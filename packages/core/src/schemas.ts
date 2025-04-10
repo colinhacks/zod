@@ -520,7 +520,7 @@ export const $ZodKSUID: core.$constructor<$ZodKSUID> = /*@__PURE__*/ core.$const
 
 //////////////////////////////   ZodISODateTime   //////////////////////////////
 
-export interface $ZodISODateTimeDef extends $ZodStringFormatDef<"date-time"> {
+export interface $ZodISODateTimeDef extends $ZodStringFormatDef<"datetime"> {
   precision: number | null;
   offset: boolean;
   local: boolean;
@@ -785,7 +785,7 @@ export const $ZodBase64: core.$constructor<$ZodBase64> = /*@__PURE__*/ core.$con
 
 //////////////////////////////   ZodJSONString   //////////////////////////////
 
-// export interface $ZodJSONStringDef extends $ZodStringFormatDef<"json-string"> {}
+// export interface $ZodJSONStringDef extends $ZodStringFormatDef<"json_string"> {}
 // export Def $ZodJSONStringDef extends $ZodStringFormatInternals {
 // export interface $ZodJSONStringInternals extends $ZodStringFormatInternals {
 //   _def: $ZodJSONStringDef;
@@ -802,7 +802,7 @@ export const $ZodBase64: core.$constructor<$ZodBase64> = /*@__PURE__*/ core.$con
 //       } catch {
 //         payload.issues.push({
 //           code: "invalid_format",
-//           format: "json-string",
+//           format: "json_string",
 //           input: payload.value,
 //           inst,
 //         });

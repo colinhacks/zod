@@ -99,38 +99,38 @@ describe("toJSONSchema", () => {
     expect(toJSONSchema(z.base64())).toMatchInlineSnapshot(`
       {
         "contentEncoding": "base64",
-        "pattern": "^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$",
+        "format": "base64",
         "type": "string",
       }
     `);
     expect(toJSONSchema(z.cuid())).toMatchInlineSnapshot(`
       {
-        "pattern": "^[cC][^\\s-]{8,}$",
+        "format": "cuid",
         "type": "string",
       }
     `);
     // expect(toJSONSchema(z.regex(/asdf/))).toMatchInlineSnapshot();
     expect(toJSONSchema(z.emoji())).toMatchInlineSnapshot(`
       {
-        "pattern": "^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$",
+        "format": "emoji",
         "type": "string",
       }
     `);
     expect(toJSONSchema(z.nanoid())).toMatchInlineSnapshot(`
       {
-        "pattern": "^[a-zA-Z0-9_-]{21}$",
+        "format": "nanoid",
         "type": "string",
       }
     `);
     expect(toJSONSchema(z.cuid2())).toMatchInlineSnapshot(`
       {
-        "pattern": "^[0-9a-z]+$",
+        "format": "cuid2",
         "type": "string",
       }
     `);
     expect(toJSONSchema(z.ulid())).toMatchInlineSnapshot(`
       {
-        "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+        "format": "ulid",
         "type": "string",
       }
     `);
@@ -170,6 +170,7 @@ describe("toJSONSchema", () => {
     `);
     expect(toJSONSchema(z.jwt())).toMatchInlineSnapshot(`
       {
+        "format": "jwt",
         "type": "string",
       }
     `);
@@ -275,7 +276,7 @@ describe("toJSONSchema", () => {
     expect(toJSONSchema(z.base64())).toMatchInlineSnapshot(`
       {
         "contentEncoding": "base64",
-        "pattern": "^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$",
+        "format": "base64",
         "type": "string",
       }
     `);

@@ -291,7 +291,7 @@ test("intersection of object with date", async () => {
   const schema = z.interface({
     a: z.date(),
   });
-  expect(schema.and(schema).parse({ a: new Date(1637353595983) })).toEqual({
+  expect(z.intersection(schema, schema).parse({ a: new Date(1637353595983) })).toEqual({
     a: new Date(1637353595983),
   });
   const result = await schema.parseAsync({ a: new Date(1637353595983) });
@@ -304,7 +304,7 @@ test("intersection of object with refine with date", async () => {
       a: z.date(),
     })
     .refine(() => true);
-  expect(schema.and(schema).parse({ a: new Date(1637353595983) })).toEqual({
+  expect(z.intersection(schema, schema).parse({ a: new Date(1637353595983) })).toEqual({
     a: new Date(1637353595983),
   });
   const result = await schema.parseAsync({ a: new Date(1637353595983) });

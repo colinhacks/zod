@@ -2,7 +2,7 @@ import * as core from "@zod/core";
 import * as schemas from "./schemas.js";
 
 // iso time
-export interface ZodMiniISODateTime extends schemas.ZodMiniStringFormat<"date-time"> {
+export interface ZodMiniISODateTime extends schemas.ZodMiniStringFormat<"datetime"> {
   _zod: core.$ZodISODateTimeInternals;
 }
 export const ZodMiniISODateTime: core.$constructor<ZodMiniISODateTime> = /*@__PURE__*/ core.$constructor(

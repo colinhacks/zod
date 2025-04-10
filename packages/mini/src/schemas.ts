@@ -336,6 +336,44 @@ export function ipv6(params?: string | ZodMiniIPv6Params): ZodMiniIPv6 {
   return core._ipv6(ZodMiniIPv6, params);
 }
 
+// ZodMiniCIDRv4
+export interface ZodMiniCIDRv4 extends ZodMiniStringFormat<"cidrv4"> {
+  _zod: core.$ZodCIDRv4Internals;
+}
+export const ZodMiniCIDRv4: core.$constructor<ZodMiniCIDRv4> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniCIDRv4",
+  (inst, def) => {
+    core.$ZodCIDRv4.init(inst, def);
+    ZodMiniStringFormat.init(inst, def);
+  }
+);
+
+export type ZodMiniCIDRv4Params = util.StringFormatParams<ZodMiniCIDRv4>;
+export type ZodMiniCheckCIDRv4Params = util.CheckStringFormatParams<ZodMiniCIDRv4>;
+
+export function cidrv4(params?: string | ZodMiniCIDRv4Params): ZodMiniCIDRv4 {
+  return core._cidrv4(ZodMiniCIDRv4, params);
+}
+
+// ZodMiniCIDRv6
+export interface ZodMiniCIDRv6 extends ZodMiniStringFormat<"cidrv6"> {
+  _zod: core.$ZodCIDRv6Internals;
+}
+export const ZodMiniCIDRv6: core.$constructor<ZodMiniCIDRv6> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniCIDRv6",
+  (inst, def) => {
+    core.$ZodCIDRv6.init(inst, def);
+    ZodMiniStringFormat.init(inst, def);
+  }
+);
+
+export type ZodMiniCIDRv6Params = util.StringFormatParams<ZodMiniCIDRv6>;
+export type ZodMiniCheckCIDRv6Params = util.CheckStringFormatParams<ZodMiniCIDRv6>;
+
+export function cidrv6(params?: string | ZodMiniCIDRv6Params): ZodMiniCIDRv6 {
+  return core._cidrv6(ZodMiniCIDRv6, params);
+}
+
 // ZodMiniBase64
 export interface ZodMiniBase64 extends ZodMiniStringFormat<"base64"> {
   _zod: core.$ZodBase64Internals;

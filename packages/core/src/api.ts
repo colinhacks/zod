@@ -301,6 +301,38 @@ export function _ipv6<T extends schemas.$ZodIPv6>(
   });
 }
 
+// CIDRv4
+export type $ZodCIDRv4Params = util.StringFormatParams<schemas.$ZodCIDRv4, "pattern">;
+export type $ZodCheckCIDRv4Params = util.CheckStringFormatParams<schemas.$ZodCIDRv4, "pattern">;
+export function _cidrv4<T extends schemas.$ZodCIDRv4>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodCIDRv4Params | $ZodCheckCIDRv4Params
+): T {
+  return new Class({
+    type: "string",
+    format: "cidrv4",
+    check: "string_format",
+    abort: false,
+    ...util.normalizeParams(params),
+  });
+}
+
+// CIDRv6
+export type $ZodCIDRv6Params = util.StringFormatParams<schemas.$ZodCIDRv6, "pattern">;
+export type $ZodCheckCIDRv6Params = util.CheckStringFormatParams<schemas.$ZodCIDRv6, "pattern">;
+export function _cidrv6<T extends schemas.$ZodCIDRv6>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodCIDRv6Params | $ZodCheckCIDRv6Params
+): T {
+  return new Class({
+    type: "string",
+    format: "cidrv6",
+    check: "string_format",
+    abort: false,
+    ...util.normalizeParams(params),
+  });
+}
+
 // Base64
 export type $ZodBase64Params = util.StringFormatParams<schemas.$ZodBase64, "pattern">;
 export type $ZodCheckBase64Params = util.CheckStringFormatParams<schemas.$ZodBase64, "pattern">;
@@ -358,7 +390,7 @@ export function _isoDateTime<T extends schemas.$ZodISODateTime>(
 ): T {
   return new Class({
     type: "string",
-    format: "date-time",
+    format: "datetime",
     check: "string_format",
     offset: false,
     local: false,
@@ -874,7 +906,7 @@ export type $ZodCheckStartsWithParams = util.CheckParams<checks.$ZodCheckStartsW
 export function _startsWith(prefix: string, params?: string | $ZodCheckStartsWithParams): checks.$ZodCheckStartsWith {
   return new checks.$ZodCheckStartsWith({
     check: "string_format",
-    format: "starts-with",
+    format: "starts_with",
     ...util.normalizeParams(params),
     prefix,
   });
@@ -885,7 +917,7 @@ export type $ZodCheckEndsWithParams = util.CheckParams<checks.$ZodCheckEndsWith,
 export function _endsWith(suffix: string, params?: string | $ZodCheckEndsWithParams): checks.$ZodCheckEndsWith {
   return new checks.$ZodCheckEndsWith({
     check: "string_format",
-    format: "ends-with",
+    format: "ends_with",
     ...util.normalizeParams(params),
     suffix,
   });

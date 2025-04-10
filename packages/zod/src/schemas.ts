@@ -70,7 +70,7 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
   default(def: () => util.NoUndefined<core.output<this>>, params?: core.$ZodDefaultParams): ZodDefault<this>;
   array(): ZodArray<this>;
   or<T extends core.$ZodType>(option: T): ZodUnion<[this, T]>;
-  and<T extends core.$ZodType>(incoming: T): ZodIntersection<this, T>;
+  // and<T extends core.$ZodType>(incoming: T): ZodIntersection<this, T>;
   transform<NewOut>(
     transform: (arg: core.output<this>, ctx: RefinementCtx<core.output<this>>) => NewOut | Promise<NewOut>
   ): ZodPipe<this, ZodTransform<Awaited<NewOut>, core.output<this>>>;
@@ -135,7 +135,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   inst.nonoptional = (params) => nonoptional(inst, params);
   inst.array = () => array(inst);
   inst.or = (arg) => union([inst, arg]);
-  inst.and = (arg) => intersection(inst, arg);
+  // inst.and = (arg) => intersection(inst, arg);
   inst.transform = (tx) => pipe(inst, transform(tx as any)) as never;
   inst.default = (def, params) => _default(inst, def, params);
   // inst.coalesce = (def, params) => coalesce(inst, def, params);
@@ -224,6 +224,10 @@ export interface _ZodString<Input = unknown> extends ZodType {
   ipv4(params?: string | core.$ZodCheckIPv4Params): this;
   /** @deprecated Use `z.ipv6()` instead. */
   ipv6(params?: string | core.$ZodCheckIPv6Params): this;
+  /** @deprecated Use `z.cidrv4()` instead. */
+  cidrv4(params?: string | core.$ZodCheckCIDRv4Params): this;
+  /** @deprecated Use `z.cidrv6()` instead. */
+  cidrv6(params?: string | core.$ZodCheckCIDRv6Params): this;
   /** @deprecated Use `z.e164()` instead. */
   e164(params?: string | core.$ZodCheckE164Params): this;
 
@@ -303,6 +307,8 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
   // };
   inst.ipv4 = (params) => inst.check(core._ipv4(ZodIPv4, params));
   inst.ipv6 = (params) => inst.check(core._ipv6(ZodIPv6, params));
+  inst.cidrv4 = (params) => inst.check(core._cidrv4(ZodCIDRv4, params));
+  inst.cidrv6 = (params) => inst.check(core._cidrv6(ZodCIDRv6, params));
   inst.e164 = (params) => inst.check(core._e164(ZodE164, params));
 
   // iso
@@ -555,6 +561,32 @@ export const ZodIPv6: core.$constructor<ZodIPv6> = /*@__PURE__*/ core.$construct
 });
 export function ipv6(params?: string | core.$ZodIPv6Params): ZodIPv6 {
   return core._ipv6(ZodIPv6, params);
+}
+
+// ZodCIDRv4
+export interface ZodCIDRv4 extends ZodStringFormat<"cidrv4"> {
+  _zod: core.$ZodCIDRv4Internals;
+}
+export const ZodCIDRv4: core.$constructor<ZodCIDRv4> = /*@__PURE__*/ core.$constructor("ZodCIDRv4", (inst, def) => {
+  core.$ZodCIDRv4.init(inst, def);
+  ZodType.init(inst, def);
+});
+
+export function cidrv4(params?: string | core.$ZodCIDRv4Params): ZodCIDRv4 {
+  return core._cidrv4(ZodCIDRv4, params);
+}
+
+// ZodCIDRv6
+export interface ZodCIDRv6 extends ZodStringFormat<"cidrv6"> {
+  _zod: core.$ZodCIDRv6Internals;
+}
+export const ZodCIDRv6: core.$constructor<ZodCIDRv6> = /*@__PURE__*/ core.$constructor("ZodCIDRv6", (inst, def) => {
+  core.$ZodCIDRv6.init(inst, def);
+  ZodType.init(inst, def);
+});
+
+export function cidrv6(params?: string | core.$ZodCIDRv6Params): ZodCIDRv6 {
+  return core._cidrv6(ZodCIDRv6, params);
 }
 
 // ZodBase64
@@ -1193,13 +1225,7 @@ export function looseInterface<T extends core.$ZodLooseShape>(
   return new ZodInterface(def) as any;
 }
 
-type MergeObjects<A extends ZodObject, B extends ZodObject> = ZodObject<
-  util.ExtendShape<A["_zod"]["shape"], B["_zod"]["shape"]>,
-  A["_zod"]["extra"] // & B['_zod']["extra"]
->;
-
 // ZodObject
-
 export interface ZodObject<
   // @ts-ignore cast variance
   out Shape extends core.$ZodShape = core.$ZodShape,
@@ -1227,8 +1253,18 @@ export interface ZodObject<
   /** @deprecated This is the default behavior. This method call is likely unnecessary. */
   strip(): ZodObject<Shape, {}>;
 
-  extend<U extends ZodObject>(shape: U): MergeObjects<this, U>;
-  extend<U extends core.$ZodShape>(shape: U): MergeObjects<this, ZodObject<U, {}>>;
+  extend<U extends ZodObject>(
+    shape: U
+  ): ZodObject<
+    util.ExtendShape<Shape, U["_zod"]["shape"]>,
+    Extra // & B['_zod']["extra"]
+  >;
+  extend<U extends core.$ZodShape>(
+    shape: U
+  ): ZodObject<
+    util.ExtendShape<Shape, U>,
+    Extra // & B['_zod']["extra"]
+  >;
 
   // merge
   /** @deprecated Use `A.extend(B)` */

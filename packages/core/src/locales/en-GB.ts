@@ -30,14 +30,14 @@ const Nouns: {
   ulid: "ULID",
   xid: "XID",
   ksuid: "KSUID",
-  "date-time": "ISO datetime",
+  datetime: "ISO datetime",
   date: "ISO date",
   time: "ISO time",
   duration: "ISO duration",
   ipv4: "IPv4 address",
   ipv6: "IPv6 address",
   base64: "base64-encoded string",
-  "json-string": "JSON string",
+  json_string: "JSON string",
   e164: "E.164 number",
   jwt: "JWT",
 };
@@ -68,8 +68,8 @@ const error: errors.$ZodErrorMap = (issue) => {
     }
     case "invalid_format": {
       const _issue = issue as errors.$ZodStringFormatIssues;
-      if (_issue.format === "starts-with") return `Invalid string: must start with "${issue}"`;
-      if (_issue.format === "ends-with") return `Invalid string: must end with "${_issue.suffix}"`;
+      if (_issue.format === "starts_with") return `Invalid string: must start with "${issue}"`;
+      if (_issue.format === "ends_with") return `Invalid string: must end with "${_issue.suffix}"`;
       if (_issue.format === "includes") return `Invalid string: must include "${_issue.includes}"`;
       if (_issue.format === "regex") return `Invalid string: must match pattern ${_issue.pattern}`;
       return `Invalid ${Nouns[_issue.format] ?? issue.format}`;

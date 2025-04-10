@@ -54,17 +54,10 @@ interface EmitParams {
 }
 
 const formatMap: Partial<Record<checks.$ZodStringFormats, string>> = {
-  // email: "email",
-  // "date-time": "date-time",
-  // date: "date",
-  // time: "time",
-  // duration: "duration",
-  // // hostname: "hostname",
-  // ipv4: "ipv4",
-  // ipv6: "ipv6",
-  // uuid: "uuid",
-  // guid: "uuid",
+  guid: "uuid",
   url: "uri",
+  datetime: "date-time",
+  json_string: "json-string",
 };
 
 interface Seen {

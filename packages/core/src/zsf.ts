@@ -178,7 +178,7 @@ export interface $ZSFConditional<If extends $ZSF, Then extends $ZSF, Else extend
 // }
 
 // export interface $ZSFCheckISODateTime {
-//   check: "date-time";
+//   check: "datetime";
 //   precision?: number;
 //   local?: boolean;
 // }
@@ -218,7 +218,7 @@ export interface $ZSFConditional<If extends $ZSF, Then extends $ZSF, Else extend
 // }
 
 // export interface $ZSFCheckJSONString {
-//   check: "json-string";
+//   check: "json_string";
 // }
 
 // export interface $ZSFCheckPrefix {

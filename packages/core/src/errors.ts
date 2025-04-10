@@ -96,7 +96,7 @@ export interface $ZodIssueCustom extends $ZodIssueBase {
 ////////////////////////////////////////////
 
 export interface $ZodIssueStringCommonFormats extends $ZodIssueInvalidStringFormat {
-  format: Exclude<$ZodStringFormats, "regex" | "jwt" | "starts-with" | "ends-with" | "includes">;
+  format: Exclude<$ZodStringFormats, "regex" | "jwt" | "starts_with" | "ends_with" | "includes">;
 }
 
 export interface $ZodIssueStringInvalidRegex extends $ZodIssueInvalidStringFormat {
@@ -110,12 +110,12 @@ export interface $ZodIssueStringInvalidJWT extends $ZodIssueInvalidStringFormat 
 }
 
 export interface $ZodIssueStringStartsWith extends $ZodIssueInvalidStringFormat {
-  format: "starts-with";
+  format: "starts_with";
   prefix: string;
 }
 
 export interface $ZodIssueStringEndsWith extends $ZodIssueInvalidStringFormat {
-  format: "ends-with";
+  format: "ends_with";
   suffix: string;
 }
 

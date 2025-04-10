@@ -725,7 +725,7 @@ export function extendObjectLike(a: schemas.$ZodObjectLike, b: schemas.$ZodObjec
       // return { ...a._zod.def.shape, ...b._zod.def.shape };
     },
     optional,
-    checks: [], // delete existinet checks
+    checks: [], // delete existent checks
   }) as any;
 }
 

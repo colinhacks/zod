@@ -562,15 +562,15 @@ test("format", () => {
   expect(z.string().cuid2().format).toEqual("cuid2");
   expect(z.string().ulid().format).toEqual("ulid");
   expect(z.string().base64().format).toEqual("base64");
-  // expect(z.string().jsonString().format).toEqual("json-string");
-  // expect(z.string().json().format).toEqual("json-string");
+  // expect(z.string().jsonString().format).toEqual("json_string");
+  // expect(z.string().json().format).toEqual("json_string");
   expect(z.string().xid().format).toEqual("xid");
   expect(z.string().ksuid().format).toEqual("ksuid");
   // expect(z.string().ip().format).toEqual("ip");
   expect(z.string().ipv4().format).toEqual("ipv4");
   expect(z.string().ipv6().format).toEqual("ipv6");
   expect(z.string().e164().format).toEqual("e164");
-  expect(z.string().datetime().format).toEqual("date-time");
+  expect(z.string().datetime().format).toEqual("datetime");
   expect(z.string().date().format).toEqual("date");
   expect(z.string().time().format).toEqual("time");
   expect(z.string().duration().format).toEqual("duration");

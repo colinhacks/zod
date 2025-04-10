@@ -731,7 +731,7 @@ export type $ZodStringFormats =
   | "ulid"
   | "xid"
   | "ksuid"
-  | "date-time"
+  | "datetime"
   | "date"
   | "time"
   | "duration"
@@ -740,14 +740,14 @@ export type $ZodStringFormats =
   | "cidrv4"
   | "cidrv6"
   | "base64"
-  | "json-string"
+  | "json_string"
   | "e164"
   | "lowercase"
   | "uppercase"
   | "regex"
   | "jwt"
-  | "starts-with"
-  | "ends-with"
+  | "starts_with"
+  | "ends_with"
   | "includes";
 export interface $ZodCheckStringFormatDef<Format extends $ZodStringFormats = $ZodStringFormats> extends $ZodCheckDef {
   check: "string_format";
@@ -832,9 +832,9 @@ export const $ZodCheckRegex: core.$constructor<$ZodCheckRegex> = /*@__PURE__*/ c
 ///////////////////////////////////
 /////    $ZodCheckJSONString    /////
 ///////////////////////////////////
-// interface $ZodCheckJSONStringDef extends $ZodCheckStringFormatDef<"json-string"> {
+// interface $ZodCheckJSONStringDef extends $ZodCheckStringFormatDef<"json_string"> {
 //   // check: "string_format";
-//   // format: "json-string";
+//   // format: "json_string";
 //   // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidStringFormat> | undefined;
 // }
 
@@ -955,7 +955,7 @@ export const $ZodCheckIncludes: core.$constructor<$ZodCheckIncludes> = /*@__PURE
 /////////////////////////////////////
 /////    $ZodCheckStartsWith    /////
 /////////////////////////////////////
-interface $ZodCheckStartsWithDef extends $ZodCheckStringFormatDef<"starts-with"> {
+interface $ZodCheckStartsWithDef extends $ZodCheckStringFormatDef<"starts_with"> {
   prefix: string;
 }
 
@@ -984,7 +984,7 @@ export const $ZodCheckStartsWith: core.$constructor<$ZodCheckStartsWith> = /*@__
       payload.issues.push({
         origin: "string",
         code: "invalid_format",
-        format: "starts-with",
+        format: "starts_with",
         prefix: def.prefix,
         input: payload.value,
         inst,
@@ -997,7 +997,7 @@ export const $ZodCheckStartsWith: core.$constructor<$ZodCheckStartsWith> = /*@__
 //////////////////////////////////
 /////   $ZodCheckEndsWith    /////
 //////////////////////////////////
-interface $ZodCheckEndsWithDef extends $ZodCheckStringFormatDef<"ends-with"> {
+interface $ZodCheckEndsWithDef extends $ZodCheckStringFormatDef<"ends_with"> {
   suffix: string;
 }
 
@@ -1026,7 +1026,7 @@ export const $ZodCheckEndsWith: core.$constructor<$ZodCheckEndsWith> = /*@__PURE
       payload.issues.push({
         origin: "string",
         code: "invalid_format",
-        format: "ends-with",
+        format: "ends_with",
         suffix: def.suffix,
         input: payload.value,
         inst,
