@@ -37,6 +37,7 @@ const Nouns: {
   ipv4: "IPv4 address",
   ipv6: "IPv6 address",
   base64: "base64-encoded string",
+  base64url: "base64url-encoded string",
   json_string: "JSON string",
   e164: "E.164 number",
   jwt: "JWT",

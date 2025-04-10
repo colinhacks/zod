@@ -1269,5 +1269,6 @@ export type $ZodStringFormatChecks =
   | schemas.$ZodCIDRv4
   | schemas.$ZodCIDRv6
   | schemas.$ZodBase64
+  | schemas.$ZodBase64URL
   | schemas.$ZodE164
   | schemas.$ZodJWT;

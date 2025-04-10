@@ -139,26 +139,19 @@ export function uuid(params?: string | core.$ZodUUIDParams): ZodMiniUUID {
   return core._uuid(ZodMiniUUID, params);
 }
 
-export type ZodMiniUUIDv4Params = util.StringFormatParams<ZodMiniUUID, "pattern">;
-export type ZodMiniCheckUUIDv4Params = util.CheckStringFormatParams<ZodMiniUUID, "pattern">;
-
-export function uuidv4(params?: string | ZodMiniUUIDv4Params): ZodMiniUUID {
+export function uuidv4(params?: string | core.$ZodUUIDv4Params): ZodMiniUUID {
   return core._uuidv4(ZodMiniUUID, params);
 }
 
 // ZodMiniUUIDv6
-export type ZodMiniUUIDv6Params = util.StringFormatParams<ZodMiniUUID, "pattern">;
-export type ZodMiniCheckUUIDv6Params = util.CheckStringFormatParams<ZodMiniUUID, "pattern">;
 
-export function uuidv6(params?: string | ZodMiniUUIDv6Params): ZodMiniUUID {
+export function uuidv6(params?: string | core.$ZodUUIDv6Params): ZodMiniUUID {
   return core._uuidv6(ZodMiniUUID, params);
 }
 
 // ZodMiniUUIDv7
-export type ZodMiniUUIDv7Params = util.StringFormatParams<ZodMiniUUID, "pattern">;
-export type ZodMiniCheckUUIDv7Params = util.CheckStringFormatParams<ZodMiniUUID, "pattern">;
 
-export function uuidv7(params?: string | ZodMiniUUIDv7Params): ZodMiniUUID {
+export function uuidv7(params?: string | core.$ZodUUIDv7Params): ZodMiniUUID {
   return core._uuidv7(ZodMiniUUID, params);
 }
 
@@ -234,10 +227,8 @@ export const ZodMiniCUID2: core.$constructor<ZodMiniCUID2> = /*@__PURE__*/ core.
     ZodMiniStringFormat.init(inst, def);
   }
 );
-export type ZodMiniCUID2Params = util.StringFormatParams<ZodMiniCUID2>;
-export type ZodMiniCheckCUID2Params = util.CheckStringFormatParams<ZodMiniCUID2>;
 
-export function cuid2(params?: string | ZodMiniCUID2Params): ZodMiniCUID2 {
+export function cuid2(params?: string | core.$ZodCUID2Params): ZodMiniCUID2 {
   return core._cuid2(ZodMiniCUID2, params);
 }
 
@@ -310,10 +301,8 @@ export const ZodMiniIPv4: core.$constructor<ZodMiniIPv4> = /*@__PURE__*/ core.$c
     ZodMiniStringFormat.init(inst, def);
   }
 );
-export type ZodMiniIPv4Params = util.StringFormatParams<ZodMiniIPv4>;
-export type ZodMiniCheckIPv4Params = util.CheckStringFormatParams<ZodMiniIPv4>;
 
-export function ipv4(params?: string | ZodMiniIPv4Params): ZodMiniIPv4 {
+export function ipv4(params?: string | core.$ZodIPv4Params): ZodMiniIPv4 {
   return core._ipv4(ZodMiniIPv4, params);
 }
 
@@ -329,10 +318,7 @@ export const ZodMiniIPv6: core.$constructor<ZodMiniIPv6> = /*@__PURE__*/ core.$c
   }
 );
 
-export type ZodMiniIPv6Params = util.StringFormatParams<ZodMiniIPv6>;
-export type ZodMiniCheckIPv6Params = util.CheckStringFormatParams<ZodMiniIPv6>;
-
-export function ipv6(params?: string | ZodMiniIPv6Params): ZodMiniIPv6 {
+export function ipv6(params?: string | core.$ZodIPv6Params): ZodMiniIPv6 {
   return core._ipv6(ZodMiniIPv6, params);
 }
 
@@ -348,10 +334,7 @@ export const ZodMiniCIDRv4: core.$constructor<ZodMiniCIDRv4> = /*@__PURE__*/ cor
   }
 );
 
-export type ZodMiniCIDRv4Params = util.StringFormatParams<ZodMiniCIDRv4>;
-export type ZodMiniCheckCIDRv4Params = util.CheckStringFormatParams<ZodMiniCIDRv4>;
-
-export function cidrv4(params?: string | ZodMiniCIDRv4Params): ZodMiniCIDRv4 {
+export function cidrv4(params?: string | core.$ZodCIDRv4Params): ZodMiniCIDRv4 {
   return core._cidrv4(ZodMiniCIDRv4, params);
 }
 
@@ -367,10 +350,7 @@ export const ZodMiniCIDRv6: core.$constructor<ZodMiniCIDRv6> = /*@__PURE__*/ cor
   }
 );
 
-export type ZodMiniCIDRv6Params = util.StringFormatParams<ZodMiniCIDRv6>;
-export type ZodMiniCheckCIDRv6Params = util.CheckStringFormatParams<ZodMiniCIDRv6>;
-
-export function cidrv6(params?: string | ZodMiniCIDRv6Params): ZodMiniCIDRv6 {
+export function cidrv6(params?: string | core.$ZodCIDRv6Params): ZodMiniCIDRv6 {
   return core._cidrv6(ZodMiniCIDRv6, params);
 }
 
@@ -385,12 +365,23 @@ export const ZodMiniBase64: core.$constructor<ZodMiniBase64> = /*@__PURE__*/ cor
     ZodMiniStringFormat.init(inst, def);
   }
 );
-
-export type ZodMiniBase64Params = util.StringFormatParams<ZodMiniBase64>;
-export type ZodMiniCheckBase64Params = util.CheckStringFormatParams<ZodMiniBase64>;
-
-export function base64(params?: string | ZodMiniBase64Params): ZodMiniBase64 {
+export function base64(params?: string | core.$ZodBase64Params): ZodMiniBase64 {
   return core._base64(ZodMiniBase64, params);
+}
+
+// ZodMiniBase64URL
+export interface ZodMiniBase64URL extends ZodMiniStringFormat<"base64url"> {
+  _zod: core.$ZodBase64URLInternals;
+}
+export const ZodMiniBase64URL: core.$constructor<ZodMiniBase64URL> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniBase64URL",
+  (inst, def) => {
+    core.$ZodBase64URL.init(inst, def);
+    ZodMiniStringFormat.init(inst, def);
+  }
+);
+export function base64url(params?: string | core.$ZodBase64URLParams): ZodMiniBase64URL {
+  return core._base64url(ZodMiniBase64URL, params);
 }
 
 // ZodMiniE164
@@ -404,10 +395,8 @@ export const ZodMiniE164: core.$constructor<ZodMiniE164> = /*@__PURE__*/ core.$c
     ZodMiniStringFormat.init(inst, def);
   }
 );
-export type ZodMiniE164Params = util.StringFormatParams<ZodMiniE164>;
-export type ZodMiniCheckE164Params = util.CheckStringFormatParams<ZodMiniE164>;
 
-export function e164(params?: string | ZodMiniE164Params): ZodMiniE164 {
+export function e164(params?: string | core.$ZodE164Params): ZodMiniE164 {
   return core._e164(ZodMiniE164, params);
 }
 
@@ -1640,7 +1629,6 @@ export function _custom<O = unknown, I = O>(
   Class: util.Constructor<ZodMiniCustom, [core.$ZodCustomDef]>
 ): ZodMiniCustom<O, I> {
   const params = util.normalizeParams(_params);
-
   const schema = new Class({
     type: "custom",
     check: "custom",
