@@ -269,9 +269,9 @@ The core bundle is ~57% smaller in Zod 4 (2.3x). That's good! But we can do a lo
 
 ## Introducing `@zod/mini`
 
-But ultimately Zod's method-heavy API is fundamentally difficult to tree-shake. Even our simple `z.boolean()` schema pulls in the implementations of a bunch of methods we didn't use, like `.optional()`, `.array()`, etc. Writing slimmer implementations can only get you so far. 
+Zod's method-heavy API is fundamentally difficult to tree-shake. Even our simple `z.boolean()` script pulls in the implementations of a bunch of methods we didn't use, like `.optional()`, `.array()`, etc. Writing slimmer implementations can only get you so far. 
 
-That's where `@zod/mini` comes in. It's a sister library with functional, tree-shakable API that corresponds one-to-one with `zod`. 
+That's where `@zod/mini` comes in. It's a sister library with a functional, tree-shakable API that corresponds one-to-one with `zod`. 
 
 Where Zod uses methods, `@zod/mini` generally uses wrapper functions:
 
@@ -328,9 +328,7 @@ z.array(z.number())
 </Tab>
 </Tabs>
 
-The more functional API makes it easier for bundlers to tree-shaking the APIs you don't use. While `zod` is still recommended for the majority of use cases, any projects with uncommonly strict bundle size constraints should consider `@zod/mini`. 
-
-Read the 
+The more functional API makes it easier for bundlers to tree-shaking the APIs you don't use. While `zod` is still recommended for the majority of use cases, any projects with uncommonly strict bundle size constraints should consider `@zod/mini`.  
 
 ### 6.6x reduction in core bundle size
 
