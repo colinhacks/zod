@@ -45,7 +45,7 @@ generate({
 });
 
 interface GenerateParams {
-  path: string;
+  // path?: string;
   imports: string[];
   schemaType: "z.object" | "z.interface" | "arktype" | "valibot";
   valueTypes: string[];
@@ -61,7 +61,7 @@ interface GenerateParams {
 // Step 4: Write the generated schemas to a file
 export function generate(params: GenerateParams) {
   const {
-    path,
+    
     imports,
     schemaType,
     numSchemas,
@@ -72,10 +72,11 @@ export function generate(params: GenerateParams) {
     methods = [""],
     custom = ""
   } = params;
+  const path = "src/index.ts";
   // console.log(params);
   let file: string[] = [];
   // const file: string[] = params.imports;
-  file = file.concat(params.imports);
+  file = file.concat(imports);
   const names = Array.from({ length: numSchemas }, () => randomStr(17));
   const generated: Array<string> = [...names];
 
