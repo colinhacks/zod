@@ -27,12 +27,13 @@ export const ARKTYPE = {
 generate({
   path: "src/index.ts",
   // ...ZOD3,
-  // ...ZOD,
-  // schemaType: "z.object",
+  ...ZOD,
+  schemaType: "z.interface",
   // ...ARKTYPE,
-  ...ZOD3,
-  numSchemas: 10, 
-  numKeys: 3,
+  // ...ZOD3,
+  numSchemas: 1000, 
+  numKeys: 10,
+  numRefs: 3,
   
   // numSchemas: 1000,
   // methods: [""],
