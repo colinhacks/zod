@@ -13,3 +13,5 @@ z.array(z.number()).check(
 //   .min(5)
 //   .max(10)
 //   .refine((arr) => arr.includes(5));
+
+z.core.locales.en();

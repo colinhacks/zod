@@ -101,22 +101,23 @@ z.string({
 
 ### no longer extends `Error`
 
-It is very slow to instantiate `Error` instances in JavaScript, as the initialization process snapshots the call stack. The magnitude of this performance  little value and makes the "validation error" code path unacceptably slow.
+It is very slow to instantiate `Error` instances in JavaScript, as the initialization process snapshots the call stack. The magnitude of this performance hit is too much to justify, and extending `Error` adds little value anyway. The `.stack` trace includes lots of Zod internals and can be confusing. 
 
-In Zod 4 the `ZodError` class no longer extends the plain JavaScript `Error` class. Any code that relies on `instanceof Error` will need to be refactored.
+In Zod 4 the `ZodError` class no longer extends the plain JavaScript `Error` class. Instead, `ZodError` `implements` the `Error` interface. This means all error-handling code should still work with the exception of `instanceof Error` checks. 
 
 ```ts
 try {
   z.string().parse(data)
 } catch(err) {
+  if (err instanceof z.ZodError) {
+    // handle ZodError
+  }
+  
   if (err instanceof Error) {
     // handle regular Error
-  } else if (err instanceof z.ZodError) {
-    // handle ZodError
   }
 }
 ```
-
 
 ### updates issue formats
 
@@ -134,8 +135,8 @@ type IssueFormats =
   | z.core.$ZodIssueUnrecognizedKeys
   | z.core.$ZodIssueInvalidValue
   | z.core.$ZodIssueInvalidUnion
-  | z.core.$ZodIssueInvalidKey
-  | z.core.$ZodIssueInvalidElement
+  | z.core.$ZodIssueInvalidKey // new: used for z.record/z.map 
+  | z.core.$ZodIssueInvalidElement // new: used for z.map/z.set
   | z.core.$ZodIssueCustom;
 ```
 
@@ -145,24 +146,23 @@ Below is the list of Zod 3 issues types and their Zod 4 equivalent:
 import * as z from "zod"; // v3
 
 export type IssueFormats =
-  | z.ZodInvalidTypeIssue // renamed to z.core.$ZodIssueInvalidType
-  | z.ZodTooBigIssue  // renamed to z.core.$ZodIssueTooBig
-  | z.ZodTooSmallIssue // renamed to z.core.$ZodIssueTooSmall
-  | z.ZodInvalidStringIssue // now z.core.$ZodIssueInvalidStringFormat
-  | z.ZodNotMultipleOfIssue // renamed to z.core.$ZodIssueNotMultipleOf
-  | z.ZodUnrecognizedKeysIssue // renamed to z.core.$ZodIssueUnrecognizedKeys
+  | z.ZodInvalidTypeIssue // ♻️ renamed to z.core.$ZodIssueInvalidType
+  | z.ZodTooBigIssue  // ♻️ renamed to z.core.$ZodIssueTooBig
+  | z.ZodTooSmallIssue // ♻️ renamed to z.core.$ZodIssueTooSmall
+  | z.ZodInvalidStringIssue // ♻️ z.core.$ZodIssueInvalidStringFormat
+  | z.ZodNotMultipleOfIssue // ♻️ renamed to z.core.$ZodIssueNotMultipleOf
+  | z.ZodUnrecognizedKeysIssue // ♻️ renamed to z.core.$ZodIssueUnrecognizedKeys
+  | z.ZodInvalidUnionIssue // ♻️ renamed to z.core.$ZodIssueInvalidUnion
+  | z.ZodCustomIssue // ♻️ renamed to z.core.$ZodIssueCustom
   | z.ZodInvalidEnumValueIssue // ❌ merged in z.core.$ZodIssueInvalidValue
   | z.ZodInvalidLiteralIssue // ❌ merged into z.core.$ZodIssueInvalidValue
-  | z.ZodInvalidUnionIssue // renamed to z.core.$ZodIssueInvalidUnion
-  | z.ZodInvalidUnionDiscriminatorIssue // throws an Error at schema creation time
+  | z.ZodInvalidUnionDiscriminatorIssue // ❌ throws an Error at schema creation time
   | z.ZodInvalidArgumentsIssue // ❌ z.function throws ZodError directly
   | z.ZodInvalidReturnTypeIssue // ❌ z.function throws ZodError directly
   | z.ZodInvalidDateIssue // ❌ merged into invalid_type
   | z.ZodInvalidIntersectionTypesIssue // ❌ removed (throws regular Error)
   | z.ZodNotFiniteIssue // ❌ infinite values no longer accepted (invalid_type)
-  | z.ZodCustomIssue // renamed to z.core.$ZodIssueCustom
 ```
-
 
 While certain Zod 4 issue types have been merged, dropped, and modified, each issue remains structurally similar to Zod 3 counterpart (identical, in most cases). All issues still conform to the same base interface as Zod 3, so most common error handling logic will work without modification.
 
