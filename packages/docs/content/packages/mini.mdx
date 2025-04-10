@@ -23,7 +23,7 @@ const mySchema = z.string().optional().nullable();
 </Tab>
 </Tabs>
 
-> **Tree-shaking** — In `zod`, schemas provide a range of convenience methods to perform some common operations (e.g. `.min()` on string schemas). It isn't possible for bundlers to [tree-shake](https://en.wikipedia.org/wiki/Tree_shaking) these methods; that is, bundlers have a hard time removing method implementations from your bundle, even if they aren't used anywhere. By contrast, it's easy for bundlers to remove an unused top-level function. This is why `@zod/mini` relies so heavilty on functions.
+> **Tree-shaking** — In `zod`, schemas provide a range of convenience methods to perform some common operations (e.g. `.min()` on string schemas). Bundlers have a hard time removing ("tree shaking") method implementations from your bundle, even if they aren't used. It's much easier to remove an unused top-level function, which is why the API of `@zod/mini` uses more functions than methods.
 
 ## `ZodMiniType`
 
