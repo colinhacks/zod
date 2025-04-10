@@ -1234,7 +1234,6 @@ export interface ZodObject<
 > extends ZodType {
   _zod: core.$ZodObjectInternals<Shape, Extra>;
 
-  /** @deprecated In Zod 4, you can pass `ZodObject` instances directly into `.extend()`. */
   shape: Shape;
 
   keyof(): ZodEnum<util.ToEnum<keyof Shape & string>>;

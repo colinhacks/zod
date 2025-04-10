@@ -10,7 +10,7 @@ import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 This migration guide aims to list the breaking changes in Zod 4 in order of highest to lowest impact. Every effort was made to prevent breaking changes, but some are unavoidable.
 
 <Callout>
-**Note** — Zod 3 exported a large number of undocumented utility types and functions that are not considered part of the public API. Changes to those are not documented here, as they aren't considered part of Zod's public API.
+**Note** — Zod 3 exported a large number of undocumented, internal utility types and functions that are not considered part of the public API. Changes to those are not documented here.
 </Callout>
 
 
@@ -306,7 +306,6 @@ type schemaInput = z.input<typeof schema>;
 ## `z.object()`
 
 These modifier methods on the `ZodObject` class determine how the schema handles unknown keys. In Zod 4, this functionality now exists in top-level functions. This aligns better with Zod's declarative-first philosophy, and puts all object variants on equal footing. 
-
 
 ### deprecates `.strict()`
 
