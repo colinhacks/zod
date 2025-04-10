@@ -219,7 +219,8 @@ z.cuid2();
 z.ulid();
 z.ipv4();
 z.ipv6();
-z.cidr();          // ip range
+z.cidrv4();        // ipv4 CIDR block
+z.cidrv4();        // ipv6 CIDR block
 z.iso.date();
 z.iso.time();
 z.iso.datetime();
@@ -376,27 +377,22 @@ time.parse("00:00:00"); // ❌
 
 ```ts
 const ipv4 = z.ipv4();
+v4.parse("192.168.0.0"); // ✅
+
 const ipv6 = z.ipv6();
+v6.parse("2001:db8:85a3::8a2e:370:7334"); // ✅
 ```
 
-### IP ranges (CIDR)
+### IP blocks (CIDR)
 
 Validate IP address ranges specified with [CIDR notation](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing). By default, `.cidr()` allows both IPv4 and IPv6.
 
 ```ts
-const cidr = z.string().cidr();
-cidr.parse("192.168.0.0/24"); // ✅
-cidr.parse("2001:db8::/32"); // ✅
-```
+const cidrv4 = z.string().cidrv4();
+cidrv4.parse("192.168.0.0/24"); // ✅
 
-You can specify a version with the `version` parameter.
-
-```ts
-const ipv4Cidr = z.string().cidr({ version: "v4" });
-ipv4Cidr.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // ❌
-
-const ipv6Cidr = z.string().cidr({ version: "v6" });
-ipv6Cidr.parse("192.168.1.1"); // ❌
+const cidrv6 = z.string().cidrv6();
+cidrv6.parse("2001:db8::/32"); // ✅
 ```
 
 ## Numbers
@@ -1904,7 +1900,7 @@ const myString = z.string().check(
 </Tabs>
 
 
-By default, validation issues from checks are considered *continuable*; that is, Zod will execute *all* checks in sequence, even if one of them causes an validation error. This is usually desirable, so Zod can present a comprehensive list of validation issues in one go.
+By default, validation issues from checks are considered *continuable*; that is, Zod will execute *all* checks in sequence, even if one of them causes a validation error. This is usually desirable, so Zod can present a comprehensive list of validation issues in one go.
 
 <Tabs groupId="lib" items={["zod", "@zod/mini"]}>
 <Tab value="zod">
@@ -1951,7 +1947,7 @@ const myString = z.string()
 
 const result = myString.safeParse("OH NO");
 result.error!.issues;
-// [ { "code": "custom", "message": "Too short!" }]
+// => [{ "code": "custom", "message": "Too short!" }]
 ```
 </Tab>
 <Tab value="@zod/mini">
@@ -2471,7 +2467,7 @@ const pluto: Dog = { name: "pluto" };
 const simba: Cat = fido; // works fine
 ```
 
-In some cases, its can be desirable to simulate [nominal typing](https://en.wikipedia.org/wiki/Nominal_type_system) inside TypeScript. This can be achieved with *branded types* (also known as "opaque types").
+In some cases, it can be desirable to simulate [nominal typing](https://en.wikipedia.org/wiki/Nominal_type_system) inside TypeScript. This can be achieved with *branded types* (also known as "opaque types").
 
 ```ts
 const Cat = z.object({ name: z.string() }).brand<"Cat">();

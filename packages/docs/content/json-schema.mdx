@@ -264,7 +264,7 @@ z.toJSONSchema(schema, { target: "draft-2020-12" });
 
 > If you haven't already, read through the [Metadata and registries](/metadata) page for context on storing metadata in Zod.
 
-In Zod metadata is stored in registries. Zod exports a global registry `z.globalRegistry` that can be used to store common metadata fields like `id`, `title`, `description`, and `examples`. 
+In Zod, metadata is stored in registries. Zod exports a global registry `z.globalRegistry` that can be used to store common metadata fields like `id`, `title`, `description`, and `examples`. 
 
 <Tabs groupId="lib" items={["zod", "@zod/mini"]}>
 <Tab value="zod">
@@ -300,7 +300,7 @@ z.toJSONSchema(emailSchema);
 
 ### `unrepresentable` 
 
-The following APIs are not representable in JSON Schema. By default Zod will throw an error if they are encountered. It is unsound to attempt a conversion to JSON Schema; you should modify your schemas  as they have no equivalent in JSON. An error will be thrown if any of these are encountered.
+The following APIs are not representable in JSON Schema. By default, Zod will throw an error if they are encountered. It is unsound to attempt a conversion to JSON Schema; you should modify your schemas  as they have no equivalent in JSON. An error will be thrown if any of these are encountered.
 
 ```ts
 z.bigint(); // ❌
@@ -415,7 +415,7 @@ z.toJSONSchema(mySchema, {
 
 ### `pipes`
 
-Pipes contain an input and and output schema. By default the result of `z.toJSONSchema` represents the *output schema*; use `"pipe": "input"` to extract the input type instead.
+Pipes contain an input and and output schema. By default, the result of `z.toJSONSchema` represents the *output schema*; use `"pipe": "input"` to extract the input type instead.
 
 ```ts
 const mySchema = z.string().transform(val => val.length).pipe(z.number());
@@ -858,7 +858,7 @@ z.toJSONSchema(z.globalRegistry);
 
 > Any schema with an `id` property in the registry will be extracted into `schemas`. 
 
-By default the `$ref` URIs are relative paths like `"User"`. To make these absolute URIs, use the `uri` option. This expects a function that converts an `id` to a fully-qualified URI.
+By default, the `$ref` URIs are relative paths like `"User"`. To make these absolute URIs, use the `uri` option. This expects a function that converts an `id` to a fully-qualified URI.
 
 ```ts
 z.toJSONSchema(z.globalRegistry, {

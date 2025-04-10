@@ -1,31 +1,8 @@
 import * as z from "zod";
 
 z;
+const cidrv4 = z.string().cidrv4();
+cidrv4.parse("192.168.0.0/24"); // ✅
 
-// interface MyStringSchema extends z.$ZodString {}
-// class MyStringSchema {
-//   constructor() {
-//     z.$ZodString.init(this, {
-//       type: "string",
-//     });
-//   }
-
-//   handle(value: string) {
-//     const result = this._zod.parse({ issues: [], value }, {});
-//     if (result instanceof Promise) {
-//       throw new Error("Promise not supported");
-//     }
-//     result.issues;
-//   }
-// }
-
-// const myStringSchema = new MyStringSchema();
-// const result = myStringSchema.handle("hello");
-// console.log(result);
-
-const personToExtend = z.object({
-  firstName: z.string(),
-  lastName: z.string(),
-});
-const PersonWithNickname = personToExtend.extend({ nickName: z.string() });
-PersonWithNickname._zod.output;
+const cidrv6 = z.string().cidrv6();
+cidrv6.parse("2001:db8::/32"); // ✅
