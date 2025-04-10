@@ -5,6 +5,7 @@ import type * as errors from "./errors.js";
 import * as regexes from "./regexes.js";
 import type { StandardSchemaV1 } from "./standard-schema.js";
 import * as util from "./util.js";
+import { version } from "./versions.js";
 
 /////////////////////////////   PARSE   //////////////////////////////
 
@@ -91,6 +92,9 @@ export interface $ZodTypeInternals<out O = unknown, out I = unknown> extends $Zo
   /** The inferred input type */
   input: I;
 
+  /** The `@zod/core` version of this schema */
+  version: typeof version;
+
   /** List of deferred initializers. */
   deferred: util.AnyFunc[] | undefined;
 
@@ -148,6 +152,7 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
   inst._zod.id = def.type + "_" + util.randomString(10);
   inst._zod.def = def; // set _def property
   inst._zod.computed = inst._zod.computed || {}; // initialize _computed object
+  inst._zod.version = version;
 
   const checks = [...(inst._zod.def.checks ?? [])];
   def.type;
@@ -3691,6 +3696,8 @@ export type $ZodStringFormatTypes =
   | $ZodISODuration
   | $ZodIPv4
   | $ZodIPv6
+  | $ZodCIDRv4
+  | $ZodCIDRv6
   | $ZodBase64
   | $ZodE164
   | $ZodJWT;

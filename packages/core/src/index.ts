@@ -3,6 +3,7 @@ export * from "./parse.js";
 export * from "./errors.js";
 export * from "./schemas.js";
 export * from "./checks.js";
+export * from "./versions.js";
 export * as utils from "./util.js";
 export * as regexes from "./regexes.js";
 export * as locales from "./locales.js";
