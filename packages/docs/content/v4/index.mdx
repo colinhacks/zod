@@ -638,7 +638,7 @@ At the moment this isn't configurable; this may change in the future.
 
 ## Top-level string formats
 
-The following string formats have been hoisted to be top-level APIs on the `z` module. This is both more concise and more tree-shakable. The method equivalents (`z.string().email()`, etc.) are still available but have been deprecated. 
+The following string formats have been hoisted to be top-level APIs on the `z` module. This is both more concise and more tree-shakable. The method equivalents (`z.string().email()`, etc.) are still available but have been deprecated. They'll be removed in the next major version.
 
 ```ts
 z.email();
@@ -652,6 +652,7 @@ z.cidrv6();
 z.url();
 z.e164();
 z.base64();
+z.base64url();
 z.jwt();
 z.ascii();
 z.utf8();
