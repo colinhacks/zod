@@ -1,4 +1,4 @@
-import type * as util from "@zod/core/util";
+import type { util } from "@zod/core";
 import { expect, expectTypeOf, test } from "vitest";
 import { z } from "zod";
 

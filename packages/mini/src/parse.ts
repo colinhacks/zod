@@ -1,5 +1,5 @@
 import * as core from "@zod/core";
-import type * as util from "@zod/core/util";
+import type { util } from "@zod/core";
 
 export const parse: <T extends core.$ZodType>(
   schema: T,

@@ -1,6 +1,6 @@
 import * as core from "@zod/core";
 import { $ZodError } from "@zod/core";
-import type { AnyFunc } from "@zod/core/util";
+import type { util } from "@zod/core";
 
 /** @deprecated Use `z.core.$ZodIssue` from `@zod/core` instead, especially if you are building a library on top of Zod. */
 export type ZodIssue = core.$ZodIssue;
@@ -10,14 +10,14 @@ export class ZodError<T = unknown> extends $ZodError<T> {
   format(): core.$ZodFormattedError<T>;
   /** @deprecated Use the `z.treeifyError(err)` function instead. */
   format<U>(mapper: (issue: core.$ZodIssue) => U): core.$ZodFormattedError<T, U>;
-  format(mapper?: AnyFunc): any {
+  format(mapper?: util.AnyFunc): any {
     return core.formatError(this, mapper);
   }
   /** @deprecated Use the `z.treeifyError(err)` function instead. */
   flatten(): core.$ZodFlattenedError<T>;
   /** @deprecated Use the `z.treeifyError(err)` function instead. */
   flatten<U>(mapper: (issue: core.$ZodIssue) => U): core.$ZodFlattenedError<T, U>;
-  flatten(mapper?: AnyFunc): core.$ZodFlattenedError<T> {
+  flatten(mapper?: util.AnyFunc): core.$ZodFlattenedError<T> {
     return core.flattenError(this, mapper);
   }
   /** @deprecated Push directly to `.issues` instead. */

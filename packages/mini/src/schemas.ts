@@ -1,5 +1,5 @@
 import * as core from "@zod/core";
-import * as util from "@zod/core/util";
+import { util } from "@zod/core";
 import * as parse from "./parse.js";
 
 export * as coerce from "./coerce.js";

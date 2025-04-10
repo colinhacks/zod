@@ -1,4 +1,4 @@
-import type { Flatten } from "@zod/core/util";
+import type { util } from "@zod/core";
 import { expect, expectTypeOf, test } from "vitest";
 
 import * as z from "zod";
@@ -55,7 +55,7 @@ test("deep intersection", () => {
     Animal
   );
 
-  type Cat = Flatten<z.infer<typeof Cat>>;
+  type Cat = util.Flatten<z.infer<typeof Cat>>;
   expectTypeOf<Cat>().toEqualTypeOf<{ properties: { is_animal: boolean } & { jumped: boolean } }>();
   const a = Cat.safeParse({ properties: { is_animal: true, jumped: true } });
   expect(a.data!.properties).toEqual({ is_animal: true, jumped: true });

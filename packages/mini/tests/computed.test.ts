@@ -1,4 +1,4 @@
-import * as zc from "@zod/core/util";
+import { util as zc } from "@zod/core";
 import * as z from "@zod/mini";
 import { expect, test } from "vitest";
 
