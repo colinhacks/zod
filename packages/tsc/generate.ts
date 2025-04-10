@@ -25,7 +25,7 @@ export const ARKTYPE = {
 };
 
 generate({
-  path: "src/index.ts",
+  // path: "src/index.ts",
   // ...ZOD3,
   ...ZOD,
   schemaType: "z.interface",
@@ -160,16 +160,30 @@ export function generate(params: GenerateParams) {
 
     // extends
     for (let i = 0; i < numExtends; i++) {
+      const fields = generateFields({...params, numKeys: numExtends });
+        // for (const { key, schema } of fields) {
+        //   file.push(`  ${key}: ${schema},`);
+        // }
       const varname = randomStr(7);
-      const extendKeys = Array(3)
-        .fill(0)
-        .map(() => randomStr(7));
+      // const extendKeys = Array(3)
+      //   .fill(0)
+      //   .map(() => randomStr(7));
 
-      file.push(`export const ${varname} = ${variableName}.extend({`);
-      for (const key of extendKeys) {
-        file.push(`  "${key}": z.string(),`);
+      if(schemaType==="z.interface" || schemaType==="z.object") {
+         file.push(`export const ${varname} = ${variableName}.extend({`);
+          for (const field of fields) {
+            file.push(`  "${field.key}": ${field.schema},`);
+          }
+          file.push(`});`);
+      }else if(schemaType ==="arktype"){
+          file.push(`export const ${varname} = type({`);
+          file.push(`  "...": ${variableName},`);
+          for (const field of fields) {
+            file.push(`  "${field.key}": ${field.schema},`);
+          }
+          file.push(`});`);
       }
-      file.push(`});`);
+     
     }
 
     if (numExtends) file.push(``);
@@ -194,7 +208,7 @@ function randomStr(length: number) {
 }
 
 // Step 3: Generate a random Zod schema
-function generateFields(params: GenerateParams): { key: string; schema: string }[] {
+function generateFields(params: Pick<GenerateParams, "numKeys" | "valueTypes" | "methods">): { key: string; schema: string }[] {
   //Math.floor(Math.random() * 30) + 1; // 1-30 keys
   const { methods = [""] } = params;
   // let schema = `z.interface({`;
