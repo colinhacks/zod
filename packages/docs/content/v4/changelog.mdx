@@ -193,7 +193,7 @@ mySchema.parse(12, { error: () => "Contextual error" }); // => "Schema-level err
 
 The `.format()` method on `ZodError` has been deprecated. Instead use the top-level `z.treeifyError()` function. Read the [Formatting errors docs](/formatting-errors) for more information. 
 
-### Deprecated: `.flatten()`
+### deprecates `.flatten()`
 
 The `.flatten()` method on `ZodError` has also been deprecated. Instead use the top-level `z.treeifyError()` function. Read the [Formatting errors docs](/formatting-errors) for more information. 
 
@@ -201,7 +201,7 @@ The `.flatten()` method on `ZodError` has also been deprecated. Instead use the 
 
 This API was identical to `.flatten()`. It exists for historical reasons and isn't documented.
 
-### deprecated `.addIssue()` and `.addIssues()`
+### deprecates `.addIssue()` and `.addIssues()`
 
 Directly push to `err.issues` array instead, if necessary.
 

@@ -480,7 +480,7 @@ type ValueOptional = { prop: string | undefined };
 
 In `KeyOptional`, the `prop` key can be omitted from the object ("key optional"). In `ValueOptional`, the `prop` key *must be set* however it can be set to `undefined` ("value optional").
 
-Zod v3 cannot represent `ValueOptional`. Instead, `z.object()` automatically adds question marks to any key that accepts a value of `undefined`:
+Zod 3 cannot represent `ValueOptional`. Instead, `z.object()` automatically adds question marks to any key that accepts a value of `undefined`:
 
 ```ts
 z.object({ name: z.string().optional() }); 
@@ -511,13 +511,13 @@ const KeyOptional = z.interface({ "name?": z.string() });
 
 Key optionality is now defined with a `?` suffix in the key itself. This way, you have the power to differentiate between key- and value-optionality.
 
-> Besides this syntactic change, `z.object()` and `z.interface()` are functionality identical. They even use the same parser internally. 
+> Besides this change to optionality, `z.object()` and `z.interface()` are functionality identical. They even use the same parser internally. 
 
-The `z.object()` API is *not deprecated*; feel free to continue using it if you prefer it! For the sake of backwards compatibility `z.interface()` was added as an opt-in API.
+The `z.object()` API is *not deprecated*; feel free to continue using it if you prefer it! For the sake of backwards compatibility, `z.interface()` was added as an opt-in API.
 
 ### True recursive types
 
-But wait there's more! After implementing `z.interface()`, I had a huge realization. The `?`-suffix API in `z.interface()` lets Zod sidestep a TypeScript limitation that long prevented Zod from cleanly representing recursive (cyclical) types. Take this example from the old Zod 3 docs: 
+But wait there's more! After implementing `z.interface()`, I had a huge realization. The `?`-suffix API in `z.interface()` lets Zod sidestep a TypeScript limitation that has long prevented Zod from cleanly representing recursive (cyclical) types. Take this example from the old Zod 3 docs: 
 
 ```ts
 import * as z from "zod"; // zod@3
@@ -533,7 +533,13 @@ const Category: z.ZodType<Category> = z.object({
 });
 ```
 
-This has been a thorn in my side for years. To define a cyclical object type, you must a) define a redundant interface, b) use `z.lazy()` to avoid reference errors, and c) cast your schema to `z.ZodType`. This is terrible.
+This has been a thorn in my side for years. To define a cyclical object type, you must 
+
+- define a redundant interface
+- use `z.lazy()` to avoid reference errors
+- cast your schema to `z.ZodType`
+
+That's terrible.
 
 Here's the same example in Zod 4:
 
