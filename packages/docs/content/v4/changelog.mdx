@@ -211,6 +211,21 @@ myError.issues.push({
 });
 ```
 
+## `.and()` dropped
+
+The `.and()` method on `ZodType` has been dropped in favor of `z.intersection(A, B)`. Not only is this method rarely used, there are few good reasons to use intersections at all. The `.and()` API prevented bundlers from treeshaking `ZodIntersection`, a fairly large and complex class. 
+
+```ts
+z.object({ a: z.string() }).and(z.object({ b: z.number() })); // ❌
+
+// use z.intersection
+z.intersection(z.object({ a: z.string() }), z.object({ b: z.number() })); // ✅
+// or .extend() when possible
+z.object({ a: z.string() }).extend(z.object({ b: z.number() })); // ✅
+```
+
+
+
 ## `z.number()`
 
 ### no infinite values
@@ -223,9 +238,10 @@ The `z.number().int()` API no longer accepts unsafe integers (outside the range 
 
 
 ## `z.string()` updates
-{/* ### deprecates `.email()` etc
 
-String formats are now represented as schema classes of their own that extend `ZodString`. As such, these APIs have been moved to the top-level `z` namespace. 
+### deprecates `.email()` etc
+
+String formats are now represented as *subclasses* of `ZodString`, instead of simple internal refinements. As such, these APIs have been moved to the top-level `z` namespace. Top-level APIs are also less verbose and more tree-shakable.
 
 ```ts
 z.email();
@@ -246,7 +262,12 @@ z.iso.datetime();
 z.iso.duration();
 ```
 
-The method forms (`z.string().email()`) still exist and work as before, but are now deprecated. They may be removed in a future version. */}
+The method forms (`z.string().email()`) still exist and work as before, but are now deprecated.
+
+```ts
+z.string().email(); // ❌ deprecated
+z.email(); // ✅ 
+```
 
 ### drops `z.string().ip()` 
 

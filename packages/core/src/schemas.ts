@@ -228,7 +228,7 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
     };
   }
 
-  util.defineLazy(inst, "~standard", () => ({
+  inst["~standard"] = {
     validate: (value: unknown) => {
       const result = inst._zod.run({ value, issues: [] }, {});
       if (result instanceof Promise) {
@@ -242,7 +242,7 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
     },
     vendor: "zod",
     version: 1 as const,
-  }));
+  };
 });
 
 export { clone } from "./util.js";
@@ -520,7 +520,7 @@ export const $ZodKSUID: core.$constructor<$ZodKSUID> = /*@__PURE__*/ core.$const
 
 //////////////////////////////   ZodISODateTime   //////////////////////////////
 
-export interface $ZodISODateTimeDef extends $ZodStringFormatDef<"iso_datetime"> {
+export interface $ZodISODateTimeDef extends $ZodStringFormatDef<"datetime"> {
   precision: number | null;
   offset: boolean;
   local: boolean;
@@ -544,8 +544,8 @@ export const $ZodISODateTime: core.$constructor<$ZodISODateTime> = /*@__PURE__*/
 
 //////////////////////////////   ZodISODate   //////////////////////////////
 
-export interface $ZodISODateDef extends $ZodStringFormatDef<"iso_date"> {}
-export interface $ZodISODateInternals extends $ZodStringFormatInternals<"iso_date"> {}
+export interface $ZodISODateDef extends $ZodStringFormatDef<"date"> {}
+export interface $ZodISODateInternals extends $ZodStringFormatInternals<"date"> {}
 
 export interface $ZodISODate extends $ZodType {
   _zod: $ZodISODateInternals;
@@ -561,13 +561,13 @@ export const $ZodISODate: core.$constructor<$ZodISODate> = /*@__PURE__*/ core.$c
 
 //////////////////////////////   ZodISOTime   //////////////////////////////
 
-export interface $ZodISOTimeDef extends $ZodStringFormatDef<"iso_time"> {
+export interface $ZodISOTimeDef extends $ZodStringFormatDef<"time"> {
   precision?: number | null;
   // offset?: boolean;
   // local?: boolean;
 }
 
-export interface $ZodISOTimeInternals extends $ZodStringFormatInternals<"iso_time"> {
+export interface $ZodISOTimeInternals extends $ZodStringFormatInternals<"time"> {
   def: $ZodISOTimeDef;
 }
 
@@ -585,8 +585,8 @@ export const $ZodISOTime: core.$constructor<$ZodISOTime> = /*@__PURE__*/ core.$c
 
 //////////////////////////////   ZodISODuration   //////////////////////////////
 
-export interface $ZodISODurationDef extends $ZodStringFormatDef<"iso_duration"> {}
-export interface $ZodISODurationInternals extends $ZodStringFormatInternals<"iso_duration"> {}
+export interface $ZodISODurationDef extends $ZodStringFormatDef<"duration"> {}
+export interface $ZodISODurationInternals extends $ZodStringFormatInternals<"duration"> {}
 
 export interface $ZodISODuration extends $ZodType {
   _zod: $ZodISODurationInternals;
@@ -623,6 +623,7 @@ export const $ZodIPv4: core.$constructor<$ZodIPv4> = /*@__PURE__*/ core.$constru
     inst._zod.computed.format = `ipv4`;
   };
 });
+
 //////////////////////////////   ZodIPv6   //////////////////////////////
 
 export interface $ZodIPv6Def extends $ZodStringFormatDef<"ipv6"> {
@@ -660,6 +661,78 @@ export const $ZodIPv6: core.$constructor<$ZodIPv6> = /*@__PURE__*/ core.$constru
     }
   };
 });
+
+//////////////////////////////   ZodCIDRv4   //////////////////////////////
+
+export interface $ZodCIDRv4Def extends $ZodStringFormatDef<"cidrv4"> {
+  version?: "v4";
+}
+
+export interface $ZodCIDRv4Internals extends $ZodStringFormatInternals<"cidrv4"> {
+  def: $ZodCIDRv4Def;
+}
+
+export interface $ZodCIDRv4 extends $ZodType {
+  _zod: $ZodCIDRv4Internals;
+}
+
+export const $ZodCIDRv4: core.$constructor<$ZodCIDRv4> = /*@__PURE__*/ core.$constructor(
+  "$ZodCIDRv4",
+  (inst, def): void => {
+    def.pattern ??= regexes.cidrv4;
+    $ZodStringFormat.init(inst, def);
+    const superAttach = inst._zod.onattach;
+    inst._zod.onattach = (inst) => {
+      superAttach?.(inst);
+      inst._zod.computed.format = `cidrv4`;
+    };
+  }
+);
+
+//////////////////////////////   ZodCIDRv6   //////////////////////////////
+
+export interface $ZodCIDRv6Def extends $ZodStringFormatDef<"cidrv6"> {
+  version?: "v6";
+}
+
+export interface $ZodCIDRv6Internals extends $ZodStringFormatInternals<"cidrv6"> {
+  def: $ZodCIDRv6Def;
+}
+
+export interface $ZodCIDRv6 extends $ZodType {
+  _zod: $ZodCIDRv6Internals;
+}
+
+export const $ZodCIDRv6: core.$constructor<$ZodCIDRv6> = /*@__PURE__*/ core.$constructor(
+  "$ZodCIDRv6",
+  (inst, def): void => {
+    def.pattern ??= regexes.cidrv6; // not used for validation
+    $ZodStringFormat.init(inst, def);
+    const superAttach = inst._zod.onattach;
+    inst._zod.onattach = (inst) => {
+      superAttach?.(inst);
+      inst._zod.computed.format = `cidrv6`;
+    };
+
+    inst._zod.check = (payload) => {
+      const [address, prefix] = payload.value.split("/");
+      try {
+        if (!prefix) throw new Error();
+        const prefixNum = Number(prefix);
+        if (`${prefixNum}` !== prefix) throw new Error();
+        if (prefixNum < 0 || prefixNum > 128) throw new Error();
+        new URL(`http://[${address}]`);
+      } catch {
+        payload.issues.push({
+          code: "invalid_format",
+          format: "cidrv6",
+          input: payload.value,
+          inst,
+        });
+      }
+    };
+  }
+);
 
 //////////////////////////////   ZodIP   //////////////////////////////
 
@@ -2086,8 +2159,8 @@ function mergeValues(
     return { valid: true, data: a };
   }
   if (util.isPlainObject(a) && util.isPlainObject(b)) {
-    const bKeys = util.objectKeys(b);
-    const sharedKeys = util.objectKeys(a).filter((key) => bKeys.indexOf(key) !== -1);
+    const bKeys = Object.keys(b);
+    const sharedKeys = Object.keys(a).filter((key) => bKeys.indexOf(key) !== -1);
 
     const newObj: any = { ...a, ...b };
     for (const key of sharedKeys) {

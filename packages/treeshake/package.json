@@ -18,6 +18,7 @@
     "rollup": "^4.37.0",
     "rollup-plugin-filesize": "^10.0.0",
     "rollup-plugin-bundle-size": "^1.0.3",
-    "valibot": "^1.0.0"
+    "valibot": "^1.0.0",
+    "zod3": "npm:zod@^3.24.0"
   }
 }

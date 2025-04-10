@@ -184,35 +184,13 @@ export function assertNever(_x: never): never {
 export function assert<T>(_: any): asserts _ is T {}
 
 export function getValidEnumValues(obj: any): any {
-  const validKeys = objectKeys(obj).filter((k: any) => typeof obj[obj[k]] !== "number");
+  const validKeys = Object.keys(obj).filter((k: any) => typeof obj[obj[k]] !== "number");
   const filtered: any = {};
   for (const k of validKeys) {
     filtered[k] = obj[k];
   }
-  return objectValues(filtered);
+  return Object.values(filtered);
 }
-
-export function objectValues(obj: any): any {
-  return objectKeys(obj).map((e) => obj[e]);
-}
-
-export const objectKeys: ObjectConstructor["keys"] =
-  typeof Object.keys === "function"
-    ? (obj: any) => Object.keys(obj)
-    : (object: any) => {
-        const keys = [];
-        for (const key in object) {
-          if (Object.prototype.hasOwnProperty.call(object, key)) {
-            keys.push(key);
-          }
-        }
-        return keys;
-      };
-
-export const isInteger: NumberConstructor["isInteger"] =
-  typeof Number.isInteger === "function"
-    ? (val) => Number.isInteger(val)
-    : (val) => typeof val === "number" && Number.isFinite(val) && Math.floor(val) === val;
 
 export function joinValues<T extends Primitive[]>(array: T, separator = "|"): string {
   return array.map((val) => stringifyPrimitive(val)).join(separator);
@@ -747,7 +725,7 @@ export function extendObjectLike(a: schemas.$ZodObjectLike, b: schemas.$ZodObjec
       // return { ...a._zod.def.shape, ...b._zod.def.shape };
     },
     optional,
-    checks: [], // delete existinet checks
+    checks: [], // delete existent checks
   }) as any;
 }
 

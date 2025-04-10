@@ -40,8 +40,7 @@
     "tsx": "^4.19.2",
     "typescript": "~5.5.0",
     "vitest": "^2.0.0",
-    "zod": "workspace:*",
-    "zod3": "npm:zod@^3.24.0"
+    "zod": "workspace:*"
   },
   "lint-staged": {
     "src/*.ts": ["biome format --write", "biome lint --write"],

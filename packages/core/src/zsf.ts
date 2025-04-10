@@ -178,23 +178,23 @@ export interface $ZSFConditional<If extends $ZSF, Then extends $ZSF, Else extend
 // }
 
 // export interface $ZSFCheckISODateTime {
-//   check: "iso_datetime";
+//   check: "datetime";
 //   precision?: number;
 //   local?: boolean;
 // }
 
 // export interface $ZSFCheckISODate {
-//   check: "iso_date";
+//   check: "date";
 // }
 
 // export interface $ZSFCheckISOTime {
-//   check: "iso_time";
+//   check: "time";
 //   precision?: number;
 //   local?: boolean;
 // }
 
 // export interface $ZSFCheckDuration {
-//   check: "iso_duration";
+//   check: "duration";
 // }
 
 // export interface $ZSFCheckIP {

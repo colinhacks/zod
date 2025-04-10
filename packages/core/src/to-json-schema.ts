@@ -54,17 +54,10 @@ interface EmitParams {
 }
 
 const formatMap: Partial<Record<checks.$ZodStringFormats, string>> = {
-  email: "email",
-  iso_datetime: "date-time",
-  iso_date: "date",
-  iso_time: "time",
-  iso_duration: "duration",
-  // hostname: "hostname",
-  ipv4: "ipv4",
-  ipv6: "ipv6",
-  uuid: "uuid",
   guid: "uuid",
   url: "uri",
+  datetime: "date-time",
+  json_string: "json-string",
 };
 
 interface Seen {
@@ -173,8 +166,8 @@ export class JSONSchemaGenerator {
         if (minimum) json.minLength = minimum;
         if (maximum) json.maxLength = maximum;
         // custom pattern overrides format
-        if (format && formatMap[format]) {
-          json.format = formatMap[format];
+        if (format) {
+          json.format = formatMap[format] ?? format;
         } else if (pattern) {
           json.pattern = pattern.source;
         }

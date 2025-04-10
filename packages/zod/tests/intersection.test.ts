@@ -46,13 +46,14 @@ test("deep intersection", () => {
       is_animal: z.boolean(),
     }),
   });
-  const Cat = z
-    .object({
+  const Cat = z.intersection(
+    z.object({
       properties: z.object({
         jumped: z.boolean(),
       }),
-    })
-    .and(Animal);
+    }),
+    Animal
+  );
 
   type Cat = Flatten<z.infer<typeof Cat>>;
   expectTypeOf<Cat>().toEqualTypeOf<{ properties: { is_animal: boolean } & { jumped: boolean } }>();
@@ -68,15 +69,16 @@ test("deep intersection of arrays", async () => {
       })
     ),
   });
-  const Registry = z
-    .object({
+  const Registry = z.intersection(
+    Author,
+    z.object({
       posts: z.array(
         z.object({
           title: z.string(),
         })
       ),
     })
-    .and(Author);
+  );
 
   const posts = [
     { post_id: 1, title: "Novels" },
@@ -149,8 +151,9 @@ test("invalid deep merge of object and array combination", async () => {
       })
     ),
   });
-  const Registry = z
-    .object({
+  const Registry = z.intersection(
+    University,
+    z.object({
       students: z.array(
         z.object({
           name: z.string(),
@@ -158,7 +161,7 @@ test("invalid deep merge of object and array combination", async () => {
         })
       ),
     })
-    .and(University);
+  );
 
   const students = [{ name: "John", surname: "Doe" }];
 

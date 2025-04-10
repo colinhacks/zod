@@ -563,7 +563,7 @@ test("regexes", () => {
     `"^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$"`
   );
   expect(ipv6._zod.pattern.source).toMatchInlineSnapshot(
-    `"^(([a-fA-F0-9]{1,4}:){1,7}[a-fA-F0-9]{1,4}|::|([a-fA-F0-9]{1,4})?::([a-fA-F0-9]{1,4}:?){0,6})$"`
+    `"^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|::|([0-9a-fA-F]{1,4})?::([0-9a-fA-F]{1,4}:?){0,6})$"`
   );
   expect(ulid._zod.pattern.source).toMatchInlineSnapshot(`"^[0-9A-HJKMNP-TV-Z]{26}$"`);
   expect(uuid._zod.pattern.source).toMatchInlineSnapshot(

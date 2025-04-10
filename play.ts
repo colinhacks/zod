@@ -22,3 +22,10 @@ z;
 // const myStringSchema = new MyStringSchema();
 // const result = myStringSchema.handle("hello");
 // console.log(result);
+
+const personToExtend = z.object({
+  firstName: z.string(),
+  lastName: z.string(),
+});
+const PersonWithNickname = personToExtend.extend({ nickName: z.string() });
+PersonWithNickname._zod.output;
