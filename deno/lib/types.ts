@@ -599,6 +599,8 @@ export type ZodStringCheck =
   | { kind: "ulid"; message?: string }
   | { kind: "startsWith"; value: string; message?: string }
   | { kind: "endsWith"; value: string; message?: string }
+  | { kind: "startsWith"; value: string | string[]; message?: string }
+  | { kind: "endsWith"; value: string | string[]; message?: string }
   | { kind: "regex"; regex: RegExp; message?: string }
   | { kind: "trim"; message?: string }
   | { kind: "toLowerCase"; message?: string }
@@ -957,21 +959,35 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
       } else if (check.kind === "toUpperCase") {
         input.data = input.data.toUpperCase();
       } else if (check.kind === "startsWith") {
-        if (!(input.data as string).startsWith(check.value)) {
+        if (
+          (typeof check.value === "string" &&
+            !(input.data as string).startsWith(check.value)) ||
+          (Array.isArray(check.value) &&
+            !check.value.some((e: string) =>
+              (input.data as string)?.startsWith(e)
+            ))
+        ) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.invalid_string,
-            validation: { startsWith: check.value },
+            validation: { startsWith: check.value.toString() },
             message: check.message,
           });
           status.dirty();
         }
       } else if (check.kind === "endsWith") {
-        if (!(input.data as string).endsWith(check.value)) {
+        if (
+          (typeof check.value === "string" &&
+            !(input.data as string).endsWith(check.value)) ||
+          (Array.isArray(check.value) &&
+            !check.value.some((e: string) =>
+              (input.data as string)?.endsWith(e)
+            ))
+        ) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.invalid_string,
-            validation: { endsWith: check.value },
+            validation: { endsWith: check.value.toString() },
             message: check.message,
           });
           status.dirty();
@@ -1228,7 +1244,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     });
   }
 
-  startsWith(value: string, message?: errorUtil.ErrMessage) {
+  startsWith(value: string | string[], message?: errorUtil.ErrMessage) {
     return this._addCheck({
       kind: "startsWith",
       value: value,
@@ -1236,7 +1252,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     });
   }
 
-  endsWith(value: string, message?: errorUtil.ErrMessage) {
+  endsWith(value: string | string[], message?: errorUtil.ErrMessage) {
     return this._addCheck({
       kind: "endsWith",
       value: value,
