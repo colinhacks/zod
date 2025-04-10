@@ -80,6 +80,9 @@ export interface $ZodTypeDef {
 }
 
 export interface $ZodTypeInternals<out O = unknown, out I = unknown> extends $ZodType<O, I> {
+  /** The `@zod/core` version of this schema */
+  version: typeof version;
+
   /** Schema internals. */
   def: $ZodTypeDef;
 
@@ -91,9 +94,6 @@ export interface $ZodTypeInternals<out O = unknown, out I = unknown> extends $Zo
 
   /** The inferred input type */
   input: I;
-
-  /** The `@zod/core` version of this schema */
-  version: typeof version;
 
   /** List of deferred initializers. */
   deferred: util.AnyFunc[] | undefined;
