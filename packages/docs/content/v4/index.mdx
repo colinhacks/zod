@@ -246,7 +246,7 @@ In Zod 3, this took `4000ms` to compile; and adding additional calls to `.extend
 
 > Coupled with the upcoming [`tsgo`](https://github.com/microsoft/typescript-go) compiler, Zod 4's editor performance will scale to vastly larger schemas and codebases.
 
-## 30% reduction in core bundle size
+## 2x reduction in core bundle size
 
 Consider the following simple script.
 
@@ -265,14 +265,13 @@ It's about as simple as it gets when it comes to validation. That's intentional;
 | `zod@3`   | `12.47kb`      |
 | `zod@4`   | `5.36kb`       |
 
-
-The core bundle is ~57% smaller in Zod 4. That's good!
-
-But ultimately Zod's method-heavy API is fundamentally difficult to tree-shake. Even our simple `z.boolean()` schema pulls in the implementations of a bunch of methods we didn't use, like `.optional()`, `.array()`, etc. Writing slimmer implementations can only get you so far. 
+The core bundle is ~57% smaller in Zod 4 (2.3x). That's good! But we can do a lot better.
 
 ## Introducing `@zod/mini`
 
-The `@zod/mini` package provides a functional, tree-shakable API that corresponds one-to-one onto the existing `zod` API. Use the tabs to compare the two APIs.
+But ultimately Zod's method-heavy API is fundamentally difficult to tree-shake. Even our simple `z.boolean()` schema pulls in the implementations of a bunch of methods we didn't use, like `.optional()`, `.array()`, etc. Writing slimmer implementations can only get you so far. 
+
+That's where `@zod/mini` comes in. It's a sister library with functional, tree-shakable API that corresponds one-to-one with `zod`. Use the tabs to compare the two APIs.
 
 <Tabs groupId="lib" items={[ "@zod/mini", "zod"]}>
 <Tab value="@zod/mini">
@@ -303,6 +302,8 @@ Everything in `zod` can be represented in `@zod/mini`; their APIs correspond one
 
 The more functional API makes it easier for bundlers to tree-shaking the APIs you don't use. While `zod` is still recommended for the majority of use cases, any projects with uncommonly strict bundle size constraints should consider `@zod/mini`. 
 
+### 6.6x reduction in core bundle size
+
 Here's the script from above, updated to use `"@zod/mini"` instead of `"zod"`.
 
 ```ts
@@ -312,7 +313,7 @@ const schema = z.string().check(z.minLength(5));
 schema.parse("hello world");
 ```
 
-When we build this with `rollup`, the gzipped bundle size is `1.88kb`. That's a 6.6x reduction in core bundle size compared to `zod@3`.
+When we build this with `rollup`, the gzipped bundle size is `1.88kb`. That's an 85% (6.6x) reduction in core bundle size compared to `zod@3`.
 
 | Package   | Bundle (gzip) |
 |-----------|--------------|
