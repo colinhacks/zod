@@ -15,3 +15,6 @@ await generate({
 });
 
 await $`pnpm run build:bench`;
+
+
+

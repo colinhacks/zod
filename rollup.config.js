@@ -13,7 +13,9 @@ export default {
   },
 
   plugins: [
-    resolve(), // Resolve node_modules
+    resolve({
+      customConditions: ["@zod/source"],
+    }), // Resolve node_modules
     commonjs(), // Convert CommonJS modules to ES6
     typescript(), // Compile TypeScript
     filesize(), // Display bundle size

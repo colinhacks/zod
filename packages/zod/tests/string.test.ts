@@ -562,18 +562,18 @@ test("format", () => {
   expect(z.string().cuid2().format).toEqual("cuid2");
   expect(z.string().ulid().format).toEqual("ulid");
   expect(z.string().base64().format).toEqual("base64");
-  // expect(z.string().jsonString().format).toEqual("json_string");
-  // expect(z.string().json().format).toEqual("json_string");
+  // expect(z.string().jsonString().format).toEqual("json-string");
+  // expect(z.string().json().format).toEqual("json-string");
   expect(z.string().xid().format).toEqual("xid");
   expect(z.string().ksuid().format).toEqual("ksuid");
   // expect(z.string().ip().format).toEqual("ip");
   expect(z.string().ipv4().format).toEqual("ipv4");
   expect(z.string().ipv6().format).toEqual("ipv6");
   expect(z.string().e164().format).toEqual("e164");
-  expect(z.string().datetime().format).toEqual("iso_datetime");
-  expect(z.string().date().format).toEqual("iso_date");
-  expect(z.string().time().format).toEqual("iso_time");
-  expect(z.string().duration().format).toEqual("iso_duration");
+  expect(z.string().datetime().format).toEqual("date-time");
+  expect(z.string().date().format).toEqual("date");
+  expect(z.string().time().format).toEqual("time");
+  expect(z.string().duration().format).toEqual("duration");
 });
 
 test("min max getters", () => {
@@ -752,7 +752,7 @@ test("time parsing", () => {
   expect(() => time2.parse("00:00:00.00+00:00")).toThrow();
 });
 
-test("iso_duration", () => {
+test("duration", () => {
   const duration = z.string().duration();
 
   const validDurations = [
@@ -893,6 +893,42 @@ test("IPv6 validation", () => {
 
   // Test specific error
   expect(() => ipv6.parse("254.164.77.1")).toThrow();
+});
+
+test("CIDR v4 validation", () => {
+  const cidrV4 = z.string().cidrv4();
+
+  // Valid CIDR v4 addresses
+  expect(cidrV4.safeParse("192.168.0.0/24").success).toBe(true);
+  expect(cidrV4.safeParse("10.0.0.0/8").success).toBe(true);
+  expect(cidrV4.safeParse("172.16.0.0/12").success).toBe(true);
+  expect(cidrV4.safeParse("0.0.0.0/0").success).toBe(true);
+  expect(cidrV4.safeParse("255.255.255.255/32").success).toBe(true);
+
+  // Invalid CIDR v4 addresses
+  expect(cidrV4.safeParse("192.168.0.0").success).toBe(false); // Missing prefix
+  expect(cidrV4.safeParse("192.168.0.0/33").success).toBe(false); // Invalid prefix length
+  expect(cidrV4.safeParse("256.0.0.0/24").success).toBe(false); // Invalid IP
+  expect(cidrV4.safeParse("192.168.0.0/-1").success).toBe(false); // Negative prefix length
+  expect(cidrV4.safeParse("not a cidr").success).toBe(false); // Invalid format
+});
+
+test("CIDR v6 validation", () => {
+  const cidrV6 = z.string().cidrv6();
+
+  // Valid CIDR v6 addresses
+  expect(cidrV6.safeParse("2001:db8::/32").success).toBe(true);
+  expect(cidrV6.safeParse("::/0").success).toBe(true);
+  expect(cidrV6.safeParse("fe80::/10").success).toBe(true);
+  expect(cidrV6.safeParse("::1/128").success).toBe(true);
+  expect(cidrV6.safeParse("2001:0db8:85a3::/64").success).toBe(true);
+
+  // Invalid CIDR v6 addresses
+  expect(cidrV6.safeParse("2001:db8::").success).toBe(false); // Missing prefix
+  expect(cidrV6.safeParse("2001:db8::/129").success).toBe(false); // Invalid prefix length
+  expect(cidrV6.safeParse("2001:db8::/abc").success).toBe(false); // Invalid prefix format
+  expect(cidrV6.safeParse("not a cidr").success).toBe(false); // Invalid format
+  expect(cidrV6.safeParse("192.168.0.0/24").success).toBe(false); // IPv4 CIDR in v6 validation
 });
 
 test("E.164 validation", () => {

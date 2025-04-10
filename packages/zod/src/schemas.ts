@@ -2287,7 +2287,7 @@ export { _instanceof as instanceof };
 
 // stringbool
 export const stringbool: (_params?: core.$ZodStringBoolParams) => ZodPipe<ZodUnknown, ZodBoolean> =
-  core._stringbool.bind(null, {
+  /*@__PURE__*/ core._stringbool.bind(null, {
     Pipe: ZodPipe,
     Boolean: ZodBoolean,
     Unknown: ZodUnknown,

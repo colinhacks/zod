@@ -358,7 +358,7 @@ export function _isoDateTime<T extends schemas.$ZodISODateTime>(
 ): T {
   return new Class({
     type: "string",
-    format: "iso_datetime",
+    format: "date-time",
     check: "string_format",
     offset: false,
     local: false,
@@ -376,7 +376,7 @@ export function _isoDate<T extends schemas.$ZodISODate>(
 ): T {
   return new Class({
     type: "string",
-    format: "iso_date",
+    format: "date",
     check: "string_format",
     ...util.normalizeParams(params),
   });
@@ -391,7 +391,7 @@ export function _isoTime<T extends schemas.$ZodISOTime>(
 ): T {
   return new Class({
     type: "string",
-    format: "iso_time",
+    format: "time",
     check: "string_format",
     precision: null,
     ...util.normalizeParams(params),
@@ -407,7 +407,7 @@ export function _isoDuration<T extends schemas.$ZodISODuration>(
 ): T {
   return new Class({
     type: "string",
-    format: "iso_duration",
+    format: "duration",
     check: "string_format",
     ...util.normalizeParams(params),
   });
@@ -874,7 +874,7 @@ export type $ZodCheckStartsWithParams = util.CheckParams<checks.$ZodCheckStartsW
 export function _startsWith(prefix: string, params?: string | $ZodCheckStartsWithParams): checks.$ZodCheckStartsWith {
   return new checks.$ZodCheckStartsWith({
     check: "string_format",
-    format: "starts_with",
+    format: "starts-with",
     ...util.normalizeParams(params),
     prefix,
   });
@@ -885,7 +885,7 @@ export type $ZodCheckEndsWithParams = util.CheckParams<checks.$ZodCheckEndsWith,
 export function _endsWith(suffix: string, params?: string | $ZodCheckEndsWithParams): checks.$ZodCheckEndsWith {
   return new checks.$ZodCheckEndsWith({
     check: "string_format",
-    format: "ends_with",
+    format: "ends-with",
     ...util.normalizeParams(params),
     suffix,
   });
