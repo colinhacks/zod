@@ -1,4 +1,4 @@
-import * as z from "@zod/core";
+import * as z from "zod";
 
 z;
 
@@ -22,28 +22,3 @@ z;
 // const myStringSchema = new MyStringSchema();
 // const result = myStringSchema.handle("hello");
 // console.log(result);
-
-const check = {} as z.$ZodChecks;
-const def = check._zod.def;
-
-switch (def.check) {
-  case "less_than":
-  case "greater_than":
-  // ...
-  case "string_format":
-    {
-      const formatCheck = check as z.$ZodStringFormatChecks;
-      const formatCheckDef = formatCheck._zod.def;
-
-      switch (formatCheckDef.format) {
-        case "email":
-          // ...
-          break;
-        case "url":
-          // ...
-          break;
-        // etc
-      }
-    }
-    break;
-}

@@ -11,7 +11,7 @@ import * as util from "./util.js";
 export interface $ZodCheckDef {
   check: string;
   error?: errors.$ZodErrorMap<never> | undefined;
-  /** Whether parsing should be aborted if this check fails. */
+  /** If true, no later checks will be executed if this check fails. Default `false`. */
   abort?: boolean | undefined;
 }
 

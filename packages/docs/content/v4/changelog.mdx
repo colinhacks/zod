@@ -97,16 +97,6 @@ z.string({
 </Tab>
 </Tabs>
 
-## `z.number()`
-
-### no infinite values
-
-`POSITIVE_INFINITY` and `NEGATIVE_INFINITY` are no longer considered valid values for `z.number()`.
-
-### `.int()` accepts safe integers only
-
-The `z.number().int()` API no longer accepts unsafe integers (outside the range of `Number.MIN_SAFE_INTEGER` and `Number.MAX_SAFE_INTEGER`). Using integers out of this range causes spontaneous rounding errors.
-
 ## `ZodError`
 
 ### no longer extends `Error`
@@ -199,22 +189,21 @@ mySchema.parse(12, { error: () => "Contextual error" }); // => "Contextual error
 mySchema.parse(12, { error: () => "Contextual error" }); // => "Schema-level error"
 ```
 
-
 ### deprecates `.format()` 
 
 The `.format()` method on `ZodError` has been deprecated. Instead use the top-level `z.treeifyError()` function. Read the [Formatting errors docs](/formatting-errors) for more information. 
 
-{/* ### Deprecated: `.flatten()`
+### Deprecated: `.flatten()`
 
-The `.flatten()` method on `ZodError` has also been deprecated. Instead use the top-level `z.treeifyError()` function. Read the [Formatting errors docs](/formatting-errors) for more information.  */}
+The `.flatten()` method on `ZodError` has also been deprecated. Instead use the top-level `z.treeifyError()` function. Read the [Formatting errors docs](/formatting-errors) for more information. 
 
 ### drops `.formErrors` 
 
 This API was identical to `.flatten()`. It exists for historical reasons and isn't documented.
 
-### drops `.addIssue()` and `.addIssues()`
+### deprecated `.addIssue()` and `.addIssues()`
 
-Directly modify the `err.issues` array instead. 
+Directly push to `err.issues` array instead, if necessary.
 
 ```ts
 myError.issues.push({ 
@@ -222,17 +211,16 @@ myError.issues.push({
 });
 ```
 
-## `z.coerce` updates
+## `z.number()`
 
-The input type of all coerced booleans is now `unknown`. 
+### no infinite values
 
-```ts
-const schema = z.coerce.string();
-type schemaInput = z.input<typeof schema>;
+`POSITIVE_INFINITY` and `NEGATIVE_INFINITY` are no longer considered valid values for `z.number()`.
 
-// Zod 3: string;
-// Zod 4: unknown;
-```
+### `.int()` accepts safe integers only
+
+The `z.number().int()` API no longer accepts unsafe integers (outside the range of `Number.MIN_SAFE_INTEGER` and `Number.MAX_SAFE_INTEGER`). Using integers out of this range causes spontaneous rounding errors.
+
 
 ## `z.string()` updates
 {/* ### deprecates `.email()` etc
@@ -260,7 +248,7 @@ z.iso.duration();
 
 The method forms (`z.string().email()`) still exist and work as before, but are now deprecated. They may be removed in a future version. */}
 
-### drops `z.string().ip()`
+### drops `z.string().ip()` 
 
 This has been replaced with separate `.ipv4()` and `.ipv6()` methods. Use `z.union()` to combine them if you need to accept both.
 
@@ -268,6 +256,32 @@ This has been replaced with separate `.ipv4()` and `.ipv6()` methods. Use `z.uni
 z.string().ip() // ❌
 z.string().ipv4() // ✅
 z.string().ipv6() // ✅
+```
+
+### updates `z.string().ipv6()`
+
+Validation now happens using the `new URL()` constructor, which is far more robust than the old regular expression approach. Some invalid values that passed validation previously may now fail.
+
+### drops `z.string().cidr()` 
+
+Similarly, this has been replaced with separate `.cidrv4()` and `.cidrv4()` methods. Use `z.union()` to combine them if you need to accept both.
+
+```ts
+z.string().cidr() // ❌
+z.string().cidrv4() // ✅
+z.string().cidrv6() // ✅
+```
+
+## `z.coerce` updates
+
+The input type of all coerced booleans is now `unknown`. 
+
+```ts
+const schema = z.coerce.string();
+type schemaInput = z.input<typeof schema>;
+
+// Zod 3: string;
+// Zod 4: unknown;
 ```
 
 ## `z.object()`
@@ -300,7 +314,7 @@ z.looseObject({ name: z.string() });
 This was never particularly useful, as it was the default behavior of `z.object()`. 
 
 <Callout>
-The equivalents for `z.interface()` also exist:
+The equivalents for `z.interface()` also exist. Read more about `z.interface()` [here](/api#objects).
 
 ```ts
 z.interface({ name: z.string() });

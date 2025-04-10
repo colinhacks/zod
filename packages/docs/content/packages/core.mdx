@@ -8,10 +8,34 @@ This page is primarily intended for consumption by *library authors* who are bui
 
 This package exports the core classes and utilities that are consumed by `zod` and `@zod/mini`. It is not intended to be used directly; instead it's designed to be extended by other packages. It implements:
 
-- base schema class `$ZodType` and subclasses like `$ZodString`, etc.
-- base check class `$ZodCheck` and subclasses like `$ZodCheckMultipleOf`, etc.
-- base error class `$ZodError` and shared issue formats
-- utility types and functions
+```ts
+import * as z fro "@zod/core";
+
+// the base class for all Zod schemas
+z.$ZodType;
+
+// subclasses of $ZodType that implement common parsers
+z.$ZodString
+z.$ZodObject
+z.$ZodArray
+// ...
+
+// the base class for all Zod checks
+z.$ZodCheck;
+
+// subclasses of $ZodCheck that implement common checks
+z.$ZodCheckMinLength
+z.$ZodCheckMaxLength
+
+// the base class for all Zod errors
+z.$ZodError;
+
+// issue formats (types only)
+{} as z.$ZodIssue;
+
+// utils
+z.util.isValidJWT(...);
+```
 
 For simplicity, the `zod` and `@zod/mini` packages re-export their `@zod/core` dependency as `z.core`, but you shouldn't rely on this.
 
@@ -24,7 +48,7 @@ z.core.$ZodString;
 
 ## Versioning 
 
-Though Zod 4 is in beta, the `@zod/core` package is published as `latest`. The plan is to keep `@zod/core` in the It will remain in the `v0.x` version range ("initial development" according to semver) until the first stable release of Zod 4, at which point `v1.0.0` will be released.
+While Zod 4 is in beta, the [`@zod/core`](https://www.npmjs.com/package/@zod/core) package is published as `latest` in the `v0.x` range ("initial development" according to semver). Once the first stable release release of Zod 4, at which point `v1.0.0` will be released.
 
 ## Standard Schema
 
