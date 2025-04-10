@@ -126,6 +126,6 @@
     "test": "pnpm vitest run",
     "prepublishOnly": "pnpm run build && pnpm run test",
     "bump": "tsx ./bump.ts",
-    "pub:beta": "pnpm bump && pnpm publish --publish-branch v4 --no-git-checks --dry-run"
+    "pub:beta": "pnpm bump && pnpm publish --publish-branch v4 --no-git-checks"
   }
 }
