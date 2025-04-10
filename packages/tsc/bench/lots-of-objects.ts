@@ -30,12 +30,12 @@ await generate({
 
 await $`pnpm run build:bench`;
 
-console.log("╔═════════════════╗");
-console.log("║     ArkType     ║");
-console.log("╚═════════════════╝");
-await generate({
-  ...ARKTYPE,
-  ...SHARED
-});
+// console.log("╔═════════════════╗");
+// console.log("║     ArkType     ║");
+// console.log("╚═════════════════╝");
+// await generate({
+//   ...ARKTYPE,
+//   ...SHARED
+// });
 
-await $`pnpm run build:bench`;
+// await $`pnpm run build:bench`;
