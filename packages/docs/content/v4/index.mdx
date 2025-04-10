@@ -337,8 +337,8 @@ Here's the script from above, updated to use `"@zod/mini"` instead of `"zod"`.
 ```ts
 import * as z from "@zod/mini";
 
-const schema = z.string().check(z.minLength(5));
-schema.parse("hello world");
+const schema = z.boolean();
+schema.parse(false);
 ```
 
 When we build this with `rollup`, the gzipped bundle size is `1.88kb`. That's an 85% (6.6x) reduction in core bundle size compared to `zod@3`.
