@@ -269,9 +269,13 @@ The core bundle is ~57% smaller in Zod 4 (2.3x). That's good! But we can do a lo
 
 ## Introducing `@zod/mini`
 
-Zod's method-heavy API is fundamentally difficult to tree-shake. Even our simple `z.boolean()` script pulls in the implementations of a bunch of methods we didn't use, like `.optional()`, `.array()`, etc. Writing slimmer implementations can only get you so far. 
+Zod's method-heavy API is fundamentally difficult to tree-shake. Even our simple `z.boolean()` script pulls in the implementations of a bunch of methods we didn't use, like `.optional()`, `.array()`, etc. Writing slimmer implementations can only get you so far. That's where `@zod/mini` comes in. 
 
-That's where `@zod/mini` comes in. It's a sister library with a functional, tree-shakable API that corresponds one-to-one with `zod`. Where Zod uses methods, `@zod/mini` generally uses wrapper functions:
+```sh
+npm install @zod/mini@next
+```
+
+It's a sister library with a functional, tree-shakable API that corresponds one-to-one with `zod`. Where Zod uses methods, `@zod/mini` generally uses wrapper functions:
 
 <Tabs groupId="lib" items={[ "@zod/mini", "zod"]}>
 <Tab value="@zod/mini">
@@ -298,7 +302,7 @@ z.object({ /* ... */ }).extend({ age: z.number() });
 </Tab>
 </Tabs>
 
-Not all methods are gone! :) The parsing methods are identical in `zod` and `@zod/mini`.
+Not all methods are gone! The parsing methods are identical in `zod` and `@zod/mini`.
 
 ```ts
 import * as z from "@zod/mini";
