@@ -202,6 +202,50 @@ test("base64 validations", () => {
   }
 });
 
+test("base64url validations", () => {
+  const base64url = z.string().base64url();
+
+  const validBase64URLStrings = [
+    "SGVsbG8gV29ybGQ", // "Hello World"
+    "SGVsbG8gV29ybGQ=", // "Hello World" with padding
+    "VGhpcyBpcyBhbiBlbmNvZGVkIHN0cmluZw", // "This is an encoded string"
+    "VGhpcyBpcyBhbiBlbmNvZGVkIHN0cmluZw==", // "This is an encoded string" with padding
+    "TWFueSBoYW5kcyBtYWtlIGxpZ2h0IHdvcms", // "Many hands make light work"
+    "TWFueSBoYW5kcyBtYWtlIGxpZ2h0IHdvcms=", // "Many hands make light work" with padding
+    "UGF0aWVuY2UgaXMgdGhlIGtleSB0byBzdWNjZXNz", // "Patience is the key to success"
+    "QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg", // "Base64 encoding is fun"
+    "QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // "Base64 encoding is fun" with padding
+    "MTIzNDU2Nzg5MA", // "1234567890"
+    "MTIzNDU2Nzg5MA==", // "1234567890" with padding
+    "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo", // "abcdefghijklmnopqrstuvwxyz"
+    "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo=", // "abcdefghijklmnopqrstuvwxyz with padding"
+    "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo", // "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo=", // "ABCDEFGHIJKLMNOPQRSTUVWXYZ" with padding
+    "ISIkJSMmJyonKCk", // "!\"#$%&'()*"
+    "ISIkJSMmJyonKCk=", // "!\"#$%&'()*" with padding
+    "", // Empty string is technically valid base64url
+    "w7_Dv8O-w74K", // ÿÿþþ
+    "123456",
+  ];
+
+  for (const str of validBase64URLStrings) {
+    expect(str + base64url.safeParse(str).success).toBe(`${str}true`);
+  }
+
+  const invalidBase64URLStrings = [
+    "w7/Dv8O+w74K", // Has + and / characters (is base64)
+    "12345", // Invalid length (not a multiple of 4 characters when adding allowed number of padding characters)
+    "12345===", // Not padded correctly
+    "!UGF0aWVuY2UgaXMgdGhlIGtleSB0byBzdWNjZXNz", // Invalid character '!'
+    "?QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // Invalid character '?'
+    ".MTIzND2Nzg5MC4=", // Invalid character '.'
+  ];
+
+  for (const str of invalidBase64URLStrings) {
+    expect(str + base64url.safeParse(str).success).toBe(`${str}false`);
+  }
+});
+
 test("jwt token", () => {
   const ONE_PART = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";
   const NOT_BASE64 =

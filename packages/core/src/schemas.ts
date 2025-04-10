@@ -788,6 +788,29 @@ export const $ZodBase64: core.$constructor<$ZodBase64> = /*@__PURE__*/ core.$con
   }
 );
 
+//////////////////////////////   ZodBase64   //////////////////////////////
+
+export interface $ZodBase64URLDef extends $ZodStringFormatDef<"base64url"> {}
+export interface $ZodBase64URLInternals extends $ZodStringFormatInternals<"base64url"> {}
+
+export interface $ZodBase64URL extends $ZodType {
+  _zod: $ZodBase64URLInternals;
+}
+
+export const $ZodBase64URL: core.$constructor<$ZodBase64URL> = /*@__PURE__*/ core.$constructor(
+  "$ZodBase64URL",
+  (inst, def): void => {
+    def.pattern ??= regexes.base64url;
+    $ZodStringFormat.init(inst, def);
+
+    const superAttach = inst._zod.onattach;
+    inst._zod.onattach = (inst) => {
+      superAttach?.(inst);
+      inst._zod.computed.contentEncoding = "base64url";
+    };
+  }
+);
+
 //////////////////////////////   ZodJSONString   //////////////////////////////
 
 // export interface $ZodJSONStringDef extends $ZodStringFormatDef<"json_string"> {}
@@ -3699,5 +3722,6 @@ export type $ZodStringFormatTypes =
   | $ZodCIDRv4
   | $ZodCIDRv6
   | $ZodBase64
+  | $ZodBase64URL
   | $ZodE164
   | $ZodJWT;

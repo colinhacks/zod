@@ -9,7 +9,7 @@ import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 
 Zod 4 is now in beta after over a year of active development. It's faster, slimmer, more `tsc`-efficient, and implements some long-requested features.
 
-To try the beta:
+To install the beta:
 
 ```
 pnpm upgrade zod@next 
@@ -24,9 +24,9 @@ Huge thanks to [Clerk](https://go.clerk.com/zod-clerk), who supported my work on
 
 ## Why a new major version?
 
-Zod v3.0 was released in May 2021 (!). Back then Zod had 2700 stars on GitHub and 600k weekly downloads. Today it has 36.5k stars and 23M weekly downloads. After 24 minor versions, the Zod 3 codebase is essentially "maxxed out"; the most commonly requested features and usability improvements require some sort of breaking change. 
+Zod v3.0 was released in May 2021 (!). Back then Zod had 2700 stars on GitHub and 600k weekly downloads. Today it has 36.5k stars and 23M weekly downloads. After 24 minor versions, the Zod 3 codebase has hit a ceiling; the most commonly requested features and improvements require breaking changes.
 
-Zod 4 implements all of these in one fell swoop. It uses an entirely new internal architecture that solves some long-standing design limitations, lays the groundwork for some long-requested features, and closes 9 of Zod's [10 most upvoted open issues](https://github.com/colinhacks/zod/issues?q=is%3Aissue%20state%3Aopen%20sort%3Areactions-%2B1-desc). With luck, it will serve a the new foundation for many more years to come.
+Zod 4 implements all of these in one fell swoop. It uses an entirely new internal architecture that solves some long-standing design limitations, lays the groundwork for some long-requested features, and closes 9 of Zod's [10 most upvoted open issues](https://github.com/colinhacks/zod/issues?q=is%3Aissue%20state%3Aopen%20sort%3Areactions-%2B1-desc). With luck, it will serve as the new foundation for many more years to come.
 
 For a scannable breakdown of what's new, see the table of contents. Click on any item to jump to that section.
 
@@ -134,7 +134,7 @@ $ pnpm bench object-with-extend
 ```
 </Callout>
 
-More importantly, Zod 4 has redesigned and simplified the generics of `ZodObject` and other schema classes to avoid some pernicioius "instantiation explosions". The following script contains a number of chained calls to `.extend()` and `.omit()`.
+More importantly, Zod 4 has redesigned and simplified the generics of `ZodObject` and other schema classes to avoid some pernicious "instantiation explosions". For instance, chaining `.extend()` and `.omit()` repeatedly—something that previously caused compiler issues:
 
 ```ts
 import * as z from "zod";
@@ -271,9 +271,7 @@ The core bundle is ~57% smaller in Zod 4 (2.3x). That's good! But we can do a lo
 
 Zod's method-heavy API is fundamentally difficult to tree-shake. Even our simple `z.boolean()` script pulls in the implementations of a bunch of methods we didn't use, like `.optional()`, `.array()`, etc. Writing slimmer implementations can only get you so far. 
 
-That's where `@zod/mini` comes in. It's a sister library with a functional, tree-shakable API that corresponds one-to-one with `zod`. 
-
-Where Zod uses methods, `@zod/mini` generally uses wrapper functions:
+That's where `@zod/mini` comes in. It's a sister library with a functional, tree-shakable API that corresponds one-to-one with `zod`. Where Zod uses methods, `@zod/mini` generally uses wrapper functions:
 
 <Tabs groupId="lib" items={[ "@zod/mini", "zod"]}>
 <Tab value="@zod/mini">
@@ -284,8 +282,7 @@ z.optional(z.string());
 
 z.union([z.string(), z.number()]);
 
-const myObject = z.object({ name: z.string() });
-z.extend(myObject, { age: z.number() });
+z.extend(z.object({ /* ... */ }), { age: z.number() });
 ```
 </Tab>
 <Tab value="zod">
@@ -296,13 +293,23 @@ z.string().optional();
 
 z.string().or(z.number());
 
-const myObject = z.object({ name: z.string() });
-myObject.extend({ age: z.number() });
+z.object({ /* ... */ }).extend({ age: z.number() });
 ```
 </Tab>
 </Tabs>
 
-The general-purpose `.check()` method is used to add refinements.
+Not all methods are gone! :) The parsing methods are identical in `zod` and `@zod/mini`.
+
+```ts
+import * as z from "@zod/mini";
+
+z.string().parse("asdf");
+z.string().safeParse("asdf");
+await z.string().parseAsync("asdf");
+await z.string().safeParseAsync("asdf");
+```
+
+There's also a general-purpose `.check()` method used to add refinements.
 
 <Tabs groupId="lib" items={[ "@zod/mini", "zod"]}>
 <Tab value="@zod/mini">
@@ -328,7 +335,45 @@ z.array(z.number())
 </Tab>
 </Tabs>
 
-The more functional API makes it easier for bundlers to tree-shaking the APIs you don't use. While `zod` is still recommended for the majority of use cases, any projects with uncommonly strict bundle size constraints should consider `@zod/mini`.  
+The following top-level refinements are available in `@zod/mini`. It should be fairly self-explanatory which `zod` methods they correspond to.
+
+```ts
+import * as z from "@zod/mini";
+
+z.lt(value);
+z.lte(value); // alias: z.maximum()
+z.gt(value);
+z.gte(value); // alias: z.minimum()
+z.positive();
+z.negative();
+z.nonpositive();
+z.nonnegative();
+z.multipleOf(value);
+z.maxSize(value);
+z.minSize(value);
+z.size(value);
+z.maxLength(value);
+z.minLength(value);
+z.length(value);
+z.regex(regex);
+z.lowercase();
+z.uppercase();
+z.includes(value);
+z.startsWith(value);
+z.endsWith(value);
+z.property(key, schema); // for object schemas; check `input[key]` against `schema`
+z.mime(value); // for file schemas (see below)
+
+// overwrites (these *do not* change the inferred type!)
+z.overwrite(value => newValue);
+z.normalize();
+z.trim();
+z.toLowerCase();
+z.toUpperCase();
+```
+
+
+This more functional API makes it easier for bundlers to tree-shaking the APIs you don't use. While `zod` is still recommended for the majority of use cases, any projects with uncommonly strict bundle size constraints should consider `@zod/mini`.  
 
 ### 6.6x reduction in core bundle size
 
@@ -366,9 +411,9 @@ To add schemas to your registry:
 ```ts
 const emailSchema = z.string().email();
 
-myRegistry.add(emailSchema, { title: "Email adddress", description: "..." });
+myRegistry.add(emailSchema, { title: "Email address", description: "..." });
 myRegistry.get(emailSchema);
-// => { title: "Email adddress", ... }
+// => { title: "Email address", ... }
 ```
 
 Alternatively, you can use the `.register()` method on a schema for convenience:
@@ -376,7 +421,7 @@ Alternatively, you can use the `.register()` method on a schema for convenience:
 {/* > Unlike all other Zod methods, `.register()` is *not* immutable, it returns the original schema. */}
 
 ```ts
-emailSchema.register(myRegistry, { title: "Email adddress", description: "..." })
+emailSchema.register(myRegistry, { title: "Email address", description: "..." })
 // => returns emailSchema
 ```
 
@@ -472,7 +517,7 @@ Zod 4 introduces a new API for defining object types: `z.interface()`. This may 
 
 ### Exact(er) optional properties
 
-In TypeScript a property can be "optional" in two disctint ways:
+In TypeScript a property can be "optional" in two distinct ways:
 
 ```ts
 type KeyOptional = { prop?: string };
@@ -563,7 +608,7 @@ Category.pick({ subcategories: true });
 
 This means Zod can finally represent commonly cyclical data structure like ORM schemas, GraphQL types, etc. 
 
-> Given it's ability to represent both cyclical types and more exact optionality, I recommend always using `z.interface()` over `z.object()` without reservation. That said, `z.object()` will never be deprecated or removed, so feel free to keep using it if you prefer.
+> Given its ability to represent both cyclical types and more exact optionality, I recommend always using `z.interface()` over `z.object()` without reservation. That said, `z.object()` will never be deprecated or removed, so feel free to keep using it if you prefer.
 
 
 ## File schemas
@@ -589,7 +634,7 @@ import * as z from "zod";
 z.config(z.core.locales.en());
 ```
 
-At the time of this writing only the English locale is available; I'll be doing a call for PRs once the beta is published. I'll update this section with a list of supported languages as they become available.
+At the time of this writing only the English locale is available; There will be a call for pull request from the community shortly; this section will be updated with a list of supported languages as they become available.
 
 ## Error pretty-printing
 
@@ -628,17 +673,17 @@ This returns the following pretty-printable multi-line string:
 
 ```ts
 ✖ Unrecognized key: "extraField"
-✖ Invalid input: expected string, received number, received number
+✖ Invalid input: expected string, received number
   → at username
-✖ Invalid input: expected number, received string, received string
+✖ Invalid input: expected number, received string
   → at favoriteNumbers[1]
 ```
 
-At the moment this isn't configurable; this may change in the future.
+Currently the formatting isn't configurable; this may change in the future.
 
 ## Top-level string formats
 
-The following string formats have been hoisted to be top-level APIs on the `z` module. This is both more concise and more tree-shakable. The method equivalents (`z.string().email()`, etc.) are still available but have been deprecated. 
+All "string formats" (email, etc.) have been promoted to top-level functions on the `z` module. This is both more concise and more tree-shakable. The method equivalents (`z.string().email()`, etc.) are still available but have been deprecated. They'll be removed in the next major version.
 
 ```ts
 z.email();
@@ -652,6 +697,7 @@ z.cidrv6();
 z.url();
 z.e164();
 z.base64();
+z.base64url();
 z.jwt();
 z.ascii();
 z.utf8();
@@ -703,7 +749,7 @@ const email = z.templateLiteral([
 // `${string}@${string}` (the min/max refinements are enforced!)
 ```
 
-Every Zod schema type that can be stringified stores an internal regex: strings, string formats like `z.email()`, numbers, boolean, bigint, enums, literals, undefined/optional, null/nullable, and other template literals. The `z.templateLiteral` constructor concatenates these into a super-regex, so things like string formats (`z.email()`) are propertly enforced (but custom refinements are not!).
+Every Zod schema type that can be stringified stores an internal regex: strings, string formats like `z.email()`, numbers, boolean, bigint, enums, literals, undefined/optional, null/nullable, and other template literals. The `z.templateLiteral` constructor concatenates these into a super-regex, so things like string formats (`z.email()`) are properly enforced (but custom refinements are not!).
 
 Read the [template literal docs](/api#template-literals) for more info.
 
@@ -730,7 +776,7 @@ z.uint64();   // [0n, 18446744073709551615n]
 
 The existing `z.coerce.boolean()` API is very simple: falsy values (`false`, `undefined`, `null`, `0`, `""`, `NaN` etc) become `false`, truthy values become `true`.
 
-This is still a good API, and it's behavior aligns with the other `z.coerce` APIs. But some users requested a more sophisticated "env-style" boolean coercion. To support this, Zod 4 introduces `z.stringbool()`:
+This is still a good API, and its behavior aligns with the other `z.coerce` APIs. But some users requested a more sophisticated "env-style" boolean coercion. To support this, Zod 4 introduces `z.stringbool()`:
 
 ```ts
 const strbool = z.stringbool();
@@ -912,7 +958,7 @@ While this will not be relevant to the majority of Zod users, it's worth highlig
 
 I was resistant to this at first, but now I see it as one of Zod 4's most important features. It lets Zod level up from a simple library to a fast validation "substrate" that can be sprinkled into other libraries.
 
-If you're building a schema library, refer to the implementations of `zod` and `@zod/mini` to see how to build on top of the foundation `@zod/core` provides. Don't hesistate to get in touch in GitHub discussions or via [X](https://x.com/colinhacks)/[Bluesky](https://bsky.app/profile/colinhacks.com) for help or feedback.
+If you're building a schema library, refer to the implementations of `zod` and `@zod/mini` to see how to build on top of the foundation `@zod/core` provides. Don't hesitate to get in touch in GitHub discussions or via [X](https://x.com/colinhacks)/[Bluesky](https://bsky.app/profile/colinhacks.com) for help or feedback.
 
 
 ## Wrapping up
@@ -922,7 +968,10 @@ I'm planning to write up a series of additional posts explaining the design proc
 Zod 4 will remain in beta for roughly 6 weeks as I work with library authors and major adopters to ensure a smooth day-one transition from Zod 3 to Zod 4. I encourage all users of Zod to upgrade their installation and provide feedback during the beta window.
 
 ```sh
-  pnpm upgrade zod@next
+pnpm upgrade zod@next
 ```
 
-Happy parsing!
+<p>
+  Happy parsing!<br/>
+  — Colin McDonnell [@colinhacks](https://x.com/colinhacks)
+</p>

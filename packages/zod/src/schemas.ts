@@ -212,6 +212,8 @@ export interface _ZodString<Input = unknown> extends ZodType {
   ulid(params?: string | core.$ZodCheckULIDParams): this;
   /** @deprecated Use `z.base64()` instead. */
   base64(params?: string | core.$ZodCheckBase64Params): this;
+  /** @deprecated Use `z.base64url()` instead. */
+  base64url(params?: string | core.$ZodCheckBase64URLParams): this;
   // /** @deprecated Use `z.jsonString()` instead. */
   // jsonString(params?: string | core.$ZodCheckJSONStringParams): this;
   /** @deprecated Use `z.xid()` instead. */
@@ -295,6 +297,7 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
   inst.cuid2 = (params) => inst.check(core._cuid2(ZodCUID2, params));
   inst.ulid = (params) => inst.check(core._ulid(ZodULID, params));
   inst.base64 = (params) => inst.check(core._base64(ZodBase64, params));
+  inst.base64url = (params) => inst.check(core._base64url(ZodBase64URL, params));
   // inst.jsonString = (params) => inst.check(core._jsonString(Zodinst,params));
   // inst.json = (params) => inst.check(core._jsonString(Zodinst,params));
   inst.xid = (params) => inst.check(core._xid(ZodXID, params));
@@ -598,9 +601,24 @@ export const ZodBase64: core.$constructor<ZodBase64> = /*@__PURE__*/ core.$const
   core.$ZodBase64.init(inst, def);
   ZodType.init(inst, def);
 });
-
 export function base64(params?: string | core.$ZodBase64Params): ZodBase64 {
   return core._base64(ZodBase64, params);
+}
+
+// ZodBase64URL
+export interface ZodBase64URL extends ZodStringFormat<"base64url"> {
+  _zod: core.$ZodBase64URLInternals;
+}
+export const ZodBase64URL: core.$constructor<ZodBase64URL> = /*@__PURE__*/ core.$constructor(
+  "ZodBase64URL",
+  (inst, def) => {
+    // ZodStringFormat.init(inst, def);
+    core.$ZodBase64URL.init(inst, def);
+    ZodType.init(inst, def);
+  }
+);
+export function base64url(params?: string | core.$ZodBase64URLParams): ZodBase64URL {
+  return core._base64url(ZodBase64URL, params);
 }
 
 // ZodE164

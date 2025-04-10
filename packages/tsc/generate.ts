@@ -25,7 +25,6 @@ export const ARKTYPE = {
 };
 
 generate({
-  // path: "src/index.ts",
   // ...ZOD3,
   ...ZOD,
   schemaType: "z.interface",

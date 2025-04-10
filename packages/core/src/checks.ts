@@ -740,6 +740,7 @@ export type $ZodStringFormats =
   | "cidrv4"
   | "cidrv6"
   | "base64"
+  | "base64url"
   | "json_string"
   | "e164"
   | "lowercase"
@@ -1268,5 +1269,6 @@ export type $ZodStringFormatChecks =
   | schemas.$ZodCIDRv4
   | schemas.$ZodCIDRv6
   | schemas.$ZodBase64
+  | schemas.$ZodBase64URL
   | schemas.$ZodE164
   | schemas.$ZodJWT;
