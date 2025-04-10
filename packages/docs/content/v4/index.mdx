@@ -271,9 +271,7 @@ The core bundle is ~57% smaller in Zod 4 (2.3x). That's good! But we can do a lo
 
 Zod's method-heavy API is fundamentally difficult to tree-shake. Even our simple `z.boolean()` script pulls in the implementations of a bunch of methods we didn't use, like `.optional()`, `.array()`, etc. Writing slimmer implementations can only get you so far. 
 
-That's where `@zod/mini` comes in. It's a sister library with a functional, tree-shakable API that corresponds one-to-one with `zod`. 
-
-Where Zod uses methods, `@zod/mini` generally uses wrapper functions:
+That's where `@zod/mini` comes in. It's a sister library with a functional, tree-shakable API that corresponds one-to-one with `zod`. Where Zod uses methods, `@zod/mini` generally uses wrapper functions:
 
 <Tabs groupId="lib" items={[ "@zod/mini", "zod"]}>
 <Tab value="@zod/mini">
@@ -284,8 +282,7 @@ z.optional(z.string());
 
 z.union([z.string(), z.number()]);
 
-const myObject = z.object({ name: z.string() });
-z.extend(myObject, { age: z.number() });
+z.extend(z.object({ /* ... */ }), { age: z.number() });
 ```
 </Tab>
 <Tab value="zod">
@@ -296,13 +293,23 @@ z.string().optional();
 
 z.string().or(z.number());
 
-const myObject = z.object({ name: z.string() });
-myObject.extend({ age: z.number() });
+z.object({ /* ... */ }).extend({ age: z.number() });
 ```
 </Tab>
 </Tabs>
 
-The general-purpose `.check()` method is used to add refinements.
+Not all methods are gone! :) The parsing methods are identical in `zod` and `@zod/mini`.
+
+```ts
+import * as z from "@zod/mini";
+
+z.string().parse("asdf");
+z.string().safeParse("asdf");
+await z.string().parseAsync("asdf");
+await z.string().safeParseAsync("asdf");
+```
+
+There's also a general-purpose `.check()` method used to add refinements.
 
 <Tabs groupId="lib" items={[ "@zod/mini", "zod"]}>
 <Tab value="@zod/mini">
@@ -328,7 +335,45 @@ z.array(z.number())
 </Tab>
 </Tabs>
 
-The more functional API makes it easier for bundlers to tree-shaking the APIs you don't use. While `zod` is still recommended for the majority of use cases, any projects with uncommonly strict bundle size constraints should consider `@zod/mini`.  
+The following top-level refinements are available in `@zod/mini`. It should be fairly self-explanatory which `zod` methods they correspond to.
+
+```ts
+import * as z from "@zod/mini";
+
+z.lt(value);
+z.lte(value); // alias: z.maximum()
+z.gt(value);
+z.gte(value); // alias: z.minimum()
+z.positive();
+z.negative();
+z.nonpositive();
+z.nonnegative();
+z.multipleOf(value);
+z.maxSize(value);
+z.minSize(value);
+z.size(value);
+z.maxLength(value);
+z.minLength(value);
+z.length(value);
+z.regex(regex);
+z.lowercase();
+z.uppercase();
+z.includes(value);
+z.startsWith(value);
+z.endsWith(value);
+z.property(key, schema); // for object schemas; check `input[key]` against `schema`
+z.mime(value); // for file schemas (see below)
+
+// overwrites (these *do not* change the inferred type!)
+z.overwrite(value => newValue);
+z.normalize();
+z.trim();
+z.toLowerCase();
+z.toUpperCase();
+```
+
+
+This more functional API makes it easier for bundlers to tree-shaking the APIs you don't use. While `zod` is still recommended for the majority of use cases, any projects with uncommonly strict bundle size constraints should consider `@zod/mini`.  
 
 ### 6.6x reduction in core bundle size
 
