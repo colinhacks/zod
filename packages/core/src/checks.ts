@@ -42,7 +42,7 @@ export const $ZodCheck: core.$constructor<$ZodCheck<any>> = /*@__PURE__*/ core.$
 ///////////////////////////////////////
 /////      $ZodCheckLessThan      /////
 ///////////////////////////////////////
-interface $ZodCheckLessThanDef extends $ZodCheckDef {
+export interface $ZodCheckLessThanDef extends $ZodCheckDef {
   check: "less_than";
   value: util.Numeric;
   inclusive: boolean;
@@ -97,7 +97,7 @@ export const $ZodCheckLessThan: core.$constructor<$ZodCheckLessThan> = /*@__PURE
 /////////////////////////////////////
 /////    $ZodCheckGreaterThan    /////
 /////////////////////////////////////
-interface $ZodCheckGreaterThanDef extends $ZodCheckDef {
+export interface $ZodCheckGreaterThanDef extends $ZodCheckDef {
   check: "greater_than";
   value: util.Numeric;
   inclusive: boolean;
@@ -149,7 +149,7 @@ export const $ZodCheckGreaterThan: core.$constructor<$ZodCheckGreaterThan> = /*@
 /////////////////////////////////////
 // https://stackoverflow.com/questions/3966484/why-does-modulus-operator-return-fractional-number-in-javascript/31711034#31711034
 
-interface $ZodCheckMultipleOfDef<T extends number | bigint = number | bigint> extends $ZodCheckDef {
+export interface $ZodCheckMultipleOfDef<T extends number | bigint = number | bigint> extends $ZodCheckDef {
   check: "multiple_of";
   value: T;
 }
@@ -417,7 +417,7 @@ export const $ZodCheckBigIntFormat: core.$constructor<$ZodCheckBigIntFormat> = /
 //////////////////////////////////
 /////    $ZodCheckMaxSize    /////
 //////////////////////////////////
-interface $ZodCheckMaxSizeDef extends $ZodCheckDef {
+export interface $ZodCheckMaxSizeDef extends $ZodCheckDef {
   check: "max_size";
   maximum: number;
 }
@@ -466,7 +466,7 @@ export const $ZodCheckMaxSize: core.$constructor<$ZodCheckMaxSize> = /*@__PURE__
 //////////////////////////////////
 /////    $ZodCheckMinSize    /////
 //////////////////////////////////
-interface $ZodCheckMinSizeDef extends $ZodCheckDef {
+export interface $ZodCheckMinSizeDef extends $ZodCheckDef {
   check: "min_size";
   minimum: number;
 }
@@ -515,7 +515,7 @@ export const $ZodCheckMinSize: core.$constructor<$ZodCheckMinSize> = /*@__PURE__
 /////////////////////////////////////
 /////    $ZodCheckSizeEquals    /////
 /////////////////////////////////////
-interface $ZodCheckSizeEqualsDef extends $ZodCheckDef {
+export interface $ZodCheckSizeEqualsDef extends $ZodCheckDef {
   check: "size_equals";
   size: number;
 }
@@ -566,7 +566,7 @@ export const $ZodCheckSizeEquals: core.$constructor<$ZodCheckSizeEquals> = /*@__
 /////    $ZodCheckMaxLength    /////
 //////////////////////////////////
 
-interface $ZodCheckMaxLengthDef extends $ZodCheckDef {
+export interface $ZodCheckMaxLengthDef extends $ZodCheckDef {
   check: "max_length";
   maximum: number;
 }
@@ -616,7 +616,7 @@ export const $ZodCheckMaxLength: core.$constructor<$ZodCheckMaxLength> = /*@__PU
 //////////////////////////////////
 /////    $ZodCheckMinLength    /////
 //////////////////////////////////
-interface $ZodCheckMinLengthDef extends $ZodCheckDef {
+export interface $ZodCheckMinLengthDef extends $ZodCheckDef {
   check: "min_length";
   minimum: number;
 }
@@ -666,7 +666,7 @@ export const $ZodCheckMinLength: core.$constructor<$ZodCheckMinLength> = /*@__PU
 /////////////////////////////////////
 /////    $ZodCheckLengthEquals    /////
 /////////////////////////////////////
-interface $ZodCheckLengthEqualsDef extends $ZodCheckDef {
+export interface $ZodCheckLengthEqualsDef extends $ZodCheckDef {
   check: "length_equals";
   length: number;
 }
@@ -795,7 +795,7 @@ export const $ZodCheckStringFormat: core.$constructor<$ZodCheckStringFormat> = /
 ////////////////////////////////
 /////    $ZodCheckRegex    /////
 ////////////////////////////////
-interface $ZodCheckRegexDef extends $ZodCheckStringFormatDef {
+export interface $ZodCheckRegexDef extends $ZodCheckStringFormatDef {
   format: "regex";
   pattern: RegExp;
 }
@@ -869,7 +869,7 @@ export const $ZodCheckRegex: core.$constructor<$ZodCheckRegex> = /*@__PURE__*/ c
 //////////////////////////////////////
 /////    $ZodCheckLowerCase    /////
 //////////////////////////////////////
-interface $ZodCheckLowerCaseDef extends $ZodCheckStringFormatDef<"lowercase"> {}
+export interface $ZodCheckLowerCaseDef extends $ZodCheckStringFormatDef<"lowercase"> {}
 
 export interface $ZodCheckLowerCaseInternals extends $ZodCheckInternals<string> {
   def: $ZodCheckLowerCaseDef;
@@ -891,7 +891,7 @@ export const $ZodCheckLowerCase: core.$constructor<$ZodCheckLowerCase> = /*@__PU
 //////////////////////////////////////
 /////    $ZodCheckUpperCase    /////
 //////////////////////////////////////
-interface $ZodCheckUpperCaseDef extends $ZodCheckStringFormatDef<"uppercase"> {}
+export interface $ZodCheckUpperCaseDef extends $ZodCheckStringFormatDef<"uppercase"> {}
 
 export interface $ZodCheckUpperCaseInternals extends $ZodCheckInternals<string> {
   def: $ZodCheckUpperCaseDef;
@@ -913,7 +913,7 @@ export const $ZodCheckUpperCase: core.$constructor<$ZodCheckUpperCase> = /*@__PU
 ///////////////////////////////////
 /////    $ZodCheckIncludes    /////
 ///////////////////////////////////
-interface $ZodCheckIncludesDef extends $ZodCheckStringFormatDef<"includes"> {
+export interface $ZodCheckIncludesDef extends $ZodCheckStringFormatDef<"includes"> {
   includes: string;
   position?: number | undefined;
 }
@@ -956,7 +956,7 @@ export const $ZodCheckIncludes: core.$constructor<$ZodCheckIncludes> = /*@__PURE
 /////////////////////////////////////
 /////    $ZodCheckStartsWith    /////
 /////////////////////////////////////
-interface $ZodCheckStartsWithDef extends $ZodCheckStringFormatDef<"starts_with"> {
+export interface $ZodCheckStartsWithDef extends $ZodCheckStringFormatDef<"starts_with"> {
   prefix: string;
 }
 
@@ -998,7 +998,7 @@ export const $ZodCheckStartsWith: core.$constructor<$ZodCheckStartsWith> = /*@__
 //////////////////////////////////
 /////   $ZodCheckEndsWith    /////
 //////////////////////////////////
-interface $ZodCheckEndsWithDef extends $ZodCheckStringFormatDef<"ends_with"> {
+export interface $ZodCheckEndsWithDef extends $ZodCheckStringFormatDef<"ends_with"> {
   suffix: string;
 }
 
@@ -1049,7 +1049,7 @@ function handleCheckPropertyResult(
     payload.issues.push(...util.prefixIssues(property, result.issues));
   }
 }
-interface $ZodCheckPropertyDef extends $ZodCheckDef {
+export interface $ZodCheckPropertyDef extends $ZodCheckDef {
   check: "property";
   property: string;
   schema: schemas.$ZodType;
@@ -1091,7 +1091,7 @@ export const $ZodCheckProperty: core.$constructor<$ZodCheckProperty> = /*@__PURE
 ///////////////////////////////////
 /////    $ZodCheckMimeType    /////
 ///////////////////////////////////
-interface $ZodCheckMimeTypeDef extends $ZodCheckDef {
+export interface $ZodCheckMimeTypeDef extends $ZodCheckDef {
   check: "mime_type";
   mime: util.MimeTypes[];
 }
@@ -1159,7 +1159,7 @@ export const $ZodCheckMimeType: core.$constructor<$ZodCheckMimeType> = /*@__PURE
 ///////////////////////////////////
 /////    $ZodCheckOverwrite    /////
 ///////////////////////////////////
-interface $ZodCheckOverwriteDef<T = unknown> extends $ZodCheckDef {
+export interface $ZodCheckOverwriteDef<T = unknown> extends $ZodCheckDef {
   check: "overwrite";
   tx(value: T): T;
 }

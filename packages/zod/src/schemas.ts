@@ -734,31 +734,31 @@ export const ZodNumberFormat: core.$constructor<ZodNumberFormat> = /*@__PURE__*/
 );
 
 // int
-interface ZodInt extends ZodNumberFormat {}
+export interface ZodInt extends ZodNumberFormat {}
 export function int(params?: string | core.$ZodCheckNumberFormatParams): ZodInt {
   return core._int(ZodNumberFormat, params);
 }
 
 // float32
-interface ZodFloat32 extends ZodNumberFormat {}
+export interface ZodFloat32 extends ZodNumberFormat {}
 export function float32(params?: string | core.$ZodCheckNumberFormatParams): ZodFloat32 {
   return core._float32(ZodNumberFormat, params);
 }
 
 // float64
-interface ZodFloat64 extends ZodNumberFormat {}
+export interface ZodFloat64 extends ZodNumberFormat {}
 export function float64(params?: string | core.$ZodCheckNumberFormatParams): ZodFloat64 {
   return core._float64(ZodNumberFormat, params);
 }
 
 // int32
-interface ZodInt32 extends ZodNumberFormat {}
+export interface ZodInt32 extends ZodNumberFormat {}
 export function int32(params?: string | core.$ZodCheckNumberFormatParams): ZodInt32 {
   return core._int32(ZodNumberFormat, params);
 }
 
 // uint32
-interface ZodUInt32 extends ZodNumberFormat {}
+export interface ZodUInt32 extends ZodNumberFormat {}
 export function uint32(params?: string | core.$ZodCheckNumberFormatParams): ZodUInt32 {
   return core._uint32(ZodNumberFormat, params);
 }
@@ -2365,7 +2365,7 @@ export function json(params?: core.$ZodCustomParams): ZodJSONSchema {
 }
 
 // preprocess
-interface ZodPreprocessParams extends core.$ZodTransformParams, core.$ZodPipeParams {}
+export interface ZodPreprocessParams extends core.$ZodTransformParams, core.$ZodPipeParams {}
 
 // /** @deprecated Use `z.pipe()` and `z.transform()` instead. */
 export function preprocess<A, U extends core.$ZodType>(
