@@ -26,12 +26,12 @@
   <br />
 </div>
 
-<br/>
+<br/><br/>
 
 <table align="center" style="justify-content:center;align-items:center;display:flex;"><td>
-  <p align="center">The next major version of Zod (v4) is <br/>
-  under active development, supported by <br/>
-  the <a href="https://clerk.com/blog/zod-fellowship">Clerk OSS Fellowship</a>.</p></td>
+  <p align="center">Zod 4 is now in beta!
+  <br/>
+  <a target="_blank" rel="noopener noreferrer" href="https://v4.zod.dev/v4">Read the announcement 👉</a></p></td>
 </table>
 
 <br/>
