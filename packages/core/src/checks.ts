@@ -740,6 +740,7 @@ export type $ZodStringFormats =
   | "cidrv4"
   | "cidrv6"
   | "base64"
+  | "base64url"
   | "json_string"
   | "e164"
   | "lowercase"
