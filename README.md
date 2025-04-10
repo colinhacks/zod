@@ -29,8 +29,9 @@
 <br/>
 
 <table align="center" style="justify-content:center;align-items:center;display:flex;"><td>
-  <p align="center">Zod (v4) is <br/>
-  now in beta! <a target="_blank" rel="noopener noreferrer" href="https://v4.zod.dev/v4">Read the announcement 👉</a></p></td>
+  <p align="center">Zod (v4) is now in beta!
+  <br/>
+  <a target="_blank" rel="noopener noreferrer" href="https://v4.zod.dev/v4">Read the announcement 👉</a></p></td>
 </table>
 
 <br/>
