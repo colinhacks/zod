@@ -445,21 +445,22 @@ Any metadata in `z.globalRegistry` is automatically included in the JSON Schema 
 
 ```ts
 const mySchema = z.object({
-  firstName: z.string().meta({ description: "First name" }),
-  lastName: z.string().meta({ description: "Last name" }),
-  age: z.number().meta({ description: "Age" }),
+  firstName: z.string().describe("Your first name"),
+  lastName: z.string().meta({ title: "last_name" }),
+  age: z.number().meta({ examples: [12, 99] }),
 });
 
 z.toJSONSchema(mySchema);
 // => {
-//   type: "object",
+//   type: 'object',
 //   properties: {
-//     name: { title: "Your full name", type: "string" },
-//     email: { title: "Email", type: "string", format: "email" },
-//     password: { title: "Password", type: "string", minLength: 8 }
+//     firstName: { type: 'string', description: 'Your first name' },
+//     lastName: { type: 'string', title: 'last_name' },
+//     age: { type: 'number', examples: [ 12, 99 ] }
 //   },
-//   required: [ "name", "email", "password" ]
+//   required: [ 'firstName', 'lastName', 'age' ]
 // }
+
 ```
 
 Refer to the [JSON Schema docs](/json-schema) for information on customizing the generated JSON Schema.

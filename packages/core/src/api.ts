@@ -349,6 +349,22 @@ export function _base64<T extends schemas.$ZodBase64>(
   });
 }
 
+// base64url
+export type $ZodBase64URLParams = util.StringFormatParams<schemas.$ZodBase64URL, "pattern">;
+export type $ZodCheckBase64URLParams = util.CheckStringFormatParams<schemas.$ZodBase64URL, "pattern">;
+export function _base64url<T extends schemas.$ZodBase64URL>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodBase64URLParams | $ZodCheckBase64URLParams
+): T {
+  return new Class({
+    type: "string",
+    format: "base64url",
+    check: "string_format",
+    abort: false,
+    ...util.normalizeParams(params),
+  });
+}
+
 // E164
 export type $ZodE164Params = util.StringFormatParams<schemas.$ZodE164>;
 export type $ZodCheckE164Params = util.CheckStringFormatParams<schemas.$ZodE164>;
