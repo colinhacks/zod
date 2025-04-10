@@ -41,18 +41,12 @@ let CURR = MIN;
 
 while (!MAX || MAX - MIN > 10) {
   generate({
-    path: "src/index.ts",
-    // ...ZOD,
-    // ...ARKTYPE,
+    
     ...ZOD,
     schemaType: "z.interface",
-    methods: [""],
     numSchemas: CURR,
     numKeys: 3,
     numRefs: 1,
-    numOmits: 0,
-    numPicks: 0,
-    numExtends: 0,
   });
 
   console.log(`Attempting tsc compilation...`);

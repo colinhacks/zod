@@ -7,7 +7,6 @@ console.log("╔════════════════╗");
 console.log("║     Zod v3     ║");
 console.log("╚════════════════╝");
 await generate({
-  path: "src/index.ts",
   ...ZOD3,
   numSchemas: 0,
   numKeys: 0,
@@ -23,7 +22,6 @@ console.log("╔════════════════╗");
 console.log("║     Zod v4     ║");
 console.log("╚════════════════╝");
 await generate({
-  path: "src/index.ts",
   ...ZOD,
   numSchemas: 0,
   numKeys: 0,
