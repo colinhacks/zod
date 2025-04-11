@@ -439,9 +439,9 @@ Zod also exports a global registry `z.globalRegistry` that accepts some common J
 
 ```ts
 z.globalRegistry.add(z.string(), { 
-  id: "email_address"
-  title: "Email address"
-  description: "Provide your email"
+  id: "email_address",
+  title: "Email address",
+  description: "Provide your email",
   examples: ["naomie@example.com"],
   extraKey: "Additional properties are also allowed"
 });
@@ -455,9 +455,9 @@ To conveniently add a schema to `z.globalRegistry`, use the `.meta()` method.
 
 ```ts
 z.string().meta({ 
-  id: "email_address"
-  title: "Email address"
-  description: "Provide your email"
+  id: "email_address",
+  title: "Email address",
+  description: "Provide your email",
   examples: ["naomie@example.com"],
   // ...
 });

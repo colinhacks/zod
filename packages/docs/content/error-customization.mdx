@@ -273,7 +273,7 @@ Global error messages have *lower precedence* than schema-level or per-parse err
 
 The `iss` object is a [discriminated union](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions) of all possible issue types. Use the `code` property to discriminate between them.
 
-> For a breakdown of all Zod issue codes, see the [`@zod/core`](/core#issue-types) documentation.
+> For a breakdown of all Zod issue codes, see the [`@zod/core`](/packages/core#issue-types) documentation.
 
 ```ts
 const result = schema.safeParse(12, {
