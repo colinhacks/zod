@@ -17,6 +17,9 @@ const recordWithLiteralKeys = z.record(
 );
 type recordWithLiteralKeys = z.infer<typeof recordWithLiteralKeys>;
 
+const recordWithBrandedKeys = z.record(z.string().brand("someKey"), z.string());
+type recordWithBrandedKeys = z.infer<typeof recordWithBrandedKeys>;
+
 test("type inference", () => {
   util.assertEqual<booleanRecord, Record<string, boolean>>(true);
 
@@ -28,6 +31,11 @@ test("type inference", () => {
   util.assertEqual<
     recordWithLiteralKeys,
     Partial<Record<"Tuna" | "Salmon", string>>
+  >(true);
+
+  util.assertEqual<
+    recordWithBrandedKeys,
+    Record<string & z.BRAND<"someKey">, string>
   >(true);
 });
 
