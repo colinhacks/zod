@@ -105,6 +105,10 @@ z.endsWith(value);
 z.property(key, schema);
 z.mime(value);
 
+// custom checks
+z.refine()
+z.check()   // replaces .superRefine()
+
 // mutations (these do not change the inferred types)
 z.overwrite(value => newValue);
 z.normalize();

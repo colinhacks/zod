@@ -344,6 +344,10 @@ The following top-level refinements are available in `@zod/mini`. It should be f
 ```ts
 import * as z from "@zod/mini";
 
+// custom checks
+z.refine();
+
+// first-class checks
 z.lt(value);
 z.lte(value); // alias: z.maximum()
 z.gt(value);
