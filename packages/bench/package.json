@@ -4,10 +4,10 @@
   "type": "module",
   "devDependencies": {
     "@zod/core": "workspace:*",
-    "zod": "workspace:*",
     "@zod/mini": "workspace:*",
-    "zod3": "npm:zod@3.23.7",
-    "arktype": "2.0.0",
-    "valibot": "1.0.0-rc.2"
+    "arktype": "^2.1.19",
+    "valibot": "^1.0.0",
+    "zod": "workspace:*",
+    "zod3": "npm:zod@^3.23.7"
   }
 }

@@ -1,24 +1,49 @@
-import { zodbench } from "./zodbench.js";
+import * as z4 from "zod";
+import * as z3 from "zod3";
+import { metabench } from "./metabench.js";
+import * as v from "valibot";
+import { type } from 'arktype';
 
-const bench = zodbench({
-  name: "z.object().parse",
-  batch: 1000,
-  schema(z) {
-    return z.object({
-      string: z.string(),
-      boolean: z.boolean(),
-      number: z.number(),
-    });
+const z3Schema = z3.object({
+  string: z3.string(),
+  boolean: z3.boolean(),
+  number: z3.number(),
+});
+
+const z4Schema = z4.object({
+  string: z4.string(),
+  boolean: z4.boolean(),
+  number: z4.number(),
+});
+
+const valibotSchema = v.object({
+  string: v.string(),
+  boolean: v.boolean(),
+  number: v.number(),
+});
+
+const DATA = Array.from({ length: 1000 }, () =>
+  Object.freeze({
+    number: Math.random(),
+    string: `${Math.random()}`,
+    boolean: Math.random() > 0.5,
+  })
+);
+
+console.log(z3Schema.parse(DATA[0]));
+console.log(z4Schema.parse(DATA[0]));
+console.log(v.parse(valibotSchema, DATA[0]));
+
+
+const bench = metabench("z.object().parse", {
+  zod3() {
+    for (const d of DATA) z3Schema.parse(d);
   },
-  data() {
-    return Object.freeze({
-      number: Math.random(),
-      string: `${Math.random()}`,
-      boolean: Math.random() > 0.5,
-    });
+  zod4() {
+    for (const d of DATA) z4Schema.parse(d);
   },
-  benchmark(d) {
-    this.schema.parse(d);
+  valibot() {
+    for (const d of DATA) v.parse(valibotSchema, d);
   },
 });
 
