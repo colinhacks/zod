@@ -2047,16 +2047,23 @@ export interface $ZodDiscriminatedUnion<T extends readonly $ZodType[] = readonly
 }
 
 function matchDiscriminators(input: any, discs: util.DiscriminatorMap): boolean {
+  let matched = true;
   for (const [key, value] of discs) {
     const data = input?.[key];
-    if (value.values.has(data)) return true;
+
+    if (!value.values.has(data)) {
+      matched = false;
+    }
     if (value.maps.length > 0) {
       for (const m of value.maps) {
-        if (matchDiscriminators(data, m)) return true;
+        if (!matchDiscriminators(data, m)) {
+          matched = false;
+        }
       }
     }
   }
-  return false;
+
+  return matched;
 }
 
 export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
@@ -3633,8 +3640,6 @@ export interface $ZodCustom<O = unknown, I = unknown> extends $ZodType {
 }
 
 export const $ZodCustom: core.$constructor<$ZodCustom> = /*@__PURE__*/ core.$constructor("$ZodCustom", (inst, def) => {
-  // if (def.checks?.length) console.warn("Can't add custom checks to z.custom()");
-
   checks.$ZodCheck.init(inst, def);
   $ZodType.init(inst, def);
 

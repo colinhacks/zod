@@ -5,7 +5,7 @@ export class Doc {
   content: string[] = [];
   indent = 0;
 
-  constructor(args: string[]) {
+  constructor(args: string[] = []) {
     this.args = args;
   }
 

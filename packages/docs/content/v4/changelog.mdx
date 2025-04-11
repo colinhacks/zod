@@ -419,7 +419,7 @@ The result of `z.function()` is no longer a Zod schema. Instead, it acts as a st
 <Tabs groupId="lib" items={["Zod 4", "Zod 3"]} persist>
 <Tab value="Zod 4">
 ```ts
-const myFunction = z.function().args({
+const myFunction = z.function({
   input: [z.object({
     name: z.string(),
     age: z.number().int(),
