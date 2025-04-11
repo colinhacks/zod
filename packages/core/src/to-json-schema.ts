@@ -408,8 +408,7 @@ export class JSONSchemaGenerator {
       }
       case "optional": {
         const inner = this.process(def.innerType, params);
-        const json: JSONSchema.BaseSchema = _json as any;
-        json!.oneOf = [inner, { type: "null" }];
+        Object.assign(_json, inner);
         break;
       }
       case "nullable": {
@@ -420,7 +419,6 @@ export class JSONSchemaGenerator {
       case "nonoptional": {
         const inner = this.process(def.innerType, params);
         Object.assign(_json, inner);
-        _json.not = { type: "null" };
         break;
       }
       case "success": {
