@@ -1483,7 +1483,7 @@ export interface $ZodObjectLikeDef<out Shape extends $ZodShape = $ZodShape> exte
 
 export interface $ZodObjectLikeInternals<out O = object, out I = object> extends $ZodTypeInternals<O, I> {
   def: $ZodObjectLikeDef;
-  shape: $ZodShape;
+  // shape: $ZodShape;
   extra: Record<string, unknown>;
   optional: string;
   defaulted: string;
@@ -1524,7 +1524,7 @@ export const $ZodObjectLike: core.$constructor<$ZodObjectLike> = /*@__PURE__*/ c
   "$ZodObjectLike",
   (inst, def) => {
     $ZodType.init(inst, def);
-    util.defineLazy(inst._zod, "shape", () => def.shape);
+    // util.defineLazy(inst._zod, "shape", () => def.shape);
 
     const _normalized = util.cached(() => {
       const keys = Object.keys(def.shape);
@@ -1852,7 +1852,7 @@ export interface $ZodInterfaceInternals<
 > extends $ZodObjectLikeInternals<$InferInterfaceOutput<Shape, Params>, $InferInterfaceInput<Shape, Params>> {
   subtype: "interface";
   def: $ZodInterfaceDef<Shape>;
-  shape: Shape;
+  // shape: Shape;
   optional: Params["optional"];
   defaulted: Params["defaulted"];
   extra: Params["extra"];

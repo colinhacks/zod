@@ -72,3 +72,5 @@ export type {
   /** @deprecated Use `z.ZodType` */
   ZodType as Schema,
 };
+
+export type ZodRawShape = core.$ZodShape;

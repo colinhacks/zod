@@ -211,7 +211,7 @@ myError.issues.push({
 });
 ```
 
-## `.and()` dropped
+{/* ## `.and()` dropped
 
 The `.and()` method on `ZodType` has been dropped in favor of `z.intersection(A, B)`. Not only is this method rarely used, there are few good reasons to use intersections at all. The `.and()` API prevented bundlers from treeshaking `ZodIntersection`, a fairly large and complex class. 
 
@@ -222,7 +222,7 @@ z.object({ a: z.string() }).and(z.object({ b: z.number() })); // ❌
 z.intersection(z.object({ a: z.string() }), z.object({ b: z.number() })); // ✅
 // or .extend() when possible
 z.object({ a: z.string() }).extend(z.object({ b: z.number() })); // ✅
-```
+``` */}
 
 ## `z.number()`
 

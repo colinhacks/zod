@@ -41,17 +41,17 @@ test("required", () => {
   });
 
   const requiredObject = object.required();
-  expect(requiredObject._zod.shape.name).toBeInstanceOf(z.ZodNonOptional);
-  expect(requiredObject._zod.shape.name.unwrap()).toBeInstanceOf(z.ZodString);
-  expect(requiredObject._zod.shape.age).toBeInstanceOf(z.ZodNonOptional);
-  expect(requiredObject._zod.shape.age.unwrap()).toBeInstanceOf(z.ZodOptional);
-  expect(requiredObject._zod.shape.field).toBeInstanceOf(z.ZodNonOptional);
-  expect(requiredObject._zod.shape.field.unwrap()).toBeInstanceOf(z.ZodDefault);
-  expect(requiredObject._zod.shape.nullableField).toBeInstanceOf(z.ZodNonOptional);
-  expect(requiredObject._zod.shape.nullableField.unwrap()).toBeInstanceOf(z.ZodNullable);
-  expect(requiredObject._zod.shape.nullishField).toBeInstanceOf(z.ZodNonOptional);
-  expect(requiredObject._zod.shape.nullishField.unwrap()).toBeInstanceOf(z.ZodOptional);
-  expect(requiredObject._zod.shape.nullishField.unwrap().unwrap()).toBeInstanceOf(z.ZodNullable);
+  expect(requiredObject._zod.def.shape.name).toBeInstanceOf(z.ZodNonOptional);
+  expect(requiredObject._zod.def.shape.name.unwrap()).toBeInstanceOf(z.ZodString);
+  expect(requiredObject._zod.def.shape.age).toBeInstanceOf(z.ZodNonOptional);
+  expect(requiredObject._zod.def.shape.age.unwrap()).toBeInstanceOf(z.ZodOptional);
+  expect(requiredObject._zod.def.shape.field).toBeInstanceOf(z.ZodNonOptional);
+  expect(requiredObject._zod.def.shape.field.unwrap()).toBeInstanceOf(z.ZodDefault);
+  expect(requiredObject._zod.def.shape.nullableField).toBeInstanceOf(z.ZodNonOptional);
+  expect(requiredObject._zod.def.shape.nullableField.unwrap()).toBeInstanceOf(z.ZodNullable);
+  expect(requiredObject._zod.def.shape.nullishField).toBeInstanceOf(z.ZodNonOptional);
+  expect(requiredObject._zod.def.shape.nullishField.unwrap()).toBeInstanceOf(z.ZodOptional);
+  expect(requiredObject._zod.def.shape.nullishField.unwrap().unwrap()).toBeInstanceOf(z.ZodNullable);
 });
 
 test("required inference", () => {
