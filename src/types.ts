@@ -145,7 +145,8 @@ function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
     if (typeof ctx.data === "undefined") {
       return { message: message ?? required_error ?? ctx.defaultError };
     }
-    if (iss.code !== "invalid_type") return { message: ctx.defaultError };
+    if (iss.code !== "invalid_type" && iss.code !== "invalid_date")
+      return { message: ctx.defaultError };
     return { message: message ?? invalid_type_error ?? ctx.defaultError };
   };
   return { errorMap: customMap, description };
