@@ -3522,9 +3522,9 @@ export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> = /*@__
         payload.issues.push({
           input: payload.value,
           inst,
-          expected: "template_literal",
-          code: "invalid_type",
-          pattern: inst._zod.pattern,
+          code: "invalid_format",
+          format: "template_literal",
+          pattern: inst._zod.pattern.source,
         });
         return payload;
       }

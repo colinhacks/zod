@@ -682,3 +682,87 @@ test("template literal parsing - failure - complex cases", () => {
   expect(() => connectionString.parse("mongodb://host:1234/defaultauthdb?&authSource=admin")).toThrow();
   expect(() => connectionString.parse("mongodb://host:1234/?&authSource=admin")).toThrow();
 });
+
+test("template literal parsing - failure - issue format", () => {
+  expect(anotherNull.safeParse("1null")).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "invalid_format",
+            "format": "template_literal",
+            "message": "Invalid input",
+            "path": [],
+            "pattern": "^null$",
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
+  expect(cuidZZZ.safeParse("1cjld2cyuq0000t3rmniod1foyZZZ")).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "invalid_format",
+            "format": "template_literal",
+            "message": "Invalid input",
+            "path": [],
+            "pattern": "^[cC][^\\s-]{8,}ZZZ$",
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
+  expect(stringMin5Max10.safeParse("1234")).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "invalid_format",
+            "format": "template_literal",
+            "message": "Invalid input",
+            "path": [],
+            "pattern": "^[\\s\\S]{5,10}$",
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
+  expect(connectionString.safeParse("mongodb://host:1234/defaultauthdb?authSourceadmin")).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "invalid_format",
+            "format": "template_literal",
+            "message": "Invalid input",
+            "path": [],
+            "pattern": "^mongodb:\\/\\/(\\w+:\\w+@)?\\w+:\\d+(\\/(\\w+)?(\\?(\\w+=\\w+(&\\w+=\\w+)*)?)?)?$",
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
+
+  expect(stringStartsWithMax5.safeParse("1hell")).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "invalid_format",
+            "format": "template_literal",
+            "message": "Invalid input",
+            "path": [],
+            "pattern": "^hello.*$",
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
+});

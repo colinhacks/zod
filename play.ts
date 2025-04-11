@@ -1,3 +1,3 @@
-import * as z from "@zod/mini";
+import * as z from "zod";
 
-z.cuid;
+z.templateLiteral([z.string().min(5), "@", z.string().min(5)]).parse("asdf@asdf");
