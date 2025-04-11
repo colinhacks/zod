@@ -108,7 +108,7 @@ test("literal exhaustiveness", () => {
 });
 
 test("pipe exhaustiveness", () => {
-  const schema = z.record(z.enum(["Tuna", "Salmon"]).pipe(z.string()), z.string());
+  const schema = z.record(z.enum(["Tuna", "Salmon"]).pipe(z.any()), z.string());
   expect(schema.parse({ Tuna: "asdf", Salmon: "asdf" })).toEqual({
     Tuna: "asdf",
     Salmon: "asdf",

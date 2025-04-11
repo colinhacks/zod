@@ -114,7 +114,7 @@ test("type signatures", () => {
   const b = z.enum(a.options);
   expectTypeOf(a).toEqualTypeOf(b);
 
-  const c = z.enum({ a: 1, b: 2 });
+  const c = z.enum({ a: 1, b: 2 } as const);
   expectTypeOf(c.enum).toEqualTypeOf<{
     readonly a: 1;
     readonly b: 2;
@@ -127,6 +127,12 @@ test("type signatures", () => {
   }
   const d = z.enum(Fruit);
   expectTypeOf(d.enum).toEqualTypeOf(Fruit);
+
+  const e = z.enum({ a: 1, b: 2 });
+  expectTypeOf(e.enum).toEqualTypeOf<{
+    readonly a: 1;
+    readonly b: 2;
+  }>();
 });
 
 test("extract", () => {

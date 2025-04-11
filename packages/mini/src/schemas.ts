@@ -694,7 +694,7 @@ export const ZodMiniObjectLike: core.$constructor<ZodMiniObjectLike> = /*@__PURE
 );
 
 // .keyof
-export function keyof<T extends ZodMiniObject>(schema: T): ZodMiniLiteral<keyof T["_zod"]["shape"]>;
+export function keyof<T extends ZodMiniObject>(schema: T): ZodMiniLiteral<keyof T["_zod"]["def"]["shape"]>;
 export function keyof<T extends ZodMiniInterface>(schema: T): ZodMiniLiteral<keyof T["_zod"]["output"]>;
 export function keyof(schema: ZodMiniObjectLike) {
   const shape =
@@ -859,20 +859,26 @@ export function looseObject<T extends core.$ZodShape>(
 export function extend<T extends ZodMiniInterface, U extends ZodMiniInterface>(
   a: T,
   b: U
-): ZodMiniInterface<util.ExtendShape<T["_zod"]["shape"], U["_zod"]["shape"]>, util.MergeInterfaceParams<T, U>>;
+): ZodMiniInterface<
+  util.ExtendShape<T["_zod"]["def"]["shape"], U["_zod"]["def"]["shape"]>,
+  util.MergeInterfaceParams<T, U>
+>;
 export function extend<T extends ZodMiniObject, U extends ZodMiniObject>(
   a: T,
   b: U
-): ZodMiniObject<util.ExtendObject<T["_zod"]["shape"], U["_zod"]["shape"]>, U["_zod"]["extra"] & T["_zod"]["extra"]>;
+): ZodMiniObject<
+  util.ExtendObject<T["_zod"]["def"]["shape"], U["_zod"]["def"]["shape"]>,
+  U["_zod"]["extra"] & T["_zod"]["extra"]
+>;
 
 export function extend<T extends ZodMiniInterface, U extends core.$ZodLooseShape>(
   a: T,
   b: U
-): ZodMiniInterface<util.ExtendInterfaceShape<T["_zod"]["shape"], U>, util.ExtendInterfaceParams<T, U>>;
+): ZodMiniInterface<util.ExtendInterfaceShape<T["_zod"]["def"]["shape"], U>, util.ExtendInterfaceParams<T, U>>;
 export function extend<T extends ZodMiniObject, U extends core.$ZodLooseShape>(
   a: T,
   b: U
-): ZodMiniObject<util.ExtendObject<T["_zod"]["shape"], U>, T["_zod"]["extra"]>;
+): ZodMiniObject<util.ExtendObject<T["_zod"]["def"]["shape"], U>, T["_zod"]["extra"]>;
 export function extend(schema: ZodMiniObjectLike, shape: any): ZodMiniObjectLike {
   // console.log({ schema, shape });
   if (shape instanceof core.$ZodType) return util.mergeObjectLike(schema, shape as any);
@@ -888,50 +894,59 @@ export function merge<T extends ZodMiniObjectLike, U extends core.$ZodLooseShape
   shape: U
 ): T["_zod"]["def"]["type"] extends "interface"
   ? ZodMiniInterface<
-      util.ExtendShape<T["_zod"]["shape"], U["_zod"]["shape"]>,
+      util.ExtendShape<T["_zod"]["def"]["shape"], U["_zod"]["def"]["shape"]>,
       {
         extra: T["_zod"]["extra"] & U["_zod"]["extra"];
-        optional: Exclude<T["_zod"]["optional"], keyof U["_zod"]["shape"]> | U["_zod"]["optional"];
-        defaulted: Exclude<T["_zod"]["defaulted"], keyof U["_zod"]["shape"]> | U["_zod"]["defaulted"];
+        optional: Exclude<T["_zod"]["optional"], keyof U["_zod"]["def"]["shape"]> | U["_zod"]["optional"];
+        defaulted: Exclude<T["_zod"]["defaulted"], keyof U["_zod"]["def"]["shape"]> | U["_zod"]["defaulted"];
       }
     >
-  : ZodMiniObject<util.ExtendObject<T["_zod"]["shape"], U>, T["_zod"]["extra"]>;
+  : ZodMiniObject<util.ExtendObject<T["_zod"]["def"]["shape"], U>, T["_zod"]["extra"]>;
 export function merge(a: ZodMiniObjectLike, b: ZodMiniObjectLike): ZodMiniObjectLike {
   return util.mergeObjectLike(a, b);
 }
 
 // .pick
-export function pick<T extends ZodMiniObjectLike, M extends util.Exactly<util.Mask<keyof T["_zod"]["shape"]>, M>>(
+export function pick<
+  T extends ZodMiniObjectLike,
+  M extends util.Exactly<util.Mask<keyof T["_zod"]["def"]["shape"]>, M>,
+>(
   schema: T,
   mask: M
 ): T["_zod"]["def"]["type"] extends "interface"
   ? ZodMiniInterface<
-      util.Flatten<Pick<T["_zod"]["shape"], keyof T["_zod"]["shape"] & keyof M>>,
+      util.Flatten<Pick<T["_zod"]["def"]["shape"], keyof T["_zod"]["def"]["shape"] & keyof M>>,
       {
         optional: Extract<T["_zod"]["optional"], keyof M>;
         defaulted: Extract<T["_zod"]["defaulted"], keyof M>;
         extra: T["_zod"]["extra"];
       }
     >
-  : ZodMiniObject<util.Flatten<Pick<T["_zod"]["shape"], keyof T["_zod"]["shape"] & keyof M>>, T["_zod"]["extra"]>;
+  : ZodMiniObject<
+      util.Flatten<Pick<T["_zod"]["def"]["shape"], keyof T["_zod"]["def"]["shape"] & keyof M>>,
+      T["_zod"]["extra"]
+    >;
 export function pick(schema: ZodMiniObjectLike, mask: object) {
   return util.pick(schema, mask);
 }
 
 // .omit
-export function omit<T extends ZodMiniObjectLike, const M extends util.Exactly<util.Mask<keyof T["_zod"]["shape"]>, M>>(
+export function omit<
+  T extends ZodMiniObjectLike,
+  const M extends util.Exactly<util.Mask<keyof T["_zod"]["def"]["shape"]>, M>,
+>(
   schema: T,
   mask: M
 ): T["_zod"]["def"]["type"] extends "interface"
   ? ZodMiniInterface<
-      util.Flatten<Omit<T["_zod"]["shape"], keyof M>>,
+      util.Flatten<Omit<T["_zod"]["def"]["shape"], keyof M>>,
       {
         optional: Exclude<T["_zod"]["optional"], keyof M>;
         defaulted: Exclude<T["_zod"]["defaulted"], keyof M>;
         extra: T["_zod"]["extra"];
       }
     >
-  : ZodMiniObject<util.Flatten<Omit<T["_zod"]["shape"], keyof M>>, T["_zod"]["extra"]>;
+  : ZodMiniObject<util.Flatten<Omit<T["_zod"]["def"]["shape"], keyof M>>, T["_zod"]["extra"]>;
 
 export function omit(schema: ZodMiniObjectLike, mask: object) {
   return util.omit(schema, mask);
@@ -943,29 +958,32 @@ export function partial<T extends ZodMiniObjectLike>(
   ? ZodMiniInterface<
       // T['_zod']["shape"],
       {
-        [k in keyof T["_zod"]["shape"]]: ZodMiniOptional<T["_zod"]["shape"][k]>;
+        [k in keyof T["_zod"]["def"]["shape"]]: ZodMiniOptional<T["_zod"]["def"]["shape"][k]>;
       },
       {
-        optional: string & keyof T["_zod"]["shape"];
+        optional: string & keyof T["_zod"]["def"]["shape"];
         defaulted: never;
         extra: T["_zod"]["extra"];
       }
     >
   : ZodMiniObject<
       {
-        [k in keyof T["_zod"]["shape"]]: ZodMiniOptional<T["_zod"]["shape"][k]>;
+        [k in keyof T["_zod"]["def"]["shape"]]: ZodMiniOptional<T["_zod"]["def"]["shape"][k]>;
       },
       T["_zod"]["extra"]
     >;
-export function partial<T extends ZodMiniObjectLike, M extends util.Exactly<util.Mask<keyof T["_zod"]["shape"]>, M>>(
+export function partial<
+  T extends ZodMiniObjectLike,
+  M extends util.Exactly<util.Mask<keyof T["_zod"]["def"]["shape"]>, M>,
+>(
   schema: T,
   mask: M
 ): T["_zod"]["def"]["type"] extends "interface"
   ? ZodMiniInterface<
       util.ExtendShape<
-        T["_zod"]["shape"],
+        T["_zod"]["def"]["shape"],
         {
-          [k in keyof M & keyof T["_zod"]["shape"]]: ZodMiniOptional<T["_zod"]["shape"][k]>;
+          [k in keyof M & keyof T["_zod"]["def"]["shape"]]: ZodMiniOptional<T["_zod"]["def"]["shape"][k]>;
         }
       >,
       {
@@ -976,9 +994,9 @@ export function partial<T extends ZodMiniObjectLike, M extends util.Exactly<util
     >
   : ZodMiniObject<
       {
-        [k in keyof T["_zod"]["shape"]]: k extends keyof M
-          ? ZodMiniOptional<T["_zod"]["shape"][k]>
-          : T["_zod"]["shape"][k];
+        [k in keyof T["_zod"]["def"]["shape"]]: k extends keyof M
+          ? ZodMiniOptional<T["_zod"]["def"]["shape"][k]>
+          : T["_zod"]["def"]["shape"][k];
       },
       T["_zod"]["extra"]
     >;
@@ -991,19 +1009,19 @@ export function partial(schema: ZodMiniObjectLike, mask?: object): ZodMiniObject
 export function required<T extends { _zod: { subtype: "object" } } & ZodMiniObject>(
   schema: T
 ): ZodMiniObject<{
-  [k in keyof T["_zod"]["shape"]]: ZodMiniNonOptional<T["_zod"]["shape"][k]>;
+  [k in keyof T["_zod"]["def"]["shape"]]: ZodMiniNonOptional<T["_zod"]["def"]["shape"][k]>;
 }>;
 export function required<
   T extends { _zod: { subtype: "object" } } & ZodMiniObject,
-  M extends util.Exactly<util.Mask<keyof T["_zod"]["shape"]>, M>,
+  M extends util.Exactly<util.Mask<keyof T["_zod"]["def"]["shape"]>, M>,
 >(
   schema: T,
   mask: M
 ): ZodMiniObject<
   util.ExtendShape<
-    T["_zod"]["shape"],
+    T["_zod"]["def"]["shape"],
     {
-      [k in keyof M & keyof T["_zod"]["shape"]]: ZodMiniNonOptional<T["_zod"]["shape"][k]>;
+      [k in keyof M & keyof T["_zod"]["def"]["shape"]]: ZodMiniNonOptional<T["_zod"]["def"]["shape"][k]>;
     }
   >
 >;
@@ -1011,7 +1029,7 @@ export function required<T extends { _zod: { subtype: "interface" } } & ZodMiniI
   schema: T
 ): ZodMiniInterface<
   {
-    [k in keyof T["_zod"]["shape"]]: ZodMiniNonOptional<T["_zod"]["shape"][k]>;
+    [k in keyof T["_zod"]["def"]["shape"]]: ZodMiniNonOptional<T["_zod"]["def"]["shape"][k]>;
   },
   {
     optional: never;
@@ -1027,9 +1045,9 @@ export function required<
   mask: M
 ): ZodMiniInterface<
   util.ExtendShape<
-    T["_zod"]["shape"],
+    T["_zod"]["def"]["shape"],
     {
-      [k in keyof M & keyof T["_zod"]["shape"]]: ZodMiniNonOptional<T["_zod"]["shape"][k]>;
+      [k in keyof M & keyof T["_zod"]["def"]["shape"]]: ZodMiniNonOptional<T["_zod"]["def"]["shape"][k]>;
     }
   >,
   {

@@ -6,19 +6,15 @@ export default defineConfig({
   },
   test: {
     watch: false,
-    isolate: true,
+    isolate: false,
     typecheck: {
+      include: ["**/*.test.ts"],
       enabled: true,
       ignoreSourceErrors: false,
+      checker: "tsc",
+      tsconfig: "./tsconfig.json",
     },
-    // coverage: {
-    //   provider: "istanbul", // or 'v8'
-    // },
-    // reporters: [
-    //   // "basic", { summary: false }
-    //   ["basic", { summary: false }],
-    // ],
-    // reporters: false,
+
     silent: true,
   },
 }) as UserConfig;

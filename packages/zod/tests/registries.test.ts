@@ -87,12 +87,12 @@ test("z.registry with schema constraints", () => {
 // });
 
 test("output type in registry meta", () => {
-  const reg = z.registry<z.$output>();
+  const reg = z.registry<{ out: z.$output }>();
   const a = z.string();
-  reg.add(a, "asdf");
+  reg.add(a, { out: "asdf" });
   // @ts-expect-error
   reg.add(a, 1234);
-  expectTypeOf(reg.get(a)).toEqualTypeOf<string | undefined>();
+  expectTypeOf(reg.get(a)).toEqualTypeOf<{ out: string } | undefined>();
 });
 
 test("output type in registry meta - objects and arrays", () => {
@@ -106,12 +106,12 @@ test("output type in registry meta - objects and arrays", () => {
 });
 
 test("input type in registry meta", () => {
-  const reg = z.registry<z.$input>();
+  const reg = z.registry<{ in: z.$input }>();
   const a = z.pipe(z.number(), z.transform(String));
-  reg.add(a, 1234);
+  reg.add(a, { in: 1234 });
   // @ts-expect-error
   reg.add(a, "1234");
-  expectTypeOf(reg.get(a)).toEqualTypeOf<number | undefined>();
+  expectTypeOf(reg.get(a)).toEqualTypeOf<{ in: number } | undefined>();
 });
 
 test("input type in registry meta - objects and arrays", () => {

@@ -25,6 +25,10 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
   def: this["_zod"]["def"];
   /** @deprecated Use `.def` instead. */
   _def: this["_zod"]["def"];
+  /** @deprecated Use `z.output<typeof schema>` instead. */
+  _output: this["_zod"]["output"];
+  /** @deprecated Use `z.input<typeof schema>` instead. */
+  _input: this["_zod"]["input"];
   // base methods
   check(...checks: (core.CheckFn<this["_zod"]["output"]> | core.$ZodCheck<this["_zod"]["output"]>)[]): this;
   clone(def?: this["_zod"]["def"]): this;
@@ -1854,8 +1858,11 @@ export const ZodEnum: core.$constructor<ZodEnum> = /*@__PURE__*/ core.$construct
   };
 });
 
-function _enum<const T extends string[]>(values: T, params?: core.$ZodEnumParams): ZodEnum<util.ToEnum<T[number]>>;
-function _enum<T extends util.EnumLike>(entries: T, params?: core.$ZodEnumParams): ZodEnum<T>;
+function _enum<const T extends readonly string[]>(
+  values: T,
+  params?: core.$ZodEnumParams
+): ZodEnum<util.ToEnum<T[number]>>;
+function _enum<const T extends util.EnumLike>(entries: T, params?: core.$ZodEnumParams): ZodEnum<T>;
 function _enum(values: any, params?: core.$ZodEnumParams) {
   const entries: any = Array.isArray(values) ? Object.fromEntries(values.map((v) => [v, v])) : values;
 

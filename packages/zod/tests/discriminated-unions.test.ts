@@ -432,7 +432,7 @@ test("branded", () => {
   ]);
 
   type schema = z.infer<typeof schema>;
-  expectTypeOf<schema>().toEqualTypeOf<{ key: "a" } | { key: "b" & { _type: "asdfasdf" } }>();
+  expectTypeOf<schema>().toEqualTypeOf<{ key: "a" } | { key: "b" & z.core.$brand<"asdfasdf"> }>();
 
   schema.parse({ key: "a" });
   schema.parse({ key: "b" });

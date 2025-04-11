@@ -117,6 +117,8 @@ export interface $ZodFunctionParams<I extends $ZodFunctionArgs, O extends schema
   input?: I;
   output?: O;
 }
+
+function _function(): $ZodFunction;
 function _function<
   const In extends Array<schemas.$ZodType> = Array<schemas.$ZodType>,
   Out extends schemas.$ZodType = schemas.$ZodType,
