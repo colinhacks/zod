@@ -284,7 +284,7 @@ Validation now happens using the `new URL()` constructor, which is far more robu
 
 ### drops `z.string().cidr()` 
 
-Similarly, this has been replaced with separate `.cidrv4()` and `.cidrv4()` methods. Use `z.union()` to combine them if you need to accept both.
+Similarly, this has been replaced with separate `.cidrv4()` and `.cidrv6()` methods. Use `z.union()` to combine them if you need to accept both.
 
 ```ts
 z.string().cidr() // ❌
