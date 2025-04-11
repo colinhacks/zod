@@ -63,6 +63,54 @@ export interface ParseContext {
   readonly parsedType: ZodParsedType;
 }
 
+/**
+ * Processes a large input string in chunks and validates each chunk using a custom processor.
+ * Optimized for speed and memory efficiency with configurable chunk and batch sizes.
+ *
+ * @param {string} input - The input string to be processed in chunks.
+ * @param {number} chunkSize - The size of each chunk in characters.
+ * @param {number} batchSize - The number of chunks to process in one batch.
+ * @param {(chunk: string) => boolean} processor - A function to validate each chunk. Should return `true` if valid, `false` otherwise.
+ * @returns {boolean} - Returns `true` if all chunks pass validation, otherwise `false`.
+ *
+ * @example
+ * const isValid = processInChunks(
+ *   largeString,
+ *   2048, // chunk size
+ *   4,    // batch size
+ *   (chunk) => /^[A-Za-z0-9+/]+={0,2}$/.test(chunk)
+ * );
+ * console.log(isValid); // true or false
+ */
+export function processInChunks(
+  input: string,
+  chunkSize: number,
+  batchSize: number,
+  processor: (chunk: string) => boolean
+): boolean {
+  // Handle single chunk case and length of 0
+  if (input.length <= chunkSize) return processor(input);
+
+  const totalChunks = Math.ceil(input.length / chunkSize);
+
+  // Process chunks in batches
+  for (let i = 0; i < totalChunks; i += batchSize) {
+    const batchLimit = Math.min(i + batchSize, totalChunks);
+
+    for (let j = i; j < batchLimit; j++) {
+      const startIndex = j * chunkSize;
+      const chunk = input.slice(startIndex, startIndex + chunkSize);
+
+      // Stop processing on the first failure
+      if (!processor(chunk)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
 export type ParseInput = {
   data: any;
   path: (string | number)[];
