@@ -391,7 +391,11 @@ export class JSONSchemaGenerator {
           if (val === undefined) throw new Error("Literal `undefined` cannot be represented in JSON Schema");
           if (typeof val === "bigint") throw new Error("BigInt literals cannot be represented in JSON Schema");
         }
-        json.enum = def.values as any;
+        if (def.values.length === 1) {
+          json.const = def.values[0] as any;
+        } else {
+          json.enum = def.values as any;
+        }
         break;
       }
       case "file": {
