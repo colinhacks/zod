@@ -532,7 +532,7 @@ const myRecord = z.record(z.enum(["a", "b", "c"]), z.number());
 // { a?: number; b?: number; c?: number; }
 ```
 
-In Zod 4, this is no longer the case. The inferred type is what you'd expect, and Zod ensures exhaustiveneess; that is, it makes sure all enum keys exist in the input during parsing.
+In Zod 4, this is no longer the case. The inferred type is what you'd expect, and Zod ensures exhaustiveness; that is, it makes sure all enum keys exist in the input during parsing.
 
 ```ts
 const myRecord = z.record(z.enum(["a", "b", "c"]), z.number());
