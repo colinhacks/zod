@@ -438,9 +438,7 @@ describe("toJSONSchema", () => {
     const a = z.literal("hello");
     expect(toJSONSchema(a)).toMatchInlineSnapshot(`
       {
-        "enum": [
-          "hello",
-        ],
+        "const": "hello",
       }
     `);
 
