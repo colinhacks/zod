@@ -1937,6 +1937,136 @@ export class ZodBoolean extends ZodType<boolean, ZodBooleanDef, boolean> {
   };
 }
 
+//////////////////////////////////////////
+//////////////////////////////////////////
+//////////                     ///////////
+//////////      ZodEnvBool     ///////////
+//////////                     ///////////
+//////////////////////////////////////////
+//////////////////////////////////////////
+export type CaseSensitivity = "sensitive" | "insensitive";
+export const truthyValues: Set<string> = new Set([
+  "true",
+  "1",
+  "on",
+  "yes",
+  "y",
+  "enabled",
+]);
+export const falsyValues: Set<string> = new Set([
+  "false",
+  "0",
+  "off",
+  "no",
+  "n",
+  "disabled",
+]);
+export const caseSensitivity: CaseSensitivity = "insensitive";
+
+export interface ZodEnvBoolDef extends ZodTypeDef {
+  typeName: ZodFirstPartyTypeKind.ZodEnvBool;
+  true: string[];
+  false: string[];
+  case: CaseSensitivity;
+}
+
+function safeMergeTruthy(newValues?: string[]): string[] {
+  const merged = new Set<string>(truthyValues);
+  if (newValues) {
+    for (const value of newValues) {
+      if (value === "") continue;
+      merged.add(value);
+    }
+  }
+
+  return Array.from(merged);
+}
+
+function safeMergeFalsy(newValues?: string[]): string[] {
+  const merged = new Set<string>(falsyValues);
+  if (newValues) {
+    for (const value of newValues) {
+      if (value === "") continue;
+      merged.add(value);
+    }
+  }
+
+  return Array.from(merged);
+}
+
+export class ZodEnvBool extends ZodType<boolean, ZodEnvBoolDef, string> {
+  _parse(input: ParseInput): ParseReturnType<boolean> {
+    const parsedType = this._getType(input);
+
+    const ctx = this._getOrReturnCtx(input);
+    if (parsedType !== ZodParsedType.string) {
+      addIssueToContext(ctx, {
+        code: ZodIssueCode.invalid_type,
+        expected: ZodParsedType.string,
+        received: ctx.parsedType,
+      });
+      return INVALID;
+    }
+
+    // Check for case sensitivity
+    const isCaseSensitive = this._def.case === "sensitive";
+    const trueValues = isCaseSensitive
+      ? this._def.true
+      : this._def.true.map((v) => v.toLowerCase());
+    const falseValues = isCaseSensitive
+      ? this._def.false
+      : this._def.false.map((v) => v.toLowerCase());
+    const inputValue = isCaseSensitive ? input.data : input.data.toLowerCase();
+
+    // Check if the input value is in the true or false values
+    if (trueValues.includes(inputValue)) return OK(true);
+    if (falseValues.includes(inputValue)) return OK(false);
+
+    addIssueToContext(ctx, {
+      code: ZodIssueCode.invalid_string,
+      validation: "envbool",
+    });
+    return INVALID;
+  }
+
+  /**
+   * Get default truthy values
+   */
+  get _truthyValues(): string[] {
+    return Array.from(truthyValues);
+  }
+
+  /**
+   * Get default falsy values
+   */
+  get _falsyValues(): string[] {
+    return Array.from(falsyValues);
+  }
+
+  /**
+   * Get default case sensitivity
+   */
+  get _caseSensitivity(): CaseSensitivity {
+    return caseSensitivity;
+  }
+
+  static create = (
+    params?: RawCreateParams & {
+      true?: string[];
+      false?: string[];
+      case?: CaseSensitivity;
+    }
+  ): ZodEnvBool => {
+    return new ZodEnvBool({
+      typeName: ZodFirstPartyTypeKind.ZodEnvBool,
+      true: safeMergeTruthy(params?.true),
+      false: safeMergeFalsy(params?.false),
+      case: params?.case || caseSensitivity,
+      ...processCreateParams(params),
+    });
+  };
+}
+
 ///////////////////////////////////////
 ///////////////////////////////////////
 //////////                     ////////
@@ -5327,6 +5457,7 @@ export enum ZodFirstPartyTypeKind {
   ZodBranded = "ZodBranded",
   ZodPipeline = "ZodPipeline",
   ZodReadonly = "ZodReadonly",
+  ZodEnvBool = "ZodEnvBool",
 }
 export type ZodFirstPartySchemaTypes =
   | ZodString
@@ -5412,6 +5543,7 @@ const optionalType = ZodOptional.create;
 const nullableType = ZodNullable.create;
 const preprocessType = ZodEffects.createWithPreprocess;
 const pipelineType = ZodPipeline.create;
+const envboolType = ZodEnvBool.create;
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
@@ -5441,6 +5573,7 @@ export {
   discriminatedUnionType as discriminatedUnion,
   effectsType as effect,
   enumType as enum,
+  envboolType as envbool,
   functionType as function,
   instanceOfType as instanceof,
   intersectionType as intersection,
