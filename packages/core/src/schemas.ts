@@ -2051,7 +2051,7 @@ function matchDiscriminators(input: any, discs: util.DiscriminatorMap): boolean 
   for (const [key, value] of discs) {
     const data = input?.[key];
 
-    if (!value.values.has(data)) {
+    if (value.values.size && !value.values.has(data)) {
       matched = false;
     }
     if (value.maps.length > 0) {

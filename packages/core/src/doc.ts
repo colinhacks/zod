@@ -1,12 +1,12 @@
 type ModeWriter = (doc: Doc, modes: { execution: "sync" | "async" }) => void;
 
 export class Doc {
-  args: string[];
+  args!: string[];
   content: string[] = [];
   indent = 0;
 
   constructor(args: string[] = []) {
-    this.args = args;
+    if (this) this.args = args;
   }
 
   indented(fn: (doc: Doc) => void) {

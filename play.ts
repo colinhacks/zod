@@ -1,25 +1,27 @@
 import * as z from "zod";
 
-const ConfigBase = z.object({
+const a = z.object({
+  type: z.object({ key: z.literal("A") }),
   name: z.string(),
 });
 
-const FreeConfig = z.object({
-  type: z.literal("free"),
-  min_cents: z.null(),
+const b = z.object({
+  type: z.object({ key: z.literal("B") }),
+  age: z.number(),
 });
 
-// console.log(FreeConfig.shape.type);
-const PricedConfig = z.object({
-  type: z.literal("fiat-price"),
-  // min_cents: z.int().nullable(),
-  min_cents: z.null(),
-});
+const c = z.discriminatedUnion([a, b]);
 
-const Config = z.discriminatedUnion([FreeConfig, PricedConfig]);
+console.log(
+  c.safeParse({
+    type: { key: "A" },
+    name: "hello",
+  })
+);
 
-Config.parse({
-  min_cents: null,
-  type: "fiat-price",
-  name: "Standard",
-});
+console.log(
+  c.safeParse({
+    type: { key: "B" },
+    age: 12,
+  })
+);
