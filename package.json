@@ -1,7 +1,6 @@
 {
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@9.1.4",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/colinhacks/zod.git"
