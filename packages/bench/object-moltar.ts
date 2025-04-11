@@ -2,7 +2,7 @@ import * as z4 from "zod";
 import * as z3 from "zod3";
 import { metabench } from "./metabench.js";
 
-const z3schema = z3.object({
+const z3Schema = z3.object({
   number: z3.number(),
   negNumber: z3.number(),
   maxNumber: z3.number(),
@@ -13,10 +13,24 @@ const z3schema = z3.object({
     foo: z3.string(),
     num: z3.number(),
     bool: z3.boolean(),
+  }).strict()
+}).strict();
+
+const z4SchemaStrict = z4.strictObject({
+  number: z4.number(),
+  negNumber: z4.number(),
+  maxNumber: z4.number(),
+  string: z4.string(),
+  longString: z4.string(),
+  boolean: z4.boolean(),
+  deeplyNested: z4.strictObject({
+    foo: z4.string(),
+    num: z4.number(),
+    bool: z4.boolean(),
   }),
 });
 
-const z4schema = z4.object({
+const z4SchemaLoose = z4.object({
   number: z4.number(),
   negNumber: z4.number(),
   maxNumber: z4.number(),
@@ -47,15 +61,18 @@ const DATA = Array.from({ length: 1000 }, () =>
   })
 );
 
-console.log(z3schema.parse(DATA[0]));
-console.log(z4schema.parse(DATA[0]));
+console.log(z3Schema.parse(DATA[0]));
+console.log(z4SchemaLoose.parse(DATA[0]));
 
 const bench = metabench("z.object() safeParse", {
   zod3() {
-    for (const _ of DATA) z3schema.parse(_);
+    for (const _ of DATA) z3Schema.parse(_);
   },
   zod4() {
-    for (const _ of DATA) z4schema.parse(_);
+    for (const _ of DATA) z4SchemaStrict.parse(_);
+  },
+  zod4loose() {
+    for (const _ of DATA) z4SchemaLoose.parse(_);
   },
 });
 

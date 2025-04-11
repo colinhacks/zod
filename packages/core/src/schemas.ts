@@ -1686,9 +1686,13 @@ export const $ZodObjectLike: core.$constructor<$ZodObjectLike> = /*@__PURE__*/ c
     const fastEnabled = util.allowsEval.value; // && !def.catchall;
     const isObject = util.isObject;
     const { catchall } = def;
+
+    let value!: typeof _normalized.value;
+
     // const noCatchall = !def.catchall;
 
     inst._zod.parse = (payload, ctx) => {
+      value ??= _normalized.value;
       const input = payload.value;
       if (!isObject(input)) {
         payload.issues.push({
@@ -1709,7 +1713,7 @@ export const $ZodObjectLike: core.$constructor<$ZodObjectLike> = /*@__PURE__*/ c
       } else {
         payload.value = {};
         // const normalized = _normalized.value;
-        const { keys, shape, optionalKeys } = _normalized.value;
+        const { keys, shape, optionalKeys } = value;
         for (const key of keys) {
           const valueSchema = shape[key];
 
@@ -1761,13 +1765,16 @@ export const $ZodObjectLike: core.$constructor<$ZodObjectLike> = /*@__PURE__*/ c
       }
       const unrecognized: string[] = [];
       // iterate over input keys
+      const keySet = value.keySet;
+      const _catchall = catchall._zod;
+      const t = _catchall.def.type;
       for (const key of Object.keys(input)) {
-        if (_normalized.value.keySet.has(key)) continue;
-        if (catchall._zod.def.type === "never") {
+        if (keySet.has(key)) continue;
+        if (t === "never") {
           unrecognized.push(key);
           continue;
         }
-        const r = catchall._zod.run({ value: input[key], issues: [] }, ctx);
+        const r = _catchall.run({ value: input[key], issues: [] }, ctx);
 
         if (r instanceof Promise) {
           proms.push(r.then((r) => handleObjectResult(r, payload, key)));
