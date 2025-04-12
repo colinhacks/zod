@@ -6,7 +6,7 @@ import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 import { Callout } from "fumadocs-ui/components/callout"
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
-To validate data, you must first define a *schema*. Schemas represent *types*, from simple primitive values to complex. nested objects and arrays. 
+To validate data, you must first define a *schema*. Schemas represent *types*, from simple primitive values to complex nested objects and arrays. 
 
 ## Primitives
 
@@ -252,7 +252,8 @@ Zod exports several useful regexes you could use.
 
 ```ts
 // Zod's default email regex
-z.email({ pattern: z.regexes.emai });
+z.email();
+z.email({ pattern: z.regexes.email }); // equivalent
 
 // the regex used by browsers to validate input[type=email] fields
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/email
@@ -306,7 +307,7 @@ datetime.parse("2020-01-01T00:00:00.123456Z"); // ✅ (arbitrary precision)
 datetime.parse("2020-01-01T00:00:00+02:00"); // ❌ (no offsets allowed)
 ```
 
-To allow Timezone offsets can be allowed by setting the `offset` option to `true`.
+To allow timesone offsets:
 
 ```ts
 const datetime = z.iso.datetime({ offset: true });
@@ -318,14 +319,14 @@ datetime.parse("2020-01-01T00:00:00.123+02"); // ✅ (only offset hours)
 datetime.parse("2020-01-01T00:00:00Z"); // ✅ (Z still supported)
 ```
 
-Allow unqualified (timezone-less) datetimes with the `local` flag.
+To allow unqualified (timezone-less) datetimes:
 
 ```ts
 const schema = z.iso.datetime({ local: true });
 schema.parse("2020-01-01T00:00:00"); // ✅
 ```
 
-You can additionally constrain the allowable `precision`. By default, arbitrary sub-second precision is supported (but optional).
+To constrain the allowable `precision` (by default, arbitrary sub-second precision is supported).
 
 ```ts
 const datetime = z.iso.datetime({ precision: 3 });
@@ -547,8 +548,8 @@ Use `z.enum` to validate inputs against a fixed set of allowable _string_ values
 ```ts
 const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
 
-Fishenum.parse("Salmon"); // => "Salmon"
-Fishenum.parse("Swordfish"); // => ❌
+FishEnum.parse("Salmon"); // => "Salmon"
+FishEnum.parse("Swordfish"); // => ❌
 ```
 
 <Callout>
@@ -854,14 +855,14 @@ For these reasons, `z.interface` is the recommended approach. However, `z.object
 
 {/* The `z.interface()` API fixes some shortcomings with `z.object()`. Let's run through them. */}
 
-There are a couple ways in which a key can be "optional" in TypeScript. Consider these two inferfaces.
+There are a couple ways in which a key can be "optional" in TypeScript. Consider these two interfaces.
 
 ```ts
-inferface A {
+interface A {
   name?: string | undefined;
 }
 
-inferface B {
+interface B {
   name: string | undefined;
 }
 ```
@@ -884,7 +885,7 @@ z.object({ name: z.string().optional() });
 // { name?: string | undefined; }
 ```
 
-By contrast, `z.inferface()` can represent both varieties. To make a property "key optional" (e.g. to add the question mark), prefix that key with `?`. 
+By contrast, `z.interface()` can represent both varieties. To make a property "key optional" (e.g. to add the question mark), prefix that key with `?`. 
 
 
 ```ts
@@ -1237,13 +1238,13 @@ To make all fields optional:
 <Tab value="zod">
 ```ts zod
 const PartialRecipe = Recipe.partial();
-// { title?: string | undefined; discription?: string | undefined; ingredients?: string[] | undefined }
+// { title?: string | undefined; description?: string | undefined; ingredients?: string[] | undefined }
 ```
 </Tab>
 <Tab value="@zod/mini">
 ```ts @zod/mini
 const PartialRecipe = z.partial(Recipe);
-// { title?: string | undefined; discription?: string | undefined; ingredients?: string[] | undefined }
+// { title?: string | undefined; description?: string | undefined; ingredients?: string[] | undefined }
 ```
 </Tab>
 </Tabs>
@@ -1261,7 +1262,7 @@ const RecipeOptionalIngredients = Recipe.partial({
 </Tab>
 <Tab value="@zod/mini">
 ```ts @zod/mini
-const RecipeOptionalIngredients = z.partial(User, {
+const RecipeOptionalIngredients = z.partial(Recipe, {
   ingredients: true,
 });
 // { title: string; description?: string | undefined; ingredients?: string[] | undefined }
@@ -1641,7 +1642,7 @@ function handleResult(result: MyResult){
 
 You could represent with with a regular `z.union()`. But regular unions are *naive*—they check the input against each option in order and return the first one that passes. This can be slow for large unions.
 
-So Zod provides a `z.discriminatedUnion()` API that leverages the discriminator key to make parsing more efficient.
+So Zod provides a `z.discriminatedUnion()` API that uses a *discriminator key* to make parsing more efficient.
 
 
 ```ts
@@ -1745,7 +1746,7 @@ const Person = z.record(Keys, z.string());
 
 <Accordions type="single"><Accordion title="A note on numeric keys">
 
-Despite the fact that TypeScript lets you define `Record` types with `number` keys (e.g. `Record<number, unknown>`), numerical keys don't actually exist in JavaScript.
+Though TypeScript lets you define `Record` types with `number` keys (e.g. `Record<number, unknown>`), numerical keys don't actually exist in JavaScript, which converts all keys to strings.
 
 ```ts
 const myObject = { 1: "one" };
@@ -1854,7 +1855,7 @@ TestSchema.parse("whatever"); // ❌
 
 ## Refinements
 
-Every Zod schema stores an array of *refinements*. Refinements are a way to perform additional custom validation that can Zod doesn't provide a native API for.
+Every Zod schema stores an array of *refinements*. Refinements are a way to perform custom validation that can Zod doesn't provide a native API for.
 
 ### `.refine()`
 
@@ -1901,7 +1902,7 @@ const myString = z.string().check(
 </Tabs>
 
 
-By default, validation issues from checks are considered *continuable*; that is, Zod will execute *all* checks in sequence, even if one of them causes a validation error. This is usually desirable, so Zod can present a comprehensive list of validation issues in one go.
+By default, validation issues from checks are considered *continuable*; that is, Zod will execute *all* checks in sequence, even if one of them causes a validation error. This is usually desirable, as it means Zod can surface as many errors as possible in one go.
 
 <Tabs groupId="lib" items={["zod", "@zod/mini"]}>
 <Tab value="zod">
@@ -2169,7 +2170,7 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
 </Tab>
 </Tabs>
 
-The regular `.refine` API only generated create issues with a `"custom"` error code, but `.check()` makes it possible to throw other issue types. For more information on Zod's internal issue types, read the [Error customization](./error-customization) docs.
+The regular `.refine` API only generates issues with a `"custom"` error code, but `.check()` makes it possible to throw other issue types. For more information on Zod's internal issue types, read the [Error customization](./error-customization) docs.
 
 ## Pipes
 
