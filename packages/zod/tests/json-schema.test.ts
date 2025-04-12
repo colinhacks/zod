@@ -39,54 +39,63 @@ describe("toJSONSchema", () => {
     expect(toJSONSchema(z.email())).toMatchInlineSnapshot(`
       {
         "format": "email",
+        "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
         "type": "string",
       }
     `);
     expect(toJSONSchema(z.iso.datetime())).toMatchInlineSnapshot(`
       {
         "format": "date-time",
+        "pattern": "^((\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-((0[13578]|1[02])-(0[1-9]|[12]\\d|3[01])|(0[469]|11)-(0[1-9]|[12]\\d|30)|(02)-(0[1-9]|1\\d|2[0-8])))T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d+)?(Z)$",
         "type": "string",
       }
     `);
     expect(toJSONSchema(z.iso.date())).toMatchInlineSnapshot(`
       {
         "format": "date",
+        "pattern": "^((\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-((0[13578]|1[02])-(0[1-9]|[12]\\d|3[01])|(0[469]|11)-(0[1-9]|[12]\\d|30)|(02)-(0[1-9]|1\\d|2[0-8])))$",
         "type": "string",
       }
     `);
     expect(toJSONSchema(z.iso.time())).toMatchInlineSnapshot(`
       {
         "format": "time",
+        "pattern": "^([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d+)?$",
         "type": "string",
       }
     `);
     expect(toJSONSchema(z.iso.duration())).toMatchInlineSnapshot(`
       {
         "format": "duration",
+        "pattern": "^P(?:(\\d+W)|(?!.*W)(?=\\d|T\\d)(\\d+Y)?(\\d+M)?(\\d+D)?(T(?=\\d)(\\d+H)?(\\d+M)?(\\d+([.,]\\d+)?S)?)?)$",
         "type": "string",
       }
     `);
     expect(toJSONSchema(z.ipv4())).toMatchInlineSnapshot(`
       {
         "format": "ipv4",
+        "pattern": "^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$",
         "type": "string",
       }
     `);
     expect(toJSONSchema(z.ipv6())).toMatchInlineSnapshot(`
       {
         "format": "ipv6",
+        "pattern": "^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|::|([0-9a-fA-F]{1,4})?::([0-9a-fA-F]{1,4}:?){0,6})$",
         "type": "string",
       }
     `);
     expect(toJSONSchema(z.uuid())).toMatchInlineSnapshot(`
       {
         "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000)$",
         "type": "string",
       }
     `);
     expect(toJSONSchema(z.guid())).toMatchInlineSnapshot(`
       {
         "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$",
         "type": "string",
       }
     `);
@@ -100,12 +109,14 @@ describe("toJSONSchema", () => {
       {
         "contentEncoding": "base64",
         "format": "base64",
+        "pattern": "^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$",
         "type": "string",
       }
     `);
     expect(toJSONSchema(z.cuid())).toMatchInlineSnapshot(`
       {
         "format": "cuid",
+        "pattern": "^[cC][^\\s-]{8,}$",
         "type": "string",
       }
     `);
@@ -113,24 +124,28 @@ describe("toJSONSchema", () => {
     expect(toJSONSchema(z.emoji())).toMatchInlineSnapshot(`
       {
         "format": "emoji",
+        "pattern": "^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$",
         "type": "string",
       }
     `);
     expect(toJSONSchema(z.nanoid())).toMatchInlineSnapshot(`
       {
         "format": "nanoid",
+        "pattern": "^[a-zA-Z0-9_-]{21}$",
         "type": "string",
       }
     `);
     expect(toJSONSchema(z.cuid2())).toMatchInlineSnapshot(`
       {
         "format": "cuid2",
+        "pattern": "^[0-9a-z]+$",
         "type": "string",
       }
     `);
     expect(toJSONSchema(z.ulid())).toMatchInlineSnapshot(`
       {
         "format": "ulid",
+        "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
         "type": "string",
       }
     `);
@@ -219,18 +234,21 @@ describe("toJSONSchema", () => {
     expect(toJSONSchema(z.string().email())).toMatchInlineSnapshot(`
       {
         "format": "email",
+        "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
         "type": "string",
       }
     `);
     expect(toJSONSchema(z.string().uuid())).toMatchInlineSnapshot(`
       {
         "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000)$",
         "type": "string",
       }
     `);
     expect(toJSONSchema(z.iso.datetime())).toMatchInlineSnapshot(`
       {
         "format": "date-time",
+        "pattern": "^((\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-((0[13578]|1[02])-(0[1-9]|[12]\\d|3[01])|(0[469]|11)-(0[1-9]|[12]\\d|30)|(02)-(0[1-9]|1\\d|2[0-8])))T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d+)?(Z)$",
         "type": "string",
       }
     `);
@@ -238,18 +256,21 @@ describe("toJSONSchema", () => {
     expect(toJSONSchema(z.iso.date())).toMatchInlineSnapshot(`
       {
         "format": "date",
+        "pattern": "^((\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-((0[13578]|1[02])-(0[1-9]|[12]\\d|3[01])|(0[469]|11)-(0[1-9]|[12]\\d|30)|(02)-(0[1-9]|1\\d|2[0-8])))$",
         "type": "string",
       }
     `);
     expect(toJSONSchema(z.iso.time())).toMatchInlineSnapshot(`
       {
         "format": "time",
+        "pattern": "^([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d+)?$",
         "type": "string",
       }
     `);
     expect(toJSONSchema(z.iso.duration())).toMatchInlineSnapshot(`
       {
         "format": "duration",
+        "pattern": "^P(?:(\\d+W)|(?!.*W)(?=\\d|T\\d)(\\d+Y)?(\\d+M)?(\\d+D)?(T(?=\\d)(\\d+H)?(\\d+M)?(\\d+([.,]\\d+)?S)?)?)$",
         "type": "string",
       }
     `);
@@ -262,6 +283,7 @@ describe("toJSONSchema", () => {
     expect(toJSONSchema(z.ipv4())).toMatchInlineSnapshot(`
       {
         "format": "ipv4",
+        "pattern": "^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$",
         "type": "string",
       }
     `);
@@ -269,6 +291,7 @@ describe("toJSONSchema", () => {
     expect(toJSONSchema(z.ipv6())).toMatchInlineSnapshot(`
       {
         "format": "ipv6",
+        "pattern": "^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|::|([0-9a-fA-F]{1,4})?::([0-9a-fA-F]{1,4}:?){0,6})$",
         "type": "string",
       }
     `);
@@ -277,6 +300,7 @@ describe("toJSONSchema", () => {
       {
         "contentEncoding": "base64",
         "format": "base64",
+        "pattern": "^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$",
         "type": "string",
       }
     `);
@@ -289,6 +313,14 @@ describe("toJSONSchema", () => {
     expect(toJSONSchema(z.guid())).toMatchInlineSnapshot(`
       {
         "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$",
+        "type": "string",
+      }
+    `);
+    expect(toJSONSchema(z.string().regex(/asdf/))).toMatchInlineSnapshot(`
+      {
+        "format": "regex",
+        "pattern": "asdf",
         "type": "string",
       }
     `);
