@@ -239,11 +239,11 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
       if (result instanceof Promise) {
         return result.then(({ issues, value }) => {
           if (issues.length === 0) return { value } as any;
-          return { issues };
+          return { issues: issues.map((iss) => util.finalizeIssue(iss, {}, core.config())) };
         });
       }
       if (result.issues.length === 0) return { value: result.value } as any;
-      return { issues: result.issues };
+      return { issues: result.issues.map((iss) => util.finalizeIssue(iss, {}, core.config())) };
     },
     vendor: "zod",
     version: 1 as const,
