@@ -594,7 +594,7 @@ class ZodType<Output = unknown, Input = unknown> {
 The second generic `Def` has been entirely removed. Instead the base class now only tracks `Output` and `Input`. While previously the `Input` value defaulted to `Output`, it now defaults to `unknown`. This allows generic functions involving `z.ZodType` to behave more intuitively in many cases.
 
 ```ts
-const inferSchema<T extends z.ZodType>(schema: T): T {
+function inferSchema<T extends z.ZodType>(schema: T): T {
   return schema;
 };
 
