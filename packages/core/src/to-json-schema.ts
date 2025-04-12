@@ -168,7 +168,8 @@ export class JSONSchemaGenerator {
         // custom pattern overrides format
         if (format) {
           json.format = formatMap[format] ?? format;
-        } else if (pattern) {
+        }
+        if (pattern) {
           json.pattern = pattern.source;
         }
         if (contentEncoding) json.contentEncoding = contentEncoding;
