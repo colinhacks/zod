@@ -169,12 +169,17 @@ export interface $ZodErrorMap<T extends $ZodIssueBase = $ZodIssue> {
 ////////////////////////    ERROR CLASS   ////////////////////////
 
 const ZOD_ERROR: symbol = Symbol.for("{{zod.error}}");
+export interface $ZodError<T = unknown> extends Error {
+  _zod: { type: T };
+  stack?: string;
+  name: string;
+}
 export class $ZodError<T = unknown> implements Error {
   /** @deprecated Virtual property, do not access. */
-  _zod!: { type: T };
+
   public issues: $ZodIssue[];
-  name!: string;
-  stack?: string;
+
+  // stack?: string;
 
   get message(): string {
     return JSON.stringify(this.issues, jsonStringifyReplacer, 2);
