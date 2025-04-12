@@ -20,6 +20,16 @@ test("length checks", async () => {
 });
 
 test("length checks", async () => {
+  const schema = z.string();
+  const result = await schema["~standard"].validate("asdf");
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "value": "asdf",
+    }
+  `);
+});
+
+test("length checks", async () => {
   const schema = z.string().refine(async (val) => val.length > 5);
   const result = await schema["~standard"].validate(12);
   expect(result).toMatchInlineSnapshot(`
@@ -32,6 +42,16 @@ test("length checks", async () => {
           "path": [],
         },
       ],
+    }
+  `);
+});
+
+test("length checks", async () => {
+  const schema = z.string().refine(async (val) => val.length > 5);
+  const result = await schema["~standard"].validate("234134134");
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "value": "234134134",
     }
   `);
 });
