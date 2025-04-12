@@ -505,9 +505,7 @@ describe("toJSONSchema", () => {
 
     expect(toJSONSchema(a)).toMatchInlineSnapshot(`
       {
-        "additionalProperties": {
-          "not": {},
-        },
+        "additionalProperties": false,
         "properties": {
           "age": {
             "type": "number",
@@ -579,16 +577,37 @@ describe("toJSONSchema", () => {
       {
         "properties": {
           "optional": {
-            "oneOf": [
-              {
-                "type": "string",
-              },
-              {
-                "type": "null",
-              },
-            ],
+            "type": "string",
           },
           "required": {
+            "type": "string",
+          },
+        },
+        "required": [
+          "required",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  it("optional fields - object with options", () => {
+    const schema = z.object({
+      required: z.string().min(1),
+      optional: z.string().max(10).optional(),
+    });
+
+    const result = toJSONSchema(schema);
+
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "properties": {
+          "optional": {
+            "maxLength": 10,
+            "type": "string",
+          },
+          "required": {
+            "minLength": 1,
             "type": "string",
           },
         },
@@ -672,9 +691,7 @@ describe("toJSONSchema", () => {
 
     expect(toJSONSchema(a)).toMatchInlineSnapshot(`
       {
-        "additionalProperties": {
-          "not": {},
-        },
+        "additionalProperties": false,
         "properties": {
           "age": {
             "type": "number",

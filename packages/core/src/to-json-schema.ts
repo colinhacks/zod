@@ -289,6 +289,11 @@ export class JSONSchemaGenerator {
             ...params,
             path: [...params.path, "additionalProperties"],
           });
+
+          // if "additionalProperties" is `{"not": {}}`, then it should be `false`
+          if (JSON.stringify(json.additionalProperties) === '{"not":{}}') {
+            json.additionalProperties = false;
+          }
         }
 
         break;
@@ -410,21 +415,12 @@ export class JSONSchemaGenerator {
         }
         break;
       }
-      case "optional": {
-        const inner = this.process(def.innerType, params);
-        const json: JSONSchema.BaseSchema = _json as any;
-        json!.oneOf = [inner, { type: "null" }];
-        break;
-      }
-      case "nullable": {
-        const inner = this.process(def.innerType, params);
-        _json.oneOf = [inner, { type: "null" }];
-        break;
-      }
+      case "optional":
+      case "nullable":
       case "nonoptional": {
+        // merge with inner, should be handled by `required`
         const inner = this.process(def.innerType, params);
         Object.assign(_json, inner);
-        _json.not = { type: "null" };
         break;
       }
       case "success": {
