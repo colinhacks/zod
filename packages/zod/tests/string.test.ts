@@ -581,6 +581,27 @@ test("regexp error message", () => {
   expect(() => z.string().uuid().parse("purr")).toThrow();
 });
 
+test("regexp error custom message", () => {
+  const result = z
+    .string()
+    .regex(/^moo+$/, { message: 'Custom error message' })
+    .safeParse("boooo");
+  expect(result.error!.issues).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "invalid_format",
+        "format": "regex",
+        "message": "Custom error message",
+        "origin": "string",
+        "path": [],
+        "pattern": "/^moo+$/",
+      },
+    ]
+  `);
+
+  expect(() => z.string().uuid().parse("purr")).toThrow();
+});
+
 test("regex lastIndex reset", () => {
   const schema = z.string().regex(/^\d+$/g);
   expect(schema.safeParse("123").success).toEqual(true);

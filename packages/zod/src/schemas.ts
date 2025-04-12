@@ -323,7 +323,7 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
   inst.duration = (params) => inst.check(iso.duration(params as any));
 
   // validations
-  inst.regex = (params) => inst.check(checks.regex(params));
+  inst.regex = (...args) => inst.check(checks.regex(...args));
   inst.includes = (...args) => inst.check(checks.includes(...args));
   inst.startsWith = (params) => inst.check(checks.startsWith(params));
   inst.endsWith = (params) => inst.check(checks.endsWith(params));
