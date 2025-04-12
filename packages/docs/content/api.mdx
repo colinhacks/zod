@@ -621,7 +621,7 @@ To create a new enum schema, excluding certain values:
 <Tab value="zod">
 ```ts
 const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
-const SalmonAndTroutOnly = FishEnum.exclude(["Salmon", "Trout"]);
+const TunaOnly = FishEnum.exclude(["Salmon", "Trout"]);
 ```
 </Tab>
 <Tab value="@zod/mini">
@@ -640,7 +640,7 @@ To create a new enum schema, extracting certain values:
 <Tab value="zod">
 ```ts
 const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
-const TunaOnly = FishEnum.extract(["Salmon", "Trout"]);
+const SalmonAndTroutOnly = FishEnum.extract(["Salmon", "Trout"]);
 ```
 </Tab>
 <Tab value="@zod/mini">
