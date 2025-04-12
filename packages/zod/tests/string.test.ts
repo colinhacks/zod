@@ -584,7 +584,7 @@ test("regexp error message", () => {
 test("regexp error custom message", () => {
   const result = z
     .string()
-    .regex(/^moo+$/, { message: 'Custom error message' })
+    .regex(/^moo+$/, { message: "Custom error message" })
     .safeParse("boooo");
   expect(result.error!.issues).toMatchInlineSnapshot(`
     [

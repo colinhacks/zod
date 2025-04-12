@@ -25,3 +25,5 @@ console.log(
     age: 12,
   })
 );
+
+// z.int();
