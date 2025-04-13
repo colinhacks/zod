@@ -33,10 +33,10 @@ export const parsedType = (data: any): string => {
         return "object";
       }
       if (prototype !== Object.prototype) {
-        if (!data.constructor) {
-          return "object";
+        if (data.constructor) {
+          return data.constructor.name;
         }
-        return data.constructor.name;
+        return "object";
       }
     }
   }
