@@ -331,7 +331,14 @@ test("async validation multiple errors 2", async () => {
     z.object({
       hello: z.string(),
       foo: z.object({
-        bar: z.number().refine(is_async ? async () => false : () => false),
+        bar: z.number().refine(
+          is_async
+            ? async () =>
+                new Promise((resolve) => {
+                  setTimeout(() => resolve(false), 500);
+                })
+            : () => false
+        ),
       }),
     });
 
