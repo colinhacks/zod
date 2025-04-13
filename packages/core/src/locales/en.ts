@@ -33,6 +33,9 @@ export const parsedType = (data: any): string => {
         return "object";
       }
       if (prototype !== Object.prototype) {
+        if (!data.constructor) {
+          return "object";
+        }
         return data.constructor.name;
       }
     }

@@ -16,4 +16,7 @@ test("parsedType", () => {
 
   const nullPrototype = Object.create(null);
   expect(parsedType(nullPrototype)).toBe("object");
+
+  const doubleNullPrototype = Object.create(Object.create(null));
+  expect(parsedType(doubleNullPrototype)).toBe("object");
 });
