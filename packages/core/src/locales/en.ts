@@ -27,7 +27,12 @@ export const parsedType = (data: any): string => {
       if (data === null) {
         return "null";
       }
-      if (Object.getPrototypeOf(data) !== Object.prototype) {
+
+      const prototype = Object.getPrototypeOf(data);
+      if (prototype === null) {
+        return "object";
+      }
+      if (prototype !== Object.prototype) {
         return data.constructor.name;
       }
     }
