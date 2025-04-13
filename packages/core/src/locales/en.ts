@@ -28,15 +28,8 @@ export const parsedType = (data: any): string => {
         return "null";
       }
 
-      const prototype = Object.getPrototypeOf(data);
-      if (prototype === null) {
-        return "object";
-      }
-      if (prototype !== Object.prototype) {
-        if (data.constructor) {
-          return data.constructor.name;
-        }
-        return "object";
+      if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
+        return data.constructor.name;
       }
     }
   }
