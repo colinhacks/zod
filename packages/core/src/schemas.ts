@@ -1683,7 +1683,7 @@ export const $ZodObjectLike: core.$constructor<$ZodObjectLike> = /*@__PURE__*/ c
 
     let fastpass!: ReturnType<typeof generateFastpass>;
     const fastEnabled = util.allowsEval.value; // && !def.catchall;
-    const isObject = util.isPlainObject;
+    const isObject = util.isObject;
     const { catchall } = def;
 
     let value!: typeof _normalized.value;

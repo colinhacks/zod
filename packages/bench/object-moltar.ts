@@ -16,6 +16,20 @@ const z3Schema = z3.object({
   }).strict()
 }).strict();
 
+const z4Schema = z4.object({
+  number: z4.number(),
+  negNumber: z4.number(),
+  maxNumber: z4.number(),
+  string: z4.string(),
+  longString: z4.string(),
+  boolean: z4.boolean(),
+  deeplyNested: z4.strictObject({
+    foo: z4.string(),
+    num: z4.number(),
+    bool: z4.boolean(),
+  }),
+});
+
 const z4SchemaStrict = z4.strictObject({
   number: z4.number(),
   negNumber: z4.number(),
@@ -62,18 +76,21 @@ const DATA = Array.from({ length: 1000 }, () =>
 );
 
 console.log(z3Schema.parse(DATA[0]));
-console.log(z4SchemaLoose.parse(DATA[0]));
+console.log(z4Schema.parse(DATA[0]));
 
 const bench = metabench("z.object() safeParse", {
   zod3() {
     for (const _ of DATA) z3Schema.parse(_);
   },
   zod4() {
-    for (const _ of DATA) z4SchemaStrict.parse(_);
+    for (const _ of DATA) z4Schema.parse(_);
   },
-  zod4loose() {
-    for (const _ of DATA) z4SchemaLoose.parse(_);
-  },
+  // zod4strict() {
+  //   for (const _ of DATA) z4SchemaStrict.parse(_);
+  // },
+  // zod4loose() {
+  //   for (const _ of DATA) z4SchemaLoose.parse(_);
+  // },
 });
 
 await bench.run();
