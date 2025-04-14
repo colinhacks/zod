@@ -97,9 +97,13 @@ export namespace util {
 }
 
 export namespace objectUtil {
-  export type MergeShapes<U, V> = {
-    [k in Exclude<keyof U, keyof V>]: U[k];
-  } & V;
+  export type MergeShapes<U, V> =
+    // fast path when there is no keys overlap
+    keyof U & keyof V extends never
+      ? U & V
+      : {
+          [k in Exclude<keyof U, keyof V>]: U[k];
+        } & V;
 
   type optionalKeys<T extends object> = {
     [k in keyof T]: undefined extends T[k] ? k : never;
@@ -131,11 +135,15 @@ export namespace objectUtil {
     };
   };
 
-  export type extendShape<A extends object, B extends object> = {
-    [K in keyof A as K extends keyof B ? never : K]: A[K];
-  } & {
-    [K in keyof B]: B[K];
-  };
+  export type extendShape<A extends object, B extends object> =
+    // fast path when there is no keys overlap
+    keyof A & keyof B extends never
+      ? A & B
+      : {
+          [K in keyof A as K extends keyof B ? never : K]: A[K];
+        } & {
+          [K in keyof B]: B[K];
+        };
 }
 
 export const ZodParsedType = util.arrayToEnum([
