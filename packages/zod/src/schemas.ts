@@ -1259,14 +1259,12 @@ export interface ZodObject<
   keyof(): ZodEnum<util.ToEnum<keyof Shape & string>>;
   catchall<T extends core.$ZodType>(schema: T): ZodObject<Shape, Record<string, T["_zod"]["output"]>>;
 
-  /** @deprecated Use `z.looseObject()` instead. */
+  /** @deprecated Use `z.looseObject()` or `.loose()` instead. */
   passthrough(): ZodObject<Shape, Record<string, unknown>>;
-  // /** @deprecated Use `z.looseObject()` instead. */
-  // nonstrict(): ZodObject<Shape>;
-  /** @deprecated Use `z.looseObject()` instead. */
+
   loose(): ZodObject<Shape, Record<string, unknown>>;
 
-  /** @deprecated Use `z.strictObject()` instead. */
+  /** The `z.strictObject()` API is preferred. */
   strict(): ZodObject<Shape, {}>;
 
   /** @deprecated This is the default behavior. This method call is likely unnecessary. */
