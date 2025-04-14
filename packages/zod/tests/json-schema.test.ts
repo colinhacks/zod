@@ -603,6 +603,7 @@ describe("toJSONSchema", () => {
     const schema = z.object({
       required: z.string(),
       optional: z.string().optional(),
+      nonoptional: z.string().optional().nonoptional(),
     });
 
     const result = toJSONSchema(schema);
@@ -610,15 +611,11 @@ describe("toJSONSchema", () => {
     expect(result).toMatchInlineSnapshot(`
       {
         "properties": {
+          "nonoptional": {
+            "type": "string",
+          },
           "optional": {
-            "oneOf": [
-              {
-                "type": "string",
-              },
-              {
-                "type": "null",
-              },
-            ],
+            "type": "string",
           },
           "required": {
             "type": "string",
@@ -626,6 +623,7 @@ describe("toJSONSchema", () => {
         },
         "required": [
           "required",
+          "nonoptional",
         ],
         "type": "object",
       }
