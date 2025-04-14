@@ -199,8 +199,7 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
           throw new core.$ZodAsyncError();
         }
         if (asyncResult || _ instanceof Promise) {
-          asyncResult = asyncResult ?? Promise.resolve();
-          asyncResult.then(async () => {
+          asyncResult = (asyncResult ?? Promise.resolve()).then(async () => {
             await _;
             const nextLen = payload.issues.length;
             if (nextLen === currLen) return;
