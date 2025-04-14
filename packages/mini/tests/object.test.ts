@@ -28,6 +28,12 @@ test("z.object", () => {
   // "test?" is required in ZodObject
   expect(() => z.parse(a, { name: "john", age: "30" })).toThrow();
   expect(() => z.parse(a, "hello")).toThrow();
+
+  // null prototype
+  const schema = z.object({ a: z.string() });
+  const obj = Object.create(null);
+  obj.a = "foo";
+  expect(schema.parse(obj)).toEqual({ a: "foo" });
 });
 
 test("z.strictObject", () => {

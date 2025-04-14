@@ -440,3 +440,10 @@ test("assignability", () => {
   z.interface({ "a?": z.string() }) satisfies z.ZodInterface;
   z.interface({ "?a": z.string() }) satisfies z.ZodInterface;
 });
+
+test("null prototype", () => {
+  const schema = z.object({ a: z.string() });
+  const obj = Object.create(null);
+  obj.a = "foo";
+  expect(schema.parse(obj)).toEqual({ a: "foo" });
+});
