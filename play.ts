@@ -1,3 +1,6 @@
 import * as z from "zod";
 
-console.log(z.object({}).parse([]));
+const Schema = z.object({
+  limit: z.int().default(0),
+});
+type Schema = z.infer<typeof Schema>;
