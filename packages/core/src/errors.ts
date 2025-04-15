@@ -175,12 +175,7 @@ export interface $ZodError<T = unknown> extends Error {
   name: string;
 }
 export class $ZodError<T = unknown> implements Error {
-  /** @deprecated Virtual property, do not access. */
-
   public issues: $ZodIssue[];
-
-  // stack?: string;
-
   get message(): string {
     return JSON.stringify(this.issues, jsonStringifyReplacer, 2);
   }

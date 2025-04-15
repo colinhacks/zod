@@ -1,6 +1,8 @@
 import * as z from "zod";
 
-const Schema = z.object({
-  limit: z.int().default(0),
-});
-type Schema = z.infer<typeof Schema>;
+z.config(z.locales.es());
+
+const result = z.string().safeParse(123);
+
+result.error!.issues[0].message;
+// => Entrada inválida: se esperaba string, recibido número
