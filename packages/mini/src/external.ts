@@ -19,6 +19,7 @@ export {
   treeifyError,
   prettifyError,
   toJSONSchema,
+  locales,
 } from "@zod/core";
 
 /** A special constant with type `never` */
