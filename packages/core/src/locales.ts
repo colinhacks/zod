@@ -1,3 +1,4 @@
+import az from "./locales/az.js";
 import en from "./locales/en.js";
 
-export { en };
+export { az, en };
