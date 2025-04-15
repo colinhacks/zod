@@ -26,4 +26,5 @@ export {
   treeifyError,
   prettifyError,
   toJSONSchema,
+  locales,
 } from "@zod/core";
