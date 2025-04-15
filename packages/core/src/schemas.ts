@@ -2983,7 +2983,7 @@ export const $ZodOptional: core.$constructor<$ZodOptional> = /*@__PURE__*/ core.
   "$ZodOptional",
   (inst, def) => {
     $ZodType.init(inst, def);
-    // inst._zod.qin = "true";
+    inst._zod.qin = "true";
     inst._zod.qout = "true";
     if (def.innerType._zod.values) inst._zod.values = new Set([...def.innerType._zod.values, undefined]);
     const pattern = (def.innerType as any)._zod.pattern;
