@@ -26,7 +26,17 @@ export default async function Page(props: {
     });
 
   return (
-    <DocsPage toc={toc} tableOfContent={{ style: "clerk", single: false }} full={false}>
+    <DocsPage
+      toc={toc}
+      tableOfContent={{ style: "clerk", single: false }}
+      full={false}
+      editOnGithub={{
+        owner: "colinhacks",
+        repo: "zod",
+        sha: "v4",
+        path: `packages/docs/content/${page.file.path}`,
+      }}
+    >
       {title && title !== "Intro" ? <DocsTitle>{title}</DocsTitle> : null}
       <DocsDescription>{description}</DocsDescription>
       <DocsBody {...{}}>
