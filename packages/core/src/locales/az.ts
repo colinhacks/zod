@@ -74,8 +74,7 @@ const error: errors.$ZodErrorMap = (issue) => {
     case "invalid_type":
       return `Yanlış dəyər: gözlənilən ${issue.expected}, daxil olan ${parsedType(issue.input)}`;
     case "invalid_value":
-      if (issue.values.length === 1)
-        return `Yanlış dəyər: gözlənilən ${util.stringifyPrimitive(issue.values[0])}`;
+      if (issue.values.length === 1) return `Yanlış dəyər: gözlənilən ${util.stringifyPrimitive(issue.values[0])}`;
       return `Yanlış seçim: aşağıdakılardan biri olmalıdır: ${util.joinValues(issue.values, "|")}`;
     case "too_big": {
       const adj = issue.inclusive ? "<=" : "<";
@@ -87,20 +86,15 @@ const error: errors.$ZodErrorMap = (issue) => {
     case "too_small": {
       const adj = issue.inclusive ? ">=" : ">";
       const sizing = getSizing(issue.origin);
-      if (sizing)
-        return `Çox kiçik: gözlənilən ${issue.origin} ${adj}${issue.minimum.toString()} ${sizing.unit}`;
+      if (sizing) return `Çox kiçik: gözlənilən ${issue.origin} ${adj}${issue.minimum.toString()} ${sizing.unit}`;
       return `Çox kiçik: gözlənilən ${issue.origin} ${adj}${issue.minimum.toString()}`;
     }
     case "invalid_format": {
       const _issue = issue as errors.$ZodStringFormatIssues;
-      if (_issue.format === "starts_with")
-        return `Yanlış mətn: "${issue}" ilə başlamalıdır`;
-      if (_issue.format === "ends_with")
-        return `Yanlış mətn: "${_issue.suffix}" ilə bitməlidir`;
-      if (_issue.format === "includes")
-        return `Yanlış mətn: "${_issue.includes}" daxil olmalıdır`;
-      if (_issue.format === "regex")
-        return `Yanlış mətn: ${_issue.pattern} şablonuna uyğun olmalıdır`;
+      if (_issue.format === "starts_with") return `Yanlış mətn: "${issue}" ilə başlamalıdır`;
+      if (_issue.format === "ends_with") return `Yanlış mətn: "${_issue.suffix}" ilə bitməlidir`;
+      if (_issue.format === "includes") return `Yanlış mətn: "${_issue.includes}" daxil olmalıdır`;
+      if (_issue.format === "regex") return `Yanlış mətn: ${_issue.pattern} şablonuna uyğun olmalıdır`;
       return `Yanlış ${Nouns[_issue.format] ?? issue.format}`;
     }
     case "not_multiple_of":
