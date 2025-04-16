@@ -95,10 +95,10 @@ const error: errors.$ZodErrorMap = (issue) => {
     }
     case "invalid_format": {
       const _issue = issue as errors.$ZodStringFormatIssues;
-      if (_issue.format === "starts_with") return `نص غير صالح: يجب أن يبدأ بـ "${issue}"`;
-      if (_issue.format === "ends_with") return `نص غير صالح: يجب أن ينتهي بـ "${_issue.suffix}"`;
-      if (_issue.format === "includes") return `نص غير صالح: يجب أن يتضمن "${_issue.includes}"`;
-      if (_issue.format === "regex") return `نص غير صالح: يجب أن يطابق النمط ${_issue.pattern}`;
+      if (_issue.format === "starts_with") return `تنسيق غير صالح: يجب أن يبدأ بـ "${issue}"`;
+      if (_issue.format === "ends_with") return `تنسيق غير صالح: يجب أن ينتهي بـ "${_issue.suffix}"`;
+      if (_issue.format === "includes") return `تنسيق غير صالح: يجب أن يتضمن "${_issue.includes}"`;
+      if (_issue.format === "regex") return `تنسيق غير صالح: يجب أن يطابق النمط ${_issue.pattern}`;
       return `${Nouns[_issue.format] ?? issue.format} غير صالح`;
     }
     case "not_multiple_of":
