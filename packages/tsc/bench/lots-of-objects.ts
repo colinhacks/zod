@@ -6,15 +6,15 @@ import { ARKTYPE, ZOD, ZOD3, generate } from "../generate.js";
 const SHARED = {
   numSchemas: 500,
   numKeys: 5,
-  numExtends: 1
-}
+  numExtends: 1,
+};
 console.log("╔════════════════╗");
 console.log("║     Zod v3     ║");
 console.log("╚════════════════╝");
 await generate({
   ...ZOD3,
   schemaType: "z.object",
-  ...SHARED
+  ...SHARED,
 });
 
 await $`pnpm run build:bench`;
@@ -25,7 +25,7 @@ console.log("╚════════════════╝");
 await generate({
   ...ZOD,
   schemaType: "z.object",
-  ...SHARED
+  ...SHARED,
 });
 
 await $`pnpm run build:bench`;

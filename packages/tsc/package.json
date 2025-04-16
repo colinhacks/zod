@@ -12,7 +12,9 @@
     "valibot": "^1.0.0",
     "zod": "workspace:*",
     "@zod/core": "workspace:*",
-    "zod3": "npm:zod@3.23.7",
+    "zod3-24-2": "npm:zod@3.24.2",
+    "zod3-24-3": "npm:zod@3.24.3",
+    "zod3": "npm:zod@^3.0.0",
     "@zod/mini": "workspace:*",
     "execa": "^9.5.2"
   },
@@ -26,5 +28,4 @@
     "prepublish": "npm run build",
     "bench": "tsx ./bench/index.ts"
   }
-  
 }

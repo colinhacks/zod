@@ -41,7 +41,6 @@ let CURR = MIN;
 
 while (!MAX || MAX - MIN > 10) {
   generate({
-    
     ...ZOD,
     schemaType: "z.interface",
     numSchemas: CURR,

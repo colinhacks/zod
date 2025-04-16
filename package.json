@@ -48,6 +48,7 @@
     "packages/*/**/*.md": ["prettier --ignore-unknown --write"]
   },
   "scripts": {
+    "fix": "pnpm run format && pnpm run lint",
     "format": "biome check --write .",
     "format:check": "biome check .",
     "lint": "biome lint --write .",

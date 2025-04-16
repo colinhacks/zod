@@ -13,7 +13,7 @@ await generate({
   custom: `
   export const schema = z.string();
   export type schema = z.infer<typeof schema>;
-  `
+  `,
 });
 
 await $`pnpm run build:bench`;
@@ -28,7 +28,7 @@ await generate({
   custom: `
   export const schema = z.string();
   export type schema = z.infer<typeof schema>;
-  `
+  `,
 });
 
 await $`pnpm run build:bench`;

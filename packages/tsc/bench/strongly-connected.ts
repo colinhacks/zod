@@ -3,7 +3,6 @@ import { execa } from "execa";
 const $ = execa({ stdout: "inherit", stderr: "inherit" });
 import { ARKTYPE, ZOD, ZOD3, generate } from "../generate.js";
 
-
 console.log("╔════════════════╗");
 console.log("║     Zod v4     ║");
 console.log("╚════════════════╝");
@@ -17,4 +16,3 @@ await generate({
 });
 
 await $`pnpm run build:bench`;
-
