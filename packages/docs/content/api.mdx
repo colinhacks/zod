@@ -871,10 +871,10 @@ In `A`, the `name` property can be set `undefined` or it can be omitted from the
 
 ```ts
 const obj: A = { name: undefined }; // ✅
-const obj: A = {} ; // ✅ 
+const obj: A = {} ; // ✅ pass
 
 const obj: B = { name: undefined }; // ✅ 
-const obj: B = {} ; // ❌ compile error, missing required property `name`
+const obj: B = {} ; // ❌ compile error: missing required property `name`
 ```
 
 
