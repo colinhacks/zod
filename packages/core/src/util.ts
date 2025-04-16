@@ -588,7 +588,7 @@ export type ExtendInterfaceParams<A extends schemas.$ZodInterface, Shape extends
   defaulted: Exclude<A["_zod"]["defaulted"], CleanKeys<keyof Shape>> | DefaultedInterfaceKeys<keyof Shape>;
   extra: A["_zod"]["extra"];
 }>;
-export type ExtendInterfaceShape<A extends schemas.$ZodLooseShape, B extends schemas.$ZodLooseShape> = ExtendShape<
+export type ExtendInterfaceShape<A extends schemas.$ZodLooseShape, B extends schemas.$ZodLooseShape> = Extend<
   A,
   CleanInterfaceShape<B>
 >;
