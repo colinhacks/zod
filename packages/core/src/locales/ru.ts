@@ -4,7 +4,7 @@ import * as util from "../util.js";
 
 const Sizable: Record<string, { unit: string; verb: string }> = {
   string: { unit: "символов", verb: "иметь" },
-  file: { unit: "байтов", verb: "иметь" },
+  file: { unit: "байт", verb: "иметь" },
   array: { unit: "элементов", verb: "иметь" },
   set: { unit: "элементов", verb: "иметь" },
 };
@@ -56,7 +56,7 @@ const Nouns: {
   datetime: "ISO дата и время",
   date: "ISO дата",
   time: "ISO время",
-  duration: "ISO продолжительность",
+  duration: "ISO длительность",
   ipv4: "IPv4 адрес",
   ipv6: "IPv6 адрес",
   cidrv4: "IPv4 диапазон",
@@ -102,7 +102,7 @@ const error: errors.$ZodErrorMap = (issue) => {
     case "not_multiple_of":
       return `Неверное число: должно быть кратным ${issue.divisor}`;
     case "unrecognized_keys":
-      return `Нераспознанный ключ${issue.keys.length > 1 ? "и" : ""}: ${util.joinValues(issue.keys, ", ")}`;
+      return `Нераспознанн${issue.keys.length > 1 ? "ые" : "ый"} ключ${issue.keys.length > 1 ? "и" : ""}: ${util.joinValues(issue.keys, ", ")}`;
     case "invalid_key":
       return `Неверный ключ в ${issue.origin}`;
     case "invalid_union":
