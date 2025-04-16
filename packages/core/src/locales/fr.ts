@@ -56,7 +56,7 @@ const Nouns: {
   ulid: "ULID",
   xid: "XID",
   ksuid: "KSUID",
-  datetime: "datetime ISO",
+  datetime: "date et heure ISO",
   date: "date ISO",
   time: "heure ISO",
   duration: "durée ISO",
