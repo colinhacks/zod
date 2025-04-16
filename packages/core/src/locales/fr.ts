@@ -28,10 +28,7 @@ export const parsedType = (data: any): string => {
         return "null";
       }
 
-      if (
-        Object.getPrototypeOf(data) !== Object.prototype &&
-        data.constructor
-      ) {
+      if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
         return data.constructor.name;
       }
     }
@@ -77,8 +74,7 @@ const error: errors.$ZodErrorMap = (issue) => {
     case "invalid_type":
       return `Entrée invalide : ${issue.expected} attendu, ${parsedType(issue.input)} reçu`;
     case "invalid_value":
-      if (issue.values.length === 1)
-        return `Entrée invalide : ${util.stringifyPrimitive(issue.values[0])} attendu`;
+      if (issue.values.length === 1) return `Entrée invalide : ${util.stringifyPrimitive(issue.values[0])} attendu`;
       return `Option invalide : une valeur parmi ${util.joinValues(issue.values, "|")} attendue`;
     case "too_big": {
       const adj = issue.inclusive ? "<=" : "<";
@@ -98,14 +94,10 @@ const error: errors.$ZodErrorMap = (issue) => {
     }
     case "invalid_format": {
       const _issue = issue as errors.$ZodStringFormatIssues;
-      if (_issue.format === "starts_with")
-        return `Chaîne invalide : doit commencer par "${issue}"`;
-      if (_issue.format === "ends_with")
-        return `Chaîne invalide : doit se terminer par "${_issue.suffix}"`;
-      if (_issue.format === "includes")
-        return `Chaîne invalide : doit inclure "${_issue.includes}"`;
-      if (_issue.format === "regex")
-        return `Chaîne invalide : doit correspondre au modèle ${_issue.pattern}`;
+      if (_issue.format === "starts_with") return `Chaîne invalide : doit commencer par "${issue}"`;
+      if (_issue.format === "ends_with") return `Chaîne invalide : doit se terminer par "${_issue.suffix}"`;
+      if (_issue.format === "includes") return `Chaîne invalide : doit inclure "${_issue.includes}"`;
+      if (_issue.format === "regex") return `Chaîne invalide : doit correspondre au modèle ${_issue.pattern}`;
       return `${Nouns[_issue.format] ?? issue.format} invalide`;
     }
     case "not_multiple_of":
