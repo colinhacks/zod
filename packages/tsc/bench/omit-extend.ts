@@ -8,6 +8,7 @@ console.log("║     Zod v3.24.2     ║");
 console.log("╚═════════════════════╝");
 await generate({
   ...ZOD,
+
   numSchemas: 0,
   numKeys: 0,
 
@@ -22,6 +23,7 @@ console.log("║     Zod v3.24.3     ║");
 console.log("╚═════════════════════╝");
 await generate({
   ...ZOD,
+
   numSchemas: 0,
   numKeys: 0,
 
@@ -126,6 +128,28 @@ export const m = l.extend({
   c: z.string(),
 });
 
-export type _out = z.infer<typeof m>;
+export const n = m.omit({
+  a: true,
+  b: true,
+  c: true,
+});
+
+export const o = n.extend({
+  a: z.string(),
+  b: z.string(),
+  c: z.string(),
+});
+
+export const p = o.omit({
+  a: true,
+  b: true,
+  c: true,
+});
+
+export const q = p.extend({
+  a: z.string(),
+  b: z.string(),
+  c: z.string(),
+});
 `;
 }
