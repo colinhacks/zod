@@ -77,14 +77,14 @@ const error: errors.$ZodErrorMap = (issue) => {
       if (issue.values.length === 1) return `無効な入力: ${util.stringifyPrimitive(issue.values[0])}が期待されました`;
       return `無効な選択: ${util.joinValues(issue.values, "、")}のいずれかである必要があります`;
     case "too_big": {
-      const adj = issue.inclusive ? "以下" : "未満";
+      const adj = issue.inclusive ? "<=" : "<";
       const sizing = getSizing(issue.origin);
       if (sizing)
         return `大きすぎる値: ${issue.origin ?? "値"}は${issue.maximum.toString()}${sizing.unit ?? "要素"}${adj}である必要があります`;
       return `大きすぎる値: ${issue.origin ?? "値"}は${issue.maximum.toString()}${adj}である必要があります`;
     }
     case "too_small": {
-      const adj = issue.inclusive ? "以上" : "より大きい";
+      const adj = issue.inclusive ? ">=" : ">";
       const sizing = getSizing(issue.origin);
       if (sizing)
         return `小さすぎる値: ${issue.origin}は${issue.minimum.toString()}${sizing.unit}${adj}である必要があります`;
