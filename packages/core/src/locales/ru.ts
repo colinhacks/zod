@@ -2,14 +2,71 @@ import type { $ZodStringFormats } from "../checks.js";
 import type * as errors from "../errors.js";
 import * as util from "../util.js";
 
-const Sizable: Record<string, { unit: string; verb: string }> = {
-  string: { unit: "символов", verb: "иметь" },
-  file: { unit: "байт", verb: "иметь" },
-  array: { unit: "элементов", verb: "иметь" },
-  set: { unit: "элементов", verb: "иметь" },
+function getRussianPlural(count: number, one: string, few: string, many: string): string {
+  const absCount = Math.abs(count);
+  const lastDigit = absCount % 10;
+  const lastTwoDigits = absCount % 100;
+
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
+    return many;
+  }
+
+  if (lastDigit === 1) {
+    return one;
+  }
+
+  if (lastDigit >= 2 && lastDigit <= 4) {
+    return few;
+  }
+
+  return many;
+}
+
+interface RussianSizable {
+  unit: {
+    one: string;
+    few: string;
+    many: string;
+  };
+  verb: string;
+}
+
+const Sizable: Record<string, RussianSizable> = {
+  string: {
+    unit: {
+      one: "символ",
+      few: "символа",
+      many: "символов",
+    },
+    verb: "иметь",
+  },
+  file: {
+    unit: {
+      one: "байт",
+      few: "байта",
+      many: "байт",
+    },
+    verb: "иметь",
+  },
+  array: {
+    unit: {
+      one: "элемент",
+      few: "элемента",
+      many: "элементов",
+    },
+    verb: "иметь",
+  },
+  set: {
+    unit: {
+      one: "элемент",
+      few: "элемента",
+      many: "элементов",
+    },
+    verb: "иметь",
+  },
 };
 
-function getSizing(origin: string): { unit: string; verb: string } | null {
+function getSizing(origin: string): RussianSizable | null {
   return Sizable[origin] ?? null;
 }
 
@@ -79,15 +136,20 @@ const error: errors.$ZodErrorMap = (issue) => {
     case "too_big": {
       const adj = issue.inclusive ? "<=" : "<";
       const sizing = getSizing(issue.origin);
-      if (sizing)
-        return `Слишком большое значение: ожидалось, что ${issue.origin ?? "значение"} будет иметь ${adj}${issue.maximum.toString()} ${sizing.unit ?? "элементов"}`;
+      if (sizing) {
+        const maxValue = Number(issue.maximum);
+        const unit = getRussianPlural(maxValue, sizing.unit.one, sizing.unit.few, sizing.unit.many);
+        return `Слишком большое значение: ожидалось, что ${issue.origin ?? "значение"} будет иметь ${adj}${issue.maximum.toString()} ${unit}`;
+      }
       return `Слишком большое значение: ожидалось, что ${issue.origin ?? "значение"} будет ${adj}${issue.maximum.toString()}`;
     }
     case "too_small": {
       const adj = issue.inclusive ? ">=" : ">";
       const sizing = getSizing(issue.origin);
       if (sizing) {
-        return `Слишком маленькое значение: ожидалось, что ${issue.origin} будет иметь ${adj}${issue.minimum.toString()} ${sizing.unit}`;
+        const minValue = Number(issue.minimum);
+        const unit = getRussianPlural(minValue, sizing.unit.one, sizing.unit.few, sizing.unit.many);
+        return `Слишком маленькое значение: ожидалось, что ${issue.origin} будет иметь ${adj}${issue.minimum.toString()} ${unit}`;
       }
       return `Слишком маленькое значение: ожидалось, что ${issue.origin} будет ${adj}${issue.minimum.toString()}`;
     }
