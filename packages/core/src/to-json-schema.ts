@@ -36,8 +36,9 @@ interface EmitParams {
 
   /* How to handle reused schemas.
    * - `"inline"` — Default. Reused schemas will be inlined
-   * - `"ref"` — Reused schemas will be extracted as $defs */
-  reused?: "ref" | "inline";
+   * - `"ref"` — Reused schemas will be extracted as $defs
+   * - `"ref-registry"` — All schema with `id` in metadata will be extracted as $defs */
+  reused?: "ref" | "ref-registry" | "inline";
   /** A function used to convert `id` values to URIs to be used in *external* $refs.
    *
    * Default is `(id) => id`.
@@ -599,17 +600,15 @@ export class JSONSchemaGenerator {
       }
 
       // handle reused schemas
-      if (seen.count > 1) {
-        if (params.reused === "ref") {
-          const { ref, defId } = makeURI(entry);
-          if (defId) defs[defId] = { ...seen.cached };
-          schemaToRef({
-            schema: seen.schema,
-            ref,
-          });
-          // biome-ignore lint:
-          continue;
-        }
+      if ((params.reused === "ref" && seen.count > 1) || (params.reused === "ref-registry" && seen.schema.id)) {
+        const { ref, defId } = makeURI(entry);
+        if (defId) defs[defId] = { ...seen.cached };
+        schemaToRef({
+          schema: seen.schema,
+          ref,
+        });
+        // biome-ignore lint:
+        continue;
       }
     }
 
