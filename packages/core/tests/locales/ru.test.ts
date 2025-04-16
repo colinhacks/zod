@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import ru from "../ru.js";
+import ru from "../../src/locales/ru.js";
 
 describe("Russian localization", () => {
   const { localeError } = ru();
