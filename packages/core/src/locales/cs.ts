@@ -80,16 +80,16 @@ const error: errors.$ZodErrorMap = (issue) => {
       const adj = issue.inclusive ? "<=" : "<";
       const sizing = getSizing(issue.origin);
       if (sizing)
-        return `Příliš velk(ý/á/é): očekáváno, že ${issue.origin ?? "hodnota"} bude mít ${adj}${issue.maximum.toString()} ${sizing.unit ?? "prvků"}`;
-      return `Příliš velk(ý/á/é): očekáváno, že ${issue.origin ?? "hodnota"} bude ${adj}${issue.maximum.toString()}`;
+        return `Hodnota je příliš velká: ${issue.origin ?? "hodnota"} musí mít ${adj}${issue.maximum.toString()} ${sizing.unit ?? "prvků"}`;
+      return `Hodnota je příliš velká: ${issue.origin ?? "hodnota"} musí být ${adj}${issue.maximum.toString()}`;
     }
     case "too_small": {
       const adj = issue.inclusive ? ">=" : ">";
       const sizing = getSizing(issue.origin);
       if (sizing) {
-        return `Příliš mal(ý/á/é): očekáváno, že ${issue.origin} bude mít ${adj}${issue.minimum.toString()} ${sizing.unit}`;
+        return `Hodnota je příliš malá: ${issue.origin} musí mít ${adj}${issue.minimum.toString()} ${sizing.unit}`;
       }
-      return `Příliš mal(ý/á/é): očekáváno, že ${issue.origin} bude ${adj}${issue.minimum.toString()}`;
+      return `Hodnota je příliš malá: ${issue.origin} musí být ${adj}${issue.minimum.toString()}`;
     }
     case "invalid_format": {
       const _issue = issue as errors.$ZodStringFormatIssues;
@@ -97,12 +97,12 @@ const error: errors.$ZodErrorMap = (issue) => {
       if (_issue.format === "ends_with") return `Neplatný řetězec: musí končit na "${_issue.suffix}"`;
       if (_issue.format === "includes") return `Neplatný řetězec: musí obsahovat "${_issue.includes}"`;
       if (_issue.format === "regex") return `Neplatný řetězec: musí odpovídat vzoru ${_issue.pattern}`;
-      return `Neplatn(ý/á/é) ${Nouns[_issue.format] ?? issue.format}`;
+      return `Neplatný formát ${Nouns[_issue.format] ?? issue.format}`;
     }
     case "not_multiple_of":
       return `Neplatné číslo: musí být násobkem ${issue.divisor}`;
     case "unrecognized_keys":
-      return `Nerozpoznan(ý/á/é) klíč${issue.keys.length > 1 ? "e" : ""}: ${util.joinValues(issue.keys, ", ")}`;
+      return `Neznámé klíče: ${util.joinValues(issue.keys, ", ")}`;
     case "invalid_key":
       return `Neplatný klíč v ${issue.origin}`;
     case "invalid_union":
