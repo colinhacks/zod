@@ -1035,7 +1035,7 @@ type ZodInterfacePartial<
   T extends ZodInterface,
   Keys extends keyof T["_zod"]["def"]["shape"] = keyof T["_zod"]["def"]["shape"],
 > = ZodInterface<
-  util.ExtendShape<
+  util.Extend<
     T["_zod"]["def"]["shape"],
     {
       [k in Keys]: ZodOptional<T["_zod"]["def"]["shape"][k]>;
@@ -1052,7 +1052,7 @@ type ZodInterfaceRequired<
   T extends ZodInterface,
   Keys extends keyof T["_zod"]["def"]["shape"] = keyof T["_zod"]["def"]["shape"],
 > = ZodInterface<
-  util.ExtendShape<
+  util.Extend<
     T["_zod"]["def"]["shape"],
     {
       [k in Keys]: ZodNonOptional<T["_zod"]["def"]["shape"][k]>;
@@ -1066,7 +1066,7 @@ type ZodInterfaceRequired<
 >;
 
 export type MergeInterfaces<A extends ZodInterface, B extends ZodInterface> = ZodInterface<
-  util.ExtendShape<A["_zod"]["def"]["shape"], B["_zod"]["def"]["shape"]>,
+  util.Extend<A["_zod"]["def"]["shape"], B["_zod"]["def"]["shape"]>,
   util.MergeInterfaceParams<A, B>
 >;
 
@@ -1270,11 +1270,11 @@ export interface ZodObject<
   /** @deprecated This is the default behavior. This method call is likely unnecessary. */
   strip(): ZodObject<Shape, {}>;
 
-  extend<const U extends ZodObject>(schema: U): ZodObject<util.ExtendShape<Shape, U["_zod"]["def"]["shape"]>, Extra>;
+  extend<const U extends ZodObject>(schema: U): ZodObject<util.Extend<Shape, U["_zod"]["def"]["shape"]>, Extra>;
   extend<U extends core.$ZodShape>(
     shape: U
   ): ZodObject<
-    util.ExtendShape<Shape, U>,
+    util.Extend<Shape, U>,
     Extra // & B['_zod']["extra"]
   >;
 
@@ -1282,7 +1282,7 @@ export interface ZodObject<
   /** @deprecated Use `A.extend(B)` */
   merge<U extends ZodObject<any, any>>(
     other: U
-  ): ZodObject<util.Flatten<util.Overwrite<Shape, U["_zod"]["def"]["shape"]>>, Extra>;
+  ): ZodObject<util.Flatten<util.Extend<Shape, U["_zod"]["def"]["shape"]>>, Extra>;
 
   pick<M extends util.Exactly<util.Mask<string & keyof Shape>, M>>(
     mask: M
@@ -1396,15 +1396,12 @@ export function looseObject<T extends core.$ZodShape>(
 export function extend<T extends ZodInterface, U extends ZodInterface>(
   a: T,
   b: U
-): ZodInterface<
-  util.ExtendShape<T["_zod"]["def"]["shape"], U["_zod"]["def"]["shape"]>,
-  util.MergeInterfaceParams<T, U>
->;
+): ZodInterface<util.Extend<T["_zod"]["def"]["shape"], U["_zod"]["def"]["shape"]>, util.MergeInterfaceParams<T, U>>;
 export function extend<T extends ZodObject, U extends ZodObject>(
   a: T,
   b: U
 ): ZodObject<
-  util.ExtendObject<T["_zod"]["def"]["shape"], U["_zod"]["def"]["shape"]>,
+  util.Extend<T["_zod"]["def"]["shape"], U["_zod"]["def"]["shape"]>,
   U["_zod"]["extra"] & T["_zod"]["extra"]
 >;
 export function extend<T extends ZodObjectLike, U extends core.$ZodLooseShape>(
@@ -1412,7 +1409,7 @@ export function extend<T extends ZodObjectLike, U extends core.$ZodLooseShape>(
   shape: U
 ): T extends ZodInterface<infer TShape, infer TParams>
   ? ZodInterface<util.ExtendInterfaceShape<TShape, U>, util.ExtendInterfaceParams<ZodInterface<TShape, TParams>, U>>
-  : ZodObject<util.ExtendObject<T["_zod"]["def"]["shape"], U>, T["_zod"]["extra"]>;
+  : ZodObject<util.Extend<T["_zod"]["def"]["shape"], U>, T["_zod"]["extra"]>;
 export function extend(schema: ZodObjectLike, shape: core.$ZodShape): ZodObjectLike {
   if (shape instanceof core.$ZodType) return util.mergeObjectLike(schema, shape as any);
   if (schema instanceof ZodInterface) {
@@ -1428,14 +1425,14 @@ export function merge<T extends ZodObjectLike, U extends core.$ZodLooseShape>(
 ): T["_zod"]["def"]["type"] extends "interface"
   ? // T extends ZodInterface
     ZodInterface<
-      util.ExtendShape<T["_zod"]["def"]["shape"], U["_zod"]["def"]["shape"]>,
+      util.Extend<T["_zod"]["def"]["shape"], U["_zod"]["def"]["shape"]>,
       {
         extra: T["_zod"]["extra"] & U["_zod"]["extra"];
         optional: Exclude<T["_zod"]["optional"], keyof U["_zod"]["def"]["shape"]> | U["_zod"]["optional"];
         defaulted: Exclude<T["_zod"]["defaulted"], keyof U["_zod"]["def"]["shape"]> | U["_zod"]["defaulted"];
       }
     >
-  : ZodObject<util.ExtendObject<T["_zod"]["def"]["shape"], U>, T["_zod"]["extra"]>;
+  : ZodObject<util.Extend<T["_zod"]["def"]["shape"], U>, T["_zod"]["extra"]>;
 export function merge(a: ZodObjectLike, b: ZodObjectLike): ZodObjectLike {
   return util.mergeObjectLike(a, b);
 }
@@ -1509,7 +1506,7 @@ export function partial<T extends ZodObjectLike, M extends util.Exactly<util.Mas
   mask: M
 ): T["_zod"]["def"]["type"] extends "interface"
   ? ZodInterface<
-      util.ExtendShape<
+      util.Extend<
         T["_zod"]["def"]["shape"],
         {
           [k in keyof M & keyof T["_zod"]["def"]["shape"]]: ZodOptional<T["_zod"]["def"]["shape"][k]>;
@@ -1547,7 +1544,7 @@ export function required<
   schema: T,
   mask: M
 ): ZodObject<
-  util.ExtendShape<
+  util.Extend<
     T["_zod"]["def"]["shape"],
     {
       [k in keyof M & keyof T["_zod"]["def"]["shape"]]: ZodNonOptional<T["_zod"]["def"]["shape"][k]>;
@@ -1573,7 +1570,7 @@ export function required<
   schema: T,
   mask: M
 ): ZodInterface<
-  util.ExtendShape<
+  util.Extend<
     T["_zod"]["def"]["shape"],
     {
       [k in keyof M & keyof T["_zod"]["def"]["shape"]]: ZodNonOptional<T["_zod"]["def"]["shape"][k]>;
