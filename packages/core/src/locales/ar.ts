@@ -110,7 +110,7 @@ const error: errors.$ZodErrorMap = (issue) => {
     case "invalid_union":
       return "إدخال غير صالح";
     case "invalid_element":
-      return `قيمة غير صالحة في ${issue.origin}`;
+      return `عنصر غير صالح ضمن: ${issue.origin}`;
     default:
       return "إدخال غير صالح";
   }
