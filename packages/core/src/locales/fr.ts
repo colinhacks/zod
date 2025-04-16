@@ -79,7 +79,7 @@ const error: errors.$ZodErrorMap = (issue) => {
     case "invalid_value":
       if (issue.values.length === 1)
         return `Entrée invalide : ${util.stringifyPrimitive(issue.values[0])} attendu`;
-      return `Option invalide : une des valeurs suivantes attendue ${util.joinValues(issue.values, "|")}`;
+      return `Option invalide : une valeur parmi ${util.joinValues(issue.values, "|")} attendue`;
     case "too_big": {
       const adj = issue.inclusive ? "<=" : "<";
       const sizing = getSizing(issue.origin);
