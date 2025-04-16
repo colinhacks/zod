@@ -124,19 +124,16 @@ export type NoNeverKeys<T> = {
 export type NoNever<T> = Identity<{
   [k in NoNeverKeys<T>]: k extends keyof T ? T[k] : never;
 }>;
-export type ExtendShape<A extends object, B extends object> = Identity<
+export type ExtendShape<A extends object, B extends object> = Flatten<
   // fast path when there is no keys overlap
-  keyof A & keyof B extends never
-    ? A & B
-    : {
-        [K in keyof A as K extends keyof B ? never : K]: A[K];
-      } & {
-        [K in keyof B]: B[K];
-      }
+  keyof A & keyof B extends never ? A & B
+  : {
+      [K in keyof A as K extends keyof B ? never : K]: A[K];
+    } & {
+      [K in keyof B]: B[K];
+    }
 >;
-export type ExtendObject<A extends schemas.$ZodLooseShape, B extends schemas.$ZodLooseShape> = Flatten<
-  ExtendShape<A, B>
->;
+export type ExtendObject<A extends schemas.$ZodLooseShape, B extends schemas.$ZodLooseShape> = ExtendShape<A, B>;
 export type TupleItems = ReadonlyArray<schemas.$ZodType>;
 export type AnyFunc = (...args: any[]) => any;
 export type IsProp<T, K extends keyof T> = T[K] extends AnyFunc ? never : K;
