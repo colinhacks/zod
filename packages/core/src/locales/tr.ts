@@ -74,13 +74,13 @@ const error: errors.$ZodErrorMap = (issue) => {
     case "invalid_type":
       return `Geçersiz değer: beklenen ${issue.expected}, alınan ${parsedType(issue.input)}`;
     case "invalid_value":
-      if (issue.values.length === 1)
-        return `Geçersiz değer: beklenen ${util.stringifyPrimitive(issue.values[0])}`;
+      if (issue.values.length === 1) return `Geçersiz değer: beklenen ${util.stringifyPrimitive(issue.values[0])}`;
       return `Geçersiz seçenek: aşağıdakilerden biri olmalı: ${util.joinValues(issue.values, "|")}`;
     case "too_big": {
       const adj = issue.inclusive ? "<=" : "<";
       const sizing = getSizing(issue.origin);
-      if (sizing) return `Çok büyük: beklenen ${issue.origin ?? "değer"} ${adj}${issue.maximum.toString()} ${sizing.unit ?? "öğe"}`;
+      if (sizing)
+        return `Çok büyük: beklenen ${issue.origin ?? "değer"} ${adj}${issue.maximum.toString()} ${sizing.unit ?? "öğe"}`;
       return `Çok büyük: beklenen ${issue.origin ?? "değer"} ${adj}${issue.maximum.toString()}`;
     }
     case "too_small": {
