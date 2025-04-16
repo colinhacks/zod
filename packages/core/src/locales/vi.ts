@@ -28,10 +28,7 @@ export const parsedType = (data: any): string => {
         return "null";
       }
 
-      if (
-        Object.getPrototypeOf(data) !== Object.prototype &&
-        data.constructor
-      ) {
+      if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
         return data.constructor.name;
       }
     }
@@ -98,14 +95,10 @@ const error: errors.$ZodErrorMap = (issue) => {
     }
     case "invalid_format": {
       const _issue = issue as errors.$ZodStringFormatIssues;
-      if (_issue.format === "starts_with")
-        return `Chuỗi không hợp lệ: phải bắt đầu bằng "${_issue.prefix}"`;
-      if (_issue.format === "ends_with")
-        return `Chuỗi không hợp lệ: phải kết thúc bằng "${_issue.suffix}"`;
-      if (_issue.format === "includes")
-        return `Chuỗi không hợp lệ: phải bao gồm "${_issue.includes}"`;
-      if (_issue.format === "regex")
-        return `Chuỗi không hợp lệ: phải khớp với mẫu ${_issue.pattern}`;
+      if (_issue.format === "starts_with") return `Chuỗi không hợp lệ: phải bắt đầu bằng "${_issue.prefix}"`;
+      if (_issue.format === "ends_with") return `Chuỗi không hợp lệ: phải kết thúc bằng "${_issue.suffix}"`;
+      if (_issue.format === "includes") return `Chuỗi không hợp lệ: phải bao gồm "${_issue.includes}"`;
+      if (_issue.format === "regex") return `Chuỗi không hợp lệ: phải khớp với mẫu ${_issue.pattern}`;
       return `${Nouns[_issue.format] ?? issue.format} không hợp lệ`;
     }
     case "not_multiple_of":
