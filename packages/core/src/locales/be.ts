@@ -2,14 +2,71 @@ import type { $ZodStringFormats } from "../checks.js";
 import type * as errors from "../errors.js";
 import * as util from "../util.js";
 
-const Sizable: Record<string, { unit: string; verb: string }> = {
-  string: { unit: "сімвалаў", verb: "мець" },
-  file: { unit: "байтаў", verb: "мець" },
-  array: { unit: "элементаў", verb: "мець" },
-  set: { unit: "элементаў", verb: "мець" },
+function getBelarusianPlural(count: number, one: string, few: string, many: string): string {
+  const absCount = Math.abs(count);
+  const lastDigit = absCount % 10;
+  const lastTwoDigits = absCount % 100;
+
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
+    return many;
+  }
+
+  if (lastDigit === 1) {
+    return one;
+  }
+
+  if (lastDigit >= 2 && lastDigit <= 4) {
+    return few;
+  }
+
+  return many;
+}
+
+interface BelarusianSizable {
+  unit: {
+    one: string;
+    few: string;
+    many: string;
+  };
+  verb: string;
+}
+
+const Sizable: Record<string, BelarusianSizable> = {
+  string: {
+    unit: {
+      one: "сімвал",
+      few: "сімвалы",
+      many: "сімвалаў",
+    },
+    verb: "мець",
+  },
+  array: {
+    unit: {
+      one: "элемент",
+      few: "элементы",
+      many: "элементаў",
+    },
+    verb: "мець",
+  },
+  set: {
+    unit: {
+      one: "элемент",
+      few: "элементы",
+      many: "элементаў",
+    },
+    verb: "мець",
+  },
+  file: {
+    unit: {
+      one: "байт",
+      few: "байты",
+      many: "байтаў",
+    },
+    verb: "мець",
+  },
 };
 
-function getSizing(origin: string): { unit: string; verb: string } | null {
+function getSizing(origin: string): BelarusianSizable | null {
   return Sizable[origin] ?? null;
 }
 
@@ -79,15 +136,20 @@ const error: errors.$ZodErrorMap = (issue) => {
     case "too_big": {
       const adj = issue.inclusive ? "<=" : "<";
       const sizing = getSizing(issue.origin);
-      if (sizing)
-        return `Занадта вялікі: чакалася, што ${issue.origin ?? "значэнне"} павінна ${sizing.verb} ${adj}${issue.maximum.toString()} ${sizing.unit ?? "элементаў"}`;
+      if (sizing) {
+        const maxValue = Number(issue.maximum);
+        const unit = getBelarusianPlural(maxValue, sizing.unit.one, sizing.unit.few, sizing.unit.many);
+        return `Занадта вялікі: чакалася, што ${issue.origin ?? "значэнне"} павінна ${sizing.verb} ${adj}${issue.maximum.toString()} ${unit}`;
+      }
       return `Занадта вялікі: чакалася, што ${issue.origin ?? "значэнне"} павінна быць ${adj}${issue.maximum.toString()}`;
     }
     case "too_small": {
       const adj = issue.inclusive ? ">=" : ">";
       const sizing = getSizing(issue.origin);
       if (sizing) {
-        return `Занадта малы: чакалася, што ${issue.origin} павінна ${sizing.verb} ${adj}${issue.minimum.toString()} ${sizing.unit}`;
+        const minValue = Number(issue.minimum);
+        const unit = getBelarusianPlural(minValue, sizing.unit.one, sizing.unit.few, sizing.unit.many);
+        return `Занадта малы: чакалася, што ${issue.origin} павінна ${sizing.verb} ${adj}${issue.minimum.toString()} ${unit}`;
       }
       return `Занадта малы: чакалася, што ${issue.origin} павінна быць ${adj}${issue.minimum.toString()}`;
     }
