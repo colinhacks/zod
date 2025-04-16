@@ -28,10 +28,7 @@ export const parsedType = (data: any): string => {
         return "null";
       }
 
-      if (
-        Object.getPrototypeOf(data) !== Object.prototype &&
-        data.constructor
-      ) {
+      if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
         return data.constructor.name;
       }
     }
@@ -99,14 +96,10 @@ const error: errors.$ZodErrorMap = (issue) => {
     }
     case "invalid_format": {
       const _issue = issue as errors.$ZodStringFormatIssues;
-      if (_issue.format === "starts_with")
-        return `Érvénytelen string: "${issue}" értékkel kell kezdődnie`;
-      if (_issue.format === "ends_with")
-        return `Érvénytelen string: "${_issue.suffix}" értékkel kell végződnie`;
-      if (_issue.format === "includes")
-        return `Érvénytelen string: "${_issue.includes}" értéket kell tartalmaznia`;
-      if (_issue.format === "regex")
-        return `Érvénytelen string: ${_issue.pattern} mintának kell megfelelnie`;
+      if (_issue.format === "starts_with") return `Érvénytelen string: "${issue}" értékkel kell kezdődnie`;
+      if (_issue.format === "ends_with") return `Érvénytelen string: "${_issue.suffix}" értékkel kell végződnie`;
+      if (_issue.format === "includes") return `Érvénytelen string: "${_issue.includes}" értéket kell tartalmaznia`;
+      if (_issue.format === "regex") return `Érvénytelen string: ${_issue.pattern} mintának kell megfelelnie`;
       return `Érvénytelen ${Nouns[_issue.format] ?? issue.format}`;
     }
     case "not_multiple_of":
