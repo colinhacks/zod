@@ -28,10 +28,7 @@ export const parsedType = (data: any): string => {
         return "null";
       }
 
-      if (
-        Object.getPrototypeOf(data) !== Object.prototype &&
-        data.constructor
-      ) {
+      if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
         return data.constructor.name;
       }
     }
@@ -77,8 +74,7 @@ const error: errors.$ZodErrorMap = (issue) => {
     case "invalid_type":
       return `Няправільны ўвод: чакаўся ${issue.expected}, атрымана ${parsedType(issue.input)}`;
     case "invalid_value":
-      if (issue.values.length === 1)
-        return `Няправільны ўвод: чакалася ${util.stringifyPrimitive(issue.values[0])}`;
+      if (issue.values.length === 1) return `Няправільны ўвод: чакалася ${util.stringifyPrimitive(issue.values[0])}`;
       return `Няправільны варыянт: чакаўся адзін з ${util.joinValues(issue.values, "|")}`;
     case "too_big": {
       const adj = issue.inclusive ? "<=" : "<";
@@ -98,14 +94,10 @@ const error: errors.$ZodErrorMap = (issue) => {
     }
     case "invalid_format": {
       const _issue = issue as errors.$ZodStringFormatIssues;
-      if (_issue.format === "starts_with")
-        return `Няправільны радок: павінен пачынацца з "${issue}"`;
-      if (_issue.format === "ends_with")
-        return `Няправільны радок: павінен заканчвацца на "${_issue.suffix}"`;
-      if (_issue.format === "includes")
-        return `Няправільны радок: павінен уключаць "${_issue.includes}"`;
-      if (_issue.format === "regex")
-        return `Няправільны радок: павінен адпавядаць шаблону ${_issue.pattern}`;
+      if (_issue.format === "starts_with") return `Няправільны радок: павінен пачынацца з "${issue}"`;
+      if (_issue.format === "ends_with") return `Няправільны радок: павінен заканчвацца на "${_issue.suffix}"`;
+      if (_issue.format === "includes") return `Няправільны радок: павінен уключаць "${_issue.includes}"`;
+      if (_issue.format === "regex") return `Няправільны радок: павінен адпавядаць шаблону ${_issue.pattern}`;
       return `Няправільны ${Nouns[_issue.format] ?? issue.format}`;
     }
     case "not_multiple_of":
