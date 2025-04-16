@@ -75,13 +75,13 @@ const error: errors.$ZodErrorMap = (issue) => {
       return `Virheellinen syöte: pitäisi olla ${issue.expected}, mutta oli ${parsedType(issue.input)}`;
     // return `Invalid input: expected ${issue.expected}, received ${util.getParsedType(issue.input)}`;
     case "invalid_value":
-      if (issue.values.length === 1) return `Virheellinen syöte: pitäisi olla ${util.stringifyPrimitive(issue.values[0])}`;
+      if (issue.values.length === 1)
+        return `Virheellinen syöte: pitäisi olla ${util.stringifyPrimitive(issue.values[0])}`;
       return `Virheellinen valinta: pitäisi olla yksi seuraavista: ${util.joinValues(issue.values, "|")}`;
     case "too_big": {
       const adj = issue.inclusive ? "<=" : "<";
       const sizing = getSizing(issue.origin);
-      if (sizing)
-        return `Liian suuri: ${issue.origin} pitäisi olla ${adj}${issue.maximum.toString()} ${sizing.unit}`;
+      if (sizing) return `Liian suuri: ${issue.origin} pitäisi olla ${adj}${issue.maximum.toString()} ${sizing.unit}`;
       return `Liian suuri: ${issue.origin ?? "arvon"} pitäisi olla ${adj}${issue.maximum.toString()}`;
     }
     case "too_small": {
