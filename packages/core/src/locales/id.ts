@@ -1,0 +1,124 @@
+import type { $ZodStringFormats } from "../checks.js";
+import type * as errors from "../errors.js";
+import * as util from "../util.js";
+
+const Sizable: Record<string, { unit: string; verb: string }> = {
+  string: { unit: "characters", verb: "memiliki" },
+  file: { unit: "byte", verb: "memiliki" },
+  array: { unit: "item", verb: "memiliki" },
+  set: { unit: "item", verb: "memiliki" },
+};
+
+function getSizing(origin: string): { unit: string; verb: string } | null {
+  return Sizable[origin] ?? null;
+}
+
+export const parsedType = (data: any): string => {
+  const t = typeof data;
+
+  switch (t) {
+    case "number": {
+      return Number.isNaN(data) ? "NaN" : "number";
+    }
+    case "object": {
+      if (Array.isArray(data)) {
+        return "array";
+      }
+      if (data === null) {
+        return "null";
+      }
+
+      if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
+        return data.constructor.name;
+      }
+    }
+  }
+  return t;
+};
+
+const Nouns: {
+  [k in $ZodStringFormats | (string & {})]?: string;
+} = {
+  regex: "input",
+  email: "email address",
+  url: "URL",
+  emoji: "emoji",
+  uuid: "UUID",
+  uuidv4: "UUIDv4",
+  uuidv6: "UUIDv6",
+  nanoid: "nanoid",
+  guid: "GUID",
+  cuid: "cuid",
+  cuid2: "cuid2",
+  ulid: "ULID",
+  xid: "XID",
+  ksuid: "KSUID",
+  datetime: "ISO datetime",
+  date: "ISO date",
+  time: "ISO time",
+  duration: "ISO duration",
+  ipv4: "IPv4 address",
+  ipv6: "IPv6 address",
+  cidrv4: "IPv4 range",
+  cidrv6: "IPv6 range",
+  base64: "base64-encoded string",
+  base64url: "base64url-encoded string",
+  json_string: "JSON string",
+  e164: "E.164 number",
+  jwt: "JWT",
+  template_literal: "input",
+};
+
+const error: errors.$ZodErrorMap = (issue) => {
+  switch (issue.code) {
+    case "invalid_type":
+      return `Input tidak valid: diharapkaan ${issue.expected}, diterima ${parsedType(issue.input)}`;
+    case "invalid_value":
+      if (issue.values.length === 1) return `Input tidak valid: diharapkaan ${util.stringifyPrimitive(issue.values[0])}`;
+      return `Pilihan tidak valid: diharapkan salah satu dari ${util.joinValues(issue.values, "|")}`;
+    case "too_big": {
+      const adj = issue.inclusive ? "<=" : "<";
+      const sizing = getSizing(issue.origin);
+      if (sizing)
+        return `Terlalu besar: diharapkan ${issue.origin ?? "value"} memiliki ${adj}${issue.maximum.toString()} ${sizing.unit ?? "elemen"}`;
+      return `Terlalu besar: diharapkan ${issue.origin ?? "value"} menjadi ${adj}${issue.maximum.toString()}`;
+    }
+    case "too_small": {
+      const adj = issue.inclusive ? ">=" : ">";
+      const sizing = getSizing(issue.origin);
+      if (sizing) {
+        return `Terlalu kecil: diharapkan ${issue.origin} memiliki ${adj}${issue.minimum.toString()} ${sizing.unit}`;
+      }
+
+      return `Terlalu kecil: diharapkan ${issue.origin} menjadi ${adj}${issue.minimum.toString()}`;
+    }
+    case "invalid_format": {
+      const _issue = issue as errors.$ZodStringFormatIssues;
+      if (_issue.format === "starts_with") return `String tidak valid: harus dimulai dengan "${issue}"`;
+      if (_issue.format === "ends_with") return `String tidak valid: harus berakhir dengan "${_issue.suffix}"`;
+      if (_issue.format === "includes") return `String tidak valid: harus menyertakan "${_issue.includes}"`;
+      if (_issue.format === "regex") return `String tidak valid: harus sesuai pola ${_issue.pattern}`;
+      return `Invalid ${Nouns[_issue.format] ?? issue.format}`;
+    }
+    case "not_multiple_of":
+      return `Angka tidak valid: harus kelipatan dari ${issue.divisor}`;
+    case "unrecognized_keys":
+      return `Kunci tidak dikenali ${issue.keys.length > 1 ? "s" : ""}: ${util.joinValues(issue.keys, ", ")}`;
+    case "invalid_key":
+      return `Kunci tidak valid di ${issue.origin}`;
+    case "invalid_union":
+      return "Input tidak valid";
+    case "invalid_element":
+      return `Invalid value in ${issue.origin}`;
+    default:
+      return `Input tidak valid`;
+  }
+};
+
+export { error };
+
+export default function (): { localeError: errors.$ZodErrorMap } {
+  return {
+    localeError: error,
+  };
+}
