@@ -74,7 +74,8 @@ const error: errors.$ZodErrorMap = (issue) => {
     case "invalid_type":
       return `Input tidak valid: diharapkaan ${issue.expected}, diterima ${parsedType(issue.input)}`;
     case "invalid_value":
-      if (issue.values.length === 1) return `Input tidak valid: diharapkaan ${util.stringifyPrimitive(issue.values[0])}`;
+      if (issue.values.length === 1)
+        return `Input tidak valid: diharapkaan ${util.stringifyPrimitive(issue.values[0])}`;
       return `Pilihan tidak valid: diharapkan salah satu dari ${util.joinValues(issue.values, "|")}`;
     case "too_big": {
       const adj = issue.inclusive ? "<=" : "<";
