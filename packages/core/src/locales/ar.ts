@@ -81,17 +81,17 @@ const error: errors.$ZodErrorMap = (issue) => {
       const adj = issue.inclusive ? "<=" : "<";
       const sizing = getSizing(issue.origin);
       if (sizing)
-        return `كبير جدًا: من المتوقع أن يحتوي ${issue.origin ?? "value"} على ${adj}${issue.maximum.toString()} ${sizing.unit ?? "elements"}`;
-      return `كبير جدًا: من المتوقع أن يكون ${issue.origin ?? "value"} ${adj}${issue.maximum.toString()}`;
+        return `كبير جدًا: من المتوقع أن يحتوي ${issue.origin ?? "value"} على ${adj} ${issue.maximum.toString()} ${sizing.unit ?? "elements"}`;
+      return `كبير جدًا: من المتوقع أن يكون ${issue.origin ?? "value"} ${adj} ${issue.maximum.toString()}`;
     }
     case "too_small": {
       const adj = issue.inclusive ? ">=" : ">";
       const sizing = getSizing(issue.origin);
       if (sizing) {
-        return `صغير جدًا: من المتوقع أن يحتوي ${issue.origin} على ${adj}${issue.minimum.toString()} ${sizing.unit}`;
+        return `صغير جدًا: من المتوقع أن يحتوي ${issue.origin} على ${adj} ${issue.minimum.toString()} ${sizing.unit}`;
       }
 
-      return `صغير جدًا: من المتوقع أن يكون ${issue.origin} ${adj}${issue.minimum.toString()}`;
+      return `صغير جدًا: من المتوقع أن يكون ${issue.origin} ${adj} ${issue.minimum.toString()}`;
     }
     case "invalid_format": {
       const _issue = issue as errors.$ZodStringFormatIssues;
