@@ -102,7 +102,7 @@ const error: errors.$ZodErrorMap = (issue) => {
       return `${Nouns[_issue.format] ?? issue.format} غير صالح`;
     }
     case "not_multiple_of":
-      return `رقم غير صالح: يجب أن يكون من مضاعفات ${issue.divisor}`;
+      return `القيمة غير صالحة: يجب أن تكون من مضاعفات العدد ${issue.divisor}.`;
     case "unrecognized_keys":
       return `${issue.keys.length > 1 ? "مفاتيح غير مُعرَّفة" : "مفتاح غير مُعرَّف"}: ${util.joinValues(issue.keys, "، ")}`;
     case "invalid_key":
