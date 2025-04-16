@@ -75,7 +75,7 @@ const error: errors.$ZodErrorMap = (issue) => {
       return `نوع غير صالح: كان من المتوقع ${issue.expected}، تم استلام ${parsedType(issue.input)}`;
     case "invalid_value":
       if (issue.values.length === 1)
-        return `إدخال غير صالح: كان من المتوقع ${util.stringifyPrimitive(issue.values[0])}`;
+        return `القيمة غير صالحة. القيمة المتوقعة ${util.stringifyPrimitive(issue.values[0])}`;
       return `خيار غير صالح: كان من المتوقع أن تكون أحد القيم ${util.joinValues(issue.values, "|")}`;
     case "too_big": {
       const adj = issue.inclusive ? "<=" : "<";
