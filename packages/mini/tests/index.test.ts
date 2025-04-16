@@ -604,17 +604,17 @@ test("z.default", () => {
 });
 
 test("z.catch", () => {
-  const a = z.catch(z.string(), "default");
+  const a = z._catch(z.string(), "default");
   type a = z.output<typeof a>;
   expectTypeOf<a>().toEqualTypeOf<string>();
   expect(z.parse(a, "hello")).toEqual("hello");
   expect(z.parse(a, 123)).toEqual("default");
 
-  const b = z.catch(z.string(), () => "default");
+  const b = z._catch(z.string(), () => "default");
   expect(z.parse(b, "hello")).toEqual("hello");
   expect(z.parse(b, 123)).toEqual("default");
 
-  const c = z.catch(z.string(), (ctx) => {
+  const c = z._catch(z.string(), (ctx) => {
     return `${ctx.error.issues.length}issues`;
   });
   expect(z.parse(c, 1234)).toEqual("1issues");

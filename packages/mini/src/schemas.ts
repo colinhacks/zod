@@ -1472,7 +1472,7 @@ export const ZodMiniCatch: core.$constructor<ZodMiniCatch> = /*@__PURE__*/ core.
   }
 );
 
-function _catch<T extends SomeType>(
+export function _catch<T extends SomeType>(
   innerType: T,
   catchValue: core.output<T> | ((ctx: core.$ZodCatchCtx) => core.output<T>),
   params?: core.$ZodCatchParams
@@ -1486,7 +1486,6 @@ function _catch<T extends SomeType>(
     ...util.normalizeParams(params),
   }) as ZodMiniCatch<T>;
 }
-export { _catch as catch };
 
 // ZodMiniNaN
 export interface ZodMiniNaN extends ZodMiniType {
