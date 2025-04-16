@@ -108,7 +108,7 @@ const error: errors.$ZodErrorMap = (issue) => {
     case "invalid_key":
       return `مفتاح غير صالح في ${issue.origin}`;
     case "invalid_union":
-      return "القيمة المُدخلة لا تطابق أيًا من الأنواع المتوقعة.";
+      return "القيمة المُدخلة لا تطابق أيًا من الأنواع المتوقعة";
     case "invalid_element":
       return `عنصر غير صالح ضمن: ${issue.origin}`;
     default:
