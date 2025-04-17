@@ -1,11 +1,19 @@
-import * as zm from "@zod/mini";
-import * as z from "zod";
+import * as z from "./packages/tsc/node_modules/zod4/dist/esm/index.js";
 
-zm._default;
+export const a = z.object({
+  a: z.string(),
+  b: z.string(),
+  c: z.string(),
+});
 
-z.config(z.locales.es());
+export const b = a.omit({
+  a: true,
+  b: true,
+  c: true,
+});
 
-const result = z.string().safeParse(123);
-
-result.error!.issues[0].message;
-// => Entrada inválida: se esperaba string, recibido número
+export const c = b.extend({
+  a: z.string(),
+  b: z.string(),
+  c: z.string(),
+});
