@@ -1,6 +1,6 @@
 import type { $ZodStringFormats } from "../checks.js";
-import type { $ZodTypeDef } from "../schemas.js";
 import type * as errors from "../errors.js";
+import type { $ZodTypeDef } from "../schemas.js";
 import * as util from "../util.js";
 
 const Sizable: Record<string, { unit: string; subject: string }> = {
@@ -11,14 +11,14 @@ const Sizable: Record<string, { unit: string; subject: string }> = {
   number: { unit: "", subject: "luvun" },
   bigint: { unit: "", subject: "suuren kokonaisluvun" },
   int: { unit: "", subject: "kokonaisluvun" },
-  date: { unit: "", subject: "päivämäärän" }
+  date: { unit: "", subject: "päivämäärän" },
 };
 
 function getSizing(origin: string): { unit: string; subject: string } | null {
   return Sizable[origin] ?? null;
 }
 
-const TypeNames: { [k in $ZodTypeDef["type"] | (string & {})]?: string; } = {
+const TypeNames: { [k in $ZodTypeDef["type"] | (string & {})]?: string } = {
   string: "merkkijono",
   number: "luku",
   int: "kokonaisluku",
@@ -57,12 +57,12 @@ const TypeNames: { [k in $ZodTypeDef["type"] | (string & {})]?: string; } = {
   template_literal: "merkkijonopohja",
   promise: "lupaus",
   lazy: "viivästetty",
-  custom: "mukautettu"
+  custom: "mukautettu",
 };
 
 function getTypeName(type: string): string {
   return TypeNames[type] ?? type;
-};
+}
 
 export const parsedType = (data: any): string => {
   const t = typeof data;
@@ -121,7 +121,6 @@ export const parsedType = (data: any): string => {
     default: {
       return t;
     }
-
   }
 };
 
@@ -158,11 +157,11 @@ const Nouns: {
   template_literal: "syöte",
 };
 
-const InOrigin: { [k in (string & {})]?: string } = {
+const InOrigin: { [k in string & {}]?: string } = {
   record: "tietueessa",
   map: "map-kokoelmassa",
-  set: "joukossa"
-}
+  set: "joukossa",
+};
 
 const error: errors.$ZodErrorMap = (issue) => {
   switch (issue.code) {
@@ -175,7 +174,9 @@ const error: errors.$ZodErrorMap = (issue) => {
     case "too_big": {
       const adj = issue.inclusive ? "<=" : "<";
       const sizing = getSizing(issue.origin);
-      if (sizing) return `Liian suuri: ${sizing.subject} täytyy olla ${adj}${issue.maximum.toString()} ${sizing.unit}`.trim();
+      if (sizing) {
+        return `Liian suuri: ${sizing.subject} täytyy olla ${adj}${issue.maximum.toString()} ${sizing.unit}`.trim();
+      }
       return `Liian suuri: ${issue.origin ?? "arvon"} täytyy olla ${adj}${issue.maximum.toString()}`;
     }
     case "too_small": {
