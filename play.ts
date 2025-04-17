@@ -1,19 +1,22 @@
-import * as z from "./packages/tsc/node_modules/zod4/dist/esm/index.js";
+import * as z from "zod";
+const LogLevelNames = ["ERROR", "WARN", "INFO", "DEBUG", "DEBUG_ES", "NONE"] as const;
+const ZodLogLevelNames = z.enum(LogLevelNames);
+type ZodLogLevelNames = z.infer<typeof ZodLogLevelNames>;
 
-export const a = z.object({
-  a: z.string(),
-  b: z.string(),
-  c: z.string(),
+export const ZODSettingsMap = z.object({
+  loglevel: ZodLogLevelNames.describe("log level for the server"),
+  // .... other props
 });
+type ZodSettingsMap = z.infer<typeof ZODSettingsMap>;
 
-export const b = a.omit({
-  a: true,
-  b: true,
-  c: true,
-});
-
-export const c = b.extend({
-  a: z.string(),
-  b: z.string(),
-  c: z.string(),
-});
+export type SettingsMap = z.infer<typeof ZODSettingsMap>;
+// SettingsMap is now  {
+//   loglevel: z.core.$InferEnumOutput<{
+//        ERROR: "ERROR";
+//        WARN: "WARN";
+//        INFO: "INFO";
+//        DEBUG: "DEBUG";
+//        NONE: "NONE";
+//    }>;
+//      ....
+// }
