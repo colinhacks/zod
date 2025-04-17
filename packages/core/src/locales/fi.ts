@@ -6,7 +6,7 @@ import * as util from "../util.js";
 const Sizable: Record<string, { unit: string; subject: string }> = {
   string: { unit: "merkkiä", subject: "merkkijonon" },
   file: { unit: "tavua", subject: "tiedoston" },
-  array: { unit: "alkiota", subject: "taulukon" },
+  array: { unit: "alkiota", subject: "listan" },
   set: { unit: "alkiota", subject: "joukon" },
   number: { unit: "", subject: "luvun" },
   bigint: { unit: "", subject: "suuren kokonaisluvun" },
@@ -29,7 +29,7 @@ const TypeNames: { [k in $ZodTypeDef["type"] | (string & {})]?: string } = {
   date: "päivämäärä",
   object: "objekti",
   file: "tiedosto",
-  array: "taulukko",
+  array: "lista",
   map: "hajautustaulu",
   set: "joukko",
   nan: "epäluku",
@@ -67,7 +67,7 @@ export const parsedType = (data: any): string => {
     }
     case "object": {
       if (Array.isArray(data)) {
-        return "taulukko";
+        return "lista";
       }
       if (data === null) {
         return "tyhjä";
@@ -103,7 +103,7 @@ export const parsedType = (data: any): string => {
 const Nouns: {
   [k in $ZodStringFormats | (string & {})]?: string;
 } = {
-  regex: "syöte",
+  regex: "regex-lauseke",
   email: "sähköpostiosoite",
   url: "URL-osoite",
   emoji: "emoji",
@@ -130,7 +130,7 @@ const Nouns: {
   json_string: "JSON-merkkijono",
   e164: "E.164-luku",
   jwt: "JWT",
-  template_literal: "syöte",
+  template_literal: "templaattimerkkijono",
 };
 
 const InOrigin: { [k in string & {}]?: string } = {
@@ -168,7 +168,7 @@ const error: errors.$ZodErrorMap = (issue) => {
       if (_issue.format === "starts_with") return `Virheellinen merkkijono: alussa täytyy olla "${_issue.prefix}"`;
       if (_issue.format === "ends_with") return `Virheellinen merkkijono: lopussa täytyy olla "${_issue.suffix}"`;
       if (_issue.format === "includes") return `Virheellinen merkkijono: täytyy sisältää "${_issue.includes}"`;
-      if (_issue.format === "regex") return `Virheellinen merkkijono: täytyy vastata kaavaa ${_issue.pattern}`;
+      if (_issue.format === "regex") return `Virheellinen merkkijono: täytyy vastata regex-lauseketta ${_issue.pattern}`;
       return `Virheellinen ${Nouns[_issue.format] ?? issue.format}`;
     }
     case "not_multiple_of":
