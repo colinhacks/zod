@@ -30,7 +30,7 @@ const TypeNames: { [k in $ZodTypeDef["type"] | (string & {})]?: string } = {
   object: "objekti",
   file: "tiedosto",
   array: "lista",
-  map: "hajautustaulu",
+  map: "hakemisto",
   set: "joukko",
   nan: "epäluku",
   promise: "lupaus",
@@ -76,7 +76,7 @@ export const parsedType = (data: any): string => {
         return "päivämäärä";
       }
       if (data instanceof Map) {
-        return "hajautustaulu";
+        return "hakemisto";
       }
       if (data instanceof Set) {
         return "joukko";
@@ -135,7 +135,7 @@ const Nouns: {
 
 const InOrigin: { [k in string & {}]?: string } = {
   record: "tietueessa",
-  map: "hajautustaulussa",
+  map: "hakemistossa",
   set: "joukossa",
 };
 
@@ -168,7 +168,9 @@ const error: errors.$ZodErrorMap = (issue) => {
       if (_issue.format === "starts_with") return `Virheellinen merkkijono: alussa täytyy olla "${_issue.prefix}"`;
       if (_issue.format === "ends_with") return `Virheellinen merkkijono: lopussa täytyy olla "${_issue.suffix}"`;
       if (_issue.format === "includes") return `Virheellinen merkkijono: täytyy sisältää "${_issue.includes}"`;
-      if (_issue.format === "regex") return `Virheellinen merkkijono: täytyy vastata regex-lauseketta ${_issue.pattern}`;
+      if (_issue.format === "regex") {
+        return `Virheellinen merkkijono: täytyy vastata regex-lauseketta ${_issue.pattern}`;
+      }
       return `Virheellinen ${Nouns[_issue.format] ?? issue.format}`;
     }
     case "not_multiple_of":
