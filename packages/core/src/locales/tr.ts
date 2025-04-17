@@ -61,12 +61,12 @@ const Nouns: {
   ipv6: "IPv6 adresi",
   cidrv4: "IPv4 aralığı",
   cidrv6: "IPv6 aralığı",
-  base64: "base64 ile kodlanmış metin",
-  base64url: "base64url ile kodlanmış metin",
+  base64: "base64 ile şifrelenmiş metin",
+  base64url: "base64url ile şifrelenmiş metin",
   json_string: "JSON dizesi",
   e164: "E.164 sayısı",
   jwt: "JWT",
-  template_literal: "girdi",
+  template_literal: "Şablon dizesi",
 };
 
 const error: errors.$ZodErrorMap = (issue) => {
