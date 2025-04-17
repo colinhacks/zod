@@ -3,10 +3,10 @@ import type * as errors from "../errors.js";
 import * as util from "../util.js";
 
 const Sizable: Record<string, { unit: string; verb: string }> = {
-  string: { unit: "حرف", verb: "أن يحتوي على" },
-  file: { unit: "بايت", verb: "أن يحتوي على" },
-  array: { unit: "عنصر", verb: "أن يحتوي على" },
-  set: { unit: "عنصر", verb: "أن يحتوي على" },
+  string: { unit: "حرف", verb: "أن يحوي" },
+  file: { unit: "بايت", verb: "أن يحوي" },
+  array: { unit: "عنصر", verb: "أن يحوي" },
+  set: { unit: "عنصر", verb: "أن يحوي" },
 };
 
 function getSizing(origin: string): { unit: string; verb: string } | null {
@@ -39,10 +39,10 @@ export const parsedType = (data: any): string => {
 const Nouns: {
   [k in $ZodStringFormats | (string & {})]?: string;
 } = {
-  regex: "input",
-  email: "email address",
-  url: "URL",
-  emoji: "emoji",
+  regex: "نص نمطي",
+  email: "بريد إلكتروني",
+  url: "رابط",
+  emoji: "إيموجي",
   uuid: "UUID",
   uuidv4: "UUIDv4",
   uuidv6: "UUIDv6",
@@ -53,66 +53,65 @@ const Nouns: {
   ulid: "ULID",
   xid: "XID",
   ksuid: "KSUID",
-  datetime: "ISO datetime",
-  date: "ISO date",
-  time: "ISO time",
-  duration: "ISO duration",
-  ipv4: "IPv4 address",
-  ipv6: "IPv6 address",
-  cidrv4: "IPv4 range",
-  cidrv6: "IPv6 range",
-  base64: "base64-encoded string",
-  base64url: "base64url-encoded string",
-  json_string: "JSON string",
-  e164: "E.164 number",
+  datetime: "تاريخ ووقت بمعيار ISO",
+  date: "تاريخ بمعيار ISO",
+  time: "وقت بمعيار ISO",
+  duration: "مدة بمعيار ISO",
+  ipv4: "عنوان IPv4",
+  ipv6: "عنوان IPv6",
+  cidrv4: "مدى عناوين بصيغة IPv4",
+  cidrv6: "مدى عناوين بصيغة IPv6",
+  base64: "نَص بترميز base64-encoded",
+  base64url: "نَص بترميز base64url-encoded",
+  json_string: "نَص على هيئة JSON",
+  e164: "رقم هاتف بمعيار E.164",
   jwt: "JWT",
-  template_literal: "input",
+  template_literal: "نص مقولب",
 };
 
 const error: errors.$ZodErrorMap = (issue) => {
   switch (issue.code) {
     case "invalid_type":
-      return `نوع غير صالح: كان من المتوقع ${issue.expected}، تم استلام ${parsedType(issue.input)}`;
+      return `مدخلات غير مقبولة: يفترض إدخال ${issue.expected}، ولكن ما تم إدخاله ${parsedType(issue.input)}`;
     case "invalid_value":
-      if (issue.values.length === 1)
-        return `القيمة غير صالحة. القيمة المتوقعة ${util.stringifyPrimitive(issue.values[0])}`;
-      return `القيمة غير صالحة: كان من المتوقع أن تكون إحدى القيم التالية:  ${util.joinValues(issue.values, "|")}`;
+      if (issue.values.length === 1) return `مدخلات غير مقبولة: يفترض إدخال ${util.stringifyPrimitive(issue.values[0])}`;
+      return `اختيار غير مقبول: يتوقع انتقاء أحد هذه الخيارات: ${util.joinValues(issue.values, "|")}`;
     case "too_big": {
       const adj = issue.inclusive ? "<=" : "<";
       const sizing = getSizing(issue.origin);
       if (sizing)
-        return `كبير جدًا: من المتوقع أن يحتوي ${issue.origin ?? "value"} على ${adj} ${issue.maximum.toString()} ${sizing.unit ?? "elements"}`;
-      return `كبير جدًا: من المتوقع أن يكون ${issue.origin ?? "value"} ${adj} ${issue.maximum.toString()}`;
+        return ` أكبر من اللازم: يفترض أن تكون ${issue.origin ?? "القيمة"} ${adj}${issue.maximum.toString()} ${sizing.unit ?? "عنصر"}`;
+      return `أكبر من اللازم: يفترض أن تكون ${issue.origin ?? "القيمة"} ${adj}${issue.maximum.toString()}`;
     }
     case "too_small": {
       const adj = issue.inclusive ? ">=" : ">";
       const sizing = getSizing(issue.origin);
       if (sizing) {
-        return `صغير جدًا: من المتوقع أن يحتوي ${issue.origin} على ${adj} ${issue.minimum.toString()} ${sizing.unit}`;
+        return `أصغر من اللازم: يفترض لـ ${issue.origin} أن يكون ${adj}${issue.minimum.toString()} ${sizing.unit}`;
       }
 
-      return `صغير جدًا: من المتوقع أن يكون ${issue.origin} ${adj} ${issue.minimum.toString()}`;
+      return `أصغر من اللازم: يفترض لـ ${issue.origin} أن يكون ${adj}${issue.minimum.toString()}`;
     }
     case "invalid_format": {
       const _issue = issue as errors.$ZodStringFormatIssues;
-      if (_issue.format === "starts_with") return `تنسيق غير صالح: يجب أن يبدأ بـ "${issue}"`;
-      if (_issue.format === "ends_with") return `تنسيق غير صالح: يجب أن ينتهي بـ "${_issue.suffix}"`;
-      if (_issue.format === "includes") return `تنسيق غير صالح: يجب أن يتضمن "${_issue.includes}"`;
-      if (_issue.format === "regex") return `تنسيق غير صالح: يجب أن يطابق النمط ${_issue.pattern}`;
-      return `${Nouns[_issue.format] ?? issue.format} غير صالح`;
+      if (_issue.format === "starts_with") return `نَص خطأ: يجب أن يبدأ بـ "${issue}"`;
+      if (_issue.format === "ends_with") return `نَص خطأ: يجب أن ينتهي بـ "${_issue.suffix}"`;
+      if (_issue.format === "includes") return `نَص خطأ: يجب أن يتضمَّن "${_issue.includes}"`;
+      if (_issue.format === "regex") return `نَص خطأ: يجب أن يطابق النمط ${_issue.pattern}`;
+      return `Invalid ${Nouns[_issue.format] ?? issue.format}`;
     }
     case "not_multiple_of":
-      return `القيمة غير صالحة: يجب أن تكون من مضاعفات العدد ${issue.divisor}.`;
+      return `رقم غير مقبول: يجب أن يكون من مضاعفات ${issue.divisor}`;
     case "unrecognized_keys":
-      return `${issue.keys.length > 1 ? "مفاتيح غير مُعرَّفة" : "مفتاح غير مُعرَّف"}: ${util.joinValues(issue.keys, "، ")}`;
+      return `معرف${issue.keys.length > 1 ? "ات" : ""} غريب${issue.keys.length > 1 ? "ة" : ""}: ${util.joinValues(issue.keys, "، ")}`;
     case "invalid_key":
-      return `مفتاح غير صالح في ${issue.origin}`;
+      return `معرف غير مقبول في ${issue.origin}`;
     case "invalid_union":
-      return "القيمة المُدخلة لا تطابق أيًا من الأنواع المتوقعة";
+      return "مدخل غير مقبول";
     case "invalid_element":
-      return `عنصر غير صالح ضمن: ${issue.origin}`;
+      return `مدخل غير مقبول في ${issue.origin}`;
     default:
-      return "إدخال غير صالح";
+      return `مدخل غير مقبول`;
   }
 };
 
