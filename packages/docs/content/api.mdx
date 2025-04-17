@@ -102,7 +102,7 @@ To allow multiple literal values:
 ```ts
 const colors = z.literal(["red", "green", "blue"]);
 
-colos.parse("green"); // ✅
+colors.parse("green"); // ✅
 colors.parse("yellow"); // ❌
 ```
 
