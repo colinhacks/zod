@@ -40,7 +40,7 @@ const TypeNames: { [k in $ZodTypeDef["type"] | (string & {})]?: string } = {
   tuple: "monikko",
   union: "yhdiste",
   intersection: "leikkaus",
-  map: "map-kokoelma",
+  map: "hajautustaulu",
   set: "joukko",
   enum: "luettelo",
   literal: "literaali",
@@ -100,7 +100,7 @@ export const parsedType = (data: any): string => {
         return "päivämäärä";
       }
       if (data instanceof Map) {
-        return "map-kokoelma";
+        return "hajautustaulu";
       }
       if (data instanceof Set) {
         return "joukko";
@@ -159,7 +159,7 @@ const Nouns: {
 
 const InOrigin: { [k in string & {}]?: string } = {
   record: "tietueessa",
-  map: "map-kokoelmassa",
+  map: "hajautustaulussa",
   set: "joukossa",
 };
 
