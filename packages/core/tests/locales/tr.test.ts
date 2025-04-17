@@ -53,7 +53,6 @@ test("locales - tr", () => {
 
   const invalidFormatStartsWith = z.string().startsWith("abcd").safeParse("invalid-string");
   expect(invalidFormatStartsWith.error!.issues[0].code).toBe("invalid_format");
-  console.log(invalidFormatStartsWith.error!.issues);
   expect(invalidFormatStartsWith.error!.issues[0].message).toBe('Geçersiz metin: "abcd" ile başlamalı');
 
   const notMultipleOf = z.number().multipleOf(3).safeParse(10);
