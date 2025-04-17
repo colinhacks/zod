@@ -1797,17 +1797,22 @@ export type $ZodLooseShape = Record<string, any>;
 
 export type $InferInterfaceOutput<
   T extends $ZodLooseShape,
-  Params extends $ZodInterfaceNamedParams,
+  Extra extends Record<string, unknown>,
 > = string extends keyof T
   ? object
   : {} extends T
     ? object
     : util.Flatten<
+        // {
+        //   -readonly [k in Params["optional"]]?: T[k]["_zod"]["output"];
+        // } & {
+        //   -readonly [k in Exclude<keyof T, Params["optional"]>]: T[k]["_zod"]["output"];
+        // }
         {
-          -readonly [k in Params["optional"]]?: T[k]["_zod"]["output"];
+          [k in keyof T as k extends `${string}?` ? never : keyof T]: T[k]["_zod"]["output"];
         } & {
-          -readonly [k in Exclude<keyof T, Params["optional"]>]: T[k]["_zod"]["output"];
-        } & Params["extra"]
+          [k in keyof T as k extends `${infer K}?` ? K : never]-?: T[k]["_zod"]["output"];
+        } & Extra
       >;
 
 export type $InferInterfaceInput<
@@ -1837,25 +1842,28 @@ export interface $ZodInterfaceNamedParams {
 
 export interface $ZodInterfaceInternals<
   Shape extends Readonly<$ZodLooseShape> = Readonly<$ZodLooseShape>,
-  Params extends $ZodInterfaceNamedParams = $ZodInterfaceNamedParams,
-> extends $ZodObjectLikeInternals<$InferInterfaceOutput<Shape, Params>, $InferInterfaceInput<Shape, Params>> {
+  Extra extends Record<string, unknown> = Record<string, unknown>,
+> extends $ZodObjectLikeInternals<$InferInterfaceOutput<Shape, Extra>, $InferInterfaceInput<Shape, Extra>> {
   subtype: "interface";
   def: $ZodInterfaceDef<Shape>;
+  keymap: util.CleanKeyMap<Shape>;
   // shape: Shape;
-  optional: Params["optional"];
-  defaulted: Params["defaulted"];
-  extra: Params["extra"];
+  // optional: Params["optional"];
+  // defaulted: Params["defaulted"];
+  extra: Extra;
+  shape: Shape;
 }
 
 export interface $ZodInterface<
   Shape extends Readonly<$ZodLooseShape> = Readonly<$ZodLooseShape>,
-  Params extends $ZodInterfaceNamedParams = {
-    optional: string;
-    defaulted: string;
-    extra: Record<string, unknown>;
-  },
+  Extra extends Record<string, unknown> = Record<string, unknown>,
+  // Params extends $ZodInterfaceNamedParams = {
+  //   optional: string;
+  //   defaulted: string;
+  //   extra: Record<string, unknown>;
+  // },
 > extends $ZodType {
-  _zod: $ZodInterfaceInternals<Shape, Params>;
+  _zod: $ZodInterfaceInternals<Shape, Extra>;
 }
 
 export const $ZodInterface: core.$constructor<$ZodInterface> = /*@__PURE__*/ core.$constructor(

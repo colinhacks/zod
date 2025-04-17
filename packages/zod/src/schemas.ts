@@ -1077,6 +1077,7 @@ export interface ZodInterface<
   out Params extends core.$ZodInterfaceNamedParams = core.$ZodInterfaceNamedParams,
 > extends ZodType {
   _zod: core.$ZodInterfaceInternals<Shape, Params>;
+  shape: this["_zod"]["shape"];
 
   keyof(): ZodEnum<util.ToEnum<util.InterfaceKeys<string & keyof Shape>>>;
   catchall<T extends core.$ZodType>(

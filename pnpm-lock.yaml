@@ -237,8 +237,8 @@ importers:
         specifier: workspace:*
         version: link:../mini
       arktype:
-        specifier: 2.0.0-rc.33
-        version: 2.0.0-rc.33
+        specifier: ^2.0.0
+        version: 2.1.19
       execa:
         specifier: ^9.5.2
         version: 9.5.2
@@ -285,14 +285,8 @@ packages:
     resolution: {integrity: sha512-Izvir8iIoU+X4SKtDAa5kpb+9cpifclzsbA8x/AZY0k0gIfXYQ1fa1B6Epfe6vNA2YfDX8VtrZFgvnXB6aPEoQ==}
     engines: {node: '>=18'}
 
-  '@ark/schema@0.33.0':
-    resolution: {integrity: sha512-GPjzbiydOL5gd9UFZMUQr5JBqT9YTX2dPT+u18aNswlGOgQE01y9B6kiwK/JyoaSwEJSDyxAPABsVRL7gG9KSQ==}
-
   '@ark/schema@0.45.9':
     resolution: {integrity: sha512-rG0v/JI0sibn/0wERAHTYVLCtEqoMP2IIlxnb+S5DrEjCI5wpubbZSWMDW50tZ8tV6FANu6zzHDeeKbp6lsZdg==}
-
-  '@ark/util@0.33.0':
-    resolution: {integrity: sha512-zzYQiRHLPwK15T5CM6SgQXTycKNpAvA2qwdlMbK5vFbLzy3P87VNKA8NiezBIXm+jsov3lEtMKE6kLtbZQDUbg==}
 
   '@ark/util@0.45.9':
     resolution: {integrity: sha512-0WYNAb8aRGp7dNt6xIvIrRzL7V1XL3u3PK2vcklhtTrdaP235DjC9qJhzidrxtWr68mA5ySSjUrgrXk622bKkw==}
@@ -2550,9 +2544,6 @@ packages:
   aria-hidden@1.2.4:
     resolution: {integrity: sha512-y+CcFFwelSXpLZk/7fMB2mUbGtX9lKycf1MWJ7CaTIERyitVlyQx6C+sxcROU2BAJ24OiZyK+8wj2i8AlBoS3A==}
     engines: {node: '>=10'}
-
-  arktype@2.0.0-rc.33:
-    resolution: {integrity: sha512-ndtDXtunbff0o1urOOXq/eHGuUqIlp5MZ99lWON3MS0LZzF7/WFf+SwOCSomoPj9BptMLMyLS9cIYVNndD5QVQ==}
 
   arktype@2.1.19:
     resolution: {integrity: sha512-notORSuTSpfLV7rq0kYC4mTgIVlVR0xQuvtFxOaE9aKiXyON/kgoIBwZZcKeSSb4BebNcfJoGlxJicAUl/HMdw==}
@@ -5298,15 +5289,9 @@ snapshots:
       typescript: 5.6.1-rc
       validate-npm-package-name: 5.0.1
 
-  '@ark/schema@0.33.0':
-    dependencies:
-      '@ark/util': 0.33.0
-
   '@ark/schema@0.45.9':
     dependencies:
       '@ark/util': 0.45.9
-
-  '@ark/util@0.33.0': {}
 
   '@ark/util@0.45.9': {}
 
@@ -7336,11 +7321,6 @@ snapshots:
   aria-hidden@1.2.4:
     dependencies:
       tslib: 2.8.1
-
-  arktype@2.0.0-rc.33:
-    dependencies:
-      '@ark/schema': 0.33.0
-      '@ark/util': 0.33.0
 
   arktype@2.1.19:
     dependencies:
