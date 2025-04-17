@@ -1,7 +1,5 @@
 import type { $ZodStringFormats } from "../checks.js";
 import type * as errors from "../errors.js";
-import { bigint } from "../regexes.js";
-import type { $ZodTypeDef } from "../schemas.js";
 import * as util from "../util.js";
 
 const Sizable: Record<string, { unit: string; subject: string }> = {
