@@ -27,7 +27,7 @@ const Player = z.interface({
 import * as z from "@zod/mini";
 
 const Player = z.interface({ 
-  username: z. string(),
+  username: z.string(),
   xp: z.number()
 });
 ```
@@ -105,7 +105,7 @@ try {
 </Tabs>
 
 <Callout>
-**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](#transform), you'll need to use the `.safeParse()` method instead. 
+**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](#transform), you'll need to use the `.parseAsync()` method instead. 
 
 ```ts
 const schema = z.string().refine(async (val) => val.length <= 8);
@@ -159,7 +159,7 @@ Zod infers a static type from your schema definitions. You can extract this type
 
 ```ts
 const Player = z.interface({ 
-  username: z. string(),
+  username: z.string(),
   xp: z.number()
 });
 
