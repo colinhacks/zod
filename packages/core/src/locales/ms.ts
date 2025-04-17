@@ -3,11 +3,11 @@ import type * as errors from "../errors.js";
 import * as util from "../util.js";
 
 const Sizable: Record<string, { unit: string; verb: string }> = {
-    string: { unit: "aksara", verb: "mempunyai" },
-    file: { unit: "bait", verb: "mempunyai" },
-    array: { unit: "elemen", verb: "mempunyai" },
-    set: { unit: "elemen", verb: "mempunyai" },
-  };  
+  string: { unit: "aksara", verb: "mempunyai" },
+  file: { unit: "bait", verb: "mempunyai" },
+  array: { unit: "elemen", verb: "mempunyai" },
+  set: { unit: "elemen", verb: "mempunyai" },
+};
 
 function getSizing(origin: string): { unit: string; verb: string } | null {
   return Sizable[origin] ?? null;
@@ -72,10 +72,10 @@ const Nouns: {
 const error: errors.$ZodErrorMap = (issue) => {
   switch (issue.code) {
     case "invalid_type":
-        return `Input tidak sah: dijangka ${issue.expected}, diterima ${parsedType(issue.input)}`;
+      return `Input tidak sah: dijangka ${issue.expected}, diterima ${parsedType(issue.input)}`;
     case "invalid_value":
-        if (issue.values.length === 1) return `Input tidak sah: dijangka ${util.stringifyPrimitive(issue.values[0])}`;
-        return `Pilihan tidak sah: dijangka salah satu daripada ${util.joinValues(issue.values, "|")}`;
+      if (issue.values.length === 1) return `Input tidak sah: dijangka ${util.stringifyPrimitive(issue.values[0])}`;
+      return `Pilihan tidak sah: dijangka salah satu daripada ${util.joinValues(issue.values, "|")}`;
     case "too_big": {
       const adj = issue.inclusive ? "<=" : "<";
       const sizing = getSizing(issue.origin);
