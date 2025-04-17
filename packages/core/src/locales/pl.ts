@@ -80,17 +80,18 @@ const error: errors.$ZodErrorMap = (issue) => {
     case "too_big": {
       const adj = issue.inclusive ? "<=" : "<";
       const sizing = getSizing(issue.origin);
-      if (sizing)
+      if (sizing) {
         return `Zbyt duż(y/a/e): oczekiwano, że ${issue.origin ?? "wartość"} będzie mieć ${adj}${issue.maximum.toString()} ${sizing.unit ?? "elementów"}`;
+      }
       return `Zbyt duż(y/a/e): oczekiwano, że ${issue.origin ?? "wartość"} będzie wynosić ${adj}${issue.maximum.toString()}`;
     }
     case "too_small": {
       const adj = issue.inclusive ? ">=" : ">";
       const sizing = getSizing(issue.origin);
       if (sizing) {
-        return `Zbyt mał(y/a/e): oczekiwano, że ${issue.origin} będzie mieć ${adj}${issue.minimum.toString()} ${sizing.unit}`;
+        return `Zbyt mał(y/a/e): oczekiwano, że ${issue.origin ?? "wartość"} będzie mieć ${adj}${issue.minimum.toString()} ${sizing.unit ?? "elementów"}`;
       }
-      return `Zbyt mał(y/a/e): oczekiwano, że ${issue.origin} będzie wynosić ${adj}${issue.minimum.toString()}`;
+      return `Zbyt mał(y/a/e): oczekiwano, że ${issue.origin ?? "wartość"} będzie wynosić ${adj}${issue.minimum.toString()}`;
     }
     case "invalid_format": {
       const _issue = issue as errors.$ZodStringFormatIssues;
