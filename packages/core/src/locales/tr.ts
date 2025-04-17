@@ -91,7 +91,7 @@ const error: errors.$ZodErrorMap = (issue) => {
     }
     case "invalid_format": {
       const _issue = issue as errors.$ZodStringFormatIssues;
-      if (_issue.format === "starts_with") return `Geçersiz metin: "${issue.prefix}" ile başlamalı`;
+      if (_issue.format === "starts_with") return `Geçersiz metin: "${_issue.prefix}" ile başlamalı`;
       if (_issue.format === "ends_with") return `Geçersiz metin: "${_issue.suffix}" ile bitmeli`;
       if (_issue.format === "includes") return `Geçersiz metin: "${_issue.includes}" içermeli`;
       if (_issue.format === "regex") return `Geçersiz metin: ${_issue.pattern} desenine uymalı`;
