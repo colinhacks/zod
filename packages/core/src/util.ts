@@ -553,9 +553,13 @@ export function optionalInterfaceKeys(shape: schemas.$ZodLooseShape): string[] {
     .map((k) => k.replace(/\?$/, ""));
 }
 
-export type CleanInterfaceShape<T extends object> = Identity<{
-  [k in keyof T as k extends `${infer K}?` ? K : k extends `?${infer K}` ? K : k]: T[k];
-}>;
+export type CleanInterfaceShape<T extends object> = Identity<
+  {
+    [k in keyof T as k extends `${infer K}?` ? K : k extends `?${infer K}` ? K : never]: T[k];
+  } & {
+    [k in keyof T as k extends `${string}?` | `?${string}` ? never : k]: T[k];
+  }
+>;
 export type CleanKeys<T extends PropertyKey> = T extends `${infer K}?` ? K : T extends `?${infer K}` ? K : T;
 export type OptionalInterfaceKeys<T extends PropertyKey> = T extends `${infer K}?` ? K : never;
 export type DefaultedInterfaceKeys<T extends PropertyKey> = T extends `?${infer K}` ? K : never;

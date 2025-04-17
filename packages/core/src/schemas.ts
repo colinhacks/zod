@@ -1814,9 +1814,9 @@ export type $InferInterfaceOutput<
     ? object
     : util.Flatten<
         {
-          -readonly [k in Params["optional"]]?: T[k]["_zod"]["output"];
+          -readonly [k in keyof T as k extends Params["optional"] ? k : never]?: T[k]["_zod"]["output"];
         } & {
-          -readonly [k in Exclude<keyof T, Params["optional"]>]: T[k]["_zod"]["output"];
+          -readonly [k in keyof T as k extends Params["optional"] ? never : k]: T[k]["_zod"]["output"];
         } & Params["extra"]
       >;
 
@@ -1829,9 +1829,13 @@ export type $InferInterfaceInput<
     ? Record<string, unknown>
     : util.Flatten<
         {
-          -readonly [k in Params["optional"] | Params["defaulted"]]?: T[k]["_zod"]["input"];
+          -readonly [k in keyof T as k extends Params["optional"] | Params["defaulted"]
+            ? k
+            : never]?: T[k]["_zod"]["input"];
         } & {
-          -readonly [k in Exclude<keyof T, Params["optional"] | Params["defaulted"]>]: T[k]["_zod"]["input"];
+          -readonly [k in keyof T as k extends Params["optional"] | Params["defaulted"]
+            ? never
+            : k]: T[k]["_zod"]["input"];
         } & Params["extra"]
       >;
 
@@ -1880,11 +1884,8 @@ export const $ZodInterface: core.$constructor<$ZodInterface> = /*@__PURE__*/ cor
 ///////////////////////////////////////////////////////
 
 // compute output type
-type OptionalOutKeys<T extends $ZodShape> = {
-  [k in keyof T]: T[k] extends { _zod: { qout: "true" } } ? k : never;
-}[keyof T];
 type OptionalOutProps<T extends $ZodShape> = {
-  [k in OptionalOutKeys<T>]?: T[k]["_zod"]["output"];
+  [k in keyof T as T[k]["_zod"]["qout"] extends "true" ? k : never]?: T[k]["_zod"]["output"];
 };
 type RequiredOutProps<T extends $ZodShape> = {
   [k in keyof T as T[k]["_zod"]["qout"] extends "true" ? never : k]-?: T[k]["_zod"]["output"];
