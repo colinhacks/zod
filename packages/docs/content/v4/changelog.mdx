@@ -191,11 +191,11 @@ mySchema.parse(12, { error: () => "Contextual error" }); // => "Schema-level err
 
 ### deprecates `.format()` 
 
-The `.format()` method on `ZodError` has been deprecated. Instead use the top-level `z.treeifyError()` function. Read the [Formatting errors docs](/formatting-errors) for more information. 
+The `.format()` method on `ZodError` has been deprecated. Instead use the top-level `z.treeifyError()` function. Read the [Formatting errors docs](/error-formatting) for more information. 
 
 ### deprecates `.flatten()`
 
-The `.flatten()` method on `ZodError` has also been deprecated. Instead use the top-level `z.treeifyError()` function. Read the [Formatting errors docs](/formatting-errors) for more information. 
+The `.flatten()` method on `ZodError` has also been deprecated. Instead use the top-level `z.treeifyError()` function. Read the [Formatting errors docs](/error-formatting) for more information. 
 
 ### drops `.formErrors` 
 
@@ -377,7 +377,7 @@ enum Color {
 const ColorSchema = z.enum(Color); // ✅
 ```
 
-As part of this refactor of `ZodEnum`, a number of long-deprecated and redundunant features have been removed. These were all identical and only existed for historical reasons.
+As part of this refactor of `ZodEnum`, a number of long-deprecated and redundant features have been removed. These were all identical and only existed for historical reasons.
 
 ```ts
 ColorSchema.enum.Red; // ✅ => "Red" (canonical API)
@@ -462,7 +462,7 @@ myFunction.implementAsync(async (input) => {
 
 ### ignores type predicates
 
-In Zod 3, passing a [type predicate](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates) as a refinement functions could still narrow the type of a schema. This wasn't documented but was discussd in some issues. This is no longer the case.
+In Zod 3, passing a [type predicate](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates) as a refinement functions could still narrow the type of a schema. This wasn't documented but was discussed in some issues. This is no longer the case.
 
 ```ts
 const mySchema = z.unknown().refine((val): val is string => {
@@ -678,7 +678,7 @@ z.string().transform(val => val); // ZodPipe<ZodString, ZodTransform>
 
 ### drops `ZodPreprocess`
 
-As with `.transform()`, the `z.prepreprocess()` function now returns a `ZodPipe` instance instead of a dedicated `ZodPreprocess` instance.
+As with `.transform()`, the `z.preprocess()` function now returns a `ZodPipe` instance instead of a dedicated `ZodPreprocess` instance.
 
 ```ts
 z.preprocess(val => val, z.string()); // ZodPipe<ZodTransform, ZodString>
