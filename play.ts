@@ -1,21 +1,17 @@
 import * as z from "zod";
 
-const Internal = z.object({
-  num: z.number(),
-  str: z.string(),
+const Record = z.record(z.enum(["a", "b", "c"]), z.number());
+type Record = z.infer<typeof Record>;
+Record.parse({
+  a: 1,
+  // b: 2,
+  // c: 3,
 });
-//.meta({ id: "Internal" });
 
-const External = z.object({
-  a: Internal,
-  b: Internal.optional(),
-  c: z.lazy(() => Internal),
-  d: z.promise(Internal),
-  e: z.pipe(Internal, Internal),
+const PartialRecord = z.record(z.enum(["a", "b", "c"]).or(z.never()), z.number());
+type PartialRecord = z.infer<typeof PartialRecord>;
+PartialRecord.parse({
+  a: 1,
+  // b: 2,
+  // c: 3,
 });
-console.dir(
-  z.toJSONSchema(External, {
-    reused: "ref",
-  }),
-  { depth: null }
-);

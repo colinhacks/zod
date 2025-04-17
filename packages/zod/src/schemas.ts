@@ -663,7 +663,7 @@ export interface _ZodNumber<Input = unknown> extends ZodType {
   /** Identical to .max() */
   lte(value: number, params?: string | core.$ZodCheckLessThanParams): this;
   max(value: number, params?: string | core.$ZodCheckLessThanParams): this;
-  /** @deprecated Use `z.int()` instead. */
+  /** @deprecated Consider `z.int()` instead. This API is considered *legacy*; it will never be removed but a better alternative exists. */
   int(params?: string | core.$ZodCheckNumberFormatParams): this;
   /** @deprecated This is now identical to `.int()` instead. Only numbers in the safe integer range are accepted. */
   safe(params?: string | core.$ZodCheckNumberFormatParams): this;
@@ -675,12 +675,12 @@ export interface _ZodNumber<Input = unknown> extends ZodType {
   /** @deprecated Use `.multipleOf()` instead. */
   step(value: number, params?: string | core.$ZodCheckMultipleOfParams): this;
 
-  /** @deprecated In v4 and later, z.number() does not allow infinite values. This is a no-op. */
+  /** @deprecated In v4 and later, z.number() does not allow infinite values by default. This is a no-op. */
   finite(params?: any): this;
 
   minValue: number | null;
   maxValue: number | null;
-  /** @deprecated Check `format` property instead.  */
+  /** @deprecated Check the `format` property instead.  */
   isInt: boolean;
   /** @deprecated Number schemas no longer accept infinite values, so this always returns `true`. */
   isFinite: boolean;

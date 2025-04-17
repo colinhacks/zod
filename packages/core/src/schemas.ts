@@ -2428,8 +2428,12 @@ export interface $ZodRecordDef extends $ZodTypeDef {
 
 export interface $ZodRecordInternals<Key extends $ZodRecordKey = $ZodRecordKey, Value extends $ZodType = $ZodType>
   extends $ZodTypeInternals<
-    Record<Key["_zod"]["output"], Value["_zod"]["output"]>,
-    Record<Key["_zod"]["input"], Value["_zod"]["input"]>
+    undefined extends Key["_zod"]["values"]
+      ? Partial<Record<Key["_zod"]["output"], Value["_zod"]["output"]>>
+      : Record<Key["_zod"]["output"], Value["_zod"]["output"]>,
+    undefined extends Key["_zod"]["values"]
+      ? Partial<Record<Key["_zod"]["input"], Value["_zod"]["input"]>>
+      : Record<Key["_zod"]["input"], Value["_zod"]["input"]>
   > {
   def: $ZodRecordDef;
   isst: errors.$ZodIssueInvalidType | errors.$ZodIssueInvalidKey<Record<PropertyKey, unknown>>;

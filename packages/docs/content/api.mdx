@@ -1722,6 +1722,7 @@ Record schemas are used to validate types such as `Record<string, number>`.
 
 ```ts
 const IdCache = z.record(z.string(), z.string());
+type IdCache = z.infer<typeof IdCache>; // Record<string, string>
 
 IdCache.parse({
   carlotta: "77d2586b-9e8e-4ecf-8b21-ea7e0530eadd",
@@ -1742,7 +1743,26 @@ To create an object schemas containing keys defined by an enum:
 ```ts
 const Keys = z.enum(["id", "name", "email"]);
 const Person = z.record(Keys, z.string());
+// { id: string; name: string; email: string }
 ```
+
+<Callout>
+  **Partial records** — If you pass a `z.enum` as the first argument to `z.record()`, Zod will exhaustively check that all enum values exist in the input as keys. This behavior agrees with TypeScript:
+
+  ```ts
+  type MyRecord = Record<"a" | "b", string>;
+  const myRecord: MyRecord = { a: "foo", b: "bar" }; // ✅
+  const myRecord: MyRecord = { a: "foo" }; // ❌ missing required key `b`
+  ```
+
+  If you want a *partial* record type, you can trick to trick Zod a little bit. This short-circuits the special handling of `z.enum()`.
+
+  ```ts
+  const Keys = z.enum(["id", "name", "email"]).or(z.never()); 
+  const Person = z.record(Keys, z.string());
+  // { id?: string; name?: string; email?: string }
+  ```
+</Callout>
 
 <Accordions type="single"><Accordion title="A note on numeric keys">
 
