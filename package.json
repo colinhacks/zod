@@ -43,9 +43,9 @@
     "zod": "workspace:*"
   },
   "lint-staged": {
-    "src/*.ts": ["biome format --write", "biome lint --write"],
-    "*.json": ["biome format --write", "biome lint --write"],
-    "*.md": ["prettier --ignore-unknown --write"]
+    "packages/*/src/**/*.ts": ["biome format --write", "biome lint --write"],
+    "packages/*/**/*.json": ["biome format --write", "biome lint --write"],
+    "packages/*/**/*.md": ["prettier --ignore-unknown --write"]
   },
   "scripts": {
     "format": "biome check --write .",
@@ -62,7 +62,7 @@
     "dev:play": "pnpm dev playground.ts",
     "bench": "tsx --conditions @zod/source packages/bench/index.ts",
     "moltar": "pnpm bench object-moltar",
-    "prepare": "husky install && pnpm format:check",
+    "prepare": "husky install",
     "postbuild": "biome format --write .",
     "publish:jsr": "jsr publish --dry-run",
     "bundle:rollup": "rollup -c",

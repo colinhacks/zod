@@ -1,4 +1,7 @@
+import * as zm from "@zod/mini";
 import * as z from "zod";
+
+zm._default;
 
 z.config(z.locales.es());
 

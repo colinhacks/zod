@@ -1590,12 +1590,16 @@ export const ZodMiniLazy: core.$constructor<ZodMiniLazy> = /*@__PURE__*/ core.$c
   }
 );
 
-export function _lazy<T extends SomeType>(getter: () => T): ZodMiniLazy<T> {
+// export function lazy<T extends object>(getter: () => T): T {
+//   return util.createTransparentProxy<T>(getter);
+// }
+function _lazy<T extends SomeType>(getter: () => T): ZodMiniLazy<T> {
   return new ZodMiniLazy({
     type: "lazy",
     getter,
   }) as ZodMiniLazy<T>;
 }
+export { _lazy as lazy };
 
 // ZodMiniPromise
 export interface ZodMiniPromise<T extends SomeType = SomeType> extends ZodMiniType {
@@ -1641,7 +1645,7 @@ export function check<O = unknown>(fn: core.CheckFn<O>, params?: core.$ZodCustom
 }
 
 // ZodCustom
-export function _custom<O = unknown, I = O>(
+function _custom<O = unknown, I = O>(
   fn: (data: O) => unknown,
   _params: string | core.$ZodCustomParams | undefined,
   Class: util.Constructor<ZodMiniCustom, [core.$ZodCustomDef]>
@@ -1687,10 +1691,6 @@ function _instanceof<T extends typeof Class>(
 }
 export { _instanceof as instanceof };
 
-export function lazy<T extends object>(getter: () => T): T {
-  return util.createTransparentProxy<T>(getter);
-}
-
 // stringbool
 export const stringbool: (_params?: core.$ZodStringBoolParams) => ZodMiniPipe<ZodMiniUnknown, ZodMiniBoolean<boolean>> =
   /* @__PURE__ */ core._stringbool.bind(null, {
@@ -1700,15 +1700,17 @@ export const stringbool: (_params?: core.$ZodStringBoolParams) => ZodMiniPipe<Zo
   }) as any;
 
 // json
-export type ZodMiniJSONSchema = ZodMiniUnion<
-  [
-    ZodMiniString<string>,
-    ZodMiniNumber<number>,
-    ZodMiniBoolean<boolean>,
-    ZodMiniNull,
-    ZodMiniArray<ZodMiniJSONSchema>,
-    ZodMiniRecord<ZodMiniString<string>, ZodMiniJSONSchema>,
-  ]
+export type ZodMiniJSONSchema = ZodMiniLazy<
+  ZodMiniUnion<
+    [
+      ZodMiniString<string>,
+      ZodMiniNumber<number>,
+      ZodMiniBoolean<boolean>,
+      ZodMiniNull,
+      ZodMiniArray<ZodMiniJSONSchema>,
+      ZodMiniRecord<ZodMiniString<string>, ZodMiniJSONSchema>,
+    ]
+  >
 > & {
   _zod: {
     input: util.JSONType;
@@ -1717,7 +1719,7 @@ export type ZodMiniJSONSchema = ZodMiniUnion<
 };
 
 export function json(): ZodMiniJSONSchema {
-  const jsonSchema: ZodMiniJSONSchema = lazy(() => {
+  const jsonSchema: ZodMiniJSONSchema = _lazy(() => {
     return union([string(), number(), boolean(), _null(), array(jsonSchema), record(string(), jsonSchema)]);
   }) as ZodMiniJSONSchema;
   return jsonSchema;
