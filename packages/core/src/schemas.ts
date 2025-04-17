@@ -2426,15 +2426,34 @@ export interface $ZodRecordDef extends $ZodTypeDef {
   valueType: $ZodType;
 }
 
+type $InferZodRecordOutput<
+  Key extends $ZodRecordKey = $ZodRecordKey,
+  Value extends $ZodType = $ZodType,
+> = undefined extends Key["_zod"]["values"]
+  ? string extends Key["_zod"]["output"]
+    ? Record<Key["_zod"]["output"], Value["_zod"]["output"]>
+    : number extends Key["_zod"]["output"]
+      ? Record<Key["_zod"]["output"], Value["_zod"]["output"]>
+      : symbol extends Key["_zod"]["output"]
+        ? Record<Key["_zod"]["output"], Value["_zod"]["output"]>
+        : Partial<Record<Key["_zod"]["output"], Value["_zod"]["output"]>>
+  : Record<Key["_zod"]["output"], Value["_zod"]["output"]>;
+
+type $InferZodRecordInput<
+  Key extends $ZodRecordKey = $ZodRecordKey,
+  Value extends $ZodType = $ZodType,
+> = undefined extends Key["_zod"]["values"]
+  ? string extends Key["_zod"]["input"]
+    ? Record<Key["_zod"]["input"], Value["_zod"]["input"]>
+    : number extends Key["_zod"]["input"]
+      ? Record<Key["_zod"]["input"], Value["_zod"]["input"]>
+      : symbol extends Key["_zod"]["input"]
+        ? Record<Key["_zod"]["input"], Value["_zod"]["input"]>
+        : Partial<Record<Key["_zod"]["input"], Value["_zod"]["input"]>>
+  : Record<Key["_zod"]["input"], Value["_zod"]["input"]>;
+
 export interface $ZodRecordInternals<Key extends $ZodRecordKey = $ZodRecordKey, Value extends $ZodType = $ZodType>
-  extends $ZodTypeInternals<
-    undefined extends Key["_zod"]["values"]
-      ? Partial<Record<Key["_zod"]["output"], Value["_zod"]["output"]>>
-      : Record<Key["_zod"]["output"], Value["_zod"]["output"]>,
-    undefined extends Key["_zod"]["values"]
-      ? Partial<Record<Key["_zod"]["input"], Value["_zod"]["input"]>>
-      : Record<Key["_zod"]["input"], Value["_zod"]["input"]>
-  > {
+  extends $ZodTypeInternals<$InferZodRecordOutput<Key, Value>, $InferZodRecordInput<Key, Value>> {
   def: $ZodRecordDef;
   isst: errors.$ZodIssueInvalidType | errors.$ZodIssueInvalidKey<Record<PropertyKey, unknown>>;
 }

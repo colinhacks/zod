@@ -875,7 +875,7 @@ test("pipe", () => {
   `);
   // => { type: "number" }
 
-  const b = z.toJSONSchema(mySchema, { pipes: "input" });
+  const b = z.toJSONSchema(mySchema, { type: "input" });
   expect(b).toMatchInlineSnapshot(`
     {
       "type": "string",
@@ -945,6 +945,73 @@ test("passthrough schemas", () => {
         "e",
       ],
       "type": "object",
+    }
+  `);
+});
+
+test("extract schemas with id", () => {
+  const name = z.string().meta({ id: "name" });
+  const result = z.toJSONSchema(
+    z.object({
+      first_name: name,
+      last_name: name.nullable(),
+      middle_name: name.optional(),
+      age: z.number().meta({ id: "age" }),
+    })
+  );
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "$defs": {
+        "age": {
+          "id": "age",
+          "type": "number",
+        },
+        "name": {
+          "id": "name",
+          "type": "string",
+        },
+      },
+      "properties": {
+        "age": {
+          "$ref": "#/$defs/age",
+        },
+        "first_name": {
+          "$ref": "#/$defs/name",
+        },
+        "last_name": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/name",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "middle_name": {
+          "$ref": "#/$defs/name",
+        },
+      },
+      "required": [
+        "first_name",
+        "last_name",
+        "age",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
+test("unrepresentable literal values are ignored", () => {
+  const schema = z.literal(["hello", null, 5, BigInt(1324), undefined]);
+  const result = z.toJSONSchema(schema, { unrepresentable: "any" });
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "enum": [
+        "hello",
+        null,
+        5,
+      ],
     }
   `);
 });
