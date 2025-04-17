@@ -116,7 +116,7 @@ const error: errors.$ZodErrorMap = (issue) => {
     case "invalid_key":
       return "Virheellinen avain tietueessa";
     case "invalid_union":
-      return "Virheellinen yhdiste";
+      return "Virheellinen unioni";
     case "invalid_element":
       return "Virheellinen arvo joukossa";
     default:
