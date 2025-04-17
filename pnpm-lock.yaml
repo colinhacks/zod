@@ -86,6 +86,9 @@ importers:
       zod:
         specifier: workspace:*
         version: link:packages/zod
+      zod3:
+        specifier: npm:zod@^3.0.0
+        version: zod@3.24.3
 
   packages/bench:
     devDependencies:

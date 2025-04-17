@@ -1,22 +1,21 @@
 import * as z from "zod";
-const LogLevelNames = ["ERROR", "WARN", "INFO", "DEBUG", "DEBUG_ES", "NONE"] as const;
-const ZodLogLevelNames = z.enum(LogLevelNames);
-type ZodLogLevelNames = z.infer<typeof ZodLogLevelNames>;
 
-export const ZODSettingsMap = z.object({
-  loglevel: ZodLogLevelNames.describe("log level for the server"),
-  // .... other props
+const Internal = z.object({
+  num: z.number(),
+  str: z.string(),
 });
-type ZodSettingsMap = z.infer<typeof ZODSettingsMap>;
+//.meta({ id: "Internal" });
 
-export type SettingsMap = z.infer<typeof ZODSettingsMap>;
-// SettingsMap is now  {
-//   loglevel: z.core.$InferEnumOutput<{
-//        ERROR: "ERROR";
-//        WARN: "WARN";
-//        INFO: "INFO";
-//        DEBUG: "DEBUG";
-//        NONE: "NONE";
-//    }>;
-//      ....
-// }
+const External = z.object({
+  a: Internal,
+  b: Internal.optional(),
+  c: z.lazy(() => Internal),
+  d: z.promise(Internal),
+  e: z.pipe(Internal, Internal),
+});
+console.dir(
+  z.toJSONSchema(External, {
+    reused: "ref",
+  }),
+  { depth: null }
+);

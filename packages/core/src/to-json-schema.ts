@@ -25,7 +25,7 @@ interface JSONSchemaGeneratorParams {
 interface ProcessParams {
   schemaPath: schemas.$ZodType[];
   path: (string | number)[];
-  initial?: Seen | undefined;
+  // initial?: Seen | undefined;
 }
 
 interface EmitParams {
@@ -101,6 +101,7 @@ export class JSONSchemaGenerator {
 
     // check for schema in seens
     const seen = this.seen.get(schema);
+
     if (seen) {
       seen.count++;
 
@@ -116,7 +117,7 @@ export class JSONSchemaGenerator {
     }
 
     // initialize
-    const result: Seen = _params.initial ?? { schema: {}, cached: {}, count: 1, cycle: undefined };
+    const result: Seen = { schema: {}, cached: {}, count: 1, cycle: undefined };
     this.seen.set(schema, result);
 
     if (schema._zod.toJSONSchema) {
@@ -411,11 +412,7 @@ export class JSONSchemaGenerator {
         }
         break;
       }
-      case "optional": {
-        const inner = this.process(def.innerType, params);
-        Object.assign(_json, inner);
-        break;
-      }
+
       case "nullable": {
         const inner = this.process(def.innerType, params);
         _json.oneOf = [inner, { type: "null" }];
@@ -427,9 +424,6 @@ export class JSONSchemaGenerator {
         break;
       }
       case "success": {
-        // _json.if = this.process(def.innerType, params);
-        // _json.then = { const: true };
-        // _json.else = { const: false };
         const json = _json as JSONSchema.BooleanSchema;
         json.type = "boolean";
         break;
@@ -443,15 +437,14 @@ export class JSONSchemaGenerator {
       case "catch": {
         // use conditionals
         const inner = this.process(def.innerType, params);
+        Object.assign(_json, inner);
         let catchValue: any;
         try {
           catchValue = def.catchValue(undefined as any);
         } catch {
           throw new Error("Dynamic catch values are not supported in JSON Schema");
         }
-        _json.if = inner;
-        _json.then = inner;
-        _json.else = { const: catchValue };
+        _json.default = catchValue;
         break;
       }
       case "nan": {
@@ -461,17 +454,11 @@ export class JSONSchemaGenerator {
         break;
       }
       case "pipe": {
-        // this.seen.delete(schema);
         const innerType = this.pipes === "input" ? def.in : def.out;
-        this.process(innerType, params);
-        const inner = this.seen.get(innerType)!;
-        this.seen.set(schema, inner);
+        const inner = this.process(innerType, params);
+        result.schema = inner;
+
         break;
-        // const innerType = def.out;
-        // const inner = this.process(def.out, params);
-        // Object.assign(_json, inner);
-        // this.seen.set(schema, this.seen.get(innerType)!);
-        // return inner;
       }
       case "readonly": {
         const inner = this.process(def.innerType, params);
@@ -488,28 +475,21 @@ export class JSONSchemaGenerator {
         break;
       }
       case "promise": {
-        // this.seen.delete(schema);
-        // const innerType = def.innerType;
-        // const inner = this.process(def.innerType, params);
-        // Object.assign(_json, inner);
-        // this.seen.set(schema, this.seen.get(innerType)!);
-        // return inner;
-
-        const innerType = def.innerType;
-        this.process(innerType, params);
-        const inner = this.seen.get(innerType)!;
-        this.seen.set(schema, inner);
+        const inner = this.process(def.innerType, params);
+        result.schema = inner;
+        break;
+      }
+      // passthrough types
+      case "optional": {
+        const inner = this.process(def.innerType, params);
+        result.schema = inner;
         break;
       }
       case "lazy": {
         const innerType = (schema as schemas.$ZodLazy)._zod._getter;
-        this.process(innerType, params);
-        const inner = this.seen.get(innerType)!;
-        this.seen.set(schema, inner);
+        const inner = this.process(innerType, params);
+        result.schema = inner;
         break;
-        // Object.assign(_json, inner);
-        // this.seen.set(schema, this.seen.get(innerType)!);
-        // return inner;
       }
       case "custom": {
         if (this.unrepresentable === "throw") {
@@ -524,6 +504,7 @@ export class JSONSchemaGenerator {
 
     // pulling fresh from this.seen in case it was overwritten
     const _result = this.seen.get(schema)!;
+
     this.override({
       zodSchema: schema,
       jsonSchema: _result.schema,
@@ -566,9 +547,6 @@ export class JSONSchemaGenerator {
         return { defId: id, ref: `${params.external.uri("__shared")}#/${defsSegment}/${id}` };
       }
 
-      // if (entry[0] === schema) {
-      //   return { ref: "#" };
-      // }
       const uriPrefix = `#`;
       const defUriPrefix = `${uriPrefix}/${defsSegment}/`;
       const defId = entry[1].schema.id ?? `__schema${this.counter++}`;
@@ -647,8 +625,6 @@ export class JSONSchemaGenerator {
       // this essentially "finalizes" this schema
       // each call to .emit() is functionally independent
       // though the seen map is shared
-      // console.dir(result, { depth: 10 });
-      // console.log(JSON.stringify(result, null, 2));
       return JSON.parse(JSON.stringify(result));
     } catch (_err) {
       console.log(_err);
@@ -690,7 +666,6 @@ export function toJSONSchema(
       gen.process(schema);
     }
 
-    console.log(gen.seen.size);
     const schemas: Record<string, JSONSchema.BaseSchema> = {};
     const external = {
       registry: input,
@@ -717,6 +692,7 @@ export function toJSONSchema(
 
   const gen = new JSONSchemaGenerator(_params);
   gen.process(input);
+
   // console.log(gen.seen);
   return gen.emit(input, _params);
 }
