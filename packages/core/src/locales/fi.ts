@@ -1,24 +1,93 @@
 import type { $ZodStringFormats } from "../checks.js";
+import type { $ZodTypeDef } from "../schemas.js";
 import type * as errors from "../errors.js";
 import * as util from "../util.js";
 
-const Sizable: Record<string, { unit: string; verb: string }> = {
-  string: { unit: "merkkiä", verb: "olla" },
-  file: { unit: "tavua", verb: "olla" },
-  array: { unit: "kohdetta", verb: "olla" },
-  set: { unit: "kohdetta", verb: "olla" },
+const Sizable: Record<string, { unit: string; subject: string }> = {
+  string: { unit: "merkkiä", subject: "merkkijonon" },
+  file: { unit: "tavua", subject: "tiedoston" },
+  array: { unit: "alkiota", subject: "taulukon" },
+  set: { unit: "alkiota", subject: "joukon" },
+  number: { unit: "", subject: "luvun" },
+  bigint: { unit: "", subject: "suuren kokonaisluvun" },
+  int: { unit: "", subject: "kokonaisluvun" },
+  date: { unit: "", subject: "päivämäärän" }
 };
 
-function getSizing(origin: string): { unit: string; verb: string } | null {
+function getSizing(origin: string): { unit: string; subject: string } | null {
   return Sizable[origin] ?? null;
 }
+
+const TypeNames: { [k in $ZodTypeDef["type"] | (string & {})]?: string; } = {
+  string: "merkkijono",
+  number: "luku",
+  int: "kokonaisluku",
+  boolean: "totuusarvo",
+  bigint: "suuri kokonaisluku",
+  symbol: "symboli",
+  null: "tyhjä",
+  undefined: "määrittelemätön",
+  void: "tyhjä paluuarvo",
+  never: "ei koskaan",
+  any: "mikä tahansa",
+  unknown: "tuntematon",
+  date: "päivämäärä",
+  object: "objekti",
+  interface: "rajapinta",
+  record: "tietue",
+  file: "tiedosto",
+  array: "taulukko",
+  tuple: "monikko",
+  union: "yhdiste",
+  intersection: "leikkaus",
+  map: "map-kokoelma",
+  set: "joukko",
+  enum: "luettelo",
+  literal: "literaali",
+  nullable: "mahdollisesti tyhjä",
+  optional: "valinnainen",
+  nonoptional: "pakollinen",
+  success: "onnistunut",
+  transform: "muunnos",
+  default: "oletusarvo",
+  catch: "virheenkäsittely",
+  nan: "epäluku",
+  pipe: "putki",
+  readonly: "vain luku",
+  template_literal: "merkkijonopohja",
+  promise: "lupaus",
+  lazy: "viivästetty",
+  custom: "mukautettu"
+};
+
+function getTypeName(type: string): string {
+  return TypeNames[type] ?? type;
+};
 
 export const parsedType = (data: any): string => {
   const t = typeof data;
 
   switch (t) {
     case "number": {
-      return Number.isNaN(data) ? "epäluku" : "numero";
+      return Number.isNaN(data) ? "epäluku" : "luku";
+    }
+    case "bigint": {
+      return Number.isNaN(data) ? "epäluku" : "suuri kokonaisluku";
+    }
+    case "boolean": {
+      return "totuusarvo";
+    }
+    case "symbol": {
+      return "symboli";
+    }
+    case "function": {
+      return "funktio";
+    }
+    case "string": {
+      return "merkkijono";
+    }
+    case "undefined": {
+      return "määrittelemätön";
     }
     case "object": {
       if (Array.isArray(data)) {
@@ -27,13 +96,33 @@ export const parsedType = (data: any): string => {
       if (data === null) {
         return "tyhjä";
       }
+      if (data instanceof Date) {
+        return "päivämäärä";
+      }
+      if (data instanceof Map) {
+        return "map-kokoelma";
+      }
+      if (data instanceof Set) {
+        return "joukko";
+      }
+      if (data instanceof File) {
+        return "tiedosto";
+      }
+      if (data instanceof Promise) {
+        return "lupaus";
+      }
 
       if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
         return data.constructor.name;
       }
+
+      return "objekti";
     }
+    default: {
+      return t;
+    }
+
   }
-  return t;
 };
 
 const Nouns: {
@@ -64,52 +153,57 @@ const Nouns: {
   base64: "base64-koodattu merkkijono",
   base64url: "base64url-koodattu merkkijono",
   json_string: "JSON-merkkijono",
-  e164: "E.164-numero",
+  e164: "E.164-luku",
   jwt: "JWT",
   template_literal: "syöte",
 };
 
+const InOrigin: { [k in (string & {})]?: string } = {
+  record: "tietueessa",
+  map: "map-kokoelmassa",
+  set: "joukossa"
+}
+
 const error: errors.$ZodErrorMap = (issue) => {
   switch (issue.code) {
     case "invalid_type":
-      return `Virheellinen syöte: pitäisi olla ${issue.expected}, mutta oli ${parsedType(issue.input)}`;
-    // return `Invalid input: expected ${issue.expected}, received ${util.getParsedType(issue.input)}`;
+      return `Virheellinen tyyppi: täytyy olla ${getTypeName(issue.expected)}, oli ${parsedType(issue.input)}`;
     case "invalid_value":
       if (issue.values.length === 1)
-        return `Virheellinen syöte: pitäisi olla ${util.stringifyPrimitive(issue.values[0])}`;
-      return `Virheellinen valinta: pitäisi olla yksi seuraavista: ${util.joinValues(issue.values, "|")}`;
+        return `Virheellinen syöte: täytyy olla ${util.stringifyPrimitive(issue.values[0])}`;
+      return `Virheellinen valinta: täytyy olla yksi seuraavista: ${util.joinValues(issue.values, "|")}`;
     case "too_big": {
       const adj = issue.inclusive ? "<=" : "<";
       const sizing = getSizing(issue.origin);
-      if (sizing) return `Liian suuri: ${issue.origin} pitäisi olla ${adj}${issue.maximum.toString()} ${sizing.unit}`;
-      return `Liian suuri: ${issue.origin ?? "arvon"} pitäisi olla ${adj}${issue.maximum.toString()}`;
+      if (sizing) return `Liian suuri: ${sizing.subject} täytyy olla ${adj}${issue.maximum.toString()} ${sizing.unit}`.trim();
+      return `Liian suuri: ${issue.origin ?? "arvon"} täytyy olla ${adj}${issue.maximum.toString()}`;
     }
     case "too_small": {
       const adj = issue.inclusive ? ">=" : ">";
       const sizing = getSizing(issue.origin);
       if (sizing) {
-        return `Liian pieni: ${issue.origin} pitäisi olla ${adj}${issue.minimum.toString()} ${sizing.unit}`;
+        return `Liian pieni: ${sizing.subject} täytyy olla ${adj}${issue.minimum.toString()} ${sizing.unit}`.trim();
       }
-      return `Liian pieni: ${issue.origin ?? "arvon"} pitäisi olla ${adj}${issue.minimum.toString()}`;
+      return `Liian pieni: ${issue.origin ?? "arvon"} täytyy olla ${adj}${issue.minimum.toString()}`;
     }
     case "invalid_format": {
       const _issue = issue as errors.$ZodStringFormatIssues;
-      if (_issue.format === "starts_with") return `Virheellinen merkkijono: alussa täytyy olla "${issue}"`;
+      if (_issue.format === "starts_with") return `Virheellinen merkkijono: alussa täytyy olla "${_issue.prefix}"`;
       if (_issue.format === "ends_with") return `Virheellinen merkkijono: lopussa täytyy olla "${_issue.suffix}"`;
       if (_issue.format === "includes") return `Virheellinen merkkijono: täytyy sisältää "${_issue.includes}"`;
       if (_issue.format === "regex") return `Virheellinen merkkijono: täytyy vastata kaavaa ${_issue.pattern}`;
       return `Virheellinen ${Nouns[_issue.format] ?? issue.format}`;
     }
     case "not_multiple_of":
-      return `Virheellinen numero: täytyy olla luvun ${issue.divisor} monikerta`;
+      return `Virheellinen luku: täytyy olla luvun ${issue.divisor} monikerta`;
     case "unrecognized_keys":
       return `${issue.keys.length > 1 ? "Tuntemattomat avaimet" : "Tuntematon avain"}: ${util.joinValues(issue.keys, ", ")}`;
     case "invalid_key":
-      return `Virheellinen avain kohteessa ${issue.origin}`;
+      return `Virheellinen avain ${InOrigin[issue.origin] ?? issue.origin}`;
     case "invalid_union":
       return "Virheellinen yhdiste";
     case "invalid_element":
-      return `Virheellinen arvo kohteessa ${issue.origin}`;
+      return `Virheellinen arvo ${InOrigin[issue.origin] ?? issue.origin}`;
     default:
       return `Virheellinen syöte`;
   }
