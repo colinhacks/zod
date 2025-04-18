@@ -3,7 +3,7 @@ import type * as errors from "../errors.js";
 import * as util from "../util.js";
 
 const Sizable: Record<string, { unit: string; verb: string }> = {
-  string: { unit: "characters", verb: "memiliki" },
+  string: { unit: "karakter", verb: "memiliki" },
   file: { unit: "byte", verb: "memiliki" },
   array: { unit: "item", verb: "memiliki" },
   set: { unit: "item", verb: "memiliki" },
