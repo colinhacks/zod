@@ -17,6 +17,12 @@ const apiLibraries: ZodResource[] = [
     description: "Build end-to-end typesafe APIs without GraphQL.",
     slug: "trpc/trpc",
   },
+  {
+    name: "GQLoom",
+    url: "https://gqloom.dev/",
+    description: "Weave GraphQL schema and resolvers using Zod.",
+    slug: "modevol-com/gqloom",
+  },
 ];
 
 const formIntegrations: ZodResource[] = [];
