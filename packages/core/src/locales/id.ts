@@ -40,7 +40,7 @@ const Nouns: {
   [k in $ZodStringFormats | (string & {})]?: string;
 } = {
   regex: "input",
-  email: "email address",
+  email: "alamat email",
   url: "URL",
   emoji: "emoji",
   uuid: "UUID",
