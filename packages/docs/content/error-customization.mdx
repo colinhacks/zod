@@ -68,45 +68,56 @@ The `zod` library exports a subclass of `$ZodError` called simply `ZodError`. Th
 
 ## The `error` param
 
-Virtually every Zod API accepts an optional parameters object. The `error` param is used to customize the error messages produced by a particular schema.
+Virtually every Zod API accepts an optional error message parameter. 
+
+```ts
+z.string("Not a string!");
+```
+
+This custom error will show up as the `message` property of any validation issues that originate from this schema.
+
+```ts
+z.string("Not a string!").parse(12);
+// ❌ throws ZodError {
+//   issues: [
+//     {
+//       expected: 'string',
+//       code: 'invalid_type',
+//       path: [],
+//       message: 'Not a string!'   <-- 👀 custom error message 
+//     }
+//   ]
+// }
+```
+
+All `z` functions and schema methods accept custom errors.
 
 <Tabs groupId="lib" items={["zod", "@zod/mini"]}>
 <Tab value="zod">
 ```ts
-z.string({ error: "Bad!"}).parse(12);
-
-// throws ZodError {
-//   issues: [
-//     {
-//       expected: 'string',
-//       code: 'invalid_type',
-//       path: [],
-//       message: 'Bad!'   <-- 👀 custom error message 
-//     }
-//   ]
-// }
+z.string("Bad!");
+z.string().min(5, "Too short!");
+z.uuid("Bad UUID!");
+z.iso.date("Bad date!");
+z.array(z.string(), "Bad array!");
+z.array(z.string()).min(5, "Too few items!");
+z.set(z.string(), "Bad set!");
 ```
 </Tab>
 <Tab value="@zod/mini">
 ```ts
-z.string({ error: "Bad string"}).parse(12);
-
-// throws $ZodError {
-//   issues: [
-//     {
-//       expected: 'string',
-//       code: 'invalid_type',
-//       path: [],
-//       message: 'Bad string'
-//     }
-//   ]
-// }
+z.string("Bad!");
+z.string().check(z.minLength(5, "Too short!"));
+z.uuid("Bad UUID!");
+z.iso.date("Bad date!");
+z.array(z.string(), "Bad array!");
+z.array(z.string()).check(z.minLength(5, "Too few items!"));
+z.set(z.string(), "Bad set!");
 ```
-
 </Tab>
 </Tabs>
 
-Nearly all functions and methods support `error`.
+If you prefer, you can pass a params object with an `error` parameter instead.
 
 <Tabs groupId="lib" items={["zod", "@zod/mini"]}>
 <Tab value="zod">
@@ -118,9 +129,6 @@ z.iso.date({ error: "Bad date!" });
 z.array(z.string(), { error: "Bad array!" });
 z.array(z.string()).min(5, { error: "Too few items!" });
 z.set(z.string(), { error: "Bad set!" });
-z.array(z.string(), { error: "Bad array!" });
-z.set(z.string(), { error: "Bad set!" });
-z.array(z.string(), { error: "Bad array!" });
 ```
 </Tab>
 <Tab value="@zod/mini">
@@ -132,15 +140,12 @@ z.iso.date({ error: "Bad date!" });
 z.array(z.string(), { error: "Bad array!" });
 z.array(z.string()).check(z.minLength(5, { error: "Too few items!" }));
 z.set(z.string(), { error: "Bad set!" });
-z.array(z.string(), { error: "Bad array!" });
-z.set(z.string(), { error: "Bad set!" });
-z.array(z.string(), { error: "Bad array!" });
 ```
 
 </Tab>
 </Tabs>
 
-The `error` param optionally accepts a function, also known as an **error map**. This function will be called at parse time.
+The `error` param optionally accepts a function. This function will be called at parse time if a validation error occurs.
 
 ```ts
 z.string({ error: ()=>`[${Date.now()}]: Validation failure.` });
