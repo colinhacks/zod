@@ -4,11 +4,12 @@ import { $ZodRegistry, globalRegistry } from "./registries.js";
 import type * as schemas from "./schemas.js";
 
 interface JSONSchemaGeneratorParams {
-  /** A registry used to look up metadata for each schema. Any schema with an `id` property will be extracted as a $def. */
+  /** A registry used to look up metadata for each schema. Any schema with an `id` property will be extracted as a $def.
+   *  @default globalRegistry */
   metadata?: $ZodRegistry<Record<string, any>>;
   /** The JSON Schema version to target.
    * - `"draft-2020-12"` — Default. JSON Schema Draft 2020-12
-   * - `"draft-7"` — Default. JSON Schema Draft 7 */
+   * - `"draft-7"` — JSON Schema Draft 7 */
   target?: "draft-7" | "draft-2020-12";
   /** How to handle unrepresentable types.
    * - `"throw"` — Default. Unrepresentable types throw an error
