@@ -271,6 +271,7 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
       inst._zod.computed.format = def.format;
       inst._zod.computed.minimum = minimum;
       inst._zod.computed.maximum = maximum;
+      inst._zod.computed.inclusive = true;
       if (isInt) inst._zod.computed.pattern = regexes.integer;
     };
 
