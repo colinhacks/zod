@@ -298,10 +298,10 @@ export class JSONSchemaGenerator {
       }
       case "union": {
         const json: JSONSchema.BaseSchema = _json as any;
-        json.oneOf = def.options.map((x, i) =>
+        json.anyOf = def.options.map((x, i) =>
           this.process(x, {
             ...params,
-            path: [...params.path, "oneOf", i],
+            path: [...params.path, "anyOf", i],
           })
         );
         break;
@@ -433,7 +433,7 @@ export class JSONSchemaGenerator {
 
       case "nullable": {
         const inner = this.process(def.innerType, params);
-        _json.oneOf = [inner, { type: "null" }];
+        _json.anyOf = [inner, { type: "null" }];
         break;
       }
       case "nonoptional": {

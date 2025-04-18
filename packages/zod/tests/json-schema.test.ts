@@ -346,7 +346,7 @@ describe("toJSONSchema", () => {
     const schema = z.union([z.string(), z.number()]);
     expect(toJSONSchema(schema)).toMatchInlineSnapshot(`
       {
-        "oneOf": [
+        "anyOf": [
           {
             "type": "string",
           },
@@ -979,7 +979,7 @@ test("extract schemas with id", () => {
           "$ref": "#/$defs/name",
         },
         "last_name": {
-          "oneOf": [
+          "anyOf": [
             {
               "$ref": "#/$defs/name",
             },
