@@ -2290,12 +2290,11 @@ const coercedInt = z.transform((val, ctx) => {
     });
 
     // this is a special constant with type `never`
-    // return it to exit the transform without impacting the inferred return type
+    // returning it lets you exit the transform without impacting the inferred return type
     return z.NEVER; 
   }
 });
 ```
-
 
 Most commonly, transforms are used in conjunction with [Pipes](#pipes). This combination is useful for performing some initial validation, then transforming the parsed data into another form.
 
