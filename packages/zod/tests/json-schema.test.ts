@@ -1003,15 +1003,29 @@ test("extract schemas with id", () => {
 });
 
 test("unrepresentable literal values are ignored", () => {
-  const schema = z.literal(["hello", null, 5, BigInt(1324), undefined]);
-  const result = z.toJSONSchema(schema, { unrepresentable: "any" });
-  expect(result).toMatchInlineSnapshot(`
+  const a = z.toJSONSchema(z.literal(["hello", null, 5, BigInt(1324), undefined]), { unrepresentable: "any" });
+  expect(a).toMatchInlineSnapshot(`
     {
       "enum": [
         "hello",
         null,
         5,
+        1324,
       ],
     }
   `);
+
+  const b = z.toJSONSchema(z.literal([undefined, null, 5, BigInt(1324)]), { unrepresentable: "any" });
+  expect(b).toMatchInlineSnapshot(`
+    {
+      "enum": [
+        null,
+        5,
+        1324,
+      ],
+    }
+  `);
+
+  const c = z.toJSONSchema(z.literal([undefined]), { unrepresentable: "any" });
+  expect(c).toMatchInlineSnapshot(`{}`);
 });

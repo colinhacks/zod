@@ -16,7 +16,7 @@ interface JSONSchemaGeneratorParams {
   unrepresentable?: "throw" | "any";
   /** Arbitrary custom logic that can be used to modify the generated JSON Schema. */
   override?: (ctx: { zodSchema: schemas.$ZodType; jsonSchema: JSONSchema.BaseSchema }) => void;
-  /** Whether to extract the `"input"` or `"output"` type. Relevant to transforms, pipes, defaults, coerced primitives, etc.
+  /** Whether to extract the `"input"` or `"output"` type. Relevant to transforms, Error converting schema to JSONz, defaults, coerced primitives, etc.
    * - `"output" — Default. Convert the output schema.
    * - `"input"` — Convert the input schema. */
   io?: "input" | "output";
@@ -68,6 +68,7 @@ interface Seen {
   defId?: string | undefined;
   // external?: string | undefined;
 }
+
 export class JSONSchemaGenerator {
   metadataRegistry: $ZodRegistry<Record<string, any>>;
   target: "draft-7" | "draft-2020-12";
@@ -389,24 +390,31 @@ export class JSONSchemaGenerator {
       }
       case "literal": {
         const json: JSONSchema.BaseSchema = _json as any;
+        const vals: (string | number | boolean | null)[] = [];
         for (const val of def.values) {
           if (val === undefined) {
             if (this.unrepresentable === "throw") {
               throw new Error("Literal `undefined` cannot be represented in JSON Schema");
+            } else {
+              // do not add to vals
             }
-          }
-          if (typeof val === "bigint") {
+          } else if (typeof val === "bigint") {
             if (this.unrepresentable === "throw") {
               throw new Error("BigInt literals cannot be represented in JSON Schema");
+            } else {
+              vals.push(Number(val));
             }
+          } else {
+            vals.push(val);
           }
         }
-        if (def.values.length === 1) {
-          json.const = def.values[0] as any;
+        if (vals.length === 0) {
+          // do nothing (an undefined literal was stripped)
+        } else if (vals.length === 1) {
+          const val = vals[0];
+          json.const = val;
         } else {
-          json.enum = def.values.filter(
-            (val) => typeof val === "string" || typeof val === "number" || typeof val === "boolean" || val === null
-          ) as any;
+          json.enum = vals;
         }
         break;
       }

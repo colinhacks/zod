@@ -164,7 +164,9 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
   //
 
   for (const ch of checks) {
-    ch._zod.onattach?.(inst);
+    for (const fn of ch._zod.onattach) {
+      fn(inst);
+    }
   }
 
   if (checks.length === 0) {
@@ -621,11 +623,9 @@ export interface $ZodIPv4 extends $ZodType {
 export const $ZodIPv4: core.$constructor<$ZodIPv4> = /*@__PURE__*/ core.$constructor("$ZodIPv4", (inst, def): void => {
   def.pattern ??= regexes.ipv4;
   $ZodStringFormat.init(inst, def);
-  const superAttach = inst._zod.onattach;
-  inst._zod.onattach = (inst) => {
-    superAttach?.(inst);
+  inst._zod.onattach.push((inst) => {
     inst._zod.computed.format = `ipv4`;
-  };
+  });
 });
 
 //////////////////////////////   ZodIPv6   //////////////////////////////
@@ -645,11 +645,10 @@ export interface $ZodIPv6 extends $ZodType {
 export const $ZodIPv6: core.$constructor<$ZodIPv6> = /*@__PURE__*/ core.$constructor("$ZodIPv6", (inst, def): void => {
   def.pattern ??= regexes.ipv6;
   $ZodStringFormat.init(inst, def);
-  const superAttach = inst._zod.onattach;
-  inst._zod.onattach = (inst) => {
-    superAttach?.(inst);
+
+  inst._zod.onattach.push((inst) => {
     inst._zod.computed.format = `ipv6`;
-  };
+  });
 
   inst._zod.check = (payload) => {
     try {
@@ -685,11 +684,6 @@ export const $ZodCIDRv4: core.$constructor<$ZodCIDRv4> = /*@__PURE__*/ core.$con
   (inst, def): void => {
     def.pattern ??= regexes.cidrv4;
     $ZodStringFormat.init(inst, def);
-    const superAttach = inst._zod.onattach;
-    inst._zod.onattach = (inst) => {
-      superAttach?.(inst);
-      inst._zod.computed.format = `cidrv4`;
-    };
   }
 );
 
@@ -712,11 +706,6 @@ export const $ZodCIDRv6: core.$constructor<$ZodCIDRv6> = /*@__PURE__*/ core.$con
   (inst, def): void => {
     def.pattern ??= regexes.cidrv6; // not used for validation
     $ZodStringFormat.init(inst, def);
-    const superAttach = inst._zod.onattach;
-    inst._zod.onattach = (inst) => {
-      superAttach?.(inst);
-      inst._zod.computed.format = `cidrv6`;
-    };
 
     inst._zod.check = (payload) => {
       const [address, prefix] = payload.value.split("/");
@@ -757,11 +746,7 @@ export const $ZodCIDRv6: core.$constructor<$ZodCIDRv6> = /*@__PURE__*/ core.$con
 //   else if (def.version === "v6") def.pattern ??= regexes.ipv6;
 //   else def.pattern ??= regexes.ip;
 //   $ZodStringFormat.init(inst, def);
-//   const superAttach = inst._zod.onattach;
-//   inst._zod.onattach = (inst) => {
-//     superAttach?.(inst);
-//     inst._zod.computed.format = `ip${def.version ?? ""}`;
-//   };
+
 // });
 
 //////////////////////////////   ZodBase64   //////////////////////////////
@@ -779,11 +764,9 @@ export const $ZodBase64: core.$constructor<$ZodBase64> = /*@__PURE__*/ core.$con
     def.pattern ??= regexes.base64;
     $ZodStringFormat.init(inst, def);
 
-    const superAttach = inst._zod.onattach;
-    inst._zod.onattach = (inst) => {
-      superAttach?.(inst);
+    inst._zod.onattach.push((inst) => {
       inst._zod.computed.contentEncoding = "base64";
-    };
+    });
   }
 );
 
@@ -802,11 +785,9 @@ export const $ZodBase64URL: core.$constructor<$ZodBase64URL> = /*@__PURE__*/ cor
     def.pattern ??= regexes.base64url;
     $ZodStringFormat.init(inst, def);
 
-    const superAttach = inst._zod.onattach;
-    inst._zod.onattach = (inst) => {
-      superAttach?.(inst);
+    inst._zod.onattach.push((inst) => {
       inst._zod.computed.contentEncoding = "base64url";
-    };
+    });
   }
 );
 
