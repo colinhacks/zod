@@ -1202,6 +1202,18 @@ export function record<Key extends core.$ZodRecordKey, Value extends SomeType>(
     ...util.normalizeParams(params),
   }) as ZodMiniRecord<Key, Value>;
 }
+export function partialRecord<Key extends core.$ZodRecordKey, Value extends SomeType>(
+  keyType: Key,
+  valueType: Value,
+  params?: core.$ZodRecordParams
+): ZodMiniRecord<ZodMiniUnion<[Key, ZodMiniNever]>, Value> {
+  return new ZodMiniRecord({
+    type: "record",
+    keyType: union([keyType, never()]),
+    valueType,
+    ...util.normalizeParams(params),
+  }) as ZodMiniRecord<Key, Value>;
+}
 
 // ZodMiniMap
 export interface ZodMiniMap<Key extends SomeType = SomeType, Value extends SomeType = SomeType> extends ZodMiniType {

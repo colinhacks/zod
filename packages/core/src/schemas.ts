@@ -1482,7 +1482,9 @@ function handleObjectResult(result: ParsePayload, final: ParsePayload, key: Prop
 
 function handleOptionalObjectResult(result: ParsePayload, final: ParsePayload, key: PropertyKey, input: any) {
   if (result.issues.length) {
+    // validation failed against value schema
     if (input[key] === undefined) {
+      // if input was undefined, ignore the error
       if (key in input) {
         (final.value as any)[key] = undefined;
       }
@@ -1490,8 +1492,10 @@ function handleOptionalObjectResult(result: ParsePayload, final: ParsePayload, k
       final.issues.push(...util.prefixIssues(key, result.issues));
     }
   } else if (result.value === undefined) {
+    // validation returned `undefined`
     if (key in input) (final.value as any)[key] = undefined;
   } else {
+    // non-undefined value
     (final.value as any)[key] = result.value;
   }
 }
@@ -3597,6 +3601,8 @@ export interface $ZodLazyInternals<T extends $ZodType = $ZodType>
   _getter: T;
   pattern: T["_zod"]["pattern"];
   disc: T["_zod"]["disc"];
+  qin: T["_zod"]["qin"];
+  qout: T["_zod"]["qout"];
 }
 
 export interface $ZodLazy<T extends $ZodType = $ZodType> extends $ZodType {
@@ -3612,6 +3618,9 @@ export const $ZodLazy: core.$constructor<$ZodLazy> = /*@__PURE__*/ core.$constru
   inst._zod.parse = (payload, ctx) => {
     return inst._zod._getter._zod.run(payload, ctx);
   };
+  // qin and qout
+  util.defineLazy(inst._zod, "qin", () => inst._zod._getter._zod.qin);
+  util.defineLazy(inst._zod, "qout", () => inst._zod._getter._zod.qout);
 });
 
 ////////////////////////////////////////

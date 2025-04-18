@@ -1750,6 +1750,19 @@ export function record<Key extends core.$ZodRecordKey, Value extends core.$ZodTy
   }) as ZodRecord<Key, Value>;
 }
 
+export function partialRecord<Key extends core.$ZodRecordKey, Value extends core.$ZodType>(
+  keyType: Key,
+  valueType: Value,
+  params?: core.$ZodRecordParams
+): ZodRecord<ZodUnion<[Key, ZodNever]>, Value> {
+  return new ZodRecord({
+    type: "record",
+    keyType: union([keyType, never()]),
+    valueType,
+    ...util.normalizeParams(params),
+  }) as ZodRecord<ZodUnion<[Key, ZodNever]>, Value>;
+}
+
 // ZodMap
 export interface ZodMap<Key extends core.$ZodType = core.$ZodType, Value extends core.$ZodType = core.$ZodType>
   extends ZodType {

@@ -1720,6 +1720,7 @@ type EmployedPerson = z.infer<typeof EmployedPerson>;
 
 Record schemas are used to validate types such as `Record<string, number>`.
 
+### `z.record()`
 ```ts
 const IdCache = z.record(z.string(), z.string());
 type IdCache = z.infer<typeof IdCache>; // Record<string, string>
@@ -1747,7 +1748,7 @@ const Person = z.record(Keys, z.string());
 ```
 
 <Callout>
-  **Partial records** — If you pass a `z.enum` as the first argument to `z.record()`, Zod will exhaustively check that all enum values exist in the input as keys. This behavior agrees with TypeScript:
+  **Zod 4** — In Zod 4, if you pass a `z.enum` as the first argument to `z.record()`, Zod will exhaustively check that all enum values exist in the input as keys. This behavior agrees with TypeScript:
 
   ```ts
   type MyRecord = Record<"a" | "b", string>;
@@ -1755,16 +1756,31 @@ const Person = z.record(Keys, z.string());
   const myRecord: MyRecord = { a: "foo" }; // ❌ missing required key `b`
   ```
 
-  If you want a *partial* record type, you can trick to trick Zod a little bit. This short-circuits the special handling of `z.enum()`.
+  In Zod 3, exhaustiveness was not checked. To replicate the Zod 3 behavior, use `z.partialRecord()`.
+
+</Callout>
+
+### `z.partialRecord()`
+
+If you want a *partial* record type, use `z.partialRecord()`. This skips the special exhaustiveness checks Zod normally runs with `z.enum()` and `z.literal()` key schemas.
+
+```ts
+const Keys = z.enum(["id", "name", "email"]).or(z.never()); 
+const Person = z.partialRecord(Keys, z.string());
+// { id?: string; name?: string; email?: string }
+```
+
+<Accordions>
+<Accordion title="Partial records">
+  If you want a *partial* record type, you'll need to trick Zod a little. This short-circuits the special handling of `z.enum()`.
 
   ```ts
   const Keys = z.enum(["id", "name", "email"]).or(z.never()); 
   const Person = z.record(Keys, z.string());
   // { id?: string; name?: string; email?: string }
   ```
-</Callout>
-
-<Accordions type="single"><Accordion title="A note on numeric keys">
+</Accordion>
+<Accordion title="A note on numeric keys">
 
 Though TypeScript lets you define `Record` types with `number` keys (e.g. `Record<number, unknown>`), numerical keys don't actually exist in JavaScript, which converts all keys to strings.
 
