@@ -77,7 +77,7 @@ const error: errors.$ZodErrorMap = (issue) => {
       if (issue.values.length === 1) {
         return `ورودی نامعتبر: می‌بایست ${util.stringifyPrimitive(issue.values[0])} می‌بود`;
       }
-      return `گزینه نامعتبر: می‌بایست یکی از ${util.stringifyPrimitive(issue.values[0])} می‌بود`;
+      return `گزینه نامعتبر: می‌بایست یکی از ${util.joinValues(issue.values, "|")} می‌بود`;
     case "too_big": {
       const adj = issue.inclusive ? "<=" : "<";
       const sizing = getSizing(issue.origin);
@@ -92,7 +92,6 @@ const error: errors.$ZodErrorMap = (issue) => {
       if (sizing) {
         return `خیلی کوچک: ${issue.origin} باید ${adj}${issue.minimum.toString()} ${sizing.unit} باشد`;
       }
-
       return `خیلی کوچک: ${issue.origin} باید ${adj}${issue.minimum.toString()} باشد`;
     }
     case "invalid_format": {
