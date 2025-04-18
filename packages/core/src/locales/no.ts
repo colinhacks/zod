@@ -75,22 +75,22 @@ const error: errors.$ZodErrorMap = (issue) => {
       return `Ugyldig input: forventet ${issue.expected}, fikk ${parsedType(issue.input)}`;
     case "invalid_value":
       if (issue.values.length === 1) return `Ugyldig input: forventet ${util.stringifyPrimitive(issue.values[0])}`;
-      return `Ugyldig alternativ: forventet en av ${util.joinValues(issue.values, "|")}`;
+      return `Ugyldig valg: forventet en av ${util.joinValues(issue.values, "|")}`;
     case "too_big": {
       const adj = issue.inclusive ? "<=" : "<";
       const sizing = getSizing(issue.origin);
       if (sizing)
-        return `For stor: forventet ${issue.origin ?? "value"} til å ha ${adj}${issue.maximum.toString()} ${sizing.unit ?? "elementer"}`;
-      return `For stor: forventet ${issue.origin ?? "value"} til å ha ${adj}${issue.maximum.toString()}`;
+        return `For stor(t): forventet ${issue.origin ?? "value"} til å ha ${adj}${issue.maximum.toString()} ${sizing.unit ?? "elementer"}`;
+      return `For stor(t): forventet ${issue.origin ?? "value"} til å ha ${adj}${issue.maximum.toString()}`;
     }
     case "too_small": {
       const adj = issue.inclusive ? ">=" : ">";
       const sizing = getSizing(issue.origin);
       if (sizing) {
-        return `For lite: forventet ${issue.origin} til å ha ${adj}${issue.minimum.toString()} ${sizing.unit}`;
+        return `For lite(n): forventet ${issue.origin} til å ha ${adj}${issue.minimum.toString()} ${sizing.unit}`;
       }
 
-      return `For lite: forventet ${issue.origin} til å ha ${adj}${issue.minimum.toString()}`;
+      return `For lite(n): forventet ${issue.origin} til å ha ${adj}${issue.minimum.toString()}`;
     }
     case "invalid_format": {
       const _issue = issue as errors.$ZodStringFormatIssues;
