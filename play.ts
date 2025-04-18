@@ -8,3 +8,5 @@ const result = z.toJSONSchema(
   })
 );
 console.dir(result, { depth: null });
+
+// z.email().length(5, 10).meta({ id: "email" });

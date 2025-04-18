@@ -364,7 +364,7 @@ export interface ZodEmail extends ZodStringFormat<"email"> {
 export const ZodEmail: core.$constructor<ZodEmail> = /*@__PURE__*/ core.$constructor("ZodEmail", (inst, def) => {
   // ZodStringFormat.init(inst, def);
   core.$ZodEmail.init(inst, def);
-  ZodType.init(inst, def);
+  ZodStringFormat.init(inst, def);
 });
 
 export function email(params?: string | core.$ZodEmailParams): ZodEmail {
@@ -378,7 +378,7 @@ export interface ZodGUID extends ZodStringFormat<"guid"> {
 export const ZodGUID: core.$constructor<ZodGUID> = /*@__PURE__*/ core.$constructor("ZodGUID", (inst, def) => {
   // ZodStringFormat.init(inst, def);
   core.$ZodGUID.init(inst, def);
-  ZodType.init(inst, def);
+  ZodStringFormat.init(inst, def);
 });
 
 export function guid(params?: string | core.$ZodGUIDParams): ZodGUID {
@@ -392,7 +392,7 @@ export interface ZodUUID extends ZodStringFormat<"uuid"> {
 export const ZodUUID: core.$constructor<ZodUUID> = /*@__PURE__*/ core.$constructor("ZodUUID", (inst, def) => {
   // ZodStringFormat.init(inst, def);
   core.$ZodUUID.init(inst, def);
-  ZodType.init(inst, def);
+  ZodStringFormat.init(inst, def);
 });
 
 export function uuid(params?: string | core.$ZodUUIDParams): ZodUUID {
@@ -422,7 +422,7 @@ export interface ZodURL extends ZodStringFormat<"url"> {
 export const ZodURL: core.$constructor<ZodURL> = /*@__PURE__*/ core.$constructor("ZodURL", (inst, def) => {
   // ZodStringFormat.init(inst, def);
   core.$ZodURL.init(inst, def);
-  ZodType.init(inst, def);
+  ZodStringFormat.init(inst, def);
 });
 
 export function url(params?: string | core.$ZodURLParams): ZodURL {
@@ -436,7 +436,7 @@ export interface ZodEmoji extends ZodStringFormat<"emoji"> {
 export const ZodEmoji: core.$constructor<ZodEmoji> = /*@__PURE__*/ core.$constructor("ZodEmoji", (inst, def) => {
   // ZodStringFormat.init(inst, def);
   core.$ZodEmoji.init(inst, def);
-  ZodType.init(inst, def);
+  ZodStringFormat.init(inst, def);
 });
 
 export function emoji(params?: string | core.$ZodEmojiParams): ZodEmoji {
@@ -450,7 +450,7 @@ export interface ZodNanoID extends ZodStringFormat<"nanoid"> {
 export const ZodNanoID: core.$constructor<ZodNanoID> = /*@__PURE__*/ core.$constructor("ZodNanoID", (inst, def) => {
   // ZodStringFormat.init(inst, def);
   core.$ZodNanoID.init(inst, def);
-  ZodType.init(inst, def);
+  ZodStringFormat.init(inst, def);
 });
 
 export function nanoid(params?: string | core.$ZodNanoIDParams): ZodNanoID {
@@ -464,7 +464,7 @@ export interface ZodCUID extends ZodStringFormat<"cuid"> {
 export const ZodCUID: core.$constructor<ZodCUID> = /*@__PURE__*/ core.$constructor("ZodCUID", (inst, def) => {
   // ZodStringFormat.init(inst, def);
   core.$ZodCUID.init(inst, def);
-  ZodType.init(inst, def);
+  ZodStringFormat.init(inst, def);
 });
 
 export function cuid(params?: string | core.$ZodCUIDParams): ZodCUID {
@@ -478,7 +478,7 @@ export interface ZodCUID2 extends ZodStringFormat<"cuid2"> {
 export const ZodCUID2: core.$constructor<ZodCUID2> = /*@__PURE__*/ core.$constructor("ZodCUID2", (inst, def) => {
   // ZodStringFormat.init(inst, def);
   core.$ZodCUID2.init(inst, def);
-  ZodType.init(inst, def);
+  ZodStringFormat.init(inst, def);
 });
 
 export function cuid2(params?: string | core.$ZodCUID2Params): ZodCUID2 {
@@ -492,7 +492,7 @@ export interface ZodULID extends ZodStringFormat<"ulid"> {
 export const ZodULID: core.$constructor<ZodULID> = /*@__PURE__*/ core.$constructor("ZodULID", (inst, def) => {
   // ZodStringFormat.init(inst, def);
   core.$ZodULID.init(inst, def);
-  ZodType.init(inst, def);
+  ZodStringFormat.init(inst, def);
 });
 
 export function ulid(params?: string | core.$ZodULIDParams): ZodULID {
@@ -506,7 +506,7 @@ export interface ZodXID extends ZodStringFormat<"xid"> {
 export const ZodXID: core.$constructor<ZodXID> = /*@__PURE__*/ core.$constructor("ZodXID", (inst, def) => {
   // ZodStringFormat.init(inst, def);
   core.$ZodXID.init(inst, def);
-  ZodType.init(inst, def);
+  ZodStringFormat.init(inst, def);
 });
 
 export function xid(params?: string | core.$ZodXIDParams): ZodXID {
@@ -520,7 +520,7 @@ export interface ZodKSUID extends ZodStringFormat<"ksuid"> {
 export const ZodKSUID: core.$constructor<ZodKSUID> = /*@__PURE__*/ core.$constructor("ZodKSUID", (inst, def) => {
   // ZodStringFormat.init(inst, def);
   core.$ZodKSUID.init(inst, def);
-  ZodType.init(inst, def);
+  ZodStringFormat.init(inst, def);
 });
 
 export function ksuid(params?: string | core.$ZodKSUIDParams): ZodKSUID {
@@ -534,7 +534,7 @@ export function ksuid(params?: string | core.$ZodKSUIDParams): ZodKSUID {
 // export const ZodIP: core.$constructor<ZodIP> = /*@__PURE__*/ core.$constructor("ZodIP", (inst, def) => {
 //   // ZodStringFormat.init(inst, def);
 //   core.$ZodIP.init(inst, def);
-//   ZodType.init(inst, def);
+//   ZodStringFormat.init(inst, def);
 // });
 
 // export function ip(params?: string | core.$ZodIPParams): ZodIP {
@@ -548,7 +548,7 @@ export interface ZodIPv4 extends ZodStringFormat<"ipv4"> {
 export const ZodIPv4: core.$constructor<ZodIPv4> = /*@__PURE__*/ core.$constructor("ZodIPv4", (inst, def) => {
   // ZodStringFormat.init(inst, def);
   core.$ZodIPv4.init(inst, def);
-  ZodType.init(inst, def);
+  ZodStringFormat.init(inst, def);
 });
 
 export function ipv4(params?: string | core.$ZodIPv4Params): ZodIPv4 {
@@ -562,7 +562,7 @@ export interface ZodIPv6 extends ZodStringFormat<"ipv6"> {
 export const ZodIPv6: core.$constructor<ZodIPv6> = /*@__PURE__*/ core.$constructor("ZodIPv6", (inst, def) => {
   // ZodStringFormat.init(inst, def);
   core.$ZodIPv6.init(inst, def);
-  ZodType.init(inst, def);
+  ZodStringFormat.init(inst, def);
 });
 export function ipv6(params?: string | core.$ZodIPv6Params): ZodIPv6 {
   return core._ipv6(ZodIPv6, params);
@@ -574,7 +574,7 @@ export interface ZodCIDRv4 extends ZodStringFormat<"cidrv4"> {
 }
 export const ZodCIDRv4: core.$constructor<ZodCIDRv4> = /*@__PURE__*/ core.$constructor("ZodCIDRv4", (inst, def) => {
   core.$ZodCIDRv4.init(inst, def);
-  ZodType.init(inst, def);
+  ZodStringFormat.init(inst, def);
 });
 
 export function cidrv4(params?: string | core.$ZodCIDRv4Params): ZodCIDRv4 {
@@ -587,7 +587,7 @@ export interface ZodCIDRv6 extends ZodStringFormat<"cidrv6"> {
 }
 export const ZodCIDRv6: core.$constructor<ZodCIDRv6> = /*@__PURE__*/ core.$constructor("ZodCIDRv6", (inst, def) => {
   core.$ZodCIDRv6.init(inst, def);
-  ZodType.init(inst, def);
+  ZodStringFormat.init(inst, def);
 });
 
 export function cidrv6(params?: string | core.$ZodCIDRv6Params): ZodCIDRv6 {
@@ -601,7 +601,7 @@ export interface ZodBase64 extends ZodStringFormat<"base64"> {
 export const ZodBase64: core.$constructor<ZodBase64> = /*@__PURE__*/ core.$constructor("ZodBase64", (inst, def) => {
   // ZodStringFormat.init(inst, def);
   core.$ZodBase64.init(inst, def);
-  ZodType.init(inst, def);
+  ZodStringFormat.init(inst, def);
 });
 export function base64(params?: string | core.$ZodBase64Params): ZodBase64 {
   return core._base64(ZodBase64, params);
@@ -616,7 +616,7 @@ export const ZodBase64URL: core.$constructor<ZodBase64URL> = /*@__PURE__*/ core.
   (inst, def) => {
     // ZodStringFormat.init(inst, def);
     core.$ZodBase64URL.init(inst, def);
-    ZodType.init(inst, def);
+    ZodStringFormat.init(inst, def);
   }
 );
 export function base64url(params?: string | core.$ZodBase64URLParams): ZodBase64URL {
@@ -630,7 +630,7 @@ export interface ZodE164 extends ZodStringFormat<"e164"> {
 export const ZodE164: core.$constructor<ZodE164> = /*@__PURE__*/ core.$constructor("ZodE164", (inst, def) => {
   // ZodStringFormat.init(inst, def);
   core.$ZodE164.init(inst, def);
-  ZodType.init(inst, def);
+  ZodStringFormat.init(inst, def);
 });
 
 export function e164(params?: string | core.$ZodE164Params): ZodE164 {
@@ -644,7 +644,7 @@ export interface ZodJWT extends ZodStringFormat<"jwt"> {
 export const ZodJWT: core.$constructor<ZodJWT> = /*@__PURE__*/ core.$constructor("ZodJWT", (inst, def) => {
   // ZodStringFormat.init(inst, def);
   core.$ZodJWT.init(inst, def);
-  ZodType.init(inst, def);
+  ZodStringFormat.init(inst, def);
 });
 
 export function jwt(params?: string | core.$ZodJWTParams): ZodJWT {

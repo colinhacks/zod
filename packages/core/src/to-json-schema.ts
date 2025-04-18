@@ -472,10 +472,8 @@ export class JSONSchemaGenerator {
       }
       case "readonly": {
         const inner = this.process(def.innerType, params);
-        // Object.assign(_json, inner);
-        _json.allOf = [inner];
-        _json.ext;
-        // _json.$ref =
+        Object.assign(_json, inner);
+        // _json.allOf = [inner];
         _json.readOnly = true;
         break;
       }
