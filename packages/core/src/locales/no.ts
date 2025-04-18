@@ -5,8 +5,8 @@ import * as util from "../util.js";
 const Sizable: Record<string, { unit: string; verb: string }> = {
   string: { unit: "tegn", verb: "å ha" },
   file: { unit: "bytes", verb: "å ha" },
-  array: { unit: "elementer", verb: "å ha" },
-  set: { unit: "elementer", verb: "å ha" },
+  array: { unit: "elementer", verb: "å inneholde" },
+  set: { unit: "elementer", verb: "å inneholde" },
 };
 
 function getSizing(origin: string): { unit: string; verb: string } | null {
@@ -28,7 +28,10 @@ export const parsedType = (data: any): string => {
         return "null";
       }
 
-      if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
+      if (
+        Object.getPrototypeOf(data) !== Object.prototype &&
+        data.constructor
+      ) {
         return data.constructor.name;
       }
     }
@@ -75,7 +78,8 @@ const error: errors.$ZodErrorMap = (issue) => {
       return `Ugyldig input: forventet ${issue.expected}, fikk ${parsedType(issue.input)}`;
     // return `Invalid input: expected ${issue.expected}, received ${util.getParsedType(issue.input)}`;
     case "invalid_value":
-      if (issue.values.length === 1) return `Ugyldig input: forventet ${util.stringifyPrimitive(issue.values[0])}`;
+      if (issue.values.length === 1)
+        return `Ugyldig input: forventet ${util.stringifyPrimitive(issue.values[0])}`;
       return `Ugyldig alternativ: forventet en av ${util.joinValues(issue.values, "|")}`;
     case "too_big": {
       const adj = issue.inclusive ? "<=" : "<";
@@ -95,10 +99,14 @@ const error: errors.$ZodErrorMap = (issue) => {
     }
     case "invalid_format": {
       const _issue = issue as errors.$ZodStringFormatIssues;
-      if (_issue.format === "starts_with") return `Ugyldig streng: må starte med "${issue}"`;
-      if (_issue.format === "ends_with") return `Ugyldig streng: må ende med "${_issue.suffix}"`;
-      if (_issue.format === "includes") return `Ugyldig streng: må inneholde "${_issue.includes}"`;
-      if (_issue.format === "regex") return `Ugyldig streng: må matche mønsteret ${_issue.pattern}`;
+      if (_issue.format === "starts_with")
+        return `Ugyldig streng: må starte med "${issue}"`;
+      if (_issue.format === "ends_with")
+        return `Ugyldig streng: må ende med "${_issue.suffix}"`;
+      if (_issue.format === "includes")
+        return `Ugyldig streng: må inneholde "${_issue.includes}"`;
+      if (_issue.format === "regex")
+        return `Ugyldig streng: må matche mønsteret ${_issue.pattern}`;
       return `Ugyldig ${Nouns[_issue.format] ?? issue.format}`;
     }
     case "not_multiple_of":
