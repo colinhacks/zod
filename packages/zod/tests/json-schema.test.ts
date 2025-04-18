@@ -875,7 +875,7 @@ test("pipe", () => {
   `);
   // => { type: "number" }
 
-  const b = z.toJSONSchema(mySchema, { type: "input" });
+  const b = z.toJSONSchema(mySchema, { io: "input" });
   expect(b).toMatchInlineSnapshot(`
     {
       "type": "string",

@@ -19,7 +19,7 @@ interface JSONSchemaGeneratorParams {
   /** Whether to extract the `"input"` or `"output"` type. Relevant to transforms, pipes, defaults, coerced primitives, etc.
    * - `"output" — Default. Convert the output schema.
    * - `"input"` — Convert the input schema. */
-  type?: "input" | "output";
+  io?: "input" | "output";
 }
 
 interface ProcessParams {
@@ -73,7 +73,7 @@ export class JSONSchemaGenerator {
   target: "draft-7" | "draft-2020-12";
   unrepresentable: "throw" | "any";
   override: (ctx: { zodSchema: schemas.$ZodType; jsonSchema: JSONSchema.BaseSchema }) => void;
-  type: "input" | "output";
+  io: "input" | "output";
 
   counter = 0;
   seen: Map<schemas.$ZodType, Seen>;
@@ -84,7 +84,7 @@ export class JSONSchemaGenerator {
     this.target = params?.target ?? "draft-2020-12";
     this.unrepresentable = params?.unrepresentable ?? "throw";
     this.override = params?.override ?? (() => {});
-    this.type = params?.type ?? "output";
+    this.io = params?.io ?? "output";
 
     this.seen = new Map();
   }
@@ -464,7 +464,7 @@ export class JSONSchemaGenerator {
         break;
       }
       case "pipe": {
-        const innerType = this.type === "input" ? def.in : def.out;
+        const innerType = this.io === "input" ? def.in : def.out;
         const inner = this.process(innerType, params);
         result.schema = inner;
 
