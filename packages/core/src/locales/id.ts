@@ -99,7 +99,7 @@ const error: errors.$ZodErrorMap = (issue) => {
       if (_issue.format === "ends_with") return `String tidak valid: harus berakhir dengan "${_issue.suffix}"`;
       if (_issue.format === "includes") return `String tidak valid: harus menyertakan "${_issue.includes}"`;
       if (_issue.format === "regex") return `String tidak valid: harus sesuai pola ${_issue.pattern}`;
-      return `Invalid ${Nouns[_issue.format] ?? issue.format}`;
+      return `${Nouns[_issue.format] ?? issue.format} tidak valid`;
     }
     case "not_multiple_of":
       return `Angka tidak valid: harus kelipatan dari ${issue.divisor}`;
