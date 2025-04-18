@@ -8,9 +8,9 @@ import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 In Zod, validation errors are surfaced as instances of the `z.core.$ZodError` class.
 
-> The `zod` package uses a subclass of this called `ZodError` that implements some additional convenience methods. 
+> The `zod` package uses a subclass of this called `ZodError` that implements some additional convenience methods.
 
-Instances of `$ZodError` contain an `.issues` property containing a human-readable `message` and additional structured information about each encountered validation issue. 
+Instances of `$ZodError` contain an `.issues` property containing a human-readable `message` and additional structured information about each encountered validation issue.
 
 
 <Tabs groupId="lib" items={["zod", "@zod/mini"]}>
@@ -81,7 +81,7 @@ z.string({ error: "Bad!"}).parse(12);
 //       expected: 'string',
 //       code: 'invalid_type',
 //       path: [],
-//       message: 'Bad!'   <-- 👀 custom error message 
+//       message: 'Bad!'   <-- 👀 custom error message
 //     }
 //   ]
 // }
@@ -238,7 +238,7 @@ result.error.issues;
 // [{ message: "highest priority", ... }]
 ```
 
-The `iss` object is a [discriminated union](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions) of all possible issue types. Use the `code` property to discriminate between them. 
+The `iss` object is a [discriminated union](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions) of all possible issue types. Use the `code` property to discriminate between them.
 
 > For a breakdown of all Zod issue codes, see the [`@zod/core`](/packages/core#issue-types) documentation.
 
@@ -269,7 +269,7 @@ z.config({
 });
 ```
 
-Global error messages have *lower precedence* than schema-level or per-parse error messages. 
+Global error messages have *lower precedence* than schema-level or per-parse error messages.
 
 The `iss` object is a [discriminated union](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions) of all possible issue types. Use the `code` property to discriminate between them.
 
@@ -340,3 +340,4 @@ The following locales are available:
 
 - `az` — Azerbaijani
 - `en` — English
+- `zh-tw` - Traditional Chinese
