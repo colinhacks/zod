@@ -76,7 +76,6 @@ const error: errors.$ZodErrorMap = (issue) => {
   switch (issue.code) {
     case "invalid_type":
       return `Ugyldig input: forventet ${issue.expected}, fikk ${parsedType(issue.input)}`;
-    // return `Invalid input: expected ${issue.expected}, received ${util.getParsedType(issue.input)}`;
     case "invalid_value":
       if (issue.values.length === 1)
         return `Ugyldig input: forventet ${util.stringifyPrimitive(issue.values[0])}`;
