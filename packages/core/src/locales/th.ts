@@ -72,10 +72,9 @@ const Nouns: {
 const error: errors.$ZodErrorMap = (issue) => {
   switch (issue.code) {
     case "invalid_type":
-      return `ข้อมูลไม่ถูกต้อง: ควรเป็น ${issue.expected} แต่ได้รับ ${parsedType(issue.input)}`;
-    // return `ข้อมูลไม่ถูกต้อง: ควรเป็น ${issue.expected} แต่ได้รับ ${util.getParsedType(issue.input)}`;
+      return `ประเภทข้อมูลไม่ถูกต้อง: ควรเป็น ${issue.expected} แต่ได้รับ ${parsedType(issue.input)}`;
     case "invalid_value":
-      if (issue.values.length === 1) return `ข้อมูลไม่ถูกต้อง: ควรเป็น ${util.stringifyPrimitive(issue.values[0])}`;
+      if (issue.values.length === 1) return `ค่าไม่ถูกต้อง: ควรเป็น ${util.stringifyPrimitive(issue.values[0])}`;
       return `ตัวเลือกไม่ถูกต้อง: ควรเป็นหนึ่งใน ${util.joinValues(issue.values, "|")}`;
     case "too_big": {
       const adj = issue.inclusive ? "ไม่เกิน" : "น้อยกว่า";
@@ -110,7 +109,7 @@ const error: errors.$ZodErrorMap = (issue) => {
     case "invalid_key":
       return `คีย์ไม่ถูกต้องใน ${issue.origin}`;
     case "invalid_union":
-      return "ข้อมูลไม่ถูกต้อง: ไม่ตรงกับรูปแบบที่กำหนดไว้";
+      return "ข้อมูลไม่ถูกต้อง: ไม่ตรงกับรูปแบบยูเนียนที่กำหนดไว้";
     case "invalid_element":
       return `ข้อมูลไม่ถูกต้องใน ${issue.origin}`;
     default:
