@@ -74,7 +74,7 @@ const error: errors.$ZodErrorMap = (issue) => {
     case "invalid_type":
       return `Ugyldig input: forventet ${issue.expected}, fikk ${parsedType(issue.input)}`;
     case "invalid_value":
-      if (issue.values.length === 1) return `Ugyldig input: forventet ${util.stringifyPrimitive(issue.values[0])}`;
+      if (issue.values.length === 1) return `Ugyldig verdi: forventet ${util.stringifyPrimitive(issue.values[0])}`;
       return `Ugyldig valg: forventet en av ${util.joinValues(issue.values, "|")}`;
     case "too_big": {
       const adj = issue.inclusive ? "<=" : "<";
