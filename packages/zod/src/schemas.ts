@@ -113,7 +113,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
       ],
     });
   };
-  inst.clone = (_def) => core.clone(inst, _def ?? def);
+  inst.clone = (_def) => core.clone(inst, _def);
   inst.brand = () => inst as any;
   inst.register = ((reg: any, meta: any) => {
     reg.add(inst, meta);
@@ -150,8 +150,9 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   // meta
   inst.describe = (description) => {
     const cl = inst.clone();
-    const meta = core.globalRegistry.get(inst) ?? {};
+    const meta = { ...(core.globalRegistry.get(inst) ?? {}) };
     meta.description = description;
+    delete meta.id;
     core.globalRegistry.add(cl, meta);
     return cl;
   };
