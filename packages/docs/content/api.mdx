@@ -1666,7 +1666,8 @@ const MyResult = z.discriminatedUnion([
   If Zod can't find a discriminator key, it will throw an error at schema creation time.
 </Callout>
 
-<Accordions type="single"><Accordion title="Nesting discriminated unions">
+<Accordions type="single">
+<Accordion title="Nesting discriminated unions">
 
   For advanced use cases, discriminated unions can be nested. Zod will figure out the optimal parsing strategy to leverage the discriminators at each level.
 
@@ -1684,7 +1685,8 @@ const MyResult = z.discriminatedUnion([
   ]);
   ```
 
-</Accordion></Accordions>
+</Accordion>
+</Accordions>
 
 ## Intersections
 

@@ -1539,7 +1539,9 @@ export const $ZodObjectLike: core.$constructor<$ZodObjectLike> = /*@__PURE__*/ c
           discMap.set(key, o);
         }
       }
-      if (!hasDisc) return undefined as any;
+      if (!hasDisc) {
+        return undefined as any;
+      }
       return discMap;
     });
 
@@ -3419,6 +3421,7 @@ export interface $ZodReadonlyInternals<T extends $ZodType = $ZodType>
   qin: T["_zod"]["qin"];
   qout: T["_zod"]["qout"];
   isst: never;
+  disc: T["_zod"]["disc"];
 }
 
 export interface $ZodReadonly<T extends $ZodType = $ZodType> extends $ZodType {
@@ -3429,6 +3432,7 @@ export const $ZodReadonly: core.$constructor<$ZodReadonly> = /*@__PURE__*/ core.
   "$ZodReadonly",
   (inst, def) => {
     $ZodType.init(inst, def);
+    inst._zod.disc = def.innerType._zod.disc;
     // inst._zod.qin = def.innerType._zod.qin;
     inst._zod.qout = def.innerType._zod.qout;
 
