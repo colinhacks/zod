@@ -1640,7 +1640,7 @@ function handleResult(result: MyResult){
 }
 ```
 
-You could represent with with a regular `z.union()`. But regular unions are *naive*—they check the input against each option in order and return the first one that passes. This can be slow for large unions.
+You could represent it with a regular `z.union()`. But regular unions are *naive*—they check the input against each option in order and return the first one that passes. This can be slow for large unions.
 
 So Zod provides a `z.discriminatedUnion()` API that uses a *discriminator key* to make parsing more efficient.
 
