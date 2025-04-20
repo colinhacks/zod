@@ -1,20 +1,20 @@
 import { execa } from "execa";
 
 const $ = execa({ stdout: "inherit", stderr: "inherit" });
-import { ARKTYPE, ZOD, ZOD3, generate } from "../generate.js";
+import * as gen from "../generate.js";
 
 const SHARED = {
   numSchemas: 500,
   numKeys: 5,
-  numExtends: 1
-}
+  numExtends: 1,
+};
 console.log("╔════════════════╗");
 console.log("║     Zod v3     ║");
 console.log("╚════════════════╝");
-await generate({
-  ...ZOD3,
+await gen.generate({
+  ...gen.ZOD3,
   schemaType: "z.object",
-  ...SHARED
+  ...SHARED,
 });
 
 await $`pnpm run build:bench`;
@@ -22,10 +22,10 @@ await $`pnpm run build:bench`;
 console.log("╔════════════════╗");
 console.log("║     Zod v4     ║");
 console.log("╚════════════════╝");
-await generate({
-  ...ZOD,
+await gen.generate({
+  ...gen.ZOD,
   schemaType: "z.object",
-  ...SHARED
+  ...SHARED,
 });
 
 await $`pnpm run build:bench`;
@@ -33,8 +33,8 @@ await $`pnpm run build:bench`;
 // console.log("╔═════════════════╗");
 // console.log("║     ArkType     ║");
 // console.log("╚═════════════════╝");
-// await generate({
-//   ...ARKTYPE,
+// await gen.generate({
+// gen.  ...ARKTYPE,
 //   ...SHARED
 // });
 

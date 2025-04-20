@@ -70,7 +70,6 @@
       ".next",
       "packages/bench",
       "packages/treeshake",
-      "packages/tsc",
       ".source"
     ]
   }
