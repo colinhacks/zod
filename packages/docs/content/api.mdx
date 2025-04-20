@@ -823,7 +823,7 @@ const email = z.templateLiteral([
 There are two APIs for defining object schemas: `z.object()` and `z.interface()`. The two APIs are largely identical, with a small (but important!) difference in how *optional properties* are defined.
 {/* 
 <Callout>
-The `z.interface()` API was introduced in Zod 4 as a more flexible and powerful way to represent objects. Optional properties are specified with a `?` prefix in the key. This gives you more control over representing *optionality*:
+The `z.interface()` API was introduced in Zod 4 as a more flexible and powerful way to represent objects. Optional properties are specified with a `?` suffix in the key. This gives you more control over representing *optionality*:
 
 ```ts
 z.interface({
@@ -885,7 +885,7 @@ z.object({ name: z.string().optional() });
 // { name?: string | undefined; }
 ```
 
-By contrast, `z.interface()` can represent both varieties. To make a property "key optional" (e.g. to add the question mark), prefix that key with `?`. 
+By contrast, `z.interface()` can represent both varieties. To make a property "key optional" (e.g. to add the question mark), suffix that key with `?`. 
 
 
 ```ts
