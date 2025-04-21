@@ -3432,7 +3432,7 @@ export const $ZodReadonly: core.$constructor<$ZodReadonly> = /*@__PURE__*/ core.
   "$ZodReadonly",
   (inst, def) => {
     $ZodType.init(inst, def);
-    inst._zod.disc = def.innerType._zod.disc;
+    util.defineLazy(inst._zod, "disc", () => def.innerType._zod.disc);
     // inst._zod.qin = def.innerType._zod.qin;
     inst._zod.qout = def.innerType._zod.qout;
 
