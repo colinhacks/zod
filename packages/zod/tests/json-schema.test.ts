@@ -157,29 +157,29 @@ describe("toJSONSchema", () => {
     `);
     expect(toJSONSchema(z.int())).toMatchInlineSnapshot(`
       {
-        "exclusiveMaximum": 9007199254740991,
-        "exclusiveMinimum": -9007199254740991,
+        "maximum": 9007199254740991,
+        "minimum": -9007199254740991,
         "type": "integer",
       }
     `);
     expect(toJSONSchema(z.int32())).toMatchInlineSnapshot(`
       {
-        "exclusiveMaximum": 2147483647,
-        "exclusiveMinimum": -2147483648,
+        "maximum": 2147483647,
+        "minimum": -2147483648,
         "type": "integer",
       }
     `);
     expect(toJSONSchema(z.float32())).toMatchInlineSnapshot(`
       {
-        "exclusiveMaximum": 3.4028234663852886e+38,
-        "exclusiveMinimum": -3.4028234663852886e+38,
+        "maximum": 3.4028234663852886e+38,
+        "minimum": -3.4028234663852886e+38,
         "type": "number",
       }
     `);
     expect(toJSONSchema(z.float64())).toMatchInlineSnapshot(`
       {
-        "exclusiveMaximum": 1.7976931348623157e+308,
-        "exclusiveMinimum": -1.7976931348623157e+308,
+        "maximum": 1.7976931348623157e+308,
+        "minimum": -1.7976931348623157e+308,
         "type": "number",
       }
     `);
