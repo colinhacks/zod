@@ -112,7 +112,7 @@ const error: errors.$ZodErrorMap = (issue) => {
     case "invalid_element":
       return `مدخل غير مقبول في ${issue.origin}`;
     default:
-      return `مدخل غير مقبول`;
+      return "مدخل غير مقبول";
   }
 };
 
