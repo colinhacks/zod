@@ -2996,7 +2996,7 @@ export const $ZodOptional: core.$constructor<$ZodOptional> = /*@__PURE__*/ core.
   "$ZodOptional",
   (inst, def) => {
     $ZodType.init(inst, def);
-    // inst._zod.qin = "true";
+    inst._zod.qin = "true";
     inst._zod.qout = "true";
     if (def.innerType._zod.values) inst._zod.values = new Set([...def.innerType._zod.values, undefined]);
     const pattern = (def.innerType as any)._zod.pattern;
@@ -3091,6 +3091,7 @@ export const $ZodDefault: core.$constructor<$ZodDefault> = /*@__PURE__*/ core.$c
   (inst, def) => {
     $ZodType.init(inst, def);
 
+    inst._zod.qin = "true";
     inst._zod.values = def.innerType._zod.values;
 
     inst._zod.parse = (payload, ctx) => {
@@ -3282,7 +3283,7 @@ export interface $ZodCatch<T extends $ZodType = $ZodType> extends $ZodType {
 
 export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$constructor("$ZodCatch", (inst, def) => {
   $ZodType.init(inst, def);
-  // inst._zod.qin = def.innerType._zod.qin;
+  inst._zod.qin = def.innerType._zod.qin;
   inst._zod.qout = def.innerType._zod.qout;
   inst._zod.values = def.innerType._zod.values;
 
@@ -3433,7 +3434,7 @@ export const $ZodReadonly: core.$constructor<$ZodReadonly> = /*@__PURE__*/ core.
   (inst, def) => {
     $ZodType.init(inst, def);
     util.defineLazy(inst._zod, "disc", () => def.innerType._zod.disc);
-    // inst._zod.qin = def.innerType._zod.qin;
+    inst._zod.qin = def.innerType._zod.qin;
     inst._zod.qout = def.innerType._zod.qout;
 
     inst._zod.parse = (payload, ctx) => {
