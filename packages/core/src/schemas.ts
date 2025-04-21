@@ -130,7 +130,7 @@ export interface $ZodTypeInternals<out O = unknown, out I = unknown> extends $Zo
   /** The constructor function of this schema. */
   constr: new (
     def: any
-  ) => any;
+  ) => $ZodType;
 
   /** A catchall object for computed metadata related to this schema. Commonly modified by checks using `onattach`. */
   computed: Record<string, any>;
@@ -140,6 +140,9 @@ export interface $ZodTypeInternals<out O = unknown, out I = unknown> extends $Zo
 
   /** An optional method used to override `toJSONSchema` logic. */
   toJSONSchema?: () => object;
+
+  /** The parent of this schema. Only set during certain clone operations. */
+  parent?: $ZodType | undefined;
 }
 
 export interface $ZodType<out O = unknown, out I = unknown> {

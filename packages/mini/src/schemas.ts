@@ -55,7 +55,7 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
         ],
       });
     };
-    inst.clone = (_def) => core.clone(inst, _def ?? def);
+    inst.clone = (_def) => core.clone(inst, _def);
     inst.brand = () => inst as any;
     inst.register = ((reg: any, meta: any) => {
       reg.add(inst, meta);
