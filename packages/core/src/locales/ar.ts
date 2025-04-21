@@ -74,7 +74,8 @@ const error: errors.$ZodErrorMap = (issue) => {
     case "invalid_type":
       return `مدخلات غير مقبولة: يفترض إدخال ${issue.expected}، ولكن ما تم إدخاله ${parsedType(issue.input)}`;
     case "invalid_value":
-      if (issue.values.length === 1) return `مدخلات غير مقبولة: يفترض إدخال ${util.stringifyPrimitive(issue.values[0])}`;
+      if (issue.values.length === 1)
+        return `مدخلات غير مقبولة: يفترض إدخال ${util.stringifyPrimitive(issue.values[0])}`;
       return `اختيار غير مقبول: يتوقع انتقاء أحد هذه الخيارات: ${util.joinValues(issue.values, "|")}`;
     case "too_big": {
       const adj = issue.inclusive ? "<=" : "<";
