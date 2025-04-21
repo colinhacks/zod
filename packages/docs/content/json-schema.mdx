@@ -232,6 +232,7 @@ interface ToJSONSchemaParams {
       
       - `"inline"` — Reused schemas will be inlined
       - `"ref"` — Reused schemas will be extracted into `$defs`
+      - `"ref-registry"` — All schemas with `id` in metadata will be extracted as `$defs`
     </td>
     <td><code>"inline"</code></td>
   </tr>
@@ -394,6 +395,8 @@ z.toJSONSchema(User, { reused: "ref" });
 //   '$defs': { __schema0: { type: 'string' } }
 // }
 ```
+
+> With `reused` option set to `"ref-registry"` it is possible to only extract schemas with an `id` property (reused schemas without `id` will be inlined) into `$defs`. 
 
 ### `override`
 

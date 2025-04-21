@@ -1,5 +1,5 @@
 import { toJSONSchema } from "@zod/core";
-import { describe, expect, test } from "vitest";
+import { beforeAll, describe, expect, test } from "vitest";
 import * as z from "zod";
 
 describe("toJSONSchema", () => {
@@ -841,6 +841,476 @@ describe("toJSONSchema", () => {
       }"
     `
     );
+  });
+});
+
+describe("toJSONSchema params", () => {
+  describe("reused", () => {
+    const reusedRegistry = z.registry<{ id?: string }>();
+
+    const InternalA = z.object({ str: z.string() });
+    const InternalB = z.object({ str: z.string() });
+    const InternalC = z.object({ str: z.string() });
+
+    const External = z.object({
+      intA1: InternalA,
+      intA2: InternalA,
+      intB1: InternalB,
+      intB2: InternalB,
+      intC: InternalC,
+    });
+
+    beforeAll(() => {
+      reusedRegistry.add(InternalA, { id: "internalA" });
+      reusedRegistry.add(InternalC, { id: "internalC" });
+    });
+
+    test("inline (without registry)", () => {
+      const result = toJSONSchema(External, { reused: "inline" });
+
+      expect(JSON.stringify(result, null, 2)).toMatchInlineSnapshot(
+        `
+        "{
+          "type": "object",
+          "properties": {
+            "intA1": {
+              "type": "object",
+              "properties": {
+                "str": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "str"
+              ]
+            },
+            "intA2": {
+              "type": "object",
+              "properties": {
+                "str": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "str"
+              ]
+            },
+            "intB1": {
+              "type": "object",
+              "properties": {
+                "str": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "str"
+              ]
+            },
+            "intB2": {
+              "type": "object",
+              "properties": {
+                "str": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "str"
+              ]
+            },
+            "intC": {
+              "type": "object",
+              "properties": {
+                "str": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "str"
+              ]
+            }
+          },
+          "required": [
+            "intA1",
+            "intA2",
+            "intB1",
+            "intB2",
+            "intC"
+          ]
+        }"
+      `
+      );
+    });
+
+    test("inline (with registry)", () => {
+      const result = toJSONSchema(External, { metadata: reusedRegistry, reused: "inline" });
+
+      expect(JSON.stringify(result, null, 2)).toMatchInlineSnapshot(
+        `
+        "{
+          "type": "object",
+          "properties": {
+            "intA1": {
+              "id": "internalA",
+              "type": "object",
+              "properties": {
+                "str": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "str"
+              ]
+            },
+            "intA2": {
+              "id": "internalA",
+              "type": "object",
+              "properties": {
+                "str": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "str"
+              ]
+            },
+            "intB1": {
+              "type": "object",
+              "properties": {
+                "str": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "str"
+              ]
+            },
+            "intB2": {
+              "type": "object",
+              "properties": {
+                "str": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "str"
+              ]
+            },
+            "intC": {
+              "id": "internalC",
+              "type": "object",
+              "properties": {
+                "str": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "str"
+              ]
+            }
+          },
+          "required": [
+            "intA1",
+            "intA2",
+            "intB1",
+            "intB2",
+            "intC"
+          ]
+        }"
+      `
+      );
+    });
+
+    test("ref (without registry)", () => {
+      const result = toJSONSchema(External, { reused: "ref" });
+
+      expect(JSON.stringify(result, null, 2)).toMatchInlineSnapshot(
+        `
+        "{
+          "type": "object",
+          "properties": {
+            "intA1": {
+              "$ref": "#/$defs/__schema0"
+            },
+            "intA2": {
+              "$ref": "#/$defs/__schema0"
+            },
+            "intB1": {
+              "$ref": "#/$defs/__schema1"
+            },
+            "intB2": {
+              "$ref": "#/$defs/__schema1"
+            },
+            "intC": {
+              "type": "object",
+              "properties": {
+                "str": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "str"
+              ]
+            }
+          },
+          "required": [
+            "intA1",
+            "intA2",
+            "intB1",
+            "intB2",
+            "intC"
+          ],
+          "$defs": {
+            "__schema0": {
+              "type": "object",
+              "properties": {
+                "str": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "str"
+              ]
+            },
+            "__schema1": {
+              "type": "object",
+              "properties": {
+                "str": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "str"
+              ]
+            }
+          }
+        }"
+      `
+      );
+    });
+
+    test("ref (with registry)", () => {
+      const result = toJSONSchema(External, { metadata: reusedRegistry, reused: "ref" });
+
+      expect(JSON.stringify(result, null, 2)).toMatchInlineSnapshot(
+        `
+        "{
+          "type": "object",
+          "properties": {
+            "intA1": {
+              "$ref": "#/$defs/internalA"
+            },
+            "intA2": {
+              "$ref": "#/$defs/internalA"
+            },
+            "intB1": {
+              "$ref": "#/$defs/__schema0"
+            },
+            "intB2": {
+              "$ref": "#/$defs/__schema0"
+            },
+            "intC": {
+              "id": "internalC",
+              "type": "object",
+              "properties": {
+                "str": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "str"
+              ]
+            }
+          },
+          "required": [
+            "intA1",
+            "intA2",
+            "intB1",
+            "intB2",
+            "intC"
+          ],
+          "$defs": {
+            "internalA": {
+              "id": "internalA",
+              "type": "object",
+              "properties": {
+                "str": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "str"
+              ]
+            },
+            "__schema0": {
+              "type": "object",
+              "properties": {
+                "str": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "str"
+              ]
+            }
+          }
+        }"
+      `
+      );
+    });
+
+    test("ref-registry (without registry)", () => {
+      const result = toJSONSchema(External, { reused: "ref-registry" });
+
+      expect(JSON.stringify(result, null, 2)).toMatchInlineSnapshot(
+        `
+        "{
+          "type": "object",
+          "properties": {
+            "intA1": {
+              "type": "object",
+              "properties": {
+                "str": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "str"
+              ]
+            },
+            "intA2": {
+              "type": "object",
+              "properties": {
+                "str": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "str"
+              ]
+            },
+            "intB1": {
+              "type": "object",
+              "properties": {
+                "str": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "str"
+              ]
+            },
+            "intB2": {
+              "type": "object",
+              "properties": {
+                "str": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "str"
+              ]
+            },
+            "intC": {
+              "type": "object",
+              "properties": {
+                "str": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "str"
+              ]
+            }
+          },
+          "required": [
+            "intA1",
+            "intA2",
+            "intB1",
+            "intB2",
+            "intC"
+          ]
+        }"
+      `
+      );
+    });
+
+    test("ref-registry (with registry)", () => {
+      const result = toJSONSchema(External, { metadata: reusedRegistry, reused: "ref-registry" });
+
+      expect(JSON.stringify(result, null, 2)).toMatchInlineSnapshot(
+        `
+        "{
+          "type": "object",
+          "properties": {
+            "intA1": {
+              "$ref": "#/$defs/internalA"
+            },
+            "intA2": {
+              "$ref": "#/$defs/internalA"
+            },
+            "intB1": {
+              "type": "object",
+              "properties": {
+                "str": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "str"
+              ]
+            },
+            "intB2": {
+              "type": "object",
+              "properties": {
+                "str": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "str"
+              ]
+            },
+            "intC": {
+              "$ref": "#/$defs/internalC"
+            }
+          },
+          "required": [
+            "intA1",
+            "intA2",
+            "intB1",
+            "intB2",
+            "intC"
+          ],
+          "$defs": {
+            "internalA": {
+              "id": "internalA",
+              "type": "object",
+              "properties": {
+                "str": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "str"
+              ]
+            },
+            "internalC": {
+              "id": "internalC",
+              "type": "object",
+              "properties": {
+                "str": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "str"
+              ]
+            }
+          }
+        }"
+      `
+      );
+    });
   });
 });
 
