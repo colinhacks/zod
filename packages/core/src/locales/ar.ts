@@ -66,7 +66,7 @@ const Nouns: {
   json_string: "نَص على هيئة JSON",
   e164: "رقم هاتف بمعيار E.164",
   jwt: "JWT",
-  template_literal: "نص مقولب",
+  template_literal: "مدخل",
 };
 
 const error: errors.$ZodErrorMap = (issue) => {
