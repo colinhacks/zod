@@ -72,7 +72,7 @@ const Nouns: {
 const error: errors.$ZodErrorMap = (issue) => {
   switch (issue.code) {
     case "invalid_type":
-      return `مدخلات غير مقبولة: يفترض إدخال ${issue.expected}، ولكن ما تم إدخاله ${parsedType(issue.input)}`;
+      return `مدخلات غير مقبولة: يفترض إدخال ${issue.expected}، ولكن تم إدخال ${parsedType(issue.input)}`;
     case "invalid_value":
       if (issue.values.length === 1)
         return `مدخلات غير مقبولة: يفترض إدخال ${util.stringifyPrimitive(issue.values[0])}`;
