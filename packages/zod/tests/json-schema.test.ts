@@ -1327,3 +1327,30 @@ test("basic registry", () => {
     }
   `);
 });
+
+test("_ref", () => {
+  // const a = z.promise(z.string().describe("a"));
+  const a = z.toJSONSchema(z.promise(z.string().describe("a")));
+  expect(a).toMatchInlineSnapshot(`
+    {
+      "description": "a",
+      "type": "string",
+    }
+  `);
+
+  const b = z.toJSONSchema(z.lazy(() => z.string().describe("a")));
+  expect(b).toMatchInlineSnapshot(`
+    {
+      "description": "a",
+      "type": "string",
+    }
+  `);
+
+  const c = z.toJSONSchema(z.optional(z.string().describe("a")));
+  expect(c).toMatchInlineSnapshot(`
+    {
+      "description": "a",
+      "type": "string",
+    }
+  `);
+});
