@@ -164,7 +164,9 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
   //
 
   for (const ch of checks) {
-    ch._zod.onattach?.(inst);
+    for (const fn of ch._zod.onattach) {
+      fn(inst);
+    }
   }
 
   if (checks.length === 0) {
@@ -621,11 +623,9 @@ export interface $ZodIPv4 extends $ZodType {
 export const $ZodIPv4: core.$constructor<$ZodIPv4> = /*@__PURE__*/ core.$constructor("$ZodIPv4", (inst, def): void => {
   def.pattern ??= regexes.ipv4;
   $ZodStringFormat.init(inst, def);
-  const superAttach = inst._zod.onattach;
-  inst._zod.onattach = (inst) => {
-    superAttach?.(inst);
+  inst._zod.onattach.push((inst) => {
     inst._zod.computed.format = `ipv4`;
-  };
+  });
 });
 
 //////////////////////////////   ZodIPv6   //////////////////////////////
@@ -645,11 +645,10 @@ export interface $ZodIPv6 extends $ZodType {
 export const $ZodIPv6: core.$constructor<$ZodIPv6> = /*@__PURE__*/ core.$constructor("$ZodIPv6", (inst, def): void => {
   def.pattern ??= regexes.ipv6;
   $ZodStringFormat.init(inst, def);
-  const superAttach = inst._zod.onattach;
-  inst._zod.onattach = (inst) => {
-    superAttach?.(inst);
+
+  inst._zod.onattach.push((inst) => {
     inst._zod.computed.format = `ipv6`;
-  };
+  });
 
   inst._zod.check = (payload) => {
     try {
@@ -685,11 +684,6 @@ export const $ZodCIDRv4: core.$constructor<$ZodCIDRv4> = /*@__PURE__*/ core.$con
   (inst, def): void => {
     def.pattern ??= regexes.cidrv4;
     $ZodStringFormat.init(inst, def);
-    const superAttach = inst._zod.onattach;
-    inst._zod.onattach = (inst) => {
-      superAttach?.(inst);
-      inst._zod.computed.format = `cidrv4`;
-    };
   }
 );
 
@@ -712,11 +706,6 @@ export const $ZodCIDRv6: core.$constructor<$ZodCIDRv6> = /*@__PURE__*/ core.$con
   (inst, def): void => {
     def.pattern ??= regexes.cidrv6; // not used for validation
     $ZodStringFormat.init(inst, def);
-    const superAttach = inst._zod.onattach;
-    inst._zod.onattach = (inst) => {
-      superAttach?.(inst);
-      inst._zod.computed.format = `cidrv6`;
-    };
 
     inst._zod.check = (payload) => {
       const [address, prefix] = payload.value.split("/");
@@ -757,11 +746,7 @@ export const $ZodCIDRv6: core.$constructor<$ZodCIDRv6> = /*@__PURE__*/ core.$con
 //   else if (def.version === "v6") def.pattern ??= regexes.ipv6;
 //   else def.pattern ??= regexes.ip;
 //   $ZodStringFormat.init(inst, def);
-//   const superAttach = inst._zod.onattach;
-//   inst._zod.onattach = (inst) => {
-//     superAttach?.(inst);
-//     inst._zod.computed.format = `ip${def.version ?? ""}`;
-//   };
+
 // });
 
 //////////////////////////////   ZodBase64   //////////////////////////////
@@ -779,11 +764,9 @@ export const $ZodBase64: core.$constructor<$ZodBase64> = /*@__PURE__*/ core.$con
     def.pattern ??= regexes.base64;
     $ZodStringFormat.init(inst, def);
 
-    const superAttach = inst._zod.onattach;
-    inst._zod.onattach = (inst) => {
-      superAttach?.(inst);
+    inst._zod.onattach.push((inst) => {
       inst._zod.computed.contentEncoding = "base64";
-    };
+    });
   }
 );
 
@@ -802,11 +785,9 @@ export const $ZodBase64URL: core.$constructor<$ZodBase64URL> = /*@__PURE__*/ cor
     def.pattern ??= regexes.base64url;
     $ZodStringFormat.init(inst, def);
 
-    const superAttach = inst._zod.onattach;
-    inst._zod.onattach = (inst) => {
-      superAttach?.(inst);
+    inst._zod.onattach.push((inst) => {
       inst._zod.computed.contentEncoding = "base64url";
-    };
+    });
   }
 );
 
@@ -1501,7 +1482,9 @@ function handleObjectResult(result: ParsePayload, final: ParsePayload, key: Prop
 
 function handleOptionalObjectResult(result: ParsePayload, final: ParsePayload, key: PropertyKey, input: any) {
   if (result.issues.length) {
+    // validation failed against value schema
     if (input[key] === undefined) {
+      // if input was undefined, ignore the error
       if (key in input) {
         (final.value as any)[key] = undefined;
       }
@@ -1509,8 +1492,10 @@ function handleOptionalObjectResult(result: ParsePayload, final: ParsePayload, k
       final.issues.push(...util.prefixIssues(key, result.issues));
     }
   } else if (result.value === undefined) {
+    // validation returned `undefined`
     if (key in input) (final.value as any)[key] = undefined;
   } else {
+    // non-undefined value
     (final.value as any)[key] = result.value;
   }
 }
@@ -2426,11 +2411,34 @@ export interface $ZodRecordDef extends $ZodTypeDef {
   valueType: $ZodType;
 }
 
+type $InferZodRecordOutput<
+  Key extends $ZodRecordKey = $ZodRecordKey,
+  Value extends $ZodType = $ZodType,
+> = undefined extends Key["_zod"]["values"]
+  ? string extends Key["_zod"]["output"]
+    ? Record<Key["_zod"]["output"], Value["_zod"]["output"]>
+    : number extends Key["_zod"]["output"]
+      ? Record<Key["_zod"]["output"], Value["_zod"]["output"]>
+      : symbol extends Key["_zod"]["output"]
+        ? Record<Key["_zod"]["output"], Value["_zod"]["output"]>
+        : Partial<Record<Key["_zod"]["output"], Value["_zod"]["output"]>>
+  : Record<Key["_zod"]["output"], Value["_zod"]["output"]>;
+
+type $InferZodRecordInput<
+  Key extends $ZodRecordKey = $ZodRecordKey,
+  Value extends $ZodType = $ZodType,
+> = undefined extends Key["_zod"]["values"]
+  ? string extends Key["_zod"]["input"]
+    ? Record<Key["_zod"]["input"], Value["_zod"]["input"]>
+    : number extends Key["_zod"]["input"]
+      ? Record<Key["_zod"]["input"], Value["_zod"]["input"]>
+      : symbol extends Key["_zod"]["input"]
+        ? Record<Key["_zod"]["input"], Value["_zod"]["input"]>
+        : Partial<Record<Key["_zod"]["input"], Value["_zod"]["input"]>>
+  : Record<Key["_zod"]["input"], Value["_zod"]["input"]>;
+
 export interface $ZodRecordInternals<Key extends $ZodRecordKey = $ZodRecordKey, Value extends $ZodType = $ZodType>
-  extends $ZodTypeInternals<
-    Record<Key["_zod"]["output"], Value["_zod"]["output"]>,
-    Record<Key["_zod"]["input"], Value["_zod"]["input"]>
-  > {
+  extends $ZodTypeInternals<$InferZodRecordOutput<Key, Value>, $InferZodRecordInput<Key, Value>> {
   def: $ZodRecordDef;
   isst: errors.$ZodIssueInvalidType | errors.$ZodIssueInvalidKey<Record<PropertyKey, unknown>>;
 }
@@ -2719,7 +2727,7 @@ function handleSetResult(result: ParsePayload, final: ParsePayload<Set<any>>) {
 //////////                    //////////
 ////////////////////////////////////////
 ////////////////////////////////////////
-export type $InferEnumOutput<T extends util.EnumLike> = T[keyof T];
+export type $InferEnumOutput<T extends util.EnumLike> = T[keyof T] & {};
 export type $InferEnumInput<T extends util.EnumLike> = $InferEnumOutput<T>;
 
 export interface $ZodEnumDef<T extends util.EnumLike = util.EnumLike> extends $ZodTypeDef {
@@ -3593,6 +3601,8 @@ export interface $ZodLazyInternals<T extends $ZodType = $ZodType>
   _getter: T;
   pattern: T["_zod"]["pattern"];
   disc: T["_zod"]["disc"];
+  qin: T["_zod"]["qin"];
+  qout: T["_zod"]["qout"];
 }
 
 export interface $ZodLazy<T extends $ZodType = $ZodType> extends $ZodType {
@@ -3608,6 +3618,9 @@ export const $ZodLazy: core.$constructor<$ZodLazy> = /*@__PURE__*/ core.$constru
   inst._zod.parse = (payload, ctx) => {
     return inst._zod._getter._zod.run(payload, ctx);
   };
+  // qin and qout
+  util.defineLazy(inst._zod, "qin", () => inst._zod._getter._zod.qin);
+  util.defineLazy(inst._zod, "qout", () => inst._zod._getter._zod.qout);
 });
 
 ////////////////////////////////////////

@@ -4,11 +4,12 @@ import { $ZodRegistry, globalRegistry } from "./registries.js";
 import type * as schemas from "./schemas.js";
 
 interface JSONSchemaGeneratorParams {
-  /** A registry used to look up metadata for each schema. Any schema with an `id` property will be extracted as a $def. */
+  /** A registry used to look up metadata for each schema. Any schema with an `id` property will be extracted as a $def.
+   *  @default globalRegistry */
   metadata?: $ZodRegistry<Record<string, any>>;
   /** The JSON Schema version to target.
    * - `"draft-2020-12"` — Default. JSON Schema Draft 2020-12
-   * - `"draft-7"` — Default. JSON Schema Draft 7 */
+   * - `"draft-7"` — JSON Schema Draft 7 */
   target?: "draft-7" | "draft-2020-12";
   /** How to handle unrepresentable types.
    * - `"throw"` — Default. Unrepresentable types throw an error
@@ -16,16 +17,16 @@ interface JSONSchemaGeneratorParams {
   unrepresentable?: "throw" | "any";
   /** Arbitrary custom logic that can be used to modify the generated JSON Schema. */
   override?: (ctx: { zodSchema: schemas.$ZodType; jsonSchema: JSONSchema.BaseSchema }) => void;
-  /** How to handle pipes. Pipes contain an input and output schema.
+  /** Whether to extract the `"input"` or `"output"` type. Relevant to transforms, Error converting schema to JSONz, defaults, coerced primitives, etc.
    * - `"output" — Default. Convert the output schema.
    * - `"input"` — Convert the input schema. */
-  pipes?: "input" | "output";
+  io?: "input" | "output";
 }
 
 interface ProcessParams {
   schemaPath: schemas.$ZodType[];
   path: (string | number)[];
-  initial?: Seen | undefined;
+  // initial?: Seen | undefined;
 }
 
 interface EmitParams {
@@ -68,12 +69,13 @@ interface Seen {
   defId?: string | undefined;
   // external?: string | undefined;
 }
+
 export class JSONSchemaGenerator {
   metadataRegistry: $ZodRegistry<Record<string, any>>;
   target: "draft-7" | "draft-2020-12";
   unrepresentable: "throw" | "any";
   override: (ctx: { zodSchema: schemas.$ZodType; jsonSchema: JSONSchema.BaseSchema }) => void;
-  pipes: "input" | "output";
+  io: "input" | "output";
 
   counter = 0;
   seen: Map<schemas.$ZodType, Seen>;
@@ -84,7 +86,7 @@ export class JSONSchemaGenerator {
     this.target = params?.target ?? "draft-2020-12";
     this.unrepresentable = params?.unrepresentable ?? "throw";
     this.override = params?.override ?? (() => {});
-    this.pipes = params?.pipes ?? "output";
+    this.io = params?.io ?? "output";
 
     this.seen = new Map();
   }
@@ -101,6 +103,7 @@ export class JSONSchemaGenerator {
 
     // check for schema in seens
     const seen = this.seen.get(schema);
+
     if (seen) {
       seen.count++;
 
@@ -116,7 +119,7 @@ export class JSONSchemaGenerator {
     }
 
     // initialize
-    const result: Seen = _params.initial ?? { schema: {}, cached: {}, count: 1, cycle: undefined };
+    const result: Seen = { schema: {}, cached: {}, count: 1, cycle: undefined };
     this.seen.set(schema, result);
 
     if (schema._zod.toJSONSchema) {
@@ -296,10 +299,10 @@ export class JSONSchemaGenerator {
       }
       case "union": {
         const json: JSONSchema.BaseSchema = _json as any;
-        json.oneOf = def.options.map((x, i) =>
+        json.anyOf = def.options.map((x, i) =>
           this.process(x, {
             ...params,
-            path: [...params.path, "oneOf", i],
+            path: [...params.path, "anyOf", i],
           })
         );
         break;
@@ -388,14 +391,31 @@ export class JSONSchemaGenerator {
       }
       case "literal": {
         const json: JSONSchema.BaseSchema = _json as any;
+        const vals: (string | number | boolean | null)[] = [];
         for (const val of def.values) {
-          if (val === undefined) throw new Error("Literal `undefined` cannot be represented in JSON Schema");
-          if (typeof val === "bigint") throw new Error("BigInt literals cannot be represented in JSON Schema");
+          if (val === undefined) {
+            if (this.unrepresentable === "throw") {
+              throw new Error("Literal `undefined` cannot be represented in JSON Schema");
+            } else {
+              // do not add to vals
+            }
+          } else if (typeof val === "bigint") {
+            if (this.unrepresentable === "throw") {
+              throw new Error("BigInt literals cannot be represented in JSON Schema");
+            } else {
+              vals.push(Number(val));
+            }
+          } else {
+            vals.push(val);
+          }
         }
-        if (def.values.length === 1) {
-          json.const = def.values[0] as any;
+        if (vals.length === 0) {
+          // do nothing (an undefined literal was stripped)
+        } else if (vals.length === 1) {
+          const val = vals[0];
+          json.const = val;
         } else {
-          json.enum = def.values as any;
+          json.enum = vals;
         }
         break;
       }
@@ -411,14 +431,10 @@ export class JSONSchemaGenerator {
         }
         break;
       }
-      case "optional": {
-        const inner = this.process(def.innerType, params);
-        Object.assign(_json, inner);
-        break;
-      }
+
       case "nullable": {
         const inner = this.process(def.innerType, params);
-        _json.oneOf = [inner, { type: "null" }];
+        _json.anyOf = [inner, { type: "null" }];
         break;
       }
       case "nonoptional": {
@@ -427,9 +443,6 @@ export class JSONSchemaGenerator {
         break;
       }
       case "success": {
-        // _json.if = this.process(def.innerType, params);
-        // _json.then = { const: true };
-        // _json.else = { const: false };
         const json = _json as JSONSchema.BooleanSchema;
         json.type = "boolean";
         break;
@@ -443,15 +456,14 @@ export class JSONSchemaGenerator {
       case "catch": {
         // use conditionals
         const inner = this.process(def.innerType, params);
+        Object.assign(_json, inner);
         let catchValue: any;
         try {
           catchValue = def.catchValue(undefined as any);
         } catch {
           throw new Error("Dynamic catch values are not supported in JSON Schema");
         }
-        _json.if = inner;
-        _json.then = inner;
-        _json.else = { const: catchValue };
+        _json.default = catchValue;
         break;
       }
       case "nan": {
@@ -461,21 +473,16 @@ export class JSONSchemaGenerator {
         break;
       }
       case "pipe": {
-        // this.seen.delete(schema);
-        const innerType = this.pipes === "input" ? def.in : def.out;
-        this.process(innerType, params);
-        const inner = this.seen.get(innerType)!;
-        this.seen.set(schema, inner);
+        const innerType = this.io === "input" ? def.in : def.out;
+        const inner = this.process(innerType, params);
+        result.schema = inner;
+
         break;
-        // const innerType = def.out;
-        // const inner = this.process(def.out, params);
-        // Object.assign(_json, inner);
-        // this.seen.set(schema, this.seen.get(innerType)!);
-        // return inner;
       }
       case "readonly": {
         const inner = this.process(def.innerType, params);
         Object.assign(_json, inner);
+        // _json.allOf = [inner];
         _json.readOnly = true;
         break;
       }
@@ -488,28 +495,21 @@ export class JSONSchemaGenerator {
         break;
       }
       case "promise": {
-        // this.seen.delete(schema);
-        // const innerType = def.innerType;
-        // const inner = this.process(def.innerType, params);
-        // Object.assign(_json, inner);
-        // this.seen.set(schema, this.seen.get(innerType)!);
-        // return inner;
-
-        const innerType = def.innerType;
-        this.process(innerType, params);
-        const inner = this.seen.get(innerType)!;
-        this.seen.set(schema, inner);
+        const inner = this.process(def.innerType, params);
+        result.schema = inner;
+        break;
+      }
+      // passthrough types
+      case "optional": {
+        const inner = this.process(def.innerType, params);
+        result.schema = inner;
         break;
       }
       case "lazy": {
         const innerType = (schema as schemas.$ZodLazy)._zod._getter;
-        this.process(innerType, params);
-        const inner = this.seen.get(innerType)!;
-        this.seen.set(schema, inner);
+        const inner = this.process(innerType, params);
+        result.schema = inner;
         break;
-        // Object.assign(_json, inner);
-        // this.seen.set(schema, this.seen.get(innerType)!);
-        // return inner;
       }
       case "custom": {
         if (this.unrepresentable === "throw") {
@@ -524,6 +524,7 @@ export class JSONSchemaGenerator {
 
     // pulling fresh from this.seen in case it was overwritten
     const _result = this.seen.get(schema)!;
+
     this.override({
       zodSchema: schema,
       jsonSchema: _result.schema,
@@ -557,6 +558,7 @@ export class JSONSchemaGenerator {
         return { ref: "#" };
       }
 
+      // external is configured
       const defsSegment = this.target === "draft-2020-12" ? "$defs" : "definitions";
       if (params.external) {
         const externalId = params.external.registry.get(entry[0])?.id; // ?? "__shared";// `__schema${this.counter++}`;
@@ -566,9 +568,7 @@ export class JSONSchemaGenerator {
         return { defId: id, ref: `${params.external.uri("__shared")}#/${defsSegment}/${id}` };
       }
 
-      // if (entry[0] === schema) {
-      //   return { ref: "#" };
-      // }
+      // self-contained schema
       const uriPrefix = `#`;
       const defUriPrefix = `${uriPrefix}/${defsSegment}/`;
       const defId = entry[1].schema.id ?? `__schema${this.counter++}`;
@@ -599,6 +599,18 @@ export class JSONSchemaGenerator {
           });
           continue;
         }
+      }
+
+      // handle schemas with `id`
+      const id = this.metadataRegistry.get(entry[0])?.id;
+      if (id) {
+        const { ref, defId } = makeURI(entry);
+        if (defId) defs[defId] = { ...seen.cached };
+        schemaToRef({
+          schema: seen.schema,
+          ref,
+        });
+        continue;
       }
 
       // handle cycles
@@ -647,8 +659,6 @@ export class JSONSchemaGenerator {
       // this essentially "finalizes" this schema
       // each call to .emit() is functionally independent
       // though the seen map is shared
-      // console.dir(result, { depth: 10 });
-      // console.log(JSON.stringify(result, null, 2));
       return JSON.parse(JSON.stringify(result));
     } catch (_err) {
       console.log(_err);
@@ -690,7 +700,6 @@ export function toJSONSchema(
       gen.process(schema);
     }
 
-    console.log(gen.seen.size);
     const schemas: Record<string, JSONSchema.BaseSchema> = {};
     const external = {
       registry: input,
@@ -717,6 +726,7 @@ export function toJSONSchema(
 
   const gen = new JSONSchemaGenerator(_params);
   gen.process(input);
+
   // console.log(gen.seen);
   return gen.emit(input, _params);
 }

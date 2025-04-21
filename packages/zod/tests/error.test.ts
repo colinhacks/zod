@@ -651,3 +651,35 @@ test("dont short circuit on continuable errors", () => {
   `);
   // expect(result.error!.issues.length).toEqual(2);
 });
+
+test("string error params", () => {
+  const a = z.string("Bad!");
+  expect(a.safeParse(123).error!.issues[0].message).toBe("Bad!");
+
+  const b = z.string().min(5, "Too short!");
+  expect(b.safeParse("abc").error!.issues[0].message).toBe("Too short!");
+
+  const c = z.uuid("Bad UUID!");
+  expect(c.safeParse("not-a-uuid").error!.issues[0].message).toBe("Bad UUID!");
+
+  const d = z.string().datetime({ message: "Bad date!" });
+  expect(d.safeParse("not-a-date").error!.issues[0].message).toBe("Bad date!");
+
+  const e = z.array(z.string(), "Bad array!");
+  expect(e.safeParse("not-an-array").error!.issues[0].message).toBe("Bad array!");
+
+  const f = z.array(z.string()).min(5, "Too few items!");
+  expect(f.safeParse(["a", "b"]).error!.issues[0].message).toBe("Too few items!");
+
+  const g = z.set(z.string(), "Bad set!");
+  expect(g.safeParse("not-a-set").error!.issues[0].message).toBe("Bad set!");
+
+  const h = z.array(z.string(), "Bad array!");
+  expect(h.safeParse(123).error!.issues[0].message).toBe("Bad array!");
+
+  const i = z.set(z.string(), "Bad set!");
+  expect(i.safeParse(123).error!.issues[0].message).toBe("Bad set!");
+
+  const j = z.array(z.string(), "Bad array!");
+  expect(j.safeParse(null).error!.issues[0].message).toBe("Bad array!");
+});

@@ -17,6 +17,12 @@ const apiLibraries: ZodResource[] = [
     description: "Build end-to-end typesafe APIs without GraphQL.",
     slug: "trpc/trpc",
   },
+  {
+    name: "GQLoom",
+    url: "https://gqloom.dev/",
+    description: "Weave GraphQL schema and resolvers using Zod.",
+    slug: "modevol-com/gqloom",
+  },
 ];
 
 const formIntegrations: ZodResource[] = [];
@@ -25,7 +31,14 @@ const zodToXConverters: ZodResource[] = [];
 
 const xToZodConverters: ZodResource[] = [];
 
-const mockingLibraries: ZodResource[] = [];
+const mockingLibraries: ZodResource[] = [
+  {
+    name: "zod-schema-faker",
+    url: "https://github.com/soc221b/zod-schema-faker",
+    description: "Generate mock data from zod schemas. Powered by @faker-js/faker and randexp.js.",
+    slug: "soc221b/zod-schema-faker",
+  },
+];
 
 const poweredByZodProjects: ZodResource[] = [];
 
