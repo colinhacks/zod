@@ -98,7 +98,7 @@ const error: errors.$ZodErrorMap = (issue) => {
       if (_issue.format === "ends_with") return `نَص خطأ: يجب أن ينتهي بـ "${_issue.suffix}"`;
       if (_issue.format === "includes") return `نَص خطأ: يجب أن يتضمَّن "${_issue.includes}"`;
       if (_issue.format === "regex") return `نَص خطأ: يجب أن يطابق النمط ${_issue.pattern}`;
-      return `Invalid ${Nouns[_issue.format] ?? issue.format}`;
+      return `${Nouns[_issue.format] ?? issue.format} غير مقبول`;
     }
     case "not_multiple_of":
       return `رقم غير مقبول: يجب أن يكون من مضاعفات ${issue.divisor}`;
