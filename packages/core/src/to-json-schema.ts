@@ -61,11 +61,16 @@ const formatMap: Partial<Record<checks.$ZodStringFormats, string>> = {
 };
 
 interface Seen {
+  /** JSON Schema result for this Zod schema */
   schema: JSONSchema.BaseSchema;
-  cached: JSONSchema.BaseSchema;
-  count: number;
-  cycle?: (string | number)[] | undefined;
+  /** A cached version of the schema that doesn't get overwritten during ref resolution */
+  def?: JSONSchema.BaseSchema;
   defId?: string | undefined;
+  /** Number of times this schema was encountered during traversal */
+  count: number;
+  /** Cycle path */
+  cycle?: (string | number)[] | undefined;
+
   // external?: string | undefined;
 }
 
@@ -118,7 +123,7 @@ export class JSONSchemaGenerator {
     }
 
     // initialize
-    const result: Seen = { schema: {}, cached: {}, count: 1, cycle: undefined };
+    const result: Seen = { schema: {}, count: 1, cycle: undefined };
     this.seen.set(schema, result);
 
     // if(schema._zod.parent){
@@ -152,10 +157,8 @@ export class JSONSchemaGenerator {
     };
 
     if (schema._zod.parent) {
-      if (schema._zod.parent) {
-        // schema was cloned from another schema
-        result.schema = this.process(schema._zod.parent, params);
-      }
+      // schema was cloned from another schema
+      result.schema._ref = this.process(schema._zod.parent, params);
     } else {
       const _json = result.schema;
       switch (def.type) {
@@ -478,15 +481,19 @@ export class JSONSchemaGenerator {
         case "pipe": {
           const innerType = this.io === "input" ? def.in : def.out;
           const inner = this.process(innerType, params);
-          result.schema = inner;
+          // result.schema = inner;
+          _json._ref = inner;
 
           break;
         }
         case "readonly": {
-          const inner = this.process(def.innerType, params);
-          Object.assign(_json, inner);
-          // _json.allOf = [inner];
+          _json._ref = this.process(def.innerType, params);
           _json.readOnly = true;
+          // const inner = this.process(def.innerType, params);
+          // Object.assign(_json, inner);
+          // _json.allOf = [inner];
+          // result.extra.readOnly = true;
+          // _json.readOnly = true;
           break;
         }
         case "template_literal": {
@@ -499,19 +506,21 @@ export class JSONSchemaGenerator {
         }
         case "promise": {
           const inner = this.process(def.innerType, params);
-          result.schema = inner;
+          // result.schema = inner;
+          _json._ref = inner;
           break;
         }
         // passthrough types
         case "optional": {
-          const inner = this.process(def.innerType, params);
-          result.schema = inner;
+          // result.schema = this.process(def.innerType, params);
+          _json._ref = this.process(def.innerType, params);
           break;
         }
         case "lazy": {
           const innerType = (schema as schemas.$ZodLazy)._zod._getter;
           const inner = this.process(innerType, params);
-          result.schema = inner;
+          // result.schema = inner;
+          _json._ref = inner;
           break;
         }
         case "custom": {
@@ -540,7 +549,7 @@ export class JSONSchemaGenerator {
       jsonSchema: _result.schema,
     });
 
-    Object.assign(_result.cached, _result.schema);
+    // Object.assign(_result.cached, _result.schema);
     return _result.schema;
   }
 
@@ -554,76 +563,90 @@ export class JSONSchemaGenerator {
     } satisfies EmitParams;
 
     // iterate over seen map
-    const result: JSONSchema.BaseSchema = {};
-    const defs: JSONSchema.BaseSchema["$defs"] = params.external?.defs ?? {};
-    const seen = this.seen.get(schema);
-    if (!seen) throw new Error("Unprocessed schema. This is a bug in Zod.");
-    Object.assign(result, seen.cached);
+    // const result: JSONSchema.BaseSchema = {};
+    // const defs: JSONSchema.BaseSchema["$defs"] = params.external?.defs ?? {};
+    const root = this.seen.get(schema);
+
+    if (!root) throw new Error("Unprocessed schema. This is a bug in Zod.");
+
+    // initialize result with root schema fields
+    // Object.assign(result, seen.cached);
 
     const makeURI = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): { ref: string; defId?: string } => {
       // comparing the seen objects because sometimes
       // multiple schemas map to the same seen object.
       // e.g. lazy
-      if (entry[1] === seen) {
-        return { ref: "#" };
-      }
 
       // external is configured
       const defsSegment = this.target === "draft-2020-12" ? "$defs" : "definitions";
       if (params.external) {
         const externalId = params.external.registry.get(entry[0])?.id; // ?? "__shared";// `__schema${this.counter++}`;
+
+        // check if schema is in the external registry
         if (externalId) return { ref: params.external.uri(externalId) };
+
+        // otherwise, add to __shared
         const id = entry[1].defId ?? entry[1].schema.id ?? `schema${this.counter++}`;
         entry[1].defId = id;
         return { defId: id, ref: `${params.external.uri("__shared")}#/${defsSegment}/${id}` };
+      }
+
+      if (entry[1] === root) {
+        return { ref: "#" };
       }
 
       // self-contained schema
       const uriPrefix = `#`;
       const defUriPrefix = `${uriPrefix}/${defsSegment}/`;
       const defId = entry[1].schema.id ?? `__schema${this.counter++}`;
-
       return { defId, ref: defUriPrefix + defId };
     };
 
+    const extractToDef = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): void => {
+      if (entry[1].schema.$ref) {
+        // throw new Error("Already extracted");
+        return;
+      }
+      const seen = entry[1];
+      const { ref, defId } = makeURI(entry);
+      // defId won't be set if the schema is a reference to an external schema
+
+      seen.def = { ...seen.schema };
+      if (defId) seen.defId = defId;
+      // wipe away all properties except $ref
+      schemaToRef(seen, ref);
+    };
+
+    // extract schemas into $defs
     for (const entry of this.seen.entries()) {
       const seen = entry[1];
+
+      // convert root schema to # $ref
+      // also prevents root schema from being extracted
       if (schema === entry[0]) {
-        schemaToRef({
-          schema: seen.schema,
-          ref: "#",
-        });
+        // do not copy to defs...this is the root schema
+        extractToDef(entry);
         continue;
       }
 
-      // external
+      // extract schemas that are in the external registry
       if (params.external) {
         const ext = params.external.registry.get(entry[0])?.id;
         if (schema !== entry[0] && ext) {
-          // does not write to defs
-          const { ref, defId } = makeURI(entry); // params.external.uri(ext);
-          if (defId) defs[defId] = { ...seen.cached };
-          schemaToRef({
-            schema: seen.schema,
-            ref,
-          });
+          extractToDef(entry);
           continue;
         }
       }
 
-      // handle schemas with `id`
+      // extract schemas with `id` meta
       const id = this.metadataRegistry.get(entry[0])?.id;
       if (id) {
-        const { ref, defId } = makeURI(entry);
-        if (defId) defs[defId] = { ...seen.cached };
-        schemaToRef({
-          schema: seen.schema,
-          ref,
-        });
+        extractToDef(entry);
+
         continue;
       }
 
-      // handle cycles
+      // break cycles
       if (seen.cycle) {
         if (params.cycles === "throw") {
           throw new Error(
@@ -632,31 +655,37 @@ export class JSONSchemaGenerator {
               '\n\nSet the `cycles` parameter to `"ref"` to resolve cyclical schemas with defs.'
           );
         } else if (params.cycles === "ref") {
-          const { ref, defId } = makeURI(entry); // schema === entry[0] ? "#" : defUriPrefix + id;
-          if (defId) defs[defId] = { ...seen.cached };
-          schemaToRef({
-            schema: seen.schema,
-            ref,
-          });
+          extractToDef(entry);
         }
         continue;
       }
 
-      // handle reused schemas
+      // extract reused schemas
       if (seen.count > 1) {
         if (params.reused === "ref") {
-          const { ref, defId } = makeURI(entry);
-          if (defId) defs[defId] = { ...seen.cached };
-          schemaToRef({
-            schema: seen.schema,
-            ref,
-          });
+          extractToDef(entry);
           // biome-ignore lint:
           continue;
         }
       }
     }
 
+    for (const entry of this.seen.entries()) {
+      const seen = entry[1];
+      flattenRef(seen.schema);
+      if (seen.def) flattenRef(seen.def);
+    }
+
+    const result = { ...root.def };
+    const defs: JSONSchema.BaseSchema["$defs"] = params.external?.defs ?? {};
+    for (const entry of this.seen.entries()) {
+      const seen = entry[1];
+      if (seen.def && seen.defId) {
+        defs[seen.defId] = seen.def;
+      }
+    }
+
+    // set definitions in result
     if (!params.external && Object.keys(defs).length > 0) {
       if (this.target === "draft-2020-12") {
         result.$defs = defs;
@@ -671,17 +700,23 @@ export class JSONSchemaGenerator {
       // though the seen map is shared
       return JSON.parse(JSON.stringify(result));
     } catch (_err) {
-      console.log(_err);
       throw new Error("Error converting schema to JSON.");
     }
   }
 }
 
-function schemaToRef(params: {
-  schema: JSONSchema.BaseSchema;
-  ref: string;
-}) {
-  const { schema, ref } = params;
+// flatten _refs
+const flattenRef = (schema: JSONSchema.BaseSchema) => {
+  const _schema = { ...schema };
+  if (schema._ref) flattenRef(schema._ref);
+  const ref = schema._ref;
+  Object.assign(schema, ref);
+  Object.assign(schema, _schema); // this is to prevent mutation of the original schema
+  delete schema._ref;
+};
+
+function schemaToRef(seen: Seen, ref: string) {
+  const schema = seen.schema;
   for (const key in schema) {
     delete schema[key];
     schema.$ref = ref;
@@ -737,6 +772,5 @@ export function toJSONSchema(
   const gen = new JSONSchemaGenerator(_params);
   gen.process(input);
 
-  // console.log(gen.seen);
   return gen.emit(input, _params);
 }

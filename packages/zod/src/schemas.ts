@@ -150,9 +150,8 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   // meta
   inst.describe = (description) => {
     const cl = inst.clone();
-    const meta = { ...(core.globalRegistry.get(inst) ?? {}) };
-    meta.description = description;
-    delete meta.id;
+    const meta = { ...(core.globalRegistry.get(inst) ?? {}), description };
+    delete meta.id; // do not inherit
     core.globalRegistry.add(cl, meta);
     return cl;
   };
