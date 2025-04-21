@@ -1354,3 +1354,76 @@ test("_ref", () => {
     }
   `);
 });
+
+test("input type", () => {
+  const schema = z.object({
+    a: z.string(),
+    b: z.string().optional(),
+    c: z.string().default("hello"),
+    d: z.string().nullable(),
+  });
+  expect(toJSONSchema(schema, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "properties": {
+        "a": {
+          "type": "string",
+        },
+        "b": {
+          "type": "string",
+        },
+        "c": {
+          "default": "hello",
+          "type": "string",
+        },
+        "d": {
+          "anyOf": [
+            {
+              "type": "string",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+      },
+      "required": [
+        "a",
+        "c",
+        "d",
+      ],
+      "type": "object",
+    }
+  `);
+  expect(toJSONSchema(schema, { io: "output" })).toMatchInlineSnapshot(`
+    {
+      "properties": {
+        "a": {
+          "type": "string",
+        },
+        "b": {
+          "type": "string",
+        },
+        "c": {
+          "default": "hello",
+          "type": "string",
+        },
+        "d": {
+          "anyOf": [
+            {
+              "type": "string",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+      },
+      "required": [
+        "a",
+        "c",
+        "d",
+      ],
+      "type": "object",
+    }
+  `);
+});
