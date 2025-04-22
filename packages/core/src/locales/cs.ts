@@ -97,17 +97,18 @@ const error: errors.$ZodErrorMap = (issue) => {
     case "too_big": {
       const adj = issue.inclusive ? "<=" : "<";
       const sizing = getSizing(issue.origin);
-      if (sizing)
+      if (sizing) {
         return `Hodnota je příliš velká: ${issue.origin ?? "hodnota"} musí mít ${adj}${issue.maximum.toString()} ${sizing.unit ?? "prvků"}`;
+      }
       return `Hodnota je příliš velká: ${issue.origin ?? "hodnota"} musí být ${adj}${issue.maximum.toString()}`;
     }
     case "too_small": {
       const adj = issue.inclusive ? ">=" : ">";
       const sizing = getSizing(issue.origin);
       if (sizing) {
-        return `Hodnota je příliš malá: ${issue.origin} musí mít ${adj}${issue.minimum.toString()} ${sizing.unit}`;
+        return `Hodnota je příliš malá: ${issue.origin ?? "hodnota"} musí mít ${adj}${issue.minimum.toString()} ${sizing.unit ?? "prvků"}`;
       }
-      return `Hodnota je příliš malá: ${issue.origin} musí být ${adj}${issue.minimum.toString()}`;
+      return `Hodnota je příliš malá: ${issue.origin ?? "hodnota"} musí být ${adj}${issue.minimum.toString()}`;
     }
     case "invalid_format": {
       const _issue = issue as errors.$ZodStringFormatIssues;
