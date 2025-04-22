@@ -54,6 +54,12 @@ const poweredByZodProjects: ZodResource[] = [
     description: "Load configurations across multiple sources with flexible adapters, ensuring type safety with Zod.",
     slug: "alexmarqs/zod-config",
   },
+  {
+    name: "Composable Functions",
+    url: "https://github.com/seasonedcc/composable-functions",
+    description: "Types and functions to make composition easy and safe.",
+    slug: "seasonedcc/composable-functions",
+  },
 ];
 
 const zodUtilities: ZodResource[] = [];
