@@ -1119,7 +1119,7 @@ export interface ZodInterface<
   extend<U extends ZodInterface>(int: U): MergeInterfaces<this, U>;
   extend<U extends core.$ZodLooseShape>(
     shape: U
-  ): MergeInterfaces<this, ZodInterface<U, util.InitInterfaceParams<U, {}>>>;
+  ): MergeInterfaces<this, ZodInterface<util.CleanInterfaceShape<U>, util.InitInterfaceParams<U, {}>>>;
 
   /** @deprecated Use `A.extend(B)` */
   merge<U extends ZodInterface>(incoming: U): MergeInterfaces<this, U>;
