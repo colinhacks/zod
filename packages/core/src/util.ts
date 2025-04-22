@@ -580,12 +580,14 @@ export type MergeInterfaceParams<
   B extends schemas.$ZodInterface,
   // BKeys extends PropertyKey,
 > = Identity<{
+  // Optional keys from A, excluding any keys present in B's shape, unioned with B's optional keys
   optional: Exclude<A["_zod"]["optional"], keyof B["_zod"]["def"]["shape"]> | B["_zod"]["optional"];
   defaulted: Exclude<A["_zod"]["defaulted"], keyof B["_zod"]["def"]["shape"]> | B["_zod"]["defaulted"];
   extra: A["_zod"]["extra"];
 }>;
 
 export type ExtendInterfaceParams<A extends schemas.$ZodInterface, Shape extends schemas.$ZodLooseShape> = Identity<{
+  // Optional keys from A, excluding any cleaned keys present in the extending Shape, unioned with the Shape's optional keys
   optional: Exclude<A["_zod"]["optional"], CleanKeys<keyof Shape>> | OptionalInterfaceKeys<keyof Shape>;
   defaulted: Exclude<A["_zod"]["defaulted"], CleanKeys<keyof Shape>> | DefaultedInterfaceKeys<keyof Shape>;
   extra: A["_zod"]["extra"];

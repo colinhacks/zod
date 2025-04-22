@@ -1804,9 +1804,12 @@ export type $InferInterfaceOutput<
     ? object
     : util.Flatten<
         {
-          -readonly [k in Params["optional"]]?: T[k]["_zod"]["output"];
+          // Use CleanKeys on the optional parameter keys
+          -readonly [k in util.CleanKeys<Params["optional"]>]?: T[k]["_zod"]["output"];
         } & {
-          -readonly [k in Exclude<keyof T, Params["optional"]>]: T[k]["_zod"]["output"];
+          // Use CleanKeys on the required keys.
+          // Apply CleanKeys to keyof T *before* excluding the cleaned optional keys.
+          -readonly [k in util.CleanKeys<Exclude<util.CleanKeys<keyof T>, Params["optional"]>>]: T[k]["_zod"]["output"];
         } & Params["extra"]
       >;
 
@@ -1819,9 +1822,13 @@ export type $InferInterfaceInput<
     ? Record<string, unknown>
     : util.Flatten<
         {
-          -readonly [k in Params["optional"] | Params["defaulted"]]?: T[k]["_zod"]["input"];
+          // Use CleanKeys on optional/defaulted keys
+          -readonly [k in util.CleanKeys<Params["optional"] | Params["defaulted"]>]?: T[k]["_zod"]["input"];
         } & {
-          -readonly [k in Exclude<keyof T, Params["optional"] | Params["defaulted"]>]: T[k]["_zod"]["input"];
+          // Use CleanKeys on required keys
+          -readonly [k in util.CleanKeys<
+            Exclude<keyof T, Params["optional"] | Params["defaulted"]>
+          >]: T[k]["_zod"]["input"];
         } & Params["extra"]
       >;
 
