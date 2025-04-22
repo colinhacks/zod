@@ -21,14 +21,19 @@ test("ZodInterface extended optional keys inference - runtime works correctly", 
   });
 
   // Runtime verification - these all work correctly
-  const withBothFields = { optionalBaseProp: 123, optionalExtendedProp: "test" };
+  const withBothFields = {
+    optionalBaseProp: 123,
+    optionalExtendedProp: "test",
+  };
   expect(ExtendedSchema.parse(withBothFields)).toEqual(withBothFields);
 
   // Empty object is valid (both fields optional)
   expect(ExtendedSchema.parse({})).toEqual({});
 
   // Only optionalBaseProp is valid
-  expect(ExtendedSchema.parse({ optionalBaseProp: 456 })).toEqual({ optionalBaseProp: 456 });
+  expect(ExtendedSchema.parse({ optionalBaseProp: 456 })).toEqual({
+    optionalBaseProp: 456,
+  });
 
   // Only optionalExtendedProp is valid
   expect(ExtendedSchema.parse({ optionalExtendedProp: "test-only" })).toEqual({
@@ -66,7 +71,10 @@ test("ZodInterface extended optional keys inference - type inference bug", () =>
 
   // Check for property names in the inferred type
   type HasExtendedProp = HasProperty<ExtendedType, "optionalExtendedProp">;
-  type HasExtendedPropWithQuestion = HasProperty<ExtendedType, "optionalExtendedProp?">;
+  type HasExtendedPropWithQuestion = HasProperty<
+    ExtendedType,
+    "optionalExtendedProp?"
+  >;
 
   // This verifies the "optionalExtendedProp" property exists (which is correct)
   expectTypeOf<HasExtendedProp>().toEqualTypeOf<true>();
@@ -161,10 +169,22 @@ test("ZodInterface complex extended/discriminated union optional keys inference 
 
   // Runtime check example (optional)
   const exampleA: TypeA = { id: "1", kind: "A", propA: "hello" };
-  const exampleB: TypeB = { id: "2", kind: "B", propB: true, optionalB: new Date() };
-  const exampleBaseOptional: TypeA = { id: "3", kind: "A", propA: "world", baseOptional: true };
+  const exampleB: TypeB = {
+    id: "2",
+    kind: "B",
+    propB: true,
+    optionalB: new Date(),
+  };
+  const exampleBaseOptional: TypeA = {
+    id: "3",
+    kind: "A",
+    propA: "world",
+    baseOptional: true,
+  };
 
   expect(GenericDiscriminatedSchema.parse(exampleA)).toEqual(exampleA);
   expect(GenericDiscriminatedSchema.parse(exampleB)).toEqual(exampleB);
-  expect(GenericDiscriminatedSchema.parse(exampleBaseOptional)).toEqual(exampleBaseOptional);
+  expect(GenericDiscriminatedSchema.parse(exampleBaseOptional)).toEqual(
+    exampleBaseOptional
+  );
 });
