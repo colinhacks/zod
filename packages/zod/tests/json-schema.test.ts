@@ -157,29 +157,29 @@ describe("toJSONSchema", () => {
     `);
     expect(toJSONSchema(z.int())).toMatchInlineSnapshot(`
       {
-        "exclusiveMaximum": 9007199254740991,
-        "exclusiveMinimum": -9007199254740991,
+        "maximum": 9007199254740991,
+        "minimum": -9007199254740991,
         "type": "integer",
       }
     `);
     expect(toJSONSchema(z.int32())).toMatchInlineSnapshot(`
       {
-        "exclusiveMaximum": 2147483647,
-        "exclusiveMinimum": -2147483648,
+        "maximum": 2147483647,
+        "minimum": -2147483648,
         "type": "integer",
       }
     `);
     expect(toJSONSchema(z.float32())).toMatchInlineSnapshot(`
       {
-        "exclusiveMaximum": 3.4028234663852886e+38,
-        "exclusiveMinimum": -3.4028234663852886e+38,
+        "maximum": 3.4028234663852886e+38,
+        "minimum": -3.4028234663852886e+38,
         "type": "number",
       }
     `);
     expect(toJSONSchema(z.float64())).toMatchInlineSnapshot(`
       {
-        "exclusiveMaximum": 1.7976931348623157e+308,
-        "exclusiveMinimum": -1.7976931348623157e+308,
+        "maximum": 1.7976931348623157e+308,
+        "minimum": -1.7976931348623157e+308,
         "type": "number",
       }
     `);
@@ -346,7 +346,7 @@ describe("toJSONSchema", () => {
     const schema = z.union([z.string(), z.number()]);
     expect(toJSONSchema(schema)).toMatchInlineSnapshot(`
       {
-        "oneOf": [
+        "anyOf": [
           {
             "type": "string",
           },
@@ -875,7 +875,7 @@ test("pipe", () => {
   `);
   // => { type: "number" }
 
-  const b = z.toJSONSchema(mySchema, { pipes: "input" });
+  const b = z.toJSONSchema(mySchema, { io: "input" });
   expect(b).toMatchInlineSnapshot(`
     {
       "type": "string",
@@ -945,6 +945,385 @@ test("passthrough schemas", () => {
         "e",
       ],
       "type": "object",
+    }
+  `);
+});
+
+test("extract schemas with id", () => {
+  const name = z.string().meta({ id: "name" });
+  const result = z.toJSONSchema(
+    z.object({
+      first_name: name,
+      last_name: name.nullable(),
+      middle_name: name.optional(),
+      age: z.number().meta({ id: "age" }),
+    })
+  );
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "$defs": {
+        "age": {
+          "id": "age",
+          "type": "number",
+        },
+        "name": {
+          "id": "name",
+          "type": "string",
+        },
+      },
+      "properties": {
+        "age": {
+          "$ref": "#/$defs/age",
+        },
+        "first_name": {
+          "$ref": "#/$defs/name",
+        },
+        "last_name": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "middle_name": {
+          "$ref": "#/$defs/name",
+        },
+      },
+      "required": [
+        "first_name",
+        "last_name",
+        "age",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
+test("unrepresentable literal values are ignored", () => {
+  const a = z.toJSONSchema(z.literal(["hello", null, 5, BigInt(1324), undefined]), { unrepresentable: "any" });
+  expect(a).toMatchInlineSnapshot(`
+    {
+      "enum": [
+        "hello",
+        null,
+        5,
+        1324,
+      ],
+    }
+  `);
+
+  const b = z.toJSONSchema(z.literal([undefined, null, 5, BigInt(1324)]), { unrepresentable: "any" });
+  expect(b).toMatchInlineSnapshot(`
+    {
+      "enum": [
+        null,
+        5,
+        1324,
+      ],
+    }
+  `);
+
+  const c = z.toJSONSchema(z.literal([undefined]), { unrepresentable: "any" });
+  expect(c).toMatchInlineSnapshot(`{}`);
+});
+
+test("describe with id", () => {
+  const jobId = z.string().meta({ id: "jobId" });
+
+  const a = z.toJSONSchema(
+    z.object({
+      current: jobId.describe("Current job"),
+      previous: jobId.describe("Previous job"),
+    })
+  );
+  expect(a).toMatchInlineSnapshot(`
+    {
+      "$defs": {
+        "jobId": {
+          "id": "jobId",
+          "type": "string",
+        },
+      },
+      "properties": {
+        "current": {
+          "$ref": "#/$defs/jobId",
+          "description": "Current job",
+        },
+        "previous": {
+          "$ref": "#/$defs/jobId",
+          "description": "Previous job",
+        },
+      },
+      "required": [
+        "current",
+        "previous",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
+test("overwrite id", () => {
+  const jobId = z.string().meta({ id: "aaa" });
+
+  const a = z.toJSONSchema(
+    z.object({
+      current: jobId,
+      previous: jobId.meta({ id: "bbb" }),
+    })
+  );
+  expect(a).toMatchInlineSnapshot(`
+    {
+      "$defs": {
+        "aaa": {
+          "id": "aaa",
+          "type": "string",
+        },
+        "bbb": {
+          "$ref": "#/$defs/aaa",
+          "id": "bbb",
+        },
+      },
+      "properties": {
+        "current": {
+          "$ref": "#/$defs/aaa",
+        },
+        "previous": {
+          "$ref": "#/$defs/bbb",
+        },
+      },
+      "required": [
+        "current",
+        "previous",
+      ],
+      "type": "object",
+    }
+  `);
+
+  const b = z.toJSONSchema(
+    z.object({
+      current: jobId,
+      previous: jobId.meta({ id: "ccc" }),
+    }),
+    {
+      reused: "ref",
+    }
+  );
+  expect(b).toMatchInlineSnapshot(`
+    {
+      "$defs": {
+        "aaa": {
+          "id": "aaa",
+          "type": "string",
+        },
+        "ccc": {
+          "$ref": "#/$defs/aaa",
+          "id": "ccc",
+        },
+      },
+      "properties": {
+        "current": {
+          "$ref": "#/$defs/aaa",
+        },
+        "previous": {
+          "$ref": "#/$defs/ccc",
+        },
+      },
+      "required": [
+        "current",
+        "previous",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
+test("overwrite descriptions", () => {
+  const field = z.string().describe("a").describe("b").describe("c");
+
+  const a = z.toJSONSchema(
+    z.object({
+      d: field.describe("d"),
+      e: field.describe("e"),
+    })
+  );
+  expect(a).toMatchInlineSnapshot(`
+    {
+      "properties": {
+        "d": {
+          "description": "d",
+          "type": "string",
+        },
+        "e": {
+          "description": "e",
+          "type": "string",
+        },
+      },
+      "required": [
+        "d",
+        "e",
+      ],
+      "type": "object",
+    }
+  `);
+
+  const b = z.toJSONSchema(
+    z.object({
+      d: field.describe("d"),
+      e: field.describe("e"),
+    }),
+    {
+      reused: "ref",
+    }
+  );
+  expect(a).toMatchInlineSnapshot(`
+    {
+      "properties": {
+        "d": {
+          "description": "d",
+          "type": "string",
+        },
+        "e": {
+          "description": "e",
+          "type": "string",
+        },
+      },
+      "required": [
+        "d",
+        "e",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
+test("top-level readonly", () => {
+  const A = z
+    .interface({
+      name: z.string(),
+      get b() {
+        return B;
+      },
+    })
+    .readonly()
+    .meta({ id: "A" });
+
+  const B = z
+    .interface({
+      name: z.string(),
+      get a() {
+        return A;
+      },
+    })
+    .readonly()
+    .meta({ id: "B" });
+
+  const result = z.toJSONSchema(A);
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "$defs": {
+        "B": {
+          "id": "B",
+          "properties": {
+            "a": {
+              "$ref": "#",
+            },
+            "name": {
+              "type": "string",
+            },
+          },
+          "readOnly": true,
+          "required": [
+            "name",
+            "a",
+          ],
+          "type": "object",
+        },
+      },
+      "id": "A",
+      "properties": {
+        "b": {
+          "$ref": "#/$defs/B",
+        },
+        "name": {
+          "type": "string",
+        },
+      },
+      "readOnly": true,
+      "required": [
+        "name",
+        "b",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
+test("basic registry", () => {
+  const myRegistry = z.registry<{ id: string }>();
+  const User = z.interface({
+    name: z.string(),
+    get posts() {
+      return z.array(Post);
+    },
+  });
+
+  const Post = z.interface({
+    title: z.string(),
+    content: z.string(),
+    get author() {
+      return User;
+    },
+  });
+
+  myRegistry.add(User, { id: "User" });
+  myRegistry.add(Post, { id: "Post" });
+
+  const result = z.toJSONSchema(myRegistry);
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "schemas": {
+        "Post": {
+          "properties": {
+            "author": {
+              "$ref": "User",
+            },
+            "content": {
+              "type": "string",
+            },
+            "title": {
+              "type": "string",
+            },
+          },
+          "required": [
+            "title",
+            "content",
+            "author",
+          ],
+          "type": "object",
+        },
+        "User": {
+          "properties": {
+            "name": {
+              "type": "string",
+            },
+            "posts": {
+              "items": {
+                "$ref": "Post",
+              },
+              "type": "array",
+            },
+          },
+          "required": [
+            "name",
+            "posts",
+          ],
+          "type": "object",
+        },
+      },
     }
   `);
 });

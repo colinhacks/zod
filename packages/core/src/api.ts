@@ -1609,6 +1609,7 @@ export function _stringbool(
           def: {
             check: "custom",
           },
+          onattach: [],
         },
       },
     ],

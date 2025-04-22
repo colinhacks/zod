@@ -395,8 +395,10 @@ export function escapeRegex(str: string): string {
 }
 
 // zod-specific utils
-export function clone<T extends schemas.$ZodType>(inst: T, def: T["_zod"]["def"]): T {
-  return new inst._zod.constr(def);
+export function clone<T extends schemas.$ZodType>(inst: T, def?: T["_zod"]["def"]): T {
+  const cl = new inst._zod.constr(def ?? inst._zod.def);
+  if (!def) cl._zod.parent = inst;
+  return cl as any;
 }
 
 export type Params<
@@ -631,7 +633,7 @@ export const NUMBER_FORMAT_RANGES: Record<checks.$ZodNumberFormats, [number, num
   int32: [-2147483648, 2147483647],
   uint32: [0, 4294967295],
   float32: [-3.4028234663852886e38, 3.4028234663852886e38],
-  float64: [-1.7976931348623157e308, 1.7976931348623157e308],
+  float64: [-Number.MAX_VALUE, Number.MAX_VALUE],
 };
 
 export const BIGINT_FORMAT_RANGES: Record<checks.$ZodBigIntFormats, [bigint, bigint]> = {

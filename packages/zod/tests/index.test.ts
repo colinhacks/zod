@@ -387,6 +387,11 @@ test("z.record", () => {
   expect(() => z.parse(c, { a: "hello", b: "world" })).toThrow();
   // extra keys
   expect(() => z.parse(c, { a: "hello", b: "world", c: "world", d: "world" })).toThrow();
+
+  // partial enum
+  const d = z.record(z.enum(["a", "b"]).or(z.never()), z.string());
+  type d = z.output<typeof d>;
+  expectTypeOf<d>().toEqualTypeOf<Partial<Record<"a" | "b", string>>>();
 });
 
 test("z.map", () => {
