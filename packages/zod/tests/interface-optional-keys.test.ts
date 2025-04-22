@@ -71,10 +71,7 @@ test("ZodInterface extended optional keys inference - type inference bug", () =>
 
   // Check for property names in the inferred type
   type HasExtendedProp = HasProperty<ExtendedType, "optionalExtendedProp">;
-  type HasExtendedPropWithQuestion = HasProperty<
-    ExtendedType,
-    "optionalExtendedProp?"
-  >;
+  type HasExtendedPropWithQuestion = HasProperty<ExtendedType, "optionalExtendedProp?">;
 
   // This verifies the "optionalExtendedProp" property exists (which is correct)
   expectTypeOf<HasExtendedProp>().toEqualTypeOf<true>();
@@ -121,10 +118,7 @@ test("ZodInterface complex extended/discriminated union optional keys inference 
   });
 
   // Discriminated Union Schema
-  const GenericDiscriminatedSchema = z.discriminatedUnion("kind", [
-    ExtendedSchemaA,
-    ExtendedSchemaB,
-  ]);
+  const GenericDiscriminatedSchema = z.discriminatedUnion("kind", [ExtendedSchemaA, ExtendedSchemaB]);
 
   // Infer types
   type DiscriminatedType = z.infer<typeof GenericDiscriminatedSchema>;
@@ -184,7 +178,5 @@ test("ZodInterface complex extended/discriminated union optional keys inference 
 
   expect(GenericDiscriminatedSchema.parse(exampleA)).toEqual(exampleA);
   expect(GenericDiscriminatedSchema.parse(exampleB)).toEqual(exampleB);
-  expect(GenericDiscriminatedSchema.parse(exampleBaseOptional)).toEqual(
-    exampleBaseOptional
-  );
+  expect(GenericDiscriminatedSchema.parse(exampleBaseOptional)).toEqual(exampleBaseOptional);
 });
