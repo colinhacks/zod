@@ -23,7 +23,14 @@ const formIntegrations: ZodResource[] = [];
 
 const zodToXConverters: ZodResource[] = [];
 
-const xToZodConverters: ZodResource[] = [];
+const xToZodConverters: ZodResource[] = [
+  {
+    name: "orval",
+    url: "https://github.com/orval-labs/orval",
+    description: "Generate Zod schemas from OpenAPI schemas",
+    slug: "orval-labs/orval",
+  },
+];
 
 const mockingLibraries: ZodResource[] = [];
 
