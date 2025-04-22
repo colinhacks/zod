@@ -20,6 +20,24 @@ export const parsedType = (data: any): string => {
     case "number": {
       return Number.isNaN(data) ? "NaN" : "číslo";
     }
+    case "string": {
+      return "řetězec";
+    }
+    case "boolean": {
+      return "boolean";
+    }
+    case "bigint": {
+      return "bigint";
+    }
+    case "function": {
+      return "funkce";
+    }
+    case "symbol": {
+      return "symbol";
+    }
+    case "undefined": {
+      return "undefined";
+    }
     case "object": {
       if (Array.isArray(data)) {
         return "pole";
