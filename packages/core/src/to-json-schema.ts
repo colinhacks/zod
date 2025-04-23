@@ -173,8 +173,8 @@ export class JSONSchemaGenerator {
             pattern?: RegExp;
             contentEncoding?: string;
           };
-          if (minimum) json.minLength = minimum;
-          if (maximum) json.maxLength = maximum;
+          if (typeof minimum === "number") json.minLength = minimum;
+          if (typeof maximum === "number") json.maxLength = maximum;
           // custom pattern overrides format
           if (format) {
             json.format = formatMap[format] ?? format;
@@ -265,8 +265,8 @@ export class JSONSchemaGenerator {
             minimum?: number;
             maximum?: number;
           };
-          if (minimum) json.minItems = minimum;
-          if (maximum) json.maxItems = maximum;
+          if (typeof minimum === "number") json.minItems = minimum;
+          if (typeof maximum === "number") json.maxItems = maximum;
           json.type = "array";
           json.items = this.process(def.element, { ...params, path: [...params.path, "items"] });
           break;
@@ -365,8 +365,8 @@ export class JSONSchemaGenerator {
             minimum?: number;
             maximum?: number;
           };
-          if (minimum) json.minItems = minimum;
-          if (maximum) json.maxItems = maximum;
+          if (typeof minimum === "number") json.minItems = minimum;
+          if (typeof maximum === "number") json.maxItems = maximum;
           break;
         }
         case "record": {
