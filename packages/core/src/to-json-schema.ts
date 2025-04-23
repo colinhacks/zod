@@ -282,7 +282,7 @@ export class JSONSchemaGenerator {
           //   params.shapeCache.set(schema, shape);
           // }
           for (const key in shape) {
-            json.properties[key] = this.process(shape[key], {
+            json.properties[key] = this.process(shape[key].type, {
               ...params,
               path: [...params.path, "properties", key],
             });
@@ -290,8 +290,17 @@ export class JSONSchemaGenerator {
 
           // required keys
           const allKeys = new Set(Object.keys(shape));
-          const optionalKeys = new Set(def.optional);
-          const requiredKeys = new Set([...allKeys].filter((key) => !optionalKeys.has(key)));
+          // const optionalKeys = new Set(def.optional);
+          const requiredKeys = new Set(
+            [...allKeys].filter((key) => {
+              const opt = def.shape[key].optionality;
+              if (this.io === "input") {
+                return opt === "required";
+              } else {
+                return opt === "required" || opt === "defaulted";
+              }
+            })
+          );
           json.required = Array.from(requiredKeys);
 
           // catchall

@@ -47,9 +47,14 @@ test("pick parse - fail", () => {
 });
 
 test("pick - remove optional", () => {
-  const schema = z.interface({ a: z.string, "b?": z.string() });
-  expect(schema.pick({ a: true })._zod.def.optional).toEqual([]);
-  expect(schema.pick({ b: true })._zod.def.optional).toEqual(["b"]);
+  const schema = z.interface({ a: z.string(), "b?": z.string() });
+  expect(schema._zod.def.shape.a.optionality).toEqual("required");
+  expect("b?" in schema._zod.def.shape).toEqual(false);
+  expect("b" in schema._zod.def.shape).toEqual(true);
+  expect(schema._zod.def.shape.b!.optionality).toEqual("optional");
+  expect(schema.pick({ a: true })._zod.def.shape.a.optionality).toEqual("required");
+  expect("b" in schema.pick({ a: true })._zod.def.shape).toEqual(false);
+  expect("a" in schema.pick({ b: true })._zod.def.shape).toEqual(false);
 });
 
 test("omit type inference", () => {
@@ -86,14 +91,21 @@ test("omit parse - fail", () => {
 
 test("omit - remove optional", () => {
   const schema = z.interface({ a: z.string(), "b?": z.string() });
-  expect(schema.omit({ a: true })._zod.def.optional).toEqual(["b"]);
-  expect(schema.omit({ b: true })._zod.def.optional).toEqual([]);
+  expect(schema._zod.def.shape.a.optionality).toEqual("required");
+  expect("a" in schema.omit({ a: true })._zod.def.shape).toEqual(false);
+  // expect(schema.omit({ b: true })._zod.def.optional).toEqual([]);
 });
 
 test("nonstrict inference", () => {
   const laxfish = fish.pick({ name: true }).catchall(z.any());
   type laxfish = z.infer<typeof laxfish>;
-  expectTypeOf<laxfish>().toEqualTypeOf<{ name: string; [k: string]: any }>();
+  expectTypeOf<laxfish>().toEqualTypeOf<{ name: string } & { [k: string]: any }>();
+});
+
+test("nonstrict inference", () => {
+  const laxfish = fish.pick({ name: true }).catchall(z.unknown());
+  type laxfish = z.infer<typeof laxfish>;
+  expectTypeOf<laxfish>().toEqualTypeOf<{ name: string } & { [k: string]: unknown }>();
 });
 
 test("nonstrict parsing - pass", () => {

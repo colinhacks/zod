@@ -661,7 +661,6 @@ describe("toJSONSchema", () => {
     const userSchema = z.interface({
       name: z.string(),
       "age?": z.number(),
-      "?email": z.string(),
     });
 
     const result = toJSONSchema(userSchema);
@@ -671,16 +670,12 @@ describe("toJSONSchema", () => {
           "age": {
             "type": "number",
           },
-          "email": {
-            "type": "string",
-          },
           "name": {
             "type": "string",
           },
         },
         "required": [
           "name",
-          "email",
         ],
         "type": "object",
       }
@@ -1179,16 +1174,22 @@ test("overwrite descriptions", () => {
       reused: "ref",
     }
   );
-  expect(a).toMatchInlineSnapshot(`
+  expect(b).toMatchInlineSnapshot(`
     {
-      "properties": {
-        "d": {
-          "description": "d",
+      "$defs": {
+        "__schema0": {
+          "description": "c",
           "type": "string",
         },
+      },
+      "properties": {
+        "d": {
+          "$ref": "#/$defs/__schema0",
+          "description": "d",
+        },
         "e": {
+          "$ref": "#/$defs/__schema0",
           "description": "e",
-          "type": "string",
         },
       },
       "required": [
@@ -1388,7 +1389,6 @@ test("input type", () => {
       },
       "required": [
         "a",
-        "c",
         "d",
       ],
       "type": "object",

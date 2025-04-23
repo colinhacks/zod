@@ -70,17 +70,6 @@ test("default in optional key", () => {
   expect(schema.parse({ name: undefined }).name).toEqual("tuna");
 });
 
-test("defaulted key", () => {
-  const schema = z.interface({
-    "?a": z.string().default("asdf"),
-  });
-
-  expectTypeOf<typeof schema._zod.input>().toEqualTypeOf<{ a?: string }>();
-  expectTypeOf<typeof schema._zod.output>().toEqualTypeOf<{ a: string }>();
-  expect(schema.parse({})).toEqual({ a: "asdf" });
-  expect(schema.parse({ a: undefined })).toEqual({ a: "asdf" });
-});
-
 test("z.interface - strip by default", () => {
   const schema = z.interface({ points: z.number() });
   const data = { points: 2314, unknown: "asdf" };
@@ -131,18 +120,49 @@ test("only run catchall on unknown keys", () => {
   });
 });
 
-test("extend overrides existing", async () => {
+// test("extend overrides existing", async () => {
+//   const a = z.interface({ a: z.string() });
+//   const b = z.interface({ a: z.number() });
+//   const c = a.extend(b);
+//   type c = z.infer<typeof c>;
+//   expectTypeOf<c>().toEqualTypeOf<{ a: number }>();
+// });
+
+// test("extend overrides optionality", async () => {
+//   const a = z.interface({ "?a": z.string(), "b?": z.string() });
+//   const b = z.interface({ a: z.string(), b: z.string() });
+//   const c = a.extend(b);
+
+//   type c = z.infer<typeof c>;
+//   expectTypeOf<c>().toEqualTypeOf<{ a: string; b: string }>();
+
+//   const aData = { a: "asdf" };
+//   expect(a.parse(aData)).toEqual(aData);
+
+//   expect(c.safeParse(aData).success).toEqual(false);
+
+//   const cData = { a: "asdf", b: "asdf" };
+//   expect(c.parse(cData)).toEqual(cData);
+// });
+
+test("extend with .shape", async () => {
   const a = z.interface({ a: z.string() });
   const b = z.interface({ a: z.number() });
-  const c = a.extend(b);
+  const c = z.interface({
+    ...a.shape,
+    ...b.shape,
+  });
   type c = z.infer<typeof c>;
   expectTypeOf<c>().toEqualTypeOf<{ a: number }>();
 });
 
-test("extend overrides optionality", async () => {
-  const a = z.interface({ "?a": z.string(), "b?": z.string() });
+test("extend overrides with .shape", async () => {
+  const a = z.interface({ a: z.string(), "b?": z.string() });
   const b = z.interface({ a: z.string(), b: z.string() });
-  const c = a.extend(b);
+  const c = z.interface({
+    ...a.shape,
+    ...b.shape,
+  });
 
   type c = z.infer<typeof c>;
   expectTypeOf<c>().toEqualTypeOf<{ a: string; b: string }>();
@@ -197,25 +217,18 @@ test(".partial", async () => {
   const Partial = z.interface({ a: z.string(), b: z.string().optional() }).partial();
   type Partial = z.infer<typeof Partial>;
   expectTypeOf<Partial>().toEqualTypeOf<{ a?: string; b?: string }>();
-  expect(Partial._zod.def.shape.a).toBeInstanceOf(z.ZodOptional);
-  expect(Partial._zod.def.shape.b).toBeInstanceOf(z.ZodOptional);
-  expect(Partial._zod.def.optional).toEqual(["a", "b"]);
+  expect(Partial._zod.def.shape.a!.type).toBeInstanceOf(z.ZodOptional);
+  expect(Partial._zod.def.shape.b!.type).toBeInstanceOf(z.ZodOptional);
 });
 
 test(".required", async () => {
-  const Required = z
-    .interface({ a: z.string(), b: z.string().optional(), "c?": z.string(), "?d": z.string() })
-    .required();
+  const Required = z.interface({ a: z.string(), b: z.string().optional(), "c?": z.string() }).required();
   type Required = z.infer<typeof Required>;
-  expectTypeOf<Required>().toEqualTypeOf<{ a: string; b: string; c: string; d: string }>();
-  expectTypeOf<typeof Required._zod.optional>().toEqualTypeOf<never>();
-  expectTypeOf<typeof Required._zod.defaulted>().toEqualTypeOf<"d">();
-  expect(Required._zod.def.shape.a).toBeInstanceOf(z.ZodNonOptional);
-  expect(Required._zod.def.shape.b).toBeInstanceOf(z.ZodNonOptional);
-  expect(Required._zod.def.shape.c).toBeInstanceOf(z.ZodNonOptional);
-  expect(Required._zod.def.shape.d).toBeInstanceOf(z.ZodNonOptional);
-  expect(Required._zod.def.optional).toEqual([]);
-  // expect(Required._zod.def.defaulted).toEqual(["d"]);
+  expectTypeOf<Required>().toEqualTypeOf<{ a: string; b: string; c: string }>();
+
+  expect(Required._zod.def.shape.a!.type).toBeInstanceOf(z.ZodNonOptional);
+  expect(Required._zod.def.shape.b!.type).toBeInstanceOf(z.ZodNonOptional);
+  expect(Required._zod.def.shape.c!.type).toBeInstanceOf(z.ZodNonOptional);
 });
 
 test("inferred picked object type with optional properties", async () => {
@@ -416,4 +429,19 @@ test("xor", () => {
   const _Outer: z.ZodType<Outer> = z.interface({
     data: z.union([z.interface({ name: z.string(), a: z.number() }), z.interface({ name: z.string(), b: z.number() })]),
   });
+});
+
+test("duplication with shape", () => {
+  const a = z.interface({
+    name: z.string(),
+    "age?": z.number(),
+  });
+
+  const b = z.interface({
+    ...a.shape,
+  });
+
+  type a = z.infer<typeof a>;
+  type b = z.infer<typeof b>;
+  expectTypeOf<a>().toEqualTypeOf<b>();
 });

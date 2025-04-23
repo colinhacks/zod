@@ -43,9 +43,12 @@ test("pick parse - fail", () => {
 });
 
 test("pick - remove optional", () => {
-  const schema = z.interface({ a: z.string, "b?": z.string() });
-  expect(schema.pick({ a: true })._zod.def.optional).toEqual([]);
-  expect(schema.pick({ b: true })._zod.def.optional).toEqual(["b"]);
+  const schema = z.interface({ a: z.string(), "b?": z.string() });
+  expect(schema._zod.def.shape.a.optionality).toEqual("required");
+  expect(schema._zod.def.shape.b!.optionality).toEqual("optional");
+  const picked = schema.pick({ a: true });
+  expect(picked._zod.def.shape.a.optionality).toEqual("required");
+  expect("b" in picked._zod.def.shape!).toEqual(false);
 });
 
 test("omit type inference", () => {
@@ -81,9 +84,9 @@ test("omit parse - fail", () => {
 });
 
 test("omit - remove optional", () => {
-  const schema = z.interface({ a: z.string, "b?": z.string() });
-  expect(schema.omit({ a: true })._zod.def.optional).toEqual(["b"]);
-  expect(schema.omit({ b: true })._zod.def.optional).toEqual([]);
+  const schema = z.interface({ a: z.string(), "b?": z.string() });
+  expect(schema._zod.def.shape.a.optionality).toEqual("required");
+  expect("a" in schema.omit({ a: true })._zod.def.shape).toEqual(false);
 });
 
 test("nonstrict inference", () => {

@@ -19,27 +19,21 @@ test("optionals", () => {
   const a = z.interface({
     a: z.string(),
     "b?": z.string(),
-    "?c": z._default(z.string(), "c"),
     d: z._default(z.string(), "d"),
     e: z.optional(z.string()),
-    "?f": z.optional(z.string()),
   });
 
   interface a_in {
     a: string;
     b?: string;
-    c?: string;
     d: string | undefined;
     e: string | undefined;
-    f?: string | undefined;
   }
   interface a_out {
     a: string;
     b?: string;
-    c: string;
     d: string;
     e: string | undefined;
-    f: string | undefined;
   }
 
   expectTypeOf<typeof a._zod.output>().toEqualTypeOf<a_out>();
@@ -47,35 +41,29 @@ test("optionals", () => {
 
   // check parsing behavior
   // b is optional in input and output
-  // c is optional in input but will always show up in output
   // d is required in input & output but will be overwritten if `undefined`
   // e is required in input & output but can be `undefined`
-  // f is optional in input but will always show up in output
-  expect(z.parse(a, { a: "a", b: "b", c: "c", d: "d", e: "e", f: "f" })).toEqual({
+  expect(z.parse(a, { a: "a", b: "b", d: "d", e: "e" })).toEqual({
     a: "a",
     b: "b",
-    c: "c",
+
     d: "d",
     e: "e",
-    f: "f",
   });
 
   // omit b, c, and f to test optionality
   expect(z.parse(a, { a: "a", d: "d", e: "e" })).toEqual({
     a: "a",
-    c: "c", // default
+    // default
     d: "d",
     e: "e",
-    f: undefined,
   });
 
   // test default values for d and f
-  expect(z.parse(a, { a: "a", d: undefined, e: "e", f: undefined })).toEqual({
+  expect(z.parse(a, { a: "a", d: undefined, e: "e" })).toEqual({
     a: "a",
-    c: "c",
     d: "d",
     e: "e",
-    f: undefined,
   });
 });
 
@@ -230,56 +218,52 @@ test("z.keyof", () => {
 //   expect(z.safeParse(extendedSchema, { name: "John", age: 30, isAdmin: true }).success).toBe(true);
 // });
 
-test("z.extend", () => {
-  const a = z.interface({ a: z.string() });
+// test("z.extend", () => {
+//   const a = z.interface({ a: z.string() });
 
-  const b = z.extend(a, z.interface({ b: z.string() }));
-  expectTypeOf(b).toEqualTypeOf<
-    z.ZodMiniInterface<
-      { a: z.ZodMiniString<string>; b: z.ZodMiniString<string> },
-      {
-        optional: never;
-        defaulted: never;
-        extra: {};
-      }
-    >
-  >();
-  z.parse(b, { a: "a", b: "b" });
-  expect(() => z.parse(b, { a: "a" })).toThrow();
-});
+//   const b = z.extend(a, z.interface({ b: z.string() }));
+//   expectTypeOf(b).toEqualTypeOf<
+//     z.ZodMiniInterface<
+//       { a: z.ZodMiniString<string>; b: z.ZodMiniString<string> },
+//       {
+//         optional: never;
+//         defaulted: never;
+//         extra: {};
+//       }
+//     >
+//   >();
+//   z.parse(b, { a: "a", b: "b" });
+//   expect(() => z.parse(b, { a: "a" })).toThrow();
+// });
 
-test("z.extend with optionals", () => {
-  const a = z.interface({ a: z.string(), "b?": z.string() });
-  const _ = z.interface({ "a?": z.string(), b: z.string() });
-  const b = z.extend(a, _);
-  expectTypeOf(b).toEqualTypeOf<
-    z.ZodMiniInterface<
-      { a: z.ZodMiniString<string>; b: z.ZodMiniString<string> },
-      {
-        optional: "a";
-        defaulted: never;
-        extra: {};
-      }
-    >
-  >();
-  z.parse(b, { a: "a", b: "b" });
-  expect(b._zod.def.optional).toEqual(["a"]);
-  z.parse(b, { b: "b" });
-  expect(() => z.parse(b, { a: "a" })).toThrow();
-});
+// test("z.extend with optionals", () => {
+//   const a = z.interface({ a: z.string(), "b?": z.string() });
+//   const _ = z.interface({ "a?": z.string(), b: z.string() });
+//   const b = z.extend(a, _);
+//   expectTypeOf(b).toEqualTypeOf<
+//     z.ZodMiniInterface<
+//       { a: z.ZodMiniString<string>; b: z.ZodMiniString<string> },
+//       {
+//         optional: "a";
+//         defaulted: never;
+//         extra: {};
+//       }
+//     >
+//   >();
+//   z.parse(b, { a: "a", b: "b" });
+//   expect(b._zod.def.optional).toEqual(["a"]);
+//   z.parse(b, { b: "b" });
+//   expect(() => z.parse(b, { a: "a" })).toThrow();
+// });
 
 test("z.extend with optional properties", () => {
   const a = z.interface({ "a?": z.string(), b: z.string() });
-  const b = z.extend(a, { "?a": z.string(), "b?": z.string() });
+  const b = z.extend(a, { a: z.string(), "b?": z.string() });
   type b = z.infer<typeof b>;
-  expectTypeOf(b._zod.def.shape).toEqualTypeOf<{
+  expectTypeOf(b.shape).toEqualTypeOf<{
     a: z.ZodMiniString<string>;
-    b: z.ZodMiniString<string>;
+    b?: z.ZodMiniString<string>;
   }>();
-  expectTypeOf<typeof a._zod.defaulted>().toEqualTypeOf<never>();
-  expectTypeOf<typeof a._zod.optional>().toEqualTypeOf<"a">();
-  expectTypeOf<typeof b._zod.defaulted>().toEqualTypeOf<"a">();
-  expectTypeOf<typeof b._zod.optional>().toEqualTypeOf<"b">();
   expectTypeOf<b>().toEqualTypeOf<{ a: string; b?: string }>();
 });
 

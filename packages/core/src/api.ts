@@ -1013,7 +1013,7 @@ export function _interface<T extends schemas.$ZodLooseShape>(
   Class: util.SchemaClass<schemas.$ZodInterface>,
   shape: T,
   params?: $ZodInterfaceParams
-): schemas.$ZodInterface<util.CleanInterfaceShape<T>, util.InitInterfaceParams<T, {}>> {
+): schemas.$ZodInterface<T, {}> {
   const cleaned = util.cached(() => util.cleanInterfaceShape(shape));
   const def: schemas.$ZodInterfaceDef = {
     type: "interface",
@@ -1023,9 +1023,9 @@ export function _interface<T extends schemas.$ZodLooseShape>(
       return _shape;
       // return cleaned.value.shape;
     },
-    get optional() {
-      return cleaned.value.optional;
-    },
+    // get shapeMeta() {
+    //   return cleaned.value.shapeMeta;
+    // },
     ...util.normalizeParams(params),
   };
   return new Class(def) as any;
@@ -1036,7 +1036,7 @@ export function _strictInterface<T extends schemas.$ZodLooseShape>(
   Class: util.SchemaClass<schemas.$ZodInterface>,
   shape: T,
   params?: $ZodInterfaceParams
-): schemas.$ZodInterface<util.CleanInterfaceShape<T>, util.InitInterfaceParams<T, {}>> {
+): schemas.$ZodInterface<T, {}> {
   const cleaned = util.cached(() => util.cleanInterfaceShape(shape));
   const def: schemas.$ZodInterfaceDef = {
     type: "interface",
@@ -1046,9 +1046,9 @@ export function _strictInterface<T extends schemas.$ZodLooseShape>(
       return _shape;
       // return cleaned.value.shape;
     },
-    get optional() {
-      return cleaned.value.optional;
-    },
+    // get shapeMeta() {
+    //   return cleaned.value.shapeMeta;
+    // },
     catchall: _never(schemas.$ZodNever),
     ...util.normalizeParams(params),
   };
@@ -1059,20 +1059,21 @@ export function _strictInterface<T extends schemas.$ZodLooseShape>(
 export function _looseInterface<T extends schemas.$ZodLooseShape>(
   Class: util.SchemaClass<schemas.$ZodInterface>,
   shape: T,
-  params?: $ZodInterfaceParams
-): schemas.$ZodInterface<util.CleanInterfaceShape<T>, util.InitInterfaceParams<T, Record<string, unknown>>> {
+  params?: string | $ZodInterfaceParams
+): schemas.$ZodInterface<T, Record<string, unknown>> {
   const cleaned = util.cached(() => util.cleanInterfaceShape(shape));
   const def: schemas.$ZodInterfaceDef = {
     type: "interface",
-    get optional() {
-      return cleaned.value.optional;
-    },
+
     get shape() {
       const _shape = cleaned.value.shape;
       util.assignProp(this, "shape", _shape);
       return _shape;
       // return cleaned.value.shape;
     },
+    // get shapeMeta() {
+    //   return cleaned.value.shapeMeta;
+    // },
     catchall: _unknown(schemas.$ZodUnknown),
     ...util.normalizeParams(params),
   };
@@ -1087,9 +1088,9 @@ export function _object<T extends schemas.$ZodShape = Record<never, schemas.$Zod
 ): schemas.$ZodObject<T, {}> {
   const def: schemas.$ZodObjectDef = {
     type: "object",
-    shape: shape ?? {},
-    get optional() {
-      return util.optionalObjectKeys(shape ?? {});
+    // shape: shape ?? {},
+    get shape() {
+      return util.objectShapeMeta(shape ?? {});
     },
     ...util.normalizeParams(params),
   };
@@ -1104,9 +1105,9 @@ export function _strictObject<T extends schemas.$ZodShape>(
 ): schemas.$ZodObject<T, {}> {
   return new Class({
     type: "object",
-    shape: shape as schemas.$ZodShape,
-    get optional() {
-      return util.optionalObjectKeys(shape);
+    // shape: shape as schemas.$ZodShape,
+    get shape() {
+      return util.objectShapeMeta(shape ?? {});
     },
     catchall: _never(schemas.$ZodNever),
     ...util.normalizeParams(params),
@@ -1121,9 +1122,9 @@ export function _looseObject<T extends schemas.$ZodShape>(
 ): schemas.$ZodObject<T, { [k: string]: unknown }> {
   return new Class({
     type: "object",
-    shape: shape as schemas.$ZodShape,
-    get optional() {
-      return util.optionalObjectKeys(shape);
+    // shape: shape as schemas.$ZodShape,
+    get shape() {
+      return util.objectShapeMeta(shape ?? {});
     },
     catchall: _unknown(schemas.$ZodUnknown),
     ...util.normalizeParams(params),

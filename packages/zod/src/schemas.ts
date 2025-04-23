@@ -1,5 +1,6 @@
 import * as core from "@zod/core";
 import { util } from "@zod/core";
+
 import * as checks from "./checks.js";
 import * as iso from "./iso.js";
 import * as parse from "./parse.js";
@@ -1019,7 +1020,7 @@ export const ZodObjectLike: core.$constructor<ZodObjectLike> = /*@__PURE__*/ cor
 );
 
 // .keyof
-export function keyof<T extends ZodObject>(schema: T): ZodLiteral<keyof T["_zod"]["def"]["shape"]>;
+export function keyof<T extends ZodObject>(schema: T): ZodLiteral<keyof T["_zod"]["output"]>;
 export function keyof<T extends ZodInterface>(schema: T): ZodLiteral<keyof T["_zod"]["output"]>;
 export function keyof(schema: ZodObjectLike) {
   const shape =
@@ -1031,136 +1032,150 @@ export function keyof(schema: ZodObjectLike) {
 }
 
 // ZodInterface
-type ZodInterfacePartial<
-  T extends ZodInterface,
-  Keys extends keyof T["_zod"]["def"]["shape"] = keyof T["_zod"]["def"]["shape"],
-> = ZodInterface<
-  util.Extend<
-    T["_zod"]["def"]["shape"],
-    {
-      [k in Keys]: ZodOptional<T["_zod"]["def"]["shape"][k]>;
-    }
-  >,
+/**
+ *
+ * shape {a, "b?", "c"}
+ * mask: {a, b}
+ * result: { "a?", "b?", c }
+ *
+ */
+// type AddQ<T extends string> = T extends `${infer R}?` ? T : `${T}?`;
+// type ZodInterfacePartial<T extends ZodInterface, MaskKeys extends PropertyKey = keyof T["shape"]> = util.Identity<
+//   ZodInterface<
+//     // util.Extend<
+//     //   T["shape"],
+//     //   {
+//     //     [k in Keys]: ZodOptional<T["shape"][k]>;
+//     //   }
+//     // >,
+//     // {
+//     //   // remove mask keys
+//     //   [k in keyof T["shape"] as k extends T["_cleanToRaw"][string & keyof Mask] ? never : k]: T["shape"][k];
+//     // } & {
+//     //   [k in keyof Mask as `${k & string}?`]: ZodOptional<T["shape"][T["_cleanToRaw"][k & string]]>;
+//     // },
+//     {
+//       [k in keyof T["shape"] as util.CleanKey<k> extends MaskKeys ? `${util.CleanKey<k> & string}?` : k]: T["shape"][k];
+//     },
+//     T["_zod"]["extra"]
+//   >
+// >;
+
+// type ZodInterfaceRequired<T extends ZodInterface, Keys extends keyof T["shape"] = keyof T["shape"]> = ZodInterface<
+//   util.Extend<
+//     T["shape"],
+//     {
+//       [k in Keys]: ZodNonOptional<T["shape"][k]>;
+//     }
+//   >,
+//   {
+//     optional: never;
+//     defaulted: T["_zod"]["defaulted"];
+//     extra: T["_zod"]["extra"];
+//   }
+// >;
+
+// export type PartialInterfaceShape<
+//   Shape extends core.$ZodLooseShape,
+//   Keys extends PropertyKey = keyof Shape,
+// > = util.Identity<{
+//   [k in keyof Shape as util.CleanKey<k> extends Keys ? `${util.CleanKey<k> & string}?` : k]: Shape[k];
+// }>;
+export type RequiredInterfaceShape<
+  Shape extends core.$ZodLooseShape,
+  Keys extends PropertyKey = keyof Shape,
+> = util.Identity<
   {
-    optional: T["_zod"]["optional"] | (string & Keys);
-    defaulted: T["_zod"]["defaulted"];
-    extra: T["_zod"]["extra"];
+    [k in keyof Shape as k extends Keys ? k : never]-?: ZodNonOptional<NonNullable<Shape[k]>>;
+  } & {
+    [k in keyof Shape as k extends Keys ? never : k]-?: NonNullable<Shape[k]>;
   }
 >;
+// export type ExtendInterfaceShape<
+//   Shape extends core.$ZodLooseShape,
+//   Incoming extends core.$ZodLooseShape,
+// > = util.CleanKey<keyof Shape> & util.CleanKey<keyof Incoming> extends never
+//   ? Shape & Incoming
+//   : util.Identity<
+//       {
+//         [k in util.CleanKey<keyof Shape> as util.CleanKey<k> extends util.CleanKey<keyof Incoming>
+//           ? never
+//           : k]: Shape[k];
+//       } & {
+//         [k in keyof Incoming]: Incoming[k];
+//       }
+//     >;
 
-type ZodInterfaceRequired<
-  T extends ZodInterface,
-  Keys extends keyof T["_zod"]["def"]["shape"] = keyof T["_zod"]["def"]["shape"],
-> = ZodInterface<
-  util.Extend<
-    T["_zod"]["def"]["shape"],
-    {
-      [k in Keys]: ZodNonOptional<T["_zod"]["def"]["shape"][k]>;
-    }
-  >,
-  {
-    optional: never;
-    defaulted: T["_zod"]["defaulted"];
-    extra: T["_zod"]["extra"];
-  }
+export type MergeInterfaces<A extends ZodInterface, B extends core.$ZodLooseShape> = ZodInterface<
+  util.Extend<A["shape"], B["shape"]>,
+  A["_zod"]["outextra"],
+  A["_zod"]["inextra"]
 >;
 
-export type MergeInterfaces<A extends ZodInterface, B extends ZodInterface> = ZodInterface<
-  util.Extend<A["_zod"]["def"]["shape"], B["_zod"]["def"]["shape"]>,
-  util.MergeInterfaceParams<A, B>
->;
+// type lkajdf = util.ToCleanMap<{
+//   a: ZodString;
+//   "b?": ZodString;
+//   "?c": ZodString;
+// }>;
 
+// type lkajdfdf = util.FromCleanMap<{
+//   a: ZodString;
+//   "b?": ZodString;
+//   "?c": ZodString;
+// }>;
 export interface ZodInterface<
   // @ts-ignore cast variance
   out Shape extends core.$ZodLooseShape = core.$ZodLooseShape,
-  // @ts-ignore cast variance
-  out Params extends core.$ZodInterfaceNamedParams = core.$ZodInterfaceNamedParams,
+  OutExtra extends Record<string, unknown> = Record<string, unknown>,
+  InExtra extends Record<string, unknown> = Record<string, unknown>,
 > extends ZodType {
-  _zod: core.$ZodInterfaceInternals<Shape, Params>;
-  shape: this["_zod"]["shape"];
+  _zod: core.$ZodInterfaceInternals<Shape, OutExtra, InExtra>;
+  shape: Shape;
+  // _rawToClean: util.ToCleanMap<Shape>;
+  // _cleanToRaw: util.FromCleanMap<Shape>;
 
   keyof(): ZodEnum<util.ToEnum<util.InterfaceKeys<string & keyof Shape>>>;
-  catchall<T extends core.$ZodType>(
-    schema: T
-  ): ZodInterface<
-    Shape,
-    {
-      optional: Params["optional"];
-      defaulted: Params["defaulted"];
-      extra: Record<string, T["_zod"]["output"]>;
-    }
-  >;
-  /** Consider `z.strictObject({ ...A.shape })` instead. */
-  strict(): ZodInterface<
-    Shape,
-    {
-      optional: Params["optional"];
-      defaulted: Params["defaulted"];
-      extra: {};
-    }
-  >;
+  catchall<T extends core.$ZodType>(schema: T): ZodInterface<Shape, Record<string, T["_zod"]["output"]>>;
+  strict(): ZodInterface<Shape, {}>;
+  loose(): ZodInterface<Shape, Record<string, unknown>>;
+  strip(): ZodInterface<Shape, {}>;
 
-  loose(): ZodInterface<
-    Shape,
-    {
-      optional: Params["optional"];
-      defaulted: Params["defaulted"];
-      extra: Record<string, unknown>;
-    }
-  >;
-
-  /**  Use `z.looseObject({ ...A.shape })` instead. */
-  strip(): ZodInterface<
-    Shape,
-    {
-      optional: Params["optional"];
-      defaulted: Params["defaulted"];
-      extra: {};
-    }
-  >;
-
-  extend<U extends ZodInterface>(int: U): MergeInterfaces<this, U>;
+  /** This API is discouraged, as it can degrade `tsc` compiler performance in some cases. Instead, create a new object type using the `.shape` property.
+   * ```
+   * const myNewSchema = z.interface({ ...A.shape, newField: z.string() })
+   * ``` */
   extend<U extends core.$ZodLooseShape>(
     shape: U
-  ): MergeInterfaces<this, ZodInterface<U, util.InitInterfaceParams<U, {}>>>;
+  ): ZodInterface<util.Extend<Shape, ProcessInterfaceShape<U>>, OutExtra, InExtra>;
 
-  /** @deprecated Use `A.extend(B)` */
-  merge<U extends ZodInterface>(incoming: U): MergeInterfaces<this, U>;
+  /** @deprecated Use `z.interface({ ...A.shape, ...B.shape })` */
+  merge<U extends ZodInterface>(
+    incoming: U
+  ): ZodInterface<util.Extend<Shape, U["shape"]>, OutExtra & U["_zod"]["outextra"], InExtra & U["_zod"]["inextra"]>;
 
-  pick<const M extends util.Exactly<util.Mask<string & keyof Shape>, M>>(
+  pick<const M extends util.Exactly<util.Mask<keyof Shape>, M>>(
     mask: M
-  ): ZodInterface<
-    util.Flatten<Pick<Shape, keyof Shape & keyof M>>,
-    {
-      optional: Extract<Params["optional"], keyof M>;
-      defaulted: Extract<Params["defaulted"], keyof M>;
-      extra: Params["extra"];
-    }
-  >;
+  ): ZodInterface<Pick<Shape, string & keyof M>, OutExtra, InExtra>;
 
-  omit<const M extends util.Exactly<util.Mask<string & keyof Shape>, M>>(
+  omit<const M extends util.Exactly<util.Mask<keyof Shape>, M>>(
     mask: M
-  ): ZodInterface<
-    util.Flatten<Omit<Shape, keyof M>>,
-    {
-      optional: Exclude<Params["optional"], keyof M>;
-      defaulted: Exclude<Params["defaulted"], keyof M>;
-      extra: Params["extra"];
-    }
-  >;
+  ): ZodInterface<Omit<Shape, string & keyof M>, OutExtra, InExtra>;
 
-  partial(): ZodInterfacePartial<this>;
-  partial<M extends util.Mask<string & keyof Shape>>(mask: M): ZodInterfacePartial<this, string & keyof M>;
+  partial(): ZodInterface<Partial<Shape>, OutExtra, InExtra>;
+  partial<M extends util.Exactly<util.Mask<keyof Shape>, M>>(
+    mask: M
+  ): ZodInterface<util.MakePartial<Shape, string & keyof M>, OutExtra, InExtra>;
 
-  required(): ZodInterfaceRequired<this, string & keyof Shape>;
-  required<M extends util.Mask<string & keyof Shape>>(mask: M): ZodInterfaceRequired<this, string & keyof M>;
+  required(): ZodInterface<RequiredInterfaceShape<Shape>, OutExtra, InExtra>;
+  required<M extends util.Exactly<util.Mask<string & keyof Shape>, M>>(
+    mask: M
+  ): ZodInterface<RequiredInterfaceShape<Shape, keyof M>, OutExtra, InExtra>;
 }
 export const ZodInterface: core.$constructor<ZodInterface> = /*@__PURE__*/ core.$constructor(
   "ZodInterface",
   (inst, def) => {
     core.$ZodInterface.init(inst, def);
     ZodType.init(inst, def);
-    // util.defineLazy(inst._zod, "shape", () => def.shape);
 
     inst.keyof = () => _enum(Object.keys(inst._zod.def.shape));
     inst.catchall = (catchall) => inst.clone({ ...inst._zod.def, catchall });
@@ -1174,16 +1189,21 @@ export const ZodInterface: core.$constructor<ZodInterface> = /*@__PURE__*/ core.
     inst.merge = (other) => util.mergeObjectLike(inst, other);
     inst.pick = (mask) => util.pick(inst, mask) as any;
     inst.omit = (mask) => util.omit(inst, mask);
-    inst.partial = (...args: any[]) => util.partialObjectLike(ZodOptional, inst, args[0]);
+    inst.partial = (...args: any[]) => util.partialObjectLike(null, inst, args[0]);
     inst.required = (...args: any[]) => util.requiredObjectLike(ZodNonOptional, inst, args[0]);
   }
 );
 
+export type ProcessInterfaceShape<T extends core.$ZodLooseShape> = {
+  [k in keyof T as k extends `${infer K}?` ? K : never]?: T[k];
+} & {
+  [k in keyof T as k extends `${string}?` ? never : k]: T[k];
+};
 function _interface<T extends core.$ZodLooseShape>(
   shape: T,
   params?: string | core.$ZodInterfaceParams,
   Class: util.Constructor<ZodInterface> = ZodInterface
-): ZodInterface<util.CleanInterfaceShape<T>, util.InitInterfaceParams<T, {}>> {
+): ZodInterface<util.Flatten<ProcessInterfaceShape<T>>, {}, {}> {
   const cleaned = util.cached(() => util.cleanInterfaceShape(shape));
   const def: core.$ZodInterfaceDef = {
     type: "interface",
@@ -1193,9 +1213,16 @@ function _interface<T extends core.$ZodLooseShape>(
       util.assignProp(this, "shape", _shape);
       return _shape;
     },
-    get optional() {
-      return cleaned.value.optional;
-    },
+    // get shapeMeta() {
+    //   return cleaned.value.shapeMeta;
+    // },
+    // get _rawShape() {
+    //   // not cached!
+    //   return cleaned.value.shape;
+    // },
+    // get optional() {
+    //   return cleaned.value.optional;
+    // },
     ...util.normalizeParams(params),
   };
   return new Class(def) as any;
@@ -1207,19 +1234,28 @@ export { _interface as interface };
 export function strictInterface<T extends core.$ZodLooseShape>(
   shape: T,
   params?: string | core.$ZodInterfaceParams
-): ZodInterface<util.CleanInterfaceShape<T>, util.InitInterfaceParams<T, {}>> {
+): ZodInterface<T, {}> {
   const cleaned = util.cached(() => util.cleanInterfaceShape(shape));
+
   const def: core.$ZodInterfaceDef = {
     type: "interface",
     get shape() {
       // return cleaned.value.shape;
+
       const _shape = cleaned.value.shape;
       util.assignProp(this, "shape", _shape);
       return _shape;
     },
-    get optional() {
-      return cleaned.value.optional;
-    },
+    // get shapeMeta() {
+    //   return cleaned.value.shapeMeta;
+    // },
+    // get _rawShape() {
+    //   // not cached!
+    //   return cleaned.value.shape;
+    // },
+    // get optional() {
+    //   return cleaned.value.optional;
+    // },
     catchall: never(),
     ...util.normalizeParams(params),
   };
@@ -1231,19 +1267,27 @@ export function strictInterface<T extends core.$ZodLooseShape>(
 export function looseInterface<T extends core.$ZodLooseShape>(
   shape: T,
   params?: string | core.$ZodInterfaceParams
-): ZodInterface<util.CleanInterfaceShape<T>, util.InitInterfaceParams<T, Record<string, unknown>>> {
+): ZodInterface<T, Record<string, unknown>> {
   const cleaned = util.cached(() => util.cleanInterfaceShape(shape));
   const def: core.$ZodInterfaceDef = {
     type: "interface",
-    get optional() {
-      return cleaned.value.optional;
-    },
+    // get optional() {
+    //   return cleaned.value.optional;
+    // },
     get shape() {
       // return cleaned.value.shape;
       const _shape = cleaned.value.shape;
       util.assignProp(this, "shape", _shape);
       return _shape;
     },
+    // get shapeMeta() {
+    //   return cleaned.value.shapeMeta;
+    // },
+
+    // get _rawShape() {
+    //   // not cached!
+    //   return cleaned.value.shape;
+    // },
     catchall: unknown(),
     ...util.normalizeParams(params),
   };
@@ -1254,14 +1298,15 @@ export function looseInterface<T extends core.$ZodLooseShape>(
 export interface ZodObject<
   // @ts-ignore cast variance
   out Shape extends core.$ZodShape = core.$ZodShape,
-  // @ts-ignore cast variance
-  Extra extends Record<string, unknown> = Record<string, unknown>,
+  OutExtra extends Record<string, unknown> = Record<string, unknown>,
+  InExtra extends Record<string, unknown> = Record<string, unknown>,
 > extends ZodType {
-  _zod: core.$ZodObjectInternals<Shape, Extra>;
+  _zod: core.$ZodObjectInternals<Shape, OutExtra, InExtra>;
 
   shape: Shape;
 
   keyof(): ZodEnum<util.ToEnum<keyof Shape & string>>;
+<<<<<<< HEAD
   /** Define a schema to validate all unrecognized keys. This overrides the existing strict/loose behavior. */
   catchall<T extends core.$ZodType>(schema: T): ZodObject<Shape, Record<string, T["_zod"]["output"]>>;
 
@@ -1275,34 +1320,57 @@ export interface ZodObject<
 
   /** This is the default behavior. This method call is likely unnecessary. */
   strip(): ZodObject<Shape, {}>;
+=======
+  catchall<T extends core.$ZodType>(
+    schema: T
+  ): ZodObject<Shape, Record<string, T["_zod"]["output"]>, Record<string, T["_zod"]["input"]>>;
 
-  extend<const U extends ZodObject>(schema: U): ZodObject<util.Extend<Shape, U["_zod"]["def"]["shape"]>, Extra>;
+  /** @deprecated Use `z.looseObject()` or `.loose()` instead. */
+  passthrough(): ZodObject<Shape, Record<string, unknown>, Record<string, unknown>>;
+
+  loose(): ZodObject<Shape, Record<string, unknown>, Record<string, unknown>>;
+
+  /** The `z.strictObject()` API is preferred. */
+  strict(): ZodObject<Shape, {}, {}>;
+
+  /** @deprecated This is the default behavior. This method call is likely unnecessary. */
+  strip(): ZodObject<Shape, {}, {}>;
+>>>>>>> 2b18cea5 (Refactor object-like internals. use optionality in zodinterface shape. remove ?-prefixing for defaulted. handle optionals/defaults in json schema)
+
+  extend<const U extends ZodObject>(schema: U): ZodObject<util.Extend<Shape, U["shape"]>, OutExtra, InExtra>;
   extend<U extends core.$ZodShape>(
     shape: U
   ): ZodObject<
     util.Extend<Shape, U>,
-    Extra // & B['_zod']["extra"]
+    OutExtra,
+    InExtra // & B['_zod']["extra"]
   >;
 
   // merge
+<<<<<<< HEAD
   /** @deprecated Use `A.extend(B.shape)` */
   merge<U extends ZodObject<any, any>>(
     other: U
   ): ZodObject<util.Flatten<util.Extend<Shape, U["_zod"]["def"]["shape"]>>, Extra>;
+=======
+  /** @deprecated Use `A.extend(B)` */
+  merge<U extends ZodObject>(other: U): ZodObject<util.Flatten<util.Extend<Shape, U["shape"]>>, OutExtra, InExtra>;
+>>>>>>> 2b18cea5 (Refactor object-like internals. use optionality in zodinterface shape. remove ?-prefixing for defaulted. handle optionals/defaults in json schema)
 
   pick<M extends util.Exactly<util.Mask<string & keyof Shape>, M>>(
     mask: M
-  ): ZodObject<util.Flatten<Pick<Shape, Extract<keyof Shape, keyof M>>>, Extra>;
+  ): ZodObject<util.Flatten<Pick<Shape, Extract<keyof Shape, keyof M>>>, OutExtra, InExtra>;
 
   omit<M extends util.Exactly<util.Mask<string & keyof Shape>, M>>(
     mask: M
-  ): ZodObject<util.Flatten<Omit<Shape, Extract<keyof Shape, keyof M>>>, Extra>;
+  ): ZodObject<util.Flatten<Omit<Shape, Extract<keyof Shape, keyof M>>>, OutExtra, InExtra>;
 
   partial(): ZodObject<
     {
       [k in keyof Shape]: ZodOptional<Shape[k]>;
     },
-    Extra
+    OutExtra,
+    InExtra
   >;
   partial<M extends util.Exactly<util.Mask<string & keyof Shape>, M>>(
     mask: M
@@ -1310,7 +1378,8 @@ export interface ZodObject<
     {
       [k in keyof Shape]: k extends keyof M ? ZodOptional<Shape[k]> : Shape[k];
     },
-    Extra
+    OutExtra,
+    InExtra
   >;
 
   // required
@@ -1318,7 +1387,8 @@ export interface ZodObject<
     {
       [k in keyof Shape]: ZodNonOptional<Shape[k]>;
     },
-    Extra
+    OutExtra,
+    InExtra
   >;
   required<M extends util.Exactly<util.Mask<string & keyof Shape>, M>>(
     mask: M
@@ -1326,14 +1396,17 @@ export interface ZodObject<
     {
       [k in keyof Shape]: k extends keyof M ? ZodNonOptional<Shape[k]> : Shape[k];
     },
-    Extra
+    OutExtra,
+    InExtra
   >;
 }
 export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$constructor("ZodObject", (inst, def) => {
   core.$ZodObject.init(inst, def);
   ZodType.init(inst, def);
 
-  inst.shape = def.shape;
+  util.defineLazy(inst, "shape", () => {
+    return Object.fromEntries(Object.entries(inst._zod.def.shape).map(([k, v]) => [k, v.type]));
+  });
   inst.keyof = () => _enum(Object.keys(inst._zod.def.shape)) as any;
   inst.catchall = (catchall) => inst.clone({ ...inst._zod.def, catchall });
   inst.passthrough = () => inst.clone({ ...inst._zod.def, catchall: unknown() });
@@ -1352,16 +1425,20 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
   inst.partial = (...args: any[]) => util.partialObjectLike(ZodOptional, inst, args[0] as object);
   inst.required = (...args: any[]) => util.requiredObjectLike(ZodNonOptional, inst, args[0] as object);
 });
+
 export function object<T extends core.$ZodShape = Record<never, core.$ZodType>>(
   shape?: T,
   params?: string | core.$ZodObjectLikeParams
-): ZodObject<T, {}> {
+): ZodObject<T, {}, {}> {
   const def: core.$ZodObjectDef = {
     type: "object",
-    shape: shape ?? {},
-    get optional() {
-      return util.optionalObjectKeys(shape ?? {});
+    // shape: shape ?? {},
+    get shape() {
+      return util.objectShapeMeta(shape ?? {});
     },
+    // get optional() {
+    //   return util.optionalObjectKeys(shape ?? {});
+    // },
     ...util.normalizeParams(params),
   };
   return new ZodObject(def) as any;
@@ -1372,13 +1449,16 @@ export function object<T extends core.$ZodShape = Record<never, core.$ZodType>>(
 export function strictObject<T extends core.$ZodShape>(
   shape: T,
   params?: string | core.$ZodObjectParams
-): ZodObject<T, {}> {
+): ZodObject<T, {}, {}> {
   return new ZodObject({
     type: "object",
-    shape: shape as core.$ZodShape,
-    get optional() {
-      return util.optionalObjectKeys(shape);
+    // shape: shape as core.$ZodShape,
+    get shape() {
+      return util.objectShapeMeta(shape);
     },
+    // get optional() {
+    //   return util.optionalObjectKeys(shape);
+    // },
     catchall: never(),
     ...util.normalizeParams(params),
   }) as any;
@@ -1389,211 +1469,217 @@ export function strictObject<T extends core.$ZodShape>(
 export function looseObject<T extends core.$ZodShape>(
   shape: T,
   params?: string | core.$ZodObjectParams
-): ZodObject<T, { [k: string]: unknown }> {
+): ZodObject<T, { [k: string]: unknown }, { [k: string]: unknown }> {
   return new ZodObject({
     type: "object",
-    shape: shape as core.$ZodShape,
-    get optional() {
-      return util.optionalObjectKeys(shape);
+    // shape: shape as core.$ZodShape,
+    get shape() {
+      return util.objectShapeMeta(shape);
     },
+    // get optional() {
+    //   return util.optionalObjectKeys(shape);
+    // },
     catchall: unknown(),
     ...util.normalizeParams(params),
   }) as any;
 }
 
 // object methods
-export function extend<T extends ZodInterface, U extends ZodInterface>(
-  a: T,
-  b: U
-): ZodInterface<util.Extend<T["_zod"]["def"]["shape"], U["_zod"]["def"]["shape"]>, util.MergeInterfaceParams<T, U>>;
-export function extend<T extends ZodObject, U extends ZodObject>(
-  a: T,
-  b: U
-): ZodObject<
-  util.Extend<T["_zod"]["def"]["shape"], U["_zod"]["def"]["shape"]>,
-  U["_zod"]["extra"] & T["_zod"]["extra"]
->;
-export function extend<T extends ZodObjectLike, U extends core.$ZodLooseShape>(
-  schema: T,
-  shape: U
-): T extends ZodInterface<infer TShape, infer TParams>
-  ? ZodInterface<util.ExtendInterfaceShape<TShape, U>, util.ExtendInterfaceParams<ZodInterface<TShape, TParams>, U>>
-  : ZodObject<util.Extend<T["_zod"]["def"]["shape"], U>, T["_zod"]["extra"]>;
-export function extend(schema: ZodObjectLike, shape: core.$ZodShape): ZodObjectLike {
-  if (shape instanceof core.$ZodType) return util.mergeObjectLike(schema, shape as any);
-  if (schema instanceof ZodInterface) {
-    return util.mergeObjectLike(schema, _interface(shape));
-  }
-  if (schema instanceof ZodObject) return util.mergeObjectLike(schema, object(shape));
-  return util.extend(schema, shape);
-}
+// export function extend<T extends ZodInterface, U extends ZodInterface>(
+//   a: T,
+//   b: U
+// ): ZodInterface<util.Extend<T["_zod"]["def"]["shape"], U["_zod"]["def"]["shape"]>, util.MergeInterfaceParams<T, U>>;
+// export function extend<T extends ZodObject, U extends ZodObject>(
+//   a: T,
+//   b: U
+// ): ZodObject<
+//   util.Extend<T["_zod"]["def"]["shape"], U["_zod"]["def"]["shape"]>,
+//   U["_zod"]["extra"] & T["_zod"]["extra"]
+// >;
+// export function extend<T extends ZodObjectLike, U extends core.$ZodLooseShape>(
+//   schema: T,
+//   shape: U
+// ): T extends ZodInterface<infer TShape, infer TExtra>
+//   ? ZodInterface<util.ExtendInterfaceShape<TShape, U>, util.ExtendInterfaceParams<ZodInterface<TShape, TExtra>, U>>
+//   : ZodObject<util.Extend<T["_zod"]["def"]["shape"], U>, T["_zod"]["extra"]>;
+// export function extend(schema: ZodObjectLike, shape: core.$ZodShape): ZodObjectLike {
+//   if (shape instanceof core.$ZodType) return util.mergeObjectLike(schema, shape as any);
+//   if (schema instanceof ZodInterface) {
+//     return util.mergeObjectLike(schema, _interface(shape));
+//   }
+//   if (schema instanceof ZodObject) return util.mergeObjectLike(schema, object(shape));
+//   return util.extend(schema, shape);
+// }
 
-export function merge<T extends ZodObjectLike, U extends core.$ZodLooseShape>(
-  schema: T,
-  shape: U
-): T["_zod"]["def"]["type"] extends "interface"
-  ? // T extends ZodInterface
-    ZodInterface<
-      util.Extend<T["_zod"]["def"]["shape"], U["_zod"]["def"]["shape"]>,
-      {
-        extra: T["_zod"]["extra"] & U["_zod"]["extra"];
-        optional: Exclude<T["_zod"]["optional"], keyof U["_zod"]["def"]["shape"]> | U["_zod"]["optional"];
-        defaulted: Exclude<T["_zod"]["defaulted"], keyof U["_zod"]["def"]["shape"]> | U["_zod"]["defaulted"];
-      }
-    >
-  : ZodObject<util.Extend<T["_zod"]["def"]["shape"], U>, T["_zod"]["extra"]>;
-export function merge(a: ZodObjectLike, b: ZodObjectLike): ZodObjectLike {
-  return util.mergeObjectLike(a, b);
-}
+// export function merge<T extends ZodObjectLike, U extends core.$ZodLooseShape>(
+//   schema: T,
+//   shape: U
+// ): T["_zod"]["def"]["type"] extends "interface"
+//   ? // T extends ZodInterface
+//     ZodInterface<
+//       util.Extend<T["_zod"]["def"]["shape"], U["_zod"]["def"]["shape"]>,
+//       {
+//         extra: T["_zod"]["extra"] & U["_zod"]["extra"];
+//         optional: Exclude<T["_zod"]["optional"], keyof U["_zod"]["def"]["shape"]> | U["_zod"]["optional"];
+//         defaulted: Exclude<T["_zod"]["defaulted"], keyof U["_zod"]["def"]["shape"]> | U["_zod"]["defaulted"];
+//       }
+//     >
+//   : ZodObject<util.Extend<T["_zod"]["def"]["shape"], U>, T["_zod"]["extra"]>;
+// export function merge(a: ZodObjectLike, b: ZodObjectLike): ZodObjectLike {
+//   return util.mergeObjectLike(a, b);
+// }
 
 // .pick
-export function pick<T extends ZodObjectLike, M extends util.Exactly<util.Mask<keyof T["_zod"]["def"]["shape"]>, M>>(
-  schema: T,
-  mask: M
-): T["_zod"]["def"]["type"] extends "interface"
-  ? ZodInterface<
-      util.Flatten<Pick<T["_zod"]["def"]["shape"], keyof T["_zod"]["def"]["shape"] & keyof M>>,
-      {
-        optional: Extract<T["_zod"]["optional"], keyof M>;
-        defaulted: Extract<T["_zod"]["defaulted"], keyof M>;
-        extra: T["_zod"]["extra"];
-      }
-    >
-  : ZodObject<
-      util.Flatten<Pick<T["_zod"]["def"]["shape"], keyof T["_zod"]["def"]["shape"] & keyof M>>,
-      T["_zod"]["extra"]
-    >;
-export function pick(schema: ZodObjectLike, mask: object) {
-  // const picked = util.pick(schema, mask);
-  return util.pick(schema, mask);
+// export function pick<T extends ZodObjectLike, M extends util.Exactly<util.Mask<keyof T["_zod"]["def"]["shape"]>, M>>(
+//   schema: T,
+//   mask: M
+// ): T["_zod"]["def"]["type"] extends "interface"
+//   ? ZodInterface<
+//       util.Flatten<Pick<T["_zod"]["def"]["shape"], keyof T["_zod"]["def"]["shape"] & keyof M>>,
+//       {
+//         optional: Extract<T["_zod"]["optional"], keyof M>;
+//         defaulted: Extract<T["_zod"]["defaulted"], keyof M>;
+//         extra: T["_zod"]["extra"];
+//       }
+//     >
+//   : ZodObject<
+//       util.Flatten<Pick<T["_zod"]["def"]["shape"], keyof T["_zod"]["def"]["shape"] & keyof M>>,
+//       T["_zod"]["extra"]
+//     >;
+// export function pick(schema: ZodObjectLike, mask: object) {
+//   // const picked = util.pick(schema, mask);
+//   return util.pick(schema, mask);
+// }
+
+// // .omit
+// export function omit<
+//   T extends ZodObjectLike,
+//   const M extends util.Exactly<util.Mask<keyof T["_zod"]["def"]["shape"]>, M>,
+// >(
+//   schema: T,
+//   mask: M
+// ): T["_zod"]["def"]["type"] extends "interface"
+//   ? ZodInterface<
+//       util.Flatten<Omit<T["_zod"]["def"]["shape"], keyof M>>,
+//       {
+//         optional: Exclude<T["_zod"]["optional"], keyof M>;
+//         defaulted: Exclude<T["_zod"]["defaulted"], keyof M>;
+//         extra: T["_zod"]["extra"];
+//       }
+//     >
+//   : ZodObject<util.Flatten<Omit<T["_zod"]["def"]["shape"], keyof M>>, T["_zod"]["extra"]>;
+
+// export function omit(schema: ZodObjectLike, mask: object) {
+//   return util.omit(schema, mask);
+// }
+export function partial<T extends object>(shape: T): Partial<T> {
+  return shape;
 }
 
-// .omit
-export function omit<
-  T extends ZodObjectLike,
-  const M extends util.Exactly<util.Mask<keyof T["_zod"]["def"]["shape"]>, M>,
->(
-  schema: T,
-  mask: M
-): T["_zod"]["def"]["type"] extends "interface"
-  ? ZodInterface<
-      util.Flatten<Omit<T["_zod"]["def"]["shape"], keyof M>>,
-      {
-        optional: Exclude<T["_zod"]["optional"], keyof M>;
-        defaulted: Exclude<T["_zod"]["defaulted"], keyof M>;
-        extra: T["_zod"]["extra"];
-      }
-    >
-  : ZodObject<util.Flatten<Omit<T["_zod"]["def"]["shape"], keyof M>>, T["_zod"]["extra"]>;
+// export function partial<T extends ZodObjectLike>(
+//   schema: T
+// ): T["_zod"]["def"]["type"] extends "interface"
+//   ? ZodInterface<
+//       // T['_zod']["shape"],
+//       {
+//         [k in keyof T["_zod"]["def"]["shape"]]: ZodOptional<T["_zod"]["def"]["shape"][k]>;
+//       },
+//       {
+//         optional: string & keyof T["_zod"]["def"]["shape"];
+//         defaulted: never;
+//         extra: T["_zod"]["extra"];
+//       }
+//     >
+//   : ZodObject<
+//       {
+//         [k in keyof T["_zod"]["def"]["shape"]]: ZodOptional<T["_zod"]["def"]["shape"][k]>;
+//       },
+//       T["_zod"]["extra"]
+//     >;
+// export function partial<T extends ZodObjectLike, M extends util.Exactly<util.Mask<keyof T["_zod"]["def"]["shape"]>, M>>(
+//   schema: T,
+//   mask: M
+// ): T["_zod"]["def"]["type"] extends "interface"
+//   ? ZodInterface<
+//       util.Extend<
+//         T["_zod"]["def"]["shape"],
+//         {
+//           [k in keyof M & keyof T["_zod"]["def"]["shape"]]: ZodOptional<T["_zod"]["def"]["shape"][k]>;
+//         }
+//       >,
+//       {
+//         optional: string & (T["_zod"]["optional"] | keyof M);
+//         defaulted: T["_zod"]["defaulted"];
+//         extra: T["_zod"]["extra"];
+//       }
+//     >
+//   : ZodObject<
+//       {
+//         [k in keyof T["_zod"]["def"]["shape"]]: k extends keyof M
+//           ? ZodOptional<T["_zod"]["def"]["shape"][k]>
+//           : T["_zod"]["def"]["shape"][k];
+//       },
+//       T["_zod"]["extra"]
+//     >;
 
-export function omit(schema: ZodObjectLike, mask: object) {
-  return util.omit(schema, mask);
-}
+// export function partial(schema: ZodObjectLike, mask?: object): ZodObjectLike {
+//   return util.partialObjectLike(ZodOptional, schema, mask);
+// }
 
-export function partial<T extends ZodObjectLike>(
-  schema: T
-): T["_zod"]["def"]["type"] extends "interface"
-  ? ZodInterface<
-      // T['_zod']["shape"],
-      {
-        [k in keyof T["_zod"]["def"]["shape"]]: ZodOptional<T["_zod"]["def"]["shape"][k]>;
-      },
-      {
-        optional: string & keyof T["_zod"]["def"]["shape"];
-        defaulted: never;
-        extra: T["_zod"]["extra"];
-      }
-    >
-  : ZodObject<
-      {
-        [k in keyof T["_zod"]["def"]["shape"]]: ZodOptional<T["_zod"]["def"]["shape"][k]>;
-      },
-      T["_zod"]["extra"]
-    >;
-export function partial<T extends ZodObjectLike, M extends util.Exactly<util.Mask<keyof T["_zod"]["def"]["shape"]>, M>>(
-  schema: T,
-  mask: M
-): T["_zod"]["def"]["type"] extends "interface"
-  ? ZodInterface<
-      util.Extend<
-        T["_zod"]["def"]["shape"],
-        {
-          [k in keyof M & keyof T["_zod"]["def"]["shape"]]: ZodOptional<T["_zod"]["def"]["shape"][k]>;
-        }
-      >,
-      {
-        optional: string & (T["_zod"]["optional"] | keyof M);
-        defaulted: T["_zod"]["defaulted"];
-        extra: T["_zod"]["extra"];
-      }
-    >
-  : ZodObject<
-      {
-        [k in keyof T["_zod"]["def"]["shape"]]: k extends keyof M
-          ? ZodOptional<T["_zod"]["def"]["shape"][k]>
-          : T["_zod"]["def"]["shape"][k];
-      },
-      T["_zod"]["extra"]
-    >;
-
-export function partial(schema: ZodObjectLike, mask?: object): ZodObjectLike {
-  return util.partialObjectLike(ZodOptional, schema, mask);
-}
-
-// .required
-export function required<T extends { _subtype: "object" } & ZodObject>(
-  schema: T
-): ZodObject<{
-  [k in keyof T["_zod"]["def"]["shape"]]: ZodNonOptional<T["_zod"]["def"]["shape"][k]>;
-}>;
-export function required<
-  T extends { _subtype: "object" } & ZodObject,
-  M extends util.Exactly<util.Mask<keyof T["_zod"]["def"]["shape"]>, M>,
->(
-  schema: T,
-  mask: M
-): ZodObject<
-  util.Extend<
-    T["_zod"]["def"]["shape"],
-    {
-      [k in keyof M & keyof T["_zod"]["def"]["shape"]]: ZodNonOptional<T["_zod"]["def"]["shape"][k]>;
-    }
-  >
->;
-export function required<T extends { _subtype: "interface" } & ZodInterface>(
-  schema: T
-): ZodInterface<
-  {
-    [k in keyof T["_zod"]["def"]["shape"]]: ZodNonOptional<T["_zod"]["def"]["shape"][k]>;
-  },
-  {
-    optional: never;
-    defaulted: T["_zod"]["defaulted"];
-    extra: T["_zod"]["extra"];
-  }
->;
-export function required<
-  T extends { _subtype: "interface" } & ZodInterface,
-  M extends util.Mask<keyof T["_zod"]["output"]>,
->(
-  schema: T,
-  mask: M
-): ZodInterface<
-  util.Extend<
-    T["_zod"]["def"]["shape"],
-    {
-      [k in keyof M & keyof T["_zod"]["def"]["shape"]]: ZodNonOptional<T["_zod"]["def"]["shape"][k]>;
-    }
-  >,
-  {
-    optional: Exclude<T["_zod"]["optional"], keyof M>;
-    defaulted: T["_zod"]["defaulted"];
-    extra: T["_zod"]["extra"];
-  }
->;
-export function required(schema: ZodObjectLike, mask?: object): ZodObjectLike {
-  return util.requiredObjectLike(ZodNonOptional, schema, mask);
-}
+// // .required
+// export function required<T extends { _subtype: "object" } & ZodObject>(
+//   schema: T
+// ): ZodObject<{
+//   [k in keyof T["_zod"]["def"]["shape"]]: ZodNonOptional<T["_zod"]["def"]["shape"][k]>;
+// }>;
+// export function required<
+//   T extends { _subtype: "object" } & ZodObject,
+//   M extends util.Exactly<util.Mask<keyof T["_zod"]["def"]["shape"]>, M>,
+// >(
+//   schema: T,
+//   mask: M
+// ): ZodObject<
+//   util.Extend<
+//     T["_zod"]["def"]["shape"],
+//     {
+//       [k in keyof M & keyof T["_zod"]["def"]["shape"]]: ZodNonOptional<T["_zod"]["def"]["shape"][k]>;
+//     }
+//   >
+// >;
+// export function required<T extends { _subtype: "interface" } & ZodInterface>(
+//   schema: T
+// ): ZodInterface<
+//   {
+//     [k in keyof T["_zod"]["def"]["shape"]]: ZodNonOptional<T["_zod"]["def"]["shape"][k]>;
+//   },
+//   {
+//     optional: never;
+//     defaulted: T["_zod"]["defaulted"];
+//     extra: T["_zod"]["extra"];
+//   }
+// >;
+// export function required<
+//   T extends { _subtype: "interface" } & ZodInterface,
+//   M extends util.Mask<keyof T["_zod"]["output"]>,
+// >(
+//   schema: T,
+//   mask: M
+// ): ZodInterface<
+//   util.Extend<
+//     T["_zod"]["def"]["shape"],
+//     {
+//       [k in keyof M & keyof T["_zod"]["def"]["shape"]]: ZodNonOptional<T["_zod"]["def"]["shape"][k]>;
+//     }
+//   >,
+//   {
+//     optional: Exclude<T["_zod"]["optional"], keyof M>;
+//     defaulted: T["_zod"]["defaulted"];
+//     extra: T["_zod"]["extra"];
+//   }
+// >;
+// export function required(schema: ZodObjectLike, mask?: object): ZodObjectLike {
+//   return util.requiredObjectLike(ZodNonOptional, schema, mask);
+// }
 
 // ZodUnion
 export interface ZodUnion<T extends readonly core.$ZodType[] = readonly core.$ZodType[]> extends ZodType {

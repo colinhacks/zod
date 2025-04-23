@@ -2,7 +2,7 @@ import { expect, expectTypeOf, test } from "vitest";
 
 import * as z from "zod";
 
-test("qin qout passthrough", () => {
+test("opt passthrough", () => {
   const object = z.object({
     a: z.lazy(() => z.string()),
     b: z.lazy(() => z.string().optional()),
@@ -36,11 +36,7 @@ test("qin qout passthrough", () => {
     c: "default",
   });
 
-  const lazyString = z.lazy(() => z.string().optional());
-  expect(lazyString._zod.qout).toEqual("true");
-  expect(object._zod.def.optional).toMatchInlineSnapshot(`
-    [
-      "b",
-    ]
-  `);
+  expect(z.lazy(() => z.string())._zod.opt).toEqual("required");
+  expect(z.lazy(() => z.string().optional())._zod.opt).toEqual("optional");
+  expect(z.lazy(() => z.string().default("asdf"))._zod.opt).toEqual("defaulted");
 });
