@@ -1082,7 +1082,7 @@ export interface ZodInterface<
 
   keyof(): ZodEnum<util.ToEnum<util.InterfaceKeys<string & keyof Shape>>>;
   catchall<T extends core.$ZodType>(
-    schema: T
+    schema?: T
   ): ZodInterface<
     Shape,
     {
@@ -1259,7 +1259,7 @@ export interface ZodObject<
   shape: Shape;
 
   keyof(): ZodEnum<util.ToEnum<keyof Shape & string>>;
-  catchall<T extends core.$ZodType>(schema: T): ZodObject<Shape, Record<string, T["_zod"]["output"]>>;
+  catchall<T extends core.$ZodType>(schema?: T): ZodObject<Shape, Record<string, T["_zod"]["output"]>>;
 
   /** @deprecated Use `z.looseObject()` or `.loose()` instead. */
   passthrough(): ZodObject<Shape, Record<string, unknown>>;
