@@ -26,7 +26,7 @@ test("branded types", () => {
   // number branding
   const numberSchema = z.number().brand<42>();
   type NumberSchema = z.infer<typeof numberSchema>;
-  expectTypeOf<NumberSchema>().toEqualTypeOf<number & { [z.$brand]: { 42: true } }>();
+  expectTypeOf<NumberSchema>().toEqualTypeOf<number & { [z.$brand]: 42 }>();
 
   // symbol branding
   const MyBrand: unique symbol = Symbol("hello");

@@ -5,6 +5,15 @@ test("type inference", () => {
   const booleanRecord = z.record(z.string(), z.boolean());
   type booleanRecord = typeof booleanRecord._output;
 
+  const recordWithStringKeys = z.record(z.string(), z.number());
+  type recordWithStringKeys = z.infer<typeof recordWithStringKeys>;
+
+  const recordWithNumberKeys = z.record(z.number(), z.number());
+  type recordWithNumberKeys = z.infer<typeof recordWithNumberKeys>;
+
+  const recordWithSymbolKeys = z.record(z.symbol(), z.number());
+  type recordWithSymbolKeys = z.infer<typeof recordWithSymbolKeys>;
+
   const recordWithEnumKeys = z.record(z.enum(["Tuna", "Salmon"]), z.string());
   type recordWithEnumKeys = z.infer<typeof recordWithEnumKeys>;
 
@@ -14,10 +23,28 @@ test("type inference", () => {
   const recordWithLiteralUnionKeys = z.record(z.union([z.literal("Tuna"), z.literal("Salmon")]), z.string());
   type recordWithLiteralUnionKeys = z.infer<typeof recordWithLiteralUnionKeys>;
 
+  const recordWithBrandedStringKeys = z.record(z.string().brand("SomeBrand"), z.number());
+  type recordWithBrandedStringKeys = z.infer<typeof recordWithBrandedStringKeys>;
+
+  const recordWithBrandedNumberKeys = z.record(z.number().brand("SomeBrand"), z.number());
+  type recordWithBrandedNumberKeys = z.infer<typeof recordWithBrandedNumberKeys>;
+
+  const recordWithBrandedSymbolKeys = z.record(z.symbol().brand("SomeBrand"), z.number());
+  type recordWithBrandedSymbolKeys = z.infer<typeof recordWithBrandedSymbolKeys>;
+
   expectTypeOf<booleanRecord>().toEqualTypeOf<Record<string, boolean>>();
+
+  expectTypeOf<recordWithStringKeys>().toEqualTypeOf<Record<string, number>>();
+  expectTypeOf<recordWithNumberKeys>().toEqualTypeOf<Record<number, number>>();
+  expectTypeOf<recordWithSymbolKeys>().toEqualTypeOf<Record<symbol, number>>();
+
   expectTypeOf<recordWithEnumKeys>().toEqualTypeOf<Record<"Tuna" | "Salmon", string>>();
   expectTypeOf<recordWithLiteralKey>().toEqualTypeOf<Record<"Tuna" | "Salmon", string>>();
   expectTypeOf<recordWithLiteralUnionKeys>().toEqualTypeOf<Partial<Record<"Tuna" | "Salmon", string>>>();
+
+  expectTypeOf<recordWithBrandedStringKeys>().toEqualTypeOf<Record<string & z.$brand<"SomeBrand">, number>>();
+  expectTypeOf<recordWithBrandedNumberKeys>().toEqualTypeOf<Record<number & z.$brand<"SomeBrand">, number>>();
+  expectTypeOf<recordWithBrandedSymbolKeys>().toEqualTypeOf<Record<symbol & z.$brand<"SomeBrand">, number>>();
 });
 
 test("enum exhaustiveness", () => {
