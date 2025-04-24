@@ -48,11 +48,11 @@ test("pick parse - fail", () => {
 
 test("pick - remove optional", () => {
   const schema = z.interface({ a: z.string(), "b?": z.string() });
-  expect(schema._zod.def.shape.a.optionality).toEqual("required");
+  expect(schema._zod.def.shape.a.optionality).toEqual(undefined);
   expect("b?" in schema._zod.def.shape).toEqual(false);
   expect("b" in schema._zod.def.shape).toEqual(true);
   expect(schema._zod.def.shape.b!.optionality).toEqual("optional");
-  expect(schema.pick({ a: true })._zod.def.shape.a.optionality).toEqual("required");
+  expect(schema.pick({ a: true })._zod.def.shape.a.optionality).toEqual(undefined);
   expect("b" in schema.pick({ a: true })._zod.def.shape).toEqual(false);
   expect("a" in schema.pick({ b: true })._zod.def.shape).toEqual(false);
 });
@@ -91,7 +91,7 @@ test("omit parse - fail", () => {
 
 test("omit - remove optional", () => {
   const schema = z.interface({ a: z.string(), "b?": z.string() });
-  expect(schema._zod.def.shape.a.optionality).toEqual("required");
+  expect(schema._zod.def.shape.a.optionality).toEqual(undefined);
   expect("a" in schema.omit({ a: true })._zod.def.shape).toEqual(false);
   // expect(schema.omit({ b: true })._zod.def.optional).toEqual([]);
 });

@@ -24,10 +24,10 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
   def: this["_zod"]["def"];
   /** @deprecated Use `.def` instead. */
   _def: this["_zod"]["def"];
-  /** @deprecated Use `z.output<typeof schema>` instead. */
-  _output: this["_zod"]["output"];
-  /** @deprecated Use `z.input<typeof schema>` instead. */
-  _input: this["_zod"]["input"];
+  // /** @deprecated Use `z.output<typeof schema>` instead. */
+  // _output: this["_zod"]["output"];
+  // /** @deprecated Use `z.input<typeof schema>` instead. */
+  // _input: this["_zod"]["input"];
   // base methods
   check(...checks: (core.CheckFn<this["_zod"]["output"]> | core.$ZodCheck<this["_zod"]["output"]>)[]): this;
   clone(def?: this["_zod"]["def"]): this;
@@ -1009,7 +1009,10 @@ export function array<T extends core.$ZodType>(element: core.$ZodType, params?: 
 
 // ZodObjectLike
 export interface ZodObjectLike<out O = object, out I = object> extends ZodType {
-  _zod: core.$ZodObjectLikeInternals<O, I>;
+  _zod: core.$ZodObjectLikeInternals<{
+    output: O;
+    input: I;
+  }>;
 }
 export const ZodObjectLike: core.$constructor<ZodObjectLike> = /*@__PURE__*/ core.$constructor(
   "ZodObjectLike",
@@ -1177,6 +1180,17 @@ export const ZodInterface: core.$constructor<ZodInterface> = /*@__PURE__*/ core.
     core.$ZodInterface.init(inst, def);
     ZodType.init(inst, def);
 
+    const shape = {} as any;
+    for (const key in inst._zod.def.shape) {
+      const value = inst._zod.def.shape[key];
+      if (value.optionality === "optional") {
+        shape[key + "?"] = value;
+      } else {
+        shape[key] = value;
+      }
+    }
+    inst.shape = shape;
+
     inst.keyof = () => _enum(Object.keys(inst._zod.def.shape));
     inst.catchall = (catchall) => inst.clone({ ...inst._zod.def, catchall });
     inst.loose = () => inst.clone({ ...inst._zod.def, catchall: unknown() });
@@ -1203,7 +1217,7 @@ function _interface<T extends core.$ZodLooseShape>(
   shape: T,
   params?: string | core.$ZodInterfaceParams,
   Class: util.Constructor<ZodInterface> = ZodInterface
-): ZodInterface<util.Flatten<ProcessInterfaceShape<T>>, {}, {}> {
+): ZodInterface<T, {}, {}> {
   const cleaned = util.cached(() => util.cleanInterfaceShape(shape));
   const def: core.$ZodInterfaceDef = {
     type: "interface",
@@ -1572,7 +1586,7 @@ export function looseObject<T extends core.$ZodShape>(
 // export function omit(schema: ZodObjectLike, mask: object) {
 //   return util.omit(schema, mask);
 // }
-export function partial<T extends object>(shape: T): Partial<T> {
+export function partial<T>(shape: T): Partial<T> {
   return shape;
 }
 

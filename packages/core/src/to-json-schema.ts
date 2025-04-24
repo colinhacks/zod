@@ -295,9 +295,9 @@ export class JSONSchemaGenerator {
             [...allKeys].filter((key) => {
               const opt = def.shape[key].optionality;
               if (this.io === "input") {
-                return opt === "required";
+                return opt === undefined;
               } else {
-                return opt === "required" || opt === "defaulted";
+                return opt === undefined || opt === "defaulted";
               }
             })
           );

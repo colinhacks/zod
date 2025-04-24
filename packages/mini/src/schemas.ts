@@ -7,7 +7,7 @@ export * as iso from "./iso.js";
 
 type SomeType = core.$ZodType;
 
-export interface ZodMiniType<out O = unknown, out I = unknown> extends core.$ZodType<O, I> {
+export interface ZodMiniType extends core.$ZodType<any, any> {
   check(...checks: (core.CheckFn<this["_zod"]["output"]> | core.$ZodCheck<this["_zod"]["output"]>)[]): this;
   clone(def?: this["_zod"]["def"]): this;
   register<R extends core.$ZodRegistry>(
@@ -685,7 +685,10 @@ export function array<T extends SomeType>(element: SomeType, params?: any): ZodM
 
 // ZodMiniObjectLike
 export interface ZodMiniObjectLike<out O = object, out I = object> extends ZodMiniType {
-  _zod: core.$ZodObjectLikeInternals<O, I>;
+  _zod: core.$ZodObjectLikeInternals<{
+    output: O;
+    input: I;
+  }>;
   shape: core.$ZodShape;
 }
 export const ZodMiniObjectLike: core.$constructor<ZodMiniObjectLike> = /*@__PURE__*/ core.$constructor(
@@ -713,8 +716,8 @@ export interface ZodMiniInterface<
 > extends ZodMiniType {
   _zod: core.$ZodInterfaceInternals<Shape, OutExtra, InExtra>;
   shape: Shape;
-  _rawToClean: util.ToCleanMap<Shape>;
-  _cleanToRaw: util.FromCleanMap<Shape>;
+  // _rawToClean: util.ToCleanMap<Shape>;
+  // _cleanToRaw: util.FromCleanMap<Shape>;
 }
 export const ZodMiniInterface: core.$constructor<ZodMiniInterface> = /*@__PURE__*/ core.$constructor(
   "ZodMiniInterface",
@@ -734,7 +737,7 @@ function _interface<T extends core.$ZodLooseShape>(
   shape: T,
   params?: string | core.$ZodInterfaceParams,
   Class: util.Constructor<ZodMiniInterface> = ZodMiniInterface
-): ZodMiniInterface<ProcessInterfaceShape<T>, {}, {}> {
+): ZodMiniInterface<T, {}, {}> {
   const cleaned = util.cached(() => util.cleanInterfaceShape(shape));
   const def: core.$ZodInterfaceDef = {
     type: "interface",

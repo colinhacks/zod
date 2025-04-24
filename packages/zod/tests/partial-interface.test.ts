@@ -125,7 +125,7 @@ test("partial with mask", async () => {
   expect(masked._zod.def.shape.field!.type).toBeInstanceOf(z.ZodDefault);
   expect(masked._zod.def.shape.field!.optionality).toEqual("optional");
   expect(masked._zod.def.shape.country.type).toBeInstanceOf(z.ZodString);
-  expect(masked._zod.def.shape.country.optionality).toEqual("required");
+  expect(masked._zod.def.shape.country.optionality).toEqual(undefined);
 
   masked.parse({ country: "US" });
   await masked.parseAsync({ country: "US" });
@@ -142,10 +142,10 @@ test("partial with mask -- ignore falsy values", async () => {
   // @ts-expect-error
   const masked = object.partial({ name: true, country: false }).strict();
 
-  expect(object._zod.def.shape.name!.optionality).toEqual("required");
-  expect(object._zod.def.shape.country!.optionality).toEqual("required");
+  expect(object._zod.def.shape.name!.optionality).toEqual(undefined);
+  expect(object._zod.def.shape.country!.optionality).toEqual(undefined);
   expect(masked._zod.def.shape.name!.optionality).toEqual("optional");
-  expect(masked._zod.def.shape.country!.optionality).toEqual("required");
+  expect(masked._zod.def.shape.country!.optionality).toEqual(undefined);
 
   masked.parse({ country: "US" });
   await masked.parseAsync({ country: "US" });

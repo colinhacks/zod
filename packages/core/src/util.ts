@@ -546,7 +546,7 @@ export function objectShapeMeta(rawShape: schemas.$ZodShape): schemas.$ZodShapeM
   for (const key in rawShape) {
     shape[key] = {
       type: rawShape[key],
-      optionality: rawShape[key]._zod.opt,
+      optionality: rawShape[key]._zod.optionality,
     };
     // if (rawShape[key]._zod.qin) {
     //   shape[key].optionality = "defaulted";
@@ -654,14 +654,14 @@ export function cleanInterfaceShape<T extends schemas.$ZodLooseShape>(
   const keyMap: Record<string, string> = {};
   const shape: Writeable<schemas.$ZodShapeMeta> = {};
 
-  for (const [key, type] of Object.entries(_shape)) {
+  for (const [key, type] of Object.entries(_shape as schemas.$ZodShape)) {
     if (!type._zod) {
       throw new Error(`Invalid value in shape at "${key}": not a Zod schema`);
     }
     console.log("key", key);
     const cleanKey = key.endsWith("?") ? key.slice(0, -1) : key;
 
-    shape[cleanKey] = { type, optionality: type._zod.opt };
+    shape[cleanKey] = { type, optionality: type._zod.optionality };
 
     // question mark overrides entry optionality
     if (key.endsWith("?")) {
@@ -669,7 +669,7 @@ export function cleanInterfaceShape<T extends schemas.$ZodLooseShape>(
     }
 
     // default overrides question mark
-    if (type._zod.opt === "defaulted") {
+    if (type._zod.optionality === "defaulted") {
       shape[cleanKey].optionality = "defaulted";
     }
 
@@ -859,7 +859,7 @@ export function requiredObjectLike(
           type: "nonoptional",
           innerType: oldShape[key].type,
         }),
-        optionality: "required",
+        // optionality: undefined,
       };
     }
   } else {
@@ -870,7 +870,7 @@ export function requiredObjectLike(
           type: "nonoptional",
           innerType: oldShape[key].type,
         }),
-        optionality: "required",
+        // optionality: undefined,
       };
     }
   }
