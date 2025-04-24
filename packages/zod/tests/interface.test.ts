@@ -136,7 +136,7 @@ test("make schema strip with catchall", () => {
   const data = { points: 2314, unknown: "asdf" };
   const result = schema.safeParse(data);
   expect(result.data).toEqual({ points: 2314 });
-})
+});
 
 test("extend overrides existing", async () => {
   const a = z.interface({ a: z.string() });

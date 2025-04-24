@@ -165,7 +165,7 @@ test("catchall overrides strict", () => {
 test("make schema strip with catchall", () => {
   const val = z.strictObject({ points: z.number() }).catchall().parse(data);
   expect(val).toEqual({ points: 2314 });
-})
+});
 
 test("optional keys are unset", async () => {
   const SNamedEntity = z.object({
