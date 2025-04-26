@@ -71,7 +71,7 @@ const Nouns: {
 const error: errors.$ZodErrorMap = (issue) => {
   switch (issue.code) {
     case "invalid_type":
-      return `Entrada inválida: esperado ${issue.expected}, recebido ${parsedType(issue.input)}`;
+      return `Tipo inválido: esperado ${issue.expected}, recebido ${parsedType(issue.input)}`;
     case "invalid_value":
       if (issue.values.length === 1) return `Entrada inválida: esperado ${util.stringifyPrimitive(issue.values[0])}`;
       return `Opção inválida: esperada uma das ${util.joinValues(issue.values, "|")}`;
