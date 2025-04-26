@@ -60,9 +60,9 @@ const Nouns: {
   ipv6: "endereço IPv6",
   cidrv4: "faixa IPv4",
   cidrv6: "faixa IPv6",
-  base64: "string codificada em base64",
+  base64: "texto codificado em base64",
   base64url: "URL codificada em base64",
-  json_string: "string JSON",
+  json_string: "texto JSON",
   e164: "número E.164",
   jwt: "JWT",
   template_literal: "entrada",
@@ -93,10 +93,10 @@ const error: errors.$ZodErrorMap = (issue) => {
     }
     case "invalid_format": {
       const _issue = issue as errors.$ZodStringFormatIssues;
-      if (_issue.format === "starts_with") return `String inválida: deve começar com "${issue}"`;
-      if (_issue.format === "ends_with") return `String inválida: deve terminar com "${_issue.suffix}"`;
-      if (_issue.format === "includes") return `String inválida: deve incluir "${_issue.includes}"`;
-      if (_issue.format === "regex") return `String inválida: deve corresponder ao padrão ${_issue.pattern}`;
+      if (_issue.format === "starts_with") return `Texto inválido: deve começar com "${issue}"`;
+      if (_issue.format === "ends_with") return `Texto inválido: deve terminar com "${_issue.suffix}"`;
+      if (_issue.format === "includes") return `Texto inválido: deve incluir "${_issue.includes}"`;
+      if (_issue.format === "regex") return `Texto inválido: deve corresponder ao padrão ${_issue.pattern}`;
       return `${Nouns[_issue.format] ?? issue.format} inválido`;
     }
     case "not_multiple_of":
