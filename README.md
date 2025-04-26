@@ -43,7 +43,7 @@
   <a href="https://www.stainless.com/?utm_source=zod">
     <picture width="95%" >
       <source media="(prefers-color-scheme: dark)" srcset="https://i.imgur.com/bjyoaHY.jpeg">
-      <img alt="fern logo" src="https://i.imgur.com/bjyoaHY.jpeg" width="95%">
+      <img alt="stainless logo" src="https://i.imgur.com/bjyoaHY.jpeg" width="95%">
     </picture>
   </a>
   <br/>
