@@ -27,7 +27,7 @@ export const parsedType = (data: any): string => {
       if (data === null) {
         return "nulo";
       }
-      if (Object.getPrototypeOf(data) !== Object.prototype) {
+      if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
         return data.constructor.name;
       }
     }
