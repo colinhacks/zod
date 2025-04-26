@@ -5,8 +5,8 @@ import * as util from "../util.js";
 const Sizable: Record<string, { unit: string; verb: string }> = {
   string: { unit: "caracteres", verb: "ter" },
   file: { unit: "bytes", verb: "ter" },
-  array: { unit: "elementos", verb: "ter" },
-  set: { unit: "elementos", verb: "ter" },
+  array: { unit: "itens", verb: "ter" },
+  set: { unit: "itens", verb: "ter" },
 };
 
 function getSizing(origin: string): { unit: string; verb: string } | null {
