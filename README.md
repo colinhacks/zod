@@ -37,13 +37,13 @@
 <br/>
 <br/>
 
-<h2 align="center">Featured sponsor: Fern</h2>
+<h2 align="center">Featured sponsor: Stainless</h2>
 
 <div align="center">
-  <a href="https://link.buildwithfern.com/zod-partnership">
+  <a href="https://www.stainless.com/?utm_source=zod">
     <picture width="95%" >
-      <source media="(prefers-color-scheme: dark)" srcset="https://i.imgur.com/ntvK08h.png">
-      <img alt="fern logo" src="https://i.imgur.com/pqyEkg5.png" width="95%">
+      <source media="(prefers-color-scheme: dark)" srcset="https://i.imgur.com/bjyoaHY.jpeg">
+      <img alt="fern logo" src="https://i.imgur.com/bjyoaHY.jpeg" width="95%">
     </picture>
   </a>
   <br/>
