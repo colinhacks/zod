@@ -38,7 +38,7 @@ export const parsedType = (data: any): string => {
 const Nouns: {
   [k in $ZodStringFormats | (string & {})]?: string;
 } = {
-  regex: "entrada",
+  regex: "padrão",
   email: "endereço de e-mail",
   url: "URL",
   emoji: "emoji",
