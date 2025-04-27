@@ -190,3 +190,24 @@ export const isAsync = <T>(
   x: ParseReturnType<T>
 ): x is AsyncParseReturnType<T> =>
   typeof Promise !== "undefined" && x instanceof Promise;
+
+export function getBestValidationResult<T>(
+  results: { ctx: ParseContext; result: SyncParseReturnType<T> }[]
+): { result: SyncParseReturnType<T>; ctx: ParseContext } | undefined {
+  // First look for a valid result
+  for (const item of results) {
+    if (item.result.status === "valid") {
+      return item;
+    }
+  }
+  
+  // Then look for a dirty result
+  for (const item of results) {
+    if (item.result.status === "dirty") {
+      return item;
+    }
+  }
+  
+  // No valid or dirty results found
+  return undefined;
+}

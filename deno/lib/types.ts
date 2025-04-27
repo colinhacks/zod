@@ -5,6 +5,7 @@ import {
   addIssueToContext,
   AsyncParseReturnType,
   DIRTY,
+  getBestValidationResult,
   INVALID,
   isAborted,
   isAsync,
@@ -660,7 +661,7 @@ const durationRegex =
 const emailRegex =
   /^(?!\.)(?!.*\.\.)([A-Z0-9_'+\-\.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z0-9\-]*\.)+[A-Z]{2,}$/i;
 // const emailRegex =
-//   /^[a-z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-z0-9-]+(?:\.[a-z0-9\-]+)*$/i;
+//   /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9-]+(?:\.[a-z0-9\-]+)*$/i;
 
 // from https://thekevinscott.com/emojis-in-javascript/#writing-a-regular-expression
 const _emojiRegex = `^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$`;
@@ -3094,37 +3095,6 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
     const { ctx } = this._processInputParams(input);
     const options = this._def.options;
 
-    function handleResults(
-      results: { ctx: ParseContext; result: SyncParseReturnType<any> }[]
-    ) {
-      // return first issue-free validation if it exists
-      for (const result of results) {
-        if (result.result.status === "valid") {
-          return result.result;
-        }
-      }
-
-      for (const result of results) {
-        if (result.result.status === "dirty") {
-          // add issues from dirty option
-
-          ctx.common.issues.push(...result.ctx.common.issues);
-          return result.result;
-        }
-      }
-
-      // return invalid
-      const unionErrors = results.map(
-        (result) => new ZodError(result.ctx.common.issues)
-      );
-
-      addIssueToContext(ctx, {
-        code: ZodIssueCode.invalid_union,
-        unionErrors,
-      });
-      return INVALID;
-    }
-
     if (ctx.common.async) {
       return Promise.all(
         options.map(async (option) => {
@@ -3136,6 +3106,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
             },
             parent: null,
           };
+
           return {
             result: await option._parseAsync({
               data: ctx.data,
@@ -3145,11 +3116,32 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
             ctx: childCtx,
           };
         })
-      ).then(handleResults);
+      ).then((results) => {
+        const bestResult = getBestValidationResult(results);
+
+        if (bestResult) {
+          if (bestResult.result.status === "dirty") {
+            ctx.common.issues.push(...bestResult.ctx.common.issues);
+          }
+          return bestResult.result;
+        }
+
+        // If no valid or dirty results, collect all errors
+        const unionErrors = results.map(
+          (result) => new ZodError(result.ctx.common.issues)
+        );
+
+        addIssueToContext(ctx, {
+          code: ZodIssueCode.invalid_union,
+          unionErrors,
+        });
+
+        return INVALID;
+      });
     } else {
-      let dirty: undefined | { result: DIRTY<any>; ctx: ParseContext } =
-        undefined;
-      const issues: ZodIssue[][] = [];
+      const results: { ctx: ParseContext; result: SyncParseReturnType<any> }[] =
+        [];
+
       for (const option of options) {
         const childCtx: ParseContext = {
           ...ctx,
@@ -3159,29 +3151,36 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
           },
           parent: null,
         };
+
         const result = option._parseSync({
           data: ctx.data,
           path: ctx.path,
           parent: childCtx,
         });
 
+        results.push({ result, ctx: childCtx });
+
+        // Return immediately on first valid result for better performance
         if (result.status === "valid") {
           return result;
-        } else if (result.status === "dirty" && !dirty) {
-          dirty = { result, ctx: childCtx };
-        }
-
-        if (childCtx.common.issues.length) {
-          issues.push(childCtx.common.issues);
         }
       }
 
-      if (dirty) {
-        ctx.common.issues.push(...dirty.ctx.common.issues);
-        return dirty.result;
+      // Find the best result (first dirty result if no valid ones)
+      const bestResult = getBestValidationResult(results);
+
+      if (bestResult) {
+        if (bestResult.result.status === "dirty") {
+          ctx.common.issues.push(...bestResult.ctx.common.issues);
+        }
+        return bestResult.result;
       }
 
-      const unionErrors = issues.map((issues) => new ZodError(issues));
+      // If all options failed, collect all errors
+      const unionErrors = results.map(
+        (result) => new ZodError(result.ctx.common.issues)
+      );
+
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_union,
         unionErrors,
