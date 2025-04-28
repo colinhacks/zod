@@ -834,8 +834,8 @@ z.string().cuid2();
 z.string().ulid();
 z.string().regex(regex);
 z.string().includes(string);
-z.string().startsWith(string);
-z.string().endsWith(string);
+z.string().startsWith(string | string[]);
+z.string().endsWith(string | string[]);
 z.string().datetime(); // ISO 8601; by default only `Z` timezone allowed
 z.string().ip(); // defaults to allow both IPv4 and IPv6
 z.string().cidr(); // defaults to allow both IPv4 and IPv6
@@ -875,7 +875,13 @@ z.string().emoji({ message: "Contains non-emoji characters" });
 z.string().uuid({ message: "Invalid UUID" });
 z.string().includes("tuna", { message: "Must include tuna" });
 z.string().startsWith("https://", { message: "Must provide secure URL" });
+z.string().startsWith(["https://", "http://"], {
+  message: "Must provide a valid URL starting with http:// or https://",
+});
 z.string().endsWith(".com", { message: "Only .com domains allowed" });
+z.string().endsWith([".com", ".org"], {
+  message: "Only .com or .org domains allowed",
+});
 z.string().datetime({ message: "Invalid datetime string! Must be UTC." });
 z.string().date({ message: "Invalid date string!" });
 z.string().time({ message: "Invalid time string!" });
