@@ -395,7 +395,7 @@ This now behaves identically to `z.array().min(1)`. The inferred type does not c
 const NonEmpty = z.array(z.string()).nonempty();
 
 type NonEmpty = z.infer<typeof NonEmpty>; 
-// Zod 3: [string, string[]]
+// Zod 3: [string, ...string[]]
 // Zod 4: string[]
 ```
 
@@ -403,7 +403,7 @@ The old behavior is now better represented with `z.tuple()` and a "rest" argumen
 
 ```ts
 z.tuple([z.string()], z.string());
-// => [string, string[]]
+// => [string, ...string[]]
 ```
 
 ## `z.promise()` deprecated
