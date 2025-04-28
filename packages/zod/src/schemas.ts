@@ -1266,7 +1266,7 @@ export interface ZodObject<
 
   loose(): ZodObject<Shape, Record<string, unknown>>;
 
-  /** The `z.strictObject()` API is preferred. */
+  /** @deprecated Use `z.strictObject()` instead. */
   strict(): ZodObject<Shape, {}>;
 
   /** @deprecated This is the default behavior. This method call is likely unnecessary. */
