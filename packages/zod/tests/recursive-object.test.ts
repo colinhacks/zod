@@ -156,4 +156,6 @@ test("complicated self-recursion", () => {
       },
     }),
   });
+
+  type _Category = z.output<typeof Category>;
 });

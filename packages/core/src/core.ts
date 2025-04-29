@@ -61,8 +61,12 @@ export class $ZodAsyncError extends Error {
 // export type input<T extends schemas.$ZodType> = T["_zod"]["input"];
 // export type output<T extends schemas.$ZodType> = T["_zod"]["output"];
 // export type input<T extends schemas.$ZodType> = T["_zod"] extends { "~input": infer I } ? I : T["_zod"]["input"];
-export type input<T extends schemas.$ZodType> = T["_zod"] extends { "~input": infer I } ? I : T["_zod"]["input"];
-export type output<T extends schemas.$ZodType> = T["_zod"] extends { "~output": infer O } ? O : T["_zod"]["output"];
+export type input<T extends schemas.$ZodType> = T["_zod"] extends { "~input": any }
+  ? T["_zod"]["~input"]
+  : T["_zod"]["input"];
+export type output<T extends schemas.$ZodType> = T["_zod"] extends { "~output": any }
+  ? T["_zod"]["~output"]
+  : T["_zod"]["output"];
 export type { output as infer };
 
 //////////////////////////////   CONFIG   ///////////////////////////////////////

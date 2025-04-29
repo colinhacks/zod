@@ -2,8 +2,14 @@ import * as z from "zod";
 
 const Category = z.object({
   name: z.string(),
+  get self() {
+    return Category.optional().nullable();
+  },
   get parent() {
     return Category.nullable();
+  },
+  get subcategories() {
+    return z.array(Category);
   },
 });
 
@@ -13,9 +19,6 @@ const Alazy = z.object({
   val: z.number(),
   get b() {
     return Blazy;
-  },
-  get a() {
-    return Alazy;
   },
 });
 type Alazy = z.infer<typeof Alazy>;
