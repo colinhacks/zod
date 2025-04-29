@@ -16,7 +16,7 @@ interface JSONSchemaGeneratorParams {
    * - `"any"` — Unrepresentable types become `{}` */
   unrepresentable?: "throw" | "any";
   /** Arbitrary custom logic that can be used to modify the generated JSON Schema. */
-  override?: (ctx: { zodSchema: schemas.$ZodType; jsonSchema: JSONSchema.BaseSchema; }) => void;
+  override?: (ctx: { zodSchema: schemas.$ZodType; jsonSchema: JSONSchema.BaseSchema }) => void;
   /** Whether to extract the `"input"` or `"output"` type. Relevant to transforms, Error converting schema to JSONz, defaults, coerced primitives, etc.
    * - `"output" — Default. Convert the output schema.
    * - `"input"` — Convert the input schema. */
@@ -45,13 +45,13 @@ interface EmitParams {
    */
   // uri?: (id: string) => string;
   external?:
-  | {
-    registry: $ZodRegistry<{ id?: string | undefined; }>;
-    uri: (id: string) => string;
-    // __shared: boolean;
-    defs: Record<string, JSONSchema.BaseSchema>;
-  }
-  | undefined;
+    | {
+        registry: $ZodRegistry<{ id?: string | undefined }>;
+        uri: (id: string) => string;
+        // __shared: boolean;
+        defs: Record<string, JSONSchema.BaseSchema>;
+      }
+    | undefined;
 }
 
 const formatMap: Partial<Record<checks.$ZodStringFormats, string>> = {
@@ -79,7 +79,7 @@ export class JSONSchemaGenerator {
   metadataRegistry: $ZodRegistry<Record<string, any>>;
   target: "draft-7" | "draft-2020-12";
   unrepresentable: "throw" | "any";
-  override: (ctx: { zodSchema: schemas.$ZodType; jsonSchema: JSONSchema.BaseSchema; }) => void;
+  override: (ctx: { zodSchema: schemas.$ZodType; jsonSchema: JSONSchema.BaseSchema }) => void;
   io: "input" | "output";
 
   counter = 0;
@@ -90,7 +90,7 @@ export class JSONSchemaGenerator {
     this.metadataRegistry = params?.metadata ?? globalRegistry;
     this.target = params?.target ?? "draft-2020-12";
     this.unrepresentable = params?.unrepresentable ?? "throw";
-    this.override = params?.override ?? (() => { });
+    this.override = params?.override ?? (() => {});
     this.io = params?.io ?? "output";
 
     this.seen = new Map();
@@ -573,7 +573,7 @@ export class JSONSchemaGenerator {
     // initialize result with root schema fields
     // Object.assign(result, seen.cached);
 
-    const makeURI = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): { ref: string; defId?: string; } => {
+    const makeURI = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): { ref: string; defId?: string } => {
       // comparing the seen objects because sometimes
       // multiple schemas map to the same seen object.
       // e.g. lazy
@@ -652,8 +652,8 @@ export class JSONSchemaGenerator {
         if (params.cycles === "throw") {
           throw new Error(
             "Cycle detected: " +
-            `#/${seen.cycle?.join("/")}/<root>` +
-            '\n\nSet the `cycles` parameter to `"ref"` to resolve cyclical schemas with defs.'
+              `#/${seen.cycle?.join("/")}/<root>` +
+              '\n\nSet the `cycles` parameter to `"ref"` to resolve cyclical schemas with defs.'
           );
         } else if (params.cycles === "ref") {
           extractToDef(entry);
@@ -724,18 +724,18 @@ function schemaToRef(seen: Seen, ref: string) {
   }
 }
 
-interface ToJSONSchemaParams extends Omit<JSONSchemaGeneratorParams & EmitParams, never> { }
+interface ToJSONSchemaParams extends Omit<JSONSchemaGeneratorParams & EmitParams, never> {}
 interface RegistryToJSONSchemaParams extends Omit<JSONSchemaGeneratorParams & EmitParams, never> {
   uri?: (id: string) => string;
 }
 
 export function toJSONSchema(schema: schemas.$ZodType, _params?: ToJSONSchemaParams): JSONSchema.BaseSchema;
 export function toJSONSchema(
-  registry: $ZodRegistry<{ id?: string | undefined; }>,
+  registry: $ZodRegistry<{ id?: string | undefined }>,
   _params?: RegistryToJSONSchemaParams
-): { schemas: Record<string, JSONSchema.BaseSchema>; };
+): { schemas: Record<string, JSONSchema.BaseSchema> };
 export function toJSONSchema(
-  input: schemas.$ZodType | $ZodRegistry<{ id?: string | undefined; }>,
+  input: schemas.$ZodType | $ZodRegistry<{ id?: string | undefined }>,
   _params?: ToJSONSchemaParams
 ): any {
   if (input instanceof $ZodRegistry) {
