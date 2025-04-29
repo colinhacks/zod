@@ -495,7 +495,7 @@ z.ZodString.create(); // ❌
 You no longer need to specify a discriminator key (though you still can if you wish; it is ignored).
 
 ```ts
-in Zod 4:
+// in Zod 4:
 const myUnion = z.discriminatedUnion([
   z.object({ type: z.literal("a"), a: z.string() }),
   z.object({ type: z.literal("b"), b: z.number() }),
