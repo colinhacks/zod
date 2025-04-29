@@ -126,9 +126,34 @@ test("mutual recursion", () => {
   expect(() => Alazy.parse({ val: "asdf" })).toThrow();
 });
 
+// TODO
 test("mutual recursion with cyclical data", () => {
   const a: any = { val: 1 };
   const b: any = { val: 2 };
   a.b = b;
   b.a = a;
+});
+
+test("complicated self-recursion", () => {
+  const Category = z.object({
+    name: z.string(),
+    age: z.optional(z.number()),
+    get nullself() {
+      return Category.nullable();
+    },
+    get optself() {
+      return Category.optional();
+    },
+    get self() {
+      return Category;
+    },
+    get subcategories() {
+      return z.array(Category);
+    },
+    nested: z.object({
+      get sub() {
+        return Category;
+      },
+    }),
+  });
 });

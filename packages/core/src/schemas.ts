@@ -112,6 +112,8 @@ export interface $ZodTypeInternals<
   output: Out; //extends { $out: infer O } ? O : Out;
   /** The inferred input type */
   input: In; //extends { $in: infer I } ? I : In;
+
+  types?: any;
   // $output: any;
   // $input: any;
   // "~output"?: unknown;
@@ -1478,15 +1480,15 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
 //////////////////////////////////////////
 
 export type $ZodShape = Readonly<{ [k: string]: $ZodType }>;
-export type $ZodShapeMetaValue<T extends $ZodType = $ZodType> = {
-  type: T;
-  optionality?: "optional" | "defaulted" | undefined;
-};
-export type $ZodShapeMeta<T extends $ZodShape = $ZodShape> = Readonly<{ [k in keyof T]: $ZodShapeMetaValue<T[k]> }>;
+// export type $ZodShapeMetaValue<T extends $ZodType = $ZodType> = {
+//   type: T;
+//   optionality?: "optional" | "defaulted" | undefined;
+// };
+// export type $ZodShapeMeta<T extends $ZodShape = $ZodShape> = Readonly<{ [k in keyof T]: $ZodShapeMetaValue<T[k]> }>;
 
 export interface $ZodObjectLikeDef<Shape extends $ZodShape = $ZodShape> extends $ZodTypeDef {
   type: "object" | "interface";
-  shape: $ZodShapeMeta<Shape>;
+  shape: Shape;
   // shapeMeta: $ZodShapeMeta;
   catchall?: $ZodType | undefined;
 }
@@ -1540,12 +1542,13 @@ export const $ZodObjectLike: core.$constructor<$ZodObjectLike> = /*@__PURE__*/ c
 
     const _normalized = util.cached(() => {
       const keys = Object.keys(def.shape);
+      const okeys = util.optionalObjectKeys(def.shape);
       return {
         shape: def.shape,
         keys,
         keySet: new Set(keys),
         numKeys: keys.length,
-        optionalKeys: new Set(keys.filter((key) => def.shape[key].optionality === "optional")),
+        optionalKeys: new Set(okeys),
       };
     });
 
@@ -1554,7 +1557,7 @@ export const $ZodObjectLike: core.$constructor<$ZodObjectLike> = /*@__PURE__*/ c
       const discMap: util.DiscriminatorMap = new Map();
       let hasDisc = false;
       for (const key in shape) {
-        const field = shape[key].type._zod;
+        const field = shape[key]._zod;
         if (field.values || field.disc) {
           hasDisc = true;
           const o: util.DiscriminatorMapElement = {
@@ -1747,8 +1750,8 @@ export const $ZodObjectLike: core.$constructor<$ZodObjectLike> = /*@__PURE__*/ c
           //   });
           // }
 
-          const r = el.type._zod.run({ value: input[key], issues: [] }, ctx);
-          const isOptional = el.optionality === "optional";
+          const r = el._zod.run({ value: input[key], issues: [] }, ctx);
+          const isOptional = el._zod.optionality === "optional";
           // if (isOptional) {
           //   if (!(key in input)) {
           //     continue;
@@ -1870,9 +1873,9 @@ export type $InferInterfaceOutput<
   : keyof T extends never
     ? object
     : {
-        [k in keyof T as undefined extends core.output<T[k]> ? k : never]?: core.output<T[k]>;
+        -readonly [k in keyof T as T[k] extends OptionalOutSchema ? k : never]?: core.output<T[k]>;
       } & {
-        [k in keyof T as undefined extends core.output<T[k]> ? never : k]: core.output<T[k]>;
+        -readonly [k in keyof T as T[k] extends OptionalOutSchema ? never : k]: core.output<T[k]>;
       } & Extra;
 
 export type $InferInterfaceInput<
@@ -1969,7 +1972,7 @@ export interface $ZodInterfaceInternals<
   Shape extends Readonly<$ZodLooseShape> = Readonly<$ZodLooseShape>,
   OutExtra extends Record<string, unknown> = Record<string, unknown>,
   InExtra extends Record<string, unknown> = Record<string, unknown>,
-> extends $ZodTypeInternals<unknown, unknown> {
+> extends $ZodTypeInternals<object, object> {
   subtype: "interface";
   def: $ZodInterfaceDef<Shape>;
   outextra: OutExtra;
@@ -1977,9 +1980,13 @@ export interface $ZodInterfaceInternals<
   isst: errors.$ZodIssueInvalidType | errors.$ZodIssueUnrecognizedKeys;
   disc: util.DiscriminatorMap;
   // types: {
-  "~output": $InferInterfaceOutput<Shape, OutExtra>;
-  "~input": $InferInterfaceInput<Shape, InExtra>;
+  // "~output": $InferInterfaceOutput<Shape, OutExtra>;
+  // "~input": $InferInterfaceInput<Shape, InExtra>;
   // $types: { output: $InferInterfaceOutput<Shape, OutExtra>; input: $InferInterfaceOutput<Shape, OutExtra> };
+  // };
+  // "~types": {
+  "~output": util.Prettify<$InferInterfaceOutput<Shape, OutExtra>>;
+  "~input": util.Prettify<$InferInterfaceInput<Shape, InExtra>>;
   // };
   // shape: $ZodShapeMeta<Shape>;
 
@@ -2043,18 +2050,22 @@ export type $InferObjectInput<T extends $ZodShape, Extra extends Record<string, 
 
 export interface $ZodObjectDef<Shape extends $ZodShape = $ZodShape> extends $ZodObjectLikeDef<Shape> {
   type: "object";
-  shape: $ZodShapeMeta<Shape>;
+  shape: Shape;
 }
 
 export interface $ZodObjectInternals<
-  Shape extends $ZodShape = $ZodShape,
+  Shape extends Readonly<$ZodLooseShape> = Readonly<$ZodLooseShape>,
   OutExtra extends Record<string, unknown> = Record<string, unknown>,
   InExtra extends Record<string, unknown> = Record<string, unknown>,
-> extends $ZodObjectLikeInternals<$InferObjectOutput<Shape, OutExtra>, $InferObjectInput<Shape, InExtra>> {
+> extends $ZodObjectLikeInternals<object, object> {
   subtype: "object";
   def: $ZodObjectDef<Shape>;
   outextra: OutExtra;
   inextra: InExtra;
+  "~output": $InferObjectOutput<Shape, OutExtra>;
+  "~input": $InferObjectInput<Shape, InExtra>;
+  // "~output": $InferObjectOutput<Shape, OutExtra>;
+  // "~input": $InferObjectInput<Shape, InExtra>;
 }
 
 export interface $ZodObject<

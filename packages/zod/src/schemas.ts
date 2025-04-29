@@ -1009,10 +1009,7 @@ export function array<T extends core.$ZodType>(element: core.$ZodType, params?: 
 
 // ZodObjectLike
 export interface ZodObjectLike<out O = object, out I = object> extends ZodType {
-  _zod: core.$ZodObjectLikeInternals<{
-    output: O;
-    input: I;
-  }>;
+  _zod: core.$ZodObjectLikeInternals<O, I>;
 }
 export const ZodObjectLike: core.$constructor<ZodObjectLike> = /*@__PURE__*/ core.$constructor(
   "ZodObjectLike",
@@ -1440,7 +1437,7 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
   inst.required = (...args: any[]) => util.requiredObjectLike(ZodNonOptional, inst, args[0] as object);
 });
 
-export function object<T extends core.$ZodShape = Record<never, core.$ZodType>>(
+export function object<T extends core.$ZodLooseShape = Record<never, core.$ZodType>>(
   shape?: T,
   params?: string | core.$ZodObjectLikeParams
 ): ZodObject<T, {}, {}> {

@@ -1052,7 +1052,7 @@ export function partial<T extends ZodMiniObject, M extends util.Exactly<util.Mas
 export function partial<T extends core.$ZodLooseShape>(shape: T): Partial<T>;
 export function partial(schema: ZodMiniObjectLike, mask?: object): ZodMiniObjectLike {
   console.log("sup");
-  if (schema instanceof ZodMiniInterface) return util.partialObjectLike(null, schema, mask);
+  if (schema instanceof ZodMiniInterface) return util.partialObjectLike(ZodMiniOptional, schema, mask);
   if (schema instanceof ZodMiniObject) return util.partialObjectLike(ZodMiniOptional, schema, mask);
   return schema; // base case: shape
 }
