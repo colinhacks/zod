@@ -242,3 +242,9 @@ test("int getter", () => {
 test("finite getter", () => {
   expect(z.number().isFinite).toEqual(true);
 });
+
+test("string format methods", () => {
+  const a = z.int32().min(5);
+  expect(a.parse(6)).toEqual(6);
+  expect(() => a.parse(1)).toThrow();
+});

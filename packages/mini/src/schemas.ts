@@ -439,7 +439,7 @@ export const ZodMiniNumberFormat: core.$constructor<ZodMiniNumberFormat> = /*@__
   "ZodMiniNumberFormat",
   (inst, def) => {
     core.$ZodNumberFormat.init(inst, def);
-    ZodMiniType.init(inst, def);
+    ZodMiniNumber.init(inst, def);
   }
 );
 
