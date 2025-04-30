@@ -599,7 +599,7 @@ export type FromCleanMap<T extends schemas.$ZodLooseShape> = {
 };
 // export type OptionalInterfaceKeys<T extends PropertyKey> = T extends `${infer K}?` ? K : never;
 // export type DefaultedInterfaceKeys<T extends PropertyKey> = T extends `?${infer K}` ? K : never;
-// export type PickShape<T extends schemas.$ZodObjectLike> = Flatten<
+// export type PickShape<T extends schemas.$ZodObject> = Flatten<
 //   Pick<T['_zod'], keyof Shape & this["_cleanToRaw"][string & keyof M]>
 // >;
 // export type InitInterfaceParams<T extends schemas.$ZodLooseShape, Extra extends Record<string, unknown>> = Identity<{
@@ -694,7 +694,7 @@ export const BIGINT_FORMAT_RANGES: Record<checks.$ZodBigIntFormats, [bigint, big
   uint64: [/* @__PURE__*/ BigInt(0), /* @__PURE__*/ BigInt("18446744073709551615")],
 };
 
-export function pick(schema: schemas.$ZodObjectLike, mask: Record<string, unknown>): any {
+export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>): any {
   // const newShape: Writeable<schemas.$ZodShape> = {};
   const newShape: Writeable<schemas.$ZodShape> = {};
   // const newOptional: string[] = [];
@@ -717,7 +717,7 @@ export function pick(schema: schemas.$ZodObjectLike, mask: Record<string, unknow
   }) as any;
 }
 
-export function omit(schema: schemas.$ZodObjectLike, mask: object): any {
+export function omit(schema: schemas.$ZodObject, mask: object): any {
   // const newShape: Writeable<schemas.$ZodShape> = { ...schema._zod.def.shape };
   const newShape: Writeable<schemas.$ZodShape> = { ...schema._zod.def.shape };
   const currDef = schema._zod.def; //.shape;
@@ -737,7 +737,7 @@ export function omit(schema: schemas.$ZodObjectLike, mask: object): any {
   });
 }
 
-export function extend(schema: schemas.$ZodObjectLike, shape: schemas.$ZodShape): any {
+export function extend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): any {
   const def = {
     ...schema._zod.def,
     get shape() {
@@ -750,7 +750,7 @@ export function extend(schema: schemas.$ZodObjectLike, shape: schemas.$ZodShape)
   return clone(schema, def) as any;
 }
 
-export function mergeObjectLike(a: schemas.$ZodObjectLike, b: schemas.$ZodObjectLike): any {
+export function mergeObjectLike(a: schemas.$ZodObject, b: schemas.$ZodObject): any {
   // const shapeMeta = { ...a._zod.def.shapeMeta, ...b._zod.def.shapeMeta };
   // const bKeys = new Set(Object.keys(b._zod.def.shape));
   // const optional = [...a._zod.def.optional.filter((k) => !bKeys.has(k)), ...b._zod.def.optional];
@@ -769,7 +769,7 @@ export function mergeObjectLike(a: schemas.$ZodObjectLike, b: schemas.$ZodObject
   }) as any;
 }
 
-export function extendObjectLike(a: schemas.$ZodObjectLike, b: schemas.$ZodObjectLike): any {
+export function extendObjectLike(a: schemas.$ZodObject, b: schemas.$ZodObject): any {
   // const bKeys = new Set(Object.keys(b._zod.def.shape));
   // const optional = [...a._zod.def.optional.filter((k) => !bKeys.has(k)), ...b._zod.def.optional];
 
@@ -789,7 +789,7 @@ export function extendObjectLike(a: schemas.$ZodObjectLike, b: schemas.$ZodObjec
 
 export function partialObjectLike(
   Class: SchemaClass<schemas.$ZodOptional> | null,
-  schema: schemas.$ZodObjectLike,
+  schema: schemas.$ZodObject,
   mask: object | undefined
 ): any {
   console.log("PartialObjectLike");
@@ -837,7 +837,7 @@ export function partialObjectLike(
 
 export function requiredObjectLike(
   Class: SchemaClass<schemas.$ZodNonOptional>,
-  schema: schemas.$ZodObjectLike,
+  schema: schemas.$ZodObject,
   mask: object | undefined
 ): any {
   const oldShape = schema._zod.def.shape;

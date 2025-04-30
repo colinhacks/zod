@@ -271,8 +271,7 @@ export class JSONSchemaGenerator {
           json.items = this.process(def.element, { ...params, path: [...params.path, "items"] });
           break;
         }
-        case "object":
-        case "interface": {
+        case "object": {
           const json: JSONSchema.ObjectSchema = _json as any;
           json.type = "object";
           json.properties = {};

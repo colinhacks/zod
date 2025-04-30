@@ -58,9 +58,6 @@ export class $ZodAsyncError extends Error {
 
 ////////////////////////////  TYPE HELPERS  ///////////////////////////////////
 
-// export type input<T extends schemas.$ZodType> = T["_zod"]["input"];
-// export type output<T extends schemas.$ZodType> = T["_zod"]["output"];
-// export type input<T extends schemas.$ZodType> = T["_zod"] extends { "~input": infer I } ? I : T["_zod"]["input"];
 export type input<T extends schemas.$ZodType> = T["_zod"] extends { "~input": any }
   ? T["_zod"]["~input"]
   : T["_zod"]["input"];

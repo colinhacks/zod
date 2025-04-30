@@ -29,7 +29,7 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
   // /** @deprecated Use `z.input<typeof schema>` instead. */
   // _input: this["_zod"]["input"];
   // base methods
-  check(...checks: (core.CheckFn<this["_zod"]["output"]> | core.$ZodCheck<this["_zod"]["output"]>)[]): this;
+  check(...checks: (core.CheckFn<core.output<this>> | core.$ZodCheck<core.output<this>>)[]): this;
   clone(def?: this["_zod"]["def"]): this;
   register<R extends core.$ZodRegistry>(
     registry: R,
@@ -39,9 +39,12 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
         : [core.$ZodRegistry<R["_meta"], this>["_meta"]]
       : ["Incompatible schema"]
   ): this;
+  // brand<T extends PropertyKey = PropertyKey>(
+  //   value?: T
+  // ): this & Record<"_zod", Record<"output", core.output<this> & core.$brand<T>>>;
   brand<T extends PropertyKey = PropertyKey>(
     value?: T
-  ): this & Record<"_zod", Record<"output", this["_zod"]["output"] & core.$brand<T>>>;
+  ): PropertyKey extends T ? this : this & Record<"_zod", Record<"output", this["_zod"]["output"] & core.$brand<T>>>;
 
   // parsing
   parse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;
@@ -1008,16 +1011,16 @@ export function array<T extends core.$ZodType>(element: core.$ZodType, params?: 
 }
 
 // ZodObjectLike
-export interface ZodObjectLike<out O extends object = object, out I extends object = object> extends ZodType {
-  _zod: core.$ZodObjectLikeInternals<O, I>;
-}
-export const ZodObjectLike: core.$constructor<ZodObjectLike> = /*@__PURE__*/ core.$constructor(
-  "ZodObjectLike",
-  (inst, def) => {
-    core.$ZodObjectLike.init(inst, def);
-    ZodType.init(inst, def);
-  }
-);
+// export interface ZodObjectLike<out O extends object = object, out I extends object = object> extends ZodType {
+//   _zod: core.$ZodObjectLikeInternals<O, I>;
+// }
+// export const ZodObject: core.$constructor<ZodObjectLike> = /*@__PURE__*/ core.$constructor(
+//   "ZodObjectLike",
+//   (inst, def) => {
+//     core.$ZodObject.init(inst, def);
+//     ZodType.init(inst, def);
+//   }
+// );
 
 // .keyof
 export function keyof<T extends ZodObject>(schema: T): ZodLiteral<keyof T["_zod"]["output"]> {
@@ -1301,13 +1304,11 @@ export function keyof<T extends ZodObject>(schema: T): ZodLiteral<keyof T["_zod"
 
 // ZodObject
 export interface ZodObject<
-  // @ts-ignore cast variance
-  out Shape extends core.$ZodShape = core.$ZodShape,
+  Shape extends core.$ZodShape = core.$ZodShape,
   OutExtra extends Record<string, unknown> = Record<string, unknown>,
   InExtra extends Record<string, unknown> = Record<string, unknown>,
 > extends ZodType {
   _zod: core.$ZodObjectInternals<Shape, OutExtra, InExtra>;
-
   shape: Shape;
 
   keyof(): ZodEnum<util.ToEnum<keyof Shape & string>>;
@@ -1405,6 +1406,7 @@ export interface ZodObject<
     InExtra
   >;
 }
+
 export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$constructor("ZodObject", (inst, def) => {
   core.$ZodObject.init(inst, def);
   ZodType.init(inst, def);
@@ -1439,9 +1441,8 @@ export function object<T extends core.$ZodLooseShape = Record<never, core.$ZodTy
     type: "object",
     // shape: shape ?? {},
     get shape() {
-      const _shape = { ...shape }; // runs any getters
-      util.assignProp(this, "shape", _shape);
-      return _shape;
+      util.assignProp(this, "shape", { ...shape });
+      return this.shape;
     },
     // get shape() {
     //   return util.objectShapeMeta(shape ?? {});
@@ -1464,9 +1465,8 @@ export function strictObject<T extends core.$ZodShape>(
     type: "object",
     // shape: shape as core.$ZodShape,
     get shape() {
-      const _shape = { ...shape }; // runs any getters
-      util.assignProp(this, "shape", _shape);
-      return _shape;
+      util.assignProp(this, "shape", { ...shape });
+      return this.shape;
     },
     // get optional() {
     //   return util.optionalObjectKeys(shape);
@@ -1486,9 +1486,8 @@ export function looseObject<T extends core.$ZodShape>(
     type: "object",
     // shape: shape as core.$ZodShape,
     get shape() {
-      const _shape = { ...shape }; // runs any getters
-      util.assignProp(this, "shape", _shape);
-      return _shape;
+      util.assignProp(this, "shape", { ...shape });
+      return this.shape;
     },
     // get optional() {
     //   return util.optionalObjectKeys(shape);
