@@ -29,7 +29,14 @@ const formIntegrations: ZodResource[] = [];
 
 const zodToXConverters: ZodResource[] = [];
 
-const xToZodConverters: ZodResource[] = [];
+const xToZodConverters: ZodResource[] = [
+  {
+    name: "kubb",
+    url: "https://github.com/kubb-labs/kubb",
+    description: "The ultimate toolkit for working with APIs.",
+    slug: "kubb-labs/kubb",
+  },
+];
 
 const mockingLibraries: ZodResource[] = [
   {
