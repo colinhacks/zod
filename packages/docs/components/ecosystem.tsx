@@ -40,7 +40,14 @@ const mockingLibraries: ZodResource[] = [
   },
 ];
 
-const poweredByZodProjects: ZodResource[] = [];
+const poweredByZodProjects: ZodResource[] = [
+  {
+    name: "zod-config",
+    url: "https://github.com/alexmarqs/zod-config",
+    description: "Load configurations across multiple sources with flexible adapters, ensuring type safety with Zod.",
+    slug: "alexmarqs/zod-config",
+  },
+];
 
 const zodUtilities: ZodResource[] = [];
 
