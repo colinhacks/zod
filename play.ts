@@ -1,19 +1,16 @@
 import * as z from "zod";
 
-const Category = z.object({
-  name: z.string(),
-  get self() {
-    return Category.optional().nullable();
-  },
+const LinkedList = z.object({
+  value: z.number(),
   get parent() {
-    return Category.nullable();
+    return LinkedList;
   },
-  get subcategories() {
-    return z.array(Category);
+  get children() {
+    return z.array(LinkedList);
   },
 });
 
-type Category = z.output<typeof Category>;
+type LinkedList = z.output<typeof LinkedList>;
 
 const Alazy = z.object({
   val: z.number(),
@@ -31,4 +28,4 @@ const Blazy = z.object({
 });
 type Blazy = z.infer<typeof Blazy>;
 
-export type { Category };
+export type { LinkedList };

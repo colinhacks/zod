@@ -1436,7 +1436,7 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
 export function object<T extends core.$ZodLooseShape = Record<never, core.$ZodType>>(
   shape?: T,
   params?: string | core.$ZodObjectLikeParams
-): ZodObject<T, {}, {}> {
+): ZodObject<util.Writeable<T> & {}, {}, {}> {
   const def: core.$ZodObjectDef = {
     type: "object",
     // shape: shape ?? {},
