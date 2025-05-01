@@ -2386,7 +2386,7 @@ defaultTuna.parse(undefined); // => "tuna"
 </Tab>
 <Tab value="@zod/mini">
 ```ts
-const defaultTuna = z.default(z.string(), "tuna");
+const defaultTuna = z._default(z.string(), "tuna");
 
 defaultTuna.parse(undefined); // => "tuna"
 ```
@@ -2431,7 +2431,7 @@ randomDefault.parse(undefined);    // => 0.7223408162401552
 </Tab>
 <Tab value="@zod/mini">
 ```ts
-const randomDefault = z.default(z.number(), Math.random);
+const randomDefault = z._default(z.number(), Math.random);
 
 z.parse(randomDefault, undefined); // => 0.4413456736055323
 z.parse(randomDefault, undefined); // => 0.1871840107401901
