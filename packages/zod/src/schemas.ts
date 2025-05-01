@@ -25,9 +25,9 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
   /** @deprecated Use `.def` instead. */
   _def: this["_zod"]["def"];
   // /** @deprecated Use `z.output<typeof schema>` instead. */
-  // _output: this["_zod"]["output"];
+  _output: core.output<this>;
   // /** @deprecated Use `z.input<typeof schema>` instead. */
-  // _input: this["_zod"]["input"];
+  _input: core.input<this>;
   // base methods
   check(...checks: (core.CheckFn<core.output<this>> | core.$ZodCheck<core.output<this>>)[]): this;
   clone(def?: this["_zod"]["def"]): this;
@@ -39,12 +39,10 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
         : [core.$ZodRegistry<R["_meta"], this>["_meta"]]
       : ["Incompatible schema"]
   ): this;
-  // brand<T extends PropertyKey = PropertyKey>(
-  //   value?: T
-  // ): this & Record<"_zod", Record<"output", core.output<this> & core.$brand<T>>>;
+
   brand<T extends PropertyKey = PropertyKey>(
     value?: T
-  ): PropertyKey extends T ? this : this & Record<"_zod", Record<"output", this["_zod"]["output"] & core.$brand<T>>>;
+  ): PropertyKey extends T ? this : this & Record<"_zod", Record<"~output", core.output<this> & core.$brand<T>>>;
 
   // parsing
   parse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;
@@ -1304,7 +1302,8 @@ export function keyof<T extends ZodObject>(schema: T): ZodLiteral<keyof T["_zod"
 
 // ZodObject
 export interface ZodObject<
-  Shape extends core.$ZodShape = core.$ZodShape,
+  // @ts-ignore cast variance
+  out Shape extends core.$ZodShape = core.$ZodLooseShape,
   OutExtra extends Record<string, unknown> = Record<string, unknown>,
   InExtra extends Record<string, unknown> = Record<string, unknown>,
 > extends ZodType {
@@ -1312,7 +1311,6 @@ export interface ZodObject<
   shape: Shape;
 
   keyof(): ZodEnum<util.ToEnum<keyof Shape & string>>;
-<<<<<<< HEAD
   /** Define a schema to validate all unrecognized keys. This overrides the existing strict/loose behavior. */
   catchall<T extends core.$ZodType>(schema: T): ZodObject<Shape, Record<string, T["_zod"]["output"]>>;
 
@@ -1326,25 +1324,8 @@ export interface ZodObject<
 
   /** This is the default behavior. This method call is likely unnecessary. */
   strip(): ZodObject<Shape, {}>;
-=======
-  catchall<T extends core.$ZodType>(
-    schema: T
-  ): ZodObject<Shape, Record<string, T["_zod"]["output"]>, Record<string, T["_zod"]["input"]>>;
 
-  /** @deprecated Use `z.looseObject()` or `.loose()` instead. */
-  passthrough(): ZodObject<Shape, Record<string, unknown>, Record<string, unknown>>;
-
-  loose(): ZodObject<Shape, Record<string, unknown>, Record<string, unknown>>;
-
-  /** The `z.strictObject()` API is preferred. */
-  strict(): ZodObject<Shape, {}, {}>;
-
-  /** @deprecated This is the default behavior. This method call is likely unnecessary. */
-  strip(): ZodObject<Shape, {}, {}>;
->>>>>>> 2b18cea5 (Refactor object-like internals. use optionality in zodinterface shape. remove ?-prefixing for defaulted. handle optionals/defaults in json schema)
-
-  extend<const U extends ZodObject>(schema: U): ZodObject<util.Extend<Shape, U["shape"]>, OutExtra, InExtra>;
-  extend<U extends core.$ZodShape>(
+  extend<U extends core.$ZodLooseShape>(
     shape: U
   ): ZodObject<
     util.Extend<Shape, U>,
@@ -1352,16 +1333,29 @@ export interface ZodObject<
     InExtra // & B['_zod']["extra"]
   >;
 
-  // merge
-<<<<<<< HEAD
-  /** @deprecated Use `A.extend(B.shape)` */
-  merge<U extends ZodObject<any, any>>(
+  /**
+   * @deprecated Use destructuring to merge the shapes:
+   *
+   * ```ts
+   * z.object({
+   *    ...A.shape,
+   *    ...B.shape
+   * });
+   * ```
+   */
+  merge<U extends ZodObject>(
     other: U
-  ): ZodObject<util.Flatten<util.Extend<Shape, U["_zod"]["def"]["shape"]>>, Extra>;
-=======
-  /** @deprecated Use `A.extend(B)` */
-  merge<U extends ZodObject>(other: U): ZodObject<util.Flatten<util.Extend<Shape, U["shape"]>>, OutExtra, InExtra>;
->>>>>>> 2b18cea5 (Refactor object-like internals. use optionality in zodinterface shape. remove ?-prefixing for defaulted. handle optionals/defaults in json schema)
+  ): ZodObject<util.Extend<Shape, U["shape"]>, U["_zod"]["outextra"], U["_zod"]["inextra"]>;
+  /**
+   * @deprecated Use destructuring to merge the shapes:
+   *
+   * ```ts
+   * z.object({
+   *    ...A.shape,
+   *    ...B.shape
+   * });
+   * ```
+   */
 
   pick<M extends util.Exactly<util.Mask<string & keyof Shape>, M>>(
     mask: M
@@ -1457,7 +1451,7 @@ export function object<T extends core.$ZodLooseShape = Record<never, core.$ZodTy
 
 // strictObject
 
-export function strictObject<T extends core.$ZodShape>(
+export function strictObject<T extends core.$ZodLooseShape>(
   shape: T,
   params?: string | core.$ZodObjectParams
 ): ZodObject<T, {}, {}> {
@@ -1478,7 +1472,7 @@ export function strictObject<T extends core.$ZodShape>(
 
 // looseObject
 
-export function looseObject<T extends core.$ZodShape>(
+export function looseObject<T extends core.$ZodLooseShape>(
   shape: T,
   params?: string | core.$ZodObjectParams
 ): ZodObject<T, { [k: string]: unknown }, { [k: string]: unknown }> {

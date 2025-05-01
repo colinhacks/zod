@@ -112,13 +112,3 @@ test("object optionality", () => {
     hi: "hi",
   });
 });
-
-test("interface optionality", () => {
-  const schema = z.interface({
-    hi: z.string().default("hi"),
-  });
-
-  expect(schema.parse({})).toEqual({
-    hi: "hi",
-  });
-});

@@ -1,15 +1,25 @@
 import * as z from "zod";
 
-const schema = z.object({
-  a: z.number(),
-  b: z.number().int(),
-  c: z.number().positive(),
+const Category = z.object({
+  name: z.string(),
+  age: z.optional(z.number()),
+  get nullself() {
+    return Category.nullable();
+  },
+  get optself() {
+    return Category.optional();
+  },
+  get self() {
+    return Category;
+  },
+  get subcategories() {
+    return z.array(Category);
+  },
+  nested: z.object({
+    get sub() {
+      return Category;
+    },
+  }),
 });
 
-console.log(
-  schema.parse({
-    a: 1,
-    b: 2,
-    c: 3,
-  })
-); // { a: 1, b: 2, c: 3 }
+type _Category = z.output<typeof Category>;

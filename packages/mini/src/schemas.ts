@@ -20,7 +20,7 @@ export interface ZodMiniType<out Output = unknown, out Input = unknown> extends 
   ): this;
   brand<T extends PropertyKey = PropertyKey>(
     value?: T
-  ): PropertyKey extends T ? this : this & Record<"_zod", Record<"output", this["_zod"]["output"] & core.$brand<T>>>;
+  ): PropertyKey extends T ? this : this & Record<"_zod", Record<"~output", core.output<this> & core.$brand<T>>>;
 
   def: this["_zod"]["def"];
 
@@ -801,7 +801,8 @@ export function keyof<T extends ZodMiniObject>(schema: T): ZodMiniLiteral<keyof 
 
 // ZodMiniObject
 export interface ZodMiniObject<
-  Shape extends core.$ZodShape = core.$ZodShape,
+  // @ts-ignore Cast variance
+  out Shape extends core.$ZodShape = core.$ZodShape,
   OutExtra extends Record<string, unknown> = Record<string, unknown>,
   InExtra extends Record<string, unknown> = Record<string, unknown>,
 > extends ZodMiniType {
@@ -887,11 +888,11 @@ export function extend<T extends ZodMiniObject, U extends core.$ZodLooseShape>(
   // return util.extend(schema, shape);
 }
 
-/** @deprecated Identical to `z.extend()` */
-export function merge<T extends ZodMiniObject, U extends core.$ZodLooseShape>(
+/** @deprecated Identical to `z.extend(A, B)` */
+export function merge<T extends ZodMiniObject, U extends ZodMiniObject>(
   a: T,
   b: U
-): ZodMiniObject<util.Extend<T["shape"], U>, T["_zod"]["outextra"], T["_zod"]["inextra"]>;
+): ZodMiniObject<util.Extend<T["shape"], U["shape"]>, T["_zod"]["outextra"], T["_zod"]["inextra"]>;
 export function merge(schema: ZodMiniObject, shape: any): ZodMiniObject {
   return util.extend(schema, shape);
 }

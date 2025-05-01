@@ -11,7 +11,7 @@ test("branded types", () => {
   // simple branding
   type MySchema = z.infer<typeof mySchema>;
 
-  expectTypeOf<MySchema>().toEqualTypeOf<{ name: string } & z.BRAND<"superschema">>();
+  expectTypeOf<MySchema>().toEqualTypeOf<{ name: string } & z.$brand<"superschema">>();
 
   const doStuff = (arg: MySchema) => arg;
   doStuff(mySchema.parse({ name: "hello there" }));

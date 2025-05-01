@@ -658,9 +658,9 @@ describe("toJSONSchema", () => {
   });
 
   test("simple interface", () => {
-    const userSchema = z.interface({
+    const userSchema = z.object({
       name: z.string(),
-      "age?": z.number(),
+      age: z.number().optional(),
     });
 
     const result = toJSONSchema(userSchema);
@@ -683,7 +683,7 @@ describe("toJSONSchema", () => {
   });
 
   test("catchall interface", () => {
-    const a = z.strictInterface({
+    const a = z.strictObject({
       name: z.string(),
       age: z.number(),
     });
@@ -710,7 +710,7 @@ describe("toJSONSchema", () => {
     `);
 
     const b = z
-      .interface({
+      .object({
         name: z.string(),
       })
       .catchall(z.string());
@@ -732,7 +732,7 @@ describe("toJSONSchema", () => {
       }
     `);
 
-    const c = z.looseInterface({
+    const c = z.looseObject({
       name: z.string(),
     });
 
@@ -753,7 +753,7 @@ describe("toJSONSchema", () => {
   });
 
   test("recursive interface schemas", () => {
-    const TreeNodeSchema = z.interface({
+    const TreeNodeSchema = z.object({
       id: z.string(),
       get children() {
         return TreeNodeSchema;
@@ -785,14 +785,14 @@ describe("toJSONSchema", () => {
   });
 
   test("mutually recursive interface schemas", () => {
-    const FolderSchema = z.interface({
+    const FolderSchema = z.object({
       name: z.string(),
       get files() {
         return z.array(FileSchema);
       },
     });
 
-    const FileSchema = z.interface({
+    const FileSchema = z.object({
       name: z.string(),
       get parent() {
         return FolderSchema;
@@ -1203,7 +1203,7 @@ test("overwrite descriptions", () => {
 
 test("top-level readonly", () => {
   const A = z
-    .interface({
+    .object({
       name: z.string(),
       get b() {
         return B;
@@ -1213,7 +1213,7 @@ test("top-level readonly", () => {
     .meta({ id: "A" });
 
   const B = z
-    .interface({
+    .object({
       name: z.string(),
       get a() {
         return A;
@@ -1265,14 +1265,14 @@ test("top-level readonly", () => {
 
 test("basic registry", () => {
   const myRegistry = z.registry<{ id: string }>();
-  const User = z.interface({
+  const User = z.object({
     name: z.string(),
     get posts() {
       return z.array(Post);
     },
   });
 
-  const Post = z.interface({
+  const Post = z.object({
     title: z.string(),
     content: z.string(),
     get author() {

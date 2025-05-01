@@ -97,7 +97,6 @@ export class JSONSchemaGenerator {
   }
 
   process(schema: schemas.$ZodType, _params: ProcessParams = { path: [], schemaPath: [] }): JSONSchema.BaseSchema {
-    console.log("process", schema);
     const def = (schema as schemas.$ZodTypes)._zod.def;
     // if (def.type === "lazy") {
     //   return this.process((schema as schemas.$ZodLazy)._zod._getter, _params);

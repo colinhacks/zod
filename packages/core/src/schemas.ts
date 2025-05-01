@@ -97,7 +97,8 @@ export interface $ZodTypeInternals<out O = unknown, out I = unknown> {
   id: string;
 
   /** The inferred output type */
-  // "~output"?: any;
+  // "
+  // "?: any;
   // "~input"?: any;
   // "~types"?: any;
   output: O; //extends { $out: infer O } ? O : Out;
@@ -1483,14 +1484,13 @@ export type $ZodShape = Readonly<{ [k: string]: $ZodType }>;
 export interface $ZodObjectDef<Shape extends $ZodShape = $ZodShape> extends $ZodTypeDef {
   type: "object";
   shape: Shape;
-  // shapeMeta: $ZodShapeMeta;
   catchall?: $ZodType | undefined;
 }
 
 export interface $ZodObjectInternals<
   Shape extends Readonly<$ZodShape> = Readonly<$ZodShape>,
-  OutExtra extends Record<string, unknown> = Record<string, unknown>,
-  InExtra extends Record<string, unknown> = Record<string, unknown>,
+  out OutExtra extends Record<string, unknown> = Record<string, unknown>,
+  out InExtra extends Record<string, unknown> = Record<string, unknown>,
 > extends $ZodTypeInternals<any, any> {
   def: $ZodObjectDef<Shape>;
   outextra: OutExtra;
@@ -1498,10 +1498,41 @@ export interface $ZodObjectInternals<
   isst: errors.$ZodIssueInvalidType | errors.$ZodIssueUnrecognizedKeys;
   disc: util.DiscriminatorMap;
 
-  // "~types": { output: $InferObjectOutput<Shape, OutExtra>; input: $InferObjectInput<Shape, InExtra> };
+  // special keys only used for objects
+  // not defined on $ZodTypeInternals (base interface) because it breaks cyclical inference
+  // the z.infer<> util checks for these first when extracting inferred type
   "~output": $InferObjectOutput<Shape, OutExtra>;
   "~input": $InferObjectInput<Shape, InExtra>;
 }
+export type $ZodLooseShape = Record<string, any>;
+
+type OptionalOutSchema = { _zod: { optionality: "optional" } };
+type OptionalInSchema = { _zod: { optionality: "defaulted" | "optional" } };
+
+export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = string extends keyof T
+  ? object
+  : keyof T extends never
+    ? object
+    : util.Prettify<
+        {
+          -readonly [k in keyof T as T[k] extends OptionalOutSchema ? k : never]?: core.output<T[k]>;
+        } & {
+          -readonly [k in keyof T as T[k] extends OptionalOutSchema ? never : k]: core.output<T[k]>;
+        }
+      > &
+        Extra;
+
+export type $InferObjectInput<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = string extends keyof T
+  ? object
+  : keyof T extends never
+    ? object
+    : util.Prettify<
+        {
+          [k in keyof T as T[k] extends OptionalInSchema ? k : never]?: core.input<T[k]>;
+        } & {
+          [k in keyof T as T[k] extends OptionalInSchema ? never : k]: core.input<T[k]>;
+        } & Extra
+      >;
 
 function handleObjectResult(result: ParsePayload, final: ParsePayload, key: PropertyKey) {
   // if(isOptional)
@@ -1752,36 +1783,6 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     });
   };
 });
-
-export type $ZodLooseShape = Record<string, any>;
-
-type OptionalOutSchema = { _zod: { optionality: "optional" } };
-type OptionalInSchema = { _zod: { optionality: "defaulted" | "optional" } };
-
-export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = string extends keyof T
-  ? object
-  : keyof T extends never
-    ? object
-    : util.Prettify<
-        {
-          -readonly [k in keyof T as T[k] extends OptionalOutSchema ? k : never]?: core.output<T[k]>;
-        } & {
-          -readonly [k in keyof T as T[k] extends OptionalOutSchema ? never : k]: core.output<T[k]>;
-        }
-      > &
-        Extra;
-
-export type $InferObjectInput<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = string extends keyof T
-  ? object
-  : keyof T extends never
-    ? object
-    : util.Prettify<
-        {
-          [k in keyof T as T[k] extends OptionalInSchema ? k : never]?: core.input<T[k]>;
-        } & {
-          [k in keyof T as T[k] extends OptionalInSchema ? never : k]: core.input<T[k]>;
-        } & Extra
-      >;
 
 /////////////////////////////////////////
 /////////////////////////////////////////
@@ -3351,9 +3352,7 @@ type AppendToTemplateLiteral<
   Suffix extends $LiteralPart | $ZodType,
 > = Suffix extends $LiteralPart
   ? `${Template}${UndefinedToEmptyString<Suffix>}`
-  : Suffix extends $ZodType
-    ? `${Template}${UndefinedToEmptyString<$LiteralPart & Suffix["_zod"]["output"]>}`
-    : never;
+  : `${Template}${UndefinedToEmptyString<$LiteralPart & core.output<Suffix & $ZodType>>}`;
 
 export type $PartsToTemplateLiteral<Parts extends $TemplateLiteralPart[]> = [] extends Parts
   ? ``
