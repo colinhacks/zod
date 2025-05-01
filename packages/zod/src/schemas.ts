@@ -665,7 +665,7 @@ export interface _ZodNumber<Input = unknown> extends ZodType {
   max(value: number, params?: string | core.$ZodCheckLessThanParams): this;
   /** Consider `z.int()` instead. This API is considered *legacy*; it will never be removed but a better alternative exists. */
   int(params?: string | core.$ZodCheckNumberFormatParams): this;
-  /** @deprecated This is now identical to `.int()` instead. Only numbers in the safe integer range are accepted. */
+  /** @deprecated This is now identical to `.int()`. Only numbers in the safe integer range are accepted. */
   safe(params?: string | core.$ZodCheckNumberFormatParams): this;
   positive(params?: string | core.$ZodCheckGreaterThanParams): this;
   nonnegative(params?: string | core.$ZodCheckGreaterThanParams): this;
