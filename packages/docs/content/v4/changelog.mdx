@@ -308,16 +308,6 @@ type schemaInput = z.input<typeof schema>;
 
 These modifier methods on the `ZodObject` class determine how the schema handles unknown keys. In Zod 4, this functionality now exists in top-level functions. This aligns better with Zod's declarative-first philosophy, and puts all object variants on equal footing. 
 
-### deprecates `.strict()`
-
-```ts
-// Zod 3
-z.object({ name: z.string() }).strict();
-
-// Zod 4
-z.strictObject({ name: z.string() });
-```
-
 ### deprecates `.passthrough()`
 
 ```ts
