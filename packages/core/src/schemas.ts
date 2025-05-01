@@ -1488,7 +1488,7 @@ export interface $ZodObjectDef<Shape extends $ZodShape = $ZodShape> extends $Zod
 }
 
 export interface $ZodObjectInternals<
-  Shape extends Readonly<$ZodLooseShape> = Readonly<$ZodLooseShape>,
+  Shape extends Readonly<$ZodShape> = Readonly<$ZodShape>,
   OutExtra extends Record<string, unknown> = Record<string, unknown>,
   InExtra extends Record<string, unknown> = Record<string, unknown>,
 > extends $ZodTypeInternals<any, any> {
@@ -1533,7 +1533,7 @@ function handleOptionalObjectResult(result: ParsePayload, final: ParsePayload, k
 }
 
 export interface $ZodObject<
-  Shape extends Readonly<$ZodLooseShape> = Readonly<$ZodLooseShape>,
+  Shape extends Readonly<$ZodShape> = Readonly<$ZodShape>,
   OutExtra extends Record<string, unknown> = Record<string, unknown>,
   InExtra extends Record<string, unknown> = Record<string, unknown>,
 > extends $ZodType {
@@ -1583,7 +1583,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
 
     const parseStr = (key: string) => {
       const k = util.esc(key);
-      return `shape[${k}].type._zod.run({ value: input[${k}], issues: [] }, ctx)`;
+      return `shape[${k}]._zod.run({ value: input[${k}], issues: [] }, ctx)`;
     };
 
     // doc.write(`const shape = inst._zod.def.shape;`);

@@ -1,31 +1,15 @@
 import * as z from "zod";
 
-const LinkedList = z.object({
-  value: z.number(),
-  get parent() {
-    return LinkedList;
-  },
-  get children() {
-    return z.array(LinkedList);
-  },
+const schema = z.object({
+  a: z.number(),
+  b: z.number().int(),
+  c: z.number().positive(),
 });
 
-type LinkedList = z.output<typeof LinkedList>;
-
-const Alazy = z.object({
-  val: z.number(),
-  get b() {
-    return Blazy;
-  },
-});
-type Alazy = z.infer<typeof Alazy>;
-
-const Blazy = z.object({
-  val: z.number(),
-  get a() {
-    return z.optional(Alazy);
-  },
-});
-type Blazy = z.infer<typeof Blazy>;
-
-export type { LinkedList };
+console.log(
+  schema.parse({
+    a: 1,
+    b: 2,
+    c: 3,
+  })
+); // { a: 1, b: 2, c: 3 }

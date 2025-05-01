@@ -97,6 +97,7 @@ export class JSONSchemaGenerator {
   }
 
   process(schema: schemas.$ZodType, _params: ProcessParams = { path: [], schemaPath: [] }): JSONSchema.BaseSchema {
+    console.log("process", schema);
     const def = (schema as schemas.$ZodTypes)._zod.def;
     // if (def.type === "lazy") {
     //   return this.process((schema as schemas.$ZodLazy)._zod._getter, _params);
@@ -281,7 +282,7 @@ export class JSONSchemaGenerator {
           //   params.shapeCache.set(schema, shape);
           // }
           for (const key in shape) {
-            json.properties[key] = this.process(shape[key].type, {
+            json.properties[key] = this.process(shape[key], {
               ...params,
               path: [...params.path, "properties", key],
             });
@@ -292,7 +293,7 @@ export class JSONSchemaGenerator {
           // const optionalKeys = new Set(def.optional);
           const requiredKeys = new Set(
             [...allKeys].filter((key) => {
-              const opt = def.shape[key].optionality;
+              const opt = def.shape[key]._zod.optionality;
               if (this.io === "input") {
                 return opt === undefined;
               } else {
