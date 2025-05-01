@@ -317,6 +317,18 @@ test("strictcreate", async () => {
   expect(asyncResult.success).toEqual(false);
 });
 
+test("looseObject", async () => {
+  const looseObj = z.looseObject({
+    name: z.string(),
+  });
+
+  const syncResult = looseObj.safeParse({ name: "asdf", unexpected: 13 });
+  expect(syncResult.success).toEqual(true);
+
+  const asyncResult = await looseObj.spa({ name: "asdf", unexpected: 13 });
+  expect(asyncResult.success).toEqual(true);
+});
+
 test("object with refine", async () => {
   const schema = z
     .object({

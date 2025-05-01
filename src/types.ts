@@ -3052,6 +3052,19 @@ export class ZodObject<
     }) as any;
   };
 
+  static looseCreate = <T extends ZodRawShape>(
+    shape: T,
+    params?: RawCreateParams
+  ): ZodObject<T, "passthrough"> => {
+    return new ZodObject({
+      shape: () => shape,
+      unknownKeys: "passthrough",
+      catchall: ZodNever.create(),
+      typeName: ZodFirstPartyTypeKind.ZodObject,
+      ...processCreateParams(params),
+    }) as any;
+  };
+
   static lazycreate = <T extends ZodRawShape>(
     shape: () => T,
     params?: RawCreateParams
@@ -5394,6 +5407,7 @@ const voidType = ZodVoid.create;
 const arrayType = ZodArray.create;
 const objectType = ZodObject.create;
 const strictObjectType = ZodObject.strictCreate;
+const looseObjectType = ZodObject.looseCreate;
 const unionType = ZodUnion.create;
 const discriminatedUnionType = ZodDiscriminatedUnion.create;
 const intersectionType = ZodIntersection.create;
@@ -5464,6 +5478,7 @@ export {
   recordType as record,
   setType as set,
   strictObjectType as strictObject,
+  looseObjectType as looseObject,
   stringType as string,
   symbolType as symbol,
   effectsType as transformer,
