@@ -274,8 +274,8 @@ This has been replaced with separate `.ipv4()` and `.ipv6()` methods. Use `z.uni
 
 ```ts
 z.string().ip() // ❌
-z.string().ipv4() // ✅
-z.string().ipv6() // ✅
+z.ipv4() // ✅
+z.ipv6() // ✅
 ```
 
 ### updates `z.string().ipv6()`
@@ -288,8 +288,8 @@ Similarly, this has been replaced with separate `.cidrv4()` and `.cidrv6()` meth
 
 ```ts
 z.string().cidr() // ❌
-z.string().cidrv4() // ✅
-z.string().cidrv6() // ✅
+z.cidrv4() // ✅
+z.cidrv6() // ✅
 ```
 
 ## `z.coerce` updates
