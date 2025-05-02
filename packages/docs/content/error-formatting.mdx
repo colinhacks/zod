@@ -10,7 +10,7 @@ Zod emphasizes _completeness_ and _correctness_ in its error reporting. In many 
 Consider this simple object schema.
 
 ```ts
-const schema = z.object({
+const schema = z.strictObject({
   username: z.string(),
   favoriteNumbers: z.array(z.number()),
 });
@@ -22,6 +22,7 @@ Attempting to parse this invalid data results in an error containing two issues.
 const result = schema.safeParse({
   username: 1234,
   favoriteNumbers: [1234, "4567"],
+  extraKey: 1234,
 });
 
 result.error!.issues;
