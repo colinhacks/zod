@@ -1,25 +1,20 @@
 import * as z from "zod";
 
+type Category = z.infer<typeof Category>;
+
 const Category = z.object({
-  name: z.string(),
-  age: z.optional(z.number()),
-  get nullself() {
+  title: z.string(),
+  get parent() {
     return Category.nullable();
   },
-  get optself() {
-    return Category.optional();
-  },
-  get self() {
-    return Category;
-  },
-  get subcategories() {
+  get children() {
     return z.array(Category);
   },
-  nested: z.object({
-    get sub() {
-      return Category;
-    },
-  }),
 });
 
-type _Category = z.output<typeof Category>;
+const cat = Category.parse({
+  /* data */
+});
+cat.children[0].parent!.children[0].parent!.parent!.parent!.parent!.parent!.parent!.parent;
+
+export type { Category };
