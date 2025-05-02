@@ -22,7 +22,7 @@ const mySchema = z.nullable(z.optional(z.string()));
 </Tab>
 <Tab value="zod">
 ```ts
-import * as z from "@zod/mini";
+import { z } from "zod";
 
 const mySchema = z.string().optional().nullable();
 ```
