@@ -7,10 +7,11 @@
     {
       "type": "node",
       "request": "launch",
+      "runtimeExecutable": "tsx",
       "name": "Launch Program",
       "skipFiles": ["<node_internals>/**"],
       "preLaunchTask": "tsc: build - tsconfig.json",
-      "program": "${workspaceFolder}/src/playground.ts",
+      "program": "${workspaceFolder}/playground.ts",
       "outFiles": ["${workspaceFolder}/**/*.js"]
     }
   ]
