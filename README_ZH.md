@@ -471,6 +471,7 @@ z.string().ulid();
 z.string().duration();
 z.string().regex(regex);
 z.string().includes(string);
+z.string().hostname();
 z.string().startsWith(string);
 z.string().endsWith(string);
 z.string().datetime(); // ISO 8601；默认值为无 UTC 偏移，选项见下文
@@ -504,6 +505,7 @@ z.string().url({ message: "Invalid url" });
 z.string().emoji({ message: "Contains non-emoji characters" });
 z.string().uuid({ message: "Invalid UUID" });
 z.string().includes("tuna", { message: "Must include tuna" });
+z.string().hostname({ message: "Must provide a valid hostname" });
 z.string().startsWith("https://", { message: "Must provide secure URL" });
 z.string().endsWith(".com", { message: "Only .com domains allowed" });
 z.string().datetime({ message: "Invalid datetime string! Must be UTC." });

@@ -55,6 +55,8 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
           }
         } else if ("startsWith" in issue.validation) {
           message = `Invalid input: must start with "${issue.validation.startsWith}"`;
+        } else if ("hostname" in issue.validation) {
+          message = `Invalid input: must be a valid hostname`;
         } else if ("endsWith" in issue.validation) {
           message = `Invalid input: must end with "${issue.validation.endsWith}"`;
         } else {
