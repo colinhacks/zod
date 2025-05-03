@@ -387,7 +387,7 @@ v6.parse("2001:db8:85a3::8a2e:370:7334"); // ✅
 
 ### IP blocks (CIDR)
 
-Validate IP address ranges specified with [CIDR notation](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing). By default, `.cidr()` allows both IPv4 and IPv6.
+Validate IP address ranges specified with [CIDR notation](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing).
 
 ```ts
 const cidrv4 = z.string().cidrv4();
@@ -621,7 +621,7 @@ To create a new enum schema, excluding certain values:
 <Tab value="zod">
 ```ts
 const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
-const SalmonAndTroutOnly = FishEnum.extract(["Salmon", "Trout"]);
+const TunaOnly = FishEnum.exclude(["Salmon", "Trout"]);
 ```
 </Tab>
 <Tab value="@zod/mini">
@@ -640,7 +640,7 @@ To create a new enum schema, extracting certain values:
 <Tab value="zod">
 ```ts
 const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
-const TunaOnly = FishEnum.exclude(["Salmon", "Trout"]);
+const SalmonAndTroutOnly = FishEnum.extract(["Salmon", "Trout"]);
 ```
 </Tab>
 <Tab value="@zod/mini">
@@ -823,7 +823,7 @@ const email = z.templateLiteral([
 There are two APIs for defining object schemas: `z.object()` and `z.interface()`. The two APIs are largely identical, with a small (but important!) difference in how *optional properties* are defined.
 {/* 
 <Callout>
-The `z.interface()` API was introduced in Zod 4 as a more flexible and powerful way to represent objects. Optional properties are specified with a `?` prefix in the key. This gives you more control over representing *optionality*:
+The `z.interface()` API was introduced in Zod 4 as a more flexible and powerful way to represent objects. Optional properties are specified with a `?` suffix in the key. This gives you more control over representing *optionality*:
 
 ```ts
 z.interface({
@@ -885,7 +885,7 @@ z.object({ name: z.string().optional() });
 // { name?: string | undefined; }
 ```
 
-By contrast, `z.interface()` can represent both varieties. To make a property "key optional" (e.g. to add the question mark), prefix that key with `?`. 
+By contrast, `z.interface()` can represent both varieties. To make a property "key optional" (e.g. to add the question mark), suffix that key with `?`. 
 
 
 ```ts
@@ -1640,7 +1640,7 @@ function handleResult(result: MyResult){
 }
 ```
 
-You could represent with with a regular `z.union()`. But regular unions are *naive*—they check the input against each option in order and return the first one that passes. This can be slow for large unions.
+You could represent it with a regular `z.union()`. But regular unions are *naive*—they check the input against each option in order and return the first one that passes. This can be slow for large unions.
 
 So Zod provides a `z.discriminatedUnion()` API that uses a *discriminator key* to make parsing more efficient.
 
@@ -1666,7 +1666,8 @@ const MyResult = z.discriminatedUnion([
   If Zod can't find a discriminator key, it will throw an error at schema creation time.
 </Callout>
 
-<Accordions type="single"><Accordion title="Nesting discriminated unions">
+<Accordions type="single">
+<Accordion title="Nesting discriminated unions">
 
   For advanced use cases, discriminated unions can be nested. Zod will figure out the optimal parsing strategy to leverage the discriminators at each level.
 
@@ -1684,7 +1685,8 @@ const MyResult = z.discriminatedUnion([
   ]);
   ```
 
-</Accordion></Accordions>
+</Accordion>
+</Accordions>
 
 ## Intersections
 
@@ -1731,7 +1733,7 @@ IdCache.parse({
 });
 ```
 
-The key schema can be any Zod schema that as assignable to `string | number | symbol`.
+The key schema can be any Zod schema that is assignable to `string | number | symbol`.
 
 ```ts
 const Keys = z.union([z.string(), z.number(), z.symbol()]);
@@ -1891,7 +1893,7 @@ TestSchema.parse("whatever"); // ❌
 
 ## Refinements
 
-Every Zod schema stores an array of *refinements*. Refinements are a way to perform custom validation that can Zod doesn't provide a native API for.
+Every Zod schema stores an array of *refinements*. Refinements are a way to perform custom validation that Zod doesn't provide a native API for.
 
 ### `.refine()`
 
@@ -2384,7 +2386,7 @@ defaultTuna.parse(undefined); // => "tuna"
 </Tab>
 <Tab value="@zod/mini">
 ```ts
-const defaultTuna = z.default(z.string(), "tuna");
+const defaultTuna = z._default(z.string(), "tuna");
 
 defaultTuna.parse(undefined); // => "tuna"
 ```
@@ -2429,7 +2431,7 @@ randomDefault.parse(undefined);    // => 0.7223408162401552
 </Tab>
 <Tab value="@zod/mini">
 ```ts
-const randomDefault = z.default(z.number(), Math.random);
+const randomDefault = z._default(z.number(), Math.random);
 
 z.parse(randomDefault, undefined); // => 0.4413456736055323
 z.parse(randomDefault, undefined); // => 0.1871840107401901

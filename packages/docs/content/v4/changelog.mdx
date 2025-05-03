@@ -254,7 +254,8 @@ z.cuid2();
 z.ulid();
 z.ipv4();
 z.ipv6();
-z.cidr();          // ip range
+z.cidrv4();          // ip range
+z.cidrv6();          // ip range
 z.iso.date();
 z.iso.time();
 z.iso.datetime();
@@ -274,8 +275,8 @@ This has been replaced with separate `.ipv4()` and `.ipv6()` methods. Use `z.uni
 
 ```ts
 z.string().ip() // ❌
-z.string().ipv4() // ✅
-z.string().ipv6() // ✅
+z.ipv4() // ✅
+z.ipv6() // ✅
 ```
 
 ### updates `z.string().ipv6()`
@@ -288,8 +289,8 @@ Similarly, this has been replaced with separate `.cidrv4()` and `.cidrv6()` meth
 
 ```ts
 z.string().cidr() // ❌
-z.string().cidrv4() // ✅
-z.string().cidrv6() // ✅
+z.cidrv4() // ✅
+z.cidrv6() // ✅
 ```
 
 ## `z.coerce` updates
@@ -308,8 +309,10 @@ type schemaInput = z.input<typeof schema>;
 
 These modifier methods on the `ZodObject` class determine how the schema handles unknown keys. In Zod 4, this functionality now exists in top-level functions. This aligns better with Zod's declarative-first philosophy, and puts all object variants on equal footing. 
 
-### deprecates `.strict()`
 
+### discourages `.strict()`
+
+> The `.strict()` method is discouraged but not deprecat4ed. It won't be removed. 
 ```ts
 // Zod 3
 z.object({ name: z.string() }).strict();
@@ -395,7 +398,7 @@ This now behaves identically to `z.array().min(1)`. The inferred type does not c
 const NonEmpty = z.array(z.string()).nonempty();
 
 type NonEmpty = z.infer<typeof NonEmpty>; 
-// Zod 3: [string, string[]]
+// Zod 3: [string, ...string[]]
 // Zod 4: string[]
 ```
 
@@ -403,7 +406,7 @@ The old behavior is now better represented with `z.tuple()` and a "rest" argumen
 
 ```ts
 z.tuple([z.string()], z.string());
-// => [string, string[]]
+// => [string, ...string[]]
 ```
 
 ## `z.promise()` deprecated
@@ -495,7 +498,7 @@ z.ZodString.create(); // ❌
 You no longer need to specify a discriminator key (though you still can if you wish; it is ignored).
 
 ```ts
-in Zod 4:
+// in Zod 4:
 const myUnion = z.discriminatedUnion([
   z.object({ type: z.literal("a"), a: z.string() }),
   z.object({ type: z.literal("b"), b: z.number() }),

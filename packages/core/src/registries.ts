@@ -61,28 +61,20 @@ export interface JSONSchemaMeta {
   [k: string]: unknown;
 }
 
-export class $ZodJSONSchemaRegistry<
-  Meta extends JSONSchemaMeta = JSONSchemaMeta,
-  Schema extends $ZodType = $ZodType,
-> extends $ZodRegistry<Meta, Schema> {
-  toJSONSchema(_schema: Schema): object {
-    return {};
-  }
-}
+// export class $ZodJSONSchemaRegistry<
+//   Meta extends JSONSchemaMeta = JSONSchemaMeta,
+//   Schema extends $ZodType = $ZodType,
+// > extends $ZodRegistry<Meta, Schema> {
+//   toJSONSchema(_schema: Schema): object {
+//     return {};
+//   }
+// }
 
 export interface GlobalMeta extends JSONSchemaMeta {}
-
-export const globalRegistry: $ZodJSONSchemaRegistry<GlobalMeta> =
-  /*@__PURE__*/ new $ZodJSONSchemaRegistry<GlobalMeta>();
 
 // registries
 export function registry<T extends MetadataType = MetadataType, S extends $ZodType = $ZodType>(): $ZodRegistry<T, S> {
   return new $ZodRegistry<T, S>();
 }
 
-export function jsonSchemaRegistry<
-  T extends JSONSchemaMeta = JSONSchemaMeta,
-  S extends $ZodType = $ZodType,
->(): $ZodJSONSchemaRegistry<T, S> {
-  return new $ZodJSONSchemaRegistry();
-}
+export const globalRegistry: $ZodRegistry<GlobalMeta> = /*@__PURE__*/ registry<GlobalMeta>();

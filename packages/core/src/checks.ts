@@ -266,12 +266,13 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
 
     const isInt = def.format?.includes("int");
     const origin = isInt ? "int" : "number";
-    const [minimum, maximum] = util.NUMBER_FORMAT_RANGES[def.format!];
+    const [minimum, maximum] = util.NUMBER_FORMAT_RANGES[def.format];
 
     inst._zod.onattach.push((inst) => {
       inst._zod.computed.format = def.format;
       inst._zod.computed.minimum = minimum;
       inst._zod.computed.maximum = maximum;
+      inst._zod.computed.inclusive = true;
       if (isInt) inst._zod.computed.pattern = regexes.integer;
     });
 

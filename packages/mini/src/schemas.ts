@@ -55,7 +55,7 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
         ],
       });
     };
-    inst.clone = (_def) => core.clone(inst, _def ?? def);
+    inst.clone = (_def) => core.clone(inst, _def);
     inst.brand = () => inst as any;
     inst.register = ((reg: any, meta: any) => {
       reg.add(inst, meta);
@@ -439,7 +439,7 @@ export const ZodMiniNumberFormat: core.$constructor<ZodMiniNumberFormat> = /*@__
   "ZodMiniNumberFormat",
   (inst, def) => {
     core.$ZodNumberFormat.init(inst, def);
-    ZodMiniType.init(inst, def);
+    ZodMiniNumber.init(inst, def);
   }
 );
 

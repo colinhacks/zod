@@ -130,7 +130,7 @@ export interface $ZodTypeInternals<out O = unknown, out I = unknown> extends $Zo
   /** The constructor function of this schema. */
   constr: new (
     def: any
-  ) => any;
+  ) => $ZodType;
 
   /** A catchall object for computed metadata related to this schema. Commonly modified by checks using `onattach`. */
   computed: Record<string, any>;
@@ -140,6 +140,9 @@ export interface $ZodTypeInternals<out O = unknown, out I = unknown> extends $Zo
 
   /** An optional method used to override `toJSONSchema` logic. */
   toJSONSchema?: () => object;
+
+  /** The parent of this schema. Only set during certain clone operations. */
+  parent?: $ZodType | undefined;
 }
 
 export interface $ZodType<out O = unknown, out I = unknown> {
@@ -1536,7 +1539,9 @@ export const $ZodObjectLike: core.$constructor<$ZodObjectLike> = /*@__PURE__*/ c
           discMap.set(key, o);
         }
       }
-      if (!hasDisc) return undefined as any;
+      if (!hasDisc) {
+        return undefined as any;
+      }
       return discMap;
     });
 
@@ -3416,6 +3421,7 @@ export interface $ZodReadonlyInternals<T extends $ZodType = $ZodType>
   qin: T["_zod"]["qin"];
   qout: T["_zod"]["qout"];
   isst: never;
+  disc: T["_zod"]["disc"];
 }
 
 export interface $ZodReadonly<T extends $ZodType = $ZodType> extends $ZodType {
@@ -3426,6 +3432,7 @@ export const $ZodReadonly: core.$constructor<$ZodReadonly> = /*@__PURE__*/ core.
   "$ZodReadonly",
   (inst, def) => {
     $ZodType.init(inst, def);
+    util.defineLazy(inst._zod, "disc", () => def.innerType._zod.disc);
     // inst._zod.qin = def.innerType._zod.qin;
     inst._zod.qout = def.innerType._zod.qout;
 

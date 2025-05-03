@@ -113,7 +113,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
       ],
     });
   };
-  inst.clone = (_def) => core.clone(inst, _def ?? def);
+  inst.clone = (_def) => core.clone(inst, _def);
   inst.brand = () => inst as any;
   inst.register = ((reg: any, meta: any) => {
     reg.add(inst, meta);
@@ -150,8 +150,8 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   // meta
   inst.describe = (description) => {
     const cl = inst.clone();
-    const meta = core.globalRegistry.get(inst) ?? {};
-    meta.description = description;
+    const meta = { ...(core.globalRegistry.get(inst) ?? {}), description };
+    delete meta.id; // do not inherit
     core.globalRegistry.add(cl, meta);
     return cl;
   };
@@ -182,6 +182,56 @@ export interface _ZodString<Input = unknown> extends ZodType {
   minLength: number | null;
   maxLength: number | null;
 
+  // /** @deprecated Use `z.jsonString()` instead. */
+  // json(params?: string | core.$ZodCheckJSONStringParams): this;
+
+  // miscellaneous checks
+  regex(regex: RegExp, params?: string | core.$ZodCheckRegexParams): this;
+  includes(value: string, params?: { message?: string; position?: number }): this;
+  startsWith(value: string, params?: string | core.$ZodCheckStartsWithParams): this;
+  endsWith(value: string, params?: string | core.$ZodCheckEndsWithParams): this;
+  min(minLength: number, params?: string | core.$ZodCheckMinLengthParams): this;
+  max(maxLength: number, params?: string | core.$ZodCheckMaxLengthParams): this;
+  length(len: number, params?: string | core.$ZodCheckLengthEqualsParams): this;
+  nonempty(params?: string | core.$ZodCheckMinLengthParams): this;
+  lowercase(params?: string | core.$ZodCheckLowerCaseParams): this;
+  uppercase(params?: string | core.$ZodCheckUpperCaseParams): this;
+
+  // transforms
+  trim(): this;
+  normalize(form?: "NFC" | "NFD" | "NFKC" | "NFKD" | (string & {})): this;
+  toLowerCase(): this;
+  toUpperCase(): this;
+}
+
+export const _ZodString: core.$constructor<_ZodString> = /*@__PURE__*/ core.$constructor("_ZodString", (inst, def) => {
+  core.$ZodString.init(inst, def);
+  ZodType.init(inst, def);
+
+  inst.format = inst._zod.computed.format ?? null;
+  inst.minLength = inst._zod.computed.minimum ?? null;
+  inst.maxLength = inst._zod.computed.maximum ?? null;
+
+  // validations
+  inst.regex = (...args) => inst.check(checks.regex(...args));
+  inst.includes = (...args) => inst.check(checks.includes(...args));
+  inst.startsWith = (params) => inst.check(checks.startsWith(params));
+  inst.endsWith = (params) => inst.check(checks.endsWith(params));
+  inst.min = (...args) => inst.check(checks.minLength(...args));
+  inst.max = (...args) => inst.check(checks.maxLength(...args));
+  inst.length = (...args) => inst.check(checks.length(...args));
+  inst.nonempty = (...args) => inst.check(checks.minLength(1, ...args));
+  inst.lowercase = (params) => inst.check(checks.lowercase(params));
+  inst.uppercase = (params) => inst.check(checks.uppercase(params));
+
+  // transforms
+  inst.trim = () => inst.check(checks.trim());
+  inst.normalize = (...args) => inst.check(checks.normalize(...args));
+  inst.toLowerCase = () => inst.check(checks.toLowerCase());
+  inst.toUpperCase = () => inst.check(checks.toUpperCase());
+});
+
+export interface ZodString extends _ZodString<string> {
   // string format checks
   // email(): ZodString;
   // email(params?: string): ZodString;
@@ -254,37 +304,11 @@ export interface _ZodString<Input = unknown> extends ZodType {
   ): this;
   /** @deprecated Use `z.iso.duration()` instead. */
   duration(params?: string | core.$ZodCheckISODurationParams): this;
-
-  // /** @deprecated Use `z.jsonString()` instead. */
-  // json(params?: string | core.$ZodCheckJSONStringParams): this;
-
-  // miscellaneous checks
-  regex(regex: RegExp, params?: string | core.$ZodCheckRegexParams): this;
-  includes(value: string, params?: { message?: string; position?: number }): this;
-  startsWith(value: string, params?: string | core.$ZodCheckStartsWithParams): this;
-  endsWith(value: string, params?: string | core.$ZodCheckEndsWithParams): this;
-  min(minLength: number, params?: string | core.$ZodCheckMinLengthParams): this;
-  max(maxLength: number, params?: string | core.$ZodCheckMaxLengthParams): this;
-  length(len: number, params?: string | core.$ZodCheckLengthEqualsParams): this;
-  nonempty(params?: string | core.$ZodCheckMinLengthParams): this;
-  lowercase(params?: string | core.$ZodCheckLowerCaseParams): this;
-  uppercase(params?: string | core.$ZodCheckUpperCaseParams): this;
-
-  // transforms
-  trim(): this;
-  normalize(form?: "NFC" | "NFD" | "NFKC" | "NFKD" | (string & {})): this;
-  toLowerCase(): this;
-  toUpperCase(): this;
 }
 
-export interface ZodString extends _ZodString<string> {}
 export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$constructor("ZodString", (inst, def) => {
   core.$ZodString.init(inst, def);
-  ZodType.init(inst, def);
-
-  inst.format = inst._zod.computed.format ?? null;
-  inst.minLength = inst._zod.computed.minimum ?? null;
-  inst.maxLength = inst._zod.computed.maximum ?? null;
+  _ZodString.init(inst, def);
 
   inst.email = (params) => inst.check(core._email(ZodEmail, params));
   inst.url = (params) => inst.check(core._url(ZodURL, params));
@@ -302,16 +326,8 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
   inst.ulid = (params) => inst.check(core._ulid(ZodULID, params));
   inst.base64 = (params) => inst.check(core._base64(ZodBase64, params));
   inst.base64url = (params) => inst.check(core._base64url(ZodBase64URL, params));
-  // inst.jsonString = (params) => inst.check(core._jsonString(Zodinst,params));
-  // inst.json = (params) => inst.check(core._jsonString(Zodinst,params));
   inst.xid = (params) => inst.check(core._xid(ZodXID, params));
   inst.ksuid = (params) => inst.check(core._ksuid(ZodKSUID, params));
-  // inst.ip = (params) => {
-  //   const version = (params ?? {} as any)?.version;
-  //   if (version === "v4") return inst.check(core._ipv4(ZodIPv4, params));
-  //   if (version === "v6") return inst.check(core._ipv6(ZodIPv6, params as any));
-  //   return union([inst.ipv4(params), inst.ipv6(params as any)]);
-  // };
   inst.ipv4 = (params) => inst.check(core._ipv4(ZodIPv4, params));
   inst.ipv6 = (params) => inst.check(core._ipv6(ZodIPv6, params));
   inst.cidrv4 = (params) => inst.check(core._cidrv4(ZodCIDRv4, params));
@@ -323,24 +339,6 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
   inst.date = (params) => inst.check(iso.date(params as any));
   inst.time = (params) => inst.check(iso.time(params as any));
   inst.duration = (params) => inst.check(iso.duration(params as any));
-
-  // validations
-  inst.regex = (...args) => inst.check(checks.regex(...args));
-  inst.includes = (...args) => inst.check(checks.includes(...args));
-  inst.startsWith = (params) => inst.check(checks.startsWith(params));
-  inst.endsWith = (params) => inst.check(checks.endsWith(params));
-  inst.min = (...args) => inst.check(checks.minLength(...args));
-  inst.max = (...args) => inst.check(checks.maxLength(...args));
-  inst.length = (...args) => inst.check(checks.length(...args));
-  inst.nonempty = (...args) => inst.check(checks.minLength(1, ...args));
-  inst.lowercase = (params) => inst.check(checks.lowercase(params));
-  inst.uppercase = (params) => inst.check(checks.uppercase(params));
-
-  // transforms
-  inst.trim = () => inst.check(checks.trim());
-  inst.normalize = (...args) => inst.check(checks.normalize(...args));
-  inst.toLowerCase = () => inst.check(checks.toLowerCase());
-  inst.toUpperCase = () => inst.check(checks.toUpperCase());
 });
 
 export function string(params?: string | core.$ZodStringParams): ZodString {
@@ -348,14 +346,14 @@ export function string(params?: string | core.$ZodStringParams): ZodString {
 }
 
 // ZodStringFormat
-export interface ZodStringFormat<Format extends core.$ZodStringFormats = core.$ZodStringFormats> extends ZodString {
+export interface ZodStringFormat<Format extends core.$ZodStringFormats = core.$ZodStringFormats> extends _ZodString {
   _zod: core.$ZodStringFormatInternals<Format>;
 }
 export const ZodStringFormat: core.$constructor<ZodStringFormat> = /*@__PURE__*/ core.$constructor(
   "ZodStringFormat",
   (inst, def) => {
     core.$ZodStringFormat.init(inst, def);
-    ZodString.init(inst, def);
+    _ZodString.init(inst, def);
   }
 );
 
@@ -667,7 +665,7 @@ export interface _ZodNumber<Input = unknown> extends ZodType {
   max(value: number, params?: string | core.$ZodCheckLessThanParams): this;
   /** Consider `z.int()` instead. This API is considered *legacy*; it will never be removed but a better alternative exists. */
   int(params?: string | core.$ZodCheckNumberFormatParams): this;
-  /** @deprecated This is now identical to `.int()` instead. Only numbers in the safe integer range are accepted. */
+  /** @deprecated This is now identical to `.int()`. Only numbers in the safe integer range are accepted. */
   safe(params?: string | core.$ZodCheckNumberFormatParams): this;
   positive(params?: string | core.$ZodCheckGreaterThanParams): this;
   nonnegative(params?: string | core.$ZodCheckGreaterThanParams): this;
@@ -733,7 +731,7 @@ export const ZodNumberFormat: core.$constructor<ZodNumberFormat> = /*@__PURE__*/
   "ZodNumberFormat",
   (inst, def) => {
     core.$ZodNumberFormat.init(inst, def);
-    ZodType.init(inst, def);
+    ZodNumber.init(inst, def);
   }
 );
 
@@ -1091,6 +1089,7 @@ export interface ZodInterface<
       extra: Record<string, T["_zod"]["output"]>;
     }
   >;
+  /** Consider `z.strictObject({ ...A.shape })` instead. */
   strict(): ZodInterface<
     Shape,
     {
@@ -1099,6 +1098,7 @@ export interface ZodInterface<
       extra: {};
     }
   >;
+
   loose(): ZodInterface<
     Shape,
     {
@@ -1107,6 +1107,8 @@ export interface ZodInterface<
       extra: Record<string, unknown>;
     }
   >;
+
+  /**  Use `z.looseObject({ ...A.shape })` instead. */
   strip(): ZodInterface<
     Shape,
     {
@@ -1259,17 +1261,18 @@ export interface ZodObject<
   shape: Shape;
 
   keyof(): ZodEnum<util.ToEnum<keyof Shape & string>>;
+  /** Define a schema to validate all unrecognized keys. This overrides the existing strict/loose behavior. */
   catchall<T extends core.$ZodType>(schema: T): ZodObject<Shape, Record<string, T["_zod"]["output"]>>;
 
   /** @deprecated Use `z.looseObject()` or `.loose()` instead. */
   passthrough(): ZodObject<Shape, Record<string, unknown>>;
-
+  /** Consider `z.looseObject(A.shape)` instead */
   loose(): ZodObject<Shape, Record<string, unknown>>;
 
-  /** The `z.strictObject()` API is preferred. */
+  /** Consider `z.strictObject(A.shape)` instead */
   strict(): ZodObject<Shape, {}>;
 
-  /** @deprecated This is the default behavior. This method call is likely unnecessary. */
+  /** This is the default behavior. This method call is likely unnecessary. */
   strip(): ZodObject<Shape, {}>;
 
   extend<const U extends ZodObject>(schema: U): ZodObject<util.Extend<Shape, U["_zod"]["def"]["shape"]>, Extra>;
@@ -1281,7 +1284,7 @@ export interface ZodObject<
   >;
 
   // merge
-  /** @deprecated Use `A.extend(B)` */
+  /** @deprecated Use `A.extend(B.shape)` */
   merge<U extends ZodObject<any, any>>(
     other: U
   ): ZodObject<util.Flatten<util.Extend<Shape, U["_zod"]["def"]["shape"]>>, Extra>;
