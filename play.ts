@@ -1,20 +1,16 @@
 import * as z from "zod";
 
-type Category = z.infer<typeof Category>;
-
-const Category = z.object({
-  title: z.string(),
-  get parent() {
-    return Category.nullable();
-  },
-  get children() {
-    return z.array(Category);
-  },
-});
-
-const cat = Category.parse({
-  /* data */
-});
-cat.children[0].parent!.children[0].parent!.parent!.parent!.parent!.parent!.parent!.parent;
-
-export type { Category };
+const Z = z.record(z.templateLiteral(["zod", z.string()]), z.number()).and(
+  z.object({
+    root: z.array(z.union([z.string(), z.number()])),
+    nested: z.object({
+      a: z.literal(true),
+    }),
+    inlined: z
+      .object({
+        b: z.literal(false),
+      })
+      .readonly()
+      .optional(),
+  })
+);
