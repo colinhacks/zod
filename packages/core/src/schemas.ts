@@ -1911,6 +1911,7 @@ export interface $ZodObjectInternals<
 > extends $ZodObjectLikeInternals<$InferObjectOutput<Shape, Extra>, $InferObjectInput<Shape, Extra>> {
   subtype: "object";
   def: $ZodObjectDef<Shape>;
+  shape: Shape;
   extra: Extra;
 }
 
