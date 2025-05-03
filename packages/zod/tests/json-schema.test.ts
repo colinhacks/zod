@@ -145,7 +145,7 @@ describe("toJSONSchema", () => {
     expect(toJSONSchema(z.ulid())).toMatchInlineSnapshot(`
       {
         "format": "ulid",
-        "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+        "pattern": "^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$",
         "type": "string",
       }
     `);
