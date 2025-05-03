@@ -2556,8 +2556,8 @@ numberWithRandomDefault.parse(undefined); // => 0.7223408162401552
 
 Conceptually, this is how Zod processes default values:
 
-1. If the input is `undefined`, the default value is returned
-2. Otherwise, the data is parsed using the base schema
+1. If the input is `undefined`, the default value is substituted
+2. Then the data is parsed using the base schema. Your default value will be parsed by the schema (including any potential transforms).
 
 ### `.describe`
 
