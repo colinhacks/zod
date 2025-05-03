@@ -31,6 +31,12 @@ const zodToXConverters: ZodResource[] = [];
 
 const xToZodConverters: ZodResource[] = [
   {
+    name: "orval",
+    url: "https://github.com/orval-labs/orval",
+    description: "Generate Zod schemas from OpenAPI schemas",
+    slug: "orval-labs/orval",
+  },
+  {
     name: "kubb",
     url: "https://github.com/kubb-labs/kubb",
     description: "The ultimate toolkit for working with APIs.",
