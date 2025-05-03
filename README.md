@@ -847,7 +847,7 @@ z.string().toUpperCase(); // toUpperCase
 
 // added in Zod 3.23
 z.string().date(); // ISO date format (YYYY-MM-DD)
-z.string().time(); // ISO time format (HH:mm:ss[.SSSSSS])
+z.string().time(); // ISO time format (HH:mm:ss[.SSSSSS] or HH:mm)
 z.string().duration(); // ISO 8601 duration
 z.string().base64();
 ```
@@ -887,7 +887,7 @@ z.string().cidr({ message: "Invalid CIDR" });
 
 As you may have noticed, Zod string includes a few date/time related validations. These validations are regular expression based, so they are not as strict as a full date/time library. However, they are very convenient for validating user input.
 
-The `z.string().datetime()` method enforces ISO 8601; default is no timezone offsets and arbitrary sub-second decimal precision.
+The `z.string().datetime()` method enforces ISO 8601; default is no timezone offsets and arbitrary sub-second decimal precision. Seconds may be omitted if precision is not set.
 
 ```ts
 const datetime = z.string().datetime();
@@ -895,6 +895,7 @@ const datetime = z.string().datetime();
 datetime.parse("2020-01-01T00:00:00Z"); // pass
 datetime.parse("2020-01-01T00:00:00.123Z"); // pass
 datetime.parse("2020-01-01T00:00:00.123456Z"); // pass (arbitrary precision)
+datetime.parse("2020-01-01T00:00Z"); // pass (hours and minutes only)
 datetime.parse("2020-01-01T00:00:00+02:00"); // fail (no offsets allowed)
 ```
 
@@ -904,6 +905,7 @@ Timezone offsets can be allowed by setting the `offset` option to `true`.
 const datetime = z.string().datetime({ offset: true });
 
 datetime.parse("2020-01-01T00:00:00+02:00"); // pass
+datetime.parse("2020-01-01T00:00+02:00"); // pass
 datetime.parse("2020-01-01T00:00:00.123+02:00"); // pass (millis optional)
 datetime.parse("2020-01-01T00:00:00.123+0200"); // pass (millis optional)
 datetime.parse("2020-01-01T00:00:00.123+02"); // pass (only offset hours)
@@ -915,6 +917,7 @@ Allow unqualified (timezone-less) datetimes with the `local` flag.
 ```ts
 const schema = z.string().datetime({ local: true });
 schema.parse("2020-01-01T00:00:00"); // pass
+schema.parse("2020-01-01T00:00"); // pass
 ```
 
 You can additionally constrain the allowable `precision`. By default, arbitrary sub-second precision is supported (but optional).
@@ -924,6 +927,7 @@ const datetime = z.string().datetime({ precision: 3 });
 
 datetime.parse("2020-01-01T00:00:00.123Z"); // pass
 datetime.parse("2020-01-01T00:00:00Z"); // fail
+datetime.parse("2020-01-01T00:00Z"); // fail
 datetime.parse("2020-01-01T00:00:00.123456Z"); // fail
 ```
 
@@ -945,13 +949,14 @@ date.parse("2020-01-32"); // fail
 
 > Added in Zod 3.23
 
-The `z.string().time()` method validates strings in the format `HH:MM:SS[.s+]`. The second can include arbitrary decimal precision. It does not allow timezone offsets of any kind.
+The `z.string().time()` method validates strings in the format `HH:MM` or `HH:MM:SS[.s+]`. The second can include arbitrary decimal precision. It does not allow timezone offsets of any kind.
 
 ```ts
 const time = z.string().time();
 
 time.parse("00:00:00"); // pass
 time.parse("09:52:31"); // pass
+time.parse("09:52"); // pass
 time.parse("23:59:59.9999999"); // pass (arbitrary precision)
 
 time.parse("00:00:00.123Z"); // fail (no `Z` allowed)
@@ -966,6 +971,7 @@ const time = z.string().time({ precision: 3 });
 time.parse("00:00:00.123"); // pass
 time.parse("00:00:00.123456"); // fail
 time.parse("00:00:00"); // fail
+time.parse("00:00"); // fail
 ```
 
 ### IP addresses

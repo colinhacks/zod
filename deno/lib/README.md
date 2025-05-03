@@ -53,7 +53,7 @@
 <!-- <hr/> -->
 <br/>
 <br/>
- 
+
 ## Table of contents
 
 > These docs have been translated into [Chinese](./README_ZH.md) and [Korean](./README_KO.md).
@@ -216,7 +216,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
           <img alt="CodeRabbit logo" height="80px" src="https://github.com/user-attachments/assets/d791bc7d-dc60-4d55-9c31-97779839cb74">
         </picture>
       </a>
-      <br  />   
+      <br  />
       Cut code review time & bugs in half
       <br/>
       <a href="https://www.coderabbit.ai/" style="text-decoration:none;">coderabbit.ai</a>
@@ -241,7 +241,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
           <img alt="Courier logo" height="62px" src="https://github.com/user-attachments/assets/6b09506a-78de-47e8-a8c1-792efe31910a">
         </picture>
       </a>
-      <br  />   
+      <br  />
       The API platform for sending notifications
       <br/>
       <a href="https://www.courier.com/?utm_source=zod&utm_campaign=osssponsors" style="text-decoration:none;">courier.com</a>
@@ -257,7 +257,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
           <img alt="LibLab" height="62px" src="https://github.com/user-attachments/assets/3de0b617-5137-49c4-b72d-a033cbe602d8">
         </picture>
       </a>
-      <br  />   
+      <br  />
       Generate better SDKs for your APIs
       <br/>
       <a href="https://liblab.com/?utm_source=zod" style="text-decoration:none;">liblab.com</a>
@@ -275,7 +275,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
           <img alt="Neon" height="68px" src="https://github.com/user-attachments/assets/b5799fc8-81ff-4053-a1c3-b29adf85e7a1">
         </picture>
       </a>
-      <br  />   
+      <br  />
       Serverless Postgres — Ship faster
       <br/>
       <a href="https://neon.tech" style="text-decoration:none;">neon.tech</a>
@@ -291,7 +291,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
           <img alt="Retool" height="45px" src="https://github.com/colinhacks/zod/assets/3084745/5ef4c11b-efeb-4495-90a8-41b83f798600">
         </picture>
       </a>
-      <br  />   
+      <br  />
       Build AI apps and workflows with <a href="https://retool.com/products/ai?utm_source=github&utm_medium=referral&utm_campaign=zod">Retool AI</a>
       <br/>
       <a href="https://retool.com/?utm_source=github&utm_medium=referral&utm_campaign=zod" style="text-decoration:none;">retool.com</a>
@@ -309,7 +309,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
           <img alt="stainless" height="45px" src="https://github.com/colinhacks/zod/assets/3084745/e9444e44-d991-4bba-a697-dbcfad608e47">
         </picture>
       </a>
-      <br  />   
+      <br  />
       Generate best-in-class SDKs
       <br/>
       <a href="https://stainless.com" style="text-decoration:none;">stainless.com</a>
@@ -325,7 +325,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
           <img alt="speakeasy" height="40px" src="https://github.com/colinhacks/zod/assets/3084745/647524a4-22bb-4199-be70-404207a5a2b5">
         </picture>
       </a>
-      <br  />   
+      <br  />
       SDKs & Terraform providers for your API
       <br/>
       <a href="https://speakeasy.com/?utm_source=zod+docs" style="text-decoration:none;">speakeasy.com</a>
@@ -847,7 +847,7 @@ z.string().toUpperCase(); // toUpperCase
 
 // added in Zod 3.23
 z.string().date(); // ISO date format (YYYY-MM-DD)
-z.string().time(); // ISO time format (HH:mm:ss[.SSSSSS])
+z.string().time(); // ISO time format (HH:mm:ss[.SSSSSS] or HH:mm)
 z.string().duration(); // ISO 8601 duration
 z.string().base64();
 ```
@@ -887,7 +887,7 @@ z.string().cidr({ message: "Invalid CIDR" });
 
 As you may have noticed, Zod string includes a few date/time related validations. These validations are regular expression based, so they are not as strict as a full date/time library. However, they are very convenient for validating user input.
 
-The `z.string().datetime()` method enforces ISO 8601; default is no timezone offsets and arbitrary sub-second decimal precision.
+The `z.string().datetime()` method enforces ISO 8601; default is no timezone offsets and arbitrary sub-second decimal precision. Seconds may be omitted if precision is not set.
 
 ```ts
 const datetime = z.string().datetime();
@@ -895,6 +895,7 @@ const datetime = z.string().datetime();
 datetime.parse("2020-01-01T00:00:00Z"); // pass
 datetime.parse("2020-01-01T00:00:00.123Z"); // pass
 datetime.parse("2020-01-01T00:00:00.123456Z"); // pass (arbitrary precision)
+datetime.parse("2020-01-01T00:00Z"); // pass (hours and minutes only)
 datetime.parse("2020-01-01T00:00:00+02:00"); // fail (no offsets allowed)
 ```
 
@@ -904,6 +905,7 @@ Timezone offsets can be allowed by setting the `offset` option to `true`.
 const datetime = z.string().datetime({ offset: true });
 
 datetime.parse("2020-01-01T00:00:00+02:00"); // pass
+datetime.parse("2020-01-01T00:00+02:00"); // pass
 datetime.parse("2020-01-01T00:00:00.123+02:00"); // pass (millis optional)
 datetime.parse("2020-01-01T00:00:00.123+0200"); // pass (millis optional)
 datetime.parse("2020-01-01T00:00:00.123+02"); // pass (only offset hours)
@@ -915,6 +917,7 @@ Allow unqualified (timezone-less) datetimes with the `local` flag.
 ```ts
 const schema = z.string().datetime({ local: true });
 schema.parse("2020-01-01T00:00:00"); // pass
+schema.parse("2020-01-01T00:00"); // pass
 ```
 
 You can additionally constrain the allowable `precision`. By default, arbitrary sub-second precision is supported (but optional).
@@ -924,6 +927,7 @@ const datetime = z.string().datetime({ precision: 3 });
 
 datetime.parse("2020-01-01T00:00:00.123Z"); // pass
 datetime.parse("2020-01-01T00:00:00Z"); // fail
+datetime.parse("2020-01-01T00:00Z"); // fail
 datetime.parse("2020-01-01T00:00:00.123456Z"); // fail
 ```
 
@@ -945,13 +949,14 @@ date.parse("2020-01-32"); // fail
 
 > Added in Zod 3.23
 
-The `z.string().time()` method validates strings in the format `HH:MM:SS[.s+]`. The second can include arbitrary decimal precision. It does not allow timezone offsets of any kind.
+The `z.string().time()` method validates strings in the format `HH:MM` or `HH:MM:SS[.s+]`. The second can include arbitrary decimal precision. It does not allow timezone offsets of any kind.
 
 ```ts
 const time = z.string().time();
 
 time.parse("00:00:00"); // pass
 time.parse("09:52:31"); // pass
+time.parse("09:52"); // pass
 time.parse("23:59:59.9999999"); // pass (arbitrary precision)
 
 time.parse("00:00:00.123Z"); // fail (no `Z` allowed)
@@ -966,6 +971,7 @@ const time = z.string().time({ precision: 3 });
 time.parse("00:00:00.123"); // pass
 time.parse("00:00:00.123456"); // fail
 time.parse("00:00:00"); // fail
+time.parse("00:00"); // fail
 ```
 
 ### IP addresses
