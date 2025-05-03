@@ -1089,6 +1089,7 @@ export interface ZodInterface<
       extra: Record<string, T["_zod"]["output"]>;
     }
   >;
+  /** Consider `z.strictObject({ ...A.shape })` instead. */
   strict(): ZodInterface<
     Shape,
     {
@@ -1097,6 +1098,7 @@ export interface ZodInterface<
       extra: {};
     }
   >;
+
   loose(): ZodInterface<
     Shape,
     {
@@ -1105,6 +1107,8 @@ export interface ZodInterface<
       extra: Record<string, unknown>;
     }
   >;
+
+  /**  Use `z.looseObject({ ...A.shape })` instead. */
   strip(): ZodInterface<
     Shape,
     {
@@ -1257,17 +1261,18 @@ export interface ZodObject<
   shape: Shape;
 
   keyof(): ZodEnum<util.ToEnum<keyof Shape & string>>;
+  /** Define a schema to validate all unrecognized keys. This overrides the existing strict/loose behavior. */
   catchall<T extends core.$ZodType>(schema: T): ZodObject<Shape, Record<string, T["_zod"]["output"]>>;
 
   /** @deprecated Use `z.looseObject()` or `.loose()` instead. */
   passthrough(): ZodObject<Shape, Record<string, unknown>>;
-
+  /** Consider `z.looseObject(A.shape)` instead */
   loose(): ZodObject<Shape, Record<string, unknown>>;
 
-  /** The `z.strictObject()` API is preferred. */
+  /** Consider `z.strictObject(A.shape)` instead */
   strict(): ZodObject<Shape, {}>;
 
-  /** @deprecated This is the default behavior. This method call is likely unnecessary. */
+  /** This is the default behavior. This method call is likely unnecessary. */
   strip(): ZodObject<Shape, {}>;
 
   extend<const U extends ZodObject>(schema: U): ZodObject<util.Extend<Shape, U["_zod"]["def"]["shape"]>, Extra>;
@@ -1279,7 +1284,7 @@ export interface ZodObject<
   >;
 
   // merge
-  /** @deprecated Use `A.extend(B)` */
+  /** @deprecated Use `A.extend(B.shape)` */
   merge<U extends ZodObject<any, any>>(
     other: U
   ): ZodObject<util.Flatten<util.Extend<Shape, U["_zod"]["def"]["shape"]>>, Extra>;
