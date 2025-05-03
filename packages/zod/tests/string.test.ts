@@ -492,6 +492,9 @@ test("ulid", () => {
   const tooLong = "01ARZ3NDEKTSV4RRFFQ69G5FAVA";
   expect(ulid.safeParse(tooLong)).toMatchObject({ success: false });
 
+  const caseInsensitive = ulid.safeParse("01arZ3nDeKTsV4RRffQ69G5FAV");
+  expect(caseInsensitive.success).toEqual(true);
+
   expect(result.error!.issues[0].message).toEqual("Invalid ULID");
   expect(result.error).toMatchInlineSnapshot(`
     ZodError {
@@ -502,7 +505,7 @@ test("ulid", () => {
           "message": "Invalid ULID",
           "origin": "string",
           "path": [],
-          "pattern": "/^[0-9A-HJKMNP-TV-Z]{26}$/",
+          "pattern": "/^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$/",
         },
       ],
     }
