@@ -40,13 +40,6 @@ let CURR = MIN;
 // shape interface: 43472
 
 while (!MAX || MAX - MIN > 2) {
-  // generate({
-  //   ...ZOD,
-  //   schemaType: "z.interface",
-  //   numSchemas: CURR,
-  //   numKeys: 3,
-  //   numRefs: 1,
-  // });
   gen.generateExtendChain({
     ...gen.ARKTYPE,
     numSchemas: CURR,

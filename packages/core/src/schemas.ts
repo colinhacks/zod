@@ -263,11 +263,15 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
       if (result instanceof Promise) {
         return result.then(({ issues, value }) => {
           if (issues.length === 0) return { value } as any;
-          return { issues: issues.map((iss) => util.finalizeIssue(iss, {}, core.config())) };
+          return {
+            issues: issues.map((iss) => util.finalizeIssue(iss, {}, core.config())),
+          };
         });
       }
       if (result.issues.length === 0) return { value: result.value } as any;
-      return { issues: result.issues.map((iss) => util.finalizeIssue(iss, {}, core.config())) };
+      return {
+        issues: result.issues.map((iss) => util.finalizeIssue(iss, {}, core.config())),
+      };
     },
     vendor: "zod",
     version: 1 as const,
@@ -3154,7 +3158,9 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
         if (result.issues.length) {
           payload.value = def.catchValue({
             ...payload,
-            error: { issues: result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())) },
+            error: {
+              issues: result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
+            },
             input: payload.value,
           });
           payload.issues = [];
@@ -3168,7 +3174,9 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
     if (result.issues.length) {
       payload.value = def.catchValue({
         ...payload,
-        error: { issues: result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())) },
+        error: {
+          issues: result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
+        },
         input: payload.value,
       });
       payload.issues = [];
@@ -3568,7 +3576,6 @@ export type $ZodTypes =
   | $ZodVoid
   | $ZodArray
   | $ZodObject
-  // | $ZodInterface
   | $ZodUnion
   | $ZodIntersection
   | $ZodTuple

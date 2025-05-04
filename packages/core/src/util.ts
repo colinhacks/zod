@@ -151,7 +151,9 @@ export type ExtractIndexSignature<T> = {
 };
 export type Keys<T extends object> = keyof OmitIndexSignature<T>;
 
-export type SchemaClass<T extends schemas.$ZodType> = { new (def: T["_zod"]["def"]): T };
+export type SchemaClass<T extends schemas.$ZodType> = {
+  new (def: T["_zod"]["def"]): T;
+};
 export type EnumValue = string | number; // | bigint | boolean | symbol;
 export type EnumLike = Readonly<Record<string, EnumValue>>;
 export type ToEnum<T extends EnumValue> = Flatten<{ [k in T]: k }>;
@@ -166,7 +168,11 @@ export type HasLength = { length: number }; // string | Array<unknown> | Set<unk
 export type Numeric = number | bigint | Date;
 export type SafeParseResult<T> = SafeParseSuccess<T> | SafeParseError<T>;
 export type SafeParseSuccess<T> = { success: true; data: T; error?: never };
-export type SafeParseError<T> = { success: false; data?: never; error: errors.$ZodError<T> };
+export type SafeParseError<T> = {
+  success: false;
+  data?: never;
+  error: errors.$ZodError<T>;
+};
 
 export type DiscriminatorMapElement = {
   values: Set<Primitive>;
@@ -597,89 +603,6 @@ export type ToCleanMap<T extends schemas.$ZodLooseShape> = {
 export type FromCleanMap<T extends schemas.$ZodLooseShape> = {
   [k in keyof T as k extends `?${infer K}` ? K : k extends `${infer K}?` ? K : k]: k;
 };
-// export type OptionalInterfaceKeys<T extends PropertyKey> = T extends `${infer K}?` ? K : never;
-// export type DefaultedInterfaceKeys<T extends PropertyKey> = T extends `?${infer K}` ? K : never;
-// export type PickShape<T extends schemas.$ZodObject> = Flatten<
-//   Pick<T['_zod'], keyof Shape & this["_cleanToRaw"][string & keyof M]>
-// >;
-// export type InitInterfaceParams<T extends schemas.$ZodLooseShape, Extra extends Record<string, unknown>> = Identity<{
-//   optional: OptionalInterfaceKeys<keyof T>;
-//   defaulted: DefaultedInterfaceKeys<keyof T>;
-//   extra: Extra;
-// }>;
-
-// export type MergeOptional<A extends schemas.$ZodInterface, B extends schemas.$ZodInterface> =
-//   | Exclude<A["_zod"]["optional"], keyof B["_zod"]["def"]["shape"]>
-//   | B["_zod"]["optional"];
-// export type MergeDefaulted<A extends schemas.$ZodInterface, B extends schemas.$ZodInterface> =
-//   | Exclude<A["_zod"]["defaulted"], keyof B["_zod"]["def"]["shape"]>
-//   | B["_zod"]["defaulted"];
-
-// export type MergeInterfaceParams<
-//   A extends schemas.$ZodInterface,
-//   B extends schemas.$ZodInterface,
-//   // BKeys extends PropertyKey,
-// > = Identity<{
-//   optional: Exclude<A["_zod"]["optional"], keyof B["_zod"]["def"]["shape"]> | B["_zod"]["optional"];
-//   defaulted: Exclude<A["_zod"]["defaulted"], keyof B["_zod"]["def"]["shape"]> | B["_zod"]["defaulted"];
-//   extra: A["_zod"]["extra"];
-// }>;
-
-// export type ExtendInterfaceParams<A extends schemas.$ZodInterface, Shape extends schemas.$ZodLooseShape> = Identity<{
-//   optional: Exclude<A["_zod"]["optional"], CleanKey<keyof Shape>> | OptionalInterfaceKeys<keyof Shape>;
-//   defaulted: Exclude<A["_zod"]["defaulted"], CleanKey<keyof Shape>> | DefaultedInterfaceKeys<keyof Shape>;
-//   extra: A["_zod"]["extra"];
-// }>;
-
-// export type ExtendInterfaceShape<A extends schemas.$ZodLooseShape, B extends schemas.$ZodLooseShape> = Extend<A, B>;
-// export type InterfaceParams<T extends schemas.$ZodInterface> = {
-//   optional: T["_zod"]["optional"];
-//   defaulted: T["_zod"]["defaulted"];
-//   extra: T["_zod"]["extra"];
-// };
-
-// export function cleanInterfaceKey(key: string): string {
-//   if (key.startsWith("?")) return key.slice(1);
-//   if (key.endsWith("?")) return key.slice(0, -1);
-//   return key;
-//   // return key.replace(/^\?/, "").replace(/\?$/, "");
-// }
-
-// export function cleanInterfaceShape<T extends schemas.$ZodLooseShape>(
-//   _shape: T
-// ): {
-//   // shape: CleanInterfaceShape<T>;
-//   keyMap: Record<string, string>;
-//   shape: schemas.$ZodShape;
-// } {
-//   console.log({ _shape });
-//   const keyMap: Record<string, string> = {};
-//   const shape: Writeable<schemas.$ZodShape> = {};
-
-//   for (const [key, type] of Object.entries(_shape as schemas.$ZodShape)) {
-//     if (!type._zod) {
-//       throw new Error(`Invalid value in shape at "${key}": not a Zod schema`);
-//     }
-//     console.log("key", key);
-//     const cleanKey = key.endsWith("?") ? key.slice(0, -1) : key;
-
-//     shape[cleanKey] = { type, optionality: type._zod.optionality };
-
-//     // question mark overrides entry optionality
-//     if (key.endsWith("?")) {
-//       shape[cleanKey].optionality = "optional";
-//     }
-
-//     // default overrides question mark
-//     if (type._zod.optionality === "defaulted") {
-//       shape[cleanKey].optionality = "defaulted";
-//     }
-
-//     keyMap[cleanKey] = key;
-//   }
-
-//   return { shape, keyMap };
-// }
 
 export const NUMBER_FORMAT_RANGES: Record<checks.$ZodNumberFormats, [number, number]> = {
   safeint: [Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER],
@@ -695,9 +618,7 @@ export const BIGINT_FORMAT_RANGES: Record<checks.$ZodBigIntFormats, [bigint, big
 };
 
 export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>): any {
-  // const newShape: Writeable<schemas.$ZodShape> = {};
   const newShape: Writeable<schemas.$ZodShape> = {};
-  // const newOptional: string[] = [];
   const currDef = schema._zod.def; //.shape;
 
   for (const key in mask) {
@@ -718,10 +639,8 @@ export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>):
 }
 
 export function omit(schema: schemas.$ZodObject, mask: object): any {
-  // const newShape: Writeable<schemas.$ZodShape> = { ...schema._zod.def.shape };
   const newShape: Writeable<schemas.$ZodShape> = { ...schema._zod.def.shape };
   const currDef = schema._zod.def; //.shape;
-  // const newOptional = new Set(schema._zod.def.optional);
   for (const key in mask) {
     if (!(key in currDef.shape)) {
       throw new Error(`Unrecognized key: "${key}"`);
@@ -750,53 +669,26 @@ export function extend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): an
   return clone(schema, def) as any;
 }
 
-export function mergeObjectLike(a: schemas.$ZodObject, b: schemas.$ZodObject): any {
-  // const shapeMeta = { ...a._zod.def.shapeMeta, ...b._zod.def.shapeMeta };
-  // const bKeys = new Set(Object.keys(b._zod.def.shape));
-  // const optional = [...a._zod.def.optional.filter((k) => !bKeys.has(k)), ...b._zod.def.optional];
-
+export function merge(a: schemas.$ZodObject, b: schemas.$ZodObject): any {
   return clone(a, {
     ...a._zod.def,
     get shape() {
       const _shape = { ...a._zod.def.shape, ...b._zod.def.shape };
       assignProp(this, "shape", _shape); // self-caching
       return _shape;
-      // return { ...a._zod.def.shape, ...b._zod.def.shape };
     },
-    // shapeMeta: { ...a._zod.def.shapeMeta, ...b._zod.def.shapeMeta },
     catchall: b._zod.def.catchall,
     checks: [], // delete existing checks
   }) as any;
 }
 
-export function extendObjectLike(a: schemas.$ZodObject, b: schemas.$ZodObject): any {
-  // const bKeys = new Set(Object.keys(b._zod.def.shape));
-  // const optional = [...a._zod.def.optional.filter((k) => !bKeys.has(k)), ...b._zod.def.optional];
-
-  return clone(a, {
-    ...a._zod.def,
-    get shape() {
-      const _shape = { ...a._zod.def.shape, ...b._zod.def.shape };
-      assignProp(this, "shape", _shape);
-      return _shape;
-      // return { ...a._zod.def.shape, ...b._zod.def.shape };
-    },
-    // shapeMeta: { ...a._zod.def.shapeMeta, ...b._zod.def.shapeMeta },
-    // optional,
-    checks: [], // delete existent checks
-  }) as any;
-}
-
-export function partialObjectLike(
+export function partial(
   Class: SchemaClass<schemas.$ZodOptional> | null,
   schema: schemas.$ZodObject,
   mask: object | undefined
 ): any {
-  console.log("PartialObjectLike");
-  // const shape: Writeable<schemas.$ZodShape> = { ...schema._zod.def.shape };
   const oldShape = schema._zod.def.shape;
   const shape: Writeable<schemas.$ZodShape> = { ...oldShape };
-  // const optional: Set<string> = new Set(schema._zod.def.optional);
 
   if (mask) {
     for (const key in mask) {
@@ -810,8 +702,6 @@ export function partialObjectLike(
             innerType: oldShape[key],
           })
         : oldShape[key];
-      // optional.add(key);
-      // shapeMeta[key] = { ...shapeMeta[key], optionality: "optional" };
     }
   } else {
     for (const key in oldShape) {
@@ -821,21 +711,17 @@ export function partialObjectLike(
             innerType: oldShape[key],
           })
         : oldShape[key];
-      // shapeMeta[key] = { ...shapeMeta[key], optionality: "optional" };
-      // optional.add(key);
     }
   }
 
   return clone(schema, {
     ...schema._zod.def,
     shape,
-    // shapeMeta,
-    // optional: [...optional],
     checks: [],
   }) as any;
 }
 
-export function requiredObjectLike(
+export function required(
   Class: SchemaClass<schemas.$ZodNonOptional>,
   schema: schemas.$ZodObject,
   mask: object | undefined
@@ -872,14 +758,6 @@ export function requiredObjectLike(
     checks: [],
   }) as any;
 }
-
-// export type InterfaceKeys<Keys extends string> = string extends Keys
-//   ? string
-//   : Keys extends `${infer K}?`
-//     ? K
-//     : Keys extends `?${infer K}`
-//       ? K
-//       : Keys;
 
 export type Constructor<T, Def extends any[] = any[]> = new (...args: Def) => T;
 
