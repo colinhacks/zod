@@ -173,8 +173,8 @@ export class JSONSchemaGenerator {
             pattern?: RegExp;
             contentEncoding?: string;
           };
-          if (minimum) json.minLength = minimum;
-          if (maximum) json.maxLength = maximum;
+          if (typeof minimum === "number") json.minLength = minimum;
+          if (typeof maximum === "number") json.maxLength = maximum;
           // custom pattern overrides format
           if (format) {
             json.format = formatMap[format] ?? format;
@@ -198,15 +198,15 @@ export class JSONSchemaGenerator {
           if (format?.includes("int")) json.type = "integer";
           else json.type = "number";
 
-          if (minimum) {
+          if (typeof minimum === "number") {
             if (inclusive) json.minimum = minimum;
             else json.exclusiveMinimum = minimum;
           }
-          if (maximum) {
+          if (typeof maximum === "number") {
             if (inclusive) json.maximum = maximum;
             else json.exclusiveMaximum = maximum;
           }
-          if (multipleOf) json.multipleOf = multipleOf;
+          if (typeof multipleOf === "number") json.multipleOf = multipleOf;
 
           break;
         }
@@ -265,8 +265,8 @@ export class JSONSchemaGenerator {
             minimum?: number;
             maximum?: number;
           };
-          if (minimum) json.minItems = minimum;
-          if (maximum) json.maxItems = maximum;
+          if (typeof minimum === "number") json.minItems = minimum;
+          if (typeof maximum === "number") json.maxItems = maximum;
           json.type = "array";
           json.items = this.process(def.element, { ...params, path: [...params.path, "items"] });
           break;
@@ -373,8 +373,8 @@ export class JSONSchemaGenerator {
             minimum?: number;
             maximum?: number;
           };
-          if (minimum) json.minItems = minimum;
-          if (maximum) json.maxItems = maximum;
+          if (typeof minimum === "number") json.minItems = minimum;
+          if (typeof maximum === "number") json.maxItems = maximum;
           break;
         }
         case "record": {
