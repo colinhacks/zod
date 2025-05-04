@@ -1,12 +1,16 @@
 import * as z from "zod";
 
-z;
-
-const frozenLetters = Object.freeze(["a", "b"]);
-const lettersAsConst = ["a", "b"] as const;
-
-const frozenLettersParser = z.enum(frozenLetters);
-const lettersAsConstParser = z.enum(lettersAsConst);
-
-console.log(frozenLettersParser.safeParse("a"));
-console.log(lettersAsConstParser.safeParse("a"));
+const Z = z.record(z.templateLiteral(["zod", z.string()]), z.number()).and(
+  z.object({
+    root: z.array(z.union([z.string(), z.number()])),
+    nested: z.object({
+      a: z.literal(true),
+    }),
+    inlined: z
+      .object({
+        b: z.literal(false),
+      })
+      .readonly()
+      .optional(),
+  })
+);

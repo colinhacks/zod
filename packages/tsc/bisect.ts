@@ -48,7 +48,7 @@ while (!MAX || MAX - MIN > 2) {
   //   numRefs: 1,
   // });
   gen.generateExtendChain({
-    ...gen.ZOD,
+    ...gen.ARKTYPE,
     numSchemas: CURR,
     numKeys: 6,
   });

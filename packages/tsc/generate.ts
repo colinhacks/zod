@@ -25,8 +25,8 @@ export const ARKTYPE = {
 };
 
 generateExtendChain({
-  ...ZOD,
-  numSchemas: 40,
+  ...ARKTYPE,
+  numSchemas: 25,
   numKeys: 6,
 });
 // generate({

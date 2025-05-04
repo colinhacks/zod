@@ -271,8 +271,7 @@ export class JSONSchemaGenerator {
           json.items = this.process(def.element, { ...params, path: [...params.path, "items"] });
           break;
         }
-        case "object":
-        case "interface": {
+        case "object": {
           const json: JSONSchema.ObjectSchema = _json as any;
           json.type = "object";
           json.properties = {};
@@ -290,8 +289,17 @@ export class JSONSchemaGenerator {
 
           // required keys
           const allKeys = new Set(Object.keys(shape));
-          const optionalKeys = new Set(def.optional);
-          const requiredKeys = new Set([...allKeys].filter((key) => !optionalKeys.has(key)));
+          // const optionalKeys = new Set(def.optional);
+          const requiredKeys = new Set(
+            [...allKeys].filter((key) => {
+              const opt = def.shape[key]._zod.optionality;
+              if (this.io === "input") {
+                return opt === undefined;
+              } else {
+                return opt === undefined || opt === "defaulted";
+              }
+            })
+          );
           json.required = Array.from(requiredKeys);
 
           // catchall
@@ -482,7 +490,6 @@ export class JSONSchemaGenerator {
         case "pipe": {
           const innerType = this.io === "input" ? def.in : def.out;
           const inner = this.process(innerType, params);
-          // result.schema = inner;
           _json._ref = inner;
 
           break;
@@ -673,8 +680,8 @@ export class JSONSchemaGenerator {
 
     for (const entry of this.seen.entries()) {
       const seen = entry[1];
-      flattenRef(seen.schema);
-      if (seen.def) flattenRef(seen.def);
+      flattenRef(seen.schema, { target: this.target });
+      if (seen.def) flattenRef(seen.def, { target: this.target });
     }
 
     const result = { ...root.def };
@@ -707,12 +714,19 @@ export class JSONSchemaGenerator {
 }
 
 // flatten _refs
-const flattenRef = (schema: JSONSchema.BaseSchema) => {
+const flattenRef = (schema: JSONSchema.BaseSchema, params: Pick<ToJSONSchemaParams, "target">) => {
   const _schema = { ...schema };
-  if (schema._ref) flattenRef(schema._ref);
+  if (schema._ref) flattenRef(schema._ref, params);
   const ref = schema._ref;
-  Object.assign(schema, ref);
-  Object.assign(schema, _schema); // this is to prevent mutation of the original schema
+  if (ref) {
+    if (ref.$ref && params.target === "draft-7") {
+      schema.allOf = schema.allOf ?? [];
+      schema.allOf.push(ref);
+    } else {
+      Object.assign(schema, ref);
+      Object.assign(schema, _schema); // this is to prevent overwriting any fields in the original schema
+    }
+  }
   delete schema._ref;
 };
 

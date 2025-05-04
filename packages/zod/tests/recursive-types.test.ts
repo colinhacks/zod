@@ -1,5 +1,4 @@
 import { expect, expectTypeOf, test } from "vitest";
-
 import { z } from "zod";
 
 test("recursion with z.lazy", () => {
@@ -23,7 +22,7 @@ test("recursion with z.lazy", () => {
     ],
   };
 
-  const Category = z.interface({
+  const Category = z.object({
     name: z.string(),
     get subcategories() {
       return z.array(Category);
@@ -47,34 +46,32 @@ test("recursion involving union type", () => {
     },
   };
 
-  const LinkedListSchema = z.union([
-    z.null(),
-    z.interface({
+  const LL = z
+    .object({
       value: z.number(),
       get next() {
-        return LinkedListSchema;
+        return LL.nullable();
       },
-    }),
-  ]);
+    })
+    .or(z.null());
 
-  LinkedListSchema.parse(data);
+  LL.parse(data);
 });
 
-const Alazy = z.interface({
-  val: z.number(),
-  get b() {
-    return Blazy;
-  },
-});
+test("mutual recursion - native", () => {
+  const Alazy = z.object({
+    val: z.number(),
+    get b() {
+      return Blazy;
+    },
+  });
 
-const Blazy = z.interface({
-  val: z.number(),
-  get a() {
-    return Alazy.optional();
-  },
-});
-
-test("mutual recursion", () => {
+  const Blazy = z.object({
+    val: z.number(),
+    get a() {
+      return Alazy.optional();
+    },
+  });
   const testData = {
     val: 1,
     b: {
@@ -100,18 +97,8 @@ test("mutual recursion", () => {
   expect(() => Alazy.parse({ val: "asdf" })).toThrow();
 });
 
-// test("mutual recursion with cyclical data", () => {
-//   const a: any = { val: 1 };
-//   const b: any = { val: 2 };
-//   a.b = b;
-//   b.a = a;
-
-//   Alazy.parse(a);
-//   Blazy.parse(b);
-// });
-
-test("pick and omit with recursive interface", () => {
-  const Category = z.strictInterface({
+test("pick and omit with getter", () => {
+  const Category = z.strictObject({
     name: z.string(),
     get subcategories() {
       return z.array(Category);

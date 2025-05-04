@@ -10,7 +10,7 @@ test("z.object", () => {
   });
 
   a._zod.def.shape["test?"];
-  a._zod.def.shape.points._zod.qout;
+  a._zod.def.shape.points._zod.optionality;
 
   type a = z.output<typeof a>;
 
@@ -124,7 +124,9 @@ test("z.partial", () => {
     email?: string;
   }>();
   expect(z.safeParse(partialSchema, { name: "John" }).success).toBe(true);
+});
 
+test("z.partial with mask", () => {
   const partialSchemaWithMask = z.partial(userSchema, { name: true });
   type PartialUserWithMask = z.infer<typeof partialSchemaWithMask>;
   expectTypeOf<PartialUserWithMask>().toEqualTypeOf<{

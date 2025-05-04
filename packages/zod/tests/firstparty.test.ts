@@ -34,8 +34,6 @@ test("first party switch", () => {
       break;
     case "object":
       break;
-    case "interface":
-      break;
     case "union":
       break;
     case "intersection":

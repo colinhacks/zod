@@ -11,7 +11,6 @@ export type Schema =
 export interface BaseSchema {
   /** A special key used as an intermediate representation of extends-style relationships. Removed in the omit stage. */
   _ref?: BaseSchema;
-
   type?: string | undefined;
   $id?: string | undefined;
   id?: string | undefined;
