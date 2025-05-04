@@ -696,16 +696,17 @@ const dateRegexSource = `((\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[0246
 const dateRegex = new RegExp(`^${dateRegexSource}$`);
 
 function timeRegexSource(args: { precision?: number | null }) {
-  // let regex = `\\d{2}:\\d{2}:\\d{2}`;
-  let regex = `([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d`;
-
+  let secondsRegexSource = `[0-5]\\d`;
   if (args.precision) {
-    regex = `${regex}\\.\\d{${args.precision}}`;
+    secondsRegexSource = `${secondsRegexSource}\\.\\d{${args.precision}}`;
   } else if (args.precision == null) {
-    regex = `${regex}(\\.\\d+)?`;
+    secondsRegexSource = `${secondsRegexSource}(\\.\\d+)?`;
   }
-  return regex;
+
+  const secondsQuantifier = args.precision ? "+" : "?"; // require seconds if precision is nonzero
+  return `([01]\\d|2[0-3]):[0-5]\\d(:${secondsRegexSource})${secondsQuantifier}`;
 }
+
 function timeRegex(args: {
   offset?: boolean;
   local?: boolean;
