@@ -25,7 +25,14 @@ const apiLibraries: ZodResource[] = [
   },
 ];
 
-const formIntegrations: ZodResource[] = [];
+const formIntegrations: ZodResource[] = [
+  {
+    name: "@regle/schemas",
+    url: "https://github.com/victorgarciaesgi/regle/tree/main/packages/schemas",
+    description: "Headless form validation library for Vue.js.",
+    slug: "victorgarciaesgi/regle",
+  },
+];
 
 const zodToXConverters: ZodResource[] = [];
 
