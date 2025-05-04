@@ -65,9 +65,7 @@ export function generate(params: GenerateObjectsParams) {
   const names = Array.from({ length: numSchemas }, () => randomStr(17));
   const generated: Array<string> = [...names];
 
-  console.log(
-    `Generating ${numSchemas} schemas w/ ${params.numKeys} keys and ${numRefs} refs.`
-  );
+  console.log(`Generating ${numSchemas} schemas w/ ${params.numKeys} keys and ${numRefs} refs.`);
 
   for (const variableName of names) {
     // file.push(`export const ${variableName} = { name: "${variableName}" };`);
@@ -96,9 +94,7 @@ export function generate(params: GenerateObjectsParams) {
         if (schemaType === "arktype") {
           throw new Error("References not supported in arktype.");
         } else {
-          file.push(
-            `  get ${randomStr(7)}(){ return ${linked} as typeof ${linked}},`
-          );
+          file.push(`  get ${randomStr(7)}(){ return ${linked} as typeof ${linked}},`);
         }
       }
     }
@@ -121,9 +117,7 @@ export function generate(params: GenerateObjectsParams) {
     // omits
     for (let i = 0; i < numOmits; i++) {
       const varname = randomStr(7);
-      const omitKeys = keys
-        .slice(0, keys.length - 1)
-        .filter(() => Math.random() > 0.5);
+      const omitKeys = keys.slice(0, keys.length - 1).filter(() => Math.random() > 0.5);
       file.push(`export const ${varname} = ${variableName}.omit({`);
       for (const key of omitKeys) {
         file.push(`  "${key}": true,`);
@@ -136,9 +130,7 @@ export function generate(params: GenerateObjectsParams) {
     // picks
     for (let i = 0; i < numPicks; i++) {
       const varname = randomStr(7);
-      const pickKeys = keys
-        .slice(0, keys.length - 1)
-        .filter(() => Math.random() > 0.5);
+      const pickKeys = keys.slice(0, keys.length - 1).filter(() => Math.random() > 0.5);
 
       file.push(`export const ${varname} = ${variableName}.pick({`);
       for (const key of pickKeys) {
@@ -224,9 +216,7 @@ export function generateExtendChain(params: GenerateExtendChainParams) {
   const initialName = randomStr(17);
   // const generated: Array<string> = [...names];
 
-  console.log(
-    `Generating ${numSchemas} chained calls to .extend() w/ ${params.numKeys} keys...`
-  );
+  console.log(`Generating ${numSchemas} chained calls to .extend() w/ ${params.numKeys} keys...`);
   if (schemaType === "arktype") {
     file.push(`export const ${initialName}_0 = type({`);
   } else if (schemaType === "valibot") {
@@ -288,9 +278,7 @@ export function generateExtendChain(params: GenerateExtendChainParams) {
         file.push(`});`);
         file.push(`export type ${newName} = typeof ${newName}.out;`);
       } else if (schemaType === "valibot") {
-        file.push(
-          `export const ${newName} = v.object({ ...${prevName}.entries,`
-        );
+        file.push(`export const ${newName} = v.object({ ...${prevName}.entries,`);
         for (const field of newFields) {
           file.push(`  "${field.key}": ${field.schema},`);
         }
@@ -342,9 +330,7 @@ function generateFields(
   for (let i = 0; i < params.numKeys; i++) {
     const key = randomStr(8); // Key name of 8 chars
     // keys.push(key);
-    const randomTypeIndex = Math.floor(
-      Math.random() * params.valueTypes.length
-    );
+    const randomTypeIndex = Math.floor(Math.random() * params.valueTypes.length);
     const randomChainMethodIndex = Math.floor(Math.random() * methods.length);
     const randomType = params.valueTypes[randomTypeIndex];
     // const randomChance = Math.random();

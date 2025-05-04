@@ -58,9 +58,7 @@ while (!MAX || MAX - MIN > 2) {
     const time = proc.stdout.match(/total time:\s+(.+)/i)![1];
     const instantiations = proc.stdout.match(/instantiations:\s+(.+)/i)![1];
     const memory = proc.stdout.match(/memory used:\s+(.+)/i)![1];
-    console.log(
-      `Compilation succeeded.\n   Time: ${time}\n   Instantiations: ${instantiations}\n   Memory ${memory}`
-    );
+    console.log(`Compilation succeeded.\n   Time: ${time}\n   Instantiations: ${instantiations}\n   Memory ${memory}`);
 
     // success
     if (!MAX) {

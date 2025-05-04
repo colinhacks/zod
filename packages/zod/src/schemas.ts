@@ -17,13 +17,10 @@ export * as coerce from "./coerce.js";
 ///////////////////////////////////////////
 
 export interface RefinementCtx<T = unknown> extends core.ParsePayload<T> {
-  addIssue(
-    arg: string | core.$ZodRawIssue | Partial<core.$ZodIssueCustom>
-  ): void;
+  addIssue(arg: string | core.$ZodRawIssue | Partial<core.$ZodIssueCustom>): void;
 }
 
-export interface ZodType<out Output = unknown, out Input = unknown>
-  extends core.$ZodType<Output, Input> {
+export interface ZodType<out Output = unknown, out Input = unknown> extends core.$ZodType<Output, Input> {
   def: this["_zod"]["def"];
   /** @deprecated Use `.def` instead. */
   _def: this["_zod"]["def"];
@@ -32,12 +29,7 @@ export interface ZodType<out Output = unknown, out Input = unknown>
   // /** @deprecated Use `z.input<typeof schema>` instead. */
   _input: core.input<this>;
   // base methods
-  check(
-    ...checks: (
-      | core.CheckFn<core.output<this>>
-      | core.$ZodCheck<core.output<this>>
-    )[]
-  ): this;
+  check(...checks: (core.CheckFn<core.output<this>> | core.$ZodCheck<core.output<this>>)[]): this;
   clone(def?: this["_zod"]["def"]): this;
   register<R extends core.$ZodRegistry>(
     registry: R,
@@ -50,24 +42,12 @@ export interface ZodType<out Output = unknown, out Input = unknown>
 
   brand<T extends PropertyKey = PropertyKey>(
     value?: T
-  ): PropertyKey extends T
-    ? this
-    : this &
-        Record<"_zod", Record<"~output", core.output<this> & core.$brand<T>>>;
+  ): PropertyKey extends T ? this : this & Record<"_zod", Record<"~output", core.output<this> & core.$brand<T>>>;
 
   // parsing
-  parse(
-    data: unknown,
-    params?: core.ParseContext<core.$ZodIssue>
-  ): core.output<this>;
-  safeParse(
-    data: unknown,
-    params?: core.ParseContext<core.$ZodIssue>
-  ): parse.ZodSafeParseResult<core.output<this>>;
-  parseAsync(
-    data: unknown,
-    params?: core.ParseContext<core.$ZodIssue>
-  ): Promise<core.output<this>>;
+  parse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;
+  safeParse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): parse.ZodSafeParseResult<core.output<this>>;
+  parseAsync(data: unknown, params?: core.ParseContext<core.$ZodIssue>): Promise<core.output<this>>;
   safeParseAsync(
     data: unknown,
     params?: core.ParseContext<core.$ZodIssue>
@@ -78,42 +58,25 @@ export interface ZodType<out Output = unknown, out Input = unknown>
   ) => Promise<parse.ZodSafeParseResult<core.output<this>>>;
 
   // refinements
-  refine(
-    check: (arg: core.output<this>) => unknown | Promise<unknown>,
-    params?: string | core.$ZodCustomParams
-  ): this;
+  refine(check: (arg: core.output<this>) => unknown | Promise<unknown>, params?: string | core.$ZodCustomParams): this;
   /** @deprecated Use `.check()` instead. */
   superRefine(
-    refinement: (
-      arg: core.output<this>,
-      ctx: RefinementCtx<this["_zod"]["output"]>
-    ) => void | Promise<void>
+    refinement: (arg: core.output<this>, ctx: RefinementCtx<this["_zod"]["output"]>) => void | Promise<void>
   ): this;
   overwrite(fn: (x: core.output<this>) => core.output<this>): this;
 
   // wrappers
   optional(params?: string | core.$ZodOptionalParams): ZodOptional<this>;
-  nonoptional(
-    params?: string | core.$ZodNonOptionalParams
-  ): ZodNonOptional<this>;
+  nonoptional(params?: string | core.$ZodNonOptionalParams): ZodNonOptional<this>;
   nullable(params?: string | core.$ZodNullableParams): ZodNullable<this>;
   nullish(): ZodOptional<ZodNullable<this>>;
-  default(
-    def: util.NoUndefined<core.output<this>>,
-    params?: string | core.$ZodDefaultParams
-  ): ZodDefault<this>;
-  default(
-    def: () => util.NoUndefined<core.output<this>>,
-    params?: string | core.$ZodDefaultParams
-  ): ZodDefault<this>;
+  default(def: util.NoUndefined<core.output<this>>, params?: string | core.$ZodDefaultParams): ZodDefault<this>;
+  default(def: () => util.NoUndefined<core.output<this>>, params?: string | core.$ZodDefaultParams): ZodDefault<this>;
   array(): ZodArray<this>;
   or<T extends core.$ZodType>(option: T): ZodUnion<[this, T]>;
   and<T extends core.$ZodType>(incoming: T): ZodIntersection<this, T>;
   transform<NewOut>(
-    transform: (
-      arg: core.output<this>,
-      ctx: RefinementCtx<core.output<this>>
-    ) => NewOut | Promise<NewOut>
+    transform: (arg: core.output<this>, ctx: RefinementCtx<core.output<this>>) => NewOut | Promise<NewOut>
   ): ZodPipe<this, ZodTransform<Awaited<NewOut>, core.output<this>>>;
   catch(def: core.output<this>): ZodCatch<this>;
   catch(def: (ctx: core.$ZodCatchCtx) => core.output<this>): ZodCatch<this>;
@@ -135,88 +98,83 @@ export interface ZodType<out Output = unknown, out Input = unknown>
   isNullable(): boolean;
 }
 
-export const ZodType: core.$constructor<ZodType> =
-  /*@__PURE__*/ core.$constructor("ZodType", (inst, def) => {
-    core.$ZodType.init(inst, def);
-    inst.def = def;
-    inst._def = def;
+export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$constructor("ZodType", (inst, def) => {
+  core.$ZodType.init(inst, def);
+  inst.def = def;
+  inst._def = def;
 
-    // base methods
-    inst.check = (...checks) => {
-      return inst.clone({
-        ...def,
-        checks: [
-          ...(def.checks ?? []),
-          ...checks.map((ch) =>
-            typeof ch === "function"
-              ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } }
-              : ch
-          ),
-        ],
-      });
-    };
-    inst.clone = (_def) => core.clone(inst, _def);
-    inst.brand = () => inst as any;
-    inst.register = ((reg: any, meta: any) => {
-      reg.add(inst, meta);
-      return inst;
-    }) as any;
-
-    // parsing
-    inst.parse = (data, params) => parse.parse(inst, data, params);
-    inst.safeParse = (data, params) => parse.safeParse(inst, data, params);
-    inst.parseAsync = async (data, params) =>
-      parse.parseAsync(inst, data, params);
-    inst.safeParseAsync = async (data, params) =>
-      parse.safeParseAsync(inst, data, params);
-    inst.spa = inst.safeParseAsync;
-
-    // refinements
-    inst.refine = (check, params) => inst.check(refine(check, params));
-    inst.superRefine = (refinement) => inst.check(superRefine(refinement));
-    inst.overwrite = (fn) => inst.check(checks.overwrite(fn));
-
-    // wrappers
-    inst.optional = (params) => optional(inst, params);
-    inst.nullable = (params) => nullable(inst, params);
-    inst.nullish = () => optional(nullable(inst));
-    inst.nonoptional = (params) => nonoptional(inst, params);
-    inst.array = () => array(inst);
-    inst.or = (arg) => union([inst, arg]);
-    inst.and = (arg) => intersection(inst, arg);
-    inst.transform = (tx) => pipe(inst, transform(tx as any)) as never;
-    inst.default = (def, params) => _default(inst, def, params);
-    // inst.coalesce = (def, params) => coalesce(inst, def, params);
-    inst.catch = (params) => _catch(inst, params);
-    inst.pipe = (target) => pipe(inst, target);
-    inst.readonly = () => readonly(inst);
-
-    // meta
-    inst.describe = (description) => {
-      const cl = inst.clone();
-      const meta = { ...(core.globalRegistry.get(inst) ?? {}), description };
-      delete meta.id; // do not inherit
-      core.globalRegistry.add(cl, meta);
-      return cl;
-    };
-    Object.defineProperty(inst, "description", {
-      get() {
-        return core.globalRegistry.get(inst)?.description;
-      },
-      configurable: true,
+  // base methods
+  inst.check = (...checks) => {
+    return inst.clone({
+      ...def,
+      checks: [
+        ...(def.checks ?? []),
+        ...checks.map((ch) =>
+          typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
+        ),
+      ],
     });
-    inst.meta = (...args: any) => {
-      if (args.length === 0) return core.globalRegistry.get(inst);
-      const cl = inst.clone();
-      core.globalRegistry.add(cl, args[0]);
-      return cl as any;
-    };
-
-    // helpers
-    inst.isOptional = () => inst.safeParse(undefined).success;
-    inst.isNullable = () => inst.safeParse(null).success;
+  };
+  inst.clone = (_def) => core.clone(inst, _def);
+  inst.brand = () => inst as any;
+  inst.register = ((reg: any, meta: any) => {
+    reg.add(inst, meta);
     return inst;
+  }) as any;
+
+  // parsing
+  inst.parse = (data, params) => parse.parse(inst, data, params);
+  inst.safeParse = (data, params) => parse.safeParse(inst, data, params);
+  inst.parseAsync = async (data, params) => parse.parseAsync(inst, data, params);
+  inst.safeParseAsync = async (data, params) => parse.safeParseAsync(inst, data, params);
+  inst.spa = inst.safeParseAsync;
+
+  // refinements
+  inst.refine = (check, params) => inst.check(refine(check, params));
+  inst.superRefine = (refinement) => inst.check(superRefine(refinement));
+  inst.overwrite = (fn) => inst.check(checks.overwrite(fn));
+
+  // wrappers
+  inst.optional = (params) => optional(inst, params);
+  inst.nullable = (params) => nullable(inst, params);
+  inst.nullish = () => optional(nullable(inst));
+  inst.nonoptional = (params) => nonoptional(inst, params);
+  inst.array = () => array(inst);
+  inst.or = (arg) => union([inst, arg]);
+  inst.and = (arg) => intersection(inst, arg);
+  inst.transform = (tx) => pipe(inst, transform(tx as any)) as never;
+  inst.default = (def, params) => _default(inst, def, params);
+  // inst.coalesce = (def, params) => coalesce(inst, def, params);
+  inst.catch = (params) => _catch(inst, params);
+  inst.pipe = (target) => pipe(inst, target);
+  inst.readonly = () => readonly(inst);
+
+  // meta
+  inst.describe = (description) => {
+    const cl = inst.clone();
+    const meta = { ...(core.globalRegistry.get(inst) ?? {}), description };
+    delete meta.id; // do not inherit
+    core.globalRegistry.add(cl, meta);
+    return cl;
+  };
+  Object.defineProperty(inst, "description", {
+    get() {
+      return core.globalRegistry.get(inst)?.description;
+    },
+    configurable: true,
   });
+  inst.meta = (...args: any) => {
+    if (args.length === 0) return core.globalRegistry.get(inst);
+    const cl = inst.clone();
+    core.globalRegistry.add(cl, args[0]);
+    return cl as any;
+  };
+
+  // helpers
+  inst.isOptional = () => inst.safeParse(undefined).success;
+  inst.isNullable = () => inst.safeParse(null).success;
+  return inst;
+});
 
 // ZodString
 export interface _ZodString<Input = unknown> extends ZodType {
@@ -231,14 +189,8 @@ export interface _ZodString<Input = unknown> extends ZodType {
 
   // miscellaneous checks
   regex(regex: RegExp, params?: string | core.$ZodCheckRegexParams): this;
-  includes(
-    value: string,
-    params?: { message?: string; position?: number }
-  ): this;
-  startsWith(
-    value: string,
-    params?: string | core.$ZodCheckStartsWithParams
-  ): this;
+  includes(value: string, params?: { message?: string; position?: number }): this;
+  startsWith(value: string, params?: string | core.$ZodCheckStartsWithParams): this;
   endsWith(value: string, params?: string | core.$ZodCheckEndsWithParams): this;
   min(minLength: number, params?: string | core.$ZodCheckMinLengthParams): this;
   max(maxLength: number, params?: string | core.$ZodCheckMaxLengthParams): this;
@@ -254,33 +206,32 @@ export interface _ZodString<Input = unknown> extends ZodType {
   toUpperCase(): this;
 }
 
-export const _ZodString: core.$constructor<_ZodString> =
-  /*@__PURE__*/ core.$constructor("_ZodString", (inst, def) => {
-    core.$ZodString.init(inst, def);
-    ZodType.init(inst, def);
+export const _ZodString: core.$constructor<_ZodString> = /*@__PURE__*/ core.$constructor("_ZodString", (inst, def) => {
+  core.$ZodString.init(inst, def);
+  ZodType.init(inst, def);
 
-    inst.format = inst._zod.computed.format ?? null;
-    inst.minLength = inst._zod.computed.minimum ?? null;
-    inst.maxLength = inst._zod.computed.maximum ?? null;
+  inst.format = inst._zod.computed.format ?? null;
+  inst.minLength = inst._zod.computed.minimum ?? null;
+  inst.maxLength = inst._zod.computed.maximum ?? null;
 
-    // validations
-    inst.regex = (...args) => inst.check(checks.regex(...args));
-    inst.includes = (...args) => inst.check(checks.includes(...args));
-    inst.startsWith = (params) => inst.check(checks.startsWith(params));
-    inst.endsWith = (params) => inst.check(checks.endsWith(params));
-    inst.min = (...args) => inst.check(checks.minLength(...args));
-    inst.max = (...args) => inst.check(checks.maxLength(...args));
-    inst.length = (...args) => inst.check(checks.length(...args));
-    inst.nonempty = (...args) => inst.check(checks.minLength(1, ...args));
-    inst.lowercase = (params) => inst.check(checks.lowercase(params));
-    inst.uppercase = (params) => inst.check(checks.uppercase(params));
+  // validations
+  inst.regex = (...args) => inst.check(checks.regex(...args));
+  inst.includes = (...args) => inst.check(checks.includes(...args));
+  inst.startsWith = (params) => inst.check(checks.startsWith(params));
+  inst.endsWith = (params) => inst.check(checks.endsWith(params));
+  inst.min = (...args) => inst.check(checks.minLength(...args));
+  inst.max = (...args) => inst.check(checks.maxLength(...args));
+  inst.length = (...args) => inst.check(checks.length(...args));
+  inst.nonempty = (...args) => inst.check(checks.minLength(1, ...args));
+  inst.lowercase = (params) => inst.check(checks.lowercase(params));
+  inst.uppercase = (params) => inst.check(checks.uppercase(params));
 
-    // transforms
-    inst.trim = () => inst.check(checks.trim());
-    inst.normalize = (...args) => inst.check(checks.normalize(...args));
-    inst.toLowerCase = () => inst.check(checks.toLowerCase());
-    inst.toUpperCase = () => inst.check(checks.toUpperCase());
-  });
+  // transforms
+  inst.trim = () => inst.check(checks.trim());
+  inst.normalize = (...args) => inst.check(checks.normalize(...args));
+  inst.toLowerCase = () => inst.check(checks.toLowerCase());
+  inst.toUpperCase = () => inst.check(checks.toUpperCase());
+});
 
 export interface ZodString extends _ZodString<string> {
   // string format checks
@@ -357,69 +308,66 @@ export interface ZodString extends _ZodString<string> {
   duration(params?: string | core.$ZodCheckISODurationParams): this;
 }
 
-export const ZodString: core.$constructor<ZodString> =
-  /*@__PURE__*/ core.$constructor("ZodString", (inst, def) => {
-    core.$ZodString.init(inst, def);
-    _ZodString.init(inst, def);
+export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$constructor("ZodString", (inst, def) => {
+  core.$ZodString.init(inst, def);
+  _ZodString.init(inst, def);
 
-    inst.email = (params) => inst.check(core._email(ZodEmail, params));
-    inst.url = (params) => inst.check(core._url(ZodURL, params));
-    inst.jwt = (params) => inst.check(core._jwt(ZodJWT, params));
-    inst.emoji = (params) => inst.check(core._emoji(ZodEmoji, params));
-    inst.guid = (params) => inst.check(core._guid(ZodGUID, params));
-    inst.uuid = (params) => inst.check(core._uuid(ZodUUID, params));
-    inst.uuidv4 = (params) => inst.check(core._uuidv4(ZodUUID, params));
-    inst.uuidv6 = (params) => inst.check(core._uuidv6(ZodUUID, params));
-    inst.uuidv7 = (params) => inst.check(core._uuidv7(ZodUUID, params));
-    inst.nanoid = (params) => inst.check(core._nanoid(ZodNanoID, params));
-    inst.guid = (params) => inst.check(core._guid(ZodGUID, params));
-    inst.cuid = (params) => inst.check(core._cuid(ZodCUID, params));
-    inst.cuid2 = (params) => inst.check(core._cuid2(ZodCUID2, params));
-    inst.ulid = (params) => inst.check(core._ulid(ZodULID, params));
-    inst.base64 = (params) => inst.check(core._base64(ZodBase64, params));
-    inst.base64url = (params) =>
-      inst.check(core._base64url(ZodBase64URL, params));
-    inst.xid = (params) => inst.check(core._xid(ZodXID, params));
-    inst.ksuid = (params) => inst.check(core._ksuid(ZodKSUID, params));
-    inst.ipv4 = (params) => inst.check(core._ipv4(ZodIPv4, params));
-    inst.ipv6 = (params) => inst.check(core._ipv6(ZodIPv6, params));
-    inst.cidrv4 = (params) => inst.check(core._cidrv4(ZodCIDRv4, params));
-    inst.cidrv6 = (params) => inst.check(core._cidrv6(ZodCIDRv6, params));
-    inst.e164 = (params) => inst.check(core._e164(ZodE164, params));
+  inst.email = (params) => inst.check(core._email(ZodEmail, params));
+  inst.url = (params) => inst.check(core._url(ZodURL, params));
+  inst.jwt = (params) => inst.check(core._jwt(ZodJWT, params));
+  inst.emoji = (params) => inst.check(core._emoji(ZodEmoji, params));
+  inst.guid = (params) => inst.check(core._guid(ZodGUID, params));
+  inst.uuid = (params) => inst.check(core._uuid(ZodUUID, params));
+  inst.uuidv4 = (params) => inst.check(core._uuidv4(ZodUUID, params));
+  inst.uuidv6 = (params) => inst.check(core._uuidv6(ZodUUID, params));
+  inst.uuidv7 = (params) => inst.check(core._uuidv7(ZodUUID, params));
+  inst.nanoid = (params) => inst.check(core._nanoid(ZodNanoID, params));
+  inst.guid = (params) => inst.check(core._guid(ZodGUID, params));
+  inst.cuid = (params) => inst.check(core._cuid(ZodCUID, params));
+  inst.cuid2 = (params) => inst.check(core._cuid2(ZodCUID2, params));
+  inst.ulid = (params) => inst.check(core._ulid(ZodULID, params));
+  inst.base64 = (params) => inst.check(core._base64(ZodBase64, params));
+  inst.base64url = (params) => inst.check(core._base64url(ZodBase64URL, params));
+  inst.xid = (params) => inst.check(core._xid(ZodXID, params));
+  inst.ksuid = (params) => inst.check(core._ksuid(ZodKSUID, params));
+  inst.ipv4 = (params) => inst.check(core._ipv4(ZodIPv4, params));
+  inst.ipv6 = (params) => inst.check(core._ipv6(ZodIPv6, params));
+  inst.cidrv4 = (params) => inst.check(core._cidrv4(ZodCIDRv4, params));
+  inst.cidrv6 = (params) => inst.check(core._cidrv6(ZodCIDRv6, params));
+  inst.e164 = (params) => inst.check(core._e164(ZodE164, params));
 
-    // iso
-    inst.datetime = (params) => inst.check(iso.datetime(params as any));
-    inst.date = (params) => inst.check(iso.date(params as any));
-    inst.time = (params) => inst.check(iso.time(params as any));
-    inst.duration = (params) => inst.check(iso.duration(params as any));
-  });
+  // iso
+  inst.datetime = (params) => inst.check(iso.datetime(params as any));
+  inst.date = (params) => inst.check(iso.date(params as any));
+  inst.time = (params) => inst.check(iso.time(params as any));
+  inst.duration = (params) => inst.check(iso.duration(params as any));
+});
 
 export function string(params?: string | core.$ZodStringParams): ZodString {
   return core._string(ZodString, params) as any;
 }
 
 // ZodStringFormat
-export interface ZodStringFormat<
-  Format extends core.$ZodStringFormats = core.$ZodStringFormats,
-> extends _ZodString {
+export interface ZodStringFormat<Format extends core.$ZodStringFormats = core.$ZodStringFormats> extends _ZodString {
   _zod: core.$ZodStringFormatInternals<Format>;
 }
-export const ZodStringFormat: core.$constructor<ZodStringFormat> =
-  /*@__PURE__*/ core.$constructor("ZodStringFormat", (inst, def) => {
+export const ZodStringFormat: core.$constructor<ZodStringFormat> = /*@__PURE__*/ core.$constructor(
+  "ZodStringFormat",
+  (inst, def) => {
     core.$ZodStringFormat.init(inst, def);
     _ZodString.init(inst, def);
-  });
+  }
+);
 
 // ZodEmail
 export interface ZodEmail extends ZodStringFormat<"email"> {
   _zod: core.$ZodEmailInternals;
 }
-export const ZodEmail: core.$constructor<ZodEmail> =
-  /*@__PURE__*/ core.$constructor("ZodEmail", (inst, def) => {
-    // ZodStringFormat.init(inst, def);
-    core.$ZodEmail.init(inst, def);
-    ZodStringFormat.init(inst, def);
-  });
+export const ZodEmail: core.$constructor<ZodEmail> = /*@__PURE__*/ core.$constructor("ZodEmail", (inst, def) => {
+  // ZodStringFormat.init(inst, def);
+  core.$ZodEmail.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
 
 export function email(params?: string | core.$ZodEmailParams): ZodEmail {
   return core._email(ZodEmail, params);
@@ -429,12 +377,11 @@ export function email(params?: string | core.$ZodEmailParams): ZodEmail {
 export interface ZodGUID extends ZodStringFormat<"guid"> {
   _zod: core.$ZodGUIDInternals;
 }
-export const ZodGUID: core.$constructor<ZodGUID> =
-  /*@__PURE__*/ core.$constructor("ZodGUID", (inst, def) => {
-    // ZodStringFormat.init(inst, def);
-    core.$ZodGUID.init(inst, def);
-    ZodStringFormat.init(inst, def);
-  });
+export const ZodGUID: core.$constructor<ZodGUID> = /*@__PURE__*/ core.$constructor("ZodGUID", (inst, def) => {
+  // ZodStringFormat.init(inst, def);
+  core.$ZodGUID.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
 
 export function guid(params?: string | core.$ZodGUIDParams): ZodGUID {
   return core._guid(ZodGUID, params);
@@ -444,12 +391,11 @@ export function guid(params?: string | core.$ZodGUIDParams): ZodGUID {
 export interface ZodUUID extends ZodStringFormat<"uuid"> {
   _zod: core.$ZodUUIDInternals;
 }
-export const ZodUUID: core.$constructor<ZodUUID> =
-  /*@__PURE__*/ core.$constructor("ZodUUID", (inst, def) => {
-    // ZodStringFormat.init(inst, def);
-    core.$ZodUUID.init(inst, def);
-    ZodStringFormat.init(inst, def);
-  });
+export const ZodUUID: core.$constructor<ZodUUID> = /*@__PURE__*/ core.$constructor("ZodUUID", (inst, def) => {
+  // ZodStringFormat.init(inst, def);
+  core.$ZodUUID.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
 
 export function uuid(params?: string | core.$ZodUUIDParams): ZodUUID {
   return core._uuid(ZodUUID, params);
@@ -475,12 +421,11 @@ export function uuidv7(params?: string | core.$ZodUUIDv7Params): ZodUUID {
 export interface ZodURL extends ZodStringFormat<"url"> {
   _zod: core.$ZodURLInternals;
 }
-export const ZodURL: core.$constructor<ZodURL> =
-  /*@__PURE__*/ core.$constructor("ZodURL", (inst, def) => {
-    // ZodStringFormat.init(inst, def);
-    core.$ZodURL.init(inst, def);
-    ZodStringFormat.init(inst, def);
-  });
+export const ZodURL: core.$constructor<ZodURL> = /*@__PURE__*/ core.$constructor("ZodURL", (inst, def) => {
+  // ZodStringFormat.init(inst, def);
+  core.$ZodURL.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
 
 export function url(params?: string | core.$ZodURLParams): ZodURL {
   return core._url(ZodURL, params);
@@ -490,12 +435,11 @@ export function url(params?: string | core.$ZodURLParams): ZodURL {
 export interface ZodEmoji extends ZodStringFormat<"emoji"> {
   _zod: core.$ZodEmojiInternals;
 }
-export const ZodEmoji: core.$constructor<ZodEmoji> =
-  /*@__PURE__*/ core.$constructor("ZodEmoji", (inst, def) => {
-    // ZodStringFormat.init(inst, def);
-    core.$ZodEmoji.init(inst, def);
-    ZodStringFormat.init(inst, def);
-  });
+export const ZodEmoji: core.$constructor<ZodEmoji> = /*@__PURE__*/ core.$constructor("ZodEmoji", (inst, def) => {
+  // ZodStringFormat.init(inst, def);
+  core.$ZodEmoji.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
 
 export function emoji(params?: string | core.$ZodEmojiParams): ZodEmoji {
   return core._emoji(ZodEmoji, params);
@@ -505,12 +449,11 @@ export function emoji(params?: string | core.$ZodEmojiParams): ZodEmoji {
 export interface ZodNanoID extends ZodStringFormat<"nanoid"> {
   _zod: core.$ZodNanoIDInternals;
 }
-export const ZodNanoID: core.$constructor<ZodNanoID> =
-  /*@__PURE__*/ core.$constructor("ZodNanoID", (inst, def) => {
-    // ZodStringFormat.init(inst, def);
-    core.$ZodNanoID.init(inst, def);
-    ZodStringFormat.init(inst, def);
-  });
+export const ZodNanoID: core.$constructor<ZodNanoID> = /*@__PURE__*/ core.$constructor("ZodNanoID", (inst, def) => {
+  // ZodStringFormat.init(inst, def);
+  core.$ZodNanoID.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
 
 export function nanoid(params?: string | core.$ZodNanoIDParams): ZodNanoID {
   return core._nanoid(ZodNanoID, params);
@@ -520,12 +463,11 @@ export function nanoid(params?: string | core.$ZodNanoIDParams): ZodNanoID {
 export interface ZodCUID extends ZodStringFormat<"cuid"> {
   _zod: core.$ZodCUIDInternals;
 }
-export const ZodCUID: core.$constructor<ZodCUID> =
-  /*@__PURE__*/ core.$constructor("ZodCUID", (inst, def) => {
-    // ZodStringFormat.init(inst, def);
-    core.$ZodCUID.init(inst, def);
-    ZodStringFormat.init(inst, def);
-  });
+export const ZodCUID: core.$constructor<ZodCUID> = /*@__PURE__*/ core.$constructor("ZodCUID", (inst, def) => {
+  // ZodStringFormat.init(inst, def);
+  core.$ZodCUID.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
 
 export function cuid(params?: string | core.$ZodCUIDParams): ZodCUID {
   return core._cuid(ZodCUID, params);
@@ -535,12 +477,11 @@ export function cuid(params?: string | core.$ZodCUIDParams): ZodCUID {
 export interface ZodCUID2 extends ZodStringFormat<"cuid2"> {
   _zod: core.$ZodCUID2Internals;
 }
-export const ZodCUID2: core.$constructor<ZodCUID2> =
-  /*@__PURE__*/ core.$constructor("ZodCUID2", (inst, def) => {
-    // ZodStringFormat.init(inst, def);
-    core.$ZodCUID2.init(inst, def);
-    ZodStringFormat.init(inst, def);
-  });
+export const ZodCUID2: core.$constructor<ZodCUID2> = /*@__PURE__*/ core.$constructor("ZodCUID2", (inst, def) => {
+  // ZodStringFormat.init(inst, def);
+  core.$ZodCUID2.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
 
 export function cuid2(params?: string | core.$ZodCUID2Params): ZodCUID2 {
   return core._cuid2(ZodCUID2, params);
@@ -550,12 +491,11 @@ export function cuid2(params?: string | core.$ZodCUID2Params): ZodCUID2 {
 export interface ZodULID extends ZodStringFormat<"ulid"> {
   _zod: core.$ZodULIDInternals;
 }
-export const ZodULID: core.$constructor<ZodULID> =
-  /*@__PURE__*/ core.$constructor("ZodULID", (inst, def) => {
-    // ZodStringFormat.init(inst, def);
-    core.$ZodULID.init(inst, def);
-    ZodStringFormat.init(inst, def);
-  });
+export const ZodULID: core.$constructor<ZodULID> = /*@__PURE__*/ core.$constructor("ZodULID", (inst, def) => {
+  // ZodStringFormat.init(inst, def);
+  core.$ZodULID.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
 
 export function ulid(params?: string | core.$ZodULIDParams): ZodULID {
   return core._ulid(ZodULID, params);
@@ -565,12 +505,11 @@ export function ulid(params?: string | core.$ZodULIDParams): ZodULID {
 export interface ZodXID extends ZodStringFormat<"xid"> {
   _zod: core.$ZodXIDInternals;
 }
-export const ZodXID: core.$constructor<ZodXID> =
-  /*@__PURE__*/ core.$constructor("ZodXID", (inst, def) => {
-    // ZodStringFormat.init(inst, def);
-    core.$ZodXID.init(inst, def);
-    ZodStringFormat.init(inst, def);
-  });
+export const ZodXID: core.$constructor<ZodXID> = /*@__PURE__*/ core.$constructor("ZodXID", (inst, def) => {
+  // ZodStringFormat.init(inst, def);
+  core.$ZodXID.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
 
 export function xid(params?: string | core.$ZodXIDParams): ZodXID {
   return core._xid(ZodXID, params);
@@ -580,12 +519,11 @@ export function xid(params?: string | core.$ZodXIDParams): ZodXID {
 export interface ZodKSUID extends ZodStringFormat<"ksuid"> {
   _zod: core.$ZodKSUIDInternals;
 }
-export const ZodKSUID: core.$constructor<ZodKSUID> =
-  /*@__PURE__*/ core.$constructor("ZodKSUID", (inst, def) => {
-    // ZodStringFormat.init(inst, def);
-    core.$ZodKSUID.init(inst, def);
-    ZodStringFormat.init(inst, def);
-  });
+export const ZodKSUID: core.$constructor<ZodKSUID> = /*@__PURE__*/ core.$constructor("ZodKSUID", (inst, def) => {
+  // ZodStringFormat.init(inst, def);
+  core.$ZodKSUID.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
 
 export function ksuid(params?: string | core.$ZodKSUIDParams): ZodKSUID {
   return core._ksuid(ZodKSUID, params);
@@ -609,12 +547,11 @@ export function ksuid(params?: string | core.$ZodKSUIDParams): ZodKSUID {
 export interface ZodIPv4 extends ZodStringFormat<"ipv4"> {
   _zod: core.$ZodIPv4Internals;
 }
-export const ZodIPv4: core.$constructor<ZodIPv4> =
-  /*@__PURE__*/ core.$constructor("ZodIPv4", (inst, def) => {
-    // ZodStringFormat.init(inst, def);
-    core.$ZodIPv4.init(inst, def);
-    ZodStringFormat.init(inst, def);
-  });
+export const ZodIPv4: core.$constructor<ZodIPv4> = /*@__PURE__*/ core.$constructor("ZodIPv4", (inst, def) => {
+  // ZodStringFormat.init(inst, def);
+  core.$ZodIPv4.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
 
 export function ipv4(params?: string | core.$ZodIPv4Params): ZodIPv4 {
   return core._ipv4(ZodIPv4, params);
@@ -624,12 +561,11 @@ export function ipv4(params?: string | core.$ZodIPv4Params): ZodIPv4 {
 export interface ZodIPv6 extends ZodStringFormat<"ipv6"> {
   _zod: core.$ZodIPv6Internals;
 }
-export const ZodIPv6: core.$constructor<ZodIPv6> =
-  /*@__PURE__*/ core.$constructor("ZodIPv6", (inst, def) => {
-    // ZodStringFormat.init(inst, def);
-    core.$ZodIPv6.init(inst, def);
-    ZodStringFormat.init(inst, def);
-  });
+export const ZodIPv6: core.$constructor<ZodIPv6> = /*@__PURE__*/ core.$constructor("ZodIPv6", (inst, def) => {
+  // ZodStringFormat.init(inst, def);
+  core.$ZodIPv6.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
 export function ipv6(params?: string | core.$ZodIPv6Params): ZodIPv6 {
   return core._ipv6(ZodIPv6, params);
 }
@@ -638,11 +574,10 @@ export function ipv6(params?: string | core.$ZodIPv6Params): ZodIPv6 {
 export interface ZodCIDRv4 extends ZodStringFormat<"cidrv4"> {
   _zod: core.$ZodCIDRv4Internals;
 }
-export const ZodCIDRv4: core.$constructor<ZodCIDRv4> =
-  /*@__PURE__*/ core.$constructor("ZodCIDRv4", (inst, def) => {
-    core.$ZodCIDRv4.init(inst, def);
-    ZodStringFormat.init(inst, def);
-  });
+export const ZodCIDRv4: core.$constructor<ZodCIDRv4> = /*@__PURE__*/ core.$constructor("ZodCIDRv4", (inst, def) => {
+  core.$ZodCIDRv4.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
 
 export function cidrv4(params?: string | core.$ZodCIDRv4Params): ZodCIDRv4 {
   return core._cidrv4(ZodCIDRv4, params);
@@ -652,11 +587,10 @@ export function cidrv4(params?: string | core.$ZodCIDRv4Params): ZodCIDRv4 {
 export interface ZodCIDRv6 extends ZodStringFormat<"cidrv6"> {
   _zod: core.$ZodCIDRv6Internals;
 }
-export const ZodCIDRv6: core.$constructor<ZodCIDRv6> =
-  /*@__PURE__*/ core.$constructor("ZodCIDRv6", (inst, def) => {
-    core.$ZodCIDRv6.init(inst, def);
-    ZodStringFormat.init(inst, def);
-  });
+export const ZodCIDRv6: core.$constructor<ZodCIDRv6> = /*@__PURE__*/ core.$constructor("ZodCIDRv6", (inst, def) => {
+  core.$ZodCIDRv6.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
 
 export function cidrv6(params?: string | core.$ZodCIDRv6Params): ZodCIDRv6 {
   return core._cidrv6(ZodCIDRv6, params);
@@ -666,12 +600,11 @@ export function cidrv6(params?: string | core.$ZodCIDRv6Params): ZodCIDRv6 {
 export interface ZodBase64 extends ZodStringFormat<"base64"> {
   _zod: core.$ZodBase64Internals;
 }
-export const ZodBase64: core.$constructor<ZodBase64> =
-  /*@__PURE__*/ core.$constructor("ZodBase64", (inst, def) => {
-    // ZodStringFormat.init(inst, def);
-    core.$ZodBase64.init(inst, def);
-    ZodStringFormat.init(inst, def);
-  });
+export const ZodBase64: core.$constructor<ZodBase64> = /*@__PURE__*/ core.$constructor("ZodBase64", (inst, def) => {
+  // ZodStringFormat.init(inst, def);
+  core.$ZodBase64.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
 export function base64(params?: string | core.$ZodBase64Params): ZodBase64 {
   return core._base64(ZodBase64, params);
 }
@@ -680,15 +613,15 @@ export function base64(params?: string | core.$ZodBase64Params): ZodBase64 {
 export interface ZodBase64URL extends ZodStringFormat<"base64url"> {
   _zod: core.$ZodBase64URLInternals;
 }
-export const ZodBase64URL: core.$constructor<ZodBase64URL> =
-  /*@__PURE__*/ core.$constructor("ZodBase64URL", (inst, def) => {
+export const ZodBase64URL: core.$constructor<ZodBase64URL> = /*@__PURE__*/ core.$constructor(
+  "ZodBase64URL",
+  (inst, def) => {
     // ZodStringFormat.init(inst, def);
     core.$ZodBase64URL.init(inst, def);
     ZodStringFormat.init(inst, def);
-  });
-export function base64url(
-  params?: string | core.$ZodBase64URLParams
-): ZodBase64URL {
+  }
+);
+export function base64url(params?: string | core.$ZodBase64URLParams): ZodBase64URL {
   return core._base64url(ZodBase64URL, params);
 }
 
@@ -696,12 +629,11 @@ export function base64url(
 export interface ZodE164 extends ZodStringFormat<"e164"> {
   _zod: core.$ZodE164Internals;
 }
-export const ZodE164: core.$constructor<ZodE164> =
-  /*@__PURE__*/ core.$constructor("ZodE164", (inst, def) => {
-    // ZodStringFormat.init(inst, def);
-    core.$ZodE164.init(inst, def);
-    ZodStringFormat.init(inst, def);
-  });
+export const ZodE164: core.$constructor<ZodE164> = /*@__PURE__*/ core.$constructor("ZodE164", (inst, def) => {
+  // ZodStringFormat.init(inst, def);
+  core.$ZodE164.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
 
 export function e164(params?: string | core.$ZodE164Params): ZodE164 {
   return core._e164(ZodE164, params);
@@ -711,12 +643,11 @@ export function e164(params?: string | core.$ZodE164Params): ZodE164 {
 export interface ZodJWT extends ZodStringFormat<"jwt"> {
   _zod: core.$ZodJWTInternals;
 }
-export const ZodJWT: core.$constructor<ZodJWT> =
-  /*@__PURE__*/ core.$constructor("ZodJWT", (inst, def) => {
-    // ZodStringFormat.init(inst, def);
-    core.$ZodJWT.init(inst, def);
-    ZodStringFormat.init(inst, def);
-  });
+export const ZodJWT: core.$constructor<ZodJWT> = /*@__PURE__*/ core.$constructor("ZodJWT", (inst, def) => {
+  // ZodStringFormat.init(inst, def);
+  core.$ZodJWT.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
 
 export function jwt(params?: string | core.$ZodJWTParams): ZodJWT {
   return core._jwt(ZodJWT, params);
@@ -742,10 +673,7 @@ export interface _ZodNumber<Input = unknown> extends ZodType {
   nonnegative(params?: string | core.$ZodCheckGreaterThanParams): this;
   negative(params?: string | core.$ZodCheckLessThanParams): this;
   nonpositive(params?: string | core.$ZodCheckLessThanParams): this;
-  multipleOf(
-    value: number,
-    params?: string | core.$ZodCheckMultipleOfParams
-  ): this;
+  multipleOf(value: number, params?: string | core.$ZodCheckMultipleOfParams): this;
   /** @deprecated Use `.multipleOf()` instead. */
   step(value: number, params?: string | core.$ZodCheckMultipleOfParams): this;
 
@@ -763,38 +691,35 @@ export interface _ZodNumber<Input = unknown> extends ZodType {
 
 export interface ZodNumber extends _ZodNumber<number> {}
 
-export const ZodNumber: core.$constructor<ZodNumber> =
-  /*@__PURE__*/ core.$constructor("ZodNumber", (inst, def) => {
-    core.$ZodNumber.init(inst, def);
-    ZodType.init(inst, def);
+export const ZodNumber: core.$constructor<ZodNumber> = /*@__PURE__*/ core.$constructor("ZodNumber", (inst, def) => {
+  core.$ZodNumber.init(inst, def);
+  ZodType.init(inst, def);
 
-    inst.gt = (value, params) => inst.check(checks.gt(value, params));
-    inst.gte = (value, params) => inst.check(checks.gte(value, params));
-    inst.min = (value, params) => inst.check(checks.gte(value, params));
-    inst.lt = (value, params) => inst.check(checks.lt(value, params));
-    inst.lte = (value, params) => inst.check(checks.lte(value, params));
-    inst.max = (value, params) => inst.check(checks.lte(value, params));
-    inst.int = (params) => inst.check(int(params));
-    inst.safe = (params) => inst.check(int(params));
-    inst.positive = (params) => inst.check(checks.gt(0, params));
-    inst.nonnegative = (params) => inst.check(checks.gte(0, params));
-    inst.negative = (params) => inst.check(checks.lt(0, params));
-    inst.nonpositive = (params) => inst.check(checks.lte(0, params));
-    inst.multipleOf = (value, params) =>
-      inst.check(checks.multipleOf(value, params));
-    inst.step = (value, params) => inst.check(checks.multipleOf(value, params));
+  inst.gt = (value, params) => inst.check(checks.gt(value, params));
+  inst.gte = (value, params) => inst.check(checks.gte(value, params));
+  inst.min = (value, params) => inst.check(checks.gte(value, params));
+  inst.lt = (value, params) => inst.check(checks.lt(value, params));
+  inst.lte = (value, params) => inst.check(checks.lte(value, params));
+  inst.max = (value, params) => inst.check(checks.lte(value, params));
+  inst.int = (params) => inst.check(int(params));
+  inst.safe = (params) => inst.check(int(params));
+  inst.positive = (params) => inst.check(checks.gt(0, params));
+  inst.nonnegative = (params) => inst.check(checks.gte(0, params));
+  inst.negative = (params) => inst.check(checks.lt(0, params));
+  inst.nonpositive = (params) => inst.check(checks.lte(0, params));
+  inst.multipleOf = (value, params) => inst.check(checks.multipleOf(value, params));
+  inst.step = (value, params) => inst.check(checks.multipleOf(value, params));
 
-    // inst.finite = (params) => inst.check(core.finite(params));
-    inst.finite = () => inst;
+  // inst.finite = (params) => inst.check(core.finite(params));
+  inst.finite = () => inst;
 
-    inst.minValue = inst._zod.computed.minimum ?? null;
-    inst.maxValue = inst._zod.computed.maximum ?? null;
-    inst.isInt =
-      (inst._zod.computed.format ?? "").includes("int") ||
-      Number.isSafeInteger(inst._zod.computed.multipleOf ?? 0.5);
-    inst.isFinite = true;
-    inst.format = inst._zod.computed.format ?? null;
-  });
+  inst.minValue = inst._zod.computed.minimum ?? null;
+  inst.maxValue = inst._zod.computed.maximum ?? null;
+  inst.isInt =
+    (inst._zod.computed.format ?? "").includes("int") || Number.isSafeInteger(inst._zod.computed.multipleOf ?? 0.5);
+  inst.isFinite = true;
+  inst.format = inst._zod.computed.format ?? null;
+});
 
 export function number(params?: string | core.$ZodNumberParams): ZodNumber {
   return core._number(ZodNumber, params) as any;
@@ -804,49 +729,41 @@ export function number(params?: string | core.$ZodNumberParams): ZodNumber {
 export interface ZodNumberFormat extends ZodNumber {
   _zod: core.$ZodNumberFormatInternals;
 }
-export const ZodNumberFormat: core.$constructor<ZodNumberFormat> =
-  /*@__PURE__*/ core.$constructor("ZodNumberFormat", (inst, def) => {
+export const ZodNumberFormat: core.$constructor<ZodNumberFormat> = /*@__PURE__*/ core.$constructor(
+  "ZodNumberFormat",
+  (inst, def) => {
     core.$ZodNumberFormat.init(inst, def);
     ZodNumber.init(inst, def);
-  });
+  }
+);
 
 // int
 export interface ZodInt extends ZodNumberFormat {}
-export function int(
-  params?: string | core.$ZodCheckNumberFormatParams
-): ZodInt {
+export function int(params?: string | core.$ZodCheckNumberFormatParams): ZodInt {
   return core._int(ZodNumberFormat, params);
 }
 
 // float32
 export interface ZodFloat32 extends ZodNumberFormat {}
-export function float32(
-  params?: string | core.$ZodCheckNumberFormatParams
-): ZodFloat32 {
+export function float32(params?: string | core.$ZodCheckNumberFormatParams): ZodFloat32 {
   return core._float32(ZodNumberFormat, params);
 }
 
 // float64
 export interface ZodFloat64 extends ZodNumberFormat {}
-export function float64(
-  params?: string | core.$ZodCheckNumberFormatParams
-): ZodFloat64 {
+export function float64(params?: string | core.$ZodCheckNumberFormatParams): ZodFloat64 {
   return core._float64(ZodNumberFormat, params);
 }
 
 // int32
 export interface ZodInt32 extends ZodNumberFormat {}
-export function int32(
-  params?: string | core.$ZodCheckNumberFormatParams
-): ZodInt32 {
+export function int32(params?: string | core.$ZodCheckNumberFormatParams): ZodInt32 {
   return core._int32(ZodNumberFormat, params);
 }
 
 // uint32
 export interface ZodUInt32 extends ZodNumberFormat {}
-export function uint32(
-  params?: string | core.$ZodCheckNumberFormatParams
-): ZodUInt32 {
+export function uint32(params?: string | core.$ZodCheckNumberFormatParams): ZodUInt32 {
   return core._uint32(ZodNumberFormat, params);
 }
 
@@ -855,11 +772,10 @@ export interface _ZodBoolean<T = unknown> extends ZodType {
   _zod: core.$ZodBooleanInternals<T>;
 }
 export interface ZodBoolean extends _ZodBoolean<boolean> {}
-export const ZodBoolean: core.$constructor<ZodBoolean> =
-  /*@__PURE__*/ core.$constructor("ZodBoolean", (inst, def) => {
-    core.$ZodBoolean.init(inst, def);
-    ZodType.init(inst, def);
-  });
+export const ZodBoolean: core.$constructor<ZodBoolean> = /*@__PURE__*/ core.$constructor("ZodBoolean", (inst, def) => {
+  core.$ZodBoolean.init(inst, def);
+  ZodType.init(inst, def);
+});
 
 export function boolean(params?: string | core.$ZodBooleanParams): ZodBoolean {
   return core._boolean(ZodBoolean, params) as any;
@@ -881,10 +797,7 @@ export interface _ZodBigInt<T = unknown> extends ZodType {
   negative(params?: string | core.$ZodCheckLessThanParams): this;
   nonpositive(params?: string | core.$ZodCheckLessThanParams): this;
   nonnegative(params?: string | core.$ZodCheckGreaterThanParams): this;
-  multipleOf(
-    value: bigint,
-    params?: string | core.$ZodCheckMultipleOfParams
-  ): this;
+  multipleOf(value: bigint, params?: string | core.$ZodCheckMultipleOfParams): this;
 
   minValue: bigint | null;
   maxValue: bigint | null;
@@ -892,30 +805,28 @@ export interface _ZodBigInt<T = unknown> extends ZodType {
 }
 
 export interface ZodBigInt extends _ZodBigInt<bigint> {}
-export const ZodBigInt: core.$constructor<ZodBigInt> =
-  /*@__PURE__*/ core.$constructor("ZodBigInt", (inst, def) => {
-    core.$ZodBigInt.init(inst, def);
-    ZodType.init(inst, def);
+export const ZodBigInt: core.$constructor<ZodBigInt> = /*@__PURE__*/ core.$constructor("ZodBigInt", (inst, def) => {
+  core.$ZodBigInt.init(inst, def);
+  ZodType.init(inst, def);
 
-    inst.gte = (value, params) => inst.check(checks.gte(value, params));
-    inst.min = (value, params) => inst.check(checks.gte(value, params));
-    inst.gt = (value, params) => inst.check(checks.gt(value, params));
-    inst.gte = (value, params) => inst.check(checks.gte(value, params));
-    inst.min = (value, params) => inst.check(checks.gte(value, params));
-    inst.lt = (value, params) => inst.check(checks.lt(value, params));
-    inst.lte = (value, params) => inst.check(checks.lte(value, params));
-    inst.max = (value, params) => inst.check(checks.lte(value, params));
-    inst.positive = (params) => inst.check(checks.gt(BigInt(0), params));
-    inst.negative = (params) => inst.check(checks.lt(BigInt(0), params));
-    inst.nonpositive = (params) => inst.check(checks.lte(BigInt(0), params));
-    inst.nonnegative = (params) => inst.check(checks.gte(BigInt(0), params));
-    inst.multipleOf = (value, params) =>
-      inst.check(checks.multipleOf(value, params));
+  inst.gte = (value, params) => inst.check(checks.gte(value, params));
+  inst.min = (value, params) => inst.check(checks.gte(value, params));
+  inst.gt = (value, params) => inst.check(checks.gt(value, params));
+  inst.gte = (value, params) => inst.check(checks.gte(value, params));
+  inst.min = (value, params) => inst.check(checks.gte(value, params));
+  inst.lt = (value, params) => inst.check(checks.lt(value, params));
+  inst.lte = (value, params) => inst.check(checks.lte(value, params));
+  inst.max = (value, params) => inst.check(checks.lte(value, params));
+  inst.positive = (params) => inst.check(checks.gt(BigInt(0), params));
+  inst.negative = (params) => inst.check(checks.lt(BigInt(0), params));
+  inst.nonpositive = (params) => inst.check(checks.lte(BigInt(0), params));
+  inst.nonnegative = (params) => inst.check(checks.gte(BigInt(0), params));
+  inst.multipleOf = (value, params) => inst.check(checks.multipleOf(value, params));
 
-    inst.minValue = inst._zod.computed.minimum ?? null;
-    inst.maxValue = inst._zod.computed.maximum ?? null;
-    inst.format = inst._zod.computed.format ?? null;
-  });
+  inst.minValue = inst._zod.computed.minimum ?? null;
+  inst.maxValue = inst._zod.computed.maximum ?? null;
+  inst.format = inst._zod.computed.format ?? null;
+});
 
 export function bigint(params?: string | core.$ZodBigIntParams): ZodBigInt {
   return core._bigint(ZodBigInt, params) as any;
@@ -926,23 +837,21 @@ export function bigint(params?: string | core.$ZodBigIntParams): ZodBigInt {
 export interface ZodBigIntFormat extends ZodBigInt {
   _zod: core.$ZodBigIntFormatInternals;
 }
-export const ZodBigIntFormat: core.$constructor<ZodBigIntFormat> =
-  /*@__PURE__*/ core.$constructor("ZodBigIntFormat", (inst, def) => {
+export const ZodBigIntFormat: core.$constructor<ZodBigIntFormat> = /*@__PURE__*/ core.$constructor(
+  "ZodBigIntFormat",
+  (inst, def) => {
     core.$ZodBigIntFormat.init(inst, def);
     ZodBigInt.init(inst, def);
-  });
+  }
+);
 
 // int64
-export function int64(
-  params?: string | core.$ZodBigIntFormatParams
-): ZodBigIntFormat {
+export function int64(params?: string | core.$ZodBigIntFormatParams): ZodBigIntFormat {
   return core._int64(ZodBigIntFormat, params);
 }
 
 // uint64
-export function uint64(
-  params?: string | core.$ZodBigIntFormatParams
-): ZodBigIntFormat {
+export function uint64(params?: string | core.$ZodBigIntFormatParams): ZodBigIntFormat {
   return core._uint64(ZodBigIntFormat, params);
 }
 
@@ -950,11 +859,10 @@ export function uint64(
 export interface ZodSymbol extends ZodType {
   _zod: core.$ZodSymbolInternals;
 }
-export const ZodSymbol: core.$constructor<ZodSymbol> =
-  /*@__PURE__*/ core.$constructor("ZodSymbol", (inst, def) => {
-    core.$ZodSymbol.init(inst, def);
-    ZodType.init(inst, def);
-  });
+export const ZodSymbol: core.$constructor<ZodSymbol> = /*@__PURE__*/ core.$constructor("ZodSymbol", (inst, def) => {
+  core.$ZodSymbol.init(inst, def);
+  ZodType.init(inst, def);
+});
 
 export function symbol(params?: string | core.$ZodSymbolParams): ZodSymbol {
   return core._symbol(ZodSymbol, params);
@@ -964,11 +872,13 @@ export function symbol(params?: string | core.$ZodSymbolParams): ZodSymbol {
 export interface ZodUndefined extends ZodType {
   _zod: core.$ZodUndefinedInternals;
 }
-export const ZodUndefined: core.$constructor<ZodUndefined> =
-  /*@__PURE__*/ core.$constructor("ZodUndefined", (inst, def) => {
+export const ZodUndefined: core.$constructor<ZodUndefined> = /*@__PURE__*/ core.$constructor(
+  "ZodUndefined",
+  (inst, def) => {
     core.$ZodUndefined.init(inst, def);
     ZodType.init(inst, def);
-  });
+  }
+);
 
 function _undefined(params?: string | core.$ZodUndefinedParams): ZodUndefined {
   return core._undefined(ZodUndefined, params);
@@ -979,11 +889,10 @@ export { _undefined as undefined };
 export interface ZodNull extends ZodType {
   _zod: core.$ZodNullInternals;
 }
-export const ZodNull: core.$constructor<ZodNull> =
-  /*@__PURE__*/ core.$constructor("ZodNull", (inst, def) => {
-    core.$ZodNull.init(inst, def);
-    ZodType.init(inst, def);
-  });
+export const ZodNull: core.$constructor<ZodNull> = /*@__PURE__*/ core.$constructor("ZodNull", (inst, def) => {
+  core.$ZodNull.init(inst, def);
+  ZodType.init(inst, def);
+});
 
 function _null(params?: string | core.$ZodNullParams): ZodNull {
   return core._null(ZodNull, params);
@@ -994,11 +903,10 @@ export { _null as null };
 export interface ZodAny extends ZodType {
   _zod: core.$ZodAnyInternals;
 }
-export const ZodAny: core.$constructor<ZodAny> =
-  /*@__PURE__*/ core.$constructor("ZodAny", (inst, def) => {
-    core.$ZodAny.init(inst, def);
-    ZodType.init(inst, def);
-  });
+export const ZodAny: core.$constructor<ZodAny> = /*@__PURE__*/ core.$constructor("ZodAny", (inst, def) => {
+  core.$ZodAny.init(inst, def);
+  ZodType.init(inst, def);
+});
 
 export function any(params?: string | core.$ZodAnyParams): ZodAny {
   return core._any(ZodAny, params);
@@ -1008,11 +916,10 @@ export function any(params?: string | core.$ZodAnyParams): ZodAny {
 export interface ZodUnknown extends ZodType {
   _zod: core.$ZodUnknownInternals;
 }
-export const ZodUnknown: core.$constructor<ZodUnknown> =
-  /*@__PURE__*/ core.$constructor("ZodUnknown", (inst, def) => {
-    core.$ZodUnknown.init(inst, def);
-    ZodType.init(inst, def);
-  });
+export const ZodUnknown: core.$constructor<ZodUnknown> = /*@__PURE__*/ core.$constructor("ZodUnknown", (inst, def) => {
+  core.$ZodUnknown.init(inst, def);
+  ZodType.init(inst, def);
+});
 
 export function unknown(params?: string | core.$ZodUnknownParams): ZodUnknown {
   return core._unknown(ZodUnknown, params);
@@ -1022,11 +929,10 @@ export function unknown(params?: string | core.$ZodUnknownParams): ZodUnknown {
 export interface ZodNever extends ZodType {
   _zod: core.$ZodNeverInternals;
 }
-export const ZodNever: core.$constructor<ZodNever> =
-  /*@__PURE__*/ core.$constructor("ZodNever", (inst, def) => {
-    core.$ZodNever.init(inst, def);
-    ZodType.init(inst, def);
-  });
+export const ZodNever: core.$constructor<ZodNever> = /*@__PURE__*/ core.$constructor("ZodNever", (inst, def) => {
+  core.$ZodNever.init(inst, def);
+  ZodType.init(inst, def);
+});
 
 export function never(params?: string | core.$ZodNeverParams): ZodNever {
   return core._never(ZodNever, params);
@@ -1036,11 +942,10 @@ export function never(params?: string | core.$ZodNeverParams): ZodNever {
 export interface ZodVoid extends ZodType {
   _zod: core.$ZodVoidInternals;
 }
-export const ZodVoid: core.$constructor<ZodVoid> =
-  /*@__PURE__*/ core.$constructor("ZodVoid", (inst, def) => {
-    core.$ZodVoid.init(inst, def);
-    ZodType.init(inst, def);
-  });
+export const ZodVoid: core.$constructor<ZodVoid> = /*@__PURE__*/ core.$constructor("ZodVoid", (inst, def) => {
+  core.$ZodVoid.init(inst, def);
+  ZodType.init(inst, def);
+});
 
 function _void(params?: string | core.$ZodVoidParams): ZodVoid {
   return core._void(ZodVoid, params);
@@ -1051,14 +956,8 @@ export { _void as void };
 export interface _ZodDate<T = unknown> extends ZodType {
   _zod: core.$ZodDateInternals<T>;
 
-  min(
-    value: number | Date,
-    params?: string | core.$ZodCheckGreaterThanParams
-  ): this;
-  max(
-    value: number | Date,
-    params?: string | core.$ZodCheckLessThanParams
-  ): this;
+  min(value: number | Date, params?: string | core.$ZodCheckGreaterThanParams): this;
+  max(value: number | Date, params?: string | core.$ZodCheckLessThanParams): this;
 
   /** @deprecated Not recommended. */
   minDate: Date | null;
@@ -1067,26 +966,24 @@ export interface _ZodDate<T = unknown> extends ZodType {
 }
 
 export interface ZodDate extends _ZodDate<Date> {}
-export const ZodDate: core.$constructor<ZodDate> =
-  /*@__PURE__*/ core.$constructor("ZodDate", (inst, def) => {
-    core.$ZodDate.init(inst, def);
-    ZodType.init(inst, def);
+export const ZodDate: core.$constructor<ZodDate> = /*@__PURE__*/ core.$constructor("ZodDate", (inst, def) => {
+  core.$ZodDate.init(inst, def);
+  ZodType.init(inst, def);
 
-    inst.min = (value, params) => inst.check(checks.gte(value, params));
-    inst.max = (value, params) => inst.check(checks.lte(value, params));
+  inst.min = (value, params) => inst.check(checks.gte(value, params));
+  inst.max = (value, params) => inst.check(checks.lte(value, params));
 
-    const c = inst._zod.computed;
-    inst.minDate = c.minimum ? new Date(c.minimum) : null;
-    inst.maxDate = c.maximum ? new Date(c.maximum) : null;
-  });
+  const c = inst._zod.computed;
+  inst.minDate = c.minimum ? new Date(c.minimum) : null;
+  inst.maxDate = c.maximum ? new Date(c.maximum) : null;
+});
 
 export function date(params?: string | core.$ZodDateParams): ZodDate {
   return core._date(ZodDate, params);
 }
 
 // ZodArray
-export interface ZodArray<T extends core.$ZodType = core.$ZodType>
-  extends ZodType {
+export interface ZodArray<T extends core.$ZodType = core.$ZodType> extends ZodType {
   _zod: core.$ZodArrayInternals<T>;
 
   element: T;
@@ -1095,35 +992,24 @@ export interface ZodArray<T extends core.$ZodType = core.$ZodType>
   max(maxLength: number, params?: string | core.$ZodCheckMaxLengthParams): this;
   length(len: number, params?: string | core.$ZodCheckLengthEqualsParams): this;
 }
-export const ZodArray: core.$constructor<ZodArray> =
-  /*@__PURE__*/ core.$constructor("ZodArray", (inst, def) => {
-    core.$ZodArray.init(inst, def);
-    ZodType.init(inst, def);
+export const ZodArray: core.$constructor<ZodArray> = /*@__PURE__*/ core.$constructor("ZodArray", (inst, def) => {
+  core.$ZodArray.init(inst, def);
+  ZodType.init(inst, def);
 
-    inst.element = def.element as any;
-    inst.min = (minLength, params) =>
-      inst.check(checks.minLength(minLength, params));
-    inst.nonempty = (params) => inst.check(checks.minLength(1, params));
-    inst.max = (maxLength, params) =>
-      inst.check(checks.maxLength(maxLength, params));
-    inst.length = (len, params) => inst.check(checks.length(len, params));
-  });
+  inst.element = def.element as any;
+  inst.min = (minLength, params) => inst.check(checks.minLength(minLength, params));
+  inst.nonempty = (params) => inst.check(checks.minLength(1, params));
+  inst.max = (maxLength, params) => inst.check(checks.maxLength(maxLength, params));
+  inst.length = (len, params) => inst.check(checks.length(len, params));
+});
 
-export function array<T extends core.$ZodType>(
-  element: T,
-  params?: string | core.$ZodArrayParams
-): ZodArray<T>;
-export function array<T extends core.$ZodType>(
-  element: core.$ZodType,
-  params?: any
-): ZodArray<T> {
+export function array<T extends core.$ZodType>(element: T, params?: string | core.$ZodArrayParams): ZodArray<T>;
+export function array<T extends core.$ZodType>(element: core.$ZodType, params?: any): ZodArray<T> {
   return core._array(ZodArray, element, params) as any;
 }
 
 // .keyof
-export function keyof<T extends ZodObject>(
-  schema: T
-): ZodLiteral<keyof T["_zod"]["output"]> {
+export function keyof<T extends ZodObject>(schema: T): ZodLiteral<keyof T["_zod"]["output"]> {
   const shape = schema._zod.def.shape;
   return literal(Object.keys(shape)) as any;
 }
@@ -1140,9 +1026,7 @@ export interface ZodObject<
 
   keyof(): ZodEnum<util.ToEnum<keyof Shape & string>>;
   /** Define a schema to validate all unrecognized keys. This overrides the existing strict/loose behavior. */
-  catchall<T extends core.$ZodType>(
-    schema: T
-  ): ZodObject<Shape, Record<string, T["_zod"]["output"]>>;
+  catchall<T extends core.$ZodType>(schema: T): ZodObject<Shape, Record<string, T["_zod"]["output"]>>;
 
   /** @deprecated Use `z.looseObject()` or `.loose()` instead. */
   passthrough(): ZodObject<Shape, Record<string, unknown>>;
@@ -1175,11 +1059,7 @@ export interface ZodObject<
    */
   merge<U extends ZodObject>(
     other: U
-  ): ZodObject<
-    util.Extend<Shape, U["shape"]>,
-    U["_zod"]["outextra"],
-    U["_zod"]["inextra"]
-  >;
+  ): ZodObject<util.Extend<Shape, U["shape"]>, U["_zod"]["outextra"], U["_zod"]["inextra"]>;
   /**
    * @deprecated Use destructuring to merge the shapes:
    *
@@ -1193,19 +1073,11 @@ export interface ZodObject<
 
   pick<M extends util.Exactly<util.Mask<string & keyof Shape>, M>>(
     mask: M
-  ): ZodObject<
-    util.Flatten<Pick<Shape, Extract<keyof Shape, keyof M>>>,
-    OutExtra,
-    InExtra
-  >;
+  ): ZodObject<util.Flatten<Pick<Shape, Extract<keyof Shape, keyof M>>>, OutExtra, InExtra>;
 
   omit<M extends util.Exactly<util.Mask<string & keyof Shape>, M>>(
     mask: M
-  ): ZodObject<
-    util.Flatten<Omit<Shape, Extract<keyof Shape, keyof M>>>,
-    OutExtra,
-    InExtra
-  >;
+  ): ZodObject<util.Flatten<Omit<Shape, Extract<keyof Shape, keyof M>>>, OutExtra, InExtra>;
 
   partial(): ZodObject<
     {
@@ -1236,47 +1108,39 @@ export interface ZodObject<
     mask: M
   ): ZodObject<
     {
-      [k in keyof Shape]: k extends keyof M
-        ? ZodNonOptional<Shape[k]>
-        : Shape[k];
+      [k in keyof Shape]: k extends keyof M ? ZodNonOptional<Shape[k]> : Shape[k];
     },
     OutExtra,
     InExtra
   >;
 }
 
-export const ZodObject: core.$constructor<ZodObject> =
-  /*@__PURE__*/ core.$constructor("ZodObject", (inst, def) => {
-    core.$ZodObject.init(inst, def);
-    ZodType.init(inst, def);
+export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$constructor("ZodObject", (inst, def) => {
+  core.$ZodObject.init(inst, def);
+  ZodType.init(inst, def);
 
-    util.defineLazy(inst, "shape", () => {
-      return Object.fromEntries(Object.entries(inst._zod.def.shape));
-    });
-    inst.keyof = () => _enum(Object.keys(inst._zod.def.shape)) as any;
-    inst.catchall = (catchall) => inst.clone({ ...inst._zod.def, catchall });
-    inst.passthrough = () =>
-      inst.clone({ ...inst._zod.def, catchall: unknown() });
-    // inst.nonstrict = () => inst.clone({ ...inst._zod.def, catchall: api.unknown() });
-    inst.loose = () => inst.clone({ ...inst._zod.def, catchall: unknown() });
-    inst.strict = () => inst.clone({ ...inst._zod.def, catchall: never() });
-    inst.strip = () => inst.clone({ ...inst._zod.def, catchall: undefined });
-
-    inst.extend = (incoming: any) => {
-      return util.extend(inst, incoming);
-    };
-    inst.merge = (other) => util.merge(inst, other);
-    inst.pick = (mask) => util.pick(inst, mask);
-    inst.omit = (mask) => util.omit(inst, mask);
-    inst.partial = (...args: any[]) =>
-      util.partial(ZodOptional, inst, args[0] as object);
-    inst.required = (...args: any[]) =>
-      util.required(ZodNonOptional, inst, args[0] as object);
+  util.defineLazy(inst, "shape", () => {
+    return Object.fromEntries(Object.entries(inst._zod.def.shape));
   });
+  inst.keyof = () => _enum(Object.keys(inst._zod.def.shape)) as any;
+  inst.catchall = (catchall) => inst.clone({ ...inst._zod.def, catchall });
+  inst.passthrough = () => inst.clone({ ...inst._zod.def, catchall: unknown() });
+  // inst.nonstrict = () => inst.clone({ ...inst._zod.def, catchall: api.unknown() });
+  inst.loose = () => inst.clone({ ...inst._zod.def, catchall: unknown() });
+  inst.strict = () => inst.clone({ ...inst._zod.def, catchall: never() });
+  inst.strip = () => inst.clone({ ...inst._zod.def, catchall: undefined });
 
-export function object<
-  T extends core.$ZodLooseShape = Record<never, core.$ZodType>,
->(
+  inst.extend = (incoming: any) => {
+    return util.extend(inst, incoming);
+  };
+  inst.merge = (other) => util.merge(inst, other);
+  inst.pick = (mask) => util.pick(inst, mask);
+  inst.omit = (mask) => util.omit(inst, mask);
+  inst.partial = (...args: any[]) => util.partial(ZodOptional, inst, args[0] as object);
+  inst.required = (...args: any[]) => util.required(ZodNonOptional, inst, args[0] as object);
+});
+
+export function object<T extends core.$ZodLooseShape = Record<never, core.$ZodType>>(
   shape?: T,
   params?: string | core.$ZodObjectParams
 ): ZodObject<util.Writeable<T> & {}, {}, {}> {
@@ -1335,18 +1199,15 @@ export function partial<T>(shape: T): Partial<T> {
 }
 
 // ZodUnion
-export interface ZodUnion<
-  T extends readonly core.$ZodType[] = readonly core.$ZodType[],
-> extends ZodType {
+export interface ZodUnion<T extends readonly core.$ZodType[] = readonly core.$ZodType[]> extends ZodType {
   _zod: core.$ZodUnionInternals<T>;
   options: T;
 }
-export const ZodUnion: core.$constructor<ZodUnion> =
-  /*@__PURE__*/ core.$constructor("ZodUnion", (inst, def) => {
-    core.$ZodUnion.init(inst, def);
-    ZodType.init(inst, def);
-    inst.options = def.options;
-  });
+export const ZodUnion: core.$constructor<ZodUnion> = /*@__PURE__*/ core.$constructor("ZodUnion", (inst, def) => {
+  core.$ZodUnion.init(inst, def);
+  ZodType.init(inst, def);
+  inst.options = def.options;
+});
 
 export function union<const T extends readonly core.$ZodType[]>(
   options: T,
@@ -1360,16 +1221,17 @@ export function union<const T extends readonly core.$ZodType[]>(
 }
 
 // ZodDiscriminatedUnion
-export interface ZodDiscriminatedUnion<
-  Options extends readonly core.$ZodType[] = readonly core.$ZodType[],
-> extends ZodUnion<Options> {
+export interface ZodDiscriminatedUnion<Options extends readonly core.$ZodType[] = readonly core.$ZodType[]>
+  extends ZodUnion<Options> {
   _zod: core.$ZodDiscriminatedUnionInternals<Options>;
 }
-export const ZodDiscriminatedUnion: core.$constructor<ZodDiscriminatedUnion> =
-  /*@__PURE__*/ core.$constructor("ZodDiscriminatedUnion", (inst, def) => {
+export const ZodDiscriminatedUnion: core.$constructor<ZodDiscriminatedUnion> = /*@__PURE__*/ core.$constructor(
+  "ZodDiscriminatedUnion",
+  (inst, def) => {
     core.$ZodDiscriminatedUnion.init(inst, def);
     ZodType.init(inst, def);
-  });
+  }
+);
 
 export interface $ZodTypeDiscriminableInternals extends core.$ZodTypeInternals {
   disc: util.DiscriminatorMap;
@@ -1379,16 +1241,12 @@ export interface $ZodTypeDiscriminable extends ZodType {
   _zod: $ZodTypeDiscriminableInternals;
 }
 
-export function discriminatedUnion<
-  Types extends [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]],
->(
+export function discriminatedUnion<Types extends [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]]>(
   disc: string,
   options: Types,
   params?: string | core.$ZodDiscriminatedUnionParams
 ): ZodDiscriminatedUnion<Types>;
-export function discriminatedUnion<
-  Types extends [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]],
->(
+export function discriminatedUnion<Types extends [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]]>(
   options: Types,
   params?: string | core.$ZodDiscriminatedUnionParams
 ): ZodDiscriminatedUnion<Types>;
@@ -1403,17 +1261,17 @@ export function discriminatedUnion(...args: any[]): any {
 }
 
 // ZodIntersection
-export interface ZodIntersection<
-  A extends core.$ZodType = core.$ZodType,
-  B extends core.$ZodType = core.$ZodType,
-> extends ZodType {
+export interface ZodIntersection<A extends core.$ZodType = core.$ZodType, B extends core.$ZodType = core.$ZodType>
+  extends ZodType {
   _zod: core.$ZodIntersectionInternals<A, B>;
 }
-export const ZodIntersection: core.$constructor<ZodIntersection> =
-  /*@__PURE__*/ core.$constructor("ZodIntersection", (inst, def) => {
+export const ZodIntersection: core.$constructor<ZodIntersection> = /*@__PURE__*/ core.$constructor(
+  "ZodIntersection",
+  (inst, def) => {
     core.$ZodIntersection.init(inst, def);
     ZodType.init(inst, def);
-  });
+  }
+);
 
 export function intersection<T extends core.$ZodType, U extends core.$ZodType>(
   left: T,
@@ -1436,33 +1294,26 @@ export interface ZodTuple<
   _zod: core.$ZodTupleInternals<T, Rest>;
   rest<Rest extends core.$ZodType>(rest: Rest): ZodTuple<T, Rest>;
 }
-export const ZodTuple: core.$constructor<ZodTuple> =
-  /*@__PURE__*/ core.$constructor("ZodTuple", (inst, def) => {
-    core.$ZodTuple.init(inst, def);
-    ZodType.init(inst, def);
-    inst.rest = (rest) =>
-      inst.clone({
-        ...inst._zod.def,
-        rest,
-      }) as any;
-  });
+export const ZodTuple: core.$constructor<ZodTuple> = /*@__PURE__*/ core.$constructor("ZodTuple", (inst, def) => {
+  core.$ZodTuple.init(inst, def);
+  ZodType.init(inst, def);
+  inst.rest = (rest) =>
+    inst.clone({
+      ...inst._zod.def,
+      rest,
+    }) as any;
+});
 
 export function tuple<T extends readonly [core.$ZodType, ...core.$ZodType[]]>(
   items: T,
   params?: string | core.$ZodTupleParams
 ): ZodTuple<T, null>;
-export function tuple<
-  T extends readonly [core.$ZodType, ...core.$ZodType[]],
-  Rest extends core.$ZodType,
->(
+export function tuple<T extends readonly [core.$ZodType, ...core.$ZodType[]], Rest extends core.$ZodType>(
   items: T,
   rest: Rest,
   params?: string | core.$ZodTupleParams
 ): ZodTuple<T, Rest>;
-export function tuple(
-  items: [],
-  params?: string | core.$ZodTupleParams
-): ZodTuple<[], null>;
+export function tuple(items: [], params?: string | core.$ZodTupleParams): ZodTuple<[], null>;
 export function tuple(
   items: core.$ZodType[],
   _paramsOrRest?: string | core.$ZodTupleParams | core.$ZodType,
@@ -1488,19 +1339,15 @@ export interface ZodRecord<
   keyType: Key;
   valueType: Value;
 }
-export const ZodRecord: core.$constructor<ZodRecord> =
-  /*@__PURE__*/ core.$constructor("ZodRecord", (inst, def) => {
-    core.$ZodRecord.init(inst, def);
-    ZodType.init(inst, def);
+export const ZodRecord: core.$constructor<ZodRecord> = /*@__PURE__*/ core.$constructor("ZodRecord", (inst, def) => {
+  core.$ZodRecord.init(inst, def);
+  ZodType.init(inst, def);
 
-    inst.keyType = def.keyType;
-    inst.valueType = def.valueType;
-  });
+  inst.keyType = def.keyType;
+  inst.valueType = def.valueType;
+});
 
-export function record<
-  Key extends core.$ZodRecordKey,
-  Value extends core.$ZodType,
->(
+export function record<Key extends core.$ZodRecordKey, Value extends core.$ZodType>(
   keyType: Key,
   valueType: Value,
   params?: string | core.$ZodRecordParams
@@ -1513,10 +1360,7 @@ export function record<
   }) as ZodRecord<Key, Value>;
 }
 
-export function partialRecord<
-  Key extends core.$ZodRecordKey,
-  Value extends core.$ZodType,
->(
+export function partialRecord<Key extends core.$ZodRecordKey, Value extends core.$ZodType>(
   keyType: Key,
   valueType: Value,
   params?: string | core.$ZodRecordParams
@@ -1530,22 +1374,19 @@ export function partialRecord<
 }
 
 // ZodMap
-export interface ZodMap<
-  Key extends core.$ZodType = core.$ZodType,
-  Value extends core.$ZodType = core.$ZodType,
-> extends ZodType {
+export interface ZodMap<Key extends core.$ZodType = core.$ZodType, Value extends core.$ZodType = core.$ZodType>
+  extends ZodType {
   _zod: core.$ZodMapInternals<Key, Value>;
 
   keyType: Key;
   valueType: Value;
 }
-export const ZodMap: core.$constructor<ZodMap> =
-  /*@__PURE__*/ core.$constructor("ZodMap", (inst, def) => {
-    core.$ZodMap.init(inst, def);
-    ZodType.init(inst, def);
-    inst.keyType = def.keyType;
-    inst.valueType = def.valueType;
-  });
+export const ZodMap: core.$constructor<ZodMap> = /*@__PURE__*/ core.$constructor("ZodMap", (inst, def) => {
+  core.$ZodMap.init(inst, def);
+  ZodType.init(inst, def);
+  inst.keyType = def.keyType;
+  inst.valueType = def.valueType;
+});
 
 export function map<Key extends core.$ZodType, Value extends core.$ZodType>(
   keyType: Key,
@@ -1561,8 +1402,7 @@ export function map<Key extends core.$ZodType, Value extends core.$ZodType>(
 }
 
 // ZodSet
-export interface ZodSet<T extends core.$ZodType = core.$ZodType>
-  extends ZodType {
+export interface ZodSet<T extends core.$ZodType = core.$ZodType> extends ZodType {
   _zod: core.$ZodSetInternals<T>;
   min(minSize: number, params?: string | core.$ZodCheckMinSizeParams): this;
   /** */
@@ -1570,16 +1410,15 @@ export interface ZodSet<T extends core.$ZodType = core.$ZodType>
   max(maxSize: number, params?: string | core.$ZodCheckMaxSizeParams): this;
   size(size: number, params?: string | core.$ZodCheckSizeEqualsParams): this;
 }
-export const ZodSet: core.$constructor<ZodSet> =
-  /*@__PURE__*/ core.$constructor("ZodSet", (inst, def) => {
-    core.$ZodSet.init(inst, def);
-    ZodType.init(inst, def);
+export const ZodSet: core.$constructor<ZodSet> = /*@__PURE__*/ core.$constructor("ZodSet", (inst, def) => {
+  core.$ZodSet.init(inst, def);
+  ZodType.init(inst, def);
 
-    inst.min = (...args) => inst.check(core._minSize(...args));
-    inst.nonempty = (params) => inst.check(core._minSize(1, params));
-    inst.max = (...args) => inst.check(core._maxSize(...args));
-    inst.size = (...args) => inst.check(core._size(...args));
-  });
+  inst.min = (...args) => inst.check(core._minSize(...args));
+  inst.nonempty = (params) => inst.check(core._minSize(1, params));
+  inst.max = (...args) => inst.check(core._maxSize(...args));
+  inst.size = (...args) => inst.check(core._size(...args));
+});
 
 export function set<Value extends core.$ZodType>(
   valueType: Value,
@@ -1594,8 +1433,7 @@ export function set<Value extends core.$ZodType>(
 
 // ZodEnum
 // @ts
-export interface ZodEnum<T extends util.EnumLike = util.EnumLike>
-  extends ZodType {
+export interface ZodEnum<T extends util.EnumLike = util.EnumLike> extends ZodType {
   _zod: core.$ZodEnumInternals<T>;
 
   enum: T;
@@ -1610,59 +1448,53 @@ export interface ZodEnum<T extends util.EnumLike = util.EnumLike>
     params?: string | core.$ZodEnumParams
   ): ZodEnum<util.Flatten<Omit<T, U[number]>>>;
 }
-export const ZodEnum: core.$constructor<ZodEnum> =
-  /*@__PURE__*/ core.$constructor("ZodEnum", (inst, def) => {
-    core.$ZodEnum.init(inst, def);
-    ZodType.init(inst, def);
+export const ZodEnum: core.$constructor<ZodEnum> = /*@__PURE__*/ core.$constructor("ZodEnum", (inst, def) => {
+  core.$ZodEnum.init(inst, def);
+  ZodType.init(inst, def);
 
-    inst.enum = def.entries;
-    inst.options = Object.values(def.entries);
+  inst.enum = def.entries;
+  inst.options = Object.values(def.entries);
 
-    const keys = new Set(Object.keys(def.entries));
+  const keys = new Set(Object.keys(def.entries));
 
-    inst.extract = (values, params) => {
-      const newEntries: Record<string, any> = {};
-      for (const value of values) {
-        if (keys.has(value)) {
-          newEntries[value] = def.entries[value];
-        } else throw new Error(`Key ${value} not found in enum`);
-      }
-      return new ZodEnum({
-        ...def,
-        checks: [],
-        ...util.normalizeParams(params),
-        entries: newEntries,
-      }) as any;
-    };
+  inst.extract = (values, params) => {
+    const newEntries: Record<string, any> = {};
+    for (const value of values) {
+      if (keys.has(value)) {
+        newEntries[value] = def.entries[value];
+      } else throw new Error(`Key ${value} not found in enum`);
+    }
+    return new ZodEnum({
+      ...def,
+      checks: [],
+      ...util.normalizeParams(params),
+      entries: newEntries,
+    }) as any;
+  };
 
-    inst.exclude = (values, params) => {
-      const newEntries: Record<string, any> = { ...def.entries };
-      for (const value of values) {
-        if (keys.has(value)) {
-          delete newEntries[value];
-        } else throw new Error(`Key ${value} not found in enum`);
-      }
-      return new ZodEnum({
-        ...def,
-        checks: [],
-        ...util.normalizeParams(params),
-        entries: newEntries,
-      }) as any;
-    };
-  });
+  inst.exclude = (values, params) => {
+    const newEntries: Record<string, any> = { ...def.entries };
+    for (const value of values) {
+      if (keys.has(value)) {
+        delete newEntries[value];
+      } else throw new Error(`Key ${value} not found in enum`);
+    }
+    return new ZodEnum({
+      ...def,
+      checks: [],
+      ...util.normalizeParams(params),
+      entries: newEntries,
+    }) as any;
+  };
+});
 
 function _enum<const T extends readonly string[]>(
   values: T,
   params?: string | core.$ZodEnumParams
 ): ZodEnum<util.ToEnum<T[number]>>;
-function _enum<const T extends util.EnumLike>(
-  entries: T,
-  params?: string | core.$ZodEnumParams
-): ZodEnum<T>;
+function _enum<const T extends util.EnumLike>(entries: T, params?: string | core.$ZodEnumParams): ZodEnum<T>;
 function _enum(values: any, params?: string | core.$ZodEnumParams) {
-  const entries: any = Array.isArray(values)
-    ? Object.fromEntries(values.map((v) => [v, v]))
-    : values;
+  const entries: any = Array.isArray(values) ? Object.fromEntries(values.map((v) => [v, v])) : values;
 
   return new ZodEnum({
     type: "enum",
@@ -1679,10 +1511,7 @@ export { _enum as enum };
  * z.enum(Colors);
  * ```
  */
-export function nativeEnum<T extends util.EnumLike>(
-  entries: T,
-  params?: string | core.$ZodEnumParams
-): ZodEnum<T> {
+export function nativeEnum<T extends util.EnumLike>(entries: T, params?: string | core.$ZodEnumParams): ZodEnum<T> {
   return new ZodEnum({
     type: "enum",
     entries,
@@ -1691,17 +1520,15 @@ export function nativeEnum<T extends util.EnumLike>(
 }
 
 // ZodLiteral
-export interface ZodLiteral<T extends util.Primitive = util.Primitive>
-  extends ZodType {
+export interface ZodLiteral<T extends util.Primitive = util.Primitive> extends ZodType {
   _zod: core.$ZodLiteralInternals<T>;
   values: Set<T>;
 }
-export const ZodLiteral: core.$constructor<ZodLiteral> =
-  /*@__PURE__*/ core.$constructor("ZodLiteral", (inst, def) => {
-    core.$ZodLiteral.init(inst, def);
-    ZodType.init(inst, def);
-    inst.values = new Set(def.values);
-  });
+export const ZodLiteral: core.$constructor<ZodLiteral> = /*@__PURE__*/ core.$constructor("ZodLiteral", (inst, def) => {
+  core.$ZodLiteral.init(inst, def);
+  ZodType.init(inst, def);
+  inst.values = new Set(def.values);
+});
 
 export function literal<const T extends Array<util.Literal>>(
   value: T,
@@ -1725,20 +1552,16 @@ export interface ZodFile extends ZodType {
 
   min(size: number, params?: string | core.$ZodCheckMinSizeParams): this;
   max(size: number, params?: string | core.$ZodCheckMaxSizeParams): this;
-  mime(
-    types: Array<util.MimeTypes>,
-    params?: string | core.$ZodCheckMimeTypeParams
-  ): this;
+  mime(types: Array<util.MimeTypes>, params?: string | core.$ZodCheckMimeTypeParams): this;
 }
-export const ZodFile: core.$constructor<ZodFile> =
-  /*@__PURE__*/ core.$constructor("ZodFile", (inst, def) => {
-    core.$ZodFile.init(inst, def);
-    ZodType.init(inst, def);
+export const ZodFile: core.$constructor<ZodFile> = /*@__PURE__*/ core.$constructor("ZodFile", (inst, def) => {
+  core.$ZodFile.init(inst, def);
+  ZodType.init(inst, def);
 
-    inst.min = (size, params) => inst.check(core._minSize(size, params));
-    inst.max = (size, params) => inst.check(core._maxSize(size, params));
-    inst.mime = (types, params) => inst.check(core._mime(types, params));
-  });
+  inst.min = (size, params) => inst.check(core._minSize(size, params));
+  inst.max = (size, params) => inst.check(core._maxSize(size, params));
+  inst.mime = (types, params) => inst.check(core._mime(types, params));
+});
 
 export function file(params?: string | core.$ZodFileParams): ZodFile {
   return core._file(ZodFile, params) as any;
@@ -1748,8 +1571,9 @@ export function file(params?: string | core.$ZodFileParams): ZodFile {
 export interface ZodTransform<O = unknown, I = unknown> extends ZodType {
   _zod: core.$ZodTransformInternals<O, I>;
 }
-export const ZodTransform: core.$constructor<ZodTransform> =
-  /*@__PURE__*/ core.$constructor("ZodTransform", (inst, def) => {
+export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.$constructor(
+  "ZodTransform",
+  (inst, def) => {
     core.$ZodTransform.init(inst, def);
     ZodType.init(inst, def);
 
@@ -1780,7 +1604,8 @@ export const ZodTransform: core.$constructor<ZodTransform> =
       payload.value = output;
       return payload;
     };
-  });
+  }
+);
 
 export function transform<I = unknown, O = I>(
   fn: (input: I, ctx: core.ParsePayload) => O,
@@ -1794,19 +1619,20 @@ export function transform<I = unknown, O = I>(
 }
 
 // ZodOptional
-export interface ZodOptional<T extends core.$ZodType = core.$ZodType>
-  extends ZodType {
+export interface ZodOptional<T extends core.$ZodType = core.$ZodType> extends ZodType {
   _zod: core.$ZodOptionalInternals<T>;
 
   unwrap(): T;
 }
-export const ZodOptional: core.$constructor<ZodOptional> =
-  /*@__PURE__*/ core.$constructor("ZodOptional", (inst, def) => {
+export const ZodOptional: core.$constructor<ZodOptional> = /*@__PURE__*/ core.$constructor(
+  "ZodOptional",
+  (inst, def) => {
     core.$ZodOptional.init(inst, def);
     ZodType.init(inst, def);
 
     inst.unwrap = () => inst._zod.def.innerType;
-  });
+  }
+);
 
 export function optional<T extends core.$ZodType>(
   innerType: T,
@@ -1820,19 +1646,20 @@ export function optional<T extends core.$ZodType>(
 }
 
 // ZodNullable
-export interface ZodNullable<T extends core.$ZodType = core.$ZodType>
-  extends ZodType {
+export interface ZodNullable<T extends core.$ZodType = core.$ZodType> extends ZodType {
   _zod: core.$ZodNullableInternals<T>;
 
   unwrap(): T;
 }
-export const ZodNullable: core.$constructor<ZodNullable> =
-  /*@__PURE__*/ core.$constructor("ZodNullable", (inst, def) => {
+export const ZodNullable: core.$constructor<ZodNullable> = /*@__PURE__*/ core.$constructor(
+  "ZodNullable",
+  (inst, def) => {
     core.$ZodNullable.init(inst, def);
     ZodType.init(inst, def);
 
     inst.unwrap = () => inst._zod.def.innerType;
-  });
+  }
+);
 
 export function nullable<T extends core.$ZodType>(
   innerType: T,
@@ -1846,61 +1673,54 @@ export function nullable<T extends core.$ZodType>(
 }
 
 // nullish
-export function nullish<T extends core.$ZodType>(
-  innerType: T
-): ZodOptional<ZodNullable<T>> {
+export function nullish<T extends core.$ZodType>(innerType: T): ZodOptional<ZodNullable<T>> {
   return optional(nullable(innerType));
 }
 
 // ZodDefault
-export interface ZodDefault<T extends core.$ZodType = core.$ZodType>
-  extends ZodType {
+export interface ZodDefault<T extends core.$ZodType = core.$ZodType> extends ZodType {
   _zod: core.$ZodDefaultInternals<T>;
 
   unwrap(): T;
   /** @deprecated Use `.unwrap()` instead. */
   removeDefault(): T;
 }
-export const ZodDefault: core.$constructor<ZodDefault> =
-  /*@__PURE__*/ core.$constructor("ZodDefault", (inst, def) => {
-    core.$ZodDefault.init(inst, def);
-    ZodType.init(inst, def);
+export const ZodDefault: core.$constructor<ZodDefault> = /*@__PURE__*/ core.$constructor("ZodDefault", (inst, def) => {
+  core.$ZodDefault.init(inst, def);
+  ZodType.init(inst, def);
 
-    inst.unwrap = () => inst._zod.def.innerType;
-    inst.removeDefault = inst.unwrap;
-  });
+  inst.unwrap = () => inst._zod.def.innerType;
+  inst.removeDefault = inst.unwrap;
+});
 
 export function _default<T extends core.$ZodType>(
   innerType: T,
-  defaultValue:
-    | util.NoUndefined<core.output<T>>
-    | (() => util.NoUndefined<core.output<T>>),
+  defaultValue: util.NoUndefined<core.output<T>> | (() => util.NoUndefined<core.output<T>>),
   params?: string | core.$ZodDefaultParams
 ): ZodDefault<T> {
   return new ZodDefault({
     type: "default",
-    defaultValue: (typeof defaultValue === "function"
-      ? defaultValue
-      : () => defaultValue) as () => core.output<T>,
+    defaultValue: (typeof defaultValue === "function" ? defaultValue : () => defaultValue) as () => core.output<T>,
     innerType,
     ...util.normalizeParams(params),
   }) as any as ZodDefault<T>;
 }
 
 // ZodNonOptional
-export interface ZodNonOptional<T extends core.$ZodType = core.$ZodType>
-  extends ZodType {
+export interface ZodNonOptional<T extends core.$ZodType = core.$ZodType> extends ZodType {
   _zod: core.$ZodNonOptionalInternals<T>;
 
   unwrap(): T;
 }
-export const ZodNonOptional: core.$constructor<ZodNonOptional> =
-  /*@__PURE__*/ core.$constructor("ZodNonOptional", (inst, def) => {
+export const ZodNonOptional: core.$constructor<ZodNonOptional> = /*@__PURE__*/ core.$constructor(
+  "ZodNonOptional",
+  (inst, def) => {
     core.$ZodNonOptional.init(inst, def);
     ZodType.init(inst, def);
 
     inst.unwrap = () => inst._zod.def.innerType;
-  });
+  }
+);
 
 export function nonoptional<T extends core.$ZodType>(
   innerType: T,
@@ -1914,19 +1734,17 @@ export function nonoptional<T extends core.$ZodType>(
 }
 
 // ZodSuccess
-export interface ZodSuccess<T extends core.$ZodType = core.$ZodType>
-  extends ZodType {
+export interface ZodSuccess<T extends core.$ZodType = core.$ZodType> extends ZodType {
   _zod: core.$ZodSuccessInternals<T>;
 
   unwrap(): T;
 }
-export const ZodSuccess: core.$constructor<ZodSuccess> =
-  /*@__PURE__*/ core.$constructor("ZodSuccess", (inst, def) => {
-    core.$ZodSuccess.init(inst, def);
-    ZodType.init(inst, def);
+export const ZodSuccess: core.$constructor<ZodSuccess> = /*@__PURE__*/ core.$constructor("ZodSuccess", (inst, def) => {
+  core.$ZodSuccess.init(inst, def);
+  ZodType.init(inst, def);
 
-    inst.unwrap = () => inst._zod.def.innerType;
-  });
+  inst.unwrap = () => inst._zod.def.innerType;
+});
 
 export function success<T extends core.$ZodType>(
   innerType: T,
@@ -1940,22 +1758,20 @@ export function success<T extends core.$ZodType>(
 }
 
 // ZodCatch
-export interface ZodCatch<T extends core.$ZodType = core.$ZodType>
-  extends ZodType {
+export interface ZodCatch<T extends core.$ZodType = core.$ZodType> extends ZodType {
   _zod: core.$ZodCatchInternals<T>;
 
   unwrap(): T;
   /** @deprecated Use `.unwrap()` instead. */
   removeCatch(): T;
 }
-export const ZodCatch: core.$constructor<ZodCatch> =
-  /*@__PURE__*/ core.$constructor("ZodCatch", (inst, def) => {
-    core.$ZodCatch.init(inst, def);
-    ZodType.init(inst, def);
+export const ZodCatch: core.$constructor<ZodCatch> = /*@__PURE__*/ core.$constructor("ZodCatch", (inst, def) => {
+  core.$ZodCatch.init(inst, def);
+  ZodType.init(inst, def);
 
-    inst.unwrap = () => inst._zod.def.innerType;
-    inst.removeCatch = inst.unwrap;
-  });
+  inst.unwrap = () => inst._zod.def.innerType;
+  inst.removeCatch = inst.unwrap;
+});
 
 function _catch<T extends core.$ZodType>(
   innerType: T,
@@ -1965,9 +1781,9 @@ function _catch<T extends core.$ZodType>(
   return new ZodCatch({
     type: "catch",
     innerType,
-    catchValue: (typeof catchValue === "function"
-      ? catchValue
-      : () => catchValue) as (ctx: core.$ZodCatchCtx) => core.output<T>,
+    catchValue: (typeof catchValue === "function" ? catchValue : () => catchValue) as (
+      ctx: core.$ZodCatchCtx
+    ) => core.output<T>,
     ...util.normalizeParams(params),
   }) as ZodCatch<T>;
 }
@@ -1977,51 +1793,36 @@ export { _catch as catch };
 export interface ZodNaN extends ZodType {
   _zod: core.$ZodNaNInternals;
 }
-export const ZodNaN: core.$constructor<ZodNaN> =
-  /*@__PURE__*/ core.$constructor("ZodNaN", (inst, def) => {
-    core.$ZodNaN.init(inst, def);
-    ZodType.init(inst, def);
-  });
+export const ZodNaN: core.$constructor<ZodNaN> = /*@__PURE__*/ core.$constructor("ZodNaN", (inst, def) => {
+  core.$ZodNaN.init(inst, def);
+  ZodType.init(inst, def);
+});
 
 export function nan(params?: string | core.$ZodNaNParams): ZodNaN {
   return core._nan(ZodNaN, params);
 }
 
 // ZodPipe
-export interface ZodPipe<
-  A extends core.$ZodType = core.$ZodType,
-  B extends core.$ZodType = core.$ZodType,
-> extends ZodType {
+export interface ZodPipe<A extends core.$ZodType = core.$ZodType, B extends core.$ZodType = core.$ZodType>
+  extends ZodType {
   _zod: core.$ZodPipeInternals<A, B>;
 
   in: A;
   out: B;
 }
-export const ZodPipe: core.$constructor<ZodPipe> =
-  /*@__PURE__*/ core.$constructor("ZodPipe", (inst, def) => {
-    core.$ZodPipe.init(inst, def);
-    ZodType.init(inst, def);
+export const ZodPipe: core.$constructor<ZodPipe> = /*@__PURE__*/ core.$constructor("ZodPipe", (inst, def) => {
+  core.$ZodPipe.init(inst, def);
+  ZodType.init(inst, def);
 
-    inst.in = def.in;
-    inst.out = def.out;
-  });
+  inst.in = def.in;
+  inst.out = def.out;
+});
 
 export function pipe<
   const A extends core.$ZodType,
-  B extends core.$ZodType<unknown, core.output<A>> = core.$ZodType<
-    unknown,
-    core.output<A>
-  >,
->(
-  in_: A,
-  out: B | core.$ZodType<unknown, core.output<A>>,
-  params?: string | core.$ZodPipeParams
-): ZodPipe<A, B>;
-export function pipe(
-  in_: core.$ZodType,
-  out: core.$ZodType,
-  params?: string | core.$ZodPipeParams
-) {
+  B extends core.$ZodType<unknown, core.output<A>> = core.$ZodType<unknown, core.output<A>>,
+>(in_: A, out: B | core.$ZodType<unknown, core.output<A>>, params?: string | core.$ZodPipeParams): ZodPipe<A, B>;
+export function pipe(in_: core.$ZodType, out: core.$ZodType, params?: string | core.$ZodPipeParams) {
   return new ZodPipe({
     type: "pipe",
     in: in_,
@@ -2031,15 +1832,16 @@ export function pipe(
 }
 
 // ZodReadonly
-export interface ZodReadonly<T extends core.$ZodType = core.$ZodType>
-  extends ZodType {
+export interface ZodReadonly<T extends core.$ZodType = core.$ZodType> extends ZodType {
   _zod: core.$ZodReadonlyInternals<T>;
 }
-export const ZodReadonly: core.$constructor<ZodReadonly> =
-  /*@__PURE__*/ core.$constructor("ZodReadonly", (inst, def) => {
+export const ZodReadonly: core.$constructor<ZodReadonly> = /*@__PURE__*/ core.$constructor(
+  "ZodReadonly",
+  (inst, def) => {
     core.$ZodReadonly.init(inst, def);
     ZodType.init(inst, def);
-  });
+  }
+);
 
 export function readonly<T extends core.$ZodType>(
   innerType: T,
@@ -2053,19 +1855,18 @@ export function readonly<T extends core.$ZodType>(
 }
 
 // ZodTemplateLiteral
-export interface ZodTemplateLiteral<Template extends string = string>
-  extends ZodType {
+export interface ZodTemplateLiteral<Template extends string = string> extends ZodType {
   _zod: core.$ZodTemplateLiteralInternals<Template>;
 }
-export const ZodTemplateLiteral: core.$constructor<ZodTemplateLiteral> =
-  /*@__PURE__*/ core.$constructor("ZodTemplateLiteral", (inst, def) => {
+export const ZodTemplateLiteral: core.$constructor<ZodTemplateLiteral> = /*@__PURE__*/ core.$constructor(
+  "ZodTemplateLiteral",
+  (inst, def) => {
     core.$ZodTemplateLiteral.init(inst, def);
     ZodType.init(inst, def);
-  });
+  }
+);
 
-export function templateLiteral<
-  const Parts extends core.$TemplateLiteralPart[],
->(
+export function templateLiteral<const Parts extends core.$TemplateLiteralPart[]>(
   parts: Parts,
   params?: string | core.$ZodTemplateLiteralParams
 ): ZodTemplateLiteral<core.$PartsToTemplateLiteral<Parts>> {
@@ -2077,19 +1878,17 @@ export function templateLiteral<
 }
 
 // ZodLazy
-export interface ZodLazy<T extends core.$ZodType = core.$ZodType>
-  extends ZodType {
+export interface ZodLazy<T extends core.$ZodType = core.$ZodType> extends ZodType {
   _zod: core.$ZodLazyInternals<T>;
 
   unwrap(): T;
 }
-export const ZodLazy: core.$constructor<ZodLazy> =
-  /*@__PURE__*/ core.$constructor("ZodLazy", (inst, def) => {
-    core.$ZodLazy.init(inst, def);
-    ZodType.init(inst, def);
+export const ZodLazy: core.$constructor<ZodLazy> = /*@__PURE__*/ core.$constructor("ZodLazy", (inst, def) => {
+  core.$ZodLazy.init(inst, def);
+  ZodType.init(inst, def);
 
-    inst.unwrap = () => inst._zod.def.getter();
-  });
+  inst.unwrap = () => inst._zod.def.getter();
+});
 
 export function lazy<T extends core.$ZodType>(getter: () => T): ZodLazy<T> {
   return new ZodLazy({
@@ -2099,19 +1898,17 @@ export function lazy<T extends core.$ZodType>(getter: () => T): ZodLazy<T> {
 }
 
 // ZodPromise
-export interface ZodPromise<T extends core.$ZodType = core.$ZodType>
-  extends ZodType {
+export interface ZodPromise<T extends core.$ZodType = core.$ZodType> extends ZodType {
   _zod: core.$ZodPromiseInternals<T>;
 
   unwrap(): T;
 }
-export const ZodPromise: core.$constructor<ZodPromise> =
-  /*@__PURE__*/ core.$constructor("ZodPromise", (inst, def) => {
-    core.$ZodPromise.init(inst, def);
-    ZodType.init(inst, def);
+export const ZodPromise: core.$constructor<ZodPromise> = /*@__PURE__*/ core.$constructor("ZodPromise", (inst, def) => {
+  core.$ZodPromise.init(inst, def);
+  ZodType.init(inst, def);
 
-    inst.unwrap = () => inst._zod.def.innerType;
-  });
+  inst.unwrap = () => inst._zod.def.innerType;
+});
 
 export function promise<T extends core.$ZodType>(
   innerType: T,
@@ -2128,17 +1925,13 @@ export function promise<T extends core.$ZodType>(
 export interface ZodCustom<O = unknown, I = unknown> extends ZodType {
   _zod: core.$ZodCustomInternals<O, I>;
 }
-export const ZodCustom: core.$constructor<ZodCustom> =
-  /*@__PURE__*/ core.$constructor("ZodCustom", (inst, def) => {
-    core.$ZodCustom.init(inst, def);
-    ZodType.init(inst, def);
-  });
+export const ZodCustom: core.$constructor<ZodCustom> = /*@__PURE__*/ core.$constructor("ZodCustom", (inst, def) => {
+  core.$ZodCustom.init(inst, def);
+  ZodType.init(inst, def);
+});
 
 // custom checks
-export function check<O = unknown>(
-  fn: core.CheckFn<O>,
-  params?: string | core.$ZodCustomParams
-): core.$ZodCheck<O> {
+export function check<O = unknown>(fn: core.CheckFn<O>, params?: string | core.$ZodCustomParams): core.$ZodCheck<O> {
   const ch = new core.$ZodCheck({
     check: "custom",
     ...util.normalizeParams(params),
@@ -2214,27 +2007,16 @@ function _instanceof<T extends typeof Class>(
 export { _instanceof as instanceof };
 
 // stringbool
-export const stringbool: (
-  _params?: string | core.$ZodStringBoolParams
-) => ZodPipe<ZodUnknown, ZodBoolean> = /*@__PURE__*/ core._stringbool.bind(
-  null,
-  {
+export const stringbool: (_params?: string | core.$ZodStringBoolParams) => ZodPipe<ZodUnknown, ZodBoolean> =
+  /*@__PURE__*/ core._stringbool.bind(null, {
     Pipe: ZodPipe,
     Boolean: ZodBoolean,
     Unknown: ZodUnknown,
-  }
-) as any;
+  }) as any;
 
 // json
 export type ZodJSONSchema = ZodUnion<
-  [
-    ZodString,
-    ZodNumber,
-    ZodBoolean,
-    ZodNull,
-    ZodArray<ZodJSONSchema>,
-    ZodRecord<ZodString, ZodJSONSchema>,
-  ]
+  [ZodString, ZodNumber, ZodBoolean, ZodNull, ZodArray<ZodJSONSchema>, ZodRecord<ZodString, ZodJSONSchema>]
 > & {
   _zod: {
     input: util.JSONType;
@@ -2244,23 +2026,14 @@ export type ZodJSONSchema = ZodUnion<
 
 export function json(params?: string | core.$ZodCustomParams): ZodJSONSchema {
   const jsonSchema: any = lazy(() => {
-    return union([
-      string(params),
-      number(),
-      boolean(),
-      _null(),
-      array(jsonSchema),
-      record(string(), jsonSchema),
-    ]);
+    return union([string(params), number(), boolean(), _null(), array(jsonSchema), record(string(), jsonSchema)]);
   });
 
   return jsonSchema;
 }
 
 // preprocess
-export interface ZodPreprocessParams
-  extends core.$ZodTransformParams,
-    core.$ZodPipeParams {}
+export interface ZodPreprocessParams extends core.$ZodTransformParams, core.$ZodPipeParams {}
 
 // /** @deprecated Use `z.pipe()` and `z.transform()` instead. */
 export function preprocess<A, U extends core.$ZodType>(
