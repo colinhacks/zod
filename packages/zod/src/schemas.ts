@@ -1194,10 +1194,6 @@ export function looseObject<T extends core.$ZodLooseShape>(
   }) as any;
 }
 
-export function partial<T>(shape: T): Partial<T> {
-  return shape;
-}
-
 // ZodUnion
 export interface ZodUnion<T extends readonly core.$ZodType[] = readonly core.$ZodType[]> extends ZodType {
   _zod: core.$ZodUnionInternals<T>;
