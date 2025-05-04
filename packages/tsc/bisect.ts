@@ -40,13 +40,6 @@ let CURR = MIN;
 // shape interface: 43472
 
 while (!MAX || MAX - MIN > 2) {
-  // generate({
-  //   ...ZOD,
-  //   schemaType: "z.interface",
-  //   numSchemas: CURR,
-  //   numKeys: 3,
-  //   numRefs: 1,
-  // });
   gen.generateExtendChain({
     ...gen.ARKTYPE,
     numSchemas: CURR,
@@ -65,7 +58,9 @@ while (!MAX || MAX - MIN > 2) {
     const time = proc.stdout.match(/total time:\s+(.+)/i)![1];
     const instantiations = proc.stdout.match(/instantiations:\s+(.+)/i)![1];
     const memory = proc.stdout.match(/memory used:\s+(.+)/i)![1];
-    console.log(`Compilation succeeded.\n   Time: ${time}\n   Instantiations: ${instantiations}\n   Memory ${memory}`);
+    console.log(
+      `Compilation succeeded.\n   Time: ${time}\n   Instantiations: ${instantiations}\n   Memory ${memory}`
+    );
 
     // success
     if (!MAX) {
