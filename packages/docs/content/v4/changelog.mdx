@@ -305,6 +305,34 @@ type schemaInput = z.input<typeof schema>;
 // Zod 4: unknown;
 ```
 
+## `.default()` updates
+
+The application of `.default()` has changed in a subtle way. 
+
+```ts
+T.default(default).parse(input); // where T is some schema
+```
+
+In Zod 3, this would be equivalent to:
+
+```ts
+// the default value would be parsed by the inner schema
+T.parse(input ?? default); 
+```
+
+in Zod 4, the default short-circuits the parsing process.
+
+```ts
+// 
+input === undefined ? default : T.parse(input);
+```
+
+To replicate the old behavior, you can use transform and pipe:
+
+```ts
+z.transform(val => val ?? default).pipe(T);
+```
+
 ## `z.object()`
 
 These modifier methods on the `ZodObject` class determine how the schema handles unknown keys. In Zod 4, this functionality now exists in top-level functions. This aligns better with Zod's declarative-first philosophy, and puts all object variants on equal footing. 
