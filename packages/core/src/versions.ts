@@ -1,5 +1,5 @@
 export const version = {
   major: 0,
   minor: 11,
-  patch: 2 as number,
+  patch: 3 as number,
 } as const;
