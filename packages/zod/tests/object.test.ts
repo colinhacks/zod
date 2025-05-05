@@ -440,6 +440,12 @@ test("assignability", () => {
   z.object({}) satisfies z.ZodObject;
   z.object({ "a?": z.string() }) satisfies z.ZodObject;
   z.object({ "?a": z.string() }) satisfies z.ZodObject;
+
+  z.object({
+    a: z.string(),
+    b: z.number(),
+    c: z.boolean(),
+  }) satisfies z.core.$ZodObject;
 });
 
 test("null prototype", () => {
