@@ -338,31 +338,25 @@ z.transform(val => val ?? default).pipe(T);
 These modifier methods on the `ZodObject` class determine how the schema handles unknown keys. In Zod 4, this functionality now exists in top-level functions. This aligns better with Zod's declarative-first philosophy, and puts all object variants on equal footing. 
 
 
-### discourages `.strict()`
+### deprecates `.strict()` and `.passthrough()`
 
-> The `.strict()` method is discouraged but not deprecat4ed. It won't be removed. 
+These methods are generally no longer necessary. Instead use the top-level `z.strictObject()` and `z.looseObject()` functions.
+
 ```ts
 // Zod 3
 z.object({ name: z.string() }).strict();
-
-// Zod 4
-z.strictObject({ name: z.string() });
-```
-
-### deprecates `.passthrough()`
-
-```ts
-// Zod 3
 z.object({ name: z.string() }).passthrough();
 
 // Zod 4
+z.strictObject({ name: z.string() });
 z.looseObject({ name: z.string() });
 ```
 
+> These methods are still available for backwards compatibility, and they will not be removed. They are considered legacy.
+
 ### deprecates `.strip()`
 
-This was never particularly useful, as it was the default behavior of `z.object()`. 
-
+This was never particularly useful, as it was the default behavior of `z.object()`. To convert a strict object to a "regular" one, use `z.object(A.shape)`.
 
 ### drops `.nonstrict()`
 
