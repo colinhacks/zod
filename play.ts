@@ -1,25 +1,13 @@
-import * as z from "zod3";
+import * as z from "zod";
 
 z;
 
-function a() {
-  b();
-}
-
-function b() {
-  c();
-}
-
-function c() {
-  z.string().parse(12);
-}
-
-try {
-  a();
-} catch (err: any) {
-  console.log(err);
-  console.log(err.stack);
-}
+const a = z.object({
+  a: z.string(),
+  b: z.number().or(z.boolean()),
+  c: z.optional(z.number()),
+});
+console.log(a);
 
 // class Version<
 //   T extends z.ZodType = z.ZodType,

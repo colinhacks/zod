@@ -115,3 +115,10 @@ test("assignability", () => {
   // $ZodFile
   z.file() satisfies z.core.$ZodFile;
 });
+
+test("checks", () => {
+  const _a: z.core.$ZodCheck = {} as any as z.core.$ZodChecks;
+  const _b: z.core.$ZodCheck = {} as any as z.core.$ZodStringFormatChecks;
+  const _c: z.core.$ZodType = {} as any as z.core.$ZodTypes;
+  const _d: z.core.$ZodType = {} as any as z.core.$ZodStringFormatTypes;
+});

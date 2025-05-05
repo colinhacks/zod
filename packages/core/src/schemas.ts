@@ -176,7 +176,6 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
   inst._zod.def = def; // set _def property
   inst._zod.computed = inst._zod.computed || {}; // initialize _computed object
   inst._zod.version = version;
-  // inst._zod.optionality ??= "required"; // default
 
   const checks = [...(inst._zod.def.checks ?? [])];
 
