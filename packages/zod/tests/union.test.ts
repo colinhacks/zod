@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 
 import * as z from "zod";
 
@@ -72,4 +72,11 @@ test("readonly union", async () => {
   const union = z.union(options);
   union.parse("asdf");
   union.parse(12);
+});
+
+test("union inferred types", () => {
+  const test = z.object({}).or(z.array(z.object({})));
+
+  type Test = z.output<typeof test>; // <— any
+  expectTypeOf<Test>().toEqualTypeOf<Record<string, never> | Array<Record<string, never>>>();
 });

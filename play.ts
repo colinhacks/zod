@@ -1,8 +1,30 @@
 import * as z from "zod";
 
-const test = z.object({}).or(z.array(z.object({})));
-test.def.options[0]._zod.output;
+console.log(
+  JSON.stringify(
+    z.toJSONSchema(
+      z.object({
+        jobId: z.string().default("foo"), // or .catch()
+      }),
+      {
+        reused: "ref",
+        io: "input",
+      }
+    ),
+    null,
+    2
+  )
+);
 
-type Test = z.output<typeof test>; // <— any
-
-z.core.util.optionalKeys;
+/**
+ * {
+  "type": "object",
+  "properties": {
+    "jobId": {
+      "type": "string",
+      "default": "foo"
+    }
+  },
+  "required": []
+}
+ */
