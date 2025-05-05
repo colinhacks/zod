@@ -1492,7 +1492,8 @@ export interface $ZodObjectDef<Shape extends $ZodShape = $ZodShape> extends $Zod
 }
 
 export interface $ZodObjectInternals<
-  Shape extends Readonly<$ZodShape> = Readonly<$ZodShape>,
+  // @ts-ignore Cast variance
+  out Shape extends Readonly<$ZodShape> = Readonly<$ZodShape>,
   out OutExtra extends Record<string, unknown> = Record<string, unknown>,
   out InExtra extends Record<string, unknown> = Record<string, unknown>,
 > extends $ZodTypeInternals<any, any> {
@@ -1568,9 +1569,10 @@ function handleOptionalObjectResult(result: ParsePayload, final: ParsePayload, k
 }
 
 export interface $ZodObject<
-  Shape extends Readonly<$ZodShape> = Readonly<$ZodShape>,
-  OutExtra extends Record<string, unknown> = Record<string, unknown>,
-  InExtra extends Record<string, unknown> = Record<string, unknown>,
+  // @ts-ignore Cast variance
+  out Shape extends Readonly<$ZodShape> = Readonly<$ZodShape>,
+  out OutExtra extends Record<string, unknown> = Record<string, unknown>,
+  out InExtra extends Record<string, unknown> = Record<string, unknown>,
 > extends $ZodType {
   _zod: $ZodObjectInternals<Shape, OutExtra, InExtra>;
 }

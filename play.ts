@@ -1,30 +1,10 @@
 import * as z from "zod";
 
-console.log(
-  JSON.stringify(
-    z.toJSONSchema(
-      z.object({
-        jobId: z.string().default("foo"), // or .catch()
-      }),
-      {
-        reused: "ref",
-        io: "input",
-      }
-    ),
-    null,
-    2
-  )
-);
+const schema = z.object({
+  a: z.string(),
+  b: z.number(),
+  c: z.boolean(),
+});
 
-/**
- * {
-  "type": "object",
-  "properties": {
-    "jobId": {
-      "type": "string",
-      "default": "foo"
-    }
-  },
-  "required": []
-}
- */
+const test: z.core.$ZodObject = schema;
+// ___^^^^^
