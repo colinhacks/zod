@@ -1,44 +1,61 @@
-import * as z from "zod";
+import * as z from "@zod/mini";
 
-z;
-
-const a = z.object({
-  a: z.string(),
-  b: z.number().or(z.boolean()),
-  c: z.optional(z.number()),
+const Category = z.object({
+  name: z.string(),
+  get parent() {
+    return Category;
+  },
 });
-console.log(a);
 
-// class Version<
-//   T extends z.ZodType = z.ZodType,
-//   Prev extends Version<any, any> | null = null, // ✅ no self‑referencing default
-// > {
-//   type: T;
-//   prev: Prev;
-//   migrate: (prev: z.output<NonNullable<Prev>["type"]>) => z.output<T>;
+type Category = z.infer<typeof Category>;
 
-//   constructor(type: T, prev: Prev, migrate: (prev: z.output<NonNullable<Prev>["type"]>) => z.output<T>) {
-//     this.type = type;
-//     this.prev = prev;
-//     this.migrate = migrate;
-//   }
+// base type
+interface ZodType {
+  optional: "true" | "false";
+  output: any;
+}
 
-//   bump<U extends z.ZodType>(schema: U, migrate: (prev: z.output<T>) => z.output<U>): Version<U, this> {
-//     return new Version(schema, this, migrate);
-//   }
+// string
+interface ZodString extends ZodType {
+  optional: "false";
+  output: string;
+}
 
-//   static initial<T extends z.ZodType>(schema: T): Version<T, null> {
-//     return new Version(schema, null, () => {
-//       throw new Error("initial");
-//     });
-//   }
-// }
+// object
+type ZodShape = Record<string, any>;
+type Prettify<T> = { [K in keyof T]: T[K] } & {};
+type InferObjectType<Shape extends ZodShape> = Prettify<
+  {
+    [k in keyof Shape as Shape[k] extends { optional: "true" } ? k : never]?: Shape[k]["output"];
+  } & {
+    [k in keyof Shape as Shape[k] extends { optional: "true" } ? never : k]: Shape[k]["output"];
+  }
+>;
+interface ZodObject<T extends ZodShape> extends ZodType {
+  optional: "false";
+  output: InferObjectType<T>;
+}
 
-// const v1 = Version.initial(z.object({ a: z.string() }));
+// optional
+interface ZodOptional<T extends ZodType> extends ZodType {
+  optional: "true";
+  output: T["output"] | undefined;
+}
 
-// const v2 = v1.bump(v1.type.extend({ b: z.number() }), (prev) => {
-//   return {
-//     ...prev,
-//     b: 0,
-//   };
-// });
+// factories
+declare function object<T extends ZodShape>(shape: T): ZodObject<T>;
+declare function string(): ZodString;
+declare function optional<T extends ZodType>(schema: T): ZodOptional<T>;
+
+// recursive type inference error
+const _Category = object({
+  name: string(),
+  get parent() {
+    return optional(_Category);
+  },
+});
+
+type _Category = (typeof _Category)["output"];
+
+export const name = _Category.output.parent?.parent?.parent?.parent?.name;
+//           ^?
