@@ -824,7 +824,7 @@ Zod includes a handful of string-specific validations.
 z.string().max(5);
 z.string().min(5);
 z.string().length(5);
-z.string().email();
+z.string().email(); // note that there are various different definitions of what constitutes a valid email address depending on the environment and use case; this is just a reasonable default
 z.string().url();
 z.string().emoji();
 z.string().uuid();
