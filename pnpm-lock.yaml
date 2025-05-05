@@ -110,6 +110,9 @@ importers:
       zod3:
         specifier: npm:zod@^3.23.7
         version: zod@3.24.2
+      zod4:
+        specifier: npm:zod@4.0.0-beta.20250505T012514
+        version: zod@4.0.0-beta.20250505T012514
 
   packages/core: {}
 
@@ -2440,6 +2443,9 @@ packages:
 
   '@zag-js/types@1.8.2':
     resolution: {integrity: sha512-J+94HhFAPOBchNdGcmvqjB8nbQFgKHcqGoPl5vNTKlcoibN0yFjn4XFZoQU6uCf8sPhNg6NUNTkluR5YjybyJA==}
+
+  '@zod/core@0.11.4':
+    resolution: {integrity: sha512-ezfAaaxgjSXZw9sH5QJ4/uqFmg8PbwBFtdSlzz1OoXWcSUR4fj4meS491+lk9ZGxCymjJ/pbOSu7nzcxvHtG0g==}
 
   '@zod/core@0.8.1':
     resolution: {integrity: sha512-djj8hPhxIHcG8ptxITaw/Bout5HJZ9NyRbKr95Eilqwt9R0kvITwUQGDU+n+MVdsBIka5KwztmZSLti22F+P0A==}
@@ -5263,6 +5269,9 @@ packages:
   zod@4.0.0-beta.20250420T053007:
     resolution: {integrity: sha512-5pp8Q0PNDaNcUptGiBE9akyioJh3RJpagIxrLtAVMR9IxwcSZiOsJD/1/98CyhItdTlI2H91MfhhLzRlU+fifA==}
 
+  zod@4.0.0-beta.20250505T012514:
+    resolution: {integrity: sha512-b9Oif/j2uIFuimTO3xqTZP71cfNcv49G7sSDF8wp4+MH2tSCDgRDy5RKEMbLtD0LTrmGznL/gYqqDW7U80PudA==}
+
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
@@ -7238,6 +7247,8 @@ snapshots:
   '@zag-js/types@1.8.2':
     dependencies:
       csstype: 3.1.3
+
+  '@zod/core@0.11.4': {}
 
   '@zod/core@0.8.1': {}
 
@@ -10681,5 +10692,9 @@ snapshots:
   zod@4.0.0-beta.20250420T053007:
     dependencies:
       '@zod/core': 0.8.1
+
+  zod@4.0.0-beta.20250505T012514:
+    dependencies:
+      '@zod/core': 0.11.4
 
   zwitch@2.0.4: {}

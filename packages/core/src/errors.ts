@@ -180,9 +180,20 @@ export class $ZodError implements Error {
     return JSON.stringify(this.issues, jsonStringifyReplacer, 2);
   }
 
+  // get stack(): string {
+  //   Error.captureStackTrace(this);
+  //   return this.stack;
+  // }
+
   constructor(issues: $ZodIssue[]) {
     Object.defineProperty(this, "_tag", { value: ZOD_ERROR, enumerable: false });
     Object.defineProperty(this, "name", { value: "$ZodError", enumerable: false });
+    // Object.defineProperty(this, "stack", {
+    //   get(){
+    //     Error.captureStackTrace(this);
+    //     return this.stack;
+    //   }
+    // })
     this.issues = issues;
   }
 

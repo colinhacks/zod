@@ -17,9 +17,11 @@ export function _parse<T extends schemas.$ZodType>(
     throw new core.$ZodAsyncError();
   }
   if (result.issues.length) {
-    throw new (this?.Error ?? errors.$ZodError)(
+    const e = new (this?.Error ?? errors.$ZodError)(
       result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))
     );
+    Error.captureStackTrace(e, _parse);
+    throw e;
   }
   return result.value as core.output<T>;
 }
@@ -60,9 +62,11 @@ export async function _parseAsync<T extends schemas.$ZodType>(
   let result = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) result = await result;
   if (result.issues.length) {
-    throw new (this?.Error ?? errors.$ZodError)(
+    const e = new (this?.Error ?? errors.$ZodError)(
       result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))
     );
+    Error.captureStackTrace(e, _parseAsync);
+    throw e;
   }
   return result.value as core.output<T>;
 }
