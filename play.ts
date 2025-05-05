@@ -1,8 +1,6 @@
-import * as z from "@zod/mini";
+import * as z from "zod";
 
-const object = z.object({ foo: z.string() });
-type ObjectType = z.infer<typeof object>; // { foo: string }
+const test = z.object({}).or(z.array(z.object({})));
+test.def.options[0]._zod.output;
 
-const partial = z.partial(object);
-
-type PartialType = z.infer<typeof partial>; // object
+type Test = z.output<typeof test>; // <— any

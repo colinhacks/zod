@@ -120,6 +120,7 @@ export type Mapped<T> = { [k in keyof T]: T[k] };
 export type Prettify<T> = {
   [K in keyof T]: T[K];
 } & {};
+
 export type NoNeverKeys<T> = {
   [k in keyof T]: [T[k]] extends [never] ? never : k;
 }[keyof T];

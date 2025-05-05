@@ -1516,7 +1516,7 @@ type OptionalInSchema = { _zod: { optionality: "defaulted" | "optional" } };
 export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = string extends keyof T
   ? object
   : keyof T extends never
-    ? object
+    ? Record<string, never>
     : util.Prettify<
         {
           -readonly [k in keyof T as T[k] extends OptionalOutSchema ? never : k]: core.output<T[k]>;
@@ -1529,7 +1529,7 @@ export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<st
 export type $InferObjectInput<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = string extends keyof T
   ? object
   : keyof T extends never
-    ? object
+    ? Record<string, never>
     : util.Prettify<
         {
           [k in keyof T as T[k] extends OptionalInSchema ? never : k]: core.input<T[k]>;
@@ -1795,13 +1795,15 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
 //////////                    ///////////
 /////////////////////////////////////////
 /////////////////////////////////////////
+export type $InferUnionOutput<T extends $ZodType> = T extends any ? core.output<T> : never;
+export type $InferUnionInput<T extends $ZodType> = T extends any ? core.input<T> : never;
 export interface $ZodUnionDef<Options extends readonly $ZodType[] = readonly $ZodType[]> extends $ZodTypeDef {
   type: "union";
   options: Options;
 }
 
 export interface $ZodUnionInternals<T extends readonly $ZodType[] = readonly $ZodType[]>
-  extends $ZodTypeInternals<core.output<T[number]>, core.input<T[number]>> {
+  extends $ZodTypeInternals<$InferUnionOutput<T[number]>, $InferUnionOutput<T[number]>> {
   def: $ZodUnionDef<T>;
   isst: errors.$ZodIssueInvalidUnion;
   pattern: T[number]["_zod"]["pattern"];

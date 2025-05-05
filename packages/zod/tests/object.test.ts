@@ -80,7 +80,7 @@ test("empty object", () => {
   expect(schema.parse({ name: "asdf" })).toEqual({});
   expect(schema.safeParse(null).success).toEqual(false);
   expect(schema.safeParse("asdf").success).toEqual(false);
-  expectTypeOf<z.output<typeof schema>>().toEqualTypeOf<object>();
+  expectTypeOf<z.output<typeof schema>>().toEqualTypeOf<Record<string, never>>();
 });
 
 const data = {
