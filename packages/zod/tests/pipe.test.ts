@@ -69,3 +69,8 @@ test("break on fatal errors", () => {
     }
   `);
 });
+
+test("retains optionality", () => {
+  const schema = z.string().optional().transform((str) => str?.length);
+  expect(schema._zod.optionality).toBe("optional");
+})
