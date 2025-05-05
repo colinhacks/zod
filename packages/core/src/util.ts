@@ -534,12 +534,6 @@ export function createTransparentProxy<T extends object>(getter: () => T): T {
         target ??= getter();
         return Reflect.defineProperty(target, prop, descriptor);
       },
-      // apply(target, thisArg, args) {
-      //   return Reflect.apply(target, thisArg, args);
-      // },
-      // construct(target, args, newTarget) {
-      //   return Reflect.construct(target, args, newTarget);
-      // },
     }
   ) as T;
 }
@@ -550,53 +544,12 @@ export function stringifyPrimitive(value: any): string {
   return `${value}`;
 }
 
-// export function objectShapeMeta(rawShape: schemas.$ZodShape): schemas.$ZodShape {
-//   const shape: Writeable<schemas.$ZodShape> = {};
-//   for (const key in rawShape) {
-//     shape[key] = {
-//       type: rawShape[key],
-//       optionality: rawShape[key]._zod.optionality,
-//     };
-//     // if (rawShape[key]._zod.qin) {
-//     //   shape[key].optionality = "defaulted";
-//     // } else if (rawShape[key]._zod.qout) {
-//     //   shape[key].optionality = "optional";
-//     // } else {
-//     //   shape[key].optionality = "required";
-//     // }
-//   }
-//   return shape;
-// }
-// export function interfaceShapeMeta(shape: schemas.$ZodShape): schemas.$ZodShape {
-//   const shapeMeta: Writeable<schemas.$ZodShape> = {};
-//   for (const key in shape) {
-//     if(key[0] === "?") {
-//     shapeMeta[key] ??= { optionality: "required" }; // default
-//     if (shape[key]._zod.qin) {
-//       shapeMeta[key].optionality = "defaulted";
-//     } else if (shape[key]._zod.qout) {
-//       shapeMeta[key].optionality = "optional";
-//     }
-//   }
-//   return shapeMeta;
-// }
-export function optionalObjectKeys(shape: schemas.$ZodShape): string[] {
+export function optionalKeys(shape: schemas.$ZodShape): string[] {
   return Object.keys(shape).filter((k) => {
     return shape[k]._zod.optionality === "optional";
   });
 }
 
-// export function optionalInterfaceKeys(shape: schemas.$ZodLooseShape): string[] {
-//   return Object.keys(shape)
-//     .filter((k) => {
-//       return k.endsWith("?");
-//     })
-//     .map((k) => k.replace(/\?$/, ""));
-// }
-
-// type CleanInterfaceShape<T extends object> = Identity<{
-//   [k in keyof T as k extends `${infer K}?` ? K : k extends `?${infer K}` ? K : k]: T[k];
-// }>;
 export type CleanKey<T extends PropertyKey> = T extends `?${infer K}` ? K : T extends `${infer K}?` ? K : T;
 export type ToCleanMap<T extends schemas.$ZodLooseShape> = {
   [k in keyof T]: k extends `?${infer K}` ? K : k extends `${infer K}?` ? K : k;

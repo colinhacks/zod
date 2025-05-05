@@ -735,7 +735,7 @@ export function strictObject<T extends core.$ZodShape>(
       return this.shape;
     },
     // get optional() {
-    //   return util.optionalObjectKeys(shape);
+    //   return util.optionalKeys(shape);
     // },
     catchall: never(),
     ...util.normalizeParams(params),
@@ -756,7 +756,7 @@ export function looseObject<T extends core.$ZodShape>(
       return this.shape;
     },
     // get optional() {
-    //   return util.optionalObjectKeys(shape);
+    //   return util.optionalKeys(shape);
     // },
     catchall: unknown(),
     ...util.normalizeParams(params),

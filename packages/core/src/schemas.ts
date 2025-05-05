@@ -1581,7 +1581,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
 
   const _normalized = util.cached(() => {
     const keys = Object.keys(def.shape);
-    const okeys = util.optionalObjectKeys(def.shape);
+    const okeys = util.optionalKeys(def.shape);
     return {
       shape: def.shape,
       keys,
