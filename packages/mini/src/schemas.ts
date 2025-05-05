@@ -706,7 +706,7 @@ export const ZodMiniObject: core.$constructor<ZodMiniObject> = /*@__PURE__*/ cor
     ZodMiniType.init(inst, def);
   }
 );
-export function object<T extends core.$ZodShape = Record<never, SomeType>>(
+export function object<T extends core.$ZodLooseShape = Record<never, SomeType>>(
   shape?: T,
   params?: string | core.$ZodObjectParams
 ): ZodMiniObject<T, {}, {}> {
@@ -723,13 +723,13 @@ export function object<T extends core.$ZodShape = Record<never, SomeType>>(
 
 // strictObject
 
-export function strictObject<T extends core.$ZodShape>(
+export function strictObject<T extends core.$ZodLooseShape>(
   shape: T,
   params?: string | core.$ZodObjectParams
 ): ZodMiniObject<T, {}, {}> {
   return new ZodMiniObject({
     type: "object",
-    // shape: shape as core.$ZodShape,
+    // shape: shape as core.$ZodLooseShape,
     get shape() {
       util.assignProp(this, "shape", { ...shape });
       return this.shape;
@@ -744,13 +744,13 @@ export function strictObject<T extends core.$ZodShape>(
 
 // looseObject
 
-export function looseObject<T extends core.$ZodShape>(
+export function looseObject<T extends core.$ZodLooseShape>(
   shape: T,
   params?: string | core.$ZodObjectParams
 ): ZodMiniObject<T, { [k: string]: unknown }, { [k: string]: unknown }> {
   return new ZodMiniObject({
     type: "object",
-    // shape: shape as core.$ZodShape,
+    // shape: shape as core.$ZodLooseShape,
     get shape() {
       util.assignProp(this, "shape", { ...shape });
       return this.shape;
