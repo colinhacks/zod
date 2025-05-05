@@ -1579,7 +1579,6 @@ export interface $ZodObject<
 
 export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$constructor("$ZodObject", (inst, def) => {
   $ZodType.init(inst, def);
-  // util.defineLazy(inst._zod, "shape", () => def.shape);
 
   const _normalized = util.cached(() => {
     const keys = Object.keys(def.shape);
@@ -2604,8 +2603,10 @@ export interface $ZodEnumDef<T extends util.EnumLike = util.EnumLike> extends $Z
   entries: T;
 }
 
-export interface $ZodEnumInternals<T extends util.EnumLike = util.EnumLike>
-  extends $ZodTypeInternals<$InferEnumOutput<T>, $InferEnumInput<T>> {
+export interface $ZodEnumInternals<
+  // @ts-ignore Cast variance
+  out T extends util.EnumLike = util.EnumLike,
+> extends $ZodTypeInternals<$InferEnumOutput<T>, $InferEnumInput<T>> {
   // enum: T;
 
   def: $ZodEnumDef<T>;
