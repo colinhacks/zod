@@ -1039,7 +1039,7 @@ export interface ZodObject<
   /** This is the default behavior. This method call is likely unnecessary. */
   strip(): ZodObject<Shape, {}>;
 
-  extend<U extends core.$ZodLooseShape>(
+  extend<U extends core.$ZodLooseShape & Partial<Record<keyof Shape, core.$ZodType>>>(
     shape: U
   ): ZodObject<
     util.Extend<Shape, U>,
@@ -1060,16 +1060,6 @@ export interface ZodObject<
   merge<U extends ZodObject>(
     other: U
   ): ZodObject<util.Extend<Shape, U["shape"]>, U["_zod"]["outextra"], U["_zod"]["inextra"]>;
-  /**
-   * @deprecated Use destructuring to merge the shapes:
-   *
-   * ```ts
-   * z.object({
-   *    ...A.shape,
-   *    ...B.shape
-   * });
-   * ```
-   */
 
   pick<M extends util.Exactly<util.Mask<string & keyof Shape>, M>>(
     mask: M
@@ -1140,7 +1130,7 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
   inst.required = (...args: any[]) => util.required(ZodNonOptional, inst, args[0] as object);
 });
 
-export function object<T extends core.$ZodLooseShape = Record<never, core.$ZodType>>(
+export function object<T extends core.$ZodLooseShape = Partial<Record<never, core.$ZodType>>>(
   shape?: T,
   params?: string | core.$ZodObjectParams
 ): ZodObject<util.Writeable<T> & {}, {}, {}> {
