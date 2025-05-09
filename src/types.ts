@@ -4734,7 +4734,9 @@ export class ZodEffects<
           );
         }
 
-        return { status: status.value, value: result };
+        return result === INVALID
+          ? { status: "aborted" }
+          : { status: status.value, value: result };
       } else {
         return this._def.schema
           ._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx })
@@ -4742,7 +4744,10 @@ export class ZodEffects<
             if (!isValid(base)) return base;
 
             return Promise.resolve(effect.transform(base.value, checkCtx)).then(
-              (result) => ({ status: status.value, value: result })
+              (result) =>
+                result === INVALID
+                  ? { status: "aborted" }
+                  : { status: status.value, value: result }
             );
           });
       }

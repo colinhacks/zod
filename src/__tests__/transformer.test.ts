@@ -231,3 +231,159 @@ test("async short circuit on dirty", async () => {
     expect(result2.error.issues[0].code).toEqual(z.ZodIssueCode.invalid_type);
   }
 });
+
+test("pass through aborted status as value type if status is valid", () => {
+  const schema = z
+    .object({
+      status: z.enum(["aborted"]),
+    })
+    .transform((val) => val)
+    .refine((val) => val.status === "aborted", "status should be aborted")
+    .refine(() => false, "should run");
+
+  const result = schema.safeParse({ status: "aborted" });
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues.length).toEqual(1);
+    expect(result.error.issues[0].message).toEqual("should run");
+  }
+});
+
+test("pass through aborted status as value type if status is dirty", () => {
+  const schema = z
+    .string()
+    .transform((val, ctx) => {
+      const splits = val.split(" ");
+      if (splits.length === 1) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "string must contain spaces",
+        });
+        return { status: "aborted" } as const;
+      }
+      return splits;
+    })
+    .refine(
+      (val) => Array.isArray(val) || val.status === "aborted",
+      "value should be passed through"
+    )
+    .refine(() => false, "refinement should run");
+
+  const r1 = schema.safeParse("foo");
+  expect(r1.success).toEqual(false);
+  if (!r1.success) {
+    expect(r1.error.issues.length).toEqual(2);
+    expect(r1.error.issues[0].message).toEqual("string must contain spaces");
+    expect(r1.error.issues[1].message).toEqual("refinement should run");
+  }
+});
+
+test("short circuit on returning z.NEVER in transform", () => {
+  const schema = z
+    .string()
+    .transform((val, ctx) => {
+      const splits = val.split(" ");
+      if (splits.length === 1) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "string must contain spaces",
+        });
+        return z.NEVER;
+      }
+      return splits;
+    })
+    .refine(
+      (splits) => !(typeof splits === "object" && !Array.isArray(splits)),
+      "wrong type for splits"
+    );
+
+  const r1 = schema.safeParse("foo");
+  expect(r1.success).toEqual(false);
+  if (!r1.success) {
+    expect(r1.error.issues.length).toEqual(1);
+    expect(r1.error.issues[0].message).toEqual("string must contain spaces");
+  }
+
+  const r2 = schema.safeParse("foo bar");
+  expect(r2.success).toEqual(true);
+  if (r2.success) expect(r2.data).toEqual(["foo", "bar"]);
+});
+
+////
+
+test("async pass through aborted status as value type if status is valid", async () => {
+  const schema = z
+    .object({
+      status: z.enum(["aborted"]),
+    })
+    .transform((val) => val)
+    .refine((val) => val.status === "aborted", "status should be aborted")
+    .refine(() => false, "should run");
+
+  const result = await schema.safeParseAsync({ status: "aborted" });
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues.length).toEqual(1);
+    expect(result.error.issues[0].message).toEqual("should run");
+  }
+});
+
+test("async pass through aborted status as value type if status is dirty", async () => {
+  const schema = z
+    .string()
+    .transform((val, ctx) => {
+      const splits = val.split(" ");
+      if (splits.length === 1) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "string must contain spaces",
+        });
+        return { status: "aborted" } as const;
+      }
+      return splits;
+    })
+    .refine(
+      (val) => Array.isArray(val) || val.status === "aborted",
+      "value should be passed through"
+    )
+    .refine(() => false, "refinement should run");
+
+  const r1 = await schema.safeParseAsync("foo");
+  expect(r1.success).toEqual(false);
+  if (!r1.success) {
+    expect(r1.error.issues.length).toEqual(2);
+    expect(r1.error.issues[0].message).toEqual("string must contain spaces");
+    expect(r1.error.issues[1].message).toEqual("refinement should run");
+  }
+});
+
+test("async short circuit on returning z.NEVER in transform", async () => {
+  const schema = z
+    .string()
+    .transform((val, ctx) => {
+      const splits = val.split(" ");
+      if (splits.length === 1) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "string must contain spaces",
+        });
+        return z.NEVER;
+      }
+      return splits;
+    })
+    .refine(
+      (splits) => !(typeof splits === "object" && !Array.isArray(splits)),
+      "wrong type for splits"
+    );
+
+  const r1 = await schema.safeParseAsync("foo");
+  expect(r1.success).toEqual(false);
+  if (!r1.success) {
+    expect(r1.error.issues.length).toEqual(1);
+    expect(r1.error.issues[0].message).toEqual("string must contain spaces");
+  }
+
+  const r2 = await schema.safeParseAsync("foo bar");
+  expect(r2.success).toEqual(true);
+  if (r2.success) expect(r2.data).toEqual(["foo", "bar"]);
+});
