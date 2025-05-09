@@ -5063,7 +5063,7 @@ export interface ZodBrandedDef<T extends ZodTypeAny> extends ZodTypeDef {
 
 export const BRAND: unique symbol = Symbol("zod_brand");
 export type BRAND<T extends string | number | symbol> = {
-  [BRAND]: { [k in T]: true };
+  readonly [BRAND]: { readonly [k in T]: true };
 };
 
 export class ZodBranded<
