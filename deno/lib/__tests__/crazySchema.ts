@@ -25,7 +25,7 @@ export const crazySchema = z.object({
     z.object({ p1: z.number().optional() })
   ),
   enum: z.intersection(z.enum(["zero", "one"]), z.enum(["one", "two"])),
-  nonstrict: z.object({ points: z.number() }).nonstrict(),
+  nonstrict: z.object({ points: z.number() }).passthrough(),
   numProm: z.promise(z.number()),
   lenfun: z.function(z.tuple([z.string()]), z.boolean()),
 });

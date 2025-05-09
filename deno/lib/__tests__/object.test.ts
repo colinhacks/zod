@@ -89,9 +89,8 @@ test("unknownkeys override", () => {
   const val = z
     .object({ points: z.number() })
     .strict()
-    .passthrough()
     .strip()
-    .nonstrict()
+    .passthrough()
     .parse(data);
 
   expect(val).toEqual(data);
