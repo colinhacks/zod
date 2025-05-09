@@ -567,6 +567,9 @@ export abstract class ZodType<
   readonly(): ZodReadonly<this> {
     return ZodReadonly.create(this);
   }
+  defer(): ZodDefer<this> {
+    return ZodDefer.create(this, this._def) as any;
+  }
 
   isOptional(): boolean {
     return this.safeParse(undefined).success;
@@ -3021,6 +3024,39 @@ export class ZodObject<
     ) as any;
   }
 
+  deferProps(): ZodObject<
+    { [k in keyof T]: ZodDefer<T[k]> },
+    UnknownKeys,
+    Catchall
+  >;
+  deferProps<Mask extends util.Exactly<{ [k in keyof T]?: true }, Mask>>(
+    mask: Mask
+  ): ZodObject<
+    objectUtil.noNever<{
+      [k in keyof T]: k extends keyof Mask ? ZodDefer<T[k]> : T[k];
+    }>,
+    UnknownKeys,
+    Catchall
+  >;
+  deferProps(mask?: any) {
+    const newShape: any = {};
+
+    util.objectKeys(this.shape).forEach((key) => {
+      const fieldSchema = this.shape[key];
+
+      if (mask && !mask[key]) {
+        newShape[key] = fieldSchema;
+      } else {
+        newShape[key] = fieldSchema.defer();
+      }
+    });
+
+    return new ZodObject({
+      ...this._def,
+      shape: () => newShape,
+    }) as any;
+  }
+
   static create = <T extends ZodRawShape>(
     shape: T,
     params?: RawCreateParams
@@ -5229,6 +5265,46 @@ export class ZodReadonly<T extends ZodTypeAny> extends ZodType<
   }
 }
 
+///////////////////////////////////////////
+///////////////////////////////////////////
+//////////                       //////////
+//////////       ZodDefer        //////////
+//////////                       //////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+export interface ZodDeferDef<T extends ZodTypeAny = ZodTypeAny>
+  extends ZodTypeDef {
+  innerType: T;
+  typeName: ZodFirstPartyTypeKind.ZodDefer;
+}
+
+export type ZodDeferType<T extends ZodTypeAny> = ZodDefer<T>;
+
+export class ZodDefer<T extends ZodTypeAny> extends ZodType<
+  () => T["_output"],
+  ZodDeferDef<T>,
+  T["_input"]
+> {
+  _parse(input: ParseInput): ParseReturnType<() => this["_output"]> {
+    return OK(() => this._def.innerType.parse(input.data));
+  }
+
+  eager() {
+    return this._def.innerType;
+  }
+
+  static create = <T extends ZodTypeAny>(
+    type: T,
+    params?: RawCreateParams
+  ): ZodDefer<T> => {
+    return new ZodDefer({
+      innerType: type,
+      typeName: ZodFirstPartyTypeKind.ZodDefer,
+      ...processCreateParams(params),
+    }) as any;
+  };
+}
+
 ////////////////////////////////////////
 ////////////////////////////////////////
 //////////                    //////////
@@ -5328,6 +5404,7 @@ export enum ZodFirstPartyTypeKind {
   ZodBranded = "ZodBranded",
   ZodPipeline = "ZodPipeline",
   ZodReadonly = "ZodReadonly",
+  ZodDefer = "ZodDefer",
 }
 export type ZodFirstPartySchemaTypes =
   | ZodString
@@ -5365,6 +5442,7 @@ export type ZodFirstPartySchemaTypes =
   | ZodBranded<any, any>
   | ZodPipeline<any, any>
   | ZodReadonly<any>
+  | ZodDefer<any>
   | ZodSymbol;
 
 // requires TS 4.4+
@@ -5413,6 +5491,7 @@ const optionalType = ZodOptional.create;
 const nullableType = ZodNullable.create;
 const preprocessType = ZodEffects.createWithPreprocess;
 const pipelineType = ZodPipeline.create;
+const deferType = ZodDefer.create;
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
@@ -5439,6 +5518,7 @@ export {
   bigIntType as bigint,
   booleanType as boolean,
   dateType as date,
+  deferType as defer,
   discriminatedUnionType as discriminatedUnion,
   effectsType as effect,
   enumType as enum,
