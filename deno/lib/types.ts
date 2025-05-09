@@ -3970,6 +3970,10 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
     }
   }
 
+  get value() {
+    return this._def.valueType;
+  }
+
   min(minSize: number, message?: errorUtil.ErrMessage): this {
     return new ZodSet({
       ...this._def,

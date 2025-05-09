@@ -105,6 +105,11 @@ test("failing when set is bigger than max() ", () => {
   }
 });
 
+test("get element", () => {
+  justTwo.value.parse("asdf");
+  expect(() => justTwo.value.parse(12)).toThrow();
+});
+
 test("doesn’t throw when an empty set is given", () => {
   const result = stringSet.safeParse(new Set([]));
   expect(result.success).toEqual(true);
