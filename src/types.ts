@@ -3148,8 +3148,6 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
         })
       ).then(handleResults);
     } else {
-      let dirty: undefined | { result: DIRTY<any>; ctx: ParseContext } =
-        undefined;
       const issues: ZodIssue[][] = [];
       for (const option of options) {
         const childCtx: ParseContext = {
@@ -3168,18 +3166,11 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
 
         if (result.status === "valid") {
           return result;
-        } else if (result.status === "dirty" && !dirty) {
-          dirty = { result, ctx: childCtx };
         }
 
         if (childCtx.common.issues.length) {
           issues.push(childCtx.common.issues);
         }
-      }
-
-      if (dirty) {
-        ctx.common.issues.push(...dirty.ctx.common.issues);
-        return dirty.result;
       }
 
       const unionErrors = issues.map((issues) => new ZodError(issues));
