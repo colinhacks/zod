@@ -604,6 +604,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 
 #### Powered by Zod
 
+- [`KOTYK`](https://github.com/KiT-Maverik/kotyk): 🇺🇦 Ukrainian-grade configuration layer. Strict, type-safe, one-liner pattern always watching your environment variables like a guardian. No undefined, no silent failures, and absolutely no mercy for missing API_KEYs.
 - [`freerstore`](https://github.com/JacobWeisenburger/freerstore): Firestore cost optimizer.
 - [`slonik`](https://github.com/gajus/slonik/tree/gajus/add-zod-validation-backwards-compatible#runtime-validation-and-static-type-inference): Node.js Postgres client with strong Zod integration.
 - [`schemql`](https://github.com/a2lix/schemql): Enhances your SQL workflow by combining raw SQL with targeted type safety and schema validation.
