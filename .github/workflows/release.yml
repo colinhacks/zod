@@ -4,7 +4,7 @@ name: Release on npm
 on:
   push:
     branches:
-      - "master"
+      - "main"
     paths:
       - package.json
 

@@ -7,7 +7,7 @@
 </p>
 <br/>
 <p align="center">
-<a href="https://github.com/colinhacks/zod/actions?query=branch%3Amaster"><img src="https://github.com/colinhacks/zod/actions/workflows/test.yml/badge.svg?event=push&branch=master" alt="Zod CI status" /></a>
+<a href="https://github.com/colinhacks/zod/actions?query=branch%3Amain"><img src="https://github.com/colinhacks/zod/actions/workflows/test.yml/badge.svg?event=push&branch=main" alt="Zod CI status" /></a>
 <a href="https://twitter.com/colinhacks" rel="nofollow"><img src="https://img.shields.io/badge/created%20by-@colinhacks-4BBAAB.svg" alt="Created by Colin McDonnell"></a>
 <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/colinhacks/zod" alt="License"></a>
 <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/npm/dw/zod.svg" alt="npm"></a>
@@ -64,6 +64,7 @@
   - [.nonempty](#nonempty)
   - [.min/.max/.length](#minmaxlength)
 - [Unions](#unions)
+- [Discriminated unions](#discriminated-unions)
 - [Optionals](#optionals)
 - [Nullables](#nullables)
 - [Enums](#enums)
@@ -296,6 +297,7 @@ _要在这里看到你的名字 + Twitter + 網站 , 请在[Freelancer](https://
 - [`zod-i18n-map`](https://github.com/aiji42/zod-i18n): 有助于翻译 zod 错误信息。
 - [`mobx-zod-form`](https://github.com/MonoidDev/mobx-zod-form): 以数据为中心的表格构建工具，基于 MobX 和 Zod。
 - [`zodock`](https://github.com/ItMaga/zodock): 基於 Zod 模式生成模擬數據。
+- [`GQLoom`](https://github.com/modevol-com/gqloom): 使用 ZOD 编织 GraphQL Schema 和解析器。
 
 # 安装
 
@@ -315,27 +317,14 @@ _要在这里看到你的名字 + Twitter + 網站 , 请在[Freelancer](https://
 }
 ```
 
-### 从`npm`(Node/Bun)安装
+### 从`npm` 安装
 
 ```sh
 npm install zod
+deno add npm:zod      # deno
 yarn add zod          # yarn
 bun add zod           # bun
 pnpm add zod          # pnpm
-```
-
-### 从`deno.land/x` (Deno)安装
-
-和 Node 不同，Deno 依靠一个直接的 URL 导入而非像 npm 这样的包管理器。可以这样导入最新版本的 Zod:
-
-```ts
-import { z } from "https://deno.land/x/zod/mod.ts";
-```
-
-你也可以指定一个具体的版本：
-
-```ts
-import { z } from "https://deno.land/x/zod@v3.16.1/mod.ts";
 ```
 
 > README 的剩余部分假定你是直接通过 npm 安装的`zod`包。
@@ -896,6 +885,48 @@ Zod 将按照每个 "选项" 的顺序测试输入，并返回第一个成功验
 
 ```ts
 const stringOrNumber = z.string().or(z.number());
+```
+
+## Discriminated unions
+
+判别联合模式是指联合类型有一个特定键，根据该键值命中对应的对象模式。
+
+```ts
+type MyUnion =
+  | { status: "success"; data: string }
+  | { status: "failed"; error: Error };
+```
+
+这种特殊的联合类型可以用 `z.discriminatedUnion` 方法来表示。Zod 可以检查判别键（上例中的 `status` ），以确定应使用哪种模式来解析输入。这不仅提高了解析效率，还让 Zod 可以更友好地报告错误。
+
+如果使用基础的联合模式，输入会根据所提供的每个 "选项 "进行测试，如果无效，所有 "选项 "的问题都会显示在 zod 错误中。对于判别联合模式，只会对特定键值对应的 "选项" 进行测试，并只显示与该 "选项 "相关的问题。
+
+```ts
+const myUnion = z.discriminatedUnion("status", [
+  z.object({ status: z.literal("success"), data: z.string() }),
+  z.object({ status: z.literal("failed"), error: z.instanceof(Error) }),
+]);
+
+myUnion.parse({ status: "success", data: "yippie ki yay" });
+```
+
+可以使用 `.options` 属性获取选项列表。
+
+```ts
+myUnion.options; // [ZodObject<...>, ZodObject<...>]
+```
+
+要合并两个或更多判别联合模式，请展开所有模式中的 `.options`。
+
+```ts
+const A = z.discriminatedUnion("status", [
+  /* options */
+]);
+const B = z.discriminatedUnion("status", [
+  /* options */
+]);
+
+const AB = z.discriminatedUnion("status", [...A.options, ...B.options]);
 ```
 
 ## Optionals

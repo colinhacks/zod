@@ -1,5 +1,14 @@
 # Contributing
 
+> ⚠ The default branch has just been switched to `main` from `master` (as of May 15th, 2024). Follow the following instructions to update your local fork.
+>
+> ```sh
+> git branch -m master main   # rename local branch
+> git fetch origin   # fetch from remote
+> git branch -u origin/main main   # set upstream
+> git remote set-head origin -a   # update remote
+> ```
+
 When it comes to open source, there are different ways you can contribute, all
 of which are valuable. Here's few guidelines that should help you as you prepare
 your contribution.
@@ -13,7 +22,7 @@ Before you start working on a contribution, create an issue describing what you 
 - Fork the repo
 - Clone your forked repository: `git clone git@github.com:{your_username}/zod.git`
 - Enter the zod directory: `cd zod`
-- Create a new branch off the `master` branch: `git checkout -b your-feature-name`
+- Create a new branch off the `main` branch: `git checkout -b your-feature-name`
 - Implement your contributions (see the Development section for more information)
 - Push your branch to the repo: `git push origin your-feature-name`
 - Go to https://github.com/colinhacks/zod/compare and select the branch you just pushed in the "compare:" dropdown
@@ -30,6 +39,17 @@ The following steps will get you setup to contribute changes to this repo:
 3. Run `yarn` to install dependencies.
 
 4. Start playing with the code! You can do some simple experimentation in [`playground.ts`](playground.ts) (see `yarn play` below) or start implementing a feature right away.
+
+## Alternative: VSCode Dev Container setup
+
+For an officially supported isolated dev environment that automatically installs dependencies for you:
+
+1. `F1` in VSCode and start typing `Dev Containers: Clone Repository in Named Container Volume` to run the command.
+2. For the repo, paste `git@github.com:{your_username}/zod.git` if you're using ssh.
+3. Click `Create a new volume...` and name it `zod` and the folder name as `zod`.
+
+Note: if you can't see `Dev Containers` in the `F1` menu, follow [this guide](https://code.visualstudio.com/docs/devcontainers/tutorial) to install the needed extension.
+In the OSS version of VSCode the extension may be not available.
 
 ### Commands
 

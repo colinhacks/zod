@@ -17,3 +17,16 @@ test("string params", () => {
   // @ts-ignore
   expect(JSON.stringify(result.error).includes("customerr")).toEqual(true);
 });
+
+test("async validations", async () => {
+  const example1 = z.custom<number>(async (x) => {
+    return typeof x === "number";
+  });
+  const r1 = await example1.safeParseAsync(1234);
+  expect(r1.success).toEqual(true);
+  expect(r1.data).toEqual(1234);
+
+  const r2 = await example1.safeParseAsync("asdf");
+  expect(r2.success).toEqual(false);
+  expect(r2.error!.issues.length).toEqual(1);
+});

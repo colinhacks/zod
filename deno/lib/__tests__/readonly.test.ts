@@ -203,3 +203,53 @@ test("object freezing", () => {
     )
   ).toBe(true);
 });
+
+test("async object freezing", async () => {
+  expect(
+    Object.isFrozen(await z.array(z.string()).readonly().parseAsync(["a"]))
+  ).toBe(true);
+  expect(
+    Object.isFrozen(
+      await z.tuple([z.string(), z.number()]).readonly().parseAsync(["a", 1])
+    )
+  ).toBe(true);
+  expect(
+    Object.isFrozen(
+      await z
+        .map(z.string(), z.date())
+        .readonly()
+        .parseAsync(new Map([["a", new Date()]]))
+    )
+  ).toBe(true);
+  expect(
+    Object.isFrozen(
+      await z
+        .set(z.promise(z.string()))
+        .readonly()
+        .parseAsync(new Set([Promise.resolve("a")]))
+    )
+  ).toBe(true);
+  expect(
+    Object.isFrozen(
+      await z.record(z.string()).readonly().parseAsync({ a: "b" })
+    )
+  ).toBe(true);
+  expect(
+    Object.isFrozen(
+      await z.record(z.string(), z.number()).readonly().parseAsync({ a: 1 })
+    )
+  ).toBe(true);
+  expect(
+    Object.isFrozen(
+      await z
+        .object({ a: z.string(), 1: z.number() })
+        .readonly()
+        .parseAsync({ a: "b", 1: 2 })
+    )
+  ).toBe(true);
+  expect(
+    Object.isFrozen(
+      await z.promise(z.string()).readonly().parseAsync(Promise.resolve("a"))
+    )
+  ).toBe(true);
+});

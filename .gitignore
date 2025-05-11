@@ -3,10 +3,10 @@ node_modules
 /lib
 /__buildtest__
 coverage
-.vscode
 .idea
 *.log
 playground.ts
+playground.mts
 deno/lib/playground.ts
 .eslintcache
 workspace.code-workspace

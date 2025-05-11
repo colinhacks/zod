@@ -1,0 +1,22 @@
+{
+  "typescript.tsdk": "/Users/colinmcd94/Documents/Projects/zod/node_modules/typescript/lib",
+  "files.exclude": {
+    "**/deno": true
+  },
+  "files.watcherExclude": {
+    "**/deno": true
+  },
+  "search.exclude": {
+    "**/deno": true
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "typescript.validate.enable": true,
+  "typescript.tsserver.experimental.enableProjectDiagnostics": true
+}
