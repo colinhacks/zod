@@ -75,7 +75,14 @@ const poweredByZodProjects: ZodResource[] = [
   },
 ];
 
-const zodUtilities: ZodResource[] = [];
+const zodUtilities: ZodResource[] = [
+  {
+    name: "zod-playground",
+    url: "https://github.com/marilari88/zod-playground",
+    description: "Interactive playground for testing and exploring Zod and Zod mini schemas in real-time.",
+    slug: "marilari88/zod-playground",
+  },
+];
 
 export {
   apiLibraries,
@@ -105,7 +112,7 @@ export function Table(props: { resources: ZodResource[] }) {
                 <code className="whitespace-nowrap">{resource.name}</code>
               </a>
             </td>
-            <td className="whitespace-nowrap">{`⭐️ ${resource.stars ?? "ERR"}`}</td>
+            <td className="whitespace-nowrap">{`⭐ ${resource.stars ?? "ERR"}`}</td>
             <td>{resource.description}</td>
           </tr>
         ))}
