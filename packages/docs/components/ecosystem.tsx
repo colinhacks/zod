@@ -23,6 +23,12 @@ const apiLibraries: ZodResource[] = [
     description: "Weave GraphQL schema and resolvers using Zod.",
     slug: "modevol-com/gqloom",
   },
+  {
+    name: "oRPC",
+    url: "https://orpc.unnoq.com/",
+    description: "Typesafe APIs Made Simple",
+    slug: "unnoq/orpc",
+  },
 ];
 
 const formIntegrations: ZodResource[] = [
