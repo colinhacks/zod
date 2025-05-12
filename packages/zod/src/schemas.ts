@@ -1482,8 +1482,6 @@ function _enum<const T extends util.EnumLike>(entries: T, params?: string | core
 function _enum(values: any, params?: string | core.$ZodEnumParams) {
   const entries: any = Array.isArray(values) ? Object.fromEntries(values.map((v) => [v, v])) : values;
 
-  console.log("entries", entries);
-
   return new ZodEnum({
     type: "enum",
     entries,
