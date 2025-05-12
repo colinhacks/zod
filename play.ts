@@ -6,4 +6,4 @@ export const UserModel = z.object({
   email: z.string().optional(),
 });
 
-type UserModel = z.infer<typeof UserModel>;
+export type UserModel = z.infer<typeof UserModel>;
