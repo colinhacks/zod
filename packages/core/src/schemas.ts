@@ -1624,7 +1624,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     // doc.write(`const shape = inst._zod.def.shape;`);
     doc.write(`const input = payload.value;`);
 
-    const ids: any = {};
+    const ids: any = Object.create(null);
     for (const key of keys) {
       ids[key] = util.randomString(15);
     }
