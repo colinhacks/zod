@@ -2622,14 +2622,7 @@ export interface $ZodEnum<T extends util.EnumLike = util.EnumLike> extends $ZodT
 
 export const $ZodEnum: core.$constructor<$ZodEnum> = /*@__PURE__*/ core.$constructor("$ZodEnum", (inst, def) => {
   $ZodType.init(inst, def);
-  const values = Object.entries(def.entries)
-    // remove reverse mappings
-    // .filter(([k, v]) => {
-    //   const diagonal = def.entries[def.entries[k]];
-    //   const isReverseMapping = typeof v === "number" && k === diagonal;
-    //   return !isReverseMapping;
-    // })
-    .map(([_, v]) => v);
+  const values = Object.entries(def.entries).map(([_, v]) => v);
 
   inst._zod.values = new Set<util.Primitive>(values);
 

@@ -1,4 +1,4 @@
-import { /* assert, */ expect, expectTypeOf, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 import * as z from "zod";
 
 test("enum from string array", () => {
@@ -21,12 +21,10 @@ test("enum with identical k/v pairs", () => {
 
 test("enum with identical k/v pairs at least one numeric value", () => {
   const weirdEnum = z.enum({ A: 1, B: "A", C: 3, 3: "C" });
-  // type weirdEnum = z.infer<typeof weirdEnum>;
-
   weirdEnum.parse("A");
   weirdEnum.parse(1);
   weirdEnum.parse("C");
-  // assert.isFalse(weirdEnum.safeParse(3).success);
+  weirdEnum.parse(3);
 });
 
 test("enum from const object", () => {
