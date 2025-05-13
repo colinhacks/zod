@@ -4,6 +4,7 @@ import be from "./locales/be.js";
 import cs from "./locales/cs.js";
 import en from "./locales/en.js";
 import es from "./locales/es.js";
+import mk from "./locales/mk.js";
 import ur from "./locales/ur.js";
 import fa from "./locales/fa.js";
 import ko from "./locales/ko.js";
