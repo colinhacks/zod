@@ -44,6 +44,7 @@ import {
 
 export interface RefinementCtx {
   addIssue: (arg: IssueData) => void;
+  data: any;
   path: (string | number)[];
 }
 export type ZodRawShape = { [k: string]: ZodTypeAny };
@@ -4639,6 +4640,9 @@ export class ZodEffects<
         } else {
           status.dirty();
         }
+      },
+      get data() {
+        return ctx.data;
       },
       get path() {
         return ctx.path;
