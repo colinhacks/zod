@@ -16,7 +16,7 @@ Before you can do anything else, you need to define a schema. For the purposes o
 ```ts
 import * as z from "zod"; 
 
-const Player = z.interface({ 
+const Player = z.object({ 
   username: z.string(),
   xp: z.number()
 });
@@ -26,7 +26,7 @@ const Player = z.interface({
 ```ts
 import * as z from "@zod/mini";
 
-const Player = z.interface({ 
+const Player = z.object({ 
   username: z.string(),
   xp: z.number()
 });
@@ -158,7 +158,7 @@ await schema.safeParseAsync("hello");
 Zod infers a static type from your schema definitions. You can extract this type with the `z.infer<>` utility and use it however you like.
 
 ```ts
-const Player = z.interface({ 
+const Player = z.object({ 
   username: z.string(),
   xp: z.number()
 });

@@ -1,5 +1,6 @@
 import * as core from "@zod/core";
 import { util } from "@zod/core";
+
 import * as checks from "./checks.js";
 import * as iso from "./iso.js";
 import * as parse from "./parse.js";
@@ -23,12 +24,12 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
   def: this["_zod"]["def"];
   /** @deprecated Use `.def` instead. */
   _def: this["_zod"]["def"];
-  /** @deprecated Use `z.output<typeof schema>` instead. */
-  _output: this["_zod"]["output"];
-  /** @deprecated Use `z.input<typeof schema>` instead. */
-  _input: this["_zod"]["input"];
+  // /** @deprecated Use `z.output<typeof schema>` instead. */
+  _output: core.output<this>;
+  // /** @deprecated Use `z.input<typeof schema>` instead. */
+  _input: core.input<this>;
   // base methods
-  check(...checks: (core.CheckFn<this["_zod"]["output"]> | core.$ZodCheck<this["_zod"]["output"]>)[]): this;
+  check(...checks: (core.CheckFn<core.output<this>> | core.$ZodCheck<core.output<this>>)[]): this;
   clone(def?: this["_zod"]["def"]): this;
   register<R extends core.$ZodRegistry>(
     registry: R,
@@ -38,9 +39,10 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
         : [core.$ZodRegistry<R["_meta"], this>["_meta"]]
       : ["Incompatible schema"]
   ): this;
+
   brand<T extends PropertyKey = PropertyKey>(
     value?: T
-  ): this & Record<"_zod", Record<"output", this["_zod"]["output"] & core.$brand<T>>>;
+  ): PropertyKey extends T ? this : this & Record<"_zod", Record<"~output", core.output<this> & core.$brand<T>>>;
 
   // parsing
   parse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;
@@ -182,6 +184,56 @@ export interface _ZodString<Input = unknown> extends ZodType {
   minLength: number | null;
   maxLength: number | null;
 
+  // /** @deprecated Use `z.jsonString()` instead. */
+  // json(params?: string | core.$ZodCheckJSONStringParams): this;
+
+  // miscellaneous checks
+  regex(regex: RegExp, params?: string | core.$ZodCheckRegexParams): this;
+  includes(value: string, params?: { message?: string; position?: number }): this;
+  startsWith(value: string, params?: string | core.$ZodCheckStartsWithParams): this;
+  endsWith(value: string, params?: string | core.$ZodCheckEndsWithParams): this;
+  min(minLength: number, params?: string | core.$ZodCheckMinLengthParams): this;
+  max(maxLength: number, params?: string | core.$ZodCheckMaxLengthParams): this;
+  length(len: number, params?: string | core.$ZodCheckLengthEqualsParams): this;
+  nonempty(params?: string | core.$ZodCheckMinLengthParams): this;
+  lowercase(params?: string | core.$ZodCheckLowerCaseParams): this;
+  uppercase(params?: string | core.$ZodCheckUpperCaseParams): this;
+
+  // transforms
+  trim(): this;
+  normalize(form?: "NFC" | "NFD" | "NFKC" | "NFKD" | (string & {})): this;
+  toLowerCase(): this;
+  toUpperCase(): this;
+}
+
+export const _ZodString: core.$constructor<_ZodString> = /*@__PURE__*/ core.$constructor("_ZodString", (inst, def) => {
+  core.$ZodString.init(inst, def);
+  ZodType.init(inst, def);
+
+  inst.format = inst._zod.computed.format ?? null;
+  inst.minLength = inst._zod.computed.minimum ?? null;
+  inst.maxLength = inst._zod.computed.maximum ?? null;
+
+  // validations
+  inst.regex = (...args) => inst.check(checks.regex(...args));
+  inst.includes = (...args) => inst.check(checks.includes(...args));
+  inst.startsWith = (params) => inst.check(checks.startsWith(params));
+  inst.endsWith = (params) => inst.check(checks.endsWith(params));
+  inst.min = (...args) => inst.check(checks.minLength(...args));
+  inst.max = (...args) => inst.check(checks.maxLength(...args));
+  inst.length = (...args) => inst.check(checks.length(...args));
+  inst.nonempty = (...args) => inst.check(checks.minLength(1, ...args));
+  inst.lowercase = (params) => inst.check(checks.lowercase(params));
+  inst.uppercase = (params) => inst.check(checks.uppercase(params));
+
+  // transforms
+  inst.trim = () => inst.check(checks.trim());
+  inst.normalize = (...args) => inst.check(checks.normalize(...args));
+  inst.toLowerCase = () => inst.check(checks.toLowerCase());
+  inst.toUpperCase = () => inst.check(checks.toUpperCase());
+});
+
+export interface ZodString extends _ZodString<string> {
   // string format checks
   // email(): ZodString;
   // email(params?: string): ZodString;
@@ -254,37 +306,11 @@ export interface _ZodString<Input = unknown> extends ZodType {
   ): this;
   /** @deprecated Use `z.iso.duration()` instead. */
   duration(params?: string | core.$ZodCheckISODurationParams): this;
-
-  // /** @deprecated Use `z.jsonString()` instead. */
-  // json(params?: string | core.$ZodCheckJSONStringParams): this;
-
-  // miscellaneous checks
-  regex(regex: RegExp, params?: string | core.$ZodCheckRegexParams): this;
-  includes(value: string, params?: { message?: string; position?: number }): this;
-  startsWith(value: string, params?: string | core.$ZodCheckStartsWithParams): this;
-  endsWith(value: string, params?: string | core.$ZodCheckEndsWithParams): this;
-  min(minLength: number, params?: string | core.$ZodCheckMinLengthParams): this;
-  max(maxLength: number, params?: string | core.$ZodCheckMaxLengthParams): this;
-  length(len: number, params?: string | core.$ZodCheckLengthEqualsParams): this;
-  nonempty(params?: string | core.$ZodCheckMinLengthParams): this;
-  lowercase(params?: string | core.$ZodCheckLowerCaseParams): this;
-  uppercase(params?: string | core.$ZodCheckUpperCaseParams): this;
-
-  // transforms
-  trim(): this;
-  normalize(form?: "NFC" | "NFD" | "NFKC" | "NFKD" | (string & {})): this;
-  toLowerCase(): this;
-  toUpperCase(): this;
 }
 
-export interface ZodString extends _ZodString<string> {}
 export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$constructor("ZodString", (inst, def) => {
   core.$ZodString.init(inst, def);
-  ZodType.init(inst, def);
-
-  inst.format = inst._zod.computed.format ?? null;
-  inst.minLength = inst._zod.computed.minimum ?? null;
-  inst.maxLength = inst._zod.computed.maximum ?? null;
+  _ZodString.init(inst, def);
 
   inst.email = (params) => inst.check(core._email(ZodEmail, params));
   inst.url = (params) => inst.check(core._url(ZodURL, params));
@@ -302,16 +328,8 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
   inst.ulid = (params) => inst.check(core._ulid(ZodULID, params));
   inst.base64 = (params) => inst.check(core._base64(ZodBase64, params));
   inst.base64url = (params) => inst.check(core._base64url(ZodBase64URL, params));
-  // inst.jsonString = (params) => inst.check(core._jsonString(Zodinst,params));
-  // inst.json = (params) => inst.check(core._jsonString(Zodinst,params));
   inst.xid = (params) => inst.check(core._xid(ZodXID, params));
   inst.ksuid = (params) => inst.check(core._ksuid(ZodKSUID, params));
-  // inst.ip = (params) => {
-  //   const version = (params ?? {} as any)?.version;
-  //   if (version === "v4") return inst.check(core._ipv4(ZodIPv4, params));
-  //   if (version === "v6") return inst.check(core._ipv6(ZodIPv6, params as any));
-  //   return union([inst.ipv4(params), inst.ipv6(params as any)]);
-  // };
   inst.ipv4 = (params) => inst.check(core._ipv4(ZodIPv4, params));
   inst.ipv6 = (params) => inst.check(core._ipv6(ZodIPv6, params));
   inst.cidrv4 = (params) => inst.check(core._cidrv4(ZodCIDRv4, params));
@@ -323,24 +341,6 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
   inst.date = (params) => inst.check(iso.date(params as any));
   inst.time = (params) => inst.check(iso.time(params as any));
   inst.duration = (params) => inst.check(iso.duration(params as any));
-
-  // validations
-  inst.regex = (...args) => inst.check(checks.regex(...args));
-  inst.includes = (...args) => inst.check(checks.includes(...args));
-  inst.startsWith = (params) => inst.check(checks.startsWith(params));
-  inst.endsWith = (params) => inst.check(checks.endsWith(params));
-  inst.min = (...args) => inst.check(checks.minLength(...args));
-  inst.max = (...args) => inst.check(checks.maxLength(...args));
-  inst.length = (...args) => inst.check(checks.length(...args));
-  inst.nonempty = (...args) => inst.check(checks.minLength(1, ...args));
-  inst.lowercase = (params) => inst.check(checks.lowercase(params));
-  inst.uppercase = (params) => inst.check(checks.uppercase(params));
-
-  // transforms
-  inst.trim = () => inst.check(checks.trim());
-  inst.normalize = (...args) => inst.check(checks.normalize(...args));
-  inst.toLowerCase = () => inst.check(checks.toLowerCase());
-  inst.toUpperCase = () => inst.check(checks.toUpperCase());
 });
 
 export function string(params?: string | core.$ZodStringParams): ZodString {
@@ -348,14 +348,14 @@ export function string(params?: string | core.$ZodStringParams): ZodString {
 }
 
 // ZodStringFormat
-export interface ZodStringFormat<Format extends core.$ZodStringFormats = core.$ZodStringFormats> extends ZodString {
+export interface ZodStringFormat<Format extends core.$ZodStringFormats = core.$ZodStringFormats> extends _ZodString {
   _zod: core.$ZodStringFormatInternals<Format>;
 }
 export const ZodStringFormat: core.$constructor<ZodStringFormat> = /*@__PURE__*/ core.$constructor(
   "ZodStringFormat",
   (inst, def) => {
     core.$ZodStringFormat.init(inst, def);
-    ZodString.init(inst, def);
+    _ZodString.init(inst, def);
   }
 );
 
@@ -667,7 +667,7 @@ export interface _ZodNumber<Input = unknown> extends ZodType {
   max(value: number, params?: string | core.$ZodCheckLessThanParams): this;
   /** Consider `z.int()` instead. This API is considered *legacy*; it will never be removed but a better alternative exists. */
   int(params?: string | core.$ZodCheckNumberFormatParams): this;
-  /** @deprecated This is now identical to `.int()` instead. Only numbers in the safe integer range are accepted. */
+  /** @deprecated This is now identical to `.int()`. Only numbers in the safe integer range are accepted. */
   safe(params?: string | core.$ZodCheckNumberFormatParams): this;
   positive(params?: string | core.$ZodCheckGreaterThanParams): this;
   nonnegative(params?: string | core.$ZodCheckGreaterThanParams): this;
@@ -733,7 +733,7 @@ export const ZodNumberFormat: core.$constructor<ZodNumberFormat> = /*@__PURE__*/
   "ZodNumberFormat",
   (inst, def) => {
     core.$ZodNumberFormat.init(inst, def);
-    ZodType.init(inst, def);
+    ZodNumber.init(inst, def);
   }
 );
 
@@ -1008,297 +1008,73 @@ export function array<T extends core.$ZodType>(element: core.$ZodType, params?: 
   return core._array(ZodArray, element, params) as any;
 }
 
-// ZodObjectLike
-export interface ZodObjectLike<out O = object, out I = object> extends ZodType {
-  _zod: core.$ZodObjectLikeInternals<O, I>;
-}
-export const ZodObjectLike: core.$constructor<ZodObjectLike> = /*@__PURE__*/ core.$constructor(
-  "ZodObjectLike",
-  (inst, def) => {
-    core.$ZodObjectLike.init(inst, def);
-    ZodType.init(inst, def);
-  }
-);
-
 // .keyof
-export function keyof<T extends ZodObject>(schema: T): ZodLiteral<keyof T["_zod"]["def"]["shape"]>;
-export function keyof<T extends ZodInterface>(schema: T): ZodLiteral<keyof T["_zod"]["output"]>;
-export function keyof(schema: ZodObjectLike) {
-  const shape =
-    schema._zod.def.type === "interface"
-      ? util.cleanInterfaceShape(schema._zod.def.shape).shape
-      : schema._zod.def.shape;
-
+export function keyof<T extends ZodObject>(schema: T): ZodLiteral<keyof T["_zod"]["output"]> {
+  const shape = schema._zod.def.shape;
   return literal(Object.keys(shape)) as any;
-}
-
-// ZodInterface
-type ZodInterfacePartial<
-  T extends ZodInterface,
-  Keys extends keyof T["_zod"]["def"]["shape"] = keyof T["_zod"]["def"]["shape"],
-> = ZodInterface<
-  util.Extend<
-    T["_zod"]["def"]["shape"],
-    {
-      [k in Keys]: ZodOptional<T["_zod"]["def"]["shape"][k]>;
-    }
-  >,
-  {
-    optional: T["_zod"]["optional"] | (string & Keys);
-    defaulted: T["_zod"]["defaulted"];
-    extra: T["_zod"]["extra"];
-  }
->;
-
-type ZodInterfaceRequired<
-  T extends ZodInterface,
-  Keys extends keyof T["_zod"]["def"]["shape"] = keyof T["_zod"]["def"]["shape"],
-> = ZodInterface<
-  util.Extend<
-    T["_zod"]["def"]["shape"],
-    {
-      [k in Keys]: ZodNonOptional<T["_zod"]["def"]["shape"][k]>;
-    }
-  >,
-  {
-    optional: never;
-    defaulted: T["_zod"]["defaulted"];
-    extra: T["_zod"]["extra"];
-  }
->;
-
-export type MergeInterfaces<A extends ZodInterface, B extends ZodInterface> = ZodInterface<
-  util.Extend<A["_zod"]["def"]["shape"], B["_zod"]["def"]["shape"]>,
-  util.MergeInterfaceParams<A, B>
->;
-
-export interface ZodInterface<
-  // @ts-ignore cast variance
-  out Shape extends core.$ZodLooseShape = core.$ZodLooseShape,
-  // @ts-ignore cast variance
-  out Params extends core.$ZodInterfaceNamedParams = core.$ZodInterfaceNamedParams,
-> extends ZodType {
-  _zod: core.$ZodInterfaceInternals<Shape, Params>;
-
-  keyof(): ZodEnum<util.ToEnum<util.InterfaceKeys<string & keyof Shape>>>;
-  catchall<T extends core.$ZodType>(
-    schema: T
-  ): ZodInterface<
-    Shape,
-    {
-      optional: Params["optional"];
-      defaulted: Params["defaulted"];
-      extra: Record<string, T["_zod"]["output"]>;
-    }
-  >;
-  strict(): ZodInterface<
-    Shape,
-    {
-      optional: Params["optional"];
-      defaulted: Params["defaulted"];
-      extra: {};
-    }
-  >;
-  loose(): ZodInterface<
-    Shape,
-    {
-      optional: Params["optional"];
-      defaulted: Params["defaulted"];
-      extra: Record<string, unknown>;
-    }
-  >;
-  strip(): ZodInterface<
-    Shape,
-    {
-      optional: Params["optional"];
-      defaulted: Params["defaulted"];
-      extra: {};
-    }
-  >;
-
-  extend<U extends ZodInterface>(int: U): MergeInterfaces<this, U>;
-  extend<U extends core.$ZodLooseShape>(
-    shape: U
-  ): MergeInterfaces<this, ZodInterface<U, util.InitInterfaceParams<U, {}>>>;
-
-  /** @deprecated Use `A.extend(B)` */
-  merge<U extends ZodInterface>(incoming: U): MergeInterfaces<this, U>;
-
-  pick<const M extends util.Exactly<util.Mask<string & keyof Shape>, M>>(
-    mask: M
-  ): ZodInterface<
-    util.Flatten<Pick<Shape, keyof Shape & keyof M>>,
-    {
-      optional: Extract<Params["optional"], keyof M>;
-      defaulted: Extract<Params["defaulted"], keyof M>;
-      extra: Params["extra"];
-    }
-  >;
-
-  omit<const M extends util.Exactly<util.Mask<string & keyof Shape>, M>>(
-    mask: M
-  ): ZodInterface<
-    util.Flatten<Omit<Shape, keyof M>>,
-    {
-      optional: Exclude<Params["optional"], keyof M>;
-      defaulted: Exclude<Params["defaulted"], keyof M>;
-      extra: Params["extra"];
-    }
-  >;
-
-  partial(): ZodInterfacePartial<this>;
-  partial<M extends util.Mask<string & keyof Shape>>(mask: M): ZodInterfacePartial<this, string & keyof M>;
-
-  required(): ZodInterfaceRequired<this, string & keyof Shape>;
-  required<M extends util.Mask<string & keyof Shape>>(mask: M): ZodInterfaceRequired<this, string & keyof M>;
-}
-export const ZodInterface: core.$constructor<ZodInterface> = /*@__PURE__*/ core.$constructor(
-  "ZodInterface",
-  (inst, def) => {
-    core.$ZodInterface.init(inst, def);
-    ZodType.init(inst, def);
-    // util.defineLazy(inst._zod, "shape", () => def.shape);
-
-    inst.keyof = () => _enum(Object.keys(inst._zod.def.shape));
-    inst.catchall = (catchall) => inst.clone({ ...inst._zod.def, catchall });
-    inst.loose = () => inst.clone({ ...inst._zod.def, catchall: unknown() });
-    inst.strict = () => inst.clone({ ...inst._zod.def, catchall: never() });
-    inst.strip = () => inst.clone({ ...inst._zod.def, catchall: undefined });
-    inst.extend = (incoming: any) => {
-      if (incoming instanceof core.$ZodInterface) return util.extendObjectLike(inst, incoming);
-      return util.extendObjectLike(inst, _interface(incoming));
-    };
-    inst.merge = (other) => util.mergeObjectLike(inst, other);
-    inst.pick = (mask) => util.pick(inst, mask) as any;
-    inst.omit = (mask) => util.omit(inst, mask);
-    inst.partial = (...args: any[]) => util.partialObjectLike(ZodOptional, inst, args[0]);
-    inst.required = (...args: any[]) => util.requiredObjectLike(ZodNonOptional, inst, args[0]);
-  }
-);
-
-function _interface<T extends core.$ZodLooseShape>(
-  shape: T,
-  params?: string | core.$ZodInterfaceParams,
-  Class: util.Constructor<ZodInterface> = ZodInterface
-): ZodInterface<util.CleanInterfaceShape<T>, util.InitInterfaceParams<T, {}>> {
-  const cleaned = util.cached(() => util.cleanInterfaceShape(shape));
-  const def: core.$ZodInterfaceDef = {
-    type: "interface",
-    get shape() {
-      // return cleaned.value.shape;
-      const _shape = cleaned.value.shape;
-      util.assignProp(this, "shape", _shape);
-      return _shape;
-    },
-    get optional() {
-      return cleaned.value.optional;
-    },
-    ...util.normalizeParams(params),
-  };
-  return new Class(def) as any;
-}
-export { _interface as interface };
-
-// strictInterface
-
-export function strictInterface<T extends core.$ZodLooseShape>(
-  shape: T,
-  params?: string | core.$ZodInterfaceParams
-): ZodInterface<util.CleanInterfaceShape<T>, util.InitInterfaceParams<T, {}>> {
-  const cleaned = util.cached(() => util.cleanInterfaceShape(shape));
-  const def: core.$ZodInterfaceDef = {
-    type: "interface",
-    get shape() {
-      // return cleaned.value.shape;
-      const _shape = cleaned.value.shape;
-      util.assignProp(this, "shape", _shape);
-      return _shape;
-    },
-    get optional() {
-      return cleaned.value.optional;
-    },
-    catchall: never(),
-    ...util.normalizeParams(params),
-  };
-  return new ZodInterface(def) as any;
-}
-
-// looseInterface
-
-export function looseInterface<T extends core.$ZodLooseShape>(
-  shape: T,
-  params?: string | core.$ZodInterfaceParams
-): ZodInterface<util.CleanInterfaceShape<T>, util.InitInterfaceParams<T, Record<string, unknown>>> {
-  const cleaned = util.cached(() => util.cleanInterfaceShape(shape));
-  const def: core.$ZodInterfaceDef = {
-    type: "interface",
-    get optional() {
-      return cleaned.value.optional;
-    },
-    get shape() {
-      // return cleaned.value.shape;
-      const _shape = cleaned.value.shape;
-      util.assignProp(this, "shape", _shape);
-      return _shape;
-    },
-    catchall: unknown(),
-    ...util.normalizeParams(params),
-  };
-  return new ZodInterface(def) as any;
 }
 
 // ZodObject
 export interface ZodObject<
   // @ts-ignore cast variance
-  out Shape extends core.$ZodShape = core.$ZodShape,
-  // @ts-ignore cast variance
-  Extra extends Record<string, unknown> = Record<string, unknown>,
+  out Shape extends core.$ZodShape = core.$ZodLooseShape,
+  OutExtra extends Record<string, unknown> = Record<string, unknown>,
+  InExtra extends Record<string, unknown> = Record<string, unknown>,
 > extends ZodType {
-  _zod: core.$ZodObjectInternals<Shape, Extra>;
-
+  _zod: core.$ZodObjectInternals<Shape, OutExtra, InExtra>;
   shape: Shape;
 
   keyof(): ZodEnum<util.ToEnum<keyof Shape & string>>;
+  /** Define a schema to validate all unrecognized keys. This overrides the existing strict/loose behavior. */
   catchall<T extends core.$ZodType>(schema: T): ZodObject<Shape, Record<string, T["_zod"]["output"]>>;
 
   /** @deprecated Use `z.looseObject()` or `.loose()` instead. */
   passthrough(): ZodObject<Shape, Record<string, unknown>>;
-
+  /** Consider `z.looseObject(A.shape)` instead */
   loose(): ZodObject<Shape, Record<string, unknown>>;
 
-  /** The `z.strictObject()` API is preferred. */
+  /** Consider `z.strictObject(A.shape)` instead */
   strict(): ZodObject<Shape, {}>;
 
-  /** @deprecated This is the default behavior. This method call is likely unnecessary. */
+  /** This is the default behavior. This method call is likely unnecessary. */
   strip(): ZodObject<Shape, {}>;
 
-  extend<const U extends ZodObject>(schema: U): ZodObject<util.Extend<Shape, U["_zod"]["def"]["shape"]>, Extra>;
-  extend<U extends core.$ZodShape>(
+  extend<U extends core.$ZodLooseShape & Partial<Record<keyof Shape, core.$ZodType>>>(
     shape: U
   ): ZodObject<
     util.Extend<Shape, U>,
-    Extra // & B['_zod']["extra"]
+    OutExtra,
+    InExtra // & B['_zod']["extra"]
   >;
 
-  // merge
-  /** @deprecated Use `A.extend(B)` */
-  merge<U extends ZodObject<any, any>>(
+  /**
+   * @deprecated Use destructuring to merge the shapes:
+   *
+   * ```ts
+   * z.object({
+   *    ...A.shape,
+   *    ...B.shape
+   * });
+   * ```
+   */
+  merge<U extends ZodObject>(
     other: U
-  ): ZodObject<util.Flatten<util.Extend<Shape, U["_zod"]["def"]["shape"]>>, Extra>;
+  ): ZodObject<util.Extend<Shape, U["shape"]>, U["_zod"]["outextra"], U["_zod"]["inextra"]>;
 
   pick<M extends util.Exactly<util.Mask<string & keyof Shape>, M>>(
     mask: M
-  ): ZodObject<util.Flatten<Pick<Shape, Extract<keyof Shape, keyof M>>>, Extra>;
+  ): ZodObject<util.Flatten<Pick<Shape, Extract<keyof Shape, keyof M>>>, OutExtra, InExtra>;
 
   omit<M extends util.Exactly<util.Mask<string & keyof Shape>, M>>(
     mask: M
-  ): ZodObject<util.Flatten<Omit<Shape, Extract<keyof Shape, keyof M>>>, Extra>;
+  ): ZodObject<util.Flatten<Omit<Shape, Extract<keyof Shape, keyof M>>>, OutExtra, InExtra>;
 
   partial(): ZodObject<
     {
       [k in keyof Shape]: ZodOptional<Shape[k]>;
     },
-    Extra
+    OutExtra,
+    InExtra
   >;
   partial<M extends util.Exactly<util.Mask<string & keyof Shape>, M>>(
     mask: M
@@ -1306,7 +1082,8 @@ export interface ZodObject<
     {
       [k in keyof Shape]: k extends keyof M ? ZodOptional<Shape[k]> : Shape[k];
     },
-    Extra
+    OutExtra,
+    InExtra
   >;
 
   // required
@@ -1314,7 +1091,8 @@ export interface ZodObject<
     {
       [k in keyof Shape]: ZodNonOptional<Shape[k]>;
     },
-    Extra
+    OutExtra,
+    InExtra
   >;
   required<M extends util.Exactly<util.Mask<string & keyof Shape>, M>>(
     mask: M
@@ -1322,14 +1100,18 @@ export interface ZodObject<
     {
       [k in keyof Shape]: k extends keyof M ? ZodNonOptional<Shape[k]> : Shape[k];
     },
-    Extra
+    OutExtra,
+    InExtra
   >;
 }
+
 export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$constructor("ZodObject", (inst, def) => {
   core.$ZodObject.init(inst, def);
   ZodType.init(inst, def);
 
-  inst.shape = def.shape;
+  util.defineLazy(inst, "shape", () => {
+    return Object.fromEntries(Object.entries(inst._zod.def.shape));
+  });
   inst.keyof = () => _enum(Object.keys(inst._zod.def.shape)) as any;
   inst.catchall = (catchall) => inst.clone({ ...inst._zod.def, catchall });
   inst.passthrough = () => inst.clone({ ...inst._zod.def, catchall: unknown() });
@@ -1339,25 +1121,27 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
   inst.strip = () => inst.clone({ ...inst._zod.def, catchall: undefined });
 
   inst.extend = (incoming: any) => {
-    if (incoming instanceof ZodObject) return util.extendObjectLike(inst, incoming);
-    return util.extendObjectLike(inst, object(incoming));
+    return util.extend(inst, incoming);
   };
-  inst.merge = (other) => util.mergeObjectLike(inst, other);
+  inst.merge = (other) => util.merge(inst, other);
   inst.pick = (mask) => util.pick(inst, mask);
   inst.omit = (mask) => util.omit(inst, mask);
-  inst.partial = (...args: any[]) => util.partialObjectLike(ZodOptional, inst, args[0] as object);
-  inst.required = (...args: any[]) => util.requiredObjectLike(ZodNonOptional, inst, args[0] as object);
+  inst.partial = (...args: any[]) => util.partial(ZodOptional, inst, args[0] as object);
+  inst.required = (...args: any[]) => util.required(ZodNonOptional, inst, args[0] as object);
 });
-export function object<T extends core.$ZodShape = Record<never, core.$ZodType>>(
+
+export function object<T extends core.$ZodLooseShape = Partial<Record<never, core.$ZodType>>>(
   shape?: T,
-  params?: string | core.$ZodObjectLikeParams
-): ZodObject<T, {}> {
+  params?: string | core.$ZodObjectParams
+): ZodObject<util.Writeable<T> & {}, {}, {}> {
   const def: core.$ZodObjectDef = {
     type: "object",
-    shape: shape ?? {},
-    get optional() {
-      return util.optionalObjectKeys(shape ?? {});
+
+    get shape() {
+      util.assignProp(this, "shape", { ...shape });
+      return this.shape;
     },
+
     ...util.normalizeParams(params),
   };
   return new ZodObject(def) as any;
@@ -1365,230 +1149,39 @@ export function object<T extends core.$ZodShape = Record<never, core.$ZodType>>(
 
 // strictObject
 
-export function strictObject<T extends core.$ZodShape>(
+export function strictObject<T extends core.$ZodLooseShape>(
   shape: T,
   params?: string | core.$ZodObjectParams
-): ZodObject<T, {}> {
+): ZodObject<T, {}, {}> {
   return new ZodObject({
     type: "object",
-    shape: shape as core.$ZodShape,
-    get optional() {
-      return util.optionalObjectKeys(shape);
+
+    get shape() {
+      util.assignProp(this, "shape", { ...shape });
+      return this.shape;
     },
+
     catchall: never(),
     ...util.normalizeParams(params),
   }) as any;
 }
 
 // looseObject
-
-export function looseObject<T extends core.$ZodShape>(
+export function looseObject<T extends core.$ZodLooseShape>(
   shape: T,
   params?: string | core.$ZodObjectParams
-): ZodObject<T, { [k: string]: unknown }> {
+): ZodObject<T, { [k: string]: unknown }, { [k: string]: unknown }> {
   return new ZodObject({
     type: "object",
-    shape: shape as core.$ZodShape,
-    get optional() {
-      return util.optionalObjectKeys(shape);
+
+    get shape() {
+      util.assignProp(this, "shape", { ...shape });
+      return this.shape;
     },
+
     catchall: unknown(),
     ...util.normalizeParams(params),
   }) as any;
-}
-
-// object methods
-export function extend<T extends ZodInterface, U extends ZodInterface>(
-  a: T,
-  b: U
-): ZodInterface<util.Extend<T["_zod"]["def"]["shape"], U["_zod"]["def"]["shape"]>, util.MergeInterfaceParams<T, U>>;
-export function extend<T extends ZodObject, U extends ZodObject>(
-  a: T,
-  b: U
-): ZodObject<
-  util.Extend<T["_zod"]["def"]["shape"], U["_zod"]["def"]["shape"]>,
-  U["_zod"]["extra"] & T["_zod"]["extra"]
->;
-export function extend<T extends ZodObjectLike, U extends core.$ZodLooseShape>(
-  schema: T,
-  shape: U
-): T extends ZodInterface<infer TShape, infer TParams>
-  ? ZodInterface<util.ExtendInterfaceShape<TShape, U>, util.ExtendInterfaceParams<ZodInterface<TShape, TParams>, U>>
-  : ZodObject<util.Extend<T["_zod"]["def"]["shape"], U>, T["_zod"]["extra"]>;
-export function extend(schema: ZodObjectLike, shape: core.$ZodShape): ZodObjectLike {
-  if (shape instanceof core.$ZodType) return util.mergeObjectLike(schema, shape as any);
-  if (schema instanceof ZodInterface) {
-    return util.mergeObjectLike(schema, _interface(shape));
-  }
-  if (schema instanceof ZodObject) return util.mergeObjectLike(schema, object(shape));
-  return util.extend(schema, shape);
-}
-
-export function merge<T extends ZodObjectLike, U extends core.$ZodLooseShape>(
-  schema: T,
-  shape: U
-): T["_zod"]["def"]["type"] extends "interface"
-  ? // T extends ZodInterface
-    ZodInterface<
-      util.Extend<T["_zod"]["def"]["shape"], U["_zod"]["def"]["shape"]>,
-      {
-        extra: T["_zod"]["extra"] & U["_zod"]["extra"];
-        optional: Exclude<T["_zod"]["optional"], keyof U["_zod"]["def"]["shape"]> | U["_zod"]["optional"];
-        defaulted: Exclude<T["_zod"]["defaulted"], keyof U["_zod"]["def"]["shape"]> | U["_zod"]["defaulted"];
-      }
-    >
-  : ZodObject<util.Extend<T["_zod"]["def"]["shape"], U>, T["_zod"]["extra"]>;
-export function merge(a: ZodObjectLike, b: ZodObjectLike): ZodObjectLike {
-  return util.mergeObjectLike(a, b);
-}
-
-// .pick
-export function pick<T extends ZodObjectLike, M extends util.Exactly<util.Mask<keyof T["_zod"]["def"]["shape"]>, M>>(
-  schema: T,
-  mask: M
-): T["_zod"]["def"]["type"] extends "interface"
-  ? ZodInterface<
-      util.Flatten<Pick<T["_zod"]["def"]["shape"], keyof T["_zod"]["def"]["shape"] & keyof M>>,
-      {
-        optional: Extract<T["_zod"]["optional"], keyof M>;
-        defaulted: Extract<T["_zod"]["defaulted"], keyof M>;
-        extra: T["_zod"]["extra"];
-      }
-    >
-  : ZodObject<
-      util.Flatten<Pick<T["_zod"]["def"]["shape"], keyof T["_zod"]["def"]["shape"] & keyof M>>,
-      T["_zod"]["extra"]
-    >;
-export function pick(schema: ZodObjectLike, mask: object) {
-  // const picked = util.pick(schema, mask);
-  return util.pick(schema, mask);
-}
-
-// .omit
-export function omit<
-  T extends ZodObjectLike,
-  const M extends util.Exactly<util.Mask<keyof T["_zod"]["def"]["shape"]>, M>,
->(
-  schema: T,
-  mask: M
-): T["_zod"]["def"]["type"] extends "interface"
-  ? ZodInterface<
-      util.Flatten<Omit<T["_zod"]["def"]["shape"], keyof M>>,
-      {
-        optional: Exclude<T["_zod"]["optional"], keyof M>;
-        defaulted: Exclude<T["_zod"]["defaulted"], keyof M>;
-        extra: T["_zod"]["extra"];
-      }
-    >
-  : ZodObject<util.Flatten<Omit<T["_zod"]["def"]["shape"], keyof M>>, T["_zod"]["extra"]>;
-
-export function omit(schema: ZodObjectLike, mask: object) {
-  return util.omit(schema, mask);
-}
-
-export function partial<T extends ZodObjectLike>(
-  schema: T
-): T["_zod"]["def"]["type"] extends "interface"
-  ? ZodInterface<
-      // T['_zod']["shape"],
-      {
-        [k in keyof T["_zod"]["def"]["shape"]]: ZodOptional<T["_zod"]["def"]["shape"][k]>;
-      },
-      {
-        optional: string & keyof T["_zod"]["def"]["shape"];
-        defaulted: never;
-        extra: T["_zod"]["extra"];
-      }
-    >
-  : ZodObject<
-      {
-        [k in keyof T["_zod"]["def"]["shape"]]: ZodOptional<T["_zod"]["def"]["shape"][k]>;
-      },
-      T["_zod"]["extra"]
-    >;
-export function partial<T extends ZodObjectLike, M extends util.Exactly<util.Mask<keyof T["_zod"]["def"]["shape"]>, M>>(
-  schema: T,
-  mask: M
-): T["_zod"]["def"]["type"] extends "interface"
-  ? ZodInterface<
-      util.Extend<
-        T["_zod"]["def"]["shape"],
-        {
-          [k in keyof M & keyof T["_zod"]["def"]["shape"]]: ZodOptional<T["_zod"]["def"]["shape"][k]>;
-        }
-      >,
-      {
-        optional: string & (T["_zod"]["optional"] | keyof M);
-        defaulted: T["_zod"]["defaulted"];
-        extra: T["_zod"]["extra"];
-      }
-    >
-  : ZodObject<
-      {
-        [k in keyof T["_zod"]["def"]["shape"]]: k extends keyof M
-          ? ZodOptional<T["_zod"]["def"]["shape"][k]>
-          : T["_zod"]["def"]["shape"][k];
-      },
-      T["_zod"]["extra"]
-    >;
-
-export function partial(schema: ZodObjectLike, mask?: object): ZodObjectLike {
-  return util.partialObjectLike(ZodOptional, schema, mask);
-}
-
-// .required
-export function required<T extends { _subtype: "object" } & ZodObject>(
-  schema: T
-): ZodObject<{
-  [k in keyof T["_zod"]["def"]["shape"]]: ZodNonOptional<T["_zod"]["def"]["shape"][k]>;
-}>;
-export function required<
-  T extends { _subtype: "object" } & ZodObject,
-  M extends util.Exactly<util.Mask<keyof T["_zod"]["def"]["shape"]>, M>,
->(
-  schema: T,
-  mask: M
-): ZodObject<
-  util.Extend<
-    T["_zod"]["def"]["shape"],
-    {
-      [k in keyof M & keyof T["_zod"]["def"]["shape"]]: ZodNonOptional<T["_zod"]["def"]["shape"][k]>;
-    }
-  >
->;
-export function required<T extends { _subtype: "interface" } & ZodInterface>(
-  schema: T
-): ZodInterface<
-  {
-    [k in keyof T["_zod"]["def"]["shape"]]: ZodNonOptional<T["_zod"]["def"]["shape"][k]>;
-  },
-  {
-    optional: never;
-    defaulted: T["_zod"]["defaulted"];
-    extra: T["_zod"]["extra"];
-  }
->;
-export function required<
-  T extends { _subtype: "interface" } & ZodInterface,
-  M extends util.Mask<keyof T["_zod"]["output"]>,
->(
-  schema: T,
-  mask: M
-): ZodInterface<
-  util.Extend<
-    T["_zod"]["def"]["shape"],
-    {
-      [k in keyof M & keyof T["_zod"]["def"]["shape"]]: ZodNonOptional<T["_zod"]["def"]["shape"][k]>;
-    }
-  >,
-  {
-    optional: Exclude<T["_zod"]["optional"], keyof M>;
-    defaulted: T["_zod"]["defaulted"];
-    extra: T["_zod"]["extra"];
-  }
->;
-export function required(schema: ZodObjectLike, mask?: object): ZodObjectLike {
-  return util.requiredObjectLike(ZodNonOptional, schema, mask);
 }
 
 // ZodUnion

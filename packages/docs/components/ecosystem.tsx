@@ -25,11 +25,31 @@ const apiLibraries: ZodResource[] = [
   },
 ];
 
-const formIntegrations: ZodResource[] = [];
+const formIntegrations: ZodResource[] = [
+  {
+    name: "@regle/schemas",
+    url: "https://github.com/victorgarciaesgi/regle/tree/main/packages/schemas",
+    description: "Headless form validation library for Vue.js.",
+    slug: "victorgarciaesgi/regle",
+  },
+];
 
 const zodToXConverters: ZodResource[] = [];
 
-const xToZodConverters: ZodResource[] = [];
+const xToZodConverters: ZodResource[] = [
+  {
+    name: "orval",
+    url: "https://github.com/orval-labs/orval",
+    description: "Generate Zod schemas from OpenAPI schemas",
+    slug: "orval-labs/orval",
+  },
+  {
+    name: "kubb",
+    url: "https://github.com/kubb-labs/kubb",
+    description: "The ultimate toolkit for working with APIs.",
+    slug: "kubb-labs/kubb",
+  },
+];
 
 const mockingLibraries: ZodResource[] = [
   {
@@ -40,7 +60,20 @@ const mockingLibraries: ZodResource[] = [
   },
 ];
 
-const poweredByZodProjects: ZodResource[] = [];
+const poweredByZodProjects: ZodResource[] = [
+  {
+    name: "zod-config",
+    url: "https://github.com/alexmarqs/zod-config",
+    description: "Load configurations across multiple sources with flexible adapters, ensuring type safety with Zod.",
+    slug: "alexmarqs/zod-config",
+  },
+  {
+    name: "Composable Functions",
+    url: "https://github.com/seasonedcc/composable-functions",
+    description: "Types and functions to make composition easy and safe.",
+    slug: "seasonedcc/composable-functions",
+  },
+];
 
 const zodUtilities: ZodResource[] = [];
 
