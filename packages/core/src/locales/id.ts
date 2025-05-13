@@ -74,8 +74,7 @@ const error: errors.$ZodErrorMap = (issue) => {
     case "invalid_type":
       return `Input tidak valid: diharapkan ${issue.expected}, diterima ${parsedType(issue.input)}`;
     case "invalid_value":
-      if (issue.values.length === 1)
-        return `Input tidak valid: diharapkan ${util.stringifyPrimitive(issue.values[0])}`;
+      if (issue.values.length === 1) return `Input tidak valid: diharapkan ${util.stringifyPrimitive(issue.values[0])}`;
       return `Pilihan tidak valid: diharapkan salah satu dari ${util.joinValues(issue.values, "|")}`;
     case "too_big": {
       const adj = issue.inclusive ? "<=" : "<";
@@ -95,7 +94,7 @@ const error: errors.$ZodErrorMap = (issue) => {
     }
     case "invalid_format": {
       const _issue = issue as errors.$ZodStringFormatIssues;
-      if (_issue.format === "starts_with") return `String tidak valid: harus dimulai dengan "${issue}"`;
+      if (_issue.format === "starts_with") return `String tidak valid: harus dimulai dengan "${_issue.prefix}"`;
       if (_issue.format === "ends_with") return `String tidak valid: harus berakhir dengan "${_issue.suffix}"`;
       if (_issue.format === "includes") return `String tidak valid: harus menyertakan "${_issue.includes}"`;
       if (_issue.format === "regex") return `String tidak valid: harus sesuai pola ${_issue.pattern}`;

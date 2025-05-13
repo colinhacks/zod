@@ -94,7 +94,7 @@ const error: errors.$ZodErrorMap = (issue) => {
     }
     case "invalid_format": {
       const _issue = issue as errors.$ZodStringFormatIssues;
-      if (_issue.format === "starts_with") return `Ugyldig streng: må starte med "${issue}"`;
+      if (_issue.format === "starts_with") return `Ugyldig streng: må starte med "${_issue.prefix}"`;
       if (_issue.format === "ends_with") return `Ugyldig streng: må ende med "${_issue.suffix}"`;
       if (_issue.format === "includes") return `Ugyldig streng: må inneholde "${_issue.includes}"`;
       if (_issue.format === "regex") return `Ugyldig streng: må matche mønsteret ${_issue.pattern}`;
