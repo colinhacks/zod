@@ -3692,7 +3692,7 @@ export type RecordType<K extends string | number | symbol, V> = [
   ? Record<K, V>
   : [symbol] extends [K]
   ? Record<K, V>
-  : [BRAND<string | number | symbol>] extends [K]
+  : [K] extends [BRAND<string | number | symbol>]
   ? Record<K, V>
   : Partial<Record<K, V>>;
 export class ZodRecord<
