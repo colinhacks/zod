@@ -8,12 +8,16 @@ test("type inference", () => {
   const recordWithEnumKeys = z.record(z.enum(["Tuna", "Salmon"]), z.string());
   type recordWithEnumKeys = z.infer<typeof recordWithEnumKeys>;
 
-  const recordWithLiteralKeys = z.record(z.union([z.literal("Tuna"), z.literal("Salmon")]), z.string());
-  type recordWithLiteralKeys = z.infer<typeof recordWithLiteralKeys>;
+  const recordWithLiteralKey = z.record(z.literal(["Tuna", "Salmon"]), z.string());
+  type recordWithLiteralKey = z.infer<typeof recordWithLiteralKey>;
+
+  const recordWithLiteralUnionKeys = z.record(z.union([z.literal("Tuna"), z.literal("Salmon")]), z.string());
+  type recordWithLiteralUnionKeys = z.infer<typeof recordWithLiteralUnionKeys>;
 
   expectTypeOf<booleanRecord>().toEqualTypeOf<Record<string, boolean>>();
   expectTypeOf<recordWithEnumKeys>().toEqualTypeOf<Record<"Tuna" | "Salmon", string>>();
-  expectTypeOf<recordWithLiteralKeys>().toEqualTypeOf<Record<"Tuna" | "Salmon", string>>();
+  expectTypeOf<recordWithLiteralKey>().toEqualTypeOf<Record<"Tuna" | "Salmon", string>>();
+  expectTypeOf<recordWithLiteralUnionKeys>().toEqualTypeOf<Partial<Record<"Tuna" | "Salmon", string>>>();
 });
 
 test("enum exhaustiveness", () => {
