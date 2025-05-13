@@ -1,6 +1,21 @@
+import ar from "./locales/ar.js";
 import az from "./locales/az.js";
+import cs from "./locales/cs.js";
 import en from "./locales/en.js";
 import es from "./locales/es.js";
 import ru from "./locales/ru.js";
+import tr from "./locales/tr.js";
+import id from "./locales/id.js";
+import it from "./locales/it.js";
+import vi from "./locales/vi.js";
+import zhCN from "./locales/zh-CN.js";
+import hu from "./locales/hu.js";
+import fi from "./locales/fi.js";
+import ua from "./locales/ua.js";
+import pl from "./locales/pl.js";
+import he from "./locales/he.js";
+import fr from "./locales/fr.js";
+import ja from "./locales/ja.js";
+import pt from "./locales/pt.js";
 
-export { az, es, en, ru };
+export { ar, az, cs, es, en, fi, fr, he, hu, id, it, ja, pl, pt, ru, tr, ua, vi, zhCN };

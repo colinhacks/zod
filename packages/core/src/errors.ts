@@ -174,7 +174,7 @@ export interface $ZodError<T = unknown> extends Error {
   stack?: string;
   name: string;
 }
-export class $ZodError<T = unknown> implements Error {
+export class $ZodError implements Error {
   public issues: $ZodIssue[];
   get message(): string {
     return JSON.stringify(this.issues, jsonStringifyReplacer, 2);
