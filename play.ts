@@ -1,9 +1,11 @@
 import * as z from "zod";
 
-export const UserModel = z.object({
-  id: z.string(),
-  name: z.string(),
-  email: z.string().optional(),
-});
+export function parseData() {
+  z.string().parse(1234);
+}
 
-type UserModel = z.infer<typeof UserModel>;
+export function main() {
+  parseData();
+}
+
+main();

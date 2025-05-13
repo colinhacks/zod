@@ -1624,7 +1624,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     // doc.write(`const shape = inst._zod.def.shape;`);
     doc.write(`const input = payload.value;`);
 
-    const ids: any = {};
+    const ids: any = Object.create(null);
     for (const key of keys) {
       ids[key] = util.randomString(15);
     }
@@ -1803,7 +1803,7 @@ export interface $ZodUnionDef<Options extends readonly $ZodType[] = readonly $Zo
 }
 
 export interface $ZodUnionInternals<T extends readonly $ZodType[] = readonly $ZodType[]>
-  extends $ZodTypeInternals<$InferUnionOutput<T[number]>, $InferUnionOutput<T[number]>> {
+  extends $ZodTypeInternals<$InferUnionOutput<T[number]>, $InferUnionInput<T[number]>> {
   def: $ZodUnionDef<T>;
   isst: errors.$ZodIssueInvalidUnion;
   pattern: T[number]["_zod"]["pattern"];
