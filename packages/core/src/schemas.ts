@@ -1803,7 +1803,7 @@ export interface $ZodUnionDef<Options extends readonly $ZodType[] = readonly $Zo
 }
 
 export interface $ZodUnionInternals<T extends readonly $ZodType[] = readonly $ZodType[]>
-  extends $ZodTypeInternals<$InferUnionOutput<T[number]>, $InferUnionOutput<T[number]>> {
+  extends $ZodTypeInternals<$InferUnionOutput<T[number]>, $InferUnionInput<T[number]>> {
   def: $ZodUnionDef<T>;
   isst: errors.$ZodIssueInvalidUnion;
   pattern: T[number]["_zod"]["pattern"];
