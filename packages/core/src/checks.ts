@@ -266,7 +266,7 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
 
     const isInt = def.format?.includes("int");
     const origin = isInt ? "int" : "number";
-    const [minimum, maximum] = util.NUMBER_FORMAT_RANGES[def.format!];
+    const [minimum, maximum] = util.NUMBER_FORMAT_RANGES[def.format];
 
     inst._zod.onattach.push((inst) => {
       inst._zod.computed.format = def.format;

@@ -145,7 +145,7 @@ describe("toJSONSchema", () => {
     expect(toJSONSchema(z.ulid())).toMatchInlineSnapshot(`
       {
         "format": "ulid",
-        "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+        "pattern": "^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$",
         "type": "string",
       }
     `);
@@ -658,10 +658,9 @@ describe("toJSONSchema", () => {
   });
 
   test("simple interface", () => {
-    const userSchema = z.interface({
+    const userSchema = z.object({
       name: z.string(),
-      "age?": z.number(),
-      "?email": z.string(),
+      age: z.number().optional(),
     });
 
     const result = toJSONSchema(userSchema);
@@ -671,16 +670,12 @@ describe("toJSONSchema", () => {
           "age": {
             "type": "number",
           },
-          "email": {
-            "type": "string",
-          },
           "name": {
             "type": "string",
           },
         },
         "required": [
           "name",
-          "email",
         ],
         "type": "object",
       }
@@ -688,7 +683,7 @@ describe("toJSONSchema", () => {
   });
 
   test("catchall interface", () => {
-    const a = z.strictInterface({
+    const a = z.strictObject({
       name: z.string(),
       age: z.number(),
     });
@@ -715,7 +710,7 @@ describe("toJSONSchema", () => {
     `);
 
     const b = z
-      .interface({
+      .object({
         name: z.string(),
       })
       .catchall(z.string());
@@ -737,7 +732,7 @@ describe("toJSONSchema", () => {
       }
     `);
 
-    const c = z.looseInterface({
+    const c = z.looseObject({
       name: z.string(),
     });
 
@@ -758,7 +753,7 @@ describe("toJSONSchema", () => {
   });
 
   test("recursive interface schemas", () => {
-    const TreeNodeSchema = z.interface({
+    const TreeNodeSchema = z.object({
       id: z.string(),
       get children() {
         return TreeNodeSchema;
@@ -790,14 +785,14 @@ describe("toJSONSchema", () => {
   });
 
   test("mutually recursive interface schemas", () => {
-    const FolderSchema = z.interface({
+    const FolderSchema = z.object({
       name: z.string(),
       get files() {
         return z.array(FileSchema);
       },
     });
 
-    const FileSchema = z.interface({
+    const FileSchema = z.object({
       name: z.string(),
       get parent() {
         return FolderSchema;
@@ -1179,16 +1174,22 @@ test("overwrite descriptions", () => {
       reused: "ref",
     }
   );
-  expect(a).toMatchInlineSnapshot(`
+  expect(b).toMatchInlineSnapshot(`
     {
-      "properties": {
-        "d": {
-          "description": "d",
+      "$defs": {
+        "__schema0": {
+          "description": "c",
           "type": "string",
         },
+      },
+      "properties": {
+        "d": {
+          "$ref": "#/$defs/__schema0",
+          "description": "d",
+        },
         "e": {
+          "$ref": "#/$defs/__schema0",
           "description": "e",
-          "type": "string",
         },
       },
       "required": [
@@ -1202,7 +1203,7 @@ test("overwrite descriptions", () => {
 
 test("top-level readonly", () => {
   const A = z
-    .interface({
+    .object({
       name: z.string(),
       get b() {
         return B;
@@ -1212,7 +1213,7 @@ test("top-level readonly", () => {
     .meta({ id: "A" });
 
   const B = z
-    .interface({
+    .object({
       name: z.string(),
       get a() {
         return A;
@@ -1264,14 +1265,14 @@ test("top-level readonly", () => {
 
 test("basic registry", () => {
   const myRegistry = z.registry<{ id: string }>();
-  const User = z.interface({
+  const User = z.object({
     name: z.string(),
     get posts() {
       return z.array(Post);
     },
   });
 
-  const Post = z.interface({
+  const Post = z.object({
     title: z.string(),
     content: z.string(),
     get author() {
@@ -1324,6 +1325,105 @@ test("basic registry", () => {
           "type": "object",
         },
       },
+    }
+  `);
+});
+
+test("_ref", () => {
+  // const a = z.promise(z.string().describe("a"));
+  const a = z.toJSONSchema(z.promise(z.string().describe("a")));
+  expect(a).toMatchInlineSnapshot(`
+    {
+      "description": "a",
+      "type": "string",
+    }
+  `);
+
+  const b = z.toJSONSchema(z.lazy(() => z.string().describe("a")));
+  expect(b).toMatchInlineSnapshot(`
+    {
+      "description": "a",
+      "type": "string",
+    }
+  `);
+
+  const c = z.toJSONSchema(z.optional(z.string().describe("a")));
+  expect(c).toMatchInlineSnapshot(`
+    {
+      "description": "a",
+      "type": "string",
+    }
+  `);
+});
+
+test("input type", () => {
+  const schema = z.object({
+    a: z.string(),
+    b: z.string().optional(),
+    c: z.string().default("hello"),
+    d: z.string().nullable(),
+  });
+  expect(toJSONSchema(schema, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "properties": {
+        "a": {
+          "type": "string",
+        },
+        "b": {
+          "type": "string",
+        },
+        "c": {
+          "default": "hello",
+          "type": "string",
+        },
+        "d": {
+          "anyOf": [
+            {
+              "type": "string",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+      },
+      "required": [
+        "a",
+        "d",
+      ],
+      "type": "object",
+    }
+  `);
+  expect(toJSONSchema(schema, { io: "output" })).toMatchInlineSnapshot(`
+    {
+      "properties": {
+        "a": {
+          "type": "string",
+        },
+        "b": {
+          "type": "string",
+        },
+        "c": {
+          "default": "hello",
+          "type": "string",
+        },
+        "d": {
+          "anyOf": [
+            {
+              "type": "string",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+      },
+      "required": [
+        "a",
+        "c",
+        "d",
+      ],
+      "type": "object",
     }
   `);
 });
