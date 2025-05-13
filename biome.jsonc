@@ -1,5 +1,6 @@
 {
   "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
@@ -70,7 +71,6 @@
       ".next",
       "packages/bench",
       "packages/treeshake",
-      "packages/tsc",
       ".source"
     ]
   }
