@@ -5,7 +5,7 @@
     "noEmit": false,
     "extendedDiagnostics": true,
     "skipLibCheck": true,
-    "customConditions": []
+    "customConditions": ["@zod/source"]
   },
   "files": ["src/index.ts"]
 }
