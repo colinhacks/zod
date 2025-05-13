@@ -9,7 +9,7 @@ export const parse: <T extends core.$ZodType>(
   schema: T,
   value: unknown,
   _ctx?: core.ParseContext<core.$ZodIssue>
-) => core.output<T> = /* @__PURE__ */ core._parse.bind({ Error: ZodError }) as any;
+) => core.output<T> = /* @__PURE__ */ core._parse({ Error: ZodError }) as any;
 
 export const safeParse: <T extends core.$ZodType>(
   schema: T,

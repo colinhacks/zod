@@ -1,9 +1,14 @@
-import * as z from "zod";
+import type * as z4 from "zod";
+import * as z from "zod3";
 
-export const UserModel = z.object({
-  id: z.string(),
-  name: z.string(),
-  email: z.string().optional(),
-});
+z;
 
-type UserModel = z.infer<typeof UserModel>;
+type Schema = z.ZodType | z4.core.$ZodType;
+
+declare const schema: Schema;
+
+if ("_zod" in schema) {
+  schema._zod;
+} else {
+  schema._def;
+}

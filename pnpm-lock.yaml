@@ -266,6 +266,9 @@ importers:
       '@zod/core':
         specifier: workspace:*
         version: link:../core
+      '@zod/mini':
+        specifier: workspace:*
+        version: link:../mini
 
 packages:
 
