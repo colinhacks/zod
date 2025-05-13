@@ -44,8 +44,14 @@
     "zod3": "npm:zod@^3.0.0"
   },
   "lint-staged": {
-    "packages/*/src/**/*.ts": ["biome format --write", "biome lint --write"],
-    "packages/*/**/*.json": ["biome format --write", "biome lint --write"],
+    "packages/*/src/**/*.ts": [
+      "biome format --no-errors-on-unmatched --write",
+      "biome lint --no-errors-on-unmatched --write"
+    ],
+    "packages/*/**/*.json": [
+      "biome format --no-errors-on-unmatched --write",
+      "biome lint --no-errors-on-unmatched --write"
+    ],
     "packages/*/**/*.md": ["prettier --ignore-unknown --write"]
   },
   "scripts": {
