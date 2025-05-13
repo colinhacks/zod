@@ -1,11 +1,18 @@
 import * as z from "zod";
 
-export function parseData() {
+function parseData() {
   z.string().parse(1234);
 }
 
-export function main() {
+function main() {
   parseData();
 }
+
+// try {
+//   main();
+// } catch (e) {
+//   console.log(e);
+//   console.log(e.stack);
+// }
 
 main();

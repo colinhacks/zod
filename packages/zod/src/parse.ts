@@ -8,7 +8,8 @@ export type ZodSafeParseError<T> = { success: false; data?: never; error: ZodErr
 export const parse: <T extends core.$ZodType>(
   schema: T,
   value: unknown,
-  _ctx?: core.ParseContext<core.$ZodIssue>
+  _ctx?: core.ParseContext<core.$ZodIssue>,
+  callee?: core.util.AnyFunc
 ) => core.output<T> = /* @__PURE__ */ core._parse(ZodError) as any;
 
 export const safeParse: <T extends core.$ZodType>(
@@ -20,7 +21,8 @@ export const safeParse: <T extends core.$ZodType>(
 export const parseAsync: <T extends core.$ZodType>(
   schema: T,
   value: unknown,
-  _ctx?: core.ParseContext<core.$ZodIssue>
+  _ctx?: core.ParseContext<core.$ZodIssue>,
+  callee?: core.util.AnyFunc
 ) => Promise<core.output<T>> = /* @__PURE__ */ core._parseAsync(ZodError) as any;
 
 export const safeParseAsync: <T extends core.$ZodType>(

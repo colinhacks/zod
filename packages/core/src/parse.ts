@@ -9,10 +9,11 @@ type ZodErrorClass = { new (issues: errors.$ZodIssue[]): errors.$ZodError };
 export type $Parse = <T extends schemas.$ZodType>(
   schema: T,
   value: unknown,
-  _ctx?: schemas.ParseContext<errors.$ZodIssue>
+  _ctx?: schemas.ParseContext<errors.$ZodIssue>,
+  callee?: util.AnyFunc
 ) => core.output<T>;
 
-export const _parse: (_Err: ZodErrorClass) => $Parse = (_Err) => (schema, value, _ctx) => {
+export const _parse: (_Err: ZodErrorClass) => $Parse = (_Err) => (schema, value, _ctx, callee) => {
   const ctx: schemas.ParseContextInternal = _ctx ? Object.assign(_ctx, { async: false }) : { async: false };
   const result = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) {
@@ -20,7 +21,7 @@ export const _parse: (_Err: ZodErrorClass) => $Parse = (_Err) => (schema, value,
   }
   if (result.issues.length) {
     const e = new _Err(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())));
-    Error.captureStackTrace(e);
+    Error.captureStackTrace(e, callee);
     throw e;
   }
   return result.value;
@@ -31,16 +32,17 @@ export const parse: $Parse = /* @__PURE__*/ _parse(errors.$ZodError);
 export type $ParseAsync = <T extends schemas.$ZodType>(
   schema: T,
   value: unknown,
-  _ctx?: schemas.ParseContext<errors.$ZodIssue>
+  _ctx?: schemas.ParseContext<errors.$ZodIssue>,
+  callee?: util.AnyFunc
 ) => Promise<core.output<T>>;
 
-export const _parseAsync: (_Err: ZodErrorClass) => $ParseAsync = (_Err) => async (schema, value, _ctx) => {
+export const _parseAsync: (_Err: ZodErrorClass) => $ParseAsync = (_Err) => async (schema, value, _ctx, callee) => {
   const ctx: schemas.ParseContextInternal = _ctx ? Object.assign(_ctx, { async: true }) : { async: true };
   let result = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) result = await result;
   if (result.issues.length) {
     const e = new _Err(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())));
-    Error.captureStackTrace(e, _parseAsync);
+    Error.captureStackTrace(e, callee);
     throw e;
   }
   return result.value as core.output<typeof schema>;

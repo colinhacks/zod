@@ -174,16 +174,25 @@ export interface $ZodError<T = unknown> extends Error {
   stack?: string;
   name: string;
 }
-export class $ZodError implements Error {
-  public issues: $ZodIssue[];
-  get message(): string {
+export class $ZodError extends Error {
+  public issues!: $ZodIssue[];
+
+  override get message() {
+    // console.log("GET MESSAGE");
     return JSON.stringify(this.issues, jsonStringifyReplacer, 2);
   }
 
+  // toString() {
+  //   console.log("TO STRING");
+  //   return this.stack;
+  // }
   constructor(issues: $ZodIssue[]) {
+    super();
     Object.defineProperty(this, "_tag", { value: ZOD_ERROR, enumerable: false });
-    Object.defineProperty(this, "name", { value: "$ZodError", enumerable: false });
-    this.issues = issues;
+    // Object.defineProperty(this, "name", { value: "$ZodError", enumerable: false });
+    // Object.defineProperty(this, "message", { value: JSON.stringify(issues, jsonStringifyReplacer, 2) });
+    // this.issues = issues;
+    Object.defineProperty(this, "issues", { value: issues, enumerable: false });
   }
 
   // @ts-ignore
