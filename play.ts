@@ -1,11 +1,9 @@
-import * as zm from "@zod/mini";
 import * as z from "zod";
 
-zm._default;
+export const UserModel = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string().optional(),
+});
 
-z.config(z.locales.es());
-
-const result = z.string().safeParse(123);
-
-result.error!.issues[0].message;
-// => Entrada inválida: se esperaba string, recibido número
+type UserModel = z.infer<typeof UserModel>;

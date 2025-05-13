@@ -1,6 +1,6 @@
 export const cuid: RegExp = /^[cC][^\s-]{8,}$/;
 export const cuid2: RegExp = /^[0-9a-z]+$/;
-export const ulid: RegExp = /^[0-9A-HJKMNP-TV-Z]{26}$/;
+export const ulid: RegExp = /^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$/;
 export const xid: RegExp = /^[0-9a-vA-V]{20}$/;
 export const ksuid: RegExp = /^[A-Za-z0-9]{27}$/;
 export const nanoid: RegExp = /^[a-zA-Z0-9_-]{21}$/;

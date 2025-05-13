@@ -17,9 +17,11 @@ export function _parse<T extends schemas.$ZodType>(
     throw new core.$ZodAsyncError();
   }
   if (result.issues.length) {
-    throw new (this?.Error ?? errors.$ZodError)(
+    const e = new (this?.Error ?? errors.$ZodError)(
       result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))
     );
+    Error.captureStackTrace(e, _parse);
+    throw e;
   }
   return result.value as core.output<T>;
 }
@@ -60,9 +62,11 @@ export async function _parseAsync<T extends schemas.$ZodType>(
   let result = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) result = await result;
   if (result.issues.length) {
-    throw new (this?.Error ?? errors.$ZodError)(
+    const e = new (this?.Error ?? errors.$ZodError)(
       result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))
     );
+    Error.captureStackTrace(e, _parseAsync);
+    throw e;
   }
   return result.value as core.output<T>;
 }
@@ -78,14 +82,17 @@ export async function _safeParseAsync<T extends schemas.$ZodType>(
   let result = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) result = await result;
 
-  if (result.issues.length) {
-    return {
-      success: false,
-      error: new (this?.Error ?? errors.$ZodError)(
-        result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))
-      ),
-    };
-  }
-  return { success: true, data: result.value };
+  return (
+    result.issues.length
+      ? {
+          success: false,
+          error: new (this?.Error ?? errors.$ZodError)(
+            result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))
+          ),
+        }
+      : { success: true, data: result.value }
+  ) as util.SafeParseResult<core.output<T>>;
 }
-export const safeParseAsync: typeof _safeParseAsync = /* @__PURE__*/ _safeParseAsync.bind({ Error: errors.$ZodError });
+export const safeParseAsync: typeof _safeParseAsync = /* @__PURE__*/ _safeParseAsync.bind({
+  Error: errors.$ZodError,
+}) as any;
