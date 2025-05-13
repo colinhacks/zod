@@ -37,17 +37,6 @@ test("valid parse - object", () => {
   ).toEqual({ type: "a", a: "abc" });
 });
 
-test("valid parse - interface", () => {
-  expect(
-    z
-      .discriminatedUnion([
-        z.interface({ type: z.literal("a"), a: z.string() }),
-        z.interface({ type: z.literal("b"), b: z.string() }),
-      ])
-      .parse({ type: "a", a: "abc" })
-  ).toEqual({ type: "a", a: "abc" });
-});
-
 test("valid - include discriminator key (deprecated)", () => {
   expect(
     z
@@ -66,16 +55,6 @@ test("valid - optional discriminator (object)", () => {
   ]);
   expect(schema.parse({ type: "a", a: "abc" })).toEqual({ type: "a", a: "abc" });
   expect(schema.parse({ a: "abc" })).toEqual({ a: "abc" });
-});
-
-test("valid - optional discriminator (interface)", () => {
-  const schema = z.discriminatedUnion([
-    z.interface({ type: z.literal("a").optional(), a: z.string() }),
-    z.interface({ type: z.literal("b"), b: z.string() }),
-  ]);
-  expect(schema.parse({ type: "a", a: "abc" })).toEqual({ type: "a", a: "abc" });
-  expect(schema.parse({ type: undefined, a: "abc" })).toEqual({ type: undefined, a: "abc" });
-  expect(schema.parse({ type: "b", b: "abc" })).toEqual({ type: "b", b: "abc" });
 });
 
 test("valid - discriminator value of various primitive types", () => {

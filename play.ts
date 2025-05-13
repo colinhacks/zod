@@ -1,21 +1,11 @@
 import * as z from "zod";
 
-const Internal = z.object({
-  num: z.number(),
-  str: z.string(),
-});
-//.meta({ id: "Internal" });
+export function parseData() {
+  z.string().parse(1234);
+}
 
-const External = z.object({
-  a: Internal,
-  b: Internal.optional(),
-  c: z.lazy(() => Internal),
-  d: z.promise(Internal),
-  e: z.pipe(Internal, Internal),
-});
-console.dir(
-  z.toJSONSchema(External, {
-    reused: "ref",
-  }),
-  { depth: null }
-);
+export function main() {
+  parseData();
+}
+
+main();
