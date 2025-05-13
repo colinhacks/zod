@@ -1,7 +1,7 @@
 import type { $ZodCheck, $ZodStringFormats } from "./checks.js";
+import { $constructor } from "./core.js";
 import type { $ZodType } from "./schemas.js";
 import type * as util from "./util.js";
-import { jsonStringifyReplacer } from "./util.js";
 
 ///////////////////////////
 ////     base type     ////
@@ -168,38 +168,56 @@ export interface $ZodErrorMap<T extends $ZodIssueBase = $ZodIssue> {
 
 ////////////////////////    ERROR CLASS   ////////////////////////
 
-const ZOD_ERROR: symbol = Symbol.for("{{zod.error}}");
+// const ZOD_ERROR: symbol = Symbol.for("{{zod.error}}");
 export interface $ZodError<T = unknown> extends Error {
-  _zod: { type: T };
+  issues: $ZodIssue[];
+  _zod: {
+    output: T;
+    def: $ZodIssue[];
+  };
   stack?: string;
   name: string;
 }
-export class $ZodError extends Error {
-  public issues!: $ZodIssue[];
 
-  override get message() {
-    // console.log("GET MESSAGE");
-    return JSON.stringify(this.issues, jsonStringifyReplacer, 2);
-  }
+export const $ZodError: $constructor<$ZodError> = $constructor("$ZodError", (inst, def) => {
+  Object.defineProperties(inst, {
+    issues: {
+      value: def,
+      enumerable: true,
+    },
+    _zod: {
+      value: inst._zod,
+      enumerable: false,
+    },
+  });
+});
 
-  // toString() {
-  //   console.log("TO STRING");
-  //   return this.stack;
-  // }
-  constructor(issues: $ZodIssue[]) {
-    super();
-    Object.defineProperty(this, "_tag", { value: ZOD_ERROR, enumerable: false });
-    // Object.defineProperty(this, "name", { value: "$ZodError", enumerable: false });
-    // Object.defineProperty(this, "message", { value: JSON.stringify(issues, jsonStringifyReplacer, 2) });
-    // this.issues = issues;
-    Object.defineProperty(this, "issues", { value: issues, enumerable: false });
-  }
+// export class _$ZodError extends Error {
+//   public issues!: $ZodIssue[];
 
-  // @ts-ignore
-  static [Symbol.hasInstance](inst: any) {
-    return inst?._tag === ZOD_ERROR;
-  }
-}
+//   override get message() {
+//     // console.log("GET MESSAGE");
+//     return JSON.stringify(this.issues, jsonStringifyReplacer, 2);
+//   }
+
+//   // toString() {
+//   //   console.log("TO STRING");
+//   //   return this.stack;
+//   // }
+//   constructor(issues: $ZodIssue[]) {
+//     super();
+//     Object.defineProperty(this, "_tag", { value: ZOD_ERROR, enumerable: false });
+//     // Object.defineProperty(this, "name", { value: "$ZodError", enumerable: false });
+//     // Object.defineProperty(this, "message", { value: JSON.stringify(issues, jsonStringifyReplacer, 2) });
+//     // this.issues = issues;
+//     Object.defineProperty(this, "issues", { value: issues, enumerable: false });
+//   }
+
+//   // @ts-ignore
+//   static [Symbol.hasInstance](inst: any) {
+//     return inst?._tag === ZOD_ERROR;
+//   }
+// }
 
 ///////////////////    ERROR UTILITIES   ////////////////////////
 
