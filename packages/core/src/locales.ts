@@ -1,6 +1,25 @@
+import ar from "./locales/ar.js";
 import az from "./locales/az.js";
+import be from "./locales/be.js";
+import cs from "./locales/cs.js";
 import en from "./locales/en.js";
 import es from "./locales/es.js";
 import fa from "./locales/fa.js";
+import ko from "./locales/ko.js";
+import ota from "./locales/ota.js";
+import ru from "./locales/ru.js";
+import tr from "./locales/tr.js";
+import id from "./locales/id.js";
+import it from "./locales/it.js";
+import vi from "./locales/vi.js";
+import zhCN from "./locales/zh-CN.js";
+import hu from "./locales/hu.js";
+import fi from "./locales/fi.js";
+import ua from "./locales/ua.js";
+import pl from "./locales/pl.js";
+import he from "./locales/he.js";
+import fr from "./locales/fr.js";
+import ja from "./locales/ja.js";
+import pt from "./locales/pt.js";
 
-export { az, es, en, fa };
+export { ar, az, be, cs, es, en, fa, fi, fr, he, hu, id, it, ja, ko, ota, pl, pt, ru, tr, ua, vi, zhCN };
