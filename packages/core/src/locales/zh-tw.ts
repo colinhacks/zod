@@ -3,10 +3,10 @@ import type * as errors from "../errors.js";
 import * as util from "../util.js";
 
 const Sizable: Record<string, { unit: string; verb: string }> = {
-  string: { unit: "字元", verb: "to have" },
-  file: { unit: "位元", verb: "to have" },
-  array: { unit: "項目", verb: "to have" },
-  set: { unit: "項目", verb: "to have" },
+  string: { unit: "字元", verb: "擁有" },
+  file: { unit: "位元組", verb: "擁有" },
+  array: { unit: "項目", verb: "擁有" },
+  set: { unit: "項目", verb: "擁有" },
 };
 
 function getSizing(origin: string): { unit: string; verb: string } | null {
