@@ -387,7 +387,7 @@ v6.parse("2001:db8:85a3::8a2e:370:7334"); // ✅
 
 ### IP blocks (CIDR)
 
-Validate IP address ranges specified with [CIDR notation](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing). By default, `.cidr()` allows both IPv4 and IPv6.
+Validate IP address ranges specified with [CIDR notation](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing).
 
 ```ts
 const cidrv4 = z.string().cidrv4();
@@ -820,104 +820,9 @@ const email = z.templateLiteral([
 
 ## Objects
 
-There are two APIs for defining object schemas: `z.object()` and `z.interface()`. The two APIs are largely identical, with a small (but important!) difference in how *optional properties* are defined.
-{/* 
-<Callout>
-The `z.interface()` API was introduced in Zod 4 as a more flexible and powerful way to represent objects. Optional properties are specified with a `?` suffix in the key. This gives you more control over representing *optionality*:
-
-```ts
-z.interface({
-  email: z.string(),
-  name: z.string().optional(),
-  "bio?": z.string(),
-});
-// { email: string; name: string | undefined; bio?: string; }
-```
-
-With this new syntax, it's now possible to define recursive types directly using getters—no `z.lazy()` required.
-
-```ts
-const Node = z.interface({
-  value: z.string(),
-  get children(){
-    return z.array(Node).optional()
-  }
-});
-``` 
-
-For these reasons, `z.interface` is the recommended approach. However, `z.object()` is still fully supported. 
-</Callout> */}
-
-{/* For a detailed discussion of the differences, refer to the [introductory blog post](#) for `z.interface()`. */}
-
-<Accordions>
-<Accordion title="z.interface() vs. z.object()">
-
-{/* The `z.interface()` API fixes some shortcomings with `z.object()`. Let's run through them. */}
-
-There are a couple ways in which a key can be "optional" in TypeScript. Consider these two interfaces.
-
-```ts
-interface A {
-  name?: string | undefined;
-}
-
-interface B {
-  name: string | undefined;
-}
-```
-
-In `A`, the `name` property can be set `undefined` or it can be omitted from the object entirely. By contrast, `B` requires that a `name` propertly is set.
-
-```ts
-const obj: A = { name: undefined }; // ✅
-const obj: A = {} ; // ✅ pass
-
-const obj: B = { name: undefined }; // ✅ 
-const obj: B = {} ; // ❌ compile error: missing required property `name`
-```
-
-
-The `z.object()` API can only represent `A`. When an an optional schema (e.g. `z.string().optional()`) is passed into `z.object()`, Zod automatically adds the question mark to the inferred type. 
-
-```ts
-z.object({ name: z.string().optional() });
-// { name?: string | undefined; }
-```
-
-By contrast, `z.interface()` can represent both varieties. To make a property "key optional" (e.g. to add the question mark), suffix that key with `?`. 
-
-
-```ts
-z.interface({ "name?": z.string() });
-// { name?: string | undefined; }
-
-z.interface({ name: z.string().optional() });
-// { name: string | undefined; }
-```
-
-As a happy side-effect of this new `z.interface()` API, it's possible to define recursive types directly—no type-casting or `z.lazy()` required! See the documentation on [`Recursive objects`](#recursive-objects) for more information.
-</Accordion>
-</Accordions>
-
 To define an object type:
 
-<Tabs groupId="object-api" items={["z.interface", "z.object"]}>
-  <Tab value="z.interface">
-  ```ts z.interface
-  // all properties are required by default
-  const Person = z.interface({
-    name: z.string(),
-    age: z.number(),
-  });
-
-  type Person = z.infer<typeof Person>;
-  // => { name: string; age: number; }
-  ```
-  </Tab>
-
-  <Tab value="z.object">
-  ```ts z.object
+```ts z.object
   // all properties are required by default
   const Person = z.object({
     name: z.string(),
@@ -927,24 +832,8 @@ To define an object type:
   type Person = z.infer<typeof Person>;
   // => { name: string; age: number; }
   ```
-  </Tab>
-</Tabs>
-
 By default, all properties are required. To make certain properties optional:
 
-<Tabs groupId="object-api" items={["z.interface", "z.object"]}>
-<Tab value="z.interface">
-```ts z.interface
-const Dog = z.interface({
-  name: z.string(),
-  "age?": z.number(), // optional field
-});
-
-Dog.parse({ name: "Yeller" }); // ✅
-```
-</Tab>
-
-<Tab value="z.object">
 ```ts z.object
 const Dog = z.object({
   name: z.string(),
@@ -953,40 +842,15 @@ const Dog = z.object({
 
 Dog.parse({ name: "Yeller" }); // ✅
 ```
-</Tab>
-</Tabs>
 
 By default, unrecognized keys are *stripped* from the parsed result:
 
-<Tabs groupId="object-api" items={["z.interface", "z.object"]}>
-<Tab value="z.interface">
-```ts z.interface
-Dog.parse({ name: "Yeller", extraKey: true });
-// => { name: "Yeller" }
-```
-</Tab>
-<Tab value="z.object">
 ```ts z.object
 Dog.parse({ name: "Yeller", extraKey: true });
 // => { name: "Yeller" }
 ```
-</Tab>
-</Tabs>
-
 To define a *strict* schema that throws an error when unknown keys are found:
 
-<Tabs groupId="object-api" items={["z.interface", "z.object"]}>
-<Tab value="z.interface">
-```ts z.interface
-const StrictDog = z.strictInterface({
-  name: z.string(),
-});
-
-StrictDog.parse({ name: "Yeller", extraKey: true });
-// ❌ throws
-```
-</Tab>
-<Tab value="z.object">
 ```ts z.object
 const StrictDog = z.strictObject({
   name: z.string(),
@@ -995,23 +859,9 @@ const StrictDog = z.strictObject({
 StrictDog.parse({ name: "Yeller", extraKey: true });
 // ❌ throws
 ```
-</Tab>
-</Tabs>
 
 To define a *loose* schema that allows unknown keys to pass through:
 
-<Tabs groupId="object-api" items={["z.interface", "z.object"]}>
-<Tab value="z.interface">
-```ts z.interface
-const LooseDog = z.looseInterface({
-  name: z.string(),
-});
-
-Dog.parse({ name: "Yeller", extraKey: true });
-// => { name: "Yeller", extraKey: true }
-```
-</Tab>
-<Tab value="z.object">
 ```ts z.object
 const LooseDog = z.looseObject({
   name: z.string(),
@@ -1020,30 +870,6 @@ const LooseDog = z.looseObject({
 Dog.parse({ name: "Yeller", extraKey: true });
 // => { name: "Yeller", extraKey: true }
 ```
-</Tab>
-</Tabs>
-
-{/* 
-To validate unknown keys against a schema:
-
-<CodeGroup>
-```ts z.interface
-const Dog = z.interface({
-  name: z.string(),
-}).catchall;
-
-Dog.parse({ name: "Yeller", extraKey: true });
-// => { name: "Yeller" }
-```
-```ts z.object
-const Dog = z.strictObject({
-  name: z.string(),
-});
-
-Dog.parse({ name: "Yeller", extraKey: true });
-// => { name: "Yeller" }
-```
-</Tab></Tabs> */}
 
 ### `.shape`
 
@@ -1105,42 +931,12 @@ const DogWithBreed = z.extend(Dog, {
 </Tabs>
 
 <Callout>
-  This API can be used to overwrite existing fields! Be careful with this power!
+  This API can be used to overwrite existing fields! Be careful with this power! 
+  
+  
+  If the two schemas share keys, B will override A.
 </Callout>
 
-You can also pass another object schema into `.extend()`:
-
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
-```ts
-const HasBreed = z.interface({ breed: z.string() });
-const DogWithBreed = Dog.extend(HasBreed);
-```
-</Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
-const HasBreed = z.interface({ breed: z.string() });
-const DogWithBreed = z.extend(Dog, HasBreed);
-```
-</Tab>
-</Tabs>
-
-<Callout>
-If the two schemas share keys, B will override A. The returned schema also inherits the strictness level (strip, strict, loose) from B.
-</Callout>
-
-{/* 
-### `.merge()`
-
-```ts
-const BaseTeacher = z.object({ students: z.array(z.string()) });
-const HasID = z.object({ id: z.string() });
-
-const Teacher = BaseTeacher.merge(HasID);
-type Teacher = z.infer<typeof Teacher>; // => { students: string[], id: string }
-```
-
-> If the two schemas share keys, the properties of B overrides the property of A. The returned schema also inherits the "unknownKeys" policy (strip/strict/passthrough) and the catchall schema of B. */}
 
 ### `.pick`
 
@@ -1148,18 +944,6 @@ Inspired by TypeScript's built-in `Pick` and `Omit` utility types, Zod provides 
 
 Starting from this initial schema:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
-```ts z.interface
-const Recipe = z.interface({
-  title: z.string(),
-  "description?": z.string(),
-  ingredients: z.array(z.string()),
-});
-// { name: string; description?: string; ingredients: string[] }
-```
-</Tab>
-<Tab value="@zod/mini">
 ```ts z.object
 const Recipe = z.object({
   name: z.string(),
@@ -1168,9 +952,6 @@ const Recipe = z.object({
 });
 // { id: string; name: string; ingredients: string[] }
 ```
-</Tab>
-</Tabs>
-
 To pick certain keys:
 
 
@@ -1209,28 +990,7 @@ const RecipeNoId = z.omit(Recipe, { id: true });
 ### `.partial()`
 
 For convenience, Zod provides a dedicated API for making some or all properties optional, inspired by the built-in TypeScript utility type [`Partial`](https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype).
-{/* 
 
-<Tabs groupId="object-api" items={["z.interface", "z.object"]}>
-<Tab value="z.interface">
-```ts z.interface
-const User = z.object({
-  email: z.string(),
-  username: z.string(),
-});
-// { email: string; username: string }
-```
-</Tab>
-<Tab value="z.object">
-```ts z.object
-const User = z.object({
-  email: z.string(),
-  username: z.string(),
-});
-// { email: string; username: string }
-```
-</Tab>
-</Tabs> */}
 
 To make all fields optional:
 
@@ -1274,30 +1034,6 @@ const RecipeOptionalIngredients = z.partial(Recipe, {
 
 Zod provides an API for making some or all properties *required*, inspired by TypeScript's [`Required`](https://www.typescriptlang.org/docs/handbook/utility-types.html#requiredtype) utility type.
 
-{/* 
-Starting from this schema:
-
-<Tabs groupId="object-api" items={["z.interface", "z.object"]}>
-<Tab value="z.interface">
-```ts z.interface
-const User = z.object({
-  "email?": z.string(),
-  "username?": z.string(),
-});
-// { email?: string | undefined; username?: string | undefined }
-```
-</Tab>
-<Tab value="z.object">
-```ts z.object
-const User = z.object({
-  email: z.string().optional(),
-  username: z.string().optional(),
-});
-// { email?: string | undefined; username?: string | undefined }
-```
-</Tab>
-</Tabs> */}
-
 To make all properties required:
 
 <Tabs groupId="lib" items={["zod", "@zod/mini"]}>
@@ -1332,88 +1068,12 @@ const RecipeRequiredDescription = z.required(Recipe, {description: true});
 </Tab>
 </Tabs>
 
-{/* ### `.passthrough`
-
-By default Zod object schemas strip out unrecognized keys during parsing.
-
-```ts
-const person = z.object({
-  name: z.string(),
-});
-
-person.parse({
-  name: "bob dylan",
-  extraKey: 61,
-});
-// => { name: "bob dylan" }
-// extraKey has been stripped
-```
-
-Instead, if you want to pass through unknown keys, use `.passthrough()` .
-
-```ts
-person.passthrough().parse({
-  name: "bob dylan",
-  extraKey: 61,
-});
-// => { name: "bob dylan", extraKey: 61 }
-```
-
-### `.strict`
-
-By default Zod object schemas strip out unrecognized keys during parsing. You can _disallow_ unknown keys with `.strict()` . If there are any unknown keys in the input, Zod will throw an error.
-
-```ts
-const person = z
-  .object({
-    name: z.string(),
-  })
-  .strict();
-
-person.parse({
-  name: "bob dylan",
-  extraKey: 61,
-});
-// => throws ZodError
-```
-
-### `.strip`
-
-You can use the `.strip` method to reset an object schema to the default behavior (stripping unrecognized keys).
-
-### `.catchall`
-
-You can pass a "catchall" schema into an object schema. All unknown keys will be validated against it.
-
-```ts
-const person = z
-  .object({
-    name: z.string(),
-  })
-  .catchall(z.number());
-
-person.parse({
-  name: "bob dylan",
-  validExtraKey: 61, // works fine
-});
-
-person.parse({
-  name: "bob dylan",
-  validExtraKey: false, // fails
-});
-// => throws ZodError
-```
-
-Using `.catchall()` obviates `.passthrough()` , `.strip()` , or `.strict()`. All keys are now considered "known".
-
-<br/> */}
-
 ## Recursive objects
 
-The `z.interface()` API is capable of representing recursive types using [getters](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/get).
+To define a self-referential type, use a [getter](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/get) on the key. This lets JavaScript resolve the cyclical schema at runtime.
 
 ```ts
-const Category = z.interface({
+const Category = z.object({
   name: z.string(),
   get subcategories(){
     return z.array(Category)
@@ -1427,14 +1087,14 @@ type Category = z.infer<typeof Category>;
 You can also represent *mutually recursive types*:
 
 ```ts
-const User = z.interface({
+const User = z.object({
   email: z.email(),
   get posts(){
     return z.array(Post)
   }
 });
 
-const Post = z.interface({
+const Post = z.object({
   title: z.string(),
   get author(){
     return User
@@ -1444,35 +1104,9 @@ const Post = z.interface({
 
 All object APIs (pick, omit, required, partial, etc) work as you'd expect.
 
-<Accordions>
-<Accordion title="What about z.object()?">
-Due to a limitation in TypeScript, `z.object()` isn't capable of defining recursive types without a manual type definition. This means you need to redundantly define a TypeScript type in addition to your Zod schema.
-
-```ts
-interface Category {
-  name: string;
-  subcategories: Category[];
-};
-
-const categorySchema: z.ZodType<Category> = z.object({
-  name: z.string(),
-  subcategories: z.lazy(() => categorySchema.array()),
-});
-```
-
-This is verbose, error prone, and counter to the goals of Zod. The `z.interface()` API was introduced in large part so recursive types could be more readily represented in Zod.
-</Accordion>
-</Accordions>
-
-{/* ### Cyclical objects */}
-
 <Callout type="warn"> 
   Though recursive schemas are supported, passing cyclical data into Zod will cause an infinite loop.
 </Callout>
-
-
-
-> To detect cyclical objects before they cause problems, consider [this approach](https://gist.github.com/colinhacks/d35825e505e635df27cc950776c5500b).
 
 ## Arrays
 
@@ -1506,27 +1140,6 @@ stringArray.def.element; // => string schema
 </Tab>
 </Tabs>
 
-{/* ### `.nonempty`
-
-If you want to ensure that an array contains at least one element, use `.nonempty()`.
-
-```ts
-const nonEmptyStrings = z.string().array().nonempty();
-// the inferred type is now
-// [string, ...string[]]
-
-nonEmptyStrings.parse([]); // throws: "Array cannot be empty"
-nonEmptyStrings.parse(["Ariana Grande"]); // passes
-```
-
-You can optionally specify a custom error message:
-
-```ts
-// optional custom error message
-const nonEmptyStrings = z.string().array().nonempty({
-  message: "Can't be empty!",
-});
-``` */}
 
 ### `.min/.max/.length`
 
@@ -1647,8 +1260,8 @@ So Zod provides a `z.discriminatedUnion()` API that uses a *discriminator key* t
 
 ```ts
 const MyResult = z.discriminatedUnion([
-  z.interface({ status: z.literal("success"), data: z.string() }),
-  z.interface({ status: z.literal("failed"), error: z.string() }),
+  z.object({ status: z.literal("success"), data: z.string() }),
+  z.object({ status: z.literal("failed"), error: z.string() }),
 ]);
 ```
 
@@ -1658,8 +1271,8 @@ const MyResult = z.discriminatedUnion([
 
   ```ts
   const MyResult = z.discriminatedUnion("status", [
-    z.interface({ status: z.literal("success"), data: z.string() }),
-    z.interface({ status: z.literal("failed"), error: z.string() }),
+    z.object({ status: z.literal("success"), data: z.string() }),
+    z.object({ status: z.literal("failed"), error: z.string() }),
   ]);
   ```
 
@@ -1674,13 +1287,13 @@ const MyResult = z.discriminatedUnion([
   ```ts
   const BaseError = { status: z.literal("failed"), message: z.string() };
   const MyErrors = z.discriminatedUnion([
-    z.interface({ ...BaseError, code: z.literal(400) }),
-    z.interface({ ...BaseError, code: z.literal(401) }),
-    z.interface({ ...BaseError, code: z.literal(500) }),
+    z.object({ ...BaseError, code: z.literal(400) }),
+    z.object({ ...BaseError, code: z.literal(401) }),
+    z.object({ ...BaseError, code: z.literal(500) }),
   ]);
 
   const MyResult = z.discriminatedUnion([
-    z.interface({ status: z.literal("success"), data: z.string() }),
+    z.object({ status: z.literal("success"), data: z.string() }),
     MyErrors
   ]);
   ```
@@ -2386,36 +1999,12 @@ defaultTuna.parse(undefined); // => "tuna"
 </Tab>
 <Tab value="@zod/mini">
 ```ts
-const defaultTuna = z.default(z.string(), "tuna");
+const defaultTuna = z._default(z.string(), "tuna");
 
 defaultTuna.parse(undefined); // => "tuna"
 ```
 </Tab>
 </Tabs>
-
-
-{/* This value will be returned if the `input` is undefined. This is also true inside object schemas:
-
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
-```ts
-const Fish = z.interface({
-  name: z.string().default("tuna"),
-});
-
-Fish.parse({}); // => { name: "tuna" }
-```
-</Tab>
-<Tab value="@zod/mini">
-```ts
-const Fish = z.interface({
-  name: z.string().default("tuna"),
-});
-
-z.parse(Fish, {}); // => { name: "tuna" }
-```
-</Tab>
-</Tabs> */}
 
 Alternatively, you can pass a function which will be re-executed whenever a default value needs to be generated:
 
@@ -2431,7 +2020,7 @@ randomDefault.parse(undefined);    // => 0.7223408162401552
 </Tab>
 <Tab value="@zod/mini">
 ```ts
-const randomDefault = z.default(z.number(), Math.random);
+const randomDefault = z._default(z.number(), Math.random);
 
 z.parse(randomDefault, undefined); // => 0.4413456736055323
 z.parse(randomDefault, undefined); // => 0.1871840107401901

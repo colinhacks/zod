@@ -191,6 +191,12 @@ const formIntegrations: ZodResource[] = [
     description: "Tiny 0.5kb Zod-based, HTML form abstraction that goes brr.",
     slug: "schalkventer/frrm",
   },
+  {
+    name: "@regle/schemas",
+    url: "https://github.com/victorgarciaesgi/regle/tree/main/packages/schemas",
+    description: "Headless form validation library for Vue.js.",
+    slug: "victorgarciaesgi/regle",
+  },
 ];
 
 const zodToXConverters: ZodResource[] = [
