@@ -8,7 +8,7 @@ console.log("║     Zod v4     ║");
 console.log("╚════════════════╝");
 await gen.generate({
   ...gen.ZOD,
-  schemaType: "z.interface",
+  schemaType: "z.object",
   numSchemas: 500,
   numKeys: 3,
   numRefs: 1,

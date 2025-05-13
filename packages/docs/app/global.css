@@ -74,7 +74,7 @@ html .prose {
   code {
     @apply font-light;
     @apply border-none px-1.5;
-    margin-top: -4px;
+    /* margin-top: -4px; */
   }
 
   button[role="tab"] {
