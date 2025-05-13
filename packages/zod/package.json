@@ -69,6 +69,7 @@
     "pub:beta": "pnpm bump:beta && pnpm publish --tag next --publish-branch v4 --no-git-checks"
   },
   "dependencies": {
-    "@zod/core": "workspace:*"
+    "@zod/core": "workspace:*",
+    "@zod/mini": "workspace:*"
   }
 }
