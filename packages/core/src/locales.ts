@@ -4,6 +4,7 @@ import be from "./locales/be.js";
 import cs from "./locales/cs.js";
 import en from "./locales/en.js";
 import es from "./locales/es.js";
+import ur from "./locales/ur.js";
 import fa from "./locales/fa.js";
 import ko from "./locales/ko.js";
 import ota from "./locales/ota.js";
@@ -22,4 +23,4 @@ import fr from "./locales/fr.js";
 import ja from "./locales/ja.js";
 import pt from "./locales/pt.js";
 
-export { ar, az, be, cs, es, en, fa, fi, fr, he, hu, id, it, ja, ko, ota, pl, pt, ru, tr, ua, vi, zhCN };
+export { ar, az, be, cs, es, en, fa, fi, fr, he, hu, id, it, ja, ko, ota, pl, pt, ru, tr, ua, ur, vi, zhCN };
