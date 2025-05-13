@@ -37,13 +37,13 @@
 <br/>
 <br/>
 
-<h2 align="center">Featured sponsor: Stainless</h2>
+<h2 align="center">Featured sponsor: Jazz</h2>
 
 <div align="center">
-  <a href="https://www.stainless.com/?utm_source=zod">
+  <a href="https://jazz.tools/?utm_source=zod">
     <picture width="95%" >
-      <source media="(prefers-color-scheme: dark)" srcset="https://i.imgur.com/bjyoaHY.jpeg">
-      <img alt="stainless logo" src="https://i.imgur.com/bjyoaHY.jpeg" width="95%">
+      <source media="(prefers-color-scheme: dark)" srcset="https://i.imgur.com/w1GE8ao.png">
+      <img alt="jazz logo" src="https://i.imgur.com/w1GE8ao.png" width="95%">
     </picture>
   </a>
   <br/>
