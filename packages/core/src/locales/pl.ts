@@ -81,7 +81,7 @@ const error: errors.$ZodErrorMap = (issue) => {
       const adj = issue.inclusive ? "<=" : "<";
       const sizing = getSizing(issue.origin);
       if (sizing) {
-        return `Zbyt duż(y/a/e): oczekiwano, że ${issue.origin ?? "wartość"} będzie mieć ${adj}${issue.maximum.toString()} ${sizing.unit ?? "elementów"}`;
+        return `Za duża wartość: oczekiwano, że ${issue.origin ?? "wartość"} będzie mieć ${adj}${issue.maximum.toString()} ${sizing.unit ?? "elementów"}`;
       }
       return `Zbyt duż(y/a/e): oczekiwano, że ${issue.origin ?? "wartość"} będzie wynosić ${adj}${issue.maximum.toString()}`;
     }
