@@ -40,11 +40,18 @@
     "tsx": "^4.19.3",
     "typescript": "~5.5.4",
     "vitest": "^2.1.9",
-    "zod": "workspace:*"
+    "zod": "workspace:*",
+    "zod3": "npm:zod@^3.0.0"
   },
   "lint-staged": {
-    "packages/*/src/**/*.ts": ["biome format --write", "biome lint --write"],
-    "packages/*/**/*.json": ["biome format --write", "biome lint --write"],
+    "packages/*/src/**/*.ts": [
+      "biome format --no-errors-on-unmatched --write",
+      "biome lint --no-errors-on-unmatched --write"
+    ],
+    "packages/*/**/*.json": [
+      "biome format --no-errors-on-unmatched --write",
+      "biome lint --no-errors-on-unmatched --write"
+    ],
     "packages/*/**/*.md": ["prettier --ignore-unknown --write"]
   },
   "scripts": {

@@ -1,11 +1,11 @@
-import * as zm from "@zod/mini";
 import * as z from "zod";
 
-zm._default;
+export function parseData() {
+  z.string().parse(1234);
+}
 
-z.config(z.locales.es());
+export function main() {
+  parseData();
+}
 
-const result = z.string().safeParse(123);
-
-result.error!.issues[0].message;
-// => Entrada inválida: se esperaba string, recibido número
+main();

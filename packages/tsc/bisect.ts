@@ -1,5 +1,5 @@
 import { $ } from "execa";
-import { ARKTYPE, VALIBOT, ZOD, ZOD3, generate } from "./generate.js";
+import * as gen from "./generate.js";
 
 // detect control c and process.exit()
 process.on("SIGINT", () => {
@@ -39,13 +39,11 @@ let CURR = MIN;
 // regular interface: 33328
 // shape interface: 43472
 
-while (!MAX || MAX - MIN > 10) {
-  generate({
-    ...ZOD,
-    schemaType: "z.interface",
+while (!MAX || MAX - MIN > 2) {
+  gen.generateExtendChain({
+    ...gen.ARKTYPE,
     numSchemas: CURR,
-    numKeys: 3,
-    numRefs: 1,
+    numKeys: 6,
   });
 
   console.log(`Attempting tsc compilation...`);
