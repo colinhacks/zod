@@ -40,14 +40,22 @@
     "tsx": "^4.19.3",
     "typescript": "~5.5.4",
     "vitest": "^2.1.9",
-    "zod": "workspace:*"
+    "zod": "workspace:*",
+    "zod3": "npm:zod@^3.0.0"
   },
   "lint-staged": {
-    "packages/*/src/**/*.ts": ["biome format --write", "biome lint --write"],
-    "packages/*/**/*.json": ["biome format --write", "biome lint --write"],
+    "packages/*/src/**/*.ts": [
+      "biome format --no-errors-on-unmatched --write",
+      "biome lint --no-errors-on-unmatched --write"
+    ],
+    "packages/*/**/*.json": [
+      "biome format --no-errors-on-unmatched --write",
+      "biome lint --no-errors-on-unmatched --write"
+    ],
     "packages/*/**/*.md": ["prettier --ignore-unknown --write"]
   },
   "scripts": {
+    "fix": "pnpm run format && pnpm run lint",
     "format": "biome check --write .",
     "format:check": "biome check .",
     "lint": "biome lint --write .",
@@ -59,7 +67,7 @@
     "prepublishOnly": "pnpm run test && pnpm run build && tsx scripts/prepublish.ts",
     "dev": "tsx --conditions @zod/source",
     "dev:watch": "tsx --conditions @zod/source --watch",
-    "dev:play": "pnpm dev playground.ts",
+    "dev:play": "pnpm dev play.ts",
     "bench": "tsx --conditions @zod/source packages/bench/index.ts",
     "moltar": "pnpm bench object-moltar",
     "prepare": "husky install",

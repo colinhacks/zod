@@ -80,7 +80,7 @@ test("empty object", () => {
   expect(schema.parse({ name: "asdf" })).toEqual({});
   expect(schema.safeParse(null).success).toEqual(false);
   expect(schema.safeParse("asdf").success).toEqual(false);
-  expectTypeOf<typeof schema._zod.output>().toEqualTypeOf<object>();
+  expectTypeOf<z.output<typeof schema>>().toEqualTypeOf<Record<string, never>>();
 });
 
 const data = {
@@ -213,6 +213,7 @@ test("test async union", async () => {
 test("test inferred merged type", async () => {
   const asdf = z.object({ a: z.string() }).merge(z.object({ a: z.number() }));
   type asdf = z.infer<typeof asdf>;
+
   expectTypeOf<asdf>().toEqualTypeOf<{ a: number }>();
 });
 
@@ -433,12 +434,18 @@ test("passthrough index signature", () => {
 // });
 
 test("assignability", () => {
-  z.interface({ a: z.string() }) satisfies z.ZodInterface;
-  z.interface({ a: z.string() }).catchall(z.number()) satisfies z.ZodInterface;
-  z.interface({ a: z.string() }).strict() satisfies z.ZodInterface;
-  z.interface({}) satisfies z.ZodInterface;
-  z.interface({ "a?": z.string() }) satisfies z.ZodInterface;
-  z.interface({ "?a": z.string() }) satisfies z.ZodInterface;
+  z.object({ a: z.string() }) satisfies z.ZodObject;
+  z.object({ a: z.string() }).catchall(z.number()) satisfies z.ZodObject;
+  z.object({ a: z.string() }).strict() satisfies z.ZodObject;
+  z.object({}) satisfies z.ZodObject;
+  z.object({ "a?": z.string() }) satisfies z.ZodObject;
+  z.object({ "?a": z.string() }) satisfies z.ZodObject;
+
+  z.object({
+    a: z.string(),
+    b: z.number(),
+    c: z.boolean(),
+  }) satisfies z.core.$ZodObject;
 });
 
 test("null prototype", () => {
