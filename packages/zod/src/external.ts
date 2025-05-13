@@ -13,6 +13,7 @@ config(en());
 export type { infer, output, input } from "@zod/core";
 export {
   globalRegistry,
+  type GlobalMeta,
   registry,
   config,
   $output,
