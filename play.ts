@@ -1,17 +1,11 @@
-import * as z from "@zod/mini";
+import * as z from "zod";
 
-console.log(z.toJSONSchema(z.literal(undefined), { unrepresentable: "any" }));
+export function parseData() {
+  z.string().parse(1234);
+}
 
-const A = z.partialRecord(z.enum(["a", "b"]), z.number());
-type A = z.infer<typeof A>;
+export function main() {
+  parseData();
+}
 
-z.string("Bad!");
-z.string().check(z.minLength(5, "Too short!"));
-z.uuid("Bad UUID!");
-z.iso.date("Bad date!");
-z.array(z.string(), "Bad array!");
-z.array(z.string()).check(z.minLength(5, "Too few items!"));
-z.set(z.string(), "Bad set!");
-z.array(z.string(), "Bad array!");
-z.set(z.string(), "Bad set!");
-z.array(z.string(), "Bad array!");
+main();

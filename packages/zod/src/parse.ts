@@ -9,24 +9,22 @@ export const parse: <T extends core.$ZodType>(
   schema: T,
   value: unknown,
   _ctx?: core.ParseContext<core.$ZodIssue>
-) => core.output<T> = /* @__PURE__ */ core._parse.bind({ Error: ZodError }) as any;
+) => core.output<T> = /* @__PURE__ */ core._parse(ZodError) as any;
 
 export const safeParse: <T extends core.$ZodType>(
   schema: T,
   value: unknown,
   _ctx?: core.ParseContext<core.$ZodIssue>
-) => ZodSafeParseResult<core.output<T>> = /* @__PURE__ */ core._safeParse.bind({ Error: ZodError }) as any;
+) => ZodSafeParseResult<core.output<T>> = /* @__PURE__ */ core._safeParse(ZodError) as any;
 
 export const parseAsync: <T extends core.$ZodType>(
   schema: T,
   value: unknown,
   _ctx?: core.ParseContext<core.$ZodIssue>
-) => Promise<core.output<T>> = /* @__PURE__ */ core._parseAsync.bind({ Error: ZodError }) as any;
+) => Promise<core.output<T>> = /* @__PURE__ */ core._parseAsync(ZodError) as any;
 
 export const safeParseAsync: <T extends core.$ZodType>(
   schema: T,
   value: unknown,
   _ctx?: core.ParseContext<core.$ZodIssue>
-) => Promise<ZodSafeParseResult<core.output<T>>> = /* @__PURE__ */ core._safeParseAsync.bind({
-  Error: ZodError,
-}) as any;
+) => Promise<ZodSafeParseResult<core.output<T>>> = /* @__PURE__ */ core._safeParseAsync(ZodError) as any;

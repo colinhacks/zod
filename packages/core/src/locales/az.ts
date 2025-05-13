@@ -91,7 +91,7 @@ const error: errors.$ZodErrorMap = (issue) => {
     }
     case "invalid_format": {
       const _issue = issue as errors.$ZodStringFormatIssues;
-      if (_issue.format === "starts_with") return `Yanlış mətn: "${issue}" ilə başlamalıdır`;
+      if (_issue.format === "starts_with") return `Yanlış mətn: "${_issue.prefix}" ilə başlamalıdır`;
       if (_issue.format === "ends_with") return `Yanlış mətn: "${_issue.suffix}" ilə bitməlidir`;
       if (_issue.format === "includes") return `Yanlış mətn: "${_issue.includes}" daxil olmalıdır`;
       if (_issue.format === "regex") return `Yanlış mətn: ${_issue.pattern} şablonuna uyğun olmalıdır`;
