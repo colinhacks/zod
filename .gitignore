@@ -17,6 +17,7 @@ dist
 .tshy
 .tshy-build
 packages/tsc-perf
+.pnpm-store
 
 tsconfig.vitest-temp.json
 *.tgz
