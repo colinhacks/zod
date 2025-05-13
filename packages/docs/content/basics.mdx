@@ -14,9 +14,9 @@ Before you can do anything else, you need to define a schema. For the purposes o
 <Tabs groupId="lib" items={["zod", "@zod/mini"]}>
 <Tab value="zod">
 ```ts
-import * as z from "zod";
+import * as z from "zod"; 
 
-const Player = z.interface({ 
+const Player = z.object({ 
   username: z.string(),
   xp: z.number()
 });
@@ -26,8 +26,8 @@ const Player = z.interface({
 ```ts
 import * as z from "@zod/mini";
 
-const Player = z.interface({ 
-  username: z. string(),
+const Player = z.object({ 
+  username: z.string(),
   xp: z.number()
 });
 ```
@@ -105,7 +105,7 @@ try {
 </Tabs>
 
 <Callout>
-**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](#transform), you'll need to use the `.safeParse()` method instead. 
+**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](#transform), you'll need to use the `.parseAsync()` method instead. 
 
 ```ts
 const schema = z.string().refine(async (val) => val.length <= 8);
@@ -158,8 +158,8 @@ await schema.safeParseAsync("hello");
 Zod infers a static type from your schema definitions. You can extract this type with the `z.infer<>` utility and use it however you like.
 
 ```ts
-const Player = z.interface({ 
-  username: z. string(),
+const Player = z.object({ 
+  username: z.string(),
   xp: z.number()
 });
 

@@ -520,105 +520,6 @@ z.toJSONSchema(mySchema);
 Refer to the [JSON Schema docs](/json-schema) for information on customizing the generated JSON Schema.
 
 
-## `z.interface()`
-
-Zod 4 introduces a new API for defining object types: `z.interface()`. This may seem surprising or confusing, so I'll briefly explain the reasoning here. (A full blog post on this topic is coming soon.)
-
-### Exact(er) optional properties
-
-In TypeScript a property can be "optional" in two distinct ways:
-
-```ts
-type KeyOptional = { prop?: string };
-type ValueOptional = { prop: string | undefined };
-```
-
-In `KeyOptional`, the `prop` key can be omitted from the object ("key optional"). In `ValueOptional`, the `prop` key *must be set* however it can be set to `undefined` ("value optional").
-
-Zod 3 cannot represent `ValueOptional`. Instead, `z.object()` automatically adds question marks to any key that accepts a value of `undefined`:
-
-```ts
-z.object({ name: z.string().optional() }); 
-// { name?: string | undefined }
-
-z.object({ name: z.union([z.string(), z.undefined()]) }); 
-// { name?: string | undefined }
-```
-
-This includes special schema types like `z.unknown()`:
-
-```ts
-z.object({ name: z.unknown() }); // { name?: unknown } 
-z.object({ name: z.any() }); // { name?: any } 
-```
-
-To properly represent "key optionality", Zod needed an *object-level* API for marking keys as optional, instead of trying to guess based on the value schema.
-
-This is why Zod 4 introduces a new API for defining object types: `z.interface()`.
-
-```ts
-const ValueOptional = z.interface({ name: z.string().optional()}); 
-// { name: string | undefined }
-
-const KeyOptional = z.interface({ "name?": z.string() }); 
-// { name?: string }
-```
-
-Key optionality is now defined with a `?` suffix in the key itself. This way, you have the power to differentiate between key- and value-optionality.
-
-> Besides this change to optionality, `z.object()` and `z.interface()` are functionality identical. They even use the same parser internally. 
-
-The `z.object()` API is *not deprecated*; feel free to continue using it if you prefer it! For the sake of backwards compatibility, `z.interface()` was added as an opt-in API.
-
-### True recursive types
-
-But wait there's more! After implementing `z.interface()`, I had a huge realization. The `?`-suffix API in `z.interface()` lets Zod sidestep a TypeScript limitation that has long prevented Zod from cleanly representing recursive (cyclical) types. Take this example from the old Zod 3 docs: 
-
-```ts
-import * as z from "zod"; // zod@3
-
-interface Category  {
-  name: string;
-  subcategories: Category[];
-};
-
-const Category: z.ZodType<Category> = z.object({
-  name: z.string(),
-  subcategories: z.lazy(() => Category.array()),
-});
-```
-
-This has been a thorn in my side for years. To define a cyclical object type, you must 
-
-- define a redundant interface
-- use `z.lazy()` to avoid reference errors
-- cast your schema to `z.ZodType`
-
-That's terrible.
-
-Here's the same example in Zod 4:
-
-```ts
-import * as z from "zod"; // zod@4
-
-const Category = z.interface({
-  name: z.string(),
-  get subcategories() {
-    return z.array(Category)
-  }
-});
-```
-
-No casting, no `z.lazy()`, no redundant type signatures. Just use [getters](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/get) to define any cyclical properties. The resulting instance has all the object methods you expect:
-
-```ts
-Category.pick({ subcategories: true });
-```
-
-This means Zod can finally represent commonly cyclical data structure like ORM schemas, GraphQL types, etc. 
-
-> Given its ability to represent both cyclical types and more exact optionality, I recommend always using `z.interface()` over `z.object()` without reservation. That said, `z.object()` will never be deprecated or removed, so feel free to keep using it if you prefer.
-
 
 ## File schemas
 
@@ -899,7 +800,7 @@ const MyErrors = z.discriminatedUnion([
 ]);
 
 const MyResult = z.discriminatedUnion([
-  z.interface({ status: z.literal("success"), data: z.string() }),
+  z.object({ status: z.literal("success"), data: z.string() }),
   MyErrors
 ]);
 ```
@@ -972,7 +873,7 @@ If you're building a schema library, refer to the implementations of `zod` and `
 
 ## Wrapping up
 
-I'm planning to write up a series of additional posts explaining the design process and rationale behind some major features like `@zod/mini` and `z.interface()`. I'll update this section as those get posted. 
+I'm planning to write up a series of additional posts explaining the design process and rationale behind some major features like `@zod/mini`. I'll update this section as those get posted. 
 
 Zod 4 will remain in beta for roughly 6 weeks as I work with library authors and major adopters to ensure a smooth day-one transition from Zod 3 to Zod 4. I encourage all users of Zod to upgrade their installation and provide feedback during the beta window.
 
