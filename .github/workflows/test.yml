@@ -41,5 +41,5 @@ jobs:
           node-version: ${{ matrix.node }}
       - uses: pnpm/action-setup@v4
       - run: pnpm install
-      # - run: pnpm format:check
-      # - run: pnpm lint:check
+      - run: pnpm format:check
+      - run: pnpm lint:check

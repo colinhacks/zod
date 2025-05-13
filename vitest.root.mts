@@ -6,7 +6,7 @@ export default defineConfig({
   },
   test: {
     watch: false,
-    isolate: false,
+    isolate: true,
     typecheck: {
       include: ["**/*.test.ts"],
       enabled: true,
