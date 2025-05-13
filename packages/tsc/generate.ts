@@ -25,33 +25,15 @@ export const ARKTYPE = {
 };
 
 generateExtendChain({
-  ...ZOD,
-  numSchemas: 40,
+  ...ARKTYPE,
+  numSchemas: 25,
   numKeys: 6,
 });
-// generate({
-//   // ...ZOD3,
-//   ...ZOD,
-//   schemaType: "z.interface",
-//   // ...ARKTYPE,
-//   // ...ZOD3,
-//   numSchemas: 1000,
-//   numKeys: 10,
-//   numRefs: 3,
-
-//   // numSchemas: 1000,
-//   // methods: [""],
-//   // numKeys: 5,
-//   // numRefs: 0,
-//   // numOmits: 10,
-//   // numPicks: 10,
-//   // numExtends: 10,
-// });
 
 interface GenerateObjectsParams {
   // path?: string;
   imports: string[];
-  schemaType: "z.object" | "z.interface" | "arktype" | "valibot";
+  schemaType: "z.object" | "arktype" | "valibot";
   valueTypes: string[];
   methods?: string[];
   numSchemas: number;
@@ -109,9 +91,7 @@ export function generate(params: GenerateObjectsParams) {
       for (let i = 0; i < numRefs; i++) {
         const randomIndex = Math.floor(Math.random() * generated.length);
         const linked = generated[randomIndex];
-        if (schemaType === "z.interface") {
-          file.push(`  get ${randomStr(7)}(){\n    return ${linked} as typeof ${linked}\n  },`);
-        } else if (schemaType === "arktype") {
+        if (schemaType === "arktype") {
           throw new Error("References not supported in arktype.");
         } else {
           file.push(`  get ${randomStr(7)}(){ return ${linked} as typeof ${linked}},`);
@@ -172,7 +152,7 @@ export function generate(params: GenerateObjectsParams) {
       //   .fill(0)
       //   .map(() => randomStr(7));
 
-      if (schemaType === "z.interface" || schemaType === "z.object") {
+      if (schemaType === "z.object") {
         file.push(`export const ${varname} = ${variableName}.extend({`);
         for (const field of fields) {
           file.push(`  "${field.key}": ${field.schema},`);
@@ -201,7 +181,7 @@ export function generate(params: GenerateObjectsParams) {
 interface GenerateExtendChainParams {
   // path?: string;
   imports: string[];
-  schemaType: "z.object" | "z.interface" | "arktype" | "valibot";
+  schemaType: "z.object" | "arktype" | "valibot";
   valueTypes: string[];
   methods?: string[];
   numSchemas: number;
@@ -344,7 +324,7 @@ function generateFields(
 ): { key: string; schema: string }[] {
   //Math.floor(Math.random() * 30) + 1; // 1-30 keys
   const { methods = [""] } = params;
-  // let schema = `z.interface({`;
+
   // const keys = [];
   const fields: { key: string; schema: string }[] = [];
   for (let i = 0; i < params.numKeys; i++) {

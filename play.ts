@@ -1,10 +1,9 @@
 import * as z from "zod";
-const name = z.object({ first: z.string(), last: z.string() }).meta({ id: "name" });
-const result = z.toJSONSchema(
-  z.object({
-    name: name,
-    alt: name.readonly(),
-    age: z.number().meta({ id: "age" }),
-  })
-);
-console.dir(result, { depth: null });
+
+export const UserModel = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string().optional(),
+});
+
+type UserModel = z.infer<typeof UserModel>;

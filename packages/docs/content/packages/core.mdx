@@ -79,7 +79,6 @@ export type $ZodTypes =
   | $ZodVoid
   | $ZodArray
   | $ZodObject
-  | $ZodInterface
   | $ZodUnion
   | $ZodIntersection
   | $ZodTuple
@@ -416,12 +415,12 @@ When your user installs `zod` or `@zod/mini`, their package manager will automat
 <Callout>
 ### Versioning
 
-While Zod 4 is in beta, the [`@zod/core`](https://www.npmjs.com/package/@zod/core) package is published as `latest` in the `v0.x` range ("initial development" according to semver). Once the first stable release release of Zod 4, at which point `v1.0.0` will be released.
+While Zod 4 is in beta, the [`@zod/core`](https://www.npmjs.com/package/@zod/core) package is published as `latest` in the `v0.x` range ("initial development" according to semver). The `v1.0.0` release will accompany the first stable release of `zod@4.0`.
 
 | Version | Semver Range | Description                                                                 |
 |--------------|--------------|-----------------------------------------------------------------------------|
 | Beta         | `@zod/core@^0.0.1`     | Versions will say in `v0.x` range during the beta |
-| Stable       | `@zod/core@^1.0.0`     | Once the stable version is released, you'll need to bump the version to `^1.0.0`.  |
+| Stable       | `@zod/core@^1.0.0`     | It will go stable alongside `zod@4`. At this point, you'll need to bump the version to `^1.0.0`.  |
 </Callout>
 
 If Zod isn't *always* needed for your library (say, if you are building a framework that supports a number of different schema libraries), use `"peerDependenciesMeta"` to mark `@zod/core` as optional.

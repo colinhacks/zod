@@ -71,7 +71,12 @@ import { Bronze } from '../components/bronze';
 
 <br /><br /><br />
 
-<Featured />
+<Featured data={{
+  name: "Stainless",
+  link: "https://www.stainless.com/?utm_source=zod",
+  lightImage: "https://i.imgur.com/bjyoaHY.jpeg",
+  darkImage: "https://i.imgur.com/bjyoaHY.jpeg",
+}} />
 
 ## Introduction
 
@@ -80,7 +85,7 @@ Zod is a TypeScript-first validation library. Using Zod, you can define *schemas
 ```ts
 import * as z from "zod";
 
-const User = z.interface({
+const User = z.object({
   name: z.string(),
 });
 
