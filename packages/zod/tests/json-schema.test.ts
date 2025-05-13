@@ -145,7 +145,7 @@ describe("toJSONSchema", () => {
     expect(toJSONSchema(z.ulid())).toMatchInlineSnapshot(`
       {
         "format": "ulid",
-        "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+        "pattern": "^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$",
         "type": "string",
       }
     `);
@@ -157,29 +157,29 @@ describe("toJSONSchema", () => {
     `);
     expect(toJSONSchema(z.int())).toMatchInlineSnapshot(`
       {
-        "exclusiveMaximum": 9007199254740991,
-        "exclusiveMinimum": -9007199254740991,
+        "maximum": 9007199254740991,
+        "minimum": -9007199254740991,
         "type": "integer",
       }
     `);
     expect(toJSONSchema(z.int32())).toMatchInlineSnapshot(`
       {
-        "exclusiveMaximum": 2147483647,
-        "exclusiveMinimum": -2147483648,
+        "maximum": 2147483647,
+        "minimum": -2147483648,
         "type": "integer",
       }
     `);
     expect(toJSONSchema(z.float32())).toMatchInlineSnapshot(`
       {
-        "exclusiveMaximum": 3.4028234663852886e+38,
-        "exclusiveMinimum": -3.4028234663852886e+38,
+        "maximum": 3.4028234663852886e+38,
+        "minimum": -3.4028234663852886e+38,
         "type": "number",
       }
     `);
     expect(toJSONSchema(z.float64())).toMatchInlineSnapshot(`
       {
-        "exclusiveMaximum": 1.7976931348623157e+308,
-        "exclusiveMinimum": -1.7976931348623157e+308,
+        "maximum": 1.7976931348623157e+308,
+        "minimum": -1.7976931348623157e+308,
         "type": "number",
       }
     `);
@@ -346,7 +346,7 @@ describe("toJSONSchema", () => {
     const schema = z.union([z.string(), z.number()]);
     expect(toJSONSchema(schema)).toMatchInlineSnapshot(`
       {
-        "oneOf": [
+        "anyOf": [
           {
             "type": "string",
           },
@@ -658,10 +658,9 @@ describe("toJSONSchema", () => {
   });
 
   test("simple interface", () => {
-    const userSchema = z.interface({
+    const userSchema = z.object({
       name: z.string(),
-      "age?": z.number(),
-      "?email": z.string(),
+      age: z.number().optional(),
     });
 
     const result = toJSONSchema(userSchema);
@@ -671,16 +670,12 @@ describe("toJSONSchema", () => {
           "age": {
             "type": "number",
           },
-          "email": {
-            "type": "string",
-          },
           "name": {
             "type": "string",
           },
         },
         "required": [
           "name",
-          "email",
         ],
         "type": "object",
       }
@@ -688,7 +683,7 @@ describe("toJSONSchema", () => {
   });
 
   test("catchall interface", () => {
-    const a = z.strictInterface({
+    const a = z.strictObject({
       name: z.string(),
       age: z.number(),
     });
@@ -715,7 +710,7 @@ describe("toJSONSchema", () => {
     `);
 
     const b = z
-      .interface({
+      .object({
         name: z.string(),
       })
       .catchall(z.string());
@@ -737,7 +732,7 @@ describe("toJSONSchema", () => {
       }
     `);
 
-    const c = z.looseInterface({
+    const c = z.looseObject({
       name: z.string(),
     });
 
@@ -758,7 +753,7 @@ describe("toJSONSchema", () => {
   });
 
   test("recursive interface schemas", () => {
-    const TreeNodeSchema = z.interface({
+    const TreeNodeSchema = z.object({
       id: z.string(),
       get children() {
         return TreeNodeSchema;
@@ -790,14 +785,14 @@ describe("toJSONSchema", () => {
   });
 
   test("mutually recursive interface schemas", () => {
-    const FolderSchema = z.interface({
+    const FolderSchema = z.object({
       name: z.string(),
       get files() {
         return z.array(FileSchema);
       },
     });
 
-    const FileSchema = z.interface({
+    const FileSchema = z.object({
       name: z.string(),
       get parent() {
         return FolderSchema;
@@ -979,7 +974,7 @@ test("extract schemas with id", () => {
           "$ref": "#/$defs/name",
         },
         "last_name": {
-          "oneOf": [
+          "anyOf": [
             {
               "$ref": "#/$defs/name",
             },
@@ -1028,4 +1023,407 @@ test("unrepresentable literal values are ignored", () => {
 
   const c = z.toJSONSchema(z.literal([undefined]), { unrepresentable: "any" });
   expect(c).toMatchInlineSnapshot(`{}`);
+});
+
+test("describe with id", () => {
+  const jobId = z.string().meta({ id: "jobId" });
+
+  const a = z.toJSONSchema(
+    z.object({
+      current: jobId.describe("Current job"),
+      previous: jobId.describe("Previous job"),
+    })
+  );
+  expect(a).toMatchInlineSnapshot(`
+    {
+      "$defs": {
+        "jobId": {
+          "id": "jobId",
+          "type": "string",
+        },
+      },
+      "properties": {
+        "current": {
+          "$ref": "#/$defs/jobId",
+          "description": "Current job",
+        },
+        "previous": {
+          "$ref": "#/$defs/jobId",
+          "description": "Previous job",
+        },
+      },
+      "required": [
+        "current",
+        "previous",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
+test("overwrite id", () => {
+  const jobId = z.string().meta({ id: "aaa" });
+
+  const a = z.toJSONSchema(
+    z.object({
+      current: jobId,
+      previous: jobId.meta({ id: "bbb" }),
+    })
+  );
+  expect(a).toMatchInlineSnapshot(`
+    {
+      "$defs": {
+        "aaa": {
+          "id": "aaa",
+          "type": "string",
+        },
+        "bbb": {
+          "$ref": "#/$defs/aaa",
+          "id": "bbb",
+        },
+      },
+      "properties": {
+        "current": {
+          "$ref": "#/$defs/aaa",
+        },
+        "previous": {
+          "$ref": "#/$defs/bbb",
+        },
+      },
+      "required": [
+        "current",
+        "previous",
+      ],
+      "type": "object",
+    }
+  `);
+
+  const b = z.toJSONSchema(
+    z.object({
+      current: jobId,
+      previous: jobId.meta({ id: "ccc" }),
+    }),
+    {
+      reused: "ref",
+    }
+  );
+  expect(b).toMatchInlineSnapshot(`
+    {
+      "$defs": {
+        "aaa": {
+          "id": "aaa",
+          "type": "string",
+        },
+        "ccc": {
+          "$ref": "#/$defs/aaa",
+          "id": "ccc",
+        },
+      },
+      "properties": {
+        "current": {
+          "$ref": "#/$defs/aaa",
+        },
+        "previous": {
+          "$ref": "#/$defs/ccc",
+        },
+      },
+      "required": [
+        "current",
+        "previous",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
+test("overwrite descriptions", () => {
+  const field = z.string().describe("a").describe("b").describe("c");
+
+  const a = z.toJSONSchema(
+    z.object({
+      d: field.describe("d"),
+      e: field.describe("e"),
+    })
+  );
+  expect(a).toMatchInlineSnapshot(`
+    {
+      "properties": {
+        "d": {
+          "description": "d",
+          "type": "string",
+        },
+        "e": {
+          "description": "e",
+          "type": "string",
+        },
+      },
+      "required": [
+        "d",
+        "e",
+      ],
+      "type": "object",
+    }
+  `);
+
+  const b = z.toJSONSchema(
+    z.object({
+      d: field.describe("d"),
+      e: field.describe("e"),
+    }),
+    {
+      reused: "ref",
+    }
+  );
+  expect(b).toMatchInlineSnapshot(`
+    {
+      "$defs": {
+        "__schema0": {
+          "description": "c",
+          "type": "string",
+        },
+      },
+      "properties": {
+        "d": {
+          "$ref": "#/$defs/__schema0",
+          "description": "d",
+        },
+        "e": {
+          "$ref": "#/$defs/__schema0",
+          "description": "e",
+        },
+      },
+      "required": [
+        "d",
+        "e",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
+test("top-level readonly", () => {
+  const A = z
+    .object({
+      name: z.string(),
+      get b() {
+        return B;
+      },
+    })
+    .readonly()
+    .meta({ id: "A" });
+
+  const B = z
+    .object({
+      name: z.string(),
+      get a() {
+        return A;
+      },
+    })
+    .readonly()
+    .meta({ id: "B" });
+
+  const result = z.toJSONSchema(A);
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "$defs": {
+        "B": {
+          "id": "B",
+          "properties": {
+            "a": {
+              "$ref": "#",
+            },
+            "name": {
+              "type": "string",
+            },
+          },
+          "readOnly": true,
+          "required": [
+            "name",
+            "a",
+          ],
+          "type": "object",
+        },
+      },
+      "id": "A",
+      "properties": {
+        "b": {
+          "$ref": "#/$defs/B",
+        },
+        "name": {
+          "type": "string",
+        },
+      },
+      "readOnly": true,
+      "required": [
+        "name",
+        "b",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
+test("basic registry", () => {
+  const myRegistry = z.registry<{ id: string }>();
+  const User = z.object({
+    name: z.string(),
+    get posts() {
+      return z.array(Post);
+    },
+  });
+
+  const Post = z.object({
+    title: z.string(),
+    content: z.string(),
+    get author() {
+      return User;
+    },
+  });
+
+  myRegistry.add(User, { id: "User" });
+  myRegistry.add(Post, { id: "Post" });
+
+  const result = z.toJSONSchema(myRegistry);
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "schemas": {
+        "Post": {
+          "properties": {
+            "author": {
+              "$ref": "User",
+            },
+            "content": {
+              "type": "string",
+            },
+            "title": {
+              "type": "string",
+            },
+          },
+          "required": [
+            "title",
+            "content",
+            "author",
+          ],
+          "type": "object",
+        },
+        "User": {
+          "properties": {
+            "name": {
+              "type": "string",
+            },
+            "posts": {
+              "items": {
+                "$ref": "Post",
+              },
+              "type": "array",
+            },
+          },
+          "required": [
+            "name",
+            "posts",
+          ],
+          "type": "object",
+        },
+      },
+    }
+  `);
+});
+
+test("_ref", () => {
+  // const a = z.promise(z.string().describe("a"));
+  const a = z.toJSONSchema(z.promise(z.string().describe("a")));
+  expect(a).toMatchInlineSnapshot(`
+    {
+      "description": "a",
+      "type": "string",
+    }
+  `);
+
+  const b = z.toJSONSchema(z.lazy(() => z.string().describe("a")));
+  expect(b).toMatchInlineSnapshot(`
+    {
+      "description": "a",
+      "type": "string",
+    }
+  `);
+
+  const c = z.toJSONSchema(z.optional(z.string().describe("a")));
+  expect(c).toMatchInlineSnapshot(`
+    {
+      "description": "a",
+      "type": "string",
+    }
+  `);
+});
+
+test("input type", () => {
+  const schema = z.object({
+    a: z.string(),
+    b: z.string().optional(),
+    c: z.string().default("hello"),
+    d: z.string().nullable(),
+  });
+  expect(toJSONSchema(schema, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "properties": {
+        "a": {
+          "type": "string",
+        },
+        "b": {
+          "type": "string",
+        },
+        "c": {
+          "default": "hello",
+          "type": "string",
+        },
+        "d": {
+          "anyOf": [
+            {
+              "type": "string",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+      },
+      "required": [
+        "a",
+        "d",
+      ],
+      "type": "object",
+    }
+  `);
+  expect(toJSONSchema(schema, { io: "output" })).toMatchInlineSnapshot(`
+    {
+      "properties": {
+        "a": {
+          "type": "string",
+        },
+        "b": {
+          "type": "string",
+        },
+        "c": {
+          "default": "hello",
+          "type": "string",
+        },
+        "d": {
+          "anyOf": [
+            {
+              "type": "string",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+      },
+      "required": [
+        "a",
+        "c",
+        "d",
+      ],
+      "type": "object",
+    }
+  `);
 });

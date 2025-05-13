@@ -43,16 +43,19 @@ test("pick parse - fail", () => {
 });
 
 test("pick - remove optional", () => {
-  const schema = z.interface({ a: z.string, "b?": z.string() });
-  expect(schema.pick({ a: true })._zod.def.optional).toEqual([]);
-  expect(schema.pick({ b: true })._zod.def.optional).toEqual(["b"]);
+  const schema = z.object({ a: z.string(), b: z.string().optional() });
+  expect(schema._zod.def.shape.a._zod.optionality).toEqual(undefined);
+  expect(schema._zod.def.shape.b!._zod.optionality).toEqual("optional");
+  const picked = schema.pick({ a: true });
+  expect(picked._zod.def.shape.a._zod.optionality).toEqual(undefined);
+  expect("b" in picked._zod.def.shape!).toEqual(false);
 });
 
 test("omit type inference", () => {
   const nonameFish = fish.omit({ name: true });
   type nonameFish = z.infer<typeof nonameFish>;
 
-  expectTypeOf<nonameFish>().toEqualTypeOf<{ age: number; nested: object }>();
+  expectTypeOf<nonameFish>().toEqualTypeOf<{ age: number; nested: Record<string, never> }>();
 });
 
 test("omit parse - success", () => {
@@ -81,9 +84,10 @@ test("omit parse - fail", () => {
 });
 
 test("omit - remove optional", () => {
-  const schema = z.interface({ a: z.string, "b?": z.string() });
-  expect(schema.omit({ a: true })._zod.def.optional).toEqual(["b"]);
-  expect(schema.omit({ b: true })._zod.def.optional).toEqual([]);
+  const schema = z.object({ a: z.string(), b: z.string().optional() });
+  const omitted = schema.omit({ a: true });
+  expect("a" in omitted._zod.def.shape).toEqual(false);
+  expect(omitted._zod.def.shape.b!._zod.optionality).toEqual("optional");
 });
 
 test("nonstrict inference", () => {

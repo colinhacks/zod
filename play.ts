@@ -1,3 +1,11 @@
 import * as z from "zod";
 
-console.log(z.toJSONSchema(z.literal(undefined), { unrepresentable: "any" }));
+export function parseData() {
+  z.string().parse(1234);
+}
+
+export function main() {
+  parseData();
+}
+
+main();
