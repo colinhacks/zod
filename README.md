@@ -1201,6 +1201,15 @@ You can also retrieve the list of options as a tuple with the `.options` propert
 FishEnum.options; // ["Salmon", "Tuna", "Trout"];
 ```
 
+** `.extend()` **
+
+You can create supersets of a Zod enum with the `.extend` method.
+
+```ts
+const SalmonAndTrout = z.enum(["Salmon", "Trout"]);
+const FishEnum = SalmonAndTrout.extend(["Tuna"]);
+```
+
 **`.exclude/.extract()`**
 
 You can create subsets of a Zod enum with the `.exclude` and `.extract` methods.

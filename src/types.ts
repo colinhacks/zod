@@ -4408,6 +4408,16 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
     return enumValues as any;
   }
 
+  extend<const ToExtend extends readonly [string, ...string[]]>(
+    values: ToExtend,
+    newDef: RawCreateParams = this._def
+  ): ZodEnum<[...T, ...Writeable<ToExtend>]> {
+    return ZodEnum.create([...this._def.values, ...values], {
+      ...this._def,
+      ...newDef,
+    }) as any;
+  }
+
   extract<ToExtract extends readonly [T[number], ...T[number][]]>(
     values: ToExtract,
     newDef: RawCreateParams = this._def
