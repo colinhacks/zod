@@ -1656,15 +1656,53 @@ const nonEmptyStrings = z.string().array().nonempty({
 });
 ```
 
-### `.min/.max/.length`
+### `.length`
+
+To enforce an exact-length array, use `.length()`. This method changes the inferred type to a tuple of the specified length.
+
+```ts
+z.string().array().length(5); // must contain 5 items exactly
+// Inferred type: [string, string, string, string, string] & { length: 5 }
+```
+
+### `.min/.max`
+
+Specify minimum and maximum array lengths using:
 
 ```ts
 z.string().array().min(5); // must contain 5 or more items
 z.string().array().max(5); // must contain 5 or fewer items
-z.string().array().length(5); // must contain 5 items exactly
 ```
 
-Unlike `.nonempty()` these methods do not change the inferred type.
+Unlike `.nonempty()` and `.length()` these methods do not change the inferred type.
+
+### TypeScript Limitations
+
+- The `.length()` method converts the array schema into a tuple type of the specified length. However, due to TypeScript limitations, the maximum inferred tuple length is set to `100`. Passing a number greater than `100` results in a non-empty array with the specified length:
+
+  ```ts
+  const hundredAndOneStrings = z.string().array().length(101);
+  // Inferred type: [string, ...string[]] & { length: 101 }
+  ```
+
+- If a generic `number` is passed to `.length()`, Zod will validate the length but lose the tuple inference, resulting in a simple array:
+
+  ```ts
+  let size: number = 2;
+  const strings = z.string().array().length(size).parse(["foo", "bar"]);
+  // Inferred type: string[]
+  ```
+
+- To avoid runtime errors, `.length()`, `.min()` and `.max()` disallow negative numbers:
+
+  ```ts
+  z.string().array().length(-1);
+  // TypeScript Error: Argument of type '-1' is not assignable to parameter of type 'never'. ts(2345)
+  ```
+
+  While negative values for `.min()` wouldn’t make sense (since an empty array is always valid), disallowing them maintains consistency.
+
+  > ⚠️ `NaN`, `Infinity` and `-Infinity` cannot be checked because in TypeScript they are of type `number`.
 
 <br/>
 
