@@ -7,17 +7,28 @@ import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 
 > To learn more about the performance enhancements and new features of Zod 4, read the [introductory post](/v4).
 
-This migration guide aims to list the breaking changes in Zod 4 in order of highest to lowest impact. Every effort was made to prevent breaking changes, but some are unavoidable.
+To give the ecosystem time to migrate, Zod 4 will initially be published alongside `zod@3.25.0`. It is consumable as a subpath import:
+
+```ts
+import { z } from "zod/v4";
+```
+
+This migration guide aims to list the breaking changes in Zod 4 in order of highest to lowest impact. Every effort was made to prevent breaking changes, but some are unavoidable. 
 
 <Callout>
-**Note** — Zod 3 exported a large number of undocumented, internal utility types and functions that are not considered part of the public API. Changes to those are not documented here.
+**Note** — Zod 3 exported a large number of undocumented quasi-internal utility types and functions that are not considered part of the public API. Changes to those are not documented here.
 </Callout>
-
 
 To install the beta:
 
 ```
 npm upgrade zod@next
+```
+
+To start using Zod 4, import it from `zod/v4`:
+
+```ts
+import { z } from "zod/v4";
 ```
 
 ## Error customization
