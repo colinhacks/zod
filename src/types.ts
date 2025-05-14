@@ -3692,7 +3692,11 @@ export type RecordType<K extends string | number | symbol, V> = [
   ? Record<K, V>
   : [symbol] extends [K]
   ? Record<K, V>
-  : [BRAND<string | number | symbol>] extends [K]
+  : [string & AnyBrand] extends [K]
+  ? Record<K, V>
+  : [number & AnyBrand] extends [K]
+  ? Record<K, V>
+  : [symbol & AnyBrand] extends [K]
   ? Record<K, V>
   : Partial<Record<K, V>>;
 export class ZodRecord<
@@ -5064,6 +5068,9 @@ export interface ZodBrandedDef<T extends ZodTypeAny> extends ZodTypeDef {
 export const BRAND: unique symbol = Symbol("zod_brand");
 export type BRAND<T extends string | number | symbol> = {
   [BRAND]: { [k in T]: true };
+};
+export type AnyBrand = {
+  [BRAND]: any;
 };
 
 export class ZodBranded<
