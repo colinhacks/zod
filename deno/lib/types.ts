@@ -776,9 +776,9 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     if (this._def.coerce) {
       input.data = String(input.data);
     }
-    const parsedType = this._getType(input);
 
-    if (parsedType !== ZodParsedType.string) {
+    // Inline typecheck for performance
+    if (typeof input.data !== "string") {
       const ctx = this._getOrReturnCtx(input);
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_type,
