@@ -4343,14 +4343,19 @@ function createZodEnum(
   });
 }
 
+const lookupSymbol = Symbol("lookup");
 export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
   T[number],
   ZodEnumDef<T>,
   T[number]
 > {
-  #cache: Set<T[number]> | undefined;
-
+  private [lookupSymbol]: Set<T[number]> | undefined;
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    let lookup = this[lookupSymbol];
+    if (!lookup) {
+      lookup = new Set(this._def.values);
+      this[lookupSymbol] = lookup;
+    }
     if (typeof input.data !== "string") {
       const ctx = this._getOrReturnCtx(input);
       const expectedValues = this._def.values;
@@ -4362,14 +4367,9 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
       return INVALID;
     }
 
-    if (!this.#cache) {
-      this.#cache = new Set(this._def.values);
-    }
-
-    if (!this.#cache.has(input.data)) {
+    if (!lookup.has(input.data)) {
       const ctx = this._getOrReturnCtx(input);
       const expectedValues = this._def.values;
-
       addIssueToContext(ctx, {
         received: ctx.data,
         code: ZodIssueCode.invalid_enum_value,
@@ -4459,7 +4459,7 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
   ZodNativeEnumDef<T>,
   T[keyof T]
 > {
-  #cache: Set<T[keyof T]> | undefined;
+  private [lookupSymbol]: Set<T[keyof T]> | undefined;
   _parse(input: ParseInput): ParseReturnType<T[keyof T]> {
     const nativeEnumValues = util.getValidEnumValues(this._def.values);
 
@@ -4477,11 +4477,11 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
       return INVALID;
     }
 
-    if (!this.#cache) {
-      this.#cache = new Set(util.getValidEnumValues(this._def.values));
+    if (!this[lookupSymbol]) {
+      this[lookupSymbol] = new Set(util.getValidEnumValues(this._def.values));
     }
 
-    if (!this.#cache.has(input.data)) {
+    if (!this[lookupSymbol].has(input.data)) {
       const expectedValues = util.objectValues(nativeEnumValues);
 
       addIssueToContext(ctx, {
