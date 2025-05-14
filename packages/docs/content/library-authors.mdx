@@ -13,16 +13,15 @@ This page is primarily intended for consumption by *library authors* who are bui
 
 First things first, make sure you need to depend on Zod at all. 
 
-If you're building a library that accepts user-defined schemas to perform black-box validation, you may not need to integrate with `zod` specifically. Instead look into [Standard Schema](https://standardschema.dev/). It's a shared interface implemented by most popular validation libraries in the TypeScript ecosystem (see the [full list](https://standardschema.dev/#what-schema-libraries-implement-the-spec)), including Zod. 
+If you're building a library that accepts user-defined schemas to perform black-box validation, you may not need to integrate with Zod specifically. Instead look into [Standard Schema](https://standardschema.dev/). It's a shared interface implemented by most popular validation libraries in the TypeScript ecosystem (see the [full list](https://standardschema.dev/#what-schema-libraries-implement-the-spec)), including Zod. 
 
 This spec works great if you accept user-defined schemas and treat them like "black box" validators. Given any compliant library, you can extract inferred input/output types, validate inputs, and get back a standardized error.
 
 If you need Zod specific functionality, read on.
 
-## Peer dependencies
+## How to configure peer dependencies?
 
-Generally speaking, any library built on top of Zod should include `zod` in `"peerDependencies"`. This lets your users "bring their own Zod".
-
+Any library built on top of Zod should include `"zod"` in `"peerDependencies"`. This lets your users "bring their own Zod".
 
 ```json
 // package.json
@@ -34,10 +33,7 @@ Generally speaking, any library built on top of Zod should include `zod` in `"pe
 }
 ```
 
-When your user installs `zod` or `zod/v4-mini`, their package manager will automatically install `zod/v4/core` too. So this peer dependency will be met as long as your user has one of these packages installed.
-
-During development, you need to meet your own peer dependency requirement, to do so, add `zod` to your `"devDependencies"` as well. You'll need to use `zod@next` until `zod@3.25.0` is stably released. 
-
+During development, you need to meet your own peer dependency requirement, to do so, add `"zod"` to your `"devDependencies"` as well. You'll need to use `zod@next` until `zod@3.25.0` is stably released. 
 
 ```ts
 // package.json
@@ -53,7 +49,7 @@ During development, you need to meet your own peer dependency requirement, to do
 
 ## How to support Zod 4?
 
-To support Zod 4, update the minimum version for your `zod` peer dependency to `^3.25.0`. 
+To support Zod 4, update the minimum version for your `"zod"` peer dependency to `^3.25.0`. 
 
 ```json
 // package.json
@@ -68,11 +64,10 @@ To support Zod 4, update the minimum version for your `zod` peer dependency to `
 Starting with `v3.25.0`, Zod 4 is available at a `/v4` subpath. 
 
 ```ts
-import * as z3 from "zod/v3";
 import * as z4 from "zod/v4/core";
 ```
 
-You should *not* import from the package root (`"zod"`)! Currently the package root exports `zod/v3`. At some point in the future, this will be changed such that the root exports `zod/v4`, at which point the package will be bumped to `v4.0.0` on `npm`.
+Library code should *not* import from the package root (`"zod"`)! Instead, import from the version-specific subpaths: `"zod/v3"` and `"zod/v4/core"`. This way, your code is future-proofed against major version bumps down the line.
 
 ## How to support Zod 3 and Zod 4 simultaneously?
 
@@ -81,7 +76,6 @@ Starting in `v3.25.0`, the package contains copies of both Zod 3 and Zod 4 at th
 ```ts
 import * as z3 from "zod/v3";
 import * as z4 from "zod/v4/core";
-
 
 type Schema = z3.ZodTypeAny | z4.$ZodType;
 
@@ -105,9 +99,9 @@ if ("_zod" in schema) {
 }
 ```
 
-## How to support Zod 4 (regular) and Zod 4 Mini simultaneously?
+## How to support Zod and Zod Mini simultaneously?
 
-Libraries should *only* be using types from `zod/v4/core`. This sub-package defines the interfaces, classes, and utilities that are shared between `zod/v4` and `zod/v4-mini`. By building against the shared base interfaces, you can reliably support both sub-packages without duplicate code.
+Your library code should only import from `zod/v4/core`. This sub-package defines the interfaces, classes, and utilities that are shared between `zod/v4` and `zod/v4-mini`. 
 
 ```ts
 // library code
@@ -121,7 +115,7 @@ export function acceptObjectSchema<T extends z.$ZodObject>(schema: T){
 }
 ```
 
-This function can accept both `zod/v4` and `zod/v4-mini` schemas. 
+By building against the shared base interfaces, you can reliably support both sub-packages simultaneously. This function can accept both `zod/v4` and `zod/v4-mini` schemas. 
 
 ```ts
 // user code
@@ -136,7 +130,7 @@ import * as zm from "zod/v4-mini";
 acceptObjectSchema(zm.object({ name: zm.string() }))
 ```
 
-Refer to the [Zod Core](/packages/core) page for more information.
+Refer to the [Zod Core](/packages/core) page for more information on the contents of the core sub-library.
 
 {/* ### Future proofing
 

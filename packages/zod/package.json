@@ -75,6 +75,18 @@
         "default": "./dist/commonjs/v4/core/index.js"
       }
     },
+    "./v4/locales": {
+      "import": {
+        "@zod/source": "./src/v4/locales/index.ts",
+        "types": "./dist/esm/v4/locales/index.d.ts",
+        "default": "./dist/esm/v4/locales/index.js"
+      },
+      "require": {
+        "@zod/source": "./src/v4/locales/index.ts",
+        "types": "./dist/commonjs/v4/locales/index.d.ts",
+        "default": "./dist/commonjs/v4/locales/index.js"
+      }
+    },
     "./v4/locales/*": {
       "import": {
         "@zod/source": "./src/v4/locales/*",
@@ -96,6 +108,7 @@
       "./v4": "./src/v4/index.ts",
       "./v4-mini": "./src/v4/mini/index.ts",
       "./v4/core": "./src/v4/core/index.ts",
+      "./v4/locales": "./src/v4/locales/index.ts",
       "./v4/locales/*": "./src/v4/locales/*"
     },
     "sourceDialects": ["@zod/source"],

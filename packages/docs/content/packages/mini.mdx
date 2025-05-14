@@ -53,7 +53,7 @@ await mySchema.safeParseAsync('asdf')
 
 ### `.check()`
 
-In `zod` there are dedicated methods on schema subclasses for performing common checks:
+In `zod/v4` there are dedicated methods on schema subclasses for performing common checks:
 
 ```ts
 import { z } from "zod/v4";
@@ -150,7 +150,7 @@ mySchema.clone(mySchema._zod.def);
 
 ## No default locale
 
-While `zod` automatically loads the English (`en`) locale, `zod/v4-mini` does not. This reduces the bundle size in scenarios where error messages are unnecessary, localized to a non-English language, or otherwise customized.
+While `zod/v4` automatically loads the English (`en`) locale, `zod/v4-mini` does not. This reduces the bundle size in scenarios where error messages are unnecessary, localized to a non-English language, or otherwise customized.
 
 This means, by default the `message` property of all issues will simply read `"Invalid input"`. To load the English locale:
 

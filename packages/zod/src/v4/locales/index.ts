@@ -1,71 +1,34 @@
-import ar from "./ar.js";
-import az from "./az.js";
-import be from "./be.js";
-import ca from "./ca.js";
-import cs from "./cs.js";
-import de from "./de.js";
-import en from "./en.js";
-import es from "./es.js";
-import fa from "./fa.js";
-import fi from "./fi.js";
-import fr from "./fr.js";
-import frCA from "./frCA.js";
-import he from "./he.js";
-import hu from "./hu.js";
-import id from "./id.js";
-import it from "./it.js";
-import ja from "./ja.js";
-import ko from "./ko.js";
-import mk from "./mk.js";
-import ms from "./ms.js";
-import no from "./no.js";
-import ota from "./ota.js";
-import pl from "./pl.js";
-import pt from "./pt.js";
-import ru from "./ru.js";
-import sl from "./sl.js";
-import ta from "./ta.js";
-import th from "./th.js";
-import tr from "./tr.js";
-import ua from "./ua.js";
-import ur from "./ur.js";
-import vi from "./vi.js";
-import zhCN from "./zh-CN.js";
-import zhTW from "./zh-tw.js";
-
-export {
-  ar,
-  az,
-  be,
-  ca,
-  cs,
-  de,
-  es,
-  en,
-  fa,
-  fi,
-  fr,
-  frCA,
-  he,
-  hu,
-  id,
-  it,
-  ja,
-  ko,
-  mk,
-  ms,
-  no,
-  ota,
-  pl,
-  pt,
-  ru,
-  sl,
-  ta,
-  th,
-  tr,
-  ua,
-  ur,
-  vi,
-  zhCN,
-  zhTW,
-};
+export { default as ar } from "./ar.js";
+export { default as az } from "./az.js";
+export { default as be } from "./be.js";
+export { default as ca } from "./ca.js";
+export { default as cs } from "./cs.js";
+export { default as de } from "./de.js";
+export { default as en } from "./en.js";
+export { default as es } from "./es.js";
+export { default as fa } from "./fa.js";
+export { default as fi } from "./fi.js";
+export { default as fr } from "./fr.js";
+export { default as frCA } from "./frCA.js";
+export { default as he } from "./he.js";
+export { default as hu } from "./hu.js";
+export { default as id } from "./id.js";
+export { default as it } from "./it.js";
+export { default as ja } from "./ja.js";
+export { default as ko } from "./ko.js";
+export { default as mk } from "./mk.js";
+export { default as ms } from "./ms.js";
+export { default as no } from "./no.js";
+export { default as ota } from "./ota.js";
+export { default as pl } from "./pl.js";
+export { default as pt } from "./pt.js";
+export { default as ru } from "./ru.js";
+export { default as sl } from "./sl.js";
+export { default as ta } from "./ta.js";
+export { default as th } from "./th.js";
+export { default as tr } from "./tr.js";
+export { default as ua } from "./ua.js";
+export { default as ur } from "./ur.js";
+export { default as vi } from "./vi.js";
+export { default as zhCN } from "./zh-CN.js";
+export { default as zhTW } from "./zh-tw.js";

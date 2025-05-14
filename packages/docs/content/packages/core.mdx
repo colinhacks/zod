@@ -4,7 +4,7 @@ title: Zod Core
 
 import { Callout } from "fumadocs-ui/components/callout"
 
-This sub-package exports the core classes and utilities that are consumed by `zod` and `zod/v4-mini`. It is not intended to be used directly; instead it's designed to be extended by other packages. It implements:
+This sub-package exports the core classes and utilities that are consumed by `zod/v4` and `zod/v4-mini`. It is not intended to be used directly; instead it's designed to be extended by other packages. It implements:
 
 ```ts
 import { z } from "zod/v4/core";
@@ -90,7 +90,7 @@ export type $ZodTypes =
 
 All `zod/v4/core` subclasses only contain a single property: `_zod`. This property is an object containing the schemas *internals*. The goal is to make `zod/v4/core` as extensible and unopinionated as possible. Other libraries can "build their own Zod" on top of these classes without `zod/v4/core` cluttering up the interface. 
 
-Refer to the implementations of `zod` and `zod/v4-mini` for examples of how to extend these classes. 
+Refer to the implementations of `zod/v4` and `zod/v4-mini` for examples of how to extend these classes. 
 
 The `_zod` internals property contains some notable properties:
 
@@ -291,7 +291,7 @@ The base class for all errors in Zod is `$ZodError`.
 
 > For performance reasons, `$ZodError` *does not* extend the built-in `Error` class! So using `instanceof Error` will return `false`.
 
-- The `zod` package implements a subclass of `$ZodError` called `ZodError` with some additional convenience methods.
+- The `zod/v4` package implements a subclass of `$ZodError` called `ZodError` with some additional convenience methods.
 - The `zod/v4-mini` sub-package directly uses `$ZodError`
 
 ```ts

@@ -263,8 +263,8 @@ It's about as simple as it gets when it comes to validation. That's intentional;
 
 | Package | Bundle (gzip) |
 |---------|--------------|
-| `zod@3`   | `12.47kb`      |
-| `zod@4`   | `5.36kb`       |
+| `zod/v3`   | `12.47kb`      |
+| `zod/v4`   | `5.36kb`       |
 
 The core bundle is ~57% smaller in Zod 4 (2.3x). That's good! But we can do a lot better.
 
@@ -303,7 +303,7 @@ z.object({ /* ... */ }).extend({ age: z.number() });
 </Tab>
 </Tabs>
 
-Not all methods are gone! The parsing methods are identical in `zod` and `zod/v4-mini`.
+Not all methods are gone! The parsing methods are identical in `zod/v4` and `zod/v4-mini`.
 
 ```ts
 import { z } from "zod/v4-mini";
@@ -340,7 +340,7 @@ z.array(z.number())
 </Tab>
 </Tabs>
 
-The following top-level refinements are available in `zod/v4-mini`. It should be fairly self-explanatory which `zod` methods they correspond to.
+The following top-level refinements are available in `zod/v4-mini`. It should be fairly self-explanatory which methods they correspond to.
 
 ```ts
 import { z } from "zod/v4-mini";
@@ -382,7 +382,7 @@ z.toUpperCase();
 ```
 
 
-This more functional API makes it easier for bundlers to tree-shaking the APIs you don't use. While `zod` is still recommended for the majority of use cases, any projects with uncommonly strict bundle size constraints should consider `zod/v4-mini`.  
+This more functional API makes it easier for bundlers to tree-shaking the APIs you don't use. While `zod/v4` is still recommended for the majority of use cases, any projects with uncommonly strict bundle size constraints should consider `zod/v4-mini`.  
 
 ### 6.6x reduction in core bundle size
 
@@ -403,7 +403,7 @@ When we build this with `rollup`, the gzipped bundle size is `1.88kb`. That's an
 | `zod@4`     | `5.36kb`       |
 | `zod/v4-mini` | `1.88kb`       |
 
-Learn more on the dedicated [`zod/v4-mini`](/packages/mini) docs page. Complete API details are mixed into existing documentation pages; code blocks contain separate tabs for `zod` and `zod/v4-mini` wherever their APIs diverge.
+Learn more on the dedicated [`zod/v4-mini`](/packages/mini) docs page. Complete API details are mixed into existing documentation pages; code blocks contain separate tabs for `"Zod"` and `"Zod Mini"` wherever their APIs diverge.
 
 ## Metadata
 
@@ -864,11 +864,11 @@ z.number().overwrite(val => val ** 2).max(100);
 
 ## An extensible foundation: `zod/v4/core`
 
-While this will not be relevant to the majority of Zod users, it's worth highlighting. The addition of `zod/v4-mini` necessitated the creation of a third package `zod/v4/core` that contains the core functionality shared between `zod` and `zod/v4-mini`. 
+While this will not be relevant to the majority of Zod users, it's worth highlighting. The addition of `zod/v4-mini` necessitated the creation of a shared sub-package `zod/v4/core` which contains the core functionality shared between `zod/v4` and `zod/v4-mini`. 
 
 I was resistant to this at first, but now I see it as one of Zod 4's most important features. It lets Zod level up from a simple library to a fast validation "substrate" that can be sprinkled into other libraries.
 
-If you're building a schema library, refer to the implementations of `zod` and `zod/v4-mini` to see how to build on top of the foundation `zod/v4/core` provides. Don't hesitate to get in touch in GitHub discussions or via [X](https://x.com/colinhacks)/[Bluesky](https://bsky.app/profile/colinhacks.com) for help or feedback.
+If you're building a schema library, refer to the implementations of `zod/v4` and `zod/v4-mini` to see how to build on top of the foundation `zod/v4/core` provides. Don't hesitate to get in touch in GitHub discussions or via [X](https://x.com/colinhacks)/[Bluesky](https://bsky.app/profile/colinhacks.com) for help or feedback.
 
 
 ## Wrapping up
