@@ -49,6 +49,7 @@ test("regular error", () => {
 
 test(".flatten()", () => {
   const flattened = parsed.error!.flatten();
+  // flattened.
   expectTypeOf(flattened).toMatchTypeOf<{
     formErrors: string[];
     fieldErrors: {
@@ -414,4 +415,14 @@ test("z.toDotPath", () => {
 
   // Test with empty path
   expect(z.core.toDotPath([])).toMatchInlineSnapshot(`""`);
+});
+
+test("inheritance", () => {
+  const e1 = new z.ZodError([]);
+  const e2 = new z._ZodError([]);
+
+  expect(e1).toBeInstanceOf(z.ZodError);
+  expect(e2).toBeInstanceOf(z._ZodError);
+  expect(e2).not.toBeInstanceOf(z.ZodError);
+  expect(e1).toBeInstanceOf(z._ZodError);
 });

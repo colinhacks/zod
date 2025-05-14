@@ -1,5 +1,6 @@
 import { expect, expectTypeOf, test } from "vitest";
 import * as z from "zod";
+import { $ZodError } from "../../core/dist/commonjs/errors.js";
 
 const promSchema = z.promise(
   z.object({
@@ -27,19 +28,15 @@ test("promise parsing success", async () => {
 });
 
 test("promise parsing fail", async () => {
-  // expect(() => promSchema.parse(Promise.resolve({ name: "Bobby", age: "10" }))).toThrow();
-  // return await expect(bad).resolves.toBe({ name: 'Bobby', age: '10' });
-  // return await expect(bad).rejects.toBeInstanceOf(z.ZodError);
-  // done();
   const bad = await promSchema.safeParseAsync(Promise.resolve({ name: "Bobby", age: "10" }));
   expect(bad.success).toBe(false);
-  expect(bad.error).toBeInstanceOf(z.ZodError);
+  expect(bad.error).toBeInstanceOf(z._ZodError);
 });
 
 test("promise parsing fail 2", async () => {
   const result = await promSchema.safeParseAsync(Promise.resolve({ name: "Bobby", age: "10" }));
   expect(result.success).toBe(false);
-  expect(result.error).toBeInstanceOf(z.ZodError);
+  expect(result.error).toBeInstanceOf(z._ZodError);
 });
 
 test("promise parsing fail", () => {
@@ -70,7 +67,7 @@ test("async function fail", async () => {
   const validatedFunction = asyncFunction.implementAsync(() => {
     return Promise.resolve("asdf" as any);
   });
-  await expect(validatedFunction()).rejects.toBeInstanceOf(z.ZodError);
+  await expect(validatedFunction()).rejects.toBeInstanceOf($ZodError);
 });
 
 test("async promise parsing", () => {

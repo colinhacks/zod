@@ -1,5 +1,5 @@
 import * as core from "@zod/core";
-import { ZodError, ZodInternalError } from "./errors.js";
+import { ZodError, _ZodError } from "./errors.js";
 
 export type ZodSafeParseResult<T> = ZodSafeParseSuccess<T> | ZodSafeParseError<T>;
 export type ZodSafeParseSuccess<T> = { success: true; data: T; error?: never };
@@ -9,24 +9,25 @@ export const parse: <T extends core.$ZodType>(
   schema: T,
   value: unknown,
   _ctx?: core.ParseContext<core.$ZodIssue>,
-  callee?: core.util.AnyFunc
+  _params?: { callee?: core.util.AnyFunc; Err?: core.$ZodErrorClass }
 ) => core.output<T> = /* @__PURE__ */ core._parse(ZodError) as any;
-
-export const safeParse: <T extends core.$ZodType>(
-  schema: T,
-  value: unknown,
-  _ctx?: core.ParseContext<core.$ZodIssue>
-) => ZodSafeParseResult<core.output<T>> = /* @__PURE__ */ core._safeParse(ZodInternalError) as any;
 
 export const parseAsync: <T extends core.$ZodType>(
   schema: T,
   value: unknown,
   _ctx?: core.ParseContext<core.$ZodIssue>,
-  callee?: core.util.AnyFunc
+  _params?: { callee?: core.util.AnyFunc; Err?: core.$ZodErrorClass }
 ) => Promise<core.output<T>> = /* @__PURE__ */ core._parseAsync(ZodError) as any;
+
+export const safeParse: <T extends core.$ZodType>(
+  schema: T,
+  value: unknown,
+  _ctx?: core.ParseContext<core.$ZodIssue>
+  // _params?: { callee?: core.util.AnyFunc; Err?: core.$ZodErrorClass }
+) => ZodSafeParseResult<core.output<T>> = /* @__PURE__ */ core._safeParse(_ZodError) as any;
 
 export const safeParseAsync: <T extends core.$ZodType>(
   schema: T,
   value: unknown,
   _ctx?: core.ParseContext<core.$ZodIssue>
-) => Promise<ZodSafeParseResult<core.output<T>>> = /* @__PURE__ */ core._safeParseAsync(ZodInternalError) as any;
+) => Promise<ZodSafeParseResult<core.output<T>>> = /* @__PURE__ */ core._safeParseAsync(_ZodError) as any;

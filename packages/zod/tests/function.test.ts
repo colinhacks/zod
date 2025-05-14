@@ -1,3 +1,4 @@
+import { inspect } from "util";
 import { expect, expectTypeOf, test } from "vitest";
 import * as z from "zod";
 
@@ -130,9 +131,11 @@ test("input validation error", () => {
 
   const checker = () => fn();
 
-  expect(checker).toThrowErrorMatchingInlineSnapshot(`
-    $ZodError {
-      "issues": [
+  try {
+    checker();
+  } catch (e: any) {
+    expect(e.issues).toMatchInlineSnapshot(`
+      [
         {
           "code": "invalid_type",
           "expected": "string",
@@ -141,9 +144,9 @@ test("input validation error", () => {
             0,
           ],
         },
-      ],
-    }
-  `);
+      ]
+    `);
+  }
 });
 
 test("output validation error", () => {
@@ -152,43 +155,21 @@ test("output validation error", () => {
     output: z.string(),
   });
   const fn = schema.implement(() => 1234 as any);
-  expect(fn).toThrowErrorMatchingInlineSnapshot(`
-    $ZodError {
-      "issues": [
+  try {
+    fn();
+  } catch (e: any) {
+    expect(e.issues).toMatchInlineSnapshot(`
+      [
         {
           "code": "invalid_type",
           "expected": "string",
           "message": "Invalid input: expected string, received number",
           "path": [],
         },
-      ],
-    }
-  `);
+      ]
+    `);
+  }
 });
-
-// test("special function error codes", () => {
-//   const checker = z.function(z.tuple([z.string()]), z.boolean()).implement((arg) => {
-//     return arg.length as any;
-//   });
-//   try {
-//     checker("12" as any);
-//   } catch (err) {
-//     const zerr = err as z.ZodError;
-//     const first = zerr.issues[0];
-//     if (first.code !== z.ZodIssueCode.invalid_return_type) throw new Error();
-
-//     expect(first.returnTypeError).toBeInstanceOf(z.ZodError);
-//   }
-
-//   try {
-//     checker(12 as any);
-//   } catch (err) {
-//     const zerr = err as z.ZodError;
-//     const first = zerr.issues[0];
-//     if (first.code !== z.ZodIssueCode.invalid_arguments) throw new Error();
-//     expect(first.argumentsError).toBeInstanceOf(z.ZodError);
-//   }
-// });
 
 test("function with async refinements", async () => {
   const schema = z

@@ -1,5 +1,5 @@
 import * as core from "@zod/core";
-import { $ZodError } from "@zod/core";
+import { type $ZodError, _$ZodError } from "@zod/core";
 
 /** @deprecated Use `z.core.$ZodIssue` from `@zod/core` instead, especially if you are building a library on top of Zod. */
 export type ZodIssue = core.$ZodIssue;
@@ -7,9 +7,11 @@ export type ZodIssue = core.$ZodIssue;
 /** An Error-like class that doesn't extend `Error`. Used inside safeParse.  */
 export interface ZodError<T = unknown> extends $ZodError<T> {
   /** @deprecated Use the `z.treeifyError(err)` function instead. */
-  format<U>(mapper?: (issue: core.$ZodIssue) => U): core.$ZodFormattedError<T, U>;
+  format(): core.$ZodFormattedError<T>;
+  format<U>(mapper: (issue: core.$ZodIssue) => U): core.$ZodFormattedError<T, U>;
   /** @deprecated Use the `z.treeifyError(err)` function instead. */
-  flatten<U>(mapper?: (issue: core.$ZodIssue) => U): core.$ZodFlattenedError<T, U>;
+  flatten(): core.$ZodFlattenedError<T>;
+  flatten<U>(mapper: (issue: core.$ZodIssue) => U): core.$ZodFlattenedError<T, U>;
   /** @deprecated Push directly to `.issues` instead. */
   addIssue(issue: core.$ZodIssue): void;
   /** @deprecated Push directly to `.issues` instead. */
@@ -19,8 +21,8 @@ export interface ZodError<T = unknown> extends $ZodError<T> {
   isEmpty: boolean;
 }
 
-export const ZodInternalError: core.$constructor<ZodError> = core.$constructor("ZodError", (inst, issues) => {
-  $ZodError.init(inst, issues);
+export const _ZodError: core.$constructor<ZodError> = core.$constructor("ZodError", (inst, issues) => {
+  _$ZodError.init(inst, issues);
   Object.defineProperty(inst, "format", {
     value: (mapper: any) => core.formatError(inst, mapper),
     enumerable: false,
@@ -48,7 +50,7 @@ export interface ZodError<T = unknown> extends $ZodError<T> {}
 export class ZodError extends Error {
   constructor(issues: core.$ZodIssue[]) {
     super();
-    ZodInternalError.init(this, issues);
+    _ZodError.init(this, issues);
   }
 }
 

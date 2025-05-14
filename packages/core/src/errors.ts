@@ -170,6 +170,7 @@ export interface $ZodErrorMap<T extends $ZodIssueBase = $ZodIssue> {
 
 // const ZOD_ERROR: symbol = Symbol.for("{{zod.error}}");
 export interface $ZodError<T = unknown> extends Error {
+  type: T;
   issues: $ZodIssue[];
   _zod: {
     output: T;
@@ -179,7 +180,7 @@ export interface $ZodError<T = unknown> extends Error {
   name: string;
 }
 
-export const $ZodError: $constructor<$ZodError> = $constructor("$ZodError", (inst, def) => {
+export const _$ZodError: $constructor<$ZodError> = $constructor("$ZodError", (inst, def) => {
   Object.defineProperties(inst, {
     issues: {
       value: def,
@@ -189,8 +190,22 @@ export const $ZodError: $constructor<$ZodError> = $constructor("$ZodError", (ins
       value: inst._zod,
       enumerable: false,
     },
+    // message: {
+    //   get() {
+    //     return JSON.stringify(this.issues, util.jsonStringifyReplacer, 2);
+    //   },
+    //   enumerable: false,
+    // },
   });
 });
+
+// export interface $ZodError<T = unknown> extends $ZodError<T> {}
+export class $ZodError extends Error {
+  constructor(issues: $ZodIssue[]) {
+    super();
+    _$ZodError.init(this, issues);
+  }
+}
 
 // export class _$ZodError extends Error {
 //   public issues!: $ZodIssue[];

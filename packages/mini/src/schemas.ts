@@ -40,9 +40,9 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
 
     core.$ZodType.init(inst, def);
     inst.def = def;
-    inst.parse = (data, params) => parse.parse(inst, data, params, inst.parse);
+    inst.parse = (data, params) => parse.parse(inst, data, params, { callee: inst.parse });
     inst.safeParse = (data, params) => parse.safeParse(inst, data, params);
-    inst.parseAsync = async (data, params) => parse.parseAsync(inst, data, params, inst.parseAsync);
+    inst.parseAsync = async (data, params) => parse.parseAsync(inst, data, params, { callee: inst.parseAsync });
     inst.safeParseAsync = async (data, params) => parse.safeParseAsync(inst, data, params);
     inst.check = (...checks) => {
       return inst.clone({

@@ -2,7 +2,6 @@ import * as core from "@zod/core";
 import { util } from "@zod/core";
 
 import * as checks from "./checks.js";
-import type { ZodError } from "./errors.js";
 import * as iso from "./iso.js";
 import * as parse from "./parse.js";
 
@@ -99,10 +98,6 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
   isNullable(): boolean;
 }
 
-export type ZodSafeParseResult<T> = ZodSafeParseSuccess<T> | ZodSafeParseError<T>;
-export type ZodSafeParseSuccess<T> = { success: true; data: T; error?: never };
-export type ZodSafeParseError<T> = { success: false; data?: never; error: ZodError<T> };
-
 export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$constructor("ZodType", (inst, def) => {
   core.$ZodType.init(inst, def);
   inst.def = def;
@@ -152,9 +147,9 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   // ) => Promise<ZodSafeParseResult<core.output<T>>> = /* @__PURE__ */ core._safeParseAsync(ZodError) as any;
 
   // parsing
-  inst.parse = (data, params) => parse.parse(inst, data, params, inst.parse);
+  inst.parse = (data, params) => parse.parse(inst, data, params, { callee: inst.parse });
   inst.safeParse = (data, params) => parse.safeParse(inst, data, params);
-  inst.parseAsync = async (data, params) => parse.parseAsync(inst, data, params, inst.parseAsync);
+  inst.parseAsync = async (data, params) => parse.parseAsync(inst, data, params, { callee: inst.parseAsync });
   inst.safeParseAsync = async (data, params) => parse.safeParseAsync(inst, data, params);
   inst.spa = inst.safeParseAsync;
 

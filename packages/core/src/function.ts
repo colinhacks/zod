@@ -1,4 +1,5 @@
 import { _tuple } from "./api.js";
+
 import { parse, parseAsync } from "./parse.js";
 import * as schemas from "./schemas.js";
 import { $ZodTuple } from "./schemas.js";
@@ -53,14 +54,15 @@ export class $ZodFunction<
     if (typeof func !== "function") {
       throw new Error("implement() must be called with a function");
     }
-    return ((...args: any[]) => {
-      const parsedArgs = this._def.input ? parse(this._def.input, args) : args;
+    const impl = ((...args: any[]) => {
+      const parsedArgs = this._def.input ? parse(this._def.input, args, undefined, { callee: impl }) : args;
       if (!Array.isArray(parsedArgs)) {
         throw new Error("Invalid arguments schema: not an array or tuple schema.");
       }
       const output = func(...parsedArgs);
-      return this._def.output ? parse(this._def.output, output) : output;
+      return this._def.output ? parse(this._def.output, output, undefined, { callee: impl }) : output;
     }) as any;
+    return impl;
   }
 
   implementAsync<F extends $InferInnerFunctionTypeAsync<Args, Returns>>(
@@ -70,14 +72,15 @@ export class $ZodFunction<
       throw new Error("implement() must be called with a function");
     }
 
-    return (async (...args: any[]) => {
-      const parsedArgs = this._def.input ? await parseAsync(this._def.input, args) : args;
+    const impl = (async (...args: any[]) => {
+      const parsedArgs = this._def.input ? await parseAsync(this._def.input, args, undefined, { callee: impl }) : args;
       if (!Array.isArray(parsedArgs)) {
         throw new Error("Invalid arguments schema: not an array or tuple schema.");
       }
       const output = await func(...parsedArgs);
-      return this._def.output ? parseAsync(this._def.output, output) : output;
+      return this._def.output ? parseAsync(this._def.output, output, undefined, { callee: impl }) : output;
     }) as any;
+    return impl;
   }
 
   input<const Items extends util.TupleItems, const Rest extends schemas.$ZodType | null = null>(

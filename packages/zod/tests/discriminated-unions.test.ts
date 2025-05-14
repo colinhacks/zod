@@ -105,7 +105,7 @@ test("valid - discriminator value of various primitive types", () => {
     type: "not_a_key",
     val: "val",
   });
-  expect(fail.error).toBeInstanceOf(z.ZodError);
+  expect(fail.error).toBeInstanceOf(z._ZodError);
 });
 
 test("invalid - null", () => {
@@ -126,17 +126,15 @@ test("invalid - null", () => {
     //     path: [],
     //   },
     // ];
-    expect(e).toMatchInlineSnapshot(`
-      ZodError {
-        "issues": [
-          {
-            "code": "invalid_type",
-            "expected": "object",
-            "message": "Invalid input: expected object, received null",
-            "path": [],
-          },
-        ],
-      }
+    expect(e.issues).toMatchInlineSnapshot(`
+      [
+        {
+          "code": "invalid_type",
+          "expected": "object",
+          "message": "Invalid input: expected object, received null",
+          "path": [],
+        },
+      ]
     `);
   }
 });
