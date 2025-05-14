@@ -3257,7 +3257,7 @@ export const $ZodPipe: core.$constructor<$ZodPipe> = /*@__PURE__*/ core.$constru
   // inst._zod.qin = def.in._zod.qin;
   // inst._zod.qout = def.in._zod.qout;
   inst._zod.values = def.in._zod.values;
-
+  inst._zod.optionality = def.in._zod.optionality;
   inst._zod.parse = (payload, ctx) => {
     const left = def.in._zod.run(payload, ctx);
     if (left instanceof Promise) {
