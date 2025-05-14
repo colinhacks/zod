@@ -31,10 +31,10 @@
     "lint-staged": "^12.5.0",
     "mitata": "^0.1.14",
     "prettier": "^3.5.3",
+    "supershy": "^1.0.0",
     "tinybench": "^2.9.0",
     "ts-morph": "^14.0.0",
     "tsdown": "^0.11.9",
-    "tshy": "^1.0.0",
     "tslib": "^2.8.1",
     "tsx": "^4.19.3",
     "typescript": "^5.5.4",
@@ -51,7 +51,9 @@
       "biome format --no-errors-on-unmatched --write",
       "biome lint --no-errors-on-unmatched --write"
     ],
-    "packages/*/**/*.md": ["prettier --ignore-unknown --write"]
+    "packages/*/**/*.md": [
+      "prettier --ignore-unknown --write"
+    ]
   },
   "scripts": {
     "fix": "pnpm run format && pnpm run lint",
