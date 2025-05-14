@@ -303,7 +303,9 @@ export class JSONSchemaGenerator {
           json.required = Array.from(requiredKeys);
 
           // catchall
-          if (def.catchall) {
+          if (def.catchall?._zod.def.type === "never") {
+            json.additionalProperties = false;
+          } else if (def.catchall) {
             json.additionalProperties = this.process(def.catchall, {
               ...params,
               path: [...params.path, "additionalProperties"],
