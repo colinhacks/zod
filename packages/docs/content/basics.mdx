@@ -14,7 +14,7 @@ Before you can do anything else, you need to define a schema. For the purposes o
 <Tabs groupId="lib" items={["zod", "@zod/mini"]}>
 <Tab value="zod">
 ```ts
-import * as z from "zod"; 
+import * as z from "zod/v4"; 
 
 const Player = z.object({ 
   username: z.string(),
@@ -24,7 +24,7 @@ const Player = z.object({
 </Tab>
 <Tab value="@zod/mini">
 ```ts
-import * as z from "@zod/mini";
+import * as z from "zod/v4-mini"
 
 const Player = z.object({ 
   username: z.string(),

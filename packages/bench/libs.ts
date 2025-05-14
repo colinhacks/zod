@@ -3,7 +3,7 @@ import { metabench } from "./metabench.js";
 
 import { type } from "arktype";
 import * as v from "valibot";
-import * as z from "zod";
+import * as z from "zod/v4";
 
 const schema = z.object({
   a: z.string(),

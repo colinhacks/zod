@@ -14,7 +14,6 @@
     "@rollup/plugin-typescript": "^12.1.2",
     "@types/node": "^22.13.13",
     "zod": "workspace:*",
-    "@zod/mini": "workspace:*",
     "rollup": "^4.37.0",
     "rollup-plugin-filesize": "^10.0.0",
     "rollup-plugin-bundle-size": "^1.0.3",

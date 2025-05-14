@@ -26,12 +26,6 @@ importers:
       '@web-std/file':
         specifier: ^3.0.3
         version: 3.0.3
-      '@zod/core':
-        specifier: workspace:*
-        version: link:packages/core
-      '@zod/mini':
-        specifier: workspace:*
-        version: link:packages/mini
       arktype:
         specifier: ^2.1.19
         version: 2.1.19
@@ -78,8 +72,8 @@ importers:
         specifier: ^4.19.3
         version: 4.19.3
       typescript:
-        specifier: ~5.5.4
-        version: 5.5.4
+        specifier: ^5.5.4
+        version: 5.8.2
       vitest:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@20.17.30)(lightningcss@1.29.3)(terser@5.39.0)
@@ -92,12 +86,6 @@ importers:
 
   packages/bench:
     devDependencies:
-      '@zod/core':
-        specifier: workspace:*
-        version: link:../core
-      '@zod/mini':
-        specifier: workspace:*
-        version: link:../mini
       arktype:
         specifier: ^2.1.19
         version: 2.1.19
@@ -110,8 +98,6 @@ importers:
       zod3:
         specifier: npm:zod@^3.23.7
         version: zod@3.24.2
-
-  packages/core: {}
 
   packages/docs:
     dependencies:
@@ -177,12 +163,6 @@ importers:
         specifier: ^5.8.2
         version: 5.8.2
 
-  packages/mini:
-    dependencies:
-      '@zod/core':
-        specifier: workspace:*
-        version: link:../core
-
   packages/treeshake:
     devDependencies:
       '@rollup/plugin-commonjs':
@@ -200,9 +180,6 @@ importers:
       '@types/node':
         specifier: ^22.13.13
         version: 22.13.13
-      '@zod/mini':
-        specifier: workspace:*
-        version: link:../mini
       rollup:
         specifier: ^4.37.0
         version: 4.37.0
@@ -230,12 +207,6 @@ importers:
       '@typescript/analyze-trace':
         specifier: ^0.10.1
         version: 0.10.1
-      '@zod/core':
-        specifier: workspace:*
-        version: link:../core
-      '@zod/mini':
-        specifier: workspace:*
-        version: link:../mini
       arktype:
         specifier: ^2.0.0
         version: 2.1.19
@@ -261,14 +232,7 @@ importers:
         specifier: npm:zod@4.0.0-beta.20250420T053007
         version: zod@4.0.0-beta.20250420T053007
 
-  packages/zod:
-    dependencies:
-      '@zod/core':
-        specifier: workspace:*
-        version: link:../core
-      '@zod/mini':
-        specifier: workspace:*
-        version: link:../mini
+  packages/zod: {}
 
 packages:
 
@@ -4940,11 +4904,6 @@ packages:
   type-fest@0.21.3:
     resolution: {integrity: sha512-t0rzBq87m3fVcduHDUFhKmyyX+9eo6WQjZvf51Ea/M0Q7+T374Jp1aUiyUl0GKxp8M/OETVHSDvmkyPgvX+X2w==}
     engines: {node: '>=10'}
-
-  typescript@5.5.4:
-    resolution: {integrity: sha512-Mtq29sKDAEYP7aljRgtPOpTvOfbwRWlS6dPRzwjdE+C0R4brX/GUyhHSecbHMFLNBLcJIPt9nl9yG5TZ1weH+Q==}
-    engines: {node: '>=14.17'}
-    hasBin: true
 
   typescript@5.6.1-rc:
     resolution: {integrity: sha512-E3b2+1zEFu84jB0YQi9BORDjz9+jGbwwy1Zi3G0LUNw7a7cePUrHMRNy8aPh53nXpkFGVHSxIZo5vKTfYaFiBQ==}
@@ -10341,7 +10300,7 @@ snapshots:
       resolve-import: 2.0.0
       rimraf: 6.0.1
       sync-content: 2.0.1
-      typescript: 5.5.4
+      typescript: 5.8.2
       walk-up-path: 4.0.0
 
   tslib@2.8.1: {}
@@ -10364,8 +10323,6 @@ snapshots:
   type-fest@0.20.2: {}
 
   type-fest@0.21.3: {}
-
-  typescript@5.5.4: {}
 
   typescript@5.6.1-rc: {}
 

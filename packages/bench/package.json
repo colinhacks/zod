@@ -3,8 +3,6 @@
   "private": true,
   "type": "module",
   "devDependencies": {
-    "@zod/core": "workspace:*",
-    "@zod/mini": "workspace:*",
     "arktype": "^2.1.19",
     "valibot": "^1.0.0",
     "zod": "workspace:*",

@@ -6,7 +6,7 @@ on:
     branches:
       - v4
     paths:
-      - 'packages/core/src/versions.ts'
+      - 'packages/zod/src/v4/versions.ts'
 jobs:
   build_and_publish:
     runs-on: ubuntu-latest
