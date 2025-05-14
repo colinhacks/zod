@@ -121,6 +121,6 @@
     "test": "pnpm vitest run",
     "prepublishOnly": "pnpm test && pnpm run build",
     "bump:beta": "pnpm version minor && pnpm version \"v$(pnpm pkg get version | jq -r)-beta.$(date +%Y%m%dT%H%M%S)\"",
-    "pub:beta": "pnpm bump:beta && pnpm publish --dry-run --tag next --publish-branch v4 --no-git-checks"
+    "pub:beta": "pnpm bump:beta && pnpm publish --tag next --publish-branch v4 --no-git-checks"
   }
 }
