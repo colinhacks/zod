@@ -1,4 +1,4 @@
-import { z } from "@zod/mini";
+import { z } from "zod/v4-mini"
 
 const schema = z.string().check(z.minLength(5));
 

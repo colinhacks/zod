@@ -1,7 +1,7 @@
 import { writeFileSync } from "node:fs";
 
 export const ZOD = {
-  imports: [`import * as z from "zod";`],
+  imports: [`import * as z from "zod/v4";`],
   schemaType: "z.object" as const,
   valueTypes: [`z.string()`],
 };

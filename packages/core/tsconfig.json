@@ -1,8 +1,0 @@
-{
-  "extends": "../../.configs/tsconfig.base.json",
-  "compilerOptions": {
-    "isolatedDeclarations": false,
-    "composite": true
-  },
-  "exclude": ["vitest.config.ts"]
-}

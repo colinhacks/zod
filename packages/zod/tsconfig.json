@@ -1,9 +1,12 @@
 {
   "extends": "../../.configs/tsconfig.base.json",
   "compilerOptions": {
-    "isolatedDeclarations": true,
+    "isolatedDeclarations": false,
     "composite": true,
-    "exactOptionalPropertyTypes": true
+    "exactOptionalPropertyTypes": true,
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
+    "customConditions": ["@zod/source"]
   },
   "exclude": ["vitest.config.ts"]
 }

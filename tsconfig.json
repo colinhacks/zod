@@ -2,7 +2,9 @@
   "extends": "./.configs/tsconfig.base.json",
   "compilerOptions": {
     "rootDir": ".",
-    "noEmit": true
+    "noEmit": true,
+    "customConditions": ["@zod/source"]
     // "module": "nodeNext"
-  }
+  },
+  "exclude": ["packages/docs"]
 }

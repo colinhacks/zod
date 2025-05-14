@@ -15,14 +15,14 @@ It implements the exact same functionality as `zod`, but using a *functional*, *
 <Tabs groupId="lib" items={[ "@zod/mini", "zod"]}>
 <Tab value="@zod/mini">
 ```ts
-import * as z from "@zod/mini";
+import * as z from "zod/v4-mini"
 
 const mySchema = z.nullable(z.optional(z.string()));
 ```
 </Tab>
 <Tab value="zod">
 ```ts
-import { z } from "zod";
+import { z } from "zod/v4";
 
 const mySchema = z.string().optional().nullable();
 ```
@@ -41,7 +41,7 @@ All `@zod/mini` schemas extend the `z.ZodMiniType` base class, which in turn ext
 This is an obvious one. All `@zod/mini` schemas implement the same parsing methods as `zod`.
 
 ```ts
-import * as z from "@zod/mini";
+import * as z from "zod/v4-mini"
 
 const mySchema = z.string();
 
@@ -56,7 +56,7 @@ await mySchema.safeParseAsync('asdf')
 In `zod` there are dedicated methods on schema subclasses for performing common checks:
 
 ```ts
-import * as z from "zod";
+import * as z from "zod/v4";
 
 z.string()
   .min(5)
@@ -68,7 +68,7 @@ z.string()
 In `@zod/mini` such methods aren't implemented. Instead you pass these checks into schemas using the `.check()` method:
 
 ```ts
-import * as z from "@zod/mini";
+import * as z from "zod/v4-mini"
 
 z.string().check(
   z.minLength(5), 
@@ -132,7 +132,7 @@ z.string().register(myReg, { title: "My cool string schema" });
 For *branding* a schema. Refer to the [Branded types](/api#branded-types) docs for more information.
 
 ```ts
-import * as z from "@zod/mini";
+import * as z from "zod/v4-mini"
 
 const USD = z.string().brand("USD");
 ```
@@ -155,7 +155,7 @@ While `zod` automatically loads the English (`en`) locale, `@zod/mini` does not.
 This means, by default the `message` property of all issues will simply read `"Invalid input"`. To load the English locale:
 
 ```ts
-import * as z from "@zod/mini";
+import * as z from "zod/v4-mini"
 
 z.config(z.locales.en());
 ```

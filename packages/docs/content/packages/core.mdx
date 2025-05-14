@@ -11,7 +11,7 @@ This page is primarily intended for consumption by *library authors* who are bui
 This package exports the core classes and utilities that are consumed by `zod` and `@zod/mini`. It is not intended to be used directly; instead it's designed to be extended by other packages. It implements:
 
 ```ts
-import * as z from "@zod/core";
+import * as z from "zod/v4/core";
 
 // the base class for all Zod schemas
 z.$ZodType;
@@ -42,7 +42,7 @@ z.util.isValidJWT(...);
 For simplicity, the `zod` and `@zod/mini` packages re-export their `@zod/core` dependency as `z.core`, but you shouldn't rely on this.
 
 ```ts
-import * as z from "zod";
+import * as z from "zod/v4";
 
 z.core.$ZodString;
 // the base class for string schemas
@@ -398,14 +398,14 @@ If you need Zod specific functionality, read on.
 
 ### Peer dependencies
 
-Generally speaking, any library built on top of Zod should include `@zod/core` in `"peerDependencies"`. This lets your users "bring their own Zod".
+Generally speaking, any library built on top of Zod should include `zod` in `"peerDependencies"`. This lets your users "bring their own Zod".
 
 ```json
 // package.json
 {
   // ...
   "peerDependencies": {
-    "@zod/core": "^0.0.1"
+    "zod": "^3.0.0"
   }
 }
 ```
@@ -413,6 +413,7 @@ Generally speaking, any library built on top of Zod should include `@zod/core` i
 When your user installs `zod` or `@zod/mini`, their package manager will automatically install `@zod/core` too. So this peer dependency will be met as long as your user has one of these packages installed.
 
 <Callout>
+
 ### Versioning
 
 While Zod 4 is in beta, the [`@zod/core`](https://www.npmjs.com/package/@zod/core) package is published as `latest` in the `v0.x` range ("initial development" according to semver). The `v1.0.0` release will accompany the first stable release of `zod@4.0`.

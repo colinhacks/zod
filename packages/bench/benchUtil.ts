@@ -1,4 +1,4 @@
-import * as zNew from "zod";
+import * as zNew from "zod/v4";
 import * as zOld from "zod3";
 
 export function makeSchema<T>(factory: (z: typeof zNew) => T) {

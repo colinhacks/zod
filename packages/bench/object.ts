@@ -1,4 +1,4 @@
-import * as z4 from "zod";
+import * as z4 from "zod/v4";
 import * as z3 from "zod3";
 import { metabench } from "./metabench.js";
 import * as v from "valibot";

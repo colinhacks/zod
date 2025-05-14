@@ -124,7 +124,7 @@ try {
 The issue formats have been dramatically streamlined. 
 
 ```ts
-import * as z from "zod"; // v4
+import * as z from "zod/v4"; // v4
 
 type IssueFormats = 
   | z.core.$ZodIssueInvalidType
@@ -143,7 +143,7 @@ type IssueFormats =
 Below is the list of Zod 3 issues types and their Zod 4 equivalent:
 
 ```ts
-import * as z from "zod"; // v3
+import * as z from "zod/v4"; // v3
 
 export type IssueFormats =
   | z.ZodInvalidTypeIssue // ♻️ renamed to z.core.$ZodIssueInvalidType
@@ -625,7 +625,7 @@ The need for `z.ZodTypeAny` has been eliminated; just use `z.ZodType` instead.
 Many utility functions and types have been moved to the new `@zod/core` package, to facilitate code sharing between `zod` and `@zod/mini`. The contents of `@zod/core` from `zod`/`@zod/mini` using the `z.core` namespace. Check `z.core` if any internal APIs you rely on are missing; they've likely been moved there.
 
 ```ts
-import * as z from "zod";
+import * as z from "zod/v4";
 
 function handleError(iss: z.core.utils.$ZodError) {
   // do stuff
@@ -648,7 +648,7 @@ To facilitate code sharing, both `zod` and `@zod/mini` have a dependency on a ne
 As you can see these things are all prefixed with `$` to indicate they are implemented in `@zod/core`. Many things formerly exported from `zod` have been moved to `@zod/core`. You can access the contents of `@zod/core` from `zod`/`@zod/mini` using the `z.core` namespace.
 
 ```ts
-import * as z from "zod";
+import * as z from "zod/v4";
 
 function handleIssue(iss: z.core.$ZodIssue) {
   // do stuff
@@ -664,7 +664,7 @@ Previously both refinements and transformations lived inside a wrapper class cal
 This is particularly apparent in the `@zod/mini` API, which heavily relies on the `.check()` method to compose various validations together.
 
 ```ts
-import * as z from "@zod/mini";
+import * as z from "zod/v4-mini";
 
 z.string().check(
   z.minLength(10),
@@ -679,7 +679,7 @@ z.string().check(
 Meanwhile, transforms have been moved into a dedicated `ZodTransform` class. This schema class represents an input transform; in fact, you can actually define standalone transformations now:
 
 ```ts
-import * as z from "zod";
+import * as z from "zod/v4";
 
 const schema = z.transform(input => String(input));
 
