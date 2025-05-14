@@ -1,6 +1,5 @@
 import { expect, expectTypeOf, test } from "vitest";
 import * as z from "zod";
-import { $ZodError } from "../../core/dist/commonjs/errors.js";
 
 const promSchema = z.promise(
   z.object({
@@ -67,7 +66,7 @@ test("async function fail", async () => {
   const validatedFunction = asyncFunction.implementAsync(() => {
     return Promise.resolve("asdf" as any);
   });
-  await expect(validatedFunction()).rejects.toBeInstanceOf($ZodError);
+  await expect(validatedFunction()).rejects.toBeInstanceOf(z.core.$ZodError);
 });
 
 test("async promise parsing", () => {

@@ -42,7 +42,6 @@ export const _parseAsync: (_Err: $ZodErrorClass) => $ParseAsync = (_Err) => asyn
   if (result instanceof Promise) result = await result;
   if (result.issues.length) {
     const e = new (params?.Err ?? _Err)(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())));
-    console.log("callee", params?.callee);
     Error.captureStackTrace(e, params?.callee);
     throw e;
   }
