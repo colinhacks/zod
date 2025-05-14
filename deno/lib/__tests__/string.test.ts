@@ -292,11 +292,102 @@ test("jwt validations", () => {
 
 test("url validations", () => {
   const url = z.string().url();
-  url.parse("http://google.com");
-  url.parse("https://google.com/asdf?asdf=ljk3lk4&asdf=234#asdf");
-  expect(() => url.parse("asdf")).toThrow();
-  expect(() => url.parse("https:/")).toThrow();
-  expect(() => url.parse("asdfj@lkjsdf.com")).toThrow();
+  for (const el of [
+    "http://foo.com/blah_blah",
+    "http://foo.com/blah_blah/",
+    "http://foo.com/blah_blah_(wikipedia)",
+    "http://foo.com/blah_blah_(wikipedia)_(again)",
+    "http://www.example.com/wpstyle/?p=364",
+    "https://www.example.com/foo/?bar=baz&inga=42&quux",
+    "http://✪df.ws/123",
+    "http://userid:password@example.com:8080",
+    "http://userid:password@example.com:8080/",
+    "http://userid@example.com",
+    "http://userid@example.com/",
+    "http://userid@example.com:8080",
+    "http://userid@example.com:8080/",
+    "http://userid:password@example.com",
+    "http://userid:password@example.com/",
+    "http://➡.ws/䨹",
+    "http://⌘.ws",
+    "http://⌘.ws/",
+    "http://foo.com/blah_(wikipedia)#cite-1",
+    "http://foo.com/blah_(wikipedia)_blah#cite-1",
+    "http://foo.com/unicode_(✪)_in_parens",
+    "http://foo.com/(something)?after=parens",
+    "http://☺.damowmow.com/",
+    "http://code.google.com/events/#&product=browser",
+    "http://j.mp",
+    "ftp://foo.bar/baz",
+    "http://foo.bar/?q=Test%20URL-encoded%20stuff",
+    "http://مثال.إختبار",
+    "http://例子.测试",
+    "http://-.~_!$&'()*+,;=:%40:80%2f::::::@example.com",
+    "http://1337.net",
+    "http://a.b-c.de",
+    "http://a.b--c.de",
+    "http://me.com//123", // Double slashes are valid according to RFC 2396
+    "http://223.255.255.254",
+    "https://www.google.be",
+    "https://www.google.be/?q=test",
+    "https://www.google.be?q=test",
+    "https://www.google.be?q=test&hi=true",
+    "https://www.google.com/?a=1&b=2",
+    "https://www.google.com/#4802394",
+    "https://www.google.com/#inbox?a=2",
+    "https://google.com/#floo_bar?a=2&c=foo",
+    "https://www.google.co.uk:3000/eweqweeqwe/ewqeeqweqe",
+    "https://www.google.co.uk/eweqweeqwe/ewqeeqweqe",
+    "https://google.com/?a=1&b=2#eweqweqwewqeqweweqweqweqweqwewopqieqwoeqweipqwoeiqweiqwpoeiqwieqwopeiqwpooeqwieiqwoeiqwoeiqweiqwopeiqwpeiqweiqweoiwqopepwoqiepqwoieoiwqeipqwoeiowqieoipoeiwqoiepowiqoieqw&ewquie", // eslint-disable-line max-len
+    "https://google.com:3000/?a=1&b=2#eweqweqwewqeqweweqweqweqweqwewopqieqwoeqweipqwoeiqweiqwpoeiqwieqwopeiqwpooeqwieiqwoeiqwoeiqweiqwopeiqwpeiqweiqweoiwqopepwoqiepqwoieoiwqeipqwoeiowqieoipoeiwqoiepowiqoieqw&ewquie", // eslint-disable-line max-len
+    "http://x.comddfsdfsdf.", // Trailing dots in tlds are valid
+  ]) {
+    expect(() => url.parse(el)).not.toThrow();
+  }
+
+  for (const el of [
+    "asdf",
+    "asdfj@lkjsdf.com",
+    "http://",
+    "http://.",
+    "http://..",
+    "http://../",
+    "http://?",
+    "http://??",
+    "http://??/",
+    "http://#",
+    "http://##",
+    "http://##/",
+    "http://foo.bar?q=Spaces should be encoded",
+    "//",
+    "//a",
+    "///a",
+    "///",
+    "http:///a",
+    "foo.com",
+    "rdar://1234",
+    "h://test",
+    "http:// shouldfail.com",
+    ":// should fail",
+    "http://foo.bar/foo(bar)baz quux",
+    "ftps://foo.bar/",
+    "http://-error-.invalid/",
+    "http://-a.b.co",
+    "http://a.b-.co",
+    "http://0.0.0.0",
+    "http://10.1.1.0",
+    "http://10.1.1.255",
+    "http://224.1.1.1",
+    "http://1.1.1.1.1",
+    "http://123.123.123",
+    "http://3628126748",
+    "http://.www.foo.bar/",
+    "http://.www.foo.bar./",
+    "http://10.1.1.1",
+    "http://10.1.1.254",
+  ]) {
+    expect(() => url.parse(el)).toThrow();
+  }
 });
 
 test("url error overrides", () => {
