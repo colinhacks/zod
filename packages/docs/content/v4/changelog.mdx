@@ -124,7 +124,7 @@ try {
 The issue formats have been dramatically streamlined. 
 
 ```ts
-import * as z from "zod/v4"; // v4
+import { z } from "zod/v4"; // v4
 
 type IssueFormats = 
   | z.core.$ZodIssueInvalidType
@@ -143,7 +143,7 @@ type IssueFormats =
 Below is the list of Zod 3 issues types and their Zod 4 equivalent:
 
 ```ts
-import * as z from "zod/v4"; // v3
+import { z } from "zod/v4"; // v3
 
 export type IssueFormats =
   | z.ZodInvalidTypeIssue // ♻️ renamed to z.core.$ZodIssueInvalidType
@@ -622,10 +622,10 @@ The need for `z.ZodTypeAny` has been eliminated; just use `z.ZodType` instead.
 
 ### adds `z.core`
 
-Many utility functions and types have been moved to the new `@zod/core` package, to facilitate code sharing between `zod` and `@zod/mini`. The contents of `@zod/core` from `zod`/`@zod/mini` using the `z.core` namespace. Check `z.core` if any internal APIs you rely on are missing; they've likely been moved there.
+Many utility functions and types have been moved to the new `zod/v4/core` package, to facilitate code sharing between `zod` and `zod/v4-mini`. The contents of `zod/v4/core` from `zod`/`zod/v4-mini` using the `z.core` namespace. Check `z.core` if any internal APIs you rely on are missing; they've likely been moved there.
 
 ```ts
-import * as z from "zod/v4";
+import { z } from "zod/v4";
 
 function handleError(iss: z.core.utils.$ZodError) {
   // do stuff
@@ -639,16 +639,16 @@ The `._def` property is now moved to `._zod.def`. The structure of all internal 
 
 {/* The core library also implements the base classes of all schemas (`$ZodType` base class, plus `$ZodString`, `$ZodNumber`, etc), utility functions/types, issue types (`$ZodIssueInvalidType`, etc.), and the base error class (`$ZodError`). If you are building on top of Zod, using the core classes is recommended over using the `zod`-specific classes like (`ZodType`, `ZodString`, etc.). */}
 
-{/* ## The `@zod/core` package
+{/* ## The `zod/v4/core` package
 
-A new `@zod/mini` package is being released concurrently with Zod 4. This is a new package optimized for tree-shakability and intended for use in bundle-size-constrained applications. 
+A new `zod/v4-mini` package is being released concurrently with Zod 4. This is a new package optimized for tree-shakability and intended for use in bundle-size-constrained applications. 
 
-To facilitate code sharing, both `zod` and `@zod/mini` have a dependency on a new common core library called `@zod/core`. This library implements the base classes of all schemas (`$ZodType` base class, plus `$ZodString`, `$ZodNumber`, etc), utility functions/types, issue types (`$ZodIssueInvalidType`, etc.), and the base error class (`$ZodError`).
+To facilitate code sharing, both `zod` and `zod/v4-mini` have a dependency on a new common core library called `zod/v4/core`. This library implements the base classes of all schemas (`$ZodType` base class, plus `$ZodString`, `$ZodNumber`, etc), utility functions/types, issue types (`$ZodIssueInvalidType`, etc.), and the base error class (`$ZodError`).
 
-As you can see these things are all prefixed with `$` to indicate they are implemented in `@zod/core`. Many things formerly exported from `zod` have been moved to `@zod/core`. You can access the contents of `@zod/core` from `zod`/`@zod/mini` using the `z.core` namespace.
+As you can see these things are all prefixed with `$` to indicate they are implemented in `zod/v4/core`. Many things formerly exported from `zod` have been moved to `zod/v4/core`. You can access the contents of `zod/v4/core` from `zod`/`zod/v4-mini` using the `z.core` namespace.
 
 ```ts
-import * as z from "zod/v4";
+import { z } from "zod/v4";
 
 function handleIssue(iss: z.core.$ZodIssue) {
   // do stuff
@@ -661,10 +661,10 @@ This doesn't affect the user-facing APIs, but it's an internal change worth high
 
 Previously both refinements and transformations lived inside a wrapper class called `ZodEffects`. That means adding either one to a schema would wrap the original schema in a `ZodEffects` instance. In Zod 4, refinements now live inside the schemas themselves. More accurately, each schema contains an array of "checks"; the concept of a "check" is new in Zod 4 and generalizes the concept of a refinement to include potentially side-effectful transforms like `z.toLowerCase()`. 
 
-This is particularly apparent in the `@zod/mini` API, which heavily relies on the `.check()` method to compose various validations together.
+This is particularly apparent in the `zod/v4-mini` API, which heavily relies on the `.check()` method to compose various validations together.
 
 ```ts
-import * as z from "zod/v4-mini";
+import { z } from "zod/v4-mini";
 
 z.string().check(
   z.minLength(10),
@@ -679,7 +679,7 @@ z.string().check(
 Meanwhile, transforms have been moved into a dedicated `ZodTransform` class. This schema class represents an input transform; in fact, you can actually define standalone transformations now:
 
 ```ts
-import * as z from "zod/v4";
+import { z } from "zod/v4";
 
 const schema = z.transform(input => String(input));
 

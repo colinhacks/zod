@@ -1,3 +1,3 @@
-import * as z from "zod";
+import { z } from "zod/v4";
 
-z.string();
+z.core.version;

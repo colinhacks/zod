@@ -462,16 +462,12 @@ export function toDotPath(path: (string | number | symbol)[]): string {
   return segs.join("");
 }
 
-export function prettifyError(error: $ZodError): string {
-  // Create a Map to group issues by path
-  // const issuesMap = new Map<string, string[]>();
+interface BaseError {
+  issues: $ZodIssueBase[];
+}
+
+export function prettifyError(error: BaseError): string {
   const lines: string[] = [];
-  // issuesMap.set("", []);
-
-  // if(error.issues.every(issue => issue.path.length === 0)) {
-  //   return error.issues.map(issue => `✖ ${issue.message}`).join("\n");
-  // }
-
   // sort by path length
   const issues = [...error.issues].sort((a, b) => a.path.length - b.path.length);
 

@@ -108,13 +108,13 @@ colors.parse("yellow"); // ❌
 
 To extract the set of allowed values from a literal schema:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]} persist>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]} persist>
+<Tab value="Zod">
 ```ts
 colors.values; // => Set<"red" | "green" | "blue">
 ```
 </Tab>
-<Tab value="@zod/mini">
+<Tab value="Zod Mini">
 ```ts
 // no equivalent
 ```
@@ -125,14 +125,14 @@ colors.values; // => Set<"red" | "green" | "blue">
 
 {/* Zod provides a handful of built-in string validation and transform APIs.
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 z.string().startsWith("fourscore")
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 z.string().check(z.startsWith("fourscore"))
 ```
 </Tab>
@@ -140,14 +140,14 @@ z.string().check(z.startsWith("fourscore"))
 
 All of the APIs documented below support the `error` parameter for customizing the error message.
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 z.string().startsWith("fourscore", {error: "Nice try, buddy"})
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 z.string().check(z.startsWith("fourscore", {error: "Nice try, buddy"}))
 ```
 </Tab></Tabs> */}
@@ -155,8 +155,8 @@ z.string().check(z.startsWith("fourscore", {error: "Nice try, buddy"}))
 
 Zod provides a handful of built-in string validation and transform APIs. To perform some common string validations:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 z.string().max(5);
 z.string().min(5);
@@ -169,8 +169,8 @@ z.string().uppercase();
 z.string().lowercase();
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 z.string().check(z.max(5));
 z.string().check(z.min(5));
 z.string().check(z.length(5));
@@ -186,16 +186,16 @@ z.string().check(z.lowercase());
 
 To perform some simple string transforms:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 z.string().trim(); // trim whitespace
 z.string().toLowerCase(); // toLowerCase
 z.string().toUpperCase(); // toUpperCase
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 z.string().check(z.trim()); // trim whitespace
 z.string().check(z.toLowerCase()); // toLowerCase
 z.string().check(z.toUpperCase()); // toUpperCase
@@ -411,8 +411,8 @@ schema.parse(Infinity);  // ❌
 
 Zod implements a handful of number-specific validations:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 z.number().gt(5);
 z.number().gte(5);                     // alias .min(5)
@@ -425,8 +425,8 @@ z.number().nonpositive();
 z.number().multipleOf(5);              // alias .step(5)
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 z.number().check(z.gt(5));
 z.number().check(z.gte(5));            // alias .min(5)
 z.number().check(z.lt(5));
@@ -466,8 +466,8 @@ z.bigint();
 
 Zod includes a handful of bigint-specific validations.
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 z.bigint().gt(5n);
 z.bigint().gte(5n);                    // alias `.min(5n)`
@@ -480,8 +480,8 @@ z.bigint().nonpositive();
 z.bigint().multipleOf(5n);             // alias `.step(5n)`
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 z.bigint().check(z.gt(5n));
 z.bigint().check(z.gte(5n));           // alias `.min(5n)`
 z.bigint().check(z.lt(5n));
@@ -524,15 +524,15 @@ z.date({
 
 Zod provides a handful of date-specific validations.
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 z.date().min(new Date("1900-01-01"), { error: "Too old!" });
 z.date().max(new Date(), { error: "Too young!" });
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 z.date().check(z.minimum(new Date("1900-01-01"), { error: "Too old!" }));
 z.date().check(z.maximum(new Date(), { error: "Too young!" }));
 ```
@@ -594,8 +594,8 @@ const FishEnum = z.enum(Fish);
 
 To extract the schema's values as an enum-like object:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
 
@@ -603,8 +603,8 @@ FishEnum.enum;
 // => { Salmon: "Salmon", Tuna: "Tuna", Trout: "Trout" }
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
 
 FishEnum.def.entries;
@@ -617,15 +617,15 @@ FishEnum.def.entries;
 
 To create a new enum schema, excluding certain values:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
 const TunaOnly = FishEnum.exclude(["Salmon", "Trout"]);
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 // no equivalent
  
 ```
@@ -636,15 +636,15 @@ const TunaOnly = FishEnum.exclude(["Salmon", "Trout"]);
 
 To create a new enum schema, extracting certain values:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
 const SalmonAndTroutOnly = FishEnum.extract(["Salmon", "Trout"]);
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 // no equivalent
  
 ```
@@ -698,14 +698,14 @@ z.stringbool({
 
 To make a schema *optional* (that is, to allow `undefined` inputs).
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 z.optional(z.literal("yoda")); // or z.literal("yoda").optional()
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 z.optional(z.literal("yoda"));
 ```
 </Tab>
@@ -713,14 +713,14 @@ z.optional(z.literal("yoda"));
 
 This returns a `ZodOptional` instance that wraps the original schema. To extract the inner schema:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 optionalYoda.unwrap(); // ZodLiteral<"yoda">
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 optionalYoda.def.innerType; // ZodMiniLiteral<"yoda">
 ```
 </Tab>
@@ -730,14 +730,14 @@ optionalYoda.def.innerType; // ZodMiniLiteral<"yoda">
 
 To make a schema *nullable* (that is, to allow `null` inputs).
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 z.nullable(z.literal("yoda")); // or z.literal("yoda").nullable()
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 const nullableYoda = z.nullable(z.literal("yoda"));
 ```
 </Tab>
@@ -745,14 +745,14 @@ const nullableYoda = z.nullable(z.literal("yoda"));
 
 This returns a `ZodNullable` instance that wraps the original schema. To extract the inner schema:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 nullableYoda.unwrap(); // ZodLiteral<"yoda">
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 nullableYoda.def.innerType; // ZodMiniLiteral<"yoda">
 ```
 </Tab>
@@ -762,14 +762,14 @@ nullableYoda.def.innerType; // ZodMiniLiteral<"yoda">
 
 To make a schema *nullish* (both optional and nullable):
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const nullishYoda = z.nullish(z.literal("yoda"));
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 const nullishYoda = z.nullish(z.literal("yoda"));
 ```
 </Tab>
@@ -875,15 +875,15 @@ Dog.parse({ name: "Yeller", extraKey: true });
 
 To access the internal schemas:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 Dog.shape.name; // => string schema
 Dog.shape.age; // => number schema
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 Dog.def.shape.name; // => string schema
 Dog.def.shape.age; // => number schema
 ```
@@ -894,15 +894,15 @@ Dog.def.shape.age; // => number schema
 
 To create a `ZodEnum` schema from the keys of an object schema:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const keySchema = Dog.keyof();
 // => ZodEnum<["name", "age"]>
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 const keySchema = z.keyof(Dog);
 // => ZodEnum<["name", "age"]>
 ```
@@ -913,16 +913,16 @@ const keySchema = z.keyof(Dog);
 
 To add additional fields to an object schema:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const DogWithBreed = Dog.extend({
   breed: z.string(),
 });
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 const DogWithBreed = z.extend(Dog, {
   breed: z.string(),
 });
@@ -955,14 +955,14 @@ const Recipe = z.object({
 To pick certain keys:
 
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts zod
 const JustTheTitle = Recipe.pick({ title: true });
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 const JustTheTitle = z.pick(Recipe, { title: true });
 ```
 </Tab>
@@ -973,14 +973,14 @@ const JustTheTitle = z.pick(Recipe, { title: true });
 
 To omit certain keys:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts zod
 const RecipeNoId = Recipe.omit({ id: true });
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 const RecipeNoId = z.omit(Recipe, { id: true });
 ```
 </Tab>
@@ -994,15 +994,15 @@ For convenience, Zod provides a dedicated API for making some or all properties 
 
 To make all fields optional:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts zod
 const PartialRecipe = Recipe.partial();
 // { title?: string | undefined; description?: string | undefined; ingredients?: string[] | undefined }
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 const PartialRecipe = z.partial(Recipe);
 // { title?: string | undefined; description?: string | undefined; ingredients?: string[] | undefined }
 ```
@@ -1011,8 +1011,8 @@ const PartialRecipe = z.partial(Recipe);
 
 To make certain properties optional:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts zod
 const RecipeOptionalIngredients = Recipe.partial({
   ingredients: true,
@@ -1020,8 +1020,8 @@ const RecipeOptionalIngredients = Recipe.partial({
 // { title: string; description?: string | undefined; ingredients?: string[] | undefined }
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 const RecipeOptionalIngredients = z.partial(Recipe, {
   ingredients: true,
 });
@@ -1036,15 +1036,15 @@ Zod provides an API for making some or all properties *required*, inspired by Ty
 
 To make all properties required:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts zod
 const RequiredRecipe = Recipe.required();
 // { title: string; description: string; ingredients: string[] }
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 const RequiredRecipe = z.required(Recipe);
 // { title: string; description: string; ingredients: string[] }
 ```
@@ -1053,15 +1053,15 @@ const RequiredRecipe = z.required(Recipe);
 
 To make certain properties required:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts zod
 const RecipeRequiredDescription = Recipe.required({description: true});
 // { title: string; description: string; ingredients: string[] }
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 const RecipeRequiredDescription = z.required(Recipe, {description: true});
 // { title: string; description: string; ingredients: string[] }
 ```
@@ -1112,14 +1112,14 @@ All object APIs (pick, omit, required, partial, etc) work as you'd expect.
 
 To define an array schema:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const stringArray = z.array(z.string()); // or z.string().array()
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 const stringArray = z.array(z.string());
 ```
 </Tab>
@@ -1127,14 +1127,14 @@ const stringArray = z.array(z.string());
 
 To access the inner schema for an element of the array.
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 stringArray.unwrap(); // => string schema
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 stringArray.def.element; // => string schema
 ```
 </Tab>
@@ -1143,16 +1143,16 @@ stringArray.def.element; // => string schema
 
 ### `.min/.max/.length`
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 z.array(z.string()).min(5); // must contain 5 or more items
 z.array(z.string()).max(5); // must contain 5 or fewer items
 z.array(z.string()).length(5); // must contain 5 items exactly
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 z.array(z.string()).check(z.minLength(5)); // must contain 5 or more items
 z.array(z.string()).check(z.maxLength(5)); // must contain 5 or fewer items
 z.array(z.string()).check(z.length(5)); // must contain 5 items exactly
@@ -1198,14 +1198,14 @@ stringOrNumber.parse(14); // passes
 
 To extract the internal option schemas:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 stringOrNumber.options; // [ZodString, ZodNumber]
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 stringOrNumber.def.options; // [ZodString, ZodNumber]
 ```
 </Tab>
@@ -1437,15 +1437,15 @@ NumberSet.parse(mySet);
 
 Set schemas can be further constrained with the following utility methods.
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 z.set(z.string()).min(5); // must contain 5 or more items
 z.set(z.string()).max(5); // must contain 5 or fewer items
 z.set(z.string()).size(5); // must contain 5 items exactly
 ```
 </Tab>
-<Tab value='@zod/mini'>
+<Tab value='zod/v4-mini'>
 ```ts
 z.set(z.string()).check(z.minSize(5)); // must contain 5 or more items
 z.set(z.string()).check(z.maxSize(5)); // must contain 5 or fewer items
@@ -1516,14 +1516,14 @@ Every Zod schema stores an array of *refinements*. Refinements are a way to perf
 
 ### `.refine()` */}
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const myString = z.string().refine((val) => val.length <= 255);
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 const myString = z.string().check(z.refine((val) => val.length <= 255));
 ```
 </Tab>
@@ -1535,16 +1535,16 @@ const myString = z.string().check(z.refine((val) => val.length <= 255));
 
 To customize the error message:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const myString = z.string().refine((val) => val.length > 8, { 
   error: "Too short!" 
 });
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 const myString = z.string().check(
   z.refine((val) => val.length > 8, { error: "Too short!" })
 );
@@ -1555,8 +1555,8 @@ const myString = z.string().check(
 
 By default, validation issues from checks are considered *continuable*; that is, Zod will execute *all* checks in sequence, even if one of them causes a validation error. This is usually desirable, as it means Zod can surface as many errors as possible in one go.
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const myString = z.string()
   .refine((val) => val.length > 8)
@@ -1571,8 +1571,8 @@ result.error.issues;
 ] */
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 const myString = z.string().check(
   z.refine((val) => val.length > 8),
   z.refine((val) => val === val.toLowerCase())
@@ -1590,8 +1590,8 @@ result.error.issues;
 
 To mark a particular refinement as *non-continuable*, use the `abort` parameter. Validation will terminate if the check fails.
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const myString = z.string()
   .refine((val) => val.length > 8, { abort: true })
@@ -1603,8 +1603,8 @@ result.error!.issues;
 // => [{ "code": "custom", "message": "Too short!" }]
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 const myString = z.string().check(
   z.refine((val) => val.length > 8, { abort: true }),
   z.refine((val) => val === val.toLowerCase(), { abort: true })
@@ -1619,8 +1619,8 @@ result.error!.issues;
 
 To customize the error path, use the `path` parameter. This is typically only useful in the context of object schemas.
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const passwordForm = z
   .object({
@@ -1633,7 +1633,7 @@ const passwordForm = z
   });
 ```
 </Tab>
-<Tab value="@zod/mini">
+<Tab value="Zod Mini">
 ```ts
 const passwordForm = z
   .object({
@@ -1650,8 +1650,8 @@ const passwordForm = z
 
 This will set the `path` parameter in the associated issue:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const result = passwordForm.safeParse({ password: "asdf", confirm: "qwer" });
 result.error.issues;
@@ -1662,7 +1662,7 @@ result.error.issues;
 }] */
 ```
 </Tab>
-<Tab value="@zod/mini">
+<Tab value="Zod Mini">
 ```ts
 const result = z.safeParse(passwordForm, { password: "asdf", confirm: "qwer" });
 result.error.issues;
@@ -1687,13 +1687,13 @@ const userId = z.string().refine(async (id) => {
 <Callout>
   If you use async refinements, you must use the `.parseAsync` method to parse data! Otherwise Zod will throw an error.
 
-  <Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-  <Tab value="zod">
+  <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+  <Tab value="Zod">
   ```ts
   const result = await userId.parseAsync("abc123");
   ```
   </Tab>
-  <Tab value="@zod/mini">
+  <Tab value="Zod Mini">
   ```ts
   const result = await z.parseAsync(userId, "abc123");
   ```
@@ -1709,8 +1709,8 @@ const userId = z.string().refine(async (id) => {
   <Accordions>
   <Accordion title="View .superRefine() example">
     
-    <Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-    <Tab value="zod">
+    <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+    <Tab value="Zod">
     ```ts
     const UniqueStringArray = z.array(z.string()).superRefine((val, ctx) => {
       if (val.length > 3) {
@@ -1734,7 +1734,7 @@ const userId = z.string().refine(async (id) => {
     });
     ```
     </Tab>
-    <Tab value="@zod/mini">
+    <Tab value="Zod Mini">
     ```ts
     // no equivalent, use `z.check()` instead
      
@@ -1768,8 +1768,8 @@ const userId = z.string().refine(async (id) => {
 
 The `.refine()` API is syntactic sugar atop a more versatile (and verbose) API called `.check()`. You can use this API to create multiple issues in a single refinement or have full control of the generated issue objects.
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const UniqueStringArray = z.array(z.string()).check((ctx) => {
   if (ctx.value.length > 3) {
@@ -1794,7 +1794,7 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
 });
 ```
 </Tab>
-<Tab value="@zod/mini">
+<Tab value="Zod Mini">
 ```ts
 const UniqueStringArray = z.array(z.string()).check((ctx) => {
   if (ctx.value.length > 3) {
@@ -1827,15 +1827,15 @@ The regular `.refine` API only generates issues with a `"custom"` error code, bu
 
 Schemas can be chained together into "pipes". Pipes are primarily useful when used in conjunction with [Transforms](#transforms).
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const stringToLength = z.string().pipe(z.transform(val => val.length));
 
 stringToLength.parse("hello"); // => 5
 ```
 </Tab>
-<Tab value="@zod/mini">
+<Tab value="Zod Mini">
 ```ts
 const stringToLength = z.pipe(z.string(), z.transform(val => val.length));
 
@@ -1849,8 +1849,8 @@ z.parse(stringToLength, "hello"); // => 5
 
 Transforms are a special kind of schema. Instead of validating input, they accept anything and perform some transformation on the data. To define a transform:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const castToString = z.transform((val) => String(val));
 
@@ -1859,8 +1859,8 @@ castToString.parse(123); // => "123"
 castToString.parse(true); // => "true"
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 const castToString = z.transform((val) => String(val));
 
 z.parse(castToString, "asdf"); // => "asdf"
@@ -1872,16 +1872,16 @@ z.parse(castToString, true); // => "true"
 
 {/* The output type of the schema is inferred from the transform function:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const castToString = z.transform((val) => String(val));
 
 type CastToString = z.infer<typeof castToString>; // string
 ```
 </Tab>
-<Tab value="@zod/mini">
-```ts @zod/mini
+<Tab value="Zod Mini">
+```ts zod/v4-mini
 const castToString = z.transform((val) => String(val));
 
 type CastToString = z.infer<typeof castToString>; // string
@@ -1914,15 +1914,15 @@ const coercedInt = z.transform((val, ctx) => {
 Most commonly, transforms are used in conjunction with [Pipes](#pipes). This combination is useful for performing some initial validation, then transforming the parsed data into another form.
 
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const stringToLength = z.string().pipe(z.transform(val => val.length));
 
 stringToLength.parse("hello"); // => 5
 ```
 </Tab>
-<Tab value="@zod/mini">
+<Tab value="Zod Mini">
 ```ts
 const stringToLength = z.pipe(z.string(), z.transform(val => val.length));
 
@@ -1935,13 +1935,13 @@ z.parse(stringToLength, "hello"); // => 5
 
 Piping some schema into a transform is a common pattern, so Zod provides a convenience `.transform()` method.
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const stringToLength = z.string().transform(val => val.length); 
 ```
 </Tab>
-<Tab value="@zod/mini">
+<Tab value="Zod Mini">
 ```ts
 // no equivalent
 ```
@@ -1950,8 +1950,8 @@ const stringToLength = z.string().transform(val => val.length);
 
 Transforms can also be async:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const idToUser = z
   .string()
@@ -1963,7 +1963,7 @@ const idToUser = z
 const user = await idToUser.parseAsync("abc123");
 ```
 </Tab>
-<Tab value="@zod/mini">
+<Tab value="Zod Mini">
 ```ts
 const idToUser = z.pipe(
   z.string(),
@@ -1989,15 +1989,15 @@ Piping a transform into another schema is another common pattern, so Zod provide
 
 To set a default value for a schema:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const defaultTuna = z.string().default("tuna");
 
 defaultTuna.parse(undefined); // => "tuna"
 ```
 </Tab>
-<Tab value="@zod/mini">
+<Tab value="Zod Mini">
 ```ts
 const defaultTuna = z._default(z.string(), "tuna");
 
@@ -2008,8 +2008,8 @@ defaultTuna.parse(undefined); // => "tuna"
 
 Alternatively, you can pass a function which will be re-executed whenever a default value needs to be generated:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const randomDefault = z.number().default(Math.random);
 
@@ -2018,7 +2018,7 @@ randomDefault.parse(undefined);    // => 0.1871840107401901
 randomDefault.parse(undefined);    // => 0.7223408162401552
 ```
 </Tab>
-<Tab value="@zod/mini">
+<Tab value="Zod Mini">
 ```ts
 const randomDefault = z._default(z.number(), Math.random);
 
@@ -2033,8 +2033,8 @@ z.parse(randomDefault, undefined); // => 0.7223408162401552
 
 Use `.catch()` to define a fallback value to be returned in the event of a validation error:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const numberWithCatch = z.number().catch(42);
 
@@ -2042,7 +2042,7 @@ numberWithCatch.parse(5); // => 5
 numberWithCatch.parse("tuna"); // => 42
 ```
 </Tab>
-<Tab value="@zod/mini">
+<Tab value="Zod Mini">
 ```ts
 const numberWithCatch = z.catch(z.number(), 42);
 
@@ -2055,8 +2055,8 @@ numberWithCatch.parse("tuna"); // => 42
 
 Alternatively, you can pass a function which will be re-executed whenever a catch value needs to be generated.
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const numberWithRandomCatch = z.number().catch((ctx) => {
   ctx.error; // the caught ZodError
@@ -2068,7 +2068,7 @@ numberWithRandomCatch.parse("sup"); // => 0.1871840107401901
 numberWithRandomCatch.parse("sup"); // => 0.7223408162401552
 ```
 </Tab>
-<Tab value="@zod/mini">
+<Tab value="Zod Mini">
 ```ts
 const numberWithRandomCatch = z.catch(z.number(), (ctx) => {
   ctx.value;   // the input value
@@ -2124,15 +2124,15 @@ With this brand, any plain (unbranded) data structures are no longer assignable 
 
 To mark a schema as readonly:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const ReadonlyUser = z.object({ name: z.string() }).readonly();
 type ReadonlyUser = z.infer<typeof ReadonlyUser>;
 // Readonly<{ name: string }>
 ```
 </Tab>
-<Tab value="@zod/mini">
+<Tab value="Zod Mini">
 ```ts
 const ReadonlyUser = z.readonly(z.object({ name: z.string() }));
 type ReadonlyUser = z.infer<typeof ReadonlyUser>;
@@ -2143,8 +2143,8 @@ type ReadonlyUser = z.infer<typeof ReadonlyUser>;
 
 This returns a new schema that wraps the original. The new schema's inferred type will be marked as `readonly`. Note that this only affects objects, arrays, tuples, `Set`, and `Map` in TypeScript:
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 z.object({ name: z.string() }).readonly(); // { readonly name: string }
 z.array(z.string()).readonly(); // readonly string[]
@@ -2153,7 +2153,7 @@ z.map(z.string(), z.date()).readonly(); // ReadonlyMap<string, Date>
 z.set(z.string()).readonly(); // ReadonlySet<string>
 ```
 </Tab>
-<Tab value="@zod/mini">
+<Tab value="Zod Mini">
 ```ts
 z.readonly(z.object({ name: z.string() })); // { readonly name: string }
 z.readonly(z.array(z.string())); // readonly string[]
@@ -2166,14 +2166,14 @@ z.readonly(z.set(z.string())); // ReadonlySet<string>
 
 Inputs will be parsed using the original schema, then the result will be frozen with [`Object.freeze()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze) to prevent modifications.
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const result = ReadonlyUser.parse({ name: "fido" });
 result.name = "simba"; // throws TypeError
 ```
 </Tab>
-<Tab value="@zod/mini">
+<Tab value="Zod Mini">
 ```ts
 const result = z.parse(ReadonlyUser, { name: "fido" });
 result.name = "simba"; // throws TypeError

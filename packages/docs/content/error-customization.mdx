@@ -8,15 +8,15 @@ import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 In Zod, validation errors are surfaced as instances of the `z.core.$ZodError` class.
 
-> The `zod` package uses a subclass of this called `ZodError` that implements some additional convenience methods.
+> The `zod/v4` package uses a subclass of this called `z.ZodError` that implements some additional convenience methods.
 
-Instances of `$ZodError` contain an `.issues` property containing a human-readable `message` and additional structured information about each encountered validation issue.
+Instances of `$ZodError` contain an `.issues` array. Each issue contains a human-readable `message` and additional structured metadata about the issue.
 
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
-import * as z from "zod/v4";
+import { z } from "zod/v4";
 
 const result = z.string().safeParse(12); // { success: false, error: ZodError }
 result.error.issues;
@@ -30,9 +30,9 @@ result.error.issues;
 // ]
 ```
 </Tab>
-<Tab value="@zod/mini">
+<Tab value="Zod Mini">
 ```ts
-import * as z from "@zod/min";
+import { z } from "zod/v4-mini";
 
 const result = z.string().safeParse(12); // { success: false, error: z.core.$ZodError }
 result.error.issues;
@@ -51,19 +51,7 @@ result.error.issues;
 
 {/* ## Customization */}
 
-Every issue inside a `$ZodError` contains a `message` property with a human-readable error message. This message can be customized in a number of ways.
-
-{/* ## Error reporting in Zod
-
-Both Zod and `@zod/mini` depend on an common internal library called `@zod/core`. This core library exports an error class `$ZodError`, which serves as the basis for all error reporting in Zod. You can access this class using the `z.core` namespace.
-
-```ts
-import * as z from "zod/v4";
-
-z.core.$ZodError;
-```
-
-The `zod` library exports a subclass of `$ZodError` called simply `ZodError`. This subclass adds some convenience methods to the base class. */}
+Every issue contains a `message` property with a human-readable error message. Error messages can be customized in a number of ways.
 
 
 ## The `error` param
@@ -92,8 +80,8 @@ z.string("Not a string!").parse(12);
 
 All `z` functions and schema methods accept custom errors.
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 z.string("Bad!");
 z.string().min(5, "Too short!");
@@ -104,7 +92,7 @@ z.array(z.string()).min(5, "Too few items!");
 z.set(z.string(), "Bad set!");
 ```
 </Tab>
-<Tab value="@zod/mini">
+<Tab value="Zod Mini">
 ```ts
 z.string("Bad!");
 z.string().check(z.minLength(5, "Too short!"));
@@ -119,8 +107,8 @@ z.set(z.string(), "Bad set!");
 
 If you prefer, you can pass a params object with an `error` parameter instead.
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 z.string({ error: "Bad!" });
 z.string().min(5, { error: "Too short!" });
@@ -131,7 +119,7 @@ z.array(z.string()).min(5, { error: "Too few items!" });
 z.set(z.string(), { error: "Bad set!" });
 ```
 </Tab>
-<Tab value="@zod/mini">
+<Tab value="Zod Mini">
 ```ts
 z.string({ error: "Bad!" });
 z.string().check(z.minLength(5, { error: "Too short!" }));
@@ -158,15 +146,15 @@ z.string({ error: ()=>`[${Date.now()}]: Validation failure.` });
 
 The `error` function received a context object you can use to customize the error message based on the `input` or other validation information.
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 z.string({
   error: (iss) => iss.input===undefined ? "Field is required." : "Invalid input."
 });
 ```
 </Tab>
-<Tab value="@zod/mini">
+<Tab value="Zod Mini">
 ```ts
 z.string({
   error: (iss) => iss.input===undefined ? "Field is required." : "Invalid input."
@@ -178,8 +166,8 @@ z.string({
 For advanced cases, the `iss` object provides additional information you can use to customize the error.
 
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 z.string({
   error: (iss) => {
@@ -191,7 +179,7 @@ z.string({
 });
 ```
 </Tab>
-<Tab value="@zod/mini">
+<Tab value="Zod Mini">
 ```ts
 z.string({
   error: (iss) => {
@@ -245,7 +233,7 @@ result.error.issues;
 
 The `iss` object is a [discriminated union](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions) of all possible issue types. Use the `code` property to discriminate between them.
 
-> For a breakdown of all Zod issue codes, see the [`@zod/core`](/packages/core#issue-types) documentation.
+> For a breakdown of all Zod issue codes, see the [`zod/v4/core`](/packages/core#issue-types) documentation.
 
 ```ts
 const result = schema.safeParse(12, {
@@ -277,7 +265,7 @@ Global error messages have *lower precedence* than schema-level or per-parse err
 
 The `iss` object is a [discriminated union](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions) of all possible issue types. Use the `code` property to discriminate between them.
 
-> For a breakdown of all Zod issue codes, see the [`@zod/core`](/packages/core#issue-types) documentation.
+> For a breakdown of all Zod issue codes, see the [`zod/v4/core`](/packages/core#issue-types) documentation.
 
 ```ts
 const result = schema.safeParse(12, {
@@ -295,23 +283,23 @@ const result = schema.safeParse(12, {
 
 ## Internationalization
 
-To support internationalization of error message, Zod provides several built-in **locales**. These are exported from the `@zod/core` package.
+To support internationalization of error message, Zod provides several built-in **locales**. These are exported from the `zod/v4/core` package.
 
-> **Note** — The `zod` library automatically loads the `en` locale automatically. The `@zod/mini`package does not load any locale; instead all error messages default to `Invalid input`.
+> **Note** — The `zod` library automatically loads the `en` locale automatically. The `zod/v4-mini` sub-package does not load any locale; instead all error messages default to `Invalid input`.
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
-import * as z from "zod/v4";
-import en from "@zod/core/locales/en"
+import { z } from "zod/v4";
+import en from "zod/v4/locales/en"
 
 z.config(en());
 ```
 </Tab>
-<Tab value="@zod/mini">
+<Tab value="Zod Mini">
 ```ts
-import * as z from "zod/v4-mini"
-import en from "@zod/core/locales/en"
+import { z } from "zod/v4-mini"
+import en from "zod/v4/locales/en"
 
 z.config(en());
 ```
@@ -321,35 +309,34 @@ z.config(en());
 To lazily load a locale, consider dynamic imports:
 
 ```ts
-import * as z from "zod/v4";
+import { z } from "zod/v4";
 
-async function loadLocale (locale: string) {
-  const { default: locale } = await import(`@zod/core/locales/${locale}`);
+async function loadLocale(locale: string) {
+  const { default: locale } = await import(`zod/v4/locales/${locale}`);
   z.config(locale());
 };
 
 await loadLocale("fr");
 ```
 
-For convenience, all locales are exported as `z.locales` feom `zod`/`@zod/mini`.
+For convenience, all locales are exported as `z.locales` from `zod/v4/locales`.
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
-import * as z from "zod/v4";
+import { z } from "zod/v4";
 
 z.config(z.locales.en());
 ```
 </Tab>
-<Tab value="@zod/mini">
+<Tab value="Zod Mini">
 ```ts
-import * as z from "zod/v4-mini"
+import { z } from "zod/v4-mini"
 
 z.config(z.locales.en());
 ```
 </Tab>
 </Tabs>
-
 
 ### Locales
 

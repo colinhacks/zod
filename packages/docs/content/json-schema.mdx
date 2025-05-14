@@ -14,7 +14,7 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 To convert a Zod schema to JSON Schema, use the `z.toJSONSchema()` function.
 
 ```ts
-import * as z from "zod/v4";
+import { z } from "zod/v4";
 
 const schema = z.object({
   name: z.string(),
@@ -268,10 +268,10 @@ z.toJSONSchema(schema, { target: "draft-2020-12" });
 
 In Zod, metadata is stored in registries. Zod exports a global registry `z.globalRegistry` that can be used to store common metadata fields like `id`, `title`, `description`, and `examples`. 
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
-import * as z from "zod/v4";
+import { z } from "zod/v4";
 
 // `.meta()` is a convenience method for registering a schema in `z.globalRegistry`
 const emailSchema = z.string().meta({ 
@@ -283,9 +283,9 @@ z.toJSONSchema(emailSchema);
 // => { type: "string", title: "Email address", description: "Your email address", ... } 
 ```
 </Tab>
-<Tab value="@zod/mini">
+<Tab value="Zod Mini">
 ```ts
-import * as z from "zod/v4";
+import { z } from "zod/v4";
 
 // `.meta()` is a convenience method for registering a schema in `z.globalRegistry`
 const emailSchema = z.string().register(z.globalRegistry, { 
@@ -808,7 +808,7 @@ Passing a schema into `z.toJSONSchema()` will return a *self-contained* JSON Sch
 In other cases, you may have a set of Zod schemas you'd like to represent using multiple interlinked JSON Schemas, perhaps to write to `.json` files and serve from a web server. To achieve this, you can pass a [registry](/metadata#registries) into `z.toJSONSchema()`.
 
 ```ts
-import * as z from "zod/v4";
+import { z } from "zod/v4";
 
 const User = z.object({
   name: z.string(),

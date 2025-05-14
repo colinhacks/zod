@@ -1,0 +1,138 @@
+---
+title: For library authors
+---
+
+import { Callout } from "fumadocs-ui/components/callout"
+
+This page is primarily intended for consumption by *library authors* who are building tooling on top of Zod. 
+
+
+> If you are a library author and think this page should include some additional guidance, please open an issue!
+
+## Do I need to depend on Zod?
+
+First things first, make sure you need to depend on Zod at all. 
+
+If you're building a library that accepts user-defined schemas to perform black-box validation, you may not need to integrate with `zod` specifically. Instead look into [Standard Schema](https://standardschema.dev/). It's a shared interface implemented by most popular validation libraries in the TypeScript ecosystem (see the [full list](https://standardschema.dev/#what-schema-libraries-implement-the-spec)), including Zod. 
+
+This spec works great if you accept user-defined schemas and treat them like "black box" validators. Given any compliant library, you can extract inferred input/output types, validate inputs, and get back a standardized error.
+
+If you need Zod specific functionality, read on.
+
+## Peer dependencies
+
+Generally speaking, any library built on top of Zod should include `zod` in `"peerDependencies"`. This lets your users "bring their own Zod".
+
+
+```json
+// package.json
+{
+  // ...
+  "peerDependencies": {
+    "zod": "^3.25.0"
+  }
+}
+```
+
+When your user installs `zod` or `zod/v4-mini`, their package manager will automatically install `zod/v4/core` too. So this peer dependency will be met as long as your user has one of these packages installed.
+
+During development, you need to meet your own peer dependency requirement, to do so, add `zod` to your `"devDependencies"` as well. You'll need to use `zod@next` until `zod@3.25.0` is stably released. 
+
+
+```ts
+// package.json
+{
+  "peerDependencies": {
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "zod": "next"
+  }
+}
+```
+
+## How to support Zod 4?
+
+To support Zod 4, update the minimum version for your `zod` peer dependency to `^3.25.0`. 
+
+```json
+// package.json
+{
+  // ...
+  "peerDependencies": {
+    "zod": "^3.25.0"
+  }
+}
+```
+
+Starting with `v3.25.0`, Zod 4 is available at a `/v4` subpath. 
+
+```ts
+import * as z3 from "zod/v3";
+import * as z4 from "zod/v4/core";
+```
+
+You should *not* import from the package root (`"zod"`)! Currently the package root exports `zod/v3`. At some point in the future, this will be changed such that the root exports `zod/v4`, at which point the package will be bumped to `v4.0.0` on `npm`.
+
+## How to support Zod 3 and Zod 4 simultaneously?
+
+Starting in `v3.25.0`, the package contains copies of both Zod 3 and Zod 4 at their respective subpaths. This makes it easy to support both versions simultaneously.
+
+```ts
+import * as z3 from "zod/v3";
+import * as z4 from "zod/v4/core";
+
+
+type Schema = z3.ZodTypeAny | z4.$ZodType;
+
+function acceptUserSchema(schema: z3.ZodTypeAny | z4.$ZodType) {
+  // ...
+}
+```
+
+To differentiate between Zod 3 and Zod 4 schemas at runtime, check for the `"_zod"` property. This property is only defined on Zod 4 schemas.
+
+```ts
+import type * as z3 from "zod/v3";
+import type * as v4 from "zod/v4/core";
+
+declare const schema: z3.ZodTypeAny | v4.$ZodType;
+
+if ("_zod" in schema) {
+  schema._zod.def; // Zod 4 schema
+} else {
+  schema._def; // Zod 3 schema
+}
+```
+
+## How to support Zod 4 (regular) and Zod 4 Mini simultaneously?
+
+Libraries should *only* be using types from `zod/v4/core`. This sub-package defines the interfaces, classes, and utilities that are shared between `zod/v4` and `zod/v4-mini`. 
+
+Refer to the [Zod Core](/packages/core) page for more information.
+
+{/* ### Future proofing
+
+To future-proof your library, your code should always allow for new schema and check classes to be added in the future. The addition of a new schema type is *not* considered a breaking change. 
+
+One common pattern when introspecting Zod schemas is to write a switch statement over the set of first-party schema types:
+
+```ts
+const schema = {} as z.$ZodTypes;
+const def = schema._zod.def;
+switch (def.type) {
+  case "string":
+    // ...
+    break;
+  case "object":
+    // ...
+    break;
+  default:
+    console.warn(`Unknown schema type: ${def.type}`);
+    // reasonable fallback behavior
+}
+```
+
+To future-proof this code, your `default` case should probably not throw an error. Instead, it should print an informative error and fall back to some reasonable behavior. If instead you `throw` an error in the default case, your library will be unusable if/when new schemas types are added in the future. Best to print a warning and treat it as a "no-op" (or some other reasonable fallback behavior). The same applies to unrecognized check types, string formats, etc.
+
+ */}
