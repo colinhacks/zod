@@ -107,7 +107,34 @@ if ("_zod" in schema) {
 
 ## How to support Zod 4 (regular) and Zod 4 Mini simultaneously?
 
-Libraries should *only* be using types from `zod/v4/core`. This sub-package defines the interfaces, classes, and utilities that are shared between `zod/v4` and `zod/v4-mini`. 
+Libraries should *only* be using types from `zod/v4/core`. This sub-package defines the interfaces, classes, and utilities that are shared between `zod/v4` and `zod/v4-mini`. By building against the shared base interfaces, you can reliably support both sub-packages without duplicate code.
+
+```ts
+// library code
+import * as z from "zod/v4/core";
+
+export function acceptObjectSchema<T extends z.$ZodObject>(schema: T){
+  // parse data
+  z.parse(schema, { /* somedata */});
+  // inspect internals
+  schema._zod.def.shape;
+}
+```
+
+This function can accept both `zod/v4` and `zod/v4-mini` schemas. 
+
+```ts
+// user code
+import { acceptObjectSchema } from "your-library";
+
+// Zod 4
+import * as z from "zod/v4";
+acceptObjectSchema(z.object({ name: z.string() }));
+
+// Zod 4 Mini
+import * as zm from "zod/v4-mini";
+acceptObjectSchema(zm.object({ name: zm.string() }))
+```
 
 Refer to the [Zod Core](/packages/core) page for more information.
 
