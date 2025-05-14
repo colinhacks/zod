@@ -7,16 +7,13 @@ import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 
 > Refer to the [Changelog](/v4/changelog) for a complete list of breaking changes. 
 
-Zod 4 is now in beta after over a year of active development. It's faster, slimmer, more `tsc`-efficient, and implements some long-requested features.
+Zod 4 is now in beta after over a year of active development. It's faster, slimmer, more `tsc`-efficient, and implements some long-requested features. 
 
 To install the beta:
 
 ```
 pnpm upgrade zod@next 
 ```
-
-
-Development will continue on the [`v4`](https://github.com/colinhacks/zod/tree/v4) branch over a 4-6 week beta period as I work with libraries to ensure day-one compatibility with the first stable release.
 
 To give the ecosystem time to migrate, Zod 4 will initially be published alongsize Zod 3. It will be consumable as a subpath import:
 
@@ -26,8 +23,8 @@ import { z } from "zod/v4";
 
 During this transition window:
 
-1. Zod 4 will be considered 100% stable and production-ready
-2. The `"zod"` package will continue to be published in the `3.x.x` version range on npm. The `/v4` subpath will be added in the `zod@3.25` release.
+1. *Zod 4 is considered 100% stable and production-ready!*
+2. The `"zod"` package will continue to be published in the `3.x.x` version range on npm. The `/v4` subpath will be added in the `zod@3.25.0` release.
 3. Zod 3 will continue to be exported from the package root (`"zod"`) as well as a new subpath (`"zod/v3"`). It will continue to receive bug fixes & stability improvements.
 
 <Accordions>
@@ -53,6 +50,7 @@ During this transition window:
 </Accordion>
 </Accordions>
 
+Development will continue on the [`v4`](https://github.com/colinhacks/zod/tree/v4) branch over a 4-6 week beta period as I work with libraries to ensure day-one compatibility with the first stable release.
 
 <Callout icon="❤️"> 
 Huge thanks to [Clerk](https://go.clerk.com/zod-clerk), who supported my work on Zod 4 through their extremely generous [OSS Fellowship](https://clerk.com/blog/zod-fellowship). They were an amazing partner throughout the (much longer than anticipated!) development process.
