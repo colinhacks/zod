@@ -4,9 +4,7 @@ name: Release betas
 on:
   push:
     branches:
-      - v4
-    paths:
-      - 'packages/zod/src/v4/versions.ts'
+      - v4 # release on all commits to v4
 jobs:
   build_and_publish:
     runs-on: ubuntu-latest
