@@ -87,7 +87,8 @@
   - [Dates](#dates)
   - [Times](#times)
   - [IP addresses](#ip-addresses)
-  - [IP ranges](#ip-ranges-cidr)
+  - [IP ranges (CIDR)](#ip-ranges-cidr)
+  - [MAC addresses](#mac-addresses)
 - [Numbers](#numbers)
 - [BigInts](#bigints)
 - [NaNs](#nans)
@@ -118,7 +119,6 @@
 - [Unions](#unions)
 - [Discriminated unions](#discriminated-unions)
 - [Records](#records)
-  - [Record key type](#record-key-type)
 - [Maps](#maps)
 - [Sets](#sets)
 - [Intersections](#intersections)
@@ -166,6 +166,7 @@
 - [Guides and concepts](#guides-and-concepts)
   - [Type inference](#type-inference)
   - [Writing generic functions](#writing-generic-functions)
+    - [Inferring the inferred type](#inferring-the-inferred-type)
     - [Constraining allowable inputs](#constraining-allowable-inputs)
   - [Error handling](#error-handling)
   - [Error formatting](#error-formatting)
@@ -850,6 +851,7 @@ z.string().date(); // ISO date format (YYYY-MM-DD)
 z.string().time(); // ISO time format (HH:mm:ss[.SSSSSS] or HH:mm)
 z.string().duration(); // ISO 8601 duration
 z.string().base64();
+z.string().mac(); // Validate 48-bit MAC  
 ```
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions that can be used in conjunction with [Refinements](#refine).
@@ -881,6 +883,7 @@ z.string().date({ message: "Invalid date string!" });
 z.string().time({ message: "Invalid time string!" });
 z.string().ip({ message: "Invalid IP address" });
 z.string().cidr({ message: "Invalid CIDR" });
+z.string().mac({ message: "Invalid MAC address" });
 ```
 
 ### Datetimes
@@ -1017,6 +1020,18 @@ ipv4Cidr.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // fail
 
 const ipv6Cidr = z.string().cidr({ version: "v6" });
 ipv6Cidr.parse("192.168.1.1"); // fail
+```
+ ### MAC addresses
+
+Validate standard 48-bit MAC address [IEEE 802](https://en.wikipedia.org/wiki/MAC_address).
+
+```ts
+const mac = z.string().mac();
+mac.parse("00:1A:2B:3C:4D:5E"); // Pass
+mac.parse("98-76-54-32-10-FF"); // Pass
+mac.parse("00:1A:2B:3C:4D:5E:FF"); // Fail
+// Fails if mixed separator is used
+mac.parse("00:1A:2B-3C:4D:5E"); // Fail
 ```
 
 <br/>

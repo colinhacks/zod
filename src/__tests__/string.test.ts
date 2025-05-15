@@ -464,6 +464,7 @@ test("checks getters", () => {
   expect(z.string().email().isIP).toEqual(false);
   expect(z.string().email().isCIDR).toEqual(false);
   expect(z.string().email().isULID).toEqual(false);
+  expect(z.string().email().isMac).toEqual(false);
 
   expect(z.string().url().isEmail).toEqual(false);
   expect(z.string().url().isURL).toEqual(true);
@@ -474,6 +475,7 @@ test("checks getters", () => {
   expect(z.string().url().isIP).toEqual(false);
   expect(z.string().url().isCIDR).toEqual(false);
   expect(z.string().url().isULID).toEqual(false);
+  expect(z.string().url().isMac).toEqual(false);
 
   expect(z.string().cuid().isEmail).toEqual(false);
   expect(z.string().cuid().isURL).toEqual(false);
@@ -484,6 +486,7 @@ test("checks getters", () => {
   expect(z.string().cuid().isIP).toEqual(false);
   expect(z.string().cuid().isCIDR).toEqual(false);
   expect(z.string().cuid().isULID).toEqual(false);
+  expect(z.string().cuid().isMac).toEqual(false);
 
   expect(z.string().cuid2().isEmail).toEqual(false);
   expect(z.string().cuid2().isURL).toEqual(false);
@@ -494,6 +497,7 @@ test("checks getters", () => {
   expect(z.string().cuid2().isIP).toEqual(false);
   expect(z.string().cuid2().isCIDR).toEqual(false);
   expect(z.string().cuid2().isULID).toEqual(false);
+  expect(z.string().cuid2().isMac).toEqual(false);
 
   expect(z.string().uuid().isEmail).toEqual(false);
   expect(z.string().uuid().isURL).toEqual(false);
@@ -504,6 +508,7 @@ test("checks getters", () => {
   expect(z.string().uuid().isIP).toEqual(false);
   expect(z.string().uuid().isCIDR).toEqual(false);
   expect(z.string().uuid().isULID).toEqual(false);
+  expect(z.string().uuid().isMac).toEqual(false);
 
   expect(z.string().nanoid().isEmail).toEqual(false);
   expect(z.string().nanoid().isURL).toEqual(false);
@@ -514,6 +519,7 @@ test("checks getters", () => {
   expect(z.string().nanoid().isIP).toEqual(false);
   expect(z.string().nanoid().isCIDR).toEqual(false);
   expect(z.string().nanoid().isULID).toEqual(false);
+  expect(z.string().nanoid().isMac).toEqual(false);
 
   expect(z.string().ip().isEmail).toEqual(false);
   expect(z.string().ip().isURL).toEqual(false);
@@ -524,6 +530,7 @@ test("checks getters", () => {
   expect(z.string().ip().isIP).toEqual(true);
   expect(z.string().ip().isCIDR).toEqual(false);
   expect(z.string().ip().isULID).toEqual(false);
+  expect(z.string().ip().isMac).toEqual(false);
 
   expect(z.string().cidr().isEmail).toEqual(false);
   expect(z.string().cidr().isURL).toEqual(false);
@@ -534,6 +541,7 @@ test("checks getters", () => {
   expect(z.string().cidr().isIP).toEqual(false);
   expect(z.string().cidr().isCIDR).toEqual(true);
   expect(z.string().cidr().isULID).toEqual(false);
+  expect(z.string().cidr().isMac).toEqual(false);
 
   expect(z.string().ulid().isEmail).toEqual(false);
   expect(z.string().ulid().isURL).toEqual(false);
@@ -543,7 +551,19 @@ test("checks getters", () => {
   expect(z.string().ulid().isNANOID).toEqual(false);
   expect(z.string().ulid().isIP).toEqual(false);
   expect(z.string().ulid().isCIDR).toEqual(false);
+  expect(z.string().ulid().isMac).toEqual(false);
   expect(z.string().ulid().isULID).toEqual(true);
+
+  expect(z.string().mac().isEmail).toEqual(false);
+  expect(z.string().mac().isURL).toEqual(false);
+  expect(z.string().mac().isCUID).toEqual(false);
+  expect(z.string().mac().isCUID2).toEqual(false);
+  expect(z.string().mac().isUUID).toEqual(false);
+  expect(z.string().mac().isNANOID).toEqual(false);
+  expect(z.string().mac().isIP).toEqual(false);
+  expect(z.string().mac().isCIDR).toEqual(false);
+  expect(z.string().mac().isULID).toEqual(false);
+  expect(z.string().mac().isMac).toEqual(true);
 });
 
 test("min max getters", () => {
@@ -927,4 +947,40 @@ test("CIDR validation", () => {
   expect(
     invalidCidrs.every((ip) => cidrSchema.safeParse(ip).success === false)
   ).toBe(true);
+});
+
+test("MAC validation", () => {
+  const mac = z.string().mac();
+  expect(mac.safeParse("00:1A:2B:3C:4D:5E").success).toBe(true);
+  expect(() => mac.parse("00:1A-2B:3C:4D:5E")).toThrow();
+
+  const validMacs = [
+    "00:1A:2B:3C:4D:5E",
+    "FF:FF:FF:FF:FF:FF",
+    "01-23-45-67-89-AB",
+    "A1:B2:C3:D4:E5:F6",
+    "10:20:30:40:50:60",
+    "AA-BB-CC-DD-EE-FF",
+    "0a:1b:2c:3d:4e:5f",
+    "DE-AD-BE-EF-00-01",
+    "12:34:56:78:9A:BC",
+    "98-76-54-32-10-FF"
+  ];
+
+  const invalidMacs = [
+    "00:1A-2B:3C-4D:5E",
+    "001A2B3C4D5E",
+    "00:1A:2B:3C:4D",
+    "00:1A:2B:3C:4D:5E:FF",
+    "00-1A-2B-3C-4D",
+    "00:1A:2B:3C:4D:GZ",
+    "00:1A:2B:3C:4D:5E:GG",
+    "123:45:67:89:AB:CD",
+    "00--1A:2B:3C:4D:5E",
+    "00:1A::2B:3C:4D:5E"
+  ];
+
+  const macSchema = z.string().mac();
+  expect(validMacs.every((mac) => macSchema.safeParse(mac).success)).toBe(true);
+  expect(invalidMacs.every((mac) => macSchema.safeParse(mac).success)).toBe(false);
 });

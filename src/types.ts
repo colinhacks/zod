@@ -625,7 +625,8 @@ export type ZodStringCheck =
   | { kind: "ip"; version?: IpVersion; message?: string }
   | { kind: "cidr"; version?: IpVersion; message?: string }
   | { kind: "base64"; message?: string }
-  | { kind: "base64url"; message?: string };
+  | { kind: "base64url"; message?: string }
+  | { kind: "mac"; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -694,6 +695,11 @@ const base64urlRegex =
 // with leap year validation
 const dateRegexSource = `((\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-((0[13578]|1[02])-(0[1-9]|[12]\\d|3[01])|(0[469]|11)-(0[1-9]|[12]\\d|30)|(02)-(0[1-9]|1\\d|2[0-8])))`;
 const dateRegex = new RegExp(`^${dateRegexSource}$`);
+
+// https://stackoverflow.com/questions/4260467/what-is-a-regular-expression-for-a-mac-address
+// no support for mac without seperators
+// enforces all seperators should be either ':' or '-'
+const macRegex=/^([0-9A-Fa-f]{2}(:)){5}[0-9A-Fa-f]{2}$|^([0-9A-Fa-f]{2}(-)){5}[0-9A-Fa-f]{2}$/;
 
 function timeRegexSource(args: { precision?: number | null }) {
   let secondsRegexSource = `[0-5]\\d`;
@@ -765,6 +771,14 @@ function isValidCidr(ip: string, version?: IpVersion) {
     return true;
   }
   if ((version === "v6" || !version) && ipv6CidrRegex.test(ip)) {
+    return true;
+  }
+
+  return false;
+}
+
+function isValidMac(mac:string) {
+  if (macRegex.test(mac)){
     return true;
   }
 
@@ -1073,7 +1087,18 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           });
           status.dirty();
         }
-      } else {
+      } else if (check.kind === "mac") {
+        if (!isValidMac(input.data)) {
+          ctx = this._getOrReturnCtx(input,ctx);
+          addIssueToContext(ctx, {
+            validation: "mac",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
+      }
+      else {
         util.assertNever(check);
       }
     }
@@ -1149,6 +1174,10 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
 
   cidr(options?: string | { version?: IpVersion; message?: string }) {
     return this._addCheck({ kind: "cidr", ...errorUtil.errToObj(options) });
+  }
+
+  mac(message?: errorUtil.ErrMessage) {
+    return this._addCheck({ kind: "mac", ...errorUtil.errToObj(message) });
   }
 
   datetime(
@@ -1352,6 +1381,9 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   get isBase64url() {
     // base64url encoding is a modification of base64 that can safely be used in URLs and filenames
     return !!this._def.checks.find((ch) => ch.kind === "base64url");
+  }
+  get isMac() {
+    return !!this._def.checks.find((ch)=> ch.kind === "mac")
   }
 
   get minLength() {
