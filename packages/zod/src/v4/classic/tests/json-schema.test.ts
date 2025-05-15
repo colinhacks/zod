@@ -31,7 +31,11 @@ describe("toJSONSchema", () => {
     `);
     expect(toJSONSchema(z.any())).toMatchInlineSnapshot(`{}`);
     expect(toJSONSchema(z.unknown())).toMatchInlineSnapshot(`{}`);
-    expect(toJSONSchema(z.never())).toMatchInlineSnapshot(`{}`);
+    expect(toJSONSchema(z.never())).toMatchInlineSnapshot(`
+      {
+        "not": {},
+      }
+    `);
     expect(toJSONSchema(z.email())).toMatchInlineSnapshot(`
       {
         "format": "email",
@@ -526,7 +530,9 @@ describe("toJSONSchema", () => {
 
     expect(toJSONSchema(a)).toMatchInlineSnapshot(`
       {
-        "additionalProperties": false,
+        "additionalProperties": {
+          "not": {},
+        },
         "properties": {
           "age": {
             "type": "number",
@@ -684,7 +690,9 @@ describe("toJSONSchema", () => {
 
     expect(toJSONSchema(a)).toMatchInlineSnapshot(`
       {
-        "additionalProperties": false,
+        "additionalProperties": {
+          "not": {},
+        },
         "properties": {
           "age": {
             "type": "number",
