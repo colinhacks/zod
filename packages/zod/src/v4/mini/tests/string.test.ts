@@ -122,7 +122,7 @@ test("z.url with optional hostname regex", () => {
 });
 
 test("z.url with optional protocol regex", () => {
-  const a = z.url({ protocol: /^https?:$/ });
+  const a = z.url({ protocol: /^https?$/ });
   expect(a.parse("http://example.com")).toEqual("http://example.com");
   expect(a.parse("https://example.com")).toEqual("https://example.com");
   expect(() => a.parse("ftp://example.com")).toThrow();
@@ -131,7 +131,7 @@ test("z.url with optional protocol regex", () => {
 });
 
 test("z.url with both hostname and protocol regexes", () => {
-  const a = z.url({ hostname: /example\.com$/, protocol: /^https:$/ });
+  const a = z.url({ hostname: /example\.com$/, protocol: /^https$/ });
   expect(a.parse("https://example.com")).toEqual("https://example.com");
   expect(a.parse("https://sub.example.com")).toEqual("https://sub.example.com");
   expect(() => a.parse("http://example.com")).toThrow();
@@ -141,7 +141,7 @@ test("z.url with both hostname and protocol regexes", () => {
 });
 
 test("z.url with invalid regex patterns", () => {
-  const a = z.url({ hostname: /a+$/, protocol: /^ftp:$/ });
+  const a = z.url({ hostname: /a+$/, protocol: /^ftp$/ });
   a.parse("ftp://a");
   a.parse("ftp://aaaaaaaa");
   expect(() => a.parse("http://aaa")).toThrow();
