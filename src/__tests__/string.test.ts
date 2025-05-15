@@ -67,6 +67,7 @@ test("email validations", () => {
     `something@subdomain.domain-with-hyphens.tld`,
     `common'name@domain.com`,
     `francois@etu.inp-n7.fr`,
+	`exam&ple&test@gmail.com`,
   ];
   const invalidEmails = [
     // no "printable characters"
@@ -150,6 +151,10 @@ test("email validations", () => {
     `invalid@[IPv6:5348:4ed3:5d38:67fb:e9b:acd2:c13:192.168.256.1]`,
     `test@.com`,
     `aaaaaaaaaaaaaaalongemailthatcausesregexDoSvulnerability@test.c`,
+	`example&&test@g&mail.com`,
+	`exampletest@g&mail.com`,
+	`&example&&test@g&mail&.com`,
+	`example&&test@g&mail&.com&`,
   ];
   const emailSchema = z.string().email();
 
