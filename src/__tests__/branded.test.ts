@@ -15,7 +15,7 @@ test("branded types", () => {
   type MySchema = z.infer<typeof mySchema>;
   util.assertEqual<
     MySchema,
-    { name: string } & { [z.BRAND]: { superschema: true } }
+    { name: string } & z.BRAND<'superschema'>
   >(true);
 
   const doStuff = (arg: MySchema) => arg;
