@@ -76,11 +76,13 @@ export interface $ZodConfig {
   customError?: errors.$ZodErrorMap | undefined;
   /** Localized error map. Lowest priority. */
   localeError?: errors.$ZodErrorMap | undefined;
+  /** Disable JIT schema compilation. Useful in environments that disallow `eval`. */
+  jitless?: boolean | undefined;
 }
 
 export const globalConfig: $ZodConfig = {};
 
-export function config(config?: Partial<$ZodConfig>): $ZodConfig {
-  if (config) Object.assign(globalConfig, config);
+export function config(newConfig?: Partial<$ZodConfig>): $ZodConfig {
+  if (newConfig) Object.assign(globalConfig, newConfig);
   return globalConfig;
 }
