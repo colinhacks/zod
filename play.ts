@@ -1,5 +1,11 @@
-import { z } from "zod/v4";
+import * as zMini from "zod/v4-mini";
 
 z;
 
-console.log(z.toJSONSchema(z.never()));
+zMini.pipe(
+  zMini.pipe(
+    zMini.string().check(zMini.regex(/asdf/)),
+    zMini.transform((v) => new Date(v))
+  ),
+  zMini.date().check(zMini.maximum(new Date()))
+);

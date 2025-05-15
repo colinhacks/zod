@@ -647,6 +647,7 @@ export { _void as void };
 export interface ZodMiniDate<T = unknown> extends ZodMiniType {
   _zod: core.$ZodDateInternals<T>;
 }
+
 export const ZodMiniDate: core.$constructor<ZodMiniDate> = /*@__PURE__*/ core.$constructor(
   "ZodMiniDate",
   (inst, def) => {
@@ -655,7 +656,7 @@ export const ZodMiniDate: core.$constructor<ZodMiniDate> = /*@__PURE__*/ core.$c
   }
 );
 
-export function date(params?: string | core.$ZodDateParams): ZodMiniDate {
+export function date(params?: string | core.$ZodDateParams): ZodMiniDate<Date> {
   return core._date(ZodMiniDate, params) as any;
 }
 
