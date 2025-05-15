@@ -511,6 +511,17 @@ z.string().superRefine((val, ctx) => {
 });
 ```
 
+### drops function as second argument
+
+The following horrifying overload has been removed. 
+
+```ts
+const longString = z.string().refine(
+  (val) => val.length > 10,
+  (val) => ({ message: `${val} is not more than 10 characters` })
+);
+```
+
 ## `z.ostring()`, etc dropped
 
 The undocumented convenience methods `z.ostring()`, `z.onumber()`, etc. have been removed. These were shorthand methods for defining optional string schemas.
