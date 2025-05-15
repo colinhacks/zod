@@ -244,8 +244,7 @@ export class JSONSchemaGenerator {
           break;
         }
         case "never": {
-          result.schema = false as any;
-          // _json.not = {};
+          _json.not = {};
           break;
         }
         case "void": {
