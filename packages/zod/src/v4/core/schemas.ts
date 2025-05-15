@@ -67,6 +67,7 @@ export interface $ZodTypeDef {
     | "success"
     | "transform"
     | "default"
+    | "prefault"
     | "catch"
     | "nan"
     | "pipe"
@@ -2975,15 +2976,12 @@ export const $ZodNullable: core.$constructor<$ZodNullable> = /*@__PURE__*/ core.
 export interface $ZodDefaultDef<T extends $ZodType = $ZodType> extends $ZodTypeDef {
   type: "default";
   innerType: T;
-  defaultValue: () => util.NoUndefined<core.output<T>>;
+  /** The default value. May be a getter. */
+  defaultValue: util.NoUndefined<core.output<T>>;
 }
 
 export interface $ZodDefaultInternals<T extends $ZodType = $ZodType>
-  extends $ZodTypeInternals<
-    // this is pragmatic but not strictly correct
-    util.NoUndefined<core.output<T>>,
-    core.input<T> | undefined
-  > {
+  extends $ZodTypeInternals<util.NoUndefined<core.output<T>>, core.input<T> | undefined> {
   def: $ZodDefaultDef<T>;
   // qin: "true";
   optionality: "defaulted";
@@ -3006,7 +3004,7 @@ export const $ZodDefault: core.$constructor<$ZodDefault> = /*@__PURE__*/ core.$c
 
     inst._zod.parse = (payload, ctx) => {
       if (payload.value === undefined) {
-        payload.value = def.defaultValue();
+        payload.value = def.defaultValue;
         /**
          * $ZodDefault always returns the default value immediately.
          * It doesn't pass the default value into the validator ("prefault"). There's no reason to pass the default value through validation. The validity of the default is enforced by TypeScript statically. Otherwise, it's the responsibility of the user to ensure the default is valid. In the case of pipes with divergent in/out types, you can specify the default on the `in` schema of your ZodPipe to set a "prefault" for the pipe.   */
@@ -3023,10 +3021,55 @@ export const $ZodDefault: core.$constructor<$ZodDefault> = /*@__PURE__*/ core.$c
 
 function handleDefaultResult(payload: ParsePayload, def: $ZodDefaultDef) {
   if (payload.value === undefined) {
-    payload.value = def.defaultValue();
+    payload.value = def.defaultValue;
   }
   return payload;
 }
+
+////////////////////////////////////////////
+////////////////////////////////////////////
+//////////                        //////////
+//////////      $ZodPrefault      //////////
+//////////                        //////////
+////////////////////////////////////////////
+////////////////////////////////////////////
+
+export interface $ZodPrefaultDef<T extends $ZodType = $ZodType> extends $ZodTypeDef {
+  type: "prefault";
+  innerType: T;
+  /** The default value. May be a getter. */
+  defaultValue: core.input<T>;
+}
+
+export interface $ZodPrefaultInternals<T extends $ZodType = $ZodType>
+  extends $ZodTypeInternals<util.NoUndefined<core.output<T>>, core.input<T> | undefined> {
+  def: $ZodPrefaultDef<T>;
+  optionality: "defaulted";
+  isst: never;
+  values: T["_zod"]["values"];
+}
+
+export interface $ZodPrefault<T extends $ZodType = $ZodType> extends $ZodType {
+  _zod: $ZodPrefaultInternals<T>;
+}
+
+export const $ZodPrefault: core.$constructor<$ZodPrefault> = /*@__PURE__*/ core.$constructor(
+  "$ZodPrefault",
+  (inst, def) => {
+    $ZodType.init(inst, def);
+
+    inst._zod.optionality = "defaulted";
+    inst._zod.values = def.innerType._zod.values;
+
+    inst._zod.parse = (payload, ctx) => {
+      if (payload.value === undefined) {
+        payload.value = def.defaultValue;
+      }
+      return def.innerType._zod.run(payload, ctx);
+    };
+  }
+);
+
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
 //////////                           //////////
@@ -3634,6 +3677,7 @@ export type $ZodTypes =
   | $ZodLazy
   | $ZodOptional
   | $ZodDefault
+  | $ZodPrefault
   | $ZodTemplateLiteral
   | $ZodCustom
   | $ZodTransform

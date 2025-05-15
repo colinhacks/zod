@@ -1358,6 +1358,7 @@ test("input type", () => {
     b: z.string().optional(),
     c: z.string().default("hello"),
     d: z.string().nullable(),
+    e: z.string().prefault("hello"),
   });
   expect(toJSONSchema(schema, { io: "input" })).toMatchInlineSnapshot(`
     {
@@ -1381,6 +1382,12 @@ test("input type", () => {
               "type": "null",
             },
           ],
+        },
+        "e": {
+          "default": {
+            "value": "hello",
+          },
+          "type": "string",
         },
       },
       "required": [
@@ -1413,11 +1420,18 @@ test("input type", () => {
             },
           ],
         },
+        "e": {
+          "default": {
+            "value": "hello",
+          },
+          "type": "string",
+        },
       },
       "required": [
         "a",
         "c",
         "d",
+        "e",
       ],
       "type": "object",
     }

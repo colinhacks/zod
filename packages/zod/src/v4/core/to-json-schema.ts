@@ -467,7 +467,13 @@ export class JSONSchemaGenerator {
         case "default": {
           const inner = this.process(def.innerType, params);
           Object.assign(_json, inner);
-          _json.default = def.defaultValue();
+          _json.default = def.defaultValue;
+          break;
+        }
+        case "prefault": {
+          const inner = this.process(def.innerType, params);
+          Object.assign(_json, inner);
+          _json.default = schema["~standard"].validate(undefined);
           break;
         }
         case "catch": {
