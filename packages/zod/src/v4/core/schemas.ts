@@ -2896,7 +2896,7 @@ export interface $ZodOptionalInternals<T extends $ZodType = $ZodType>
   optionality: "optional";
   isst: never;
   values: T["_zod"]["values"];
-  pattern: RegExp;
+  pattern: T["_zod"]["pattern"];
 }
 
 export interface $ZodOptional<T extends $ZodType = $ZodType> extends $ZodType {
@@ -2908,10 +2908,14 @@ export const $ZodOptional: core.$constructor<$ZodOptional> = /*@__PURE__*/ core.
   (inst, def) => {
     $ZodType.init(inst, def);
     inst._zod.optionality = "optional";
-    if (def.innerType._zod.values) inst._zod.values = new Set([...def.innerType._zod.values, undefined]);
 
-    const pattern = (def.innerType as any)._zod.pattern;
-    if (pattern) inst._zod.pattern = new RegExp(`^(${util.cleanRegex(pattern.source)})?$`);
+    util.defineLazy(inst._zod, "values", () =>
+      def.innerType._zod.values ? new Set([...def.innerType._zod.values, undefined]) : undefined
+    );
+    util.defineLazy(inst._zod, "pattern", () => {
+      const pattern = def.innerType._zod.pattern;
+      return pattern ? new RegExp(`^(${util.cleanRegex(pattern.source)})?$`) : undefined;
+    });
 
     inst._zod.parse = (payload, ctx) => {
       if (payload.value === undefined) {
@@ -2940,7 +2944,7 @@ export interface $ZodNullableInternals<T extends $ZodType = $ZodType>
   optionality: T["_zod"]["optionality"];
   isst: never;
   values: T["_zod"]["values"];
-  pattern: RegExp;
+  pattern: T["_zod"]["pattern"];
 }
 
 export interface $ZodNullable<T extends $ZodType = $ZodType> extends $ZodType {
@@ -2951,12 +2955,16 @@ export const $ZodNullable: core.$constructor<$ZodNullable> = /*@__PURE__*/ core.
   "$ZodNullable",
   (inst, def) => {
     $ZodType.init(inst, def);
-    inst._zod.optionality = def.innerType._zod.optionality;
+    util.defineLazy(inst._zod, "optionality", () => def.innerType._zod.optionality);
 
-    const pattern = (def.innerType as any)._zod.pattern;
-    if (pattern) inst._zod.pattern = new RegExp(`^(${util.cleanRegex(pattern.source)}|null)$`);
+    util.defineLazy(inst._zod, "pattern", () => {
+      const pattern = def.innerType._zod.pattern;
+      return pattern ? new RegExp(`^(${util.cleanRegex(pattern.source)}|null)$`) : undefined;
+    });
 
-    if (def.innerType._zod.values) inst._zod.values = new Set([...def.innerType._zod.values, null]);
+    util.defineLazy(inst._zod, "values", () => {
+      return def.innerType._zod.values ? new Set([...def.innerType._zod.values, null]) : undefined;
+    });
 
     inst._zod.parse = (payload, ctx) => {
       if (payload.value === null) return payload;
@@ -3000,7 +3008,7 @@ export const $ZodDefault: core.$constructor<$ZodDefault> = /*@__PURE__*/ core.$c
 
     // inst._zod.qin = "true";
     inst._zod.optionality = "defaulted";
-    inst._zod.values = def.innerType._zod.values;
+    util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
 
     inst._zod.parse = (payload, ctx) => {
       if (payload.value === undefined) {
@@ -3059,7 +3067,7 @@ export const $ZodPrefault: core.$constructor<$ZodPrefault> = /*@__PURE__*/ core.
     $ZodType.init(inst, def);
 
     inst._zod.optionality = "defaulted";
-    inst._zod.values = def.innerType._zod.values;
+    util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
 
     inst._zod.parse = (payload, ctx) => {
       if (payload.value === undefined) {
@@ -3097,8 +3105,12 @@ export const $ZodNonOptional: core.$constructor<$ZodNonOptional> = /*@__PURE__*/
   "$ZodNonOptional",
   (inst, def) => {
     $ZodType.init(inst, def);
-    if (def.innerType._zod.values)
-      inst._zod.values = new Set([...def.innerType._zod.values].filter((x) => x !== undefined));
+
+    util.defineLazy(inst._zod, "values", () => {
+      const v = def.innerType._zod.values;
+      return v ? new Set([...v].filter((x) => x !== undefined)) : undefined;
+    });
+
     inst._zod.parse = (payload, ctx) => {
       const result = def.innerType._zod.run(payload, ctx);
       if (result instanceof Promise) {
@@ -3237,8 +3249,8 @@ export interface $ZodCatch<T extends $ZodType = $ZodType> extends $ZodType {
 
 export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$constructor("$ZodCatch", (inst, def) => {
   $ZodType.init(inst, def);
-  inst._zod.optionality = def.innerType._zod.optionality;
-  inst._zod.values = def.innerType._zod.values;
+  util.defineLazy(inst._zod, "optionality", () => def.innerType._zod.optionality);
+  util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
 
   inst._zod.parse = (payload, ctx) => {
     const result = def.innerType._zod.run(payload, ctx);
@@ -3392,7 +3404,7 @@ export const $ZodReadonly: core.$constructor<$ZodReadonly> = /*@__PURE__*/ core.
   (inst, def) => {
     $ZodType.init(inst, def);
     util.defineLazy(inst._zod, "disc", () => def.innerType._zod.disc);
-    inst._zod.optionality = def.innerType._zod.optionality;
+    util.defineLazy(inst._zod, "optionality", () => def.innerType._zod.optionality);
 
     inst._zod.parse = (payload, ctx) => {
       const result = def.innerType._zod.run(payload, ctx);
