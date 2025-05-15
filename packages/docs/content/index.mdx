@@ -111,26 +111,6 @@ console.log(data.name);
 - Extensive ecosystem
 
 
-
-## Requirements
-
-
-Zod is tested against *TypeScript v5.5* and later. Older versions may work but are not officially supported.
-
-You must enable `strict` mode in your `tsconfig.json`. This is a best practice for all TypeScript projects.
-
-  
-  ```ts
-  // tsconfig.json
-  {
-    // ...
-    "compilerOptions": {
-      // ...
-      "strict": true
-    }
-  }
-  ```
-
 ## Installation
 
 {/* ### `npm` */}
@@ -154,6 +134,29 @@ pnpm add zod@canary          # pnpm
 ```
 
 {/* > The rest of this README assumes you are using npm and importing directly from the `"zod"` package. */}
+
+## Requirements
+
+Zod is tested against *TypeScript v5.5* and later. Older versions may work but are not officially supported.
+
+You must enable `strict` mode in your `tsconfig.json`. This is a best practice for all TypeScript projects.
+  
+```ts
+// tsconfig.json
+{
+  // ...
+  "compilerOptions": {
+    // ...
+    "strict": true
+  }
+}
+```
+
+The legacy `"moduleResolution": "node"` and `"moduleResolution": "node"` modes are not supported. Your `"moduleResolution"` should be set to one of the following:
+
+- `"node16"` (default if `"module"` is set to `"node16"`/`"node18"`)
+- `"nodenext"` (default if `"module"` is set to `"nodenext"`)
+- `"bundler"`
 
 ## Sponsors
 
