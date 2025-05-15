@@ -1604,7 +1604,7 @@ function handleOptionalObjectResult(result: ParsePayload, final: ParsePayload, k
     if (key in input) (final.value as any)[key] = undefined;
   } else {
     // non-undefined value
-    if (key in input) (final.value as any)[key] = result.value;
+    (final.value as any)[key] = result.value;
   }
 }
 
@@ -3645,7 +3645,7 @@ function handleRefineResult(result: unknown, payload: ParsePayload, input: unkno
       code: "custom",
       input,
       inst, // incorporates params.error into issue reporting
-      path: inst._zod.def.path, // incorporates params.error into issue reporting
+      path: [...(inst._zod.def.path ?? [])], // incorporates params.error into issue reporting
       continue: !inst._zod.def.abort,
       // params: inst._zod.def.params,
     };

@@ -57,7 +57,7 @@ export type $SafeParse = <T extends schemas.$ZodType>(
 ) => util.SafeParseResult<core.output<T>>;
 
 export const _safeParse: (_Err: $ZodErrorClass) => $SafeParse = (_Err) => (schema, value, _ctx) => {
-  const ctx: schemas.ParseContextInternal = _ctx ? Object.assign(_ctx, { async: false }) : { async: false };
+  const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: false } : { async: false };
   const result = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) {
     throw new core.$ZodAsyncError();
