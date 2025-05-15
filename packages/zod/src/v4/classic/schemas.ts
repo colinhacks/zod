@@ -230,6 +230,7 @@ export interface _ZodString<Input = unknown> extends ZodType {
   toUpperCase(): this;
 }
 
+/** @internal */
 export const _ZodString: core.$constructor<_ZodString> = /*@__PURE__*/ core.$constructor("_ZodString", (inst, def) => {
   core.$ZodString.init(inst, def);
   ZodType.init(inst, def);

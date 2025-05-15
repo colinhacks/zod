@@ -1,7 +1,4 @@
 import { z } from "zod/v4";
-const schema_02 = z.enum({
-  A: 1,
-  B: "A",
-});
 
-schema_02.parse("A");
+const a = z.url({ hostname: /example\.com$/, protocol: /^https:$/ });
+a.parse("https://example.com");

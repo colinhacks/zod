@@ -88,8 +88,66 @@ test("z.email", () => {
 
 test("z.url", () => {
   const a = z.url();
-  expect(z.parse(a, "http://example.com")).toEqual("http://example.com");
-  expect(() => z.parse(a, "asdf")).toThrow();
+  // valid URLs
+  expect(a.parse("http://example.com")).toEqual("http://example.com");
+  expect(a.parse("https://example.com")).toEqual("https://example.com");
+  expect(a.parse("ftp://example.com")).toEqual("ftp://example.com");
+  expect(a.parse("http://sub.example.com")).toEqual("http://sub.example.com");
+  expect(a.parse("https://example.com/path?query=123#fragment")).toEqual("https://example.com/path?query=123#fragment");
+  expect(a.parse("http://localhost")).toEqual("http://localhost");
+  expect(a.parse("https://localhost")).toEqual("https://localhost");
+  expect(a.parse("http://localhost:3000")).toEqual("http://localhost:3000");
+  expect(a.parse("https://localhost:3000")).toEqual("https://localhost:3000");
+
+  // invalid URLs
+  expect(() => a.parse("not-a-url")).toThrow();
+  // expect(() => a.parse("http:/example.com")).toThrow();
+  expect(() => a.parse("://example.com")).toThrow();
+  expect(() => a.parse("http://")).toThrow();
+  expect(() => a.parse("example.com")).toThrow();
+
+  // wrong type
+  expect(() => a.parse(123)).toThrow();
+  expect(() => a.parse(null)).toThrow();
+  expect(() => a.parse(undefined)).toThrow();
+});
+
+test("z.url with optional hostname regex", () => {
+  const a = z.url({ hostname: /example\.com$/ });
+  expect(a.parse("http://example.com")).toEqual("http://example.com");
+  expect(a.parse("https://sub.example.com")).toEqual("https://sub.example.com");
+  expect(() => a.parse("http://examples.com")).toThrow();
+  expect(() => a.parse("http://example.org")).toThrow();
+  expect(() => a.parse("asdf")).toThrow();
+});
+
+test("z.url with optional protocol regex", () => {
+  const a = z.url({ protocol: /^https?:$/ });
+  expect(a.parse("http://example.com")).toEqual("http://example.com");
+  expect(a.parse("https://example.com")).toEqual("https://example.com");
+  expect(() => a.parse("ftp://example.com")).toThrow();
+  expect(() => a.parse("mailto:example@example.com")).toThrow();
+  expect(() => a.parse("asdf")).toThrow();
+});
+
+test("z.url with both hostname and protocol regexes", () => {
+  const a = z.url({ hostname: /example\.com$/, protocol: /^https:$/ });
+  expect(a.parse("https://example.com")).toEqual("https://example.com");
+  expect(a.parse("https://sub.example.com")).toEqual("https://sub.example.com");
+  expect(() => a.parse("http://example.com")).toThrow();
+  expect(() => a.parse("https://example.org")).toThrow();
+  expect(() => a.parse("ftp://example.com")).toThrow();
+  expect(() => a.parse("asdf")).toThrow();
+});
+
+test("z.url with invalid regex patterns", () => {
+  const a = z.url({ hostname: /a+$/, protocol: /^ftp:$/ });
+  a.parse("ftp://a");
+  a.parse("ftp://aaaaaaaa");
+  expect(() => a.parse("http://aaa")).toThrow();
+  expect(() => a.parse("https://example.com")).toThrow();
+  expect(() => a.parse("ftp://asdfasdf")).toThrow();
+  expect(() => a.parse("ftp://invalid")).toThrow();
 });
 
 test("z.emoji", () => {
