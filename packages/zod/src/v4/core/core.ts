@@ -50,6 +50,9 @@ export type $brand<T extends string | number | symbol = string | number | symbol
   [$brand]: { [k in T]: true };
 };
 
+export type $ZodBranded<T extends schemas.$ZodType, Brand extends string | number | symbol> = T &
+  Record<"_zod", Record<"~output", output<T> & $brand<Brand>>>;
+
 export class $ZodAsyncError extends Error {
   constructor() {
     super(`Encountered Promise during synchronous parse. Use .parseAsync() instead.`);

@@ -40,9 +40,7 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
       : ["Incompatible schema"]
   ): this;
 
-  brand<T extends PropertyKey = PropertyKey>(
-    value?: T
-  ): PropertyKey extends T ? this : this & Record<"_zod", Record<"~output", core.output<this> & core.$brand<T>>>;
+  brand<T extends PropertyKey = PropertyKey>(value?: T): PropertyKey extends T ? this : core.$ZodBranded<this, T>;
 
   // parsing
   parse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;

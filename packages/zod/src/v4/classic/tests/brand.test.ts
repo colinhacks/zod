@@ -49,3 +49,9 @@ test("branded types", () => {
   // @ts-expect-error
   doStuff({ name: "hello there!" });
 });
+
+test("$branded", () => {
+  const a = z.string().brand<"a">();
+
+  expectTypeOf<typeof a>().toEqualTypeOf<z.core.$ZodBranded<z.ZodString, "a">>();
+});
