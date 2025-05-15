@@ -311,7 +311,7 @@ schema.parse("sup"); // ❌
 To validate the hostname against a specific regex:
 
 ```ts
-const schema = z.url({ hostname: /^example.com$/ });
+const schema = z.url({ hostname: /^example\.com$/ });
 
 schema.parse("https://example.com"); // ✅
 schema.parse("https://zombo.com"); // ❌
