@@ -28,7 +28,7 @@ test("opt passthrough", () => {
       a: "hello",
       b: undefined,
     },
-    { noPrecompilation: true }
+    { jitless: true }
   );
   expect(result).toEqual({
     a: "hello",

@@ -15,7 +15,7 @@ export interface ParseContext<T extends errors.$ZodIssueBase = never> {
   /** Include the `input` field in issue objects. Default `false`. */
   readonly reportInput?: boolean;
   /** Skip eval-based fast path. Default `false`. */
-  readonly noPrecompilation?: boolean;
+  readonly jitless?: boolean;
   /** Abort validation after the first error. Default `false`. */
   // readonly abortEarly?: boolean;
 }
@@ -1754,7 +1754,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
 
     const proms: Promise<any>[] = [];
 
-    if (jit && fastEnabled && ctx?.async === false && ctx.noPrecompilation !== true) {
+    if (jit && fastEnabled && ctx?.async === false && ctx.jitless !== true) {
       // always synchronous
       if (!fastpass) fastpass = generateFastpass(def.shape);
       payload = fastpass(payload, ctx);
