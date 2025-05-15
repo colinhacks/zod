@@ -2,6 +2,7 @@ import * as checks from "./checks.js";
 import * as core from "./core.js";
 import { Doc } from "./doc.js";
 import type * as errors from "./errors.js";
+import { safeParse, safeParseAsync } from "./parse.js";
 import * as regexes from "./regexes.js";
 import type { StandardSchemaV1 } from "./standard-schema.js";
 import * as util from "./util.js";
@@ -259,19 +260,12 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
 
   inst["~standard"] = {
     validate: (value: unknown) => {
-      const result = inst._zod.run({ value, issues: [] }, {});
-      if (result instanceof Promise) {
-        return result.then(({ issues, value }) => {
-          if (issues.length === 0) return { value } as any;
-          return {
-            issues: issues.map((iss) => util.finalizeIssue(iss, {}, core.config())),
-          };
-        });
+      try {
+        const r = safeParse(inst, value);
+        return r.success ? { value: r.data } : { issues: r.error?.issues };
+      } catch (_) {
+        return safeParseAsync(inst, value).then((r) => (r.success ? { value: r.data } : { issues: r.error?.issues }));
       }
-      if (result.issues.length === 0) return { value: result.value } as any;
-      return {
-        issues: result.issues.map((iss) => util.finalizeIssue(iss, {}, core.config())),
-      };
     },
     vendor: "zod",
     version: 1 as const,
@@ -1587,9 +1581,9 @@ function handleObjectResult(result: ParsePayload, final: ParsePayload, key: Prop
   // if(isOptional)
   if (result.issues.length) {
     final.issues.push(...util.prefixIssues(key, result.issues));
-  } else {
-    (final.value as any)[key] = result.value;
   }
+
+  (final.value as any)[key] = result.value;
 }
 
 function handleOptionalObjectResult(result: ParsePayload, final: ParsePayload, key: PropertyKey, input: any) {
@@ -1599,6 +1593,8 @@ function handleOptionalObjectResult(result: ParsePayload, final: ParsePayload, k
       // if input was undefined, ignore the error
       if (key in input) {
         (final.value as any)[key] = undefined;
+      } else {
+        (final.value as any)[key] = result.value;
       }
     } else {
       final.issues.push(...util.prefixIssues(key, result.issues));
@@ -1608,7 +1604,7 @@ function handleOptionalObjectResult(result: ParsePayload, final: ParsePayload, k
     if (key in input) (final.value as any)[key] = undefined;
   } else {
     // non-undefined value
-    (final.value as any)[key] = result.value;
+    if (key in input) (final.value as any)[key] = result.value;
   }
 }
 
@@ -1718,8 +1714,9 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
         } else if (${id}.value === undefined) {
           if (${k} in input) payload.value[${k}] = undefined;
         } else {
-          payload.value[${k}] = ${id}.value;
-        }  
+          if (${k} in input) payload.value[${k}] = ${id}.value;
+        }
+          
         `);
     }
 
@@ -2310,9 +2307,8 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
 function handleTupleResult(result: ParsePayload, final: ParsePayload<any[]>, index: number) {
   if (result.issues.length) {
     final.issues.push(...util.prefixIssues(index, result.issues));
-  } else {
-    final.value[index] = result.value;
   }
+  final.value[index] = result.value;
 }
 
 //////////////////////////////////////////
@@ -2444,6 +2440,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
             path: [key],
             inst,
           });
+          payload.value[keyResult.value as PropertyKey] = keyResult.value;
           continue;
         }
 
@@ -2454,17 +2451,15 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
             result.then((result) => {
               if (result.issues.length) {
                 payload.issues.push(...util.prefixIssues(key, result.issues));
-              } else {
-                payload.value[keyResult.value as PropertyKey] = result.value;
               }
+              payload.value[keyResult.value as PropertyKey] = result.value;
             })
           );
         } else {
           if (result.issues.length) {
             payload.issues.push(...util.prefixIssues(key, result.issues));
-          } else {
-            payload.value[keyResult.value as PropertyKey] = result.value;
           }
+          payload.value[keyResult.value as PropertyKey] = result.value;
         }
       }
     }
@@ -2572,9 +2567,8 @@ function handleMapResult(
         issues: valueResult.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
       });
     }
-  } else {
-    final.value.set(keyResult.value, valueResult.value);
   }
+  final.value.set(keyResult.value, valueResult.value);
 }
 
 ///////////////////////////////////////
@@ -2631,9 +2625,8 @@ export const $ZodSet: core.$constructor<$ZodSet> = /*@__PURE__*/ core.$construct
 function handleSetResult(result: ParsePayload, final: ParsePayload<Set<any>>) {
   if (result.issues.length) {
     final.issues.push(...result.issues);
-  } else {
-    final.value.add(result.value);
   }
+  final.value.add(result.value);
 }
 
 ////////////////////////////////////////
@@ -3265,9 +3258,9 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
             input: payload.value,
           });
           payload.issues = [];
-        } else {
-          payload.value = result.value;
         }
+        payload.value = result.value;
+
         return payload;
       });
     }
@@ -3281,9 +3274,9 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
         input: payload.value,
       });
       payload.issues = [];
-    } else {
-      payload.value = result.value;
     }
+    payload.value = result.value;
+
     return payload;
   };
 });

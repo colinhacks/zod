@@ -421,3 +421,49 @@ describe("type refinement", () => {
   });
 });
 */
+
+test("nested refinements", () => {
+  const zodSchema = z
+    .object({
+      password: z.string().min(1),
+      nested: z
+        .object({
+          confirm: z
+            .string()
+            .min(1)
+            .refine((value) => value.length > 2, {
+              message: "Confirm length should be > 2",
+            }),
+        })
+        .refine(
+          (data) => {
+            console.log("refine password", { data });
+            return data.confirm === "bar";
+          },
+          {
+            path: ["confirm"],
+            error: 'Value must be "bar"',
+          }
+        ),
+    })
+    .refine(
+      (data) => {
+        console.log("refine root", { data });
+        console.log("Data");
+        console.log(data);
+        return data.nested.confirm === data.password;
+      },
+      {
+        path: ["nested", "confirm"],
+        error: "Password and confirm must match",
+      }
+    );
+
+  const DATA = {
+    password: "bar",
+    nested: { confirm: "" },
+  };
+  zodSchema.safeParse(DATA);
+  zodSchema.safeParse(DATA, { jitless: true });
+  zodSchema._zod.run({ issues: [], value: DATA }, { async: undefined });
+});
