@@ -1,15 +1,15 @@
 import { z } from "zod/v4";
 
-// const schema = z.url();
+z.config({
+  jitless: true,
+});
 
-// schema.parse("https://example.com"); // ✅
-// schema.parse("http://localhost"); // ✅
-// schema.parse("sup");
+const A = z.object({
+  a: z.string(),
+});
 
-// const schema = z.url({ hostname: /^example.com$/ });
-// schema.parse("https://example.com"); // ✅
-// schema.parse("https://zombo.com"); // ❌
-
-// const schema = z.url({ protocol: /^https$/ });
-// schema.parse("https://example.com"); // ✅
-// schema.parse("httpss://example.com"); // ❌
+console.log(
+  A.parse({
+    a: "hello",
+  })
+);

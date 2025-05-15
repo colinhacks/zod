@@ -1728,8 +1728,12 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
   };
 
   let fastpass!: ReturnType<typeof generateFastpass>;
-  const fastEnabled = util.allowsEval.value; // && !def.catchall;
+
   const isObject = util.isObject;
+  const jit = !core.globalConfig.jitless;
+  const allowsEval = util.allowsEval;
+
+  const fastEnabled = jit && allowsEval.value; // && !def.catchall;
   const { catchall } = def;
 
   let value!: typeof _normalized.value;
@@ -1749,7 +1753,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
 
     const proms: Promise<any>[] = [];
 
-    if (fastEnabled && ctx?.async === false && ctx.noPrecompilation !== true) {
+    if (jit && fastEnabled && ctx?.async === false && ctx.noPrecompilation !== true) {
       // always synchronous
       if (!fastpass) fastpass = generateFastpass(def.shape);
       payload = fastpass(payload, ctx);
