@@ -1084,11 +1084,11 @@ export interface ZodObject<
     other: U
   ): ZodObject<util.Extend<Shape, U["shape"]>, U["_zod"]["outextra"], U["_zod"]["inextra"]>;
 
-  pick<M extends util.Exactly<util.Mask<string & keyof Shape>, M>>(
+  pick<M extends util.Exactly<util.Mask<keyof Shape>, M>>(
     mask: M
   ): ZodObject<util.Flatten<Pick<Shape, Extract<keyof Shape, keyof M>>>, OutExtra, InExtra>;
 
-  omit<M extends util.Exactly<util.Mask<string & keyof Shape>, M>>(
+  omit<M extends util.Exactly<util.Mask<keyof Shape>, M>>(
     mask: M
   ): ZodObject<util.Flatten<Omit<Shape, Extract<keyof Shape, keyof M>>>, OutExtra, InExtra>;
 
@@ -1099,7 +1099,7 @@ export interface ZodObject<
     OutExtra,
     InExtra
   >;
-  partial<M extends util.Exactly<util.Mask<string & keyof Shape>, M>>(
+  partial<M extends util.Exactly<util.Mask<keyof Shape>, M>>(
     mask: M
   ): ZodObject<
     {
@@ -1117,7 +1117,7 @@ export interface ZodObject<
     OutExtra,
     InExtra
   >;
-  required<M extends util.Exactly<util.Mask<string & keyof Shape>, M>>(
+  required<M extends util.Exactly<util.Mask<keyof Shape>, M>>(
     mask: M
   ): ZodObject<
     {

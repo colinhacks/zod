@@ -9,7 +9,7 @@ export type Schema =
 // | BaseSchema;
 
 export interface BaseSchema {
-  /** A special key used as an intermediate representation of extends-style relationships. Removed in the omit stage. */
+  /** A special key used as an intermediate representation of extends-style relationships. Omitted as a $ref with additional properties. */
   _ref?: BaseSchema;
   type?: string | undefined;
   $id?: string | undefined;
