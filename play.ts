@@ -1,5 +1,7 @@
-import { z } from "zod/v4-mini";
+import { z } from "zod/v4";
+const schema_02 = z.enum({
+  A: 1,
+  B: "A",
+});
 
-const args = ["asdf"] as const;
-
-z.enum(args);
+schema_02.parse("A");

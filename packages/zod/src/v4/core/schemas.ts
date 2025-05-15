@@ -2623,12 +2623,11 @@ export interface $ZodEnum<T extends util.EnumLike = util.EnumLike> extends $ZodT
 export const $ZodEnum: core.$constructor<$ZodEnum> = /*@__PURE__*/ core.$constructor("$ZodEnum", (inst, def) => {
   $ZodType.init(inst, def);
 
+  const numericValues = Object.values(def.entries).filter((v) => typeof v === "number");
   const values = Object.entries(def.entries)
-    // remove reverse mappings
-    .filter(([k, _]) => {
-      return typeof def.entries[def.entries[k]] !== "number";
-    })
+    .filter(([k, _]) => numericValues.indexOf(+k) === -1)
     .map(([_, v]) => v);
+
   inst._zod.values = new Set<util.Primitive>(values);
 
   inst._zod.pattern = new RegExp(
@@ -2904,8 +2903,6 @@ export const $ZodNullable: core.$constructor<$ZodNullable> = /*@__PURE__*/ core.
   (inst, def) => {
     $ZodType.init(inst, def);
     inst._zod.optionality = def.innerType._zod.optionality;
-    // inst._zod.qin = def.innerType._zod.qin;
-    // inst._zod.qout = def.innerType._zod.qout;
 
     const pattern = (def.innerType as any)._zod.pattern;
     if (pattern) inst._zod.pattern = new RegExp(`^(${util.cleanRegex(pattern.source)}|null)$`);
@@ -3149,8 +3146,6 @@ export interface $ZodCatch<T extends $ZodType = $ZodType> extends $ZodType {
 
 export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$constructor("$ZodCatch", (inst, def) => {
   $ZodType.init(inst, def);
-  // inst._zod.qin = def.innerType._zod.qin;
-  // inst._zod.qout = def.innerType._zod.qout;
   inst._zod.optionality = def.innerType._zod.optionality;
   inst._zod.values = def.innerType._zod.values;
 
@@ -3306,8 +3301,6 @@ export const $ZodReadonly: core.$constructor<$ZodReadonly> = /*@__PURE__*/ core.
   (inst, def) => {
     $ZodType.init(inst, def);
     util.defineLazy(inst._zod, "disc", () => def.innerType._zod.disc);
-    // inst._zod.qin = def.innerType._zod.qin;
-    // inst._zod.qout = def.innerType._zod.qout;
     inst._zod.optionality = def.innerType._zod.optionality;
 
     inst._zod.parse = (payload, ctx) => {

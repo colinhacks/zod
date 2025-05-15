@@ -789,3 +789,12 @@ export function issue(...args: [string | errors.$ZodRawIssue, any?, any?]): erro
 
   return { ...iss };
 }
+
+export function cleanEnum(obj: Record<string, EnumValue>): EnumValue[] {
+  return Object.entries(obj)
+    .filter(([k, _]) => {
+      // return true if NaN, meaning it's not a number, thus a string key
+      return Number.isNaN(Number.parseInt(k, 10));
+    })
+    .map((el) => el[1]);
+}

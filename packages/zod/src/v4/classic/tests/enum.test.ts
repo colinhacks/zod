@@ -280,3 +280,12 @@ test("enum with message returns the custom error message", () => {
     expect(result4.error.issues[0].message).toEqual("the value provided is invalid");
   }
 });
+
+test("enum with diagonal keys", () => {
+  const schema_02 = z.enum({
+    A: 1,
+    B: "A",
+  });
+
+  expect(schema_02.safeParse("A")).toMatchObject({ success: true });
+});
