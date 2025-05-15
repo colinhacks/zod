@@ -1230,6 +1230,16 @@ export function _default<T extends SomeType>(
   }) as any as ZodMiniDefault<T>;
 }
 
+export function prefault<T extends core.$ZodType>(
+  schema: T,
+  value: util.NoUndefined<T["_zod"]["input"]>
+): ZodMiniPipe<ZodMiniTransform<T["_zod"]["input"], T["_zod"]["input"] | undefined>, T> {
+  return pipe(
+    transform((input) => input ?? value),
+    schema as any
+  );
+}
+
 // ZodMiniNonOptional
 export interface ZodMiniNonOptional<T extends SomeType = SomeType> extends ZodMiniType {
   _zod: core.$ZodNonOptionalInternals<T>;

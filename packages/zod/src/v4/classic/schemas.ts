@@ -1703,6 +1703,16 @@ export function _default<T extends core.$ZodType>(
   }) as any as ZodDefault<T>;
 }
 
+export function prefault<T extends core.$ZodType>(
+  schema: T,
+  value: util.NoUndefined<T["_zod"]["input"]>
+): ZodPipe<ZodTransform<T["_zod"]["input"], T["_zod"]["input"] | undefined>, T> {
+  return pipe(
+    transform((input) => input ?? value),
+    schema as any
+  );
+}
+
 // ZodNonOptional
 export interface ZodNonOptional<T extends core.$ZodType = core.$ZodType> extends ZodType {
   _zod: core.$ZodNonOptionalInternals<T>;
