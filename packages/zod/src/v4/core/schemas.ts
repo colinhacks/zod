@@ -1998,7 +1998,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
     for (const option of def.options) {
       const disc = option._zod.disc;
       if (!disc) {
-        throw new Error(`Invalid disciminated union element: ${option._zod.def.type}`);
+        throw new Error(`Invalid discriminated union element: ${option._zod.def.type}`);
       }
       discMap.set(option, disc);
     }

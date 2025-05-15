@@ -5,3 +5,4 @@ export const schema = z.object({
   age: z.number(),
   email: z.boolean(),
 });
+

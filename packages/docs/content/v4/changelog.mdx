@@ -515,11 +515,13 @@ z.string().superRefine((val, ctx) => {
 
 The undocumented convenience methods `z.ostring()`, `z.onumber()`, etc. have been removed. These were shorthand methods for defining optional string schemas.
 
-## `z.literal()` drops `symbol` support
+## `z.literal()` 
+
+### drops `symbol` support
 
 Symbols aren't considered literal values, nor can they be simply compared with `===`. This was an oversight in Zod 3.
 
-## `.create()` factories dropped
+## static `.create()` factories dropped
 
 Previously all Zod classes defined a static `.create()` method. These are now implemented as standalone factory functions.
 

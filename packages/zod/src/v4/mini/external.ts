@@ -1,4 +1,3 @@
-export * as core from "zod/v4/core";
 export * from "./parse.js";
 export * from "./schemas.js";
 export * from "./checks.js";

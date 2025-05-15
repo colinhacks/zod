@@ -40,11 +40,35 @@ function config(config) {
     return globalConfig;
 }
 
+const _$ZodError = $constructor("$ZodError", (inst, def) => {
+    Object.defineProperties(inst, {
+        issues: {
+            value: def,
+            enumerable: true,
+        },
+        _zod: {
+            value: inst._zod,
+            enumerable: false,
+        },
+        // message: {
+        //   get() {
+        //     return JSON.stringify(this.issues, util.jsonStringifyReplacer, 2);
+        //   },
+        //   enumerable: false,
+        // },
+    });
+});
+// export interface $ZodError<T = unknown> extends $ZodError<T> {}
+class $ZodError extends Error {
+    constructor(issues) {
+        super();
+        _$ZodError.init(this, issues);
+    }
+}
+
 // functions
-function jsonStringifyReplacer(_, value) {
-    if (typeof value === "bigint")
-        return value.toString();
-    return value;
+function nullish(input) {
+    return input === null || input === undefined;
 }
 function randomString(length = 10) {
     const chars = "abcdefghijklmnopqrstuvwxyz";
@@ -94,78 +118,113 @@ function finalizeIssue(iss, ctx, config) {
     }
     return full;
 }
-
-////////////////////////    ERROR CLASS   ////////////////////////
-const ZOD_ERROR = Symbol.for("{{zod.error}}");
-class $ZodError {
-    get message() {
-        return JSON.stringify(this.issues, jsonStringifyReplacer, 2);
-    }
-    constructor(issues) {
-        Object.defineProperty(this, "_tag", { value: ZOD_ERROR, enumerable: false });
-        Object.defineProperty(this, "name", { value: "$ZodError", enumerable: false });
-        this.issues = issues;
-    }
-    // @ts-ignore
-    static [Symbol.hasInstance](inst) {
-        return inst?._tag === ZOD_ERROR;
-    }
+function getLengthableOrigin(input) {
+    if (Array.isArray(input))
+        return "array";
+    if (typeof input === "string")
+        return "string";
+    return "unknown";
 }
 
-function _parse(schema, value, _ctx) {
-    const ctx = _ctx ? { ..._ctx, async: false } : { async: false };
+const _parse = (_Err) => (schema, value, _ctx, _params) => {
+    const ctx = _ctx ? Object.assign(_ctx, { async: false }) : { async: false };
     const result = schema._zod.run({ value, issues: [] }, ctx);
     if (result instanceof Promise) {
         throw new $ZodAsyncError();
     }
     if (result.issues.length) {
-        throw new (this?.Error ?? $ZodError)(result.issues.map((iss) => finalizeIssue(iss, ctx, config())));
+        const e = new (_params?.Err ?? _Err)(result.issues.map((iss) => finalizeIssue(iss, ctx, config())));
+        Error.captureStackTrace(e, _params?.callee);
+        throw e;
     }
     return result.value;
-}
-function _safeParse(schema, value, _ctx) {
-    const ctx = _ctx ? { ..._ctx, async: false } : { async: false };
+};
+const parse = /* @__PURE__*/ _parse($ZodError);
+const _parseAsync = (_Err) => async (schema, value, _ctx, params) => {
+    const ctx = _ctx ? Object.assign(_ctx, { async: true }) : { async: true };
+    let result = schema._zod.run({ value, issues: [] }, ctx);
+    if (result instanceof Promise)
+        result = await result;
+    if (result.issues.length) {
+        const e = new (params?.Err ?? _Err)(result.issues.map((iss) => finalizeIssue(iss, ctx, config())));
+        Error.captureStackTrace(e, params?.callee);
+        throw e;
+    }
+    return result.value;
+};
+const parseAsync = /* @__PURE__*/ _parseAsync($ZodError);
+const _safeParse = (_Err) => (schema, value, _ctx) => {
+    const ctx = _ctx ? Object.assign(_ctx, { async: false }) : { async: false };
     const result = schema._zod.run({ value, issues: [] }, ctx);
     if (result instanceof Promise) {
         throw new $ZodAsyncError();
     }
-    return (result.issues.length
+    return result.issues.length
         ? {
             success: false,
-            error: new (this?.Error ?? $ZodError)(result.issues.map((iss) => finalizeIssue(iss, ctx, config()))),
+            error: new (_Err ?? $ZodError)(result.issues.map((iss) => finalizeIssue(iss, ctx, config()))),
         }
-        : { success: true, data: result.value });
-}
-async function _parseAsync(schema, value, _ctx) {
-    const ctx = _ctx ? { ..._ctx, async: true } : { async: true };
+        : { success: true, data: result.value };
+};
+const safeParse = /* @__PURE__*/ _safeParse(_$ZodError);
+const _safeParseAsync = (_Err) => async (schema, value, _ctx) => {
+    const ctx = _ctx ? Object.assign(_ctx, { async: true }) : { async: true };
     let result = schema._zod.run({ value, issues: [] }, ctx);
     if (result instanceof Promise)
         result = await result;
-    if (result.issues.length) {
-        throw new (this?.Error ?? $ZodError)(result.issues.map((iss) => finalizeIssue(iss, ctx, config())));
-    }
-    return result.value;
-}
-async function _safeParseAsync(schema, value, _ctx) {
-    const ctx = _ctx ? { ..._ctx, async: true } : { async: true };
-    let result = schema._zod.run({ value, issues: [] }, ctx);
-    if (result instanceof Promise)
-        result = await result;
-    if (result.issues.length) {
-        return {
+    return result.issues.length
+        ? {
             success: false,
-            error: new (this?.Error ?? $ZodError)(result.issues.map((iss) => finalizeIssue(iss, ctx, config()))),
-        };
-    }
-    return { success: true, data: result.value };
-}
+            error: new _Err(result.issues.map((iss) => finalizeIssue(iss, ctx, config()))),
+        }
+        : { success: true, data: result.value };
+};
+const safeParseAsync = /* @__PURE__*/ _safeParseAsync(_$ZodError);
 
-const boolean$1 = /true|false/i;
+const string$1 = (params) => {
+    const regex = params ? `[\\s\\S]{${params?.minimum ?? 0},${params?.maximum ?? ""}}` : `[\\s\\S]*`;
+    return new RegExp(`^${regex}$`);
+};
+
+// import { $ZodType } from "./schemas.js";
+const $ZodCheck = /*@__PURE__*/ $constructor("$ZodCheck", (inst, def) => {
+    var _a;
+    inst._zod ?? (inst._zod = {});
+    inst._zod.def = def;
+    (_a = inst._zod).onattach ?? (_a.onattach = []);
+});
+const $ZodCheckMinLength = /*@__PURE__*/ $constructor("$ZodCheckMinLength", (inst, def) => {
+    $ZodCheck.init(inst, def);
+    inst._zod.when = (payload) => {
+        const val = payload.value;
+        return !nullish(val) && val.length !== undefined;
+    };
+    inst._zod.onattach.push((inst) => {
+        const curr = (inst._zod.computed.minimum ?? Number.NEGATIVE_INFINITY);
+        if (def.minimum > curr)
+            inst._zod.computed.minimum = def.minimum;
+    });
+    inst._zod.check = (payload) => {
+        const input = payload.value;
+        const length = input.length;
+        if (length >= def.minimum)
+            return;
+        const origin = getLengthableOrigin(input);
+        payload.issues.push({
+            origin,
+            code: "too_small",
+            minimum: def.minimum,
+            input,
+            inst,
+            continue: !def.abort,
+        });
+    };
+});
 
 const version = {
-    major: 0,
-    minor: 8,
-    patch: 1,
+    major: 4,
+    minor: 0,
+    patch: 0,
 };
 
 const $ZodType = /*@__PURE__*/ $constructor("$ZodType", (inst, def) => {
@@ -175,7 +234,6 @@ const $ZodType = /*@__PURE__*/ $constructor("$ZodType", (inst, def) => {
     inst._zod.def = def; // set _def property
     inst._zod.computed = inst._zod.computed || {}; // initialize _computed object
     inst._zod.version = version;
-    // inst._zod.optionality ??= "required"; // default
     const checks = [...(inst._zod.def.checks ?? [])];
     // if inst is itself a checks.$ZodCheck, run it as a check
     if (inst._zod.traits.has("$ZodCheck")) {
@@ -257,61 +315,64 @@ const $ZodType = /*@__PURE__*/ $constructor("$ZodType", (inst, def) => {
                 return result.then(({ issues, value }) => {
                     if (issues.length === 0)
                         return { value };
-                    return { issues: issues.map((iss) => finalizeIssue(iss, {}, config())) };
+                    return {
+                        issues: issues.map((iss) => finalizeIssue(iss, {}, config())),
+                    };
                 });
             }
             if (result.issues.length === 0)
                 return { value: result.value };
-            return { issues: result.issues.map((iss) => finalizeIssue(iss, {}, config())) };
+            return {
+                issues: result.issues.map((iss) => finalizeIssue(iss, {}, config())),
+            };
         },
         vendor: "zod",
         version: 1,
     };
 });
-const $ZodBoolean = /*@__PURE__*/ $constructor("$ZodBoolean", (inst, def) => {
+const $ZodString = /*@__PURE__*/ $constructor("$ZodString", (inst, def) => {
     $ZodType.init(inst, def);
-    inst._zod.pattern = boolean$1;
-    inst._zod.parse = (payload, _ctx) => {
+    inst._zod.pattern = inst?._zod.computed?.pattern ?? string$1(inst._zod.computed);
+    inst._zod.parse = (payload, _) => {
         if (def.coerce)
             try {
-                payload.value = Boolean(payload.value);
+                payload.value = String(payload.value);
             }
             catch (_) { }
-        const input = payload.value;
-        if (typeof input === "boolean")
+        if (typeof payload.value === "string")
             return payload;
         payload.issues.push({
-            expected: "boolean",
+            expected: "string",
             code: "invalid_type",
-            input,
+            input: payload.value,
             inst,
         });
         return payload;
     };
 });
 
-function _boolean(Class, params) {
+function _string(Class, params) {
     return new Class({
-        type: "boolean",
+        type: "string",
         ...normalizeParams(),
     });
 }
-
-const parse = /* @__PURE__ */ _parse.bind({ Error: $ZodError });
-const safeParse = /* @__PURE__ */ _safeParse.bind({ Error: $ZodError });
-const parseAsync = /* @__PURE__ */ _parseAsync.bind({ Error: $ZodError });
-const safeParseAsync = /* @__PURE__ */ _safeParseAsync.bind({
-    Error: $ZodError,
-});
+function _minLength(minimum, params) {
+    return new $ZodCheckMinLength({
+        check: "min_length",
+        ...normalizeParams(),
+        minimum,
+    });
+}
 
 const ZodMiniType = /*@__PURE__*/ $constructor("ZodMiniType", (inst, def) => {
     if (!inst._zod)
         throw new Error("Uninitialized schema in mixin ZodMiniType.");
     $ZodType.init(inst, def);
     inst.def = def;
-    inst.parse = (data, params) => parse(inst, data, params);
+    inst.parse = (data, params) => parse(inst, data, params, { callee: inst.parse });
     inst.safeParse = (data, params) => safeParse(inst, data, params);
-    inst.parseAsync = async (data, params) => parseAsync(inst, data, params);
+    inst.parseAsync = async (data, params) => parseAsync(inst, data, params, { callee: inst.parseAsync });
     inst.safeParseAsync = async (data, params) => safeParseAsync(inst, data, params);
     inst.check = (...checks) => {
         return inst.clone({
@@ -329,13 +390,13 @@ const ZodMiniType = /*@__PURE__*/ $constructor("ZodMiniType", (inst, def) => {
         return inst;
     });
 });
-const ZodMiniBoolean = /*@__PURE__*/ $constructor("ZodMiniBoolean", (inst, def) => {
-    $ZodBoolean.init(inst, def);
+const ZodMiniString = /*@__PURE__*/ $constructor("ZodMiniString", (inst, def) => {
+    $ZodString.init(inst, def);
     ZodMiniType.init(inst, def);
 });
-function boolean(params) {
-    return _boolean(ZodMiniBoolean);
+function string(params) {
+    return _string(ZodMiniString);
 }
 
-var schema = boolean();
-console.log(schema.parse(true));
+var schema = string().check(_minLength(5));
+console.log(schema.parse("hi"));
