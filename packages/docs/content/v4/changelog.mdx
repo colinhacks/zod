@@ -108,27 +108,32 @@ z.string({
 </Tab>
 </Tabs>
 
-## `ZodError`
+## `.safeParse()` 
 
-### no longer extends `Error`
+For performance reasons, the errors returned by `.safeParse()` and `.safeParseAsync()` no longer extend `Error`. 
 
-It is very slow to instantiate `Error` instances in JavaScript, as the initialization process snapshots the call stack. The magnitude of this performance hit is too much to justify, and extending `Error` adds little value anyway. The `.stack` trace includes lots of Zod internals and can be confusing. 
+```ts
+const result = z.string().safeParse(12); 
+result.error! instanceof Error; // => false
+```
 
-In Zod 4 the `ZodError` class no longer extends the plain JavaScript `Error` class. Instead, `ZodError` `implements` the `Error` interface. This means all error-handling code should still work with the exception of `instanceof Error` checks. 
+It is very slow to instantiate `Error` instances in JavaScript, as the initialization process snapshots the call stack. In the case of Zod's "safe" parse methods, it's expected that you will handle errors at the point of parsing, so instantiating a true `Error` object adds little value anyway. 
+
+> Pro tip: prefer `.safeParse()` over `try/catch` in performance-sensitive code.
+
+By contrast the errors thrown by `.parse()` and `.parseAsync()` still `Error`. 
 
 ```ts
 try {
-  z.string().parse(data)
-} catch(err) {
-  if (err instanceof z.ZodError) {
-    // handle ZodError
-  }
-  
-  if (err instanceof Error) {
-    // handle regular Error
-  }
+  z.string().parse(12);
+} catch (err) {
+  console.log(err instanceof Error); // => true
 }
 ```
+
+Aside from the prototype difference, the error classes are identical.
+
+## `ZodError`
 
 ### updates issue formats
 
@@ -241,11 +246,13 @@ z.object({ a: z.string() }).extend(z.object({ b: z.number() })); // ✅
 
 `POSITIVE_INFINITY` and `NEGATIVE_INFINITY` are no longer considered valid values for `z.number()`.
 
+### `.safe()` no longer accepts floats
+
+In Zod 3, `z.number().safe()` is deprecated. It now behaves identically to `.int()` (see below). Importantly, that means it no longer accepts floats.
+
 ### `.int()` accepts safe integers only
 
-The `z.number().int()` API no longer accepts unsafe integers (outside the range of `Number.MIN_SAFE_INTEGER` and `Number.MAX_SAFE_INTEGER`). Using integers out of this range causes spontaneous rounding errors.
-
-
+The `z.number().int()` API no longer accepts unsafe integers (outside the range of `Number.MIN_SAFE_INTEGER` and `Number.MAX_SAFE_INTEGER`). Using integers out of this range causes spontaneous rounding errors. (Also: You should switch to `z.int()`.)
 ## `z.string()` updates
 
 ### deprecates `.email()` etc

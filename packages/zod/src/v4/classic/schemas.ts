@@ -94,7 +94,22 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
   meta(data: core.$replace<core.GlobalMeta, this>): this;
 
   // helpers
+  /** @deprecated Try safe-parsing `undefined` (this is what `isOptional` does internally):
+   *
+   * ```ts
+   * const schema = z.string().optional();
+   * const isOptional = schema.safeParse(undefined).success; // true
+   * ```
+   */
   isOptional(): boolean;
+  /**
+   * @deprecated Try safe-parsing `null` (this is what `isNullable` does internally):
+   *
+   * ```ts
+   * const schema = z.string().nullable();
+   * const isNullable = schema.safeParse(null).success; // true
+   * ```
+   */
   isNullable(): boolean;
 }
 
