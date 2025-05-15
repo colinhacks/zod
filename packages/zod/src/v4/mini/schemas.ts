@@ -1225,19 +1225,35 @@ export function _default<T extends SomeType>(
 ): ZodMiniDefault<T> {
   return new ZodMiniDefault({
     type: "default",
-    defaultValue: (typeof defaultValue === "function" ? defaultValue : () => defaultValue) as () => core.output<T>,
     innerType,
-  }) as any as ZodMiniDefault<T>;
+    get defaultValue() {
+      return typeof defaultValue === "function" ? (defaultValue as Function)() : defaultValue;
+    },
+  }) as ZodMiniDefault<T>;
 }
 
-export function prefault<T extends core.$ZodType>(
-  schema: T,
-  value: util.NoUndefined<T["_zod"]["input"]>
-): ZodMiniPipe<ZodMiniTransform<T["_zod"]["input"], T["_zod"]["input"] | undefined>, T> {
-  return pipe(
-    transform((input) => input ?? value),
-    schema as any
-  );
+// ZodMiniPrefault
+export interface ZodMiniPrefault<T extends SomeType = SomeType> extends ZodMiniType {
+  _zod: core.$ZodPrefaultInternals<T>;
+}
+export const ZodMiniPrefault: core.$constructor<ZodMiniPrefault> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniPrefault",
+  (inst, def) => {
+    core.$ZodPrefault.init(inst, def);
+    ZodMiniType.init(inst, def);
+  }
+);
+export function prefault<T extends SomeType>(
+  innerType: T,
+  defaultValue: util.NoUndefined<core.input<T>> | (() => util.NoUndefined<core.input<T>>)
+): ZodMiniPrefault<T> {
+  return new ZodMiniPrefault({
+    type: "prefault",
+    innerType,
+    get defaultValue() {
+      return typeof defaultValue === "function" ? (defaultValue as Function)() : defaultValue;
+    },
+  }) as ZodMiniPrefault<T>;
 }
 
 // ZodMiniNonOptional

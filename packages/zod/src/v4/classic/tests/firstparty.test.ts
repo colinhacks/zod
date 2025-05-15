@@ -60,6 +60,8 @@ test("first party switch", () => {
       break;
     case "default":
       break;
+    case "prefault":
+      break;
     case "template_literal":
       break;
     case "custom":
@@ -146,6 +148,8 @@ test("$ZodSchemaTypes", () => {
       break;
     case "default":
       break;
+    case "prefault":
+      break;
     case "template_literal":
       break;
     case "custom":
@@ -166,6 +170,7 @@ test("$ZodSchemaTypes", () => {
       break;
     case "lazy":
       break;
+
     default:
       expectTypeOf(type).toEqualTypeOf<never>();
   }

@@ -1260,8 +1260,10 @@ export function _default<T extends schemas.$ZodObject>(
 ): schemas.$ZodDefault<T> {
   return new Class({
     type: "default",
-    defaultValue: (typeof defaultValue === "function" ? defaultValue : () => defaultValue) as any,
     innerType,
+    get defaultValue() {
+      return typeof defaultValue === "function" ? (defaultValue as Function)() : defaultValue;
+    },
   }) as any;
 }
 

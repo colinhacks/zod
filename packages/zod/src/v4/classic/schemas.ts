@@ -70,6 +70,8 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
   nullish(): ZodOptional<ZodNullable<this>>;
   default(def: util.NoUndefined<core.output<this>>): ZodDefault<this>;
   default(def: () => util.NoUndefined<core.output<this>>): ZodDefault<this>;
+  prefault(def: () => core.input<this>): ZodPrefault<this>;
+  prefault(def: core.input<this>): ZodPrefault<this>;
   array(): ZodArray<this>;
   or<T extends core.$ZodType>(option: T): ZodUnion<[this, T]>;
   and<T extends core.$ZodType>(incoming: T): ZodIntersection<this, T>;
@@ -166,6 +168,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   inst.and = (arg) => intersection(inst, arg);
   inst.transform = (tx) => pipe(inst, transform(tx as any)) as never;
   inst.default = (def) => _default(inst, def);
+  inst.prefault = (def) => prefault(inst, def);
   // inst.coalesce = (def, params) => coalesce(inst, def, params);
   inst.catch = (params) => _catch(inst, params);
   inst.pipe = (target) => pipe(inst, target);
@@ -1698,19 +1701,38 @@ export function _default<T extends core.$ZodType>(
 ): ZodDefault<T> {
   return new ZodDefault({
     type: "default",
-    defaultValue: (typeof defaultValue === "function" ? defaultValue : () => defaultValue) as () => core.output<T>,
     innerType,
+    get defaultValue() {
+      return typeof defaultValue === "function" ? (defaultValue as Function)() : defaultValue;
+    },
   }) as any as ZodDefault<T>;
 }
 
+// ZodPrefault
+export interface ZodPrefault<T extends core.$ZodType = core.$ZodType> extends ZodType {
+  _zod: core.$ZodPrefaultInternals<T>;
+  unwrap(): T;
+}
+export const ZodPrefault: core.$constructor<ZodPrefault> = /*@__PURE__*/ core.$constructor(
+  "ZodPrefault",
+  (inst, def) => {
+    core.$ZodPrefault.init(inst, def);
+    ZodType.init(inst, def);
+    inst.unwrap = () => inst._zod.def.innerType;
+  }
+);
+
 export function prefault<T extends core.$ZodType>(
-  schema: T,
-  value: util.NoUndefined<T["_zod"]["input"]>
-): ZodPipe<ZodTransform<T["_zod"]["input"], T["_zod"]["input"] | undefined>, T> {
-  return pipe(
-    transform((input) => input ?? value),
-    schema as any
-  );
+  innerType: T,
+  defaultValue: core.input<T> | (() => core.input<T>)
+): ZodPrefault<T> {
+  return new ZodPrefault({
+    type: "prefault",
+    innerType,
+    get defaultValue() {
+      return typeof defaultValue === "function" ? (defaultValue as Function)() : defaultValue;
+    },
+  }) as ZodPrefault<T>;
 }
 
 // ZodNonOptional
