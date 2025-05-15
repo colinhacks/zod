@@ -282,14 +282,17 @@ test("url validations", () => {
   url.parse("http://google.com");
   url.parse("https://google.com/asdf?asdf=ljk3lk4&asdf=234#asdf");
   url.parse("https://anonymous:flabada@developer.mozilla.org/en-US/docs/Web/API/URL/password");
+  url.parse("https://localhost");
+  url.parse("https://my.local");
+  url.parse("http://aslkfjdalsdfkjaf");
+  url.parse("http://localhost");
+
   expect(() => url.parse("asdf")).toThrow();
   expect(() => url.parse("http:.......///broken.com")).toThrow();
   expect(() => url.parse("c:")).toThrow();
   expect(() => url.parse("WWW:WWW.COM")).toThrow();
   expect(() => url.parse("https:/")).toThrow();
-  expect(() => url.parse("https://asdf")).toThrow();
   expect(() => url.parse("asdfj@lkjsdf.com")).toThrow();
-  expect(() => url.parse("http://localhost")).toThrow();
 });
 
 test("url error overrides", () => {

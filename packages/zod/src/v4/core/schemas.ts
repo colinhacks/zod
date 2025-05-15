@@ -414,8 +414,13 @@ export const $ZodEmail: core.$constructor<$ZodEmail> = /*@__PURE__*/ core.$const
 
 //////////////////////////////   ZodURL   //////////////////////////////
 
-export interface $ZodURLDef extends $ZodStringFormatDef<"url"> {}
-export interface $ZodURLInternals extends $ZodStringFormatInternals<"url"> {}
+export interface $ZodURLDef extends $ZodStringFormatDef<"url"> {
+  hostname?: RegExp | undefined;
+  protocol?: RegExp | undefined;
+}
+export interface $ZodURLInternals extends $ZodStringFormatInternals<"url"> {
+  def: $ZodURLDef;
+}
 
 export interface $ZodURL extends $ZodType {
   _zod: $ZodURLInternals;
@@ -426,8 +431,47 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
   inst._zod.check = (payload) => {
     try {
       const url = new URL(payload.value);
+
       regexes.hostname.lastIndex = 0;
-      if (!regexes.hostname.test(url.hostname)) throw new Error();
+      if (!regexes.hostname.test(url.hostname)) {
+        payload.issues.push({
+          code: "invalid_format",
+          format: "url",
+          note: "Invalid hostname",
+          pattern: regexes.hostname.source,
+          input: payload.value,
+          inst,
+        });
+      }
+
+      if (def.hostname) {
+        def.hostname.lastIndex = 0;
+        if (!def.hostname.test(url.hostname)) {
+          payload.issues.push({
+            code: "invalid_format",
+            format: "url",
+            note: "Invalid hostname",
+            pattern: def.hostname.source,
+            input: payload.value,
+            inst,
+          });
+        }
+      }
+
+      if (def.protocol) {
+        def.protocol.lastIndex = 0;
+        if (!def.protocol.test(url.protocol.endsWith(":") ? url.protocol.slice(0, -1) : url.protocol)) {
+          payload.issues.push({
+            code: "invalid_format",
+            format: "url",
+            note: "Invalid protocol",
+            pattern: def.protocol.source,
+            input: payload.value,
+            inst,
+          });
+        }
+      }
+
       return;
     } catch (_) {
       payload.issues.push({
