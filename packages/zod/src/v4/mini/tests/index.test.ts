@@ -904,13 +904,11 @@ test("z.promise", async () => {
 // });
 
 test("z.pipe type enforcement", () => {
-  test("pipe with async transform", async () => {
+  z.pipe(
     z.pipe(
-      z.pipe(
-        z.string().check(z.regex(/asdf/)),
-        z.transform((v) => new Date(v))
-      ),
-      z.date().check(z.maximum(new Date()))
-    );
-  });
+      z.string().check(z.regex(/asdf/)),
+      z.transform((v) => new Date(v))
+    ),
+    z.date().check(z.maximum(new Date()))
+  );
 });
