@@ -839,6 +839,7 @@ z.string().endsWith(string);
 z.string().datetime(); // ISO 8601; by default only `Z` timezone allowed
 z.string().ip(); // defaults to allow both IPv4 and IPv6
 z.string().cidr(); // defaults to allow both IPv4 and IPv6
+z.string().creditCard();
 
 // transforms
 z.string().trim(); // trim whitespace
