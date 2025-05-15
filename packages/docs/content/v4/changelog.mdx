@@ -501,6 +501,16 @@ type MySchema = z.infer<typeof mySchema>;
 // Zod 4: still `unknown`
 ```
 
+### drops `ctx.path`
+
+Zod's new parsing architecture does not eagerly evaluate the `path` array. This was a necessary change that unlocks Zod 4's dramatic performance improvements.
+
+```ts
+z.string().superRefine((val, ctx) => {
+  ctx.path; // ❌ no longer available
+});
+```
+
 ## `z.ostring()`, etc dropped
 
 The undocumented convenience methods `z.ostring()`, `z.onumber()`, etc. have been removed. These were shorthand methods for defining optional string schemas.
