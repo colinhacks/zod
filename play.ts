@@ -1,11 +1,5 @@
-import * as zMini from "zod/v4-mini";
+import * as z from "zod/v4";
 
-z;
+// z.string().check(z.startsWith("asdf", "bad")).parse("qwer");
 
-zMini.pipe(
-  zMini.pipe(
-    zMini.string().check(zMini.regex(/asdf/)),
-    zMini.transform((v) => new Date(v))
-  ),
-  zMini.date().check(zMini.maximum(new Date()))
-);
+console.log(z.string().includes("Error")._zod.def);

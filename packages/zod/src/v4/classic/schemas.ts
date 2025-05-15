@@ -64,12 +64,12 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
   overwrite(fn: (x: core.output<this>) => core.output<this>): this;
 
   // wrappers
-  optional(params?: string | core.$ZodOptionalParams): ZodOptional<this>;
+  optional(): ZodOptional<this>;
   nonoptional(params?: string | core.$ZodNonOptionalParams): ZodNonOptional<this>;
-  nullable(params?: string | core.$ZodNullableParams): ZodNullable<this>;
+  nullable(): ZodNullable<this>;
   nullish(): ZodOptional<ZodNullable<this>>;
-  default(def: util.NoUndefined<core.output<this>>, params?: string | core.$ZodDefaultParams): ZodDefault<this>;
-  default(def: () => util.NoUndefined<core.output<this>>, params?: string | core.$ZodDefaultParams): ZodDefault<this>;
+  default(def: util.NoUndefined<core.output<this>>): ZodDefault<this>;
+  default(def: () => util.NoUndefined<core.output<this>>): ZodDefault<this>;
   array(): ZodArray<this>;
   or<T extends core.$ZodType>(option: T): ZodUnion<[this, T]>;
   and<T extends core.$ZodType>(incoming: T): ZodIntersection<this, T>;
@@ -157,15 +157,15 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   inst.overwrite = (fn) => inst.check(checks.overwrite(fn));
 
   // wrappers
-  inst.optional = (params) => optional(inst, params);
-  inst.nullable = (params) => nullable(inst, params);
+  inst.optional = () => optional(inst);
+  inst.nullable = () => nullable(inst);
   inst.nullish = () => optional(nullable(inst));
   inst.nonoptional = (params) => nonoptional(inst, params);
   inst.array = () => array(inst);
   inst.or = (arg) => union([inst, arg]);
   inst.and = (arg) => intersection(inst, arg);
   inst.transform = (tx) => pipe(inst, transform(tx as any)) as never;
-  inst.default = (def, params) => _default(inst, def, params);
+  inst.default = (def) => _default(inst, def);
   // inst.coalesce = (def, params) => coalesce(inst, def, params);
   inst.catch = (params) => _catch(inst, params);
   inst.pipe = (target) => pipe(inst, target);
@@ -211,7 +211,7 @@ export interface _ZodString<Input = unknown> extends ZodType {
 
   // miscellaneous checks
   regex(regex: RegExp, params?: string | core.$ZodCheckRegexParams): this;
-  includes(value: string, params?: { message?: string; position?: number }): this;
+  includes(value: string, params?: core.$ZodCheckIncludesParams): this;
   startsWith(value: string, params?: string | core.$ZodCheckStartsWithParams): this;
   endsWith(value: string, params?: string | core.$ZodCheckEndsWithParams): this;
   min(minLength: number, params?: string | core.$ZodCheckMinLengthParams): this;
@@ -931,8 +931,8 @@ export const ZodAny: core.$constructor<ZodAny> = /*@__PURE__*/ core.$constructor
   ZodType.init(inst, def);
 });
 
-export function any(params?: string | core.$ZodAnyParams): ZodAny {
-  return core._any(ZodAny, params);
+export function any(): ZodAny {
+  return core._any(ZodAny);
 }
 
 // ZodUnknown
@@ -944,8 +944,8 @@ export const ZodUnknown: core.$constructor<ZodUnknown> = /*@__PURE__*/ core.$con
   ZodType.init(inst, def);
 });
 
-export function unknown(params?: string | core.$ZodUnknownParams): ZodUnknown {
-  return core._unknown(ZodUnknown, params);
+export function unknown(): ZodUnknown {
+  return core._unknown(ZodUnknown);
 }
 
 // ZodNever
@@ -1284,14 +1284,12 @@ export const ZodIntersection: core.$constructor<ZodIntersection> = /*@__PURE__*/
 
 export function intersection<T extends core.$ZodType, U extends core.$ZodType>(
   left: T,
-  right: U,
-  params?: string | core.$ZodIntersectionParams
+  right: U
 ): ZodIntersection<T, U> {
   return new ZodIntersection({
     type: "intersection",
     left,
     right,
-    ...util.normalizeParams(params),
   }) as ZodIntersection<T, U>;
 }
 
@@ -1643,14 +1641,10 @@ export const ZodOptional: core.$constructor<ZodOptional> = /*@__PURE__*/ core.$c
   }
 );
 
-export function optional<T extends core.$ZodType>(
-  innerType: T,
-  params?: string | core.$ZodOptionalParams
-): ZodOptional<T> {
+export function optional<T extends core.$ZodType>(innerType: T): ZodOptional<T> {
   return new ZodOptional({
     type: "optional",
     innerType,
-    ...util.normalizeParams(params),
   }) as ZodOptional<T>;
 }
 
@@ -1670,14 +1664,10 @@ export const ZodNullable: core.$constructor<ZodNullable> = /*@__PURE__*/ core.$c
   }
 );
 
-export function nullable<T extends core.$ZodType>(
-  innerType: T,
-  params?: string | core.$ZodNullableParams
-): ZodNullable<T> {
+export function nullable<T extends core.$ZodType>(innerType: T): ZodNullable<T> {
   return new ZodNullable({
     type: "nullable",
     innerType,
-    ...util.normalizeParams(params),
   }) as ZodNullable<T>;
 }
 
@@ -1704,14 +1694,12 @@ export const ZodDefault: core.$constructor<ZodDefault> = /*@__PURE__*/ core.$con
 
 export function _default<T extends core.$ZodType>(
   innerType: T,
-  defaultValue: util.NoUndefined<core.output<T>> | (() => util.NoUndefined<core.output<T>>),
-  params?: string | core.$ZodDefaultParams
+  defaultValue: util.NoUndefined<core.output<T>> | (() => util.NoUndefined<core.output<T>>)
 ): ZodDefault<T> {
   return new ZodDefault({
     type: "default",
     defaultValue: (typeof defaultValue === "function" ? defaultValue : () => defaultValue) as () => core.output<T>,
     innerType,
-    ...util.normalizeParams(params),
   }) as any as ZodDefault<T>;
 }
 
@@ -1755,14 +1743,10 @@ export const ZodSuccess: core.$constructor<ZodSuccess> = /*@__PURE__*/ core.$con
   inst.unwrap = () => inst._zod.def.innerType;
 });
 
-export function success<T extends core.$ZodType>(
-  innerType: T,
-  params?: string | core.$ZodSuccessParams
-): ZodSuccess<T> {
+export function success<T extends core.$ZodType>(innerType: T): ZodSuccess<T> {
   return new ZodSuccess({
     type: "success",
     innerType,
-    ...util.normalizeParams(params),
   }) as ZodSuccess<T>;
 }
 
@@ -1784,8 +1768,7 @@ export const ZodCatch: core.$constructor<ZodCatch> = /*@__PURE__*/ core.$constru
 
 function _catch<T extends core.$ZodType>(
   innerType: T,
-  catchValue: core.output<T> | ((ctx: core.$ZodCatchCtx) => core.output<T>),
-  params?: string | core.$ZodCatchParams
+  catchValue: core.output<T> | ((ctx: core.$ZodCatchCtx) => core.output<T>)
 ): ZodCatch<T> {
   return new ZodCatch({
     type: "catch",
@@ -1793,7 +1776,6 @@ function _catch<T extends core.$ZodType>(
     catchValue: (typeof catchValue === "function" ? catchValue : () => catchValue) as (
       ctx: core.$ZodCatchCtx
     ) => core.output<T>,
-    ...util.normalizeParams(params),
   }) as ZodCatch<T>;
 }
 export { _catch as catch };
@@ -1830,13 +1812,14 @@ export const ZodPipe: core.$constructor<ZodPipe> = /*@__PURE__*/ core.$construct
 export function pipe<
   const A extends core.$ZodType,
   B extends core.$ZodType<unknown, core.output<A>> = core.$ZodType<unknown, core.output<A>>,
->(in_: A, out: B | core.$ZodType<unknown, core.output<A>>, params?: string | core.$ZodPipeParams): ZodPipe<A, B>;
-export function pipe(in_: core.$ZodType, out: core.$ZodType, params?: string | core.$ZodPipeParams) {
+>(in_: A, out: B | core.$ZodType<unknown, core.output<A>>): ZodPipe<A, B>;
+export function pipe(in_: core.$ZodType, out: core.$ZodType) {
   return new ZodPipe({
     type: "pipe",
     in: in_,
     out,
-    ...util.normalizeParams(params),
+
+    // ...util.normalizeParams(params),
   });
 }
 
@@ -1852,14 +1835,10 @@ export const ZodReadonly: core.$constructor<ZodReadonly> = /*@__PURE__*/ core.$c
   }
 );
 
-export function readonly<T extends core.$ZodType>(
-  innerType: T,
-  params?: string | core.$ZodReadonlyParams
-): ZodReadonly<T> {
+export function readonly<T extends core.$ZodType>(innerType: T): ZodReadonly<T> {
   return new ZodReadonly({
     type: "readonly",
     innerType,
-    ...util.normalizeParams(params),
   }) as ZodReadonly<T>;
 }
 
@@ -1919,14 +1898,10 @@ export const ZodPromise: core.$constructor<ZodPromise> = /*@__PURE__*/ core.$con
   inst.unwrap = () => inst._zod.def.innerType;
 });
 
-export function promise<T extends core.$ZodType>(
-  innerType: T,
-  params?: string | core.$ZodPromiseParams
-): ZodPromise<T> {
+export function promise<T extends core.$ZodType>(innerType: T): ZodPromise<T> {
   return new ZodPromise({
     type: "promise",
     innerType,
-    ...util.normalizeParams(params),
   }) as ZodPromise<T>;
 }
 
@@ -2042,7 +2017,7 @@ export function json(params?: string | core.$ZodCustomParams): ZodJSONSchema {
 }
 
 // preprocess
-export interface ZodPreprocessParams extends core.$ZodTransformParams, core.$ZodPipeParams {}
+export interface ZodPreprocessParams extends core.$ZodTransformParams {}
 
 // /** @deprecated Use `z.pipe()` and `z.transform()` instead. */
 export function preprocess<A, U extends core.$ZodType>(
@@ -2050,5 +2025,5 @@ export function preprocess<A, U extends core.$ZodType>(
   schema: U,
   params?: ZodPreprocessParams
 ): ZodPipe<ZodTransform<A, unknown>, U> {
-  return pipe(transform(fn as any, params), schema as any, params);
+  return pipe(transform(fn as any, params), schema as any);
 }

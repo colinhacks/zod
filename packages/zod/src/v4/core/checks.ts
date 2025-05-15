@@ -720,14 +720,12 @@ export const $ZodCheckLengthEquals: core.$constructor<$ZodCheckLengthEquals> = /
 /////    $ZodCheckStringFormatRegex    /////
 /////////////////////////////////////////////
 export type $ZodStringFormats =
-  | "regex"
   | "email"
   | "url"
   | "emoji"
   | "uuid"
   | "guid"
   | "nanoid"
-  | "guid"
   | "cuid"
   | "cuid2"
   | "ulid"

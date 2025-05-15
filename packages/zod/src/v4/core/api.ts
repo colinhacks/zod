@@ -655,22 +655,17 @@ export function _null<T extends schemas.$ZodNull>(Class: util.SchemaClass<T>, pa
 
 // Any
 export type $ZodAnyParams = util.TypeParams<schemas.$ZodAny>;
-export function _any<T extends schemas.$ZodAny>(Class: util.SchemaClass<T>, params?: string | $ZodAnyParams): T {
+export function _any<T extends schemas.$ZodAny>(Class: util.SchemaClass<T>): T {
   return new Class({
     type: "any",
-    ...util.normalizeParams(params),
   });
 }
 
 // Unknown
 export type $ZodUnknownParams = util.TypeParams<schemas.$ZodUnknown>;
-export function _unknown<T extends schemas.$ZodUnknown>(
-  Class: util.SchemaClass<T>,
-  params?: string | $ZodUnknownParams
-): T {
+export function _unknown<T extends schemas.$ZodUnknown>(Class: util.SchemaClass<T>): T {
   return new Class({
     type: "unknown",
-    ...util.normalizeParams(params),
   });
 }
 
@@ -1047,14 +1042,12 @@ export type $ZodIntersectionParams = util.TypeParams<schemas.$ZodIntersection, "
 export function _intersection<T extends schemas.$ZodObject, U extends schemas.$ZodObject>(
   Class: util.SchemaClass<schemas.$ZodIntersection>,
   left: T,
-  right: U,
-  params?: $ZodIntersectionParams
+  right: U
 ): schemas.$ZodIntersection<T, U> {
   return new Class({
     type: "intersection",
     left,
     right,
-    ...util.normalizeParams(params),
   }) as any;
 }
 
@@ -1238,13 +1231,11 @@ export function _transform<I = unknown, O = I>(
 export type $ZodOptionalParams = util.TypeParams<schemas.$ZodOptional, "innerType">;
 export function _optional<T extends schemas.$ZodObject>(
   Class: util.SchemaClass<schemas.$ZodOptional>,
-  innerType: T,
-  params?: $ZodOptionalParams
+  innerType: T
 ): schemas.$ZodOptional<T> {
   return new Class({
     type: "optional",
     innerType,
-    ...util.normalizeParams(params),
   }) as any;
 }
 
@@ -1252,13 +1243,11 @@ export function _optional<T extends schemas.$ZodObject>(
 export type $ZodNullableParams = util.TypeParams<schemas.$ZodNullable, "innerType">;
 export function _nullable<T extends schemas.$ZodObject>(
   Class: util.SchemaClass<schemas.$ZodNullable>,
-  innerType: T,
-  params?: $ZodNullableParams
+  innerType: T
 ): schemas.$ZodNullable<T> {
   return new Class({
     type: "nullable",
     innerType,
-    ...util.normalizeParams(params),
   }) as any;
 }
 
@@ -1267,14 +1256,12 @@ export type $ZodDefaultParams = util.TypeParams<schemas.$ZodDefault, "innerType"
 export function _default<T extends schemas.$ZodObject>(
   Class: util.SchemaClass<schemas.$ZodDefault>,
   innerType: T,
-  defaultValue: util.NoUndefined<core.output<T>> | (() => util.NoUndefined<core.output<T>>),
-  params?: $ZodDefaultParams
+  defaultValue: util.NoUndefined<core.output<T>> | (() => util.NoUndefined<core.output<T>>)
 ): schemas.$ZodDefault<T> {
   return new Class({
     type: "default",
     defaultValue: (typeof defaultValue === "function" ? defaultValue : () => defaultValue) as any,
     innerType,
-    ...util.normalizeParams(params),
   }) as any;
 }
 
@@ -1296,13 +1283,11 @@ export function _nonoptional<T extends schemas.$ZodObject>(
 export type $ZodSuccessParams = util.TypeParams<schemas.$ZodSuccess, "innerType">;
 export function _success<T extends schemas.$ZodObject>(
   Class: util.SchemaClass<schemas.$ZodSuccess>,
-  innerType: T,
-  params?: $ZodSuccessParams
+  innerType: T
 ): schemas.$ZodSuccess<T> {
   return new Class({
     type: "success",
     innerType,
-    ...util.normalizeParams(params),
   }) as any;
 }
 
@@ -1311,14 +1296,12 @@ export type $ZodCatchParams = util.TypeParams<schemas.$ZodCatch, "innerType" | "
 export function _catch<T extends schemas.$ZodObject>(
   Class: util.SchemaClass<schemas.$ZodCatch>,
   innerType: T,
-  catchValue: core.output<T> | ((ctx: schemas.$ZodCatchCtx) => core.output<T>),
-  params?: $ZodCatchParams
+  catchValue: core.output<T> | ((ctx: schemas.$ZodCatchCtx) => core.output<T>)
 ): schemas.$ZodCatch<T> {
   return new Class({
     type: "catch",
     innerType,
     catchValue: (typeof catchValue === "function" ? catchValue : () => catchValue) as any,
-    ...util.normalizeParams(params),
   }) as any;
 }
 
@@ -1330,14 +1313,12 @@ export function _pipe<
 >(
   Class: util.SchemaClass<schemas.$ZodPipe>,
   in_: A,
-  out: B | schemas.$ZodType<unknown, core.output<A>>,
-  params?: $ZodPipeParams
+  out: B | schemas.$ZodType<unknown, core.output<A>>
 ): schemas.$ZodPipe<A, B> {
   return new Class({
     type: "pipe",
     in: in_,
     out,
-    ...util.normalizeParams(params),
   }) as any;
 }
 
@@ -1345,13 +1326,11 @@ export function _pipe<
 export type $ZodReadonlyParams = util.TypeParams<schemas.$ZodReadonly, "innerType">;
 export function _readonly<T extends schemas.$ZodObject>(
   Class: util.SchemaClass<schemas.$ZodReadonly>,
-  innerType: T,
-  params?: $ZodReadonlyParams
+  innerType: T
 ): schemas.$ZodReadonly<T> {
   return new Class({
     type: "readonly",
     innerType,
-    ...util.normalizeParams(params),
   }) as any;
 }
 
@@ -1373,13 +1352,11 @@ export function _templateLiteral<const Parts extends schemas.$TemplateLiteralPar
 export type $ZodLazyParams = util.TypeParams<schemas.$ZodLazy, "getter">;
 export function _lazy<T extends schemas.$ZodType>(
   Class: util.SchemaClass<schemas.$ZodLazy>,
-  getter: () => T,
-  params?: $ZodLazyParams
+  getter: () => T
 ): schemas.$ZodLazy<T> {
   return new Class({
     type: "lazy",
     getter,
-    ...util.normalizeParams(params),
   }) as any;
 }
 
@@ -1387,13 +1364,11 @@ export function _lazy<T extends schemas.$ZodType>(
 export type $ZodPromiseParams = util.TypeParams<schemas.$ZodPromise, "innerType">;
 export function _promise<T extends schemas.$ZodObject>(
   Class: util.SchemaClass<schemas.$ZodPromise>,
-  innerType: T,
-  params?: $ZodPromiseParams
+  innerType: T
 ): schemas.$ZodPromise<T> {
   return new Class({
     type: "promise",
     innerType,
-    ...util.normalizeParams(params),
   }) as any;
 }
 
@@ -1425,6 +1400,7 @@ export function _refine<T>(
 // export type $ZodCustomParams = util.CheckTypeParams<schemas.$ZodCustom, "fn">
 
 /////////    STRINGBOOL   /////////
+
 // stringbool
 export interface $ZodStringBoolParams extends util.TypeParams {
   truthy?: string[];

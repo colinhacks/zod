@@ -409,20 +409,23 @@ export function clone<T extends schemas.$ZodType>(inst: T, def?: T["_zod"]["def"
   return cl as any;
 }
 
+type EmptyToNever<T> = keyof T extends never ? never : T;
 export type Params<
   T extends schemas.$ZodType | checks.$ZodCheck,
   IssueTypes extends errors.$ZodIssueBase,
   OmitKeys extends keyof T["_zod"]["def"] = never,
 > = Flatten<
   Partial<
-    Omit<T["_zod"]["def"], OmitKeys> &
-      ([IssueTypes] extends [never]
-        ? { error?: never } // unknown
-        : {
-            error?: string | errors.$ZodErrorMap<IssueTypes> | undefined;
-            /** @deprecated This parameter is deprecated. Use `error` instead. */
-            message?: string | undefined; // supported in Zod 3
-          })
+    EmptyToNever<
+      Omit<T["_zod"]["def"], OmitKeys> &
+        ([IssueTypes] extends [never]
+          ? {} // unknown
+          : {
+              error?: string | errors.$ZodErrorMap<IssueTypes> | undefined;
+              /** @deprecated This parameter is deprecated. Use `error` instead. */
+              message?: string | undefined; // supported in Zod 3
+            })
+    >
   >
 >;
 
@@ -474,17 +477,21 @@ export function splitChecksAndParams<T extends TypeParams>(
   };
 }
 
-export type Normalize<T> = T extends Record<any, any>
-  ? Flatten<
-      {
-        [k in keyof Omit<T, "error" | "message">]: T[k];
-      } & {
-        error?: Exclude<T["error"], string>;
-        // path?: PropertyKey[] | undefined;
-        // message?: string | undefined;
-      }
-    >
-  : never;
+export type Normalize<T> = T extends undefined
+  ? never
+  : T extends Record<any, any>
+    ? Flatten<
+        {
+          [k in keyof Omit<T, "error" | "message">]: T[k];
+        } & ("error" extends keyof T
+          ? {
+              error?: Exclude<T["error"], string>;
+              // path?: PropertyKey[] | undefined;
+              // message?: string | undefined;
+            }
+          : unknown)
+      >
+    : never;
 
 export function normalizeParams<T>(_params: T): Normalize<T> {
   const params: any = _params;
