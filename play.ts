@@ -1,4 +1,5 @@
-import z from "zod/v4";
-import { en } from "zod/v4/locales";
+import { z } from "zod/v4-mini";
 
-z.config(en());
+const args = ["asdf"] as const;
+
+z.enum(args);

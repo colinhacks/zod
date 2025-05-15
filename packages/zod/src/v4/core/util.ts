@@ -256,7 +256,6 @@ export function defineLazy<T, K extends keyof T>(object: T, key: K, getter: () =
       if (!set) {
         const value = getter();
         object[key] = value;
-        // Object.defineProperty(object, key, { value });
         return value;
       }
       throw new Error("cached value already set");

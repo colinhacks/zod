@@ -48,7 +48,7 @@ test("schema getter", () => {
 });
 
 test("lazy proxy", () => {
-  const schema = z.lazy(() => z.string())._zod._getter.min(6);
+  const schema = z.lazy(() => z.string())._zod.innerType.min(6);
   schema.parse("123456");
   expect(schema.safeParse("12345").success).toBe(false);
 });

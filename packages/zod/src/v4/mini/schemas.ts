@@ -1070,7 +1070,7 @@ export const ZodMiniEnum: core.$constructor<ZodMiniEnum> = /*@__PURE__*/ core.$c
   }
 );
 
-function _enum<const T extends string[]>(
+function _enum<const T extends readonly string[]>(
   values: T,
   params?: string | core.$ZodEnumParams
 ): ZodMiniEnum<util.ToEnum<T[number]>>;

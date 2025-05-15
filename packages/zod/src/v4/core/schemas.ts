@@ -2860,9 +2860,8 @@ export const $ZodOptional: core.$constructor<$ZodOptional> = /*@__PURE__*/ core.
   (inst, def) => {
     $ZodType.init(inst, def);
     inst._zod.optionality = "optional";
-    // inst._zod.qin = "true";
-    // inst._zod.qout = "true";
     if (def.innerType._zod.values) inst._zod.values = new Set([...def.innerType._zod.values, undefined]);
+
     const pattern = (def.innerType as any)._zod.pattern;
     if (pattern) inst._zod.pattern = new RegExp(`^(${util.cleanRegex(pattern.source)})?$`);
 
@@ -3478,7 +3477,8 @@ export interface $ZodLazyInternals<T extends $ZodType = $ZodType>
   extends $ZodTypeInternals<core.output<T>, core.input<T>> {
   def: $ZodLazyDef;
   isst: never;
-  _getter: T;
+  /** Auto-cached way to retrieve the inner schema */
+  innerType: T;
   pattern: T["_zod"]["pattern"];
   disc: T["_zod"]["disc"];
   // qin: T["_zod"]["qin"];
@@ -3493,12 +3493,13 @@ export interface $ZodLazy<T extends $ZodType = $ZodType> extends $ZodType {
 export const $ZodLazy: core.$constructor<$ZodLazy> = /*@__PURE__*/ core.$constructor("$ZodLazy", (inst, def) => {
   $ZodType.init(inst, def);
 
-  util.defineLazy(inst._zod, "_getter", def.getter);
-  util.defineLazy(inst._zod, "pattern", () => inst._zod._getter._zod.pattern);
-  util.defineLazy(inst._zod, "disc", () => inst._zod._getter._zod.disc);
-  util.defineLazy(inst._zod, "optionality", () => inst._zod._getter._zod.optionality);
+  util.defineLazy(inst._zod, "innerType", () => def.getter());
+  util.defineLazy(inst._zod, "pattern", () => inst._zod.innerType._zod.pattern);
+  util.defineLazy(inst._zod, "disc", () => inst._zod.innerType._zod.disc);
+  util.defineLazy(inst._zod, "optionality", () => inst._zod.innerType._zod.optionality);
   inst._zod.parse = (payload, ctx) => {
-    return inst._zod._getter._zod.run(payload, ctx);
+    const inner = inst._zod.innerType;
+    return inner._zod.run(payload, ctx);
   };
 });
 

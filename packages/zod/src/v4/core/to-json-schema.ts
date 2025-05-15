@@ -525,7 +525,7 @@ export class JSONSchemaGenerator {
           break;
         }
         case "lazy": {
-          const innerType = (schema as schemas.$ZodLazy)._zod._getter;
+          const innerType = (schema as schemas.$ZodLazy)._zod.innerType;
           const inner = this.process(innerType, params);
           // result.schema = inner;
           _json._ref = inner;
