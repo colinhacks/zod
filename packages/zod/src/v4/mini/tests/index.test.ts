@@ -902,3 +902,15 @@ test("z.promise", async () => {
 //   // @ts-expect-error
 //   schema.assertOutput<string>();
 // });
+
+test("z.pipe type enforcement", () => {
+  test("pipe with async transform", async () => {
+    z.pipe(
+      z.pipe(
+        z.string().check(z.regex(/asdf/)),
+        z.transform((v) => new Date(v))
+      ),
+      z.date().check(z.maximum(new Date()))
+    );
+  });
+});
