@@ -530,9 +530,7 @@ describe("toJSONSchema", () => {
 
     expect(toJSONSchema(a)).toMatchInlineSnapshot(`
       {
-        "additionalProperties": {
-          "not": {},
-        },
+        "additionalProperties": false,
         "properties": {
           "age": {
             "type": "number",
@@ -690,9 +688,7 @@ describe("toJSONSchema", () => {
 
     expect(toJSONSchema(a)).toMatchInlineSnapshot(`
       {
-        "additionalProperties": {
-          "not": {},
-        },
+        "additionalProperties": false,
         "properties": {
           "age": {
             "type": "number",
