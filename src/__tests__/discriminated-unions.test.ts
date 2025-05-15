@@ -318,3 +318,75 @@ test("readonly array of options", () => {
     z.discriminatedUnion("type", options).parse({ type: "x", val: 1 })
   ).toEqual({ type: "x", val: 1 });
 });
+
+test("valid - unions and intersections of objects", () => {
+  const union = z.discriminatedUnion("type", [
+    z.object({ type: z.literal("a"), a: z.string() }),
+    z.object({ type: z.literal("b") }).and(z.object({ b: z.string() })),
+    z
+      .object({ type: z.literal("c"), c: z.string() })
+      .or(z.object({ type: z.literal("c"), c: z.number() }))
+      .or(z.object({ type: z.literal("d"), d: z.string() })),
+    z
+      .object({ type: z.literal("e"), e: z.string() })
+      .and(z.object({ foo: z.string() }).or(z.object({ bar: z.string() }))),
+    z
+      .object({ type: z.literal("f"), f: z.string() })
+      .or(z.object({ type: z.literal("f") }).and(z.object({ f: z.number() }))),
+    z.discriminatedUnion("foo", [
+      z.object({ type: z.literal("g"), foo: z.literal("bar") }),
+      z.object({ type: z.literal("h"), foo: z.literal("baz") }),
+    ]),
+    z
+      .object({ type: z.literal("i").or(z.literal("j")) })
+      .and(
+        z.object({
+          type: z.literal("i").or(z.literal("j")).and(z.literal("i")),
+        })
+      )
+      .and(z.object({ type: z.literal("i") }))
+      .and(z.object({ foo: z.string() })),
+  ]);
+
+  expect(union.parse({ type: "a", a: "123" })).toEqual({ type: "a", a: "123" });
+  expect(union.parse({ type: "b", b: "123" })).toEqual({ type: "b", b: "123" });
+  expect(union.parse({ type: "c", c: "123" })).toEqual({ type: "c", c: "123" });
+  expect(union.parse({ type: "c", c: 123 })).toEqual({ type: "c", c: 123 });
+  expect(union.parse({ type: "d", d: "123" })).toEqual({ type: "d", d: "123" });
+  expect(() => {
+    union.parse({ type: "d", c: "123" });
+  }).toThrow();
+  expect(union.parse({ type: "e", e: "123", foo: "456" })).toEqual({
+    type: "e",
+    e: "123",
+    foo: "456",
+  });
+  expect(union.parse({ type: "e", e: "123", bar: "456" })).toEqual({
+    type: "e",
+    e: "123",
+    bar: "456",
+  });
+  expect(() => {
+    union.parse({ type: "e", e: "123" });
+  }).toThrow();
+  expect(union.parse({ type: "f", f: "123" })).toEqual({ type: "f", f: "123" });
+  expect(union.parse({ type: "f", f: 123 })).toEqual({ type: "f", f: 123 });
+  expect(union.parse({ type: "g", foo: "bar" })).toEqual({
+    type: "g",
+    foo: "bar",
+  });
+  expect(union.parse({ type: "h", foo: "baz" })).toEqual({
+    type: "h",
+    foo: "baz",
+  });
+  expect(() => {
+    union.parse({ type: "h", foo: "bar" });
+  }).toThrow();
+  expect(union.parse({ type: "i", foo: "123" })).toEqual({
+    type: "i",
+    foo: "123",
+  });
+  expect(() => {
+    union.parse({ type: "j", foo: "123" });
+  }).toThrow();
+});

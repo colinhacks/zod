@@ -22,7 +22,12 @@ import {
 } from "./helpers/parseUtil.ts";
 import { partialUtil } from "./helpers/partialUtil.ts";
 import { Primitive } from "./helpers/typeAliases.ts";
-import { getParsedType, objectUtil, util, ZodParsedType } from "./helpers/util.ts";
+import {
+  getParsedType,
+  objectUtil,
+  util,
+  ZodParsedType,
+} from "./helpers/util.ts";
 import type { StandardSchemaV1 } from "./standard-schema.ts";
 import {
   IssueData,
@@ -3076,7 +3081,9 @@ export type AnyZodObject = ZodObject<any, any, any>;
 //////////                    //////////
 ////////////////////////////////////////
 ////////////////////////////////////////
-export type ZodUnionOptions = Readonly<[ZodTypeAny, ...ZodTypeAny[]]>;
+export type ZodUnionOptions<T extends ZodTypeAny = ZodTypeAny> = Readonly<
+  [T, ...T[]]
+>;
 export interface ZodUnionDef<
   T extends ZodUnionOptions = Readonly<
     [ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]
@@ -3218,45 +3225,160 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
 /////////////////////////////////////////////////////
 /////////////////////////////////////////////////////
 
-const getDiscriminator = <T extends ZodTypeAny>(type: T): Primitive[] => {
-  if (type instanceof ZodLazy) {
-    return getDiscriminator(type.schema);
-  } else if (type instanceof ZodEffects) {
-    return getDiscriminator(type.innerType());
-  } else if (type instanceof ZodLiteral) {
-    return [type.value];
-  } else if (type instanceof ZodEnum) {
-    return type.options;
-  } else if (type instanceof ZodNativeEnum) {
-    // eslint-disable-next-line ban/ban
-    return util.objectValues(type.enum as any);
-  } else if (type instanceof ZodDefault) {
-    return getDiscriminator(type._def.innerType);
-  } else if (type instanceof ZodUndefined) {
-    return [undefined];
-  } else if (type instanceof ZodNull) {
-    return [null];
-  } else if (type instanceof ZodOptional) {
-    return [undefined, ...getDiscriminator(type.unwrap())];
-  } else if (type instanceof ZodNullable) {
-    return [null, ...getDiscriminator(type.unwrap())];
-  } else if (type instanceof ZodBranded) {
-    return getDiscriminator(type.unwrap());
-  } else if (type instanceof ZodReadonly) {
-    return getDiscriminator(type.unwrap());
-  } else if (type instanceof ZodCatch) {
-    return getDiscriminator(type._def.innerType);
-  } else {
-    return [];
+type AnyZodDiscriminatedUnionOption =
+  | SomeZodObject
+  | ZodIntersection<
+      AnyZodDiscriminatedUnionOption,
+      AnyZodDiscriminatedUnionOption
+    >
+  | ZodUnion<ZodUnionOptions<AnyZodDiscriminatedUnionOption>>
+  | ZodDiscriminatedUnion<any, readonly AnyZodDiscriminatedUnionOption[]>;
+
+export type ZodDiscriminatedUnionOption<Discriminator extends string> =
+  | ZodObject<
+      { [key in Discriminator]: ZodTypeAny } & ZodRawShape,
+      UnknownKeysParam,
+      ZodTypeAny
+    >
+  | ZodIntersection<
+      ZodDiscriminatedUnionOption<Discriminator>,
+      AnyZodDiscriminatedUnionOption
+    >
+  | ZodIntersection<
+      AnyZodDiscriminatedUnionOption,
+      ZodDiscriminatedUnionOption<Discriminator>
+    >
+  | ZodUnion<ZodUnionOptions<ZodDiscriminatedUnionOption<Discriminator>>>
+  | ZodDiscriminatedUnion<
+      any,
+      readonly ZodDiscriminatedUnionOption<Discriminator>[]
+    >;
+
+const getDiscriminatorValues = (
+  discriminator: string,
+  type: AnyZodDiscriminatedUnionOption,
+  values: Set<Primitive>
+) => {
+  if (type instanceof ZodObject) {
+    getDiscriminator(type.shape[discriminator], values);
+  } else if (type instanceof ZodIntersection) {
+    const leftHasDiscriminator = hasDiscriminator(
+      discriminator,
+      type._def.left
+    );
+    const rightHasDiscriminator = hasDiscriminator(
+      discriminator,
+      type._def.right
+    );
+
+    if (leftHasDiscriminator && rightHasDiscriminator) {
+      const leftValues = new Set<Primitive>();
+      const rightValues = new Set<Primitive>();
+
+      getDiscriminatorValues(discriminator, type._def.left, leftValues);
+      getDiscriminatorValues(discriminator, type._def.right, rightValues);
+
+      for (const value of leftValues) {
+        if (rightValues.has(value)) {
+          values.add(value);
+        }
+      }
+    } else if (leftHasDiscriminator) {
+      getDiscriminatorValues(discriminator, type._def.left, values);
+    } else if (rightHasDiscriminator) {
+      getDiscriminatorValues(discriminator, type._def.right, values);
+    }
+  } else if (
+    type instanceof ZodUnion ||
+    type instanceof ZodDiscriminatedUnion
+  ) {
+    for (const optionType of type.options) {
+      getDiscriminatorValues(discriminator, optionType, values);
+    }
   }
 };
 
-export type ZodDiscriminatedUnionOption<Discriminator extends string> =
-  ZodObject<
-    { [key in Discriminator]: ZodTypeAny } & ZodRawShape,
-    UnknownKeysParam,
-    ZodTypeAny
-  >;
+const hasDiscriminator = (
+  discriminator: string,
+  type: AnyZodDiscriminatedUnionOption
+): boolean => {
+  if (type instanceof ZodObject) {
+    return discriminator in type.shape;
+  } else if (type instanceof ZodIntersection) {
+    return (
+      hasDiscriminator(discriminator, type._def.left) ||
+      hasDiscriminator(discriminator, type._def.right)
+    );
+  } else if (
+    type instanceof ZodUnion ||
+    type instanceof ZodDiscriminatedUnion
+  ) {
+    return type.options.some((optionType) =>
+      hasDiscriminator(discriminator, optionType)
+    );
+  } else {
+    return false;
+  }
+};
+
+const getDiscriminator = <T extends ZodTypeAny>(
+  type: T,
+  values: Set<Primitive>
+) => {
+  if (type instanceof ZodLazy) {
+    getDiscriminator(type.schema, values);
+  } else if (type instanceof ZodEffects) {
+    getDiscriminator(type.innerType(), values);
+  } else if (type instanceof ZodLiteral) {
+    values.add(type.value);
+  } else if (type instanceof ZodEnum) {
+    for (const value of type.options) {
+      values.add(value);
+    }
+  } else if (type instanceof ZodNativeEnum) {
+    // eslint-disable-next-line ban/ban
+    for (const value of util.objectValues(type.enum as any)) {
+      values.add(value);
+    }
+  } else if (type instanceof ZodDefault) {
+    getDiscriminator(type._def.innerType, values);
+  } else if (type instanceof ZodUndefined) {
+    values.add(undefined);
+  } else if (type instanceof ZodNull) {
+    values.add(null);
+  } else if (type instanceof ZodOptional) {
+    values.add(undefined);
+    getDiscriminator(type.unwrap(), values);
+  } else if (type instanceof ZodNullable) {
+    values.add(null);
+    getDiscriminator(type.unwrap(), values);
+  } else if (type instanceof ZodBranded) {
+    getDiscriminator(type.unwrap(), values);
+  } else if (type instanceof ZodReadonly) {
+    getDiscriminator(type.unwrap(), values);
+  } else if (type instanceof ZodCatch) {
+    getDiscriminator(type._def.innerType, values);
+  } else if (type instanceof ZodIntersection) {
+    const leftValues = new Set<Primitive>();
+    const rightValues = new Set<Primitive>();
+
+    getDiscriminator(type._def.left, leftValues);
+    getDiscriminator(type._def.right, rightValues);
+
+    for (const value of leftValues) {
+      if (rightValues.has(value)) {
+        values.add(value);
+      }
+    }
+  } else if (
+    type instanceof ZodUnion ||
+    type instanceof ZodDiscriminatedUnion
+  ) {
+    for (const optionType of type.options) {
+      getDiscriminator(optionType, values);
+    }
+  }
+};
 
 export interface ZodDiscriminatedUnionDef<
   Discriminator extends string,
@@ -3353,9 +3475,10 @@ export class ZodDiscriminatedUnion<
     const optionsMap: Map<Primitive, Types[number]> = new Map();
 
     // try {
+    const discriminatorValues = new Set<Primitive>();
     for (const type of options) {
-      const discriminatorValues = getDiscriminator(type.shape[discriminator]);
-      if (!discriminatorValues.length) {
+      getDiscriminatorValues(discriminator, type, discriminatorValues);
+      if (discriminatorValues.size < 1) {
         throw new Error(
           `A discriminator value for key \`${discriminator}\` could not be extracted from all schema options`
         );
@@ -3371,6 +3494,7 @@ export class ZodDiscriminatedUnion<
 
         optionsMap.set(value, type);
       }
+      discriminatorValues.clear();
     }
 
     return new ZodDiscriminatedUnion<
