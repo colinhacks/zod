@@ -746,8 +746,8 @@ export function finalizeIssue(
   config: $ZodConfig
 ): errors.$ZodIssue {
   const full = { ...iss, path: iss.path ?? [] } as errors.$ZodIssue;
+
   // for backwards compatibility
-  // const _ctx: errors.$ZodErrorMapCtx = { data: iss.input, defaultError: undefined as any };
   if (!iss.message) {
     const message =
       unwrapMessage(iss.inst?._zod.def?.error?.(iss as never)) ??
@@ -764,6 +764,7 @@ export function finalizeIssue(
   if (!ctx?.reportInput) {
     delete (full as any).input;
   }
+
   return full;
 }
 
