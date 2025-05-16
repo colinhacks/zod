@@ -1154,13 +1154,11 @@ export const ZodMiniTransform: core.$constructor<ZodMiniTransform> = /*@__PURE__
 );
 
 export function transform<I = unknown, O = I>(
-  fn: (input: I, ctx: core.ParsePayload) => O,
-  params?: string | core.$ZodTransformParams
+  fn: (input: I, ctx: core.ParsePayload) => O
 ): ZodMiniTransform<Awaited<O>, I> {
   return new ZodMiniTransform({
     type: "transform",
     transform: fn as any,
-    ...util.normalizeParams(params),
   }) as any;
 }
 

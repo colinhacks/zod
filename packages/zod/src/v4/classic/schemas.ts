@@ -1613,7 +1613,7 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
           _issue.code ??= "custom";
           _issue.input ??= payload.value;
           _issue.inst ??= inst;
-          _issue.continue ??= !def.abort;
+          _issue.continue ??= true;
           payload.issues.push(util.issue(_issue));
         }
       };
@@ -1632,13 +1632,13 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
 );
 
 export function transform<I = unknown, O = I>(
-  fn: (input: I, ctx: core.ParsePayload) => O,
-  params?: string | core.$ZodTransformParams
+  fn: (input: I, ctx: core.ParsePayload) => O
+  // params?: string | core.$ZodTransformParams
 ): ZodTransform<Awaited<O>, I> {
   return new ZodTransform({
     type: "transform",
     transform: fn as any,
-    ...util.normalizeParams(params),
+    // ...util.normalizeParams(params),
   }) as any;
 }
 
@@ -2011,16 +2011,12 @@ export function superRefine<T>(
   return ch;
 }
 
-// instanceof
-abstract class Class {
-  constructor(..._args: any[]) {}
-}
 type ZodInstanceOfParams = util.Params<
   ZodCustom,
   core.$ZodIssueCustom,
   "type" | "check" | "checks" | "fn" | "abort" | "error" | "params" | "path"
 >;
-function _instanceof<T extends typeof Class>(
+function _instanceof<T extends typeof util.Class>(
   cls: T,
   params: ZodInstanceOfParams = {
     error: `Input not instance of ${cls.name}`,
@@ -2063,13 +2059,12 @@ export function json(params?: string | core.$ZodCustomParams): ZodJSONSchema {
 }
 
 // preprocess
-export interface ZodPreprocessParams extends core.$ZodTransformParams {}
+// export interface ZodPreprocessParams extends core.$ZodTransformParams {}
 
 // /** @deprecated Use `z.pipe()` and `z.transform()` instead. */
 export function preprocess<A, U extends core.$ZodType>(
   fn: (arg: unknown, ctx: RefinementCtx) => A,
-  schema: U,
-  params?: ZodPreprocessParams
+  schema: U
 ): ZodPipe<ZodTransform<A, unknown>, U> {
-  return pipe(transform(fn as any, params), schema as any);
+  return pipe(transform(fn as any), schema as any);
 }

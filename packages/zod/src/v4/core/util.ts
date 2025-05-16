@@ -321,14 +321,13 @@ export function isObject(data: any): data is Record<PropertyKey, unknown> {
 
 export const allowsEval: { value: boolean } = cached(() => {
   try {
+    const F = Function;
     new F("");
     return true;
   } catch (_) {
     return false;
   }
 });
-
-export const F: typeof Function = Function;
 
 export function isPlainObject(data: any): data is Record<PropertyKey, unknown> {
   return typeof data === "object" && data !== null && Object.getPrototypeOf(data) === Object.prototype;
@@ -807,4 +806,9 @@ export function cleanEnum(obj: Record<string, EnumValue>): EnumValue[] {
       return Number.isNaN(Number.parseInt(k, 10));
     })
     .map((el) => el[1]);
+}
+
+// instanceof
+export abstract class Class {
+  constructor(..._args: any[]) {}
 }

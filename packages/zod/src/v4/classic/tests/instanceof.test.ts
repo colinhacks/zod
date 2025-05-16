@@ -32,3 +32,5 @@ test("instanceof fatal", () => {
   const res = schema.safeParse(null);
   expect(res.success).toBe(false);
 });
+
+test("extract class reference", () => {});
