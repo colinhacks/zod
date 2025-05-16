@@ -1977,7 +1977,6 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
 
     const _super = inst._zod.parse;
     const _disc: util.DiscriminatorMap = new Map();
-    // const discMap: Map<$ZodType, util.DiscriminatorMap> = new Map();
     for (const el of def.options) {
       const subdisc = el._zod.disc;
       if (!subdisc) throw new Error(`Invalid discriminated union option at index "${def.options.indexOf(el)}"`);
@@ -1995,7 +1994,6 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
         }
         for (const m of o.maps) _o.maps.push(m);
       }
-      // discMap.set(el, subdisc);
     }
     inst._zod.disc = _disc;
 
@@ -2004,7 +2002,6 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
     if (discKeys.length === 0) {
       throw new Error(`Invalid discriminated union: no shared discriminator key: ${discKeys.join(", ")}`);
     }
-    // const discKey = discKeys[0];
 
     inst._zod.parse = (payload, ctx) => {
       const input = payload.value;
@@ -2845,7 +2842,6 @@ export const $ZodFile: core.$constructor<$ZodFile> = /*@__PURE__*/ core.$constru
 export interface $ZodTransformDef extends $ZodTypeDef {
   type: "transform";
   transform: (input: unknown, payload: ParsePayload<unknown>) => util.MaybeAsync<unknown>;
-  // abort?: boolean | undefined;
 }
 export interface $ZodTransformInternals<O = unknown, I = unknown> extends $ZodTypeInternals<O, I> {
   def: $ZodTransformDef;

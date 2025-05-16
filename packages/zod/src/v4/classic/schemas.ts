@@ -1633,12 +1633,10 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
 
 export function transform<I = unknown, O = I>(
   fn: (input: I, ctx: core.ParsePayload) => O
-  // params?: string | core.$ZodTransformParams
 ): ZodTransform<Awaited<O>, I> {
   return new ZodTransform({
     type: "transform",
     transform: fn as any,
-    // ...util.normalizeParams(params),
   }) as any;
 }
 
@@ -2059,7 +2057,6 @@ export function json(params?: string | core.$ZodCustomParams): ZodJSONSchema {
 }
 
 // preprocess
-// export interface ZodPreprocessParams extends core.$ZodTransformParams {}
 
 // /** @deprecated Use `z.pipe()` and `z.transform()` instead. */
 export function preprocess<A, U extends core.$ZodType>(
