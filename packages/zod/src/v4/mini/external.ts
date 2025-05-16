@@ -14,10 +14,10 @@ export {
   function,
   clone,
   regexes,
-  // flattenError,
-  // formatError,
   treeifyError,
   prettifyError,
+  formatError,
+  flattenError,
   toJSONSchema,
   locales,
 } from "zod/v4/core";

@@ -1,51 +1,28 @@
 import { z } from "zod/v4";
 
-const zodSchema = z
-  .object({
-    password: z.string().min(1),
-    nested: z
-      .object({
-        confirm: z
-          .string()
-          .min(1)
-          .refine((value) => value.length > 2, {
-            message: "Confirm length should be > 2",
-          }),
-      })
-      .refine(
-        (data) => {
-          return data.confirm === "bar";
-        },
-        {
-          path: ["confirm"],
-          error: 'Value must be "bar"',
-        }
+const schema = z.object({
+  username: z.string(),
+  coworkers: z.array(
+    z.object({
+      name: z.string(),
+      children: z.array(
+        z.object({
+          name: z.string(),
+        })
       ),
-  })
-  .refine(
-    (data) => {
-      return data.nested.confirm === data.password;
-    },
-    {
-      path: ["nested", "confirm"],
-      error: "Password and confirm must match",
-    }
-  );
+    })
+  ),
+});
 
-const DATA = {
-  password: "bar",
-  nested: { confirm: "" },
+const data = {
+  username: "John",
+  coworkers: [
+    { name: "Dave", children: [{ name: "Luke" }] },
+    { name: "Amy", children: [{ name: "Ana" }, { name: 3 }] },
+  ],
 };
 
-// ✅ OK
-const result1 = zodSchema.safeParse(DATA);
-console.dir(result1, { depth: null });
+const result = schema.safeParse(data);
+console.dir(z.formatError(result.error!), { depth: null }); // false
 
-const result2 = zodSchema.safeParse(DATA, { jitless: true });
-console.dir(result2, { depth: null });
-zodSchema.safeParse(DATA, { jitless: true });
-zodSchema.safeParse(DATA, { jitless: true });
-zodSchema.safeParse(DATA, { jitless: true });
-
-const result3 = zodSchema["~standard"].validate(DATA);
-console.dir(result3, { depth: null });
+z.treeifyError(result.error!).properties?.username?.errors; // true

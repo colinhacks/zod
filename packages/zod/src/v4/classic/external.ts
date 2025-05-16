@@ -24,6 +24,8 @@ export {
   regexes,
   treeifyError,
   prettifyError,
+  formatError,
+  flattenError,
   toJSONSchema,
   locales,
 } from "zod/v4/core";

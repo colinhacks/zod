@@ -274,9 +274,7 @@ export type $ZodFormattedError<T, U = string> = {
   _errors: U[];
 } & util.Flatten<_ZodFormattedError<T, U>>;
 
-/** @deprecated Use `z.treeifyError()` instead. */
 export function formatError<T>(error: $ZodError<T>): $ZodFormattedError<T>;
-/** @deprecated Use `z.treeifyError()` instead. */
 export function formatError<T, U>(error: $ZodError<T>, mapper?: (issue: $ZodIssue) => U): $ZodFormattedError<T, U>;
 export function formatError<T>(error: $ZodError, _mapper?: any) {
   const mapper: (issue: $ZodIssue) => any =
