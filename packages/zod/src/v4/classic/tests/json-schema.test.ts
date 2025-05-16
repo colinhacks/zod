@@ -1437,3 +1437,30 @@ test("input type", () => {
     }
   `);
 });
+
+test("examples on pipe", () => {
+  const schema = z
+    .string()
+    .meta({ examples: ["test"] })
+    .transform(Number)
+    // .pipe(z.transform(Number).meta({ examples: [4] }))
+    .meta({ examples: [4] });
+
+  const i = z.toJSONSchema(schema, { io: "input", unrepresentable: "any" });
+  expect(i).toMatchInlineSnapshot(`
+    {
+      "examples": [
+        "test",
+      ],
+      "type": "string",
+    }
+  `);
+  const o = z.toJSONSchema(schema, { io: "output", unrepresentable: "any" });
+  expect(o).toMatchInlineSnapshot(`
+    {
+      "examples": [
+        4,
+      ],
+    }
+  `);
+});

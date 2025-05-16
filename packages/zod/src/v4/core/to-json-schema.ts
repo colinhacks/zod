@@ -98,13 +98,6 @@ export class JSONSchemaGenerator {
 
   process(schema: schemas.$ZodType, _params: ProcessParams = { path: [], schemaPath: [] }): JSONSchema.BaseSchema {
     const def = (schema as schemas.$ZodTypes)._zod.def;
-    // if (def.type === "lazy") {
-    //   return this.process((schema as schemas.$ZodLazy)._zod._getter, _params);
-    // } else if (def.type === "promise") {
-    //   return this.process(def.innerType, _params);
-    // } else if (def.type === "pipe") {
-    //   return this.process(def.out, _params);
-    // }
 
     // check for schema in seens
     const seen = this.seen.get(schema);
@@ -142,12 +135,6 @@ export class JSONSchemaGenerator {
     // const ext = this.external?.registry.get(schema)?.id;
     // if (ext) {
     //   result.external = ext;
-    // }
-
-    // // metadata
-    // const meta = this.metadataRegistry.get(schema);
-    // if (meta) {
-    //   Object.assign(_json, meta);
     // }
 
     // const def = (schema as schemas.$ZodTypes)._zod.def;
@@ -553,8 +540,10 @@ export class JSONSchemaGenerator {
 
     // metadata
     const meta = this.metadataRegistry.get(schema);
-    if (meta) {
-      Object.assign(result.schema, meta);
+    if (meta) Object.assign(result.schema, meta);
+    if (this.io === "input" && def.type === "pipe") {
+      // examples only apply to output type of pipe
+      delete result.schema.examples;
     }
 
     // pulling fresh from this.seen in case it was overwritten
@@ -565,7 +554,6 @@ export class JSONSchemaGenerator {
       jsonSchema: _result.schema,
     });
 
-    // Object.assign(_result.cached, _result.schema);
     return _result.schema;
   }
 
@@ -688,6 +676,7 @@ export class JSONSchemaGenerator {
 
     for (const entry of this.seen.entries()) {
       const seen = entry[1];
+
       flattenRef(seen.schema, { target: this.target });
       if (seen.def) flattenRef(seen.def, { target: this.target });
     }
