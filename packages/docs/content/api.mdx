@@ -1119,6 +1119,10 @@ type Category = z.infer<typeof Category>;
 // { name: string; subcategories: Category[] }
 ```
 
+<Callout type="warn"> 
+  Though recursive schemas are supported, passing cyclical data into Zod will cause an infinite loop.
+</Callout>
+
 You can also represent *mutually recursive types*:
 
 ```ts
@@ -1137,12 +1141,34 @@ const Post = z.object({
 });
 ```
 
-All object APIs (pick, omit, required, partial, etc) work as you'd expect.
+All object APIs (`.pick()`, `.omit()`, `.required()`, `.partial()`, etc.) work as you'd expect.
 
-<Callout type="warn"> 
-  Though recursive schemas are supported, passing cyclical data into Zod will cause an infinite loop.
-</Callout>
+Due to TypeScript limitations, recursive type inference can be finicky, and it only works in certain scenarios. Some more complicated types may trigger recursive type errors like this:
 
+```ts
+const Activity = z.object({
+  name: z.string(),
+  get subactivities() {
+    // ^ ❌ 'subactivities' implicitly has return type 'any' because it does not 
+    // // have a return type annotation and is referenced directly or indirectly 
+    // in one of its return expressions.ts(7023)
+
+    return z.union([z.null(), Activity]);
+  },
+});
+```
+
+In these cases, you can resolve the error with a type annotation on the offending getter:
+
+```ts
+const Activity = z.object({
+  name: z.string(),
+  get subactivities(): z.ZodUnion<[z.ZodNull, typeof Activity]> { // ✅
+    return z.union([z.null(), Activity]); 
+  },
+});
+```
+{/* 
 <Accordions>
   <Accordion title="Resolving type errors in recursive schemas">
     Recursive type inference can by mysterious. TypeScript is capable of it in certain limited scenarios. Depending on what you're trying to do, you may encounter errors like this:
@@ -1187,9 +1213,12 @@ All object APIs (pick, omit, required, partial, etc) work as you'd expect.
     ```ts
     const Activity = z.object({
       name: z.string(),
-      get children() {
-        return z.optional(z.array(Activity)); // ❌
-        return Activity.array().optional() // ✅
+      get subactivities() {
+        // ^ ❌ 'subactivities' implicitly has return type 'any' because it does not 
+        // // have a return type annotation and is referenced directly or indirectly 
+        // in one of its return expressions.ts(7023)
+
+        return z.union([z.null(), Activity]);
       },
     });
     ```
@@ -1210,7 +1239,7 @@ All object APIs (pick, omit, required, partial, etc) work as you'd expect.
     ```
 
   </Accordion>
-</Accordions>
+</Accordions> */}
 
 ## Arrays
 
