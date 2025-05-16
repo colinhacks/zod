@@ -1,5 +1,11 @@
 import { z } from "zod/v4";
 
-const schema = z.union([z.literal("a"), z.literal("b"), z.literal("c")]);
-
-console.log(schema._zod.values);
+const baseCategorySchema = z.object({
+  name: z.string(),
+});
+type Category = z.infer<typeof baseCategorySchema> & {
+  subcategories: Category[];
+};
+const categorySchema: z.ZodType<Category> = baseCategorySchema.extend({
+  subcategories: z.lazy(() => categorySchema.array()),
+});

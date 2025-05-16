@@ -209,4 +209,14 @@ test("lazy initialization", () => {
   const e: any = z.lazy(() => e).nonoptional();
   const f: any = z.lazy(() => f).catch({} as any);
   const g: any = z.lazy(() => z.object({ g })).readonly();
+
+  const baseCategorySchema = z.object({
+    name: z.string(),
+  });
+  type Category = z.infer<typeof baseCategorySchema> & {
+    subcategories: Category[];
+  };
+  const categorySchema: z.ZodType<Category> = baseCategorySchema.extend({
+    subcategories: z.lazy(() => categorySchema.array()),
+  });
 });
