@@ -80,3 +80,15 @@ test("union inferred types", () => {
   type Test = z.output<typeof test>; // <— any
   expectTypeOf<Test>().toEqualTypeOf<Record<string, never> | Array<Record<string, never>>>();
 });
+
+test("union values", () => {
+  const schema = z.union([z.literal("a"), z.literal("b"), z.literal("c")]);
+
+  expect(schema._zod.values).toMatchInlineSnapshot(`
+    Set {
+      "a",
+      "b",
+      "c",
+    }
+  `);
+});
