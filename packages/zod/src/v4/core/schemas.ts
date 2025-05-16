@@ -151,9 +151,6 @@ export interface $ZodTypeInternals<out O = unknown, out I = unknown> {
   parent?: $ZodType | undefined;
 }
 
-export type $out<T> = { _zod: { "~output": T } };
-export type $in<T> = { _zod: { "~input": T } };
-
 // export interface $ZodTypeInternals<out O = unknown, out I = unknown> extends $ZodTypeInternals {
 //   // "~types": { output: O; input: I };
 //   output: O;
