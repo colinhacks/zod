@@ -1,19 +1,12 @@
 import { z } from "zod/v4";
 
-const schema = z.object({
-  name: z.string(),
-  age: z.number(),
-});
+const schema = z.preprocess((data, ctx) => {
+  ctx.addIssue({
+    code: "custom",
+    message: `custom error`,
+  });
+  return data;
+}, z.string());
+const result = schema.safeParse(1234);
 
-const data = {
-  name: "John Doe",
-  age: 30,
-};
-
-const result = schema.safeParse(data);
-
-if (result.success) {
-  console.log("Parsed data:", result.data);
-} else {
-  console.error("Validation errors:", result.error);
-}
+console.dir(result.error!, { depth: null });

@@ -156,7 +156,9 @@ test("invalid discriminator value", () => {
             "errors": [],
             "message": "Invalid input",
             "note": "No matching discriminator",
-            "path": [],
+            "path": [
+              "type",
+            ],
           },
         ],
       },
