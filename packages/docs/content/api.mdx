@@ -1143,6 +1143,75 @@ All object APIs (pick, omit, required, partial, etc) work as you'd expect.
   Though recursive schemas are supported, passing cyclical data into Zod will cause an infinite loop.
 </Callout>
 
+<Accordions>
+  <Accordion title="Resolving type errors in recursive schemas">
+    Recursive type inference can by mysterious. TypeScript is capable of it in certain limited scenarios. Depending on what you're trying to do, you may encounter errors like this:
+
+    ```ts
+    export const Activity = z.object({
+      name: z.string(),
+      get children() {
+        // ^ ❌ 'children' implicitly has return type 'any' because it does not 
+        // have a return type annotation and is referenced directly or indirectly 
+        // in one of its return expressions.ts(7023)
+
+        return z.optional(z.array(Activity)); //.optional();
+      },
+    });
+    ```
+
+    Here are a couple rules of thumb:
+
+    ### Object types only 
+    
+    Generally speaking, recursive inference only works with object types that are referencing each other. TypeScript has special handling for resolving getter-based recursive objects, which is what Zod relies on. If you try to add non-object types into the mix, you'll likely encounter errors.
+
+    ```ts
+    const Activity = z.object({
+      name: z.string(),
+      get children() { // ❌ type error
+        return z.optional(ActivityArray);
+      },
+    });
+
+    const ActivityArray = z.array(Activity);
+    ```
+
+    Sometimes you can get around this limitation by defining 
+
+
+    ### Avoid nesting function calls
+    
+    Functions like `z.array()` and `z.optional()` accept Zod schemas, so when you use them TypeScript will do some type-checking on their inputs to make sure they are valid. But type checking is the enemy of recursive type inference—it's hard for TypeScript to *check* and *infer* types at the same time. Methods do not have this problem, so prefer methods over functions when possible (sorry Zod Mini users).
+
+    ```ts
+    const Activity = z.object({
+      name: z.string(),
+      get children() {
+        return z.optional(z.array(Activity)); // ❌
+        return Activity.array().optional() // ✅
+      },
+    });
+    ```
+
+    ### Fall back to type annotations on your getters
+    
+    When in doubt, you can generally sidestep these issues with some carefully deployed type annotations on your getters. Due to the limitations described above, this is particularly necessary when using Zod Mini.
+
+    ```ts
+    import { z } from "zod/v4";
+
+    const Activity = z.object({
+      name: z.string(),
+      get subactivities(): z.ZodMiniDefault<z.ZodMiniArray<typeof Activity>> {
+        return z._default(z.array(Activity), []);
+      },
+    });
+    ```
+
+  </Accordion>
+</Accordions>
+
 ## Arrays
 
 To define an array schema:

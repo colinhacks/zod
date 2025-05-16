@@ -988,7 +988,7 @@ export type $ZodArrayParams = util.TypeParams<schemas.$ZodArray, "element">;
 export function _array<T extends schemas.$ZodType>(
   Class: util.SchemaClass<schemas.$ZodArray>,
   element: T,
-  params?: $ZodArrayParams
+  params?: string | $ZodArrayParams
 ): schemas.$ZodArray<T> {
   return new Class({
     type: "array",
@@ -1007,7 +1007,7 @@ export type $ZodUnionParams = util.TypeParams<schemas.$ZodUnion, "options">;
 export function _union<const T extends readonly schemas.$ZodObject[]>(
   Class: util.SchemaClass<schemas.$ZodUnion>,
   options: T,
-  params?: $ZodUnionParams
+  params?: string | $ZodUnionParams
 ): schemas.$ZodUnion<T> {
   return new Class({
     type: "union",
@@ -1028,7 +1028,7 @@ export type $ZodDiscriminatedUnionParams = util.TypeParams<schemas.$ZodDiscrimin
 export function _discriminatedUnion<Types extends [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]]>(
   Class: util.SchemaClass<schemas.$ZodDiscriminatedUnion>,
   options: Types,
-  params?: $ZodDiscriminatedUnionParams
+  params?: string | $ZodDiscriminatedUnionParams
 ): schemas.$ZodDiscriminatedUnion<Types> {
   return new Class({
     type: "union",
@@ -1056,24 +1056,24 @@ export type $ZodTupleParams = util.TypeParams<schemas.$ZodTuple, "items" | "rest
 export function _tuple<T extends readonly [schemas.$ZodType, ...schemas.$ZodType[]]>(
   Class: util.SchemaClass<schemas.$ZodTuple>,
   items: T,
-  params?: $ZodTupleParams
+  params?: string | $ZodTupleParams
 ): schemas.$ZodTuple<T, null>;
 export function _tuple<T extends readonly [schemas.$ZodType, ...schemas.$ZodType[]], Rest extends schemas.$ZodType>(
   Class: util.SchemaClass<schemas.$ZodTuple>,
   items: T,
   rest: Rest,
-  params?: $ZodTupleParams
+  params?: string | $ZodTupleParams
 ): schemas.$ZodTuple<T, Rest>;
 // export function _tuple(
 //   Class: util.SchemaClass<schemas.$ZodTuple>,
 //   items: [],
-//   params?: $ZodTupleParams
+//   params?: string | $ZodTupleParams
 // ): schemas.$ZodTuple<[], null>;
 export function _tuple(
   Class: util.SchemaClass<schemas.$ZodTuple>,
   items: schemas.$ZodType[],
-  _paramsOrRest?: $ZodTupleParams | schemas.$ZodType,
-  _params?: $ZodTupleParams
+  _paramsOrRest?: string | $ZodTupleParams | schemas.$ZodType,
+  _params?: string | $ZodTupleParams
 ) {
   const hasRest = _paramsOrRest instanceof schemas.$ZodType;
   const params = hasRest ? _params : _paramsOrRest;
@@ -1092,7 +1092,7 @@ export function _record<Key extends schemas.$ZodRecordKey, Value extends schemas
   Class: util.SchemaClass<schemas.$ZodRecord>,
   keyType: Key,
   valueType: Value,
-  params?: $ZodRecordParams
+  params?: string | $ZodRecordParams
 ): schemas.$ZodRecord<Key, Value> {
   return new Class({
     type: "record",
@@ -1108,7 +1108,7 @@ export function _map<Key extends schemas.$ZodObject, Value extends schemas.$ZodO
   Class: util.SchemaClass<schemas.$ZodMap>,
   keyType: Key,
   valueType: Value,
-  params?: $ZodMapParams
+  params?: string | $ZodMapParams
 ): schemas.$ZodMap<Key, Value> {
   return new Class({
     type: "map",
@@ -1123,7 +1123,7 @@ export type $ZodSetParams = util.TypeParams<schemas.$ZodSet, "valueType">;
 export function _set<Value extends schemas.$ZodObject>(
   Class: util.SchemaClass<schemas.$ZodSet>,
   valueType: Value,
-  params?: $ZodSetParams
+  params?: string | $ZodSetParams
 ): schemas.$ZodSet<Value> {
   return new Class({
     type: "set",
@@ -1137,14 +1137,14 @@ export type $ZodEnumParams = util.TypeParams<schemas.$ZodEnum, "entries">;
 export function _enum<const T extends string[]>(
   Class: util.SchemaClass<schemas.$ZodEnum>,
   values: T,
-  params?: $ZodEnumParams
+  params?: string | $ZodEnumParams
 ): schemas.$ZodEnum<util.ToEnum<T[number]>>;
 export function _enum<T extends util.EnumLike>(
   Class: util.SchemaClass<schemas.$ZodEnum>,
   entries: T,
-  params?: $ZodEnumParams
+  params?: string | $ZodEnumParams
 ): schemas.$ZodEnum<T>;
-export function _enum(Class: util.SchemaClass<schemas.$ZodEnum>, values: any, params?: $ZodEnumParams) {
+export function _enum(Class: util.SchemaClass<schemas.$ZodEnum>, values: any, params?: string | $ZodEnumParams) {
   const entries: any = Array.isArray(values) ? Object.fromEntries(values.map((v) => [v, v])) : values;
   // if (Array.isArray(values)) {
   //   for (const value of values) {
@@ -1175,7 +1175,7 @@ export function _enum(Class: util.SchemaClass<schemas.$ZodEnum>, values: any, pa
 export function _nativeEnum<T extends util.EnumLike>(
   Class: util.SchemaClass<schemas.$ZodEnum>,
   entries: T,
-  params?: $ZodEnumParams
+  params?: string | $ZodEnumParams
 ): schemas.$ZodEnum<T> {
   return new Class({
     type: "enum",
@@ -1189,12 +1189,12 @@ export type $ZodLiteralParams = util.TypeParams<schemas.$ZodLiteral, "values">;
 export function _literal<const T extends Array<util.Literal>>(
   Class: util.SchemaClass<schemas.$ZodLiteral>,
   value: T,
-  params?: $ZodLiteralParams
+  params?: string | $ZodLiteralParams
 ): schemas.$ZodLiteral<T[number]>;
 export function _literal<const T extends util.Literal>(
   Class: util.SchemaClass<schemas.$ZodLiteral>,
   value: T,
-  params?: $ZodLiteralParams
+  params?: string | $ZodLiteralParams
 ): schemas.$ZodLiteral<T>;
 export function _literal(Class: util.SchemaClass<schemas.$ZodLiteral>, value: any, params: any) {
   return new Class({
@@ -1218,7 +1218,7 @@ export type $ZodTransformParams = util.TypeParams<schemas.$ZodTransform, "transf
 export function _transform<I = unknown, O = I>(
   Class: util.SchemaClass<schemas.$ZodTransform>,
   fn: (input: I, ctx?: schemas.ParsePayload) => O,
-  params?: $ZodTransformParams
+  params?: string | $ZodTransformParams
 ): schemas.$ZodTransform<Awaited<O>, I> {
   return new Class({
     type: "transform",
@@ -1272,7 +1272,7 @@ export type $ZodNonOptionalParams = util.TypeParams<schemas.$ZodNonOptional, "in
 export function _nonoptional<T extends schemas.$ZodObject>(
   Class: util.SchemaClass<schemas.$ZodNonOptional>,
   innerType: T,
-  params?: $ZodNonOptionalParams
+  params?: string | $ZodNonOptionalParams
 ): schemas.$ZodNonOptional<T> {
   return new Class({
     type: "nonoptional",
@@ -1341,7 +1341,7 @@ export type $ZodTemplateLiteralParams = util.TypeParams<schemas.$ZodTemplateLite
 export function _templateLiteral<const Parts extends schemas.$TemplateLiteralPart[]>(
   Class: util.SchemaClass<schemas.$ZodTemplateLiteral>,
   parts: Parts,
-  params?: $ZodTemplateLiteralParams
+  params?: string | $ZodTemplateLiteralParams
 ): schemas.$ZodTemplateLiteral<schemas.$PartsToTemplateLiteral<Parts>> {
   return new Class({
     type: "template_literal",
@@ -1421,7 +1421,7 @@ export function _stringbool(
     Boolean?: typeof schemas.$ZodBoolean;
     Unknown?: typeof schemas.$ZodUnknown;
   },
-  _params?: $ZodStringBoolParams
+  _params?: string | $ZodStringBoolParams
 ): schemas.$ZodPipe<schemas.$ZodUnknown, schemas.$ZodBoolean<boolean>> {
   const params = util.normalizeParams(_params);
   const trueValues = new Set(params?.truthy ?? ["true", "1", "yes", "on", "y", "enabled"]);

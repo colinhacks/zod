@@ -1044,8 +1044,7 @@ export const ZodArray: core.$constructor<ZodArray> = /*@__PURE__*/ core.$constru
   inst.length = (len, params) => inst.check(checks.length(len, params));
 });
 
-export function array<T extends core.$ZodType>(element: T, params?: string | core.$ZodArrayParams): ZodArray<T>;
-export function array<T extends core.$ZodType>(element: core.$ZodType, params?: any): ZodArray<T> {
+export function array<T extends core.$ZodType>(element: T, params?: string | core.$ZodArrayParams): ZodArray<T> {
   return core._array(ZodArray, element, params) as any;
 }
 

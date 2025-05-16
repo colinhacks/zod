@@ -2025,6 +2025,8 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
       if (def.unionFallback) {
         return _super(payload, ctx);
       }
+
+      // no matching discriminator
       payload.issues.push({
         code: "invalid_union",
         errors: [],
