@@ -1,22 +1,22 @@
 import * as core from "zod/v4/core";
 import * as schemas from "./schemas.js";
 
-export function string(params?: string | core.$ZodStringParams): schemas.ZodMiniString<unknown> {
-  return core._coercedString(schemas.ZodMiniString, params);
+export function string<T = unknown>(params?: string | core.$ZodStringParams): schemas.ZodMiniString<T> {
+  return core._coercedString(schemas.ZodMiniString, params) as schemas.ZodMiniString<T>;
 }
 
-export function number(params?: string | core.$ZodNumberParams): schemas.ZodMiniNumber<unknown> {
-  return core._coercedNumber(schemas.ZodMiniNumber, params);
+export function number<T = unknown>(params?: string | core.$ZodNumberParams): schemas.ZodMiniNumber<T> {
+  return core._coercedNumber(schemas.ZodMiniNumber, params) as schemas.ZodMiniNumber<T>;
 }
 
-export function boolean(params?: string | core.$ZodBooleanParams): schemas.ZodMiniBoolean<unknown> {
-  return core._coercedBoolean(schemas.ZodMiniBoolean, params);
+export function boolean<T = unknown>(params?: string | core.$ZodBooleanParams): schemas.ZodMiniBoolean<T> {
+  return core._coercedBoolean(schemas.ZodMiniBoolean, params) as schemas.ZodMiniBoolean<T>;
 }
 
-export function bigint(params?: string | core.$ZodBigIntParams): schemas.ZodMiniBigInt<unknown> {
-  return core._coercedBigint(schemas.ZodMiniBigInt, params);
+export function bigint<T = unknown>(params?: string | core.$ZodBigIntParams): schemas.ZodMiniBigInt<T> {
+  return core._coercedBigint(schemas.ZodMiniBigInt, params) as schemas.ZodMiniBigInt<T>;
 }
 
-export function date(params?: string | core.$ZodDateParams): schemas.ZodMiniDate<unknown> {
-  return core._coercedDate(schemas.ZodMiniDate, params);
+export function date<T = unknown>(params?: string | core.$ZodDateParams): schemas.ZodMiniDate<T> {
+  return core._coercedDate(schemas.ZodMiniDate, params) as schemas.ZodMiniDate<T>;
 }

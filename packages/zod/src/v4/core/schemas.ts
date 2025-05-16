@@ -81,11 +81,6 @@ export interface $ZodTypeDef {
   checks?: checks.$ZodCheck<never>[];
 }
 
-export const $out: unique symbol = Symbol("out");
-export type $out = typeof $out;
-export const $in: unique symbol = Symbol("in");
-export type $in = typeof $in;
-
 // @ts-ignore
 export interface $ZodTypeInternals<out O = unknown, out I = unknown> {
   /** The `@zod/core` version of this schema */
@@ -155,6 +150,9 @@ export interface $ZodTypeInternals<out O = unknown, out I = unknown> {
   /** The parent of this schema. Only set during certain clone operations. */
   parent?: $ZodType | undefined;
 }
+
+export type $out<T> = { _zod: { "~output": T } };
+export type $in<T> = { _zod: { "~input": T } };
 
 // export interface $ZodTypeInternals<out O = unknown, out I = unknown> extends $ZodTypeInternals {
 //   // "~types": { output: O; input: I };

@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 
 import * as z from "zod/v4";
 
@@ -150,3 +150,11 @@ test("date coercion", () => {
 //   expect(schema.parse("300vmax")).toEqual("300vmax");
 //   expect(schema.parse(["300px"])).toEqual("300px");
 // });
+
+test("override input type", () => {
+  const a = z.coerce.string<any>();
+  type input = z.input<typeof a>;
+  expectTypeOf<input>().toEqualTypeOf<any>();
+  type output = z.infer<typeof a>;
+  expectTypeOf<output>().toEqualTypeOf<string>();
+});
