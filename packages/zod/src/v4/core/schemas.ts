@@ -3248,6 +3248,7 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
     const result = def.innerType._zod.run(payload, ctx);
     if (result instanceof Promise) {
       return result.then((result) => {
+        payload.value = result.value;
         if (result.issues.length) {
           payload.value = def.catchValue({
             ...payload,
@@ -3258,12 +3259,12 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
           });
           payload.issues = [];
         }
-        payload.value = result.value;
 
         return payload;
       });
     }
 
+    payload.value = result.value;
     if (result.issues.length) {
       payload.value = def.catchValue({
         ...payload,
@@ -3274,7 +3275,6 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
       });
       payload.issues = [];
     }
-    payload.value = result.value;
 
     return payload;
   };
