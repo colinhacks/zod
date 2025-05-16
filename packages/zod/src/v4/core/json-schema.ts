@@ -9,8 +9,6 @@ export type Schema =
 // | BaseSchema;
 
 export interface BaseSchema {
-  /** A special key used as an intermediate representation of extends-style relationships. Omitted as a $ref with additional properties. */
-  _ref?: BaseSchema;
   type?: string | undefined;
   $id?: string | undefined;
   id?: string | undefined;
@@ -37,6 +35,10 @@ export interface BaseSchema {
   enum?: Array<string | number | boolean | null> | undefined;
   const?: string | number | boolean | null | undefined;
   [k: string]: unknown;
+
+  /** A special key used as an intermediate representation of extends-style relationships. Omitted as a $ref with additional properties. */
+  _ref?: BaseSchema;
+  _prefault?: unknown | undefined;
 }
 
 export interface ObjectSchema extends BaseSchema {

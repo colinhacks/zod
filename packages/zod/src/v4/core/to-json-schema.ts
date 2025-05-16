@@ -71,7 +71,7 @@ interface Seen {
   count: number;
   /** Cycle path */
   cycle?: (string | number)[] | undefined;
-
+  isParent?: boolean | undefined;
   // external?: string | undefined;
 }
 
@@ -147,6 +147,7 @@ export class JSONSchemaGenerator {
     if (schema._zod.parent) {
       // schema was cloned from another schema
       result.schema._ref = this.process(schema._zod.parent, params);
+      this.seen.get(schema._zod.parent)!.isParent = true;
     } else {
       const _json = result.schema;
       switch (def.type) {
@@ -460,7 +461,10 @@ export class JSONSchemaGenerator {
         case "prefault": {
           const inner = this.process(def.innerType, params);
           Object.assign(_json, inner);
-          _json.default = schema["~standard"].validate(undefined);
+          // console.dir("PRE", { depth: null });
+          // console.dir(def.defaultValue, { depth: null });
+          if (this.io === "input") _json._prefault = def.defaultValue;
+          // else _json.default = schema["~standard"].validate(undefined);
           break;
         }
         case "catch": {
@@ -482,11 +486,18 @@ export class JSONSchemaGenerator {
           }
           break;
         }
+        case "template_literal": {
+          const json = _json as JSONSchema.StringSchema;
+          const pattern = schema._zod.pattern;
+          if (!pattern) throw new Error("Pattern not found in template literal");
+          json.type = "string";
+          json.pattern = pattern.source;
+          break;
+        }
         case "pipe": {
           const innerType = this.io === "input" ? def.in : def.out;
           const inner = this.process(innerType, params);
           _json._ref = inner;
-
           break;
         }
         case "readonly": {
@@ -499,14 +510,7 @@ export class JSONSchemaGenerator {
           // _json.readOnly = true;
           break;
         }
-        case "template_literal": {
-          const json = _json as JSONSchema.StringSchema;
-          const pattern = schema._zod.pattern;
-          if (!pattern) throw new Error("Pattern not found in template literal");
-          json.type = "string";
-          json.pattern = pattern.source;
-          break;
-        }
+
         case "promise": {
           const inner = this.process(def.innerType, params);
           // result.schema = inner;
@@ -542,17 +546,24 @@ export class JSONSchemaGenerator {
     const meta = this.metadataRegistry.get(schema);
     if (meta) Object.assign(result.schema, meta);
     if (this.io === "input" && def.type === "pipe") {
-      // examples only apply to output type of pipe
+      // examples/defaults only apply to output type of pipe
       delete result.schema.examples;
+      delete result.schema.default;
+      if (result.schema._prefault) result.schema.default = result.schema._prefault;
     }
+    if (this.io === "input" && result.schema._prefault) result.schema.default ??= result.schema._prefault;
+    delete result.schema._prefault;
 
     // pulling fresh from this.seen in case it was overwritten
     const _result = this.seen.get(schema)!;
 
-    this.override({
-      zodSchema: schema,
-      jsonSchema: _result.schema,
-    });
+    // do not run override if the schema is a reference
+    // if (!_result.schema._ref) {
+    // this.override({
+    //   zodSchema: schema,
+    //   jsonSchema: _result.schema,
+    // });
+    // }
 
     return _result.schema;
   }
@@ -606,6 +617,7 @@ export class JSONSchemaGenerator {
       return { defId, ref: defUriPrefix + defId };
     };
 
+    // adds
     const extractToDef = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): void => {
       if (entry[1].schema.$ref) {
         // throw new Error("Already extracted");
@@ -618,7 +630,11 @@ export class JSONSchemaGenerator {
       seen.def = { ...seen.schema };
       if (defId) seen.defId = defId;
       // wipe away all properties except $ref
-      schemaToRef(seen, ref);
+      const schema = seen.schema;
+      for (const key in schema) {
+        delete schema[key];
+        schema.$ref = ref;
+      }
     };
 
     // extract schemas into $defs
@@ -674,14 +690,33 @@ export class JSONSchemaGenerator {
       }
     }
 
-    for (const entry of this.seen.entries()) {
-      const seen = entry[1];
+    for (const [_, seen] of this.seen.entries()) {
+      // const seen = entry[1];
+      // console.dir(seen.schema, { depth: null });
+      // const isDirectRef = Object.keys(seen.schema).length === 1 && seen.schema._ref;
 
       flattenRef(seen.schema, { target: this.target });
       if (seen.def) flattenRef(seen.def, { target: this.target });
+
+      // // do not run overrides on parents
+      // if (!seen.isParent)
+      //   this.override({
+      //     zodSchema: schema,
+      //     jsonSchema: seen.def ?? seen.schema,
+      //   });
     }
 
+    for (const [schema, seen] of this.seen.entries()) {
+      // do not run overrides on parents
+      // console.dir(seen.isParent, { depth: null });
+      if (seen.isParent !== true)
+        this.override({
+          zodSchema: schema,
+          jsonSchema: seen.def ?? seen.schema,
+        });
+    }
     const result = { ...root.def };
+
     const defs: JSONSchema.BaseSchema["$defs"] = params.external?.defs ?? {};
     for (const entry of this.seen.entries()) {
       const seen = entry[1];
@@ -700,7 +735,7 @@ export class JSONSchemaGenerator {
     }
 
     try {
-      // this essentially "finalizes" this schema
+      // this "finalizes" this schema and ensures all cycles are removed
       // each call to .emit() is functionally independent
       // though the seen map is shared
       return JSON.parse(JSON.stringify(result));
@@ -713,7 +748,10 @@ export class JSONSchemaGenerator {
 // flatten _refs
 const flattenRef = (schema: JSONSchema.BaseSchema, params: Pick<ToJSONSchemaParams, "target">) => {
   const _schema = { ...schema };
+
+  // make sure _ref has been resolved
   if (schema._ref) flattenRef(schema._ref, params);
+
   const ref = schema._ref;
   if (ref) {
     if (ref.$ref && params.target === "draft-7") {
@@ -727,13 +765,14 @@ const flattenRef = (schema: JSONSchema.BaseSchema, params: Pick<ToJSONSchemaPara
   delete schema._ref;
 };
 
-function schemaToRef(seen: Seen, ref: string) {
-  const schema = seen.schema;
-  for (const key in schema) {
-    delete schema[key];
-    schema.$ref = ref;
-  }
-}
+// deletes all keys and sets $ref
+// function schemaToRef(seen: Seen, ref: string) {
+//   const schema = seen.schema;
+//   for (const key in schema) {
+//     delete schema[key];
+//     schema.$ref = ref;
+//   }
+// }
 
 interface ToJSONSchemaParams extends Omit<JSONSchemaGeneratorParams & EmitParams, never> {}
 interface RegistryToJSONSchemaParams extends Omit<JSONSchemaGeneratorParams & EmitParams, never> {
