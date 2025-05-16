@@ -81,11 +81,6 @@ export interface $ZodTypeDef {
   checks?: checks.$ZodCheck<never>[];
 }
 
-export const $out: unique symbol = Symbol("out");
-export type $out = typeof $out;
-export const $in: unique symbol = Symbol("in");
-export type $in = typeof $in;
-
 // @ts-ignore
 export interface $ZodTypeInternals<out O = unknown, out I = unknown> {
   /** The `@zod/core` version of this schema */
