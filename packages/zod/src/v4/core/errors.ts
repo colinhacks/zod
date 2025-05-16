@@ -180,59 +180,20 @@ export interface $ZodError<T = unknown> extends Error {
   name: string;
 }
 
-export const _$ZodError: $constructor<$ZodError> = $constructor("$ZodError", (inst, def) => {
-  Object.defineProperties(inst, {
-    issues: {
-      value: def,
-      enumerable: true,
-    },
-    _zod: {
-      value: inst._zod,
-      enumerable: false,
-    },
-    // message: {
-    //   get() {
-    //     return JSON.stringify(this.issues, util.jsonStringifyReplacer, 2);
-    //   },
-    //   enumerable: false,
-    // },
+const initializer = (inst: $ZodError, def: $ZodIssue[]): void => {
+  Object.defineProperty(inst, "_zod", {
+    value: inst._zod,
+    enumerable: false,
   });
-});
+  Object.defineProperty(inst, "issues", {
+    value: def,
+    enumerable: true,
+  });
+};
 
-// export interface $ZodError<T = unknown> extends $ZodError<T> {}
-export class $ZodError extends Error {
-  constructor(issues: $ZodIssue[]) {
-    super();
-    _$ZodError.init(this, issues);
-  }
-}
-
-// export class _$ZodError extends Error {
-//   public issues!: $ZodIssue[];
-
-//   override get message() {
-//     // console.log("GET MESSAGE");
-//     return JSON.stringify(this.issues, jsonStringifyReplacer, 2);
-//   }
-
-//   // toString() {
-//   //   console.log("TO STRING");
-//   //   return this.stack;
-//   // }
-//   constructor(issues: $ZodIssue[]) {
-//     super();
-//     Object.defineProperty(this, "_tag", { value: ZOD_ERROR, enumerable: false });
-//     // Object.defineProperty(this, "name", { value: "$ZodError", enumerable: false });
-//     // Object.defineProperty(this, "message", { value: JSON.stringify(issues, jsonStringifyReplacer, 2) });
-//     // this.issues = issues;
-//     Object.defineProperty(this, "issues", { value: issues, enumerable: false });
-//   }
-
-//   // @ts-ignore
-//   static [Symbol.hasInstance](inst: any) {
-//     return inst?._tag === ZOD_ERROR;
-//   }
-// }
+export const $ZodError: $constructor<$ZodError> = $constructor("$ZodError", initializer);
+interface $ZodRealError<T = any> extends $ZodError<T> {}
+export const $ZodRealError: $constructor<$ZodRealError> = $constructor("$ZodError", initializer, { Parent: Error });
 
 ///////////////////    ERROR UTILITIES   ////////////////////////
 
@@ -317,24 +278,6 @@ export function formatError<T>(error: $ZodError, _mapper?: any) {
   return fieldErrors;
 }
 
-type _ZodErrorTree<T, U = string> = T extends [any, ...any[]]
-  ? { [K in keyof T]?: $ZodFormattedError<T[K], U> }
-  : T extends any[]
-    ? { [k: number]: $ZodFormattedError<T[number], U> }
-    : T extends object
-      ? util.Flatten<{ [K in keyof T]?: $ZodFormattedError<T[K], U> }>
-      : any;
-
-// export type $ZodErrorTree<T, U = string> = {
-//   errors: U[];
-//   properties: T extends [any, ...any[]]
-//     ? { [K in keyof T]?: $ZodErrorTree<T[K], U> }
-//     : T extends any[]
-//       ? Array<$ZodErrorTree<T[number], U>>
-//       : T extends object
-//         ? { [K in keyof T]?: $ZodErrorTree<T[K], U> }
-//         : any;
-// };
 export type $ZodErrorTree<T, U = string> = T extends [any, ...any[]]
   ? { errors: U[]; items?: { [K in keyof T]?: $ZodErrorTree<T[K], U> } }
   : T extends any[]
@@ -383,27 +326,7 @@ export function treeifyError<T>(error: $ZodError, _mapper?: any) {
           if (terminal) {
             curr.errors.push(mapper(issue));
           }
-          // curr = curr.properties[el];
-          // const terminal = i === issue.path.length - 1;
 
-          // if (!curr) {
-          //   if (typeof el === "string") {
-          //     result.properties = {};
-          //   } else {
-          //     (result as any).properties = [];
-          //   }
-          // }
-
-          // // const curr: any = result.properties;
-          // if (!terminal) {
-          //   curr[el] = curr[el] || { errors: [] };
-          // } else {
-          //   curr[el] = curr[el] || { errors: [] };
-          //   curr[el].errors.push(mapper(issue));
-          // }
-
-          // curr = curr[el];
-          // curr = curr.properties[el];
           i++;
         }
       }

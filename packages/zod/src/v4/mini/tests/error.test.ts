@@ -7,3 +7,16 @@ test("no locale by default", () => {
   expect(result.error!.issues.length).toEqual(1);
   expect(result.error!.issues[0].message).toEqual("Invalid input");
 });
+
+test("error inheritance", () => {
+  const e1 = z.string().safeParse(123).error!;
+  expect(e1).toBeInstanceOf(z.core.$ZodError);
+  expect(e1).not.toBeInstanceOf(Error);
+
+  try {
+    z.string().parse(123);
+  } catch (e2) {
+    expect(e2).toBeInstanceOf(z.core.$ZodRealError);
+    expect(e2).toBeInstanceOf(Error);
+  }
+});

@@ -1,5 +1,6 @@
 import type * as errors from "./errors.js";
 import type * as schemas from "./schemas.js";
+import type { Class } from "./util.js";
 //////////////////////////////   CONSTRUCTORS   ///////////////////////////////////////
 
 type ZodTrait = { _zod: { def: any; [k: string]: any } };
@@ -10,10 +11,14 @@ export interface $constructor<T extends ZodTrait, D = T["_zod"]["def"]> {
 
 export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T["_zod"]["def"]>(
   name: string,
-  initializer: (inst: T, def: D) => void
+  initializer: (inst: T, def: D) => void,
+  params?: { Parent?: typeof Class }
 ): $constructor<T, D> {
-  class _ {
+  const Parent = params?.Parent ?? Object;
+
+  class _ extends Parent {
     constructor(def: D) {
+      super();
       const th = this as any;
       _.init(th, def);
       th._zod.deferred ??= [];
@@ -36,7 +41,8 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
       inst._zod.def = def;
     }
 
-    static [Symbol.hasInstance](inst: any) {
+    static override [Symbol.hasInstance](inst: any) {
+      if (params?.Parent && inst instanceof params.Parent) return true;
       return inst?._zod?.traits?.has(name);
     }
   }

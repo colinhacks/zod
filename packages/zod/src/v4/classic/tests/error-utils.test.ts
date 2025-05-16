@@ -419,10 +419,12 @@ test("z.toDotPath", () => {
 
 test("inheritance", () => {
   const e1 = new z.ZodError([]);
-  const e2 = new z._ZodError([]);
-
+  expect(e1).toBeInstanceOf(z.core.$ZodError);
   expect(e1).toBeInstanceOf(z.ZodError);
-  expect(e2).toBeInstanceOf(z._ZodError);
-  expect(e2).not.toBeInstanceOf(z.ZodError);
-  expect(e1).toBeInstanceOf(z._ZodError);
+  expect(e1).not.toBeInstanceOf(Error);
+
+  const e2 = new z.ZodRealError([]);
+  expect(e2).toBeInstanceOf(z.ZodError);
+  expect(e2).toBeInstanceOf(z.ZodRealError);
+  expect(e2).toBeInstanceOf(Error);
 });

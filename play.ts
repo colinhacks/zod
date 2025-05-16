@@ -1,12 +1,5 @@
 import { z } from "zod/v4";
 
-const schema = z.preprocess((data, ctx) => {
-  ctx.addIssue({
-    code: "custom",
-    message: `custom error`,
-  });
-  return data;
-}, z.string());
-const result = schema.safeParse(1234);
+const err = new z.ZodError([]);
 
-console.dir(result.error!, { depth: null });
+console.dir(err instanceof z.ZodRealError, { depth: null });

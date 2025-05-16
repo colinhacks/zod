@@ -27,7 +27,7 @@ export const _parse: (_Err: $ZodErrorClass) => $Parse = (_Err) => (schema, value
   return result.value;
 };
 
-export const parse: $Parse = /* @__PURE__*/ _parse(errors.$ZodError);
+export const parse: $Parse = /* @__PURE__*/ _parse(errors.$ZodRealError);
 
 export type $ParseAsync = <T extends schemas.$ZodType>(
   schema: T,
@@ -48,7 +48,7 @@ export const _parseAsync: (_Err: $ZodErrorClass) => $ParseAsync = (_Err) => asyn
   return result.value as core.output<typeof schema>;
 };
 
-export const parseAsync: $ParseAsync = /* @__PURE__*/ _parseAsync(errors.$ZodError);
+export const parseAsync: $ParseAsync = /* @__PURE__*/ _parseAsync(errors.$ZodRealError);
 
 export type $SafeParse = <T extends schemas.$ZodType>(
   schema: T,
@@ -70,7 +70,7 @@ export const _safeParse: (_Err: $ZodErrorClass) => $SafeParse = (_Err) => (schem
       }
     : { success: true, data: result.value };
 };
-export const safeParse: $SafeParse = /* @__PURE__*/ _safeParse(errors._$ZodError);
+export const safeParse: $SafeParse = /* @__PURE__*/ _safeParse(errors.$ZodError);
 
 export type $SafeParseAsync = <T extends schemas.$ZodType>(
   schema: T,
@@ -91,4 +91,4 @@ export const _safeParseAsync: (_Err: $ZodErrorClass) => $SafeParseAsync = (_Err)
     : { success: true, data: result.value };
 };
 
-export const safeParseAsync: $SafeParseAsync = /* @__PURE__*/ _safeParseAsync(errors._$ZodError);
+export const safeParseAsync: $SafeParseAsync = /* @__PURE__*/ _safeParseAsync(errors.$ZodError);

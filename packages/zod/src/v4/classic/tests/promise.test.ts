@@ -29,13 +29,13 @@ test("promise parsing success", async () => {
 test("promise parsing fail", async () => {
   const bad = await promSchema.safeParseAsync(Promise.resolve({ name: "Bobby", age: "10" }));
   expect(bad.success).toBe(false);
-  expect(bad.error).toBeInstanceOf(z._ZodError);
+  expect(bad.error).toBeInstanceOf(z.ZodError);
 });
 
 test("promise parsing fail 2", async () => {
   const result = await promSchema.safeParseAsync(Promise.resolve({ name: "Bobby", age: "10" }));
   expect(result.success).toBe(false);
-  expect(result.error).toBeInstanceOf(z._ZodError);
+  expect(result.error).toBeInstanceOf(z.ZodError);
 });
 
 test("promise parsing fail", () => {

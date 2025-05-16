@@ -105,7 +105,7 @@ test("valid - discriminator value of various primitive types", () => {
     type: "not_a_key",
     val: "val",
   });
-  expect(fail.error).toBeInstanceOf(z._ZodError);
+  expect(fail.error).toBeInstanceOf(z.ZodError);
 });
 
 test("invalid - null", () => {

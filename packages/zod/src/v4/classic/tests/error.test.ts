@@ -683,3 +683,20 @@ test("string error params", () => {
   const j = z.array(z.string(), "Bad array!");
   expect(j.safeParse(null).error!.issues[0].message).toBe("Bad array!");
 });
+
+test("error inheritance", () => {
+  const e1 = z.string().safeParse(123).error!;
+  expect(e1).toBeInstanceOf(z.core.$ZodError);
+  expect(e1).toBeInstanceOf(z.ZodError);
+  expect(e1).toBeInstanceOf(z.ZodRealError);
+  expect(e1).not.toBeInstanceOf(Error);
+
+  try {
+    z.string().parse(123);
+  } catch (e2) {
+    expect(e1).toBeInstanceOf(z.core.$ZodError);
+    expect(e2).toBeInstanceOf(z.ZodError);
+    expect(e2).toBeInstanceOf(z.ZodRealError);
+    expect(e2).toBeInstanceOf(Error);
+  }
+});
