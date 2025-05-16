@@ -34,9 +34,10 @@ export class Doc {
   }
 
   compile() {
+    const F = Function;
     const args = this?.args;
     const content = this?.content ?? [``];
     const lines = [...content.map((x) => `  ${x}`)];
-    return new Function(...args, lines.join("\n"));
+    return new F(...args, lines.join("\n"));
   }
 }

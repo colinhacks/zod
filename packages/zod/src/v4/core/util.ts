@@ -321,12 +321,14 @@ export function isObject(data: any): data is Record<PropertyKey, unknown> {
 
 export const allowsEval: { value: boolean } = cached(() => {
   try {
-    new Function("");
+    new F("");
     return true;
   } catch (_) {
     return false;
   }
 });
+
+export const F: typeof Function = Function;
 
 export function isPlainObject(data: any): data is Record<PropertyKey, unknown> {
   return typeof data === "object" && data !== null && Object.getPrototypeOf(data) === Object.prototype;
