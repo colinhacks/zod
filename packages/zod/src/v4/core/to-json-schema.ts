@@ -26,7 +26,6 @@ interface JSONSchemaGeneratorParams {
 interface ProcessParams {
   schemaPath: schemas.$ZodType[];
   path: (string | number)[];
-  // initial?: Seen | undefined;
 }
 
 interface EmitParams {
@@ -34,16 +33,11 @@ interface EmitParams {
    * - `"ref"` — Default. Cycles will be broken using $defs
    * - `"throw"` — Cycles will throw an error if encountered */
   cycles?: "ref" | "throw";
-
   /* How to handle reused schemas.
    * - `"inline"` — Default. Reused schemas will be inlined
    * - `"ref"` — Reused schemas will be extracted as $defs */
   reused?: "ref" | "inline";
-  /** A function used to convert `id` values to URIs to be used in *external* $refs.
-   *
-   * Default is `(id) => id`.
-   */
-  // uri?: (id: string) => string;
+
   external?:
     | {
         registry: $ZodRegistry<{ id?: string | undefined }>;
@@ -71,8 +65,8 @@ interface Seen {
   count: number;
   /** Cycle path */
   cycle?: (string | number)[] | undefined;
-
-  // external?: string | undefined;
+  isParent?: boolean | undefined;
+  ref?: schemas.$ZodType | undefined | null;
 }
 
 export class JSONSchemaGenerator {
@@ -120,15 +114,9 @@ export class JSONSchemaGenerator {
     const result: Seen = { schema: {}, count: 1, cycle: undefined };
     this.seen.set(schema, result);
 
-    // if(schema._zod.parent){
-    //   // schema was cloned from another schema
-    //   result.
-    // }
-
     if (schema._zod.toJSONSchema) {
       // custom method overrides default behavior
       result.schema = schema._zod.toJSONSchema() as any;
-      // return
     }
 
     // check if external
@@ -137,7 +125,6 @@ export class JSONSchemaGenerator {
     //   result.external = ext;
     // }
 
-    // const def = (schema as schemas.$ZodTypes)._zod.def;
     const params = {
       ..._params,
       schemaPath: [..._params.schemaPath, schema],
@@ -146,7 +133,9 @@ export class JSONSchemaGenerator {
 
     if (schema._zod.parent) {
       // schema was cloned from another schema
-      result.schema._ref = this.process(schema._zod.parent, params);
+      result.ref = schema._zod.parent;
+      this.process(schema._zod.parent, params);
+      this.seen.get(schema._zod.parent)!.isParent = true;
     } else {
       const _json = result.schema;
       switch (def.type) {
@@ -221,7 +210,6 @@ export class JSONSchemaGenerator {
         }
         case "null": {
           _json.type = "null";
-          // const json = { type: "null" } as JSONSchema.NullSchema;
           break;
         }
         case "any": {
@@ -263,10 +251,7 @@ export class JSONSchemaGenerator {
           json.type = "object";
           json.properties = {};
           const shape = def.shape; // params.shapeCache.get(schema)!;
-          // if (!shape) {
-          //   shape = def.shape;
-          //   params.shapeCache.set(schema, shape);
-          // }
+
           for (const key in shape) {
             json.properties[key] = this.process(shape[key], {
               ...params,
@@ -442,8 +427,8 @@ export class JSONSchemaGenerator {
           break;
         }
         case "nonoptional": {
-          const inner = this.process(def.innerType, params);
-          Object.assign(_json, inner);
+          this.process(def.innerType, params);
+          result.ref = def.innerType;
           break;
         }
         case "success": {
@@ -452,21 +437,22 @@ export class JSONSchemaGenerator {
           break;
         }
         case "default": {
-          const inner = this.process(def.innerType, params);
-          Object.assign(_json, inner);
+          this.process(def.innerType, params);
+          result.ref = def.innerType;
           _json.default = def.defaultValue;
           break;
         }
         case "prefault": {
-          const inner = this.process(def.innerType, params);
-          Object.assign(_json, inner);
-          _json.default = schema["~standard"].validate(undefined);
+          this.process(def.innerType, params);
+          result.ref = def.innerType;
+          if (this.io === "input") _json._prefault = def.defaultValue;
+
           break;
         }
         case "catch": {
           // use conditionals
-          const inner = this.process(def.innerType, params);
-          Object.assign(_json, inner);
+          this.process(def.innerType, params);
+          result.ref = def.innerType;
           let catchValue: any;
           try {
             catchValue = def.catchValue(undefined as any);
@@ -482,23 +468,6 @@ export class JSONSchemaGenerator {
           }
           break;
         }
-        case "pipe": {
-          const innerType = this.io === "input" ? def.in : def.out;
-          const inner = this.process(innerType, params);
-          _json._ref = inner;
-
-          break;
-        }
-        case "readonly": {
-          _json._ref = this.process(def.innerType, params);
-          _json.readOnly = true;
-          // const inner = this.process(def.innerType, params);
-          // Object.assign(_json, inner);
-          // _json.allOf = [inner];
-          // result.extra.readOnly = true;
-          // _json.readOnly = true;
-          break;
-        }
         case "template_literal": {
           const json = _json as JSONSchema.StringSchema;
           const pattern = schema._zod.pattern;
@@ -507,23 +476,33 @@ export class JSONSchemaGenerator {
           json.pattern = pattern.source;
           break;
         }
-        case "promise": {
-          const inner = this.process(def.innerType, params);
-          // result.schema = inner;
-          _json._ref = inner;
+        case "pipe": {
+          const innerType = this.io === "input" ? def.in : def.out;
+          this.process(innerType, params);
+          result.ref = innerType;
+          break;
+        }
+        case "readonly": {
+          this.process(def.innerType, params);
+          result.ref = def.innerType;
+          _json.readOnly = true;
           break;
         }
         // passthrough types
+        case "promise": {
+          this.process(def.innerType, params);
+          result.ref = def.innerType;
+          break;
+        }
         case "optional": {
-          // result.schema = this.process(def.innerType, params);
-          _json._ref = this.process(def.innerType, params);
+          this.process(def.innerType, params);
+          result.ref = def.innerType;
           break;
         }
         case "lazy": {
           const innerType = (schema as schemas.$ZodLazy)._zod.innerType;
-          const inner = this.process(innerType, params);
-          // result.schema = inner;
-          _json._ref = inner;
+          this.process(innerType, params);
+          result.ref = innerType;
           break;
         }
         case "custom": {
@@ -542,17 +521,16 @@ export class JSONSchemaGenerator {
     const meta = this.metadataRegistry.get(schema);
     if (meta) Object.assign(result.schema, meta);
     if (this.io === "input" && def.type === "pipe") {
-      // examples only apply to output type of pipe
+      // examples/defaults only apply to output type of pipe
       delete result.schema.examples;
+      delete result.schema.default;
+      if (result.schema._prefault) result.schema.default = result.schema._prefault;
     }
+    if (this.io === "input" && result.schema._prefault) result.schema.default ??= result.schema._prefault;
+    delete result.schema._prefault;
 
     // pulling fresh from this.seen in case it was overwritten
     const _result = this.seen.get(schema)!;
-
-    this.override({
-      zodSchema: schema,
-      jsonSchema: _result.schema,
-    });
 
     return _result.schema;
   }
@@ -566,9 +544,7 @@ export class JSONSchemaGenerator {
       external: _params?.external ?? undefined,
     } satisfies EmitParams;
 
-    // iterate over seen map
-    // const result: JSONSchema.BaseSchema = {};
-    // const defs: JSONSchema.BaseSchema["$defs"] = params.external?.defs ?? {};
+    // iterate over seen map;
     const root = this.seen.get(schema);
 
     if (!root) throw new Error("Unprocessed schema. This is a bug in Zod.");
@@ -608,17 +584,21 @@ export class JSONSchemaGenerator {
 
     const extractToDef = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): void => {
       if (entry[1].schema.$ref) {
-        // throw new Error("Already extracted");
         return;
       }
       const seen = entry[1];
       const { ref, defId } = makeURI(entry);
-      // defId won't be set if the schema is a reference to an external schema
 
       seen.def = { ...seen.schema };
+      // defId won't be set if the schema is a reference to an external schema
       if (defId) seen.defId = defId;
       // wipe away all properties except $ref
-      schemaToRef(seen, ref);
+      const schema = seen.schema;
+      for (const key in schema) {
+        // @ts-ignore
+        delete schema[key];
+        schema.$ref = ref;
+      }
     };
 
     // extract schemas into $defs
@@ -674,14 +654,45 @@ export class JSONSchemaGenerator {
       }
     }
 
-    for (const entry of this.seen.entries()) {
-      const seen = entry[1];
+    // flatten _refs
+    const flattenRef = (zodSchema: schemas.$ZodType, params: Pick<ToJSONSchemaParams, "target">) => {
+      const seen = this.seen.get(zodSchema)!;
+      const schema = seen.def ?? seen.schema;
 
-      flattenRef(seen.schema, { target: this.target });
-      if (seen.def) flattenRef(seen.def, { target: this.target });
+      const _schema = { ...schema };
+      if (seen.ref === null) {
+        return;
+      }
+
+      const ref = seen.ref;
+      seen.ref = null;
+      if (ref) {
+        flattenRef(ref, params);
+
+        const refSchema = this.seen.get(ref)!.schema;
+
+        if (refSchema.$ref && params.target === "draft-7") {
+          schema.allOf = schema.allOf ?? [];
+          schema.allOf.push(refSchema);
+        } else {
+          Object.assign(schema, refSchema);
+          Object.assign(schema, _schema); // this is to prevent overwriting any fields in the original schema
+        }
+      }
+
+      if (!seen.isParent)
+        this.override({
+          zodSchema,
+          jsonSchema: schema,
+        });
+    };
+
+    for (const entry of this.seen.entries()) {
+      flattenRef(entry[0], { target: this.target });
     }
 
     const result = { ...root.def };
+
     const defs: JSONSchema.BaseSchema["$defs"] = params.external?.defs ?? {};
     for (const entry of this.seen.entries()) {
       const seen = entry[1];
@@ -700,38 +711,13 @@ export class JSONSchemaGenerator {
     }
 
     try {
-      // this essentially "finalizes" this schema
+      // this "finalizes" this schema and ensures all cycles are removed
       // each call to .emit() is functionally independent
       // though the seen map is shared
       return JSON.parse(JSON.stringify(result));
     } catch (_err) {
       throw new Error("Error converting schema to JSON.");
     }
-  }
-}
-
-// flatten _refs
-const flattenRef = (schema: JSONSchema.BaseSchema, params: Pick<ToJSONSchemaParams, "target">) => {
-  const _schema = { ...schema };
-  if (schema._ref) flattenRef(schema._ref, params);
-  const ref = schema._ref;
-  if (ref) {
-    if (ref.$ref && params.target === "draft-7") {
-      schema.allOf = schema.allOf ?? [];
-      schema.allOf.push(ref);
-    } else {
-      Object.assign(schema, ref);
-      Object.assign(schema, _schema); // this is to prevent overwriting any fields in the original schema
-    }
-  }
-  delete schema._ref;
-};
-
-function schemaToRef(seen: Seen, ref: string) {
-  const schema = seen.schema;
-  for (const key in schema) {
-    delete schema[key];
-    schema.$ref = ref;
   }
 }
 

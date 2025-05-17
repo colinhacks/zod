@@ -851,6 +851,27 @@ test("override", () => {
   `);
 });
 
+test("override: do not run on references", () => {
+  let overrideCount = 0;
+  const schema = z
+    .union([z.string().date(), z.string().datetime(), z.string().datetime({ local: true })])
+    .meta({ a: true })
+    .transform((str) => new Date(str))
+    .meta({ b: true })
+    .pipe(z.date())
+    .meta({ c: true })
+    .brand("dateIn");
+  z.toJSONSchema(schema, {
+    unrepresentable: "any",
+    io: "input",
+    override(_) {
+      overrideCount++;
+    },
+  });
+
+  expect(overrideCount).toBe(6);
+});
+
 test("pipe", () => {
   const mySchema = z
     .string()
@@ -1352,6 +1373,53 @@ test("_ref", () => {
   `);
 });
 
+test("defaults/prefaults", () => {
+  const a = z
+    .string()
+    .transform((val) => val.length)
+    .pipe(z.number());
+  const b = a.prefault("hello");
+  const c = a.default(1234);
+
+  // a
+  expect(toJSONSchema(a)).toMatchInlineSnapshot(`
+    {
+      "type": "number",
+    }
+  `);
+  expect(toJSONSchema(a, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "type": "string",
+    }
+  `);
+
+  // b
+  expect(toJSONSchema(b)).toMatchInlineSnapshot(`
+    {
+      "type": "number",
+    }
+  `);
+  expect(toJSONSchema(b, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "default": "hello",
+      "type": "string",
+    }
+  `);
+  // c
+  expect(toJSONSchema(c)).toMatchInlineSnapshot(`
+    {
+      "default": 1234,
+      "type": "number",
+    }
+  `);
+  expect(toJSONSchema(c, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "default": 1234,
+      "type": "string",
+    }
+  `);
+});
+
 test("input type", () => {
   const schema = z.object({
     a: z.string(),
@@ -1384,9 +1452,7 @@ test("input type", () => {
           ],
         },
         "e": {
-          "default": {
-            "value": "hello",
-          },
+          "default": "hello",
           "type": "string",
         },
       },
@@ -1421,9 +1487,6 @@ test("input type", () => {
           ],
         },
         "e": {
-          "default": {
-            "value": "hello",
-          },
           "type": "string",
         },
       },
@@ -1461,6 +1524,23 @@ test("examples on pipe", () => {
       "examples": [
         4,
       ],
+    }
+  `);
+});
+
+test("override with refs", () => {
+  const a = z.string().optional();
+  const result = z.toJSONSchema(a, {
+    override(ctx) {
+      if (ctx.zodSchema._zod.def.type === "string") {
+        ctx.jsonSchema.type = "STRING";
+      }
+    },
+  });
+
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "type": "STRING",
     }
   `);
 });
