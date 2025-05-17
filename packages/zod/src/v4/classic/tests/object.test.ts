@@ -417,7 +417,7 @@ test("passthrough index signature", () => {
   expectTypeOf<a>().toEqualTypeOf<{ a: string }>();
   const b = a.passthrough();
   type b = z.infer<typeof b>;
-  expectTypeOf<b>().toEqualTypeOf<{ a: string } & { [k: string]: unknown }>();
+  expectTypeOf<b>().toEqualTypeOf<{ a: string; [k: string]: unknown }>();
 });
 
 // test("xor", () => {
