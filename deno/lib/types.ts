@@ -4352,11 +4352,11 @@ export interface ZodLooseEnumDef<T extends [string, ...string[]]>
 }
 
 export class ZodLooseEnum<T extends [string, ...string[]]> extends ZodType<
-  string,
+  T[number],
   ZodLooseEnumDef<T>,
   string
 > {
-  _parse(input: ParseInput): ParseReturnType<T[number]> {
+  _parse(input: ParseInput): ParseReturnType<string> {
     const parsedType = getParsedType(input.data);
 
     if (parsedType !== ZodParsedType.string) {
@@ -4369,7 +4369,7 @@ export class ZodLooseEnum<T extends [string, ...string[]]> extends ZodType<
       return INVALID;
     }
 
-    return OK(input.data);
+    return OK(input.data as unknown as T[number]);
   }
 
   get options(): T {
@@ -4387,7 +4387,7 @@ export class ZodLooseEnum<T extends [string, ...string[]]> extends ZodType<
     });
   }
 }
-export function looseEnum<T extends readonly [string, ...string[]]>(
+export function looseEnum<U extends string, T extends Readonly<[U, ...U[]]>>(
   values: T
 ): ZodLooseEnum<Writeable<T>> {
   return ZodLooseEnum.create(values as Writeable<T>);
