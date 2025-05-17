@@ -2,9 +2,10 @@ import * as z from "zod/v4";
 
 z;
 
-console.dir(z.ZodError.name, { depth: null });
-console.dir(z.ZodRealError.name, { depth: null });
-console.dir(z.core.$ZodError.name, { depth: null });
-console.dir(z.core.$ZodRealError.name, { depth: null });
+const schema = z.union([z.string(), z.number()]);
 
-z.string().parse(1234);
+z.toJSONSchema(schema, {
+  override(ctx) {
+    console.dir(ctx.zodSchema._zod.def.type, { depth: null });
+  },
+});

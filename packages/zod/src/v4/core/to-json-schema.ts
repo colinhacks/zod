@@ -688,7 +688,7 @@ export class JSONSchemaGenerator {
         });
     };
 
-    for (const entry of this.seen.entries()) {
+    for (const entry of [...this.seen.entries()].reverse()) {
       flattenRef(entry[0], { target: this.target });
     }
 
