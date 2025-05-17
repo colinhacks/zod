@@ -2642,7 +2642,7 @@ function handleSetResult(result: ParsePayload, final: ParsePayload<Set<any>>) {
 ////////////////////////////////////////
 ////////////////////////////////////////
 export type $InferEnumOutput<T extends util.EnumLike> = T[keyof T] & {};
-export type $InferEnumInput<T extends util.EnumLike> = $InferEnumOutput<T>;
+export type $InferEnumInput<T extends util.EnumLike> = T[keyof T] & {};
 
 export interface $ZodEnumDef<T extends util.EnumLike = util.EnumLike> extends $ZodTypeDef {
   type: "enum";

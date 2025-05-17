@@ -40,9 +40,9 @@ interface EmitParams {
 
   external?:
     | {
+        /**  */
         registry: $ZodRegistry<{ id?: string | undefined }>;
         uri: (id: string) => string;
-        // __shared: boolean;
         defs: Record<string, JSONSchema.BaseSchema>;
       }
     | undefined;
@@ -80,7 +80,6 @@ export class JSONSchemaGenerator {
   seen: Map<schemas.$ZodType, Seen>;
 
   constructor(params?: JSONSchemaGeneratorParams) {
-    // this.external = params?.external;
     this.metadataRegistry = params?.metadata ?? globalRegistry;
     this.target = params?.target ?? "draft-2020-12";
     this.unrepresentable = params?.unrepresentable ?? "throw";
