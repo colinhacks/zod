@@ -1519,15 +1519,6 @@ const Person = z.partialRecord(Keys, z.string());
 ```
 
 <Accordions>
-<Accordion title="Partial records">
-  If you want a *partial* record type, you'll need to trick Zod a little. This short-circuits the special handling of `z.enum()`.
-
-  ```ts
-  const Keys = z.enum(["id", "name", "email"]).or(z.never()); 
-  const Person = z.record(Keys, z.string());
-  // { id?: string; name?: string; email?: string }
-  ```
-</Accordion>
 <Accordion title="A note on numeric keys">
 
 Though TypeScript lets you define `Record` types with `number` keys (e.g. `Record<number, unknown>`), numerical keys don't actually exist in JavaScript, which converts all keys to strings.
