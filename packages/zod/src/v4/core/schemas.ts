@@ -30,7 +30,6 @@ export interface ParsePayload<T = unknown> {
   value: T;
   issues: errors.$ZodRawIssue[];
   path: (string | number)[];
-  custom?: unknown;
 }
 
 export type CheckFn<T> = (input: ParsePayload<T>) => util.MaybeAsync<void>;
