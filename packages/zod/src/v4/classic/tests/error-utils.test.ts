@@ -374,6 +374,48 @@ test("z.treeifyError", () => {
   `);
 });
 
+test("z.treeifyError 2", () => {
+  const schema = z.strictObject({
+    name: z.string(),
+    logLevel: z.union([z.string(), z.number()]),
+    env: z.literal(["production", "development"]),
+  });
+
+  const data = {
+    name: 1000,
+    logLevel: false,
+    extra: 1000,
+  };
+
+  const result = schema.safeParse(data);
+  const err = z.treeifyError(result.error!);
+  expect(err).toMatchInlineSnapshot(`
+    {
+      "errors": [
+        "Unrecognized key: "extra"",
+      ],
+      "properties": {
+        "env": {
+          "errors": [
+            "Invalid option: expected one of "production"|"development"",
+          ],
+        },
+        "logLevel": {
+          "errors": [
+            "Invalid input: expected string, received boolean",
+            "Invalid input: expected number, received boolean",
+          ],
+        },
+        "name": {
+          "errors": [
+            "Invalid input: expected string, received number",
+          ],
+        },
+      },
+    }
+  `);
+});
+
 test("z.prettifyError", () => {
   expect(z.prettifyError(result.error!)).toMatchInlineSnapshot(`
     "✖ Unrecognized key: "extra"

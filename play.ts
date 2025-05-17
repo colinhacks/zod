@@ -2,15 +2,17 @@ import { z } from "zod/v4";
 
 z;
 
-const schema = z.strictObject({
-  username: z.string(),
-  favoriteNumbers: z.array(z.number()),
+const schema = z.object({
+  name: z.string(),
+  logLevel: z.union([z.string(), z.number()]),
+  env: z.literal(["production", "development"]),
 });
 
-const result = schema.parse({
-  username: 1234,
-  favoriteNumbers: [1234, "4567"],
-  extraKey: 1234,
-});
+const data = {
+  name: 1000,
+  logLevel: false,
+};
 
-console.dir(result.error, { depth: null });
+const result = schema.safeParse(data);
+
+console.dir(z.prettifyError(result.error!), { depth: null });

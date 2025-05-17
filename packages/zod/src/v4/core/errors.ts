@@ -308,24 +308,27 @@ export function treeifyError<T>(error: $ZodError, _mapper?: any) {
       return issue.message;
     };
   const result: $ZodErrorTree<T> = { errors: [] } as any;
-  const processError = (error: { issues: $ZodIssue[] }) => {
+  const processError = (error: { issues: $ZodIssue[] }, path: PropertyKey[] = []) => {
     for (const issue of error.issues) {
       if (issue.code === "invalid_union") {
-        issue.errors.map((issues) => processError({ issues }));
+        issue.errors.map((issues) => processError({ issues }, issue.path));
       } else if (issue.code === "invalid_key") {
-        processError({ issues: issue.issues });
+        processError({ issues: issue.issues }, issue.path);
       } else if (issue.code === "invalid_element") {
-        processError({ issues: issue.issues });
-      } else if (issue.path.length === 0) {
-        result.errors.push(mapper(issue));
+        processError({ issues: issue.issues }, issue.path);
       } else {
+        const fullpath = [...path, ...issue.path];
+        if (fullpath.length === 0) {
+          result.errors.push(mapper(issue));
+          continue;
+        }
+
         let curr: any = result;
         let i = 0;
+        while (i < fullpath.length) {
+          const el = fullpath[i];
 
-        while (i < issue.path.length) {
-          const el = issue.path[i];
-
-          const terminal = i === issue.path.length - 1;
+          const terminal = i === fullpath.length - 1;
           if (typeof el === "string") {
             curr.properties ??= {};
             curr.properties[el] ??= { errors: [] };
