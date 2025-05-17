@@ -1731,16 +1731,6 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     for (const key of keys) {
       ids[key] = util.randomString(15);
     }
-    // for (const key of keys) {
-    //   if (optionalKeys.has(key)) continue;
-    //   const id = ids[key];
-    //   doc.write(`const ${id} = ${parseStr(key)};`);
-    //   doc.write(`
-    //       if (${id}.issues.length) payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
-    //         ...iss,
-    //         path: iss.path ? [${util.esc(key)}, ...iss.path] : [${util.esc(key)}]
-    //       })));`);
-    // }
 
     // A: preserve key order {
     doc.write(`const newResult = {}`);
@@ -1782,45 +1772,6 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       }
     }
 
-    // B: one-shot payload.value
-    // doc.write(`const newResult = {`);
-    // doc.indented(() => {
-    //   for (const key of keys) {
-    //     if (optionalKeys.has(key)) continue;
-    //     const id = ids[key];
-    //     doc.write(`  ${util.esc(key)}: ${id}.value,`);
-    //   }
-    // });
-    // doc.write(`}`);
-
-    // NEW: always run validation
-    // this lets default values get applied to optionals
-    // for (const key of keys) {
-    //   if (!optionalKeys.has(key)) continue;
-    //   const id = ids[key];
-    //   doc.write(`const ${id} = ${parseStr(key)};`);
-    //   const k = util.esc(key);
-    //   doc.write(`
-    //     if (${id}.issues.length) {
-    //       if (input[${k}] === undefined) {
-    //         if (${k} in input) {
-    //           newResult[${k}] = undefined;
-    //         }
-    //       } else {
-    //         payload.issues = payload.issues.concat(
-    //           ${id}.issues.map((iss) => ({
-    //             ...iss,
-    //             path: iss.path ? [${k}, ...iss.path] : [${k}],
-    //           }))
-    //         );
-    //       }
-    //     } else if (${id}.value === undefined) {
-    //       if (${k} in input) newResult[${k}] = undefined;
-    //     } else {
-    //       if (${k} in input) newResult[${k}] = ${id}.value;
-    //     }
-    //     `);
-    // }
     doc.write(`payload.value = newResult;`);
     doc.write(`return payload;`);
     const fn = doc.compile();
