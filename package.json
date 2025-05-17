@@ -22,9 +22,10 @@
     "@types/node": "14",
     "@typescript-eslint/eslint-plugin": "^5.15.0",
     "@typescript-eslint/parser": "^5.15.0",
+    "@vitest/coverage-v8": "^0.32.2",
     "babel-jest": "^29.5.0",
     "benchmark": "^2.1.4",
-    "dependency-cruiser": "^9.19.0",
+    "dependency-cruiser": "^16.10.2",
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-ban": "^1.6.0",
@@ -118,5 +119,8 @@
       "npm-funding": true
     }
   },
-  "types": "./index.d.ts"
+  "types": "./index.d.ts",
+  "dependencies": {
+    "yarn": "^1.22.22"
+  }
 }

@@ -4343,6 +4343,50 @@ function createZodEnum(
   });
 }
 
+export interface ZodLooseEnumDef<T extends [string, ...string[]]>
+  extends ZodTypeDef {
+  values: T;
+  typeName: ZodFirstPartyTypeKind.ZodLooseEnum;
+}
+
+export class ZodLooseEnum<T extends [string, ...string[]]> extends ZodType<
+  T[number],
+  ZodLooseEnumDef<T>,
+  string
+> {
+  _parse(input: ParseInput): ParseReturnType<T[number]> {
+    const parsedType = getParsedType(input.data);
+
+    if (parsedType !== ZodParsedType.string) {
+      const ctx = this._getOrReturnCtx(input);
+      addIssueToContext(ctx, {
+        code: ZodIssueCode.invalid_type,
+        expected: ZodParsedType.string,
+        received: parsedType,
+      });
+      return { status: "aborted" };
+    }
+
+    return { status: "valid", value: input.data };
+  }
+
+  get options(): T {
+    return this._def.values;
+  }
+
+  static create<T extends [string, ...string[]]>(values: T): ZodLooseEnum<T> {
+    return new ZodLooseEnum({
+      values,
+      typeName: ZodFirstPartyTypeKind.ZodLooseEnum,
+    });
+  }
+}
+export function looseEnum<T extends readonly [string, ...string[]]>(
+  values: T
+): ZodLooseEnum<Writeable<T>> {
+  return ZodLooseEnum.create(values as Writeable<T>);
+}
+
 export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
   T[number],
   ZodEnumDef<T>,
@@ -5318,6 +5362,7 @@ export enum ZodFirstPartyTypeKind {
   ZodLazy = "ZodLazy",
   ZodLiteral = "ZodLiteral",
   ZodEnum = "ZodEnum",
+  ZodLooseEnum = "ZodLooseEnum",
   ZodEffects = "ZodEffects",
   ZodNativeEnum = "ZodNativeEnum",
   ZodOptional = "ZodOptional",
