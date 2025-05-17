@@ -139,21 +139,7 @@ export interface $ZodTypeInternals<out O = unknown, out I = unknown> {
   ) => $ZodType;
 
   /** A catchall object for bag metadata related to this schema. Commonly modified by checks using `onattach`. */
-  // bag: Record<string, unknown>;
-  bag: util.LoosePartial<{
-    minimum: util.Numeric;
-    maximum: util.Numeric;
-    multipleOf: util.Numeric;
-    exclusiveMinimum: util.Numeric;
-    exclusiveMaximum: util.Numeric;
-    pattern: RegExp;
-    format: string;
-    contentEncoding: string;
-    contentType: string;
-    mime: util.MimeTypes[];
-    size: number;
-    length: number;
-  }>;
+  bag: Record<string, unknown>;
 
   /** The set of issues this schema might throw during type checking. */
   isst: errors.$ZodIssueBase;
