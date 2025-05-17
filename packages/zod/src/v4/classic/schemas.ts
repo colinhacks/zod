@@ -754,11 +754,14 @@ export const ZodNumber: core.$constructor<ZodNumber> = /*@__PURE__*/ core.$const
   // inst.finite = (params) => inst.check(core.finite(params));
   inst.finite = () => inst;
 
-  inst.minValue = inst._zod.bag.minimum ?? null;
-  inst.maxValue = inst._zod.bag.maximum ?? null;
-  inst.isInt = (inst._zod.bag.format ?? "").includes("int") || Number.isSafeInteger(inst._zod.bag.multipleOf ?? 0.5);
+  const bag = inst._zod.bag;
+  inst.minValue =
+    Math.max(bag.minimum ?? Number.NEGATIVE_INFINITY, bag.exclusiveMinimum ?? Number.NEGATIVE_INFINITY) ?? null;
+  inst.maxValue =
+    Math.min(bag.maximum ?? Number.POSITIVE_INFINITY, bag.exclusiveMaximum ?? Number.POSITIVE_INFINITY) ?? null;
+  inst.isInt = (bag.format ?? "").includes("int") || Number.isSafeInteger(bag.multipleOf ?? 0.5);
   inst.isFinite = true;
-  inst.format = inst._zod.bag.format ?? null;
+  inst.format = bag.format ?? null;
 });
 
 export function number(params?: string | core.$ZodNumberParams): ZodNumber {

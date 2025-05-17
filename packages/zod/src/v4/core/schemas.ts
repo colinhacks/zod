@@ -1016,6 +1016,8 @@ export interface $ZodNumberInternals<Input = unknown> extends $ZodTypeInternals<
   bag: util.LoosePartial<{
     minimum: number;
     maximum: number;
+    exclusiveMinimum: number;
+    exclusiveMaximum: number;
     format: string;
     pattern: RegExp;
   }>;

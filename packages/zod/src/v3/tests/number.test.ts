@@ -4,11 +4,11 @@ import { expect, test } from "vitest";
 import * as z from "zod/v3";
 
 const gtFive = z.number().gt(5);
-const gteFive = z.number().gte(5);
-const minFive = z.number().min(5);
-const ltFive = z.number().lt(5);
+const gteFive = z.number().gte(-5).gte(5);
+const minFive = z.number().min(0).min(5);
+const ltFive = z.number().lte(10).lt(5);
 const lteFive = z.number().lte(5);
-const maxFive = z.number().max(5);
+const maxFive = z.number().max(10).max(5);
 const intNum = z.number().int();
 const positive = z.number().positive();
 const negative = z.number().negative();
