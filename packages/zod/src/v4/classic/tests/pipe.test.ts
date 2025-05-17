@@ -15,6 +15,20 @@ test("string to number pipe async", async () => {
   expect(await schema.parseAsync("1234")).toEqual(1234);
 });
 
+test("string with default fallback", () => {
+  const stringWithDefault = z
+    .pipe(
+      z.transform((v) => (v === "none" ? undefined : v)),
+      z.string()
+    )
+    .catch("default");
+
+  expect(stringWithDefault.parse("ok")).toBe("ok");
+  expect(stringWithDefault.parse(undefined)).toBe("default");
+  expect(stringWithDefault.parse("none")).toBe("default");
+  expect(stringWithDefault.parse(15)).toBe("default");
+});
+
 test("continue on non-fatal errors", () => {
   const schema = z
     .string()
