@@ -2,4 +2,4 @@ import { z } from "zod/v4";
 
 z;
 
-z.instanceof(z.ZodType);
+z.number().gte(Number.MIN_SAFE_INTEGER).lte(Number.MAX_SAFE_INTEGER);
