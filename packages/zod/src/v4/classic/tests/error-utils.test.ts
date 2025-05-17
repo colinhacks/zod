@@ -441,6 +441,14 @@ test("z.toDotPath", () => {
     `"user.$special["Symbol(#symbol)"]"`
   );
 
+  // Test with dots and quotes
+  expect(z.core.toDotPath(["search", `query("foo.bar"="abc")`])).toMatchInlineSnapshot(
+    `"search["query(\\"foo.bar\\"=\\"abc\\")"]"`
+  );
+
+  // Test with newlines
+  expect(z.core.toDotPath(["search", `foo\nbar`])).toMatchInlineSnapshot(`"search["foo\\nbar"]"`);
+
   // Test with empty strings
   expect(z.core.toDotPath(["", "empty"])).toMatchInlineSnapshot(`".empty"`);
 
@@ -453,7 +461,7 @@ test("z.toDotPath", () => {
   );
 
   // Test with square brackets in keys
-  expect(z.core.toDotPath(["data[0]", "value"])).toMatchInlineSnapshot(`"data[0].value"`);
+  expect(z.core.toDotPath(["data[0]", "value"])).toMatchInlineSnapshot(`"["data[0]"].value"`);
 
   // Test with empty path
   expect(z.core.toDotPath([])).toMatchInlineSnapshot(`""`);

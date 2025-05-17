@@ -388,8 +388,8 @@ export function toDotPath(path: (string | number | symbol)[]): string {
   const segs: string[] = [];
   for (const seg of path) {
     if (typeof seg === "number") segs.push(`[${seg}]`);
-    else if (typeof seg === "symbol") segs.push(`["${String(seg)}"]`);
-    else if (seg.includes(".")) segs.push(`["${seg}"]`);
+    else if (typeof seg === "symbol") segs.push(`[${JSON.stringify(String(seg))}]`);
+    else if (/[^\w$]/.test(seg)) segs.push(`[${JSON.stringify(seg)}]`);
     else {
       if (segs.length) segs.push(".");
       segs.push(seg);
