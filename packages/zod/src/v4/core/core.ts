@@ -27,7 +27,11 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
       }
     }
     static init(inst: T, def: D) {
-      inst._zod ??= {} as any;
+      Object.defineProperty(inst, "_zod", {
+        value: inst._zod ?? {},
+        enumerable: false,
+      });
+      // inst._zod ??= {} as any;
       inst._zod.traits ??= new Set();
       // const seen = inst._zod.traits.has(name);
 

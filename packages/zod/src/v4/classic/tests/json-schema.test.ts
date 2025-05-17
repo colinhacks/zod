@@ -1527,3 +1527,20 @@ test("examples on pipe", () => {
     }
   `);
 });
+
+test("override with refs", () => {
+  const a = z.string().optional();
+  const result = z.toJSONSchema(a, {
+    override(ctx) {
+      if (ctx.zodSchema._zod.def.type === "string") {
+        ctx.jsonSchema.type = "STRING";
+      }
+    },
+  });
+
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "type": "STRING",
+    }
+  `);
+});

@@ -37,7 +37,7 @@ export interface BaseSchema {
   [k: string]: unknown;
 
   /** A special key used as an intermediate representation of extends-style relationships. Omitted as a $ref with additional properties. */
-  _ref?: BaseSchema;
+  // _ref?: BaseSchema;
   _prefault?: unknown | undefined;
 }
 
