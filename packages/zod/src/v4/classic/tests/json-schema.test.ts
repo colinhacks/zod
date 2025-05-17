@@ -329,6 +329,80 @@ describe("toJSONSchema", () => {
       }
     `
     );
+
+    expect(toJSONSchema(z.number().gt(5).gt(10))).toMatchInlineSnapshot(`
+      {
+        "exclusiveMinimum": 10,
+        "type": "number",
+      }
+    `);
+
+    expect(toJSONSchema(z.number().gt(5).gte(10))).toMatchInlineSnapshot(`
+      {
+        "minimum": 10,
+        "type": "number",
+      }
+    `);
+
+    expect(toJSONSchema(z.number().lt(5).lt(3))).toMatchInlineSnapshot(`
+      {
+        "exclusiveMaximum": 3,
+        "type": "number",
+      }
+    `);
+
+    expect(toJSONSchema(z.number().lt(5).lt(3).lte(2))).toMatchInlineSnapshot(`
+      {
+        "maximum": 2,
+        "type": "number",
+      }
+    `);
+
+    expect(toJSONSchema(z.number().lt(5).lte(3))).toMatchInlineSnapshot(`
+      {
+        "maximum": 3,
+        "type": "number",
+      }
+    `);
+
+    expect(toJSONSchema(z.number().gt(5).lt(10))).toMatchInlineSnapshot(`
+      {
+        "exclusiveMaximum": 10,
+        "exclusiveMinimum": 5,
+        "type": "number",
+      }
+    `);
+    expect(toJSONSchema(z.number().gte(5).lte(10))).toMatchInlineSnapshot(`
+      {
+        "maximum": 10,
+        "minimum": 5,
+        "type": "number",
+      }
+    `);
+    expect(toJSONSchema(z.number().positive())).toMatchInlineSnapshot(`
+      {
+        "exclusiveMinimum": 0,
+        "type": "number",
+      }
+    `);
+    expect(toJSONSchema(z.number().negative())).toMatchInlineSnapshot(`
+      {
+        "exclusiveMaximum": 0,
+        "type": "number",
+      }
+    `);
+    expect(toJSONSchema(z.number().nonpositive())).toMatchInlineSnapshot(`
+      {
+        "maximum": 0,
+        "type": "number",
+      }
+    `);
+    expect(toJSONSchema(z.number().nonnegative())).toMatchInlineSnapshot(`
+      {
+        "minimum": 0,
+        "type": "number",
+      }
+    `);
   });
 
   test("arrays", () => {
@@ -1544,3 +1618,51 @@ test("override with refs", () => {
     }
   `);
 });
+
+// test("number checks", () => {
+//   expect(z.toJSONSchema(z.number().int())).toMatchInlineSnapshot(`
+//     {
+//       "maximum": 9007199254740991,
+//       "minimum": -9007199254740991,
+//       "type": "integer",
+//     }
+//   `);
+//   expect(z.toJSONSchema(z.int())).toMatchInlineSnapshot(`
+//     {
+//       "maximum": 9007199254740991,
+//       "minimum": -9007199254740991,
+//       "type": "integer",
+//     }
+//   `);
+//   expect(z.toJSONSchema(z.int().positive())).toMatchInlineSnapshot(`
+//     {
+//       "exclusiveMinimum": 0,
+//       "maximum": 9007199254740991,
+//       "minimum": -9007199254740991,
+//       "type": "integer",
+//     }
+//   `);
+//   expect(z.toJSONSchema(z.int().nonnegative())).toMatchInlineSnapshot(`
+//     {
+//       "maximum": 9007199254740991,
+//       "minimum": 0,
+//       "type": "integer",
+//     }
+//   `);
+//   expect(z.toJSONSchema(z.int().gt(0))).toMatchInlineSnapshot(`
+//     {
+//       "exclusiveMinimum": 0,
+//       "maximum": 9007199254740991,
+//       "minimum": -9007199254740991,
+//       "type": "integer",
+//     }
+//   `);
+//   expect(z.toJSONSchema(z.int().gte(0))).toMatchInlineSnapshot(`
+//     {
+//       "maximum": 9007199254740991,
+//       "minimum": 0,
+//       "type": "integer",
+//     }
+//   `);
+
+// });

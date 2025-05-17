@@ -251,9 +251,9 @@ export const _ZodString: core.$constructor<_ZodString> = /*@__PURE__*/ core.$con
   core.$ZodString.init(inst, def);
   ZodType.init(inst, def);
 
-  inst.format = inst._zod.computed.format ?? null;
-  inst.minLength = inst._zod.computed.minimum ?? null;
-  inst.maxLength = inst._zod.computed.maximum ?? null;
+  inst.format = inst._zod.bag.format ?? null;
+  inst.minLength = inst._zod.bag.minimum ?? null;
+  inst.maxLength = inst._zod.bag.maximum ?? null;
 
   // validations
   inst.regex = (...args) => inst.check(checks.regex(...args));
@@ -719,7 +719,7 @@ export interface _ZodNumber<Input = unknown> extends ZodType {
   step(value: number, params?: string | core.$ZodCheckMultipleOfParams): this;
 
   /** @deprecated In v4 and later, z.number() does not allow infinite values by default. This is a no-op. */
-  finite(params?: any): this;
+  finite(params?: unknown): this;
 
   minValue: number | null;
   maxValue: number | null;
@@ -754,12 +754,11 @@ export const ZodNumber: core.$constructor<ZodNumber> = /*@__PURE__*/ core.$const
   // inst.finite = (params) => inst.check(core.finite(params));
   inst.finite = () => inst;
 
-  inst.minValue = inst._zod.computed.minimum ?? null;
-  inst.maxValue = inst._zod.computed.maximum ?? null;
-  inst.isInt =
-    (inst._zod.computed.format ?? "").includes("int") || Number.isSafeInteger(inst._zod.computed.multipleOf ?? 0.5);
+  inst.minValue = inst._zod.bag.minimum ?? null;
+  inst.maxValue = inst._zod.bag.maximum ?? null;
+  inst.isInt = (inst._zod.bag.format ?? "").includes("int") || Number.isSafeInteger(inst._zod.bag.multipleOf ?? 0.5);
   inst.isFinite = true;
-  inst.format = inst._zod.computed.format ?? null;
+  inst.format = inst._zod.bag.format ?? null;
 });
 
 export function number(params?: string | core.$ZodNumberParams): ZodNumber {
@@ -864,9 +863,9 @@ export const ZodBigInt: core.$constructor<ZodBigInt> = /*@__PURE__*/ core.$const
   inst.nonnegative = (params) => inst.check(checks.gte(BigInt(0), params));
   inst.multipleOf = (value, params) => inst.check(checks.multipleOf(value, params));
 
-  inst.minValue = inst._zod.computed.minimum ?? null;
-  inst.maxValue = inst._zod.computed.maximum ?? null;
-  inst.format = inst._zod.computed.format ?? null;
+  inst.minValue = inst._zod.bag.minimum ?? null;
+  inst.maxValue = inst._zod.bag.maximum ?? null;
+  inst.format = inst._zod.bag.format ?? null;
 });
 
 export function bigint(params?: string | core.$ZodBigIntParams): ZodBigInt {
@@ -1014,7 +1013,7 @@ export const ZodDate: core.$constructor<ZodDate> = /*@__PURE__*/ core.$construct
   inst.min = (value, params) => inst.check(checks.gte(value, params));
   inst.max = (value, params) => inst.check(checks.lte(value, params));
 
-  const c = inst._zod.computed;
+  const c = inst._zod.bag;
   inst.minDate = c.minimum ? new Date(c.minimum) : null;
   inst.maxDate = c.maximum ? new Date(c.maximum) : null;
 });

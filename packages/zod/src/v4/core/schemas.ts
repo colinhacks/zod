@@ -138,8 +138,22 @@ export interface $ZodTypeInternals<out O = unknown, out I = unknown> {
     def: any
   ) => $ZodType;
 
-  /** A catchall object for computed metadata related to this schema. Commonly modified by checks using `onattach`. */
-  computed: Record<string, any>;
+  /** A catchall object for bag metadata related to this schema. Commonly modified by checks using `onattach`. */
+  // bag: Record<string, unknown>;
+  bag: util.LoosePartial<{
+    minimum: util.Numeric;
+    maximum: util.Numeric;
+    multipleOf: util.Numeric;
+    exclusiveMinimum: util.Numeric;
+    exclusiveMaximum: util.Numeric;
+    pattern: RegExp;
+    format: string;
+    contentEncoding: string;
+    contentType: string;
+    mime: util.MimeTypes[];
+    size: number;
+    length: number;
+  }>;
 
   /** The set of issues this schema might throw during type checking. */
   isst: errors.$ZodIssueBase;
@@ -171,7 +185,7 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
   inst ??= {} as any;
   inst._zod.id = def.type + "_" + util.randomString(10);
   inst._zod.def = def; // set _def property
-  inst._zod.computed = inst._zod.computed || {}; // initialize _computed object
+  inst._zod.bag = inst._zod.bag || {}; // initialize _bag object
   inst._zod.version = version;
 
   const checks = [...(inst._zod.def.checks ?? [])];
@@ -289,6 +303,12 @@ export interface $ZodStringInternals<Input> extends $ZodTypeInternals<string, In
 
   /** @deprecated Internal API, use with caution (not deprecated) */
   isst: errors.$ZodIssueInvalidType;
+  bag: util.LoosePartial<{
+    minimum: number;
+    maximum: number;
+    pattern: RegExp;
+    format: string;
+  }>;
 }
 
 export interface $ZodString<Input = unknown> extends $ZodType {
@@ -297,7 +317,7 @@ export interface $ZodString<Input = unknown> extends $ZodType {
 
 export const $ZodString: core.$constructor<$ZodString> = /*@__PURE__*/ core.$constructor("$ZodString", (inst, def) => {
   $ZodType.init(inst, def);
-  inst._zod.pattern = inst?._zod.computed?.pattern ?? regexes.string(inst._zod.computed);
+  inst._zod.pattern = inst?._zod.bag?.pattern ?? regexes.string(inst._zod.bag);
   inst._zod.parse = (payload, _) => {
     if (def.coerce)
       try {
@@ -684,7 +704,7 @@ export const $ZodIPv4: core.$constructor<$ZodIPv4> = /*@__PURE__*/ core.$constru
   def.pattern ??= regexes.ipv4;
   $ZodStringFormat.init(inst, def);
   inst._zod.onattach.push((inst) => {
-    inst._zod.computed.format = `ipv4`;
+    inst._zod.bag.format = `ipv4`;
   });
 });
 
@@ -707,7 +727,7 @@ export const $ZodIPv6: core.$constructor<$ZodIPv6> = /*@__PURE__*/ core.$constru
   $ZodStringFormat.init(inst, def);
 
   inst._zod.onattach.push((inst) => {
-    inst._zod.computed.format = `ipv6`;
+    inst._zod.bag.format = `ipv6`;
   });
 
   inst._zod.check = (payload) => {
@@ -835,7 +855,7 @@ export const $ZodBase64: core.$constructor<$ZodBase64> = /*@__PURE__*/ core.$con
     $ZodStringFormat.init(inst, def);
 
     inst._zod.onattach.push((inst) => {
-      inst._zod.computed.contentEncoding = "base64";
+      inst._zod.bag.contentEncoding = "base64";
     });
 
     inst._zod.check = (payload) => {
@@ -873,7 +893,7 @@ export const $ZodBase64URL: core.$constructor<$ZodBase64URL> = /*@__PURE__*/ cor
     $ZodStringFormat.init(inst, def);
 
     inst._zod.onattach.push((inst) => {
-      inst._zod.computed.contentEncoding = "base64url";
+      inst._zod.bag.contentEncoding = "base64url";
     });
 
     inst._zod.check = (payload) => {
@@ -993,6 +1013,12 @@ export interface $ZodNumberInternals<Input = unknown> extends $ZodTypeInternals<
   pattern: RegExp;
   /** @deprecated Internal API, use with caution (not deprecated) */
   isst: errors.$ZodIssueInvalidType;
+  bag: util.LoosePartial<{
+    minimum: number;
+    maximum: number;
+    format: string;
+    pattern: RegExp;
+  }>;
 }
 
 export interface $ZodNumber<Input = unknown> extends $ZodType {
@@ -1001,7 +1027,7 @@ export interface $ZodNumber<Input = unknown> extends $ZodType {
 
 export const $ZodNumber: core.$constructor<$ZodNumber> = /*@__PURE__*/ core.$constructor("$ZodNumber", (inst, def) => {
   $ZodType.init(inst, def);
-  inst._zod.pattern = inst._zod.computed.pattern ?? regexes.number;
+  inst._zod.pattern = inst._zod.bag.pattern ?? regexes.number;
 
   inst._zod.parse = (payload, _ctx) => {
     if (def.coerce)
@@ -1122,6 +1148,11 @@ export interface $ZodBigIntInternals<T = unknown> extends $ZodTypeInternals<bigi
   /** @internal Internal API, use with caution */
   def: $ZodBigIntDef;
   isst: errors.$ZodIssueInvalidType;
+  bag: util.LoosePartial<{
+    minimum: bigint;
+    maximum: bigint;
+    format: string;
+  }>;
 }
 
 export interface $ZodBigInt<T = unknown> extends $ZodType {
@@ -1436,6 +1467,11 @@ export interface $ZodDateDef extends $ZodTypeDef {
 export interface $ZodDateInternals<T = unknown> extends $ZodTypeInternals<Date, T> {
   def: $ZodDateDef;
   isst: errors.$ZodIssueInvalidType; // | errors.$ZodIssueInvalidDate;
+  bag: util.LoosePartial<{
+    minimum: Date;
+    maximum: Date;
+    format: string;
+  }>;
 }
 
 export interface $ZodDate<T = unknown> extends $ZodType {
@@ -1939,7 +1975,7 @@ export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$const
     inst._zod.values = values;
   }
 
-  // computed union regex for pattern if all options have pattern
+  // bag union regex for pattern if all options have pattern
   if (def.options.every((o) => o._zod.pattern)) {
     const patterns = def.options.map((o) => o._zod.pattern);
     inst._zod.pattern = new RegExp(`^(${patterns.map((p) => util.cleanRegex(p!.source)).join("|")})$`);
@@ -3286,7 +3322,7 @@ export interface $ZodCatchDef extends $ZodTypeDef {
 }
 
 export interface $ZodCatchInternals<T extends $ZodType = $ZodType>
-  extends $ZodTypeInternals<core.output<T>, util.Loose<core.input<T>>> {
+  extends $ZodTypeInternals<core.output<T>, core.input<T> | util.Whatever> {
   def: $ZodCatchDef;
   // qin: T["_zod"]["qin"];
   // qout: T["_zod"]["qout"];
@@ -3674,6 +3710,9 @@ export interface $ZodCustomInternals<O = unknown, I = unknown>
   def: $ZodCustomDef;
   issc: errors.$ZodIssue;
   isst: never;
+  bag: util.LoosePartial<{
+    Class: typeof util.Class;
+  }>;
 }
 
 export interface $ZodCustom<O = unknown, I = unknown> extends $ZodType {

@@ -45,7 +45,7 @@ test("catch with transform", () => {
   expect(stringWithDefault.unwrap().out).toBeInstanceOf(z.ZodTransform);
 
   type inp = z.input<typeof stringWithDefault>;
-  expectTypeOf<inp>().toEqualTypeOf<util.Loose<string>>();
+  expectTypeOf<inp>().toEqualTypeOf<string | util.Whatever>();
   type out = z.output<typeof stringWithDefault>;
   expectTypeOf<out>().toEqualTypeOf<string>();
 });
@@ -59,7 +59,7 @@ test("catch on existing optional", () => {
   expect(stringWithDefault.unwrap().unwrap()).toBeInstanceOf(z.ZodString);
 
   type inp = z.input<typeof stringWithDefault>;
-  expectTypeOf<inp>().toEqualTypeOf<util.Loose<string | undefined>>();
+  expectTypeOf<inp>().toEqualTypeOf<string | undefined | util.Whatever>();
   type out = z.output<typeof stringWithDefault>;
   expectTypeOf<out>().toEqualTypeOf<string | undefined>();
 });
@@ -68,7 +68,7 @@ test("optional on catch", () => {
   const stringWithDefault = z.string().catch("asdf").optional();
 
   type inp = z.input<typeof stringWithDefault>;
-  expectTypeOf<inp>().toEqualTypeOf<util.Loose<string | undefined>>();
+  expectTypeOf<inp>().toEqualTypeOf<string | util.Whatever>();
   type out = z.output<typeof stringWithDefault>;
   expectTypeOf<out>().toEqualTypeOf<string | undefined>();
 });
@@ -102,7 +102,7 @@ test("nested", () => {
     inner: "asdf",
   });
   type input = z.input<typeof outer>;
-  expectTypeOf<input>().toEqualTypeOf<util.Loose<{ inner: util.Loose<string> }>>();
+  expectTypeOf<input>().toEqualTypeOf<{ inner: string | util.Whatever } | util.Whatever>();
   type out = z.output<typeof outer>;
 
   expectTypeOf<out>().toEqualTypeOf<{ inner: string }>();
