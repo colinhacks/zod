@@ -113,7 +113,7 @@ export function datetime(args: {
   return new RegExp(`^${regex}$`);
 }
 
-export const string = (params?: { minimum?: number; maximum?: number }): RegExp => {
+export const string = (params?: { minimum?: number | undefined; maximum?: number | undefined }): RegExp => {
   const regex = params ? `[\\s\\S]{${params?.minimum ?? 0},${params?.maximum ?? ""}}` : `[\\s\\S]*`;
   return new RegExp(`^${regex}$`);
 };

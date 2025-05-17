@@ -70,10 +70,11 @@ export const $ZodCheckLessThan: core.$constructor<$ZodCheckLessThan> = /*@__PURE
     const origin = numericOriginMap[typeof def.value as "number" | "bigint" | "object"];
 
     inst._zod.onattach.push((inst) => {
-      const curr = inst._zod.computed.maximum ?? Number.POSITIVE_INFINITY;
+      const bag = inst._zod.bag;
+      const curr = (def.inclusive ? bag.maximum : bag.exclusiveMaximum) ?? Number.POSITIVE_INFINITY;
       if (def.value < curr) {
-        inst._zod.computed.maximum = def.value;
-        inst._zod.computed.inclusive = def.inclusive;
+        if (def.inclusive) bag.maximum = def.value;
+        else bag.exclusiveMaximum = def.value;
       }
     });
 
@@ -120,10 +121,11 @@ export const $ZodCheckGreaterThan: core.$constructor<$ZodCheckGreaterThan> = /*@
     const origin = numericOriginMap[typeof def.value as "number" | "bigint" | "object"];
 
     inst._zod.onattach.push((inst) => {
-      const curr = inst._zod.computed.minimum ?? Number.NEGATIVE_INFINITY;
+      const bag = inst._zod.bag;
+      const curr = (def.inclusive ? bag.minimum : bag.exclusiveMinimum) ?? Number.NEGATIVE_INFINITY;
       if (def.value > curr) {
-        inst._zod.computed.minimum = def.value;
-        inst._zod.computed.inclusive = def.inclusive;
+        if (def.inclusive) bag.minimum = def.value;
+        else bag.exclusiveMinimum = def.value;
       }
     });
 
@@ -170,7 +172,7 @@ export const $ZodCheckMultipleOf: core.$constructor<$ZodCheckMultipleOf<number |
     $ZodCheck.init(inst, def);
 
     inst._zod.onattach.push((inst) => {
-      inst._zod.computed.multipleOf ??= def.value;
+      inst._zod.bag.multipleOf ??= def.value;
     });
 
     inst._zod.check = (payload) => {
@@ -212,7 +214,7 @@ export const $ZodCheckMultipleOf: core.$constructor<$ZodCheckMultipleOf<number |
 //     $ZodCheck.init(inst, def);
 
 //     inst._zod.onattach = (inst) => {
-//       inst["_computed"].finite = true;
+//       inst["_bag"].finite = true;
 //     };
 
 //     inst._zod.check = (payload) => {
@@ -252,6 +254,9 @@ export interface $ZodCheckNumberFormatDef extends $ZodCheckDef {
 export interface $ZodCheckNumberFormatInternals extends $ZodCheckInternals<number> {
   def: $ZodCheckNumberFormatDef;
   issc: errors.$ZodIssueInvalidType | errors.$ZodIssueTooBig<"number"> | errors.$ZodIssueTooSmall<"number">;
+  // bag: util.LoosePartial<{
+  //   minimum?: number | undefined;
+  // }>;
 }
 
 export interface $ZodCheckNumberFormat extends $ZodCheck<number> {
@@ -269,11 +274,11 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
     const [minimum, maximum] = util.NUMBER_FORMAT_RANGES[def.format];
 
     inst._zod.onattach.push((inst) => {
-      inst._zod.computed.format = def.format;
-      inst._zod.computed.minimum = minimum;
-      inst._zod.computed.maximum = maximum;
-      inst._zod.computed.inclusive = true;
-      if (isInt) inst._zod.computed.pattern = regexes.integer;
+      const bag = inst._zod.bag;
+      bag.format = def.format;
+      bag.minimum = minimum;
+      bag.maximum = maximum;
+      if (isInt) bag.pattern = regexes.integer;
     });
 
     inst._zod.check = (payload) => {
@@ -383,9 +388,10 @@ export const $ZodCheckBigIntFormat: core.$constructor<$ZodCheckBigIntFormat> = /
     const [minimum, maximum] = util.BIGINT_FORMAT_RANGES[def.format!];
 
     inst._zod.onattach.push((inst) => {
-      inst._zod.computed.format = def.format;
-      inst._zod.computed.minimum = minimum;
-      inst._zod.computed.maximum = maximum;
+      const bag = inst._zod.bag;
+      bag.format = def.format;
+      bag.minimum = minimum;
+      bag.maximum = maximum;
     });
 
     inst._zod.check = (payload) => {
@@ -444,8 +450,8 @@ export const $ZodCheckMaxSize: core.$constructor<$ZodCheckMaxSize> = /*@__PURE__
     };
 
     inst._zod.onattach.push((inst) => {
-      const curr = (inst._zod.computed.maximum ?? Number.POSITIVE_INFINITY) as number;
-      if (def.maximum < curr) inst._zod.computed.maximum = def.maximum;
+      const curr = (inst._zod.bag.maximum ?? Number.POSITIVE_INFINITY) as number;
+      if (def.maximum < curr) inst._zod.bag.maximum = def.maximum;
     });
 
     inst._zod.check = (payload) => {
@@ -493,8 +499,8 @@ export const $ZodCheckMinSize: core.$constructor<$ZodCheckMinSize> = /*@__PURE__
     };
 
     inst._zod.onattach.push((inst) => {
-      const curr = (inst._zod.computed.minimum ?? Number.NEGATIVE_INFINITY) as number;
-      if (def.minimum > curr) inst._zod.computed.minimum = def.minimum;
+      const curr = (inst._zod.bag.minimum ?? Number.NEGATIVE_INFINITY) as number;
+      if (def.minimum > curr) inst._zod.bag.minimum = def.minimum;
     });
 
     inst._zod.check = (payload) => {
@@ -542,9 +548,10 @@ export const $ZodCheckSizeEquals: core.$constructor<$ZodCheckSizeEquals> = /*@__
     };
 
     inst._zod.onattach.push((inst) => {
-      inst._zod.computed.minimum = def.size;
-      inst._zod.computed.maximum = def.size;
-      inst._zod.computed.size = def.size;
+      const bag = inst._zod.bag;
+      bag.minimum = def.size;
+      bag.maximum = def.size;
+      bag.size = def.size;
     });
 
     inst._zod.check = (payload) => {
@@ -593,8 +600,8 @@ export const $ZodCheckMaxLength: core.$constructor<$ZodCheckMaxLength> = /*@__PU
     };
 
     inst._zod.onattach.push((inst) => {
-      const curr = (inst._zod.computed.maximum ?? Number.POSITIVE_INFINITY) as number;
-      if (def.maximum < curr) inst._zod.computed.maximum = def.maximum;
+      const curr = (inst._zod.bag.maximum ?? Number.POSITIVE_INFINITY) as number;
+      if (def.maximum < curr) inst._zod.bag.maximum = def.maximum;
     });
 
     inst._zod.check = (payload) => {
@@ -643,8 +650,8 @@ export const $ZodCheckMinLength: core.$constructor<$ZodCheckMinLength> = /*@__PU
     };
 
     inst._zod.onattach.push((inst) => {
-      const curr = (inst._zod.computed.minimum ?? Number.NEGATIVE_INFINITY) as number;
-      if (def.minimum > curr) inst._zod.computed.minimum = def.minimum;
+      const curr = (inst._zod.bag.minimum ?? Number.NEGATIVE_INFINITY) as number;
+      if (def.minimum > curr) inst._zod.bag.minimum = def.minimum;
     });
 
     inst._zod.check = (payload) => {
@@ -694,9 +701,10 @@ export const $ZodCheckLengthEquals: core.$constructor<$ZodCheckLengthEquals> = /
     };
 
     inst._zod.onattach.push((inst) => {
-      inst._zod.computed.minimum = def.length;
-      inst._zod.computed.maximum = def.length;
-      inst._zod.computed.length = def.length;
+      const bag = inst._zod.bag;
+      bag.minimum = def.length;
+      bag.maximum = def.length;
+      bag.length = def.length;
     });
 
     inst._zod.check = (payload) => {
@@ -771,8 +779,8 @@ export const $ZodCheckStringFormat: core.$constructor<$ZodCheckStringFormat> = /
     $ZodCheck.init(inst, def);
 
     inst._zod.onattach.push((inst) => {
-      inst._zod.computed.format = def.format;
-      if (def.pattern) inst._zod.computed.pattern = def.pattern;
+      inst._zod.bag.format = def.format;
+      if (def.pattern) inst._zod.bag.pattern = def.pattern;
     });
 
     inst._zod.check ??= (payload) => {
@@ -935,7 +943,7 @@ export const $ZodCheckIncludes: core.$constructor<$ZodCheckIncludes> = /*@__PURE
     const pattern = new RegExp(util.escapeRegex(def.includes));
     def.pattern = pattern;
     inst._zod.onattach.push((inst) => {
-      inst._zod.computed.pattern = pattern;
+      inst._zod.bag.pattern = pattern;
     });
 
     inst._zod.check = (payload) => {
@@ -977,7 +985,7 @@ export const $ZodCheckStartsWith: core.$constructor<$ZodCheckStartsWith> = /*@__
     const pattern = new RegExp(`^${util.escapeRegex(def.prefix)}.*`);
     def.pattern ??= pattern;
     inst._zod.onattach.push((inst) => {
-      inst._zod.computed.pattern = pattern;
+      inst._zod.bag.pattern = pattern;
     });
 
     inst._zod.check = (payload) => {
@@ -1019,7 +1027,7 @@ export const $ZodCheckEndsWith: core.$constructor<$ZodCheckEndsWith> = /*@__PURE
     const pattern = new RegExp(`.*${util.escapeRegex(def.suffix)}$`);
     def.pattern ??= pattern;
     inst._zod.onattach.push((inst) => {
-      inst._zod.computed.pattern = new RegExp(`.*${util.escapeRegex(def.suffix)}$`);
+      inst._zod.bag.pattern = new RegExp(`.*${util.escapeRegex(def.suffix)}$`);
     });
 
     inst._zod.check = (payload) => {
@@ -1111,7 +1119,7 @@ export const $ZodCheckMimeType: core.$constructor<$ZodCheckMimeType> = /*@__PURE
     $ZodCheck.init(inst, def);
     const mimeSet = new Set(def.mime);
     inst._zod.onattach.push((inst) => {
-      inst._zod.computed.mime = def.mime;
+      inst._zod.bag.mime = def.mime;
     });
     inst._zod.check = (payload) => {
       if (mimeSet.has(payload.value.type)) return;

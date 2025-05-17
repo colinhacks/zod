@@ -141,7 +141,7 @@ export class JSONSchemaGenerator {
         case "string": {
           const json: JSONSchema.StringSchema = _json as any;
           json.type = "string";
-          const { minimum, maximum, format, pattern, contentEncoding } = schema._zod.computed as {
+          const { minimum, maximum, format, pattern, contentEncoding } = schema._zod.bag as {
             minimum?: number;
             maximum?: number;
             format?: checks.$ZodStringFormats;
@@ -163,24 +163,28 @@ export class JSONSchemaGenerator {
         }
         case "number": {
           const json: JSONSchema.NumberSchema | JSONSchema.IntegerSchema = _json as any;
-          const { minimum, maximum, format, multipleOf, inclusive } = schema._zod.computed as {
-            minimum?: number;
-            maximum?: number;
-            format?: checks.$ZodNumberFormats;
-            multipleOf?: number;
-            inclusive?: boolean;
-          };
-          if (format?.includes("int")) json.type = "integer";
+          const { minimum, maximum, format, multipleOf, exclusiveMaximum, exclusiveMinimum } = schema._zod.bag;
+          if (typeof format === "string" && format.includes("int")) json.type = "integer";
           else json.type = "number";
 
+          if (typeof exclusiveMinimum === "number") json.exclusiveMinimum = exclusiveMinimum;
           if (typeof minimum === "number") {
-            if (inclusive) json.minimum = minimum;
-            else json.exclusiveMinimum = minimum;
+            json.minimum = minimum;
+            if (typeof exclusiveMinimum === "number") {
+              if (exclusiveMinimum >= minimum) delete json.minimum;
+              else delete json.exclusiveMinimum;
+            }
           }
+
+          if (typeof exclusiveMaximum === "number") json.exclusiveMaximum = exclusiveMaximum;
           if (typeof maximum === "number") {
-            if (inclusive) json.maximum = maximum;
-            else json.exclusiveMaximum = maximum;
+            json.maximum = maximum;
+            if (typeof exclusiveMaximum === "number") {
+              if (exclusiveMaximum <= maximum) delete json.maximum;
+              else delete json.exclusiveMaximum;
+            }
           }
+
           if (typeof multipleOf === "number") json.multipleOf = multipleOf;
 
           break;
@@ -235,12 +239,10 @@ export class JSONSchemaGenerator {
         }
         case "array": {
           const json: JSONSchema.ArraySchema = _json as any;
-          const { minimum, maximum } = schema._zod.computed as {
-            minimum?: number;
-            maximum?: number;
-          };
+          const { minimum, maximum } = schema._zod.bag;
           if (typeof minimum === "number") json.minItems = minimum;
           if (typeof maximum === "number") json.maxItems = maximum;
+
           json.type = "array";
           json.items = this.process(def.element, { ...params, path: [...params.path, "items"] });
           break;
@@ -342,7 +344,7 @@ export class JSONSchemaGenerator {
           }
 
           // length
-          const { minimum, maximum } = schema._zod.computed as {
+          const { minimum, maximum } = schema._zod.bag as {
             minimum?: number;
             maximum?: number;
           };
