@@ -67,8 +67,8 @@ export const cidrv6: RegExp =
 export const ip: RegExp = new RegExp(`(${ipv4.source})|(${ipv6.source})`);
 
 // https://stackoverflow.com/questions/7860392/determine-if-string-is-in-base64-using-javascript
-export const base64: RegExp = /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
-export const base64url: RegExp = /^([0-9a-zA-Z-_]{4})*(([0-9a-zA-Z-_]{2}(==)?)|([0-9a-zA-Z-_]{3}(=)?))?$/;
+export const base64: RegExp = /^(?:[0-9a-zA-Z+/]{4})*(?:(?:[0-9a-zA-Z+/]{2}==)|(?:[0-9a-zA-Z+/]{3}=))?$/;
+export const base64url: RegExp = /^[A-Za-z0-9_-]*$/;
 
 // based on https://stackoverflow.com/questions/106179/regular-expression-to-match-dns-hostname-or-ip-address
 // export const hostname: RegExp =

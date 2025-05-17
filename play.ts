@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { z } from "zod/v4";
 
 const schemas = [z.number().int(), z.int(), z.int().positive(), z.int().nonnegative(), z.int().gt(0), z.int().gte(0)];
@@ -7,8 +8,13 @@ for (const schema of schemas) {
   console.log("JSON Schema", z.toJSONSchema(schema));
 }
 
-const myEnum = z.enum(["left", "right", "center", "justify"]);
-const myObject = z.object({ myEnum: myEnum });
+// /^(?:[0-9a-zA-Z+/][0-9a-zA-Z+/][0-9a-zA-Z+/][0-9a-zA-Z+/])*(?:[0-9a-zA-Z+/][0-9a-zA-Z+/]==|[0-9a-zA-Z+/][0-9a-zA-Z+/][0-9a-zA-Z+/]=)?$/
 
-type MyObject = z.infer<typeof myObject>;
-type MyObjectInput = z.input<typeof myObject>;
+const bigbase64 = randomBytes(1024 * 1024 * 300).toString("base64");
+z.base64().parse(bigbase64);
+const bigbase64url = randomBytes(1024 * 1024 * 300).toString("base64url");
+z.base64url().parse(bigbase64url);
+
+// z.base64();
+
+console.dir(z.core.isValidBase64URL("w7/Dv8O+w74K"), { depth: null });

@@ -109,7 +109,7 @@ describe("toJSONSchema", () => {
       {
         "contentEncoding": "base64",
         "format": "base64",
-        "pattern": "^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$",
+        "pattern": "^(?:[0-9a-zA-Z+/]{4})*(?:(?:[0-9a-zA-Z+/]{2}==)|(?:[0-9a-zA-Z+/]{3}=))?$",
         "type": "string",
       }
     `);
@@ -293,7 +293,7 @@ describe("toJSONSchema", () => {
       {
         "contentEncoding": "base64",
         "format": "base64",
-        "pattern": "^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$",
+        "pattern": "^(?:[0-9a-zA-Z+/]{4})*(?:(?:[0-9a-zA-Z+/]{2}==)|(?:[0-9a-zA-Z+/]{3}=))?$",
         "type": "string",
       }
     `);
