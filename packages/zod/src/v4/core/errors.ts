@@ -189,6 +189,19 @@ const initializer = (inst: $ZodError, def: $ZodIssue[]): void => {
     value: def,
     enumerable: true,
   });
+  // Object.defineProperty(inst, "message", {
+  //   get() {
+  //     return (
+  //       "\n" +
+  //       inst.issues
+  //         .map((iss) => {
+  //           return `✖ ${iss.message}${iss.path.length ? ` [${iss.path.join(".")}]` : ""}`;
+  //         })
+  //         .join("\n")
+  //     );
+  //   },
+  //   enumerable: false,
+  // });
 };
 
 export const $ZodError: $constructor<$ZodError> = $constructor("$ZodError", initializer);
