@@ -30,6 +30,7 @@ export interface ParsePayload<T = unknown> {
   value: T;
   issues: errors.$ZodRawIssue[];
   path: (string | number)[];
+  custom?: unknown;
 }
 
 export type CheckFn<T> = (input: ParsePayload<T>) => util.MaybeAsync<void>;
@@ -1731,7 +1732,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
 
     const parseStr = (key: string) => {
       const k = util.esc(key);
-      return `shape[${k}]._zod.run({ value: input[${k}], issues: [] }, ctx)`;
+      return `shape[${k}]._zod.run({ value: input[${k}], issues: [], path: [...payload.path, ${k}.toString()] }, ctx)`;
     };
 
     // doc.write(`const shape = inst._zod.def.shape;`);
@@ -1803,8 +1804,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
   const jit = !core.globalConfig.jitless;
   const allowsEval = util.allowsEval;
 
-  // const fastEnabled = jit && allowsEval.value; // && !def.catchall;
-  const fastEnabled = false;
+  const fastEnabled = jit && allowsEval.value; // && !def.catchall;
   const { catchall } = def;
 
   let value!: typeof _normalized.value;
