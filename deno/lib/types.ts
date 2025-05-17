@@ -5400,6 +5400,7 @@ export type ZodFirstPartySchemaTypes =
   | ZodLazy<any>
   | ZodLiteral<any>
   | ZodEnum<any>
+  | ZodLooseEnum<any>
   | ZodEffects<any, any, any>
   | ZodNativeEnum<any>
   | ZodOptional<any>
