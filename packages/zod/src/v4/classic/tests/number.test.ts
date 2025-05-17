@@ -49,37 +49,37 @@ test("Infinity validation", () => {
 });
 
 test(".gt() validation", () => {
-  const schema = z.number().gt(5);
+  const schema = z.number().gt(0).gt(5);
   expect(schema.parse(6)).toEqual(6);
   expect(() => schema.parse(5)).toThrow();
 });
 
 test(".gte() validation", () => {
-  const schema = z.number().gte(5);
+  const schema = z.number().gt(0).gte(1).gte(5);
   expect(schema.parse(5)).toEqual(5);
   expect(() => schema.parse(4)).toThrow();
 });
 
 test(".min() validation", () => {
-  const schema = z.number().min(5);
+  const schema = z.number().min(0).min(5);
   expect(schema.parse(5)).toEqual(5);
   expect(() => schema.parse(4)).toThrow();
 });
 
 test(".lt() validation", () => {
-  const schema = z.number().lt(5);
+  const schema = z.number().lte(10).lt(5);
   expect(schema.parse(4)).toEqual(4);
   expect(() => schema.parse(5)).toThrow();
 });
 
 test(".lte() validation", () => {
-  const schema = z.number().lte(5);
+  const schema = z.number().lte(10).lte(5);
   expect(schema.parse(5)).toEqual(5);
   expect(() => schema.parse(6)).toThrow();
 });
 
 test(".max() validation", () => {
-  const schema = z.number().max(5);
+  const schema = z.number().max(10).max(5);
   expect(schema.parse(5)).toEqual(5);
   expect(() => schema.parse(6)).toThrow();
 });
