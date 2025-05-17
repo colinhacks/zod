@@ -14,7 +14,3 @@ const bigbase64 = randomBytes(1024 * 1024 * 300).toString("base64");
 z.base64().parse(bigbase64);
 const bigbase64url = randomBytes(1024 * 1024 * 300).toString("base64url");
 z.base64url().parse(bigbase64url);
-
-// z.base64();
-
-console.dir(z.core.isValidBase64URL("w7/Dv8O+w74K"), { depth: null });
