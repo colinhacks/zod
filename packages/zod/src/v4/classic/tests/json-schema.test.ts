@@ -1031,6 +1031,49 @@ test("override: do not run on references", () => {
   expect(overrideCount).toBe(6);
 });
 
+test("override with refs", () => {
+  const a = z.string().optional();
+  const result = z.toJSONSchema(a, {
+    override(ctx) {
+      if (ctx.zodSchema._zod.def.type === "string") {
+        ctx.jsonSchema.type = "STRING";
+      }
+    },
+  });
+
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft-2020-12/schema",
+      "type": "STRING",
+    }
+  `);
+});
+
+test("override execution order", () => {
+  const schema = z.union([z.string(), z.number()]);
+  let unionSchema!: any;
+  z.toJSONSchema(schema, {
+    override(ctx) {
+      if (ctx.zodSchema._zod.def.type === "union") {
+        unionSchema = ctx.jsonSchema;
+      }
+    },
+  });
+
+  expect(unionSchema).toMatchInlineSnapshot(`
+    {
+      "anyOf": [
+        {
+          "type": "string",
+        },
+        {
+          "type": "number",
+        },
+      ],
+    }
+  `);
+});
+
 test("pipe", () => {
   const mySchema = z
     .string()
@@ -1714,24 +1757,6 @@ test("examples on pipe", () => {
       "examples": [
         4,
       ],
-    }
-  `);
-});
-
-test("override with refs", () => {
-  const a = z.string().optional();
-  const result = z.toJSONSchema(a, {
-    override(ctx) {
-      if (ctx.zodSchema._zod.def.type === "string") {
-        ctx.jsonSchema.type = "STRING";
-      }
-    },
-  });
-
-  expect(result).toMatchInlineSnapshot(`
-    {
-      "$schema": "https://json-schema.org/draft-2020-12/schema",
-      "type": "STRING",
     }
   `);
 });
