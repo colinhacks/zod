@@ -253,6 +253,7 @@ In Zod 3, `z.number().safe()` is deprecated. It now behaves identically to `.int
 ### `.int()` accepts safe integers only
 
 The `z.number().int()` API no longer accepts unsafe integers (outside the range of `Number.MIN_SAFE_INTEGER` and `Number.MAX_SAFE_INTEGER`). Using integers out of this range causes spontaneous rounding errors. (Also: You should switch to `z.int()`.)
+
 ## `z.string()` updates
 
 ### deprecates `.email()` etc
@@ -286,6 +287,11 @@ The method forms (`z.string().email()`) still exist and work as before, but are 
 z.string().email(); // ❌ deprecated
 z.email(); // ✅ 
 ```
+
+
+### no padding in `.base64url()` 
+
+Padding is no longer allowed in `z.base64url()` (formerly `z.string().base64url()`). Generally it's desirable for base64url strings to be unpadded and URL-safe. 
 
 ### drops `z.string().ip()` 
 
