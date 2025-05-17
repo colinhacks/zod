@@ -82,47 +82,44 @@ export interface $ZodTypeDef {
 }
 
 // @ts-ignore
+/** @internal */
 export interface $ZodTypeInternals<out O = unknown, out I = unknown> {
   /** The `@zod/core` version of this schema */
   version: typeof version;
 
-  /** Schema internals. */
+  /** Schema definition. */
   def: $ZodTypeDef;
   // types: Types;
 
-  /** Randomly generated ID for this schema. */
+  /** @internal Randomly generated ID for this schema. */
   id: string;
 
-  /** The inferred output type */
-  // "
-  // "?: any;
-  // "~input"?: any;
-  // "~types"?: any;
+  /** @internal The inferred output type */
   output: O; //extends { $out: infer O } ? O : Out;
-  /** The inferred input type */
+  /** @internal The inferred input type */
   input: I; //extends { $in: infer I } ? I : In;
 
-  /** List of deferred initializers. */
+  /** @internal List of deferred initializers. */
   deferred: util.AnyFunc[] | undefined;
 
-  /** Parses input and runs all checks (refinements). */
+  /** @internal Parses input and runs all checks (refinements). */
   run(payload: ParsePayload<any>, ctx: ParseContextInternal): util.MaybeAsync<ParsePayload>;
 
-  /** Parses input, doesn't run checks. */
+  /** @internal Parses input, doesn't run checks. */
   parse(payload: ParsePayload<any>, ctx: ParseContextInternal): util.MaybeAsync<ParsePayload>;
 
-  /** Stores identifiers for the set of traits implemented by this schema. */
+  /** @internal  Stores identifiers for the set of traits implemented by this schema. */
   traits: Set<string>;
 
-  /** Indicates that a schema output type should be considered optional inside objects.
+  /** @internal Indicates that a schema output type should be considered optional inside objects.
    * @default Required
    */
   optionality?: "optional" | "defaulted" | undefined;
 
-  /** A set of literal discriminators used for the fast path in discriminated unions. */
+  /** @internal A set of literal discriminators used for the fast path in discriminated unions. */
   disc: util.DiscriminatorMap | undefined;
 
-  /** The set of literal values that will pass validation. Must be an exhaustive set. Used to determine optionality in z.record().
+  /** @internal The set of literal values that will pass validation. Must be an exhaustive set. Used to determine optionality in z.record().
    *
    * Defined on: enum, const, literal, null, undefined
    * Passthrough: optional, nullable, branded, default, catch, pipe
@@ -130,24 +127,24 @@ export interface $ZodTypeInternals<out O = unknown, out I = unknown> {
    */
   values: util.PrimitiveSet | undefined;
 
-  /** This flag indicates that a schema validation can be represented with a regular expression. Used to determine allowable schemas in z.templateLiteral(). */
+  /** @internal This flag indicates that a schema validation can be represented with a regular expression. Used to determine allowable schemas in z.templateLiteral(). */
   pattern: RegExp | undefined;
 
-  /** The constructor function of this schema. */
+  /** @internal The constructor function of this schema. */
   constr: new (
     def: any
   ) => $ZodType;
 
-  /** A catchall object for bag metadata related to this schema. Commonly modified by checks using `onattach`. */
+  /** @internal A catchall object for bag metadata related to this schema. Commonly modified by checks using `onattach`. */
   bag: Record<string, unknown>;
 
-  /** The set of issues this schema might throw during type checking. */
+  /** @internal The set of issues this schema might throw during type checking. */
   isst: errors.$ZodIssueBase;
 
   /** An optional method used to override `toJSONSchema` logic. */
   toJSONSchema?: () => object;
 
-  /** The parent of this schema. Only set during certain clone operations. */
+  /** @internal The parent of this schema. Only set during certain clone operations. */
   parent?: $ZodType | undefined;
 }
 
