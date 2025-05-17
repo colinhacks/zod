@@ -1571,11 +1571,6 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
 //////////////////////////////////////////
 
 export type $ZodShape = Readonly<{ [k: string]: $ZodType }>;
-// export type $ZodShapeMetaValue<T extends $ZodType = $ZodType> = {
-//   type: T;
-//   optionality?: "optional" | "defaulted" | undefined;
-// };
-// export type $ZodShapeMeta<T extends $ZodShape = $ZodShape> = Readonly<{ [k in keyof T]: $ZodShapeMetaValue<T[k]> }>;
 
 export interface $ZodObjectDef<Shape extends $ZodShape = $ZodShape> extends $ZodTypeDef {
   type: "object";
@@ -3507,7 +3502,7 @@ function handleReadonlyResult(payload: ParsePayload): ParsePayload {
 
 export interface $ZodTemplateLiteralDef extends $ZodTypeDef {
   type: "template_literal";
-  parts: $TemplateLiteralPart[];
+  parts: $ZodTemplateLiteralPart[];
 }
 export interface $ZodTemplateLiteralInternals<Template extends string = string>
   extends $ZodTypeInternals<Template, Template> {
@@ -3520,26 +3515,26 @@ export interface $ZodTemplateLiteral<Template extends string = string> extends $
   _zod: $ZodTemplateLiteralInternals<Template>;
 }
 
-export type $LiteralPart = Exclude<util.Literal, symbol>; //string | number | boolean | null | undefined;
-interface _$SchemaPart extends $ZodTypeInternals<$LiteralPart, $LiteralPart> {
+type LiteralPart = Exclude<util.Literal, symbol>; //string | number | boolean | null | undefined;
+interface SchemaPartInternals extends $ZodTypeInternals<LiteralPart, LiteralPart> {
   pattern: RegExp;
 }
-export interface $SchemaPart extends $ZodType {
-  _zod: _$SchemaPart;
+interface SchemaPart extends $ZodType {
+  _zod: SchemaPartInternals;
 }
-export type $TemplateLiteralPart = $LiteralPart | $SchemaPart;
+export type $ZodTemplateLiteralPart = LiteralPart | SchemaPart;
 
 type UndefinedToEmptyString<T> = T extends undefined ? "" : T;
 type AppendToTemplateLiteral<
   Template extends string,
-  Suffix extends $LiteralPart | $ZodType,
-> = Suffix extends $LiteralPart
+  Suffix extends LiteralPart | $ZodType,
+> = Suffix extends LiteralPart
   ? `${Template}${UndefinedToEmptyString<Suffix>}`
-  : `${Template}${UndefinedToEmptyString<$LiteralPart & core.output<Suffix & $ZodType>>}`;
+  : `${Template}${UndefinedToEmptyString<LiteralPart & core.output<Suffix & $ZodType>>}`;
 
-export type $PartsToTemplateLiteral<Parts extends $TemplateLiteralPart[]> = [] extends Parts
+export type $PartsToTemplateLiteral<Parts extends $ZodTemplateLiteralPart[]> = [] extends Parts
   ? ``
-  : Parts extends [...infer Rest extends $TemplateLiteralPart[], infer Last extends $TemplateLiteralPart]
+  : Parts extends [...infer Rest extends $ZodTemplateLiteralPart[], infer Last extends $ZodTemplateLiteralPart]
     ? AppendToTemplateLiteral<$PartsToTemplateLiteral<Rest>, Last>
     : never;
 

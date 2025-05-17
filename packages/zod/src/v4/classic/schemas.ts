@@ -1893,7 +1893,7 @@ export const ZodTemplateLiteral: core.$constructor<ZodTemplateLiteral> = /*@__PU
   }
 );
 
-export function templateLiteral<const Parts extends core.$TemplateLiteralPart[]>(
+export function templateLiteral<const Parts extends core.$ZodTemplateLiteralPart[]>(
   parts: Parts,
   params?: string | core.$ZodTemplateLiteralParams
 ): ZodTemplateLiteral<core.$PartsToTemplateLiteral<Parts>> {
@@ -2004,7 +2004,7 @@ export function superRefine<T>(
   return ch;
 }
 
-type ZodInstanceOfParams = util.Params<
+type ZodInstanceOfParams = core.Params<
   ZodCustom,
   core.$ZodIssueCustom,
   "type" | "check" | "checks" | "fn" | "abort" | "error" | "params" | "path"

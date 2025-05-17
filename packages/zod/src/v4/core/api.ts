@@ -1,10 +1,63 @@
 import * as checks from "./checks.js";
 import type * as core from "./core.js";
+import type * as errors from "./errors.js";
 import * as schemas from "./schemas.js";
 import * as util from "./util.js";
 
+export type Params<
+  T extends schemas.$ZodType | checks.$ZodCheck,
+  IssueTypes extends errors.$ZodIssueBase,
+  OmitKeys extends keyof T["_zod"]["def"] = never,
+> = util.Flatten<
+  Partial<
+    util.EmptyToNever<
+      Omit<T["_zod"]["def"], OmitKeys> &
+        ([IssueTypes] extends [never]
+          ? {} // unknown
+          : {
+              error?: string | errors.$ZodErrorMap<IssueTypes> | undefined;
+              /** @deprecated This parameter is deprecated. Use `error` instead. */
+              message?: string | undefined; // supported in Zod 3
+            })
+    >
+  >
+>;
+
+export type TypeParams<
+  T extends schemas.$ZodType = schemas.$ZodType & { _isst: never },
+  AlsoOmit extends Exclude<keyof T["_zod"]["def"], "type" | "checks" | "error"> = never,
+> = Params<T, NonNullable<T["_zod"]["isst"]>, "type" | "checks" | "error" | AlsoOmit>;
+
+// strips types that are not exposed in the public factory
+// incl. `error`, `check`
+export type CheckParams<
+  T extends checks.$ZodCheck = checks.$ZodCheck, // & { _issc: never },
+  AlsoOmit extends Exclude<keyof T["_zod"]["def"], "check" | "error"> = never,
+> = Params<T, NonNullable<T["_zod"]["issc"]>, "check" | "error" | AlsoOmit>;
+
+// strips types that are not exposed in the public factory
+// incl. `type`, `checks`, `error`, `check`, `format`
+export type StringFormatParams<
+  T extends schemas.$ZodStringFormat = schemas.$ZodStringFormat,
+  AlsoOmit extends Exclude<keyof T["_zod"]["def"], "type" | "coerce" | "checks" | "error" | "check" | "format"> = never,
+> = Params<
+  T,
+  NonNullable<T["_zod"]["isst"] | T["_zod"]["issc"]>,
+  "type" | "coerce" | "checks" | "error" | "check" | "format" | AlsoOmit
+>;
+
+export type CheckStringFormatParams<
+  T extends schemas.$ZodStringFormat = schemas.$ZodStringFormat,
+  AlsoOmit extends Exclude<keyof T["_zod"]["def"], "type" | "coerce" | "checks" | "error" | "check" | "format"> = never,
+> = Params<T, NonNullable<T["_zod"]["issc"]>, "type" | "coerce" | "checks" | "error" | "check" | "format" | AlsoOmit>;
+
+export type CheckTypeParams<
+  T extends schemas.$ZodType & checks.$ZodCheck = schemas.$ZodType & checks.$ZodCheck,
+  AlsoOmit extends Exclude<keyof T["_zod"]["def"], "type" | "checks" | "error" | "check"> = never,
+> = Params<T, NonNullable<T["_zod"]["isst"] | T["_zod"]["issc"]>, "type" | "checks" | "error" | "check" | AlsoOmit>;
+
 // String
-export type $ZodStringParams = util.TypeParams<schemas.$ZodString<string>, "coerce">;
+export type $ZodStringParams = TypeParams<schemas.$ZodString<string>, "coerce">;
 export function _string<T extends schemas.$ZodString>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodStringParams
@@ -27,8 +80,8 @@ export function _coercedString<T extends schemas.$ZodString>(
 }
 
 // Email
-export type $ZodEmailParams = util.StringFormatParams<schemas.$ZodEmail>;
-export type $ZodCheckEmailParams = util.CheckStringFormatParams<schemas.$ZodEmail>;
+export type $ZodEmailParams = StringFormatParams<schemas.$ZodEmail>;
+export type $ZodCheckEmailParams = CheckStringFormatParams<schemas.$ZodEmail>;
 export function _email<T extends schemas.$ZodEmail>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodEmailParams | $ZodCheckEmailParams
@@ -43,8 +96,8 @@ export function _email<T extends schemas.$ZodEmail>(
 }
 
 // GUID
-export type $ZodGUIDParams = util.StringFormatParams<schemas.$ZodGUID, "pattern">;
-export type $ZodCheckGUIDParams = util.CheckStringFormatParams<schemas.$ZodGUID, "pattern">;
+export type $ZodGUIDParams = StringFormatParams<schemas.$ZodGUID, "pattern">;
+export type $ZodCheckGUIDParams = CheckStringFormatParams<schemas.$ZodGUID, "pattern">;
 export function _guid<T extends schemas.$ZodGUID>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodGUIDParams | $ZodCheckGUIDParams
@@ -59,8 +112,8 @@ export function _guid<T extends schemas.$ZodGUID>(
 }
 
 // UUID
-export type $ZodUUIDParams = util.StringFormatParams<schemas.$ZodUUID, "pattern">;
-export type $ZodCheckUUIDParams = util.CheckStringFormatParams<schemas.$ZodUUID, "pattern">;
+export type $ZodUUIDParams = StringFormatParams<schemas.$ZodUUID, "pattern">;
+export type $ZodCheckUUIDParams = CheckStringFormatParams<schemas.$ZodUUID, "pattern">;
 export function _uuid<T extends schemas.$ZodUUID>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodUUIDParams | $ZodCheckUUIDParams
@@ -75,8 +128,8 @@ export function _uuid<T extends schemas.$ZodUUID>(
 }
 
 // UUIDv4
-export type $ZodUUIDv4Params = util.StringFormatParams<schemas.$ZodUUID, "pattern">;
-export type $ZodCheckUUIDv4Params = util.CheckStringFormatParams<schemas.$ZodUUID, "pattern">;
+export type $ZodUUIDv4Params = StringFormatParams<schemas.$ZodUUID, "pattern">;
+export type $ZodCheckUUIDv4Params = CheckStringFormatParams<schemas.$ZodUUID, "pattern">;
 export function _uuidv4<T extends schemas.$ZodUUID>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodUUIDv4Params | $ZodCheckUUIDv4Params
@@ -92,8 +145,8 @@ export function _uuidv4<T extends schemas.$ZodUUID>(
 }
 
 // UUIDv6
-export type $ZodUUIDv6Params = util.StringFormatParams<schemas.$ZodUUID, "pattern">;
-export type $ZodCheckUUIDv6Params = util.CheckStringFormatParams<schemas.$ZodUUID, "pattern">;
+export type $ZodUUIDv6Params = StringFormatParams<schemas.$ZodUUID, "pattern">;
+export type $ZodCheckUUIDv6Params = CheckStringFormatParams<schemas.$ZodUUID, "pattern">;
 export function _uuidv6<T extends schemas.$ZodUUID>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodUUIDv6Params | $ZodCheckUUIDv6Params
@@ -109,8 +162,8 @@ export function _uuidv6<T extends schemas.$ZodUUID>(
 }
 
 // UUIDv7
-export type $ZodUUIDv7Params = util.StringFormatParams<schemas.$ZodUUID, "pattern">;
-export type $ZodCheckUUIDv7Params = util.CheckStringFormatParams<schemas.$ZodUUID, "pattern">;
+export type $ZodUUIDv7Params = StringFormatParams<schemas.$ZodUUID, "pattern">;
+export type $ZodCheckUUIDv7Params = CheckStringFormatParams<schemas.$ZodUUID, "pattern">;
 export function _uuidv7<T extends schemas.$ZodUUID>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodUUIDv7Params | $ZodCheckUUIDv7Params
@@ -126,8 +179,8 @@ export function _uuidv7<T extends schemas.$ZodUUID>(
 }
 
 // URL
-export type $ZodURLParams = util.StringFormatParams<schemas.$ZodURL>;
-export type $ZodCheckURLParams = util.CheckStringFormatParams<schemas.$ZodURL>;
+export type $ZodURLParams = StringFormatParams<schemas.$ZodURL>;
+export type $ZodCheckURLParams = CheckStringFormatParams<schemas.$ZodURL>;
 export function _url<T extends schemas.$ZodURL>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodURLParams | $ZodCheckURLParams
@@ -142,8 +195,8 @@ export function _url<T extends schemas.$ZodURL>(
 }
 
 // Emoji
-export type $ZodEmojiParams = util.StringFormatParams<schemas.$ZodEmoji>;
-export type $ZodCheckEmojiParams = util.CheckStringFormatParams<schemas.$ZodEmoji>;
+export type $ZodEmojiParams = StringFormatParams<schemas.$ZodEmoji>;
+export type $ZodCheckEmojiParams = CheckStringFormatParams<schemas.$ZodEmoji>;
 export function _emoji<T extends schemas.$ZodEmoji>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodEmojiParams | $ZodCheckEmojiParams
@@ -158,8 +211,8 @@ export function _emoji<T extends schemas.$ZodEmoji>(
 }
 
 // NanoID
-export type $ZodNanoIDParams = util.StringFormatParams<schemas.$ZodNanoID>;
-export type $ZodCheckNanoIDParams = util.CheckStringFormatParams<schemas.$ZodNanoID>;
+export type $ZodNanoIDParams = StringFormatParams<schemas.$ZodNanoID>;
+export type $ZodCheckNanoIDParams = CheckStringFormatParams<schemas.$ZodNanoID>;
 export function _nanoid<T extends schemas.$ZodNanoID>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodNanoIDParams | $ZodCheckNanoIDParams
@@ -174,8 +227,8 @@ export function _nanoid<T extends schemas.$ZodNanoID>(
 }
 
 // CUID
-export type $ZodCUIDParams = util.StringFormatParams<schemas.$ZodCUID>;
-export type $ZodCheckCUIDParams = util.CheckStringFormatParams<schemas.$ZodCUID>;
+export type $ZodCUIDParams = StringFormatParams<schemas.$ZodCUID>;
+export type $ZodCheckCUIDParams = CheckStringFormatParams<schemas.$ZodCUID>;
 export function _cuid<T extends schemas.$ZodCUID>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodCUIDParams | $ZodCheckCUIDParams
@@ -190,8 +243,8 @@ export function _cuid<T extends schemas.$ZodCUID>(
 }
 
 // CUID2
-export type $ZodCUID2Params = util.StringFormatParams<schemas.$ZodCUID2>;
-export type $ZodCheckCUID2Params = util.CheckStringFormatParams<schemas.$ZodCUID2>;
+export type $ZodCUID2Params = StringFormatParams<schemas.$ZodCUID2>;
+export type $ZodCheckCUID2Params = CheckStringFormatParams<schemas.$ZodCUID2>;
 export function _cuid2<T extends schemas.$ZodCUID2>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodCUID2Params | $ZodCheckCUID2Params
@@ -206,8 +259,8 @@ export function _cuid2<T extends schemas.$ZodCUID2>(
 }
 
 // ULID
-export type $ZodULIDParams = util.StringFormatParams<schemas.$ZodULID>;
-export type $ZodCheckULIDParams = util.CheckStringFormatParams<schemas.$ZodULID>;
+export type $ZodULIDParams = StringFormatParams<schemas.$ZodULID>;
+export type $ZodCheckULIDParams = CheckStringFormatParams<schemas.$ZodULID>;
 export function _ulid<T extends schemas.$ZodULID>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodULIDParams | $ZodCheckULIDParams
@@ -222,8 +275,8 @@ export function _ulid<T extends schemas.$ZodULID>(
 }
 
 // XID
-export type $ZodXIDParams = util.StringFormatParams<schemas.$ZodXID>;
-export type $ZodCheckXIDParams = util.CheckStringFormatParams<schemas.$ZodXID>;
+export type $ZodXIDParams = StringFormatParams<schemas.$ZodXID>;
+export type $ZodCheckXIDParams = CheckStringFormatParams<schemas.$ZodXID>;
 export function _xid<T extends schemas.$ZodXID>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodXIDParams | $ZodCheckXIDParams
@@ -238,8 +291,8 @@ export function _xid<T extends schemas.$ZodXID>(
 }
 
 // KSUID
-export type $ZodKSUIDParams = util.StringFormatParams<schemas.$ZodKSUID>;
-export type $ZodCheckKSUIDParams = util.CheckStringFormatParams<schemas.$ZodKSUID>;
+export type $ZodKSUIDParams = StringFormatParams<schemas.$ZodKSUID>;
+export type $ZodCheckKSUIDParams = CheckStringFormatParams<schemas.$ZodKSUID>;
 export function _ksuid<T extends schemas.$ZodKSUID>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodKSUIDParams | $ZodCheckKSUIDParams
@@ -254,8 +307,8 @@ export function _ksuid<T extends schemas.$ZodKSUID>(
 }
 
 // IP
-// export type $ZodIPParams = util.StringFormatParams<schemas.$ZodIP, "pattern">;
-// export type $ZodCheckIPParams = util.CheckStringFormatParams<schemas.$ZodIP, "pattern">;
+// export type $ZodIPParams = StringFormatParams<schemas.$ZodIP, "pattern">;
+// export type $ZodCheckIPParams = CheckStringFormatParams<schemas.$ZodIP, "pattern">;
 // export function _ip<T extends schemas.$ZodIP>(
 //   Class: util.SchemaClass<T>,
 //   params?: string | $ZodIPParams | $ZodCheckIPParams
@@ -270,8 +323,8 @@ export function _ksuid<T extends schemas.$ZodKSUID>(
 // }
 
 // IPv4
-export type $ZodIPv4Params = util.StringFormatParams<schemas.$ZodIPv4, "pattern">;
-export type $ZodCheckIPv4Params = util.CheckStringFormatParams<schemas.$ZodIPv4, "pattern">;
+export type $ZodIPv4Params = StringFormatParams<schemas.$ZodIPv4, "pattern">;
+export type $ZodCheckIPv4Params = CheckStringFormatParams<schemas.$ZodIPv4, "pattern">;
 export function _ipv4<T extends schemas.$ZodIPv4>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodIPv4Params | $ZodCheckIPv4Params
@@ -286,8 +339,8 @@ export function _ipv4<T extends schemas.$ZodIPv4>(
 }
 
 // IPv6
-export type $ZodIPv6Params = util.StringFormatParams<schemas.$ZodIPv6, "pattern">;
-export type $ZodCheckIPv6Params = util.CheckStringFormatParams<schemas.$ZodIPv6, "pattern">;
+export type $ZodIPv6Params = StringFormatParams<schemas.$ZodIPv6, "pattern">;
+export type $ZodCheckIPv6Params = CheckStringFormatParams<schemas.$ZodIPv6, "pattern">;
 export function _ipv6<T extends schemas.$ZodIPv6>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodIPv6Params | $ZodCheckIPv6Params
@@ -302,8 +355,8 @@ export function _ipv6<T extends schemas.$ZodIPv6>(
 }
 
 // CIDRv4
-export type $ZodCIDRv4Params = util.StringFormatParams<schemas.$ZodCIDRv4, "pattern">;
-export type $ZodCheckCIDRv4Params = util.CheckStringFormatParams<schemas.$ZodCIDRv4, "pattern">;
+export type $ZodCIDRv4Params = StringFormatParams<schemas.$ZodCIDRv4, "pattern">;
+export type $ZodCheckCIDRv4Params = CheckStringFormatParams<schemas.$ZodCIDRv4, "pattern">;
 export function _cidrv4<T extends schemas.$ZodCIDRv4>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodCIDRv4Params | $ZodCheckCIDRv4Params
@@ -318,8 +371,8 @@ export function _cidrv4<T extends schemas.$ZodCIDRv4>(
 }
 
 // CIDRv6
-export type $ZodCIDRv6Params = util.StringFormatParams<schemas.$ZodCIDRv6, "pattern">;
-export type $ZodCheckCIDRv6Params = util.CheckStringFormatParams<schemas.$ZodCIDRv6, "pattern">;
+export type $ZodCIDRv6Params = StringFormatParams<schemas.$ZodCIDRv6, "pattern">;
+export type $ZodCheckCIDRv6Params = CheckStringFormatParams<schemas.$ZodCIDRv6, "pattern">;
 export function _cidrv6<T extends schemas.$ZodCIDRv6>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodCIDRv6Params | $ZodCheckCIDRv6Params
@@ -334,8 +387,8 @@ export function _cidrv6<T extends schemas.$ZodCIDRv6>(
 }
 
 // Base64
-export type $ZodBase64Params = util.StringFormatParams<schemas.$ZodBase64, "pattern">;
-export type $ZodCheckBase64Params = util.CheckStringFormatParams<schemas.$ZodBase64, "pattern">;
+export type $ZodBase64Params = StringFormatParams<schemas.$ZodBase64, "pattern">;
+export type $ZodCheckBase64Params = CheckStringFormatParams<schemas.$ZodBase64, "pattern">;
 export function _base64<T extends schemas.$ZodBase64>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodBase64Params | $ZodCheckBase64Params
@@ -350,8 +403,8 @@ export function _base64<T extends schemas.$ZodBase64>(
 }
 
 // base64url
-export type $ZodBase64URLParams = util.StringFormatParams<schemas.$ZodBase64URL, "pattern">;
-export type $ZodCheckBase64URLParams = util.CheckStringFormatParams<schemas.$ZodBase64URL, "pattern">;
+export type $ZodBase64URLParams = StringFormatParams<schemas.$ZodBase64URL, "pattern">;
+export type $ZodCheckBase64URLParams = CheckStringFormatParams<schemas.$ZodBase64URL, "pattern">;
 export function _base64url<T extends schemas.$ZodBase64URL>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodBase64URLParams | $ZodCheckBase64URLParams
@@ -366,8 +419,8 @@ export function _base64url<T extends schemas.$ZodBase64URL>(
 }
 
 // E164
-export type $ZodE164Params = util.StringFormatParams<schemas.$ZodE164>;
-export type $ZodCheckE164Params = util.CheckStringFormatParams<schemas.$ZodE164>;
+export type $ZodE164Params = StringFormatParams<schemas.$ZodE164>;
+export type $ZodCheckE164Params = CheckStringFormatParams<schemas.$ZodE164>;
 export function _e164<T extends schemas.$ZodE164>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodE164Params | $ZodCheckE164Params
@@ -382,8 +435,8 @@ export function _e164<T extends schemas.$ZodE164>(
 }
 
 // JWT
-export type $ZodJWTParams = util.StringFormatParams<schemas.$ZodJWT, "pattern">;
-export type $ZodCheckJWTParams = util.CheckStringFormatParams<schemas.$ZodJWT, "pattern">;
+export type $ZodJWTParams = StringFormatParams<schemas.$ZodJWT, "pattern">;
+export type $ZodCheckJWTParams = CheckStringFormatParams<schemas.$ZodJWT, "pattern">;
 export function _jwt<T extends schemas.$ZodJWT>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodJWTParams | $ZodCheckJWTParams
@@ -398,8 +451,8 @@ export function _jwt<T extends schemas.$ZodJWT>(
 }
 
 // ISODateTime
-export type $ZodISODateTimeParams = util.StringFormatParams<schemas.$ZodISODateTime, "pattern">;
-export type $ZodCheckISODateTimeParams = util.CheckStringFormatParams<schemas.$ZodISODateTime, "pattern">;
+export type $ZodISODateTimeParams = StringFormatParams<schemas.$ZodISODateTime, "pattern">;
+export type $ZodCheckISODateTimeParams = CheckStringFormatParams<schemas.$ZodISODateTime, "pattern">;
 export function _isoDateTime<T extends schemas.$ZodISODateTime>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodISODateTimeParams | $ZodCheckISODateTimeParams
@@ -416,8 +469,8 @@ export function _isoDateTime<T extends schemas.$ZodISODateTime>(
 }
 
 // ISODate
-export type $ZodISODateParams = util.StringFormatParams<schemas.$ZodISODate, "pattern">;
-export type $ZodCheckISODateParams = util.CheckStringFormatParams<schemas.$ZodISODate, "pattern">;
+export type $ZodISODateParams = StringFormatParams<schemas.$ZodISODate, "pattern">;
+export type $ZodCheckISODateParams = CheckStringFormatParams<schemas.$ZodISODate, "pattern">;
 export function _isoDate<T extends schemas.$ZodISODate>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodISODateParams | $ZodCheckISODateParams
@@ -431,8 +484,8 @@ export function _isoDate<T extends schemas.$ZodISODate>(
 }
 
 // ISOTime
-export type $ZodISOTimeParams = util.StringFormatParams<schemas.$ZodISOTime, "pattern">;
-export type $ZodCheckISOTimeParams = util.CheckStringFormatParams<schemas.$ZodISOTime, "pattern">;
+export type $ZodISOTimeParams = StringFormatParams<schemas.$ZodISOTime, "pattern">;
+export type $ZodCheckISOTimeParams = CheckStringFormatParams<schemas.$ZodISOTime, "pattern">;
 export function _isoTime<T extends schemas.$ZodISOTime>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodISOTimeParams | $ZodCheckISOTimeParams
@@ -447,8 +500,8 @@ export function _isoTime<T extends schemas.$ZodISOTime>(
 }
 
 // ISODuration
-export type $ZodISODurationParams = util.StringFormatParams<schemas.$ZodISODuration>;
-export type $ZodCheckISODurationParams = util.CheckStringFormatParams<schemas.$ZodISODuration>;
+export type $ZodISODurationParams = StringFormatParams<schemas.$ZodISODuration>;
+export type $ZodCheckISODurationParams = CheckStringFormatParams<schemas.$ZodISODuration>;
 export function _isoDuration<T extends schemas.$ZodISODuration>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodISODurationParams | $ZodCheckISODurationParams
@@ -462,9 +515,9 @@ export function _isoDuration<T extends schemas.$ZodISODuration>(
 }
 
 // Number
-export type $ZodNumberParams = util.TypeParams<schemas.$ZodNumber<number>, "coerce">;
-export type $ZodNumberFormatParams = util.CheckTypeParams<schemas.$ZodNumberFormat, "format" | "coerce">;
-export type $ZodCheckNumberFormatParams = util.CheckParams<checks.$ZodCheckNumberFormat, "format">;
+export type $ZodNumberParams = TypeParams<schemas.$ZodNumber<number>, "coerce">;
+export type $ZodNumberFormatParams = CheckTypeParams<schemas.$ZodNumberFormat, "format" | "coerce">;
+export type $ZodCheckNumberFormatParams = CheckParams<checks.$ZodCheckNumberFormat, "format">;
 export function _number<T extends schemas.$ZodNumber>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodNumberParams
@@ -550,7 +603,7 @@ export function _uint32<T extends schemas.$ZodNumberFormat>(
 }
 
 // Boolean
-export type $ZodBooleanParams = util.TypeParams<schemas.$ZodBoolean<boolean>, "coerce">;
+export type $ZodBooleanParams = TypeParams<schemas.$ZodBoolean<boolean>, "coerce">;
 export function _boolean<T extends schemas.$ZodBoolean>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodBooleanParams
@@ -572,9 +625,9 @@ export function _coercedBoolean<T extends schemas.$ZodBoolean>(
 }
 
 // BigInt
-export type $ZodBigIntParams = util.TypeParams<schemas.$ZodBigInt<bigint>>;
-export type $ZodBigIntFormatParams = util.CheckTypeParams<schemas.$ZodBigIntFormat, "format" | "coerce">;
-export type $ZodCheckBigIntFormatParams = util.CheckParams<checks.$ZodCheckBigIntFormat, "format">;
+export type $ZodBigIntParams = TypeParams<schemas.$ZodBigInt<bigint>>;
+export type $ZodBigIntFormatParams = CheckTypeParams<schemas.$ZodBigIntFormat, "format" | "coerce">;
+export type $ZodCheckBigIntFormatParams = CheckParams<checks.$ZodCheckBigIntFormat, "format">;
 export function _bigint<T extends schemas.$ZodBigInt>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodBigIntParams
@@ -621,7 +674,7 @@ export function _uint64<T extends schemas.$ZodBigIntFormat>(
 }
 
 // Symbol
-export type $ZodSymbolParams = util.TypeParams<schemas.$ZodSymbol>;
+export type $ZodSymbolParams = TypeParams<schemas.$ZodSymbol>;
 export function _symbol<T extends schemas.$ZodSymbol>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodSymbolParams
@@ -633,7 +686,7 @@ export function _symbol<T extends schemas.$ZodSymbol>(
 }
 
 // Undefined
-export type $ZodUndefinedParams = util.TypeParams<schemas.$ZodUndefined>;
+export type $ZodUndefinedParams = TypeParams<schemas.$ZodUndefined>;
 export function _undefined<T extends schemas.$ZodUndefined>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodUndefinedParams
@@ -645,7 +698,7 @@ export function _undefined<T extends schemas.$ZodUndefined>(
 }
 
 // Null
-export type $ZodNullParams = util.TypeParams<schemas.$ZodNull>;
+export type $ZodNullParams = TypeParams<schemas.$ZodNull>;
 export function _null<T extends schemas.$ZodNull>(Class: util.SchemaClass<T>, params?: string | $ZodNullParams): T {
   return new Class({
     type: "null",
@@ -654,7 +707,7 @@ export function _null<T extends schemas.$ZodNull>(Class: util.SchemaClass<T>, pa
 }
 
 // Any
-export type $ZodAnyParams = util.TypeParams<schemas.$ZodAny>;
+export type $ZodAnyParams = TypeParams<schemas.$ZodAny>;
 export function _any<T extends schemas.$ZodAny>(Class: util.SchemaClass<T>): T {
   return new Class({
     type: "any",
@@ -662,7 +715,7 @@ export function _any<T extends schemas.$ZodAny>(Class: util.SchemaClass<T>): T {
 }
 
 // Unknown
-export type $ZodUnknownParams = util.TypeParams<schemas.$ZodUnknown>;
+export type $ZodUnknownParams = TypeParams<schemas.$ZodUnknown>;
 export function _unknown<T extends schemas.$ZodUnknown>(Class: util.SchemaClass<T>): T {
   return new Class({
     type: "unknown",
@@ -670,7 +723,7 @@ export function _unknown<T extends schemas.$ZodUnknown>(Class: util.SchemaClass<
 }
 
 // Never
-export type $ZodNeverParams = util.TypeParams<schemas.$ZodNever>;
+export type $ZodNeverParams = TypeParams<schemas.$ZodNever>;
 export function _never<T extends schemas.$ZodNever>(Class: util.SchemaClass<T>, params?: string | $ZodNeverParams): T {
   return new Class({
     type: "never",
@@ -679,7 +732,7 @@ export function _never<T extends schemas.$ZodNever>(Class: util.SchemaClass<T>, 
 }
 
 // Void
-export type $ZodVoidParams = util.TypeParams<schemas.$ZodVoid>;
+export type $ZodVoidParams = TypeParams<schemas.$ZodVoid>;
 export function _void<T extends schemas.$ZodVoid>(Class: util.SchemaClass<T>, params?: string | $ZodVoidParams): T {
   return new Class({
     type: "void",
@@ -688,7 +741,7 @@ export function _void<T extends schemas.$ZodVoid>(Class: util.SchemaClass<T>, pa
 }
 
 // Date
-export type $ZodDateParams = util.TypeParams<schemas.$ZodDate, "coerce">;
+export type $ZodDateParams = TypeParams<schemas.$ZodDate, "coerce">;
 export function _date<T extends schemas.$ZodDate>(Class: util.SchemaClass<T>, params?: string | $ZodDateParams): T {
   return new Class({
     type: "date",
@@ -707,7 +760,7 @@ export function _coercedDate<T extends schemas.$ZodDate>(
 }
 
 // NaN
-export type $ZodNaNParams = util.TypeParams<schemas.$ZodNaN>;
+export type $ZodNaNParams = TypeParams<schemas.$ZodNaN>;
 export function _nan<T extends schemas.$ZodNaN>(Class: util.SchemaClass<T>, params?: string | $ZodNaNParams): T {
   return new Class({
     type: "nan",
@@ -715,7 +768,7 @@ export function _nan<T extends schemas.$ZodNaN>(Class: util.SchemaClass<T>, para
   });
 }
 
-export type $ZodCheckLessThanParams = util.CheckParams<checks.$ZodCheckLessThan, "inclusive" | "value">;
+export type $ZodCheckLessThanParams = CheckParams<checks.$ZodCheckLessThan, "inclusive" | "value">;
 export function _lt(
   value: util.Numeric,
   params?: string | $ZodCheckLessThanParams
@@ -746,7 +799,7 @@ export {
 };
 
 // ZodCheckGreaterThan
-export type $ZodCheckGreaterThanParams = util.CheckParams<checks.$ZodCheckGreaterThan, "inclusive" | "value">;
+export type $ZodCheckGreaterThanParams = CheckParams<checks.$ZodCheckGreaterThan, "inclusive" | "value">;
 export function _gt(value: util.Numeric, params?: string | $ZodCheckGreaterThanParams): checks.$ZodCheckGreaterThan {
   return new checks.$ZodCheckGreaterThan({
     check: "greater_than",
@@ -790,7 +843,7 @@ export function _nonnegative(params?: string | $ZodCheckGreaterThanParams): chec
   return _gte(0, params);
 }
 
-export type $ZodCheckMultipleOfParams = util.CheckParams<checks.$ZodCheckMultipleOf, "value">;
+export type $ZodCheckMultipleOfParams = CheckParams<checks.$ZodCheckMultipleOf, "value">;
 export function _multipleOf(
   value: number | bigint,
   params?: string | $ZodCheckMultipleOfParams
@@ -802,7 +855,7 @@ export function _multipleOf(
   });
 }
 
-export type $ZodCheckMaxSizeParams = util.CheckParams<checks.$ZodCheckMaxSize, "maximum">;
+export type $ZodCheckMaxSizeParams = CheckParams<checks.$ZodCheckMaxSize, "maximum">;
 export function _maxSize(
   maximum: number,
   params?: string | $ZodCheckMaxSizeParams
@@ -814,7 +867,7 @@ export function _maxSize(
   });
 }
 
-export type $ZodCheckMinSizeParams = util.CheckParams<checks.$ZodCheckMinSize, "minimum">;
+export type $ZodCheckMinSizeParams = CheckParams<checks.$ZodCheckMinSize, "minimum">;
 export function _minSize(
   minimum: number,
   params?: string | $ZodCheckMinSizeParams
@@ -826,7 +879,7 @@ export function _minSize(
   });
 }
 
-export type $ZodCheckSizeEqualsParams = util.CheckParams<checks.$ZodCheckSizeEquals, "size">;
+export type $ZodCheckSizeEqualsParams = CheckParams<checks.$ZodCheckSizeEquals, "size">;
 export function _size(
   size: number,
   params?: string | $ZodCheckSizeEqualsParams
@@ -838,7 +891,7 @@ export function _size(
   });
 }
 
-export type $ZodCheckMaxLengthParams = util.CheckParams<checks.$ZodCheckMaxLength, "maximum">;
+export type $ZodCheckMaxLengthParams = CheckParams<checks.$ZodCheckMaxLength, "maximum">;
 export function _maxLength(
   maximum: number,
   params?: string | $ZodCheckMaxLengthParams
@@ -851,7 +904,7 @@ export function _maxLength(
   return ch;
 }
 
-export type $ZodCheckMinLengthParams = util.CheckParams<checks.$ZodCheckMinLength, "minimum">;
+export type $ZodCheckMinLengthParams = CheckParams<checks.$ZodCheckMinLength, "minimum">;
 export function _minLength(
   minimum: number,
   params?: string | $ZodCheckMinLengthParams
@@ -863,7 +916,7 @@ export function _minLength(
   });
 }
 
-export type $ZodCheckLengthEqualsParams = util.CheckParams<checks.$ZodCheckLengthEquals, "length">;
+export type $ZodCheckLengthEqualsParams = CheckParams<checks.$ZodCheckLengthEquals, "length">;
 export function _length(
   length: number,
   params?: string | $ZodCheckLengthEqualsParams
@@ -875,7 +928,7 @@ export function _length(
   });
 }
 
-export type $ZodCheckRegexParams = util.CheckParams<checks.$ZodCheckRegex, "format" | "pattern">;
+export type $ZodCheckRegexParams = CheckParams<checks.$ZodCheckRegex, "format" | "pattern">;
 export function _regex(pattern: RegExp, params?: string | $ZodCheckRegexParams): checks.$ZodCheckRegex {
   return new checks.$ZodCheckRegex({
     check: "string_format",
@@ -885,7 +938,7 @@ export function _regex(pattern: RegExp, params?: string | $ZodCheckRegexParams):
   });
 }
 
-export type $ZodCheckLowerCaseParams = util.CheckParams<checks.$ZodCheckLowerCase, "format">;
+export type $ZodCheckLowerCaseParams = CheckParams<checks.$ZodCheckLowerCase, "format">;
 export function _lowercase(params?: string | $ZodCheckLowerCaseParams): checks.$ZodCheckLowerCase {
   return new checks.$ZodCheckLowerCase({
     check: "string_format",
@@ -894,7 +947,7 @@ export function _lowercase(params?: string | $ZodCheckLowerCaseParams): checks.$
   });
 }
 
-export type $ZodCheckUpperCaseParams = util.CheckParams<checks.$ZodCheckUpperCase, "format">;
+export type $ZodCheckUpperCaseParams = CheckParams<checks.$ZodCheckUpperCase, "format">;
 
 export function _uppercase(params?: string | $ZodCheckUpperCaseParams): checks.$ZodCheckUpperCase {
   return new checks.$ZodCheckUpperCase({
@@ -904,7 +957,7 @@ export function _uppercase(params?: string | $ZodCheckUpperCaseParams): checks.$
   });
 }
 
-export type $ZodCheckIncludesParams = util.CheckParams<checks.$ZodCheckIncludes, "includes" | "format" | "pattern">;
+export type $ZodCheckIncludesParams = CheckParams<checks.$ZodCheckIncludes, "includes" | "format" | "pattern">;
 export function _includes(includes: string, params?: string | $ZodCheckIncludesParams): checks.$ZodCheckIncludes {
   return new checks.$ZodCheckIncludes({
     check: "string_format",
@@ -913,7 +966,7 @@ export function _includes(includes: string, params?: string | $ZodCheckIncludesP
     includes,
   });
 }
-export type $ZodCheckStartsWithParams = util.CheckParams<checks.$ZodCheckStartsWith, "prefix" | "format" | "pattern">;
+export type $ZodCheckStartsWithParams = CheckParams<checks.$ZodCheckStartsWith, "prefix" | "format" | "pattern">;
 export function _startsWith(prefix: string, params?: string | $ZodCheckStartsWithParams): checks.$ZodCheckStartsWith {
   return new checks.$ZodCheckStartsWith({
     check: "string_format",
@@ -923,7 +976,7 @@ export function _startsWith(prefix: string, params?: string | $ZodCheckStartsWit
   });
 }
 
-export type $ZodCheckEndsWithParams = util.CheckParams<checks.$ZodCheckEndsWith, "suffix" | "format" | "pattern">;
+export type $ZodCheckEndsWithParams = CheckParams<checks.$ZodCheckEndsWith, "suffix" | "format" | "pattern">;
 
 export function _endsWith(suffix: string, params?: string | $ZodCheckEndsWithParams): checks.$ZodCheckEndsWith {
   return new checks.$ZodCheckEndsWith({
@@ -934,7 +987,7 @@ export function _endsWith(suffix: string, params?: string | $ZodCheckEndsWithPar
   });
 }
 
-export type $ZodCheckPropertyParams = util.CheckParams<checks.$ZodCheckProperty, "property" | "schema">;
+export type $ZodCheckPropertyParams = CheckParams<checks.$ZodCheckProperty, "property" | "schema">;
 export function _property<K extends string, T extends schemas.$ZodType>(
   property: K,
   schema: T,
@@ -948,7 +1001,7 @@ export function _property<K extends string, T extends schemas.$ZodType>(
   });
 }
 
-export type $ZodCheckMimeTypeParams = util.CheckParams<checks.$ZodCheckMimeType, "mime">;
+export type $ZodCheckMimeTypeParams = CheckParams<checks.$ZodCheckMimeType, "mime">;
 export function _mime(types: util.MimeTypes[], params?: string | $ZodCheckMimeTypeParams): checks.$ZodCheckMimeType {
   return new checks.$ZodCheckMimeType({
     check: "mime_type",
@@ -984,7 +1037,7 @@ export function _toUpperCase(): checks.$ZodCheckOverwrite<string> {
 ///////  collections   ///////
 
 // Array
-export type $ZodArrayParams = util.TypeParams<schemas.$ZodArray, "element">;
+export type $ZodArrayParams = TypeParams<schemas.$ZodArray, "element">;
 export function _array<T extends schemas.$ZodType>(
   Class: util.SchemaClass<schemas.$ZodArray>,
   element: T,
@@ -1000,10 +1053,10 @@ export function _array<T extends schemas.$ZodType>(
   }) as schemas.$ZodArray<T>;
 }
 
-export type $ZodObjectParams = util.TypeParams<schemas.$ZodObject, "shape" | "catchall">;
+export type $ZodObjectParams = TypeParams<schemas.$ZodObject, "shape" | "catchall">;
 
 // ZodUnion
-export type $ZodUnionParams = util.TypeParams<schemas.$ZodUnion, "options">;
+export type $ZodUnionParams = TypeParams<schemas.$ZodUnion, "options">;
 export function _union<const T extends readonly schemas.$ZodObject[]>(
   Class: util.SchemaClass<schemas.$ZodUnion>,
   options: T,
@@ -1024,7 +1077,7 @@ export interface $ZodTypeDiscriminableInternals extends schemas.$ZodTypeInternal
 export interface $ZodTypeDiscriminable extends schemas.$ZodType {
   _zod: $ZodTypeDiscriminableInternals;
 }
-export type $ZodDiscriminatedUnionParams = util.TypeParams<schemas.$ZodDiscriminatedUnion, "options">;
+export type $ZodDiscriminatedUnionParams = TypeParams<schemas.$ZodDiscriminatedUnion, "options">;
 export function _discriminatedUnion<Types extends [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]]>(
   Class: util.SchemaClass<schemas.$ZodDiscriminatedUnion>,
   options: Types,
@@ -1038,7 +1091,7 @@ export function _discriminatedUnion<Types extends [$ZodTypeDiscriminable, ...$Zo
 }
 
 // ZodIntersection
-export type $ZodIntersectionParams = util.TypeParams<schemas.$ZodIntersection, "left" | "right">;
+export type $ZodIntersectionParams = TypeParams<schemas.$ZodIntersection, "left" | "right">;
 export function _intersection<T extends schemas.$ZodObject, U extends schemas.$ZodObject>(
   Class: util.SchemaClass<schemas.$ZodIntersection>,
   left: T,
@@ -1052,7 +1105,7 @@ export function _intersection<T extends schemas.$ZodObject, U extends schemas.$Z
 }
 
 // ZodTuple
-export type $ZodTupleParams = util.TypeParams<schemas.$ZodTuple, "items" | "rest">;
+export type $ZodTupleParams = TypeParams<schemas.$ZodTuple, "items" | "rest">;
 export function _tuple<T extends readonly [schemas.$ZodType, ...schemas.$ZodType[]]>(
   Class: util.SchemaClass<schemas.$ZodTuple>,
   items: T,
@@ -1087,7 +1140,7 @@ export function _tuple(
 }
 
 // ZodRecord
-export type $ZodRecordParams = util.TypeParams<schemas.$ZodRecord, "keyType" | "valueType">;
+export type $ZodRecordParams = TypeParams<schemas.$ZodRecord, "keyType" | "valueType">;
 export function _record<Key extends schemas.$ZodRecordKey, Value extends schemas.$ZodObject>(
   Class: util.SchemaClass<schemas.$ZodRecord>,
   keyType: Key,
@@ -1103,7 +1156,7 @@ export function _record<Key extends schemas.$ZodRecordKey, Value extends schemas
 }
 
 // ZodMap
-export type $ZodMapParams = util.TypeParams<schemas.$ZodMap, "keyType" | "valueType">;
+export type $ZodMapParams = TypeParams<schemas.$ZodMap, "keyType" | "valueType">;
 export function _map<Key extends schemas.$ZodObject, Value extends schemas.$ZodObject>(
   Class: util.SchemaClass<schemas.$ZodMap>,
   keyType: Key,
@@ -1119,7 +1172,7 @@ export function _map<Key extends schemas.$ZodObject, Value extends schemas.$ZodO
 }
 
 // ZodSet
-export type $ZodSetParams = util.TypeParams<schemas.$ZodSet, "valueType">;
+export type $ZodSetParams = TypeParams<schemas.$ZodSet, "valueType">;
 export function _set<Value extends schemas.$ZodObject>(
   Class: util.SchemaClass<schemas.$ZodSet>,
   valueType: Value,
@@ -1133,7 +1186,7 @@ export function _set<Value extends schemas.$ZodObject>(
 }
 
 // ZodEnum
-export type $ZodEnumParams = util.TypeParams<schemas.$ZodEnum, "entries">;
+export type $ZodEnumParams = TypeParams<schemas.$ZodEnum, "entries">;
 export function _enum<const T extends string[]>(
   Class: util.SchemaClass<schemas.$ZodEnum>,
   values: T,
@@ -1185,7 +1238,7 @@ export function _nativeEnum<T extends util.EnumLike>(
 }
 
 // ZodLiteral
-export type $ZodLiteralParams = util.TypeParams<schemas.$ZodLiteral, "values">;
+export type $ZodLiteralParams = TypeParams<schemas.$ZodLiteral, "values">;
 export function _literal<const T extends Array<util.Literal>>(
   Class: util.SchemaClass<schemas.$ZodLiteral>,
   value: T,
@@ -1205,7 +1258,7 @@ export function _literal(Class: util.SchemaClass<schemas.$ZodLiteral>, value: an
 }
 
 // ZodFile
-export type $ZodFileParams = util.TypeParams<schemas.$ZodFile>;
+export type $ZodFileParams = TypeParams<schemas.$ZodFile>;
 export function _file(Class: util.SchemaClass<schemas.$ZodFile>, params?: string | $ZodFileParams): schemas.$ZodFile {
   return new Class({
     type: "file",
@@ -1214,7 +1267,7 @@ export function _file(Class: util.SchemaClass<schemas.$ZodFile>, params?: string
 }
 
 // ZodTransform
-export type $ZodTransformParams = util.TypeParams<schemas.$ZodTransform, "transform">;
+export type $ZodTransformParams = TypeParams<schemas.$ZodTransform, "transform">;
 export function _transform<I = unknown, O = I>(
   Class: util.SchemaClass<schemas.$ZodTransform>,
   fn: (input: I, ctx?: schemas.ParsePayload) => O
@@ -1226,7 +1279,7 @@ export function _transform<I = unknown, O = I>(
 }
 
 // ZodOptional
-export type $ZodOptionalParams = util.TypeParams<schemas.$ZodOptional, "innerType">;
+export type $ZodOptionalParams = TypeParams<schemas.$ZodOptional, "innerType">;
 export function _optional<T extends schemas.$ZodObject>(
   Class: util.SchemaClass<schemas.$ZodOptional>,
   innerType: T
@@ -1238,7 +1291,7 @@ export function _optional<T extends schemas.$ZodObject>(
 }
 
 // ZodNullable
-export type $ZodNullableParams = util.TypeParams<schemas.$ZodNullable, "innerType">;
+export type $ZodNullableParams = TypeParams<schemas.$ZodNullable, "innerType">;
 export function _nullable<T extends schemas.$ZodObject>(
   Class: util.SchemaClass<schemas.$ZodNullable>,
   innerType: T
@@ -1250,7 +1303,7 @@ export function _nullable<T extends schemas.$ZodObject>(
 }
 
 // ZodDefault
-export type $ZodDefaultParams = util.TypeParams<schemas.$ZodDefault, "innerType" | "defaultValue">;
+export type $ZodDefaultParams = TypeParams<schemas.$ZodDefault, "innerType" | "defaultValue">;
 export function _default<T extends schemas.$ZodObject>(
   Class: util.SchemaClass<schemas.$ZodDefault>,
   innerType: T,
@@ -1266,7 +1319,7 @@ export function _default<T extends schemas.$ZodObject>(
 }
 
 // ZodNonOptional
-export type $ZodNonOptionalParams = util.TypeParams<schemas.$ZodNonOptional, "innerType">;
+export type $ZodNonOptionalParams = TypeParams<schemas.$ZodNonOptional, "innerType">;
 export function _nonoptional<T extends schemas.$ZodObject>(
   Class: util.SchemaClass<schemas.$ZodNonOptional>,
   innerType: T,
@@ -1280,7 +1333,7 @@ export function _nonoptional<T extends schemas.$ZodObject>(
 }
 
 // ZodSuccess
-export type $ZodSuccessParams = util.TypeParams<schemas.$ZodSuccess, "innerType">;
+export type $ZodSuccessParams = TypeParams<schemas.$ZodSuccess, "innerType">;
 export function _success<T extends schemas.$ZodObject>(
   Class: util.SchemaClass<schemas.$ZodSuccess>,
   innerType: T
@@ -1292,7 +1345,7 @@ export function _success<T extends schemas.$ZodObject>(
 }
 
 // ZodCatch
-export type $ZodCatchParams = util.TypeParams<schemas.$ZodCatch, "innerType" | "catchValue">;
+export type $ZodCatchParams = TypeParams<schemas.$ZodCatch, "innerType" | "catchValue">;
 export function _catch<T extends schemas.$ZodObject>(
   Class: util.SchemaClass<schemas.$ZodCatch>,
   innerType: T,
@@ -1306,7 +1359,7 @@ export function _catch<T extends schemas.$ZodObject>(
 }
 
 // ZodPipe
-export type $ZodPipeParams = util.TypeParams<schemas.$ZodPipe, "in" | "out">;
+export type $ZodPipeParams = TypeParams<schemas.$ZodPipe, "in" | "out">;
 export function _pipe<
   const A extends schemas.$ZodType,
   B extends schemas.$ZodType<unknown, core.output<A>> = schemas.$ZodType<unknown, core.output<A>>,
@@ -1323,7 +1376,7 @@ export function _pipe<
 }
 
 // ZodReadonly
-export type $ZodReadonlyParams = util.TypeParams<schemas.$ZodReadonly, "innerType">;
+export type $ZodReadonlyParams = TypeParams<schemas.$ZodReadonly, "innerType">;
 export function _readonly<T extends schemas.$ZodObject>(
   Class: util.SchemaClass<schemas.$ZodReadonly>,
   innerType: T
@@ -1335,8 +1388,8 @@ export function _readonly<T extends schemas.$ZodObject>(
 }
 
 // ZodTemplateLiteral
-export type $ZodTemplateLiteralParams = util.TypeParams<schemas.$ZodTemplateLiteral, "parts">;
-export function _templateLiteral<const Parts extends schemas.$TemplateLiteralPart[]>(
+export type $ZodTemplateLiteralParams = TypeParams<schemas.$ZodTemplateLiteral, "parts">;
+export function _templateLiteral<const Parts extends schemas.$ZodTemplateLiteralPart[]>(
   Class: util.SchemaClass<schemas.$ZodTemplateLiteral>,
   parts: Parts,
   params?: string | $ZodTemplateLiteralParams
@@ -1349,7 +1402,7 @@ export function _templateLiteral<const Parts extends schemas.$TemplateLiteralPar
 }
 
 // ZodLazy
-export type $ZodLazyParams = util.TypeParams<schemas.$ZodLazy, "getter">;
+export type $ZodLazyParams = TypeParams<schemas.$ZodLazy, "getter">;
 export function _lazy<T extends schemas.$ZodType>(
   Class: util.SchemaClass<schemas.$ZodLazy>,
   getter: () => T
@@ -1361,7 +1414,7 @@ export function _lazy<T extends schemas.$ZodType>(
 }
 
 // ZodPromise
-export type $ZodPromiseParams = util.TypeParams<schemas.$ZodPromise, "innerType">;
+export type $ZodPromiseParams = TypeParams<schemas.$ZodPromise, "innerType">;
 export function _promise<T extends schemas.$ZodObject>(
   Class: util.SchemaClass<schemas.$ZodPromise>,
   innerType: T
@@ -1373,7 +1426,7 @@ export function _promise<T extends schemas.$ZodObject>(
 }
 
 // ZodCustom
-export type $ZodCustomParams = util.CheckTypeParams<schemas.$ZodCustom, "fn">;
+export type $ZodCustomParams = CheckTypeParams<schemas.$ZodCustom, "fn">;
 export function _custom<O = unknown, I = O>(
   Class: util.SchemaClass<schemas.$ZodCustom>,
   fn: (data: O) => unknown,
@@ -1397,12 +1450,12 @@ export function _refine<T>(
   return _custom(Class, fn, _params);
 }
 
-// export type $ZodCustomParams = util.CheckTypeParams<schemas.$ZodCustom, "fn">
+// export type $ZodCustomParams = CheckTypeParams<schemas.$ZodCustom, "fn">
 
 /////////    STRINGBOOL   /////////
 
 // stringbool
-export interface $ZodStringBoolParams extends util.TypeParams {
+export interface $ZodStringBoolParams extends TypeParams {
   truthy?: string[];
   falsy?: string[];
   /**

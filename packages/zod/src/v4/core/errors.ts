@@ -189,6 +189,7 @@ const initializer = (inst: $ZodError, def: $ZodIssue[]): void => {
     value: def,
     enumerable: true,
   });
+  inst.message = `Invalid input`;
   // Object.defineProperty(inst, "message", {
   //   get() {
   //     return (

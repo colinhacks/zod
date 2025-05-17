@@ -1390,7 +1390,7 @@ export const ZodMiniTemplateLiteral: core.$constructor<ZodMiniTemplateLiteral> =
   }
 );
 
-export function templateLiteral<const Parts extends core.$TemplateLiteralPart[]>(
+export function templateLiteral<const Parts extends core.$ZodTemplateLiteralPart[]>(
   parts: Parts,
   params?: string | core.$ZodTemplateLiteralParams
 ): ZodMiniTemplateLiteral<core.$PartsToTemplateLiteral<Parts>> {

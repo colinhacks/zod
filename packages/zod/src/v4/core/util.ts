@@ -140,8 +140,7 @@ export type Extend<A extends SomeObject, B extends SomeObject> = Flatten<
         [K in keyof B]: B[K];
       }
 >;
-// export type Overwrite<A extends SomeObject, B extends SomeObject> = Extend<A, B>;
-// export type Extend<A extends schemas.$ZodLooseShape, B extends schemas.$ZodLooseShape> = Extend<A, B>;
+
 export type TupleItems = ReadonlyArray<schemas.$ZodType>;
 export type AnyFunc = (...args: any[]) => any;
 export type IsProp<T, K extends keyof T> = T[K] extends AnyFunc ? never : K;
@@ -413,73 +412,7 @@ export function clone<T extends schemas.$ZodType>(inst: T, def?: T["_zod"]["def"
   return cl as any;
 }
 
-type EmptyToNever<T> = keyof T extends never ? never : T;
-export type Params<
-  T extends schemas.$ZodType | checks.$ZodCheck,
-  IssueTypes extends errors.$ZodIssueBase,
-  OmitKeys extends keyof T["_zod"]["def"] = never,
-> = Flatten<
-  Partial<
-    EmptyToNever<
-      Omit<T["_zod"]["def"], OmitKeys> &
-        ([IssueTypes] extends [never]
-          ? {} // unknown
-          : {
-              error?: string | errors.$ZodErrorMap<IssueTypes> | undefined;
-              /** @deprecated This parameter is deprecated. Use `error` instead. */
-              message?: string | undefined; // supported in Zod 3
-            })
-    >
-  >
->;
-
-export type TypeParams<
-  T extends schemas.$ZodType = schemas.$ZodType & { _isst: never },
-  AlsoOmit extends Exclude<keyof T["_zod"]["def"], "type" | "checks" | "error"> = never,
-> = Params<T, NonNullable<T["_zod"]["isst"]>, "type" | "checks" | "error" | AlsoOmit>;
-
-// strips types that are not exposed in the public factory
-// incl. `error`, `check`
-export type CheckParams<
-  T extends checks.$ZodCheck = checks.$ZodCheck, // & { _issc: never },
-  AlsoOmit extends Exclude<keyof T["_zod"]["def"], "check" | "error"> = never,
-> = Params<T, NonNullable<T["_zod"]["issc"]>, "check" | "error" | AlsoOmit>;
-
-// strips types that are not exposed in the public factory
-// incl. `type`, `checks`, `error`, `check`, `format`
-export type StringFormatParams<
-  T extends schemas.$ZodStringFormat = schemas.$ZodStringFormat,
-  AlsoOmit extends Exclude<keyof T["_zod"]["def"], "type" | "coerce" | "checks" | "error" | "check" | "format"> = never,
-> = Params<
-  T,
-  NonNullable<T["_zod"]["isst"] | T["_zod"]["issc"]>,
-  "type" | "coerce" | "checks" | "error" | "check" | "format" | AlsoOmit
->;
-
-export type CheckStringFormatParams<
-  T extends schemas.$ZodStringFormat = schemas.$ZodStringFormat,
-  AlsoOmit extends Exclude<keyof T["_zod"]["def"], "type" | "coerce" | "checks" | "error" | "check" | "format"> = never,
-> = Params<T, NonNullable<T["_zod"]["issc"]>, "type" | "coerce" | "checks" | "error" | "check" | "format" | AlsoOmit>;
-
-export type CheckTypeParams<
-  T extends schemas.$ZodType & checks.$ZodCheck = schemas.$ZodType & checks.$ZodCheck,
-  AlsoOmit extends Exclude<keyof T["_zod"]["def"], "type" | "checks" | "error" | "check"> = never,
-> = Params<T, NonNullable<T["_zod"]["isst"] | T["_zod"]["issc"]>, "type" | "checks" | "error" | "check" | AlsoOmit>;
-
-export function splitChecksAndParams<T extends TypeParams>(
-  _paramsOrChecks?: T | unknown[] | string,
-  _checks?: unknown[]
-): {
-  checks: checks.$ZodCheck<any>[];
-  params: T | string;
-} {
-  const params = (Array.isArray(_paramsOrChecks) ? {} : (_paramsOrChecks ?? {})) as T;
-  const checks: any[] = Array.isArray(_paramsOrChecks) ? _paramsOrChecks : (_checks ?? []);
-  return {
-    checks,
-    params,
-  };
-}
+export type EmptyToNever<T> = keyof T extends never ? never : T;
 
 export type Normalize<T> = T extends undefined
   ? never

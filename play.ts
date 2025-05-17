@@ -1,12 +1,10 @@
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 z;
 
-type Element = [string, ElementList];
-type ElementList = (Element | string)[];
+console.dir(z.ZodError.name, { depth: null });
+console.dir(z.ZodRealError.name, { depth: null });
+console.dir(z.core.$ZodError.name, { depth: null });
+console.dir(z.core.$ZodRealError.name, { depth: null });
 
-const ZodElement: z.ZodType<Element> = z.lazy(() => z.tuple([z.string(), ZodElementList]));
-
-const ZodElementList: z.ZodType<ElementList> = z.lazy(() => z.array(z.union([z.string(), ZodElement])));
-
-console.dir(ZodElementList.parse([]), { depth: null });
+z.string().parse(1234);
