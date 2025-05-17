@@ -134,7 +134,6 @@ export class JSONSchemaGenerator {
     if (schema._zod.parent) {
       // schema was cloned from another schema
       result.ref = schema._zod.parent;
-      // result.schema._ref = this.process(schema._zod.parent, params);
       this.process(schema._zod.parent, params);
       this.seen.get(schema._zod.parent)!.isParent = true;
     } else {
@@ -480,7 +479,6 @@ export class JSONSchemaGenerator {
         case "pipe": {
           const innerType = this.io === "input" ? def.in : def.out;
           this.process(innerType, params);
-
           result.ref = innerType;
           break;
         }
@@ -488,17 +486,14 @@ export class JSONSchemaGenerator {
           this.process(def.innerType, params);
           result.ref = def.innerType;
           _json.readOnly = true;
-
-          break;
-        }
-
-        case "promise": {
-          this.process(def.innerType, params);
-
-          result.ref = def.innerType;
           break;
         }
         // passthrough types
+        case "promise": {
+          this.process(def.innerType, params);
+          result.ref = def.innerType;
+          break;
+        }
         case "optional": {
           this.process(def.innerType, params);
           result.ref = def.innerType;
