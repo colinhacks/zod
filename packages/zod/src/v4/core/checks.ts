@@ -388,9 +388,10 @@ export const $ZodCheckBigIntFormat: core.$constructor<$ZodCheckBigIntFormat> = /
     const [minimum, maximum] = util.BIGINT_FORMAT_RANGES[def.format!];
 
     inst._zod.onattach.push((inst) => {
-      inst._zod.bag.format = def.format;
-      inst._zod.bag.minimum = minimum;
-      inst._zod.bag.maximum = maximum;
+      const bag = inst._zod.bag;
+      bag.format = def.format;
+      bag.minimum = minimum;
+      bag.maximum = maximum;
     });
 
     inst._zod.check = (payload) => {
@@ -547,9 +548,10 @@ export const $ZodCheckSizeEquals: core.$constructor<$ZodCheckSizeEquals> = /*@__
     };
 
     inst._zod.onattach.push((inst) => {
-      inst._zod.bag.minimum = def.size;
-      inst._zod.bag.maximum = def.size;
-      inst._zod.bag.size = def.size;
+      const bag = inst._zod.bag;
+      bag.minimum = def.size;
+      bag.maximum = def.size;
+      bag.size = def.size;
     });
 
     inst._zod.check = (payload) => {
@@ -699,9 +701,10 @@ export const $ZodCheckLengthEquals: core.$constructor<$ZodCheckLengthEquals> = /
     };
 
     inst._zod.onattach.push((inst) => {
-      inst._zod.bag.minimum = def.length;
-      inst._zod.bag.maximum = def.length;
-      inst._zod.bag.length = def.length;
+      const bag = inst._zod.bag;
+      bag.minimum = def.length;
+      bag.maximum = def.length;
+      bag.length = def.length;
     });
 
     inst._zod.check = (payload) => {

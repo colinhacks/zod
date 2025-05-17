@@ -251,9 +251,10 @@ export const _ZodString: core.$constructor<_ZodString> = /*@__PURE__*/ core.$con
   core.$ZodString.init(inst, def);
   ZodType.init(inst, def);
 
-  inst.format = inst._zod.bag.format ?? null;
-  inst.minLength = inst._zod.bag.minimum ?? null;
-  inst.maxLength = inst._zod.bag.maximum ?? null;
+  const bag = inst._zod.bag;
+  inst.format = bag.format ?? null;
+  inst.minLength = bag.minimum ?? null;
+  inst.maxLength = bag.maximum ?? null;
 
   // validations
   inst.regex = (...args) => inst.check(checks.regex(...args));
@@ -866,9 +867,10 @@ export const ZodBigInt: core.$constructor<ZodBigInt> = /*@__PURE__*/ core.$const
   inst.nonnegative = (params) => inst.check(checks.gte(BigInt(0), params));
   inst.multipleOf = (value, params) => inst.check(checks.multipleOf(value, params));
 
-  inst.minValue = inst._zod.bag.minimum ?? null;
-  inst.maxValue = inst._zod.bag.maximum ?? null;
-  inst.format = inst._zod.bag.format ?? null;
+  const bag = inst._zod.bag;
+  inst.minValue = bag.minimum ?? null;
+  inst.maxValue = bag.maximum ?? null;
+  inst.format = bag.format ?? null;
 });
 
 export function bigint(params?: string | core.$ZodBigIntParams): ZodBigInt {
