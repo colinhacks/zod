@@ -417,7 +417,7 @@ test("passthrough index signature", () => {
   expectTypeOf<a>().toEqualTypeOf<{ a: string }>();
   const b = a.passthrough();
   type b = z.infer<typeof b>;
-  expectTypeOf<b>().toEqualTypeOf<{ a: string } & { [k: string]: unknown }>();
+  expectTypeOf<b>().toEqualTypeOf<{ a: string; [k: string]: unknown }>();
 });
 
 // test("xor", () => {
@@ -453,4 +453,24 @@ test("null prototype", () => {
   const obj = Object.create(null);
   obj.a = "foo";
   expect(schema.parse(obj)).toEqual({ a: "foo" });
+});
+
+test("empty objects", () => {
+  const A = z.looseObject({});
+  type Ain = z.input<typeof A>;
+  expectTypeOf<Ain>().toEqualTypeOf<Record<string, unknown>>();
+  type Aout = z.output<typeof A>;
+  expectTypeOf<Aout>().toEqualTypeOf<Record<string, unknown>>();
+
+  const B = z.object({});
+  type Bout = z.output<typeof B>;
+  expectTypeOf<Bout>().toEqualTypeOf<Record<string, never>>();
+  type Bin = z.input<typeof B>;
+  expectTypeOf<Bin>().toEqualTypeOf<Record<string, never>>();
+
+  const C = z.strictObject({});
+  type Cout = z.output<typeof C>;
+  expectTypeOf<Cout>().toEqualTypeOf<Record<string, never>>();
+  type Cin = z.input<typeof C>;
+  expectTypeOf<Cin>().toEqualTypeOf<Record<string, never>>();
 });

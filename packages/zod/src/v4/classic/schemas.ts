@@ -1055,37 +1055,33 @@ export function keyof<T extends ZodObject>(schema: T): ZodLiteral<keyof T["_zod"
 }
 
 // ZodObject
+
 export interface ZodObject<
   // @ts-ignore cast variance
   out Shape extends core.$ZodShape = core.$ZodLooseShape,
-  OutExtra extends Record<string, unknown> = Record<string, unknown>,
-  InExtra extends Record<string, unknown> = Record<string, unknown>,
+  out Config extends core.$ZodObjectConfig = core.$ZodObjectConfig,
 > extends ZodType {
-  _zod: core.$ZodObjectInternals<Shape, OutExtra, InExtra>;
+  _zod: core.$ZodObjectInternals<Shape, Config>;
   shape: Shape;
 
   keyof(): ZodEnum<util.ToEnum<keyof Shape & string>>;
   /** Define a schema to validate all unrecognized keys. This overrides the existing strict/loose behavior. */
-  catchall<T extends core.$ZodType>(schema: T): ZodObject<Shape, Record<string, T["_zod"]["output"]>>;
+  catchall<T extends core.$ZodType>(schema: T): ZodObject<Shape, core.$catchall<T>>;
 
   /** @deprecated Use `z.looseObject()` or `.loose()` instead. */
-  passthrough(): ZodObject<Shape, Record<string, unknown>>;
+  passthrough(): ZodObject<Shape, core.$loose>;
   /** Consider `z.looseObject(A.shape)` instead */
-  loose(): ZodObject<Shape, Record<string, unknown>>;
+  loose(): ZodObject<Shape, core.$loose>;
 
   /** Consider `z.strictObject(A.shape)` instead */
-  strict(): ZodObject<Shape, {}>;
+  strict(): ZodObject<Shape, core.$strict>;
 
   /** This is the default behavior. This method call is likely unnecessary. */
-  strip(): ZodObject<Shape, {}>;
+  strip(): ZodObject<Shape, core.$strict>;
 
   extend<U extends core.$ZodLooseShape & Partial<Record<keyof Shape, core.$ZodType>>>(
     shape: U
-  ): ZodObject<
-    util.Extend<Shape, U>,
-    OutExtra,
-    InExtra // & B['_zod']["extra"]
-  >;
+  ): ZodObject<util.Extend<Shape, U>, Config>;
 
   /**
    * @deprecated Use destructuring to merge the shapes:
@@ -1097,24 +1093,21 @@ export interface ZodObject<
    * });
    * ```
    */
-  merge<U extends ZodObject>(
-    other: U
-  ): ZodObject<util.Extend<Shape, U["shape"]>, U["_zod"]["outextra"], U["_zod"]["inextra"]>;
+  merge<U extends ZodObject>(other: U): ZodObject<util.Extend<Shape, U["shape"]>, U["_zod"]["config"]>;
 
   pick<M extends util.Exactly<util.Mask<keyof Shape>, M>>(
     mask: M
-  ): ZodObject<util.Flatten<Pick<Shape, Extract<keyof Shape, keyof M>>>, OutExtra, InExtra>;
+  ): ZodObject<util.Flatten<Pick<Shape, Extract<keyof Shape, keyof M>>>, Config>;
 
   omit<M extends util.Exactly<util.Mask<keyof Shape>, M>>(
     mask: M
-  ): ZodObject<util.Flatten<Omit<Shape, Extract<keyof Shape, keyof M>>>, OutExtra, InExtra>;
+  ): ZodObject<util.Flatten<Omit<Shape, Extract<keyof Shape, keyof M>>>, Config>;
 
   partial(): ZodObject<
     {
       [k in keyof Shape]: ZodOptional<Shape[k]>;
     },
-    OutExtra,
-    InExtra
+    Config
   >;
   partial<M extends util.Exactly<util.Mask<keyof Shape>, M>>(
     mask: M
@@ -1122,8 +1115,7 @@ export interface ZodObject<
     {
       [k in keyof Shape]: k extends keyof M ? ZodOptional<Shape[k]> : Shape[k];
     },
-    OutExtra,
-    InExtra
+    Config
   >;
 
   // required
@@ -1131,8 +1123,7 @@ export interface ZodObject<
     {
       [k in keyof Shape]: ZodNonOptional<Shape[k]>;
     },
-    OutExtra,
-    InExtra
+    Config
   >;
   required<M extends util.Exactly<util.Mask<keyof Shape>, M>>(
     mask: M
@@ -1140,8 +1131,7 @@ export interface ZodObject<
     {
       [k in keyof Shape]: k extends keyof M ? ZodNonOptional<Shape[k]> : Shape[k];
     },
-    OutExtra,
-    InExtra
+    Config
   >;
 }
 
@@ -1173,7 +1163,7 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
 export function object<T extends core.$ZodLooseShape = Partial<Record<never, core.$ZodType>>>(
   shape?: T,
   params?: string | core.$ZodObjectParams
-): ZodObject<util.Writeable<T> & {}, {}, {}> {
+): ZodObject<util.Writeable<T> & {}, core.$strip> {
   const def: core.$ZodObjectDef = {
     type: "object",
 
@@ -1192,7 +1182,7 @@ export function object<T extends core.$ZodLooseShape = Partial<Record<never, cor
 export function strictObject<T extends core.$ZodLooseShape>(
   shape: T,
   params?: string | core.$ZodObjectParams
-): ZodObject<T, {}, {}> {
+): ZodObject<T, core.$strict> {
   return new ZodObject({
     type: "object",
 
@@ -1207,10 +1197,11 @@ export function strictObject<T extends core.$ZodLooseShape>(
 }
 
 // looseObject
+
 export function looseObject<T extends core.$ZodLooseShape>(
   shape: T,
   params?: string | core.$ZodObjectParams
-): ZodObject<T, { [k: string]: unknown }, { [k: string]: unknown }> {
+): ZodObject<T, core.$loose> {
   return new ZodObject({
     type: "object",
 

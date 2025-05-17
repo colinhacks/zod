@@ -21,7 +21,7 @@ test("object intersection: loose", () => {
 
   const C = z.intersection(A, B); // BaseC.merge(HasID);
   type C = z.infer<typeof C>;
-  expectTypeOf<C>().toEqualTypeOf<{ a: string } & { b: string } & Record<string, unknown>>();
+  expectTypeOf<C>().toEqualTypeOf<{ a: string; [x: string]: unknown } & { b: string }>();
   const data = { a: "foo", b: "foo", c: "extra" };
   expect(C.parse(data)).toEqual(data);
   expect(() => C.parse({ a: "foo" })).toThrow();

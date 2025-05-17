@@ -93,7 +93,7 @@ test("omit - remove optional", () => {
 test("nonstrict inference", () => {
   const laxfish = fish.pick({ name: true }).catchall(z.any());
   type laxfish = z.infer<typeof laxfish>;
-  expectTypeOf<laxfish>().toEqualTypeOf<{ name: string } & { [k: string]: any }>();
+  expectTypeOf<laxfish>().toEqualTypeOf<{ name: string; [k: string]: any }>();
 });
 
 test("nonstrict parsing - pass", () => {

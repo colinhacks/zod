@@ -1565,20 +1565,18 @@ export interface $ZodObjectDef<Shape extends $ZodShape = $ZodShape> extends $Zod
 export interface $ZodObjectInternals<
   // @ts-ignore Cast variance
   out Shape extends Readonly<$ZodShape> = Readonly<$ZodShape>,
-  out OutExtra extends Record<string, unknown> = Record<string, unknown>,
-  out InExtra extends Record<string, unknown> = Record<string, unknown>,
+  out Config extends $ZodObjectConfig = $ZodObjectConfig,
 > extends $ZodTypeInternals<any, any> {
   def: $ZodObjectDef<Shape>;
-  outextra: OutExtra;
-  inextra: InExtra;
+  config: Config;
   isst: errors.$ZodIssueInvalidType | errors.$ZodIssueUnrecognizedKeys;
   disc: util.DiscriminatorMap;
 
   // special keys only used for objects
   // not defined on $ZodTypeInternals (base interface) because it breaks cyclical inference
   // the z.infer<> util checks for these first when extracting inferred type
-  "~output": $InferObjectOutput<Shape, OutExtra>;
-  "~input": $InferObjectInput<Shape, InExtra>;
+  "~output": $InferObjectOutput<Shape, Config["out"]>;
+  "~input": $InferObjectInput<Shape, Config["in"]>;
 }
 export type $ZodLooseShape = Record<string, any>;
 
@@ -1587,26 +1585,25 @@ type OptionalInSchema = { _zod: { optionality: "defaulted" | "optional" } };
 
 export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = string extends keyof T
   ? object
-  : keyof T extends never
+  : keyof (T & Extra) extends never
     ? Record<string, never>
     : util.Prettify<
         {
           -readonly [k in keyof T as T[k] extends OptionalOutSchema ? never : k]: core.output<T[k]>;
         } & {
           -readonly [k in keyof T as T[k] extends OptionalOutSchema ? k : never]?: core.output<T[k]>;
-        }
-      > &
-        Extra;
+        } & Extra
+      >;
 
 export type $InferObjectInput<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = string extends keyof T
   ? object
-  : keyof T extends never
+  : keyof (T & Extra) extends never
     ? Record<string, never>
     : util.Prettify<
         {
-          [k in keyof T as T[k] extends OptionalInSchema ? never : k]: core.input<T[k]>;
+          -readonly [k in keyof T as T[k] extends OptionalInSchema ? never : k]: core.input<T[k]>;
         } & {
-          [k in keyof T as T[k] extends OptionalInSchema ? k : never]?: core.input<T[k]>;
+          -readonly [k in keyof T as T[k] extends OptionalInSchema ? k : never]?: core.input<T[k]>;
         } & Extra
       >;
 
@@ -1641,13 +1638,32 @@ function handleOptionalObjectResult(result: ParsePayload, final: ParsePayload, k
   }
 }
 
+export type $ZodObjectConfig = { out: Record<string, unknown>; in: Record<string, unknown> };
+
+export type $loose = {
+  out: Record<string, unknown>;
+  in: Record<string, unknown>;
+};
+export type $strict = {
+  out: {};
+  in: {};
+};
+export type $strip = {
+  out: {};
+  in: {};
+};
+export type $catchall<T extends $ZodType> = {
+  out: { [k: string]: core.output<T> };
+  in: { [k: string]: core.input<T> };
+};
 export interface $ZodObject<
   // @ts-ignore Cast variance
   out Shape extends Readonly<$ZodShape> = Readonly<$ZodShape>,
-  out OutExtra extends Record<string, unknown> = Record<string, unknown>,
-  out InExtra extends Record<string, unknown> = Record<string, unknown>,
+  out Params extends $ZodObjectConfig = $ZodObjectConfig,
+  // out OutExtra extends Record<string, unknown> = Record<string, unknown>,
+  // out InExtra extends Record<string, unknown> = Record<string, unknown>,
 > extends $ZodType {
-  _zod: $ZodObjectInternals<Shape, OutExtra, InExtra>;
+  _zod: $ZodObjectInternals<Shape, Params>;
 }
 
 export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$constructor("$ZodObject", (inst, def) => {
