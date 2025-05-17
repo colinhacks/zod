@@ -4364,7 +4364,7 @@ export class ZodLooseEnum<T extends [string, ...string[]]> extends ZodType<
         expected: ZodParsedType.string,
         received: parsedType,
       });
-      return { status: "aborted" };
+      return INVALID;
     }
 
     return { status: "valid", value: input.data };
