@@ -1,5 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
+// @ts-ignore TS6133
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 
 import { util } from "../helpers/util";
