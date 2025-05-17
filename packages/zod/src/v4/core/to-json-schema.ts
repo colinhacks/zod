@@ -582,17 +582,15 @@ export class JSONSchemaGenerator {
       return { defId, ref: defUriPrefix + defId };
     };
 
-    // adds
     const extractToDef = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): void => {
       if (entry[1].schema.$ref) {
-        // throw new Error("Already extracted");
         return;
       }
       const seen = entry[1];
       const { ref, defId } = makeURI(entry);
-      // defId won't be set if the schema is a reference to an external schema
 
       seen.def = { ...seen.schema };
+      // defId won't be set if the schema is a reference to an external schema
       if (defId) seen.defId = defId;
       // wipe away all properties except $ref
       const schema = seen.schema;
