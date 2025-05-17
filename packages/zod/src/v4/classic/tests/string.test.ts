@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { expect, test } from "vitest";
 
 import * as z from "zod/v4";
@@ -207,22 +208,22 @@ test("base64url validations", () => {
 
   const validBase64URLStrings = [
     "SGVsbG8gV29ybGQ", // "Hello World"
-    "SGVsbG8gV29ybGQ=", // "Hello World" with padding
+
     "VGhpcyBpcyBhbiBlbmNvZGVkIHN0cmluZw", // "This is an encoded string"
-    "VGhpcyBpcyBhbiBlbmNvZGVkIHN0cmluZw==", // "This is an encoded string" with padding
+
     "TWFueSBoYW5kcyBtYWtlIGxpZ2h0IHdvcms", // "Many hands make light work"
-    "TWFueSBoYW5kcyBtYWtlIGxpZ2h0IHdvcms=", // "Many hands make light work" with padding
+
     "UGF0aWVuY2UgaXMgdGhlIGtleSB0byBzdWNjZXNz", // "Patience is the key to success"
     "QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg", // "Base64 encoding is fun"
-    "QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // "Base64 encoding is fun" with padding
+
     "MTIzNDU2Nzg5MA", // "1234567890"
-    "MTIzNDU2Nzg5MA==", // "1234567890" with padding
+
     "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo", // "abcdefghijklmnopqrstuvwxyz"
-    "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo=", // "abcdefghijklmnopqrstuvwxyz with padding"
+
     "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo", // "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo=", // "ABCDEFGHIJKLMNOPQRSTUVWXYZ" with padding
+
     "ISIkJSMmJyonKCk", // "!\"#$%&'()*"
-    "ISIkJSMmJyonKCk=", // "!\"#$%&'()*" with padding
+
     "", // Empty string is technically valid base64url
     "w7_Dv8O-w74K", // ÿÿþþ
     "123456",
@@ -239,11 +240,28 @@ test("base64url validations", () => {
     "!UGF0aWVuY2UgaXMgdGhlIGtleSB0byBzdWNjZXNz", // Invalid character '!'
     "?QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // Invalid character '?'
     ".MTIzND2Nzg5MC4=", // Invalid character '.'
+
+    // disallow valid padding
+    "SGVsbG8gV29ybGQ=", // "Hello World" with padding
+    "VGhpcyBpcyBhbiBlbmNvZGVkIHN0cmluZw==", // "This is an encoded string" with padding
+    "TWFueSBoYW5kcyBtYWtlIGxpZ2h0IHdvcms=", // "Many hands make light work" with padding
+    "QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // "Base64 encoding is fun" with padding
+    "MTIzNDU2Nzg5MA==", // "1234567890" with padding
+    "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo=", // "abcdefghijklmnopqrstuvwxyz with padding"
+    "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo=", // "ABCDEFGHIJKLMNOPQRSTUVWXYZ" with padding
+    "ISIkJSMmJyonKCk=", // "!\"#$%&'()*" with padding
   ];
 
   for (const str of invalidBase64URLStrings) {
     expect(str + base64url.safeParse(str).success).toBe(`${str}false`);
   }
+});
+
+test("big base64 and base64url", () => {
+  const bigbase64 = randomBytes(1024 * 1024 * 10).toString("base64");
+  z.base64().parse(bigbase64);
+  const bigbase64url = randomBytes(1024 * 1024 * 10).toString("base64url");
+  z.base64url().parse(bigbase64url);
 });
 
 test("jwt token", () => {

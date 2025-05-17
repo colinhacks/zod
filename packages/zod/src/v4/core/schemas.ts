@@ -810,6 +810,16 @@ export const $ZodCIDRv6: core.$constructor<$ZodCIDRv6> = /*@__PURE__*/ core.$con
 // });
 
 //////////////////////////////   ZodBase64   //////////////////////////////
+export function isValidBase64(data: string): boolean {
+  if (data === "") return true;
+  if (data.length % 4 !== 0) return false;
+  try {
+    atob(data);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export interface $ZodBase64Def extends $ZodStringFormatDef<"base64"> {}
 export interface $ZodBase64Internals extends $ZodStringFormatInternals<"base64"> {}
@@ -827,10 +837,27 @@ export const $ZodBase64: core.$constructor<$ZodBase64> = /*@__PURE__*/ core.$con
     inst._zod.onattach.push((inst) => {
       inst._zod.computed.contentEncoding = "base64";
     });
+
+    inst._zod.check = (payload) => {
+      if (isValidBase64(payload.value)) return;
+
+      payload.issues.push({
+        code: "invalid_format",
+        format: "base64",
+        input: payload.value,
+        inst,
+      });
+    };
   }
 );
 
 //////////////////////////////   ZodBase64   //////////////////////////////
+export function isValidBase64URL(data: string): boolean {
+  if (!regexes.base64url.test(data)) return false;
+  const base64 = data.replace(/[-_]/g, (c) => (c === "-" ? "+" : "/"));
+  const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+  return isValidBase64(padded);
+}
 
 export interface $ZodBase64URLDef extends $ZodStringFormatDef<"base64url"> {}
 export interface $ZodBase64URLInternals extends $ZodStringFormatInternals<"base64url"> {}
@@ -848,6 +875,17 @@ export const $ZodBase64URL: core.$constructor<$ZodBase64URL> = /*@__PURE__*/ cor
     inst._zod.onattach.push((inst) => {
       inst._zod.computed.contentEncoding = "base64url";
     });
+
+    inst._zod.check = (payload) => {
+      if (isValidBase64URL(payload.value)) return;
+
+      payload.issues.push({
+        code: "invalid_format",
+        format: "base64url",
+        input: payload.value,
+        inst,
+      });
+    };
   }
 );
 
