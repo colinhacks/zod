@@ -1262,12 +1262,12 @@ export interface $ZodTypeDiscriminable extends ZodType {
   _zod: $ZodTypeDiscriminableInternals;
 }
 
-export function discriminatedUnion<Types extends [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]]>(
+export function discriminatedUnion<Types extends readonly [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]]>(
   disc: string,
   options: Types,
   params?: string | core.$ZodDiscriminatedUnionParams
 ): ZodDiscriminatedUnion<Types>;
-export function discriminatedUnion<Types extends [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]]>(
+export function discriminatedUnion<Types extends readonly [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]]>(
   options: Types,
   params?: string | core.$ZodDiscriminatedUnionParams
 ): ZodDiscriminatedUnion<Types>;

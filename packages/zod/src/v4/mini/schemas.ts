@@ -896,7 +896,7 @@ export interface $ZodTypeDiscriminable extends ZodMiniType {
   _zod: $ZodTypeDiscriminableInternals;
 }
 
-export function discriminatedUnion<Types extends [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]]>(
+export function discriminatedUnion<Types extends readonly [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]]>(
   options: Types,
   params?: string | core.$ZodDiscriminatedUnionParams
 ): ZodMiniDiscriminatedUnion<Types> {

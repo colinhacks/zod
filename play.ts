@@ -2,4 +2,11 @@ import { z } from "zod/v4";
 
 z;
 
-z.number().gte(Number.MIN_SAFE_INTEGER).lte(Number.MAX_SAFE_INTEGER);
+type Element = [string, ElementList];
+type ElementList = (Element | string)[];
+
+const ZodElement: z.ZodType<Element> = z.lazy(() => z.tuple([z.string(), ZodElementList]));
+
+const ZodElementList: z.ZodType<ElementList> = z.lazy(() => z.array(z.union([z.string(), ZodElement])));
+
+console.dir(ZodElementList.parse([]), { depth: null });

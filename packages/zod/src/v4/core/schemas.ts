@@ -1950,21 +1950,20 @@ function handleUnionResults(results: ParsePayload[], final: ParsePayload, inst: 
 export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$constructor("$ZodUnion", (inst, def) => {
   $ZodType.init(inst, def);
 
-  const values = new Set<util.Primitive>();
-  if (def.options.every((o) => o._zod.values)) {
-    for (const option of def.options) {
-      for (const v of option._zod.values!) {
-        values.add(v);
-      }
+  util.defineLazy(inst._zod, "values", () => {
+    if (def.options.every((o) => o._zod.values)) {
+      return new Set<util.Primitive>(def.options.flatMap((option) => Array.from(option._zod.values!)));
     }
-    inst._zod.values = values;
-  }
+    return undefined;
+  });
 
-  // bag union regex for pattern if all options have pattern
-  if (def.options.every((o) => o._zod.pattern)) {
-    const patterns = def.options.map((o) => o._zod.pattern);
-    inst._zod.pattern = new RegExp(`^(${patterns.map((p) => util.cleanRegex(p!.source)).join("|")})$`);
-  }
+  util.defineLazy(inst._zod, "pattern", () => {
+    if (def.options.every((o) => o._zod.pattern)) {
+      const patterns = def.options.map((o) => o._zod.pattern);
+      return new RegExp(`^(${patterns.map((p) => util.cleanRegex(p!.source)).join("|")})$`);
+    }
+    return undefined;
+  });
 
   inst._zod.parse = (payload, ctx) => {
     const async = false;
@@ -2051,32 +2050,35 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
     $ZodUnion.init(inst, def);
 
     const _super = inst._zod.parse;
-    const _disc: util.DiscriminatorMap = new Map();
-    for (const el of def.options) {
-      const subdisc = el._zod.disc;
-      if (!subdisc) throw new Error(`Invalid discriminated union option at index "${def.options.indexOf(el)}"`);
-      for (const [key, o] of subdisc) {
-        if (!_disc.has(key))
-          _disc.set(key, {
-            values: new Set(),
-            maps: [],
-          });
-        const _o = _disc.get(key)!;
-        for (const v of o.values) {
-          // Removed to account for unions of unions
-          // Some schemas may have the same discriminator value in this case
-          _o.values.add(v);
+    util.defineLazy(inst._zod, "disc", () => {
+      const _disc: util.DiscriminatorMap = new Map();
+      for (const el of def.options) {
+        const subdisc = el._zod.disc;
+        if (!subdisc) throw new Error(`Invalid discriminated union option at index "${def.options.indexOf(el)}"`);
+        for (const [key, o] of subdisc) {
+          if (!_disc.has(key))
+            _disc.set(key, {
+              values: new Set(),
+              maps: [],
+            });
+          const _o = _disc.get(key)!;
+          for (const v of o.values) {
+            _o.values.add(v);
+          }
+          for (const m of o.maps) _o.maps.push(m);
         }
-        for (const m of o.maps) _o.maps.push(m);
       }
-    }
-    inst._zod.disc = _disc;
+      return _disc;
+    });
 
-    const subdiscs = def.options.map((o) => o._zod.disc!);
-    const discKeys = [...inst._zod.disc.keys()].filter((k) => subdiscs.every((d) => d.has(k)));
-    if (discKeys.length === 0) {
-      throw new Error(`Invalid discriminated union: no shared discriminator key: ${discKeys.join(", ")}`);
-    }
+    const _discKeys = util.cached(() => {
+      const subdiscs = def.options.map((o) => o._zod.disc!);
+      const discKeys = [...inst._zod.disc.keys()].filter((k) => subdiscs.every((d) => d.has(k)));
+      if (discKeys.length === 0) {
+        throw new Error(`Invalid discriminated union: no shared discriminator key: ${discKeys.join(", ")}`);
+      }
+      return discKeys;
+    });
 
     inst._zod.parse = (payload, ctx) => {
       const input = payload.value;
@@ -2091,7 +2093,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
       }
 
       const filteredOptions: $ZodType[] = [];
-      for (const k of discKeys) {
+      for (const k of _discKeys.value) {
         let matched = false;
         for (const option of def.options) {
           if (matchDiscriminatorAtKey(input, k, option._zod.disc!.get(k)!)) {
