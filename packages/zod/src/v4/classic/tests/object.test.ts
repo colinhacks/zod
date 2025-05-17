@@ -474,3 +474,20 @@ test("empty objects", () => {
   type Cin = z.input<typeof C>;
   expectTypeOf<Cin>().toEqualTypeOf<Record<string, never>>();
 });
+
+test("preserve key order", () => {
+  const schema = z.object({
+    a: z.string().optional(),
+    b: z.string(),
+  });
+  const r1 = schema.safeParse({ a: "asdf", b: "qwer" });
+  const r2 = schema.safeParse({ a: "asdf", b: "qwer" }, { jitless: true });
+
+  expect(Object.keys(r1.data!)).toMatchInlineSnapshot(`
+    [
+      "a",
+      "b",
+    ]
+  `);
+  expect(Object.keys(r1.data!)).toEqual(Object.keys(r2.data!));
+});

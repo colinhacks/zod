@@ -1676,8 +1676,6 @@ export interface $ZodObject<
   // @ts-ignore Cast variance
   out Shape extends Readonly<$ZodShape> = Readonly<$ZodShape>,
   out Params extends $ZodObjectConfig = $ZodObjectConfig,
-  // out OutExtra extends Record<string, unknown> = Record<string, unknown>,
-  // out InExtra extends Record<string, unknown> = Record<string, unknown>,
 > extends $ZodType {
   _zod: $ZodObjectInternals<Shape, Params>;
 }
@@ -1727,46 +1725,35 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       return `shape[${k}]._zod.run({ value: input[${k}], issues: [] }, ctx)`;
     };
 
-    // doc.write(`const shape = inst._zod.def.shape;`);
     doc.write(`const input = payload.value;`);
 
     const ids: any = Object.create(null);
     for (const key of keys) {
       ids[key] = util.randomString(15);
     }
-    for (const key of keys) {
-      if (optionalKeys.has(key)) continue;
-      const id = ids[key];
-      doc.write(`const ${id} = ${parseStr(key)};`);
-      doc.write(`
-          if (${id}.issues.length) payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
-            ...iss,
-            path: iss.path ? [${util.esc(key)}, ...iss.path] : [${util.esc(key)}]
-          })));`);
-    }
+    // for (const key of keys) {
+    //   if (optionalKeys.has(key)) continue;
+    //   const id = ids[key];
+    //   doc.write(`const ${id} = ${parseStr(key)};`);
+    //   doc.write(`
+    //       if (${id}.issues.length) payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
+    //         ...iss,
+    //         path: iss.path ? [${util.esc(key)}, ...iss.path] : [${util.esc(key)}]
+    //       })));`);
+    // }
 
-    doc.write(`payload.value = {`);
-    doc.indented(() => {
-      for (const key of keys) {
-        if (optionalKeys.has(key)) continue;
+    // A: preserve key order {
+    doc.write(`const newResult = {}`);
+    for (const key of keys) {
+      if (optionalKeys.has(key)) {
         const id = ids[key];
-        doc.write(`  ${util.esc(key)}: ${id}.value,`);
-      }
-    });
-    doc.write(`}`);
-
-    // NEW: always run validation
-    // this lets default values get applied to optionals
-    for (const key of keys) {
-      if (!optionalKeys.has(key)) continue;
-      const id = ids[key];
-      doc.write(`const ${id} = ${parseStr(key)};`);
-      const k = util.esc(key);
-      doc.write(`
+        doc.write(`const ${id} = ${parseStr(key)};`);
+        const k = util.esc(key);
+        doc.write(`
         if (${id}.issues.length) {
           if (input[${k}] === undefined) {
             if (${k} in input) {
-              payload.value[${k}] = undefined;
+              newResult[${k}] = undefined;
             }
           } else {
             payload.issues = payload.issues.concat(
@@ -1777,14 +1764,64 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
             );
           }
         } else if (${id}.value === undefined) {
-          if (${k} in input) payload.value[${k}] = undefined;
+          if (${k} in input) newResult[${k}] = undefined;
         } else {
-          if (${k} in input) payload.value[${k}] = ${id}.value;
+          if (${k} in input) newResult[${k}] = ${id}.value;
         }
-          
         `);
+      } else {
+        const id = ids[key];
+        //  const id = ids[key];
+        doc.write(`const ${id} = ${parseStr(key)};`);
+        doc.write(`
+          if (${id}.issues.length) payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
+            ...iss,
+            path: iss.path ? [${util.esc(key)}, ...iss.path] : [${util.esc(key)}]
+          })));`);
+        doc.write(`newResult[${util.esc(key)}] = ${id}.value`);
+      }
     }
 
+    // B: one-shot payload.value
+    // doc.write(`const newResult = {`);
+    // doc.indented(() => {
+    //   for (const key of keys) {
+    //     if (optionalKeys.has(key)) continue;
+    //     const id = ids[key];
+    //     doc.write(`  ${util.esc(key)}: ${id}.value,`);
+    //   }
+    // });
+    // doc.write(`}`);
+
+    // NEW: always run validation
+    // this lets default values get applied to optionals
+    // for (const key of keys) {
+    //   if (!optionalKeys.has(key)) continue;
+    //   const id = ids[key];
+    //   doc.write(`const ${id} = ${parseStr(key)};`);
+    //   const k = util.esc(key);
+    //   doc.write(`
+    //     if (${id}.issues.length) {
+    //       if (input[${k}] === undefined) {
+    //         if (${k} in input) {
+    //           newResult[${k}] = undefined;
+    //         }
+    //       } else {
+    //         payload.issues = payload.issues.concat(
+    //           ${id}.issues.map((iss) => ({
+    //             ...iss,
+    //             path: iss.path ? [${k}, ...iss.path] : [${k}],
+    //           }))
+    //         );
+    //       }
+    //     } else if (${id}.value === undefined) {
+    //       if (${k} in input) newResult[${k}] = undefined;
+    //     } else {
+    //       if (${k} in input) newResult[${k}] = ${id}.value;
+    //     }
+    //     `);
+    // }
+    doc.write(`payload.value = newResult;`);
     doc.write(`return payload;`);
     const fn = doc.compile();
     return (payload: any, ctx: any) => fn(shape, payload, ctx);
