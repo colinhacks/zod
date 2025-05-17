@@ -3227,6 +3227,8 @@ const getDiscriminator = <T extends ZodTypeAny>(type: T): Primitive[] => {
     return [type.value];
   } else if (type instanceof ZodEnum) {
     return type.options;
+  } else if (type instanceof ZodLooseEnum) {
+    return type.options;
   } else if (type instanceof ZodNativeEnum) {
     // eslint-disable-next-line ban/ban
     return util.objectValues(type.enum as any);
@@ -4271,7 +4273,7 @@ export class ZodLiteral<T> extends ZodType<T, ZodLiteralDef<T>, T> {
       });
       return INVALID;
     }
-    return { status: "valid", value: input.data };
+    return OK(input.data);
   }
 
   get value() {
@@ -4350,7 +4352,7 @@ export interface ZodLooseEnumDef<T extends [string, ...string[]]>
 }
 
 export class ZodLooseEnum<T extends [string, ...string[]]> extends ZodType<
-  T[number],
+  string,
   ZodLooseEnumDef<T>,
   string
 > {
@@ -4367,17 +4369,21 @@ export class ZodLooseEnum<T extends [string, ...string[]]> extends ZodType<
       return INVALID;
     }
 
-    return { status: "valid", value: input.data };
+    return OK(input.data);
   }
 
   get options(): T {
     return this._def.values;
   }
 
-  static create<T extends [string, ...string[]]>(values: T): ZodLooseEnum<T> {
+  static create<T extends [string, ...string[]]>(
+    values: T,
+    params?: RawCreateParams
+  ): ZodLooseEnum<T> {
     return new ZodLooseEnum({
       values,
       typeName: ZodFirstPartyTypeKind.ZodLooseEnum,
+      ...processCreateParams(params),
     });
   }
 }
@@ -5081,7 +5087,7 @@ export class ZodNaN extends ZodType<number, ZodNaNDef, number> {
       return INVALID;
     }
 
-    return { status: "valid", value: input.data };
+    return OK(input.data);
   }
 
   static create = (params?: RawCreateParams): ZodNaN => {

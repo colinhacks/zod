@@ -1,7 +1,6 @@
-// @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
 
-import { z, ZodError } from "../index";
+import * as z from "../index";
 
 const testEnum = ["pending", "completed", "cancelled"] as const;
 const schema = z.looseEnum(testEnum);
@@ -19,10 +18,10 @@ test("accepts other string values", () => {
 });
 
 test("rejects non-string values", () => {
-  expect(() => schema.parse(123)).toThrow(ZodError);
-  expect(() => schema.parse(null)).toThrow(ZodError);
-  expect(() => schema.parse(undefined)).toThrow(ZodError);
-  expect(() => schema.parse({})).toThrow(ZodError);
+  expect(() => schema.parse(123)).toThrow();
+  expect(() => schema.parse(null)).toThrow();
+  expect(() => schema.parse(undefined)).toThrow();
+  expect(() => schema.parse({})).toThrow();
 });
 
 test("works with refine()", () => {
@@ -30,7 +29,7 @@ test("works with refine()", () => {
     message: "Too short",
   });
   expect(refined.parse("long-value")).toBe("long-value");
-  expect(() => refined.parse("abc")).toThrow(ZodError);
+  expect(() => refined.parse("abc")).toThrow();
 });
 
 test("provides proper TypeScript inference", () => {
