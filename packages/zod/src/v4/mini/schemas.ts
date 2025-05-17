@@ -1509,7 +1509,9 @@ function _instanceof<T extends typeof Class>(
     error: `Input not instance of ${cls.name}`,
   }
 ): ZodMiniCustom<InstanceType<T>> {
-  return custom((data) => data instanceof cls, params);
+  const inst = custom((data) => data instanceof cls, params);
+  inst._zod.bag.Class = cls;
+  return inst as any;
 }
 export { _instanceof as instanceof };
 

@@ -2015,13 +2015,15 @@ function _instanceof<T extends typeof util.Class>(
     error: `Input not instance of ${cls.name}`,
   }
 ): ZodCustom<InstanceType<T>> {
-  return new ZodCustom({
+  const inst = new ZodCustom({
     type: "custom",
     check: "custom",
     fn: (data) => data instanceof cls,
     abort: true,
     ...(util.normalizeParams(params) as any),
-  }) as any;
+  });
+  inst._zod.bag.Class = cls;
+  return inst as any;
 }
 export { _instanceof as instanceof };
 
