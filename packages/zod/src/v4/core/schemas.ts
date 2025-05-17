@@ -29,6 +29,7 @@ export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> ex
 export interface ParsePayload<T = unknown> {
   value: T;
   issues: errors.$ZodRawIssue[];
+  path: (string | number)[];
 }
 
 export type CheckFn<T> = (input: ParsePayload<T>) => util.MaybeAsync<void>;
@@ -1543,6 +1544,7 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
         {
           value: item,
           issues: [],
+          path: [...payload.path, i],
         },
         ctx
       );
@@ -1801,7 +1803,8 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
   const jit = !core.globalConfig.jitless;
   const allowsEval = util.allowsEval;
 
-  const fastEnabled = jit && allowsEval.value; // && !def.catchall;
+  // const fastEnabled = jit && allowsEval.value; // && !def.catchall;
+  const fastEnabled = false;
   const { catchall } = def;
 
   let value!: typeof _normalized.value;
@@ -1845,7 +1848,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
         //   });
         // }
 
-        const r = el._zod.run({ value: input[key], issues: [] }, ctx);
+        const r = el._zod.run({ value: input[key], issues: [], path: [...payload.path, key.toString()] }, ctx);
         const isOptional = el._zod.optionality === "optional";
 
         if (r instanceof Promise) {
@@ -1879,7 +1882,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
         unrecognized.push(key);
         continue;
       }
-      const r = _catchall.run({ value: input[key], issues: [] }, ctx);
+      const r = _catchall.run({ value: input[key], issues: [], path: [...payload.path, key.toString()] }, ctx);
 
       if (r instanceof Promise) {
         proms.push(r.then((r) => handleObjectResult(r, payload, key)));
@@ -1974,6 +1977,7 @@ export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$const
         {
           value: payload.value,
           issues: [],
+          path: payload.path,
         },
         ctx
       );
@@ -2154,8 +2158,8 @@ export const $ZodIntersection: core.$constructor<$ZodIntersection> = /*@__PURE__
 
     inst._zod.parse = (payload, ctx) => {
       const { value: input } = payload;
-      const left = def.left._zod.run({ value: input, issues: [] }, ctx);
-      const right = def.right._zod.run({ value: input, issues: [] }, ctx);
+      const left = def.left._zod.run({ value: input, issues: [], path: payload.path }, ctx);
+      const right = def.right._zod.run({ value: input, issues: [], path: payload.path }, ctx);
       const async = left instanceof Promise || right instanceof Promise;
 
       if (async) {
@@ -2350,6 +2354,7 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
         {
           value: input[i],
           issues: [],
+          path: [...payload.path, i],
         },
         ctx
       );
@@ -2369,6 +2374,7 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
           {
             value: el,
             issues: [],
+            path: [...payload.path, i],
           },
           ctx
         );
@@ -2468,7 +2474,10 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       payload.value = {};
       for (const key of values) {
         if (typeof key === "string" || typeof key === "number" || typeof key === "symbol") {
-          const result = def.valueType._zod.run({ value: input[key], issues: [] }, ctx);
+          const result = def.valueType._zod.run(
+            { value: input[key], issues: [], path: [...payload.path, key.toString()] },
+            ctx
+          );
 
           if (result instanceof Promise) {
             proms.push(
@@ -2507,7 +2516,10 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       payload.value = {};
       for (const key of Reflect.ownKeys(input)) {
         if (key === "__proto__") continue;
-        const keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
+        const keyResult = def.keyType._zod.run(
+          { value: key, issues: [], path: [...payload.path, key.toString()] },
+          ctx
+        );
 
         if (keyResult instanceof Promise) {
           throw new Error("Async schemas not supported in object keys currently");
@@ -2526,7 +2538,10 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
           continue;
         }
 
-        const result = def.valueType._zod.run({ value: input[key], issues: [] }, ctx);
+        const result = def.valueType._zod.run(
+          { value: input[key], issues: [], path: [...payload.path, key.toString()] },
+          ctx
+        );
 
         if (result instanceof Promise) {
           proms.push(
@@ -2595,8 +2610,11 @@ export const $ZodMap: core.$constructor<$ZodMap> = /*@__PURE__*/ core.$construct
     payload.value = new Map();
 
     for (const [key, value] of input) {
-      const keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
-      const valueResult = def.valueType._zod.run({ value: value, issues: [] }, ctx);
+      const keyResult = def.keyType._zod.run({ value: key, issues: [], path: [...payload.path, key.toString()] }, ctx);
+      const valueResult = def.valueType._zod.run(
+        { value: value, issues: [], path: [...payload.path, key.toString()] },
+        ctx
+      );
 
       if (keyResult instanceof Promise || valueResult instanceof Promise) {
         proms.push(
@@ -2693,7 +2711,7 @@ export const $ZodSet: core.$constructor<$ZodSet> = /*@__PURE__*/ core.$construct
     const proms: Promise<any>[] = [];
     payload.value = new Set();
     for (const item of input) {
-      const result = def.valueType._zod.run({ value: item, issues: [] }, ctx);
+      const result = def.valueType._zod.run({ value: item, issues: [], path: payload.path }, ctx);
       if (result instanceof Promise) {
         proms.push(result.then((result) => handleSetResult(result, payload)));
       } else handleSetResult(result, payload);
@@ -3445,7 +3463,7 @@ function handlePipeResult(left: ParsePayload, def: $ZodPipeDef, ctx: ParseContex
     return left;
   }
 
-  return def.out._zod.run({ value: left.value, issues: left.issues }, ctx);
+  return def.out._zod.run({ value: left.value, issues: left.issues, path: left.path }, ctx);
 }
 
 ////////////////////////////////////////////
@@ -3627,7 +3645,9 @@ export const $ZodPromise: core.$constructor<$ZodPromise> = /*@__PURE__*/ core.$c
     $ZodType.init(inst, def);
 
     inst._zod.parse = (payload, ctx) => {
-      return Promise.resolve(payload.value).then((inner) => def.innerType._zod.run({ value: inner, issues: [] }, ctx));
+      return Promise.resolve(payload.value).then((inner) =>
+        def.innerType._zod.run({ value: inner, issues: [], path: [] }, ctx)
+      );
     };
   }
 );

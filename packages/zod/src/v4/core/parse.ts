@@ -15,7 +15,7 @@ export type $Parse = <T extends schemas.$ZodType>(
 
 export const _parse: (_Err: $ZodErrorClass) => $Parse = (_Err) => (schema, value, _ctx, _params) => {
   const ctx: schemas.ParseContextInternal = _ctx ? Object.assign(_ctx, { async: false }) : { async: false };
-  const result = schema._zod.run({ value, issues: [] }, ctx);
+  const result = schema._zod.run({ value, issues: [], path: [] }, ctx);
   if (result instanceof Promise) {
     throw new core.$ZodAsyncError();
   }
@@ -38,7 +38,7 @@ export type $ParseAsync = <T extends schemas.$ZodType>(
 
 export const _parseAsync: (_Err: $ZodErrorClass) => $ParseAsync = (_Err) => async (schema, value, _ctx, params) => {
   const ctx: schemas.ParseContextInternal = _ctx ? Object.assign(_ctx, { async: true }) : { async: true };
-  let result = schema._zod.run({ value, issues: [] }, ctx);
+  let result = schema._zod.run({ value, issues: [], path: [] }, ctx);
   if (result instanceof Promise) result = await result;
   if (result.issues.length) {
     const e = new (params?.Err ?? _Err)(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())));
@@ -58,7 +58,7 @@ export type $SafeParse = <T extends schemas.$ZodType>(
 
 export const _safeParse: (_Err: $ZodErrorClass) => $SafeParse = (_Err) => (schema, value, _ctx) => {
   const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: false } : { async: false };
-  const result = schema._zod.run({ value, issues: [] }, ctx);
+  const result = schema._zod.run({ value, issues: [], path: [] }, ctx);
   if (result instanceof Promise) {
     throw new core.$ZodAsyncError();
   }
@@ -80,7 +80,7 @@ export type $SafeParseAsync = <T extends schemas.$ZodType>(
 
 export const _safeParseAsync: (_Err: $ZodErrorClass) => $SafeParseAsync = (_Err) => async (schema, value, _ctx) => {
   const ctx: schemas.ParseContextInternal = _ctx ? Object.assign(_ctx, { async: true }) : { async: true };
-  let result = schema._zod.run({ value, issues: [] }, ctx);
+  let result = schema._zod.run({ value, issues: [], path: [] }, ctx);
   if (result instanceof Promise) result = await result;
 
   return result.issues.length

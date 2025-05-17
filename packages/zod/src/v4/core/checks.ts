@@ -1082,6 +1082,7 @@ export const $ZodCheckProperty: core.$constructor<$ZodCheckProperty> = /*@__PURE
         {
           value: (payload.value as any)[def.property],
           issues: [],
+          path: payload.path,
         },
         {}
       );
