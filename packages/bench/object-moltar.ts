@@ -1,4 +1,5 @@
 import * as z4 from "zod/v4";
+import * as z4lib from "./node_modules/zod/dist/esm/v4/index.js";
 import * as z3 from "zod3";
 import { metabench } from "./metabench.js";
 
@@ -15,6 +16,20 @@ const z3Schema = z3.object({
     bool: z3.boolean(),
   }).strict()
 }).strict();
+
+const z4LibSchema = z4lib.object({
+  number: z4lib.number(),
+  negNumber: z4lib.number(),
+  maxNumber: z4lib.number(),
+  string: z4lib.string(),
+  longString: z4lib.string(),
+  boolean: z4lib.boolean(),
+  deeplyNested: z4lib.strictObject({
+    foo: z4lib.string(),
+    num: z4lib.number(),
+    bool: z4lib.boolean(),
+  }),
+});
 
 const z4Schema = z4.object({
   number: z4.number(),
@@ -82,9 +97,12 @@ const bench = metabench("z.object() safeParse", {
   zod3() {
     for (const _ of DATA) z3Schema.parse(_);
   },
-  zod4() {
+  // zod4lib() {
+  //   for (const _ of DATA) z4LibSchema.parse(_);
+  // },
+  zod4(){
     for (const _ of DATA) z4Schema.parse(_);
-  },
+  }
   // zod4strict() {
   //   for (const _ of DATA) z4SchemaStrict.parse(_);
   // },
