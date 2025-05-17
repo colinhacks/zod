@@ -164,7 +164,7 @@ export class JSONSchemaGenerator {
         case "number": {
           const json: JSONSchema.NumberSchema | JSONSchema.IntegerSchema = _json as any;
           const { minimum, maximum, format, multipleOf, exclusiveMaximum, exclusiveMinimum } = schema._zod.bag;
-          if (format?.includes("int")) json.type = "integer";
+          if (typeof format === "string" && format.includes("int")) json.type = "integer";
           else json.type = "number";
 
           if (typeof exclusiveMinimum === "number") json.exclusiveMinimum = exclusiveMinimum;
