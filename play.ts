@@ -1,26 +1,35 @@
 import * as z from "zod/v4";
 
-// console.dir(z.email()._zod.bag.pattern, { depth: null });
-// console.dir(z.email().def.pattern, { depth: null });
-// console.dir(z.email()._zod.pattern, { depth: null });
+// import { z } from "zod/v4";
 
-const BaseError = { status: z.literal("failed"), message: z.string() };
-const MyErrors = z.discriminatedUnion("code", [
-  z.object({ ...BaseError, code: z.literal(400) }),
-  z.object({ ...BaseError, code: z.literal(401) }),
-  z.object({ ...BaseError, code: z.literal(500) }),
-]);
+const schema = z.object({
+  topLevel: z.discriminatedUnion("topLevelDiscKey", [
+    z.object({
+      topLevelDiscKey: z.literal("fruit"),
+      lowLevel: z.discriminatedUnion("lowLevelDiscKey", [
+        z.object({
+          lowLevelDiscKey: z.literal("apple"),
+          someKey: z.literal("1$"),
+        }),
+        z.object({
+          lowLevelDiscKey: z.literal("banana"),
+          someKey: z.number(),
+        }),
+      ]),
+    }),
+  ]),
+});
 
-const MyResult = z.discriminatedUnion("status", [
-  z.object({ status: z.literal("success"), data: z.string() }),
-  MyErrors,
-]);
+// Works.
+const firstDiscUnion = schema.parse({
+  topLevel: { topLevelDiscKey: "fruit", lowLevel: { lowLevelDiscKey: "apple", someKey: "1$" } },
+} satisfies z.infer<typeof schema>);
+console.info(firstDiscUnion);
 
-console.dir(
-  MyResult.parse({
-    status: "failed",
-    code: 401,
-    message: "asdf",
-  }),
-  { depth: null }
-);
+// Does not work.
+// Throws 'No matching discriminator' error.
+// However, this code works in zod v3 (for v3 schema needed to be slightly modified to explicitly specify the discriminator).
+const secondDiscUnion = schema.parse({
+  topLevel: { topLevelDiscKey: "fruit", lowLevel: { lowLevelDiscKey: "banana", someKey: 2 } },
+} satisfies z.infer<typeof schema>);
+console.info(secondDiscUnion);
