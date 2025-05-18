@@ -30,7 +30,7 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
   _input: core.input<this>;
   // base methods
   check(...checks: (core.CheckFn<core.output<this>> | core.$ZodCheck<core.output<this>>)[]): this;
-  clone(def?: this["_zod"]["def"]): this;
+  clone(def?: this["_zod"]["def"], params?: { parent: boolean }): this;
   register<R extends core.$ZodRegistry>(
     registry: R,
     ...meta: this extends R["_schema"]
@@ -120,17 +120,20 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
 
   // base methods
   inst.check = (...checks) => {
-    return inst.clone({
-      ...def,
-      checks: [
-        ...(def.checks ?? []),
-        ...checks.map((ch) =>
-          typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
-        ),
-      ],
-    });
+    return inst.clone(
+      {
+        ...def,
+        checks: [
+          ...(def.checks ?? []),
+          ...checks.map((ch) =>
+            typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
+          ),
+        ],
+      }
+      // { parent: true }
+    );
   };
-  inst.clone = (_def) => core.clone(inst, _def);
+  inst.clone = (def, params) => core.clone(inst, def, params);
   inst.brand = () => inst as any;
   inst.register = ((reg: any, meta: any) => {
     reg.add(inst, meta);
@@ -192,9 +195,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   // meta
   inst.describe = (description) => {
     const cl = inst.clone();
-    const meta = { ...(core.globalRegistry.get(inst) ?? {}), description };
-    delete meta.id; // do not inherit
-    core.globalRegistry.add(cl, meta);
+    core.globalRegistry.add(cl, { description });
     return cl;
   };
   Object.defineProperty(inst, "description", {
@@ -204,7 +205,9 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
     configurable: true,
   });
   inst.meta = (...args: any) => {
-    if (args.length === 0) return core.globalRegistry.get(inst);
+    if (args.length === 0) {
+      return core.globalRegistry.get(inst);
+    }
     const cl = inst.clone();
     core.globalRegistry.add(cl, args[0]);
     return cl as any;
