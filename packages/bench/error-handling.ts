@@ -1,7 +1,7 @@
 import { makeData, makeSchema } from "./benchUtil.js";
 import { metabench } from "./metabench.js";
 
-import * as z4 from "zod4";
+import * as z4 from "zod/v4";
 import * as z from "zod";
 
 const a = z4.object({ a: z4.string() });

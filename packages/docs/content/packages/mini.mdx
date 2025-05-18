@@ -1,47 +1,47 @@
 ---
-title: "@zod/mini"
+title: Zod Mini
 ---
 
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
-The `@zod/mini` library was introduced with the release of Zod 4. 
+The `zod/v4-mini` variant was introduced with the release of Zod 4. 
 
 ```sh
-npm install @zod/mini@next
+npm install zod@next
 ```
 
 It implements the exact same functionality as `zod`, but using a *functional*, *tree-shakable* API. If you're coming from `zod`, this means you generally will use *functions* in place of methods.
 
-<Tabs groupId="lib" items={[ "@zod/mini", "zod"]}>
-<Tab value="@zod/mini">
+<Tabs groupId="lib" items={[ "Zod Mini", "Zod"]}>
+<Tab value="Zod Mini">
 ```ts
-import * as z from "@zod/mini";
+import { z } from "zod/v4-mini"
 
 const mySchema = z.nullable(z.optional(z.string()));
 ```
 </Tab>
-<Tab value="zod">
+<Tab value="Zod">
 ```ts
-import { z } from "zod";
+import { z } from "zod/v4";
 
 const mySchema = z.string().optional().nullable();
 ```
 </Tab>
 </Tabs>
 
-> **Tree-shaking** — In `zod`, schemas provide a range of convenience methods to perform some common operations (e.g. `.min()` on string schemas). Bundlers have a hard time removing ("tree shaking") method implementations from your bundle, even if they aren't used. It's much easier to remove an unused top-level function, which is why the API of `@zod/mini` uses more functions than methods.
+> **Tree-shaking** — In `zod`, schemas provide a range of convenience methods to perform some common operations (e.g. `.min()` on string schemas). Bundlers have a hard time removing ("tree shaking") method implementations from your bundle, even if they aren't used. It's much easier to remove an unused top-level function, which is why the API of `zod/v4-mini` uses more functions than methods.
 
 ## `ZodMiniType`
 
-All `@zod/mini` schemas extend the `z.ZodMiniType` base class, which in turn extends `z.core.$ZodType` from [`@zod/core`](/packages/core). While this class implements far fewer methods than `ZodType` in `zod`, some particularly useful methods remain.
+All `zod/v4-mini` schemas extend the `z.ZodMiniType` base class, which in turn extends `z.core.$ZodType` from [`zod/v4/core`](/packages/core). While this class implements far fewer methods than `ZodType` in `zod`, some particularly useful methods remain.
 
 
 ### `.parse`
 
-This is an obvious one. All `@zod/mini` schemas implement the same parsing methods as `zod`.
+This is an obvious one. All `zod/v4-mini` schemas implement the same parsing methods as `zod`.
 
 ```ts
-import * as z from "@zod/mini";
+import { z } from "zod/v4-mini"
 
 const mySchema = z.string();
 
@@ -53,10 +53,10 @@ await mySchema.safeParseAsync('asdf')
 
 ### `.check()`
 
-In `zod` there are dedicated methods on schema subclasses for performing common checks:
+In `zod/v4` there are dedicated methods on schema subclasses for performing common checks:
 
 ```ts
-import * as z from "zod";
+import { z } from "zod/v4";
 
 z.string()
   .min(5)
@@ -65,10 +65,10 @@ z.string()
   .trim()
 ```
 
-In `@zod/mini` such methods aren't implemented. Instead you pass these checks into schemas using the `.check()` method:
+In `zod/v4-mini` such methods aren't implemented. Instead you pass these checks into schemas using the `.check()` method:
 
 ```ts
-import * as z from "@zod/mini";
+import { z } from "zod/v4-mini"
 
 z.string().check(
   z.minLength(5), 
@@ -132,7 +132,7 @@ z.string().register(myReg, { title: "My cool string schema" });
 For *branding* a schema. Refer to the [Branded types](/api#branded-types) docs for more information.
 
 ```ts
-import * as z from "@zod/mini";
+import { z } from "zod/v4-mini"
 
 const USD = z.string().brand("USD");
 ```
@@ -150,12 +150,12 @@ mySchema.clone(mySchema._zod.def);
 
 ## No default locale
 
-While `zod` automatically loads the English (`en`) locale, `@zod/mini` does not. This reduces the bundle size in scenarios where error messages are unnecessary, localized to a non-English language, or otherwise customized.
+While `zod/v4` automatically loads the English (`en`) locale, `zod/v4-mini` does not. This reduces the bundle size in scenarios where error messages are unnecessary, localized to a non-English language, or otherwise customized.
 
 This means, by default the `message` property of all issues will simply read `"Invalid input"`. To load the English locale:
 
 ```ts
-import * as z from "@zod/mini";
+import { z } from "zod/v4-mini"
 
 z.config(z.locales.en());
 ```

@@ -7,7 +7,8 @@ interface ZodResource {
   description: React.ReactNode;
   slug: string;
   stars?: number;
-  // author?: string;
+  /** Whether the library has confirmed support for Zod 4 */
+  v4?: boolean;
 }
 
 const apiLibraries: ZodResource[] = [
@@ -16,6 +17,7 @@ const apiLibraries: ZodResource[] = [
     url: "https://github.com/trpc/trpc",
     description: "Build end-to-end typesafe APIs without GraphQL.",
     slug: "trpc/trpc",
+    v4: true,
   },
   {
     name: "@anatine/zod-nestjs",
@@ -84,6 +86,7 @@ const apiLibraries: ZodResource[] = [
     url: "https://github.com/modevol-com/gqloom",
     description: "Weave GraphQL schema and resolvers using Zod.",
     slug: "modevol-com/gqloom",
+    v4: true,
   },
 ];
 
@@ -196,6 +199,7 @@ const formIntegrations: ZodResource[] = [
     url: "https://github.com/victorgarciaesgi/regle/tree/main/packages/schemas",
     description: "Headless form validation library for Vue.js.",
     slug: "victorgarciaesgi/regle",
+    v4: true,
   },
 ];
 
@@ -365,12 +369,14 @@ const xToZodConverters: ZodResource[] = [
     url: "https://github.com/anymaniax/orval",
     description: "Generate Zod schemas from OpenAPI schemas",
     slug: "anymaniax/orval",
+    v4: true,
   },
   {
     name: "Kubb",
     url: "https://github.com/kubb-labs/kubb",
     description: "Generate SDKs and Zod schemas from your OpenAPI schemas",
     slug: "kubb-labs/kubb",
+    v4: true,
   },
 ];
 
@@ -411,6 +417,7 @@ const mockingLibraries: ZodResource[] = [
     url: "https://github.com/soc221b/zod-schema-faker",
     description: "Generates mock data from Zod schemas. Powered by @faker-js/faker and randexp.js",
     slug: "soc221b/zod-schema-faker",
+    v4: true,
   },
 ];
 
@@ -462,6 +469,7 @@ const poweredByZodProjects: ZodResource[] = [
     url: "https://github.com/alexmarqs/zod-config",
     description: "Load configurations across multiple sources with flexible adapters, ensuring type safety with Zod.",
     slug: "alexmarqs/zod-config",
+    v4: true,
   },
   {
     name: "unplugin-environment",
@@ -476,6 +484,13 @@ const poweredByZodProjects: ZodResource[] = [
     description: "Create runtime-checked structs with Zod.",
     slug: "reesericci/zod-struct",
     stars: 0,
+  },
+  {
+    name: "Composable Functions",
+    url: "https://github.com/seasonedcc/composable-functions",
+    description: "Types and functions to make composition easy and safe.",
+    slug: "seasonedcc/composable-functions",
+    v4: true,
   },
 ];
 
@@ -530,6 +545,7 @@ export function Table(props: { resources: ZodResource[] }) {
         <tr>
           <th>Name</th>
           <th>Stars</th>
+          <th>Zod 4 support</th>
           <th>Description</th>
         </tr>
       </thead>
@@ -542,6 +558,7 @@ export function Table(props: { resources: ZodResource[] }) {
               </a>
             </td>
             <td className="whitespace-nowrap">{`⭐️ ${resource.stars ?? "ERR"}`}</td>
+            <td className="whitespace-nowrap">{`${resource.v4 ? "✅" : ""}`}</td>
             <td>{resource.description}</td>
           </tr>
         ))}

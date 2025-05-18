@@ -7,6 +7,7 @@ interface ZodResource {
   description: React.ReactNode;
   slug: string;
   stars?: number;
+  v4?: boolean;
   // author?: string;
 }
 
@@ -29,6 +30,15 @@ const apiLibraries: ZodResource[] = [
     description: "Typesafe APIs Made Simple",
     slug: "unnoq/orpc",
   },
+
+  // https://github.com/honojs/middleware/tree/main/packages/zod-validator
+  // {
+  //   name: "@hono/zod-validator",
+  //   url: "https://github.com/honojs/middleware/tree/main/packages/zod-validator",
+  //   description: "Zod validator middleware for Hono",
+  //   slug: "honojs/middleware",
+  // },
+
 ];
 
 const formIntegrations: ZodResource[] = [
@@ -100,6 +110,7 @@ export function Table(props: { resources: ZodResource[] }) {
         <tr>
           <th>Name</th>
           <th>Stars</th>
+          <th>Zod 4 support</th>
           <th>Description</th>
         </tr>
       </thead>
@@ -112,6 +123,7 @@ export function Table(props: { resources: ZodResource[] }) {
               </a>
             </td>
             <td className="whitespace-nowrap">{`⭐️ ${resource.stars ?? "ERR"}`}</td>
+            <td className="whitespace-nowrap">{`⭐️ ${resource.v4 ? "✅" : ""}`}</td>
             <td>{resource.description}</td>
           </tr>
         ))}

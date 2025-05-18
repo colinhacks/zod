@@ -13,10 +13,10 @@
     "metadata",
     "json-schema",
     "ecosystem",
+    "library-authors",
     "---Packages---",
     "packages/zod",
     "packages/mini",
-    "packages/json",
     "packages/core"
   ]
 }

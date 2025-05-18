@@ -1,8 +1,8 @@
 # onepager-fuma
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 </Tab>
-<Tab value="@zod/mini">
+<Tab value="Zod Mini">
 </Tab>
 </Tabs>

@@ -1,17 +1,13 @@
 ---
-title: "@zod/core"
+title: Zod Core
 ---
 
 import { Callout } from "fumadocs-ui/components/callout"
 
-This page is primarily intended for consumption by *library authors* who are building tooling on top of Zod. 
-
-## What's in `@zod/core`
-
-This package exports the core classes and utilities that are consumed by `zod` and `@zod/mini`. It is not intended to be used directly; instead it's designed to be extended by other packages. It implements:
+This sub-package exports the core classes and utilities that are consumed by `zod/v4` and `zod/v4-mini`. It is not intended to be used directly; instead it's designed to be extended by other packages. It implements:
 
 ```ts
-import * as z from "@zod/core";
+import { z } from "zod/v4/core";
 
 // the base class for all Zod schemas
 z.$ZodType;
@@ -39,17 +35,6 @@ z.$ZodError;
 z.util.isValidJWT(...);
 ```
 
-For simplicity, the `zod` and `@zod/mini` packages re-export their `@zod/core` dependency as `z.core`, but you shouldn't rely on this.
-
-```ts
-import * as z from "zod";
-
-z.core.$ZodString;
-// the base class for string schemas
-```
-
-
-
 ## Schemas
 
 The base class for all Zod schemas is `$ZodType`. It accepts two generic parameters: `Output` and `Input`.
@@ -60,7 +45,7 @@ export class $ZodType<Output = unknown, Input = unknown> {
 }
 ```
 
-`@zod/core` exports a number of subclasses that implement some common parsers. A union of all first-party subclasses is exported as `z.$ZodTypes`.
+`zod/v4/core` exports a number of subclasses that implement some common parsers. A union of all first-party subclasses is exported as `z.$ZodTypes`.
 
 ```ts
 export type $ZodTypes =
@@ -103,9 +88,9 @@ export type $ZodTypes =
   | $ZodFile;
 ```
 
-All `@zod/core` subclasses only contain a single property: `_zod`. This property is an object containing the schemas *internals*. The goal is to make `@zod/core` as extensible and unopinionated as possible. Other libraries can "build their own Zod" on top of these classes without `@zod/core` cluttering up the interface. 
+All `zod/v4/core` subclasses only contain a single property: `_zod`. This property is an object containing the schemas *internals*. The goal is to make `zod/v4/core` as extensible and unopinionated as possible. Other libraries can "build their own Zod" on top of these classes without `zod/v4/core` cluttering up the interface. 
 
-Refer to the implementations of `zod` and `@zod/mini` for examples of how to extend these classes. 
+Refer to the implementations of `zod/v4` and `zod/v4-mini` for examples of how to extend these classes. 
 
 The `_zod` internals property contains some notable properties:
 
@@ -192,7 +177,7 @@ The `_zod` internals property contains some notable properties:
   - `.def.check` — A string representing the check's type, e.g. `"min_lenth"`, `"less_than"`, `"string_format"`, etc.
 - `.check()` — Contains the check's validation logic.
 
-`@zod/core` exports a number of subclasses that perform some common refinements. All first-party subclasses are exported as a union called `z.$ZodChecks`.
+`zod/v4/core` exports a number of subclasses that perform some common refinements. All first-party subclasses are exported as a union called `z.$ZodChecks`.
 
 ```ts
 export type $ZodChecks =
@@ -306,8 +291,8 @@ The base class for all errors in Zod is `$ZodError`.
 
 > For performance reasons, `$ZodError` *does not* extend the built-in `Error` class! So using `instanceof Error` will return `false`.
 
-- The `zod` package implements a subclass of `$ZodError` called `ZodError` with some additional convenience methods.
-- The `@zod/mini` package directly uses `$ZodError`
+- The `zod/v4` package implements a subclass of `$ZodError` called `ZodError` with some additional convenience methods.
+- The `zod/v4-mini` sub-package directly uses `$ZodError`
 
 ```ts
 export class $ZodError<T = unknown> implements Error {
@@ -357,126 +342,27 @@ Zod implements the [Standard Schema](https://standardschema.dev/) specification,
 
 2. Set up `peerDependencies` properly!
 
-If your tool accepts Zod schemas from a consumer/user, you should add `"@zod/core"` to `peerDependencies`. This lets your users "bring their own Zod". Be as flexible as possible with the version range. For example, if your tool is compatible with `@zod/core`, you can use the following. This allows your users to bring any version of `@zod/core`, avoiding accidental duplicate installs.
+If your tool accepts Zod schemas from a consumer/user, you should add `"zod/v4/core"` to `peerDependencies`. This lets your users "bring their own Zod". Be as flexible as possible with the version range. For example, if your tool is compatible with `zod/v4/core`, you can use the following. This allows your users to bring any version of `zod/v4/core`, avoiding accidental duplicate installs.
 
 
 ```json
 {
   "peerDependencies": {
-    "@zod/core": "*"
+    "zod/v4/core": "*"
   }
 }
 ```
 
-Since package managers generally won't install your own `peerDependencies`, you'll need to add `@zod/core` to your `devDependencies` as well. As new versions of `@zod/core` are released, you can update your `devDependencies` to match the latest version. This is important for testing and development purposes.
+Since package managers generally won't install your own `peerDependencies`, you'll need to add `zod/v4/core` to your `devDependencies` as well. As new versions of `zod/v4/core` are released, you can update your `devDependencies` to match the latest version. This is important for testing and development purposes.
 
 ```json
 {
   "peerDependencies": {
-    "@zod/core": "*"
+    "zod": "*"
   },
   "devDependencies": {
-    "@zod/core": "^0.0.1"
+    "zod": "^3.25.0"
   }
 }
 ``` */}
-
-
-## Building on top of Zod
-
-> If you are a library author and think this page should include some additional guidance, please open an issue!
-
-### Standard Schema
-
-First things first, make sure you need to depend on Zod at all. 
-
-If you're building a library that accepts user-defined schemas to perform black-box validation, you may not need to integrate with `zod` specifically. Instead look into [Standard Schema](https://standardschema.dev/). It's a shared interface implemented by most popular validation libraries in the TypeScript ecosystem (see the [full list](https://standardschema.dev/#what-schema-libraries-implement-the-spec)), including Zod. 
-
-This spec works great if you accept user-defined schemas and treat them like "black box" validators. Given any compliant library, you can extract inferred input/output types, validate inputs, and get back a standardized error.
-
-If you need Zod specific functionality, read on.
-
-### Peer dependencies
-
-Generally speaking, any library built on top of Zod should include `@zod/core` in `"peerDependencies"`. This lets your users "bring their own Zod".
-
-```json
-// package.json
-{
-  // ...
-  "peerDependencies": {
-    "@zod/core": "^0.0.1"
-  }
-}
-```
-
-When your user installs `zod` or `@zod/mini`, their package manager will automatically install `@zod/core` too. So this peer dependency will be met as long as your user has one of these packages installed.
-
-<Callout>
-### Versioning
-
-While Zod 4 is in beta, the [`@zod/core`](https://www.npmjs.com/package/@zod/core) package is published as `latest` in the `v0.x` range ("initial development" according to semver). The `v1.0.0` release will accompany the first stable release of `zod@4.0`.
-
-| Version | Semver Range | Description                                                                 |
-|--------------|--------------|-----------------------------------------------------------------------------|
-| Beta         | `@zod/core@^0.0.1`     | Versions will say in `v0.x` range during the beta |
-| Stable       | `@zod/core@^1.0.0`     | It will go stable alongside `zod@4`. At this point, you'll need to bump the version to `^1.0.0`.  |
-</Callout>
-
-If Zod isn't *always* needed for your library (say, if you are building a framework that supports a number of different schema libraries), use `"peerDependenciesMeta"` to mark `@zod/core` as optional.
-
-```json
-// package.json
-{
-  // ...
-  "peerDependencies": {
-    "@zod/core": "^0.0.1"
-  },
-  "peerDependenciesMeta": {
-    "@zod/core": {
-      "optional": true
-    }
-  }
-}
-```
-
-### Dev dependencies (local development)
-
-During development, you need to meet your own peer dependency requirement, so you should also add `@zod/core` to your `"devDependencies"`.
-
-```ts
-// package.json
-{
-  "peerDependencies": {
-    "@zod/core": "^0.0.1"
-  },
-  "devDependencies": {
-    "@zod/core": "^0.0.1"
-  }
-}
-```
-
-
-### Future proofing
-
-To future-proof your library, you should always allow for new schema and check classes to be added in the future. If you are using switch statements to discriminate over union types, consider printing a warning when an unknown schema type is encountered.
-
-```ts
-const schema = {} as z.$ZodTypes;
-const def = schema._zod.def;
-switch (def.type) {
-  case "string":
-    // ...
-    break;
-  case "object":
-    // ...
-    break;
-  default:
-    console.warn(`Unknown schema type: ${def.type}`);
-    // reasonable fallback behavior
-}
-```
-
-If instead you `throw` an error in the default case, your library will be unusable if/when new schemas types are added in the future. Best to print a warning and treat it as a "no-op" (or some other reasonable fallback behavior). The same applies to unrecognized check types, string formats, etc.
-
 

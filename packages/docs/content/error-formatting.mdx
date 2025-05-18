@@ -10,6 +10,8 @@ Zod emphasizes _completeness_ and _correctness_ in its error reporting. In many 
 Consider this simple object schema.
 
 ```ts
+import { z } from "zod/v4";
+
 const schema = z.strictObject({
   username: z.string(),
   favoriteNumbers: z.array(z.number()),

@@ -19,11 +19,7 @@ export async function GET(request: Request) {
 
     // Get dynamic params
     const title = searchParams.get("title") || "Zod Documentation";
-    const description = searchParams.get("description"); // || "TypeScript-first schema validation with static type inference";
-    // const path = searchParams.get("path");
-
-    // Format breadcrumbs from path
-    // const breadcrumbs = path.split("/").map((crumb) => crumb.toUpperCase());
+    const description = searchParams.get("description");
 
     return new ImageResponse(
       <div

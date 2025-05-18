@@ -3,6 +3,6 @@
   "compilerOptions": {
     "rootDir": ".",
     "noEmit": true
-    // "module": "nodeNext"
-  }
+  },
+  "exclude": ["packages/docs"]
 }

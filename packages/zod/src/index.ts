@@ -1,5 +1,4 @@
-import * as z from "./external.js";
+import z3 from "./v3/index.js";
+export * from "./v3/index.js";
 
-export { z };
-export * from "./external.js";
-export default z;
+export default z3;

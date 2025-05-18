@@ -22,7 +22,7 @@ const layoutProps: DocsLayoutProps = {
     //     url: "/api",
     //   },
     //   {
-    //     title: "@zod/mini",
+    //     title: "zod/v4-mini",
     //     // description: "Test Tab",
     //     url: "/api",
     //   },

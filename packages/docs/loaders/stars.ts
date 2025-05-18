@@ -15,6 +15,8 @@ export async function fetchStars(resources: { slug: string; stars?: number }[]) 
       )
     );
 
+    if (uniqueSlugs.length === 0) return;
+
     const queryParts = uniqueSlugs.map(({ id, slug }) => {
       const [owner, name] = slug.split("/");
       return `

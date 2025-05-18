@@ -14,7 +14,7 @@ It's often useful to associate a schema with some additional *metadata* for docu
 Metadata in Zod is handled via *registries*. Registries are collections of schemas, each associated with some *strongly-typed* metadata. To create a simple registry:
 
 ```ts
-import * as z from "zod";
+import { z } from "zod/v4";
 
 const myRegistry = z.registry<{ description: string }>();
 ```
@@ -90,7 +90,7 @@ export interface GlobalMeta {
 To register some metadata in `z.globalRegistry` for a schema:
 
 ```ts
-import * as z from "zod";
+import { z } from "zod/v4";
 
 const emailSchema = z.email().register(z.globalRegistry, { 
   id: "email_address",
@@ -104,8 +104,8 @@ const emailSchema = z.email().register(z.globalRegistry, {
 
 For a more convenient approach, use the `.meta()` method to register a schema in `z.globalRegistry`. 
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const emailSchema = z.email().meta({ 
   id: "email_address",
@@ -114,7 +114,7 @@ const emailSchema = z.email().meta({
 });
 ```
 </Tab>
-<Tab value="@zod/mini">
+<Tab value="Zod Mini">
 ```ts
 // no equivalent
   
@@ -131,6 +131,15 @@ emailSchema.meta();
 // => { id: "email_address", title: "Email address", ... }
 ```
 
+Metadata is associated with a *specific schema instance.* This is important to keep in mind, especially since Zod methods are immutable—they always return a new instance.
+
+```ts
+const A = z.string().meta({ description: "A cool string" });
+A.meta(); // => { hello: "true" }
+
+const B = A.refine(_ => true);
+B.meta(); // => undefined
+```
 
 ### `.describe()`
 
@@ -141,8 +150,8 @@ The `.describe()` method still exists for compatibility with Zod 3, but `.meta()
 The `.describe()` method is a shorthand for registering a schema in `z.globalRegistry` with just a `description` field.
 
 
-<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-<Tab value="zod">
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const emailSchema = z.email();
 emailSchema.describe("An email address");
@@ -151,7 +160,7 @@ emailSchema.describe("An email address");
 emailSchema.meta({ description: "An email address" });
 ```
 </Tab>
-<Tab value="@zod/mini">
+<Tab value="Zod Mini">
 ```ts
 // no equivalent
  
@@ -168,7 +177,7 @@ You've already seen a simple example of a custom registry:
 
 
 ```ts
-import * as z from "zod";
+import { z } from "zod/v4";
 
 const myRegistry = z.registry<{ description: string };>();
 ```
@@ -180,7 +189,7 @@ Let's look at some more advanced patterns.
 It's often valuable for the metadata type to reference the *inferred type* of a schema. For instance, you may want an `examples` field to contain examples of the schema's output.
 
 ```ts
-import * as z from "zod";
+import { z } from "zod/v4";
 
 type MyMeta = { examples: z.$output[] };
 const myRegistry = z.registry<MyMeta>();
@@ -196,7 +205,7 @@ The special symbol `z.$output` is a reference to the schemas inferred output typ
 Pass a second generic to `z.registry()` to constrain the schema types that can be added to a registry. This registry only accepts string schemas.
 
 ```ts
-import * as z from "zod";
+import { z } from "zod/v4";
 
 const myRegistry = z.registry<{ description: string }, z.ZodString>();
 
