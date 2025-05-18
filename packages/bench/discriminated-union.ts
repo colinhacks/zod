@@ -3,7 +3,8 @@ import { metabench } from "./metabench.js";
 
 
 import * as z3 from "zod/v3";
-import * as z4 from "zod/v4-mini";
+import * as z4 from "zod/v4";
+import * as z4lib from "zodnext/v4";
 
 
 const z3fields ={
@@ -51,7 +52,8 @@ const z3Union = z3.union([
 
 const z3DiscUnion = z3.discriminatedUnion("type", z3Union._def.options);
 
-const z4fields = {
+function makeSchema(z: typeof z4){
+   const z4fields = {
   data1: z4.string(),
   data2: z4.string(),
   data3: z4.string(),
@@ -93,7 +95,13 @@ const z4Union = z4.union([
     ...z4fields
   }),
 ]);
+return z4Union;
 
+}
+
+const z4Union = makeSchema(z4);
+const z4LibUnion  = makeSchema(z4lib as any);
+const z4LibDiscUnion  = z4lib.discriminatedUnion( z4LibUnion._def.options);
 
 const z4DiscUnion = z4.discriminatedUnion("type", z4Union.def.options);
 
@@ -124,31 +132,40 @@ console.dir(z3Union.parse(DATA[0]), {depth: null});
 console.dir(z3DiscUnion.parse(DATA[0]), {depth: null});
 console.dir(z4Union.parse(DATA[0]), {depth: null});
 console.dir(z4DiscUnion.parse(DATA[0]), {depth: null});
+console.dir(z4LibUnion.parse(DATA[0]), {depth: null});
+console.dir(z4LibDiscUnion.parse(DATA[0]), {depth: null});
+
+
 const args=  {jitless: true}
 const bench = metabench("z.disriminatedUnion().parse", {
-  z3() {
-    for (const item of DATA) {
-      z3Union.parse(item);
-    }
-  },
+  // z3() {
+  //   for (const item of DATA) {
+  //     z3Union.parse(item);
+  //   }
+  // },
   z3Disc() {
     for (const item of DATA) {
       z3DiscUnion.parse(item);
     }
   },
-  z4() {
-    for (const item of DATA) {
-      z4Union.parse(item);
-    }
-  },
-  z4jitless() {
-    for (const item of DATA) {
-      z4Union.parse(item, args);
-    }
-  },
+  // z4() {
+  //   for (const item of DATA) {
+  //     z4Union.parse(item);
+  //   }
+  // },
+  // z4jitless() {
+  //   for (const item of DATA) {
+  //     z4Union.parse(item, args);
+  //   }
+  // },
   z4Disc() {
     for (const item of DATA) {
       z4DiscUnion.parse(item);
+    }
+  },
+  z4LibDisc(){
+    for (const item of DATA) {
+      z4LibDiscUnion.parse(item);
     }
   }
 })

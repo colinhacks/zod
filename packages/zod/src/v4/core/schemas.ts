@@ -2056,12 +2056,9 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
       return _disc;
     });
 
-    const _subdiscMap = util.cached(() => {
+    const _discmap = util.cached(() => {
       const map: Map<$ZodType, util.DiscriminatorMapElement> = new Map();
-      // console.dir("init", { depth: null });
-      // console.dir(def.discriminator, { depth: null });
       for (const o of def.options) {
-        console.dir(o._zod.disc, { depth: null });
         const discEl = o._zod.disc?.get(def.discriminator);
         if (!discEl) throw new Error("Invalid discriminated union option");
         map.set(o, discEl);
@@ -2082,9 +2079,9 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
       }
 
       const filtered: $ZodType[] = [];
-      const subdiscMap = _subdiscMap.value;
+      const discmap = _discmap.value;
       for (const option of def.options) {
-        const subdisc = subdiscMap.get(option)!;
+        const subdisc = discmap.get(option)!;
         if (matchDiscriminatorAtKey(input, def.discriminator, subdisc)) {
           filtered.push(option);
         }
