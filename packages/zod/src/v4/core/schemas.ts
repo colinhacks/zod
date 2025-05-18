@@ -943,6 +943,7 @@ export function isValidJWT(token: string, algorithm: util.JWTAlgorithm | null = 
     const [header] = tokensParts;
     const parsedHeader = JSON.parse(atob(header));
     if ("typ" in parsedHeader && parsedHeader?.typ !== "JWT") return false;
+    if (!parsedHeader.alg) return false;
     if (algorithm && (!("alg" in parsedHeader) || parsedHeader.alg !== algorithm)) return false;
     return true;
   } catch {

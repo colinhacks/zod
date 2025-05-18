@@ -247,33 +247,41 @@ for (const str of invalidBase64URLStrings) {
   });
 }
 
+function makeJwt(header: object, payload: object) {
+  const headerBase64 = Buffer.from(JSON.stringify(header)).toString("base64url");
+  const payloadBase64 = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const signature = "signature"; // Placeholder for the signature
+  return `${headerBase64}.${payloadBase64}.${signature}`;
+}
+
 test("jwt validations", () => {
   const jwt = z.string().jwt();
   const jwtWithAlg = z.string().jwt({ alg: "HS256" });
 
-  // Valid JWTs
-  const validHeader = Buffer.from(JSON.stringify({ typ: "JWT", alg: "HS256" })).toString("base64url");
-  const validPayload = Buffer.from("{}").toString("base64url");
-  const validSignature = "signature";
-  const validJWT = `${validHeader}.${validPayload}.${validSignature}`;
-
-  expect(() => jwt.parse(validJWT)).not.toThrow();
-  expect(() => jwtWithAlg.parse(validJWT)).not.toThrow();
-
-  // Invalid format
   expect(() => jwt.parse("invalid")).toThrow();
   expect(() => jwt.parse("invalid.invalid")).toThrow();
   expect(() => jwt.parse("invalid.invalid.invalid")).toThrow();
 
+  // Valid JWTs
+  const d1 = makeJwt({ typ: "JWT", alg: "HS256" }, {});
+  expect(() => jwt.parse(d1)).not.toThrow();
+  expect(() => jwtWithAlg.parse(d1)).not.toThrow();
+
   // Invalid header
-  const invalidHeader = Buffer.from("{}").toString("base64url");
-  const invalidHeaderJWT = `${invalidHeader}.${validPayload}.${validSignature}`;
-  expect(() => jwt.parse(invalidHeaderJWT)).toThrow();
+  const d2 = makeJwt({}, {});
+  expect(() => jwt.parse(d2)).toThrow();
 
   // Wrong algorithm
-  const wrongAlgHeader = Buffer.from(JSON.stringify({ typ: "JWT", alg: "RS256" })).toString("base64url");
-  const wrongAlgJWT = `${wrongAlgHeader}.${validPayload}.${validSignature}`;
-  expect(() => jwtWithAlg.parse(wrongAlgJWT)).toThrow();
+  const d3 = makeJwt({ typ: "JWT", alg: "RS256" }, {});
+  expect(() => jwtWithAlg.parse(d3)).toThrow();
+
+  // missing typ is fine
+  const d4 = makeJwt({ alg: "HS256" }, {});
+  jwt.parse(d4);
+
+  // type isn't JWT
+  const d5 = makeJwt({ typ: "SUP", alg: "HS256" }, { foo: "bar" });
+  expect(() => jwt.parse(d5)).toThrow();
 
   // Custom error message
   const customMsg = "Invalid JWT token";
