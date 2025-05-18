@@ -485,3 +485,40 @@ test("multple discriminators", () => {
     });
   }).toThrow();
 });
+
+test("single element union", () => {
+  const schema = z.object({
+    a: z.literal("discKey"),
+    b: z.enum(["apple", "banana"]),
+    c: z.object({ id: z.string() }),
+  });
+
+  const input = {
+    a: "discKey",
+    b: "apple",
+    c: {}, // Invalid, as schema requires `id` property
+  };
+
+  // Validation must fail here, but it doesn't
+
+  const result = z.discriminatedUnion([schema]).safeParse(input);
+  expect(result).toMatchObject({ success: false });
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "string",
+            "message": "Invalid input: expected string, received undefined",
+            "path": [
+              "c",
+              "id",
+            ],
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
+});
