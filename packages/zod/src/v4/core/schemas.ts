@@ -1964,14 +1964,7 @@ export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$const
       }`);
     }
 
-    doc.write(`payload.issues.push({
-      code: "invalid_union",
-      input: final.value,
-      inst,
-      errors: []
-    });`);
-    doc.write(`return payload`);
-
+    doc.write(`return null;`);
     const fn = doc.compile();
     return (payload: any, ctx: any) => fn(options, payload, ctx);
   };
@@ -1983,7 +1976,16 @@ export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$const
     if (jitEnabled && ctx?.async === false && ctx.jitless !== true) {
       // use JIT
       fastpath ??= makeJIT();
-      return fastpath(payload, ctx);
+      const result = fastpath(payload, ctx);
+      if (result === null) {
+        payload.issues.push({
+          code: "invalid_union",
+          input: payload.value,
+          inst,
+          errors: [],
+        });
+      }
+      return payload;
     }
     const results: util.MaybeAsync<ParsePayload>[] = [];
     for (const option of def.options) {
