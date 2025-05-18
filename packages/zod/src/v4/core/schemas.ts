@@ -2075,32 +2075,50 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
         return payload;
       }
 
-      const filteredOptions: $ZodType[] = [];
-      for (const k of _discKeys.value) {
-        let matched = false;
-        for (const option of def.options) {
-          if (matchDiscriminatorAtKey(input, k, option._zod.disc!.get(k)!)) {
-            matched = true;
-            filteredOptions.push(option);
-          }
+      const filtered: $ZodType[] = [];
+      for (const option of def.options) {
+        if (matchDiscriminators(input, option._zod.disc!)) {
+          filtered.push(option);
         }
-        // no matching discriminator
-        if (!matched && !def.unionFallback)
-          payload.issues.push({
-            code: "invalid_union",
-            errors: [],
-            note: "No matching discriminator",
-            path: [k],
-            input,
-            inst,
-          });
+        // let matched = true;
+        // for (const k of _discKeys.value) {
+        //   if (!matchDiscriminatorAtKey(input, k, option._zod.disc!.get(k)!)) {
+        //     matched = false;
+        //   }
+        // }
+
+        // if (matched) {
+        //   filtered.push(option);
+        // } else if (!def.unionFallback) {
+        //   // if(matched)
+        //   // no matching discriminator
+        //   payload.issues.push({
+        //     code: "invalid_union",
+        //     errors: [],
+        //     note: "No matching discriminator",
+        //     path: [_discKeys.value[0]],
+        //     input,
+        //     inst,
+        //   });
+        // } else {
+        // }
       }
 
-      if (filteredOptions.length === 1) return filteredOptions[0]._zod.run(payload, ctx) as any;
+      if (filtered.length === 1) return filtered[0]._zod.run(payload, ctx) as any;
 
       if (def.unionFallback) {
         return _super(payload, ctx);
       }
+
+      // no matching discriminator
+      payload.issues.push({
+        code: "invalid_union",
+        errors: [],
+        note: "No matching discriminator",
+        input,
+        path: [_discKeys.value[0]],
+        inst,
+      });
 
       return payload;
     };
