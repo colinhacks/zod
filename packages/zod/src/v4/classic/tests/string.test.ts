@@ -264,35 +264,69 @@ test("big base64 and base64url", () => {
   z.base64url().parse(bigbase64url);
 });
 
+function makeJwt(header: object, payload: object) {
+  const headerBase64 = Buffer.from(JSON.stringify(header)).toString("base64url");
+  const payloadBase64 = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const signature = "signature"; // Placeholder for the signature
+  return `${headerBase64}.${payloadBase64}.${signature}`;
+}
+
 test("jwt token", () => {
-  const ONE_PART = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";
-  const NOT_BASE64 =
-    "headerIsNotBase64Encoded.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.RRi1X2IlXd5rZa9Mf_0VUOf-RxOzAhbB4tgViUGamWE";
-  const NO_TYP =
-    "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.GuoUe6tw79bJlbU1HU0ADX0pr0u2kf3r_4OdrDufSfQ";
-  const TYP_NOT_JWT =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpUVyJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.RRi1X2IlXd5rZa9Mf_0VUOf-RxOzAhbB4tgViUGamWE";
+  const jwt = z.string().jwt();
+  expect(() => jwt.parse("invalid")).toThrow();
+  expect(() => jwt.parse("invalid.invalid")).toThrow();
+  expect(() => jwt.parse("invalid.invalid.invalid")).toThrow();
 
-  const GOOD_JWT_HS256 =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
-  const GOOD_JWT_ES256 =
-    "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.tyh-VfuzIxCyGYDlkBA7DfyjrqmSHu6pQ2hoZuFqUSLPNY2N0mpHb3nk5K17HWP_3cYHBw7AhHale5wky6-sVA";
+  // Valid JWTs
+  const es256jwt = z.string().jwt({ alg: "ES256" });
+  const d1 = makeJwt({ typ: "JWT", alg: "ES256" }, {});
+  jwt.parse(d1);
+  es256jwt.parse(d1);
 
-  const jwtSchema = z.string().jwt();
+  // Invalid header
+  const d2 = makeJwt({}, {});
+  expect(() => jwt.parse(d2)).toThrow();
 
-  expect(() => jwtSchema.parse(ONE_PART)).toThrow();
-  expect(() => jwtSchema.parse(NOT_BASE64)).toThrow();
-  expect(() => jwtSchema.parse(TYP_NOT_JWT)).toThrow();
-  expect(() => jwtSchema.parse(TYP_NOT_JWT)).toThrow();
-  expect(() => jwtSchema.parse(TYP_NOT_JWT)).toThrow();
-  expect(() => z.string().jwt({ alg: "ES256" }).parse(GOOD_JWT_HS256)).toThrow();
-  expect(() => z.string().jwt({ alg: "HS256" }).parse(GOOD_JWT_ES256)).toThrow();
-  //Success
-  jwtSchema.parse(NO_TYP); // allow no typ
-  expect(() => jwtSchema.parse(GOOD_JWT_HS256)).not.toThrow();
-  expect(() => jwtSchema.parse(GOOD_JWT_ES256)).not.toThrow();
-  expect(() => z.string().jwt({ alg: "HS256" }).parse(GOOD_JWT_HS256)).not.toThrow();
-  expect(() => z.string().jwt({ alg: "ES256" }).parse(GOOD_JWT_ES256)).not.toThrow();
+  // Wrong algorithm
+  const d3 = makeJwt({ typ: "JWT", alg: "RS256" }, {});
+  expect(() => es256jwt.parse(d3)).toThrow();
+
+  // missing typ is fine
+  const d4 = makeJwt({ alg: "HS256" }, {});
+  jwt.parse(d4);
+
+  // type isn't JWT
+  const d5 = makeJwt({ typ: "SUP", alg: "HS256" }, { foo: "bar" });
+  expect(() => jwt.parse(d5)).toThrow();
+
+  // const ONE_PART = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";
+  // const NOT_BASE64 =
+  //   "headerIsNotBase64Encoded.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.RRi1X2IlXd5rZa9Mf_0VUOf-RxOzAhbB4tgViUGamWE";
+  // const NO_TYP =
+  //   "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.GuoUe6tw79bJlbU1HU0ADX0pr0u2kf3r_4OdrDufSfQ";
+  // const TYP_NOT_JWT =
+  //   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpUVyJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.RRi1X2IlXd5rZa9Mf_0VUOf-RxOzAhbB4tgViUGamWE";
+
+  // const GOOD_JWT_HS256 =
+  //   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+  // const GOOD_JWT_ES256 =
+  //   "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.tyh-VfuzIxCyGYDlkBA7DfyjrqmSHu6pQ2hoZuFqUSLPNY2N0mpHb3nk5K17HWP_3cYHBw7AhHale5wky6-sVA";
+
+  // const jwtSchema = z.string().jwt();
+
+  // expect(() => jwtSchema.parse(ONE_PART)).toThrow();
+  // expect(() => jwtSchema.parse(NOT_BASE64)).toThrow();
+  // expect(() => jwtSchema.parse(TYP_NOT_JWT)).toThrow();
+  // expect(() => jwtSchema.parse(TYP_NOT_JWT)).toThrow();
+  // expect(() => jwtSchema.parse(TYP_NOT_JWT)).toThrow();
+  // expect(() => z.string().jwt({ alg: "ES256" }).parse(GOOD_JWT_HS256)).toThrow();
+  // expect(() => z.string().jwt({ alg: "HS256" }).parse(GOOD_JWT_ES256)).toThrow();
+  // //Success
+  // jwtSchema.parse(NO_TYP); // allow no typ
+  // expect(() => jwtSchema.parse(GOOD_JWT_HS256)).not.toThrow();
+  // expect(() => jwtSchema.parse(GOOD_JWT_ES256)).not.toThrow();
+  // expect(() => z.string().jwt({ alg: "HS256" }).parse(GOOD_JWT_HS256)).not.toThrow();
+  // expect(() => z.string().jwt({ alg: "ES256" }).parse(GOOD_JWT_ES256)).not.toThrow();
 });
 
 test("url validations", () => {
