@@ -29,7 +29,7 @@ test("_values", () => {
 test("valid parse - object", () => {
   expect(
     z
-      .discriminatedUnion([
+      .discriminatedUnion("type", [
         z.object({ type: z.literal("a"), a: z.string() }),
         z.object({ type: z.literal("b"), b: z.string() }),
       ])
@@ -49,7 +49,7 @@ test("valid - include discriminator key (deprecated)", () => {
 });
 
 test("valid - optional discriminator (object)", () => {
-  const schema = z.discriminatedUnion([
+  const schema = z.discriminatedUnion("type", [
     z.object({ type: z.literal("a").optional(), a: z.string() }),
     z.object({ type: z.literal("b"), b: z.string() }),
   ]);
@@ -58,7 +58,7 @@ test("valid - optional discriminator (object)", () => {
 });
 
 test("valid - discriminator value of various primitive types", () => {
-  const schema = z.discriminatedUnion([
+  const schema = z.discriminatedUnion("type", [
     z.object({ type: z.literal("1"), val: z.string() }),
     z.object({ type: z.literal(1), val: z.string() }),
     z.object({ type: z.literal(BigInt(1)), val: z.string() }),
@@ -110,7 +110,7 @@ test("valid - discriminator value of various primitive types", () => {
 
 test("invalid - null", () => {
   try {
-    z.discriminatedUnion([
+    z.discriminatedUnion("type", [
       z.object({ type: z.literal("a"), a: z.string() }),
       z.object({ type: z.literal("b"), b: z.string() }),
     ]).parse(null);
@@ -141,7 +141,7 @@ test("invalid - null", () => {
 
 test("invalid discriminator value", () => {
   const result = z
-    .discriminatedUnion([
+    .discriminatedUnion("type", [
       z.object({ type: z.literal("a"), a: z.string() }),
       z.object({ type: z.literal("b"), b: z.string() }),
     ])
@@ -170,6 +170,7 @@ test("invalid discriminator value", () => {
 test("invalid discriminator value - unionFallback", () => {
   const result = z
     .discriminatedUnion(
+      "type",
       [z.object({ type: z.literal("a"), a: z.string() }), z.object({ type: z.literal("b"), b: z.string() })],
       { unionFallback: true }
     )
@@ -226,7 +227,7 @@ test("invalid discriminator value - unionFallback", () => {
 
 test("valid discriminator value, invalid data", () => {
   const result = z
-    .discriminatedUnion([
+    .discriminatedUnion("type", [
       z.object({ type: z.literal("a"), a: z.string() }),
       z.object({ type: z.literal("b"), b: z.string() }),
     ])
@@ -262,8 +263,10 @@ test("valid discriminator value, invalid data", () => {
 
 test("wrong schema - missing discriminator", () => {
   try {
-    z.discriminatedUnion([z.object({ type: z.literal("a"), a: z.string() }), z.object({ b: z.string() }) as any])._zod
-      .disc;
+    z.discriminatedUnion("type", [
+      z.object({ type: z.literal("a"), a: z.string() }),
+      z.object({ b: z.string() }) as any,
+    ])._zod.disc;
     throw new Error();
   } catch (e: any) {
     expect(e.message.includes("Invalid discriminated union option")).toBe(true);
@@ -273,7 +276,7 @@ test("wrong schema - missing discriminator", () => {
 // removed to account for unions of unions
 // test("wrong schema - duplicate discriminator values", () => {
 //   try {
-//     z.discriminatedUnion([
+//     z.discriminatedUnion("type",[
 //       z.object({ type: z.literal("a"), a: z.string() }),
 //       z.object({ type: z.literal("a"), b: z.string() }),
 //     ]);
@@ -284,7 +287,7 @@ test("wrong schema - missing discriminator", () => {
 // });
 
 test("async - valid", async () => {
-  const schema = await z.discriminatedUnion([
+  const schema = await z.discriminatedUnion("type", [
     z.object({
       type: z.literal("a"),
       a: z
@@ -304,7 +307,7 @@ test("async - valid", async () => {
 
 test("async - invalid", async () => {
   // try {
-  const a = z.discriminatedUnion([
+  const a = z.discriminatedUnion("type", [
     z.object({
       type: z.literal("a"),
       a: z
@@ -346,7 +349,7 @@ test("async - invalid", async () => {
 });
 
 test("valid - literals with .default or .pipe", () => {
-  const schema = z.discriminatedUnion([
+  const schema = z.discriminatedUnion("type", [
     z.object({
       type: z.literal("foo").default("foo"),
       a: z.string(),
@@ -469,7 +472,7 @@ test("multple discriminators", () => {
     min_cents: z.null(),
   });
 
-  const Config = z.discriminatedUnion([FreeConfig, PricedConfig]);
+  const Config = z.discriminatedUnion("type", [FreeConfig, PricedConfig]);
 
   Config.parse({
     min_cents: null,
@@ -501,7 +504,7 @@ test("single element union", () => {
 
   // Validation must fail here, but it doesn't
 
-  const u = z.discriminatedUnion([schema]);
+  const u = z.discriminatedUnion("a", [schema]);
   const result = u.safeParse(input);
   expect(result).toMatchObject({ success: false });
   expect(result).toMatchInlineSnapshot(`

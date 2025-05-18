@@ -1,20 +1,26 @@
 import * as z from "zod/v4";
 
-const schema = z.object({
-  a: z.literal("discKey"),
-  b: z.enum(["apple", "banana"]),
-  c: z.object({ id: z.string() }),
-});
+// console.dir(z.email()._zod.bag.pattern, { depth: null });
+// console.dir(z.email().def.pattern, { depth: null });
+// console.dir(z.email()._zod.pattern, { depth: null });
 
-const input = {
-  a: "discKey",
-  b: "apple",
-  c: {}, // Invalid, as schema requires `id` property
-};
+const BaseError = { status: z.literal("failed"), message: z.string() };
+const MyErrors = z.discriminatedUnion("code", [
+  z.object({ ...BaseError, code: z.literal(400) }),
+  z.object({ ...BaseError, code: z.literal(401) }),
+  z.object({ ...BaseError, code: z.literal(500) }),
+]);
 
-// Validation must fail here, but it doesn't
-const testDiscUnion = z.discriminatedUnion([schema]);
-// .parse(input);
-// console.dir(testDiscUnion, { depth: null });
+const MyResult = z.discriminatedUnion("status", [
+  z.object({ status: z.literal("success"), data: z.string() }),
+  MyErrors,
+]);
 
-console.dir(testDiscUnion.options, { depth: null });
+console.dir(
+  MyResult.parse({
+    status: "failed",
+    code: 401,
+    message: "asdf",
+  }),
+  { depth: null }
+);

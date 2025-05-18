@@ -243,7 +243,7 @@ test("z.discriminatedUnion", () => {
     age: z.number(),
   });
 
-  const c = z.discriminatedUnion([a, b]);
+  const c = z.discriminatedUnion("type", [a, b]);
 
   expect(c._zod.def.options.length).toEqual(2);
   expect(c._zod.disc!.get("type")!.values.has("A")).toEqual(true);
@@ -267,7 +267,7 @@ test("z.discriminatedUnion with nested discriminator", () => {
     age: z.number(),
   });
 
-  const c = z.discriminatedUnion([a, b]);
+  const c = z.discriminatedUnion("type", [a, b]);
   expect(c._zod.disc!.get("type")!.maps[0].get("key")!.values.has("A")).toEqual(true);
   expect(c._zod.disc!.get("type")!.maps[1].get("key")!.values.has("B")).toEqual(true);
 
@@ -282,7 +282,7 @@ test("z.discriminatedUnion with nested discriminator", () => {
 });
 
 test("z.discriminatedUnion nested", () => {
-  const schema1 = z.discriminatedUnion([
+  const schema1 = z.discriminatedUnion("type", [
     z.object({
       type: z.literal("A"),
       name: z.string(),
@@ -294,7 +294,7 @@ test("z.discriminatedUnion nested", () => {
     }),
   ]);
 
-  const schema2 = z.discriminatedUnion([
+  const schema2 = z.discriminatedUnion("type", [
     z.object({
       num: z.literal(2),
       type: z.literal("C"),
@@ -307,7 +307,7 @@ test("z.discriminatedUnion nested", () => {
     }),
   ]);
 
-  const hyper = z.discriminatedUnion([schema1, schema2]);
+  const hyper = z.discriminatedUnion("type", [schema1, schema2]);
   expect(hyper._zod.disc!.get("num")).toEqual({
     values: new Set([1, 2]),
     maps: [],
