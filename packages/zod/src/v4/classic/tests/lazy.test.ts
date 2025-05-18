@@ -36,9 +36,14 @@ test("opt passthrough", () => {
     c: "default",
   });
 
-  expect(z.lazy(() => z.string())._zod.optionality).toEqual(undefined);
-  expect(z.lazy(() => z.string().optional())._zod.optionality).toEqual("optional");
-  expect(z.lazy(() => z.string().default("asdf"))._zod.optionality).toEqual("defaulted");
+  expect(z.lazy(() => z.string())._zod.optin).toEqual(undefined);
+  expect(z.lazy(() => z.string())._zod.optout).toEqual(undefined);
+
+  expect(z.lazy(() => z.string().optional())._zod.optin).toEqual("optional");
+  expect(z.lazy(() => z.string().optional())._zod.optout).toEqual("optional");
+
+  expect(z.lazy(() => z.string().default("asdf"))._zod.optin).toEqual("optional");
+  expect(z.lazy(() => z.string().default("asdf"))._zod.optout).toEqual(undefined);
 });
 
 //////////////   LAZY   //////////////

@@ -38,7 +38,6 @@ const apiLibraries: ZodResource[] = [
   //   description: "Zod validator middleware for Hono",
   //   slug: "honojs/middleware",
   // },
-
 ];
 
 const formIntegrations: ZodResource[] = [
