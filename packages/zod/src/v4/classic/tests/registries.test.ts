@@ -148,3 +148,12 @@ test(".describe", () => {
   expect(a1.description).toEqual(undefined);
   expect(a2.description).toEqual("Hello");
 });
+
+test("inherit across clone", () => {
+  const A = z.string().meta({ a: true });
+  expect(A.meta()).toEqual({ a: true });
+  const B = A.meta({ b: true });
+  expect(B.meta()).toEqual({ a: true, b: true });
+  const C = B.describe("hello");
+  expect(C.meta()).toEqual({ a: true, b: true, description: "hello" });
+});

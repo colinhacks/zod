@@ -130,11 +130,19 @@ export class JSONSchemaGenerator {
       path: _params.path,
     };
 
-    if (schema._zod.parent) {
+    const parent = schema._zod.parent;
+    // if (parent) {
+    //   // schema was cloned from another schema
+    //   result.ref = parent;
+    //   this.process(parent, params);
+    //   this.seen.get(parent)!.isParent = true;
+    // }
+
+    if (parent) {
       // schema was cloned from another schema
-      result.ref = schema._zod.parent;
-      this.process(schema._zod.parent, params);
-      this.seen.get(schema._zod.parent)!.isParent = true;
+      result.ref = parent;
+      this.process(parent, params);
+      this.seen.get(parent)!.isParent = true;
     } else {
       const _json = result.schema;
       switch (def.type) {

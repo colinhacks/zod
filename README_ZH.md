@@ -1473,7 +1473,6 @@ const value = await stringSchema.parseAsync("hello"); // => hello
 
 ### `.safeParse`
 
-`.safeParse(data:unknown): { success: true; data: T; } | { success: false; error: ZodError; }`
 
 如果你不希望 Zod 在验证失败时抛出错误，请使用`.safeParse`。该方法返回一个包含成功解析的数据的对象，或者一个包含验证问题详细信息的 ZodError 实例。
 

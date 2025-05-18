@@ -406,9 +406,9 @@ export function escapeRegex(str: string): string {
 }
 
 // zod-specific utils
-export function clone<T extends schemas.$ZodType>(inst: T, def?: T["_zod"]["def"]): T {
+export function clone<T extends schemas.$ZodType>(inst: T, def?: T["_zod"]["def"], params?: { parent: boolean }): T {
   const cl = new inst._zod.constr(def ?? inst._zod.def);
-  if (!def) cl._zod.parent = inst;
+  if (!def || params?.parent) cl._zod.parent = inst;
   return cl as any;
 }
 
