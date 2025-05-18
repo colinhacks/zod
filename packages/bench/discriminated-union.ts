@@ -143,7 +143,7 @@ const bench = metabench("z.disriminatedUnion().parse", {
   //     z3Union.parse(item);
   //   }
   // },
-  z3Disc() {
+  "zod 3"() {
     for (const item of DATA) {
       z3DiscUnion.parse(item);
     }
@@ -158,12 +158,12 @@ const bench = metabench("z.disriminatedUnion().parse", {
   //     z4Union.parse(item, args);
   //   }
   // },
-  z4Disc() {
+  "zod 4 (after)"() {
     for (const item of DATA) {
       z4DiscUnion.parse(item);
     }
   },
-  z4LibDisc(){
+  "zod 4 (before)"(){
     for (const item of DATA) {
       z4LibDiscUnion.parse(item);
     }
