@@ -131,6 +131,15 @@ emailSchema.meta();
 // => { id: "email_address", title: "Email address", ... }
 ```
 
+Metadata is associated with a *specific schema instance.* This is important to keep in mind, especially since Zod methods are immutable—they always return a new instance.
+
+```ts
+const A = z.string().meta({ description: "A cool string" });
+A.meta(); // => { hello: "true" }
+
+const B = A.refine(_ => true);
+B.meta(); // => undefined
+```
 
 ### `.describe()`
 
