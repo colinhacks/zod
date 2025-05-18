@@ -1077,15 +1077,17 @@ export interface $ZodTypeDiscriminableInternals extends schemas.$ZodTypeInternal
 export interface $ZodTypeDiscriminable extends schemas.$ZodType {
   _zod: $ZodTypeDiscriminableInternals;
 }
-export type $ZodDiscriminatedUnionParams = TypeParams<schemas.$ZodDiscriminatedUnion, "options">;
+export type $ZodDiscriminatedUnionParams = TypeParams<schemas.$ZodDiscriminatedUnion, "options" | "discriminator">;
 export function _discriminatedUnion<Types extends [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]]>(
   Class: util.SchemaClass<schemas.$ZodDiscriminatedUnion>,
+  discriminator: string,
   options: Types,
   params?: string | $ZodDiscriminatedUnionParams
 ): schemas.$ZodDiscriminatedUnion<Types> {
   return new Class({
     type: "union",
     options,
+    discriminator,
     ...util.normalizeParams(params),
   }) as any;
 }

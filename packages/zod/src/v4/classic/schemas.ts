@@ -1266,22 +1266,17 @@ export interface $ZodTypeDiscriminable extends ZodType {
 }
 
 export function discriminatedUnion<Types extends readonly [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]]>(
-  disc: string,
+  discriminator: string,
   options: Types,
   params?: string | core.$ZodDiscriminatedUnionParams
-): ZodDiscriminatedUnion<Types>;
-export function discriminatedUnion<Types extends readonly [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]]>(
-  options: Types,
-  params?: string | core.$ZodDiscriminatedUnionParams
-): ZodDiscriminatedUnion<Types>;
-export function discriminatedUnion(...args: any[]): any {
-  if (typeof args[0] === "string") args = args.slice(1);
-  const [options, params] = args;
+): ZodDiscriminatedUnion<Types> {
+  // const [options, params] = args;
   return new ZodDiscriminatedUnion({
     type: "union",
     options,
+    discriminator,
     ...util.normalizeParams(params),
-  });
+  }) as any;
 }
 
 // ZodIntersection

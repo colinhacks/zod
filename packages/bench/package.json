@@ -6,6 +6,7 @@
     "arktype": "^2.1.19",
     "valibot": "^1.0.0",
     "zod": "workspace:*",
+    "zodnext": "npm:zod@next",
     "zod3": "npm:zod@^3.23.7"
   },
   "scripts": {

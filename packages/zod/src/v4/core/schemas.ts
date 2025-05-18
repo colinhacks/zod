@@ -1949,7 +1949,7 @@ export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$const
   });
 
   inst._zod.parse = (payload, ctx) => {
-    const async = false;
+    let async = false;
 
     const results: util.MaybeAsync<ParsePayload>[] = [];
     for (const option of def.options) {
@@ -1962,6 +1962,7 @@ export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$const
       );
       if (result instanceof Promise) {
         results.push(result);
+        async = true;
       } else {
         if (result.issues.length === 0) return result;
         results.push(result);
@@ -1985,6 +1986,7 @@ export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$const
 
 export interface $ZodDiscriminatedUnionDef<Options extends readonly $ZodType[] = readonly $ZodType[]>
   extends $ZodUnionDef<Options> {
+  discriminator: string;
   unionFallback?: boolean;
 }
 
@@ -2054,13 +2056,14 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
       return _disc;
     });
 
-    const _discKeys = util.cached(() => {
-      const subdiscs = def.options.map((o) => o._zod.disc!);
-      const discKeys = [...inst._zod.disc.keys()].filter((k) => subdiscs.every((d) => d.has(k)));
-      if (discKeys.length === 0) {
-        throw new Error(`Invalid discriminated union: no shared discriminator key: ${discKeys.join(", ")}`);
+    const _discmap = util.cached(() => {
+      const map: Map<$ZodType, util.DiscriminatorMapElement> = new Map();
+      for (const o of def.options) {
+        const discEl = o._zod.disc?.get(def.discriminator);
+        if (!discEl) throw new Error("Invalid discriminated union option");
+        map.set(o, discEl);
       }
-      return discKeys;
+      return map;
     });
 
     inst._zod.parse = (payload, ctx) => {
@@ -2076,36 +2079,15 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
       }
 
       const filtered: $ZodType[] = [];
+      const discmap = _discmap.value;
       for (const option of def.options) {
-        if (matchDiscriminators(input, option._zod.disc!)) {
+        const subdisc = discmap.get(option)!;
+        if (matchDiscriminatorAtKey(input, def.discriminator, subdisc)) {
           filtered.push(option);
         }
-        // let matched = true;
-        // for (const k of _discKeys.value) {
-        //   if (!matchDiscriminatorAtKey(input, k, option._zod.disc!.get(k)!)) {
-        //     matched = false;
-        //   }
-        // }
-
-        // if (matched) {
-        //   filtered.push(option);
-        // } else if (!def.unionFallback) {
-        //   // if(matched)
-        //   // no matching discriminator
-        //   payload.issues.push({
-        //     code: "invalid_union",
-        //     errors: [],
-        //     note: "No matching discriminator",
-        //     path: [_discKeys.value[0]],
-        //     input,
-        //     inst,
-        //   });
-        // } else {
-        // }
       }
 
       if (filtered.length === 1) return filtered[0]._zod.run(payload, ctx) as any;
-
       if (def.unionFallback) {
         return _super(payload, ctx);
       }
@@ -2116,7 +2098,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
         errors: [],
         note: "No matching discriminator",
         input,
-        path: [_discKeys.value[0]],
+        path: [def.discriminator],
         inst,
       });
 

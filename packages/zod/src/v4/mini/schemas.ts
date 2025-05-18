@@ -900,12 +900,14 @@ export interface $ZodTypeDiscriminable extends ZodMiniType {
 }
 
 export function discriminatedUnion<Types extends readonly [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]]>(
+  discriminator: string,
   options: Types,
   params?: string | core.$ZodDiscriminatedUnionParams
 ): ZodMiniDiscriminatedUnion<Types> {
   return new ZodMiniDiscriminatedUnion({
     type: "union",
     options,
+    discriminator,
     ...util.normalizeParams(params),
   }) as ZodMiniDiscriminatedUnion<Types>;
 }
