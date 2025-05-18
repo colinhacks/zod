@@ -45,6 +45,15 @@ export class $ZodRegistry<Meta extends MetadataType = MetadataType, Schema exten
   }
 
   get<S extends Schema>(schema: S): $replace<Meta, S> | undefined {
+    // return this._map.get(schema) as any;
+
+    // inherit metadata
+    const p = schema._zod.parent as Schema;
+    if (p) {
+      const pm: any = { ...(this.get(p) ?? {}) };
+      delete pm.id; // do not inherit id
+      return { ...pm, ...this._map.get(schema) } as any;
+    }
     return this._map.get(schema) as any;
   }
 
