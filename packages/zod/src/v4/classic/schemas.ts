@@ -1249,8 +1249,8 @@ export interface ZodDiscriminatedUnion<Options extends readonly core.$ZodType[] 
 export const ZodDiscriminatedUnion: core.$constructor<ZodDiscriminatedUnion> = /*@__PURE__*/ core.$constructor(
   "ZodDiscriminatedUnion",
   (inst, def) => {
+    ZodUnion.init(inst, def);
     core.$ZodDiscriminatedUnion.init(inst, def);
-    ZodType.init(inst, def);
   }
 );
 

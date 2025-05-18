@@ -501,7 +501,8 @@ test("single element union", () => {
 
   // Validation must fail here, but it doesn't
 
-  const result = z.discriminatedUnion([schema]).safeParse(input);
+  const u = z.discriminatedUnion([schema]);
+  const result = u.safeParse(input);
   expect(result).toMatchObject({ success: false });
   expect(result).toMatchInlineSnapshot(`
     {
@@ -521,4 +522,6 @@ test("single element union", () => {
       "success": false,
     }
   `);
+
+  expect(u.options.length).toEqual(1);
 });

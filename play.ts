@@ -13,5 +13,8 @@ const input = {
 };
 
 // Validation must fail here, but it doesn't
-const testDiscUnion = z.discriminatedUnion([schema]).parse(input);
-console.dir(testDiscUnion, { depth: null });
+const testDiscUnion = z.discriminatedUnion([schema]);
+// .parse(input);
+// console.dir(testDiscUnion, { depth: null });
+
+console.dir(testDiscUnion.options, { depth: null });
