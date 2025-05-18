@@ -24,6 +24,13 @@ const apiLibraries: ZodResource[] = [
     description: "Weave GraphQL schema and resolvers using Zod.",
     slug: "modevol-com/gqloom",
   },
+  {
+    name: "oRPC",
+    url: "https://orpc.unnoq.com/",
+    description: "Typesafe APIs Made Simple",
+    slug: "unnoq/orpc",
+  },
+
   // https://github.com/honojs/middleware/tree/main/packages/zod-validator
   // {
   //   name: "@hono/zod-validator",
@@ -31,6 +38,7 @@ const apiLibraries: ZodResource[] = [
   //   description: "Zod validator middleware for Hono",
   //   slug: "honojs/middleware",
   // },
+
 ];
 
 const formIntegrations: ZodResource[] = [
