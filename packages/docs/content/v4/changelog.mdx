@@ -559,24 +559,6 @@ Previously all Zod classes defined a static `.create()` method. These are now im
 z.ZodString.create(); // ❌ 
 ```
 
-## `z.discriminatedUnion()`
-
-You no longer need to specify a discriminator key (though you still can if you wish; it is ignored).
-
-```ts
-// in Zod 4:
-const myUnion = z.discriminatedUnion([
-  z.object({ type: z.literal("a"), a: z.string() }),
-  z.object({ type: z.literal("b"), b: z.number() }),
-]);
-
-// in Zod 3:
-const myUnion = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("a"), a: z.string() }),
-  z.object({ type: z.literal("b"), b: z.number() }),
-]);
-```
-
 ## `z.record()`
 
 ### drops single argument usage

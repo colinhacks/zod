@@ -808,33 +808,30 @@ Replace `errorMap` with `error` (function syntax):
 
 ## Upgraded `z.discriminatedUnion()`
 
-Discriminated union support has improved in a couple ways. First, you no longer need to specify the discriminator key. Zod now has a robust way to identify the discriminator key automatically. If no shared discriminator key is found, Zod will throw an error at schema initialization time.
+Discriminated unions now support a number of schema types not previously supported, including unions, pipes, and nested objects:
 
 ```ts
-// in Zod 4:
-const myUnion = z.discriminatedUnion([
-  z.object({ type: z.literal("a"), a: z.string() }),
-  z.object({ type: z.literal("b"), b: z.number() }),
-]);
-
-// in Zod 3:
-const myUnion = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("a"), a: z.string() }),
-  z.object({ type: z.literal("b"), b: z.number() }),
+const MyResult = z.discriminatedUnion("status", [
+  // simple literal
+  z.object({ status: z.literal("aaa"), data: z.string() }),
+  // union discriminator
+  z.object({ status: z.union([z.literal("bbb"), z.literal("ccc")]) }),
+  // pipe discriminator
+  z.object({ status: z.object({ value: z.literal("fail") }) }),
 ]);
 ```
 
-Discriminated unions schema now finally *compose*—you can use one discriminated union as a member of another. Zod determines the optimal discrimination strategy.
+Perhaps most importantly, discriminated unions schema now *compose*—you can use one discriminated union as a member of another.
 
 ```ts
 const BaseError = z.object({ status: z.literal("failed"), message: z.string() });
-const MyErrors = z.discriminatedUnion([
+const MyErrors = z.discriminatedUnion("code", [
   BaseError.extend({ code: z.literal(400) }),
   BaseError.extend({ code: z.literal(401) }),
   BaseError.extend({ code: z.literal(500) })
 ]);
 
-const MyResult = z.discriminatedUnion([
+const MyResult = z.discriminatedUnion("status", [
   z.object({ status: z.literal("success"), data: z.string() }),
   MyErrors
 ]);

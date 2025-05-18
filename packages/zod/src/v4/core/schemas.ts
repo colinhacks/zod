@@ -2968,9 +2968,10 @@ export const $ZodOptional: core.$constructor<$ZodOptional> = /*@__PURE__*/ core.
     $ZodType.init(inst, def);
     inst._zod.optionality = "optional";
 
-    util.defineLazy(inst._zod, "values", () =>
-      def.innerType._zod.values ? new Set([...def.innerType._zod.values, undefined]) : undefined
-    );
+    util.defineLazy(inst._zod, "values", () => {
+      console.dir("VALUES", { depth: null });
+      return def.innerType._zod.values ? new Set([...def.innerType._zod.values, undefined]) : undefined;
+    });
     util.defineLazy(inst._zod, "pattern", () => {
       const pattern = def.innerType._zod.pattern;
       return pattern ? new RegExp(`^(${util.cleanRegex(pattern.source)})?$`) : undefined;

@@ -528,3 +528,49 @@ test("single element union", () => {
 
   expect(u.options.length).toEqual(1);
 });
+
+test("nested discriminated unions", () => {
+  const BaseError = z.object({ status: z.literal("failed"), message: z.string() });
+  const MyErrors = z.discriminatedUnion("code", [
+    BaseError.extend({ code: z.literal(400) }),
+    BaseError.extend({ code: z.literal(401) }),
+    BaseError.extend({ code: z.literal(500) }),
+  ]);
+
+  const MyResult = z.discriminatedUnion("status", [
+    z.object({ status: z.literal("success"), data: z.string() }),
+    MyErrors,
+  ]);
+
+  const result = MyResult.parse({ status: "success", data: "hello" });
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "data": "hello",
+      "status": "success",
+    }
+  `);
+  const result2 = MyResult.parse({ status: "failed", code: 400, message: "bad request" });
+  expect(result2).toMatchInlineSnapshot(`
+    {
+      "code": 400,
+      "message": "bad request",
+      "status": "failed",
+    }
+  `);
+  const result3 = MyResult.parse({ status: "failed", code: 401, message: "unauthorized" });
+  expect(result3).toMatchInlineSnapshot(`
+    {
+      "code": 401,
+      "message": "unauthorized",
+      "status": "failed",
+    }
+  `);
+  const result4 = MyResult.parse({ status: "failed", code: 500, message: "internal server error" });
+  expect(result4).toMatchInlineSnapshot(`
+    {
+      "code": 500,
+      "message": "internal server error",
+      "status": "failed",
+    }
+  `);
+});
