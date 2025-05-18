@@ -1948,9 +1948,43 @@ export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$const
     return undefined;
   });
 
-  inst._zod.parse = (payload, ctx) => {
-    const async = false;
+  const jitEnabled = !core.globalConfig.jitless && util.allowsEval;
+  const makeJIT = () => {
+    const doc = new Doc(["options", "payload", "ctx"]);
+    const { options } = def;
 
+    doc.write(`const input = payload.value;`);
+    for (const i in options) {
+      const option = options[i];
+      const id = option._zod.id;
+      doc.write(`const ${id} = options[${i}]._zod.run({ value: input, issues: [] }, ctx)`);
+      doc.write(`if(${id}.issues.length === 0){
+        payload.value = ${id}.value;  
+        return payload;
+      }`);
+    }
+
+    doc.write(`payload.issues.push({
+      code: "invalid_union",
+      input: final.value,
+      inst,
+      errors: []
+    });`);
+    doc.write(`return payload`);
+
+    const fn = doc.compile();
+    return (payload: any, ctx: any) => fn(options, payload, ctx);
+  };
+
+  let fastpath: ReturnType<typeof makeJIT>;
+
+  inst._zod.parse = (payload, ctx) => {
+    let async = false;
+    if (jitEnabled && ctx?.async === false && ctx.jitless !== true) {
+      // use JIT
+      fastpath ??= makeJIT();
+      return fastpath(payload, ctx);
+    }
     const results: util.MaybeAsync<ParsePayload>[] = [];
     for (const option of def.options) {
       const result = option._zod.run(
@@ -1961,6 +1995,7 @@ export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$const
         ctx
       );
       if (result instanceof Promise) {
+        async = true;
         results.push(result);
       } else {
         if (result.issues.length === 0) return result;
