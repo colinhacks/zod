@@ -35,15 +35,6 @@ export type CheckFn<T> = (input: ParsePayload<T>) => util.MaybeAsync<void>;
 
 /////////////////////////////   SCHEMAS   //////////////////////////////
 
-type $optional = {
-  input: "optional";
-  output: "optional";
-};
-
-type $defaulted = {
-  input: "optional";
-  output?: "optional" | undefined;
-};
 export interface $ZodTypeDef {
   type:
     | "string"
