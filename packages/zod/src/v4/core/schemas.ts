@@ -35,6 +35,15 @@ export type CheckFn<T> = (input: ParsePayload<T>) => util.MaybeAsync<void>;
 
 /////////////////////////////   SCHEMAS   //////////////////////////////
 
+type $optional = {
+  input: "optional";
+  output: "optional";
+};
+
+type $defaulted = {
+  input: "optional";
+  output?: "optional" | undefined;
+};
 export interface $ZodTypeDef {
   type:
     | "string"
@@ -114,7 +123,9 @@ export interface $ZodTypeInternals<out O = unknown, out I = unknown> {
   /** @internal Indicates that a schema output type should be considered optional inside objects.
    * @default Required
    */
-  optionality?: "optional" | "defaulted" | undefined;
+
+  optin?: "optional" | undefined;
+  optout?: "optional" | undefined;
 
   /** @internal A set of literal discriminators used for the fast path in discriminated unions. */
   disc: util.DiscriminatorMap | undefined;
@@ -1597,8 +1608,8 @@ export interface $ZodObjectInternals<
 }
 export type $ZodLooseShape = Record<string, any>;
 
-type OptionalOutSchema = { _zod: { optionality: "optional" } };
-type OptionalInSchema = { _zod: { optionality: "defaulted" | "optional" } };
+type OptionalOutSchema = { _zod: { optout: "optional" } };
+type OptionalInSchema = { _zod: { optin: "optional" } };
 
 export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = string extends keyof T
   ? object
@@ -1634,6 +1645,7 @@ function handleObjectResult(result: ParsePayload, final: ParsePayload, key: Prop
 }
 
 function handleOptionalObjectResult(result: ParsePayload, final: ParsePayload, key: PropertyKey, input: any) {
+  // console.dir({ key, result }, { depth: null });
   if (result.issues.length) {
     // validation failed against value schema
     if (input[key] === undefined) {
@@ -1687,6 +1699,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
   const _normalized = util.cached(() => {
     const keys = Object.keys(def.shape);
     const okeys = util.optionalKeys(def.shape);
+    console.dir(okeys, { depth: null });
     return {
       shape: def.shape,
       keys,
@@ -1720,6 +1733,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
   const generateFastpass = (shape: any) => {
     const doc = new Doc(["shape", "payload", "ctx"]);
     const { keys, optionalKeys } = _normalized.value;
+    console.dir({ keys, optionalKeys }, { depth: null });
 
     const parseStr = (key: string) => {
       const k = util.esc(key);
@@ -1740,6 +1754,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
         const id = ids[key];
         doc.write(`const ${id} = ${parseStr(key)};`);
         const k = util.esc(key);
+        doc.write(`console.log(${id});`);
         doc.write(`
         if (${id}.issues.length) {
           if (input[${k}] === undefined) {
@@ -1757,7 +1772,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
         } else if (${id}.value === undefined) {
           if (${k} in input) newResult[${k}] = undefined;
         } else {
-          if (${k} in input) newResult[${k}] = ${id}.value;
+          newResult[${k}] = ${id}.value;
         }
         `);
       } else {
@@ -1830,7 +1845,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
         // }
 
         const r = el._zod.run({ value: input[key], issues: [] }, ctx);
-        const isOptional = el._zod.optionality === "optional";
+        const isOptional = el._zod.optin === "optional";
 
         if (r instanceof Promise) {
           proms.push(
@@ -2258,7 +2273,7 @@ type TupleInputTypeWithOptionals<T extends util.TupleItems> = T extends readonly
   ...infer Prefix extends $ZodType[],
   infer Tail extends $ZodType,
 ]
-  ? Tail["_zod"]["optionality"] extends "optional" | "defaulted"
+  ? Tail["_zod"]["optin"] extends "optional"
     ? [...TupleInputTypeWithOptionals<Prefix>, Tail["_zod"]["input"]?]
     : TupleInputTypeNoOptionals<T>
   : [];
@@ -2274,7 +2289,7 @@ type TupleOutputTypeWithOptionals<T extends util.TupleItems> = T extends readonl
   ...infer Prefix extends $ZodType[],
   infer Tail extends $ZodType,
 ]
-  ? Tail["_zod"]["optionality"] extends "optional"
+  ? Tail["_zod"]["optout"] extends "optional"
     ? [...TupleOutputTypeWithOptionals<Prefix>, core.output<Tail>?]
     : TupleOutputTypeNoOptionals<T>
   : [];
@@ -2295,7 +2310,7 @@ export interface $ZodTuple<T extends util.TupleItems = util.TupleItems, Rest ext
 export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$constructor("$ZodTuple", (inst, def) => {
   $ZodType.init(inst, def);
   const items = def.items;
-  const optStart = items.length - [...items].reverse().findIndex((item) => item._zod.optionality !== "optional");
+  const optStart = items.length - [...items].reverse().findIndex((item) => item._zod.optin !== "optional");
 
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
@@ -2953,7 +2968,8 @@ export interface $ZodOptionalDef<T extends $ZodType = $ZodType> extends $ZodType
 export interface $ZodOptionalInternals<T extends $ZodType = $ZodType>
   extends $ZodTypeInternals<core.output<T> | undefined, core.input<T> | undefined> {
   def: $ZodOptionalDef<T>;
-  optionality: "optional";
+  optin: "optional";
+  optout: "optional";
   isst: never;
   values: T["_zod"]["values"];
   pattern: T["_zod"]["pattern"];
@@ -2967,7 +2983,8 @@ export const $ZodOptional: core.$constructor<$ZodOptional> = /*@__PURE__*/ core.
   "$ZodOptional",
   (inst, def) => {
     $ZodType.init(inst, def);
-    inst._zod.optionality = "optional";
+    inst._zod.optin = "optional";
+    inst._zod.optout = "optional";
 
     util.defineLazy(inst._zod, "values", () => {
       console.dir("VALUES", { depth: null });
@@ -3002,7 +3019,8 @@ export interface $ZodNullableDef<T extends $ZodType = $ZodType> extends $ZodType
 export interface $ZodNullableInternals<T extends $ZodType = $ZodType>
   extends $ZodTypeInternals<core.output<T> | null, core.input<T> | null> {
   def: $ZodNullableDef<T>;
-  optionality: T["_zod"]["optionality"];
+  optin: T["_zod"]["optin"];
+  optout: T["_zod"]["optout"];
   isst: never;
   values: T["_zod"]["values"];
   pattern: T["_zod"]["pattern"];
@@ -3016,7 +3034,8 @@ export const $ZodNullable: core.$constructor<$ZodNullable> = /*@__PURE__*/ core.
   "$ZodNullable",
   (inst, def) => {
     $ZodType.init(inst, def);
-    util.defineLazy(inst._zod, "optionality", () => def.innerType._zod.optionality);
+    util.defineLazy(inst._zod, "optin", () => def.innerType._zod.optin);
+    util.defineLazy(inst._zod, "optout", () => def.innerType._zod.optout);
 
     util.defineLazy(inst._zod, "pattern", () => {
       const pattern = def.innerType._zod.pattern;
@@ -3052,8 +3071,7 @@ export interface $ZodDefaultDef<T extends $ZodType = $ZodType> extends $ZodTypeD
 export interface $ZodDefaultInternals<T extends $ZodType = $ZodType>
   extends $ZodTypeInternals<util.NoUndefined<core.output<T>>, core.input<T> | undefined> {
   def: $ZodDefaultDef<T>;
-  // qin: "true";
-  optionality: "defaulted";
+  optin: "optional";
   isst: never;
   values: T["_zod"]["values"];
 }
@@ -3068,7 +3086,7 @@ export const $ZodDefault: core.$constructor<$ZodDefault> = /*@__PURE__*/ core.$c
     $ZodType.init(inst, def);
 
     // inst._zod.qin = "true";
-    inst._zod.optionality = "defaulted";
+    inst._zod.optin = "optional";
     util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
 
     inst._zod.parse = (payload, ctx) => {
@@ -3113,7 +3131,7 @@ export interface $ZodPrefaultDef<T extends $ZodType = $ZodType> extends $ZodType
 export interface $ZodPrefaultInternals<T extends $ZodType = $ZodType>
   extends $ZodTypeInternals<util.NoUndefined<core.output<T>>, core.input<T> | undefined> {
   def: $ZodPrefaultDef<T>;
-  optionality: "defaulted";
+  optin: "optional";
   isst: never;
   values: T["_zod"]["values"];
 }
@@ -3127,7 +3145,7 @@ export const $ZodPrefault: core.$constructor<$ZodPrefault> = /*@__PURE__*/ core.
   (inst, def) => {
     $ZodType.init(inst, def);
 
-    inst._zod.optionality = "defaulted";
+    inst._zod.optin = "optional";
     util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
 
     inst._zod.parse = (payload, ctx) => {
@@ -3299,7 +3317,8 @@ export interface $ZodCatchInternals<T extends $ZodType = $ZodType>
   // qin: T["_zod"]["qin"];
   // qout: T["_zod"]["qout"];
 
-  optionality: T["_zod"]["optionality"];
+  optin: T["_zod"]["optin"];
+  optout: T["_zod"]["optout"];
   isst: never;
   values: T["_zod"]["values"];
 }
@@ -3310,7 +3329,8 @@ export interface $ZodCatch<T extends $ZodType = $ZodType> extends $ZodType {
 
 export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$constructor("$ZodCatch", (inst, def) => {
   $ZodType.init(inst, def);
-  util.defineLazy(inst._zod, "optionality", () => def.innerType._zod.optionality);
+  util.defineLazy(inst._zod, "optin", () => def.innerType._zod.optin);
+  util.defineLazy(inst._zod, "optout", () => def.innerType._zod.optout);
   util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
 
   inst._zod.parse = (payload, ctx) => {
@@ -3404,6 +3424,8 @@ export interface $ZodPipeInternals<A extends $ZodType = $ZodType, B extends $Zod
   def: $ZodPipeDef<A, B>;
   isst: never;
   values: A["_zod"]["values"];
+  optin: A["_zod"]["optin"];
+  optout: B["_zod"]["optout"];
 }
 
 export interface $ZodPipe<A extends $ZodType = $ZodType, B extends $ZodType = $ZodType> extends $ZodType {
@@ -3412,9 +3434,9 @@ export interface $ZodPipe<A extends $ZodType = $ZodType, B extends $ZodType = $Z
 
 export const $ZodPipe: core.$constructor<$ZodPipe> = /*@__PURE__*/ core.$constructor("$ZodPipe", (inst, def) => {
   $ZodType.init(inst, def);
-  // inst._zod.qin = def.in._zod.qin;
-  // inst._zod.qout = def.in._zod.qout;
-  inst._zod.values = def.in._zod.values;
+  util.defineLazy(inst._zod, "values", () => def.in._zod.values);
+  util.defineLazy(inst._zod, "optin", () => def.in._zod.optin);
+  util.defineLazy(inst._zod, "optout", () => def.out._zod.optout);
 
   inst._zod.parse = (payload, ctx) => {
     const left = def.in._zod.run(payload, ctx);
@@ -3449,9 +3471,8 @@ export interface $ZodReadonlyDef extends $ZodTypeDef {
 export interface $ZodReadonlyInternals<T extends $ZodType = $ZodType>
   extends $ZodTypeInternals<util.MakeReadonly<core.output<T>>, util.MakeReadonly<core.input<T>>> {
   def: $ZodReadonlyDef;
-  // qin: T["_zod"]["qin"];
-  // qout: T["_zod"]["qout"];
-  optionality: T["_zod"]["optionality"];
+  optin: T["_zod"]["optin"];
+  optout: T["_zod"]["optout"];
   isst: never;
   disc: T["_zod"]["disc"];
 }
@@ -3465,7 +3486,8 @@ export const $ZodReadonly: core.$constructor<$ZodReadonly> = /*@__PURE__*/ core.
   (inst, def) => {
     $ZodType.init(inst, def);
     util.defineLazy(inst._zod, "disc", () => def.innerType._zod.disc);
-    util.defineLazy(inst._zod, "optionality", () => def.innerType._zod.optionality);
+    util.defineLazy(inst._zod, "optin", () => def.innerType._zod.optin);
+    util.defineLazy(inst._zod, "optout", () => def.innerType._zod.optout);
 
     inst._zod.parse = (payload, ctx) => {
       const result = def.innerType._zod.run(payload, ctx);
@@ -3638,9 +3660,8 @@ export interface $ZodLazyInternals<T extends $ZodType = $ZodType>
   innerType: T;
   pattern: T["_zod"]["pattern"];
   disc: T["_zod"]["disc"];
-  // qin: T["_zod"]["qin"];
-  // qout: T["_zod"]["qout"];
-  optionality: T["_zod"]["optionality"];
+  optin: T["_zod"]["optin"];
+  optout: T["_zod"]["optout"];
 }
 
 export interface $ZodLazy<T extends $ZodType = $ZodType> extends $ZodType {
@@ -3653,7 +3674,8 @@ export const $ZodLazy: core.$constructor<$ZodLazy> = /*@__PURE__*/ core.$constru
   util.defineLazy(inst._zod, "innerType", () => def.getter());
   util.defineLazy(inst._zod, "pattern", () => inst._zod.innerType._zod.pattern);
   util.defineLazy(inst._zod, "disc", () => inst._zod.innerType._zod.disc);
-  util.defineLazy(inst._zod, "optionality", () => inst._zod.innerType._zod.optionality);
+  util.defineLazy(inst._zod, "optin", () => inst._zod.innerType._zod.optin);
+  util.defineLazy(inst._zod, "optout", () => inst._zod.innerType._zod.optout);
   inst._zod.parse = (payload, ctx) => {
     const inner = inst._zod.innerType;
     return inner._zod.run(payload, ctx);

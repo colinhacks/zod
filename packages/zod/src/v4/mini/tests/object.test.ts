@@ -10,7 +10,7 @@ test("z.object", () => {
   });
 
   a._zod.def.shape["test?"];
-  a._zod.def.shape.points._zod.optionality;
+  a._zod.def.shape.points._zod.optin;
 
   type a = z.output<typeof a>;
 

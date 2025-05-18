@@ -489,7 +489,7 @@ export function stringifyPrimitive(value: any): string {
 
 export function optionalKeys(shape: schemas.$ZodShape): string[] {
   return Object.keys(shape).filter((k) => {
-    return shape[k]._zod.optionality === "optional";
+    return shape[k]._zod.optin === "optional";
   });
 }
 

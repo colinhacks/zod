@@ -273,11 +273,11 @@ export class JSONSchemaGenerator {
           // const optionalKeys = new Set(def.optional);
           const requiredKeys = new Set(
             [...allKeys].filter((key) => {
-              const opt = def.shape[key]._zod.optionality;
+              const v = def.shape[key]._zod;
               if (this.io === "input") {
-                return opt === undefined;
+                return v.optin === undefined;
               } else {
-                return opt === undefined || opt === "defaulted";
+                return v.optout === undefined;
               }
             })
           );
