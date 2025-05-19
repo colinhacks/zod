@@ -80,7 +80,7 @@ const config = {
       // BASIC USAGE
       ...generateRedirects(
         {
-          "basic-usage": "defining-a-schema",
+          "basic-usage": "",
           "type-inference": "inferring-types",
           "schema-methods": "schema-methods",
           parse: "parsing-data",
@@ -109,25 +109,30 @@ const config = {
           booleans: "booleans",
           "dates-1": "dates",
           "zod-enums": "enums",
-          "native-enums": "native-enums",
+          "native-enums": "enums",
           optionals: "optionals",
           nullables: "nullables",
           optional: "optionals",
           nullable: "nullables",
           nullish: "nullish",
+
+          // objects
           objects: "objects",
           shape: "shape",
+
           keyof: "keyof",
           extend: "extend",
-          merge: "merge",
+          merge: "extend",
           pickomit: "pick",
           partial: "partial",
           deeppartial: "partial",
           required: "required",
           passthrough: "zlooseobject",
           strict: "zstrictobject",
-          strip: "strip",
+          strip: "objects",
           catchall: "catchall",
+
+          // composits
           arrays: "arrays",
           element: "arrays",
           nonempty: "arrays",
@@ -136,6 +141,7 @@ const config = {
           unions: "unions",
           "discriminated-unions": "discriminated-unions",
           records: "records",
+          "record-key-type": "records",
           maps: "maps",
           sets: "sets",
           intersections: "intersections",

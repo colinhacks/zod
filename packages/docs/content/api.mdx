@@ -930,6 +930,20 @@ Dog.parse({ name: "Yeller", extraKey: true });
 // => { name: "Yeller", extraKey: true }
 ```
 
+### `.catchall()`
+
+To defina a *catchall schema* that will be used to validate any unrecognized keys:
+
+```
+const DogWithStrings = z.object({
+  name: z.string(),
+  age: z.number().optional(),
+}).catchall(z.string());
+
+DogWithStrings.parse({ name: "Yeller", extraKey: "extraValue" }); // ✅
+DogWithStrings.parse({ name: "Yeller", extraKey: 42 }); // ❌
+```
+
 ### `.shape`
 
 To access the internal schemas:
@@ -1126,6 +1140,8 @@ const RecipeRequiredDescription = z.required(Recipe, {description: true});
 ```
 </Tab>
 </Tabs>
+
+
 
 ## Recursive objects
 
@@ -2434,4 +2450,44 @@ z.custom<...>((val) => ..., "custom error message");
 
 ## Functions
 
-While not a 
+<Callout type="warn">
+  In Zod 4, `z.function()` no longer returns a Zod schema.
+</Callout>
+
+Zod provides a `z.function()` utility for defining Zod-validated functions. This way, you can avoid intermixing validation code with your business logic.
+
+```ts
+const MyFunction = z.function({
+  input: [z.string()], // parameters (must be an array or a ZodTuple)
+  output: z.number()  // return type
+});
+```
+
+Function schemas have an `.implement()` method which accepts a function and returns a new function that automatically validates its inputs and outputs.
+
+```ts
+const computeTrimmedLength = MyFunction.implement((input) => {
+  // TypeScript knows x is a string!
+  return input.trim().length;
+});
+
+trimmedLength("sandwich"); // => 8
+trimmedLength(" asdf "); // => 4
+```
+
+This function will throw a `ZodError` if the input is invalid:
+
+```ts
+computeTrimmedLength(42); // throws ZodError
+```
+
+If you only care about validating inputs, omit the `output` field is optional.
+
+```ts
+const MyFunction = z.function({
+  input: [z.string()], // parameters (must be an array or a ZodTuple)
+});
+
+const computeTrimmedLength = MyFunction.implement((input) => input.trim.length);
+```
+
