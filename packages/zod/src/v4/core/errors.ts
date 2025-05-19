@@ -1,7 +1,7 @@
 import type { $ZodCheck, $ZodStringFormats } from "./checks.js";
 import { $constructor } from "./core.js";
 import type { $ZodType } from "./schemas.js";
-import type * as util from "./util.js";
+import * as util from "./util.js";
 
 ///////////////////////////
 ////     base type     ////
@@ -181,14 +181,25 @@ export interface $ZodError<T = unknown> extends Error {
 }
 
 const initializer = (inst: $ZodError, def: $ZodIssue[]): void => {
+  inst.name = "$ZodError";
   Object.defineProperty(inst, "_zod", {
     value: inst._zod,
     enumerable: false,
   });
   Object.defineProperty(inst, "issues", {
     value: def,
-    enumerable: true,
+    enumerable: false,
   });
+  // inst.message = JSON.stringify(def, util.jsonStringifyReplacer, 2);
+  Object.defineProperty(inst, "message", {
+    get() {
+      return JSON.stringify(def, util.jsonStringifyReplacer, 2);
+    },
+    enumerable: true,
+    // configurable: false,
+  });
+  // inst.toString = () => inst.message;
+
   // inst.message = `Invalid input`;
   // Object.defineProperty(inst, "message", {
   //   get() {

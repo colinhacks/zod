@@ -40,88 +40,84 @@ test("nested refinements", () => {
   };
   expect(zodSchema.safeParse(DATA)).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "too_small",
-            "message": "Too small: expected string to have >1 characters",
-            "minimum": 1,
-            "origin": "string",
-            "path": [
-              "nested",
-              "confirm",
-            ],
-          },
-          {
-            "code": "custom",
-            "message": "Confirm length should be > 2",
-            "path": [
-              "nested",
-              "confirm",
-            ],
-          },
-          {
-            "code": "custom",
-            "message": "Value must be "bar"",
-            "path": [
-              "nested",
-              "confirm",
-            ],
-          },
-          {
-            "code": "custom",
-            "message": "Password and confirm must match",
-            "path": [
-              "nested",
-              "confirm",
-            ],
-          },
+      "error": [ZodError: [
+      {
+        "origin": "string",
+        "code": "too_small",
+        "minimum": 1,
+        "path": [
+          "nested",
+          "confirm"
         ],
+        "message": "Too small: expected string to have >1 characters"
       },
+      {
+        "code": "custom",
+        "path": [
+          "nested",
+          "confirm"
+        ],
+        "message": "Confirm length should be > 2"
+      },
+      {
+        "code": "custom",
+        "path": [
+          "nested",
+          "confirm"
+        ],
+        "message": "Value must be \\"bar\\""
+      },
+      {
+        "code": "custom",
+        "path": [
+          "nested",
+          "confirm"
+        ],
+        "message": "Password and confirm must match"
+      }
+    ]],
       "success": false,
     }
   `);
 
   expect(zodSchema.safeParse(DATA, { jitless: true })).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "too_small",
-            "message": "Too small: expected string to have >1 characters",
-            "minimum": 1,
-            "origin": "string",
-            "path": [
-              "nested",
-              "confirm",
-            ],
-          },
-          {
-            "code": "custom",
-            "message": "Confirm length should be > 2",
-            "path": [
-              "nested",
-              "confirm",
-            ],
-          },
-          {
-            "code": "custom",
-            "message": "Value must be "bar"",
-            "path": [
-              "nested",
-              "confirm",
-            ],
-          },
-          {
-            "code": "custom",
-            "message": "Password and confirm must match",
-            "path": [
-              "nested",
-              "confirm",
-            ],
-          },
+      "error": [ZodError: [
+      {
+        "origin": "string",
+        "code": "too_small",
+        "minimum": 1,
+        "path": [
+          "nested",
+          "confirm"
         ],
+        "message": "Too small: expected string to have >1 characters"
       },
+      {
+        "code": "custom",
+        "path": [
+          "nested",
+          "confirm"
+        ],
+        "message": "Confirm length should be > 2"
+      },
+      {
+        "code": "custom",
+        "path": [
+          "nested",
+          "confirm"
+        ],
+        "message": "Value must be \\"bar\\""
+      },
+      {
+        "code": "custom",
+        "path": [
+          "nested",
+          "confirm"
+        ],
+        "message": "Password and confirm must match"
+      }
+    ]],
       "success": false,
     }
   `);

@@ -102,17 +102,15 @@ test("date schema", async () => {
   expect(() => dateSchema.parse(null)).toThrow();
   expect(await dateSchema.safeParseAsync(new Date("invalid"))).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "invalid_type",
-            "expected": "date",
-            "message": "Invalid input: expected date, received Date",
-            "path": [],
-            "received": "Invalid Date",
-          },
-        ],
-      },
+      "error": [ZodError: [
+      {
+        "expected": "date",
+        "code": "invalid_type",
+        "received": "Invalid Date",
+        "path": [],
+        "message": "Invalid input: expected date, received Date"
+      }
+    ]],
       "success": false,
     }
   `);

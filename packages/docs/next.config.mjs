@@ -13,13 +13,7 @@ function generateRedirects(idmap, page, origin = "/") {
   const redirects = [];
 
   for (const [key, value] of Object.entries(idmap)) {
-    // if (origin === "/" && page === "/") {
-    //   console.log("skipping root redirect:", key);
-    //   continue;
-    // }
-    console.dir({ page, origin, key, value }, { depth: null });
     if (key === value && origin === page) {
-      console.log("skip infinite redirect:", key);
       continue;
     }
 
@@ -268,17 +262,7 @@ const config = {
     ];
 
     const redirects = [...mainPageRedirects, ...errorHandlingRedirects, ...changelogRedirects];
-    console.dir(redirects, { depth: null });
     return redirects;
-
-    // return [
-    //   {
-    //     source: "/",
-    //     has: [{ type: "query", key: "id", value: "basic-usage" }],
-    //     destination: "/basics?id=defining-a-schema",
-    //     permanent: true,
-    //   },
-    // ];
   },
 };
 

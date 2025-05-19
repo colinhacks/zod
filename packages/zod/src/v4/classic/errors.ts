@@ -23,6 +23,7 @@ export interface ZodError<T = unknown> extends $ZodError<T> {
 
 const initializer = (inst: ZodError, issues: core.$ZodIssue[]) => {
   $ZodError.init(inst, issues);
+  inst.name = "ZodError";
   Object.defineProperties(inst, {
     format: {
       value: (mapper: any) => core.formatError(inst, mapper),

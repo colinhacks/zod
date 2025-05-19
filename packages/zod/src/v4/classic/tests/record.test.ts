@@ -34,35 +34,31 @@ test("enum exhaustiveness", () => {
 
   expect(schema.safeParse({ Tuna: "asdf", Salmon: "asdf", Trout: "asdf" })).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "unrecognized_keys",
-            "keys": [
-              "Trout",
-            ],
-            "message": "Unrecognized key: "Trout"",
-            "path": [],
-          },
+      "error": [ZodError: [
+      {
+        "code": "unrecognized_keys",
+        "keys": [
+          "Trout"
         ],
-      },
+        "path": [],
+        "message": "Unrecognized key: \\"Trout\\""
+      }
+    ]],
       "success": false,
     }
   `);
   expect(schema.safeParse({ Tuna: "asdf" })).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "invalid_type",
-            "expected": "string",
-            "message": "Invalid input: expected string, received undefined",
-            "path": [
-              "Salmon",
-            ],
-          },
+      "error": [ZodError: [
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": [
+          "Salmon"
         ],
-      },
+        "message": "Invalid input: expected string, received undefined"
+      }
+    ]],
       "success": false,
     }
   `);
@@ -77,35 +73,31 @@ test("literal exhaustiveness", () => {
 
   expect(schema.safeParse({ Tuna: "asdf", Salmon: "asdf", Trout: "asdf" })).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "unrecognized_keys",
-            "keys": [
-              "Trout",
-            ],
-            "message": "Unrecognized key: "Trout"",
-            "path": [],
-          },
+      "error": [ZodError: [
+      {
+        "code": "unrecognized_keys",
+        "keys": [
+          "Trout"
         ],
-      },
+        "path": [],
+        "message": "Unrecognized key: \\"Trout\\""
+      }
+    ]],
       "success": false,
     }
   `);
   expect(schema.safeParse({ Tuna: "asdf" })).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "invalid_type",
-            "expected": "string",
-            "message": "Invalid input: expected string, received undefined",
-            "path": [
-              "Salmon",
-            ],
-          },
+      "error": [ZodError: [
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": [
+          "Salmon"
         ],
-      },
+        "message": "Invalid input: expected string, received undefined"
+      }
+    ]],
       "success": false,
     }
   `);
@@ -120,35 +112,31 @@ test("pipe exhaustiveness", () => {
 
   expect(schema.safeParse({ Tuna: "asdf", Salmon: "asdf", Trout: "asdf" })).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "unrecognized_keys",
-            "keys": [
-              "Trout",
-            ],
-            "message": "Unrecognized key: "Trout"",
-            "path": [],
-          },
+      "error": [ZodError: [
+      {
+        "code": "unrecognized_keys",
+        "keys": [
+          "Trout"
         ],
-      },
+        "path": [],
+        "message": "Unrecognized key: \\"Trout\\""
+      }
+    ]],
       "success": false,
     }
   `);
   expect(schema.safeParse({ Tuna: "asdf" })).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "invalid_type",
-            "expected": "string",
-            "message": "Invalid input: expected string, received undefined",
-            "path": [
-              "Salmon",
-            ],
-          },
+      "error": [ZodError: [
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": [
+          "Salmon"
         ],
-      },
+        "message": "Invalid input: expected string, received undefined"
+      }
+    ]],
       "success": false,
     }
   `);
@@ -163,35 +151,31 @@ test("union exhaustiveness", () => {
 
   expect(schema.safeParse({ Tuna: "asdf", Salmon: "asdf", Trout: "asdf" })).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "unrecognized_keys",
-            "keys": [
-              "Trout",
-            ],
-            "message": "Unrecognized key: "Trout"",
-            "path": [],
-          },
+      "error": [ZodError: [
+      {
+        "code": "unrecognized_keys",
+        "keys": [
+          "Trout"
         ],
-      },
+        "path": [],
+        "message": "Unrecognized key: \\"Trout\\""
+      }
+    ]],
       "success": false,
     }
   `);
   expect(schema.safeParse({ Tuna: "asdf" })).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "invalid_type",
-            "expected": "string",
-            "message": "Invalid input: expected string, received undefined",
-            "path": [
-              "Salmon",
-            ],
-          },
+      "error": [ZodError: [
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": [
+          "Salmon"
         ],
-      },
+        "message": "Invalid input: expected string, received undefined"
+      }
+    ]],
       "success": false,
     }
   `);
@@ -208,16 +192,14 @@ test("string record parse - pass", () => {
   expect(schema.safeParse({ asdf: 1234 }).success).toEqual(false);
   expect(schema.safeParse("asdf")).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "invalid_type",
-            "expected": "record",
-            "message": "Invalid input: expected record, received string",
-            "path": [],
-          },
-        ],
-      },
+      "error": [ZodError: [
+      {
+        "expected": "record",
+        "code": "invalid_type",
+        "path": [],
+        "message": "Invalid input: expected record, received string"
+      }
+    ]],
       "success": false,
     }
   `);
@@ -325,28 +307,26 @@ test("async parsing", async () => {
   const result = await schema.safeParseAsync(data);
   expect(result.success).toEqual(false);
   expect(result.error).toMatchInlineSnapshot(`
-    ZodError {
-      "issues": [
-        {
-          "code": "custom",
-          "message": "Invalid input",
-          "path": [
-            "foo",
-          ],
-        },
-        {
-          "code": "custom",
-          "message": "Invalid input",
-          "path": [
-            "baz",
-          ],
-        },
-        {
-          "code": "custom",
-          "message": "Invalid input",
-          "path": [],
-        },
-      ],
-    }
+    [ZodError: [
+      {
+        "code": "custom",
+        "path": [
+          "foo"
+        ],
+        "message": "Invalid input"
+      },
+      {
+        "code": "custom",
+        "path": [
+          "baz"
+        ],
+        "message": "Invalid input"
+      },
+      {
+        "code": "custom",
+        "path": [],
+        "message": "Invalid input"
+      }
+    ]]
   `);
 });

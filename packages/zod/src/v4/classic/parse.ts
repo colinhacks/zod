@@ -1,5 +1,5 @@
 import * as core from "zod/v4/core";
-import { ZodError, ZodRealError } from "./errors.js";
+import { type ZodError, ZodRealError } from "./errors.js";
 
 export type ZodSafeParseResult<T> = ZodSafeParseSuccess<T> | ZodSafeParseError<T>;
 export type ZodSafeParseSuccess<T> = { success: true; data: T; error?: never };
@@ -24,10 +24,10 @@ export const safeParse: <T extends core.$ZodType>(
   value: unknown,
   _ctx?: core.ParseContext<core.$ZodIssue>
   // _params?: { callee?: core.util.AnyFunc; Err?: core.$ZodErrorClass }
-) => ZodSafeParseResult<core.output<T>> = /* @__PURE__ */ core._safeParse(ZodError) as any;
+) => ZodSafeParseResult<core.output<T>> = /* @__PURE__ */ core._safeParse(ZodRealError) as any;
 
 export const safeParseAsync: <T extends core.$ZodType>(
   schema: T,
   value: unknown,
   _ctx?: core.ParseContext<core.$ZodIssue>
-) => Promise<ZodSafeParseResult<core.output<T>>> = /* @__PURE__ */ core._safeParseAsync(ZodError) as any;
+) => Promise<ZodSafeParseResult<core.output<T>>> = /* @__PURE__ */ core._safeParseAsync(ZodRealError) as any;

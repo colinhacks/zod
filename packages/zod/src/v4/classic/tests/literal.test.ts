@@ -60,18 +60,16 @@ test("literal default error message", () => {
   expect(result.success).toEqual(false);
   expect(result.error!.issues.length).toEqual(1);
   expect(result.error).toMatchInlineSnapshot(`
-    ZodError {
-      "issues": [
-        {
-          "code": "invalid_value",
-          "message": "Invalid input: expected "Tuna"",
-          "path": [],
-          "values": [
-            "Tuna",
-          ],
-        },
-      ],
-    }
+    [ZodError: [
+      {
+        "code": "invalid_value",
+        "values": [
+          "Tuna"
+        ],
+        "path": [],
+        "message": "Invalid input: expected \\"Tuna\\""
+      }
+    ]]
   `);
 });
 
