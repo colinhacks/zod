@@ -1,6 +1,7 @@
 // @ts-ignore TS6133
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
+// @ts-ignore TS6133
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 
 import { util } from "../helpers/util.ts";
