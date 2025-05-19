@@ -7,7 +7,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { Banner } from "fumadocs-ui/components/banner";
 import { RootProvider } from "fumadocs-ui/provider";
 import { Inter } from "next/font/google";
-import type { ReactNode } from "react";
+import { type ReactNode, Suspense } from "react";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -34,7 +34,9 @@ export default function Layout({ children }: { children: ReactNode }) {
         >
           {children}
         </RootProvider>
-        <Scroller />
+        <Suspense fallback={null}>
+          <Scroller />
+        </Suspense>
       </body>
     </html>
   );
