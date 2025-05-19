@@ -17,12 +17,12 @@ export default function Layout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={inter.className} suppressHydrationWarning>
       <body className="flex flex-col min-h-screen">
-        <Banner id="zod4">
+        {/* <Banner id="zod4">
           💎 Zod 4 is now stable! <span>&nbsp;</span>
           <a className="underline" href="/v4">
             Read the announcement.
           </a>
-        </Banner>
+        </Banner> */}
         <InkeepBubble />
         <Analytics />
         <RootProvider
