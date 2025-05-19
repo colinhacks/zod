@@ -67,7 +67,7 @@ importers:
         version: 14.0.0
       tsdown:
         specifier: ^0.11.9
-        version: 0.11.9(typescript@5.8.2)
+        version: 0.11.9(typescript@5.5.4)
       tslib:
         specifier: ^2.8.1
         version: 2.8.1
@@ -76,7 +76,7 @@ importers:
         version: 4.19.3
       typescript:
         specifier: ^5.5.4
-        version: 5.8.2
+        version: 5.5.4
       vitest:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@20.17.30)(lightningcss@1.29.3)(terser@5.39.0)
@@ -109,7 +109,7 @@ importers:
     dependencies:
       '@inkeep/cxkit-react':
         specifier: ^0.5.52
-        version: 0.5.52(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@3.24.3)
+        version: 0.5.52(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@packages+zod)
       '@radix-ui/react-accordion':
         specifier: ^1.2.4
         version: 1.2.4(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -4214,6 +4214,7 @@ packages:
   node-domexception@1.0.0:
     resolution: {integrity: sha512-/jKZoMpw0F8GRwl4/eLROPA3cfcXtLApP0QzLmUT/HuPCZWyB7IY9ZrMeKw2O/nFIqPQB3PVM9aYm0F312AXDQ==}
     engines: {node: '>=10.5.0'}
+    deprecated: Use your platform's native DOMException instead
 
   node-emoji@2.2.0:
     resolution: {integrity: sha512-Z3lTE9pLaJF47NyMhd4ww1yFTAP8YhYI8SleJiHzM46Fgpm5cnNzSl9XfzFNqbaz+VlJrIj3fXQ4DeN1Rjm6cw==}
@@ -5134,6 +5135,11 @@ packages:
     resolution: {integrity: sha512-t0rzBq87m3fVcduHDUFhKmyyX+9eo6WQjZvf51Ea/M0Q7+T374Jp1aUiyUl0GKxp8M/OETVHSDvmkyPgvX+X2w==}
     engines: {node: '>=10'}
 
+  typescript@5.5.4:
+    resolution: {integrity: sha512-Mtq29sKDAEYP7aljRgtPOpTvOfbwRWlS6dPRzwjdE+C0R4brX/GUyhHSecbHMFLNBLcJIPt9nl9yG5TZ1weH+Q==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
   typescript@5.6.1-rc:
     resolution: {integrity: sha512-E3b2+1zEFu84jB0YQi9BORDjz9+jGbwwy1Zi3G0LUNw7a7cePUrHMRNy8aPh53nXpkFGVHSxIZo5vKTfYaFiBQ==}
     engines: {node: '>=14.17'}
@@ -5901,7 +5907,7 @@ snapshots:
 
   '@inkeep/cxkit-color-mode@0.5.52': {}
 
-  '@inkeep/cxkit-primitives@0.5.52(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@3.24.3)':
+  '@inkeep/cxkit-primitives@0.5.52(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@packages+zod)':
     dependencies:
       '@inkeep/cxkit-color-mode': 0.5.52
       '@inkeep/cxkit-theme': 0.5.52
@@ -5933,7 +5939,7 @@ snapshots:
       dequal: 2.0.3
       humps: 2.0.1
       merge-anything: 5.1.7
-      openai: 4.78.1(encoding@0.1.13)(zod@3.24.3)
+      openai: 4.78.1(encoding@0.1.13)(zod@packages+zod)
       prism-react-renderer: 2.4.1(react@19.0.0)
       react: 19.0.0
       react-dom: 19.0.0(react@19.0.0)
@@ -5954,9 +5960,9 @@ snapshots:
       - supports-color
       - zod
 
-  '@inkeep/cxkit-react@0.5.52(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@3.24.3)':
+  '@inkeep/cxkit-react@0.5.52(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@packages+zod)':
     dependencies:
-      '@inkeep/cxkit-styled': 0.5.52(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@3.24.3)
+      '@inkeep/cxkit-styled': 0.5.52(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@packages+zod)
       '@radix-ui/react-use-controllable-state': 1.1.0(@types/react@19.0.11)(react@19.0.0)
     transitivePeerDependencies:
       - '@types/react'
@@ -5967,9 +5973,9 @@ snapshots:
       - supports-color
       - zod
 
-  '@inkeep/cxkit-styled@0.5.52(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@3.24.3)':
+  '@inkeep/cxkit-styled@0.5.52(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@packages+zod)':
     dependencies:
-      '@inkeep/cxkit-primitives': 0.5.52(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@3.24.3)
+      '@inkeep/cxkit-primitives': 0.5.52(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@packages+zod)
       class-variance-authority: 0.7.1
       clsx: 2.1.1
       merge-anything: 5.1.7
@@ -9781,7 +9787,7 @@ snapshots:
       regex: 6.0.1
       regex-recursion: 6.0.2
 
-  openai@4.78.1(encoding@0.1.13)(zod@3.24.3):
+  openai@4.78.1(encoding@0.1.13)(zod@packages+zod):
     dependencies:
       '@types/node': 18.19.86
       '@types/node-fetch': 2.6.12
@@ -9791,7 +9797,7 @@ snapshots:
       formdata-node: 4.4.1
       node-fetch: 2.7.0(encoding@0.1.13)
     optionalDependencies:
-      zod: 3.24.3
+      zod: link:packages/zod
     transitivePeerDependencies:
       - encoding
 
@@ -10211,7 +10217,7 @@ snapshots:
       glob: 11.0.2
       package-json-from-dist: 1.0.1
 
-  rolldown-plugin-dts@0.12.2(rolldown@1.0.0-beta.8-commit.d95f99e)(typescript@5.8.2):
+  rolldown-plugin-dts@0.12.2(rolldown@1.0.0-beta.8-commit.d95f99e)(typescript@5.5.4):
     dependencies:
       '@babel/generator': 7.27.1
       '@babel/parser': 7.27.2
@@ -10222,7 +10228,7 @@ snapshots:
       get-tsconfig: 4.10.0
       rolldown: 1.0.0-beta.8-commit.d95f99e
     optionalDependencies:
-      typescript: 5.8.2
+      typescript: 5.5.4
     transitivePeerDependencies:
       - oxc-resolver
       - supports-color
@@ -10708,7 +10714,7 @@ snapshots:
       '@ts-morph/common': 0.13.0
       code-block-writer: 11.0.3
 
-  tsdown@0.11.9(typescript@5.8.2):
+  tsdown@0.11.9(typescript@5.5.4):
     dependencies:
       ansis: 4.0.0
       cac: 6.7.14
@@ -10718,13 +10724,13 @@ snapshots:
       empathic: 1.1.0
       hookable: 5.5.3
       rolldown: 1.0.0-beta.8-commit.d95f99e
-      rolldown-plugin-dts: 0.12.2(rolldown@1.0.0-beta.8-commit.d95f99e)(typescript@5.8.2)
+      rolldown-plugin-dts: 0.12.2(rolldown@1.0.0-beta.8-commit.d95f99e)(typescript@5.5.4)
       semver: 7.7.2
       tinyexec: 1.0.1
       tinyglobby: 0.2.13
       unconfig: 7.3.2
     optionalDependencies:
-      typescript: 5.8.2
+      typescript: 5.5.4
     transitivePeerDependencies:
       - '@oxc-project/runtime'
       - oxc-resolver
@@ -10765,6 +10771,8 @@ snapshots:
   type-fest@0.20.2: {}
 
   type-fest@0.21.3: {}
+
+  typescript@5.5.4: {}
 
   typescript@5.6.1-rc: {}
 
