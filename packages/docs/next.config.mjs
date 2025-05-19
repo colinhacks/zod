@@ -31,32 +31,19 @@ const config = {
   reactStrictMode: true,
   redirects() {
     return [
-      {
-        source: "/",
-        has: [
-          {
-            type: "query",
-            key: "id",
-            value: "primitives",
-          },
-        ],
-        destination: "/api#primitives",
-        permanent: true,
-      },
-
       // INTRO
       ...generateRedirects(
         {
-          // introduction
-          // sponsors
-          // platinum
-          // gold
-          // silver
-          // bronze
-          // copper
-          // installation
-          // requirements
-          // from-npm
+          introduction: "introduction",
+          sponsors: "sponsors",
+          platinum: "platinum",
+          gold: "gold",
+          silver: "silver",
+          bronze: "bronze",
+          copper: "bronze",
+          installation: "installation",
+          requirements: "requirements",
+          "from-npm": "installation",
         },
         "/intro"
       ),
@@ -64,15 +51,15 @@ const config = {
       // ECOSYSTEM
       ...generateRedirects(
         {
-          // ecosystem
-          // resources
-          // api-libraries
-          // form-integrations
-          // zod-to-x
-          // x-to-zod
-          // mocking
-          // powered-by-zod
-          // utilities-for-zod
+          ecosystem: "ecosystem",
+          resources: "resources",
+          "api-libraries": "api-libraries",
+          "form-integrations": "form-integrations",
+          "zod-to-x": "zod-to-x",
+          "x-to-zod": "x-to-zod",
+          mocking: "mocking-libaries",
+          "powered-by-zod": "powered-by-zod",
+          "utilities-for-zod": "zod-utilities",
         },
         "/ecosystem"
       ),
@@ -89,89 +76,89 @@ const config = {
       // API
       ...generateRedirects(
         {
-          // primitives
-          // coercion-for-primitives
-          // literals
-          // strings
-          // datetimes
-          // dates
-          // times
-          // ip-addresses
-          // ip-ranges-cidr
-          // numbers
-          // bigints
-          // nans
-          // booleans
-          // dates-1
-          // zod-enums
-          // native-enums
-          // optionals
-          // nullables
-          // objects
-          // shape
-          // keyof
-          // extend
-          // merge
-          // pickomit
-          // partial
-          // deeppartial
-          // required
-          // passthrough
-          // strict
-          // strip
-          // catchall
-          // arrays
-          // element
-          // nonempty
-          // minmaxlength
-          // tuples
-          // unions
-          // discriminated-unions
-          // records
-          // record-key-type
-          // maps
-          // sets
-          // intersections
-          // recursive-types
-          // zodtype-with-zodeffects
-          // json-type
-          // cyclical-objects
-          // promises
-          // instanceof
-          // functions
-          // preprocess
-          // custom-schemas
-          // schema-methods
-          // parse
-          // parseasync
-          // safeparse
-          // safeparseasync
-          // refine
-          // arguments
-          // customize-error-path
-          // asynchronous-refinements
-          // relationship-to-transforms
-          // superrefine
-          // abort-early
-          // type-refinements
-          // transform
-          // chaining-order
-          // validating-during-transform
-          // relationship-to-refinements
-          // async-transforms
-          // default
-          // describe
-          // catch
-          // optional
-          // nullable
-          // nullish
-          // array
-          // promise
-          // or
-          // and
-          // brand
-          // readonly
-          // pipe
+          // primitives: "primitives",
+          // "coercion-for-primitives": "coercion-for-primitives",
+          // literals: "literals",
+          // strings: "strings",
+          // datetimes: "datetimes",
+          // dates: "dates",
+          // times: "times",
+          // "ip-addresses": "ip-addresses",
+          // "ip-ranges-cidr": "ip-ranges-cidr",
+          // numbers: "numbers",
+          // bigints: "bigints",
+          // nans: "nans",
+          // booleans: "booleans",
+          // "dates-1": "dates-1",
+          // "zod-enums": "zod-enums",
+          // "native-enums": "native-enums",
+          // optionals: "optionals",
+          // nullables: "nullables",
+          // objects: "objects",
+          // shape: "shape",
+          // keyof: "keyof",
+          // extend: "extend",
+          // merge: "merge",
+          // pickomit: "pickomit",
+          // partial: "partial",
+          // deeppartial: "deeppartial",
+          // required: "required",
+          // passthrough: "passthrough",
+          // strict: "strict",
+          // strip: "strip",
+          // catchall: "catchall",
+          // arrays: "arrays",
+          // element: "element",
+          //  nonempty: "nonempty",
+          //  minmaxlength: "minmaxlength",
+          //  tuples: "tuples",
+          //  unions: "unions",
+          //  "discriminated-unions": "discriminated-unions",
+          //  records: "records",
+          //  "record-key-type": "record-key-type",
+          //  maps: "maps",
+          //  sets: "sets",
+          //  intersections: "intersections",
+          //  "recursive-types": "recursive-types",
+          //  "zodtype-with-zodeffects": "zodtype-with-zodeffects",
+          //  "json-type": "json-type",
+          //  "cyclical-objects": "cyclical-objects",
+          //  promises: "promises",
+          //  instanceof: "instanceof",
+          //  functions: "functions",
+          //  preprocess: "preprocess",
+          //  "custom-schemas": "custom-schemas",
+          //  "schema-methods": "schema-methods",
+          //  parse: "parse",
+          //  parseasync: "parseasync",
+          //  safeparse: "safeparse",
+          //  safeparseasync: "safeparseasync",
+          //  refine: "refine",
+          //  arguments: "arguments",
+          //  "customize-error-path": "customize-error-path",
+          //  "asynchronous-refinements": "asynchronous-refinements",
+          //  "relationship-to-transforms": "relationship-to-transforms",
+          //  superrefine: "superrefine",
+          //  "abort-early": "abort-early",
+          //  "type-refinements": "type-refinements",
+          //  transform: "transform",
+          //  "chaining-order": "chaining-order",
+          //  "validating-during-transform": "validating-during-transform",
+          //  "relationship-to-refinements": "relationship-to-refinements",
+          //  "async-transforms": "async-transforms",
+          //  default: "default",
+          //  describe: "describe",
+          //  catch: "catch",
+          //  optional: "optional",
+          //  nullable: "nullable",
+          //  nullish: "nullish",
+          //  array: "array",
+          //  promise: "promise",
+          //  or: "or",
+          //  and: "and",
+          //  brand: "brand",
+          //  readonly: "readonly",
+          //  pipe: "pipe",
         },
         "/api"
       ),

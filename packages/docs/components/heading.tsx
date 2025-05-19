@@ -18,8 +18,8 @@ export function Heading<T extends Types = "h1">({ as, className, ...props }: Hea
     <As className={`flex scroll-m-28 flex-row items-center gap-2 ${className}`} {...props}>
       <Link
         data-card=""
-        href={`#${props.id}`}
-        // href={`?id=${props.id}`}
+        // href={`#${props.id}`}
+        href={`?id=${props.id}`}
         // onclick="event.preventDefault(); history.pushState(null, '', '?asdf=qwer');"
         className="peer"
         // shallow={true}
