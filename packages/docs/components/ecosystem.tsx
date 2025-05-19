@@ -74,11 +74,11 @@ const mockingLibraries: ZodResource[] = [
     slug: "soc221b/zod-schema-faker",
   },
   {
-    "name": "zocker",
+    name: "zocker",
     url: "https://zocker.sigrist.dev",
     description: "Generates valid, semantically meaningful data for your Zod schemas.",
     slug: "LorisSigrist/zocker",
-  }
+  },
 ];
 
 const poweredByZodProjects: ZodResource[] = [
