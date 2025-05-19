@@ -32,3 +32,16 @@ test("min max getters", () => {
     beforeBenchmarkDate
   );
 });
+
+test("custom error message on invalid_date", () => {
+  const invalidDate = new Date("I am not a date");
+  const customMsg = "I am custom";
+  const dateWithMsg = z.date({ message: customMsg });
+  try {
+    dateWithMsg.parse(invalidDate);
+  } catch (error) {
+    const issue = (error as z.ZodError).issues[0];
+    expect(issue.code).toBe("invalid_date");
+    expect(issue.message).toBe(customMsg);
+  }
+});
