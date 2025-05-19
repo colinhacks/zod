@@ -1690,7 +1690,6 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
   const _normalized = util.cached(() => {
     const keys = Object.keys(def.shape);
     const okeys = util.optionalKeys(def.shape);
-    console.dir(okeys, { depth: null });
     return {
       shape: def.shape,
       keys,
@@ -1724,7 +1723,6 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
   const generateFastpass = (shape: any) => {
     const doc = new Doc(["shape", "payload", "ctx"]);
     const { keys, optionalKeys } = _normalized.value;
-    console.dir({ keys, optionalKeys }, { depth: null });
 
     const parseStr = (key: string) => {
       const k = util.esc(key);
@@ -1745,7 +1743,6 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
         const id = ids[key];
         doc.write(`const ${id} = ${parseStr(key)};`);
         const k = util.esc(key);
-        doc.write(`console.log(${id});`);
         doc.write(`
         if (${id}.issues.length) {
           if (input[${k}] === undefined) {
@@ -2978,7 +2975,6 @@ export const $ZodOptional: core.$constructor<$ZodOptional> = /*@__PURE__*/ core.
     inst._zod.optout = "optional";
 
     util.defineLazy(inst._zod, "values", () => {
-      console.dir("VALUES", { depth: null });
       return def.innerType._zod.values ? new Set([...def.innerType._zod.values, undefined]) : undefined;
     });
     util.defineLazy(inst._zod, "pattern", () => {
