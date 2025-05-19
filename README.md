@@ -79,7 +79,6 @@ console.log(data.name);
 ```
 
 <br/>
-<br/>
 
 ## Features
 
@@ -92,11 +91,15 @@ console.log(data.name);
 - Built-in JSON Schema conversion
 - Extensive ecosystem
 
+<br/>
+
 ## Installation
 
 ```sh
 npm install zod
 ```
+
+<br/>
 
 ## Basic usage
 
@@ -110,9 +113,8 @@ const Player = z.object({
   xp: z.number()
 });
 ```
-
-
-## Parsing data
+ 
+### Parsing data
 
 Given any Zod schema, use `.parse` to validate an input. If it's valid, Zod returns a strongly-typed *deep clone* of the input. 
 
@@ -130,7 +132,7 @@ await schema.parseAsync("hello");
 // => "hello"
 ```
 
-## Handling errors
+### Handling errors
 
 When validation fails, the `.parse()` method will throw a `ZodError` instance with granular information about the validation issues.
 
@@ -179,7 +181,7 @@ await schema.safeParseAsync("hello");
 // => { success: true; data: "hello" }
 ```
 
-## Inferring types
+### Inferring types
 
 Zod infers a static type from your schema definitions. You can extract this type with the `z.infer<>` utility and use it however you like.
 
