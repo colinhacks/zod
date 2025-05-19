@@ -4461,14 +4461,13 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
 > {
   #cache: Set<T[keyof T]> | undefined;
   _parse(input: ParseInput): ParseReturnType<T[keyof T]> {
-    const nativeEnumValues = util.getValidEnumValues(this._def.values);
-
     const ctx = this._getOrReturnCtx(input);
+
     if (
       ctx.parsedType !== ZodParsedType.string &&
       ctx.parsedType !== ZodParsedType.number
     ) {
-      const expectedValues = util.objectValues(nativeEnumValues);
+      const expectedValues = util.getValidEnumValues(this._def.values);
       addIssueToContext(ctx, {
         expected: util.joinValues(expectedValues) as "string",
         received: ctx.parsedType,
@@ -4482,7 +4481,7 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
     }
 
     if (!this.#cache.has(input.data)) {
-      const expectedValues = util.objectValues(nativeEnumValues);
+      const expectedValues = util.getValidEnumValues(this._def.values);
 
       addIssueToContext(ctx, {
         received: ctx.data,

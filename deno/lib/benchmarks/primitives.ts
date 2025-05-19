@@ -55,6 +55,38 @@ longEnumSuite
     console.log(`long z.enum: ${e.target}`);
   });
 
+const nativeEnumSuite = new Benchmark.Suite("z.nativeEnum");
+const nativeEnumSchema = z.nativeEnum(enumSchema.Values);
+
+nativeEnumSuite
+  .add("valid", () => {
+    nativeEnumSchema.parse("a");
+  })
+  .add("invalid", () => {
+    try {
+      nativeEnumSchema.parse("x");
+    } catch (e) {}
+  })
+  .on("cycle", (e: Benchmark.Event) => {
+    console.log(`z.nativeEnum: ${e.target}`);
+  });
+
+const longNativeEnumSuite = new Benchmark.Suite("long z.nativeEnum");
+const longNativeEnumSchema = z.nativeEnum(longEnumSchema.Values);
+
+longNativeEnumSuite
+  .add("valid", () => {
+    longNativeEnumSchema.parse("five");
+  })
+  .add("invalid", () => {
+    try {
+      longNativeEnumSchema.parse("invalid");
+    } catch (e) {}
+  })
+  .on("cycle", (e: Benchmark.Event) => {
+    console.log(`long z.nativeEnum: ${e.target}`);
+  });
+
 const undefinedSuite = new Benchmark.Suite("z.undefined");
 const undefinedSchema = z.undefined();
 
@@ -164,6 +196,8 @@ export default {
   suites: [
     enumSuite,
     longEnumSuite,
+    nativeEnumSuite,
+    longNativeEnumSuite,
     undefinedSuite,
     literalSuite,
     numberSuite,
