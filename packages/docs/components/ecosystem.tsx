@@ -73,6 +73,12 @@ const mockingLibraries: ZodResource[] = [
     description: "Generate mock data from zod schemas. Powered by @faker-js/faker and randexp.js.",
     slug: "soc221b/zod-schema-faker",
   },
+  {
+    "name": "zocker",
+    url: "https://zocker.sigrist.dev",
+    description: "Generates valid, semantically meaningful data for your Zod schemas.",
+    slug: "LorisSigrist/zocker",
+  }
 ];
 
 const poweredByZodProjects: ZodResource[] = [
