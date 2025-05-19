@@ -3219,36 +3219,45 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
 /////////////////////////////////////////////////////
 
 const getDiscriminator = <T extends ZodTypeAny>(type: T): Primitive[] => {
-  if (type instanceof ZodLazy) {
-    return getDiscriminator(type.schema);
-  } else if (type instanceof ZodEffects) {
-    return getDiscriminator(type.innerType());
-  } else if (type instanceof ZodLiteral) {
-    return [type.value];
-  } else if (type instanceof ZodEnum) {
-    return type.options;
-  } else if (type instanceof ZodNativeEnum) {
-    // eslint-disable-next-line ban/ban
-    return util.objectValues(type.enum as any);
-  } else if (type instanceof ZodDefault) {
-    return getDiscriminator(type._def.innerType);
-  } else if (type instanceof ZodUndefined) {
-    return [undefined];
-  } else if (type instanceof ZodNull) {
-    return [null];
-  } else if (type instanceof ZodOptional) {
-    return [undefined, ...getDiscriminator(type.unwrap())];
-  } else if (type instanceof ZodNullable) {
-    return [null, ...getDiscriminator(type.unwrap())];
-  } else if (type instanceof ZodBranded) {
-    return getDiscriminator(type.unwrap());
-  } else if (type instanceof ZodReadonly) {
-    return getDiscriminator(type.unwrap());
-  } else if (type instanceof ZodCatch) {
-    return getDiscriminator(type._def.innerType);
-  } else {
-    return [];
+  const result: Primitive[] = [];
+  const stack: ZodTypeAny[] = [type];
+
+  while (stack.length > 0) {
+    const current = stack.pop()!;
+
+    if (current instanceof ZodLazy) {
+      stack.push(current.schema);
+    } else if (current instanceof ZodEffects) {
+      stack.push(current.innerType());
+    } else if (current instanceof ZodLiteral) {
+      result.push(current.value);
+    } else if (current instanceof ZodEnum) {
+      result.push(...current.options);
+    } else if (current instanceof ZodNativeEnum) {
+      // eslint-disable-next-line ban/ban
+      result.push(...util.objectValues(current.enum as any));
+    } else if (current instanceof ZodDefault) {
+      stack.push(current._def.innerType);
+    } else if (current instanceof ZodUndefined) {
+      result.push(undefined);
+    } else if (current instanceof ZodNull) {
+      result.push(null);
+    } else if (current instanceof ZodOptional) {
+      result.push(undefined);
+      stack.push(current.unwrap());
+    } else if (current instanceof ZodNullable) {
+      result.push(null);
+      stack.push(current.unwrap());
+    } else if (current instanceof ZodBranded) {
+      stack.push(current.unwrap());
+    } else if (current instanceof ZodReadonly) {
+      stack.push(current.unwrap());
+    } else if (current instanceof ZodCatch) {
+      stack.push(current._def.innerType);
+    }
   }
+
+  return result;
 };
 
 export type ZodDiscriminatedUnionOption<Discriminator extends string> =
@@ -3407,55 +3416,89 @@ function mergeValues(
   a: any,
   b: any
 ): { valid: true; data: any } | { valid: false } {
-  const aType = getParsedType(a);
-  const bType = getParsedType(b);
+  const root = { _data: undefined as any };
 
-  if (a === b) {
-    return { valid: true, data: a };
-  } else if (aType === ZodParsedType.object && bType === ZodParsedType.object) {
-    const bKeys = util.objectKeys(b);
-    const sharedKeys = util
-      .objectKeys(a)
-      .filter((key) => bKeys.indexOf(key) !== -1);
+  let valid = true;
 
-    const newObj: any = { ...a, ...b };
-    for (const key of sharedKeys) {
-      const sharedValue = mergeValues(a[key], b[key]);
-      if (!sharedValue.valid) {
-        return { valid: false };
+  const stack: Array<{
+    a: any;
+    b: any;
+    parent: any;
+    key: string | number;
+  }> = [
+    { a, b, parent: root, key: "_data" },
+  ];
+
+  while (stack.length > 0 && valid) {
+    const { a, b, parent, key } = stack.pop()!;
+    const aType = getParsedType(a);
+    const bType = getParsedType(b);
+
+    if (a === b) {
+      parent[key] = a;
+      continue;
+    }
+
+    if (aType === ZodParsedType.object && bType === ZodParsedType.object) {
+      const bKeys = util.objectKeys(b);
+      const sharedKeys = util
+        .objectKeys(a)
+        .filter((k) => bKeys.indexOf(k) !== -1);
+
+      const newObj = { ...a, ...b };
+      parent[key] = newObj;
+
+      for (const sharedKey of sharedKeys) {
+        stack.push({
+          a: a[sharedKey],
+          b: b[sharedKey],
+          parent: newObj,
+          key: sharedKey,
+        });
       }
-      newObj[key] = sharedValue.data;
+
+      continue;
     }
 
-    return { valid: true, data: newObj };
-  } else if (aType === ZodParsedType.array && bType === ZodParsedType.array) {
-    if (a.length !== b.length) {
-      return { valid: false };
-    }
-
-    const newArray: unknown[] = [];
-    for (let index = 0; index < a.length; index++) {
-      const itemA = a[index];
-      const itemB = b[index];
-      const sharedValue = mergeValues(itemA, itemB);
-
-      if (!sharedValue.valid) {
-        return { valid: false };
+    if (aType === ZodParsedType.array && bType === ZodParsedType.array) {
+      if (a.length !== b.length) {
+        valid = false;
+        break;
       }
 
-      newArray.push(sharedValue.data);
+      const newArray: unknown[] = [];
+      parent[key] = newArray;
+
+      for (let i = 0; i < a.length; i++) {
+        newArray[i] = undefined;
+
+        stack.push({
+          a: a[i],
+          b: b[i],
+          parent: newArray,
+          key: i,
+        });
+      }
+      continue;
     }
 
-    return { valid: true, data: newArray };
-  } else if (
-    aType === ZodParsedType.date &&
-    bType === ZodParsedType.date &&
-    +a === +b
-  ) {
-    return { valid: true, data: a };
-  } else {
+    if (
+      aType === ZodParsedType.date &&
+      bType === ZodParsedType.date &&
+      +a === +b
+    ) {
+      parent[key] = a;
+      continue;
+    }
+
+    valid = false;
+  }
+
+  if (!valid) {
     return { valid: false };
   }
+
+  return { valid: true, data: root._data };
 }
 
 export class ZodIntersection<
