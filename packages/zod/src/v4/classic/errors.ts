@@ -4,7 +4,7 @@ import { $ZodError } from "zod/v4/core";
 /** @deprecated Use `z.core.$ZodIssue` from `@zod/core` instead, especially if you are building a library on top of Zod. */
 export type ZodIssue = core.$ZodIssue;
 
-/** An Error-like class that doesn't extend `Error`. Used inside safeParse.  */
+/** An Error-like class used to store Zod validation issues.  */
 export interface ZodError<T = unknown> extends $ZodError<T> {
   /** @deprecated Use the `z.treeifyError(err)` function instead. */
   format(): core.$ZodFormattedError<T>;
