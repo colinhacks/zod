@@ -56,7 +56,7 @@ export default async function (request: NextRequest) {
         <div tw="flex flex-col w-full pr-52">
           {/* Added right padding to avoid text overlapping with logo */}
           {/* <p tw="text-4xl font-bold tracking-tight text-white m-0 leading-none mb-6 border-b border-gray-700 pb-4">
-            Zod Docs
+            Zod
           </p> */}
           <h1 tw="text-8xl font-bold tracking-tight text-white m-0 leading-none">{title}</h1>
           {description ? <p tw="text-2xl text-gray-300 mt-6 max-w-4xl">{description}</p> : null}

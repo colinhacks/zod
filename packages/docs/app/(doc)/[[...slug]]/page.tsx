@@ -73,7 +73,7 @@ export async function generateMetadata(props: {
   if (!page) notFound();
 
   const rootTitle = page.data.title ?? "Home";
-  const title = rootTitle + " | Zod Docs";
+  const title = rootTitle + " | Zod";
   const description = page.data.description;
   return {
     title,
