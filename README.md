@@ -39,8 +39,8 @@
 <div align="center">
   <a href="https://jazz.tools/?utm_source=zod">
     <picture width="95%" >
-      <source media="(prefers-color-scheme: dark)" srcset="https://i.imgur.com/w1GE8ao.png">
-      <img alt="jazz logo" src="https://i.imgur.com/w1GE8ao.png" width="95%">
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/garden-co/jazz/938f6767e46cdfded60e50d99bf3b533f4809c68/homepage/homepage/public/Zod%20sponsor%20message.png">
+      <img alt="jazz logo" src="https://raw.githubusercontent.com/garden-co/jazz/938f6767e46cdfded60e50d99bf3b533f4809c68/homepage/homepage/public/Zod%20sponsor%20message.png" width="95%">
     </picture>
   </a>
   <br/>
