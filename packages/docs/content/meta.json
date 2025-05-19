@@ -14,7 +14,7 @@
     "json-schema",
     "ecosystem",
     "library-authors",
-    "---sublibraries---",
+    "---Packages---",
     "packages/zod",
     "packages/mini",
     "packages/core"

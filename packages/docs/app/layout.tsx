@@ -36,15 +36,31 @@ export default function Layout({ children }: { children: ReactNode }) {
         <script
           dangerouslySetInnerHTML={{
             __html: `
-          document.addEventListener("DOMContentLoaded", () => {
+          console.log("initial")
+          window.addEventListener("popstate", ()=>{ console.log("popstate") });
+          window.addEventListener("load", ()=>{ console.log("load") });
+          window.addEventListener("DOMContentLoaded", ()=>{ console.log("DOMContentLoaded") });
+          window.addEventListener("pageshow", ()=>{ console.log("pageshow") });
+          window.addEventListener("beforeunload", ()=>{ console.log("beforeunload") });
+          window.addEventListener("unload", ()=>{ console.log("unload") });
+          window.addEventListener("visibilitychange", ()=>{ console.log("visibilitychange") });
+          // window.addEventListener("scroll", ()=>{ console.log("scroll") });
+
+          function __handleScroll(){
             // if id query parameter is present, scroll to the element with that id
             const params = new URLSearchParams(window.location.search);
+            console.dir(params, {depth: null});
             const id = params.get("id");
+            console.dir(params, {depth: null});
             if (id) {
-              const element = document.getElementById(id);
-              element?.scrollIntoView({ behavior: "smooth" });
+              console.dir(document.getElementById(id), {depth: null});
+              document.getElementById(id)?.scrollIntoView();
             }
-          });
+          }
+          
+          // window.addEventListener("popstate",__handleScroll);
+          // window.addEventListener("load", __handleScroll);
+          // __handleScroll();
         `,
           }}
         />
