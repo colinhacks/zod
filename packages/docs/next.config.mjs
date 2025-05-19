@@ -8,24 +8,34 @@ const withMDX = createMDX();
  * @param {string} page
  * * @param {string?} origin
  */
-function generateRedirects(idmap, page, origin = null) {
+function generateRedirects(idmap, page, origin = "/") {
   /** @type import("next").Redirect */
   const redirects = [];
 
   for (const [key, value] of Object.entries(idmap)) {
-    if (key === value && origin === null)
-      redirects.push({
-        source: origin ?? `/`,
-        has: [
-          {
-            type: "query",
-            key: "id",
-            value: key,
-          },
-        ],
-        destination: `/${page}?id=${value}#{value}`,
-        permanent: true,
-      });
+    // if (origin === "/" && page === "/") {
+    //   console.log("skipping root redirect:", key);
+    //   continue;
+    // }
+    console.dir({ page, origin, key, value }, { depth: null });
+    if (key === value && origin === page) {
+      console.log("skip infinite redirect:", key);
+      continue;
+    }
+
+    if (page[0] !== "/") throw new Error("page must start with /");
+    redirects.push({
+      source: origin,
+      has: [
+        {
+          type: "query",
+          key: "id",
+          value: key,
+        },
+      ],
+      destination: `${page}?id=${value}`,
+      permanent: true,
+    });
   }
   return redirects;
 }
@@ -48,7 +58,7 @@ const config = {
           requirements: "requirements",
           "from-npm": "installation",
         },
-        "/intro"
+        "/"
       ),
 
       // ECOSYSTEM
@@ -60,7 +70,7 @@ const config = {
           "form-integrations": "form-integrations",
           "zod-to-x": "zod-to-x",
           "x-to-zod": "x-to-zod",
-          mocking: "mocking-libaries",
+          mocking: "mocking-libraries",
           "powered-by-zod": "powered-by-zod",
           "utilities-for-zod": "zod-utilities",
         },
@@ -71,14 +81,14 @@ const config = {
       ...generateRedirects(
         {
           "basic-usage": "defining-a-schema",
-          "type-inference": "inferred-types",
+          "type-inference": "inferring-types",
           "schema-methods": "schema-methods",
-          parse: "parse",
-          parseasync: "parse",
-          safeparse: "safeparse",
-          safeparseasync: "safeparse",
+          parse: "parsing-data",
+          parseasync: "parsing-data",
+          safeparse: "handling-errors",
+          safeparseasync: "handling-errors",
         },
-        "/basic-usage"
+        "/basics"
       ),
 
       // API
@@ -155,8 +165,8 @@ const config = {
           "async-transforms": "transforms",
           default: "defaults",
           catch: "catch",
-          array: "array",
-          promise: "promise",
+          array: "arrays",
+          promise: "promises",
           or: "unions",
           and: "intersections",
           brand: "branded-types",
@@ -169,7 +179,7 @@ const config = {
       // METADATA
       ...generateRedirects(
         {
-          describe: "describe",
+          describe: "",
         },
         "/metadata"
       ),
@@ -177,9 +187,9 @@ const config = {
       // FOR MAINTAINERS
       ...generateRedirects(
         {
-          // "writing-generic-functions": "how-to-accept-user-define-schemas",
-          // "inferring-the-inferred-type": "how-to-accept-user-define-schemas",
-          // "constraining-allowable-inputs": "how-to-accept-user-define-schemas",
+          "writing-generic-functions": "how-to-accept-user-defined-schemas",
+          "inferring-the-inferred-type": "how-to-accept-user-defined-schemas",
+          "constraining-allowable-inputs": "how-to-accept-user-defined-schemas",
         },
         "/library-authors"
       ),
@@ -197,7 +207,7 @@ const config = {
         {
           "error-handling": "handling-errors",
         },
-        "/basic-usage"
+        "/basics"
       ),
 
       // DROPPED
@@ -222,6 +232,10 @@ const config = {
           "contextual-error-map": "error-precedence",
           "customizing-errors-with-zoderrormap": "global-error-customization",
           "a-demonstrative-example": "",
+          zoderror: "",
+          zodissue: "",
+          zodissuecode: "",
+          zodparsedtype: "",
         },
         "/error-customization",
         "/ERROR_HANDLING"
@@ -232,26 +246,9 @@ const config = {
           "error-handling-for-forms": "error-handling-for-forms",
           "formatting-errors": "formatting-errors",
           "flattening-errors": "zflattenerror",
-          "post-processing-issues": "post-processing-issues",
-          "extract-type-signature": "extract-type-signature",
-          "a-working-example": "global-error-customization",
         },
         "/error-formatting",
         "/ERROR_HANDLING"
-      ),
-      // /ERROR_HANDLING.md
-      ...generateRedirects(
-        {
-          zoderror: "zoderror",
-          zodissue: "zodissue",
-          zodissuecode: "zodissuecode",
-          zodparsedtype: "zodparsedtype",
-
-          "post-processing-issues": "ztreeifyerror",
-          "extract-type-signature": "ztreeifyerror",
-        },
-        "/error-handling",
-        "/ERROR_HANDLING" // origin
       ),
     ];
 
@@ -264,7 +261,18 @@ const config = {
       },
     ];
 
-    return [...mainPageRedirects, ...errorHandlingRedirects, ...changelogRedirects];
+    const redirects = [...mainPageRedirects, ...errorHandlingRedirects, ...changelogRedirects];
+    console.dir(redirects, { depth: null });
+    return redirects;
+
+    // return [
+    //   {
+    //     source: "/",
+    //     has: [{ type: "query", key: "id", value: "basic-usage" }],
+    //     destination: "/basics?id=defining-a-schema",
+    //     permanent: true,
+    //   },
+    // ];
   },
 };
 
