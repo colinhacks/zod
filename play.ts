@@ -1,9 +1,9 @@
-import * as z from "zod/v4";
+import type { LanguageModelV1 } from "@ai-sdk/provider";
+import { generateObject } from "ai";
+import type { z } from "zod";
 
-// console.log(z.string().safeParse(234).error);
-z.string().parse(234);
-// try {
-//   z.string().parse(234);
-// } catch (e) {
-//   console.dir(e, { depth: null });
-// }
+export function myFn<T>(model: LanguageModelV1, schema: z.Schema<T>) {
+  return generateObject({ model, schema });
+}
+
+myFn;

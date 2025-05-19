@@ -3450,7 +3450,7 @@ export class ZodTuple<
     return this._def.items;
   }
 
-  rest<Rest extends ZodTypeAny>(rest: Rest): ZodTuple<T, Rest> {
+  rest<RestSchema extends ZodTypeAny>(rest: RestSchema): ZodTuple<T, RestSchema> {
     return new ZodTuple({
       ...this._def,
       rest,
