@@ -1,14 +1,5 @@
 # Contributing
 
-> ⚠ The default branch has just been switched to `main` from `master` (as of May 15th, 2024). Follow the following instructions to update your local fork.
->
-> ```sh
-> git branch -m master main   # rename local branch
-> git fetch origin   # fetch from remote
-> git branch -u origin/main main   # set upstream
-> git remote set-head origin -a   # update remote
-> ```
-
 When it comes to open source, there are different ways you can contribute, all
 of which are valuable. Here's few guidelines that should help you as you prepare
 your contribution.
@@ -22,7 +13,7 @@ Before you start working on a contribution, create an issue describing what you 
 - Fork the repo
 - Clone your forked repository: `git clone git@github.com:{your_username}/zod.git`
 - Enter the zod directory: `cd zod`
-- Create a new branch off the `main` branch: `git checkout -b your-feature-name`
+- Create a new branch off the `master` branch: `git checkout -b your-feature-name`
 - Implement your contributions (see the Development section for more information)
 - Push your branch to the repo: `git push origin your-feature-name`
 - Go to https://github.com/colinhacks/zod/compare and select the branch you just pushed in the "compare:" dropdown
@@ -36,9 +27,9 @@ The following steps will get you setup to contribute changes to this repo:
 
 2. Clone your forked repo: `git clone git@github.com:{your_username}/zod.git`
 
-3. Run `yarn` to install dependencies.
+3. Run `pnpm i` to install dependencies.
 
-4. Start playing with the code! You can do some simple experimentation in [`playground.ts`](playground.ts) (see `yarn play` below) or start implementing a feature right away.
+4. Start playing with the code! You can do some simple experimentation in [`playground.ts`](playground.ts) (see `pnpm play` below) or start implementing a feature right away.
 
 ## Alternative: VSCode Dev Container setup
 
@@ -53,27 +44,35 @@ In the OSS version of VSCode the extension may be not available.
 
 ### Commands
 
-**`yarn build`**
+**`pnpm build`**
 
 - deletes `lib` and re-compiles `src` to `lib`
 
-**`yarn test`**
+**`pnpm test`**
 
-- runs all Jest tests and generates coverage badge
+- runs all Vitest tests and generates coverage badge
 
-**`yarn test enum`**
+**`pnpm test:watch`**
 
-- runs a single test file (e.g. `enum.test.ts`)
+- runs all Vitest tests and
 
-**`yarn play`**
+**`pnpm test <file>`**
+
+- runs all test files that match `<file>`
+
+**`pnpm test --filter <ws> <file>`**
+
+- runs all test files in `<ws>` that match `<file>` (e.g. `"enum"` will match `"enum.test.ts"`)
+
+**`pnpm play`**
 
 - executes [`playground.ts`](playground.ts), watches for changes. useful for experimentation
 
 ### Tests
 
-Zod uses Jest for testing. After implementing your contribution, write tests for it. Just create a new file under `src/__tests__` or add additional tests to the appropriate existing file.
+Zod uses Vitest for testing. After implementing your contribution, write tests for it. Just create a new file in the `tests` directory of any workspace, or add additional tests to an existing file if appropriate.
 
-Before submitting your PR, run `yarn test` to make sure there are no (unintended) breaking changes.
+> Zod uses git hooks to execute tests before `git push`. Before submitting your PR, run `pnpm test` to make sure there are no (unintended) breaking changes.
 
 ### Documentation
 
