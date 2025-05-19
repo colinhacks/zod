@@ -5,39 +5,31 @@ title: Migration guide
 import { Callout } from "fumadocs-ui/components/callout";
 import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 
-> To learn more about the performance enhancements and new features of Zod 4, read the [introductory post](/v4).
+> This migration guide aims to list the breaking changes in Zod 4 in order of highest to lowest impact. To learn more about the performance enhancements and new features of Zod 4, read the [introductory post](/v4).
 
-To give the ecosystem time to migrate, Zod 4 will initially be published alongside `zod@3.25.0`. It is consumable as a subpath import:
+To give the ecosystem time to migrate, Zod 4 will initially be published alongside Zod v3.25. To use Zod 4, upgrade to `zod@3.25.0` or later:
+
+```
+npm upgrade zod@^3.25.0
+```
+
+Zod 4 is available at the `"/v4"` subpath:
 
 ```ts
 import { z } from "zod/v4";
 ```
-
-This migration guide aims to list the breaking changes in Zod 4 in order of highest to lowest impact. Every effort was made to prevent breaking changes, but some are unavoidable. 
 
 <Callout>
-**Note** — Zod 3 exported a large number of undocumented quasi-internal utility types and functions that are not considered part of the public API. Changes to those are not documented here.
+**Note** — Zod 3 exported a number of undocumented quasi-internal utility types and functions that are not considered part of the public API. Changes to those are not documented here.
 </Callout>
-
-To install the beta:
-
-```
-npm upgrade zod@next
-```
-
-To start using Zod 4, import it from `zod/v4`:
-
-```ts
-import { z } from "zod/v4";
-```
 
 ## Error customization
 
-This is perhaps the most visible of the removed APIs. Zod 4 standardizes the APIs for error customization under a single, unified `error` param. 
+Zod 4 standardizes the APIs for error customization under a single, unified `error` param. Previously Zod's error customization APIs were fragmented and inconsistent. This is cleaned up in Zod 4. 
 
 ### deprecates `message`
 
-Replace `message` with `error`. The `message` parameter is still supported but deprecated.
+Replaces `message` with `error`. The `message` parameter is still supported but deprecated.
 
 <Tabs groupId="error-message" items={["Zod 4", "Zod 3"]} persist>
 <Tab value="Zod 4">
@@ -80,7 +72,9 @@ z.string({
 
 ### drops `errorMap`
 
-This is renamed to `error`. Error maps can also now return a string or `undefined` (which yields control to the next error map in the chain).
+This is renamed to `error`. 
+
+Error maps can also now return a plain `string` (instead of `{message: string}`). They can also return `undefined`, which tells Zod to yield control to the next error map in the chain.
 
 <Tabs groupId="error-map" items={["Zod 4", "Zod 3"]} persist>
 <Tab value="Zod 4">

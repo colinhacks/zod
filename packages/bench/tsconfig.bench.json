@@ -3,6 +3,9 @@
   "compilerOptions": {
     "noEmit": true,
     "extendedDiagnostics": true,
-    "traceResolution": true
+    "traceResolution": true,
+    "customConditions": [],
+    "skipDefaultLibCheck": true,
+    "skipLibCheck": true,
   }
 }

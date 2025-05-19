@@ -30,24 +30,25 @@ jobs:
         run: |
           pnpm install
 
-      # - id: publish
-      #   name: Publish to NPM
-      #   uses: JS-DevTools/npm-publish@v3
-      #   with:
-      #     token: ${{ secrets.NPM_TOKEN }}
-      #     dry-run: false
-      #     provenance: true
+      - id: publish
+        name: Publish to NPM
+        uses: JS-DevTools/npm-publish@v3
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          dry-run: true
+          provenance: true
+          package: ./packages/zod
 
-      # - name: Post-publish
-      #   if: steps.publish.outputs.type != 'none'
-      #   run: |
-      #     echo "Published ${{ steps.publish.outputs.type }} version: ${{ steps.publish.outputs.version }}"
+      - name: Post-publish
+        if: steps.publish.outputs.type != 'none'
+        run: |
+          echo "Published ${{ steps.publish.outputs.type }} version: ${{ steps.publish.outputs.version }}"
 
-      # - name: Publish skipped
-      #   if: steps.publish.outputs.type == 'none'
-      #   run: |
-      #     echo "Version in package.json has not changed. Skipping."
-      #     exit 0
+      - name: Publish skipped
+        if: steps.publish.outputs.type == 'none'
+        run: |
+          echo "Version in package.json has not changed. Skipping."
+          exit 0
      
       # - name: Configure changelog
       #   if: steps.publish.outputs.type != 'none'

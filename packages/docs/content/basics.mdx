@@ -45,28 +45,11 @@ const Player = z.object({
 
   During this transition window:
 
-  1. Zod 4 will be considered 100% stable and production-ready
+  1. Zod 4 is considered stable and production-ready
   2. The `"zod"` package will continue to be published in the `3.x.x` version range on npm. The `/v4` subpath will be added in the `zod@3.25` release.
   3. Zod 3 will continue to be exported from the package root (`"zod"`) as well as a new subpath (`"zod/v3"`). It will continue to receive bug fixes & stability improvements.
 
-  Why? Zod occupies a unique place in the ecosystem. Many libraries/frameworks in the ecosystem accept user-defined Zod schemas. This means their user-facing API is strongly coupled to Zod and its various classes/interfaces/utilities. For these libraries/frameworks, a breaking change to Zod necessarily causes a breaking change for their users. A Zod 3 `ZodType` is not assignable to a Zod 4 `ZodType`.
-
-  So why can't libraries just support v3 and v4 simultaneously? Unfortunately the limitations of peerDependencies (and inconsistencies between package managers) make it extremely difficult to elegantly support two major versions of one library simultaneously.
-
-  If I naively published `zod@4.0.0` to npm, the vast majority of the libraries in Zod's ecosystem would need to publish a new major version to properly support Zod 4. this includes some high-profile libraries like the `ai` SDK. it would trigger a "version bump avalanche" across the ecosystem and generally create a huge amount of frustration and work. 
-  
-  By co-publishing v3 and v4 together, we solve this problem. it provides a straightforward way to support Zod 3 and Zod 4 (including Zod Mini) simultaneously. they can continue defining a single peerDependency on `"zod"`; no need for more arcane solutions like npm aliases, optional peer dependencies, or a `"zod-compat"` package. 
-
-  Existing projects will be able upgrade Zod to the latest minor version (`zod@3.25`) to get access to `"zod/v4"` and its many improvements. (During the beta period, they can use `zod@next`.) The can do this with confidence that there will be zero breakage.
-
-  Libraries will need to bump the minimum version of their `"zod"` peer dependency to `zod@^3.25.0`. They can then reference both Zod 3 and Zod 4 in their implementation:
-
-  ```ts 
-  import * as z3 from "zod/v3"
-  import * as z4 from "zod/v4"
-  ```
-
-  Later, once there's broad support for v4, we'll bump the major version on npm and start exporting Zod 4 from the package root, completing the transition. Zod 3 will remain available at `"zod/v3"` forever. While it may seem unorthodox, this is the only approach I'm aware of that enables a clean, incremental migration path for both Zod's users and the libraries in the broader ecosystem.
+  For a complete breakdown of the subpath versioning strategy, see the [associated writeup](https://github.com/colinhacks/zod/issues/4371).
 </Accordion>
 </Accordions>
 
