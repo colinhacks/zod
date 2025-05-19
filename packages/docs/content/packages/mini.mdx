@@ -1,0 +1,163 @@
+---
+title: Zod Mini
+---
+
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+The `zod/v4-mini` variant was introduced with the release of Zod 4. To try it:
+
+```sh
+npm install zod@^3.25.0
+```
+
+It implements the exact same functionality as `zod`, but using a *functional*, *tree-shakable* API. If you're coming from `zod`, this means you generally will use *functions* in place of methods.
+
+<Tabs groupId="lib" items={[ "Zod Mini", "Zod"]}>
+<Tab value="Zod Mini">
+```ts
+import { z } from "zod/v4-mini"
+
+const mySchema = z.nullable(z.optional(z.string()));
+```
+</Tab>
+<Tab value="Zod">
+```ts
+import { z } from "zod/v4";
+
+const mySchema = z.string().optional().nullable();
+```
+</Tab>
+</Tabs>
+
+> **Tree-shaking** — In `zod`, schemas provide a range of convenience methods to perform some common operations (e.g. `.min()` on string schemas). Bundlers have a hard time removing ("tree shaking") method implementations from your bundle, even if they aren't used. It's much easier to remove an unused top-level function, which is why the API of `zod/v4-mini` uses more functions than methods.
+
+## `ZodMiniType`
+
+All `zod/v4-mini` schemas extend the `z.ZodMiniType` base class, which in turn extends `z.core.$ZodType` from [`zod/v4/core`](/packages/core). While this class implements far fewer methods than `ZodType` in `zod`, some particularly useful methods remain.
+
+
+### `.parse`
+
+This is an obvious one. All `zod/v4-mini` schemas implement the same parsing methods as `zod`.
+
+```ts
+import { z } from "zod/v4-mini"
+
+const mySchema = z.string();
+
+mySchema.parse('asdf')
+await mySchema.parseAsync('asdf')
+mySchema.safeParse('asdf')
+await mySchema.safeParseAsync('asdf')
+```
+
+### `.check()`
+
+In `zod/v4` there are dedicated methods on schema subclasses for performing common checks:
+
+```ts
+import { z } from "zod/v4";
+
+z.string()
+  .min(5)
+  .max(10)
+  .refine(val => val.includes("@"))
+  .trim()
+```
+
+In `zod/v4-mini` such methods aren't implemented. Instead you pass these checks into schemas using the `.check()` method:
+
+```ts
+import { z } from "zod/v4-mini"
+
+z.string().check(
+  z.minLength(5), 
+  z.maxLength(10),
+  z.refine(val => val.includes("@")),
+  z.trim()
+);
+```
+
+The following checks are implemented. Some of these checks only apply to schemas of certain types (e.g. strings or numbers). The APIs are all type-safe; TypeScript won't let you add an unsupported check to your schema.
+
+```ts
+z.lt(value);
+z.lte(value); // alias: z.maximum()
+z.gt(value);
+z.gte(value); // alias: z.minimum()
+z.positive();
+z.negative();
+z.nonpositive();
+z.nonnegative();
+z.multipleOf(value);
+z.maxSize(value);
+z.minSize(value);
+z.size(value);
+z.maxLength(value);
+z.minLength(value);
+z.length(value);
+z.regex(regex);
+z.lowercase();
+z.uppercase();
+z.includes(value);
+z.startsWith(value);
+z.endsWith(value);
+z.property(key, schema);
+z.mime(value);
+
+// custom checks
+z.refine()
+z.check()   // replaces .superRefine()
+
+// mutations (these do not change the inferred types)
+z.overwrite(value => newValue);
+z.normalize();
+z.trim();
+z.toLowerCase();
+z.toUpperCase();
+```
+
+### `.register()`
+
+For registering a schema in a [registry](/metadata#registries).
+
+```ts
+const myReg = z.registry<{title: string}>();
+
+z.string().register(myReg, { title: "My cool string schema" });
+```
+
+### `.brand()`
+
+For *branding* a schema. Refer to the [Branded types](/api#branded-types) docs for more information.
+
+```ts
+import { z } from "zod/v4-mini"
+
+const USD = z.string().brand("USD");
+```
+
+
+### `.clone(def)`
+
+Returns an identical clone of the current schema using the provided `def`.
+
+```ts
+const mySchema = z.string()
+
+mySchema.clone(mySchema._zod.def);
+```
+
+## No default locale
+
+While `zod/v4` automatically loads the English (`en`) locale, `zod/v4-mini` does not. This reduces the bundle size in scenarios where error messages are unnecessary, localized to a non-English language, or otherwise customized.
+
+This means, by default the `message` property of all issues will simply read `"Invalid input"`. To load the English locale:
+
+```ts
+import { z } from "zod/v4-mini"
+
+z.config(z.locales.en());
+```
+
+Refer to the [Locales](/error-customization#internationalization) docs for more on localization.

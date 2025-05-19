@@ -1,0 +1,37 @@
+# .github/release.yml
+
+name: Release betas
+on:
+  push:
+    branches:
+      - v4 # release on all commits to v4
+jobs:
+  build_and_publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: latest
+          
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+      - name: Install dependencies
+        run: |
+          pnpm install
+      
+      - name: Authenticate with npm
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+
+      # - id: publish
+      #   name: Publish to NPM
+      #   run: |
+      #     pnpm run pub:beta

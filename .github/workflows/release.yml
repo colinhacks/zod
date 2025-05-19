@@ -4,7 +4,7 @@ name: Release on npm
 on:
   push:
     branches:
-      - "main"
+      - main
     paths:
       - package.json
 
@@ -19,37 +19,25 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
+      
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: Checkout zod-deno
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.ZOD_BOT_TOKEN }}
-          repository: colinhacks/zod-deno
-          path: deno/lib
-
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
       - name: Install dependencies
         run: |
-          yarn install
-
-      - name: Build
-        run: |
-          yarn clean
-          yarn build
-          cp logo.svg deno/lib
-          cp README.md deno/lib
+          pnpm install
 
       - id: publish
         name: Publish to NPM
         uses: JS-DevTools/npm-publish@v3
         with:
           token: ${{ secrets.NPM_TOKEN }}
-          dry-run: false
+          dry-run: true
           provenance: true
+          package: ./packages/zod
 
       - name: Post-publish
         if: steps.publish.outputs.type != 'none'
@@ -61,63 +49,38 @@ jobs:
         run: |
           echo "Version in package.json has not changed. Skipping."
           exit 0
+     
+      # - name: Configure changelog
+      #   if: steps.publish.outputs.type != 'none'
+      #   run: |
+      #     echo '{"categories": [], "template": "## Commits:\n\n${{ '${{UNCATEGORIZED}}' }}", "pr_template": ${{ '"- ${{MERGE_SHA}} ${{TITLE}}"' }} }' > changelog_config.json
+      #     cat changelog_config.json
+      #     echo "last_tag=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
+      #     echo "curr_commit=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
-      - name: Push to Deno
-        if: steps.publish.outputs.type != 'none'
-        working-directory: deno/lib
-        run: |
-          git config --global user.email "zodbot@colinhacks.com"
-          git config --global user.name "Zod Bot"
-          git add . -f
-          git commit -m "Build from zod $GITHUB_SHA" --allow-empty
-          git push
+      # - name: Generate changelog
+      #   if: steps.publish.outputs.type != 'none'
+      #   id: github_release
+      #   uses: mikepenz/release-changelog-builder-action@v2.9.0
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     fromTag: "${{ env.last_tag }}"
+      #     toTag: ${{ github.ref }}
+      #     commitMode: true
+      #     configuration: changelog_config.json
 
-      - name: Configure changelog
-        if: steps.publish.outputs.type != 'none'
-        run: |
-          echo '{"categories": [], "template": "## Commits:\n\n${{ '${{UNCATEGORIZED}}' }}", "pr_template": ${{ '"- ${{MERGE_SHA}} ${{TITLE}}"' }} }' > changelog_config.json
-          cat changelog_config.json
-          echo "last_tag=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
-          echo "curr_commit=$(git rev-parse HEAD)" >> $GITHUB_ENV
+      # - name: Create release
+      #   if: steps.publish.outputs.type != 'none'
+      #   id: create_release
+      #   uses: actions/create-release@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     tag_name: v${{ steps.publish.outputs.version }}
+      #     release_name: v${{ steps.publish.outputs.version }}
+      #     commitish: ${{ github.ref }}
+      #     body: ${{steps.github_release.outputs.changelog}}
+      #     draft: false
+      #     prerelease: false
 
-      - name: Generate changelog
-        if: steps.publish.outputs.type != 'none'
-        id: github_release
-        uses: mikepenz/release-changelog-builder-action@v2.9.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          fromTag: "${{ env.last_tag }}"
-          toTag: ${{ github.ref }}
-          commitMode: true
-          configuration: changelog_config.json
-
-      - name: Create release
-        if: steps.publish.outputs.type != 'none'
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ steps.publish.outputs.version }}
-          release_name: v${{ steps.publish.outputs.version }}
-          commitish: ${{ github.ref }}
-          body: ${{steps.github_release.outputs.changelog}}
-          draft: false
-          prerelease: false
-
-      - name: Create Deno release
-        if: steps.publish.outputs.type != 'none'
-        id: create_deno_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.ZOD_BOT_TOKEN }}
-        with:
-          tag_name: v${{ steps.publish.outputs.version }}
-          release_name: v${{ steps.publish.outputs.version }}
-          commitish: refs/heads/main
-          body: ${{steps.github_release.outputs.changelog}}
-          draft: false
-          prerelease: false
-          owner: colinhacks
-          repo: zod-deno

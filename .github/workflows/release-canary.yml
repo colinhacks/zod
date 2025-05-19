@@ -4,7 +4,7 @@ name: Release on npm (canary)
 on:
   push:
     branches:
-      - "main"
+      - main
     paths:
       - "src/**"
       - ".github/workflows/release-canary.yml"
@@ -20,30 +20,30 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
+      # - name: Set up Node
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: 20
 
-      - name: Install dependencies
-        run: |
-          yarn install
+      # - name: Install dependencies
+      #   run: |
+      #     yarn install
 
-      - name: Build
-        run: |
-          yarn clean
-          yarn build
+      # - name: Build
+      #   run: |
+      #     yarn clean
+      #     yarn build
 
-      - name: Set version
-        run: |
-          npm --no-git-tag-version version minor
-          npm --no-git-tag-version version $(npm pkg get version | sed 's/"//g')-canary.$(date +'%Y%m%dT%H%M%S')
+      # - name: Set version
+      #   run: |
+      #     npm --no-git-tag-version version minor
+      #     npm --no-git-tag-version version $(npm pkg get version | sed 's/"//g')-canary.$(date +'%Y%m%dT%H%M%S')
 
-      - id: publish
-        name: Publish to NPM
-        uses: JS-DevTools/npm-publish@v3
-        with:
-          token: ${{ secrets.NPM_TOKEN }}
-          dry-run: false
-          tag: canary
-          provenance: true
+      # - id: publish
+      #   name: Publish to NPM
+      #   uses: JS-DevTools/npm-publish@v3
+      #   with:
+      #     token: ${{ secrets.NPM_TOKEN }}
+      #     dry-run: false
+      #     tag: canary
+      #     provenance: true

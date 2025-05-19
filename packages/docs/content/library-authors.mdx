@@ -1,0 +1,233 @@
+---
+title: For library authors
+---
+
+import { Callout } from "fumadocs-ui/components/callout"
+
+This page is primarily intended for consumption by *library authors* who are building tooling on top of Zod. 
+
+
+> If you are a library author and think this page should include some additional guidance, please open an issue!
+
+## Do I need to depend on Zod?
+
+First things first, make sure you need to depend on Zod at all. 
+
+If you're building a library that accepts user-defined schemas to perform black-box validation, you may not need to integrate with Zod specifically. Instead look into [Standard Schema](https://standardschema.dev/). It's a shared interface implemented by most popular validation libraries in the TypeScript ecosystem (see the [full list](https://standardschema.dev/#what-schema-libraries-implement-the-spec)), including Zod. 
+
+This spec works great if you accept user-defined schemas and treat them like "black box" validators. Given any compliant library, you can extract inferred input/output types, validate inputs, and get back a standardized error.
+
+If you need Zod specific functionality, read on.
+
+## How to configure peer dependencies?
+
+Any library built on top of Zod should include `"zod"` in `"peerDependencies"`. This lets your users "bring their own Zod".
+
+```json
+// package.json
+{
+  // ...
+  "peerDependencies": {
+    "zod": "^3.25.0"
+  }
+}
+```
+
+During development, you need to meet your own peer dependency requirement, to do so, add `"zod"` to your `"devDependencies"` as well.
+
+```ts
+// package.json
+{
+  "peerDependencies": {
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "zod": "^3.25.0"
+  }
+}
+```
+
+## How to support Zod 4?
+
+To support Zod 4, update the minimum version for your `"zod"` peer dependency to `^3.25.0`. 
+
+```json
+// package.json
+{
+  // ...
+  "peerDependencies": {
+    "zod": "^3.25.0"
+  }
+}
+```
+
+Starting with `v3.25.0`, Zod 4 is available at a `/v4` subpath. 
+
+```ts
+import * as z4 from "zod/v4/core";
+```
+
+Library code should *not* import from the package root (`"zod"`)! Instead, import from the version-specific subpaths: `"zod/v3"` and `"zod/v4/core"`. This way, your code is future-proofed against major version bumps down the line.
+
+## How to support Zod 3 and Zod 4 simultaneously?
+
+Starting in `v3.25.0`, the package contains copies of both Zod 3 and Zod 4 at their respective subpaths. This makes it easy to support both versions simultaneously.
+
+```ts
+import * as z3 from "zod/v3";
+import * as z4 from "zod/v4/core";
+
+type Schema = z3.ZodTypeAny | z4.$ZodType;
+
+function acceptUserSchema(schema: z3.ZodTypeAny | z4.$ZodType) {
+  // ...
+}
+```
+
+To differentiate between Zod 3 and Zod 4 schemas at runtime, check for the `"_zod"` property. This property is only defined on Zod 4 schemas.
+
+```ts
+import type * as z3 from "zod/v3";
+import type * as v4 from "zod/v4/core";
+
+declare const schema: z3.ZodTypeAny | v4.$ZodType;
+
+if ("_zod" in schema) {
+  schema._zod.def; // Zod 4 schema
+} else {
+  schema._def; // Zod 3 schema
+}
+```
+
+## How to support Zod and Zod Mini simultaneously?
+
+Your library code should only import from `zod/v4/core`. This sub-package defines the interfaces, classes, and utilities that are shared between `zod/v4` and `zod/v4-mini`. 
+
+```ts
+// library code
+import * as z from "zod/v4/core";
+
+export function acceptObjectSchema<T extends z.$ZodObject>(schema: T){
+  // parse data
+  z.parse(schema, { /* somedata */});
+  // inspect internals
+  schema._zod.def.shape;
+}
+```
+
+By building against the shared base interfaces, you can reliably support both sub-packages simultaneously. This function can accept both `zod/v4` and `zod/v4-mini` schemas. 
+
+```ts
+// user code
+import { acceptObjectSchema } from "your-library";
+
+// Zod 4
+import * as z from "zod/v4";
+acceptObjectSchema(z.object({ name: z.string() }));
+
+// Zod 4 Mini
+import * as zm from "zod/v4-mini";
+acceptObjectSchema(zm.object({ name: zm.string() }))
+```
+
+Refer to the [Zod Core](/packages/core) page for more information on the contents of the core sub-library.
+
+{/* ### Future proofing
+
+To future-proof your library, your code should always allow for new schema and check classes to be added in the future. The addition of a new schema type is *not* considered a breaking change. 
+
+One common pattern when introspecting Zod schemas is to write a switch statement over the set of first-party schema types:
+
+```ts
+const schema = {} as z.$ZodTypes;
+const def = schema._zod.def;
+switch (def.type) {
+  case "string":
+    // ...
+    break;
+  case "object":
+    // ...
+    break;
+  default:
+    console.warn(`Unknown schema type: ${def.type}`);
+    // reasonable fallback behavior
+}
+```
+
+To future-proof this code, your `default` case should probably not throw an error. Instead, it should print an informative error and fall back to some reasonable behavior. If instead you `throw` an error in the default case, your library will be unusable if/when new schemas types are added in the future. Best to print a warning and treat it as a "no-op" (or some other reasonable fallback behavior). The same applies to unrecognized check types, string formats, etc.
+
+ */}
+
+## How to accept user-defined schemas?
+
+Accepting user-defined schemas is the a fundamental operation for any library built on Zod. This section outlines the best practices for doing so.
+
+When starting out, it may be tempting to write a function that accepts a Zod schema like this:
+
+```ts
+import * as z from "zod/v4";
+
+function inferSchema<T>(schema: z.core.$ZodType<T>) {
+  return schema;
+}
+```
+
+This approach is incorrect, and limits TypeScript's ability to properly infer the argument. No matter what you pass in, the type of `schema` will be an instance of `ZodType`. 
+
+```ts
+inferSchema(z.string());
+// => z.core.$ZodType<string>
+```
+
+This approach loses type information, namely _which subclass_ the input actually is (in this case, `ZodString`). That means you can't call any string-specific methods like `.min()` on the result of `inferSchema`. Instead, your generic parameter should extend the core Zod schema interface:
+
+```ts
+function inferSchema<T extends z.core.$ZodType>(schema: T) {
+  return schema;
+}
+
+inferSchema(z.string());
+// => ZodString
+```
+
+The result is now fully and properly typed, you can extract & use the inferred type of the schema:
+
+```ts
+function parseData<T extends z.ZodTypeAny>(data: unknown, schema: T): z.output<T> {
+  return schema.parse(data);
+}
+
+parseData("sup", z.string());
+// => string
+```
+
+To constrain the input schema to a specific subclass:
+
+```ts
+
+import * as z from "zod/v4";
+
+// only accepts object schemas
+function inferSchema<T>(schema: z.core.$ZodObject) {
+  return schema;
+}
+```
+
+To constrain the inferred output type of the input schema:
+
+```ts
+
+import * as z from "zod/v4";
+
+// only accepts object schemas
+function inferSchema<T extends z.core.$ZodType<string>>(schema: T) {
+  return schema;
+}
+
+inferSchema(z.string()); // ✅ 
+
+inferSchema(z.number()); 
+// ❌ The types of '_zod.output' are incompatible between these types. 
+// // Type 'number' is not assignable to type 'string'
+```
+
