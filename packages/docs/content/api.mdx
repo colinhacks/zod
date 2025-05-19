@@ -345,7 +345,7 @@ datetime.parse("2020-01-01T00:00:00.123456Z"); // ✅ (arbitrary precision)
 datetime.parse("2020-01-01T00:00:00+02:00"); // ❌ (no offsets allowed)
 ```
 
-To allow timesone offsets:
+To allow timezone offsets:
 
 ```ts
 const datetime = z.iso.datetime({ offset: true });
