@@ -8,6 +8,7 @@ import { SidebarItem, SidebarSeparator } from "@/components/sidebar-item";
 const layoutProps: DocsLayoutProps = {
   ...baseOptions,
   tree: source.pageTree,
+
   sidebar: {
     hideSearch: false,
     collapsible: false,
@@ -15,18 +16,26 @@ const layoutProps: DocsLayoutProps = {
       Item: SidebarItem,
       Separator: SidebarSeparator,
     },
-    // tabs: [
-    //   {
-    //     title: "Zod",
-    //     // description: "Test Tab",
-    //     url: "/api",
-    //   },
-    //   {
-    //     title: "zod/v4-mini",
-    //     // description: "Test Tab",
-    //     url: "/api",
-    //   },
-    // ],
+    tabs: [
+      {
+        title: "Zod 4",
+        url: "/api",
+        description: "The latest version of Zod",
+        icon: <img src="/logo/logo.png" alt="Zod 4" className="h-4" />,
+      },
+      {
+        title: "Zod 3",
+        description: "In maintenance mode",
+        url: "/packages/v3",
+        icon: (
+          <img
+            src="https://raw.githubusercontent.com/colinhacks/zod/3782fe29920c311984004c350b9fefaf0ae4c54a/logo.svg"
+            alt="Zod 3"
+            className="h-4"
+          />
+        ),
+      },
+    ],
   },
   nav: {
     ...baseOptions.nav,
@@ -38,7 +47,7 @@ const layoutProps: DocsLayoutProps = {
     {
       type: "icon",
       url: "https://github.com/colinhacks/zod",
-      text: "Github",
+      text: "GitHub",
       icon: (
         <svg role="img" viewBox="0 0 24 24" fill="currentColor">
           <title>github logo</title>

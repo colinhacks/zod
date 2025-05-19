@@ -1,7 +1,7 @@
 {
   "root": true,
   "pages": [
-    "---Beta---",
+    "---Zod 4---",
     "v4/index",
     "v4/changelog",
     "---Documentation---",
@@ -14,7 +14,7 @@
     "json-schema",
     "ecosystem",
     "library-authors",
-    "---Packages---",
+    "---sublibraries---",
     "packages/zod",
     "packages/mini",
     "packages/core"

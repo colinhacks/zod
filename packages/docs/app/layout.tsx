@@ -33,6 +33,21 @@ export default function Layout({ children }: { children: ReactNode }) {
         >
           {children}
         </RootProvider>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+          document.addEventListener("DOMContentLoaded", () => {
+            // if id query parameter is present, scroll to the element with that id
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get("id");
+            if (id) {
+              const element = document.getElementById(id);
+              element?.scrollIntoView({ behavior: "smooth" });
+            }
+          });
+        `,
+          }}
+        />
       </body>
     </html>
   );
