@@ -52,7 +52,7 @@
 <br/>
 
 
-### Read the docs: [zod.dev](https://zod.dev)
+### [Read the docs →](https://zod.dev)
 
 <br/>
 <br/>
