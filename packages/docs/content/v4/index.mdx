@@ -12,7 +12,9 @@ After a year of active development: Zod 4 is now stable! It's faster, slimmer, m
 Huge thanks to [Clerk](https://go.clerk.com/zod-clerk), who supported my work on Zod 4 through their extremely generous [OSS Fellowship](https://clerk.com/blog/zod-fellowship). They were an amazing partner throughout the (much longer than anticipated!) development process.
 </Callout>
 
-To simplify the migration process both for users and Zod's ecosystem of associated libraries, Zod 4 is being published alongside Zod 3 as part of the `zod@3.25` release. 
+## Versioning 
+
+To simplify the migration process both for users and Zod's ecosystem of associated libraries, Zod 4 will initially published alongside Zod 3 as part of the `zod@3.25` release. Despite the version number, it it considered stable and ready for production use.
 
 To upgrade: 
 
@@ -26,7 +28,9 @@ Then import Zod 4 from the `"/v4"` subpath:
 import { z } from "zod/v4";
 ```
 
-For a detailed writeup on the reasons for this versioning scheme, refer to [this writeup](https://github.com/colinhacks/zod/issues/4371). For a complete list of breaking changes, refer to the [Migration guide](/v4/changelog). This post focuses on new features & enhancements.
+Down the road, when there's broad support for Zod 4, we'll publish `zod@4.0.0` on npm. At this point, Zod 4 will be exported from the package root (`"zod"`). The `"zod/v4"` subpath will remain available. For a detailed writeup on the reasons for this versioning scheme, refer to [this writeup](https://github.com/colinhacks/zod/issues/4371). 
+
+For a complete list of breaking changes, refer to the [Migration guide](/v4/changelog). This post focuses on new features & enhancements.
 
 {/* A number of popular ecosystem packages have Zod 4 support ready or nearly ready. Track the following pull requests for updates:
 - [`drizzle-zod#4478`](https://github.com/drizzle-team/drizzle-orm/pull/4478)
