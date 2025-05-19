@@ -2145,6 +2145,15 @@ const user = await idToUser.parse("abc123");
 
 Piping a transform into another schema is another common pattern, so Zod provides a convenience `z.preprocess()` function.
 
+```ts
+const coercedInt = z.preprocess((val) => {
+  if (typeof val === "string") {
+    return Number.parseInt(val);
+  }
+  return val;
+}, z.int());
+```
+
 ## Defaults
 
 To set a default value for a schema:

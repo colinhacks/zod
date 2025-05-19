@@ -78,6 +78,12 @@ export const Silver = () => {
       url: "mux.link/zod",
       href: "https://mux.link/zod",
     },
+    {
+      name: "Juno",
+      logoSrc: "https://avatars.githubusercontent.com/u/147273133?s=200&v=4",
+      url: "juno.build",
+      href: "https://juno.build/?utm_source=zod",
+    },
   ];
 
   return (
