@@ -102,7 +102,7 @@ z.string({
 </Tab>
 </Tabs>
 
-## `.safeParse()` 
+{/* ## `.safeParse()` 
 
 For performance reasons, the errors returned by `.safeParse()` and `.safeParseAsync()` no longer extend `Error`. 
 
@@ -124,10 +124,10 @@ try {
   console.log(err instanceof Error); // => true
 }
 ```
-
+ */}
 
 ## `ZodError`
-
+{/* 
 ### changes to `.message` 
 
 Previously the `.message` property on `ZodError` was a JSON.stringified copy of the `.issues` array. This was redundant, confusing, and a bit of an abuse of the `.message` property. Also due to the [`Error` prototype changes](#safeparse) (and inconsistencies in how Node.js logs `Error` subclasses vs other objects) the logging of a multi-line `.message` property got a lot uglier:
@@ -165,7 +165,7 @@ ZodError {
 }
 ```
 
-Vitest uses special handling for `Error` subclasses that ignores enumerable properties. 
+Vitest uses special handling for `Error` subclasses that ignores enumerable properties.  */}
 
 ### updates issue formats
 
