@@ -2,14 +2,14 @@ import type { $ZodStringFormats } from "../core/checks.js";
 import type * as errors from "../core/errors.js";
 import * as util from "../core/util.js";
 
-const Sizable: Record<string, { unit: string; }> = {
+const Sizable: Record<string, { unit: string }> = {
   string: { unit: "tekens" },
   file: { unit: "bytes" },
   array: { unit: "elementen" },
   set: { unit: "elementen" },
 };
 
-function getSizing(origin: string): { unit: string; } | null {
+function getSizing(origin: string): { unit: string } | null {
   return Sizable[origin] ?? null;
 }
 
