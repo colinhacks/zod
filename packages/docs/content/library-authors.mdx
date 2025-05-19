@@ -219,7 +219,7 @@ To constrain the inferred output type of the input schema:
 
 import * as z from "zod/v4";
 
-// only accepts object schemas
+// only accepts string schemas
 function inferSchema<T extends z.core.$ZodType<string>>(schema: T) {
   return schema;
 }
