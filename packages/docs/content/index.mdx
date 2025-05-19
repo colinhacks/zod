@@ -140,6 +140,8 @@ pnpm add zod@canary          # pnpm
 
 Zod is tested against *TypeScript v5.5* and later. Older versions may work but are not officially supported.
 
+### `"strict"`
+
 You must enable `strict` mode in your `tsconfig.json`. This is a best practice for all TypeScript projects.
   
 ```ts
@@ -153,7 +155,9 @@ You must enable `strict` mode in your `tsconfig.json`. This is a best practice f
 }
 ```
 
-The legacy `"moduleResolution": "node"` and `"moduleResolution": "classic"` modes are not supported. Your `"moduleResolution"` should be set to one of the following:
+### `"moduleResolution"`
+
+Your `"moduleResolution"` should be set to one of the following. The legacy `"node"` and `"classic"` modes are not supported, as they do not support subpath imports.
 
 - `"node16"` (default if `"module"` is set to `"node16"`/`"node18"`)
 - `"nodenext"` (default if `"module"` is set to `"nodenext"`)
