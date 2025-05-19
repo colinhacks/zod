@@ -1643,7 +1643,6 @@ test("defaults/prefaults", () => {
   expect(toJSONSchema(c, { io: "input" })).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft-2020-12/schema",
-      "default": 1234,
       "type": "string",
     }
   `);

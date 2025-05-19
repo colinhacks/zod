@@ -448,7 +448,11 @@ export class JSONSchemaGenerator {
         case "default": {
           this.process(def.innerType, params);
           result.ref = def.innerType;
-          _json.default = def.defaultValue;
+          if (this.io === "output" || def.innerType._zod.def.type !== "pipe") {
+            // the default value is the default for the output type - see https://zod.dev/v4/changelog?id=default-updates
+            // so it's ok to use if a) the user wants the output type of b) it's not a pipe, so the input and output types are the same
+            _json.default = def.defaultValue;
+          }
           break;
         }
         case "prefault": {
