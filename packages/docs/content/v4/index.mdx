@@ -1,67 +1,40 @@
 ---
-title: Introducing Zod 4 beta
+title: Introducing Zod 4
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
 import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
-> Refer to the [Changelog](/v4/changelog) for a complete list of breaking changes. 
-
-Zod 4 is now in beta after over a year of active development. It's faster, slimmer, more `tsc`-efficient, and implements some long-requested features. 
-
-To install the beta:
-
-```
-pnpm upgrade zod@next 
-```
-
-To give the ecosystem time to migrate, Zod 4 will initially be published alongsize Zod 3. It will be consumable as a subpath import:
-
-```ts
-import { z } from "zod/v4";
-```
-
-During this transition window:
-
-1. *Zod 4 is considered 100% stable and production-ready!*
-2. The `"zod"` package will continue to be published in the `3.x.x` version range on npm. The `/v4` subpath will be added in the `zod@3.25.0` release.
-3. Zod 3 will continue to be exported from the package root (`"zod"`) as well as a new subpath (`"zod/v3"`). It will continue to receive bug fixes & stability improvements.
-
-<Accordions>
-<Accordion title='Why?'>
-  Zod occupies a unique place in the ecosystem. Many libraries/frameworks in the ecosystem accept user-defined Zod schemas. This means their user-facing API is strongly coupled to Zod and its various classes/interfaces/utilities. For these libraries/frameworks, a breaking change to Zod necessarily causes a breaking change for their users. A Zod 3 `ZodType` is not assignable to a Zod 4 `ZodType`.
-
-  So why can't libraries just support v3 and v4 simultaneously? Unfortunately the limitations of peerDependencies (and inconsistencies between package managers) make it extremely difficult to elegantly support two major versions of one library simultaneously.
-
-  If I naively published `zod@4.0.0` to npm, the vast majority of the libraries in Zod's ecosystem would need to publish a new major version to properly support Zod 4. this includes some high-profile libraries like the `ai` SDK. it would trigger a "version bump avalanche" across the ecosystem and generally create a huge amount of frustration and work. 
-  
-  By co-publishing v3 and v4 together, we solve this problem. it provides a straightforward way to support Zod 3 and Zod 4 (including Zod Mini) simultaneously. they can continue defining a single peerDependency on `"zod"`; no need for more arcane solutions like npm aliases, optional peer dependencies, or a `"zod-compat"` package. 
-
-  Existing projects will be able upgrade Zod to the latest minor version (`zod@3.25`) to get access to `"zod/v4"` and its many improvements. (During the beta period, they can use `zod@next`.) The can do this with confidence that there will be zero breakage.
-
-  Libraries will need to bump the minimum version of their `"zod"` peer dependency to `zod@^3.25.0`. They can then reference both Zod 3 and Zod 4 in their implementation:
-
-  ```ts 
-  import * as z3 from "zod/v3"
-  import * as z4 from "zod/v4"
-  ```
-
-  Later, once there's broad support for v4, we'll bump the major version on npm and start exporting Zod 4 from the package root, completing the transition. Zod 3 will remain available at `"zod/v3"` forever. While it may seem unorthodox, this is the only approach I'm aware of that enables a clean, incremental migration path for both Zod's users and the libraries in the broader ecosystem.
-</Accordion>
-</Accordions>
-
-Development will continue on the [`v4`](https://github.com/colinhacks/zod/tree/v4) branch over a 4-6 week beta period as I work with libraries to ensure day-one compatibility with the first stable release.
+After a year of active development: Zod 4 is now stable! It's faster, slimmer, more `tsc`-efficient, and implements some long-requested features. 
 
 <Callout icon="❤️"> 
 Huge thanks to [Clerk](https://go.clerk.com/zod-clerk), who supported my work on Zod 4 through their extremely generous [OSS Fellowship](https://clerk.com/blog/zod-fellowship). They were an amazing partner throughout the (much longer than anticipated!) development process.
 </Callout>
 
+To simplify the migration process both for users and Zod's ecosystem of associated libraries, Zod 4 is being published alongside Zod 3 as part of the `zod@3.25` release. To upgrade: 
+
+```
+npm upgrade zod@^3.25.0
+```
+
+Then import Zod 4 from the `"/v4"` subpath:
+
+```ts
+import { z } from "zod/v4";
+```
+
+Refer to the [Migration guide](/v4/changelog) for a complete list of breaking changes. This page covers the new features and improvements.
+
+{/* A number of popular ecosystem packages have Zod 4 support ready or nearly ready. Track the following pull requests for updates:
+- [`drizzle-zod#4478`](https://github.com/drizzle-team/drizzle-orm/pull/4478)
+- [`@hono/zod-validator#1173`](https://github.com/honojs/middleware/pull/1173) */}
+
 ## Why a new major version?
 
 Zod v3.0 was released in May 2021 (!). Back then Zod had 2700 stars on GitHub and 600k weekly downloads. Today it has 36.5k stars and 23M weekly downloads. After 24 minor versions, the Zod 3 codebase has hit a ceiling; the most commonly requested features and improvements require breaking changes.
 
-Zod 4 implements all of these in one fell swoop. It uses an entirely new internal architecture that solves some long-standing design limitations, lays the groundwork for some long-requested features, and closes 9 of Zod's [10 most upvoted open issues](https://github.com/colinhacks/zod/issues?q=is%3Aissue%20state%3Aopen%20sort%3Areactions-%2B1-desc). With luck, it will serve as the new foundation for many more years to come.
+Zod 4 fixes a number of long-standing design limitations of Zod 3 in one fell swoop, paving the way for several long-requested features. It closes 9 of Zod's [10 most upvoted open issues](https://github.com/colinhacks/zod/issues?q=is%3Aissue%20state%3Aopen%20sort%3Areactions-%2B1-desc). With luck, it will serve as the new foundation for many more years to come.
 
 For a scannable breakdown of what's new, see the table of contents. Click on any item to jump to that section.
 
@@ -82,7 +55,7 @@ Then to run a particular benchmark:
 $ pnpm bench <name>
 ```
 
-### 2.6x faster string parsing
+### 14x faster string parsing
 
 ```sh
 $ pnpm bench string
@@ -92,12 +65,12 @@ benchmark      time (avg)             (min … max)       p75       p99      p99
 ------------------------------------------------- -----------------------------
 • z.string().parse
 ------------------------------------------------- -----------------------------
-zod3          348 µs/iter       (299 µs … 743 µs)    362 µs    494 µs    634 µs
-zod4          132 µs/iter       (108 µs … 348 µs)    162 µs    269 µs    322 µs
+zod3          363 µs/iter       (338 µs … 683 µs)    351 µs    467 µs    572 µs
+zod4       24'674 ns/iter    (21'083 ns … 235 µs) 24'209 ns 76'125 ns    120 µs
 
 summary for z.string().parse
   zod4
-   2.63x faster than zod3
+   14.71x faster than zod3
 ```
 
 ### 3x faster array parsing
@@ -110,15 +83,15 @@ benchmark      time (avg)             (min … max)       p75       p99      p99
 ------------------------------------------------- -----------------------------
 • z.array() parsing
 ------------------------------------------------- -----------------------------
-zod3          162 µs/iter       (141 µs … 753 µs)    152 µs    291 µs    513 µs
-zod4       54'282 ns/iter    (47'084 ns … 669 µs) 50'833 ns    185 µs    233 µs
+zod3          147 µs/iter       (137 µs … 767 µs)    140 µs    246 µs    520 µs
+zod4       19'817 ns/iter    (18'125 ns … 436 µs) 19'125 ns 44'500 ns    137 µs
 
 summary for z.array() parsing
   zod4
-   2.98x faster than zod3
+   7.43x faster than zod3
 ```
 
-### 7x faster object parsing
+### 6.5x faster object parsing
 
 This runs the [Moltar validation library benchmark](https://moltar.github.io/typescript-runtime-type-benchmarks/). 
 
@@ -128,15 +101,15 @@ benchmark      time (avg)             (min … max)       p75       p99      p99
 ------------------------------------------------- -----------------------------
 • z.object() safeParse
 ------------------------------------------------- -----------------------------
-zod3          767 µs/iter     (735 µs … 3'136 µs)    775 µs    898 µs  3'136 µs
-zod4          110 µs/iter     (102 µs … 1'291 µs)    105 µs    217 µs    566 µs
+zod3          805 µs/iter     (771 µs … 2'802 µs)    804 µs    928 µs  2'802 µs
+zod4          124 µs/iter     (118 µs … 1'236 µs)    119 µs    231 µs    329 µs
 
 summary for z.object() safeParse
   zod4
-   6.98x faster than zod3
+   6.5x faster than zod3
 ```
 
-## 20x reduction in `tsc` instantiations
+## 100x reduction in `tsc` instantiations
 
 Consider the following simple file:
 
@@ -158,7 +131,7 @@ export const B = A.extend({
 });
 ```
 
-Compiling this file with `tsc --extendedDiagnostics` using `zod@3` results in >25000 type instantiations. With `zod@4` it only results in ~1100. 
+Compiling this file with `tsc --extendedDiagnostics` using `"zod/v3"` results in >25000 type instantiations. With `"zod/v4"` it only results in ~175. 
 
 <Callout>
 
@@ -303,7 +276,7 @@ It's about as simple as it gets when it comes to validation. That's intentional;
 
 The core bundle is ~57% smaller in Zod 4 (2.3x). That's good! But we can do a lot better.
 
-## Introducing `zod/v4-mini`
+## Introducing Zod Mini
 
 Zod's method-heavy API is fundamentally difficult to tree-shake. Even our simple `z.boolean()` script pulls in the implementations of a bunch of methods we didn't use, like `.optional()`, `.array()`, etc. Writing slimmer implementations can only get you so far. That's where `zod/v4-mini` comes in. 
 
@@ -434,8 +407,8 @@ When we build this with `rollup`, the gzipped bundle size is `1.88kb`. That's an
 
 | Package   | Bundle (gzip) |
 |-----------|--------------|
-| `zod@3`     |  `12.47kb`      |
-| `zod@4`     | `5.36kb`       |
+| `zod/v3`     |  `12.47kb`      |
+| `zod/v4`     | `5.36kb`       |
 | `zod/v4-mini` | `1.88kb`       |
 
 Learn more on the dedicated [`zod/v4-mini`](/packages/mini) docs page. Complete API details are mixed into existing documentation pages; code blocks contain separate tabs for `"Zod"` and `"Zod Mini"` wherever their APIs diverge.
@@ -554,7 +527,47 @@ z.toJSONSchema(mySchema);
 
 Refer to the [JSON Schema docs](/json-schema) for information on customizing the generated JSON Schema.
 
+## Recursive objects
 
+This was an unexpected on. After years of trying to crack this problem, I finally [found a way](https://x.com/colinhacks/status/1919286275133378670) to properly infer recursive object types in Zod. To define a recursive type:
+
+```ts
+const Category = z.object({
+  name: z.string(),
+  get subcategories(){
+    return z.array(Category)
+  }
+});
+
+type Category = z.infer<typeof Category>;
+// { name: string; subcategories: Category[] }
+```
+
+You can also represent *mutually recursive types*:
+
+```ts
+const User = z.object({
+  email: z.email(),
+  get posts(){
+    return z.array(Post)
+  }
+});
+
+const Post = z.object({
+  title: z.string(),
+  get author(){
+    return User
+  }
+});
+```
+
+Unlike the Zod 3 pattern for recursive types, there's no type casting required. The resulting schemas are plain `ZodObject` instances and have the full set of methods available. 
+
+```ts
+Post.pick({ title: true })
+Post.partial();
+Post.extend({ publishDate: z.date() });
+```
 
 ## File schemas
 
@@ -583,7 +596,7 @@ At the time of this writing only the English locale is available; There will be 
 
 ## Error pretty-printing
 
-The success of the [`zod-validation-error`](https://www.npmjs.com/package/zod-validation-error) package demonstrates that there's significant demand for an official API for pretty-printing errors. If you are using that package currently, by all means continue using it. 
+The popularity of the [`zod-validation-error`](https://www.npmjs.com/package/zod-validation-error) package demonstrates that there's significant demand for an official API for pretty-printing errors. If you are using that package currently, by all means continue using it. 
 
 Zod now implements a top-level `z.prettifyError` function for converting a `ZodError` to a user-friendly formatted string.
 
@@ -821,7 +834,7 @@ const MyResult = z.discriminatedUnion("status", [
 ]);
 ```
 
-Perhaps most importantly, discriminated unions schema now *compose*—you can use one discriminated union as a member of another.
+Perhaps most importantly, discriminated unions now *compose*—you can use one discriminated union as a member of another.
 
 ```ts
 const BaseError = z.object({ status: z.literal("failed"), message: z.string() });
@@ -857,7 +870,7 @@ const httpCodes = z.union([
 ]);
 ```
 
-## Refinements now live inside schemas
+## Refinements live inside schemas
 
 In Zod 3, they were stored in a `ZodEffects` class that wrapped the original schema. This was inconvenient, as it meant you couldn't interleave `.refine()` with other schema methods like `.min()`.
 
@@ -905,12 +918,12 @@ If you're building a schema library, refer to the implementations of `zod/v4` an
 
 ## Wrapping up
 
-I'm planning to write up a series of additional posts explaining the design process and rationale behind some major features like `zod/v4-mini`. I'll update this section as those get posted. 
+I'm planning to write up a series of additional posts explaining the design process behind some major features like `zod/v4-mini`. I'll update this section as those get posted. 
 
-Zod 4 will remain in beta for roughly 6 weeks as I work with library authors and major adopters to ensure a smooth day-one transition from Zod 3 to Zod 4. I encourage all users of Zod to upgrade their installation and provide feedback during the beta window.
+For library authors, there is now a dedicated [For library authors](/v4/library-authors) guide that describes the best practices for building on top of Zod. It answers common questions about how to support Zod 3 & Zod 4 (including Mini) simultaneously.
 
 ```sh
-pnpm upgrade zod@next
+pnpm upgrade zod@^3.25.0
 ```
 
 Happy parsing!<br/>

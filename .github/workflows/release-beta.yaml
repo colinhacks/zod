@@ -31,7 +31,7 @@ jobs:
       - name: Authenticate with npm
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
 
-      - id: publish
-        name: Publish to NPM
-        run: |
-          pnpm run pub:beta
+      # - id: publish
+      #   name: Publish to NPM
+      #   run: |
+      #     pnpm run pub:beta

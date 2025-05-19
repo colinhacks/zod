@@ -426,6 +426,7 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
   inst._zod.check = (payload) => {
     try {
       const url = new URL(payload.value);
+      console.log(url);
 
       regexes.hostname.lastIndex = 0;
       if (!regexes.hostname.test(url.hostname)) {
@@ -469,6 +470,7 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
 
       return;
     } catch (_) {
+      console.dir("FAILED", { depth: null });
       payload.issues.push({
         code: "invalid_format",
         format: "url",
