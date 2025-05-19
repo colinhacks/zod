@@ -4,7 +4,7 @@ import InkeepSearchBox from "@/components/inkeep-search";
 import "./global.css";
 import Scroller from "@/components/scroller";
 import { Analytics } from "@vercel/analytics/react";
-import { Banner } from "fumadocs-ui/components/banner";
+// import { Banner } from "fumadocs-ui/components/banner";
 import { RootProvider } from "fumadocs-ui/provider";
 import { Inter } from "next/font/google";
 import { type ReactNode, Suspense } from "react";
