@@ -25,13 +25,9 @@
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://www.npmjs.com/package/zod">npm</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <a href="https://deno.land/x/zod">deno</a>
-  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://github.com/colinhacks/zod/issues/new">Issues</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://twitter.com/colinhacks">@colinhacks</a>
-  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <a href="https://trpc.io">tRPC</a>
   <br />
 </div>
 
@@ -51,9 +47,19 @@
   <p><sub>Learn more about <a target="_blank" rel="noopener noreferrer" href="mailto:sponsorship@colinhacks.com">featured sponsorships</a></sub></p>
 </div>
 
+<br/>
+<br/>
+<br/>
+
+
+### Read the docs: [zod.dev](https://zod.dev)
+
+<br/>
+<br/>
+
 ## What is Zod?
 
-Zod is a TypeScript-first validation library. Using Zod, you can define *schemas* you can use to validate data, from a simple `string` to a complex nested object.
+Zod is a TypeScript-first validation library. Define a schema and parse some data with it. You'll get back a strongly typed, validated result.
 
 ```ts
 import { z } from "zod/v4";
@@ -72,8 +78,8 @@ const data = User.parse(input);
 console.log(data.name);
 ```
 
-
-### [Read the docs →](https://zod.dev)
+<br/>
+<br/>
 
 ## Features
 
@@ -94,18 +100,16 @@ npm install zod
 
 ## Basic usage
 
-
-### Defining a schema
-
 Before you can do anything else, you need to define a schema. For the purposes of this guide, we'll use a simple object schema.
 
-
+```
 import { z } from "zod/v4"; 
 
 const Player = z.object({ 
   username: z.string(),
   xp: z.number()
 });
+```
 
 
 ## Parsing data
@@ -117,7 +121,7 @@ Player.parse({ username: "billie", xp: 100 });
 // => returns { username: "billie", xp: 100 }
 ```
 
-> **Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](#transform), you'll need to use the `.parseAsync()` method instead. 
+**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](#transform), you'll need to use the `.parseAsync()` method instead. 
 
 ```ts
 const schema = z.string().refine(async (val) => val.length <= 8);
@@ -166,7 +170,7 @@ if (!result.success) {
 }
 ```
 
-> **Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](#transform), you'll need to use the `.safeParseAsync()` method instead. 
+**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](#transform), you'll need to use the `.safeParseAsync()` method instead. 
 
 ```ts
 const schema = z.string().refine(async (val) => val.length <= 8);
