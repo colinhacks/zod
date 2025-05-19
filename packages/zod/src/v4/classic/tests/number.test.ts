@@ -16,33 +16,29 @@ test("Infinity validation", () => {
   const schema = z.number();
   expect(schema.safeParse(Number.POSITIVE_INFINITY)).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "invalid_type",
-            "expected": "number",
-            "message": "Invalid input: expected number, received number",
-            "path": [],
-            "received": "Infinity",
-          },
-        ],
-      },
+      "error": [ZodError: [
+      {
+        "expected": "number",
+        "code": "invalid_type",
+        "received": "Infinity",
+        "path": [],
+        "message": "Invalid input: expected number, received number"
+      }
+    ]],
       "success": false,
     }
   `);
   expect(schema.safeParse(Number.NEGATIVE_INFINITY)).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "invalid_type",
-            "expected": "number",
-            "message": "Invalid input: expected number, received number",
-            "path": [],
-            "received": "Infinity",
-          },
-        ],
-      },
+      "error": [ZodError: [
+      {
+        "expected": "number",
+        "code": "invalid_type",
+        "received": "Infinity",
+        "path": [],
+        "message": "Invalid input: expected number, received number"
+      }
+    ]],
       "success": false,
     }
   `);
@@ -153,33 +149,29 @@ test(".finite() validation", () => {
   expect(schema.parse(123)).toEqual(123);
   expect(schema.safeParse(Number.POSITIVE_INFINITY)).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "invalid_type",
-            "expected": "number",
-            "message": "Invalid input: expected number, received number",
-            "path": [],
-            "received": "Infinity",
-          },
-        ],
-      },
+      "error": [ZodError: [
+      {
+        "expected": "number",
+        "code": "invalid_type",
+        "received": "Infinity",
+        "path": [],
+        "message": "Invalid input: expected number, received number"
+      }
+    ]],
       "success": false,
     }
   `);
   expect(schema.safeParse(Number.NEGATIVE_INFINITY)).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "invalid_type",
-            "expected": "number",
-            "message": "Invalid input: expected number, received number",
-            "path": [],
-            "received": "Infinity",
-          },
-        ],
-      },
+      "error": [ZodError: [
+      {
+        "expected": "number",
+        "code": "invalid_type",
+        "received": "Infinity",
+        "path": [],
+        "message": "Invalid input: expected number, received number"
+      }
+    ]],
       "success": false,
     }
   `);

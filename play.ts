@@ -1,5 +1,9 @@
-import * as z_cjs from "./node_modules/zod/dist/commonjs/v4/index.js";
-import * as z_esm from "./node_modules/zod/dist/esm/v4/index.js";
+import * as z from "zod/v4";
 
-z_cjs.string() instanceof z_esm.ZodString;
-// => true
+// console.log(z.string().safeParse(234).error);
+z.string().parse(234);
+// try {
+//   z.string().parse(234);
+// } catch (e) {
+//   console.dir(e, { depth: null });
+// }
