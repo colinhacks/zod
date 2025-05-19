@@ -30,6 +30,12 @@ jobs:
         run: |
           pnpm install
 
+      - name: Install dependencies
+        working-directory: ./packages/zod
+        run: |
+          pnpm run test
+          pnpm build
+
       - id: publish
         name: Publish to NPM
         uses: JS-DevTools/npm-publish@v3
