@@ -8,29 +8,31 @@ type FeatureData = {
 export function Featured(props: { data: FeatureData }) {
   const { data: feature } = props;
   return (
-    <div className="w-full flex flex-col items-center">
-      <span
+    <>
+      <h2
         style={{ borderBottom: "1px solid hsla(0, 0%, 100%, 0.1)" }}
-        className="font-semibold w-full text-center pb-2 border-b border-gray-900 border-solid text-xl"
+        // className="font-semibold w-full text-center pb-2 border-b border-gray-900 border-solid text-xl"
+        className="text-center wide m-0!"
       >
         Featured sponsor: {feature.name}
-      </span>
-
-      <a href={feature.link} className="mt-0 mb-0 border-none">
-        <div className="h-[320px] flex justify-center items-center m-3">
-          <picture className="h-[300px] flex items-center">
-            <source media="(prefers-color-scheme: dark)" srcSet={feature.darkImage} />
-            <img alt={`${feature.name} logo`} src={feature.lightImage} className="max-h-[300px] w-auto" />
-          </picture>
-        </div>
-      </a>
-      <p className="mt-0 mb-0 text-xs">
-        Interested in featuring?{" "}
-        <a target="_blank" rel="noopener noreferrer" href="mailto:sponsorship@colinhacks.com">
-          Get in touch.
+      </h2>
+      <div className="w-full flex flex-col items-stretch">
+        <a href={feature.link} className="mt-0 mb-0 border-none">
+          <div className="h-[320px] flex justify-center items-center m-1">
+            <picture className="h-[300px] flex items-center m-0!">
+              <source media="(prefers-color-scheme: dark)" srcSet={feature.darkImage} />
+              <img alt={`${feature.name} logo`} src={feature.lightImage} className="max-h-[300px] w-auto" />
+            </picture>
+          </div>
         </a>
-      </p>
-    </div>
+        <p className="mt-0 mb-0 text-xs text-center">
+          Interested in featuring?{" "}
+          <a target="_blank" rel="noopener noreferrer" href="mailto:sponsorship@colinhacks.com">
+            Get in touch.
+          </a>
+        </p>
+      </div>
+    </>
   );
 }
 
