@@ -8,3 +8,10 @@ const data = z
   .parse({ foo: null }, { jitless: false });
 
 console.dir(data, { depth: null });
+
+function inferSchema<T>(schema: z.core.$ZodType<string>) {
+  return schema;
+}
+
+inferSchema(z.string()); // ✅
+inferSchema(z.number()); // ❌ Inferred type is not assignable to parameter of type 'string'

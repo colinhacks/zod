@@ -76,8 +76,6 @@ Now that we have a schema, we can parse some data with it.
 
 ### `.parse()`
 
-`.parse(data: unknown): T`
-
 Given any Zod schema, use `.parse` to validate an input. If it's valid, Zod returns a strongly-typed *deep clone* of the input. 
 
 ```ts
@@ -85,7 +83,20 @@ Player.parse({ username: "billie", xp: 100 });
 // => returns { username: "billie", xp: 100 }
 ```
 
-Otherwise, a `ZodError` instance is thrown with detailed information about the validation issues.
+<Callout>
+**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](#transform), you'll need to use the `.parseAsync()` method instead. 
+
+```ts
+const schema = z.string().refine(async (val) => val.length <= 8);
+
+await schema.parseAsync("hello");
+// => "hello"
+```
+</Callout>
+
+## Handling errors
+
+When validation fails, the `.parse()` method will throw a `ZodError` instance with granular information about the validation issues.
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -140,39 +151,14 @@ try {
 </Tab>
 </Tabs>
 
-<Callout>
-**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](#transform), you'll need to use the `.parseAsync()` method instead. 
+To avoid a `try/catch` block, you can use the `.safeParse()` to get back a plain result object containing either the successfully parsed data or a `ZodError`. The result type is a [discriminated union](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions), so you can handle both cases conveniently.
 
 ```ts
-const schema = z.string().refine(async (val) => val.length <= 8);
-
-await schema.parseAsync("hello");
-// => "hello"
-```
-</Callout>
-
-### `.safeParse()`
-
-`.safeParse(data:unknown): { success: true; data: T; } | { success: false; error: ZodError; }`
-
-To avoid `try/catch` blocks, use `.safeParse()`. This method returns an object containing either the successfully parsed data or a `ZodError`.
-
-```ts
-Player.safeParse({ username: "billie", xp: 100 });
-// => { success: true; data: { username: "billie", xp: 100 } }
-
-Player.safeParse({ username: 42, xp: "100" });
-// => { success: false; error: ZodError }
-```
-
-The result type is a [discriminated union](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions), so you can handle both cases conveniently:
-
-```ts
-const result = stringSchema.safeParse("billie");
+const result = Player.safeParse("billie");
 if (!result.success) {
-  result.error;   // handle error
+  result.error;   // ZodError instance
 } else {
-  result.data;    // do stuff
+  result.data;    // { username: string; xp: number }
 }
 ```
 
@@ -187,9 +173,7 @@ await schema.safeParseAsync("hello");
 ```
 </Callout>
 
-
-
-## Inferred types
+## Inferring types
 
 Zod infers a static type from your schema definitions. You can extract this type with the `z.infer<>` utility and use it however you like.
 

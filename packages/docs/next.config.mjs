@@ -6,31 +6,34 @@ const withMDX = createMDX();
  *
  * @param {object} idmap
  * @param {string} page
+ * * @param {string?} origin
  */
-function generateRedirects(idmap, page) {
+function generateRedirects(idmap, page, origin = null) {
   /** @type import("next").Redirect */
   const redirects = [];
-  // return redirects;
-  // for (const [key, value] of Object.entries(idmap)) {
-  //   redirects.push({
-  //     source: `/`,
-  //     has: [
-  //       {
-  //         type: "query",
-  //         key: "id",
-  //         value: key,
-  //       },
-  //     ],
-  //     destination: `/${page}#${value}`,
-  //   });
-  // }
+
+  for (const [key, value] of Object.entries(idmap)) {
+    if (key === value && origin === null)
+      redirects.push({
+        source: origin ?? `/`,
+        has: [
+          {
+            type: "query",
+            key: "id",
+            value: key,
+          },
+        ],
+        destination: `/${page}?id=${value}#{value}`,
+        permanent: true,
+      });
+  }
   return redirects;
 }
 /** @type {import('next').NextConfig} */
 const config = {
   reactStrictMode: true,
   redirects() {
-    return [
+    const mainPageRedirects = [
       // INTRO
       ...generateRedirects(
         {
@@ -67,8 +70,13 @@ const config = {
       // BASIC USAGE
       ...generateRedirects(
         {
-          // basic-usage
-          // type-inference
+          "basic-usage": "defining-a-schema",
+          "type-inference": "inferred-types",
+          "schema-methods": "schema-methods",
+          parse: "parse",
+          parseasync: "parse",
+          safeparse: "safeparse",
+          safeparseasync: "safeparse",
         },
         "/basic-usage"
       ),
@@ -76,146 +84,121 @@ const config = {
       // API
       ...generateRedirects(
         {
-          // primitives: "primitives",
-          // "coercion-for-primitives": "coercion-for-primitives",
-          // literals: "literals",
-          // strings: "strings",
-          // datetimes: "datetimes",
-          // dates: "dates",
-          // times: "times",
-          // "ip-addresses": "ip-addresses",
-          // "ip-ranges-cidr": "ip-ranges-cidr",
-          // numbers: "numbers",
-          // bigints: "bigints",
-          // nans: "nans",
-          // booleans: "booleans",
-          // "dates-1": "dates-1",
-          // "zod-enums": "zod-enums",
-          // "native-enums": "native-enums",
-          // optionals: "optionals",
-          // nullables: "nullables",
-          // objects: "objects",
-          // shape: "shape",
-          // keyof: "keyof",
-          // extend: "extend",
-          // merge: "merge",
-          // pickomit: "pickomit",
-          // partial: "partial",
-          // deeppartial: "deeppartial",
-          // required: "required",
-          // passthrough: "passthrough",
-          // strict: "strict",
-          // strip: "strip",
-          // catchall: "catchall",
-          // arrays: "arrays",
-          // element: "element",
-          //  nonempty: "nonempty",
-          //  minmaxlength: "minmaxlength",
-          //  tuples: "tuples",
-          //  unions: "unions",
-          //  "discriminated-unions": "discriminated-unions",
-          //  records: "records",
-          //  "record-key-type": "record-key-type",
-          //  maps: "maps",
-          //  sets: "sets",
-          //  intersections: "intersections",
-          //  "recursive-types": "recursive-types",
-          //  "zodtype-with-zodeffects": "zodtype-with-zodeffects",
-          //  "json-type": "json-type",
-          //  "cyclical-objects": "cyclical-objects",
-          //  promises: "promises",
-          //  instanceof: "instanceof",
-          //  functions: "functions",
-          //  preprocess: "preprocess",
-          //  "custom-schemas": "custom-schemas",
-          //  "schema-methods": "schema-methods",
-          //  parse: "parse",
-          //  parseasync: "parseasync",
-          //  safeparse: "safeparse",
-          //  safeparseasync: "safeparseasync",
-          //  refine: "refine",
-          //  arguments: "arguments",
-          //  "customize-error-path": "customize-error-path",
-          //  "asynchronous-refinements": "asynchronous-refinements",
-          //  "relationship-to-transforms": "relationship-to-transforms",
-          //  superrefine: "superrefine",
-          //  "abort-early": "abort-early",
-          //  "type-refinements": "type-refinements",
-          //  transform: "transform",
-          //  "chaining-order": "chaining-order",
-          //  "validating-during-transform": "validating-during-transform",
-          //  "relationship-to-refinements": "relationship-to-refinements",
-          //  "async-transforms": "async-transforms",
-          //  default: "default",
-          //  describe: "describe",
-          //  catch: "catch",
-          //  optional: "optional",
-          //  nullable: "nullable",
-          //  nullish: "nullish",
-          //  array: "array",
-          //  promise: "promise",
-          //  or: "or",
-          //  and: "and",
-          //  brand: "brand",
-          //  readonly: "readonly",
-          //  pipe: "pipe",
+          primitives: "primitives",
+          "coercion-for-primitives": "coercion",
+          literals: "literals",
+          strings: "strings",
+          datetimes: "iso-datetimes",
+          dates: "iso-dates",
+          times: "iso-times",
+          "ip-addresses": "ip-addresses",
+          "ip-ranges-cidr": "ip-blocks-cidr",
+          numbers: "numbers",
+          bigints: "bigints",
+          nans: "numbers",
+          booleans: "booleans",
+          "dates-1": "dates",
+          "zod-enums": "enums",
+          "native-enums": "native-enums",
+          optionals: "optionals",
+          nullables: "nullables",
+          optional: "optionals",
+          nullable: "nullables",
+          nullish: "nullish",
+          objects: "objects",
+          shape: "shape",
+          keyof: "keyof",
+          extend: "extend",
+          merge: "merge",
+          pickomit: "pick",
+          partial: "partial",
+          deeppartial: "partial",
+          required: "required",
+          passthrough: "zlooseobject",
+          strict: "zstrictobject",
+          strip: "strip",
+          catchall: "catchall",
+          arrays: "arrays",
+          element: "arrays",
+          nonempty: "arrays",
+          minmaxlength: "arrays",
+          tuples: "tuples",
+          unions: "unions",
+          "discriminated-unions": "discriminated-unions",
+          records: "records",
+          maps: "maps",
+          sets: "sets",
+          intersections: "intersections",
+          "recursive-types": "recursive-objects",
+          "zodtype-with-zodeffects": "recursive-objects",
+          "json-type": "json",
+          "cyclical-objects": "recursive-objects",
+          promises: "promises",
+          instanceof: "instanceof",
+          functions: "functions",
+          preprocess: "preprocess",
+          "custom-schemas": "custom",
+
+          // methods
+          refine: "refinements",
+          arguments: "refine",
+          "customize-error-path": "refine",
+          "asynchronous-refinements": "refine",
+          "relationship-to-transforms": "refine",
+          superrefine: "superrefine",
+          "abort-early": "transforms",
+          "type-refinements": "refine",
+          transform: "transforms",
+          "chaining-order": "transforms",
+          "validating-during-transform": "transforms",
+          "relationship-to-refinements": "transforms",
+          "async-transforms": "transforms",
+          default: "defaults",
+          catch: "catch",
+          array: "array",
+          promise: "promise",
+          or: "unions",
+          and: "intersections",
+          brand: "branded-types",
+          readonly: "readonly",
+          pipe: "pipes",
         },
         "/api"
+      ),
+
+      // METADATA
+      ...generateRedirects(
+        {
+          describe: "describe",
+        },
+        "/metadata"
       ),
 
       // FOR MAINTAINERS
       ...generateRedirects(
         {
-          // writing-generic-functions
-          // inferring-the-inferred-type
-          // constraining-allowable-inputs
+          // "writing-generic-functions": "how-to-accept-user-define-schemas",
+          // "inferring-the-inferred-type": "how-to-accept-user-define-schemas",
+          // "constraining-allowable-inputs": "how-to-accept-user-define-schemas",
         },
         "/library-authors"
-      ),
-
-      // CUSTOMIZING ERRORS
-      ...generateRedirects(
-        {
-          // error-handling
-        },
-        "/customizing-errors"
       ),
 
       // FORMATTING ERRORS
       // error-formatting
       ...generateRedirects(
         {
-          // error-formatting
+          "error-formatting": "",
         },
-        "/formatting-errors"
+        "/error-formatting"
       ),
-
-      // /ERROR_HANDLING.md
 
       ...generateRedirects(
         {
-          // zoderror
-          // zodissue
-          // zodissuecode
-          // zodparsedtype
-          // a-demonstrative-example
-          // customizing-errors-with-zoderrormap
-          // error-map-priority
-          // global-error-map
-          // schema-bound-error-map
-          // contextual-error-map
-          // a-working-example
-          // error-handling-for-forms
-          // formatting-errors
-          // flattening-errors
-          // post-processing-issues
-          // extract-type-signature
+          "error-handling": "handling-errors",
         },
-        "/error-handling"
+        "/basic-usage"
       ),
-
-      // /CHANGELOG
-      // https://github.com/colinhacks/zod/releases
 
       // DROPPED
       // guides-and-concepts
@@ -227,6 +210,61 @@ const config = {
       // runtypes
       // ow
     ];
+
+    const errorHandlingRedirects = [
+      // CUSTOMIZING ERRORS
+      ...generateRedirects(
+        {
+          "error-handling": "",
+          "error-map-priority": "error-precedence",
+          "global-error-map": "error-precedence",
+          "schema-bound-error-map": "error-precedence",
+          "contextual-error-map": "error-precedence",
+          "customizing-errors-with-zoderrormap": "global-error-customization",
+          "a-demonstrative-example": "",
+        },
+        "/error-customization",
+        "/ERROR_HANDLING"
+      ),
+      ...generateRedirects(
+        {
+          "error-formatting": "",
+          "error-handling-for-forms": "error-handling-for-forms",
+          "formatting-errors": "formatting-errors",
+          "flattening-errors": "zflattenerror",
+          "post-processing-issues": "post-processing-issues",
+          "extract-type-signature": "extract-type-signature",
+          "a-working-example": "global-error-customization",
+        },
+        "/error-formatting",
+        "/ERROR_HANDLING"
+      ),
+      // /ERROR_HANDLING.md
+      ...generateRedirects(
+        {
+          zoderror: "zoderror",
+          zodissue: "zodissue",
+          zodissuecode: "zodissuecode",
+          zodparsedtype: "zodparsedtype",
+
+          "post-processing-issues": "ztreeifyerror",
+          "extract-type-signature": "ztreeifyerror",
+        },
+        "/error-handling",
+        "/ERROR_HANDLING" // origin
+      ),
+    ];
+
+    const changelogRedirects = [
+      // /CHANGELOG redirect to https://github.com/colinhacks/zod/releases
+      {
+        source: "/CHANGELOG",
+        destination: "https://github.com/colinhacks/zod/releases",
+        permanent: false,
+      },
+    ];
+
+    return [...mainPageRedirects, ...errorHandlingRedirects, ...changelogRedirects];
   },
 };
 

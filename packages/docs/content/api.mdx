@@ -23,6 +23,9 @@ z.undefined();
 z.null();
 ```
 
+
+### Coercion
+
 To coerce input data to the appropriate type, use `z.coerce` instead:
 
 ```ts
@@ -869,6 +872,8 @@ To define an object type:
   ```
 By default, all properties are required. To make certain properties optional:
 
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts z.object
 const Dog = z.object({
   name: z.string(),
@@ -877,6 +882,20 @@ const Dog = z.object({
 
 Dog.parse({ name: "Yeller" }); // ✅
 ```
+</Tab>
+<Tab value="Zod Mini">
+```ts z.object
+const Dog = z.object({
+  name: z.string(),
+  age: z.optional(z.number())
+});
+
+Dog.parse({ name: "Yeller" }); // ✅
+```
+</Tab>
+</Tabs>
+
+
 
 By default, unrecognized keys are *stripped* from the parsed result:
 
@@ -884,6 +903,9 @@ By default, unrecognized keys are *stripped* from the parsed result:
 Dog.parse({ name: "Yeller", extraKey: true });
 // => { name: "Yeller" }
 ```
+
+### `z.strictObject`
+
 To define a *strict* schema that throws an error when unknown keys are found:
 
 ```ts z.object
@@ -894,6 +916,8 @@ const StrictDog = z.strictObject({
 StrictDog.parse({ name: "Yeller", extraKey: true });
 // ❌ throws
 ```
+
+### `z.looseObject`
 
 To define a *loose* schema that allows unknown keys to pass through:
 
@@ -973,7 +997,7 @@ const DogWithBreed = z.extend(Dog, {
 </Callout>
 
 
-### `.pick`
+### `.pick()`
 
 Inspired by TypeScript's built-in `Pick` and `Omit` utility types, Zod provides dedicated APIs for picking and omitting certain keys from an object schema.
 
@@ -1004,7 +1028,7 @@ const JustTheTitle = z.pick(Recipe, { title: true });
 </Tabs>
 
 
-### `.omit`
+### `.omit()`
 
 To omit certain keys:
 
@@ -1273,8 +1297,7 @@ stringArray.def.element; // => string schema
 </Tab>
 </Tabs>
 
-
-### `.min/.max/.length`
+Zod implements a number of array-specific validations:
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -1468,7 +1491,6 @@ type EmployedPerson = z.infer<typeof EmployedPerson>;
 
 Record schemas are used to validate types such as `Record<string, number>`.
 
-### `z.record()`
 ```ts
 const IdCache = z.record(z.string(), z.string());
 type IdCache = z.infer<typeof IdCache>; // Record<string, string>
@@ -1507,8 +1529,6 @@ const Person = z.record(Keys, z.string());
   In Zod 3, exhaustiveness was not checked. To replicate the Zod 3 behavior, use `z.partialRecord()`.
 
 </Callout>
-
-### `z.partialRecord()`
 
 If you want a *partial* record type, use `z.partialRecord()`. This skips the special exhaustiveness checks Zod normally runs with `z.enum()` and `z.literal()` key schemas.
 
