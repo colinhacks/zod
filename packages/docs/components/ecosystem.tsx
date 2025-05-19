@@ -78,6 +78,7 @@ const mockingLibraries: ZodResource[] = [
     url: "https://zocker.sigrist.dev",
     description: "Generates valid, semantically meaningful data for your Zod schemas.",
     slug: "LorisSigrist/zocker",
+    v4: true,
   },
 ];
 
