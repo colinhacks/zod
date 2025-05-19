@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths:
-      - package.json
+      - packages/zod/package.json
 
 jobs:
   build_and_publish:
