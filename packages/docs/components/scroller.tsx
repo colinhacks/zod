@@ -25,7 +25,7 @@ export default function Scroller() {
     // accept either ?id=foo or #foo
     const id = searchParams?.get("id") ?? window.location.hash.slice(1);
     const el = id ? document.getElementById(id) : null;
-    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    el?.scrollIntoView();
   }
 
   return null;
