@@ -319,7 +319,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
     <td align="center">
       <p></p>
       <p>
-      <a href="https://speakeasy.com/?utm_source=zod+docs">
+      <a href="https://speakeasy.com/editor?utm_source=zod+docs">
         <picture height="40px">
           <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/b1d86601-c7fb-483c-9927-5dc24ce8b737">
           <img alt="speakeasy" height="40px" src="https://github.com/colinhacks/zod/assets/3084745/647524a4-22bb-4199-be70-404207a5a2b5">
@@ -414,6 +414,11 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <img src="https://avatars.githubusercontent.com/u/76428554?s=200&v=4" height="50px;" alt="Cybozu logo" />
       <br />
       <a style="text-decoration:none;" href="https://cybozu.co.jp/index.html" target="_blank">Cybozu</a>
+    </td>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/147273133?s=200&v=4" height="50px;" alt="Juno logo" />
+      <br />
+      <a style="text-decoration:none;" href="https://juno.build/?utm_source=zod" target="_blank">Juno</a>
     </td>
   </tr>
 </table>
