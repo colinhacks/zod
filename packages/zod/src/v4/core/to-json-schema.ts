@@ -384,7 +384,10 @@ export class JSONSchemaGenerator {
         }
         case "enum": {
           const json: JSONSchema.BaseSchema = _json as any;
-          json.enum = Object.values(def.entries);
+          const values = Object.values(def.entries);
+          json.type = typeof values[0] === "number" ? "number" : "string";
+          json.enum = values;
+          json["x-enumNames"] = Object.keys(def.entries);
           break;
         }
         case "literal": {
