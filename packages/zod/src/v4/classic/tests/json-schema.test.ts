@@ -597,6 +597,12 @@ describe("toJSONSchema", () => {
           "b",
           "c",
         ],
+        "type": "string",
+        "x-enumNames": [
+          "a",
+          "b",
+          "c",
+        ],
       }
     `);
   });
