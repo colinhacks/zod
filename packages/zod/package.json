@@ -1,6 +1,6 @@
 {
   "name": "zod",
-  "version": "3.25.7",
+  "version": "3.25.8",
   "type": "module",
   "author": "Colin McDonnell <zod@colinhacks.com>",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
@@ -11,7 +11,7 @@
   "license": "MIT",
   "sideEffects": false,
   "main": "./dist/commonjs/index.js",
-  "types": "./dist/esm/index.d.ts",
+  "types": "./dist/commonjs/index.d.ts",
   "module": "./dist/esm/index.js",
   "exports": {
     "./package.json": "./package.json",
@@ -23,7 +23,7 @@
       },
       "require": {
         "@zod/source": "./src/index.ts",
-        "types": "./dist/esm/index.d.ts",
+        "types": "./dist/commonjs/index.d.ts",
         "default": "./dist/commonjs/index.js"
       }
     },
@@ -35,7 +35,7 @@
       },
       "require": {
         "@zod/source": "./src/v3/index.ts",
-        "types": "./dist/esm/v3/index.d.ts",
+        "types": "./dist/commonjs/v3/index.d.ts",
         "default": "./dist/commonjs/v3/index.js"
       }
     },
@@ -47,7 +47,7 @@
       },
       "require": {
         "@zod/source": "./src/v4/index.ts",
-        "types": "./dist/esm/v4/index.d.ts",
+        "types": "./dist/commonjs/v4/index.d.ts",
         "default": "./dist/commonjs/v4/index.js"
       }
     },
@@ -59,7 +59,7 @@
       },
       "require": {
         "@zod/source": "./src/v4/mini/index.ts",
-        "types": "./dist/esm/v4/mini/index.d.ts",
+        "types": "./dist/commonjs/v4/mini/index.d.ts",
         "default": "./dist/commonjs/v4/mini/index.js"
       }
     },
@@ -71,7 +71,7 @@
       },
       "require": {
         "@zod/source": "./src/v4/core/index.ts",
-        "types": "./dist/esm/v4/core/index.d.ts",
+        "types": "./dist/commonjs/v4/core/index.d.ts",
         "default": "./dist/commonjs/v4/core/index.js"
       }
     },
@@ -83,7 +83,7 @@
       },
       "require": {
         "@zod/source": "./src/v4/locales/index.ts",
-        "types": "./dist/esm/v4/locales/index.d.ts",
+        "types": "./dist/commonjs/v4/locales/index.d.ts",
         "default": "./dist/commonjs/v4/locales/index.js"
       }
     },
@@ -95,7 +95,7 @@
       },
       "require": {
         "@zod/source": "./src/v4/locales/*",
-        "types": "./dist/esm/v4/locales/*",
+        "types": "./dist/commonjs/v4/locales/*",
         "default": "./dist/commonjs/v4/locales/*"
       }
     }
@@ -129,9 +129,10 @@
   "scripts": {
     "clean": "rm -rf dist",
     "build": "supershy",
-    "postbuild": "pnpm biome check --write . && tsx postbuild.ts",
+    "postbuild": "pnpm biome check --write .",
     "test:watch": "pnpm vitest",
     "test": "pnpm vitest run",
+    "prepublishOnly": "pnpm test && pnpm run build",
     "bump:beta": "pnpm version \"v$(pnpm pkg get version | jq -r)-beta.$(date +%Y%m%dT%H%M%S)\"",
     "pub:beta": "pnpm bump:beta && pnpm publish --tag next --publish-branch v4 --no-git-checks --dry-run"
   }
