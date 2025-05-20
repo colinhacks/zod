@@ -11,43 +11,53 @@ test("successful validation", () => {
   const r1 = testTuple.safeParse(["asdf", "asdf"]);
   expect(r1.success).toEqual(false);
   expect(r1.error!).toMatchInlineSnapshot(`
-    [ZodError: [
-      {
-        "expected": "number",
-        "code": "invalid_type",
-        "path": [
-          1
-        ],
-        "message": "Invalid input: expected number, received string"
-      }
-    ]]
+    ZodError ({
+      "issues": [
+        {
+          "code": "invalid_type",
+          "expected": "number",
+          "message": "Invalid input: expected number, received string",
+          "path": [
+            1,
+          ],
+        },
+      ],
+      "message": "✖ Invalid input: expected number, received string
+      → at [1]",
+    })
   `);
 
   const r2 = testTuple.safeParse(["asdf", 1234, true]);
   expect(r2.success).toEqual(false);
   expect(r2.error!).toMatchInlineSnapshot(`
-    [ZodError: [
-      {
-        "origin": "array",
-        "code": "too_big",
-        "maximum": 2,
-        "path": [],
-        "message": "Too big: expected array to have <2 items"
-      }
-    ]]
+    ZodError ({
+      "issues": [
+        {
+          "code": "too_big",
+          "maximum": 2,
+          "message": "Too big: expected array to have <2 items",
+          "origin": "array",
+          "path": [],
+        },
+      ],
+      "message": "✖ Too big: expected array to have <2 items",
+    })
   `);
 
   const r3 = testTuple.safeParse({});
   expect(r3.success).toEqual(false);
   expect(r3.error!).toMatchInlineSnapshot(`
-    [ZodError: [
-      {
-        "expected": "tuple",
-        "code": "invalid_type",
-        "path": [],
-        "message": "Invalid input: expected tuple, received object"
-      }
-    ]]
+    ZodError ({
+      "issues": [
+        {
+          "code": "invalid_type",
+          "expected": "tuple",
+          "message": "Invalid input: expected tuple, received object",
+          "path": [],
+        },
+      ],
+      "message": "✖ Invalid input: expected tuple, received object",
+    })
   `);
 });
 
@@ -63,43 +73,53 @@ test("async validation", async () => {
   const r1 = await testTuple.safeParseAsync(["asdf", "asdf"]);
   expect(r1.success).toEqual(false);
   expect(r1.error!).toMatchInlineSnapshot(`
-    [ZodError: [
-      {
-        "expected": "number",
-        "code": "invalid_type",
-        "path": [
-          1
-        ],
-        "message": "Invalid input: expected number, received string"
-      }
-    ]]
+    ZodError ({
+      "issues": [
+        {
+          "code": "invalid_type",
+          "expected": "number",
+          "message": "Invalid input: expected number, received string",
+          "path": [
+            1,
+          ],
+        },
+      ],
+      "message": "✖ Invalid input: expected number, received string
+      → at [1]",
+    })
   `);
 
   const r2 = await testTuple.safeParseAsync(["asdf", 1234, true]);
   expect(r2.success).toEqual(false);
   expect(r2.error!).toMatchInlineSnapshot(`
-    [ZodError: [
-      {
-        "origin": "array",
-        "code": "too_big",
-        "maximum": 2,
-        "path": [],
-        "message": "Too big: expected array to have <2 items"
-      }
-    ]]
+    ZodError ({
+      "issues": [
+        {
+          "code": "too_big",
+          "maximum": 2,
+          "message": "Too big: expected array to have <2 items",
+          "origin": "array",
+          "path": [],
+        },
+      ],
+      "message": "✖ Too big: expected array to have <2 items",
+    })
   `);
 
   const r3 = await testTuple.safeParseAsync({});
   expect(r3.success).toEqual(false);
   expect(r3.error!).toMatchInlineSnapshot(`
-    [ZodError: [
-      {
-        "expected": "tuple",
-        "code": "invalid_type",
-        "path": [],
-        "message": "Invalid input: expected tuple, received object"
-      }
-    ]]
+    ZodError ({
+      "issues": [
+        {
+          "code": "invalid_type",
+          "expected": "tuple",
+          "message": "Invalid input: expected tuple, received object",
+          "path": [],
+        },
+      ],
+      "message": "✖ Invalid input: expected tuple, received object",
+    })
   `);
 });
 

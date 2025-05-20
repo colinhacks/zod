@@ -230,16 +230,20 @@ test("catch error", () => {
 
   expect(result.success).toEqual(false);
   expect(result.error!).toMatchInlineSnapshot(`
-    [ZodError: [
-      {
-        "expected": "number",
-        "code": "invalid_type",
-        "path": [
-          "age"
-        ],
-        "message": "Invalid input: expected number, received null"
-      }
-    ]]
+    ZodError ({
+      "issues": [
+        {
+          "code": "invalid_type",
+          "expected": "number",
+          "message": "Invalid input: expected number, received null",
+          "path": [
+            "age",
+          ],
+        },
+      ],
+      "message": "✖ Invalid input: expected number, received null
+      → at age",
+    })
   `);
 });
 

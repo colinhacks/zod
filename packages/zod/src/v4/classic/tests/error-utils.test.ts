@@ -14,32 +14,40 @@ const parsed = Test.safeParse({});
 test("regular error", () => {
   expect(parsed).toMatchInlineSnapshot(`
     {
-      "error": [ZodError: [
-      {
-        "expected": "number",
-        "code": "invalid_type",
-        "path": [
-          "f1"
+      "error": ZodError ({
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "number",
+            "message": "Invalid input: expected number, received undefined",
+            "path": [
+              "f1",
+            ],
+          },
+          {
+            "code": "invalid_type",
+            "expected": "string",
+            "message": "Invalid input: expected string, received undefined",
+            "path": [
+              "f3",
+            ],
+          },
+          {
+            "code": "invalid_type",
+            "expected": "array",
+            "message": "Invalid input: expected array, received undefined",
+            "path": [
+              "f4",
+            ],
+          },
         ],
-        "message": "Invalid input: expected number, received undefined"
-      },
-      {
-        "expected": "string",
-        "code": "invalid_type",
-        "path": [
-          "f3"
-        ],
-        "message": "Invalid input: expected string, received undefined"
-      },
-      {
-        "expected": "array",
-        "code": "invalid_type",
-        "path": [
-          "f4"
-        ],
-        "message": "Invalid input: expected array, received undefined"
-      }
-    ]],
+        "message": "✖ Invalid input: expected number, received undefined
+      → at f1
+    ✖ Invalid input: expected string, received undefined
+      → at f3
+    ✖ Invalid input: expected array, received undefined
+      → at f4",
+      }),
       "success": false,
     }
   `);

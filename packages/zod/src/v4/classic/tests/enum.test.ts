@@ -190,17 +190,20 @@ test("enum error message, invalid enum elementstring", () => {
   expect(result.error!.issues.length).toEqual(1);
 
   expect(result.error).toMatchInlineSnapshot(`
-    [ZodError: [
-      {
-        "code": "invalid_value",
-        "values": [
-          "Tuna",
-          "Trout"
-        ],
-        "path": [],
-        "message": "Invalid option: expected one of \\"Tuna\\"|\\"Trout\\""
-      }
-    ]]
+    ZodError ({
+      "issues": [
+        {
+          "code": "invalid_value",
+          "message": "Invalid option: expected one of "Tuna"|"Trout"",
+          "path": [],
+          "values": [
+            "Tuna",
+            "Trout",
+          ],
+        },
+      ],
+      "message": "✖ Invalid option: expected one of "Tuna"|"Trout"",
+    })
   `);
 });
 
@@ -210,17 +213,20 @@ test("enum error message, invalid type", () => {
   expect(result.error!.issues.length).toEqual(1);
   // expect(result.error!.issues[0].message).toEqual('Invalid input: expected one of "Tuna"|"Trout"');
   expect(result.error).toMatchInlineSnapshot(`
-    [ZodError: [
-      {
-        "code": "invalid_value",
-        "values": [
-          "Tuna",
-          "Trout"
-        ],
-        "path": [],
-        "message": "Invalid option: expected one of \\"Tuna\\"|\\"Trout\\""
-      }
-    ]]
+    ZodError ({
+      "issues": [
+        {
+          "code": "invalid_value",
+          "message": "Invalid option: expected one of "Tuna"|"Trout"",
+          "path": [],
+          "values": [
+            "Tuna",
+            "Trout",
+          ],
+        },
+      ],
+      "message": "✖ Invalid option: expected one of "Tuna"|"Trout"",
+    })
   `);
 });
 
@@ -234,17 +240,20 @@ test("nativeEnum default error message", () => {
   expect(result.error!.issues.length).toEqual(1);
   // expect(result.error!.issues[0].message).toEqual('Invalid input: expected one of "Tuna"|"Trout"');
   expect(result.error).toMatchInlineSnapshot(`
-    [ZodError: [
-      {
-        "code": "invalid_value",
-        "values": [
-          "Tuna",
-          "Trout"
-        ],
-        "path": [],
-        "message": "Invalid option: expected one of \\"Tuna\\"|\\"Trout\\""
-      }
-    ]]
+    ZodError ({
+      "issues": [
+        {
+          "code": "invalid_value",
+          "message": "Invalid option: expected one of "Tuna"|"Trout"",
+          "path": [],
+          "values": [
+            "Tuna",
+            "Trout",
+          ],
+        },
+      ],
+      "message": "✖ Invalid option: expected one of "Tuna"|"Trout"",
+    })
   `);
 });
 

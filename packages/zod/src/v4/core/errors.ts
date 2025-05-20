@@ -1,7 +1,7 @@
 import type { $ZodCheck, $ZodStringFormats } from "./checks.js";
 import { $constructor } from "./core.js";
 import type { $ZodType } from "./schemas.js";
-import * as util from "./util.js";
+import type * as util from "./util.js";
 
 ///////////////////////////
 ////     base type     ////
@@ -193,7 +193,7 @@ const initializer = (inst: $ZodError, def: $ZodIssue[]): void => {
   // inst.message = JSON.stringify(def, util.jsonStringifyReplacer, 2);
   Object.defineProperty(inst, "message", {
     get() {
-      return JSON.stringify(def, util.jsonStringifyReplacer, 2);
+      return prettifyError(inst);
     },
     enumerable: true,
     // configurable: false,

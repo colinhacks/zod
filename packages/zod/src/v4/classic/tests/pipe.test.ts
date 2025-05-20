@@ -40,18 +40,22 @@ test("continue on non-fatal errors", () => {
 
   expect(schema.safeParse("4321")).toMatchInlineSnapshot(`
     {
-      "error": [ZodError: [
-      {
-        "code": "custom",
-        "path": [],
-        "message": "A"
-      },
-      {
-        "code": "custom",
-        "path": [],
-        "message": "B"
-      }
-    ]],
+      "error": ZodError ({
+        "issues": [
+          {
+            "code": "custom",
+            "message": "A",
+            "path": [],
+          },
+          {
+            "code": "custom",
+            "message": "B",
+            "path": [],
+          },
+        ],
+        "message": "✖ A
+    ✖ B",
+      }),
       "success": false,
     }
   `);
@@ -68,13 +72,16 @@ test("break on fatal errors", () => {
 
   expect(schema.safeParse("4321")).toMatchInlineSnapshot(`
     {
-      "error": [ZodError: [
-      {
-        "code": "custom",
-        "path": [],
-        "message": "A"
-      }
-    ]],
+      "error": ZodError ({
+        "issues": [
+          {
+            "code": "custom",
+            "message": "A",
+            "path": [],
+          },
+        ],
+        "message": "✖ A",
+      }),
       "success": false,
     }
   `);

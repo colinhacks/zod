@@ -149,17 +149,21 @@ test("invalid discriminator value", () => {
 
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": [ZodError: [
-      {
-        "code": "invalid_union",
-        "errors": [],
-        "note": "No matching discriminator",
-        "path": [
-          "type"
+      "error": ZodError ({
+        "issues": [
+          {
+            "code": "invalid_union",
+            "errors": [],
+            "message": "Invalid input",
+            "note": "No matching discriminator",
+            "path": [
+              "type",
+            ],
+          },
         ],
-        "message": "Invalid input"
-      }
-    ]],
+        "message": "✖ Invalid input
+      → at type",
+      }),
       "success": false,
     }
   `);
@@ -175,47 +179,50 @@ test("invalid discriminator value - unionFallback", () => {
     .safeParse({ type: "x", a: "abc" });
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": [ZodError: [
-      {
-        "code": "invalid_union",
-        "errors": [
-          [
-            {
-              "code": "invalid_value",
-              "values": [
-                "a"
+      "error": ZodError ({
+        "issues": [
+          {
+            "code": "invalid_union",
+            "errors": [
+              [
+                {
+                  "code": "invalid_value",
+                  "message": "Invalid input: expected "a"",
+                  "path": [
+                    "type",
+                  ],
+                  "values": [
+                    "a",
+                  ],
+                },
               ],
-              "path": [
-                "type"
+              [
+                {
+                  "code": "invalid_value",
+                  "message": "Invalid input: expected "b"",
+                  "path": [
+                    "type",
+                  ],
+                  "values": [
+                    "b",
+                  ],
+                },
+                {
+                  "code": "invalid_type",
+                  "expected": "string",
+                  "message": "Invalid input: expected string, received undefined",
+                  "path": [
+                    "b",
+                  ],
+                },
               ],
-              "message": "Invalid input: expected \\"a\\""
-            }
-          ],
-          [
-            {
-              "code": "invalid_value",
-              "values": [
-                "b"
-              ],
-              "path": [
-                "type"
-              ],
-              "message": "Invalid input: expected \\"b\\""
-            },
-            {
-              "expected": "string",
-              "code": "invalid_type",
-              "path": [
-                "b"
-              ],
-              "message": "Invalid input: expected string, received undefined"
-            }
-          ]
+            ],
+            "message": "Invalid input",
+            "path": [],
+          },
         ],
-        "path": [],
-        "message": "Invalid input"
-      }
-    ]],
+        "message": "✖ Invalid input",
+      }),
       "success": false,
     }
   `);
@@ -240,16 +247,20 @@ test("valid discriminator value, invalid data", () => {
   // ];
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": [ZodError: [
-      {
-        "expected": "string",
-        "code": "invalid_type",
-        "path": [
-          "a"
+      "error": ZodError ({
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "string",
+            "message": "Invalid input: expected string, received undefined",
+            "path": [
+              "a",
+            ],
+          },
         ],
-        "message": "Invalid input: expected string, received undefined"
-      }
-    ]],
+        "message": "✖ Invalid input: expected string, received undefined
+      → at a",
+      }),
       "success": false,
     }
   `);
@@ -327,16 +338,20 @@ test("async - invalid", async () => {
   //   },
   // ]);
   expect(result.error).toMatchInlineSnapshot(`
-    [ZodError: [
-      {
-        "expected": "string",
-        "code": "invalid_type",
-        "path": [
-          "a"
-        ],
-        "message": "Invalid input: expected string, received number"
-      }
-    ]]
+    ZodError ({
+      "issues": [
+        {
+          "code": "invalid_type",
+          "expected": "string",
+          "message": "Invalid input: expected string, received number",
+          "path": [
+            "a",
+          ],
+        },
+      ],
+      "message": "✖ Invalid input: expected string, received number
+      → at a",
+    })
   `);
 });
 
@@ -501,17 +516,21 @@ test("single element union", () => {
   expect(result).toMatchObject({ success: false });
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": [ZodError: [
-      {
-        "expected": "string",
-        "code": "invalid_type",
-        "path": [
-          "c",
-          "id"
+      "error": ZodError ({
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "string",
+            "message": "Invalid input: expected string, received undefined",
+            "path": [
+              "c",
+              "id",
+            ],
+          },
         ],
-        "message": "Invalid input: expected string, received undefined"
-      }
-    ]],
+        "message": "✖ Invalid input: expected string, received undefined
+      → at c.id",
+      }),
       "success": false,
     }
   `);

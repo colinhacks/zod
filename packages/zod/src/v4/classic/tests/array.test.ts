@@ -108,26 +108,32 @@ test("continue parsing despite array size error", () => {
   });
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": [ZodError: [
-      {
-        "expected": "string",
-        "code": "invalid_type",
-        "path": [
-          "people",
-          0
+      "error": ZodError ({
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "string",
+            "message": "Invalid input: expected string, received number",
+            "path": [
+              "people",
+              0,
+            ],
+          },
+          {
+            "code": "too_small",
+            "message": "Too small: expected array to have >2 items",
+            "minimum": 2,
+            "origin": "array",
+            "path": [
+              "people",
+            ],
+          },
         ],
-        "message": "Invalid input: expected string, received number"
-      },
-      {
-        "origin": "array",
-        "code": "too_small",
-        "minimum": 2,
-        "path": [
-          "people"
-        ],
-        "message": "Too small: expected array to have >2 items"
-      }
-    ]],
+        "message": "✖ Too small: expected array to have >2 items
+      → at people
+    ✖ Invalid input: expected string, received number
+      → at people[0]",
+      }),
       "success": false,
     }
   `);
@@ -139,32 +145,40 @@ test("parse should fail given sparse array", () => {
   expect(result.success).toEqual(false);
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": [ZodError: [
-      {
-        "expected": "string",
-        "code": "invalid_type",
-        "path": [
-          0
+      "error": ZodError ({
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "string",
+            "message": "Invalid input: expected string, received undefined",
+            "path": [
+              0,
+            ],
+          },
+          {
+            "code": "invalid_type",
+            "expected": "string",
+            "message": "Invalid input: expected string, received undefined",
+            "path": [
+              1,
+            ],
+          },
+          {
+            "code": "invalid_type",
+            "expected": "string",
+            "message": "Invalid input: expected string, received undefined",
+            "path": [
+              2,
+            ],
+          },
         ],
-        "message": "Invalid input: expected string, received undefined"
-      },
-      {
-        "expected": "string",
-        "code": "invalid_type",
-        "path": [
-          1
-        ],
-        "message": "Invalid input: expected string, received undefined"
-      },
-      {
-        "expected": "string",
-        "code": "invalid_type",
-        "path": [
-          2
-        ],
-        "message": "Invalid input: expected string, received undefined"
-      }
-    ]],
+        "message": "✖ Invalid input: expected string, received undefined
+      → at [0]
+    ✖ Invalid input: expected string, received undefined
+      → at [1]
+    ✖ Invalid input: expected string, received undefined
+      → at [2]",
+      }),
       "success": false,
     }
   `);

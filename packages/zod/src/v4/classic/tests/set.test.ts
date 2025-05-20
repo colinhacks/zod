@@ -94,14 +94,17 @@ test("throws when a Map is given", () => {
   const result = stringSet.safeParse(new Map([]));
   expect(result.success).toEqual(false);
   expect(result.error).toMatchInlineSnapshot(`
-    [ZodError: [
-      {
-        "expected": "set",
-        "code": "invalid_type",
-        "path": [],
-        "message": "Invalid input: expected set, received Map"
-      }
-    ]]
+    ZodError ({
+      "issues": [
+        {
+          "code": "invalid_type",
+          "expected": "set",
+          "message": "Invalid input: expected set, received Map",
+          "path": [],
+        },
+      ],
+      "message": "✖ Invalid input: expected set, received Map",
+    })
   `);
 });
 
@@ -110,14 +113,17 @@ test("throws when the given set has invalid input", () => {
   expect(result.success).toEqual(false);
   expect(result.error!.issues.length).toEqual(1);
   expect(result.error).toMatchInlineSnapshot(`
-    [ZodError: [
-      {
-        "expected": "string",
-        "code": "invalid_type",
-        "path": [],
-        "message": "Invalid input: expected string, received symbol"
-      }
-    ]]
+    ZodError ({
+      "issues": [
+        {
+          "code": "invalid_type",
+          "expected": "string",
+          "message": "Invalid input: expected string, received symbol",
+          "path": [],
+        },
+      ],
+      "message": "✖ Invalid input: expected string, received symbol",
+    })
   `);
 });
 
@@ -126,20 +132,24 @@ test("throws when the given set has multiple invalid entries", () => {
   expect(result.success).toEqual(false);
   expect(result.error!.issues.length).toEqual(2);
   expect(result.error).toMatchInlineSnapshot(`
-    [ZodError: [
-      {
-        "expected": "string",
-        "code": "invalid_type",
-        "path": [],
-        "message": "Invalid input: expected string, received number"
-      },
-      {
-        "expected": "string",
-        "code": "invalid_type",
-        "path": [],
-        "message": "Invalid input: expected string, received number"
-      }
-    ]]
+    ZodError ({
+      "issues": [
+        {
+          "code": "invalid_type",
+          "expected": "string",
+          "message": "Invalid input: expected string, received number",
+          "path": [],
+        },
+        {
+          "code": "invalid_type",
+          "expected": "string",
+          "message": "Invalid input: expected string, received number",
+          "path": [],
+        },
+      ],
+      "message": "✖ Invalid input: expected string, received number
+    ✖ Invalid input: expected string, received number",
+    })
   `);
 });
 

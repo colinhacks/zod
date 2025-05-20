@@ -393,16 +393,19 @@ test("nanoid", () => {
 
   expect(result.error!.issues[0].message).toEqual("custom error");
   expect(result.error).toMatchInlineSnapshot(`
-    [ZodError: [
-      {
-        "origin": "string",
-        "code": "invalid_format",
-        "format": "nanoid",
-        "pattern": "/^[a-zA-Z0-9_-]{21}$/",
-        "path": [],
-        "message": "custom error"
-      }
-    ]]
+    ZodError ({
+      "issues": [
+        {
+          "code": "invalid_format",
+          "format": "nanoid",
+          "message": "custom error",
+          "origin": "string",
+          "path": [],
+          "pattern": "/^[a-zA-Z0-9_-]{21}$/",
+        },
+      ],
+      "message": "✖ custom error",
+    })
   `);
 });
 
@@ -414,16 +417,19 @@ test("bad nanoid", () => {
 
   expect(result.error!.issues[0].message).toEqual("custom error");
   expect(result.error).toMatchInlineSnapshot(`
-    [ZodError: [
-      {
-        "origin": "string",
-        "code": "invalid_format",
-        "format": "nanoid",
-        "pattern": "/^[a-zA-Z0-9_-]{21}$/",
-        "path": [],
-        "message": "custom error"
-      }
-    ]]
+    ZodError ({
+      "issues": [
+        {
+          "code": "invalid_format",
+          "format": "nanoid",
+          "message": "custom error",
+          "origin": "string",
+          "path": [],
+          "pattern": "/^[a-zA-Z0-9_-]{21}$/",
+        },
+      ],
+      "message": "✖ custom error",
+    })
   `);
 });
 
@@ -497,16 +503,19 @@ test("cuid", () => {
 
   expect(result.error!.issues[0].message).toEqual("Invalid cuid");
   expect(result.error).toMatchInlineSnapshot(`
-    [ZodError: [
-      {
-        "origin": "string",
-        "code": "invalid_format",
-        "format": "cuid",
-        "pattern": "/^[cC][^\\\\s-]{8,}$/",
-        "path": [],
-        "message": "Invalid cuid"
-      }
-    ]]
+    ZodError ({
+      "issues": [
+        {
+          "code": "invalid_format",
+          "format": "cuid",
+          "message": "Invalid cuid",
+          "origin": "string",
+          "path": [],
+          "pattern": "/^[cC][^\\s-]{8,}$/",
+        },
+      ],
+      "message": "✖ Invalid cuid",
+    })
   `);
 });
 
@@ -546,16 +555,19 @@ test("ulid", () => {
 
   expect(result.error!.issues[0].message).toEqual("Invalid ULID");
   expect(result.error).toMatchInlineSnapshot(`
-    [ZodError: [
-      {
-        "origin": "string",
-        "code": "invalid_format",
-        "format": "ulid",
-        "pattern": "/^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$/",
-        "path": [],
-        "message": "Invalid ULID"
-      }
-    ]]
+    ZodError ({
+      "issues": [
+        {
+          "code": "invalid_format",
+          "format": "ulid",
+          "message": "Invalid ULID",
+          "origin": "string",
+          "path": [],
+          "pattern": "/^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$/",
+        },
+      ],
+      "message": "✖ Invalid ULID",
+    })
   `);
 });
 
@@ -567,16 +579,19 @@ test("xid", () => {
 
   expect(result.error!.issues[0].message).toEqual("Invalid XID");
   expect(result.error).toMatchInlineSnapshot(`
-    [ZodError: [
-      {
-        "origin": "string",
-        "code": "invalid_format",
-        "format": "xid",
-        "pattern": "/^[0-9a-vA-V]{20}$/",
-        "path": [],
-        "message": "Invalid XID"
-      }
-    ]]
+    ZodError ({
+      "issues": [
+        {
+          "code": "invalid_format",
+          "format": "xid",
+          "message": "Invalid XID",
+          "origin": "string",
+          "path": [],
+          "pattern": "/^[0-9a-vA-V]{20}$/",
+        },
+      ],
+      "message": "✖ Invalid XID",
+    })
   `);
 });
 
