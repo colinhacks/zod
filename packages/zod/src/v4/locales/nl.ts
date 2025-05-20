@@ -95,7 +95,7 @@ const error: errors.$ZodErrorMap = (issue) => {
     case "invalid_format": {
       const _issue = issue as errors.$ZodStringFormatIssues;
       if (_issue.format === "starts_with") {
-        return `Ongeldige string: moet met "${_issue.prefix}" beginnen`;
+        return `Ongeldige text: moet met "${_issue.prefix}" beginnen`;
       }
       if (_issue.format === "ends_with") return `Ongeldige tekst: moet op "${_issue.suffix}" eindigen`;
       if (_issue.format === "includes") return `Ongeldige tekst: moet "${_issue.includes}" bevatten`;
