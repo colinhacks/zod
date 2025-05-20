@@ -1,9 +1,5 @@
-import type { LanguageModelV1 } from "@ai-sdk/provider";
-import { generateObject } from "ai";
-import type { z } from "zod";
+import z3 from "zod/v3";
+import z4 from "zod/v4";
 
-export function myFn<T>(model: LanguageModelV1, schema: z.Schema<T>) {
-  return generateObject({ model, schema });
-}
-
-myFn;
+console.log("before (v3): ", z3.string().safeParse(123).error);
+console.log("after (v4):", z4.string().safeParse(123).error);
