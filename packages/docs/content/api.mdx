@@ -2480,8 +2480,8 @@ const computeTrimmedLength = MyFunction.implement((input) => {
   return input.trim().length;
 });
 
-trimmedLength("sandwich"); // => 8
-trimmedLength(" asdf "); // => 4
+computeTrimmedLength("sandwich"); // => 8
+computeTrimmedLength(" asdf "); // => 4
 ```
 
 This function will throw a `ZodError` if the input is invalid:
