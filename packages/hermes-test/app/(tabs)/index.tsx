@@ -131,37 +131,29 @@ export default function ZodHermesTestScreen() {
     // Symbol Usage
     testResults.push(
       runTest("Symbol.hasInstance", "Symbol Usage", () => {
-        // Check Symbol.hasInstance on the constructor (z.ZodString), not on the instance
-        // This aligns with the JavaScript spec where Symbol.hasInstance is a static method
-        const hasInstance = (z.ZodString as any)[Symbol.hasInstance];
-        if (typeof hasInstance !== "function") {
-          throw new Error("Symbol.hasInstance is not a function on the constructor");
-        }
-
-        // Verify that instanceof works correctly with the schema
         const schema = z.string();
-        if (!(schema instanceof z.ZodString)) {
-          throw new Error("instanceof check failed with schema");
+        // Use a type assertion to avoid TypeScript error with Symbol access
+        const hasInstance = (schema as any)[Symbol.hasInstance];
+        if (typeof hasInstance !== "function") {
+          throw new Error("Symbol.hasInstance is not a function");
         }
-      })
+      }),
     );
 
     testResults.push(
       runTest("Symbol brand", "Symbol Usage", () => {
-        // Instead of trying to parse, which requires _zod.run to be implemented,
-        // we'll just check that the brand method exists and returns an object
-        const schema = z.string().brand("custom");
-
-        // Verify the schema object was returned
-        if (!schema || typeof schema !== "object") {
-          throw new Error("Brand method did not return a schema object");
+        try {
+          const schema = z.string().brand("custom");
+          const parsed = schema.parse("hello");
+          if (!parsed) {
+            throw new Error("Failed to parse with branded schema");
+          }
+        } catch (e) {
+          throw new Error(
+            `Branding failed: ${e instanceof Error ? e.message : String(e)}`,
+          );
         }
-
-        // Verify the schema is still a ZodString
-        if (!(schema instanceof z.ZodString)) {
-          throw new Error("Branded schema is not an instance of ZodString");
-        }
-      })
+      }),
     );
 
     // Object.defineProperty
@@ -246,24 +238,17 @@ export default function ZodHermesTestScreen() {
           }),
         });
 
-        // Verify the schema object was created correctly
-        if (!nestedSchema || typeof nestedSchema !== "object") {
-          throw new Error("Complex nested schema not created properly");
-        }
+        const validData = {
+          user: {
+            details: {
+              preferences: ["dark mode", "notifications off"],
+            },
+          },
+        };
 
-        // Verify the schema is an instance of ZodObject
-        if (!(nestedSchema instanceof z.ZodObject)) {
-          throw new Error("Complex nested schema is not an instance of ZodObject");
-        }
-
-        // Verify the nested structure exists
-        if (!nestedSchema.shape || typeof nestedSchema.shape !== "object") {
-          throw new Error("Complex nested schema shape is not accessible");
-        }
-
-        // Verify the user property exists in the shape
-        if (!nestedSchema.shape.user) {
-          throw new Error("Complex nested schema missing user property");
+        const result = nestedSchema.safeParse(validData);
+        if (!result.success) {
+          throw new Error(`Nested schema validation failed`);
         }
       })
     );
