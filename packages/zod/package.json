@@ -85,7 +85,7 @@
   },
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "tsx ./build.ts",
+    "build": "tsx ./build.mts",
     "postbuild": "pnpm biome check --write .",
     "test:watch": "pnpm vitest",
     "test": "pnpm vitest run",
