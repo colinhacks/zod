@@ -56,37 +56,37 @@ jobs:
           echo "Version in package.json has not changed. Skipping."
           exit 0
      
-      # - name: Configure changelog
-      #   if: steps.publish.outputs.type != 'none'
-      #   run: |
-      #     echo '{"categories": [], "template": "## Commits:\n\n${{ '${{UNCATEGORIZED}}' }}", "pr_template": ${{ '"- ${{MERGE_SHA}} ${{TITLE}}"' }} }' > changelog_config.json
-      #     cat changelog_config.json
-      #     echo "last_tag=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
-      #     echo "curr_commit=$(git rev-parse HEAD)" >> $GITHUB_ENV
+      - name: Configure changelog
+        if: steps.publish.outputs.type != 'none'
+        run: |
+          echo '{"categories": [], "template": "## Commits:\n\n${{ '${{UNCATEGORIZED}}' }}", "pr_template": ${{ '"- ${{MERGE_SHA}} ${{TITLE}}"' }} }' > changelog_config.json
+          cat changelog_config.json
+          echo "last_tag=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
+          echo "curr_commit=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
-      # - name: Generate changelog
-      #   if: steps.publish.outputs.type != 'none'
-      #   id: github_release
-      #   uses: mikepenz/release-changelog-builder-action@v2.9.0
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     fromTag: "${{ env.last_tag }}"
-      #     toTag: ${{ github.ref }}
-      #     commitMode: true
-      #     configuration: changelog_config.json
+      - name: Generate changelog
+        if: steps.publish.outputs.type != 'none'
+        id: github_release
+        uses: mikepenz/release-changelog-builder-action@v2.9.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          fromTag: "${{ env.last_tag }}"
+          toTag: ${{ github.ref }}
+          commitMode: true
+          configuration: changelog_config.json
 
-      # - name: Create release
-      #   if: steps.publish.outputs.type != 'none'
-      #   id: create_release
-      #   uses: actions/create-release@v1
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     tag_name: v${{ steps.publish.outputs.version }}
-      #     release_name: v${{ steps.publish.outputs.version }}
-      #     commitish: ${{ github.ref }}
-      #     body: ${{steps.github_release.outputs.changelog}}
-      #     draft: false
-      #     prerelease: false
+      - name: Create release
+        if: steps.publish.outputs.type != 'none'
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.publish.outputs.version }}
+          release_name: v${{ steps.publish.outputs.version }}
+          commitish: ${{ github.ref }}
+          body: ${{steps.github_release.outputs.changelog}}
+          draft: false
+          prerelease: false
 
