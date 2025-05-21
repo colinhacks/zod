@@ -1,0 +1,13 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "@/*": ["./*"],
+      "zod": ["../zod/dist/esm"],
+      "zod/v4": ["../zod/dist/esm/v4"]
+    },
+    "typeRoots": ["./node_modules/@types", "./types"]
+  },
+  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts", "types/**/*.d.ts"]
+}
