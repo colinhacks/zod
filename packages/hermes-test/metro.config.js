@@ -27,12 +27,12 @@ config.resolver.unstable_enablePackageExports = true;
 // Ignore require cycles by pattern
 config.resolver.requireCycleIgnorePatterns = [
   // Default patterns
-  /(^|\/|\\)node_modules($|\/|\\)/, 
+  /(^|\/|\\)node_modules($|\/|\\)/,
   /(^|\/|\\)packages($|\/|\\)/,
   // Specific Zod cycles
   /\/zod\/dist\/esm\/v4\/classic\/schemas\.js/,
   /\/zod\/dist\/esm\/v4\/classic\/iso\.js/,
-  /\/zod\/dist\/esm\/v4\/classic\/coerce\.js/
+  /\/zod\/dist\/esm\/v4\/classic\/coerce\.js/,
 ];
 
 module.exports = config;
