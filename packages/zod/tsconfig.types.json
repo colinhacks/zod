@@ -5,7 +5,9 @@
     "module": "Node16",
     "moduleResolution": "node16",
     "customConditions": ["@zod/source"],
-    "outDir": "./dist/cjs"
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "./dist/types"
   },
   "include": ["src"]
 }

@@ -2,7 +2,8 @@
   "extends": "./.configs/tsconfig.base.json",
   "compilerOptions": {
     "rootDir": ".",
-    "noEmit": true
+    "noEmit": true,
+    "moduleResolution": "node16"
   },
   "exclude": ["packages/docs"]
 }

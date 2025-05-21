@@ -5,7 +5,7 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "customConditions": ["@zod/source"],
-    "outDir": "./dist"
+    "outDir": "./dist/esm"
   },
   "include": ["src"],
   "exclude": ["**/tests/**"]
