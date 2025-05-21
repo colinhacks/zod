@@ -6,7 +6,8 @@ on:
     branches:
       - main
     paths:
-      - packages/zod/package.json
+      - "packages/zod/package.json"
+      - ".github/workflows/release.yml"
 
 jobs:
   build_and_publish:
@@ -53,7 +54,7 @@ jobs:
           echo "Published ${{ steps.publish.outputs.type }} version: ${{ steps.publish.outputs.version }}"
 
       - name: Publish skipped
-        if: ${{ steps.publish.outputs.type }}
+        if: ${{ !steps.publish.outputs.type }}
         run: |
           echo "Version in package.json has not changed. Skipping."
           exit 0
