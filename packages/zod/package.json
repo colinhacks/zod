@@ -1,6 +1,6 @@
 {
   "name": "zod",
-  "version": "3.25.15",
+  "version": "3.25.16",
   "author": "Colin McDonnell <zod@colinhacks.com>",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
   "files": ["src", "dist"],
@@ -16,14 +16,9 @@
     "./package.json": "./package.json",
     ".": {
       "@zod/source": "./src/index.ts",
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.mjs"
-      },
-      "require": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
-      }
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js"
     },
     "./v3": {
       "@zod/source": "./src/v3/index.ts",
@@ -58,8 +53,8 @@
     "./v4/locales/*": {
       "@zod/source": "./src/v4/locales/*",
       "types": "./dist/v4/locales/*.d.ts",
-      "import": "./dist/v4/locales/*.mjs",
-      "require": "./dist/v4/locales/*.js"
+      "import": "./dist/v4/locales/*",
+      "require": "./dist/v4/locales/*"
     }
   },
   "tshy": {
