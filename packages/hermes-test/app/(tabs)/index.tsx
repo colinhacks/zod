@@ -131,13 +131,19 @@ export default function ZodHermesTestScreen() {
     // Symbol Usage
     testResults.push(
       runTest("Symbol.hasInstance", "Symbol Usage", () => {
-        const schema = z.string();
-        // Use a type assertion to avoid TypeScript error with Symbol access
-        const hasInstance = (schema as any)[Symbol.hasInstance];
+        // Check Symbol.hasInstance on the constructor (z.ZodString), not on the instance
+        // This aligns with the JavaScript spec where Symbol.hasInstance is a static method
+        const hasInstance = (z.ZodString as any)[Symbol.hasInstance];
         if (typeof hasInstance !== "function") {
-          throw new Error("Symbol.hasInstance is not a function");
+          throw new Error("Symbol.hasInstance is not a function on the constructor");
         }
-      }),
+
+        // Verify that instanceof works correctly with the schema
+        const schema = z.string();
+        if (!(schema instanceof z.ZodString)) {
+          throw new Error("instanceof check failed with schema");
+        }
+      })
     );
 
     testResults.push(
