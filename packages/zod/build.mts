@@ -48,7 +48,7 @@ $`pnpm tsc -p tsconfig.types.json`;
 // const typesPackageJsonPath = path.join(path.resolve(typesPath), "package.json");
 // fs.mkdirSync(typesDistDir, { recursive: true });
 // fs.writeFileSync(typesPackageJsonPath, JSON.stringify({ type: "module" }, null, 2));
-writePackageJson("./dist/types", { type: "module" });
+writePackageJson("./dist/types", { type: "commonjs" });
 
 console.log("DONE.");
 
