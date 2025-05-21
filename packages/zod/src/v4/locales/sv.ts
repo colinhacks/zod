@@ -39,7 +39,7 @@ export const parsedType = (data: any): string => {
 const Nouns: {
   [k in $ZodStringFormats | (string & {})]?: string;
 } = {
-  regex: "input",
+  regex: "reguljärt uttryck",
   email: "e-postadress",
   url: "URL",
   emoji: "emoji",
@@ -66,7 +66,7 @@ const Nouns: {
   json_string: "JSON-sträng",
   e164: "E.164-nummer",
   jwt: "JWT",
-  template_literal: "input",
+  template_literal: "mall-literal",
 };
 
 const error: errors.$ZodErrorMap = (issue) => {
@@ -80,22 +80,21 @@ const error: errors.$ZodErrorMap = (issue) => {
       const adj = issue.inclusive ? "<=" : "<";
       const sizing = getSizing(issue.origin);
       if (sizing)
-        return `För stor(t): förväntade ${issue.origin ?? "värde"} att ha ${adj}${issue.maximum.toString()} ${sizing.unit ?? "element"}`;
-      return `För stor(t): förväntat ${issue.origin ?? "värde"} to be ${adj}${issue.maximum.toString()}`;
+        return `För stor(t): förväntade ${issue.origin ?? "värdet"} att ha ${adj}${issue.maximum.toString()} ${sizing.unit ?? "element"}`;
+      return `För stor(t): förväntat ${issue.origin ?? "värdet"} to be ${adj}${issue.maximum.toString()}`;
     }
     case "too_small": {
       const adj = issue.inclusive ? ">=" : ">";
       const sizing = getSizing(issue.origin);
       if (sizing) {
-        return `För lite(t): förväntade ${issue.origin} att ha ${adj}${issue.minimum.toString()} ${sizing.unit}`;
+        return `För lite(t): förväntade ${issue.origin ?? "värdet"} att ha ${adj}${issue.minimum.toString()} ${sizing.unit}`;
       }
-
-      return `För lite(t): förväntade ${issue.origin} att ha ${adj}${issue.minimum.toString()}`;
+      return `För lite(t): förväntade ${issue.origin ?? "värdet"} att ha ${adj}${issue.minimum.toString()}`;
     }
     case "invalid_format": {
       const _issue = issue as errors.$ZodStringFormatIssues;
       if (_issue.format === "starts_with") {
-        return `Ogiltig sträng: måsta börja med "${_issue.prefix}"`;
+        return `Ogiltig sträng: måste börja med "${_issue.prefix}"`;
       }
       if (_issue.format === "ends_with") return `Ogiltig sträng: måste sluta med "${_issue.suffix}"`;
       if (_issue.format === "includes") return `Ogiltig sträng: måste innehålla "${_issue.includes}"`;
@@ -107,11 +106,11 @@ const error: errors.$ZodErrorMap = (issue) => {
     case "unrecognized_keys":
       return `${issue.keys.length > 1 ? "Okända nycklar" : "Okänd nyckel"}: ${util.joinValues(issue.keys, ", ")}`;
     case "invalid_key":
-      return `Ogiltig nyckel i ${issue.origin}`;
+      return `Ogiltig nyckel i ${issue.origin ?? "värdet"}`;
     case "invalid_union":
       return "Ogiltig input";
     case "invalid_element":
-      return `Ogiltigt värde i ${issue.origin}`;
+      return `Ogiltigt värde i ${issue.origin ?? "värdet"}`;
     default:
       return `Ogiltig input`;
   }
