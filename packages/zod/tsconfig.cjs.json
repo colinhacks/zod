@@ -1,0 +1,12 @@
+{
+  "extends": "../../.configs/tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "module": "Node16",
+    "moduleResolution": "node16",
+    "customConditions": ["@zod/source"],
+    "outDir": "./dist",
+    "declaration": true
+  },
+  "include": ["src"]
+}

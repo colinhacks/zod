@@ -1,9 +1,6 @@
 {
   "extends": "../../.configs/tsconfig.base.json",
   "compilerOptions": {
-    "isolatedDeclarations": false,
-    "composite": true,
-    "exactOptionalPropertyTypes": true,
     "module": "NodeNext",
     "moduleResolution": "nodenext",
     "customConditions": ["@zod/source"]
