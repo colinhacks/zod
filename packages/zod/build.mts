@@ -6,7 +6,7 @@ import { globbySync } from "globby";
 const $ = execaSync({ stdio: "inherit" });
 /**
  * Synchronously builds TypeScript projects (ESM and CommonJS)
- * and recursively renames all .js files in the dist directory to .mts.
+ * and recursively renames all .js files in the dist directory to .mjs.
  * Uses execa's $.sync for shell commands and globbySync for file finding.
  * Pipes subprocess logs (stdout/stderr) to the main process.
  */
@@ -32,15 +32,15 @@ console.log("Compiling ES modules..."); // Added log for clarity
 $`pnpm tsc -p tsconfig.esm.json`;
 console.log("ES modules compiled."); // Added log for clarity
 
-console.log("Renaming .js files to .mts in dist directory..."); // Added log for clarity
+console.log("Renaming .js files to .mjs in dist directory..."); // Added log for clarity
 const tsFiles = globbySync(`${distDir}/**/*.js`, {
   onlyFiles: true,
 });
 
-// Iterate over each found .js file and rename it to .mts
+// Iterate over each found .js file and rename it to .mjs
 for (const file of tsFiles) {
-  if (file.endsWith(".mjs")) continue; // skip if already .mts
-  // Create the new path by replacing the .js extension with .mts
+  if (file.endsWith(".mjs")) continue; // skip if already .mjs
+  // Create the new path by replacing the .js extension with .mjs
   const newPath = file.replace(/\.js$/, ".mjs");
   // Execute the 'mv' command synchronously to rename the file
   // Using $.sync for this shell command as well, with stdio inherited.
