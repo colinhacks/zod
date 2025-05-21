@@ -3,6 +3,7 @@ import type * as core from "./core.js";
 import type * as errors from "./errors.js";
 import * as schemas from "./schemas.js";
 import * as util from "./util.js";
+import { safeCreateSchema } from "./util.js";
 
 export type Params<
   T extends schemas.$ZodType | checks.$ZodCheck,
@@ -62,10 +63,14 @@ export function _string<T extends schemas.$ZodString>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodStringParams
 ): T {
-  return new Class({
-    type: "string",
-    ...util.normalizeParams(params),
-  });
+  return safeCreateSchema(
+    Class,
+    {
+      type: "string",
+      ...util.normalizeParams(params),
+    },
+    "string"
+  );
 }
 
 export function _coercedString<T extends schemas.$ZodString>(

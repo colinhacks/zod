@@ -748,3 +748,34 @@ export function cleanEnum(obj: Record<string, EnumValue>): EnumValue[] {
 export abstract class Class {
   constructor(..._args: any[]) {}
 }
+
+// Utility function to safely create schema objects without using constructors
+export function safeCreateSchema<T extends schemas.$ZodType>(Class: any, def: any, _schemaType: string): T {
+  const staticInit = Class.init;
+
+  if (typeof staticInit === "function") {
+    // This class was likely created by $constructor or follows a similar pattern.
+    // Create instance without calling its own constructor, then run its static initializer.
+    const obj = Object.create(Class.prototype);
+    staticInit(obj, def); // This sets up obj._zod and type-specific properties.
+
+    // The static init (from $constructor pattern) DOES NOT run deferred initializers.
+    // The class's own constructor normally does that AFTER static init.
+    // So, we need to mimic that here.
+    // Ensure obj._zod.deferred is an array, then run them.
+    obj._zod.deferred ??= [];
+    const deferred = obj._zod.deferred; // get a reference
+    obj._zod.deferred = []; // clear before running, standard practice
+    for (const fn of deferred) {
+      if (typeof fn === "function") {
+        fn(obj); // Call with obj as context if needed, though standard ones are parameterless
+      }
+    }
+    return obj as T;
+  } else {
+    // This class does not have a static `init`. It's either a plain JS class
+    // or an older/different Zod class pattern. Fall back to direct instantiation.
+    // This path worked for Zod tests but failed for Hermes previously for some types.
+    return new Class(def);
+  }
+}
