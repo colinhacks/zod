@@ -24,18 +24,20 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+      
       - name: Install pnpm
         uses: pnpm/action-setup@v4
+        
       - name: Install dependencies
         run: |
           pnpm install
 
-      - name: Install dependencies
+      - name: Build and test
         working-directory: ./packages/zod
         run: |
           pnpm run test
           pnpm build
-
+          
       - id: publish
         name: Publish to NPM
         uses: JS-DevTools/npm-publish@v3

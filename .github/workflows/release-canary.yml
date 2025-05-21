@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths:
-      - "src/**"
+      - "packages/zod/**"
       - ".github/workflows/release-canary.yml"
 jobs:
   build_and_publish:
@@ -20,30 +20,36 @@ jobs:
         with:
           fetch-depth: 0
 
-      # - name: Set up Node
-      #   uses: actions/setup-node@v4
-      #   with:
-      #     node-version: 20
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
 
-      # - name: Install dependencies
-      #   run: |
-      #     yarn install
+      - name: Install dependencies
+        run: |
+          pnpm install
 
-      # - name: Build
-      #   run: |
-      #     yarn clean
-      #     yarn build
+      - name: Build and test
+        working-directory: ./packages/zod
+        run: |
+          pnpm run test
+          pnpm build
 
-      # - name: Set version
-      #   run: |
-      #     npm --no-git-tag-version version minor
-      #     npm --no-git-tag-version version $(npm pkg get version | sed 's/"//g')-canary.$(date +'%Y%m%dT%H%M%S')
+      - name: Set version
+        run: |
+          npm --no-git-tag-version version minor
+          npm --no-git-tag-version version $(npm pkg get version | sed 's/"//g')-canary.$(date +'%Y%m%dT%H%M%S')
 
-      # - id: publish
-      #   name: Publish to NPM
-      #   uses: JS-DevTools/npm-publish@v3
-      #   with:
-      #     token: ${{ secrets.NPM_TOKEN }}
-      #     dry-run: false
-      #     tag: canary
-      #     provenance: true
+      - id: publish
+        name: Publish to NPM
+        uses: JS-DevTools/npm-publish@v3
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          dry-run: false
+          provenance: true
+          tag: canary
+          package: ./packages/zod
+          
