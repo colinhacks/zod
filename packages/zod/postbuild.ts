@@ -7,9 +7,7 @@ try {
   const packageJson = readFileSync(packageJsonPath, "utf-8");
 
   // Replace occurrences of "types": "./dist/commonjs/ with "types": "./dist/esm/
-  const updatedPackageJson = packageJson
-    .replace(/"types": "\.\/dist\/esm\//g, '"types": "./dist/types/')
-    .replace(/"types": "\.\/dist\/commonjs\//g, '"types": "./dist/types/');
+  const updatedPackageJson = packageJson.replace(/"types": "\.\/dist\/commonjs\//g, '"types": "./dist/esm/');
 
   // Write the updated content back to package.json
   writeFileSync(packageJsonPath, updatedPackageJson, "utf-8");
