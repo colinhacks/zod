@@ -155,11 +155,9 @@ export default function ZodHermesTestScreen() {
             throw new Error("Failed to parse with branded schema");
           }
         } catch (e) {
-          throw new Error(
-            `Branding failed: ${e instanceof Error ? e.message : String(e)}`,
-          );
+          throw new Error(`Branding failed: ${e instanceof Error ? e.message : String(e)}`);
         }
-      }),
+      })
     );
 
     // Object.defineProperty
