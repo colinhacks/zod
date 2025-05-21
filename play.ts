@@ -1,3 +1,3 @@
-import type { z } from "zod";
+import { z } from "zod";
 
 z;
