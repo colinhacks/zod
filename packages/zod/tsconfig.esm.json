@@ -2,8 +2,8 @@
   "extends": "../../.configs/tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "./src",
-    "module": "NodeNext",
-    "moduleResolution": "nodenext",
+    "module": "esnext",
+    "moduleResolution": "bundler",
     "customConditions": ["@zod/source"],
     "outDir": "./dist"
   },
