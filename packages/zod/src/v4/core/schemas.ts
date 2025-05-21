@@ -2865,7 +2865,10 @@ export const $ZodLiteral: core.$constructor<$ZodLiteral> = /*@__PURE__*/ core.$c
 //////////////////////////////////////////
 
 // provide a fallback in case the File interface isn't provided in the environment
-interface File {}
+declare global {
+  interface File {}
+}
+
 export interface $ZodFileDef extends $ZodTypeDef {
   type: "file";
 }
