@@ -71,7 +71,7 @@
     },
     "./v4/locales/*": {
       "@zod/source": "./src/v4/locales/*",
-      "types": "./dist/types/v4/locales/*.d.ts",
+      "types": "./dist/types/v4/locales/*",
       "import": "./dist/esm/v4/locales/*",
       "require": "./dist/cjs/v4/locales/*"
     }
