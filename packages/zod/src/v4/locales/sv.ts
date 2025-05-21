@@ -79,9 +79,10 @@ const error: errors.$ZodErrorMap = (issue) => {
     case "too_big": {
       const adj = issue.inclusive ? "<=" : "<";
       const sizing = getSizing(issue.origin);
-      if (sizing)
+      if (sizing) {
         return `För stor(t): förväntade ${issue.origin ?? "värdet"} att ha ${adj}${issue.maximum.toString()} ${sizing.unit ?? "element"}`;
-      return `För stor(t): förväntat ${issue.origin ?? "värdet"} to be ${adj}${issue.maximum.toString()}`;
+      }
+      return `För stor(t): förväntat ${issue.origin ?? "värdet"} att ha ${adj}${issue.maximum.toString()}`;
     }
     case "too_small": {
       const adj = issue.inclusive ? ">=" : ">";
@@ -98,7 +99,7 @@ const error: errors.$ZodErrorMap = (issue) => {
       }
       if (_issue.format === "ends_with") return `Ogiltig sträng: måste sluta med "${_issue.suffix}"`;
       if (_issue.format === "includes") return `Ogiltig sträng: måste innehålla "${_issue.includes}"`;
-      if (_issue.format === "regex") return `Ogiltig sträng: måste matcha mönstret ${_issue.pattern}`;
+      if (_issue.format === "regex") return `Ogiltig sträng: måste matcha mönstret "${_issue.pattern}"`;
       return `Ogiltig(t) ${Nouns[_issue.format] ?? issue.format}`;
     }
     case "not_multiple_of":
