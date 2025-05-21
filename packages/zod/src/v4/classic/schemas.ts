@@ -1064,7 +1064,7 @@ export function keyof<T extends ZodObject>(schema: T): ZodLiteral<keyof T["_zod"
 // ZodObject
 
 export interface ZodObject<
-  // @ts-ignore cast variance
+  /** @ts-ignore Cast variance */
   out Shape extends core.$ZodShape = core.$ZodLooseShape,
   out Config extends core.$ZodObjectConfig = core.$ZodObjectConfig,
 > extends ZodType {

@@ -81,7 +81,6 @@ export interface $ZodTypeDef {
   checks?: checks.$ZodCheck<never>[];
 }
 
-// @ts-ignore
 /** @internal */
 export interface $ZodTypeInternals<out O = unknown, out I = unknown> {
   /** The `@zod/core` version of this schema */
@@ -1582,7 +1581,7 @@ export interface $ZodObjectDef<Shape extends $ZodShape = $ZodShape> extends $Zod
 }
 
 export interface $ZodObjectInternals<
-  // @ts-ignore Cast variance
+  /** @ts-ignore Cast variance */
   out Shape extends Readonly<$ZodShape> = Readonly<$ZodShape>,
   out Config extends $ZodObjectConfig = $ZodObjectConfig,
 > extends $ZodTypeInternals<any, any> {
@@ -1676,7 +1675,7 @@ export type $catchall<T extends $ZodType> = {
   in: { [k: string]: core.input<T> };
 };
 export interface $ZodObject<
-  // @ts-ignore Cast variance
+  /** @ts-ignore Cast variance */
   out Shape extends Readonly<$ZodShape> = Readonly<$ZodShape>,
   out Params extends $ZodObjectConfig = $ZodObjectConfig,
 > extends $ZodType {
@@ -2714,7 +2713,7 @@ export interface $ZodEnumDef<T extends util.EnumLike = util.EnumLike> extends $Z
 }
 
 export interface $ZodEnumInternals<
-  // @ts-ignore Cast variance
+  /** @ts-ignore Cast variance */
   out T extends util.EnumLike = util.EnumLike,
 > extends $ZodTypeInternals<$InferEnumOutput<T>, $InferEnumInput<T>> {
   // enum: T;

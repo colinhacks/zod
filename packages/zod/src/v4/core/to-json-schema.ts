@@ -604,7 +604,6 @@ export class JSONSchemaGenerator {
       // wipe away all properties except $ref
       const schema = seen.schema;
       for (const key in schema) {
-        // @ts-ignore
         delete schema[key];
         schema.$ref = ref;
       }

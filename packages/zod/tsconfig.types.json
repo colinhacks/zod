@@ -7,7 +7,8 @@
     "customConditions": ["@zod/source"],
     "declaration": true,
     "emitDeclarationOnly": true,
-    "outDir": "./dist/types"
+    "outDir": "./dist/types",
+    "removeComments": false
   },
   "include": ["src"]
 }
