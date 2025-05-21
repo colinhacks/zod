@@ -65,7 +65,7 @@ In the OSS version of VSCode the extension may be not available.
 
 - runs all test files in `<ws>` that match `<file>` (e.g. `"enum"` will match `"enum.test.ts"`)
 
-**`pnpm play`**
+**`pnpm dev:play`**
 
 - executes [`play.ts`](play.ts), watches for changes. useful for experimentation
 
