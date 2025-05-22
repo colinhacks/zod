@@ -14,42 +14,52 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
   initializer: (inst: T, def: D) => void,
   params?: { Parent?: typeof Class }
 ): $constructor<T, D> {
+  function init(inst: T, def: D) {
+    Object.defineProperty(inst, "_zod", {
+      value: inst._zod ?? {},
+      enumerable: false,
+    });
+    // inst._zod ??= {} as any;a
+    inst._zod.traits ??= new Set();
+    // const seen = inst._zod.traits.has(name);
+
+    inst._zod.traits.add(name);
+    initializer(inst, def);
+    // support prototype modifications
+    for (const k in _.prototype) {
+      Object.defineProperty(inst, k, { value: (_.prototype as any)[k].bind(inst) });
+    }
+    inst._zod.constr = _;
+    inst._zod.def = def;
+  }
+
+  function construct(instance: any, def: D) {
+    init(instance, def);
+    instance._zod.deferred ??= [];
+    for (const fn of instance._zod.deferred) {
+      fn();
+    }
+    return instance;
+  }
+
   const Parent = params?.Parent ?? Object;
+  class Definition extends Parent {}
 
-  class _ extends Parent {
-    constructor(def: D) {
-      super();
-      const th = this as any;
-      _.init(th, def);
-      th._zod.deferred ??= [];
-      for (const fn of th._zod.deferred) {
-        fn();
-      }
-    }
-    static init(inst: T, def: D) {
-      Object.defineProperty(inst, "_zod", {
-        value: inst._zod ?? {},
-        enumerable: false,
-      });
-      // inst._zod ??= {} as any;
-      inst._zod.traits ??= new Set();
-      // const seen = inst._zod.traits.has(name);
-
-      inst._zod.traits.add(name);
-      initializer(inst, def);
-      // support prototype modifications
-      for (const k in _.prototype) {
-        Object.defineProperty(inst, k, { value: (_.prototype as any)[k].bind(inst) });
-      }
-      inst._zod.constr = _;
-      inst._zod.def = def;
+  function _(this: any, def: D) {
+    if (params?.Parent) {
+      return construct(new Definition(), def);
     }
 
-    static override [Symbol.hasInstance](inst: any) {
+    return construct(this, def);
+  }
+
+  Object.defineProperty(_, "init", { value: init });
+  Object.defineProperty(_, Symbol.hasInstance, {
+    value: (inst: any) => {
       if (params?.Parent && inst instanceof params.Parent) return true;
       return inst?._zod?.traits?.has(name);
-    }
-  }
+    },
+  });
   Object.defineProperty(_, "name", { value: name });
   return _ as any;
 }
