@@ -719,9 +719,9 @@ export class JSONSchemaGenerator {
     }
 
     if (this.target === "draft-2020-12") {
-      result.$schema = "https://json-schema.org/draft-2020-12/schema";
+      result.$schema = "https://json-schema.org/draft/2020-12/schema";
     } else if (this.target === "draft-7") {
-      result.$schema = "https://json-schema.org/draft-07/schema";
+      result.$schema = "http://json-schema.org/draft-07/schema#";
     } else {
       console.warn(`Invalid target: ${this.target}`);
     }
