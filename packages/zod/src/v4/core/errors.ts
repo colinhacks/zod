@@ -192,7 +192,6 @@ const initializer = (inst: $ZodError, def: $ZodIssue[]): void => {
     value: def,
     enumerable: false,
   });
-  // inst.message = JSON.stringify(def, util.jsonStringifyReplacer, 2);
   Object.defineProperty(inst, "message", {
     get() {
       return JSON.stringify(def, util.jsonStringifyReplacer, 2);
@@ -200,22 +199,6 @@ const initializer = (inst: $ZodError, def: $ZodIssue[]): void => {
     enumerable: true,
     // configurable: false,
   });
-  // inst.toString = () => inst.message;
-
-  // inst.message = `Invalid input`;
-  // Object.defineProperty(inst, "message", {
-  //   get() {
-  //     return (
-  //       "\n" +
-  //       inst.issues
-  //         .map((iss) => {
-  //           return `✖ ${iss.message}${iss.path.length ? ` [${iss.path.join(".")}]` : ""}`;
-  //         })
-  //         .join("\n")
-  //     );
-  //   },
-  //   enumerable: false,
-  // });
 };
 
 export const $ZodError: $constructor<$ZodError> = $constructor("$ZodError", initializer);

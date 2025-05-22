@@ -19,9 +19,8 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
       value: inst._zod ?? {},
       enumerable: false,
     });
-    // inst._zod ??= {} as any;a
+
     inst._zod.traits ??= new Set();
-    // const seen = inst._zod.traits.has(name);
 
     inst._zod.traits.add(name);
     initializer(inst, def);
@@ -33,24 +32,39 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
     inst._zod.def = def;
   }
 
-  function construct(instance: any, def: D) {
-    init(instance, def);
-    instance._zod.deferred ??= [];
-    for (const fn of instance._zod.deferred) {
-      fn();
-    }
-    return instance;
-  }
+  // function construct(instance: any, def: D) {
+  //   init(instance, def);
+  //   instance._zod.deferred ??= [];
+  //   for (const fn of instance._zod.deferred) {
+  //     fn();
+  //   }
+  //   return instance;
+  // }
 
+  // const Parent = params?.Parent ?? Object;
+  // class Definition extends Parent {}
+
+  // function _(this: any, def: D) {
+  //   if (params?.Parent) {
+  //     return construct(new Definition(), def);
+  //   }
+
+  //   return construct(this, def);
+  // }
+
+  // doesn't work if Parent has a constructor with arguments
   const Parent = params?.Parent ?? Object;
   class Definition extends Parent {}
+  Object.defineProperty(Definition, "name", { value: name });
 
   function _(this: any, def: D) {
-    if (params?.Parent) {
-      return construct(new Definition(), def);
+    const inst = params?.Parent ? new Definition() : this;
+    init(inst, def);
+    inst._zod.deferred ??= [];
+    for (const fn of inst._zod.deferred) {
+      fn();
     }
-
-    return construct(this, def);
+    return inst;
   }
 
   Object.defineProperty(_, "init", { value: init });
