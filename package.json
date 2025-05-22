@@ -26,6 +26,7 @@
     "chalk": "^5.4.1",
     "console-table-printer": "^2.12.1",
     "execa": "^9.5.2",
+    "globby": "^14.1.0",
     "husky": "^7.0.4",
     "jsr": "^0.12.4",
     "lint-staged": "^12.5.0",

@@ -28,7 +28,7 @@ Then import Zod 4 from the `"/v4"` subpath:
 import { z } from "zod/v4";
 ```
 
-Down the road, when there's broad support for Zod 4, we'll publish `zod@4.0.0` on npm. At this point, Zod 4 will be exported from the package root (`"zod"`). The `"zod/v4"` subpath will remain available. For a detailed writeup on the reasons for this versioning scheme, refer to [this writeup](https://github.com/colinhacks/zod/issues/4371). 
+Down the road, when there's broad support for Zod 4, we'll publish `zod@4.0.0` on npm. At this point, Zod 4 will be exported from the package root (`"zod"`). The `"zod/v4"` subpath will remain available. For a detailed writeup on the reasons for this versioning scheme, refer to [this issue](https://github.com/colinhacks/zod/issues/4371). 
 
 For a complete list of breaking changes, refer to the [Migration guide](/v4/changelog). This post focuses on new features & enhancements.
 
@@ -79,7 +79,7 @@ summary for z.string().parse
    14.71x faster than zod3
 ```
 
-### 3x faster array parsing
+### 7x faster array parsing
 
 ```sh
 $ pnpm bench array
@@ -396,7 +396,7 @@ z.toUpperCase();
 ```
 
 
-This more functional API makes it easier for bundlers to tree-shaking the APIs you don't use. While `zod/v4` is still recommended for the majority of use cases, any projects with uncommonly strict bundle size constraints should consider `zod/v4-mini`.  
+This more functional API makes it easier for bundlers to tree-shake the APIs you don't use. While `zod/v4` is still recommended for the majority of use cases, any projects with uncommonly strict bundle size constraints should consider `zod/v4-mini`.  
 
 ### 6.6x reduction in core bundle size
 
@@ -535,7 +535,7 @@ Refer to the [JSON Schema docs](/json-schema) for information on customizing the
 
 ## Recursive objects
 
-This was an unexpected on. After years of trying to crack this problem, I finally [found a way](https://x.com/colinhacks/status/1919286275133378670) to properly infer recursive object types in Zod. To define a recursive type:
+This was an unexpected one. After years of trying to crack this problem, I finally [found a way](https://x.com/colinhacks/status/1919286275133378670) to properly infer recursive object types in Zod. To define a recursive type:
 
 ```ts
 const Category = z.object({

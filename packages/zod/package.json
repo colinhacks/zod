@@ -1,6 +1,6 @@
 {
   "name": "zod",
-  "version": "3.25.7",
+  "version": "3.25.20",
   "type": "module",
   "author": "Colin McDonnell <zod@colinhacks.com>",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
@@ -10,94 +10,70 @@
   "keywords": ["typescript", "schema", "validation", "type", "inference"],
   "license": "MIT",
   "sideEffects": false,
-  "main": "./dist/commonjs/index.js",
-  "types": "./dist/esm/index.d.ts",
+  "main": "./dist/cjs/index.js",
+  "types": "./dist/types/index.d.ts",
   "module": "./dist/esm/index.js",
   "exports": {
     "./package.json": "./package.json",
     ".": {
       "import": {
         "@zod/source": "./src/index.ts",
-        "types": "./dist/esm/index.d.ts",
+        "types": "./dist/types/index.d.ts",
         "default": "./dist/esm/index.js"
       },
       "require": {
         "@zod/source": "./src/index.ts",
-        "types": "./dist/esm/index.d.ts",
-        "default": "./dist/commonjs/index.js"
+        "types": "./dist/types/index.d.ts",
+        "default": "./dist/cjs/index.js"
       }
     },
     "./v3": {
       "import": {
-        "@zod/source": "./src/v3/index.ts",
-        "types": "./dist/esm/v3/index.d.ts",
-        "default": "./dist/esm/v3/index.js"
+        "@zod/source": "./src/index.ts",
+        "types": "./dist/types/index.d.ts",
+        "default": "./dist/esm/index.js"
       },
       "require": {
-        "@zod/source": "./src/v3/index.ts",
-        "types": "./dist/esm/v3/index.d.ts",
-        "default": "./dist/commonjs/v3/index.js"
+        "@zod/source": "./src/index.ts",
+        "types": "./dist/types/index.d.ts",
+        "default": "./dist/cjs/index.js"
       }
     },
     "./v4": {
       "import": {
         "@zod/source": "./src/v4/index.ts",
-        "types": "./dist/esm/v4/index.d.ts",
+        "types": "./dist/types/v4/index.d.ts",
         "default": "./dist/esm/v4/index.js"
       },
       "require": {
         "@zod/source": "./src/v4/index.ts",
-        "types": "./dist/esm/v4/index.d.ts",
-        "default": "./dist/commonjs/v4/index.js"
+        "types": "./dist/types/v4/index.d.ts",
+        "default": "./dist/cjs/v4/index.js"
       }
     },
     "./v4-mini": {
-      "import": {
-        "@zod/source": "./src/v4/mini/index.ts",
-        "types": "./dist/esm/v4/mini/index.d.ts",
-        "default": "./dist/esm/v4/mini/index.js"
-      },
-      "require": {
-        "@zod/source": "./src/v4/mini/index.ts",
-        "types": "./dist/esm/v4/mini/index.d.ts",
-        "default": "./dist/commonjs/v4/mini/index.js"
-      }
+      "@zod/source": "./src/v4/mini/index.ts",
+      "types": "./dist/types/v4/mini/index.d.ts",
+      "import": "./dist/esm/v4/mini/index.js",
+      "require": "./dist/cjs/v4/mini/index.js"
     },
     "./v4/core": {
-      "import": {
-        "@zod/source": "./src/v4/core/index.ts",
-        "types": "./dist/esm/v4/core/index.d.ts",
-        "default": "./dist/esm/v4/core/index.js"
-      },
-      "require": {
-        "@zod/source": "./src/v4/core/index.ts",
-        "types": "./dist/esm/v4/core/index.d.ts",
-        "default": "./dist/commonjs/v4/core/index.js"
-      }
+      "@zod/source": "./src/v4/core/index.ts",
+      "types": "./dist/types/v4/core/index.d.ts",
+      "import": "./dist/esm/v4/core/index.js",
+      "require": "./dist/cjs/v4/core/index.js"
     },
     "./v4/locales": {
-      "import": {
-        "@zod/source": "./src/v4/locales/index.ts",
-        "types": "./dist/esm/v4/locales/index.d.ts",
-        "default": "./dist/esm/v4/locales/index.js"
-      },
-      "require": {
-        "@zod/source": "./src/v4/locales/index.ts",
-        "types": "./dist/esm/v4/locales/index.d.ts",
-        "default": "./dist/commonjs/v4/locales/index.js"
-      }
+      "@zod/source": "./src/v4/locales/index.ts",
+      "types": "./dist/types/v4/locales/index.d.ts",
+      "import": "./dist/esm/v4/locales/index.js",
+      "require": "./dist/cjs/v4/locales/index.js"
     },
     "./v4/locales/*": {
-      "import": {
-        "@zod/source": "./src/v4/locales/*",
-        "types": "./dist/esm/v4/locales/*",
-        "default": "./dist/esm/v4/locales/*"
-      },
-      "require": {
-        "@zod/source": "./src/v4/locales/*",
-        "types": "./dist/esm/v4/locales/*",
-        "default": "./dist/commonjs/v4/locales/*"
-      }
+      "@zod/source": "./src/v4/locales/*",
+      "types": "./dist/types/v4/locales/*",
+      "import": "./dist/esm/v4/locales/*",
+      "require": "./dist/cjs/v4/locales/*"
     }
   },
   "tshy": {
@@ -128,8 +104,8 @@
   },
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "supershy",
-    "postbuild": "pnpm biome check --write . && tsx postbuild.ts",
+    "build": "tsx ./build.mts",
+    "postbuild": "pnpm biome check --write .",
     "test:watch": "pnpm vitest",
     "test": "pnpm vitest run",
     "bump:beta": "pnpm version \"v$(pnpm pkg get version | jq -r)-beta.$(date +%Y%m%dT%H%M%S)\"",

@@ -291,7 +291,7 @@ To support internationalization of error message, Zod provides several built-in 
 <Tab value="Zod">
 ```ts
 import { z } from "zod/v4";
-import en from "zod/v4/locales/en"
+import en from "zod/v4/locales/en.js"
 
 z.config(en());
 ```
@@ -299,7 +299,7 @@ z.config(en());
 <Tab value="Zod Mini">
 ```ts
 import { z } from "zod/v4-mini"
-import en from "zod/v4/locales/en"
+import en from "zod/v4/locales/en.js"
 
 z.config(en());
 ```
@@ -312,7 +312,7 @@ To lazily load a locale, consider dynamic imports:
 import { z } from "zod/v4";
 
 async function loadLocale(locale: string) {
-  const { default: locale } = await import(`zod/v4/locales/${locale}`);
+  const { default: locale } = await import(`zod/v4/locales/${locale}.js`);
   z.config(locale());
 };
 

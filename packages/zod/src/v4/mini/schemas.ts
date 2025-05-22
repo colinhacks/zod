@@ -695,7 +695,7 @@ export function keyof<T extends ZodMiniObject>(schema: T): ZodMiniLiteral<keyof 
 
 // ZodMiniObject
 export interface ZodMiniObject<
-  // @ts-ignore Cast variance
+  /** @ts-ignore Cast variance */
   out Shape extends core.$ZodShape = core.$ZodShape,
   out Config extends core.$ZodObjectConfig = core.$ZodObjectConfig,
 > extends ZodMiniType {
