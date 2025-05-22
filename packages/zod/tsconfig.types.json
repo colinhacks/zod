@@ -10,5 +10,6 @@
     "outDir": "./dist/types",
     "removeComments": false
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["**/tests/**"]
 }
