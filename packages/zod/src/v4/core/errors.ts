@@ -86,7 +86,7 @@ export interface $ZodIssueInvalidValue<Input = unknown> extends $ZodIssueBase {
 }
 
 export interface $ZodIssueCustom extends $ZodIssueBase {
-  readonly code?: "custom";
+  readonly code: "custom";
   readonly params?: Record<string, any> | undefined;
   readonly input: unknown;
 }
@@ -148,6 +148,8 @@ export type $ZodIssue =
   | $ZodIssueInvalidElement
   | $ZodIssueInvalidValue
   | $ZodIssueCustom;
+
+export type $ZodIssueCode = $ZodIssue["code"];
 
 export type $ZodRawIssue<T extends $ZodIssueBase = $ZodIssue> = T extends any ? RawIssue<T> : never;
 type RawIssue<T extends $ZodIssueBase> = util.Flatten<

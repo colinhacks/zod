@@ -1962,10 +1962,10 @@ export function check<O = unknown>(fn: core.CheckFn<O>, params?: string | core.$
   return ch;
 }
 
-export function custom<O = unknown, I = O>(
-  fn?: (data: O) => unknown,
+export function custom<O>(
+  fn?: (data: unknown) => unknown,
   _params?: string | core.$ZodCustomParams | undefined
-): ZodCustom<O, I> {
+): ZodCustom<O, O> {
   return core._custom(ZodCustom, fn ?? (() => true), _params) as any;
 }
 
