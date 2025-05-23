@@ -69,6 +69,7 @@ test("args method", () => {
   const t1 = z.function();
   type t1 = (typeof t1)["_input"];
   expectTypeOf<t1>().toEqualTypeOf<(...args_1: never[]) => unknown>();
+  t1._input;
 
   const t2args = z.tuple([z.string()], z.unknown());
 

@@ -45,8 +45,16 @@ export class $ZodFunction<
   Args extends $ZodFunctionIn = $ZodFunctionIn,
   Returns extends $ZodFunctionOut = $ZodFunctionOut,
 > {
-  _def: $ZodFunctionDef<Args, Returns>;
+  // _zod!: {
+  //   def: $ZodFunctionDef<Args, Returns>;
+  //   input: $InferInnerFunctionType<Args, Returns>;
+  //   output: $InferOuterFunctionType<Args, Returns>;
+  // };
+
   def: $ZodFunctionDef<Args, Returns>;
+
+  /** @deprecated */
+  _def!: $ZodFunctionDef<Args, Returns>;
   _input!: $InferInnerFunctionType<Args, Returns>;
   _output!: $InferOuterFunctionType<Args, Returns>;
 
