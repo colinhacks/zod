@@ -363,7 +363,7 @@ type schemaInput = z.input<typeof schema>;
 
 ## `.default()` updates
 
-The application of `.default()` has changed in a subtle way. If the input is `undefined`, `ZodDefault` short-circuits the parsing process and returns the default value. The the default value must be assignable to the *output type*.
+The application of `.default()` has changed in a subtle way. If the input is `undefined`, `ZodDefault` short-circuits the parsing process and returns the default value. The default value must be assignable to the *output type*.
 
 ```ts
 const schema = z.string()
