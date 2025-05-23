@@ -398,7 +398,7 @@ z.toJSONSchema(User, { reused: "ref" });
 
 ### `override`
 
-To define some custom override logic, use `override`. The provided callback has access to the original Zod schema and the default JSON Schema. *This function should dircectly modify `ctx.jsonSchema`.*
+To define some custom override logic, use `override`. The provided callback has access to the original Zod schema and the default JSON Schema. *This function should directly modify `ctx.jsonSchema`.*
 
 
 ```ts
@@ -415,6 +415,20 @@ z.toJSONSchema(mySchema, {
 ```
 
 Note that unrepresentable types will throw an `Error` before this functions is called. If you are trying to define custom behavior for an unrepresentable type, you'll need to use set the `unrepresentable: "any"` alongside `override`.
+
+```ts
+// support z.date() as ISO datetime strings
+const result = z.toJSONSchema(z.date(), {
+  unrepresentable: "any",
+  override: (ctx) => {
+    const def = ctx.zodSchema._zod.def;
+    if(def.type ==="date"){
+      ctx.jsonSchema.type = "string";
+      ctx.jsonSchema.format = "date-time";
+    }
+  },
+});
+```
 
 ### `io`
 
