@@ -157,3 +157,13 @@ test("inherit across clone", () => {
   const C = B.describe("hello");
   expect(C.meta()).toEqual({ a: true, b: true, description: "hello" });
 });
+
+test("register with replace", () => {
+  z.string().register(z.globalRegistry, {
+    examples: ["example"],
+  });
+  z.string().register(z.globalRegistry, {
+    // @ts-expect-error
+    examples: [1234],
+  });
+});

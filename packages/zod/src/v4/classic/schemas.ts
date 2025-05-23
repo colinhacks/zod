@@ -35,8 +35,8 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
     registry: R,
     ...meta: this extends R["_schema"]
       ? undefined extends R["_meta"]
-        ? [core.$ZodRegistry<R["_meta"], this>["_meta"]?]
-        : [core.$ZodRegistry<R["_meta"], this>["_meta"]]
+        ? [core.$replace<R["_meta"], this>?]
+        : [core.$replace<R["_meta"], this>]
       : ["Incompatible schema"]
   ): this;
 
