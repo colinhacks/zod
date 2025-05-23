@@ -683,6 +683,7 @@ test("error serialization", () => {
   try {
     z.string().parse(123);
   } catch (e) {
+    console.dir(e, { depth: null });
     expect(e).toMatchInlineSnapshot(`
       [ZodError: [
         {

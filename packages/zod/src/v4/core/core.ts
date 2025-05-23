@@ -32,26 +32,6 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
     inst._zod.def = def;
   }
 
-  // function construct(instance: any, def: D) {
-  //   init(instance, def);
-  //   instance._zod.deferred ??= [];
-  //   for (const fn of instance._zod.deferred) {
-  //     fn();
-  //   }
-  //   return instance;
-  // }
-
-  // const Parent = params?.Parent ?? Object;
-  // class Definition extends Parent {}
-
-  // function _(this: any, def: D) {
-  //   if (params?.Parent) {
-  //     return construct(new Definition(), def);
-  //   }
-
-  //   return construct(this, def);
-  // }
-
   // doesn't work if Parent has a constructor with arguments
   const Parent = params?.Parent ?? Object;
   class Definition extends Parent {}
