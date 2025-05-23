@@ -792,28 +792,6 @@ export const $ZodCIDRv6: core.$constructor<$ZodCIDRv6> = /*@__PURE__*/ core.$con
   }
 );
 
-//////////////////////////////   ZodIP   //////////////////////////////
-
-// export interface $ZodIPDef extends $ZodStringFormatDef<"ip"> {
-//   version?: "v4" | "v6";
-// }
-
-// export interface $ZodIPInternals extends $ZodStringFormatInternals<"ip"> {
-//   def: $ZodIPDef;
-// }
-
-// export interface $ZodIP extends $ZodType {
-//   _zod: $ZodIPInternals;
-// }
-
-// export const $ZodIP: core.$constructor<$ZodIP> = /*@__PURE__*/ core.$constructor("$ZodIP", (inst, def): void => {
-//   if (def.version === "v4") def.pattern ??= regexes.ipv4;
-//   else if (def.version === "v6") def.pattern ??= regexes.ipv6;
-//   else def.pattern ??= regexes.ip;
-//   $ZodStringFormat.init(inst, def);
-
-// });
-
 //////////////////////////////   ZodBase64   //////////////////////////////
 export function isValidBase64(data: string): boolean {
   if (data === "") return true;
@@ -893,34 +871,6 @@ export const $ZodBase64URL: core.$constructor<$ZodBase64URL> = /*@__PURE__*/ cor
     };
   }
 );
-
-//////////////////////////////   ZodJSONString   //////////////////////////////
-
-// export interface $ZodJSONStringDef extends $ZodStringFormatDef<"json_string"> {}
-// export Def $ZodJSONStringDef extends $ZodStringFormatInternals {
-// export interface $ZodJSONStringInternals extends $ZodStringFormatInternals {
-//   _def: $ZodJSONStringDef;
-// }
-
-// export const $ZodJSONString: core.$constructor<{_zod: $ZodJSONStringInternals}> = /*@__PURE__*/ core.$constructor(
-//   "$ZodJSONString",
-//   (inst, def): void => {
-//     $ZodStringFormat.init(inst, def);
-//     inst._zod.check = (payload) => {
-//       try {
-//         JSON.parse(payload.value);
-//         return;
-//       } catch {
-//         payload.issues.push({
-//           code: "invalid_format",
-//           format: "json_string",
-//           input: payload.value,
-//           inst,
-//         });
-//       }
-//     };
-//   }
-// );
 
 //////////////////////////////   ZodE164   //////////////////////////////
 
