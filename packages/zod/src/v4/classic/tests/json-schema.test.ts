@@ -503,6 +503,7 @@ describe("toJSONSchema", () => {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "allOf": [
           {
+            "additionalProperties": false,
             "properties": {
               "name": {
                 "type": "string",
@@ -514,6 +515,7 @@ describe("toJSONSchema", () => {
             "type": "object",
           },
           {
+            "additionalProperties": false,
             "properties": {
               "age": {
                 "type": "number",
@@ -651,6 +653,7 @@ describe("toJSONSchema", () => {
       `
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
         "properties": {
           "age": {
             "type": "number",
@@ -787,6 +790,7 @@ describe("toJSONSchema", () => {
     expect(result).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
         "properties": {
           "nonoptional": {
             "type": "string",
@@ -822,6 +826,7 @@ describe("toJSONSchema", () => {
     expect(result).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
         "properties": {
           "name": {
             "type": "string",
@@ -852,6 +857,7 @@ describe("toJSONSchema", () => {
     expect(result).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
         "properties": {
           "age": {
             "type": "number",
@@ -966,6 +972,7 @@ describe("toJSONSchema", () => {
           "id",
           "children"
         ],
+        "additionalProperties": false,
         "$schema": "https://json-schema.org/draft/2020-12/schema"
       }"
     `
@@ -1013,7 +1020,8 @@ describe("toJSONSchema", () => {
               "required": [
                 "name",
                 "parent"
-              ]
+              ],
+              "additionalProperties": false
             }
           }
         },
@@ -1021,6 +1029,7 @@ describe("toJSONSchema", () => {
           "name",
           "files"
         ],
+        "additionalProperties": false,
         "$schema": "https://json-schema.org/draft/2020-12/schema"
       }"
     `
@@ -1157,6 +1166,7 @@ test("passthrough schemas", () => {
     {
       "$defs": {
         "__schema0": {
+          "additionalProperties": false,
           "properties": {
             "num": {
               "type": "number",
@@ -1173,6 +1183,7 @@ test("passthrough schemas", () => {
         },
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
       "properties": {
         "a": {
           "$ref": "#/$defs/__schema0",
@@ -1224,6 +1235,7 @@ test("extract schemas with id", () => {
         },
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
       "properties": {
         "age": {
           "$ref": "#/$defs/age",
@@ -1307,6 +1319,7 @@ test("describe with id", () => {
         },
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
       "properties": {
         "current": {
           "$ref": "#/$defs/jobId",
@@ -1348,6 +1361,7 @@ test("overwrite id", () => {
         },
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
       "properties": {
         "current": {
           "$ref": "#/$defs/aaa",
@@ -1386,6 +1400,7 @@ test("overwrite id", () => {
         },
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
       "properties": {
         "current": {
           "$ref": "#/$defs/aaa",
@@ -1415,6 +1430,7 @@ test("overwrite descriptions", () => {
   expect(a).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
       "properties": {
         "d": {
           "description": "d",
@@ -1451,6 +1467,7 @@ test("overwrite descriptions", () => {
         },
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
       "properties": {
         "d": {
           "$ref": "#/$defs/__schema0",
@@ -1496,6 +1513,7 @@ test("top-level readonly", () => {
     {
       "$defs": {
         "B": {
+          "additionalProperties": false,
           "id": "B",
           "properties": {
             "a": {
@@ -1514,6 +1532,7 @@ test("top-level readonly", () => {
         },
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
       "id": "A",
       "properties": {
         "b": {
@@ -1559,6 +1578,7 @@ test("basic registry", () => {
       "schemas": {
         "Post": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "additionalProperties": false,
           "properties": {
             "author": {
               "$ref": "User",
@@ -1579,6 +1599,7 @@ test("basic registry", () => {
         },
         "User": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "additionalProperties": false,
           "properties": {
             "name": {
               "type": "string",
@@ -1731,6 +1752,7 @@ test("input type", () => {
   expect(toJSONSchema(schema, { io: "output" })).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
       "properties": {
         "a": {
           "type": "string",
