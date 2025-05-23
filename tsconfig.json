@@ -2,7 +2,7 @@
   "extends": "./.configs/tsconfig.base.json",
   "compilerOptions": {
     "rootDir": ".",
-    "noEmit": true
+    "declaration": true
   },
   "exclude": ["packages/docs"]
 }
