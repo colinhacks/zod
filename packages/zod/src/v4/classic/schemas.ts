@@ -140,30 +140,6 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
     return inst;
   }) as any;
 
-  //  const parse: <T extends core.$ZodType>(
-  //   schema: T,
-  //   value: unknown,
-  //   _ctx?: core.ParseContext<core.$ZodIssue>
-  // ) => core.output<T> = /* @__PURE__ */ core._parse(ZodError, parse) as any;
-
-  //  const safeParse: <T extends core.$ZodType>(
-  //   schema: T,
-  //   value: unknown,
-  //   _ctx?: core.ParseContext<core.$ZodIssue>
-  // ) => ZodSafeParseResult<core.output<T>> = /* @__PURE__ */ core._safeParse(ZodError) as any;
-
-  //  const parseAsync: <T extends core.$ZodType>(
-  //   schema: T,
-  //   value: unknown,
-  //   _ctx?: core.ParseContext<core.$ZodIssue>
-  // ) => Promise<core.output<T>> = /* @__PURE__ */ core._parseAsync(ZodError) as any;
-
-  //  const safeParseAsync: <T extends core.$ZodType>(
-  //   schema: T,
-  //   value: unknown,
-  //   _ctx?: core.ParseContext<core.$ZodIssue>
-  // ) => Promise<ZodSafeParseResult<core.output<T>>> = /* @__PURE__ */ core._safeParseAsync(ZodError) as any;
-
   // parsing
   inst.parse = (data, params) => parse.parse(inst, data, params, { callee: inst.parse });
   inst.safeParse = (data, params) => parse.safeParse(inst, data, params);
