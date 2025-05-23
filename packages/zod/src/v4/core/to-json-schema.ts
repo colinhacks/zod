@@ -285,7 +285,11 @@ export class JSONSchemaGenerator {
 
           // catchall
           if (def.catchall?._zod.def.type === "never") {
+            // strict
             json.additionalProperties = false;
+          } else if (!def.catchall) {
+            // regular
+            if (this.io === "output") json.additionalProperties = false;
           } else if (def.catchall) {
             json.additionalProperties = this.process(def.catchall, {
               ...params,

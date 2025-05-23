@@ -669,6 +669,41 @@ describe("toJSONSchema", () => {
     );
   });
 
+  test("additionalproperties in z.object", () => {
+    const a = z.object({
+      name: z.string(),
+    });
+    expect(toJSONSchema(a)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+          },
+        },
+        "required": [
+          "name",
+        ],
+        "type": "object",
+      }
+    `);
+    expect(toJSONSchema(a, { io: "input" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "properties": {
+          "name": {
+            "type": "string",
+          },
+        },
+        "required": [
+          "name",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
   test("catchall objects", () => {
     const a = z.strictObject({
       name: z.string(),
