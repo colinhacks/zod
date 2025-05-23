@@ -1540,11 +1540,21 @@ export function nativeEnum<T extends util.EnumLike>(entries: T, params?: string 
 export interface ZodLiteral<T extends util.Primitive = util.Primitive> extends ZodType {
   _zod: core.$ZodLiteralInternals<T>;
   values: Set<T>;
+  /** @legacy Use `.values` instead. Accessing this property will throw an error if the literal accepts multiple values. */
+  value: T;
 }
 export const ZodLiteral: core.$constructor<ZodLiteral> = /*@__PURE__*/ core.$constructor("ZodLiteral", (inst, def) => {
   core.$ZodLiteral.init(inst, def);
   ZodType.init(inst, def);
   inst.values = new Set(def.values);
+  Object.defineProperty(inst, "value", {
+    get() {
+      if (def.values.length > 1) {
+        throw new Error("This schema contains multiple valid literal values. Use `.values` instead.");
+      }
+      return def.values[0];
+    },
+  });
 });
 
 export function literal<const T extends Array<util.Literal>>(

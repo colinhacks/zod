@@ -2777,7 +2777,7 @@ export interface $ZodLiteralDef extends $ZodTypeDef {
 
 export interface $ZodLiteralInternals<T extends util.Primitive = util.Primitive> extends $ZodTypeInternals<T, T> {
   def: $ZodLiteralDef;
-  values: util.PrimitiveSet;
+  values: Set<T>;
   pattern: RegExp;
   isst: errors.$ZodIssueInvalidValue;
 }

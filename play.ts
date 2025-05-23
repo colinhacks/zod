@@ -1,5 +1,3 @@
-import * as z from "zod/v4-mini";
+import * as z from "zod/v4";
 
-z.string().register(z.globalRegistry, {
-  examples: ["example"], // Type 'string' is not assignable to type 'unique symbol'.
-});
+z;

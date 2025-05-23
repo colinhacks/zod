@@ -414,6 +414,7 @@ z.toJSONSchema(mySchema, {
 });
 ```
 
+Note that unrepresentable types will throw an `Error` before this functions is called. If you are trying to define custom behavior for an unrepresentable type, you'll need to use set the `unrepresentable: "any"` alongside `override`.
 
 ### `io`
 

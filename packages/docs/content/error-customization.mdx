@@ -181,14 +181,14 @@ z.string().min(5, {
 Return `undefined` to avoid setting an error message. This is useful for customizing certain error messages but not others. Zod will yield control to the next error map in the [precedence chain](#error-precedence).
 
 ```ts
-z.string().min(5, {
-  error: (iss) => {
-    // customize "too_small" error message
-    if (iss.code === "too_small") {
-      return `Password must have ${iss.minimum} characters or more`;
+z.int64({
+  error: (issue) => {
+    // override too_big error message
+    if (issue.code === "too_big") {
+      return { message: `Value must be <${issue.maximum}` };
     }
 
-    // use default error otherwise
+    //  defer to default
     return undefined;
   },
 });
