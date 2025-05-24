@@ -134,7 +134,7 @@ z.set(z.string(), { error: "Bad set!" });
 </Tabs>
 
 
-The `error` param optionally accepts a function. An error customization function is known as an **error map** in Zod terminology. The error map will can at parse time if a valiation error occurs.
+The `error` param optionally accepts a function. An error customization function is known as an **error map** in Zod terminology. The error map will run at parse time if a valiation error occurs.
 
 ```ts
 z.string({ error: ()=>`[${Date.now()}]: Validation failure.` });
