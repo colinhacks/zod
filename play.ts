@@ -1,13 +1,5 @@
-import * as z from "zod/v4";
+import z3 from "zod/v3";
+import z4 from "zod/v4";
 
-export const a = z.object({
-  asdf: z.iso.datetime(),
-});
-
-const fn = z.function({
-  // input: z.tuple([z.string()], z.number()),
-  output: z.string(),
-});
-
-fn.def.output;
-fn.def.input;
+console.log("before (v3): ", z3.string().safeParse(123).error?.message);
+console.log("after (v4):", z4.string().safeParse(123).error?.message);

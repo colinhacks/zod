@@ -686,72 +686,87 @@ test("template literal parsing - failure - complex cases", () => {
 test("template literal parsing - failure - issue format", () => {
   expect(anotherNull.safeParse("1null")).toMatchInlineSnapshot(`
     {
-      "error": [ZodError: [
-      {
-        "code": "invalid_format",
-        "format": "template_literal",
-        "pattern": "^null$",
-        "path": [],
-        "message": "Invalid input"
-      }
-    ]],
+      "error": ZodError ({
+        "issues": [
+          {
+            "code": "invalid_format",
+            "format": "template_literal",
+            "message": "Invalid input",
+            "path": [],
+            "pattern": "^null$",
+          },
+        ],
+        "message": "✖ Invalid input",
+      }),
       "success": false,
     }
   `);
   expect(cuidZZZ.safeParse("1cjld2cyuq0000t3rmniod1foyZZZ")).toMatchInlineSnapshot(`
     {
-      "error": [ZodError: [
-      {
-        "code": "invalid_format",
-        "format": "template_literal",
-        "pattern": "^[cC][^\\\\s-]{8,}ZZZ$",
-        "path": [],
-        "message": "Invalid input"
-      }
-    ]],
+      "error": ZodError ({
+        "issues": [
+          {
+            "code": "invalid_format",
+            "format": "template_literal",
+            "message": "Invalid input",
+            "path": [],
+            "pattern": "^[cC][^\\s-]{8,}ZZZ$",
+          },
+        ],
+        "message": "✖ Invalid input",
+      }),
       "success": false,
     }
   `);
   expect(stringMin5Max10.safeParse("1234")).toMatchInlineSnapshot(`
     {
-      "error": [ZodError: [
-      {
-        "code": "invalid_format",
-        "format": "template_literal",
-        "pattern": "^[\\\\s\\\\S]{5,10}$",
-        "path": [],
-        "message": "Invalid input"
-      }
-    ]],
+      "error": ZodError ({
+        "issues": [
+          {
+            "code": "invalid_format",
+            "format": "template_literal",
+            "message": "Invalid input",
+            "path": [],
+            "pattern": "^[\\s\\S]{5,10}$",
+          },
+        ],
+        "message": "✖ Invalid input",
+      }),
       "success": false,
     }
   `);
   expect(connectionString.safeParse("mongodb://host:1234/defaultauthdb?authSourceadmin")).toMatchInlineSnapshot(`
     {
-      "error": [ZodError: [
-      {
-        "code": "invalid_format",
-        "format": "template_literal",
-        "pattern": "^mongodb:\\\\/\\\\/(\\\\w+:\\\\w+@)?\\\\w+:\\\\d+(\\\\/(\\\\w+)?(\\\\?(\\\\w+=\\\\w+(&\\\\w+=\\\\w+)*)?)?)?$",
-        "path": [],
-        "message": "Invalid input"
-      }
-    ]],
+      "error": ZodError ({
+        "issues": [
+          {
+            "code": "invalid_format",
+            "format": "template_literal",
+            "message": "Invalid input",
+            "path": [],
+            "pattern": "^mongodb:\\/\\/(\\w+:\\w+@)?\\w+:\\d+(\\/(\\w+)?(\\?(\\w+=\\w+(&\\w+=\\w+)*)?)?)?$",
+          },
+        ],
+        "message": "✖ Invalid input",
+      }),
       "success": false,
     }
   `);
 
   expect(stringStartsWithMax5.safeParse("1hell")).toMatchInlineSnapshot(`
     {
-      "error": [ZodError: [
-      {
-        "code": "invalid_format",
-        "format": "template_literal",
-        "pattern": "^hello.*$",
-        "path": [],
-        "message": "Invalid input"
-      }
-    ]],
+      "error": ZodError ({
+        "issues": [
+          {
+            "code": "invalid_format",
+            "format": "template_literal",
+            "message": "Invalid input",
+            "path": [],
+            "pattern": "^hello.*$",
+          },
+        ],
+        "message": "✖ Invalid input",
+      }),
       "success": false,
     }
   `);

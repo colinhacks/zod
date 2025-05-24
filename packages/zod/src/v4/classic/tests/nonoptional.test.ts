@@ -10,14 +10,17 @@ test("nonoptional", () => {
   expect(result.success).toBe(false);
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": [ZodError: [
-      {
-        "expected": "string",
-        "code": "invalid_type",
-        "path": [],
-        "message": "Invalid input: expected string, received undefined"
-      }
-    ]],
+      "error": ZodError ({
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "string",
+            "message": "Invalid input: expected string, received undefined",
+            "path": [],
+          },
+        ],
+        "message": "✖ Invalid input: expected string, received undefined",
+      }),
       "success": false,
     }
   `);
@@ -32,14 +35,17 @@ test("nonoptional with default", () => {
   expect(result.success).toBe(false);
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": [ZodError: [
-      {
-        "code": "invalid_type",
-        "expected": "nonoptional",
-        "path": [],
-        "message": "Invalid input: expected nonoptional, received undefined"
-      }
-    ]],
+      "error": ZodError ({
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "nonoptional",
+            "message": "Invalid input: expected nonoptional, received undefined",
+            "path": [],
+          },
+        ],
+        "message": "✖ Invalid input: expected nonoptional, received undefined",
+      }),
       "success": false,
     }
   `);
@@ -57,30 +63,38 @@ test("nonoptional in object", () => {
   // expect(schema.safeParse({ hi: undefined }).success).toEqual(false);
   expect(r2.success).toEqual(false);
   expect(r2.error).toMatchInlineSnapshot(`
-    [ZodError: [
-      {
-        "code": "invalid_type",
-        "expected": "nonoptional",
-        "path": [
-          "hi"
-        ],
-        "message": "Invalid input: expected nonoptional, received undefined"
-      }
-    ]]
+    ZodError ({
+      "issues": [
+        {
+          "code": "invalid_type",
+          "expected": "nonoptional",
+          "message": "Invalid input: expected nonoptional, received undefined",
+          "path": [
+            "hi",
+          ],
+        },
+      ],
+      "message": "✖ Invalid input: expected nonoptional, received undefined
+      → at hi",
+    })
   `);
 
   const r3 = schema.safeParse({});
   expect(r3.success).toEqual(false);
   expect(r3.error).toMatchInlineSnapshot(`
-    [ZodError: [
-      {
-        "code": "invalid_type",
-        "expected": "nonoptional",
-        "path": [
-          "hi"
-        ],
-        "message": "Invalid input: expected nonoptional, received undefined"
-      }
-    ]]
+    ZodError ({
+      "issues": [
+        {
+          "code": "invalid_type",
+          "expected": "nonoptional",
+          "message": "Invalid input: expected nonoptional, received undefined",
+          "path": [
+            "hi",
+          ],
+        },
+      ],
+      "message": "✖ Invalid input: expected nonoptional, received undefined
+      → at hi",
+    })
   `);
 });

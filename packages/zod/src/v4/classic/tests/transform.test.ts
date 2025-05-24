@@ -17,13 +17,16 @@ test("transform ctx.addIssue with parse", () => {
   const result = schema.safeParse("asdf");
   expect(result.success).toEqual(false);
   expect(result.error!).toMatchInlineSnapshot(`
-    [ZodError: [
-      {
-        "code": "custom",
-        "message": "asdf is not one of our allowed strings",
-        "path": []
-      }
-    ]]
+    ZodError ({
+      "issues": [
+        {
+          "code": "custom",
+          "message": "asdf is not one of our allowed strings",
+          "path": [],
+        },
+      ],
+      "message": "✖ asdf is not one of our allowed strings",
+    })
   `);
 });
 
@@ -47,13 +50,16 @@ test("transform ctx.addIssue with parseAsync", async () => {
 
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": [ZodError: [
-      {
-        "code": "custom",
-        "message": "asdf is not one of our allowed strings",
-        "path": []
-      }
-    ]],
+      "error": ZodError ({
+        "issues": [
+          {
+            "code": "custom",
+            "message": "asdf is not one of our allowed strings",
+            "path": [],
+          },
+        ],
+        "message": "✖ asdf is not one of our allowed strings",
+      }),
       "success": false,
     }
   `);
@@ -200,13 +206,16 @@ test("short circuit on dirty", () => {
   expect(result.success).toEqual(false);
 
   expect(result.error).toMatchInlineSnapshot(`
-    [ZodError: [
-      {
-        "code": "custom",
-        "path": [],
-        "message": "Invalid input"
-      }
-    ]]
+    ZodError ({
+      "issues": [
+        {
+          "code": "custom",
+          "message": "Invalid input",
+          "path": [],
+        },
+      ],
+      "message": "✖ Invalid input",
+    })
   `);
 
   const result2 = schema.safeParse(1234);
@@ -225,26 +234,32 @@ test("async short circuit on dirty", async () => {
   expect(result.success).toEqual(false);
 
   expect(result.error).toMatchInlineSnapshot(`
-    [ZodError: [
-      {
-        "code": "custom",
-        "path": [],
-        "message": "Invalid input"
-      }
-    ]]
+    ZodError ({
+      "issues": [
+        {
+          "code": "custom",
+          "message": "Invalid input",
+          "path": [],
+        },
+      ],
+      "message": "✖ Invalid input",
+    })
   `);
 
   const result2 = await schema.spa(1234);
   expect(result2.success).toEqual(false);
 
   expect(result2.error).toMatchInlineSnapshot(`
-    [ZodError: [
-      {
-        "expected": "string",
-        "code": "invalid_type",
-        "path": [],
-        "message": "Invalid input: expected string, received number"
-      }
-    ]]
+    ZodError ({
+      "issues": [
+        {
+          "code": "invalid_type",
+          "expected": "string",
+          "message": "Invalid input: expected string, received number",
+          "path": [],
+        },
+      ],
+      "message": "✖ Invalid input: expected string, received number",
+    })
   `);
 });
