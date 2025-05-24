@@ -780,9 +780,9 @@ export const $ZodCheckStringFormat: core.$constructor<$ZodCheckStringFormat> = /
     $ZodCheck.init(inst, def);
 
     inst._zod.onattach.push((inst) => {
-      inst._zod.bag.format = def.format;
+      const bag = inst._zod.bag as $ZodStringInternals<unknown>["bag"];
+      bag.format = def.format;
       if (def.pattern) {
-        const bag = inst._zod.bag as $ZodStringInternals<unknown>["bag"];
         if (bag.patterns) {
           bag.patterns.add(def.pattern);
         } else {

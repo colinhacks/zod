@@ -689,7 +689,8 @@ export const $ZodIPv4: core.$constructor<$ZodIPv4> = /*@__PURE__*/ core.$constru
   def.pattern ??= regexes.ipv4;
   $ZodStringFormat.init(inst, def);
   inst._zod.onattach.push((inst) => {
-    inst._zod.bag.format = `ipv4`;
+    const bag = inst._zod.bag as $ZodStringInternals<unknown>["bag"];
+    bag.format = `ipv4`;
   });
 });
 
@@ -712,7 +713,8 @@ export const $ZodIPv6: core.$constructor<$ZodIPv6> = /*@__PURE__*/ core.$constru
   $ZodStringFormat.init(inst, def);
 
   inst._zod.onattach.push((inst) => {
-    inst._zod.bag.format = `ipv6`;
+    const bag = inst._zod.bag as $ZodStringInternals<unknown>["bag"];
+    bag.format = `ipv6`;
   });
 
   inst._zod.check = (payload) => {
