@@ -161,16 +161,16 @@ export class JSONSchemaGenerator {
           }
           if (contentEncoding) json.contentEncoding = contentEncoding;
           if (patterns) {
-            const patternsItems = Array.from(patterns);
-            json.pattern = patternsItems[0].source;
+            const regexes = [...patterns];
+            json.pattern = regexes[0].source;
 
-            if (patternsItems.length > 1) {
+            if (regexes.length > 1) {
               result.schema = {
                 allOf: [
                   json,
-                  ...patternsItems.slice(1).map((pattern) => ({
+                  ...regexes.slice(1).map((regex) => ({
                     type: "string",
-                    pattern: pattern.source,
+                    pattern: regex.source,
                   })),
                 ],
               };
