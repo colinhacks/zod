@@ -60,6 +60,12 @@ export const Bronze = () => {
       url: "github.com/jasonLaster",
       href: "https://github.com/jasonLaster",
     },
+    {
+      name: "Clipboard",
+      logoSrc: "https://avatars.githubusercontent.com/u/28880063?s=200&v=4",
+      url: "clipboardhealth.com/engineering",
+      href: "https://www.clipboardhealth.com/engineering",
+    },
   ];
 
   return (
