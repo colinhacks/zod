@@ -15,6 +15,7 @@ export { default as hu } from "./hu.js";
 export { default as id } from "./id.js";
 export { default as it } from "./it.js";
 export { default as ja } from "./ja.js";
+export { default as kh } from "./kh.js";
 export { default as ko } from "./ko.js";
 export { default as mk } from "./mk.js";
 export { default as ms } from "./ms.js";
