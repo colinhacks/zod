@@ -714,7 +714,7 @@ test("lowerCase", () => {
 });
 
 test("datetime parsing", () => {
-  const datetime = z.string().datetime();
+  const datetime = z.iso.datetime();
   datetime.parse("1970-01-01T00:00:00.000Z");
   datetime.parse("2022-10-13T09:52:31.816Z");
   datetime.parse("2022-10-13T09:52:31.8162314Z");
@@ -728,7 +728,7 @@ test("datetime parsing", () => {
   expect(() => datetime.parse("2020-10-14T17:42:29+00:00")).toThrow();
   expect(() => datetime.parse("2020-10-14T17:42.123+00:00")).toThrow();
 
-  const datetimeNoMs = z.string().datetime({ precision: 0 });
+  const datetimeNoMs = z.iso.datetime({ precision: 0 });
   datetimeNoMs.parse("1970-01-01T00:00:00Z");
   datetimeNoMs.parse("2022-10-13T09:52:31Z");
   datetimeNoMs.parse("2022-10-13T09:52Z");
@@ -737,7 +737,7 @@ test("datetime parsing", () => {
   expect(() => datetimeNoMs.parse("1970-01-01T00:00:00.Z")).toThrow();
   expect(() => datetimeNoMs.parse("2022-10-13T09:52:31.816Z")).toThrow();
 
-  const datetime3Ms = z.string().datetime({ precision: 3 });
+  const datetime3Ms = z.iso.datetime({ precision: 3 });
   datetime3Ms.parse("1970-01-01T00:00:00.000Z");
   datetime3Ms.parse("2022-10-13T09:52:31.123Z");
   expect(() => datetime3Ms.parse("tuna")).toThrow();
@@ -746,7 +746,7 @@ test("datetime parsing", () => {
   expect(() => datetime3Ms.parse("2022-10-13T09:52:31Z")).toThrow();
   expect(() => datetime3Ms.parse("2022-10-13T09:52Z")).toThrow();
 
-  const datetimeOffset = z.string().datetime({ offset: true });
+  const datetimeOffset = z.iso.datetime({ offset: true });
   datetimeOffset.parse("1970-01-01T00:00:00.000Z");
   datetimeOffset.parse("2022-10-13T09:52:31.816234134Z");
   datetimeOffset.parse("1970-01-01T00:00:00Z");
@@ -759,7 +759,7 @@ test("datetime parsing", () => {
   expect(() => datetimeOffset.parse("tuna")).toThrow();
   expect(() => datetimeOffset.parse("2022-10-13T09:52:31.Z")).toThrow();
 
-  const datetimeOffsetNoMs = z.string().datetime({ offset: true, precision: 0 });
+  const datetimeOffsetNoMs = z.iso.datetime({ offset: true, precision: 0 });
   datetimeOffsetNoMs.parse("1970-01-01T00:00:00Z");
   datetimeOffsetNoMs.parse("2022-10-13T09:52:31Z");
   datetimeOffsetNoMs.parse("2020-10-14T17:42:29+00:00");
@@ -772,7 +772,7 @@ test("datetime parsing", () => {
   expect(() => datetimeOffsetNoMs.parse("2022-10-13T09:52:31.816Z")).toThrow();
   expect(() => datetimeOffsetNoMs.parse("2020-10-14T17:42:29.124+00:00")).toThrow();
 
-  const datetimeOffset4Ms = z.string().datetime({ offset: true, precision: 4 });
+  const datetimeOffset4Ms = z.iso.datetime({ offset: true, precision: 4 });
   datetimeOffset4Ms.parse("1970-01-01T00:00:00.1234Z");
   datetimeOffset4Ms.parse("2020-10-14T17:42:29.1234+00:00");
   datetimeOffset4Ms.parse("2020-10-14T17:42:29.1234+0000");
@@ -784,7 +784,7 @@ test("datetime parsing", () => {
 });
 
 test("date parsing", () => {
-  const date = z.string().date();
+  const date = z.iso.date();
   date.parse("1970-01-01");
   date.parse("2022-01-31");
   date.parse("2022-03-31");
@@ -838,7 +838,7 @@ test("date parsing", () => {
 });
 
 test("time parsing", () => {
-  const time = z.string().time();
+  const time = z.iso.time();
   time.parse("00:00:00");
   time.parse("23:00:00");
   time.parse("00:59:00");
@@ -861,7 +861,7 @@ test("time parsing", () => {
   expect(() => time.parse("24:60:60")).toThrow();
   expect(() => time.parse("24:60")).toThrow();
 
-  const time2 = z.string().time({ precision: 2 });
+  const time2 = z.iso.time({ precision: 2 });
   time2.parse("00:00:00.00");
   time2.parse("09:52:31.12");
   time2.parse("23:59:59.99");
