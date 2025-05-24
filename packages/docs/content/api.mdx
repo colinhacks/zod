@@ -174,8 +174,8 @@ z.string().lowercase();
 </Tab>
 <Tab value="Zod Mini">
 ```ts zod/v4-mini
-z.string().check(z.max(5));
-z.string().check(z.min(5));
+z.string().check(z.maximum(5)); // or z.lte()
+z.string().check(z.minimum(5)); // or z.gte()
 z.string().check(z.length(5));
 z.string().check(z.regex(/^[a-z]+$/));
 z.string().check(z.startsWith("aaa"));

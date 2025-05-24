@@ -35,8 +35,8 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
     registry: R,
     ...meta: this extends R["_schema"]
       ? undefined extends R["_meta"]
-        ? [core.$ZodRegistry<R["_meta"], this>["_meta"]?]
-        : [core.$ZodRegistry<R["_meta"], this>["_meta"]]
+        ? [core.$replace<R["_meta"], this>?]
+        : [core.$replace<R["_meta"], this>]
       : ["Incompatible schema"]
   ): this;
 
@@ -116,7 +116,7 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
 export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$constructor("ZodType", (inst, def) => {
   core.$ZodType.init(inst, def);
   inst.def = def;
-  inst._def = def;
+  Object.defineProperty(inst, "_def", { value: def });
 
   // base methods
   inst.check = (...checks) => {
@@ -139,30 +139,6 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
     reg.add(inst, meta);
     return inst;
   }) as any;
-
-  //  const parse: <T extends core.$ZodType>(
-  //   schema: T,
-  //   value: unknown,
-  //   _ctx?: core.ParseContext<core.$ZodIssue>
-  // ) => core.output<T> = /* @__PURE__ */ core._parse(ZodError, parse) as any;
-
-  //  const safeParse: <T extends core.$ZodType>(
-  //   schema: T,
-  //   value: unknown,
-  //   _ctx?: core.ParseContext<core.$ZodIssue>
-  // ) => ZodSafeParseResult<core.output<T>> = /* @__PURE__ */ core._safeParse(ZodError) as any;
-
-  //  const parseAsync: <T extends core.$ZodType>(
-  //   schema: T,
-  //   value: unknown,
-  //   _ctx?: core.ParseContext<core.$ZodIssue>
-  // ) => Promise<core.output<T>> = /* @__PURE__ */ core._parseAsync(ZodError) as any;
-
-  //  const safeParseAsync: <T extends core.$ZodType>(
-  //   schema: T,
-  //   value: unknown,
-  //   _ctx?: core.ParseContext<core.$ZodIssue>
-  // ) => Promise<ZodSafeParseResult<core.output<T>>> = /* @__PURE__ */ core._safeParseAsync(ZodError) as any;
 
   // parsing
   inst.parse = (data, params) => parse.parse(inst, data, params, { callee: inst.parse });
@@ -1540,11 +1516,21 @@ export function nativeEnum<T extends util.EnumLike>(entries: T, params?: string 
 export interface ZodLiteral<T extends util.Primitive = util.Primitive> extends ZodType {
   _zod: core.$ZodLiteralInternals<T>;
   values: Set<T>;
+  /** @legacy Use `.values` instead. Accessing this property will throw an error if the literal accepts multiple values. */
+  value: T;
 }
 export const ZodLiteral: core.$constructor<ZodLiteral> = /*@__PURE__*/ core.$constructor("ZodLiteral", (inst, def) => {
   core.$ZodLiteral.init(inst, def);
   ZodType.init(inst, def);
   inst.values = new Set(def.values);
+  Object.defineProperty(inst, "value", {
+    get() {
+      if (def.values.length > 1) {
+        throw new Error("This schema contains multiple valid literal values. Use `.values` instead.");
+      }
+      return def.values[0];
+    },
+  });
 });
 
 export function literal<const T extends Array<util.Literal>>(
@@ -1962,10 +1948,10 @@ export function check<O = unknown>(fn: core.CheckFn<O>, params?: string | core.$
   return ch;
 }
 
-export function custom<O = unknown, I = O>(
-  fn?: (data: O) => unknown,
+export function custom<O>(
+  fn?: (data: unknown) => unknown,
   _params?: string | core.$ZodCustomParams | undefined
-): ZodCustom<O, I> {
+): ZodCustom<O, O> {
   return core._custom(ZodCustom, fn ?? (() => true), _params) as any;
 }
 

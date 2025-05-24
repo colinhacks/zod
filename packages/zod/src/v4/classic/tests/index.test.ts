@@ -706,17 +706,17 @@ test("z.templateLiteral", () => {
 });
 
 // this returns both a schema and a check
-test("z.custom", () => {
+test("z.custom schema", () => {
   const a = z.custom((val) => {
     return typeof val === "string";
   });
   expect(z.parse(a, "hello")).toEqual("hello");
   expect(() => z.parse(a, 123)).toThrow();
+});
 
-  const b = z.string().check(z.custom((val) => val.length > 3));
-
-  expect(z.parse(b, "hello")).toEqual("hello");
-  expect(() => z.parse(b, "hi")).toThrow();
+test("z.custom check", () => {
+  // @ts-expect-error Inference not possible, use z.refine()
+  z.date().check(z.custom((val) => val.getTime() > 0));
 });
 
 test("z.check", () => {

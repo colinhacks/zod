@@ -68,7 +68,8 @@ test("function inference 1", () => {
 test("args method", () => {
   const t1 = z.function();
   type t1 = (typeof t1)["_input"];
-  expectTypeOf<t1>().toEqualTypeOf<(...args_1: unknown[]) => unknown>();
+  expectTypeOf<t1>().toEqualTypeOf<(...args_1: never[]) => unknown>();
+  t1._input;
 
   const t2args = z.tuple([z.string()], z.unknown());
 
@@ -79,6 +80,14 @@ test("args method", () => {
   const t3 = t2.output(z.boolean());
   type t3 = (typeof t3)["_input"];
   expectTypeOf<t3>().toEqualTypeOf<(arg: string, ...args_1: unknown[]) => boolean>();
+});
+
+test("contravariance", () => {
+  const fn = z.function().implement((_a: string, _b: number) => {
+    return new Date();
+  });
+
+  expectTypeOf(fn).toEqualTypeOf<(a: string, b: number) => Date>();
 });
 
 const args2 = z.tuple([

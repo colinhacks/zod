@@ -1,10 +1,10 @@
 {
   "name": "zod",
-  "version": "3.25.20",
+  "version": "3.25.28",
   "type": "module",
   "author": "Colin McDonnell <zod@colinhacks.com>",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
-  "files": ["src", "dist"],
+  "files": ["dist", "v3", "v4", "v4-mini"],
   "funding": "https://github.com/sponsors/colinhacks",
   "homepage": "https://zod.dev",
   "keywords": ["typescript", "schema", "validation", "type", "inference"],

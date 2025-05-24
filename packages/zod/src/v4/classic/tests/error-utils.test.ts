@@ -1,6 +1,8 @@
 import { expect, expectTypeOf, test } from "vitest";
 import * as z from "zod/v4";
 
+declare const iss: z.core.$ZodIssueCode;
+
 const Test = z.object({
   f1: z.number(),
   f2: z.string().optional(),

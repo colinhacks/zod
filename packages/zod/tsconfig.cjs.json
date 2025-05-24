@@ -7,5 +7,6 @@
     "customConditions": ["@zod/source"],
     "outDir": "./dist/cjs"
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["**/tests/**"]
 }

@@ -86,7 +86,7 @@ export interface $ZodIssueInvalidValue<Input = unknown> extends $ZodIssueBase {
 }
 
 export interface $ZodIssueCustom extends $ZodIssueBase {
-  readonly code?: "custom";
+  readonly code: "custom";
   readonly params?: Record<string, any> | undefined;
   readonly input: unknown;
 }
@@ -149,6 +149,8 @@ export type $ZodIssue =
   | $ZodIssueInvalidValue
   | $ZodIssueCustom;
 
+export type $ZodIssueCode = $ZodIssue["code"];
+
 export type $ZodRawIssue<T extends $ZodIssueBase = $ZodIssue> = T extends any ? RawIssue<T> : never;
 type RawIssue<T extends $ZodIssueBase> = util.Flatten<
   util.MakePartial<T, "message" | "path"> & {
@@ -190,7 +192,6 @@ const initializer = (inst: $ZodError, def: $ZodIssue[]): void => {
     value: def,
     enumerable: false,
   });
-  // inst.message = JSON.stringify(def, util.jsonStringifyReplacer, 2);
   Object.defineProperty(inst, "message", {
     get() {
       return prettifyError(inst);
@@ -198,22 +199,6 @@ const initializer = (inst: $ZodError, def: $ZodIssue[]): void => {
     enumerable: true,
     // configurable: false,
   });
-  // inst.toString = () => inst.message;
-
-  // inst.message = `Invalid input`;
-  // Object.defineProperty(inst, "message", {
-  //   get() {
-  //     return (
-  //       "\n" +
-  //       inst.issues
-  //         .map((iss) => {
-  //           return `✖ ${iss.message}${iss.path.length ? ` [${iss.path.join(".")}]` : ""}`;
-  //         })
-  //         .join("\n")
-  //     );
-  //   },
-  //   enumerable: false,
-  // });
 };
 
 export const $ZodError: $constructor<$ZodError> = $constructor("$ZodError", initializer);

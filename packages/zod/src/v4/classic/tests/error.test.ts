@@ -1,3 +1,4 @@
+import { inspect } from "node:util";
 import { expect, test } from "vitest";
 import * as z from "zod/v4";
 
@@ -720,7 +721,6 @@ test("error serialization", () => {
   try {
     z.string().parse(123);
   } catch (e) {
-    console.dir(e, { depth: null });
     expect(e).toMatchInlineSnapshot(`
       ZodError ({
         "issues": [
@@ -733,6 +733,16 @@ test("error serialization", () => {
         ],
         "message": "✖ Invalid input: expected string, received number",
       })
+    `);
+    expect(inspect(e).split("\n").slice(0, 8).join("\n")).toMatchInlineSnapshot(`
+      "ZodError: [
+        {
+          "expected": "string",
+          "code": "invalid_type",
+          "path": [],
+          "message": "Invalid input: expected string, received number"
+        }
+      ]"
     `);
   }
 });

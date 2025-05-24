@@ -313,7 +313,7 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
               input,
               code: "too_big",
               maximum: Number.MAX_SAFE_INTEGER,
-              note: "Integers must be within the the safe integer range.",
+              note: "Integers must be within the safe integer range.",
               inst,
               origin,
               continue: !def.abort,

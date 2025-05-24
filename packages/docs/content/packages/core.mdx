@@ -88,9 +88,10 @@ export type $ZodTypes =
   | $ZodFile;
 ```
 
-All `zod/v4/core` subclasses only contain a single property: `_zod`. This property is an object containing the schemas *internals*. The goal is to make `zod/v4/core` as extensible and unopinionated as possible. Other libraries can "build their own Zod" on top of these classes without `zod/v4/core` cluttering up the interface. 
 
-Refer to the implementations of `zod/v4` and `zod/v4-mini` for examples of how to extend these classes. 
+## Internals
+
+All `zod/v4/core` subclasses only contain a single property: `_zod`. This property is an object containing the schemas *internals*. The goal is to make `zod/v4/core` as extensible and unopinionated as possible. Other libraries can "build their own Zod" on top of these classes without `zod/v4/core` cluttering up the interface. Refer to the implementations of `zod/v4` and `zod/v4-mini` for examples of how to extend these classes. 
 
 The `_zod` internals property contains some notable properties:
 
@@ -122,7 +123,6 @@ export function walk(_schema: z.$ZodType) {
 
 There are a number of subclasses of `$ZodString` that implement various *string formats*. These are exported as `z.$ZodStringFormatTypes`.
 
-
 ```ts
 export type $ZodStringFormatTypes =
   | $ZodGUID
@@ -148,6 +148,21 @@ export type $ZodStringFormatTypes =
   | $ZodBase64URL
   | $ZodE164
   | $ZodJWT
+```
+
+
+## Parsing 
+
+As the Zod Core schema classes have no methods, there are top-level functions for parsing data.
+
+```ts
+import * as z from "zod/v4/core";
+
+const schema = new z.$ZodString({ type: "string" });
+z.parse(schema, "hello");
+z.safeParse(schema, "hello");
+await z.parseAsync(schema, "hello");
+await z.safeParseAsync(schema, "hello");
 ```
 
 

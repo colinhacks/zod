@@ -83,3 +83,8 @@ test("literal bigint default error message", () => {
   expect(result.error!.issues.length).toEqual(1);
   expect(result.error!.issues[0].message).toEqual(`Invalid input: expected 12n`);
 });
+
+test(".value getter", () => {
+  expect(z.literal("tuna").value).toEqual("tuna");
+  expect(() => z.literal([1, 2, 3]).value).toThrow();
+});
