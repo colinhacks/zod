@@ -18,6 +18,7 @@ export { default as ja } from "./ja.js";
 export { default as ko } from "./ko.js";
 export { default as mk } from "./mk.js";
 export { default as ms } from "./ms.js";
+export { default as nl } from "./nl.js";
 export { default as no } from "./no.js";
 export { default as ota } from "./ota.js";
 export { default as pl } from "./pl.js";
