@@ -105,7 +105,7 @@ npm install zod
 
 Before you can do anything else, you need to define a schema. For the purposes of this guide, we'll use a simple object schema.
 
-```
+```ts
 import { z } from "zod/v4"; 
 
 const Player = z.object({ 
