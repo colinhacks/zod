@@ -734,6 +734,8 @@ test("error serialization", () => {
         "message": "✖ Invalid input: expected string, received number",
       })
     `);
-    expect(inspect(e).split("\n").shift()).toMatchInlineSnapshot(`"ZodError: ✖ Invalid input: expected string, received number"`);
+    expect(inspect(e).split("\n").shift()).toMatchInlineSnapshot(
+      `"ZodError: ✖ Invalid input: expected string, received number"`
+    );
   }
 });
