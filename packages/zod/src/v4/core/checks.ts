@@ -4,7 +4,6 @@ import * as core from "./core.js";
 import type * as errors from "./errors.js";
 import * as regexes from "./regexes.js";
 import type * as schemas from "./schemas.js";
-import type { $ZodStringInternals } from "./schemas.js";
 import * as util from "./util.js";
 
 //////////////////////////////   CHECKS   ///////////////////////////////////////
@@ -780,7 +779,7 @@ export const $ZodCheckStringFormat: core.$constructor<$ZodCheckStringFormat> = /
     $ZodCheck.init(inst, def);
 
     inst._zod.onattach.push((inst) => {
-      const bag = inst._zod.bag as $ZodStringInternals<unknown>["bag"];
+      const bag = inst._zod.bag as schemas.$ZodStringInternals<unknown>["bag"];
       bag.format = def.format;
       if (def.pattern) {
         if (bag.patterns) {
@@ -951,7 +950,7 @@ export const $ZodCheckIncludes: core.$constructor<$ZodCheckIncludes> = /*@__PURE
     const pattern = new RegExp(util.escapeRegex(def.includes));
     def.pattern = pattern;
     inst._zod.onattach.push((inst) => {
-      const bag = inst._zod.bag as $ZodStringInternals<unknown>["bag"];
+      const bag = inst._zod.bag as schemas.$ZodStringInternals<unknown>["bag"];
       if (bag.patterns) {
         bag.patterns.add(pattern);
       } else {
@@ -998,7 +997,7 @@ export const $ZodCheckStartsWith: core.$constructor<$ZodCheckStartsWith> = /*@__
     const pattern = new RegExp(`^${util.escapeRegex(def.prefix)}.*`);
     def.pattern ??= pattern;
     inst._zod.onattach.push((inst) => {
-      const bag = inst._zod.bag as $ZodStringInternals<unknown>["bag"];
+      const bag = inst._zod.bag as schemas.$ZodStringInternals<unknown>["bag"];
       if (bag.patterns) {
         bag.patterns.add(pattern);
       } else {
@@ -1045,7 +1044,7 @@ export const $ZodCheckEndsWith: core.$constructor<$ZodCheckEndsWith> = /*@__PURE
     const pattern = new RegExp(`.*${util.escapeRegex(def.suffix)}$`);
     def.pattern ??= pattern;
     inst._zod.onattach.push((inst) => {
-      const bag = inst._zod.bag as $ZodStringInternals<unknown>["bag"];
+      const bag = inst._zod.bag as schemas.$ZodStringInternals<unknown>["bag"];
       if (bag.patterns) {
         bag.patterns.add(pattern);
       } else {

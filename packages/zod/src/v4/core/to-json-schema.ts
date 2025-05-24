@@ -1,9 +1,7 @@
 import type * as checks from "./checks.js";
-import type { $ZodStringFormats } from "./checks.js";
 import type * as JSONSchema from "./json-schema.js";
 import { $ZodRegistry, globalRegistry } from "./registries.js";
 import type * as schemas from "./schemas.js";
-import type { $ZodStringInternals } from "./schemas.js";
 
 interface JSONSchemaGeneratorParams {
   /** A registry used to look up metadata for each schema. Any schema with an `id` property will be extracted as a $def.
@@ -152,12 +150,12 @@ export class JSONSchemaGenerator {
           const json: JSONSchema.StringSchema = _json as any;
           json.type = "string";
           const { minimum, maximum, format, patterns, contentEncoding } = schema._zod
-            .bag as $ZodStringInternals<unknown>["bag"];
+            .bag as schemas.$ZodStringInternals<unknown>["bag"];
           if (typeof minimum === "number") json.minLength = minimum;
           if (typeof maximum === "number") json.maxLength = maximum;
           // custom pattern overrides format
           if (format) {
-            json.format = formatMap[format as $ZodStringFormats] ?? format;
+            json.format = formatMap[format as checks.$ZodStringFormats] ?? format;
           }
           if (contentEncoding) json.contentEncoding = contentEncoding;
           if (patterns) {
