@@ -368,6 +368,52 @@ describe("toJSONSchema", () => {
     `);
   });
 
+  test("string patterns", () => {
+    expect(z.toJSONSchema(z.string().startsWith("hello").includes("cruel").endsWith("world"))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "allOf": [
+          {
+            "pattern": "^hello.*",
+            "type": "string",
+          },
+          {
+            "pattern": "cruel",
+            "type": "string",
+          },
+          {
+            "pattern": ".*world$",
+            "type": "string",
+          },
+        ],
+      }
+    `);
+
+    expect(
+      z.toJSONSchema(
+        z
+          .string()
+          .regex(/^hello/)
+          .regex(/world$/)
+      )
+    ).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "allOf": [
+          {
+            "format": "regex",
+            "pattern": "^hello",
+            "type": "string",
+          },
+          {
+            "pattern": "world$",
+            "type": "string",
+          },
+        ],
+      }
+    `);
+  });
+
   test("number constraints", () => {
     expect(z.toJSONSchema(z.number().min(5).max(10))).toMatchInlineSnapshot(
       `
