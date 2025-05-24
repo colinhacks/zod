@@ -79,7 +79,7 @@ Error maps can also now return a plain `string` (instead of `{message: string}`)
 <Tabs groupId="error-map" items={["Zod 4", "Zod 3"]} persist>
 <Tab value="Zod 4">
 ```ts
-z.string({
+z.string().min(5, {
   error: (issue) => {
     if (issue.code === "too_small") {
       return `Value must be >${issue.minimum}`
