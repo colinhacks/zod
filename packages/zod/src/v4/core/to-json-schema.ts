@@ -1,7 +1,9 @@
 import type * as checks from "./checks.js";
+import type { $ZodStringFormats } from "./checks.js";
 import type * as JSONSchema from "./json-schema.js";
 import { $ZodRegistry, globalRegistry } from "./registries.js";
 import type * as schemas from "./schemas.js";
+import type { $ZodStringInternals } from "./schemas.js";
 
 interface JSONSchemaGeneratorParams {
   /** A registry used to look up metadata for each schema. Any schema with an `id` property will be extracted as a $def.
@@ -149,23 +151,31 @@ export class JSONSchemaGenerator {
         case "string": {
           const json: JSONSchema.StringSchema = _json as any;
           json.type = "string";
-          const { minimum, maximum, format, pattern, contentEncoding } = schema._zod.bag as {
-            minimum?: number;
-            maximum?: number;
-            format?: checks.$ZodStringFormats;
-            pattern?: RegExp;
-            contentEncoding?: string;
-          };
+          const { minimum, maximum, format, patterns, contentEncoding } = schema._zod
+            .bag as $ZodStringInternals<unknown>["bag"];
           if (typeof minimum === "number") json.minLength = minimum;
           if (typeof maximum === "number") json.maxLength = maximum;
           // custom pattern overrides format
           if (format) {
-            json.format = formatMap[format] ?? format;
-          }
-          if (pattern) {
-            json.pattern = pattern.source;
+            json.format = formatMap[format as $ZodStringFormats] ?? format;
           }
           if (contentEncoding) json.contentEncoding = contentEncoding;
+          if (patterns) {
+            const patternsItems = Array.from(patterns);
+            json.pattern = patternsItems[0].source;
+
+            if (patternsItems.length > 1) {
+              result.schema = {
+                allOf: [
+                  json,
+                  ...patternsItems.slice(1).map((pattern) => ({
+                    type: "string",
+                    pattern: pattern.source,
+                  })),
+                ],
+              };
+            }
+          }
 
           break;
         }

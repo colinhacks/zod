@@ -4,6 +4,7 @@ import * as core from "./core.js";
 import type * as errors from "./errors.js";
 import * as regexes from "./regexes.js";
 import type * as schemas from "./schemas.js";
+import type { $ZodStringInternals } from "./schemas.js";
 import * as util from "./util.js";
 
 //////////////////////////////   CHECKS   ///////////////////////////////////////
@@ -780,7 +781,14 @@ export const $ZodCheckStringFormat: core.$constructor<$ZodCheckStringFormat> = /
 
     inst._zod.onattach.push((inst) => {
       inst._zod.bag.format = def.format;
-      if (def.pattern) inst._zod.bag.pattern = def.pattern;
+      if (def.pattern) {
+        const bag = inst._zod.bag as $ZodStringInternals<unknown>["bag"];
+        if (bag.patterns) {
+          bag.patterns.add(def.pattern);
+        } else {
+          bag.patterns = new Set([def.pattern]);
+        }
+      }
     });
 
     inst._zod.check ??= (payload) => {
@@ -943,7 +951,12 @@ export const $ZodCheckIncludes: core.$constructor<$ZodCheckIncludes> = /*@__PURE
     const pattern = new RegExp(util.escapeRegex(def.includes));
     def.pattern = pattern;
     inst._zod.onattach.push((inst) => {
-      inst._zod.bag.pattern = pattern;
+      const bag = inst._zod.bag as $ZodStringInternals<unknown>["bag"];
+      if (bag.patterns) {
+        bag.patterns.add(pattern);
+      } else {
+        bag.patterns = new Set([pattern]);
+      }
     });
 
     inst._zod.check = (payload) => {
@@ -985,7 +998,12 @@ export const $ZodCheckStartsWith: core.$constructor<$ZodCheckStartsWith> = /*@__
     const pattern = new RegExp(`^${util.escapeRegex(def.prefix)}.*`);
     def.pattern ??= pattern;
     inst._zod.onattach.push((inst) => {
-      inst._zod.bag.pattern = pattern;
+      const bag = inst._zod.bag as $ZodStringInternals<unknown>["bag"];
+      if (bag.patterns) {
+        bag.patterns.add(pattern);
+      } else {
+        bag.patterns = new Set([pattern]);
+      }
     });
 
     inst._zod.check = (payload) => {
@@ -1027,7 +1045,12 @@ export const $ZodCheckEndsWith: core.$constructor<$ZodCheckEndsWith> = /*@__PURE
     const pattern = new RegExp(`.*${util.escapeRegex(def.suffix)}$`);
     def.pattern ??= pattern;
     inst._zod.onattach.push((inst) => {
-      inst._zod.bag.pattern = new RegExp(`.*${util.escapeRegex(def.suffix)}$`);
+      const bag = inst._zod.bag as $ZodStringInternals<unknown>["bag"];
+      if (bag.patterns) {
+        bag.patterns.add(pattern);
+      } else {
+        bag.patterns = new Set([pattern]);
+      }
     });
 
     inst._zod.check = (payload) => {

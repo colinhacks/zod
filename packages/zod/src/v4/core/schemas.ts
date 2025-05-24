@@ -290,8 +290,9 @@ export interface $ZodStringInternals<Input> extends $ZodTypeInternals<string, In
   bag: util.LoosePartial<{
     minimum: number;
     maximum: number;
-    pattern: RegExp;
+    patterns: Set<RegExp>;
     format: string;
+    contentEncoding: string;
   }>;
 }
 
@@ -301,7 +302,7 @@ export interface $ZodString<Input = unknown> extends $ZodType {
 
 export const $ZodString: core.$constructor<$ZodString> = /*@__PURE__*/ core.$constructor("$ZodString", (inst, def) => {
   $ZodType.init(inst, def);
-  inst._zod.pattern = inst?._zod.bag?.pattern ?? regexes.string(inst._zod.bag);
+  inst._zod.pattern = inst?._zod.bag?.patterns?.values().next().value ?? regexes.string(inst._zod.bag);
   inst._zod.parse = (payload, _) => {
     if (def.coerce)
       try {
