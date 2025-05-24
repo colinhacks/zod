@@ -339,6 +339,7 @@ The `z.iso.datetime()` method enforces ISO 8601; by default, no timezone offsets
 ```ts
 const datetime = z.iso.datetime();
 
+datetime.parse("2020-01-01T00:00"); // ✅ (seconds may be omitted if precision is not set)
 datetime.parse("2020-01-01T00:00:00Z"); // ✅
 datetime.parse("2020-01-01T00:00:00.123Z"); // ✅
 datetime.parse("2020-01-01T00:00:00.123456Z"); // ✅ (arbitrary precision)
@@ -355,12 +356,14 @@ datetime.parse("2020-01-01T00:00:00.123+02:00"); // ✅ (millis optional)
 datetime.parse("2020-01-01T00:00:00.123+0200"); // ✅ (millis optional)
 datetime.parse("2020-01-01T00:00:00.123+02"); // ✅ (only offset hours)
 datetime.parse("2020-01-01T00:00:00Z"); // ✅ (Z still supported)
+datetime.parse("2020-01-01T00:00Z"); // ✅ (seconds omitted)
 ```
 
 To allow unqualified (timezone-less) datetimes:
 
 ```ts
 const schema = z.iso.datetime({ local: true });
+schema.parse("2020-01-01T00:00"); // ✅
 schema.parse("2020-01-01T00:00:00"); // ✅
 ```
 
@@ -370,6 +373,7 @@ To constrain the allowable `precision` (by default, arbitrary sub-second precisi
 const datetime = z.iso.datetime({ precision: 3 });
 
 datetime.parse("2020-01-01T00:00:00.123Z"); // ✅
+datetime.parse("2020-01-01T00:00Z"); // ❌
 datetime.parse("2020-01-01T00:00:00Z"); // ❌
 datetime.parse("2020-01-01T00:00:00.123456Z"); // ❌
 ```
@@ -390,11 +394,12 @@ date.parse("2020-01-32"); // ❌
 
 > Added in Zod 3.23
 
-The `z.iso.time()` method validates strings in the format `HH:MM:SS[.s+]`. The second can include arbitrary decimal precision. It does not allow timezone offsets of any kind.
+The `z.iso.time()` method validates strings in the format `HH:MM` or `HH:MM:SS[.s+]`. The second can include arbitrary decimal precision. It does not allow timezone offsets of any kind.
 
 ```ts
 const time = z.iso.time();
 
+time.parse("00:00"); // ✅
 time.parse("00:00:00"); // ✅
 time.parse("09:52:31"); // ✅
 time.parse("23:59:59.9999999"); // ✅ (arbitrary precision)

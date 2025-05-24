@@ -82,19 +82,18 @@ const dateSource = `((\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][04
 export const date: RegExp = new RegExp(`^${dateSource}$`);
 
 function timeSource(args: { precision?: number | null }) {
-  // let regex = `\\d{2}:\\d{2}:\\d{2}`;
-  let regex = `([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d`;
-
+  let secondsRegexSource = `[0-5]\\d`;
   if (args.precision) {
-    regex = `${regex}\\.\\d{${args.precision}}`;
+    secondsRegexSource = `${secondsRegexSource}\\.\\d{${args.precision}}`;
   } else if (args.precision == null) {
-    regex = `${regex}(\\.\\d+)?`;
+    secondsRegexSource = `${secondsRegexSource}(\\.\\d+)?`;
   }
-  return regex;
+
+  const secondsQuantifier = args.precision ? "+" : "?"; // require seconds if precision is nonzero
+  return `([01]\\d|2[0-3]):[0-5]\\d(:${secondsRegexSource})${secondsQuantifier}`;
 }
-export function time(args: {
-  precision?: number | null;
-}): RegExp {
+
+export function time(args: { precision?: number | null }): RegExp {
   return new RegExp(`^${timeSource(args)}$`);
 }
 
@@ -113,7 +112,10 @@ export function datetime(args: {
   return new RegExp(`^${regex}$`);
 }
 
-export const string = (params?: { minimum?: number | undefined; maximum?: number | undefined }): RegExp => {
+export const string = (params?: {
+  minimum?: number | undefined;
+  maximum?: number | undefined;
+}): RegExp => {
   const regex = params ? `[\\s\\S]{${params?.minimum ?? 0},${params?.maximum ?? ""}}` : `[\\s\\S]*`;
   return new RegExp(`^${regex}$`);
 };
