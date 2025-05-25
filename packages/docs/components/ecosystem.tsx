@@ -33,7 +33,7 @@ const apiLibraries: ZodResource[] = [
   {
     name: "Express Zod API",
     url: "https://github.com/RobinTail/express-zod-api",
-    description: "Build Express-based APIs with I/O schema validation and custom middlewares.",
+    description: "Build Express-based API with I/O validation and middlewares, OpenAPI docs and type-safe client.",
     slug: "RobinTail/express-zod-api",
     v4: true,
   },
