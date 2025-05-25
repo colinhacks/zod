@@ -1852,6 +1852,7 @@ export type $InferUnionInput<T extends $ZodType> = T extends any ? core.input<T>
 export interface $ZodUnionDef<Options extends readonly $ZodType[] = readonly $ZodType[]> extends $ZodTypeDef {
   type: "union";
   options: Options;
+  discriminator?: string;
 }
 
 export interface $ZodUnionInternals<T extends readonly $ZodType[] = readonly $ZodType[]>
