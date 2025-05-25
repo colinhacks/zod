@@ -35,6 +35,7 @@ const apiLibraries: ZodResource[] = [
     url: "https://github.com/RobinTail/express-zod-api",
     description: "Build Express-based APIs with I/O schema validation and custom middlewares.",
     slug: "RobinTail/express-zod-api",
+    v4: true,
   },
 
   // https://github.com/honojs/middleware/tree/main/packages/zod-validator
