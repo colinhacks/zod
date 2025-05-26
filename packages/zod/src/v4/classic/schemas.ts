@@ -238,8 +238,8 @@ export const _ZodString: core.$constructor<_ZodString> = /*@__PURE__*/ core.$con
   // validations
   inst.regex = (...args) => inst.check(checks.regex(...args));
   inst.includes = (...args) => inst.check(checks.includes(...args));
-  inst.startsWith = (params) => inst.check(checks.startsWith(params));
-  inst.endsWith = (params) => inst.check(checks.endsWith(params));
+  inst.startsWith = (...args) => inst.check(checks.startsWith(...args));
+  inst.endsWith = (...args) => inst.check(checks.endsWith(...args));
   inst.min = (...args) => inst.check(checks.minLength(...args));
   inst.max = (...args) => inst.check(checks.maxLength(...args));
   inst.length = (...args) => inst.check(checks.length(...args));

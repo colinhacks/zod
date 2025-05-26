@@ -1,29 +1,13 @@
-import * as z from "zod/v3";
+import * as z from "zod/v4";
 
-console.log({
-  href: new URL(import.meta.url).href,
-  hostname: new URL(import.meta.url).hostname,
-  pathname: new URL(import.meta.url).pathname,
-});
+// import { z } from "zod/v4";
 
-// z.
-// z.string.url({ hostname: /.*/ }).parse(import.meta.url);
+const result = z
+  .object({
+    email: z.email().endsWith("@example.com", "CUSTOM"),
+  })
+  .safeParse({
+    email: "test@github.com",
+  });
 
-// const a = z.url({
-//   protocol: /^https?$/,
-// });
-const a = z.string().url();
-
-a.parse("https://example.com");
-a.parse("http://example.com");
-a.parse("htt://example.com");
-a.parse("c:");
-a.parse("mailto:noreply@zod.dev"); // ❌
-
-// const a = z.url();
-
-// a.parse("https://example.com"); // ✅
-// a.parse("http://localhost"); // ✅
-// a.parse("mailto:noreply@zod.dev"); // ❌
-// a.parse("sup"); // ❌
-/^([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
+console.log(JSON.stringify(result.error!.issues, null, 2));
