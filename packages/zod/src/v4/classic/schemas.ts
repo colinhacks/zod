@@ -1015,6 +1015,8 @@ export interface ZodArray<T extends core.$ZodType = core.$ZodType> extends ZodTy
   nonempty(params?: string | core.$ZodCheckMinLengthParams): this;
   max(maxLength: number, params?: string | core.$ZodCheckMaxLengthParams): this;
   length(len: number, params?: string | core.$ZodCheckLengthEqualsParams): this;
+
+  unwrap(): T;
 }
 export const ZodArray: core.$constructor<ZodArray> = /*@__PURE__*/ core.$constructor("ZodArray", (inst, def) => {
   core.$ZodArray.init(inst, def);
@@ -1025,6 +1027,8 @@ export const ZodArray: core.$constructor<ZodArray> = /*@__PURE__*/ core.$constru
   inst.nonempty = (params) => inst.check(checks.minLength(1, params));
   inst.max = (maxLength, params) => inst.check(checks.maxLength(maxLength, params));
   inst.length = (len, params) => inst.check(checks.length(len, params));
+
+  inst.unwrap = () => inst.element;
 });
 
 export function array<T extends core.$ZodType>(element: T, params?: string | core.$ZodArrayParams): ZodArray<T> {

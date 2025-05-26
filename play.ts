@@ -11,3 +11,5 @@ const result = z
   });
 
 console.log(JSON.stringify(result.error!.issues, null, 2));
+
+z.array(z.string()).def.element;
