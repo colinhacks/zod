@@ -297,16 +297,15 @@ z.guid();
 
 ### URLs
 
-To validate any WHATWG-compatible URL.
+The validate any WHATWG-compatible URL. 
 
 ```ts
 const schema = z.url();
 
 schema.parse("https://example.com"); // ✅
 schema.parse("http://localhost"); // ✅
-
-schema.parse("mailto:noreply@zod.dev"); // ❌
-schema.parse("sup"); // ❌
+schema.parse("mailto:noreply@zod.dev"); // ✅
+schema.parse("sup"); // ✅
 ```
 
 > Internally this uses the `new URL()` constructor to perform validation. This may behave differently across platforms and runtimes but is generally the most rigorous way to validate URIs/URLs. 
@@ -329,6 +328,15 @@ schema.parse("https://example.com"); // ✅
 schema.parse("http://example.com"); // ❌
 ```
 
+Here is the recommended schema for validating HTTP URLs. It limits the protocol to `http`/`https` and ensures the hostname is a valid domain name.
+
+```ts
+const httpUrl = z.url({
+  protocol: /^https?$/,
+  hostname: z.regexes.domain 
+            // /^([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/
+});
+```
 
 ### ISO datetimes
 
