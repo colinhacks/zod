@@ -51,7 +51,6 @@ export interface $ZodTypeDef {
     | "unknown"
     | "date"
     | "object"
-    | "interface"
     | "record"
     | "file"
     | "array"

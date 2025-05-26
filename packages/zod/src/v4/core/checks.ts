@@ -286,6 +286,14 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
 
       if (isInt) {
         if (!Number.isInteger(input)) {
+          // invalid_format issue
+          // payload.issues.push({
+          //   expected: def.format,
+          //   format: def.format,
+          //   code: "invalid_format",
+          //   input,
+          //   inst,
+          // });
           // invalid_type issue
           payload.issues.push({
             expected: origin,

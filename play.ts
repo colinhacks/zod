@@ -1,15 +1,17 @@
 import * as z from "zod/v4";
 
-// import { z } from "zod/v4";
+z;
 
-const result = z
-  .object({
-    email: z.email().endsWith("@example.com", "CUSTOM"),
-  })
-  .safeParse({
-    email: "test@github.com",
-  });
+const a = z.discriminatedUnion("type", [
+  z
+    .object({
+      type: z.literal("a"),
+    })
+    .meta({ id: "foo" }),
+]);
 
-console.log(JSON.stringify(result.error!.issues, null, 2));
-
-z.array(z.string()).def.element;
+z.toJSONSchema(a, {
+  override(ctx) {
+    console.dir(ctx.jsonSchema, { depth: null });
+  },
+});
