@@ -15,7 +15,7 @@ export const config = {
 export default async function (request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const imagePrefix = process.env.VERCEL_URL ? `https://v4.zod.dev` : "http://localhost:3000";
+    const imagePrefix = process.env.VERCEL_URL ? `https://zod.dev` : "http://localhost:3000";
 
     // Get dynamic params
     const title = searchParams.get("title") || "Zod Documentation";
