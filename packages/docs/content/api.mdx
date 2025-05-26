@@ -333,8 +333,7 @@ Here is the recommended schema for validating HTTP URLs. It limits the protocol 
 ```ts
 const httpUrl = z.url({
   protocol: /^https?$/,
-  hostname: z.regexes.domain 
-            // /^([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/
+  hostname: z.regexes.domain // /^([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/
 });
 ```
 
