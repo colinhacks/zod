@@ -329,7 +329,7 @@ schema.parse("http://example.com"); // ❌
 ```
 
 <Callout>
-  **Web URLs** — A common use case is validating Web (`http`/`https`) URLs. Here's the recommended schema for doing so:
+  **Web URLs** — In many cases, you'll want to validate Web URLs specifically. Here's the recommended schema for doing so:
 
   ```ts
   const httpUrl = z.url({
@@ -338,7 +338,7 @@ schema.parse("http://example.com"); // ❌
   });
   ```
 
-  This restricts the protocol to `http`/`https` and ensures the hostname is a valid domain name with the regex:
+  This restricts the protocol to `http`/`https` and ensures the hostname is a valid domain name with the `z.regexes.domain` regular expression:
 
   ```ts
   /^([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/
@@ -947,7 +947,7 @@ Dog.parse({ name: "Yeller", extraKey: true });
 
 ### `.catchall()`
 
-To defina a *catchall schema* that will be used to validate any unrecognized keys:
+To define a *catchall schema* that will be used to validate any unrecognized keys:
 
 ```
 const DogWithStrings = z.object({
@@ -1034,11 +1034,11 @@ Starting from this initial schema:
 
 ```ts z.object
 const Recipe = z.object({
-  name: z.string(),
+  title: z.string(),
   description: z.string().optional(),
   ingredients: z.array(z.string()),
 });
-// { id: string; name: string; ingredients: string[] }
+// { title: string; description?: string | undefined; ingredients: string[] }
 ```
 To pick certain keys:
 
@@ -2495,8 +2495,8 @@ const computeTrimmedLength = MyFunction.implement((input) => {
   return input.trim().length;
 });
 
-trimmedLength("sandwich"); // => 8
-trimmedLength(" asdf "); // => 4
+computeTrimmedLength("sandwich"); // => 8
+computeTrimmedLength(" asdf "); // => 4
 ```
 
 This function will throw a `ZodError` if the input is invalid:
