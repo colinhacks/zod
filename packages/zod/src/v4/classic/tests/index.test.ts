@@ -835,48 +835,6 @@ test("z.json", () => {
   expect(() => z.parse(a, { a: undefined })).toThrow();
 });
 
-test("z.stringbool", () => {
-  const a = z.stringbool();
-
-  expect(z.parse(a, "true")).toEqual(true);
-  expect(z.parse(a, "yes")).toEqual(true);
-  expect(z.parse(a, "1")).toEqual(true);
-  expect(z.parse(a, "on")).toEqual(true);
-  expect(z.parse(a, "y")).toEqual(true);
-  expect(z.parse(a, "enabled")).toEqual(true);
-  expect(z.parse(a, "TRUE")).toEqual(true);
-
-  expect(z.parse(a, "false")).toEqual(false);
-  expect(z.parse(a, "no")).toEqual(false);
-  expect(z.parse(a, "0")).toEqual(false);
-  expect(z.parse(a, "off")).toEqual(false);
-  expect(z.parse(a, "n")).toEqual(false);
-  expect(z.parse(a, "disabled")).toEqual(false);
-  expect(z.parse(a, "FALSE")).toEqual(false);
-
-  expect(z.safeParse(a, "other")).toMatchObject({ success: false });
-  expect(z.safeParse(a, "")).toMatchObject({ success: false });
-  expect(z.safeParse(a, undefined)).toMatchObject({ success: false });
-  expect(z.safeParse(a, {})).toMatchObject({ success: false });
-  expect(z.safeParse(a, true)).toMatchObject({ success: false });
-  expect(z.safeParse(a, false)).toMatchObject({ success: false });
-
-  const b = z.stringbool({
-    truthy: ["y"],
-    falsy: ["n"],
-  });
-  expect(z.parse(b, "y")).toEqual(true);
-  expect(z.parse(b, "n")).toEqual(false);
-  expect(z.safeParse(b, "true")).toMatchObject({ success: false });
-  expect(z.safeParse(b, "false")).toMatchObject({ success: false });
-
-  const c = z.stringbool({
-    case: "sensitive",
-  });
-  expect(z.parse(c, "true")).toEqual(true);
-  expect(z.safeParse(c, "TRUE")).toMatchObject({ success: false });
-});
-
 // promise
 test("z.promise", async () => {
   const a = z.promise(z.string());

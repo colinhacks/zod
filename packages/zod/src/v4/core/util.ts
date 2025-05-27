@@ -318,7 +318,7 @@ export function esc(str: string): string {
 }
 
 export function isObject(data: any): data is Record<PropertyKey, unknown> {
-  return typeof data === "object" && data !== null; // && !Array.isArray(data);
+  return typeof data === "object" && data !== null && !Array.isArray(data);
 }
 
 export const allowsEval: { value: boolean } = cached(() => {

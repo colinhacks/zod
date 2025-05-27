@@ -1476,9 +1476,10 @@ export function _stringbool(
   },
   _params?: string | $ZodStringBoolParams
 ): schemas.$ZodPipe<schemas.$ZodUnknown, schemas.$ZodBoolean<boolean>> {
-  const params = util.normalizeParams(_params);
-  const trueValues = new Set(params?.truthy ?? ["true", "1", "yes", "on", "y", "enabled"]);
-  const falseValues = new Set(params?.falsy ?? ["false", "0", "no", "off", "n", "disabled"]);
+  const { case: _case, error, truthy, falsy } = util.normalizeParams(_params);
+
+  const trueValues = new Set(truthy ?? ["true", "1", "yes", "on", "y", "enabled"]);
+  const falseValues = new Set(falsy ?? ["false", "0", "no", "off", "n", "disabled"]);
 
   const _Pipe = Classes.Pipe ?? schemas.$ZodPipe;
   const _Boolean = Classes.Boolean ?? schemas.$ZodBoolean;
@@ -1492,7 +1493,7 @@ export function _stringbool(
           check: (ctx: any) => {
             if (typeof ctx.value === "string") {
               let data: string = ctx.value;
-              if (params?.case !== "sensitive") data = data.toLowerCase();
+              if (_case !== "sensitive") data = data.toLowerCase();
               if (trueValues.has(data)) {
                 ctx.value = true;
               } else if (falseValues.has(data)) {
@@ -1521,6 +1522,7 @@ export function _stringbool(
         },
       },
     ],
+    error,
   });
 
   return new _Pipe({
@@ -1528,6 +1530,8 @@ export function _stringbool(
     in: inst,
     out: new _Boolean({
       type: "boolean",
+      error,
     }),
+    error,
   }) as any;
 }
