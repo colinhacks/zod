@@ -2002,7 +2002,7 @@ function _instanceof<T extends typeof util.Class>(
   params: ZodInstanceOfParams = {
     error: `Input not instance of ${cls.name}`,
   }
-): ZodCustom<InstanceType<T>> {
+): ZodCustom<InstanceType<T>, InstanceType<T>> {
   const inst = new ZodCustom({
     type: "custom",
     check: "custom",

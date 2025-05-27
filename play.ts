@@ -1,17 +1,8 @@
-import * as z from "zod/v4";
+import * as z from "zod/v4-mini";
 
 z;
 
-const a = z.discriminatedUnion("type", [
-  z
-    .object({
-      type: z.literal("a"),
-    })
-    .meta({ id: "foo" }),
-]);
+const fn = (value: string) => Uint8Array.from(Buffer.from(value, "base64"));
 
-z.toJSONSchema(a, {
-  override(ctx) {
-    console.dir(ctx.jsonSchema, { depth: null });
-  },
-});
+// Argument of type 'ZodCustom<Uint8Array<ArrayBuffer>, unknown>' is not assignable to parameter of type '$ZodType<any, Uint8Array<ArrayBuffer>>'.
+z.pipe(z.pipe(z.string(), z.transform(fn)), z.instanceof(Uint8Array));

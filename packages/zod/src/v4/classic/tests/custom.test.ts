@@ -14,3 +14,10 @@ test("string params", () => {
   expect(result.success).toEqual(false);
   expect(JSON.stringify(result.error).includes("customerr")).toEqual(true);
 });
+
+test("instanceof", () => {
+  const fn = (value: string) => Uint8Array.from(Buffer.from(value, "base64"));
+
+  // Argument of type 'ZodCustom<Uint8Array<ArrayBuffer>, unknown>' is not assignable to parameter of type '$ZodType<any, Uint8Array<ArrayBuffer>>'.
+  z.string().transform(fn).pipe(z.instanceof(Uint8Array));
+});
