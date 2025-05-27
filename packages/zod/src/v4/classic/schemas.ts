@@ -1071,10 +1071,13 @@ export interface ZodObject<
   ): ZodObject<util.Extend<Shape, U>, Config>;
 
   /**
-   * @deprecated Use destructuring to merge the shapes:
+   * @deprecated Use spread syntax and the `.shape` property to combine two object schemas:
    *
    * ```ts
-   * z.object({
+   * const A = z.object({ a: z.string() });
+   * const B = z.object({ b: z.number() });
+   *
+   * const C = z.object({
    *    ...A.shape,
    *    ...B.shape
    * });

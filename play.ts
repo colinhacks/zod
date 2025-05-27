@@ -1,8 +1,27 @@
-import * as z from "zod/v4-mini";
+import { z } from "zod/v4";
 
-z;
+const zval = z
+  .string()
+  .check((ctx) => {
+    console.log(`Checking value: ${ctx.value}`);
+    if (ctx.value !== "expected") {
+      ctx.issues.push({
+        message: `Value must be 'expected', got '${ctx.value}'`,
+        input: ctx.value,
+        code: "custom",
+        fatal: true,
+      });
+    }
+  })
+  .transform((val) => {
+    console.log(`Transforming value: ${val}`);
+    return val.toUpperCase();
+  })
+  .prefault("unexpected");
 
-const fn = (value: string) => Uint8Array.from(Buffer.from(value, "base64"));
+const obj = z.object({
+  test: zval,
+});
 
-// Argument of type 'ZodCustom<Uint8Array<ArrayBuffer>, unknown>' is not assignable to parameter of type '$ZodType<any, Uint8Array<ArrayBuffer>>'.
-z.pipe(z.pipe(z.string(), z.transform(fn)), z.instanceof(Uint8Array));
+console.log(obj.parse({ test: undefined })); // check runs, doesn't throw, transform not run
+console.log(zval.parse(undefined)); // check runs, throws
