@@ -1,7 +1,7 @@
 import { expect, expectTypeOf, test } from "vitest";
 import { z } from "zod/v4";
 
-test("recursion with z.lazy", () => {
+test("recursive types using getter property", () => {
   const data = {
     name: "I",
     subcategories: [
