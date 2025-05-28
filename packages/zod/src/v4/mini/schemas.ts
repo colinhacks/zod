@@ -878,15 +878,9 @@ export const ZodMiniDiscriminatedUnion: core.$constructor<ZodMiniDiscriminatedUn
   }
 );
 
-export interface $ZodTypeDiscriminableInternals extends core.$ZodTypeInternals {
-  disc: util.DiscriminatorMap;
-}
-
-export interface $ZodTypeDiscriminable extends ZodMiniType {
-  _zod: $ZodTypeDiscriminableInternals;
-}
-
-export function discriminatedUnion<Types extends readonly [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]]>(
+export function discriminatedUnion<
+  Types extends readonly [core.$ZodTypeDiscriminable, ...core.$ZodTypeDiscriminable[]],
+>(
   discriminator: string,
   options: Types,
   params?: string | core.$ZodDiscriminatedUnionParams

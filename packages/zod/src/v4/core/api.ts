@@ -1071,7 +1071,7 @@ export function _union<const T extends readonly schemas.$ZodObject[]>(
 
 // ZodDiscriminatedUnion
 export interface $ZodTypeDiscriminableInternals extends schemas.$ZodTypeInternals {
-  disc: util.DiscriminatorMap;
+  propValues: util.PropValues;
 }
 
 export interface $ZodTypeDiscriminable extends schemas.$ZodType {
