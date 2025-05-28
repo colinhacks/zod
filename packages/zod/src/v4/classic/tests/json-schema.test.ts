@@ -1037,6 +1037,7 @@ describe("toJSONSchema", () => {
     expect(JSON.stringify(result, null, 2)).toMatchInlineSnapshot(
       `
       "{
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "id": {
@@ -1050,8 +1051,7 @@ describe("toJSONSchema", () => {
           "id",
           "children"
         ],
-        "additionalProperties": false,
-        "$schema": "https://json-schema.org/draft/2020-12/schema"
+        "additionalProperties": false
       }"
     `
     );
@@ -1078,6 +1078,7 @@ describe("toJSONSchema", () => {
     expect(JSON.stringify(result, null, 2)).toMatchInlineSnapshot(
       `
       "{
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "name": {
@@ -1107,8 +1108,7 @@ describe("toJSONSchema", () => {
           "name",
           "files"
         ],
-        "additionalProperties": false,
-        "$schema": "https://json-schema.org/draft/2020-12/schema"
+        "additionalProperties": false
       }"
     `
     );
