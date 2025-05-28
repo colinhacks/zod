@@ -199,11 +199,11 @@ z.int64({
 To customize errors on a *per-parse* basis, pass an error map into the parse method:
 
 ```ts
-const schema = z.string()
+const schema = z.string();
 
 schema.parse(12, {
   error: iss => "per-parse custom error"
-};
+});
 ```
 
 This has *lower precedence* than any schema-level custom messages.
@@ -212,7 +212,7 @@ This has *lower precedence* than any schema-level custom messages.
 const schema = z.string({ error: "highest priority" });
 const result = schema.safeParse(12, {
   error: (iss) => "lower priority",
-})
+});
 
 result.error.issues;
 // [{ message: "highest priority", ... }]
@@ -233,7 +233,7 @@ const result = schema.safeParse(12, {
     }
     // ...
   }
-})
+});
 ```
 
 ## Global error customization
