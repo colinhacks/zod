@@ -112,3 +112,183 @@ test("object optionality", () => {
     hi: "hi",
   });
 });
+
+test("nested prefault/default", () => {
+  const a = z
+    .string()
+    .default("a")
+    .refine((val) => val.startsWith("a"));
+  const b = z
+    .string()
+    .refine((val) => val.startsWith("b"))
+    .default("b");
+  const c = z
+    .string()
+    .prefault("c")
+    .refine((val) => val.startsWith("c"));
+  const d = z
+    .string()
+    .refine((val) => val.startsWith("d"))
+    .prefault("d");
+
+  const obj = z.object({
+    a,
+    b,
+    c,
+    d,
+  });
+
+  expect(obj.safeParse({ a: "a1", b: "b1", c: "c1", d: "d1" })).toMatchInlineSnapshot(`
+    {
+      "data": {
+        "a": "a1",
+        "b": "b1",
+        "c": "c1",
+        "d": "d1",
+      },
+      "success": true,
+    }
+  `);
+
+  expect(obj.safeParse({ a: "f", b: "f", c: "f", d: "f" })).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "code": "custom",
+        "path": [
+          "a"
+        ],
+        "message": "Invalid input"
+      },
+      {
+        "code": "custom",
+        "path": [
+          "b"
+        ],
+        "message": "Invalid input"
+      },
+      {
+        "code": "custom",
+        "path": [
+          "c"
+        ],
+        "message": "Invalid input"
+      },
+      {
+        "code": "custom",
+        "path": [
+          "d"
+        ],
+        "message": "Invalid input"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+
+  expect(obj.safeParse({})).toMatchInlineSnapshot(`
+    {
+      "data": {
+        "a": "a",
+        "b": "b",
+        "c": "c",
+        "d": "d",
+      },
+      "success": true,
+    }
+  `);
+
+  expect(obj.safeParse({ a: undefined, b: undefined, c: undefined, d: undefined })).toMatchInlineSnapshot(`
+    {
+      "data": {
+        "a": "a",
+        "b": "b",
+        "c": "c",
+        "d": "d",
+      },
+      "success": true,
+    }
+  `);
+
+  const obj2 = z.object({
+    a: a.optional(),
+    b: b.optional(),
+    c: c.optional(),
+    d: d.optional(),
+  });
+  expect(obj2.safeParse({ a: undefined, b: undefined, c: undefined, d: undefined })).toMatchInlineSnapshot(`
+    {
+      "data": {
+        "a": undefined,
+        "b": undefined,
+        "c": undefined,
+        "d": undefined,
+      },
+      "success": true,
+    }
+  `);
+
+  expect(a.parse(undefined)).toBe("a");
+  expect(b.parse(undefined)).toBe("b");
+  expect(c.parse(undefined)).toBe("c");
+  expect(d.parse(undefined)).toBe("d");
+});
+
+test("failing default", () => {
+  const a = z
+    .string()
+    .default("z")
+    .refine((val) => val.startsWith("a"));
+  const b = z
+    .string()
+    .refine((val) => val.startsWith("b"))
+    .default("z");
+  const c = z
+    .string()
+    .prefault("z")
+    .refine((val) => val.startsWith("c"));
+  const d = z
+    .string()
+    .refine((val) => val.startsWith("d"))
+    .prefault("z");
+
+  const obj = z.object({
+    a,
+    b,
+    c,
+    d,
+  });
+
+  expect(
+    obj.safeParse({
+      a: undefined,
+      b: undefined,
+      c: undefined,
+      d: undefined,
+    }).error!.issues
+  ).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "custom",
+        "message": "Invalid input",
+        "path": [
+          "a",
+        ],
+      },
+      {
+        "code": "custom",
+        "message": "Invalid input",
+        "path": [
+          "c",
+        ],
+      },
+      {
+        "code": "custom",
+        "message": "Invalid input",
+        "path": [
+          "d",
+        ],
+      },
+    ]
+  `);
+});
