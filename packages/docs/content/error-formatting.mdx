@@ -77,7 +77,7 @@ const tree = z.treeifyError(result.error);
 }
 ```
 
-The result is a nested structure that mirrors the schema itself. You can easily access the errors that occured at a particular path. The `errors` field contains the error messages at a given path, and the special properties `properties` and `items` let you traverse deeper into the tree.
+The result is a nested structure that mirrors the schema itself. You can easily access the errors that occurred at a particular path. The `errors` field contains the error messages at a given path, and the special properties `properties` and `items` let you traverse deeper into the tree.
 
 ```ts
 tree.properties?.username?.errors;
@@ -133,7 +133,7 @@ This returns the following string:
     }
     ```
 
-    The result is a nested structure that mirrors the schema itself. You can easily access the errors that occured at a particular path.
+    The result is a nested structure that mirrors the schema itself. You can easily access the errors that occurred at a particular path.
 
     ```ts
     formatted?.username?._errors;

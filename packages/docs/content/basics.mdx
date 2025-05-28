@@ -82,9 +82,9 @@ When validation fails, the `.parse()` method will throw a `ZodError` instance wi
 ```ts
 try {
   Player.parse({ username: 42, xp: "100" });
-} catch(err){
+} catch(error){
   if(error instanceof z.ZodError){
-    err.issues; 
+    error.issues; 
     /* [
       {
         expected: 'string',
@@ -107,9 +107,9 @@ try {
 ```ts
 try {
   Player.parse({ username: 42, xp: "100" });
-} catch(err){
+} catch(error){
   if(error instanceof z.core.$ZodError){
-    err.issues; 
+    error.issues; 
     /* [
       {
         expected: 'string',

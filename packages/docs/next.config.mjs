@@ -126,7 +126,7 @@ const config = {
           strip: "objects",
           catchall: "catchall",
 
-          // composits
+          // composites
           arrays: "arrays",
           element: "arrays",
           nonempty: "arrays",
