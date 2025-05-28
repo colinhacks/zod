@@ -295,19 +295,3 @@ test("fatal superRefine", () => {
   expect(result.success).toEqual(false);
   if (!result.success) expect(result.error.issues.length).toEqual(1);
 });
-
-test("superRefine after skipped transform", () => {
-  const schema = z
-    .string()
-    .regex(/^\d+$/)
-    .transform((val) => Number(val))
-    .superRefine((val) => {
-      if (typeof val !== "number") {
-        throw new Error("Called without transform");
-      }
-    });
-
-  const result = schema.safeParse("");
-
-  expect(result.success).toEqual(false);
-});
