@@ -48,11 +48,12 @@ interface EmitParams {
     | undefined;
 }
 
-const formatMap: Partial<Record<checks.$ZodStringFormats, string>> = {
+const formatMap: Partial<Record<checks.$ZodStringFormats, string | undefined>> = {
   guid: "uuid",
   url: "uri",
   datetime: "date-time",
   json_string: "json-string",
+  regex: "", // do not set
 };
 
 interface Seen {
@@ -156,15 +157,16 @@ export class JSONSchemaGenerator {
           // custom pattern overrides format
           if (format) {
             json.format = formatMap[format as checks.$ZodStringFormats] ?? format;
+            if (json.format === "") delete json.format; // empty format is not valid
           }
           if (contentEncoding) json.contentEncoding = contentEncoding;
           if (patterns && patterns.size > 0) {
             const regexes = [...patterns];
-            if (regexes.length === 1) {
-              json.pattern = regexes[0].source;
-            } else {
-              json.allOf = [
+            if (regexes.length === 1) json.pattern = regexes[0].source;
+            else if (regexes.length > 1) {
+              result.schema.allOf = [
                 ...regexes.map((regex) => ({
+                  ...(this.target === "draft-7" ? { type: "string" } : {}),
                   pattern: regex.source,
                 })),
               ];

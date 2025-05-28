@@ -361,7 +361,6 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(z.string().regex(/asdf/))).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "format": "regex",
         "pattern": "asdf",
         "type": "string",
       }
@@ -369,46 +368,57 @@ describe("toJSONSchema", () => {
   });
 
   test("string patterns", () => {
-    expect(z.toJSONSchema(z.string().startsWith("hello").includes("cruel").endsWith("world"))).toMatchInlineSnapshot(`
-  {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "allOf": [
+    expect(
+      z.toJSONSchema(z.string().startsWith("hello").includes("cruel").endsWith("world").regex(/stuff/))
+    ).toMatchInlineSnapshot(`
       {
-        "pattern": "^hello.*",
-      },
-      {
-        "pattern": "cruel",
-      },
-      {
-        "pattern": ".*world$",
-      },
-    ],
-    "type": "string",
-  }
-`);
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "allOf": [
+          {
+            "pattern": "^hello.*",
+          },
+          {
+            "pattern": "cruel",
+          },
+          {
+            "pattern": ".*world$",
+          },
+          {
+            "pattern": "stuff",
+          },
+        ],
+        "type": "string",
+      }
+    `);
 
     expect(
-      z.toJSONSchema(
-        z
-          .string()
-          .regex(/^hello/)
-          .regex(/world$/)
-      )
+      z.toJSONSchema(z.string().startsWith("hello").includes("cruel").endsWith("world").regex(/stuff/), {
+        target: "draft-7",
+      })
     ).toMatchInlineSnapshot(`
-  {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "allOf": [
       {
-        "pattern": "^hello",
-      },
-      {
-        "pattern": "world$",
-      },
-    ],
-    "format": "regex",
-    "type": "string",
-  }
-`);
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "allOf": [
+          {
+            "pattern": "^hello.*",
+            "type": "string",
+          },
+          {
+            "pattern": "cruel",
+            "type": "string",
+          },
+          {
+            "pattern": ".*world$",
+            "type": "string",
+          },
+          {
+            "pattern": "stuff",
+            "type": "string",
+          },
+        ],
+        "type": "string",
+      }
+    `);
   });
 
   test("number constraints", () => {
