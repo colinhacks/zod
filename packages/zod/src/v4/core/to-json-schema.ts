@@ -618,8 +618,8 @@ export class JSONSchemaGenerator {
       const schema = seen.schema;
       for (const key in schema) {
         delete schema[key];
-        schema.$ref = ref;
       }
+      schema.$ref = ref;
     };
 
     // extract schemas into $defs
