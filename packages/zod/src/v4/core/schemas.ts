@@ -1626,6 +1626,11 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
 
   const _normalized = util.cached(() => {
     const keys = Object.keys(def.shape);
+    for (const k of keys) {
+      if (!(def.shape[k] instanceof $ZodType)) {
+        throw new Error(`Invalid element at key "${k}": expected a Zod schema`);
+      }
+    }
     const okeys = util.optionalKeys(def.shape);
 
     return {

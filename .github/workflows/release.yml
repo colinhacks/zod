@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - "packages/zod/package.json"
+      - "packages/zod/src/**"
       - ".github/workflows/release.yml"
 
 jobs:

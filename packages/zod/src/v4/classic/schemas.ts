@@ -1156,12 +1156,10 @@ export function object<T extends core.$ZodLooseShape = Partial<Record<never, cor
 ): ZodObject<util.Writeable<T> & {}, core.$strip> {
   const def: core.$ZodObjectDef = {
     type: "object",
-
     get shape() {
       util.assignProp(this, "shape", { ...shape });
       return this.shape;
     },
-
     ...util.normalizeParams(params),
   };
   return new ZodObject(def) as any;
