@@ -287,7 +287,10 @@ export class JSONSchemaGenerator {
               }
             })
           );
-          json.required = Array.from(requiredKeys);
+
+          if (requiredKeys.size > 0) {
+            json.required = Array.from(requiredKeys);
+          }
 
           // catchall
           if (def.catchall?._zod.def.type === "never") {
