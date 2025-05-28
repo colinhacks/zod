@@ -499,7 +499,7 @@ export class JSONSchemaGenerator {
           break;
         }
         case "pipe": {
-          const innerType = this.io === "input" ? (def.in._zod.def.type === "transform" ? def.out : def.in) : def.out;
+          const innerType = this.io === "input" ? def.in : def.out;
           this.process(innerType, params);
           result.ref = innerType;
           break;

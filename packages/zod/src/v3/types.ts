@@ -4074,7 +4074,7 @@ function createZodEnum(values: [string, ...string[]], params?: RawCreateParams) 
 }
 
 export class ZodEnum<T extends [string, ...string[]]> extends ZodType<T[number], ZodEnumDef<T>, T[number]> {
-  _cache: Set<T[number]> | undefined;
+  #cache: Set<T[number]> | undefined;
 
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     if (typeof input.data !== "string") {
@@ -4088,11 +4088,11 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<T[number],
       return INVALID;
     }
 
-    if (!this._cache) {
-      this._cache = new Set(this._def.values);
+    if (!this.#cache) {
+      this.#cache = new Set(this._def.values);
     }
 
-    if (!this._cache.has(input.data)) {
+    if (!this.#cache.has(input.data)) {
       const ctx = this._getOrReturnCtx(input);
       const expectedValues = this._def.values;
 
@@ -4172,7 +4172,7 @@ export interface ZodNativeEnumDef<T extends EnumLike = EnumLike> extends ZodType
 export type EnumLike = { [k: string]: string | number; [nu: number]: string };
 
 export class ZodNativeEnum<T extends EnumLike> extends ZodType<T[keyof T], ZodNativeEnumDef<T>, T[keyof T]> {
-  _cache: Set<T[keyof T]> | undefined;
+  #cache: Set<T[keyof T]> | undefined;
   _parse(input: ParseInput): ParseReturnType<T[keyof T]> {
     const nativeEnumValues = util.getValidEnumValues(this._def.values);
 
@@ -4187,11 +4187,11 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<T[keyof T], ZodNa
       return INVALID;
     }
 
-    if (!this._cache) {
-      this._cache = new Set(util.getValidEnumValues(this._def.values));
+    if (!this.#cache) {
+      this.#cache = new Set(util.getValidEnumValues(this._def.values));
     }
 
-    if (!this._cache.has(input.data)) {
+    if (!this.#cache.has(input.data)) {
       const expectedValues = util.objectValues(nativeEnumValues);
 
       addIssueToContext(ctx, {
@@ -4411,7 +4411,7 @@ export class ZodEffects<T extends ZodTypeAny, Output = output<T>, Input = input<
           parent: ctx,
         });
 
-        if (!isValid(base)) return INVALID;
+        if (!isValid(base)) return base;
 
         const result = effect.transform(base.value, checkCtx);
         if (result instanceof Promise) {
@@ -4423,7 +4423,7 @@ export class ZodEffects<T extends ZodTypeAny, Output = output<T>, Input = input<
         return { status: status.value, value: result };
       } else {
         return this._def.schema._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx }).then((base) => {
-          if (!isValid(base)) return INVALID;
+          if (!isValid(base)) return base;
 
           return Promise.resolve(effect.transform(base.value, checkCtx)).then((result) => ({
             status: status.value,
