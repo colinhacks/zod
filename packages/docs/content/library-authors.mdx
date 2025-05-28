@@ -190,17 +190,6 @@ inferSchema(z.string());
 // => ZodString
 ```
 
-The result is now fully and properly typed, you can extract & use the inferred type of the schema:
-
-```ts
-function parseData<T extends z.ZodTypeAny>(data: unknown, schema: T): z.output<T> {
-  return schema.parse(data);
-}
-
-parseData("sup", z.string());
-// => string
-```
-
 To constrain the input schema to a specific subclass:
 
 ```ts
@@ -231,3 +220,13 @@ inferSchema(z.number());
 // // Type 'number' is not assignable to type 'string'
 ```
 
+To parse data with the schema, use the top-level `z.parse`/`z.safeParse`/`z.parseAsync`/`z.safeParseAsync` functions. The `z.core.$ZodType` subclass has no methods on it. The usual parsing methods are implemented by Zod and Zod Mini, but are not available in Zod Core.
+
+```ts
+function parseData<T extends z.core.$ZodType>(data: unknown, schema: T): z.output<T> {
+  return z.parse(schema, data);
+}
+
+parseData("sup", z.string());
+// => string
+```
