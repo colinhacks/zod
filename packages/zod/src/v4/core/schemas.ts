@@ -289,8 +289,9 @@ export interface $ZodStringInternals<Input> extends $ZodTypeInternals<string, In
   bag: util.LoosePartial<{
     minimum: number;
     maximum: number;
-    pattern: RegExp;
+    patterns: Set<RegExp>;
     format: string;
+    contentEncoding: string;
   }>;
 }
 
@@ -300,7 +301,7 @@ export interface $ZodString<Input = unknown> extends $ZodType {
 
 export const $ZodString: core.$constructor<$ZodString> = /*@__PURE__*/ core.$constructor("$ZodString", (inst, def) => {
   $ZodType.init(inst, def);
-  inst._zod.pattern = inst?._zod.bag?.pattern ?? regexes.string(inst._zod.bag);
+  inst._zod.pattern = [...(inst?._zod.bag?.patterns ?? [])].pop() ?? regexes.string(inst._zod.bag);
   inst._zod.parse = (payload, _) => {
     if (def.coerce)
       try {
@@ -675,7 +676,8 @@ export const $ZodIPv4: core.$constructor<$ZodIPv4> = /*@__PURE__*/ core.$constru
   def.pattern ??= regexes.ipv4;
   $ZodStringFormat.init(inst, def);
   inst._zod.onattach.push((inst) => {
-    inst._zod.bag.format = `ipv4`;
+    const bag = inst._zod.bag as $ZodStringInternals<unknown>["bag"];
+    bag.format = `ipv4`;
   });
 });
 
@@ -698,7 +700,8 @@ export const $ZodIPv6: core.$constructor<$ZodIPv6> = /*@__PURE__*/ core.$constru
   $ZodStringFormat.init(inst, def);
 
   inst._zod.onattach.push((inst) => {
-    inst._zod.bag.format = `ipv6`;
+    const bag = inst._zod.bag as $ZodStringInternals<unknown>["bag"];
+    bag.format = `ipv6`;
   });
 
   inst._zod.check = (payload) => {

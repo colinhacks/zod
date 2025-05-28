@@ -149,23 +149,31 @@ export class JSONSchemaGenerator {
         case "string": {
           const json: JSONSchema.StringSchema = _json as any;
           json.type = "string";
-          const { minimum, maximum, format, pattern, contentEncoding } = schema._zod.bag as {
-            minimum?: number;
-            maximum?: number;
-            format?: checks.$ZodStringFormats;
-            pattern?: RegExp;
-            contentEncoding?: string;
-          };
+          const { minimum, maximum, format, patterns, contentEncoding } = schema._zod
+            .bag as schemas.$ZodStringInternals<unknown>["bag"];
           if (typeof minimum === "number") json.minLength = minimum;
           if (typeof maximum === "number") json.maxLength = maximum;
           // custom pattern overrides format
           if (format) {
-            json.format = formatMap[format] ?? format;
-          }
-          if (pattern) {
-            json.pattern = pattern.source;
+            json.format = formatMap[format as checks.$ZodStringFormats] ?? format;
           }
           if (contentEncoding) json.contentEncoding = contentEncoding;
+          if (patterns) {
+            const regexes = [...patterns];
+            json.pattern = regexes[0].source;
+
+            if (regexes.length > 1) {
+              result.schema = {
+                allOf: [
+                  json,
+                  ...regexes.slice(1).map((regex) => ({
+                    type: "string",
+                    pattern: regex.source,
+                  })),
+                ],
+              };
+            }
+          }
 
           break;
         }
