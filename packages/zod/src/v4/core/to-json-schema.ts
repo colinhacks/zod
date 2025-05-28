@@ -709,7 +709,16 @@ export class JSONSchemaGenerator {
       flattenRef(entry[0], { target: this.target });
     }
 
-    const result = { ...root.def };
+    const result: JSONSchema.BaseSchema = {};
+    if (this.target === "draft-2020-12") {
+      result.$schema = "https://json-schema.org/draft/2020-12/schema";
+    } else if (this.target === "draft-7") {
+      result.$schema = "http://json-schema.org/draft-07/schema#";
+    } else {
+      console.warn(`Invalid target: ${this.target}`);
+    }
+
+    Object.assign(result, root.def);
 
     const defs: JSONSchema.BaseSchema["$defs"] = params.external?.defs ?? {};
     for (const entry of this.seen.entries()) {
@@ -726,14 +735,6 @@ export class JSONSchemaGenerator {
       } else {
         result.definitions = defs;
       }
-    }
-
-    if (this.target === "draft-2020-12") {
-      result.$schema = "https://json-schema.org/draft/2020-12/schema";
-    } else if (this.target === "draft-7") {
-      result.$schema = "http://json-schema.org/draft-07/schema#";
-    } else {
-      console.warn(`Invalid target: ${this.target}`);
     }
 
     try {
