@@ -1943,3 +1943,14 @@ test("examples on pipe", () => {
 //   `);
 
 // });
+
+test("use output type for preprocess", () => {
+  const a = z.preprocess((val) => String(val), z.string());
+
+  expect(z.toJSONSchema(a, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+    }
+  `);
+});
