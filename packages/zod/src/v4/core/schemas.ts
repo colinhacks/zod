@@ -116,16 +116,19 @@ export interface $ZodTypeInternals<out O = unknown, out I = unknown> {
   optin?: "optional" | undefined;
   optout?: "optional" | undefined;
 
-  /** @internal A set of literal discriminators used for the fast path in discriminated unions. */
-  disc: util.DiscriminatorMap | undefined;
-
   /** @internal The set of literal values that will pass validation. Must be an exhaustive set. Used to determine optionality in z.record().
    *
    * Defined on: enum, const, literal, null, undefined
    * Passthrough: optional, nullable, branded, default, catch, pipe
    * Todo: unions?
    */
-  values: util.PrimitiveSet | undefined;
+  values?: util.PrimitiveSet | undefined;
+
+  /** @internal A set of literal discriminators used for the fast path in discriminated unions. */
+  propValues?: util.PropValues | undefined;
+
+  /** @internal A set of literal discriminators used for the fast path in discriminated unions. */
+  disc?: util.DiscriminatorMap | undefined;
 
   /** @internal This flag indicates that a schema validation can be represented with a regular expression. Used to determine allowable schemas in z.templateLiteral(). */
   pattern: RegExp | undefined;
@@ -1642,25 +1645,20 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     };
   });
 
-  util.defineLazy(inst._zod, "disc", () => {
+  util.defineLazy(inst._zod, "propValues", () => {
     const shape = def.shape;
-    const discMap: util.DiscriminatorMap = new Map();
-    let hasDisc = false;
+    const propValues: util.PropValues = {};
     for (const key in shape) {
       const field = shape[key]._zod;
-      if (field.values || field.disc) {
-        hasDisc = true;
-        const o: util.DiscriminatorMapElement = {
-          values: new Set(field.values ?? []),
-          maps: field.disc ? [field.disc] : [],
-        };
-        discMap.set(key, o);
+      if (field.values) {
+        propValues[key] ??= new Set();
+        for (const v of field.values) propValues[key].add(v);
+      }
+      if (field.propValues) {
+        throw new Error("Object discriminators not supported.");
       }
     }
-    if (!hasDisc) {
-      return undefined as any;
-    }
-    return discMap;
+    return propValues;
   });
 
   const generateFastpass = (shape: any) => {
@@ -2008,6 +2006,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
       for (const o of def.options) {
         const discEl = o._zod.disc?.get(def.discriminator);
         if (!discEl) throw new Error("Invalid discriminated union option");
+        // if(map.has(o)) throw new Error(`Duplicate discriminator value "${String(v)}" for key "${String(key)}"`);
         map.set(o, discEl);
       }
       return map;
