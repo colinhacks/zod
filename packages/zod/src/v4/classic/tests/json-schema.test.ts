@@ -375,17 +375,15 @@ describe("toJSONSchema", () => {
         "allOf": [
           {
             "pattern": "^hello.*",
-            "type": "string",
           },
           {
             "pattern": "cruel",
-            "type": "string",
           },
           {
             "pattern": ".*world$",
-            "type": "string",
           },
         ],
+        "type": "string",
       }
     `);
 
@@ -401,15 +399,14 @@ describe("toJSONSchema", () => {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "allOf": [
           {
-            "format": "regex",
             "pattern": "^hello",
-            "type": "string",
           },
           {
             "pattern": "world$",
-            "type": "string",
           },
         ],
+        "format": "regex",
+        "type": "string",
       }
     `);
   });

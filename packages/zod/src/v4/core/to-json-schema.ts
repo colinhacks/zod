@@ -158,20 +158,16 @@ export class JSONSchemaGenerator {
             json.format = formatMap[format as checks.$ZodStringFormats] ?? format;
           }
           if (contentEncoding) json.contentEncoding = contentEncoding;
-          if (patterns) {
+          if (patterns && patterns.size > 0) {
             const regexes = [...patterns];
-            json.pattern = regexes[0].source;
-
-            if (regexes.length > 1) {
-              result.schema = {
-                allOf: [
-                  json,
-                  ...regexes.slice(1).map((regex) => ({
-                    type: "string",
-                    pattern: regex.source,
-                  })),
-                ],
-              };
+            if (regexes.length === 1) {
+              json.pattern = regexes[0].source;
+            } else {
+              json.allOf = [
+                ...regexes.map((regex) => ({
+                  pattern: regex.source,
+                })),
+              ];
             }
           }
 
