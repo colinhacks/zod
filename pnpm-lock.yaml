@@ -210,6 +210,9 @@ importers:
       zod3:
         specifier: npm:zod@^3.24.0
         version: zod@3.24.2
+      zod4:
+        specifier: npm:zod@^3.25.0
+        version: zod@3.25.34
 
   packages/tsc:
     devDependencies:

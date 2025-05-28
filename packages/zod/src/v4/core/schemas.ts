@@ -128,9 +128,6 @@ export interface $ZodTypeInternals<out O = unknown, out I = unknown> {
   /** @internal A set of literal discriminators used for the fast path in discriminated unions. */
   propValues?: util.PropValues | undefined;
 
-  /** @internal A set of literal discriminators used for the fast path in discriminated unions. */
-  // disc?: util.DiscriminatorMap | undefined;
-
   /** @internal This flag indicates that a schema validation can be represented with a regular expression. Used to determine allowable schemas in z.templateLiteral(). */
   pattern: RegExp | undefined;
 
@@ -1532,7 +1529,6 @@ export interface $ZodObjectInternals<
   def: $ZodObjectDef<Shape>;
   config: Config;
   isst: errors.$ZodIssueInvalidType | errors.$ZodIssueUnrecognizedKeys;
-  // disc: util.DiscriminatorMap;
   propValues: util.PropValues;
   // special keys only used for objects
   // not defined on $ZodTypeInternals (base interface) because it breaks cyclical inference
@@ -1937,7 +1933,6 @@ export interface $ZodDiscriminatedUnionDef<Options extends readonly $ZodType[] =
 export interface $ZodDiscriminatedUnionInternals<Options extends readonly $ZodType[] = readonly $ZodType[]>
   extends $ZodUnionInternals<Options> {
   def: $ZodDiscriminatedUnionDef<Options>;
-  // disc: util.DiscriminatorMap;
   propValues: util.PropValues;
 }
 
@@ -1982,17 +1977,6 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
       return map;
     });
 
-    // const _discmap = util.cached(() => {
-    //   const map: Map<$ZodType, util.DiscriminatorMapElement> = new Map();
-    //   for (const o of def.options) {
-    //     const discEl = o._zod.disc?.get(def.discriminator);
-    //     if (!discEl) throw new Error("Invalid discriminated union option");
-    //     // if(map.has(o)) throw new Error(`Duplicate discriminator value "${String(v)}" for key "${String(key)}"`);
-    //     map.set(o, discEl);
-    //   }
-    //   return map;
-    // });
-
     inst._zod.parse = (payload, ctx) => {
       const input = payload.value;
       if (!util.isObject(input)) {
@@ -2010,7 +1994,6 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
         return opt._zod.run(payload, ctx) as any;
       }
 
-      // if (filtered.length === 1) return filtered[0]._zod.run(payload, ctx) as any;
       if (def.unionFallback) {
         return _super(payload, ctx);
       }
