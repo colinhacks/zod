@@ -1,4 +1,4 @@
-import { makeData, makeSchema, randomPick, randomString } from "./benchUtil.js";
+import { makeData, randomPick, randomString } from "./benchUtil.js";
 import { metabench } from "./metabench.js";
 
 
@@ -54,55 +54,54 @@ const z3DiscUnion = z3.discriminatedUnion("type", z3Union._def.options);
 
 function makeSchema(z: typeof z4){
    const z4fields = {
-  data1: z4.string(),
-  data2: z4.string(),
-  data3: z4.string(),
-  // data4: z4.string(),
-  // data5: z4.string(),
-  // data6: z4.string(),
-  // data7: z4.string(),
-  // data8: z4.string(),
-  // data9: z4.string(),
-  // data10: z4.string(),
-}
-const z4Union = z4.union([
-  z4.object({
-    type: z4.literal("a"),
-    ...z4fields
-  }),
-  z4.object({
-    type: z4.literal("b"),
-    ...z4fields
-  }),
-  z4.object({
-    type: z4.literal("c"),
-    ...z4fields
-  }),
-  z4.object({
-    type: z4.literal("d"),
-    ...z4fields
-  }),
-  z4.object({
-    type: z4.literal("e"),
-    ...z4fields
-  }),
-  z4.object({
-    type: z4.literal("f"),
-    ...z4fields
-  }),
-  z4.object({
-    type: z4.literal("g"),
-    ...z4fields
-  }),
-]);
-return z4Union;
+    data1: z.string(),
+    data2: z.string(),
+    data3: z.string(),
+    // data4: z.string(),
+    // data5: z.string(),
+    // data6: z.string(),
+    // data7: z.string(),
+    // data8: z.string(),
+    // data9: z.string(),
+    // data10: z.string(),
+  }
+  const z4Union = z.union([
+    z.object({
+      type: z.literal("a"),
+      ...z4fields
+    }),
+    z.object({
+      type: z.literal("b"),
+      ...z4fields
+    }),
+    z.object({
+      type: z.literal("c"),
+      ...z4fields
+    }),
+    z.object({
+      type: z.literal("d"),
+      ...z4fields
+    }),
+    z.object({
+      type: z.literal("e"),
+      ...z4fields
+    }),
+    z.object({
+      type: z.literal("f"),
+      ...z4fields
+    }),
+    z.object({
+      type: z.literal("g"),
+      ...z4fields
+    }),
+  ]);
+  return z4Union;
 
 }
 
 const z4Union = makeSchema(z4);
 const z4LibUnion  = makeSchema(z4lib as any);
-const z4LibDiscUnion  = z4lib.discriminatedUnion( z4LibUnion._def.options);
-
+const z4LibDiscUnion  = z4lib.discriminatedUnion("type", z4LibUnion._def.options as any);
 const z4DiscUnion = z4.discriminatedUnion("type", z4Union.def.options);
 
 const DATA = makeData(100, () => ({ 
