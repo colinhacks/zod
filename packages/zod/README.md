@@ -2,9 +2,9 @@
   <img src="logo.svg" width="200px" align="center" alt="Zod logo" />
   <h1 align="center">Zod</h1>
   <p align="center">
-    ✨ <a href="https://zod.dev">https://zod.dev</a> ✨
-    <br/>
     TypeScript-first schema validation with static type inference
+    <br/>
+    ✨ <a href="https://zod.dev/api">Read the docs at zod.dev →</a> ✨
   </p>
 </p>
 <br/>
@@ -23,10 +23,6 @@
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://discord.gg/RcG33DQJdf">Discord</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <a href="https://www.npmjs.com/package/zod">npm</a>
-  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <a href="https://github.com/colinhacks/zod/issues/new">Issues</a>
-  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://twitter.com/colinhacks">@colinhacks</a>
   <br />
 </div>
@@ -38,9 +34,9 @@
 
 <div align="center">
   <a href="https://jazz.tools/?utm_source=zod">
-    <picture width="95%" >
+    <picture width="85%" >
       <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/garden-co/jazz/938f6767e46cdfded60e50d99bf3b533f4809c68/homepage/homepage/public/Zod%20sponsor%20message.png">
-      <img alt="jazz logo" src="https://raw.githubusercontent.com/garden-co/jazz/938f6767e46cdfded60e50d99bf3b533f4809c68/homepage/homepage/public/Zod%20sponsor%20message.png" width="95%">
+      <img alt="jazz logo" src="https://raw.githubusercontent.com/garden-co/jazz/938f6767e46cdfded60e50d99bf3b533f4809c68/homepage/homepage/public/Zod%20sponsor%20message.png" width="85%">
     </picture>
   </a>
   <br/>
@@ -51,8 +47,7 @@
 <br/>
 <br/>
 
-
-### [Read the docs →](https://zod.dev)
+### [Read the docs →](https://zod.dev/api)
 
 <br/>
 <br/>
@@ -69,7 +64,9 @@ const User = z.object({
 });
 
 // some untrusted data...
-const input = { /* stuff */ };
+const input = {
+  /* stuff */
+};
 
 // the parsed result is validated and type safe!
 const data = User.parse(input);
@@ -106,24 +103,24 @@ npm install zod
 Before you can do anything else, you need to define a schema. For the purposes of this guide, we'll use a simple object schema.
 
 ```ts
-import { z } from "zod/v4"; 
+import { z } from "zod/v4";
 
-const Player = z.object({ 
+const Player = z.object({
   username: z.string(),
-  xp: z.number()
+  xp: z.number(),
 });
 ```
- 
+
 ### Parsing data
 
-Given any Zod schema, use `.parse` to validate an input. If it's valid, Zod returns a strongly-typed *deep clone* of the input. 
+Given any Zod schema, use `.parse` to validate an input. If it's valid, Zod returns a strongly-typed _deep clone_ of the input.
 
 ```ts
-Player.parse({ username: "billie", xp: 100 }); 
+Player.parse({ username: "billie", xp: 100 });
 // => returns { username: "billie", xp: 100 }
 ```
 
-**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](#transform), you'll need to use the `.parseAsync()` method instead. 
+**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](#transform), you'll need to use the `.parseAsync()` method instead.
 
 ```ts
 const schema = z.string().refine(async (val) => val.length <= 8);
@@ -136,13 +133,12 @@ await schema.parseAsync("hello");
 
 When validation fails, the `.parse()` method will throw a `ZodError` instance with granular information about the validation issues.
 
-
 ```ts
 try {
   Player.parse({ username: 42, xp: "100" });
-} catch(err){
-  if(error instanceof z.ZodError){
-    err.issues; 
+} catch (err) {
+  if (error instanceof z.ZodError) {
+    err.issues;
     /* [
       {
         expected: 'string',
@@ -166,13 +162,13 @@ To avoid a `try/catch` block, you can use the `.safeParse()` method to get back 
 ```ts
 const result = Player.safeParse({ username: 42, xp: "100" });
 if (!result.success) {
-  result.error;   // ZodError instance
+  result.error; // ZodError instance
 } else {
-  result.data;    // { username: string; xp: number }
+  result.data; // { username: string; xp: number }
 }
 ```
 
-**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](#transform), you'll need to use the `.safeParseAsync()` method instead. 
+**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](#transform), you'll need to use the `.safeParseAsync()` method instead.
 
 ```ts
 const schema = z.string().refine(async (val) => val.length <= 8);
@@ -186,9 +182,9 @@ await schema.safeParseAsync("hello");
 Zod infers a static type from your schema definitions. You can extract this type with the `z.infer<>` utility and use it however you like.
 
 ```ts
-const Player = z.object({ 
+const Player = z.object({
   username: z.string(),
-  xp: z.number()
+  xp: z.number(),
 });
 
 // extract the inferred type
