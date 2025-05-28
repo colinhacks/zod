@@ -733,10 +733,11 @@ strbool.parse(/* anything else */); // ZodError<[{ code: "invalid_value" }]>
 To customize the truthy and falsy values:
 
 ```ts
+// these are the defaults
 z.stringbool({
-  truthy: ["yes", "true"],
-  falsy: ["no", "false"]
-})
+  truthy: ["true", "1", "yes", "on", "y", "enabled"],
+  falsy: ["false", "0", "no", "off", "n", "disabled"],
+});
 ```
 
 Be default the schema is *case-insensitive*; all inputs are converted to lowercase before comparison to the `truthy`/`falsy` values. To make it case-sensitive:
