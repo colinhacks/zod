@@ -136,7 +136,7 @@ console.dir(z4LibDiscUnion.parse(DATA[0]), {depth: null});
 
 
 const args=  {jitless: true}
-const bench = metabench("z.disriminatedUnion().parse", {
+const bench = metabench("z.discriminatedUnion().parse", {
   // z3() {
   //   for (const item of DATA) {
   //     z3Union.parse(item);
