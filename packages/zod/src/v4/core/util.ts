@@ -177,12 +177,13 @@ export type SafeParseError<T> = {
   error: errors.$ZodError<T>;
 };
 
-export type DiscriminatorMapElement = {
-  values: Set<Primitive>;
-  maps: DiscriminatorMap[];
-};
-export type DiscriminatorMap = Map<PropertyKey, DiscriminatorMapElement>;
+// export type DiscriminatorMapElement = {
+//   values: Set<Primitive>;
+//   maps: DiscriminatorMap[];
+// };
+export type PropValues = Record<string, Set<Primitive>>;
 export type PrimitiveSet = Set<Primitive>;
+export type DiscriminatorMap = Map<Primitive, schemas.$ZodType>;
 
 // functions
 export function assertEqual<A, B>(val: AssertEqual<A, B>): AssertEqual<A, B> {

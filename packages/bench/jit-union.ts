@@ -74,7 +74,7 @@ const DATA = makeData(100, () => ({
 const args=  {jitless: true}
 console.dir(z4Union.parse(DATA[0]), {depth: null});
 console.dir(z4Union.parse(DATA[0], args), {depth: null});
-const bench = metabench("z.disriminatedUnion().parse", {
+const bench = metabench("z.discriminatedUnion().parse", {
 
   v4_jit() {
     for (const item of DATA) {

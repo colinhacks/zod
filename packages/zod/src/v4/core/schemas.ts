@@ -1,3 +1,4 @@
+import type { $ZodTypeDiscriminable } from "./api.js";
 import * as checks from "./checks.js";
 import * as core from "./core.js";
 import { Doc } from "./doc.js";
@@ -116,16 +117,16 @@ export interface $ZodTypeInternals<out O = unknown, out I = unknown> {
   optin?: "optional" | undefined;
   optout?: "optional" | undefined;
 
-  /** @internal A set of literal discriminators used for the fast path in discriminated unions. */
-  disc: util.DiscriminatorMap | undefined;
-
   /** @internal The set of literal values that will pass validation. Must be an exhaustive set. Used to determine optionality in z.record().
    *
    * Defined on: enum, const, literal, null, undefined
    * Passthrough: optional, nullable, branded, default, catch, pipe
    * Todo: unions?
    */
-  values: util.PrimitiveSet | undefined;
+  values?: util.PrimitiveSet | undefined;
+
+  /** @internal A set of literal discriminators used for the fast path in discriminated unions. */
+  propValues?: util.PropValues | undefined;
 
   /** @internal This flag indicates that a schema validation can be represented with a regular expression. Used to determine allowable schemas in z.templateLiteral(). */
   pattern: RegExp | undefined;
@@ -1528,7 +1529,7 @@ export interface $ZodObjectInternals<
   def: $ZodObjectDef<Shape>;
   config: Config;
   isst: errors.$ZodIssueInvalidType | errors.$ZodIssueUnrecognizedKeys;
-  disc: util.DiscriminatorMap;
+  propValues: util.PropValues;
   // special keys only used for objects
   // not defined on $ZodTypeInternals (base interface) because it breaks cyclical inference
   // the z.infer<> util checks for these first when extracting inferred type
@@ -1642,25 +1643,17 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     };
   });
 
-  util.defineLazy(inst._zod, "disc", () => {
+  util.defineLazy(inst._zod, "propValues", () => {
     const shape = def.shape;
-    const discMap: util.DiscriminatorMap = new Map();
-    let hasDisc = false;
+    const propValues: util.PropValues = {};
     for (const key in shape) {
       const field = shape[key]._zod;
-      if (field.values || field.disc) {
-        hasDisc = true;
-        const o: util.DiscriminatorMapElement = {
-          values: new Set(field.values ?? []),
-          maps: field.disc ? [field.disc] : [],
-        };
-        discMap.set(key, o);
+      if (field.values) {
+        propValues[key] ??= new Set();
+        for (const v of field.values) propValues[key].add(v);
       }
     }
-    if (!hasDisc) {
-      return undefined as any;
-    }
-    return discMap;
+    return propValues;
   });
 
   const generateFastpass = (shape: any) => {
@@ -1940,40 +1933,11 @@ export interface $ZodDiscriminatedUnionDef<Options extends readonly $ZodType[] =
 export interface $ZodDiscriminatedUnionInternals<Options extends readonly $ZodType[] = readonly $ZodType[]>
   extends $ZodUnionInternals<Options> {
   def: $ZodDiscriminatedUnionDef<Options>;
-  disc: util.DiscriminatorMap;
+  propValues: util.PropValues;
 }
 
 export interface $ZodDiscriminatedUnion<T extends readonly $ZodType[] = readonly $ZodType[]> extends $ZodType {
   _zod: $ZodDiscriminatedUnionInternals<T>;
-}
-
-function matchDiscriminatorAtKey(input: any, key: PropertyKey, disc: util.DiscriminatorMapElement): boolean {
-  let matched = true;
-  const data = input?.[key];
-
-  if (disc.values.size && !disc.values.has(data)) {
-    matched = false;
-  }
-  if (disc.maps.length > 0) {
-    for (const m of disc.maps) {
-      if (!matchDiscriminators(data, m)) {
-        matched = false;
-      }
-    }
-  }
-
-  return matched;
-}
-
-function matchDiscriminators(input: any, discs: util.DiscriminatorMap): boolean {
-  let matched = true;
-  for (const [key, value] of discs) {
-    if (!matchDiscriminatorAtKey(input, key, value)) {
-      matched = false;
-    }
-  }
-
-  return matched;
 }
 
 export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
@@ -1982,33 +1946,33 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
     $ZodUnion.init(inst, def);
 
     const _super = inst._zod.parse;
-    util.defineLazy(inst._zod, "disc", () => {
-      const _disc: util.DiscriminatorMap = new Map();
-      for (const el of def.options) {
-        const subdisc = el._zod.disc;
-        if (!subdisc) throw new Error(`Invalid discriminated union option at index "${def.options.indexOf(el)}"`);
-        for (const [key, o] of subdisc) {
-          if (!_disc.has(key))
-            _disc.set(key, {
-              values: new Set(),
-              maps: [],
-            });
-          const _o = _disc.get(key)!;
-          for (const v of o.values) {
-            _o.values.add(v);
+    util.defineLazy(inst._zod, "propValues", () => {
+      const propValues: util.PropValues = {};
+      for (const option of def.options) {
+        const pv = option._zod.propValues;
+        if (!pv || Object.keys(pv).length === 0)
+          throw new Error(`Invalid discriminated union option at index "${def.options.indexOf(option)}"`);
+        for (const [k, v] of Object.entries(pv!)) {
+          if (!propValues[k]) propValues[k] = new Set();
+          for (const val of v) {
+            propValues[k].add(val);
           }
-          for (const m of o.maps) _o.maps.push(m);
         }
       }
-      return _disc;
+      return propValues;
     });
 
-    const _discmap = util.cached(() => {
-      const map: Map<$ZodType, util.DiscriminatorMapElement> = new Map();
-      for (const o of def.options) {
-        const discEl = o._zod.disc?.get(def.discriminator);
-        if (!discEl) throw new Error("Invalid discriminated union option");
-        map.set(o, discEl);
+    const disc = util.cached(() => {
+      const opts = def.options as $ZodTypeDiscriminable[];
+      const map: Map<util.Primitive, $ZodType> = new Map();
+      for (const o of opts) {
+        const values = o._zod.propValues[def.discriminator];
+        for (const v of values) {
+          if (map.has(v)) {
+            throw new Error(`Duplicate discriminator value "${String(v)}"`);
+          }
+          map.set(v, o);
+        }
       }
       return map;
     });
@@ -2025,16 +1989,11 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
         return payload;
       }
 
-      const filtered: $ZodType[] = [];
-      const discmap = _discmap.value;
-      for (const option of def.options) {
-        const subdisc = discmap.get(option)!;
-        if (matchDiscriminatorAtKey(input, def.discriminator, subdisc)) {
-          filtered.push(option);
-        }
+      const opt = disc.value.get(input?.[def.discriminator] as any);
+      if (opt) {
+        return opt._zod.run(payload, ctx) as any;
       }
 
-      if (filtered.length === 1) return filtered[0]._zod.run(payload, ctx) as any;
       if (def.unionFallback) {
         return _super(payload, ctx);
       }
@@ -3407,7 +3366,7 @@ export interface $ZodReadonlyInternals<T extends $ZodType = $ZodType>
   optin: T["_zod"]["optin"];
   optout: T["_zod"]["optout"];
   isst: never;
-  disc: T["_zod"]["disc"];
+  propValues: T["_zod"]["propValues"];
 }
 
 export interface $ZodReadonly<T extends $ZodType = $ZodType> extends $ZodType {
@@ -3418,7 +3377,7 @@ export const $ZodReadonly: core.$constructor<$ZodReadonly> = /*@__PURE__*/ core.
   "$ZodReadonly",
   (inst, def) => {
     $ZodType.init(inst, def);
-    util.defineLazy(inst._zod, "disc", () => def.innerType._zod.disc);
+    util.defineLazy(inst._zod, "propValues", () => def.innerType._zod.propValues);
     util.defineLazy(inst._zod, "optin", () => def.innerType._zod.optin);
     util.defineLazy(inst._zod, "optout", () => def.innerType._zod.optout);
 
@@ -3592,7 +3551,7 @@ export interface $ZodLazyInternals<T extends $ZodType = $ZodType>
   /** Auto-cached way to retrieve the inner schema */
   innerType: T;
   pattern: T["_zod"]["pattern"];
-  disc: T["_zod"]["disc"];
+  propValues: T["_zod"]["propValues"];
   optin: T["_zod"]["optin"];
   optout: T["_zod"]["optout"];
 }
@@ -3606,7 +3565,7 @@ export const $ZodLazy: core.$constructor<$ZodLazy> = /*@__PURE__*/ core.$constru
 
   util.defineLazy(inst._zod, "innerType", () => def.getter());
   util.defineLazy(inst._zod, "pattern", () => inst._zod.innerType._zod.pattern);
-  util.defineLazy(inst._zod, "disc", () => inst._zod.innerType._zod.disc);
+  util.defineLazy(inst._zod, "propValues", () => inst._zod.innerType._zod.propValues);
   util.defineLazy(inst._zod, "optin", () => inst._zod.innerType._zod.optin);
   util.defineLazy(inst._zod, "optout", () => inst._zod.innerType._zod.optout);
   inst._zod.parse = (payload, ctx) => {
