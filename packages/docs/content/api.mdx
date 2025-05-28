@@ -174,8 +174,8 @@ z.string().lowercase();
 </Tab>
 <Tab value="Zod Mini">
 ```ts zod/v4-mini
-z.string().check(z.maximum(5)); // or z.lte()
-z.string().check(z.minimum(5)); // or z.gte()
+z.string().check(z.maxLength(5));
+z.string().check(z.minLength(5));
 z.string().check(z.length(5));
 z.string().check(z.regex(/^[a-z]+$/));
 z.string().check(z.startsWith("aaa"));
@@ -481,9 +481,9 @@ z.number().multipleOf(5);              // alias .step(5)
 <Tab value="Zod Mini">
 ```ts zod/v4-mini
 z.number().check(z.gt(5));
-z.number().check(z.gte(5));            // alias .min(5)
+z.number().check(z.gte(5));            // alias .minimum(5)
 z.number().check(z.lt(5));
-z.number().check(z.lte(5));            // alias .max(5)
+z.number().check(z.lte(5));            // alias .maximum(5)
 z.number().check(z.positive()); 
 z.number().check(z.nonnegative()); 
 z.number().check(z.negative()); 
@@ -536,9 +536,9 @@ z.bigint().multipleOf(5n);             // alias `.step(5n)`
 <Tab value="Zod Mini">
 ```ts zod/v4-mini
 z.bigint().check(z.gt(5n));
-z.bigint().check(z.gte(5n));           // alias `.min(5n)`
+z.bigint().check(z.gte(5n));           // alias `.minimum(5n)`
 z.bigint().check(z.lt(5n));
-z.bigint().check(z.lte(5n));           // alias `.max(5n)`
+z.bigint().check(z.lte(5n));           // alias `.maximum(5n)`
 z.bigint().check(z.positive()); 
 z.bigint().check(z.nonnegative()); 
 z.bigint().check(z.negative()); 
