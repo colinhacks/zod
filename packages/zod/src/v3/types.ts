@@ -4411,7 +4411,7 @@ export class ZodEffects<T extends ZodTypeAny, Output = output<T>, Input = input<
           parent: ctx,
         });
 
-        if (!isValid(base)) return base;
+        if (!isValid(base)) return INVALID;
 
         const result = effect.transform(base.value, checkCtx);
         if (result instanceof Promise) {
@@ -4423,7 +4423,7 @@ export class ZodEffects<T extends ZodTypeAny, Output = output<T>, Input = input<
         return { status: status.value, value: result };
       } else {
         return this._def.schema._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx }).then((base) => {
-          if (!isValid(base)) return base;
+          if (!isValid(base)) return INVALID;
 
           return Promise.resolve(effect.transform(base.value, checkCtx)).then((result) => ({
             status: status.value,
