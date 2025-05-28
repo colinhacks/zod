@@ -1768,7 +1768,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
         // }
 
         const r = el._zod.run({ value: input[key], issues: [] }, ctx);
-        const isOptional = el._zod.optin === "optional";
+        const isOptional = el._zod.optin === "optional" && el._zod.optout === "optional";
 
         if (r instanceof Promise) {
           proms.push(

@@ -1,4 +1,4 @@
-import { z } from "zod/v4";
+import { z } from "zod/v4-mini";
 
 // const zval = z
 //   .string()
@@ -10,6 +10,8 @@ import { z } from "zod/v4";
 //         input: ctx.value,
 //         code: "custom",
 //         fatal: true,
+//         // continue: false,
+//         // fa
 //       });
 //     }
 //   })
@@ -23,11 +25,19 @@ import { z } from "zod/v4";
 //   test: zval,
 // });
 
-// console.log(obj.parse({ test: undefined })); // check runs, doesn't throw, transform not run
-// console.log(zval.parse(undefined)); // check runs, throws
+// console.log("NESTED");
+// console.log(obj.safeParse({ test: undefined }, { jitless: true })); // check runs, doesn't throw, transform not run
 
-try {
-  const result = z.stringbool("Wrong!").parse("");
-} catch (err) {
-  console.log(err);
-}
+// console.log("\n\nTOP LEVEL");
+// console.log(zval.safeParse(undefined, { jitless: true })); // check runs, throws
+
+const Shared = z.object({
+  label: z.string(),
+  description: z.string(),
+});
+
+const DU = z.discriminatedUnion("type", [
+  z.extend(Shared, { type: z.literal("a"), value: z.number() }),
+  z.extend(Shared, { type: z.literal("b"), value: z.string() }),
+  z.extend(Shared, { type: z.literal("c"), value: z.boolean() }),
+]);
