@@ -370,22 +370,22 @@ describe("toJSONSchema", () => {
 
   test("string patterns", () => {
     expect(z.toJSONSchema(z.string().startsWith("hello").includes("cruel").endsWith("world"))).toMatchInlineSnapshot(`
+  {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "allOf": [
       {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "allOf": [
-          {
-            "pattern": "^hello.*",
-          },
-          {
-            "pattern": "cruel",
-          },
-          {
-            "pattern": ".*world$",
-          },
-        ],
-        "type": "string",
-      }
-    `);
+        "pattern": "^hello.*",
+      },
+      {
+        "pattern": "cruel",
+      },
+      {
+        "pattern": ".*world$",
+      },
+    ],
+    "type": "string",
+  }
+`);
 
     expect(
       z.toJSONSchema(
@@ -395,20 +395,20 @@ describe("toJSONSchema", () => {
           .regex(/world$/)
       )
     ).toMatchInlineSnapshot(`
+  {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "allOf": [
       {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "allOf": [
-          {
-            "pattern": "^hello",
-          },
-          {
-            "pattern": "world$",
-          },
-        ],
-        "format": "regex",
-        "type": "string",
-      }
-    `);
+        "pattern": "^hello",
+      },
+      {
+        "pattern": "world$",
+      },
+    ],
+    "format": "regex",
+    "type": "string",
+  }
+`);
   });
 
   test("number constraints", () => {
