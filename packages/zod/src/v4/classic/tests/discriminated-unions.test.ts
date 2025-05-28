@@ -451,7 +451,7 @@ test("optional and nullable", () => {
   if (value.key === null) value.b;
 });
 
-test("multple discriminators", () => {
+test("multiple discriminators", () => {
   const FreeConfig = z.object({
     type: z.literal("free"),
     min_cents: z.null(),
