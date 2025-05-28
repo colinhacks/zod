@@ -10,7 +10,6 @@
   "keywords": ["typescript", "schema", "validation", "type", "inference"],
   "license": "MIT",
   "sideEffects": false,
-
   "main": "./dist/cjs/index.js",
   "types": "./dist/types/index.d.ts",
   "module": "./dist/esm/index.js",
