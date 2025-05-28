@@ -32,15 +32,13 @@ test("ctx.addIssue accepts string", () => {
   expect(result.error!.issues).toHaveLength(1);
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "custom",
-            "message": "bad stuff",
-            "path": [],
-          },
-        ],
-      },
+      "error": [ZodError: [
+      {
+        "message": "bad stuff",
+        "code": "custom",
+        "path": []
+      }
+    ]],
       "success": false,
     }
   `);
@@ -63,15 +61,13 @@ test("preprocess ctx.addIssue with parse", () => {
   expect(result.error!.issues).toHaveLength(1);
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "custom",
-            "message": "asdf is not one of our allowed strings",
-            "path": [],
-          },
-        ],
-      },
+      "error": [ZodError: [
+      {
+        "code": "custom",
+        "message": "asdf is not one of our allowed strings",
+        "path": []
+      }
+    ]],
       "success": false,
     }
   `);
@@ -90,21 +86,19 @@ test("preprocess ctx.addIssue non-fatal by default", () => {
   expect(result.error!.issues).toHaveLength(2);
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "custom",
-            "message": "custom error",
-            "path": [],
-          },
-          {
-            "code": "invalid_type",
-            "expected": "string",
-            "message": "Invalid input: expected string, received number",
-            "path": [],
-          },
-        ],
+      "error": [ZodError: [
+      {
+        "code": "custom",
+        "message": "custom error",
+        "path": []
       },
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": [],
+        "message": "Invalid input: expected string, received number"
+      }
+    ]],
       "success": false,
     }
   `);
@@ -127,17 +121,15 @@ test("preprocess ctx.addIssue fatal true", () => {
   expect(result.error!.issues).toHaveLength(1);
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "custom",
-            "fatal": true,
-            "message": "custom error",
-            "origin": "custom",
-            "path": [],
-          },
-        ],
-      },
+      "error": [ZodError: [
+      {
+        "code": "custom",
+        "origin": "custom",
+        "message": "custom error",
+        "fatal": true,
+        "path": []
+      }
+    ]],
       "success": false,
     }
   `);
@@ -158,15 +150,13 @@ test("async preprocess ctx.addIssue with parseAsync", async () => {
   expect(result.error!.issues).toHaveLength(1);
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "custom",
-            "message": "asdf is not one of our allowed strings",
-            "path": [],
-          },
-        ],
-      },
+      "error": [ZodError: [
+      {
+        "code": "custom",
+        "message": "asdf is not one of our allowed strings",
+        "path": []
+      }
+    ]],
       "success": false,
     }
   `);
@@ -188,21 +178,19 @@ test("z.NEVER in preprocess", () => {
   expect(result.error!.issues).toHaveLength(2);
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "custom",
-            "message": "bad",
-            "path": [],
-          },
-          {
-            "code": "invalid_type",
-            "expected": "number",
-            "message": "Invalid input: expected number, received object",
-            "path": [],
-          },
-        ],
+      "error": [ZodError: [
+      {
+        "code": "custom",
+        "message": "bad",
+        "path": []
       },
+      {
+        "expected": "number",
+        "code": "invalid_type",
+        "path": [],
+        "message": "Invalid input: expected number, received object"
+      }
+    ]],
       "success": false,
     }
   `);
@@ -221,29 +209,27 @@ test("preprocess as the second property of object", () => {
   expect(result.error!.issues).toHaveLength(2);
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "too_small",
-            "message": "Too small: expected string to have >1 characters",
-            "minimum": 1,
-            "origin": "string",
-            "path": [
-              "nonEmptyStr",
-            ],
-          },
-          {
-            "code": "too_small",
-            "inclusive": false,
-            "message": "Too small: expected number to be >0",
-            "minimum": 0,
-            "origin": "number",
-            "path": [
-              "positiveNum",
-            ],
-          },
+      "error": [ZodError: [
+      {
+        "origin": "string",
+        "code": "too_small",
+        "minimum": 1,
+        "path": [
+          "nonEmptyStr"
         ],
+        "message": "Too small: expected string to have >1 characters"
       },
+      {
+        "origin": "number",
+        "code": "too_small",
+        "minimum": 0,
+        "inclusive": false,
+        "path": [
+          "positiveNum"
+        ],
+        "message": "Too small: expected number to be >0"
+      }
+    ]],
       "success": false,
     }
   `);
@@ -260,28 +246,26 @@ test("preprocess validates with sibling errors", () => {
   expect(result.error!.issues).toHaveLength(2);
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "invalid_type",
-            "expected": "string",
-            "message": "Invalid input: expected string, received undefined",
-            "path": [
-              "missing",
-            ],
-          },
-          {
-            "code": "invalid_format",
-            "format": "regex",
-            "message": "Invalid string: must match pattern / asdf/",
-            "origin": "string",
-            "path": [
-              "preprocess",
-            ],
-            "pattern": "/ asdf/",
-          },
+      "error": [ZodError: [
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": [
+          "missing"
         ],
+        "message": "Invalid input: expected string, received undefined"
       },
+      {
+        "origin": "string",
+        "code": "invalid_format",
+        "format": "regex",
+        "pattern": "/ asdf/",
+        "path": [
+          "preprocess"
+        ],
+        "message": "Invalid string: must match pattern / asdf/"
+      }
+    ]],
       "success": false,
     }
   `);

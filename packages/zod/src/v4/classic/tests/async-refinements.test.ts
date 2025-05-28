@@ -18,15 +18,13 @@ test("async refine", async () => {
   expect(r2.success).toBe(false);
   expect(r2).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "custom",
-            "message": "Invalid input",
-            "path": [],
-          },
-        ],
-      },
+      "error": [ZodError: [
+      {
+        "code": "custom",
+        "path": [],
+        "message": "Invalid input"
+      }
+    ]],
       "success": false,
     }
   `);
@@ -55,15 +53,13 @@ test("async refine that uses value", async () => {
   const r1 = await schema1.safeParseAsync("asdf");
   expect(r1.success).toBe(false);
   expect(r1.error).toMatchInlineSnapshot(`
-    ZodError {
-      "issues": [
-        {
-          "code": "custom",
-          "message": "Invalid input",
-          "path": [],
-        },
-      ],
-    }
+    [ZodError: [
+      {
+        "code": "custom",
+        "path": [],
+        "message": "Invalid input"
+      }
+    ]]
   `);
 
   const r2 = await schema1.safeParseAsync("asdf123");

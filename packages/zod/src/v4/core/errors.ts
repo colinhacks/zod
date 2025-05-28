@@ -1,7 +1,7 @@
 import type { $ZodCheck, $ZodStringFormats } from "./checks.js";
 import { $constructor } from "./core.js";
 import type { $ZodType } from "./schemas.js";
-import type * as util from "./util.js";
+import * as util from "./util.js";
 
 ///////////////////////////
 ////     base type     ////
@@ -86,7 +86,7 @@ export interface $ZodIssueInvalidValue<Input = unknown> extends $ZodIssueBase {
 }
 
 export interface $ZodIssueCustom extends $ZodIssueBase {
-  readonly code?: "custom";
+  readonly code: "custom";
   readonly params?: Record<string, any> | undefined;
   readonly input: unknown;
 }
@@ -149,6 +149,8 @@ export type $ZodIssue =
   | $ZodIssueInvalidValue
   | $ZodIssueCustom;
 
+export type $ZodIssueCode = $ZodIssue["code"];
+
 export type $ZodRawIssue<T extends $ZodIssueBase = $ZodIssue> = T extends any ? RawIssue<T> : never;
 type RawIssue<T extends $ZodIssueBase> = util.Flatten<
   util.MakePartial<T, "message" | "path"> & {
@@ -181,28 +183,22 @@ export interface $ZodError<T = unknown> extends Error {
 }
 
 const initializer = (inst: $ZodError, def: $ZodIssue[]): void => {
+  inst.name = "$ZodError";
   Object.defineProperty(inst, "_zod", {
     value: inst._zod,
     enumerable: false,
   });
   Object.defineProperty(inst, "issues", {
     value: def,
-    enumerable: true,
+    enumerable: false,
   });
-  // inst.message = `Invalid input`;
-  // Object.defineProperty(inst, "message", {
-  //   get() {
-  //     return (
-  //       "\n" +
-  //       inst.issues
-  //         .map((iss) => {
-  //           return `✖ ${iss.message}${iss.path.length ? ` [${iss.path.join(".")}]` : ""}`;
-  //         })
-  //         .join("\n")
-  //     );
-  //   },
-  //   enumerable: false,
-  // });
+  Object.defineProperty(inst, "message", {
+    get() {
+      return JSON.stringify(def, util.jsonStringifyReplacer, 2);
+    },
+    enumerable: true,
+    // configurable: false,
+  });
 };
 
 export const $ZodError: $constructor<$ZodError> = $constructor("$ZodError", initializer);

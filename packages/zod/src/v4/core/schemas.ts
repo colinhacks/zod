@@ -51,7 +51,6 @@ export interface $ZodTypeDef {
     | "unknown"
     | "date"
     | "object"
-    | "interface"
     | "record"
     | "file"
     | "array"
@@ -81,7 +80,6 @@ export interface $ZodTypeDef {
   checks?: checks.$ZodCheck<never>[];
 }
 
-// @ts-ignore
 /** @internal */
 export interface $ZodTypeInternals<out O = unknown, out I = unknown> {
   /** The `@zod/core` version of this schema */
@@ -291,8 +289,9 @@ export interface $ZodStringInternals<Input> extends $ZodTypeInternals<string, In
   bag: util.LoosePartial<{
     minimum: number;
     maximum: number;
-    pattern: RegExp;
+    patterns: Set<RegExp>;
     format: string;
+    contentEncoding: string;
   }>;
 }
 
@@ -302,7 +301,7 @@ export interface $ZodString<Input = unknown> extends $ZodType {
 
 export const $ZodString: core.$constructor<$ZodString> = /*@__PURE__*/ core.$constructor("$ZodString", (inst, def) => {
   $ZodType.init(inst, def);
-  inst._zod.pattern = inst?._zod.bag?.pattern ?? regexes.string(inst._zod.bag);
+  inst._zod.pattern = [...(inst?._zod.bag?.patterns ?? [])].pop() ?? regexes.string(inst._zod.bag);
   inst._zod.parse = (payload, _) => {
     if (def.coerce)
       try {
@@ -427,18 +426,6 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
     try {
       const url = new URL(payload.value);
 
-      regexes.hostname.lastIndex = 0;
-      if (!regexes.hostname.test(url.hostname)) {
-        payload.issues.push({
-          code: "invalid_format",
-          format: "url",
-          note: "Invalid hostname",
-          pattern: regexes.hostname.source,
-          input: payload.value,
-          inst,
-        });
-      }
-
       if (def.hostname) {
         def.hostname.lastIndex = 0;
         if (!def.hostname.test(url.hostname)) {
@@ -446,7 +433,7 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
             code: "invalid_format",
             format: "url",
             note: "Invalid hostname",
-            pattern: def.hostname.source,
+            pattern: regexes.hostname.source,
             input: payload.value,
             inst,
           });
@@ -689,7 +676,8 @@ export const $ZodIPv4: core.$constructor<$ZodIPv4> = /*@__PURE__*/ core.$constru
   def.pattern ??= regexes.ipv4;
   $ZodStringFormat.init(inst, def);
   inst._zod.onattach.push((inst) => {
-    inst._zod.bag.format = `ipv4`;
+    const bag = inst._zod.bag as $ZodStringInternals<unknown>["bag"];
+    bag.format = `ipv4`;
   });
 });
 
@@ -712,7 +700,8 @@ export const $ZodIPv6: core.$constructor<$ZodIPv6> = /*@__PURE__*/ core.$constru
   $ZodStringFormat.init(inst, def);
 
   inst._zod.onattach.push((inst) => {
-    inst._zod.bag.format = `ipv6`;
+    const bag = inst._zod.bag as $ZodStringInternals<unknown>["bag"];
+    bag.format = `ipv6`;
   });
 
   inst._zod.check = (payload) => {
@@ -791,28 +780,6 @@ export const $ZodCIDRv6: core.$constructor<$ZodCIDRv6> = /*@__PURE__*/ core.$con
     };
   }
 );
-
-//////////////////////////////   ZodIP   //////////////////////////////
-
-// export interface $ZodIPDef extends $ZodStringFormatDef<"ip"> {
-//   version?: "v4" | "v6";
-// }
-
-// export interface $ZodIPInternals extends $ZodStringFormatInternals<"ip"> {
-//   def: $ZodIPDef;
-// }
-
-// export interface $ZodIP extends $ZodType {
-//   _zod: $ZodIPInternals;
-// }
-
-// export const $ZodIP: core.$constructor<$ZodIP> = /*@__PURE__*/ core.$constructor("$ZodIP", (inst, def): void => {
-//   if (def.version === "v4") def.pattern ??= regexes.ipv4;
-//   else if (def.version === "v6") def.pattern ??= regexes.ipv6;
-//   else def.pattern ??= regexes.ip;
-//   $ZodStringFormat.init(inst, def);
-
-// });
 
 //////////////////////////////   ZodBase64   //////////////////////////////
 export function isValidBase64(data: string): boolean {
@@ -893,34 +860,6 @@ export const $ZodBase64URL: core.$constructor<$ZodBase64URL> = /*@__PURE__*/ cor
     };
   }
 );
-
-//////////////////////////////   ZodJSONString   //////////////////////////////
-
-// export interface $ZodJSONStringDef extends $ZodStringFormatDef<"json_string"> {}
-// export Def $ZodJSONStringDef extends $ZodStringFormatInternals {
-// export interface $ZodJSONStringInternals extends $ZodStringFormatInternals {
-//   _def: $ZodJSONStringDef;
-// }
-
-// export const $ZodJSONString: core.$constructor<{_zod: $ZodJSONStringInternals}> = /*@__PURE__*/ core.$constructor(
-//   "$ZodJSONString",
-//   (inst, def): void => {
-//     $ZodStringFormat.init(inst, def);
-//     inst._zod.check = (payload) => {
-//       try {
-//         JSON.parse(payload.value);
-//         return;
-//       } catch {
-//         payload.issues.push({
-//           code: "invalid_format",
-//           format: "json_string",
-//           input: payload.value,
-//           inst,
-//         });
-//       }
-//     };
-//   }
-// );
 
 //////////////////////////////   ZodE164   //////////////////////////////
 
@@ -1582,7 +1521,7 @@ export interface $ZodObjectDef<Shape extends $ZodShape = $ZodShape> extends $Zod
 }
 
 export interface $ZodObjectInternals<
-  // @ts-ignore Cast variance
+  /** @ts-ignore Cast variance */
   out Shape extends Readonly<$ZodShape> = Readonly<$ZodShape>,
   out Config extends $ZodObjectConfig = $ZodObjectConfig,
 > extends $ZodTypeInternals<any, any> {
@@ -1590,7 +1529,6 @@ export interface $ZodObjectInternals<
   config: Config;
   isst: errors.$ZodIssueInvalidType | errors.$ZodIssueUnrecognizedKeys;
   disc: util.DiscriminatorMap;
-
   // special keys only used for objects
   // not defined on $ZodTypeInternals (base interface) because it breaks cyclical inference
   // the z.infer<> util checks for these first when extracting inferred type
@@ -1676,7 +1614,7 @@ export type $catchall<T extends $ZodType> = {
   in: { [k: string]: core.input<T> };
 };
 export interface $ZodObject<
-  // @ts-ignore Cast variance
+  /** @ts-ignore Cast variance */
   out Shape extends Readonly<$ZodShape> = Readonly<$ZodShape>,
   out Params extends $ZodObjectConfig = $ZodObjectConfig,
 > extends $ZodType {
@@ -1688,6 +1626,11 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
 
   const _normalized = util.cached(() => {
     const keys = Object.keys(def.shape);
+    for (const k of keys) {
+      if (!(def.shape[k] instanceof $ZodType)) {
+        throw new Error(`Invalid element at key "${k}": expected a Zod schema`);
+      }
+    }
     const okeys = util.optionalKeys(def.shape);
 
     return {
@@ -1833,7 +1776,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
         // }
 
         const r = el._zod.run({ value: input[key], issues: [] }, ctx);
-        const isOptional = el._zod.optin === "optional";
+        const isOptional = el._zod.optin === "optional" && el._zod.optout === "optional";
 
         if (r instanceof Promise) {
           proms.push(
@@ -2714,7 +2657,7 @@ export interface $ZodEnumDef<T extends util.EnumLike = util.EnumLike> extends $Z
 }
 
 export interface $ZodEnumInternals<
-  // @ts-ignore Cast variance
+  /** @ts-ignore Cast variance */
   out T extends util.EnumLike = util.EnumLike,
 > extends $ZodTypeInternals<$InferEnumOutput<T>, $InferEnumInput<T>> {
   // enum: T;
@@ -2778,7 +2721,7 @@ export interface $ZodLiteralDef extends $ZodTypeDef {
 
 export interface $ZodLiteralInternals<T extends util.Primitive = util.Primitive> extends $ZodTypeInternals<T, T> {
   def: $ZodLiteralDef;
-  values: util.PrimitiveSet;
+  values: Set<T>;
   pattern: RegExp;
   isst: errors.$ZodIssueInvalidValue;
 }
@@ -2866,7 +2809,10 @@ export const $ZodLiteral: core.$constructor<$ZodLiteral> = /*@__PURE__*/ core.$c
 //////////////////////////////////////////
 
 // provide a fallback in case the File interface isn't provided in the environment
-interface File {}
+declare global {
+  interface File {}
+}
+
 export interface $ZodFileDef extends $ZodTypeDef {
   type: "file";
 }

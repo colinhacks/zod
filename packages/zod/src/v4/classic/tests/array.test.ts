@@ -108,28 +108,26 @@ test("continue parsing despite array size error", () => {
   });
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "invalid_type",
-            "expected": "string",
-            "message": "Invalid input: expected string, received number",
-            "path": [
-              "people",
-              0,
-            ],
-          },
-          {
-            "code": "too_small",
-            "message": "Too small: expected array to have >2 items",
-            "minimum": 2,
-            "origin": "array",
-            "path": [
-              "people",
-            ],
-          },
+      "error": [ZodError: [
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": [
+          "people",
+          0
         ],
+        "message": "Invalid input: expected string, received number"
       },
+      {
+        "origin": "array",
+        "code": "too_small",
+        "minimum": 2,
+        "path": [
+          "people"
+        ],
+        "message": "Too small: expected array to have >2 items"
+      }
+    ]],
       "success": false,
     }
   `);
@@ -141,34 +139,32 @@ test("parse should fail given sparse array", () => {
   expect(result.success).toEqual(false);
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "invalid_type",
-            "expected": "string",
-            "message": "Invalid input: expected string, received undefined",
-            "path": [
-              0,
-            ],
-          },
-          {
-            "code": "invalid_type",
-            "expected": "string",
-            "message": "Invalid input: expected string, received undefined",
-            "path": [
-              1,
-            ],
-          },
-          {
-            "code": "invalid_type",
-            "expected": "string",
-            "message": "Invalid input: expected string, received undefined",
-            "path": [
-              2,
-            ],
-          },
+      "error": [ZodError: [
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": [
+          0
         ],
+        "message": "Invalid input: expected string, received undefined"
       },
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": [
+          1
+        ],
+        "message": "Invalid input: expected string, received undefined"
+      },
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": [
+          2
+        ],
+        "message": "Invalid input: expected string, received undefined"
+      }
+    ]],
       "success": false,
     }
   `);

@@ -56,7 +56,7 @@ Every issue contains a `message` property with a human-readable error message. E
 
 ## The `error` param
 
-Virtually every Zod API accepts an optional error message parameter.
+Virtually every Zod API accepts an optional error message.
 
 ```ts
 z.string("Not a string!");
@@ -87,7 +87,7 @@ z.string("Bad!");
 z.string().min(5, "Too short!");
 z.uuid("Bad UUID!");
 z.iso.date("Bad date!");
-z.array(z.string(), "Bad array!");
+z.array(z.string(), "Not an array!");
 z.array(z.string()).min(5, "Too few items!");
 z.set(z.string(), "Bad set!");
 ```
@@ -133,7 +133,8 @@ z.set(z.string(), { error: "Bad set!" });
 </Tab>
 </Tabs>
 
-The `error` param optionally accepts a function. This function will be called at parse time if a valiation error occurs.
+
+The `error` param optionally accepts a function. An error customization function is known as an **error map** in Zod terminology. The error map will run at parse time if a valiation error occurs.
 
 ```ts
 z.string({ error: ()=>`[${Date.now()}]: Validation failure.` });
@@ -143,31 +144,16 @@ z.string({ error: ()=>`[${Date.now()}]: Validation failure.` });
 **Note** — In Zod v3, there were separate params for `message` (a string) and `errorMap` (a function). These have been unified in Zod 4 as `error`.
 </Callout>
 
+The error map receives a context object you can use to customize the error message based on the validation issue.
 
-The `error` function received a context object you can use to customize the error message based on the `input` or other validation information.
-
-<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
-<Tab value="Zod">
 ```ts
 z.string({
-  error: (iss) => iss.input===undefined ? "Field is required." : "Invalid input."
+  error: (iss) => iss.input === undefined ? "Field is required." : "Invalid input."
 });
 ```
-</Tab>
-<Tab value="Zod Mini">
-```ts
-z.string({
-  error: (iss) => iss.input===undefined ? "Field is required." : "Invalid input."
-});
-```
-</Tab>
-</Tabs>
 
 For advanced cases, the `iss` object provides additional information you can use to customize the error.
 
-
-<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
-<Tab value="Zod">
 ```ts
 z.string({
   error: (iss) => {
@@ -178,21 +164,6 @@ z.string({
   },
 });
 ```
-</Tab>
-<Tab value="Zod Mini">
-```ts
-z.string({
-  error: (iss) => {
-    iss.inst;
-    iss.code; // the issue code
-    iss.input; // the input data
-    iss.inst; // the schema/check that originated this issue
-    iss.path; // the path of the error
-  },
-});
-```
-</Tab>
-</Tabs>
 
 Depending on the API you are using, there may be additional properties available. Use TypeScript's autocomplete to explore the available properties.
 
@@ -203,6 +174,22 @@ z.string().min(5, {
     iss.minimum; // the minimum value
     iss.inclusive; // whether the minimum is inclusive
     return `Password must have ${iss.minimum} characters or more`;
+  },
+});
+```
+
+Return `undefined` to avoid setting an error message. This is useful for customizing certain error messages but not others. Zod will yield control to the next error map in the [precedence chain](#error-precedence).
+
+```ts
+z.int64({
+  error: (issue) => {
+    // override too_big error message
+    if (issue.code === "too_big") {
+      return { message: `Value must be <${issue.maximum}` };
+    }
+
+    //  defer to default
+    return undefined;
   },
 });
 ```
@@ -291,7 +278,7 @@ To support internationalization of error message, Zod provides several built-in 
 <Tab value="Zod">
 ```ts
 import { z } from "zod/v4";
-import en from "zod/v4/locales/en"
+import en from "zod/v4/locales/en.js"
 
 z.config(en());
 ```
@@ -299,7 +286,7 @@ z.config(en());
 <Tab value="Zod Mini">
 ```ts
 import { z } from "zod/v4-mini"
-import en from "zod/v4/locales/en"
+import en from "zod/v4/locales/en.js"
 
 z.config(en());
 ```
@@ -312,7 +299,7 @@ To lazily load a locale, consider dynamic imports:
 import { z } from "zod/v4";
 
 async function loadLocale(locale: string) {
-  const { default: locale } = await import(`zod/v4/locales/${locale}`);
+  const { default: locale } = await import(`zod/v4/locales/${locale}.js`);
   z.config(locale());
 };
 
@@ -341,6 +328,7 @@ z.config(z.locales.en());
 ### Locales
 
 The following locales are available:
+
 
 - `ar` — Arabic
 - `az` — Azerbaijani

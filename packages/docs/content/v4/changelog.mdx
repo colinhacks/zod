@@ -79,7 +79,7 @@ Error maps can also now return a plain `string` (instead of `{message: string}`)
 <Tabs groupId="error-map" items={["Zod 4", "Zod 3"]} persist>
 <Tab value="Zod 4">
 ```ts
-z.string({
+z.string().min(5, {
   error: (issue) => {
     if (issue.code === "too_small") {
       return `Value must be >${issue.minimum}`
@@ -102,7 +102,7 @@ z.string({
 </Tab>
 </Tabs>
 
-## `.safeParse()` 
+{/* ## `.safeParse()` 
 
 For performance reasons, the errors returned by `.safeParse()` and `.safeParseAsync()` no longer extend `Error`. 
 
@@ -115,7 +115,7 @@ It is very slow to instantiate `Error` instances in JavaScript, as the initializ
 
 > Pro tip: prefer `.safeParse()` over `try/catch` in performance-sensitive code.
 
-By contrast the errors thrown by `.parse()` and `.parseAsync()` still `Error`. 
+By contrast the errors thrown by `.parse()` and `.parseAsync()` still extend `Error`. Aside from the prototype difference, the error classes are identical.
 
 ```ts
 try {
@@ -124,10 +124,48 @@ try {
   console.log(err instanceof Error); // => true
 }
 ```
-
-Aside from the prototype difference, the error classes are identical.
+ */}
 
 ## `ZodError`
+{/* 
+### changes to `.message` 
+
+Previously the `.message` property on `ZodError` was a JSON.stringified copy of the `.issues` array. This was redundant, confusing, and a bit of an abuse of the `.message` property. Also due to the [`Error` prototype changes](#safeparse) (and inconsistencies in how Node.js logs `Error` subclasses vs other objects) the logging of a multi-line `.message` property got a lot uglier:
+
+```sh
+$ tsx index.ts
+ZodError {
+  message: '[\n' +
+    '  {\n' +
+    '    "expected": "string",\n' +
+    '    "code": "invalid_type",\n' +
+    '    "path": [],\n' +
+    '    "message": "Invalid input: expected string, received number"\n' +
+    '  }\n' +
+    ']'
+}
+```
+
+
+For these reasons, the `.message` property is left empty and the `.issues` array is marked as enumerable. This keeps error logging consistent and pretty:
+
+```sh
+$ tsx index.ts
+z.string().parse(234);
+
+ZodError {
+  issues: [
+    {
+      expected: 'string',
+      code: 'invalid_type',
+      path: [],
+      message: 'Invalid input: expected string, received number'
+    }
+  ]
+}
+```
+
+Vitest uses special handling for `Error` subclasses that ignores enumerable properties.  */}
 
 ### updates issue formats
 
@@ -325,7 +363,7 @@ type schemaInput = z.input<typeof schema>;
 
 ## `.default()` updates
 
-The application of `.default()` has changed in a subtle way. If the input is `undefined`, `ZodDefault` short-circuits the parsing process and returns the default value. The the default value must be assignable to the *output type*.
+The application of `.default()` has changed in a subtle way. If the input is `undefined`, `ZodDefault` short-circuits the parsing process and returns the default value. The default value must be assignable to the *output type*.
 
 ```ts
 const schema = z.string()

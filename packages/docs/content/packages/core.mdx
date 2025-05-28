@@ -3,6 +3,7 @@ title: Zod Core
 ---
 
 import { Callout } from "fumadocs-ui/components/callout"
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
 This sub-package exports the core classes and utilities that are consumed by `zod/v4` and `zod/v4-mini`. It is not intended to be used directly; instead it's designed to be extended by other packages. It implements:
 
@@ -88,9 +89,82 @@ export type $ZodTypes =
   | $ZodFile;
 ```
 
-All `zod/v4/core` subclasses only contain a single property: `_zod`. This property is an object containing the schemas *internals*. The goal is to make `zod/v4/core` as extensible and unopinionated as possible. Other libraries can "build their own Zod" on top of these classes without `zod/v4/core` cluttering up the interface. 
+<Accordions>
+<Accordion title="Inheritance diagram">
+  Here is a complete inheritance diagram for the core schema classes:
+  ```txt
+  - $ZodType
+      - $ZodString
+          - $ZodStringFormat
+              - $ZodGUID
+              - $ZodUUID
+              - $ZodEmail
+              - $ZodURL
+              - $ZodEmoji
+              - $ZodNanoID
+              - $ZodCUID
+              - $ZodCUID2
+              - $ZodULID
+              - $ZodXID
+              - $ZodKSUID
+              - $ZodISODateTime
+              - $ZodISODate
+              - $ZodISOTime
+              - $ZodISODuration
+              - $ZodIPv4
+              - $ZodIPv6
+              - $ZodCIDRv4
+              - $ZodCIDRv6
+              - $ZodBase64
+              - $ZodBase64URL
+              - $ZodE164
+              - $ZodJWT
+      - $ZodNumber
+          - $ZodNumberFormat
+      - $ZodBoolean
+      - $ZodBigInt
+          - $ZodBigIntFormat
+      - $ZodSymbol
+      - $ZodUndefined
+      - $ZodNull
+      - $ZodAny
+      - $ZodUnknown
+      - $ZodNever
+      - $ZodVoid
+      - $ZodDate
+      - $ZodArray
+      - $ZodObject
+      - $ZodUnion
+          - $ZodDiscriminatedUnion
+      - $ZodIntersection
+      - $ZodTuple
+      - $ZodRecord
+      - $ZodMap
+      - $ZodSet
+      - $ZodEnum
+      - $ZodLiteral
+      - $ZodFile
+      - $ZodTransform
+      - $ZodOptional
+      - $ZodNullable
+      - $ZodDefault
+      - $ZodPrefault
+      - $ZodNonOptional
+      - $ZodSuccess
+      - $ZodCatch
+      - $ZodNaN
+      - $ZodPipe
+      - $ZodReadonly
+      - $ZodTemplateLiteral
+      - $ZodCustom
 
-Refer to the implementations of `zod/v4` and `zod/v4-mini` for examples of how to extend these classes. 
+      ```
+</Accordion>
+</Accordions>
+
+## Internals
+
+All `zod/v4/core` subclasses only contain a single property: `_zod`. This property is an object containing the schemas *internals*. The goal is to make `zod/v4/core` as extensible and unopinionated as possible. Other libraries can "build their own Zod" on top of these classes without `zod/v4/core` cluttering up the interface. Refer to the implementations of `zod/v4` and `zod/v4-mini` for examples of how to extend these classes. 
 
 The `_zod` internals property contains some notable properties:
 
@@ -122,7 +196,6 @@ export function walk(_schema: z.$ZodType) {
 
 There are a number of subclasses of `$ZodString` that implement various *string formats*. These are exported as `z.$ZodStringFormatTypes`.
 
-
 ```ts
 export type $ZodStringFormatTypes =
   | $ZodGUID
@@ -148,6 +221,21 @@ export type $ZodStringFormatTypes =
   | $ZodBase64URL
   | $ZodE164
   | $ZodJWT
+```
+
+
+## Parsing 
+
+As the Zod Core schema classes have no methods, there are top-level functions for parsing data.
+
+```ts
+import * as z from "zod/v4/core";
+
+const schema = new z.$ZodString({ type: "string" });
+z.parse(schema, "hello");
+z.safeParse(schema, "hello");
+await z.parseAsync(schema, "hello");
+await z.safeParseAsync(schema, "hello");
 ```
 
 

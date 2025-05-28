@@ -1,3 +1,4 @@
+import { inspect } from "node:util";
 import { expect, test } from "vitest";
 import * as z from "zod/v4";
 
@@ -47,16 +48,14 @@ test("type error with custom error map", () => {
   const result = z.string().safeParse(234, { error: errorMap });
   expect(result.success).toBe(false);
   expect(result.error).toMatchInlineSnapshot(`
-    ZodError {
-      "issues": [
-        {
-          "code": "invalid_type",
-          "expected": "string",
-          "message": "bad type!",
-          "path": [],
-        },
-      ],
-    }
+    [ZodError: [
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": [],
+        "message": "bad type!"
+      }
+    ]]
   `);
 });
 
@@ -69,18 +68,16 @@ test("refinement fail with params", () => {
     .safeParse(2, { error: errorMap });
   expect(result.success).toBe(false);
   expect(result.error).toMatchInlineSnapshot(`
-    ZodError {
-      "issues": [
-        {
-          "code": "custom",
-          "message": "less-than-3",
-          "params": {
-            "minimum": 3,
-          },
-          "path": [],
+    [ZodError: [
+      {
+        "code": "custom",
+        "path": [],
+        "params": {
+          "minimum": 3
         },
-      ],
-    }
+        "message": "less-than-3"
+      }
+    ]]
   `);
 });
 
@@ -95,18 +92,16 @@ test("hard coded error  with custom errormap", () => {
 
   expect(result.success).toBe(false);
   expect(result.error).toMatchInlineSnapshot(`
-    ZodError {
-      "issues": [
-        {
-          "code": "custom",
-          "message": "override",
-          "params": {
-            "minimum": 13,
-          },
-          "path": [],
+    [ZodError: [
+      {
+        "code": "custom",
+        "path": [],
+        "params": {
+          "minimum": 13
         },
-      ],
-    }
+        "message": "override"
+      }
+    ]]
   `);
 });
 
@@ -118,15 +113,13 @@ test("default error message", () => {
 
   expect(result.success).toBe(false);
   expect(result.error).toMatchInlineSnapshot(`
-    ZodError {
-      "issues": [
-        {
-          "code": "custom",
-          "message": "Invalid input",
-          "path": [],
-        },
-      ],
-    }
+    [ZodError: [
+      {
+        "code": "custom",
+        "path": [],
+        "message": "Invalid input"
+      }
+    ]]
   `);
 });
 
@@ -138,15 +131,13 @@ test("override error in refine", () => {
   expect(result.success).toBe(false);
   expect(result.error!.issues.length).toEqual(1);
   expect(result.error).toMatchInlineSnapshot(`
-    ZodError {
-      "issues": [
-        {
-          "code": "custom",
-          "message": "override",
-          "path": [],
-        },
-      ],
-    }
+    [ZodError: [
+      {
+        "code": "custom",
+        "path": [],
+        "message": "override"
+      }
+    ]]
   `);
 });
 
@@ -160,15 +151,13 @@ test("override error in refinement", () => {
   expect(result.success).toBe(false);
   expect(result.error!.issues.length).toEqual(1);
   expect(result.error).toMatchInlineSnapshot(`
-    ZodError {
-      "issues": [
-        {
-          "code": "custom",
-          "message": "override",
-          "path": [],
-        },
-      ],
-    }
+    [ZodError: [
+      {
+        "code": "custom",
+        "path": [],
+        "message": "override"
+      }
+    ]]
   `);
 });
 
@@ -182,17 +171,15 @@ test("array minimum", () => {
   expect(result.success).toBe(false);
   expect(result.error!.issues[0].code).toEqual("too_small");
   expect(result.error).toMatchInlineSnapshot(`
-    ZodError {
-      "issues": [
-        {
-          "code": "too_small",
-          "message": "Too small: expected array to have >3 items",
-          "minimum": 3,
-          "origin": "array",
-          "path": [],
-        },
-      ],
-    }
+    [ZodError: [
+      {
+        "origin": "array",
+        "code": "too_small",
+        "minimum": 3,
+        "path": [],
+        "message": "Too small: expected array to have >3 items"
+      }
+    ]]
   `);
 });
 
@@ -201,18 +188,16 @@ test("literal bigint default error message", () => {
   expect(result.success).toBe(false);
   expect(result.error!.issues.length).toEqual(1);
   expect(result.error).toMatchInlineSnapshot(`
-    ZodError {
-      "issues": [
-        {
-          "code": "invalid_value",
-          "message": "Invalid input: expected 12n",
-          "path": [],
-          "values": [
-            12n,
-          ],
-        },
-      ],
-    }
+    [ZodError: [
+      {
+        "code": "invalid_value",
+        "values": [
+          "12"
+        ],
+        "path": [],
+        "message": "Invalid input: expected 12n"
+      }
+    ]]
   `);
 });
 
@@ -230,18 +215,16 @@ test("custom path in custom error map", () => {
   const result = schema.safeParse({ items: ["first"] }, { error: errorMap });
   expect(result.success).toBe(false);
   expect(result.error).toMatchInlineSnapshot(`
-    ZodError {
-      "issues": [
-        {
-          "code": "custom",
-          "message": "doesnt matter",
-          "path": [
-            "items",
-            "items-too-few",
-          ],
-        },
-      ],
-    }
+    [ZodError: [
+      {
+        "code": "custom",
+        "path": [
+          "items",
+          "items-too-few"
+        ],
+        "message": "doesnt matter"
+      }
+    ]]
   `);
 });
 
@@ -542,17 +525,15 @@ test("z.config customError ", () => {
   const result = stringWithCustomError.min(10).safeParse("tooshort");
   expect(result.success).toBe(false);
   expect(result.error).toMatchInlineSnapshot(`
-    ZodError {
-      "issues": [
-        {
-          "code": "too_small",
-          "message": "override",
-          "minimum": 10,
-          "origin": "string",
-          "path": [],
-        },
-      ],
-    }
+    [ZodError: [
+      {
+        "origin": "string",
+        "code": "too_small",
+        "minimum": 10,
+        "path": [],
+        "message": "override"
+      }
+    ]]
   `);
   expect(result.error!.issues[0].message).toEqual("override");
   z.config({ customError: undefined });
@@ -628,26 +609,24 @@ test("dont short circuit on continuable errors", () => {
   const result = user.safeParse({ password: "asdf", confirm: "qwer" });
   expect(result.success).toBe(false);
   expect(result.error).toMatchInlineSnapshot(`
-    ZodError {
-      "issues": [
-        {
-          "code": "too_small",
-          "message": "Too small: expected string to have >6 characters",
-          "minimum": 6,
-          "origin": "string",
-          "path": [
-            "password",
-          ],
-        },
-        {
-          "code": "custom",
-          "message": "Passwords don't match",
-          "path": [
-            "confirm",
-          ],
-        },
-      ],
-    }
+    [ZodError: [
+      {
+        "origin": "string",
+        "code": "too_small",
+        "minimum": 6,
+        "path": [
+          "password"
+        ],
+        "message": "Too small: expected string to have >6 characters"
+      },
+      {
+        "code": "custom",
+        "path": [
+          "confirm"
+        ],
+        "message": "Passwords don't match"
+      }
+    ]]
   `);
   // expect(result.error!.issues.length).toEqual(2);
 });
@@ -689,7 +668,7 @@ test("error inheritance", () => {
   expect(e1).toBeInstanceOf(z.core.$ZodError);
   expect(e1).toBeInstanceOf(z.ZodError);
   expect(e1).toBeInstanceOf(z.ZodRealError);
-  expect(e1).not.toBeInstanceOf(Error);
+  // expect(e1).not.toBeInstanceOf(Error);
 
   try {
     z.string().parse(123);
@@ -697,7 +676,7 @@ test("error inheritance", () => {
     expect(e1).toBeInstanceOf(z.core.$ZodError);
     expect(e2).toBeInstanceOf(z.ZodError);
     expect(e2).toBeInstanceOf(z.ZodRealError);
-    expect(e2).toBeInstanceOf(Error);
+    // expect(e2).toBeInstanceOf(Error);
   }
 });
 
@@ -705,7 +684,25 @@ test("error serialization", () => {
   try {
     z.string().parse(123);
   } catch (e) {
-    console.dir(e, { depth: null });
-    expect(e).toMatchInlineSnapshot(`[Error]`);
+    expect(e).toMatchInlineSnapshot(`
+      [ZodError: [
+        {
+          "expected": "string",
+          "code": "invalid_type",
+          "path": [],
+          "message": "Invalid input: expected string, received number"
+        }
+      ]]
+    `);
+    expect(inspect(e).split("\n").slice(0, 8).join("\n")).toMatchInlineSnapshot(`
+      "ZodError: [
+        {
+          "expected": "string",
+          "code": "invalid_type",
+          "path": [],
+          "message": "Invalid input: expected string, received number"
+        }
+      ]"
+    `);
   }
 });

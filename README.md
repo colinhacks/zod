@@ -105,7 +105,7 @@ npm install zod
 
 Before you can do anything else, you need to define a schema. For the purposes of this guide, we'll use a simple object schema.
 
-```
+```ts
 import { z } from "zod/v4"; 
 
 const Player = z.object({ 
@@ -164,7 +164,7 @@ try {
 To avoid a `try/catch` block, you can use the `.safeParse()` method to get back a plain result object containing either the successfully parsed data or a `ZodError`. The result type is a [discriminated union](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions), so you can handle both cases conveniently.
 
 ```ts
-const result = Player.parse({ username: 42, xp: "100" });
+const result = Player.safeParse({ username: 42, xp: "100" });
 if (!result.success) {
   result.error;   // ZodError instance
 } else {

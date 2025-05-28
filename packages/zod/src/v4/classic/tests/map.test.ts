@@ -32,24 +32,22 @@ test("valid parse async", async () => {
   const result = await asyncMap.safeParseAsync(new Map([["first", "foo"]]));
   expect(result.success).toEqual(false);
   expect(result.error).toMatchInlineSnapshot(`
-    ZodError {
-      "issues": [
-        {
-          "code": "custom",
-          "message": "bad key",
-          "path": [
-            "first",
-          ],
-        },
-        {
-          "code": "custom",
-          "message": "bad value",
-          "path": [
-            "first",
-          ],
-        },
-      ],
-    }
+    [ZodError: [
+      {
+        "code": "custom",
+        "path": [
+          "first"
+        ],
+        "message": "bad key"
+      },
+      {
+        "code": "custom",
+        "path": [
+          "first"
+        ],
+        "message": "bad value"
+      }
+    ]]
   `);
 });
 
@@ -68,26 +66,24 @@ test("throws when the given map has invalid key and invalid input", () => {
   if (result.success === false) {
     expect(result.error.issues.length).toEqual(2);
     expect(result.error).toMatchInlineSnapshot(`
-      ZodError {
-        "issues": [
-          {
-            "code": "invalid_type",
-            "expected": "string",
-            "message": "Invalid input: expected string, received number",
-            "path": [
-              42,
-            ],
-          },
-          {
-            "code": "invalid_type",
-            "expected": "string",
-            "message": "Invalid input: expected string, received symbol",
-            "path": [
-              42,
-            ],
-          },
-        ],
-      }
+      [ZodError: [
+        {
+          "expected": "string",
+          "code": "invalid_type",
+          "path": [
+            42
+          ],
+          "message": "Invalid input: expected string, received number"
+        },
+        {
+          "expected": "string",
+          "code": "invalid_type",
+          "path": [
+            42
+          ],
+          "message": "Invalid input: expected string, received symbol"
+        }
+      ]]
     `);
   }
 });
@@ -146,24 +142,22 @@ test("dirty", async () => {
   if (!result.success) {
     expect(result.error.issues.length).toEqual(2);
     expect(result.error).toMatchInlineSnapshot(`
-      ZodError {
-        "issues": [
-          {
-            "code": "custom",
-            "message": "Keys must be uppercase",
-            "path": [
-              "first",
-            ],
-          },
-          {
-            "code": "custom",
-            "message": "Keys must be uppercase",
-            "path": [
-              "second",
-            ],
-          },
-        ],
-      }
+      [ZodError: [
+        {
+          "code": "custom",
+          "path": [
+            "first"
+          ],
+          "message": "Keys must be uppercase"
+        },
+        {
+          "code": "custom",
+          "path": [
+            "second"
+          ],
+          "message": "Keys must be uppercase"
+        }
+      ]]
     `);
   }
 });
@@ -188,17 +182,15 @@ test("map with object keys", () => {
   const badResult = map.safeParse(badData);
   expect(badResult.success).toEqual(false);
   expect(badResult.error).toMatchInlineSnapshot(`
-    ZodError {
-      "issues": [
-        {
-          "code": "invalid_type",
-          "expected": "object",
-          "message": "Invalid input: expected object, received string",
-          "path": [
-            "bad",
-          ],
-        },
-      ],
-    }
+    [ZodError: [
+      {
+        "expected": "object",
+        "code": "invalid_type",
+        "path": [
+          "bad"
+        ],
+        "message": "Invalid input: expected object, received string"
+      }
+    ]]
   `);
 });

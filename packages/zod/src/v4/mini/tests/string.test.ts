@@ -121,6 +121,15 @@ test("z.url with optional hostname regex", () => {
   expect(() => a.parse("asdf")).toThrow();
 });
 
+test("z.url - file urls", () => {
+  // file URLs
+  const a = z.url({ hostname: /.*/ }); // allow any hostname
+  expect(a.parse("file:///path/to/file.txt")).toEqual("file:///path/to/file.txt");
+  expect(a.parse("file:///C:/path/to/file.txt")).toEqual("file:///C:/path/to/file.txt");
+  expect(a.parse("file:///C:/path/to/file.txt?query=123#fragment")).toEqual(
+    "file:///C:/path/to/file.txt?query=123#fragment"
+  );
+});
 test("z.url with optional protocol regex", () => {
   const a = z.url({ protocol: /^https?$/ });
   expect(a.parse("http://example.com")).toEqual("http://example.com");

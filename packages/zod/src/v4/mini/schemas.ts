@@ -14,8 +14,8 @@ export interface ZodMiniType<out Output = unknown, out Input = unknown> extends 
     registry: R,
     ...meta: this extends R["_schema"]
       ? undefined extends R["_meta"]
-        ? [core.$ZodRegistry<R["_meta"], this>["_meta"]?]
-        : [core.$ZodRegistry<R["_meta"], this>["_meta"]]
+        ? [core.$replace<R["_meta"], this>?]
+        : [core.$replace<R["_meta"], this>]
       : ["Incompatible schema"]
   ): this;
   brand<T extends PropertyKey = PropertyKey>(
@@ -281,19 +281,6 @@ export const ZodMiniKSUID: core.$constructor<ZodMiniKSUID> = /*@__PURE__*/ core.
 export function ksuid(params?: string | core.$ZodKSUIDParams): ZodMiniKSUID {
   return core._ksuid(ZodMiniKSUID, params);
 }
-
-// ZodMiniIP
-// export interface ZodMiniIP extends ZodMiniStringFormat<"ip"> {
-//   _zod: core.$ZodIPInternals;
-// }
-// export const ZodMiniIP: core.$constructor<ZodMiniIP> = /*@__PURE__*/ core.$constructor("ZodMiniIP", (inst, def) => {
-//   core.$ZodIP.init(inst, def);
-//   ZodMiniStringFormat.init(inst, def);
-// });
-
-// export function ip(params?: string | core.$ZodIPParams): ZodMiniIP {
-//   return core._ip(ZodMiniIP, params);
-// }
 
 // ZodMiniIPv4
 export interface ZodMiniIPv4 extends ZodMiniStringFormat<"ipv4"> {
@@ -695,7 +682,7 @@ export function keyof<T extends ZodMiniObject>(schema: T): ZodMiniLiteral<keyof 
 
 // ZodMiniObject
 export interface ZodMiniObject<
-  // @ts-ignore Cast variance
+  /** @ts-ignore Cast variance */
   out Shape extends core.$ZodShape = core.$ZodShape,
   out Config extends core.$ZodObjectConfig = core.$ZodObjectConfig,
 > extends ZodMiniType {
@@ -1513,7 +1500,7 @@ function _instanceof<T extends typeof Class>(
   params: core.$ZodCustomParams = {
     error: `Input not instance of ${cls.name}`,
   }
-): ZodMiniCustom<InstanceType<T>> {
+): ZodMiniCustom<InstanceType<T>, InstanceType<T>> {
   const inst = custom((data) => data instanceof cls, params);
   inst._zod.bag.Class = cls;
   return inst as any;

@@ -74,6 +74,7 @@ export const base64url: RegExp = /^[A-Za-z0-9_-]*$/;
 // export const hostname: RegExp =
 //   /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)+([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/;
 export const hostname: RegExp = /^([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+$/;
+export const domain: RegExp = /^([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
 
 // https://blog.stevenlevithan.com/archives/validate-phone-number#r4-3 (regex sans spaces)
 export const e164: RegExp = /^\+(?:[0-9]){6,14}[0-9]$/;

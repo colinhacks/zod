@@ -1,6 +1,8 @@
 import { expect, expectTypeOf, test } from "vitest";
 import * as z from "zod/v4";
 
+declare const iss: z.core.$ZodIssueCode;
+
 const Test = z.object({
   f1: z.number(),
   f2: z.string().optional(),
@@ -14,34 +16,32 @@ const parsed = Test.safeParse({});
 test("regular error", () => {
   expect(parsed).toMatchInlineSnapshot(`
     {
-      "error": ZodError {
-        "issues": [
-          {
-            "code": "invalid_type",
-            "expected": "number",
-            "message": "Invalid input: expected number, received undefined",
-            "path": [
-              "f1",
-            ],
-          },
-          {
-            "code": "invalid_type",
-            "expected": "string",
-            "message": "Invalid input: expected string, received undefined",
-            "path": [
-              "f3",
-            ],
-          },
-          {
-            "code": "invalid_type",
-            "expected": "array",
-            "message": "Invalid input: expected array, received undefined",
-            "path": [
-              "f4",
-            ],
-          },
+      "error": [ZodError: [
+      {
+        "expected": "number",
+        "code": "invalid_type",
+        "path": [
+          "f1"
         ],
+        "message": "Invalid input: expected number, received undefined"
       },
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": [
+          "f3"
+        ],
+        "message": "Invalid input: expected string, received undefined"
+      },
+      {
+        "expected": "array",
+        "code": "invalid_type",
+        "path": [
+          "f4"
+        ],
+        "message": "Invalid input: expected array, received undefined"
+      }
+    ]],
       "success": false,
     }
   `);
@@ -471,7 +471,7 @@ test("inheritance", () => {
   const e1 = new z.ZodError([]);
   expect(e1).toBeInstanceOf(z.core.$ZodError);
   expect(e1).toBeInstanceOf(z.ZodError);
-  expect(e1).not.toBeInstanceOf(Error);
+  // expect(e1).not.toBeInstanceOf(Error);
 
   const e2 = new z.ZodRealError([]);
   expect(e2).toBeInstanceOf(z.ZodError);

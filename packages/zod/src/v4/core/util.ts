@@ -318,7 +318,7 @@ export function esc(str: string): string {
 }
 
 export function isObject(data: any): data is Record<PropertyKey, unknown> {
-  return typeof data === "object" && data !== null;
+  return typeof data === "object" && data !== null && !Array.isArray(data);
 }
 
 export const allowsEval: { value: boolean } = cached(() => {
@@ -489,7 +489,7 @@ export function stringifyPrimitive(value: any): string {
 
 export function optionalKeys(shape: schemas.$ZodShape): string[] {
   return Object.keys(shape).filter((k) => {
-    return shape[k]._zod.optin === "optional";
+    return shape[k]._zod.optin === "optional" && shape[k]._zod.optout === "optional";
   });
 }
 

@@ -47,6 +47,13 @@ const formIntegrations: ZodResource[] = [
     description: "Headless form validation library for Vue.js.",
     slug: "victorgarciaesgi/regle",
   },
+  {
+    name: "conform",
+    url: "https://conform.guide/api/zod/parseWithZod",
+    description:
+      "A type-safe form validation library utilizing web fundamentals to progressively enhance HTML Forms with full support for server frameworks like Remix and Next.js.",
+    slug: "edmundhung/conform",
+  },
 ];
 
 const zodToXConverters: ZodResource[] = [];
@@ -72,6 +79,13 @@ const mockingLibraries: ZodResource[] = [
     url: "https://github.com/soc221b/zod-schema-faker",
     description: "Generate mock data from zod schemas. Powered by @faker-js/faker and randexp.js.",
     slug: "soc221b/zod-schema-faker",
+  },
+  {
+    name: "zocker",
+    url: "https://zocker.sigrist.dev",
+    description: "Generates valid, semantically meaningful data for your Zod schemas.",
+    slug: "LorisSigrist/zocker",
+    v4: true,
   },
 ];
 

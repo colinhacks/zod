@@ -16,7 +16,7 @@ interface JSONSchemaGeneratorParams {
    * - `"any"` — Unrepresentable types become `{}` */
   unrepresentable?: "throw" | "any";
   /** Arbitrary custom logic that can be used to modify the generated JSON Schema. */
-  override?: (ctx: { zodSchema: schemas.$ZodType; jsonSchema: JSONSchema.BaseSchema }) => void;
+  override?: (ctx: { zodSchema: schemas.$ZodTypes; jsonSchema: JSONSchema.BaseSchema }) => void;
   /** Whether to extract the `"input"` or `"output"` type. Relevant to transforms, Error converting schema to JSONz, defaults, coerced primitives, etc.
    * - `"output" — Default. Convert the output schema.
    * - `"input"` — Convert the input schema. */
@@ -48,11 +48,12 @@ interface EmitParams {
     | undefined;
 }
 
-const formatMap: Partial<Record<checks.$ZodStringFormats, string>> = {
+const formatMap: Partial<Record<checks.$ZodStringFormats, string | undefined>> = {
   guid: "uuid",
   url: "uri",
   datetime: "date-time",
   json_string: "json-string",
+  regex: "", // do not set
 };
 
 interface Seen {
@@ -73,7 +74,7 @@ export class JSONSchemaGenerator {
   metadataRegistry: $ZodRegistry<Record<string, any>>;
   target: "draft-7" | "draft-2020-12";
   unrepresentable: "throw" | "any";
-  override: (ctx: { zodSchema: schemas.$ZodType; jsonSchema: JSONSchema.BaseSchema }) => void;
+  override: (ctx: { zodSchema: schemas.$ZodTypes; jsonSchema: JSONSchema.BaseSchema }) => void;
   io: "input" | "output";
 
   counter = 0;
@@ -149,23 +150,28 @@ export class JSONSchemaGenerator {
         case "string": {
           const json: JSONSchema.StringSchema = _json as any;
           json.type = "string";
-          const { minimum, maximum, format, pattern, contentEncoding } = schema._zod.bag as {
-            minimum?: number;
-            maximum?: number;
-            format?: checks.$ZodStringFormats;
-            pattern?: RegExp;
-            contentEncoding?: string;
-          };
+          const { minimum, maximum, format, patterns, contentEncoding } = schema._zod
+            .bag as schemas.$ZodStringInternals<unknown>["bag"];
           if (typeof minimum === "number") json.minLength = minimum;
           if (typeof maximum === "number") json.maxLength = maximum;
           // custom pattern overrides format
           if (format) {
-            json.format = formatMap[format] ?? format;
-          }
-          if (pattern) {
-            json.pattern = pattern.source;
+            json.format = formatMap[format as checks.$ZodStringFormats] ?? format;
+            if (json.format === "") delete json.format; // empty format is not valid
           }
           if (contentEncoding) json.contentEncoding = contentEncoding;
+          if (patterns && patterns.size > 0) {
+            const regexes = [...patterns];
+            if (regexes.length === 1) json.pattern = regexes[0].source;
+            else if (regexes.length > 1) {
+              result.schema.allOf = [
+                ...regexes.map((regex) => ({
+                  ...(this.target === "draft-7" ? { type: "string" } : {}),
+                  pattern: regex.source,
+                })),
+              ];
+            }
+          }
 
           break;
         }
@@ -281,11 +287,18 @@ export class JSONSchemaGenerator {
               }
             })
           );
-          json.required = Array.from(requiredKeys);
+
+          if (requiredKeys.size > 0) {
+            json.required = Array.from(requiredKeys);
+          }
 
           // catchall
           if (def.catchall?._zod.def.type === "never") {
+            // strict
             json.additionalProperties = false;
+          } else if (!def.catchall) {
+            // regular
+            if (this.io === "output") json.additionalProperties = false;
           } else if (def.catchall) {
             json.additionalProperties = this.process(def.catchall, {
               ...params,
@@ -604,10 +617,9 @@ export class JSONSchemaGenerator {
       // wipe away all properties except $ref
       const schema = seen.schema;
       for (const key in schema) {
-        // @ts-ignore
         delete schema[key];
-        schema.$ref = ref;
       }
+      schema.$ref = ref;
     };
 
     // extract schemas into $defs
@@ -691,7 +703,7 @@ export class JSONSchemaGenerator {
 
       if (!seen.isParent)
         this.override({
-          zodSchema,
+          zodSchema: zodSchema as schemas.$ZodTypes,
           jsonSchema: schema,
         });
     };
@@ -700,7 +712,16 @@ export class JSONSchemaGenerator {
       flattenRef(entry[0], { target: this.target });
     }
 
-    const result = { ...root.def };
+    const result: JSONSchema.BaseSchema = {};
+    if (this.target === "draft-2020-12") {
+      result.$schema = "https://json-schema.org/draft/2020-12/schema";
+    } else if (this.target === "draft-7") {
+      result.$schema = "http://json-schema.org/draft-07/schema#";
+    } else {
+      console.warn(`Invalid target: ${this.target}`);
+    }
+
+    Object.assign(result, root.def);
 
     const defs: JSONSchema.BaseSchema["$defs"] = params.external?.defs ?? {};
     for (const entry of this.seen.entries()) {
@@ -717,14 +738,6 @@ export class JSONSchemaGenerator {
       } else {
         result.definitions = defs;
       }
-    }
-
-    if (this.target === "draft-2020-12") {
-      result.$schema = "https://json-schema.org/draft-2020-12/schema";
-    } else if (this.target === "draft-7") {
-      result.$schema = "https://json-schema.org/draft-07/schema";
-    } else {
-      console.warn(`Invalid target: ${this.target}`);
     }
 
     try {

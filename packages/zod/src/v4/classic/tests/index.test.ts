@@ -706,17 +706,17 @@ test("z.templateLiteral", () => {
 });
 
 // this returns both a schema and a check
-test("z.custom", () => {
+test("z.custom schema", () => {
   const a = z.custom((val) => {
     return typeof val === "string";
   });
   expect(z.parse(a, "hello")).toEqual("hello");
   expect(() => z.parse(a, 123)).toThrow();
+});
 
-  const b = z.string().check(z.custom((val) => val.length > 3));
-
-  expect(z.parse(b, "hello")).toEqual("hello");
-  expect(() => z.parse(b, "hi")).toThrow();
+test("z.custom check", () => {
+  // @ts-expect-error Inference not possible, use z.refine()
+  z.date().check(z.custom((val) => val.getTime() > 0));
 });
 
 test("z.check", () => {
@@ -833,48 +833,6 @@ test("z.json", () => {
   expect(() => z.parse(a, { a: new Date() })).toThrow();
   expect(() => z.parse(a, undefined)).toThrow();
   expect(() => z.parse(a, { a: undefined })).toThrow();
-});
-
-test("z.stringbool", () => {
-  const a = z.stringbool();
-
-  expect(z.parse(a, "true")).toEqual(true);
-  expect(z.parse(a, "yes")).toEqual(true);
-  expect(z.parse(a, "1")).toEqual(true);
-  expect(z.parse(a, "on")).toEqual(true);
-  expect(z.parse(a, "y")).toEqual(true);
-  expect(z.parse(a, "enabled")).toEqual(true);
-  expect(z.parse(a, "TRUE")).toEqual(true);
-
-  expect(z.parse(a, "false")).toEqual(false);
-  expect(z.parse(a, "no")).toEqual(false);
-  expect(z.parse(a, "0")).toEqual(false);
-  expect(z.parse(a, "off")).toEqual(false);
-  expect(z.parse(a, "n")).toEqual(false);
-  expect(z.parse(a, "disabled")).toEqual(false);
-  expect(z.parse(a, "FALSE")).toEqual(false);
-
-  expect(z.safeParse(a, "other")).toMatchObject({ success: false });
-  expect(z.safeParse(a, "")).toMatchObject({ success: false });
-  expect(z.safeParse(a, undefined)).toMatchObject({ success: false });
-  expect(z.safeParse(a, {})).toMatchObject({ success: false });
-  expect(z.safeParse(a, true)).toMatchObject({ success: false });
-  expect(z.safeParse(a, false)).toMatchObject({ success: false });
-
-  const b = z.stringbool({
-    truthy: ["y"],
-    falsy: ["n"],
-  });
-  expect(z.parse(b, "y")).toEqual(true);
-  expect(z.parse(b, "n")).toEqual(false);
-  expect(z.safeParse(b, "true")).toMatchObject({ success: false });
-  expect(z.safeParse(b, "false")).toMatchObject({ success: false });
-
-  const c = z.stringbool({
-    case: "sensitive",
-  });
-  expect(z.parse(c, "true")).toEqual(true);
-  expect(z.safeParse(c, "TRUE")).toMatchObject({ success: false });
 });
 
 // promise

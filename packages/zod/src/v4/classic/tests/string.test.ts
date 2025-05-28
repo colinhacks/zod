@@ -339,12 +339,52 @@ test("url validations", () => {
   url.parse("http://aslkfjdalsdfkjaf");
   url.parse("http://localhost");
 
+  url.parse("c:");
+
   expect(() => url.parse("asdf")).toThrow();
-  expect(() => url.parse("http:.......///broken.com")).toThrow();
-  expect(() => url.parse("c:")).toThrow();
-  expect(() => url.parse("WWW:WWW.COM")).toThrow();
   expect(() => url.parse("https:/")).toThrow();
   expect(() => url.parse("asdfj@lkjsdf.com")).toThrow();
+  expect(() => url.parse("https://")).toThrow();
+});
+
+test("httpurl", () => {
+  const httpUrl = z.url({
+    protocol: /^https?$/,
+    hostname: z.regexes.domain,
+    // /^([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/
+  });
+
+  httpUrl.parse("https://example.com");
+  httpUrl.parse("http://example.com");
+  // ports
+  httpUrl.parse("https://example.com:8080");
+  httpUrl.parse("http://example.com:8080");
+  // subdomains
+  httpUrl.parse("https://sub.example.com");
+  httpUrl.parse("http://sub.example.com");
+  // paths
+  httpUrl.parse("https://example.com/path/to/resource");
+  httpUrl.parse("http://example.com/path/to/resource");
+  // query parameters
+  httpUrl.parse("https://example.com/path?query=param");
+  httpUrl.parse("http://example.com/path?query=param");
+  // fragment identifiers
+  httpUrl.parse("https://example.com/path#fragment");
+  httpUrl.parse("http://example.com/path#fragment");
+  // fails
+  expect(() => httpUrl.parse("ftp://example.com")).toThrow();
+  expect(() => httpUrl.parse("shttp://example.com")).toThrow();
+  expect(() => httpUrl.parse("httpz://example.com")).toThrow();
+  expect(() => httpUrl.parse("http://")).toThrow();
+  expect(() => httpUrl.parse("http://localhost")).toThrow();
+  expect(() => httpUrl.parse("http://-asdf.com")).toThrow();
+  expect(() =>
+    httpUrl.parse(
+      "http://asdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdf.com"
+    )
+  ).toThrow();
+  expect(() => httpUrl.parse("http://asdf.c")).toThrow();
+  expect(() => httpUrl.parse("mailto:asdf@lckj.com")).toThrow();
 });
 
 test("url error overrides", () => {
@@ -393,18 +433,16 @@ test("nanoid", () => {
 
   expect(result.error!.issues[0].message).toEqual("custom error");
   expect(result.error).toMatchInlineSnapshot(`
-    ZodError {
-      "issues": [
-        {
-          "code": "invalid_format",
-          "format": "nanoid",
-          "message": "custom error",
-          "origin": "string",
-          "path": [],
-          "pattern": "/^[a-zA-Z0-9_-]{21}$/",
-        },
-      ],
-    }
+    [ZodError: [
+      {
+        "origin": "string",
+        "code": "invalid_format",
+        "format": "nanoid",
+        "pattern": "/^[a-zA-Z0-9_-]{21}$/",
+        "path": [],
+        "message": "custom error"
+      }
+    ]]
   `);
 });
 
@@ -416,18 +454,16 @@ test("bad nanoid", () => {
 
   expect(result.error!.issues[0].message).toEqual("custom error");
   expect(result.error).toMatchInlineSnapshot(`
-    ZodError {
-      "issues": [
-        {
-          "code": "invalid_format",
-          "format": "nanoid",
-          "message": "custom error",
-          "origin": "string",
-          "path": [],
-          "pattern": "/^[a-zA-Z0-9_-]{21}$/",
-        },
-      ],
-    }
+    [ZodError: [
+      {
+        "origin": "string",
+        "code": "invalid_format",
+        "format": "nanoid",
+        "pattern": "/^[a-zA-Z0-9_-]{21}$/",
+        "path": [],
+        "message": "custom error"
+      }
+    ]]
   `);
 });
 
@@ -501,18 +537,16 @@ test("cuid", () => {
 
   expect(result.error!.issues[0].message).toEqual("Invalid cuid");
   expect(result.error).toMatchInlineSnapshot(`
-    ZodError {
-      "issues": [
-        {
-          "code": "invalid_format",
-          "format": "cuid",
-          "message": "Invalid cuid",
-          "origin": "string",
-          "path": [],
-          "pattern": "/^[cC][^\\s-]{8,}$/",
-        },
-      ],
-    }
+    [ZodError: [
+      {
+        "origin": "string",
+        "code": "invalid_format",
+        "format": "cuid",
+        "pattern": "/^[cC][^\\\\s-]{8,}$/",
+        "path": [],
+        "message": "Invalid cuid"
+      }
+    ]]
   `);
 });
 
@@ -552,18 +586,16 @@ test("ulid", () => {
 
   expect(result.error!.issues[0].message).toEqual("Invalid ULID");
   expect(result.error).toMatchInlineSnapshot(`
-    ZodError {
-      "issues": [
-        {
-          "code": "invalid_format",
-          "format": "ulid",
-          "message": "Invalid ULID",
-          "origin": "string",
-          "path": [],
-          "pattern": "/^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$/",
-        },
-      ],
-    }
+    [ZodError: [
+      {
+        "origin": "string",
+        "code": "invalid_format",
+        "format": "ulid",
+        "pattern": "/^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$/",
+        "path": [],
+        "message": "Invalid ULID"
+      }
+    ]]
   `);
 });
 
@@ -575,18 +607,16 @@ test("xid", () => {
 
   expect(result.error!.issues[0].message).toEqual("Invalid XID");
   expect(result.error).toMatchInlineSnapshot(`
-    ZodError {
-      "issues": [
-        {
-          "code": "invalid_format",
-          "format": "xid",
-          "message": "Invalid XID",
-          "origin": "string",
-          "path": [],
-          "pattern": "/^[0-9a-vA-V]{20}$/",
-        },
-      ],
-    }
+    [ZodError: [
+      {
+        "origin": "string",
+        "code": "invalid_format",
+        "format": "xid",
+        "pattern": "/^[0-9a-vA-V]{20}$/",
+        "path": [],
+        "message": "Invalid XID"
+      }
+    ]]
   `);
 });
 

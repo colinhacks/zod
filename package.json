@@ -26,11 +26,13 @@
     "chalk": "^5.4.1",
     "console-table-printer": "^2.12.1",
     "execa": "^9.5.2",
+    "globby": "^14.1.0",
     "husky": "^7.0.4",
     "jsr": "^0.12.4",
     "lint-staged": "^12.5.0",
     "mitata": "^0.1.14",
     "prettier": "^3.5.3",
+    "semver": "^7.7.2",
     "supershy": "^1.0.0",
     "tinybench": "^2.9.0",
     "ts-morph": "^14.0.0",
@@ -63,7 +65,7 @@
     "build": "pnpm run -r --filter '!@zod/docs' build",
     "test:watch": "vitest",
     "test": "vitest run",
-    "prepublishOnly": "pnpm run test && pnpm run build && tsx scripts/prepublish.ts",
+    "prepublishOnly": "pnpm run test && pnpm run build",
     "dev": "tsx --conditions @zod/source",
     "dev:watch": "tsx --conditions @zod/source --watch",
     "dev:play": "pnpm dev play.ts",
@@ -74,6 +76,7 @@
     "publish:jsr": "jsr publish --dry-run",
     "bundle:rollup": "rollup -c",
     "bundle:esbuild": "esbuild --bundle ./scratch/input.ts --outfile=./scratch/out_esbuild.js --bundle --format=esm",
-    "pub:beta": "pnpm run -r pub:beta"
+    "pub:beta": "pnpm run -r pub:beta",
+    "semver-check": "tsx scripts/semver-check.ts"
   }
 }

@@ -174,8 +174,8 @@ z.string().lowercase();
 </Tab>
 <Tab value="Zod Mini">
 ```ts zod/v4-mini
-z.string().check(z.max(5));
-z.string().check(z.min(5));
+z.string().check(z.maximum(5)); // or z.lte()
+z.string().check(z.minimum(5)); // or z.gte()
 z.string().check(z.length(5));
 z.string().check(z.regex(/^[a-z]+$/));
 z.string().check(z.startsWith("aaa"));
@@ -297,19 +297,18 @@ z.guid();
 
 ### URLs
 
-To validate any WHATWG-compatible URL.
+To validate any WHATWG-compatible URL:
 
 ```ts
 const schema = z.url();
 
 schema.parse("https://example.com"); // ✅
 schema.parse("http://localhost"); // ✅
-
-schema.parse("mailto:noreply@zod.dev"); // ❌
-schema.parse("sup"); // ❌
+schema.parse("mailto:noreply@zod.dev"); // ✅
+schema.parse("sup"); // ✅
 ```
 
-> Internally this uses the `new URL()` constructor to perform validation. This may behave differently across platforms and runtimes but is generally the most rigorous way to validate URIs/URLs. 
+As you can see this is quite permissive. Internally this uses the `new URL()` constructor to valid inputs; this behavior may differ across platforms and runtimes but it's the mostly rigorous way to validate URIs/URLs on any given JS runtime/engine. 
 
 To validate the hostname against a specific regex:
 
@@ -329,6 +328,22 @@ schema.parse("https://example.com"); // ✅
 schema.parse("http://example.com"); // ❌
 ```
 
+<Callout>
+  **Web URLs** — In many cases, you'll want to validate Web URLs specifically. Here's the recommended schema for doing so:
+
+  ```ts
+  const httpUrl = z.url({
+    protocol: /^https?$/,
+    hostname: z.regexes.domain
+  });
+  ```
+
+  This restricts the protocol to `http`/`https` and ensures the hostname is a valid domain name with the `z.regexes.domain` regular expression:
+
+  ```ts
+  /^([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/
+  ```
+</Callout>
 
 ### ISO datetimes
 
@@ -345,7 +360,7 @@ datetime.parse("2020-01-01T00:00:00.123456Z"); // ✅ (arbitrary precision)
 datetime.parse("2020-01-01T00:00:00+02:00"); // ❌ (no offsets allowed)
 ```
 
-To allow timesone offsets:
+To allow timezone offsets:
 
 ```ts
 const datetime = z.iso.datetime({ offset: true });
@@ -932,7 +947,7 @@ Dog.parse({ name: "Yeller", extraKey: true });
 
 ### `.catchall()`
 
-To defina a *catchall schema* that will be used to validate any unrecognized keys:
+To define a *catchall schema* that will be used to validate any unrecognized keys:
 
 ```
 const DogWithStrings = z.object({
@@ -1019,11 +1034,11 @@ Starting from this initial schema:
 
 ```ts z.object
 const Recipe = z.object({
-  name: z.string(),
+  title: z.string(),
   description: z.string().optional(),
   ingredients: z.array(z.string()),
 });
-// { id: string; name: string; ingredients: string[] }
+// { title: string; description?: string | undefined; ingredients: string[] }
 ```
 To pick certain keys:
 
@@ -2480,8 +2495,8 @@ const computeTrimmedLength = MyFunction.implement((input) => {
   return input.trim().length;
 });
 
-trimmedLength("sandwich"); // => 8
-trimmedLength(" asdf "); // => 4
+computeTrimmedLength("sandwich"); // => 8
+computeTrimmedLength(" asdf "); // => 4
 ```
 
 This function will throw a `ZodError` if the input is invalid:
