@@ -47,8 +47,11 @@ interface EmitParams {
       }
     | undefined;
   internal?: {
-    selfRef: (zodSchema: schemas.$ZodType, jsonSchema: JSONSchema.BaseSchema) => { defId?: string; ref: string };
-    makeRef: (zodSchema: schemas.$ZodType, jsonSchema: JSONSchema.BaseSchema) => { defId: string; ref: string };
+    makeRef: (
+      zodSchema: schemas.$ZodType,
+      jsonSchema: JSONSchema.BaseSchema,
+      isSelf: boolean
+    ) => { defId?: string; ref: string };
   };
 }
 
@@ -571,9 +574,9 @@ export class JSONSchemaGenerator {
       // uri: _params?.uri ?? ((id) => `${id}`),
       external: _params?.external ?? undefined,
       internal: _params?.internal ?? {
-        selfRef: () => ({ ref: "#" }),
-        makeRef: (_, jsonSchema) => {
+        makeRef: (_, jsonSchema, isSelf) => {
           const uriPrefix = `#`;
+          if (isSelf) return { ref: uriPrefix };
           const defUriPrefix = `${uriPrefix}/${defsSegment}/`;
           const defId = jsonSchema.id ?? `__schema${this.counter++}`;
           return { defId, ref: defUriPrefix + defId };
@@ -607,12 +610,8 @@ export class JSONSchemaGenerator {
         return { defId: id, ref: `${params.external.uri("__shared")}#/${defsSegment}/${id}` };
       }
 
-      if (entry[1] === root) {
-        return params.internal.selfRef(entry[0], entry[1].schema);
-      }
-
       // self-contained schema
-      return params.internal.makeRef(entry[0], entry[1].schema);
+      return params.internal.makeRef(entry[0], entry[1].schema, entry[1] === root);
     };
 
     const extractToDef = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): void => {

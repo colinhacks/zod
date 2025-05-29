@@ -1956,12 +1956,12 @@ test("use output type for preprocess", () => {
 });
 
 describe("internal parameter", () => {
-  const oasReg = new Map<z.core.$ZodType, { name: string; depiction: z.core.JSONSchema.BaseSchema }>();
+  const oasDoc = new Map<z.core.$ZodType, { name: string; depiction: z.core.JSONSchema.BaseSchema }>();
   const makeRef = (zodSchema: z.core.$ZodType, jsonSchema: z.core.JSONSchema.BaseSchema) => {
-    if (!oasReg.has(zodSchema)) {
-      oasReg.set(zodSchema, { name: `Schema${oasReg.size + 1}`, depiction: jsonSchema });
+    if (!oasDoc.has(zodSchema)) {
+      oasDoc.set(zodSchema, { name: `Schema${oasDoc.size + 1}`, depiction: jsonSchema });
     }
-    const { name } = oasReg.get(zodSchema)!;
+    const { name } = oasDoc.get(zodSchema)!;
     return { defId: name, ref: `#/components/schemas/${name}` };
   };
 
@@ -1976,7 +1976,7 @@ describe("internal parameter", () => {
       subcategories: z.array(z.lazy(() => categorySchema)),
     });
 
-    const result = z.toJSONSchema(categorySchema, { internal: { selfRef: makeRef, makeRef } });
+    const result = z.toJSONSchema(categorySchema, { internal: { makeRef } });
     expect(result).toMatchInlineSnapshot(`
       {
         "$defs": {
@@ -2030,7 +2030,7 @@ describe("internal parameter", () => {
       },
     });
 
-    const result = z.toJSONSchema(TreeNodeSchema, { internal: { selfRef: makeRef, makeRef } });
+    const result = z.toJSONSchema(TreeNodeSchema, { internal: { makeRef } });
 
     // Should have definitions for recursive schema
     expect(JSON.stringify(result, null, 2)).toMatchInlineSnapshot(
@@ -2089,7 +2089,7 @@ describe("internal parameter", () => {
       },
     });
 
-    const result = z.toJSONSchema(FolderSchema, { internal: { selfRef: makeRef, makeRef } });
+    const result = z.toJSONSchema(FolderSchema, { internal: { makeRef } });
 
     // Should have definitions for both schemas
     expect(JSON.stringify(result, null, 2)).toMatchInlineSnapshot(
