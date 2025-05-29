@@ -7,3 +7,6 @@ const a = z
   .default(5);
 
 console.dir(z.toJSONSchema(a, { io: "input" }), { depth: null });
+z.formatError;
+
+z.jwt({ alg: "Edscaasdf" });

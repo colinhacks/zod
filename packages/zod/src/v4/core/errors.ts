@@ -216,7 +216,6 @@ type _FlattenedError<T, U = string> = {
   };
 };
 
-/** @deprecated Use `z.treeifyError()` instead. */
 export function flattenError<T>(error: $ZodError<T>): _FlattenedError<T>;
 export function flattenError<T, U>(error: $ZodError<T>, mapper?: (issue: $ZodIssue) => U): _FlattenedError<T, U>;
 export function flattenError(error: $ZodError, mapper = (issue: $ZodIssue) => issue.message): any {
