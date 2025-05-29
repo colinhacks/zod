@@ -1954,13 +1954,13 @@ test("use output type for preprocess", () => {
   `);
 });
 
-describe("internal parameter", () => {
-  const oasDoc = new Map<z.core.$ZodType, { name: string; depiction: z.core.JSONSchema.BaseSchema }>();
-  const makeRef = (zodSchema: z.core.$ZodType, jsonSchema: z.core.JSONSchema.BaseSchema) => {
+describe("internal parameter: custom makeRef() function", () => {
+  const oasDoc = new Map<z.core.$ZodType, string>();
+  const makeRef = (zodSchema: z.core.$ZodType) => {
     if (!oasDoc.has(zodSchema)) {
-      oasDoc.set(zodSchema, { name: `Schema${oasDoc.size + 1}`, depiction: jsonSchema });
+      oasDoc.set(zodSchema, `Schema${oasDoc.size + 1}`);
     }
-    const { name } = oasDoc.get(zodSchema)!;
+    const name = oasDoc.get(zodSchema)!;
     return { defId: name, ref: `#/components/schemas/${name}` };
   };
 
@@ -1975,30 +1975,32 @@ describe("internal parameter", () => {
       subcategories: z.array(z.lazy(() => categorySchema)),
     });
 
-    const result = z.toJSONSchema(categorySchema, { internal: { makeRef } });
-    expect(result).toMatchInlineSnapshot(`
+    const { $defs, ...rest } = z.toJSONSchema(categorySchema, { internal: { makeRef } });
+    expect($defs).toMatchInlineSnapshot(`
       {
-        "$defs": {
-          "Schema1": {
-            "additionalProperties": false,
-            "properties": {
-              "name": {
-                "type": "string",
-              },
-              "subcategories": {
-                "items": {
-                  "$ref": "#/components/schemas/Schema1",
-                },
-                "type": "array",
-              },
+        "Schema1": {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
             },
-            "required": [
-              "name",
-              "subcategories",
-            ],
-            "type": "object",
+            "subcategories": {
+              "items": {
+                "$ref": "#/components/schemas/Schema1",
+              },
+              "type": "array",
+            },
           },
+          "required": [
+            "name",
+            "subcategories",
+          ],
+          "type": "object",
         },
+      }
+    `);
+    expect(rest).toMatchInlineSnapshot(`
+      {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
         "properties": {
@@ -2029,48 +2031,46 @@ describe("internal parameter", () => {
       },
     });
 
-    const result = z.toJSONSchema(TreeNodeSchema, { internal: { makeRef } });
-
-    // Should have definitions for recursive schema
-    expect(JSON.stringify(result, null, 2)).toMatchInlineSnapshot(
-      `
-      "{
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
+    const { $defs, ...rest } = z.toJSONSchema(TreeNodeSchema, { internal: { makeRef } });
+    expect($defs).toMatchInlineSnapshot(`
+      {
+        "Schema2": {
+          "additionalProperties": false,
+          "properties": {
+            "children": {
+              "$ref": "#/components/schemas/Schema2",
+            },
+            "id": {
+              "type": "string",
+            },
           },
+          "required": [
+            "id",
+            "children",
+          ],
+          "type": "object",
+        },
+      }
+    `);
+    expect(rest).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
           "children": {
-            "$ref": "#/components/schemas/Schema2"
-          }
+            "$ref": "#/components/schemas/Schema2",
+          },
+          "id": {
+            "type": "string",
+          },
         },
         "required": [
           "id",
-          "children"
+          "children",
         ],
-        "additionalProperties": false,
-        "$defs": {
-          "Schema2": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "children": {
-                "$ref": "#/components/schemas/Schema2"
-              }
-            },
-            "required": [
-              "id",
-              "children"
-            ],
-            "additionalProperties": false
-          }
-        }
-      }"
-    `
-    );
+        "type": "object",
+      }
+    `);
   });
 
   test("mutually recursive interface schemas", () => {
@@ -2088,80 +2088,78 @@ describe("internal parameter", () => {
       },
     });
 
-    const result = z.toJSONSchema(FolderSchema, { internal: { makeRef } });
-
-    // Should have definitions for both schemas
-    expect(JSON.stringify(result, null, 2)).toMatchInlineSnapshot(
-      `
-      "{
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
+    const { $defs, ...rest } = z.toJSONSchema(FolderSchema, { internal: { makeRef } });
+    expect($defs).toMatchInlineSnapshot(`
+      {
+        "Schema3": {
+          "additionalProperties": false,
+          "properties": {
+            "files": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                  },
+                  "parent": {
+                    "$ref": "#/components/schemas/Schema3",
+                  },
+                },
+                "required": [
+                  "name",
+                  "parent",
+                ],
+                "type": "object",
+              },
+              "type": "array",
+            },
+            "name": {
+              "type": "string",
+            },
           },
+          "required": [
+            "name",
+            "files",
+          ],
+          "type": "object",
+        },
+      }
+    `);
+    expect(rest).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
           "files": {
-            "type": "array",
             "items": {
-              "type": "object",
+              "additionalProperties": false,
               "properties": {
                 "name": {
-                  "type": "string"
+                  "type": "string",
                 },
                 "parent": {
-                  "$ref": "#/components/schemas/Schema3"
-                }
+                  "$ref": "#/components/schemas/Schema3",
+                },
               },
               "required": [
                 "name",
-                "parent"
+                "parent",
               ],
-              "additionalProperties": false
-            }
-          }
+              "type": "object",
+            },
+            "type": "array",
+          },
+          "name": {
+            "type": "string",
+          },
         },
         "required": [
           "name",
-          "files"
+          "files",
         ],
-        "additionalProperties": false,
-        "$defs": {
-          "Schema3": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string"
-              },
-              "files": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "name": {
-                      "type": "string"
-                    },
-                    "parent": {
-                      "$ref": "#/components/schemas/Schema3"
-                    }
-                  },
-                  "required": [
-                    "name",
-                    "parent"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            },
-            "required": [
-              "name",
-              "files"
-            ],
-            "additionalProperties": false
-          }
-        }
-      }"
-    `
-    );
+        "type": "object",
+      }
+    `);
   });
 });
 
