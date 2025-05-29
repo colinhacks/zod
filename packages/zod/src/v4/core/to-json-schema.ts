@@ -604,6 +604,8 @@ export class JSONSchemaGenerator {
       return { defId, ref: defUriPrefix + defId };
     };
 
+    // stored cached version in `def` property
+    // remove all properties, set $ref
     const extractToDef = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): void => {
       if (entry[1].schema.$ref) {
         return;
@@ -680,27 +682,31 @@ export class JSONSchemaGenerator {
       const seen = this.seen.get(zodSchema)!;
       const schema = seen.def ?? seen.schema;
 
-      const _schema = { ...schema };
+      const _cached = { ...schema };
+
+      // already seen
       if (seen.ref === null) {
         return;
       }
 
+      // flatten ref if defined
       const ref = seen.ref;
-      seen.ref = null;
+      seen.ref = null; // prevent recursion
       if (ref) {
         flattenRef(ref, params);
 
+        // merge referenced schema into current
         const refSchema = this.seen.get(ref)!.schema;
-
         if (refSchema.$ref && params.target === "draft-7") {
           schema.allOf = schema.allOf ?? [];
           schema.allOf.push(refSchema);
         } else {
           Object.assign(schema, refSchema);
-          Object.assign(schema, _schema); // this is to prevent overwriting any fields in the original schema
+          Object.assign(schema, _cached); // prevent overwriting any fields in the original schema
         }
       }
 
+      // execute overrides
       if (!seen.isParent)
         this.override({
           zodSchema: zodSchema as schemas.$ZodTypes,
@@ -723,6 +729,7 @@ export class JSONSchemaGenerator {
 
     Object.assign(result, root.def);
 
+    // build defs object
     const defs: JSONSchema.BaseSchema["$defs"] = params.external?.defs ?? {};
     for (const entry of this.seen.entries()) {
       const seen = entry[1];
