@@ -17,7 +17,9 @@ export type JWTAlgorithm =
   | "ES512"
   | "PS256"
   | "PS384"
-  | "PS512";
+  | "PS512"
+  | "EdDSA"
+  | (string & {});
 export type IPVersion = "v4" | "v6";
 export type MimeTypes =
   | "application/json"
