@@ -333,7 +333,11 @@ export const allowsEval: { value: boolean } = cached(() => {
 });
 
 export function isPlainObject(data: any): data is Record<PropertyKey, unknown> {
-  return typeof data === "object" && data !== null && Object.getPrototypeOf(data) === Object.prototype;
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    (Object.getPrototypeOf(data) === Object.prototype || Object.getPrototypeOf(data) === null)
+  );
 }
 
 export function numKeys(data: any): number {

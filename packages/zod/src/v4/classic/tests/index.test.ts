@@ -775,3 +775,15 @@ test("z.promise", async () => {
 //   // @ts-expect-error
 //   schema.assertOutput<string>();
 // });
+
+test("isPlainObject", () => {
+  expect(z.core.util.isPlainObject({})).toEqual(true);
+  expect(z.core.util.isPlainObject(Object.create(null))).toEqual(true);
+  expect(z.core.util.isPlainObject([])).toEqual(false);
+  expect(z.core.util.isPlainObject(new Date())).toEqual(false);
+  expect(z.core.util.isPlainObject(null)).toEqual(false);
+  expect(z.core.util.isPlainObject(undefined)).toEqual(false);
+  expect(z.core.util.isPlainObject("string")).toEqual(false);
+  expect(z.core.util.isPlainObject(123)).toEqual(false);
+  expect(z.core.util.isPlainObject(Symbol())).toEqual(false);
+});
