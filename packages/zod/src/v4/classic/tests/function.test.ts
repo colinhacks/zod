@@ -158,6 +158,34 @@ test("input validation error", () => {
   }
 });
 
+test("array inputs", () => {
+  const a = z.function({
+    input: [
+      z.object({
+        name: z.string(),
+        age: z.number().int(),
+      }),
+    ],
+    output: z.string(),
+  });
+
+  a.implement((args) => {
+    return `${args.age}`;
+  });
+
+  const b = z.function({
+    input: [
+      z.object({
+        name: z.string(),
+        age: z.number().int(),
+      }),
+    ],
+  });
+  b.implement((args) => {
+    return `${args.age}`;
+  });
+});
+
 test("output validation error", () => {
   const schema = z.function({
     input: z.tuple([]),

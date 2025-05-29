@@ -137,6 +137,13 @@ function _function(): $ZodFunction;
 function _function<const In extends Array<schemas.$ZodType> = Array<schemas.$ZodType>>(params: {
   input: In;
 }): $ZodFunction<$ZodTuple<In, null>, $ZodFunctionOut>;
+function _function<
+  const In extends Array<schemas.$ZodType> = Array<schemas.$ZodType>,
+  const Out extends $ZodFunctionOut = $ZodFunctionOut,
+>(params: {
+  input: In;
+  output: Out;
+}): $ZodFunction<$ZodTuple<In, null>, Out>;
 function _function<const In extends $ZodFunctionIn = $ZodFunctionIn>(params: {
   input: In;
 }): $ZodFunction<In, $ZodFunctionOut>;

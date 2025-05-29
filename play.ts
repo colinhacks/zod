@@ -1,22 +1,17 @@
 import { z } from "zod/v4";
 
-const schema = z.discriminatedUnion(
-  "foo",
-  [
+// export type ClickCallbackArgs = z.infer<typeof ClickCallbackArgsSchema>;
+
+const myFunction = z.function({
+  input: [
     z.object({
-      foo: z.literal("x"),
-      x: z.string(),
-    }),
-    z.object({
-      foo: z.literal("y"),
-      y: z.string(),
+      name: z.string(),
+      age: z.number().int(),
     }),
   ],
-  {
-    error: "Invalid discriminator",
-  }
-);
+  output: z.string(),
+});
 
-const error = schema.safeParse({ foo: "invalid" }).error;
-console.log("error:", error);
-console.dir(z.treeifyError(error!), { depth: null });
+myFunction.implement((args) => {
+  return `${args.age}`;
+});
