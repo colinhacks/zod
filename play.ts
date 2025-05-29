@@ -24,6 +24,9 @@ z.treeifyError(arg.error!);
 
 const output = z.string();
 
+const aa = z.function();
+type aa = Parameters<typeof aa._output>;
+
 const itWorks = z.function({ input: [z.string()] }).implement(output.parse);
 const itWorks2 = z.function({ input: [z.string()] }).implement((args) => output.parse(args));
 const itWorks3 = z.function({ input: [z.string().default("")] }).implement(output.parse);

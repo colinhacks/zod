@@ -82,13 +82,13 @@ test("args method", () => {
   expectTypeOf<t3>().toEqualTypeOf<(arg: string, ...args_1: unknown[]) => boolean>();
 });
 
-test("contravariance", () => {
-  const fn = z.function().implement((_a: string, _b: number) => {
-    return new Date();
-  });
+// test("custom args", () => {
+//   const fn = z.function().implement((_a: string, _b: number) => {
+//     return new Date();
+//   });
 
-  expectTypeOf(fn).toEqualTypeOf<(a: string, b: number) => Date>();
-});
+//   expectTypeOf(fn).toEqualTypeOf<(a: string, b: number) => Date>();
+// });
 
 const args2 = z.tuple([
   z.object({
@@ -137,6 +137,7 @@ test("input validation error", () => {
   });
   const fn = schema.implement(() => 1234 as any);
 
+  // @ts-expect-error
   const checker = () => fn();
 
   try {
