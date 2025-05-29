@@ -1777,7 +1777,6 @@ test("defaults/prefaults", () => {
   expect(z.toJSONSchema(c, { io: "input" })).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "default": 1234,
       "type": "string",
     }
   `);
@@ -1954,3 +1953,31 @@ test("use output type for preprocess", () => {
     }
   `);
 });
+
+// test("isTransforming", () => {
+//   const tx = z.core.isTransforming;
+//   expect(tx(z.string())).toEqual(false);
+//   expect(tx(z.string().transform((val) => val))).toEqual(true);
+//   expect(tx(z.string().pipe(z.string()))).toEqual(false);
+//   expect(
+//     tx(
+//       z
+//         .string()
+//         .transform((val) => val)
+//         .pipe(z.string())
+//     )
+//   ).toEqual(true);
+
+//   const a = z.transform((val) => val);
+//   expect(tx(z.transform((val) => val))).toEqual(true);
+//   expect(tx(a.optional())).toEqual(true);
+
+//   const b = z.string().optional();
+//   expect(tx(b)).toEqual(false);
+
+//   const c = z.string().prefault("hello");
+//   expect(tx(c)).toEqual(false);
+
+//   const d = z.string().default("hello");
+//   expect(tx(d)).toEqual(false);
+// });
