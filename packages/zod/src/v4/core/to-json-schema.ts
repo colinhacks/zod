@@ -46,8 +46,6 @@ interface EmitParams {
         defs: Record<string, JSONSchema.BaseSchema>;
       }
     | undefined;
-  /** @override external */
-  makeURI?: (entry: [schemas.$ZodType<unknown, unknown>, Seen]) => { ref: string; defId?: string };
 }
 
 const formatMap: Partial<Record<checks.$ZodStringFormats, string | undefined>> = {
@@ -560,12 +558,23 @@ export class JSONSchemaGenerator {
   }
 
   emit(schema: schemas.$ZodType, _params?: EmitParams): JSONSchema.BaseSchema {
+    const params = {
+      cycles: _params?.cycles ?? "ref",
+      reused: _params?.reused ?? "inline",
+      // unrepresentable: _params?.unrepresentable ?? "throw",
+      // uri: _params?.uri ?? ((id) => `${id}`),
+      external: _params?.external ?? undefined,
+    } satisfies EmitParams;
+
     // iterate over seen map;
     const root = this.seen.get(schema);
 
     if (!root) throw new Error("Unprocessed schema. This is a bug in Zod.");
 
-    const makeDefaultURI = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): { ref: string; defId?: string } => {
+    // initialize result with root schema fields
+    // Object.assign(result, seen.cached);
+
+    const makeURI = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): { ref: string; defId?: string } => {
       // comparing the seen objects because sometimes
       // multiple schemas map to the same seen object.
       // e.g. lazy
@@ -595,24 +604,12 @@ export class JSONSchemaGenerator {
       return { defId, ref: defUriPrefix + defId };
     };
 
-    const params = {
-      cycles: _params?.cycles ?? "ref",
-      reused: _params?.reused ?? "inline",
-      // unrepresentable: _params?.unrepresentable ?? "throw",
-      // uri: _params?.uri ?? ((id) => `${id}`),
-      external: _params?.external ?? undefined,
-      makeURI: _params?.makeURI ?? makeDefaultURI,
-    } satisfies EmitParams;
-
-    // initialize result with root schema fields
-    // Object.assign(result, seen.cached);
-
     const extractToDef = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): void => {
       if (entry[1].schema.$ref) {
         return;
       }
       const seen = entry[1];
-      const { ref, defId } = params.makeURI(entry);
+      const { ref, defId } = makeURI(entry);
 
       seen.def = { ...seen.schema };
       // defId won't be set if the schema is a reference to an external schema
