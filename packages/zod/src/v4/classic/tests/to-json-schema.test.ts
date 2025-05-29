@@ -1954,3 +1954,214 @@ test("use output type for preprocess", () => {
     }
   `);
 });
+
+describe("internal parameter", () => {
+  const oasReg = new Map<z.core.$ZodType, { name: string; depiction: z.core.JSONSchema.BaseSchema }>();
+  const makeRef = (zodSchema: z.core.$ZodType, jsonSchema: z.core.JSONSchema.BaseSchema) => {
+    if (!oasReg.has(zodSchema)) {
+      oasReg.set(zodSchema, { name: `Schema${oasReg.size + 1}`, depiction: jsonSchema });
+    }
+    const { name } = oasReg.get(zodSchema)!;
+    return { defId: name, ref: `#/components/schemas/${name}` };
+  };
+
+  test("recursive object", () => {
+    interface Category {
+      name: string;
+      subcategories: Category[];
+    }
+
+    const categorySchema: z.ZodType<Category> = z.object({
+      name: z.string(),
+      subcategories: z.array(z.lazy(() => categorySchema)),
+    });
+
+    const result = z.toJSONSchema(categorySchema, { internal: { selfRef: makeRef, makeRef } });
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "$defs": {
+          "Schema1": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+              },
+              "subcategories": {
+                "items": {
+                  "$ref": "#/components/schemas/Schema1",
+                },
+                "type": "array",
+              },
+            },
+            "required": [
+              "name",
+              "subcategories",
+            ],
+            "type": "object",
+          },
+        },
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+          },
+          "subcategories": {
+            "items": {
+              "$ref": "#/components/schemas/Schema1",
+            },
+            "type": "array",
+          },
+        },
+        "required": [
+          "name",
+          "subcategories",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  test("recursive interface schemas", () => {
+    const TreeNodeSchema = z.object({
+      id: z.string(),
+      get children() {
+        return TreeNodeSchema;
+      },
+    });
+
+    const result = z.toJSONSchema(TreeNodeSchema, { internal: { selfRef: makeRef, makeRef } });
+
+    // Should have definitions for recursive schema
+    expect(JSON.stringify(result, null, 2)).toMatchInlineSnapshot(
+      `
+      "{
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "children": {
+            "$ref": "#/components/schemas/Schema2"
+          }
+        },
+        "required": [
+          "id",
+          "children"
+        ],
+        "additionalProperties": false,
+        "$defs": {
+          "Schema2": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "children": {
+                "$ref": "#/components/schemas/Schema2"
+              }
+            },
+            "required": [
+              "id",
+              "children"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }"
+    `
+    );
+  });
+
+  test("mutually recursive interface schemas", () => {
+    const FolderSchema = z.object({
+      name: z.string(),
+      get files() {
+        return z.array(FileSchema);
+      },
+    });
+
+    const FileSchema = z.object({
+      name: z.string(),
+      get parent() {
+        return FolderSchema;
+      },
+    });
+
+    const result = z.toJSONSchema(FolderSchema, { internal: { selfRef: makeRef, makeRef } });
+
+    // Should have definitions for both schemas
+    expect(JSON.stringify(result, null, 2)).toMatchInlineSnapshot(
+      `
+      "{
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "parent": {
+                  "$ref": "#/components/schemas/Schema3"
+                }
+              },
+              "required": [
+                "name",
+                "parent"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "name",
+          "files"
+        ],
+        "additionalProperties": false,
+        "$defs": {
+          "Schema3": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "files": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "parent": {
+                      "$ref": "#/components/schemas/Schema3"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "parent"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "name",
+              "files"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }"
+    `
+    );
+  });
+});

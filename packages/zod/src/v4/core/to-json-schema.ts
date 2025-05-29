@@ -46,6 +46,10 @@ interface EmitParams {
         defs: Record<string, JSONSchema.BaseSchema>;
       }
     | undefined;
+  internal?: {
+    selfRef: (zodSchema: schemas.$ZodType, jsonSchema: JSONSchema.BaseSchema) => { defId?: string; ref: string };
+    makeRef: (zodSchema: schemas.$ZodType, jsonSchema: JSONSchema.BaseSchema) => { defId: string; ref: string };
+  };
 }
 
 const formatMap: Partial<Record<checks.$ZodStringFormats, string | undefined>> = {
@@ -558,12 +562,23 @@ export class JSONSchemaGenerator {
   }
 
   emit(schema: schemas.$ZodType, _params?: EmitParams): JSONSchema.BaseSchema {
+    const defsSegment = this.target === "draft-2020-12" ? "$defs" : "definitions";
+
     const params = {
       cycles: _params?.cycles ?? "ref",
       reused: _params?.reused ?? "inline",
       // unrepresentable: _params?.unrepresentable ?? "throw",
       // uri: _params?.uri ?? ((id) => `${id}`),
       external: _params?.external ?? undefined,
+      internal: _params?.internal ?? {
+        selfRef: () => ({ ref: "#" }),
+        makeRef: (_, jsonSchema) => {
+          const uriPrefix = `#`;
+          const defUriPrefix = `${uriPrefix}/${defsSegment}/`;
+          const defId = jsonSchema.id ?? `__schema${this.counter++}`;
+          return { defId, ref: defUriPrefix + defId };
+        },
+      },
     } satisfies EmitParams;
 
     // iterate over seen map;
@@ -580,7 +595,6 @@ export class JSONSchemaGenerator {
       // e.g. lazy
 
       // external is configured
-      const defsSegment = this.target === "draft-2020-12" ? "$defs" : "definitions";
       if (params.external) {
         const externalId = params.external.registry.get(entry[0])?.id; // ?? "__shared";// `__schema${this.counter++}`;
 
@@ -594,14 +608,11 @@ export class JSONSchemaGenerator {
       }
 
       if (entry[1] === root) {
-        return { ref: "#" };
+        return params.internal.selfRef(entry[0], entry[1].schema);
       }
 
       // self-contained schema
-      const uriPrefix = `#`;
-      const defUriPrefix = `${uriPrefix}/${defsSegment}/`;
-      const defId = entry[1].schema.id ?? `__schema${this.counter++}`;
-      return { defId, ref: defUriPrefix + defId };
+      return params.internal.makeRef(entry[0], entry[1].schema);
     };
 
     const extractToDef = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): void => {
