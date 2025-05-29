@@ -33,9 +33,15 @@ export type $InferInnerFunctionTypeAsync<Args extends $ZodFunctionIn, Returns ex
   ...args: null extends Args ? never[] : NonNullable<Args>["_zod"]["output"]
 ) => null extends Returns ? unknown : util.MaybeAsync<NonNullable<Returns>["_zod"]["input"]>;
 
-export type $InferOuterFunctionType<Args extends $ZodFunctionIn, Returns extends $ZodFunctionOut> = (
-  ...args: null extends Args ? never[] : NonNullable<Args>["_zod"]["input"]
-) => null extends Returns ? unknown : NonNullable<Returns>["_zod"]["output"];
+// export type $InferOuterFunctionType<Args extends $ZodFunctionIn, Returns extends $ZodFunctionOut> = (
+//   ...args: null extends Args ? never[] : NonNullable<Args>["_zod"]["input"]
+// ) => null extends Returns ? unknown : NonNullable<Returns>["_zod"]["output"];
+export interface $InferOuterFunctionType<Args extends $ZodFunctionIn, Returns extends $ZodFunctionOut> {
+  // biome-ignore lint:
+  (
+    ...args: null extends Args ? [] : NonNullable<Args>["_zod"]["input"]
+  ): null extends Returns ? unknown : NonNullable<Returns>["_zod"]["output"];
+}
 
 export type $InferOuterFunctionTypeAsync<Args extends $ZodFunctionIn, Returns extends $ZodFunctionOut> = (
   ...args: null extends Args ? never[] : NonNullable<Args>["_zod"]["input"]
@@ -65,7 +71,10 @@ export class $ZodFunction<
 
   implement<F extends $InferInnerFunctionType<Args, Returns>>(
     func: F
-  ): F extends this["_output"] ? F : this["_output"] {
+  ): // allow for return type inference
+  ReturnType<F> extends ReturnType<this["_output"]>
+    ? (...args: Parameters<this["_output"]>) => ReturnType<F>
+    : this["_output"] {
     if (typeof func !== "function") {
       throw new Error("implement() must be called with a function");
     }
