@@ -4,7 +4,7 @@
   <p align="center">
     TypeScript-first schema validation with static type inference
     <br/>
-    ✨ <a href="https://zod.dev/api">Read the docs at zod.dev →</a> ✨
+    by <a href="https://x.com/colinhacks">@colinhacks</a>
   </p>
 </p>
 <br/>
@@ -19,11 +19,13 @@
 </p>
 
 <div align="center">
-  <a href="https://zod.dev">Documentation</a>
+  <a href="https://zod.dev/api">Docs</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://discord.gg/RcG33DQJdf">Discord</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <a href="https://twitter.com/colinhacks">@colinhacks</a>
+  <a href="https://twitter.com/colinhacks">𝕏</a>
+  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+  <a href="https://bsky.app/profile/zod.dev">Bluesky</a>
   <br />
 </div>
 
