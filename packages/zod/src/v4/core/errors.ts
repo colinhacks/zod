@@ -255,7 +255,7 @@ export function formatError<T>(error: $ZodError, _mapper?: any) {
   const fieldErrors: $ZodFormattedError<T> = { _errors: [] } as any;
   const processError = (error: { issues: $ZodIssue[] }) => {
     for (const issue of error.issues) {
-      if (issue.code === "invalid_union") {
+      if (issue.code === "invalid_union" && issue.errors.length) {
         issue.errors.map((issues) => processError({ issues }));
       } else if (issue.code === "invalid_key") {
         processError({ issues: issue.issues });
@@ -306,7 +306,8 @@ export function treeifyError<T>(error: $ZodError, _mapper?: any) {
   const result: $ZodErrorTree<T> = { errors: [] } as any;
   const processError = (error: { issues: $ZodIssue[] }, path: PropertyKey[] = []) => {
     for (const issue of error.issues) {
-      if (issue.code === "invalid_union") {
+      if (issue.code === "invalid_union" && issue.errors.length) {
+        // regular union error
         issue.errors.map((issues) => processError({ issues }, issue.path));
       } else if (issue.code === "invalid_key") {
         processError({ issues: issue.issues }, issue.path);
