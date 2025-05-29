@@ -542,12 +542,14 @@ export class JSONSchemaGenerator {
     // metadata
     const meta = this.metadataRegistry.get(schema);
     if (meta) Object.assign(result.schema, meta);
-    if (this.io === "input" && def.type === "pipe") {
+
+    if (this.io === "input" && isTransforming(schema)) {
       // examples/defaults only apply to output type of pipe
       delete result.schema.examples;
       delete result.schema.default;
-      if (result.schema._prefault) result.schema.default = result.schema._prefault;
     }
+
+    // set prefault as default
     if (this.io === "input" && result.schema._prefault) result.schema.default ??= result.schema._prefault;
     delete result.schema._prefault;
 
@@ -808,4 +810,108 @@ export function toJSONSchema(
   gen.process(input);
 
   return gen.emit(input, _params);
+}
+
+function isTransforming(
+  _schema: schemas.$ZodType,
+  _ctx?: {
+    seen: Set<schemas.$ZodType>;
+  }
+): boolean {
+  const ctx = _ctx ?? { seen: new Set() };
+
+  if (ctx.seen.has(_schema)) return false;
+  ctx.seen.add(_schema);
+
+  const schema = _schema as schemas.$ZodTypes;
+  const def = schema._zod.def;
+  switch (def.type) {
+    case "string":
+    case "number":
+    case "bigint":
+    case "boolean":
+    case "date":
+    case "symbol":
+    case "undefined":
+    case "null":
+    case "any":
+    case "unknown":
+    case "never":
+    case "void":
+    case "literal":
+    case "enum":
+    case "nan":
+    case "file":
+    case "template_literal":
+      return false;
+    case "array": {
+      return isTransforming(def.element, ctx);
+    }
+    case "object": {
+      for (const key in def.shape) {
+        if (isTransforming(def.shape[key], ctx)) return true;
+      }
+      return false;
+    }
+    case "union": {
+      for (const option of def.options) {
+        if (isTransforming(option, ctx)) return true;
+      }
+      return false;
+    }
+    case "intersection": {
+      return isTransforming(def.left, ctx) || isTransforming(def.right, ctx);
+    }
+    case "tuple": {
+      for (const item of def.items) {
+        if (isTransforming(item, ctx)) return true;
+      }
+      if (def.rest && isTransforming(def.rest, ctx)) return true;
+      return false;
+    }
+    case "record": {
+      return isTransforming(def.keyType, ctx) || isTransforming(def.valueType, ctx);
+    }
+    case "map": {
+      return isTransforming(def.keyType, ctx) || isTransforming(def.valueType, ctx);
+    }
+    case "set": {
+      return isTransforming(def.valueType, ctx);
+    }
+
+    // inner types
+    case "promise":
+    case "optional":
+    case "nonoptional":
+    case "nullable":
+    case "readonly":
+      return isTransforming(def.innerType, ctx);
+    case "lazy":
+      return isTransforming(def.getter(), ctx);
+    case "default": {
+      return isTransforming(def.innerType, ctx);
+    }
+    case "prefault": {
+      return isTransforming(def.innerType, ctx);
+    }
+    case "custom": {
+      return false;
+    }
+    case "transform": {
+      return true;
+    }
+    case "pipe": {
+      return isTransforming(def.in, ctx) || isTransforming(def.out, ctx);
+    }
+    case "success": {
+      return false;
+    }
+    case "catch": {
+      return false;
+    }
+
+    default:
+      def satisfies never;
+  }
+  throw new Error(`Unknown schema type: ${(def as any).type}`);
 }
