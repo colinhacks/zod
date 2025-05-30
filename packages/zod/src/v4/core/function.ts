@@ -1,5 +1,5 @@
 import { _array, _tuple, _unknown } from "./api.js";
-
+import type * as core from "./core.js";
 import { parse, parseAsync } from "./parse.js";
 import * as schemas from "./schemas.js";
 import { $ZodTuple } from "./schemas.js";
@@ -26,20 +26,20 @@ export type $ZodFunctionIn = $ZodFunctionArgs;
 export type $ZodFunctionOut = schemas.$ZodType;
 
 export type $InferInnerFunctionType<Args extends $ZodFunctionIn, Returns extends $ZodFunctionOut> = (
-  ...args: $ZodFunctionIn extends Args ? never[] : Args["_zod"]["output"]
-) => Returns["_zod"]["input"];
+  ...args: $ZodFunctionIn extends Args ? never[] : core.output<Args>
+) => core.input<Returns>;
 
 export type $InferInnerFunctionTypeAsync<Args extends $ZodFunctionIn, Returns extends $ZodFunctionOut> = (
-  ...args: $ZodFunctionIn extends Args ? never[] : Args["_zod"]["output"]
-) => util.MaybeAsync<Returns["_zod"]["input"]>;
+  ...args: $ZodFunctionIn extends Args ? never[] : core.output<Args>
+) => util.MaybeAsync<core.input<Returns>>;
 
 export type $InferOuterFunctionType<Args extends $ZodFunctionIn, Returns extends $ZodFunctionOut> = (
-  ...args: $ZodFunctionIn extends Args ? never[] : Args["_zod"]["input"]
-) => Returns["_zod"]["output"];
+  ...args: $ZodFunctionIn extends Args ? never[] : core.input<Args>
+) => core.output<Returns>;
 
 export type $InferOuterFunctionTypeAsync<Args extends $ZodFunctionIn, Returns extends $ZodFunctionOut> = (
-  ...args: $ZodFunctionIn extends Args ? never[] : Args["_zod"]["input"]
-) => util.MaybeAsync<Returns["_zod"]["output"]>;
+  ...args: $ZodFunctionIn extends Args ? never[] : core.input<Args>
+) => util.MaybeAsync<core.output<Returns>>;
 
 export class $ZodFunction<
   Args extends $ZodFunctionIn = $ZodFunctionIn,

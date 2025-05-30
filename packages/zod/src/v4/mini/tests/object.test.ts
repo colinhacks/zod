@@ -36,6 +36,21 @@ test("z.object", () => {
   expect(schema.parse(obj)).toEqual({ a: "foo" });
 });
 
+test("z.object().check()", () => {
+  const a = z.object({
+    name: z.string(),
+    age: z.number(),
+    points: z.optional(z.number()),
+    "test?": z.boolean(),
+  });
+
+  type a = z.output<typeof a>;
+
+  a.check(({ value }) => {
+    expectTypeOf(value).toEqualTypeOf<a>();
+  });
+});
+
 test("z.strictObject", () => {
   const a = z.strictObject({
     name: z.string(),
