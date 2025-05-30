@@ -1554,7 +1554,7 @@ export interface ZodFile extends ZodType {
 
   min(size: number, params?: string | core.$ZodCheckMinSizeParams): this;
   max(size: number, params?: string | core.$ZodCheckMaxSizeParams): this;
-  mime(types: Array<util.MimeTypes>, params?: string | core.$ZodCheckMimeTypeParams): this;
+  mime(types: util.MimeTypes | Array<util.MimeTypes>, params?: string | core.$ZodCheckMimeTypeParams): this;
 }
 export const ZodFile: core.$constructor<ZodFile> = /*@__PURE__*/ core.$constructor("ZodFile", (inst, def) => {
   core.$ZodFile.init(inst, def);
@@ -1562,7 +1562,7 @@ export const ZodFile: core.$constructor<ZodFile> = /*@__PURE__*/ core.$construct
 
   inst.min = (size, params) => inst.check(core._minSize(size, params));
   inst.max = (size, params) => inst.check(core._maxSize(size, params));
-  inst.mime = (types, params) => inst.check(core._mime(types, params));
+  inst.mime = (types, params) => inst.check(core._mime(Array.isArray(types) ? types : [types], params));
 });
 
 export function file(params?: string | core.$ZodFileParams): ZodFile {

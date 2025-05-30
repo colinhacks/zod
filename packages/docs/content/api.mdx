@@ -1630,6 +1630,38 @@ z.set(z.string()).check(z.size(5)); // must contain 5 items exactly
 </Tab>
 </Tabs>
 
+## Files
+
+To validate `File` instances:
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+const fileSchema = z.file();
+
+fileSchema.min(10_000); // minimum .size (bytes)
+fileSchema.max(1_000_000); // maximum .size (bytes)
+fileSchema.mime(["image/png"]); // MIME type
+```
+
+</Tab>
+<Tab value='zod/v4-mini'>
+```ts
+const fileSchema = z.file();
+
+fileSchema.check(
+  z.minSize(10_000), // minimum .size (bytes)
+  z.maxSize(1_000_000), // maximum .size (bytes)
+  z.mime(["image/png"]); // MIME type
+)
+```
+</Tab>
+</Tabs>
+
+
+
+
+
 ## Promises
 
 <Callout type="warn">
@@ -2445,6 +2477,7 @@ const jsonSchema = z.lazy(() => {
   ]);
 });
 ```
+
 
 ## Custom
 

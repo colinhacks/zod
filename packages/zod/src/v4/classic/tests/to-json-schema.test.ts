@@ -237,10 +237,6 @@ describe("toJSONSchema", () => {
     expect(() => z.toJSONSchema(z.set(z.string()))).toThrow("Set cannot be represented in JSON Schema");
     expect(() => z.toJSONSchema(z.custom(() => true))).toThrow("Custom types cannot be represented in JSON Schema");
 
-    // File type
-    const fileSchema = z.file();
-    expect(() => z.toJSONSchema(fileSchema)).toThrow("File cannot be represented in JSON Schema");
-
     // Transform
     const transformSchema = z.string().transform((val) => Number.parseInt(val));
     expect(() => z.toJSONSchema(transformSchema)).toThrow("Transforms cannot be represented in JSON Schema");
@@ -2044,6 +2040,46 @@ test("flatten simple intersections", () => {
         },
       ],
       "description": "123",
+    }
+  `);
+});
+
+test("z.file()", () => {
+  const a = z.file().meta({ describe: "File" }).mime("image/png").min(1000).max(10000);
+  expect(z.toJSONSchema(a)).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "contentEncoding": "binary",
+      "contentMediaType": "image/png",
+      "format": "binary",
+      "maxLength": 10000,
+      "minLength": 1000,
+      "type": "string",
+    }
+  `);
+
+  const b = z.file().mime(["image/png", "image/jpg"]).min(1000).max(10000);
+  expect(z.toJSONSchema(b)).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "anyOf": [
+        {
+          "contentEncoding": "binary",
+          "contentMediaType": "image/png",
+          "format": "binary",
+          "maxLength": 10000,
+          "minLength": 1000,
+          "type": "string",
+        },
+        {
+          "contentEncoding": "binary",
+          "contentMediaType": "image/jpg",
+          "format": "binary",
+          "maxLength": 10000,
+          "minLength": 1000,
+          "type": "string",
+        },
+      ],
     }
   `);
 });

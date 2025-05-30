@@ -433,10 +433,33 @@ export class JSONSchemaGenerator {
           }
           break;
         }
+
         case "file": {
-          if (this.unrepresentable === "throw") {
-            throw new Error("File cannot be represented in JSON Schema");
+          const json: JSONSchema.StringSchema = _json as any;
+          const file: JSONSchema.StringSchema = {
+            type: "string",
+            format: "binary",
+            contentEncoding: "binary",
+          };
+
+          const { minimum, maximum, mime } = schema._zod.bag as schemas.$ZodFileInternals["bag"];
+          if (minimum !== undefined) file.minLength = minimum;
+          if (maximum !== undefined) file.maxLength = maximum;
+          if (mime) {
+            if (mime.length === 1) {
+              file.contentMediaType = mime[0];
+              Object.assign(json, file);
+            } else {
+              json.anyOf = mime.map((m) => {
+                const mFile: JSONSchema.StringSchema = { ...file, contentMediaType: m };
+                return mFile;
+              });
+            }
           }
+
+          // if (this.unrepresentable === "throw") {
+          //   throw new Error("File cannot be represented in JSON Schema");
+          // }
           break;
         }
         case "transform": {
