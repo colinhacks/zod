@@ -776,6 +776,7 @@ function isValidCidr(ip: string, version?: IpVersion) {
 }
 
 function isValidCreditCard(cardNumber: string): boolean {
+  const sanitizedCardNumber = cardNumber.replace(creditSanitizeRegex, "");
   const isLuhnAlgo = (sanitizedCardNumber: string): boolean => {
     // Remove any non-digit chars
     const number = sanitizedCardNumber.replace(nonDigitRegex, "");
@@ -796,15 +797,14 @@ function isValidCreditCard(cardNumber: string): boolean {
     return sum % 10 === 0;
   };
 
-  const sanitized = cardNumber.replace(creditSanitizeRegex, "");
   return (
     creditCardRegex.test(cardNumber) &&
     // Remove any hyphens and blanks
-    sanitized !== "" &&
+    sanitizedCardNumber !== "" &&
     // Check if it matches a provider
-    creditByProviderRegexList.some((regex) => regex.test(sanitized!)) &&
+    creditByProviderRegexList.some((regex) => regex.test(sanitizedCardNumber!)) &&
     // Check if passes luhn algorithm
-    isLuhnAlgo(sanitized)
+    isLuhnAlgo(sanitizedCardNumber)
   );
 }
 
