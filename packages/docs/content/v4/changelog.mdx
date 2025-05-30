@@ -351,7 +351,7 @@ z.cidrv6() // ✅
 
 ## `z.coerce` updates
 
-The input type of all coerced booleans is now `unknown`. 
+The input type of all `z.coerce` schemas is now `unknown`. 
 
 ```ts
 const schema = z.coerce.string();
@@ -394,9 +394,6 @@ schema.parse(undefined); // => 4
 
 
 ## `z.object()`
-
-These modifier methods on the `ZodObject` class determine how the schema handles unknown keys. In Zod 4, this functionality now exists in top-level functions. This aligns better with Zod's declarative-first philosophy, and puts all object variants on equal footing. 
-
 
 ### deprecates `.strict()` and `.passthrough()`
 

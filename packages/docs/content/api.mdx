@@ -1199,6 +1199,8 @@ const Post = z.object({
 
 All object APIs (`.pick()`, `.omit()`, `.required()`, `.partial()`, etc.) work as you'd expect.
 
+### Circularity errors
+
 Due to TypeScript limitations, recursive type inference can be finicky, and it only works in certain scenarios. Some more complicated types may trigger recursive type errors like this:
 
 ```ts
@@ -1224,6 +1226,7 @@ const Activity = z.object({
   },
 });
 ```
+
 {/* 
 <Accordions>
   <Accordion title="Resolving type errors in recursive schemas">
