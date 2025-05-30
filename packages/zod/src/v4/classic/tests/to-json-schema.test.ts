@@ -2045,8 +2045,18 @@ test("flatten simple intersections", () => {
 });
 
 test("z.file()", () => {
-  const a = z.file().meta({ describe: "File" }).mime("image/png").min(1000).max(10000);
+  const a = z.file();
   expect(z.toJSONSchema(a)).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "contentEncoding": "binary",
+      "format": "binary",
+      "type": "string",
+    }
+  `);
+
+  const b = z.file().mime("image/png").min(1000).max(10000);
+  expect(z.toJSONSchema(b)).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "contentEncoding": "binary",
@@ -2058,8 +2068,8 @@ test("z.file()", () => {
     }
   `);
 
-  const b = z.file().mime(["image/png", "image/jpg"]).min(1000).max(10000);
-  expect(z.toJSONSchema(b)).toMatchInlineSnapshot(`
+  const c = z.file().mime(["image/png", "image/jpg"]).min(1000).max(10000);
+  expect(z.toJSONSchema(c)).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "anyOf": [

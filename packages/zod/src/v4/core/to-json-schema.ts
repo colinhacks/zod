@@ -455,6 +455,8 @@ export class JSONSchemaGenerator {
                 return mFile;
               });
             }
+          } else {
+            Object.assign(json, file);
           }
 
           // if (this.unrepresentable === "throw") {
