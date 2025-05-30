@@ -335,11 +335,20 @@ export const allowsEval: { value: boolean } = cached(() => {
 });
 
 export function isPlainObject(data: any): data is Record<PropertyKey, unknown> {
-  return (
-    typeof data === "object" &&
-    data !== null &&
-    (Object.getPrototypeOf(data) === Object.prototype || Object.getPrototypeOf(data) === null)
-  );
+  if (typeof data !== "object" || data === null) return false;
+  if (Object.prototype.toString.call(data) !== Object.prototype.toString.call({})) return false;
+  let proto = Object.getPrototypeOf(data);
+  if (proto === null || proto === Object.prototype) {
+    return true;
+  }
+  while (proto !== null) {
+    const nextProto = Object.getPrototypeOf(proto);
+    if (nextProto === Object.prototype || nextProto === null) {
+      return true;
+    }
+    proto = nextProto;
+  }
+  return false;
 }
 
 export function numKeys(data: any): number {
