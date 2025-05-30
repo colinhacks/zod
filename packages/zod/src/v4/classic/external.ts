@@ -27,8 +27,9 @@ export {
   formatError,
   flattenError,
   toJSONSchema,
-  locales,
 } from "zod/v4/core";
+
+export * as locales from "../locales/index.js";
 
 // iso
 // must be exported from top-level

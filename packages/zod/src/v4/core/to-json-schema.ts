@@ -48,14 +48,6 @@ interface EmitParams {
     | undefined;
 }
 
-const formatMap: Partial<Record<checks.$ZodStringFormats, string | undefined>> = {
-  guid: "uuid",
-  url: "uri",
-  datetime: "date-time",
-  json_string: "json-string",
-  regex: "", // do not set
-};
-
 interface Seen {
   /** JSON Schema result for this Zod schema */
   schema: JSONSchema.BaseSchema;
@@ -92,6 +84,14 @@ export class JSONSchemaGenerator {
 
   process(schema: schemas.$ZodType, _params: ProcessParams = { path: [], schemaPath: [] }): JSONSchema.BaseSchema {
     const def = (schema as schemas.$ZodTypes)._zod.def;
+
+    const formatMap: Partial<Record<checks.$ZodStringFormats, string | undefined>> = {
+      guid: "uuid",
+      url: "uri",
+      datetime: "date-time",
+      json_string: "json-string",
+      regex: "", // do not set
+    };
 
     // check for schema in seens
     const seen = this.seen.get(schema);

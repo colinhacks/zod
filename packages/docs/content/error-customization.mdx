@@ -306,7 +306,7 @@ async function loadLocale(locale: string) {
 await loadLocale("fr");
 ```
 
-For convenience, all locales are exported as `z.locales` from `zod/v4/locales`.
+For convenience, all locales are exported as `z.locales` from `zod/v4`. In some bundlers, this may not be tree-shakable.
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">

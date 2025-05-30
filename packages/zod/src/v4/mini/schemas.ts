@@ -33,7 +33,7 @@ export interface ZodMiniType<out Output = unknown, out Input = unknown> extends 
 export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$constructor(
   "ZodMiniType",
   (inst, def) => {
-    if (!inst._zod) throw new Error("Uninitialized schema in mixin ZodMiniType.");
+    if (!inst._zod) throw new Error("Uninitialized schema in ZodMiniType.");
 
     core.$ZodType.init(inst, def);
     inst.def = def;
@@ -1501,11 +1501,15 @@ export { _instanceof as instanceof };
 // stringbool
 export const stringbool: (
   _params?: string | core.$ZodStringBoolParams
-) => ZodMiniPipe<ZodMiniUnknown, ZodMiniBoolean<boolean>> = /* @__PURE__ */ core._stringbool.bind(null, {
-  Pipe: ZodMiniPipe,
-  Boolean: ZodMiniBoolean,
-  Unknown: ZodMiniUnknown,
-}) as any;
+) => ZodMiniPipe<ZodMiniUnknown, ZodMiniBoolean<boolean>> = (...args) =>
+  core._stringbool(
+    {
+      Pipe: ZodMiniPipe,
+      Boolean: ZodMiniBoolean,
+      Unknown: ZodMiniUnknown,
+    },
+    ...args
+  ) as any;
 
 // json
 export type ZodMiniJSONSchema = ZodMiniLazy<
