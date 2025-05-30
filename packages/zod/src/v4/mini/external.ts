@@ -19,9 +19,9 @@ export {
   formatError,
   flattenError,
   toJSONSchema,
-  locales,
 } from "zod/v4/core";
 
+export * as locales from "../locales/index.js";
 /** A special constant with type `never` */
 // export const NEVER = {} as never;
 

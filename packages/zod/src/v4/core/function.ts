@@ -101,8 +101,9 @@ export class $ZodFunction<
   ): $ZodFunction<schemas.$ZodTuple<Items, Rest>, Returns>;
   input<NewArgs extends $ZodFunctionIn>(args: NewArgs): $ZodFunction<NewArgs, Returns>;
   input(...args: any[]): $ZodFunction<any, Returns> {
+    const F: any = this.constructor;
     if (Array.isArray(args[0])) {
-      return new $ZodFunction({
+      return new F({
         type: "function",
         input: new $ZodTuple({
           type: "tuple",
@@ -112,7 +113,8 @@ export class $ZodFunction<
         output: this._def.output,
       });
     }
-    return new $ZodFunction({
+
+    return new F({
       type: "function",
       input: args[0],
       output: this._def.output,
@@ -120,7 +122,8 @@ export class $ZodFunction<
   }
 
   output<NewReturns extends schemas.$ZodType>(output: NewReturns): $ZodFunction<Args, NewReturns> {
-    return new $ZodFunction({
+    const F: any = this.constructor;
+    return new F({
       type: "function",
       input: this._def.input,
       output,
