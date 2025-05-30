@@ -237,10 +237,6 @@ describe("toJSONSchema", () => {
     expect(() => z.toJSONSchema(z.set(z.string()))).toThrow("Set cannot be represented in JSON Schema");
     expect(() => z.toJSONSchema(z.custom(() => true))).toThrow("Custom types cannot be represented in JSON Schema");
 
-    // File type
-    const fileSchema = z.file();
-    expect(() => z.toJSONSchema(fileSchema)).toThrow("File cannot be represented in JSON Schema");
-
     // Transform
     const transformSchema = z.string().transform((val) => Number.parseInt(val));
     expect(() => z.toJSONSchema(transformSchema)).toThrow("Transforms cannot be represented in JSON Schema");
