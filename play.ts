@@ -1,15 +1,10 @@
-import { z } from "zod/v4";
+import { z } from "zod/v4-mini";
 
-const User = z.string().optional();
-
-console.dir(z.toJSONSchema(User), { depth: null });
-// => {
-//   type: 'object',
-//   properties: { name: { type: 'string' }, friend: { '$ref': '#' } },
-//   required: [ 'name', 'friend' ]
-//   additionalProperties: false
-// }
-
-z.toJSONSchema(z.globalRegistry, {
-  uri: (id) => `https://example.com/${id}.json`,
-});
+const Thing = z
+  .object({
+    name: z.string(),
+    age: z.number(),
+  })
+  .check(({ value, issues }) => {
+    value; // => any
+  });

@@ -56,7 +56,7 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
   refine(check: (arg: core.output<this>) => unknown | Promise<unknown>, params?: string | core.$ZodCustomParams): this;
   /** @deprecated Use `.check()` instead. */
   superRefine(
-    refinement: (arg: core.output<this>, ctx: RefinementCtx<this["_zod"]["output"]>) => void | Promise<void>
+    refinement: (arg: core.output<this>, ctx: RefinementCtx<core.output<this>>) => void | Promise<void>
   ): this;
   overwrite(fn: (x: core.output<this>) => core.output<this>): this;
 
@@ -77,8 +77,8 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
   ): ZodPipe<this, ZodTransform<Awaited<NewOut>, core.output<this>>>;
   catch(def: core.output<this>): ZodCatch<this>;
   catch(def: (ctx: core.$ZodCatchCtx) => core.output<this>): ZodCatch<this>;
-  pipe<T extends core.$ZodType<any, this["_zod"]["output"]>>(
-    target: T | core.$ZodType<any, this["_zod"]["output"]>
+  pipe<T extends core.$ZodType<any, core.output<this>>>(
+    target: T | core.$ZodType<any, core.output<this>>
   ): ZodPipe<this, T>;
   readonly(): ZodReadonly<this>;
 
