@@ -64,8 +64,6 @@ export const cidrv4: RegExp =
 export const cidrv6: RegExp =
   /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|::|([0-9a-fA-F]{1,4})?::([0-9a-fA-F]{1,4}:?){0,6})\/(12[0-8]|1[01][0-9]|[1-9]?[0-9])$/;
 
-// export const ip: RegExp = /*@__PURE__*/ new RegExp(`(${ipv4.source})|(${ipv6.source})`);
-
 // https://stackoverflow.com/questions/7860392/determine-if-string-is-in-base64-using-javascript
 export const base64: RegExp = /^$|^(?:[0-9a-zA-Z+/]{4})*(?:(?:[0-9a-zA-Z+/]{2}==)|(?:[0-9a-zA-Z+/]{3}=))?$/;
 export const base64url: RegExp = /^[A-Za-z0-9_-]*$/;

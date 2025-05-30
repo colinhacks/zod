@@ -2008,7 +2008,6 @@ function _instanceof<T extends typeof util.Class>(
 export { _instanceof as instanceof };
 
 // stringbool
-
 export const stringbool: (_params?: string | core.$ZodStringBoolParams) => ZodPipe<ZodUnknown, ZodBoolean> = (
   ...args
 ) =>

@@ -1501,7 +1501,7 @@ export { _instanceof as instanceof };
 // stringbool
 export const stringbool: (
   _params?: string | core.$ZodStringBoolParams
-) => ZodMiniPipe<ZodMiniUnknown, ZodMiniBoolean<boolean>> = /* @__PURE__ */ (...args) =>
+) => ZodMiniPipe<ZodMiniUnknown, ZodMiniBoolean<boolean>> = (...args) =>
   core._stringbool(
     {
       Pipe: ZodMiniPipe,

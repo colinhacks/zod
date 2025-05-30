@@ -14,7 +14,7 @@ const error: () => errors.$ZodErrorMap = () => {
     return Sizable[origin] ?? null;
   }
 
-  const parsedType = /* @__PURE__ */ (data: any): string => {
+  const parsedType = (data: any): string => {
     const t = typeof data;
 
     switch (t) {
