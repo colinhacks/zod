@@ -2,9 +2,6 @@ import * as core from "zod/v4/core";
 import { util } from "zod/v4/core";
 import * as parse from "./parse.js";
 
-export * as coerce from "./coerce.js";
-export * as iso from "./iso.js";
-
 type SomeType = core.$ZodType;
 
 export interface ZodMiniType<out Output = unknown, out Input = unknown> extends core.$ZodType<Output, Input> {

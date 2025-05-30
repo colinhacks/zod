@@ -5,9 +5,6 @@ import * as checks from "./checks.js";
 import * as iso from "./iso.js";
 import * as parse from "./parse.js";
 
-export * as iso from "./iso.js";
-export * as coerce from "./coerce.js";
-
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 ////////////                   ////////////
