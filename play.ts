@@ -1,11 +1,6 @@
 import { z } from "zod/v4";
 
-const User = z.object({
-  name: z.string(),
-  get friend() {
-    return User;
-  },
-});
+const User = z.string().optional();
 
 console.dir(z.toJSONSchema(User), { depth: null });
 // => {

@@ -179,14 +179,18 @@ z.undefined();
 // => { type: "null" }
 ```
 
-Similarly, `optional` and `nullable` are made nullable via `oneOf`:
+Similarly, `nullable` is represented via a union with `null`::
+
+```ts
+z.nullable(z.string());
+// => { oneOf: [{ type: "string" }, { type: "null" }] }
+```
+
+Optional schemas are represented as-is, though they are decorated with an `optional` annotation.
 
 ```ts
 z.optional(z.string());
-// => { oneOf: [{ type: "string" }, { type: "null" }] }
-
-z.nullable(z.string());
-// => { oneOf: [{ type: "string" }, { type: "null" }] }
+// => { type: "string" }
 ```
 
 {/* ### Pipes
