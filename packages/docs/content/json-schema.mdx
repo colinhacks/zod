@@ -26,6 +26,7 @@ z.toJSONSchema(schema)
 //   type: 'object',
 //   properties: { name: { type: 'string' }, age: { type: 'number' } },
 //   required: [ 'name', 'age' ]
+//   additionalProperties: false
 // }
 ```
 
@@ -312,7 +313,6 @@ z.void(); // ❌
 z.date(); // ❌
 z.map(); // ❌
 z.set(); // ❌
-z.file(); // ❌
 z.transform(); // ❌
 z.nan(); // ❌
 z.custom(); // ❌
@@ -348,6 +348,7 @@ toJSONSchema(User);
 //   type: 'object',
 //   properties: { name: { type: 'string' }, friend: { '$ref': '#' } },
 //   required: [ 'name', 'friend' ]
+//   additionalProperties: false
 // }
 ```
 

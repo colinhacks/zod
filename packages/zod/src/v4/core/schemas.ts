@@ -2779,6 +2779,11 @@ export interface $ZodFileDef extends $ZodTypeDef {
 export interface $ZodFileInternals extends $ZodTypeInternals<File, File> {
   def: $ZodFileDef;
   isst: errors.$ZodIssueInvalidType;
+  bag: util.LoosePartial<{
+    minimum: number;
+    maximum: number;
+    mime: util.MimeTypes[];
+  }>;
 }
 
 export interface $ZodFile extends $ZodType {

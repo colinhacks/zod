@@ -2047,3 +2047,43 @@ test("flatten simple intersections", () => {
     }
   `);
 });
+
+test("z.file()", () => {
+  const a = z.file().meta({ describe: "File" }).mime("image/png").min(1000).max(10000);
+  expect(z.toJSONSchema(a)).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "contentEncoding": "binary",
+      "contentMediaType": "image/png",
+      "format": "binary",
+      "maxLength": 10000,
+      "minLength": 1000,
+      "type": "string",
+    }
+  `);
+
+  const b = z.file().mime(["image/png", "image/jpg"]).min(1000).max(10000);
+  expect(z.toJSONSchema(b)).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "anyOf": [
+        {
+          "contentEncoding": "binary",
+          "contentMediaType": "image/png",
+          "format": "binary",
+          "maxLength": 10000,
+          "minLength": 1000,
+          "type": "string",
+        },
+        {
+          "contentEncoding": "binary",
+          "contentMediaType": "image/jpg",
+          "format": "binary",
+          "maxLength": 10000,
+          "minLength": 1000,
+          "type": "string",
+        },
+      ],
+    }
+  `);
+});
