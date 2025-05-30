@@ -400,7 +400,10 @@ export class JSONSchemaGenerator {
         }
         case "enum": {
           const json: JSONSchema.BaseSchema = _json as any;
-          json.enum = Object.values(def.entries);
+          const values = Object.values(def.entries);
+          // Number enums can have both string and number values
+          json.type = values.some((v) => typeof v === "number") ? "number" : "string";
+          json.enum = values;
           break;
         }
         case "literal": {
