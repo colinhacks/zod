@@ -105,8 +105,6 @@ export class JSONSchemaGenerator {
         seen.cycle = _params.path;
       }
 
-      seen.count++;
-      // break cycle
       return seen.schema;
     }
 
@@ -320,16 +318,21 @@ export class JSONSchemaGenerator {
         }
         case "intersection": {
           const json: JSONSchema.BaseSchema = _json as any;
-          json.allOf = [
-            this.process(def.left, {
-              ...params,
-              path: [...params.path, "allOf", 0],
-            }),
-            this.process(def.right, {
-              ...params,
-              path: [...params.path, "allOf", 1],
-            }),
+          const a = this.process(def.left, {
+            ...params,
+            path: [...params.path, "allOf", 0],
+          });
+          const b = this.process(def.right, {
+            ...params,
+            path: [...params.path, "allOf", 1],
+          });
+
+          const isSimpleIntersection = (val: any) => "allOf" in val && Object.keys(val).length === 1;
+          const allOf = [
+            ...(isSimpleIntersection(a) ? (a.allOf as any[]) : [a]),
+            ...(isSimpleIntersection(b) ? (b.allOf as any[]) : [b]),
           ];
+          json.allOf = allOf;
           break;
         }
         case "tuple": {
