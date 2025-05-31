@@ -30,6 +30,13 @@ const apiLibraries: ZodResource[] = [
     description: "Typesafe APIs Made Simple",
     slug: "unnoq/orpc",
   },
+  {
+    name: "Express Zod API",
+    url: "https://github.com/RobinTail/express-zod-api",
+    description: "Build Express-based API with I/O validation and middlewares, OpenAPI docs and type-safe client.",
+    slug: "RobinTail/express-zod-api",
+    v4: true,
+  },
 
   // https://github.com/honojs/middleware/tree/main/packages/zod-validator
   // {
