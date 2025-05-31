@@ -639,8 +639,8 @@ describe("toJSONSchema", () => {
 
   // enum
   test("enum", () => {
-    const schema = z.enum(["a", "b", "c"]);
-    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+    const a = z.enum(["a", "b", "c"]);
+    expect(z.toJSONSchema(a)).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "enum": [
@@ -648,6 +648,29 @@ describe("toJSONSchema", () => {
           "b",
           "c",
         ],
+        "type": "string",
+      }
+    `);
+
+    enum B {
+      A = 0,
+      B = 1,
+      C = 2,
+    }
+
+    const b = z.enum(B);
+    expect(z.toJSONSchema(b)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "enum": [
+          "A",
+          "B",
+          "C",
+          0,
+          1,
+          2,
+        ],
+        "type": "number",
       }
     `);
   });
