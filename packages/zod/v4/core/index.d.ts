@@ -1,1 +1,1 @@
-export * from "../../dist/types/v4/core/index.d.ts";
+export * from "../../dist/types/v4/core/index.js";
