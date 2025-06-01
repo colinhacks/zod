@@ -149,17 +149,6 @@ export interface $ZodTypeInternals<out O = unknown, out I = unknown> {
   parent?: $ZodType | undefined;
 }
 
-// export interface $ZodTypeInternals<out O = unknown, out I = unknown> extends $ZodTypeInternals {
-//   // "~types": { output: O; input: I };
-//   output: O;
-//   input: I;
-// }
-
-// export interface _$ZodType {
-//   _zod: $ZodTypeInternals;
-//   "~standard": StandardSchemaV1.Props<core.input<this>, core.output<this>>;
-// }
-
 export interface $ZodType<O = unknown, I = unknown> {
   _zod: $ZodTypeInternals<O, I>;
   "~standard": StandardSchemaV1.Props<core.input<this>, core.output<this>>;
@@ -1525,7 +1514,10 @@ export interface $ZodObjectInternals<
   /** @ts-ignore Cast variance */
   out Shape extends Readonly<$ZodShape> = Readonly<$ZodShape>,
   out Config extends $ZodObjectConfig = $ZodObjectConfig,
-> extends $ZodTypeInternals<any, any> {
+> extends $ZodTypeInternals<
+    $InferObjectOutputFallback<Shape, Config["out"]>,
+    $InferObjectInputFallback<Shape, Config["in"]>
+  > {
   def: $ZodObjectDef<Shape>;
   config: Config;
   isst: errors.$ZodIssueInvalidType | errors.$ZodIssueUnrecognizedKeys;
@@ -1540,6 +1532,36 @@ export type $ZodLooseShape = Record<string, any>;
 
 type OptionalOutSchema = { _zod: { optout: "optional" } };
 type OptionalInSchema = { _zod: { optin: "optional" } };
+
+export type $InferObjectOutputFallback<
+  T extends $ZodLooseShape,
+  Extra extends Record<string, unknown>,
+> = string extends keyof T
+  ? object
+  : keyof (T & Extra) extends never
+    ? Record<string, never>
+    : util.Prettify<
+        {
+          // this is a simplified fallback type
+          // there is no support for key optionality
+          -readonly [k in keyof T]: core.output<T[k]>;
+        } & Extra
+      >;
+
+export type $InferObjectInputFallback<
+  T extends $ZodLooseShape,
+  Extra extends Record<string, unknown>,
+> = string extends keyof T
+  ? object
+  : keyof (T & Extra) extends never
+    ? Record<string, never>
+    : util.Prettify<
+        {
+          // this is a simplified fallback type
+          // there is no support for key optionality
+          -readonly [k in keyof T]: core.input<T[k]>;
+        } & Extra
+      >;
 
 export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = string extends keyof T
   ? object

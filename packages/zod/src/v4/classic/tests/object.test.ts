@@ -503,3 +503,17 @@ test("empty shape", () => {
   expect(() => a.parse([])).toThrow();
   expect(() => a.parse([], { jitless: true })).toThrow();
 });
+
+test("zodtype assignability", () => {
+  // Does not error
+  z.object({ hello: z.string().optional() }) satisfies z.ZodType<{ hello?: string | undefined }>;
+  z.object({ hello: z.string() }) satisfies z.ZodType<{ hello?: string | undefined }>;
+  // @ts-expect-error
+  z.object({}) satisfies z.ZodType<{ hello: string | undefined }>;
+  // @ts-expect-error
+  z.object({ hello: z.string().optional() }) satisfies z.ZodType<{ hello: string | undefined }>;
+  // @ts-expect-error
+  z.object({ hello: z.string().optional() }) satisfies z.ZodType<{ hello: string }>;
+  // @ts-expect-error
+  z.object({ hello: z.number() }) satisfies z.ZodType<{ hello?: string | undefined }>;
+});
