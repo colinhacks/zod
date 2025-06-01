@@ -14,7 +14,8 @@ test("array min/max", async () => {
     [
       {
         "code": "too_small",
-        "message": "Too small: expected array to have >2 items",
+        "inclusive": true,
+        "message": "Too small: expected array to have >=2 items",
         "minimum": 2,
         "origin": "array",
         "path": [],
@@ -28,8 +29,9 @@ test("array min/max", async () => {
     [
       {
         "code": "too_big",
+        "inclusive": true,
         "maximum": 2,
-        "message": "Too big: expected array to have <2 items",
+        "message": "Too big: expected array to have <=2 items",
         "origin": "array",
         "path": [],
       },
@@ -122,10 +124,11 @@ test("continue parsing despite array size error", () => {
         "origin": "array",
         "code": "too_small",
         "minimum": 2,
+        "inclusive": true,
         "path": [
           "people"
         ],
-        "message": "Too small: expected array to have >2 items"
+        "message": "Too small: expected array to have >=2 items"
       }
     ]],
       "success": false,
