@@ -861,7 +861,7 @@ const hello = z.templateLiteral(["hello, ", z.string()]);
 // `hello, ${string}`
 
 const cssUnits = z.enum(["px", "em", "rem", "%"]);
-const css = z.templateLiteral([z.number(), cssUnits ]);
+const css = z.templateLiteral([z.number(), cssUnits]);
 // `${number}px` | `${number}em` | `${number}rem` | `${number}%`
 
 const email = z.templateLiteral([
