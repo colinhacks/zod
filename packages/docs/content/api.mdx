@@ -52,9 +52,9 @@ schema.parse(null);      // => "null"
 
   | Zod API                  | Coercion                   |
   |--------------------------|----------------------------|
-  | `z.coerce.string()`      | `new String(value)`        |
-  | `z.coerce.number()`      | `new Number(value)`        |
-  | `z.coerce.boolean()`     | `new Boolean(value)`       |
+  | `z.coerce.string()`      | `String(value)`            |
+  | `z.coerce.number()`      | `Number(value)`            |
+  | `z.coerce.boolean()`     | `Boolean(value)`           |
   | `z.coerce.bigint()`      | `BigInt(value)`            |
   | `z.coerce.date()`        | `new Date(value)`          |
 
