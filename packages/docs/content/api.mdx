@@ -950,7 +950,7 @@ Dog.parse({ name: "Yeller", extraKey: true });
 
 To define a *catchall schema* that will be used to validate any unrecognized keys:
 
-```
+```ts z.object
 const DogWithStrings = z.object({
   name: z.string(),
   age: z.number().optional(),
