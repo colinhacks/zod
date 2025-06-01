@@ -22,6 +22,7 @@ export { default as ms } from "./ms.js";
 export { default as nl } from "./nl.js";
 export { default as no } from "./no.js";
 export { default as ota } from "./ota.js";
+export { default as ps } from "./ps.js";
 export { default as pl } from "./pl.js";
 export { default as pt } from "./pt.js";
 export { default as ru } from "./ru.js";
