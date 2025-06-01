@@ -721,6 +721,19 @@ describe("toJSONSchema", () => {
         ],
       }
     `);
+
+    const d = z.literal(["hello", "zod", "v4"]);
+    expect(z.toJSONSchema(d)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "enum": [
+          "hello",
+          "zod",
+          "v4",
+        ],
+        "type": "string",
+      }
+    `);
   });
 
   // pipe
