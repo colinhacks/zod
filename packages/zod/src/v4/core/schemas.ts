@@ -114,7 +114,9 @@ export interface $ZodTypeInternals<out O = unknown, out I = unknown> {
    * @default Required
    */
 
+  /** @internal */
   optin?: "optional" | undefined;
+  /** @internal */
   optout?: "optional" | undefined;
 
   /** @internal The set of literal values that will pass validation. Must be an exhaustive set. Used to determine optionality in z.record().
