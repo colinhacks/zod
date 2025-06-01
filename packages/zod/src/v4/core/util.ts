@@ -203,13 +203,12 @@ export function assertNever(_x: never): never {
 }
 export function assert<T>(_: any): asserts _ is T {}
 
-export function getValidEnumValues(obj: any): any {
-  const validKeys = Object.keys(obj).filter((k: any) => typeof obj[obj[k]] !== "number");
-  const filtered: any = {};
-  for (const k of validKeys) {
-    filtered[k] = obj[k];
-  }
-  return Object.values(filtered);
+export function getEnumValues(entries: EnumLike): EnumValue[] {
+  const numericValues = Object.values(entries).filter((v) => typeof v === "number");
+  const values = Object.entries(entries)
+    .filter(([k, _]) => numericValues.indexOf(+k) === -1)
+    .map(([_, v]) => v);
+  return values;
 }
 
 export function joinValues<T extends Primitive[]>(array: T, separator = "|"): string {

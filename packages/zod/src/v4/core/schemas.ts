@@ -2636,10 +2636,7 @@ export interface $ZodEnum<T extends util.EnumLike = util.EnumLike> extends $ZodT
 export const $ZodEnum: core.$constructor<$ZodEnum> = /*@__PURE__*/ core.$constructor("$ZodEnum", (inst, def) => {
   $ZodType.init(inst, def);
 
-  const numericValues = Object.values(def.entries).filter((v) => typeof v === "number");
-  const values = Object.entries(def.entries)
-    .filter(([k, _]) => numericValues.indexOf(+k) === -1)
-    .map(([_, v]) => v);
+  const values = util.getEnumValues(def.entries);
 
   inst._zod.values = new Set<util.Primitive>(values);
 

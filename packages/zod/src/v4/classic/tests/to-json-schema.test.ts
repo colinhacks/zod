@@ -663,9 +663,6 @@ describe("toJSONSchema", () => {
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "enum": [
-          "A",
-          "B",
-          "C",
           0,
           1,
           2,

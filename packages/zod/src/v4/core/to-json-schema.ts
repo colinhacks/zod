@@ -2,6 +2,7 @@ import type * as checks from "./checks.js";
 import type * as JSONSchema from "./json-schema.js";
 import { $ZodRegistry, globalRegistry } from "./registries.js";
 import type * as schemas from "./schemas.js";
+import { getEnumValues } from "./util.js";
 
 interface JSONSchemaGeneratorParams {
   /** A registry used to look up metadata for each schema. Any schema with an `id` property will be extracted as a $def.
@@ -400,9 +401,10 @@ export class JSONSchemaGenerator {
         }
         case "enum": {
           const json: JSONSchema.BaseSchema = _json as any;
-          const values = Object.values(def.entries);
+          const values = getEnumValues(def.entries);
           // Number enums can have both string and number values
-          json.type = values.some((v) => typeof v === "number") ? "number" : "string";
+          if (values.every((v) => typeof v === "number")) json.type = "number";
+          if (values.every((v) => typeof v === "string")) json.type = "string";
           json.enum = values;
           break;
         }
