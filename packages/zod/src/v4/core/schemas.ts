@@ -1972,6 +1972,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
       const propValues: util.PropValues = {};
       for (const option of def.options) {
         const pv = option._zod.propValues;
+        console.dir(pv, { depth: null });
         if (!pv || Object.keys(pv).length === 0)
           throw new Error(`Invalid discriminated union option at index "${def.options.indexOf(option)}"`);
         for (const [k, v] of Object.entries(pv!)) {
@@ -1989,6 +1990,8 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
       const map: Map<util.Primitive, $ZodType> = new Map();
       for (const o of opts) {
         const values = o._zod.propValues[def.discriminator];
+        if (!values || values.size === 0)
+          throw new Error(`Invalid discriminated union option at index "${def.options.indexOf(o)}"`);
         for (const v of values) {
           if (map.has(v)) {
             throw new Error(`Duplicate discriminator value "${String(v)}"`);
