@@ -986,7 +986,7 @@ export function partialRecord<Key extends core.$ZodRecordKey, Value extends Some
     keyType: union([keyType, never()]),
     valueType,
     ...util.normalizeParams(params),
-  }) as ZodMiniRecord<Key, Value>;
+  }) as ZodMiniRecord<ZodMiniUnion<[Key, ZodMiniNever]>, Value>;
 }
 
 // ZodMiniMap
@@ -1512,17 +1512,15 @@ export const stringbool: (
   ) as any;
 
 // json
-export type ZodMiniJSONSchema = ZodMiniLazy<
-  ZodMiniUnion<
-    [
-      ZodMiniString<string>,
-      ZodMiniNumber<number>,
-      ZodMiniBoolean<boolean>,
-      ZodMiniNull,
-      ZodMiniArray<ZodMiniJSONSchema>,
-      ZodMiniRecord<ZodMiniString<string>, ZodMiniJSONSchema>,
-    ]
-  >
+export type ZodMiniJSONSchema = ZodMiniUnion<
+  [
+    ZodMiniString,
+    ZodMiniNumber,
+    ZodMiniBoolean,
+    ZodMiniNull,
+    ZodMiniArray<ZodMiniJSONSchema>,
+    ZodMiniRecord<ZodMiniString<string>, ZodMiniJSONSchema>,
+  ]
 > & {
   _zod: {
     input: util.JSONType;
@@ -1531,8 +1529,8 @@ export type ZodMiniJSONSchema = ZodMiniLazy<
 };
 
 export function json(): ZodMiniJSONSchema {
-  const jsonSchema: ZodMiniJSONSchema = _lazy(() => {
+  const jsonSchema: any = _lazy(() => {
     return union([string(), number(), boolean(), _null(), array(jsonSchema), record(string(), jsonSchema)]);
-  }) as ZodMiniJSONSchema;
+  });
   return jsonSchema;
 }

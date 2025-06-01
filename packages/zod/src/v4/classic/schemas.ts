@@ -1130,7 +1130,7 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
     return Object.fromEntries(Object.entries(inst._zod.def.shape));
   });
   inst.keyof = () => _enum(Object.keys(inst._zod.def.shape)) as any;
-  inst.catchall = (catchall) => inst.clone({ ...inst._zod.def, catchall });
+  inst.catchall = (catchall) => inst.clone({ ...inst._zod.def, catchall }) as any;
   inst.passthrough = () => inst.clone({ ...inst._zod.def, catchall: unknown() });
   // inst.nonstrict = () => inst.clone({ ...inst._zod.def, catchall: api.unknown() });
   inst.loose = () => inst.clone({ ...inst._zod.def, catchall: unknown() });

@@ -720,6 +720,8 @@ test("z.lazy", () => {
 test("z.json", () => {
   const a = z.json();
   type a = z.output<typeof a>;
+  a._zod.output;
+
   expectTypeOf<a>().toEqualTypeOf<util.JSONType>();
 
   expect(z.parse(a, "hello")).toEqual("hello");

@@ -24,7 +24,7 @@ export const _parse: (_Err: $ZodErrorClass) => $Parse = (_Err) => (schema, value
     Error.captureStackTrace(e, _params?.callee);
     throw e;
   }
-  return result.value;
+  return result.value as core.output<typeof schema>;
 };
 
 export const parse: $Parse = /* @__PURE__*/ _parse(errors.$ZodRealError);
@@ -68,7 +68,7 @@ export const _safeParse: (_Err: $ZodErrorClass) => $SafeParse = (_Err) => (schem
         success: false,
         error: new (_Err ?? errors.$ZodError)(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))),
       }
-    : { success: true, data: result.value };
+    : ({ success: true, data: result.value } as any);
 };
 export const safeParse: $SafeParse = /* @__PURE__*/ _safeParse(errors.$ZodRealError);
 
@@ -88,7 +88,7 @@ export const _safeParseAsync: (_Err: $ZodErrorClass) => $SafeParseAsync = (_Err)
         success: false,
         error: new _Err(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))),
       }
-    : { success: true, data: result.value };
+    : ({ success: true, data: result.value } as any);
 };
 
 export const safeParseAsync: $SafeParseAsync = /* @__PURE__*/ _safeParseAsync(errors.$ZodRealError);

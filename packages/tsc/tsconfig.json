@@ -4,7 +4,7 @@
   "compilerOptions": {
     "target": "es2022",
     "module": "NodeNext",
-    // "customConditions": ["@zod/source"],
+    "customConditions": [],
     "incremental": false,
     "noEmit": true
   }
