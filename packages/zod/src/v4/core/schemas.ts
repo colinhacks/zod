@@ -1974,7 +1974,6 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
       const propValues: util.PropValues = {};
       for (const option of def.options) {
         const pv = option._zod.propValues;
-        console.dir(pv, { depth: null });
         if (!pv || Object.keys(pv).length === 0)
           throw new Error(`Invalid discriminated union option at index "${def.options.indexOf(option)}"`);
         for (const [k, v] of Object.entries(pv!)) {
