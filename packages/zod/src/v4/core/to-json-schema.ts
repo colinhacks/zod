@@ -245,6 +245,12 @@ export class JSONSchemaGenerator {
           break;
         }
         case "date": {
+          if (def.coerce) {
+            const json = _json as JSONSchema.StringSchema;
+            json.type = "string";
+            json.format = "date-time";
+            break;
+          }
           if (this.unrepresentable === "throw") {
             throw new Error("Date cannot be represented in JSON Schema");
           }
