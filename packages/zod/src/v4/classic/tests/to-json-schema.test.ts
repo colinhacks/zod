@@ -707,11 +707,20 @@ describe("toJSONSchema", () => {
       }
     `);
 
-    const b = z.literal(["hello", undefined, null, 5, BigInt(1324)]);
-    expect(() => z.toJSONSchema(b)).toThrow();
+    const b = z.literal(7);
+    expect(z.toJSONSchema(b)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "const": 7,
+        "type": "number",
+      }
+    `);
 
-    const c = z.literal(["hello", null, 5]);
-    expect(z.toJSONSchema(c)).toMatchInlineSnapshot(`
+    const c = z.literal(["hello", undefined, null, 5, BigInt(1324)]);
+    expect(() => z.toJSONSchema(c)).toThrow();
+
+    const d = z.literal(["hello", null, 5]);
+    expect(z.toJSONSchema(d)).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "enum": [
@@ -719,6 +728,19 @@ describe("toJSONSchema", () => {
           null,
           5,
         ],
+      }
+    `);
+
+    const e = z.literal(["hello", "zod", "v4"]);
+    expect(z.toJSONSchema(e)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "enum": [
+          "hello",
+          "zod",
+          "v4",
+        ],
+        "type": "string",
       }
     `);
   });
