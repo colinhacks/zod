@@ -1766,8 +1766,8 @@ By default, validation issues from checks are considered *continuable*; that is,
 <Tab value="Zod">
 ```ts
 const myString = z.string()
-  .refine((val) => val.length > 8)
-  .refine((val) => val === val.toLowerCase());
+  .refine((val) => val.length > 8, { error: "Too short!" })
+  .refine((val) => val === val.toLowerCase(), { error: "Must be lowercase" });
   
 
 const result = myString.safeParse("OH NO");
@@ -1781,8 +1781,8 @@ result.error.issues;
 <Tab value="Zod Mini">
 ```ts zod/v4-mini
 const myString = z.string().check(
-  z.refine((val) => val.length > 8),
-  z.refine((val) => val === val.toLowerCase())
+  z.refine((val) => val.length > 8, { error: "Too short!" }),
+  z.refine((val) => val === val.toLowerCase(), { error: "Must be lowercase" })
 );
 
 const result = z.safeParse(myString, "OH NO");
@@ -1801,8 +1801,8 @@ To mark a particular refinement as *non-continuable*, use the `abort` parameter.
 <Tab value="Zod">
 ```ts
 const myString = z.string()
-  .refine((val) => val.length > 8, { abort: true })
-  .refine((val) => val === val.toLowerCase());
+  .refine((val) => val.length > 8, { error: "Too short!", abort: true })
+  .refine((val) => val === val.toLowerCase(), { error: "Must be lowercase", abort: true });
 
 
 const result = myString.safeParse("OH NO");
@@ -1813,8 +1813,8 @@ result.error!.issues;
 <Tab value="Zod Mini">
 ```ts zod/v4-mini
 const myString = z.string().check(
-  z.refine((val) => val.length > 8, { abort: true }),
-  z.refine((val) => val === val.toLowerCase(), { abort: true })
+  z.refine((val) => val.length > 8, { error: "Too short!", abort: true }),
+  z.refine((val) => val === val.toLowerCase(), { error: "Must be lowercase", abort: true })
 );
 
 const result = z.safeParse(myString, "OH NO");
