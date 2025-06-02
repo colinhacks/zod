@@ -52,9 +52,9 @@ schema.parse(null);      // => "null"
 
   | Zod API                  | Coercion                   |
   |--------------------------|----------------------------|
-  | `z.coerce.string()`      | `new String(value)`        |
-  | `z.coerce.number()`      | `new Number(value)`        |
-  | `z.coerce.boolean()`     | `new Boolean(value)`       |
+  | `z.coerce.string()`      | `String(value)`            |
+  | `z.coerce.number()`      | `Number(value)`            |
+  | `z.coerce.boolean()`     | `Boolean(value)`           |
   | `z.coerce.bigint()`      | `BigInt(value)`            |
   | `z.coerce.date()`        | `new Date(value)`          |
 
@@ -308,7 +308,7 @@ schema.parse("mailto:noreply@zod.dev"); // ✅
 schema.parse("sup"); // ✅
 ```
 
-As you can see this is quite permissive. Internally this uses the `new URL()` constructor to valid inputs; this behavior may differ across platforms and runtimes but it's the mostly rigorous way to validate URIs/URLs on any given JS runtime/engine. 
+As you can see this is quite permissive. Internally this uses the `new URL()` constructor to validate inputs; this behavior may differ across platforms and runtimes but it's the mostly rigorous way to validate URIs/URLs on any given JS runtime/engine. 
 
 To validate the hostname against a specific regex:
 
@@ -718,7 +718,7 @@ strbool.parse("1")            // => true
 strbool.parse("yes")          // => true
 strbool.parse("on")           // => true
 strbool.parse("y")            // => true
-strbool.parse("enable")       // => true
+strbool.parse("enabled")      // => true
 
 strbool.parse("false");       // => false
 strbool.parse("0");           // => false
@@ -861,7 +861,7 @@ const hello = z.templateLiteral(["hello, ", z.string()]);
 // `hello, ${string}`
 
 const cssUnits = z.enum(["px", "em", "rem", "%"]);
-const css = z.templateLiteral([z.number(), cssUnits ]);
+const css = z.templateLiteral([z.number(), cssUnits]);
 // `${number}px` | `${number}em` | `${number}rem` | `${number}%`
 
 const email = z.templateLiteral([
@@ -950,7 +950,7 @@ Dog.parse({ name: "Yeller", extraKey: true });
 
 To define a *catchall schema* that will be used to validate any unrecognized keys:
 
-```
+```ts z.object
 const DogWithStrings = z.object({
   name: z.string(),
   age: z.number().optional(),
@@ -1507,10 +1507,10 @@ type c = z.infer<typeof c>; // => number
 This can be useful for intersecting two object types. 
 
 ```ts
-const Person = z.intersection({ name: z.string() });
+const Person = z.object({ name: z.string() });
 type Person = z.infer<typeof Person>;
 
-const Employee = z.intersection({ role: z.string() });
+const Employee = z.object({ role: z.string() });
 type Employee = z.infer<typeof Employee>;
 
 const EmployedPerson = z.intersection(Person, Employee);
@@ -1766,8 +1766,8 @@ By default, validation issues from checks are considered *continuable*; that is,
 <Tab value="Zod">
 ```ts
 const myString = z.string()
-  .refine((val) => val.length > 8)
-  .refine((val) => val === val.toLowerCase());
+  .refine((val) => val.length > 8, { error: "Too short!" })
+  .refine((val) => val === val.toLowerCase(), { error: "Must be lowercase" });
   
 
 const result = myString.safeParse("OH NO");
@@ -1781,8 +1781,8 @@ result.error.issues;
 <Tab value="Zod Mini">
 ```ts zod/v4-mini
 const myString = z.string().check(
-  z.refine((val) => val.length > 8),
-  z.refine((val) => val === val.toLowerCase())
+  z.refine((val) => val.length > 8, { error: "Too short!" }),
+  z.refine((val) => val === val.toLowerCase(), { error: "Must be lowercase" })
 );
 
 const result = z.safeParse(myString, "OH NO");
@@ -1801,8 +1801,8 @@ To mark a particular refinement as *non-continuable*, use the `abort` parameter.
 <Tab value="Zod">
 ```ts
 const myString = z.string()
-  .refine((val) => val.length > 8, { abort: true })
-  .refine((val) => val === val.toLowerCase());
+  .refine((val) => val.length > 8, { error: "Too short!", abort: true })
+  .refine((val) => val === val.toLowerCase(), { error: "Must be lowercase", abort: true });
 
 
 const result = myString.safeParse("OH NO");
@@ -1813,8 +1813,8 @@ result.error!.issues;
 <Tab value="Zod Mini">
 ```ts zod/v4-mini
 const myString = z.string().check(
-  z.refine((val) => val.length > 8, { abort: true }),
-  z.refine((val) => val === val.toLowerCase(), { abort: true })
+  z.refine((val) => val.length > 8, { error: "Too short!", abort: true }),
+  z.refine((val) => val === val.toLowerCase(), { error: "Must be lowercase", abort: true })
 );
 
 const result = z.safeParse(myString, "OH NO");
@@ -2441,7 +2441,7 @@ The `z.templateLiteral` API can handle any number of string literals (e.g. `"hel
 z.templateLiteral([ "hi there" ]); 
 // `hi there`
 
-z.templateLiteral([ "email: ", z.string()]); 
+z.templateLiteral([ "email: ", z.string() ]); 
 // `email: ${string}`
 
 z.templateLiteral([ "high", z.literal(5) ]); 
@@ -2524,7 +2524,7 @@ Function schemas have an `.implement()` method which accepts a function and retu
 
 ```ts
 const computeTrimmedLength = MyFunction.implement((input) => {
-  // TypeScript knows x is a string!
+  // TypeScript knows input is a string!
   return input.trim().length;
 });
 
