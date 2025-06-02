@@ -2524,7 +2524,7 @@ Function schemas have an `.implement()` method which accepts a function and retu
 
 ```ts
 const computeTrimmedLength = MyFunction.implement((input) => {
-  // TypeScript knows x is a string!
+  // TypeScript knows input is a string!
   return input.trim().length;
 });
 
