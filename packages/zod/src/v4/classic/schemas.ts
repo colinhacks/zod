@@ -127,9 +127,9 @@ export interface ZodType<
   /** @deprecated Use `.def` instead. */
   _def: Internals["def"];
   /** @deprecated Use `z.output<typeof schema>` instead. */
-  _output: core.output<this>;
+  _output: Output;
   /** @deprecated Use `z.input<typeof schema>` instead. */
-  _input: core.input<this>;
+  _input: Input;
   // base methods
   check(...checks: (core.CheckFn<core.output<this>> | core.$ZodCheck<core.output<this>>)[]): this;
   clone(def?: Internals["def"], params?: { parent: boolean }): this;
