@@ -81,6 +81,7 @@ export class $ZodAsyncError extends Error {
 // export type output<T extends schemas.$ZodType> = T["_zod"] extends { "~output": any }
 //   ? T["_zod"]["~output"]
 //   : T["_zod"]["output"];
+// Mk2
 export type input<T> = T extends { _zod: { "~input": any } }
   ? T["_zod"]["~input"]
   : T extends { _zod: { input: any } }
@@ -91,6 +92,9 @@ export type output<T> = T extends { _zod: { "~output": any } }
   : T extends { _zod: { output: any } }
     ? T["_zod"]["output"]
     : never;
+// Mk 3
+// export type input<T extends schemas.$ZodType> = T["_zod"]["input"];
+// export type output<T extends schemas.$ZodType> = T["_zod"]["output"];
 
 export type { output as infer };
 

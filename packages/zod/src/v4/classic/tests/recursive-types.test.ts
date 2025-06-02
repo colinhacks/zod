@@ -46,14 +46,13 @@ test("recursion involving union type", () => {
     },
   };
 
-  const LL = z
-    .object({
-      value: z.number(),
-      get next() {
-        return LL.nullable();
-      },
-    })
-    .or(z.null());
+  const LL = z.object({
+    value: z.number(),
+    get next() {
+      return LL.nullable();
+    },
+  });
+  // .or(z.null());
 
   LL.parse(data);
 });

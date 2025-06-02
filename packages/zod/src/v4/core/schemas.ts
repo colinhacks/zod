@@ -83,6 +83,7 @@ export interface $ZodTypeDef {
 
 /** @internal */
 export interface $ZodTypeInternals<out O = unknown, out I = unknown> {
+  "~type": this["def"]["type"];
   /** The `@zod/core` version of this schema */
   version: typeof version;
 
@@ -153,9 +154,20 @@ export interface $ZodTypeInternals<out O = unknown, out I = unknown> {
 
 export type $ZodStandardSchema<T extends $ZodType> = StandardSchemaV1.Props<core.input<T>, core.output<T>>;
 
-export interface $ZodType<O = unknown, I = unknown> {
-  _zod: $ZodTypeInternals<O, I>;
+export interface $ZodType<
+  O = unknown,
+  I = unknown,
+  Internals extends $ZodTypeInternals<O, I> = $ZodTypeInternals<O, I>,
+> {
+  _zod: Internals;
   "~standard": $ZodStandardSchema<this>;
+  // "~args": this["_zod"][any];
+  // /** @deprecated @internal Internal field. */
+  // "~d": this["_zod"]["def"];
+  // /** @deprecated @internal Internal field. */
+  // "~o": O;
+  // /** @deprecated @internal Internal field. */
+  // "~i": I;
 }
 
 export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constructor("$ZodType", (inst, def) => {
@@ -1519,8 +1531,10 @@ export interface $ZodObjectInternals<
   out Shape extends Readonly<$ZodShape> = Readonly<$ZodShape>,
   out Config extends $ZodObjectConfig = $ZodObjectConfig,
 > extends $ZodTypeInternals<
-    $InferObjectOutputFallback<Shape, Config["out"]>,
-    $InferObjectInputFallback<Shape, Config["in"]>
+    any,
+    any
+    // $InferObjectOutputFallback<Shape, Config["out"]>,
+    // $InferObjectInputFallback<Shape, Config["in"]>
   > {
   def: $ZodObjectDef<Shape>;
   config: Config;
@@ -3462,12 +3476,38 @@ type AppendToTemplateLiteral<
   Suffix extends LiteralPart | $ZodType,
 > = Suffix extends LiteralPart
   ? `${Template}${UndefinedToEmptyString<Suffix>}`
-  : `${Template}${UndefinedToEmptyString<LiteralPart & core.output<Suffix & $ZodType>>}`;
+  : Suffix extends $ZodType
+    ? `${Template}${core.output<Suffix> extends infer T extends LiteralPart ? UndefinedToEmptyString<T> : never}`
+    : never;
 
+export type ConcatenateTupleOfStrings<T extends string[]> = T extends [
+  infer First extends string,
+  ...infer Rest extends string[],
+]
+  ? Rest extends string[]
+    ? First extends ""
+      ? ConcatenateTupleOfStrings<Rest>
+      : `${First}${ConcatenateTupleOfStrings<Rest>}`
+    : never
+  : "";
+export type ConvertPartsToStringTuple<Parts extends $ZodTemplateLiteralPart[]> = {
+  [K in keyof Parts]: Parts[K] extends LiteralPart
+    ? `${UndefinedToEmptyString<Parts[K]>}`
+    : Parts[K] extends $ZodType
+      ? `${core.output<Parts[K]> extends infer T extends LiteralPart ? UndefinedToEmptyString<T> : never}`
+      : never;
+};
+
+export type ToTemplateLiteral<Parts extends $ZodTemplateLiteralPart[]> = ConcatenateTupleOfStrings<
+  ConvertPartsToStringTuple<Parts>
+>;
+// type lkjasd = ConcatenateTupleOfStrings<["Hello", " ", "World", "!"]>; // "Hello World!"
 export type $PartsToTemplateLiteral<Parts extends $ZodTemplateLiteralPart[]> = [] extends Parts
   ? ``
-  : Parts extends [...infer Rest extends $ZodTemplateLiteralPart[], infer Last extends $ZodTemplateLiteralPart]
-    ? AppendToTemplateLiteral<$PartsToTemplateLiteral<Rest>, Last>
+  : Parts extends [...infer Rest, infer Last extends $ZodTemplateLiteralPart]
+    ? Rest extends $ZodTemplateLiteralPart[]
+      ? AppendToTemplateLiteral<$PartsToTemplateLiteral<Rest>, Last>
+      : never
     : never;
 
 export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> = /*@__PURE__*/ core.$constructor(
