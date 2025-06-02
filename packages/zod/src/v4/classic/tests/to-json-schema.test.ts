@@ -365,7 +365,15 @@ describe("toJSONSchema", () => {
 
   test("string patterns", () => {
     expect(
-      z.toJSONSchema(z.string().startsWith("hello").includes("cruel").endsWith("world").regex(/stuff/))
+      z.toJSONSchema(
+        z
+          .string()
+          .startsWith("hello")
+          .includes("cruel")
+          .includes("dark", { position: 10 })
+          .endsWith("world")
+          .regex(/stuff/)
+      )
     ).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -375,6 +383,9 @@ describe("toJSONSchema", () => {
           },
           {
             "pattern": "cruel",
+          },
+          {
+            "pattern": "^.{10}dark",
           },
           {
             "pattern": ".*world$",
@@ -388,9 +399,18 @@ describe("toJSONSchema", () => {
     `);
 
     expect(
-      z.toJSONSchema(z.string().startsWith("hello").includes("cruel").endsWith("world").regex(/stuff/), {
-        target: "draft-7",
-      })
+      z.toJSONSchema(
+        z
+          .string()
+          .startsWith("hello")
+          .includes("cruel")
+          .includes("dark", { position: 10 })
+          .endsWith("world")
+          .regex(/stuff/),
+        {
+          target: "draft-7",
+        }
+      )
     ).toMatchInlineSnapshot(`
       {
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -401,6 +421,10 @@ describe("toJSONSchema", () => {
           },
           {
             "pattern": "cruel",
+            "type": "string",
+          },
+          {
+            "pattern": "^.{10}dark",
             "type": "string",
           },
           {

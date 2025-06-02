@@ -952,7 +952,8 @@ export const $ZodCheckIncludes: core.$constructor<$ZodCheckIncludes> = /*@__PURE
   (inst, def) => {
     $ZodCheck.init(inst, def);
 
-    const pattern = new RegExp(util.escapeRegex(def.includes));
+    const escapedRegex = util.escapeRegex(def.includes);
+    const pattern = new RegExp(typeof def.position === "number" ? `^.{${def.position}}${escapedRegex}` : escapedRegex);
     def.pattern = pattern;
     inst._zod.onattach.push((inst) => {
       const bag = inst._zod.bag as schemas.$ZodStringInternals<unknown>["bag"];
