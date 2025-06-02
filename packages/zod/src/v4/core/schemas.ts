@@ -151,9 +151,11 @@ export interface $ZodTypeInternals<out O = unknown, out I = unknown> {
   parent?: $ZodType | undefined;
 }
 
+export type $ZodStandardSchema<T extends $ZodType> = StandardSchemaV1.Props<core.input<T>, core.output<T>>;
+
 export interface $ZodType<O = unknown, I = unknown> {
   _zod: $ZodTypeInternals<O, I>;
-  "~standard": StandardSchemaV1.Props<core.input<this>, core.output<this>>;
+  "~standard": $ZodStandardSchema<this>;
 }
 
 export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constructor("$ZodType", (inst, def) => {
