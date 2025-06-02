@@ -2857,7 +2857,6 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
     $ZodType.init(inst, def);
     inst._zod.parse = (payload, _ctx) => {
       const _out = def.transform(payload.value, payload);
-
       if (_ctx.async) {
         const output = _out instanceof Promise ? _out : Promise.resolve(_out);
         return output.then((output) => {
@@ -3373,7 +3372,6 @@ function handlePipeResult(left: ParsePayload, def: $ZodPipeDef, ctx: ParseContex
   if (util.aborted(left)) {
     return left;
   }
-
   return def.out._zod.run({ value: left.value, issues: left.issues }, ctx);
 }
 

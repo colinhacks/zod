@@ -1450,20 +1450,12 @@ export function check<O = unknown>(fn: core.CheckFn<O>, params?: string | core.$
 }
 
 // ZodCustom
-function _custom<O = unknown, I = O>(
-  fn: (data: O) => unknown,
-  _params: string | core.$ZodCustomParams | undefined,
-  Class: util.Constructor<ZodMiniCustom, [core.$ZodCustomDef]>
+// custom schema
+export function custom<O = unknown, I = O>(
+  fn?: (data: O) => unknown,
+  _params?: string | core.$ZodCustomParams | undefined
 ): ZodMiniCustom<O, I> {
-  const params = util.normalizeParams(_params);
-  const schema = new Class({
-    type: "custom",
-    check: "custom",
-    fn: fn as any,
-    ...params,
-  });
-
-  return schema as any;
+  return core._custom(ZodMiniCustom, fn ?? (() => true), _params) as any;
 }
 
 // refine
@@ -1471,15 +1463,7 @@ export function refine<T>(
   fn: (arg: NoInfer<T>) => util.MaybeAsync<unknown>,
   _params: string | core.$ZodCustomParams = {}
 ): core.$ZodCheck<T> {
-  return _custom(fn, _params, ZodMiniCustom);
-}
-
-// custom schema
-export function custom<O = unknown, I = O>(
-  fn?: (data: O) => unknown,
-  _params?: string | core.$ZodCustomParams | undefined
-): ZodMiniCustom<O, I> {
-  return _custom(fn ?? (() => true), _params, ZodMiniCustom);
+  return core._refine(ZodMiniCustom, fn, _params);
 }
 
 // instanceof

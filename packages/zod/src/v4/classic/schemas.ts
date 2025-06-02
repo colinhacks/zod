@@ -1955,7 +1955,7 @@ export function refine<T>(
   fn: (arg: NoInfer<T>) => util.MaybeAsync<unknown>,
   _params: string | core.$ZodCustomParams = {}
 ): core.$ZodCheck<T> {
-  return core._custom(ZodCustom, fn, _params);
+  return core._refine(ZodCustom, fn, _params);
 }
 
 // superRefine

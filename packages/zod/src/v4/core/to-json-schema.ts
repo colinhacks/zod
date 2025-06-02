@@ -432,8 +432,13 @@ export class JSONSchemaGenerator {
             // do nothing (an undefined literal was stripped)
           } else if (vals.length === 1) {
             const val = vals[0];
+            json.type = val === null ? "null" : typeof val;
             json.const = val;
           } else {
+            if (vals.every((v) => typeof v === "number")) json.type = "number";
+            if (vals.every((v) => typeof v === "string")) json.type = "string";
+            if (vals.every((v) => typeof v === "boolean")) json.type = "string";
+            if (vals.every((v) => v === null)) json.type = "null";
             json.enum = vals;
           }
           break;

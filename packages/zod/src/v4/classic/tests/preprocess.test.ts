@@ -270,3 +270,28 @@ test("preprocess validates with sibling errors", () => {
     }
   `);
 });
+
+test("perform transform with non-fatal issues", () => {
+  const A = z
+    .string()
+    .refine((_) => false)
+    .min(4)
+    .transform((val) => val.length)
+    .pipe(z.number())
+    .refine((_) => false);
+  expect(A.safeParse("asdfasdf").error!.issues).toHaveLength(2);
+  expect(A.safeParse("asdfasdf").error).toMatchInlineSnapshot(`
+    [ZodError: [
+      {
+        "code": "custom",
+        "path": [],
+        "message": "Invalid input"
+      },
+      {
+        "code": "custom",
+        "path": [],
+        "message": "Invalid input"
+      }
+    ]]
+  `);
+});

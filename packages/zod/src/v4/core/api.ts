@@ -1434,6 +1434,31 @@ export function _custom<O = unknown, I = O>(
   fn: (data: O) => unknown,
   _params: string | $ZodCustomParams | undefined
 ): schemas.$ZodCustom<O, I> {
+  const norm = util.normalizeParams(_params);
+  norm.abort ??= true; // default to abort:false
+  const schema = new Class({
+    type: "custom",
+    check: "custom",
+    fn: fn as any,
+    ...norm,
+  });
+
+  return schema as any;
+}
+
+// export function _refine<T>(
+//   Class: util.SchemaClass<schemas.$ZodCustom>,
+//   fn: (arg: NoInfer<T>) => util.MaybeAsync<unknown>,
+//   _params: string | $ZodCustomParams = {}
+// ): checks.$ZodCheck<T> {
+//   return _custom(Class, fn, _params);
+// }
+// same as _custom but deafults to abort:false
+export function _refine<O = unknown, I = O>(
+  Class: util.SchemaClass<schemas.$ZodCustom>,
+  fn: (data: O) => unknown,
+  _params: string | $ZodCustomParams | undefined
+): schemas.$ZodCustom<O, I> {
   const schema = new Class({
     type: "custom",
     check: "custom",
@@ -1442,14 +1467,6 @@ export function _custom<O = unknown, I = O>(
   });
 
   return schema as any;
-}
-
-export function _refine<T>(
-  Class: util.SchemaClass<schemas.$ZodCustom>,
-  fn: (arg: NoInfer<T>) => util.MaybeAsync<unknown>,
-  _params: string | $ZodCustomParams = {}
-): checks.$ZodCheck<T> {
-  return _custom(Class, fn, _params);
 }
 
 // export type $ZodCustomParams = CheckTypeParams<schemas.$ZodCustom, "fn">

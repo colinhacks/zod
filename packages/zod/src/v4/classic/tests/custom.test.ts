@@ -21,3 +21,20 @@ test("instanceof", () => {
   // Argument of type 'ZodCustom<Uint8Array<ArrayBuffer>, unknown>' is not assignable to parameter of type '$ZodType<any, Uint8Array<ArrayBuffer>>'.
   z.string().transform(fn).pipe(z.instanceof(Uint8Array));
 });
+
+test("non-continuable by default", () => {
+  const A = z
+    .custom<string>((val) => typeof val === "string")
+    .transform((_) => {
+      throw new Error("Invalid input");
+    });
+  expect(A.safeParse(123).error!).toMatchInlineSnapshot(`
+    [ZodError: [
+      {
+        "code": "custom",
+        "path": [],
+        "message": "Invalid input"
+      }
+    ]]
+  `);
+});
