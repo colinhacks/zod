@@ -1507,10 +1507,10 @@ type c = z.infer<typeof c>; // => number
 This can be useful for intersecting two object types. 
 
 ```ts
-const Person = z.intersection({ name: z.string() });
+const Person = z.object({ name: z.string() });
 type Person = z.infer<typeof Person>;
 
-const Employee = z.intersection({ role: z.string() });
+const Employee = z.object({ role: z.string() });
 type Employee = z.infer<typeof Employee>;
 
 const EmployedPerson = z.intersection(Person, Employee);
