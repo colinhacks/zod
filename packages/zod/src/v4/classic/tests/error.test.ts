@@ -176,8 +176,9 @@ test("array minimum", () => {
         "origin": "array",
         "code": "too_small",
         "minimum": 3,
+        "inclusive": true,
         "path": [],
-        "message": "Too small: expected array to have >3 items"
+        "message": "Too small: expected array to have >=3 items"
       }
     ]]
   `);
@@ -530,6 +531,7 @@ test("z.config customError ", () => {
         "origin": "string",
         "code": "too_small",
         "minimum": 10,
+        "inclusive": true,
         "path": [],
         "message": "override"
       }
@@ -614,10 +616,11 @@ test("dont short circuit on continuable errors", () => {
         "origin": "string",
         "code": "too_small",
         "minimum": 6,
+        "inclusive": true,
         "path": [
           "password"
         ],
-        "message": "Too small: expected string to have >6 characters"
+        "message": "Too small: expected string to have >=6 characters"
       },
       {
         "code": "custom",

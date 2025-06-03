@@ -214,10 +214,11 @@ test("preprocess as the second property of object", () => {
         "origin": "string",
         "code": "too_small",
         "minimum": 1,
+        "inclusive": true,
         "path": [
           "nonEmptyStr"
         ],
-        "message": "Too small: expected string to have >1 characters"
+        "message": "Too small: expected string to have >=1 characters"
       },
       {
         "origin": "number",
