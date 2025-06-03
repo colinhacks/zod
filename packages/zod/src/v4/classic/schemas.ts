@@ -21,15 +21,9 @@ export interface ZodType<
   out Output = unknown,
   out Input = unknown,
   out Internals extends core.$ZodTypeInternals<Output, Input> = core.$ZodTypeInternals<Output, Input>,
-  // out Internals extends core.$ZodTypeInternals = core.$ZodTypeInternals,
 > extends core.$ZodType<Output, Input, Internals> {
   def: Internals["def"];
   type: Internals["def"]["type"];
-  "~standard": core.$ZodStandardSchema<this>;
-
-  // "~type": Internals["def"]["type"];
-  // "~output": Internals["output"];
-  // "~input": Internals["input"];
 
   /** @deprecated Use `.def` instead. */
   _def: Internals["def"];
@@ -123,15 +117,11 @@ export interface ZodType<
   isNullable(): boolean;
 }
 
-// export interface _ZodType<out Internals extends core._$ZodTypeInternals = core._$ZodTypeInternals>
-//   // @ts-ignore
-//   extends ZodType<any, any, Internals> {}
-
 export interface _ZodType<out Internals extends core.$ZodTypeInternals = core.$ZodTypeInternals>
   extends ZodType<any, any, Internals> {}
 
 export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$constructor("ZodType", (inst, def) => {
-  core.$ZodType.init(inst as any, def);
+  core.$ZodType.init(inst, def);
   inst.def = def;
   Object.defineProperty(inst, "_def", { value: def });
 
@@ -219,9 +209,6 @@ export interface _ZodString<T extends core.$ZodStringInternals<unknown> = core.$
   minLength: number | null;
   maxLength: number | null;
 
-  // /** @deprecated Use `z.jsonString()` instead. */
-  // json(params?: string | core.$ZodCheckJSONStringParams): this;
-
   // miscellaneous checks
   regex(regex: RegExp, params?: string | core.$ZodCheckRegexParams): this;
   includes(value: string, params?: core.$ZodCheckIncludesParams): this;
@@ -272,9 +259,7 @@ export const _ZodString: core.$constructor<_ZodString> = /*@__PURE__*/ core.$con
 
 export interface ZodString extends _ZodString<core.$ZodStringInternals<string>> {
   // string format checks
-  // email(): ZodString;
-  // email(params?: string): ZodString;
-  // email(params?: StringFormatParams): ZodString;
+
   /** @deprecated Use `z.email()` instead. */
   email(params?: string | core.$ZodCheckEmailParams): this;
   /** @deprecated Use `z.url()` instead. */
@@ -1041,9 +1026,8 @@ export interface ZodObject<
   /** @ts-ignore Cast variance */
   out Shape extends core.$ZodShape = core.$ZodLooseShape,
   out Config extends core.$ZodObjectConfig = core.$ZodObjectConfig,
-> extends ZodType<any, any, core.$ZodObjectInternals<Shape, Config>>,
+> extends _ZodType<core.$ZodObjectInternals<Shape, Config>>,
     core.$ZodObject<Shape, Config> {
-  // "~standard": core.$ZodStandardSchema<this>;
   shape: Shape;
 
   keyof(): ZodEnum<util.ToEnum<keyof Shape & string>>;
