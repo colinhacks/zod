@@ -27,5 +27,22 @@ export {
   formatError,
   flattenError,
   toJSONSchema,
-  locales,
 } from "zod/v4/core";
+
+export * as locales from "../locales/index.js";
+
+// iso
+// must be exported from top-level
+// https://github.com/colinhacks/zod/issues/4491
+export { ZodISODateTime, ZodISODate, ZodISOTime, ZodISODuration } from "./iso.js";
+export * as iso from "./iso.js";
+
+// coerce
+export type {
+  ZodCoercedString,
+  ZodCoercedNumber,
+  ZodCoercedBigInt,
+  ZodCoercedBoolean,
+  ZodCoercedDate,
+} from "./coerce.js";
+export * as coerce from "./coerce.js";

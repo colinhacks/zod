@@ -2,13 +2,10 @@ import * as core from "zod/v4/core";
 import { util } from "zod/v4/core";
 import * as parse from "./parse.js";
 
-export * as coerce from "./coerce.js";
-export * as iso from "./iso.js";
-
 type SomeType = core.$ZodType;
 
 export interface ZodMiniType<out Output = unknown, out Input = unknown> extends core.$ZodType<Output, Input> {
-  check(...checks: (core.CheckFn<this["_zod"]["output"]> | core.$ZodCheck<this["_zod"]["output"]>)[]): this;
+  check(...checks: (core.CheckFn<core.output<this>> | core.$ZodCheck<core.output<this>>)[]): this;
   clone(def?: this["_zod"]["def"], params?: { parent: boolean }): this;
   register<R extends core.$ZodRegistry>(
     registry: R,
@@ -36,7 +33,7 @@ export interface ZodMiniType<out Output = unknown, out Input = unknown> extends 
 export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$constructor(
   "ZodMiniType",
   (inst, def) => {
-    if (!inst._zod) throw new Error("Uninitialized schema in mixin ZodMiniType.");
+    if (!inst._zod) throw new Error("Uninitialized schema in ZodMiniType.");
 
     core.$ZodType.init(inst, def);
     inst.def = def;
@@ -878,15 +875,9 @@ export const ZodMiniDiscriminatedUnion: core.$constructor<ZodMiniDiscriminatedUn
   }
 );
 
-export interface $ZodTypeDiscriminableInternals extends core.$ZodTypeInternals {
-  disc: util.DiscriminatorMap;
-}
-
-export interface $ZodTypeDiscriminable extends ZodMiniType {
-  _zod: $ZodTypeDiscriminableInternals;
-}
-
-export function discriminatedUnion<Types extends readonly [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]]>(
+export function discriminatedUnion<
+  Types extends readonly [core.$ZodTypeDiscriminable, ...core.$ZodTypeDiscriminable[]],
+>(
   discriminator: string,
   options: Types,
   params?: string | core.$ZodDiscriminatedUnionParams
@@ -995,7 +986,7 @@ export function partialRecord<Key extends core.$ZodRecordKey, Value extends Some
     keyType: union([keyType, never()]),
     valueType,
     ...util.normalizeParams(params),
-  }) as ZodMiniRecord<Key, Value>;
+  }) as ZodMiniRecord<ZodMiniUnion<[Key, ZodMiniNever]>, Value>;
 }
 
 // ZodMiniMap
@@ -1459,20 +1450,12 @@ export function check<O = unknown>(fn: core.CheckFn<O>, params?: string | core.$
 }
 
 // ZodCustom
-function _custom<O = unknown, I = O>(
-  fn: (data: O) => unknown,
-  _params: string | core.$ZodCustomParams | undefined,
-  Class: util.Constructor<ZodMiniCustom, [core.$ZodCustomDef]>
+// custom schema
+export function custom<O = unknown, I = O>(
+  fn?: (data: O) => unknown,
+  _params?: string | core.$ZodCustomParams | undefined
 ): ZodMiniCustom<O, I> {
-  const params = util.normalizeParams(_params);
-  const schema = new Class({
-    type: "custom",
-    check: "custom",
-    fn: fn as any,
-    ...params,
-  });
-
-  return schema as any;
+  return core._custom(ZodMiniCustom, fn ?? (() => true), _params) as any;
 }
 
 // refine
@@ -1480,15 +1463,7 @@ export function refine<T>(
   fn: (arg: NoInfer<T>) => util.MaybeAsync<unknown>,
   _params: string | core.$ZodCustomParams = {}
 ): core.$ZodCheck<T> {
-  return _custom(fn, _params, ZodMiniCustom);
-}
-
-// custom schema
-export function custom<O = unknown, I = O>(
-  fn?: (data: O) => unknown,
-  _params?: string | core.$ZodCustomParams | undefined
-): ZodMiniCustom<O, I> {
-  return _custom(fn ?? (() => true), _params, ZodMiniCustom);
+  return core._refine(ZodMiniCustom, fn, _params);
 }
 
 // instanceof
@@ -1500,7 +1475,7 @@ function _instanceof<T extends typeof Class>(
   params: core.$ZodCustomParams = {
     error: `Input not instance of ${cls.name}`,
   }
-): ZodMiniCustom<InstanceType<T>> {
+): ZodMiniCustom<InstanceType<T>, InstanceType<T>> {
   const inst = custom((data) => data instanceof cls, params);
   inst._zod.bag.Class = cls;
   return inst as any;
@@ -1510,24 +1485,26 @@ export { _instanceof as instanceof };
 // stringbool
 export const stringbool: (
   _params?: string | core.$ZodStringBoolParams
-) => ZodMiniPipe<ZodMiniUnknown, ZodMiniBoolean<boolean>> = /* @__PURE__ */ core._stringbool.bind(null, {
-  Pipe: ZodMiniPipe,
-  Boolean: ZodMiniBoolean,
-  Unknown: ZodMiniUnknown,
-}) as any;
+) => ZodMiniPipe<ZodMiniUnknown, ZodMiniBoolean<boolean>> = (...args) =>
+  core._stringbool(
+    {
+      Pipe: ZodMiniPipe,
+      Boolean: ZodMiniBoolean,
+      Unknown: ZodMiniUnknown,
+    },
+    ...args
+  ) as any;
 
 // json
-export type ZodMiniJSONSchema = ZodMiniLazy<
-  ZodMiniUnion<
-    [
-      ZodMiniString<string>,
-      ZodMiniNumber<number>,
-      ZodMiniBoolean<boolean>,
-      ZodMiniNull,
-      ZodMiniArray<ZodMiniJSONSchema>,
-      ZodMiniRecord<ZodMiniString<string>, ZodMiniJSONSchema>,
-    ]
-  >
+export type ZodMiniJSONSchema = ZodMiniUnion<
+  [
+    ZodMiniString,
+    ZodMiniNumber,
+    ZodMiniBoolean,
+    ZodMiniNull,
+    ZodMiniArray<ZodMiniJSONSchema>,
+    ZodMiniRecord<ZodMiniString<string>, ZodMiniJSONSchema>,
+  ]
 > & {
   _zod: {
     input: util.JSONType;
@@ -1536,8 +1513,8 @@ export type ZodMiniJSONSchema = ZodMiniLazy<
 };
 
 export function json(): ZodMiniJSONSchema {
-  const jsonSchema: ZodMiniJSONSchema = _lazy(() => {
+  const jsonSchema: any = _lazy(() => {
     return union([string(), number(), boolean(), _null(), array(jsonSchema), record(string(), jsonSchema)]);
-  }) as ZodMiniJSONSchema;
+  });
   return jsonSchema;
 }

@@ -1,4 +1,6 @@
 import { writeFileSync } from "node:fs";
+import { mkdirSync } from "node:fs";
+import { dirname } from "node:path";
 
 export const ZOD = {
   imports: [`import * as z from "zod/v4";`],
@@ -175,6 +177,8 @@ export function generate(params: GenerateObjectsParams) {
 
   file.push(custom);
 
+  // Create directory if it doesn't exist
+  mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, file.join("\n"), { flag: "w" });
 }
 
@@ -304,6 +308,8 @@ export function generateExtendChain(params: GenerateExtendChainParams) {
     }
   }
 
+  // Create directory if it doesn't exist
+  mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, file.join("\n"), { flag: "w" });
 }
 

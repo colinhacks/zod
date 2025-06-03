@@ -195,8 +195,8 @@ const formIntegrations: ZodResource[] = [
     slug: "schalkventer/frrm",
   },
   {
-    name: "@regle/schemas",
-    url: "https://github.com/victorgarciaesgi/regle/tree/main/packages/schemas",
+    name: "regle",
+    url: "https://github.com/victorgarciaesgi/regle",
     description: "Headless form validation library for Vue.js.",
     slug: "victorgarciaesgi/regle",
     v4: true,

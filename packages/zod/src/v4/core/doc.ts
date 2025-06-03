@@ -39,7 +39,6 @@ export class Doc {
     const content = this?.content ?? [``];
     const lines = [...content.map((x) => `  ${x}`)];
     // console.log(lines.join("\n"));
-    // console.dir("COMPILE", {depth: null});
     return new F(...args, lines.join("\n"));
   }
 }

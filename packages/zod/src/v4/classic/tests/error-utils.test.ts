@@ -478,3 +478,50 @@ test("inheritance", () => {
   expect(e2).toBeInstanceOf(z.ZodRealError);
   expect(e2).toBeInstanceOf(Error);
 });
+
+test("disc union treeify/format", () => {
+  const schema = z.discriminatedUnion(
+    "foo",
+    [
+      z.object({
+        foo: z.literal("x"),
+        x: z.string(),
+      }),
+      z.object({
+        foo: z.literal("y"),
+        y: z.string(),
+      }),
+    ],
+    {
+      error: "Invalid discriminator",
+    }
+  );
+
+  const error = schema.safeParse({ foo: "invalid" }).error;
+  expect(z.treeifyError(error!)).toMatchInlineSnapshot(`
+    {
+      "errors": [],
+      "properties": {
+        "foo": {
+          "errors": [
+            "Invalid discriminator",
+          ],
+        },
+      },
+    }
+  `);
+  expect(z.prettifyError(error!)).toMatchInlineSnapshot(`
+    "✖ Invalid discriminator
+      → at foo"
+  `);
+  expect(z.formatError(error!)).toMatchInlineSnapshot(`
+    {
+      "_errors": [],
+      "foo": {
+        "_errors": [
+          "Invalid discriminator",
+        ],
+      },
+    }
+  `);
+});

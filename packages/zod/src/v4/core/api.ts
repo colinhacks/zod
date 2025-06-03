@@ -1071,7 +1071,7 @@ export function _union<const T extends readonly schemas.$ZodObject[]>(
 
 // ZodDiscriminatedUnion
 export interface $ZodTypeDiscriminableInternals extends schemas.$ZodTypeInternals {
-  disc: util.DiscriminatorMap;
+  propValues: util.PropValues;
 }
 
 export interface $ZodTypeDiscriminable extends schemas.$ZodType {
@@ -1434,6 +1434,31 @@ export function _custom<O = unknown, I = O>(
   fn: (data: O) => unknown,
   _params: string | $ZodCustomParams | undefined
 ): schemas.$ZodCustom<O, I> {
+  const norm = util.normalizeParams(_params);
+  norm.abort ??= true; // default to abort:false
+  const schema = new Class({
+    type: "custom",
+    check: "custom",
+    fn: fn as any,
+    ...norm,
+  });
+
+  return schema as any;
+}
+
+// export function _refine<T>(
+//   Class: util.SchemaClass<schemas.$ZodCustom>,
+//   fn: (arg: NoInfer<T>) => util.MaybeAsync<unknown>,
+//   _params: string | $ZodCustomParams = {}
+// ): checks.$ZodCheck<T> {
+//   return _custom(Class, fn, _params);
+// }
+// same as _custom but deafults to abort:false
+export function _refine<O = unknown, I = O>(
+  Class: util.SchemaClass<schemas.$ZodCustom>,
+  fn: (data: O) => unknown,
+  _params: string | $ZodCustomParams | undefined
+): schemas.$ZodCustom<O, I> {
   const schema = new Class({
     type: "custom",
     check: "custom",
@@ -1442,14 +1467,6 @@ export function _custom<O = unknown, I = O>(
   });
 
   return schema as any;
-}
-
-export function _refine<T>(
-  Class: util.SchemaClass<schemas.$ZodCustom>,
-  fn: (arg: NoInfer<T>) => util.MaybeAsync<unknown>,
-  _params: string | $ZodCustomParams = {}
-): checks.$ZodCheck<T> {
-  return _custom(Class, fn, _params);
 }
 
 // export type $ZodCustomParams = CheckTypeParams<schemas.$ZodCustom, "fn">
@@ -1476,9 +1493,10 @@ export function _stringbool(
   },
   _params?: string | $ZodStringBoolParams
 ): schemas.$ZodPipe<schemas.$ZodUnknown, schemas.$ZodBoolean<boolean>> {
-  const params = util.normalizeParams(_params);
-  const trueValues = new Set(params?.truthy ?? ["true", "1", "yes", "on", "y", "enabled"]);
-  const falseValues = new Set(params?.falsy ?? ["false", "0", "no", "off", "n", "disabled"]);
+  const { case: _case, error, truthy, falsy } = util.normalizeParams(_params);
+
+  const trueValues = new Set(truthy ?? ["true", "1", "yes", "on", "y", "enabled"]);
+  const falseValues = new Set(falsy ?? ["false", "0", "no", "off", "n", "disabled"]);
 
   const _Pipe = Classes.Pipe ?? schemas.$ZodPipe;
   const _Boolean = Classes.Boolean ?? schemas.$ZodBoolean;
@@ -1492,7 +1510,7 @@ export function _stringbool(
           check: (ctx: any) => {
             if (typeof ctx.value === "string") {
               let data: string = ctx.value;
-              if (params?.case !== "sensitive") data = data.toLowerCase();
+              if (_case !== "sensitive") data = data.toLowerCase();
               if (trueValues.has(data)) {
                 ctx.value = true;
               } else if (falseValues.has(data)) {
@@ -1521,6 +1539,7 @@ export function _stringbool(
         },
       },
     ],
+    error,
   });
 
   return new _Pipe({
@@ -1528,6 +1547,8 @@ export function _stringbool(
     in: inst,
     out: new _Boolean({
       type: "boolean",
+      error,
     }),
+    error,
   }) as any;
 }

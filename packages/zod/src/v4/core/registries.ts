@@ -66,18 +66,11 @@ export interface JSONSchemaMeta {
   id?: string | undefined;
   title?: string | undefined;
   description?: string | undefined;
-  examples?: $output[] | undefined;
+  example?: unknown | undefined;
+  examples?: unknown[] | Record<string, { value: unknown; [k: string]: unknown }> | undefined; // allow array or example map
+  deprecated?: boolean | undefined;
   [k: string]: unknown;
 }
-
-// export class $ZodJSONSchemaRegistry<
-//   Meta extends JSONSchemaMeta = JSONSchemaMeta,
-//   Schema extends $ZodType = $ZodType,
-// > extends $ZodRegistry<Meta, Schema> {
-//   toJSONSchema(_schema: Schema): object {
-//     return {};
-//   }
-// }
 
 export interface GlobalMeta extends JSONSchemaMeta {}
 

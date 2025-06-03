@@ -286,6 +286,14 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
 
       if (isInt) {
         if (!Number.isInteger(input)) {
+          // invalid_format issue
+          // payload.issues.push({
+          //   expected: def.format,
+          //   format: def.format,
+          //   code: "invalid_format",
+          //   input,
+          //   inst,
+          // });
           // invalid_type issue
           payload.issues.push({
             expected: origin,
@@ -779,8 +787,12 @@ export const $ZodCheckStringFormat: core.$constructor<$ZodCheckStringFormat> = /
     $ZodCheck.init(inst, def);
 
     inst._zod.onattach.push((inst) => {
-      inst._zod.bag.format = def.format;
-      if (def.pattern) inst._zod.bag.pattern = def.pattern;
+      const bag = inst._zod.bag as schemas.$ZodStringInternals<unknown>["bag"];
+      bag.format = def.format;
+      if (def.pattern) {
+        bag.patterns ??= new Set();
+        bag.patterns.add(def.pattern);
+      }
     });
 
     inst._zod.check ??= (payload) => {
@@ -940,10 +952,13 @@ export const $ZodCheckIncludes: core.$constructor<$ZodCheckIncludes> = /*@__PURE
   (inst, def) => {
     $ZodCheck.init(inst, def);
 
-    const pattern = new RegExp(util.escapeRegex(def.includes));
+    const escapedRegex = util.escapeRegex(def.includes);
+    const pattern = new RegExp(typeof def.position === "number" ? `^.{${def.position}}${escapedRegex}` : escapedRegex);
     def.pattern = pattern;
     inst._zod.onattach.push((inst) => {
-      inst._zod.bag.pattern = pattern;
+      const bag = inst._zod.bag as schemas.$ZodStringInternals<unknown>["bag"];
+      bag.patterns ??= new Set();
+      bag.patterns.add(pattern);
     });
 
     inst._zod.check = (payload) => {
@@ -985,7 +1000,9 @@ export const $ZodCheckStartsWith: core.$constructor<$ZodCheckStartsWith> = /*@__
     const pattern = new RegExp(`^${util.escapeRegex(def.prefix)}.*`);
     def.pattern ??= pattern;
     inst._zod.onattach.push((inst) => {
-      inst._zod.bag.pattern = pattern;
+      const bag = inst._zod.bag as schemas.$ZodStringInternals<unknown>["bag"];
+      bag.patterns ??= new Set();
+      bag.patterns.add(pattern);
     });
 
     inst._zod.check = (payload) => {
@@ -1027,7 +1044,9 @@ export const $ZodCheckEndsWith: core.$constructor<$ZodCheckEndsWith> = /*@__PURE
     const pattern = new RegExp(`.*${util.escapeRegex(def.suffix)}$`);
     def.pattern ??= pattern;
     inst._zod.onattach.push((inst) => {
-      inst._zod.bag.pattern = new RegExp(`.*${util.escapeRegex(def.suffix)}$`);
+      const bag = inst._zod.bag as schemas.$ZodStringInternals<unknown>["bag"];
+      bag.patterns ??= new Set();
+      bag.patterns.add(pattern);
     });
 
     inst._zod.check = (payload) => {

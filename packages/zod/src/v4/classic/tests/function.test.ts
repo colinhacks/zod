@@ -82,13 +82,13 @@ test("args method", () => {
   expectTypeOf<t3>().toEqualTypeOf<(arg: string, ...args_1: unknown[]) => boolean>();
 });
 
-test("contravariance", () => {
-  const fn = z.function().implement((_a: string, _b: number) => {
-    return new Date();
-  });
+// test("custom args", () => {
+//   const fn = z.function().implement((_a: string, _b: number) => {
+//     return new Date();
+//   });
 
-  expectTypeOf(fn).toEqualTypeOf<(a: string, b: number) => Date>();
-});
+//   expectTypeOf(fn).toEqualTypeOf<(a: string, b: number) => Date>();
+// });
 
 const args2 = z.tuple([
   z.object({
@@ -137,6 +137,7 @@ test("input validation error", () => {
   });
   const fn = schema.implement(() => 1234 as any);
 
+  // @ts-expect-error
   const checker = () => fn();
 
   try {
@@ -155,6 +156,34 @@ test("input validation error", () => {
       ]
     `);
   }
+});
+
+test("array inputs", () => {
+  const a = z.function({
+    input: [
+      z.object({
+        name: z.string(),
+        age: z.number().int(),
+      }),
+    ],
+    output: z.string(),
+  });
+
+  a.implement((args) => {
+    return `${args.age}`;
+  });
+
+  const b = z.function({
+    input: [
+      z.object({
+        name: z.string(),
+        age: z.number().int(),
+      }),
+    ],
+  });
+  b.implement((args) => {
+    return `${args.age}`;
+  });
 });
 
 test("output validation error", () => {

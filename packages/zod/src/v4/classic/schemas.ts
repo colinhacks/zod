@@ -5,9 +5,6 @@ import * as checks from "./checks.js";
 import * as iso from "./iso.js";
 import * as parse from "./parse.js";
 
-export * as iso from "./iso.js";
-export * as coerce from "./coerce.js";
-
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 ////////////                   ////////////
@@ -59,7 +56,7 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
   refine(check: (arg: core.output<this>) => unknown | Promise<unknown>, params?: string | core.$ZodCustomParams): this;
   /** @deprecated Use `.check()` instead. */
   superRefine(
-    refinement: (arg: core.output<this>, ctx: RefinementCtx<this["_zod"]["output"]>) => void | Promise<void>
+    refinement: (arg: core.output<this>, ctx: RefinementCtx<core.output<this>>) => void | Promise<void>
   ): this;
   overwrite(fn: (x: core.output<this>) => core.output<this>): this;
 
@@ -80,8 +77,8 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
   ): ZodPipe<this, ZodTransform<Awaited<NewOut>, core.output<this>>>;
   catch(def: core.output<this>): ZodCatch<this>;
   catch(def: (ctx: core.$ZodCatchCtx) => core.output<this>): ZodCatch<this>;
-  pipe<T extends core.$ZodType<any, this["_zod"]["output"]>>(
-    target: T | core.$ZodType<any, this["_zod"]["output"]>
+  pipe<T extends core.$ZodType<any, core.output<this>>>(
+    target: T | core.$ZodType<any, core.output<this>>
   ): ZodPipe<this, T>;
   readonly(): ZodReadonly<this>;
 
@@ -238,8 +235,8 @@ export const _ZodString: core.$constructor<_ZodString> = /*@__PURE__*/ core.$con
   // validations
   inst.regex = (...args) => inst.check(checks.regex(...args));
   inst.includes = (...args) => inst.check(checks.includes(...args));
-  inst.startsWith = (params) => inst.check(checks.startsWith(params));
-  inst.endsWith = (params) => inst.check(checks.endsWith(params));
+  inst.startsWith = (...args) => inst.check(checks.startsWith(...args));
+  inst.endsWith = (...args) => inst.check(checks.endsWith(...args));
   inst.min = (...args) => inst.check(checks.minLength(...args));
   inst.max = (...args) => inst.check(checks.maxLength(...args));
   inst.length = (...args) => inst.check(checks.length(...args));
@@ -1015,6 +1012,8 @@ export interface ZodArray<T extends core.$ZodType = core.$ZodType> extends ZodTy
   nonempty(params?: string | core.$ZodCheckMinLengthParams): this;
   max(maxLength: number, params?: string | core.$ZodCheckMaxLengthParams): this;
   length(len: number, params?: string | core.$ZodCheckLengthEqualsParams): this;
+
+  unwrap(): T;
 }
 export const ZodArray: core.$constructor<ZodArray> = /*@__PURE__*/ core.$constructor("ZodArray", (inst, def) => {
   core.$ZodArray.init(inst, def);
@@ -1025,6 +1024,8 @@ export const ZodArray: core.$constructor<ZodArray> = /*@__PURE__*/ core.$constru
   inst.nonempty = (params) => inst.check(checks.minLength(1, params));
   inst.max = (maxLength, params) => inst.check(checks.maxLength(maxLength, params));
   inst.length = (len, params) => inst.check(checks.length(len, params));
+
+  inst.unwrap = () => inst.element;
 });
 
 export function array<T extends core.$ZodType>(element: T, params?: string | core.$ZodArrayParams): ZodArray<T> {
@@ -1067,10 +1068,13 @@ export interface ZodObject<
   ): ZodObject<util.Extend<Shape, U>, Config>;
 
   /**
-   * @deprecated Use destructuring to merge the shapes:
+   * @deprecated Use spread syntax and the `.shape` property to combine two object schemas:
    *
    * ```ts
-   * z.object({
+   * const A = z.object({ a: z.string() });
+   * const B = z.object({ b: z.number() });
+   *
+   * const C = z.object({
    *    ...A.shape,
    *    ...B.shape
    * });
@@ -1126,7 +1130,7 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
     return Object.fromEntries(Object.entries(inst._zod.def.shape));
   });
   inst.keyof = () => _enum(Object.keys(inst._zod.def.shape)) as any;
-  inst.catchall = (catchall) => inst.clone({ ...inst._zod.def, catchall });
+  inst.catchall = (catchall) => inst.clone({ ...inst._zod.def, catchall }) as any;
   inst.passthrough = () => inst.clone({ ...inst._zod.def, catchall: unknown() });
   // inst.nonstrict = () => inst.clone({ ...inst._zod.def, catchall: api.unknown() });
   inst.loose = () => inst.clone({ ...inst._zod.def, catchall: unknown() });
@@ -1149,12 +1153,10 @@ export function object<T extends core.$ZodLooseShape = Partial<Record<never, cor
 ): ZodObject<util.Writeable<T> & {}, core.$strip> {
   const def: core.$ZodObjectDef = {
     type: "object",
-
     get shape() {
       util.assignProp(this, "shape", { ...shape });
       return this.shape;
     },
-
     ...util.normalizeParams(params),
   };
   return new ZodObject(def) as any;
@@ -1233,15 +1235,9 @@ export const ZodDiscriminatedUnion: core.$constructor<ZodDiscriminatedUnion> = /
   }
 );
 
-export interface $ZodTypeDiscriminableInternals extends core.$ZodTypeInternals {
-  disc: util.DiscriminatorMap;
-}
-
-export interface $ZodTypeDiscriminable extends ZodType {
-  _zod: $ZodTypeDiscriminableInternals;
-}
-
-export function discriminatedUnion<Types extends readonly [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]]>(
+export function discriminatedUnion<
+  Types extends readonly [core.$ZodTypeDiscriminable, ...core.$ZodTypeDiscriminable[]],
+>(
   discriminator: string,
   options: Types,
   params?: string | core.$ZodDiscriminatedUnionParams
@@ -1555,7 +1551,7 @@ export interface ZodFile extends ZodType {
 
   min(size: number, params?: string | core.$ZodCheckMinSizeParams): this;
   max(size: number, params?: string | core.$ZodCheckMaxSizeParams): this;
-  mime(types: Array<util.MimeTypes>, params?: string | core.$ZodCheckMimeTypeParams): this;
+  mime(types: util.MimeTypes | Array<util.MimeTypes>, params?: string | core.$ZodCheckMimeTypeParams): this;
 }
 export const ZodFile: core.$constructor<ZodFile> = /*@__PURE__*/ core.$constructor("ZodFile", (inst, def) => {
   core.$ZodFile.init(inst, def);
@@ -1563,7 +1559,7 @@ export const ZodFile: core.$constructor<ZodFile> = /*@__PURE__*/ core.$construct
 
   inst.min = (size, params) => inst.check(core._minSize(size, params));
   inst.max = (size, params) => inst.check(core._maxSize(size, params));
-  inst.mime = (types, params) => inst.check(core._mime(types, params));
+  inst.mime = (types, params) => inst.check(core._mime(Array.isArray(types) ? types : [types], params));
 });
 
 export function file(params?: string | core.$ZodFileParams): ZodFile {
@@ -1959,7 +1955,7 @@ export function refine<T>(
   fn: (arg: NoInfer<T>) => util.MaybeAsync<unknown>,
   _params: string | core.$ZodCustomParams = {}
 ): core.$ZodCheck<T> {
-  return core._custom(ZodCustom, fn, _params);
+  return core._refine(ZodCustom, fn, _params);
 }
 
 // superRefine
@@ -1998,7 +1994,7 @@ function _instanceof<T extends typeof util.Class>(
   params: ZodInstanceOfParams = {
     error: `Input not instance of ${cls.name}`,
   }
-): ZodCustom<InstanceType<T>> {
+): ZodCustom<InstanceType<T>, InstanceType<T>> {
   const inst = new ZodCustom({
     type: "custom",
     check: "custom",
@@ -2012,12 +2008,17 @@ function _instanceof<T extends typeof util.Class>(
 export { _instanceof as instanceof };
 
 // stringbool
-export const stringbool: (_params?: string | core.$ZodStringBoolParams) => ZodPipe<ZodUnknown, ZodBoolean> =
-  /*@__PURE__*/ core._stringbool.bind(null, {
-    Pipe: ZodPipe,
-    Boolean: ZodBoolean,
-    Unknown: ZodUnknown,
-  }) as any;
+export const stringbool: (_params?: string | core.$ZodStringBoolParams) => ZodPipe<ZodUnknown, ZodBoolean> = (
+  ...args
+) =>
+  core._stringbool(
+    {
+      Pipe: ZodPipe,
+      Boolean: ZodBoolean,
+      Unknown: ZodUnknown,
+    },
+    ...args
+  ) as any;
 
 // json
 export type ZodJSONSchema = ZodUnion<

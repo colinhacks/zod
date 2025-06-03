@@ -260,7 +260,7 @@ test("wrong schema - missing discriminator", () => {
     z.discriminatedUnion("type", [
       z.object({ type: z.literal("a"), a: z.string() }),
       z.object({ b: z.string() }) as any,
-    ])._zod.disc;
+    ])._zod.propValues;
     throw new Error();
   } catch (e: any) {
     expect(e.message.includes("Invalid discriminated union option")).toBe(true);
@@ -451,7 +451,7 @@ test("optional and nullable", () => {
   if (value.key === null) value.b;
 });
 
-test("multple discriminators", () => {
+test("multiple discriminators", () => {
   const FreeConfig = z.object({
     type: z.literal("free"),
     min_cents: z.null(),
@@ -531,6 +531,32 @@ test("nested discriminated unions", () => {
     z.object({ status: z.literal("success"), data: z.string() }),
     MyErrors,
   ]);
+
+  expect(MyErrors._zod.propValues).toMatchInlineSnapshot(`
+    {
+      "code": Set {
+        400,
+        401,
+        500,
+      },
+      "status": Set {
+        "failed",
+      },
+    }
+  `);
+  expect(MyResult._zod.propValues).toMatchInlineSnapshot(`
+    {
+      "code": Set {
+        400,
+        401,
+        500,
+      },
+      "status": Set {
+        "success",
+        "failed",
+      },
+    }
+  `);
 
   const result = MyResult.parse({ status: "success", data: "hello" });
   expect(result).toMatchInlineSnapshot(`

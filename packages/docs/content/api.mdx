@@ -52,9 +52,9 @@ schema.parse(null);      // => "null"
 
   | Zod API                  | Coercion                   |
   |--------------------------|----------------------------|
-  | `z.coerce.string()`      | `new String(value)`        |
-  | `z.coerce.number()`      | `new Number(value)`        |
-  | `z.coerce.boolean()`     | `new Boolean(value)`       |
+  | `z.coerce.string()`      | `String(value)`            |
+  | `z.coerce.number()`      | `Number(value)`            |
+  | `z.coerce.boolean()`     | `Boolean(value)`           |
   | `z.coerce.bigint()`      | `BigInt(value)`            |
   | `z.coerce.date()`        | `new Date(value)`          |
 
@@ -89,7 +89,6 @@ const tuna = z.literal("tuna");
 const twelve = z.literal(12);
 const twobig = z.literal(2n);
 const tru = z.literal(true);
-const terrific = z.literal(Symbol("terrific"));
 ```
 
 To represent the JavaScript literals `null` and `undefined`:
@@ -174,8 +173,8 @@ z.string().lowercase();
 </Tab>
 <Tab value="Zod Mini">
 ```ts zod/v4-mini
-z.string().check(z.maximum(5)); // or z.lte()
-z.string().check(z.minimum(5)); // or z.gte()
+z.string().check(z.maxLength(5));
+z.string().check(z.minLength(5));
 z.string().check(z.length(5));
 z.string().check(z.regex(/^[a-z]+$/));
 z.string().check(z.startsWith("aaa"));
@@ -297,19 +296,18 @@ z.guid();
 
 ### URLs
 
-To validate any WHATWG-compatible URL.
+To validate any WHATWG-compatible URL:
 
 ```ts
 const schema = z.url();
 
 schema.parse("https://example.com"); // ✅
 schema.parse("http://localhost"); // ✅
-
-schema.parse("mailto:noreply@zod.dev"); // ❌
-schema.parse("sup"); // ❌
+schema.parse("mailto:noreply@zod.dev"); // ✅
+schema.parse("sup"); // ✅
 ```
 
-> Internally this uses the `new URL()` constructor to perform validation. This may behave differently across platforms and runtimes but is generally the most rigorous way to validate URIs/URLs. 
+As you can see this is quite permissive. Internally this uses the `new URL()` constructor to validate inputs; this behavior may differ across platforms and runtimes but it's the mostly rigorous way to validate URIs/URLs on any given JS runtime/engine. 
 
 To validate the hostname against a specific regex:
 
@@ -329,6 +327,22 @@ schema.parse("https://example.com"); // ✅
 schema.parse("http://example.com"); // ❌
 ```
 
+<Callout>
+  **Web URLs** — In many cases, you'll want to validate Web URLs specifically. Here's the recommended schema for doing so:
+
+  ```ts
+  const httpUrl = z.url({
+    protocol: /^https?$/,
+    hostname: z.regexes.domain
+  });
+  ```
+
+  This restricts the protocol to `http`/`https` and ensures the hostname is a valid domain name with the `z.regexes.domain` regular expression:
+
+  ```ts
+  /^([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/
+  ```
+</Callout>
 
 ### ISO datetimes
 
@@ -471,9 +485,9 @@ z.number().multipleOf(5);              // alias .step(5)
 <Tab value="Zod Mini">
 ```ts zod/v4-mini
 z.number().check(z.gt(5));
-z.number().check(z.gte(5));            // alias .min(5)
+z.number().check(z.gte(5));            // alias .minimum(5)
 z.number().check(z.lt(5));
-z.number().check(z.lte(5));            // alias .max(5)
+z.number().check(z.lte(5));            // alias .maximum(5)
 z.number().check(z.positive()); 
 z.number().check(z.nonnegative()); 
 z.number().check(z.negative()); 
@@ -526,9 +540,9 @@ z.bigint().multipleOf(5n);             // alias `.step(5n)`
 <Tab value="Zod Mini">
 ```ts zod/v4-mini
 z.bigint().check(z.gt(5n));
-z.bigint().check(z.gte(5n));           // alias `.min(5n)`
+z.bigint().check(z.gte(5n));           // alias `.minimum(5n)`
 z.bigint().check(z.lt(5n));
-z.bigint().check(z.lte(5n));           // alias `.max(5n)`
+z.bigint().check(z.lte(5n));           // alias `.maximum(5n)`
 z.bigint().check(z.positive()); 
 z.bigint().check(z.nonnegative()); 
 z.bigint().check(z.negative()); 
@@ -708,7 +722,7 @@ strbool.parse("1")            // => true
 strbool.parse("yes")          // => true
 strbool.parse("on")           // => true
 strbool.parse("y")            // => true
-strbool.parse("enable")       // => true
+strbool.parse("enabled")      // => true
 
 strbool.parse("false");       // => false
 strbool.parse("0");           // => false
@@ -723,10 +737,11 @@ strbool.parse(/* anything else */); // ZodError<[{ code: "invalid_value" }]>
 To customize the truthy and falsy values:
 
 ```ts
+// these are the defaults
 z.stringbool({
-  truthy: ["yes", "true"],
-  falsy: ["no", "false"]
-})
+  truthy: ["true", "1", "yes", "on", "y", "enabled"],
+  falsy: ["false", "0", "no", "off", "n", "disabled"],
+});
 ```
 
 Be default the schema is *case-insensitive*; all inputs are converted to lowercase before comparison to the `truthy`/`falsy` values. To make it case-sensitive:
@@ -850,7 +865,7 @@ const hello = z.templateLiteral(["hello, ", z.string()]);
 // `hello, ${string}`
 
 const cssUnits = z.enum(["px", "em", "rem", "%"]);
-const css = z.templateLiteral([z.number(), cssUnits ]);
+const css = z.templateLiteral([z.number(), cssUnits]);
 // `${number}px` | `${number}em` | `${number}rem` | `${number}%`
 
 const email = z.templateLiteral([
@@ -937,9 +952,9 @@ Dog.parse({ name: "Yeller", extraKey: true });
 
 ### `.catchall()`
 
-To defina a *catchall schema* that will be used to validate any unrecognized keys:
+To define a *catchall schema* that will be used to validate any unrecognized keys:
 
-```
+```ts z.object
 const DogWithStrings = z.object({
   name: z.string(),
   age: z.number().optional(),
@@ -1024,11 +1039,11 @@ Starting from this initial schema:
 
 ```ts z.object
 const Recipe = z.object({
-  name: z.string(),
+  title: z.string(),
   description: z.string().optional(),
   ingredients: z.array(z.string()),
 });
-// { id: string; name: string; ingredients: string[] }
+// { title: string; description?: string | undefined; ingredients: string[] }
 ```
 To pick certain keys:
 
@@ -1188,6 +1203,8 @@ const Post = z.object({
 
 All object APIs (`.pick()`, `.omit()`, `.required()`, `.partial()`, etc.) work as you'd expect.
 
+### Circularity errors
+
 Due to TypeScript limitations, recursive type inference can be finicky, and it only works in certain scenarios. Some more complicated types may trigger recursive type errors like this:
 
 ```ts
@@ -1213,6 +1230,7 @@ const Activity = z.object({
   },
 });
 ```
+
 {/* 
 <Accordions>
   <Accordion title="Resolving type errors in recursive schemas">
@@ -1493,10 +1511,10 @@ type c = z.infer<typeof c>; // => number
 This can be useful for intersecting two object types. 
 
 ```ts
-const Person = z.intersection({ name: z.string() });
+const Person = z.object({ name: z.string() });
 type Person = z.infer<typeof Person>;
 
-const Employee = z.intersection({ role: z.string() });
+const Employee = z.object({ role: z.string() });
 type Employee = z.infer<typeof Employee>;
 
 const EmployedPerson = z.intersection(Person, Employee);
@@ -1619,6 +1637,34 @@ z.set(z.string()).check(z.size(5)); // must contain 5 items exactly
 </Tab>
 </Tabs>
 
+## Files
+
+To validate `File` instances:
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+const fileSchema = z.file();
+
+fileSchema.min(10_000); // minimum .size (bytes)
+fileSchema.max(1_000_000); // maximum .size (bytes)
+fileSchema.mime(["image/png"]); // MIME type
+```
+
+</Tab>
+<Tab value='zod/v4-mini'>
+```ts
+const fileSchema = z.file();
+
+fileSchema.check(
+  z.minSize(10_000), // minimum .size (bytes)
+  z.maxSize(1_000_000), // maximum .size (bytes)
+  z.mime(["image/png"]); // MIME type
+)
+```
+</Tab>
+</Tabs>
+
 ## Promises
 
 <Callout type="warn">
@@ -1724,8 +1770,8 @@ By default, validation issues from checks are considered *continuable*; that is,
 <Tab value="Zod">
 ```ts
 const myString = z.string()
-  .refine((val) => val.length > 8)
-  .refine((val) => val === val.toLowerCase());
+  .refine((val) => val.length > 8, { error: "Too short!" })
+  .refine((val) => val === val.toLowerCase(), { error: "Must be lowercase" });
   
 
 const result = myString.safeParse("OH NO");
@@ -1739,8 +1785,8 @@ result.error.issues;
 <Tab value="Zod Mini">
 ```ts zod/v4-mini
 const myString = z.string().check(
-  z.refine((val) => val.length > 8),
-  z.refine((val) => val === val.toLowerCase())
+  z.refine((val) => val.length > 8, { error: "Too short!" }),
+  z.refine((val) => val === val.toLowerCase(), { error: "Must be lowercase" })
 );
 
 const result = z.safeParse(myString, "OH NO");
@@ -1759,8 +1805,8 @@ To mark a particular refinement as *non-continuable*, use the `abort` parameter.
 <Tab value="Zod">
 ```ts
 const myString = z.string()
-  .refine((val) => val.length > 8, { abort: true })
-  .refine((val) => val === val.toLowerCase());
+  .refine((val) => val.length > 8, { error: "Too short!", abort: true })
+  .refine((val) => val === val.toLowerCase(), { error: "Must be lowercase", abort: true });
 
 
 const result = myString.safeParse("OH NO");
@@ -1771,8 +1817,8 @@ result.error!.issues;
 <Tab value="Zod Mini">
 ```ts zod/v4-mini
 const myString = z.string().check(
-  z.refine((val) => val.length > 8, { abort: true }),
-  z.refine((val) => val === val.toLowerCase(), { abort: true })
+  z.refine((val) => val.length > 8, { error: "Too short!", abort: true }),
+  z.refine((val) => val === val.toLowerCase(), { error: "Must be lowercase", abort: true })
 );
 
 const result = z.safeParse(myString, "OH NO");
@@ -2399,7 +2445,7 @@ The `z.templateLiteral` API can handle any number of string literals (e.g. `"hel
 z.templateLiteral([ "hi there" ]); 
 // `hi there`
 
-z.templateLiteral([ "email: ", z.string()]); 
+z.templateLiteral([ "email: ", z.string() ]); 
 // `email: ${string}`
 
 z.templateLiteral([ "high", z.literal(5) ]); 
@@ -2434,6 +2480,7 @@ const jsonSchema = z.lazy(() => {
   ]);
 });
 ```
+
 
 ## Custom
 
@@ -2481,12 +2528,12 @@ Function schemas have an `.implement()` method which accepts a function and retu
 
 ```ts
 const computeTrimmedLength = MyFunction.implement((input) => {
-  // TypeScript knows x is a string!
+  // TypeScript knows input is a string!
   return input.trim().length;
 });
 
-trimmedLength("sandwich"); // => 8
-trimmedLength(" asdf "); // => 4
+computeTrimmedLength("sandwich"); // => 8
+computeTrimmedLength(" asdf "); // => 4
 ```
 
 This function will throw a `ZodError` if the input is invalid:
@@ -2495,7 +2542,7 @@ This function will throw a `ZodError` if the input is invalid:
 computeTrimmedLength(42); // throws ZodError
 ```
 
-If you only care about validating inputs, omit the `output` field is optional.
+If you only care about validating inputs, you can omit the `output` field.
 
 ```ts
 const MyFunction = z.function({

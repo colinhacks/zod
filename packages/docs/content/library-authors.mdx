@@ -61,13 +61,27 @@ To support Zod 4, update the minimum version for your `"zod"` peer dependency to
 }
 ```
 
-Starting with `v3.25.0`, Zod 4 is available at a `/v4` subpath. 
+Starting with `v3.25.0`, the Zod 4 core package is available at a `/v4/core` subpath. Read the [Versioning in Zod 4](https://github.com/colinhacks/zod/issues/4371) writeup for full context on this versioning approach.
 
 ```ts
 import * as z4 from "zod/v4/core";
 ```
 
-Library code should *not* import from the package root (`"zod"`)! Instead, import from the version-specific subpaths: `"zod/v3"` and `"zod/v4/core"`. This way, your code is future-proofed against major version bumps down the line.
+Import from these subpaths only. Think of them like "permalinks" to their respective Zod versions. These will remain available forever.
+
+- `"zod/v3"` for Zod 3 ✅ 
+- `"zod/v4/core"` for the Zod 4 Core package ✅
+
+Do not import from these subpaths:
+
+- `"zod"` — ❌ In 3.x releases, this exports Zod 3. In a [future 4.x release](https://github.com/colinhacks/zod/issues/4371), this will export Zod 4. Use the permalinks instead. 
+- `"zod/v4"`— ❌ This subpath is the home of Zod 4 "Classic". If you reference classes from the standard module, your library will not work with Zod Mini. This is extremely discouraged. Use `"zod/v4/core"` instead, which exports the `$`-prefixed subclasses that are extended by Zod Classic and Zod Mini. The internals of the classic & mini subclasses are identical; they only differ in which helper methods they implement.
+
+## Do I need to publish a new major version?
+
+No, you should not need to publish a new major version of your library to support Zod 4 (unless you are dropping support for Zod 3, which isn't recommended). 
+
+You will need to bump your peer dependency to `^3.25.0`, thus your users will need to `npm upgrade zod`. But there were no breaking changes made to Zod 3 between `zod@3.24` and `zod@3.25`; in fact, there were no code changes whatsoever. As code changes will be required on the part of your users, I do not believe this constitutes a breaking change. I recommend against publishing a new major version.
 
 ## How to support Zod 3 and Zod 4 simultaneously?
 
@@ -88,7 +102,7 @@ To differentiate between Zod 3 and Zod 4 schemas at runtime, check for the `"_zo
 
 ```ts
 import type * as z3 from "zod/v3";
-import type * as v4 from "zod/v4/core";
+import type * as z4 from "zod/v4/core";
 
 declare const schema: z3.ZodTypeAny | v4.$ZodType;
 
@@ -101,15 +115,15 @@ if ("_zod" in schema) {
 
 ## How to support Zod and Zod Mini simultaneously?
 
-Your library code should only import from `zod/v4/core`. This sub-package defines the interfaces, classes, and utilities that are shared between `zod/v4` and `zod/v4-mini`. 
+Your library code should only import from `"zod/v4/core"`. This sub-package defines the interfaces, classes, and utilities that are shared between `zod/v4` and `zod/v4-mini`. 
 
 ```ts
 // library code
-import * as z from "zod/v4/core";
+import * as z4 from "zod/v4/core";
 
-export function acceptObjectSchema<T extends z.$ZodObject>(schema: T){
+export function acceptObjectSchema<T extends z4.$ZodObject>(schema: T){
   // parse data
-  z.parse(schema, { /* somedata */});
+  z4.parse(schema, { /* somedata */});
   // inspect internals
   schema._zod.def.shape;
 }
@@ -165,50 +179,39 @@ Accepting user-defined schemas is the a fundamental operation for any library bu
 When starting out, it may be tempting to write a function that accepts a Zod schema like this:
 
 ```ts
-import * as z from "zod/v4";
+import * as z4 from "zod/v4/core";
 
-function inferSchema<T>(schema: z.core.$ZodType<T>) {
+function inferSchema<T>(schema: z4.$ZodType<T>) {
   return schema;
 }
 ```
 
-This approach is incorrect, and limits TypeScript's ability to properly infer the argument. No matter what you pass in, the type of `schema` will be an instance of `ZodType`. 
+This approach is incorrect, and limits TypeScript's ability to properly infer the argument. No matter what you pass in, the type of `schema` will be an instance of `$ZodType`. 
 
 ```ts
 inferSchema(z.string());
-// => z.core.$ZodType<string>
+// => $ZodType<string>
 ```
 
 This approach loses type information, namely _which subclass_ the input actually is (in this case, `ZodString`). That means you can't call any string-specific methods like `.min()` on the result of `inferSchema`. Instead, your generic parameter should extend the core Zod schema interface:
 
 ```ts
-function inferSchema<T extends z.core.$ZodType>(schema: T) {
+function inferSchema<T extends z4.$ZodType>(schema: T) {
   return schema;
 }
 
 inferSchema(z.string());
-// => ZodString
-```
-
-The result is now fully and properly typed, you can extract & use the inferred type of the schema:
-
-```ts
-function parseData<T extends z.ZodTypeAny>(data: unknown, schema: T): z.output<T> {
-  return schema.parse(data);
-}
-
-parseData("sup", z.string());
-// => string
+// => ZodString ✅
 ```
 
 To constrain the input schema to a specific subclass:
 
 ```ts
 
-import * as z from "zod/v4";
+import * as z4 from "zod/v4/core";
 
 // only accepts object schemas
-function inferSchema<T>(schema: z.core.$ZodObject) {
+function inferSchema<T>(schema: z4.$ZodObject) {
   return schema;
 }
 ```
@@ -217,10 +220,10 @@ To constrain the inferred output type of the input schema:
 
 ```ts
 
-import * as z from "zod/v4";
+import * as z4 from "zod/v4/core";
 
 // only accepts string schemas
-function inferSchema<T extends z.core.$ZodType<string>>(schema: T) {
+function inferSchema<T extends z4.$ZodType<string>>(schema: T) {
   return schema;
 }
 
@@ -231,3 +234,13 @@ inferSchema(z.number());
 // // Type 'number' is not assignable to type 'string'
 ```
 
+To parse data with the schema, use the top-level `z4.parse`/`z4.safeParse`/`z4.parseAsync`/`z4.safeParseAsync` functions. The `z4.$ZodType` subclass has no methods on it. The usual parsing methods are implemented by Zod and Zod Mini, but are not available in Zod Core.
+
+```ts
+function parseData<T extends z4.$ZodType>(data: unknown, schema: T): z4.output<T> {
+  return z.parse(schema, data);
+}
+
+parseData("sup", z.string());
+// => string
+```

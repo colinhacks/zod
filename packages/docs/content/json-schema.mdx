@@ -25,7 +25,8 @@ z.toJSONSchema(schema)
 // => {
 //   type: 'object',
 //   properties: { name: { type: 'string' }, age: { type: 'number' } },
-//   required: [ 'name', 'age' ]
+//   required: [ 'name', 'age' ],
+//   additionalProperties: false,
 // }
 ```
 
@@ -39,12 +40,10 @@ z.void(); // ❌
 z.date(); // ❌
 z.map(); // ❌
 z.set(); // ❌
-z.file(); // ❌
 z.transform(); // ❌
 z.nan(); // ❌
 z.custom(); // ❌
 ```
-
 
 ## String formats
 
@@ -99,6 +98,75 @@ z.int(); // => { type: "integer" }
 z.int32(); // => { type: "integer", exclusiveMinimum: ..., exclusiveMaximum: ... }
 ```
 
+## Object schemas
+
+By default, `z.object()` schemas contain `additionalProperties: "false"`. This is an accurate representation of Zod's default behavior, as plain `z.object()` schema strip additional properties.
+
+```ts
+import { z } from "zod/v4";
+
+const schema = z.object({
+  name: z.string(),
+  age: z.number(),
+});
+
+z.toJSONSchema(schema)
+// => {
+//   type: 'object',
+//   properties: { name: { type: 'string' }, age: { type: 'number' } },
+//   required: [ 'name', 'age' ],
+//   additionalProperties: false,
+// }
+```
+
+When converting to JSON Schema in `"input"` mode, `additionalProperties` is not set. See the [`io` docs](#io) for more information.
+
+```ts
+import { z } from "zod/v4";
+
+const schema = z.object({
+  name: z.string(),
+  age: z.number(),
+});
+
+z.toJSONSchema(schema, { io: "input" });
+// => {
+//   type: 'object',
+//   properties: { name: { type: 'string' }, age: { type: 'number' } },
+//   required: [ 'name', 'age' ],
+// }
+```
+
+By contrast: 
+
+- `z.looseObject()` will *never* set `additionalProperties: false`
+- `z.strictObject()` will *always* set `additionalProperties: false`
+
+
+## File schemas
+
+Zod converts `z.file()` to the following OpenAPI-friendly schema:
+
+```ts
+z.file();
+// => { type: "string", format: "binary", contentEncoding: "binary" }
+```
+
+Size and MIME checks are also represented:
+
+```ts
+z.file().min(1).max(1024 * 1024).mimeType("image/png");
+// => {
+//   type: "string",
+//   format: "binary",
+//   contentEncoding: "binary",
+//   contentMediaType: "image/png",
+//   minLength: 1,
+//   maxLength: 1048576,
+// }
+```
+
+
 ## Nullability
 
 Zod converts both `undefined`/`null` to `{ type: "null" }` in JSON Schema.
@@ -111,14 +179,18 @@ z.undefined();
 // => { type: "null" }
 ```
 
-Similarly, `optional` and `nullable` are made nullable via `oneOf`:
+Similarly, `nullable` is represented via a union with `null`::
+
+```ts
+z.nullable(z.string());
+// => { oneOf: [{ type: "string" }, { type: "null" }] }
+```
+
+Optional schemas are represented as-is, though they are decorated with an `optional` annotation.
 
 ```ts
 z.optional(z.string());
-// => { oneOf: [{ type: "string" }, { type: "null" }] }
-
-z.nullable(z.string());
-// => { oneOf: [{ type: "string" }, { type: "null" }] }
+// => { type: "string" }
 ```
 
 {/* ### Pipes
@@ -171,88 +243,6 @@ interface ToJSONSchemaParams {
   uri?: (id: string) => string;
 }
 ```
-
-
-{/* <table>
-<thead>
-  <tr>
-    <th>Param</th>
-    <th>Description</th>
-    <th>Default</th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td><code>metadata</code></td>
-    <td>
-      A registry used to look up metadata for each schema. All metadata will be copied into the resulting JSON Schema. 
-
-      Any schema with an `id` property will be extracted into `$defs`.
-    </td>
-    <td>
-      `z.globalRegistry`
-    </td>
-  </tr>
-  <tr>
-    <td><code>target</code></td>
-    <td>
-      The JSON Schema version to target. 
-      
-      - `"draft-2020-12"`
-      - `"draft-7"`
-    </td>
-    <td>
-      `"draft-2020-12"`
-    </td>
-  </tr>
-  <tr>
-    <td><code>unrepresentable</code></td>
-    <td>
-      How to handle unrepresentable types.
-
-      - `"throw"` — Unrepresentable types throw an error if encountered
-      - `"any"` — Unrepresentable types become `{}`  
-    </td>
-
-    <td><code>"throw"</code></td>
-  </tr>
-  <tr>
-    <td><code>cycles</code></td>
-    <td>
-      How to handle cycles.
-
-      - `"ref"` — Cycles will be broken using `$defs`
-      - `"throw"` — Cycles will throw an error if encountered
-    </td>
-    <td><code>"ref"</code></td>
-  </tr>
-  <tr>
-    <td><code>reused</code></td>
-    <td>
-      How to handle reused schemas.
-      
-      - `"inline"` — Reused schemas will be inlined
-      - `"ref"` — Reused schemas will be extracted into `$defs`
-    </td>
-    <td><code>"inline"</code></td>
-  </tr>
-  <tr>
-    <td><code>external</code></td>
-    <td>
-      A registry used to determine which schemas to convert to *external `$ref`s*. This is useful if you are generating individual `.json` files for some set of types. 
-    
-      If defined, any schema with an <code>id</code> property in this registry is extracted as an external $ref.
-    </td>
-    <td>`null`</td>
-  </tr>
-  <tr>
-    <td><code>externalURI</code></td>
-    <td>A function used to convert <code>id</code> values to URIs to be used in <em>external</em> $refs.</td>
-    <td><code>(id) => id</code></td>
-  </tr>
-</tbody>
-</table> */}
-
 ### `target`
 
 To set the target JSON Schema version, use the `target` parameter. By default, Zod will target Draft 2020-12.   
@@ -312,7 +302,6 @@ z.void(); // ❌
 z.date(); // ❌
 z.map(); // ❌
 z.set(); // ❌
-z.file(); // ❌
 z.transform(); // ❌
 z.nan(); // ❌
 z.custom(); // ❌
@@ -343,11 +332,12 @@ const User = z.object({
   },
 });
 
-toJSONSchema(User);
+z.toJSONSchema(User);
 // => {
 //   type: 'object',
 //   properties: { name: { type: 'string' }, friend: { '$ref': '#' } },
-//   required: [ 'name', 'friend' ]
+//   required: [ 'name', 'friend' ],
+//   additionalProperties: false,
 // }
 ```
 
@@ -377,7 +367,8 @@ z.toJSONSchema(User);
 //     firstName: { type: 'string' }, 
 //     lastName: { type: 'string' } 
 //   },
-//   required: [ 'firstName', 'lastName' ]
+//   required: [ 'firstName', 'lastName' ],
+//   additionalProperties: false,
 // }
 ```
 
@@ -392,6 +383,7 @@ z.toJSONSchema(User, { reused: "ref" });
 //     lastName: { '$ref': '#/$defs/__schema0' }
 //   },
 //   required: [ 'firstName', 'lastName' ],
+//   additionalProperties: false,
 //   '$defs': { __schema0: { type: 'string' } }
 // }
 ```
@@ -445,377 +437,6 @@ const jsonSchema = z.toJSONSchema(mySchema, { io: "input" });
 // => { type: "string" }
 ```
 
-{/* ### `uri`
-
-To customize all *external* `$ref` URIs, use the `uri` option. This expects a function that converts an `id` to a fully-qualified URI.
-
-```ts
-const myRegistry = z.registry();
-const mySchema = z.string().meta({ id: "my-schema" });
-``` */}
-
-
-{/* <Accordions>
-
-  <Accordion title="What about string formats?">
-    Zod converts the following schema types to the equivalent JSON Schema `format`:
-
-    ```ts
-    // Supported via `format`
-    z.email(); // => { type: "string", format: "email" }
-    z.iso.datetime(); // => { type: "string", format: "date-time" }
-    z.iso.date(); // => { type: "string", format: "date" }
-    z.iso.time(); // => { type: "string", format: "time" }
-    z.iso.duration(); // => { type: "string", format: "duration" }
-    z.ipv4(); // => { type: "string", format: "ipv4" }
-    z.ipv6(); // => { type: "string", format: "ipv6" }
-    z.uuid(); // => { type: "string", format: "uuid" }
-    z.guid(); // => { type: "string", format: "uuid" }
-    z.url(); // => { type: "string", format: "uri" }
-    ```
-
-    These schemas are supported via `contentEncoding`:
-
-    ```ts
-    z.base64(); // => { type: "string", contentEncoding: "base64" }
-    ```
-
-    All other string formats are supported via `pattern`:
-
-    ```ts
-    z.cuid();
-    z.regex();
-    z.emoji();
-    z.nanoid();
-    z.cuid2();
-    z.ulid();
-    z.cidr();
-    ```
-
-    The following aren't supported, as they can't be accurately represented in JSON Schema:
-
-    ```ts
-    z.jwt();
-    z.ipv6();
-    ```
-  </Accordion>
-
-  <Accordion title="What numeric types are supported?">
-    Zod converts the following numeric types to JSON Schema:
-
-    ```ts
-    // Supported via `type`
-    z.number(); // => { type: "number" }
-
-    // Sets exclusiveMinimum, exclusiveMaximum
-    z.float32();
-    z.float64();
-    ```
-
-    ```ts
-    // Supported via type
-    z.int(); // => { type: "integer" }
-
-    // Sets exclusiveMinimum, exclusiveMaximum
-    z.int32(); // => { type: "integer" }
-    ```
-
-    The following aren't supported, as they can't be accurately represented in JSON Schema:
-
-    ```ts
-    z.bigint();
-    z.int64();
-    ```
-  </Accordion>
-
-  <Accordion title="What about nullability?">
-    Zod converts both `undefined`/`optional` and `null`/`nullable` to `null` in JSON Schema.
-
-    ```ts
-    z.null(); 
-    // => { type: "null" }
-    
-    z.undefined(); 
-    // => { type: "null" }
-
-    z.optional(z.string());
-    // => { oneOf: [{ type: "string" }, { type: "null" }] }
-
-    z.nullable(z.string());
-    // => { oneOf: [{ type: "string" }, { type: "null" }] }
-    ```
-  </Accordion>
-  <Accordion title="What about pipes?">
-    Pipes contain and input and and output schema. Zod uses the *output schema* for JSON Schema conversion.
-  </Accordion>
-
-</Accordions> */}
-
-{/* ### Primitives
-
-The following primitive types are converted into their JSON Schema equivalents:
-
-```ts
-z.string(); // => { type: "string" }
-z.number(); // => { type: "number" }
-z.boolean(); // => { type: "boolean" }
-z.null(); // => { type: "null" }
-z.undefined(); // => { type: "null" }
-z.literal("hello"); // => { enum: ["hello"] }
-``` */}
-
-{/* 
-### String formats
-
-The following string formats are supported:
-
-```ts
-// Supported via `format`
-z.email(); // => { type: "string", format: "email" }
-z.iso.datetime(); // => { type: "string", format: "date-time" }
-z.iso.date(); // => { type: "string", format: "date" }
-z.iso.time(); // => { type: "string", format: "time" }
-z.iso.duration(); // => { type: "string", format: "duration" }
-z.ipv4(); // => { type: "string", format: "ipv4" }
-z.ipv6(); // => { type: "string", format: "ipv6" }
-z.uuid(); // => { type: "string", format: "uuid" }
-z.guid(); // => { type: "string", format: "uuid" }
-z.url(); // => { type: "string", format: "uri" }
-
-// Supported via `contentEncoding`
-z.base64(); // => { type: "string", contentEncoding: "base64" }
-
-// Supported via `pattern`
-z.cuid();
-z.regex();
-z.emoji();
-z.nanoid();
-z.cuid2();
-z.ulid();
-z.cidr();
-``` */}
-{/* 
-### Numeric types
-
-The following `number` types are supported:
-
-```ts
-// Supported via `type`
-z.number(); // => { type: "number" }
-
-// Sets exclusiveMinimum, exclusiveMaximum
-z.float32();
-z.float64();
-```
-
-The following `integer` types are supported:
-
-```ts
-// Supported via type
-z.int(); // => { type: "integer" }
-
-// Sets exclusiveMinimum, exclusiveMaximum
-z.int32(); // => { type: "integer" }
-``` */}
-
-{/* 
-### Nullables
-
-Both `undefined`/`optional` and `null`/`nullable` are converted to `null` in JSON Schema.
-
-```ts
-z.null(); // => { type: "null" }
-z.undefined(); // => { type: "null" }
-
-z.optional(z.string());
-// => { oneOf: [{ type: "string" }, { type: "null" }] }
-
-z.nullable(z.string());
-// => { oneOf: [{ type: "string" }, { type: "null" }] }
-``` */}
-
-{/* ### Arrays and tuples
-
-Full support for arrays and tuples:
-
-```ts
-z.array(z.string()); 
-// => { type: "array", items: { type: "string" } }
-
-z.array(z.string()).min(1).max(10); 
-// => { type: "array", items: { type: "string" }, minItems: 1, maxItems: 10 }
-
-// Supported via `type` and `prefixItems`
-z.tuple([ z.string(),  z.number( ]); 
-// => { type: "array", prefixItems: [{ type: "string" }, { type: "number" }] }
-
-z.tuple([z.string()]).rest(z.boolean()); 
-// => { type: "array", prefixItems: [{ type: "string" }], additionalItems: { type: "boolean" } }
-```
-
-### Objects
-
-Full support for objects:
-
-```ts
-z.object({ name: z.string() });
-// => { type: "object", properties: { name: { type: "string" }}, required: ["name"] }
-
-z.strictInterface({ name: z.string() })
-// => { ..., additionalProperties: {not: {}} }
-
-z.looseInterface({ name: z.string() })
-// => { ..., additionalProperties: {} }
-
-z.object({ "name?": z.string() });
-// => { type: "object", properties: { name: { type: "string" }}, required: [] }
-
-z.record(z.string(), z.string());
-// => { type: "object", propertyNames: { type: "string" }, additionalProperties: { type: "string" } }
-``` */}
-
-{/* ### Special types
-
-```ts
-z.any(); // => {}
-z.unknown(); // => {}
-z.never(); // => { not: {} }
-``` */}
-
-
-{/* ## Compare to `zod-to-json-schema`
-
-There is a popular existing third-party library for `zod-to-json-schema` available. It aims to provide a more flexible and configurable way to convert to JSON Schema, whereas `z.toJSONSchema()` is much simpler but less forgiving. For those who are currently using `zod-to-json-schema` here is a table of its supported options and how they are handled by Zod's built-in converter.
-
-<table>
-<tr>
-  <td><code>name</code></td>
-  <td>
-    Must be specified as an <code>id</code> property in a registry.
-  </td>
-</tr>
-<tr>
-  <td><code>nameStrategy</code></td>
-  <td>
-    The `title` is an unrelated metadata property. Only `id` is used for refs.
-  </td>
-</tr>
-<tr>
-  <td><code>basePath</code></td>
-  <td>
-    ✅ Supported
-  </td>
-</tr>
-<tr>
-  <td><code>$refStrategy</code></td>
-  <td>
-    Only schemas specified in a registry will be pulled out as a ref.
-  </td>
-</tr>
-<tr>
-  <td><code>effectStrategy</code></td>
-  <td>
-    The `ZodEffects` class no longer exists. Refinements are stored internally by schemas; they are supported. Transforms are represented with `ZodTransform` and are not supported.
-  </td>
-</tr>
-<tr>
-  <td><code>dateStrategy</code></td>
-  <td>
-    The `z.date()` API is not supported. Use `z.iso.date()` to represent string-encoded dates.
-  </td>
-</tr>
-<tr>
-  <td><code>emailStrategy</code></td>
-  <td>
-    This always uses `format: "email"`. If you specify a custom `pattern`, it will be added to the schema with `pattern`.
-  </td>
-</tr>
-<tr>
-  <td><code>base64Strategy</code></td>
-  <td>
-    This always uses `contentEncoding: "base64"`. If your JSON Schema parser doesn't support `contentEncoding`, don't use `z.string().regex()` instead of `z.base64()`.
-  </td>
-</tr>
-<tr>
-  <td><code>definitionPath</code></td>
-  <td>
-    ✅ Supported
-  </td>
-</tr>
-<tr>
-  <td><code>target</code></td>
-  <td>
-    Out of scope
-  </td>
-</tr>
-<tr>
-  <td><code>strictUnions</code></td>
-  <td>
-    ❌ Should never be necessary
-  </td>
-</tr>
-<tr>
-  <td><code>definitions</code></td>
-  <td>
-    Registries make this obsolete.
-  </td>
-</tr>
-<tr>
-  <td><code>errorMessages</code></td>
-  <td>
-    ❌ Not supported
-  </td>
-</tr>
-<tr>
-  <td><code>markdownDescription</code></td>
-  <td>
-    ❌ Not supported
-  </td>
-</tr>
-<tr>
-  <td><code>patternStrategy</code></td>
-  <td>
-    ❌ Not supported
-  </td>
-</tr>
-<tr>
-  <td><code>applyRegexFlags</code></td>
-  <td>
-    Support is planned.
-  </td>
-</tr>
-<tr>
-  <td><code>pipeStrategy</code></td>
-  <td>
-    Always uses the output schema.
-  </td>
-</tr>
-<tr>
-  <td>
-    <code>removeAdditionalStrategy</code>
-    <br/>
-    <code>allowedAdditionalProperties</code>
-    <br/>
-    <code>rejectedAdditionalProperties</code>
-  </td>
-  <td>
-    Additional properties is left unset by default. Use a `strict` schema if you want to disallow additional properties.
-  </td>
-</tr>
-<tr>
-  <td><code>override</code></td>
-  <td>
-    Out of scope
-  </td>
-</tr>
-<tr>
-  <td><code>postProcess</code></td>
-  <td>
-    Out of scope
-  </td>
-</tr>
-</table> */}
-
 ## Registries
 
 Passing a schema into `z.toJSONSchema()` will return a *self-contained* JSON Schema. 
@@ -857,7 +478,8 @@ z.toJSONSchema(z.globalRegistry);
 //         name: { type: 'string' },
 //         posts: { type: 'array', items: { '$ref': 'Post' } }
 //       },
-//       required: [ 'name', 'posts' ]
+//       required: [ 'name', 'posts' ],
+//       additionalProperties: false,
 //     },
 //     Post: {
 //       id: 'Post',
@@ -867,7 +489,8 @@ z.toJSONSchema(z.globalRegistry);
 //         content: { type: 'string' },
 //         author: { '$ref': 'User' }
 //       },
-//       required: [ 'title', 'content', 'author' ]
+//       required: [ 'title', 'content', 'author' ],
+//       additionalProperties: false,
 //     }
 //   }
 // }
@@ -893,7 +516,8 @@ z.toJSONSchema(z.globalRegistry, {
 //           items: { '$ref': 'https://example.com/Post.json' }
 //         }
 //       },
-//       required: [ 'name', 'posts' ]
+//       required: [ 'name', 'posts' ],
+//       additionalProperties: false,
 //     },
 //     Post: {
 //       id: 'Post',
@@ -903,7 +527,8 @@ z.toJSONSchema(z.globalRegistry, {
 //         content: { type: 'string' },
 //         author: { '$ref': 'https://example.com/User.json' }
 //       },
-//       required: [ 'title', 'content', 'author' ]
+//       required: [ 'title', 'content', 'author' ],
+//       additionalProperties: false,
 //     }
 //   }
 // }

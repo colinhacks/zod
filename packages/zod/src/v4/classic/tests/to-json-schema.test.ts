@@ -237,10 +237,6 @@ describe("toJSONSchema", () => {
     expect(() => z.toJSONSchema(z.set(z.string()))).toThrow("Set cannot be represented in JSON Schema");
     expect(() => z.toJSONSchema(z.custom(() => true))).toThrow("Custom types cannot be represented in JSON Schema");
 
-    // File type
-    const fileSchema = z.file();
-    expect(() => z.toJSONSchema(fileSchema)).toThrow("File cannot be represented in JSON Schema");
-
     // Transform
     const transformSchema = z.string().transform((val) => Number.parseInt(val));
     expect(() => z.toJSONSchema(transformSchema)).toThrow("Transforms cannot be represented in JSON Schema");
@@ -361,8 +357,85 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(z.string().regex(/asdf/))).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "format": "regex",
         "pattern": "asdf",
+        "type": "string",
+      }
+    `);
+  });
+
+  test("string patterns", () => {
+    expect(
+      z.toJSONSchema(
+        z
+          .string()
+          .startsWith("hello")
+          .includes("cruel")
+          .includes("dark", { position: 10 })
+          .endsWith("world")
+          .regex(/stuff/)
+      )
+    ).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "allOf": [
+          {
+            "pattern": "^hello.*",
+          },
+          {
+            "pattern": "cruel",
+          },
+          {
+            "pattern": "^.{10}dark",
+          },
+          {
+            "pattern": ".*world$",
+          },
+          {
+            "pattern": "stuff",
+          },
+        ],
+        "type": "string",
+      }
+    `);
+
+    expect(
+      z.toJSONSchema(
+        z
+          .string()
+          .startsWith("hello")
+          .includes("cruel")
+          .includes("dark", { position: 10 })
+          .endsWith("world")
+          .regex(/stuff/),
+        {
+          target: "draft-7",
+        }
+      )
+    ).toMatchInlineSnapshot(`
+      {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "allOf": [
+          {
+            "pattern": "^hello.*",
+            "type": "string",
+          },
+          {
+            "pattern": "cruel",
+            "type": "string",
+          },
+          {
+            "pattern": "^.{10}dark",
+            "type": "string",
+          },
+          {
+            "pattern": ".*world$",
+            "type": "string",
+          },
+          {
+            "pattern": "stuff",
+            "type": "string",
+          },
+        ],
         "type": "string",
       }
     `);
@@ -590,8 +663,8 @@ describe("toJSONSchema", () => {
 
   // enum
   test("enum", () => {
-    const schema = z.enum(["a", "b", "c"]);
-    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+    const a = z.enum(["a", "b", "c"]);
+    expect(z.toJSONSchema(a)).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "enum": [
@@ -599,6 +672,26 @@ describe("toJSONSchema", () => {
           "b",
           "c",
         ],
+        "type": "string",
+      }
+    `);
+
+    enum B {
+      A = 0,
+      B = 1,
+      C = 2,
+    }
+
+    const b = z.enum(B);
+    expect(z.toJSONSchema(b)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "enum": [
+          0,
+          1,
+          2,
+        ],
+        "type": "number",
       }
     `);
   });
@@ -610,14 +703,24 @@ describe("toJSONSchema", () => {
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "const": "hello",
+        "type": "string",
       }
     `);
 
-    const b = z.literal(["hello", undefined, null, 5, BigInt(1324)]);
-    expect(() => z.toJSONSchema(b)).toThrow();
+    const b = z.literal(7);
+    expect(z.toJSONSchema(b)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "const": 7,
+        "type": "number",
+      }
+    `);
 
-    const c = z.literal(["hello", null, 5]);
-    expect(z.toJSONSchema(c)).toMatchInlineSnapshot(`
+    const c = z.literal(["hello", undefined, null, 5, BigInt(1324)]);
+    expect(() => z.toJSONSchema(c)).toThrow();
+
+    const d = z.literal(["hello", null, 5]);
+    expect(z.toJSONSchema(d)).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "enum": [
@@ -625,6 +728,19 @@ describe("toJSONSchema", () => {
           null,
           5,
         ],
+      }
+    `);
+
+    const e = z.literal(["hello", "zod", "v4"]);
+    expect(z.toJSONSchema(e)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "enum": [
+          "hello",
+          "zod",
+          "v4",
+        ],
+        "type": "string",
       }
     `);
   });
@@ -984,6 +1100,7 @@ describe("toJSONSchema", () => {
     expect(JSON.stringify(result, null, 2)).toMatchInlineSnapshot(
       `
       "{
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "id": {
@@ -997,8 +1114,7 @@ describe("toJSONSchema", () => {
           "id",
           "children"
         ],
-        "additionalProperties": false,
-        "$schema": "https://json-schema.org/draft/2020-12/schema"
+        "additionalProperties": false
       }"
     `
     );
@@ -1025,6 +1141,7 @@ describe("toJSONSchema", () => {
     expect(JSON.stringify(result, null, 2)).toMatchInlineSnapshot(
       `
       "{
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "name": {
@@ -1054,8 +1171,7 @@ describe("toJSONSchema", () => {
           "name",
           "files"
         ],
-        "additionalProperties": false,
-        "$schema": "https://json-schema.org/draft/2020-12/schema"
+        "additionalProperties": false
       }"
     `
     );
@@ -1724,7 +1840,6 @@ test("defaults/prefaults", () => {
   expect(z.toJSONSchema(c, { io: "input" })).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "default": 1234,
       "type": "string",
     }
   `);
@@ -1890,3 +2005,158 @@ test("examples on pipe", () => {
 //   `);
 
 // });
+
+test("use output type for preprocess", () => {
+  const a = z.preprocess((val) => String(val), z.string());
+
+  expect(z.toJSONSchema(a, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+    }
+  `);
+});
+
+// test("isTransforming", () => {
+//   const tx = z.core.isTransforming;
+//   expect(tx(z.string())).toEqual(false);
+//   expect(tx(z.string().transform((val) => val))).toEqual(true);
+//   expect(tx(z.string().pipe(z.string()))).toEqual(false);
+//   expect(
+//     tx(
+//       z
+//         .string()
+//         .transform((val) => val)
+//         .pipe(z.string())
+//     )
+//   ).toEqual(true);
+
+//   const a = z.transform((val) => val);
+//   expect(tx(z.transform((val) => val))).toEqual(true);
+//   expect(tx(a.optional())).toEqual(true);
+
+//   const b = z.string().optional();
+//   expect(tx(b)).toEqual(false);
+
+//   const c = z.string().prefault("hello");
+//   expect(tx(c)).toEqual(false);
+
+//   const d = z.string().default("hello");
+//   expect(tx(d)).toEqual(false);
+// });
+
+test("flatten simple intersections", () => {
+  const FirstSchema = z.object({
+    testNum: z.number(),
+  });
+
+  const SecondSchema = z.object({
+    testStr: z.string(),
+  });
+
+  const ThirdSchema = z.object({
+    testBool: z.boolean(),
+  });
+
+  const HelloSchema = FirstSchema.and(SecondSchema).and(ThirdSchema).describe("123");
+
+  // Zod 3
+  // console.log(JSON.stringify(zodToJsonSchema(HelloSchema), null, 2));
+
+  // Zod 4
+  const result = z.toJSONSchema(HelloSchema, { target: "draft-7" });
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "allOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "testNum": {
+              "type": "number",
+            },
+          },
+          "required": [
+            "testNum",
+          ],
+          "type": "object",
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "testStr": {
+              "type": "string",
+            },
+          },
+          "required": [
+            "testStr",
+          ],
+          "type": "object",
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "testBool": {
+              "type": "boolean",
+            },
+          },
+          "required": [
+            "testBool",
+          ],
+          "type": "object",
+        },
+      ],
+      "description": "123",
+    }
+  `);
+});
+
+test("z.file()", () => {
+  const a = z.file();
+  expect(z.toJSONSchema(a)).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "contentEncoding": "binary",
+      "format": "binary",
+      "type": "string",
+    }
+  `);
+
+  const b = z.file().mime("image/png").min(1000).max(10000);
+  expect(z.toJSONSchema(b)).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "contentEncoding": "binary",
+      "contentMediaType": "image/png",
+      "format": "binary",
+      "maxLength": 10000,
+      "minLength": 1000,
+      "type": "string",
+    }
+  `);
+
+  const c = z.file().mime(["image/png", "image/jpg"]).min(1000).max(10000);
+  expect(z.toJSONSchema(c)).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "anyOf": [
+        {
+          "contentEncoding": "binary",
+          "contentMediaType": "image/png",
+          "format": "binary",
+          "maxLength": 10000,
+          "minLength": 1000,
+          "type": "string",
+        },
+        {
+          "contentEncoding": "binary",
+          "contentMediaType": "image/jpg",
+          "format": "binary",
+          "maxLength": 10000,
+          "minLength": 1000,
+          "type": "string",
+        },
+      ],
+    }
+  `);
+});

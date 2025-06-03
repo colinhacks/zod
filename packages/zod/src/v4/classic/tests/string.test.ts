@@ -339,12 +339,52 @@ test("url validations", () => {
   url.parse("http://aslkfjdalsdfkjaf");
   url.parse("http://localhost");
 
+  url.parse("c:");
+
   expect(() => url.parse("asdf")).toThrow();
-  expect(() => url.parse("http:.......///broken.com")).toThrow();
-  expect(() => url.parse("c:")).toThrow();
-  expect(() => url.parse("WWW:WWW.COM")).toThrow();
   expect(() => url.parse("https:/")).toThrow();
   expect(() => url.parse("asdfj@lkjsdf.com")).toThrow();
+  expect(() => url.parse("https://")).toThrow();
+});
+
+test("httpurl", () => {
+  const httpUrl = z.url({
+    protocol: /^https?$/,
+    hostname: z.regexes.domain,
+    // /^([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/
+  });
+
+  httpUrl.parse("https://example.com");
+  httpUrl.parse("http://example.com");
+  // ports
+  httpUrl.parse("https://example.com:8080");
+  httpUrl.parse("http://example.com:8080");
+  // subdomains
+  httpUrl.parse("https://sub.example.com");
+  httpUrl.parse("http://sub.example.com");
+  // paths
+  httpUrl.parse("https://example.com/path/to/resource");
+  httpUrl.parse("http://example.com/path/to/resource");
+  // query parameters
+  httpUrl.parse("https://example.com/path?query=param");
+  httpUrl.parse("http://example.com/path?query=param");
+  // fragment identifiers
+  httpUrl.parse("https://example.com/path#fragment");
+  httpUrl.parse("http://example.com/path#fragment");
+  // fails
+  expect(() => httpUrl.parse("ftp://example.com")).toThrow();
+  expect(() => httpUrl.parse("shttp://example.com")).toThrow();
+  expect(() => httpUrl.parse("httpz://example.com")).toThrow();
+  expect(() => httpUrl.parse("http://")).toThrow();
+  expect(() => httpUrl.parse("http://localhost")).toThrow();
+  expect(() => httpUrl.parse("http://-asdf.com")).toThrow();
+  expect(() =>
+    httpUrl.parse(
+      "http://asdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdf.com"
+    )
+  ).toThrow();
+  expect(() => httpUrl.parse("http://asdf.c")).toThrow();
+  expect(() => httpUrl.parse("mailto:asdf@lckj.com")).toThrow();
 });
 
 test("url error overrides", () => {

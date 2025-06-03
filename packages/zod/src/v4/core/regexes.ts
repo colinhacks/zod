@@ -26,9 +26,9 @@ export const uuid = (version?: number | undefined): RegExp => {
     `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-${version}[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$`
   );
 };
-export const uuid4: RegExp = uuid(4);
-export const uuid6: RegExp = uuid(6);
-export const uuid7: RegExp = uuid(7);
+export const uuid4: RegExp = /*@__PURE__*/ uuid(4);
+export const uuid6: RegExp = /*@__PURE__*/ uuid(6);
+export const uuid7: RegExp = /*@__PURE__*/ uuid(7);
 
 /** Practical email validation */
 export const email: RegExp =
@@ -64,8 +64,6 @@ export const cidrv4: RegExp =
 export const cidrv6: RegExp =
   /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|::|([0-9a-fA-F]{1,4})?::([0-9a-fA-F]{1,4}:?){0,6})\/(12[0-8]|1[01][0-9]|[1-9]?[0-9])$/;
 
-export const ip: RegExp = new RegExp(`(${ipv4.source})|(${ipv6.source})`);
-
 // https://stackoverflow.com/questions/7860392/determine-if-string-is-in-base64-using-javascript
 export const base64: RegExp = /^$|^(?:[0-9a-zA-Z+/]{4})*(?:(?:[0-9a-zA-Z+/]{2}==)|(?:[0-9a-zA-Z+/]{3}=))?$/;
 export const base64url: RegExp = /^[A-Za-z0-9_-]*$/;
@@ -74,12 +72,13 @@ export const base64url: RegExp = /^[A-Za-z0-9_-]*$/;
 // export const hostname: RegExp =
 //   /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)+([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/;
 export const hostname: RegExp = /^([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+$/;
+export const domain: RegExp = /^([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
 
 // https://blog.stevenlevithan.com/archives/validate-phone-number#r4-3 (regex sans spaces)
 export const e164: RegExp = /^\+(?:[0-9]){6,14}[0-9]$/;
 
 const dateSource = `((\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-((0[13578]|1[02])-(0[1-9]|[12]\\d|3[01])|(0[469]|11)-(0[1-9]|[12]\\d|30)|(02)-(0[1-9]|1\\d|2[0-8])))`;
-export const date: RegExp = new RegExp(`^${dateSource}$`);
+export const date: RegExp = /*@__PURE__*/ new RegExp(`^${dateSource}$`);
 
 function timeSource(args: { precision?: number | null }) {
   let secondsRegexSource = `[0-5]\\d`;

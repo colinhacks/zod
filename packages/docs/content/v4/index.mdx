@@ -14,7 +14,7 @@ Huge thanks to [Clerk](https://go.clerk.com/zod-clerk), who supported my work on
 
 ## Versioning 
 
-To simplify the migration process both for users and Zod's ecosystem of associated libraries, Zod 4 will initially published alongside Zod 3 as part of the `zod@3.25` release. Despite the version number, it it considered stable and ready for production use.
+To simplify the migration process both for users and Zod's ecosystem of associated libraries, Zod 4 will initially published alongside Zod 3 as part of the `zod@3.25` release. Despite the version number, it is considered stable and ready for production use.
 
 To upgrade: 
 
@@ -584,7 +584,7 @@ const fileSchema = z.file();
 
 fileSchema.min(10_000); // minimum .size (bytes)
 fileSchema.max(1_000_000); // maximum .size (bytes)
-fileSchema.type("image/png"); // MIME type
+fileSchema.mime(["image/png"]); // MIME type
 ```
 
 ## Internationalization
@@ -750,7 +750,7 @@ strbool.parse("1")            // => true
 strbool.parse("yes")          // => true
 strbool.parse("on")           // => true
 strbool.parse("y")            // => true
-strbool.parse("enable")       // => true
+strbool.parse("enabled")      // => true
 
 strbool.parse("false");       // => false
 strbool.parse("0");           // => false
@@ -827,7 +827,7 @@ Replace `errorMap` with `error` (function syntax):
 
 ## Upgraded `z.discriminatedUnion()`
 
-Discriminated unions now support a number of schema types not previously supported, including unions, pipes, and nested objects:
+Discriminated unions now support a number of schema types not previously supported, including unions and pipes:
 
 ```ts
 const MyResult = z.discriminatedUnion("status", [
@@ -836,7 +836,7 @@ const MyResult = z.discriminatedUnion("status", [
   // union discriminator
   z.object({ status: z.union([z.literal("bbb"), z.literal("ccc")]) }),
   // pipe discriminator
-  z.object({ status: z.object({ value: z.literal("fail") }) }),
+  z.object({ status: z.literal("fail").transform(val => val.toUpperCase()) }),
 ]);
 ```
 
@@ -844,15 +844,14 @@ Perhaps most importantly, discriminated unions now *compose*—you can use one d
 
 ```ts
 const BaseError = z.object({ status: z.literal("failed"), message: z.string() });
-const MyErrors = z.discriminatedUnion("code", [
-  BaseError.extend({ code: z.literal(400) }),
-  BaseError.extend({ code: z.literal(401) }),
-  BaseError.extend({ code: z.literal(500) })
-]);
 
 const MyResult = z.discriminatedUnion("status", [
   z.object({ status: z.literal("success"), data: z.string() }),
-  MyErrors
+  z.discriminatedUnion("code", [
+    BaseError.extend({ code: z.literal(400) }),
+    BaseError.extend({ code: z.literal(401) }),
+    BaseError.extend({ code: z.literal(500) })
+  ])
 ]);
 ```
 

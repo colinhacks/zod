@@ -228,96 +228,6 @@ test("z.union", () => {
   expect(() => z.parse(a, true)).toThrow();
 });
 
-test("z.discriminatedUnion", () => {
-  const a = z.object({
-    type: z.literal("A"),
-    name: z.string(),
-  });
-  expect(a._zod.disc!.get("type")).toEqual({
-    values: new Set(["A"]),
-    maps: [],
-  });
-
-  const b = z.object({
-    type: z.literal("B"),
-    age: z.number(),
-  });
-
-  const c = z.discriminatedUnion("type", [a, b]);
-
-  expect(c._zod.def.options.length).toEqual(2);
-  expect(c._zod.disc!.get("type")!.values.has("A")).toEqual(true);
-  expect(c._zod.disc!.get("type")!.values.has("B")).toEqual(true);
-
-  expect(z.parse(c, { type: "A", name: "john" })).toEqual({
-    type: "A",
-    name: "john",
-  });
-  expect(z.parse(c, { type: "B", age: 30 })).toEqual({ type: "B", age: 30 });
-});
-
-test("z.discriminatedUnion with nested discriminator", () => {
-  const a = z.object({
-    type: z.object({ key: z.literal("A") }),
-    name: z.string(),
-  });
-
-  const b = z.object({
-    type: z.object({ key: z.literal("B") }),
-    age: z.number(),
-  });
-
-  const c = z.discriminatedUnion("type", [a, b]);
-  expect(c._zod.disc!.get("type")!.maps[0].get("key")!.values.has("A")).toEqual(true);
-  expect(c._zod.disc!.get("type")!.maps[1].get("key")!.values.has("B")).toEqual(true);
-
-  expect(z.parse(c, { type: { key: "A" }, name: "john" })).toEqual({
-    type: { key: "A" },
-    name: "john",
-  });
-  expect(z.parse(c, { type: { key: "B" }, age: 30 })).toEqual({
-    type: { key: "B" },
-    age: 30,
-  });
-});
-
-test("z.discriminatedUnion nested", () => {
-  const schema1 = z.discriminatedUnion("type", [
-    z.object({
-      type: z.literal("A"),
-      name: z.string(),
-    }),
-    z.object({
-      num: z.literal(1),
-      type: z.literal("B"),
-      age: z.number(),
-    }),
-  ]);
-
-  const schema2 = z.discriminatedUnion("type", [
-    z.object({
-      num: z.literal(2),
-      type: z.literal("C"),
-      name: z.string(),
-    }),
-    z.object({
-      num: z.literal(2),
-      type: z.literal("D"),
-      age: z.number(),
-    }),
-  ]);
-
-  const hyper = z.discriminatedUnion("type", [schema1, schema2]);
-  expect(hyper._zod.disc!.get("num")).toEqual({
-    values: new Set([1, 2]),
-    maps: [],
-  });
-  expect(hyper._zod.disc!.get("type")).toEqual({
-    values: new Set(["A", "B", "C", "D"]),
-    maps: [],
-  });
-});
-
 test("z.intersection", () => {
   const a = z.intersection(z.object({ a: z.string() }), z.object({ b: z.number() }));
   expect(z.parse(a, { a: "hello", b: 123 })).toEqual({ a: "hello", b: 123 });
@@ -835,48 +745,6 @@ test("z.json", () => {
   expect(() => z.parse(a, { a: undefined })).toThrow();
 });
 
-test("z.stringbool", () => {
-  const a = z.stringbool();
-
-  expect(z.parse(a, "true")).toEqual(true);
-  expect(z.parse(a, "yes")).toEqual(true);
-  expect(z.parse(a, "1")).toEqual(true);
-  expect(z.parse(a, "on")).toEqual(true);
-  expect(z.parse(a, "y")).toEqual(true);
-  expect(z.parse(a, "enabled")).toEqual(true);
-  expect(z.parse(a, "TRUE")).toEqual(true);
-
-  expect(z.parse(a, "false")).toEqual(false);
-  expect(z.parse(a, "no")).toEqual(false);
-  expect(z.parse(a, "0")).toEqual(false);
-  expect(z.parse(a, "off")).toEqual(false);
-  expect(z.parse(a, "n")).toEqual(false);
-  expect(z.parse(a, "disabled")).toEqual(false);
-  expect(z.parse(a, "FALSE")).toEqual(false);
-
-  expect(z.safeParse(a, "other")).toMatchObject({ success: false });
-  expect(z.safeParse(a, "")).toMatchObject({ success: false });
-  expect(z.safeParse(a, undefined)).toMatchObject({ success: false });
-  expect(z.safeParse(a, {})).toMatchObject({ success: false });
-  expect(z.safeParse(a, true)).toMatchObject({ success: false });
-  expect(z.safeParse(a, false)).toMatchObject({ success: false });
-
-  const b = z.stringbool({
-    truthy: ["y"],
-    falsy: ["n"],
-  });
-  expect(z.parse(b, "y")).toEqual(true);
-  expect(z.parse(b, "n")).toEqual(false);
-  expect(z.safeParse(b, "true")).toMatchObject({ success: false });
-  expect(z.safeParse(b, "false")).toMatchObject({ success: false });
-
-  const c = z.stringbool({
-    case: "sensitive",
-  });
-  expect(z.parse(c, "true")).toEqual(true);
-  expect(z.safeParse(c, "TRUE")).toMatchObject({ success: false });
-});
-
 // promise
 test("z.promise", async () => {
   const a = z.promise(z.string());
@@ -907,3 +775,15 @@ test("z.promise", async () => {
 //   // @ts-expect-error
 //   schema.assertOutput<string>();
 // });
+
+test("isPlainObject", () => {
+  expect(z.core.util.isPlainObject({})).toEqual(true);
+  expect(z.core.util.isPlainObject(Object.create(null))).toEqual(true);
+  expect(z.core.util.isPlainObject([])).toEqual(false);
+  expect(z.core.util.isPlainObject(new Date())).toEqual(false);
+  expect(z.core.util.isPlainObject(null)).toEqual(false);
+  expect(z.core.util.isPlainObject(undefined)).toEqual(false);
+  expect(z.core.util.isPlainObject("string")).toEqual(false);
+  expect(z.core.util.isPlainObject(123)).toEqual(false);
+  expect(z.core.util.isPlainObject(Symbol())).toEqual(false);
+});

@@ -30,6 +30,13 @@ const apiLibraries: ZodResource[] = [
     description: "Typesafe APIs Made Simple",
     slug: "unnoq/orpc",
   },
+  {
+    name: "Express Zod API",
+    url: "https://github.com/RobinTail/express-zod-api",
+    description: "Build Express-based API with I/O validation and middlewares, OpenAPI docs and type-safe client.",
+    slug: "RobinTail/express-zod-api",
+    v4: true,
+  },
 
   // https://github.com/honojs/middleware/tree/main/packages/zod-validator
   // {
@@ -42,10 +49,17 @@ const apiLibraries: ZodResource[] = [
 
 const formIntegrations: ZodResource[] = [
   {
-    name: "@regle/schemas",
-    url: "https://github.com/victorgarciaesgi/regle/tree/main/packages/schemas",
+    name: "regle",
+    url: "https://github.com/victorgarciaesgi/regle",
     description: "Headless form validation library for Vue.js.",
     slug: "victorgarciaesgi/regle",
+  },
+  {
+    name: "conform",
+    url: "https://conform.guide/api/zod/parseWithZod",
+    description:
+      "A type-safe form validation library utilizing web fundamentals to progressively enhance HTML Forms with full support for server frameworks like Remix and Next.js.",
+    slug: "edmundhung/conform",
   },
 ];
 

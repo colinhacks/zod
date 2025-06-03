@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - "packages/zod/package.json"
+      - "packages/zod/src/**"
       - ".github/workflows/release.yml"
 
 jobs:
@@ -53,10 +54,27 @@ jobs:
         run: |
           echo "Published ${{ steps.publish.outputs.type }} version: ${{ steps.publish.outputs.version }}"
 
-      - name: Publish skipped
+      - name: Set canary version
+        if: ${{ !steps.publish.outputs.type }}
+        working-directory: ./packages/zod
+        run: |
+          npm --no-git-tag-version version minor
+          npm --no-git-tag-version version $(npm pkg get version | sed 's/"//g')-canary.$(date +'%Y%m%dT%H%M%S')
+
+      - name: Publish canary
+        if: ${{ !steps.publish.outputs.type }}
+        uses: JS-DevTools/npm-publish@v3
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          dry-run: false
+          provenance: true
+          tag: canary
+          package: ./packages/zod
+      
+      - name: Done with canary
         if: ${{ !steps.publish.outputs.type }}
         run: |
-          echo "Version in package.json has not changed. Skipping."
+          echo "Canary published."
           exit 0
      
       - name: Configure changelog

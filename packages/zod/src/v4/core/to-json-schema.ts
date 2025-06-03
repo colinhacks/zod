@@ -2,6 +2,7 @@ import type * as checks from "./checks.js";
 import type * as JSONSchema from "./json-schema.js";
 import { $ZodRegistry, globalRegistry } from "./registries.js";
 import type * as schemas from "./schemas.js";
+import { getEnumValues } from "./util.js";
 
 interface JSONSchemaGeneratorParams {
   /** A registry used to look up metadata for each schema. Any schema with an `id` property will be extracted as a $def.
@@ -48,13 +49,6 @@ interface EmitParams {
     | undefined;
 }
 
-const formatMap: Partial<Record<checks.$ZodStringFormats, string>> = {
-  guid: "uuid",
-  url: "uri",
-  datetime: "date-time",
-  json_string: "json-string",
-};
-
 interface Seen {
   /** JSON Schema result for this Zod schema */
   schema: JSONSchema.BaseSchema;
@@ -92,6 +86,14 @@ export class JSONSchemaGenerator {
   process(schema: schemas.$ZodType, _params: ProcessParams = { path: [], schemaPath: [] }): JSONSchema.BaseSchema {
     const def = (schema as schemas.$ZodTypes)._zod.def;
 
+    const formatMap: Partial<Record<checks.$ZodStringFormats, string | undefined>> = {
+      guid: "uuid",
+      url: "uri",
+      datetime: "date-time",
+      json_string: "json-string",
+      regex: "", // do not set
+    };
+
     // check for schema in seens
     const seen = this.seen.get(schema);
 
@@ -104,8 +106,6 @@ export class JSONSchemaGenerator {
         seen.cycle = _params.path;
       }
 
-      seen.count++;
-      // break cycle
       return seen.schema;
     }
 
@@ -149,23 +149,28 @@ export class JSONSchemaGenerator {
         case "string": {
           const json: JSONSchema.StringSchema = _json as any;
           json.type = "string";
-          const { minimum, maximum, format, pattern, contentEncoding } = schema._zod.bag as {
-            minimum?: number;
-            maximum?: number;
-            format?: checks.$ZodStringFormats;
-            pattern?: RegExp;
-            contentEncoding?: string;
-          };
+          const { minimum, maximum, format, patterns, contentEncoding } = schema._zod
+            .bag as schemas.$ZodStringInternals<unknown>["bag"];
           if (typeof minimum === "number") json.minLength = minimum;
           if (typeof maximum === "number") json.maxLength = maximum;
           // custom pattern overrides format
           if (format) {
-            json.format = formatMap[format] ?? format;
-          }
-          if (pattern) {
-            json.pattern = pattern.source;
+            json.format = formatMap[format as checks.$ZodStringFormats] ?? format;
+            if (json.format === "") delete json.format; // empty format is not valid
           }
           if (contentEncoding) json.contentEncoding = contentEncoding;
+          if (patterns && patterns.size > 0) {
+            const regexes = [...patterns];
+            if (regexes.length === 1) json.pattern = regexes[0].source;
+            else if (regexes.length > 1) {
+              result.schema.allOf = [
+                ...regexes.map((regex) => ({
+                  ...(this.target === "draft-7" ? { type: "string" } : {}),
+                  pattern: regex.source,
+                })),
+              ];
+            }
+          }
 
           break;
         }
@@ -281,7 +286,10 @@ export class JSONSchemaGenerator {
               }
             })
           );
-          json.required = Array.from(requiredKeys);
+
+          if (requiredKeys.size > 0) {
+            json.required = Array.from(requiredKeys);
+          }
 
           // catchall
           if (def.catchall?._zod.def.type === "never") {
@@ -311,16 +319,21 @@ export class JSONSchemaGenerator {
         }
         case "intersection": {
           const json: JSONSchema.BaseSchema = _json as any;
-          json.allOf = [
-            this.process(def.left, {
-              ...params,
-              path: [...params.path, "allOf", 0],
-            }),
-            this.process(def.right, {
-              ...params,
-              path: [...params.path, "allOf", 1],
-            }),
+          const a = this.process(def.left, {
+            ...params,
+            path: [...params.path, "allOf", 0],
+          });
+          const b = this.process(def.right, {
+            ...params,
+            path: [...params.path, "allOf", 1],
+          });
+
+          const isSimpleIntersection = (val: any) => "allOf" in val && Object.keys(val).length === 1;
+          const allOf = [
+            ...(isSimpleIntersection(a) ? (a.allOf as any[]) : [a]),
+            ...(isSimpleIntersection(b) ? (b.allOf as any[]) : [b]),
           ];
+          json.allOf = allOf;
           break;
         }
         case "tuple": {
@@ -388,7 +401,11 @@ export class JSONSchemaGenerator {
         }
         case "enum": {
           const json: JSONSchema.BaseSchema = _json as any;
-          json.enum = Object.values(def.entries);
+          const values = getEnumValues(def.entries);
+          // Number enums can have both string and number values
+          if (values.every((v) => typeof v === "number")) json.type = "number";
+          if (values.every((v) => typeof v === "string")) json.type = "string";
+          json.enum = values;
           break;
         }
         case "literal": {
@@ -415,16 +432,46 @@ export class JSONSchemaGenerator {
             // do nothing (an undefined literal was stripped)
           } else if (vals.length === 1) {
             const val = vals[0];
+            json.type = val === null ? "null" : typeof val;
             json.const = val;
           } else {
+            if (vals.every((v) => typeof v === "number")) json.type = "number";
+            if (vals.every((v) => typeof v === "string")) json.type = "string";
+            if (vals.every((v) => typeof v === "boolean")) json.type = "string";
+            if (vals.every((v) => v === null)) json.type = "null";
             json.enum = vals;
           }
           break;
         }
+
         case "file": {
-          if (this.unrepresentable === "throw") {
-            throw new Error("File cannot be represented in JSON Schema");
+          const json: JSONSchema.StringSchema = _json as any;
+          const file: JSONSchema.StringSchema = {
+            type: "string",
+            format: "binary",
+            contentEncoding: "binary",
+          };
+
+          const { minimum, maximum, mime } = schema._zod.bag as schemas.$ZodFileInternals["bag"];
+          if (minimum !== undefined) file.minLength = minimum;
+          if (maximum !== undefined) file.maxLength = maximum;
+          if (mime) {
+            if (mime.length === 1) {
+              file.contentMediaType = mime[0];
+              Object.assign(json, file);
+            } else {
+              json.anyOf = mime.map((m) => {
+                const mFile: JSONSchema.StringSchema = { ...file, contentMediaType: m };
+                return mFile;
+              });
+            }
+          } else {
+            Object.assign(json, file);
           }
+
+          // if (this.unrepresentable === "throw") {
+          //   throw new Error("File cannot be represented in JSON Schema");
+          // }
           break;
         }
         case "transform": {
@@ -490,7 +537,7 @@ export class JSONSchemaGenerator {
           break;
         }
         case "pipe": {
-          const innerType = this.io === "input" ? def.in : def.out;
+          const innerType = this.io === "input" ? (def.in._zod.def.type === "transform" ? def.out : def.in) : def.out;
           this.process(innerType, params);
           result.ref = innerType;
           break;
@@ -533,12 +580,14 @@ export class JSONSchemaGenerator {
     // metadata
     const meta = this.metadataRegistry.get(schema);
     if (meta) Object.assign(result.schema, meta);
-    if (this.io === "input" && def.type === "pipe") {
+
+    if (this.io === "input" && isTransforming(schema)) {
       // examples/defaults only apply to output type of pipe
       delete result.schema.examples;
       delete result.schema.default;
-      if (result.schema._prefault) result.schema.default = result.schema._prefault;
     }
+
+    // set prefault as default
     if (this.io === "input" && result.schema._prefault) result.schema.default ??= result.schema._prefault;
     delete result.schema._prefault;
 
@@ -595,6 +644,8 @@ export class JSONSchemaGenerator {
       return { defId, ref: defUriPrefix + defId };
     };
 
+    // stored cached version in `def` property
+    // remove all properties, set $ref
     const extractToDef = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): void => {
       if (entry[1].schema.$ref) {
         return;
@@ -609,8 +660,8 @@ export class JSONSchemaGenerator {
       const schema = seen.schema;
       for (const key in schema) {
         delete schema[key];
-        schema.$ref = ref;
       }
+      schema.$ref = ref;
     };
 
     // extract schemas into $defs
@@ -671,27 +722,31 @@ export class JSONSchemaGenerator {
       const seen = this.seen.get(zodSchema)!;
       const schema = seen.def ?? seen.schema;
 
-      const _schema = { ...schema };
+      const _cached = { ...schema };
+
+      // already seen
       if (seen.ref === null) {
         return;
       }
 
+      // flatten ref if defined
       const ref = seen.ref;
-      seen.ref = null;
+      seen.ref = null; // prevent recursion
       if (ref) {
         flattenRef(ref, params);
 
+        // merge referenced schema into current
         const refSchema = this.seen.get(ref)!.schema;
-
         if (refSchema.$ref && params.target === "draft-7") {
           schema.allOf = schema.allOf ?? [];
           schema.allOf.push(refSchema);
         } else {
           Object.assign(schema, refSchema);
-          Object.assign(schema, _schema); // this is to prevent overwriting any fields in the original schema
+          Object.assign(schema, _cached); // prevent overwriting any fields in the original schema
         }
       }
 
+      // execute overrides
       if (!seen.isParent)
         this.override({
           zodSchema: zodSchema as schemas.$ZodTypes,
@@ -703,8 +758,18 @@ export class JSONSchemaGenerator {
       flattenRef(entry[0], { target: this.target });
     }
 
-    const result = { ...root.def };
+    const result: JSONSchema.BaseSchema = {};
+    if (this.target === "draft-2020-12") {
+      result.$schema = "https://json-schema.org/draft/2020-12/schema";
+    } else if (this.target === "draft-7") {
+      result.$schema = "http://json-schema.org/draft-07/schema#";
+    } else {
+      console.warn(`Invalid target: ${this.target}`);
+    }
 
+    Object.assign(result, root.def);
+
+    // build defs object
     const defs: JSONSchema.BaseSchema["$defs"] = params.external?.defs ?? {};
     for (const entry of this.seen.entries()) {
       const seen = entry[1];
@@ -720,14 +785,6 @@ export class JSONSchemaGenerator {
       } else {
         result.definitions = defs;
       }
-    }
-
-    if (this.target === "draft-2020-12") {
-      result.$schema = "https://json-schema.org/draft/2020-12/schema";
-    } else if (this.target === "draft-7") {
-      result.$schema = "http://json-schema.org/draft-07/schema#";
-    } else {
-      console.warn(`Invalid target: ${this.target}`);
     }
 
     try {
@@ -791,4 +848,108 @@ export function toJSONSchema(
   gen.process(input);
 
   return gen.emit(input, _params);
+}
+
+function isTransforming(
+  _schema: schemas.$ZodType,
+  _ctx?: {
+    seen: Set<schemas.$ZodType>;
+  }
+): boolean {
+  const ctx = _ctx ?? { seen: new Set() };
+
+  if (ctx.seen.has(_schema)) return false;
+  ctx.seen.add(_schema);
+
+  const schema = _schema as schemas.$ZodTypes;
+  const def = schema._zod.def;
+  switch (def.type) {
+    case "string":
+    case "number":
+    case "bigint":
+    case "boolean":
+    case "date":
+    case "symbol":
+    case "undefined":
+    case "null":
+    case "any":
+    case "unknown":
+    case "never":
+    case "void":
+    case "literal":
+    case "enum":
+    case "nan":
+    case "file":
+    case "template_literal":
+      return false;
+    case "array": {
+      return isTransforming(def.element, ctx);
+    }
+    case "object": {
+      for (const key in def.shape) {
+        if (isTransforming(def.shape[key], ctx)) return true;
+      }
+      return false;
+    }
+    case "union": {
+      for (const option of def.options) {
+        if (isTransforming(option, ctx)) return true;
+      }
+      return false;
+    }
+    case "intersection": {
+      return isTransforming(def.left, ctx) || isTransforming(def.right, ctx);
+    }
+    case "tuple": {
+      for (const item of def.items) {
+        if (isTransforming(item, ctx)) return true;
+      }
+      if (def.rest && isTransforming(def.rest, ctx)) return true;
+      return false;
+    }
+    case "record": {
+      return isTransforming(def.keyType, ctx) || isTransforming(def.valueType, ctx);
+    }
+    case "map": {
+      return isTransforming(def.keyType, ctx) || isTransforming(def.valueType, ctx);
+    }
+    case "set": {
+      return isTransforming(def.valueType, ctx);
+    }
+
+    // inner types
+    case "promise":
+    case "optional":
+    case "nonoptional":
+    case "nullable":
+    case "readonly":
+      return isTransforming(def.innerType, ctx);
+    case "lazy":
+      return isTransforming(def.getter(), ctx);
+    case "default": {
+      return isTransforming(def.innerType, ctx);
+    }
+    case "prefault": {
+      return isTransforming(def.innerType, ctx);
+    }
+    case "custom": {
+      return false;
+    }
+    case "transform": {
+      return true;
+    }
+    case "pipe": {
+      return isTransforming(def.in, ctx) || isTransforming(def.out, ctx);
+    }
+    case "success": {
+      return false;
+    }
+    case "catch": {
+      return false;
+    }
+
+    default:
+      def satisfies never;
+  }
+  throw new Error(`Unknown schema type: ${(def as any).type}`);
 }

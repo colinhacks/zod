@@ -134,7 +134,7 @@ z.set(z.string(), { error: "Bad set!" });
 </Tabs>
 
 
-The `error` param optionally accepts a function. An error customization function is known as an **error map** in Zod terminology. The error map will can at parse time if a valiation error occurs.
+The `error` param optionally accepts a function. An error customization function is known as an **error map** in Zod terminology. The error map will run at parse time if a validation error occurs.
 
 ```ts
 z.string({ error: ()=>`[${Date.now()}]: Validation failure.` });
@@ -199,11 +199,11 @@ z.int64({
 To customize errors on a *per-parse* basis, pass an error map into the parse method:
 
 ```ts
-const schema = z.string()
+const schema = z.string();
 
 schema.parse(12, {
   error: iss => "per-parse custom error"
-};
+});
 ```
 
 This has *lower precedence* than any schema-level custom messages.
@@ -212,7 +212,7 @@ This has *lower precedence* than any schema-level custom messages.
 const schema = z.string({ error: "highest priority" });
 const result = schema.safeParse(12, {
   error: (iss) => "lower priority",
-})
+});
 
 result.error.issues;
 // [{ message: "highest priority", ... }]
@@ -233,7 +233,7 @@ const result = schema.safeParse(12, {
     }
     // ...
   }
-})
+});
 ```
 
 ## Global error customization
@@ -306,7 +306,7 @@ async function loadLocale(locale: string) {
 await loadLocale("fr");
 ```
 
-For convenience, all locales are exported as `z.locales` from `zod/v4/locales`.
+For convenience, all locales are exported as `z.locales` from `zod/v4`. In some bundlers, this may not be tree-shakable.
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -329,40 +329,43 @@ z.config(z.locales.en());
 
 The following locales are available:
 
-- `ar` — Arabic  
-- `az` — Azerbaijani  
-- `be` — Belarusian  
-- `ca` — Catalan  
-- `cs` — Czech  
-- `de` — German  
-- `en` — English  
-- `es` — Spanish  
-- `fa` — Farsi  
-- `fi` — Finnish  
-- `fr` — French  
-- `frCA` — Canadian French  
-- `he` — Hebrew  
-- `hu` — Hungarian  
-- `id` — Indonesian  
-- `it` — Italian  
-- `ja` — Japanese  
-- `ko` — Korean  
-- `mk` — Macedonian  
-- `ms` — Malay  
+- `ar` — Arabic
+- `az` — Azerbaijani
+- `be` — Belarusian
+- `ca` — Catalan
+- `cs` — Czech
+- `de` — German
+- `en` — English
+- `es` — Spanish
+- `fa` — Farsi
+- `fi` — Finnish
+- `fr` — French
+- `frCA` — Canadian French
+- `he` — Hebrew
+- `hu` — Hungarian
+- `id` — Indonesian
+- `it` — Italian
+- `ja` — Japanese
+- `kh` — Khmer
+- `ko` — Korean
+- `mk` — Macedonian
+- `ms` — Malay
+- `nl` — Dutch
 - `no` — Norwegian
-- `ota` — Türkî  
-- `pl` — Polish  
-- `pt` — Portuguese  
-- `ru` — Russian  
-- `sl` — Slovenian  
-- `ta` — Tamil  
-- `th` — Thai  
-- `tr` — Türkçe  
-- `ua` — Ukrainian  
-- `ur` — Urdu  
-- `vi` — Tiếng Việt  
-- `zhCN` — Simplified Chinese  
-- `zhTW` — Traditional Chinese  
+- `ota` — Türkî
+- `pl` — Polish
+- `pt` — Portuguese
+- `ru` — Russian
+- `sl` — Slovenian
+- `sv` — Swedish
+- `ta` — Tamil
+- `th` — Thai
+- `tr` — Türkçe
+- `ua` — Ukrainian
+- `ur` — Urdu
+- `vi` — Tiếng Việt
+- `zhCN` — Simplified Chinese
+- `zhTW` — Traditional Chinese
 
 
 ## Error precedence

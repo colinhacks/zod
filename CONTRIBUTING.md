@@ -29,7 +29,8 @@ The following steps will get you setup to contribute changes to this repo:
 
 3. Run `pnpm i` to install dependencies.
 
-4. Start playing with the code! You can do some simple experimentation in [`playground.ts`](playground.ts) (see `pnpm play` below) or start implementing a feature right away.
+4. Start playing with the code! You can do some simple experimentation in [`play.ts`](play.ts) (see `pnpm play` below) or start implementing a feature right away.
+
 
 ## Alternative: VSCode Dev Container setup
 
@@ -64,9 +65,9 @@ In the OSS version of VSCode the extension may be not available.
 
 - runs all test files in `<ws>` that match `<file>` (e.g. `"enum"` will match `"enum.test.ts"`)
 
-**`pnpm play`**
+**`pnpm dev:play`**
 
-- executes [`playground.ts`](playground.ts), watches for changes. useful for experimentation
+- executes [`play.ts`](play.ts), watches for changes. useful for experimentation
 
 ### Tests
 

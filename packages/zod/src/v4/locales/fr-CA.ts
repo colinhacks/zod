@@ -19,11 +19,11 @@ const error: () => errors.$ZodErrorMap = () => {
 
     switch (t) {
       case "number": {
-        return Number.isNaN(data) ? "NaN" : "nombre";
+        return Number.isNaN(data) ? "NaN" : "number";
       }
       case "object": {
         if (Array.isArray(data)) {
-          return "tableau";
+          return "array";
         }
         if (data === null) {
           return "null";
@@ -41,7 +41,7 @@ const error: () => errors.$ZodErrorMap = () => {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "entrée",
-    email: "adresse e-mail",
+    email: "adresse courriel",
     url: "URL",
     emoji: "emoji",
     uuid: "UUID",
@@ -54,7 +54,7 @@ const error: () => errors.$ZodErrorMap = () => {
     ulid: "ULID",
     xid: "XID",
     ksuid: "KSUID",
-    datetime: "date et heure ISO",
+    datetime: "date-heure ISO",
     date: "date ISO",
     time: "heure ISO",
     duration: "durée ISO",
@@ -73,32 +73,34 @@ const error: () => errors.$ZodErrorMap = () => {
   return (issue) => {
     switch (issue.code) {
       case "invalid_type":
-        return `Entrée invalide : ${issue.expected} attendu, ${parsedType(issue.input)} reçu`;
+        return `Entrée invalide : attendu ${issue.expected}, reçu ${parsedType(issue.input)}`;
       case "invalid_value":
-        if (issue.values.length === 1) return `Entrée invalide : ${util.stringifyPrimitive(issue.values[0])} attendu`;
-        return `Option invalide : une valeur parmi ${util.joinValues(issue.values, "|")} attendue`;
+        if (issue.values.length === 1) return `Entrée invalide : attendu ${util.stringifyPrimitive(issue.values[0])}`;
+        return `Option invalide : attendu l'une des valeurs suivantes ${util.joinValues(issue.values, "|")}`;
       case "too_big": {
-        const adj = issue.inclusive ? "<=" : "<";
+        const adj = issue.inclusive ? "≤" : "<";
         const sizing = getSizing(issue.origin);
         if (sizing)
-          return `Trop grand : ${issue.origin ?? "valeur"} doit ${sizing.verb} ${adj}${issue.maximum.toString()} ${sizing.unit ?? "élément(s)"}`;
-        return `Trop grand : ${issue.origin ?? "valeur"} doit être ${adj}${issue.maximum.toString()}`;
+          return `Trop grand : attendu que ${issue.origin ?? "la valeur"} ait ${adj}${issue.maximum.toString()} ${sizing.unit}`;
+        return `Trop grand : attendu que ${issue.origin ?? "la valeur"} soit ${adj}${issue.maximum.toString()}`;
       }
       case "too_small": {
-        const adj = issue.inclusive ? ">=" : ">";
+        const adj = issue.inclusive ? "≥" : ">";
         const sizing = getSizing(issue.origin);
         if (sizing) {
-          return `Trop petit : ${issue.origin} doit ${sizing.verb} ${adj}${issue.minimum.toString()} ${sizing.unit}`;
+          return `Trop petit : attendu que ${issue.origin} ait ${adj}${issue.minimum.toString()} ${sizing.unit}`;
         }
 
-        return `Trop petit : ${issue.origin} doit être ${adj}${issue.minimum.toString()}`;
+        return `Trop petit : attendu que ${issue.origin} soit ${adj}${issue.minimum.toString()}`;
       }
       case "invalid_format": {
         const _issue = issue as errors.$ZodStringFormatIssues;
-        if (_issue.format === "starts_with") return `Chaîne invalide : doit commencer par "${_issue.prefix}"`;
+        if (_issue.format === "starts_with") {
+          return `Chaîne invalide : doit commencer par "${_issue.prefix}"`;
+        }
         if (_issue.format === "ends_with") return `Chaîne invalide : doit se terminer par "${_issue.suffix}"`;
         if (_issue.format === "includes") return `Chaîne invalide : doit inclure "${_issue.includes}"`;
-        if (_issue.format === "regex") return `Chaîne invalide : doit correspondre au modèle ${_issue.pattern}`;
+        if (_issue.format === "regex") return `Chaîne invalide : doit correspondre au motif ${_issue.pattern}`;
         return `${Nouns[_issue.format] ?? issue.format} invalide`;
       }
       case "not_multiple_of":

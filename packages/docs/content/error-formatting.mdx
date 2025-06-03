@@ -77,7 +77,7 @@ const tree = z.treeifyError(result.error);
 }
 ```
 
-The result is a nested structure that mirrors the schema itself. You can easily access the errors that occured at a particular path. The `errors` field contains the error messages at a given path, and the special properties `properties` and `items` let you traverse deeper into the tree.
+The result is a nested structure that mirrors the schema itself. You can easily access the errors that occurred at a particular path. The `errors` field contains the error messages at a given path, and the special properties `properties` and `items` let you traverse deeper into the tree.
 
 ```ts
 tree.properties?.username?.errors;
@@ -119,7 +119,7 @@ This returns the following string:
 
     To convert the error into a nested object:
 
-    ```ts
+     ```ts
     const formatted = z.formatError(result.error);
 
     // returns:
@@ -133,7 +133,7 @@ This returns the following string:
     }
     ```
 
-    The result is a nested structure that mirrors the schema itself. You can easily access the errors that occured at a particular path.
+    The result is a nested structure that mirrors the schema itself. You can easily access the errors that occurred at a particular path.
 
     ```ts
     formatted?.username?._errors;
@@ -150,36 +150,26 @@ This returns the following string:
 
 ## `z.flattenError()`
 
-<Callout type="warn">
-  This has been deprecated in favor of `z.treeifyError()`.
-</Callout>
+While `z.treeifyError()` is useful for traversing a potentially complex nested structure, the majority of schemas are *flat*—just one level deep. In this case, use `z.flattenError()` to retrieve a clean, shallow error object.
 
-<Accordions>
-  <Accordion title="Show docs">
-    
-    While `z.formatError()` is useful for traversing a potentially complex nested structure, the majority of schemas are *flat*—just one level deep. In this case, use `z.flattenError()` to retrieve a clean, shallow error object.
+```ts
+const flattened = z.flattenError(result.error);
+// { errors: string[], properties: { [key: string]: string[] } }
 
-    ```ts
-    const flattened = z.flattenError(result.error);
-    // { errors: string[], properties: { [key: string]: string[] } }
+{
+  formErrors: [ 'Unrecognized key: "extraKey"' ],
+  fieldErrors: {
+    username: [ 'Invalid input: expected string, received number' ],
+    favoriteNumbers: [ 'Invalid input: expected number, received string' ]
+  }
+}
+```
 
-    {
-      formErrors: [ 'Unrecognized key: "extraKey"' ],
-      fieldErrors: {
-        username: [ 'Invalid input: expected string, received number' ],
-        favoriteNumbers: [ 'Invalid input: expected number, received string' ]
-      }
-    }
-    ```
+The `formErrors` array contains any top-level errors (where `path` is `[]`). The `fieldErrors` object provides an array of errors for each field in the schema.
 
-    The `formErrors` array contains any top-level errors (where `path` is `[]`). The `fieldErrors` object provides an array of errors for each field in the schema.
+```ts
+flattened.fieldErrors.string; // => [ 'Invalid input: expected string, received number' ]
+flattened.fieldErrors.numbers; // => [ 'Invalid input: expected number, received string' ]
+```
 
-    ```ts
-    flattened.fieldErrors.string; // => [ 'Invalid input: expected string, received number' ]
-    flattened.fieldErrors.numbers; // => [ 'Invalid input: expected number, received string' ]
-    ```
-
-    > **Note** — If you have issues with a `path` longer than one level, this function throws away some error information. 
-
-  </Accordion>
-</Accordions>
+> **Note** — If you have issues with a `path` longer than one level, this function throws away some error information. 

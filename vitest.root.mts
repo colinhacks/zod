@@ -1,4 +1,4 @@
-import { type UserConfig, defineConfig } from "vitest/config";
+import { type ViteUserConfig, defineConfig } from "vitest/config";
 
 export default defineConfig({
   resolve: {
@@ -14,7 +14,6 @@ export default defineConfig({
       checker: "tsc",
       tsconfig: "./tsconfig.json",
     },
-
     silent: true,
   },
-}) as UserConfig;
+}) as ViteUserConfig;

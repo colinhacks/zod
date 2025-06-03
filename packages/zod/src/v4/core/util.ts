@@ -17,7 +17,9 @@ export type JWTAlgorithm =
   | "ES512"
   | "PS256"
   | "PS384"
-  | "PS512";
+  | "PS512"
+  | "EdDSA"
+  | (string & {});
 export type IPVersion = "v4" | "v6";
 export type MimeTypes =
   | "application/json"
@@ -177,12 +179,13 @@ export type SafeParseError<T> = {
   error: errors.$ZodError<T>;
 };
 
-export type DiscriminatorMapElement = {
-  values: Set<Primitive>;
-  maps: DiscriminatorMap[];
-};
-export type DiscriminatorMap = Map<PropertyKey, DiscriminatorMapElement>;
+// export type DiscriminatorMapElement = {
+//   values: Set<Primitive>;
+//   maps: DiscriminatorMap[];
+// };
+export type PropValues = Record<string, Set<Primitive>>;
 export type PrimitiveSet = Set<Primitive>;
+export type DiscriminatorMap = Map<Primitive, schemas.$ZodType>;
 
 // functions
 export function assertEqual<A, B>(val: AssertEqual<A, B>): AssertEqual<A, B> {
@@ -200,13 +203,12 @@ export function assertNever(_x: never): never {
 }
 export function assert<T>(_: any): asserts _ is T {}
 
-export function getValidEnumValues(obj: any): any {
-  const validKeys = Object.keys(obj).filter((k: any) => typeof obj[obj[k]] !== "number");
-  const filtered: any = {};
-  for (const k of validKeys) {
-    filtered[k] = obj[k];
-  }
-  return Object.values(filtered);
+export function getEnumValues(entries: EnumLike): EnumValue[] {
+  const numericValues = Object.values(entries).filter((v) => typeof v === "number");
+  const values = Object.entries(entries)
+    .filter(([k, _]) => numericValues.indexOf(+k) === -1)
+    .map(([_, v]) => v);
+  return values;
 }
 
 export function joinValues<T extends Primitive[]>(array: T, separator = "|"): string {
@@ -318,7 +320,7 @@ export function esc(str: string): string {
 }
 
 export function isObject(data: any): data is Record<PropertyKey, unknown> {
-  return typeof data === "object" && data !== null;
+  return typeof data === "object" && data !== null && !Array.isArray(data);
 }
 
 export const allowsEval: { value: boolean } = cached(() => {
@@ -332,7 +334,11 @@ export const allowsEval: { value: boolean } = cached(() => {
 });
 
 export function isPlainObject(data: any): data is Record<PropertyKey, unknown> {
-  return typeof data === "object" && data !== null && Object.getPrototypeOf(data) === Object.prototype;
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    (Object.getPrototypeOf(data) === Object.prototype || Object.getPrototypeOf(data) === null)
+  );
 }
 
 export function numKeys(data: any): number {
@@ -489,7 +495,7 @@ export function stringifyPrimitive(value: any): string {
 
 export function optionalKeys(shape: schemas.$ZodShape): string[] {
   return Object.keys(shape).filter((k) => {
-    return shape[k]._zod.optin === "optional";
+    return shape[k]._zod.optin === "optional" && shape[k]._zod.optout === "optional";
   });
 }
 

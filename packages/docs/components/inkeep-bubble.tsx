@@ -45,7 +45,7 @@ export function InkeepBubble() {
     aiChatSettings: {
       // optional settings
 
-      aiAssistantAvatar: "https://v4.zod.dev/logo/logo.png", // use your own ai assistant avatar
+      aiAssistantAvatar: "https://zod.dev/logo/logo.png", // use your own ai assistant avatar
       exampleQuestions: [
         "How do I convert a Zod schema to a JSON Schema?",
         "How do I define a cyclical object type?",

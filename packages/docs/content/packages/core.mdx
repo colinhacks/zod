@@ -3,6 +3,7 @@ title: Zod Core
 ---
 
 import { Callout } from "fumadocs-ui/components/callout"
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
 This sub-package exports the core classes and utilities that are consumed by `zod/v4` and `zod/v4-mini`. It is not intended to be used directly; instead it's designed to be extended by other packages. It implements:
 
@@ -88,6 +89,78 @@ export type $ZodTypes =
   | $ZodFile;
 ```
 
+<Accordions>
+<Accordion title="Inheritance diagram">
+  Here is a complete inheritance diagram for the core schema classes:
+  ```txt
+  - $ZodType
+      - $ZodString
+          - $ZodStringFormat
+              - $ZodGUID
+              - $ZodUUID
+              - $ZodEmail
+              - $ZodURL
+              - $ZodEmoji
+              - $ZodNanoID
+              - $ZodCUID
+              - $ZodCUID2
+              - $ZodULID
+              - $ZodXID
+              - $ZodKSUID
+              - $ZodISODateTime
+              - $ZodISODate
+              - $ZodISOTime
+              - $ZodISODuration
+              - $ZodIPv4
+              - $ZodIPv6
+              - $ZodCIDRv4
+              - $ZodCIDRv6
+              - $ZodBase64
+              - $ZodBase64URL
+              - $ZodE164
+              - $ZodJWT
+      - $ZodNumber
+          - $ZodNumberFormat
+      - $ZodBoolean
+      - $ZodBigInt
+          - $ZodBigIntFormat
+      - $ZodSymbol
+      - $ZodUndefined
+      - $ZodNull
+      - $ZodAny
+      - $ZodUnknown
+      - $ZodNever
+      - $ZodVoid
+      - $ZodDate
+      - $ZodArray
+      - $ZodObject
+      - $ZodUnion
+          - $ZodDiscriminatedUnion
+      - $ZodIntersection
+      - $ZodTuple
+      - $ZodRecord
+      - $ZodMap
+      - $ZodSet
+      - $ZodEnum
+      - $ZodLiteral
+      - $ZodFile
+      - $ZodTransform
+      - $ZodOptional
+      - $ZodNullable
+      - $ZodDefault
+      - $ZodPrefault
+      - $ZodNonOptional
+      - $ZodSuccess
+      - $ZodCatch
+      - $ZodNaN
+      - $ZodPipe
+      - $ZodReadonly
+      - $ZodTemplateLiteral
+      - $ZodCustom
+
+      ```
+</Accordion>
+</Accordions>
 
 ## Internals
 
