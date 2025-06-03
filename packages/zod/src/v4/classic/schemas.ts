@@ -36,7 +36,7 @@ export interface __ZodType<out Internals extends core.$ZodTypeInternals = core.$
   _input: Internals["input"];
 
   // base methods
-  check(...checks: (core.CheckFn<Internals["output"]> | core.$ZodCheck<Internals["output"]>)[]): this;
+  check(...checks: (core.CheckFn<core.output<this>> | core.$ZodCheck<core.output<this>>)[]): this;
   clone(def?: Internals["def"], params?: { parent: boolean }): this;
   register<R extends core.$ZodRegistry>(
     registry: R,
@@ -50,48 +50,45 @@ export interface __ZodType<out Internals extends core.$ZodTypeInternals = core.$
   brand<T extends PropertyKey = PropertyKey>(value?: T): PropertyKey extends T ? this : core.$ZodBranded<this, T>;
 
   // parsing
-  parse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): Internals["output"];
-  safeParse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): parse.ZodSafeParseResult<Internals["output"]>;
-  parseAsync(data: unknown, params?: core.ParseContext<core.$ZodIssue>): Promise<Internals["output"]>;
+  parse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;
+  safeParse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): parse.ZodSafeParseResult<core.output<this>>;
+  parseAsync(data: unknown, params?: core.ParseContext<core.$ZodIssue>): Promise<core.output<this>>;
   safeParseAsync(
     data: unknown,
     params?: core.ParseContext<core.$ZodIssue>
-  ): Promise<parse.ZodSafeParseResult<Internals["output"]>>;
+  ): Promise<parse.ZodSafeParseResult<core.output<this>>>;
   spa: (
     data: unknown,
     params?: core.ParseContext<core.$ZodIssue>
-  ) => Promise<parse.ZodSafeParseResult<Internals["output"]>>;
+  ) => Promise<parse.ZodSafeParseResult<core.output<this>>>;
 
   // refinements
-  refine(
-    check: (arg: Internals["output"]) => unknown | Promise<unknown>,
-    params?: string | core.$ZodCustomParams
-  ): this;
+  refine(check: (arg: core.output<this>) => unknown | Promise<unknown>, params?: string | core.$ZodCustomParams): this;
   /** @deprecated Use `.check()` instead. */
   superRefine(
-    refinement: (arg: Internals["output"], ctx: RefinementCtx<Internals["output"]>) => void | Promise<void>
+    refinement: (arg: core.output<this>, ctx: RefinementCtx<core.output<this>>) => void | Promise<void>
   ): this;
-  overwrite(fn: (x: Internals["output"]) => Internals["output"]): this;
+  overwrite(fn: (x: core.output<this>) => core.output<this>): this;
 
   // wrappers
   optional(): ZodOptional<this>;
   nonoptional(params?: string | core.$ZodNonOptionalParams): ZodNonOptional<this>;
   nullable(): ZodNullable<this>;
   nullish(): ZodOptional<ZodNullable<this>>;
-  default(def: util.NoUndefined<Internals["output"]>): ZodDefault<this>;
-  default(def: () => util.NoUndefined<Internals["output"]>): ZodDefault<this>;
-  prefault(def: () => Internals["input"]): ZodPrefault<this>;
-  prefault(def: Internals["input"]): ZodPrefault<this>;
+  default(def: util.NoUndefined<core.output<this>>): ZodDefault<this>;
+  default(def: () => util.NoUndefined<core.output<this>>): ZodDefault<this>;
+  prefault(def: () => core.input<this>): ZodPrefault<this>;
+  prefault(def: core.input<this>): ZodPrefault<this>;
   array(): ZodArray<this>;
   or<T extends core.SomeType>(option: T): ZodUnion<[this, T]>;
   and<T extends core.SomeType>(incoming: T): ZodIntersection<this, T>;
   transform<NewOut>(
-    transform: (arg: Internals["output"], ctx: RefinementCtx<Internals["output"]>) => NewOut | Promise<NewOut>
-  ): ZodPipe<this, ZodTransform<Awaited<NewOut>, Internals["output"]>>;
-  catch(def: Internals["output"]): ZodCatch<this>;
-  catch(def: (ctx: core.$ZodCatchCtx) => Internals["output"]): ZodCatch<this>;
-  pipe<T extends core.$ZodType<any, Internals["output"]>>(
-    target: T | core.$ZodType<any, Internals["output"]>
+    transform: (arg: core.output<this>, ctx: RefinementCtx<core.output<this>>) => NewOut | Promise<NewOut>
+  ): ZodPipe<this, ZodTransform<Awaited<NewOut>, core.output<this>>>;
+  catch(def: core.output<this>): ZodCatch<this>;
+  catch(def: (ctx: core.$ZodCatchCtx) => core.output<this>): ZodCatch<this>;
+  pipe<T extends core.$ZodType<any, core.output<this>>>(
+    target: T | core.$ZodType<any, core.output<this>>
   ): ZodPipe<this, T>;
   readonly(): ZodReadonly<this>;
 
