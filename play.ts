@@ -1,14 +1,16 @@
-import type { ZodType, ZodUnion, z } from "zod/v4";
+import { z } from "zod/v4";
 
-export type RefinedSchema<T extends z.ZodType<object> | ZodUnion> = T extends ZodUnion
-  ? RefinedUnionSchema<T>
-  : T extends ZodType<infer O extends object>
-    ? RefinedTypeSchema<O>
-    : never;
+const feature = z.object({
+  title: z.string(),
+  get features() {
+    return z.array(feature).optional();
+  },
+});
 
-export type RefinedTypeSchema<T extends object> = any;
+const output = z.object({
+  id: z.int().nonnegative(),
+  name: z.string(),
+  features: feature.array(), // <—
+});
 
-export type RefinedUnionSchema<T extends ZodUnion> = any;
-
-type A = z.ZodUnion extends z.ZodType<object> ? true : false;
-type B = z.ZodType<object> extends z.ZodUnion ? true : false;
+type Output = z.output<typeof output>;

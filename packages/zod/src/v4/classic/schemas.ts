@@ -118,21 +118,21 @@ export type _output<T> = T extends { "~output": any } ? T["~output"] : T extends
 export interface ZodType<
   out Output = unknown,
   out Input = unknown,
-  out Internals extends core.$ZodTypeInternals<Output, Input> = core.$ZodTypeInternals<Output, Input>,
-> extends core.$ZodType<Output, Input, Internals> {
+  // out Internals extends core.$ZodTypeInternals<Output, Input> = core.$ZodTypeInternals<Output, Input>,
+> extends core.$ZodType<Output, Input> {
   // export interface ZodType<out Output = unknown, out Input = unknown> extends core.$ZodType<Output, Input> {
-  _zod: Internals;
-  def: Internals["def"];
-  type: Internals["def"]["type"];
+  // _zod: this["_zod"];
+  def: this["_zod"]["def"];
+  type: this["_zod"]["def"]["type"];
   /** @deprecated Use `.def` instead. */
-  _def: Internals["def"];
+  _def: this["_zod"]["def"];
   /** @deprecated Use `z.output<typeof schema>` instead. */
   _output: Output;
   /** @deprecated Use `z.input<typeof schema>` instead. */
   _input: Input;
   // base methods
   check(...checks: (core.CheckFn<core.output<this>> | core.$ZodCheck<core.output<this>>)[]): this;
-  clone(def?: Internals["def"], params?: { parent: boolean }): this;
+  clone(def?: this["_zod"]["def"], params?: { parent: boolean }): this;
   register<R extends core.$ZodRegistry>(
     registry: R,
     ...meta: this extends R["_schema"]
@@ -215,7 +215,7 @@ export interface ZodType<
   isNullable(): boolean;
 }
 export interface _ZodType<Internals extends core.$ZodTypeInternals = core.$ZodTypeInternals>
-  extends ZodType<Internals["output"], Internals["input"], Internals> {
+  extends ZodType<Internals["output"], Internals["input"]> {
   _zod: Internals;
 }
 
@@ -1113,10 +1113,8 @@ export function date(params?: string | core.$ZodDateParams): ZodDate {
 }
 
 // ZodArray
-export interface ZodArray<T extends core.$ZodType = core.$ZodType>
-  extends _ZodType<core.$ZodArrayInternals<T>>,
-    core.$ZodArray<T> {
-  // _zod: core.$ZodArrayInternals<T>;
+export interface ZodArray<T extends core.$ZodType = core.$ZodType> extends ZodType {
+  _zod: core.$ZodArrayInternals<T>;
 
   element: T;
   min(minLength: number, params?: string | core.$ZodCheckMinLengthParams): this;
@@ -1155,9 +1153,8 @@ export interface ZodObject<
   /** @ts-ignore Cast variance */
   out Shape extends core.$ZodShape = core.$ZodLooseShape,
   out Config extends core.$ZodObjectConfig = core.$ZodObjectConfig,
-> extends _ZodType<core.$ZodObjectInternals<Shape, Config>>,
-    core.$ZodObject<Shape, Config> {
-  // _zod: core.$ZodObjectInternals<Shape, Config>;
+> extends ZodType {
+  _zod: core.$ZodObjectInternals<Shape, Config>;
   shape: Shape;
 
   keyof(): ZodEnum<util.ToEnum<keyof Shape & string>>;

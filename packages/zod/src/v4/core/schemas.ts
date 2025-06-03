@@ -157,9 +157,9 @@ export type $ZodStandardSchema<T extends $ZodType> = StandardSchemaV1.Props<core
 export interface $ZodType<
   O = unknown,
   I = unknown,
-  Internals extends $ZodTypeInternals<O, I> = $ZodTypeInternals<O, I>,
+  // Internals extends $ZodTypeInternals<O, I> = $ZodTypeInternals<O, I>,
 > {
-  _zod: Internals;
+  _zod: $ZodTypeInternals<O, I>;
   "~standard": $ZodStandardSchema<this>;
   // "~args": this["_zod"][any];
   // /** @deprecated @internal Internal field. */
@@ -1531,10 +1531,10 @@ export interface $ZodObjectInternals<
   out Shape extends Readonly<$ZodShape> = Readonly<$ZodShape>,
   out Config extends $ZodObjectConfig = $ZodObjectConfig,
 > extends $ZodTypeInternals<
-    any,
-    any
-    // $InferObjectOutputFallback<Shape, Config["out"]>,
-    // $InferObjectInputFallback<Shape, Config["in"]>
+    // any,
+    // any
+    $InferObjectOutputFallback<Shape, Config["out"]>,
+    $InferObjectInputFallback<Shape, Config["in"]>
   > {
   def: $ZodObjectDef<Shape>;
   config: Config;
