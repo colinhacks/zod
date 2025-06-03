@@ -17,111 +17,7 @@ export interface RefinementCtx<T = unknown> extends core.ParsePayload<T> {
   addIssue(arg: string | core.$ZodRawIssue | Partial<core.$ZodIssueCustom>): void;
 }
 
-export type _input<T> = T extends { "~input": any } ? T["~input"] : T extends { input: any } ? T["input"] : never;
-export type _output<T> = T extends { "~output": any } ? T["~output"] : T extends { output: any } ? T["output"] : never;
-
-// export interface _ZodType<Internals extends core.$ZodTypeInternals = core.$ZodTypeInternals>
-//   extends core.$ZodType<Internals["output"], Internals["input"]> {
-//   _zod: Internals;
-//   def: Internals["def"];
-//   /** @deprecated Use `.def` instead. */
-//   _def: Internals["def"];
-//   // /** @deprecated Use `z.output<typeof schema>` instead. */
-//   _output: _output<Internals>;
-//   // /** @deprecated Use `z.input<typeof schema>` instead. */
-//   _input: _input<Internals>;
-//   // base methods
-//   check(...checks: (core.CheckFn<core.output<this>> | core.$ZodCheck<core.output<this>>)[]): this;
-//   clone(def?: Internals["def"], params?: { parent: boolean }): this;
-//   register<R extends core.$ZodRegistry>(
-//     registry: R,
-//     ...meta: this extends R["_schema"]
-//       ? undefined extends R["_meta"]
-//         ? [core.$replace<R["_meta"], this>?]
-//         : [core.$replace<R["_meta"], this>]
-//       : ["Incompatible schema"]
-//   ): this;
-
-//   brand<T extends PropertyKey = PropertyKey>(value?: T): PropertyKey extends T ? this : core.$ZodBranded<this, T>;
-
-//   // parsing
-//   parse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;
-//   safeParse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): parse.ZodSafeParseResult<core.output<this>>;
-//   parseAsync(data: unknown, params?: core.ParseContext<core.$ZodIssue>): Promise<core.output<this>>;
-//   safeParseAsync(
-//     data: unknown,
-//     params?: core.ParseContext<core.$ZodIssue>
-//   ): Promise<parse.ZodSafeParseResult<core.output<this>>>;
-//   spa: (
-//     data: unknown,
-//     params?: core.ParseContext<core.$ZodIssue>
-//   ) => Promise<parse.ZodSafeParseResult<core.output<this>>>;
-
-//   // refinements
-//   refine(check: (arg: core.output<this>) => unknown | Promise<unknown>, params?: string | core.$ZodCustomParams): this;
-//   /** @deprecated Use `.check()` instead. */
-//   superRefine(
-//     refinement: (arg: core.output<this>, ctx: RefinementCtx<core.output<this>>) => void | Promise<void>
-//   ): this;
-//   overwrite(fn: (x: core.output<this>) => core.output<this>): this;
-
-//   // wrappers
-//   optional(): ZodOptional<this>;
-//   nonoptional(params?: string | core.$ZodNonOptionalParams): ZodNonOptional<this>;
-//   nullable(): ZodNullable<this>;
-//   nullish(): ZodOptional<ZodNullable<this>>;
-//   default(def: util.NoUndefined<core.output<this>>): ZodDefault<this>;
-//   default(def: () => util.NoUndefined<core.output<this>>): ZodDefault<this>;
-//   prefault(def: () => core.input<this>): ZodPrefault<this>;
-//   prefault(def: core.input<this>): ZodPrefault<this>;
-//   array(): ZodArray<this>;
-//   or<T extends core.$ZodType>(option: T): ZodUnion<[this, T]>;
-//   and<T extends core.$ZodType>(incoming: T): ZodIntersection<this, T>;
-//   transform<NewOut>(
-//     transform: (arg: core.output<this>, ctx: RefinementCtx<core.output<this>>) => NewOut | Promise<NewOut>
-//   ): ZodPipe<this, ZodTransform<Awaited<NewOut>, core.output<this>>>;
-//   catch(def: core.output<this>): ZodCatch<this>;
-//   catch(def: (ctx: core.$ZodCatchCtx) => core.output<this>): ZodCatch<this>;
-//   pipe<T extends core.$ZodType<any, core.output<this>>>(
-//     target: T | core.$ZodType<any, core.output<this>>
-//   ): ZodPipe<this, T>;
-//   readonly(): ZodReadonly<this>;
-
-//   /** Returns a new instance that has been registered in `z.globalRegistry` with the specified description */
-//   describe(description: string): this;
-//   description?: string;
-//   /** Returns the metadata associated with this instance in `z.globalRegistry` */
-//   meta(): core.$replace<core.GlobalMeta, this> | undefined;
-//   /** Returns a new instance that has been registered in `z.globalRegistry` with the specified metadata */
-//   meta(data: core.$replace<core.GlobalMeta, this>): this;
-
-//   // helpers
-//   /** @deprecated Try safe-parsing `undefined` (this is what `isOptional` does internally):
-//    *
-//    * ```ts
-//    * const schema = z.string().optional();
-//    * const isOptional = schema.safeParse(undefined).success; // true
-//    * ```
-//    */
-//   isOptional(): boolean;
-//   /**
-//    * @deprecated Try safe-parsing `null` (this is what `isNullable` does internally):
-//    *
-//    * ```ts
-//    * const schema = z.string().nullable();
-//    * const isNullable = schema.safeParse(null).success; // true
-//    * ```
-//    */
-//   isNullable(): boolean;
-// }
-
-export interface ZodType<
-  out Output = unknown,
-  out Input = unknown,
-  // out Internals extends core.$ZodTypeInternals<Output, Input> = core.$ZodTypeInternals<Output, Input>,
-> extends core.$ZodType<Output, Input> {
-  // export interface ZodType<out Output = unknown, out Input = unknown> extends core.$ZodType<Output, Input> {
-  // _zod: this["_zod"];
+export interface ZodType<out Output = unknown, out Input = unknown> extends core.$ZodType<Output, Input> {
   def: this["_zod"]["def"];
   type: this["_zod"]["def"]["type"];
   /** @deprecated Use `.def` instead. */
@@ -302,8 +198,8 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
 });
 
 // ZodString
-export interface _ZodString<Input = unknown> extends _ZodType<core.$ZodStringInternals<Input>>, core.$ZodString<Input> {
-  _zod: core.$ZodStringInternals<Input>;
+export interface _ZodString<Input = unknown> extends _ZodType<core.$ZodStringInternals<Input>> {
+  // _zod: core.$ZodStringInternals<Input>;
 
   format: string | null;
   minLength: number | null;
@@ -487,7 +383,7 @@ export const ZodStringFormat: core.$constructor<ZodStringFormat> = /*@__PURE__*/
 );
 
 // ZodEmail
-export interface ZodEmail extends ZodStringFormat<"email"> {
+export interface ZodEmail extends ZodStringFormat<"email">, core.$ZodEmail {
   _zod: core.$ZodEmailInternals;
 }
 export const ZodEmail: core.$constructor<ZodEmail> = /*@__PURE__*/ core.$constructor("ZodEmail", (inst, def) => {
