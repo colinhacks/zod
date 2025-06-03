@@ -25,13 +25,13 @@ test("recursion with z.lazy", () => {
   const Category = z.object({
     name: z.string(),
     get subcategories() {
-      return z.array(Category);
+      return z.array(Category).optional().nullable();
     },
   });
   type Category = z.infer<typeof Category>;
   interface _Category {
     name: string;
-    subcategories: _Category[];
+    subcategories?: _Category[] | undefined | null;
   }
   expectTypeOf<Category>().toEqualTypeOf<_Category>();
   Category.parse(data);
@@ -64,8 +64,6 @@ test("recursion involving union type", () => {
     next: _LL | null;
   };
   expectTypeOf<LL>().toEqualTypeOf<_LL>();
-  // type a = LL['next']
-  // .or(z.null());
 
   LL.parse(data);
 });
@@ -180,6 +178,45 @@ test("deferred self-recursion", () => {
 
   expectTypeOf<Feature>().toEqualTypeOf<_Feature>();
   expectTypeOf<Output>().toEqualTypeOf<_Output>();
+});
+
+test("mutual recursion with meta", () => {
+  const A = z
+    .object({
+      name: z.string(),
+      get b() {
+        return B;
+      },
+    })
+    .readonly()
+    .meta({ id: "A" })
+    .optional();
+
+  const B = z
+    .object({
+      name: z.string(),
+      get a() {
+        return A;
+      },
+    })
+    .readonly()
+    .meta({ id: "B" });
+
+  type A = z.infer<typeof A>;
+  type B = z.infer<typeof B>;
+
+  type _A =
+    | Readonly<{
+        name: string;
+        b: _B;
+      }>
+    | undefined;
+  type _B = Readonly<{
+    name: string;
+    a?: _A;
+  }>;
+  expectTypeOf<A>().toEqualTypeOf<_A>();
+  expectTypeOf<B>().toEqualTypeOf<_B>();
 });
 
 test("recursion compatibility", () => {

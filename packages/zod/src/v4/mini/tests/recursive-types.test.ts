@@ -24,8 +24,8 @@ test("recursion with z.lazy", () => {
 
   const Category = z.object({
     name: z.string(),
-    get subcategories() {
-      return z.array(Category);
+    get subcategories(): z.ZodMiniOptional<z.ZodMiniArray<typeof Category>> {
+      return z.optional(z.array(Category));
     },
   });
   Category.parse(data);
@@ -33,7 +33,7 @@ test("recursion with z.lazy", () => {
   type Category = z.infer<typeof Category>;
   interface _Category {
     name: string;
-    subcategories: _Category[];
+    subcategories?: _Category[];
   }
   expectTypeOf<Category>().toEqualTypeOf<_Category>();
 });

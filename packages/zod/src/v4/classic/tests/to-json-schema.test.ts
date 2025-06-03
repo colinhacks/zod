@@ -1636,9 +1636,9 @@ test("top-level readonly", () => {
         return B;
       },
     })
-    .readonly();
-  // .meta({ id: "A" });
-  z.globalRegistry.add(A, { id: "A" });
+    .readonly()
+    .meta({ id: "A" });
+  // z.globalRegistry.add(A, { id: "A" });
   // .meta({ id: "A" });
 
   const B = z
@@ -1648,8 +1648,9 @@ test("top-level readonly", () => {
         return A;
       },
     })
-    .readonly();
-  z.globalRegistry.add(B, { id: "B" });
+    .readonly()
+    .meta({ id: "B" });
+  // z.globalRegistry.add(B, { id: "B" });
   // .meta({ id: "B" });
 
   const result = z.z.toJSONSchema(A);
