@@ -21,8 +21,6 @@ export type RefinedSchema<T extends z.ZodType<object> | z.ZodUnion> = T extends 
     ? RefinedTypeSchema<z.output<T>> // <-- Type instantiation is excessively deep and possibly infinite.
     : never;
 
-export type RefinedTypeSchema<T extends object> = any;
+export type RefinedTypeSchema<T extends object> = T;
 
-export type RefinedUnionSchema<T extends z.ZodUnion> = any;
-
-type a = (z.ZodType<object> | z.ZodUnion) & z.ZodUnion;
+export type RefinedUnionSchema<T extends z.ZodUnion> = T;

@@ -29,6 +29,11 @@ test("recursion with z.lazy", () => {
     },
   });
   type Category = z.infer<typeof Category>;
+  interface _Category {
+    name: string;
+    subcategories: _Category[];
+  }
+  expectTypeOf<Category>().toEqualTypeOf<_Category>();
   Category.parse(data);
 });
 
@@ -54,6 +59,11 @@ test("recursion involving union type", () => {
     },
   });
   type LL = z.infer<typeof LL>;
+  type _LL = {
+    value: number;
+    next: _LL | null;
+  };
+  expectTypeOf<LL>().toEqualTypeOf<_LL>();
   // type a = LL['next']
   // .or(z.null());
 
@@ -94,6 +104,17 @@ test("mutual recursion - native", () => {
   };
 
   type Alazy = z.infer<typeof Alazy>;
+  type Blazy = z.infer<typeof Blazy>;
+  interface _Alazy {
+    val: number;
+    b: _Blazy;
+  }
+  interface _Blazy {
+    val: number;
+    a?: _Alazy | undefined;
+  }
+  expectTypeOf<Alazy>().toEqualTypeOf<_Alazy>();
+  expectTypeOf<Blazy>().toEqualTypeOf<_Blazy>();
   Alazy.parse(testData);
   Blazy.parse(testData.b);
 
