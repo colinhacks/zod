@@ -4,20 +4,20 @@ import * as z from "zod/v4";
 declare module "zod/v4" {
   interface ZodType {
     /** @deprecated */
-    dostuff(): string;
+    _classic(): string;
   }
 }
 
 test("prototype extension", () => {
-  z.ZodType.prototype.dostuff = function () {
-    return "stuff";
+  z.ZodType.prototype._classic = function () {
+    return "_classic";
   };
 
   // should pass
-  const result = z.string().dostuff();
-  expect(result).toBe("stuff");
+  const result = z.string()._classic();
+  expect(result).toBe("_classic");
   // expectTypeOf<typeof result>().toEqualTypeOf<string>();
 
   // clean up
-  z.ZodType.prototype.fun = undefined;
+  z.ZodType.prototype._classic = undefined;
 });
