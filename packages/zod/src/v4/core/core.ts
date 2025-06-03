@@ -64,8 +64,8 @@ export type $brand<T extends string | number | symbol = string | number | symbol
   [$brand]: { [k in T]: true };
 };
 
-export type $ZodBranded<T extends schemas.$ZodType, Brand extends string | number | symbol> = T &
-  Record<"_zod", Record<"~output", output<T> & $brand<Brand>>>;
+export type $ZodBranded<T extends schemas._$ZodType, Brand extends string | number | symbol> = T &
+  Record<"_zod", Record<"output", output<T> & $brand<Brand>>>;
 
 export class $ZodAsyncError extends Error {
   constructor() {
@@ -75,22 +75,38 @@ export class $ZodAsyncError extends Error {
 
 ////////////////////////////  TYPE HELPERS  ///////////////////////////////////
 
-// export type input<T extends schemas.$ZodType> = T["_zod"] extends { "~input": any }
+// export type input<T extends schemas.$ZodType> = T["_zod"]["input"];
+// export type output<T extends schemas.$ZodType> = T["_zod"]["output"];
+// export type input<T extends schemas.$ZodType> = T["_zod"]["input"];
+// export type output<T extends schemas.$ZodType> = T["_zod"]["output"];
+export type input<T> = T extends { _zod: { input: any } } ? Required<T["_zod"]>["input"] : unknown;
+export type output<T> = T extends { _zod: { output: any } } ? Required<T["_zod"]>["output"] : unknown;
+
+// Mk2
+// export type input<T> = T extends { _zod: { "~input": any } }
 //   ? T["_zod"]["~input"]
-//   : T["_zod"]["input"];
-// export type output<T extends schemas.$ZodType> = T["_zod"] extends { "~output": any }
+//   : T extends { _zod: { input: any } }
+//     ? T["_zod"]["input"]
+//     : never;
+// export type output<T> = T extends { _zod: { "~output": any } }
 //   ? T["_zod"]["~output"]
-//   : T["_zod"]["output"];
-export type input<T> = T extends { _zod: { "~input": any } }
-  ? T["_zod"]["~input"]
-  : T extends { _zod: { input: any } }
-    ? T["_zod"]["input"]
-    : never;
-export type output<T> = T extends { _zod: { "~output": any } }
-  ? T["_zod"]["~output"]
-  : T extends { _zod: { output: any } }
-    ? T["_zod"]["output"]
-    : never;
+//   : T extends { _zod: { output: any } }
+//     ? T["_zod"]["output"]
+//     : never;
+// Mk 3
+// export type input<T extends schemas.$ZodType> = T["_zod"]["input"];
+// export type output<T extends schemas.$ZodType> = T["_zod"]["output"];
+// Mk 4
+// export type input<T extends schemas.$ZodType> = T[] extends { _zod: { "~input": any } }
+//   ? T["_zod"]["~input"]
+//   : T extends { _zod: { input: any } }
+//     ? T["_zod"]["input"]
+//     : never;
+// export type output<T extends schemas.$ZodType> = T extends { _zod: { "~output": any } }
+//   ? T["_zod"]["~output"]
+//   : T extends { _zod: { output: any } }
+//     ? T["_zod"]["output"]
+//     : never;
 
 export type { output as infer };
 

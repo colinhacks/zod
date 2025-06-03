@@ -143,7 +143,7 @@ export type Extend<A extends SomeObject, B extends SomeObject> = Flatten<
       }
 >;
 
-export type TupleItems = ReadonlyArray<schemas.$ZodType>;
+export type TupleItems = ReadonlyArray<schemas.SomeType>;
 export type AnyFunc = (...args: any[]) => any;
 export type IsProp<T, K extends keyof T> = T[K] extends AnyFunc ? never : K;
 export type MaybeAsync<T> = T | Promise<T>;
@@ -156,7 +156,7 @@ export type ExtractIndexSignature<T> = {
 };
 export type Keys<T extends object> = keyof OmitIndexSignature<T>;
 
-export type SchemaClass<T extends schemas.$ZodType> = {
+export type SchemaClass<T extends schemas.SomeType> = {
   new (def: T["_zod"]["def"]): T;
 };
 export type EnumValue = string | number; // | bigint | boolean | symbol;
@@ -179,13 +179,8 @@ export type SafeParseError<T> = {
   error: errors.$ZodError<T>;
 };
 
-// export type DiscriminatorMapElement = {
-//   values: Set<Primitive>;
-//   maps: DiscriminatorMap[];
-// };
 export type PropValues = Record<string, Set<Primitive>>;
 export type PrimitiveSet = Set<Primitive>;
-export type DiscriminatorMap = Map<Primitive, schemas.$ZodType>;
 
 // functions
 export function assertEqual<A, B>(val: AssertEqual<A, B>): AssertEqual<A, B> {

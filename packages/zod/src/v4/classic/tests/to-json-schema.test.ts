@@ -1638,6 +1638,8 @@ test("top-level readonly", () => {
     })
     .readonly()
     .meta({ id: "A" });
+  // z.globalRegistry.add(A, { id: "A" });
+  // .meta({ id: "A" });
 
   const B = z
     .object({
@@ -1648,6 +1650,8 @@ test("top-level readonly", () => {
     })
     .readonly()
     .meta({ id: "B" });
+  // z.globalRegistry.add(B, { id: "B" });
+  // .meta({ id: "B" });
 
   const result = z.z.toJSONSchema(A);
   expect(result).toMatchInlineSnapshot(`

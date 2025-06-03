@@ -1050,7 +1050,7 @@ export function _array<T extends schemas.$ZodType>(
     //   return element;
     // },
     ...util.normalizeParams(params),
-  }) as schemas.$ZodArray<T>;
+  }) as any;
 }
 
 export type $ZodObjectParams = TypeParams<schemas.$ZodObject, "shape" | "catchall">;
