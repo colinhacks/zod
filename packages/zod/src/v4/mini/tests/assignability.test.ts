@@ -116,7 +116,7 @@ test("assignability", () => {
   z.file() satisfies z.core.$ZodFile;
 });
 
-test("type narrowing across unions", () => {
+test("assignability with type narrowing", () => {
   type _RefinedSchema<T extends z.ZodMiniType<object> | z.ZodMiniUnion> = T extends z.ZodMiniUnion
     ? RefinedUnionSchema<T> // <-- Type instantiation is excessively deep and possibly infinite.
     : T extends z.ZodMiniType<object>

@@ -180,3 +180,15 @@ test("assignability to $ZodType", () => {
 
   expectTypeOf<z.ZodType extends z.core.$ZodType ? true : false>().toEqualTypeOf<true>();
 });
+
+test("assignability with narrowing", () => {
+  type _RefinedSchema<T extends z.ZodType<object> | z.ZodUnion> = T extends z.ZodUnion
+    ? RefinedUnionSchema<T> // <-- Type instantiation is excessively deep and possibly infinite.
+    : T extends z.ZodType<object>
+      ? RefinedTypeSchema<z.output<T>> // <-- Type instantiation is excessively deep and possibly infinite.
+      : never;
+
+  type RefinedTypeSchema<T extends object> = T;
+
+  type RefinedUnionSchema<T extends z.ZodUnion> = T;
+});
