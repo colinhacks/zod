@@ -1,12 +1,12 @@
 import * as core from "zod/v4/core";
 import * as schemas from "./schemas.js";
 
-export interface ZodCoercedString<T = unknown> extends schemas._ZodString<T> {}
+export interface ZodCoercedString<T = unknown> extends schemas._ZodString<core.$ZodStringInternals<T>> {}
 export function string<T = unknown>(params?: string | core.$ZodStringParams): ZodCoercedString<T> {
   return core._coercedString(schemas.ZodString, params) as any;
 }
 
-export interface ZodCoercedNumber<T = unknown> extends schemas._ZodNumber<T> {}
+export interface ZodCoercedNumber<T = unknown> extends schemas._ZodNumber<core.$ZodNumberInternals<T>> {}
 export function number<T = unknown>(params?: string | core.$ZodNumberParams): ZodCoercedNumber<T> {
   return core._coercedNumber(schemas.ZodNumber, params) as ZodCoercedNumber<T>;
 }

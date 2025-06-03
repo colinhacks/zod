@@ -28,6 +28,7 @@ test("recursion with z.lazy", () => {
       return z.array(Category);
     },
   });
+  type Category = z.infer<typeof Category>;
   Category.parse(data);
 });
 
@@ -52,6 +53,8 @@ test("recursion involving union type", () => {
       return LL.nullable();
     },
   });
+  type LL = z.infer<typeof LL>;
+  // type a = LL['next']
   // .or(z.null());
 
   LL.parse(data);
@@ -90,6 +93,7 @@ test("mutual recursion - native", () => {
     },
   };
 
+  type Alazy = z.infer<typeof Alazy>;
   Alazy.parse(testData);
   Blazy.parse(testData.b);
 
@@ -105,6 +109,7 @@ test("pick and omit with getter", () => {
   });
 
   type Category = z.infer<typeof Category>;
+
   interface _Category {
     name: string;
     subcategories: _Category[];
@@ -122,4 +127,69 @@ test("pick and omit with getter", () => {
 
   expect(() => PickedCategory.parse({ name: "test", subcategories: [] })).toThrow();
   expect(() => OmittedCategory.parse({ name: "test", subcategories: [] })).toThrow();
+});
+
+test("recursion compatibility", () => {
+  // array
+  const A = z.object({
+    get array() {
+      return A.array();
+    },
+    get optional() {
+      return A.optional();
+    },
+    get nullable() {
+      return A.nullable();
+    },
+    get nonoptional() {
+      return A.nonoptional();
+    },
+    get readonly() {
+      return A.readonly();
+    },
+    get describe() {
+      return A.describe("A recursive type");
+    },
+    get meta() {
+      return A.meta({ description: "A recursive type" });
+    },
+    get pipe() {
+      return A.pipe(z.any());
+    },
+    get strict() {
+      return A.strict();
+    },
+    get tuple() {
+      return z.tuple([A, A]);
+    },
+    get object() {
+      return z
+        .object({
+          subcategories: A,
+        })
+        .strict()
+        .loose();
+    },
+    get union() {
+      return z.union([A, A]);
+    },
+    get intersection() {
+      return z.intersection(A, A);
+    },
+    get record() {
+      return z.record(z.string(), A);
+    },
+    get map() {
+      return z.map(z.string(), A);
+    },
+    get set() {
+      return z.set(A);
+    },
+    get lazy() {
+      return z.lazy(() => A);
+    },
+    get promise() {
+      return z.promise(A);
+    },
+  });
 });

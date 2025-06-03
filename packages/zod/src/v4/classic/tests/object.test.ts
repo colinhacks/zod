@@ -223,7 +223,6 @@ test("inferred merged object type with optional properties", async () => {
     .merge(z.object({ a: z.string().optional(), b: z.string() }));
   type Merged = z.infer<typeof Merged>;
   expectTypeOf<Merged>().toEqualTypeOf<{ a?: string; b: string }>();
-
   expectTypeOf<Merged>().toEqualTypeOf<{ a?: string; b: string }>();
 });
 

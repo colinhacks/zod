@@ -1637,6 +1637,7 @@ test("top-level readonly", () => {
       },
     })
     .readonly();
+  // .meta({ id: "A" });
   z.globalRegistry.add(A, { id: "A" });
   // .meta({ id: "A" });
 

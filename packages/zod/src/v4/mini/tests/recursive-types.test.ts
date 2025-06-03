@@ -60,7 +60,7 @@ test("mutual recursion - native", () => {
   const Alazy = z.object({
     val: z.number(),
     get b() {
-      return Blazy;
+      return z.optional(Blazy);
     },
   });
 
@@ -121,4 +121,87 @@ test("pick and omit with getter", () => {
 
   expect(() => PickedCategory.parse({ name: "test", subcategories: [] })).toThrow();
   expect(() => OmittedCategory.parse({ name: "test", subcategories: [] })).toThrow();
+});
+
+test("recursion compatibility", () => {
+  // array
+  const A = z.object({
+    get subcategories() {
+      return z.array(A);
+    },
+  });
+  // tuple
+  const B = z.object({
+    get subcategories() {
+      return z.tuple([B, B]);
+    },
+  });
+  // object
+  const C = z.object({
+    get subcategories() {
+      return z.object({
+        subcategories: C,
+      });
+    },
+  });
+  // union
+  const D = z.object({
+    get subcategories() {
+      return z.union([D, z.string()]);
+    },
+  });
+  // intersection
+  const E = z.object({
+    get subcategories() {
+      return z.intersection(E, E);
+    },
+  });
+  // record
+  const F = z.object({
+    get subcategories() {
+      return z.record(z.string(), F);
+    },
+  });
+  // map
+  const G = z.object({
+    get subcategories() {
+      return z.map(z.string(), G);
+    },
+  });
+  // set
+  const H = z.object({
+    get subcategories() {
+      return z.set(H);
+    },
+  });
+  // optional
+  const I = z.object({
+    get subcategories() {
+      return z.optional(I);
+    },
+  });
+  // nullable
+  const J = z.object({
+    get subcategories() {
+      return z.nullable(J);
+    },
+  });
+  // optional
+  const L = z.object({
+    get subcategories() {
+      return z.optional(L);
+    },
+  });
+  // nullable
+  const M = z.object({
+    get subcategories() {
+      return z.nullable(M);
+    },
+  });
+  // nonoptional
+  const N = z.object({
+    get subcategories() {
+      return z.nonoptional(N);
+    },
+  });
 });
