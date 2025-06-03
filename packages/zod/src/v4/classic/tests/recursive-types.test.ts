@@ -150,6 +150,38 @@ test("pick and omit with getter", () => {
   expect(() => OmittedCategory.parse({ name: "test", subcategories: [] })).toThrow();
 });
 
+test("deferred self-recursion", () => {
+  const Feature = z.object({
+    title: z.string(),
+    get features(): z.ZodOptional<z.ZodArray<typeof Feature>> {
+      return z.optional(z.array(Feature)); //.optional();
+    },
+  });
+  type Feature = z.infer<typeof Feature>;
+
+  const Output = z.object({
+    id: z.int(), //.nonnegative(),
+    name: z.string(),
+    features: z.array(Feature), //.array(), // <—
+  });
+
+  type Output = z.output<typeof Output>;
+
+  type _Feature = {
+    title: string;
+    features?: _Feature[] | undefined;
+  };
+
+  type _Output = {
+    id: number;
+    name: string;
+    features: _Feature[];
+  };
+
+  expectTypeOf<Feature>().toEqualTypeOf<_Feature>();
+  expectTypeOf<Output>().toEqualTypeOf<_Output>();
+});
+
 test("recursion compatibility", () => {
   // array
   const A = z.object({

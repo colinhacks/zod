@@ -165,10 +165,12 @@ export interface _$ZodType<T extends _$ZodTypeInternals = _$ZodTypeInternals> {
   // /** @deprecated @internal Internal field. */
   // "~i": I;
 }
-export type SomeType = _$ZodType;
+export type SomeType = _$ZodType; //<any, any, $ZodTypeInternals<unknown, unknown>>;
 
-export interface $ZodType<O = unknown, I = unknown> extends _$ZodType {
-  _zod: $ZodTypeInternals<O, I>;
+export interface $ZodType<O = unknown, I = unknown, Internals extends $ZodTypeInternals<O, I> = $ZodTypeInternals<O, I>>
+  extends _$ZodType<Internals> {
+  // _zod: $ZodTypeInternals<O, I>;
+  // _zod: Internals;
   "~standard": $ZodStandardSchema<this>;
 }
 
@@ -1655,8 +1657,8 @@ export interface $ZodObject<
   /** @ts-ignore Cast variance */
   out Shape extends Readonly<$ZodShape> = Readonly<$ZodShape>,
   out Params extends $ZodObjectConfig = $ZodObjectConfig,
-> extends _$ZodType {
-  _zod: $ZodObjectInternals<Shape, Params>;
+> extends $ZodType<any, any, $ZodObjectInternals<Shape, Params>> {
+  // _zod: $ZodObjectInternals<Shape, Params>;
   "~standard": $ZodStandardSchema<this>;
 }
 

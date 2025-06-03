@@ -17,8 +17,12 @@ export interface RefinementCtx<T = unknown> extends core.ParsePayload<T> {
   addIssue(arg: string | core.$ZodRawIssue | Partial<core.$ZodIssueCustom>): void;
 }
 
-export interface __ZodType<out Internals extends core.$ZodTypeInternals = core.$ZodTypeInternals>
-  extends core._$ZodType<Internals> {
+export interface ZodType<
+  out Output = unknown,
+  out Input = unknown,
+  out Internals extends core.$ZodTypeInternals<Output, Input> = core.$ZodTypeInternals<Output, Input>,
+  // out Internals extends core.$ZodTypeInternals = core.$ZodTypeInternals,
+> extends core.$ZodType<Output, Input, Internals> {
   // _zod: Internals;
   def: Internals["def"];
   type: Internals["def"]["type"];
@@ -119,13 +123,13 @@ export interface __ZodType<out Internals extends core.$ZodTypeInternals = core.$
    */
   isNullable(): boolean;
 }
+
+// export interface _ZodType<out Internals extends core._$ZodTypeInternals = core._$ZodTypeInternals>
+//   // @ts-ignore
+//   extends ZodType<any, any, Internals> {}
+
 export interface _ZodType<out Internals extends core.$ZodTypeInternals = core.$ZodTypeInternals>
-  extends __ZodType<Internals>,
-    core.$ZodType<Internals["output"], Internals["input"]> {
-  _zod: Internals;
-}
-export interface ZodType<out Output = unknown, out Input = unknown>
-  extends _ZodType<core.$ZodTypeInternals<Output, Input>> {}
+  extends ZodType<any, any, Internals> {}
 
 export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$constructor("ZodType", (inst, def) => {
   core.$ZodType.init(inst as any, def);
@@ -1024,7 +1028,9 @@ export function date(params?: string | core.$ZodDateParams): ZodDate {
 }
 
 // ZodArray
-export interface ZodArray<T extends core.SomeType = core.$ZodType> extends _ZodType<core.$ZodArrayInternals<T>> {
+export interface ZodArray<T extends core.SomeType = core.$ZodType>
+  extends ZodType<any, any, core.$ZodArrayInternals<T>>,
+    core.$ZodArray<T> {
   // _zod: core.$ZodArrayInternals<T>;
 
   element: T;
@@ -1048,7 +1054,7 @@ export const ZodArray: core.$constructor<ZodArray> = /*@__PURE__*/ core.$constru
   inst.unwrap = () => inst.element;
 });
 
-export function array<T extends core._$ZodType>(element: T, params?: string | core.$ZodArrayParams): ZodArray<T> {
+export function array<T extends core.SomeType>(element: T, params?: string | core.$ZodArrayParams): ZodArray<T> {
   return core._array(ZodArray, element as any, params) as any;
 }
 
@@ -1064,9 +1070,9 @@ export interface ZodObject<
   /** @ts-ignore Cast variance */
   out Shape extends core.$ZodShape = core.$ZodLooseShape,
   out Config extends core.$ZodObjectConfig = core.$ZodObjectConfig,
-> extends __ZodType<core.$ZodObjectInternals<Shape, Config>>,
+> extends ZodType<any, any, core.$ZodObjectInternals<Shape, Config>>,
     core.$ZodObject<Shape, Config> {
-  _zod: core.$ZodObjectInternals<Shape, Config>;
+  // _zod: core.$ZodObjectInternals<Shape, Config>;
   // "~standard": core.$ZodStandardSchema<this>;
   shape: Shape;
 
@@ -1172,7 +1178,7 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
 export function object<T extends core.$ZodLooseShape = Partial<Record<never, core.SomeType>>>(
   shape?: T,
   params?: string | core.$ZodObjectParams
-): ZodObject<util.Writeable<T> & {}, core.$strip> {
+): ZodObject<util.Writeable<T>, core.$strip> {
   const def: core.$ZodObjectDef = {
     type: "object",
     get shape() {
@@ -1247,7 +1253,8 @@ export function union<const T extends readonly core.SomeType[]>(
 
 // ZodDiscriminatedUnion
 export interface ZodDiscriminatedUnion<Options extends readonly core.SomeType[] = readonly core.$ZodType[]>
-  extends ZodUnion<Options> {
+  extends ZodUnion<Options>,
+    core.$ZodDiscriminatedUnion<Options> {
   _zod: core.$ZodDiscriminatedUnionInternals<Options>;
 }
 export const ZodDiscriminatedUnion: core.$constructor<ZodDiscriminatedUnion> = /*@__PURE__*/ core.$constructor(
@@ -1419,7 +1426,7 @@ export function map<Key extends core.SomeType, Value extends core.SomeType>(
 
 // ZodSet
 export interface ZodSet<T extends core.SomeType = core.$ZodType>
-  extends _ZodType<core.$ZodSetInternals<T>>,
+  extends ZodType<any, any, core.$ZodSetInternals<T>>,
     core.$ZodSet<T> {
   // _zod: core.$ZodSetInternals<T>;
   min(minSize: number, params?: string | core.$ZodCheckMinSizeParams): this;
@@ -1450,8 +1457,8 @@ export function set<Value extends core.SomeType>(
 }
 
 // ZodEnum
-// @ts
-export interface ZodEnum<T extends util.EnumLike = util.EnumLike>
+// @ts-ignore Cast variance
+export interface ZodEnum<out T extends util.EnumLike = util.EnumLike>
   extends _ZodType<core.$ZodEnumInternals<T>>,
     core.$ZodEnum<T> {
   // _zod: core.$ZodEnumInternals<T>;

@@ -4,9 +4,13 @@ import * as parse from "./parse.js";
 
 type SomeType = core.SomeType;
 
-export interface ZodMiniType<out Output = unknown, out Input = unknown> extends core.$ZodType<Output, Input> {
+export interface ZodMiniType<
+  out Output = unknown,
+  out Input = unknown,
+  out Internals extends core.$ZodTypeInternals<Output, Input> = core.$ZodTypeInternals<Output, Input>,
+> extends core.$ZodType<Output, Input, Internals> {
   check(...checks: (core.CheckFn<core.output<this>> | core.$ZodCheck<core.output<this>>)[]): this;
-  clone(def?: this["_zod"]["def"], params?: { parent: boolean }): this;
+  clone(def?: Internals["def"], params?: { parent: boolean }): this;
   register<R extends core.$ZodRegistry>(
     registry: R,
     ...meta: this extends R["_schema"]
@@ -19,7 +23,7 @@ export interface ZodMiniType<out Output = unknown, out Input = unknown> extends 
     value?: T
   ): PropertyKey extends T ? this : this & Record<"_zod", Record<"output", core.output<this> & core.$brand<T>>>;
 
-  def: this["_zod"]["def"];
+  def: Internals["def"];
 
   parse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;
   safeParse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): util.SafeParseResult<core.output<this>>;
@@ -29,6 +33,9 @@ export interface ZodMiniType<out Output = unknown, out Input = unknown> extends 
     params?: core.ParseContext<core.$ZodIssue>
   ): Promise<util.SafeParseResult<core.output<this>>>;
 }
+
+interface _ZodMiniType<out Internals extends core.$ZodTypeInternals = core.$ZodTypeInternals>
+  extends ZodMiniType<Internals["output"], Internals["input"], Internals> {}
 
 export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$constructor(
   "ZodMiniType",
@@ -65,8 +72,10 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
 );
 
 // ZodMiniString
-export interface ZodMiniString<Input = unknown> extends ZodMiniType {
-  _zod: core.$ZodStringInternals<Input>;
+export interface ZodMiniString<Input = unknown>
+  extends _ZodMiniType<core.$ZodStringInternals<Input>>,
+    core.$ZodString<Input> {
+  // _zod: core.$ZodStringInternals<Input>;
 }
 export const ZodMiniString: core.$constructor<ZodMiniString> = /*@__PURE__*/ core.$constructor(
   "ZodMiniString",
@@ -648,8 +657,10 @@ export function date(params?: string | core.$ZodDateParams): ZodMiniDate<Date> {
 }
 
 // ZodMiniArray
-export interface ZodMiniArray<T extends SomeType = core.$ZodType> extends ZodMiniType {
-  _zod: core.$ZodArrayInternals<T>;
+export interface ZodMiniArray<T extends SomeType = core.$ZodType>
+  extends _ZodMiniType<core.$ZodArrayInternals<T>>,
+    core.$ZodArray<T> {
+  // _zod: core.$ZodArrayInternals<T>;
 }
 export const ZodMiniArray: core.$constructor<ZodMiniArray> = /*@__PURE__*/ core.$constructor(
   "ZodMiniArray",
@@ -679,8 +690,8 @@ export interface ZodMiniObject<
   /** @ts-ignore Cast variance */
   out Shape extends core.$ZodShape = core.$ZodShape,
   out Config extends core.$ZodObjectConfig = core.$ZodObjectConfig,
-> extends ZodMiniType {
-  _zod: core.$ZodObjectInternals<Shape, Config>;
+> extends ZodMiniType<any, any, core.$ZodObjectInternals<Shape, Config>>,
+    core.$ZodObject<Shape, Config> {
   shape: Shape;
 }
 export const ZodMiniObject: core.$constructor<ZodMiniObject> = /*@__PURE__*/ core.$constructor(
@@ -706,7 +717,6 @@ export function object<T extends core.$ZodLooseShape = Record<never, SomeType>>(
 }
 
 // strictObject
-
 export function strictObject<T extends core.$ZodLooseShape>(
   shape: T,
   params?: string | core.$ZodObjectParams
@@ -718,16 +728,12 @@ export function strictObject<T extends core.$ZodLooseShape>(
       util.assignProp(this, "shape", { ...shape });
       return this.shape;
     },
-    // get optional() {
-    //   return util.optionalKeys(shape);
-    // },
     catchall: never(),
     ...util.normalizeParams(params),
   }) as any;
 }
 
 // looseObject
-
 export function looseObject<T extends core.$ZodLooseShape>(
   shape: T,
   params?: string | core.$ZodObjectParams
