@@ -11,17 +11,17 @@ export function number<T = unknown>(params?: string | core.$ZodNumberParams): Zo
   return core._coercedNumber(schemas.ZodNumber, params) as ZodCoercedNumber<T>;
 }
 
-export interface ZodCoercedBoolean<T = unknown> extends schemas._ZodBoolean<T> {}
+export interface ZodCoercedBoolean<T = unknown> extends schemas._ZodBoolean<core.$ZodBooleanInternals<T>> {}
 export function boolean<T = unknown>(params?: string | core.$ZodBooleanParams): ZodCoercedBoolean<T> {
   return core._coercedBoolean(schemas.ZodBoolean, params) as ZodCoercedBoolean<T>;
 }
 
-export interface ZodCoercedBigInt<T = unknown> extends schemas._ZodBigInt<T> {}
+export interface ZodCoercedBigInt<T = unknown> extends schemas._ZodBigInt<core.$ZodBigIntInternals<T>> {}
 export function bigint<T = unknown>(params?: string | core.$ZodBigIntParams): ZodCoercedBigInt<T> {
   return core._coercedBigint(schemas.ZodBigInt, params) as ZodCoercedBigInt<T>;
 }
 
-export interface ZodCoercedDate<T = unknown> extends schemas._ZodDate<T> {}
+export interface ZodCoercedDate<T = unknown> extends schemas._ZodDate<core.$ZodDateInternals<T>> {}
 export function date<T = unknown>(params?: string | core.$ZodDateParams): ZodCoercedDate<T> {
   return core._coercedDate(schemas.ZodDate, params) as ZodCoercedDate<T>;
 }
