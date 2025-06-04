@@ -1587,7 +1587,7 @@ export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<st
   : keyof (T & Extra) extends never
     ? Record<string, never>
     : util.Prettify<
-        {
+        Record<keyof T, any> & {
           -readonly [k in keyof T as T[k] extends OptionalOutSchema ? never : k]: core.output<T[k]>;
         } & {
           -readonly [k in keyof T as T[k] extends OptionalOutSchema ? k : never]?: core.output<T[k]>;
@@ -1599,7 +1599,7 @@ export type $InferObjectInput<T extends $ZodLooseShape, Extra extends Record<str
   : keyof (T & Extra) extends never
     ? Record<string, never>
     : util.Prettify<
-        {
+        Record<keyof T, any> & {
           -readonly [k in keyof T as T[k] extends OptionalInSchema ? never : k]: core.input<T[k]>;
         } & {
           -readonly [k in keyof T as T[k] extends OptionalInSchema ? k : never]?: core.input<T[k]>;
@@ -2679,7 +2679,10 @@ export interface $ZodEnumInternals<
   isst: errors.$ZodIssueInvalidValue;
 }
 
-export interface $ZodEnum<T extends util.EnumLike = util.EnumLike> extends $ZodType {
+export interface $ZodEnum<
+  /** @ts-ignore Cast variance */
+  out T extends util.EnumLike = util.EnumLike,
+> extends $ZodType {
   _zod: $ZodEnumInternals<T>;
 }
 

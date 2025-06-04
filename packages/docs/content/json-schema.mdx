@@ -186,7 +186,7 @@ z.nullable(z.string());
 // => { oneOf: [{ type: "string" }, { type: "null" }] }
 ```
 
-Optional schemas are represented as-is, though they are decorated with an `optional` annotation.
+Optional schemas are represented as-is. Optionality only changes the JSON Schema when the schema is nested inside an object.
 
 ```ts
 z.optional(z.string());
@@ -236,7 +236,7 @@ interface ToJSONSchemaParams {
    * - `"ref"` — Reused schemas will be extracted as $defs */
   reused?: "ref" | "inline";
 
-  /** A function used to convert `id` values to URIs to be used in *external* $refs.
+  /** A function used to convert `id` values to URIs to be used in *external* $refs. Only used when generating JSON Schema from a registry.
    *
    * Default is `(id) => id`.
    */
@@ -288,6 +288,17 @@ z.toJSONSchema(emailSchema);
 ```
 </Tab>
 </Tabs>
+
+All schemas with an `id` property will be extracted into `$defs`/`definitions`:
+
+```ts
+import { z } from "zod/v4";
+
+const User = z.object({
+  name: z.string().meta({id: "first_name"}),
+  email: z.string().email().meta({ id: "email_address" }),
+});
+
 
 All metadata fields get copied into the resulting JSON Schema. 
 

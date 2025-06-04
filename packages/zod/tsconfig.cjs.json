@@ -4,6 +4,7 @@
     "rootDir": "./src",
     "module": "Node16",
     "moduleResolution": "node16",
+    "isolatedDeclarations": false,
     "customConditions": ["@zod/source"],
     "outDir": "./dist/cjs"
   },

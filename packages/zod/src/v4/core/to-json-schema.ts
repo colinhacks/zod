@@ -38,7 +38,9 @@ interface EmitParams {
    * - `"inline"` — Default. Reused schemas will be inlined
    * - `"ref"` — Reused schemas will be extracted as $defs */
   reused?: "ref" | "inline";
+}
 
+interface EmitParamsInternal extends EmitParams {
   external?:
     | {
         /**  */
@@ -48,7 +50,6 @@ interface EmitParams {
       }
     | undefined;
 }
-
 interface Seen {
   /** JSON Schema result for this Zod schema */
   schema: JSONSchema.BaseSchema;
@@ -597,14 +598,14 @@ export class JSONSchemaGenerator {
     return _result.schema;
   }
 
-  emit(schema: schemas.$ZodType, _params?: EmitParams): JSONSchema.BaseSchema {
+  emit(schema: schemas.$ZodType, _params?: EmitParamsInternal): JSONSchema.BaseSchema {
     const params = {
       cycles: _params?.cycles ?? "ref",
       reused: _params?.reused ?? "inline",
       // unrepresentable: _params?.unrepresentable ?? "throw",
       // uri: _params?.uri ?? ((id) => `${id}`),
       external: _params?.external ?? undefined,
-    } satisfies EmitParams;
+    } satisfies EmitParamsInternal;
 
     // iterate over seen map;
     const root = this.seen.get(schema);
@@ -652,7 +653,6 @@ export class JSONSchemaGenerator {
       }
       const seen = entry[1];
       const { ref, defId } = makeURI(entry);
-
       seen.def = { ...seen.schema };
       // defId won't be set if the schema is a reference to an external schema
       if (defId) seen.defId = defId;
@@ -798,20 +798,18 @@ export class JSONSchemaGenerator {
   }
 }
 
-interface ToJSONSchemaParams extends Omit<JSONSchemaGeneratorParams & EmitParams, never> {}
-interface RegistryToJSONSchemaParams extends Omit<JSONSchemaGeneratorParams & EmitParams, never> {
-  uri?: (id: string) => string;
-}
+type ToJSONSchemaParams = JSONSchemaGeneratorParams & EmitParams & { uri?: never }; // for autocompletion
+type RegistryToJSONSchemaParams = JSONSchemaGeneratorParams &
+  EmitParams & {
+    uri?: (id: string) => string;
+  };
 
-export function toJSONSchema(schema: schemas.$ZodType, _params?: ToJSONSchemaParams): JSONSchema.BaseSchema;
 export function toJSONSchema(
   registry: $ZodRegistry<{ id?: string | undefined }>,
   _params?: RegistryToJSONSchemaParams
 ): { schemas: Record<string, JSONSchema.BaseSchema> };
-export function toJSONSchema(
-  input: schemas.$ZodType | $ZodRegistry<{ id?: string | undefined }>,
-  _params?: ToJSONSchemaParams
-): any {
+export function toJSONSchema(schema: schemas.$ZodType, _params?: ToJSONSchemaParams): JSONSchema.BaseSchema;
+export function toJSONSchema(input: schemas.$ZodType | $ZodRegistry, _params?: any): any {
   if (input instanceof $ZodRegistry) {
     const gen = new JSONSchemaGenerator(_params);
     const defs: any = {};
@@ -832,6 +830,7 @@ export function toJSONSchema(
         ..._params,
         external,
       });
+      schemas[key].$id ??= external.uri(key);
     }
 
     if (Object.keys(defs).length > 0) {
@@ -844,6 +843,7 @@ export function toJSONSchema(
     return { schemas };
   }
 
+  if (_params?.uri) throw new Error("The `uri` parameter is not supported for single-schema toJSONSchema conversion.");
   const gen = new JSONSchemaGenerator(_params);
   gen.process(input);
 

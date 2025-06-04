@@ -18,6 +18,7 @@
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "noImplicitOverride": true,
+    "isolatedDeclarations": true,
 
     "noFallthroughCasesInSwitch": true,
     "resolveJsonModule": true,

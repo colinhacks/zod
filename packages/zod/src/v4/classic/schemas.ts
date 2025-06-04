@@ -1400,9 +1400,11 @@ export function set<Value extends core.SomeType>(
 }
 
 // ZodEnum
-// @ts-ignore Cast variance
-export interface ZodEnum<out T extends util.EnumLike = util.EnumLike>
-  extends _ZodType<core.$ZodEnumInternals<T>>,
+
+export interface ZodEnum<
+  /** @ts-ignore Cast variance */
+  out T extends util.EnumLike = util.EnumLike,
+> extends _ZodType<core.$ZodEnumInternals<T>>,
     core.$ZodEnum<T> {
   enum: T;
   options: Array<T[keyof T]>;

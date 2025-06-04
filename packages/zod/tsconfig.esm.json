@@ -4,6 +4,7 @@
     "rootDir": "./src",
     "module": "esnext",
     "moduleResolution": "bundler",
+    "isolatedDeclarations": false,
     "customConditions": ["@zod/source"],
     "outDir": "./dist/esm"
   },
