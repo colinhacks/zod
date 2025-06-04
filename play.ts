@@ -1,7 +1,11 @@
-import * as z from "zod/v4";
+import { z } from "zod";
 
-const schema = z.string().meta({
-  whatever: 1234,
-});
+// (A) fails in v4 – TDZ on recursive use
+const NodeA: z.ZodType<any> = z.lazy(() => NodeA).optional();
 
-console.dir(z.toJSONSchema(schema), { depth: null });
+// (B) works in v4
+const NodeB: z.ZodType<any> = z.lazy(() => NodeB.optional());
+
+// Usage
+NodeA.parse(undefined); // ❌ ReferenceError: Cannot access 'NodeA' before initialization
+NodeB.parse(undefined); // ✅ passes
