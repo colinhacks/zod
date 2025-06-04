@@ -441,6 +441,7 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
             pattern: regexes.hostname.source,
             input: payload.value,
             inst,
+            continue: !def.abort,
           });
         }
       }
@@ -455,6 +456,7 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
             pattern: def.protocol.source,
             input: payload.value,
             inst,
+            continue: !def.abort,
           });
         }
       }
@@ -466,6 +468,7 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
         format: "url",
         input: payload.value,
         inst,
+        continue: !def.abort,
       });
     }
   };
@@ -719,6 +722,7 @@ export const $ZodIPv6: core.$constructor<$ZodIPv6> = /*@__PURE__*/ core.$constru
         format: "ipv6",
         input: payload.value,
         inst,
+        continue: !def.abort,
       });
     }
   };
@@ -780,6 +784,7 @@ export const $ZodCIDRv6: core.$constructor<$ZodCIDRv6> = /*@__PURE__*/ core.$con
           format: "cidrv6",
           input: payload.value,
           inst,
+          continue: !def.abort,
         });
       }
     };
@@ -823,6 +828,7 @@ export const $ZodBase64: core.$constructor<$ZodBase64> = /*@__PURE__*/ core.$con
         format: "base64",
         input: payload.value,
         inst,
+        continue: !def.abort,
       });
     };
   }
@@ -861,6 +867,7 @@ export const $ZodBase64URL: core.$constructor<$ZodBase64URL> = /*@__PURE__*/ cor
         format: "base64url",
         input: payload.value,
         inst,
+        continue: !def.abort,
       });
     };
   }
@@ -919,6 +926,7 @@ export const $ZodJWT: core.$constructor<$ZodJWT> = /*@__PURE__*/ core.$construct
       format: "jwt",
       input: payload.value,
       inst,
+      continue: !def.abort,
     });
   };
 });

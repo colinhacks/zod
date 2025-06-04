@@ -79,14 +79,14 @@ For convenience, Zod provides a global registry (`z.globalRegistry`) that can be
 
 ```ts
 export interface GlobalMeta {
-  id?: string;
-  title?: string;
-  description?: string;
-  example?: unknown;
+  id?: string ;
+  title?: string ;
+  description?: string ;
+  example?: unknown ;
   examples?: 
     | unknown[] // array-style (JSON Schema)
     | Record<string, { value: unknown; [k: string]: unknown }>;  // map-style (OpenAPI)
-  deprecated?: boolean;
+  deprecated?: boolean ;
   [k: string]: unknown;
 }
 ```

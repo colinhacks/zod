@@ -1,9 +1,54 @@
 import { z } from "zod/v4";
 
-const A = z.object({
-  get x() {
-    return A;
-  },
-});
+z.ipv4()
+  .transform((value) => {
+    // Called when invalid value
+    console.log("input:", value);
 
-const StrictA = A.strict();
+    return value;
+  })
+  .safeParse("invalid_value");
+
+z.email()
+  .transform((value) => {
+    // Called when invalid value
+    console.log("input:", value);
+
+    return value;
+  })
+  .safeParse("invalid_value");
+
+z.uuid()
+  .transform((value) => {
+    // Called when invalid value
+    console.log("input:", value);
+
+    return value;
+  })
+  .safeParse("invalid_value");
+
+z.url()
+  .transform((value) => {
+    // Not called when invalid value
+    console.log("input:", value);
+    return value;
+  })
+  .safeParse("invalid_value");
+
+z.number()
+  .transform((value) => {
+    // Not called when invalid value
+    console.log("input:", value);
+
+    return value;
+  })
+  .safeParse("invalid_value");
+
+z.boolean()
+  .transform((value) => {
+    // Not called when invalid value
+    console.log("input:", value);
+
+    return value;
+  })
+  .safeParse("invalid_value");
