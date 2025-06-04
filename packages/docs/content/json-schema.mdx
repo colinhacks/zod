@@ -289,6 +289,16 @@ z.toJSONSchema(emailSchema);
 </Tab>
 </Tabs>
 
+All metadata fields get copied into the resulting JSON Schema. 
+
+```ts
+const schema = z.string().meta({
+  whatever: 1234
+});
+
+z.toJSONSchema(schema);
+// => { type: "string", whatever: 1234 }
+```
 
 ### `unrepresentable` 
 

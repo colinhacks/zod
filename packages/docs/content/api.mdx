@@ -1206,11 +1206,11 @@ Due to TypeScript limitations, recursive type inference can be finicky, and it o
 const Activity = z.object({
   name: z.string(),
   get subactivities() {
-    // ^ ❌ 'subactivities' implicitly has return type 'any' because it does not 
-    // // have a return type annotation and is referenced directly or indirectly 
+    // ^ ❌ 'subactivities' implicitly has return type 'any' because it does not
+    // have a return type annotation and is referenced directly or indirectly
     // in one of its return expressions.ts(7023)
 
-    return z.union([z.null(), Activity]);
+    return z.nullable(z.array(Activity));
   },
 });
 ```
@@ -1220,11 +1220,13 @@ In these cases, you can resolve the error with a type annotation on the offendin
 ```ts
 const Activity = z.object({
   name: z.string(),
-  get subactivities(): z.ZodUnion<[z.ZodNull, typeof Activity]> { // ✅
-    return z.union([z.null(), Activity]); 
+  get subactivities(): z.ZodNullable<z.ZodArray<typeof Activity>> {
+    return z.nullable(z.array(Activity));
   },
 });
 ```
+
+{/* Some general rules of thumb for avoiding circularity  */}
 
 {/* 
 <Accordions>
@@ -1273,7 +1275,7 @@ const Activity = z.object({
       name: z.string(),
       get subactivities() {
         // ^ ❌ 'subactivities' implicitly has return type 'any' because it does not 
-        // // have a return type annotation and is referenced directly or indirectly 
+        // have a return type annotation and is referenced directly or indirectly 
         // in one of its return expressions.ts(7023)
 
         return z.union([z.null(), Activity]);

@@ -1,15 +1,7 @@
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
-z;
+const schema = z.string().meta({
+  whatever: 1234,
+});
 
-export const createV4Schema = <Output>(opts: {
-  schema: z.ZodType<Output>;
-}) => {
-  return opts.schema;
-};
-
-createV4Schema({
-  schema: z.object({
-    name: z.string(),
-  }),
-})._zod.output.name;
+console.dir(z.toJSONSchema(schema), { depth: null });

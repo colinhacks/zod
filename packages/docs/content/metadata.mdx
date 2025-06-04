@@ -82,8 +82,12 @@ export interface GlobalMeta {
   id?: string;
   title?: string;
   description?: string;
-  examples?: T[]; // T is the output type of the schema you are registering
-  [k: string]: unknown; // accepts other properties too
+  example?: unknown;
+  examples?: 
+    | unknown[] // array-style (JSON Schema)
+    | Record<string, { value: unknown; [k: string]: unknown }>;  // map-style (OpenAPI)
+  deprecated?: boolean;
+  [k: string]: unknown;
 }
 ```
 
