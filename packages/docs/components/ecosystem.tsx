@@ -47,6 +47,12 @@ const formIntegrations: ZodResource[] = [
     description: "Headless form validation library for Vue.js.",
     slug: "victorgarciaesgi/regle",
   },
+  {
+    name: "Superforms",
+    url: "https://github.com/ciscoheat/sveltekit-superforms",
+    description: "Making SvelteKit forms a pleasure to use!",
+    slug: "ciscoheat/sveltekit-superforms",
+  }
 ];
 
 const zodToXConverters: ZodResource[] = [];
