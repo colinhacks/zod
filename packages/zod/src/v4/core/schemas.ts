@@ -154,23 +154,18 @@ export interface $ZodTypeInternals<out O = unknown, out I = unknown> extends _$Z
 
 export type $ZodStandardSchema<T> = StandardSchemaV1.Props<core.input<T>, core.output<T>>;
 
-export interface _$ZodType<T extends _$ZodTypeInternals = _$ZodTypeInternals> {
-  _zod: T;
-  // "~standard": $ZodStandardSchema<this>;
-  // "~args": this["_zod"][any];
-  // /** @deprecated @internal Internal field. */
-  // "~d": this["_zod"]["def"];
-  // /** @deprecated @internal Internal field. */
-  // "~o": O;
-  // /** @deprecated @internal Internal field. */
-  // "~i": I;
-}
-export type SomeType = _$ZodType; //<any, any, $ZodTypeInternals<unknown, unknown>>;
+// export interface _$ZodType<T extends _$ZodTypeInternals = _$ZodTypeInternals> {
+//   _zod: T;
+// }
+export type SomeType = { _zod: _$ZodTypeInternals };
+// _$ZodType; //<any, any, $ZodTypeInternals<unknown, unknown>>;
 
-export interface $ZodType<O = unknown, I = unknown, Internals extends $ZodTypeInternals<O, I> = $ZodTypeInternals<O, I>>
-  extends _$ZodType<Internals> {
-  // _zod: $ZodTypeInternals<O, I>;
-  // _zod: Internals;
+export interface $ZodType<
+  O = unknown,
+  I = unknown,
+  Internals extends $ZodTypeInternals<O, I> = $ZodTypeInternals<O, I>,
+> {
+  _zod: Internals;
   "~standard": $ZodStandardSchema<this>;
 }
 
@@ -1648,7 +1643,7 @@ export type $strip = {
   out: {};
   in: {};
 };
-export type $catchall<T extends _$ZodType> = {
+export type $catchall<T extends SomeType> = {
   out: { [k: string]: core.output<T> };
   in: { [k: string]: core.input<T> };
 };

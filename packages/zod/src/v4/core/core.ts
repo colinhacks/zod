@@ -64,7 +64,7 @@ export type $brand<T extends string | number | symbol = string | number | symbol
   [$brand]: { [k in T]: true };
 };
 
-export type $ZodBranded<T extends schemas._$ZodType, Brand extends string | number | symbol> = T &
+export type $ZodBranded<T extends schemas.SomeType, Brand extends string | number | symbol> = T &
   Record<"_zod", Record<"output", output<T> & $brand<Brand>>>;
 
 export class $ZodAsyncError extends Error {
