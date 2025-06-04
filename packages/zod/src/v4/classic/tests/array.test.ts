@@ -49,6 +49,7 @@ test("array length", async () => {
     [
       {
         "code": "too_small",
+        "exact": true,
         "message": "Too small: expected array to have >2 items",
         "minimum": 2,
         "origin": "array",
@@ -63,6 +64,7 @@ test("array length", async () => {
     [
       {
         "code": "too_big",
+        "exact": true,
         "maximum": 2,
         "message": "Too big: expected array to have <2 items",
         "origin": "array",
