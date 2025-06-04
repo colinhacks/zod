@@ -68,5 +68,5 @@ test("generic on output type", () => {
     schema: z.object({
       name: z.string(),
     }),
-  })._zod.output.name;
+  })?._zod?.output?.name;
 });

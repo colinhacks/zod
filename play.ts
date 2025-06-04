@@ -1,11 +1,9 @@
-import { z } from "zod";
+import { z } from "zod/v4";
 
-// (A) fails in v4 – TDZ on recursive use
-const NodeA: z.ZodType<any> = z.lazy(() => NodeA).optional();
+const A = z.object({
+  get x() {
+    return A;
+  },
+});
 
-// (B) works in v4
-const NodeB: z.ZodType<any> = z.lazy(() => NodeB.optional());
-
-// Usage
-NodeA.parse(undefined); // ❌ ReferenceError: Cannot access 'NodeA' before initialization
-NodeB.parse(undefined); // ✅ passes
+const StrictA = A.strict();

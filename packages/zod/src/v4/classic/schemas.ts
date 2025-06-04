@@ -1152,12 +1152,10 @@ export function strictObject<T extends core.$ZodLooseShape>(
 ): ZodObject<T, core.$strict> {
   return new ZodObject({
     type: "object",
-
     get shape() {
       util.assignProp(this, "shape", { ...shape });
       return this.shape;
     },
-
     catchall: never(),
     ...util.normalizeParams(params),
   }) as any;
@@ -1171,12 +1169,10 @@ export function looseObject<T extends core.$ZodLooseShape>(
 ): ZodObject<T, core.$loose> {
   return new ZodObject({
     type: "object",
-
     get shape() {
       util.assignProp(this, "shape", { ...shape });
       return this.shape;
     },
-
     catchall: unknown(),
     ...util.normalizeParams(params),
   }) as any;

@@ -123,6 +123,8 @@ colors.values; // => Set<"red" | "green" | "blue">
 </Tab>
 </Tabs>
 
+
+
 ## Strings
 
 {/* Zod provides a handful of built-in string validation and transform APIs.
@@ -449,6 +451,36 @@ const cidrv6 = z.string().cidrv6();
 cidrv6.parse("2001:db8::/32"); // ✅
 ```
 
+## Template literals
+
+> **New in Zod 4**
+
+To define a template literal schema:
+
+```ts
+const schema = z.templateLiteral("hello, ", z.string(), "!");
+// `hello, ${string}!`
+```
+
+The `z.templateLiteral` API can handle any number of string literals (e.g. `"hello"`) and schemas. Any schema with an inferred type that's assignable to `string | number | bigint | boolean | null | undefined` can be passed.
+
+```ts
+z.templateLiteral([ "hi there" ]);
+// `hi there`
+
+z.templateLiteral([ "email: ", z.string() ]);
+// `email: ${string}`
+
+z.templateLiteral([ "high", z.literal(5) ]);
+// `high5`
+
+z.templateLiteral([ z.nullable(z.literal("grassy")) ]);
+// `grassy` | `null`
+
+z.templateLiteral([ z.number(), z.enum(["px", "em", "rem"]) ]);
+// `${number}px` | `${number}em` | `${number}rem`
+```
+
 ## Numbers
 
 Use `z.number()` to validate numbers. It allows any finite number.
@@ -703,7 +735,7 @@ const SalmonAndTroutOnly = FishEnum.extract(["Salmon", "Trout"]);
 </Tab>
 </Tabs>
 
-## Stringbool
+## Stringbools [#stringbool]
 
 > **💎 New in Zod 4**
 
@@ -746,6 +778,7 @@ z.stringbool({
   case: "sensitive"
 });
 ```
+
 
 ## Optionals
 
@@ -846,29 +879,6 @@ No value will pass validation.
 
 ```ts
 z.never(); // inferred type: `never`
-```
-
-## Template literals
-
-
-> **💎 New in Zod 4**
-
-Zod 4 finally implements one of the last remaining unrepresented features of TypeScript's type system: template literals. Virtually all primitive schemas can be used in `z.templateLiteral`: strings, string formats like `z.email()`, numbers, booleans, enums, literals (of the non-template variety), optional/nullable, and other template literals.
-
-```ts
-const hello = z.templateLiteral(["hello, ", z.string()]);
-// `hello, ${string}`
-
-const cssUnits = z.enum(["px", "em", "rem", "%"]);
-const css = z.templateLiteral([z.number(), cssUnits]);
-// `${number}px` | `${number}em` | `${number}rem` | `${number}%`
-
-const email = z.templateLiteral([
-  z.string().min(1),
-  "@",
-  z.string().max(64),
-]);
-// `${string}@${string}` (the min/max refinements are enforced!)
 ```
 
 ## Objects
@@ -1022,7 +1032,7 @@ const DogWithBreed = z.extend(Dog, {
   This API can be used to overwrite existing fields! Be careful with this power! If the two schemas share keys, B will override A.
 </Callout>
 
-Despite the existence of the `.extend` API, the recommended way to extend an object schema is to create an entirely new schema:
+Despite the existence of the `.extend` API, the recommended way to extend an object schema is to create an entirely new schema by destructuring the original schema's `shape` property.
 
 ```ts
 const DogWithBreed = z.object({
@@ -2397,7 +2407,7 @@ type ReadonlyUser = z.infer<typeof ReadonlyUser>;
 </Tab>
 </Tabs>
 
-This returns a new schema that wraps the original. The new schema's inferred type will be marked as `readonly`. Note that this only affects objects, arrays, tuples, `Set`, and `Map` in TypeScript:
+The inferred type of the new schemas will be marked as `readonly`. Note that in TypeScript, this only affects objects, arrays, tuples, `Set`, and `Map`:
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -2420,7 +2430,7 @@ z.readonly(z.set(z.string())); // ReadonlySet<string>
 </Tab>
 </Tabs>
 
-Inputs will be parsed using the original schema, then the result will be frozen with [`Object.freeze()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze) to prevent modifications.
+Inputs will be parsed like normal, then the result will be frozen with [`Object.freeze()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze) to prevent modifications.
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -2436,36 +2446,6 @@ result.name = "simba"; // throws TypeError
 ```
 </Tab>
 </Tabs>
-
-## Template literals
-
-> **New in Zod 4**
-
-To define a template literal schema:
-
-```ts
-const schema = z.templateLiteral("hello, ", z.string(), "!");
-// `hello, ${string}!`
-```
-
-The `z.templateLiteral` API can handle any number of string literals (e.g. `"hello"`) and schemas. Any schema with an inferred type that's assignable to `string | number | bigint | boolean | null | undefined` can be passed.
-
-```ts
-z.templateLiteral([ "hi there" ]); 
-// `hi there`
-
-z.templateLiteral([ "email: ", z.string() ]); 
-// `email: ${string}`
-
-z.templateLiteral([ "high", z.literal(5) ]); 
-// `high5`
-
-z.templateLiteral([ z.nullable(z.literal("grassy")) ]); 
-// `grassy` | `null`
-
-z.templateLiteral([ z.number(), z.enum(["px", "em", "rem"]) ]); 
-// `${number}px` | `${number}em` | `${number}rem`
-```
 
 ## JSON
 
