@@ -45,7 +45,7 @@ interface EmitParamsInternal extends EmitParams {
     | {
         /**  */
         registry: $ZodRegistry<{ id?: string | undefined }>;
-        uri: (id: string) => string;
+        uri?: (id: string) => string;
         defs: Record<string, JSONSchema.BaseSchema>;
       }
     | undefined;
@@ -622,16 +622,20 @@ export class JSONSchemaGenerator {
 
       // external is configured
       const defsSegment = this.target === "draft-2020-12" ? "$defs" : "definitions";
+
       if (params.external) {
+        const uri = params.external.uri ?? ((id) => id);
         const externalId = params.external.registry.get(entry[0])?.id; // ?? "__shared";// `__schema${this.counter++}`;
 
         // check if schema is in the external registry
-        if (externalId) return { ref: params.external.uri(externalId) };
+        if (externalId) {
+          return { ref: uri(externalId) };
+        }
 
         // otherwise, add to __shared
         const id = entry[1].defId ?? entry[1].schema.id ?? `schema${this.counter++}`;
         entry[1].defId = id;
-        return { defId: id, ref: `${params.external.uri("__shared")}#/${defsSegment}/${id}` };
+        return { defId: id, ref: `${uri("__shared")}#/${defsSegment}/${id}` };
       }
 
       if (entry[1] === root) {
@@ -821,16 +825,19 @@ export function toJSONSchema(input: schemas.$ZodType | $ZodRegistry, _params?: a
     const schemas: Record<string, JSONSchema.BaseSchema> = {};
     const external = {
       registry: input,
-      uri: (_params as RegistryToJSONSchemaParams)?.uri || ((id) => id),
+      uri: (_params as RegistryToJSONSchemaParams)?.uri,
       defs,
     };
     for (const entry of input._idmap.entries()) {
       const [key, schema] = entry;
-      schemas[key] = gen.emit(schema, {
+      const emitted = gen.emit(schema, {
         ..._params,
         external,
       });
-      schemas[key].$id ??= external.uri(key);
+      schemas[key] = {
+        ...(external.uri ? { $id: external.uri(key) } : {}),
+        ...emitted,
+      };
     }
 
     if (Object.keys(defs).length > 0) {

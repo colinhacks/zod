@@ -1587,7 +1587,7 @@ export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<st
   : keyof (T & Extra) extends never
     ? Record<string, never>
     : util.Prettify<
-        Record<keyof T, any> & {
+        {
           -readonly [k in keyof T as T[k] extends OptionalOutSchema ? never : k]: core.output<T[k]>;
         } & {
           -readonly [k in keyof T as T[k] extends OptionalOutSchema ? k : never]?: core.output<T[k]>;
@@ -1599,7 +1599,7 @@ export type $InferObjectInput<T extends $ZodLooseShape, Extra extends Record<str
   : keyof (T & Extra) extends never
     ? Record<string, never>
     : util.Prettify<
-        Record<keyof T, any> & {
+        {
           -readonly [k in keyof T as T[k] extends OptionalInSchema ? never : k]: core.input<T[k]>;
         } & {
           -readonly [k in keyof T as T[k] extends OptionalInSchema ? k : never]?: core.input<T[k]>;

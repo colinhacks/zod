@@ -1717,8 +1717,8 @@ test("basic registry", () => {
   myRegistry.add(User, { id: "User" });
   myRegistry.add(Post, { id: "Post" });
 
-  const result = z.z.toJSONSchema(myRegistry);
-  expect(result).toMatchInlineSnapshot(`
+  const a = z.z.toJSONSchema(myRegistry);
+  expect(a).toMatchInlineSnapshot(`
     {
       "schemas": {
         "Post": {
@@ -1752,6 +1752,59 @@ test("basic registry", () => {
             "posts": {
               "items": {
                 "$ref": "Post",
+              },
+              "type": "array",
+            },
+          },
+          "required": [
+            "name",
+            "posts",
+          ],
+          "type": "object",
+        },
+      },
+    }
+  `);
+
+  const b = z.z.toJSONSchema(myRegistry, {
+    uri: (id) => `https://example.com/schemas/${id}.json`,
+  });
+  expect(b).toMatchInlineSnapshot(`
+    {
+      "schemas": {
+        "Post": {
+          "$id": "https://example.com/schemas/Post.json",
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "additionalProperties": false,
+          "properties": {
+            "author": {
+              "$ref": "https://example.com/schemas/User.json",
+            },
+            "content": {
+              "type": "string",
+            },
+            "title": {
+              "type": "string",
+            },
+          },
+          "required": [
+            "title",
+            "content",
+            "author",
+          ],
+          "type": "object",
+        },
+        "User": {
+          "$id": "https://example.com/schemas/User.json",
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+            },
+            "posts": {
+              "items": {
+                "$ref": "https://example.com/schemas/Post.json",
               },
               "type": "array",
             },
