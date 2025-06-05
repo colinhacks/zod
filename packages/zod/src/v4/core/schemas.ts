@@ -1461,24 +1461,10 @@ export interface $ZodArrayInternals<T extends SomeType = $ZodType>
   extends $ZodTypeInternals<core.output<T>[], core.input<T>[]> {
   def: $ZodArrayDef<T>;
   isst: errors.$ZodIssueInvalidType;
-  // optout: "optional";
-  // optin: "optional";
 }
-
-// export interface $ZodArrayInternals<T extends SomeType = $ZodType>
-//   extends $ZodTypeInternals<core.output<T>[], core.input<T>[]> {
-//   def: $ZodOptionalDef<T>;
-//   optin: "optional";
-//   optout: "optional";
-//   isst: never;
-//   values: T["_zod"]["values"];
-//   pattern: T["_zod"]["pattern"];
-// }
 
 export interface $ZodArray<T extends SomeType = $ZodType>
-  extends $ZodType<core.output<T>[], core.input<T>[], $ZodArrayInternals<T>> {
-  // _zod: $ZodArrayInternals<T>;
-}
+  extends $ZodType<core.output<T>[], core.input<T>[], $ZodArrayInternals<T>> {}
 
 function handleArrayResult(result: ParsePayload<any>, final: ParsePayload<any[]>, index: number) {
   if (result.issues.length) {
