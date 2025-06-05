@@ -1,7 +1,5 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-pnpm format
-pnpm lint
-pnpm semver-check
 pnpm test
+pnpm semver-check
