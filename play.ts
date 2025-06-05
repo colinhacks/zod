@@ -1,54 +1,30 @@
+// import { expectTypeOf } from "vitest";
+// import { expectTypeOf } from "vitest";
 import { z } from "zod/v4";
 
-z.ipv4()
-  .transform((value) => {
-    // Called when invalid value
-    console.log("input:", value);
+export const slotSchema = z.object({
+  slotCode: z.string(),
 
-    return value;
-  })
-  .safeParse("invalid_value");
+  get blocks() {
+    return z.array(blockSchema);
+  },
+});
 
-z.email()
-  .transform((value) => {
-    // Called when invalid value
-    console.log("input:", value);
+const a: A = null as any;
 
-    return value;
-  })
-  .safeParse("invalid_value");
+export const blockSchema = z.object({
+  blockCode: z.string(),
+  get slots() {
+    // return z.array(slotSchema);              // would work, but we want `slots` to be optional
+    return z.array(slotSchema).optional(); // infers `slots` as unknown below
+    // return z.optional(z.array(slotSchema));  // causes a type error
+  },
+});
 
-z.uuid()
-  .transform((value) => {
-    // Called when invalid value
-    console.log("input:", value);
+export const pageSchema = z.object({
+  slots: z.array(slotSchema),
+});
 
-    return value;
-  })
-  .safeParse("invalid_value");
-
-z.url()
-  .transform((value) => {
-    // Not called when invalid value
-    console.log("input:", value);
-    return value;
-  })
-  .safeParse("invalid_value");
-
-z.number()
-  .transform((value) => {
-    // Not called when invalid value
-    console.log("input:", value);
-
-    return value;
-  })
-  .safeParse("invalid_value");
-
-z.boolean()
-  .transform((value) => {
-    // Not called when invalid value
-    console.log("input:", value);
-
-    return value;
-  })
-  .safeParse("invalid_value");
+const test = pageSchema.parse(null);
+test.slots;
+// ^?

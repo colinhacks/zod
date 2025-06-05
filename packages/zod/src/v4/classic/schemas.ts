@@ -987,7 +987,7 @@ export function date(params?: string | core.$ZodDateParams): ZodDate {
 
 // ZodArray
 export interface ZodArray<T extends core.SomeType = core.$ZodType>
-  extends ZodType<any, any, core.$ZodArrayInternals<T>>,
+  extends _ZodType<core.$ZodArrayInternals<T>>,
     core.$ZodArray<T> {
   element: T;
   min(minLength: number, params?: string | core.$ZodCheckMinLengthParams): this;
@@ -1996,14 +1996,18 @@ export const stringbool: (_params?: string | core.$ZodStringBoolParams) => ZodPi
   ) as any;
 
 // json
-export type ZodJSONSchema = ZodUnion<
+type _ZodJSONSchema = ZodUnion<
   [ZodString, ZodNumber, ZodBoolean, ZodNull, ZodArray<ZodJSONSchema>, ZodRecord<ZodString, ZodJSONSchema>]
-> & {
-  _zod: {
-    input: util.JSONType;
-    output: util.JSONType;
-  };
-};
+>;
+type _ZodJSONSchemaInternals = _ZodJSONSchema["_zod"];
+
+export interface ZodJSONSchemaInternals extends _ZodJSONSchemaInternals {
+  output: util.JSONType;
+  input: util.JSONType;
+}
+export interface ZodJSONSchema extends _ZodJSONSchema {
+  _zod: ZodJSONSchemaInternals;
+}
 
 export function json(params?: string | core.$ZodCustomParams): ZodJSONSchema {
   const jsonSchema: any = lazy(() => {
@@ -2016,9 +2020,9 @@ export function json(params?: string | core.$ZodCustomParams): ZodJSONSchema {
 // preprocess
 
 // /** @deprecated Use `z.pipe()` and `z.transform()` instead. */
-export function preprocess<A, U extends core.SomeType>(
-  fn: (arg: unknown, ctx: RefinementCtx) => A,
+export function preprocess<A, U extends core.SomeType, B = unknown>(
+  fn: (arg: B, ctx: RefinementCtx) => A,
   schema: U
-): ZodPipe<ZodTransform<A, unknown>, U> {
-  return pipe(transform(fn as any), schema as any);
+): ZodPipe<ZodTransform<A, B>, U> {
+  return pipe(transform(fn as any), schema as any) as any;
 }

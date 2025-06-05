@@ -184,7 +184,7 @@ test("mutual recursion with meta", () => {
   const A = z
     .object({
       name: z.string(),
-      get b() {
+      get b(): typeof B {
         return B;
       },
     })
@@ -195,7 +195,7 @@ test("mutual recursion with meta", () => {
   const B = z
     .object({
       name: z.string(),
-      get a() {
+      get a(): typeof A {
         return A;
       },
     })
@@ -211,6 +211,7 @@ test("mutual recursion with meta", () => {
         b: _B;
       }>
     | undefined;
+  // | undefined;
   type _B = Readonly<{
     name: string;
     a?: _A;
