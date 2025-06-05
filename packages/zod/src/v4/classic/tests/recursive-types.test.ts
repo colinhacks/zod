@@ -184,7 +184,7 @@ test("mutual recursion with meta", () => {
   const A = z
     .object({
       name: z.string(),
-      get b(): typeof B {
+      get b() {
         return B;
       },
     })
@@ -195,7 +195,7 @@ test("mutual recursion with meta", () => {
   const B = z
     .object({
       name: z.string(),
-      get a(): typeof A {
+      get a() {
         return A;
       },
     })

@@ -1370,7 +1370,7 @@ export function map<Key extends core.SomeType, Value extends core.SomeType>(
 
 // ZodSet
 export interface ZodSet<T extends core.SomeType = core.$ZodType>
-  extends ZodType<any, any, core.$ZodSetInternals<T>>,
+  extends _ZodType<core.$ZodSetInternals<T>>,
     core.$ZodSet<T> {
   min(minSize: number, params?: string | core.$ZodCheckMinSizeParams): this;
   /** */

@@ -27,4 +27,3 @@ export const pageSchema = z.object({
 
 const test = pageSchema.parse(null);
 test.slots;
-// ^?
