@@ -16,7 +16,7 @@ await gen.generate({
   numRefs: 0,
 });
 
-await $`pnpm run build:bench`;
+// await $`pnpm run build:bench`;
 
 console.log("╔════════════════╗");
 console.log("║     Zod v4     ║");
@@ -24,8 +24,8 @@ console.log("╚════════════════╝");
 await gen.generate({
   ...gen.ZOD,
   schemaType: "z.object",
-  numSchemas: 1,
-  numExtends: 1,
+  numSchemas: 10,
+  numExtends: 10,
   methods: [""],
   numKeys: 5,
   numRefs: 0,

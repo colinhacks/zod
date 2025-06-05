@@ -71,7 +71,8 @@
       ".next",
       "packages/bench",
       "packages/treeshake",
-      ".source"
+      ".source",
+      "play.ts"
     ]
   }
 }

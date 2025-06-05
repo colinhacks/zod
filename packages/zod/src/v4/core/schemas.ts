@@ -2679,7 +2679,10 @@ export interface $ZodEnumInternals<
   isst: errors.$ZodIssueInvalidValue;
 }
 
-export interface $ZodEnum<T extends util.EnumLike = util.EnumLike> extends $ZodType {
+export interface $ZodEnum<
+  /** @ts-ignore Cast variance */
+  out T extends util.EnumLike = util.EnumLike,
+> extends $ZodType {
   _zod: $ZodEnumInternals<T>;
 }
 
