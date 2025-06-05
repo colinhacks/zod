@@ -4,7 +4,6 @@
     "module": "NodeNext",
     "moduleResolution": "nodenext",
     "customConditions": ["@zod/source"],
-    "isolatedDeclarations": true,
     "noEmit": true,
     "declaration": true
   },
