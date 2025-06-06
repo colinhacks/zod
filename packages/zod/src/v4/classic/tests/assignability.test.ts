@@ -192,3 +192,19 @@ test("assignability with narrowing", () => {
 
   type RefinedUnionSchema<T extends z.ZodUnion> = T;
 });
+
+test("generic assignability in objects", () => {
+  interface SortItem<T extends string> {
+    key: T;
+    order: string;
+  }
+
+  const createSortItemSchema = <T extends z.ZodType<string>>(sortKeySchema: T) =>
+    z.object({
+      key: sortKeySchema,
+      order: z.string(),
+    });
+
+  <T extends z.ZodType<string>>(sortKeySchema: T, defaultSortBy: SortItem<z.output<T>>[] = []) =>
+    createSortItemSchema(sortKeySchema).array().default(defaultSortBy);
+});

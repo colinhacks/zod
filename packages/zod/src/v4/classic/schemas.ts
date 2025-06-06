@@ -72,7 +72,7 @@ export interface ZodType<
   nonoptional(params?: string | core.$ZodNonOptionalParams): ZodNonOptional<this>;
   nullable(): ZodNullable<this>;
   nullish(): ZodOptional<ZodNullable<this>>;
-  default(def: util.NoUndefined<core.output<this>>): ZodDefault<this>;
+  default(def: core.output<this>): ZodDefault<this>;
   default(def: () => util.NoUndefined<core.output<this>>): ZodDefault<this>;
   prefault(def: () => core.input<this>): ZodPrefault<this>;
   prefault(def: core.input<this>): ZodPrefault<this>;

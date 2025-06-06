@@ -1527,45 +1527,15 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
 type OptionalOutSchema = { _zod: { optout: "optional" } };
 type OptionalInSchema = { _zod: { optin: "optional" } };
 
-export type $InferObjectOutputFallback<
-  T extends $ZodLooseShape,
-  Extra extends Record<string, unknown>,
-> = string extends keyof T
-  ? object
-  : keyof (T & Extra) extends never
-    ? Record<string, never>
-    : util.Prettify<
-        {
-          // this is a simplified fallback type
-          // there is no support for key optionality
-          -readonly [k in keyof T]: core.output<T[k]>;
-        } & Extra
-      >;
-
-export type $InferObjectInputFallback<
-  T extends $ZodLooseShape,
-  Extra extends Record<string, unknown>,
-> = string extends keyof T
-  ? object
-  : keyof (T & Extra) extends never
-    ? Record<string, never>
-    : util.Prettify<
-        {
-          // this is a simplified fallback type
-          // there is no support for key optionality
-          -readonly [k in keyof T]: core.input<T[k]>;
-        } & Extra
-      >;
-
 export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = string extends keyof T
   ? object
   : keyof (T & Extra) extends never
     ? Record<string, never>
     : util.Prettify<
         {
-          -readonly [k in keyof T as T[k] extends OptionalOutSchema ? never : k]: core.output<T[k]>;
+          -readonly [k in keyof T as T[k] extends OptionalOutSchema ? never : k]: T[k]["_zod"]["output"];
         } & {
-          -readonly [k in keyof T as T[k] extends OptionalOutSchema ? k : never]?: core.output<T[k]>;
+          -readonly [k in keyof T as T[k] extends OptionalOutSchema ? k : never]?: T[k]["_zod"]["output"];
         } & Extra
       >;
 
@@ -1575,9 +1545,9 @@ export type $InferObjectInput<T extends $ZodLooseShape, Extra extends Record<str
     ? Record<string, never>
     : util.Prettify<
         {
-          -readonly [k in keyof T as T[k] extends OptionalInSchema ? never : k]: core.input<T[k]>;
+          -readonly [k in keyof T as T[k] extends OptionalInSchema ? never : k]: T[k]["_zod"]["input"];
         } & {
-          -readonly [k in keyof T as T[k] extends OptionalInSchema ? k : never]?: core.input<T[k]>;
+          -readonly [k in keyof T as T[k] extends OptionalInSchema ? k : never]?: T[k]["_zod"]["input"];
         } & Extra
       >;
 
@@ -1874,6 +1844,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
 //////////                    ///////////
 /////////////////////////////////////////
 /////////////////////////////////////////
+// use generic to distribute union types
 export type $InferUnionOutput<T extends SomeType> = T extends any ? core.output<T> : never;
 export type $InferUnionInput<T extends SomeType> = T extends any ? core.input<T> : never;
 export interface $ZodUnionDef<Options extends readonly SomeType[] = readonly $ZodType[]> extends $ZodTypeDef {
