@@ -450,6 +450,22 @@ export function _jwt<T extends schemas.$ZodJWT>(
   });
 }
 
+// CreditCard
+export type $ZodCreditCardParams = StringFormatParams<schemas.$ZodCreditCard>;
+export type $ZodCheckCreditCardParams = CheckStringFormatParams<schemas.$ZodCreditCard>;
+export function _creditCard<T extends schemas.$ZodCreditCard>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodJWTParams | $ZodCheckJWTParams
+): T {
+  return new Class({
+    type: "string",
+    format: "credit_card",
+    check: "string_format",
+    abort: false,
+    ...util.normalizeParams(params),
+  });
+}
+
 // ISODateTime
 export type $ZodISODateTimeParams = StringFormatParams<schemas.$ZodISODateTime, "pattern">;
 export type $ZodCheckISODateTimeParams = CheckStringFormatParams<schemas.$ZodISODateTime, "pattern">;
