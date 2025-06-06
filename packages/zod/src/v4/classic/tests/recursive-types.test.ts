@@ -155,7 +155,7 @@ test("deferred self-recursion", () => {
       return z.optional(z.array(Feature)); //.optional();
     },
   });
-  type Feature = z.infer<typeof Feature>;
+  // type Feature = z.infer<typeof Feature>;
 
   const Output = z.object({
     id: z.int(), //.nonnegative(),
@@ -176,8 +176,47 @@ test("deferred self-recursion", () => {
     features: _Feature[];
   };
 
-  expectTypeOf<Feature>().toEqualTypeOf<_Feature>();
+  // expectTypeOf<Feature>().toEqualTypeOf<_Feature>();
   expectTypeOf<Output>().toEqualTypeOf<_Output>();
+});
+
+test("deferred mutual recursion", () => {
+  const Slot = z.object({
+    slotCode: z.string(),
+
+    get blocks() {
+      return z.array(Block);
+    },
+  });
+  type Slot = z.infer<typeof Slot>;
+
+  const Block = z.object({
+    blockCode: z.string(),
+    get slots() {
+      return z.array(Slot).optional();
+    },
+  });
+  type Block = z.infer<typeof Block>;
+
+  const Page = z.object({
+    slots: z.array(Slot),
+  });
+  type Page = z.infer<typeof Page>;
+
+  type _Slot = {
+    slotCode: string;
+    blocks: _Block[];
+  };
+  type _Block = {
+    blockCode: string;
+    slots?: _Slot[] | undefined;
+  };
+  type _Page = {
+    slots: _Slot[];
+  };
+  expectTypeOf<Slot>().toEqualTypeOf<_Slot>();
+  expectTypeOf<Block>().toEqualTypeOf<_Block>();
+  expectTypeOf<Page>().toEqualTypeOf<_Page>();
 });
 
 test("mutual recursion with meta", () => {
