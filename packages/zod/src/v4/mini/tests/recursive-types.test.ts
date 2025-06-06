@@ -79,7 +79,7 @@ test("mutual recursion - native", () => {
 
   const Blazy = z.object({
     val: z.number(),
-    get a(): z.ZodMiniOptional<typeof Alazy> {
+    get a() {
       return z.optional(Alazy);
     },
   });
@@ -109,11 +109,11 @@ test("mutual recursion - native", () => {
   type Blazy = z.infer<typeof Blazy>;
   interface _Alazy {
     val: number;
-    b?: _Blazy;
+    b?: _Blazy | undefined;
   }
   interface _Blazy {
     val: number;
-    a?: _Alazy;
+    a?: _Alazy | undefined;
   }
   expectTypeOf<Alazy>().toEqualTypeOf<_Alazy>();
   expectTypeOf<Blazy>().toEqualTypeOf<_Blazy>();

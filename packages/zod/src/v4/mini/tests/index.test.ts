@@ -824,3 +824,45 @@ test("z.pipe type enforcement", () => {
     z.date().check(z.maximum(new Date()))
   );
 });
+
+test("def typing", () => {
+  z.string().def.type satisfies "string";
+  z.email().def.format satisfies "email";
+  z.number().def.type satisfies "number";
+  z.float64().def.format satisfies z.core.$ZodNumberFormats;
+  z.bigint().def.type satisfies "bigint";
+  z.boolean().def.type satisfies "boolean";
+  z.date().def.type satisfies "date";
+  z.symbol().def.type satisfies "symbol";
+  z.undefined().def.type satisfies "undefined";
+  z.nullable(z.string()).def.type satisfies "nullable";
+  z.null().def.type satisfies "null";
+  z.any().def.type satisfies "any";
+  z.unknown().def.type satisfies "unknown";
+  z.never().def.type satisfies "never";
+  z.void().def.type satisfies "void";
+  z.array(z.string()).def.type satisfies "array";
+  z.object({ key: z.string() }).def.type satisfies "object";
+  z.union([z.string(), z.number()]).def.type satisfies "union";
+  z.intersection(z.string(), z.number()).def.type satisfies "intersection";
+  z.tuple([z.string(), z.number()]).def.type satisfies "tuple";
+  z.record(z.string(), z.number()).def.type satisfies "record";
+  z.map(z.string(), z.number()).def.type satisfies "map";
+  z.set(z.string()).def.type satisfies "set";
+  z.literal("example").def.type satisfies "literal";
+  z.enum(["a", "b", "c"]).def.type satisfies "enum";
+  z.promise(z.string()).def.type satisfies "promise";
+  z.lazy(() => z.string()).def.type satisfies "lazy";
+  z.optional(z.string()).def.type satisfies "optional";
+  z._default(z.string(), "default").def.type satisfies "default";
+  z.templateLiteral([z.literal("a"), z.literal("b")]).def.type satisfies "template_literal";
+  z.custom<string>((val) => typeof val === "string").def.type satisfies "custom";
+  z.transform((val) => val as string).def.type satisfies "transform";
+  z.nonoptional(z.string()).def.type satisfies "nonoptional";
+  z.readonly(z.unknown()).def.type satisfies "readonly";
+  z.nan().def.type satisfies "nan";
+  z.pipe(z.unknown(), z.number()).def.type satisfies "pipe";
+  z.success(z.string()).def.type satisfies "success";
+  z.catch(z.string(), "fallback").def.type satisfies "catch";
+  z.file().def.type satisfies "file";
+});
