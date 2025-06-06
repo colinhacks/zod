@@ -328,29 +328,53 @@ export const allowsEval: { value: boolean } = cached(() => {
   }
 });
 
+// export function isPlainObject(data: any): data is Record<PropertyKey, unknown> {
+//   return (
+//     typeof data === "object" &&
+//     data !== null &&
+//     (Object.getPrototypeOf(data) === Object.prototype || Object.getPrototypeOf(data) === null)
+//   );
+// }
+
+function _isObject(data: any) {
+  return Object.prototype.toString.call(data) === "[object Object]";
+}
+
 export function isPlainObject(data: any): data is Record<PropertyKey, unknown> {
-  if (
-    typeof data === "object" &&
-    data !== null &&
-    (Object.getPrototypeOf(data) === Object.prototype || Object.getPrototypeOf(data) === null)
-  ) {
-    return true;
+  if (typeof data === "object" && data !== null) {
+    if (Object.getPrototypeOf(data) === Object.prototype) return true;
+    if (Object.getPrototypeOf(data) === null) return true;
   }
 
-  if (isObject(data) === false) return false;
+  if (_isObject(data) === false) return false;
 
   const ctor = data.constructor;
   if (ctor === undefined) return true;
 
   const prot = ctor.prototype;
-  if (isObject(prot) === false) return false;
+  if (_isObject(prot) === false) return false;
 
-  if (!prot || Object.prototype.hasOwnProperty.call(prot, "isPrototypeOf") === false) {
+  if (Object.prototype.hasOwnProperty.call(prot, "isPrototypeOf") === false) {
     return false;
   }
 
   return true;
 }
+
+//   if (Array.isArray(data)) return false;
+
+//   const ctor = data.constructor;
+//   if (ctor === undefined) return true;
+
+//   const prot = ctor.prototype;
+//   if (isObject(prot) === false) return false;
+
+//   if (!prot || Object.prototype.hasOwnProperty.call(prot, "isPrototypeOf") === false) {
+//     return false;
+//   }
+
+//   return true;
+// }
 
 export function numKeys(data: any): number {
   let keyCount = 0;
