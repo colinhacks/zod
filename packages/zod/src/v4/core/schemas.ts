@@ -1657,14 +1657,7 @@ export interface $ZodObject<
   /** @ts-ignore Cast variance */
   out Shape extends Readonly<$ZodShape> = Readonly<$ZodShape>,
   out Params extends $ZodObjectConfig = $ZodObjectConfig,
-> extends $ZodType<
-    any,
-    any,
-    // $InferObjectOutput<Shape, Params["out"]>,
-    // $InferObjectInput<Shape, Params["in"]>,
-    $ZodObjectInternals<Shape, Params>
-  > {
-  // _zod: $ZodObjectInternals<Shape, Params>;
+> extends $ZodType<any, any, $ZodObjectInternals<Shape, Params>> {
   "~standard": $ZodStandardSchema<this>;
 }
 
