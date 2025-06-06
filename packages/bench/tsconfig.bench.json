@@ -4,7 +4,7 @@
     "noEmit": true,
     "extendedDiagnostics": true,
     "traceResolution": true,
-    "customConditions": [],
+    "customConditions": ["@zod/source"],
     "skipDefaultLibCheck": true,
     "skipLibCheck": true,
   }
