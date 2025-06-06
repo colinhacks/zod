@@ -211,6 +211,7 @@ test("mutual recursion with meta", () => {
         b: _B;
       }>
     | undefined;
+  // | undefined;
   type _B = Readonly<{
     name: string;
     a?: _A;

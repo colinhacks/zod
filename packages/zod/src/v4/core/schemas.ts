@@ -154,11 +154,7 @@ export interface $ZodTypeInternals<out O = unknown, out I = unknown> extends _$Z
 
 export type $ZodStandardSchema<T> = StandardSchemaV1.Props<core.input<T>, core.output<T>>;
 
-// export interface _$ZodType<T extends _$ZodTypeInternals = _$ZodTypeInternals> {
-//   _zod: T;
-// }
 export type SomeType = { _zod: _$ZodTypeInternals };
-// _$ZodType; //<any, any, $ZodTypeInternals<unknown, unknown>>;
 
 export interface $ZodType<
   O = unknown,
@@ -167,6 +163,10 @@ export interface $ZodType<
 > {
   _zod: Internals;
   "~standard": $ZodStandardSchema<this>;
+}
+export interface _$ZodType<T extends $ZodTypeInternals = $ZodTypeInternals>
+  extends $ZodType<T["output"], T["input"], T> {
+  // _zod: T;
 }
 
 export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constructor("$ZodType", (inst, def) => {
@@ -300,8 +300,8 @@ export interface $ZodStringInternals<Input> extends $ZodTypeInternals<string, In
   }>;
 }
 
-export interface $ZodString<Input = unknown> extends $ZodType {
-  _zod: $ZodStringInternals<Input>;
+export interface $ZodString<Input = unknown> extends _$ZodType<$ZodStringInternals<Input>> {
+  // _zod: $ZodStringInternals<Input>;
 }
 
 export const $ZodString: core.$constructor<$ZodString> = /*@__PURE__*/ core.$constructor("$ZodString", (inst, def) => {
@@ -1463,9 +1463,8 @@ export interface $ZodArrayInternals<T extends SomeType = $ZodType>
   isst: errors.$ZodIssueInvalidType;
 }
 
-export interface $ZodArray<T extends SomeType = $ZodType> extends $ZodType {
-  _zod: $ZodArrayInternals<T>;
-}
+export interface $ZodArray<T extends SomeType = $ZodType>
+  extends $ZodType<core.output<T>[], core.input<T>[], $ZodArrayInternals<T>> {}
 
 function handleArrayResult(result: ParsePayload<any>, final: ParsePayload<any[]>, index: number) {
   if (result.issues.length) {
@@ -1524,30 +1523,6 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
 //////////                      //////////
 //////////////////////////////////////////
 //////////////////////////////////////////
-export type $ZodShape = Readonly<{ [k: string]: $ZodType }>;
-
-export interface $ZodObjectDef<Shape extends $ZodShape = $ZodShape> extends $ZodTypeDef {
-  type: "object";
-  shape: Shape;
-  catchall?: $ZodType | undefined;
-}
-
-export interface $ZodObjectInternals<
-  /** @ts-ignore Cast variance */
-  out Shape extends Readonly<$ZodShape> = Readonly<$ZodShape>,
-  out Config extends $ZodObjectConfig = $ZodObjectConfig,
-> extends _$ZodTypeInternals {
-  def: $ZodObjectDef<Shape>;
-  config: Config;
-  isst: errors.$ZodIssueInvalidType | errors.$ZodIssueUnrecognizedKeys;
-  propValues: util.PropValues;
-  // special keys only used for objects
-  // not defined on $ZodTypeInternals (base interface) because it breaks cyclical inference
-  // the z.infer<> util checks for these first when extracting inferred type
-  output: $InferObjectOutput<Shape, Config["out"]>;
-  input: $InferObjectInput<Shape, Config["in"]>;
-}
-export type $ZodLooseShape = Record<string, any>;
 
 type OptionalOutSchema = { _zod: { optout: "optional" } };
 type OptionalInSchema = { _zod: { optin: "optional" } };
@@ -1656,12 +1631,33 @@ export type $catchall<T extends SomeType> = {
   in: { [k: string]: core.input<T> };
 };
 
+export type $ZodShape = Readonly<{ [k: string]: $ZodType }>;
+
+export interface $ZodObjectDef<Shape extends $ZodShape = $ZodShape> extends $ZodTypeDef {
+  type: "object";
+  shape: Shape;
+  catchall?: $ZodType | undefined;
+}
+
+export interface $ZodObjectInternals<
+  /** @ts-ignore Cast variance */
+  out Shape extends Readonly<$ZodShape> = Readonly<$ZodShape>,
+  out Config extends $ZodObjectConfig = $ZodObjectConfig,
+> extends _$ZodTypeInternals {
+  def: $ZodObjectDef<Shape>;
+  config: Config;
+  isst: errors.$ZodIssueInvalidType | errors.$ZodIssueUnrecognizedKeys;
+  propValues: util.PropValues;
+  output: $InferObjectOutput<Shape, Config["out"]>;
+  input: $InferObjectInput<Shape, Config["in"]>;
+}
+export type $ZodLooseShape = Record<string, any>;
+
 export interface $ZodObject<
   /** @ts-ignore Cast variance */
   out Shape extends Readonly<$ZodShape> = Readonly<$ZodShape>,
   out Params extends $ZodObjectConfig = $ZodObjectConfig,
 > extends $ZodType<any, any, $ZodObjectInternals<Shape, Params>> {
-  // _zod: $ZodObjectInternals<Shape, Params>;
   "~standard": $ZodStandardSchema<this>;
 }
 
