@@ -61,6 +61,12 @@ const formIntegrations: ZodResource[] = [
       "A type-safe form validation library utilizing web fundamentals to progressively enhance HTML Forms with full support for server frameworks like Remix and Next.js.",
     slug: "edmundhung/conform",
   },
+  {
+    name: "Superforms",
+    url: "https://superforms.rocks",
+    description: "Making SvelteKit forms a pleasure to use!",
+    slug: "ciscoheat/sveltekit-superforms",
+  },
 ];
 
 const zodToXConverters: ZodResource[] = [];
