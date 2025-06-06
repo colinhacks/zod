@@ -1518,7 +1518,9 @@ export const stringbool: (
   ) as any;
 
 // json
-export type ZodMiniJSONSchema = ZodMiniUnion<
+
+// json
+type _ZodMiniJSONSchema = ZodMiniUnion<
   [
     ZodMiniString,
     ZodMiniNumber,
@@ -1527,12 +1529,16 @@ export type ZodMiniJSONSchema = ZodMiniUnion<
     ZodMiniArray<ZodMiniJSONSchema>,
     ZodMiniRecord<ZodMiniString<string>, ZodMiniJSONSchema>,
   ]
-> & {
-  _zod: {
-    input: util.JSONType;
-    output: util.JSONType;
-  };
-};
+>;
+type _ZodMiniJSONSchemaInternals = _ZodMiniJSONSchema["_zod"];
+
+export interface ZodMiniJSONSchemaInternals extends _ZodMiniJSONSchemaInternals {
+  output: util.JSONType;
+  input: util.JSONType;
+}
+export interface ZodMiniJSONSchema extends _ZodMiniJSONSchema {
+  _zod: ZodMiniJSONSchemaInternals;
+}
 
 export function json(): ZodMiniJSONSchema {
   const jsonSchema: any = _lazy(() => {
