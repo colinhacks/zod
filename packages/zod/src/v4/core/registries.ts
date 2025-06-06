@@ -12,9 +12,11 @@ export type $replace<Meta, S extends $ZodType> = Meta extends $output
     ? core.input<S>
     : Meta extends (infer M)[]
       ? $replace<M, S>[]
-      : Meta extends (...args: any[]) => any
+      : // Preserve functions
+        Meta extends (...args: any[]) => any
         ? Meta
-        : Meta extends object
+        : // handle objects
+          Meta extends object
           ? { [K in keyof Meta]: $replace<Meta[K], S> }
           : Meta;
 
