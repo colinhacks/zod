@@ -351,21 +351,6 @@ export function isPlainObject(o: any): o is Record<PropertyKey, unknown> {
   return true;
 }
 
-//   if (Array.isArray(data)) return false;
-
-//   const ctor = data.constructor;
-//   if (ctor === undefined) return true;
-
-//   const prot = ctor.prototype;
-//   if (isObject(prot) === false) return false;
-
-//   if (!prot || Object.prototype.hasOwnProperty.call(prot, "isPrototypeOf") === false) {
-//     return false;
-//   }
-
-//   return true;
-// }
-
 export function numKeys(data: any): number {
   let keyCount = 0;
   for (const key in data) {
