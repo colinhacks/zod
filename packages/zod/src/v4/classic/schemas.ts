@@ -1401,7 +1401,7 @@ export function set<Value extends core.SomeType>(
 
 // ZodEnum
 export interface ZodEnum<
-  /* @ts-ignore Cast variance */
+  /** @ts-ignore Cast variance */
   out T extends util.EnumLike = util.EnumLike,
 > extends _ZodType<core.$ZodEnumInternals<T>>,
     core.$ZodEnum<T> {
