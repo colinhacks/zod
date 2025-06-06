@@ -12,10 +12,11 @@ export type $replace<Meta, S extends $ZodType> = Meta extends $output
     ? core.input<S>
     : Meta extends (infer M)[]
       ? $replace<M, S>[]
-      : // handle objecs
-        Meta extends object
-        ? { [K in keyof Meta]: $replace<Meta[K], S> }
-        : Meta;
+      : Meta extends (...args: any[]) => any
+        ? Meta
+        : Meta extends object
+          ? { [K in keyof Meta]: $replace<Meta[K], S> }
+          : Meta;
 
 type MetadataType = Record<string, unknown> | undefined;
 export class $ZodRegistry<Meta extends MetadataType = MetadataType, Schema extends $ZodType = $ZodType> {
