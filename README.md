@@ -1937,7 +1937,7 @@ const imageFile = z.file({
 });
 ```
 
-You can validate the file's minimum and maximum size.
+You can validate the file's minimum and maximum size in bytes.
 
 ```ts
 const imageFile = z.file().size({ min: 100000, max: 200000 });
