@@ -11,5 +11,5 @@ export const createSortItemSchema = <T extends z.ZodType<string>>(sortKeySchema:
     order: z.string(),
   });
 
-const error = <T extends z.ZodType<string>>(sortKeySchema: T, defaultSortBy: SortItem<z.output<T>>[] = []) =>
-  createSortItemSchema(sortKeySchema).array().default(defaultSortBy);
+// const error = <T extends z.ZodType<string>>(sortKeySchema: T, defaultSortBy: SortItem<z.output<T>>[] = []) =>
+//   createSortItemSchema(sortKeySchema).array().default(defaultSortBy);
