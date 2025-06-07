@@ -1,0 +1,9 @@
+{
+  "extends": "../../.configs/tsconfig.base.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
+    "customConditions": ["@zod/source"]
+  },
+  "exclude": ["vitest.config.ts"]
+}
