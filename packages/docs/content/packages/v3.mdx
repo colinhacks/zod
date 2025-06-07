@@ -8,7 +8,6 @@ import { Callout } from "fumadocs-ui/components/callout";
   **Note:** These are legacy docs for Zod v3. For the latest version, refer to the [Zod v4 documentation](/packages/zod).
 </Callout>
 
-
 Zod is a TypeScript-first schema declaration and validation library. I'm using the term "schema" to broadly refer to any data type, from a simple `string` to a complex nested object.
 
 Zod is designed to be as developer-friendly as possible. The goal is to eliminate duplicative type declarations. With Zod, you declare a validator _once_ and Zod will automatically infer the static TypeScript type. It's easy to compose simpler types into complex data structures.
@@ -1517,8 +1516,6 @@ const test = async () => {
 };
 ```
 
-
-
 <br/>
 
 ## Instanceof
@@ -1537,7 +1534,37 @@ TestSchema.parse(new Test()); // passes
 TestSchema.parse(blob); // throws
 ```
 
+
+
 <br/>
+
+## Files
+
+This basic implementation validates the input type. As usual, you can set custom error messages.
+
+```ts
+const imageFile = z.file({
+  required_error: "file is required",
+  invalid_type_error: "This object must be a file",
+});
+```
+
+You can validate the file's minimum and maximum size in bytes.
+
+```ts
+const imageFile = z.file().size({ min: 100000, max: 200000 });
+```
+
+You check again min and max size of the file.
+
+```ts
+// Validate MIME type for any image
+const imageFileAny = z.file().mimeType("image/*");
+
+// Validate specific MIME types
+const imageFileJpegPng = z.file().mimeType("image/jpeg,image/png");
+const imageFileJpegPngArray = z.file().mimeType(["image/jpeg", "image/png"]);
+```
 
 ## Functions
 
