@@ -78,6 +78,7 @@ Previous versions:
     - [Cyclical data](#cyclical-objects)
   - [Promises](#promises)
   - [Instanceof](#instanceof)
+  - [Files](#files)
   - [Function schemas](#function-schemas)
 - [Base class methods (ZodType)](#zodtype-methods-and-properties)
   - [.parse](#parse)
@@ -1101,6 +1102,38 @@ const blob: any = "whatever";
 TestSchema.parse(new Test()); // passes
 TestSchema.parse("blob"); // throws
 ```
+
+<br/>
+
+## Files
+
+This basic setup ensures the input is a valid file. As always, you can customize error messages as needed
+
+```ts
+const imageFile = z.file({
+  required_error: "file is required",
+  invalid_type_error: "This object must be a file",
+});
+```
+
+You can validate a file’s size in bytes
+
+```ts
+const imageFile = z.file().size({ min: 100000, max: 200000 });
+```
+
+Restrict accepted file types using MIME type checks
+
+```ts
+// Validate MIME type for any image
+const imageFileAny = z.file().mime("image/*");
+
+// Validate specific MIME types
+const imageFileJpegPng = z.file().mime("image/jpeg,image/png");
+const imageFileJpegPngArray = z.file().mime(["image/jpeg", "image/png"]);
+```
+
+</br>
 
 ## Function schemas
 
