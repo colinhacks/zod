@@ -30,6 +30,7 @@ export const ZodParsedType = util.arrayToEnum([
   "never",
   "map",
   "set",
+  "file",
 ]);
 
 export type ZodParsedType = keyof typeof ZodParsedType;
@@ -50,6 +51,9 @@ export const getParsedType = (data: any): ZodParsedType => {
     case "bigint":
       return ZodParsedType.bigint;
     case "object":
+      if (data instanceof File) {
+        return ZodParsedType.file;
+      }
       if (Array.isArray(data)) return ZodParsedType.array;
       if (data === null) return ZodParsedType.null;
       if (

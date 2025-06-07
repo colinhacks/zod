@@ -2283,6 +2283,129 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 //////////                       //////////
+//////////        ZodFile        //////////
+//////////                       //////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+type SizeRange = { min?: number; max?: number };
+
+export type ZodFileCheck =
+  | { kind: "size"; value: SizeRange; message: string | undefined }
+  | {
+      kind: "mime_type";
+      value: string | string[];
+      message: string | undefined;
+    };
+
+export interface ZodFileDef extends ZodTypeDef {
+  checks: ZodFileCheck[];
+  typeName: ZodFirstPartyTypeKind.ZodFile;
+}
+
+export class ZodFile extends ZodType<File, ZodFileDef, File> {
+  size(range: SizeRange, message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "size",
+      value: range,
+      message: errorUtil.toString(message),
+    });
+  }
+
+  mime(type: string | string[], message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "mime_type",
+      value: type,
+      message: errorUtil.toString(message),
+    });
+  }
+
+  _parse(
+    ctx: ParseContext,
+    data: any,
+    _parsedType: ZodParsedType
+  ): ParseReturnType<this["_output"]> {
+    if (_parsedType !== ZodParsedType.file) {
+      ctx.addIssue(data, {
+        code: ZodIssueCode.invalid_type,
+        expected: ZodParsedType.file,
+        received: _parsedType,
+      });
+      return INVALID;
+    }
+
+    const file = data as File;
+
+    for (const check of this._def.checks) {
+      if (
+        check.kind === "size" &&
+        check.value.min &&
+        check.value.min > file.size
+      ) {
+        ctx.addIssue(file, {
+          code: ZodIssueCode.too_small,
+          minimum: check.value.min,
+          type: ZodParsedType.number,
+          inclusive: true,
+          message: check.message,
+        });
+        return INVALID;
+      } else if (
+        check.kind === "size" &&
+        check.value.max &&
+        check.value.max < file.size
+      ) {
+        ctx.addIssue(file, {
+          code: ZodIssueCode.too_big,
+          maximum: check.value.max,
+          type: ZodParsedType.number,
+          inclusive: true,
+          message: check.message,
+        });
+        return INVALID;
+      } else if (check.kind === "mime_type") {
+        const mimeTypes = Array.isArray(check.value)
+          ? check.value
+          : check.value.split(",").map((s) => s.trim());
+
+        const state = mimeTypes.reduce((state, currentMimeType) => {
+          const regex = new RegExp(currentMimeType, "gm");
+
+          return state || regex.test(file.type);
+        }, false);
+
+        if (!state) {
+          ctx.addIssue(file, {
+            code: ZodIssueCode.invalid_type,
+            expected: ZodParsedType.object,
+            received: _parsedType,
+            message: check.message,
+          });
+          return INVALID;
+        }
+      }
+    }
+
+    return { valid: true, value: file };
+  }
+
+  _addCheck(check: ZodFileCheck) {
+    return new ZodFile({
+      ...this._def,
+      checks: [...this._def.checks, check],
+    });
+  }
+
+  static create = (): ZodFile => {
+    return new ZodFile({
+      typeName: ZodFirstPartyTypeKind.ZodFile,
+      checks: [],
+    });
+  };
+}
+
+///////////////////////////////////////////
+///////////////////////////////////////////
+//////////                       //////////
 //////////      ZodFunction      //////////
 //////////                       //////////
 ///////////////////////////////////////////
@@ -2973,7 +3096,7 @@ export class ZodNullable<T extends ZodTypeAny> extends ZodType<
 //////////                        //////////
 //////////       ZodDefault       //////////
 //////////                        //////////
-////////////////////////////////////////////
+//////////////////  //////////////////////////
 ////////////////////////////////////////////
 export interface ZodDefaultDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
@@ -3044,6 +3167,7 @@ export enum ZodFirstPartyTypeKind {
   ZodRecord = "ZodRecord",
   ZodMap = "ZodMap",
   ZodSet = "ZodSet",
+  ZodFile = "ZodFile",
   ZodFunction = "ZodFunction",
   ZodLazy = "ZodLazy",
   ZodLiteral = "ZodLiteral",
@@ -3075,6 +3199,7 @@ export type ZodFirstPartySchemaTypes =
   | ZodRecord
   | ZodMap
   | ZodSet
+  | ZodFile
   | ZodFunction<any, any>
   | ZodLazy<any>
   | ZodLiteral<any>
@@ -3113,6 +3238,7 @@ const tupleType = ZodTuple.create;
 const recordType = ZodRecord.create;
 const mapType = ZodMap.create;
 const setType = ZodSet.create;
+const fileType = ZodFile.create;
 const functionType = ZodFunction.create;
 const lazyType = ZodLazy.create;
 const literalType = ZodLiteral.create;
@@ -3135,6 +3261,7 @@ export {
   dateType as date,
   effectsType as effect,
   enumType as enum,
+  fileType as file,
   functionType as function,
   instanceOfType as instanceof,
   intersectionType as intersection,
