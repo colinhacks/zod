@@ -138,7 +138,7 @@ When validation fails, the `.parse()` method will throw a `ZodError` instance wi
 try {
   Player.parse({ username: 42, xp: "100" });
 } catch (err) {
-  if (error instanceof z.ZodError) {
+  if (err instanceof z.ZodError) {
     err.issues;
     /* [
       {
