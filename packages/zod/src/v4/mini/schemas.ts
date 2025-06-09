@@ -1098,7 +1098,7 @@ export const ZodMiniLiteral: core.$constructor<ZodMiniLiteral> = /*@__PURE__*/ c
   }
 );
 
-export function literal<const T extends Array<util.Literal>>(
+export function literal<const T extends ReadonlyArray<util.Literal>>(
   value: T,
   params?: string | core.$ZodLiteralParams
 ): ZodMiniLiteral<T[number]>;
