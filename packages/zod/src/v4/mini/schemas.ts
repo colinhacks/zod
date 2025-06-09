@@ -792,14 +792,6 @@ export function omit<T extends ZodMiniObject, const M extends util.Mask<keyof T[
   return util.omit(schema, mask);
 }
 
-export function partial<T extends ZodMiniObject>(
-  schema: T
-): ZodMiniObject<
-  {
-    [k in keyof T["shape"]]: ZodMiniOptional<T["shape"][k]>;
-  },
-  T["_zod"]["config"]
->;
 export function partial<T extends ZodMiniObject, M extends util.Mask<keyof T["shape"]>>(
   schema: T,
   mask: M
@@ -809,8 +801,33 @@ export function partial<T extends ZodMiniObject, M extends util.Mask<keyof T["sh
   },
   T["_zod"]["config"]
 >;
-export function partial(schema: ZodMiniObject, mask?: object) {
-  return util.partial(ZodMiniOptional, schema, mask);
+
+export function partial<T extends ZodMiniObject>(
+  schema: T
+): ZodMiniObject<
+  {
+    [k in keyof T["shape"]]: ZodMiniOptional<T["shape"][k]>;
+  },
+  T["_zod"]["config"]
+>;
+
+export function partial<Key extends core.$ZodRecordKey, Value extends SomeType>(
+  schema: ZodMiniRecord<Key, Value>
+): ZodMiniRecord<ZodMiniUnion<[Key, ZodMiniNever]>, Value>;
+
+export function partial<T extends ZodMiniObject | ZodMiniRecord>(schema: T, mask?: any): any {
+  if (schema._zod.def.type === "record") {
+    const recordDef = schema._zod.def;
+    return record(union([recordDef.keyType, never()]), recordDef.valueType);
+  }
+  const { type, shape, ...config } = schema._zod.def;
+  return new ZodMiniObject({
+    type: "object",
+    shape: mask
+      ? Object.fromEntries(Object.entries(shape).map(([k, v]) => [k, k in mask ? optional(v) : v]))
+      : Object.fromEntries(Object.entries(shape).map(([k, v]) => [k, optional(v)])),
+    ...util.normalizeParams(config),
+  }) as any;
 }
 
 export type RequiredInterfaceShape<
