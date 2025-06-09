@@ -51,7 +51,7 @@ export interface $ZodCheckLessThanDef extends $ZodCheckDef {
 
 export interface $ZodCheckLessThanInternals<T extends util.Numeric = util.Numeric> extends $ZodCheckInternals<T> {
   def: $ZodCheckLessThanDef;
-  issc: errors.$ZodIssueTooSmall<T>;
+  issc: errors.$ZodIssueTooBig<T>;
 }
 
 const numericOriginMap = {
