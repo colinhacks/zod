@@ -240,3 +240,8 @@ test("string format methods", () => {
   expect(a.parse(6)).toEqual(6);
   expect(() => a.parse(1)).toThrow();
 });
+
+test("error customization", () => {
+  z.number().gte(5, { error: (iss) => "Min: " + iss.minimum.valueOf() });
+  z.number().lte(5, { error: (iss) => "Max: " + iss.maximum.valueOf() });
+});
