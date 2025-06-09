@@ -427,6 +427,8 @@ test("z.literal", () => {
   expect(z.parse(a, "hello")).toEqual("hello");
   expect(() => z.parse(a, "world")).toThrow();
   expect(() => z.parse(a, 123)).toThrow();
+
+  z.literal(["adf"] as const);
 });
 
 test("z.file", () => {

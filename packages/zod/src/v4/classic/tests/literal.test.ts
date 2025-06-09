@@ -85,3 +85,8 @@ test(".value getter", () => {
   expect(z.literal("tuna").value).toEqual("tuna");
   expect(() => z.literal([1, 2, 3]).value).toThrow();
 });
+
+test("readonly", () => {
+  const a = ["asdf"] as const;
+  z.literal(a);
+});

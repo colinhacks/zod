@@ -1510,7 +1510,7 @@ export const ZodLiteral: core.$constructor<ZodLiteral> = /*@__PURE__*/ core.$con
   });
 });
 
-export function literal<const T extends Array<util.Literal> | ReadonlyArray<util.Literal>>(
+export function literal<const T extends ReadonlyArray<util.Literal>>(
   value: T,
   params?: string | core.$ZodLiteralParams
 ): ZodLiteral<T[number]>;
