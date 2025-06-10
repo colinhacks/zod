@@ -28,10 +28,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (data === null) {
           return "null";
         }
-        if (
-          Object.getPrototypeOf(data) !== Object.prototype &&
-          data.constructor
-        ) {
+        if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
           return data.constructor.name;
         }
       }
