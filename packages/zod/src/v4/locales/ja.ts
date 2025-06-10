@@ -78,18 +78,18 @@ const error: () => errors.$ZodErrorMap = () => {
         if (issue.values.length === 1) return `無効な入力: ${util.stringifyPrimitive(issue.values[0])}が期待されました`;
         return `無効な選択: ${util.joinValues(issue.values, "、")}のいずれかである必要があります`;
       case "too_big": {
-        const adj = issue.inclusive ? "<=" : "<";
+        const adj = issue.inclusive ? "以下である" : "より小さい";
         const sizing = getSizing(issue.origin);
         if (sizing)
-          return `大きすぎる値: ${issue.origin ?? "値"}は${issue.maximum.toString()}${sizing.unit ?? "要素"}${adj}である必要があります`;
-        return `大きすぎる値: ${issue.origin ?? "値"}は${issue.maximum.toString()}${adj}である必要があります`;
+          return `大きすぎる値: ${issue.origin ?? "値"}は${issue.maximum.toString()}${sizing.unit ?? "要素"}${adj}必要があります`;
+        return `大きすぎる値: ${issue.origin ?? "値"}は${issue.maximum.toString()}${adj}必要があります`;
       }
       case "too_small": {
-        const adj = issue.inclusive ? ">=" : ">";
+        const adj = issue.inclusive ? "以上である" : "より大きい";
         const sizing = getSizing(issue.origin);
         if (sizing)
-          return `小さすぎる値: ${issue.origin}は${issue.minimum.toString()}${sizing.unit}${adj}である必要があります`;
-        return `小さすぎる値: ${issue.origin}は${issue.minimum.toString()}${adj}である必要があります`;
+          return `小さすぎる値: ${issue.origin}は${issue.minimum.toString()}${sizing.unit}${adj}必要があります`;
+        return `小さすぎる値: ${issue.origin}は${issue.minimum.toString()}${adj}必要があります`;
       }
       case "invalid_format": {
         const _issue = issue as errors.$ZodStringFormatIssues;
