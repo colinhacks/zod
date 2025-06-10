@@ -1,5 +1,4 @@
 import { z } from "zod/v4";
-import type { ZodArray, ZodDiscriminatedUnion } from "zod/v4";
 
 export const SegmentFilter = z.object({
   type: z.literal("segment"),
