@@ -37,6 +37,13 @@ const apiLibraries: ZodResource[] = [
     slug: "RobinTail/express-zod-api",
     v4: true,
   },
+  {
+    name: "Zod Sockets",
+    url: "https://github.com/RobinTail/zod-sockets",
+    description: "Socket.IO solution with I/O validation, an AsyncAPI generator, and a type-safe events map.",
+    slug: "RobinTail/zod-sockets",
+    v4: true,
+  },
 
   // https://github.com/honojs/middleware/tree/main/packages/zod-validator
   // {
