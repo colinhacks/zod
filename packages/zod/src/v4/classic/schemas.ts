@@ -1401,7 +1401,7 @@ export function set<Value extends core.SomeType>(
 
 // ZodEnum
 export interface ZodEnum<
-  /* @ts-ignore Cast variance */
+  /** @ts-ignore Cast variance */
   out T extends util.EnumLike = util.EnumLike,
 > extends _ZodType<core.$ZodEnumInternals<T>>,
     core.$ZodEnum<T> {
@@ -1510,7 +1510,7 @@ export const ZodLiteral: core.$constructor<ZodLiteral> = /*@__PURE__*/ core.$con
   });
 });
 
-export function literal<const T extends Array<util.Literal>>(
+export function literal<const T extends ReadonlyArray<util.Literal>>(
   value: T,
   params?: string | core.$ZodLiteralParams
 ): ZodLiteral<T[number]>;
@@ -1984,14 +1984,15 @@ function _instanceof<T extends typeof util.Class>(
 export { _instanceof as instanceof };
 
 // stringbool
-export const stringbool: (_params?: string | core.$ZodStringBoolParams) => ZodPipe<ZodUnknown, ZodBoolean> = (
-  ...args
-) =>
+export const stringbool: (
+  _params?: string | core.$ZodStringBoolParams
+) => ZodPipe<ZodPipe<ZodString, ZodTransform<boolean, string>>, ZodBoolean> = (...args) =>
   core._stringbool(
     {
       Pipe: ZodPipe,
       Boolean: ZodBoolean,
-      Unknown: ZodUnknown,
+      String: ZodString,
+      Transform: ZodTransform,
     },
     ...args
   ) as any;

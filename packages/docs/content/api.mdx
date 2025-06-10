@@ -2358,7 +2358,7 @@ type Cat = { name: string };
 type Dog = { name: string };
 
 const pluto: Dog = { name: "pluto" };
-const simba: Cat = fido; // works fine
+const simba: Cat = pluto; // works fine
 ```
 
 In some cases, it can be desirable to simulate [nominal typing](https://en.wikipedia.org/wiki/Nominal_type_system) inside TypeScript. This can be achieved with *branded types* (also known as "opaque types").

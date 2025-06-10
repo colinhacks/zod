@@ -1098,7 +1098,7 @@ export const ZodMiniLiteral: core.$constructor<ZodMiniLiteral> = /*@__PURE__*/ c
   }
 );
 
-export function literal<const T extends Array<util.Literal>>(
+export function literal<const T extends ReadonlyArray<util.Literal>>(
   value: T,
   params?: string | core.$ZodLiteralParams
 ): ZodMiniLiteral<T[number]>;
@@ -1507,12 +1507,13 @@ export { _instanceof as instanceof };
 // stringbool
 export const stringbool: (
   _params?: string | core.$ZodStringBoolParams
-) => ZodMiniPipe<ZodMiniUnknown, ZodMiniBoolean<boolean>> = (...args) =>
+) => ZodMiniPipe<ZodMiniPipe<ZodMiniString, ZodMiniTransform<boolean, string>>, ZodMiniBoolean> = (...args) =>
   core._stringbool(
     {
       Pipe: ZodMiniPipe,
       Boolean: ZodMiniBoolean,
-      Unknown: ZodMiniUnknown,
+      String: ZodMiniString,
+      Transform: ZodMiniTransform,
     },
     ...args
   ) as any;
