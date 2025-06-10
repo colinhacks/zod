@@ -475,6 +475,13 @@ export class JSONSchemaGenerator {
           break;
         }
         case "transform": {
+          const schema = def.toJSONSchema?.(this.io);
+
+          if (schema) {
+            Object.assign(_json, schema);
+            break;
+          }
+
           if (this.unrepresentable === "throw") {
             throw new Error("Transforms cannot be represented in JSON Schema");
           }

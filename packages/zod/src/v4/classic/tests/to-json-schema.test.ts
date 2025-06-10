@@ -256,6 +256,32 @@ describe("toJSONSchema", () => {
     expect(() => z.toJSONSchema(dynamicCatchSchema)).toThrow("Dynamic catch values are not supported in JSON Schema");
   });
 
+  test("override for transform", () => {
+    const noSchemaForIo = z.transform(() => true, {
+      toJSONSchema: () => undefined,
+    });
+    const schemaForInput = z.transform(() => true, {
+      toJSONSchema: (io) => (io === "input" ? { type: "string" } : undefined),
+    });
+    const schemaForOutput = z.transform(() => true, {
+      toJSONSchema: (io) => (io === "output" ? { type: "string" } : undefined),
+    });
+
+    expect(() => z.toJSONSchema(noSchemaForIo)).toThrow("Transforms cannot be represented in JSON Schema");
+    expect(z.toJSONSchema(schemaForInput, { io: "input" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "string",
+      }
+    `);
+    expect(z.toJSONSchema(schemaForOutput, { io: "output" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "string",
+      }
+    `);
+  });
+
   test("string formats", () => {
     expect(z.toJSONSchema(z.string().email())).toMatchInlineSnapshot(`
       {

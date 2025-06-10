@@ -1272,11 +1272,13 @@ export function _file(Class: util.SchemaClass<schemas.$ZodFile>, params?: string
 export type $ZodTransformParams = TypeParams<schemas.$ZodTransform, "transform">;
 export function _transform<I = unknown, O = I>(
   Class: util.SchemaClass<schemas.$ZodTransform>,
-  fn: (input: I, ctx?: schemas.ParsePayload) => O
+  fn: (input: I, ctx?: schemas.ParsePayload) => O,
+  params?: $ZodTransformParams
 ): schemas.$ZodTransform<Awaited<O>, I> {
   return new Class({
     type: "transform",
     transform: fn as any,
+    toJSONSchema: params?.toJSONSchema,
   }) as any;
 }
 
