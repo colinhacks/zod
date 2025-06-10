@@ -164,7 +164,22 @@ test("loose examples", () => {
   });
 });
 
-test("function meta", () => {
+test("function meta witout replacement", () => {
+  const myReg = z.registry<{
+    defaulter: (arg: string, test: boolean) => number;
+  }>();
+
+  const mySchema = z.date();
+  myReg.add(mySchema, {
+    defaulter: (arg, _test) => {
+      return arg.length;
+    },
+  });
+
+  expect(myReg.get(mySchema)!.defaulter("hello", true)).toEqual(5);
+});
+
+test("function meta with replacement", () => {
   const myReg = z.registry<{
     defaulter: (arg: z.$input, test: boolean) => z.$output;
   }>();
