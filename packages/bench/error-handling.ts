@@ -1,4 +1,4 @@
-import { makeData, makeSchema } from "./benchUtil.js";
+import { makeData } from "./benchUtil.js";
 import { metabench } from "./metabench.js";
 
 import * as z4 from "zod/v4";
