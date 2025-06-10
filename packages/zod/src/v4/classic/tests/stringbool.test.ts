@@ -5,6 +5,8 @@ test("z.stringbool", () => {
   const a = z.stringbool();
   type a = z.infer<typeof a>;
   expectTypeOf<a>().toEqualTypeOf<boolean>();
+  type a_in = z.input<typeof a>;
+  expectTypeOf<a_in>().toEqualTypeOf<string>();
 
   expect(z.parse(a, "true")).toEqual(true);
   expect(z.parse(a, "yes")).toEqual(true);
@@ -28,20 +30,31 @@ test("z.stringbool", () => {
   expect(z.safeParse(a, {})).toMatchObject({ success: false });
   expect(z.safeParse(a, true)).toMatchObject({ success: false });
   expect(z.safeParse(a, false)).toMatchObject({ success: false });
+});
 
+test("custom values", () => {
   const b = z.stringbool({
     truthy: ["y"],
-    falsy: ["n"],
+    falsy: ["N"],
   });
   expect(z.parse(b, "y")).toEqual(true);
+  expect(z.parse(b, "Y")).toEqual(true);
   expect(z.parse(b, "n")).toEqual(false);
+  expect(z.parse(b, "N")).toEqual(false);
   expect(z.safeParse(b, "true")).toMatchObject({ success: false });
   expect(z.safeParse(b, "false")).toMatchObject({ success: false });
+});
 
+test("custom values - case sensitive", () => {
   const c = z.stringbool({
+    truthy: ["y"],
+    falsy: ["N"],
     case: "sensitive",
   });
-  expect(z.parse(c, "true")).toEqual(true);
+  expect(z.parse(c, "y")).toEqual(true);
+  expect(z.safeParse(c, "Y")).toMatchObject({ success: false });
+  expect(z.parse(c, "N")).toEqual(false);
+  expect(z.safeParse(c, "n")).toMatchObject({ success: false });
   expect(z.safeParse(c, "TRUE")).toMatchObject({ success: false });
 });
 

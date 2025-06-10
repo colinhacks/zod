@@ -1478,9 +1478,9 @@ export interface $ZodStringBoolParams extends TypeParams {
   truthy?: string[];
   falsy?: string[];
   /**
-   * Options `"sensitive"`, `"insensitive"`
+   * Options: `"sensitive"`, `"insensitive"`
    *
-   * Defaults to `"insensitive"`
+   * @default `"insensitive"`
    */
   case?: "sensitive" | "insensitive" | undefined;
 }
@@ -1489,66 +1489,69 @@ export function _stringbool(
   Classes: {
     Pipe?: typeof schemas.$ZodPipe;
     Boolean?: typeof schemas.$ZodBoolean;
-    Unknown?: typeof schemas.$ZodUnknown;
+    Transform?: typeof schemas.$ZodTransform;
+    String?: typeof schemas.$ZodString;
   },
   _params?: string | $ZodStringBoolParams
-): schemas.$ZodPipe<schemas.$ZodUnknown, schemas.$ZodBoolean<boolean>> {
+): schemas.$ZodPipe<
+  schemas.$ZodPipe<schemas.$ZodString, schemas.$ZodTransform<boolean, string>>,
+  schemas.$ZodBoolean<boolean>
+> {
   const { case: _case, error, truthy, falsy } = util.normalizeParams(_params);
 
-  const trueValues = new Set(truthy ?? ["true", "1", "yes", "on", "y", "enabled"]);
-  const falseValues = new Set(falsy ?? ["false", "0", "no", "off", "n", "disabled"]);
+  let truthyArray = truthy ?? ["true", "1", "yes", "on", "y", "enabled"];
+  let falsyArray = falsy ?? ["false", "0", "no", "off", "n", "disabled"];
+  if (_case !== "sensitive") {
+    truthyArray = truthyArray.map((v) => (typeof v === "string" ? v.toLowerCase() : v));
+    falsyArray = falsyArray.map((v) => (typeof v === "string" ? v.toLowerCase() : v));
+  }
+
+  const truthySet = new Set(truthyArray);
+  const falsySet = new Set(falsyArray);
 
   const _Pipe = Classes.Pipe ?? schemas.$ZodPipe;
   const _Boolean = Classes.Boolean ?? schemas.$ZodBoolean;
-  const _Unknown = Classes.Unknown ?? schemas.$ZodUnknown;
+  const _String = Classes.String ?? schemas.$ZodString;
+  const _Transform = Classes.Transform ?? schemas.$ZodTransform;
 
-  const inst = new _Unknown({
-    type: "unknown",
-    checks: [
-      {
-        _zod: {
-          check: (ctx: any) => {
-            if (typeof ctx.value === "string") {
-              let data: string = ctx.value;
-              if (_case !== "sensitive") data = data.toLowerCase();
-              if (trueValues.has(data)) {
-                ctx.value = true;
-              } else if (falseValues.has(data)) {
-                ctx.value = false;
-              } else {
-                ctx.issues.push({
-                  code: "invalid_value",
-                  expected: "stringbool",
-                  values: [...trueValues, ...falseValues],
-                  input: ctx.value,
-                  inst,
-                });
-              }
-            } else {
-              ctx.issues.push({
-                code: "invalid_type",
-                expected: "string",
-                input: ctx.value,
-              });
-            }
-          },
-          def: {
-            check: "custom",
-          },
-          onattach: [],
-        },
-      },
-    ],
+  const tx = new _Transform({
+    type: "transform",
+    transform: (input, payload: schemas.ParsePayload<unknown>) => {
+      let data: string = input as string;
+      if (_case !== "sensitive") data = data.toLowerCase();
+      if (truthySet.has(data)) {
+        return true;
+      } else if (falsySet.has(data)) {
+        return false;
+      } else {
+        payload.issues.push({
+          code: "invalid_value",
+          expected: "stringbool",
+          values: [...truthySet, ...falsySet],
+          input: payload.value,
+          inst: tx,
+        });
+        return {} as never;
+      }
+    },
     error,
   });
 
-  return new _Pipe({
+  const innerPipe = new _Pipe({
     type: "pipe",
-    in: inst,
+    in: new _String({ type: "string", error }),
+    out: tx,
+    error,
+  });
+
+  const outerPipe = new _Pipe({
+    type: "pipe",
+    in: innerPipe,
     out: new _Boolean({
       type: "boolean",
       error,
     }),
     error,
-  }) as any;
+  });
+  return outerPipe as any;
 }
