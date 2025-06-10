@@ -1,7 +1,7 @@
 {
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@10.8.0",
+  "packageManager": "pnpm@10.12.1",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/colinhacks/zod.git"
@@ -53,7 +53,9 @@
       "biome format --no-errors-on-unmatched --write",
       "biome lint --no-errors-on-unmatched --write"
     ],
-    "packages/*/**/*.md": ["prettier --ignore-unknown --write"]
+    "packages/*/**/*.md": [
+      "prettier --ignore-unknown --write"
+    ]
   },
   "scripts": {
     "fix": "pnpm run format && pnpm run lint",

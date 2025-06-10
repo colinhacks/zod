@@ -39,7 +39,6 @@ export async function fetchStars(resources: { slug: string; stars?: number }[]) 
     const json = await res.json();
 
     if (json.errors) {
-      console.error("GraphQL errors:", json.errors);
       throw new Error("Failed to fetch GitHub stars");
     }
 
