@@ -163,3 +163,18 @@ test("loose examples", () => {
     examples: ["example"],
   });
 });
+
+test("function meta", () => {
+  const myReg = z.registry<{
+    defaulter: (arg: z.$input, test: boolean) => z.$output;
+  }>();
+
+  const mySchema = z.string().transform((val) => val.length);
+  myReg.add(mySchema, {
+    defaulter: (arg, _test) => {
+      return arg.length;
+    },
+  });
+
+  expect(myReg.get(mySchema)!.defaulter("hello", true)).toEqual(5);
+});

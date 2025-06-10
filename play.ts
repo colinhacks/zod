@@ -1,15 +1,14 @@
 import { z } from "zod/v4";
 
-export interface SortItem<T extends string> {
-  key: T;
-  order: string;
-}
+const myReg = z.registry<{
+  defaulter: (arg: z.$input) => z.$output;
+}>();
 
-export const createSortItemSchema = <T extends z.ZodType<string>>(sortKeySchema: T) =>
-  z.object({
-    key: sortKeySchema,
-    order: z.string(),
-  });
+const mySchema = z.string().transform((val) => val.length);
+myReg.add(mySchema, {
+  defaulter: (arg) => {
+    return arg.length;
+  },
+});
 
-const error = <T extends z.ZodType<string>>(sortKeySchema: T, defaultSortBy: SortItem<z.output<T>>[] = []) =>
-  createSortItemSchema(sortKeySchema).array().default(defaultSortBy);
+myReg.get(mySchema)?.defaulter("hello"); // 5
