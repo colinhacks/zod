@@ -171,7 +171,8 @@ export interface _$ZodType<T extends $ZodTypeInternals = $ZodTypeInternals>
 
 export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constructor("$ZodType", (inst, def) => {
   inst ??= {} as any;
-  inst._zod.id = def.type + "_" + util.randomString(10);
+  // avoids issues with using Math.random() in Next.js caching
+  util.defineLazy(inst._zod, "id", () => def.type + "_" + util.randomString(10));
   inst._zod.def = def; // set _def property
   inst._zod.bag = inst._zod.bag || {}; // initialize _bag object
   inst._zod.version = version;
