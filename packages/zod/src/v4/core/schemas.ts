@@ -210,10 +210,8 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
           const shouldRun = ch._zod.when(payload);
 
           if (!shouldRun) continue;
-        } else {
-          if (isAborted) {
-            continue;
-          }
+        } else if (isAborted) {
+          continue;
         }
 
         const currLen = payload.issues.length;
@@ -1787,12 +1785,10 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
               isOptional ? handleOptionalObjectResult(r, payload, key, input) : handleObjectResult(r, payload, key)
             )
           );
+        } else if (isOptional) {
+          handleOptionalObjectResult(r, payload, key, input);
         } else {
-          if (isOptional) {
-            handleOptionalObjectResult(r, payload, key, input);
-          } else {
-            handleObjectResult(r, payload, key);
-          }
+          handleObjectResult(r, payload, key);
         }
       }
     }
