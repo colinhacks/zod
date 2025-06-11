@@ -526,7 +526,6 @@ test("index signature in shape", () => {
 
   const schema = makeZodObj("foo");
   type schema = z.infer<typeof schema>;
-  schema.parse({}).asdf;
 
   expectTypeOf<schema>().toEqualTypeOf<Record<string, unknown>>();
 });
