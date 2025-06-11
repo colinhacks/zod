@@ -358,7 +358,8 @@ const datetime = z.iso.datetime();
 datetime.parse("2020-01-01T00:00:00Z"); // ✅
 datetime.parse("2020-01-01T00:00:00.123Z"); // ✅
 datetime.parse("2020-01-01T00:00:00.123456Z"); // ✅ (arbitrary precision)
-datetime.parse("2020-01-01T00:00:00+02:00"); // ❌ (no offsets allowed)
+datetime.parse("2020-01-01T00:00:00+02:00"); // ❌ (offsets not allowed)
+datetime.parse("2020-01-01T00:00:00"); // ❌ (local not allowed)
 ```
 
 To allow timezone offsets:
@@ -413,12 +414,12 @@ The `z.iso.time()` method validates strings in the format `HH:MM:SS[.s+]`. The s
 ```ts
 const time = z.iso.time();
 
-time.parse("00:00:00"); // ✅
-time.parse("09:52:31"); // ✅
-time.parse("23:59:59.9999999"); // ✅ (arbitrary precision)
+time.parse("03:15:00"); // ✅
+time.parse("03:15:00.9999999"); // ✅ (arbitrary precision)
+time.parse("03:15"); // ✅ normalizes to `09:52:00`
 
-time.parse("00:00:00.123Z"); // ❌ (no `Z` allowed)
-time.parse("00:00:00.123+02:00"); // ❌ (no offsets allowed)
+time.parse("03:15:00Z"); // ❌ (no `Z` allowed)
+time.parse("03:15:00+02:00"); // ❌ (no offsets allowed)
 ```
 
 You can set the `precision` option to constrain the allowable decimal precision.

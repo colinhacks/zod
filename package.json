@@ -32,6 +32,7 @@
     "lint-staged": "^12.5.0",
     "mitata": "^0.1.14",
     "prettier": "^3.5.3",
+    "recheck": "^4.5.0",
     "semver": "^7.7.2",
     "supershy": "^1.0.0",
     "tinybench": "^2.9.0",
@@ -53,7 +54,9 @@
       "biome format --no-errors-on-unmatched --write",
       "biome lint --no-errors-on-unmatched --write"
     ],
-    "packages/*/**/*.md": ["prettier --ignore-unknown --write"]
+    "packages/*/**/*.md": [
+      "prettier --ignore-unknown --write"
+    ]
   },
   "scripts": {
     "fix": "pnpm run format && pnpm run lint",
