@@ -816,6 +816,21 @@ test("datetime parsing", () => {
   expect(() => datetimeOffset4Ms.parse("2020-10-14T17:42:29.124+00:00")).toThrow();
 });
 
+test("datetime offset normalization", () => {
+  const a = z.iso.datetime({ offset: true });
+  expect({
+    a: a.parse("2020-10-14T17:42:29+02"),
+    b: a.parse("2020-10-14T17:42:29+0200"),
+    c: a.parse("2020-10-14T17:42:29+02:00"),
+  }).toMatchInlineSnapshot(`
+    {
+      "a": "2020-10-14T17:42:29+02:00",
+      "b": "2020-10-14T17:42:29+02:00",
+      "c": "2020-10-14T17:42:29+02:00",
+    }
+  `);
+});
+
 test("date parsing", () => {
   const date = z.string().date();
   date.parse("1970-01-01");

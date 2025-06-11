@@ -366,11 +366,13 @@ To allow timezone offsets:
 ```ts
 const datetime = z.iso.datetime({ offset: true });
 
-datetime.parse("2020-01-01T00:00:00+02:00"); // ✅
-datetime.parse("2020-01-01T00:00:00.123+02:00"); // ✅ (millis optional)
-datetime.parse("2020-01-01T00:00:00.123+0200"); // ✅ (millis optional)
-datetime.parse("2020-01-01T00:00:00.123+02"); // ✅ (only offset hours)
-datetime.parse("2020-01-01T00:00:00Z"); // ✅ (Z still supported)
+// result is normalized to RFC 3339 format
+datetime.parse("2020-01-01T00:00:00+02");    // ✅ "2020-01-01T00:00:00+02:00"
+datetime.parse("2020-01-01T00:00:00+0200");  // ✅ "2020-01-01T00:00:00+02:00"
+datetime.parse("2020-01-01T00:00:00+02:00"); // ✅ "2020-01-01T00:00:00+02:00"
+
+// Z is still supported
+datetime.parse("2020-01-01T00:00:00Z"); // ✅ 
 ```
 
 To allow unqualified (timezone-less) datetimes:
