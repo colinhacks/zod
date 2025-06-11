@@ -118,7 +118,7 @@ test("datetime parsing with local option", () => {
 test("datetime parsing with local and offset", () => {
   const a = z.string().datetime({ local: true, offset: true });
 
-  a.parse("2022-10-13T12:52");
+  expect(a.parse("2022-10-13T12:52")).toEqual("2022-10-13T12:52:00");
   expect(() => a.parse("2022-10-13T12:52Z")).toThrow();
   expect(() => a.parse("2022-10-13T12:52+02:00")).toThrow();
 });
