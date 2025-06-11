@@ -18,7 +18,7 @@ export namespace util {
     for (const item of items) {
       obj[item] = item;
     }
-    return obj as any;
+    return obj;
   };
 
   export const getValidEnumValues = (obj: any): any[] => {

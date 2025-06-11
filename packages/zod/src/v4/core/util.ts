@@ -457,7 +457,7 @@ export function normalizeParams<T>(_params: T): Normalize<T> {
   }
   delete params.message;
   if (typeof params.error === "string") return { ...params, error: () => params.error } as any;
-  return params as any;
+  return params;
 }
 
 export function createTransparentProxy<T extends object>(getter: () => T): T {

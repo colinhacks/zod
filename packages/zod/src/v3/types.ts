@@ -2804,7 +2804,7 @@ export class ZodObject<
    * @deprecated
    */
   deepPartial(): partialUtil.DeepPartial<this> {
-    return deepPartialify(this) as any;
+    return deepPartialify(this);
   }
 
   partial(): ZodObject<{ [k in keyof T]: ZodOptional<T[k]> }, UnknownKeys, Catchall>;
@@ -3072,7 +3072,7 @@ const getDiscriminator = <T extends ZodTypeAny>(type: T): Primitive[] => {
     return type.options;
   } else if (type instanceof ZodNativeEnum) {
     // eslint-disable-next-line ban/ban
-    return util.objectValues(type.enum as any);
+    return util.objectValues(type.enum);
   } else if (type instanceof ZodDefault) {
     return getDiscriminator(type._def.innerType);
   } else if (type instanceof ZodUndefined) {
@@ -3309,7 +3309,7 @@ export class ZodIntersection<T extends ZodTypeAny, U extends ZodTypeAny> extends
         status.dirty();
       }
 
-      return { status: status.value, value: merged.data as any };
+      return { status: status.value, value: merged.data };
     };
 
     if (ctx.common.async) {
@@ -3833,7 +3833,7 @@ export class ZodFunction<Args extends ZodTuple<any, any>, Returns extends ZodTyp
         path: ctx.path,
         errorMaps: [ctx.common.contextualErrorMap, ctx.schemaErrorMap, getErrorMap(), defaultErrorMap].filter(
           (x) => !!x
-        ) as ZodErrorMap[],
+        ),
         issueData: {
           code: ZodIssueCode.invalid_arguments,
           argumentsError: error,
@@ -3847,7 +3847,7 @@ export class ZodFunction<Args extends ZodTuple<any, any>, Returns extends ZodTyp
         path: ctx.path,
         errorMaps: [ctx.common.contextualErrorMap, ctx.schemaErrorMap, getErrorMap(), defaultErrorMap].filter(
           (x) => !!x
-        ) as ZodErrorMap[],
+        ),
         issueData: {
           code: ZodIssueCode.invalid_return_type,
           returnTypeError: error,
@@ -4115,7 +4115,7 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<T[number],
     for (const val of this._def.values) {
       enumValues[val] = val;
     }
-    return enumValues as any;
+    return enumValues;
   }
 
   get Values(): Values<T> {
@@ -4123,7 +4123,7 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<T[number],
     for (const val of this._def.values) {
       enumValues[val] = val;
     }
-    return enumValues as any;
+    return enumValues;
   }
 
   get Enum(): Values<T> {
@@ -4131,7 +4131,7 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<T[number],
     for (const val of this._def.values) {
       enumValues[val] = val;
     }
-    return enumValues as any;
+    return enumValues;
   }
 
   extract<ToExtract extends readonly [T[number], ...T[number][]]>(
@@ -4201,7 +4201,7 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<T[keyof T], ZodNa
       });
       return INVALID;
     }
-    return OK(input.data as any);
+    return OK(input.data);
   }
 
   get enum() {
