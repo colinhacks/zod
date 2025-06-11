@@ -7,4 +7,6 @@ const B = A.superRefine((val, ctx) => {
   });
 });
 
-B.parse("test"); // Should pass
+// B.parse("test"); // Should pass
+
+console.log(navigator, { depth: null });
