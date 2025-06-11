@@ -107,7 +107,9 @@ export function datetime(args: {
 
   const opts: string[] = [];
   opts.push(args.local ? `Z?` : `Z`);
-  if (args.offset) opts.push(`([+-]\\d{2}:?\\d{2})`);
+  // if (args.offset) opts.push(`([+-]\\d{2}:?\\d{2})`);
+  // minutes, colon optional
+  if (args.offset) opts.push(`([+-]\\d{2}(?::?\\d{2})?)`);
   regex = `${regex}(${opts.join("|")})`;
   return new RegExp(`^${regex}$`);
 }

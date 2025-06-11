@@ -604,6 +604,20 @@ export const $ZodISODateTime: core.$constructor<$ZodISODateTime> = /*@__PURE__*/
   (inst, def): void => {
     def.pattern ??= regexes.datetime(def);
     $ZodStringFormat.init(inst, def);
+
+    const _super = inst._zod.check;
+    inst._zod.check = (payload) => {
+      _super(payload);
+
+      // normalize timezone offset
+      // add colon & minutes if missing
+      // if no offset, return early
+      const curr = payload.value;
+      if (/[+-]\d\d$/.test(curr)) payload.value = curr + ":00";
+      else if (/[+-]\d\d\d\d$/.test(curr)) {
+        payload.value = curr.slice(0, -2) + ":" + curr.slice(-2);
+      }
+    };
   }
 );
 
