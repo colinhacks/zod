@@ -279,7 +279,7 @@ test("redos checker", () => {
   const e = z.string().date();
   const f = z.string().time();
   const g = z.string().duration();
-  for (const schema of [a, b, c, d, e, f]) {
+  for (const schema of [a, b, c, d, e, f, g]) {
     const result = checkSync(schema._zod.pattern.source, "");
     if (result.status !== "safe") throw Error("ReDoS issue");
   }
