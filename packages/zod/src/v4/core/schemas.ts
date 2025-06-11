@@ -139,7 +139,7 @@ export interface _$ZodTypeInternals {
   isst: errors.$ZodIssueBase;
 
   /** An optional method used to override `toJSONSchema` logic. */
-  toJSONSchema?: () => object;
+  toJSONSchema?: () => unknown;
 
   /** @internal The parent of this schema. Only set during certain clone operations. */
   parent?: $ZodType | undefined;

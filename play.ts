@@ -1,4 +1,9 @@
 import { z } from "zod/v4";
 
-const datetime = z.iso.datetime({ offset: true });
-datetime.parse("2020-01-01T00:00:00.123+02");
+const enumSchema = z.enum(["a", "b", "c"]);
+const nativeEnumSchema = z.nativeEnum(enumSchema.enum);
+
+console.dir(nativeEnumSchema.safeParse("a"), { depth: null }); // Valid
+console.dir(nativeEnumSchema.safeParse("d"), { depth: null }); // Throws ZodError
+
+z.file().mime([""]);

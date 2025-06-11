@@ -1221,7 +1221,7 @@ test("override with refs", () => {
   const result = z.z.toJSONSchema(a, {
     override(ctx) {
       if (ctx.zodSchema._zod.def.type === "string") {
-        ctx.jsonSchema.type = "STRING";
+        ctx.jsonSchema.type = "STRING" as "string";
       }
     },
   });
@@ -2161,6 +2161,22 @@ test("z.file()", () => {
           "type": "string",
         },
       ],
+    }
+  `);
+});
+
+test("custom toJSONSchema", () => {
+  const schema = z.instanceof(Date);
+  schema._zod.toJSONSchema = () => ({
+    type: "string",
+    format: "date-time",
+  });
+
+  expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "format": "date-time",
+      "type": "string",
     }
   `);
 });
