@@ -1597,6 +1597,7 @@ export type $strip = {
   out: {};
   in: {};
 };
+
 export type $catchall<T extends SomeType> = {
   out: { [k: string]: core.output<T> };
   in: { [k: string]: core.input<T> };
@@ -3629,7 +3630,7 @@ export interface $ZodCustomDef<O = unknown> extends $ZodTypeDef, checks.$ZodChec
   path?: PropertyKey[] | undefined;
   error?: errors.$ZodErrorMap | undefined;
   params?: Record<string, any> | undefined;
-  fn: (arg: O) => unknown; // checks.$ZodCheck<O>["_zod"]["check"];
+  fn: (arg: O) => unknown;
 }
 
 export interface $ZodCustomInternals<O = unknown, I = unknown>

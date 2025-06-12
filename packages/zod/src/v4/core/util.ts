@@ -314,6 +314,10 @@ export function esc(str: string): string {
   return JSON.stringify(str);
 }
 
+export const captureStackTrace: typeof Error.captureStackTrace = Error.captureStackTrace
+  ? Error.captureStackTrace
+  : (..._args) => {};
+
 export function isObject(data: any): data is Record<PropertyKey, unknown> {
   return typeof data === "object" && data !== null && !Array.isArray(data);
 }

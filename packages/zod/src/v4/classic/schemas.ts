@@ -1913,6 +1913,7 @@ export const ZodCustom: core.$constructor<ZodCustom> = /*@__PURE__*/ core.$const
 export function check<O = unknown>(fn: core.CheckFn<O>, params?: string | core.$ZodCustomParams): core.$ZodCheck<O> {
   const ch = new core.$ZodCheck({
     check: "custom",
+
     ...util.normalizeParams(params),
   });
 
