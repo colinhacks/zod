@@ -45,8 +45,8 @@ importers:
         specifier: ^14.1.0
         version: 14.1.0
       husky:
-        specifier: ^7.0.4
-        version: 7.0.4
+        specifier: ^9.1.7
+        version: 9.1.7
       jsr:
         specifier: ^0.12.4
         version: 0.12.4
@@ -112,7 +112,7 @@ importers:
         version: zod@3.24.3
       zod4:
         specifier: npm:zod@latest
-        version: link:../zod
+        version: zod@3.25.62
 
   packages/docs:
     dependencies:
@@ -3753,9 +3753,9 @@ packages:
   humps@2.0.1:
     resolution: {integrity: sha512-E0eIbrFWUhwfXJmsbdjRQFQPrl5pTEoKlz163j1mTqqUnU9PgR4AgB8AIITzuB3vLBdxZXyZ9TDIrwB2OASz4g==}
 
-  husky@7.0.4:
-    resolution: {integrity: sha512-vbaCKN2QLtP/vD4yvs6iz6hBEo6wkSzs8HpRah1Z6aGmF2KW5PdYuAd7uX5a+OyBZHBhd+TFLqgjUgytQr4RvQ==}
-    engines: {node: '>=12'}
+  husky@9.1.7:
+    resolution: {integrity: sha512-5gs5ytaNjBrh5Ow3zrvdUUY+0VxIuWVL4i9irt6friV+BqdCfmV11CQTWMiBYWHbXhco+J1kHfTOUkePhCDvMA==}
+    engines: {node: '>=18'}
     hasBin: true
 
   iconv-lite@0.6.3:
@@ -5791,6 +5791,9 @@ packages:
 
   zod@3.24.3:
     resolution: {integrity: sha512-HhY1oqzWCQWuUqvBFnsyrtZRhyPeR7SUGv+C4+MsisMuVfSPx8HpwWqH8tRahSlt6M3PiFAcoeFhZAqIXTxoSg==}
+
+  zod@3.25.62:
+    resolution: {integrity: sha512-YCxsr4DmhPcrKPC9R1oBHQNlQzlJEyPAId//qTau/vBee9uO8K6prmRq4eMkOyxvBfH4wDPIPdLx9HVMWIY3xA==}
 
   zod@4.0.0-beta.20250420T053007:
     resolution: {integrity: sha512-5pp8Q0PNDaNcUptGiBE9akyioJh3RJpagIxrLtAVMR9IxwcSZiOsJD/1/98CyhItdTlI2H91MfhhLzRlU+fifA==}
@@ -9218,7 +9221,7 @@ snapshots:
 
   humps@2.0.1: {}
 
-  husky@7.0.4: {}
+  husky@9.1.7: {}
 
   iconv-lite@0.6.3:
     dependencies:
@@ -11692,6 +11695,8 @@ snapshots:
   zod@3.24.2: {}
 
   zod@3.24.3: {}
+
+  zod@3.25.62: {}
 
   zod@4.0.0-beta.20250420T053007:
     dependencies:
