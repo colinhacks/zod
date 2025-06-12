@@ -407,8 +407,6 @@ date.parse("2020-01-32"); // ❌
 
 ### ISO times
 
-> Added in Zod 3.23
-
 The `z.iso.time()` method validates strings in the format `HH:MM:SS[.s+]`. The second can include arbitrary decimal precision. It does not allow timezone offsets of any kind.
 
 ```ts
@@ -416,8 +414,8 @@ const time = z.iso.time();
 
 time.parse("03:15:00"); // ✅
 time.parse("03:15:00.9999999"); // ✅ (arbitrary precision)
-time.parse("03:15"); // ✅ normalizes to `09:52:00`
 
+time.parse("03:15"); // ❌ seconds are required
 time.parse("03:15:00Z"); // ❌ (no `Z` allowed)
 time.parse("03:15:00+02:00"); // ❌ (no offsets allowed)
 ```
@@ -1587,7 +1585,7 @@ const Person = z.record(Keys, z.string());
   const myRecord: MyRecord = { a: "foo" }; // ❌ missing required key `b`
   ```
 
-  In Zod 3, exhaustiveness was not checked. To replicate the Zod 3 behavior, use `z.partialRecord()`.
+  In Zod 3, exhaustiveness was not checked. To replicate the old behavior, use `z.partialRecord()`.
 
 </Callout>
 

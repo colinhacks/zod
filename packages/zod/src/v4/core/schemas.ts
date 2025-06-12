@@ -606,24 +606,6 @@ export const $ZodISODateTime: core.$constructor<$ZodISODateTime> = /*@__PURE__*/
     $ZodStringFormat.init(inst, def);
 
     const _super = inst._zod.check;
-    inst._zod.check = (payload) => {
-      _super(payload);
-
-      if (payload.issues.length) return;
-
-      // normalization
-      // add colon & minutes to offset
-      // add seconds to time
-
-      const curr = payload.value;
-      if (/[+-]\d\d$/.test(curr)) {
-        payload.value = curr + ":00";
-      } else if (/[+-]\d\d\d\d$/.test(curr)) {
-        payload.value = curr.slice(0, -2) + ":" + curr.slice(-2);
-      } else if (/T\d{2}:\d{2}$/.test(curr)) {
-        payload.value = curr + ":00";
-      }
-    };
   }
 );
 
@@ -648,8 +630,6 @@ export const $ZodISODate: core.$constructor<$ZodISODate> = /*@__PURE__*/ core.$c
 
 export interface $ZodISOTimeDef extends $ZodStringFormatDef<"time"> {
   precision?: number | null;
-  // offset?: boolean;
-  // local?: boolean;
 }
 
 export interface $ZodISOTimeInternals extends $ZodStringFormatInternals<"time"> {
@@ -667,16 +647,6 @@ export const $ZodISOTime: core.$constructor<$ZodISOTime> = /*@__PURE__*/ core.$c
     $ZodStringFormat.init(inst, def);
 
     const _super = inst._zod.check;
-    inst._zod.check = (payload) => {
-      _super(payload);
-      if (payload.issues.length) return;
-
-      // normalize seconds. add if missing.
-      const curr = payload.value;
-      if (/^\d{2}:\d{2}$/.test(curr)) {
-        payload.value = curr + ":00";
-      }
-    };
   }
 );
 

@@ -450,6 +450,13 @@ export function _jwt<T extends schemas.$ZodJWT>(
   });
 }
 
+export const TimePrecision = {
+  Any: null,
+  Minute: -1,
+  Second: 0,
+  Millisecond: 3,
+  Microsecond: 6,
+} as const;
 // ISODateTime
 export type $ZodISODateTimeParams = StringFormatParams<schemas.$ZodISODateTime, "pattern">;
 export type $ZodCheckISODateTimeParams = CheckStringFormatParams<schemas.$ZodISODateTime, "pattern">;

@@ -81,21 +81,21 @@ export const e164: RegExp = /^\+(?:[0-9]){6,14}[0-9]$/;
 const dateSource = `(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))`;
 export const date: RegExp = /*@__PURE__*/ new RegExp(`^${dateSource}$`);
 
-function timeSource(args: { precision?: number | null | undefined; local?: boolean }) {
+function timeSource(args: { precision?: number | null | undefined }) {
   const hhmm = `(?:[01]\\d|2[0-3]):[0-5]\\d`;
   const regex =
     typeof args.precision === "number"
-      ? args.precision === 0
-        ? `${hhmm}:[0-5]\\d`
-        : `${hhmm}:[0-5]\\d\\.\\d{${args.precision}}`
-      : args.local
-        ? `${hhmm}(?::[0-5]\\d(?:\\.\\d+)?)?`
-        : `${hhmm}:[0-5]\\d(?:\\.\\d+)?`;
+      ? args.precision === -1
+        ? `${hhmm}`
+        : args.precision === 0
+          ? `${hhmm}:[0-5]\\d`
+          : `${hhmm}:[0-5]\\d\\.\\d{${args.precision}}`
+      : `${hhmm}(?::[0-5]\\d(?:\\.\\d+)?)?`;
   return regex;
 }
 export function time(args: {
   precision?: number | null;
-  local?: boolean;
+  // local?: boolean;
 }): RegExp {
   return new RegExp(`^${timeSource(args)}$`);
 }
@@ -106,16 +106,11 @@ export function datetime(args: {
   offset?: boolean;
   local?: boolean;
 }): RegExp {
-  const requiredSeconds = timeSource({ precision: args.precision });
-  const optionalSeconds = timeSource({ precision: args.precision, local: true });
-  const times: string[] = [`(?:${requiredSeconds}Z)`];
-  // let timeRegex = timeSource(args);
-  if (args.offset) times.push(`(?:${requiredSeconds}(?:[+-]\\d{2}(?::?\\d{2})?))`);
-  if (args.local) times.push(`(?:${optionalSeconds})`);
-  const timeRegex = times.join("|");
-  // if (args.local) {
-  //   timeRegex = `${timeRegex}|${timeSource({ precision: args.precision, local: true })}`;
-  // }
+  const time = timeSource({ precision: args.precision });
+  const opts = ["Z"];
+  if (args.local) opts.push("");
+  if (args.offset) opts.push(`([+-]\\d{2}:\\d{2})`);
+  const timeRegex = `${time}(?:${opts.join("|")})`;
 
   return new RegExp(`^${dateSource}T(?:${timeRegex})$`);
 }
