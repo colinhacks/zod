@@ -78,25 +78,15 @@ const error: () => errors.$ZodErrorMap = () => {
         if (issue.values.length === 1) return `Ungültige Eingabe: erwartet ${util.stringifyPrimitive(issue.values[0])}`;
         return `Ungültige Option: erwartet eine von ${util.joinValues(issue.values, "|")}`;
       case "too_big": {
-        const sizing = getSizing(issue.origin);
-        if (issue.exact) {
-          if (sizing)
-            return `Zu groß: erwartet, dass ${issue.origin ?? "Wert"} genau ${issue.maximum.toString()} ${sizing.unit ?? "Elemente"} hat`;
-          return `Zu groß: erwartet, dass ${issue.origin ?? "Wert"} genau ${issue.maximum.toString()} ist`;
-        }
         const adj = issue.inclusive ? "<=" : "<";
+        const sizing = getSizing(issue.origin);
         if (sizing)
           return `Zu groß: erwartet, dass ${issue.origin ?? "Wert"} ${adj}${issue.maximum.toString()} ${sizing.unit ?? "Elemente"} hat`;
         return `Zu groß: erwartet, dass ${issue.origin ?? "Wert"} ${adj}${issue.maximum.toString()} ist`;
       }
       case "too_small": {
-        const sizing = getSizing(issue.origin);
-        if (issue.exact) {
-          if (sizing)
-            return `Zu klein: erwartet, dass ${issue.origin} genau ${issue.minimum.toString()} ${sizing.unit} hat`;
-          return `Zu klein: erwartet, dass ${issue.origin} genau ${issue.minimum.toString()} ist`;
-        }
         const adj = issue.inclusive ? ">=" : ">";
+        const sizing = getSizing(issue.origin);
         if (sizing) {
           return `Zu klein: erwartet, dass ${issue.origin} ${adj}${issue.minimum.toString()} ${sizing.unit} hat`;
         }

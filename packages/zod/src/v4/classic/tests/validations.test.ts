@@ -12,7 +12,7 @@ test("string length", async () => {
         {
           "code": "too_small",
           "exact": true,
-          "message": "Too small: expected string to have exactly 4 characters",
+          "message": "Too small: expected string to have >4 characters",
           "minimum": 4,
           "origin": "string",
           "path": [],
@@ -31,7 +31,7 @@ test("string length", async () => {
           "code": "too_big",
           "exact": true,
           "maximum": 4,
-          "message": "Too big: expected string to have exactly 4 characters",
+          "message": "Too big: expected string to have <4 characters",
           "origin": "string",
           "path": [],
         },
