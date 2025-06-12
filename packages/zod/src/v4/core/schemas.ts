@@ -1107,7 +1107,7 @@ export const $ZodBigInt: core.$constructor<$ZodBigInt> = /*@__PURE__*/ core.$con
   inst._zod.parse = (payload, _ctx) => {
     if (def.coerce)
       try {
-        payload.value = BigInt(payload.value as any);
+        payload.value = BigInt(payload.value);
       } catch (_) {}
     const { value: input } = payload;
     if (typeof input === "bigint") return payload;
@@ -2665,7 +2665,7 @@ export const $ZodEnum: core.$constructor<$ZodEnum> = /*@__PURE__*/ core.$constru
 
   inst._zod.parse = (payload, _ctx) => {
     const input = payload.value;
-    if (inst._zod.values.has(input as any)) {
+    if (inst._zod.values.has(input)) {
       return payload;
     }
     payload.issues.push({
@@ -2717,7 +2717,7 @@ export const $ZodLiteral: core.$constructor<$ZodLiteral> = /*@__PURE__*/ core.$c
 
     inst._zod.parse = (payload, _ctx) => {
       const input = payload.value;
-      if (inst._zod.values.has(input as any)) {
+      if (inst._zod.values.has(input)) {
         return payload;
       }
       payload.issues.push({

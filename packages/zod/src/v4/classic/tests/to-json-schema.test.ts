@@ -825,7 +825,7 @@ describe("toJSONSchema", () => {
       z.toJSONSchema(a, {
         io: "input",
         override(ctx) {
-          const def = (ctx.zodSchema as z.core.$ZodTypes)._zod.def;
+          const def = ctx.zodSchema._zod.def;
           if (def.type === "object" && !def.catchall) {
             (ctx.jsonSchema as z.core.JSONSchema.ObjectSchema).additionalProperties = false;
           }
