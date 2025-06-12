@@ -1148,7 +1148,6 @@ export const $ZodCheckMimeType: core.$constructor<$ZodCheckMimeType> = /*@__PURE
         code: "invalid_value",
         values: def.mime,
         input: payload.value.type,
-        path: ["type"],
         inst,
       });
     };
