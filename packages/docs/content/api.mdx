@@ -355,10 +355,11 @@ The `z.iso.datetime()` method enforces ISO 8601; by default, no timezone offsets
 ```ts
 const datetime = z.iso.datetime();
 
-datetime.parse("2020-01-01T00:00:00Z"); // ✅
-datetime.parse("2020-01-01T00:00:00.123Z"); // ✅
-datetime.parse("2020-01-01T00:00:00.123456Z"); // ✅ (arbitrary precision)
-datetime.parse("2020-01-01T00:00:00+02:00"); // ❌ (no offsets allowed)
+datetime.parse("2020-01-01T06:15:00Z"); // ✅
+datetime.parse("2020-01-01T06:15:00.123Z"); // ✅
+datetime.parse("2020-01-01T06:15:00.123456Z"); // ✅ (arbitrary precision)
+datetime.parse("2020-01-01T06:15:00+02:00"); // ❌ (offsets not allowed)
+datetime.parse("2020-01-01T06:15:00"); // ❌ (local not allowed)
 ```
 
 To allow timezone offsets:
@@ -366,30 +367,47 @@ To allow timezone offsets:
 ```ts
 const datetime = z.iso.datetime({ offset: true });
 
-// result is normalized to RFC 3339 format
-datetime.parse("2020-01-01T00:00:00+02");    // ✅ "2020-01-01T00:00:00+02:00"
-datetime.parse("2020-01-01T00:00:00+0200");  // ✅ "2020-01-01T00:00:00+02:00"
-datetime.parse("2020-01-01T00:00:00+02:00"); // ✅ "2020-01-01T00:00:00+02:00"
+// allows timezone offsets
+datetime.parse("2020-01-01T06:15:00+02:00"); // ✅
+
+// basic offsets not allowed
+datetime.parse("2020-01-01T06:15:00+02");    // ❌
+datetime.parse("2020-01-01T06:15:00+0200");  // ❌
 
 // Z is still supported
-datetime.parse("2020-01-01T00:00:00Z"); // ✅ 
+datetime.parse("2020-01-01T06:15:00Z"); // ✅ 
 ```
 
 To allow unqualified (timezone-less) datetimes:
 
 ```ts
 const schema = z.iso.datetime({ local: true });
-schema.parse("2020-01-01T00:00:00"); // ✅
+schema.parse("2020-01-01T06:15:01"); // ✅
+schema.parse("2020-01-01T06:15"); // ✅ seconds optional
 ```
 
-To constrain the allowable `precision` (by default, arbitrary sub-second precision is supported).
+To constrain the allowable time `precision`. By default, seconds are optional and arbitrary sub-second precision is allowed.
 
 ```ts
-const datetime = z.iso.datetime({ precision: 3 });
+const a = z.iso.datetime();
+a.parse("2020-01-01T06:15Z"); // ✅
+a.parse("2020-01-01T06:15:00Z"); // ✅
+a.parse("2020-01-01T06:15:00.123Z"); // ✅
 
-datetime.parse("2020-01-01T00:00:00.123Z"); // ✅
-datetime.parse("2020-01-01T00:00:00Z"); // ❌
-datetime.parse("2020-01-01T00:00:00.123456Z"); // ❌
+const b = z.iso.datetime({ precision: -1 }); // minute precision (no seconds)
+b.parse("2020-01-01T06:15Z"); // ✅
+b.parse("2020-01-01T06:15:00Z"); // ❌
+b.parse("2020-01-01T06:15:00.123Z"); // ❌
+
+const c = z.iso.datetime({ precision: 0 }); // second precision only
+c.parse("2020-01-01T06:15Z"); // ❌
+c.parse("2020-01-01T06:15:00Z"); // ✅
+c.parse("2020-01-01T06:15:00.123Z"); // ❌
+
+const d = z.iso.datetime({ precision: 3 }); // millisecond precision only
+d.parse("2020-01-01T06:15Z"); // ❌
+d.parse("2020-01-01T06:15:00Z"); // ❌
+d.parse("2020-01-01T06:15:00.123Z"); // ✅
 ```
 
 ### ISO dates
@@ -406,29 +424,31 @@ date.parse("2020-01-32"); // ❌
 
 ### ISO times
 
-> Added in Zod 3.23
-
-The `z.iso.time()` method validates strings in the format `HH:MM:SS[.s+]`. The second can include arbitrary decimal precision. It does not allow timezone offsets of any kind.
+The `z.iso.time()` method validates strings in the format `HH:MM[:SS[.s+]]`. By default seconds are optional, as are sub-second deciams.
 
 ```ts
 const time = z.iso.time();
 
-time.parse("00:00:00"); // ✅
-time.parse("09:52:31"); // ✅
-time.parse("23:59:59.9999999"); // ✅ (arbitrary precision)
-
-time.parse("00:00:00.123Z"); // ❌ (no `Z` allowed)
-time.parse("00:00:00.123+02:00"); // ❌ (no offsets allowed)
+time.parse("03:15"); // ✅
+time.parse("03:15:00"); // ✅
+time.parse("03:15:00.9999999"); // ✅ (arbitrary precision)
 ```
 
-You can set the `precision` option to constrain the allowable decimal precision.
+No offsets of any kind are allowed.
 
 ```ts
-const time = z.iso.time({ precision: 3 });
+time.parse("03:15:00Z"); // ❌ (no `Z` allowed)
+time.parse("03:15:00+02:00"); // ❌ (no offsets allowed)
+```
 
-time.parse("00:00:00.123"); // ✅
-time.parse("00:00:00.123456"); // ❌
-time.parse("00:00:00"); // ❌
+Use the `precision` parameter to constrain the allowable decimal precision.
+
+```ts
+z.iso.time({ precision: -1 }); // HH:MM (minute precision)
+z.iso.time({ precision: 0 }); // HH:MM:SS (second precision)
+z.iso.time({ precision: 1 }); // HH:MM:SS.s (decisecond precision)
+z.iso.time({ precision: 2 }); // HH:MM:SS.ss (centisecond precision)
+z.iso.time({ precision: 3 }); // HH:MM:SS.sss (millisecond precision)
 ```
 
 ### IP addresses
@@ -597,7 +617,7 @@ Use `z.date()` to validate `Date` instances.
 
 ```ts
 z.date().safeParse(new Date()); // success: true
-z.date().safeParse("2022-01-12T00:00:00.000Z"); // success: false
+z.date().safeParse("2022-01-12T06:15:00.000Z"); // success: false
 ```
 
 To customize the error message:
@@ -1586,7 +1606,7 @@ const Person = z.record(Keys, z.string());
   const myRecord: MyRecord = { a: "foo" }; // ❌ missing required key `b`
   ```
 
-  In Zod 3, exhaustiveness was not checked. To replicate the Zod 3 behavior, use `z.partialRecord()`.
+  In Zod 3, exhaustiveness was not checked. To replicate the old behavior, use `z.partialRecord()`.
 
 </Callout>
 

@@ -2,13 +2,18 @@ import { z } from "zod/v4";
 
 z;
 
-// const schema = z.iso.datetime({ offset: true, local: true });
-// console.dir(schema.parse("2023-10-01T12:00:00.132"), { depth: null });
+// const time = z.iso.datetime();
+console.log("z.iso.datetime()");
+console.log(z.iso.datetime()._zod.def.pattern);
 
-const datetime = z.iso.datetime({ offset: true });
+console.log("z.iso.datetime({local: true})");
+console.log(z.iso.datetime({ local: true })._zod.def.pattern);
 
-datetime.parse("2020-01-01T00:00:00+02:00"); // ✅
-datetime.parse("2020-01-01T00:00:00.123+02:00"); // ✅ (millis optional)
-datetime.parse("2020-01-01T00:00:00.123+0200"); // ✅ (millis optional)
-datetime.parse("2020-01-01T00:00:00.123+02"); // ✅ (only offset hours)
-datetime.parse("2020-01-01T00:00:00Z"); // ✅ (Z still supported)
+console.log("z.iso.datetime({offset: true})");
+console.log(z.iso.datetime({ offset: true })._zod.def.pattern);
+
+console.log("z.iso.datetime({precision: z.TimePrecision.Minute})");
+console.log(z.iso.datetime({ precision: z.TimePrecision.Minute })._zod.def.pattern);
+
+console.log("z.iso.datetime({offset: true, local: true })");
+console.log(z.iso.datetime({ offset: true, local: true })._zod.def.pattern);

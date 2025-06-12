@@ -606,18 +606,6 @@ export const $ZodISODateTime: core.$constructor<$ZodISODateTime> = /*@__PURE__*/
     $ZodStringFormat.init(inst, def);
 
     const _super = inst._zod.check;
-    inst._zod.check = (payload) => {
-      _super(payload);
-
-      // normalize timezone offset
-      // add colon & minutes if missing
-      // if no offset, return early
-      const curr = payload.value;
-      if (/[+-]\d\d$/.test(curr)) payload.value = curr + ":00";
-      else if (/[+-]\d\d\d\d$/.test(curr)) {
-        payload.value = curr.slice(0, -2) + ":" + curr.slice(-2);
-      }
-    };
   }
 );
 
@@ -642,8 +630,6 @@ export const $ZodISODate: core.$constructor<$ZodISODate> = /*@__PURE__*/ core.$c
 
 export interface $ZodISOTimeDef extends $ZodStringFormatDef<"time"> {
   precision?: number | null;
-  // offset?: boolean;
-  // local?: boolean;
 }
 
 export interface $ZodISOTimeInternals extends $ZodStringFormatInternals<"time"> {
@@ -659,6 +645,8 @@ export const $ZodISOTime: core.$constructor<$ZodISOTime> = /*@__PURE__*/ core.$c
   (inst, def): void => {
     def.pattern ??= regexes.time(def);
     $ZodStringFormat.init(inst, def);
+
+    const _super = inst._zod.check;
   }
 );
 
