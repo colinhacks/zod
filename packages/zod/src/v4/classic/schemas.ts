@@ -1043,7 +1043,7 @@ export interface ZodObject<
   strict(): ZodObject<Shape, core.$strict>;
 
   /** This is the default behavior. This method call is likely unnecessary. */
-  strip(): ZodObject<Shape, core.$strict>;
+  strip(): ZodObject<Shape, core.$strip>;
 
   extend<U extends core.$ZodLooseShape & Partial<Record<keyof Shape, core.SomeType>>>(
     shape: U
