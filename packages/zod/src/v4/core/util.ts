@@ -319,7 +319,11 @@ export function isObject(data: any): data is Record<PropertyKey, unknown> {
 }
 
 export const allowsEval: { value: boolean } = cached(() => {
-  if (typeof navigator !== "undefined" && navigator?.userAgent.includes("Cloudflare")) {
+  if (
+    typeof navigator !== "undefined" &&
+    typeof navigator?.userAgent === "string" &&
+    navigator?.userAgent.includes("Cloudflare")
+  ) {
     return false;
   }
 
