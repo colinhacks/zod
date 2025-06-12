@@ -60,6 +60,7 @@ const formIntegrations: ZodResource[] = [
     url: "https://github.com/victorgarciaesgi/regle",
     description: "Headless form validation library for Vue.js.",
     slug: "victorgarciaesgi/regle",
+    v4: true,
   },
   {
     name: "conform",
