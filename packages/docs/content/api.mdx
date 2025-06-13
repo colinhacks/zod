@@ -480,7 +480,7 @@ cidrv6.parse("2001:db8::/32"); // ✅
 To define a template literal schema:
 
 ```ts
-const schema = z.templateLiteral("hello, ", z.string(), "!");
+const schema = z.templateLiteral([ "hello, ", z.string(), "!" ]);
 // `hello, ${string}!`
 ```
 
