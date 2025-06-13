@@ -29,7 +29,7 @@
     "globby": "^14.1.0",
     "husky": "^9.1.7",
     "jsr": "^0.12.4",
-    "lint-staged": "^12.5.0",
+    "lint-staged": "^16.1.0",
     "mitata": "^0.1.14",
     "prettier": "^3.5.3",
     "recheck": "^4.5.0",
