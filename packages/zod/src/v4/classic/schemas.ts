@@ -1202,10 +1202,12 @@ export function union<const T extends readonly core.SomeType[]>(
 }
 
 // ZodDiscriminatedUnion
-export interface ZodDiscriminatedUnion<Options extends readonly core.SomeType[] = readonly core.$ZodType[]>
-  extends ZodUnion<Options>,
-    core.$ZodDiscriminatedUnion<Options> {
-  _zod: core.$ZodDiscriminatedUnionInternals<Options>;
+export interface ZodDiscriminatedUnion<
+  Options extends readonly core.SomeType[] = readonly core.$ZodType[],
+  Discriminator extends string = string,
+> extends ZodUnion<Options>,
+    core.$ZodDiscriminatedUnion<Options, Discriminator> {
+  _zod: core.$ZodDiscriminatedUnionInternals<Options, Discriminator>;
 }
 export const ZodDiscriminatedUnion: core.$constructor<ZodDiscriminatedUnion> = /*@__PURE__*/ core.$constructor(
   "ZodDiscriminatedUnion",
@@ -1216,12 +1218,13 @@ export const ZodDiscriminatedUnion: core.$constructor<ZodDiscriminatedUnion> = /
 );
 
 export function discriminatedUnion<
-  Types extends readonly [core.$ZodTypeDiscriminable, ...core.$ZodTypeDiscriminable[]],
+  Types extends readonly [core.$ZodTypeDiscriminable<Discriminator>, ...core.$ZodTypeDiscriminable<Discriminator>[]],
+  Discriminator extends string,
 >(
-  discriminator: string,
+  discriminator: Discriminator,
   options: Types,
   params?: string | core.$ZodDiscriminatedUnionParams
-): ZodDiscriminatedUnion<Types> {
+): ZodDiscriminatedUnion<Types, Discriminator> {
   // const [options, params] = args;
   return new ZodDiscriminatedUnion({
     type: "union",
