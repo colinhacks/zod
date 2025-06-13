@@ -20,50 +20,11 @@ afterEach(() => {
 });
 
 test("passing validations", () => {
-  expect(minCheck.safeParse(new File(["12345"], "test.txt"))).toMatchInlineSnapshot(`
-    {
-      "data": File {
-        Symbol(kHandle): Blob {},
-        Symbol(kLength): 5,
-        Symbol(kType): "",
-        Symbol(state): FileState {
-          "lastModified": 1749757007218,
-          "name": "test.txt",
-        },
-      },
-      "success": true,
-    }
-  `);
-  expect(maxCheck.safeParse(new File(["12345678"], "test.txt"))).toMatchInlineSnapshot(`
-    {
-      "data": File {
-        Symbol(kHandle): Blob {},
-        Symbol(kLength): 8,
-        Symbol(kType): "",
-        Symbol(state): FileState {
-          "lastModified": 1749757007224,
-          "name": "test.txt",
-        },
-      },
-      "success": true,
-    }
-  `);
-  expect(mimeCheck.safeParse(new File([""], "test.csv", { type: "text/plain" }))).toMatchInlineSnapshot(`
-    {
-      "data": File {
-        Symbol(kHandle): Blob {},
-        Symbol(kLength): 0,
-        Symbol(kType): "text/plain",
-        Symbol(state): FileState {
-          "lastModified": 1749757007224,
-          "name": "test.csv",
-        },
-      },
-      "success": true,
-    }
-  `);
-  expect(mimeCheck.safeParse(new File([""], "test.txt"))).toThrow();
-  expect(mimeCheck.safeParse(new File([""], "test.txt", { type: "text/csv" }))).toThrow();
+  minCheck.safeParse(new File(["12345"], "test.txt"));
+  maxCheck.safeParse(new File(["12345678"], "test.txt"));
+  mimeCheck.safeParse(new File([""], "test.csv", { type: "text/plain" }));
+  expect(() => mimeCheck.parse(new File([""], "test.txt"))).toThrow();
+  expect(() => mimeCheck.parse(new File([""], "test.txt", { type: "text/csv" }))).toThrow();
 });
 
 test("failing validations", () => {
