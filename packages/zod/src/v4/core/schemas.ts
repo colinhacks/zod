@@ -1935,20 +1935,27 @@ export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$const
 //////////////////////////////////////////////////////
 //////////////////////////////////////////////////////
 
-export interface $ZodDiscriminatedUnionDef<Options extends readonly SomeType[] = readonly $ZodType[]>
-  extends $ZodUnionDef<Options> {
-  discriminator: string;
+export interface $ZodDiscriminatedUnionDef<
+  Options extends readonly SomeType[] = readonly $ZodType[],
+  Discriminator extends string = string,
+> extends $ZodUnionDef<Options> {
+  discriminator: Discriminator;
   unionFallback?: boolean;
 }
 
-export interface $ZodDiscriminatedUnionInternals<Options extends readonly SomeType[] = readonly $ZodType[]>
-  extends $ZodUnionInternals<Options> {
-  def: $ZodDiscriminatedUnionDef<Options>;
+export interface $ZodDiscriminatedUnionInternals<
+  Options extends readonly SomeType[] = readonly $ZodType[],
+  Discriminator extends string = string,
+> extends $ZodUnionInternals<Options> {
+  def: $ZodDiscriminatedUnionDef<Options, Discriminator>;
   propValues: util.PropValues;
 }
 
-export interface $ZodDiscriminatedUnion<T extends readonly SomeType[] = readonly $ZodType[]> extends $ZodType {
-  _zod: $ZodDiscriminatedUnionInternals<T>;
+export interface $ZodDiscriminatedUnion<
+  T extends readonly SomeType[] = readonly $ZodType[],
+  Discriminator extends string = string,
+> extends $ZodType {
+  _zod: $ZodDiscriminatedUnionInternals<T, Discriminator>;
 }
 
 export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
@@ -1974,7 +1981,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
     });
 
     const disc = util.cached(() => {
-      const opts = def.options as $ZodTypeDiscriminable[];
+      const opts = def.options as $ZodTypeDiscriminable<string>[];
       const map: Map<util.Primitive, $ZodType> = new Map();
       for (const o of opts) {
         const values = o._zod.propValues[def.discriminator];

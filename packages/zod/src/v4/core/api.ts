@@ -1077,20 +1077,24 @@ export function _union<const T extends readonly schemas.$ZodObject[]>(
 }
 
 // ZodDiscriminatedUnion
-export interface $ZodTypeDiscriminableInternals extends schemas.$ZodTypeInternals {
+export interface $ZodTypeDiscriminableInternals<Discriminator extends string>
+  extends schemas.$ZodTypeInternals<unknown, { [key in Discriminator]?: unknown }> {
   propValues: util.PropValues;
 }
 
-export interface $ZodTypeDiscriminable extends schemas.$ZodType {
-  _zod: $ZodTypeDiscriminableInternals;
+export interface $ZodTypeDiscriminable<Discriminator extends string> extends schemas.$ZodType {
+  _zod: $ZodTypeDiscriminableInternals<Discriminator>;
 }
 export type $ZodDiscriminatedUnionParams = TypeParams<schemas.$ZodDiscriminatedUnion, "options" | "discriminator">;
-export function _discriminatedUnion<Types extends [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]]>(
+export function _discriminatedUnion<
+  Types extends [$ZodTypeDiscriminable<Discriminator>, ...$ZodTypeDiscriminable<Discriminator>[]],
+  Discriminator extends string,
+>(
   Class: util.SchemaClass<schemas.$ZodDiscriminatedUnion>,
-  discriminator: string,
+  discriminator: Discriminator,
   options: Types,
   params?: string | $ZodDiscriminatedUnionParams
-): schemas.$ZodDiscriminatedUnion<Types> {
+): schemas.$ZodDiscriminatedUnion<Types, Discriminator> {
   return new Class({
     type: "union",
     options,
