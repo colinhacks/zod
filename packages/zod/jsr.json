@@ -1,0 +1,12 @@
+{
+  "name": "@zod/zod",
+  "version": "4.0.0-alpha.0",
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "publish": {
+    "include": ["src", "LICENSE", "package.json", "README.md"],
+    "exclude": ["tests", "dist"]
+  }
+}

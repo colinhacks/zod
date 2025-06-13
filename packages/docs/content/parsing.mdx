@@ -1,0 +1,74 @@
+---
+title: Parsing data
+---
+
+Given a Zod schema, there are a number of ways to parse data with it. 
+
+## `.parse`
+
+Given any Zod schema, you can call its `.parse` method to check `data` is valid. If it is, a value is returned with full type information! Otherwise, an error is thrown.
+
+> IMPORTANT: The value returned by `.parse` is a _deep clone_ of the variable you passed in.
+
+```ts
+const stringSchema = z.string();
+
+stringSchema.parse("fish"); // => returns "fish"
+stringSchema.parse(12); // throws error
+```
+
+## `.parseAsync`
+
+`.parseAsync(data:unknown): Promise<T>`
+
+If you use asynchronous [refinements](#refine) or [transforms](#transform) (more on those later), you'll need to use `.parseAsync`.
+
+```ts
+const stringSchema = z.string().refine(async (val) => val.length <= 8);
+
+await stringSchema.parseAsync("hello"); // => returns "hello"
+await stringSchema.parseAsync("hello world"); // => throws error
+```
+
+## `.safeParse`
+
+`.safeParse(data:unknown): { success: true; data: T; } | { success: false; error: ZodError; }`
+
+If you don't want Zod to throw errors when validation fails, use `.safeParse`. This method returns an object containing either the successfully parsed data or a ZodError instance containing detailed information about the validation problems.
+
+```ts
+stringSchema.safeParse(12);
+// => { success: false; error: ZodError }
+
+stringSchema.safeParse("billie");
+// => { success: true; data: 'billie' }
+```
+
+The result is a _discriminated union_, so you can handle errors very conveniently:
+
+```ts
+const result = stringSchema.safeParse("billie");
+if (!result.success) {
+  // handle error then return
+  result.error;
+} else {
+  // do something
+  result.data;
+}
+```
+
+## `.safeParseAsync`
+
+> Alias: `.spa`
+
+An asynchronous version of `safeParse`.
+
+```ts
+await stringSchema.safeParseAsync("billie");
+```
+
+For convenience, this has been aliased to `.spa`:
+
+```ts
+await stringSchema.spa("billie");
+```

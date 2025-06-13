@@ -4,72 +4,81 @@ name: Release on npm
 on:
   push:
     branches:
-      - "master"
+      - main
     paths:
-      - package.json
+      - "packages/zod/package.json"
+      - "packages/zod/src/**"
+      - ".github/workflows/release.yml"
 
 jobs:
   build_and_publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+      id-token: write
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          submodules: true
-
-      - name: Set up Node
-        uses: actions/setup-node@v1
-        with:
-          node-version: 16
       
-      - name: Checkout zod-deno
-        uses: actions/checkout@v2
+      - name: Set up Node
+        uses: actions/setup-node@v4
         with:
-          token: ${{ secrets.ZOD_BOT_TOKEN }}
-          repository: colinhacks/zod-deno
-          path: deno/lib
-
+          node-version: 20
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        
       - name: Install dependencies
         run: |
-          yarn install
+          pnpm install
 
-      - name: Build
+      - name: Build and test
+        working-directory: ./packages/zod
         run: |
-          yarn clean
-          yarn build
-          cp logo.svg deno/lib
-          cp README.md deno/lib
-
+          pnpm run test
+          pnpm build
+          
       - id: publish
         name: Publish to NPM
-        uses: JS-DevTools/npm-publish@v1
+        uses: JS-DevTools/npm-publish@v3
         with:
           token: ${{ secrets.NPM_TOKEN }}
           dry-run: false
+          provenance: true
+          package: ./packages/zod
 
       - name: Post-publish
-        if: steps.publish.outputs.type != 'none'
+        if: ${{ steps.publish.outputs.type }}
         run: |
           echo "Published ${{ steps.publish.outputs.type }} version: ${{ steps.publish.outputs.version }}"
 
-      - name: Publish skipped
-        if: steps.publish.outputs.type == 'none'
+      - name: Set canary version
+        if: ${{ !steps.publish.outputs.type }}
+        working-directory: ./packages/zod
         run: |
-          echo "Version in package.json has not changed. Skipping."
+          npm --no-git-tag-version version minor
+          npm --no-git-tag-version version $(npm pkg get version | sed 's/"//g')-canary.$(date +'%Y%m%dT%H%M%S')
+
+      - name: Publish canary
+        if: ${{ !steps.publish.outputs.type }}
+        uses: JS-DevTools/npm-publish@v3
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          dry-run: false
+          provenance: true
+          tag: canary
+          package: ./packages/zod
+      
+      - name: Done with canary
+        if: ${{ !steps.publish.outputs.type }}
+        run: |
+          echo "Canary published."
           exit 0
-
-      - name: Push to Deno
-        if: steps.publish.outputs.type != 'none'
-        working-directory: deno/lib
-        run: |
-          git config --global user.email "zodbot@colinhacks.com"
-          git config --global user.name "Zod Bot"
-          git add . -f
-          git commit -m "Build from zod $GITHUB_SHA" --allow-empty
-          git push
-
+     
       - name: Configure changelog
-        if: steps.publish.outputs.type != 'none'
+        if: ${{ steps.publish.outputs.type }}
         run: |
           echo '{"categories": [], "template": "## Commits:\n\n${{ '${{UNCATEGORIZED}}' }}", "pr_template": ${{ '"- ${{MERGE_SHA}} ${{TITLE}}"' }} }' > changelog_config.json
           cat changelog_config.json
@@ -77,7 +86,7 @@ jobs:
           echo "curr_commit=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
       - name: Generate changelog
-        if: steps.publish.outputs.type != 'none'
+        if: ${{ steps.publish.outputs.type }}
         id: github_release
         uses: mikepenz/release-changelog-builder-action@v2.9.0
         env:
@@ -89,9 +98,9 @@ jobs:
           configuration: changelog_config.json
 
       - name: Create release
-        if: steps.publish.outputs.type != 'none'
+        if: ${{ steps.publish.outputs.type }}
         id: create_release
-        uses: actions/create-release@latest
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -102,18 +111,3 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Create Deno release
-        if: steps.publish.outputs.type != 'none'
-        id: create_deno_release
-        uses: actions/create-release@latest
-        env:
-          GITHUB_TOKEN: ${{ secrets.ZOD_BOT_TOKEN }}
-        with:
-          tag_name: v${{ steps.publish.outputs.version }}
-          release_name: v${{ steps.publish.outputs.version }}
-          commitish: refs/heads/main
-          body: ${{steps.github_release.outputs.changelog}}
-          draft: false
-          prerelease: false
-          owner: colinhacks
-          repo: zod-deno

@@ -27,33 +27,53 @@ The following steps will get you setup to contribute changes to this repo:
 
 2. Clone your forked repo: `git clone git@github.com:{your_username}/zod.git`
 
-3. Run `yarn` to install dependencies.
+3. Run `pnpm i` to install dependencies.
 
-4. Start playing with the code! You can do some simple experimentation in [`playground.ts`](playground.ts) (see `yarn play` below) or start implementing a feature right away.
+4. Start playing with the code! You can do some simple experimentation in [`play.ts`](play.ts) (see `pnpm play` below) or start implementing a feature right away.
+
+
+## Alternative: VSCode Dev Container setup
+
+For an officially supported isolated dev environment that automatically installs dependencies for you:
+
+1. `F1` in VSCode and start typing `Dev Containers: Clone Repository in Named Container Volume` to run the command.
+2. For the repo, paste `git@github.com:{your_username}/zod.git` if you're using ssh.
+3. Click `Create a new volume...` and name it `zod` and the folder name as `zod`.
+
+Note: if you can't see `Dev Containers` in the `F1` menu, follow [this guide](https://code.visualstudio.com/docs/devcontainers/tutorial) to install the needed extension.
+In the OSS version of VSCode the extension may be not available.
 
 ### Commands
 
-**`yarn build`**
+**`pnpm build`**
 
 - deletes `lib` and re-compiles `src` to `lib`
 
-**`yarn test`**
+**`pnpm test`**
 
-- runs all Jest tests and generates coverage badge
+- runs all Vitest tests and generates coverage badge
 
-**`yarn test enum`**
+**`pnpm test:watch`**
 
-- runs a single test file (e.g. `enum.test.ts`)
+- runs all Vitest tests and
 
-**`yarn play`**
+**`pnpm test <file>`**
 
-- executes [`playground.ts`](playground.ts), watches for changes. useful for experimentation
+- runs all test files that match `<file>`
+
+**`pnpm test --filter <ws> <file>`**
+
+- runs all test files in `<ws>` that match `<file>` (e.g. `"enum"` will match `"enum.test.ts"`)
+
+**`pnpm dev:play`**
+
+- executes [`play.ts`](play.ts), watches for changes. useful for experimentation
 
 ### Tests
 
-Zod uses Jest for testing. After implementing your contribution, write tests for it. Just create a new file under `src/__tests__` or add additional tests to the appropriate existing file.
+Zod uses Vitest for testing. After implementing your contribution, write tests for it. Just create a new file in the `tests` directory of any workspace, or add additional tests to an existing file if appropriate.
 
-Before submitting your PR, run `yarn test` to make sure there are no (unintended) breaking changes.
+> Zod uses git hooks to execute tests before `git push`. Before submitting your PR, run `pnpm test` to make sure there are no (unintended) breaking changes.
 
 ### Documentation
 

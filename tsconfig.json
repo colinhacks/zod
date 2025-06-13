@@ -1,6 +1,8 @@
 {
-  "extends": "./configs/tsconfig.base.json",
+  "extends": "./.configs/tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "../lib"
-  }
+    "rootDir": ".",
+    "declaration": true
+  },
+  "exclude": ["packages/docs"]
 }
