@@ -17,9 +17,6 @@ importers:
       '@types/benchmark':
         specifier: ^2.1.5
         version: 2.1.5
-      '@types/chalk':
-        specifier: ^2.2.4
-        version: 2.2.4
       '@types/node':
         specifier: ^20.17.30
         version: 20.17.30
@@ -2608,10 +2605,6 @@ packages:
 
   '@types/benchmark@2.1.5':
     resolution: {integrity: sha512-cKio2eFB3v7qmKcvIHLUMw/dIx/8bhWPuzpzRT4unCPRTD8VdA9Zb0afxpcxOqR4PixRS7yT42FqGS8BYL8g1w==}
-
-  '@types/chalk@2.2.4':
-    resolution: {integrity: sha512-pb/QoGqtCpH2famSp72qEsXkNzcErlVmiXlQ/ww+5AddD8TmmYS7EWg5T20YiNCAiTgs8pMf2G8SJG5h/ER1ZQ==}
-    deprecated: This is a stub types definition. chalk provides its own type definitions, so you do not need this installed.
 
   '@types/debug@4.1.12':
     resolution: {integrity: sha512-vIChWdVG3LG1SMxEvI/AK+FWJthlrqlTu7fbrlywTkkaONwk/UAGaULXRlf8vkzFBLVm0zkMdCquhL5aOjhXPQ==}
@@ -7895,10 +7888,6 @@ snapshots:
   '@types/aws-lambda@8.10.148': {}
 
   '@types/benchmark@2.1.5': {}
-
-  '@types/chalk@2.2.4':
-    dependencies:
-      chalk: 5.4.1
 
   '@types/debug@4.1.12':
     dependencies:
