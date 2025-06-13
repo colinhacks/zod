@@ -57,16 +57,6 @@ export namespace util {
           return keys;
         };
 
-  export const find = <T>(
-    arr: T[],
-    checker: (arg: T) => any
-  ): T | undefined => {
-    for (const item of arr) {
-      if (checker(item)) return item;
-    }
-    return undefined;
-  };
-
   export type identity<T> = objectUtil.identity<T>;
   export type flatten<T> = objectUtil.flatten<T>;
 
