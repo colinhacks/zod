@@ -18,7 +18,7 @@ export function HeroLogo({ className }: HeroLogoProps) {
           className="absolute inset-0 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse flex items-center justify-center"
           style={{ height: "170px" }}
         >
-          <div className="w-20 h-20 bg-gray-300 dark:bg-gray-600 rounded-lg opacity-50" />
+          <div className="size-20 bg-gray-300 dark:bg-gray-600 rounded-lg opacity-50" />
         </div>
       )}
 
