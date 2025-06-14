@@ -72,10 +72,10 @@ export interface JSONSchemaMeta {
   id?: string | undefined;
   title?: string | undefined;
   description?: string | undefined;
-  example?: unknown | undefined;
-  examples?: unknown[] | Record<string, { value: unknown; [k: string]: unknown }> | undefined; // allow array or example map
+  example?: $input | $output | undefined;
+  examples?: ($input | $output)[] | Record<string, { value: $input | $output; [k: string]: unknown }> | undefined; // allow array or example map
   deprecated?: boolean | undefined;
-  [k: string]: unknown;
+  [k: string]: any;
 }
 
 export interface GlobalMeta extends JSONSchemaMeta {}
