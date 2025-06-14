@@ -1,7 +1,2 @@
-#!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
-
 pnpm semver-check
-npx lint-staged --verbose
-
-
+lint-staged --verbose

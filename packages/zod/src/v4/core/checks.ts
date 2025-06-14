@@ -346,9 +346,9 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
       if (input < minimum) {
         payload.issues.push({
           origin: "number",
-          input: input as number,
+          input,
           code: "too_small",
-          minimum: minimum as number,
+          minimum,
           inclusive: true,
           inst,
           continue: !def.abort,
@@ -1148,7 +1148,6 @@ export const $ZodCheckMimeType: core.$constructor<$ZodCheckMimeType> = /*@__PURE
         code: "invalid_value",
         values: def.mime,
         input: payload.value.type,
-        path: ["type"],
         inst,
       });
     };

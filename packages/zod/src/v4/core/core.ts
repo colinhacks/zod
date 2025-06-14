@@ -26,7 +26,7 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
     initializer(inst, def);
     // support prototype modifications
     for (const k in _.prototype) {
-      if (!(k in inst)) Object.defineProperty(inst, k, { value: (_.prototype as any)[k].bind(inst) });
+      if (!(k in inst)) Object.defineProperty(inst, k, { value: _.prototype[k].bind(inst) });
     }
     inst._zod.constr = _;
     inst._zod.def = def;

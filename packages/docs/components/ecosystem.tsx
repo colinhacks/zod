@@ -7,7 +7,7 @@ interface ZodResource {
   description: React.ReactNode;
   slug: string;
   stars?: number;
-  v4?: boolean;
+  // v4?: boolean;
   // author?: string;
 }
 
@@ -35,14 +35,12 @@ const apiLibraries: ZodResource[] = [
     url: "https://github.com/RobinTail/express-zod-api",
     description: "Build Express-based API with I/O validation and middlewares, OpenAPI docs and type-safe client.",
     slug: "RobinTail/express-zod-api",
-    v4: true,
   },
   {
     name: "Zod Sockets",
     url: "https://github.com/RobinTail/zod-sockets",
     description: "Socket.IO solution with I/O validation, an AsyncAPI generator, and a type-safe events map.",
     slug: "RobinTail/zod-sockets",
-    v4: true,
   },
 
   // https://github.com/honojs/middleware/tree/main/packages/zod-validator
@@ -105,7 +103,6 @@ const mockingLibraries: ZodResource[] = [
     url: "https://zocker.sigrist.dev",
     description: "Generates valid, semantically meaningful data for your Zod schemas.",
     slug: "LorisSigrist/zocker",
-    v4: true,
   },
 ];
 
@@ -143,7 +140,7 @@ export function Table(props: { resources: ZodResource[] }) {
         <tr>
           <th>Name</th>
           <th>Stars</th>
-          <th>Zod 4 support</th>
+          {/* <th>Zod 4 support</th> */}
           <th>Description</th>
         </tr>
       </thead>
@@ -156,7 +153,7 @@ export function Table(props: { resources: ZodResource[] }) {
               </a>
             </td>
             <td className="whitespace-nowrap">{`⭐️ ${resource.stars ?? "ERR"}`}</td>
-            <td className="whitespace-nowrap">{`⭐️ ${resource.v4 ? "✅" : ""}`}</td>
+            {/* <td className="whitespace-nowrap">{`⭐️ ${resource.v4 ? "✅" : ""}`}</td> */}
             <td>{resource.description}</td>
           </tr>
         ))}

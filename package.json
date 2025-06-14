@@ -18,7 +18,6 @@
     "@arethetypeswrong/cli": "^0.17.4",
     "@biomejs/biome": "^1.9.4",
     "@types/benchmark": "^2.1.5",
-    "@types/chalk": "^2.2.4",
     "@types/node": "^20.17.30",
     "@web-std/file": "^3.0.3",
     "arktype": "^2.1.19",
@@ -27,11 +26,12 @@
     "console-table-printer": "^2.12.1",
     "execa": "^9.5.2",
     "globby": "^14.1.0",
-    "husky": "^7.0.4",
+    "husky": "^9.1.7",
     "jsr": "^0.12.4",
     "lint-staged": "^12.5.0",
     "mitata": "^0.1.14",
     "prettier": "^3.5.3",
+    "recheck": "^4.5.0",
     "semver": "^7.7.2",
     "supershy": "^1.0.0",
     "tinybench": "^2.9.0",
@@ -53,9 +53,7 @@
       "biome format --no-errors-on-unmatched --write",
       "biome lint --no-errors-on-unmatched --write"
     ],
-    "packages/*/**/*.md": [
-      "prettier --ignore-unknown --write"
-    ]
+    "packages/*/**/*.md": ["prettier --ignore-unknown --write"]
   },
   "scripts": {
     "fix": "pnpm run format && pnpm run lint",
@@ -73,7 +71,7 @@
     "dev:play": "pnpm dev play.ts",
     "bench": "tsx --conditions @zod/source packages/bench/index.ts",
     "moltar": "pnpm bench object-moltar",
-    "prepare": "husky install",
+    "prepare": "husky",
     "postbuild": "biome format --write .",
     "publish:jsr": "jsr publish --dry-run",
     "bundle:rollup": "rollup -c",

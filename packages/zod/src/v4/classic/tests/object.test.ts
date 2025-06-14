@@ -516,3 +516,16 @@ test("zodtype assignability", () => {
   // @ts-expect-error
   z.object({ hello: z.number() }) satisfies z.ZodType<{ hello?: string | undefined }>;
 });
+
+test("index signature in shape", () => {
+  function makeZodObj<const T extends string>(key: T) {
+    return z.looseObject({
+      [key]: z.string(),
+    });
+  }
+
+  const schema = makeZodObj("foo");
+  type schema = z.infer<typeof schema>;
+
+  expectTypeOf<schema>().toEqualTypeOf<Record<string, unknown>>();
+});

@@ -27,6 +27,7 @@ export {
   formatError,
   flattenError,
   toJSONSchema,
+  TimePrecision,
 } from "zod/v4/core";
 
 export * as locales from "../locales/index.js";

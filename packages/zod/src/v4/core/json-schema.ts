@@ -6,101 +6,138 @@ export type Schema =
   | IntegerSchema
   | BooleanSchema
   | NullSchema;
-// | BaseSchema;
 
-export interface BaseSchema {
-  type?: string | undefined;
-  $id?: string | undefined;
-  id?: string | undefined;
-  $schema?: string | undefined;
-  $ref?: string | undefined;
-  $anchor?: string | undefined;
-  $defs?: { [key: string]: BaseSchema } | undefined;
-  definitions?: { [key: string]: BaseSchema } | undefined;
-  $comment?: string | undefined;
-  title?: string | undefined;
-  description?: string | undefined;
-  default?: unknown | undefined;
-  examples?: unknown[] | undefined;
-  readOnly?: boolean | undefined;
-  writeOnly?: boolean | undefined;
-  deprecated?: boolean | undefined;
-  allOf?: BaseSchema[] | undefined;
-  anyOf?: BaseSchema[] | undefined;
-  oneOf?: BaseSchema[] | undefined;
-  not?: BaseSchema | undefined;
-  if?: BaseSchema | undefined;
-  then?: BaseSchema | undefined;
-  else?: BaseSchema | undefined;
-  enum?: Array<string | number | boolean | null> | undefined;
-  const?: string | number | boolean | null | undefined;
+// export type JsonType = "object" | "array" | "string" | "number" | "boolean" | "null" | "integer";
+
+// export interface JSONSchema {
+//   type?: string ;
+//   $id?: string ;
+//   id?: string ;
+//   $schema?: string ;
+//   $ref?: string ;
+//   $anchor?: string ;
+//   $defs?: { [key: string]: JSONSchema } ;
+//   definitions?: { [key: string]: JSONSchema } ;
+//   $comment?: string ;
+//   title?: string ;
+//   description?: string ;
+//   default?: unknown ;
+//   examples?: unknown[] ;
+//   readOnly?: boolean ;
+//   writeOnly?: boolean ;
+//   deprecated?: boolean ;
+//   allOf?: JSONSchema[] ;
+//   anyOf?: JSONSchema[] ;
+//   oneOf?: JSONSchema[] ;
+//   not?: JSONSchema ;
+//   if?: JSONSchema ;
+//   then?: JSONSchema ;
+//   else?: JSONSchema ;
+//   enum?: Array<string | number | boolean | null> ;
+//   const?: string | number | boolean | null ;
+//   [k: string]: unknown;
+
+//   /** A special key used as an intermediate representation of extends-style relationships. Omitted as a $ref with additional properties. */
+//   // _ref?: JSONSchema;
+//   _prefault?: unknown ;
+// }
+
+export type _JSONSchema = boolean | JSONSchema;
+export type JSONSchema = {
   [k: string]: unknown;
+  $schema?: "https://json-schema.org/draft/2020-12/schema" | "http://json-schema.org/draft-07/schema#";
+  $id?: string;
+  $anchor?: string;
+  $ref?: string;
+  $dynamicRef?: string;
+  $dynamicAnchor?: string;
+  $vocabulary?: Record<string, boolean>;
+  $comment?: string;
+  $defs?: Record<string, JSONSchema>;
+  type?: "object" | "array" | "string" | "number" | "boolean" | "null" | "integer";
+  additionalItems?: _JSONSchema;
+  unevaluatedItems?: _JSONSchema;
+  prefixItems?: _JSONSchema[];
+  items?: _JSONSchema | _JSONSchema[];
+  contains?: _JSONSchema;
+  additionalProperties?: _JSONSchema;
+  unevaluatedProperties?: _JSONSchema;
+  properties?: Record<string, _JSONSchema>;
+  patternProperties?: Record<string, _JSONSchema>;
+  dependentSchemas?: Record<string, _JSONSchema>;
+  propertyNames?: _JSONSchema;
+  if?: _JSONSchema;
+  then?: _JSONSchema;
+  else?: _JSONSchema;
+  allOf?: JSONSchema[];
+  anyOf?: JSONSchema[];
+  oneOf?: JSONSchema[];
+  not?: _JSONSchema;
+  multipleOf?: number;
+  maximum?: number;
+  exclusiveMaximum?: number;
+  minimum?: number;
+  exclusiveMinimum?: number;
+  maxLength?: number;
+  minLength?: number;
+  pattern?: string;
+  maxItems?: number;
+  minItems?: number;
+  uniqueItems?: boolean;
+  maxContains?: number;
+  minContains?: number;
+  maxProperties?: number;
+  minProperties?: number;
+  required?: string[];
+  dependentRequired?: Record<string, string[]>;
+  enum?: Array<string | number | boolean | null>;
+  const?: string | number | boolean | null;
 
-  /** A special key used as an intermediate representation of extends-style relationships. Omitted as a $ref with additional properties. */
-  // _ref?: BaseSchema;
-  _prefault?: unknown | undefined;
-}
+  // metadata
+  id?: string;
+  title?: string;
+  description?: string;
+  default?: unknown;
+  deprecated?: boolean;
+  readOnly?: boolean;
+  writeOnly?: boolean;
+  examples?: unknown[];
+  format?: string;
+  contentMediaType?: string;
+  contentEncoding?: string;
+  contentSchema?: JSONSchema;
 
-export interface ObjectSchema extends BaseSchema {
+  // internal
+  _prefault?: unknown;
+};
+
+// for backwards compatibility
+export type BaseSchema = JSONSchema;
+
+export interface ObjectSchema extends JSONSchema {
   type: "object";
-  properties?: { [key: string]: BaseSchema } | undefined;
-  patternProperties?: { [key: string]: BaseSchema } | undefined;
-  additionalProperties?: BaseSchema | boolean | undefined;
-  required?: string[] | undefined;
-  dependentRequired?: { [key: string]: string[] } | undefined;
-  propertyNames?: BaseSchema | undefined;
-  minProperties?: number | undefined;
-  maxProperties?: number | undefined;
-  unevaluatedProperties?: BaseSchema | boolean | undefined;
-  dependentSchemas?: { [key: string]: BaseSchema } | undefined;
 }
 
-export interface ArraySchema extends BaseSchema {
+export interface ArraySchema extends JSONSchema {
   type: "array";
-  items?: BaseSchema | BaseSchema[] | undefined;
-  prefixItems?: BaseSchema[] | undefined;
-  additionalItems?: BaseSchema | boolean; // (deprecated | undefined)
-  contains?: BaseSchema | undefined;
-  minItems?: number | undefined;
-  maxItems?: number | undefined;
-  minContains?: number | undefined;
-  maxContains?: number | undefined;
-  uniqueItems?: boolean | undefined;
-  unevaluatedItems?: BaseSchema | boolean | undefined;
 }
 
-export interface StringSchema extends BaseSchema {
+export interface StringSchema extends JSONSchema {
   type: "string";
-  minLength?: number | undefined;
-  maxLength?: number | undefined;
-  pattern?: string | undefined;
-  format?: string | undefined;
-  contentEncoding?: string | undefined;
-  contentMediaType?: string | undefined;
 }
 
-export interface NumberSchema extends BaseSchema {
+export interface NumberSchema extends JSONSchema {
   type: "number";
-  minimum?: number | undefined;
-  maximum?: number | undefined;
-  exclusiveMinimum?: number | undefined;
-  exclusiveMaximum?: number | undefined;
-  multipleOf?: number | undefined;
 }
 
-export interface IntegerSchema extends BaseSchema {
+export interface IntegerSchema extends JSONSchema {
   type: "integer";
-  minimum?: number | undefined;
-  maximum?: number | undefined;
-  exclusiveMinimum?: number | undefined;
-  exclusiveMaximum?: number | undefined;
-  multipleOf?: number | undefined;
 }
 
-export interface BooleanSchema extends BaseSchema {
+export interface BooleanSchema extends JSONSchema {
   type: "boolean";
 }
 
-export interface NullSchema extends BaseSchema {
+export interface NullSchema extends JSONSchema {
   type: "null";
 }

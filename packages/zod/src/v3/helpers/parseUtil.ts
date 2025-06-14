@@ -28,7 +28,7 @@ export const makeIssue = (params: {
   const maps = errorMaps
     .filter((m) => !!m)
     .slice()
-    .reverse() as ZodErrorMap[];
+    .reverse();
   for (const map of maps) {
     errorMessage = map(fullIssue, { data, defaultError: errorMessage }).message;
   }
@@ -80,7 +80,7 @@ export function addIssueToContext(ctx: ParseContext, issueData: IssueData): void
       ctx.schemaErrorMap, // then schema-bound map if available
       overrideMap, // then global override map
       overrideMap === defaultErrorMap ? undefined : defaultErrorMap, // then global default map
-    ].filter((x) => !!x) as ZodErrorMap[],
+    ].filter((x) => !!x),
   });
   ctx.common.issues.push(issue);
 }

@@ -139,7 +139,7 @@ export interface _$ZodTypeInternals {
   isst: errors.$ZodIssueBase;
 
   /** An optional method used to override `toJSONSchema` logic. */
-  toJSONSchema?: () => object;
+  toJSONSchema?: () => unknown;
 
   /** @internal The parent of this schema. Only set during certain clone operations. */
   parent?: $ZodType | undefined;
@@ -211,10 +211,8 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
           const shouldRun = ch._zod.when(payload);
 
           if (!shouldRun) continue;
-        } else {
-          if (isAborted) {
-            continue;
-          }
+        } else if (isAborted) {
+          continue;
         }
 
         const currLen = payload.issues.length;
@@ -606,6 +604,8 @@ export const $ZodISODateTime: core.$constructor<$ZodISODateTime> = /*@__PURE__*/
   (inst, def): void => {
     def.pattern ??= regexes.datetime(def);
     $ZodStringFormat.init(inst, def);
+
+    const _super = inst._zod.check;
   }
 );
 
@@ -630,8 +630,6 @@ export const $ZodISODate: core.$constructor<$ZodISODate> = /*@__PURE__*/ core.$c
 
 export interface $ZodISOTimeDef extends $ZodStringFormatDef<"time"> {
   precision?: number | null;
-  // offset?: boolean;
-  // local?: boolean;
 }
 
 export interface $ZodISOTimeInternals extends $ZodStringFormatInternals<"time"> {
@@ -647,6 +645,8 @@ export const $ZodISOTime: core.$constructor<$ZodISOTime> = /*@__PURE__*/ core.$c
   (inst, def): void => {
     def.pattern ??= regexes.time(def);
     $ZodStringFormat.init(inst, def);
+
+    const _super = inst._zod.check;
   }
 );
 
@@ -1107,7 +1107,7 @@ export const $ZodBigInt: core.$constructor<$ZodBigInt> = /*@__PURE__*/ core.$con
   inst._zod.parse = (payload, _ctx) => {
     if (def.coerce)
       try {
-        payload.value = BigInt(payload.value as any);
+        payload.value = BigInt(payload.value);
       } catch (_) {}
     const { value: input } = payload;
     if (typeof input === "bigint") return payload;
@@ -1529,7 +1529,7 @@ type OptionalOutSchema = { _zod: { optout: "optional" } };
 type OptionalInSchema = { _zod: { optin: "optional" } };
 
 export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = string extends keyof T
-  ? object
+  ? Record<string, unknown>
   : keyof (T & Extra) extends never
     ? Record<string, never>
     : util.Prettify<
@@ -1541,7 +1541,7 @@ export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<st
       >;
 
 export type $InferObjectInput<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = string extends keyof T
-  ? object
+  ? Record<string, unknown>
   : keyof (T & Extra) extends never
     ? Record<string, never>
     : util.Prettify<
@@ -1597,6 +1597,7 @@ export type $strip = {
   out: {};
   in: {};
 };
+
 export type $catchall<T extends SomeType> = {
   out: { [k: string]: core.output<T> };
   in: { [k: string]: core.input<T> };
@@ -1788,12 +1789,10 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
               isOptional ? handleOptionalObjectResult(r, payload, key, input) : handleObjectResult(r, payload, key)
             )
           );
+        } else if (isOptional) {
+          handleOptionalObjectResult(r, payload, key, input);
         } else {
-          if (isOptional) {
-            handleOptionalObjectResult(r, payload, key, input);
-          } else {
-            handleObjectResult(r, payload, key);
-          }
+          handleObjectResult(r, payload, key);
         }
       }
     }
@@ -2667,7 +2666,7 @@ export const $ZodEnum: core.$constructor<$ZodEnum> = /*@__PURE__*/ core.$constru
 
   inst._zod.parse = (payload, _ctx) => {
     const input = payload.value;
-    if (inst._zod.values.has(input as any)) {
+    if (inst._zod.values.has(input)) {
       return payload;
     }
     payload.issues.push({
@@ -2719,7 +2718,7 @@ export const $ZodLiteral: core.$constructor<$ZodLiteral> = /*@__PURE__*/ core.$c
 
     inst._zod.parse = (payload, _ctx) => {
       const input = payload.value;
-      if (inst._zod.values.has(input as any)) {
+      if (inst._zod.values.has(input)) {
         return payload;
       }
       payload.issues.push({
@@ -3631,7 +3630,7 @@ export interface $ZodCustomDef<O = unknown> extends $ZodTypeDef, checks.$ZodChec
   path?: PropertyKey[] | undefined;
   error?: errors.$ZodErrorMap | undefined;
   params?: Record<string, any> | undefined;
-  fn: (arg: O) => unknown; // checks.$ZodCheck<O>["_zod"]["check"];
+  fn: (arg: O) => unknown;
 }
 
 export interface $ZodCustomInternals<O = unknown, I = unknown>

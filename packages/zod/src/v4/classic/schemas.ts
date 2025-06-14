@@ -1043,7 +1043,7 @@ export interface ZodObject<
   strict(): ZodObject<Shape, core.$strict>;
 
   /** This is the default behavior. This method call is likely unnecessary. */
-  strip(): ZodObject<Shape, core.$strict>;
+  strip(): ZodObject<Shape, core.$strip>;
 
   extend<U extends core.$ZodLooseShape & Partial<Record<keyof Shape, core.SomeType>>>(
     shape: U
@@ -1913,6 +1913,7 @@ export const ZodCustom: core.$constructor<ZodCustom> = /*@__PURE__*/ core.$const
 export function check<O = unknown>(fn: core.CheckFn<O>, params?: string | core.$ZodCustomParams): core.$ZodCheck<O> {
   const ch = new core.$ZodCheck({
     check: "custom",
+
     ...util.normalizeParams(params),
   });
 

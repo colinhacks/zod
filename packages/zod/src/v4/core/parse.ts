@@ -21,7 +21,7 @@ export const _parse: (_Err: $ZodErrorClass) => $Parse = (_Err) => (schema, value
   }
   if (result.issues.length) {
     const e = new (_params?.Err ?? _Err)(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())));
-    Error.captureStackTrace(e, _params?.callee);
+    util.captureStackTrace(e, _params?.callee);
     throw e;
   }
   return result.value as core.output<typeof schema>;
@@ -42,7 +42,7 @@ export const _parseAsync: (_Err: $ZodErrorClass) => $ParseAsync = (_Err) => asyn
   if (result instanceof Promise) result = await result;
   if (result.issues.length) {
     const e = new (params?.Err ?? _Err)(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())));
-    Error.captureStackTrace(e, params?.callee);
+    util.captureStackTrace(e, params?.callee);
     throw e;
   }
   return result.value as core.output<typeof schema>;
