@@ -14,6 +14,25 @@ body {
   --color-fd-primary: var(--ui-color);
 }
 
+/* Prevent FOUC and improve image loading experience */
+img {
+  image-rendering: crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* Ensure consistent layout during image loading */
+.hero-logo-container {
+  min-height: 170px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Smooth transitions for theme switching */
+* {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
 :root {
   /* --ui-color: hsl(221, 98%, 59%); */
   --ui-color: hsl(320, 80%, 40%);

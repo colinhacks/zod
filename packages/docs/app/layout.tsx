@@ -16,6 +16,11 @@ const inter = Inter({
 export default function Layout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={inter.className} suppressHydrationWarning>
+      <head>
+        {/* Preload critical images to prevent FOUC */}
+        <link rel="preload" as="image" href="/logo/logo-glow.png" />
+        <link rel="preload" as="image" href="/logo/logo.png" />
+      </head>
       <body className="flex flex-col min-h-screen">
         <Banner id="zod4">
           💎 Zod 4 is now stable! <span>&nbsp;</span>
