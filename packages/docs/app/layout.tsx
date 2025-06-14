@@ -20,6 +20,11 @@ export default function Layout({ children }: { children: ReactNode }) {
         {/* Preload critical images to prevent FOUC */}
         <link rel="preload" as="image" href="/logo/logo-glow.png" />
         <link rel="preload" as="image" href="/logo/logo.png" />
+        <link
+          rel="preload"
+          as="image"
+          href="https://raw.githubusercontent.com/colinhacks/zod/3782fe29920c311984004c350b9fefaf0ae4c54a/logo.svg"
+        />
       </head>
       <body className="flex flex-col min-h-screen">
         <Banner id="zod4">
