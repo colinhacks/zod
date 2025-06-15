@@ -1,15 +1,7 @@
 "use client";
 
-import Image from "next/image";
+import Image, { type ImageProps } from "next/image";
 import { useState } from "react";
-
-interface SidebarLogoProps {
-  src: string;
-  alt: string;
-  width?: number;
-  height?: number;
-  className?: string;
-}
 
 export function SidebarLogo({ src, alt, width = 24, height = 24, className = "h-5" }: SidebarLogoProps) {
   const [isLoaded, setIsLoaded] = useState(false);
