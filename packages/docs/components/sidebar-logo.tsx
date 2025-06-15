@@ -3,7 +3,7 @@
 import Image, { type ImageProps } from "next/image";
 import { useState } from "react";
 
-export function SidebarLogo({ src, alt, width = 24, height = 24, className = "h-5" }: SidebarLogoProps) {
+export function SidebarLogo({ src, alt, width = 24, height = 24, className = "h-5" }: ImageProps) {
   const [isLoaded, setIsLoaded] = useState(false);
 
   return (
