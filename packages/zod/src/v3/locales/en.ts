@@ -69,6 +69,10 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
         message = `Number must be ${
           issue.exact ? `exactly equal to ` : issue.inclusive ? `greater than or equal to ` : `greater than `
         }${issue.minimum}`;
+      else if (issue.type === "bigint")
+        message = `Number must be ${
+          issue.exact ? `exactly equal to ` : issue.inclusive ? `greater than or equal to ` : `greater than `
+        }${issue.minimum}`;
       else if (issue.type === "date")
         message = `Date must be ${
           issue.exact ? `exactly equal to ` : issue.inclusive ? `greater than or equal to ` : `greater than `
