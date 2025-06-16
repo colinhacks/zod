@@ -125,6 +125,12 @@ const poweredByZodProjects: ZodResource[] = [
     description: "Types and functions to make composition easy and safe.",
     slug: "seasonedcc/composable-functions",
   },
+  {
+    name: "zod-xlsx",
+    url: "https://github.com/sidwebworks/zod-xlsx",
+    description: "A xlsx based resource validator using Zod schemas for data imports and more",
+    slug: "sidwebworks/zod-xlsx",
+  },
 ];
 
 const zodUtilities: ZodResource[] = [];
