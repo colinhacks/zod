@@ -848,6 +848,13 @@ export function required(schema: ZodMiniObject, mask?: object) {
   return util.required(ZodMiniNonOptional, schema, mask);
 }
 
+export function catchall<T extends ZodMiniObject, U extends SomeType>(
+  inst: T,
+  catchall: U
+): ZodMiniObject<T["shape"], core.$catchall<U>> {
+  return inst.clone({ ...inst._zod.def, catchall: catchall as any }) as any;
+}
+
 // ZodMiniUnion
 export interface ZodMiniUnion<T extends readonly SomeType[] = readonly core.$ZodType[]>
   extends _ZodMiniType<core.$ZodUnionInternals<T>> {
