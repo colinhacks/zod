@@ -686,7 +686,7 @@ export function array<T extends SomeType>(element: SomeType, params?: any): ZodM
 }
 
 // .keyof
-export function keyof<T extends ZodMiniObject>(schema: T): ZodMiniLiteral<keyof T["shape"]> {
+export function keyof<T extends ZodMiniObject>(schema: T): ZodMiniLiteral<Exclude<keyof T["shape"], symbol>> {
   const shape = schema._zod.def.shape;
   return literal(Object.keys(shape)) as any;
 }
@@ -1094,7 +1094,7 @@ export function nativeEnum<T extends util.EnumLike>(entries: T, params?: string 
 }
 
 // ZodMiniLiteral
-export interface ZodMiniLiteral<T extends util.Primitive = util.Primitive>
+export interface ZodMiniLiteral<T extends util.Literal = util.Literal>
   extends _ZodMiniType<core.$ZodLiteralInternals<T>> {
   // _zod: core.$ZodLiteralInternals<T>;
 }

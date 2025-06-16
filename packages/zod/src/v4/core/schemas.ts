@@ -2687,19 +2687,19 @@ export const $ZodEnum: core.$constructor<$ZodEnum> = /*@__PURE__*/ core.$constru
 ////////////////////////////////////////
 ////////////////////////////////////////
 
-export interface $ZodLiteralDef extends $ZodTypeDef {
+export interface $ZodLiteralDef<T extends util.Literal> extends $ZodTypeDef {
   type: "literal";
-  values: util.LiteralArray;
+  values: T[];
 }
 
-export interface $ZodLiteralInternals<T extends util.Primitive = util.Primitive> extends $ZodTypeInternals<T, T> {
-  def: $ZodLiteralDef;
+export interface $ZodLiteralInternals<T extends util.Literal = util.Literal> extends $ZodTypeInternals<T, T> {
+  def: $ZodLiteralDef<T>;
   values: Set<T>;
   pattern: RegExp;
   isst: errors.$ZodIssueInvalidValue;
 }
 
-export interface $ZodLiteral<T extends util.Primitive = util.Primitive> extends $ZodType {
+export interface $ZodLiteral<T extends util.Literal = util.Literal> extends $ZodType {
   _zod: $ZodLiteralInternals<T>;
 }
 
@@ -2708,7 +2708,7 @@ export const $ZodLiteral: core.$constructor<$ZodLiteral> = /*@__PURE__*/ core.$c
   (inst, def) => {
     $ZodType.init(inst, def);
 
-    inst._zod.values = new Set<util.Primitive>(def.values);
+    inst._zod.values = new Set<util.Literal>(def.values);
     inst._zod.pattern = new RegExp(
       `^(${def.values
 

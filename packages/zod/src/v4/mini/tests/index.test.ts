@@ -852,6 +852,7 @@ test("def typing", () => {
   z.map(z.string(), z.number()).def.type satisfies "map";
   z.set(z.string()).def.type satisfies "set";
   z.literal("example").def.type satisfies "literal";
+  expectTypeOf(z.literal("example").def.values).toEqualTypeOf<"example"[]>();
   z.enum(["a", "b", "c"]).def.type satisfies "enum";
   z.promise(z.string()).def.type satisfies "promise";
   z.lazy(() => z.string()).def.type satisfies "lazy";

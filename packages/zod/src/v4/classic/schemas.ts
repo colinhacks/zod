@@ -1015,7 +1015,7 @@ export function array<T extends core.SomeType>(element: T, params?: string | cor
 }
 
 // .keyof
-export function keyof<T extends ZodObject>(schema: T): ZodLiteral<keyof T["_zod"]["output"]> {
+export function keyof<T extends ZodObject>(schema: T): ZodLiteral<Exclude<keyof T["_zod"]["output"], symbol>> {
   const shape = schema._zod.def.shape;
   return literal(Object.keys(shape)) as any;
 }
@@ -1487,7 +1487,7 @@ export function nativeEnum<T extends util.EnumLike>(entries: T, params?: string 
 }
 
 // ZodLiteral
-export interface ZodLiteral<T extends util.Primitive = util.Primitive>
+export interface ZodLiteral<T extends util.Literal = util.Literal>
   extends _ZodType<core.$ZodLiteralInternals<T>>,
     core.$ZodLiteral<T> {
   values: Set<T>;
