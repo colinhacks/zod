@@ -725,7 +725,9 @@ export const $ZodCheckLengthEquals: core.$constructor<$ZodCheckLengthEquals> = /
       const tooBig = length > def.length;
       payload.issues.push({
         origin,
-        ...(tooBig ? { code: "too_big", maximum: def.length } : { code: "too_small", minimum: def.length }),
+        ...(tooBig
+          ? { code: "too_big", maximum: def.length, exact: true }
+          : { code: "too_small", minimum: def.length, exact: true }),
         input: payload.value,
         inst,
         continue: !def.abort,
