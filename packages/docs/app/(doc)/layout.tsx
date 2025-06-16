@@ -22,7 +22,7 @@ const layoutProps: DocsLayoutProps = {
         title: "Zod 4",
         description: "The latest version of Zod",
         url: "/",
-        icon: <SidebarLogo src="/logo/logo.png" alt="Zod 4" width={20} height={20} className="h-5" />,
+        icon: <SidebarLogo src="/logo/logo.png" alt="Zod 4" width={24} height={20} className="h-5" />,
       },
       {
         title: "Zod 3",
