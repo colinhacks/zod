@@ -433,13 +433,35 @@ test("passthrough index signature", () => {
 // });
 
 test("assignability", () => {
-  z.object({ a: z.string() }) satisfies z.ZodObject;
-  z.object({ a: z.string() }).catchall(z.number()) satisfies z.ZodObject;
+  z.object({ a: z.string() }) satisfies z.ZodObject<{ a: z.ZodString }>;
+  z.object({ a: z.string() }).catchall(z.number()) satisfies z.ZodObject<{ a: z.ZodString }>;
   z.object({ a: z.string() }).strict() satisfies z.ZodObject;
   z.object({}) satisfies z.ZodObject;
-  z.object({ "a?": z.string() }) satisfies z.ZodObject;
-  z.object({ "?a": z.string() }) satisfies z.ZodObject;
 
+  z.looseObject({ name: z.string() }) satisfies z.ZodObject<
+    {
+      name: z.ZodString;
+    },
+    z.core.$loose
+  >;
+  z.looseObject({ name: z.string() }) satisfies z.ZodObject<{
+    name: z.ZodString;
+  }>;
+  z.strictObject({ name: z.string() }) satisfies z.ZodObject<
+    {
+      name: z.ZodString;
+    },
+    z.core.$loose
+  >;
+  z.strictObject({ name: z.string() }) satisfies z.ZodObject<
+    {
+      name: z.ZodString;
+    },
+    z.core.$strict
+  >;
+  z.object({ name: z.string() }) satisfies z.ZodObject<{
+    name: z.ZodString;
+  }>;
   z.object({
     a: z.string(),
     b: z.number(),

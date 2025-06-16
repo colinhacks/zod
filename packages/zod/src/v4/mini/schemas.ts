@@ -695,7 +695,7 @@ export function keyof<T extends ZodMiniObject>(schema: T): ZodMiniLiteral<keyof 
 export interface ZodMiniObject<
   /** @ts-ignore Cast variance */
   out Shape extends core.$ZodShape = core.$ZodShape,
-  out Config extends core.$ZodObjectConfig = core.$ZodObjectConfig,
+  out Config extends core.$ZodObjectConfig = core.$strip,
 > extends ZodMiniType<any, any, core.$ZodObjectInternals<Shape, Config>>,
     core.$ZodObject<Shape, Config> {
   shape: Shape;
@@ -705,6 +705,7 @@ export const ZodMiniObject: core.$constructor<ZodMiniObject> = /*@__PURE__*/ cor
   (inst, def) => {
     core.$ZodObject.init(inst, def);
     ZodMiniType.init(inst, def);
+    util.defineLazy(inst, "shape", () => def.shape);
   }
 );
 export function object<T extends core.$ZodLooseShape = Record<never, SomeType>>(
