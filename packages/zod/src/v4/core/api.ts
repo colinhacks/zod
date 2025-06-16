@@ -1460,7 +1460,7 @@ export function _custom<O = unknown, I = O>(
 // ): checks.$ZodCheck<T> {
 //   return _custom(Class, fn, _params);
 // }
-// same as _custom but deafults to abort:false
+// same as _custom but defaults to abort:false
 export function _refine<O = unknown, I = O>(
   Class: util.SchemaClass<schemas.$ZodCustom>,
   fn: (data: O) => unknown,
