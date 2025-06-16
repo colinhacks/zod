@@ -1077,12 +1077,24 @@ const DogWithBreed = z.extend(Dog, {
 
 Despite the existence of the `.extend` API, the recommended way to extend an object schema is to create an entirely new schema by destructuring the original schema's `shape` property.
 
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const DogWithBreed = z.object({
   ...Dog.shape,
   breed: z.string(),
 });
 ```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+const DogWithBreed = z.object({
+  ...Dog.def.shape,
+  breed: z.string(),
+});
+```
+</Tab>
+</Tabs>
 
 This is a clean and powerful approach with a lot of advantages. 
 
