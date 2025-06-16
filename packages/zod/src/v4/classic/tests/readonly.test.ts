@@ -240,7 +240,7 @@ test("readonly and the get method", () => {
   expect(readonlyBigInt.parse(bigIntVal)).toEqual(bigIntVal);
   expect(readonlyBoolean.parse(true)).toEqual(true);
   const dateVal = new Date();
-  expect(readonlyDate.parse(new Date())).toEqual(dateVal);
+  expect(readonlyDate.parse(dateVal)).toEqual(dateVal);
   expect(readonlyUndefined.parse(undefined)).toEqual(undefined);
   expect(readonlyNull.parse(null)).toEqual(null);
   expect(readonlyAny.parse("whatever")).toEqual("whatever");
