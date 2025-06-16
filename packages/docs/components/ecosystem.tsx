@@ -72,6 +72,12 @@ const formIntegrations: ZodResource[] = [
     description: "Making SvelteKit forms a pleasure to use!",
     slug: "ciscoheat/sveltekit-superforms",
   },
+  {
+    name: "zod-validation-error",
+    url: "https://github.com/causaly/zod-validation-error",
+    description: "Generate user-friendly error messages from ZodError instances.",
+    slug: "causaly/zod-validation-error",
+  },
 ];
 
 const zodToXConverters: ZodResource[] = [];
