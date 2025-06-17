@@ -1,3 +1,5 @@
 import { z } from "zod/v4";
 
-console.dir(z.string().date({ error: "Invalid date string!" }).safeParse("asdf"), { depth: null });
+z.string().parse(12, {
+  reportInput: true,
+});
