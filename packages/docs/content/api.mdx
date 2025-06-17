@@ -335,7 +335,7 @@ schema.parse("http://example.com"); // ❌
   ```ts
   const httpUrl = z.url({
     protocol: /^https?$/,
-    hostname: z.regexes.domain
+    hostname: z.regexes.hostname
   });
   ```
 
