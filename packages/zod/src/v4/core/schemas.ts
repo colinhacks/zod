@@ -326,16 +326,16 @@ export const $ZodString: core.$constructor<$ZodString> = /*@__PURE__*/ core.$con
 
 //////////////////////////////   ZodStringFormat   //////////////////////////////
 
-export interface $ZodStringFormatDef<Format extends checks.$ZodStringFormats = checks.$ZodStringFormats>
+export interface $ZodStringFormatDef<Format extends string = string>
   extends $ZodStringDef,
     checks.$ZodCheckStringFormatDef<Format> {}
 
-export interface $ZodStringFormatInternals<Format extends checks.$ZodStringFormats = checks.$ZodStringFormats>
+export interface $ZodStringFormatInternals<Format extends string = string>
   extends $ZodStringInternals<string>,
     checks.$ZodCheckStringFormatInternals {
   def: $ZodStringFormatDef<Format>;
 }
-export interface $ZodStringFormat<Format extends checks.$ZodStringFormats = checks.$ZodStringFormats> extends $ZodType {
+export interface $ZodStringFormat<Format extends string = string> extends $ZodType {
   _zod: $ZodStringFormatInternals<Format>;
 }
 

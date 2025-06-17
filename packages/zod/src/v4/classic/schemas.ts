@@ -370,7 +370,7 @@ export function string(params?: string | core.$ZodStringParams): ZodString {
 }
 
 // ZodStringFormat
-export interface ZodStringFormat<Format extends core.$ZodStringFormats = core.$ZodStringFormats>
+export interface ZodStringFormat<Format extends string | string[] = string>
   extends _ZodString<core.$ZodStringFormatInternals<Format>> {}
 export const ZodStringFormat: core.$constructor<ZodStringFormat> = /*@__PURE__*/ core.$constructor(
   "ZodStringFormat",
@@ -2026,4 +2026,28 @@ export function preprocess<A, U extends core.SomeType, B = unknown>(
   schema: U
 ): ZodPipe<ZodTransform<A, B>, U> {
   return pipe(transform(fn as any), schema as any) as any;
+}
+
+interface $ZodStringFormatParams {
+  abort?: boolean;
+  error?: string | core.$ZodErrorMap<core.$ZodIssueInvalidStringFormat>;
+  // pattern?:
+}
+// export function stringFormat(format: string, )
+
+uuidv4();
+export function stringFormat<T>(
+  format: string,
+  fn: (arg: NoInfer<T>) => util.MaybeAsync<unknown>,
+  _params: string | core.$ZodCustomParams = {}
+): ZodStringFormat {
+  const params = util.normalizeParams(_params);
+  const inst = new ZodStringFormat({
+    ...util.normalizeParams(_params),
+    check: "string_format",
+    type: "string",
+    format,
+    ...params,
+  });
+  return inst;
 }

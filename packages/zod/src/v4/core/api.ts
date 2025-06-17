@@ -79,6 +79,10 @@ export function _coercedString<T extends schemas.$ZodString>(
   });
 }
 
+export type $ZodStringFormatParams = CheckTypeParams<schemas.$ZodStringFormat, "format" | "coerce">;
+export type $ZodCheckStringFormatParams = CheckParams<checks.$ZodCheckStringFormat, "format">;
+// custom format
+
 // Email
 export type $ZodEmailParams = StringFormatParams<schemas.$ZodEmail>;
 export type $ZodCheckEmailParams = CheckStringFormatParams<schemas.$ZodEmail>;
