@@ -3,6 +3,7 @@
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { ChevronRight } from "lucide-react";
 import { type ComponentPropsWithoutRef, forwardRef } from "react";
+export { Accordions } from "fumadocs-ui/components/accordion";
 
 export const Accordion = forwardRef<
   HTMLDivElement,
