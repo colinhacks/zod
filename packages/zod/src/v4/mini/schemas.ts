@@ -686,7 +686,7 @@ export function array<T extends SomeType>(element: SomeType, params?: any): ZodM
 }
 
 // .keyof
-export function keyof<T extends ZodMiniObject>(schema: T): ZodMiniLiteral<keyof T["shape"]> {
+export function keyof<T extends ZodMiniObject>(schema: T): ZodMiniLiteral<Exclude<keyof T["shape"], symbol>> {
   const shape = schema._zod.def.shape;
   return literal(Object.keys(shape)) as any;
 }
@@ -695,7 +695,7 @@ export function keyof<T extends ZodMiniObject>(schema: T): ZodMiniLiteral<keyof 
 export interface ZodMiniObject<
   /** @ts-ignore Cast variance */
   out Shape extends core.$ZodShape = core.$ZodShape,
-  out Config extends core.$ZodObjectConfig = core.$ZodObjectConfig,
+  out Config extends core.$ZodObjectConfig = core.$strip,
 > extends ZodMiniType<any, any, core.$ZodObjectInternals<Shape, Config>>,
     core.$ZodObject<Shape, Config> {
   shape: Shape;
@@ -705,6 +705,7 @@ export const ZodMiniObject: core.$constructor<ZodMiniObject> = /*@__PURE__*/ cor
   (inst, def) => {
     core.$ZodObject.init(inst, def);
     ZodMiniType.init(inst, def);
+    util.defineLazy(inst, "shape", () => def.shape);
   }
 );
 export function object<T extends core.$ZodLooseShape = Record<never, SomeType>>(
@@ -846,6 +847,13 @@ export function required<T extends ZodMiniObject, M extends util.Mask<keyof T["s
 >;
 export function required(schema: ZodMiniObject, mask?: object) {
   return util.required(ZodMiniNonOptional, schema, mask);
+}
+
+export function catchall<T extends ZodMiniObject, U extends SomeType>(
+  inst: T,
+  catchall: U
+): ZodMiniObject<T["shape"], core.$catchall<U>> {
+  return inst.clone({ ...inst._zod.def, catchall: catchall as any }) as any;
 }
 
 // ZodMiniUnion
@@ -1089,7 +1097,7 @@ export function nativeEnum<T extends util.EnumLike>(entries: T, params?: string 
 }
 
 // ZodMiniLiteral
-export interface ZodMiniLiteral<T extends util.Primitive = util.Primitive>
+export interface ZodMiniLiteral<T extends util.Literal = util.Literal>
   extends _ZodMiniType<core.$ZodLiteralInternals<T>> {
   // _zod: core.$ZodLiteralInternals<T>;
 }

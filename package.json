@@ -28,7 +28,7 @@
     "globby": "^14.1.0",
     "husky": "^9.1.7",
     "jsr": "^0.12.4",
-    "lint-staged": "^12.5.0",
+    "lint-staged": "^16.1.0",
     "mitata": "^0.1.14",
     "prettier": "^3.5.3",
     "recheck": "^4.5.0",
@@ -41,7 +41,7 @@
     "tsx": "^4.19.3",
     "typescript": "^5.5.4",
     "vitest": "^2.1.9",
-    "zod": "workspace:*",
+    "zod": "link:",
     "zod3": "npm:zod@^3.0.0"
   },
   "lint-staged": {
@@ -53,7 +53,9 @@
       "biome format --no-errors-on-unmatched --write",
       "biome lint --no-errors-on-unmatched --write"
     ],
-    "packages/*/**/*.md": ["prettier --ignore-unknown --write"]
+    "packages/*/**/*.md": [
+      "prettier --ignore-unknown --write"
+    ]
   },
   "scripts": {
     "fix": "pnpm run format && pnpm run lint",

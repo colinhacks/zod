@@ -1015,7 +1015,7 @@ export function array<T extends core.SomeType>(element: T, params?: string | cor
 }
 
 // .keyof
-export function keyof<T extends ZodObject>(schema: T): ZodLiteral<keyof T["_zod"]["output"]> {
+export function keyof<T extends ZodObject>(schema: T): ZodLiteral<Exclude<keyof T["_zod"]["output"], symbol>> {
   const shape = schema._zod.def.shape;
   return literal(Object.keys(shape)) as any;
 }
@@ -1025,7 +1025,7 @@ export function keyof<T extends ZodObject>(schema: T): ZodLiteral<keyof T["_zod"
 export interface ZodObject<
   /** @ts-ignore Cast variance */
   out Shape extends core.$ZodShape = core.$ZodLooseShape,
-  out Config extends core.$ZodObjectConfig = core.$ZodObjectConfig,
+  out Config extends core.$ZodObjectConfig = core.$strip,
 > extends _ZodType<core.$ZodObjectInternals<Shape, Config>>,
     core.$ZodObject<Shape, Config> {
   shape: Shape;
@@ -1108,9 +1108,7 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
   core.$ZodObject.init(inst, def);
   ZodType.init(inst, def);
 
-  util.defineLazy(inst, "shape", () => {
-    return Object.fromEntries(Object.entries(inst._zod.def.shape));
-  });
+  util.defineLazy(inst, "shape", () => def.shape);
   inst.keyof = () => _enum(Object.keys(inst._zod.def.shape)) as any;
   inst.catchall = (catchall) => inst.clone({ ...inst._zod.def, catchall: catchall as any as core.$ZodType }) as any;
   inst.passthrough = () => inst.clone({ ...inst._zod.def, catchall: unknown() });
@@ -1492,7 +1490,7 @@ export function nativeEnum<T extends util.EnumLike>(entries: T, params?: string 
 }
 
 // ZodLiteral
-export interface ZodLiteral<T extends util.Primitive = util.Primitive>
+export interface ZodLiteral<T extends util.Literal = util.Literal>
   extends _ZodType<core.$ZodLiteralInternals<T>>,
     core.$ZodLiteral<T> {
   values: Set<T>;

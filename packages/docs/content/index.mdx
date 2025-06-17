@@ -11,13 +11,11 @@ import { Platinum } from '../components/platinum';
 import { Gold } from '../components/gold';
 import { Silver } from '../components/silver';
 import { Bronze } from '../components/bronze';
+import { HeroLogo } from '../components/hero-logo';
 
 
 <div className="flex flex-col items-stretch text-center">
-  <div style={{height:"170px"}}>
-    <img  className="block dark:hidden mx-auto my-0! h-full" alt="zod logo" src="/logo/logo-glow.png"  />
-    <img  className="hidden dark:block mx-auto my-0! h-full" alt="zod logo" src="/logo/logo-glow.png"  />
-  </div>
+  <HeroLogo />
   <h1 className="text-3xl font-bold">Zod</h1>
   <p className="mt-2 mb-1">TypeScript-first schema validation with static type inference<br/>by <a href="https://x.com/colinhacks">@colinhacks</a> </p>
   <br/>

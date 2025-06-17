@@ -72,6 +72,12 @@ const formIntegrations: ZodResource[] = [
     description: "Making SvelteKit forms a pleasure to use!",
     slug: "ciscoheat/sveltekit-superforms",
   },
+  {
+    name: "zod-validation-error",
+    url: "https://github.com/causaly/zod-validation-error",
+    description: "Generate user-friendly error messages from ZodError instances.",
+    slug: "causaly/zod-validation-error",
+  },
 ];
 
 const zodToXConverters: ZodResource[] = [];
@@ -118,6 +124,12 @@ const poweredByZodProjects: ZodResource[] = [
     url: "https://github.com/seasonedcc/composable-functions",
     description: "Types and functions to make composition easy and safe.",
     slug: "seasonedcc/composable-functions",
+  },
+  {
+    name: "zod-xlsx",
+    url: "https://github.com/sidwebworks/zod-xlsx",
+    description: "A xlsx based resource validator using Zod schemas for data imports and more",
+    slug: "sidwebworks/zod-xlsx",
   },
 ];
 

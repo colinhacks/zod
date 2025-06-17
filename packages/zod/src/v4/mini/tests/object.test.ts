@@ -152,3 +152,34 @@ test("z.partial with mask", () => {
   expect(z.safeParse(partialSchemaWithMask, { age: 30 }).success).toBe(true);
   expect(z.safeParse(partialSchemaWithMask, { name: "John" }).success).toBe(false);
 });
+
+test("z.catchall", () => {
+  // z.catchall()
+  const schema = z.catchall(
+    z.object({
+      name: z.string(),
+      // age: z.number(),
+    }),
+    z.string()
+  );
+
+  type schemaIn = z.input<typeof schema>;
+  type schemaOut = z.output<typeof schema>;
+  expectTypeOf<schemaIn>().toEqualTypeOf<{
+    name: string;
+    [key: string]: string;
+  }>();
+
+  expectTypeOf<schemaOut>().toEqualTypeOf<{
+    name: string;
+    [key: string]: string;
+  }>();
+
+  schema.parse({
+    name: "john",
+    age: "30",
+    extra: "extra value",
+  });
+
+  expect(() => schema.parse({ name: "john", age: 30 })).toThrow();
+});

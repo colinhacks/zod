@@ -981,6 +981,10 @@ Dog.parse({ name: "Yeller", extraKey: true });
 
 To define a *catchall schema* that will be used to validate any unrecognized keys:
 
+
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts z.object
 const DogWithStrings = z.object({
   name: z.string(),
@@ -990,6 +994,23 @@ const DogWithStrings = z.object({
 DogWithStrings.parse({ name: "Yeller", extraKey: "extraValue" }); // ✅
 DogWithStrings.parse({ name: "Yeller", extraKey: 42 }); // ❌
 ```
+</Tab>
+<Tab value="Zod Mini">
+```ts z.object
+const DogWithStrings = z.catchall(
+  z.object({
+    name: z.string(),
+    age: z.number().optional(),
+  }),
+  z.string()
+);
+
+DogWithStrings.parse({ name: "Yeller", extraKey: "extraValue" }); // ✅
+DogWithStrings.parse({ name: "Yeller", extraKey: 42 }); // ❌
+```
+</Tab>
+</Tabs>
+
 
 ### `.shape`
 
