@@ -590,3 +590,13 @@ test("nested discriminated unions", () => {
     }
   `);
 });
+
+test("discriminator type", () => {
+  const discriminator = z.discriminatedUnion("key", [
+    z.object({ key: z.literal("a") }),
+    z.object({ key: z.literal("b") }),
+  ])._zod.def.discriminator;
+
+  expectTypeOf<typeof discriminator>().not.toEqualTypeOf<string>();
+  expectTypeOf<typeof discriminator>().toEqualTypeOf<"key">();
+});
