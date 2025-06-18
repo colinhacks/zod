@@ -370,7 +370,7 @@ export function string(params?: string | core.$ZodStringParams): ZodString {
 }
 
 // ZodStringFormat
-export interface ZodStringFormat<Format extends core.$ZodStringFormats = core.$ZodStringFormats>
+export interface ZodStringFormat<Format extends string = string>
   extends _ZodString<core.$ZodStringFormatInternals<Format>> {}
 export const ZodStringFormat: core.$constructor<ZodStringFormat> = /*@__PURE__*/ core.$constructor(
   "ZodStringFormat",
@@ -672,6 +672,28 @@ export const ZodJWT: core.$constructor<ZodJWT> = /*@__PURE__*/ core.$constructor
 
 export function jwt(params?: string | core.$ZodJWTParams): ZodJWT {
   return core._jwt(ZodJWT, params);
+}
+
+// ZodCustomStringFormat
+export interface ZodCustomStringFormat<Format extends string = string>
+  extends ZodStringFormat<Format>,
+    core.$ZodCustomStringFormat<Format> {
+  _zod: core.$ZodCustomStringFormatInternals<Format>;
+}
+export const ZodCustomStringFormat: core.$constructor<ZodCustomStringFormat> = /*@__PURE__*/ core.$constructor(
+  "ZodCustomStringFormat",
+  (inst, def) => {
+    // ZodStringFormat.init(inst, def);
+    core.$ZodCustomStringFormat.init(inst, def);
+    ZodStringFormat.init(inst, def);
+  }
+);
+export function stringFormat<Format extends string>(
+  format: Format,
+  fnOrRegex: ((arg: string) => util.MaybeAsync<unknown>) | RegExp,
+  _params: string | core.$ZodStringFormatParams = {}
+): ZodCustomStringFormat<Format> {
+  return core._stringFormat(ZodCustomStringFormat, format, fnOrRegex, _params) as any;
 }
 
 // ZodNumber
@@ -1911,7 +1933,6 @@ export const ZodCustom: core.$constructor<ZodCustom> = /*@__PURE__*/ core.$const
 export function check<O = unknown>(fn: core.CheckFn<O>, params?: string | core.$ZodCustomParams): core.$ZodCheck<O> {
   const ch = new core.$ZodCheck({
     check: "custom",
-
     ...util.normalizeParams(params),
   });
 

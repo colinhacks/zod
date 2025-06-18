@@ -6,8 +6,7 @@
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
     "source.organizeImports.biome": "explicit",
-    "source.fixAll": "always",
-    "quickfix.biome": "explicit"
+    "source.fixAll.biome": "always"
   },
   "files.exclude": {
     "./scratch": false,

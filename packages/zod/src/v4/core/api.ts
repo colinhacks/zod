@@ -79,6 +79,10 @@ export function _coercedString<T extends schemas.$ZodString>(
   });
 }
 
+export type $ZodStringFormatParams = CheckTypeParams<schemas.$ZodStringFormat, "format" | "coerce">;
+export type $ZodCheckStringFormatParams = CheckParams<checks.$ZodCheckStringFormat, "format">;
+// custom format
+
 // Email
 export type $ZodEmailParams = StringFormatParams<schemas.$ZodEmail>;
 export type $ZodCheckEmailParams = CheckStringFormatParams<schemas.$ZodEmail>;
@@ -1561,4 +1565,27 @@ export function _stringbool(
     error,
   });
   return outerPipe as any;
+}
+
+export function _stringFormat<Format extends string>(
+  Class: typeof schemas.$ZodCustomStringFormat,
+  format: Format,
+  fnOrRegex: ((arg: string) => util.MaybeAsync<unknown>) | RegExp,
+  _params: string | $ZodStringFormatParams = {}
+): schemas.$ZodCustomStringFormat<Format> {
+  const params = util.normalizeParams(_params);
+  const def: schemas.$ZodCustomStringFormatDef = {
+    ...util.normalizeParams(_params),
+    check: "string_format",
+    type: "string",
+    format,
+    fn: typeof fnOrRegex === "function" ? fnOrRegex : (val) => fnOrRegex.test(val),
+    ...params,
+  };
+  if (fnOrRegex instanceof RegExp) {
+    def.pattern = fnOrRegex;
+  }
+
+  const inst = new Class(def);
+  return inst as any;
 }

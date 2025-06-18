@@ -326,16 +326,16 @@ export const $ZodString: core.$constructor<$ZodString> = /*@__PURE__*/ core.$con
 
 //////////////////////////////   ZodStringFormat   //////////////////////////////
 
-export interface $ZodStringFormatDef<Format extends checks.$ZodStringFormats = checks.$ZodStringFormats>
+export interface $ZodStringFormatDef<Format extends string = string>
   extends $ZodStringDef,
     checks.$ZodCheckStringFormatDef<Format> {}
 
-export interface $ZodStringFormatInternals<Format extends checks.$ZodStringFormats = checks.$ZodStringFormats>
+export interface $ZodStringFormatInternals<Format extends string = string>
   extends $ZodStringInternals<string>,
     checks.$ZodCheckStringFormatInternals {
   def: $ZodStringFormatDef<Format>;
 }
-export interface $ZodStringFormat<Format extends checks.$ZodStringFormats = checks.$ZodStringFormats> extends $ZodType {
+export interface $ZodStringFormat<Format extends string = string> extends $ZodType {
   _zod: $ZodStringFormatInternals<Format>;
 }
 
@@ -931,6 +931,39 @@ export const $ZodJWT: core.$constructor<$ZodJWT> = /*@__PURE__*/ core.$construct
     });
   };
 });
+
+//////////////////////////////   ZodCustomStringFormat   //////////////////////////////
+
+export interface $ZodCustomStringFormatDef<Format extends string = string> extends $ZodStringFormatDef<Format> {
+  fn: (val: string) => unknown;
+}
+
+export interface $ZodCustomStringFormatInternals<Format extends string = string>
+  extends $ZodStringFormatInternals<Format> {
+  def: $ZodCustomStringFormatDef<Format>;
+}
+
+export interface $ZodCustomStringFormat<Format extends string = string> extends $ZodStringFormat<Format> {
+  _zod: $ZodCustomStringFormatInternals<Format>;
+}
+
+export const $ZodCustomStringFormat: core.$constructor<$ZodCustomStringFormat> = /*@__PURE__*/ core.$constructor(
+  "$ZodCustomStringFormat",
+  (inst, def): void => {
+    $ZodStringFormat.init(inst, def);
+    inst._zod.check = (payload) => {
+      if (def.fn(payload.value)) return;
+
+      payload.issues.push({
+        code: "invalid_format",
+        format: def.format,
+        input: payload.value,
+        inst,
+        continue: !def.abort,
+      });
+    };
+  }
+);
 
 /////////////////////////////////////////
 /////////////////////////////////////////

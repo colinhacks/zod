@@ -29,3 +29,81 @@ test("string format methods", () => {
   expect(e.safeParse("email@example.com").success).toBe(true); // Positive
   expect(e.safeParse("EMAIL@EXAMPLE.COM").success).toBe(false); // Negative
 });
+
+test("z.stringFormat", () => {
+  const ccRegex = /^(?:\d{14,19}|\d{4}(?: \d{3,6}){2,4}|\d{4}(?:-\d{3,6}){2,4})$/u;
+
+  const a = z
+    .stringFormat("creditCard", (val) => ccRegex.test(val), {
+      error: `Invalid credit card number`,
+    })
+    .refine((_) => false, "Also bad");
+
+  expect(a.safeParse("asdf")).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "code": "invalid_format",
+        "format": "creditCard",
+        "path": [],
+        "message": "Invalid credit card number"
+      },
+      {
+        "code": "custom",
+        "path": [],
+        "message": "Also bad"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+  expect(a.safeParse("1234-5678-9012-3456")).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "code": "custom",
+        "path": [],
+        "message": "Also bad"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+  expect(a.def.pattern).toMatchInlineSnapshot(`undefined`);
+
+  const b = z
+    .stringFormat("creditCard", ccRegex, {
+      abort: true,
+      error: `Invalid credit card number`,
+    })
+    .refine((_) => false, "Also bad");
+
+  expect(b.safeParse("asdf")).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "code": "invalid_format",
+        "format": "creditCard",
+        "path": [],
+        "message": "Invalid credit card number"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+  expect(b.safeParse("1234-5678-9012-3456")).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "code": "custom",
+        "path": [],
+        "message": "Also bad"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+  expect(b.def.pattern).toMatchInlineSnapshot(
+    `/\\^\\(\\?:\\\\d\\{14,19\\}\\|\\\\d\\{4\\}\\(\\?: \\\\d\\{3,6\\}\\)\\{2,4\\}\\|\\\\d\\{4\\}\\(\\?:-\\\\d\\{3,6\\}\\)\\{2,4\\}\\)\\$/u`
+  );
+});
