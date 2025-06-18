@@ -1,15 +1,10 @@
-import { Heading } from "@/components/heading";
-import { Tabs, Tab } from "@/components/tabs";
 import { Accordion, Accordions } from "@/components/accordion";
+import { Heading } from "@/components/heading";
+import { Tab, Tabs } from "@/components/tabs";
 import { source } from "@/loaders/source";
 import { Callout } from "fumadocs-ui/components/callout";
 import defaultMdxComponents, { createRelativeLink } from "fumadocs-ui/mdx";
-import {
-  DocsBody,
-  DocsDescription,
-  DocsPage,
-  DocsTitle,
-} from "fumadocs-ui/page";
+import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/page";
 import { notFound } from "next/navigation";
 
 export const revalidate = 86400;
