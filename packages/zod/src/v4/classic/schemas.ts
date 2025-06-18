@@ -370,7 +370,7 @@ export function string(params?: string | core.$ZodStringParams): ZodString {
 }
 
 // ZodStringFormat
-export interface ZodStringFormat<Format extends string | string[] = string>
+export interface ZodStringFormat<Format extends string = string>
   extends _ZodString<core.$ZodStringFormatInternals<Format>> {}
 export const ZodStringFormat: core.$constructor<ZodStringFormat> = /*@__PURE__*/ core.$constructor(
   "ZodStringFormat",
