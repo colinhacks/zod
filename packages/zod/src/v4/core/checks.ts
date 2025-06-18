@@ -1280,26 +1280,4 @@ export type $ZodStringFormatChecks =
   | $ZodCheckIncludes
   | $ZodCheckStartsWith
   | $ZodCheckEndsWith
-  | schemas.$ZodGUID
-  | schemas.$ZodUUID
-  | schemas.$ZodEmail
-  | schemas.$ZodURL
-  | schemas.$ZodEmoji
-  | schemas.$ZodNanoID
-  | schemas.$ZodCUID
-  | schemas.$ZodCUID2
-  | schemas.$ZodULID
-  | schemas.$ZodXID
-  | schemas.$ZodKSUID
-  | schemas.$ZodISODateTime
-  | schemas.$ZodISODate
-  | schemas.$ZodISOTime
-  | schemas.$ZodISODuration
-  | schemas.$ZodIPv4
-  | schemas.$ZodIPv6
-  | schemas.$ZodCIDRv4
-  | schemas.$ZodCIDRv6
-  | schemas.$ZodBase64
-  | schemas.$ZodBase64URL
-  | schemas.$ZodE164
-  | schemas.$ZodJWT;
+  | schemas.$ZodStringFormatTypes; // union of string format schema types
