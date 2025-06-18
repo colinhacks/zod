@@ -236,6 +236,26 @@ const result = schema.safeParse(12, {
 });
 ```
 
+### Include input in issues
+
+By default, Zod does not include input data in issues. This is to prevent unintentional logging of potentially sensitive input data. To include the input data in each issue, use the `reportInput` flag:
+
+```ts
+z.string().parse(12, {
+  reportInput: true
+})
+
+// ZodError: [
+//   {
+//     "expected": "string",
+//     "code": "invalid_type",
+//     "input": 12, // 👀
+//     "path": [],
+//     "message": "Invalid input: expected string, received number"
+//   }
+// ]
+```
+
 ## Global error customization
 
 To specify a global error map, use `z.config()` to set Zod's `customError` configuration setting:

@@ -94,7 +94,7 @@ export function string(params?: string | core.$ZodStringParams): ZodMiniString<s
 }
 
 // ZodMiniStringFormat
-export interface ZodMiniStringFormat<Format extends core.$ZodStringFormats = core.$ZodStringFormats>
+export interface ZodMiniStringFormat<Format extends string = string>
   extends _ZodMiniString<core.$ZodStringFormatInternals<Format>>,
     core.$ZodStringFormat<Format> {
   // _zod: core.$ZodStringFormatInternals<Format>;
@@ -412,6 +412,28 @@ export const ZodMiniJWT: core.$constructor<ZodMiniJWT> = /*@__PURE__*/ core.$con
 
 export function jwt(params?: string | core.$ZodJWTParams): ZodMiniJWT {
   return core._jwt(ZodMiniJWT, params);
+}
+
+// ZodMiniCustomStringFormat
+export interface ZodMiniCustomStringFormat<Format extends string = string>
+  extends ZodMiniStringFormat<Format>,
+    core.$ZodCustomStringFormat<Format> {
+  _zod: core.$ZodCustomStringFormatInternals<Format>;
+}
+export const ZodMiniCustomStringFormat: core.$constructor<ZodMiniCustomStringFormat> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniCustomStringFormat",
+  (inst, def) => {
+    core.$ZodCustomStringFormat.init(inst, def);
+    ZodMiniStringFormat.init(inst, def);
+  }
+);
+
+export function stringFormat<Format extends string>(
+  format: Format,
+  fnOrRegex: ((arg: string) => util.MaybeAsync<unknown>) | RegExp,
+  _params: string | core.$ZodStringFormatParams = {}
+): ZodMiniCustomStringFormat<Format> {
+  return core._stringFormat(ZodMiniCustomStringFormat, format, fnOrRegex, _params) as any;
 }
 
 // ZodMiniNumber

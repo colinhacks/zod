@@ -770,7 +770,7 @@ export type $ZodStringFormats =
   | "starts_with"
   | "ends_with"
   | "includes";
-export interface $ZodCheckStringFormatDef<Format extends $ZodStringFormats = $ZodStringFormats> extends $ZodCheckDef {
+export interface $ZodCheckStringFormatDef<Format extends string = string> extends $ZodCheckDef {
   check: "string_format";
   format: Format;
   pattern?: RegExp | undefined;
@@ -799,20 +799,21 @@ export const $ZodCheckStringFormat: core.$constructor<$ZodCheckStringFormat> = /
       }
     });
 
-    inst._zod.check ??= (payload) => {
-      if (!def.pattern) throw new Error("Not implemented.");
-      def.pattern.lastIndex = 0;
-      if (def.pattern.test(payload.value)) return;
-      payload.issues.push({
-        origin: "string",
-        code: "invalid_format",
-        format: def.format,
-        input: payload.value,
-        ...(def.pattern ? { pattern: def.pattern.toString() } : {}),
-        inst,
-        continue: !def.abort,
-      });
-    };
+    if (def.pattern)
+      inst._zod.check ??= (payload) => {
+        def.pattern!.lastIndex = 0;
+        if (def.pattern!.test(payload.value)) return;
+        payload.issues.push({
+          origin: "string",
+          code: "invalid_format",
+          format: def.format,
+          input: payload.value,
+          ...(def.pattern ? { pattern: def.pattern.toString() } : {}),
+          inst,
+          continue: !def.abort,
+        });
+      };
+    else inst._zod.check ??= () => {};
   }
 );
 
@@ -1279,26 +1280,4 @@ export type $ZodStringFormatChecks =
   | $ZodCheckIncludes
   | $ZodCheckStartsWith
   | $ZodCheckEndsWith
-  | schemas.$ZodGUID
-  | schemas.$ZodUUID
-  | schemas.$ZodEmail
-  | schemas.$ZodURL
-  | schemas.$ZodEmoji
-  | schemas.$ZodNanoID
-  | schemas.$ZodCUID
-  | schemas.$ZodCUID2
-  | schemas.$ZodULID
-  | schemas.$ZodXID
-  | schemas.$ZodKSUID
-  | schemas.$ZodISODateTime
-  | schemas.$ZodISODate
-  | schemas.$ZodISOTime
-  | schemas.$ZodISODuration
-  | schemas.$ZodIPv4
-  | schemas.$ZodIPv6
-  | schemas.$ZodCIDRv4
-  | schemas.$ZodCIDRv6
-  | schemas.$ZodBase64
-  | schemas.$ZodBase64URL
-  | schemas.$ZodE164
-  | schemas.$ZodJWT;
+  | schemas.$ZodStringFormatTypes; // union of string format schema types
