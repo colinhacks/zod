@@ -1566,3 +1566,26 @@ export function _stringbool(
   });
   return outerPipe as any;
 }
+
+export function _stringFormat<Format extends string>(
+  Class: typeof schemas.$ZodCustomStringFormat,
+  format: Format,
+  fnOrRegex: ((arg: string) => util.MaybeAsync<unknown>) | RegExp,
+  _params: string | $ZodStringFormatParams = {}
+): schemas.$ZodCustomStringFormat<Format> {
+  const params = util.normalizeParams(_params);
+  const def: schemas.$ZodCustomStringFormatDef = {
+    ...util.normalizeParams(_params),
+    check: "string_format",
+    type: "string",
+    format,
+    fn: typeof fnOrRegex === "function" ? fnOrRegex : (val) => fnOrRegex.test(val),
+    ...params,
+  };
+  if (fnOrRegex instanceof RegExp) {
+    def.pattern = fnOrRegex;
+  }
+
+  const inst = new Class(def);
+  return inst as any;
+}

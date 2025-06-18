@@ -770,7 +770,7 @@ export type $ZodStringFormats =
   | "starts_with"
   | "ends_with"
   | "includes";
-export interface $ZodCheckStringFormatDef<Format extends $ZodStringFormats = $ZodStringFormats> extends $ZodCheckDef {
+export interface $ZodCheckStringFormatDef<Format extends string = string> extends $ZodCheckDef {
   check: "string_format";
   format: Format;
   pattern?: RegExp | undefined;
@@ -799,20 +799,21 @@ export const $ZodCheckStringFormat: core.$constructor<$ZodCheckStringFormat> = /
       }
     });
 
-    inst._zod.check ??= (payload) => {
-      if (!def.pattern) throw new Error("Not implemented.");
-      def.pattern.lastIndex = 0;
-      if (def.pattern.test(payload.value)) return;
-      payload.issues.push({
-        origin: "string",
-        code: "invalid_format",
-        format: def.format,
-        input: payload.value,
-        ...(def.pattern ? { pattern: def.pattern.toString() } : {}),
-        inst,
-        continue: !def.abort,
-      });
-    };
+    if (def.pattern)
+      inst._zod.check ??= (payload) => {
+        def.pattern!.lastIndex = 0;
+        if (def.pattern!.test(payload.value)) return;
+        payload.issues.push({
+          origin: "string",
+          code: "invalid_format",
+          format: def.format,
+          input: payload.value,
+          ...(def.pattern ? { pattern: def.pattern.toString() } : {}),
+          inst,
+          continue: !def.abort,
+        });
+      };
+    else inst._zod.check ??= () => {};
   }
 );
 

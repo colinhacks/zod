@@ -674,6 +674,28 @@ export function jwt(params?: string | core.$ZodJWTParams): ZodJWT {
   return core._jwt(ZodJWT, params);
 }
 
+// ZodCustomStringFormat
+export interface ZodCustomStringFormat<Format extends string = string>
+  extends ZodStringFormat<Format>,
+    core.$ZodCustomStringFormat<Format> {
+  _zod: core.$ZodCustomStringFormatInternals<Format>;
+}
+export const ZodCustomStringFormat: core.$constructor<ZodCustomStringFormat> = /*@__PURE__*/ core.$constructor(
+  "ZodCustomStringFormat",
+  (inst, def) => {
+    // ZodStringFormat.init(inst, def);
+    core.$ZodCustomStringFormat.init(inst, def);
+    ZodStringFormat.init(inst, def);
+  }
+);
+export function stringFormat<Format extends string>(
+  format: Format,
+  fnOrRegex: ((arg: string) => util.MaybeAsync<unknown>) | RegExp,
+  _params: string | core.$ZodStringFormatParams = {}
+): ZodCustomStringFormat<Format> {
+  return core._stringFormat(ZodCustomStringFormat, format, fnOrRegex, _params) as any;
+}
+
 // ZodNumber
 export interface _ZodNumber<Internals extends core.$ZodNumberInternals = core.$ZodNumberInternals>
   extends _ZodType<Internals> {
@@ -1911,7 +1933,6 @@ export const ZodCustom: core.$constructor<ZodCustom> = /*@__PURE__*/ core.$const
 export function check<O = unknown>(fn: core.CheckFn<O>, params?: string | core.$ZodCustomParams): core.$ZodCheck<O> {
   const ch = new core.$ZodCheck({
     check: "custom",
-
     ...util.normalizeParams(params),
   });
 
@@ -2026,28 +2047,4 @@ export function preprocess<A, U extends core.SomeType, B = unknown>(
   schema: U
 ): ZodPipe<ZodTransform<A, B>, U> {
   return pipe(transform(fn as any), schema as any) as any;
-}
-
-interface $ZodStringFormatParams {
-  abort?: boolean;
-  error?: string | core.$ZodErrorMap<core.$ZodIssueInvalidStringFormat>;
-  // pattern?:
-}
-// export function stringFormat(format: string, )
-
-uuidv4();
-export function stringFormat<T>(
-  format: string,
-  fn: (arg: NoInfer<T>) => util.MaybeAsync<unknown>,
-  _params: string | core.$ZodCustomParams = {}
-): ZodStringFormat {
-  const params = util.normalizeParams(_params);
-  const inst = new ZodStringFormat({
-    ...util.normalizeParams(_params),
-    check: "string_format",
-    type: "string",
-    format,
-    ...params,
-  });
-  return inst;
 }
