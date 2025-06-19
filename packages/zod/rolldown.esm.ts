@@ -7,7 +7,7 @@ export default defineConfig({
 
   // 2. tell Rolldown to emit one .js file per module, preserving your src tree
   output: {
-    dir: ".",
+    // dir: "dist/esm",
     format: "esm", // TS “module”: "esnext" → ESM
     preserveModules: true, // no bundling; one output per input
     preserveModulesRoot: "src",
