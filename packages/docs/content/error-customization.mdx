@@ -16,7 +16,7 @@ Instances of `$ZodError` contain an `.issues` array. Each issue contains a human
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 const result = z.string().safeParse(12); // { success: false, error: ZodError }
 result.error.issues;
@@ -297,7 +297,7 @@ To support internationalization of error message, Zod provides several built-in 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 import en from "zod/v4/locales/en.js"
 
 z.config(en());
@@ -316,7 +316,7 @@ z.config(en());
 To lazily load a locale, consider dynamic imports:
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 async function loadLocale(locale: string) {
   const { default: locale } = await import(`zod/v4/locales/${locale}.js`);
@@ -331,7 +331,7 @@ For convenience, all locales are exported as `z.locales` from `zod/v4`. In some 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 z.config(z.locales.en());
 ```

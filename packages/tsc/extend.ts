@@ -1,4 +1,4 @@
-// import { z } from "zod/v4";
+// import * as z from "zod/v4";
 
 // const Type1 = z.object({});
 // let test1: z.infer<typeof Type1>;

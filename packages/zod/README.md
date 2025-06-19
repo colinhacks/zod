@@ -58,7 +58,7 @@
 Zod is a TypeScript-first validation library. Define a schema and parse some data with it. You'll get back a strongly typed, validated result.
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 const User = z.object({
   name: z.string(),
@@ -104,7 +104,7 @@ npm install zod
 Before you can do anything else, you need to define a schema. For the purposes of this guide, we'll use a simple object schema.
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
 const Player = z.object({
   username: z.string(),

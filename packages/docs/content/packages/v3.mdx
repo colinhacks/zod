@@ -185,7 +185,7 @@ pnpm add zod@canary          # pnpm
 Creating a simple string schema
 
 ```ts
-import { z } from "zod";
+import * as z from "zod";
 
 // creating a schema for strings
 const mySchema = z.string();
@@ -202,7 +202,7 @@ mySchema.safeParse(12); // => { success: false; error: ZodError }
 Creating an object schema
 
 ```ts
-import { z } from "zod";
+import * as z from "zod";
 
 const User = z.object({
   username: z.string(),
@@ -220,7 +220,7 @@ type User = z.infer<typeof User>;
 ## Primitives
 
 ```ts
-import { z } from "zod";
+import * as z from "zod";
 
 // primitive values
 z.string();
