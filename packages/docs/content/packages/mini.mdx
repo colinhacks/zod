@@ -12,24 +12,86 @@ npm install zod@^3.25.0
 
 It implements the exact same functionality as `zod`, but using a *functional*, *tree-shakable* API. If you're coming from `zod`, this means you generally will use *functions* in place of methods.
 
-<Tabs groupId="lib" items={[ "Zod Mini", "Zod"]}>
-<Tab value="Zod Mini">
 ```ts
-import { z } from "zod/v4-mini"
+// regular Zod
+const mySchema = z.string().optional().nullable();
 
+// Zod Mini
 const mySchema = z.nullable(z.optional(z.string()));
 ```
-</Tab>
-<Tab value="Zod">
+
+## Tree-shaking
+
+Tree-shaking is a technique used by modern bundlers to remove unused code from the final bundle. It's also referred to as *dead-code elimination*.
+
+In regular Zod, schemas provide a range of convenience methods to perform some common operations (e.g. `.min()` on string schemas). Bundlers are generally not able to remove ("treeshake") unused method implementations from your bundle, but they are able to remove unused top-level functions. As such, the API of `zod/v4-mini` uses more functions than methods.
+
 ```ts
-import { z } from "zod/v4";
+// regular Zod
+z.string().min(5).max(10).trim()
 
-const mySchema = z.string().optional().nullable();
+// Zod Mini
+z.string().check(z.minLength(5), z.maxLength(10), z.trim());
 ```
-</Tab>
-</Tabs>
 
-> **Tree-shaking** — In `zod`, schemas provide a range of convenience methods to perform some common operations (e.g. `.min()` on string schemas). Bundlers have a hard time removing ("tree shaking") method implementations from your bundle, even if they aren't used. It's much easier to remove an unused top-level function, which is why the API of `zod/v4-mini` uses more functions than methods.
+To give a general idea about the bundle size reduction, consider this simple script:
+
+```ts
+z.boolean().parse(true)
+```
+
+Bundling this with Zod and Zod Mini results in the following bundle sizes. Zod Mini results in a 64% reduction.
+
+| Package | Bundle size (gzip) |
+|---------|-------------|
+| Zod Mini | `2.12kb` |
+| Zod | `5.91kb` |
+
+With a marginally more complex schema that involves object types:
+
+```ts
+const schema = z.object({ a: z.string(), b: z.number(), c: z.boolean() });
+
+schema.parse({
+  a: "asdf",
+  b: 123,
+  c: true,
+});
+```
+
+| Package | Bundle size (gzip) |
+|---------|-------------|
+| Zod Mini | `4.0kb` |
+| Zod | `13.1kb` |
+
+This gives you a sense of the bundle sizes involved. Look closely at these numbers and run your own benchmarks to determine if using Zod Mini is worth it for your use case.
+
+## When not to use Zod Mini
+
+In general you should probably use regular Zod unless you have uncommonly strict constraints around bundle size. Many developers massively overestimate the important of bundle size to application performance. In practice, bundle size on the scale of Zod (5-10kb) is only a meaningful concern when optimizing front-end bundles for a user base with slow mobile network connections in rural or developing areas. Let's run through some considerations:
+
+### You are optimizing for DX
+
+The API of Zod Mini is more verbose and less discoverable. The methods in Zod's API are much easier to discover & autocomplete through Intellisense than the top-level functions in Zod Mini. It isn't possible to quickly build a schema with chained APIs. (Speaking as the creator of Zod: I spent a lot of time designing the Zod Mini API to be as ergonomic as possible, but I still have a strong preference the standard Zod API.)
+
+### You're building a backend
+
+If you are using Zod on the backend, bundle size on the scale of 5kb is not meaningful. This is true even in resource-constrained environments like Lamdba. [This post](https://medium.com/@adtanasa/size-is-almost-all-that-matters-for-optimizing-aws-lambda-cold-starts-cad54f65cbb) benchmarks cold start times with bundles of various sizes. Here is a subset of the results:
+
+| Bundle size | Lambda cold start time |
+|-------------|----------------|
+| `1kb` | `171ms` |
+| `17kb` (size of gzipped non-mini Zod w/o treeshaking) | `171.6ms` (interpolated) |
+| `128kb` | `176ms` |
+| `256kb` | `182ms` |
+| `512kb` | `279ms` |
+| `1mb` | `557ms` |
+
+The minimum cold start time for a negligible `1kb` bundle is `171ms`. The next bundle size tested is `128kb`, which added only `5ms`. When gzipped, the bundle size for the entirely of regular Zod is roughly `17kb`, which would correspond to a `0.6ms` increase in startup time. 
+
+### Your users are not primarily in rural/developing areas
+
+Generally, the round trip time to the server (`100-200ms`) will dwarf the time required to download an additional `10kb`. Only on slow 3G connections (sub-`1Mbps`) does the download time for an additional `10kb` become more significant. If you aren't optimizing specifically for users in rural or developing areas, your time is likely better spent optimizing something else.
 
 ## `ZodMiniType`
 
@@ -41,7 +103,7 @@ All `zod/v4-mini` schemas extend the `z.ZodMiniType` base class, which in turn e
 This is an obvious one. All `zod/v4-mini` schemas implement the same parsing methods as `zod`.
 
 ```ts
-import { z } from "zod/v4-mini"
+import * as z from "zod/v4-mini"
 
 const mySchema = z.string();
 
@@ -68,7 +130,7 @@ z.string()
 In `zod/v4-mini` such methods aren't implemented. Instead you pass these checks into schemas using the `.check()` method:
 
 ```ts
-import { z } from "zod/v4-mini"
+import * as z from "zod/v4-mini"
 
 z.string().check(
   z.minLength(5), 
@@ -132,7 +194,7 @@ z.string().register(myReg, { title: "My cool string schema" });
 For *branding* a schema. Refer to the [Branded types](/api#branded-types) docs for more information.
 
 ```ts
-import { z } from "zod/v4-mini"
+import * as z from "zod/v4-mini"
 
 const USD = z.string().brand("USD");
 ```
@@ -155,7 +217,7 @@ While `zod/v4` automatically loads the English (`en`) locale, `zod/v4-mini` does
 This means, by default the `message` property of all issues will simply read `"Invalid input"`. To load the English locale:
 
 ```ts
-import { z } from "zod/v4-mini"
+import * as z from "zod/v4-mini"
 
 z.config(z.locales.en());
 ```

@@ -730,7 +730,7 @@ Previously both refinements and transformations lived inside a wrapper class cal
 This is particularly apparent in the `zod/v4-mini` API, which heavily relies on the `.check()` method to compose various validations together.
 
 ```ts
-import { z } from "zod/v4-mini";
+import * as z from "zod/v4-mini";
 
 z.string().check(
   z.minLength(10),
