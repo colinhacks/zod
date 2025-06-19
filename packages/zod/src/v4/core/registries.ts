@@ -72,8 +72,6 @@ export interface JSONSchemaMeta {
   id?: string | undefined;
   title?: string | undefined;
   description?: string | undefined;
-  example?: unknown | undefined;
-  examples?: unknown[] | Record<string, { value: unknown; [k: string]: unknown }> | undefined; // allow array or example map
   deprecated?: boolean | undefined;
   [k: string]: unknown;
 }
