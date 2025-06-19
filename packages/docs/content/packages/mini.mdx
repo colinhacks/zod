@@ -3,6 +3,11 @@ title: Zod Mini
 ---
 
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+<Callout type="info">
+  **Note** — The docs for Zod Mini are interleaved with the regular Zod docs via tabbed code blocks. This page is designed to explain why Zod Mini exists, when to use it, and some key differences from regular Zod.
+</Callout>
 
 The `zod/v4-mini` variant was introduced with the release of Zod 4. To try it:
 
@@ -10,7 +15,13 @@ The `zod/v4-mini` variant was introduced with the release of Zod 4. To try it:
 npm install zod@^3.25.0
 ```
 
-It implements the exact same functionality as `zod`, but using a *functional*, *tree-shakable* API. If you're coming from `zod`, this means you generally will use *functions* in place of methods.
+To import it:
+
+```ts
+import * as z from "zod/v4-mini";
+```
+
+Zod Mini implements the exact same functionality as `zod`, but using a *functional*, *tree-shakable* API. If you're coming from `zod`, this means you generally will use *functions* in place of methods.
 
 ```ts
 // regular Zod
