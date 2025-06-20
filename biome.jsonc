@@ -61,6 +61,8 @@
   },
   "files": {
     "ignore": [
+      // "*.js",
+      // "*.mjs",
       "lib",
       "coverage",
       "dist",
