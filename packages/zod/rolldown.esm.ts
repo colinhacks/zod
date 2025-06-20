@@ -3,17 +3,17 @@ import { defineConfig } from "rolldown";
 
 export default defineConfig({
   // 1. point at your entry modules (could be a glob or single file)
-  input: ["v3/index.ts", "v4/index.ts", "v4/mini/index.ts"],
+  input: ["v3/index.ts", "v4/index.ts", "v4/core/index.ts", "v4/mini/index.ts", "v4/classic/index.ts"],
 
   // 2. tell Rolldown to emit one .js file per module, preserving your src tree
   output: {
-    // dir: "dist/esm",
+    dir: ".",
     format: "esm", // TS “module”: "esnext" → ESM
     preserveModules: true, // no bundling; one output per input
-    preserveModulesRoot: "src",
+    // preserveModulesRoot: "src",
     // use .mts for all emitted files
-    entryFileNames: "[name].mts",
-    chunkFileNames: "[name].mts",
+    entryFileNames: "[name].mjs",
+    chunkFileNames: "[name].mjs",
   },
 
   // 3. have it pick up your tsconfig base + customConditions
