@@ -1,12 +1,12 @@
 {
   "extends": "../../.configs/tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "./src",
+    "rootDir": ".",
     "module": "Node16",
     "moduleResolution": "node16",
     "customConditions": ["@zod/source"],
-    "outDir": "./dist/cjs"
+    "declaration": true
   },
-  "include": ["src"],
-  "exclude": ["**/tests/**"]
+  "include": ["."],
+  "exclude": ["**/tests/**", "**/benchmarks/**", "vitest.config.ts", "dist"]
 }
