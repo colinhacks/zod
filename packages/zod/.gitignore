@@ -1,0 +1,8 @@
+index.js
+index.d.ts
+v3/**/*.js
+v3/**/*.d.ts
+v3/**/*.mjs
+v4/**/*.js
+v4/**/*.d.ts
+v4/**/*.mjs

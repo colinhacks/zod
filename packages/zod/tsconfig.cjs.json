@@ -7,6 +7,6 @@
     "customConditions": ["@zod/source"],
     "declaration": true
   },
-  "include": ["."],
-  "exclude": ["**/tests/**", "**/benchmarks/**", "vitest.config.ts", "dist"]
+  "include": ["index.ts", "v3/**/*.ts", "v4/**/*.ts"],
+  "exclude": ["**/tests/**", "**/benchmarks/**"]
 }
