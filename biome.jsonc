@@ -63,6 +63,7 @@
     "ignore": [
       "*.js",
       "*.mjs",
+      "*.cjs",
       "*.d.ts",
       "lib",
       "coverage",
