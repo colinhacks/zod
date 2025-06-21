@@ -1,5 +1,6 @@
 import { z } from "zod/v3";
-
+// import ru from "zod/v4/locales/ru.js";
+// console.dir(ru, { depth: null });
 // console.dir(z, { depth: null });
 // console.dir(
 //   z
@@ -8,17 +9,4 @@ import { z } from "zod/v3";
 //     .parse(undefined),
 //   { depth: null }
 // );
-
-z.object({
-  schemas: z.transformer(
-    z.nullable(
-      z.array(
-        z.object({
-          name: z.string(),
-        })
-      )
-    ),
-    { type: "transform", transform: (data) => data ?? [] }
-  ),
-});
-//
+console.dir(z.string().parse("Hello, Zod!"), { depth: null });
