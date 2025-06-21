@@ -27,7 +27,7 @@ export default defineConfig({
   // 3. have it pick up your tsconfig base + customConditions
   // tsconfigFilename: "./tsconfig.json", // will extend your base config
   resolve: {
-    tsconfigFilename: "./tsconfig.json", // will extend your base config
+    tsconfigFilename: "./tsconfig.cjs.json", // will extend your base config
     // conditions: ["@zod/source"], // customConditions ↔ resolve.conditions :contentReference[oaicite:1]{index=1}
   },
 });
