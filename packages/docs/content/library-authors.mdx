@@ -104,13 +104,19 @@ To differentiate between Zod 3 and Zod 4 schemas at runtime, check for the `"_zo
 import type * as z3 from "zod/v3";
 import type * as z4 from "zod/v4/core";
 
-declare const schema: z3.ZodTypeAny | z4.$ZodType;
-
-if ("_zod" in schema) {
-  schema._zod.def; // Zod 4 schema
-} else {
-  schema._def; // Zod 3 schema
-}
+export const isZod4Schema = (
+  schema: z3.ZodTypeAny | z4.$ZodType,
+): schema is z3.ZodTypeAny => {
+  if ("_zod" in schema) {
+    // This is a Zod 4 schema
+    // You can access the schema definition using `schema._zod.def`
+    return true;
+  } else {
+    // This is a Zod 3 schema
+    // You can access the schema definition using `schema._def`
+    return false;
+  }
+};
 ```
 
 ## How to support Zod and Zod Mini simultaneously?
