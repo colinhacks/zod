@@ -43,7 +43,9 @@
     "typescript": "^5.5.4",
     "vitest": "^2.1.9",
     "zod": "workspace:*",
-    "zod3": "npm:zod@^3.0.0"
+    "zod3": "npm:zod@^3.0.0",
+    "esbuild": "^0.25.5",
+    "rollup": "^4.39.0"
   },
   "lint-staged": {
     "packages/*/src/**/*.ts": [
