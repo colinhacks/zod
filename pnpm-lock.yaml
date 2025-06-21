@@ -35,6 +35,9 @@ importers:
       console-table-printer:
         specifier: ^2.12.1
         version: 2.12.1
+      esbuild:
+        specifier: ^0.25.5
+        version: 0.25.5
       execa:
         specifier: ^9.5.2
         version: 9.5.2
@@ -62,6 +65,9 @@ importers:
       rolldown:
         specifier: 1.0.0-beta.18
         version: 1.0.0-beta.18
+      rollup:
+        specifier: ^4.39.0
+        version: 4.39.0
       semver:
         specifier: ^7.7.2
         version: 7.7.2
@@ -118,7 +124,7 @@ importers:
     dependencies:
       '@inkeep/cxkit-react':
         specifier: ^0.5.80
-        version: 0.5.80(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@3.25.67)
+        version: 0.5.80(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@packages+zod)
       '@radix-ui/react-accordion':
         specifier: ^1.2.4
         version: 1.2.4(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -253,14 +259,7 @@ importers:
         specifier: npm:zod@4.0.0-beta.20250420T053007
         version: zod@4.0.0-beta.20250420T053007
 
-  packages/zod:
-    devDependencies:
-      esbuild:
-        specifier: ^0.25.5
-        version: 0.25.5
-      rollup:
-        specifier: ^4.39.0
-        version: 4.39.0
+  packages/zod: {}
 
 packages:
 
@@ -6159,7 +6158,7 @@ snapshots:
 
   '@inkeep/cxkit-color-mode@0.5.80': {}
 
-  '@inkeep/cxkit-primitives@0.5.80(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@3.25.67)':
+  '@inkeep/cxkit-primitives@0.5.80(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@packages+zod)':
     dependencies:
       '@inkeep/cxkit-color-mode': 0.5.80
       '@inkeep/cxkit-theme': 0.5.80
@@ -6193,7 +6192,7 @@ snapshots:
       lucide-react: 0.503.0(react@19.0.0)
       marked: 15.0.12
       merge-anything: 5.1.7
-      openai: 4.78.1(encoding@0.1.13)(zod@3.25.67)
+      openai: 4.78.1(encoding@0.1.13)(zod@packages+zod)
       prism-react-renderer: 2.4.1(react@19.0.0)
       react: 19.0.0
       react-dom: 19.0.0(react@19.0.0)
@@ -6214,9 +6213,9 @@ snapshots:
       - supports-color
       - zod
 
-  '@inkeep/cxkit-react@0.5.80(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@3.25.67)':
+  '@inkeep/cxkit-react@0.5.80(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@packages+zod)':
     dependencies:
-      '@inkeep/cxkit-styled': 0.5.80(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@3.25.67)
+      '@inkeep/cxkit-styled': 0.5.80(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@packages+zod)
       '@radix-ui/react-use-controllable-state': 1.1.0(@types/react@19.0.11)(react@19.0.0)
       lucide-react: 0.503.0(react@19.0.0)
     transitivePeerDependencies:
@@ -6228,9 +6227,9 @@ snapshots:
       - supports-color
       - zod
 
-  '@inkeep/cxkit-styled@0.5.80(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@3.25.67)':
+  '@inkeep/cxkit-styled@0.5.80(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@packages+zod)':
     dependencies:
-      '@inkeep/cxkit-primitives': 0.5.80(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@3.25.67)
+      '@inkeep/cxkit-primitives': 0.5.80(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@packages+zod)
       class-variance-authority: 0.7.1
       clsx: 2.1.1
       merge-anything: 5.1.7
@@ -10058,7 +10057,7 @@ snapshots:
       regex: 6.0.1
       regex-recursion: 6.0.2
 
-  openai@4.78.1(encoding@0.1.13)(zod@3.25.67):
+  openai@4.78.1(encoding@0.1.13)(zod@packages+zod):
     dependencies:
       '@types/node': 18.19.103
       '@types/node-fetch': 2.6.12
@@ -10068,7 +10067,7 @@ snapshots:
       formdata-node: 4.4.1
       node-fetch: 2.7.0(encoding@0.1.13)
     optionalDependencies:
-      zod: 3.25.67
+      zod: link:packages/zod
     transitivePeerDependencies:
       - encoding
 
@@ -11083,7 +11082,7 @@ snapshots:
 
   tsx@4.19.3:
     dependencies:
-      esbuild: 0.25.2
+      esbuild: 0.25.5
       get-tsconfig: 4.10.0
     optionalDependencies:
       fsevents: 2.3.3
