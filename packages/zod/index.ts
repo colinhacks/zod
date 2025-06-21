@@ -1,4 +1,4 @@
-import z3 from "./v3/index.js";
+import * as z from "./v3/index.js";
 export * from "./v3/index.js";
-
-export default z3;
+export { z };
+export default z;

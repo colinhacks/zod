@@ -7,6 +7,6 @@
     "customConditions": ["@zod/source"],
     "declaration": true
   },
-  "include": ["index.ts", "v3/**/*.ts", "v4/**/*.ts"],
+  "include": ["index.ts", "v3/**/*.ts", "v4/**/*.ts", "v4-mini/**/*.ts"],
   "exclude": ["**/tests/**", "**/benchmarks/**"]
 }
