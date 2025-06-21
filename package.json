@@ -32,6 +32,7 @@
     "mitata": "^0.1.14",
     "prettier": "^3.5.3",
     "recheck": "^4.5.0",
+    "rolldown": "1.0.0-beta.18",
     "semver": "^7.7.2",
     "supershy": "^1.0.0",
     "tinybench": "^2.9.0",
