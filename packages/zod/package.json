@@ -3,7 +3,7 @@
   "version": "3.25.67",
   "author": "Colin McDonnell <zod@colinhacks.com>",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
-  "files": ["dist", "v3", "v4", "v4-mini"],
+  "files": ["index.js", "index.mjs", "index.d.ts", "v3", "v4", "v4-mini"],
   "funding": "https://github.com/sponsors/colinhacks",
   "homepage": "https://zod.dev",
   "keywords": ["typescript", "schema", "validation", "type", "inference"],
@@ -11,7 +11,7 @@
   "sideEffects": false,
   "main": "./index.js",
   "types": "./index.d.ts",
-  "module": "./index.jms",
+  "module": "./index.mjs",
   "exports": {
     ".": {
       "@zod/source": "./index.ts",
@@ -20,10 +20,10 @@
       "require": "./index.js"
     },
     "./v3": {
-      "@zod/source": "./index.ts",
-      "types": "./index.d.ts",
-      "import": "./index.mjs",
-      "require": "./index.js"
+      "@zod/source": "./v3/index.ts",
+      "types": "./v3/index.d.ts",
+      "import": "./v3/index.mjs",
+      "require": "./v3/index.js"
     },
     "./v4": {
       "@zod/source": "./v4/index.ts",
@@ -90,7 +90,7 @@
     }
   },
   "scripts": {
-    "clean": "rm -rf dist",
+    "clean": "rm -rf dist && git clean -xdf .",
     "build": "pnpm build:esm && pnpm build:cjs",
     "build:esm": "pnpm rolldown -c rolldown.esm.ts",
     "build:cjs": "pnpm tsc -p tsconfig.cjs.json",

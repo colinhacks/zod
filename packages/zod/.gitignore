@@ -1,8 +1,13 @@
 index.js
 index.d.ts
+index.mjs
 v3/**/*.js
 v3/**/*.d.ts
 v3/**/*.mjs
 v4/**/*.js
 v4/**/*.d.ts
 v4/**/*.mjs
+v4-mini/**/*.js
+v4-mini/**/*.d.ts
+v4-mini/**/*.mjs
+_virtual
