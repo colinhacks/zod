@@ -1,3 +1,10 @@
-import { z } from "zod/v4";
+import { z } from "zod/v4-mini";
 
-z;
+console.dir(z, { depth: null });
+console.dir(
+  z
+    .optional(z.array(z.string()))
+    .check(z.overwrite((data) => data ?? []))
+    .parse(undefined),
+  { depth: null }
+);
