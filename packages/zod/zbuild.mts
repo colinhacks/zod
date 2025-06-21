@@ -73,7 +73,7 @@ await build({
   entryPoints: reachable,
   outdir: ".",
   format: "esm",
-  bundle: true,
+  bundle: false,
   outExtension: { ".js": ".mjs" },
   write: true,
   metafile: true,
