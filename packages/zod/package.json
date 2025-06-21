@@ -1,7 +1,6 @@
 {
   "name": "zod",
   "version": "3.25.68-alpha.5",
-  "type": "module",
   "author": "Colin McDonnell <zod@colinhacks.com>",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
   "files": ["_virtual", "index.js", "index.mjs", "index.d.ts", "v3", "v4", "v4-mini"],
@@ -93,6 +92,7 @@
   "scripts": {
     "clean": "rm -rf dist && git clean -xdf .",
     "build": "pnpm clean && pnpm build:esm && pnpm build:cjs && pnpm build:types",
+    "zbuild": "tsx ./zbuild.mts",
     "build:esm": "pnpm rolldown -c rolldown.esm.ts",
     "build:cjs": "pnpm rolldown -c rolldown.cjs.ts",
     "build:types": "pnpm tsc -p tsconfig.types.json",
@@ -104,6 +104,7 @@
     "pub:beta": "pnpm bump:beta && pnpm publish --tag next --publish-branch v4 --no-git-checks --dry-run"
   },
   "devDependencies": {
+    "esbuild": "^0.25.5",
     "rollup": "^4.39.0"
   }
 }
