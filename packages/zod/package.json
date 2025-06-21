@@ -1,6 +1,6 @@
 {
   "name": "zod",
-  "version": "3.25.68-alpha.5",
+  "version": "3.25.67",
   "author": "Colin McDonnell <zod@colinhacks.com>",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
   "files": ["_virtual", "index.js", "index.mjs", "index.d.ts", "v3", "v4", "v4-mini"],
