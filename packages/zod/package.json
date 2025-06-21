@@ -9,7 +9,7 @@
   "keywords": ["typescript", "schema", "validation", "type", "inference"],
   "license": "MIT",
   "sideEffects": false,
-  "main": "./index.cjs",
+  "main": "./index.js",
   "types": "./index.d.ts",
   "module": "./index.mjs",
   "exports": {
@@ -17,43 +17,43 @@
       "@zod/source": "./index.ts",
       "types": "./index.d.ts",
       "import": "./index.mjs",
-      "require": "./index.cjs"
+      "require": "./index.js"
     },
     "./v3": {
       "@zod/source": "./v3/index.ts",
       "types": "./v3/index.d.ts",
       "import": "./v3/index.mjs",
-      "require": "./v3/index.cjs"
+      "require": "./v3/index.js"
     },
     "./v4": {
       "@zod/source": "./v4/index.ts",
       "types": "./v4/index.d.ts",
       "import": "./v4/index.mjs",
-      "require": "./v4/index.cjs"
+      "require": "./v4/index.js"
     },
     "./v4-mini": {
       "@zod/source": "./v4/mini/index.ts",
       "types": "./v4/mini/index.d.ts",
       "import": "./v4/mini/index.mjs",
-      "require": "./v4/mini/index.cjs"
+      "require": "./v4/mini/index.js"
     },
     "./v4/mini": {
       "@zod/source": "./v4/mini/index.ts",
       "types": "./v4/mini/index.d.ts",
       "import": "./v4/mini/index.mjs",
-      "require": "./v4/mini/index.cjs"
+      "require": "./v4/mini/index.js"
     },
     "./v4/core": {
       "@zod/source": "./v4/core/index.ts",
       "types": "./v4/core/index.d.ts",
       "import": "./v4/core/index.mjs",
-      "require": "./v4/core/index.cjs"
+      "require": "./v4/core/index.js"
     },
     "./v4/locales": {
       "@zod/source": "./v4/locales/index.ts",
       "types": "./v4/locales/index.d.ts",
       "import": "./v4/locales/index.mjs",
-      "require": "./v4/locales/index.cjs"
+      "require": "./v4/locales/index.js"
     },
     "./v4/locales/*": {
       "@zod/source": "./v4/locales/*",
@@ -91,10 +91,7 @@
   },
   "scripts": {
     "clean": "rm -rf dist && git clean -xdf .",
-    "build": "pnpm clean && pnpm build:esm && pnpm build:cjs && pnpm build:types",
-    "zbuild": "tsx ./zbuild.mts",
-    "build:esm": "pnpm rolldown -c rolldown.esm.ts",
-    "build:cjs": "pnpm rolldown -c rolldown.cjs.ts",
+    "build": "tsx ./zbuild.mts",
     "build:types": "pnpm tsc -p tsconfig.types.json",
     "postbuild": "pnpm biome check --write .",
     "test:watch": "pnpm vitest",
