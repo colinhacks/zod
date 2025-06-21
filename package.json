@@ -24,6 +24,7 @@
     "benchmark": "^2.1.4",
     "chalk": "^5.4.1",
     "console-table-printer": "^2.12.1",
+    "esbuild": "^0.25.5",
     "execa": "^9.5.2",
     "globby": "^14.1.0",
     "husky": "^9.1.7",
@@ -33,19 +34,18 @@
     "prettier": "^3.5.3",
     "recheck": "^4.5.0",
     "rolldown": "1.0.0-beta.18",
+    "rollup": "^4.39.0",
     "semver": "^7.7.2",
     "supershy": "^1.0.0",
     "tinybench": "^2.9.0",
     "ts-morph": "^14.0.0",
-    "tsdown": "^0.11.9",
+    "tsdown": "^0.12.8",
     "tslib": "^2.8.1",
     "tsx": "^4.19.3",
     "typescript": "^5.5.4",
     "vitest": "^2.1.9",
     "zod": "workspace:*",
-    "zod3": "npm:zod@^3.0.0",
-    "esbuild": "^0.25.5",
-    "rollup": "^4.39.0"
+    "zod3": "npm:zod@^3.0.0"
   },
   "lint-staged": {
     "packages/*/src/**/*.ts": [
@@ -56,7 +56,9 @@
       "biome format --no-errors-on-unmatched --write",
       "biome lint --no-errors-on-unmatched --write"
     ],
-    "packages/*/**/*.md": ["prettier --ignore-unknown --write"]
+    "packages/*/**/*.md": [
+      "prettier --ignore-unknown --write"
+    ]
   },
   "scripts": {
     "fix": "pnpm run format && pnpm run lint",
