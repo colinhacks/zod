@@ -10,7 +10,7 @@ const localesObject = Object.fromEntries(
   locales.map((filename) => {
     const localeName = filename.split("/").pop()?.replace(/\.ts$/, "");
     return [`v4/locales/${localeName}`, `./src/v4/locales/${localeName}.ts`];
-  }),
+  })
 );
 
 export default defineConfig({
