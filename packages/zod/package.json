@@ -10,9 +10,9 @@
   "keywords": ["typescript", "schema", "validation", "type", "inference"],
   "license": "MIT",
   "sideEffects": false,
-  "main": "./dist/cjs/index.js",
-  "types": "./dist/types/index.d.ts",
-  "module": "./dist/esm/index.js",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "module": "./dist/index.js",
   "exports": {
     ".": {
       "import": {
@@ -110,11 +110,17 @@
   },
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "tsx ./build.mts",
+    "build": "tsdown",
     "postbuild": "pnpm biome check --write .",
     "test:watch": "pnpm vitest",
     "test": "pnpm vitest run",
     "bump:beta": "pnpm version \"v$(pnpm pkg get version | jq -r)-beta.$(date +%Y%m%dT%H%M%S)\"",
     "pub:beta": "pnpm bump:beta && pnpm publish --tag next --publish-branch v4 --no-git-checks --dry-run"
+  },
+  "dependencies": {
+    "tsdown": "^0.12.8"
+  },
+  "devDependencies": {
+    "tinyglobby": "^0.2.14"
   }
 }
