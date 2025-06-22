@@ -82,20 +82,6 @@
     },
     "./package.json": "./package.json"
   },
-  "tshy": {
-    "exports": {
-      "./package.json": "./package.json",
-      ".": "./src/index.ts",
-      "./v3": "./src/v3/index.ts",
-      "./v4": "./src/v4/index.ts",
-      "./v4-mini": "./src/v4/mini/index.ts",
-      "./v4/core": "./src/v4/core/index.ts",
-      "./v4/locales": "./src/v4/locales/index.ts",
-      "./v4/locales/*": "./src/v4/locales/*"
-    },
-    "sourceDialects": ["@zod/source"],
-    "exclude": ["./src/**/*.test.ts"]
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/colinhacks/zod.git"
