@@ -10,7 +10,7 @@ const localesObject = Object.fromEntries(
   locales.map((filename) => {
     const localeName = filename.split("/").pop()?.replace(/\.ts$/, "");
     return [`v4/locales/${localeName}`, `./src/v4/locales/${localeName}.ts`];
-  })
+  }),
 );
 
 export default defineConfig({
@@ -23,7 +23,7 @@ export default defineConfig({
     "v4-mini": "./src/v4/mini/index.ts",
     ...localesObject,
   },
-  platform: "neutral",
+  // Copied from rolldown.esm.ts
   outputOptions: {
     preserveModules: true, // no bundling; one output per input
     preserveModulesRoot: "src",
