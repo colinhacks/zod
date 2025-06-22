@@ -4,6 +4,8 @@ import { glob } from "tinyglobby";
 const locales = await glob("./src/v4/locales/*.ts", {
   cwd: import.meta.dirname,
 });
+
+// Necessary due to https://github.com/rolldown/tsdown/issues/341 for now
 const localesObject = Object.fromEntries(
   locales.map((filename) => {
     const localeName = filename.split("/").pop()?.replace(/\.ts$/, "");
@@ -30,6 +32,7 @@ export default defineConfig({
     chunkFileNames: "[name].mts",
   },
   unbundle: true,
+  // Might need https://github.com/rolldown/tsdown/issues/339 to consider
   exports: true,
   dts: true,
 });
