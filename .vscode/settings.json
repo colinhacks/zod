@@ -11,9 +11,9 @@
   "files.exclude": {
     "./scratch": false,
     "**/.tshy-build": true,
+    "**/dist": true,
     "**/lib": true
   },
   "search.useIgnoreFiles": false,
-  "editor.guides.indentation": false,
-  "vue-vine.dataTrack": false
+  "editor.guides.indentation": false
 }
