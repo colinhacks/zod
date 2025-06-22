@@ -56,9 +56,7 @@
       "biome format --no-errors-on-unmatched --write",
       "biome lint --no-errors-on-unmatched --write"
     ],
-    "packages/*/**/*.md": [
-      "prettier --ignore-unknown --write"
-    ]
+    "packages/*/**/*.md": ["prettier --ignore-unknown --write"]
   },
   "scripts": {
     "fix": "pnpm run format && pnpm run lint",

@@ -3,7 +3,8 @@
   "compilerOptions": {
     "module": "NodeNext",
     "moduleResolution": "nodenext",
-    "customConditions": ["@zod/source"]
+    "customConditions": ["@zod/source"],
+    "esModuleInterop": true
   },
-  "exclude": ["vitest.config.ts"]
+  "exclude": ["vitest.config.mts"]
 }
