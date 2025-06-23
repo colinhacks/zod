@@ -93,6 +93,8 @@
     "clean": "rm -rf dist && git clean -xdf .",
     "build": "tsx ./zbuild.mts",
     "build:types": "pnpm tsc -p tsconfig.types.json",
+    "build:tsc": "tsx tsc.mts",
+    "build:esbuild": "tsx esbuild.mts",
     "postbuild": "pnpm biome check --write .",
     "test:watch": "pnpm vitest",
     "test": "pnpm vitest run",
