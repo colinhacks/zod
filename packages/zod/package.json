@@ -1,7 +1,7 @@
 {
   "name": "zod",
   "version": "3.25.67",
-  "type": "module",
+  "type": "commonjs",
   "author": "Colin McDonnell <zod@colinhacks.com>",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
   "files": ["_virtual", "index.js", "index.cjs", "index.d.ts", "v3", "v4", "v4-mini"],
@@ -16,48 +16,47 @@
   "exports": {
     ".": {
       "@zod/source": "./index.ts",
-      "import": { "default": "./index.js", "types": "./index.d.ts" },
-      "require": { "default": "./index.cjs", "types": "./index.d.cjs" }
+      "import": {
+        "default": "./index.js",
+        "types": "./index.d.ts"
+      },
+      "require": {
+        "default": "./index.cjs",
+        "types": "./index.d.cjs"
+      }
     },
     "./v3": {
       "@zod/source": "./v3/index.ts",
-
       "import": "./v3/index.js",
       "require": "./v3/index.cjs"
     },
     "./v4": {
       "@zod/source": "./v4/index.ts",
-
       "import": "./v4/index.js",
       "require": "./v4/index.cjs"
     },
     "./v4-mini": {
       "@zod/source": "./v4/mini/index.ts",
-
       "import": "./v4/mini/index.js",
       "require": "./v4/mini/index.cjs"
     },
     "./v4/mini": {
       "@zod/source": "./v4/mini/index.ts",
-
       "import": "./v4/mini/index.js",
       "require": "./v4/mini/index.cjs"
     },
     "./v4/core": {
       "@zod/source": "./v4/core/index.ts",
-
       "import": "./v4/core/index.js",
       "require": "./v4/core/index.cjs"
     },
     "./v4/locales": {
       "@zod/source": "./v4/locales/index.ts",
-
       "import": "./v4/locales/index.js",
       "require": "./v4/locales/index.cjs"
     },
     "./v4/locales/*": {
       "@zod/source": "./v4/locales/*",
-
       "import": "./v4/locales/*",
       "require": "./v4/locales/*"
     },
