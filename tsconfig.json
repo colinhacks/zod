@@ -2,7 +2,12 @@
   "extends": "./.configs/tsconfig.base.json",
   "compilerOptions": {
     "rootDir": ".",
-    "declaration": true
+    "declaration": true,
+    // "customConditions": [],
+    // "module": "commonjs",
+    // "moduleResolution": "node"
+    "module": "node16",
+    "moduleResolution": "node16"
   },
   "exclude": ["packages/docs"]
 }

@@ -2,8 +2,8 @@
   "extends": "../../.configs/tsconfig.base.json",
   "compilerOptions": {
     "rootDir": ".",
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "Node16",
+    "moduleResolution": "node16",
     "customConditions": ["@zod/source"],
     "declaration": true
   },

@@ -9,6 +9,8 @@ const $ = execaSync({ stdio: "inherit" });
 
 $`rm -rf ./dist`;
 
+const initPkgJson = JSON.parse(fs.readFileSync("./package.json", "utf-8"));
+
 function writePackageJson(dir: string, fields: Record<string, any>) {
   const packageJsonPath = path.join(path.resolve(dir), "package.json");
   fs.mkdirSync(dir, {
@@ -20,7 +22,7 @@ function writePackageJson(dir: string, fields: Record<string, any>) {
 }
 
 console.log("building ESM...");
-const esmPkg = writePackageJson("./src", { type: "module" });
+const esmPkg = writePackageJson(".", { ...initPkgJson, type: "module" });
 $`pnpm tsc -p tsconfig.esm.json`;
 fs.rmSync(esmPkg, { force: true });
 
@@ -28,10 +30,10 @@ fs.rmSync(esmPkg, { force: true });
 // const esmPackageJsonPath = path.join(esmDistDir, "package.json");
 // fs.mkdirSync(esmDistDir, { recursive: true });
 // fs.writeFileSync(esmPackageJsonPath, JSON.stringify({ type: "module" }, null, 2));
-writePackageJson("./dist/esm", { type: "module" });
+// writePackageJson("./dist/esm", { type: "module" });
 
 console.log("building CJS...");
-const cjsPkg = writePackageJson("./src", { type: "commonjs" });
+const cjsPkg = writePackageJson(".", { ...initPkgJson, type: "commonjs" });
 $`pnpm tsc -p tsconfig.cjs.json`;
 fs.rmSync(cjsPkg, { force: true });
 // const cjsPath = "./dist/cjs";
@@ -39,7 +41,7 @@ fs.rmSync(cjsPkg, { force: true });
 // const cjsPackageJsonPath = path.join(path.resolve(cjsPath), "package.json");
 // fs.mkdirSync(cjsDistDir, { recursive: true });
 // fs.writeFileSync(cjsPackageJsonPath, JSON.stringify({ type: "commonjs" }, null, 2));
-writePackageJson("./dist/cjs", { type: "commonjs" });
+// writePackageJson("./dist/cjs", { type: "commonjs" });
 
 console.log("building types...");
 $`pnpm tsc -p tsconfig.types.json`;
@@ -48,7 +50,10 @@ $`pnpm tsc -p tsconfig.types.json`;
 // const typesPackageJsonPath = path.join(path.resolve(typesPath), "package.json");
 // fs.mkdirSync(typesDistDir, { recursive: true });
 // fs.writeFileSync(typesPackageJsonPath, JSON.stringify({ type: "module" }, null, 2));
-writePackageJson("./dist/types", { type: "commonjs" });
+// writePackageJson("./dist/types", { type: "commonjs" });
+
+// return to initial
+writePackageJson(".", initPkgJson);
 
 console.log("DONE.");
 
