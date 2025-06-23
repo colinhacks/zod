@@ -42,9 +42,10 @@ fs.rmSync(cjsPkg, { force: true });
 // fs.mkdirSync(cjsDistDir, { recursive: true });
 // fs.writeFileSync(cjsPackageJsonPath, JSON.stringify({ type: "commonjs" }, null, 2));
 // writePackageJson("./dist/cjs", { type: "commonjs" });
-
+const typesPkg = writePackageJson(".", { ...initPkgJson, type: "commonjs" });
 console.log("building types...");
 $`pnpm tsc -p tsconfig.types.json`;
+fs.rmSync(typesPkg, { force: true });
 // const typesPath = "./dist/types";
 // const typesDistDir = path.resolve(typesPath);
 // const typesPackageJsonPath = path.join(path.resolve(typesPath), "package.json");
