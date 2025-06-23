@@ -6,6 +6,6 @@
     "moduleResolution": "bundler",
     "customConditions": ["@zod/source"]
   },
-  "include": ["src"],
-  "exclude": ["**/tests/**"]
+  "include": ["index.ts", "v3/**/*.ts", "v4/**/*.ts", "v4-mini/**/*.ts"],
+  "exclude": ["**/tests/**", "**/benchmarks/**"]
 }

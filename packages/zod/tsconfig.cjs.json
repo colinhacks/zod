@@ -4,8 +4,7 @@
     "rootDir": ".",
     "module": "Node16",
     "moduleResolution": "node16",
-    "customConditions": ["@zod/source"],
-    "declaration": true
+    "customConditions": ["@zod/source"]
   },
   "include": ["index.ts", "v3/**/*.ts", "v4/**/*.ts", "v4-mini/**/*.ts"],
   "exclude": ["**/tests/**", "**/benchmarks/**"]
