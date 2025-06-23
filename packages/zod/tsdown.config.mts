@@ -1,7 +1,6 @@
-import { defineConfig } from "tsdown";
-
 import { execaSync } from "execa";
 import { globby } from "globby";
+import { defineConfig } from "tsdown";
 const $ = execaSync({ stdio: "inherit" });
 
 const entryPoints = await globby(
@@ -20,24 +19,44 @@ const entryPoints = await globby(
   }
 );
 
+// const pkgJsonPath = "./package.json";
+// const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, "utf-8"));
 export default defineConfig({
   // exports: true,
   entry: entryPoints,
   outDir: ".",
   format: ["esm", "cjs"],
   dts: true,
-  tsconfig: "./tsconfig.types.json",
+  tsconfig: "./tsconfig.cjs.json",
   unbundle: true,
+  // exports:"named",
+  // outputOptions: {
+  //   exports: "named",
+  // },
   hooks: {
     async "build:prepare"() {
       await $`pnpm clean`;
     },
+    // "build:before"(ctx) {
+    //   const fmt = ctx.buildOptions.output!.format;
+    //   const modPkg = { ...pkgJson };
+    //   if (fmt === "cjs") {
+    //     modPkg.type = "commonjs";
+    //   } else {
+    //     modPkg.type = "module";
+    //   }
+    //   delete modPkg.type;
+    //   fs.writeFileSync(pkgJsonPath, JSON.stringify(modPkg, null, 2));
+    // },
+    // "build:done"() {
+    //   fs.writeFileSync(pkgJsonPath, JSON.stringify(pkgJson, null, 2));
+    // },
   },
   attw: true,
   clean: false,
-  outExtensions(context) {
-    if (context.format === "cjs") return { js: ".js" };
-    if (context.format === "es") return { js: ".mjs" };
+  outExtensions(ctx) {
+    if (ctx.format === "cjs") return { js: ".cjs" };
+    if (ctx.format === "es") return { js: ".js" };
     return undefined;
   },
 });

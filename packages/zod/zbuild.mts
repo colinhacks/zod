@@ -4,6 +4,8 @@ import { type Plugin, build } from "esbuild";
 import { execaSync } from "execa";
 import { globby } from "globby";
 
+const $ = execaSync({ stdio: "inherit" });
+
 const entryPoints = await globby(
   [
     "index.ts",
@@ -74,9 +76,10 @@ await build({
   outdir: ".",
   format: "esm",
   bundle: false,
-  outExtension: { ".js": ".mjs" },
+  // outExtension: { ".js": ".mjs" },
   write: true,
   metafile: true,
+  platform: "node",
 });
 // console.dir(
 //   esmResults.outputFiles.map((x) => x.path),
@@ -85,14 +88,18 @@ await build({
 
 // build CJS
 console.log("building CJS...");
+// $`pnpm tsc -p tsconfig.cjs.json`;
 await build({
   entryPoints: reachable,
   outdir: ".",
   format: "cjs",
   bundle: false,
+  outExtension: { ".js": ".cjs" },
   write: true,
   metafile: true,
+  platform: "node",
 });
+
 // console.dir(
 //   cjsResults.outputFiles.map((x) => x.path),
 //   { depth: null }
@@ -100,5 +107,4 @@ await build({
 
 // build types
 console.log("building .d.ts declarations...");
-const $ = execaSync({ stdio: "inherit" });
 $`pnpm tsc -p tsconfig.types.json`;

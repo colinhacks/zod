@@ -1,11 +1,10 @@
 {
   "extends": "../../.configs/tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "./src",
+    "rootDir": ".",
     "module": "esnext",
     "moduleResolution": "bundler",
-    "customConditions": ["@zod/source"],
-    "outDir": "./dist/esm"
+    "customConditions": ["@zod/source"]
   },
   "include": ["src"],
   "exclude": ["**/tests/**"]
