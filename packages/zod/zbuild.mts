@@ -403,11 +403,10 @@ async function main(): Promise<void> {
     // Update package.json with new exports
     console.log(JSON.stringify(newExports, null, 2));
     pkgJson.exports = newExports;
+    fs.writeFileSync(packageJsonPath, JSON.stringify(pkgJson, null, 2) + "\n");
 
-    // Write updated package.json
-    // fs.writeFileSync(packageJsonPath, JSON.stringify(pkgJson, null, 2) + "\n");
-    console.log("✅ Updated package.json exports");
-    console.log("🎉 Build completed successfully!");
+    console.log("✅ Updating package.json#exports");
+    console.log("🎉 Build complete!");
   } catch (error) {
     console.error("❌ Build failed:", error);
     process.exit(1);
