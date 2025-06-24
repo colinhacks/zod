@@ -1,8 +1,3 @@
-import * as z from "zod";
+import z from "zod/v4";
 
 z.string();
-
-console.dir(z, { depth: null });
-
-const schema = z.string();
-console.dir(schema.parse("Hello, Zod!"), { depth: null });
