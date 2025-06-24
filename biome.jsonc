@@ -65,6 +65,8 @@
       "*.mjs",
       "*.cjs",
       "*.d.ts",
+      "*.d.cts",
+      "*.d.mts",
       "lib",
       "coverage",
       "dist",

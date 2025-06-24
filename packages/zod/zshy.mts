@@ -70,7 +70,6 @@ async function compileProject(config: CompilerOptions, entryPoints: string[]): P
     moduleResolution: ts.ModuleResolutionKind.NodeJs, // Override for CommonJS compatibility
     declaration: true,
     emitDeclarationOnly: false,
-    outDir: "./dist",
     target: ts.ScriptTarget.ES2020, // Ensure compatible target for CommonJS
     skipLibCheck: true, // Skip library checks to reduce errors
     allowJs: false,
@@ -254,7 +253,7 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  // read package.json and extract the "zbuild" exports config
+  // read package.json and extract the "zshy" exports config
   // console.log("📦 Extracting entry points from package.json exports...");
   const pkgJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
   const pkgJsonDir = path.dirname(packageJsonPath);
@@ -273,19 +272,24 @@ async function main(): Promise<void> {
   console.log(`📁 Reading tsconfig from ./${path.relative(pkgJsonDir, tsconfigPath)}`);
 
   // const pkgJson = JSON.parse(fs.readFileSync("./package.json", "utf-8"));
-  const CONFIG_KEY = "zbuild";
+  const CONFIG_KEY = "zshy";
+
   const config = pkgJson[CONFIG_KEY] as {
     exports?: Record<string, string>;
     sourceDialects?: string[];
+    outDir?: string; // optional, can be used to specify output directory
     // other properties can be added as needed
   };
+
+  const outDir = path.resolve(pkgJsonDir, config?.outDir || "./dist");
+
   if (!config || !config.exports) {
     console.error(`❌ No ${CONFIG_KEY}.exports found in package.json`);
     process.exit(1);
   }
 
-  // Extract entry points from zbuild exports config
-  console.log("➡️  Finding entrypoints from package.json#zbuild:");
+  // Extract entry points from zshy exports config
+  console.log("➡️  Finding entrypoints from package.json#zshy:");
   const entryPatterns: string[] = [];
   // console.dir(config.exports, { depth: null });
   console.log("   {");
@@ -311,7 +315,36 @@ async function main(): Promise<void> {
   }
   console.log("   }");
 
+  // compute entry points
   const entryPoints = await getEntryPoints(entryPatterns);
+
+  // Compute common ancestor directory for all entry points
+  const rootDir =
+    entryPoints.length > 0
+      ? entryPoints.reduce(
+          (common, entryPoint) => {
+            const entryDir = path.dirname(path.resolve(entryPoint));
+            const commonDir = path.resolve(common);
+
+            // Find the longest common path
+            const entryParts = entryDir.split(path.sep);
+            const commonParts = commonDir.split(path.sep);
+
+            let i = 0;
+            while (i < entryParts.length && i < commonParts.length && entryParts[i] === commonParts[i]) {
+              i++;
+            }
+
+            return commonParts.slice(0, i).join(path.sep) || path.sep;
+          },
+          path.dirname(path.resolve(entryPoints[0]))
+        )
+      : process.cwd();
+
+  // console.dir(_commonAncestor, { depth: null });
+  const relRootDir = path.relative(pkgJsonDir, rootDir);
+  console.log(`📂 Computed rootDir: ${relRootDir ? `./${relRootDir}` : "."}`);
+
   const isESM = pkgJson.type === "module";
   try {
     const cjsConfig = {
@@ -334,7 +367,7 @@ async function main(): Promise<void> {
         compilerOptions: {
           module: ts.ModuleKind.CommonJS,
           moduleResolution: ts.ModuleResolutionKind.Node10,
-          outDir: ".",
+          outDir,
         },
       },
       entryPoints
@@ -348,7 +381,8 @@ async function main(): Promise<void> {
         compilerOptions: {
           module: ts.ModuleKind.ESNext,
           moduleResolution: ts.ModuleResolutionKind.Bundler,
-          outDir: ".",
+          outDir,
+          declaration: false,
         },
       },
       entryPoints
@@ -357,7 +391,7 @@ async function main(): Promise<void> {
     // generate package.json exports
     console.log("📦 Generating package.json exports...");
 
-    // Generate exports based on zbuild config
+    // Generate exports based on zshy config
     const newExports: Record<string, any> = {};
 
     const sourceDialects = config.sourceDialects || [];
@@ -371,10 +405,11 @@ async function main(): Promise<void> {
       if (typeof sourcePath === "string") {
         if (sourcePath.endsWith("/*")) {
           // Handle wildcard exports
+          const relSourcePath = "./" + path.relative(pkgJsonDir, path.resolve(outDir, sourcePath.slice(0, -2)));
           newExports[exportPath] = {
             "@zod/source": sourcePath,
-            import: sourcePath,
-            require: sourcePath,
+            import: relSourcePath,
+            require: relSourcePath,
           };
           for (const sd of sourceDialects) {
             newExports[exportPath] = {
@@ -384,26 +419,46 @@ async function main(): Promise<void> {
           }
         } else if (sourcePath.endsWith(".ts")) {
           // Handle regular TypeScript entry points
-          const basePath = sourcePath.slice(0, -3); // Remove .ts extension
-          const esmFile = isESM ? `${basePath}.js` : `${basePath}.mjs`;
-          const cjsFile = isESM ? `${basePath}.cjs` : `${basePath}.js`;
-          const dtsFile = isESM ? `${basePath}.d.cts` : `${basePath}.d.ts`;
+          // const basePath = sourcePath.slice(0, -3); // ./v4/index.ts
+          const absSourcePath = path.resolve(pkgJsonDir, sourcePath); // /path/to/v4/index.ts
+          const sourcePathRelativeToRootDir = path.relative(rootDir, absSourcePath); // index.ts
+          const outPath = path.resolve(pkgJsonDir, outDir, sourcePathRelativeToRootDir); // /path/to/dist/index.ts
+          const outPathNoExt = outPath.slice(0, -3); // /path/to/dist/index
+
+          const esmFile = isESM ? `${outPathNoExt}.js` : `${outPathNoExt}.mjs`; // ./v4/index.js or ./v4/index.mjs
+          const cjsFile = isESM ? `${outPathNoExt}.cjs` : `${outPathNoExt}.js`;
+          const dtsFile = isESM ? `${outPathNoExt}.d.cts` : `${outPathNoExt}.d.ts`;
+
+          const relEsmFile = "./" + path.relative(pkgJsonDir, path.resolve(outDir, esmFile));
+          const relCjsFile = "./" + path.relative(pkgJsonDir, path.resolve(outDir, cjsFile));
+          const relDtsFile = "./" + path.relative(pkgJsonDir, path.resolve(outDir, dtsFile));
 
           newExports[exportPath] = {
-            import: {
-              default: esmFile,
-              types: dtsFile,
-            },
-            require: {
-              default: cjsFile,
-              types: dtsFile,
-            },
+            // import: {
+            //   types: relDtsFile,
+            //   default: relEsmFile,
+            // },
+            // require: {
+            //   types: relDtsFile,
+            //   default: relCjsFile,
+            // },
+            types: relDtsFile,
+            import: relEsmFile,
+            require: relCjsFile,
+            // import: {
+            //   types: relDtsFile,
+            //   default: relEsmFile,
+            // },
+            // require: {
+            //   types: relDtsFile,
+            //   default: relCjsFile,
+            // },
           };
 
           if (exportPath === ".") {
-            pkgJson.main = cjsFile;
-            pkgJson.module = esmFile;
-            pkgJson.types = dtsFile;
+            pkgJson.main = relCjsFile;
+            pkgJson.module = relEsmFile;
+            pkgJson.types = relDtsFile;
           }
           for (const sd of sourceDialects) {
             newExports[exportPath] = {
@@ -417,7 +472,7 @@ async function main(): Promise<void> {
 
     // Update package.json with new exports
     pkgJson.exports = newExports;
-    fs.writeFileSync(packageJsonPath, JSON.stringify(pkgJson, null, 2) + "\n");
+    // fs.writeFileSync(packageJsonPath, JSON.stringify(pkgJson, null, 2) + "\n");
 
     console.log("✅ Updating package.json#exports");
     console.log("   " + JSON.stringify(newExports, null, 2).split("\n").join("\n   "));
