@@ -4,10 +4,10 @@
     "rootDir": ".",
     "declaration": true,
     // "customConditions": ["@zod/source"],
-    "module": "node16",
-    "moduleResolution": "node16"
     // "module": "node16",
     // "moduleResolution": "node16"
+    "module": "commonjs",
+    "moduleResolution": "node"
   },
   "exclude": ["packages/docs"]
 }
