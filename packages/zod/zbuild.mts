@@ -5,10 +5,10 @@ import * as ts from "typescript";
 
 interface CompilerOptions {
   configPath: string;
-  compilerOptions?: ts.CompilerOptions;
+  compilerOptions: ts.CompilerOptions & Required<Pick<ts.CompilerOptions, "module">>;
   outputExtension: string;
   declarationExtension: string;
-  module: ts.ModuleKind;
+  // module: ts.ModuleKind;
 }
 
 // Get entry points using the same logic as esbuild.mts
@@ -49,37 +49,41 @@ async function getEntryPoints(): Promise<string[]> {
 //   return content;
 // }
 
-function createCompilerHost(
-  options: ts.CompilerOptions,
-  outputExtension: string,
-  declarationExtension: string
-): ts.CompilerHost {
-  const host = ts.createCompilerHost(options);
-  const originalWriteFile = host.writeFile;
+// function createCompilerHost(
+//   options: ts.CompilerOptions,
+//   outputExtension: string,
+//   declarationExtension: string
+// ): ts.CompilerHost {
+//   const host = ts.createCompilerHost(options);
+//   const originalWriteFile = host.writeFile;
 
-  host.writeFile = (fileName, data, writeByteOrderMark, onError, sourceFiles) => {
-    // Transform output file extensions
-    let outputFileName = fileName;
-    const processedData = data;
+//   host.writeFile = (fileName, data, writeByteOrderMark, onError, sourceFiles) => {
+//     // Transform output file extensions
+//     let outputFileName = fileName;
+//     const processedData = data;
 
-    if (fileName.endsWith(".js")) {
-      outputFileName = fileName.replace(/\.js$/, outputExtension);
-    } else if (fileName.endsWith(".d.ts")) {
-      outputFileName = fileName.replace(/\.d\.ts$/, declarationExtension);
-    }
+//     if (fileName.endsWith(".js")) {
+//       outputFileName = fileName.replace(/\.js$/, outputExtension);
+//     } else if (fileName.endsWith(".d.ts")) {
+//       outputFileName = fileName.replace(/\.d\.ts$/, declarationExtension);
+//     }
 
-    console.log(`Emitting: ${outputFileName}`);
+//     console.log(`Emitting: ${outputFileName}`);
 
-    if (originalWriteFile) {
-      originalWriteFile(outputFileName, processedData, writeByteOrderMark, onError, sourceFiles);
-    }
-  };
+//     if (originalWriteFile) {
+//       console.dir("calling originalWriteFile", { depth: null });
+//       originalWriteFile(outputFileName, processedData, writeByteOrderMark, onError, sourceFiles);
+//     }
+//   };
 
-  return host;
-}
+//   return host;
+// }
 
 async function compileProject(config: CompilerOptions, entryPoints: string[]): Promise<void> {
-  console.log(`\n🔨 Building with ${config.outputExtension} output...`);
+  const exts = [];
+  exts.push(config.outputExtension);
+  exts.push(config.declarationExtension);
+  console.log(`\n🧱 Building${exts.length ? " " + exts.join("/") : ""}...`);
 
   // Read and parse tsconfig.json
   const configPath = path.resolve(config.configPath);
@@ -114,14 +118,20 @@ async function compileProject(config: CompilerOptions, entryPoints: string[]): P
     return;
   }
 
+  // clean up
+  delete parsedConfig.options.rootDir;
+  delete parsedConfig.options.outDir;
+  delete parsedConfig.options.declarationDir;
+  delete parsedConfig.options.customConditions;
+
   // Override compiler options for this specific build
   const compilerOptions: ts.CompilerOptions = {
     ...parsedConfig.options,
-    module: config.module,
+    // module: config.module,
     moduleResolution: ts.ModuleResolutionKind.NodeJs, // Override for CommonJS compatibility
     declaration: true,
     emitDeclarationOnly: false,
-    outDir: parsedConfig.options.outDir || "./dist",
+    outDir: "./dist",
     target: ts.ScriptTarget.ES2020, // Ensure compatible target for CommonJS
     skipLibCheck: true, // Skip library checks to reduce errors
     allowJs: false,
@@ -130,12 +140,28 @@ async function compileProject(config: CompilerOptions, entryPoints: string[]): P
     ...(config.compilerOptions ?? {}),
   };
 
-  // Remove rootDir to avoid path conflicts
-  delete compilerOptions.rootDir;
-
   // Create compiler host
-  const host = createCompilerHost(compilerOptions, config.outputExtension, config.declarationExtension);
-  host;
+  const host = ts.createCompilerHost(compilerOptions);
+  const originalWriteFile = host.writeFile;
+
+  host.writeFile = (fileName, data, writeByteOrderMark, onError, sourceFiles) => {
+    // Transform output file extensions
+    let outputFileName = fileName;
+    const processedData = data;
+
+    if (fileName.endsWith(".js")) {
+      outputFileName = fileName.replace(/\.js$/, config.outputExtension);
+    } else if (fileName.endsWith(".d.ts")) {
+      outputFileName = fileName.replace(/\.d\.ts$/, config.declarationExtension);
+    }
+
+    // console.log(`   ${outputFileName}`);
+
+    if (originalWriteFile) {
+      originalWriteFile(outputFileName, processedData, writeByteOrderMark, onError, sourceFiles);
+    }
+  };
+
   // Create the TypeScript program using entry points
   const program = ts.createProgram({
     rootNames: entryPoints,
@@ -153,7 +179,7 @@ async function compileProject(config: CompilerOptions, entryPoints: string[]): P
 
           if (originalText.endsWith(".js")) {
             const newText = originalText.slice(0, -3) + config.outputExtension;
-            console.log(`Rewriting import from ${originalText} to ${newText}`);
+            // console.log(`Rewriting import from ${originalText} to ${newText}`);
             return ts.factory.updateImportDeclaration(
               node,
               node.modifiers,
@@ -170,7 +196,7 @@ async function compileProject(config: CompilerOptions, entryPoints: string[]): P
 
           if (originalText.endsWith(".js")) {
             const newText = originalText.slice(0, -3) + config.outputExtension;
-            console.log(`Rewriting export from ${originalText} to ${newText}`);
+            // console.log(`Rewriting export from ${originalText} to ${newText}`);
             return ts.factory.updateExportDeclaration(
               node,
               node.modifiers,
@@ -190,7 +216,7 @@ async function compileProject(config: CompilerOptions, entryPoints: string[]): P
 
             if (originalText.endsWith(".js")) {
               const newText = originalText.slice(0, -3) + config.outputExtension;
-              console.log(`Rewriting dynamic import from ${originalText} to ${newText}`);
+              // console.log(`Rewriting dynamic import from ${originalText} to ${newText}`);
               return ts.factory.updateCallExpression(node, node.expression, node.typeArguments, [
                 ts.factory.createStringLiteral(newText),
                 ...node.arguments.slice(1),
@@ -227,7 +253,7 @@ async function compileProject(config: CompilerOptions, entryPoints: string[]): P
     const errorCount = diagnostics.filter((d) => d.category === ts.DiagnosticCategory.Error).length;
     const warningCount = diagnostics.filter((d) => d.category === ts.DiagnosticCategory.Warning).length;
 
-    console.log(`⚠️  Found ${errorCount} errors and ${warningCount} warnings`);
+    console.log(`⚠️ Found ${errorCount} errors and ${warningCount} warnings`);
 
     // Only show first 5 errors to avoid overwhelming output
     const firstErrors = diagnostics.filter((d) => d.category === ts.DiagnosticCategory.Error).slice(0, 5);
@@ -250,7 +276,7 @@ async function compileProject(config: CompilerOptions, entryPoints: string[]): P
     }
   }
 
-  // Emit the files
+  // emit the files
   const emitResult = program.emit(undefined, undefined, undefined, undefined, {
     before: [extensionRewriteTransformer],
   });
@@ -258,12 +284,12 @@ async function compileProject(config: CompilerOptions, entryPoints: string[]): P
   if (emitResult.emitSkipped) {
     console.error("❌ Emit was skipped due to errors");
   } else {
-    console.log(`✅ emitted ${config.outputExtension} and ${config.declarationExtension} files`);
+    // console.log(`✅ Emitted ${config.outputExtension} and ${config.declarationExtension} files`);
   }
 
   // Report any emit diagnostics
   if (emitResult.diagnostics.length > 0) {
-    console.error("Emit diagnostics:");
+    console.error("❌ Errors detected during emit:");
     for (const diagnostic of emitResult.diagnostics) {
       console.error(
         ts.formatDiagnostic(diagnostic, {
@@ -286,27 +312,86 @@ async function main(): Promise<void> {
   }
 
   console.log("🚀 Starting TypeScript compilation...");
-  console.log(`📁 Using config: ${path.resolve(tsconfigPath)}`);
+  console.log(`📁 Reading tsconfig from ${path.resolve(tsconfigPath)}`);
+
+  const pkgJson = JSON.parse(fs.readFileSync("./package.json", "utf-8"));
+  const CONFIG_KEY = "tshy";
+  const config = pkgJson[CONFIG_KEY];
+  if (!config || !config.exports) {
+    console.error(`❌ No ${CONFIG_KEY}.exports found in package.json`);
+    process.exit(1);
+  }
+
+  // Extract entry points from tshy exports config
+  const entryPointsFromConfig: string[] = [];
+  for (const [exportPath, sourcePath] of Object.entries(config.exports)) {
+    if (typeof sourcePath === "string") {
+      if (sourcePath.endsWith("/*")) {
+        // Handle wildcard patterns
+        if (sourcePath.split("/").at(-1)!.includes("."))
+          throw new Error(`Wildcard paths should not contain file extensions: ${sourcePath}`);
+
+        const pattern = sourcePath.replace(/\*/g, "*.[mc]?ts");
+        console.dir(pattern, { depth: null });
+        const wildcardFiles = await globby([pattern], {
+          ignore: ["**/*.d.ts"],
+        });
+        entryPointsFromConfig.push(...wildcardFiles);
+        console.log(`  "${exportPath}": ${pattern}} (${wildcardFiles.length} matches)`);
+      } else if (sourcePath.endsWith(".ts")) {
+        entryPointsFromConfig.push(sourcePath);
+        console.log(`  "${exportPath}": "${sourcePath}"`);
+      }
+    }
+  }
+
+  console.dir(entryPointsFromConfig, { depth: null });
+
+  console.log("📦 Entry points from package.json exports:");
+  for (const entry of entryPointsFromConfig) {
+    console.log(`   ${entry}`);
+  }
 
   // Get entry points using the same logic as esbuild.mts
   console.log("🔍 Finding entry points...");
   const entryPoints = await getEntryPoints();
-  console.log(`📍 Entry points:`, entryPoints);
+  // console.log(`📍 Entry points:`, entryPoints);
+  for (const entry of entryPoints) {
+    console.log(`   ${entry}`);
+  }
 
   // Build CommonJS version with .cjs and .d.cts extensions
-  const cjsConfig: CompilerOptions = {
-    configPath: tsconfigPath,
-    outputExtension: ".cjs",
-    declarationExtension: ".d.cts",
-    module: ts.ModuleKind.CommonJS,
-    compilerOptions: {
-      module: ts.ModuleKind.CommonJS,
-      moduleResolution: ts.ModuleResolutionKind.Node10,
-    },
-  };
 
   try {
-    await compileProject(cjsConfig, entryPoints);
+    // console.log("🔨 Compiling CJS...");
+    await compileProject(
+      {
+        configPath: tsconfigPath,
+        outputExtension: ".cjs",
+        declarationExtension: ".d.cts",
+        compilerOptions: {
+          module: ts.ModuleKind.CommonJS,
+          moduleResolution: ts.ModuleResolutionKind.Node10,
+          outDir: ".",
+        },
+      },
+      entryPoints
+    );
+
+    // console.log("🔨 Compiling ESM...");
+    await compileProject(
+      {
+        configPath: tsconfigPath,
+        outputExtension: ".js",
+        declarationExtension: ".d.ts",
+        compilerOptions: {
+          module: ts.ModuleKind.ESNext,
+          moduleResolution: ts.ModuleResolutionKind.Bundler,
+          outDir: ".",
+        },
+      },
+      entryPoints
+    );
     console.log("\n🎉 Build completed successfully!");
   } catch (error) {
     console.error("❌ Build failed:", error);
