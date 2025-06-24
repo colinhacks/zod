@@ -14,8 +14,8 @@
   "module": "./index.mjs",
   "exports": {
     ".": {
-      "import": { "default": "./index.mjs" },
-      "require": { "default": "./index.js" }
+      "import": { "default": "./index.mjs", "types": "./index.d.ts" },
+      "require": { "default": "./index.js", "types": "./index.d.ts" }
     },
     "./v3": {
       "@zod/source": "./v3/index.ts",
