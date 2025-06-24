@@ -382,7 +382,7 @@ async function main(): Promise<void> {
           module: ts.ModuleKind.ESNext,
           moduleResolution: ts.ModuleResolutionKind.Bundler,
           outDir,
-          declaration: false,
+          // declaration: false,
         },
       },
       entryPoints
@@ -405,7 +405,7 @@ async function main(): Promise<void> {
       if (typeof sourcePath === "string") {
         if (sourcePath.endsWith("/*")) {
           // Handle wildcard exports
-          const relSourcePath = "./" + path.relative(pkgJsonDir, path.resolve(outDir, sourcePath.slice(0, -2)));
+          const relSourcePath = "./" + path.relative(pkgJsonDir, path.resolve(outDir, sourcePath.slice(0, -2))) + "/*";
           newExports[exportPath] = {
             "@zod/source": sourcePath,
             import: relSourcePath,
@@ -434,14 +434,6 @@ async function main(): Promise<void> {
           const relDtsFile = "./" + path.relative(pkgJsonDir, path.resolve(outDir, dtsFile));
 
           newExports[exportPath] = {
-            // import: {
-            //   types: relDtsFile,
-            //   default: relEsmFile,
-            // },
-            // require: {
-            //   types: relDtsFile,
-            //   default: relCjsFile,
-            // },
             types: relDtsFile,
             import: relEsmFile,
             require: relCjsFile,
@@ -472,7 +464,7 @@ async function main(): Promise<void> {
 
     // Update package.json with new exports
     pkgJson.exports = newExports;
-    // fs.writeFileSync(packageJsonPath, JSON.stringify(pkgJson, null, 2) + "\n");
+    fs.writeFileSync(packageJsonPath, JSON.stringify(pkgJson, null, 2) + "\n");
 
     console.log("✅ Updating package.json#exports");
     console.log("   " + JSON.stringify(newExports, null, 2).split("\n").join("\n   "));
