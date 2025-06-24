@@ -6,8 +6,8 @@ import * as ts from "typescript";
 interface CompilerOptions {
   configPath: string;
   compilerOptions: ts.CompilerOptions & Required<Pick<ts.CompilerOptions, "module">>;
-  jsExtension: string;
-  dtsExtension: string;
+  jsExtension?: string;
+  dtsExtension?: string;
   // module: ts.ModuleKind;
 }
 
@@ -20,8 +20,8 @@ async function getEntryPoints(patterns: string[]): Promise<string[]> {
 
 async function compileProject(config: CompilerOptions, entryPoints: string[]): Promise<void> {
   const exts = [];
-  exts.push(config.jsExtension);
-  exts.push(config.dtsExtension);
+  exts.push(config.jsExtension ?? ".js");
+  exts.push(config.dtsExtension ?? ".d.ts");
   console.log(`🧱 Building${exts.length ? " " + exts.join("/") : ""}...`);
 
   // Read and parse tsconfig.json
@@ -317,13 +317,25 @@ async function main(): Promise<void> {
   console.log("   }");
 
   const entryPoints = await getEntryPoints(entryPatterns);
-
+  const isESM = pkgJson.type === "module";
   try {
+    const cjsConfig = {
+      jsExtension: ".cjs",
+      dtsExtension: ".d.cts",
+    };
+    const esmConfig = {
+      jsExtension: ".mjs",
+      dtsExtension: ".d.mts",
+    };
+    const defaultConfig = {
+      // jsExtension: ".js",
+      // dtsExtension: ".d.ts",
+    };
+    // CJS
     await compileProject(
       {
         configPath: tsconfigPath,
-        jsExtension: ".js",
-        dtsExtension: ".d.ts",
+        ...(isESM ? cjsConfig : defaultConfig),
         compilerOptions: {
           module: ts.ModuleKind.CommonJS,
           moduleResolution: ts.ModuleResolutionKind.Node10,
@@ -333,11 +345,11 @@ async function main(): Promise<void> {
       entryPoints
     );
 
+    // ESM
     await compileProject(
       {
         configPath: tsconfigPath,
-        jsExtension: ".mjs",
-        dtsExtension: ".d.mts",
+        ...(isESM ? defaultConfig : esmConfig),
         compilerOptions: {
           module: ts.ModuleKind.ESNext,
           moduleResolution: ts.ModuleResolutionKind.Bundler,
@@ -348,7 +360,7 @@ async function main(): Promise<void> {
     );
     console.log("🎉 Build completed successfully!");
 
-    // generate package.json exports. each key in the zbuild map should be mapped to
+    // generate package.json exports. each key in the zbuild map should be mapped to a set of export files like thi
   } catch (error) {
     console.error("❌ Build failed:", error);
     process.exit(1);
