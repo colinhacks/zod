@@ -113,22 +113,18 @@ async function compileProject(config: CompilerOptions, entryPoints: string[]): P
     host,
   });
 
+  const jsExt = config.jsExtension;
+
   // Create a transformer factory to rewrite extensions
   const extensionRewriteTransformer: ts.TransformerFactory<ts.SourceFile | ts.Bundle> = (context) => {
     return (sourceFile) => {
       const visitor = (node: ts.Node): ts.Node => {
-        // Handle import declarations
-        if (
-          config.jsExtension &&
-          ts.isImportDeclaration(node) &&
-          node.moduleSpecifier &&
-          ts.isStringLiteral(node.moduleSpecifier)
-        ) {
+        if (jsExt && ts.isImportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
           const originalText = node.moduleSpecifier.text;
 
           if (originalText.endsWith(".js")) {
-            const newText = originalText.slice(0, -3) + config.jsExtension;
-            // console.log(`Rewriting import from ${originalText} to ${newText}`);
+            const newText = originalText.slice(0, -3) + jsExt;
+
             return ts.factory.updateImportDeclaration(
               node,
               node.modifiers,
@@ -140,17 +136,12 @@ async function compileProject(config: CompilerOptions, entryPoints: string[]): P
         }
 
         // Handle export declarations
-        if (
-          config.jsExtension &&
-          ts.isExportDeclaration(node) &&
-          node.moduleSpecifier &&
-          ts.isStringLiteral(node.moduleSpecifier)
-        ) {
+        if (jsExt && ts.isExportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
           const originalText = node.moduleSpecifier.text;
 
           if (originalText.endsWith(".js")) {
-            const newText = originalText.slice(0, -3) + config.jsExtension;
-            // console.log(`Rewriting export from ${originalText} to ${newText}`);
+            const newText = originalText.slice(0, -3) + jsExt;
+
             return ts.factory.updateExportDeclaration(
               node,
               node.modifiers,
@@ -163,13 +154,13 @@ async function compileProject(config: CompilerOptions, entryPoints: string[]): P
         }
 
         // Handle dynamic imports
-        if (config.jsExtension && ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
+        if (jsExt && ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
           const arg = node.arguments[0];
           if (ts.isStringLiteral(arg)) {
             const originalText = arg.text;
 
             if (originalText.endsWith(".js")) {
-              const newText = originalText.slice(0, -3) + config.jsExtension;
+              const newText = originalText.slice(0, -3) + jsExt;
               // console.log(`Rewriting dynamic import from ${originalText} to ${newText}`);
               return ts.factory.updateCallExpression(node, node.expression, node.typeArguments, [
                 ts.factory.createStringLiteral(newText),
@@ -283,7 +274,11 @@ async function main(): Promise<void> {
 
   // const pkgJson = JSON.parse(fs.readFileSync("./package.json", "utf-8"));
   const CONFIG_KEY = "zbuild";
-  const config = pkgJson[CONFIG_KEY];
+  const config = pkgJson[CONFIG_KEY] as {
+    exports?: Record<string, string>;
+    sourceDialects?: string[];
+    // other properties can be added as needed
+  };
   if (!config || !config.exports) {
     console.error(`❌ No ${CONFIG_KEY}.exports found in package.json`);
     process.exit(1);
@@ -310,7 +305,7 @@ async function main(): Promise<void> {
         console.log(`     "${exportPath}": "${pattern}", (${wildcardFiles.length} matches)`);
       } else if (sourcePath.endsWith(".ts")) {
         entryPatterns.push(sourcePath);
-        console.log(`     "${exportPath}": "${sourcePath}"`);
+        console.log(`     "${exportPath}": "${sourcePath}",`);
       }
     }
   }
@@ -358,9 +353,61 @@ async function main(): Promise<void> {
       },
       entryPoints
     );
-    console.log("🎉 Build completed successfully!");
 
-    // generate package.json exports. each key in the zbuild map should be mapped to a set of export files like thi
+    // generate package.json exports
+    console.log("📦 Generating package.json exports...");
+
+    // Generate exports based on zbuild config
+    const newExports: Record<string, any> = {};
+
+    const sourceDialects = config.sourceDialects || [];
+    for (const [exportPath, sourcePath] of Object.entries(config.exports)) {
+      if (exportPath.includes("package.json")) {
+        newExports[exportPath] = sourcePath;
+        continue;
+      }
+
+      if (typeof sourcePath === "string") {
+        if (sourcePath.includes("*")) {
+          // Handle wildcard exports
+          newExports[exportPath] = {
+            "@zod/source": sourcePath,
+            import: sourcePath,
+            require: sourcePath,
+          };
+          for (const sd of sourceDialects) {
+            newExports[exportPath] = {
+              [sd]: sourcePath,
+              ...newExports[exportPath],
+            };
+          }
+        } else if (sourcePath.endsWith(".ts")) {
+          // Handle regular TypeScript entry points
+          const basePath = sourcePath.slice(0, -3); // Remove .ts extension
+
+          newExports[exportPath] = {
+            import: isESM ? `${basePath}.js` : `${basePath}.mjs`,
+            require: isESM ? `${basePath}.cjs` : `${basePath}.js`,
+            types: isESM ? `${basePath}.d.cts` : `${basePath}.d.ts`,
+          };
+          for (const sd of sourceDialects) {
+            newExports[exportPath] = {
+              [sd]: sourcePath,
+              ...newExports[exportPath],
+            };
+          }
+        }
+      }
+    }
+
+    // Update package.json with new exports
+    console.log(JSON.stringify(newExports, null, 2));
+    pkgJson.exports = newExports;
+
+    // Write updated package.json
+    // fs.writeFileSync(packageJsonPath, JSON.stringify(pkgJson, null, 2) + "\n");
+    console.log("✅ Updated package.json exports");
+    console.log("🎉 Build completed successfully!");
   } catch (error) {
     console.error("❌ Build failed:", error);
     process.exit(1);
