@@ -12,7 +12,7 @@ interface CompilerOptions {
 }
 
 // Get entry points using the same logic as esbuild.mts
-async function getEntryPoints(): Promise<string[]> {
+async function getEntryPoints(patterns: string[]): Promise<string[]> {
   return await globby(
     [
       "index.ts",
@@ -314,7 +314,32 @@ async function main(): Promise<void> {
   console.log("🚀 Starting TypeScript compilation...");
   console.log(`📁 Reading tsconfig from ${path.resolve(tsconfigPath)}`);
 
-  const pkgJson = JSON.parse(fs.readFileSync("./package.json", "utf-8"));
+  // Find package.json by scanning up the file system
+  let packageJsonPath = "./package.json";
+  let currentDir = process.cwd();
+
+  while (currentDir !== path.dirname(currentDir)) {
+    const candidatePath = path.join(currentDir, "package.json");
+    if (fs.existsSync(candidatePath)) {
+      packageJsonPath = candidatePath;
+      break;
+    }
+    currentDir = path.dirname(currentDir);
+  }
+
+  if (!fs.existsSync(packageJsonPath)) {
+    console.error("❌ package.json not found in current directory or any parent directories");
+    process.exit(1);
+  }
+
+  console.log(`📦 Reading package.json from ${path.resolve(packageJsonPath)}`);
+
+  // read package.json and extract the "tshy" exports config
+  // console.log("📦 Extracting entry points from package.json exports...");
+  const pkgJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
+  const pkgJsonDir = path.dirname(packageJsonPath);
+
+  // const pkgJson = JSON.parse(fs.readFileSync("./package.json", "utf-8"));
   const CONFIG_KEY = "tshy";
   const config = pkgJson[CONFIG_KEY];
   if (!config || !config.exports) {
@@ -323,42 +348,48 @@ async function main(): Promise<void> {
   }
 
   // Extract entry points from tshy exports config
-  const entryPointsFromConfig: string[] = [];
+  const entryPatterns: string[] = [];
+  // console.dir(config.exports, { depth: null });
+  console.log("{");
   for (const [exportPath, sourcePath] of Object.entries(config.exports)) {
+    if (exportPath.includes("package.json")) continue;
     if (typeof sourcePath === "string") {
-      if (sourcePath.endsWith("/*")) {
-        // Handle wildcard patterns
-        if (sourcePath.split("/").at(-1)!.includes("."))
+      if (sourcePath.includes("*")) {
+        if (!sourcePath.endsWith("/*"))
           throw new Error(`Wildcard paths should not contain file extensions: ${sourcePath}`);
 
-        const pattern = sourcePath.replace(/\*/g, "*.[mc]?ts");
+        console.dir({ sourcePath }, { depth: null });
+        const pattern = sourcePath.slice(0, -2) + "/*.ts";
         console.dir(pattern, { depth: null });
         const wildcardFiles = await globby([pattern], {
           ignore: ["**/*.d.ts"],
+          cwd: pkgJsonDir,
+          deep: 1,
         });
-        entryPointsFromConfig.push(...wildcardFiles);
-        console.log(`  "${exportPath}": ${pattern}} (${wildcardFiles.length} matches)`);
+        entryPatterns.push(...wildcardFiles);
+        console.log(`  "${exportPath}": "${pattern}", // (${wildcardFiles.length} matches)`);
       } else if (sourcePath.endsWith(".ts")) {
-        entryPointsFromConfig.push(sourcePath);
+        entryPatterns.push(sourcePath);
         console.log(`  "${exportPath}": "${sourcePath}"`);
       }
     }
   }
+  console.log("}");
 
-  console.dir(entryPointsFromConfig, { depth: null });
+  console.dir(entryPatterns, { depth: null });
 
-  console.log("📦 Entry points from package.json exports:");
-  for (const entry of entryPointsFromConfig) {
-    console.log(`   ${entry}`);
-  }
+  console.log("📦 Entry points from package.json:");
+  // for (const entry of entryPatterns) {
+  //   console.log(`   ${entry}`);
+  // }
 
   // Get entry points using the same logic as esbuild.mts
-  console.log("🔍 Finding entry points...");
-  const entryPoints = await getEntryPoints();
+  // console.log("🔍 Finding entry points...");
+  const entryPoints = await getEntryPoints(entryPatterns);
   // console.log(`📍 Entry points:`, entryPoints);
-  for (const entry of entryPoints) {
-    console.log(`   ${entry}`);
-  }
+  // for (const entry of entryPoints) {
+  // console.log(`   ${entry}`);
+  // }
 
   // Build CommonJS version with .cjs and .d.cts extensions
 
