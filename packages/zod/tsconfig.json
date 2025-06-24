@@ -1,8 +1,8 @@
 {
   "extends": "../../.configs/tsconfig.base.json",
   "compilerOptions": {
-    "module": "NodeNext",
-    "moduleResolution": "nodenext",
+    "module": "node16",
+    "moduleResolution": "node16",
     "customConditions": ["@zod/source"],
     "esModuleInterop": true
   },
