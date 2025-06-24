@@ -1,7 +1,6 @@
 {
   "name": "zod",
   "version": "3.25.67",
-  "type": "module",
   "author": "Colin McDonnell <zod@colinhacks.com>",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
   "files": ["_virtual", "index.js", "index.cjs", "index.d.ts", "v3", "v4", "v4-mini"],
@@ -10,50 +9,43 @@
   "keywords": ["typescript", "schema", "validation", "type", "inference"],
   "license": "MIT",
   "sideEffects": false,
-  "main": "./index.cjs",
+  "main": "./index.js",
   "types": "./index.d.ts",
-  "module": "./index.js",
+  "module": "./index.mjs",
   "exports": {
     ".": {
-      "@zod/source": "./index.ts",
-      "import": {
-        "default": "./index.js",
-        "types": "./index.d.ts"
-      },
-      "require": {
-        "default": "./index.cjs",
-        "types": "./index.d.cjs"
-      }
+      "import": { "default": "./index.mjs" },
+      "require": { "default": "./index.js" }
     },
     "./v3": {
       "@zod/source": "./v3/index.ts",
-      "import": "./v3/index.js",
-      "require": "./v3/index.cjs"
+      "import": "./v3/index.mjs",
+      "require": "./v3/index.js"
     },
     "./v4": {
       "@zod/source": "./v4/index.ts",
-      "import": "./v4/index.js",
-      "require": "./v4/index.cjs"
+      "import": "./v4/index.mjs",
+      "require": "./v4/index.js"
     },
     "./v4-mini": {
       "@zod/source": "./v4/mini/index.ts",
-      "import": "./v4/mini/index.js",
-      "require": "./v4/mini/index.cjs"
+      "import": "./v4/mini/index.mjs",
+      "require": "./v4/mini/index.js"
     },
     "./v4/mini": {
       "@zod/source": "./v4/mini/index.ts",
-      "import": "./v4/mini/index.js",
-      "require": "./v4/mini/index.cjs"
+      "import": "./v4/mini/index.mjs",
+      "require": "./v4/mini/index.js"
     },
     "./v4/core": {
       "@zod/source": "./v4/core/index.ts",
-      "import": "./v4/core/index.js",
-      "require": "./v4/core/index.cjs"
+      "import": "./v4/core/index.mjs",
+      "require": "./v4/core/index.js"
     },
     "./v4/locales": {
       "@zod/source": "./v4/locales/index.ts",
-      "import": "./v4/locales/index.js",
-      "require": "./v4/locales/index.cjs"
+      "import": "./v4/locales/index.mjs",
+      "require": "./v4/locales/index.js"
     },
     "./v4/locales/*": {
       "@zod/source": "./v4/locales/*",
@@ -62,7 +54,7 @@
     },
     "./package.json": "./package.json"
   },
-  "tshy": {
+  "zbuild": {
     "exports": {
       "./package.json": "./package.json",
       ".": "./index.ts",
@@ -72,9 +64,7 @@
       "./v4/core": "./v4/core/index.ts",
       "./v4/locales": "./v4/locales/index.ts",
       "./v4/locales/*": "./v4/locales/*"
-    },
-    "sourceDialects": ["@zod/source"],
-    "exclude": ["./**/*.test.ts"]
+    }
   },
   "repository": {
     "type": "git",
