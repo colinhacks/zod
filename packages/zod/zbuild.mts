@@ -361,6 +361,7 @@ async function main(): Promise<void> {
     const newExports: Record<string, any> = {};
 
     const sourceDialects = config.sourceDialects || [];
+
     for (const [exportPath, sourcePath] of Object.entries(config.exports)) {
       if (exportPath.includes("package.json")) {
         newExports[exportPath] = sourcePath;
@@ -368,7 +369,7 @@ async function main(): Promise<void> {
       }
 
       if (typeof sourcePath === "string") {
-        if (sourcePath.includes("*")) {
+        if (sourcePath.endsWith("/*")) {
           // Handle wildcard exports
           newExports[exportPath] = {
             "@zod/source": sourcePath,
@@ -384,12 +385,26 @@ async function main(): Promise<void> {
         } else if (sourcePath.endsWith(".ts")) {
           // Handle regular TypeScript entry points
           const basePath = sourcePath.slice(0, -3); // Remove .ts extension
+          const esmFile = isESM ? `${basePath}.js` : `${basePath}.mjs`;
+          const cjsFile = isESM ? `${basePath}.cjs` : `${basePath}.js`;
+          const dtsFile = isESM ? `${basePath}.d.cts` : `${basePath}.d.ts`;
 
           newExports[exportPath] = {
-            import: isESM ? `${basePath}.js` : `${basePath}.mjs`,
-            require: isESM ? `${basePath}.cjs` : `${basePath}.js`,
-            types: isESM ? `${basePath}.d.cts` : `${basePath}.d.ts`,
+            import: {
+              default: esmFile,
+              types: dtsFile,
+            },
+            require: {
+              default: cjsFile,
+              types: dtsFile,
+            },
           };
+
+          if (exportPath === ".") {
+            pkgJson.main = cjsFile;
+            pkgJson.module = esmFile;
+            pkgJson.types = dtsFile;
+          }
           for (const sd of sourceDialects) {
             newExports[exportPath] = {
               [sd]: sourcePath,
@@ -401,11 +416,11 @@ async function main(): Promise<void> {
     }
 
     // Update package.json with new exports
-    console.log(JSON.stringify(newExports, null, 2));
     pkgJson.exports = newExports;
     fs.writeFileSync(packageJsonPath, JSON.stringify(pkgJson, null, 2) + "\n");
 
     console.log("✅ Updating package.json#exports");
+    console.log("   " + JSON.stringify(newExports, null, 2).split("\n").join("\n   "));
     console.log("🎉 Build complete!");
   } catch (error) {
     console.error("❌ Build failed:", error);
