@@ -1932,19 +1932,13 @@ export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$const
     return undefined;
   });
 
-  util.defineLazy(inst._zod, "optin", () => {
-    if (def.options.some((o) => o._zod.optin === "optional")) {
-      return "optional";
-    }
-    return undefined;
-  });
+  util.defineLazy(inst._zod, "optin", () =>
+    def.options.some((o) => o._zod.optin === "optional") ? "optional" : undefined
+  );
 
-  util.defineLazy(inst._zod, "optout", () => {
-    if (def.options.some((o) => o._zod.output === "optional")) {
-      return "optional";
-    }
-    return undefined;
-  });
+  util.defineLazy(inst._zod, "optout", () =>
+    def.options.some((o) => o._zod.optout === "optional") ? "optional" : undefined
+  );
 
   inst._zod.parse = (payload, ctx) => {
     let async = false;
