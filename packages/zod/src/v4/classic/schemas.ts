@@ -914,6 +914,8 @@ export const ZodUndefined: core.$constructor<ZodUndefined> = /*@__PURE__*/ core.
   (inst, def) => {
     core.$ZodUndefined.init(inst, def);
     ZodType.init(inst, def);
+    inst._zod.optin = "optional";
+    inst._zod.optout = "optional";
   }
 );
 
