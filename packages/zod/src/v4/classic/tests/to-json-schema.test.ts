@@ -31,7 +31,7 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(z.undefined())).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "null",
+        "not": {},
       }
     `);
     expect(z.toJSONSchema(z.any())).toMatchInlineSnapshot(`
