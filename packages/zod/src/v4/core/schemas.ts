@@ -1241,6 +1241,8 @@ export const $ZodUndefined: core.$constructor<$ZodUndefined> = /*@__PURE__*/ cor
     $ZodType.init(inst, def);
     inst._zod.pattern = regexes.undefined;
     inst._zod.values = new Set([undefined]);
+    inst._zod.optin = "optional";
+    inst._zod.optout = "optional";
 
     inst._zod.parse = (payload, _ctx) => {
       const { value: input } = payload;
@@ -1378,6 +1380,8 @@ export interface $ZodNever extends $ZodType {
 export const $ZodNever: core.$constructor<$ZodNever> = /*@__PURE__*/ core.$constructor("$ZodNever", (inst, def) => {
   $ZodType.init(inst, def);
 
+  inst._zod.optin = "optional";
+  inst._zod.optout = "optional";
   inst._zod.parse = (payload, _ctx) => {
     payload.issues.push({
       expected: "never",
@@ -1916,6 +1920,14 @@ function handleUnionResults(results: ParsePayload[], final: ParsePayload, inst: 
 
 export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$constructor("$ZodUnion", (inst, def) => {
   $ZodType.init(inst, def);
+
+  util.defineLazy(inst._zod, "optin", () =>
+    def.options.some((o) => o._zod.optin === "optional") ? "optional" : undefined
+  );
+
+  util.defineLazy(inst._zod, "optout", () =>
+    def.options.some((o) => o._zod.optout === "optional") ? "optional" : undefined
+  );
 
   util.defineLazy(inst._zod, "values", () => {
     if (def.options.every((o) => o._zod.values)) {
