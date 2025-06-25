@@ -31,7 +31,7 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(z.undefined())).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "null",
+        "not": {},
       }
     `);
     expect(z.toJSONSchema(z.any())).toMatchInlineSnapshot(`
@@ -1856,6 +1856,11 @@ test("input type", () => {
     c: z.string().default("hello"),
     d: z.string().nullable(),
     e: z.string().prefault("hello"),
+    f: z.string().catch("hello"),
+    g: z.never(),
+    h: z.undefined(),
+    i: z.union([z.string(), z.number().default(2)]),
+    j: z.union([z.string(), z.string().optional()]),
   });
   expect(z.toJSONSchema(schema, { io: "input" })).toMatchInlineSnapshot(`
     {
@@ -1884,6 +1889,37 @@ test("input type", () => {
         "e": {
           "default": "hello",
           "type": "string",
+        },
+        "f": {
+          "default": "hello",
+          "type": "string",
+        },
+        "g": {
+          "not": {},
+        },
+        "h": {
+          "not": {},
+        },
+        "i": {
+          "anyOf": [
+            {
+              "type": "string",
+            },
+            {
+              "default": 2,
+              "type": "number",
+            },
+          ],
+        },
+        "j": {
+          "anyOf": [
+            {
+              "type": "string",
+            },
+            {
+              "type": "string",
+            },
+          ],
         },
       },
       "required": [
@@ -1921,12 +1957,45 @@ test("input type", () => {
         "e": {
           "type": "string",
         },
+        "f": {
+          "default": "hello",
+          "type": "string",
+        },
+        "g": {
+          "not": {},
+        },
+        "h": {
+          "not": {},
+        },
+        "i": {
+          "anyOf": [
+            {
+              "type": "string",
+            },
+            {
+              "default": 2,
+              "type": "number",
+            },
+          ],
+        },
+        "j": {
+          "anyOf": [
+            {
+              "type": "string",
+            },
+            {
+              "type": "string",
+            },
+          ],
+        },
       },
       "required": [
         "a",
         "c",
         "d",
         "e",
+        "f",
+        "i",
       ],
       "type": "object",
     }
