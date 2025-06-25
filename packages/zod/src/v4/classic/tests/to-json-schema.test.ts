@@ -1860,6 +1860,7 @@ test("input type", () => {
     g: z.never(),
     h: z.undefined(),
     i: z.union([z.string(), z.number().default(2)]),
+    j: z.union([z.string(), z.string().optional()]),
   });
   expect(z.toJSONSchema(schema, { io: "input" })).toMatchInlineSnapshot(`
     {
@@ -1907,6 +1908,16 @@ test("input type", () => {
             {
               "default": 2,
               "type": "number",
+            },
+          ],
+        },
+        "j": {
+          "anyOf": [
+            {
+              "type": "string",
+            },
+            {
+              "type": "string",
             },
           ],
         },
@@ -1964,6 +1975,16 @@ test("input type", () => {
             {
               "default": 2,
               "type": "number",
+            },
+          ],
+        },
+        "j": {
+          "anyOf": [
+            {
+              "type": "string",
+            },
+            {
+              "type": "string",
             },
           ],
         },
