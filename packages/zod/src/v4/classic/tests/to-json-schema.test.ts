@@ -1887,7 +1887,7 @@ test("input type", () => {
           "type": "string",
         },
         "f": {
-          "not": {}
+          "not": {},
         },
       },
       "required": [
@@ -1926,7 +1926,7 @@ test("input type", () => {
           "type": "string",
         },
         "f": {
-          "not": {}
+          "not": {},
         },
       },
       "required": [
