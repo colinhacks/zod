@@ -1422,7 +1422,9 @@ test("unrepresentable literal values are ignored", () => {
     }
   `);
 
-  const b = z.z.toJSONSchema(z.literal([undefined, null, 5, BigInt(1324)]), { unrepresentable: "any" });
+  const b = z.z.toJSONSchema(z.literal([undefined, null, 5, BigInt(1324)]), {
+    unrepresentable: "any",
+  });
   expect(b).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1434,7 +1436,9 @@ test("unrepresentable literal values are ignored", () => {
     }
   `);
 
-  const c = z.z.toJSONSchema(z.literal([undefined]), { unrepresentable: "any" });
+  const c = z.z.toJSONSchema(z.literal([undefined]), {
+    unrepresentable: "any",
+  });
   expect(c).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1856,6 +1860,7 @@ test("input type", () => {
     c: z.string().default("hello"),
     d: z.string().nullable(),
     e: z.string().prefault("hello"),
+    f: z.never(),
   });
   expect(z.toJSONSchema(schema, { io: "input" })).toMatchInlineSnapshot(`
     {
@@ -1884,6 +1889,9 @@ test("input type", () => {
         "e": {
           "default": "hello",
           "type": "string",
+        },
+        "f": {
+          "not": {},
         },
       },
       "required": [
@@ -1920,6 +1928,9 @@ test("input type", () => {
         },
         "e": {
           "type": "string",
+        },
+        "f": {
+          "not": {},
         },
       },
       "required": [

@@ -1377,6 +1377,8 @@ export interface $ZodNever extends $ZodType {
 
 export const $ZodNever: core.$constructor<$ZodNever> = /*@__PURE__*/ core.$constructor("$ZodNever", (inst, def) => {
   $ZodType.init(inst, def);
+  inst._zod.optin = "optional";
+  inst._zod.optout = "optional";
 
   inst._zod.parse = (payload, _ctx) => {
     payload.issues.push({
