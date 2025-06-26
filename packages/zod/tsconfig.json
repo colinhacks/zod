@@ -4,7 +4,9 @@
     "module": "node16",
     "moduleResolution": "node16",
     "customConditions": ["@zod/source"],
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "rootDir": ".",
+    "outDir": "."
   },
   "exclude": ["vitest.config.mts"]
 }
