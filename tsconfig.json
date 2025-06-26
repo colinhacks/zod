@@ -3,11 +3,9 @@
   "compilerOptions": {
     "rootDir": ".",
     "declaration": true,
-    // "customConditions": ["@zod/source"],
-    // "module": "node16",
-    // "moduleResolution": "node16",
-    "module": "commonjs",
-    "moduleResolution": "node"
+    "customConditions": ["@zod/source"],
+    "module": "node16",
+    "moduleResolution": "node16"
   },
   "exclude": ["packages/docs"]
 }
