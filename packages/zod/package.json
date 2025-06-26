@@ -25,8 +25,7 @@
       "./v4/locales": "./v4/locales/index.ts",
       "./v4/locales/*": "./v4/locales/*"
     },
-    "sourceDialects": ["@zod/source"],
-    "outDir": "."
+    "sourceDialects": ["@zod/source"]
   },
   "exports": {
     "./package.json": "./package.json",
