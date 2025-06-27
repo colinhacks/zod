@@ -8,5 +8,5 @@
     "rootDir": ".",
     "outDir": "."
   },
-  "exclude": ["vitest.config.mts"]
+  "include": ["**/*.ts"]
 }

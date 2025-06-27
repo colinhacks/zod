@@ -11,6 +11,8 @@
   "files.exclude": {
     "./scratch": false,
     "**/.tshy-build": true,
+    "**/*.{js,cjs,mjs}": true,
+    "**/*.d.{ts,cts,mts}": true,
     "**/dist": true,
     "**/lib": true
   },

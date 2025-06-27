@@ -102,8 +102,8 @@ importers:
         specifier: npm:zod@^3.0.0
         version: zod@3.24.3
       zshy:
-        specifier: ^0.0.3
-        version: 0.0.3(typescript@5.5.4)
+        specifier: ^0.0.5
+        version: 0.0.5(typescript@5.5.4)
 
   packages/bench:
     devDependencies:
@@ -180,6 +180,15 @@ importers:
       tailwindcss:
         specifier: ^4.0.14
         version: 4.0.16
+      typescript:
+        specifier: ^5.8.2
+        version: 5.8.2
+
+  packages/resolution:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.13.13
+        version: 22.13.13
       typescript:
         specifier: ^5.8.2
         version: 5.8.2
@@ -5736,8 +5745,8 @@ packages:
   zod@4.0.0-beta.20250420T053007:
     resolution: {integrity: sha512-5pp8Q0PNDaNcUptGiBE9akyioJh3RJpagIxrLtAVMR9IxwcSZiOsJD/1/98CyhItdTlI2H91MfhhLzRlU+fifA==}
 
-  zshy@0.0.3:
-    resolution: {integrity: sha512-NHrg/cRm5K+Wpt0ORSdWCd9nAzDM2DbpzrH448x+2EAha8/6hsXvbdsDCjmH1255ZlMppH80i8XIzayreBlt8A==}
+  zshy@0.0.5:
+    resolution: {integrity: sha512-7Y2V4ZaxvOnhanmVx7TLT9XM3h4XAHTMP3AwlQW91Lb8+DVGjQSF6I2ZOgEk16cJC1z49HJEGC3iJD6Dus4ygw==}
     hasBin: true
     peerDependencies:
       typescript: '>5.5.0'
@@ -7765,7 +7774,7 @@ snapshots:
 
   '@types/node-fetch@2.6.12':
     dependencies:
-      '@types/node': 22.13.10
+      '@types/node': 22.13.13
       form-data: 4.0.2
 
   '@types/node@18.19.103':
@@ -11521,7 +11530,7 @@ snapshots:
     dependencies:
       '@zod/core': 0.8.1
 
-  zshy@0.0.3(typescript@5.5.4):
+  zshy@0.0.5(typescript@5.5.4):
     dependencies:
       arg: 5.0.2
       globby: 14.1.0

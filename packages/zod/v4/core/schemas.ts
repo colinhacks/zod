@@ -895,6 +895,7 @@ export function isValidJWT(token: string, algorithm: util.JWTAlgorithm | null = 
     const tokensParts = token.split(".");
     if (tokensParts.length !== 3) return false;
     const [header] = tokensParts;
+    if (!header) return false;
     const parsedHeader = JSON.parse(atob(header));
     if ("typ" in parsedHeader && parsedHeader?.typ !== "JWT") return false;
     if (!parsedHeader.alg) return false;
@@ -1692,7 +1693,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     const shape = def.shape;
     const propValues: util.PropValues = {};
     for (const key in shape) {
-      const field = shape[key]._zod;
+      const field = shape[key]!._zod;
       if (field.values) {
         propValues[key] ??= new Set();
         for (const v of field.values) propValues[key].add(v);
@@ -1798,7 +1799,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
 
       const shape = value.shape;
       for (const key of value.keys) {
-        const el = shape[key];
+        const el = shape[key]!;
 
         // do not add omitted optional keys
         // if (!(key in input)) {

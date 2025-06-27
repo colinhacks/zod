@@ -1,0 +1,17 @@
+{
+  "name": "@zod/tsc-perftest",
+  "type": "module",
+  "private": true,
+  "version": "1.0.0",
+  "main": "./lib/index.js",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.13.13",
+    "typescript": "^5.8.2"
+  },
+  "files": ["./bin/*", "./lib/*"],
+  "typings": "./lib/index.d.ts",
+  "scripts": {
+    "test": "tsc && node index.js"
+  }
+}

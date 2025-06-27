@@ -7,5 +7,6 @@
     "module": "node16",
     "moduleResolution": "node16"
   },
+  "include": ["**/*.ts"],
   "exclude": ["packages/docs"]
 }
