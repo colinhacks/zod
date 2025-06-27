@@ -699,6 +699,7 @@ function isValidJWT(jwt: string, alg?: string): boolean {
   if (!jwtRegex.test(jwt)) return false;
   try {
     const [header] = jwt.split(".");
+    if (!header) return false;
     // Convert base64url to base64
     const base64 = header
       .replace(/-/g, "+")
@@ -2494,7 +2495,7 @@ export class ZodObject<
       alwaysSet?: boolean;
     }[] = [];
     for (const key of shapeKeys) {
-      const keyValidator = shape[key];
+      const keyValidator = shape[key]!;
       const value = ctx.data[key];
       pairs.push({
         key: { status: "valid", value: key },
@@ -2821,7 +2822,7 @@ export class ZodObject<
     const newShape: any = {};
 
     for (const key of util.objectKeys(this.shape)) {
-      const fieldSchema = this.shape[key];
+      const fieldSchema = this.shape[key]!;
 
       if (mask && !mask[key]) {
         newShape[key] = fieldSchema;

@@ -8,11 +8,12 @@
 
     "strict": true,
     "alwaysStrict": true,
+    "noUncheckedIndexedAccess": true,
 
     "exactOptionalPropertyTypes": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "noUnusedLocals": false,
+    "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitAny": true,
     "noImplicitReturns": true,
@@ -22,7 +23,7 @@
     "noFallthroughCasesInSwitch": true,
     "resolveJsonModule": true,
 
-    "removeComments": false,
+    "removeComments": true,
     "esModuleInterop": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
@@ -30,5 +31,6 @@
     "isolatedModules": true,
 
     "pretty": true
-  }
+  },
+  "exclude": ["node_modules"]
 }
