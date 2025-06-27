@@ -37,6 +37,9 @@ myRegistry.add(mySchema, { description: "A cool schema!" }); // ✅
 myRegistry.add(mySchema, { description: 123 }); // ❌
 ```
 
+> **Important** —  If you register metadata on a schema and include an `id` property, Zod will throw an error if multiple schemas share the same `id` value. Make sure all registered `id` values are unique per registry. This also applies to the global registry.
+
+
 ### `.register()`
 
 > **Note** — This method is special in that it does not return a new schema; instead, it returns the original schema. No other Zod method does this! That includes `.meta()` and `.describe()` (documented below) which return a new instance.
