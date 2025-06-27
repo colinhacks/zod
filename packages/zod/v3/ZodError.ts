@@ -235,7 +235,7 @@ export class ZodError<T = any> extends Error {
           let curr: any = fieldErrors;
           let i = 0;
           while (i < issue.path.length) {
-            const el = issue.path[i];
+            const el = issue.path[i]!;
             const terminal = i === issue.path.length - 1;
 
             if (!terminal) {
@@ -300,8 +300,9 @@ export class ZodError<T = any> extends Error {
     const formErrors: U[] = [];
     for (const sub of this.issues) {
       if (sub.path.length > 0) {
-        fieldErrors[sub.path[0]] = fieldErrors[sub.path[0]] || [];
-        fieldErrors[sub.path[0]].push(mapper(sub));
+        const firstEl = sub.path[0]!;
+        fieldErrors[firstEl] = fieldErrors[firstEl] || [];
+        fieldErrors[firstEl].push(mapper(sub));
       } else {
         formErrors.push(mapper(sub));
       }

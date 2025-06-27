@@ -149,7 +149,7 @@ export class JSONSchemaGenerator {
             if (contentEncoding) json.contentEncoding = contentEncoding;
             if (patterns && patterns.size > 0) {
               const regexes = [...patterns];
-              if (regexes.length === 1) json.pattern = regexes[0].source;
+              if (regexes.length === 1) json.pattern = regexes[0]!.source;
               else if (regexes.length > 1) {
                 result.schema.allOf = [
                   ...regexes.map((regex) => ({
@@ -255,7 +255,7 @@ export class JSONSchemaGenerator {
             const shape = def.shape; // params.shapeCache.get(schema)!;
 
             for (const key in shape) {
-              json.properties[key] = this.process(shape[key], {
+              json.properties[key] = this.process(shape[key]!, {
                 ...params,
                 path: [...params.path, "properties", key],
               });
@@ -266,7 +266,7 @@ export class JSONSchemaGenerator {
             // const optionalKeys = new Set(def.optional);
             const requiredKeys = new Set(
               [...allKeys].filter((key) => {
-                const v = def.shape[key]._zod;
+                const v = def.shape[key]!._zod;
                 if (this.io === "input") {
                   return v.optin === undefined;
                 } else {
@@ -419,7 +419,7 @@ export class JSONSchemaGenerator {
             if (vals.length === 0) {
               // do nothing (an undefined literal was stripped)
             } else if (vals.length === 1) {
-              const val = vals[0];
+              const val = vals[0]!;
               json.type = val === null ? ("null" as const) : (typeof val as any);
               json.const = val;
             } else {
@@ -445,7 +445,7 @@ export class JSONSchemaGenerator {
             if (maximum !== undefined) file.maxLength = maximum;
             if (mime) {
               if (mime.length === 1) {
-                file.contentMediaType = mime[0];
+                file.contentMediaType = mime[0]!;
                 Object.assign(json, file);
               } else {
                 json.anyOf = mime.map((m) => {
@@ -876,7 +876,7 @@ function isTransforming(
     }
     case "object": {
       for (const key in def.shape) {
-        if (isTransforming(def.shape[key], ctx)) return true;
+        if (isTransforming(def.shape[key]!, ctx)) return true;
       }
       return false;
     }

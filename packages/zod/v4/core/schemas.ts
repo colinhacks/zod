@@ -604,8 +604,6 @@ export const $ZodISODateTime: core.$constructor<$ZodISODateTime> = /*@__PURE__*/
   (inst, def): void => {
     def.pattern ??= regexes.datetime(def);
     $ZodStringFormat.init(inst, def);
-
-    const _super = inst._zod.check;
   }
 );
 
@@ -645,8 +643,6 @@ export const $ZodISOTime: core.$constructor<$ZodISOTime> = /*@__PURE__*/ core.$c
   (inst, def): void => {
     def.pattern ??= regexes.time(def);
     $ZodStringFormat.init(inst, def);
-
-    const _super = inst._zod.check;
   }
 );
 
