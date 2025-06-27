@@ -223,8 +223,8 @@ export function flattenError(error: $ZodError, mapper = (issue: $ZodIssue) => is
   const formErrors: any[] = [];
   for (const sub of error.issues) {
     if (sub.path.length > 0) {
-      fieldErrors[sub.path[0]] = fieldErrors[sub.path[0]] || [];
-      fieldErrors[sub.path[0]].push(mapper(sub));
+      fieldErrors[sub.path[0]!] = fieldErrors[sub.path[0]!] || [];
+      fieldErrors[sub.path[0]!].push(mapper(sub));
     } else {
       formErrors.push(mapper(sub));
     }
@@ -267,7 +267,7 @@ export function formatError<T>(error: $ZodError, _mapper?: any) {
         let curr: any = fieldErrors;
         let i = 0;
         while (i < issue.path.length) {
-          const el = issue.path[i];
+          const el = issue.path[i]!;
           const terminal = i === issue.path.length - 1;
 
           if (!terminal) {
@@ -323,7 +323,7 @@ export function treeifyError<T>(error: $ZodError, _mapper?: any) {
         let curr: any = result;
         let i = 0;
         while (i < fullpath.length) {
-          const el = fullpath[i];
+          const el = fullpath[i]!;
 
           const terminal = i === fullpath.length - 1;
           if (typeof el === "string") {

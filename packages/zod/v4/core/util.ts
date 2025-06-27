@@ -295,7 +295,7 @@ export function promiseAllObject<T extends object>(promisesObj: T): Promise<{ [k
   return Promise.all(promises).then((results) => {
     const resolvedObj: any = {};
     for (let i = 0; i < keys.length; i++) {
-      resolvedObj[keys[i]] = results[i];
+      resolvedObj[keys[i]!] = results[i];
     }
     return resolvedObj;
   });
@@ -335,10 +335,6 @@ export const allowsEval: { value: boolean } = cached(() => {
     return false;
   }
 });
-
-function _isObject(o: any) {
-  return Object.prototype.toString.call(o) === "[object Object]";
-}
 
 export function isPlainObject(o: any): o is Record<PropertyKey, unknown> {
   if (isObject(o) === false) return false;
@@ -513,7 +509,7 @@ export function stringifyPrimitive(value: any): string {
 
 export function optionalKeys(shape: schemas.$ZodShape): string[] {
   return Object.keys(shape).filter((k) => {
-    return shape[k]._zod.optin === "optional" && shape[k]._zod.optout === "optional";
+    return shape[k]!._zod.optin === "optional" && shape[k]!._zod.optout === "optional";
   });
 }
 
@@ -549,7 +545,7 @@ export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>):
     if (!mask[key]) continue;
 
     // pick key
-    newShape[key] = currDef.shape[key];
+    newShape[key] = currDef.shape[key]!;
   }
 
   return clone(schema, {
@@ -620,18 +616,18 @@ export function partial(
       shape[key] = Class
         ? new Class({
             type: "optional",
-            innerType: oldShape[key],
+            innerType: oldShape[key]!,
           })
-        : oldShape[key];
+        : oldShape[key]!;
     }
   } else {
     for (const key in oldShape) {
       shape[key] = Class
         ? new Class({
             type: "optional",
-            innerType: oldShape[key],
+            innerType: oldShape[key]!,
           })
-        : oldShape[key];
+        : oldShape[key]!;
     }
   }
 
@@ -659,7 +655,7 @@ export function required(
       // overwrite with non-optional
       shape[key] = new Class({
         type: "nonoptional",
-        innerType: oldShape[key],
+        innerType: oldShape[key]!,
       });
     }
   } else {
@@ -667,7 +663,7 @@ export function required(
       // overwrite with non-optional
       shape[key] = new Class({
         type: "nonoptional",
-        innerType: oldShape[key],
+        innerType: oldShape[key]!,
       });
     }
   }
@@ -684,7 +680,7 @@ export type Constructor<T, Def extends any[] = any[]> = new (...args: Def) => T;
 
 export function aborted(x: schemas.ParsePayload, startIndex = 0): boolean {
   for (let i = startIndex; i < x.issues.length; i++) {
-    if (x.issues[i].continue !== true) return true;
+    if (x.issues[i]?.continue !== true) return true;
   }
   return false;
 }
