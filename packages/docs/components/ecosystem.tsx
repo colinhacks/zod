@@ -82,8 +82,8 @@ const formIntegrations: ZodResource[] = [
     name: "svelte-jsonschema-form",
     url: "https://x0k.dev/svelte-jsonschema-form/validators/zod4/",
     description: "Svelte 5 library for creating forms based on JSON schema.",
-    slug: "x0k/svelte-jsonschema-form"
-  }
+    slug: "x0k/svelte-jsonschema-form",
+  },
 ];
 
 const zodToXConverters: ZodResource[] = [];
