@@ -78,6 +78,12 @@ const formIntegrations: ZodResource[] = [
     description: "Generate user-friendly error messages from ZodError instances.",
     slug: "causaly/zod-validation-error",
   },
+  {
+    name: "svelte-jsonschema-form",
+    url: "https://x0k.dev/svelte-jsonschema-form/validators/zod4/",
+    description: "Svelte 5 library for creating forms based on JSON schema.",
+    slug: "x0k/svelte-jsonschema-form"
+  }
 ];
 
 const zodToXConverters: ZodResource[] = [];
