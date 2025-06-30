@@ -88,6 +88,12 @@ const poweredByZodProjects: ZodResource[] = [
     description: "Types and functions to make composition easy and safe.",
     slug: "seasonedcc/composable-functions",
   },
+  {
+    name: "Zod JSON-RPC",
+    url: "https://github.com/danscan/zod-jsonrpc",
+    description: "Type-safe JSON-RPC client/server library using Zod schemas.",
+    slug: "danscan/zod-jsonrpc",
+  },
 ];
 
 const zodUtilities: ZodResource[] = [];
