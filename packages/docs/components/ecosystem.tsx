@@ -30,6 +30,12 @@ const apiLibraries: ZodResource[] = [
     description: "Typesafe APIs Made Simple",
     slug: "unnoq/orpc",
   },
+  {
+    name: "Zod JSON-RPC",
+    url: "https://github.com/danscan/zod-jsonrpc",
+    description: "Type-safe JSON-RPC 2.0 client/server library using Zod.",
+    slug: "danscan/zod-jsonrpc",
+  },
 
   // https://github.com/honojs/middleware/tree/main/packages/zod-validator
   // {
@@ -87,12 +93,6 @@ const poweredByZodProjects: ZodResource[] = [
     url: "https://github.com/seasonedcc/composable-functions",
     description: "Types and functions to make composition easy and safe.",
     slug: "seasonedcc/composable-functions",
-  },
-  {
-    name: "Zod JSON-RPC",
-    url: "https://github.com/danscan/zod-jsonrpc",
-    description: "Type-safe JSON-RPC client/server library using Zod schemas.",
-    slug: "danscan/zod-jsonrpc",
   },
 ];
 
