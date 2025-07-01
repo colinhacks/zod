@@ -4,10 +4,23 @@
   "type": "module",
   "author": "Colin McDonnell <zod@colinhacks.com>",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
-  "files": ["**/*.js", "**/*.mjs", "**/*.cjs", "**/*.d.ts", "**/*.d.mts", "**/*.d.cts"],
+  "files": [
+    "**/*.js",
+    "**/*.mjs",
+    "**/*.cjs",
+    "**/*.d.ts",
+    "**/*.d.mts",
+    "**/*.d.cts"
+  ],
   "funding": "https://github.com/sponsors/colinhacks",
   "homepage": "https://zod.dev",
-  "keywords": ["typescript", "schema", "validation", "type", "inference"],
+  "keywords": [
+    "typescript",
+    "schema",
+    "validation",
+    "type",
+    "inference"
+  ],
   "license": "MIT",
   "sideEffects": false,
   "main": "./index.cjs",
@@ -25,7 +38,9 @@
       "./v4/locales": "./v4/locales/index.ts",
       "./v4/locales/*": "./v4/locales/*"
     },
-    "sourceDialects": ["@zod/source"]
+    "sourceDialects": [
+      "@zod/source"
+    ]
   },
   "exports": {
     "./package.json": "./package.json",
@@ -73,6 +88,7 @@
     },
     "./v4/locales/*": {
       "@zod/source": "./v4/locales/*",
+      "types": "./v4/locales/*",
       "import": "./v4/locales/*",
       "require": "./v4/locales/*"
     }

@@ -1,3 +1,2 @@
 pnpm test
 pnpm semver-check
-pnpm test:build

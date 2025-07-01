@@ -60,6 +60,7 @@
     }
   },
   "files": {
+    "include": ["**/*.ts", "**/*.mts", "**/*.cts"],
     "ignore": [
       "*.js",
       "*.mjs",

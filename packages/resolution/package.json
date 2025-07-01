@@ -1,5 +1,5 @@
 {
-  "name": "@zod/tsc-perftest",
+  "name": "@zod/resolution",
   "type": "module",
   "private": true,
   "version": "1.0.0",
