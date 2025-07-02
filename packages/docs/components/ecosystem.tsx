@@ -7,8 +7,6 @@ interface ZodResource {
   description: React.ReactNode;
   slug: string;
   stars?: number;
-  // v4?: boolean;
-  // author?: string;
 }
 
 const apiLibraries: ZodResource[] = [
