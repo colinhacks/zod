@@ -49,7 +49,7 @@ test("optional on default", () => {
   type out = z.output<typeof stringWithDefault>;
   expectTypeOf<out>().toEqualTypeOf<string | undefined>();
 
-  expect(stringWithDefault.parse(undefined)).toBe(undefined);
+  expect(stringWithDefault.parse(undefined)).toBe("asdf");
 });
 
 // test("complex chain example", () => {
@@ -219,10 +219,10 @@ test("nested prefault/default", () => {
   expect(obj2.safeParse({ a: undefined, b: undefined, c: undefined, d: undefined })).toMatchInlineSnapshot(`
     {
       "data": {
-        "a": undefined,
-        "b": undefined,
-        "c": undefined,
-        "d": undefined,
+        "a": "a",
+        "b": "b",
+        "c": "c",
+        "d": "d",
       },
       "success": true,
     }
@@ -290,5 +290,24 @@ test("failing default", () => {
         ],
       },
     ]
+  `);
+});
+
+test("partial should not clobber defaults", () => {
+  const objWithDefaults = z.object({
+    a: z.string().default("defaultA"),
+    b: z.string().default("defaultB"),
+    c: z.string().default("defaultC"),
+  });
+
+  const objPartialWithOneRequired = objWithDefaults.partial(); //.required({ a: true });
+
+  const test = objPartialWithOneRequired.parse({});
+  expect(test).toMatchInlineSnapshot(`
+    {
+      "a": "defaultA",
+      "b": "defaultB",
+      "c": "defaultC",
+    }
   `);
 });

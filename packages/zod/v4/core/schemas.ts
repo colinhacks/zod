@@ -2936,6 +2936,9 @@ export const $ZodOptional: core.$constructor<$ZodOptional> = /*@__PURE__*/ core.
     });
 
     inst._zod.parse = (payload, ctx) => {
+      if (def.innerType._zod.optin === "optional") {
+        return def.innerType._zod.run(payload, ctx);
+      }
       if (payload.value === undefined) {
         return payload;
       }
