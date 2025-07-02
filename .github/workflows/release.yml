@@ -30,16 +30,11 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         
-      - name: Install dependencies
-        run: |
-          pnpm install
-
-      - name: Build and test
-        working-directory: ./packages/zod
-        run: |
-          pnpm run test
-          pnpm build
-          
+      - run: pnpm install
+      - run: pnpm build
+      - run: pnpm test
+      - run: pnpm run --filter @zod/resolution test
+      
       - id: publish
         name: Publish to NPM
         uses: JS-DevTools/npm-publish@v3
