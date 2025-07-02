@@ -15,11 +15,10 @@ describe("Are The Types Wrong (attw) tests", () => {
 
     // Combine stdout and stderr for comprehensive output
     const output = result.stdout + (result.stderr ? "\n" + result.stderr : "");
-
-    expect(output.trim()).toMatchInlineSnapshot(`
-      "zod v3.25.67
-
-      🎭 Import resolved to a CommonJS type declaration file, but an ESM JavaScript file. https://github.com/arethetypeswrong/arethetypeswrong.github.io/blob/main/docs/problems/FalseCJS.md
+    // remove first line
+    const outputWithoutFirstLine = output.split("\n").slice(2).join("\n").trim();
+    expect(outputWithoutFirstLine).toMatchInlineSnapshot(`
+      "🎭 Import resolved to a CommonJS type declaration file, but an ESM JavaScript file. https://github.com/arethetypeswrong/arethetypeswrong.github.io/blob/main/docs/problems/FalseCJS.md
 
 
       "zod/package.json"

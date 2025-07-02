@@ -67,7 +67,7 @@
     "format:check": "biome check .",
     "lint": "biome lint --write .",
     "lint:check": "biome lint .",
-    "clean": "pnpm run -r clean && rm -rf node_modules",
+    "clean": "pnpm run -r clean",
     "build": "pnpm run -r --filter '!@zod/docs' build",
     "test:watch": "vitest",
     "test": "vitest run",
