@@ -1,6 +1,5 @@
 import * as z from "zod/v4";
 
-// biome-ignore lint:
 const Story = z.object({
   type: z.literal("story"),
   story: z.object({

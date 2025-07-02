@@ -16,8 +16,7 @@
   ],
   "typings": "./lib/index.d.ts",
   "scripts": {
-    "test": "tsx test-resolution.ts",
-    "build": "pnpm zshy && pnpm tsc --project tsconfig.build.json"
+    "test": "tsx test-resolution.ts"
   },
   "zshy": "./src/index.ts",
   "module": "./dist/index.js",
