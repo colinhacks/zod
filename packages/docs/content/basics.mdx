@@ -63,7 +63,7 @@ Player.parse({ username: "billie", xp: 100 });
 ```
 
 <Callout>
-**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](#transform), you'll need to use the `.parseAsync()` method instead. 
+**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](/api#transform), you'll need to use the `.parseAsync()` method instead. 
 
 ```ts
 await Player.parseAsync({ username: "billie", xp: 100 }); 
@@ -139,7 +139,7 @@ if (!result.success) {
 ```
 
 <Callout>
-**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](#transform), you'll need to use the `.safeParseAsync()` method instead. 
+**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](/api#transform), you'll need to use the `.safeParseAsync()` method instead. 
 
 ```ts
 await schema.safeParseAsync("hello");
