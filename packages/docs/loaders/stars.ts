@@ -39,6 +39,7 @@ export async function fetchStars(resources: { slug: string; stars?: number }[]) 
     const json = await res.json();
 
     if (json.errors) {
+      console.dir(json.errors, { depth: null });
       throw new Error("Failed to fetch GitHub stars");
     }
 
@@ -59,6 +60,7 @@ export async function fetchStars(resources: { slug: string; stars?: number }[]) 
     // sort by star coun (descending) in place
     resources.sort((a, b) => (b.stars || 0) - (a.stars || 0));
   } catch (_) {
+    console.log(_);
     throw new Error("Failed to fetch GitHub stars");
   }
 }
