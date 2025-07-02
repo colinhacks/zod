@@ -1,2 +1,4 @@
 pnpm test
 pnpm semver-check
+pnpm build
+pnpm clean
