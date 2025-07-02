@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execa } from "execa";
@@ -12,6 +13,13 @@ describe("Are The Types Wrong (attw) tests", () => {
       cwd: __dirname,
       reject: false, // Don't throw on non-zero exit codes
     });
+
+    // check if node_modules/zod/index.js exists
+    const zodIndexPath = path.join(__dirname, "node_modules", "zod", "index.js");
+    if (!existsSync(zodIndexPath)) {
+      // Zod has not been build
+      return;
+    }
 
     // Combine stdout and stderr for comprehensive output
     const output = result.stdout + (result.stderr ? "\n" + result.stderr : "");
