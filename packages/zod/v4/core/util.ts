@@ -314,7 +314,7 @@ export function esc(str: string): string {
   return JSON.stringify(str);
 }
 
-export const captureStackTrace: typeof Error.captureStackTrace = Error.captureStackTrace
+export const captureStackTrace: (targetObject: object, constructorOpt?: Function) => void = Error.captureStackTrace
   ? Error.captureStackTrace
   : (..._args) => {};
 
