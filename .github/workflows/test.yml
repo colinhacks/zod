@@ -27,6 +27,7 @@ jobs:
       - run: pnpm add typescript@${{ matrix.typescript }} -w
       - run: pnpm build
       - run: pnpm test
+      - run: pnpm run --filter @zod/resolution test
 
   lint:
     runs-on: ubuntu-latest

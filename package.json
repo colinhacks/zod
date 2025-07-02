@@ -45,8 +45,8 @@
     "typescript": "^5.5.4",
     "vitest": "^2.1.9",
     "zod": "workspace:*",
-    "zod3": "npm:zod@^3.0.0",
-    "zshy": "^0.0.7"
+    "zod3": "npm:zod@~3.24.0",
+    "zshy": "^0.0.12"
   },
   "lint-staged": {
     "packages/*/src/**/*.ts": [

@@ -17,4 +17,17 @@ console.log(z6.string().parse("Hello, world!"));;
 console.log(z7.string().parse("Hello, world!"));;
 
 z4.config(fr())
+const schema = z4.object({
+  name: z4.string(),
+});
+const success = JSON.stringify(schema.safeParse({ name: "John Doe" }))
+if(success !== `{"success":true,"data":{"name":"John Doe"}}`){
+  throw new Error()
+}
 
+const failure = JSON.stringify(schema.safeParse({ name: 123 }));
+if(failure !== '{"success":false,"error":{"name":"ZodError","message":"[\\n  {\\n    \\"expected\\": \\"string\\",\\n    \\"code\\": \\"invalid_type\\",\\n    \\"path\\": [\\n      \\"name\\"\\n    ],\\n    \\"message\\": \\"Entrée invalide : string attendu, nombre reçu\\"\\n  }\\n]"}}'){
+  throw new Error()
+}
+
+console.log("Success!");
