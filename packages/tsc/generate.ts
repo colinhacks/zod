@@ -337,14 +337,14 @@ function generateFields(
     // keys.push(key);
     const randomTypeIndex = Math.floor(Math.random() * params.valueTypes.length);
     const randomChainMethodIndex = Math.floor(Math.random() * methods.length);
-    const randomType = params.valueTypes[randomTypeIndex];
+    const randomType = params.valueTypes[randomTypeIndex]!;
     // const randomChance = Math.random();
     // if (randomChance > 0.98) {
     //   const { schema: nestedSchema } = generateRandomZodSchema();
     //   schema += ` ${key}: ${nestedSchema},`;
     //   continue;
     // }
-    const type = randomType + methods[randomChainMethodIndex];
+    const type = randomType + methods[randomChainMethodIndex]!;
 
     fields.push({ key, schema: type });
     // schema += ` ${key}: ${type},`;

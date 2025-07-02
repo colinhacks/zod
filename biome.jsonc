@@ -60,7 +60,14 @@
     }
   },
   "files": {
+    "include": ["**/*.ts", "**/*.mts", "**/*.cts"],
     "ignore": [
+      "*.js",
+      "*.mjs",
+      "*.cjs",
+      "*.d.ts",
+      "*.d.cts",
+      "*.d.mts",
       "lib",
       "coverage",
       "dist",

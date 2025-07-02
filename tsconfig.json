@@ -2,7 +2,11 @@
   "extends": "./.configs/tsconfig.base.json",
   "compilerOptions": {
     "rootDir": ".",
-    "declaration": true
+    "declaration": true,
+    "customConditions": ["@zod/source"],
+    "module": "node16",
+    "moduleResolution": "node16"
   },
+  "include": ["**/*.ts", "**/*.mts", "**/*.cts"],
   "exclude": ["packages/docs"]
 }
