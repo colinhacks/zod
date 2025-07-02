@@ -135,7 +135,7 @@ export const $ZodCheckGreaterThan: core.$constructor<$ZodCheckGreaterThan> = /*@
       }
 
       payload.issues.push({
-        origin: origin as "number",
+        origin,
         code: "too_small",
         minimum: def.value as number,
         input: payload.value,
@@ -571,6 +571,8 @@ export const $ZodCheckSizeEquals: core.$constructor<$ZodCheckSizeEquals> = /*@__
       payload.issues.push({
         origin: util.getSizableOrigin(input),
         ...(tooBig ? { code: "too_big", maximum: def.size } : { code: "too_small", minimum: def.size }),
+        inclusive: true,
+        exact: true,
         input: payload.value,
         inst,
         continue: !def.abort,
@@ -725,9 +727,9 @@ export const $ZodCheckLengthEquals: core.$constructor<$ZodCheckLengthEquals> = /
       const tooBig = length > def.length;
       payload.issues.push({
         origin,
-        ...(tooBig
-          ? { code: "too_big", maximum: def.length, exact: true }
-          : { code: "too_small", minimum: def.length, exact: true }),
+        ...(tooBig ? { code: "too_big", maximum: def.length } : { code: "too_small", minimum: def.length }),
+        inclusive: true,
+        exact: true,
         input: payload.value,
         inst,
         continue: !def.abort,
