@@ -83,19 +83,18 @@ test("async preprocess ctx.addIssue with parse", async () => {
     return data;
   }, z.string());
 
-  expect(schema.parseAsync("asdf")).rejects.toThrow(
-    JSON.stringify(
-      [
-        {
-          code: "custom",
-          message: "custom error",
-          path: [],
-        },
-      ],
-      null,
-      2
-    )
-  );
+  expect(await schema.safeParseAsync("asdf")).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "code": "custom",
+        "message": "custom error",
+        "path": []
+      }
+    ]],
+      "success": false,
+    }
+  `);
 });
 
 test("preprocess ctx.addIssue with parseAsync", async () => {

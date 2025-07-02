@@ -16,7 +16,8 @@
   ],
   "typings": "./lib/index.d.ts",
   "scripts": {
-    "test": "tsx test-resolution.ts"
+    "test": "pnpm vitest run && tsx test-resolution.ts",
+    "test:vitest": "vitest"
   },
   "zshy": "./src/index.ts",
   "module": "./dist/index.js",
