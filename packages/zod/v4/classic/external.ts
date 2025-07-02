@@ -28,6 +28,7 @@ export {
   flattenError,
   toJSONSchema,
   TimePrecision,
+  NEVER,
 } from "../core/index.js";
 
 export * as locales from "../locales/index.js";
