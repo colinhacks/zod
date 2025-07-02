@@ -1043,8 +1043,6 @@ export function keyof<T extends ZodObject>(schema: T): ZodLiteral<Exclude<keyof 
 }
 
 // ZodObject
-
-type OptionalInSchema = { _zod: { optin: "optional" } };
 export interface ZodObject<
   /** @ts-ignore Cast variance */
   out Shape extends core.$ZodShape = core.$ZodLooseShape,
