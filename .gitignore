@@ -23,4 +23,3 @@ packages/tsc-perf
 tsconfig.vitest-temp.json
 *.tgz
 
-

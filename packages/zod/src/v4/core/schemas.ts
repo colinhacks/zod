@@ -3441,6 +3441,7 @@ export interface $ZodReadonlyInternals<T extends SomeType = $ZodType>
   optout: T["_zod"]["optout"];
   isst: never;
   propValues: T["_zod"]["propValues"];
+  values: T["_zod"]["values"];
 }
 
 export interface $ZodReadonly<T extends SomeType = $ZodType> extends $ZodType {
@@ -3452,6 +3453,7 @@ export const $ZodReadonly: core.$constructor<$ZodReadonly> = /*@__PURE__*/ core.
   (inst, def) => {
     $ZodType.init(inst, def);
     util.defineLazy(inst._zod, "propValues", () => def.innerType._zod.propValues);
+    util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
     util.defineLazy(inst._zod, "optin", () => def.innerType._zod.optin);
     util.defineLazy(inst._zod, "optout", () => def.innerType._zod.optout);
 
