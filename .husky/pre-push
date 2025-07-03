@@ -3,7 +3,7 @@ if [ -n "$(git ls-files --others --exclude-standard)" ]; then
   git status;
   exit 1
 fi
-pnpm test
 pnpm semver-check
+pnpm test
 pnpm build
 pnpm clean
