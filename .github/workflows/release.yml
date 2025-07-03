@@ -33,7 +33,7 @@ jobs:
       - run: pnpm install
       - run: pnpm build
       - run: pnpm test
-      - run: pnpm run --filter @zod/resolution test
+      - run: pnpm run --filter @zod/resolution test:all
       
       - id: publish
         name: Publish to NPM
