@@ -217,6 +217,16 @@ test("test inferred merged type", async () => {
   expectTypeOf<asdf>().toEqualTypeOf<{ a: number }>();
 });
 
+test("inferred type with Record shape", () => {
+  type A = z.ZodObject<Record<string, z.ZodType<string, number>>>;
+  expectTypeOf<z.infer<A>>().toEqualTypeOf<Record<string, string>>();
+  expectTypeOf<z.input<A>>().toEqualTypeOf<Record<string, number>>();
+
+  type B = z.ZodObject;
+  expectTypeOf<z.infer<B>>().toEqualTypeOf<Record<string, unknown>>();
+  expectTypeOf<z.input<B>>().toEqualTypeOf<Record<string, unknown>>();
+});
+
 test("inferred merged object type with optional properties", async () => {
   const Merged = z
     .object({ a: z.string(), b: z.string().optional() })
@@ -549,5 +559,5 @@ test("index signature in shape", () => {
   const schema = makeZodObj("foo");
   type schema = z.infer<typeof schema>;
 
-  expectTypeOf<schema>().toEqualTypeOf<Record<string, unknown>>();
+  expectTypeOf<schema>().toEqualTypeOf<Record<string, string>>();
 });
