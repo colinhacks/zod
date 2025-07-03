@@ -9,6 +9,11 @@ export interface $constructor<T extends ZodTrait, D = T["_zod"]["def"]> {
   init(inst: T, def: D): asserts inst is T;
 }
 
+/** A special constant with type `never` */
+export const NEVER: never = Object.freeze({
+  status: "aborted",
+}) as never;
+
 export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T["_zod"]["def"]>(
   name: string,
   initializer: (inst: T, def: D) => void,

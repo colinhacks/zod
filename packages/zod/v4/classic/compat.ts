@@ -27,16 +27,6 @@ export const ZodIssueCode = {
   custom: "custom",
 } as const;
 
-/** @deprecated Not necessary in Zod 4. */
-type INVALID = { status: "aborted" };
-/** @deprecated Not necessary in Zod 4. */
-const INVALID: INVALID = Object.freeze({
-  status: "aborted",
-});
-
-/** A special constant with type `never` */
-export const NEVER = INVALID as never;
-
 /** @deprecated Use `z.$ZodFlattenedError` */
 export type inferFlattenedErrors<T extends core.$ZodType, U = string> = core.$ZodFlattenedError<core.output<T>, U>;
 

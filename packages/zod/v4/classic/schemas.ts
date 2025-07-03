@@ -1043,6 +1043,7 @@ export function keyof<T extends ZodObject>(schema: T): ZodLiteral<Exclude<keyof 
 }
 
 // ZodObject
+
 export interface ZodObject<
   /** @ts-ignore Cast variance */
   out Shape extends core.$ZodShape = core.$ZodLooseShape,
@@ -1085,24 +1086,21 @@ export interface ZodObject<
    */
   merge<U extends ZodObject>(other: U): ZodObject<util.Extend<Shape, U["shape"]>, U["_zod"]["config"]>;
 
-  pick<M extends util.Exactly<util.Mask<keyof Shape>, M>>(
+  pick<M extends util.Mask<keyof Shape>>(
     mask: M
   ): ZodObject<util.Flatten<Pick<Shape, Extract<keyof Shape, keyof M>>>, Config>;
 
-  omit<M extends util.Exactly<util.Mask<keyof Shape>, M>>(
+  omit<M extends util.Mask<keyof Shape>>(
     mask: M
   ): ZodObject<util.Flatten<Omit<Shape, Extract<keyof Shape, keyof M>>>, Config>;
 
   partial(): ZodObject<
     {
-      [k in keyof Shape]: // Shape[k] extends OptionalInSchema
-      //     ? Shape[k]
-      //     :
-      ZodOptional<Shape[k]>;
+      [k in keyof Shape]: ZodOptional<Shape[k]>;
     },
     Config
   >;
-  partial<M extends util.Exactly<util.Mask<keyof Shape>, M>>(
+  partial<M extends util.Mask<keyof Shape>>(
     mask: M
   ): ZodObject<
     {
@@ -1123,7 +1121,7 @@ export interface ZodObject<
     },
     Config
   >;
-  required<M extends util.Exactly<util.Mask<keyof Shape>, M>>(
+  required<M extends util.Mask<keyof Shape>>(
     mask: M
   ): ZodObject<
     {

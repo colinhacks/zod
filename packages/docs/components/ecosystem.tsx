@@ -40,6 +40,12 @@ const apiLibraries: ZodResource[] = [
     description: "Socket.IO solution with I/O validation, an AsyncAPI generator, and a type-safe events map.",
     slug: "RobinTail/zod-sockets",
   },
+  {
+    name: "Zod JSON-RPC",
+    url: "https://github.com/danscan/zod-jsonrpc",
+    description: "Type-safe JSON-RPC 2.0 client/server library using Zod.",
+    slug: "danscan/zod-jsonrpc",
+  },
 
   // https://github.com/honojs/middleware/tree/main/packages/zod-validator
   // {

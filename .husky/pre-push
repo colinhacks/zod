@@ -1,4 +1,9 @@
-pnpm test
+if [ -n "$(git ls-files --others --exclude-standard)" ]; then
+  echo "ERROR: untracked files present"; 
+  git status;
+  exit 1
+fi
 pnpm semver-check
+pnpm test
 pnpm build
 pnpm clean
