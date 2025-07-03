@@ -9,17 +9,17 @@ const __dirname = path.dirname(__filename);
 
 describe("Are The Types Wrong (attw) tests", () => {
   it("should run attw --pack node_modules/zod and check output", async () => {
-    const result = await execa("pnpm", ["attw", "--pack", "node_modules/zod", "--format", "ascii"], {
-      cwd: __dirname,
-      reject: false, // Don't throw on non-zero exit codes
-    });
-
     // check if node_modules/zod/index.js exists
     const zodIndexPath = path.join(__dirname, "node_modules", "zod", "index.js");
     if (!existsSync(zodIndexPath)) {
       // Zod has not been build
       return;
     }
+
+    const result = await execa("pnpm", ["attw", "--pack", "node_modules/zod", "--format", "ascii"], {
+      cwd: __dirname,
+      reject: false, // Don't throw on non-zero exit codes
+    });
 
     // Combine stdout and stderr for comprehensive output
     const output = result.stdout + (result.stderr ? "\n" + result.stderr : "");
