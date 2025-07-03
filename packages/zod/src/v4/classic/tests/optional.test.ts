@@ -40,15 +40,15 @@ test("optionality", () => {
 
   // z.undefined should NOT be optional
   const f = z.undefined();
-  // expect(f._zod.optin).toEqual(undefined);
-  // expect(f._zod.optout).toEqual(undefined);
+  expect(f._zod.optin).toEqual("optional");
+  expect(f._zod.optout).toEqual("optional");
   expectTypeOf<typeof f._zod.optin>().toEqualTypeOf<"optional" | undefined>();
   expectTypeOf<typeof f._zod.optout>().toEqualTypeOf<"optional" | undefined>();
 
   // z.union should be optional if any of the types are optional
   const g = z.union([z.string(), z.undefined()]);
-  expect(g._zod.optin).toEqual(undefined);
-  expect(g._zod.optout).toEqual(undefined);
+  expect(g._zod.optin).toEqual("optional");
+  expect(g._zod.optout).toEqual("optional");
   expectTypeOf<typeof g._zod.optin>().toEqualTypeOf<"optional" | undefined>();
   expectTypeOf<typeof g._zod.optout>().toEqualTypeOf<"optional" | undefined>();
 
