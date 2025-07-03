@@ -5,5 +5,3 @@ if [ -n "$(git ls-files --others --exclude-standard)" ]; then
 fi
 pnpm semver-check
 pnpm test
-pnpm build
-pnpm clean
