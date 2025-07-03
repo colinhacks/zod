@@ -160,9 +160,10 @@ test("deferred self-recursion", () => {
   const Output = z.object({
     id: z.int(), //.nonnegative(),
     name: z.string(),
-    features: z.array(Feature), //.array(), // <—
+    get features(): z.ZodArray<typeof Feature> {
+      return Feature.array();
+    },
   });
-
   type Output = z.output<typeof Output>;
 
   type _Feature = {

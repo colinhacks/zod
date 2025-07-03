@@ -9,3 +9,4 @@ description:
 globs:
 alwaysApply: false
 ---
+- Ask before generating any new files.

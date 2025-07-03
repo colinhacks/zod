@@ -1498,14 +1498,15 @@ export interface $ZodArrayDef<T extends SomeType = $ZodType> extends $ZodTypeDef
   element: T;
 }
 
-export interface $ZodArrayInternals<T extends SomeType = $ZodType>
-  extends $ZodTypeInternals<core.output<T>[], core.input<T>[]> {
+export interface $ZodArrayInternals<T extends SomeType = $ZodType> extends _$ZodTypeInternals {
+  //$ZodTypeInternals<core.output<T>[], core.input<T>[]> {
   def: $ZodArrayDef<T>;
   isst: errors.$ZodIssueInvalidType;
+  output: core.output<T>[];
+  input: core.input<T>[];
 }
 
-export interface $ZodArray<T extends SomeType = $ZodType>
-  extends $ZodType<core.output<T>[], core.input<T>[], $ZodArrayInternals<T>> {}
+export interface $ZodArray<T extends SomeType = $ZodType> extends $ZodType<any, any, $ZodArrayInternals<T>> {}
 
 function handleArrayResult(result: ParsePayload<any>, final: ParsePayload<any[]>, index: number) {
   if (result.issues.length) {
@@ -1895,17 +1896,19 @@ export interface $ZodUnionDef<Options extends readonly SomeType[] = readonly $Zo
 type IsOptionalIn<T extends SomeType> = T extends OptionalInSchema ? true : false;
 type IsOptionalOut<T extends SomeType> = T extends OptionalOutSchema ? true : false;
 
-export interface $ZodUnionInternals<T extends readonly SomeType[] = readonly $ZodType[]>
-  extends $ZodTypeInternals<$InferUnionOutput<T[number]>, $InferUnionInput<T[number]>> {
+export interface $ZodUnionInternals<T extends readonly SomeType[] = readonly $ZodType[]> extends _$ZodTypeInternals {
   def: $ZodUnionDef<T>;
   isst: errors.$ZodIssueInvalidUnion;
   pattern: T[number]["_zod"]["pattern"];
+  output: $InferUnionOutput<T[number]>;
+  input: $InferUnionInput<T[number]>;
   // if any element in the union is optional, then the union is optional
   optin: IsOptionalIn<T[number]> extends false ? "optional" | undefined : "optional";
   optout: IsOptionalOut<T[number]> extends false ? "optional" | undefined : "optional";
 }
 
-export interface $ZodUnion<T extends readonly SomeType[] = readonly $ZodType[]> extends $ZodType {
+export interface $ZodUnion<T extends readonly SomeType[] = readonly $ZodType[]>
+  extends $ZodType<any, any, $ZodUnionInternals<T>> {
   _zod: $ZodUnionInternals<T>;
 }
 
