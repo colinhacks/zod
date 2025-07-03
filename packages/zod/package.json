@@ -106,8 +106,8 @@
     }
   },
   "scripts": {
-    "clean": "rm -rf dist && git clean -qxdf . -e node_modules",
-    "build": "pnpm clean && zshy --project tsconfig.build.json",
+    "clean": "git clean -xdf . -e node_modules",
+    "build": "zshy --project tsconfig.build.json",
     "postbuild": "pnpm biome check --write .",
     "test:watch": "pnpm vitest",
     "test": "pnpm vitest run",
