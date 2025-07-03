@@ -2,6 +2,7 @@
   "extends": "../../.configs/tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "."
+    "outDir": ".",
+    "customConditions": ["@zod/source"],
   }
 }

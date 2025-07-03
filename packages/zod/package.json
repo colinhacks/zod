@@ -5,6 +5,7 @@
   "author": "Colin McDonnell <zod@colinhacks.com>",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
   "files": [
+    "src",
     "**/*.js",
     "**/*.mjs",
     "**/*.cjs",

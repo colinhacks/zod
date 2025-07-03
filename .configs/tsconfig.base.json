@@ -8,7 +8,7 @@
 
     "strict": true,
     "alwaysStrict": true,
-    "noUncheckedIndexedAccess": true,
+    "noUncheckedIndexedAccess": false,
 
     "exactOptionalPropertyTypes": true,
     "skipLibCheck": true,
