@@ -537,7 +537,7 @@ test("regexes", () => {
   // expect(anyPositiveNumber._zod.pattern.source).toMatchInlineSnapshot(`"^-?\\d+(?:\\.\\d+)?$"`);
   // expect(zeroButInADumbWay._zod.pattern.source).toMatchInlineSnapshot(`"^-?\\d+(?:\\.\\d+)?$"`);
   // expect(finiteButInADumbWay._zod.pattern.source).toMatchInlineSnapshot(`"^-?\\d+(?:\\.\\d+)?$"`);
-  expect(bool._zod.pattern.source).toMatchInlineSnapshot(`"^true|false$"`);
+  expect(bool._zod.pattern.source).toMatchInlineSnapshot(`"^(?:true|false)$"`);
   expect(bigone._zod.pattern.source).toMatchInlineSnapshot(`"^(1)$"`);
   expect(anyBigint._zod.pattern.source).toMatchInlineSnapshot(`"^\\d+n?$"`);
   expect(nullableYo._zod.pattern.source).toMatchInlineSnapshot(`"^((yo)|null)$"`);
