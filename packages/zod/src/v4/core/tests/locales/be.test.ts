@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import be from "../../../locales/be.js";
 
 describe("Belarusian localization", () => {
-  const localeError = be().localeError;
+  const { localeError } = be();
 
   describe("pluralization rules", () => {
     for (const { type, cases } of TEST_CASES) {

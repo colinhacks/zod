@@ -1139,12 +1139,12 @@ export const $ZodBigInt: core.$constructor<$ZodBigInt> = /*@__PURE__*/ core.$con
       try {
         payload.value = BigInt(payload.value);
       } catch (_) {}
-
-    if (typeof payload.value === "bigint") return payload;
+    const { value: input } = payload;
+    if (typeof input === "bigint") return payload;
     payload.issues.push({
       expected: "bigint",
       code: "invalid_type",
-      input: payload.value,
+      input,
       inst,
     });
     return payload;
@@ -1198,7 +1198,7 @@ export const $ZodSymbol: core.$constructor<$ZodSymbol> = /*@__PURE__*/ core.$con
   $ZodType.init(inst, def);
 
   inst._zod.parse = (payload, _ctx) => {
-    const input = payload.value;
+    const { value: input } = payload;
     if (typeof input === "symbol") return payload;
     payload.issues.push({
       expected: "symbol",
@@ -1240,7 +1240,7 @@ export const $ZodUndefined: core.$constructor<$ZodUndefined> = /*@__PURE__*/ cor
     inst._zod.values = new Set([undefined]);
 
     inst._zod.parse = (payload, _ctx) => {
-      const input = payload.value;
+      const { value: input } = payload;
       if (typeof input === "undefined") return payload;
       payload.issues.push({
         expected: "undefined",
@@ -1282,7 +1282,7 @@ export const $ZodNull: core.$constructor<$ZodNull> = /*@__PURE__*/ core.$constru
   inst._zod.values = new Set([null]);
 
   inst._zod.parse = (payload, _ctx) => {
-    const input = payload.value;
+    const { value: input } = payload;
     if (input === null) return payload;
     payload.issues.push({
       expected: "null",
@@ -1411,7 +1411,7 @@ export const $ZodVoid: core.$constructor<$ZodVoid> = /*@__PURE__*/ core.$constru
   $ZodType.init(inst, def);
 
   inst._zod.parse = (payload, _ctx) => {
-    const input = payload.value;
+    const { value: input } = payload;
     if (typeof input === "undefined") return payload;
     payload.issues.push({
       expected: "void",
@@ -1700,7 +1700,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
 
   const generateFastpass = (shape: any) => {
     const doc = new Doc(["shape", "payload", "ctx"]);
-    const normalized = _normalized.value;
+    const { keys, optionalKeys } = _normalized.value;
 
     const parseStr = (key: string) => {
       const k = util.esc(key);
@@ -1710,14 +1710,14 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     doc.write(`const input = payload.value;`);
 
     const ids: any = Object.create(null);
-    for (const key of normalized.keys) {
+    for (const key of keys) {
       ids[key] = util.randomString(15);
     }
 
     // A: preserve key order {
     doc.write(`const newResult = {}`);
-    for (const key of normalized.keys) {
-      if (normalized.optionalKeys.has(key)) {
+    for (const key of keys) {
+      if (optionalKeys.has(key)) {
         const id = ids[key];
         doc.write(`const ${id} = ${parseStr(key)};`);
         const k = util.esc(key);
@@ -1767,7 +1767,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
   const allowsEval = util.allowsEval;
 
   const fastEnabled = jit && allowsEval.value; // && !def.catchall;
-  const catchall = def.catchall;
+  const { catchall } = def;
 
   let value!: typeof _normalized.value;
 
@@ -2086,7 +2086,7 @@ export const $ZodIntersection: core.$constructor<$ZodIntersection> = /*@__PURE__
     $ZodType.init(inst, def);
 
     inst._zod.parse = (payload, ctx) => {
-      const input = payload.value;
+      const { value: input } = payload;
       const left = def.left._zod.run({ value: input, issues: [] }, ctx);
       const right = def.right._zod.run({ value: input, issues: [] }, ctx);
       const async = left instanceof Promise || right instanceof Promise;

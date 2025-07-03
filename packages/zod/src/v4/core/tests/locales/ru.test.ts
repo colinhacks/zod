@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import ru from "../../../locales/ru.js";
 
 describe("Russian localization", () => {
-  const localeError = ru().localeError;
+  const { localeError } = ru();
 
   describe("pluralization rules", () => {
     for (const { type, cases } of TEST_CASES) {
