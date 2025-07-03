@@ -540,9 +540,7 @@ describe("toJSONSchema", () => {
   });
 
   test("number constraints draft-4", () => {
-    expect(
-      z.toJSONSchema(z.number().gt(5).lt(10), { target: "draft-4" })
-    ).toMatchInlineSnapshot(`
+    expect(z.toJSONSchema(z.number().gt(5).lt(10), { target: "draft-4" })).toMatchInlineSnapshot(`
       {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "exclusiveMaximum": true,
