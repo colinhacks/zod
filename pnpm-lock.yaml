@@ -120,8 +120,8 @@ importers:
         specifier: npm:zod@~3.24.0
         version: zod@3.24.3
       zod4:
-        specifier: npm:zod@latest
-        version: link:../zod
+        specifier: npm:zod@3.25.68
+        version: zod@3.25.68
 
   packages/docs:
     dependencies:
@@ -5748,6 +5748,9 @@ packages:
 
   zod@3.25.67:
     resolution: {integrity: sha512-idA2YXwpCdqUSKRCACDE6ItZD9TZzy3OZMtpfLoh6oPR47lipysRrJfjzMqFxQ3uJuUPyUeWe1r9vLH33xO/Qw==}
+
+  zod@3.25.68:
+    resolution: {integrity: sha512-2APbrl2EQHZRaSvpUZNKWKAJNKwG9sNgDqmd+Y2o/C9UmsB2ClDwE9+/cfxPSkwQRV45T3XPNCrXM/scQ/0TTQ==}
 
   zod@4.0.0-beta.20250420T053007:
     resolution: {integrity: sha512-5pp8Q0PNDaNcUptGiBE9akyioJh3RJpagIxrLtAVMR9IxwcSZiOsJD/1/98CyhItdTlI2H91MfhhLzRlU+fifA==}
@@ -11532,6 +11535,8 @@ snapshots:
   zod@3.24.3: {}
 
   zod@3.25.67: {}
+
+  zod@3.25.68: {}
 
   zod@4.0.0-beta.20250420T053007:
     dependencies:

@@ -1508,11 +1508,11 @@ export function _stringbool(
   schemas.$ZodPipe<schemas.$ZodString, schemas.$ZodTransform<boolean, string>>,
   schemas.$ZodBoolean<boolean>
 > {
-  const { case: _case, error, truthy, falsy } = util.normalizeParams(_params);
+  const params = util.normalizeParams(_params);
 
-  let truthyArray = truthy ?? ["true", "1", "yes", "on", "y", "enabled"];
-  let falsyArray = falsy ?? ["false", "0", "no", "off", "n", "disabled"];
-  if (_case !== "sensitive") {
+  let truthyArray = params.truthy ?? ["true", "1", "yes", "on", "y", "enabled"];
+  let falsyArray = params.falsy ?? ["false", "0", "no", "off", "n", "disabled"];
+  if (params.case !== "sensitive") {
     truthyArray = truthyArray.map((v) => (typeof v === "string" ? v.toLowerCase() : v));
     falsyArray = falsyArray.map((v) => (typeof v === "string" ? v.toLowerCase() : v));
   }
@@ -1529,7 +1529,7 @@ export function _stringbool(
     type: "transform",
     transform: (input, payload: schemas.ParsePayload<unknown>) => {
       let data: string = input as string;
-      if (_case !== "sensitive") data = data.toLowerCase();
+      if (params.case !== "sensitive") data = data.toLowerCase();
       if (truthySet.has(data)) {
         return true;
       } else if (falsySet.has(data)) {
@@ -1545,14 +1545,15 @@ export function _stringbool(
         return {} as never;
       }
     },
-    error,
+    error: params.error,
   });
+  // params.error;
 
   const innerPipe = new _Pipe({
     type: "pipe",
-    in: new _String({ type: "string", error }),
+    in: new _String({ type: "string", error: params.error }),
     out: tx,
-    error,
+    error: params.error,
   });
 
   const outerPipe = new _Pipe({
@@ -1560,9 +1561,9 @@ export function _stringbool(
     in: innerPipe,
     out: new _Boolean({
       type: "boolean",
-      error,
+      error: params.error,
     }),
-    error,
+    error: params.error,
   });
   return outerPipe as any;
 }
