@@ -29,14 +29,14 @@
   "zshy": {
     "exports": {
       "./package.json": "./package.json",
-      ".": "./index.ts",
-      "./v3": "./v3/index.ts",
-      "./v4": "./v4/index.ts",
-      "./v4-mini": "./v4-mini/index.ts",
-      "./v4/mini": "./v4/mini/index.ts",
-      "./v4/core": "./v4/core/index.ts",
-      "./v4/locales": "./v4/locales/index.ts",
-      "./v4/locales/*": "./v4/locales/*"
+      ".": "./src/index.ts",
+      "./v3": "./src/v3/index.ts",
+      "./v4": "./src/v4/index.ts",
+      "./v4-mini": "./src/v4-mini/index.ts",
+      "./v4/mini": "./src/v4/mini/index.ts",
+      "./v4/core": "./src/v4/core/index.ts",
+      "./v4/locales": "./src/v4/locales/index.ts",
+      "./v4/locales/*": "./src/v4/locales/*"
     },
     "sourceDialects": [
       "@zod/source"
@@ -45,49 +45,49 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "@zod/source": "./index.ts",
+      "@zod/source": "./src/index.ts",
       "types": "./index.d.cts",
       "import": "./index.js",
       "require": "./index.cjs"
     },
     "./v3": {
-      "@zod/source": "./v3/index.ts",
+      "@zod/source": "./src/v3/index.ts",
       "types": "./v3/index.d.cts",
       "import": "./v3/index.js",
       "require": "./v3/index.cjs"
     },
     "./v4": {
-      "@zod/source": "./v4/index.ts",
+      "@zod/source": "./src/v4/index.ts",
       "types": "./v4/index.d.cts",
       "import": "./v4/index.js",
       "require": "./v4/index.cjs"
     },
     "./v4-mini": {
-      "@zod/source": "./v4-mini/index.ts",
+      "@zod/source": "./src/v4-mini/index.ts",
       "types": "./v4-mini/index.d.cts",
       "import": "./v4-mini/index.js",
       "require": "./v4-mini/index.cjs"
     },
     "./v4/mini": {
-      "@zod/source": "./v4/mini/index.ts",
+      "@zod/source": "./src/v4/mini/index.ts",
       "types": "./v4/mini/index.d.cts",
       "import": "./v4/mini/index.js",
       "require": "./v4/mini/index.cjs"
     },
     "./v4/core": {
-      "@zod/source": "./v4/core/index.ts",
+      "@zod/source": "./src/v4/core/index.ts",
       "types": "./v4/core/index.d.cts",
       "import": "./v4/core/index.js",
       "require": "./v4/core/index.cjs"
     },
     "./v4/locales": {
-      "@zod/source": "./v4/locales/index.ts",
+      "@zod/source": "./src/v4/locales/index.ts",
       "types": "./v4/locales/index.d.cts",
       "import": "./v4/locales/index.js",
       "require": "./v4/locales/index.cjs"
     },
     "./v4/locales/*": {
-      "@zod/source": "./v4/locales/*",
+      "@zod/source": "./src/v4/locales/*",
       "types": "./v4/locales/*",
       "import": "./v4/locales/*",
       "require": "./v4/locales/*"
@@ -107,7 +107,7 @@
   },
   "scripts": {
     "clean": "rm -rf dist && git clean -qxdf . -e node_modules",
-    "build": "pnpm clean && zshy",
+    "build": "pnpm clean && zshy --project tsconfig.build.json",
     "postbuild": "pnpm biome check --write .",
     "test:watch": "pnpm vitest",
     "test": "pnpm vitest run",
