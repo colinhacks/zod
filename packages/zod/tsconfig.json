@@ -3,7 +3,10 @@
   "compilerOptions": {
     "module": "node16",
     "moduleResolution": "node16",
-    "customConditions": ["@zod/source"]
+    "customConditions": ["@zod/source"],
+    "esModuleInterop": true,
+    "rootDir": ".",
+    "outDir": "."
   },
   "include": ["**/*.ts"]
 }
