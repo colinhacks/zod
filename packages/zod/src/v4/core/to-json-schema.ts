@@ -17,9 +17,13 @@ interface JSONSchemaGeneratorParams {
    * - `"any"` — Unrepresentable types become `{}` */
   unrepresentable?: "throw" | "any";
   /** Arbitrary custom logic that can be used to modify the generated JSON Schema. */
-  override?: (ctx: { zodSchema: schemas.$ZodTypes; jsonSchema: JSONSchema.BaseSchema }) => void;
+  override?: (ctx: {
+    zodSchema: schemas.$ZodTypes;
+    jsonSchema: JSONSchema.BaseSchema;
+    path: (string | number)[];
+  }) => void;
   /** Whether to extract the `"input"` or `"output"` type. Relevant to transforms, Error converting schema to JSONz, defaults, coerced primitives, etc.
-   * - `"output" — Default. Convert the output schema.
+   * - `"output"` — Default. Convert the output schema.
    * - `"input"` — Convert the input schema. */
   io?: "input" | "output";
 }
@@ -61,13 +65,19 @@ interface Seen {
   cycle?: (string | number)[] | undefined;
   isParent?: boolean | undefined;
   ref?: schemas.$ZodType | undefined | null;
+  /** JSON Schema property path for this schema */
+  path?: (string | number)[] | undefined;
 }
 
 export class JSONSchemaGenerator {
   metadataRegistry: $ZodRegistry<Record<string, any>>;
   target: "draft-7" | "draft-2020-12";
   unrepresentable: "throw" | "any";
-  override: (ctx: { zodSchema: schemas.$ZodTypes; jsonSchema: JSONSchema.BaseSchema }) => void;
+  override: (ctx: {
+    zodSchema: schemas.$ZodTypes;
+    jsonSchema: JSONSchema.BaseSchema;
+    path: (string | number)[];
+  }) => void;
   io: "input" | "output";
 
   counter = 0;
@@ -110,7 +120,7 @@ export class JSONSchemaGenerator {
     }
 
     // initialize
-    const result: Seen = { schema: {}, count: 1, cycle: undefined };
+    const result: Seen = { schema: {}, count: 1, cycle: undefined, path: _params.path };
     this.seen.set(schema, result);
 
     // custom method overrides default behavior
@@ -736,6 +746,7 @@ export class JSONSchemaGenerator {
         this.override({
           zodSchema: zodSchema as schemas.$ZodTypes,
           jsonSchema: schema,
+          path: seen.path ?? [],
         });
     };
 

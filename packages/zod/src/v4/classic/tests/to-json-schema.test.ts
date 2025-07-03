@@ -1259,6 +1259,35 @@ test("override execution order", () => {
   `);
 });
 
+test("override with path", () => {
+  const userSchema = z.object({
+    name: z.string(),
+    age: z.number(),
+  });
+
+  const capturedPaths: (string | number)[][] = [];
+
+  z.toJSONSchema(userSchema, {
+    override(ctx) {
+      capturedPaths.push(ctx.path);
+    },
+  });
+
+  expect(capturedPaths).toMatchInlineSnapshot(`
+    [
+      [
+        "properties",
+        "age",
+      ],
+      [
+        "properties",
+        "name",
+      ],
+      [],
+    ]
+  `);
+});
+
 test("pipe", () => {
   const mySchema = z
     .string()
