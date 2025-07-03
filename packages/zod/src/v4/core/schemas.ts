@@ -1889,11 +1889,17 @@ export interface $ZodUnionDef<Options extends readonly SomeType[] = readonly $Zo
   options: Options;
 }
 
+type IsOptionalIn<T extends SomeType> = T extends OptionalInSchema ? true : false;
+type IsOptionalOut<T extends SomeType> = T extends OptionalOutSchema ? true : false;
+
 export interface $ZodUnionInternals<T extends readonly SomeType[] = readonly $ZodType[]>
   extends $ZodTypeInternals<$InferUnionOutput<T[number]>, $InferUnionInput<T[number]>> {
   def: $ZodUnionDef<T>;
   isst: errors.$ZodIssueInvalidUnion;
   pattern: T[number]["_zod"]["pattern"];
+  // if any element in the union is optional, then the union is optional
+  optin: IsOptionalIn<T[number]> extends false ? "optional" | undefined : "optional";
+  optout: IsOptionalOut<T[number]> extends false ? "optional" | undefined : "optional";
 }
 
 export interface $ZodUnion<T extends readonly SomeType[] = readonly $ZodType[]> extends $ZodType {
