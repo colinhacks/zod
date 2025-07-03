@@ -37,6 +37,26 @@ test("optionality", () => {
   const e = z.string().default("asdf").nullable();
   expect(e._zod.optin).toEqual("optional");
   expect(e._zod.optout).toEqual(undefined);
+
+  // z.undefined should NOT be optional
+  const f = z.undefined();
+  expect(f._zod.optin).toEqual("optional");
+  expect(f._zod.optout).toEqual("optional");
+  expectTypeOf<typeof f._zod.optin>().toEqualTypeOf<"optional" | undefined>();
+  expectTypeOf<typeof f._zod.optout>().toEqualTypeOf<"optional" | undefined>();
+
+  // z.union should be optional if any of the types are optional
+  const g = z.union([z.string(), z.undefined()]);
+  expect(g._zod.optin).toEqual("optional");
+  expect(g._zod.optout).toEqual("optional");
+  expectTypeOf<typeof g._zod.optin>().toEqualTypeOf<"optional" | undefined>();
+  expectTypeOf<typeof g._zod.optout>().toEqualTypeOf<"optional" | undefined>();
+
+  const h = z.union([z.string(), z.optional(z.string())]);
+  expect(h._zod.optin).toEqual("optional");
+  expect(h._zod.optout).toEqual("optional");
+  expectTypeOf<typeof h._zod.optin>().toEqualTypeOf<"optional">();
+  expectTypeOf<typeof h._zod.optout>().toEqualTypeOf<"optional">();
 });
 
 test("pipe optionality", () => {

@@ -207,11 +207,6 @@ export class JSONSchemaGenerator {
             }
             break;
           }
-          case "undefined": {
-            const json = _json as JSONSchema.NullSchema;
-            json.type = "null";
-            break;
-          }
           case "null": {
             _json.type = "null";
             break;
@@ -222,6 +217,7 @@ export class JSONSchemaGenerator {
           case "unknown": {
             break;
           }
+          case "undefined":
           case "never": {
             _json.not = {};
             break;

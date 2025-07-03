@@ -1,3 +1,3 @@
-import * as z from "zod/v4";
+import { z } from "zod/v4";
 
-z;
+console.dir(z.object({ a: z.never() }).parse({}), { depth: null });

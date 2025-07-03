@@ -1238,6 +1238,8 @@ export const $ZodUndefined: core.$constructor<$ZodUndefined> = /*@__PURE__*/ cor
     $ZodType.init(inst, def);
     inst._zod.pattern = regexes.undefined;
     inst._zod.values = new Set([undefined]);
+    inst._zod.optin = "optional";
+    inst._zod.optout = "optional";
 
     inst._zod.parse = (payload, _ctx) => {
       const input = payload.value;
@@ -1374,7 +1376,6 @@ export interface $ZodNever extends $ZodType {
 
 export const $ZodNever: core.$constructor<$ZodNever> = /*@__PURE__*/ core.$constructor("$ZodNever", (inst, def) => {
   $ZodType.init(inst, def);
-
   inst._zod.parse = (payload, _ctx) => {
     payload.issues.push({
       expected: "never",
@@ -1882,11 +1883,17 @@ export interface $ZodUnionDef<Options extends readonly SomeType[] = readonly $Zo
   options: Options;
 }
 
+type IsOptionalIn<T extends SomeType> = T extends OptionalInSchema ? true : false;
+type IsOptionalOut<T extends SomeType> = T extends OptionalOutSchema ? true : false;
+
 export interface $ZodUnionInternals<T extends readonly SomeType[] = readonly $ZodType[]>
   extends $ZodTypeInternals<$InferUnionOutput<T[number]>, $InferUnionInput<T[number]>> {
   def: $ZodUnionDef<T>;
   isst: errors.$ZodIssueInvalidUnion;
   pattern: T[number]["_zod"]["pattern"];
+  // if any element in the union is optional, then the union is optional
+  optin: IsOptionalIn<T[number]> extends false ? "optional" | undefined : "optional";
+  optout: IsOptionalOut<T[number]> extends false ? "optional" | undefined : "optional";
 }
 
 export interface $ZodUnion<T extends readonly SomeType[] = readonly $ZodType[]> extends $ZodType {
@@ -1913,6 +1920,14 @@ function handleUnionResults(results: ParsePayload[], final: ParsePayload, inst: 
 
 export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$constructor("$ZodUnion", (inst, def) => {
   $ZodType.init(inst, def);
+
+  util.defineLazy(inst._zod, "optin", () =>
+    def.options.some((o) => o._zod.optin === "optional") ? "optional" : undefined
+  );
+
+  util.defineLazy(inst._zod, "optout", () =>
+    def.options.some((o) => o._zod.optout === "optional") ? "optional" : undefined
+  );
 
   util.defineLazy(inst._zod, "values", () => {
     if (def.options.every((o) => o._zod.values)) {
@@ -3272,7 +3287,7 @@ export interface $ZodCatch<T extends SomeType = $ZodType> extends $ZodType {
 
 export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$constructor("$ZodCatch", (inst, def) => {
   $ZodType.init(inst, def);
-  util.defineLazy(inst._zod, "optin", () => def.innerType._zod.optin);
+  inst._zod.optin = "optional";
   util.defineLazy(inst._zod, "optout", () => def.innerType._zod.optout);
   util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
 
