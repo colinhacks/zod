@@ -1925,6 +1925,7 @@ test("input type", () => {
       "required": [
         "a",
         "d",
+        "g",
       ],
       "type": "object",
     }
@@ -1995,6 +1996,7 @@ test("input type", () => {
         "d",
         "e",
         "f",
+        "g",
         "i",
       ],
       "type": "object",
