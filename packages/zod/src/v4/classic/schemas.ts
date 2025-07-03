@@ -365,6 +365,8 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
   inst.duration = (params) => inst.check(iso.duration(params as any));
 });
 
+export function string(params?: string | core.$ZodStringParams): ZodString;
+export function string<T extends string>(params?: string | core.$ZodStringParams): core.$ZodType<T, T>;
 export function string(params?: string | core.$ZodStringParams): ZodString {
   return core._string(ZodString, params) as any;
 }

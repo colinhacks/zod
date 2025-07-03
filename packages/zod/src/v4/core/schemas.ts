@@ -428,7 +428,9 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
   $ZodStringFormat.init(inst, def);
   inst._zod.check = (payload) => {
     try {
-      const url = new URL(payload.value);
+      const orig = payload.value;
+      const url = new URL(orig);
+      const href = url.href;
 
       if (def.hostname) {
         def.hostname.lastIndex = 0;
@@ -458,6 +460,13 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
             continue: !def.abort,
           });
         }
+      }
+
+      // payload.value = url.href;
+      if (!orig.endsWith("/") && href.endsWith("/")) {
+        payload.value = href.slice(0, -1);
+      } else {
+        payload.value = href;
       }
 
       return;
