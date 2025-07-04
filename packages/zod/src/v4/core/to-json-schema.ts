@@ -227,7 +227,11 @@ export class JSONSchemaGenerator {
           case "unknown": {
             break;
           }
-          case "undefined":
+          case "undefined": {
+            const json = _json as JSONSchema.NullSchema;
+            json.type = "null";
+            break;
+          }
           case "never": {
             _json.not = {};
             break;
