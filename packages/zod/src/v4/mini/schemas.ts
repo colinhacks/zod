@@ -903,9 +903,11 @@ export function union<const T extends readonly SomeType[]>(
 }
 
 // ZodMiniDiscriminatedUnion
-export interface ZodMiniDiscriminatedUnion<Options extends readonly SomeType[] = readonly core.$ZodType[]>
-  extends ZodMiniUnion<Options> {
-  _zod: core.$ZodDiscriminatedUnionInternals<Options>;
+export interface ZodMiniDiscriminatedUnion<
+  Options extends readonly SomeType[] = readonly core.$ZodType[],
+  Discriminator extends string = string,
+> extends ZodMiniUnion<Options> {
+  _zod: core.$ZodDiscriminatedUnionInternals<Options, Discriminator>;
 }
 export const ZodMiniDiscriminatedUnion: core.$constructor<ZodMiniDiscriminatedUnion> = /*@__PURE__*/ core.$constructor(
   "ZodMiniDiscriminatedUnion",
@@ -916,18 +918,19 @@ export const ZodMiniDiscriminatedUnion: core.$constructor<ZodMiniDiscriminatedUn
 );
 
 export function discriminatedUnion<
-  Types extends readonly [core.$ZodTypeDiscriminable, ...core.$ZodTypeDiscriminable[]],
+  Types extends readonly [core.$ZodTypeDiscriminable<Discriminator>, ...core.$ZodTypeDiscriminable<Discriminator>[]],
+  Discriminator extends string,
 >(
-  discriminator: string,
+  discriminator: Discriminator,
   options: Types,
   params?: string | core.$ZodDiscriminatedUnionParams
-): ZodMiniDiscriminatedUnion<Types> {
+): ZodMiniDiscriminatedUnion<Types, Discriminator> {
   return new ZodMiniDiscriminatedUnion({
     type: "union",
     options,
     discriminator,
     ...util.normalizeParams(params),
-  }) as ZodMiniDiscriminatedUnion<Types>;
+  }) as ZodMiniDiscriminatedUnion<Types, Discriminator>;
 }
 
 // ZodMiniIntersection
