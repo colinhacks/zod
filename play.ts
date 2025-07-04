@@ -1,5 +1,3 @@
-import { z } from "zod/v4";
+import { z } from "zod/v4-mini";
 
 z;
-const A = z.partialRecord(z.string(), z.string());
-type A = z.infer<typeof A>;

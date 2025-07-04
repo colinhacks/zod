@@ -335,4 +335,8 @@ test("partial record", () => {
   const schema = z.partialRecord(z.string(), z.string());
   type schema = z.infer<typeof schema>;
   expectTypeOf<schema>().toEqualTypeOf<Partial<Record<string, string>>>();
+
+  const Keys = z.enum(["id", "name", "email"]).or(z.never());
+  const Person = z.partialRecord(Keys, z.string());
+  expectTypeOf<z.infer<typeof Person>>().toEqualTypeOf<Partial<Record<"id" | "name" | "email", string>>>();
 });

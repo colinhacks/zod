@@ -2376,30 +2376,42 @@ export interface $ZodRecordDef<Key extends $ZodRecordKey = $ZodRecordKey, Value 
   valueType: Value;
 }
 
+// export type $InferZodRecordOutput<
+//   Key extends $ZodRecordKey = $ZodRecordKey,
+//   Value extends SomeType = $ZodType,
+// > = undefined extends Key["_zod"]["values"]
+//   ? string extends core.output<Key>
+//     ? Record<core.output<Key>, core.output<Value>>
+//     : number extends core.output<Key>
+//       ? Record<core.output<Key>, core.output<Value>>
+//       : symbol extends core.output<Key>
+//         ? Record<core.output<Key>, core.output<Value>>
+//         : Record<core.output<Key>, core.output<Value>>
+//   : Record<core.output<Key>, core.output<Value>>;
 export type $InferZodRecordOutput<
   Key extends $ZodRecordKey = $ZodRecordKey,
   Value extends SomeType = $ZodType,
-> = undefined extends Key["_zod"]["values"]
-  ? string extends core.output<Key>
-    ? Record<core.output<Key>, core.output<Value>>
-    : number extends core.output<Key>
-      ? Record<core.output<Key>, core.output<Value>>
-      : symbol extends core.output<Key>
-        ? Record<core.output<Key>, core.output<Value>>
-        : Record<core.output<Key>, core.output<Value>>
+> = Key extends $partial
+  ? Partial<Record<core.output<Key>, core.output<Value>>>
   : Record<core.output<Key>, core.output<Value>>;
 
+// export type $InferZodRecordInput<
+//   Key extends $ZodRecordKey = $ZodRecordKey,
+//   Value extends SomeType = $ZodType,
+// > = undefined extends Key["_zod"]["values"]
+//   ? string extends core.input<Key>
+//     ? Record<core.input<Key>, core.input<Value>>
+//     : number extends core.input<Key>
+//       ? Record<core.input<Key>, core.input<Value>>
+//       : symbol extends core.input<Key>
+//         ? Record<core.input<Key>, core.input<Value>>
+//         : Record<core.input<Key>, core.input<Value>>
+//   : Record<core.input<Key>, core.input<Value>>;
 export type $InferZodRecordInput<
   Key extends $ZodRecordKey = $ZodRecordKey,
   Value extends SomeType = $ZodType,
-> = undefined extends Key["_zod"]["values"]
-  ? string extends core.input<Key>
-    ? Record<core.input<Key>, core.input<Value>>
-    : number extends core.input<Key>
-      ? Record<core.input<Key>, core.input<Value>>
-      : symbol extends core.input<Key>
-        ? Record<core.input<Key>, core.input<Value>>
-        : Record<core.input<Key>, core.input<Value>>
+> = Key extends $partial
+  ? Partial<Record<core.input<Key>, core.input<Value>>>
   : Record<core.input<Key>, core.input<Value>>;
 
 export interface $ZodRecordInternals<Key extends $ZodRecordKey = $ZodRecordKey, Value extends SomeType = $ZodType>
@@ -2408,6 +2420,7 @@ export interface $ZodRecordInternals<Key extends $ZodRecordKey = $ZodRecordKey, 
   isst: errors.$ZodIssueInvalidType | errors.$ZodIssueInvalidKey<Record<PropertyKey, unknown>>;
 }
 
+export type $partial = { "~~partial": true };
 export interface $ZodRecord<Key extends $ZodRecordKey = $ZodRecordKey, Value extends SomeType = $ZodType>
   extends $ZodType {
   _zod: $ZodRecordInternals<Key, Value>;
