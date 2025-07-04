@@ -59,7 +59,5 @@ test("$branded", () => {
 test("branded record", () => {
   const recordWithBrandedNumberKeys = z.record(z.string().brand("SomeBrand"), z.number());
   type recordWithBrandedNumberKeys = z.infer<typeof recordWithBrandedNumberKeys>;
-  expectTypeOf<recordWithBrandedNumberKeys>().toEqualTypeOf<
-    Record<string & z.core.$brand<"SomeBrand">, number | undefined>
-  >();
+  expectTypeOf<recordWithBrandedNumberKeys>().toEqualTypeOf<Record<string & z.core.$brand<"SomeBrand">, number>>();
 });

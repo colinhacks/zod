@@ -1,0 +1,12 @@
+# Project Guidelines
+
+This file contains general coding guidelines for the project. Update this file with small rules and best practices that do not merit their own dedicated rule file.
+
+## Guidelines
+
+- Do not leave log statements (e.g., `console.log`, `debugger`) in tests or production code.
+description:
+globs:
+alwaysApply: false
+---
+- Ask before generating any new files.

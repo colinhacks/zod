@@ -1,0 +1,63 @@
+# Zod Project Guide
+
+This is the Zod TypeScript-first schema validation library project. The project uses **pnpm** as the package manager and **ES modules**.
+
+## Project Structure
+
+- **Root**: Monorepo with multiple packages
+- **Main package**: [packages/zod/](mdc:packages/zod/) - The core Zod library
+- **Package manager**: pnpm (version 10.12.1)
+- **Module system**: ES modules (`"type": "module"`)
+
+## Common Commands
+
+### Development
+- `pnpm dev` - Start development server with tsx
+- `pnpm dev:watch` - Start development server with watch mode
+- `pnpm dev:play` - Run play.ts file for testing
+
+### Testing
+- `pnpm test` - Run all tests with vitest
+- `pnpm test:watch` - Run tests in watch mode
+- `pnpm vitest run <file>` - Run specific test file
+- `pnpm vitest run packages/zod/src/v4/classic/tests/discriminated-unions.test.ts` - Run specific test
+
+### Building
+- `pnpm build` - Build all packages (excluding docs)
+- `pnpm clean` - Clean all packages
+
+### Code Quality
+- `pnpm format` - Format code with Biome
+- `pnpm format:check` - Check formatting without writing
+- `pnpm lint` - Lint and fix code with Biome
+- `pnpm lint:check` - Check linting without fixing
+- `pnpm fix` - Run both format and lint
+
+### Benchmarking
+- `pnpm bench` - Run benchmarks
+- `pnpm moltar` - Run specific benchmark (object-moltar)
+
+### Publishing
+- `pnpm prepublishOnly` - Run tests and build before publishing
+- `pnpm publish:jsr` - Publish to JSR (dry run)
+- `pnpm pub:beta` - Publish beta version
+
+## Key Files
+
+- [package.json](mdc:package.json) - Root package configuration
+- [packages/zod/package.json](mdc:packages/zod/package.json) - Main Zod package
+- [pnpm-workspace.yaml](mdc:pnpm-workspace.yaml) - Workspace configuration
+- [vitest.workspace.ts](mdc:vitest.workspace.ts) - Vitest workspace config
+
+## Development Notes
+
+- Use **pnpm** for all package management
+- Tests use **Vitest** framework
+- Code formatting/linting uses **Biome**
+- The project supports multiple Zod versions (v3, v4, v4-mini)
+- Source code uses TypeScript with ES modules
+- Node.js v24+ is required for development
+description:
+globs:
+alwaysApply: false
+---

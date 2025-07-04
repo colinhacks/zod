@@ -99,6 +99,12 @@ test("z.url", () => {
   expect(a.parse("http://localhost:3000")).toEqual("http://localhost:3000");
   expect(a.parse("https://localhost:3000")).toEqual("https://localhost:3000");
 
+  // test trimming
+  expect(a.parse("  http://example.com  ")).toEqual("http://example.com");
+  expect(a.parse("  http://example.com/")).toEqual("http://example.com/");
+  expect(a.parse("  http://example.com")).toEqual("http://example.com");
+  expect(a.parse("  http://example.com//")).toEqual("http://example.com//");
+
   // invalid URLs
   expect(() => a.parse("not-a-url")).toThrow();
   // expect(() => a.parse("http:/example.com")).toThrow();

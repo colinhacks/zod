@@ -1,0 +1,56 @@
+# Testing Workflow
+
+## Test Framework
+- **Vitest** is used for all testing
+- Tests are located in `packages/zod/src/v4/classic/tests/` and `packages/zod/src/v4/core/tests/`
+- Test files follow the pattern `*.test.ts`
+
+## Running Tests
+
+### All Tests
+```bash
+pnpm test
+```
+
+### Watch Mode
+```bash
+pnpm test:watch
+```
+
+### Specific Test File
+```bash
+pnpm vitest run packages/zod/src/v4/classic/tests/discriminated-unions.test.ts
+```
+
+### Specific Test Pattern
+```bash
+pnpm vitest run --reporter=verbose packages/zod/src/v4/classic/tests/
+```
+
+## Test Conventions
+
+- Use `test()` for individual test cases
+- Use `describe()` for test groups
+- Use `expect()` for assertions
+- Test files should be co-located with source files or in dedicated test directories
+- Follow the existing test patterns in the codebase
+
+## Test Structure Example
+```typescript
+import { z } from "../../index.js";
+
+test("test description", () => {
+  const schema = z.string();
+  const result = schema.parse("test");
+  expect(result).toBe("test");
+});
+```
+
+## Debugging Tests
+- Use `console.log()` for debugging
+- Run specific test files to isolate issues
+- Use watch mode for rapid iteration
+description:
+globs:
+alwaysApply: false
+---

@@ -17,7 +17,7 @@ test("type inference", () => {
   expectTypeOf<booleanRecord>().toEqualTypeOf<Record<string, boolean>>();
   expectTypeOf<recordWithEnumKeys>().toEqualTypeOf<Record<"Tuna" | "Salmon", string>>();
   expectTypeOf<recordWithLiteralKey>().toEqualTypeOf<Record<"Tuna" | "Salmon", string>>();
-  expectTypeOf<recordWithLiteralUnionKeys>().toEqualTypeOf<Partial<Record<"Tuna" | "Salmon", string>>>();
+  expectTypeOf<recordWithLiteralUnionKeys>().toEqualTypeOf<Record<"Tuna" | "Salmon", string>>();
 });
 
 test("enum exhaustiveness", () => {
@@ -329,4 +329,10 @@ test("async parsing", async () => {
       }
     ]]
   `);
+});
+
+test("partial record", () => {
+  const schema = z.partialRecord(z.string(), z.string());
+  type schema = z.infer<typeof schema>;
+  expectTypeOf<schema>().toEqualTypeOf<Partial<Record<string, string>>>();
 });
