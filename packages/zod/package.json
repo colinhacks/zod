@@ -1,10 +1,6 @@
 {
   "name": "zod",
-<<<<<<< HEAD
-  "version": "3.25.72",
-=======
   "version": "3.25.73",
->>>>>>> 1d6ad2f7 (Fix partialRecord)
   "type": "module",
   "author": "Colin McDonnell <zod@colinhacks.com>",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
