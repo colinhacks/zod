@@ -90,7 +90,7 @@ export interface _$ZodTypeInternals {
   // types: Types;
 
   /** @internal Randomly generated ID for this schema. */
-  id: string;
+  // id: string;
 
   /** @internal List of deferred initializers. */
   deferred: util.AnyFunc[] | undefined;
@@ -171,8 +171,7 @@ export interface _$ZodType<T extends $ZodTypeInternals = $ZodTypeInternals>
 
 export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constructor("$ZodType", (inst, def) => {
   inst ??= {} as any;
-  // avoids issues with using Math.random() in Next.js caching
-  util.defineLazy(inst._zod, "id", () => def.type + "_" + util.randomString(10));
+
   inst._zod.def = def; // set _def property
   inst._zod.bag = inst._zod.bag || {}; // initialize _bag object
   inst._zod.version = version;
@@ -1725,8 +1724,9 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     doc.write(`const input = payload.value;`);
 
     const ids: any = Object.create(null);
+    let counter = 0;
     for (const key of normalized.keys) {
-      ids[key] = util.randomString(15);
+      ids[key] = `key_${counter++}`;
     }
 
     // A: preserve key order {
@@ -1904,6 +1904,7 @@ export interface $ZodUnionInternals<T extends readonly SomeType[] = readonly $Zo
   def: $ZodUnionDef<T>;
   isst: errors.$ZodIssueInvalidUnion;
   pattern: T[number]["_zod"]["pattern"];
+  values: T[number]["_zod"]["values"]; //GetValues<T[number]>;
   output: $InferUnionOutput<T[number]>;
   input: $InferUnionInput<T[number]>;
   // if any element in the union is optional, then the union is optional
@@ -2385,7 +2386,7 @@ export type $InferZodRecordOutput<
       ? Record<core.output<Key>, core.output<Value>>
       : symbol extends core.output<Key>
         ? Record<core.output<Key>, core.output<Value>>
-        : Partial<Record<core.output<Key>, core.output<Value>>>
+        : Record<core.output<Key>, core.output<Value>>
   : Record<core.output<Key>, core.output<Value>>;
 
 export type $InferZodRecordInput<
@@ -2398,7 +2399,7 @@ export type $InferZodRecordInput<
       ? Record<core.input<Key>, core.input<Value>>
       : symbol extends core.input<Key>
         ? Record<core.input<Key>, core.input<Value>>
-        : Partial<Record<core.input<Key>, core.input<Value>>>
+        : Record<core.input<Key>, core.input<Value>>
   : Record<core.input<Key>, core.input<Value>>;
 
 export interface $ZodRecordInternals<Key extends $ZodRecordKey = $ZodRecordKey, Value extends SomeType = $ZodType>

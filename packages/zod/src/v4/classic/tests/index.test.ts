@@ -301,7 +301,7 @@ test("z.record", () => {
   // partial enum
   const d = z.record(z.enum(["a", "b"]).or(z.never()), z.string());
   type d = z.output<typeof d>;
-  expectTypeOf<d>().toEqualTypeOf<Partial<Record<"a" | "b", string>>>();
+  expectTypeOf<d>().toEqualTypeOf<Record<"a" | "b", string>>();
 });
 
 test("z.map", () => {
