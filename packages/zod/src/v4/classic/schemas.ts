@@ -1359,11 +1359,11 @@ export function partialRecord<Key extends core.$ZodRecordKey, Value extends core
   keyType: Key,
   valueType: Value,
   params?: string | core.$ZodRecordParams
-): ZodRecord<ZodUnion<[Key, ZodNever]>, Value> {
+): ZodRecord<Key, ZodOptional<Value>> {
   return new ZodRecord({
     type: "record",
     keyType: union([keyType, never()]),
-    valueType: valueType as any as core.$ZodType,
+    valueType: optional(valueType),
     ...util.normalizeParams(params),
   }) as any;
 }

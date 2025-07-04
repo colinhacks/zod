@@ -1023,11 +1023,11 @@ export function partialRecord<Key extends core.$ZodRecordKey, Value extends Some
   keyType: Key,
   valueType: Value,
   params?: string | core.$ZodRecordParams
-): ZodMiniRecord<ZodMiniUnion<[Key, ZodMiniNever]>, Value> {
+): ZodMiniRecord<Key, ZodMiniOptional<Value>> {
   return new ZodMiniRecord({
     type: "record",
     keyType: union([keyType, never()]),
-    valueType: valueType as any as core.$ZodType,
+    valueType: optional(valueType),
     ...util.normalizeParams(params),
   }) as any;
 }
