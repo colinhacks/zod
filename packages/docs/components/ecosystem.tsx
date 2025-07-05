@@ -90,7 +90,21 @@ const formIntegrations: ZodResource[] = [
   },
 ];
 
-const zodToXConverters: ZodResource[] = [];
+
+const zodToXConverters: ZodResource[] = [
+  {
+    name: "zod-openapi",
+    url: "https://github.com/samchungy/zod-openapi",
+    description: "Use Zod Schemas to create OpenAPI v3.x documentation",
+    slug: "samchungy/zod-openapi",
+  },
+  {
+    name: "fastify-zod-openapi",
+    url: "https://github.com/samchungy/fastify-zod-openapi",
+    description: "Fastify type provider, validation, serialization and @fastify/swagger support for Zod schemas",
+    slug: "samchungy/fastify-zod-openapi",
+  },
+];
 
 const xToZodConverters: ZodResource[] = [
   {
