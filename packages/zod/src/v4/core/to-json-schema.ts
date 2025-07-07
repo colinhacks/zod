@@ -227,19 +227,15 @@ export class JSONSchemaGenerator {
           case "unknown": {
             break;
           }
-          case "undefined": {
-            const json = _json as JSONSchema.NullSchema;
-            json.type = "null";
+          case "undefined":
+          case "void": {
+            if (this.unrepresentable === "throw") {
+              throw new Error("Undefined cannot be represented in JSON Schema");
+            }
             break;
           }
           case "never": {
             _json.not = {};
-            break;
-          }
-          case "void": {
-            if (this.unrepresentable === "throw") {
-              throw new Error("Void cannot be represented in JSON Schema");
-            }
             break;
           }
           case "date": {
