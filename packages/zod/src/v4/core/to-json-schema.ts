@@ -227,10 +227,15 @@ export class JSONSchemaGenerator {
           case "unknown": {
             break;
           }
-          case "undefined":
-          case "void": {
+          case "undefined": {
             if (this.unrepresentable === "throw") {
               throw new Error("Undefined cannot be represented in JSON Schema");
+            }
+            break;
+          }
+          case "void": {
+            if (this.unrepresentable === "throw") {
+              throw new Error("Void cannot be represented in JSON Schema");
             }
             break;
           }

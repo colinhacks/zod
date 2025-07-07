@@ -28,10 +28,9 @@ describe("toJSONSchema", () => {
         "type": "null",
       }
     `);
-    expect(z.toJSONSchema(z.undefined())).toMatchInlineSnapshot(`
+    expect(z.toJSONSchema(z.undefined(), { unrepresentable: "any" })).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "not": {},
       }
     `);
     expect(z.toJSONSchema(z.any())).toMatchInlineSnapshot(`
@@ -232,6 +231,7 @@ describe("toJSONSchema", () => {
     expect(() => z.toJSONSchema(z.int64())).toThrow("BigInt cannot be represented in JSON Schema");
     expect(() => z.toJSONSchema(z.symbol())).toThrow("Symbols cannot be represented in JSON Schema");
     expect(() => z.toJSONSchema(z.void())).toThrow("Void cannot be represented in JSON Schema");
+    expect(() => z.toJSONSchema(z.undefined())).toThrow("Undefined cannot be represented in JSON Schema");
     expect(() => z.toJSONSchema(z.date())).toThrow("Date cannot be represented in JSON Schema");
     expect(() => z.toJSONSchema(z.map(z.string(), z.number()))).toThrow("Map cannot be represented in JSON Schema");
     expect(() => z.toJSONSchema(z.set(z.string()))).toThrow("Set cannot be represented in JSON Schema");
@@ -1887,9 +1887,8 @@ test("input type", () => {
     e: z.string().prefault("hello"),
     f: z.string().catch("hello"),
     g: z.never(),
-    h: z.undefined(),
-    i: z.union([z.string(), z.number().default(2)]),
-    j: z.union([z.string(), z.string().optional()]),
+    h: z.union([z.string(), z.number().default(2)]),
+    i: z.union([z.string(), z.string().optional()]),
   });
   expect(z.toJSONSchema(schema, { io: "input" })).toMatchInlineSnapshot(`
     {
@@ -1927,9 +1926,6 @@ test("input type", () => {
           "not": {},
         },
         "h": {
-          "not": {},
-        },
-        "i": {
           "anyOf": [
             {
               "type": "string",
@@ -1940,7 +1936,7 @@ test("input type", () => {
             },
           ],
         },
-        "j": {
+        "i": {
           "anyOf": [
             {
               "type": "string",
@@ -1995,9 +1991,6 @@ test("input type", () => {
           "not": {},
         },
         "h": {
-          "not": {},
-        },
-        "i": {
           "anyOf": [
             {
               "type": "string",
@@ -2008,7 +2001,7 @@ test("input type", () => {
             },
           ],
         },
-        "j": {
+        "i": {
           "anyOf": [
             {
               "type": "string",
@@ -2026,7 +2019,7 @@ test("input type", () => {
         "e",
         "f",
         "g",
-        "i",
+        "h",
       ],
       "type": "object",
     }
