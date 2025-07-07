@@ -2894,6 +2894,71 @@ export const $ZodEnum: core.$constructor<$ZodEnum> = /*@__PURE__*/ core.$constru
 ////////////////////////////////////////
 ////////////////////////////////////////
 //////////                    //////////
+//////////   $ZodLooseEnum    //////////
+//////////                    //////////
+////////////////////////////////////////
+////////////////////////////////////////
+export type $InferLooseEnumOutput<T extends util.EnumLike> = T[keyof T] | (string & {});
+export type $InferLooseEnumInput<T extends util.EnumLike> = T[keyof T] | (string & {});
+
+export interface $ZodLooseEnumDef<T extends util.EnumLike = util.EnumLike> extends $ZodTypeDef {
+  type: "enum";
+  entries: T;
+}
+
+export interface $ZodLooseEnumInternals<
+  /** @ts-ignore Cast variance */
+  out T extends util.EnumLike = util.EnumLike,
+> extends $ZodTypeInternals<$InferLooseEnumOutput<T>, $InferLooseEnumInput<T>> {
+  // enum: T;
+
+  def: $ZodLooseEnumDef<T>;
+  /** @deprecated Internal API, use with caution (not deprecated) */
+  values: util.PrimitiveSet;
+  /** @deprecated Internal API, use with caution (not deprecated) */
+  pattern: RegExp;
+  isst: errors.$ZodIssueInvalidValue;
+}
+
+export interface $ZodLooseEnum<T extends util.EnumLike = util.EnumLike> extends $ZodType {
+  _zod: $ZodLooseEnumInternals<T>;
+}
+
+export const $ZodLooseEnum: core.$constructor<$ZodLooseEnum> = /*@__PURE__*/ core.$constructor(
+  "$ZodLooseEnum",
+  (inst, def) => {
+    $ZodType.init(inst, def);
+
+    const values = util.getEnumValues(def.entries);
+
+    inst._zod.values = new Set<util.Primitive>(values);
+
+    inst._zod.pattern = new RegExp(
+      `^(${values
+        .filter((k) => util.propertyKeyTypes.has(typeof k))
+        .map((o) => (typeof o === "string" ? util.escapeRegex(o) : o.toString()))
+        .join("|")})$`
+    );
+
+    inst._zod.parse = (payload, _ctx) => {
+      const input = payload.value;
+      if (typeof input === "string") {
+        return payload;
+      }
+      payload.issues.push({
+        code: "invalid_type",
+        expected: "string",
+        input,
+        inst,
+      });
+      return payload;
+    };
+  }
+);
+
+////////////////////////////////////////
+////////////////////////////////////////
+//////////                    //////////
 //////////      $ZodLiteral      //////////
 //////////                    //////////
 ////////////////////////////////////////

@@ -283,3 +283,94 @@ test("enum with diagonal keys", () => {
 
   expect(schema_02.safeParse("A")).toMatchObject({ success: true });
 });
+
+test("looseEnum from string array", () => {
+  const MyLooseEnum = z.looseEnum(["Red", "Green", "Blue"]);
+  type MyLooseEnum = z.infer<typeof MyLooseEnum>;
+  expectTypeOf<MyLooseEnum>().toEqualTypeOf<"Red" | "Green" | "Blue" | (string & {})>();
+
+  // Known values pass
+  expect(MyLooseEnum.safeParse("Red").success).toEqual(true);
+  expect(MyLooseEnum.safeParse("Green").success).toEqual(true);
+  expect(MyLooseEnum.safeParse("Blue").success).toEqual(true);
+
+  // Unknown strings also pass
+  expect(MyLooseEnum.safeParse("Yellow").success).toEqual(true);
+  expect(MyLooseEnum.safeParse("Purple").success).toEqual(true);
+  expect(MyLooseEnum.safeParse("any string").success).toEqual(true);
+
+  // Non-strings fail
+  expect(MyLooseEnum.safeParse(123).success).toEqual(false);
+  expect(MyLooseEnum.safeParse(true).success).toEqual(false);
+  expect(MyLooseEnum.safeParse(null).success).toEqual(false);
+  expect(MyLooseEnum.safeParse(undefined).success).toEqual(false);
+});
+
+test("looseEnum from native enum", () => {
+  enum Colors {
+    Red = "RED",
+    Green = "GREEN",
+    Blue = "BLUE",
+  }
+
+  const ColorsLooseEnum = z.looseEnum(Colors);
+  type ColorsLooseEnum = z.infer<typeof ColorsLooseEnum>;
+  expectTypeOf<ColorsLooseEnum>().toEqualTypeOf<Colors | (string & {})>();
+
+  // Enum values pass
+  expect(ColorsLooseEnum.safeParse(Colors.Red).success).toEqual(true);
+  expect(ColorsLooseEnum.safeParse("RED").success).toEqual(true);
+
+  // Unknown strings pass
+  expect(ColorsLooseEnum.safeParse("YELLOW").success).toEqual(true);
+  expect(ColorsLooseEnum.safeParse("anything").success).toEqual(true);
+
+  // Non-strings fail
+  expect(ColorsLooseEnum.safeParse(123).success).toEqual(false);
+});
+
+test("looseEnum access properties", () => {
+  const MyLooseEnum = z.looseEnum(["Tuna", "Trout"]);
+  expect(MyLooseEnum.enum).toEqual({ Tuna: "Tuna", Trout: "Trout" });
+  expect(MyLooseEnum.options).toEqual(["Tuna", "Trout"]);
+});
+
+test("looseEnum error messages", () => {
+  const MyLooseEnum = z.looseEnum(["A", "B", "C"]);
+
+  // Should only fail for non-string types
+  const result = MyLooseEnum.safeParse(123);
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].code).toEqual("invalid_type");
+    expect(result.error.issues[0].message).toContain("Invalid input: expected string, received number");
+  }
+});
+
+test("looseEnum with const object", () => {
+  const Status = {
+    Active: "active",
+    Inactive: "inactive",
+  } as const;
+
+  const StatusLooseEnum = z.looseEnum(Status);
+  type StatusLooseEnum = z.infer<typeof StatusLooseEnum>;
+  expectTypeOf<StatusLooseEnum>().toEqualTypeOf<"active" | "inactive" | (string & {})>();
+
+  expect(StatusLooseEnum.safeParse("active").success).toEqual(true);
+  expect(StatusLooseEnum.safeParse("inactive").success).toEqual(true);
+  expect(StatusLooseEnum.safeParse("pending").success).toEqual(true);
+  expect(StatusLooseEnum.safeParse("any string").success).toEqual(true);
+});
+
+test("looseEnum with custom error", () => {
+  const MyLooseEnum = z.looseEnum(["A", "B"], {
+    error: "Must be a string",
+  });
+
+  const result = MyLooseEnum.safeParse(123);
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toEqual("Must be a string");
+  }
+});

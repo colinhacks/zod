@@ -420,6 +420,39 @@ test("z.nativeEnum", () => {
   // expect(a.enum.C).toEqual(NativeEnum.C);
 });
 
+test("z.looseEnum", () => {
+  const a = z.looseEnum(["A", "B", "C"]);
+  type a = z.output<typeof a>;
+  expectTypeOf<a>().toEqualTypeOf<"A" | "B" | "C" | (string & {})>();
+  expect(z.parse(a, "A")).toEqual("A");
+  expect(z.parse(a, "B")).toEqual("B");
+  expect(z.parse(a, "C")).toEqual("C");
+  expect(z.parse(a, "D")).toEqual("D");
+  expect(() => z.parse(a, 123)).toThrow();
+});
+
+test("z.looseEnum - native", () => {
+  enum NativeEnum {
+    A = "A",
+    B = "B",
+    C = "C",
+  }
+  const a = z.looseEnum(NativeEnum);
+  type a = z.output<typeof a>;
+  expectTypeOf<a>().toEqualTypeOf<NativeEnum | (string & {})>();
+  expect(z.parse(a, NativeEnum.A)).toEqual(NativeEnum.A);
+  expect(z.parse(a, NativeEnum.B)).toEqual(NativeEnum.B);
+  expect(z.parse(a, NativeEnum.C)).toEqual(NativeEnum.C);
+  expect(z.parse(a, "D")).toEqual("D");
+  expect(() => z.parse(a, 123)).toThrow();
+
+  // test a.enum
+  a;
+  // expect(a.enum.A).toEqual(NativeEnum.A);
+  // expect(a.enum.B).toEqual(NativeEnum.B);
+  // expect(a.enum.C).toEqual(NativeEnum.C);
+});
+
 test("z.literal", () => {
   const a = z.literal("hello");
   type a = z.output<typeof a>;
@@ -854,6 +887,7 @@ test("def typing", () => {
   z.literal("example").def.type satisfies "literal";
   expectTypeOf(z.literal("example").def.values).toEqualTypeOf<"example"[]>();
   z.enum(["a", "b", "c"]).def.type satisfies "enum";
+  z.looseEnum(["a", "b", "c"]).def.type satisfies "enum";
   z.promise(z.string()).def.type satisfies "promise";
   z.lazy(() => z.string()).def.type satisfies "lazy";
   z.optional(z.string()).def.type satisfies "optional";

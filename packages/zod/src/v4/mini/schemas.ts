@@ -1158,6 +1158,36 @@ function _enum(values: any, params?: string | core.$ZodEnumParams) {
 }
 export { _enum as enum };
 
+// ZodMiniLooseEnum
+export interface ZodMiniLooseEnum<T extends util.EnumLike = util.EnumLike>
+  extends _ZodMiniType<core.$ZodLooseEnumInternals<T>> {
+  // _zod: core.$ZodLooseEnumInternals<T>;
+}
+
+export const ZodMiniLooseEnum: core.$constructor<ZodMiniLooseEnum> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniLooseEnum",
+  (inst, def) => {
+    core.$ZodLooseEnum.init(inst, def);
+    ZodMiniType.init(inst, def);
+  }
+);
+
+function _looseEnum<const T extends readonly string[]>(
+  values: T,
+  params?: string | core.$ZodEnumParams
+): ZodMiniLooseEnum<util.ToEnum<T[number]>>;
+function _looseEnum<T extends util.EnumLike>(entries: T, params?: string | core.$ZodEnumParams): ZodMiniLooseEnum<T>;
+function _looseEnum(values: any, params?: string | core.$ZodEnumParams) {
+  const entries: any = Array.isArray(values) ? Object.fromEntries(values.map((v) => [v, v])) : values;
+  return new ZodMiniLooseEnum({
+    type: "enum",
+    entries,
+    ...util.normalizeParams(params),
+  }) as any;
+}
+
+export { _looseEnum as looseEnum };
+
 /** @deprecated This API has been merged into `z.enum()`. Use `z.enum()` instead.
  *
  * ```ts
