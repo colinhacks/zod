@@ -1,6 +1,6 @@
 import type * as errors from "./errors.js";
 import type * as schemas from "./schemas.js";
-import type { Class } from "./util.js";
+import type * as util from "./util.js";
 //////////////////////////////   CONSTRUCTORS   ///////////////////////////////////////
 
 type ZodTrait = { _zod: { def: any; [k: string]: any } };
@@ -17,7 +17,7 @@ export const NEVER: never = Object.freeze({
 export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T["_zod"]["def"]>(
   name: string,
   initializer: (inst: T, def: D) => void,
-  params?: { Parent?: typeof Class }
+  params?: { Parent?: typeof util.Class }
 ): $constructor<T, D> {
   function init(inst: T, def: D) {
     Object.defineProperty(inst, "_zod", {
@@ -84,7 +84,7 @@ export interface $ZodBrandedDefaultOptions {
 export type $ZodBranded<
   T extends schemas.SomeType,
   Brand extends string | number | symbol,
-  Options extends $ZodBrandedOptions = $ZodBrandedDefaultOptions,
+  Options extends util.Exactly<$ZodBrandedOptions, Options> = $ZodBrandedDefaultOptions,
 > = T &
   Record<
     "_zod",
