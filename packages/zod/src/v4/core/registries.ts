@@ -46,9 +46,9 @@ export class $ZodRegistry<Meta extends MetadataType = MetadataType, Schema exten
   }
 
   remove(schema: Schema): this {
-    const meta: any = this._map.get(schema)
+    const meta: any = this._map.get(schema);
     if (meta && typeof meta === "object" && "id" in meta) {
-      this._idmap.delete(meta.id!)
+      this._idmap.delete(meta.id!);
     }
     this._map.delete(schema);
     return this;
