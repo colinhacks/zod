@@ -71,8 +71,8 @@ test("strict branded types", () => {
     type Input = z.input<typeof myStr>;
     type Output = z.output<typeof myStr>;
 
-    expectTypeOf<Input>().toEqualTypeOf<string & z.BRAND<"myStr">>();
-    expectTypeOf<Output>().toEqualTypeOf<string & z.BRAND<"myStr">>();
+    expectTypeOf<Input>().toEqualTypeOf<string & z.$brand<"myStr">>();
+    expectTypeOf<Output>().toEqualTypeOf<string & z.$brand<"myStr">>();
 
     z.string().brand("myStr", {
       strict: true,
@@ -87,8 +87,8 @@ test("strict branded types", () => {
     type Input = z.input<typeof myStr>;
     type Output = z.output<typeof myStr>;
 
-    expectTypeOf<Input>().toEqualTypeOf<string & z.BRAND<"myStr">>();
-    expectTypeOf<Output>().toEqualTypeOf<string & z.BRAND<"myStr">>();
+    expectTypeOf<Input>().toEqualTypeOf<string & z.$brand<"myStr">>();
+    expectTypeOf<Output>().toEqualTypeOf<string & z.$brand<"myStr">>();
 
     z.string().brand<
       "myStr",
