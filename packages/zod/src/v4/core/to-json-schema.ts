@@ -614,6 +614,8 @@ export class JSONSchemaGenerator {
     // initialize result with root schema fields
     // Object.assign(result, seen.cached);
 
+    // returns a ref to the schema
+    // defId will be empty if the ref points to an external schema (or #)
     const makeURI = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): { ref: string; defId?: string } => {
       // comparing the seen objects because sometimes
       // multiple schemas map to the same seen object.
@@ -625,11 +627,13 @@ export class JSONSchemaGenerator {
         const externalId = params.external.registry.get(entry[0])?.id; // ?? "__shared";// `__schema${this.counter++}`;
 
         // check if schema is in the external registry
-        if (externalId) return { ref: params.external.uri(externalId) };
+        if (externalId) {
+          return { ref: params.external.uri(externalId) };
+        }
 
         // otherwise, add to __shared
         const id: string = entry[1].defId ?? (entry[1].schema.id as string) ?? `schema${this.counter++}`;
-        entry[1].defId = id;
+        entry[1].defId = id; // set defId so it will be reused if needed
         return { defId: id, ref: `${params.external.uri("__shared")}#/${defsSegment}/${id}` };
       }
 

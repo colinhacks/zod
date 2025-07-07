@@ -45,6 +45,12 @@ export class $ZodRegistry<Meta extends MetadataType = MetadataType, Schema exten
     return this as any;
   }
 
+  clear(): this {
+    this._map = new WeakMap();
+    this._idmap = new Map();
+    return this;
+  }
+
   remove(schema: Schema): this {
     this._map.delete(schema);
     return this;

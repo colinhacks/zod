@@ -193,3 +193,12 @@ test("function meta with replacement", () => {
 
   expect(myReg.get(mySchema)!.defaulter("hello", true)).toEqual(5);
 });
+
+test("test .clear()", () => {
+  const reg = z.registry();
+  const a = z.string();
+  reg.add(a);
+  expect(reg.has(a)).toEqual(true);
+  reg.clear();
+  expect(reg.has(a)).toEqual(false);
+});
