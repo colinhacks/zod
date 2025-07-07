@@ -2426,6 +2426,7 @@ type Cat = z.infer<typeof Cat>; // { name: string } & z.$brand<"Cat">
 
 With this brand, any plain (unbranded) data structures are no longer assignable to the inferred type. You have to parse some data with the schema to get branded data.
 
+
 > Note that branded types do not affect the runtime result of `.parse`. It is a static-only construct.
 
 ### Strict branded types
