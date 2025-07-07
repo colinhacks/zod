@@ -71,7 +71,7 @@ export type $brand<T extends string | number | symbol = string | number | symbol
 
 export interface $ZodBrandedOptions {
   /**
-   * If `true`, the brand will be strict & input will be required to be branded.
+   * If `true`, the brand will be strict & input will also be required to be branded.
    * @default `false`
    */
   strict: boolean;

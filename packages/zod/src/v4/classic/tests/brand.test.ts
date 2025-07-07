@@ -73,6 +73,12 @@ test("strict branded types", () => {
 
     expectTypeOf<Input>().toEqualTypeOf<string & z.BRAND<"myStr">>();
     expectTypeOf<Output>().toEqualTypeOf<string & z.BRAND<"myStr">>();
+
+    z.string().brand("myStr", {
+      strict: true,
+      // @ts-expect-error foo is not a valid option
+      foo: "bar",
+    });
   }
 
   {
@@ -83,5 +89,14 @@ test("strict branded types", () => {
 
     expectTypeOf<Input>().toEqualTypeOf<string & z.BRAND<"myStr">>();
     expectTypeOf<Output>().toEqualTypeOf<string & z.BRAND<"myStr">>();
+
+    z.string().brand<
+      "myStr",
+      // @ts-expect-error foo is not a valid option
+      {
+        strict: true;
+        foo: "bar";
+      }
+    >();
   }
 });
