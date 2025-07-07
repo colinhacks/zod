@@ -69,8 +69,28 @@ export type $brand<T extends string | number | symbol = string | number | symbol
   [$brand]: { [k in T]: true };
 };
 
-export type $ZodBranded<T extends schemas.SomeType, Brand extends string | number | symbol> = T &
-  Record<"_zod", Record<"output", output<T> & $brand<Brand>>>;
+export interface $ZodBrandedOptions {
+  /**
+   * If `true`, the brand will be strict & input will be required to be branded.
+   * @default `false`
+   */
+  strict: boolean;
+}
+
+export type $ZodBrandedDefaultOptions = {
+  strict: false;
+};
+
+export type $ZodBranded<
+  T extends schemas.SomeType,
+  Brand extends string | number | symbol,
+  Options extends $ZodBrandedOptions = $ZodBrandedDefaultOptions,
+> = T &
+  Record<
+    "_zod",
+    Record<"output", output<T> & $brand<Brand>> &
+      (Options["strict"] extends true ? Record<"input", input<T> & $brand<Brand>> : {})
+  >;
 
 export class $ZodAsyncError extends Error {
   constructor() {
