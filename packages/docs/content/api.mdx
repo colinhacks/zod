@@ -2426,8 +2426,31 @@ type Cat = z.infer<typeof Cat>; // { name: string } & z.$brand<"Cat">
 
 With this brand, any plain (unbranded) data structures are no longer assignable to the inferred type. You have to parse some data with the schema to get branded data.
 
+### Strict branded types
 
-> Note that branded types do not affect the runtime result of `.parse`. It is a static-only construct.
+By default, branded types only affect the *output* type of a schema - the `input` type remains unbranded. This means you can pass plain data to the schema's `.parse()` method, but the result will be branded.
+
+```ts
+const UserId = z.string().brand<"UserId">();
+
+type UserIdInput = z.input<typeof UserId>;   // string (unbranded)
+type UserIdOutput = z.output<typeof UserId>; // string & z.$brand<"UserId"> (branded)
+
+UserId.parse("abc123"); // returns branded string
+```
+
+In some cases, you may want the input type to also be branded. To enable this, use the `strict` option:
+
+```ts
+const StrictUserId = z.string().brand<"UserId", { strict: true }>();
+// or alternatively:
+const StrictUserId = z.string().brand("UserId", { strict: true });
+
+type StrictUserIdInput = z.input<typeof StrictUserId>;   // string & z.$brand<"UserId"> (branded)
+type StrictUserIdOutput = z.output<typeof StrictUserId>; // string & z.$brand<"UserId"> (branded)
+```
+
+With strict branded types, both the input and output types are branded, meaning you can only pass already-branded data to the schema.
 
 ## Readonly
 

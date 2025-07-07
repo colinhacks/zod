@@ -49,3 +49,14 @@ test("branded types", () => {
   // @ts-expect-error
   doStuff({ name: "hello there!" });
 });
+
+test("strict branded types", () => {
+  const myStr = z.string().brand("myStr", {
+    strict: true,
+  });
+  type Input = z.input<typeof myStr>;
+  type Output = z.output<typeof myStr>;
+
+  expectTypeOf<Input>().toEqualTypeOf<string & z.$brand<"myStr">>();
+  expectTypeOf<Output>().toEqualTypeOf<string & z.$brand<"myStr">>();
+});

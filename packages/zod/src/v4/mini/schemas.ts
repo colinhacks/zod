@@ -19,9 +19,10 @@ export interface ZodMiniType<
         : [core.$replace<R["_meta"], this>]
       : ["Incompatible schema"]
   ): this;
-  brand<T extends PropertyKey = PropertyKey>(
-    value?: T
-  ): PropertyKey extends T ? this : this & Record<"_zod", Record<"output", core.output<this> & core.$brand<T>>>;
+  brand<
+    T extends PropertyKey = PropertyKey,
+    Options extends util.Exactly<core.$ZodBrandedOptions, Options> = core.$ZodBrandedDefaultOptions,
+  >(value?: T, options?: Options): PropertyKey extends T ? this : core.$ZodBranded<this, T, Options>;
 
   def: Internals["def"];
 

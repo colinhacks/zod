@@ -77,9 +77,9 @@ export interface $ZodBrandedOptions {
   strict: boolean;
 }
 
-export type $ZodBrandedDefaultOptions = {
+export interface $ZodBrandedDefaultOptions {
   strict: false;
-};
+}
 
 export type $ZodBranded<
   T extends schemas.SomeType,
