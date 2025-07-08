@@ -47,7 +47,7 @@ interface EmitParams {
     | {
         /**  */
         registry: $ZodRegistry<{ id?: string | undefined }>;
-        uri: (id: string) => string;
+        uri?: ((id: string) => string) | undefined;
         defs: Record<string, JSONSchema.BaseSchema>;
       }
     | undefined;
@@ -627,14 +627,15 @@ export class JSONSchemaGenerator {
         const externalId = params.external.registry.get(entry[0])?.id; // ?? "__shared";// `__schema${this.counter++}`;
 
         // check if schema is in the external registry
+        const uriGenerator = params.external.uri ?? ((id) => id);
         if (externalId) {
-          return { ref: params.external.uri(externalId) };
+          return { ref: uriGenerator(externalId) };
         }
 
         // otherwise, add to __shared
         const id: string = entry[1].defId ?? (entry[1].schema.id as string) ?? `schema${this.counter++}`;
         entry[1].defId = id; // set defId so it will be reused if needed
-        return { defId: id, ref: `${params.external.uri("__shared")}#/${defsSegment}/${id}` };
+        return { defId: id, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id}` };
       }
 
       if (entry[1] === root) {
@@ -772,6 +773,12 @@ export class JSONSchemaGenerator {
       console.warn(`Invalid target: ${this.target}`);
     }
 
+    if (params.external?.uri) {
+      const id = params.external.registry.get(schema)?.id;
+      if (!id) throw new Error("Schema is missing an `id` property");
+      result.$id = params.external.uri(id);
+    }
+
     Object.assign(result, root.def);
 
     // build defs object
@@ -784,11 +791,14 @@ export class JSONSchemaGenerator {
     }
 
     // set definitions in result
-    if (!params.external && Object.keys(defs).length > 0) {
-      if (this.target === "draft-2020-12") {
-        result.$defs = defs;
-      } else {
-        result.definitions = defs;
+    if (params.external) {
+    } else {
+      if (Object.keys(defs).length > 0) {
+        if (this.target === "draft-2020-12") {
+          result.$defs = defs;
+        } else {
+          result.definitions = defs;
+        }
       }
     }
 
@@ -828,7 +838,7 @@ export function toJSONSchema(
     const schemas: Record<string, JSONSchema.BaseSchema> = {};
     const external = {
       registry: input,
-      uri: (_params as RegistryToJSONSchemaParams)?.uri || ((id) => id),
+      uri: (_params as RegistryToJSONSchemaParams)?.uri,
       defs,
     };
     for (const entry of input._idmap.entries()) {

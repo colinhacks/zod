@@ -1746,16 +1746,17 @@ test("basic registry", () => {
   myRegistry.add(User, { id: "User" });
   myRegistry.add(Post, { id: "Post" });
 
-  const result = z.z.toJSONSchema(myRegistry);
+  const result = z.z.toJSONSchema(myRegistry, { uri: (id) => `https://example.com/${id}.json` });
   expect(result).toMatchInlineSnapshot(`
     {
       "schemas": {
         "Post": {
+          "$id": "https://example.com/Post.json",
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "additionalProperties": false,
           "properties": {
             "author": {
-              "$ref": "User",
+              "$ref": "https://example.com/User.json",
             },
             "content": {
               "type": "string",
@@ -1772,6 +1773,7 @@ test("basic registry", () => {
           "type": "object",
         },
         "User": {
+          "$id": "https://example.com/User.json",
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "additionalProperties": false,
           "properties": {
@@ -1780,7 +1782,7 @@ test("basic registry", () => {
             },
             "posts": {
               "items": {
-                "$ref": "Post",
+                "$ref": "https://example.com/Post.json",
               },
               "type": "array",
             },

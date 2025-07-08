@@ -1,24 +1,23 @@
 import { z } from "zod/v4";
 
-const schema = z
-  .object({
-    password: z.string().min(8),
-    confirmPassword: z.string(),
-  })
-  .refine(
-    (data) => {
-      console.log("pass check", data);
-      return data.password === data.confirmPassword;
-    },
-    {
-      message: "Passwords do not match",
-      path: ["confirmPassword"],
-    }
-  );
+const myRegistry = z.registry<{ id: string }>();
+const User = z.object({
+  name: z.string(),
+  get posts() {
+    return z.array(Post);
+  },
+});
 
-console.log(
-  schema.safeParse({
-    password: "asdf",
-    confirmPassword: "asdff",
-  })
-);
+const Post = z.object({
+  title: z.string(),
+  content: z.string(),
+  get author() {
+    return User;
+  },
+});
+
+myRegistry.add(User, { id: "User" });
+myRegistry.add(Post, { id: "Post" });
+
+const result = z.toJSONSchema(myRegistry, { uri: (id) => `https://example.com/schemas/${id}.json` });
+console.log(result);
