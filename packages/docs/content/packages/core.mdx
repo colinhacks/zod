@@ -262,7 +262,7 @@ export class $ZodCheck<in T = unknown> {
 The `_zod` internals property contains some notable properties:
 
 - `.def` — The check's *definition*: this is the object you pass into the class's constructor to create the check. It completely describes the check, and it's JSON-serializable.
-  - `.def.check` — A string representing the check's type, e.g. `"min_lenth"`, `"less_than"`, `"string_format"`, etc.
+  - `.def.check` — A string representing the check's type, e.g. `"min_length"`, `"less_than"`, `"string_format"`, etc.
 - `.check()` — Contains the check's validation logic.
 
 `zod/v4/core` exports a number of subclasses that perform some common refinements. All first-party subclasses are exported as a union called `z.$ZodChecks`.
