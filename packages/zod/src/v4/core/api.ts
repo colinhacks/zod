@@ -779,6 +779,8 @@ export function _nan<T extends schemas.$ZodNaN>(Class: util.SchemaClass<T>, para
   });
 }
 
+// export type $ZodCheckParams = CheckParams<checks.$ZodCheck, "abort">;
+
 export type $ZodCheckLessThanParams = CheckParams<checks.$ZodCheckLessThan, "inclusive" | "value">;
 export function _lt(
   value: util.Numeric,

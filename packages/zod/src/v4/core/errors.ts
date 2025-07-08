@@ -203,9 +203,10 @@ const initializer = (inst: $ZodError, def: $ZodIssue[]): void => {
     enumerable: true,
     // configurable: false,
   });
-  inst.toString = () => {
-    return inst.message;
-  };
+  Object.defineProperty(inst, "toString", {
+    value: () => inst.message,
+    enumerable: false,
+  });
 };
 
 export const $ZodError: $constructor<$ZodError> = $constructor("$ZodError", initializer);
