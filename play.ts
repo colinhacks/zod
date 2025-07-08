@@ -1,23 +1,31 @@
-import { z } from "zod/v4";
+import * as z from "zod/v4";
 
-const myRegistry = z.registry<{ id: string }>();
-const User = z.object({
+// const category = z.object({
+//   name: z.string(),
+//   get subcategories() {
+//     return z.array(category);
+//   },
+// });
+
+// console.dir(
+//   z.toJSONSchema(z.object({ outer: category }), {
+//     cycles: "throw",
+//   }),
+//   { depth: null }
+// );
+
+const A = z.object({
   name: z.string(),
-  get posts() {
-    return z.array(Post);
+  get subcategories() {
+    return z.array(B);
   },
 });
 
-const Post = z.object({
-  title: z.string(),
-  content: z.string(),
-  get author() {
-    return User;
+const B = z.object({
+  name: z.string(),
+  get subcategories() {
+    return z.array(A);
   },
 });
 
-myRegistry.add(User, { id: "User" });
-myRegistry.add(Post, { id: "Post" });
-
-const result = z.toJSONSchema(myRegistry, { uri: (id) => `https://example.com/schemas/${id}.json` });
-console.log(result);
+console.dir(z.toJSONSchema(A, { cycles: "throw" }), { depth: null });

@@ -652,6 +652,7 @@ export class JSONSchemaGenerator {
     // stored cached version in `def` property
     // remove all properties, set $ref
     const extractToDef = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): void => {
+      // if the schema is already a reference, do not extract it
       if (entry[1].schema.$ref) {
         return;
       }
@@ -669,15 +670,29 @@ export class JSONSchemaGenerator {
       schema.$ref = ref;
     };
 
+    // throw on cycles
+
+    // break cycles
+    if (params.cycles === "throw") {
+      for (const entry of this.seen.entries()) {
+        const seen = entry[1];
+        if (seen.cycle) {
+          throw new Error(
+            "Cycle detected: " +
+              `#/${seen.cycle?.join("/")}/<root>` +
+              '\n\nSet the `cycles` parameter to `"ref"` to resolve cyclical schemas with defs.'
+          );
+        }
+      }
+    }
+
     // extract schemas into $defs
     for (const entry of this.seen.entries()) {
       const seen = entry[1];
 
       // convert root schema to # $ref
-      // also prevents root schema from being extracted
       if (schema === entry[0]) {
-        // do not copy to defs...this is the root schema
-        extractToDef(entry);
+        extractToDef(entry); // this has special handling for the root schema
         continue;
       }
 
@@ -694,21 +709,13 @@ export class JSONSchemaGenerator {
       const id = this.metadataRegistry.get(entry[0])?.id;
       if (id) {
         extractToDef(entry);
-
         continue;
       }
 
       // break cycles
       if (seen.cycle) {
-        if (params.cycles === "throw") {
-          throw new Error(
-            "Cycle detected: " +
-              `#/${seen.cycle?.join("/")}/<root>` +
-              '\n\nSet the `cycles` parameter to `"ref"` to resolve cyclical schemas with defs.'
-          );
-        } else if (params.cycles === "ref") {
-          extractToDef(entry);
-        }
+        // any
+        extractToDef(entry);
         continue;
       }
 

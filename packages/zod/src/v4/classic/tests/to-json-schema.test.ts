@@ -2275,3 +2275,40 @@ test("custom toJSONSchema", () => {
     }
   `);
 });
+
+test("cycle detection - root", () => {
+  const schema = z.object({
+    name: z.string(),
+    get subcategories() {
+      return z.array(schema);
+    },
+  });
+
+  expect(() => z.toJSONSchema(schema, { cycles: "throw" })).toThrowErrorMatchingInlineSnapshot(`
+    [Error: Cycle detected: #/properties/subcategories/items/<root>
+
+    Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.]
+  `);
+});
+
+test("cycle detection - mutual recursion", () => {
+  const A = z.object({
+    name: z.string(),
+    get subcategories() {
+      return z.array(B);
+    },
+  });
+
+  const B = z.object({
+    name: z.string(),
+    get subcategories() {
+      return z.array(A);
+    },
+  });
+
+  expect(() => z.toJSONSchema(A, { cycles: "throw" })).toThrowErrorMatchingInlineSnapshot(`
+    [Error: Cycle detected: #/properties/subcategories/items/properties/subcategories/items/<root>
+
+    Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.]
+  `);
+});
