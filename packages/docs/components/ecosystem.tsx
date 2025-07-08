@@ -90,7 +90,14 @@ const formIntegrations: ZodResource[] = [
   },
 ];
 
-const zodToXConverters: ZodResource[] = [];
+const zodToXConverters: ZodResource[] = [
+  {
+    name: "zod2md",
+    url: "https://github.com/matejchalk/zod2md",
+    description: "Generate Markdown docs from Zod schemas",
+    slug: "matejchalk/zod2md",
+  },
+];
 
 const xToZodConverters: ZodResource[] = [
   {
