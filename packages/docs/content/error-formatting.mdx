@@ -168,8 +168,6 @@ const flattened = z.flattenError(result.error);
 The `formErrors` array contains any top-level errors (where `path` is `[]`). The `fieldErrors` object provides an array of errors for each field in the schema.
 
 ```ts
-flattened.fieldErrors.string; // => [ 'Invalid input: expected string, received number' ]
-flattened.fieldErrors.numbers; // => [ 'Invalid input: expected number, received string' ]
+flattened.fieldErrors.username; // => [ 'Invalid input: expected string, received number' ]
+flattened.fieldErrors.favoriteNumbers; // => [ 'Invalid input: expected number, received string' ]
 ```
-
-> **Note** — If you have issues with a `path` longer than one level, this function throws away some error information. 
