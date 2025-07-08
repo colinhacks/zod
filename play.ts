@@ -28,4 +28,8 @@ const B = z.object({
   },
 });
 
-console.dir(z.toJSONSchema(A, { cycles: "throw" }), { depth: null });
+z.toJSONSchema(A, {
+  override(ctx) {
+    console.log(ctx.path);
+  },
+});
