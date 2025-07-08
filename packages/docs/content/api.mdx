@@ -2054,12 +2054,12 @@ const schema = z
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
+
+    // run if password & confirmPassword are valid
     when(payload) { // [!code ++]
-      // no issues with `password` or `confirmPassword` // [!code ++]
-      return payload.issues.every((iss) => { // [!code ++]
-        const firstPathEl = iss.path?.[0]; // [!code ++]
-        return firstPathEl !== "password" && firstPathEl !== "confirmPassword"; // [!code ++]
-      }); // [!code ++]
+      return schema // [!code ++]
+        .pick({ password: true, confirmPassword: true }) // [!code ++]
+        .safeParse(payload.value).success; // [!code ++]
     },  // [!code ++]
   });
 
