@@ -295,13 +295,15 @@ export function formatError<T>(error: $ZodError, _mapper?: any) {
   return fieldErrors;
 }
 
-export type $ZodErrorTree<T, U = string> = T extends [any, ...any[]]
-  ? { errors: U[]; items?: { [K in keyof T]?: $ZodErrorTree<T[K], U> } }
-  : T extends any[]
-    ? { errors: U[]; items?: Array<$ZodErrorTree<T[number], U>> }
-    : T extends object
-      ? { errors: U[]; properties?: { [K in keyof T]?: $ZodErrorTree<T[K], U> } }
-      : { errors: U[] };
+export type $ZodErrorTree<T, U = string> = T extends util.Primitive
+  ? { errors: U[] }
+  : T extends [any, ...any[]]
+    ? { errors: U[]; items?: { [K in keyof T]?: $ZodErrorTree<T[K], U> } }
+    : T extends any[]
+      ? { errors: U[]; items?: Array<$ZodErrorTree<T[number], U>> }
+      : T extends object
+        ? { errors: U[]; properties?: { [K in keyof T]?: $ZodErrorTree<T[K], U> } }
+        : { errors: U[] };
 
 export function treeifyError<T>(error: $ZodError<T>): $ZodErrorTree<T>;
 export function treeifyError<T, U>(error: $ZodError<T>, mapper?: (issue: $ZodIssue) => U): $ZodErrorTree<T, U>;
