@@ -204,18 +204,18 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
       ctx?: ParseContextInternal | undefined
     ): util.MaybeAsync<ParsePayload> => {
       let isAborted = util.aborted(payload);
+
       let asyncResult!: Promise<unknown> | undefined;
       for (const ch of checks) {
-        if (ch._zod.when) {
-          const shouldRun = ch._zod.when(payload);
-
+        if (ch._zod.def.when) {
+          const shouldRun = ch._zod.def.when(payload);
           if (!shouldRun) continue;
         } else if (isAborted) {
           continue;
         }
-
         const currLen = payload.issues.length;
         const _ = ch._zod.check(payload as any) as any as ParsePayload;
+
         if (_ instanceof Promise && ctx?.async === false) {
           throw new core.$ZodAsyncError();
         }

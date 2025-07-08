@@ -1746,16 +1746,17 @@ test("basic registry", () => {
   myRegistry.add(User, { id: "User" });
   myRegistry.add(Post, { id: "Post" });
 
-  const result = z.z.toJSONSchema(myRegistry);
+  const result = z.z.toJSONSchema(myRegistry, { uri: (id) => `https://example.com/${id}.json` });
   expect(result).toMatchInlineSnapshot(`
     {
       "schemas": {
         "Post": {
+          "$id": "https://example.com/Post.json",
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "additionalProperties": false,
           "properties": {
             "author": {
-              "$ref": "User",
+              "$ref": "https://example.com/User.json",
             },
             "content": {
               "type": "string",
@@ -1772,6 +1773,7 @@ test("basic registry", () => {
           "type": "object",
         },
         "User": {
+          "$id": "https://example.com/User.json",
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "additionalProperties": false,
           "properties": {
@@ -1780,7 +1782,7 @@ test("basic registry", () => {
             },
             "posts": {
               "items": {
-                "$ref": "Post",
+                "$ref": "https://example.com/Post.json",
               },
               "type": "array",
             },
@@ -2271,5 +2273,42 @@ test("custom toJSONSchema", () => {
       "format": "date-time",
       "type": "string",
     }
+  `);
+});
+
+test("cycle detection - root", () => {
+  const schema = z.object({
+    name: z.string(),
+    get subcategories() {
+      return z.array(schema);
+    },
+  });
+
+  expect(() => z.toJSONSchema(schema, { cycles: "throw" })).toThrowErrorMatchingInlineSnapshot(`
+    [Error: Cycle detected: #/properties/subcategories/items/<root>
+
+    Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.]
+  `);
+});
+
+test("cycle detection - mutual recursion", () => {
+  const A = z.object({
+    name: z.string(),
+    get subcategories() {
+      return z.array(B);
+    },
+  });
+
+  const B = z.object({
+    name: z.string(),
+    get subcategories() {
+      return z.array(A);
+    },
+  });
+
+  expect(() => z.toJSONSchema(A, { cycles: "throw" })).toThrowErrorMatchingInlineSnapshot(`
+    [Error: Cycle detected: #/properties/subcategories/items/properties/subcategories/items/<root>
+
+    Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.]
   `);
 });

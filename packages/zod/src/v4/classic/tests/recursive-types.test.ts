@@ -324,3 +324,33 @@ test("recursion compatibility", () => {
     },
   });
 });
+
+// biome-ignore lint: sadf
+export type RecursiveA = z.ZodUnion<
+  [
+    z.ZodObject<{
+      a: z.ZodDefault<RecursiveA>;
+      b: z.ZodPrefault<RecursiveA>;
+      c: z.ZodNonOptional<RecursiveA>;
+      d: z.ZodOptional<RecursiveA>;
+      e: z.ZodNullable<RecursiveA>;
+      g: z.ZodReadonly<RecursiveA>;
+      h: z.ZodPipe<RecursiveA, z.ZodString>;
+      i: z.ZodArray<RecursiveA>;
+      j: z.ZodSet<RecursiveA>;
+      k: z.ZodMap<RecursiveA, RecursiveA>;
+      l: z.ZodRecord<z.ZodString, RecursiveA>;
+      m: z.ZodUnion<[RecursiveA, RecursiveA]>;
+      n: z.ZodIntersection<RecursiveA, RecursiveA>;
+      o: z.ZodLazy<RecursiveA>;
+      p: z.ZodPromise<RecursiveA>;
+      q: z.ZodCatch<RecursiveA>;
+      r: z.ZodSuccess<RecursiveA>;
+      s: z.ZodTransform<RecursiveA, string>;
+      t: z.ZodTuple<[RecursiveA, RecursiveA]>;
+      u: z.ZodObject<{
+        a: RecursiveA;
+      }>;
+    }>,
+  ]
+>;
