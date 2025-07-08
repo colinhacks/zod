@@ -321,7 +321,7 @@ test("all errors", () => {
 });
 
 const schema = z.strictObject({
-  username: z.string(),
+  username: z.string().brand<"username">(),
   favoriteNumbers: z.array(z.number()),
   nesting: z.object({
     a: z.string(),
@@ -336,8 +336,33 @@ const result = schema.safeParse({
   extra: 1234,
 });
 
+const tree = z.treeifyError(result.error!);
+
+expectTypeOf(tree).toEqualTypeOf<{
+  errors: string[];
+  properties?: {
+    username?: {
+      errors: string[];
+    };
+    favoriteNumbers?: {
+      errors: string[];
+      items?: {
+        errors: string[];
+      }[];
+    };
+    nesting?: {
+      errors: string[];
+      properties?: {
+        a?: {
+          errors: string[];
+        };
+      };
+    };
+  };
+}>();
+
 test("z.treeifyError", () => {
-  expect(z.treeifyError(result.error!)).toMatchInlineSnapshot(`
+  expect(tree).toMatchInlineSnapshot(`
     {
       "errors": [
         "Unrecognized key: "extra"",
