@@ -103,6 +103,12 @@ const zodToXConverters: ZodResource[] = [
     description: "Fastify type provider, validation, serialization and @fastify/swagger support for Zod schemas",
     slug: "samchungy/fastify-zod-openapi",
   },
+  {
+    name: "zod2md",
+    url: "https://github.com/matejchalk/zod2md",
+    description: "Generate Markdown docs from Zod schemas",
+    slug: "matejchalk/zod2md",
+  },
 ];
 
 const xToZodConverters: ZodResource[] = [

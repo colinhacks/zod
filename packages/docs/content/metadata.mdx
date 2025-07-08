@@ -28,6 +28,7 @@ myRegistry.add(mySchema, { description: "A cool schema!"});
 myRegistry.has(mySchema); // => true
 myRegistry.get(mySchema); // => { description: "A cool schema!" }
 myRegistry.remove(mySchema);
+myRegistry.clear(); // wipe registry
 ```
 
 TypeScript enforces that the metadata for each schema matches the registry's **metadata type**.
@@ -37,7 +38,7 @@ myRegistry.add(mySchema, { description: "A cool schema!" }); // ✅
 myRegistry.add(mySchema, { description: 123 }); // ❌
 ```
 
-> **Important** —  If you register metadata on a schema and include an `id` property, Zod will throw an error if multiple schemas share the same `id` value. Make sure all registered `id` values are unique per registry. This also applies to the global registry.
+> **Special handling for `id`** —  Zod registries treat the `id` property specially. An `Error` will be thrown if multiple schemas are registered with the same `id` value. This is true for all registries, including the global registry.
 
 
 ### `.register()`

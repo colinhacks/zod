@@ -421,3 +421,112 @@ describe("type refinement", () => {
   });
 });
 */
+
+test("when", () => {
+  const schema = z
+    .strictObject({
+      password: z.string().min(8),
+      confirmPassword: z.string(),
+      other: z.string(),
+    })
+    .refine(
+      (data) => {
+        console.log("running check...");
+        console.log(data);
+        console.log(data.password);
+        return data.password === data.confirmPassword;
+      },
+      {
+        message: "Passwords do not match",
+        path: ["confirmPassword"],
+        when(payload) {
+          if (payload.value === undefined) return false;
+          if (payload.value === null) return false;
+          // no issues with confirmPassword or password
+          return payload.issues.every((iss) => iss.path?.[0] !== "confirmPassword" && iss.path?.[0] !== "password");
+        },
+      }
+    );
+
+  expect(schema.safeParse(undefined)).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "expected": "object",
+        "code": "invalid_type",
+        "path": [],
+        "message": "Invalid input: expected object, received undefined"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+  expect(schema.safeParse(null)).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "expected": "object",
+        "code": "invalid_type",
+        "path": [],
+        "message": "Invalid input: expected object, received null"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+  expect(
+    schema.safeParse({
+      password: "asdf",
+      confirmPassword: "asdfg",
+      other: "qwer",
+    })
+  ).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "origin": "string",
+        "code": "too_small",
+        "minimum": 8,
+        "inclusive": true,
+        "path": [
+          "password"
+        ],
+        "message": "Too small: expected string to have >=8 characters"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+
+  expect(
+    schema.safeParse({
+      password: "asdf",
+      confirmPassword: "asdfg",
+      other: 1234,
+    })
+  ).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "origin": "string",
+        "code": "too_small",
+        "minimum": 8,
+        "inclusive": true,
+        "path": [
+          "password"
+        ],
+        "message": "Too small: expected string to have >=8 characters"
+      },
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": [
+          "other"
+        ],
+        "message": "Invalid input: expected string, received number"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+});

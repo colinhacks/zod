@@ -1937,10 +1937,10 @@ export const ZodCustom: core.$constructor<ZodCustom> = /*@__PURE__*/ core.$const
 });
 
 // custom checks
-export function check<O = unknown>(fn: core.CheckFn<O>, params?: string | core.$ZodCustomParams): core.$ZodCheck<O> {
+export function check<O = unknown>(fn: core.CheckFn<O>): core.$ZodCheck<O> {
   const ch = new core.$ZodCheck({
     check: "custom",
-    ...util.normalizeParams(params),
+    // ...util.normalizeParams(params),
   });
 
   ch._zod.check = fn;
@@ -1962,10 +1962,7 @@ export function refine<T>(
 }
 
 // superRefine
-export function superRefine<T>(
-  fn: (arg: T, payload: RefinementCtx<T>) => void | Promise<void>,
-  params?: string | core.$ZodCustomParams
-): core.$ZodCheck<T> {
+export function superRefine<T>(fn: (arg: T, payload: RefinementCtx<T>) => void | Promise<void>): core.$ZodCheck<T> {
   const ch = check<T>((payload) => {
     (payload as RefinementCtx).addIssue = (issue) => {
       if (typeof issue === "string") {
@@ -1983,7 +1980,7 @@ export function superRefine<T>(
     };
 
     return fn(payload.value, payload as RefinementCtx<T>);
-  }, params);
+  });
   return ch;
 }
 

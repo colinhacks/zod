@@ -204,18 +204,18 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
       ctx?: ParseContextInternal | undefined
     ): util.MaybeAsync<ParsePayload> => {
       let isAborted = util.aborted(payload);
+
       let asyncResult!: Promise<unknown> | undefined;
       for (const ch of checks) {
-        if (ch._zod.when) {
-          const shouldRun = ch._zod.when(payload);
-
+        if (ch._zod.def.when) {
+          const shouldRun = ch._zod.def.when(payload);
           if (!shouldRun) continue;
         } else if (isAborted) {
           continue;
         }
-
         const currLen = payload.issues.length;
         const _ = ch._zod.check(payload as any) as any as ParsePayload;
+
         if (_ instanceof Promise && ctx?.async === false) {
           throw new core.$ZodAsyncError();
         }
@@ -2106,6 +2106,8 @@ export interface $ZodIntersectionInternals<A extends SomeType = $ZodType, B exte
   extends $ZodTypeInternals<core.output<A> & core.output<B>, core.input<A> & core.input<B>> {
   def: $ZodIntersectionDef<A, B>;
   isst: never;
+  optin: A["_zod"]["optin"] | B["_zod"]["optin"];
+  optout: A["_zod"]["optout"] | B["_zod"]["optout"];
 }
 
 export interface $ZodIntersection<A extends SomeType = $ZodType, B extends SomeType = $ZodType> extends $ZodType {
@@ -2418,6 +2420,8 @@ export interface $ZodRecordInternals<Key extends $ZodRecordKey = $ZodRecordKey, 
   extends $ZodTypeInternals<$InferZodRecordOutput<Key, Value>, $InferZodRecordInput<Key, Value>> {
   def: $ZodRecordDef<Key, Value>;
   isst: errors.$ZodIssueInvalidType | errors.$ZodIssueInvalidKey<Record<PropertyKey, unknown>>;
+  optin?: "optional" | undefined;
+  optout?: "optional" | undefined;
 }
 
 export type $partial = { "~~partial": true };
@@ -2551,6 +2555,8 @@ export interface $ZodMapInternals<Key extends SomeType = $ZodType, Value extends
   extends $ZodTypeInternals<Map<core.output<Key>, core.output<Value>>, Map<core.input<Key>, core.input<Value>>> {
   def: $ZodMapDef<Key, Value>;
   isst: errors.$ZodIssueInvalidType | errors.$ZodIssueInvalidKey | errors.$ZodIssueInvalidElement<unknown>;
+  optin?: "optional" | undefined;
+  optout?: "optional" | undefined;
 }
 
 export interface $ZodMap<Key extends SomeType = $ZodType, Value extends SomeType = $ZodType> extends $ZodType {
@@ -2650,6 +2656,8 @@ export interface $ZodSetInternals<T extends SomeType = $ZodType>
   extends $ZodTypeInternals<Set<core.output<T>>, Set<core.input<T>>> {
   def: $ZodSetDef<T>;
   isst: errors.$ZodIssueInvalidType;
+  optin?: "optional" | undefined;
+  optout?: "optional" | undefined;
 }
 
 export interface $ZodSet<T extends SomeType = $ZodType> extends $ZodType {
@@ -3060,6 +3068,7 @@ export interface $ZodDefaultInternals<T extends SomeType = $ZodType>
   extends $ZodTypeInternals<util.NoUndefined<core.output<T>>, core.input<T> | undefined> {
   def: $ZodDefaultDef<T>;
   optin: "optional";
+  optout?: "optional" | undefined; // required
   isst: never;
   values: T["_zod"]["values"];
 }
@@ -3120,6 +3129,7 @@ export interface $ZodPrefaultInternals<T extends SomeType = $ZodType>
   extends $ZodTypeInternals<util.NoUndefined<core.output<T>>, core.input<T> | undefined> {
   def: $ZodPrefaultDef<T>;
   optin: "optional";
+  optout?: "optional" | undefined;
   isst: never;
   values: T["_zod"]["values"];
 }
@@ -3162,6 +3172,8 @@ export interface $ZodNonOptionalInternals<T extends SomeType = $ZodType>
   def: $ZodNonOptionalDef<T>;
   isst: errors.$ZodIssueInvalidType;
   values: T["_zod"]["values"];
+  optin: "optional" | undefined;
+  optout: "optional" | undefined;
 }
 
 export interface $ZodNonOptional<T extends SomeType = $ZodType> extends $ZodType {
@@ -3255,6 +3267,8 @@ export interface $ZodSuccessDef<T extends SomeType = $ZodType> extends $ZodTypeD
 export interface $ZodSuccessInternals<T extends SomeType = $ZodType> extends $ZodTypeInternals<boolean, core.input<T>> {
   def: $ZodSuccessDef<T>;
   isst: never;
+  optin: T["_zod"]["optin"];
+  optout: "optional" | undefined;
 }
 
 export interface $ZodSuccess<T extends SomeType = $ZodType> extends $ZodType {

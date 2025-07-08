@@ -47,7 +47,7 @@ interface EmitParams {
     | {
         /**  */
         registry: $ZodRegistry<{ id?: string | undefined }>;
-        uri: (id: string) => string;
+        uri?: ((id: string) => string) | undefined;
         defs: Record<string, JSONSchema.BaseSchema>;
       }
     | undefined;
@@ -227,15 +227,20 @@ export class JSONSchemaGenerator {
           case "unknown": {
             break;
           }
-          case "undefined":
-          case "never": {
-            _json.not = {};
+          case "undefined": {
+            if (this.unrepresentable === "throw") {
+              throw new Error("Undefined cannot be represented in JSON Schema");
+            }
             break;
           }
           case "void": {
             if (this.unrepresentable === "throw") {
               throw new Error("Void cannot be represented in JSON Schema");
             }
+            break;
+          }
+          case "never": {
+            _json.not = {};
             break;
           }
           case "date": {
@@ -609,6 +614,8 @@ export class JSONSchemaGenerator {
     // initialize result with root schema fields
     // Object.assign(result, seen.cached);
 
+    // returns a ref to the schema
+    // defId will be empty if the ref points to an external schema (or #)
     const makeURI = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): { ref: string; defId?: string } => {
       // comparing the seen objects because sometimes
       // multiple schemas map to the same seen object.
@@ -620,12 +627,15 @@ export class JSONSchemaGenerator {
         const externalId = params.external.registry.get(entry[0])?.id; // ?? "__shared";// `__schema${this.counter++}`;
 
         // check if schema is in the external registry
-        if (externalId) return { ref: params.external.uri(externalId) };
+        const uriGenerator = params.external.uri ?? ((id) => id);
+        if (externalId) {
+          return { ref: uriGenerator(externalId) };
+        }
 
         // otherwise, add to __shared
         const id: string = entry[1].defId ?? (entry[1].schema.id as string) ?? `schema${this.counter++}`;
-        entry[1].defId = id;
-        return { defId: id, ref: `${params.external.uri("__shared")}#/${defsSegment}/${id}` };
+        entry[1].defId = id; // set defId so it will be reused if needed
+        return { defId: id, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id}` };
       }
 
       if (entry[1] === root) {
@@ -642,6 +652,7 @@ export class JSONSchemaGenerator {
     // stored cached version in `def` property
     // remove all properties, set $ref
     const extractToDef = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): void => {
+      // if the schema is already a reference, do not extract it
       if (entry[1].schema.$ref) {
         return;
       }
@@ -659,15 +670,29 @@ export class JSONSchemaGenerator {
       schema.$ref = ref;
     };
 
+    // throw on cycles
+
+    // break cycles
+    if (params.cycles === "throw") {
+      for (const entry of this.seen.entries()) {
+        const seen = entry[1];
+        if (seen.cycle) {
+          throw new Error(
+            "Cycle detected: " +
+              `#/${seen.cycle?.join("/")}/<root>` +
+              '\n\nSet the `cycles` parameter to `"ref"` to resolve cyclical schemas with defs.'
+          );
+        }
+      }
+    }
+
     // extract schemas into $defs
     for (const entry of this.seen.entries()) {
       const seen = entry[1];
 
       // convert root schema to # $ref
-      // also prevents root schema from being extracted
       if (schema === entry[0]) {
-        // do not copy to defs...this is the root schema
-        extractToDef(entry);
+        extractToDef(entry); // this has special handling for the root schema
         continue;
       }
 
@@ -684,21 +709,13 @@ export class JSONSchemaGenerator {
       const id = this.metadataRegistry.get(entry[0])?.id;
       if (id) {
         extractToDef(entry);
-
         continue;
       }
 
       // break cycles
       if (seen.cycle) {
-        if (params.cycles === "throw") {
-          throw new Error(
-            "Cycle detected: " +
-              `#/${seen.cycle?.join("/")}/<root>` +
-              '\n\nSet the `cycles` parameter to `"ref"` to resolve cyclical schemas with defs.'
-          );
-        } else if (params.cycles === "ref") {
-          extractToDef(entry);
-        }
+        // any
+        extractToDef(entry);
         continue;
       }
 
@@ -763,6 +780,12 @@ export class JSONSchemaGenerator {
       console.warn(`Invalid target: ${this.target}`);
     }
 
+    if (params.external?.uri) {
+      const id = params.external.registry.get(schema)?.id;
+      if (!id) throw new Error("Schema is missing an `id` property");
+      result.$id = params.external.uri(id);
+    }
+
     Object.assign(result, root.def);
 
     // build defs object
@@ -775,11 +798,14 @@ export class JSONSchemaGenerator {
     }
 
     // set definitions in result
-    if (!params.external && Object.keys(defs).length > 0) {
-      if (this.target === "draft-2020-12") {
-        result.$defs = defs;
-      } else {
-        result.definitions = defs;
+    if (params.external) {
+    } else {
+      if (Object.keys(defs).length > 0) {
+        if (this.target === "draft-2020-12") {
+          result.$defs = defs;
+        } else {
+          result.definitions = defs;
+        }
       }
     }
 
@@ -819,7 +845,7 @@ export function toJSONSchema(
     const schemas: Record<string, JSONSchema.BaseSchema> = {};
     const external = {
       registry: input,
-      uri: (_params as RegistryToJSONSchemaParams)?.uri || ((id) => id),
+      uri: (_params as RegistryToJSONSchemaParams)?.uri,
       defs,
     };
     for (const entry of input._idmap.entries()) {

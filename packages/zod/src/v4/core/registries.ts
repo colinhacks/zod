@@ -27,7 +27,7 @@ type MetadataType = Record<string, unknown> | undefined;
 export class $ZodRegistry<Meta extends MetadataType = MetadataType, Schema extends $ZodType = $ZodType> {
   _meta!: Meta;
   _schema!: Schema;
-  _map: WeakMap<Schema, $replace<Meta, Schema>> = new WeakMap();
+  _map: Map<Schema, $replace<Meta, Schema>> = new Map();
   _idmap: Map<string, Schema> = new Map();
 
   add<S extends Schema>(
@@ -45,7 +45,17 @@ export class $ZodRegistry<Meta extends MetadataType = MetadataType, Schema exten
     return this as any;
   }
 
+  clear(): this {
+    this._map = new Map();
+    this._idmap = new Map();
+    return this;
+  }
+
   remove(schema: Schema): this {
+    const meta: any = this._map.get(schema);
+    if (meta && typeof meta === "object" && "id" in meta) {
+      this._idmap.delete(meta.id!);
+    }
     this._map.delete(schema);
     return this;
   }

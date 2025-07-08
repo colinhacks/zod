@@ -13,18 +13,16 @@ export interface $ZodCheckDef {
   error?: errors.$ZodErrorMap<never> | undefined;
   /** If true, no later checks will be executed if this check fails. Default `false`. */
   abort?: boolean | undefined;
+  /** If provided, this check will only be executed if the function returns `true`. Defaults to `payload => z.util.isAborted(payload)`. */
+  when?: ((payload: schemas.ParsePayload) => boolean) | undefined;
 }
 
 export interface $ZodCheckInternals<T> {
   def: $ZodCheckDef;
   /** The set of issues this check might throw. */
   issc?: errors.$ZodIssueBase;
-  // "_check"(input: $ZodResult<T>): util.MaybeAsync<void>;
   check(payload: schemas.ParsePayload<T>): util.MaybeAsync<void>;
-  // _parseB(payload: ParsePayload<any>, ctx: ParseContext): util.MaybeAsync<ParsePayload>;
   onattach: ((schema: schemas.$ZodType) => void)[];
-  // "_async": boolean;
-  when?: ((payload: schemas.ParsePayload) => boolean) | undefined;
 }
 
 export interface $ZodCheck<in T = never> {
@@ -452,7 +450,7 @@ export const $ZodCheckMaxSize: core.$constructor<$ZodCheckMaxSize> = /*@__PURE__
   (inst, def) => {
     $ZodCheck.init(inst, def);
 
-    inst._zod.when = (payload) => {
+    inst._zod.def.when ??= (payload) => {
       const val = payload.value;
       return !util.nullish(val) && (val as any).size !== undefined;
     };
@@ -501,7 +499,7 @@ export const $ZodCheckMinSize: core.$constructor<$ZodCheckMinSize> = /*@__PURE__
   (inst, def) => {
     $ZodCheck.init(inst, def);
 
-    inst._zod.when = (payload) => {
+    inst._zod.def.when ??= (payload) => {
       const val = payload.value;
       return !util.nullish(val) && (val as any).size !== undefined;
     };
@@ -550,7 +548,7 @@ export const $ZodCheckSizeEquals: core.$constructor<$ZodCheckSizeEquals> = /*@__
   (inst, def) => {
     $ZodCheck.init(inst, def);
 
-    inst._zod.when = (payload) => {
+    inst._zod.def.when ??= (payload) => {
       const val = payload.value;
       return !util.nullish(val) && (val as any).size !== undefined;
     };
@@ -604,7 +602,7 @@ export const $ZodCheckMaxLength: core.$constructor<$ZodCheckMaxLength> = /*@__PU
   (inst, def) => {
     $ZodCheck.init(inst, def);
 
-    inst._zod.when = (payload) => {
+    inst._zod.def.when ??= (payload) => {
       const val = payload.value;
       return !util.nullish(val) && (val as any).length !== undefined;
     };
@@ -655,7 +653,7 @@ export const $ZodCheckMinLength: core.$constructor<$ZodCheckMinLength> = /*@__PU
   (inst, def) => {
     $ZodCheck.init(inst, def);
 
-    inst._zod.when = (payload) => {
+    inst._zod.def.when ??= (payload) => {
       const val = payload.value;
       return !util.nullish(val) && (val as any).length !== undefined;
     };
@@ -707,7 +705,7 @@ export const $ZodCheckLengthEquals: core.$constructor<$ZodCheckLengthEquals> = /
   (inst, def) => {
     $ZodCheck.init(inst, def);
 
-    inst._zod.when = (payload) => {
+    inst._zod.def.when ??= (payload) => {
       const val = payload.value;
       return !util.nullish(val) && (val as any).length !== undefined;
     };

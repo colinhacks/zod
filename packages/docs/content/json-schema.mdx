@@ -451,7 +451,7 @@ const jsonSchema = z.toJSONSchema(mySchema, { io: "input" });
 
 Passing a schema into `z.toJSONSchema()` will return a *self-contained* JSON Schema. 
 
-In other cases, you may have a set of Zod schemas you'd like to represent using multiple interlinked JSON Schemas, perhaps to write to `.json` files and serve from a web server. To achieve this, you can pass a [registry](/metadata#registries) into `z.toJSONSchema()`.
+In other cases, you may have a set of Zod schemas you'd like to represent using multiple interlinked JSON Schemas, perhaps to write to `.json` files and serve from a web server. 
 
 ```ts
 import * as z from "zod/v4";
@@ -475,7 +475,9 @@ z.globalRegistry.add(User, {id: "User"});
 z.globalRegistry.add(Post, {id: "Post"});
 ```
 
-The schemas above both have an `id` property registered in `z.globalRegistry`. To convert these to JSON Schema, pass the entire registry into `z.toJSONSchema()`.
+To achieve this, you can pass a [registry](/metadata#registries) into `z.toJSONSchema()`. 
+
+> **Important** — All schemas should have a registered `id` property in the registry! Any schemas without an `id` will be ignored. 
 
 ```ts
 z.toJSONSchema(z.globalRegistry);
@@ -506,9 +508,7 @@ z.toJSONSchema(z.globalRegistry);
 // }
 ```
 
-> Any schema with an `id` property in the registry will be extracted into `schemas`. 
-
-By default, the `$ref` URIs are relative paths like `"User"`. To make these absolute URIs, use the `uri` option. This expects a function that converts an `id` to a fully-qualified URI.
+By default, the `$ref` URIs are simple relative paths like `"User"`. To make these absolute URIs, use the `uri` option. This expects a function that converts an `id` to a fully-qualified URI.
 
 ```ts
 z.toJSONSchema(z.globalRegistry, {
