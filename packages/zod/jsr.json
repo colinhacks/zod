@@ -14,6 +14,6 @@
   },
   "publish": {
     "include": ["src", "LICENSE", "package.json", "README.md"],
-    "exclude": ["tests", "dist"]
+    "exclude": ["**/tests/**", "dist"]
   }
 }
