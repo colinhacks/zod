@@ -4,6 +4,7 @@
     "---Zod 4---",
     "v4/index",
     "v4/changelog",
+    "v4/versioning",
     "---Documentation---",
     "index",
     "basics",
