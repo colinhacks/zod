@@ -1710,7 +1710,8 @@ const fileSchema = z.file();
 
 fileSchema.min(10_000); // minimum .size (bytes)
 fileSchema.max(1_000_000); // maximum .size (bytes)
-fileSchema.mime(["image/png"]); // MIME type
+fileSchema.mime("image/png"); // MIME type
+fileSchema.mime(["image/png", "image/jpeg"]); // multiple MIME types
 ```
 
 </Tab>
@@ -1721,7 +1722,8 @@ const fileSchema = z.file();
 fileSchema.check(
   z.minSize(10_000), // minimum .size (bytes)
   z.maxSize(1_000_000), // maximum .size (bytes)
-  z.mime(["image/png"]); // MIME type
+  z.mime("image/png"), // MIME type
+  z.mime(["image/png", "image/jpeg"]); // multiple MIME types
 )
 ```
 </Tab>

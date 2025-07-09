@@ -155,7 +155,7 @@ z.file();
 Size and MIME checks are also represented:
 
 ```ts
-z.file().min(1).max(1024 * 1024).mimeType("image/png");
+z.file().min(1).max(1024 * 1024).mime("image/png");
 // => {
 //   type: "string",
 //   format: "binary",
