@@ -33,7 +33,7 @@ export class Doc {
     }
   }
 
-  compile(): (...args: any[]) => unknown {
+  compile(): any {
     const F = Function;
     const args = this?.args;
     const content = this?.content ?? [``];

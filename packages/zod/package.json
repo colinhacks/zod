@@ -31,7 +31,7 @@
     "exports": {
       "./package.json": "./package.json",
       ".": "./src/index.ts",
-      "./mini": "./src/v4/mini/index.ts",
+      "./mini": "./src/mini/index.ts",
       "./v3": "./src/v3/index.ts",
       "./v4": "./src/v4/index.ts",
       "./v4-mini": "./src/v4-mini/index.ts",
@@ -51,6 +51,12 @@
       "types": "./index.d.cts",
       "import": "./index.js",
       "require": "./index.cjs"
+    },
+    "./mini": {
+      "@zod/source": "./src/mini/index.ts",
+      "types": "./mini/index.d.cts",
+      "import": "./mini/index.js",
+      "require": "./mini/index.cjs"
     },
     "./v3": {
       "@zod/source": "./src/v3/index.ts",
