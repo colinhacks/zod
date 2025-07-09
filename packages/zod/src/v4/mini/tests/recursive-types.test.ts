@@ -1,5 +1,5 @@
 import { expect, expectTypeOf, test } from "vitest";
-import { z } from "zod/v4-mini";
+import { z } from "zod/mini";
 
 test("recursion with z.lazy", () => {
   const data = {

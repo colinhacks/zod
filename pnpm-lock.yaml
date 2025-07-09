@@ -20,6 +20,9 @@ importers:
       '@types/node':
         specifier: ^20.17.30
         version: 20.17.30
+      '@types/semver':
+        specifier: ^7.7.0
+        version: 7.7.0
       '@web-std/file':
         specifier: ^3.0.3
         version: 3.0.3
@@ -102,8 +105,8 @@ importers:
         specifier: npm:zod@~3.24.0
         version: zod@3.24.3
       zshy:
-        specifier: ^0.0.12
-        version: 0.0.12(typescript@5.5.4)
+        specifier: ^0.0.13
+        version: 0.0.13(typescript@5.5.4)
 
   packages/bench:
     devDependencies:
@@ -127,7 +130,7 @@ importers:
     dependencies:
       '@inkeep/cxkit-react':
         specifier: ^0.5.80
-        version: 0.5.80(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@packages+zod)
+        version: 0.5.80(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@3.25.68)
       '@radix-ui/react-accordion':
         specifier: ^1.2.4
         version: 1.2.4(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -2656,6 +2659,9 @@ packages:
 
   '@types/resolve@1.20.2':
     resolution: {integrity: sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==}
+
+  '@types/semver@7.7.0':
+    resolution: {integrity: sha512-k107IF4+Xr7UHjwDc7Cfd6PRQfbdkiRabXGRjo07b4WyPahFBZCZ1sE+BNxYIJPPg73UkfOsVOLwqVc/6ETrIA==}
 
   '@types/unist@2.0.11':
     resolution: {integrity: sha512-CmBKiL6NNo/OqgmMn95Fk9Whlp2mtvIv+KNpQKN2F4SjvrEesubTRWGYSg+BnWZOnlCaSTU1sMpsBOzgbYhnsA==}
@@ -5755,8 +5761,8 @@ packages:
   zod@4.0.0-beta.20250420T053007:
     resolution: {integrity: sha512-5pp8Q0PNDaNcUptGiBE9akyioJh3RJpagIxrLtAVMR9IxwcSZiOsJD/1/98CyhItdTlI2H91MfhhLzRlU+fifA==}
 
-  zshy@0.0.12:
-    resolution: {integrity: sha512-5txlxh4PoZIU4zRdXbhreeY/bnEgUvmeOXXM6TKH4FdqKDTlyk2H99SF9RmB+/U4ciAGXeXkD79Z/bQrN++pCQ==}
+  zshy@0.0.13:
+    resolution: {integrity: sha512-OyEo2NoCbCtpY9Pr5PO/7Nna6RjDQnp8k3t2df1UKRe4rMH4A0D4KqDteDBosdQ4pYiTNW927CXZrflcEFNXpQ==}
     hasBin: true
     peerDependencies:
       typescript: '>5.5.0'
@@ -6232,7 +6238,7 @@ snapshots:
 
   '@inkeep/cxkit-color-mode@0.5.80': {}
 
-  '@inkeep/cxkit-primitives@0.5.80(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@packages+zod)':
+  '@inkeep/cxkit-primitives@0.5.80(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@3.25.68)':
     dependencies:
       '@inkeep/cxkit-color-mode': 0.5.80
       '@inkeep/cxkit-theme': 0.5.80
@@ -6266,7 +6272,7 @@ snapshots:
       lucide-react: 0.503.0(react@19.0.0)
       marked: 15.0.12
       merge-anything: 5.1.7
-      openai: 4.78.1(encoding@0.1.13)(zod@packages+zod)
+      openai: 4.78.1(encoding@0.1.13)(zod@3.25.68)
       prism-react-renderer: 2.4.1(react@19.0.0)
       react: 19.0.0
       react-dom: 19.0.0(react@19.0.0)
@@ -6287,9 +6293,9 @@ snapshots:
       - supports-color
       - zod
 
-  '@inkeep/cxkit-react@0.5.80(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@packages+zod)':
+  '@inkeep/cxkit-react@0.5.80(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@3.25.68)':
     dependencies:
-      '@inkeep/cxkit-styled': 0.5.80(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@packages+zod)
+      '@inkeep/cxkit-styled': 0.5.80(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@3.25.68)
       '@radix-ui/react-use-controllable-state': 1.1.0(@types/react@19.0.11)(react@19.0.0)
       lucide-react: 0.503.0(react@19.0.0)
     transitivePeerDependencies:
@@ -6301,9 +6307,9 @@ snapshots:
       - supports-color
       - zod
 
-  '@inkeep/cxkit-styled@0.5.80(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@packages+zod)':
+  '@inkeep/cxkit-styled@0.5.80(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@3.25.68)':
     dependencies:
-      '@inkeep/cxkit-primitives': 0.5.80(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@packages+zod)
+      '@inkeep/cxkit-primitives': 0.5.80(@types/react-dom@19.0.4(@types/react@19.0.11))(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@3.25.68)
       class-variance-authority: 0.7.1
       clsx: 2.1.1
       merge-anything: 5.1.7
@@ -7820,6 +7826,8 @@ snapshots:
       csstype: 3.1.3
 
   '@types/resolve@1.20.2': {}
+
+  '@types/semver@7.7.0': {}
 
   '@types/unist@2.0.11': {}
 
@@ -10153,7 +10161,7 @@ snapshots:
       regex: 6.0.1
       regex-recursion: 6.0.2
 
-  openai@4.78.1(encoding@0.1.13)(zod@packages+zod):
+  openai@4.78.1(encoding@0.1.13)(zod@3.25.68):
     dependencies:
       '@types/node': 18.19.103
       '@types/node-fetch': 2.6.12
@@ -10163,7 +10171,7 @@ snapshots:
       formdata-node: 4.4.1
       node-fetch: 2.7.0(encoding@0.1.13)
     optionalDependencies:
-      zod: link:packages/zod
+      zod: 3.25.68
     transitivePeerDependencies:
       - encoding
 
@@ -11542,7 +11550,7 @@ snapshots:
     dependencies:
       '@zod/core': 0.8.1
 
-  zshy@0.0.12(typescript@5.5.4):
+  zshy@0.0.13(typescript@5.5.4):
     dependencies:
       arg: 5.0.2
       globby: 14.1.0

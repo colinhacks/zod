@@ -19,6 +19,7 @@
     "@biomejs/biome": "^1.9.4",
     "@types/benchmark": "^2.1.5",
     "@types/node": "^20.17.30",
+    "@types/semver": "^7.7.0",
     "@web-std/file": "^3.0.3",
     "arktype": "^2.1.19",
     "benchmark": "^2.1.4",
@@ -46,7 +47,7 @@
     "vitest": "^2.1.9",
     "zod": "workspace:*",
     "zod3": "npm:zod@~3.24.0",
-    "zshy": "^0.0.12"
+    "zshy": "^0.0.13"
   },
   "lint-staged": {
     "packages/*/src/**/*.ts": [
@@ -82,7 +83,6 @@
     "publish:jsr": "jsr publish --dry-run",
     "bundle:rollup": "rollup -c",
     "bundle:esbuild": "esbuild --bundle ./scratch/input.ts --outfile=./scratch/out_esbuild.js --bundle --format=esm",
-    "pub:beta": "pnpm run -r pub:beta",
-    "semver-check": "tsx scripts/semver-check.ts"
+    "check:semver": "tsx scripts/check-semver.ts"
   }
 }

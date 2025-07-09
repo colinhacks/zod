@@ -11,7 +11,7 @@ To validate data, you must first define a *schema*. Schemas represent *types*, f
 ## Primitives
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 // primitive types
 z.string();
@@ -136,7 +136,7 @@ z.string().startsWith("fourscore")
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 z.string().check(z.startsWith("fourscore"))
 ```
 </Tab>
@@ -151,7 +151,7 @@ z.string().startsWith("fourscore", {error: "Nice try, buddy"})
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 z.string().check(z.startsWith("fourscore", {error: "Nice try, buddy"}))
 ```
 </Tab></Tabs> */}
@@ -174,7 +174,7 @@ z.string().lowercase();
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 z.string().check(z.maxLength(5));
 z.string().check(z.minLength(5));
 z.string().check(z.length(5));
@@ -199,7 +199,7 @@ z.string().toUpperCase(); // toUpperCase
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 z.string().check(z.trim()); // trim whitespace
 z.string().check(z.toLowerCase()); // toLowerCase
 z.string().check(z.toUpperCase()); // toUpperCase
@@ -532,7 +532,7 @@ z.number().multipleOf(5);              // alias .step(5)
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 z.number().check(z.gt(5));
 z.number().check(z.gte(5));            // alias .minimum(5)
 z.number().check(z.lt(5));
@@ -587,7 +587,7 @@ z.bigint().multipleOf(5n);             // alias `.step(5n)`
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 z.bigint().check(z.gt(5n));
 z.bigint().check(z.gte(5n));           // alias `.minimum(5n)`
 z.bigint().check(z.lt(5n));
@@ -638,7 +638,7 @@ z.date().max(new Date(), { error: "Too young!" });
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 z.date().check(z.minimum(new Date("1900-01-01"), { error: "Too old!" }));
 z.date().check(z.maximum(new Date(), { error: "Too young!" }));
 ```
@@ -710,7 +710,7 @@ FishEnum.enum;
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
 
 FishEnum.def.entries;
@@ -731,7 +731,7 @@ const TunaOnly = FishEnum.exclude(["Salmon", "Trout"]);
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 // no equivalent
  
 ```
@@ -750,7 +750,7 @@ const SalmonAndTroutOnly = FishEnum.extract(["Salmon", "Trout"]);
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 // no equivalent
  
 ```
@@ -813,7 +813,7 @@ z.optional(z.literal("yoda")); // or z.literal("yoda").optional()
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 z.optional(z.literal("yoda"));
 ```
 </Tab>
@@ -828,7 +828,7 @@ optionalYoda.unwrap(); // ZodLiteral<"yoda">
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 optionalYoda.def.innerType; // ZodMiniLiteral<"yoda">
 ```
 </Tab>
@@ -845,7 +845,7 @@ z.nullable(z.literal("yoda")); // or z.literal("yoda").nullable()
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const nullableYoda = z.nullable(z.literal("yoda"));
 ```
 </Tab>
@@ -860,7 +860,7 @@ nullableYoda.unwrap(); // ZodLiteral<"yoda">
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 nullableYoda.def.innerType; // ZodMiniLiteral<"yoda">
 ```
 </Tab>
@@ -877,7 +877,7 @@ const nullishYoda = z.nullish(z.literal("yoda"));
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const nullishYoda = z.nullish(z.literal("yoda"));
 ```
 </Tab>
@@ -1024,7 +1024,7 @@ Dog.shape.age; // => number schema
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 Dog.def.shape.name; // => string schema
 Dog.def.shape.age; // => number schema
 ```
@@ -1043,7 +1043,7 @@ const keySchema = Dog.keyof();
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const keySchema = z.keyof(Dog);
 // => ZodEnum<["name", "age"]>
 ```
@@ -1063,7 +1063,7 @@ const DogWithBreed = Dog.extend({
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const DogWithBreed = z.extend(Dog, {
   breed: z.string(),
 });
@@ -1115,7 +1115,7 @@ const JustTheTitle = Recipe.pick({ title: true });
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const JustTheTitle = z.pick(Recipe, { title: true });
 ```
 </Tab>
@@ -1133,7 +1133,7 @@ const RecipeNoId = Recipe.omit({ id: true });
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const RecipeNoId = z.omit(Recipe, { id: true });
 ```
 </Tab>
@@ -1155,7 +1155,7 @@ const PartialRecipe = Recipe.partial();
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const PartialRecipe = z.partial(Recipe);
 // { title?: string | undefined; description?: string | undefined; ingredients?: string[] | undefined }
 ```
@@ -1174,7 +1174,7 @@ const RecipeOptionalIngredients = Recipe.partial({
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const RecipeOptionalIngredients = z.partial(Recipe, {
   ingredients: true,
 });
@@ -1197,7 +1197,7 @@ const RequiredRecipe = Recipe.required();
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const RequiredRecipe = z.required(Recipe);
 // { title: string; description: string; ingredients: string[] }
 ```
@@ -1214,7 +1214,7 @@ const RecipeRequiredDescription = Recipe.required({description: true});
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const RecipeRequiredDescription = z.required(Recipe, {description: true});
 // { title: string; description: string; ingredients: string[] }
 ```
@@ -1353,7 +1353,7 @@ const Activity = z.object({
     When in doubt, you can generally sidestep these issues with some carefully deployed type annotations on your getters. Due to the limitations described above, this is particularly necessary when using Zod Mini.
 
     ```ts
-    import * as z from "zod/v4";
+    import * as z from "zod";
 
     const Activity = z.object({
       name: z.string(),
@@ -1377,7 +1377,7 @@ const stringArray = z.array(z.string()); // or z.string().array()
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const stringArray = z.array(z.string());
 ```
 </Tab>
@@ -1392,7 +1392,7 @@ stringArray.unwrap(); // => string schema
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 stringArray.def.element; // => string schema
 ```
 </Tab>
@@ -1409,7 +1409,7 @@ z.array(z.string()).length(5); // must contain 5 items exactly
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 z.array(z.string()).check(z.minLength(5)); // must contain 5 or more items
 z.array(z.string()).check(z.maxLength(5)); // must contain 5 or fewer items
 z.array(z.string()).check(z.length(5)); // must contain 5 items exactly
@@ -1462,7 +1462,7 @@ stringOrNumber.options; // [ZodString, ZodNumber]
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 stringOrNumber.def.options; // [ZodString, ZodNumber]
 ```
 </Tab>
@@ -1690,7 +1690,7 @@ z.set(z.string()).max(5); // must contain 5 or fewer items
 z.set(z.string()).size(5); // must contain 5 items exactly
 ```
 </Tab>
-<Tab value='zod/v4-mini'>
+<Tab value='Zod Mini'>
 ```ts
 z.set(z.string()).check(z.minSize(5)); // must contain 5 or more items
 z.set(z.string()).check(z.maxSize(5)); // must contain 5 or fewer items
@@ -1714,7 +1714,7 @@ fileSchema.mime(["image/png"]); // MIME type
 ```
 
 </Tab>
-<Tab value='zod/v4-mini'>
+<Tab value='Zod Mini'>
 ```ts
 const fileSchema = z.file();
 
@@ -1796,7 +1796,7 @@ const myString = z.string().refine((val) => val.length <= 255);
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const myString = z.string().check(z.refine((val) => val.length <= 255));
 ```
 </Tab>
@@ -1819,7 +1819,7 @@ const myString = z.string().refine((val) => val.length > 8, {
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const myString = z.string().check(
   z.refine((val) => val.length > 8, { error: "Too short!" })
 );
@@ -1848,7 +1848,7 @@ result.error.issues;
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const myString = z.string().check(
   z.refine((val) => val.length > 8, { error: "Too short!" }),
   z.refine((val) => val === val.toLowerCase(), { error: "Must be lowercase" })
@@ -1881,7 +1881,7 @@ result.error!.issues;
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const myString = z.string().check(
   z.refine((val) => val.length > 8, { error: "Too short!", abort: true }),
   z.refine((val) => val === val.toLowerCase(), { error: "Must be lowercase", abort: true })
@@ -2259,7 +2259,7 @@ castToString.parse(true); // => "true"
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const castToString = z.transform((val) => String(val));
 
 z.parse(castToString, "asdf"); // => "asdf"
@@ -2280,7 +2280,7 @@ type CastToString = z.infer<typeof castToString>; // string
 ```
 </Tab>
 <Tab value="Zod Mini">
-```ts zod/v4-mini
+```ts
 const castToString = z.transform((val) => String(val));
 
 type CastToString = z.infer<typeof castToString>; // string

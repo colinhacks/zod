@@ -28,7 +28,7 @@ Any library built on top of Zod should include `"zod"` in `"peerDependencies"`. 
 {
   // ...
   "peerDependencies": {
-    "zod": "^3.25.0"
+    "zod": "^3.25.0 || ^4.0.0" // the "zod/v4" subpath was added in 3.25.0
   }
 }
 ```
@@ -39,29 +39,30 @@ During development, you need to meet your own peer dependency requirement, to do
 // package.json
 {
   "peerDependencies": {
-    "zod": "^3.25.0"
+    "zod": "^3.25.0 || ^4.0.0"
   },
   "devDependencies": {
-    "zod": "^3.25.0"
+    // generally, you should develop against the latest version of Zod
+    "zod": "^3.25.0 || ^4.0.0"
   }
 }
 ```
 
 ## How to support Zod 4?
 
-To support Zod 4, update the minimum version for your `"zod"` peer dependency to `^3.25.0`. 
+To support Zod 4, update the minimum version for your `"zod"` peer dependency to `^3.25.0 || ^4.0.0`. 
 
 ```json
 // package.json
 {
   // ...
   "peerDependencies": {
-    "zod": "^3.25.0"
+    "zod": "^3.25.0 || ^4.0.0"
   }
 }
 ```
 
-Starting with `v3.25.0`, the Zod 4 core package is available at a `/v4/core` subpath. Read the [Versioning in Zod 4](https://github.com/colinhacks/zod/issues/4371) writeup for full context on this versioning approach.
+Starting with `v3.25.0`, the Zod 4 core package is available at the `"zod/v4/core"` subpath. Read the [Versioning in Zod 4](https://github.com/colinhacks/zod/issues/4371) writeup for full context on this versioning approach.
 
 ```ts
 import * as z4 from "zod/v4/core";
@@ -72,10 +73,11 @@ Import from these subpaths only. Think of them like "permalinks" to their respec
 - `"zod/v3"` for Zod 3 ✅ 
 - `"zod/v4/core"` for the Zod 4 Core package ✅
 
-Do not import from these subpaths:
+You generally shouldn't be importing from any other paths. The Zod Core library is a shared library that undergirds both Zod 4 Classic and Zod 4 Mini. It's generally a bad idea to implement any functionality that is specific to one or the other. Do not import from these subpaths:
 
-- `"zod"` — ❌ In 3.x releases, this exports Zod 3. In a [future 4.x release](https://github.com/colinhacks/zod/issues/4371), this will export Zod 4. Use the permalinks instead. 
-- `"zod/v4"`— ❌ This subpath is the home of Zod 4 "Classic". If you reference classes from the standard module, your library will not work with Zod Mini. This is extremely discouraged. Use `"zod/v4/core"` instead, which exports the `$`-prefixed subclasses that are extended by Zod Classic and Zod Mini. The internals of the classic & mini subclasses are identical; they only differ in which helper methods they implement.
+- `"zod"` — ❌ In 3.x releases, this exports Zod 3. In 4.x releases, this will export Zod 4. Use the permalinks instead. 
+- `"zod/v4"` and `"zod/v4/mini"`— ❌ These subpaths are the homes of Zod 4 Classic and Mini, respectively. If you want your library to work with both Zod and Zod Mini, you should build against the base classes defined in `"zod/v4/core"`. If you reference classes from the `"zod/v4"` module, your library will not work with Zod Mini, and vice versa. This is extremely discouraged. Use `"zod/v4/core"` instead, which exports the `$`-prefixed subclasses that are extended by Zod Classic and Zod Mini. The internals of the classic & mini subclasses are identical; they only differ in which helper methods they implement.
+
 
 ## Do I need to publish a new major version?
 
@@ -115,7 +117,7 @@ if ("_zod" in schema) {
 
 ## How to support Zod and Zod Mini simultaneously?
 
-Your library code should only import from `"zod/v4/core"`. This sub-package defines the interfaces, classes, and utilities that are shared between `zod/v4` and `zod/v4-mini`. 
+Your library code should only import from `"zod/v4/core"`. This sub-package defines the interfaces, classes, and utilities that are shared between Zod and Zod Mini. 
 
 ```ts
 // library code
@@ -129,18 +131,18 @@ export function acceptObjectSchema<T extends z4.$ZodObject>(schema: T){
 }
 ```
 
-By building against the shared base interfaces, you can reliably support both sub-packages simultaneously. This function can accept both `zod/v4` and `zod/v4-mini` schemas. 
+By building against the shared base interfaces, you can reliably support both sub-packages simultaneously. This function can accept both Zod and Zod Mini schemas. 
 
 ```ts
 // user code
 import { acceptObjectSchema } from "your-library";
 
 // Zod 4
-import * as z from "zod/v4";
+import * as z from "zod";
 acceptObjectSchema(z.object({ name: z.string() }));
 
 // Zod 4 Mini
-import * as zm from "zod/v4-mini";
+import * as zm from "zod/mini";
 acceptObjectSchema(zm.object({ name: zm.string() }))
 ```
 

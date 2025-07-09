@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import * as z from "zod/v4-mini";
+import * as z from "zod/mini";
 
 declare module "zod/v4/core" {
   interface $ZodType {

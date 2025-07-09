@@ -14,21 +14,20 @@ Huge thanks to [Clerk](https://go.clerk.com/zod-clerk), who supported my work on
 
 ## Versioning 
 
-To simplify the migration process both for users and Zod's ecosystem of associated libraries, Zod 4 will initially published alongside Zod 3 as part of the `zod@3.25` release. Despite the version number, it is considered stable and ready for production use.
+{/* <Callout> 
+  **Update** — `zod@4.0.0` has now been published to npm. To upgrad
+</Callout> */}
+
+{/* To simplify the migration process both for users and Zod's ecosystem of associated libraries, Zod 4 will initially published alongside Zod 3 as part of the `zod@3.25` release. Despite the version number, it is considered stable and ready for production use. */}
 
 To upgrade: 
 
 ```
-npm upgrade zod@^3.25.0
+npm upgrade zod@^4.0.0
 ```
 
-Then import Zod 4 from the `"/v4"` subpath:
 
-```ts
-import * as z from "zod/v4";
-```
-
-Down the road, when there's broad support for Zod 4, we'll publish `zod@4.0.0` on npm. At this point, Zod 4 will be exported from the package root (`"zod"`). The `"zod/v4"` subpath will remain available. For a detailed writeup on the reasons for this versioning scheme, refer to [this issue](https://github.com/colinhacks/zod/issues/4371). 
+{/* Down the road, when there's broad support for Zod 4, we'll publish `zod@4.0.0` on npm. At this point, Zod 4 will be exported from the package root (`"zod"`). The `"zod/v4"` subpath will remain available. For a detailed writeup on the reasons for this versioning scheme, refer to [this issue](https://github.com/colinhacks/zod/issues/4371).  */}
 
 For a complete list of breaking changes, refer to the [Migration guide](/v4/changelog). This post focuses on new features & enhancements.
 
@@ -120,7 +119,7 @@ summary for z.object() safeParse
 Consider the following simple file:
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 export const A = z.object({
   a: z.string(),
@@ -152,7 +151,7 @@ $ pnpm bench object-with-extend
 More importantly, Zod 4 has redesigned and simplified the generics of `ZodObject` and other schema classes to avoid some pernicious "instantiation explosions". For instance, chaining `.extend()` and `.omit()` repeatedly—something that previously caused compiler issues:
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 export const a = z.object({
   a: z.string(),
@@ -266,7 +265,7 @@ In Zod 3, this took `4000ms` to compile; and adding additional calls to `.extend
 Consider the following simple script.
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 const schema = z.boolean();
 
@@ -277,25 +276,25 @@ It's about as simple as it gets when it comes to validation. That's intentional;
 
 | Package | Bundle (gzip) |
 |---------|--------------|
-| `zod/v3`   | `12.47kb`      |
-| `zod/v4`   | `5.36kb`       |
+| Zod 3   | `12.47kb`      |
+| Zod 4   | `5.36kb`       |
 
 The core bundle is ~57% smaller in Zod 4 (2.3x). That's good! But we can do a lot better.
 
 ## Introducing Zod Mini
 
-Zod's method-heavy API is fundamentally difficult to tree-shake. Even our simple `z.boolean()` script pulls in the implementations of a bunch of methods we didn't use, like `.optional()`, `.array()`, etc. Writing slimmer implementations can only get you so far. That's where `zod/v4-mini` comes in. 
+Zod's method-heavy API is fundamentally difficult to tree-shake. Even our simple `z.boolean()` script pulls in the implementations of a bunch of methods we didn't use, like `.optional()`, `.array()`, etc. Writing slimmer implementations can only get you so far. That's where Zod Mini comes in. 
 
 ```sh
 npm install zod@^3.25.0
 ```
 
-It's a Zod variant with a functional, tree-shakable API that corresponds one-to-one with `zod`. Where Zod uses methods, `zod/v4-mini` generally uses wrapper functions:
+It's a Zod variant with a functional, tree-shakable API that corresponds one-to-one with `zod`. Where Zod uses methods, Zod Mini generally uses wrapper functions:
 
 <Tabs groupId="lib" items={[ "Zod Mini", "Zod"]}>
 <Tab value="Zod Mini">
 ```ts
-import * as z from "zod/v4-mini";
+import * as z from "zod/mini";
 
 z.optional(z.string());
 
@@ -306,7 +305,7 @@ z.extend(z.object({ /* ... */ }), { age: z.number() });
 </Tab>
 <Tab value="Zod">
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 z.string().optional();
 
@@ -317,10 +316,10 @@ z.object({ /* ... */ }).extend({ age: z.number() });
 </Tab>
 </Tabs>
 
-Not all methods are gone! The parsing methods are identical in `zod/v4` and `zod/v4-mini`.
+Not all methods are gone! The parsing methods are identical in Zod and Zod Mini:
 
 ```ts
-import * as z from "zod/v4-mini";
+import * as z from "zod/mini";
 
 z.string().parse("asdf");
 z.string().safeParse("asdf");
@@ -333,7 +332,7 @@ There's also a general-purpose `.check()` method used to add refinements.
 <Tabs groupId="lib" items={[ "Zod Mini", "Zod"]}>
 <Tab value="Zod Mini">
 ```ts
-import * as z from "zod/v4-mini";
+import * as z from "zod/mini";
 
 z.array(z.number()).check(
   z.minLength(5), 
@@ -344,7 +343,7 @@ z.array(z.number()).check(
 </Tab>
 <Tab value="Zod">
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 z.array(z.number())
   .min(5)
@@ -354,10 +353,10 @@ z.array(z.number())
 </Tab>
 </Tabs>
 
-The following top-level refinements are available in `zod/v4-mini`. It should be fairly self-explanatory which methods they correspond to.
+The following top-level refinements are available in Zod Mini. It should be fairly self-explanatory which Zod methods they correspond to.
 
 ```ts
-import * as z from "zod/v4-mini";
+import * as z from "zod/mini";
 
 // custom checks
 z.refine();
@@ -396,14 +395,14 @@ z.toUpperCase();
 ```
 
 
-This more functional API makes it easier for bundlers to tree-shake the APIs you don't use. While `zod/v4` is still recommended for the majority of use cases, any projects with uncommonly strict bundle size constraints should consider `zod/v4-mini`.  
+This more functional API makes it easier for bundlers to tree-shake the APIs you don't use. While regular Zod is still recommended for the majority of use cases, any projects with uncommonly strict bundle size constraints should consider Zod Mini.  
 
 ### 6.6x reduction in core bundle size
 
-Here's the script from above, updated to use `"zod/v4-mini"` instead of `"zod"`.
+Here's the script from above, updated to use `"zod/mini"` instead of `"zod"`.
 
 ```ts
-import * as z from "zod/v4-mini";
+import * as z from "zod/mini";
 
 const schema = z.boolean();
 schema.parse(false);
@@ -413,18 +412,18 @@ When we build this with `rollup`, the gzipped bundle size is `1.88kb`. That's an
 
 | Package   | Bundle (gzip) |
 |-----------|--------------|
-| `zod/v3`     |  `12.47kb`      |
-| `zod/v4`     | `5.36kb`       |
-| `zod/v4-mini` | `1.88kb`       |
+| Zod 3     |  `12.47kb`      |
+| Zod 4 (regular)     | `5.36kb`       |
+| Zod 4 (mini) | `1.88kb`       |
 
-Learn more on the dedicated [`zod/v4-mini`](/packages/mini) docs page. Complete API details are mixed into existing documentation pages; code blocks contain separate tabs for `"Zod"` and `"Zod Mini"` wherever their APIs diverge.
+Learn more on the dedicated [`zod/mini`](/packages/mini) docs page. Complete API details are mixed into existing documentation pages; code blocks contain separate tabs for `"Zod"` and `"Zod Mini"` wherever their APIs diverge.
 
 ## Metadata
 
 Zod 4 introduces a new system for adding strongly-typed metadata to your schemas. Metadata isn't stored inside the schema itself; instead it's stored in a "schema registry" that associates a schema with some typed metadata. To create a registry with `z.registry()`:
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 const myRegistry = z.registry<{ title: string; description: string }>();
 ```
@@ -494,7 +493,7 @@ z.string().meta({ description: "An email address" });
 Zod 4 introduces first-party JSON Schema conversion via `z.toJSONSchema()`.
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 const mySchema = z.object({name: z.string(), points: z.number()});
 
@@ -592,7 +591,7 @@ fileSchema.mime(["image/png"]); // MIME type
 Zod 4 introduces a new `locales` API for globally translating error messages into different languages. 
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 // configure English locale (default)
 z.config(z.locales.en());
@@ -914,21 +913,21 @@ z.number().overwrite(val => val ** 2).max(100);
 
 ## An extensible foundation: `zod/v4/core`
 
-While this will not be relevant to the majority of Zod users, it's worth highlighting. The addition of `zod/v4-mini` necessitated the creation of a shared sub-package `zod/v4/core` which contains the core functionality shared between `zod/v4` and `zod/v4-mini`. 
+While this will not be relevant to the majority of Zod users, it's worth highlighting. The addition of Zod Mini necessitated the creation of a shared sub-package `zod/v4/core` which contains the core functionality shared between Zod and Zod Mini. 
 
 I was resistant to this at first, but now I see it as one of Zod 4's most important features. It lets Zod level up from a simple library to a fast validation "substrate" that can be sprinkled into other libraries.
 
-If you're building a schema library, refer to the implementations of `zod/v4` and `zod/v4-mini` to see how to build on top of the foundation `zod/v4/core` provides. Don't hesitate to get in touch in GitHub discussions or via [X](https://x.com/colinhacks)/[Bluesky](https://bsky.app/profile/colinhacks.com) for help or feedback.
+If you're building a schema library, refer to the implementations of Zod and Zod Mini to see how to build on top of the foundation `zod/v4/core` provides. Don't hesitate to get in touch in GitHub discussions or via [X](https://x.com/colinhacks)/[Bluesky](https://bsky.app/profile/colinhacks.com) for help or feedback.
 
 
 ## Wrapping up
 
-I'm planning to write up a series of additional posts explaining the design process behind some major features like `zod/v4-mini`. I'll update this section as those get posted. 
+I'm planning to write up a series of additional posts explaining the design process behind some major features like Zod Mini. I'll update this section as those get posted. 
 
 For library authors, there is now a dedicated [For library authors](/library-authors) guide that describes the best practices for building on top of Zod. It answers common questions about how to support Zod 3 & Zod 4 (including Mini) simultaneously.
 
 ```sh
-pnpm upgrade zod@^3.25.0
+pnpm upgrade zod@latest
 ```
 
 Happy parsing!<br/>

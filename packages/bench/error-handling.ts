@@ -2,7 +2,7 @@ import { makeData } from "./benchUtil.js";
 import { metabench } from "./metabench.js";
 
 import * as z4 from "zod/v4";
-import * as z from "zod";
+import * as z from "zod/v3";
 
 const a = z4.object({ a: z4.string() });
 const b = z.object({ a: z.string() });

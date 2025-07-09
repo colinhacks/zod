@@ -1,5 +1,5 @@
 import { expect, expectTypeOf, test } from "vitest";
-import * as z from "zod/v4-mini";
+import * as z from "zod/mini";
 
 const FAIL = { success: false };
 

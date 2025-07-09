@@ -2,8 +2,8 @@
   "extends": "./.configs/tsconfig.base.json",
   "compilerOptions": {
     "customConditions": ["@zod/source"],
-    "module": "node16",
-    "moduleResolution": "node16"
+    "module": "nodenext",
+    "moduleResolution": "nodenext"
   },
   "include": ["**/*.ts", "**/*.mts", "**/*.cts"],
   "exclude": ["**/*.d.ts", "**/*.d.cts", "**/*.d.mts", "packages/docs"]
