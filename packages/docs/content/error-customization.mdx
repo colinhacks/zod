@@ -8,7 +8,7 @@ import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 In Zod, validation errors are surfaced as instances of the `z.core.$ZodError` class.
 
-> The `zod/v4` package uses a subclass of this called `z.ZodError` that implements some additional convenience methods.
+> The `ZodError` class in the `zod` package is a subclass that implements some additional convenience methods.
 
 Instances of `$ZodError` contain an `.issues` array. Each issue contains a human-readable `message` and additional structured metadata about the issue.
 
@@ -292,7 +292,7 @@ const result = schema.safeParse(12, {
 
 To support internationalization of error message, Zod provides several built-in **locales**. These are exported from the `zod/v4/core` package.
 
-> **Note** — The `zod/v4` library automatically loads the `en` locale automatically. The `zod/v4-mini` sub-package does not load any locale; instead all error messages default to `Invalid input`.
+> **Note** — The regular `zod` library automatically loads the `en` locale automatically. Zod Mini does not load any locale by default; instead all error messages default to `Invalid input`.
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -326,7 +326,7 @@ async function loadLocale(locale: string) {
 await loadLocale("fr");
 ```
 
-For convenience, all locales are exported as `z.locales` from `zod/v4`. In some bundlers, this may not be tree-shakable.
+For convenience, all locales are exported as `z.locales` from `"zod"`. In some bundlers, this may not be tree-shakable.
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">

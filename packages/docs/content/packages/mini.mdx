@@ -9,10 +9,10 @@ import { Callout } from 'fumadocs-ui/components/callout';
   **Note** — The docs for Zod Mini are interleaved with the regular Zod docs via tabbed code blocks. This page is designed to explain why Zod Mini exists, when to use it, and some key differences from regular Zod.
 </Callout>
 
-The `zod/v4-mini` variant was introduced with the release of Zod 4. To try it:
+Zod Mini variant was introduced with the release of Zod 4. To try it:
 
 ```sh
-npm install zod@^3.25.0
+npm install zod@^4.0.0
 ```
 
 To import it:
@@ -35,7 +35,7 @@ const mySchema = z.nullable(z.optional(z.string()));
 
 Tree-shaking is a technique used by modern bundlers to remove unused code from the final bundle. It's also referred to as *dead-code elimination*.
 
-In regular Zod, schemas provide a range of convenience methods to perform some common operations (e.g. `.min()` on string schemas). Bundlers are generally not able to remove ("treeshake") unused method implementations from your bundle, but they are able to remove unused top-level functions. As such, the API of `zod/v4-mini` uses more functions than methods.
+In regular Zod, schemas provide a range of convenience methods to perform some common operations (e.g. `.min()` on string schemas). Bundlers are generally not able to remove ("treeshake") unused method implementations from your bundle, but they are able to remove unused top-level functions. As such, the API of Zod Mini uses more functions than methods.
 
 ```ts
 // regular Zod
@@ -108,12 +108,12 @@ Generally, the round trip time to the server (`100-200ms`) will dwarf the time r
 
 ## `ZodMiniType`
 
-All `zod/v4-mini` schemas extend the `z.ZodMiniType` base class, which in turn extends `z.core.$ZodType` from [`zod/v4/core`](/packages/core). While this class implements far fewer methods than `ZodType` in `zod`, some particularly useful methods remain.
+All Zod Mini schemas extend the `z.ZodMiniType` base class, which in turn extends `z.core.$ZodType` from [`zod/v4/core`](/packages/core). While this class implements far fewer methods than `ZodType` in `zod`, some particularly useful methods remain.
 
 
 ### `.parse`
 
-This is an obvious one. All `zod/v4-mini` schemas implement the same parsing methods as `zod`.
+This is an obvious one. All Zod Mini schemas implement the same parsing methods as `zod`.
 
 ```ts
 import * as z from "zod/mini"
@@ -128,7 +128,7 @@ await mySchema.safeParseAsync('asdf')
 
 ### `.check()`
 
-In `zod/v4` there are dedicated methods on schema subclasses for performing common checks:
+In regular Zod there are dedicated methods on schema subclasses for performing common checks:
 
 ```ts
 import * as z from "zod";
@@ -140,7 +140,7 @@ z.string()
   .trim()
 ```
 
-In `zod/v4-mini` such methods aren't implemented. Instead you pass these checks into schemas using the `.check()` method:
+In Zod Mini such methods aren't implemented. Instead you pass these checks into schemas using the `.check()` method:
 
 ```ts
 import * as z from "zod/mini"
@@ -225,7 +225,7 @@ mySchema.clone(mySchema._zod.def);
 
 ## No default locale
 
-While `zod/v4` automatically loads the English (`en`) locale, `zod/v4-mini` does not. This reduces the bundle size in scenarios where error messages are unnecessary, localized to a non-English language, or otherwise customized.
+While regular Zod automatically loads the English (`en`) locale, Zod Mini does not. This reduces the bundle size in scenarios where error messages are unnecessary, localized to a non-English language, or otherwise customized.
 
 This means, by default the `message` property of all issues will simply read `"Invalid input"`. To load the English locale:
 

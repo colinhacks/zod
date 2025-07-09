@@ -1690,7 +1690,7 @@ z.set(z.string()).max(5); // must contain 5 or fewer items
 z.set(z.string()).size(5); // must contain 5 items exactly
 ```
 </Tab>
-<Tab value='zod/v4-mini'>
+<Tab value='Zod Mini'>
 ```ts
 z.set(z.string()).check(z.minSize(5)); // must contain 5 or more items
 z.set(z.string()).check(z.maxSize(5)); // must contain 5 or fewer items
@@ -1714,7 +1714,7 @@ fileSchema.mime(["image/png"]); // MIME type
 ```
 
 </Tab>
-<Tab value='zod/v4-mini'>
+<Tab value='Zod Mini'>
 ```ts
 const fileSchema = z.file();
 

@@ -6,25 +6,27 @@ title: Versioning
 import { Callout } from "fumadocs-ui/components/callout";
 
 
-### **Update — July 8th, 2024**
+### **Update — July 8th, 2025**
 
-`zod@4.0.0` has been published to `npm`. The package root (`"zod"`) now exports Zod 4. The `"zod/v3"` and `"zod/v4"` subpaths will remain available forever. To upgrade to Zod 4:
+`zod@4.0.0` has been published to `npm`. The package root (`"zod"`) now exports Zod 4. All other subpaths have not changed and will remain available forever.
+
+To upgrade to Zod 4:
 
 ```
 npm upgrade zod@^4.0.0
 ```
 
-If you are using Zod 4, your existing imports (`"zod/v4"` and `"zod/v4-mini"`) will continue to work forever. However, after upgrading, you can optionally rewrite your imports as follows:
+If you are using Zod 4, your existing imports (`"zod/v4"` and `"zod/v4-mini"`) will continue to work forever. However, after upgrading, you can *optionally* rewrite your imports as follows:
 
 
-| Before | After |
-|--------------------|--------------|
-| `"zod/v4"`         | `"zod"`      |
-| `"zod/v4-mini"`    | `"zod/mini"` |
-| `"zod"`            | `"zod/v3"`   |
+|                | Before   | After     |
+|----------------|-----------------|-------------|
+| Zod 4          | `"zod/v4"`      | `"zod"`     |
+| Zod 4 Mini     | `"zod/v4-mini"` | `"zod/mini"`|
+| Zod 3          | `"zod"`         | `"zod/v3"`  |
 
 
-**Library authors** — if you've already implementedZod 4 support according to the best practices outlined in the [Library authors](/library-authors) guide, there is no additional work required to support Zod 4, aside from bumping your peer dependency to include `zod@^4.0.0`. No code changes were made between the latest `3.25.x` release and `4.0.0`.
+**Library authors** — if you've already implemented Zod 4 support according to the best practices outlined in the [Library authors](/library-authors) guide, bump your peer dependency to include `zod@^4.0.0`:
 
 ```json
 // package.json
@@ -35,11 +37,15 @@ If you are using Zod 4, your existing imports (`"zod/v4"` and `"zod/v4-mini"`) w
 }
 ```
 
+*There should be no other code changes necessary.* No code changes were made between the latest `3.25.x` release and `4.0.0`. This does not require a major version bump.
+
 ### Some notes 
 
-The ecosystem has implemented [broad support](https://x.com/colinhacks/status/1932323805705482339) for Zod 4. By and large, libraries have been able to support Zod 3 and Zod 4 simultaneously. This was the primary goal of the somewhat unorthodox subpath versioning scheme Zod adopted with the release of Zod 4. 
+Ultimately, the subpath versioning scheme was a necessary evil to force the ecosystem to upgrade in a non-breaking way. If I'd published `zod@4.0.0` out of the gate, most libraries would have naively bumped their peer dependencies, forcing a "version bump avalanche" across the ecosystem. This would have been a massive headache for everyone.
 
-Few other libraries are subject to the same constraints as Zod, but I strongly encourage other libraries with large associated ecosystems to consider a similar approach. Many ecosystem maintainers reached out to me to express surprise and delight with how painless it was to incrementally add support for Zod 4, something that would typically require a major version bump.
+As it stands, there is now [broad support](https://x.com/colinhacks/status/1932323805705482339) for Zod 4 across the ecosystem. No migration process is totally painless, but I haven't seen evidence of the "versioning avalanche". By and large, libraries have been able to support Zod 3 and Zod 4 simultaneously. Many ecosystem maintainers reached out to me to express surprise and delight with how painless it was to incrementally add support for Zod 4, something that would typically require a major version bump. Long story short: this approach worked. 
+
+Few other libraries are subject to the same constraints as Zod, but I strongly encourage other libraries with large associated ecosystems to consider a similar approach.
 
 ## Versioning in Zod 4
 
