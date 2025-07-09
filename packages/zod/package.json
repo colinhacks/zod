@@ -1,6 +1,6 @@
 {
   "name": "zod",
-  "version": "3.25.76",
+  "version": "4.0.0",
   "type": "module",
   "author": "Colin McDonnell <zod@colinhacks.com>",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
@@ -31,6 +31,7 @@
     "exports": {
       "./package.json": "./package.json",
       ".": "./src/index.ts",
+      "./mini": "./src/v4/mini/index.ts",
       "./v3": "./src/v3/index.ts",
       "./v4": "./src/v4/index.ts",
       "./v4-mini": "./src/v4-mini/index.ts",
@@ -112,7 +113,6 @@
     "postbuild": "pnpm biome check --write .",
     "test:watch": "pnpm vitest",
     "test": "pnpm vitest run",
-    "bump:beta": "pnpm version \"v$(pnpm pkg get version | jq -r)-beta.$(date +%Y%m%dT%H%M%S)\"",
-    "pub:beta": "pnpm bump:beta && pnpm publish --tag next --publish-branch v4 --no-git-checks --dry-run"
+    "prepublishOnly": "tsx ../../scripts/check-versions.ts"
   }
 }

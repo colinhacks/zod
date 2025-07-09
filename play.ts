@@ -1,4 +1,4 @@
-import * as z from "zod/v4";
+import * as z from "zod";
 
 // ID is branded. Brand under the hood is an obj structur {...}
 const Id = z.string().brand("Id");

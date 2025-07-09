@@ -25,7 +25,7 @@ npm upgrade zod@^3.25.0
 Then import Zod 4 from the `"/v4"` subpath:
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 ```
 
 Down the road, when there's broad support for Zod 4, we'll publish `zod@4.0.0` on npm. At this point, Zod 4 will be exported from the package root (`"zod"`). The `"zod/v4"` subpath will remain available. For a detailed writeup on the reasons for this versioning scheme, refer to [this issue](https://github.com/colinhacks/zod/issues/4371). 
@@ -120,7 +120,7 @@ summary for z.object() safeParse
 Consider the following simple file:
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 export const A = z.object({
   a: z.string(),
@@ -152,7 +152,7 @@ $ pnpm bench object-with-extend
 More importantly, Zod 4 has redesigned and simplified the generics of `ZodObject` and other schema classes to avoid some pernicious "instantiation explosions". For instance, chaining `.extend()` and `.omit()` repeatedly—something that previously caused compiler issues:
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 export const a = z.object({
   a: z.string(),
@@ -266,7 +266,7 @@ In Zod 3, this took `4000ms` to compile; and adding additional calls to `.extend
 Consider the following simple script.
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 const schema = z.boolean();
 
@@ -306,7 +306,7 @@ z.extend(z.object({ /* ... */ }), { age: z.number() });
 </Tab>
 <Tab value="Zod">
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 z.string().optional();
 
@@ -344,7 +344,7 @@ z.array(z.number()).check(
 </Tab>
 <Tab value="Zod">
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 z.array(z.number())
   .min(5)
@@ -424,7 +424,7 @@ Learn more on the dedicated [`zod/v4-mini`](/packages/mini) docs page. Complete 
 Zod 4 introduces a new system for adding strongly-typed metadata to your schemas. Metadata isn't stored inside the schema itself; instead it's stored in a "schema registry" that associates a schema with some typed metadata. To create a registry with `z.registry()`:
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 const myRegistry = z.registry<{ title: string; description: string }>();
 ```
@@ -494,7 +494,7 @@ z.string().meta({ description: "An email address" });
 Zod 4 introduces first-party JSON Schema conversion via `z.toJSONSchema()`.
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 const mySchema = z.object({name: z.string(), points: z.number()});
 
@@ -592,7 +592,7 @@ fileSchema.mime(["image/png"]); // MIME type
 Zod 4 introduces a new `locales` API for globally translating error messages into different languages. 
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 // configure English locale (default)
 z.config(z.locales.en());

@@ -15,7 +15,7 @@ Before you can do anything else, you need to define a schema. For the purposes o
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-import * as z from "zod/v4"; 
+import * as z from "zod"; 
 
 const Player = z.object({ 
   username: z.string(),
@@ -40,7 +40,7 @@ const Player = z.object({
   To allow time for the ecosystem the migrate, there will be a transitionary period in which Zod 4 will be published alongside Zod 3 and consumable as a subpath import:
 
   ```ts
-  import * as z from "zod/v4"
+  import * as z from "zod"
   ```
 
   During this transition window:

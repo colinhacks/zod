@@ -28,7 +28,8 @@ Any library built on top of Zod should include `"zod"` in `"peerDependencies"`. 
 {
   // ...
   "peerDependencies": {
-    "zod": "^3.25.0"
+    // "zod/v4" was introduced in 3.25.0
+    "zod": "^3.25.0 || ^4.0.0"
   }
 }
 ```
@@ -39,29 +40,30 @@ During development, you need to meet your own peer dependency requirement, to do
 // package.json
 {
   "peerDependencies": {
-    "zod": "^3.25.0"
+    "zod": "^3.25.0 || ^4.0.0"
   },
   "devDependencies": {
-    "zod": "^3.25.0"
+    // generally, you should develop against the latest version of Zod
+    "zod": "^3.25.0 || ^4.0.0"
   }
 }
 ```
 
 ## How to support Zod 4?
 
-To support Zod 4, update the minimum version for your `"zod"` peer dependency to `^3.25.0`. 
+To support Zod 4, update the minimum version for your `"zod"` peer dependency to `^3.25.0 || ^4.0.0`. 
 
 ```json
 // package.json
 {
   // ...
   "peerDependencies": {
-    "zod": "^3.25.0"
+    "zod": "^3.25.0 || ^4.0.0"
   }
 }
 ```
 
-Starting with `v3.25.0`, the Zod 4 core package is available at a `/v4/core` subpath. Read the [Versioning in Zod 4](https://github.com/colinhacks/zod/issues/4371) writeup for full context on this versioning approach.
+Starting with `v3.25.0`, the Zod 4 core package is available at the `"zod/v4/core"` subpath. Read the [Versioning in Zod 4](https://github.com/colinhacks/zod/issues/4371) writeup for full context on this versioning approach.
 
 ```ts
 import * as z4 from "zod/v4/core";
@@ -136,7 +138,7 @@ By building against the shared base interfaces, you can reliably support both su
 import { acceptObjectSchema } from "your-library";
 
 // Zod 4
-import * as z from "zod/v4";
+import * as z from "zod";
 acceptObjectSchema(z.object({ name: z.string() }));
 
 // Zod 4 Mini

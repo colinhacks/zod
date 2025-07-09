@@ -49,7 +49,7 @@ export const browserEmail: RegExp =
   /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 // from https://thekevinscott.com/emojis-in-javascript/#writing-a-regular-expression
 
-export const _emoji = `^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$`;
+const _emoji: string = `^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$`;
 export function emoji(): RegExp {
   return new RegExp(_emoji, "u");
 }

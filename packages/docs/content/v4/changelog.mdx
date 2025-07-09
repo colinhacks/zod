@@ -16,7 +16,7 @@ npm upgrade zod@^3.25.0
 Zod 4 is available at the `"/v4"` subpath:
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 ```
 
 <Callout>
@@ -172,7 +172,7 @@ Vitest uses special handling for `Error` subclasses that ignores enumerable prop
 The issue formats have been dramatically streamlined. 
 
 ```ts
-import * as z from "zod/v4"; // v4
+import * as z from "zod"; // v4
 
 type IssueFormats = 
   | z.core.$ZodIssueInvalidType
@@ -191,7 +191,7 @@ type IssueFormats =
 Below is the list of Zod 3 issues types and their Zod 4 equivalent:
 
 ```ts
-import * as z from "zod/v4"; // v3
+import * as z from "zod"; // v3
 
 export type IssueFormats =
   | z.ZodInvalidTypeIssue // ♻️ renamed to z.core.$ZodIssueInvalidType
@@ -707,7 +707,7 @@ function handleError(iss: z.$ZodError) {
 For convenience, the contents of `zod/v4/core` are also re-exported from `zod/v4` and `zod/v4-mini` under the `z.core` namespace. 
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 function handleError(iss: z.core.$ZodError) {
   // do stuff
@@ -745,7 +745,7 @@ z.string().check(
 Meanwhile, transforms have been moved into a dedicated `ZodTransform` class. This schema class represents an input transform; in fact, you can actually define standalone transformations now:
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 const schema = z.transform(input => String(input));
 

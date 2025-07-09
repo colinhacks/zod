@@ -40,7 +40,6 @@ This is the Zod TypeScript-first schema validation library project. The project 
 ### Publishing
 - `pnpm prepublishOnly` - Run tests and build before publishing
 - `pnpm publish:jsr` - Publish to JSR (dry run)
-- `pnpm pub:beta` - Publish beta version
 
 ## Key Files
 

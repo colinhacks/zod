@@ -11,7 +11,7 @@ To validate data, you must first define a *schema*. Schemas represent *types*, f
 ## Primitives
 
 ```ts
-import * as z from "zod/v4";
+import * as z from "zod";
 
 // primitive types
 z.string();
@@ -1353,7 +1353,7 @@ const Activity = z.object({
     When in doubt, you can generally sidestep these issues with some carefully deployed type annotations on your getters. Due to the limitations described above, this is particularly necessary when using Zod Mini.
 
     ```ts
-    import * as z from "zod/v4";
+    import * as z from "zod";
 
     const Activity = z.object({
       name: z.string(),

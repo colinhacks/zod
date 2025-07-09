@@ -25,7 +25,7 @@ try {
   }
 
   console.log(`Valid semver version: ${version}`);
-} catch (error) {
+} catch (error: any) {
   console.error(`Error: ${error.message}`);
   process.exit(1);
 }
