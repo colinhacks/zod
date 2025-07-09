@@ -39,13 +39,13 @@ If you are using Zod 4, your existing imports (`"zod/v4"` and `"zod/v4-mini"`) w
 
 *There should be no other code changes necessary.* No code changes were made between the latest `3.25.x` release and `4.0.0`. This does not require a major version bump.
 
-### Some notes 
+<details>
+<summary><strong>Some notes on subpath versioning</strong></summary>
 
-Ultimately, the subpath versioning scheme was a necessary evil to force the ecosystem to upgrade in a non-breaking way. If I'd published `zod@4.0.0` out of the gate, most libraries would have naively bumped their peer dependencies, forcing a "version bump avalanche" across the ecosystem. This would have been a massive headache for everyone.
+Ultimately, the subpath versioning scheme was a necessary evil to force the ecosystem to upgrade in a non-breaking way. If I'd published `zod@4.0.0` out of the gate, most libraries would have naively bumped their peer dependencies, forcing a "version bump avalanche" across the ecosystem.
 
-As it stands, there is now [broad support](https://x.com/colinhacks/status/1932323805705482339) for Zod 4 across the ecosystem. No migration process is totally painless, but I haven't seen evidence of the "versioning avalanche". By and large, libraries have been able to support Zod 3 and Zod 4 simultaneously. Many ecosystem maintainers reached out to me to express surprise and delight with how painless it was to incrementally add support for Zod 4, something that would typically require a major version bump. Long story short: this approach worked. 
-
-Few other libraries are subject to the same constraints as Zod, but I strongly encourage other libraries with large associated ecosystems to consider a similar approach.
+As it stands, there is now [broad support](https://x.com/colinhacks/status/1932323805705482339) for Zod 4 across the ecosystem. No migration process is totally painless, but it seems like the "version avalanche" I'd feared didn't happen. By and large, libraries have been able to support Zod 3 and Zod 4 simultaneously: Hono, LangChain, React Hook Form, etc. Several ecosystem maintainers reached out to me specifically to indicate how convenient it was to incrementally add support for Zod 4 (something that would typically require a major version bump). Long story short: this approach worked great! Few other libraries are subject to the same constraints as Zod, but I strongly encourage other libraries with large associated ecosystems to consider a similar approach.
+</details>
 
 ## Versioning in Zod 4
 
