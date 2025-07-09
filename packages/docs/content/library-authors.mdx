@@ -74,10 +74,11 @@ Import from these subpaths only. Think of them like "permalinks" to their respec
 - `"zod/v3"` for Zod 3 ✅ 
 - `"zod/v4/core"` for the Zod 4 Core package ✅
 
-Do not import from these subpaths:
+You generally shouldn't be importing from any other paths. The Zod Core library is a shared library that undergirds both Zod 4 Classic and Zod 4 Mini. It's generally a bad idea to implement any functionality that is specific to one or the other. Do not import from these subpaths:
 
 - `"zod"` — ❌ In 3.x releases, this exports Zod 3. In a [future 4.x release](https://github.com/colinhacks/zod/issues/4371), this will export Zod 4. Use the permalinks instead. 
-- `"zod/v4"`— ❌ This subpath is the home of Zod 4 "Classic". If you reference classes from the standard module, your library will not work with Zod Mini. This is extremely discouraged. Use `"zod/v4/core"` instead, which exports the `$`-prefixed subclasses that are extended by Zod Classic and Zod Mini. The internals of the classic & mini subclasses are identical; they only differ in which helper methods they implement.
+- `"zod/v4"` and `"zod/v4/mini"`— ❌ This subpath is the home of Zod 4 Classic and Mini, respectively. If you reference classes from the `"zod/v4"` module, your library will not work with Zod Mini, and vice versa. This is extremely discouraged. Use `"zod/v4/core"` instead, which exports the `$`-prefixed subclasses that are extended by Zod Classic and Zod Mini. The internals of the classic & mini subclasses are identical; they only differ in which helper methods they implement.
+
 
 ## Do I need to publish a new major version?
 
@@ -142,7 +143,7 @@ import * as z from "zod";
 acceptObjectSchema(z.object({ name: z.string() }));
 
 // Zod 4 Mini
-import * as zm from "zod/v4-mini";
+import * as zm from "zod/mini";
 acceptObjectSchema(zm.object({ name: zm.string() }))
 ```
 

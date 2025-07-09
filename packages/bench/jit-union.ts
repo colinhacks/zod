@@ -1,7 +1,7 @@
 import { makeData, randomPick, randomString } from "./benchUtil.js";
 import { metabench } from "./metabench.js";
 
-import * as z4 from "zod/v4-mini";
+import * as z4 from "zod/mini";
 
 const z4fields = {
   data1: z4.string(),

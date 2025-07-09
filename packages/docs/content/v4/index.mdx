@@ -295,7 +295,7 @@ It's a Zod variant with a functional, tree-shakable API that corresponds one-to-
 <Tabs groupId="lib" items={[ "Zod Mini", "Zod"]}>
 <Tab value="Zod Mini">
 ```ts
-import * as z from "zod/v4-mini";
+import * as z from "zod/mini";
 
 z.optional(z.string());
 
@@ -320,7 +320,7 @@ z.object({ /* ... */ }).extend({ age: z.number() });
 Not all methods are gone! The parsing methods are identical in `zod/v4` and `zod/v4-mini`.
 
 ```ts
-import * as z from "zod/v4-mini";
+import * as z from "zod/mini";
 
 z.string().parse("asdf");
 z.string().safeParse("asdf");
@@ -333,7 +333,7 @@ There's also a general-purpose `.check()` method used to add refinements.
 <Tabs groupId="lib" items={[ "Zod Mini", "Zod"]}>
 <Tab value="Zod Mini">
 ```ts
-import * as z from "zod/v4-mini";
+import * as z from "zod/mini";
 
 z.array(z.number()).check(
   z.minLength(5), 
@@ -357,7 +357,7 @@ z.array(z.number())
 The following top-level refinements are available in `zod/v4-mini`. It should be fairly self-explanatory which methods they correspond to.
 
 ```ts
-import * as z from "zod/v4-mini";
+import * as z from "zod/mini";
 
 // custom checks
 z.refine();
@@ -403,7 +403,7 @@ This more functional API makes it easier for bundlers to tree-shake the APIs you
 Here's the script from above, updated to use `"zod/v4-mini"` instead of `"zod"`.
 
 ```ts
-import * as z from "zod/v4-mini";
+import * as z from "zod/mini";
 
 const schema = z.boolean();
 schema.parse(false);

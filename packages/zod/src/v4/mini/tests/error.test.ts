@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import * as z from "zod/v4-mini";
+import * as z from "zod/mini";
 
 test("no locale by default", () => {
   const result = z.safeParse(z.string(), 12);

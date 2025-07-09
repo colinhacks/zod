@@ -105,8 +105,8 @@ importers:
         specifier: npm:zod@~3.24.0
         version: zod@3.24.3
       zshy:
-        specifier: ^0.0.12
-        version: 0.0.12(typescript@5.5.4)
+        specifier: ^0.0.13
+        version: 0.0.13(typescript@5.5.4)
 
   packages/bench:
     devDependencies:
@@ -5761,8 +5761,8 @@ packages:
   zod@4.0.0-beta.20250420T053007:
     resolution: {integrity: sha512-5pp8Q0PNDaNcUptGiBE9akyioJh3RJpagIxrLtAVMR9IxwcSZiOsJD/1/98CyhItdTlI2H91MfhhLzRlU+fifA==}
 
-  zshy@0.0.12:
-    resolution: {integrity: sha512-5txlxh4PoZIU4zRdXbhreeY/bnEgUvmeOXXM6TKH4FdqKDTlyk2H99SF9RmB+/U4ciAGXeXkD79Z/bQrN++pCQ==}
+  zshy@0.0.13:
+    resolution: {integrity: sha512-OyEo2NoCbCtpY9Pr5PO/7Nna6RjDQnp8k3t2df1UKRe4rMH4A0D4KqDteDBosdQ4pYiTNW927CXZrflcEFNXpQ==}
     hasBin: true
     peerDependencies:
       typescript: '>5.5.0'
@@ -11550,7 +11550,7 @@ snapshots:
     dependencies:
       '@zod/core': 0.8.1
 
-  zshy@0.0.12(typescript@5.5.4):
+  zshy@0.0.13(typescript@5.5.4):
     dependencies:
       arg: 5.0.2
       globby: 14.1.0

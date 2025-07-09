@@ -1,9 +1,9 @@
 import * as z1 from "zod";
 import z2 from "zod";
 import { z as z3 } from "zod";
+import * as z7 from "zod/mini";
 import * as z5 from "zod/v3";
 import * as z4 from "zod/v4";
-import * as z7 from "zod/v4-mini";
 import fr from "zod/v4/locales/fr.js";
 import * as z6 from "zod/v4/mini";
 

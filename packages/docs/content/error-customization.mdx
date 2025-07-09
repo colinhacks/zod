@@ -32,7 +32,7 @@ result.error.issues;
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-import * as z from "zod/v4-mini";
+import * as z from "zod/mini";
 
 const result = z.string().safeParse(12); // { success: false, error: z.core.$ZodError }
 result.error.issues;
@@ -305,7 +305,7 @@ z.config(en());
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-import * as z from "zod/v4-mini"
+import * as z from "zod/mini"
 import en from "zod/v4/locales/en.js"
 
 z.config(en());
@@ -338,7 +338,7 @@ z.config(z.locales.en());
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-import * as z from "zod/v4-mini"
+import * as z from "zod/mini"
 
 z.config(z.locales.en());
 ```
