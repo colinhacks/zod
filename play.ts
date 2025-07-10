@@ -1,6 +1,7 @@
-import type * as z from "zod";
+import { es } from "zod/locales";
+// import type * as z from "zod";
+import * as z from "zod/mini";
 
-const test = {} as z.ZodObject<z.ZodRawShape>;
-const prop: z.core.$ZodType = test.shape.prop;
+z.config(es());
 
-type MyShape = { readonly [k: string]: z.ZodType };
+z.string().parse(123);

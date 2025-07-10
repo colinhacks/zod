@@ -4,5 +4,5 @@
     "module": "nodenext",
     "customConditions": ["@zod/source"],
   },
-  "include": ["**/*.ts", "../../scripts/check-versions.ts"]
+  "include": ["**/*.ts"]
 }

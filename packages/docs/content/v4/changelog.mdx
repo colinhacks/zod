@@ -444,6 +444,26 @@ const mySchema = z.object({
 // Zod 4: { a: any; b: unknown };
 ```
 
+### deprecates `.merge()`
+
+The `.merge()` method on `ZodObject` has been deprecated in favor of `.extend()`. The `.extend()` method provides the same functionality, avoids ambiguity around strictness inheritance, and has better TypeScript performance.
+
+```ts
+// .merge (deprecated)
+const ExtendedSchema = BaseSchema.merge(AdditionalSchema);
+
+// .extend (recommended)
+const ExtendedSchema = BaseSchema.extend(AdditionalSchema.shape);
+
+// or use destructuring (best tsc performance)
+const ExtendedSchema = z.object({
+  ...BaseSchema.shape,
+  ...AdditionalSchema.shape,
+});
+```
+
+> **Note**: For even better TypeScript performance, consider using object destructuring instead of `.extend()`. See the [API documentation](/api?id=extend) for more details.
+
 ## `z.nativeEnum()` deprecated
 
 The `z.nativeEnum()` function is now deprecated in favor of just `z.enum()`. The `z.enum()` API has been overloaded to support an enum-like input.
@@ -578,6 +598,34 @@ const longString = z.string().refine(
 );
 ```
 
+## `.superRefine()` deprecated
+
+The `.superRefine()` method has been deprecated in favor of `.check()`. The `.check()` method provides the same functionality with a cleaner API. The `.check()` method is also available on Zod and Zod Mini schemas.
+
+```ts
+const UniqueStringArray = z.array(z.string()).check((ctx) => {
+  if (ctx.value.length > 3) {
+    ctx.issues.push({
+      code: "too_big",
+      maximum: 3,
+      origin: "array",
+      inclusive: true,
+      message: "Too many items 😡",
+      input: ctx.value
+    });
+  }
+
+  if (ctx.value.length !== new Set(ctx.value).size) {
+    ctx.issues.push({
+      code: "custom",
+      message: `No duplicates allowed.`,
+      input: ctx.value
+    });
+  }
+});
+```
+
+
 ## `z.ostring()`, etc dropped
 
 The undocumented convenience methods `z.ostring()`, `z.onumber()`, etc. have been removed. These were shorthand methods for defining optional string schemas.
@@ -625,6 +673,13 @@ In Zod 4, this is no longer the case. The inferred type is what you'd expect, an
 ```ts
 const myRecord = z.record(z.enum(["a", "b", "c"]), z.number());
 // { a: number; b: number; c: number; }
+```
+
+To replicate the old behavior with optional keys, use `z.partialRecord()`:
+
+```ts
+const myRecord = z.partialRecord(z.enum(["a", "b", "c"]), z.number());
+// { a?: number; b?: number; c?: number; }
 ```
 
 ## `z.intersection()`

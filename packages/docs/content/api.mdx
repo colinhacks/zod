@@ -1071,11 +1071,10 @@ const DogWithBreed = z.extend(Dog, {
 </Tab>
 </Tabs>
 
-<Callout>
-  This API can be used to overwrite existing fields! Be careful with this power! If the two schemas share keys, B will override A.
-</Callout>
+This API can be used to overwrite existing fields! Be careful with this power! If the two schemas share keys, B will override A.
 
-Despite the existence of the `.extend` API, the recommended way to extend an object schema is to create an entirely new schema by destructuring the original schema's `shape` property.
+<Callout>
+**Alternative: *destructuring* — You can avoid also `.extend()` by creating a new object schema entirely.
 
 ```ts
 const DogWithBreed = z.object({
@@ -1084,12 +1083,23 @@ const DogWithBreed = z.object({
 });
 ```
 
-This is a clean and powerful approach with a lot of advantages. 
+You can also use this to merge multiple objects in one go.
+
+```ts
+const DogWithBreed = z.object({
+  ...Animal.shape,
+  ...Pet.shape,
+  breed: z.string(),
+});
+```
+
+This approach has a few advantages:
 
 1. It uses language-level features ([destructuring syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring)) instead of library-specific APIs
-2. It works in Zod and Zod Mini — no method required
+2. The same syntax works in Zod and Zod Mini
 3. It's more `tsc`-efficient — the `.extend()` method can be expensive on large schemas, and due to [a TypeScript limitation](https://github.com/microsoft/TypeScript/pull/61505) it gets quadratically more expensive when calls are chained
 4. If you wish, you can change the strictness level of the resulting schema by using `z.strictObject()` or `z.looseObject()`
+</Callout>
 
 ### `.pick()`
 
@@ -1585,7 +1595,7 @@ type EmployedPerson = z.infer<typeof EmployedPerson>;
 ```
 
 <Callout type="warn">
-  In most cases, it is better to use [`A.extend(B)`](#extend) to merge two object schemas. This approach returns a new object schema, whereas `z.intersection(A, B)` returns a `ZodIntersection` instance which lacks common object methods like `pick` and `omit`.
+  When merging object schemas, prefer [`A.extend(B)`](#extend) over intersections. Using `.extend()` will gve you a new object schema, whereas `z.intersection(A, B)` returns a `ZodIntersection` instance which lacks common object methods like `pick` and `omit`.
 </Callout>
 
 ## Records
@@ -2174,6 +2184,7 @@ The `.refine()` API is syntactic sugar atop a more versatile (and verbose) API c
 ```ts
 const UniqueStringArray = z.array(z.string()).check((ctx) => {
   if (ctx.value.length > 3) {
+    // full control of issue objects
     ctx.issues.push({
       code: "too_big",
       maximum: 3,
@@ -2184,6 +2195,7 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
     });
   }
 
+  // create multiple issues in one refinement
   if (ctx.value.length !== new Set(ctx.value).size) {
     ctx.issues.push({
       code: "custom",
@@ -2198,6 +2210,7 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
 <Tab value="Zod Mini">
 ```ts
 const UniqueStringArray = z.array(z.string()).check((ctx) => {
+  // full control of issue objects
   if (ctx.value.length > 3) {
     ctx.issues.push({
       code: "too_big",
@@ -2209,6 +2222,7 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
     });
   }
 
+// create multiple issues in one refinement
   if (ctx.value.length !== new Set(ctx.value).size) {
     ctx.issues.push({
       code: "custom",

@@ -61,7 +61,8 @@ export interface ZodType<
 
   // refinements
   refine(check: (arg: core.output<this>) => unknown | Promise<unknown>, params?: string | core.$ZodCustomParams): this;
-  /** @deprecated Use `.check()` instead. */
+  /** @deprecated Use [`.check()`](https://zod.dev/api?id=check) instead.
+   */
   superRefine(
     refinement: (arg: core.output<this>, ctx: RefinementCtx<core.output<this>>) => void | Promise<void>
   ): this;
@@ -1074,17 +1075,7 @@ export interface ZodObject<
   ): ZodObject<util.Extend<Shape, U>, Config>;
 
   /**
-   * @deprecated Use spread syntax and the `.shape` property to combine two object schemas:
-   *
-   * ```ts
-   * const A = z.object({ a: z.string() });
-   * const B = z.object({ b: z.number() });
-   *
-   * const C = z.object({
-   *    ...A.shape,
-   *    ...B.shape
-   * });
-   * ```
+   * @deprecated Use [`A.extend(B.shape)`](https://zod.dev/api?id=extend) instead.
    */
   merge<U extends ZodObject>(other: U): ZodObject<util.Extend<Shape, U["shape"]>, U["_zod"]["config"]>;
 
