@@ -46,7 +46,8 @@ jobs:
           provenance: true
           package: ./packages/zod
       
-      - run: pnpm jsr publish --allow-slow-types --provenance # --dry-run
+      - run: pnpm jsr publish --allow-slow-types # --dry-run
+        if: ${{ steps.publish.outputs.type }}
         working-directory: ./packages/zod
 
       - name: Post-publish
