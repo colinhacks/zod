@@ -34,7 +34,9 @@ jobs:
       - run: pnpm build
       - run: pnpm test
       - run: pnpm run --filter @zod/resolution test:all
-      
+      - run: pnpm run prepublishOnly
+        working-directory: ./packages/zod
+
       - id: publish
         name: Publish to NPM
         uses: JS-DevTools/npm-publish@v3
@@ -43,7 +45,7 @@ jobs:
           # dry-run: true
           provenance: true
           package: ./packages/zod
-
+      
       # - run: pnpm jsr publish --allow-slow-types # --dry-run
       #   working-directory: ./packages/zod
 

@@ -2865,7 +2865,7 @@ export const $ZodLiteral: core.$constructor<$ZodLiteral> = /*@__PURE__*/ core.$c
 //////////////////////////////////////////
 
 // provide a fallback in case the File interface isn't provided in the environment
-declare global {
+declare /* deno-lint-ignore */ global {
   interface File {}
 }
 

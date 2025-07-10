@@ -40,14 +40,19 @@ if (tag === "latest") {
 // Get version from versions.ts
 const versionsVersion = `${version.major}.${version.minor}.${version.patch}`;
 
-// Compare versions
-const isValid =
+// Compare  versions
+const isPackageJsonValid =
   tag === "latest" ? packageJsonVersion === versionsVersion : packageJsonVersion.startsWith(versionsVersion);
-if (!isValid) {
+const isJsrJsonValid =
+  tag === "latest" ? jsrJsonVersion === versionsVersion : jsrJsonVersion.startsWith(versionsVersion);
+if (!isPackageJsonValid || !isJsrJsonValid) {
   console.error(`❌ Version mismatch:`);
   console.error(`   package.json: ${packageJsonVersion}`);
+  console.error(`   jsr.json:    ${jsrJsonVersion}`);
   console.error(`   versions.ts:  ${versionsVersion}`);
   console.error(`   tag:          ${tag}`);
+  console.error(`   isPackageJsonValid: ${isPackageJsonValid}`);
+  console.error(`   isJsrJsonValid: ${isJsrJsonValid}`);
   process.exit(1);
 } else {
   if (tag === "latest") {
