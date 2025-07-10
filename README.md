@@ -29,9 +29,9 @@
 <br/><br/>
 
 <table align="center" style="justify-content:center;align-items:center;display:flex;"><td>
-  <p align="center">Zod 4 is now in beta!
+  <p align="center">Zod 4 is now available!
   <br/>
-  <a target="_blank" rel="noopener noreferrer" href="https://v4.zod.dev/v4">Read the announcement 👉</a></p></td>
+  <a target="_blank" rel="noopener noreferrer" href="https://zod.dev/v4">Read the announcement 👉</a></p></td>
 </table>
 
 <br/>
@@ -60,12 +60,7 @@
 
 - [Table of contents](#table-of-contents)
 - [Introduction](#introduction)
-  - [Sponsors](#sponsors)
-    - [Platinum](#platinum)
-    - [Gold](#gold)
-    - [Silver](#silver)
-    - [Bronze](#bronze)
-    - [Copper](#copper)
+- [Sponsors](#sponsors)
   - [Ecosystem](#ecosystem)
     - [Resources](#resources)
     - [API libraries](#api-libraries)
@@ -87,7 +82,7 @@
   - [Dates](#dates)
   - [Times](#times)
   - [IP addresses](#ip-addresses)
-  - [IP ranges](#ip-ranges-cidr)
+  - [IP ranges (CIDR)](#ip-ranges-cidr)
 - [Numbers](#numbers)
 - [BigInts](#bigints)
 - [NaNs](#nans)
@@ -118,7 +113,6 @@
 - [Unions](#unions)
 - [Discriminated unions](#discriminated-unions)
 - [Records](#records)
-  - [Record key type](#record-key-type)
 - [Maps](#maps)
 - [Sets](#sets)
 - [Intersections](#intersections)
@@ -162,10 +156,10 @@
   - [`.brand`](#brand)
   - [`.readonly`](#readonly)
   - [`.pipe`](#pipe)
-    - [You can use `.pipe()` to fix common issues with `z.coerce`.](#you-can-use-pipe-to-fix-common-issues-with-zcoerce)
 - [Guides and concepts](#guides-and-concepts)
   - [Type inference](#type-inference)
   - [Writing generic functions](#writing-generic-functions)
+    - [Inferring the inferred type](#inferring-the-inferred-type)
     - [Constraining allowable inputs](#constraining-allowable-inputs)
   - [Error handling](#error-handling)
   - [Error formatting](#error-formatting)
