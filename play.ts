@@ -17,3 +17,5 @@ console.log(typeid.parse("d_1234567890"));
     message: "Invalid typeid",
   },
 ];
+
+// z.file().parse({}).foo;

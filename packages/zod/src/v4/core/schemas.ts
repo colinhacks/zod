@@ -2865,9 +2865,10 @@ export const $ZodLiteral: core.$constructor<$ZodLiteral> = /*@__PURE__*/ core.$c
 //////////////////////////////////////////
 
 // provide a fallback in case the File interface isn't provided in the environment
-declare /* deno-lint-ignore */ global {
-  interface File {}
-}
+type _File = typeof globalThis extends { File: new (...args: any[]) => any }
+  ? InstanceType<typeof globalThis.File>
+  : {};
+interface File extends _File {}
 
 export interface $ZodFileDef extends $ZodTypeDef {
   type: "file";
