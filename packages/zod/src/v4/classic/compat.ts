@@ -63,4 +63,5 @@ export type {
   ZodType as Schema,
 };
 
+/** Included for Zod 3 compatibility */
 export type ZodRawShape = core.$ZodShape;
