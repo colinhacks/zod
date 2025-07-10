@@ -3518,6 +3518,7 @@ function handleReadonlyResult(payload: ParsePayload): ParsePayload {
 export interface $ZodTemplateLiteralDef extends $ZodTypeDef {
   type: "template_literal";
   parts: $ZodTemplateLiteralPart[];
+  format?: string | undefined;
 }
 export interface $ZodTemplateLiteralInternals<Template extends string = string>
   extends $ZodTypeInternals<Template, Template> {
@@ -3624,7 +3625,7 @@ export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> = /*@__
           input: payload.value,
           inst,
           code: "invalid_format",
-          format: "template_literal",
+          format: def.format ?? "template_literal",
           pattern: inst._zod.pattern.source,
         });
         return payload;

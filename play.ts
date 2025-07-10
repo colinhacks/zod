@@ -1,18 +1,19 @@
-import * as z from "zod";
+import * as z from "zod/mini";
 
-z;
+// z.instanceof(URL).check(z.property("hash", z.string().min(10)), z.property("search", z.string().min(10)));
 
-z.stringFormat("email", /asdf/g);
-z.stringFormat("idnEmail", /asdf/g, {
-  
+const typeid = z.templateLiteral([z.enum(["a", "b", "c"]), "_", z.string().check(z.regex(/[a-z0-9]{10}/))], {
+  format: "typeid",
 });
-z.stringFormat("typeid", (val) => {
-  return val.length > 10;
-}, {
-  ""
-});
+console.log(typeid.parse("d_1234567890"));
 
-
-z.jwt({
-  
-})
+// throws ZodError ❌
+[
+  {
+    code: "invalid_format",
+    format: "typeid",
+    pattern: "^(a|b|c)_[a-z0-9]{10}$",
+    path: [],
+    message: "Invalid typeid",
+  },
+];
