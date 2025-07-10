@@ -162,7 +162,14 @@ const poweredByZodProjects: ZodResource[] = [
   },
 ];
 
-const zodUtilities: ZodResource[] = [];
+const zodUtilities: ZodResource[] = [
+  {
+    name: "eslint-plugin-import-zod",
+    url: "https://github.com/samchungy/eslint-plugin-import-zod",
+    description: "ESLint plugin to enforce namespace imports for Zod.",
+    slug: "samchungy/eslint-plugin-import-zod",
+  },
+];
 
 export {
   apiLibraries,
