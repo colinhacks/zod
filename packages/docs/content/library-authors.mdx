@@ -4,6 +4,22 @@ title: For library authors
 
 import { Callout } from "fumadocs-ui/components/callout"
 
+<Callout title="Update — July 10th, 2025">
+Zod `4.0.0` has been released on `npm`. This completes the incremental rollout process described below. To add support, bump your peer dependency to include `zod@^4.0.0`:
+
+```json
+// package.json
+{
+  "peerDependencies": {
+    "zod": "^3.25.0 || ^4.0.0"
+  }
+}
+```
+
+If you'd already implemented Zod 4 support according to the best practices described below (e.g. `"zod/v3/core"` subpath), then no other code changes should be necessary. This should not require a major version bump in your library.
+</Callout>
+ 
+
 This page is primarily intended for consumption by *library authors* who are building tooling on top of Zod. 
 
 
