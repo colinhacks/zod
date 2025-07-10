@@ -2039,7 +2039,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
       const opts = def.options as $ZodTypeDiscriminable[];
       const map: Map<util.Primitive, $ZodType> = new Map();
       for (const o of opts) {
-        const values = o._zod.propValues[def.discriminator];
+        const values = o._zod.propValues?.[def.discriminator];
         if (!values || values.size === 0)
           throw new Error(`Invalid discriminated union option at index "${def.options.indexOf(o)}"`);
         for (const v of values) {
@@ -3429,6 +3429,7 @@ export interface $ZodPipeInternals<A extends SomeType = $ZodType, B extends Some
   values: A["_zod"]["values"];
   optin: A["_zod"]["optin"];
   optout: B["_zod"]["optout"];
+  propValues: A["_zod"]["propValues"];
 }
 
 export interface $ZodPipe<A extends SomeType = $ZodType, B extends SomeType = $ZodType> extends $ZodType {
@@ -3440,6 +3441,7 @@ export const $ZodPipe: core.$constructor<$ZodPipe> = /*@__PURE__*/ core.$constru
   util.defineLazy(inst._zod, "values", () => def.in._zod.values);
   util.defineLazy(inst._zod, "optin", () => def.in._zod.optin);
   util.defineLazy(inst._zod, "optout", () => def.out._zod.optout);
+  util.defineLazy(inst._zod, "propValues", () => def.in._zod.propValues);
 
   inst._zod.parse = (payload, ctx) => {
     const left = def.in._zod.run(payload, ctx);
