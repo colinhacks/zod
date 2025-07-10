@@ -1,7 +1,8 @@
-import { es } from "zod/locales";
-// import type * as z from "zod";
-import * as z from "zod/mini";
+import { z } from "zod";
 
-z.config(es());
+const Parent = z.object({ key1: z.object({ key2: z.string() }) });
 
-z.string().parse(123);
+console.log(Parent._zod.def.shape.key1._zod.run);
+// => [Function (anonymous)]
+
+console.log(z.parse(Parent._zod.def.shape.key1, { key2: "asdf" }));

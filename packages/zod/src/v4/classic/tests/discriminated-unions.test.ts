@@ -617,3 +617,32 @@ test("readonly literal discriminator", () => {
     discUnion.parse({ type: "c", a: "hello" });
   }).toThrow();
 });
+
+test("pipes", () => {
+  const schema = z
+    .object({
+      type: z.literal("foo"),
+    })
+    .transform((s) => ({ ...s, v: 2 }));
+
+  expect(schema._zod.propValues).toMatchInlineSnapshot(`
+    {
+      "type": Set {
+        "foo",
+      },
+    }
+  `);
+
+  const schema2 = z.object({
+    type: z.literal("bar"),
+  });
+
+  const combinedSchema = z.discriminatedUnion("type", [schema, schema2], {
+    unionFallback: false,
+  });
+
+  combinedSchema.parse({
+    type: "foo",
+    v: 2,
+  });
+});
