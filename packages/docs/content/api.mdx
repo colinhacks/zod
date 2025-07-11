@@ -244,6 +244,7 @@ z.iso.date();
 z.iso.time();
 z.iso.datetime();
 z.iso.duration();
+z.stringFormat();
 ```
 
 ### Emails
@@ -491,6 +492,20 @@ cidrv4.parse("192.168.0.0/24"); // ✅
 
 const cidrv6 = z.string().cidrv6();
 cidrv6.parse("2001:db8::/32"); // ✅
+```
+
+### Custom formats
+
+Define your own string formats with `z.stringFormat()`.
+
+```ts
+z.stringFormat("email", /asdf/g);
+z.stringFormat("idnEmail", /asdf/g, {
+  
+});
+z.stringFormat("typeid", (val) => {
+  return val.length > 10; // custom refinements
+});
 ```
 
 ## Template literals
