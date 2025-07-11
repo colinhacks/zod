@@ -58,6 +58,7 @@ const error: () => errors.$ZodErrorMap = () => {
     ulid: "ULID",
     xid: "XID",
     ksuid: "KSUID",
+    typeid: "TypeID",
     datetime: "ISO-aikaleima",
     date: "ISO-päivämäärä",
     time: "ISO-aika",

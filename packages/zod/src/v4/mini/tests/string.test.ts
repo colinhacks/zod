@@ -201,6 +201,12 @@ test("z.ksuid", () => {
   expect(() => z.parse(a, "abc")).toThrow();
 });
 
+test("z.typeid", () => {
+  const a = z.typeid();
+  expect(z.parse(a, "user_01h5fskfsk4fpeqwnsyz5hj55t")).toEqual("user_01h5fskfsk4fpeqwnsyz5hj55t");
+  expect(() => z.parse(a, "abc")).toThrow();
+});
+
 // test("z.ip", () => {
 //   const a = z.ip();
 //   expect(z.parse(a, "127.0.0.1")).toEqual("127.0.0.1");

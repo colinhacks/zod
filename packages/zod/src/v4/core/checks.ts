@@ -753,6 +753,7 @@ export type $ZodStringFormats =
   | "ulid"
   | "xid"
   | "ksuid"
+  | "typeid"
   | "datetime"
   | "date"
   | "time"

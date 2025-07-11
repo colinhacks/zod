@@ -291,6 +291,22 @@ export function ksuid(params?: string | core.$ZodKSUIDParams): ZodMiniKSUID {
   return core._ksuid(ZodMiniKSUID, params);
 }
 
+// ZodMiniTypeID
+export interface ZodMiniTypeID extends _ZodMiniString<core.$ZodTypeIDInternals> {
+  // _zod: core.$ZodTypeIDInternals;
+}
+export const ZodMiniTypeID: core.$constructor<ZodMiniTypeID> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniTypeID",
+  (inst, def) => {
+    core.$ZodTypeID.init(inst, def);
+    ZodMiniStringFormat.init(inst, def);
+  }
+);
+
+export function typeid(params?: string | core.$ZodTypeIDParams): ZodMiniTypeID {
+  return core._typeid(ZodMiniTypeID, params);
+}
+
 // ZodMiniIPv4
 export interface ZodMiniIPv4 extends _ZodMiniString<core.$ZodIPv4Internals> {
   // _zod: core.$ZodIPv4Internals;

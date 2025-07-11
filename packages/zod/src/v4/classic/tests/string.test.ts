@@ -612,6 +612,25 @@ test("ksuid", () => {
   `);
 });
 
+test("typeid", () => {
+  const tid = z.string().typeid();
+  tid.parse("user_01h5fskfsk4fpeqwnsyz5hj55t");
+  const result = tid.safeParse("invalidtypeid");
+  expect(result).toMatchObject({ success: false });
+  expect(result.error!.issues).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "invalid_format",
+        "format": "typeid",
+        "message": "Invalid TypeID",
+        "origin": "string",
+        "path": [],
+        "pattern": "/^(?:[a-z](?:[a-z_]{0,61}[a-z])?_)?[0-7][0-9a-hjkmnpqrstvwxyz]{25}$/",
+      },
+    ]
+  `);
+});
+
 test("regex", () => {
   z.string()
     .regex(/^moo+$/)
@@ -690,6 +709,7 @@ test("format", () => {
   // expect(z.string().json().format).toEqual("json_string");
   expect(z.string().xid().format).toEqual("xid");
   expect(z.string().ksuid().format).toEqual("ksuid");
+  expect(z.string().typeid().format).toEqual("typeid");
   // expect(z.string().ip().format).toEqual("ip");
   expect(z.string().ipv4().format).toEqual("ipv4");
   expect(z.string().ipv6().format).toEqual("ipv6");

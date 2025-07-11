@@ -54,6 +54,7 @@ const error: () => errors.$ZodErrorMap = () => {
     ulid: "یو ایل آئی ڈی",
     xid: "ایکس آئی ڈی",
     ksuid: "کے ایس یو آئی ڈی",
+    typeid: "TypeID",
     datetime: "آئی ایس او ڈیٹ ٹائم",
     date: "آئی ایس او تاریخ",
     time: "آئی ایس او وقت",

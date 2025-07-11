@@ -583,6 +583,23 @@ export const $ZodKSUID: core.$constructor<$ZodKSUID> = /*@__PURE__*/ core.$const
   }
 );
 
+//////////////////////////////   ZodTypeID   //////////////////////////////
+
+export interface $ZodTypeIDDef extends $ZodStringFormatDef<"typeid"> {}
+export interface $ZodTypeIDInternals extends $ZodStringFormatInternals<"typeid"> {}
+
+export interface $ZodTypeID extends $ZodType {
+  _zod: $ZodTypeIDInternals;
+}
+
+export const $ZodTypeID: core.$constructor<$ZodTypeID> = /*@__PURE__*/ core.$constructor(
+  "$ZodTypeID",
+  (inst, def): void => {
+    def.pattern ??= regexes.typeid;
+    $ZodStringFormat.init(inst, def);
+  }
+);
+
 //////////////////////////////   ZodISODateTime   //////////////////////////////
 
 export interface $ZodISODateTimeDef extends $ZodStringFormatDef<"datetime"> {
@@ -3767,6 +3784,7 @@ export type $ZodStringFormatTypes =
   | $ZodULID
   | $ZodXID
   | $ZodKSUID
+  | $ZodTypeID
   | $ZodISODateTime
   | $ZodISODate
   | $ZodISOTime

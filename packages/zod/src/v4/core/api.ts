@@ -310,6 +310,22 @@ export function _ksuid<T extends schemas.$ZodKSUID>(
   });
 }
 
+// TypeID
+export type $ZodTypeIDParams = StringFormatParams<schemas.$ZodTypeID>;
+export type $ZodCheckTypeIDParams = CheckStringFormatParams<schemas.$ZodTypeID>;
+export function _typeid<T extends schemas.$ZodTypeID>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodTypeIDParams | $ZodCheckTypeIDParams
+): T {
+  return new Class({
+    type: "string",
+    format: "typeid",
+    check: "string_format",
+    abort: false,
+    ...util.normalizeParams(params),
+  });
+}
+
 // IP
 // export type $ZodIPParams = StringFormatParams<schemas.$ZodIP, "pattern">;
 // export type $ZodCheckIPParams = CheckStringFormatParams<schemas.$ZodIP, "pattern">;

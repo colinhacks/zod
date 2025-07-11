@@ -298,6 +298,8 @@ export interface ZodString extends _ZodString<core.$ZodStringInternals<string>> 
   xid(params?: string | core.$ZodCheckXIDParams): this;
   /** @deprecated Use `z.ksuid()` instead. */
   ksuid(params?: string | core.$ZodCheckKSUIDParams): this;
+  /** @deprecated Use `z.typeid()` instead. */
+  typeid(params?: string | core.$ZodCheckTypeIDParams): this;
   // /** @deprecated Use `z.ipv4()` or `z.ipv6()` instead. */
   // ip(params?: string | (core.$ZodCheckIPv4Params & { version?: "v4" | "v6" })): ZodUnion<[this, this]>;
   /** @deprecated Use `z.ipv4()` instead. */
@@ -352,6 +354,7 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
   inst.base64url = (params) => inst.check(core._base64url(ZodBase64URL, params));
   inst.xid = (params) => inst.check(core._xid(ZodXID, params));
   inst.ksuid = (params) => inst.check(core._ksuid(ZodKSUID, params));
+  inst.typeid = (params) => inst.check(core._typeid(ZodTypeID, params));
   inst.ipv4 = (params) => inst.check(core._ipv4(ZodIPv4, params));
   inst.ipv6 = (params) => inst.check(core._ipv6(ZodIPv6, params));
   inst.cidrv4 = (params) => inst.check(core._cidrv4(ZodCIDRv4, params));
@@ -548,6 +551,19 @@ export const ZodKSUID: core.$constructor<ZodKSUID> = /*@__PURE__*/ core.$constru
 
 export function ksuid(params?: string | core.$ZodKSUIDParams): ZodKSUID {
   return core._ksuid(ZodKSUID, params);
+}
+
+// ZodTypeID
+export interface ZodTypeID extends ZodStringFormat<"typeid"> {
+  _zod: core.$ZodTypeIDInternals;
+}
+export const ZodTypeID: core.$constructor<ZodTypeID> = /*@__PURE__*/ core.$constructor("ZodTypeID", (inst, def) => {
+  core.$ZodTypeID.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+
+export function typeid(params?: string | core.$ZodTypeIDParams): ZodTypeID {
+  return core._typeid(ZodTypeID, params);
 }
 
 // ZodIP

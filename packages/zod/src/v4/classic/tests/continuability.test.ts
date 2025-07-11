@@ -349,4 +349,26 @@ test("continuability", () => {
       },
     ]
   `);
+  expect(
+    z
+      .typeid()
+      .refine(() => false)
+      .safeParse("invalid_value").error!.issues
+  ).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "invalid_format",
+        "format": "typeid",
+        "message": "Invalid TypeID",
+        "origin": "string",
+        "path": [],
+        "pattern": "/^(?:[a-z](?:[a-z_]{0,61}[a-z])?_)?[0-7][0-9a-hjkmnpqrstvwxyz]{25}$/",
+      },
+      {
+        "code": "custom",
+        "message": "Invalid input",
+        "path": [],
+      },
+    ]
+  `);
 });
