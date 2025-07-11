@@ -504,9 +504,9 @@ test("when", () => {
     })
     .refine(
       (data) => {
-        console.log("running check...");
-        console.log(data);
-        console.log(data.password);
+        // console.log("running check...");
+        // console.log(data);
+        // console.log(data.password);
         return data.password === data.confirmPassword;
       },
       {

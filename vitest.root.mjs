@@ -1,4 +1,4 @@
-import { type ViteUserConfig, defineConfig } from "vitest/config";
+import { defineConfig } from "vitest/config";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
@@ -21,4 +21,4 @@ export default defineConfig({
     },
     silent: true,
   },
-}) as ViteUserConfig;
+});
