@@ -646,3 +646,15 @@ test("pipes", () => {
     v: 2,
   });
 });
+
+test("def", () => {
+  const schema = z.discriminatedUnion(
+    "type",
+    [z.object({ type: z.literal("play") }), z.object({ type: z.literal("pause") })],
+    { unionFallback: true }
+  );
+
+  expect(schema.def).toBeDefined();
+  expect(schema.def.discriminator).toEqual("type");
+  expect(schema.def.unionFallback).toEqual(true);
+});

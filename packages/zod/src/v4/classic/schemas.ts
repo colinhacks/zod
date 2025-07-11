@@ -1224,6 +1224,7 @@ export interface ZodDiscriminatedUnion<Options extends readonly core.SomeType[] 
   extends ZodUnion<Options>,
     core.$ZodDiscriminatedUnion<Options> {
   _zod: core.$ZodDiscriminatedUnionInternals<Options>;
+  def: core.$ZodDiscriminatedUnionDef<Options>;
 }
 export const ZodDiscriminatedUnion: core.$constructor<ZodDiscriminatedUnion> = /*@__PURE__*/ core.$constructor(
   "ZodDiscriminatedUnion",
