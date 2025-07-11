@@ -1070,7 +1070,7 @@ export interface ZodObject<
   strip(): ZodObject<Shape, core.$strip>;
 
   extend<U extends core.$ZodLooseShape & Partial<Record<keyof Shape, core.SomeType>>>(
-    shape: U
+    shape: U | ((shape: Shape) => U)
   ): ZodObject<util.Extend<Shape, U>, Config>;
 
   /**

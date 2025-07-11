@@ -785,9 +785,9 @@ export function looseObject<T extends core.$ZodLooseShape>(
 // object methods
 export function extend<T extends ZodMiniObject, U extends core.$ZodLooseShape>(
   schema: T,
-  shape: U
+  shape: U | ((shape: T["shape"]) => U)
 ): ZodMiniObject<util.Extend<T["shape"], U>, T["_zod"]["config"]> {
-  return util.extend(schema, shape);
+  return util.extend(schema, shape as any);
 }
 
 /** @deprecated Identical to `z.extend(A, B)` */
