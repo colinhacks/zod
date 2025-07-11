@@ -16,7 +16,7 @@ export const extendedDuration: RegExp =
 /** A regex for any UUID-like identifier: 8-4-4-4-12 hex pattern */
 export const guid: RegExp = /^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$/;
 
-/** Returns a regex for validating an RFC 4122 UUID.
+/** Returns a regex for validating an RFC 9562/4122 UUID.
  *
  * @param version Optionally specify a version 1-8. If no version is specified, all versions are supported. */
 export const uuid = (version?: number | undefined): RegExp => {

@@ -322,10 +322,10 @@ z.email(); // ✅
 
 ### stricter `.uuid()`
 
-The `z.uuid()` now validates UUIDs more strictly against the RFC 4122 specification; specifically, the variant bits must be `10` per the spec. For a more permissive "UUID-like" validator, use `z.guid()`.
+The `z.uuid()` now validates UUIDs more strictly against the RFC 9562/4122 specification; specifically, the variant bits must be `10` per the spec. For a more permissive "UUID-like" validator, use `z.guid()`.
 
 ```ts
-z.uuid(); // RFC 4122 compliant UUID
+z.uuid(); // RFC 9562/4122 compliant UUID
 z.guid(); // any 8-4-4-4-12 hex pattern
 ```
 
