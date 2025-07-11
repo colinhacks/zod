@@ -420,6 +420,17 @@ test("extend() should have power to override existing key", () => {
   expectTypeOf<PersonWithNumberAsLastName>().toEqualTypeOf<{ firstName: string; lastName: number }>();
 });
 
+test("extend() accepts a closure over shape", () => {
+  const WithMinLastName = personToExtend.extend((shape) => ({
+    lastName: shape.lastName.min(5),
+  }));
+  expect(WithMinLastName.parse({ firstName: "f", lastName: "abcdef" })).toEqual({
+    firstName: "f",
+    lastName: "abcdef",
+  });
+  expect(() => WithMinLastName.parse({ firstName: "f", lastName: "abc" })).toThrow();
+});
+
 test("passthrough index signature", () => {
   const a = z.object({ a: z.string() });
   type a = z.infer<typeof a>;

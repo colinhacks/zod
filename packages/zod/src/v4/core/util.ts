@@ -573,7 +573,11 @@ export function omit(schema: schemas.$ZodObject, mask: object): any {
   });
 }
 
-export function extend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): any {
+export function extend(
+  schema: schemas.$ZodObject,
+  shapeOrFactory: schemas.$ZodShape | ((shape: schemas.$ZodShape) => schemas.$ZodShape)
+): any {
+  const shape = typeof shapeOrFactory === "function" ? shapeOrFactory(schema._zod.def.shape) : shapeOrFactory;
   if (!isPlainObject(shape)) {
     throw new Error("Invalid input to extend: expected a plain object");
   }
