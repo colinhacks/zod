@@ -178,6 +178,7 @@ export type SafeParseError<T> = {
   data?: never;
   error: errors.$ZodError<T>;
 };
+export type OfType<T, U extends T> = U;
 
 export type PropValues = Record<string, Set<Primitive>>;
 export type PrimitiveSet = Set<Primitive>;
