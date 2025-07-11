@@ -218,6 +218,7 @@ z.url();
 z.emoji();         // validates a single emoji character
 z.base64();
 z.base64url();
+z.jwt();
 z.nanoid();
 z.cuid();
 z.cuid2();
@@ -471,6 +472,15 @@ cidrv4.parse("192.168.0.0/24"); // ✅
 
 const cidrv6 = z.string().cidrv6();
 cidrv6.parse("2001:db8::/32"); // ✅
+```
+
+### JWTs
+
+Validate [JSON Web Tokens](https://jwt.io/).
+
+```ts
+z.jwt();
+z.jwt({ alg: "HS256" });
 ```
 
 ## Template literals
