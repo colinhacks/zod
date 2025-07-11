@@ -1779,6 +1779,21 @@ TestSchema.parse(new Test()); // ✅
 TestSchema.parse("whatever"); // ❌
 ```
 
+## Property check
+
+`z.property(key, schema)` validates that `input[key]` conforms to the given
+schema. While it's most often used with object schemas, it can be added to any
+schema since the check simply reads the property from the value being parsed.
+
+```ts
+const Person = z
+  .object({ name: z.string() })
+  .check(z.property("age", z.number()));
+
+Person.parse({ name: "Hermione", age: 18 }); // ✅
+Person.parse({ name: "Hermione", age: "eighteen" }); // ❌
+```
+
 ## Refinements
 
 Every Zod schema stores an array of *refinements*. Refinements are a way to perform custom validation that Zod doesn't provide a native API for.
