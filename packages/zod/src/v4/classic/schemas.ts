@@ -1046,6 +1046,16 @@ export function keyof<T extends ZodObject>(schema: T): ZodLiteral<Exclude<keyof 
 
 // ZodObject
 
+export type SafeExtendShape<Base extends core.$ZodShape, Ext extends core.$ZodLooseShape> = {
+  [K in keyof Ext]: K extends keyof Base
+    ? core.output<Ext[K]> extends core.output<Base[K]>
+      ? core.input<Ext[K]> extends core.input<Base[K]>
+        ? Ext[K]
+        : never
+      : never
+    : Ext[K];
+};
+
 export interface ZodObject<
   /** @ts-ignore Cast variance */
   out Shape extends core.$ZodShape = core.$ZodLooseShape,
@@ -1071,6 +1081,10 @@ export interface ZodObject<
 
   extend<U extends core.$ZodLooseShape & Partial<Record<keyof Shape, core.SomeType>>>(
     shape: U
+  ): ZodObject<util.Extend<Shape, U>, Config>;
+
+  safeExtend<U extends core.$ZodLooseShape>(
+    shape: SafeExtendShape<Shape, U> & Partial<Record<keyof Shape, core.SomeType>>
   ): ZodObject<util.Extend<Shape, U>, Config>;
 
   /**
@@ -1148,6 +1162,9 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
 
   inst.extend = (incoming: any) => {
     return util.extend(inst, incoming);
+  };
+  inst.safeExtend = (incoming: any) => {
+    return util.safeExtend(inst, incoming);
   };
   inst.merge = (other) => util.merge(inst, other);
   inst.pick = (mask) => util.pick(inst, mask);
