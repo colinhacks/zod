@@ -220,7 +220,7 @@ result.error.issues;
 
 The `iss` object is a [discriminated union](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions) of all possible issue types. Use the `code` property to discriminate between them.
 
-> For a breakdown of all Zod issue codes, see the [`zod/v4/core`](/packages/core#issue-types) documentation.
+> For a breakdown of all Zod issue codes, see the [`zod/core`](/packages/core#issue-types) documentation.
 
 ```ts
 const result = schema.safeParse(12, {
@@ -272,7 +272,7 @@ Global error messages have *lower precedence* than schema-level or per-parse err
 
 The `iss` object is a [discriminated union](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions) of all possible issue types. Use the `code` property to discriminate between them.
 
-> For a breakdown of all Zod issue codes, see the [`zod/v4/core`](/packages/core#issue-types) documentation.
+> For a breakdown of all Zod issue codes, see the [`zod/core`](/packages/core#issue-types) documentation.
 
 ```ts
 const result = schema.safeParse(12, {
@@ -290,7 +290,7 @@ const result = schema.safeParse(12, {
 
 ## Internationalization
 
-To support internationalization of error message, Zod provides several built-in **locales**. These are exported from the `zod/v4/core` package.
+To support internationalization of error message, Zod provides several built-in **locales**. These are exported from the `zod/core` package.
 
 > **Note** — The regular `zod` library automatically loads the `en` locale automatically. Zod Mini does not load any locale by default; instead all error messages default to `Invalid input`.
 

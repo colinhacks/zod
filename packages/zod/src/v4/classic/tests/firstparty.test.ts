@@ -1,6 +1,6 @@
 import { expectTypeOf, test } from "vitest";
+import type * as core from "zod/core";
 import * as z from "zod/v4";
-import type * as core from "zod/v4/core";
 
 test("first party switch", () => {
   const myType = z.string() as core.$ZodTypes;
