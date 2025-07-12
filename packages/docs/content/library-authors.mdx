@@ -4,7 +4,7 @@ title: For library authors
 
 import { Callout } from "fumadocs-ui/components/callout"
 
-<Callout title="Update — July 10th, 2025">
+<Callout title="Update — July 12th, 2025">
 Zod `4.0.0` has been released on `npm`. This completes the incremental rollout process described below. To add support, bump your peer dependency to include `zod@^4.0.0`:
 
 ```json
@@ -16,7 +16,7 @@ Zod `4.0.0` has been released on `npm`. This completes the incremental rollout p
 }
 ```
 
-If you'd already implemented Zod 4 support according to the best practices described below (e.g. using the `"zod/v4/core"` subpath), then no other code changes should be necessary. This should not require a major version bump in your library.
+If you'd already implemented Zod 4 support according to the best practices described below (e.g. using the `"zod/v4/core"` or `"zod/core"`), then no other code changes should be necessary. This should not require a major version bump in your library.
 </Callout>
  
 
@@ -78,21 +78,21 @@ To support Zod 4, update the minimum version for your `"zod"` peer dependency to
 }
 ```
 
-Starting with `v3.25.0`, the Zod 4 core package is available at the `"zod/v4/core"` subpath. Read the [Versioning in Zod 4](https://github.com/colinhacks/zod/issues/4371) writeup for full context on this versioning approach.
+Starting with `v3.25.0`, the Zod 4 core package is available at the `"zod/v4/core"` subpath. With the latest version of Zod you can also import from `"zod/core"`, that's the recommended way to import the core package from now on. Read the [Versioning in Zod 4](https://github.com/colinhacks/zod/issues/4371) writeup for full context on this versioning approach.
 
 ```ts
-import * as z4 from "zod/v4/core";
+import * as z4 from "zod/core";
 ```
 
 Import from these subpaths only. Think of them like "permalinks" to their respective Zod versions. These will remain available forever.
 
 - `"zod/v3"` for Zod 3 ✅ 
-- `"zod/v4/core"` for the Zod 4 Core package ✅
+- `"zod/core"` for the Zod 4 Core package ✅
 
 You generally shouldn't be importing from any other paths. The Zod Core library is a shared library that undergirds both Zod 4 Classic and Zod 4 Mini. It's generally a bad idea to implement any functionality that is specific to one or the other. Do not import from these subpaths:
 
 - `"zod"` — ❌ In 3.x releases, this exports Zod 3. In 4.x releases, this will export Zod 4. Use the permalinks instead. 
-- `"zod/v4"` and `"zod/v4/mini"`— ❌ These subpaths are the homes of Zod 4 Classic and Mini, respectively. If you want your library to work with both Zod and Zod Mini, you should build against the base classes defined in `"zod/v4/core"`. If you reference classes from the `"zod/v4"` module, your library will not work with Zod Mini, and vice versa. This is extremely discouraged. Use `"zod/v4/core"` instead, which exports the `$`-prefixed subclasses that are extended by Zod Classic and Zod Mini. The internals of the classic & mini subclasses are identical; they only differ in which helper methods they implement.
+- `"zod/v4"` and `"zod/v4/mini"`— ❌ These subpaths are the homes of Zod 4 Classic and Mini, respectively. If you want your library to work with both Zod and Zod Mini, you should build against the base classes defined in `"zod/core"`. If you reference classes from the `"zod/v4"` module, your library will not work with Zod Mini, and vice versa. This is extremely discouraged. Use `"zod/core"` instead, which exports the `$`-prefixed subclasses that are extended by Zod Classic and Zod Mini. The internals of the classic & mini subclasses are identical; they only differ in which helper methods they implement.
 
 
 ## Do I need to publish a new major version?
@@ -107,7 +107,7 @@ Starting in `v3.25.0`, the package contains copies of both Zod 3 and Zod 4 at th
 
 ```ts
 import * as z3 from "zod/v3";
-import * as z4 from "zod/v4/core";
+import * as z4 from "zod/core";
 
 type Schema = z3.ZodTypeAny | z4.$ZodType;
 
@@ -120,7 +120,7 @@ To differentiate between Zod 3 and Zod 4 schemas at runtime, check for the `"_zo
 
 ```ts
 import type * as z3 from "zod/v3";
-import type * as z4 from "zod/v4/core";
+import type * as z4 from "zod/core";
 
 declare const schema: z3.ZodTypeAny | v4.$ZodType;
 
@@ -133,11 +133,11 @@ if ("_zod" in schema) {
 
 ## How to support Zod and Zod Mini simultaneously?
 
-Your library code should only import from `"zod/v4/core"`. This sub-package defines the interfaces, classes, and utilities that are shared between Zod and Zod Mini. 
+Your library code should only import from `"zod/core"`. This sub-package defines the interfaces, classes, and utilities that are shared between Zod and Zod Mini. 
 
 ```ts
 // library code
-import * as z4 from "zod/v4/core";
+import * as z4 from "zod/core";
 
 export function acceptObjectSchema<T extends z4.$ZodObject>(schema: T){
   // parse data
@@ -197,7 +197,7 @@ Accepting user-defined schemas is the a fundamental operation for any library bu
 When starting out, it may be tempting to write a function that accepts a Zod schema like this:
 
 ```ts
-import * as z4 from "zod/v4/core";
+import * as z4 from "zod/core";
 
 function inferSchema<T>(schema: z4.$ZodType<T>) {
   return schema;
@@ -226,7 +226,7 @@ To constrain the input schema to a specific subclass:
 
 ```ts
 
-import * as z4 from "zod/v4/core";
+import * as z4 from "zod/core";
 
 // only accepts object schemas
 function inferSchema<T>(schema: z4.$ZodObject) {
@@ -238,7 +238,7 @@ To constrain the inferred output type of the input schema:
 
 ```ts
 
-import * as z4 from "zod/v4/core";
+import * as z4 from "zod/core";
 
 // only accepts string schemas
 function inferSchema<T extends z4.$ZodType<string>>(schema: T) {

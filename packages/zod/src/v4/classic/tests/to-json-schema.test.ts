@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import * as z from "zod/v4";
-// import * as zCore from "zod/v4/core";
+// import * as zCore from "zod/core";
 
 describe("toJSONSchema", () => {
   test("primitive types", () => {

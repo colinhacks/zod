@@ -5,6 +5,7 @@
     "./package.json": "./package.json",
     ".": "./src/index.ts",
     "./mini": "./src/v4/mini/index.ts",
+    "./core": "./src/v4/core/index.ts",
     "./v3": "./src/v3/index.ts",
     "./v4": "./src/v4/index.ts",
     "./v4-mini": "./src/v4-mini/index.ts",

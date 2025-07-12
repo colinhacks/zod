@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
+import { util as zc } from "zod/core";
 import * as z from "zod/mini";
-import { util as zc } from "zod/v4/core";
 
 test("min/max", () => {
   const a = z.number().check(z.minimum(5), z.minimum(6), z.minimum(7), z.maximum(10), z.maximum(11), z.maximum(12));

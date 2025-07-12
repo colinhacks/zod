@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-// import * as z from "zod/v4/core";
+// import * as z from "zod/core";
 
 test("z.function", () => {
   expect(true).toEqual(true);

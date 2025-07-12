@@ -1,5 +1,5 @@
 import { expect, expectTypeOf, test } from "vitest";
-import type { util } from "zod/v4/core";
+import type { util } from "zod/core";
 
 import * as z from "zod/v4";
 
