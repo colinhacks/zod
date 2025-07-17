@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 
 import { SidebarItem, SidebarSeparator } from "@/components/sidebar-item";
 import { SidebarLogo } from "@/components/sidebar-logo";
+import { SponsorButton } from "@/components/sponsor-button";
 
 const layoutProps: DocsLayoutProps = {
   ...baseOptions,
@@ -46,6 +47,7 @@ const layoutProps: DocsLayoutProps = {
     transparentMode: "top",
     enabled: true,
     enableSearch: true,
+    children: <SponsorButton />,
   },
   links: [
     {
