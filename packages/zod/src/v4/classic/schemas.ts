@@ -1604,12 +1604,23 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
   }
 );
 
-export function transform<I = unknown, O = I>(
-  fn: (input: I, ctx: core.ParsePayload) => O
-): ZodTransform<Awaited<O>, I> {
+export function transform<I = unknown, O = I>(args: {
+  parse: (input: I, ctx: core.ParsePayload) => O;
+  unparse: (input: O, ctx: core.ParsePayload) => I;
+}): ZodTransform<Awaited<O>, I>;
+export function transform<I = unknown, O = I>(fn: (input: I, ctx: core.ParsePayload) => O): ZodTransform<Awaited<O>, I>;
+export function transform<I = unknown, O = I>(args: any): ZodTransform<Awaited<O>, I> {
+  if (typeof args === "function") {
+    return new ZodTransform({
+      type: "transform",
+      transform: args as any,
+    }) as any;
+  }
+  const { parse, unparse } = args;
   return new ZodTransform({
     type: "transform",
-    transform: fn as any,
+    transform: parse,
+    reverseTransform: unparse,
   }) as any;
 }
 

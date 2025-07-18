@@ -18,6 +18,8 @@ export interface ParseContext<T extends errors.$ZodIssueBase = never> {
   readonly reportInput?: boolean;
   /** Skip eval-based fast path. Default `false`. */
   readonly jitless?: boolean;
+  /** Direction for codec parsing. Default `'forward'`. */
+  readonly direction?: "forward" | "backward" | undefined;
   /** Abort validation after the first error. Default `false`. */
   // readonly abortEarly?: boolean;
 }
@@ -25,6 +27,7 @@ export interface ParseContext<T extends errors.$ZodIssueBase = never> {
 /** @internal */
 export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> extends ParseContext<T> {
   readonly async?: boolean | undefined;
+  readonly deferredChecks?: checks.$ZodCheck<never>[];
 }
 
 export interface ParsePayload<T = unknown> {
@@ -242,14 +245,30 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
     };
 
     inst._zod.run = (payload, ctx) => {
-      const result = inst._zod.parse(payload, ctx);
+      const isBackward = ctx.direction === "backward";
+      const allChecks = [...checks, ...(ctx.deferredChecks || [])];
 
-      if (result instanceof Promise) {
-        if (ctx.async === false) throw new core.$ZodAsyncError();
-        return result.then((result) => runChecks(result, checks, ctx));
+      if (isBackward) {
+        // In backward mode: run checks first, then parse
+        const checkedResult = runChecks(payload, allChecks, ctx);
+        if (checkedResult instanceof Promise) {
+          if (ctx.async === false) throw new core.$ZodAsyncError();
+          return checkedResult.then((checkedResult) => {
+            return inst._zod.parse(checkedResult, ctx);
+          });
+        }
+        return inst._zod.parse(checkedResult, ctx);
+      } else {
+        // In forward mode: parse first, then run checks
+        const result = inst._zod.parse(payload, ctx);
+        if (result instanceof Promise) {
+          if (ctx.async === false) throw new core.$ZodAsyncError();
+          return result.then((result) => {
+            return runChecks(result, allChecks, ctx);
+          });
+        }
+        return runChecks(result, allChecks, ctx);
       }
-
-      return runChecks(result, checks, ctx);
     };
   }
 
@@ -2914,6 +2933,7 @@ export const $ZodFile: core.$constructor<$ZodFile> = /*@__PURE__*/ core.$constru
 export interface $ZodTransformDef extends $ZodTypeDef {
   type: "transform";
   transform: (input: unknown, payload: ParsePayload<unknown>) => util.MaybeAsync<unknown>;
+  reverseTransform?: ((input: unknown, payload: ParsePayload<unknown>) => util.MaybeAsync<unknown>) | undefined;
 }
 export interface $ZodTransformInternals<O = unknown, I = unknown> extends $ZodTypeInternals<O, I> {
   def: $ZodTransformDef;
@@ -2929,7 +2949,19 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
   (inst, def) => {
     $ZodType.init(inst, def);
     inst._zod.parse = (payload, _ctx) => {
-      const _out = def.transform(payload.value, payload);
+      const isBackward = _ctx.direction === "backward";
+      const transformFn = isBackward ? def.reverseTransform : def.transform;
+
+      if (isBackward && !def.reverseTransform) {
+        throw new Error("Cannot run transform in backward mode: reverseTransform is not defined");
+      }
+
+      // Check for dangling transform in backward mode
+      if (isBackward && _ctx.deferredChecks && _ctx.deferredChecks.length > 0) {
+        throw new Error("Encountered dangling transform during encode. Use z.codec() instead of .transform().");
+      }
+
+      const _out = transformFn!(payload.value as never, payload);
       if (_ctx.async) {
         const output = _out instanceof Promise ? _out : Promise.resolve(_out);
         return output.then((output) => {
@@ -3441,11 +3473,30 @@ export const $ZodPipe: core.$constructor<$ZodPipe> = /*@__PURE__*/ core.$constru
   util.defineLazy(inst._zod, "propValues", () => def.in._zod.propValues);
 
   inst._zod.parse = (payload, ctx) => {
-    const left = def.in._zod.run(payload, ctx);
-    if (left instanceof Promise) {
-      return left.then((left) => handlePipeResult(left, def, ctx));
+    const isBackward = ctx.direction === "backward";
+
+    if (isBackward) {
+      // In backward mode, defer checks from B and run B -> A
+      const outChecks = def.out._zod.def.checks || [];
+      const newCtx = {
+        ...ctx,
+        deferredChecks: [...(ctx.deferredChecks || []), ...outChecks],
+      };
+
+      // Parse B schema without running its checks
+      const right = def.out._zod.parse(payload, newCtx);
+      if (right instanceof Promise) {
+        return right.then((right) => handleReversePipeResult(right, def, newCtx));
+      }
+      return handleReversePipeResult(right, def, newCtx);
+    } else {
+      // In forward mode, run A -> B
+      const left = def.in._zod.run(payload, ctx);
+      if (left instanceof Promise) {
+        return left.then((left) => handlePipeResult(left, def, ctx));
+      }
+      return handlePipeResult(left, def, ctx);
     }
-    return handlePipeResult(left, def, ctx);
   };
 });
 
@@ -3454,6 +3505,13 @@ function handlePipeResult(left: ParsePayload, def: $ZodPipeDef, ctx: ParseContex
     return left;
   }
   return def.out._zod.run({ value: left.value, issues: left.issues }, ctx);
+}
+
+function handleReversePipeResult(right: ParsePayload, def: $ZodPipeDef, ctx: ParseContextInternal) {
+  if (util.aborted(right)) {
+    return right;
+  }
+  return def.in._zod.run({ value: right.value, issues: right.issues }, ctx);
 }
 
 ////////////////////////////////////////////

@@ -174,7 +174,6 @@ export interface $ZodErrorMap<T extends $ZodIssueBase = $ZodIssue> {
 
 ////////////////////////    ERROR CLASS   ////////////////////////
 
-// const ZOD_ERROR: symbol = Symbol.for("{{zod.error}}");
 export interface $ZodError<T = unknown> extends Error {
   type: T;
   issues: $ZodIssue[];
