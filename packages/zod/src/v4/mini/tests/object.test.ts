@@ -110,6 +110,14 @@ test("z.extend", () => {
   expect(z.safeParse(extendedSchema, { name: "John", age: 30, isAdmin: true }).success).toBe(true);
 });
 
+test("z.extend with closure", () => {
+  const extendedSchema = z.extend(userSchema, (shape) => ({
+    name: shape.name.check(z.minLength(3)),
+  }));
+  expect(z.safeParse(extendedSchema, { name: "John", age: 30 }).success).toBe(true);
+  expect(z.safeParse(extendedSchema, { name: "Jo", age: 30 }).success).toBe(false);
+});
+
 test("z.pick", () => {
   const pickedSchema = z.pick(userSchema, { name: true, email: true });
   type PickedUser = z.infer<typeof pickedSchema>;
