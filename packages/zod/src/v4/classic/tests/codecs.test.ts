@@ -203,6 +203,9 @@ test("pipe with checks and transforms", () => {
     z.number()
   );
 
+  stringToNumber.parse("123");
+  stringToNumber.unparse(123);
+
   const numberWithMinCheck = z.number().min(10);
   const pipeWithChecks = stringToNumber.pipe(numberWithMinCheck);
 

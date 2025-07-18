@@ -14,4 +14,3 @@ const pipeWithChecks = z.pipe(stringToNumber, numberWithMinCheck);
 
 // With the new pipe-centric API, unparse should work correctly
 console.log(JSON.stringify(pipeWithChecks.unparse(15)));
-// console.log(JSON.stringify(pipeWithChecks.parse("5")));
