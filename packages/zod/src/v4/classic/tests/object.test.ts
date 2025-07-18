@@ -1,6 +1,6 @@
 import { expect, expectTypeOf, test } from "vitest";
+import * as core from "zod/core";
 import * as z from "zod/v4";
-import * as core from "zod/v4/core";
 
 const Test = z.object({
   f1: z.number(),

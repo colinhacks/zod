@@ -32,6 +32,7 @@
       "./package.json": "./package.json",
       ".": "./src/index.ts",
       "./mini": "./src/mini/index.ts",
+      "./core": "./src/core/index.ts",
       "./locales": "./src/locales/index.ts",
       "./v3": "./src/v3/index.ts",
       "./v4": "./src/v4/index.ts",
@@ -58,6 +59,12 @@
       "types": "./mini/index.d.cts",
       "import": "./mini/index.js",
       "require": "./mini/index.cjs"
+    },
+    "./core": {
+      "@zod/source": "./src/core/index.ts",
+      "types": "./core/index.d.cts",
+      "import": "./core/index.js",
+      "require": "./core/index.cjs"
     },
     "./locales": {
       "@zod/source": "./src/locales/index.ts",

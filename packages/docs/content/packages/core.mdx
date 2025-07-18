@@ -8,7 +8,7 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 This sub-package exports the core classes and utilities that are consumed by Zod and Zod Mini. It is not intended to be used directly; instead it's designed to be extended by other packages. It implements:
 
 ```ts
-import * as z from "zod/v4/core";
+import * as z from "zod/core";
 
 // the base class for all Zod schemas
 z.$ZodType;
@@ -46,7 +46,7 @@ export class $ZodType<Output = unknown, Input = unknown> {
 }
 ```
 
-`zod/v4/core` exports a number of subclasses that implement some common parsers. A union of all first-party subclasses is exported as `z.$ZodTypes`.
+`zod/core` exports a number of subclasses that implement some common parsers. A union of all first-party subclasses is exported as `z.$ZodTypes`.
 
 ```ts
 export type $ZodTypes =
@@ -164,7 +164,7 @@ export type $ZodTypes =
 
 ## Internals
 
-All `zod/v4/core` subclasses only contain a single property: `_zod`. This property is an object containing the schemas *internals*. The goal is to make `zod/v4/core` as extensible and unopinionated as possible. Other libraries can "build their own Zod" on top of these classes without `zod/v4/core` cluttering up the interface. Refer to the implementations of `zod` and `zod/mini` for examples of how to extend these classes. 
+All `zod/core` subclasses only contain a single property: `_zod`. This property is an object containing the schemas *internals*. The goal is to make `zod/core` as extensible and unopinionated as possible. Other libraries can "build their own Zod" on top of these classes without `zod/core` cluttering up the interface. Refer to the implementations of `zod` and `zod/mini` for examples of how to extend these classes. 
 
 The `_zod` internals property contains some notable properties:
 
@@ -229,7 +229,7 @@ export type $ZodStringFormatTypes =
 As the Zod Core schema classes have no methods, there are top-level functions for parsing data.
 
 ```ts
-import * as z from "zod/v4/core";
+import * as z from "zod/core";
 
 const schema = new z.$ZodString({ type: "string" });
 z.parse(schema, "hello");
@@ -265,7 +265,7 @@ The `_zod` internals property contains some notable properties:
   - `.def.check` — A string representing the check's type, e.g. `"min_length"`, `"less_than"`, `"string_format"`, etc.
 - `.check()` — Contains the check's validation logic.
 
-`zod/v4/core` exports a number of subclasses that perform some common refinements. All first-party subclasses are exported as a union called `z.$ZodChecks`.
+`zod/core` exports a number of subclasses that perform some common refinements. All first-party subclasses are exported as a union called `z.$ZodChecks`.
 
 ```ts
 export type $ZodChecks =
