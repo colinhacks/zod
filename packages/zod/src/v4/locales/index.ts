@@ -14,6 +14,7 @@ export { default as frCA } from "./fr-CA.js";
 export { default as he } from "./he.js";
 export { default as hu } from "./hu.js";
 export { default as id } from "./id.js";
+export { default as is } from "./is.js";
 export { default as it } from "./it.js";
 export { default as ja } from "./ja.js";
 export { default as kh } from "./kh.js";
