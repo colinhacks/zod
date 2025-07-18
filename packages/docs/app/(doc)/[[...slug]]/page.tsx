@@ -1,5 +1,6 @@
+import { Accordion, Accordions } from "@/components/accordion";
 import { Heading } from "@/components/heading";
-import { Tabs } from "@/components/tabs";
+import { Tab, Tabs } from "@/components/tabs";
 import { source } from "@/loaders/source";
 import { Callout } from "fumadocs-ui/components/callout";
 import defaultMdxComponents, { createRelativeLink } from "fumadocs-ui/mdx";
@@ -48,6 +49,9 @@ export default async function Page(props: {
             // you can add other MDX components here
             blockquote: Callout,
             Tabs,
+            Tab,
+            Accordion,
+            Accordions,
             h1: (props) => <Heading as="h1" {...props} />,
             h2: (props) => <Heading as="h2" {...props} />,
             h3: (props) => <Heading as="h3" {...props} />,
