@@ -20,6 +20,7 @@ export interface $ZodIssueBase {
 export interface $ZodIssueInvalidType<Input = unknown> extends $ZodIssueBase {
   readonly code: "invalid_type";
   readonly expected: $ZodType["_zod"]["def"]["type"];
+  readonly received?: "NaN" | "Infinity" | "Invalid Date";
   readonly input: Input;
 }
 
