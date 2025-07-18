@@ -869,3 +869,35 @@ test("def typing", () => {
   z.catch(z.string(), "fallback").def.type satisfies "catch";
   z.file().def.type satisfies "file";
 });
+
+test("functional z.unparse API in mini", () => {
+  // Test that z.unparse, z.safeUnparse, etc. are available as functions
+  expect(typeof z.unparse).toBe("function");
+  expect(typeof z.safeUnparse).toBe("function");
+  expect(typeof z.unparseAsync).toBe("function");
+  expect(typeof z.safeUnparseAsync).toBe("function");
+
+  // Test basic usage
+  const stringSchema = z.string();
+  const result = z.unparse(stringSchema, "hello");
+  expect(result).toBe("hello");
+
+  const safeResult = z.safeUnparse(stringSchema, "world");
+  expect(safeResult.success).toBe(true);
+  if (safeResult.success) {
+    expect(safeResult.data).toBe("world");
+  }
+});
+
+test("functional z.unparseAsync API in mini", async () => {
+  const stringSchema = z.string();
+
+  const result = await z.unparseAsync(stringSchema, "hello");
+  expect(result).toBe("hello");
+
+  const safeResult = await z.safeUnparseAsync(stringSchema, "world");
+  expect(safeResult.success).toBe(true);
+  if (safeResult.success) {
+    expect(safeResult.data).toBe("world");
+  }
+});

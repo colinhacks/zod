@@ -2958,7 +2958,7 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
 
       // Check for dangling transform in backward mode
       if (isBackward && _ctx.deferredChecks && _ctx.deferredChecks.length > 0) {
-        throw new Error("Encountered dangling transform during encode. Use z.codec() instead of .transform().");
+        throw new Error("Encountered dangling transform during parse");
       }
 
       const _out = transformFn!(payload.value as never, payload);
@@ -3474,17 +3474,19 @@ export const $ZodPipe: core.$constructor<$ZodPipe> = /*@__PURE__*/ core.$constru
 
   inst._zod.parse = (payload, ctx) => {
     const isBackward = ctx.direction === "backward";
-
+    const checks = def.checks ?? [];
     if (isBackward) {
       // In backward mode, defer checks from B and run B -> A
-      const outChecks = def.out._zod.def.checks || [];
-      const newCtx = {
-        ...ctx,
-        deferredChecks: [...(ctx.deferredChecks || []), ...outChecks],
-      };
+      // const outChecks = def.out._zod.def.checks || [];
+      const newCtx = checks.length
+        ? {
+            ...ctx,
+            deferredChecks: [...(ctx.deferredChecks || []), ...checks],
+          }
+        : ctx;
 
       // Parse B schema without running its checks
-      const right = def.out._zod.parse(payload, newCtx);
+      const right = def.out._zod.run(payload, newCtx);
       if (right instanceof Promise) {
         return right.then((right) => handleReversePipeResult(right, def, newCtx));
       }

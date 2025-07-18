@@ -59,6 +59,18 @@ export interface ZodType<
     params?: core.ParseContext<core.$ZodIssue>
   ) => Promise<parse.ZodSafeParseResult<core.output<this>>>;
 
+  // unparsing
+  unparse(data: core.output<this>, params?: core.ParseContext<core.$ZodIssue>): core.input<this>;
+  safeUnparse(
+    data: core.output<this>,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): parse.ZodSafeParseResult<core.input<this>>;
+  unparseAsync(data: core.output<this>, params?: core.ParseContext<core.$ZodIssue>): Promise<core.input<this>>;
+  safeUnparseAsync(
+    data: core.output<this>,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): Promise<parse.ZodSafeParseResult<core.input<this>>>;
+
   // refinements
   refine(check: (arg: core.output<this>) => unknown | Promise<unknown>, params?: string | core.$ZodCustomParams): this;
   /** @deprecated Use [`.check()`](https://zod.dev/api?id=check) instead.
@@ -154,6 +166,12 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   inst.parseAsync = async (data, params) => parse.parseAsync(inst, data, params, { callee: inst.parseAsync });
   inst.safeParseAsync = async (data, params) => parse.safeParseAsync(inst, data, params);
   inst.spa = inst.safeParseAsync;
+
+  // unparsing
+  inst.unparse = (data, params) => parse.unparse(inst, data, params);
+  inst.safeUnparse = (data, params) => parse.safeUnparse(inst, data, params);
+  inst.unparseAsync = async (data, params) => parse.unparseAsync(inst, data, params);
+  inst.safeUnparseAsync = async (data, params) => parse.safeUnparseAsync(inst, data, params);
 
   // refinements
   inst.refine = (check, params) => inst.check(refine(check, params));
@@ -1132,7 +1150,6 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
   inst.keyof = () => _enum(Object.keys(inst._zod.def.shape)) as any;
   inst.catchall = (catchall) => inst.clone({ ...inst._zod.def, catchall: catchall as any as core.$ZodType }) as any;
   inst.passthrough = () => inst.clone({ ...inst._zod.def, catchall: unknown() });
-  // inst.nonstrict = () => inst.clone({ ...inst._zod.def, catchall: api.unknown() });
   inst.loose = () => inst.clone({ ...inst._zod.def, catchall: unknown() });
   inst.strict = () => inst.clone({ ...inst._zod.def, catchall: never() });
   inst.strip = () => inst.clone({ ...inst._zod.def, catchall: undefined });
@@ -1162,8 +1179,6 @@ export function object<T extends core.$ZodLooseShape = Partial<Record<never, cor
   return new ZodObject(def) as any;
 }
 
-// strictObject
-
 export function strictObject<T extends core.$ZodLooseShape>(
   shape: T,
   params?: string | core.$ZodObjectParams
@@ -1178,8 +1193,6 @@ export function strictObject<T extends core.$ZodLooseShape>(
     ...util.normalizeParams(params),
   }) as any;
 }
-
-// looseObject
 
 export function looseObject<T extends core.$ZodLooseShape>(
   shape: T,
@@ -1591,7 +1604,13 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
         }
       };
 
-      const output = def.transform(payload.value, payload);
+      const isBackward = _ctx.direction === "backward";
+      const transformFn = isBackward ? def.reverseTransform : def.transform;
+
+      if (isBackward && !def.reverseTransform) {
+        throw new Error("Cannot run transform in backward mode: reverseTransform is not defined");
+      }
+      const output = transformFn!(payload.value, payload);
       if (output instanceof Promise) {
         return output.then((output) => {
           payload.value = output;
@@ -1604,24 +1623,33 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
   }
 );
 
-export function transform<I = unknown, O = I>(args: {
-  parse: (input: I, ctx: core.ParsePayload) => O;
-  unparse: (input: O, ctx: core.ParsePayload) => I;
-}): ZodTransform<Awaited<O>, I>;
+// Transform function overloads
 export function transform<I = unknown, O = I>(fn: (input: I, ctx: core.ParsePayload) => O): ZodTransform<Awaited<O>, I>;
-export function transform<I = unknown, O = I>(args: any): ZodTransform<Awaited<O>, I> {
-  if (typeof args === "function") {
+// options version
+export function transform<I = unknown, O = I>(options: {
+  to: (input: I, ctx: core.ParsePayload) => O;
+  from: (input: O, ctx: core.ParsePayload) => I;
+}): ZodTransform<Awaited<O>, I>;
+
+export function transform(a: any): any {
+  // Case 1: z.transform(fn)
+  if (typeof a === "function") {
     return new ZodTransform({
       type: "transform",
-      transform: args as any,
+      transform: a as any,
     }) as any;
   }
-  const { parse, unparse } = args;
-  return new ZodTransform({
-    type: "transform",
-    transform: parse,
-    reverseTransform: unparse,
-  }) as any;
+
+  // Case 2: z.transform({in, out})
+  if (typeof a === "object" && "to" in a && "from" in a) {
+    return new ZodTransform({
+      type: "transform",
+      transform: a.to,
+      reverseTransform: a.from,
+    }) as any;
+  }
+
+  throw new Error("Invalid arguments to transform function");
 }
 
 // ZodOptional
@@ -1820,6 +1848,12 @@ export function nan(params?: string | core.$ZodNaNParams): ZodNaN {
   return core._nan(ZodNaN, params);
 }
 
+export type ZodPipeline<T extends core.SomeType[]> = T extends [any]
+  ? T[0]
+  : T extends [any, ...infer Rest extends core.SomeType[]]
+    ? ZodPipe<T[0], ZodPipeline<Rest>>
+    : never;
+
 // ZodPipe
 export interface ZodPipe<A extends core.SomeType = core.$ZodType, B extends core.SomeType = core.$ZodType>
   extends _ZodType<core.$ZodPipeInternals<A, B>>,
@@ -1837,15 +1871,29 @@ export const ZodPipe: core.$constructor<ZodPipe> = /*@__PURE__*/ core.$construct
 
 export function pipe<
   const A extends core.SomeType,
-  B extends core.$ZodType<unknown, core.output<A>> = core.$ZodType<unknown, core.output<A>>,
->(in_: A, out: B | core.$ZodType<unknown, core.output<A>>): ZodPipe<A, B>;
-export function pipe(in_: core.SomeType, out: core.SomeType) {
-  return new ZodPipe({
-    type: "pipe",
-    in: in_ as unknown as core.$ZodType,
-    out: out as unknown as core.$ZodType,
-    // ...util.normalizeParams(params),
-  });
+  const B extends core.$ZodType<unknown, core.output<A>> = core.$ZodType<unknown, core.output<A>>,
+>(a: A, b: B | core.$ZodType<unknown, core.output<A>>): ZodPipe<A, B>;
+export function pipe<
+  const A extends core.SomeType,
+  const B extends core.$ZodType<unknown, core.output<A>> = core.$ZodType<unknown, core.output<A>>,
+  const C extends core.$ZodType<unknown, core.output<B>> = core.$ZodType<unknown, core.output<B>>,
+>(
+  a: A,
+  b: B | core.$ZodType<unknown, core.output<A>>,
+  c: C | core.$ZodType<unknown, core.output<B>>
+): ZodPipeline<[A, B, C]>;
+export function pipe(..._schemas: core.SomeType[]) {
+  const schemas = _schemas.slice();
+  let out = schemas.pop();
+  while (schemas.length > 0) {
+    const schema = schemas.pop();
+    out = new ZodPipe({
+      type: "pipe",
+      in: schema as unknown as core.$ZodType,
+      out: out as unknown as core.$ZodType,
+    });
+  }
+  return out;
 }
 
 // ZodReadonly

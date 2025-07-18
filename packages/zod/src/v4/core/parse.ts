@@ -66,7 +66,7 @@ export const _safeParse: (_Err: $ZodErrorClass) => $SafeParse = (_Err) => (schem
   return result.issues.length
     ? {
         success: false,
-        error: new (_Err ?? errors.$ZodError)(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))),
+        error: new _Err(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))),
       }
     : ({ success: true, data: result.value } as any);
 };
@@ -161,7 +161,7 @@ export const _safeUnparse: (_Err: $ZodErrorClass) => $SafeUnparse = (_Err) => (s
   return result.issues.length
     ? {
         success: false,
-        error: new (_Err ?? errors.$ZodError)(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))),
+        error: new _Err(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))),
       }
     : ({ success: true, data: result.value } as any);
 };

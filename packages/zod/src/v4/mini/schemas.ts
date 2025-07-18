@@ -32,6 +32,18 @@ export interface ZodMiniType<
     data: unknown,
     params?: core.ParseContext<core.$ZodIssue>
   ): Promise<util.SafeParseResult<core.output<this>>>;
+
+  // unparsing
+  unparse(data: core.output<this>, params?: core.ParseContext<core.$ZodIssue>): core.input<this>;
+  safeUnparse(
+    data: core.output<this>,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): util.SafeParseResult<core.input<this>>;
+  unparseAsync(data: core.output<this>, params?: core.ParseContext<core.$ZodIssue>): Promise<core.input<this>>;
+  safeUnparseAsync(
+    data: core.output<this>,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): Promise<util.SafeParseResult<core.input<this>>>;
 }
 
 interface _ZodMiniType<out Internals extends core.$ZodTypeInternals = core.$ZodTypeInternals>
@@ -48,6 +60,12 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
     inst.safeParse = (data, params) => parse.safeParse(inst, data, params);
     inst.parseAsync = async (data, params) => parse.parseAsync(inst, data, params, { callee: inst.parseAsync });
     inst.safeParseAsync = async (data, params) => parse.safeParseAsync(inst, data, params);
+
+    // unparsing
+    inst.unparse = (data, params) => parse.unparse(inst, data, params);
+    inst.safeUnparse = (data, params) => parse.safeUnparse(inst, data, params);
+    inst.unparseAsync = async (data, params) => parse.unparseAsync(inst, data, params);
+    inst.safeUnparseAsync = async (data, params) => parse.safeUnparseAsync(inst, data, params);
     inst.check = (...checks) => {
       return inst.clone(
         {
@@ -1172,13 +1190,34 @@ export const ZodMiniTransform: core.$constructor<ZodMiniTransform> = /*@__PURE__
   }
 );
 
+// Transform function overloads
 export function transform<I = unknown, O = I>(
-  fn: (input: I, ctx: core.ParsePayload) => O
-): ZodMiniTransform<Awaited<O>, I> {
-  return new ZodMiniTransform({
-    type: "transform",
-    transform: fn as any,
-  }) as any;
+  tx: (input: I, ctx: core.ParsePayload) => O
+): ZodMiniTransform<Awaited<O>, I>;
+export function transform<I = unknown, O = I>(tx: {
+  to: (input: I, ctx: core.ParsePayload) => O;
+  from: (input: O, ctx: core.ParsePayload) => I;
+}): ZodMiniTransform<Awaited<O>, I>;
+
+export function transform<I = unknown, O = I>(tx: any): ZodMiniTransform<Awaited<O>, I> | ZodMiniPipe<any, any> {
+  // Case 1: z.transform(fn)
+  if (typeof tx === "function") {
+    return new ZodMiniTransform({
+      type: "transform",
+      transform: tx as any,
+    }) as any;
+  }
+
+  // Case 2: z.transform({in, out})
+  if (typeof tx === "object" && "to" in tx && "from" in tx) {
+    return new ZodMiniTransform({
+      type: "transform",
+      transform: tx.to,
+      reverseTransform: tx.from,
+    }) as any;
+  }
+
+  throw new Error("Invalid arguments to transform function");
 }
 
 // ZodMiniOptional
@@ -1375,12 +1414,157 @@ export const ZodMiniPipe: core.$constructor<ZodMiniPipe> = /*@__PURE__*/ core.$c
 export function pipe<
   const A extends SomeType,
   B extends core.$ZodType<unknown, core.output<A>> = core.$ZodType<unknown, core.output<A>>,
->(in_: A, out: B | core.$ZodType<unknown, core.output<A>>): ZodMiniPipe<A, B> {
-  return new ZodMiniPipe({
-    type: "pipe",
-    in: in_ as any as core.$ZodType,
-    out: out as any as core.$ZodType,
-  }) as any;
+>(a: A, b: B | core.$ZodType<unknown, core.output<A>>): ZodMiniPipe<A, B>;
+export function pipe<
+  const A extends core.SomeType,
+  const B extends core.$ZodType<unknown, core.output<A>> = core.$ZodType<unknown, core.output<A>>,
+  const C extends core.$ZodType<unknown, core.output<B>> = core.$ZodType<unknown, core.output<B>>,
+>(
+  a: A,
+  b: B | core.$ZodType<unknown, core.output<A>>,
+  c: C | core.$ZodType<unknown, core.output<B>>
+): ZodMiniPipe<A, ZodMiniPipe<B, C>>;
+export function pipe<
+  const A extends core.SomeType,
+  const B extends core.$ZodType<unknown, core.output<A>> = core.$ZodType<unknown, core.output<A>>,
+  const C extends core.$ZodType<unknown, core.output<B>> = core.$ZodType<unknown, core.output<B>>,
+  const D extends core.$ZodType<unknown, core.output<C>> = core.$ZodType<unknown, core.output<C>>,
+>(
+  a: A,
+  b: B | core.$ZodType<unknown, core.output<A>>,
+  c: C | core.$ZodType<unknown, core.output<B>>,
+  d: D | core.$ZodType<unknown, core.output<C>>
+): ZodMiniPipe<A, ZodMiniPipe<B, ZodMiniPipe<C, D>>>;
+export function pipe<
+  const A extends core.SomeType,
+  const B extends core.$ZodType<unknown, core.output<A>> = core.$ZodType<unknown, core.output<A>>,
+  const C extends core.$ZodType<unknown, core.output<B>> = core.$ZodType<unknown, core.output<B>>,
+  const D extends core.$ZodType<unknown, core.output<C>> = core.$ZodType<unknown, core.output<C>>,
+  const E extends core.$ZodType<unknown, core.output<D>> = core.$ZodType<unknown, core.output<D>>,
+>(
+  a: A,
+  b: B | core.$ZodType<unknown, core.output<A>>,
+  c: C | core.$ZodType<unknown, core.output<B>>,
+  d: D | core.$ZodType<unknown, core.output<C>>,
+  e: E | core.$ZodType<unknown, core.output<D>>
+): ZodMiniPipe<A, ZodMiniPipe<B, ZodMiniPipe<C, ZodMiniPipe<D, E>>>>;
+export function pipe<
+  const A extends core.SomeType,
+  const B extends core.$ZodType<unknown, core.output<A>> = core.$ZodType<unknown, core.output<A>>,
+  const C extends core.$ZodType<unknown, core.output<B>> = core.$ZodType<unknown, core.output<B>>,
+  const D extends core.$ZodType<unknown, core.output<C>> = core.$ZodType<unknown, core.output<C>>,
+  const E extends core.$ZodType<unknown, core.output<D>> = core.$ZodType<unknown, core.output<D>>,
+  const F extends core.$ZodType<unknown, core.output<E>> = core.$ZodType<unknown, core.output<E>>,
+>(
+  a: A,
+  b: B | core.$ZodType<unknown, core.output<A>>,
+  c: C | core.$ZodType<unknown, core.output<B>>,
+  d: D | core.$ZodType<unknown, core.output<C>>,
+  e: E | core.$ZodType<unknown, core.output<D>>,
+  f: F | core.$ZodType<unknown, core.output<E>>
+): ZodMiniPipe<A, ZodMiniPipe<B, ZodMiniPipe<C, ZodMiniPipe<D, ZodMiniPipe<E, F>>>>>;
+export function pipe<
+  const A extends core.SomeType,
+  const B extends core.$ZodType<unknown, core.output<A>> = core.$ZodType<unknown, core.output<A>>,
+  const C extends core.$ZodType<unknown, core.output<B>> = core.$ZodType<unknown, core.output<B>>,
+  const D extends core.$ZodType<unknown, core.output<C>> = core.$ZodType<unknown, core.output<C>>,
+  const E extends core.$ZodType<unknown, core.output<D>> = core.$ZodType<unknown, core.output<D>>,
+  const F extends core.$ZodType<unknown, core.output<E>> = core.$ZodType<unknown, core.output<E>>,
+  const G extends core.$ZodType<unknown, core.output<F>> = core.$ZodType<unknown, core.output<F>>,
+>(
+  a: A,
+  b: B | core.$ZodType<unknown, core.output<A>>,
+  c: C | core.$ZodType<unknown, core.output<B>>,
+  d: D | core.$ZodType<unknown, core.output<C>>,
+  e: E | core.$ZodType<unknown, core.output<D>>,
+  f: F | core.$ZodType<unknown, core.output<E>>,
+  g: G | core.$ZodType<unknown, core.output<F>>
+): ZodMiniPipe<A, ZodMiniPipe<B, ZodMiniPipe<C, ZodMiniPipe<D, ZodMiniPipe<E, ZodMiniPipe<F, G>>>>>>;
+export function pipe<
+  const A extends core.SomeType,
+  const B extends core.$ZodType<unknown, core.output<A>> = core.$ZodType<unknown, core.output<A>>,
+  const C extends core.$ZodType<unknown, core.output<B>> = core.$ZodType<unknown, core.output<B>>,
+  const D extends core.$ZodType<unknown, core.output<C>> = core.$ZodType<unknown, core.output<C>>,
+  const E extends core.$ZodType<unknown, core.output<D>> = core.$ZodType<unknown, core.output<D>>,
+  const F extends core.$ZodType<unknown, core.output<E>> = core.$ZodType<unknown, core.output<E>>,
+  const G extends core.$ZodType<unknown, core.output<F>> = core.$ZodType<unknown, core.output<F>>,
+  const H extends core.$ZodType<unknown, core.output<G>> = core.$ZodType<unknown, core.output<G>>,
+>(
+  a: A,
+  b: B | core.$ZodType<unknown, core.output<A>>,
+  c: C | core.$ZodType<unknown, core.output<B>>,
+  d: D | core.$ZodType<unknown, core.output<C>>,
+  e: E | core.$ZodType<unknown, core.output<D>>,
+  f: F | core.$ZodType<unknown, core.output<E>>,
+  g: G | core.$ZodType<unknown, core.output<F>>,
+  h: H | core.$ZodType<unknown, core.output<G>>
+): ZodMiniPipe<A, ZodMiniPipe<B, ZodMiniPipe<C, ZodMiniPipe<D, ZodMiniPipe<E, ZodMiniPipe<F, ZodMiniPipe<G, H>>>>>>>;
+export function pipe<
+  const A extends core.SomeType,
+  const B extends core.$ZodType<unknown, core.output<A>> = core.$ZodType<unknown, core.output<A>>,
+  const C extends core.$ZodType<unknown, core.output<B>> = core.$ZodType<unknown, core.output<B>>,
+  const D extends core.$ZodType<unknown, core.output<C>> = core.$ZodType<unknown, core.output<C>>,
+  const E extends core.$ZodType<unknown, core.output<D>> = core.$ZodType<unknown, core.output<D>>,
+  const F extends core.$ZodType<unknown, core.output<E>> = core.$ZodType<unknown, core.output<E>>,
+  const G extends core.$ZodType<unknown, core.output<F>> = core.$ZodType<unknown, core.output<F>>,
+  const H extends core.$ZodType<unknown, core.output<G>> = core.$ZodType<unknown, core.output<G>>,
+  const I extends core.$ZodType<unknown, core.output<H>> = core.$ZodType<unknown, core.output<H>>,
+>(
+  a: A,
+  b: B | core.$ZodType<unknown, core.output<A>>,
+  c: C | core.$ZodType<unknown, core.output<B>>,
+  d: D | core.$ZodType<unknown, core.output<C>>,
+  e: E | core.$ZodType<unknown, core.output<D>>,
+  f: F | core.$ZodType<unknown, core.output<E>>,
+  g: G | core.$ZodType<unknown, core.output<F>>,
+  h: H | core.$ZodType<unknown, core.output<G>>,
+  i: I | core.$ZodType<unknown, core.output<H>>
+): ZodMiniPipe<
+  A,
+  ZodMiniPipe<B, ZodMiniPipe<C, ZodMiniPipe<D, ZodMiniPipe<E, ZodMiniPipe<F, ZodMiniPipe<G, ZodMiniPipe<H, I>>>>>>>
+>;
+export function pipe<
+  const A extends core.SomeType,
+  const B extends core.$ZodType<unknown, core.output<A>> = core.$ZodType<unknown, core.output<A>>,
+  const C extends core.$ZodType<unknown, core.output<B>> = core.$ZodType<unknown, core.output<B>>,
+  const D extends core.$ZodType<unknown, core.output<C>> = core.$ZodType<unknown, core.output<C>>,
+  const E extends core.$ZodType<unknown, core.output<D>> = core.$ZodType<unknown, core.output<D>>,
+  const F extends core.$ZodType<unknown, core.output<E>> = core.$ZodType<unknown, core.output<E>>,
+  const G extends core.$ZodType<unknown, core.output<F>> = core.$ZodType<unknown, core.output<F>>,
+  const H extends core.$ZodType<unknown, core.output<G>> = core.$ZodType<unknown, core.output<G>>,
+  const I extends core.$ZodType<unknown, core.output<H>> = core.$ZodType<unknown, core.output<H>>,
+  const J extends core.$ZodType<unknown, core.output<I>> = core.$ZodType<unknown, core.output<I>>,
+>(
+  a: A,
+  b: B | core.$ZodType<unknown, core.output<A>>,
+  c: C | core.$ZodType<unknown, core.output<B>>,
+  d: D | core.$ZodType<unknown, core.output<C>>,
+  e: E | core.$ZodType<unknown, core.output<D>>,
+  f: F | core.$ZodType<unknown, core.output<E>>,
+  g: G | core.$ZodType<unknown, core.output<F>>,
+  h: H | core.$ZodType<unknown, core.output<G>>,
+  i: I | core.$ZodType<unknown, core.output<H>>,
+  j: J | core.$ZodType<unknown, core.output<I>>
+): ZodMiniPipe<
+  A,
+  ZodMiniPipe<
+    B,
+    ZodMiniPipe<C, ZodMiniPipe<D, ZodMiniPipe<E, ZodMiniPipe<F, ZodMiniPipe<G, ZodMiniPipe<H, ZodMiniPipe<I, J>>>>>>>
+  >
+>;
+
+export function pipe(..._schemas: core.$ZodType[]): any {
+  const schemas = _schemas.slice();
+  let out = schemas.pop();
+  while (schemas.length > 0) {
+    const schema = schemas.pop();
+    out = new ZodMiniPipe({
+      type: "pipe",
+      in: schema as unknown as core.$ZodType,
+      out: out as unknown as core.$ZodType,
+    });
+  }
+  return out;
 }
 
 // /** @deprecated Use `z.pipe()` and `z.transform()` instead. */

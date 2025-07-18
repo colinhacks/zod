@@ -31,3 +31,30 @@ export const safeParseAsync: <T extends core.$ZodType>(
   value: unknown,
   _ctx?: core.ParseContext<core.$ZodIssue>
 ) => Promise<ZodSafeParseResult<core.output<T>>> = /* @__PURE__ */ core._safeParseAsync(ZodRealError) as any;
+
+// Unparse functions
+export const unparse: <T extends core.$ZodType>(
+  schema: T,
+  value: core.output<T>,
+  _ctx?: core.ParseContext<core.$ZodIssue>,
+  _params?: { callee?: core.util.AnyFunc; Err?: core.$ZodErrorClass }
+) => core.input<T> = /* @__PURE__ */ core._unparse(ZodRealError) as any;
+
+export const unparseAsync: <T extends core.$ZodType>(
+  schema: T,
+  value: core.output<T>,
+  _ctx?: core.ParseContext<core.$ZodIssue>,
+  _params?: { callee?: core.util.AnyFunc; Err?: core.$ZodErrorClass }
+) => Promise<core.input<T>> = /* @__PURE__ */ core._unparseAsync(ZodRealError) as any;
+
+export const safeUnparse: <T extends core.$ZodType>(
+  schema: T,
+  value: core.output<T>,
+  _ctx?: core.ParseContext<core.$ZodIssue>
+) => ZodSafeParseResult<core.input<T>> = /* @__PURE__ */ core._safeUnparse(ZodRealError) as any;
+
+export const safeUnparseAsync: <T extends core.$ZodType>(
+  schema: T,
+  value: core.output<T>,
+  _ctx?: core.ParseContext<core.$ZodIssue>
+) => Promise<ZodSafeParseResult<core.input<T>>> = /* @__PURE__ */ core._safeUnparseAsync(ZodRealError) as any;
