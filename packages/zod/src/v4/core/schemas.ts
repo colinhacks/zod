@@ -2795,7 +2795,9 @@ export const $ZodLiteral: core.$constructor<$ZodLiteral> = /*@__PURE__*/ core.$c
     inst._zod.pattern = new RegExp(
       `^(${def.values
 
-        .map((o) => (typeof o === "string" ? util.escapeRegex(o) : o ? o.toString() : String(o)))
+        .map((o) =>
+          typeof o === "string" || typeof o === "number" ? util.escapeRegex(o.toString()) : o ? o.toString() : String(o)
+        )
         .join("|")})$`
     );
 

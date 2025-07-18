@@ -6,6 +6,7 @@ const hello = z.templateLiteral(["hello"]);
 const world = z.templateLiteral(["", z.literal("world")]);
 const one = z.templateLiteral([1]);
 const two = z.templateLiteral(["", z.literal(2)]);
+const onePointOne = z.templateLiteral([z.literal(1.1)]);
 const truee = z.templateLiteral([true]);
 const anotherTrue = z.templateLiteral(["", z.literal(true)]);
 const falsee = z.templateLiteral([false]);
@@ -289,6 +290,7 @@ test("template literal parsing - success - basic cases", () => {
   world.parse("world");
   one.parse("1");
   two.parse("2");
+  onePointOne.parse("1.1");
   truee.parse("true");
   anotherTrue.parse("true");
   falsee.parse("false");
@@ -381,6 +383,7 @@ test("template literal parsing - failure - basic cases", () => {
   expect(() => one.parse("2")).toThrow();
   expect(() => one.parse("12")).toThrow();
   expect(() => one.parse("21")).toThrow();
+  expect(() => onePointOne.parse("1s1")).toThrow();
   expect(() => two.parse("1")).toThrow();
   expect(() => two.parse("21")).toThrow();
   expect(() => two.parse("12")).toThrow();
