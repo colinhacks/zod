@@ -82,14 +82,14 @@ const error: () => errors.$ZodErrorMap = () => {
         const adj = issue.inclusive ? "<=" : "<";
         const sizing = getSizing(issue.origin);
         if (sizing)
-          return `Твърде голямо: очаква се ${issue.origin ?? "стойност"} да има ${adj}${issue.maximum.toString()} ${sizing.unit ?? "елемента"}`;
+          return `Твърде голямо: очаква се ${issue.origin ?? "стойност"} да съдържа ${adj}${issue.maximum.toString()} ${sizing.unit ?? "елемента"}`;
         return `Твърде голямо: очаква се ${issue.origin ?? "стойност"} да бъде ${adj}${issue.maximum.toString()}`;
       }
       case "too_small": {
         const adj = issue.inclusive ? ">=" : ">";
         const sizing = getSizing(issue.origin);
         if (sizing) {
-          return `Твърде малко: очаква се ${issue.origin} да има ${adj}${issue.minimum.toString()} ${sizing.unit}`;
+          return `Твърде малко: очаква се ${issue.origin} да съдържа ${adj}${issue.minimum.toString()} ${sizing.unit}`;
         }
 
         return `Твърде малко: очаква се ${issue.origin} да бъде ${adj}${issue.minimum.toString()}`;
