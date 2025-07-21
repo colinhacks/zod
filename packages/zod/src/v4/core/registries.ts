@@ -23,7 +23,7 @@ export type $replace<Meta, S extends $ZodType> = Meta extends $output
           ? { [K in keyof Meta]: $replace<Meta[K], S> }
           : Meta;
 
-type MetadataType = Record<string, unknown> | undefined;
+type MetadataType = object | undefined;
 export class $ZodRegistry<Meta extends MetadataType = MetadataType, Schema extends $ZodType = $ZodType> {
   _meta!: Meta;
   _schema!: Schema;

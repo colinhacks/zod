@@ -17,3 +17,10 @@ const arg = z.discriminatedUnion("type", [
 ]);
 
 arg.def;
+interface MyMetadata {
+  a: number;
+}
+
+const adf = z.registry<MyMetadata>();
+
+// const asdfasdf: object = 1234;
