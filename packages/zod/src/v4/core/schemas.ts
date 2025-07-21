@@ -428,6 +428,7 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
   inst._zod.check = (payload) => {
     try {
       const orig = payload.value;
+      // @ts-ignore
       const url = new URL(orig);
       const href = url.href;
 
@@ -719,6 +720,7 @@ export const $ZodIPv6: core.$constructor<$ZodIPv6> = /*@__PURE__*/ core.$constru
 
   inst._zod.check = (payload) => {
     try {
+      // @ts-ignore
       new URL(`http://[${payload.value}]`);
       // return;
     } catch {
@@ -782,6 +784,7 @@ export const $ZodCIDRv6: core.$constructor<$ZodCIDRv6> = /*@__PURE__*/ core.$con
         const prefixNum = Number(prefix);
         if (`${prefixNum}` !== prefix) throw new Error();
         if (prefixNum < 0 || prefixNum > 128) throw new Error();
+        // @ts-ignore
         new URL(`http://[${address}]`);
       } catch {
         payload.issues.push({
@@ -801,6 +804,7 @@ export function isValidBase64(data: string): boolean {
   if (data === "") return true;
   if (data.length % 4 !== 0) return false;
   try {
+    // @ts-ignore
     atob(data);
     return true;
   } catch {
@@ -900,6 +904,7 @@ export function isValidJWT(token: string, algorithm: util.JWTAlgorithm | null = 
     if (tokensParts.length !== 3) return false;
     const [header] = tokensParts;
     if (!header) return false;
+    // @ts-ignore
     const parsedHeader = JSON.parse(atob(header));
     if ("typ" in parsedHeader && parsedHeader?.typ !== "JWT") return false;
     if (!parsedHeader.alg) return false;
@@ -2865,10 +2870,12 @@ export const $ZodLiteral: core.$constructor<$ZodLiteral> = /*@__PURE__*/ core.$c
 //////////////////////////////////////////
 
 // provide a fallback in case the File interface isn't provided in the environment
-type _File = typeof globalThis extends { File: new (...args: any[]) => any }
-  ? InstanceType<typeof globalThis.File>
-  : {};
-interface File extends _File {}
+type _File = typeof globalThis extends { File: infer F extends new (...args: any[]) => any } ? InstanceType<F> : {};
+/** Do not reference this directly. */
+export interface File extends _File {
+  type: string;
+  size: number;
+}
 
 export interface $ZodFileDef extends $ZodTypeDef {
   type: "file";
@@ -2893,6 +2900,7 @@ export const $ZodFile: core.$constructor<$ZodFile> = /*@__PURE__*/ core.$constru
 
   inst._zod.parse = (payload, _ctx) => {
     const input = payload.value;
+    // @ts-ignore
     if (input instanceof File) return payload;
     payload.issues.push({
       expected: "file",

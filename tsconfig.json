@@ -3,7 +3,8 @@
   "compilerOptions": {
     "customConditions": ["@zod/source"],
     "module": "nodenext",
-    "moduleResolution": "nodenext"
+    "moduleResolution": "nodenext",
+    "types": []
   },
   "include": ["**/*.ts", "**/*.mts", "**/*.cts"],
   "exclude": ["**/*.d.ts", "**/*.d.cts", "**/*.d.mts", "packages/docs"]

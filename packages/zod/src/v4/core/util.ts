@@ -314,15 +314,16 @@ export function esc(str: string): string {
   return JSON.stringify(str);
 }
 
-export const captureStackTrace: (targetObject: object, constructorOpt?: Function) => void = Error.captureStackTrace
-  ? Error.captureStackTrace
-  : (..._args) => {};
+export const captureStackTrace: (targetObject: object, constructorOpt?: Function) => void = (
+  "captureStackTrace" in Error ? Error.captureStackTrace : (..._args: any[]) => {}
+) as any;
 
 export function isObject(data: any): data is Record<PropertyKey, unknown> {
   return typeof data === "object" && data !== null && !Array.isArray(data);
 }
 
 export const allowsEval: { value: boolean } = cached(() => {
+  // @ts-ignore
   if (typeof navigator !== "undefined" && navigator?.userAgent?.includes("Cloudflare")) {
     return false;
   }
@@ -409,6 +410,7 @@ export const getParsedType = (data: any): ParsedTypes => {
       if (typeof Date !== "undefined" && data instanceof Date) {
         return "date";
       }
+      // @ts-ignore
       if (typeof File !== "undefined" && data instanceof File) {
         return "file";
       }
@@ -733,6 +735,7 @@ export function finalizeIssue(
 export function getSizableOrigin(input: any): "set" | "map" | "file" | "unknown" {
   if (input instanceof Set) return "set";
   if (input instanceof Map) return "map";
+  // @ts-ignore
   if (input instanceof File) return "file";
   return "unknown";
 }

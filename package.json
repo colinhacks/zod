@@ -18,9 +18,7 @@
     "@arethetypeswrong/cli": "^0.17.4",
     "@biomejs/biome": "^1.9.4",
     "@types/benchmark": "^2.1.5",
-    "@types/node": "^20.17.30",
     "@types/semver": "^7.7.0",
-    "@web-std/file": "^3.0.3",
     "arktype": "^2.1.19",
     "benchmark": "^2.1.4",
     "chalk": "^5.4.1",
@@ -34,6 +32,8 @@
     "mitata": "^0.1.14",
     "prettier": "^3.5.3",
     "recheck": "^4.5.0",
+    "@web-std/file": "^3.0.3",
+
     "rolldown": "1.0.0-beta.18",
     "rollup": "^4.39.0",
     "semver": "^7.7.2",
