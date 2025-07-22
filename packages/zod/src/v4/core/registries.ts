@@ -68,7 +68,8 @@ export class $ZodRegistry<Meta extends MetadataType = MetadataType, Schema exten
     if (p) {
       const pm: any = { ...(this.get(p) ?? {}) };
       delete pm.id; // do not inherit id
-      return { ...pm, ...this._map.get(schema) } as any;
+      const f = { ...pm, ...this._map.get(schema) } as any;
+      return Object.keys(f).length ? f : undefined;
     }
     return this._map.get(schema) as any;
   }
