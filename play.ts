@@ -1,26 +1,21 @@
-import { z } from "zod";
+import { z } from "zod/mini";
 
-z;
+const myPartialRecord = z.partialRecord(z.enum(["a", "b", "c"]), z.string());
 
-const arg = z.discriminatedUnion("type", [
-  z.object({
-    type: z.literal("play"),
-    id: z.string(),
-    name: z.string(),
-    duration: z.number().int().positive(),
-  }),
-  z.object({
-    type: z.literal("pause"),
-    id: z.string(),
-    reason: z.string().optional(),
-  }),
-]);
+// console.log(myPartialRecord._zod.output);
 
-arg.def;
-interface MyMetadata {
-  a: number;
-}
+console.log(
+  myPartialRecord.parse({
+    a: "123",
+  })
+);
 
-const adf = z.registry<MyMetadata>();
-
-// const asdfasdf: object = 1234;
+console.log(
+  myPartialRecord.parse({
+    b: "123",
+  })
+);
+// console.log(myPartialRecord.keyType.enum);
+// // undefined
+// console.log(myPartialRecord.keyType.options);
+// // [ ZodEnum, ZodNever ]

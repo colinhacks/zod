@@ -2742,8 +2742,8 @@ export const $ZodEnum: core.$constructor<$ZodEnum> = /*@__PURE__*/ core.$constru
   $ZodType.init(inst, def);
 
   const values = util.getEnumValues(def.entries);
-
-  inst._zod.values = new Set<util.Primitive>(values);
+  const valuesSet = new Set<util.Primitive>(values);
+  inst._zod.values = valuesSet;
 
   inst._zod.pattern = new RegExp(
     `^(${values
@@ -2754,7 +2754,7 @@ export const $ZodEnum: core.$constructor<$ZodEnum> = /*@__PURE__*/ core.$constru
 
   inst._zod.parse = (payload, _ctx) => {
     const input = payload.value;
-    if (inst._zod.values.has(input)) {
+    if (valuesSet.has(input)) {
       return payload;
     }
     payload.issues.push({

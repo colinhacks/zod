@@ -1350,9 +1350,11 @@ export function partialRecord<Key extends core.$ZodRecordKey, Value extends core
   valueType: Value,
   params?: string | core.$ZodRecordParams
 ): ZodRecord<Key & core.$partial, Value> {
+  const k = core.clone(keyType);
+  k._zod.values = undefined;
   return new ZodRecord({
     type: "record",
-    keyType: union([keyType, never()]),
+    keyType: k,
     valueType: valueType as any,
     ...util.normalizeParams(params),
   }) as any;
