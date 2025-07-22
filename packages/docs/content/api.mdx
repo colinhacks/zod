@@ -37,6 +37,7 @@ z.coerce.bigint();    // BigInt(input)
 
 The coerced variant of these schemas attempts to convert the input value to the appropriate type.
 
+
 ```ts
 const schema = z.coerce.string();
 
@@ -44,6 +45,20 @@ schema.parse("tuna");    // => "tuna"
 schema.parse(42);        // => "42"
 schema.parse(true);      // => "true"
 schema.parse(null);      // => "null"
+```
+
+<Callout>
+Coercion allows providing the expected input type,
+```ts
+const MySchema = z.object({
+  coerced: z.coerce.number<number>().optional(),
+})
+```
+This is useful when using a standard schema based form validator to avoid errors such as 
+</Callout>
+
+```
+Type 'unknown' is not assignable to type 'number | undefined'.
 ```
 
 <Accordions type="single"><Accordion title="How coercion works in Zod">
