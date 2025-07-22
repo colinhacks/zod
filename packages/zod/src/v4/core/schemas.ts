@@ -1951,6 +1951,12 @@ function handleUnionResults(results: ParsePayload[], final: ParsePayload, inst: 
     }
   }
 
+  const nonaborted = results.filter((r) => !util.aborted(r));
+  if (nonaborted.length > 0) {
+    final.value = nonaborted[0].value;
+    return nonaborted[0];
+  }
+
   final.issues.push({
     code: "invalid_union",
     input: final.value,
