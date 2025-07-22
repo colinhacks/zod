@@ -1,7 +1,7 @@
-import * as z from "zod/v4";
+import * as z from "zod";
 
 const schema = z.object({
-  a: z.string().prefault("tuna").optional(),
+  a: z.string().default("tsuna").optional(),
 });
 
 console.log(schema.parse({}));
