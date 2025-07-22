@@ -292,3 +292,49 @@ test("fastpass vs non-fastpass consistency", () => {
     validDefined: "valid",
   });
 });
+
+test("optional with check", () => {
+  const baseSchema = z
+    .string()
+    .optional()
+    .check(({ value, ...ctx }) => {
+      ctx.issues.push({
+        code: "custom",
+        input: value,
+        message: "message",
+      });
+    });
+
+  // this correctly fails
+  expect(baseSchema.safeParse(undefined)).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "code": "custom",
+        "message": "message",
+        "path": []
+      }
+    ]],
+      "success": false,
+    }
+  `);
+
+  const schemaObject = z.object({
+    date: baseSchema,
+  });
+
+  expect(schemaObject.safeParse({ date: undefined })).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "code": "custom",
+        "message": "message",
+        "path": [
+          "date"
+        ]
+      }
+    ]],
+      "success": false,
+    }
+  `);
+});

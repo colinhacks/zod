@@ -1605,52 +1605,17 @@ export type $InferObjectInput<T extends $ZodLooseShape, Extra extends Record<str
         } & Extra
       >;
 
-function handleObjectResult(result: ParsePayload, final: ParsePayload, key: PropertyKey) {
-  // if(isOptional)
+function handlePropertyResult(result: ParsePayload, final: ParsePayload, key: PropertyKey, input: any) {
   if (result.issues.length) {
     final.issues.push(...util.prefixIssues(key, result.issues));
   }
 
-  (final.value as any)[key] = result.value;
-}
-
-function handleOptionalObjectResult(result: ParsePayload, final: ParsePayload, key: PropertyKey, input: any) {
-  const issues = result.caught ? result.caught : result.issues;
-
-  if (input[key] === undefined) {
-    // Handle all cases where input[key] is undefined
-    if (result.caught?.length) {
-      // if you get back a caught value, ignore it if input was undefined
-      if (key in input) {
-        (final.value as any)[key] = undefined;
-      }
-    } else if (issues.length) {
-      // validation failed against value schema, ignore error if input was undefined
-      if (key in input) {
-        (final.value as any)[key] = undefined;
-      }
-    } else if (result.value === undefined) {
-      // validation returned `undefined`
-      if (key in input) (final.value as any)[key] = undefined;
-    } else {
-      // non-undefined result value (e.g., from default/transform)
-      (final.value as any)[key] = result.value;
+  if (result.value === undefined) {
+    if (key in input) {
+      (final.value as any)[key] = undefined;
     }
   } else {
-    // Handle all cases where input[key] is defined
-    if (result.caught?.length) {
-      // use the caught value
-      (final.value as any)[key] = result.value;
-    } else if (issues.length) {
-      // validation failed against value schema
-      final.issues.push(...util.prefixIssues(key, issues));
-    } else if (result.value === undefined) {
-      // validation returned `undefined`
-      (final.value as any)[key] = undefined;
-    } else {
-      // non-undefined value
-      (final.value as any)[key] = result.value;
-    }
+    (final.value as any)[key] = result.value;
   }
 }
 
@@ -1759,53 +1724,25 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     // A: preserve key order {
     doc.write(`const newResult = {}`);
     for (const key of normalized.keys) {
-      if (normalized.optionalKeys.has(key)) {
-        const id = ids[key];
-        doc.write(`const ${id} = ${parseStr(key)};`);
-        const k = util.esc(key);
-        doc.write(`
-        if (input[${k}] === undefined) {
-          if(${id}.caught?.length){
-            if(${k} in input){
-              newResult[${k}] = undefined;
-            }
-          } else if (${id}.issues.length) {
-            if (${k} in input) {
-              newResult[${k}] = undefined;
-            }
-          } else if (${id}.value === undefined) {
-            if (${k} in input) newResult[${k}] = undefined;
-          } else {
-            newResult[${k}] = ${id}.value;
+      const id = ids[key];
+      const k = util.esc(key);
+      doc.write(`const ${id} = ${parseStr(key)};`);
+      doc.write(`
+        if (${id}.issues.length) {
+          payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
+            ...iss,
+            path: iss.path ? [${k}, ...iss.path] : [${k}]
+          })));
+        }
+        
+        if (${id}.value === undefined) {
+          if (${k} in input) {
+            newResult[${k}] = undefined;
           }
         } else {
-          if(${id}.caught?.length){
-            newResult[${k}] = ${id}.value;
-          } else if (${id}.issues.length) {
-            payload.issues = payload.issues.concat(
-              ${id}.issues.map((iss) => ({
-                ...iss,
-                path: iss.path ? [${k}, ...iss.path] : [${k}],
-              }))
-            );
-          } else if (${id}.value === undefined) {
-            newResult[${k}] = undefined;
-          } else {
-            newResult[${k}] = ${id}.value;
-          }
+          newResult[${k}] = ${id}.value;
         }
-        `);
-      } else {
-        const id = ids[key];
-        //  const id = ids[key];
-        doc.write(`const ${id} = ${parseStr(key)};`);
-        doc.write(`
-          if (${id}.issues.length) payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
-            ...iss,
-            path: iss.path ? [${util.esc(key)}, ...iss.path] : [${util.esc(key)}]
-          })));`);
-        doc.write(`newResult[${util.esc(key)}] = ${id}.value`);
-      }
+      `);
     }
 
     doc.write(`payload.value = newResult;`);
@@ -1850,26 +1787,16 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       const shape = value.shape;
       for (const key of value.keys) {
         const el = shape[key]!;
-
         const r = el._zod.run({ value: input[key], issues: [] }, ctx);
-        const isOptional = el._zod.optin === "optional" && el._zod.optout === "optional";
-
         if (r instanceof Promise) {
-          proms.push(
-            r.then((r) =>
-              isOptional ? handleOptionalObjectResult(r, payload, key, input) : handleObjectResult(r, payload, key)
-            )
-          );
-        } else if (isOptional) {
-          handleOptionalObjectResult(r, payload, key, input);
+          proms.push(r.then((r) => handlePropertyResult(r, payload, key, input)));
         } else {
-          handleObjectResult(r, payload, key);
+          handlePropertyResult(r, payload, key, input);
         }
       }
     }
 
     if (!catchall) {
-      // return payload;
       return proms.length ? Promise.all(proms).then(() => payload) : payload;
     }
     const unrecognized: string[] = [];
@@ -1886,9 +1813,9 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       const r = _catchall.run({ value: input[key], issues: [] }, ctx);
 
       if (r instanceof Promise) {
-        proms.push(r.then((r) => handleObjectResult(r, payload, key)));
+        proms.push(r.then((r) => handlePropertyResult(r, payload, key, input)));
       } else {
-        handleObjectResult(r, payload, key);
+        handlePropertyResult(r, payload, key, input);
       }
     }
 
@@ -3364,7 +3291,7 @@ export interface $ZodCatch<T extends SomeType = $ZodType> extends $ZodType {
 
 export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$constructor("$ZodCatch", (inst, def) => {
   $ZodType.init(inst, def);
-  inst._zod.optin = "optional";
+  util.defineLazy(inst._zod, "optin", () => def.innerType._zod.optin);
   util.defineLazy(inst._zod, "optout", () => def.innerType._zod.optout);
   util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
 
