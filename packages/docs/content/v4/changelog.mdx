@@ -409,6 +409,20 @@ schema.parse(undefined); // => 4
 
 ## `z.object()`
 
+### defaults applied within optional fields
+
+Defaults inside your properties are applied, even within optional fields. This aligns better with expectations and resolves a long-standing usability issue with Zod 3. This is a subtle change that may cause breakage in code paths that rely on key existence, etc.
+
+```ts
+const schema = z.object({
+  a: z.string().default("tuna").optional(),
+});
+
+schema.parse({});
+// Zod 4: { a: "tuna" }
+// Zod 3: {}
+```
+
 ### deprecates `.strict()` and `.passthrough()`
 
 These methods are generally no longer necessary. Instead use the top-level `z.strictObject()` and `z.looseObject()` functions.
