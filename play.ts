@@ -1,27 +1,15 @@
 import * as z from "zod";
 
-const zItemTest = z.union([
-  z.object({
-    date: z.number(),
-    startDate: z.optional(z.null()),
-    endDate: z.optional(z.null()),
-  }),
-  z
-    .object({
-      date: z.optional(z.null()),
-      startDate: z.number(),
-      endDate: z.number(),
-    })
-    .refine((data) => data.startDate !== data.endDate, {
-      error: "startDate and endDate must be different",
-      path: ["endDate"],
-    }),
-]);
+export function moneyAmountString() {
+  return z
+    .string()
+    .regex(/^(0|[1-9]\d*)\.\d{2}$/, { message: "Must be a number with exactly 2 decimal places" })
+    .refine((val) => Number.parseFloat(val) > 0, { message: "Money amount must be greater than 0" });
+}
 
-const res = zItemTest.safeParse({
-  date: null,
-  startDate: 1,
-  endDate: 1,
-});
+const schema = z.object({ money: moneyAmountString() });
+type schema = z.output<typeof schema>;
+// { money: string }
 
+const res = schema.safeParse({ money: "1.00" });
 console.log(res);

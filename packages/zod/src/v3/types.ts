@@ -2456,7 +2456,7 @@ export class ZodObject<
   Output = objectOutputType<T, Catchall, UnknownKeys>,
   Input = objectInputType<T, Catchall, UnknownKeys>,
 > extends ZodType<Output, ZodObjectDef<T, UnknownKeys, Catchall>, Input> {
-  private _cached: { shape: T; keys: string[] } | null = null;
+  _cached: { shape: T; keys: string[] } | null = null;
 
   _getCached(): { shape: T; keys: string[] } {
     if (this._cached !== null) return this._cached;
