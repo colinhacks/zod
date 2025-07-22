@@ -12,10 +12,6 @@ const baseSchema = z
   });
 
 // this correctly fails
-console.log(baseSchema.safeParse(undefined));
+const result = baseSchema.safeParse(undefined);
 
-const schemaObject = z.object({
-  date: baseSchema,
-});
-
-console.log(schemaObject.safeParse({ date: undefined }));
+console.log(result.error);

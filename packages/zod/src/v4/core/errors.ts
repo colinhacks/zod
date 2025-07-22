@@ -196,13 +196,8 @@ const initializer = (inst: $ZodError, def: $ZodIssue[]): void => {
     value: def,
     enumerable: false,
   });
-  Object.defineProperty(inst, "message", {
-    get() {
-      return JSON.stringify(def, util.jsonStringifyReplacer, 2);
-    },
-    enumerable: true,
-    // configurable: false,
-  });
+  inst.message = JSON.stringify(def, util.jsonStringifyReplacer, 2);
+
   Object.defineProperty(inst, "toString", {
     value: () => inst.message,
     enumerable: false,
