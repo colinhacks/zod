@@ -30,6 +30,7 @@ export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> ex
 export interface ParsePayload<T = unknown> {
   value: T;
   issues: errors.$ZodRawIssue[];
+  caught?: errors.$ZodRawIssue[];
 }
 
 export type CheckFn<T> = (input: ParsePayload<T>) => util.MaybeAsync<void>;
@@ -120,6 +121,9 @@ export interface _$ZodTypeInternals {
    * Todo: unions?
    */
   values?: util.PrimitiveSet | undefined;
+
+  /** Default value bubbled up from  */
+  // default?: unknown | undefined;
 
   /** @internal A set of literal discriminators used for the fast path in discriminated unions. */
   propValues?: util.PropValues | undefined;
@@ -1611,24 +1615,42 @@ function handleObjectResult(result: ParsePayload, final: ParsePayload, key: Prop
 }
 
 function handleOptionalObjectResult(result: ParsePayload, final: ParsePayload, key: PropertyKey, input: any) {
-  if (result.issues.length) {
-    // validation failed against value schema
-    if (input[key] === undefined) {
-      // if input was undefined, ignore the error
+  const issues = result.caught ? result.caught : result.issues;
+
+  if (input[key] === undefined) {
+    // Handle all cases where input[key] is undefined
+    if (result.caught?.length) {
+      // if you get back a caught value, ignore it if input was undefined
       if (key in input) {
         (final.value as any)[key] = undefined;
-      } else {
-        (final.value as any)[key] = result.value;
       }
+    } else if (issues.length) {
+      // validation failed against value schema, ignore error if input was undefined
+      if (key in input) {
+        (final.value as any)[key] = undefined;
+      }
+    } else if (result.value === undefined) {
+      // validation returned `undefined`
+      if (key in input) (final.value as any)[key] = undefined;
     } else {
-      final.issues.push(...util.prefixIssues(key, result.issues));
+      // non-undefined result value (e.g., from default/transform)
+      (final.value as any)[key] = result.value;
     }
-  } else if (result.value === undefined) {
-    // validation returned `undefined`
-    if (key in input) (final.value as any)[key] = undefined;
   } else {
-    // non-undefined value
-    (final.value as any)[key] = result.value;
+    // Handle all cases where input[key] is defined
+    if (result.caught?.length) {
+      // use the caught value
+      (final.value as any)[key] = result.value;
+    } else if (issues.length) {
+      // validation failed against value schema
+      final.issues.push(...util.prefixIssues(key, issues));
+    } else if (result.value === undefined) {
+      // validation returned `undefined`
+      (final.value as any)[key] = undefined;
+    } else {
+      // non-undefined value
+      (final.value as any)[key] = result.value;
+    }
   }
 }
 
@@ -1742,23 +1764,35 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
         doc.write(`const ${id} = ${parseStr(key)};`);
         const k = util.esc(key);
         doc.write(`
-        if (${id}.issues.length) {
-          if (input[${k}] === undefined) {
+        if (input[${k}] === undefined) {
+          if(${id}.caught?.length){
+            if(${k} in input){
+              newResult[${k}] = undefined;
+            }
+          } else if (${id}.issues.length) {
             if (${k} in input) {
               newResult[${k}] = undefined;
             }
+          } else if (${id}.value === undefined) {
+            if (${k} in input) newResult[${k}] = undefined;
           } else {
+            newResult[${k}] = ${id}.value;
+          }
+        } else {
+          if(${id}.caught?.length){
+            newResult[${k}] = ${id}.value;
+          } else if (${id}.issues.length) {
             payload.issues = payload.issues.concat(
               ${id}.issues.map((iss) => ({
                 ...iss,
                 path: iss.path ? [${k}, ...iss.path] : [${k}],
               }))
             );
+          } else if (${id}.value === undefined) {
+            newResult[${k}] = undefined;
+          } else {
+            newResult[${k}] = ${id}.value;
           }
-        } else if (${id}.value === undefined) {
-          if (${k} in input) newResult[${k}] = undefined;
-        } else {
-          newResult[${k}] = ${id}.value;
         }
         `);
       } else {
@@ -1816,19 +1850,6 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       const shape = value.shape;
       for (const key of value.keys) {
         const el = shape[key]!;
-
-        // do not add omitted optional keys
-        // if (!(key in input)) {
-        //   if (optionalKeys.has(key)) continue;
-        //   payload.issues.push({
-        //     code: "invalid_type",
-        //     path: [key],
-        //     expected: "nonoptional",
-        //     note: `Missing required key: "${key}"`,
-        //     input,
-        //     inst,
-        //   });
-        // }
 
         const r = el._zod.run({ value: input[key], issues: [] }, ctx);
         const isOptional = el._zod.optin === "optional" && el._zod.optout === "optional";
@@ -3370,6 +3391,8 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
         },
         input: payload.value,
       });
+
+      payload.caught = result.issues;
       payload.issues = [];
     }
 
