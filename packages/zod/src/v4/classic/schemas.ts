@@ -1068,7 +1068,7 @@ export interface ZodObject<
   /** This is the default behavior. This method call is likely unnecessary. */
   strip(): ZodObject<Shape, core.$strip>;
 
-  extend<U extends core.$ZodLooseShape & Partial<Record<keyof Shape, core.SomeType>>>(
+  extend<U extends core.$ZodLooseShape & { [k in keyof Shape]?: core.SomeType | undefined }>(
     shape: U
   ): ZodObject<util.Extend<Shape, U>, Config>;
 
