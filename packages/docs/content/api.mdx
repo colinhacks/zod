@@ -2078,7 +2078,7 @@ const schema = z
 schema.parse({
   password: "asdf",
   confirmPassword: "asdf",
-  anotherField: 1234 // ❌ this error will prevent the password check from running
+  anotherField: 1234 // ❌ this error will not prevent the password check from running
 });
 ```
 </Tab>
