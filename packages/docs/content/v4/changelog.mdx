@@ -23,6 +23,20 @@ import * as z from "zod";
 **Note** — Zod 3 exported a number of undocumented quasi-internal utility types and functions that are not considered part of the public API. Changes to those are not documented here.
 </Callout>
 
+## Codemod
+
+A non-official codemod is available to help you migrate from Zod 3 to Zod 4: [zod-v3-to-v4](https://www.npmjs.com/package/zod-v3-to-v4)
+
+Once you have upgraded to Zod 4, you can run the following to automatically migrate your code to the new API:
+
+```
+npx zod-v3-to-v4
+```
+
+> This codemod may not catch every case, but it should cover the majority of them. You may need to manually fix some errors.
+
+If the codemod missed something or did something wrong, please [open an issue](https://github.com/nicoespeon/zod-v3-to-v4/issues).
+
 ## Error customization
 
 Zod 4 standardizes the APIs for error customization under a single, unified `error` param. Previously Zod's error customization APIs were fragmented and inconsistent. This is cleaned up in Zod 4. 
