@@ -26,3 +26,5 @@ const NodeTwo = NodeBase.extend({
 });
 
 const Node = z.union([NodeOne, NodeTwo]);
+
+z.object;

@@ -1,6 +1,7 @@
 import type { $ZodCheck, $ZodStringFormats } from "./checks.js";
 import { $constructor } from "./core.js";
 import type { $ZodType } from "./schemas.js";
+import type { StandardSchemaV1 } from "./standard-schema.js";
 import * as util from "./util.js";
 
 ///////////////////////////
@@ -386,8 +387,9 @@ export function treeifyError<T>(error: $ZodError, _mapper?: any) {
  *   ✖ Invalid input: expected number
  * ```
  */
-export function toDotPath(path: (string | number | symbol)[]): string {
+export function toDotPath(_path: readonly (string | number | symbol | StandardSchemaV1.PathSegment)[]): string {
   const segs: string[] = [];
+  const path: PropertyKey[] = _path.map((seg: any) => (typeof seg === "object" ? seg.key : seg));
   for (const seg of path) {
     if (typeof seg === "number") segs.push(`[${seg}]`);
     else if (typeof seg === "symbol") segs.push(`[${JSON.stringify(String(seg))}]`);
@@ -401,14 +403,10 @@ export function toDotPath(path: (string | number | symbol)[]): string {
   return segs.join("");
 }
 
-interface BaseError {
-  issues: $ZodIssueBase[];
-}
-
-export function prettifyError(error: BaseError): string {
+export function prettifyError(error: StandardSchemaV1.FailureResult): string {
   const lines: string[] = [];
   // sort by path length
-  const issues = [...error.issues].sort((a, b) => a.path.length - b.path.length);
+  const issues = [...error.issues].sort((a, b) => (a.path ?? []).length - (b.path ?? []).length);
 
   // Process each issue
   for (const issue of issues) {
