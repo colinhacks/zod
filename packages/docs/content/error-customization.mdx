@@ -178,7 +178,7 @@ z.string().min(5, {
 });
 ```
 
-Return `undefined` to avoid customizing the error message and fall back to the default message. (More specifically, Zod will yield control to the next error map in the [precedence chain](#error-precedence).) This is useful for selectively customizing certain error messages but not others. 
+Return `undefined` to avoid customizing the error message and fall back to the default message. (More specifically, Zod will yield control to the next error map in the [precedence chain](#error-precedence).) This is useful for selectively customizing certain error messages but not others.
 
 ```ts
 z.int64({
@@ -355,6 +355,7 @@ The following locales are available:
 - `bg` — Bulgarian
 - `ca` — Catalan
 - `cs` — Czech
+- `da` — Danish
 - `de` — German
 - `en` — English
 - `eo` — Esperanto
