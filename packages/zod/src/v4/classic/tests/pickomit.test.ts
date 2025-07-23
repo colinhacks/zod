@@ -114,14 +114,14 @@ test("pick/omit/required/partial - do not allow unknown keys", () => {
     age: z.number(),
   });
 
-  expect(() => schema.pick({ name: true, asdf: true })).toThrow();
+  expect(() => schema.pick({ name: true, asdf: true }).safeParse({})).toThrow();
 
   // @ts-expect-error
-  expect(() => schema.pick({ $unknown: true })).toThrow();
+  expect(() => schema.pick({ $unknown: true }).safeParse({})).toThrow();
   // @ts-expect-error
-  expect(() => schema.omit({ $unknown: true })).toThrow();
+  expect(() => schema.omit({ $unknown: true }).safeParse({})).toThrow();
   // @ts-expect-error
-  expect(() => schema.required({ $unknown: true })).toThrow();
+  expect(() => schema.required({ $unknown: true }).safeParse({})).toThrow();
   // @ts-expect-error
-  expect(() => schema.partial({ $unknown: true })).toThrow();
+  expect(() => schema.partial({ $unknown: true }).safeParse({})).toThrow();
 });

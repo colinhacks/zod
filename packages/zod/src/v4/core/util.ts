@@ -543,20 +543,18 @@ export const BIGINT_FORMAT_RANGES: Record<checks.$ZodBigIntFormats, [bigint, big
 };
 
 export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>): any {
+  const currDef = schema._zod.def;
+
   const def = cloneDef(schema);
   Object.defineProperties(def, {
     shape: {
       get() {
         const newShape: Writeable<schemas.$ZodShape> = {};
-        const currDef = schema._zod.def;
-
         for (const key in mask) {
           if (!(key in currDef.shape)) {
             throw new Error(`Unrecognized key: "${key}"`);
           }
           if (!mask[key]) continue;
-
-          // pick key
           newShape[key] = currDef.shape[key]!;
         }
 
@@ -573,12 +571,13 @@ export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>):
 }
 
 export function omit(schema: schemas.$ZodObject, mask: object): any {
+  const currDef = schema._zod.def;
+
   const def = cloneDef(schema);
   Object.defineProperties(def, {
     shape: {
       get() {
         const newShape: Writeable<schemas.$ZodShape> = { ...schema._zod.def.shape };
-        const currDef = schema._zod.def;
         for (const key in mask) {
           if (!(key in currDef.shape)) {
             throw new Error(`Unrecognized key: "${key}"`);
