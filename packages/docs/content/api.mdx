@@ -47,18 +47,14 @@ schema.parse(true);      // => "true"
 schema.parse(null);      // => "null"
 ```
 
-<Callout>
-Coercion allows providing the expected input type,
-```ts
-const MySchema = z.object({
-  coerced: z.coerce.number<number>().optional(),
-})
-```
-This is useful when using a standard schema based form validator to avoid errors such as 
-</Callout>
+The input type of these coerced schemas is `unknown` by default. To specify a more specific input type, pass a generic parameter:
 
-```
-Type 'unknown' is not assignable to type 'number | undefined'.
+```ts
+const A = z.coerce.number();
+type AInput = z.infer<typeof A>; // => number
+
+const B = z.coerce.number<number>();
+type BInput = z.infer<typeof B>; // => number
 ```
 
 <Accordions type="single"><Accordion title="How coercion works in Zod">
