@@ -1,3 +1,3 @@
-import * as z from "zod";
+import * as z from "zod/v3";
 
-console.log(z.url().parse("sup")); // ❌
+z.obj;

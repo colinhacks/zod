@@ -8,6 +8,6 @@ export function setErrorMap(map: ZodErrorMap) {
   overrideErrorMap = map;
 }
 
-export function getErrorMap() {
+export function getErrorMap(): ZodErrorMap {
   return overrideErrorMap;
 }

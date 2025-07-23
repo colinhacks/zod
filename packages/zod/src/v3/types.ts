@@ -674,7 +674,7 @@ export function datetimeRegex(args: {
   precision?: number | null;
   offset?: boolean;
   local?: boolean;
-}) {
+}): RegExp {
   let regex = `${dateRegexSource}T${timeRegexSource(args)}`;
 
   const opts: string[] = [];
@@ -1039,7 +1039,11 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     return { status: status.value, value: input.data };
   }
 
-  protected _regex(regex: RegExp, validation: StringValidation, message?: errorUtil.ErrMessage) {
+  protected _regex(
+    regex: RegExp,
+    validation: StringValidation,
+    message?: errorUtil.ErrMessage
+  ): ZodEffects<this, string, string> {
     return this.refinement((data) => regex.test(data), {
       validation,
       code: ZodIssueCode.invalid_string,
@@ -1047,45 +1051,45 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     });
   }
 
-  _addCheck(check: ZodStringCheck) {
+  _addCheck(check: ZodStringCheck): ZodString {
     return new ZodString({
       ...this._def,
       checks: [...this._def.checks, check],
     });
   }
 
-  email(message?: errorUtil.ErrMessage) {
+  email(message?: errorUtil.ErrMessage): ZodString {
     return this._addCheck({ kind: "email", ...errorUtil.errToObj(message) });
   }
 
-  url(message?: errorUtil.ErrMessage) {
+  url(message?: errorUtil.ErrMessage): ZodString {
     return this._addCheck({ kind: "url", ...errorUtil.errToObj(message) });
   }
 
-  emoji(message?: errorUtil.ErrMessage) {
+  emoji(message?: errorUtil.ErrMessage): ZodString {
     return this._addCheck({ kind: "emoji", ...errorUtil.errToObj(message) });
   }
 
-  uuid(message?: errorUtil.ErrMessage) {
+  uuid(message?: errorUtil.ErrMessage): ZodString {
     return this._addCheck({ kind: "uuid", ...errorUtil.errToObj(message) });
   }
-  nanoid(message?: errorUtil.ErrMessage) {
+  nanoid(message?: errorUtil.ErrMessage): ZodString {
     return this._addCheck({ kind: "nanoid", ...errorUtil.errToObj(message) });
   }
-  cuid(message?: errorUtil.ErrMessage) {
+  cuid(message?: errorUtil.ErrMessage): ZodString {
     return this._addCheck({ kind: "cuid", ...errorUtil.errToObj(message) });
   }
 
-  cuid2(message?: errorUtil.ErrMessage) {
+  cuid2(message?: errorUtil.ErrMessage): ZodString {
     return this._addCheck({ kind: "cuid2", ...errorUtil.errToObj(message) });
   }
-  ulid(message?: errorUtil.ErrMessage) {
+  ulid(message?: errorUtil.ErrMessage): ZodString {
     return this._addCheck({ kind: "ulid", ...errorUtil.errToObj(message) });
   }
-  base64(message?: errorUtil.ErrMessage) {
+  base64(message?: errorUtil.ErrMessage): ZodString {
     return this._addCheck({ kind: "base64", ...errorUtil.errToObj(message) });
   }
-  base64url(message?: errorUtil.ErrMessage) {
+  base64url(message?: errorUtil.ErrMessage): ZodString {
     // base64url encoding is a modification of base64 that can safely be used in URLs and filenames
     return this._addCheck({
       kind: "base64url",
@@ -1093,15 +1097,15 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     });
   }
 
-  jwt(options?: { alg?: string; message?: string | undefined }) {
+  jwt(options?: { alg?: string; message?: string | undefined }): ZodString {
     return this._addCheck({ kind: "jwt", ...errorUtil.errToObj(options) });
   }
 
-  ip(options?: string | { version?: IpVersion; message?: string | undefined }) {
+  ip(options?: string | { version?: IpVersion; message?: string | undefined }): ZodString {
     return this._addCheck({ kind: "ip", ...errorUtil.errToObj(options) });
   }
 
-  cidr(options?: string | { version?: IpVersion; message?: string | undefined }) {
+  cidr(options?: string | { version?: IpVersion; message?: string | undefined }): ZodString {
     return this._addCheck({ kind: "cidr", ...errorUtil.errToObj(options) });
   }
 
@@ -1114,7 +1118,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           offset?: boolean;
           local?: boolean;
         }
-  ) {
+  ): ZodString {
     if (typeof options === "string") {
       return this._addCheck({
         kind: "datetime",
@@ -1134,7 +1138,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     });
   }
 
-  date(message?: string) {
+  date(message?: string): ZodString {
     return this._addCheck({ kind: "date", message });
   }
 
@@ -1145,7 +1149,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           message?: string | undefined;
           precision?: number | null;
         }
-  ) {
+  ): ZodString {
     if (typeof options === "string") {
       return this._addCheck({
         kind: "time",
@@ -1160,11 +1164,11 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     });
   }
 
-  duration(message?: errorUtil.ErrMessage) {
+  duration(message?: errorUtil.ErrMessage): ZodString {
     return this._addCheck({ kind: "duration", ...errorUtil.errToObj(message) });
   }
 
-  regex(regex: RegExp, message?: errorUtil.ErrMessage) {
+  regex(regex: RegExp, message?: errorUtil.ErrMessage): ZodString {
     return this._addCheck({
       kind: "regex",
       regex: regex,
@@ -1172,7 +1176,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     });
   }
 
-  includes(value: string, options?: { message?: string; position?: number }) {
+  includes(value: string, options?: { message?: string; position?: number }): ZodString {
     return this._addCheck({
       kind: "includes",
       value: value,
@@ -1181,7 +1185,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     });
   }
 
-  startsWith(value: string, message?: errorUtil.ErrMessage) {
+  startsWith(value: string, message?: errorUtil.ErrMessage): ZodString {
     return this._addCheck({
       kind: "startsWith",
       value: value,
@@ -1189,7 +1193,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     });
   }
 
-  endsWith(value: string, message?: errorUtil.ErrMessage) {
+  endsWith(value: string, message?: errorUtil.ErrMessage): ZodString {
     return this._addCheck({
       kind: "endsWith",
       value: value,
@@ -1197,7 +1201,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     });
   }
 
-  min(minLength: number, message?: errorUtil.ErrMessage) {
+  min(minLength: number, message?: errorUtil.ErrMessage): ZodString {
     return this._addCheck({
       kind: "min",
       value: minLength,
@@ -1205,7 +1209,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     });
   }
 
-  max(maxLength: number, message?: errorUtil.ErrMessage) {
+  max(maxLength: number, message?: errorUtil.ErrMessage): ZodString {
     return this._addCheck({
       kind: "max",
       value: maxLength,
@@ -1213,7 +1217,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     });
   }
 
-  length(len: number, message?: errorUtil.ErrMessage) {
+  length(len: number, message?: errorUtil.ErrMessage): ZodString {
     return this._addCheck({
       kind: "length",
       value: len,
@@ -1224,89 +1228,89 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   /**
    * Equivalent to `.min(1)`
    */
-  nonempty(message?: errorUtil.ErrMessage) {
+  nonempty(message?: errorUtil.ErrMessage): ZodString {
     return this.min(1, errorUtil.errToObj(message));
   }
 
-  trim() {
+  trim(): ZodString {
     return new ZodString({
       ...this._def,
       checks: [...this._def.checks, { kind: "trim" }],
     });
   }
 
-  toLowerCase() {
+  toLowerCase(): ZodString {
     return new ZodString({
       ...this._def,
       checks: [...this._def.checks, { kind: "toLowerCase" }],
     });
   }
 
-  toUpperCase() {
+  toUpperCase(): ZodString {
     return new ZodString({
       ...this._def,
       checks: [...this._def.checks, { kind: "toUpperCase" }],
     });
   }
 
-  get isDatetime() {
+  get isDatetime(): boolean {
     return !!this._def.checks.find((ch) => ch.kind === "datetime");
   }
 
-  get isDate() {
+  get isDate(): boolean {
     return !!this._def.checks.find((ch) => ch.kind === "date");
   }
 
-  get isTime() {
+  get isTime(): boolean {
     return !!this._def.checks.find((ch) => ch.kind === "time");
   }
-  get isDuration() {
+  get isDuration(): boolean {
     return !!this._def.checks.find((ch) => ch.kind === "duration");
   }
 
-  get isEmail() {
+  get isEmail(): boolean {
     return !!this._def.checks.find((ch) => ch.kind === "email");
   }
 
-  get isURL() {
+  get isURL(): boolean {
     return !!this._def.checks.find((ch) => ch.kind === "url");
   }
 
-  get isEmoji() {
+  get isEmoji(): boolean {
     return !!this._def.checks.find((ch) => ch.kind === "emoji");
   }
 
-  get isUUID() {
+  get isUUID(): boolean {
     return !!this._def.checks.find((ch) => ch.kind === "uuid");
   }
-  get isNANOID() {
+  get isNANOID(): boolean {
     return !!this._def.checks.find((ch) => ch.kind === "nanoid");
   }
-  get isCUID() {
+  get isCUID(): boolean {
     return !!this._def.checks.find((ch) => ch.kind === "cuid");
   }
 
-  get isCUID2() {
+  get isCUID2(): boolean {
     return !!this._def.checks.find((ch) => ch.kind === "cuid2");
   }
-  get isULID() {
+  get isULID(): boolean {
     return !!this._def.checks.find((ch) => ch.kind === "ulid");
   }
-  get isIP() {
+  get isIP(): boolean {
     return !!this._def.checks.find((ch) => ch.kind === "ip");
   }
-  get isCIDR() {
+  get isCIDR(): boolean {
     return !!this._def.checks.find((ch) => ch.kind === "cidr");
   }
-  get isBase64() {
+  get isBase64(): boolean {
     return !!this._def.checks.find((ch) => ch.kind === "base64");
   }
-  get isBase64url() {
+  get isBase64url(): boolean {
     // base64url encoding is a modification of base64 that can safely be used in URLs and filenames
     return !!this._def.checks.find((ch) => ch.kind === "base64url");
   }
 
-  get minLength() {
+  get minLength(): number | null {
     let min: number | null = null;
     for (const ch of this._def.checks) {
       if (ch.kind === "min") {
@@ -1316,7 +1320,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     return min;
   }
 
-  get maxLength() {
+  get maxLength(): number | null {
     let max: number | null = null;
     for (const ch of this._def.checks) {
       if (ch.kind === "max") {
@@ -1461,25 +1465,25 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
     });
   };
 
-  gte(value: number, message?: errorUtil.ErrMessage) {
+  gte(value: number, message?: errorUtil.ErrMessage): ZodNumber {
     return this.setLimit("min", value, true, errorUtil.toString(message));
   }
   min = this.gte;
 
-  gt(value: number, message?: errorUtil.ErrMessage) {
+  gt(value: number, message?: errorUtil.ErrMessage): ZodNumber {
     return this.setLimit("min", value, false, errorUtil.toString(message));
   }
 
-  lte(value: number, message?: errorUtil.ErrMessage) {
+  lte(value: number, message?: errorUtil.ErrMessage): ZodNumber {
     return this.setLimit("max", value, true, errorUtil.toString(message));
   }
   max = this.lte;
 
-  lt(value: number, message?: errorUtil.ErrMessage) {
+  lt(value: number, message?: errorUtil.ErrMessage): ZodNumber {
     return this.setLimit("max", value, false, errorUtil.toString(message));
   }
 
-  protected setLimit(kind: "min" | "max", value: number, inclusive: boolean, message?: string) {
+  protected setLimit(kind: "min" | "max", value: number, inclusive: boolean, message?: string): ZodNumber {
     return new ZodNumber({
       ...this._def,
       checks: [
@@ -1494,21 +1498,21 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
     });
   }
 
-  _addCheck(check: ZodNumberCheck) {
+  _addCheck(check: ZodNumberCheck): ZodNumber {
     return new ZodNumber({
       ...this._def,
       checks: [...this._def.checks, check],
     });
   }
 
-  int(message?: errorUtil.ErrMessage) {
+  int(message?: errorUtil.ErrMessage): ZodNumber {
     return this._addCheck({
       kind: "int",
       message: errorUtil.toString(message),
     });
   }
 
-  positive(message?: errorUtil.ErrMessage) {
+  positive(message?: errorUtil.ErrMessage): ZodNumber {
     return this._addCheck({
       kind: "min",
       value: 0,
@@ -1517,7 +1521,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
     });
   }
 
-  negative(message?: errorUtil.ErrMessage) {
+  negative(message?: errorUtil.ErrMessage): ZodNumber {
     return this._addCheck({
       kind: "max",
       value: 0,
@@ -1526,7 +1530,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
     });
   }
 
-  nonpositive(message?: errorUtil.ErrMessage) {
+  nonpositive(message?: errorUtil.ErrMessage): ZodNumber {
     return this._addCheck({
       kind: "max",
       value: 0,
@@ -1535,7 +1539,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
     });
   }
 
-  nonnegative(message?: errorUtil.ErrMessage) {
+  nonnegative(message?: errorUtil.ErrMessage): ZodNumber {
     return this._addCheck({
       kind: "min",
       value: 0,
@@ -1544,7 +1548,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
     });
   }
 
-  multipleOf(value: number, message?: errorUtil.ErrMessage) {
+  multipleOf(value: number, message?: errorUtil.ErrMessage): ZodNumber {
     return this._addCheck({
       kind: "multipleOf",
       value: value,
@@ -1553,14 +1557,14 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
   }
   step = this.multipleOf;
 
-  finite(message?: errorUtil.ErrMessage) {
+  finite(message?: errorUtil.ErrMessage): ZodNumber {
     return this._addCheck({
       kind: "finite",
       message: errorUtil.toString(message),
     });
   }
 
-  safe(message?: errorUtil.ErrMessage) {
+  safe(message?: errorUtil.ErrMessage): ZodNumber {
     return this._addCheck({
       kind: "min",
       inclusive: true,
@@ -1574,7 +1578,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
     });
   }
 
-  get minValue() {
+  get minValue(): number | null {
     let min: number | null = null;
     for (const ch of this._def.checks) {
       if (ch.kind === "min") {
@@ -1584,7 +1588,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
     return min;
   }
 
-  get maxValue() {
+  get maxValue(): number | null {
     let max: number | null = null;
     for (const ch of this._def.checks) {
       if (ch.kind === "max") {
@@ -1594,11 +1598,11 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
     return max;
   }
 
-  get isInt() {
+  get isInt(): boolean {
     return !!this._def.checks.find((ch) => ch.kind === "int" || (ch.kind === "multipleOf" && util.isInteger(ch.value)));
   }
 
-  get isFinite() {
+  get isFinite(): boolean {
     let max: number | null = null;
     let min: number | null = null;
     for (const ch of this._def.checks) {
@@ -1694,7 +1698,7 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef, bigint> {
     return { status: status.value, value: input.data };
   }
 
-  _getInvalidInput(input: ParseInput) {
+  _getInvalidInput(input: ParseInput): INVALID {
     const ctx = this._getOrReturnCtx(input);
     addIssueToContext(ctx, {
       code: ZodIssueCode.invalid_type,
@@ -1713,25 +1717,25 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef, bigint> {
     });
   };
 
-  gte(value: bigint, message?: errorUtil.ErrMessage) {
+  gte(value: bigint, message?: errorUtil.ErrMessage): ZodBigInt {
     return this.setLimit("min", value, true, errorUtil.toString(message));
   }
   min = this.gte;
 
-  gt(value: bigint, message?: errorUtil.ErrMessage) {
+  gt(value: bigint, message?: errorUtil.ErrMessage): ZodBigInt {
     return this.setLimit("min", value, false, errorUtil.toString(message));
   }
 
-  lte(value: bigint, message?: errorUtil.ErrMessage) {
+  lte(value: bigint, message?: errorUtil.ErrMessage): ZodBigInt {
     return this.setLimit("max", value, true, errorUtil.toString(message));
   }
   max = this.lte;
 
-  lt(value: bigint, message?: errorUtil.ErrMessage) {
+  lt(value: bigint, message?: errorUtil.ErrMessage): ZodBigInt {
     return this.setLimit("max", value, false, errorUtil.toString(message));
   }
 
-  protected setLimit(kind: "min" | "max", value: bigint, inclusive: boolean, message?: string) {
+  protected setLimit(kind: "min" | "max", value: bigint, inclusive: boolean, message?: string): ZodBigInt {
     return new ZodBigInt({
       ...this._def,
       checks: [
@@ -1746,14 +1750,14 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef, bigint> {
     });
   }
 
-  _addCheck(check: ZodBigIntCheck) {
+  _addCheck(check: ZodBigIntCheck): ZodBigInt {
     return new ZodBigInt({
       ...this._def,
       checks: [...this._def.checks, check],
     });
   }
 
-  positive(message?: errorUtil.ErrMessage) {
+  positive(message?: errorUtil.ErrMessage): ZodBigInt {
     return this._addCheck({
       kind: "min",
       value: BigInt(0),
@@ -1762,7 +1766,7 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef, bigint> {
     });
   }
 
-  negative(message?: errorUtil.ErrMessage) {
+  negative(message?: errorUtil.ErrMessage): ZodBigInt {
     return this._addCheck({
       kind: "max",
       value: BigInt(0),
@@ -1771,7 +1775,7 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef, bigint> {
     });
   }
 
-  nonpositive(message?: errorUtil.ErrMessage) {
+  nonpositive(message?: errorUtil.ErrMessage): ZodBigInt {
     return this._addCheck({
       kind: "max",
       value: BigInt(0),
@@ -1780,7 +1784,7 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef, bigint> {
     });
   }
 
-  nonnegative(message?: errorUtil.ErrMessage) {
+  nonnegative(message?: errorUtil.ErrMessage): ZodBigInt {
     return this._addCheck({
       kind: "min",
       value: BigInt(0),
@@ -1789,7 +1793,7 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef, bigint> {
     });
   }
 
-  multipleOf(value: bigint, message?: errorUtil.ErrMessage) {
+  multipleOf(value: bigint, message?: errorUtil.ErrMessage): ZodBigInt {
     return this._addCheck({
       kind: "multipleOf",
       value,
@@ -1797,7 +1801,7 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef, bigint> {
     });
   }
 
-  get minValue() {
+  get minValue(): bigint | null {
     let min: bigint | null = null;
     for (const ch of this._def.checks) {
       if (ch.kind === "min") {
@@ -1807,7 +1811,7 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef, bigint> {
     return min;
   }
 
-  get maxValue() {
+  get maxValue(): bigint | null {
     let max: bigint | null = null;
     for (const ch of this._def.checks) {
       if (ch.kind === "max") {
@@ -1940,14 +1944,14 @@ export class ZodDate extends ZodType<Date, ZodDateDef, Date> {
     };
   }
 
-  _addCheck(check: ZodDateCheck) {
+  _addCheck(check: ZodDateCheck): ZodDate {
     return new ZodDate({
       ...this._def,
       checks: [...this._def.checks, check],
     });
   }
 
-  min(minDate: Date, message?: errorUtil.ErrMessage) {
+  min(minDate: Date, message?: errorUtil.ErrMessage): ZodDate {
     return this._addCheck({
       kind: "min",
       value: minDate.getTime(),
@@ -1955,7 +1959,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef, Date> {
     });
   }
 
-  max(maxDate: Date, message?: errorUtil.ErrMessage) {
+  max(maxDate: Date, message?: errorUtil.ErrMessage): ZodDate {
     return this._addCheck({
       kind: "max",
       value: maxDate.getTime(),
@@ -1963,7 +1967,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef, Date> {
     });
   }
 
-  get minDate() {
+  get minDate(): Date | null {
     let min: number | null = null;
     for (const ch of this._def.checks) {
       if (ch.kind === "min") {
@@ -1974,7 +1978,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef, Date> {
     return min != null ? new Date(min) : null;
   }
 
-  get maxDate() {
+  get maxDate(): Date | null {
     let max: number | null = null;
     for (const ch of this._def.checks) {
       if (ch.kind === "max") {
@@ -2314,7 +2318,7 @@ export class ZodArray<T extends ZodTypeAny, Cardinality extends ArrayCardinality
     return ParseStatus.mergeArray(status, result);
   }
 
-  get element() {
+  get element(): T {
     return this._def.type;
   }
 
@@ -2567,7 +2571,7 @@ export class ZodObject<
     }
   }
 
-  get shape() {
+  get shape(): T {
     return this._def.shape();
   }
 
@@ -3040,7 +3044,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
     }
   }
 
-  get options() {
+  get options(): T {
     return this._def.options;
   }
 
@@ -3159,15 +3163,15 @@ export class ZodDiscriminatedUnion<
     }
   }
 
-  get discriminator() {
+  get discriminator(): Discriminator {
     return this._def.discriminator;
   }
 
-  get options() {
+  get options(): Options {
     return this._def.options;
   }
 
-  get optionsMap() {
+  get optionsMap(): Map<Primitive, ZodDiscriminatedUnionOption<any>> {
     return this._def.optionsMap;
   }
 
@@ -3449,7 +3453,7 @@ export class ZodTuple<
     }
   }
 
-  get items() {
+  get items(): T {
     return this._def.items;
   }
 
@@ -3505,10 +3509,10 @@ export class ZodRecord<Key extends KeySchema = ZodString, Value extends ZodTypeA
   ZodRecordDef<Key, Value>,
   RecordType<Key["_input"], Value["_input"]>
 > {
-  get keySchema() {
+  get keySchema(): Key {
     return this._def.keyType;
   }
-  get valueSchema() {
+  get valueSchema(): Value {
     return this._def.valueType;
   }
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
@@ -3546,7 +3550,7 @@ export class ZodRecord<Key extends KeySchema = ZodString, Value extends ZodTypeA
     }
   }
 
-  get element() {
+  get element(): Value {
     return this._def.valueType;
   }
 
@@ -3594,10 +3598,10 @@ export class ZodMap<Key extends ZodTypeAny = ZodTypeAny, Value extends ZodTypeAn
   ZodMapDef<Key, Value>,
   Map<Key["_input"], Value["_input"]>
 > {
-  get keySchema() {
+  get keySchema(): Key {
     return this._def.keyType;
   }
-  get valueSchema() {
+  get valueSchema(): Value {
     return this._def.valueType;
   }
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
@@ -3901,11 +3905,11 @@ export class ZodFunction<Args extends ZodTuple<any, any>, Returns extends ZodTyp
     }
   }
 
-  parameters() {
+  parameters(): Args {
     return this._def.args;
   }
 
-  returnType() {
+  returnType(): Returns {
     return this._def.returns;
   }
 
@@ -4017,7 +4021,7 @@ export class ZodLiteral<T> extends ZodType<T, ZodLiteralDef<T>, T> {
     return { status: "valid", value: input.data };
   }
 
-  get value() {
+  get value(): T {
     return this._def.value;
   }
 
@@ -4109,7 +4113,7 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<T[number],
     return OK(input.data);
   }
 
-  get options() {
+  get options(): T {
     return this._def.values;
   }
 
@@ -4207,7 +4211,7 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<T[keyof T], ZodNa
     return OK(input.data);
   }
 
-  get enum() {
+  get enum(): T {
     return this._def.values;
   }
 
@@ -4237,7 +4241,7 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
   ZodPromiseDef<T>,
   Promise<T["_input"]>
 > {
-  unwrap() {
+  unwrap(): T {
     return this._def.type;
   }
 
@@ -4309,7 +4313,7 @@ export class ZodEffects<T extends ZodTypeAny, Output = output<T>, Input = input<
   ZodEffectsDef<T>,
   Input
 > {
-  innerType() {
+  innerType(): T {
     return this._def.schema;
   }
 
@@ -4495,7 +4499,7 @@ export class ZodOptional<T extends ZodTypeAny> extends ZodType<
     return this._def.innerType._parse(input);
   }
 
-  unwrap() {
+  unwrap(): T {
     return this._def.innerType;
   }
 
@@ -4535,7 +4539,7 @@ export class ZodNullable<T extends ZodTypeAny> extends ZodType<
     return this._def.innerType._parse(input);
   }
 
-  unwrap() {
+  unwrap(): T {
     return this._def.innerType;
   }
 
@@ -4579,7 +4583,7 @@ export class ZodDefault<T extends ZodTypeAny> extends ZodType<
     });
   }
 
-  removeDefault() {
+  removeDefault(): T {
     return this._def.innerType;
   }
 
@@ -4667,7 +4671,7 @@ export class ZodCatch<T extends ZodTypeAny> extends ZodType<
     }
   }
 
-  removeCatch() {
+  removeCatch(): T {
     return this._def.innerType;
   }
 
@@ -4755,7 +4759,7 @@ export class ZodBranded<T extends ZodTypeAny, B extends string | number | symbol
     });
   }
 
-  unwrap() {
+  unwrap(): T {
     return this._def.type;
   }
 }
@@ -4893,7 +4897,7 @@ export class ZodReadonly<T extends ZodTypeAny> extends ZodType<
     }) as any;
   };
 
-  unwrap() {
+  unwrap(): T {
     return this._def.innerType;
   }
 }
@@ -5041,7 +5045,8 @@ const instanceOfType = <T extends typeof Class>(
   params: CustomParams = {
     message: `Input not instance of ${cls.name}`,
   }
-) => custom<InstanceType<T>>((data) => data instanceof cls, params);
+): ZodType<InstanceType<T>, ZodTypeDef, InstanceType<T>> =>
+  custom<InstanceType<T>>((data) => data instanceof cls, params);
 
 const stringType = ZodString.create;
 const numberType = ZodNumber.create;
@@ -5077,9 +5082,9 @@ const optionalType = ZodOptional.create;
 const nullableType = ZodNullable.create;
 const preprocessType = ZodEffects.createWithPreprocess;
 const pipelineType = ZodPipeline.create;
-const ostring = () => stringType().optional();
-const onumber = () => numberType().optional();
-const oboolean = () => booleanType().optional();
+const ostring = (): ZodOptional<ZodString> => stringType().optional();
+const onumber = (): ZodOptional<ZodNumber> => numberType().optional();
+const oboolean = (): ZodOptional<ZodBoolean> => booleanType().optional();
 
 export const coerce = {
   string: ((arg) => ZodString.create({ ...arg, coerce: true })) as (typeof ZodString)["create"],
