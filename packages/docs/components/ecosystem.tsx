@@ -125,10 +125,17 @@ const xToZodConverters: ZodResource[] = [
     slug: "kubb-labs/kubb",
   },
   {
+
     name: "Hey API",
     url: "https://github.com/hey-api/openapi-ts",
     description: "The OpenAPI to TypeScript codegen. Generate clients, SDKs, validators, and more.",
     slug: "hey-api/openapi-ts",
+  },
+  {
+    name: "valype",
+    url: "https://github.com/yuzheng14/valype",
+    description: "Typescript's type definition to runtime validator (includeing zod).",
+    slug: "yuzheng14/valype",
   },
 ];
 

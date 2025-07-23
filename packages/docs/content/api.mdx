@@ -37,6 +37,7 @@ z.coerce.bigint();    // BigInt(input)
 
 The coerced variant of these schemas attempts to convert the input value to the appropriate type.
 
+
 ```ts
 const schema = z.coerce.string();
 
@@ -44,6 +45,16 @@ schema.parse("tuna");    // => "tuna"
 schema.parse(42);        // => "42"
 schema.parse(true);      // => "true"
 schema.parse(null);      // => "null"
+```
+
+The input type of these coerced schemas is `unknown` by default. To specify a more specific input type, pass a generic parameter:
+
+```ts
+const A = z.coerce.number();
+type AInput = z.infer<typeof A>; // => number
+
+const B = z.coerce.number<number>();
+type BInput = z.infer<typeof B>; // => number
 ```
 
 <Accordions type="single"><Accordion title="How coercion works in Zod">
@@ -1074,7 +1085,7 @@ const DogWithBreed = z.extend(Dog, {
 This API can be used to overwrite existing fields! Be careful with this power! If the two schemas share keys, B will override A.
 
 <Callout>
-**Alternative: destructuring** — You can alternatively avoid `.extend()` altogether by creating a new object schema entirely. This makes the strictness level of the resulting schema visually obvious.
+**Alternative: spread syntax** — You can alternatively avoid `.extend()` altogether by creating a new object schema entirely. This makes the strictness level of the resulting schema visually obvious.
 
 ```ts
 const DogWithBreed = z.object({ // or z.strictObject() or z.looseObject()...
@@ -1095,7 +1106,7 @@ const DogWithBreed = z.object({
 
 This approach has a few advantages:
 
-1. It uses language-level features ([destructuring syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring)) instead of library-specific APIs
+1. It uses language-level features ([spread syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax)) instead of library-specific APIs
 2. The same syntax works in Zod and Zod Mini
 3. It's more `tsc`-efficient — the `.extend()` method can be expensive on large schemas, and due to [a TypeScript limitation](https://github.com/microsoft/TypeScript/pull/61505) it gets quadratically more expensive when calls are chained
 4. If you wish, you can change the strictness level of the resulting schema by using `z.strictObject()` or `z.looseObject()`
