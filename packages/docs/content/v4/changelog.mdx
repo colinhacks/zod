@@ -5,7 +5,7 @@ title: Migration guide
 import { Callout } from "fumadocs-ui/components/callout";
 import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 
-> This migration guide aims to list the breaking changes in Zod 4 in order of highest to lowest impact. To learn more about the performance enhancements and new features of Zod 4, read the [introductory post](/v4).
+This migration guide aims to list the breaking changes in Zod 4 in order of highest to lowest impact. To learn more about the performance enhancements and new features of Zod 4, read the [introductory post](/v4). 
 
 {/* To give the ecosystem time to migrate, Zod 4 will initially be published alongside Zod v3.25. To use Zod 4, upgrade to `zod@3.25.0` or later: */}
 
@@ -19,8 +19,14 @@ npm upgrade zod@^4.0.0
 import * as z from "zod";
 ``` */}
 
+Many of Zod's behaviors and APIs have been made more intuitive and cohesive. The breaking changes described in this document often represent major quality-of-life improvements for Zod users. I strongly recommend reading this guide thoroughly.
+
 <Callout>
 **Note** — Zod 3 exported a number of undocumented quasi-internal utility types and functions that are not considered part of the public API. Changes to those are not documented here.
+</Callout>
+
+<Callout>
+**Unofficial codemod** — A community-maintained codemod [`zod-v3-to-v4`](https://github.com/nicoespeon/zod-v3-to-v4) is available. 
 </Callout>
 
 ## Error customization
@@ -598,7 +604,7 @@ const longString = z.string().refine(
 );
 ```
 
-## `.superRefine()` deprecated
+{/* ## `.superRefine()` deprecated
 
 The `.superRefine()` method has been deprecated in favor of `.check()`. The `.check()` method provides the same functionality with a cleaner API. The `.check()` method is also available on Zod and Zod Mini schemas.
 
@@ -623,7 +629,7 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
     });
   }
 });
-```
+``` */}
 
 
 ## `z.ostring()`, etc dropped

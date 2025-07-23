@@ -61,8 +61,6 @@ export interface ZodType<
 
   // refinements
   refine(check: (arg: core.output<this>) => unknown | Promise<unknown>, params?: string | core.$ZodCustomParams): this;
-  /** @deprecated Use [`.check()`](https://zod.dev/api?id=check) instead.
-   */
   superRefine(
     refinement: (arg: core.output<this>, ctx: RefinementCtx<core.output<this>>) => void | Promise<void>
   ): this;
