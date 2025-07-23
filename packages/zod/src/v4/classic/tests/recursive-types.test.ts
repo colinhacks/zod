@@ -260,6 +260,32 @@ test("mutual recursion with meta", () => {
   expectTypeOf<B>().toEqualTypeOf<_B>();
 });
 
+test("extend", () => {
+  const NodeBase = z.object({
+    id: z.string(),
+    get children() {
+      return z.array(Node).optional();
+    },
+  });
+
+  // typed as any
+  const NodeOne = NodeBase.extend({
+    name: z.literal("nodeOne"),
+    // if this is commented out, NodeTwo becomes any
+    get children() {
+      return z.array(Node);
+    },
+  });
+
+  const NodeTwo = NodeBase.extend({
+    name: z.literal("nodeTwo"),
+    get children() {
+      return z.array(Node);
+    },
+  });
+
+  const Node = z.union([NodeOne, NodeTwo]);
+});
 test("recursion compatibility", () => {
   // array
   const A = z.object({

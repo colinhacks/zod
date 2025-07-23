@@ -1,21 +1,18 @@
 import * as z from "zod";
 
-// import { z } from "zod";
-
 const NodeBase = z.object({
   id: z.string(),
-  // get children(): z.ZodOptional<z.ZodArray<typeof Node>> {
-  //   return z.array(Node).optional();
-  // },
+  get children() {
+    return z.array(Node).optional();
+  },
 });
 
 // typed as any
-const NodeOne = z.object({
-  ...NodeBase.shape,
+const NodeOne = NodeBase.extend({
   name: z.literal("nodeOne"),
   // if this is commented out, NodeTwo becomes any
-  get children(): z.ZodArray<z.ZodUnion<[typeof NodeOne, typeof NodeTwo]>> {
-    return z.array(z.union([NodeOne, NodeTwo]));
+  get children() {
+    return z.array(Node);
   },
 });
 
@@ -27,12 +24,40 @@ const NodeOne = z.object({
 // });
 
 // oddly, this is typed correctly
-const NodeTwo = z.object({
-  ...NodeBase.shape,
+const NodeTwo = NodeBase.extend({
   name: z.literal("nodeTwo"),
-  get children(): z.ZodArray<z.ZodUnion<[typeof NodeOne, typeof NodeTwo]>> {
-    return z.array(z.union([NodeOne, NodeTwo]));
+  get children() {
+    return z.array(Node);
   },
 });
 
-// const Node: z.ZodUnion<[typeof NodeOne, typeof NodeTwo]> = z.union([NodeOne, NodeTwo]);
+const Node = z.union([NodeOne, NodeTwo]);
+// // Define the base schemas first without children
+// const NodeBase = z.object({
+//   id: z.string(),
+//   get children() {
+//     return z.array(Node).optional();
+//   },
+// });
+
+// const NodeOne = NodeBase.extend({
+//   name: z.literal("nodeOne"),
+//   get children(): z.ZodArray<typeof Node> {
+//     return z.array(Node);
+//   },
+// });
+
+// const NodeTwo = NodeBase.extend({
+//   name: z.literal("nodeTwo"),
+//   get children(): z.ZodArray<typeof Node> {
+//     return z.array(Node);
+//   },
+// });
+
+// // Define the union
+// const Node = z.union([NodeOne, NodeTwo]);
+
+// // Export the types
+// export type NodeOneType = z.infer<typeof NodeOne>;
+// export type NodeTwoType = z.infer<typeof NodeTwo>;
+// export type NodeType = z.infer<typeof Node>;

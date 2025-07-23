@@ -1068,9 +1068,7 @@ export interface ZodObject<
   /** This is the default behavior. This method call is likely unnecessary. */
   strip(): ZodObject<Shape, core.$strip>;
 
-  extend<U extends core.$ZodLooseShape & { [k in keyof Shape]?: core.SomeType | undefined }>(
-    shape: U
-  ): ZodObject<util.Extend<Shape, U>, Config>;
+  extend<U extends core.$ZodLooseShape>(shape: U): ZodObject<util.Extend<Shape, U>, Config>;
 
   /**
    * @deprecated Use [`A.extend(B.shape)`](https://zod.dev/api?id=extend) instead.
