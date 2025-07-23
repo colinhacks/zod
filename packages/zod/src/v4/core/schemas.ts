@@ -1590,6 +1590,36 @@ export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<st
         } & Extra
       >;
 
+// experimental
+// export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = keyof (T &
+//   Extra) extends never
+//   ? Record<string, never>
+//   : string extends keyof T
+//     ? util.Prettify<
+//         {
+//           [k: string]: util.IsAny<T[string]["_zod"]["output"]> extends true ? unknown : T[string]["_zod"]["output"];
+//         } & $InferObjectOutputNoIndex<util.OmitIndexSignature<T>, Extra>
+//       >
+//     : util.Prettify<$InferObjectOutputNoIndex<T, Extra>>;
+
+// export type $InferObjectOutputNoIndex<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = {
+//   [k in keyof T as string extends k
+//     ? never
+//     : k extends string
+//       ? T[k] extends OptionalOutSchema
+//         ? never
+//         : k
+//       : never]: T[k]["_zod"]["output"];
+// } & {
+//   [k in keyof T as string extends k
+//     ? never
+//     : k extends string
+//       ? T[k] extends OptionalOutSchema
+//         ? k
+//         : never
+//       : never]?: T[k]["_zod"]["output"];
+// } & Extra;
+
 export type $InferObjectInput<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = string extends keyof T
   ? util.IsAny<T[keyof T]> extends true
     ? Record<string, unknown>

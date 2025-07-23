@@ -162,7 +162,7 @@ type RawIssue<T extends $ZodIssueBase> = util.Flatten<
     readonly input?: unknown;
     /** The schema or check that originated this issue. */
     readonly inst?: $ZodType | $ZodCheck;
-    /** @deprecated Internal use only. If `true`, Zod will continue executing validation despite this issue. */
+    /** If `true`, Zod will continue executing validation despite this issue. */
     readonly continue?: boolean | undefined;
   } & Record<string, any>
 >;

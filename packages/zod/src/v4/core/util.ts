@@ -687,7 +687,9 @@ export type Constructor<T, Def extends any[] = any[]> = new (...args: Def) => T;
 
 export function aborted(x: schemas.ParsePayload, startIndex = 0): boolean {
   for (let i = startIndex; i < x.issues.length; i++) {
-    if (x.issues[i]?.continue !== true) return true;
+    if (x.issues[i]?.continue !== true) {
+      return true;
+    }
   }
   return false;
 }

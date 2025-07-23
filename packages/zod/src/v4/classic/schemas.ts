@@ -1586,7 +1586,7 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
           _issue.code ??= "custom";
           _issue.input ??= payload.value;
           _issue.inst ??= inst;
-          _issue.continue ??= true;
+          // _issue.continue ??= true;
           payload.issues.push(util.issue(_issue));
         }
       };
