@@ -3,6 +3,7 @@ export { default as az } from "./az.js";
 export { default as be } from "./be.js";
 export { default as ca } from "./ca.js";
 export { default as cs } from "./cs.js";
+export { default as da } from "./da.js";
 export { default as de } from "./de.js";
 export { default as en } from "./en.js";
 export { default as eo } from "./eo.js";
