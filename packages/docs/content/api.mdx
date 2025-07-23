@@ -357,6 +357,13 @@ schema.parse("http://example.com"); // ❌
   ```
 </Callout>
 
+To normalize URLs, use the `normalize` flag. This will overwrite the input value with the [normalized URL](https://chatgpt.com/share/6881547f-bebc-800f-9093-f5981e277c2c) returned by `new URL()`.
+
+```ts
+new URL("HTTP://ExAmPle.com:80/./a/../b?X=1#f oo").href
+// => "http://example.com/b?X=1#f%20oo"
+```
+
 ### ISO datetimes
 
 As you may have noticed, Zod string includes a few date/time related validations. These validations are regular expression based, so they are not as strict as a full date/time library. However, they are very convenient for validating user input.

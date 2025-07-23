@@ -417,6 +417,7 @@ export const $ZodEmail: core.$constructor<$ZodEmail> = /*@__PURE__*/ core.$const
 export interface $ZodURLDef extends $ZodStringFormatDef<"url"> {
   hostname?: RegExp | undefined;
   protocol?: RegExp | undefined;
+  normalize?: boolean | undefined;
 }
 export interface $ZodURLInternals extends $ZodStringFormatInternals<"url"> {
   def: $ZodURLDef;
@@ -430,10 +431,10 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
   $ZodStringFormat.init(inst, def);
   inst._zod.check = (payload) => {
     try {
-      const orig = payload.value;
+      // Trim whitespace from input
+      const trimmed = payload.value.trim();
       // @ts-ignore
-      const url = new URL(orig);
-      const href = url.href;
+      const url = new URL(trimmed);
 
       if (def.hostname) {
         def.hostname.lastIndex = 0;
@@ -465,11 +466,13 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
         }
       }
 
-      // payload.value = url.href;
-      if (!orig.endsWith("/") && href.endsWith("/")) {
-        payload.value = href.slice(0, -1);
+      // Set the output value based on normalize flag
+      if (def.normalize) {
+        // Use normalized URL
+        payload.value = url.href;
       } else {
-        payload.value = href;
+        // Preserve the original input (trimmed)
+        payload.value = trimmed;
       }
 
       return;

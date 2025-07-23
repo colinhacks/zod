@@ -325,13 +325,6 @@ test("object utilities with recursive types", () => {
     RequiredNode,
     RequiredMaskedNode,
   ]);
-
-  // Verify they can be used without causing circularity issues
-  // expect(PickedNode._zod.def.shape.id).toBeDefined();
-  // expect("children" in OmittedNode._zod.def.shape).toBe(false);
-  // expect(MergedNode._zod.def.shape.metadata).toBeDefined();
-  // expect(PartialNode._zod.def.shape.id).toBeDefined();
-  // expect(RequiredNode._zod.def.shape.id).toBeDefined();
 });
 
 test("recursion compatibility", () => {
