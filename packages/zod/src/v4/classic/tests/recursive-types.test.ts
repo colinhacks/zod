@@ -260,18 +260,18 @@ test("mutual recursion with meta", () => {
   expectTypeOf<B>().toEqualTypeOf<_B>();
 });
 
-test("extend", () => {
+test("object utilities with recursive types", () => {
   const NodeBase = z.object({
     id: z.string(),
+    name: z.string(),
     get children() {
       return z.array(Node).optional();
     },
   });
 
-  // typed as any
+  // Test extend
   const NodeOne = NodeBase.extend({
     name: z.literal("nodeOne"),
-    // if this is commented out, NodeTwo becomes any
     get children() {
       return z.array(Node);
     },
@@ -284,8 +284,56 @@ test("extend", () => {
     },
   });
 
-  const Node = z.union([NodeOne, NodeTwo]);
+  // Test pick
+  const PickedNode = NodeBase.pick({ id: true, name: true });
+
+  // Test omit
+  const OmittedNode = NodeBase.omit({ children: true });
+
+  // Test merge
+  const ExtraProps = {
+    metadata: z.string(),
+    get parent() {
+      return Node.optional();
+    },
+  };
+  const MergedNode = NodeBase.extend(ExtraProps);
+
+  // Test partial
+  const PartialNode = NodeBase.partial();
+  const PartialMaskedNode = NodeBase.partial({ name: true });
+
+  // Test required (assuming NodeBase has optional fields)
+  const OptionalNodeBase = z.object({
+    id: z.string().optional(),
+    name: z.string().optional(),
+    get children() {
+      return z.array(Node).optional();
+    },
+  });
+  const RequiredNode = OptionalNodeBase.required();
+  const RequiredMaskedNode = OptionalNodeBase.required({ id: true });
+
+  const Node = z.union([
+    NodeOne,
+    NodeTwo,
+    PickedNode,
+    OmittedNode,
+    MergedNode,
+    PartialNode,
+    PartialMaskedNode,
+    RequiredNode,
+    RequiredMaskedNode,
+  ]);
+
+  // Verify they can be used without causing circularity issues
+  expect(PickedNode._zod.def.shape.id).toBeDefined();
+  expect("children" in OmittedNode._zod.def.shape).toBe(false);
+  expect(MergedNode._zod.def.shape.metadata).toBeDefined();
+  expect(PartialNode._zod.def.shape.id).toBeDefined();
+  expect(RequiredNode._zod.def.shape.id).toBeDefined();
 });
+
 test("recursion compatibility", () => {
   // array
   const A = z.object({
