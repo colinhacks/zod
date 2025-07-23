@@ -1074,7 +1074,7 @@ const DogWithBreed = z.extend(Dog, {
 This API can be used to overwrite existing fields! Be careful with this power! If the two schemas share keys, B will override A.
 
 <Callout>
-**Alternative: spreading** — You can alternatively avoid `.extend()` altogether by creating a new object schema entirely. This makes the strictness level of the resulting schema visually obvious.
+**Alternative: spread syntax** — You can alternatively avoid `.extend()` altogether by creating a new object schema entirely. This makes the strictness level of the resulting schema visually obvious.
 
 ```ts
 const DogWithBreed = z.object({ // or z.strictObject() or z.looseObject()...
