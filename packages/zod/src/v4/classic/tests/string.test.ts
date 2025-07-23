@@ -318,6 +318,83 @@ test("url validations", () => {
   expect(() => url.parse("https://")).toThrow();
 });
 
+test("url preserves original input", () => {
+  const url = z.string().url();
+
+  // Test the specific case from the user report
+  const input = "https://example.com?key=NUXOmHqWNVTapJkJJHw8BfD155AuqhH_qju_5fNmQ4ZHV7u8";
+  const output = url.parse(input);
+  expect(output).toBe(input); // Should preserve the original input exactly
+
+  // Test other cases where URL constructor would normalize
+  expect(url.parse("https://example.com?foo=bar")).toBe("https://example.com?foo=bar");
+  expect(url.parse("http://example.com?test=123")).toBe("http://example.com?test=123");
+  expect(url.parse("https://sub.example.com?param=value&other=data")).toBe(
+    "https://sub.example.com?param=value&other=data"
+  );
+
+  // Test cases with trailing slashes are preserved
+  expect(url.parse("https://example.com/")).toBe("https://example.com/");
+  expect(url.parse("https://example.com/path/")).toBe("https://example.com/path/");
+
+  // Test cases with paths and query parameters
+  expect(url.parse("https://example.com/path?query=param")).toBe("https://example.com/path?query=param");
+});
+
+test("url trims whitespace", () => {
+  const url = z.string().url();
+
+  // Test trimming whitespace from URLs
+  expect(url.parse("  https://example.com  ")).toBe("https://example.com");
+  expect(url.parse("  https://example.com/path?query=param  ")).toBe("https://example.com/path?query=param");
+  expect(url.parse("\t\nhttps://example.com\t\n")).toBe("https://example.com");
+  expect(url.parse("   https://example.com?key=value   ")).toBe("https://example.com?key=value");
+
+  // Test that URLs without extra whitespace are unchanged
+  expect(url.parse("https://example.com")).toBe("https://example.com");
+  expect(url.parse("https://example.com/path")).toBe("https://example.com/path");
+});
+
+test("url normalize flag", () => {
+  const normalizeUrl = z.url({ normalize: true });
+  const preserveUrl = z.url(); // normalize: false/undefined by default
+
+  // Test that normalize flag causes URL normalization
+  expect(normalizeUrl.parse("https://example.com?key=value")).toBe("https://example.com/?key=value");
+  expect(normalizeUrl.parse("http://example.com?test=123")).toBe("http://example.com/?test=123");
+
+  // Test with already normalized URLs
+  expect(normalizeUrl.parse("https://example.com/")).toBe("https://example.com/");
+  expect(normalizeUrl.parse("https://example.com/path?query=param")).toBe("https://example.com/path?query=param");
+
+  // Test complex URLs with normalization
+  expect(normalizeUrl.parse("https://example.com/../?key=value")).toBe("https://example.com/?key=value");
+  expect(normalizeUrl.parse("https://example.com/./path?key=value")).toBe("https://example.com/path?key=value");
+
+  // Compare with non-normalize behavior
+  expect(preserveUrl.parse("https://example.com?key=value")).toBe("https://example.com?key=value");
+  expect(preserveUrl.parse("http://example.com?test=123")).toBe("http://example.com?test=123");
+
+  // Test trimming with normalize
+  expect(normalizeUrl.parse("  https://example.com?key=value  ")).toBe("https://example.com/?key=value");
+  expect(preserveUrl.parse("  https://example.com?key=value  ")).toBe("https://example.com?key=value");
+});
+
+test("url normalize with hostname and protocol constraints", () => {
+  const constrainedNormalizeUrl = z.url({
+    normalize: true,
+    protocol: /^https$/,
+    hostname: /^example\.com$/,
+  });
+
+  // Test that normalization works with constraints
+  expect(constrainedNormalizeUrl.parse("https://example.com?key=value")).toBe("https://example.com/?key=value");
+
+  // Test that constraints are still enforced
+  expect(() => constrainedNormalizeUrl.parse("http://example.com?key=value")).toThrow();
+  expect(() => constrainedNormalizeUrl.parse("https://other.com?key=value")).toThrow();
+});
+
 test("httpurl", () => {
   const httpUrl = z.url({
     protocol: /^https?$/,

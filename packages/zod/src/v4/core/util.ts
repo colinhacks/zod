@@ -283,6 +283,12 @@ export function assignProp<T extends object, K extends PropertyKey>(
   });
 }
 
+export function cloneDef(schema: schemas.$ZodType): any {
+  const def: any = {};
+  Object.defineProperties(def, Object.getOwnPropertyDescriptors(schema._zod.def));
+  return def;
+}
+
 export function getElementAtPath(obj: any, path: (string | number)[] | null | undefined): any {
   if (!path) return obj;
   return path.reduce((acc, key) => acc?.[key], obj);
@@ -314,15 +320,16 @@ export function esc(str: string): string {
   return JSON.stringify(str);
 }
 
-export const captureStackTrace: (targetObject: object, constructorOpt?: Function) => void = Error.captureStackTrace
-  ? Error.captureStackTrace
-  : (..._args) => {};
+export const captureStackTrace: (targetObject: object, constructorOpt?: Function) => void = (
+  "captureStackTrace" in Error ? Error.captureStackTrace : (..._args: any[]) => {}
+) as any;
 
 export function isObject(data: any): data is Record<PropertyKey, unknown> {
   return typeof data === "object" && data !== null && !Array.isArray(data);
 }
 
 export const allowsEval: { value: boolean } = cached(() => {
+  // @ts-ignore
   if (typeof navigator !== "undefined" && navigator?.userAgent?.includes("Cloudflare")) {
     return false;
   }
@@ -409,6 +416,7 @@ export const getParsedType = (data: any): ParsedTypes => {
       if (typeof Date !== "undefined" && data instanceof Date) {
         return "date";
       }
+      // @ts-ignore
       if (typeof File !== "undefined" && data instanceof File) {
         return "file";
       }
@@ -535,71 +543,103 @@ export const BIGINT_FORMAT_RANGES: Record<checks.$ZodBigIntFormats, [bigint, big
 };
 
 export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>): any {
-  const newShape: Writeable<schemas.$ZodShape> = {};
-  const currDef = schema._zod.def; //.shape;
+  const currDef = schema._zod.def;
 
-  for (const key in mask) {
-    if (!(key in currDef.shape)) {
-      throw new Error(`Unrecognized key: "${key}"`);
-    }
-    if (!mask[key]) continue;
+  const def = cloneDef(schema);
+  Object.defineProperties(def, {
+    shape: {
+      get() {
+        const newShape: Writeable<schemas.$ZodShape> = {};
+        for (const key in mask) {
+          if (!(key in currDef.shape)) {
+            throw new Error(`Unrecognized key: "${key}"`);
+          }
+          if (!mask[key]) continue;
+          newShape[key] = currDef.shape[key]!;
+        }
 
-    // pick key
-    newShape[key] = currDef.shape[key]!;
-  }
+        assignProp(this, "shape", newShape); // self-caching
+        return newShape;
+      },
+    },
+    checks: {
+      value: [],
+    },
+  });
 
-  return clone(schema, {
-    ...schema._zod.def,
-    shape: newShape,
-    checks: [],
-  }) as any;
+  return clone(schema, def) as any;
 }
 
 export function omit(schema: schemas.$ZodObject, mask: object): any {
-  const newShape: Writeable<schemas.$ZodShape> = { ...schema._zod.def.shape };
-  const currDef = schema._zod.def; //.shape;
-  for (const key in mask) {
-    if (!(key in currDef.shape)) {
-      throw new Error(`Unrecognized key: "${key}"`);
-    }
-    if (!(mask as any)[key]) continue;
+  const currDef = schema._zod.def;
 
-    delete newShape[key];
-  }
-  return clone(schema, {
-    ...schema._zod.def,
-    shape: newShape,
-    checks: [],
+  const def = cloneDef(schema);
+  Object.defineProperties(def, {
+    shape: {
+      get() {
+        const newShape: Writeable<schemas.$ZodShape> = { ...schema._zod.def.shape };
+        for (const key in mask) {
+          if (!(key in currDef.shape)) {
+            throw new Error(`Unrecognized key: "${key}"`);
+          }
+          if (!(mask as any)[key]) continue;
+
+          delete newShape[key];
+        }
+        assignProp(this, "shape", newShape); // self-caching
+        return newShape;
+      },
+    },
+    checks: {
+      value: [],
+    },
   });
+
+  return clone(schema, def);
 }
 
 export function extend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): any {
   if (!isPlainObject(shape)) {
     throw new Error("Invalid input to extend: expected a plain object");
   }
-  const def = {
-    ...schema._zod.def,
-    get shape() {
-      const _shape = { ...schema._zod.def.shape, ...shape };
-      assignProp(this, "shape", _shape); // self-caching
-      return _shape;
+
+  const def = cloneDef(schema);
+  Object.defineProperties(def, {
+    shape: {
+      get() {
+        const _shape = { ...schema._zod.def.shape, ...shape };
+        assignProp(this, "shape", _shape); // self-caching
+        return _shape;
+      },
     },
-    checks: [], // delete existing checks
-  } as any;
+    checks: {
+      value: [],
+    },
+  });
   return clone(schema, def) as any;
 }
 
 export function merge(a: schemas.$ZodObject, b: schemas.$ZodObject): any {
-  return clone(a, {
-    ...a._zod.def,
-    get shape() {
-      const _shape = { ...a._zod.def.shape, ...b._zod.def.shape };
-      assignProp(this, "shape", _shape); // self-caching
-      return _shape;
+  const def = cloneDef(a);
+  Object.defineProperties(def, {
+    shape: {
+      get() {
+        const _shape = { ...a._zod.def.shape, ...b._zod.def.shape };
+        assignProp(this, "shape", _shape); // self-caching
+        return _shape;
+      },
     },
-    catchall: b._zod.def.catchall,
-    checks: [], // delete existing checks
-  }) as any;
+    catchall: {
+      get() {
+        return b._zod.def.catchall;
+      },
+    },
+    checks: {
+      value: [], // delete existing checks
+    },
+  });
+
+  return clone(a, def) as any;
 }
 
 export function partial(
@@ -607,40 +647,49 @@ export function partial(
   schema: schemas.$ZodObject,
   mask: object | undefined
 ): any {
-  const oldShape = schema._zod.def.shape;
-  const shape: Writeable<schemas.$ZodShape> = { ...oldShape };
+  const def = cloneDef(schema);
+  Object.defineProperties(def, {
+    shape: {
+      get() {
+        const oldShape = schema._zod.def.shape;
+        const shape: Writeable<schemas.$ZodShape> = { ...oldShape };
 
-  if (mask) {
-    for (const key in mask) {
-      if (!(key in oldShape)) {
-        throw new Error(`Unrecognized key: "${key}"`);
-      }
-      if (!(mask as any)[key]) continue;
-      // if (oldShape[key]!._zod.optin === "optional") continue;
-      shape[key] = Class
-        ? new Class({
-            type: "optional",
-            innerType: oldShape[key]!,
-          })
-        : oldShape[key]!;
-    }
-  } else {
-    for (const key in oldShape) {
-      // if (oldShape[key]!._zod.optin === "optional") continue;
-      shape[key] = Class
-        ? new Class({
-            type: "optional",
-            innerType: oldShape[key]!,
-          })
-        : oldShape[key]!;
-    }
-  }
+        if (mask) {
+          for (const key in mask) {
+            if (!(key in oldShape)) {
+              throw new Error(`Unrecognized key: "${key}"`);
+            }
+            if (!(mask as any)[key]) continue;
+            // if (oldShape[key]!._zod.optin === "optional") continue;
+            shape[key] = Class
+              ? new Class({
+                  type: "optional",
+                  innerType: oldShape[key]!,
+                })
+              : oldShape[key]!;
+          }
+        } else {
+          for (const key in oldShape) {
+            // if (oldShape[key]!._zod.optin === "optional") continue;
+            shape[key] = Class
+              ? new Class({
+                  type: "optional",
+                  innerType: oldShape[key]!,
+                })
+              : oldShape[key]!;
+          }
+        }
 
-  return clone(schema, {
-    ...schema._zod.def,
-    shape,
-    checks: [],
-  }) as any;
+        assignProp(this, "shape", shape); // self-caching
+        return shape;
+      },
+    },
+    checks: {
+      value: [],
+    },
+  });
+
+  return clone(schema, def) as any;
 }
 
 export function required(
@@ -648,44 +697,54 @@ export function required(
   schema: schemas.$ZodObject,
   mask: object | undefined
 ): any {
-  const oldShape = schema._zod.def.shape;
-  const shape: Writeable<schemas.$ZodShape> = { ...oldShape };
+  const def = cloneDef(schema);
+  Object.defineProperties(def, {
+    shape: {
+      get() {
+        const oldShape = schema._zod.def.shape;
+        const shape: Writeable<schemas.$ZodShape> = { ...oldShape };
 
-  if (mask) {
-    for (const key in mask) {
-      if (!(key in shape)) {
-        throw new Error(`Unrecognized key: "${key}"`);
-      }
-      if (!(mask as any)[key]) continue;
-      // overwrite with non-optional
-      shape[key] = new Class({
-        type: "nonoptional",
-        innerType: oldShape[key]!,
-      });
-    }
-  } else {
-    for (const key in oldShape) {
-      // overwrite with non-optional
-      shape[key] = new Class({
-        type: "nonoptional",
-        innerType: oldShape[key]!,
-      });
-    }
-  }
+        if (mask) {
+          for (const key in mask) {
+            if (!(key in shape)) {
+              throw new Error(`Unrecognized key: "${key}"`);
+            }
+            if (!(mask as any)[key]) continue;
+            // overwrite with non-optional
+            shape[key] = new Class({
+              type: "nonoptional",
+              innerType: oldShape[key]!,
+            });
+          }
+        } else {
+          for (const key in oldShape) {
+            // overwrite with non-optional
+            shape[key] = new Class({
+              type: "nonoptional",
+              innerType: oldShape[key]!,
+            });
+          }
+        }
 
-  return clone(schema, {
-    ...schema._zod.def,
-    shape,
-    // optional: [],
-    checks: [],
-  }) as any;
+        assignProp(this, "shape", shape); // self-caching
+        return shape;
+      },
+    },
+    checks: {
+      value: [],
+    },
+  });
+
+  return clone(schema, def) as any;
 }
 
 export type Constructor<T, Def extends any[] = any[]> = new (...args: Def) => T;
 
 export function aborted(x: schemas.ParsePayload, startIndex = 0): boolean {
   for (let i = startIndex; i < x.issues.length; i++) {
-    if (x.issues[i]?.continue !== true) return true;
+    if (x.issues[i]?.continue !== true) {
+      return true;
+    }
   }
   return false;
 }
@@ -733,6 +792,7 @@ export function finalizeIssue(
 export function getSizableOrigin(input: any): "set" | "map" | "file" | "unknown" {
   if (input instanceof Set) return "set";
   if (input instanceof Map) return "map";
+  // @ts-ignore
   if (input instanceof File) return "file";
   return "unknown";
 }

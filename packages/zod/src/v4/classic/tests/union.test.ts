@@ -27,7 +27,7 @@ test("return valid over invalid", () => {
 });
 
 test("return errors from both union arms", () => {
-  const result = z.union([z.number(), z.string().refine(() => false)]).safeParse("a");
+  const result = z.union([z.number(), z.boolean()]).safeParse("a");
   expect(result.success).toEqual(false);
   if (!result.success) {
     expect(result.error.issues).toMatchInlineSnapshot(`
@@ -45,8 +45,9 @@ test("return errors from both union arms", () => {
             ],
             [
               {
-                "code": "custom",
-                "message": "Invalid input",
+                "code": "invalid_type",
+                "expected": "boolean",
+                "message": "Invalid input: expected boolean, received string",
                 "path": [],
               },
             ],
@@ -89,6 +90,47 @@ test("union values", () => {
       "a",
       "b",
       "c",
+    }
+  `);
+});
+
+test("non-aborted errors", () => {
+  const zItemTest = z.union([
+    z.object({
+      date: z.number(),
+      startDate: z.optional(z.null()),
+      endDate: z.optional(z.null()),
+    }),
+    z
+      .object({
+        date: z.optional(z.null()),
+        startDate: z.number(),
+        endDate: z.number(),
+      })
+      .refine((data) => data.startDate !== data.endDate, {
+        error: "startDate and endDate must be different",
+        path: ["endDate"],
+      }),
+  ]);
+
+  const res = zItemTest.safeParse({
+    date: null,
+    startDate: 1,
+    endDate: 1,
+  });
+
+  expect(res).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "code": "custom",
+        "path": [
+          "endDate"
+        ],
+        "message": "startDate and endDate must be different"
+      }
+    ]],
+      "success": false,
     }
   `);
 });

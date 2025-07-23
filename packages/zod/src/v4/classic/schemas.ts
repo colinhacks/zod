@@ -1068,9 +1068,7 @@ export interface ZodObject<
   /** This is the default behavior. This method call is likely unnecessary. */
   strip(): ZodObject<Shape, core.$strip>;
 
-  extend<U extends core.$ZodLooseShape & Partial<Record<keyof Shape, core.SomeType>>>(
-    shape: U
-  ): ZodObject<util.Extend<Shape, U>, Config>;
+  extend<U extends core.$ZodLooseShape>(shape: U): ZodObject<util.Extend<Shape, U>, Config>;
 
   /**
    * @deprecated Use [`A.extend(B.shape)`](https://zod.dev/api?id=extend) instead.
@@ -1130,7 +1128,6 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
   inst.keyof = () => _enum(Object.keys(inst._zod.def.shape)) as any;
   inst.catchall = (catchall) => inst.clone({ ...inst._zod.def, catchall: catchall as any as core.$ZodType }) as any;
   inst.passthrough = () => inst.clone({ ...inst._zod.def, catchall: unknown() });
-  // inst.nonstrict = () => inst.clone({ ...inst._zod.def, catchall: api.unknown() });
   inst.loose = () => inst.clone({ ...inst._zod.def, catchall: unknown() });
   inst.strict = () => inst.clone({ ...inst._zod.def, catchall: never() });
   inst.strip = () => inst.clone({ ...inst._zod.def, catchall: undefined });
@@ -1350,9 +1347,11 @@ export function partialRecord<Key extends core.$ZodRecordKey, Value extends core
   valueType: Value,
   params?: string | core.$ZodRecordParams
 ): ZodRecord<Key & core.$partial, Value> {
+  const k = core.clone(keyType);
+  k._zod.values = undefined;
   return new ZodRecord({
     type: "record",
-    keyType: union([keyType, never()]),
+    keyType: k,
     valueType: valueType as any,
     ...util.normalizeParams(params),
   }) as any;
@@ -1584,7 +1583,7 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
           _issue.code ??= "custom";
           _issue.input ??= payload.value;
           _issue.inst ??= inst;
-          _issue.continue ??= true;
+          // _issue.continue ??= true;
           payload.issues.push(util.issue(_issue));
         }
       };
@@ -1838,12 +1837,16 @@ export function pipe(in_: core.SomeType, out: core.SomeType) {
 // ZodReadonly
 export interface ZodReadonly<T extends core.SomeType = core.$ZodType>
   extends _ZodType<core.$ZodReadonlyInternals<T>>,
-    core.$ZodReadonly<T> {}
+    core.$ZodReadonly<T> {
+  unwrap(): T;
+}
 export const ZodReadonly: core.$constructor<ZodReadonly> = /*@__PURE__*/ core.$constructor(
   "ZodReadonly",
   (inst, def) => {
     core.$ZodReadonly.init(inst, def);
     ZodType.init(inst, def);
+
+    inst.unwrap = () => inst._zod.def.innerType;
   }
 );
 

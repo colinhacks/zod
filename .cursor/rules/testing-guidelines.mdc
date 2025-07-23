@@ -1,0 +1,111 @@
+---
+description: Testing guidelines for the Zod codebase - when to use play.ts vs test suite, TypeScript requirements, and testing patterns
+globs: *.test.ts,*.test.tsx,play.ts
+---
+
+# Zod Testing Guidelines
+
+## Always Use TypeScript
+- **All tests must be written in TypeScript** - never use JavaScript
+- Test files should use `.test.ts` extension
+- Import types properly: `import type { ... }`
+
+## When to Use play.ts vs Test Suite
+
+### Use [play.ts](mdc:play.ts) for:
+- Quick experimentation and prototyping
+- Manual testing of new features during development
+- Debugging specific behaviors
+- One-off validation of edge cases
+- Temporary verification before writing formal tests
+
+### Use Test Suite for:
+- **All permanent test cases** - features must have proper tests
+- Regression testing
+- API validation
+- Edge case coverage
+- Performance benchmarks
+
+## Test Organization
+
+### Test File Structure
+Tests are located in:
+- `packages/zod/src/v4/classic/tests/` - V4 classic API tests
+- `packages/zod/src/v4/core/tests/` - V4 core tests  
+- `packages/zod/src/v3/tests/` - V3 compatibility tests
+
+### Test File Naming
+- Use descriptive names: `string.test.ts`, `object.test.ts`, `url-validation.test.ts`
+- Group related functionality in the same test file
+- Follow existing patterns in [packages/zod/src/v4/classic/tests/string.test.ts](mdc:packages/zod/src/v4/classic/tests/string.test.ts)
+
+## Test Writing Patterns
+
+### Framework Usage
+- Use **Vitest** as the test framework
+- Import: `import { expect, test } from "vitest";`
+- Import Zod: `import * as z from "zod/v4";`
+
+### Test Structure
+```typescript
+test("descriptive test name", () => {
+  const schema = z.string().url();
+  
+  // Test valid cases
+  expect(schema.parse("https://example.com")).toBe("https://example.com");
+  
+  // Test invalid cases
+  expect(() => schema.parse("invalid")).toThrow();
+});
+```
+
+### Testing Preferences
+- **Keep test suites concise** - use as few test cases as needed to cover functionality
+- **Don't skip tests** due to type issues - fix the types instead
+- **Don't oversimplify tests** - maintain adequate coverage
+- Test both success and failure cases
+- Use descriptive test names that explain the behavior being tested
+
+### URL Testing Example
+When testing URL validation (as seen in recent work):
+```typescript
+test("url preserves original input", () => {
+  const url = z.string().url();
+  const input = "https://example.com?key=value";
+  expect(url.parse(input)).toBe(input);
+});
+
+test("url normalize flag", () => {
+  const normalizeUrl = z.url({ normalize: true });
+  expect(normalizeUrl.parse("https://example.com?key=value"))
+    .toBe("https://example.com/?key=value");
+});
+```
+
+## Running Tests
+
+### Run Specific Tests
+```bash
+pnpm vitest run src/v4/classic/tests/string.test.ts -t "url"
+```
+
+### Run All Tests
+```bash
+pnpm test
+```
+
+### Build Before Testing
+Always rebuild when testing core changes:
+```bash
+pnpm build && pnpm test
+```
+
+## Test Development Workflow
+
+1. **Start with [play.ts](mdc:play.ts)** for initial exploration
+2. **Write proper tests** once behavior is confirmed
+3. **Test edge cases** and error conditions
+4. **Verify backward compatibility**
+5. **Run full test suite** before committing
+
+Remember: Features without tests are incomplete. Every new feature or bug fix should include corresponding test coverage.

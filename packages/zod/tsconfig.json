@@ -3,6 +3,8 @@
   "compilerOptions": {
     "module": "nodenext",
     "customConditions": ["@zod/source"],
+    "noEmit": true,
+    "types": ["vitest", "recheck"]
   },
-  "include": ["**/*.ts"]
+  "include": ["**/*.ts"],
 }

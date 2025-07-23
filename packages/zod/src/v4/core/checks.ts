@@ -1128,12 +1128,12 @@ export interface $ZodCheckMimeTypeDef extends $ZodCheckDef {
   mime: util.MimeTypes[];
 }
 
-export interface $ZodCheckMimeTypeInternals<T extends File = File> extends $ZodCheckInternals<T> {
+export interface $ZodCheckMimeTypeInternals<T extends schemas.File = schemas.File> extends $ZodCheckInternals<T> {
   def: $ZodCheckMimeTypeDef;
   issc: errors.$ZodIssueInvalidValue;
 }
 
-export interface $ZodCheckMimeType<T extends File = File> extends $ZodCheck<T> {
+export interface $ZodCheckMimeType<T extends schemas.File = schemas.File> extends $ZodCheck<T> {
   _zod: $ZodCheckMimeTypeInternals<T>;
 }
 

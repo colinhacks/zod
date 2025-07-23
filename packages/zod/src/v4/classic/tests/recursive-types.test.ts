@@ -260,6 +260,73 @@ test("mutual recursion with meta", () => {
   expectTypeOf<B>().toEqualTypeOf<_B>();
 });
 
+test("object utilities with recursive types", () => {
+  const NodeBase = z.object({
+    id: z.string(),
+    name: z.string(),
+    get children() {
+      return z.array(Node).optional();
+    },
+  });
+
+  // Test extend
+  const NodeOne = NodeBase.extend({
+    name: z.literal("nodeOne"),
+    get children() {
+      return z.array(Node);
+    },
+  });
+
+  const NodeTwo = NodeBase.extend({
+    name: z.literal("nodeTwo"),
+    get children() {
+      return z.array(Node);
+    },
+  });
+
+  // Test pick
+  const PickedNode = NodeBase.pick({ id: true, name: true });
+
+  // Test omit
+  const OmittedNode = NodeBase.omit({ children: true });
+
+  // Test merge
+  const ExtraProps = {
+    metadata: z.string(),
+    get parent() {
+      return Node.optional();
+    },
+  };
+  const MergedNode = NodeBase.extend(ExtraProps);
+
+  // Test partial
+  const PartialNode = NodeBase.partial();
+  const PartialMaskedNode = NodeBase.partial({ name: true });
+
+  // Test required (assuming NodeBase has optional fields)
+  const OptionalNodeBase = z.object({
+    id: z.string().optional(),
+    name: z.string().optional(),
+    get children() {
+      return z.array(Node).optional();
+    },
+  });
+  const RequiredNode = OptionalNodeBase.required();
+  const RequiredMaskedNode = OptionalNodeBase.required({ id: true });
+
+  const Node = z.union([
+    NodeOne,
+    NodeTwo,
+    PickedNode,
+    OmittedNode,
+    MergedNode,
+    PartialNode,
+    PartialMaskedNode,
+    RequiredNode,
+    RequiredMaskedNode,
+  ]);
+});
+
 test("recursion compatibility", () => {
   // array
   const A = z.object({

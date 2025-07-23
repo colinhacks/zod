@@ -550,3 +550,46 @@ test("disc union treeify/format", () => {
     }
   `);
 });
+
+test("update message after adding issues", () => {
+  const e = new z.ZodError([]);
+  e.addIssue({
+    code: "custom",
+    message: "message",
+    input: "asdf",
+    path: [],
+  });
+  expect(e.message).toMatchInlineSnapshot(`
+    "[
+      {
+        "code": "custom",
+        "message": "message",
+        "input": "asdf",
+        "path": []
+      }
+    ]"
+  `);
+
+  e.addIssue({
+    code: "custom",
+    message: "message",
+    input: "asdf",
+    path: [],
+  });
+  expect(e.message).toMatchInlineSnapshot(`
+    "[
+      {
+        "code": "custom",
+        "message": "message",
+        "input": "asdf",
+        "path": []
+      },
+      {
+        "code": "custom",
+        "message": "message",
+        "input": "asdf",
+        "path": []
+      }
+    ]"
+  `);
+});
