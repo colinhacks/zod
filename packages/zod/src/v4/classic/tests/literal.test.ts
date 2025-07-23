@@ -90,3 +90,28 @@ test("readonly", () => {
   const a = ["asdf"] as const;
   z.literal(a);
 });
+
+test("literal pattern", () => {
+  expect(z.literal(1.1)._zod.pattern).toMatchInlineSnapshot(`/\\^\\(1\\\\\\.1\\)\\$/`);
+
+  expect(z.templateLiteral([z.literal(1.1)]).safeParse("1.1")).toMatchInlineSnapshot(`
+    {
+      "data": "1.1",
+      "success": true,
+    }
+  `);
+  expect(z.templateLiteral([z.literal(1.1)]).safeParse("1n1")).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "code": "invalid_format",
+        "format": "template_literal",
+        "pattern": "^(1\\\\.1)$",
+        "path": [],
+        "message": "Invalid input"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+});
