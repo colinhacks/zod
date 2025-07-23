@@ -3445,7 +3445,7 @@ export const $ZodPipe: core.$constructor<$ZodPipe> = /*@__PURE__*/ core.$constru
 });
 
 function handlePipeResult(left: ParsePayload, def: $ZodPipeDef, ctx: ParseContext) {
-  if (util.aborted(left)) {
+  if (left.issues.length) {
     return left;
   }
   return def.out._zod.run({ value: left.value, issues: left.issues }, ctx);

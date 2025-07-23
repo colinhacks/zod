@@ -346,12 +346,6 @@ test("do not continue by default", () => {
         "code": "custom",
         "message": "custom error",
         "path": []
-      },
-      {
-        "expected": "number",
-        "code": "invalid_type",
-        "path": [],
-        "message": "Invalid input: expected number, received string"
       }
     ]],
       "success": false,
