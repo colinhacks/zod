@@ -124,6 +124,12 @@ const xToZodConverters: ZodResource[] = [
     description: "The ultimate toolkit for working with APIs.",
     slug: "kubb-labs/kubb",
   },
+  {
+    name: "valype",
+    url: "https://github.com/yuzheng14/valype",
+    description: "Typescript's type definition to runtime validator (includeing zod).",
+    slug: "yuzheng14/valype",
+  },
 ];
 
 const mockingLibraries: ZodResource[] = [
