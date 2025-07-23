@@ -124,6 +124,12 @@ const xToZodConverters: ZodResource[] = [
     description: "The ultimate toolkit for working with APIs.",
     slug: "kubb-labs/kubb",
   },
+  {
+    name: "Hey API",
+    url: "https://github.com/hey-api/openapi-ts",
+    description: "The OpenAPI to TypeScript codegen. Generate clients, SDKs, validators, and more.",
+    slug: "hey-api/openapi-ts",
+  },
 ];
 
 const mockingLibraries: ZodResource[] = [
