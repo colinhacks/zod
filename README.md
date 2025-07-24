@@ -50,7 +50,6 @@
   <p><sub>Learn more about <a target="_blank" rel="noopener noreferrer" href="mailto:sponsorship@colinhacks.com">featured sponsorships</a></sub></p>
 </div>
 
-<!-- <hr/> -->
 <br/>
 <br/>
 
