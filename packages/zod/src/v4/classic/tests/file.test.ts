@@ -1,6 +1,6 @@
 import { File as WebFile } from "@web-std/file";
 
-import { afterEach, beforeEach, expect, test } from "vitest";
+import { afterEach, beforeEach, expect, expectTypeOf, test } from "vitest";
 
 import * as z from "zod/v4";
 
@@ -24,6 +24,10 @@ test("passing validations", () => {
   mimeCheck.safeParse(new File([""], "test.csv", { type: "text/plain" }));
   expect(() => mimeCheck.parse(new File([""], "test.txt"))).toThrow();
   expect(() => mimeCheck.parse(new File([""], "test.txt", { type: "text/csv" }))).toThrow();
+});
+
+test("types", () => {
+  expectTypeOf(z.file().parse(new File([], "test.txt"))).toEqualTypeOf(new File([], "test.txt"));
 });
 
 test("failing validations", () => {

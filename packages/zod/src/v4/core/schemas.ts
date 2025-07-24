@@ -2862,8 +2862,8 @@ export const $ZodLiteral: core.$constructor<$ZodLiteral> = /*@__PURE__*/ core.$c
 type _File = typeof globalThis extends { File: infer F extends new (...args: any[]) => any } ? InstanceType<F> : {};
 /** Do not reference this directly. */
 export interface File extends _File {
-  type: string;
-  size: number;
+  readonly type: string;
+  readonly size: number;
 }
 
 export interface $ZodFileDef extends $ZodTypeDef {
