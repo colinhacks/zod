@@ -1916,12 +1916,11 @@ function handleUnionResults(results: ParsePayload[], final: ParsePayload, inst: 
     return nonaborted[0];
   }
 
-  const errorResults = nonaborted.length ? nonaborted : results;
   final.issues.push({
     code: "invalid_union",
     input: final.value,
     inst,
-    errors: errorResults.map((result) => result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))),
+    errors: results.map((result) => result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))),
   });
 
   return final;

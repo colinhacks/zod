@@ -134,3 +134,48 @@ test("non-aborted errors", () => {
     }
   `);
 });
+
+test("surface continuable errors only if they exist", () => {
+  const schema = z.union([z.boolean(), z.uuid(), z.jwt()]);
+
+  expect(schema.safeParse("asdf")).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "code": "invalid_union",
+        "errors": [
+          [
+            {
+              "expected": "boolean",
+              "code": "invalid_type",
+              "path": [],
+              "message": "Invalid input: expected boolean, received string"
+            }
+          ],
+          [
+            {
+              "origin": "string",
+              "code": "invalid_format",
+              "format": "uuid",
+              "pattern": "/^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000)$/",
+              "path": [],
+              "message": "Invalid UUID"
+            }
+          ],
+          [
+            {
+              "code": "invalid_format",
+              "format": "jwt",
+              "path": [],
+              "message": "Invalid JWT"
+            }
+          ]
+        ],
+        "path": [],
+        "message": "Invalid input"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+});
