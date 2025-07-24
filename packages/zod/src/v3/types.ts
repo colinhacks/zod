@@ -708,7 +708,7 @@ function isValidJWT(jwt: string, alg?: string): boolean {
     // @ts-ignore
     const decoded = JSON.parse(atob(base64));
     if (typeof decoded !== "object" || decoded === null) return false;
-    if ("typ" in decoded && decoded?.typ !== "JWT") return false;
+    if ("typ" in decoded && !decoded.typ?.startsWith("JWT")) return false;
     if (!decoded.alg) return false;
     if (alg && decoded.alg !== alg) return false;
     return true;
