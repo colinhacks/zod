@@ -309,6 +309,26 @@ export interface ZodString extends _ZodString<core.$ZodStringInternals<string>> 
   cidrv6(params?: string | core.$ZodCheckCIDRv6Params): this;
   /** @deprecated Use `z.e164()` instead. */
   e164(params?: string | core.$ZodCheckE164Params): this;
+  /** @deprecated Use `z.md5()` instead. */
+  md5(params?: string | core.$ZodCheckMD5Params): this;
+  /** @deprecated Use `z.md5Base64()` instead. */
+  md5Base64(params?: string | core.$ZodCheckMD5Base64Params): this;
+  /** @deprecated Use `z.sha1()` instead. */
+  sha1(params?: string | core.$ZodCheckSHA1Params): this;
+  /** @deprecated Use `z.sha1Base64()` instead. */
+  sha1Base64(params?: string | core.$ZodCheckSHA1Base64Params): this;
+  /** @deprecated Use `z.sha256()` instead. */
+  sha256(params?: string | core.$ZodCheckSHA256Params): this;
+  /** @deprecated Use `z.sha256Base64()` instead. */
+  sha256Base64(params?: string | core.$ZodCheckSHA256Base64Params): this;
+  /** @deprecated Use `z.sha384()` instead. */
+  sha384(params?: string | core.$ZodCheckSHA384Params): this;
+  /** @deprecated Use `z.sha384Base64()` instead. */
+  sha384Base64(params?: string | core.$ZodCheckSHA384Base64Params): this;
+  /** @deprecated Use `z.sha512()` instead. */
+  sha512(params?: string | core.$ZodCheckSHA512Params): this;
+  /** @deprecated Use `z.sha512Base64()` instead. */
+  sha512Base64(params?: string | core.$ZodCheckSHA512Base64Params): this;
 
   // ISO 8601 checks
   /** @deprecated Use `z.iso.datetime()` instead. */
@@ -356,6 +376,16 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
   inst.cidrv4 = (params) => inst.check(core._cidrv4(ZodCIDRv4, params));
   inst.cidrv6 = (params) => inst.check(core._cidrv6(ZodCIDRv6, params));
   inst.e164 = (params) => inst.check(core._e164(ZodE164, params));
+  inst.md5 = (params) => inst.check(core._md5(ZodMD5, params));
+  inst.md5Base64 = (params) => inst.check(core._md5Base64(ZodMD5Base64, params));
+  inst.sha1 = (params) => inst.check(core._sha1(ZodSHA1, params));
+  inst.sha1Base64 = (params) => inst.check(core._sha1Base64(ZodSHA1Base64, params));
+  inst.sha256 = (params) => inst.check(core._sha256(ZodSHA256, params));
+  inst.sha256Base64 = (params) => inst.check(core._sha256Base64(ZodSHA256Base64, params));
+  inst.sha384 = (params) => inst.check(core._sha384(ZodSHA384, params));
+  inst.sha384Base64 = (params) => inst.check(core._sha384Base64(ZodSHA384Base64, params));
+  inst.sha512 = (params) => inst.check(core._sha512(ZodSHA512, params));
+  inst.sha512Base64 = (params) => inst.check(core._sha512Base64(ZodSHA512Base64, params));
 
   // iso
   inst.datetime = (params) => inst.check(iso.datetime(params as any));
@@ -659,6 +689,151 @@ export const ZodE164: core.$constructor<ZodE164> = /*@__PURE__*/ core.$construct
 
 export function e164(params?: string | core.$ZodE164Params): ZodE164 {
   return core._e164(ZodE164, params);
+}
+
+// ZodMD5
+export interface ZodMD5 extends ZodStringFormat<"md5"> {
+  _zod: core.$ZodMD5Internals;
+}
+export const ZodMD5: core.$constructor<ZodMD5> = /*@__PURE__*/ core.$constructor("ZodMD5", (inst, def) => {
+  core.$ZodMD5.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+
+export function md5(params?: string | core.$ZodMD5Params): ZodMD5 {
+  return core._md5(ZodMD5, params);
+}
+
+// ZodMD5Base64
+export interface ZodMD5Base64 extends ZodStringFormat<"md5_base64"> {
+  _zod: core.$ZodMD5Base64Internals;
+}
+export const ZodMD5Base64: core.$constructor<ZodMD5Base64> = /*@__PURE__*/ core.$constructor(
+  "ZodMD5Base64",
+  (inst, def) => {
+    core.$ZodMD5Base64.init(inst, def);
+    ZodStringFormat.init(inst, def);
+  }
+);
+
+export function md5Base64(params?: string | core.$ZodMD5Base64Params): ZodMD5Base64 {
+  return core._md5Base64(ZodMD5Base64, params);
+}
+
+// ZodSHA1
+export interface ZodSHA1 extends ZodStringFormat<"sha1"> {
+  _zod: core.$ZodSHA1Internals;
+}
+export const ZodSHA1: core.$constructor<ZodSHA1> = /*@__PURE__*/ core.$constructor("ZodSHA1", (inst, def) => {
+  core.$ZodSHA1.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+
+export function sha1(params?: string | core.$ZodSHA1Params): ZodSHA1 {
+  return core._sha1(ZodSHA1, params);
+}
+
+// ZodSHA1Base64
+export interface ZodSHA1Base64 extends ZodStringFormat<"sha1_base64"> {
+  _zod: core.$ZodSHA1Base64Internals;
+}
+export const ZodSHA1Base64: core.$constructor<ZodSHA1Base64> = /*@__PURE__*/ core.$constructor(
+  "ZodSHA1Base64",
+  (inst, def) => {
+    core.$ZodSHA1Base64.init(inst, def);
+    ZodStringFormat.init(inst, def);
+  }
+);
+
+export function sha1Base64(params?: string | core.$ZodSHA1Base64Params): ZodSHA1Base64 {
+  return core._sha1Base64(ZodSHA1Base64, params);
+}
+
+// ZodSHA256
+export interface ZodSHA256 extends ZodStringFormat<"sha256"> {
+  _zod: core.$ZodSHA256Internals;
+}
+export const ZodSHA256: core.$constructor<ZodSHA256> = /*@__PURE__*/ core.$constructor("ZodSHA256", (inst, def) => {
+  core.$ZodSHA256.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+
+export function sha256(params?: string | core.$ZodSHA256Params): ZodSHA256 {
+  return core._sha256(ZodSHA256, params);
+}
+
+// ZodSHA256Base64
+export interface ZodSHA256Base64 extends ZodStringFormat<"sha256_base64"> {
+  _zod: core.$ZodSHA256Base64Internals;
+}
+export const ZodSHA256Base64: core.$constructor<ZodSHA256Base64> = /*@__PURE__*/ core.$constructor(
+  "ZodSHA256Base64",
+  (inst, def) => {
+    core.$ZodSHA256Base64.init(inst, def);
+    ZodStringFormat.init(inst, def);
+  }
+);
+
+export function sha256Base64(params?: string | core.$ZodSHA256Base64Params): ZodSHA256Base64 {
+  return core._sha256Base64(ZodSHA256Base64, params);
+}
+
+// ZodSHA384
+export interface ZodSHA384 extends ZodStringFormat<"sha384"> {
+  _zod: core.$ZodSHA384Internals;
+}
+export const ZodSHA384: core.$constructor<ZodSHA384> = /*@__PURE__*/ core.$constructor("ZodSHA384", (inst, def) => {
+  core.$ZodSHA384.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+
+export function sha384(params?: string | core.$ZodSHA384Params): ZodSHA384 {
+  return core._sha384(ZodSHA384, params);
+}
+
+// ZodSHA384Base64
+export interface ZodSHA384Base64 extends ZodStringFormat<"sha384_base64"> {
+  _zod: core.$ZodSHA384Base64Internals;
+}
+export const ZodSHA384Base64: core.$constructor<ZodSHA384Base64> = /*@__PURE__*/ core.$constructor(
+  "ZodSHA384Base64",
+  (inst, def) => {
+    core.$ZodSHA384Base64.init(inst, def);
+    ZodStringFormat.init(inst, def);
+  }
+);
+
+export function sha384Base64(params?: string | core.$ZodSHA384Base64Params): ZodSHA384Base64 {
+  return core._sha384Base64(ZodSHA384Base64, params);
+}
+
+// ZodSHA512
+export interface ZodSHA512 extends ZodStringFormat<"sha512"> {
+  _zod: core.$ZodSHA512Internals;
+}
+export const ZodSHA512: core.$constructor<ZodSHA512> = /*@__PURE__*/ core.$constructor("ZodSHA512", (inst, def) => {
+  core.$ZodSHA512.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+
+export function sha512(params?: string | core.$ZodSHA512Params): ZodSHA512 {
+  return core._sha512(ZodSHA512, params);
+}
+
+// ZodSHA512Base64
+export interface ZodSHA512Base64 extends ZodStringFormat<"sha512_base64"> {
+  _zod: core.$ZodSHA512Base64Internals;
+}
+export const ZodSHA512Base64: core.$constructor<ZodSHA512Base64> = /*@__PURE__*/ core.$constructor(
+  "ZodSHA512Base64",
+  (inst, def) => {
+    core.$ZodSHA512Base64.init(inst, def);
+    ZodStringFormat.init(inst, def);
+  }
+);
+
+export function sha512Base64(params?: string | core.$ZodSHA512Base64Params): ZodSHA512Base64 {
+  return core._sha512Base64(ZodSHA512Base64, params);
 }
 
 // ZodJWT
