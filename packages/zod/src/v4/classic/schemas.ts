@@ -1135,7 +1135,7 @@ export interface ZodObject<
 }
 
 export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$constructor("ZodObject", (inst, def) => {
-  core.$ZodObject.init(inst, def);
+  core.$ZodObjectJIT.init(inst, def);
   ZodType.init(inst, def);
 
   util.defineLazy(inst, "shape", () => def.shape);
