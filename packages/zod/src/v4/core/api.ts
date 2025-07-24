@@ -425,6 +425,166 @@ export function _e164<T extends schemas.$ZodE164>(
   });
 }
 
+// MD5
+export type $ZodMD5Params = StringFormatParams<schemas.$ZodMD5, "when">;
+export type $ZodCheckMD5Params = CheckStringFormatParams<schemas.$ZodMD5, "when">;
+export function _md5<T extends schemas.$ZodMD5>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodMD5Params | $ZodCheckMD5Params
+): T {
+  return new Class({
+    type: "string",
+    format: "md5",
+    check: "string_format",
+    abort: false,
+    ...util.normalizeParams(params),
+  });
+}
+
+// MD5 Base64
+export type $ZodMD5Base64Params = StringFormatParams<schemas.$ZodMD5Base64, "when">;
+export type $ZodCheckMD5Base64Params = CheckStringFormatParams<schemas.$ZodMD5Base64, "when">;
+export function _md5Base64<T extends schemas.$ZodMD5Base64>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodMD5Base64Params | $ZodCheckMD5Base64Params
+): T {
+  return new Class({
+    type: "string",
+    format: "md5_base64",
+    check: "string_format",
+    abort: false,
+    ...util.normalizeParams(params),
+  });
+}
+
+// SHA1
+export type $ZodSHA1Params = StringFormatParams<schemas.$ZodSHA1, "when">;
+export type $ZodCheckSHA1Params = CheckStringFormatParams<schemas.$ZodSHA1, "when">;
+export function _sha1<T extends schemas.$ZodSHA1>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodSHA1Params | $ZodCheckSHA1Params
+): T {
+  return new Class({
+    type: "string",
+    format: "sha1",
+    check: "string_format",
+    abort: false,
+    ...util.normalizeParams(params),
+  });
+}
+
+// SHA1 Base64
+export type $ZodSHA1Base64Params = StringFormatParams<schemas.$ZodSHA1Base64, "when">;
+export type $ZodCheckSHA1Base64Params = CheckStringFormatParams<schemas.$ZodSHA1Base64, "when">;
+export function _sha1Base64<T extends schemas.$ZodSHA1Base64>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodSHA1Base64Params | $ZodCheckSHA1Base64Params
+): T {
+  return new Class({
+    type: "string",
+    format: "sha1_base64",
+    check: "string_format",
+    abort: false,
+    ...util.normalizeParams(params),
+  });
+}
+
+// SHA256
+export type $ZodSHA256Params = StringFormatParams<schemas.$ZodSHA256, "when">;
+export type $ZodCheckSHA256Params = CheckStringFormatParams<schemas.$ZodSHA256, "when">;
+export function _sha256<T extends schemas.$ZodSHA256>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodSHA256Params | $ZodCheckSHA256Params
+): T {
+  return new Class({
+    type: "string",
+    format: "sha256",
+    check: "string_format",
+    abort: false,
+    ...util.normalizeParams(params),
+  });
+}
+
+// SHA256 Base64
+export type $ZodSHA256Base64Params = StringFormatParams<schemas.$ZodSHA256Base64, "when">;
+export type $ZodCheckSHA256Base64Params = CheckStringFormatParams<schemas.$ZodSHA256Base64, "when">;
+export function _sha256Base64<T extends schemas.$ZodSHA256Base64>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodSHA256Base64Params | $ZodCheckSHA256Base64Params
+): T {
+  return new Class({
+    type: "string",
+    format: "sha256_base64",
+    check: "string_format",
+    abort: false,
+    ...util.normalizeParams(params),
+  });
+}
+
+// SHA384
+export type $ZodSHA384Params = StringFormatParams<schemas.$ZodSHA384, "when">;
+export type $ZodCheckSHA384Params = CheckStringFormatParams<schemas.$ZodSHA384, "when">;
+export function _sha384<T extends schemas.$ZodSHA384>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodSHA384Params | $ZodCheckSHA384Params
+): T {
+  return new Class({
+    type: "string",
+    format: "sha384",
+    check: "string_format",
+    abort: false,
+    ...util.normalizeParams(params),
+  });
+}
+
+// SHA384 Base64
+export type $ZodSHA384Base64Params = StringFormatParams<schemas.$ZodSHA384Base64, "when">;
+export type $ZodCheckSHA384Base64Params = CheckStringFormatParams<schemas.$ZodSHA384Base64, "when">;
+export function _sha384Base64<T extends schemas.$ZodSHA384Base64>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodSHA384Base64Params | $ZodCheckSHA384Base64Params
+): T {
+  return new Class({
+    type: "string",
+    format: "sha384_base64",
+    check: "string_format",
+    abort: false,
+    ...util.normalizeParams(params),
+  });
+}
+
+// SHA512
+export type $ZodSHA512Params = StringFormatParams<schemas.$ZodSHA512, "when">;
+export type $ZodCheckSHA512Params = CheckStringFormatParams<schemas.$ZodSHA512, "when">;
+export function _sha512<T extends schemas.$ZodSHA512>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodSHA512Params | $ZodCheckSHA512Params
+): T {
+  return new Class({
+    type: "string",
+    format: "sha512",
+    check: "string_format",
+    abort: false,
+    ...util.normalizeParams(params),
+  });
+}
+
+// SHA512 Base64
+export type $ZodSHA512Base64Params = StringFormatParams<schemas.$ZodSHA512Base64, "when">;
+export type $ZodCheckSHA512Base64Params = CheckStringFormatParams<schemas.$ZodSHA512Base64, "when">;
+export function _sha512Base64<T extends schemas.$ZodSHA512Base64>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodSHA512Base64Params | $ZodCheckSHA512Base64Params
+): T {
+  return new Class({
+    type: "string",
+    format: "sha512_base64",
+    check: "string_format",
+    abort: false,
+    ...util.normalizeParams(params),
+  });
+}
+
 // JWT
 export type $ZodJWTParams = StringFormatParams<schemas.$ZodJWT, "pattern" | "when">;
 export type $ZodCheckJWTParams = CheckStringFormatParams<schemas.$ZodJWT, "pattern" | "when">;
