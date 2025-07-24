@@ -1,4 +1,3 @@
-// @ts-ignore
 import { File as WebFile } from "@web-std/file";
 
 import { afterEach, beforeEach, expect, test } from "vitest";
