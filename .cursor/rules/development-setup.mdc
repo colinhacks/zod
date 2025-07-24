@@ -1,0 +1,78 @@
+# Development Setup
+
+## Prerequisites
+
+### Node.js
+- **Required**: Node.js v24+ (project uses modern ES modules and features)
+- **Recommended**: Use nvm for Node.js version management
+- **Setup**: `nvm use default` to use the latest Node.js version
+
+### Package Manager
+- **Required**: pnpm v10.12.1 (specified in package.json)
+- **Install**: `npm install -g pnpm@10.12.1`
+
+## Environment Setup
+
+### 1. Install Dependencies
+```bash
+pnpm install
+```
+
+### 2. Verify Setup
+```bash
+node --version  # Should be v24+
+pnpm --version  # Should be 10.12.1
+```
+
+### 3. Build Project
+```bash
+pnpm build
+```
+
+### 4. Run Tests
+```bash
+pnpm test
+```
+
+## Development Workflow
+
+### Starting Development
+```bash
+pnpm dev          # Start development server
+pnpm dev:watch    # Start with watch mode
+pnpm dev:play     # Run play.ts for testing
+```
+
+### Code Quality
+```bash
+pnpm format       # Format code
+pnpm lint         # Lint and fix
+pnpm fix          # Format + lint
+```
+
+### Testing
+```bash
+pnpm test         # Run all tests
+pnpm test:watch   # Run tests in watch mode
+```
+
+## Troubleshooting
+
+### Node.js Version Issues
+- Ensure you're using Node.js v24+
+- Use `nvm use default` to switch to correct version
+- Check with `node --version`
+
+### Module Import Issues
+- Project uses ES modules (`"type": "module"`)
+- Use `.js` extensions in imports: `import { z } from "./index.js"`
+- Don't use `require()` - use `import` statements
+
+### Test Issues
+- Ensure Vitest is properly configured
+- Check that test files are in correct directories
+- Use `pnpm vitest run <specific-file>` for isolated testing
+description:
+globs:
+alwaysApply: false
+---

@@ -1,6 +1,12 @@
 {
-  "extends": "./configs/tsconfig.base.json",
+  "extends": "./.configs/tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "../lib"
-  }
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "customConditions": ["@zod/source"],
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "types": ["node"]
+  },
+  "include": ["**/*.ts", "**/*.mts", "**/*.cts"],
+  "exclude": ["**/*.d.ts", "**/*.d.cts", "**/*.d.mts", "packages/docs"]
 }
