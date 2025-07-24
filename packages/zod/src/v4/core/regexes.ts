@@ -153,7 +153,7 @@ export const sha512: RegExp = /^[a-fA-F0-9]{128}$/;
 export const md5Base64: RegExp = /^[A-Za-z0-9+/]{22}={0,2}$/;
 
 /** SHA-1 hash in base64: 28 characters (20 bytes * 4/3, with padding) */
-export const sha1Base64: RegExp = /^[A-Za-z0-9+/]{26}={0,2}$/;
+export const sha1Base64: RegExp = /^[A-Za-z0-9+/]{27}={1}$/;
 
 /** SHA-256 hash in base64: 44 characters (32 bytes * 4/3, with padding) */
 export const sha256Base64: RegExp = /^[A-Za-z0-9+/]{43}={1}$/;
