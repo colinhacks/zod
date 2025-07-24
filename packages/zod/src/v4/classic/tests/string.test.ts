@@ -956,3 +956,257 @@ test("E.164 validation", () => {
   expect(validE164Numbers.every((number) => e164Number.safeParse(number).success)).toBe(true);
   expect(invalidE164Numbers.every((number) => e164Number.safeParse(number).success === false)).toBe(true);
 });
+
+test("MD5 hash validation", () => {
+  const md5Schema = z.string().md5();
+
+  // Valid MD5 hashes
+  const validMD5Hashes = [
+    "5d41402abc4b2a76b9719d911017c592", // "hello"
+    "098f6bcd4621d373cade4e832627b4f6", // "test"
+    "d41d8cd98f00b204e9800998ecf8427e", // empty string
+    "ACBD18DB4CC2F85CEDEF654FCCC4A4D8", // uppercase
+    "acbd18db4cc2f85cedef654fccc4a4d8", // lowercase
+  ];
+
+  // Invalid MD5 hashes
+  const invalidMD5Hashes = [
+    "", // empty
+    "5d41402abc4b2a76b9719d911017c59", // too short (31 chars)
+    "5d41402abc4b2a76b9719d911017c5922", // too long (33 chars)
+    "5d41402abc4b2a76b9719d911017c59g", // invalid character 'g'
+    "5d41402abc4b2a76b9719d911017c59!", // special character
+    "5d41402a bc4b2a76b9719d911017c592", // space in middle
+  ];
+
+  expect(validMD5Hashes.every((hash) => md5Schema.safeParse(hash).success)).toBe(true);
+  expect(invalidMD5Hashes.every((hash) => md5Schema.safeParse(hash).success === false)).toBe(true);
+});
+
+test("MD5 Base64 hash validation", () => {
+  const md5Base64Schema = z.string().md5Base64();
+
+  // Valid MD5 Base64 hashes
+  const validMD5Base64Hashes = [
+    "XUFAKrxLKna5cZ2REBfFkg==", // "hello" in base64
+    "CY9rzUYh03PK3k6DJie09g==", // "test" in base64
+    "1B2M2Y8AsgTpgAmY7PhCfg==", // empty string in base64
+    "rL0Y20zC+Fzt72VPzMSk2A==", // "foo" in base64
+  ];
+
+  // Invalid MD5 Base64 hashes
+  const invalidMD5Base64Hashes = [
+    "", // empty
+    "XUFAKrxLKna5cZ2REBfFk", // too short
+    "XUFAKrxLKna5cZ2REBfFkg===", // too many padding chars
+    "XUFAKrxLKna5cZ2REBfFk@==", // invalid character '@'
+    "XUFAKrxL Kna5cZ2REBfFkg==", // space in middle
+  ];
+
+  expect(validMD5Base64Hashes.every((hash) => md5Base64Schema.safeParse(hash).success)).toBe(true);
+  expect(invalidMD5Base64Hashes.every((hash) => md5Base64Schema.safeParse(hash).success === false)).toBe(true);
+});
+
+test("SHA-1 hash validation", () => {
+  const sha1Schema = z.string().sha1();
+
+  // Valid SHA-1 hashes
+  const validSHA1Hashes = [
+    "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d", // "hello"
+    "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3", // "test"
+    "da39a3ee5e6b4b0d3255bfef95601890afd80709", // empty string
+    "AAF4C61DDCC5E8A2DABEDE0F3B482CD9AEA9434D", // uppercase
+  ];
+
+  // Invalid SHA-1 hashes
+  const invalidSHA1Hashes = [
+    "", // empty
+    "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434", // too short
+    "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434dd", // too long
+    "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434g", // invalid character
+  ];
+
+  expect(validSHA1Hashes.every((hash) => sha1Schema.safeParse(hash).success)).toBe(true);
+  expect(invalidSHA1Hashes.every((hash) => sha1Schema.safeParse(hash).success === false)).toBe(true);
+});
+
+test("SHA-1 Base64 hash validation", () => {
+  const sha1Base64Schema = z.string().sha1Base64();
+
+  // Valid SHA-1 Base64 hashes
+  const validSHA1Base64Hashes = [
+    "qvTGHdzF6KLavt4PO0gs2a6pQ00=", // 28 chars for SHA-1 base64
+    "qUqP5cyxm6YcTAhz05Hph5gvu9M=", // 28 chars for SHA-1 base64
+    "2jmj7l5rSw0yVb/vlWAYkK/YBwk=", // 28 chars for SHA-1 base64
+  ];
+
+  // Invalid SHA-1 Base64 hashes
+  const invalidSHA1Base64Hashes = [
+    "", // empty
+    "qvTGHdzF6KLavt4PO0gs2a6pQ0", // too short
+    "qvTGHdzF6KLavt4PO0gs2a6pQ00==", // too many padding chars
+    "qvTGHdzF6KLavt4PO0gs2a6pQ0@=", // invalid character
+  ];
+
+  expect(validSHA1Base64Hashes.every((hash) => sha1Base64Schema.safeParse(hash).success)).toBe(true);
+  expect(invalidSHA1Base64Hashes.every((hash) => sha1Base64Schema.safeParse(hash).success === false)).toBe(true);
+});
+
+test("SHA-256 hash validation", () => {
+  const sha256Schema = z.string().sha256();
+
+  // Valid SHA-256 hashes
+  const validSHA256Hashes = [
+    "2cf24dba4f21d4288094c14b0f2b0336deec006fdd7c73a61d5bb3ca46a04366", // "hello" (corrected)
+    "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08", // "test"
+    "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", // empty string
+  ];
+
+  // Invalid SHA-256 hashes
+  const invalidSHA256Hashes = [
+    "", // empty
+    "2cf24dba4f21d4288094c14b0f2b0336deec006fdd7c73a61d5bb3ca46a043", // too short
+    "2cf24dba4f21d4288094c14b0f2b0336deec006fdd7c73a61d5bb3ca46a04366aa", // too long
+    "2cf24dba4f21d4288094c14b0f2b0336deec006fdd7c73a61d5bb3ca46a0436g", // invalid character
+  ];
+
+  expect(validSHA256Hashes.every((hash) => sha256Schema.safeParse(hash).success)).toBe(true);
+  expect(invalidSHA256Hashes.every((hash) => sha256Schema.safeParse(hash).success === false)).toBe(true);
+});
+
+test("SHA-256 Base64 hash validation", () => {
+  const sha256Base64Schema = z.string().sha256Base64();
+
+  // Valid SHA-256 Base64 hashes
+  const validSHA256Base64Hashes = [
+    "LPJNuk8h1CiAlMFLDysM3t7sAG/dfHOmHVuzyka6BDY=", // "hello" in base64 (corrected)
+    "n4bQgYhMfWWaL+qgxVrQFaO/TxsrC4Is0V1sFbDwCgg=", // "test" in base64
+    "47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=", // empty string in base64
+  ];
+
+  // Invalid SHA-256 Base64 hashes
+  const invalidSHA256Base64Hashes = [
+    "", // empty
+    "LPJNuk8h1CiAlMFLDysM3t7sAG/dfHOmHVuzyka6BD", // too short
+    "LPJNuk8h1CiAlMFLDysM3t7sAG/dfHOmHVuzyka6BDY==", // too many padding chars
+    "LPJNuk8h1CiAlMFLDysM3t7sAG/dfHOmHVuzyka6BD@=", // invalid character
+  ];
+
+  expect(validSHA256Base64Hashes.every((hash) => sha256Base64Schema.safeParse(hash).success)).toBe(true);
+  expect(invalidSHA256Base64Hashes.every((hash) => sha256Base64Schema.safeParse(hash).success === false)).toBe(true);
+});
+
+test("SHA-384 hash validation", () => {
+  const sha384Schema = z.string().sha384();
+
+  // Valid SHA-384 hashes
+  const validSHA384Hashes = [
+    "59e1748777448c69de6b800d7a33bbfb9ff1b463e44354c3553bcdb9c666fa90125a3c79f90397bdf5f6a13de828684f", // "hello"
+    "768412320f7b0aa5812fce428dc4706b3cae50e02a64caa16a782249bfe8efc4b7ef1ccb126255d196047dfedf17a0a9", // "test"
+    "38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b", // empty string (corrected)
+  ];
+
+  // Invalid SHA-384 hashes
+  const invalidSHA384Hashes = [
+    "", // empty
+    "59e1748777448c69de6b800d7a33bbfb9ff1b463e44354c3553bcdb9c666fa90125a3c79f90397bdf5f6a13de828684", // too short
+    "59e1748777448c69de6b800d7a33bbfb9ff1b463e44354c3553bcdb9c666fa90125a3c79f90397bdf5f6a13de828684ff", // too long
+    "59e1748777448c69de6b800d7a33bbfb9ff1b463e44354c3553bcdb9c666fa90125a3c79f90397bdf5f6a13de828684g", // invalid character
+  ];
+
+  expect(validSHA384Hashes.every((hash) => sha384Schema.safeParse(hash).success)).toBe(true);
+  expect(invalidSHA384Hashes.every((hash) => sha384Schema.safeParse(hash).success === false)).toBe(true);
+});
+
+test("SHA-384 Base64 hash validation", () => {
+  const sha384Base64Schema = z.string().sha384Base64();
+
+  // Valid SHA-384 Base64 hashes
+  const validSHA384Base64Hashes = [
+    "WeF0h3dEjGnetoANejO7+5/xtGPkQ1TDVTPNO8ZsZpoSWjx5+QOXvfX2oT3oKGhP", // "hello" in base64
+    "doQSMg97CqWBL85CjcRwazzqUOAqZMqhamgkm/6O/Et+8cy9EmJV0ZYEff7fF6Cp", // "test" in base64
+  ];
+
+  // Invalid SHA-384 Base64 hashes
+  const invalidSHA384Base64Hashes = [
+    "", // empty
+    "WeF0h3dEjGnetoANejO7+5/xtGPkQ1TDVTPNO8ZsZpoSWjx5+QOXvfX2oT3oKGh", // too short
+    "WeF0h3dEjGnetoANejO7+5/xtGPkQ1TDVTPNO8ZsZpoSWjx5+QOXvfX2oT3oKGhPP", // too long
+    "WeF0h3dEjGnetoANejO7+5/xtGPkQ1TDVTPNO8ZsZpoSWjx5+QOXvfX2oT3oKGh@", // invalid character
+  ];
+
+  expect(validSHA384Base64Hashes.every((hash) => sha384Base64Schema.safeParse(hash).success)).toBe(true);
+  expect(invalidSHA384Base64Hashes.every((hash) => sha384Base64Schema.safeParse(hash).success === false)).toBe(true);
+});
+
+test("SHA-512 hash validation", () => {
+  const sha512Schema = z.string().sha512();
+
+  // Valid SHA-512 hashes
+  const validSHA512Hashes = [
+    "9b71d224bd62f3785d96d46ad3ea3d73319bfbc2890caadae2dff72519673ca72323c3d99ba5c11d7c7acc6e14b8c5da0c4663475c2e5c3adef46f73bcdec043", // "hello"
+    "ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff", // "test"
+  ];
+
+  // Invalid SHA-512 hashes
+  const invalidSHA512Hashes = [
+    "", // empty
+    "9b71d224bd62f3785d96d46ad3ea3d73319bfbc2890caadae2dff72519673ca72323c3d99ba5c11d7c7acc6e14b8c5da0c4663475c2e5c3adef46f73bcdec04", // too short
+    "9b71d224bd62f3785d96d46ad3ea3d73319bfbc2890caadae2dff72519673ca72323c3d99ba5c11d7c7acc6e14b8c5da0c4663475c2e5c3adef46f73bcdec0433", // too long
+    "9b71d224bd62f3785d96d46ad3ea3d73319bfbc2890caadae2dff72519673ca72323c3d99ba5c11d7c7acc6e14b8c5da0c4663475c2e5c3adef46f73bcdec04g", // invalid character
+  ];
+
+  expect(validSHA512Hashes.every((hash) => sha512Schema.safeParse(hash).success)).toBe(true);
+  expect(invalidSHA512Hashes.every((hash) => sha512Schema.safeParse(hash).success === false)).toBe(true);
+});
+
+test("SHA-512 Base64 hash validation", () => {
+  const sha512Base64Schema = z.string().sha512Base64();
+
+  // Valid SHA-512 Base64 hashes
+  const validSHA512Base64Hashes = [
+    "m3HSJL1i83hdltRq0+o9czGb+8KJDKra4t/3JRlnPKcjI8PZm6XBHXx6zG4UuMXaDEZjR1wuXDreT2c7zewEQw==", // "hello" in base64
+    "7iaw3Ur350mqGo7jwQrpkj9hiYB3LkQ/iBlp1JQODbJ6wYX4oOHV+E+IvIh/1nsUNzLDBMxfqargb1f1ACio/w==", // "test" in base64
+  ];
+
+  // Invalid SHA-512 Base64 hashes
+  const invalidSHA512Base64Hashes = [
+    "", // empty
+    "m3HSJL1i83hdltRq0+o9czGb+8KJDKra4t/3JRlnPKcjI8PZm6XBHXx6zG4UuMXaDEZjR1wuXDreT2c7zewEQ", // too short
+    "m3HSJL1i83hdltRq0+o9czGb+8KJDKra4t/3JRlnPKcjI8PZm6XBHXx6zG4UuMXaDEZjR1wuXDreT2c7zewEQw===", // too many padding chars
+    "m3HSJL1i83hdltRq0+o9czGb+8KJDKra4t/3JRlnPKcjI8PZm6XBHXx6zG4UuMXaDEZjR1wuXDreT2c7zewEQ@==", // invalid character
+  ];
+
+  expect(validSHA512Base64Hashes.every((hash) => sha512Base64Schema.safeParse(hash).success)).toBe(true);
+  expect(invalidSHA512Base64Hashes.every((hash) => sha512Base64Schema.safeParse(hash).success === false)).toBe(true);
+});
+
+test("hash format error messages", () => {
+  const md5Schema = z.string().md5();
+  const sha256Schema = z.string().sha256();
+
+  // Test error codes for invalid hashes
+  const md5Result = md5Schema.safeParse("invalid");
+  const sha256Result = sha256Schema.safeParse("invalid");
+
+  if (!md5Result.success) {
+    expect(md5Result.error.issues[0].code).toBe("invalid_format");
+  }
+
+  if (!sha256Result.success) {
+    expect(sha256Result.error.issues[0].code).toBe("invalid_format");
+  }
+});
+
+test("hash format chaining with other validations", () => {
+  const chainedMd5 = z.string().md5().min(32).max(32);
+  const chainedSha256 = z.string().sha256().length(64);
+
+  expect(chainedMd5.safeParse("5d41402abc4b2a76b9719d911017c592").success).toBe(true);
+  expect(chainedSha256.safeParse("2cf24dba4f21d4288094c14b0f2b0336deec006fdd7c73a61d5bb3ca46a04366").success).toBe(
+    true
+  ); // corrected - now valid
+  expect(chainedSha256.safeParse("2cf24dba4f21d4288094c14b0f2b0336deec006fdd7c73a61d5bb3ca46a0436").success).toBe(
+    false
+  ); // invalid format (63 chars)
+});
