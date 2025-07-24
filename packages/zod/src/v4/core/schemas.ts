@@ -1911,16 +1911,17 @@ function handleUnionResults(results: ParsePayload[], final: ParsePayload, inst: 
   }
 
   const nonaborted = results.filter((r) => !util.aborted(r));
-  if (nonaborted.length > 0) {
+  if (nonaborted.length === 1) {
     final.value = nonaborted[0].value;
     return nonaborted[0];
   }
 
+  const errorResults = nonaborted.length ? nonaborted : results;
   final.issues.push({
     code: "invalid_union",
     input: final.value,
     inst,
-    errors: results.map((result) => result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))),
+    errors: errorResults.map((result) => result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))),
   });
 
   return final;
@@ -2781,6 +2782,9 @@ export const $ZodLiteral: core.$constructor<$ZodLiteral> = /*@__PURE__*/ core.$c
   "$ZodLiteral",
   (inst, def) => {
     $ZodType.init(inst, def);
+    if (def.values.length === 0) {
+      throw new Error("Cannot create literal schema with no valid values");
+    }
 
     inst._zod.values = new Set<util.Literal>(def.values);
     inst._zod.pattern = new RegExp(
