@@ -133,3 +133,59 @@ export { _undefined as undefined };
 export const lowercase: RegExp = /^[^A-Z]*$/;
 // regex for string with no lowercase letters
 export const uppercase: RegExp = /^[^a-z]*$/;
+
+/** MD5 hash: 32 hexadecimal characters */
+export const md5: RegExp = /^[a-fA-F0-9]{32}$/;
+
+/** SHA-1 hash: 40 hexadecimal characters */
+export const sha1: RegExp = /^[a-fA-F0-9]{40}$/;
+
+/** SHA-256 hash: 64 hexadecimal characters */
+export const sha256: RegExp = /^[a-fA-F0-9]{64}$/;
+
+/** SHA-384 hash: 96 hexadecimal characters */
+export const sha384: RegExp = /^[a-fA-F0-9]{96}$/;
+
+/** SHA-512 hash: 128 hexadecimal characters */
+export const sha512: RegExp = /^[a-fA-F0-9]{128}$/;
+
+/** MD5 hash in base64: 24 characters (16 bytes * 4/3, with padding) */
+export const md5Base64: RegExp = /^[A-Za-z0-9+/]{22}={0,2}$/;
+
+/** SHA-1 hash in base64: 28 characters (20 bytes * 4/3, with padding) */
+export const sha1Base64: RegExp = /^[A-Za-z0-9+/]{26}={0,2}$/;
+
+/** SHA-256 hash in base64: 44 characters (32 bytes * 4/3, with padding) */
+export const sha256Base64: RegExp = /^[A-Za-z0-9+/]{43}={1}$/;
+
+/** SHA-384 hash in base64: 64 characters (48 bytes * 4/3) */
+export const sha384Base64: RegExp = /^[A-Za-z0-9+/]{64}$/;
+
+/** SHA-512 hash in base64: 88 characters (64 bytes * 4/3, with padding) */
+export const sha512Base64: RegExp = /^[A-Za-z0-9+/]{86}={0,2}$/;
+
+/** Generic hash validation function for various algorithms */
+export const hash = (algorithm: "md5" | "sha1" | "sha256" | "sha384" | "sha512"): RegExp => {
+  const lengths = {
+    md5: 32,
+    sha1: 40,
+    sha256: 64,
+    sha384: 96,
+    sha512: 128,
+  };
+
+  return new RegExp(`^[a-fA-F0-9]{${lengths[algorithm]}}$`);
+};
+
+/** Generic hash validation function for base64-encoded algorithms */
+export const hashBase64 = (algorithm: "md5" | "sha1" | "sha256" | "sha384" | "sha512"): RegExp => {
+  const regexMap = {
+    md5: md5Base64,
+    sha1: sha1Base64,
+    sha256: sha256Base64,
+    sha384: sha384Base64,
+    sha512: sha512Base64,
+  };
+
+  return regexMap[algorithm];
+};

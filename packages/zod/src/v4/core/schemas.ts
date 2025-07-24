@@ -902,6 +902,170 @@ export const $ZodE164: core.$constructor<$ZodE164> = /*@__PURE__*/ core.$constru
   $ZodStringFormat.init(inst, def);
 });
 
+//////////////////////////////   ZodMD5   //////////////////////////////
+
+export interface $ZodMD5Def extends $ZodStringFormatDef<"md5"> {}
+export interface $ZodMD5Internals extends $ZodStringFormatInternals<"md5"> {}
+
+export interface $ZodMD5 extends $ZodType {
+  _zod: $ZodMD5Internals;
+}
+
+export const $ZodMD5: core.$constructor<$ZodMD5> = /*@__PURE__*/ core.$constructor("$ZodMD5", (inst, def): void => {
+  def.pattern ??= regexes.md5;
+  $ZodStringFormat.init(inst, def);
+});
+
+//////////////////////////////   ZodMD5Base64   //////////////////////////////
+
+export interface $ZodMD5Base64Def extends $ZodStringFormatDef<"md5_base64"> {}
+export interface $ZodMD5Base64Internals extends $ZodStringFormatInternals<"md5_base64"> {}
+
+export interface $ZodMD5Base64 extends $ZodType {
+  _zod: $ZodMD5Base64Internals;
+}
+
+export const $ZodMD5Base64: core.$constructor<$ZodMD5Base64> = /*@__PURE__*/ core.$constructor(
+  "$ZodMD5Base64",
+  (inst, def): void => {
+    def.pattern ??= regexes.md5Base64;
+    $ZodStringFormat.init(inst, def);
+  }
+);
+
+//////////////////////////////   ZodSHA1   //////////////////////////////
+
+export interface $ZodSHA1Def extends $ZodStringFormatDef<"sha1"> {}
+export interface $ZodSHA1Internals extends $ZodStringFormatInternals<"sha1"> {}
+
+export interface $ZodSHA1 extends $ZodType {
+  _zod: $ZodSHA1Internals;
+}
+
+export const $ZodSHA1: core.$constructor<$ZodSHA1> = /*@__PURE__*/ core.$constructor("$ZodSHA1", (inst, def): void => {
+  def.pattern ??= regexes.sha1;
+  $ZodStringFormat.init(inst, def);
+});
+
+//////////////////////////////   ZodSHA1Base64   //////////////////////////////
+
+export interface $ZodSHA1Base64Def extends $ZodStringFormatDef<"sha1_base64"> {}
+export interface $ZodSHA1Base64Internals extends $ZodStringFormatInternals<"sha1_base64"> {}
+
+export interface $ZodSHA1Base64 extends $ZodType {
+  _zod: $ZodSHA1Base64Internals;
+}
+
+export const $ZodSHA1Base64: core.$constructor<$ZodSHA1Base64> = /*@__PURE__*/ core.$constructor(
+  "$ZodSHA1Base64",
+  (inst, def): void => {
+    def.pattern ??= regexes.sha1Base64;
+    $ZodStringFormat.init(inst, def);
+  }
+);
+
+//////////////////////////////   ZodSHA256   //////////////////////////////
+
+export interface $ZodSHA256Def extends $ZodStringFormatDef<"sha256"> {}
+export interface $ZodSHA256Internals extends $ZodStringFormatInternals<"sha256"> {}
+
+export interface $ZodSHA256 extends $ZodType {
+  _zod: $ZodSHA256Internals;
+}
+
+export const $ZodSHA256: core.$constructor<$ZodSHA256> = /*@__PURE__*/ core.$constructor(
+  "$ZodSHA256",
+  (inst, def): void => {
+    def.pattern ??= regexes.sha256;
+    $ZodStringFormat.init(inst, def);
+  }
+);
+
+//////////////////////////////   ZodSHA256Base64   //////////////////////////////
+
+export interface $ZodSHA256Base64Def extends $ZodStringFormatDef<"sha256_base64"> {}
+export interface $ZodSHA256Base64Internals extends $ZodStringFormatInternals<"sha256_base64"> {}
+
+export interface $ZodSHA256Base64 extends $ZodType {
+  _zod: $ZodSHA256Base64Internals;
+}
+
+export const $ZodSHA256Base64: core.$constructor<$ZodSHA256Base64> = /*@__PURE__*/ core.$constructor(
+  "$ZodSHA256Base64",
+  (inst, def): void => {
+    def.pattern ??= regexes.sha256Base64;
+    $ZodStringFormat.init(inst, def);
+  }
+);
+
+//////////////////////////////   ZodSHA384   //////////////////////////////
+
+export interface $ZodSHA384Def extends $ZodStringFormatDef<"sha384"> {}
+export interface $ZodSHA384Internals extends $ZodStringFormatInternals<"sha384"> {}
+
+export interface $ZodSHA384 extends $ZodType {
+  _zod: $ZodSHA384Internals;
+}
+
+export const $ZodSHA384: core.$constructor<$ZodSHA384> = /*@__PURE__*/ core.$constructor(
+  "$ZodSHA384",
+  (inst, def): void => {
+    def.pattern ??= regexes.sha384;
+    $ZodStringFormat.init(inst, def);
+  }
+);
+
+//////////////////////////////   ZodSHA384Base64   //////////////////////////////
+
+export interface $ZodSHA384Base64Def extends $ZodStringFormatDef<"sha384_base64"> {}
+export interface $ZodSHA384Base64Internals extends $ZodStringFormatInternals<"sha384_base64"> {}
+
+export interface $ZodSHA384Base64 extends $ZodType {
+  _zod: $ZodSHA384Base64Internals;
+}
+
+export const $ZodSHA384Base64: core.$constructor<$ZodSHA384Base64> = /*@__PURE__*/ core.$constructor(
+  "$ZodSHA384Base64",
+  (inst, def): void => {
+    def.pattern ??= regexes.sha384Base64;
+    $ZodStringFormat.init(inst, def);
+  }
+);
+
+//////////////////////////////   ZodSHA512   //////////////////////////////
+
+export interface $ZodSHA512Def extends $ZodStringFormatDef<"sha512"> {}
+export interface $ZodSHA512Internals extends $ZodStringFormatInternals<"sha512"> {}
+
+export interface $ZodSHA512 extends $ZodType {
+  _zod: $ZodSHA512Internals;
+}
+
+export const $ZodSHA512: core.$constructor<$ZodSHA512> = /*@__PURE__*/ core.$constructor(
+  "$ZodSHA512",
+  (inst, def): void => {
+    def.pattern ??= regexes.sha512;
+    $ZodStringFormat.init(inst, def);
+  }
+);
+
+//////////////////////////////   ZodSHA512Base64   //////////////////////////////
+
+export interface $ZodSHA512Base64Def extends $ZodStringFormatDef<"sha512_base64"> {}
+export interface $ZodSHA512Base64Internals extends $ZodStringFormatInternals<"sha512_base64"> {}
+
+export interface $ZodSHA512Base64 extends $ZodType {
+  _zod: $ZodSHA512Base64Internals;
+}
+
+export const $ZodSHA512Base64: core.$constructor<$ZodSHA512Base64> = /*@__PURE__*/ core.$constructor(
+  "$ZodSHA512Base64",
+  (inst, def): void => {
+    def.pattern ??= regexes.sha512Base64;
+    $ZodStringFormat.init(inst, def);
+  }
+);
+
 //////////////////////////////   ZodJWT   //////////////////////////////
 
 export function isValidJWT(token: string, algorithm: util.JWTAlgorithm | null = null): boolean {
