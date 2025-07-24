@@ -414,6 +414,143 @@ export function jwt(params?: string | core.$ZodJWTParams): ZodMiniJWT {
   return core._jwt(ZodMiniJWT, params);
 }
 
+// ZodMiniMD5
+export interface ZodMiniMD5 extends _ZodMiniString<core.$ZodMD5Internals> {}
+export const ZodMiniMD5: core.$constructor<ZodMiniMD5> = /*@__PURE__*/ core.$constructor("ZodMiniMD5", (inst, def) => {
+  core.$ZodMD5.init(inst, def);
+  ZodMiniStringFormat.init(inst, def);
+});
+
+export function md5(params?: string | core.$ZodMD5Params): ZodMiniMD5 {
+  return core._md5(ZodMiniMD5, params);
+}
+
+// ZodMiniMD5Base64
+export interface ZodMiniMD5Base64 extends _ZodMiniString<core.$ZodMD5Base64Internals> {}
+export const ZodMiniMD5Base64: core.$constructor<ZodMiniMD5Base64> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniMD5Base64",
+  (inst, def) => {
+    core.$ZodMD5Base64.init(inst, def);
+    ZodMiniStringFormat.init(inst, def);
+  }
+);
+
+export function md5Base64(params?: string | core.$ZodMD5Base64Params): ZodMiniMD5Base64 {
+  return core._md5Base64(ZodMiniMD5Base64, params);
+}
+
+// ZodMiniSHA1
+export interface ZodMiniSHA1 extends _ZodMiniString<core.$ZodSHA1Internals> {}
+export const ZodMiniSHA1: core.$constructor<ZodMiniSHA1> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniSHA1",
+  (inst, def) => {
+    core.$ZodSHA1.init(inst, def);
+    ZodMiniStringFormat.init(inst, def);
+  }
+);
+
+export function sha1(params?: string | core.$ZodSHA1Params): ZodMiniSHA1 {
+  return core._sha1(ZodMiniSHA1, params);
+}
+
+// ZodMiniSHA1Base64
+export interface ZodMiniSHA1Base64 extends _ZodMiniString<core.$ZodSHA1Base64Internals> {}
+export const ZodMiniSHA1Base64: core.$constructor<ZodMiniSHA1Base64> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniSHA1Base64",
+  (inst, def) => {
+    core.$ZodSHA1Base64.init(inst, def);
+    ZodMiniStringFormat.init(inst, def);
+  }
+);
+
+export function sha1Base64(params?: string | core.$ZodSHA1Base64Params): ZodMiniSHA1Base64 {
+  return core._sha1Base64(ZodMiniSHA1Base64, params);
+}
+
+// ZodMiniSHA256
+export interface ZodMiniSHA256 extends _ZodMiniString<core.$ZodSHA256Internals> {}
+export const ZodMiniSHA256: core.$constructor<ZodMiniSHA256> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniSHA256",
+  (inst, def) => {
+    core.$ZodSHA256.init(inst, def);
+    ZodMiniStringFormat.init(inst, def);
+  }
+);
+
+export function sha256(params?: string | core.$ZodSHA256Params): ZodMiniSHA256 {
+  return core._sha256(ZodMiniSHA256, params);
+}
+
+// ZodMiniSHA256Base64
+export interface ZodMiniSHA256Base64 extends _ZodMiniString<core.$ZodSHA256Base64Internals> {}
+export const ZodMiniSHA256Base64: core.$constructor<ZodMiniSHA256Base64> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniSHA256Base64",
+  (inst, def) => {
+    core.$ZodSHA256Base64.init(inst, def);
+    ZodMiniStringFormat.init(inst, def);
+  }
+);
+
+export function sha256Base64(params?: string | core.$ZodSHA256Base64Params): ZodMiniSHA256Base64 {
+  return core._sha256Base64(ZodMiniSHA256Base64, params);
+}
+
+// ZodMiniSHA384
+export interface ZodMiniSHA384 extends _ZodMiniString<core.$ZodSHA384Internals> {}
+export const ZodMiniSHA384: core.$constructor<ZodMiniSHA384> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniSHA384",
+  (inst, def) => {
+    core.$ZodSHA384.init(inst, def);
+    ZodMiniStringFormat.init(inst, def);
+  }
+);
+
+export function sha384(params?: string | core.$ZodSHA384Params): ZodMiniSHA384 {
+  return core._sha384(ZodMiniSHA384, params);
+}
+
+// ZodMiniSHA384Base64
+export interface ZodMiniSHA384Base64 extends _ZodMiniString<core.$ZodSHA384Base64Internals> {}
+export const ZodMiniSHA384Base64: core.$constructor<ZodMiniSHA384Base64> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniSHA384Base64",
+  (inst, def) => {
+    core.$ZodSHA384Base64.init(inst, def);
+    ZodMiniStringFormat.init(inst, def);
+  }
+);
+
+export function sha384Base64(params?: string | core.$ZodSHA384Base64Params): ZodMiniSHA384Base64 {
+  return core._sha384Base64(ZodMiniSHA384Base64, params);
+}
+
+// ZodMiniSHA512
+export interface ZodMiniSHA512 extends _ZodMiniString<core.$ZodSHA512Internals> {}
+export const ZodMiniSHA512: core.$constructor<ZodMiniSHA512> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniSHA512",
+  (inst, def) => {
+    core.$ZodSHA512.init(inst, def);
+    ZodMiniStringFormat.init(inst, def);
+  }
+);
+
+export function sha512(params?: string | core.$ZodSHA512Params): ZodMiniSHA512 {
+  return core._sha512(ZodMiniSHA512, params);
+}
+
+// ZodMiniSHA512Base64
+export interface ZodMiniSHA512Base64 extends _ZodMiniString<core.$ZodSHA512Base64Internals> {}
+export const ZodMiniSHA512Base64: core.$constructor<ZodMiniSHA512Base64> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniSHA512Base64",
+  (inst, def) => {
+    core.$ZodSHA512Base64.init(inst, def);
+    ZodMiniStringFormat.init(inst, def);
+  }
+);
+
+export function sha512Base64(params?: string | core.$ZodSHA512Base64Params): ZodMiniSHA512Base64 {
+  return core._sha512Base64(ZodMiniSHA512Base64, params);
+}
+
 // ZodMiniCustomStringFormat
 export interface ZodMiniCustomStringFormat<Format extends string = string>
   extends ZodMiniStringFormat<Format>,
