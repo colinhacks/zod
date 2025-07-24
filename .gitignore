@@ -12,3 +12,4 @@ deno/lib/playground.ts
 workspace.code-workspace
 .netlify
 bun.lockb
+.env
