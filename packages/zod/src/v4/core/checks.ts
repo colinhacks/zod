@@ -769,7 +769,17 @@ export type $ZodStringFormats =
   | "jwt"
   | "starts_with"
   | "ends_with"
-  | "includes";
+  | "includes"
+  | "md5"
+  | "md5_base64"
+  | "sha1"
+  | "sha1_base64"
+  | "sha256"
+  | "sha256_base64"
+  | "sha384"
+  | "sha384_base64"
+  | "sha512"
+  | "sha512_base64";
 export interface $ZodCheckStringFormatDef<Format extends string = string> extends $ZodCheckDef {
   check: "string_format";
   format: Format;
