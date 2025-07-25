@@ -67,6 +67,7 @@ export interface $ZodIssueInvalidUnion extends $ZodIssueBase {
   readonly code: "invalid_union";
   readonly errors: $ZodIssue[][];
   readonly input: unknown;
+  readonly discriminator?: string | undefined;
 }
 
 export interface $ZodIssueInvalidKey<Input = unknown> extends $ZodIssueBase {

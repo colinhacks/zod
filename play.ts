@@ -1,15 +1,19 @@
-import * as z from "zod/v4";
+import * as z from "zod";
 
-z;
+// I'd recommend using a union of literals in conjunction with Zod 4's metadata API: https://zod.dev/metadata
 
-function myThing() {
-  const schema = z.custom<string>((val) => typeof val === "string");
-  schema._zod.toJSONSchema = () => ({
-    type: "string",
-  });
-  return schema;
-}
+const foo = z.literal("foo").describe("The foo value");
+const bar = z.literal("bar").describe("The bar value");
+const baz = z.literal("baz").describe("The baz value");
 
-console.log(z.toJSONSchema(myThing()));
+const schema = z.union([foo, bar, baz]);
 
-z.file().parse({}).text;
+console.log(z.toJSONSchema(schema));
+// {
+//   '$schema': 'https://json-schema.org/draft/2020-12/schema',
+//   anyOf: [
+//     { description: 'The foo value', type: 'string', const: 'foo' },
+//     { description: 'The bar value', type: 'string', const: 'bar' },
+//     { description: 'The baz value', type: 'string', const: 'baz' }
+//   ]
+// }
