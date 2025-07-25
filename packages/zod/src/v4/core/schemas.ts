@@ -2069,6 +2069,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
         code: "invalid_union",
         errors: [],
         note: "No matching discriminator",
+        discriminator: def.discriminator,
         input,
         path: [def.discriminator],
         inst,

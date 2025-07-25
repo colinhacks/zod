@@ -1,15 +1,9 @@
-import * as z from "zod/v4";
+import * as z from "zod";
 
-z;
+const SomeSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("foo"), foo: z.string() }),
+  z.object({ type: z.literal("bar"), bar: z.string() }),
+  z.object({ type: z.literal("baz"), baz: z.string() }),
+]);
 
-function myThing() {
-  const schema = z.custom<string>((val) => typeof val === "string");
-  schema._zod.toJSONSchema = () => ({
-    type: "string",
-  });
-  return schema;
-}
-
-console.log(z.toJSONSchema(myThing()));
-
-z.file().parse({}).text;
+SomeSchema.parse({ type: "qux" });
