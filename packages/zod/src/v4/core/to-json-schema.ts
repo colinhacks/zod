@@ -10,8 +10,9 @@ interface JSONSchemaGeneratorParams {
   metadata?: $ZodRegistry<Record<string, any>>;
   /** The JSON Schema version to target.
    * - `"draft-2020-12"` — Default. JSON Schema Draft 2020-12
-   * - `"draft-7"` — JSON Schema Draft 7 */
-  target?: "draft-7" | "draft-2020-12";
+   * - `"draft-7"` — JSON Schema Draft 7
+   * - `"draft-4"` — JSON Schema Draft 4 */
+  target?: "draft-4" | "draft-7" | "draft-2020-12";
   /** How to handle unrepresentable types.
    * - `"throw"` — Default. Unrepresentable types throw an error
    * - `"any"` — Unrepresentable types become `{}` */
@@ -71,7 +72,7 @@ interface Seen {
 
 export class JSONSchemaGenerator {
   metadataRegistry: $ZodRegistry<Record<string, any>>;
-  target: "draft-7" | "draft-2020-12";
+  target: "draft-4" | "draft-7" | "draft-2020-12";
   unrepresentable: "throw" | "any";
   override: (ctx: {
     zodSchema: schemas.$ZodTypes;
@@ -163,7 +164,7 @@ export class JSONSchemaGenerator {
               else if (regexes.length > 1) {
                 result.schema.allOf = [
                   ...regexes.map((regex) => ({
-                    ...(this.target === "draft-7" ? ({ type: "string" } as const) : {}),
+                    ...(this.target === "draft-7" || this.target === "draft-4" ? ({ type: "string" } as const) : {}),
                     pattern: regex.source,
                   })),
                 ];
@@ -178,19 +179,33 @@ export class JSONSchemaGenerator {
             if (typeof format === "string" && format.includes("int")) json.type = "integer";
             else json.type = "number";
 
-            if (typeof exclusiveMinimum === "number") json.exclusiveMinimum = exclusiveMinimum;
+            if (typeof exclusiveMinimum === "number") {
+              if (this.target === "draft-4") {
+                json.minimum = exclusiveMinimum;
+                json.exclusiveMinimum = true;
+              } else {
+                json.exclusiveMinimum = exclusiveMinimum;
+              }
+            }
             if (typeof minimum === "number") {
               json.minimum = minimum;
-              if (typeof exclusiveMinimum === "number") {
+              if (typeof exclusiveMinimum === "number" && this.target !== "draft-4") {
                 if (exclusiveMinimum >= minimum) delete json.minimum;
                 else delete json.exclusiveMinimum;
               }
             }
 
-            if (typeof exclusiveMaximum === "number") json.exclusiveMaximum = exclusiveMaximum;
+            if (typeof exclusiveMaximum === "number") {
+              if (this.target === "draft-4") {
+                json.maximum = exclusiveMaximum;
+                json.exclusiveMaximum = true;
+              } else {
+                json.exclusiveMaximum = exclusiveMaximum;
+              }
+            }
             if (typeof maximum === "number") {
               json.maximum = maximum;
-              if (typeof exclusiveMaximum === "number") {
+              if (typeof exclusiveMaximum === "number" && this.target !== "draft-4") {
                 if (exclusiveMaximum <= maximum) delete json.maximum;
                 else delete json.exclusiveMaximum;
               }
@@ -379,7 +394,12 @@ export class JSONSchemaGenerator {
           case "record": {
             const json: JSONSchema.ObjectSchema = _json as any;
             json.type = "object";
-            json.propertyNames = this.process(def.keyType, { ...params, path: [...params.path, "propertyNames"] });
+            if (this.target !== "draft-4") {
+              json.propertyNames = this.process(def.keyType, {
+                ...params,
+                path: [...params.path, "propertyNames"],
+              });
+            }
             json.additionalProperties = this.process(def.valueType, {
               ...params,
               path: [...params.path, "additionalProperties"],
@@ -432,7 +452,11 @@ export class JSONSchemaGenerator {
             } else if (vals.length === 1) {
               const val = vals[0]!;
               json.type = val === null ? ("null" as const) : (typeof val as any);
-              json.const = val;
+              if (this.target === "draft-4") {
+                json.enum = [val];
+              } else {
+                json.const = val;
+              }
             } else {
               if (vals.every((v) => typeof v === "number")) json.type = "number";
               if (vals.every((v) => typeof v === "string")) json.type = "string";
@@ -749,7 +773,7 @@ export class JSONSchemaGenerator {
 
         // merge referenced schema into current
         const refSchema = this.seen.get(ref)!.schema;
-        if (refSchema.$ref && params.target === "draft-7") {
+        if (refSchema.$ref && (params.target === "draft-7" || params.target === "draft-4")) {
           schema.allOf = schema.allOf ?? [];
           schema.allOf.push(refSchema);
         } else {
@@ -776,6 +800,8 @@ export class JSONSchemaGenerator {
       result.$schema = "https://json-schema.org/draft/2020-12/schema";
     } else if (this.target === "draft-7") {
       result.$schema = "http://json-schema.org/draft-07/schema#";
+    } else if (this.target === "draft-4") {
+      result.$schema = "http://json-schema.org/draft-04/schema#";
     } else {
       // @ts-ignore
       console.warn(`Invalid target: ${this.target}`);
