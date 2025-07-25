@@ -66,6 +66,16 @@ const error: () => errors.$ZodErrorMap = () => {
     json_string: "cadena JSON",
     e164: "número E.164",
     jwt: "JWT",
+    md5: "hash MD5",
+    md5_base64: "hash MD5 codificado en base64",
+    sha1: "hash SHA-1",
+    sha1_base64: "hash SHA-1 codificado en base64",
+    sha256: "hash SHA-256",
+    sha256_base64: "hash SHA-256 codificado en base64",
+    sha384: "hash SHA-384",
+    sha384_base64: "hash SHA-384 codificado en base64",
+    sha512: "hash SHA-512",
+    sha512_base64: "hash SHA-512 codificado en base64",
     template_literal: "entrada",
   };
 
