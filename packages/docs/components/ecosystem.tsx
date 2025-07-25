@@ -175,7 +175,14 @@ const poweredByZodProjects: ZodResource[] = [
   },
 ];
 
-const zodUtilities: ZodResource[] = [];
+const zodUtilities: ZodResource[] = [
+  {
+    name: "zod-playground",
+    url: "https://github.com/marilari88/zod-playground",
+    description: "Interactive playground for testing and exploring Zod and Zod mini schemas in real-time.",
+    slug: "marilari88/zod-playground",
+  },
+];
 
 export {
   apiLibraries,
