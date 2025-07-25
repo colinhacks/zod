@@ -134,7 +134,7 @@ const xToZodConverters: ZodResource[] = [
   {
     name: "valype",
     url: "https://github.com/yuzheng14/valype",
-    description: "Typescript's type definition to runtime validator (includeing zod).",
+    description: "Typescript's type definition to runtime validator (including zod).",
     slug: "yuzheng14/valype",
   },
 ];
