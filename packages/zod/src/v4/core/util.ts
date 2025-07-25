@@ -123,6 +123,7 @@ export type Identity<T> = T;
 export type Flatten<T> = Identity<{ [k in keyof T]: T[k] }>;
 export type Mapped<T> = { [k in keyof T]: T[k] };
 export type Prettify<T> = {
+  // @ts-ignore
   [K in keyof T]: T[K];
 } & {};
 
