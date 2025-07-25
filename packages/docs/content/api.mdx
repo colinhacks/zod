@@ -697,6 +697,19 @@ FishEnum.parse("Swordfish"); // => ❌
   ```
 </Callout>
 
+Enum-like object literals (`{ [key: string]: string | number }`) are supported.
+
+```ts
+const Fish = {
+  Salmon: "Salmon",
+  Tuna: "Tuna"
+} as const
+
+const FishEnum = z.enum(Fish)
+FishEnum.parse("Salmon"); // => "Salmon"
+FishEnum.parse("Swordfish"); // => ❌
+```
+
 You can also pass in an externally-declared TypeScript enum. 
 
 <Callout>
