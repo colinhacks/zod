@@ -228,6 +228,7 @@ To validate against some common string formats:
 z.email();
 z.uuid();
 z.url();
+z.hostname();
 z.emoji();         // validates a single emoji character
 z.base64();
 z.base64url();
@@ -2316,6 +2317,10 @@ z.parse(castToString, true); // => "true"
 ```
 </Tab>
 </Tabs>
+
+<Callout type="warn">
+  Refinement functions should never throw. Thrown errors are not caught by Zod.
+</Callout>
 
 {/* The output type of the schema is inferred from the transform function:
 

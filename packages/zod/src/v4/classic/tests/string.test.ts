@@ -956,3 +956,41 @@ test("E.164 validation", () => {
   expect(validE164Numbers.every((number) => e164Number.safeParse(number).success)).toBe(true);
   expect(invalidE164Numbers.every((number) => e164Number.safeParse(number).success === false)).toBe(true);
 });
+
+test("hostname", () => {
+  const hostname = z.hostname();
+
+  // Valid hostnames
+  hostname.parse("localhost");
+  hostname.parse("example.com");
+  hostname.parse("sub.example.com");
+  hostname.parse("a-b-c.example.com");
+  hostname.parse("123.example.com");
+  hostname.parse("example-123.com");
+  hostname.parse("example-123.1234");
+  hostname.parse("developer.mozilla.org");
+  hostname.parse("hello.world.example.com");
+  hostname.parse("www.google.com");
+  hostname.parse("192.168.1.1");
+  hostname.parse("xn--d1acj3b.com");
+  hostname.parse("xn--d1acj3b.org");
+  hostname.parse("xn--d1acj3b");
+
+  // Invalid hostnames
+  expect(() => hostname.parse("")).toThrow();
+  expect(() => hostname.parse("example..com")).toThrow();
+  expect(() => hostname.parse("example-.com")).toThrow();
+  expect(() => hostname.parse("-example.com")).toThrow();
+  expect(() => hostname.parse("example.com-")).toThrow();
+  expect(() => hostname.parse("example_com")).toThrow();
+  expect(() => hostname.parse("example.com:8080")).toThrow();
+  expect(() => hostname.parse("http://example.com")).toThrow();
+  expect(() => hostname.parse("ht!tp://invalid.com")).toThrow();
+
+  expect(() => hostname.parse("xn--d1acj3b..com")).toThrow();
+  expect(() => hostname.parse("ex@mple.com")).toThrow();
+  expect(() => hostname.parse("[2001:db8::zzzz]")).toThrow();
+  expect(() => hostname.parse("exa mple.com")).toThrow();
+  expect(() => hostname.parse("-example.com")).toThrow();
+  expect(() => hostname.parse("example..com")).toThrow();
+});

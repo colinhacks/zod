@@ -44,6 +44,7 @@ export const rfc5322Email =
 
 /** A loose regex that allows Unicode characters, enforces length limits, and that's about it. */
 export const unicodeEmail = /^[^\s@"]{1,64}@[^\s@]{1,255}$/u;
+export const idnEmail = /^[^\s@"]{1,64}@[^\s@]{1,255}$/u;
 
 export const browserEmail: RegExp =
   /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
@@ -69,9 +70,10 @@ export const base64: RegExp = /^$|^(?:[0-9a-zA-Z+/]{4})*(?:(?:[0-9a-zA-Z+/]{2}==
 export const base64url: RegExp = /^[A-Za-z0-9_-]*$/;
 
 // based on https://stackoverflow.com/questions/106179/regular-expression-to-match-dns-hostname-or-ip-address
-// export const hostname: RegExp =
-//   /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)+([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/;
-export const hostname: RegExp = /^([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+$/;
+// export const hostname: RegExp = /^([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+$/;
+export const hostname: RegExp =
+  /^(?=.{1,253}\.?$)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[-0-9a-zA-Z]{0,61}[0-9a-zA-Z])?)*\.?$/;
+
 export const domain: RegExp = /^([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
 
 // https://blog.stevenlevithan.com/archives/validate-phone-number#r4-3 (regex sans spaces)
@@ -109,7 +111,8 @@ export function datetime(args: {
   const time = timeSource({ precision: args.precision });
   const opts = ["Z"];
   if (args.local) opts.push("");
-  if (args.offset) opts.push(`([+-]\\d{2}:\\d{2})`);
+  // if (args.offset) opts.push(`([+-]\\d{2}:\\d{2})`);
+  if (args.offset) opts.push(`([+-](?:[01]\\d|2[0-3]):[0-5]\\d)`);
   const timeRegex = `${time}(?:${opts.join("|")})`;
 
   return new RegExp(`^${dateSource}T(?:${timeRegex})$`);

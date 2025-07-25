@@ -62,6 +62,12 @@ test("datetime parsing with offset", () => {
   expect(() => datetimeOffset.parse("2020-10-14T17:42:29+03")).toThrow();
   expect(() => datetimeOffset.parse("tuna")).toThrow();
   expect(() => datetimeOffset.parse("2022-10-13T09:52:31.Z")).toThrow();
+
+  // Invalid offset tests
+  expect(() => datetimeOffset.parse("2020-10-14T17:42:29+24:00")).toThrow(); // out of range hours
+  expect(() => datetimeOffset.parse("2020-10-14T17:42:29+00:60")).toThrow(); // out of range minutes
+  expect(() => datetimeOffset.parse("2020-10-14T17:42:29+1:30")).toThrow(); // single digit hours
+  expect(() => datetimeOffset.parse("2020-10-14T17:42:29+00:")).toThrow(); // incomplete offset
 });
 
 test("datetime parsing with offset and precision 0", () => {

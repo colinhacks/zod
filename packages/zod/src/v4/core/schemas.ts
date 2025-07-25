@@ -1952,7 +1952,13 @@ export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$const
     return undefined;
   });
 
+  const single = def.options.length === 1;
+  const first = def.options[0]._zod.run;
+
   inst._zod.parse = (payload, ctx) => {
+    if (single) {
+      return first(payload, ctx);
+    }
     let async = false;
 
     const results: util.MaybeAsync<ParsePayload>[] = [];
@@ -2095,11 +2101,14 @@ export interface $ZodIntersectionDef<Left extends SomeType = $ZodType, Right ext
 }
 
 export interface $ZodIntersectionInternals<A extends SomeType = $ZodType, B extends SomeType = $ZodType>
-  extends $ZodTypeInternals<core.output<A> & core.output<B>, core.input<A> & core.input<B>> {
+  extends _$ZodTypeInternals {
+  // $ZodTypeInternals<core.output<A> & core.output<B>, core.input<A> & core.input<B>>
   def: $ZodIntersectionDef<A, B>;
   isst: never;
   optin: A["_zod"]["optin"] | B["_zod"]["optin"];
   optout: A["_zod"]["optout"] | B["_zod"]["optout"];
+  output: core.output<A> & core.output<B>;
+  input: core.input<A> & core.input<B>;
 }
 
 export interface $ZodIntersection<A extends SomeType = $ZodType, B extends SomeType = $ZodType> extends $ZodType {
