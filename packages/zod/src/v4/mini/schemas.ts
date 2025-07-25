@@ -436,6 +436,10 @@ export function stringFormat<Format extends string>(
   return core._stringFormat(ZodMiniCustomStringFormat, format, fnOrRegex, _params) as any;
 }
 
+export function hostname(_params?: string | core.$ZodStringFormatParams): ZodMiniCustomStringFormat<"hostname"> {
+  return core._stringFormat(ZodMiniCustomStringFormat, "hostname", core.regexes.hostname, _params) as any;
+}
+
 // ZodMiniNumber
 interface _ZodMiniNumber<T extends core.$ZodNumberInternals<unknown> = core.$ZodNumberInternals<unknown>>
   extends _ZodMiniType<T>,

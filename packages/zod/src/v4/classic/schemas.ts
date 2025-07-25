@@ -697,6 +697,10 @@ export function stringFormat<Format extends string>(
   return core._stringFormat(ZodCustomStringFormat, format, fnOrRegex, _params) as any;
 }
 
+export function hostname(_params?: string | core.$ZodStringFormatParams): ZodCustomStringFormat<"hostname"> {
+  return core._stringFormat(ZodCustomStringFormat, "hostname", core.regexes.hostname, _params) as any;
+}
+
 // ZodNumber
 export interface _ZodNumber<Internals extends core.$ZodNumberInternals = core.$ZodNumberInternals>
   extends _ZodType<Internals> {
