@@ -7,7 +7,7 @@
     "valibot": "^1.0.0",
     "zod": "workspace:*",
     "zod3": "npm:zod@~3.24.0",
-    "zod4": "npm:zod@3.25.68"
+    "zod4": "npm:zod@4.0.8"
   },
   "scripts": {
     "bench": "tsx --conditions @zod/source index.ts"

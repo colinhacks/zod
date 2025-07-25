@@ -2318,6 +2318,10 @@ z.parse(castToString, true); // => "true"
 </Tab>
 </Tabs>
 
+<Callout type="warn">
+  Refinement functions should never throw. Thrown errors are not caught by Zod.
+</Callout>
+
 {/* The output type of the schema is inferred from the transform function:
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>

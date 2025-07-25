@@ -1952,7 +1952,13 @@ export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$const
     return undefined;
   });
 
+  const single = def.options.length === 1;
+  const first = def.options[0]._zod.run;
+
   inst._zod.parse = (payload, ctx) => {
+    if (single) {
+      return first(payload, ctx);
+    }
     let async = false;
 
     const results: util.MaybeAsync<ParsePayload>[] = [];

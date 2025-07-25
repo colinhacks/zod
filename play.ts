@@ -1,4 +1,3 @@
-import * as z from "zod/mini";
+import * as z from "zod";
 
-// valid hostnames
-z.hostname().parse("localhost");
+z;
