@@ -157,6 +157,7 @@ test("invalid discriminator value", () => {
         "code": "invalid_union",
         "errors": [],
         "note": "No matching discriminator",
+        "discriminator": "type",
         "path": [
           "type"
         ],
