@@ -958,7 +958,7 @@ test("E.164 validation", () => {
 });
 
 test("MD5 hash validation", () => {
-  const md5Schema = z.string().md5();
+  const md5Schema = z.md5();
 
   // Valid MD5 hashes
   const validMD5Hashes = [
@@ -984,7 +984,7 @@ test("MD5 hash validation", () => {
 });
 
 test("MD5 Base64 hash validation", () => {
-  const md5Base64Schema = z.string().md5Base64();
+  const md5Base64Schema = z.md5Base64();
 
   // Valid MD5 Base64 hashes
   const validMD5Base64Hashes = [
@@ -1008,7 +1008,7 @@ test("MD5 Base64 hash validation", () => {
 });
 
 test("SHA-1 hash validation", () => {
-  const sha1Schema = z.string().sha1();
+  const sha1Schema = z.sha1();
 
   // Valid SHA-1 hashes
   const validSHA1Hashes = [
@@ -1031,7 +1031,7 @@ test("SHA-1 hash validation", () => {
 });
 
 test("SHA-1 Base64 hash validation", () => {
-  const sha1Base64Schema = z.string().sha1Base64();
+  const sha1Base64Schema = z.sha1Base64();
 
   // Valid SHA-1 Base64 hashes
   const validSHA1Base64Hashes = [
@@ -1053,7 +1053,7 @@ test("SHA-1 Base64 hash validation", () => {
 });
 
 test("SHA-256 hash validation", () => {
-  const sha256Schema = z.string().sha256();
+  const sha256Schema = z.sha256();
 
   // Valid SHA-256 hashes
   const validSHA256Hashes = [
@@ -1075,7 +1075,7 @@ test("SHA-256 hash validation", () => {
 });
 
 test("SHA-256 Base64 hash validation", () => {
-  const sha256Base64Schema = z.string().sha256Base64();
+  const sha256Base64Schema = z.sha256Base64();
 
   // Valid SHA-256 Base64 hashes
   const validSHA256Base64Hashes = [
@@ -1097,7 +1097,7 @@ test("SHA-256 Base64 hash validation", () => {
 });
 
 test("SHA-384 hash validation", () => {
-  const sha384Schema = z.string().sha384();
+  const sha384Schema = z.sha384();
 
   // Valid SHA-384 hashes
   const validSHA384Hashes = [
@@ -1119,7 +1119,7 @@ test("SHA-384 hash validation", () => {
 });
 
 test("SHA-384 Base64 hash validation", () => {
-  const sha384Base64Schema = z.string().sha384Base64();
+  const sha384Base64Schema = z.sha384Base64();
 
   // Valid SHA-384 Base64 hashes
   const validSHA384Base64Hashes = [
@@ -1140,7 +1140,7 @@ test("SHA-384 Base64 hash validation", () => {
 });
 
 test("SHA-512 hash validation", () => {
-  const sha512Schema = z.string().sha512();
+  const sha512Schema = z.sha512();
 
   // Valid SHA-512 hashes
   const validSHA512Hashes = [
@@ -1161,7 +1161,7 @@ test("SHA-512 hash validation", () => {
 });
 
 test("SHA-512 Base64 hash validation", () => {
-  const sha512Base64Schema = z.string().sha512Base64();
+  const sha512Base64Schema = z.sha512Base64();
 
   // Valid SHA-512 Base64 hashes
   const validSHA512Base64Hashes = [
@@ -1182,8 +1182,8 @@ test("SHA-512 Base64 hash validation", () => {
 });
 
 test("hash format error messages", () => {
-  const md5Schema = z.string().md5();
-  const sha256Schema = z.string().sha256();
+  const md5Schema = z.md5();
+  const sha256Schema = z.sha256();
 
   // Test error codes for invalid hashes
   const md5Result = md5Schema.safeParse("invalid");
@@ -1199,8 +1199,8 @@ test("hash format error messages", () => {
 });
 
 test("hash format chaining with other validations", () => {
-  const chainedMd5 = z.string().md5().min(32).max(32);
-  const chainedSha256 = z.string().sha256().length(64);
+  const chainedMd5 = z.md5().min(32).max(32);
+  const chainedSha256 = z.sha256().length(64);
 
   expect(chainedMd5.safeParse("5d41402abc4b2a76b9719d911017c592").success).toBe(true);
   expect(chainedSha256.safeParse("2cf24dba4f21d4288094c14b0f2b0336deec006fdd7c73a61d5bb3ca46a04366").success).toBe(

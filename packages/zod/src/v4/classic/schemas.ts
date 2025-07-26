@@ -309,26 +309,6 @@ export interface ZodString extends _ZodString<core.$ZodStringInternals<string>> 
   cidrv6(params?: string | core.$ZodCheckCIDRv6Params): this;
   /** @deprecated Use `z.e164()` instead. */
   e164(params?: string | core.$ZodCheckE164Params): this;
-  /** @deprecated Use `z.md5()` instead. */
-  md5(params?: string | core.$ZodCheckMD5Params): this;
-  /** @deprecated Use `z.md5Base64()` instead. */
-  md5Base64(params?: string | core.$ZodCheckMD5Base64Params): this;
-  /** @deprecated Use `z.sha1()` instead. */
-  sha1(params?: string | core.$ZodCheckSHA1Params): this;
-  /** @deprecated Use `z.sha1Base64()` instead. */
-  sha1Base64(params?: string | core.$ZodCheckSHA1Base64Params): this;
-  /** @deprecated Use `z.sha256()` instead. */
-  sha256(params?: string | core.$ZodCheckSHA256Params): this;
-  /** @deprecated Use `z.sha256Base64()` instead. */
-  sha256Base64(params?: string | core.$ZodCheckSHA256Base64Params): this;
-  /** @deprecated Use `z.sha384()` instead. */
-  sha384(params?: string | core.$ZodCheckSHA384Params): this;
-  /** @deprecated Use `z.sha384Base64()` instead. */
-  sha384Base64(params?: string | core.$ZodCheckSHA384Base64Params): this;
-  /** @deprecated Use `z.sha512()` instead. */
-  sha512(params?: string | core.$ZodCheckSHA512Params): this;
-  /** @deprecated Use `z.sha512Base64()` instead. */
-  sha512Base64(params?: string | core.$ZodCheckSHA512Base64Params): this;
 
   // ISO 8601 checks
   /** @deprecated Use `z.iso.datetime()` instead. */
@@ -376,16 +356,6 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
   inst.cidrv4 = (params) => inst.check(core._cidrv4(ZodCIDRv4, params));
   inst.cidrv6 = (params) => inst.check(core._cidrv6(ZodCIDRv6, params));
   inst.e164 = (params) => inst.check(core._e164(ZodE164, params));
-  inst.md5 = (params) => inst.check(core._md5(ZodMD5, params));
-  inst.md5Base64 = (params) => inst.check(core._md5Base64(ZodMD5Base64, params));
-  inst.sha1 = (params) => inst.check(core._sha1(ZodSHA1, params));
-  inst.sha1Base64 = (params) => inst.check(core._sha1Base64(ZodSHA1Base64, params));
-  inst.sha256 = (params) => inst.check(core._sha256(ZodSHA256, params));
-  inst.sha256Base64 = (params) => inst.check(core._sha256Base64(ZodSHA256Base64, params));
-  inst.sha384 = (params) => inst.check(core._sha384(ZodSHA384, params));
-  inst.sha384Base64 = (params) => inst.check(core._sha384Base64(ZodSHA384Base64, params));
-  inst.sha512 = (params) => inst.check(core._sha512(ZodSHA512, params));
-  inst.sha512Base64 = (params) => inst.check(core._sha512Base64(ZodSHA512Base64, params));
 
   // iso
   inst.datetime = (params) => inst.check(iso.datetime(params as any));
