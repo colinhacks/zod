@@ -18,7 +18,7 @@ const schema = z.strictObject({
 });
 ```
 
-Attempting to parse this invalid data results in an error containing two issues.
+Attempting to parse this invalid data results in an error containing three issues.
 
 ```ts
 const result = schema.safeParse({
