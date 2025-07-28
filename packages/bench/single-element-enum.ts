@@ -17,7 +17,7 @@ const DATA = Array.from({ length: 10000 }, () => 'a');
 console.log(z4Schema.parse(DATA[0]));
 console.log(z4LibSchema.parse(DATA[0]));
 
-const bench = metabench("z.object() safeParse", {
+const bench = metabench("single-element enum parse", {
   
   zodNext() {
     for(const _ of DATA) z4LibSchema.parse("a");
