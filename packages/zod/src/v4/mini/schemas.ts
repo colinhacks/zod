@@ -1531,33 +1531,6 @@ export function superRefine<T>(
   return core._superRefine(fn);
 }
 
-// superRefine
-// export interface RefinementCtx<T = unknown> extends core.ParsePayload<T> {
-//   addIssue(arg: string | core.$ZodRawIssue | Partial<core.$ZodIssueCustom>): void;
-// }
-
-// export function superRefine<T>(fn: (arg: T, payload: RefinementCtx<T>) => void | Promise<void>): core.$ZodCheck<T> {
-//   const ch = check<T>((payload) => {
-//     (payload as RefinementCtx).addIssue = (issue) => {
-//       if (typeof issue === "string") {
-//         payload.issues.push(util.issue(issue, payload.value, ch._zod.def));
-//       } else {
-//         // for Zod 3 backwards compatibility
-//         const _issue: any = issue;
-//         if (_issue.fatal) _issue.continue = false;
-//         _issue.code ??= "custom";
-//         _issue.input ??= payload.value;
-//         _issue.inst ??= ch;
-//         _issue.continue ??= !ch._zod.def.abort;
-//         payload.issues.push(util.issue(_issue));
-//       }
-//     };
-
-//     return fn(payload.value, payload as RefinementCtx<T>);
-//   });
-//   return ch;
-// }
-
 // instanceof
 abstract class Class {
   constructor(..._args: any[]) {}
