@@ -39,3 +39,4 @@ export { default as ur } from "./ur.js";
 export { default as vi } from "./vi.js";
 export { default as zhCN } from "./zh-CN.js";
 export { default as zhTW } from "./zh-TW.js";
+export { default as yo } from "./yo.js";
