@@ -33,7 +33,7 @@ export default async function Page(props: {
       editOnGithub={{
         owner: "colinhacks",
         repo: "zod",
-        sha: "v4",
+        sha: "main",
         path: `packages/docs/content/${page.file.path}`,
       }}
     >
