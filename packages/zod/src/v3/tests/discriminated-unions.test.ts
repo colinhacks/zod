@@ -94,8 +94,9 @@ test("invalid discriminator value", () => {
       {
         code: z.ZodIssueCode.invalid_union_discriminator,
         options: ["a", "b"],
-        message: "Invalid discriminator value. Expected 'a' | 'b'",
+        message: "Invalid discriminator value. Expected 'a' | 'b', received 'x'",
         path: ["type"],
+        received: "x",
       },
     ]);
   }

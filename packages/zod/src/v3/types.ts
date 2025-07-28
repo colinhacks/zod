@@ -3139,6 +3139,7 @@ export class ZodDiscriminatedUnion<
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_union_discriminator,
         options: Array.from(this.optionsMap.keys()),
+        received: discriminatorValue,
         path: [discriminator],
       });
       return INVALID;

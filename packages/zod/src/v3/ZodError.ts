@@ -63,6 +63,7 @@ export interface ZodInvalidUnionIssue extends ZodIssueBase {
 export interface ZodInvalidUnionDiscriminatorIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_union_discriminator;
   options: Primitive[];
+  received: string;
 }
 
 export interface ZodInvalidEnumValueIssue extends ZodIssueBase {
