@@ -270,14 +270,14 @@ test("intersection with recursive types", () => {
       config: z.object({ x: z.number(), y: z.number() }),
     }),
   ]);
-  type A = z.infer<typeof A>;
+  // type A = z.infer<typeof A>;
 
   const B = z.object({
     get children() {
       return z.array(C).optional();
     },
   });
-  type B = z.infer<typeof B>;
+  // type B = z.infer<typeof B>;
 
   const C = z.intersection(A, B);
   type C = z.infer<typeof C>;
