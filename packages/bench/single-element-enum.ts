@@ -5,7 +5,7 @@ import {  zod4, zodNext } from "./benchUtil.js";
 
 
 
-console.log("Single item union");
+console.log("Single-element enum benchmarking");
 
 const z4LibSchema = zod4.enum(['a']);
 
