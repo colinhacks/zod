@@ -1,21 +1,37 @@
-import * as z from "zod";
+import * as z from "zod/mini";
+// import * as z3 from "zod/v3";
+import * as zm from "zod/mini";
 
-// Base schema with broader enum
-const baseSchema = z.object({
-  gender: z.enum(["Rüde", "Hündin", "männlich", "weiblich"]).nullable(),
-  // ... other fields
-});
-// Trying to create a more specific schema with narrower enum
-const dogSchema = z.object({
-  gender: z.enum(["Rüde", "Hündin"]).nullable(),
-  // ... other fields
-});
-// Generic interface that should accept both schemas
-interface MyInterface<T extends typeof baseSchema> {
-  schema: T;
-  // ... other properties
-}
-// This fails with type error even though dogSchema's enum is a subset of baseSchema's enum
-const implementation: MyInterface<typeof dogSchema> = {
-  schema: dogSchema,
+const schema1 = zm
+  .object({
+    addressLine1: zm.string(),
+    addressLine2: zm.string().check(
+      z.superRefine((val, ctx) => {
+        if (ctx.value === "hello2") {
+          ctx.addIssue({
+            code: "custom",
+            input: ctx.value,
+            message: "hellotwo",
+          });
+        }
+      })
+    ),
+  })
+  .check((ctx) => {
+    const { addressLine1 } = ctx.value;
+    if (addressLine1 === "hello1") {
+      ctx.issues.push({
+        code: "custom",
+        input: addressLine1,
+        path: ["addressLine1"],
+        message: "hello1",
+      });
+    }
+  });
+
+const data = {
+  addressLine1: "hello1",
+  addressLine2: "hello2",
 };
+
+console.log("schema1 - zod mini", schema1.safeParse(data).error?.issues);

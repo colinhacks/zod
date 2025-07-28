@@ -297,6 +297,7 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
             expected: origin,
             format: def.format,
             code: "invalid_type",
+            continue: false,
             input,
             inst,
           });
@@ -1152,6 +1153,7 @@ export const $ZodCheckMimeType: core.$constructor<$ZodCheckMimeType> = /*@__PURE
         values: def.mime,
         input: payload.value.type,
         inst,
+        continue: !def.abort,
       });
     };
   }

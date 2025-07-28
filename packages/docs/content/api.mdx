@@ -2146,66 +2146,61 @@ schema.parse({
 
 
 ### `.superRefine()`
-
-<Callout type="warn">
-  In Zod 4, `.superRefine()` has been deprecated in favor of `.check()`
-  
-  <Accordions>
-  <Accordion title="View .superRefine() example">
     
-    <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
-    <Tab value="Zod">
-    ```ts
-    const UniqueStringArray = z.array(z.string()).superRefine((val, ctx) => {
-      if (val.length > 3) {
-        ctx.addIssue({
-          code: "too_big",
-          maximum: 3,
-          origin: "array",
-          inclusive: true,
-          message: "Too many items 😡",
-          input: val,
-        });
-      }
-
-      if (val.length !== new Set(val).size) {
-        ctx.addIssue({
-          code: "custom",
-          message: `No duplicates allowed.`,
-          input: val,
-        });
-      }
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+const UniqueStringArray = z.array(z.string()).superRefine((val, ctx) => {
+  if (val.length > 3) {
+    ctx.addIssue({
+      code: "too_big",
+      maximum: 3,
+      origin: "array",
+      inclusive: true,
+      message: "Too many items 😡",
+      input: val,
     });
-    ```
-    </Tab>
-    <Tab value="Zod Mini">
-    ```ts
-    // no equivalent, use `.check(checkFn)` instead
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-    ```
-    </Tab>
-    </Tabs>
-  </Accordion>
-  </Accordions>
-</Callout>
+  }
+
+  if (val.length !== new Set(val).size) {
+    ctx.addIssue({
+      code: "custom",
+      message: `No duplicates allowed.`,
+      input: val,
+    });
+  }
+});
+
+
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+const UniqueStringArray = z.array(z.string()).check(
+  z.superRefine((val, ctx) => {
+    if (val.length > 3) {
+      ctx.addIssue({
+        code: "too_big",
+        maximum: 3,
+        origin: "array",
+        inclusive: true,
+        message: "Too many items 😡",
+        input: val,
+      });
+    }
+
+    if (val.length !== new Set(val).size) {
+      ctx.addIssue({
+        code: "custom",
+        message: `No duplicates allowed.`,
+        input: val,
+      });
+    }
+  })
+);
+```
+</Tab>
+</Tabs>
 
 ### `.check()`
 
