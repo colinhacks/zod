@@ -391,6 +391,22 @@ export function email(params?: string | core.$ZodEmailParams): ZodEmail {
   return core._email(ZodEmail, params);
 }
 
+// ZodCurrency
+export interface ZodCurrency extends ZodStringFormat<"currency"> {
+  _zod: core.$ZodCurrencyInternals;
+}
+export const ZodCurrency: core.$constructor<ZodCurrency> = /*@__PURE__*/ core.$constructor(
+  "ZodCurrency",
+  (inst, def) => {
+    core.$ZodCurrency.init(inst, def);
+    ZodStringFormat.init(inst, def);
+  }
+);
+
+export function currency(params?: string | core.$ZodCurrencyParams): ZodCurrency {
+  return core._currency(ZodCurrency, params);
+}
+
 // ZodGUID
 export interface ZodGUID extends ZodStringFormat<"guid"> {
   _zod: core.$ZodGUIDInternals;

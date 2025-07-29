@@ -1,6 +1,7 @@
 import type { $ZodTypeDiscriminable } from "./api.js";
 import * as checks from "./checks.js";
 import * as core from "./core.js";
+import { currencies } from "./currencies.js";
 import { Doc } from "./doc.js";
 import type * as errors from "./errors.js";
 import { safeParse, safeParseAsync } from "./parse.js";
@@ -410,6 +411,37 @@ export const $ZodEmail: core.$constructor<$ZodEmail> = /*@__PURE__*/ core.$const
   (inst, def): void => {
     def.pattern ??= regexes.email;
     $ZodStringFormat.init(inst, def);
+  }
+);
+
+//////////////////////////////   ZodCurrency   //////////////////////////////
+
+export function isValidCurrency(currency: string): boolean {
+  return currencies.has(currency);
+}
+
+export interface $ZodCurrencyDef extends $ZodStringFormatDef<"currency"> {}
+export interface $ZodCurrencyInternals extends $ZodStringFormatInternals<"currency"> {}
+export interface $ZodCurrency extends $ZodType {
+  _zod: $ZodCurrencyInternals;
+}
+
+export const $ZodCurrency: core.$constructor<$ZodCurrency> = /*@__PURE__*/ core.$constructor(
+  "$ZodCurrency",
+  (inst, def): void => {
+    $ZodStringFormat.init(inst, def);
+
+    inst._zod.check = (payload) => {
+      if (isValidCurrency(payload.value)) return;
+
+      payload.issues.push({
+        code: "invalid_format",
+        format: "currency",
+        input: payload.value,
+        inst,
+        continue: !def.abort,
+      });
+    };
   }
 );
 

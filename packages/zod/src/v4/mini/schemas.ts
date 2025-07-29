@@ -121,6 +121,20 @@ export function email(params?: string | core.$ZodEmailParams): ZodMiniEmail {
   return core._email(ZodMiniEmail, params);
 }
 
+// ZodMiniCurrency
+export interface ZodMiniCurrency extends _ZodMiniString<core.$ZodCurrencyInternals> {}
+export const ZodMiniCurrency: core.$constructor<ZodMiniCurrency> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniCurrency",
+  (inst, def) => {
+    core.$ZodCurrency.init(inst, def);
+    ZodMiniStringFormat.init(inst, def);
+  }
+);
+
+export function currency(params?: string | core.$ZodCurrencyParams): ZodMiniCurrency {
+  return core._currency(ZodMiniCurrency, params);
+}
+
 // ZodMiniGUID
 export interface ZodMiniGUID extends _ZodMiniString<core.$ZodGUIDInternals> {
   // _zod: core.$ZodGUIDInternals;

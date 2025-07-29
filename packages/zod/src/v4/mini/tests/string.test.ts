@@ -86,6 +86,19 @@ test("z.email", () => {
   expect(z.safeParse(d, "bad email").error!.issues[0].message).toEqual("bad email");
 });
 
+test("z.currency", () => {
+  const a = z.currency();
+  expect(z.parse(a, "USD")).toEqual("USD");
+  expect(z.parse(a, "TND")).toEqual("TND");
+  expect(z.safeParse(a, "XXX").error!.issues[0].message).toEqual("Invalid input");
+  expect(() => z.parse(a, "eur")).toThrow();
+  expect(() => z.parse(a, "USDT")).toThrow();
+  expect(() => z.parse(a, "US")).toThrow();
+  expect(() => z.parse(a, "$€£")).toThrow();
+  expect(() => z.parse(a, "123")).toThrow();
+  expect(() => z.parse(a, 23)).toThrow();
+});
+
 test("z.url", () => {
   const a = z.url();
   // valid URLs
