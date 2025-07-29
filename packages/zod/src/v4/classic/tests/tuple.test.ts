@@ -28,9 +28,9 @@ test("successful validation", () => {
   expect(r2.error!).toMatchInlineSnapshot(`
     [ZodError: [
       {
-        "origin": "array",
         "code": "too_big",
         "maximum": 2,
+        "origin": "array",
         "path": [],
         "message": "Too big: expected array to have <2 items"
       }
@@ -80,9 +80,9 @@ test("async validation", async () => {
   expect(r2.error!).toMatchInlineSnapshot(`
     [ZodError: [
       {
-        "origin": "array",
         "code": "too_big",
         "maximum": 2,
+        "origin": "array",
         "path": [],
         "message": "Too big: expected array to have <2 items"
       }

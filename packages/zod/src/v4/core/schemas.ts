@@ -319,6 +319,7 @@ export const $ZodString: core.$constructor<$ZodString> = /*@__PURE__*/ core.$con
     payload.issues.push({
       expected: "string",
       code: "invalid_type",
+
       input: payload.value,
       inst,
     });
@@ -1205,6 +1206,7 @@ export const $ZodNumber: core.$constructor<$ZodNumber> = /*@__PURE__*/ core.$con
     payload.issues.push({
       expected: "number",
       code: "invalid_type",
+
       input,
       inst,
       ...(received ? { received } : {}),
@@ -1275,6 +1277,7 @@ export const $ZodBoolean: core.$constructor<$ZodBoolean> = /*@__PURE__*/ core.$c
       payload.issues.push({
         expected: "boolean",
         code: "invalid_type",
+
         input,
         inst,
       });
@@ -1327,6 +1330,7 @@ export const $ZodBigInt: core.$constructor<$ZodBigInt> = /*@__PURE__*/ core.$con
     payload.issues.push({
       expected: "bigint",
       code: "invalid_type",
+
       input: payload.value,
       inst,
     });
@@ -1386,6 +1390,7 @@ export const $ZodSymbol: core.$constructor<$ZodSymbol> = /*@__PURE__*/ core.$con
     payload.issues.push({
       expected: "symbol",
       code: "invalid_type",
+
       input,
       inst,
     });
@@ -1430,6 +1435,7 @@ export const $ZodUndefined: core.$constructor<$ZodUndefined> = /*@__PURE__*/ cor
       payload.issues.push({
         expected: "undefined",
         code: "invalid_type",
+
         input,
         inst,
       });
@@ -1472,6 +1478,7 @@ export const $ZodNull: core.$constructor<$ZodNull> = /*@__PURE__*/ core.$constru
     payload.issues.push({
       expected: "null",
       code: "invalid_type",
+
       input,
       inst,
     });
@@ -1563,6 +1570,7 @@ export const $ZodNever: core.$constructor<$ZodNever> = /*@__PURE__*/ core.$const
     payload.issues.push({
       expected: "never",
       code: "invalid_type",
+
       input: payload.value,
       inst,
     });
@@ -1600,6 +1608,7 @@ export const $ZodVoid: core.$constructor<$ZodVoid> = /*@__PURE__*/ core.$constru
     payload.issues.push({
       expected: "void",
       code: "invalid_type",
+
       input,
       inst,
     });
@@ -1650,6 +1659,7 @@ export const $ZodDate: core.$constructor<$ZodDate> = /*@__PURE__*/ core.$constru
     payload.issues.push({
       expected: "date",
       code: "invalid_type",
+
       input,
       ...(isDate ? { received: "Invalid Date" } : {}),
       inst,
@@ -1699,6 +1709,7 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
       payload.issues.push({
         expected: "array",
         code: "invalid_type",
+
         input,
         inst,
       });
@@ -1965,6 +1976,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       payload.issues.push({
         expected: "object",
         code: "invalid_type",
+
         input,
         inst,
       });
@@ -2018,6 +2030,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     if (unrecognized.length) {
       payload.issues.push({
         code: "unrecognized_keys",
+
         keys: unrecognized,
         input,
         inst,
@@ -2082,6 +2095,7 @@ function handleUnionResults(results: ParsePayload[], final: ParsePayload, inst: 
 
   final.issues.push({
     code: "invalid_union",
+
     input: final.value,
     inst,
     errors: results.map((result) => result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))),
@@ -2116,7 +2130,13 @@ export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$const
     return undefined;
   });
 
+  const single = def.options.length === 1;
+  const first = def.options[0]._zod.run;
+
   inst._zod.parse = (payload, ctx) => {
+    if (single) {
+      return first(payload, ctx);
+    }
     let async = false;
 
     const results: util.MaybeAsync<ParsePayload>[] = [];
@@ -2212,6 +2232,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
       if (!util.isObject(input)) {
         payload.issues.push({
           code: "invalid_type",
+
           expected: "object",
           input,
           inst,
@@ -2231,6 +2252,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
       // no matching discriminator
       payload.issues.push({
         code: "invalid_union",
+
         errors: [],
         note: "No matching discriminator",
         discriminator: def.discriminator,
@@ -2259,11 +2281,14 @@ export interface $ZodIntersectionDef<Left extends SomeType = $ZodType, Right ext
 }
 
 export interface $ZodIntersectionInternals<A extends SomeType = $ZodType, B extends SomeType = $ZodType>
-  extends $ZodTypeInternals<core.output<A> & core.output<B>, core.input<A> & core.input<B>> {
+  extends _$ZodTypeInternals {
+  // $ZodTypeInternals<core.output<A> & core.output<B>, core.input<A> & core.input<B>>
   def: $ZodIntersectionDef<A, B>;
   isst: never;
   optin: A["_zod"]["optin"] | B["_zod"]["optin"];
   optout: A["_zod"]["optout"] | B["_zod"]["optout"];
+  output: core.output<A> & core.output<B>;
+  input: core.input<A> & core.input<B>;
 }
 
 export interface $ZodIntersection<A extends SomeType = $ZodType, B extends SomeType = $ZodType> extends $ZodType {
@@ -2458,10 +2483,11 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
       const tooSmall = input.length < optStart - 1;
       if (tooBig || tooSmall) {
         payload.issues.push({
+          ...(tooBig ? { code: "too_big", maximum: items.length } : { code: "too_small", minimum: items.length }),
+
           input,
           inst,
           origin: "array" as const,
-          ...(tooBig ? { code: "too_big", maximum: items.length } : { code: "too_small", minimum: items.length }),
         });
         return payload;
       }
@@ -2596,6 +2622,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       payload.issues.push({
         expected: "record",
         code: "invalid_type",
+
         input,
         inst,
       });
@@ -2639,6 +2666,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       if (unrecognized && unrecognized.length > 0) {
         payload.issues.push({
           code: "unrecognized_keys",
+
           input,
           inst,
           keys: unrecognized,
@@ -2656,8 +2684,9 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
 
         if (keyResult.issues.length) {
           payload.issues.push({
-            origin: "record",
             code: "invalid_key",
+
+            origin: "record",
             issues: keyResult.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
             input: key,
             path: [key],
@@ -2728,6 +2757,7 @@ export const $ZodMap: core.$constructor<$ZodMap> = /*@__PURE__*/ core.$construct
       payload.issues.push({
         expected: "map",
         code: "invalid_type",
+
         input,
         inst,
       });
@@ -2771,8 +2801,9 @@ function handleMapResult(
       final.issues.push(...util.prefixIssues(key as PropertyKey, keyResult.issues));
     } else {
       final.issues.push({
-        origin: "map",
         code: "invalid_key",
+
+        origin: "map",
         input,
         inst,
         issues: keyResult.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
@@ -2786,6 +2817,7 @@ function handleMapResult(
       final.issues.push({
         origin: "map",
         code: "invalid_element",
+
         input,
         inst,
         key: key,
@@ -2910,6 +2942,7 @@ export const $ZodEnum: core.$constructor<$ZodEnum> = /*@__PURE__*/ core.$constru
     }
     payload.issues.push({
       code: "invalid_value",
+
       values,
       input,
       inst,
@@ -2965,6 +2998,7 @@ export const $ZodLiteral: core.$constructor<$ZodLiteral> = /*@__PURE__*/ core.$c
       }
       payload.issues.push({
         code: "invalid_value",
+
         values: def.values,
         input,
         inst,
@@ -3059,6 +3093,7 @@ export const $ZodFile: core.$constructor<$ZodFile> = /*@__PURE__*/ core.$constru
     payload.issues.push({
       expected: "file",
       code: "invalid_type",
+
       input,
       inst,
     });
@@ -3367,6 +3402,7 @@ function handleNonOptionalResult(payload: ParsePayload, inst: $ZodNonOptional) {
   if (!payload.issues.length && payload.value === undefined) {
     payload.issues.push({
       code: "invalid_type",
+
       expected: "nonoptional",
       input: payload.value,
       inst,
@@ -3787,6 +3823,7 @@ export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> = /*@__
         payload.issues.push({
           input: payload.value,
           inst,
+
           code: "invalid_format",
           format: def.format ?? "template_literal",
           pattern: inst._zod.pattern.source,
