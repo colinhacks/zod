@@ -122,12 +122,12 @@ test("ISO 8601 basic format timezone offset (currently unsupported)", () => {
 
   const datetime = z.iso.datetime({ offset: true });
 
-  // Basic format (without colon) - currently throws but is valid ISO 8601
-  expect(() => datetime.parse("2022-10-04T05:15:00.000+0000")).toThrow();
-  expect(() => datetime.parse("2022-10-04T05:15:00.000-0500")).toThrow();
-  expect(() => datetime.parse("2022-10-04T05:15:00.000+0530")).toThrow();
+  // Basic format (without colon)
+  expect(datetime.parse("2022-10-04T05:15:00.000+0000")).toBe("2022-10-04T05:15:00.000+00:00");
+  expect(datetime.parse("2022-10-04T05:15:00.000-0500")).toBe("2022-10-04T05:15:00.000-05:00");
+  expect(datetime.parse("2022-10-04T05:15:00.000+0530")).toBe("2022-10-04T05:15:00.000+05:30");
 
-  // Extended format (with colon) - currently supported
+  // Extended format (with colon)
   expect(datetime.parse("2022-10-04T05:15:00.000+00:00")).toBe("2022-10-04T05:15:00.000+00:00");
   expect(datetime.parse("2022-10-04T05:15:00.000-05:00")).toBe("2022-10-04T05:15:00.000-05:00");
   expect(datetime.parse("2022-10-04T05:15:00.000+05:30")).toBe("2022-10-04T05:15:00.000+05:30");
