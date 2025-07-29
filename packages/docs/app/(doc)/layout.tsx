@@ -11,7 +11,7 @@ const layoutProps: DocsLayoutProps = {
   tree: source.pageTree,
 
   sidebar: {
-    // hideSearch: false,
+    hideSearch: false,
     collapsible: false,
     components: {
       Item: SidebarItem,
@@ -45,7 +45,7 @@ const layoutProps: DocsLayoutProps = {
     ...baseOptions.nav,
     transparentMode: "top",
     enabled: true,
-    // enableSearch: true,
+    enableSearch: true,
   },
   links: [
     {

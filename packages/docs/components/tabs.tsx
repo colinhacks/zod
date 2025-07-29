@@ -1,6 +1,6 @@
 "use client";
 
-import { Tabs, TabsList, TabsTrigger, TabsContent, Tab, type TabsProps } from "fumadocs-ui/components/tabs";
+import { Primitive, Tab, type TabsProps } from "fumadocs-ui/components/tabs";
 import React from "react";
 
 interface ChildProps {
@@ -8,7 +8,7 @@ interface ChildProps {
   children: React.ReactNode;
 }
 
-const _Tabs = ({ children, ...rest }: TabsProps) => {
+const Tabs = ({ children, ...rest }: TabsProps) => {
   const validChildren = React.Children.toArray(children)
     .filter(React.isValidElement)
     .filter((child: any) => child.props.title);
@@ -24,26 +24,26 @@ const _Tabs = ({ children, ...rest }: TabsProps) => {
   });
 
   return (
-    <Tabs items={tabs} className="border-none rounded-none px-0" defaultValue={tabs[0]} {...rest}>
-      <TabsList className="px-0 bg-transparent border-b gap-6">
+    <Primitive.Tabs items={tabs} className="border-none rounded-none px-0" defaultValue={tabs[0]} {...rest}>
+      <Primitive.TabsList className="px-0 bg-transparent border-b gap-6">
         {validChildren.map((child) => {
           const { title } = child.props as ChildProps;
           return (
-            <TabsTrigger
+            <Primitive.TabsTrigger
               key={title}
               value={title}
               className="font-medium data-[state=active]:shadow-[inset_0_-1px_0_0_currentColor,_0_1px_0_0_currentColor]"
             >
               {title}
-            </TabsTrigger>
+            </Primitive.TabsTrigger>
           );
         })}
-      </TabsList>
+      </Primitive.TabsList>
       {validChildren.map((child) => {
         const { title, children: childContent, ...props } = child.props as ChildProps;
 
         return (
-          <TabsContent
+          <Primitive.TabsContent
             forceMount
             key={title}
             value={title}
@@ -51,11 +51,11 @@ const _Tabs = ({ children, ...rest }: TabsProps) => {
             {...props}
           >
             {childContent}
-          </TabsContent>
+          </Primitive.TabsContent>
         );
       })}
-    </Tabs>
+    </Primitive.Tabs>
   );
 };
 
-export { _Tabs as Tabs, Tab };
+export { Tabs, Tab };

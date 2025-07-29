@@ -4,7 +4,7 @@ import type { PageTree } from "fumadocs-core/server";
 import {
   SidebarItem as InternalSidebarItem,
   SidebarSeparator as InternalSidebarSeparator,
-} from "fumadocs-ui/components/layout/sidebar";
+} from "fumadocs-ui/layouts/docs/sidebar";
 
 const Tags: Record<string, string> = {
   "/packages/core": "New",
