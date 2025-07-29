@@ -58,7 +58,7 @@ test("datetime parsing with offset", () => {
   datetimeOffset.parse("2022-10-13T09:52:31.4Z");
   datetimeOffset.parse("2020-10-14T17:42:29+00:00");
   datetimeOffset.parse("2020-10-14T17:42:29+03:15");
-  expect(() => datetimeOffset.parse("2020-10-14T17:42:29+0315")).toThrow();
+  datetimeOffset.parse("2020-10-14T17:42:29+0315");
   expect(() => datetimeOffset.parse("2020-10-14T17:42:29+03")).toThrow();
   expect(() => datetimeOffset.parse("tuna")).toThrow();
   expect(() => datetimeOffset.parse("2022-10-13T09:52:31.Z")).toThrow();
@@ -69,7 +69,7 @@ test("datetime parsing with offset and precision 0", () => {
   datetimeOffsetNoMs.parse("1970-01-01T00:00:00Z");
   datetimeOffsetNoMs.parse("2022-10-13T09:52:31Z");
   datetimeOffsetNoMs.parse("2020-10-14T17:42:29+00:00");
-  expect(() => datetimeOffsetNoMs.parse("2020-10-14T17:42:29+0000")).toThrow();
+  datetimeOffsetNoMs.parse("2020-10-14T17:42:29+0000");
   expect(() => datetimeOffsetNoMs.parse("2020-10-14T17:42:29+00")).toThrow();
   expect(() => datetimeOffsetNoMs.parse("tuna")).toThrow();
   expect(() => datetimeOffsetNoMs.parse("1970-01-01T00:00:00.000Z")).toThrow();
@@ -82,7 +82,7 @@ test("datetime parsing with offset and precision 4", () => {
   const datetimeOffset4Ms = z.string().datetime({ offset: true, precision: 4 });
   datetimeOffset4Ms.parse("1970-01-01T00:00:00.1234Z");
   datetimeOffset4Ms.parse("2020-10-14T17:42:29.1234+00:00");
-  expect(() => datetimeOffset4Ms.parse("2020-10-14T17:42:29.1234+0000")).toThrow();
+  datetimeOffset4Ms.parse("2020-10-14T17:42:29.1234+0000");
   expect(() => datetimeOffset4Ms.parse("2020-10-14T17:42:29.1234+00")).toThrow();
   expect(() => datetimeOffset4Ms.parse("tuna")).toThrow();
   expect(() => datetimeOffset4Ms.parse("1970-01-01T00:00:00.123Z")).toThrow();
@@ -93,15 +93,15 @@ test("datetime offset normalization", () => {
   const a = z.iso.datetime({ offset: true });
 
   expect(a.safeParse("2020-10-14T17:42:29+02")).toMatchObject({ success: false });
-  expect(a.safeParse("2020-10-14T17:42:29+0200")).toMatchObject({ success: false });
+  expect(a.safeParse("2020-10-14T17:42:29+0200")).toMatchObject({ success: true });
   a.safeParse("2020-10-14T17:42:29+02:00");
 });
 
 test("datetime with +0000 offset format", () => {
   const isoDateTimeZ = z.iso.datetime({ offset: true });
 
-  // This format should fail because offset needs colon separator
-  expect(() => isoDateTimeZ.parse("2022-10-04T05:15:00.000+0000")).toThrow();
+  // Basic format (without colon) is now supported
+  isoDateTimeZ.parse("2022-10-04T05:15:00.000+0000");
 
   // Correct format with colon separator
   isoDateTimeZ.parse("2022-10-04T05:15:00.000+00:00");
@@ -123,9 +123,9 @@ test("ISO 8601 basic format timezone offset (currently unsupported)", () => {
   const datetime = z.iso.datetime({ offset: true });
 
   // Basic format (without colon)
-  expect(datetime.parse("2022-10-04T05:15:00.000+0000")).toBe("2022-10-04T05:15:00.000+00:00");
-  expect(datetime.parse("2022-10-04T05:15:00.000-0500")).toBe("2022-10-04T05:15:00.000-05:00");
-  expect(datetime.parse("2022-10-04T05:15:00.000+0530")).toBe("2022-10-04T05:15:00.000+05:30");
+  expect(datetime.parse("2022-10-04T05:15:00.000+0000")).toBe("2022-10-04T05:15:00.000+0000");
+  expect(datetime.parse("2022-10-04T05:15:00.000-0500")).toBe("2022-10-04T05:15:00.000-0500");
+  expect(datetime.parse("2022-10-04T05:15:00.000+0530")).toBe("2022-10-04T05:15:00.000+0530");
 
   // Extended format (with colon)
   expect(datetime.parse("2022-10-04T05:15:00.000+00:00")).toBe("2022-10-04T05:15:00.000+00:00");
