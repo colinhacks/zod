@@ -1,4 +1,4 @@
-import { beforeAll, afterAll } from "vitest";
+import { afterAll, beforeAll } from "vitest";
 
 const original = { ...console } as Record<string, any>;
 
@@ -9,13 +9,7 @@ function thrower(method: string) {
 }
 
 beforeAll(() => {
-  for (const method of [
-    "log",
-    "info",
-    "warn",
-    "error",
-    "debug",
-  ] as const) {
+  for (const method of ["log", "info", "warn", "error", "debug"] as const) {
     // @ts-ignore
     console[method] = thrower(method);
   }
