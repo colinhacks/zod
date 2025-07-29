@@ -122,7 +122,7 @@ colors.parse("yellow"); // ❌
 
 To extract the set of allowed values from a literal schema:
 
-<Tabs groupId="lib" items={["Zod", "Zod Mini"]} persist>
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
 colors.values; // => Set<"red" | "green" | "blue">
@@ -502,6 +502,34 @@ Validate [JSON Web Tokens](https://jwt.io/).
 ```ts
 z.jwt();
 z.jwt({ alg: "HS256" });
+```
+
+### Custom formats
+
+To define your own string formats:
+
+```ts
+const coolId = z.stringFormat("cool-id", ()=>{
+  // arbitrary validation here
+  return val.length === 100 && val.startsWith("cool-");
+});
+
+// a regex is also accepted
+z.stringFormat("cool-id", /^cool-[a-z0-9]{95}$/);
+```
+
+This schema will produce `"invalid_format"` issues, which are more descriptive that the `"custom"` errors produces by refinements or `z.custom()`.
+
+```ts
+myFormat.parse("invalid input!");
+// ZodError: [
+//   {
+//     "code": "invalid_format",
+//     "format": "cool-id",
+//     "path": [],
+//     "message": "Invalid cool-id"
+//   }
+// ]
 ```
 
 ## Template literals
@@ -1118,7 +1146,7 @@ const DogWithBreed = z.extend(Dog, {
 This API can be used to overwrite existing fields! Be careful with this power! If the two schemas share keys, B will override A.
 
 <Callout>
-**Alternative: spread syntax** — You can alternatively avoid `.extend()` altogether by creating a new object schema entirely. This makes the strictness level of the resulting schema visually obvious.
+**Alternative: spread syntax** — You can alternatively avoid `.extend()` altogether by creating a new object schema entirely. This makes the strictness level of the resulting schema visually obvious.
 
 ```ts
 const DogWithBreed = z.object({ // or z.strictObject() or z.looseObject()...
@@ -1141,7 +1169,7 @@ This approach has a few advantages:
 
 1. It uses language-level features ([spread syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax)) instead of library-specific APIs
 2. The same syntax works in Zod and Zod Mini
-3. It's more `tsc`-efficient — the `.extend()` method can be expensive on large schemas, and due to [a TypeScript limitation](https://github.com/microsoft/TypeScript/pull/61505) it gets quadratically more expensive when calls are chained
+3. It's more `tsc`-efficient — the `.extend()` method can be expensive on large schemas, and due to [a TypeScript limitation](https://github.com/microsoft/TypeScript/pull/61505) it gets quadratically more expensive when calls are chained
 4. If you wish, you can change the strictness level of the resulting schema by using `z.strictObject()` or `z.looseObject()`
 </Callout>
 
@@ -2063,7 +2091,7 @@ const userId = z.string().refine(async (id) => {
 
 #### `when`
 
-> **Note** — This is a power user feature and can absolutely be abused in ways that will increase the probability of uncaught errors originating from inside your refinements. 
+> **Note** — This is a power user feature and can absolutely be abused in ways that will increase the probability of uncaught errors originating from inside your refinements. 
 
 By default, refinements don't run if any *non-continuable* issues have already been encountered. Zod is careful to ensure the type signature of the value is correct before passing it into any refinement functions.
 

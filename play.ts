@@ -1,17 +1,3 @@
-import { z } from "zod/v4";
+import * as z from "zod";
 
-z;
-
-console.log(
-  z
-    .object({
-      a: z.string(),
-    })
-    .transform((data) => {
-      return {
-        ...data,
-        tx: true,
-      };
-    })
-    .safeParse({ a: "1" })
-);
+z.stringFormat("my-format", /myregex/g).parse("invalid input!");
