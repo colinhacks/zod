@@ -37,6 +37,7 @@ z.coerce.bigint();    // BigInt(input)
 
 The coerced variant of these schemas attempts to convert the input value to the appropriate type.
 
+
 ```ts
 const schema = z.coerce.string();
 
@@ -44,6 +45,16 @@ schema.parse("tuna");    // => "tuna"
 schema.parse(42);        // => "42"
 schema.parse(true);      // => "true"
 schema.parse(null);      // => "null"
+```
+
+The input type of these coerced schemas is `unknown` by default. To specify a more specific input type, pass a generic parameter:
+
+```ts
+const A = z.coerce.number();
+type AInput = z.infer<typeof A>; // => number
+
+const B = z.coerce.number<number>();
+type BInput = z.infer<typeof B>; // => number
 ```
 
 <Accordions type="single"><Accordion title="How coercion works in Zod">
@@ -196,6 +207,7 @@ To perform some simple string transforms:
 z.string().trim(); // trim whitespace
 z.string().toLowerCase(); // toLowerCase
 z.string().toUpperCase(); // toUpperCase
+z.string().normalize(); // normalize unicode characters
 ```
 </Tab>
 <Tab value="Zod Mini">
@@ -203,6 +215,7 @@ z.string().toUpperCase(); // toUpperCase
 z.string().check(z.trim()); // trim whitespace
 z.string().check(z.toLowerCase()); // toLowerCase
 z.string().check(z.toUpperCase()); // toUpperCase
+z.string().check(z.normalize()); // normalize unicode characters
 ```
 </Tab>
 </Tabs>
@@ -215,6 +228,7 @@ To validate against some common string formats:
 z.email();
 z.uuid();
 z.url();
+z.hostname();
 z.emoji();         // validates a single emoji character
 z.base64();
 z.base64url();
@@ -290,7 +304,7 @@ z.uuidv6();
 z.uuidv7();
 ```
 
-The RFC 4122 UUID spec requires the first two bits of byte 8 to be `10`. Other UUID-like identifiers do not enforce this constraint. To validate any UUID-like identifier:
+The RFC 9562/4122 UUID spec requires the first two bits of byte 8 to be `10`. Other UUID-like identifiers do not enforce this constraint. To validate any UUID-like identifier:
 
 ```ts
 z.guid();
@@ -306,7 +320,6 @@ const schema = z.url();
 schema.parse("https://example.com"); // ✅
 schema.parse("http://localhost"); // ✅
 schema.parse("mailto:noreply@zod.dev"); // ✅
-schema.parse("sup"); // ✅
 ```
 
 As you can see this is quite permissive. Internally this uses the `new URL()` constructor to validate inputs; this behavior may differ across platforms and runtimes but it's the mostly rigorous way to validate URIs/URLs on any given JS runtime/engine. 
@@ -345,6 +358,13 @@ schema.parse("http://example.com"); // ❌
   /^([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/
   ```
 </Callout>
+
+To normalize URLs, use the `normalize` flag. This will overwrite the input value with the [normalized URL](https://chatgpt.com/share/6881547f-bebc-800f-9093-f5981e277c2c) returned by `new URL()`.
+
+```ts
+new URL("HTTP://ExAmPle.com:80/./a/../b?X=1#f oo").href
+// => "http://example.com/b?X=1#f%20oo"
+```
 
 ### ISO datetimes
 
@@ -677,6 +697,19 @@ FishEnum.parse("Swordfish"); // => ❌
   type FishEnum = z.infer<typeof FishEnum>; // "Salmon" | "Tuna" | "Trout"
   ```
 </Callout>
+
+Enum-like object literals (`{ [key: string]: string | number }`) are supported.
+
+```ts
+const Fish = {
+  Salmon: "Salmon",
+  Tuna: "Tuna"
+} as const
+
+const FishEnum = z.enum(Fish)
+FishEnum.parse("Salmon"); // => "Salmon"
+FishEnum.parse("Swordfish"); // => ❌
+```
 
 You can also pass in an externally-declared TypeScript enum. 
 
@@ -1071,25 +1104,35 @@ const DogWithBreed = z.extend(Dog, {
 </Tab>
 </Tabs>
 
-<Callout>
-  This API can be used to overwrite existing fields! Be careful with this power! If the two schemas share keys, B will override A.
-</Callout>
+This API can be used to overwrite existing fields! Be careful with this power! If the two schemas share keys, B will override A.
 
-Despite the existence of the `.extend` API, the recommended way to extend an object schema is to create an entirely new schema by destructuring the original schema's `shape` property.
+<Callout>
+**Alternative: spread syntax** — You can alternatively avoid `.extend()` altogether by creating a new object schema entirely. This makes the strictness level of the resulting schema visually obvious.
 
 ```ts
-const DogWithBreed = z.object({
+const DogWithBreed = z.object({ // or z.strictObject() or z.looseObject()...
   ...Dog.shape,
   breed: z.string(),
 });
 ```
 
-This is a clean and powerful approach with a lot of advantages. 
+You can also use this to merge multiple objects in one go.
 
-1. It uses language-level features ([destructuring syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring)) instead of library-specific APIs
-2. It works in Zod and Zod Mini — no method required
+```ts
+const DogWithBreed = z.object({
+  ...Animal.shape,
+  ...Pet.shape,
+  breed: z.string(),
+});
+```
+
+This approach has a few advantages:
+
+1. It uses language-level features ([spread syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax)) instead of library-specific APIs
+2. The same syntax works in Zod and Zod Mini
 3. It's more `tsc`-efficient — the `.extend()` method can be expensive on large schemas, and due to [a TypeScript limitation](https://github.com/microsoft/TypeScript/pull/61505) it gets quadratically more expensive when calls are chained
 4. If you wish, you can change the strictness level of the resulting schema by using `z.strictObject()` or `z.looseObject()`
+</Callout>
 
 ### `.pick()`
 
@@ -1585,7 +1628,7 @@ type EmployedPerson = z.infer<typeof EmployedPerson>;
 ```
 
 <Callout type="warn">
-  In most cases, it is better to use [`A.extend(B)`](#extend) to merge two object schemas. This approach returns a new object schema, whereas `z.intersection(A, B)` returns a `ZodIntersection` instance which lacks common object methods like `pick` and `omit`.
+  When merging object schemas, prefer [`A.extend(B)`](#extend) over intersections. Using `.extend()` will gve you a new object schema, whereas `z.intersection(A, B)` returns a `ZodIntersection` instance which lacks common object methods like `pick` and `omit`.
 </Callout>
 
 ## Records
@@ -2068,7 +2111,7 @@ const schema = z
 schema.parse({
   password: "asdf",
   confirmPassword: "asdf",
-  anotherField: 1234 // ❌ this error will prevent the password check from running
+  anotherField: 1234 // ❌ this error will not prevent the password check from running
 });
 ```
 </Tab>
@@ -2103,70 +2146,73 @@ schema.parse({
 
 
 ### `.superRefine()`
-
-<Callout type="warn">
-  In Zod 4, `.superRefine()` has been deprecated in favor of `.check()`
-  
-  <Accordions>
-  <Accordion title="View .superRefine() example">
     
-    <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
-    <Tab value="Zod">
-    ```ts
-    const UniqueStringArray = z.array(z.string()).superRefine((val, ctx) => {
-      if (val.length > 3) {
-        ctx.addIssue({
-          code: "too_big",
-          maximum: 3,
-          origin: "array",
-          inclusive: true,
-          message: "Too many items 😡",
-          input: val,
-        });
-      }
 
-      if (val.length !== new Set(val).size) {
-        ctx.addIssue({
-          code: "custom",
-          message: `No duplicates allowed.`,
-          input: val,
-        });
-      }
+The regular `.refine` API only generates a single issue with a `"custom"` error code, but `.superRefine()` makes it possible to create multiple issues using any of Zod's [internal issue types](https://github.com/colinhacks/zod/blob/main/packages/zod/src/v4/core/errors.ts).
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+const UniqueStringArray = z.array(z.string()).superRefine((val, ctx) => {
+  if (val.length > 3) {
+    ctx.addIssue({
+      code: "too_big",
+      maximum: 3,
+      origin: "array",
+      inclusive: true,
+      message: "Too many items 😡",
+      input: val,
     });
-    ```
-    </Tab>
-    <Tab value="Zod Mini">
-    ```ts
-    // no equivalent, use `.check(checkFn)` instead
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-    ```
-    </Tab>
-    </Tabs>
-  </Accordion>
-  </Accordions>
-</Callout>
+  }
+
+  if (val.length !== new Set(val).size) {
+    ctx.addIssue({
+      code: "custom",
+      message: `No duplicates allowed.`,
+      input: val,
+    });
+  }
+});
+
+
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+const UniqueStringArray = z.array(z.string()).check(
+  z.superRefine((val, ctx) => {
+    if (val.length > 3) {
+      ctx.addIssue({
+        code: "too_big",
+        maximum: 3,
+        origin: "array",
+        inclusive: true,
+        message: "Too many items 😡",
+        input: val,
+      });
+    }
+
+    if (val.length !== new Set(val).size) {
+      ctx.addIssue({
+        code: "custom",
+        message: `No duplicates allowed.`,
+        input: val,
+      });
+    }
+  })
+);
+```
+</Tab>
+</Tabs>
 
 ### `.check()`
 
+<Callout>
+**Note** — The `.check()` API is a more low-level API that's generally more complex than `.superRefine()`. It can be faster in performance-sensitive code paths, but it's also more verbose.
+</Callout>
 
+<Accordions>
+<Accordion title="View example">
 The `.refine()` API is syntactic sugar atop a more versatile (and verbose) API called `.check()`. You can use this API to create multiple issues in a single refinement or have full control of the generated issue objects.
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
@@ -2174,6 +2220,7 @@ The `.refine()` API is syntactic sugar atop a more versatile (and verbose) API c
 ```ts
 const UniqueStringArray = z.array(z.string()).check((ctx) => {
   if (ctx.value.length > 3) {
+    // full control of issue objects
     ctx.issues.push({
       code: "too_big",
       maximum: 3,
@@ -2184,6 +2231,7 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
     });
   }
 
+  // create multiple issues in one refinement
   if (ctx.value.length !== new Set(ctx.value).size) {
     ctx.issues.push({
       code: "custom",
@@ -2198,6 +2246,7 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
 <Tab value="Zod Mini">
 ```ts
 const UniqueStringArray = z.array(z.string()).check((ctx) => {
+  // full control of issue objects
   if (ctx.value.length > 3) {
     ctx.issues.push({
       code: "too_big",
@@ -2209,6 +2258,7 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
     });
   }
 
+// create multiple issues in one refinement
   if (ctx.value.length !== new Set(ctx.value).size) {
     ctx.issues.push({
       code: "custom",
@@ -2221,8 +2271,8 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
 ```
 </Tab>
 </Tabs>
-
-The regular `.refine` API only generates issues with a `"custom"` error code, but `.check()` makes it possible to throw other issue types. For more information on Zod's internal issue types, read the [Error customization](./error-customization) docs.
+</Accordion>
+</Accordions>
 
 ## Pipes
 
@@ -2270,6 +2320,10 @@ z.parse(castToString, true); // => "true"
 ```
 </Tab>
 </Tabs>
+
+<Callout type="warn">
+  Refinement functions should never throw. Thrown errors are not caught by Zod.
+</Callout>
 
 {/* The output type of the schema is inferred from the transform function:
 

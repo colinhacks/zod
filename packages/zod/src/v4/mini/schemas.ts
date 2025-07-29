@@ -436,6 +436,10 @@ export function stringFormat<Format extends string>(
   return core._stringFormat(ZodMiniCustomStringFormat, format, fnOrRegex, _params) as any;
 }
 
+export function hostname(_params?: string | core.$ZodStringFormatParams): ZodMiniCustomStringFormat<"hostname"> {
+  return core._stringFormat(ZodMiniCustomStringFormat, "hostname", core.regexes.hostname, _params) as any;
+}
+
 // ZodMiniNumber
 interface _ZodMiniNumber<T extends core.$ZodNumberInternals<unknown> = core.$ZodNumberInternals<unknown>>
   extends _ZodMiniType<T>,
@@ -1024,9 +1028,11 @@ export function partialRecord<Key extends core.$ZodRecordKey, Value extends Some
   valueType: Value,
   params?: string | core.$ZodRecordParams
 ): ZodMiniRecord<Key & core.$partial, Value> {
+  const k = core.clone(keyType);
+  k._zod.values = undefined;
   return new ZodMiniRecord({
     type: "record",
-    keyType: union([keyType, never()]),
+    keyType: k,
     valueType: valueType as any,
     ...util.normalizeParams(params),
   }) as any;
@@ -1516,6 +1522,13 @@ export function refine<T>(
   _params: string | core.$ZodCustomParams = {}
 ): core.$ZodCheck<T> {
   return core._refine(ZodMiniCustom, fn, _params);
+}
+
+// superRefine
+export function superRefine<T>(
+  fn: (arg: T, payload: core.$RefinementCtx<T>) => void | Promise<void>
+): core.$ZodCheck<T> {
+  return core._superRefine(fn);
 }
 
 // instanceof

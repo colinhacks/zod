@@ -14,8 +14,8 @@ const z3Schema = z3.object({
     foo: z3.string(),
     num: z3.number(),
     bool: z3.boolean(),
-  }).strict()
-}).strict();
+  })
+})
 
 const z4LibSchema = z4lib.object({
   number: z4lib.number(),

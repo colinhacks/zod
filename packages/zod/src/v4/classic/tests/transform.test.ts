@@ -248,3 +248,107 @@ test("async short circuit on dirty", async () => {
     ]]
   `);
 });
+
+test("do not continue by default", () => {
+  const A = z
+    .string()
+    .transform((val, ctx) => {
+      ctx.addIssue({
+        code: "custom",
+        message: `custom error`,
+      });
+      ctx.addIssue({
+        code: "custom",
+        message: `custom error`,
+      });
+      return val;
+    })
+    .pipe(z.number() as any);
+  expect(A.safeParse("asdf")).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "code": "custom",
+        "message": "custom error",
+        "path": []
+      },
+      {
+        "code": "custom",
+        "message": "custom error",
+        "path": []
+      }
+    ]],
+      "success": false,
+    }
+  `);
+
+  const B = z
+    .string()
+    .transform((val, ctx) => {
+      ctx.issues.push({
+        code: "custom",
+        message: `custom error`,
+        input: val,
+      });
+      ctx.issues.push({
+        code: "custom",
+        message: `custom error`,
+        input: val,
+      });
+      return val;
+    })
+    .pipe(z.number() as any);
+  expect(B.safeParse("asdf")).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "code": "custom",
+        "message": "custom error",
+        "path": []
+      },
+      {
+        "code": "custom",
+        "message": "custom error",
+        "path": []
+      }
+    ]],
+      "success": false,
+    }
+  `);
+
+  const C = z
+    .string()
+    .transform((val, ctx) => {
+      ctx.issues.push({
+        code: "custom",
+        message: `custom error`,
+        input: val,
+        continue: true,
+      });
+      ctx.issues.push({
+        code: "custom",
+        message: `custom error`,
+        input: val,
+        continue: true,
+      });
+      return val;
+    })
+    .pipe(z.number() as any);
+  expect(C.safeParse("asdf")).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "code": "custom",
+        "message": "custom error",
+        "path": []
+      },
+      {
+        "code": "custom",
+        "message": "custom error",
+        "path": []
+      }
+    ]],
+      "success": false,
+    }
+  `);
+});

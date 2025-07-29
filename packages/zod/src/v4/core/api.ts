@@ -1449,13 +1449,6 @@ export function _custom<O = unknown, I = O>(
   return schema as any;
 }
 
-// export function _refine<T>(
-//   Class: util.SchemaClass<schemas.$ZodCustom>,
-//   fn: (arg: NoInfer<T>) => util.MaybeAsync<unknown>,
-//   _params: string | $ZodCustomParams = {}
-// ): checks.$ZodCheck<T> {
-//   return _custom(Class, fn, _params);
-// }
 // same as _custom but defaults to abort:false
 export function _refine<O = unknown, I = O>(
   Class: util.SchemaClass<schemas.$ZodCustom>,
@@ -1470,6 +1463,56 @@ export function _refine<O = unknown, I = O>(
   });
 
   return schema as any;
+}
+
+export type $ZodSuperRefineIssue<T extends errors.$ZodIssueBase = errors.$ZodIssue> = T extends any
+  ? RawIssue<T>
+  : never;
+type RawIssue<T extends errors.$ZodIssueBase> = T extends any
+  ? util.Flatten<
+      util.MakePartial<T, "message" | "path"> & {
+        /** The schema or check that originated this issue. */
+        readonly inst?: schemas.$ZodType | checks.$ZodCheck;
+        /** If `true`, Zod will continue executing checks/refinements after this issue. */
+        readonly continue?: boolean | undefined;
+      } & Record<string, unknown>
+    >
+  : never;
+
+export interface $RefinementCtx<T = unknown> extends schemas.ParsePayload<T> {
+  addIssue(arg: string | $ZodSuperRefineIssue): void;
+}
+
+export function _superRefine<T>(fn: (arg: T, payload: $RefinementCtx<T>) => void | Promise<void>): checks.$ZodCheck<T> {
+  const ch = _check<T>((payload) => {
+    (payload as $RefinementCtx).addIssue = (issue) => {
+      if (typeof issue === "string") {
+        payload.issues.push(util.issue(issue, payload.value, ch._zod.def));
+      } else {
+        // for Zod 3 backwards compatibility
+        const _issue: any = issue;
+        if (_issue.fatal) _issue.continue = false;
+        _issue.code ??= "custom";
+        _issue.input ??= payload.value;
+        _issue.inst ??= ch;
+        _issue.continue ??= !ch._zod.def.abort;
+        payload.issues.push(util.issue(_issue));
+      }
+    };
+
+    return fn(payload.value, payload as $RefinementCtx<T>);
+  });
+  return ch;
+}
+
+export function _check<O = unknown>(fn: schemas.CheckFn<O>, params?: string | $ZodCustomParams): checks.$ZodCheck<O> {
+  const ch = new checks.$ZodCheck({
+    check: "custom",
+    ...util.normalizeParams(params),
+  });
+
+  ch._zod.check = fn;
+  return ch;
 }
 
 // export type $ZodCustomParams = CheckTypeParams<schemas.$ZodCustom, "fn">
@@ -1533,6 +1576,7 @@ export function _stringbool(
           values: [...truthySet, ...falsySet],
           input: payload.value,
           inst: tx,
+          continue: false,
         });
         return {} as never;
       }

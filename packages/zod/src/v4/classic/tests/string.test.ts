@@ -318,6 +318,83 @@ test("url validations", () => {
   expect(() => url.parse("https://")).toThrow();
 });
 
+test("url preserves original input", () => {
+  const url = z.string().url();
+
+  // Test the specific case from the user report
+  const input = "https://example.com?key=NUXOmHqWNVTapJkJJHw8BfD155AuqhH_qju_5fNmQ4ZHV7u8";
+  const output = url.parse(input);
+  expect(output).toBe(input); // Should preserve the original input exactly
+
+  // Test other cases where URL constructor would normalize
+  expect(url.parse("https://example.com?foo=bar")).toBe("https://example.com?foo=bar");
+  expect(url.parse("http://example.com?test=123")).toBe("http://example.com?test=123");
+  expect(url.parse("https://sub.example.com?param=value&other=data")).toBe(
+    "https://sub.example.com?param=value&other=data"
+  );
+
+  // Test cases with trailing slashes are preserved
+  expect(url.parse("https://example.com/")).toBe("https://example.com/");
+  expect(url.parse("https://example.com/path/")).toBe("https://example.com/path/");
+
+  // Test cases with paths and query parameters
+  expect(url.parse("https://example.com/path?query=param")).toBe("https://example.com/path?query=param");
+});
+
+test("url trims whitespace", () => {
+  const url = z.string().url();
+
+  // Test trimming whitespace from URLs
+  expect(url.parse("  https://example.com  ")).toBe("https://example.com");
+  expect(url.parse("  https://example.com/path?query=param  ")).toBe("https://example.com/path?query=param");
+  expect(url.parse("\t\nhttps://example.com\t\n")).toBe("https://example.com");
+  expect(url.parse("   https://example.com?key=value   ")).toBe("https://example.com?key=value");
+
+  // Test that URLs without extra whitespace are unchanged
+  expect(url.parse("https://example.com")).toBe("https://example.com");
+  expect(url.parse("https://example.com/path")).toBe("https://example.com/path");
+});
+
+test("url normalize flag", () => {
+  const normalizeUrl = z.url({ normalize: true });
+  const preserveUrl = z.url(); // normalize: false/undefined by default
+
+  // Test that normalize flag causes URL normalization
+  expect(normalizeUrl.parse("https://example.com?key=value")).toBe("https://example.com/?key=value");
+  expect(normalizeUrl.parse("http://example.com?test=123")).toBe("http://example.com/?test=123");
+
+  // Test with already normalized URLs
+  expect(normalizeUrl.parse("https://example.com/")).toBe("https://example.com/");
+  expect(normalizeUrl.parse("https://example.com/path?query=param")).toBe("https://example.com/path?query=param");
+
+  // Test complex URLs with normalization
+  expect(normalizeUrl.parse("https://example.com/../?key=value")).toBe("https://example.com/?key=value");
+  expect(normalizeUrl.parse("https://example.com/./path?key=value")).toBe("https://example.com/path?key=value");
+
+  // Compare with non-normalize behavior
+  expect(preserveUrl.parse("https://example.com?key=value")).toBe("https://example.com?key=value");
+  expect(preserveUrl.parse("http://example.com?test=123")).toBe("http://example.com?test=123");
+
+  // Test trimming with normalize
+  expect(normalizeUrl.parse("  https://example.com?key=value  ")).toBe("https://example.com/?key=value");
+  expect(preserveUrl.parse("  https://example.com?key=value  ")).toBe("https://example.com?key=value");
+});
+
+test("url normalize with hostname and protocol constraints", () => {
+  const constrainedNormalizeUrl = z.url({
+    normalize: true,
+    protocol: /^https$/,
+    hostname: /^example\.com$/,
+  });
+
+  // Test that normalization works with constraints
+  expect(constrainedNormalizeUrl.parse("https://example.com?key=value")).toBe("https://example.com/?key=value");
+
+  // Test that constraints are still enforced
+  expect(() => constrainedNormalizeUrl.parse("http://example.com?key=value")).toThrow();
+  expect(() => constrainedNormalizeUrl.parse("https://other.com?key=value")).toThrow();
+});
+
 test("httpurl", () => {
   const httpUrl = z.url({
     protocol: /^https?$/,
@@ -464,8 +541,8 @@ test(`bad uuid`, () => {
     "9491d710-3185-0e06-bea0-6a2f275345e0",
     "9491d710-3185-5e06-0ea0-6a2f275345e0",
     "d89e7b01-7598-ed11-9d7a-0022489382fd", // new sequential id
-    "b3ce60f8-e8b9-40f5-1150-172ede56ff74", // Variant 0 - RFC 4122: Reserved, NCS backward compatibility
-    "92e76bf9-28b3-4730-cd7f-cb6bc51f8c09", // Variant 2 - RFC 4122: Reserved, Microsoft Corporation backward compatibility
+    "b3ce60f8-e8b9-40f5-1150-172ede56ff74", // Variant 0 - RFC 9562/4122: Reserved, NCS backward compatibility
+    "92e76bf9-28b3-4730-cd7f-cb6bc51f8c09", // Variant 2 - RFC 9562/4122: Reserved, Microsoft Corporation backward compatibility
     "invalid uuid",
     "9491d710-3185-4e06-bea0-6a2f275345e0X",
     "ffffffff-ffff-ffff-ffff-ffffffffffff",
@@ -481,8 +558,8 @@ test("good guid", () => {
   for (const goodGuid of [
     "9491d710-3185-4e06-bea0-6a2f275345e0",
     "d89e7b01-7598-ed11-9d7a-0022489382fd", // new sequential id
-    "b3ce60f8-e8b9-40f5-1150-172ede56ff74", // Variant 0 - RFC 4122: Reserved, NCS backward compatibility
-    "92e76bf9-28b3-4730-cd7f-cb6bc51f8c09", // Variant 2 - RFC 4122: Reserved, Microsoft Corporation backward compatibility
+    "b3ce60f8-e8b9-40f5-1150-172ede56ff74", // Variant 0 - RFC 9562/4122: Reserved, NCS backward compatibility
+    "92e76bf9-28b3-4730-cd7f-cb6bc51f8c09", // Variant 2 - RFC 9562/4122: Reserved, Microsoft Corporation backward compatibility
     "00000000-0000-0000-0000-000000000000",
     "ffffffff-ffff-ffff-ffff-ffffffffffff",
   ]) {
@@ -878,4 +955,42 @@ test("E.164 validation", () => {
 
   expect(validE164Numbers.every((number) => e164Number.safeParse(number).success)).toBe(true);
   expect(invalidE164Numbers.every((number) => e164Number.safeParse(number).success === false)).toBe(true);
+});
+
+test("hostname", () => {
+  const hostname = z.hostname();
+
+  // Valid hostnames
+  hostname.parse("localhost");
+  hostname.parse("example.com");
+  hostname.parse("sub.example.com");
+  hostname.parse("a-b-c.example.com");
+  hostname.parse("123.example.com");
+  hostname.parse("example-123.com");
+  hostname.parse("example-123.1234");
+  hostname.parse("developer.mozilla.org");
+  hostname.parse("hello.world.example.com");
+  hostname.parse("www.google.com");
+  hostname.parse("192.168.1.1");
+  hostname.parse("xn--d1acj3b.com");
+  hostname.parse("xn--d1acj3b.org");
+  hostname.parse("xn--d1acj3b");
+
+  // Invalid hostnames
+  expect(() => hostname.parse("")).toThrow();
+  expect(() => hostname.parse("example..com")).toThrow();
+  expect(() => hostname.parse("example-.com")).toThrow();
+  expect(() => hostname.parse("-example.com")).toThrow();
+  expect(() => hostname.parse("example.com-")).toThrow();
+  expect(() => hostname.parse("example_com")).toThrow();
+  expect(() => hostname.parse("example.com:8080")).toThrow();
+  expect(() => hostname.parse("http://example.com")).toThrow();
+  expect(() => hostname.parse("ht!tp://invalid.com")).toThrow();
+
+  expect(() => hostname.parse("xn--d1acj3b..com")).toThrow();
+  expect(() => hostname.parse("ex@mple.com")).toThrow();
+  expect(() => hostname.parse("[2001:db8::zzzz]")).toThrow();
+  expect(() => hostname.parse("exa mple.com")).toThrow();
+  expect(() => hostname.parse("-example.com")).toThrow();
+  expect(() => hostname.parse("example..com")).toThrow();
 });

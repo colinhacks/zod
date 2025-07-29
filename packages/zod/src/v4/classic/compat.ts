@@ -63,4 +63,8 @@ export type {
   ZodType as Schema,
 };
 
+/** Included for Zod 3 compatibility */
 export type ZodRawShape = core.$ZodShape;
+
+/** @deprecated Do not use. Stub definition, only included for zod-to-json-schema compatibility. */
+export enum ZodFirstPartyTypeKind {}

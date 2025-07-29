@@ -777,6 +777,7 @@ export class JSONSchemaGenerator {
     } else if (this.target === "draft-7") {
       result.$schema = "http://json-schema.org/draft-07/schema#";
     } else {
+      // @ts-ignore
       console.warn(`Invalid target: ${this.target}`);
     }
 

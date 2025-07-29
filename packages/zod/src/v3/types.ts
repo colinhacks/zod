@@ -705,6 +705,7 @@ function isValidJWT(jwt: string, alg?: string): boolean {
       .replace(/-/g, "+")
       .replace(/_/g, "/")
       .padEnd(header.length + ((4 - (header.length % 4)) % 4), "=");
+    // @ts-ignore
     const decoded = JSON.parse(atob(base64));
     if (typeof decoded !== "object" || decoded === null) return false;
     if ("typ" in decoded && decoded?.typ !== "JWT") return false;
@@ -875,6 +876,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         }
       } else if (check.kind === "url") {
         try {
+          // @ts-ignore
           new URL(input.data);
         } catch {
           ctx = this._getOrReturnCtx(input, ctx);
@@ -2454,7 +2456,7 @@ export class ZodObject<
   Output = objectOutputType<T, Catchall, UnknownKeys>,
   Input = objectInputType<T, Catchall, UnknownKeys>,
 > extends ZodType<Output, ZodObjectDef<T, UnknownKeys, Catchall>, Input> {
-  private _cached: { shape: T; keys: string[] } | null = null;
+  _cached: { shape: T; keys: string[] } | null = null;
 
   _getCached(): { shape: T; keys: string[] } {
     if (this._cached !== null) return this._cached;

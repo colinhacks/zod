@@ -1,5 +1,6 @@
 import * as core from "../core/index.js";
 import { $ZodError } from "../core/index.js";
+import * as util from "../core/util.js";
 
 /** @deprecated Use `z.core.$ZodIssue` from `@zod/core` instead, especially if you are building a library on top of Zod. */
 export type ZodIssue = core.$ZodIssue;
@@ -34,11 +35,17 @@ const initializer = (inst: ZodError, issues: core.$ZodIssue[]) => {
       // enumerable: false,
     },
     addIssue: {
-      value: (issue: any) => inst.issues.push(issue),
+      value: (issue: any) => {
+        inst.issues.push(issue);
+        inst.message = JSON.stringify(inst.issues, util.jsonStringifyReplacer, 2);
+      },
       // enumerable: false,
     },
     addIssues: {
-      value: (issues: any) => inst.issues.push(...issues),
+      value: (issues: any) => {
+        inst.issues.push(...issues);
+        inst.message = JSON.stringify(inst.issues, util.jsonStringifyReplacer, 2);
+      },
       // enumerable: false,
     },
     isEmpty: {

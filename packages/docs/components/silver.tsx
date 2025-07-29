@@ -1,6 +1,17 @@
 export const Silver = () => {
   const companies = [
     {
+      name: "Subtotal",
+      logoSrc: "https://avatars.githubusercontent.com/u/176449348?s=200&v=4",
+      url: "subtotal.com",
+      href: "https://www.subtotal.com/?utm_source=zod",
+    },
+    {
+      name: "Juno",
+      logoSrc: "https://avatars.githubusercontent.com/u/147273133?s=200&v=4",
+      url: "juno.build",
+      href: "https://juno.build/?utm_source=zod",
+    },{
       name: "Nitric",
       logoSrc: "https://avatars.githubusercontent.com/u/72055470?s=200&v=4",
       url: "nitric.io",
@@ -77,13 +88,7 @@ export const Silver = () => {
       logoSrc: "https://avatars.githubusercontent.com/u/16199997?s=200&v=4",
       url: "mux.link/zod",
       href: "https://mux.link/zod",
-    },
-    {
-      name: "Juno",
-      logoSrc: "https://avatars.githubusercontent.com/u/147273133?s=200&v=4",
-      url: "juno.build",
-      href: "https://juno.build/?utm_source=zod",
-    },
+    }
   ];
 
   return (

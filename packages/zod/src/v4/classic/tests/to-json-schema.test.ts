@@ -1952,6 +1952,7 @@ test("input type", () => {
       "required": [
         "a",
         "d",
+        "f",
         "g",
       ],
       "type": "object",
