@@ -1449,13 +1449,6 @@ export function _custom<O = unknown, I = O>(
   return schema as any;
 }
 
-// export function _refine<T>(
-//   Class: util.SchemaClass<schemas.$ZodCustom>,
-//   fn: (arg: NoInfer<T>) => util.MaybeAsync<unknown>,
-//   _params: string | $ZodCustomParams = {}
-// ): checks.$ZodCheck<T> {
-//   return _custom(Class, fn, _params);
-// }
 // same as _custom but defaults to abort:false
 export function _refine<O = unknown, I = O>(
   Class: util.SchemaClass<schemas.$ZodCustom>,

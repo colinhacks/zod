@@ -2147,6 +2147,9 @@ schema.parse({
 
 ### `.superRefine()`
     
+
+The regular `.refine` API only generates a single issue with a `"custom"` error code, but `.superRefine()` makes it possible to create multiple issues using any of Zod's [internal issue types](https://github.com/colinhacks/zod/blob/main/packages/zod/src/v4/core/errors.ts).
+
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
@@ -2204,7 +2207,12 @@ const UniqueStringArray = z.array(z.string()).check(
 
 ### `.check()`
 
+<Callout>
+**Note** — The `.check()` API is a more low-level API that's generally more complex than `.superRefine()`. It can be faster in performance-sensitive code paths, but it's also more verbose.
+</Callout>
 
+<Accordions>
+<Accordion title="View example">
 The `.refine()` API is syntactic sugar atop a more versatile (and verbose) API called `.check()`. You can use this API to create multiple issues in a single refinement or have full control of the generated issue objects.
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
@@ -2263,8 +2271,8 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
 ```
 </Tab>
 </Tabs>
-
-The regular `.refine` API only generates issues with a `"custom"` error code, but `.check()` makes it possible to throw other issue types. For more information on Zod's internal issue types, read the [Error customization](./error-customization) docs.
+</Accordion>
+</Accordions>
 
 ## Pipes
 
