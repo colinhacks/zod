@@ -1,10 +1,12 @@
-import * as zNew from "zod/v4";
-import * as zOld from "zod3";
+import * as zodNext from "../zod/src/index.js";
+import * as zod4 from "zod4";
+import * as zod3 from "zod3";
 
-export function makeSchema<T>(factory: (z: typeof zNew) => T) {
+export {zod3, zod4, zodNext}
+export function makeSchema<T>(factory: (z: typeof zod4) => T) {
   return {
-    zod3: factory(zOld as any) as T,
-    zod4: factory(zNew as any) as T,
+    zod3: factory(zod3 as any) as T,
+    zod4: factory(zod4 as any) as T,
     // zod4Ts: factory(zodNewTs as any),
   };
 }

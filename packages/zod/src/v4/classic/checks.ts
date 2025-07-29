@@ -27,4 +27,5 @@ export {
   _trim as trim,
   _toLowerCase as toLowerCase,
   _toUpperCase as toUpperCase,
+  type $RefinementCtx as RefinementCtx,
 } from "../core/index.js";
