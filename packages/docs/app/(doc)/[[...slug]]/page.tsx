@@ -5,6 +5,7 @@ import { Callout } from "fumadocs-ui/components/callout";
 import defaultMdxComponents, { createRelativeLink } from "fumadocs-ui/mdx";
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/page";
 import { notFound } from "next/navigation";
+import { Github } from "lucide-react";
 
 export const revalidate = 86400;
 
@@ -25,37 +26,46 @@ export default async function Page(props: {
       return item;
     });
 
+  const editOnGithub = (
+    <h3 className="border-[var(--color-fd-border)] pb-0 mb-0 inline-flex items-center gap-1.5 text-sm text-fd-muted-foreground">
+      <a
+        href={`https://github.com/colinhacks/zod/blob/main/content/packages/docs/${page.file.path}`}
+        rel="noreferrer noopener"
+        target="_blank"
+        className="text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 text-sm no-underline"
+      >
+        <Github className="w-4 h-4 inline mr-[1px]" /> Edit this page
+      </a>
+    </h3>
+  )
+
   return (
     <DocsPage
       toc={toc}
-      tableOfContent={{ style: "clerk", single: false }}
+      tableOfContent={{ style: "clerk", single: false, header: editOnGithub }}
       full={false}
-      editOnGithub={{
-        owner: "colinhacks",
-        repo: "zod",
-        sha: "v4",
-        path: `packages/docs/content/${page.file.path}`,
-      }}
+    
     >
       {title && title !== "Intro" ? <DocsTitle>{title}</DocsTitle> : null}
-      <DocsDescription>{description}</DocsDescription>
+      {/* <DocsDescription>{description}</DocsDescription> */}
       <DocsBody {...{}}>
-        <MDXContent
-          components={{
-            ...defaultMdxComponents,
-            // this allows you to link to other pages with relative file paths
-            a: createRelativeLink(source, page),
-            // you can add other MDX components here
-            blockquote: Callout,
-            Tabs,
-            h1: (props: any) => <Heading as="h1" {...props} />,
-            h2: (props: any) => <Heading as="h2" {...props} />,
-            h3: (props: any) => <Heading as="h3" {...props} />,
-            h4: (props: any) => <Heading as="h4" {...props} />,
-            h5: (props: any) => <Heading as="h5" {...props} />,
-            h6: (props: any) => <Heading as="h6" {...props} />,
-          }}
-        />
+      <MDXContent
+        components={{
+          ...defaultMdxComponents,
+          // this allows you to link to other pages with relative file paths
+          a: createRelativeLink(source, page),
+          // you can add other MDX components here
+          blockquote: Callout,
+          Tabs,
+          h1: (props) => <Heading as="h1" {...props} />,
+          h2: (props) => <Heading as="h2" {...props} />,
+          h3: (props) => <Heading as="h3" {...props} />,
+          h4: (props) => <Heading as="h4" {...props} />,
+          h5: (props) => <Heading as="h5" {...props} />,
+          h6: (props) => <Heading as="h6" {...props} />,
+        }}
+        
+      />
       </DocsBody>
     </DocsPage>
   );

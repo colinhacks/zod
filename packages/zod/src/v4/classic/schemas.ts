@@ -13,10 +13,6 @@ import * as parse from "./parse.js";
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 
-export interface RefinementCtx<T = unknown> extends core.ParsePayload<T> {
-  addIssue(arg: string | core.$ZodRawIssue | Partial<core.$ZodIssueCustom>): void;
-}
-
 export interface ZodType<
   out Output = unknown,
   out Input = unknown,
@@ -62,7 +58,7 @@ export interface ZodType<
   // refinements
   refine(check: (arg: core.output<this>) => unknown | Promise<unknown>, params?: string | core.$ZodCustomParams): this;
   superRefine(
-    refinement: (arg: core.output<this>, ctx: RefinementCtx<core.output<this>>) => void | Promise<void>
+    refinement: (arg: core.output<this>, ctx: core.$RefinementCtx<core.output<this>>) => void | Promise<void>
   ): this;
   overwrite(fn: (x: core.output<this>) => core.output<this>): this;
 
@@ -79,7 +75,7 @@ export interface ZodType<
   or<T extends core.SomeType>(option: T): ZodUnion<[this, T]>;
   and<T extends core.SomeType>(incoming: T): ZodIntersection<this, T>;
   transform<NewOut>(
-    transform: (arg: core.output<this>, ctx: RefinementCtx<core.output<this>>) => NewOut | Promise<NewOut>
+    transform: (arg: core.output<this>, ctx: core.$RefinementCtx<core.output<this>>) => NewOut | Promise<NewOut>
   ): ZodPipe<this, ZodTransform<Awaited<NewOut>, core.output<this>>>;
   catch(def: core.output<this>): ZodCatch<this>;
   catch(def: (ctx: core.$ZodCatchCtx) => core.output<this>): ZodCatch<this>;
@@ -695,6 +691,10 @@ export function stringFormat<Format extends string>(
   _params: string | core.$ZodStringFormatParams = {}
 ): ZodCustomStringFormat<Format> {
   return core._stringFormat(ZodCustomStringFormat, format, fnOrRegex, _params) as any;
+}
+
+export function hostname(_params?: string | core.$ZodStringFormatParams): ZodCustomStringFormat<"hostname"> {
+  return core._stringFormat(ZodCustomStringFormat, "hostname", core.regexes.hostname, _params) as any;
 }
 
 // ZodNumber
@@ -1572,7 +1572,7 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
     ZodType.init(inst, def);
 
     inst._zod.parse = (payload, _ctx) => {
-      (payload as RefinementCtx).addIssue = (issue) => {
+      (payload as core.$RefinementCtx).addIssue = (issue) => {
         if (typeof issue === "string") {
           payload.issues.push(util.issue(issue, payload.value, def));
         } else {
@@ -1955,26 +1955,10 @@ export function refine<T>(
 }
 
 // superRefine
-export function superRefine<T>(fn: (arg: T, payload: RefinementCtx<T>) => void | Promise<void>): core.$ZodCheck<T> {
-  const ch = check<T>((payload) => {
-    (payload as RefinementCtx).addIssue = (issue) => {
-      if (typeof issue === "string") {
-        payload.issues.push(util.issue(issue, payload.value, ch._zod.def));
-      } else {
-        // for Zod 3 backwards compatibility
-        const _issue: any = issue;
-        if (_issue.fatal) _issue.continue = false;
-        _issue.code ??= "custom";
-        _issue.input ??= payload.value;
-        _issue.inst ??= ch;
-        _issue.continue ??= !ch._zod.def.abort;
-        payload.issues.push(util.issue(_issue));
-      }
-    };
-
-    return fn(payload.value, payload as RefinementCtx<T>);
-  });
-  return ch;
+export function superRefine<T>(
+  fn: (arg: T, payload: core.$RefinementCtx<T>) => void | Promise<void>
+): core.$ZodCheck<T> {
+  return core._superRefine(fn);
 }
 
 type ZodInstanceOfParams = core.Params<
@@ -2040,7 +2024,7 @@ export function json(params?: string | core.$ZodCustomParams): ZodJSONSchema {
 
 // /** @deprecated Use `z.pipe()` and `z.transform()` instead. */
 export function preprocess<A, U extends core.SomeType, B = unknown>(
-  fn: (arg: B, ctx: RefinementCtx) => A,
+  fn: (arg: B, ctx: core.$RefinementCtx) => A,
   schema: U
 ): ZodPipe<ZodTransform<A, B>, U> {
   return pipe(transform(fn as any), schema as any) as any;

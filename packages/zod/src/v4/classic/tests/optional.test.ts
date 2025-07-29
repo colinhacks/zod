@@ -121,3 +121,16 @@ test("pipe optionality inside objects", () => {
     e: string;
   }>();
 });
+
+test("optional prop with pipe", () => {
+  const schema = z.object({
+    id: z
+      .union([z.number(), z.string().nullish()])
+      .transform((val) => (val === null || val === undefined ? val : Number(val)))
+      .pipe(z.number())
+      .optional(),
+  });
+
+  schema.parse({});
+  schema.parse({}, { jitless: true });
+});
