@@ -493,6 +493,34 @@ const cidrv6 = z.string().cidrv6();
 cidrv6.parse("2001:db8::/32"); // ✅
 ```
 
+### Custom formats
+
+To define your own string formats:
+
+```ts
+const coolId = z.stringFormat("cool-id", ()=>{
+  // arbitrary validation here
+  return val.length === 100 && val.startsWith("cool-");
+});
+
+// a regex is also accepted
+z.stringFormat("cool-id", /^cool-[a-z0-9]{95}$/);
+```
+
+This schema will produce `"invalid_format"` issues, which are more descriptive that the `"custom"` errors produces by refinements or `z.custom()`.
+
+```ts
+myFormat.parse("invalid input!");
+// ZodError: [
+//   {
+//     "code": "invalid_format",
+//     "format": "cool-id",
+//     "path": [],
+//     "message": "Invalid cool-id"
+//   }
+// ]
+```
+
 ## Template literals
 
 > **New in Zod 4**
