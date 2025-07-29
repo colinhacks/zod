@@ -244,7 +244,6 @@ z.iso.date();
 z.iso.time();
 z.iso.datetime();
 z.iso.duration();
-z.stringFormat();
 ```
 
 ### Emails
@@ -496,16 +495,30 @@ cidrv6.parse("2001:db8::/32"); // ✅
 
 ### Custom formats
 
-Define your own string formats with `z.stringFormat()`.
+To define your own string formats:
 
 ```ts
-z.stringFormat("email", /asdf/g);
-z.stringFormat("idnEmail", /asdf/g, {
-  
+const coolId = z.stringFormat("cool-id", ()=>{
+  // arbitrary validation here
+  return val.length === 100 && val.startsWith("cool-");
 });
-z.stringFormat("typeid", (val) => {
-  return val.length > 10; // custom refinements
-});
+
+// a regex is also accepted
+z.stringFormat("my-format", /myregex/g);
+```
+
+This schema will produce `"invalid_format"` issues, which are more descriptive that the `"custom"` errors produces by refinements or `z.custom()`.
+
+```ts
+myFormat.parse("invalid input!");
+// ZodError: [
+//   {
+//     "code": "invalid_format",
+//     "format": "cool-id",
+//     "path": [],
+//     "message": "Invalid cool-id"
+//   }
+// ]
 ```
 
 ## Template literals
