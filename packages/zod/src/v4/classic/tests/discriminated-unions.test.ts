@@ -157,6 +157,7 @@ test("invalid discriminator value", () => {
         "code": "invalid_union",
         "errors": [],
         "note": "No matching discriminator",
+        "discriminator": "type",
         "path": [
           "type"
         ],
@@ -616,4 +617,45 @@ test("readonly literal discriminator", () => {
   expect(() => {
     discUnion.parse({ type: "c", a: "hello" });
   }).toThrow();
+});
+
+test("pipes", () => {
+  const schema = z
+    .object({
+      type: z.literal("foo"),
+    })
+    .transform((s) => ({ ...s, v: 2 }));
+
+  expect(schema._zod.propValues).toMatchInlineSnapshot(`
+    {
+      "type": Set {
+        "foo",
+      },
+    }
+  `);
+
+  const schema2 = z.object({
+    type: z.literal("bar"),
+  });
+
+  const combinedSchema = z.discriminatedUnion("type", [schema, schema2], {
+    unionFallback: false,
+  });
+
+  combinedSchema.parse({
+    type: "foo",
+    v: 2,
+  });
+});
+
+test("def", () => {
+  const schema = z.discriminatedUnion(
+    "type",
+    [z.object({ type: z.literal("play") }), z.object({ type: z.literal("pause") })],
+    { unionFallback: true }
+  );
+
+  expect(schema.def).toBeDefined();
+  expect(schema.def.discriminator).toEqual("type");
+  expect(schema.def.unionFallback).toEqual(true);
 });

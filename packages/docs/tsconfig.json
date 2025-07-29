@@ -23,7 +23,8 @@
       {
         "name": "next"
       }
-    ]
+    ],
+    "types": ["mdx", "node", "react", "react-dom", "@vercel/og"]
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "components/if.tsx"],
   "exclude": ["node_modules"]

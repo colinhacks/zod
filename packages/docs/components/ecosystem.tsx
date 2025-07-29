@@ -124,6 +124,19 @@ const xToZodConverters: ZodResource[] = [
     description: "The ultimate toolkit for working with APIs.",
     slug: "kubb-labs/kubb",
   },
+  {
+
+    name: "Hey API",
+    url: "https://github.com/hey-api/openapi-ts",
+    description: "The OpenAPI to TypeScript codegen. Generate clients, SDKs, validators, and more.",
+    slug: "hey-api/openapi-ts",
+  },
+  {
+    name: "valype",
+    url: "https://github.com/yuzheng14/valype",
+    description: "Typescript's type definition to runtime validator (including zod).",
+    slug: "yuzheng14/valype",
+  },
 ];
 
 const mockingLibraries: ZodResource[] = [
@@ -162,7 +175,20 @@ const poweredByZodProjects: ZodResource[] = [
   },
 ];
 
-const zodUtilities: ZodResource[] = [];
+const zodUtilities: ZodResource[] = [
+  {
+    name: "eslint-plugin-import-zod",
+    url: "https://github.com/samchungy/eslint-plugin-import-zod",
+    description: "ESLint plugin to enforce namespace imports for Zod.",
+    slug: "samchungy/eslint-plugin-import-zod",
+  },
+  {
+    name: "zod-playground",
+    url: "https://github.com/marilari88/zod-playground",
+    description: "Interactive playground for testing and exploring Zod and Zod mini schemas in real-time.",
+    slug: "marilari88/zod-playground",
+  },
+];
 
 export {
   apiLibraries,

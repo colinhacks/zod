@@ -6,20 +6,19 @@
   "main": "./lib/index.js",
   "license": "MIT",
   "devDependencies": {
-    "@ai-sdk/provider": "^1.1.3",
     "@types/node": "^22.10.5",
     "@typescript/analyze-trace": "^0.10.1",
-    "ai": "^4.3.16",
     "arktype": "^2.0.0",
     "execa": "^9.5.2",
     "valibot": "^1.0.0",
     "zod": "workspace:*",
     "zod3": "npm:zod@^3.0.0",
-    "zod3-24-2": "npm:zod@3.24.2",
-    "zod3-24-3": "npm:zod@3.24.3",
     "zod4": "npm:zod@4.0.0-beta.20250420T053007"
   },
-  "files": ["./bin/*", "./lib/*"],
+  "files": [
+    "./bin/*",
+    "./lib/*"
+  ],
   "typings": "./lib/index.d.ts",
   "scripts": {
     "generate": "tsx generate.ts",

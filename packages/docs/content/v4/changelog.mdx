@@ -5,7 +5,7 @@ title: Migration guide
 import { Callout } from "fumadocs-ui/components/callout";
 import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 
-> This migration guide aims to list the breaking changes in Zod 4 in order of highest to lowest impact. To learn more about the performance enhancements and new features of Zod 4, read the [introductory post](/v4).
+This migration guide aims to list the breaking changes in Zod 4 in order of highest to lowest impact. To learn more about the performance enhancements and new features of Zod 4, read the [introductory post](/v4). 
 
 {/* To give the ecosystem time to migrate, Zod 4 will initially be published alongside Zod v3.25. To use Zod 4, upgrade to `zod@3.25.0` or later: */}
 
@@ -19,8 +19,14 @@ npm upgrade zod@^4.0.0
 import * as z from "zod";
 ``` */}
 
+Many of Zod's behaviors and APIs have been made more intuitive and cohesive. The breaking changes described in this document often represent major quality-of-life improvements for Zod users. I strongly recommend reading this guide thoroughly.
+
 <Callout>
 **Note** — Zod 3 exported a number of undocumented quasi-internal utility types and functions that are not considered part of the public API. Changes to those are not documented here.
+</Callout>
+
+<Callout>
+**Unofficial codemod** — A community-maintained codemod [`zod-v3-to-v4`](https://github.com/nicoespeon/zod-v3-to-v4) is available. 
 </Callout>
 
 ## Error customization
@@ -322,10 +328,10 @@ z.email(); // ✅
 
 ### stricter `.uuid()`
 
-The `z.uuid()` now validates UUIDs more strictly against the RFC 4122 specification; specifically, the variant bits must be `10` per the spec. For a more permissive "UUID-like" validator, use `z.guid()`.
+The `z.uuid()` now validates UUIDs more strictly against the RFC 9562/4122 specification; specifically, the variant bits must be `10` per the spec. For a more permissive "UUID-like" validator, use `z.guid()`.
 
 ```ts
-z.uuid(); // RFC 4122 compliant UUID
+z.uuid(); // RFC 9562/4122 compliant UUID
 z.guid(); // any 8-4-4-4-12 hex pattern
 ```
 
@@ -403,6 +409,20 @@ schema.parse(undefined); // => 4
 
 ## `z.object()`
 
+### defaults applied within optional fields
+
+Defaults inside your properties are applied, even within optional fields. This aligns better with expectations and resolves a long-standing usability issue with Zod 3. This is a subtle change that may cause breakage in code paths that rely on key existence, etc.
+
+```ts
+const schema = z.object({
+  a: z.string().default("tuna").optional(),
+});
+
+schema.parse({});
+// Zod 4: { a: "tuna" }
+// Zod 3: {}
+```
+
 ### deprecates `.strict()` and `.passthrough()`
 
 These methods are generally no longer necessary. Instead use the top-level `z.strictObject()` and `z.looseObject()` functions.
@@ -443,6 +463,26 @@ const mySchema = z.object({
 // Zod 3: { a?: any; b?: unknown };
 // Zod 4: { a: any; b: unknown };
 ```
+
+### deprecates `.merge()`
+
+The `.merge()` method on `ZodObject` has been deprecated in favor of `.extend()`. The `.extend()` method provides the same functionality, avoids ambiguity around strictness inheritance, and has better TypeScript performance.
+
+```ts
+// .merge (deprecated)
+const ExtendedSchema = BaseSchema.merge(AdditionalSchema);
+
+// .extend (recommended)
+const ExtendedSchema = BaseSchema.extend(AdditionalSchema.shape);
+
+// or use destructuring (best tsc performance)
+const ExtendedSchema = z.object({
+  ...BaseSchema.shape,
+  ...AdditionalSchema.shape,
+});
+```
+
+> **Note**: For even better TypeScript performance, consider using object destructuring instead of `.extend()`. See the [API documentation](/api?id=extend) for more details.
 
 ## `z.nativeEnum()` deprecated
 
@@ -578,6 +618,34 @@ const longString = z.string().refine(
 );
 ```
 
+{/* ## `.superRefine()` deprecated
+
+The `.superRefine()` method has been deprecated in favor of `.check()`. The `.check()` method provides the same functionality with a cleaner API. The `.check()` method is also available on Zod and Zod Mini schemas.
+
+```ts
+const UniqueStringArray = z.array(z.string()).check((ctx) => {
+  if (ctx.value.length > 3) {
+    ctx.issues.push({
+      code: "too_big",
+      maximum: 3,
+      origin: "array",
+      inclusive: true,
+      message: "Too many items 😡",
+      input: ctx.value
+    });
+  }
+
+  if (ctx.value.length !== new Set(ctx.value).size) {
+    ctx.issues.push({
+      code: "custom",
+      message: `No duplicates allowed.`,
+      input: ctx.value
+    });
+  }
+});
+``` */}
+
+
 ## `z.ostring()`, etc dropped
 
 The undocumented convenience methods `z.ostring()`, `z.onumber()`, etc. have been removed. These were shorthand methods for defining optional string schemas.
@@ -625,6 +693,13 @@ In Zod 4, this is no longer the case. The inferred type is what you'd expect, an
 ```ts
 const myRecord = z.record(z.enum(["a", "b", "c"]), z.number());
 // { a: number; b: number; c: number; }
+```
+
+To replicate the old behavior with optional keys, use `z.partialRecord()`:
+
+```ts
+const myRecord = z.partialRecord(z.enum(["a", "b", "c"]), z.number());
+// { a?: number; b?: number; c?: number; }
 ```
 
 ## `z.intersection()`

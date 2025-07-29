@@ -13,10 +13,6 @@ import * as parse from "./parse.js";
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 
-export interface RefinementCtx<T = unknown> extends core.ParsePayload<T> {
-  addIssue(arg: string | core.$ZodRawIssue | Partial<core.$ZodIssueCustom>): void;
-}
-
 export interface ZodType<
   out Output = unknown,
   out Input = unknown,
@@ -61,9 +57,8 @@ export interface ZodType<
 
   // refinements
   refine(check: (arg: core.output<this>) => unknown | Promise<unknown>, params?: string | core.$ZodCustomParams): this;
-  /** @deprecated Use `.check()` instead. */
   superRefine(
-    refinement: (arg: core.output<this>, ctx: RefinementCtx<core.output<this>>) => void | Promise<void>
+    refinement: (arg: core.output<this>, ctx: core.$RefinementCtx<core.output<this>>) => void | Promise<void>
   ): this;
   overwrite(fn: (x: core.output<this>) => core.output<this>): this;
 
@@ -80,7 +75,7 @@ export interface ZodType<
   or<T extends core.SomeType>(option: T): ZodUnion<[this, T]>;
   and<T extends core.SomeType>(incoming: T): ZodIntersection<this, T>;
   transform<NewOut>(
-    transform: (arg: core.output<this>, ctx: RefinementCtx<core.output<this>>) => NewOut | Promise<NewOut>
+    transform: (arg: core.output<this>, ctx: core.$RefinementCtx<core.output<this>>) => NewOut | Promise<NewOut>
   ): ZodPipe<this, ZodTransform<Awaited<NewOut>, core.output<this>>>;
   catch(def: core.output<this>): ZodCatch<this>;
   catch(def: (ctx: core.$ZodCatchCtx) => core.output<this>): ZodCatch<this>;
@@ -698,6 +693,10 @@ export function stringFormat<Format extends string>(
   return core._stringFormat(ZodCustomStringFormat, format, fnOrRegex, _params) as any;
 }
 
+export function hostname(_params?: string | core.$ZodStringFormatParams): ZodCustomStringFormat<"hostname"> {
+  return core._stringFormat(ZodCustomStringFormat, "hostname", core.regexes.hostname, _params) as any;
+}
+
 // ZodNumber
 export interface _ZodNumber<Internals extends core.$ZodNumberInternals = core.$ZodNumberInternals>
   extends _ZodType<Internals> {
@@ -1069,22 +1068,10 @@ export interface ZodObject<
   /** This is the default behavior. This method call is likely unnecessary. */
   strip(): ZodObject<Shape, core.$strip>;
 
-  extend<U extends core.$ZodLooseShape & Partial<Record<keyof Shape, core.SomeType>>>(
-    shape: U
-  ): ZodObject<util.Extend<Shape, U>, Config>;
+  extend<U extends core.$ZodLooseShape>(shape: U): ZodObject<util.Extend<Shape, U>, Config>;
 
   /**
-   * @deprecated Use spread syntax and the `.shape` property to combine two object schemas:
-   *
-   * ```ts
-   * const A = z.object({ a: z.string() });
-   * const B = z.object({ b: z.number() });
-   *
-   * const C = z.object({
-   *    ...A.shape,
-   *    ...B.shape
-   * });
-   * ```
+   * @deprecated Use [`A.extend(B.shape)`](https://zod.dev/api?id=extend) instead.
    */
   merge<U extends ZodObject>(other: U): ZodObject<util.Extend<Shape, U["shape"]>, U["_zod"]["config"]>;
 
@@ -1141,7 +1128,6 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
   inst.keyof = () => _enum(Object.keys(inst._zod.def.shape)) as any;
   inst.catchall = (catchall) => inst.clone({ ...inst._zod.def, catchall: catchall as any as core.$ZodType }) as any;
   inst.passthrough = () => inst.clone({ ...inst._zod.def, catchall: unknown() });
-  // inst.nonstrict = () => inst.clone({ ...inst._zod.def, catchall: api.unknown() });
   inst.loose = () => inst.clone({ ...inst._zod.def, catchall: unknown() });
   inst.strict = () => inst.clone({ ...inst._zod.def, catchall: never() });
   inst.strip = () => inst.clone({ ...inst._zod.def, catchall: undefined });
@@ -1233,6 +1219,7 @@ export interface ZodDiscriminatedUnion<Options extends readonly core.SomeType[] 
   extends ZodUnion<Options>,
     core.$ZodDiscriminatedUnion<Options> {
   _zod: core.$ZodDiscriminatedUnionInternals<Options>;
+  def: core.$ZodDiscriminatedUnionDef<Options>;
 }
 export const ZodDiscriminatedUnion: core.$constructor<ZodDiscriminatedUnion> = /*@__PURE__*/ core.$constructor(
   "ZodDiscriminatedUnion",
@@ -1360,9 +1347,11 @@ export function partialRecord<Key extends core.$ZodRecordKey, Value extends core
   valueType: Value,
   params?: string | core.$ZodRecordParams
 ): ZodRecord<Key & core.$partial, Value> {
+  const k = core.clone(keyType);
+  k._zod.values = undefined;
   return new ZodRecord({
     type: "record",
-    keyType: union([keyType, never()]),
+    keyType: k,
     valueType: valueType as any,
     ...util.normalizeParams(params),
   }) as any;
@@ -1583,7 +1572,7 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
     ZodType.init(inst, def);
 
     inst._zod.parse = (payload, _ctx) => {
-      (payload as RefinementCtx).addIssue = (issue) => {
+      (payload as core.$RefinementCtx).addIssue = (issue) => {
         if (typeof issue === "string") {
           payload.issues.push(util.issue(issue, payload.value, def));
         } else {
@@ -1594,7 +1583,7 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
           _issue.code ??= "custom";
           _issue.input ??= payload.value;
           _issue.inst ??= inst;
-          _issue.continue ??= true;
+          // _issue.continue ??= true;
           payload.issues.push(util.issue(_issue));
         }
       };
@@ -1848,12 +1837,16 @@ export function pipe(in_: core.SomeType, out: core.SomeType) {
 // ZodReadonly
 export interface ZodReadonly<T extends core.SomeType = core.$ZodType>
   extends _ZodType<core.$ZodReadonlyInternals<T>>,
-    core.$ZodReadonly<T> {}
+    core.$ZodReadonly<T> {
+  unwrap(): T;
+}
 export const ZodReadonly: core.$constructor<ZodReadonly> = /*@__PURE__*/ core.$constructor(
   "ZodReadonly",
   (inst, def) => {
     core.$ZodReadonly.init(inst, def);
     ZodType.init(inst, def);
+
+    inst.unwrap = () => inst._zod.def.innerType;
   }
 );
 
@@ -1962,26 +1955,10 @@ export function refine<T>(
 }
 
 // superRefine
-export function superRefine<T>(fn: (arg: T, payload: RefinementCtx<T>) => void | Promise<void>): core.$ZodCheck<T> {
-  const ch = check<T>((payload) => {
-    (payload as RefinementCtx).addIssue = (issue) => {
-      if (typeof issue === "string") {
-        payload.issues.push(util.issue(issue, payload.value, ch._zod.def));
-      } else {
-        // for Zod 3 backwards compatibility
-        const _issue: any = issue;
-        if (_issue.fatal) _issue.continue = false;
-        _issue.code ??= "custom";
-        _issue.input ??= payload.value;
-        _issue.inst ??= ch;
-        _issue.continue ??= !ch._zod.def.abort;
-        payload.issues.push(util.issue(_issue));
-      }
-    };
-
-    return fn(payload.value, payload as RefinementCtx<T>);
-  });
-  return ch;
+export function superRefine<T>(
+  fn: (arg: T, payload: core.$RefinementCtx<T>) => void | Promise<void>
+): core.$ZodCheck<T> {
+  return core._superRefine(fn);
 }
 
 type ZodInstanceOfParams = core.Params<
@@ -2047,7 +2024,7 @@ export function json(params?: string | core.$ZodCustomParams): ZodJSONSchema {
 
 // /** @deprecated Use `z.pipe()` and `z.transform()` instead. */
 export function preprocess<A, U extends core.SomeType, B = unknown>(
-  fn: (arg: B, ctx: RefinementCtx) => A,
+  fn: (arg: B, ctx: core.$RefinementCtx) => A,
   schema: U
 ): ZodPipe<ZodTransform<A, B>, U> {
   return pipe(transform(fn as any), schema as any) as any;

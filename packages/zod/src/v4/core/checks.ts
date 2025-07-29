@@ -297,6 +297,7 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
             expected: origin,
             format: def.format,
             code: "invalid_type",
+            continue: false,
             input,
             inst,
           });
@@ -1128,12 +1129,12 @@ export interface $ZodCheckMimeTypeDef extends $ZodCheckDef {
   mime: util.MimeTypes[];
 }
 
-export interface $ZodCheckMimeTypeInternals<T extends File = File> extends $ZodCheckInternals<T> {
+export interface $ZodCheckMimeTypeInternals<T extends schemas.File = schemas.File> extends $ZodCheckInternals<T> {
   def: $ZodCheckMimeTypeDef;
   issc: errors.$ZodIssueInvalidValue;
 }
 
-export interface $ZodCheckMimeType<T extends File = File> extends $ZodCheck<T> {
+export interface $ZodCheckMimeType<T extends schemas.File = schemas.File> extends $ZodCheck<T> {
   _zod: $ZodCheckMimeTypeInternals<T>;
 }
 
@@ -1152,6 +1153,7 @@ export const $ZodCheckMimeType: core.$constructor<$ZodCheckMimeType> = /*@__PURE
         values: def.mime,
         input: payload.value.type,
         inst,
+        continue: !def.abort,
       });
     };
   }

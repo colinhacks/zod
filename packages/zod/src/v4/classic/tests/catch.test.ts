@@ -1,6 +1,5 @@
 import { expect, expectTypeOf, test } from "vitest";
 import { z } from "zod/v4";
-import type { util } from "zod/v4/core";
 
 test("basic catch", () => {
   expect(z.string().catch("default").parse(undefined)).toBe("default");
@@ -45,7 +44,7 @@ test("catch with transform", () => {
   expect(stringWithDefault.unwrap().out).toBeInstanceOf(z.ZodTransform);
 
   type inp = z.input<typeof stringWithDefault>;
-  expectTypeOf<inp>().toEqualTypeOf<string | util.Whatever>();
+  expectTypeOf<inp>().toEqualTypeOf<string>();
   type out = z.output<typeof stringWithDefault>;
   expectTypeOf<out>().toEqualTypeOf<string>();
 });
@@ -59,7 +58,7 @@ test("catch on existing optional", () => {
   expect(stringWithDefault.unwrap().unwrap()).toBeInstanceOf(z.ZodString);
 
   type inp = z.input<typeof stringWithDefault>;
-  expectTypeOf<inp>().toEqualTypeOf<string | undefined | util.Whatever>();
+  expectTypeOf<inp>().toEqualTypeOf<string | undefined>();
   type out = z.output<typeof stringWithDefault>;
   expectTypeOf<out>().toEqualTypeOf<string | undefined>();
 });
@@ -68,7 +67,7 @@ test("optional on catch", () => {
   const stringWithDefault = z.string().catch("asdf").optional();
 
   type inp = z.input<typeof stringWithDefault>;
-  expectTypeOf<inp>().toEqualTypeOf<string | util.Whatever>();
+  expectTypeOf<inp>().toEqualTypeOf<string | undefined>();
   type out = z.output<typeof stringWithDefault>;
   expectTypeOf<out>().toEqualTypeOf<string | undefined>();
 });
@@ -102,7 +101,7 @@ test("nested", () => {
     inner: "asdf",
   });
   type input = z.input<typeof outer>;
-  expectTypeOf<input>().toEqualTypeOf<{ inner: string | util.Whatever } | util.Whatever>();
+  expectTypeOf<input>().toEqualTypeOf<{ inner: string }>();
   type out = z.output<typeof outer>;
 
   expectTypeOf<out>().toEqualTypeOf<{ inner: string }>();
