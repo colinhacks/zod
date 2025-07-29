@@ -1822,6 +1822,30 @@ TestSchema.parse(new Test()); // ✅
 TestSchema.parse("whatever"); // ❌
 ```
 
+### Property
+
+To validate a particular property of a class instance against a Zod schema:
+
+```ts
+const blobSchema = z.instanceof(URL).check(
+  z.property("protocol", z.literal("https:" as string, "Only HTTPS allowed"))
+);
+
+blobSchema.parse(new URL("https://example.com")); // ✅
+blobSchema.parse(new URL("http://example.com")); // ❌
+```
+
+The `z.property()` API works with any data type (but it's most useful when used in conjunction with `z.instanceof()`).
+
+```ts
+const blobSchema = z.string().check(
+  z.property("length", z.number().min(10))
+);
+
+blobSchema.parse("hello there!"); // ✅
+blobSchema.parse("hello."); // ❌
+```
+
 ## Refinements
 
 Every Zod schema stores an array of *refinements*. Refinements are a way to perform custom validation that Zod doesn't provide a native API for.
