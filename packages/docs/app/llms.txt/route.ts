@@ -3,7 +3,7 @@ import { source } from "@/loaders/source";
 // cached forever
 export const revalidate = false;
 
-export function stringifyTitle(title: any): string {
+function stringifyTitle(title: any): string {
   if (typeof title === "string") return title;
   if (typeof title === "number" || typeof title === "bigint" || typeof title === "boolean") {
     return String(title);
