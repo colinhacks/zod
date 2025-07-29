@@ -3007,6 +3007,13 @@ export interface $ZodOptional<T extends SomeType = $ZodType> extends $ZodType {
   _zod: $ZodOptionalInternals<T>;
 }
 
+function handleOptionalResult(result: ParsePayload, input: unknown) {
+  if (result.issues.length && input === undefined) {
+    return { issues: [], value: undefined };
+  }
+  return result;
+}
+
 export const $ZodOptional: core.$constructor<$ZodOptional> = /*@__PURE__*/ core.$constructor(
   "$ZodOptional",
   (inst, def) => {
@@ -3024,7 +3031,9 @@ export const $ZodOptional: core.$constructor<$ZodOptional> = /*@__PURE__*/ core.
 
     inst._zod.parse = (payload, ctx) => {
       if (def.innerType._zod.optin === "optional") {
-        return def.innerType._zod.run(payload, ctx);
+        const result = def.innerType._zod.run(payload, ctx);
+        if (result instanceof Promise) return result.then((r) => handleOptionalResult(r, payload.value));
+        return handleOptionalResult(result, payload.value);
       }
       if (payload.value === undefined) {
         return payload;
