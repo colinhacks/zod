@@ -504,7 +504,7 @@ const coolId = z.stringFormat("cool-id", ()=>{
 });
 
 // a regex is also accepted
-z.stringFormat("my-format", /myregex/g);
+z.stringFormat("my-format", /^cool-[a-z0-9]{95}$/);
 ```
 
 This schema will produce `"invalid_format"` issues, which are more descriptive that the `"custom"` errors produces by refinements or `z.custom()`.
