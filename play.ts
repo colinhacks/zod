@@ -1,18 +1,7 @@
 import * as z from "zod";
 
 z;
+const blobSchema = z.string().check(z.property("length", z.number().min(10)));
 
-z.stringFormat("email", /asdf/g);
-z.stringFormat("idnEmail", /asdf/g, {
-  
-});
-z.stringFormat("typeid", (val) => {
-  return val.length > 10;
-}, {
-  ""
-});
-
-
-z.jwt({
-  
-})
+blobSchema.parse("hello there!"); // ✅
+blobSchema.parse("hello."); // ❌

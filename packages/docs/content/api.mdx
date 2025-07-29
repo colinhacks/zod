@@ -1779,19 +1779,28 @@ TestSchema.parse(new Test()); // ✅
 TestSchema.parse("whatever"); // ❌
 ```
 
-## Property check
+### Property
 
-`z.property(key, schema)` validates that `input[key]` conforms to the given
-schema. While it's most often used with object schemas, it can be added to any
-schema since the check simply reads the property from the value being parsed.
+To validate a particular property of a class instance against a Zod schema:
 
 ```ts
-const Person = z
-  .object({ name: z.string() })
-  .check(z.property("age", z.number()));
+const blobSchema = z.instanceof(URL).check(
+  z.property("protocol", z.literal("https:" as string, "Only HTTPS allowed"))
+);
 
-Person.parse({ name: "Hermione", age: 18 }); // ✅
-Person.parse({ name: "Hermione", age: "eighteen" }); // ❌
+blobSchema.parse(new URL("https://example.com")); // ✅
+blobSchema.parse(new URL("http://example.com")); // ❌
+```
+
+The `z.property()` API works with any data type (but it's most useful when used in conjunction with `z.instanceof()`).
+
+```ts
+const blobSchema = z.string().check(
+  z.property("length", z.number().min(10))
+);
+
+blobSchema.parse("hello there!"); // ✅
+blobSchema.parse("hello."); // ❌
 ```
 
 ## Refinements
