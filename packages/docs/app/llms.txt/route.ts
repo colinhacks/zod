@@ -41,9 +41,9 @@ export async function GET() {
   const pages = source.getPages();
 
   // Generate LLMS.txt content
-  let txt = `# Zod Documentation
+  let txt = `# Zod
 
-> Zod is a TypeScript-first schema validation library with static type inference. This documentation provides comprehensive coverage of Zod v4's features, API, and usage patterns.
+> Zod is a TypeScript-first schema validation library with static type inference. This documentation provides comprehensive coverage of Zod 4's features, API, and usage patterns.
 
 `;
 
