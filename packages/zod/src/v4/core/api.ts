@@ -1473,7 +1473,7 @@ type RawIssue<T extends errors.$ZodIssueBase> = T extends any
       util.MakePartial<T, "message" | "path"> & {
         /** The schema or check that originated this issue. */
         readonly inst?: schemas.$ZodType | checks.$ZodCheck;
-        /** If `true`, Zod will continue executing checks/refinements after this issue. */
+        /** If `true`, Zod will execute subsequent checks/refinements instead of immediately aborting */
         readonly continue?: boolean | undefined;
       } & Record<string, unknown>
     >
@@ -1495,7 +1495,7 @@ export function _superRefine<T>(fn: (arg: T, payload: $RefinementCtx<T>) => void
         _issue.code ??= "custom";
         _issue.input ??= payload.value;
         _issue.inst ??= ch;
-        _issue.continue ??= !ch._zod.def.abort;
+        _issue.continue ??= !ch._zod.def.abort; // abort is always undefined, so this is always true...
         payload.issues.push(util.issue(_issue));
       }
     };

@@ -252,6 +252,79 @@ describe("superRefine functionality", () => {
     await expect(Strings.parseAsync(validArray)).resolves.toEqual(validArray);
   });
 
+  test("should test continuability of custom issues", () => {
+    // Default continue behavior - allows subsequent refinements
+    const defaultContinue = z
+      .string()
+      .superRefine((_, ctx) => {
+        ctx.addIssue({ code: "custom", message: "First issue" });
+      })
+      .refine(() => false, "Second issue");
+
+    expect(defaultContinue.safeParse("test")).toMatchInlineSnapshot(`
+      {
+        "error": [ZodError: [
+        {
+          "code": "custom",
+          "message": "First issue",
+          "path": []
+        },
+        {
+          "code": "custom",
+          "path": [],
+          "message": "Second issue"
+        }
+      ]],
+        "success": false,
+      }
+    `);
+
+    // Explicit continue: false - prevents subsequent refinements
+    const explicitContinueFalse = z
+      .string()
+      .superRefine((_, ctx) => {
+        ctx.addIssue({ code: "custom", message: "First issue", continue: false });
+      })
+      .refine(() => false, "Second issue");
+
+    expect(explicitContinueFalse.safeParse("test")).toMatchInlineSnapshot(`
+      {
+        "error": [ZodError: [
+        {
+          "code": "custom",
+          "message": "First issue",
+          "path": []
+        }
+      ]],
+        "success": false,
+      }
+    `);
+
+    // Multiple issues in same refinement - both always added regardless of continue
+    const multipleInSame = z.string().superRefine((_, ctx) => {
+      ctx.addIssue({ code: "custom", message: "First", continue: false });
+      ctx.addIssue({ code: "custom", message: "Second" });
+    });
+
+    expect(multipleInSame.safeParse("test")).toMatchInlineSnapshot(`
+      {
+        "error": [ZodError: [
+        {
+          "code": "custom",
+          "message": "First",
+          "path": []
+        },
+        {
+          "code": "custom",
+          "message": "Second",
+          "path": []
+        }
+      ]],
+        "success": false,
+      }
+    `);
+  });
+
   test("should accept string as shorthand for custom error message", () => {
     const schema = z.string().superRefine((_, ctx) => {
       ctx.addIssue("bad stuff");
