@@ -97,6 +97,42 @@ test("datetime offset normalization", () => {
   a.safeParse("2020-10-14T17:42:29+02:00");
 });
 
+test("datetime with +0000 offset format", () => {
+  const isoDateTimeZ = z.iso.datetime({ offset: true });
+
+  // This format should fail because offset needs colon separator
+  expect(() => isoDateTimeZ.parse("2022-10-04T05:15:00.000+0000")).toThrow();
+
+  // Correct format with colon separator
+  isoDateTimeZ.parse("2022-10-04T05:15:00.000+00:00");
+
+  // Also works with Z suffix for UTC
+  isoDateTimeZ.parse("2022-10-04T05:15:00.000Z");
+});
+
+test("ISO 8601 basic format timezone offset (currently unsupported)", () => {
+  // ISO 8601:2019 allows timezone offsets in both extended (+hh:mm) and basic (+hhmm) formats
+  // See: https://en.wikipedia.org/wiki/ISO_8601#Time_zone_designators
+  // See: https://www.iso.org/iso-8601-date-and-time-format.html
+
+  // Many programming languages and systems generate the basic format by default:
+  // - Java: SimpleDateFormat with pattern "yyyy-MM-dd'T'HH:mm:ss.SSSZ" produces +0000
+  // - Databases: PostgreSQL, MySQL often output +0000 format
+  // - Various APIs and legacy systems use this format
+
+  const datetime = z.iso.datetime({ offset: true });
+
+  // Basic format (without colon) - currently throws but is valid ISO 8601
+  expect(() => datetime.parse("2022-10-04T05:15:00.000+0000")).toThrow();
+  expect(() => datetime.parse("2022-10-04T05:15:00.000-0500")).toThrow();
+  expect(() => datetime.parse("2022-10-04T05:15:00.000+0530")).toThrow();
+
+  // Extended format (with colon) - currently supported
+  expect(datetime.parse("2022-10-04T05:15:00.000+00:00")).toBe("2022-10-04T05:15:00.000+00:00");
+  expect(datetime.parse("2022-10-04T05:15:00.000-05:00")).toBe("2022-10-04T05:15:00.000-05:00");
+  expect(datetime.parse("2022-10-04T05:15:00.000+05:30")).toBe("2022-10-04T05:15:00.000+05:30");
+});
+
 test("datetime parsing with local option", () => {
   const a = z.string().datetime({ local: true });
 
