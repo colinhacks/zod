@@ -6,6 +6,9 @@
   "author": "Colin McDonnell <zod@colinhacks.com>",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
   "homepage": "https://zod.dev",
+  "llms": "https://zod.dev/llms.txt",
+  "llmsFull": "https://zod.dev/llms-full.txt",
+  "mcpServer": "https://mcp.inkeep.com/zod/mcp",
   "funding": "https://github.com/sponsors/colinhacks",
   "sideEffects": false,
   "files": [
