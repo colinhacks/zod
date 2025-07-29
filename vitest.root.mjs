@@ -1,6 +1,6 @@
-import { dirname, resolve } from "node:path";
+import { defineConfig } from "vitest/config";
 import { fileURLToPath } from "node:url";
-import { type ViteUserConfig, defineConfig } from "vitest/config";
+import { dirname, resolve } from "node:path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -21,4 +21,4 @@ export default defineConfig({
     },
     silent: true,
   },
-}) as ViteUserConfig;
+});
