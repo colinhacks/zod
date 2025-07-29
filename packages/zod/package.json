@@ -16,7 +16,7 @@
   "funding": "https://github.com/sponsors/colinhacks",
   "homepage": "https://zod.dev",
   "llms": "https://zod.dev/llms.txt",
-  "mcpServer": "https://mcp.inkeep.com/zod/mcp",
+  "mcp": "https://mcp.inkeep.com/zod/mcp",
   "keywords": [
     "typescript",
     "schema",

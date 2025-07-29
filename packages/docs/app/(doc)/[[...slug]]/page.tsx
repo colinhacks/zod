@@ -27,7 +27,7 @@ export default async function Page(props: {
     });
 
   const editOnGithub = (
-    <h3 className=" pt-3 mt-3 inline-flex items-center gap-1.5 text-sm text-fd-muted-foreground">
+    <h3 className="border-[var(--color-fd-border)] pb-0 mb-0 inline-flex items-center gap-1.5 text-sm text-fd-muted-foreground">
       <a
         href={`https://github.com/colinhacks/zod/blob/main/content/packages/docs/${page.file.path}`}
         rel="noreferrer noopener"
@@ -42,7 +42,7 @@ export default async function Page(props: {
   return (
     <DocsPage
       toc={toc}
-      tableOfContent={{ style: "clerk", single: false, footer: editOnGithub }}
+      tableOfContent={{ style: "clerk", single: false, header: editOnGithub }}
       full={false}
     
     >
