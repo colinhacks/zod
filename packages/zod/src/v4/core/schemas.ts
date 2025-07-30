@@ -1701,6 +1701,8 @@ export interface $ZodObjectInternals<
   propValues: util.PropValues;
   output: $InferObjectOutput<Shape, Config["out"]>;
   input: $InferObjectInput<Shape, Config["in"]>;
+  optin?: "optional" | undefined;
+  optout?: "optional" | undefined;
 }
 export type $ZodLooseShape = Record<string, any>;
 
@@ -3749,11 +3751,18 @@ export interface $ZodLazy<T extends SomeType = $ZodType> extends $ZodType {
 export const $ZodLazy: core.$constructor<$ZodLazy> = /*@__PURE__*/ core.$constructor("$ZodLazy", (inst, def) => {
   $ZodType.init(inst, def);
 
+  // let _innerType!: any;
+  // util.defineLazy(def, "getter", () => {
+  //   if (!_innerType) {
+  //     _innerType = def.getter();
+  //   }
+  //   return () => _innerType;
+  // });
   util.defineLazy(inst._zod, "innerType", () => def.getter() as $ZodType);
   util.defineLazy(inst._zod, "pattern", () => inst._zod.innerType._zod.pattern);
   util.defineLazy(inst._zod, "propValues", () => inst._zod.innerType._zod.propValues);
-  util.defineLazy(inst._zod, "optin", () => inst._zod.innerType._zod.optin);
-  util.defineLazy(inst._zod, "optout", () => inst._zod.innerType._zod.optout);
+  util.defineLazy(inst._zod, "optin", () => inst._zod.innerType._zod.optin ?? undefined);
+  util.defineLazy(inst._zod, "optout", () => inst._zod.innerType._zod.optout ?? undefined);
   inst._zod.parse = (payload, ctx) => {
     const inner = inst._zod.innerType;
     return inner._zod.run(payload, ctx);

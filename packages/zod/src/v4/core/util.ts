@@ -257,16 +257,21 @@ export function floatSafeRemainder(val: number, step: number): number {
   return (valInt % stepInt) / 10 ** decCount;
 }
 
+const EVALUATING = Symbol("evaluating");
+
 export function defineLazy<T, K extends keyof T>(object: T, key: K, getter: () => T[K]): void {
-  const set = false;
+  let value: T[K] | typeof EVALUATING | undefined = undefined;
   Object.defineProperty(object, key, {
     get() {
-      if (!set) {
-        const value = getter();
-        object[key] = value;
-        return value;
+      if (value === EVALUATING) {
+        // Circular reference detected, return undefined to break the cycle
+        return undefined as T[K];
       }
-      throw new Error("cached value already set");
+      if (value === undefined) {
+        value = EVALUATING;
+        value = getter();
+      }
+      return value;
     },
     set(v) {
       Object.defineProperty(object, key, {

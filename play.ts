@@ -1,18 +1,18 @@
-import { z } from "zod";
+import { z } from "zod/v4";
 
-export const TaskListNodeSchema = z.strictObject({
-  type: z.literal("taskList"),
-  attrs: z.strictObject({ localId: z.string() }),
-  get content() {
-    return z.array(z.tuple([TaskListNodeSchema, z.union([TaskListNodeSchema])])).min(1);
-  },
-});
+export const TaskListNodeSchema = z.lazy(() =>
+  z.strictObject({
+    type: z.literal("taskList"),
+    attrs: z.strictObject({ localId: z.string() }),
+    content: z.array(z.tuple([TaskItemNodeSchema, z.union([TaskItemNodeSchema, TaskListNodeSchema])])).min(1),
+  })
+);
 
-export const ListItemNodeSchema = z.strictObject({
-  type: z.literal("listItem"),
-  attrs: z.strictObject({ localId: z.string().optional() }).optional(),
-  get content() {
-    return z
+export const ListItemNodeSchema = z.lazy(() =>
+  z.strictObject({
+    type: z.literal("listItem"),
+    attrs: z.strictObject({ localId: z.string().optional() }).optional(),
+    content: z
       .array(
         z.tuple([
           z.union([
@@ -34,17 +34,17 @@ export const ListItemNodeSchema = z.strictObject({
           ]),
         ])
       )
-      .min(1);
-  },
-});
+      .min(1),
+  })
+);
 
-export const BulletListNodeSchema = z.strictObject({
-  type: z.literal("bulletList"),
-  attrs: z.strictObject({ localId: z.string().optional() }).optional(),
-  get content() {
-    return z.array(ListItemNodeSchema).min(1);
-  },
-});
+export const BulletListNodeSchema = z.lazy(() =>
+  z.strictObject({
+    type: z.literal("bulletList"),
+    attrs: z.strictObject({ localId: z.string().optional() }).optional(),
+    content: z.array(ListItemNodeSchema).min(1),
+  })
+);
 
 export const AlignmentMarkSchema = z.strictObject({
   type: z.literal("alignment"),
@@ -1020,6 +1020,8 @@ const adf = {
   version: 1,
 };
 
-const test = DocNodeSchema.parse(adf);
+// const test = DocNodeSchema.parse(adf);
 
-console.log(JSON.stringify(test, null, 2));
+// console.log(JSON.stringify(test, null, 2));
+
+TaskListNodeSchema._zod.def.getter();
