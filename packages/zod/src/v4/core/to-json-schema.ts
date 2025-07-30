@@ -15,8 +15,9 @@ interface JSONSchemaGeneratorParams {
   target?: "draft-4" | "draft-7" | "draft-2020-12";
   /** How to handle unrepresentable types.
    * - `"throw"` — Default. Unrepresentable types throw an error
-   * - `"any"` — Unrepresentable types become `{}` */
-  unrepresentable?: "throw" | "any";
+   * - `"any"` — Unrepresentable types become `{}`
+   * - `"filter"` — Unrepresentable types are filtered out from unions and become `{}` elsewhere */
+  unrepresentable?: "throw" | "any" | "filter";
   /** Arbitrary custom logic that can be used to modify the generated JSON Schema. */
   override?: (ctx: {
     zodSchema: schemas.$ZodTypes;
@@ -73,7 +74,7 @@ interface Seen {
 export class JSONSchemaGenerator {
   metadataRegistry: $ZodRegistry<Record<string, any>>;
   target: "draft-4" | "draft-7" | "draft-2020-12";
-  unrepresentable: "throw" | "any";
+  unrepresentable: "throw" | "any" | "filter";
   override: (ctx: {
     zodSchema: schemas.$ZodTypes;
     jsonSchema: JSONSchema.BaseSchema;
@@ -329,6 +330,13 @@ export class JSONSchemaGenerator {
                 path: [...params.path, "anyOf", i],
               })
             );
+
+            if (this.unrepresentable === "filter") {
+              json.anyOf = json.anyOf.filter((option) => {
+                // Check if schema is unrepresentable (empty object)
+                return Object.keys(option).length > 0;
+              });
+            }
             break;
           }
           case "intersection": {
