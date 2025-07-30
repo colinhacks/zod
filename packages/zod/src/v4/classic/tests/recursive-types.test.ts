@@ -366,6 +366,21 @@ test("object utilities with recursive types", () => {
   ]);
 });
 
+test("tuple with recursive types", () => {
+  const TaskListNodeSchema = z.strictObject({
+    type: z.literal("taskList"),
+    get content() {
+      return z.array(z.tuple([TaskListNodeSchema, z.union([TaskListNodeSchema])])).min(1);
+    },
+  });
+  type TaskListNodeSchema = z.infer<typeof TaskListNodeSchema>;
+  type _TaskListNodeSchema = {
+    type: "taskList";
+    content: [_TaskListNodeSchema, _TaskListNodeSchema][];
+  };
+  expectTypeOf<TaskListNodeSchema>().toEqualTypeOf<_TaskListNodeSchema>();
+});
+
 test("recursion compatibility", () => {
   // array
   const A = z.object({

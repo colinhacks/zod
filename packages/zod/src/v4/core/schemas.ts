@@ -2282,9 +2282,12 @@ type TupleOutputTypeWithOptionals<T extends util.TupleItems> = T extends readonl
 export interface $ZodTupleInternals<
   T extends util.TupleItems = readonly $ZodType[],
   Rest extends SomeType | null = $ZodType | null,
-> extends $ZodTypeInternals<$InferTupleOutputType<T, Rest>, $InferTupleInputType<T, Rest>> {
+> extends _$ZodTypeInternals {
   def: $ZodTupleDef<T, Rest>;
   isst: errors.$ZodIssueInvalidType | errors.$ZodIssueTooBig<unknown[]> | errors.$ZodIssueTooSmall<unknown[]>;
+  // $ZodTypeInternals<$InferTupleOutputType<T, Rest>, $InferTupleInputType<T, Rest>>
+  output: $InferTupleOutputType<T, Rest>;
+  input: $InferTupleInputType<T, Rest>;
 }
 
 export interface $ZodTuple<
