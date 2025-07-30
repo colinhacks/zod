@@ -797,6 +797,23 @@ export function extend<T extends ZodMiniObject, U extends core.$ZodLooseShape>(
   return util.extend(schema, shape);
 }
 
+export type SafeExtendShape<Base extends core.$ZodShape, Ext extends core.$ZodLooseShape> = {
+  [K in keyof Ext]: K extends keyof Base
+    ? core.output<Ext[K]> extends core.output<Base[K]>
+      ? core.input<Ext[K]> extends core.input<Base[K]>
+        ? Ext[K]
+        : never
+      : never
+    : Ext[K];
+};
+
+export function safeExtend<T extends ZodMiniObject, U extends core.$ZodLooseShape>(
+  schema: T,
+  shape: SafeExtendShape<T["shape"], U>
+): ZodMiniObject<util.Extend<T["shape"], U>, T["_zod"]["config"]> {
+  return util.safeExtend(schema, shape as any);
+}
+
 /** @deprecated Identical to `z.extend(A, B)` */
 export function merge<T extends ZodMiniObject, U extends ZodMiniObject>(
   a: T,
