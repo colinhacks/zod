@@ -149,26 +149,26 @@ function fixedBase64url(length: number): RegExp {
 }
 
 // MD5 (16 bytes): base64 = 24 chars total (22 + "==")
-export const md5_hex: RegExp = /^[0-9a-f]{32}$/;
+export const md5_hex: RegExp = /^[0-9a-fA-F]{32}$/;
 export const md5_base64: RegExp = /*@__PURE__*/ fixedBase64(22, "==");
 export const md5_base64url: RegExp = /*@__PURE__*/ fixedBase64url(22);
 
 // SHA1 (20 bytes): base64 = 28 chars total (27 + "=")
-export const sha1_hex: RegExp = /^[0-9a-f]{40}$/;
+export const sha1_hex: RegExp = /^[0-9a-fA-F]{40}$/;
 export const sha1_base64: RegExp = /*@__PURE__*/ fixedBase64(27, "=");
 export const sha1_base64url: RegExp = /*@__PURE__*/ fixedBase64url(27);
 
 // SHA256 (32 bytes): base64 = 44 chars total (43 + "=")
-export const sha256_hex: RegExp = /^[0-9a-f]{64}$/;
+export const sha256_hex: RegExp = /^[0-9a-fA-F]{64}$/;
 export const sha256_base64: RegExp = /*@__PURE__*/ fixedBase64(43, "=");
 export const sha256_base64url: RegExp = /*@__PURE__*/ fixedBase64url(43);
 
 // SHA384 (48 bytes): base64 = 64 chars total (no padding)
-export const sha384_hex: RegExp = /^[0-9a-f]{96}$/;
+export const sha384_hex: RegExp = /^[0-9a-fA-F]{96}$/;
 export const sha384_base64: RegExp = /*@__PURE__*/ fixedBase64(64, "");
 export const sha384_base64url: RegExp = /*@__PURE__*/ fixedBase64url(64);
 
 // SHA512 (64 bytes): base64 = 88 chars total (86 + "==")
-export const sha512_hex: RegExp = /^[0-9a-f]{128}$/;
+export const sha512_hex: RegExp = /^[0-9a-fA-F]{128}$/;
 export const sha512_base64: RegExp = /*@__PURE__*/ fixedBase64(86, "==");
 export const sha512_base64url: RegExp = /*@__PURE__*/ fixedBase64url(86);
