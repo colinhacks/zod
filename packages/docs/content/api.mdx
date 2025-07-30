@@ -1639,7 +1639,7 @@ type EmployedPerson = z.infer<typeof EmployedPerson>;
 ```
 
 <Callout type="warn">
-  When merging object schemas, prefer [`A.extend(B)`](#extend) over intersections. Using `.extend()` will gve you a new object schema, whereas `z.intersection(A, B)` returns a `ZodIntersection` instance which lacks common object methods like `pick` and `omit`.
+  When merging object schemas, prefer [`A.extend(B)`](#extend) over intersections. Using `.extend()` will give you a new object schema, whereas `z.intersection(A, B)` returns a `ZodIntersection` instance which lacks common object methods like `pick` and `omit`.
 </Callout>
 
 ## Records
