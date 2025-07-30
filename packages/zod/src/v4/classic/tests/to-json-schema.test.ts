@@ -539,6 +539,19 @@ describe("toJSONSchema", () => {
     `);
   });
 
+  test("number constraints draft-4", () => {
+    expect(z.toJSONSchema(z.number().gt(5).lt(10), { target: "draft-4" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "exclusiveMaximum": true,
+        "exclusiveMinimum": true,
+        "maximum": 10,
+        "minimum": 5,
+        "type": "number",
+      }
+    `);
+  });
+
   test("arrays", () => {
     expect(z.toJSONSchema(z.array(z.string()))).toMatchInlineSnapshot(`
       {
@@ -739,6 +752,19 @@ describe("toJSONSchema", () => {
           "hello",
           "zod",
           "v4",
+        ],
+        "type": "string",
+      }
+    `);
+  });
+
+  test("literal draft-4", () => {
+    const a = z.literal("hello");
+    expect(z.toJSONSchema(a, { target: "draft-4" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "enum": [
+          "hello",
         ],
         "type": "string",
       }
