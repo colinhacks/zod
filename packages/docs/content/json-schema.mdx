@@ -224,7 +224,8 @@ interface ToJSONSchemaParams {
 
   /** How to handle unrepresentable types.
    * - `"throw"` — Default. Unrepresentable types throw an error
-   * - `"any"` — Unrepresentable types become `{}` */
+   * - `"any"` — Unrepresentable types become `{}`
+   * - `"filter"` — Unrepresentable types are filtered out from unions and become `{}` elsewhere */
   unrepresentable?: "throw" | "any";
 
   /** How to handle cycles.
