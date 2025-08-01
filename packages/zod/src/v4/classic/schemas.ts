@@ -1149,7 +1149,7 @@ export function object<T extends core.$ZodLooseShape = Partial<Record<never, cor
   const def: core.$ZodObjectDef = {
     type: "object",
     get shape() {
-      util.assignProp(this, "shape", { ...shape });
+      util.assignProp(this, "shape", shape ? util.objectClone(shape) : {});
       return this.shape;
     },
     ...util.normalizeParams(params),
@@ -1166,7 +1166,7 @@ export function strictObject<T extends core.$ZodLooseShape>(
   return new ZodObject({
     type: "object",
     get shape() {
-      util.assignProp(this, "shape", { ...shape });
+      util.assignProp(this, "shape", util.objectClone(shape));
       return this.shape;
     },
     catchall: never(),
@@ -1183,7 +1183,7 @@ export function looseObject<T extends core.$ZodLooseShape>(
   return new ZodObject({
     type: "object",
     get shape() {
-      util.assignProp(this, "shape", { ...shape });
+      util.assignProp(this, "shape", util.objectClone(shape));
       return this.shape;
     },
     catchall: unknown(),
