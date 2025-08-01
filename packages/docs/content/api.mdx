@@ -227,6 +227,7 @@ To validate against some common string formats:
 
 ```ts
 z.email();
+z.currency()
 z.uuid();
 z.url();
 z.hostname();
@@ -284,6 +285,28 @@ z.email({ pattern: z.regexes.rfc5322Email });
 
 // a loose regex that allows Unicode (good for intl emails)
 z.email({ pattern: z.regexes.unicodeEmail });
+```
+
+### Currencies
+
+To validate ISO 4217 currency codes:
+
+```ts
+z.currency();
+```
+
+This method ensures the string is a valid 3-letter currency code, such as "USD", "EUR", or "TND". It checks that the input exactly matches one of the official ISO 4217 codes.
+You can find here the full list of the ISO 4217 Currencies: https://en.wikipedia.org/wiki/ISO_4217
+
+By default, this validator is case-sensitive and expects uppercase codes. Inputs like "usd" or "eur" will fail validation.
+
+```ts
+const schema = z.currency();
+
+schema.parse("USD"); // ✅
+schema.parse("TND"); // ✅
+schema.parse("eur"); // ❌ 
+schema.parse("XYZ"); // ❌ Invalid ISO 4217 currency
 ```
 
 ### UUIDs
