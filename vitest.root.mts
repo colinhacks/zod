@@ -5,6 +5,7 @@ export default defineConfig({
     conditions: ["@zod/source"],
   },
   test: {
+    projects: ["packages/*", "."],
     watch: false,
     isolate: true,
     typecheck: {
