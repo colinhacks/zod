@@ -446,6 +446,68 @@ test("recursion compatibility", () => {
   });
 });
 
+test("recursive object with .check()", () => {
+  const Category = z
+    .object({
+      id: z.string(),
+      name: z.string(),
+      get subcategories() {
+        return z.array(Category).optional();
+      },
+    })
+    .check((ctx) => {
+      // Check for duplicate IDs among direct subcategories
+      if (ctx.value.subcategories) {
+        const siblingIds = new Set<string>();
+        ctx.value.subcategories.forEach((sub, index) => {
+          if (siblingIds.has(sub.id)) {
+            ctx.issues.push({
+              code: "custom",
+              message: `Duplicate sibling ID found: ${sub.id}`,
+              path: ["subcategories", index, "id"],
+              input: ctx.value,
+            });
+          }
+          siblingIds.add(sub.id);
+        });
+      }
+    });
+
+  // Valid - siblings have unique IDs
+  const validData = {
+    id: "electronics",
+    name: "Electronics",
+    subcategories: [
+      {
+        id: "computers",
+        name: "Computers",
+        subcategories: [
+          { id: "laptops", name: "Laptops" },
+          { id: "desktops", name: "Desktops" },
+        ],
+      },
+      {
+        id: "phones",
+        name: "Phones",
+      },
+    ],
+  };
+
+  // Invalid - duplicate sibling IDs
+  const invalidData = {
+    id: "electronics",
+    name: "Electronics",
+    subcategories: [
+      { id: "computers", name: "Computers" },
+      { id: "phones", name: "Phones" },
+      { id: "computers", name: "Computers Again" }, // Duplicate at index 2
+    ],
+  };
+
+  expect(() => Category.parse(validData)).not.toThrow();
+  expect(() => Category.parse(invalidData)).toThrow();
+});
+
 // biome-ignore lint: sadf
 export type RecursiveA = z.ZodUnion<
   [
