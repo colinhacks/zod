@@ -712,9 +712,9 @@ export function array<T extends SomeType>(element: SomeType, params?: any): ZodM
 }
 
 // .keyof
-export function keyof<T extends ZodMiniObject>(schema: T): ZodMiniLiteral<Exclude<keyof T["shape"], symbol>> {
+export function keyof<T extends ZodMiniObject>(schema: T): ZodMiniEnum<util.KeysEnum<T["shape"]>> {
   const shape = schema._zod.def.shape;
-  return literal(Object.keys(shape)) as any;
+  return _enum(Object.keys(shape)) as any;
 }
 
 // ZodMiniObject

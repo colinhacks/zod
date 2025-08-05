@@ -1038,9 +1038,9 @@ export function array<T extends core.SomeType>(element: T, params?: string | cor
 }
 
 // .keyof
-export function keyof<T extends ZodObject>(schema: T): ZodLiteral<Exclude<keyof T["_zod"]["output"], symbol>> {
+export function keyof<T extends ZodObject>(schema: T): ZodEnum<util.KeysEnum<T["_zod"]["output"]>> {
   const shape = schema._zod.def.shape;
-  return literal(Object.keys(shape)) as any;
+  return _enum(Object.keys(shape)) as any;
 }
 
 // ZodObject
