@@ -504,6 +504,44 @@ z.jwt();
 z.jwt({ alg: "HS256" });
 ```
 
+### Hash validation
+
+To validate cryptographic hash values:
+
+```ts
+z.hash("md5");
+z.hash("sha1");
+z.hash("sha256");
+z.hash("sha384");
+z.hash("sha512");
+```
+
+By default, hash validation expects hexadecimal encoding. You can specify a different encoding:
+
+```ts
+z.hash("sha256", { enc: "hex" });      // default
+z.hash("sha256", { enc: "base64" });   // base64 encoding
+z.hash("sha256", { enc: "base64url" }); // base64url encoding (no padding)
+```
+
+**Supported algorithms:**
+
+- **MD5**: 32 hex chars, 24 base64 chars (22 + "=="), or 22 base64url chars
+- **SHA1**: 40 hex chars, 28 base64 chars (27 + "="), or 27 base64url chars  
+- **SHA256**: 64 hex chars, 44 base64 chars (43 + "="), or 43 base64url chars
+- **SHA384**: 96 hex chars, 64 base64 chars (no padding), or 64 base64url chars
+- **SHA512**: 128 hex chars, 88 base64 chars (86 + "=="), or 86 base64url chars
+
+```ts
+const md5hex = z.hash("md5");
+md5hex.parse("5d41402abc4b2a76b9719d911017c592"); // ✅
+md5hex.parse("5d41402abc4b2a76b9719d911017c59"); // ❌ too short
+
+const sha256base64 = z.hash("sha256", { enc: "base64" });
+sha256base64.parse("LPJNul+wow4m6DsqxbninhsWHlwfp0JecwQzYpOLmCQ="); // ✅
+sha256base64.parse("LPJNul+wow4m6DsqxbninhsWHlwfp0JecwQzYpOLmCQ"); // ❌ missing padding
+
+
 ### Custom formats
 
 To define your own string formats:
