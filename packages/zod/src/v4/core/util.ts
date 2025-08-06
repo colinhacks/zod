@@ -631,6 +631,22 @@ export function extend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): an
   return clone(schema, def) as any;
 }
 
+export function safeExtend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): any {
+  if (!isPlainObject(shape)) {
+    throw new Error("Invalid input to safeExtend: expected a plain object");
+  }
+  const def = {
+    ...schema._zod.def,
+    get shape() {
+      const _shape = { ...schema._zod.def.shape, ...shape };
+      assignProp(this, "shape", _shape); // self-caching
+      return _shape;
+    },
+    checks: schema._zod.def.checks,
+  } as any;
+  return clone(schema, def) as any;
+}
+
 export function merge(a: schemas.$ZodObject, b: schemas.$ZodObject): any {
   const def = mergeDefs(a._zod.def, {
     get shape() {

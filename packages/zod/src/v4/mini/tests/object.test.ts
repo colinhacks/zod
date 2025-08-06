@@ -116,6 +116,15 @@ test("z.extend", () => {
   expect(z.safeParse(extendedSchema, { name: "John", age: 30, isAdmin: true }).success).toBe(true);
 });
 
+test("z.safeExtend", () => {
+  const extended = z.safeExtend(userSchema, { name: z.string() });
+  expect(z.safeParse(extended, { name: "John", age: 30 }).success).toBe(true);
+  type Extended = z.infer<typeof extended>;
+  expectTypeOf<Extended>().toEqualTypeOf<{ name: string; age: number; email?: string }>();
+  // @ts-expect-error
+  z.safeExtend(userSchema, { name: z.number() });
+});
+
 test("z.pick", () => {
   const pickedSchema = z.pick(userSchema, { name: true, email: true });
   type PickedUser = z.infer<typeof pickedSchema>;
