@@ -552,6 +552,25 @@ describe("toJSONSchema", () => {
     `);
   });
 
+  test("nullable openapi", () => {
+    expect(z.toJSONSchema(z.string().nullable(), { target: "openapi-3.0" })).toMatchInlineSnapshot(`
+      {
+        "nullable": true,
+        "type": "string",
+      }
+    `);
+  });
+
+  test("union with null openapi", () => {
+    const schema = z.union([z.string(), z.null()]);
+    expect(z.toJSONSchema(schema, { target: "openapi-3.0" })).toMatchInlineSnapshot(`
+      {
+        "nullable": true,
+        "type": "string",
+      }
+    `);
+  });
+
   test("arrays", () => {
     expect(z.toJSONSchema(z.array(z.string()))).toMatchInlineSnapshot(`
       {
