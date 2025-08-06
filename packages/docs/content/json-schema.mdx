@@ -215,8 +215,9 @@ interface ToJSONSchemaParams {
   /** The JSON Schema version to target.
    * - `"draft-2020-12"` — Default. JSON Schema Draft 2020-12
    * - `"draft-7"` — JSON Schema Draft 7
-   * - `"draft-4"` — JSON Schema Draft 4 */
-  target?: "draft-4" | "draft-7" | "draft-2020-12";
+   * - `"draft-4"` — JSON Schema Draft 4
+   * - `"openapi-3.0"` — OpenAPI 3.0 Schema Object */
+  target?: "draft-4" | "draft-7" | "draft-2020-12" | "openapi-3.0";
 
   /** A registry used to look up metadata for each schema. 
    * Any schema with an `id` property will be extracted as a $def. */
@@ -252,6 +253,7 @@ To set the target JSON Schema version, use the `target` parameter. By default, Z
 z.toJSONSchema(schema, { target: "draft-7" });
 z.toJSONSchema(schema, { target: "draft-2020-12" });
 z.toJSONSchema(schema, { target: "draft-4" });
+z.toJSONSchema(schema, { target: "openapi-3.0" });
 ```
 
 ### `metadata`
