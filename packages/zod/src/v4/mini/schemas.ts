@@ -440,6 +440,20 @@ export function hostname(_params?: string | core.$ZodStringFormatParams): ZodMin
   return core._stringFormat(ZodMiniCustomStringFormat, "hostname", core.regexes.hostname, _params) as any;
 }
 
+export function hash(
+  alg: "md5" | "sha1" | "sha256" | "sha384" | "sha512",
+  params?: {
+    enc?: "hex" | "base64" | "base64url";
+  } & core.$ZodStringFormatParams
+): ZodMiniCustomStringFormat<`${typeof alg}_${NonNullable<typeof params>["enc"] extends string ? NonNullable<typeof params>["enc"] : "hex"}`> {
+  const enc = params?.enc ?? "hex";
+  const format = `${alg}_${enc}` as const;
+  const regex = core.regexes[format as keyof typeof core.regexes] as RegExp;
+  // check for unrecognized format
+  if (!regex) throw new Error(`Unrecognized hash format: ${format}`);
+  return core._stringFormat(ZodMiniCustomStringFormat, format, regex, params) as any;
+}
+
 // ZodMiniNumber
 interface _ZodMiniNumber<T extends core.$ZodNumberInternals<unknown> = core.$ZodNumberInternals<unknown>>
   extends _ZodMiniType<T>,

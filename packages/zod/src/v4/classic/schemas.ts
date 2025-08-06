@@ -697,6 +697,19 @@ export function hostname(_params?: string | core.$ZodStringFormatParams): ZodCus
   return core._stringFormat(ZodCustomStringFormat, "hostname", core.regexes.hostname, _params) as any;
 }
 
+export function hash(
+  alg: "md5" | "sha1" | "sha256" | "sha384" | "sha512",
+  params?: {
+    enc?: "hex" | "base64" | "base64url";
+  } & core.$ZodStringFormatParams
+): ZodCustomStringFormat {
+  const enc = params?.enc ?? "hex";
+  const format = `${alg}_${enc}` as const;
+  const regex = core.regexes[format as keyof typeof core.regexes] as RegExp;
+  if (!regex) throw new Error(`Unrecognized hash format: ${format}`);
+  return core._stringFormat(ZodCustomStringFormat, format, regex, params) as any;
+}
+
 // ZodNumber
 export interface _ZodNumber<Internals extends core.$ZodNumberInternals = core.$ZodNumberInternals>
   extends _ZodType<Internals> {
