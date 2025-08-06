@@ -26,8 +26,6 @@ export default async function Page(props: {
       return item;
     });
 
-  console.log(`Page file path = ${page.file.path}`);
-
   const editOnGithub = (
     <h3 className="border-[var(--color-fd-border)] pb-0 mb-0 inline-flex items-center gap-1.5 text-sm text-fd-muted-foreground">
       <a
