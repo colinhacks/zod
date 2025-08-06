@@ -15,7 +15,7 @@ import type * as util from "./util.js";
 export interface $ZodFunctionDef<
   In extends $ZodFunctionIn = $ZodFunctionIn,
   Out extends $ZodFunctionOut = $ZodFunctionOut,
-> {
+> extends schemas.$ZodTypeDef {
   type: "function";
   input: In;
   output: Out;
@@ -44,7 +44,7 @@ export type $InferOuterFunctionTypeAsync<Args extends $ZodFunctionIn, Returns ex
 export class $ZodFunction<
   Args extends $ZodFunctionIn = $ZodFunctionIn,
   Returns extends $ZodFunctionOut = $ZodFunctionOut,
-> {
+> extends schemas.$ZodType {
   def: $ZodFunctionDef<Args, Returns>;
 
   /** @deprecated */
@@ -53,6 +53,7 @@ export class $ZodFunction<
   _output!: $InferOuterFunctionType<Args, Returns>;
 
   constructor(def: $ZodFunctionDef<Args, Returns>) {
+    super(def);
     this._def = def;
     this.def = def;
   }

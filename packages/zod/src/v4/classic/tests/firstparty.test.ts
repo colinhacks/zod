@@ -168,6 +168,8 @@ test("$ZodSchemaTypes", () => {
       break;
     case "lazy":
       break;
+    case "function":
+      break;
 
     default:
       expectTypeOf(type).toEqualTypeOf<never>();

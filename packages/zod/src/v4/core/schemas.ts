@@ -44,6 +44,7 @@ export interface $ZodTypeDef {
     | "boolean"
     | "bigint"
     | "symbol"
+    | "function"
     | "null"
     | "undefined"
     | "void" // merge with undefined?
