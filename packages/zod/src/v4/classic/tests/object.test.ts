@@ -261,6 +261,21 @@ test("inferred enum type", async () => {
   expectTypeOf<Enum>().toEqualTypeOf<"a" | "b">();
 });
 
+test("z.keyof returns enum", () => {
+  const User = z.object({ name: z.string(), age: z.number() });
+  const keysSchema = z.keyof(User);
+  expect(keysSchema.enum).toEqual({
+    name: "name",
+    age: "age",
+  });
+  expect(keysSchema._zod.def.entries).toEqual({
+    name: "name",
+    age: "age",
+  });
+  type Keys = z.infer<typeof keysSchema>;
+  expectTypeOf<Keys>().toEqualTypeOf<"name" | "age">();
+});
+
 test("inferred partial object type with optional properties", async () => {
   const Partial = z.object({ a: z.string(), b: z.string().optional() }).partial();
   type Partial = z.infer<typeof Partial>;
