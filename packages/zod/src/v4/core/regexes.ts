@@ -145,7 +145,7 @@ function fixedBase64(bodyLength: number, padding: "" | "=" | "=="): RegExp {
 
 // Helper function to create base64url regex with exact length (no padding)
 function fixedBase64url(length: number): RegExp {
-  return new RegExp(`^[A-Za-z0-9_-]{${length}}$`);
+  return new RegExp(`^[A-Za-z0-9-_]{${length}}$`);
 }
 
 // MD5 (16 bytes): base64 = 24 chars total (22 + "==")
