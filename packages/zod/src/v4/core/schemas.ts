@@ -2010,20 +2010,27 @@ export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$const
 //////////////////////////////////////////////////////
 //////////////////////////////////////////////////////
 
-export interface $ZodDiscriminatedUnionDef<Options extends readonly SomeType[] = readonly $ZodType[]>
-  extends $ZodUnionDef<Options> {
-  discriminator: string;
+export interface $ZodDiscriminatedUnionDef<
+  Options extends readonly SomeType[] = readonly $ZodType[],
+  Disc extends string = string,
+> extends $ZodUnionDef<Options> {
+  discriminator: Disc;
   unionFallback?: boolean;
 }
 
-export interface $ZodDiscriminatedUnionInternals<Options extends readonly SomeType[] = readonly $ZodType[]>
-  extends $ZodUnionInternals<Options> {
-  def: $ZodDiscriminatedUnionDef<Options>;
+export interface $ZodDiscriminatedUnionInternals<
+  Options extends readonly SomeType[] = readonly $ZodType[],
+  Disc extends string = string,
+> extends $ZodUnionInternals<Options> {
+  def: $ZodDiscriminatedUnionDef<Options, Disc>;
   propValues: util.PropValues;
 }
 
-export interface $ZodDiscriminatedUnion<T extends readonly SomeType[] = readonly $ZodType[]> extends $ZodType {
-  _zod: $ZodDiscriminatedUnionInternals<T>;
+export interface $ZodDiscriminatedUnion<
+  Options extends readonly SomeType[] = readonly $ZodType[],
+  Disc extends string = string,
+> extends $ZodType {
+  _zod: $ZodDiscriminatedUnionInternals<Options, Disc>;
 }
 
 export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
