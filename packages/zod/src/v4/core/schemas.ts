@@ -185,7 +185,6 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
   if (inst._zod.traits.has("$ZodCheck")) {
     checks.unshift(inst as any);
   }
-  //
 
   for (const ch of checks) {
     for (const fn of ch._zod.onattach) {
@@ -1725,7 +1724,6 @@ function normalizeDef(def: $ZodObjectDef) {
 
   return {
     ...def,
-    // shape: def.shape,
     keys,
     keySet: new Set(keys),
     numKeys: keys.length,
@@ -1739,7 +1737,6 @@ function handleCatchall(
   payload: ParsePayload,
   ctx: ParseContext,
   def: ReturnType<typeof normalizeDef>,
-  // catchall: $ZodType,
   inst: $ZodObject
 ) {
   const unrecognized: string[] = [];
@@ -1834,39 +1831,6 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     }
 
     return handleCatchall(proms, input, payload, ctx, _normalized.value, inst);
-    // const unrecognized: string[] = [];
-    // // iterate over input keys
-    // const keySet = value.keySet;
-    // const _catchall = catchall._zod;
-    // const t = _catchall.def.type;
-    // for (const key of Object.keys(input)) {
-    //   if (keySet.has(key)) continue;
-    //   if (t === "never") {
-    //     unrecognized.push(key);
-    //     continue;
-    //   }
-    //   const r = _catchall.run({ value: input[key], issues: [] }, ctx);
-
-    //   if (r instanceof Promise) {
-    //     proms.push(r.then((r) => handlePropertyResult(r, payload, key, input)));
-    //   } else {
-    //     handlePropertyResult(r, payload, key, input);
-    //   }
-    // }
-
-    // if (unrecognized.length) {
-    //   payload.issues.push({
-    //     code: "unrecognized_keys",
-    //     keys: unrecognized,
-    //     input,
-    //     inst,
-    //   });
-    // }
-
-    // if (!proms.length) return payload;
-    // return Promise.all(proms).then(() => {
-    //   return payload;
-    // });
   };
 });
 
