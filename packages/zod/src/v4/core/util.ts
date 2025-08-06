@@ -284,6 +284,10 @@ export function defineLazy<T, K extends keyof T>(object: T, key: K, getter: () =
   });
 }
 
+export function objectClone(obj: object) {
+  return Object.create(Object.getPrototypeOf(obj), Object.getOwnPropertyDescriptors(obj));
+}
+
 export function assignProp<T extends object, K extends PropertyKey>(
   target: T,
   prop: K,

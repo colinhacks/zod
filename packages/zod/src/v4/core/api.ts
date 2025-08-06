@@ -314,8 +314,8 @@ export function _ksuid<T extends schemas.$ZodKSUID>(
 }
 
 // IPv4
-export type $ZodIPv4Params = StringFormatParams<schemas.$ZodIPv4, "pattern" | "when">;
-export type $ZodCheckIPv4Params = CheckStringFormatParams<schemas.$ZodIPv4, "pattern" | "when">;
+export type $ZodIPv4Params = StringFormatParams<schemas.$ZodIPv4, "pattern" | "when" | "version">;
+export type $ZodCheckIPv4Params = CheckStringFormatParams<schemas.$ZodIPv4, "pattern" | "when" | "version">;
 export function _ipv4<T extends schemas.$ZodIPv4>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodIPv4Params | $ZodCheckIPv4Params
@@ -330,8 +330,8 @@ export function _ipv4<T extends schemas.$ZodIPv4>(
 }
 
 // IPv6
-export type $ZodIPv6Params = StringFormatParams<schemas.$ZodIPv6, "pattern" | "when">;
-export type $ZodCheckIPv6Params = CheckStringFormatParams<schemas.$ZodIPv6, "pattern" | "when">;
+export type $ZodIPv6Params = StringFormatParams<schemas.$ZodIPv6, "pattern" | "when" | "version">;
+export type $ZodCheckIPv6Params = CheckStringFormatParams<schemas.$ZodIPv6, "pattern" | "when" | "version">;
 export function _ipv6<T extends schemas.$ZodIPv6>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodIPv6Params | $ZodCheckIPv6Params
@@ -1081,12 +1081,15 @@ export interface $ZodTypeDiscriminable extends schemas.$ZodType {
   _zod: $ZodTypeDiscriminableInternals;
 }
 export type $ZodDiscriminatedUnionParams = TypeParams<schemas.$ZodDiscriminatedUnion, "options" | "discriminator">;
-export function _discriminatedUnion<Types extends [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]]>(
+export function _discriminatedUnion<
+  Types extends [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]],
+  Disc extends string,
+>(
   Class: util.SchemaClass<schemas.$ZodDiscriminatedUnion>,
-  discriminator: string,
+  discriminator: Disc,
   options: Types,
   params?: string | $ZodDiscriminatedUnionParams
-): schemas.$ZodDiscriminatedUnion<Types> {
+): schemas.$ZodDiscriminatedUnion<Types, Disc> {
   return new Class({
     type: "union",
     options,

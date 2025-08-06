@@ -11,7 +11,7 @@ This migration guide aims to list the breaking changes in Zod 4 in order of high
 {/* To give the ecosystem time to migrate, Zod 4 will initially be published alongside Zod v3.25. To use Zod 4, upgrade to `zod@3.25.0` or later: */}
 
 ```
-npm upgrade zod@^4.0.0
+npm install zod@^4.0.0
 ```
 
 {/* Zod 4 is available at the `"/v4"` subpath:
@@ -850,7 +850,7 @@ Branding is now handled with a direct modification to the inferred type, instead
 {/* - Dropping support for ES5
   - Zod relies on `Set` internally */}
 
-{/* - ZodObject `.keyof()` now returns `ZodLiteral` not `ZodEnum` */}
+{/* - `z.keyof` now returns `ZodEnum` instead of `ZodLiteral` */}
 
 
 
