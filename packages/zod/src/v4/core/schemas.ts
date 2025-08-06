@@ -183,7 +183,6 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
   if (inst._zod.traits.has("$ZodCheck")) {
     checks.unshift(inst as any);
   }
-  //
 
   for (const ch of checks) {
     for (const fn of ch._zod.onattach) {
@@ -1712,27 +1711,72 @@ export interface $ZodObject<
   "~standard": $ZodStandardSchema<this>;
 }
 
+function normalizeDef(def: $ZodObjectDef) {
+  const keys = Object.keys(def.shape);
+  for (const k of keys) {
+    if (!def.shape[k]._zod.traits.has("$ZodType")) {
+      throw new Error(`Invalid element at key "${k}": expected a Zod schema`);
+    }
+  }
+  const okeys = util.optionalKeys(def.shape);
+
+  return {
+    ...def,
+    keys,
+    keySet: new Set(keys),
+    numKeys: keys.length,
+    optionalKeys: new Set(okeys),
+  };
+}
+
+function handleCatchall(
+  proms: Promise<any>[],
+  input: any,
+  payload: ParsePayload,
+  ctx: ParseContext,
+  def: ReturnType<typeof normalizeDef>,
+  inst: $ZodObject
+) {
+  const unrecognized: string[] = [];
+  // iterate over input keys
+  const keySet = def.keySet;
+  const _catchall = def.catchall!._zod;
+  const t = _catchall.def.type;
+  for (const key of Object.keys(input)) {
+    if (keySet.has(key)) continue;
+    if (t === "never") {
+      unrecognized.push(key);
+      continue;
+    }
+    const r = _catchall.run({ value: input[key], issues: [] }, ctx);
+
+    if (r instanceof Promise) {
+      proms.push(r.then((r) => handlePropertyResult(r, payload, key, input)));
+    } else {
+      handlePropertyResult(r, payload, key, input);
+    }
+  }
+
+  if (unrecognized.length) {
+    payload.issues.push({
+      code: "unrecognized_keys",
+      keys: unrecognized,
+      input,
+      inst,
+    });
+  }
+
+  if (!proms.length) return payload;
+  return Promise.all(proms).then(() => {
+    return payload;
+  });
+}
+
 export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$constructor("$ZodObject", (inst, def) => {
   // requires cast because technically $ZodObject doesn't extend
   $ZodType.init(inst, def);
 
-  const _normalized = util.cached(() => {
-    const keys = Object.keys(def.shape);
-    for (const k of keys) {
-      if (!def.shape[k]._zod.traits.has("$ZodType")) {
-        throw new Error(`Invalid element at key "${k}": expected a Zod schema`);
-      }
-    }
-    const okeys = util.optionalKeys(def.shape);
-
-    return {
-      shape: def.shape,
-      keys,
-      keySet: new Set(keys),
-      numKeys: keys.length,
-      optionalKeys: new Set(okeys),
-    };
-  });
+  const _normalized = util.cached(() => normalizeDef(def));
 
   util.defineLazy(inst._zod, "propValues", () => {
     const shape = def.shape;
@@ -1747,60 +1791,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     return propValues;
   });
 
-  const generateFastpass = (shape: any) => {
-    const doc = new Doc(["shape", "payload", "ctx"]);
-    const normalized = _normalized.value;
-
-    const parseStr = (key: string) => {
-      const k = util.esc(key);
-      return `shape[${k}]._zod.run({ value: input[${k}], issues: [] }, ctx)`;
-    };
-
-    doc.write(`const input = payload.value;`);
-
-    const ids: any = Object.create(null);
-    let counter = 0;
-    for (const key of normalized.keys) {
-      ids[key] = `key_${counter++}`;
-    }
-
-    // A: preserve key order {
-    doc.write(`const newResult = {}`);
-    for (const key of normalized.keys) {
-      const id = ids[key];
-      const k = util.esc(key);
-      doc.write(`const ${id} = ${parseStr(key)};`);
-      doc.write(`
-        if (${id}.issues.length) {
-          payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
-            ...iss,
-            path: iss.path ? [${k}, ...iss.path] : [${k}]
-          })));
-        }
-        
-        if (${id}.value === undefined) {
-          if (${k} in input) {
-            newResult[${k}] = undefined;
-          }
-        } else {
-          newResult[${k}] = ${id}.value;
-        }
-      `);
-    }
-
-    doc.write(`payload.value = newResult;`);
-    doc.write(`return payload;`);
-    const fn = doc.compile();
-    return (payload: any, ctx: any) => fn(shape, payload, ctx);
-  };
-
-  let fastpass!: ReturnType<typeof generateFastpass>;
-
   const isObject = util.isObject;
-  const jit = !core.globalConfig.jitless;
-  const allowsEval = util.allowsEval;
-
-  const fastEnabled = jit && allowsEval.value; // && !def.catchall;
   const catchall = def.catchall;
 
   let value!: typeof _normalized.value;
@@ -1819,43 +1810,13 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       return payload;
     }
 
+    payload.value = {};
+
     const proms: Promise<any>[] = [];
-
-    if (jit && fastEnabled && ctx?.async === false && ctx.jitless !== true) {
-      // always synchronous
-      if (!fastpass) fastpass = generateFastpass(def.shape);
-      payload = fastpass(payload, ctx);
-    } else {
-      payload.value = {};
-
-      const shape = value.shape;
-      for (const key of value.keys) {
-        const el = shape[key]!;
-        const r = el._zod.run({ value: input[key], issues: [] }, ctx);
-        if (r instanceof Promise) {
-          proms.push(r.then((r) => handlePropertyResult(r, payload, key, input)));
-        } else {
-          handlePropertyResult(r, payload, key, input);
-        }
-      }
-    }
-
-    if (!catchall) {
-      return proms.length ? Promise.all(proms).then(() => payload) : payload;
-    }
-    const unrecognized: string[] = [];
-    // iterate over input keys
-    const keySet = value.keySet;
-    const _catchall = catchall._zod;
-    const t = _catchall.def.type;
-    for (const key of Object.keys(input)) {
-      if (keySet.has(key)) continue;
-      if (t === "never") {
-        unrecognized.push(key);
-        continue;
-      }
-      const r = _catchall.run({ value: input[key], issues: [] }, ctx);
-
+    const shape = value.shape;
+    for (const key of value.keys) {
+      const el = shape[key]!;
+      const r = el._zod.run({ value: input[key], issues: [] }, ctx);
       if (r instanceof Promise) {
         proms.push(r.then((r) => handlePropertyResult(r, payload, key, input)));
       } else {
@@ -1863,22 +1824,107 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       }
     }
 
-    if (unrecognized.length) {
-      payload.issues.push({
-        code: "unrecognized_keys",
-
-        keys: unrecognized,
-        input,
-        inst,
-      });
+    if (!catchall) {
+      return proms.length ? Promise.all(proms).then(() => payload) : payload;
     }
 
-    if (!proms.length) return payload;
-    return Promise.all(proms).then(() => {
-      return payload;
-    });
+    return handleCatchall(proms, input, payload, ctx, _normalized.value, inst);
   };
 });
+
+export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$constructor(
+  "$ZodObjectJIT",
+  (inst, def) => {
+    // requires cast because technically $ZodObject doesn't extend
+    $ZodObject.init(inst, def);
+
+    const superParse = inst._zod.parse;
+    const _normalized = util.cached(() => normalizeDef(def));
+
+    const generateFastpass = (shape: any) => {
+      const doc = new Doc(["shape", "payload", "ctx"]);
+      const normalized = _normalized.value;
+
+      const parseStr = (key: string) => {
+        const k = util.esc(key);
+        return `shape[${k}]._zod.run({ value: input[${k}], issues: [] }, ctx)`;
+      };
+
+      doc.write(`const input = payload.value;`);
+
+      const ids: any = Object.create(null);
+      let counter = 0;
+      for (const key of normalized.keys) {
+        ids[key] = `key_${counter++}`;
+      }
+
+      // A: preserve key order {
+      doc.write(`const newResult = {}`);
+      for (const key of normalized.keys) {
+        const id = ids[key];
+        const k = util.esc(key);
+        doc.write(`const ${id} = ${parseStr(key)};`);
+        doc.write(`
+        if (${id}.issues.length) {
+          payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
+            ...iss,
+            path: iss.path ? [${k}, ...iss.path] : [${k}]
+          })));
+        }
+        
+        if (${id}.value === undefined) {
+          if (${k} in input) {
+            newResult[${k}] = undefined;
+          }
+        } else {
+          newResult[${k}] = ${id}.value;
+        }
+      `);
+      }
+
+      doc.write(`payload.value = newResult;`);
+      doc.write(`return payload;`);
+      const fn = doc.compile();
+      return (payload: any, ctx: any) => fn(shape, payload, ctx);
+    };
+
+    let fastpass!: ReturnType<typeof generateFastpass>;
+
+    const isObject = util.isObject;
+    const jit = !core.globalConfig.jitless;
+    const allowsEval = util.allowsEval;
+
+    const fastEnabled = jit && allowsEval.value; // && !def.catchall;
+    const catchall = def.catchall;
+
+    let value!: typeof _normalized.value;
+
+    inst._zod.parse = (payload, ctx) => {
+      value ??= _normalized.value;
+      const input = payload.value;
+      if (!isObject(input)) {
+        payload.issues.push({
+          expected: "object",
+          code: "invalid_type",
+          input,
+          inst,
+        });
+        return payload;
+      }
+
+      if (jit && fastEnabled && ctx?.async === false && ctx.jitless !== true) {
+        // always synchronous
+        if (!fastpass) fastpass = generateFastpass(def.shape);
+        payload = fastpass(payload, ctx);
+
+        if (!catchall) return payload;
+        return handleCatchall([], input, payload, ctx, value, inst);
+      }
+
+      return superParse(payload, ctx);
+    };
+  }
+);
 
 /////////////////////////////////////////
 /////////////////////////////////////////

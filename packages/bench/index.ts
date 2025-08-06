@@ -6,8 +6,8 @@ async function run() {
   const files = process.argv[2].split(",").map((file) => import.meta.resolve(`./${file}`).replace("file://", ""));
 
   for (const file of files) {
-    // await $`pnpm tsx --conditions @zod/source ${file}`;
-    await $`pnpm tsx ${file}`;
+    await $`pnpm tsx --conditions @zod/source ${file}`;
+    // await $`pnpm tsx ${file}`;
   }
 }
 
