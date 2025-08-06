@@ -1,4 +1,3 @@
-import * as z from "zod";
+import * as z from "zod/v4";
 
-
-z.hash("sha256").parse("123");
+z;

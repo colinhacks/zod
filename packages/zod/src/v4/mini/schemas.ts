@@ -449,6 +449,8 @@ export function hash(
   const enc = params?.enc ?? "hex";
   const format = `${alg}_${enc}` as const;
   const regex = core.regexes[format as keyof typeof core.regexes] as RegExp;
+  // check for unrecognized format
+  if (!regex) throw new Error(`Unrecognized hash format: ${format}`);
   return core._stringFormat(ZodMiniCustomStringFormat, format, regex, params) as any;
 }
 
