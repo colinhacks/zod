@@ -74,6 +74,8 @@ test("first party switch", () => {
       break;
     case "pipe":
       break;
+    case "codec":
+      break;
     case "success":
       break;
     case "catch":
@@ -83,7 +85,7 @@ test("first party switch", () => {
     case "lazy":
       break;
     default:
-      expectTypeOf(def).toEqualTypeOf<never>();
+      expectTypeOf(def).toEqualTypeOf<never>(def);
   }
 });
 
@@ -160,6 +162,8 @@ test("$ZodSchemaTypes", () => {
       break;
     case "pipe":
       break;
+    case "codec":
+      break;
     case "success":
       break;
     case "catch":
@@ -170,6 +174,6 @@ test("$ZodSchemaTypes", () => {
       break;
 
     default:
-      expectTypeOf(type).toEqualTypeOf<never>();
+      expectTypeOf(type).toEqualTypeOf<never>(type);
   }
 });

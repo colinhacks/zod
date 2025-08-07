@@ -1392,6 +1392,35 @@ export function pipe<
   }) as any;
 }
 
+// ZodMiniCodec
+export interface ZodMiniCodec<A extends SomeType = core.$ZodType, B extends SomeType = core.$ZodType>
+  extends _ZodMiniType<core.$ZodCodecInternals<A, B>> {}
+export const ZodMiniCodec: core.$constructor<ZodMiniCodec> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniCodec",
+  (inst, def) => {
+    core.$ZodCodec.init(inst, def);
+    ZodMiniType.init(inst, def);
+  }
+);
+
+export function codec<const A extends SomeType, const B extends SomeType>(
+  in_: A,
+  out: B,
+  handlers: {
+    decode: (value: core.output<A>, ctx: core.ParsePayload<core.output<A>>) => any;
+    encode: (value: core.output<B>, ctx: core.ParsePayload<core.output<B>>) => any;
+  }
+): ZodMiniCodec<A, B>;
+export function codec(in_: SomeType, out: SomeType, handlers: any) {
+  return new ZodMiniCodec({
+    type: "codec",
+    in: in_ as any as core.$ZodType,
+    out: out as any as core.$ZodType,
+    decode: handlers.decode,
+    encode: handlers.encode,
+  }) as any;
+}
+
 // /** @deprecated Use `z.pipe()` and `z.transform()` instead. */
 // export function preprocess<A, U extends core.$ZodType>(
 //   fn: (arg: unknown, ctx: core.ParsePayload) => A,
