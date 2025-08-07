@@ -25,6 +25,7 @@ export interface ParseContext<T extends errors.$ZodIssueBase = never> {
 /** @internal */
 export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> extends ParseContext<T> {
   readonly async?: boolean | undefined;
+  readonly direction?: "forward" | "backward" | undefined;
 }
 
 export interface ParsePayload<T = unknown> {
@@ -72,6 +73,7 @@ export interface $ZodTypeDef {
     | "catch"
     | "nan"
     | "pipe"
+    | "codec"
     | "readonly"
     | "template_literal"
     | "promise"
@@ -2974,6 +2976,9 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
   (inst, def) => {
     $ZodType.init(inst, def);
     inst._zod.parse = (payload, _ctx) => {
+      if (_ctx.direction === "backward") {
+        throw new core.$ZodEncodeError();
+      }
       const _out = def.transform(payload.value, payload);
       if (_ctx.async) {
         const output = _out instanceof Promise ? _out : Promise.resolve(_out);
@@ -3512,6 +3517,118 @@ function handlePipeResult(left: ParsePayload, def: $ZodPipeDef, ctx: ParseContex
   return def.out._zod.run({ value: left.value, issues: left.issues }, ctx);
 }
 
+function hasTransform(schema: SomeType): boolean {
+  if (schema._zod.traits.has("$ZodTransform")) return true;
+  const def: any = schema._zod.def;
+  switch (def.type) {
+    case "pipe":
+    case "codec":
+      return hasTransform(def.in) || hasTransform(def.out);
+    case "array":
+    case "readonly":
+    case "optional":
+    case "nullable":
+    case "default":
+    case "prefault":
+    case "catch":
+    case "nonoptional":
+      return hasTransform(def.innerType);
+    case "object":
+      return Object.values(def.shape).some((s: any) => hasTransform(s));
+    case "record":
+      return hasTransform(def.valueType);
+    case "map":
+      return hasTransform(def.keyType) || hasTransform(def.valueType);
+    case "set":
+      return hasTransform(def.valueType);
+    case "union":
+      return def.options.some((s: any) => hasTransform(s));
+    case "tuple":
+      return def.items.some((s: any) => hasTransform(s)) || (def.rest && hasTransform(def.rest));
+    case "lazy":
+      return hasTransform((schema as any)._zod.innerType);
+    default:
+      return false;
+  }
+}
+
+////////////////////////////////////////////
+////////////////////////////////////////////
+//////////                        //////////
+//////////      $ZodCodec        //////////
+//////////                        //////////
+////////////////////////////////////////////
+////////////////////////////////////////////
+export interface $ZodCodecDef<A extends SomeType = $ZodType, B extends SomeType = $ZodType> extends $ZodTypeDef {
+  type: "codec";
+  in: A;
+  out: B;
+  decode: (input: core.output<A>, payload: ParsePayload<core.output<A>>) => util.MaybeAsync<core.input<B>>;
+  encode: (input: core.output<B>, payload: ParsePayload<core.output<B>>) => util.MaybeAsync<core.input<A>>;
+}
+
+export interface $ZodCodecInternals<A extends SomeType = $ZodType, B extends SomeType = $ZodType>
+  extends $ZodTypeInternals<core.output<B>, core.input<A>> {
+  def: $ZodCodecDef<A, B>;
+  isst: never;
+  values: A["_zod"]["values"];
+  optin: A["_zod"]["optin"];
+  optout: B["_zod"]["optout"];
+  propValues: A["_zod"]["propValues"];
+}
+
+export interface $ZodCodec<A extends SomeType = $ZodType, B extends SomeType = $ZodType> extends $ZodType {
+  _zod: $ZodCodecInternals<A, B>;
+}
+
+export const $ZodCodec: core.$constructor<$ZodCodec> = /*@__PURE__*/ core.$constructor("$ZodCodec", (inst, def) => {
+  $ZodType.init(inst, def);
+  util.defineLazy(inst._zod, "values", () => def.in._zod.values);
+  util.defineLazy(inst._zod, "optin", () => def.in._zod.optin);
+  util.defineLazy(inst._zod, "optout", () => def.out._zod.optout);
+  util.defineLazy(inst._zod, "propValues", () => def.in._zod.propValues);
+
+  inst._zod.parse = (payload, ctx) => {
+    if (ctx.direction === "backward") {
+      if (hasTransform(def.out)) {
+        throw new core.$ZodEncodeError();
+      }
+      const right = def.out._zod.run(payload, ctx);
+      if (right instanceof Promise) {
+        return right.then((r) => handleCodecEncode(r, def, ctx));
+      }
+      return handleCodecEncode(right, def, ctx);
+    }
+    const left = def.in._zod.run(payload, ctx);
+    if (left instanceof Promise) {
+      return left.then((l) => handleCodecDecode(l, def, ctx));
+    }
+    return handleCodecDecode(left, def, ctx);
+  };
+});
+
+function handleCodecDecode(left: ParsePayload, def: $ZodCodecDef, ctx: ParseContextInternal) {
+  if (left.issues.length) return left;
+  const _mid = def.decode(left.value as any, left as any);
+  if (ctx.async) {
+    const mid = _mid instanceof Promise ? _mid : Promise.resolve(_mid);
+    return mid.then((m) => def.out._zod.run({ value: m, issues: left.issues }, ctx));
+  }
+  if (_mid instanceof Promise) throw new core.$ZodAsyncError();
+  return def.out._zod.run({ value: _mid, issues: left.issues }, ctx);
+}
+
+function handleCodecEncode(right: ParsePayload, def: $ZodCodecDef, ctx: ParseContextInternal) {
+  if (right.issues.length) return right;
+  const _mid = def.encode(right.value as any, right as any);
+  if (ctx.async) {
+    const mid = _mid instanceof Promise ? _mid : Promise.resolve(_mid);
+    return mid.then((m) => def.in._zod.run({ value: m, issues: right.issues }, ctx));
+  }
+  if (_mid instanceof Promise) throw new core.$ZodAsyncError();
+  return def.in._zod.run({ value: _mid, issues: right.issues }, ctx);
+}
+
 ////////////////////////////////////////////
 ////////////////////////////////////////////
 //////////                        //////////
@@ -3877,6 +3994,7 @@ export type $ZodTypes =
   | $ZodReadonly
   | $ZodNaN
   | $ZodPipe
+  | $ZodCodec
   | $ZodSuccess
   | $ZodCatch
   | $ZodFile;
