@@ -29,7 +29,7 @@ export default async function Page(props: {
   const editOnGithub = (
     <h3 className="border-[var(--color-fd-border)] pb-0 mb-0 inline-flex items-center gap-1.5 text-sm text-fd-muted-foreground">
       <a
-        href={`https://github.com/colinhacks/zod/blob/main/content/packages/docs/${page.file.path}`}
+        href={`https://github.com/colinhacks/zod/blob/main/packages/docs/content/${page.file.path}`}
         rel="noreferrer noopener"
         target="_blank"
         className="text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 text-sm no-underline"
