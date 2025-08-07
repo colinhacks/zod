@@ -109,6 +109,12 @@ const zodToXConverters: ZodResource[] = [
     description: "Generate Markdown docs from Zod schemas",
     slug: "matejchalk/zod2md",
   },
+  {
+    name: "prisma-zod-generator",
+    url: "https://github.com/omar-dulaimi/prisma-zod-generator",
+    description: "Generate Zod schemas from Prisma schema with full ZodObject method support",
+    slug: "omar-dulaimi/prisma-zod-generator",
+  },
 ];
 
 const xToZodConverters: ZodResource[] = [
