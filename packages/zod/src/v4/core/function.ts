@@ -1,5 +1,5 @@
-import { _array, _tuple, _unknown } from "./api.js";
-import type * as core from "./core.js";
+import * as core from "./core.js";
+import type * as errors from "./errors.js";
 import { parse, parseAsync } from "./parse.js";
 import * as schemas from "./schemas.js";
 import { $ZodTuple } from "./schemas.js";
@@ -15,7 +15,7 @@ import type * as util from "./util.js";
 export interface $ZodFunctionDef<
   In extends $ZodFunctionIn = $ZodFunctionIn,
   Out extends $ZodFunctionOut = $ZodFunctionOut,
-> {
+> extends schemas.$ZodTypeDef {
   type: "function";
   input: In;
   output: Out;
@@ -41,94 +41,42 @@ export type $InferOuterFunctionTypeAsync<Args extends $ZodFunctionIn, Returns ex
   ...args: $ZodFunctionIn extends Args ? never[] : core.input<Args>
 ) => util.MaybeAsync<core.output<Returns>>;
 
-export class $ZodFunction<
+export interface $ZodFunctionInternals<Args extends $ZodFunctionIn, Returns extends $ZodFunctionOut>
+  extends schemas.$ZodTypeInternals<$InferOuterFunctionType<Args, Returns>, $InferInnerFunctionType<Args, Returns>> {
+  def: $ZodFunctionDef<Args, Returns>;
+  isst: errors.$ZodIssueInvalidType;
+  // _input: $InferInnerFunctionType<Args, Returns>;
+  // _output: $InferOuterFunctionType<Args, Returns>;
+}
+
+export interface $ZodFunction<
   Args extends $ZodFunctionIn = $ZodFunctionIn,
   Returns extends $ZodFunctionOut = $ZodFunctionOut,
-> {
-  def: $ZodFunctionDef<Args, Returns>;
-
+> extends schemas.$ZodType<any, any, $ZodFunctionInternals<Args, Returns>> {
   /** @deprecated */
-  _def!: $ZodFunctionDef<Args, Returns>;
-  _input!: $InferInnerFunctionType<Args, Returns>;
-  _output!: $InferOuterFunctionType<Args, Returns>;
-
-  constructor(def: $ZodFunctionDef<Args, Returns>) {
-    this._def = def;
-    this.def = def;
-  }
+  _def: $ZodFunctionDef<Args, Returns>;
+  _input: $InferInnerFunctionType<Args, Returns>;
+  _output: $InferOuterFunctionType<Args, Returns>;
 
   implement<F extends $InferInnerFunctionType<Args, Returns>>(
     func: F
   ): // allow for return type inference
   (
     ...args: Parameters<this["_output"]>
-  ) => ReturnType<F> extends ReturnType<this["_output"]> ? ReturnType<F> : ReturnType<this["_output"]> {
-    if (typeof func !== "function") {
-      throw new Error("implement() must be called with a function");
-    }
-    const impl = ((...args: any[]) => {
-      const parsedArgs = this._def.input ? parse(this._def.input, args, undefined, { callee: impl }) : args;
-      if (!Array.isArray(parsedArgs)) {
-        throw new Error("Invalid arguments schema: not an array or tuple schema.");
-      }
-      const output = func(...(parsedArgs as any));
-      return this._def.output ? parse(this._def.output, output, undefined, { callee: impl }) : output;
-    }) as any;
-    return impl;
-  }
+  ) => ReturnType<F> extends ReturnType<this["_output"]> ? ReturnType<F> : ReturnType<this["_output"]>;
 
   implementAsync<F extends $InferInnerFunctionTypeAsync<Args, Returns>>(
     func: F
-  ): F extends $InferOuterFunctionTypeAsync<Args, Returns> ? F : $InferOuterFunctionTypeAsync<Args, Returns> {
-    if (typeof func !== "function") {
-      throw new Error("implement() must be called with a function");
-    }
-
-    const impl = (async (...args: any[]) => {
-      const parsedArgs = this._def.input ? await parseAsync(this._def.input, args, undefined, { callee: impl }) : args;
-      if (!Array.isArray(parsedArgs)) {
-        throw new Error("Invalid arguments schema: not an array or tuple schema.");
-      }
-      const output = await func(...(parsedArgs as any));
-      return this._def.output ? parseAsync(this._def.output, output, undefined, { callee: impl }) : output;
-    }) as any;
-    return impl;
-  }
+  ): F extends $InferOuterFunctionTypeAsync<Args, Returns> ? F : $InferOuterFunctionTypeAsync<Args, Returns>;
 
   input<const Items extends util.TupleItems, const Rest extends $ZodFunctionOut = $ZodFunctionOut>(
     args: Items,
     rest?: Rest
   ): $ZodFunction<schemas.$ZodTuple<Items, Rest>, Returns>;
   input<NewArgs extends $ZodFunctionIn>(args: NewArgs): $ZodFunction<NewArgs, Returns>;
-  input(...args: any[]): $ZodFunction<any, Returns> {
-    const F: any = this.constructor;
-    if (Array.isArray(args[0])) {
-      return new F({
-        type: "function",
-        input: new $ZodTuple({
-          type: "tuple",
-          items: args[0],
-          rest: args[1],
-        }),
-        output: this._def.output,
-      });
-    }
+  input(...args: any[]): $ZodFunction<any, Returns>;
 
-    return new F({
-      type: "function",
-      input: args[0],
-      output: this._def.output,
-    });
-  }
-
-  output<NewReturns extends schemas.$ZodType>(output: NewReturns): $ZodFunction<Args, NewReturns> {
-    const F: any = this.constructor;
-    return new F({
-      type: "function",
-      input: this._def.input,
-      output,
-    });
-  }
+  output<NewReturns extends schemas.$ZodType>(output: NewReturns): $ZodFunction<Args, NewReturns>;
 }
 
 export interface $ZodFunctionParams<I extends $ZodFunctionIn, O extends schemas.$ZodType> {
@@ -136,41 +84,73 @@ export interface $ZodFunctionParams<I extends $ZodFunctionIn, O extends schemas.
   output?: O;
 }
 
-function _function(): $ZodFunction;
-function _function<const In extends Array<schemas.$ZodType> = Array<schemas.$ZodType>>(params: {
-  input: In;
-}): $ZodFunction<$ZodTuple<In, null>, $ZodFunctionOut>;
-function _function<
-  const In extends Array<schemas.$ZodType> = Array<schemas.$ZodType>,
-  const Out extends $ZodFunctionOut = $ZodFunctionOut,
->(params: {
-  input: In;
-  output: Out;
-}): $ZodFunction<$ZodTuple<In, null>, Out>;
-function _function<const In extends $ZodFunctionIn = $ZodFunctionIn>(params: {
-  input: In;
-}): $ZodFunction<In, $ZodFunctionOut>;
-function _function<const Out extends $ZodFunctionOut = $ZodFunctionOut>(params: {
-  output: Out;
-}): $ZodFunction<$ZodFunctionIn, Out>;
-function _function<
-  In extends $ZodFunctionIn = $ZodFunctionIn,
-  Out extends schemas.$ZodType = schemas.$ZodType,
->(params?: {
-  input: In;
-  output: Out;
-}): $ZodFunction<In, Out>;
-function _function(params?: {
-  output?: schemas.$ZodType;
-  input?: $ZodFunctionArgs | Array<schemas.$ZodType>;
-}): any {
-  return new $ZodFunction({
-    type: "function",
-    input: Array.isArray(params?.input)
-      ? _tuple(schemas.$ZodTuple, params?.input as any)
-      : (params?.input ?? _array(schemas.$ZodArray, _unknown(schemas.$ZodUnknown))),
-    output: params?.output ?? _unknown(schemas.$ZodUnknown),
-  });
-}
+export const $ZodFunction: core.$constructor<$ZodFunction> = /*@__PURE__*/ core.$constructor(
+  "$ZodFunction",
+  (inst, def) => {
+    schemas.$ZodType.init(inst, def);
+    inst._def = def;
+    inst._zod.def = def;
 
-export { _function as function };
+    inst.implement = (func) => {
+      if (typeof func !== "function") {
+        throw new Error("implement() must be called with a function");
+      }
+      const impl = ((...args: any[]) => {
+        const parsedArgs = inst._def.input ? parse(inst._def.input, args, undefined, { callee: impl }) : args;
+        const result = func(...(parsedArgs as never[]));
+        if (inst._def.output) {
+          return parseAsync(inst._def.output, result, undefined, { callee: impl });
+        }
+        return result;
+      }) as any;
+      return impl;
+    };
+
+    inst.implementAsync = (func) => {
+      if (typeof func !== "function") {
+        throw new Error("implementAsync() must be called with a function");
+      }
+      const impl = (async (...args: any[]) => {
+        const parsedArgs = inst._def.input ? parse(inst._def.input, args, undefined, { callee: impl }) : args;
+        const result = await func(...(parsedArgs as never[]));
+        if (inst._def.output) {
+          return parseAsync(inst._def.output, result, undefined, { callee: impl });
+        }
+        return result;
+      }) as any;
+      return impl;
+    };
+
+    inst.input = (...args: any[]): $ZodFunction<any, any> => {
+      const F: any = inst.constructor;
+      if (Array.isArray(args[0])) {
+        return new F({
+          type: "function",
+          input: new $ZodTuple({
+            type: "tuple",
+            items: args[0],
+            rest: args[1],
+          }),
+          output: inst._def.output,
+        });
+      }
+
+      return new F({
+        type: "function",
+        input: args[0],
+        output: inst._def.output,
+      });
+    };
+
+    inst.output = (output) => {
+      const F: any = inst.constructor;
+      return new F({
+        type: "function",
+        input: inst._def.input,
+        output,
+      });
+    };
+
+    return inst;
+  }
+);

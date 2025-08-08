@@ -79,6 +79,7 @@ export interface $ZodTypeDef {
     | "template_literal"
     | "promise"
     | "lazy"
+    | "function"
     | "custom";
   error?: errors.$ZodErrorMap<never> | undefined;
   checks?: checks.$ZodCheck<never>[];

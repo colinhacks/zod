@@ -16,7 +16,6 @@ export {
   type GlobalMeta,
   registry,
   config,
-  function,
   $output,
   $input,
   $brand,
