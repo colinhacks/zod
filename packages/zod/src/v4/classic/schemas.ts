@@ -1688,7 +1688,7 @@ export function _default<T extends core.SomeType>(
     type: "default",
     innerType: innerType as any as core.$ZodType,
     get defaultValue() {
-      return typeof defaultValue === "function" ? (defaultValue as Function)() : defaultValue;
+      return typeof defaultValue === "function" ? (defaultValue as Function)() : util.shallowClone(defaultValue);
     },
   }) as any;
 }
@@ -1716,7 +1716,7 @@ export function prefault<T extends core.SomeType>(
     type: "prefault",
     innerType: innerType as any as core.$ZodType,
     get defaultValue() {
-      return typeof defaultValue === "function" ? (defaultValue as Function)() : defaultValue;
+      return typeof defaultValue === "function" ? (defaultValue as Function)() : util.shallowClone(defaultValue);
     },
   }) as any;
 }

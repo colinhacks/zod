@@ -869,3 +869,16 @@ test("def typing", () => {
   z.catch(z.string(), "fallback").def.type satisfies "catch";
   z.file().def.type satisfies "file";
 });
+
+test("defaulted object schema returns shallow clone", () => {
+  const schema = z._default(
+    z.object({
+      a: z.string(),
+    }),
+    { a: "x" }
+  );
+  const result1 = schema.parse(undefined);
+  const result2 = schema.parse(undefined);
+  expect(result1).not.toBe(result2);
+  expect(result1).toEqual(result2);
+});

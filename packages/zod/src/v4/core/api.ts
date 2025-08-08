@@ -1321,7 +1321,7 @@ export function _default<T extends schemas.$ZodObject>(
     type: "default",
     innerType,
     get defaultValue() {
-      return typeof defaultValue === "function" ? (defaultValue as Function)() : defaultValue;
+      return typeof defaultValue === "function" ? (defaultValue as Function)() : util.shallowClone(defaultValue);
     },
   }) as any;
 }

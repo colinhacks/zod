@@ -35,3 +35,15 @@ test("prefault inside object", () => {
     email: string;
   }>();
 });
+
+test("object schema with prefault should return shallow clone", () => {
+  const schema = z
+    .object({
+      a: z.string(),
+    })
+    .default({ a: "x" });
+  const result1 = schema.parse(undefined);
+  const result2 = schema.parse(undefined);
+  expect(result1).not.toBe(result2);
+  expect(result1).toEqual(result2);
+});
