@@ -386,7 +386,7 @@ const xToZodConverters: ZodResource[] = [
   },
   {
     name: "Hey API",
-    url: "https://github.com/hey-api/openapi-ts",
+    url: "https://heyapi.dev/openapi-ts/plugins/zod/v3",
     description: "The OpenAPI to TypeScript codegen. Generate clients, SDKs, validators, and more.",
     slug: "hey-api/openapi-ts",
     v4: true,

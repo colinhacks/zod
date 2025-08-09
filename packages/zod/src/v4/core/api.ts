@@ -1081,12 +1081,15 @@ export interface $ZodTypeDiscriminable extends schemas.$ZodType {
   _zod: $ZodTypeDiscriminableInternals;
 }
 export type $ZodDiscriminatedUnionParams = TypeParams<schemas.$ZodDiscriminatedUnion, "options" | "discriminator">;
-export function _discriminatedUnion<Types extends [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]]>(
+export function _discriminatedUnion<
+  Types extends [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]],
+  Disc extends string,
+>(
   Class: util.SchemaClass<schemas.$ZodDiscriminatedUnion>,
-  discriminator: string,
+  discriminator: Disc,
   options: Types,
   params?: string | $ZodDiscriminatedUnionParams
-): schemas.$ZodDiscriminatedUnion<Types> {
+): schemas.$ZodDiscriminatedUnion<Types, Disc> {
   return new Class({
     type: "union",
     options,
@@ -1318,7 +1321,7 @@ export function _default<T extends schemas.$ZodObject>(
     type: "default",
     innerType,
     get defaultValue() {
-      return typeof defaultValue === "function" ? (defaultValue as Function)() : defaultValue;
+      return typeof defaultValue === "function" ? (defaultValue as Function)() : util.shallowClone(defaultValue);
     },
   }) as any;
 }

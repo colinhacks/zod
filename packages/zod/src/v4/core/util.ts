@@ -284,6 +284,10 @@ export function defineLazy<T, K extends keyof T>(object: T, key: K, getter: () =
   });
 }
 
+export function objectClone(obj: object) {
+  return Object.create(Object.getPrototypeOf(obj), Object.getOwnPropertyDescriptors(obj));
+}
+
 export function assignProp<T extends object, K extends PropertyKey>(
   target: T,
   prop: K,
@@ -383,6 +387,11 @@ export function isPlainObject(o: any): o is Record<PropertyKey, unknown> {
   }
 
   return true;
+}
+
+export function shallowClone(o: any): any {
+  if (isPlainObject(o)) return { ...o };
+  return o;
 }
 
 export function numKeys(data: any): number {

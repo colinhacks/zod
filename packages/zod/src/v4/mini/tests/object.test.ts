@@ -89,6 +89,12 @@ test("z.keyof", () => {
   type UserKeys = z.infer<typeof userKeysSchema>;
   expectTypeOf<UserKeys>().toEqualTypeOf<"name" | "age" | "email">();
   expect(userKeysSchema).toBeDefined();
+  expect(userKeysSchema._zod.def.type).toBe("enum");
+  expect(userKeysSchema._zod.def.entries).toEqual({
+    name: "name",
+    age: "age",
+    email: "email",
+  });
   expect(z.safeParse(userKeysSchema, "name").success).toBe(true);
   expect(z.safeParse(userKeysSchema, "age").success).toBe(true);
   expect(z.safeParse(userKeysSchema, "email").success).toBe(true);

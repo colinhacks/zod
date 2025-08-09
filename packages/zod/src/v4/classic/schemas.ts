@@ -1038,9 +1038,9 @@ export function array<T extends core.SomeType>(element: T, params?: string | cor
 }
 
 // .keyof
-export function keyof<T extends ZodObject>(schema: T): ZodLiteral<Exclude<keyof T["_zod"]["output"], symbol>> {
+export function keyof<T extends ZodObject>(schema: T): ZodEnum<util.KeysEnum<T["_zod"]["output"]>> {
   const shape = schema._zod.def.shape;
-  return literal(Object.keys(shape)) as any;
+  return _enum(Object.keys(shape)) as any;
 }
 
 // ZodObject
@@ -1149,7 +1149,7 @@ export function object<T extends core.$ZodLooseShape = Partial<Record<never, cor
   const def: core.$ZodObjectDef = {
     type: "object",
     get shape() {
-      util.assignProp(this, "shape", { ...shape });
+      util.assignProp(this, "shape", shape ? util.objectClone(shape) : {});
       return this.shape;
     },
     ...util.normalizeParams(params),
@@ -1166,7 +1166,7 @@ export function strictObject<T extends core.$ZodLooseShape>(
   return new ZodObject({
     type: "object",
     get shape() {
-      util.assignProp(this, "shape", { ...shape });
+      util.assignProp(this, "shape", util.objectClone(shape));
       return this.shape;
     },
     catchall: never(),
@@ -1183,7 +1183,7 @@ export function looseObject<T extends core.$ZodLooseShape>(
   return new ZodObject({
     type: "object",
     get shape() {
-      util.assignProp(this, "shape", { ...shape });
+      util.assignProp(this, "shape", util.objectClone(shape));
       return this.shape;
     },
     catchall: unknown(),
@@ -1215,11 +1215,13 @@ export function union<const T extends readonly core.SomeType[]>(
 }
 
 // ZodDiscriminatedUnion
-export interface ZodDiscriminatedUnion<Options extends readonly core.SomeType[] = readonly core.$ZodType[]>
-  extends ZodUnion<Options>,
-    core.$ZodDiscriminatedUnion<Options> {
-  _zod: core.$ZodDiscriminatedUnionInternals<Options>;
-  def: core.$ZodDiscriminatedUnionDef<Options>;
+export interface ZodDiscriminatedUnion<
+  Options extends readonly core.SomeType[] = readonly core.$ZodType[],
+  Disc extends string = string,
+> extends ZodUnion<Options>,
+    core.$ZodDiscriminatedUnion<Options, Disc> {
+  _zod: core.$ZodDiscriminatedUnionInternals<Options, Disc>;
+  def: core.$ZodDiscriminatedUnionDef<Options, Disc>;
 }
 export const ZodDiscriminatedUnion: core.$constructor<ZodDiscriminatedUnion> = /*@__PURE__*/ core.$constructor(
   "ZodDiscriminatedUnion",
@@ -1231,11 +1233,12 @@ export const ZodDiscriminatedUnion: core.$constructor<ZodDiscriminatedUnion> = /
 
 export function discriminatedUnion<
   Types extends readonly [core.$ZodTypeDiscriminable, ...core.$ZodTypeDiscriminable[]],
+  Disc extends string,
 >(
-  discriminator: string,
+  discriminator: Disc,
   options: Types,
   params?: string | core.$ZodDiscriminatedUnionParams
-): ZodDiscriminatedUnion<Types> {
+): ZodDiscriminatedUnion<Types, Disc> {
   // const [options, params] = args;
   return new ZodDiscriminatedUnion({
     type: "union",
@@ -1685,7 +1688,7 @@ export function _default<T extends core.SomeType>(
     type: "default",
     innerType: innerType as any as core.$ZodType,
     get defaultValue() {
-      return typeof defaultValue === "function" ? (defaultValue as Function)() : defaultValue;
+      return typeof defaultValue === "function" ? (defaultValue as Function)() : util.shallowClone(defaultValue);
     },
   }) as any;
 }
@@ -1713,7 +1716,7 @@ export function prefault<T extends core.SomeType>(
     type: "prefault",
     innerType: innerType as any as core.$ZodType,
     get defaultValue() {
-      return typeof defaultValue === "function" ? (defaultValue as Function)() : defaultValue;
+      return typeof defaultValue === "function" ? (defaultValue as Function)() : util.shallowClone(defaultValue);
     },
   }) as any;
 }

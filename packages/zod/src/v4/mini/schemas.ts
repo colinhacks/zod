@@ -712,9 +712,9 @@ export function array<T extends SomeType>(element: SomeType, params?: any): ZodM
 }
 
 // .keyof
-export function keyof<T extends ZodMiniObject>(schema: T): ZodMiniLiteral<Exclude<keyof T["shape"], symbol>> {
+export function keyof<T extends ZodMiniObject>(schema: T): ZodMiniEnum<util.KeysEnum<T["shape"]>> {
   const shape = schema._zod.def.shape;
-  return literal(Object.keys(shape)) as any;
+  return _enum(Object.keys(shape)) as any;
 }
 
 // ZodMiniObject
@@ -907,9 +907,11 @@ export function union<const T extends readonly SomeType[]>(
 }
 
 // ZodMiniDiscriminatedUnion
-export interface ZodMiniDiscriminatedUnion<Options extends readonly SomeType[] = readonly core.$ZodType[]>
-  extends ZodMiniUnion<Options> {
-  _zod: core.$ZodDiscriminatedUnionInternals<Options>;
+export interface ZodMiniDiscriminatedUnion<
+  Options extends readonly SomeType[] = readonly core.$ZodType[],
+  Disc extends string = string,
+> extends ZodMiniUnion<Options> {
+  _zod: core.$ZodDiscriminatedUnionInternals<Options, Disc>;
 }
 export const ZodMiniDiscriminatedUnion: core.$constructor<ZodMiniDiscriminatedUnion> = /*@__PURE__*/ core.$constructor(
   "ZodMiniDiscriminatedUnion",
@@ -921,17 +923,18 @@ export const ZodMiniDiscriminatedUnion: core.$constructor<ZodMiniDiscriminatedUn
 
 export function discriminatedUnion<
   Types extends readonly [core.$ZodTypeDiscriminable, ...core.$ZodTypeDiscriminable[]],
+  Disc extends string,
 >(
-  discriminator: string,
+  discriminator: Disc,
   options: Types,
   params?: string | core.$ZodDiscriminatedUnionParams
-): ZodMiniDiscriminatedUnion<Types> {
+): ZodMiniDiscriminatedUnion<Types, Disc> {
   return new ZodMiniDiscriminatedUnion({
     type: "union",
     options,
     discriminator,
     ...util.normalizeParams(params),
-  }) as ZodMiniDiscriminatedUnion<Types>;
+  }) as ZodMiniDiscriminatedUnion<Types, Disc>;
 }
 
 // ZodMiniIntersection
@@ -1253,7 +1256,7 @@ export function _default<T extends SomeType>(
     type: "default",
     innerType: innerType as any as core.$ZodType,
     get defaultValue() {
-      return typeof defaultValue === "function" ? (defaultValue as Function)() : defaultValue;
+      return typeof defaultValue === "function" ? (defaultValue as Function)() : util.shallowClone(defaultValue);
     },
   }) as any;
 }
@@ -1278,7 +1281,7 @@ export function prefault<T extends SomeType>(
     type: "prefault",
     innerType: innerType as any as core.$ZodType,
     get defaultValue() {
-      return typeof defaultValue === "function" ? (defaultValue as Function)() : defaultValue;
+      return typeof defaultValue === "function" ? (defaultValue as Function)() : util.shallowClone(defaultValue);
     },
   }) as any;
 }

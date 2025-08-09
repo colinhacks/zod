@@ -43,8 +43,8 @@ export const Gold = () => {
     {
       name: "Speakeasy",
       description: "SDKs & Terraform providers for your API",
-      logoDark: "https://github.com/colinhacks/zod/assets/3084745/b1d86601-c7fb-483c-9927-5dc24ce8b737",
-      logoLight: "https://github.com/colinhacks/zod/assets/3084745/647524a4-22bb-4199-be70-404207a5a2b5",
+      logoDark: "https://r2.zod.dev/Logo_White.svg",
+      logoLight: "https://r2.zod.dev/Logo_Black.svg",
       url: "speakeasy.com",
       href: "https://speakeasy.com/?utm_source=zod+docs",
     },
