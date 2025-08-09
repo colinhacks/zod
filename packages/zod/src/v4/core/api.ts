@@ -1383,6 +1383,25 @@ export function _pipe<
   }) as any;
 }
 
+// ZodCodec
+export function _codec<const A extends schemas.$ZodType, const B extends schemas.$ZodType>(
+  Class: util.SchemaClass<schemas.$ZodCodec>,
+  in_: A,
+  out: B,
+  codec: {
+    decode: (value: core.output<A>) => util.MaybeAsync<core.input<B>>;
+    encode: (value: core.output<B>) => util.MaybeAsync<core.input<A>>;
+  }
+): schemas.$ZodCodec<A, B> {
+  return new Class({
+    type: "codec",
+    in: in_,
+    out,
+    decode: (v: any) => codec.decode(v),
+    encode: (v: any) => codec.encode(v),
+  }) as any;
+}
+
 // ZodReadonly
 export type $ZodReadonlyParams = TypeParams<schemas.$ZodReadonly, "innerType">;
 export function _readonly<T extends schemas.$ZodObject>(

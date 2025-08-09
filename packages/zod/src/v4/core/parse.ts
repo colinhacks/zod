@@ -5,6 +5,41 @@ import * as util from "./util.js";
 
 export type $ZodErrorClass = { new (issues: errors.$ZodIssue[]): errors.$ZodError };
 
+function hasTransform(schema: schemas.$ZodType): boolean {
+  if (schema._zod.traits.has("$ZodTransform")) return true;
+  const def: any = schema._zod.def;
+  switch (def.type) {
+    case "pipe":
+    case "codec":
+      return hasTransform(def.in) || hasTransform(def.out);
+    case "array":
+    case "readonly":
+    case "optional":
+    case "nullable":
+    case "default":
+    case "prefault":
+    case "catch":
+    case "nonoptional":
+      return hasTransform(def.innerType);
+    case "object":
+      return Object.values(def.shape).some((s: any) => hasTransform(s));
+    case "record":
+      return hasTransform(def.valueType);
+    case "map":
+      return hasTransform(def.keyType) || hasTransform(def.valueType);
+    case "set":
+      return hasTransform(def.valueType);
+    case "union":
+      return def.options.some((s: any) => hasTransform(s));
+    case "tuple":
+      return def.items.some((s: any) => hasTransform(s)) || (def.rest && hasTransform(def.rest));
+    case "lazy":
+      return hasTransform((schema as any)._zod.innerType);
+    default:
+      return false;
+  }
+}
+
 ///////////        METHODS       ///////////
 export type $Parse = <T extends schemas.$ZodType>(
   schema: T,
@@ -92,3 +127,122 @@ export const _safeParseAsync: (_Err: $ZodErrorClass) => $SafeParseAsync = (_Err)
 };
 
 export const safeParseAsync: $SafeParseAsync = /* @__PURE__*/ _safeParseAsync(errors.$ZodRealError);
+
+export type $Encode = <T extends schemas.$ZodType>(
+  schema: T,
+  value: core.output<T>,
+  _ctx?: schemas.ParseContext<errors.$ZodIssue>,
+  _params?: { callee?: util.AnyFunc; Err?: $ZodErrorClass }
+) => core.input<T>;
+
+export const _encode: (_Err: $ZodErrorClass) => $Encode = (_Err) => (schema, value, _ctx, _params) => {
+  const ctx: schemas.ParseContextInternal = _ctx
+    ? Object.assign(_ctx, { async: false, direction: "backward" as const })
+    : { async: false, direction: "backward" as const };
+  if (hasTransform(schema)) {
+    throw new core.$ZodEncodeError();
+  }
+  const result = schema._zod.run({ value, issues: [] }, ctx);
+  if (result instanceof Promise) {
+    throw new core.$ZodAsyncError();
+  }
+  if (result.issues.length) {
+    const e = new (_params?.Err ?? _Err)(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())));
+    util.captureStackTrace(e, _params?.callee);
+    throw e;
+  }
+  return result.value as core.input<typeof schema>;
+};
+
+export const encode: $Encode = /* @__PURE__*/ _encode(errors.$ZodRealError);
+
+export type $EncodeAsync = <T extends schemas.$ZodType>(
+  schema: T,
+  value: core.output<T>,
+  _ctx?: schemas.ParseContext<errors.$ZodIssue>,
+  _params?: { callee?: util.AnyFunc; Err?: $ZodErrorClass }
+) => Promise<core.input<T>>;
+
+export const _encodeAsync: (_Err: $ZodErrorClass) => $EncodeAsync = (_Err) => async (schema, value, _ctx, params) => {
+  const ctx: schemas.ParseContextInternal = _ctx
+    ? Object.assign(_ctx, { async: true, direction: "backward" as const })
+    : { async: true, direction: "backward" as const };
+  if (hasTransform(schema)) {
+    throw new core.$ZodEncodeError();
+  }
+  let result = schema._zod.run({ value, issues: [] }, ctx);
+  if (result instanceof Promise) result = await result;
+  if (result.issues.length) {
+    const e = new (params?.Err ?? _Err)(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())));
+    util.captureStackTrace(e, params?.callee);
+    throw e;
+  }
+  return result.value as core.input<typeof schema>;
+};
+
+export const encodeAsync: $EncodeAsync = /* @__PURE__*/ _encodeAsync(errors.$ZodRealError);
+
+export type $SafeEncodeAsync = <T extends schemas.$ZodType>(
+  schema: T,
+  value: core.output<T>,
+  _ctx?: schemas.ParseContext<errors.$ZodIssue>
+) => Promise<util.SafeParseResult<core.input<T>>>;
+
+export const _safeEncodeAsync: (_Err: $ZodErrorClass) => $SafeEncodeAsync = (_Err) => async (schema, value, _ctx) => {
+  const ctx: schemas.ParseContextInternal = _ctx
+    ? Object.assign(_ctx, { async: true, direction: "backward" as const })
+    : { async: true, direction: "backward" as const };
+  if (hasTransform(schema)) {
+    return {
+      success: false,
+      error: new _Err([]),
+    } as any;
+  }
+  let result = schema._zod.run({ value, issues: [] }, ctx);
+  if (result instanceof Promise) result = await result;
+
+  return result.issues.length
+    ? {
+        success: false,
+        error: new _Err(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))),
+      }
+    : ({ success: true, data: result.value } as any);
+};
+
+export const safeEncodeAsync: $SafeEncodeAsync = /* @__PURE__*/ _safeEncodeAsync(errors.$ZodRealError);
+
+export type $SafeEncode = <T extends schemas.$ZodType>(
+  schema: T,
+  value: core.output<T>,
+  _ctx?: schemas.ParseContext<errors.$ZodIssue>
+) => util.SafeParseResult<core.input<T>>;
+
+export const _safeEncode: (_Err: $ZodErrorClass) => $SafeEncode = (_Err) => (schema, value, _ctx) => {
+  const ctx: schemas.ParseContextInternal = _ctx
+    ? Object.assign(_ctx, { async: false, direction: "backward" as const })
+    : { async: false, direction: "backward" as const };
+  if (hasTransform(schema)) {
+    return {
+      success: false,
+      error: new _Err([]),
+    } as any;
+  }
+  const result = schema._zod.run({ value, issues: [] }, ctx);
+  if (result instanceof Promise) {
+    throw new core.$ZodAsyncError();
+  }
+  return result.issues.length
+    ? {
+        success: false,
+        error: new _Err(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))),
+      }
+    : ({ success: true, data: result.value } as any);
+};
+
+export const safeEncode: $SafeEncode = /* @__PURE__*/ _safeEncode(errors.$ZodRealError);
+
+// decode helpers (aliases)
+export const decode: $Parse = parse;
+export const decodeAsync: $ParseAsync = parseAsync;
+export const safeDecode: $SafeParse = safeParse;
+export const safeDecodeAsync: $SafeParseAsync = safeParseAsync;

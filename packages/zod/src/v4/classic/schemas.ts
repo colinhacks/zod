@@ -54,6 +54,23 @@ export interface ZodType<
     data: unknown,
     params?: core.ParseContext<core.$ZodIssue>
   ) => Promise<parse.ZodSafeParseResult<core.output<this>>>;
+  decode(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;
+  decodeAsync(data: unknown, params?: core.ParseContext<core.$ZodIssue>): Promise<core.output<this>>;
+  safeDecode(data: unknown, params?: core.ParseContext<core.$ZodIssue>): parse.ZodSafeParseResult<core.output<this>>;
+  safeDecodeAsync(
+    data: unknown,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): Promise<parse.ZodSafeParseResult<core.output<this>>>;
+  encode(data: core.output<this>, params?: core.ParseContext<core.$ZodIssue>): core.input<this>;
+  encodeAsync(data: core.output<this>, params?: core.ParseContext<core.$ZodIssue>): Promise<core.input<this>>;
+  safeEncode(
+    data: core.output<this>,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): parse.ZodSafeParseResult<core.input<this>>;
+  safeEncodeAsync(
+    data: core.output<this>,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): Promise<parse.ZodSafeParseResult<core.input<this>>>;
 
   // refinements
   refine(check: (arg: core.output<this>) => unknown | Promise<unknown>, params?: string | core.$ZodCustomParams): this;
@@ -148,6 +165,15 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   inst.parseAsync = async (data, params) => parse.parseAsync(inst, data, params, { callee: inst.parseAsync });
   inst.safeParseAsync = async (data, params) => parse.safeParseAsync(inst, data, params);
   inst.spa = inst.safeParseAsync;
+  inst.decode = inst.parse as any;
+  inst.decodeAsync = inst.parseAsync as any;
+  inst.safeDecode = inst.safeParse as any;
+  inst.safeDecodeAsync = inst.safeParseAsync as any;
+  inst.encode = (data, params) => parse.encode(inst, data as any, params, { callee: inst.encode }) as any;
+  inst.encodeAsync = async (data, params) =>
+    parse.encodeAsync(inst, data as any, params, { callee: inst.encodeAsync }) as any;
+  inst.safeEncode = (data, params) => parse.safeEncode(inst, data as any, params) as any;
+  inst.safeEncodeAsync = async (data, params) => parse.safeEncodeAsync(inst, data as any, params) as any;
 
   // refinements
   inst.refine = (check, params) => inst.check(refine(check, params));
@@ -1834,6 +1860,38 @@ export function pipe(in_: core.SomeType, out: core.SomeType) {
     in: in_ as unknown as core.$ZodType,
     out: out as unknown as core.$ZodType,
     // ...util.normalizeParams(params),
+  });
+}
+
+// ZodCodec
+export interface ZodCodec<A extends core.SomeType = core.$ZodType, B extends core.SomeType = core.$ZodType>
+  extends _ZodType<core.$ZodCodecInternals<A, B>>,
+    core.$ZodCodec<A, B> {
+  in: A;
+  out: B;
+}
+export const ZodCodec: core.$constructor<ZodCodec> = /*@__PURE__*/ core.$constructor("ZodCodec", (inst, def) => {
+  core.$ZodCodec.init(inst, def);
+  ZodType.init(inst, def);
+  inst.in = def.in as any;
+  inst.out = def.out as any;
+});
+
+export function codec<const A extends core.SomeType, const B extends core.SomeType>(
+  in_: A,
+  out: B,
+  handlers: {
+    decode: (value: core.output<A>, ctx: core.ParsePayload<core.output<A>>) => any;
+    encode: (value: core.output<B>, ctx: core.ParsePayload<core.output<B>>) => any;
+  }
+): ZodCodec<A, B>;
+export function codec(in_: core.SomeType, out: core.SomeType, handlers: any) {
+  return new ZodCodec({
+    type: "codec",
+    in: in_ as unknown as core.$ZodType,
+    out: out as unknown as core.$ZodType,
+    decode: handlers.decode,
+    encode: handlers.encode,
   });
 }
 

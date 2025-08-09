@@ -21,6 +21,7 @@ export {
   toJSONSchema,
   TimePrecision,
   NEVER,
+  $ZodEncodeError as ZodEncodeError,
 } from "../core/index.js";
 
 export * as locales from "../locales/index.js";
