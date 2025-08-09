@@ -1721,7 +1721,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
   const _normalized = util.cached(() => {
     const keys = Object.keys(def.shape);
     for (const k of keys) {
-      if (!(def.shape[k] instanceof $ZodType)) {
+      if (!def.shape[k]._zod.traits.has("$ZodType")) {
         throw new Error(`Invalid element at key "${k}": expected a Zod schema`);
       }
     }
@@ -3642,7 +3642,8 @@ export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> = /*@__
     $ZodType.init(inst, def);
     const regexParts: string[] = [];
     for (const part of def.parts) {
-      if (part instanceof $ZodType) {
+      if (typeof part === "object" && part !== null) {
+        // is Zod schema
         if (!part._zod.pattern) {
           // if (!source)
           throw new Error(`Invalid template literal part, no pattern found: ${[...(part as any)._zod.traits].shift()}`);
