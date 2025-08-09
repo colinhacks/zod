@@ -1,6 +1,6 @@
 {
   "name": "zod",
-  "version": "4.0.16",
+  "version": "4.0.17",
   "type": "module",
   "license": "MIT",
   "author": "Colin McDonnell <zod@colinhacks.com>",
