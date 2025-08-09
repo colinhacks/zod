@@ -236,11 +236,7 @@ type ResourceTableProps = {
 async function ResourceTable({ resources }: ResourceTableProps) {
   await fetchStars(resources);
 
-  return (
-    <>
-      <Table resources={resources} />
-    </>
-  );
+  return <Table resources={resources} />;
 }
 
 export async function ApiLibraries() {
