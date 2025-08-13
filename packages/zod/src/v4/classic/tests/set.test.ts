@@ -155,7 +155,8 @@ test("min/max", async () => {
     [
       {
         "code": "too_small",
-        "message": "Too small: expected set to have >4 items",
+        "inclusive": true,
+        "message": "Too small: expected set to have >=4 items",
         "minimum": 4,
         "origin": "set",
         "path": [],
@@ -169,8 +170,9 @@ test("min/max", async () => {
     [
       {
         "code": "too_big",
+        "inclusive": true,
         "maximum": 5,
-        "message": "Too big: expected set to have <5 items",
+        "message": "Too big: expected set to have <=5 items",
         "origin": "set",
         "path": [],
       },
