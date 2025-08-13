@@ -565,6 +565,12 @@ export class JSONSchemaGenerator {
             result.ref = innerType;
             break;
           }
+          case "codec": {
+            const innerType = this.io === "input" ? def.in : def.out;
+            this.process(innerType, params);
+            result.ref = innerType;
+            break;
+          }
           case "readonly": {
             this.process(def.innerType, params);
             result.ref = def.innerType;
@@ -988,6 +994,9 @@ function isTransforming(
       return true;
     }
     case "pipe": {
+      return isTransforming(def.in, ctx) || isTransforming(def.out, ctx);
+    }
+    case "codec": {
       return isTransforming(def.in, ctx) || isTransforming(def.out, ctx);
     }
     case "success": {

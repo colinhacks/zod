@@ -106,6 +106,9 @@ test("assignability", () => {
   // $ZodPipe
   z.pipe(z.unknown(), z.number()) satisfies z.core.$ZodPipe;
 
+  // $ZodCodec
+  z.codec(z.unknown(), z.unknown(), { decode: (v) => v, encode: (v) => v }) satisfies z.core.$ZodCodec;
+
   // $ZodSuccess
   z.success(z.string()) satisfies z.core.$ZodSuccess;
 

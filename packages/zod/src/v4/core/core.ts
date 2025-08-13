@@ -78,6 +78,12 @@ export class $ZodAsyncError extends Error {
   }
 }
 
+export class $ZodEncodeError extends Error {
+  constructor() {
+    super(`Cannot encode schema containing unidirectional transforms.`);
+  }
+}
+
 ////////////////////////////  TYPE HELPERS  ///////////////////////////////////
 
 // export type input<T extends schemas.$ZodType> = T["_zod"]["input"];
