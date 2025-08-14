@@ -377,6 +377,8 @@ export function isPlainObject(o: any): o is Record<PropertyKey, unknown> {
   const ctor = o.constructor;
   if (ctor === undefined) return true;
 
+  if (typeof ctor !== "function") return true;
+
   // modified prototype
   const prot = ctor.prototype;
   if (isObject(prot) === false) return false;
