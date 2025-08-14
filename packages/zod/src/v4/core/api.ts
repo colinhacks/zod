@@ -1629,3 +1629,17 @@ export function _stringFormat<Format extends string>(
   const inst = new Class(def);
   return inst as any;
 }
+
+export function _with<T extends schemas.SomeType, TInputOverride = never, TOutputOverride = never>(
+  schema: T
+): core.WithSchema<T, TInputOverride, TOutputOverride> {
+  const newSchema = Object.create(Object.getPrototypeOf(schema));
+
+  Object.assign(newSchema, schema);
+
+  newSchema._zod = {
+    ...schema._zod,
+  };
+
+  return newSchema as core.WithSchema<T, TInputOverride, TOutputOverride>;
+}
