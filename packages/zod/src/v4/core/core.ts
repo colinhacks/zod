@@ -87,6 +87,24 @@ export class $ZodAsyncError extends Error {
 export type input<T> = T extends { _zod: { input: any } } ? T["_zod"]["input"] : unknown;
 export type output<T> = T extends { _zod: { output: any } } ? T["_zod"]["output"] : unknown;
 
+export interface WithOptions<TInput = unknown, TOutput = unknown> {
+  input?: TInput;
+  output?: TOutput;
+}
+
+export type WithSchema<T extends schemas.SomeType, TInputOverride = never, TOutputOverride = never> = T extends {
+  _zod: infer TInternals;
+}
+  ? TInternals extends schemas.$ZodTypeInternals<infer TOutput, infer TInput>
+    ? T & {
+        _zod: TInternals & {
+          input: [TInputOverride] extends [never] ? TInput : TInputOverride;
+          output: [TOutputOverride] extends [never] ? TOutput : TOutputOverride;
+        };
+      }
+    : T
+  : T;
+
 // Mk2
 // export type input<T> = T extends { _zod: { "~input": any } }
 //   ? T["_zod"]["~input"]
