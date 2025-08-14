@@ -179,6 +179,14 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
   inst._zod.bag = inst._zod.bag || {}; // initialize _bag object
   inst._zod.version = version;
 
+  Object.defineProperty(inst, "type", {
+    get() {
+      return this._zod.def.type;
+    },
+    enumerable: true,
+    configurable: true,
+  });
+
   const checks = [...(inst._zod.def.checks ?? [])];
 
   // if inst is itself a checks.$ZodCheck, run it as a check
