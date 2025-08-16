@@ -167,8 +167,8 @@ describe("early termination options", () => {
 });
 
 describe("custom error paths", () => {
-  test("should use custom path in error message", async () => {
-    const result = await z
+  test("should use custom path in error message", () => {
+    const result = z
       .object({ password: z.string(), confirm: z.string() })
       .refine((data) => data.confirm === data.password, { path: ["confirm"] })
       .safeParse({ password: "asdf", confirm: "qewr" });

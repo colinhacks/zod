@@ -39,7 +39,7 @@ test("valid parse async", async () => {
   expect(result.data!.has("second")).toEqual(true);
   expect(result.data!.has("third")).toEqual(false);
 
-  const asyncResult = await stringSet.safeParse(new Set(["first", "second"]));
+  const asyncResult = stringSet.safeParse(new Set(["first", "second"]));
   expect(asyncResult.success).toEqual(true);
   expect(asyncResult.data!.has("first")).toEqual(true);
   expect(asyncResult.data!.has("second")).toEqual(true);
