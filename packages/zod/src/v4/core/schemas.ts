@@ -31,6 +31,8 @@ export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> ex
 export interface ParsePayload<T = unknown> {
   value: T;
   issues: errors.$ZodRawIssue[];
+  // assumed false by default
+  aborted?: boolean;
 }
 
 export type CheckFn<T> = (input: ParsePayload<T>) => util.MaybeAsync<void>;
@@ -244,6 +246,17 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
       return payload;
     };
 
+    const handleChecksResult = (
+      checkResult: ParsePayload,
+      originalResult: ParsePayload,
+      ctx: ParseContextInternal
+    ): util.MaybeAsync<ParsePayload> => {
+      // if the checks mutated the value && there are no issues, re-parse the result
+      if (checkResult.value !== originalResult.value && !checkResult.issues.length)
+        return inst._zod.parse(checkResult, ctx);
+      return originalResult;
+    };
+
     inst._zod.run = (payload, ctx) => {
       if (ctx.direction === "backward") {
         const initValue = payload.value;
@@ -252,31 +265,17 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
         if (result instanceof Promise) {
           if (ctx.async === false) throw new core.$ZodAsyncError();
           return result.then(async (result) => {
-            await runChecks(
-              {
-                value: initValue,
-                issues: result.issues,
-              },
-              checks,
-              ctx
-            );
-            return result;
+            const checkResult = await runChecks({ value: initValue, issues: result.issues }, checks, ctx);
+            return handleChecksResult(checkResult, result, ctx);
           });
         }
 
-        const checkResult = runChecks(
-          {
-            value: initValue,
-            issues: result.issues,
-          },
-          checks,
-          ctx
-        );
+        const checkResult = runChecks({ value: initValue, issues: result.issues }, checks, ctx);
         if (checkResult instanceof Promise) {
           if (ctx.async === false) throw new core.$ZodAsyncError();
-          return checkResult.then(() => result);
+          return checkResult.then((checkResult) => handleChecksResult(checkResult, result, ctx));
         }
-        return result;
+        return handleChecksResult(checkResult, result, ctx);
       }
 
       // forward
@@ -3593,9 +3592,10 @@ export const $ZodPipe: core.$constructor<$ZodPipe> = /*@__PURE__*/ core.$constru
 function handlePipeResult(left: ParsePayload, def: $ZodPipeDef, ctx: ParseContextInternal) {
   if (left.issues.length) {
     // prevent further checks
-    for (const issue of left.issues) {
-      (issue as any).continue = false;
-    }
+    left.aborted = true;
+    // for (const issue of left.issues) {
+    //   (issue as any).continue = false;
+    // }
     return left;
   }
   return def.out._zod.run({ value: left.value, issues: left.issues }, ctx);
@@ -3656,9 +3656,10 @@ export const $ZodCodec: core.$constructor<$ZodCodec> = /*@__PURE__*/ core.$const
 function handleCodecResult(left: ParsePayload, def: $ZodCodecDef, ctx: ParseContextInternal) {
   if (left.issues.length) {
     // prevent further checks
-    for (const issue of left.issues) {
-      (issue as any).continue = false;
-    }
+    left.aborted = true;
+    // for (const issue of left.issues) {
+    //   (issue as any).continue = false;
+    // }
     return left;
   }
 
