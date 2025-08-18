@@ -1867,6 +1867,38 @@ export function pipe(in_: core.SomeType, out: core.SomeType) {
   });
 }
 
+// ZodCodec
+export interface ZodCodec<A extends core.SomeType = core.$ZodType, B extends core.SomeType = core.$ZodType>
+  extends _ZodType<core.$ZodCodecInternals<A, B>>,
+    core.$ZodCodec<A, B> {
+  in: A;
+  out: B;
+}
+export const ZodCodec: core.$constructor<ZodCodec> = /*@__PURE__*/ core.$constructor("ZodCodec", (inst, def) => {
+  core.$ZodCodec.init(inst, def);
+  ZodType.init(inst, def);
+
+  inst.in = def.in;
+  inst.out = def.out;
+});
+
+export function codec<const A extends core.SomeType, B extends core.$ZodType = core.$ZodType>(
+  in_: A,
+  out: B,
+  params: {
+    decode: (value: core.output<A>) => core.input<B>;
+    encode: (value: core.output<B>) => core.input<A>;
+  }
+): ZodCodec<A, B> {
+  return new ZodCodec({
+    type: "codec",
+    in: in_ as any as core.$ZodType,
+    out: out as any as core.$ZodType,
+    transform: params.decode as any,
+    reverseTransform: params.encode as any,
+  }) as any;
+}
+
 // ZodReadonly
 export interface ZodReadonly<T extends core.SomeType = core.$ZodType>
   extends _ZodType<core.$ZodReadonlyInternals<T>>,
