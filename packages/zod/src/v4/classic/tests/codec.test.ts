@@ -396,3 +396,77 @@ test("mutating refinements", () => {
   expect(z.decode(A, " asdf ")).toMatchInlineSnapshot(`"asdf"`);
   expect(z.encode(A, " asdf ")).toMatchInlineSnapshot(`"asdf"`);
 });
+
+test("codec type enforcement - correct encode/decode signatures", () => {
+  // Test that codec functions have correct type signatures
+  const stringToNumberCodec = z.codec(z.string(), z.number(), {
+    decode: (value: string) => Number(value), // core.output<A> -> core.input<B>
+    encode: (value: number) => String(value), // core.input<B> -> core.output<A>
+  });
+
+  // These should compile without errors - correct types
+  expectTypeOf<(value: string) => number>(stringToNumberCodec.def.transform).toBeFunction();
+  expectTypeOf<(value: number) => string>(stringToNumberCodec.def.reverseTransform).toBeFunction();
+
+  // Test that decode parameter type is core.output<A> (string)
+  const validDecode = (value: string) => Number(value);
+  expectTypeOf(validDecode).toMatchTypeOf<(value: string) => number>();
+
+  // Test that encode parameter type is core.input<B> (number)
+  const validEncode = (value: number) => String(value);
+  expectTypeOf(validEncode).toMatchTypeOf<(value: number) => string>();
+
+  // @ts-expect-error - decode should NOT accept core.input<A> as parameter
+  z.codec(z.string(), z.number(), {
+    decode: (value: unknown) => Number(value), // Wrong: should be string, not unknown
+    encode: (value: number) => String(value),
+  });
+
+  // @ts-expect-error - encode should NOT accept core.output<B> as parameter
+  z.codec(z.string(), z.number(), {
+    decode: (value: string) => Number(value),
+    encode: (value: unknown) => String(value), // Wrong: should be number, not unknown
+  });
+
+  // @ts-expect-error - decode return type should be core.input<B>
+  z.codec(z.string(), z.number(), {
+    decode: (value: string) => String(value), // Wrong: should return number, not string
+    encode: (value: number) => String(value),
+  });
+
+  // @ts-expect-error - encode return type should be core.output<A>
+  z.codec(z.string(), z.number(), {
+    decode: (value: string) => Number(value),
+    encode: (value: number) => Number(value), // Wrong: should return string, not number
+  });
+});
+
+test("codec type enforcement - complex types", () => {
+  type User = { id: number; name: string };
+  type UserInput = { id: string; name: string };
+
+  const userCodec = z.codec(
+    z.object({ id: z.string(), name: z.string() }),
+    z.object({ id: z.number(), name: z.string() }),
+    {
+      decode: (input: UserInput) => ({ id: Number(input.id), name: input.name }),
+      encode: (user: User) => ({ id: String(user.id), name: user.name }),
+    }
+  );
+
+  // Verify correct types are inferred
+  expectTypeOf<(input: UserInput) => User>(userCodec.def.transform).toBeFunction();
+  expectTypeOf<(user: User) => UserInput>(userCodec.def.reverseTransform).toBeFunction();
+
+  // @ts-expect-error - decode parameter should be UserInput, not User
+  z.codec(z.object({ id: z.string(), name: z.string() }), z.object({ id: z.number(), name: z.string() }), {
+    decode: (input: User) => ({ id: Number(input.id), name: input.name }), // Wrong type
+    encode: (user: User) => ({ id: String(user.id), name: user.name }),
+  });
+
+  // @ts-expect-error - encode parameter should be User, not UserInput
+  z.codec(z.object({ id: z.string(), name: z.string() }), z.object({ id: z.number(), name: z.string() }), {
+    decode: (input: UserInput) => ({ id: Number(input.id), name: input.name }),
+    encode: (user: UserInput) => ({ id: String(user.id), name: user.name }), // Wrong type
+  });
+});

@@ -1879,12 +1879,12 @@ export const ZodCodec: core.$constructor<ZodCodec> = /*@__PURE__*/ core.$constru
   core.$ZodCodec.init(inst, def);
 });
 
-export function codec<const A extends core.SomeType, B extends core.$ZodType = core.$ZodType>(
+export function codec<const A extends core.SomeType, B extends core.SomeType = core.$ZodType>(
   in_: A,
   out: B,
   params: {
     decode: (value: core.output<A>) => core.input<B>;
-    encode: (value: core.output<B>) => core.input<A>;
+    encode: (value: core.input<B>) => core.output<A>;
   }
 ): ZodCodec<A, B> {
   return new ZodCodec({
