@@ -276,11 +276,6 @@ test("perform transform with non-fatal issues", () => {
         "code": "custom",
         "path": [],
         "message": "Invalid input"
-      },
-      {
-        "code": "custom",
-        "path": [],
-        "message": "Invalid input"
       }
     ]]
   `);
