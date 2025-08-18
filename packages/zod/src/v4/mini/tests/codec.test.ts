@@ -1,5 +1,8 @@
 import { expect, expectTypeOf, test } from "vitest";
-import * as z from "zod/v4";
+import { en } from "zod/locales";
+import * as z from "zod/mini";
+
+z.config(en());
 
 const isoDateCodec = z.codec(
   z.iso.datetime(), // Input: ISO string (validates to string)
@@ -11,14 +14,14 @@ const isoDateCodec = z.codec(
 );
 
 test("instanceof", () => {
-  expect(isoDateCodec instanceof z.ZodCodec).toBe(true);
-  expect(isoDateCodec instanceof z.ZodPipe).toBe(true);
-  expect(isoDateCodec instanceof z.ZodType).toBe(true);
+  expect(isoDateCodec instanceof z.ZodMiniCodec).toBe(true);
+  expect(isoDateCodec instanceof z.ZodMiniPipe).toBe(true);
+  expect(isoDateCodec instanceof z.ZodMiniType).toBe(true);
   expect(isoDateCodec instanceof z.core.$ZodCodec).toBe(true);
   expect(isoDateCodec instanceof z.core.$ZodPipe).toBe(true);
   expect(isoDateCodec instanceof z.core.$ZodType).toBe(true);
 
-  expectTypeOf(isoDateCodec.def).toEqualTypeOf<z.core.$ZodCodecDef<z.ZodISODateTime, z.ZodDate>>();
+  expectTypeOf(isoDateCodec.def).toEqualTypeOf<z.core.$ZodCodecDef<z.ZodMiniISODateTime, z.ZodMiniDate<Date>>>();
 });
 
 test("codec basic functionality", () => {
@@ -59,7 +62,7 @@ test("codec with refinement", () => {
       decode: (isoString) => new Date(isoString),
       encode: (date) => date.toISOString(),
     })
-    .refine((val) => val.getFullYear() === 2024, { error: "Year must be 2024" });
+    .check(z.refine((val) => val.getFullYear() === 2024, { error: "Year must be 2024" }));
 
   // Valid 2024 date
   const validDate = z.decode(isoDateCodec, "2024-01-15T10:30:00.000Z");
@@ -186,16 +189,16 @@ test("nested codec with object containing codec property", () => {
   // Nested schema: object containing a codec as one of its properties, with refinements at all levels
   const waypointSchema = z
     .object({
-      name: z.string().min(1, "Waypoint name required"),
+      name: z.string().check(z.minLength(1, "Waypoint name required")),
       difficulty: z.enum(["easy", "medium", "hard"]),
       coordinate: z
         .codec(
           z
             .string()
-            .regex(/^-?\d+,-?\d+$/, "Must be 'x,y' format"), // Input: coordinate string
+            .check(z.regex(/^-?\d+,-?\d+$/, "Must be 'x,y' format")), // Input: coordinate string
           z
             .object({ x: z.number(), y: z.number() })
-            .refine((coord) => coord.x >= 0 && coord.y >= 0, { error: "Coordinates must be non-negative" }), // Output: coordinate object
+            .check(z.refine((coord) => coord.x >= 0 && coord.y >= 0, { error: "Coordinates must be non-negative" })), // Output: coordinate object
           {
             decode: (coordString: string) => {
               const [x, y] = coordString.split(",").map(Number);
@@ -204,11 +207,13 @@ test("nested codec with object containing codec property", () => {
             encode: (coord: { x: number; y: number }) => `${coord.x},${coord.y}`,
           }
         )
-        .refine((coord) => coord.x <= 1000 && coord.y <= 1000, { error: "Coordinates must be within bounds" }),
+        .check(z.refine((coord) => coord.x <= 1000 && coord.y <= 1000, { error: "Coordinates must be within bounds" })),
     })
-    .refine((waypoint) => waypoint.difficulty !== "hard" || waypoint.coordinate.x >= 100, {
-      error: "Hard waypoints must be at least 100 units from origin",
-    });
+    .check(
+      z.refine((waypoint) => waypoint.difficulty !== "hard" || waypoint.coordinate.x >= 100, {
+        error: "Hard waypoints must be at least 100 units from origin",
+      })
+    );
 
   // Test data
   const inputWaypoint = {
@@ -388,7 +393,7 @@ test("nested codec with object containing codec property", () => {
 });
 
 test("mutating refinements", () => {
-  const A = z.codec(z.string(), z.string().trim(), {
+  const A = z.codec(z.string(), z.string().check(z.trim()), {
     decode: (val) => val,
     encode: (val) => val,
   });

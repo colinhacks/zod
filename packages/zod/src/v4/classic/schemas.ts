@@ -1869,17 +1869,14 @@ export function pipe(in_: core.SomeType, out: core.SomeType) {
 
 // ZodCodec
 export interface ZodCodec<A extends core.SomeType = core.$ZodType, B extends core.SomeType = core.$ZodType>
-  extends _ZodType<core.$ZodCodecInternals<A, B>>,
+  extends ZodPipe<A, B>,
     core.$ZodCodec<A, B> {
-  in: A;
-  out: B;
+  _zod: core.$ZodCodecInternals<A, B>;
+  def: core.$ZodCodecDef<A, B>;
 }
 export const ZodCodec: core.$constructor<ZodCodec> = /*@__PURE__*/ core.$constructor("ZodCodec", (inst, def) => {
+  ZodPipe.init(inst, def);
   core.$ZodCodec.init(inst, def);
-  ZodType.init(inst, def);
-
-  inst.in = def.in;
-  inst.out = def.out;
 });
 
 export function codec<const A extends core.SomeType, B extends core.$ZodType = core.$ZodType>(

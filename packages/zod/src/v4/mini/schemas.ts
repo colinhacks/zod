@@ -1425,14 +1425,16 @@ export function pipe<
 
 // ZodMiniCodec
 export interface ZodMiniCodec<A extends SomeType = core.$ZodType, B extends SomeType = core.$ZodType>
-  extends _ZodMiniType<core.$ZodCodecInternals<A, B>> {
-  // _zod: core.$ZodCodecInternals<A, B>;
+  extends ZodMiniPipe<A, B>,
+    core.$ZodCodec<A, B> {
+  _zod: core.$ZodCodecInternals<A, B>;
+  def: core.$ZodCodecDef<A, B>;
 }
 export const ZodMiniCodec: core.$constructor<ZodMiniCodec> = /*@__PURE__*/ core.$constructor(
   "ZodMiniCodec",
   (inst, def) => {
+    ZodMiniPipe.init(inst, def);
     core.$ZodCodec.init(inst, def);
-    ZodMiniType.init(inst, def);
   }
 );
 
