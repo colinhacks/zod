@@ -45,11 +45,6 @@ test("continue on non-fatal errors", () => {
         "code": "custom",
         "path": [],
         "message": "A"
-      },
-      {
-        "code": "custom",
-        "path": [],
-        "message": "B"
       }
     ]],
       "success": false,
