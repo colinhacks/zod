@@ -1891,7 +1891,7 @@ export function codec<const A extends core.SomeType, B extends core.$ZodType = c
   }
 ): ZodCodec<A, B> {
   return new ZodCodec({
-    type: "codec",
+    type: "pipe",
     in: in_ as any as core.$ZodType,
     out: out as any as core.$ZodType,
     transform: params.decode as any,

@@ -73,7 +73,6 @@ export interface $ZodTypeDef {
     | "catch"
     | "nan"
     | "pipe"
-    | "codec"
     | "readonly"
     | "template_literal"
     | "promise"
@@ -246,9 +245,6 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
     };
 
     inst._zod.run = (payload, ctx) => {
-      console.log("run:", def.type);
-      console.log(payload);
-      console.log(ctx.direction);
       if (ctx.direction === "backward") {
         const initValue = payload.value;
         const result = inst._zod.parse(payload, ctx);
@@ -285,7 +281,6 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
 
       // forward
       const result = inst._zod.parse(payload, ctx);
-      console.log(result);
       if (result instanceof Promise) {
         if (ctx.async === false) throw new core.$ZodAsyncError();
         return result.then((result) => runChecks(result, checks, ctx));
@@ -3597,6 +3592,10 @@ export const $ZodPipe: core.$constructor<$ZodPipe> = /*@__PURE__*/ core.$constru
 
 function handlePipeResult(left: ParsePayload, def: $ZodPipeDef, ctx: ParseContextInternal) {
   if (left.issues.length) {
+    // prevent further checks
+    for (const issue of left.issues) {
+      (issue as any).continue = false;
+    }
     return left;
   }
   return def.out._zod.run({ value: left.value, issues: left.issues }, ctx);
@@ -3656,6 +3655,10 @@ export const $ZodCodec: core.$constructor<$ZodCodec> = /*@__PURE__*/ core.$const
 
 function handleCodecResult(left: ParsePayload, def: $ZodCodecDef, ctx: ParseContextInternal) {
   if (left.issues.length) {
+    // prevent further checks
+    for (const issue of left.issues) {
+      (issue as any).continue = false;
+    }
     return left;
   }
 
