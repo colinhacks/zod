@@ -1442,8 +1442,8 @@ export function codec<const A extends SomeType, B extends core.SomeType = core.$
   in_: A,
   out: B,
   params: {
-    decode: (value: core.output<A>) => core.input<B>;
-    encode: (value: core.input<B>) => core.output<A>;
+    decode: (value: core.output<A>, payload: core.ParsePayload<core.output<A>>) => core.input<B>;
+    encode: (value: core.input<B>, payload: core.ParsePayload<core.input<B>>) => core.output<A>;
   }
 ): ZodMiniCodec<A, B> {
   return new ZodMiniCodec({
@@ -1614,18 +1614,16 @@ function _instanceof<T extends typeof Class>(
 export { _instanceof as instanceof };
 
 // stringbool
-export const stringbool: (
-  _params?: string | core.$ZodStringBoolParams
-) => ZodMiniPipe<ZodMiniPipe<ZodMiniString, ZodMiniTransform<boolean, string>>, ZodMiniBoolean> = (...args) =>
-  core._stringbool(
-    {
-      Pipe: ZodMiniPipe,
-      Boolean: ZodMiniBoolean,
-      String: ZodMiniString,
-      Transform: ZodMiniTransform,
-    },
-    ...args
-  ) as any;
+export const stringbool: (_params?: string | core.$ZodStringBoolParams) => ZodMiniCodec<ZodMiniString, ZodMiniBoolean> =
+  (...args) =>
+    core._stringbool(
+      {
+        Codec: ZodMiniCodec,
+        Boolean: ZodMiniBoolean,
+        String: ZodMiniString,
+      },
+      ...args
+    ) as any;
 
 // json
 

@@ -1883,8 +1883,8 @@ export function codec<const A extends core.SomeType, B extends core.SomeType = c
   in_: A,
   out: B,
   params: {
-    decode: (value: core.output<A>) => core.input<B>;
-    encode: (value: core.input<B>) => core.output<A>;
+    decode: (value: core.output<A>, payload: core.ParsePayload<core.output<A>>) => core.input<B>;
+    encode: (value: core.input<B>, payload: core.ParsePayload<core.input<B>>) => core.output<A>;
   }
 ): ZodCodec<A, B> {
   return new ZodCodec({
@@ -2047,15 +2047,14 @@ function _instanceof<T extends typeof util.Class>(
 export { _instanceof as instanceof };
 
 // stringbool
-export const stringbool: (
-  _params?: string | core.$ZodStringBoolParams
-) => ZodPipe<ZodPipe<ZodString, ZodTransform<boolean, string>>, ZodBoolean> = (...args) =>
+export const stringbool: (_params?: string | core.$ZodStringBoolParams) => ZodCodec<ZodString, ZodBoolean> = (
+  ...args
+) =>
   core._stringbool(
     {
-      Pipe: ZodPipe,
+      Codec: ZodCodec,
       Boolean: ZodBoolean,
       String: ZodString,
-      Transform: ZodTransform,
     },
     ...args
   ) as any;

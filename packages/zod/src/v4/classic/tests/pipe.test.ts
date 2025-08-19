@@ -74,3 +74,28 @@ test("break on fatal errors", () => {
     }
   `);
 });
+
+test("reverse parsing with pipe", () => {
+  const schema = z.string().pipe(z.string());
+
+  // Reverse direction: default should NOT be applied
+  expect(z.safeDecode(schema, "asdf")).toMatchInlineSnapshot(`
+    {
+      "data": "asdf",
+      "success": true,
+    }
+  `);
+  expect(z.safeEncode(schema, "asdf")).toMatchInlineSnapshot(`
+    {
+      "data": "asdf",
+      "success": true,
+    }
+  `);
+});
+
+test("reverse parsing with pipe", () => {
+  const schema = z.string().transform((val) => val.length);
+
+  // should throw
+  expect(() => z.encode(schema, 1234)).toThrow();
+});

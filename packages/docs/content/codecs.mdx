@@ -100,3 +100,25 @@ z.safeEncode(stringToDate, new Date("2024-01-15"));
 z.safeEncodeAsync(stringToDate, new Date("2024-01-15")); 
 // => Promise<{ success: true, data: string } | { success: false, error: ZodError }>
 ```
+
+{/* ## Built-ins
+
+Zod includes several built-in codecs for common use cases:
+
+### Stringbool
+
+The `z.stringbool()` schema is implemented as a codec that transforms string values to booleans:
+
+```ts
+const schema = z.stringbool();
+
+// Decoding (string → boolean)
+z.decode(schema, "true");  // => true
+z.decode(schema, "false"); // => false
+
+// Encoding (boolean → string)  
+z.encode(schema, true);    // => "true"
+z.encode(schema, false);   // => "false"
+```
+
+This allows stringbool to work seamlessly with both `z.decode()` and `z.encode()` operations. */}

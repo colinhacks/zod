@@ -3178,6 +3178,12 @@ export const $ZodNullable: core.$constructor<$ZodNullable> = /*@__PURE__*/ core.
     });
 
     inst._zod.parse = (payload, ctx) => {
+      if (ctx.direction === "backward") {
+        // Reverse direction (encode): return inner result directly
+        return def.innerType._zod.run(payload, ctx);
+      }
+
+      // Forward direction (decode): allow null to pass through
       if (payload.value === null) return payload;
       return def.innerType._zod.run(payload, ctx);
     };
@@ -3222,13 +3228,19 @@ export const $ZodDefault: core.$constructor<$ZodDefault> = /*@__PURE__*/ core.$c
     util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
 
     inst._zod.parse = (payload, ctx) => {
+      if (ctx.direction === "backward") {
+        return def.innerType._zod.run(payload, ctx);
+      }
+
+      // Forward direction (decode): apply defaults for undefined input
       if (payload.value === undefined) {
         payload.value = def.defaultValue;
         /**
-         * $ZodDefault always returns the default value immediately.
+         * $ZodDefault returns the default value immediately in forward direction.
          * It doesn't pass the default value into the validator ("prefault"). There's no reason to pass the default value through validation. The validity of the default is enforced by TypeScript statically. Otherwise, it's the responsibility of the user to ensure the default is valid. In the case of pipes with divergent in/out types, you can specify the default on the `in` schema of your ZodPipe to set a "prefault" for the pipe.   */
         return payload;
       }
+      // Forward direction: continue with default handling
       const result = def.innerType._zod.run(payload, ctx);
       if (result instanceof Promise) {
         return result.then((result) => handleDefaultResult(result, def));
@@ -3282,6 +3294,12 @@ export const $ZodPrefault: core.$constructor<$ZodPrefault> = /*@__PURE__*/ core.
     util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
 
     inst._zod.parse = (payload, ctx) => {
+      if (ctx.direction === "backward") {
+        // Reverse direction (encode): don't apply prefault, return inner result directly
+        return def.innerType._zod.run(payload, ctx);
+      }
+
+      // Forward direction (decode): apply prefault for undefined input
       if (payload.value === undefined) {
         payload.value = def.defaultValue;
       }
@@ -3469,6 +3487,12 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
   util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
 
   inst._zod.parse = (payload, ctx) => {
+    if (ctx.direction === "backward") {
+      // Reverse direction (encode): don't apply catch, return inner result directly
+      return def.innerType._zod.run(payload, ctx);
+    }
+
+    // Forward direction (decode): apply catch logic
     const result = def.innerType._zod.run(payload, ctx);
     if (result instanceof Promise) {
       return result.then((result) => {
@@ -3554,9 +3578,9 @@ export interface $ZodPipeDef<A extends SomeType = $ZodType, B extends SomeType =
   in: A;
   out: B;
   /** Only defined inside $ZodCodec instances. */
-  transform?: (value: core.output<A>) => core.input<B>;
+  transform?: (value: core.output<A>, payload: ParsePayload<core.output<A>>) => core.input<B>;
   /** Only defined inside $ZodCodec instances. */
-  reverseTransform?: (value: core.output<B>) => core.input<A>;
+  reverseTransform?: (value: core.input<B>, payload: ParsePayload<core.input<B>>) => core.output<A>;
 }
 
 export interface $ZodPipeInternals<A extends SomeType = $ZodType, B extends SomeType = $ZodType>
@@ -3581,24 +3605,30 @@ export const $ZodPipe: core.$constructor<$ZodPipe> = /*@__PURE__*/ core.$constru
   util.defineLazy(inst._zod, "propValues", () => def.in._zod.propValues);
 
   inst._zod.parse = (payload, ctx) => {
+    if (ctx.direction === "backward") {
+      // Reverse direction (encode): return inner result directly
+      const right = def.out._zod.run(payload, ctx);
+      if (right instanceof Promise) {
+        return right.then((right) => handlePipeResult(right, def.in, ctx));
+      }
+      return handlePipeResult(right, def.in, ctx);
+    }
+
     const left = def.in._zod.run(payload, ctx);
     if (left instanceof Promise) {
-      return left.then((left) => handlePipeResult(left, def, ctx));
+      return left.then((left) => handlePipeResult(left, def.out, ctx));
     }
-    return handlePipeResult(left, def, ctx);
+    return handlePipeResult(left, def.out, ctx);
   };
 });
 
-function handlePipeResult(left: ParsePayload, def: $ZodPipeDef, ctx: ParseContextInternal) {
+function handlePipeResult(left: ParsePayload, next: $ZodType, ctx: ParseContextInternal) {
   if (left.issues.length) {
     // prevent further checks
     left.aborted = true;
-    // for (const issue of left.issues) {
-    //   (issue as any).continue = false;
-    // }
     return left;
   }
-  return def.out._zod.run({ value: left.value, issues: left.issues }, ctx);
+  return next._zod.run({ value: left.value, issues: left.issues }, ctx);
 }
 
 ////////////////////////////////////////////
@@ -3609,8 +3639,8 @@ function handlePipeResult(left: ParsePayload, def: $ZodPipeDef, ctx: ParseContex
 ////////////////////////////////////////////
 ////////////////////////////////////////////
 export interface $ZodCodecDef<A extends SomeType = $ZodType, B extends SomeType = $ZodType> extends $ZodPipeDef<A, B> {
-  transform: (value: core.output<A>) => core.input<B>;
-  reverseTransform: (value: core.output<B>) => core.input<A>;
+  transform: (value: core.output<A>, payload: ParsePayload<core.output<A>>) => core.input<B>;
+  reverseTransform: (value: core.input<B>, payload: ParsePayload<core.input<B>>) => core.output<A>;
 }
 
 export interface $ZodCodecInternals<A extends SomeType = $ZodType, B extends SomeType = $ZodType>
@@ -3657,9 +3687,6 @@ function handleCodecResult(left: ParsePayload, def: $ZodCodecDef, ctx: ParseCont
   if (left.issues.length) {
     // prevent further checks
     left.aborted = true;
-    // for (const issue of left.issues) {
-    //   (issue as any).continue = false;
-    // }
     return left;
   }
 
@@ -3667,14 +3694,14 @@ function handleCodecResult(left: ParsePayload, def: $ZodCodecDef, ctx: ParseCont
 
   if (direction === "forward") {
     // Forward: A -> B, use decode (transform)
-    const transformed = def.transform(left.value);
+    const transformed = def.transform(left.value, left);
     if (transformed instanceof Promise) {
       return transformed.then((value) => def.out._zod.run({ value, issues: left.issues }, ctx));
     }
     return def.out._zod.run({ value: transformed, issues: left.issues }, ctx);
   } else {
     // Backward: B -> A, use encode (reverseTransform)
-    const transformed = def.reverseTransform(left.value);
+    const transformed = def.reverseTransform(left.value, left);
     if (transformed instanceof Promise) {
       return transformed.then((value) => def.in._zod.run({ value, issues: left.issues }, ctx));
     }
