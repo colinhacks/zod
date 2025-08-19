@@ -1536,7 +1536,7 @@ test("describe with id", () => {
 });
 
 test("override with id", () => {
-  const jobId = z.string().meta({ id: "jobId" });
+  const jobId = z.string().meta({ id: "jobIdFoo" });
 
   const a = z.z.toJSONSchema(
     z.object({
@@ -1545,7 +1545,7 @@ test("override with id", () => {
     }),
     {
       override(ctx) {
-        if (ctx.path.join("/") === "$defs/jobId") {
+        if (ctx.path.join("/") === "$defs/jobIdFoo") {
           ctx.jsonSchema.id = "jobIdChanged";
         }
       },
@@ -1555,7 +1555,7 @@ test("override with id", () => {
   expect(a).toMatchInlineSnapshot(`
     {
       "$defs": {
-        "jobId": {
+        "jobIdFoo": {
           "id": "jobIdChanged",
           "type": "string",
         },
@@ -1564,11 +1564,11 @@ test("override with id", () => {
       "additionalProperties": false,
       "properties": {
         "current": {
-          "$ref": "#/$defs/jobId",
+          "$ref": "#/$defs/jobIdFoo",
           "description": "Current job",
         },
         "previous": {
-          "$ref": "#/$defs/jobId",
+          "$ref": "#/$defs/jobIdFoo",
           "description": "Previous job",
         },
       },
