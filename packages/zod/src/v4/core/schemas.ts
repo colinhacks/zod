@@ -3054,6 +3054,10 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
   (inst, def) => {
     $ZodType.init(inst, def);
     inst._zod.parse = (payload, _ctx) => {
+      if (_ctx.direction === "backward") {
+        throw new core.$ZodUnidirectionalError("ZodTransform");
+      }
+
       const _out = def.transform(payload.value, payload);
       if (_ctx.async) {
         const output = _out instanceof Promise ? _out : Promise.resolve(_out);
@@ -3435,6 +3439,10 @@ export const $ZodSuccess: core.$constructor<$ZodSuccess> = /*@__PURE__*/ core.$c
     $ZodType.init(inst, def);
 
     inst._zod.parse = (payload, ctx) => {
+      if (ctx.direction === "backward") {
+        throw new core.$ZodUnidirectionalError("ZodSuccess");
+      }
+
       const result = def.innerType._zod.run(payload, ctx);
       if (result instanceof Promise) {
         return result.then((result) => {
@@ -3746,6 +3754,9 @@ export const $ZodReadonly: core.$constructor<$ZodReadonly> = /*@__PURE__*/ core.
     util.defineLazy(inst._zod, "optout", () => def.innerType._zod.optout);
 
     inst._zod.parse = (payload, ctx) => {
+      if (ctx.direction === "backward") {
+        return def.innerType._zod.run(payload, ctx);
+      }
       const result = def.innerType._zod.run(payload, ctx);
       if (result instanceof Promise) {
         return result.then(handleReadonlyResult);
