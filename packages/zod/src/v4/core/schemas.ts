@@ -3182,11 +3182,6 @@ export const $ZodNullable: core.$constructor<$ZodNullable> = /*@__PURE__*/ core.
     });
 
     inst._zod.parse = (payload, ctx) => {
-      if (ctx.direction === "backward") {
-        // Reverse direction (encode): return inner result directly
-        return def.innerType._zod.run(payload, ctx);
-      }
-
       // Forward direction (decode): allow null to pass through
       if (payload.value === null) return payload;
       return def.innerType._zod.run(payload, ctx);

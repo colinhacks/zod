@@ -3,6 +3,8 @@ title: Codecs
 description: "Bidirectional data transformation with encode and decode"
 ---
 
+import { ThemedImage } from "@/components/themed-image";
+
 All Zod schemas infer an `Input` and `Output` type. In most cases, these types are the same. 
 
 ```ts
@@ -27,8 +29,11 @@ const stringToDate = z.codec(
 
 As such, Zod provides APIs for processing data in both the "forward" and "reverse" directions. 
 
-
-<img src="/codecs.png" alt="Codec directionality diagram showing bidirectional transformation between input and output schemas" />
+<ThemedImage 
+  lightSrc="/codecs-light.png" 
+  darkSrc="/codecs-dark.png" 
+  alt="Codec directionality diagram showing bidirectional transformation between input and output schemas" 
+/>
  
 ## Decoding (forward)
 
@@ -48,7 +53,7 @@ z.decode(stringToDate, "2024-01-15T10:30:00.000Z");
 // => Date
 ```
 
-This also provides the "safe" and "async" variantes you are accustomed to:
+This also provides the "safe" and "async" variants.
 
 ```ts
 z.decode(stringToDate, "2024-01-15T10:30:00.000Z"); 

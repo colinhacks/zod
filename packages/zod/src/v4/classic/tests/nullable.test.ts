@@ -20,28 +20,3 @@ test("z.null", () => {
   expect(n.parse(null)).toBe(null);
   expect(() => n.parse("asdf")).toThrow();
 });
-
-test("direction-aware nullable", () => {
-  const schema = z.string().nullable();
-
-  // Forward direction (regular parse): null should be allowed
-  expect(schema.parse(null)).toBe(null);
-
-  // Reverse direction (encode): null should NOT be specially handled, should fail validation
-  expect(z.safeEncode(schema, null as any)).toMatchInlineSnapshot(`
-    {
-      "error": [ZodError: [
-      {
-        "expected": "string",
-        "code": "invalid_type",
-        "path": [],
-        "message": "Invalid input: expected string, received null"
-      }
-    ]],
-      "success": false,
-    }
-  `);
-
-  // But valid values should still work in reverse
-  expect(z.encode(schema, "world")).toBe("world");
-});
