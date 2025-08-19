@@ -9,6 +9,7 @@
     "index",
     "basics",
     "api",
+    "codecs",
     "error-customization",
     "error-formatting",
     "metadata",

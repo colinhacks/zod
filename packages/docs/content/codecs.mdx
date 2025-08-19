@@ -1,0 +1,102 @@
+---
+title: Codecs
+description: "Bidirectional data transformation with encode and decode"
+---
+
+All Zod schemas infer an `Input` and `Output` type. In most cases, these types are the same. 
+
+```ts
+const mySchema = z.string();
+
+type Output = z.output<typeof mySchema>; // => string
+type Input = z.input<typeof mySchema>;   // => string
+```
+
+However, certain schema types cause these types to diverge, notably *codecs*, which implement a *bidirectional transformation*.
+
+```ts
+const stringToDate = z.codec(
+  z.iso.datetime(),  // input schema: ISO date string
+  z.date(),          // output schema: Date object
+  {
+    decode: (isoString) => new Date(isoString), // ISO string → Date
+    encode: (date) => date.toISOString(),       // Date → ISO string
+  }
+);
+```
+
+As such, Zod provides APIs for processing data in both the "forward" and "reverse" directions. 
+
+
+<img src="/codecs.png" alt="Codec directionality diagram showing bidirectional transformation between input and output schemas" />
+ 
+## Decoding (forward)
+
+Regular "parsing" processes data in the "forward" direction.
+
+```ts
+stringToDate.parse("2024-01-15T10:30:00.000Z"); 
+// => Date
+```
+
+In the parlance of codecs, parsing is performing a "decode" operation. The idea is that Zod schemas are typically used at a network boundary to parse/decode some serialized data (say, JSON) into richer JavaScript data structures.
+
+As such, Zod also provides an explicit top-level `z.decode()` function.
+
+```ts
+z.decode(stringToDate, "2024-01-15T10:30:00.000Z"); 
+// => Date
+```
+
+This also provides the "safe" and "async" variantes you are accustomed to:
+
+```ts
+z.decode(stringToDate, "2024-01-15T10:30:00.000Z"); 
+// => Date
+
+z.decodeAsync(stringToDate, "2024-01-15T10:30:00.000Z"); 
+// => Promise<Date>
+
+z.decodeSafe(stringToDate, "2024-01-15T10:30:00.000Z"); 
+// => { success: true, data: Date } | { success: false, error: ZodError }
+
+z.decodeSafeAsync(stringToDate, "2024-01-15T10:30:00.000Z"); 
+// => Promise<{ success: true, data: Date } | { success: false, error: ZodError }>
+```
+
+## Encoding (reverse)
+
+To perform a "reverse parse" (encoding) operation, use the `z.encode()` function:
+
+```ts
+z.encode(stringToDate, new Date("2024-01-15")); // => "2024-01-15T00:00:00.000Z"
+```
+
+You can pass any schema into `z.encode()`. Most Zod schemas do not perform any transformation. As such, they behave identically in the both directions.
+
+```ts
+const schema = z.string();
+
+z.decode(schema, "hello"); // => "hello"
+z.encode(schema, "hello"); // => "hello"
+```
+
+The behavior only differs when certain *transforming schemas* exist in the schema hierarchy.
+
+> **Note** The `.transform()` API implements a *unidirectional* transformation. If any `.transform()` exists anywhere in your schema, attempting a `z.encode()` operation will throw a *runtime error* (not a `ZodError`). 
+
+Safe and async variants are also available.
+
+```ts
+z.encode(stringToDate, new Date("2024-01-15")); 
+// => string
+
+z.encodeAsync(stringToDate, new Date("2024-01-15")); 
+// => Promise<string>
+
+z.safeEncode(stringToDate, new Date("2024-01-15")); 
+// => { success: true, data: string } | { success: false, error: ZodError }
+
+z.safeEncodeAsync(stringToDate, new Date("2024-01-15")); 
+// => Promise<{ success: true, data: string } | { success: false, error: ZodError }>
+```
