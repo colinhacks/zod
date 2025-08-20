@@ -237,47 +237,272 @@ z.encode(successSchema, true);
 // ❌ Error: Encountered unidirectional transform during encode: ZodSuccess
 ``` */}
 
-{/* 
-## Built-ins
 
-Zod includes several built-in codecs for common use cases:
+## Examples
 
+{/* Zod includes several built-in codecs for common use cases: */}
+
+Below are some commonly necessary codecs. The implementations below have been tested. Feel free to copy/paste them into your project as needed.
+
+### `stringToNumber`
+
+Converts string representations of numbers to JavaScript `number` type using `parseFloat()`.
 
 ```ts
-// numbers / bigint
-z.codec.stringToNumber(); // parseFloat() / toString()
-z.codec.stringToInt(); // parseInt() / toString()
-z.codec.stringToBigInt(); // BigInt() / toString()
-z.codec.numberToBigInt(); // BigInt() / toString()
+const stringToNumber = z.codec(z.string(), z.number(), {
+  decode: (str) => Number.parseFloat(str),
+  encode: (num) => num.toString(),
+});
 
-// dates / durations
-z.codec.isoDatetimeToDate(); // new Date() / toISOString()
-z.codec.unixSecondsToDate(); // new Date() / getTime() / 1000
-z.codec.unixMillisToDate(); // new Date() / getTime()
+// Usage
+z.decode(stringToNumber, "42.5");  // => 42.5
+z.encode(stringToNumber, 42.5);    // => "42.5"
+```
 
-// json
-z.codec.json(); // decode w/ JSON.parse(), encode w/ JSON.stringify()
+### `stringToInt`
 
-// text ⇄ bytes
-z.codec.utf8ToBytes(); // decode w/ TextEncoder, encode w/ TextDecoder
-z.codec.bytesToUtf8(); // decode w/ TextDecoder, encode w/ TextEncoder
+Converts string representations of integers to JavaScript `number` type using `parseInt()`.
 
-// binary-to-text ⇄ bytes
-z.codec.base64(); // util.base64ToUint8Array(), util.uint8ArrayToBase64()
-z.codec.base64url(); // util.base64urlToUint8Array(), util.uint8ArrayToBase64url()
-z.codec.hex(); // util.hexToUint8Array(), util.uint8ArrayToHex()
+```ts
+const stringToInt = z.codec(z.string(), z.int(), {
+  decode: (str) => Number.parseInt(str, 10),
+  encode: (num) => num.toString(),
+});
 
-// urls
-z.codec.stringToURL(); // decode w/ new URL(), encode w/ .href
-z.codec.stringToHttpURL(); // same but use httpURL for input string
-z.codec.uriComponent(); // decode w/ decodeURIComponent(), encode w/ encodeURIComponent()
+// Usage
+z.decode(stringToInt, "42");  // => 42
+z.encode(stringToInt, 42);    // => "42"
+```
 
-// boolean
-z.codec.stringToBoolean(); // alias of z.stringbool()
+### `stringToBigInt`
 
-// dependency injection (do not implement, but document)
-z.codec.isoDurationToMilliseconds(); // 
-z.codec.stringToBigDecimal(); 
-z.codec.
-``` */}
-  
+Converts string representations to JavaScript `bigint` type.
+
+```ts
+const stringToBigInt = z.codec(z.string(), z.bigint(), {
+  decode: (str) => BigInt(str),
+  encode: (bigint) => bigint.toString(),
+});
+
+// Usage
+z.decode(stringToBigInt, "123456789012345678901234567890");  // => 123456789012345678901234567890n
+z.encode(stringToBigInt, 123456789012345678901234567890n);   // => "123456789012345678901234567890"
+```
+
+### `numberToBigInt`
+
+Converts JavaScript `number` to `bigint` type.
+
+```ts
+const numberToBigInt = z.codec(z.int(), z.bigint(), {
+  decode: (num) => BigInt(num),
+  encode: (bigint) => Number(bigint),
+});
+
+// Usage
+z.decode(numberToBigInt, 42);   // => 42n
+z.encode(numberToBigInt, 42n);  // => 42
+```
+
+### `isoDatetimeToDate`
+
+Converts ISO datetime strings to JavaScript `Date` objects.
+
+```ts
+const isoDatetimeToDate = z.codec(z.iso.datetime(), z.date(), {
+  decode: (isoString) => new Date(isoString),
+  encode: (date) => date.toISOString(),
+});
+
+// Usage
+z.decode(isoDatetimeToDate, "2024-01-15T10:30:00.000Z");  // => Date object
+z.encode(isoDatetimeToDate, new Date("2024-01-15"));       // => "2024-01-15T00:00:00.000Z"
+```
+
+### `unixSecondsToDate`
+
+Converts Unix timestamps (seconds since epoch) to JavaScript `Date` objects.
+
+```ts
+const unixSecondsToDate = z.codec(z.int().min(0), z.date(), {
+  decode: (unixSeconds) => new Date(unixSeconds * 1000),
+  encode: (date) => Math.floor(date.getTime() / 1000),
+});
+
+// Usage
+z.decode(unixSecondsToDate, 1705314600);  // => Date object
+z.encode(unixSecondsToDate, new Date());  // => Unix timestamp in seconds
+```
+
+### `unixMillisToDate`
+
+Converts Unix timestamps (milliseconds since epoch) to JavaScript `Date` objects.
+
+```ts
+const unixMillisToDate = z.codec(z.int().min(0), z.date(), {
+  decode: (unixMillis) => new Date(unixMillis),
+  encode: (date) => date.getTime(),
+});
+
+// Usage
+z.decode(unixMillisToDate, 1705314600000);  // => Date object
+z.encode(unixMillisToDate, new Date());     // => Unix timestamp in milliseconds
+```
+
+### `json()`
+
+Parses JSON strings into structured data and serializes back to JSON.
+
+```ts
+const json = <T extends z.ZodTypeAny>(schema: T) =>
+  z.codec(z.string(), schema, {
+    decode: (jsonString) => JSON.parse(jsonString),
+    encode: (value) => JSON.stringify(value),
+  });
+
+// Usage
+const codec = json(z.object({ name: z.string(), age: z.number() }));
+z.decode(codec, '{"name":"Alice","age":30}');  // => { name: "Alice", age: 30 }
+z.encode(codec, { name: "Bob", age: 25 });     // => '{"name":"Bob","age":25}'
+```
+
+### `utf8ToBytes`
+
+Converts UTF-8 strings to `Uint8Array` byte arrays.
+
+```ts
+const utf8ToBytes = z.codec(z.string(), z.instanceof(Uint8Array), {
+  decode: (str) => new TextEncoder().encode(str),
+  encode: (bytes) => new TextDecoder().decode(bytes),
+});
+
+// Usage
+z.decode(utf8ToBytes, "Hello, 世界!");  // => Uint8Array
+z.encode(utf8ToBytes, bytes);          // => "Hello, 世界!"
+```
+
+### `bytesToUtf8`
+
+Converts `Uint8Array` byte arrays to UTF-8 strings.
+
+```ts
+const bytesToUtf8 = z.codec(z.instanceof(Uint8Array), z.string(), {
+  decode: (bytes) => new TextDecoder().decode(bytes),
+  encode: (str) => new TextEncoder().encode(str),
+});
+
+// Usage
+z.decode(bytesToUtf8, bytes);          // => "Hello, 世界!"
+z.encode(bytesToUtf8, "Hello, 世界!");  // => Uint8Array
+```
+
+### `base64ToBytes`
+
+Converts base64 strings to `Uint8Array` byte arrays and vice versa.
+
+```ts
+const base64ToBytes = z.codec(z.base64(), z.instanceof(Uint8Array), {
+  decode: (base64String) => z.core.util.base64ToUint8Array(base64String),
+  encode: (bytes) => z.core.util.uint8ArrayToBase64(bytes),
+});
+
+// Usage
+z.decode(base64ToBytes, "SGVsbG8=");  // => Uint8Array([72, 101, 108, 108, 111])
+z.encode(base64ToBytes, bytes);       // => "SGVsbG8="
+```
+
+### `base64urlToBytes`
+
+Converts base64url strings (URL-safe base64) to `Uint8Array` byte arrays.
+
+```ts
+const base64urlToBytes = z.codec(z.base64url(), z.instanceof(Uint8Array), {
+  decode: (base64urlString) => z.core.util.base64urlToUint8Array(base64urlString),
+  encode: (bytes) => z.core.util.uint8ArrayToBase64url(bytes),
+});
+
+// Usage
+z.decode(base64urlToBytes, "SGVsbG8");  // => Uint8Array([72, 101, 108, 108, 111])
+z.encode(base64urlToBytes, bytes);      // => "SGVsbG8"
+```
+
+### `hexToBytes`
+
+Converts hexadecimal strings to `Uint8Array` byte arrays and vice versa.
+
+```ts
+const hexToBytes = z.codec(z.hex(), z.instanceof(Uint8Array), {
+  decode: (hexString) => z.core.util.hexToUint8Array(hexString),
+  encode: (bytes) => z.core.util.uint8ArrayToHex(bytes),
+});
+
+// Usage
+z.decode(hexToBytes, "48656c6c6f");     // => Uint8Array([72, 101, 108, 108, 111])
+z.encode(hexToBytes, bytes);            // => "48656c6c6f"
+```
+
+### `stringToURL`
+
+Converts URL strings to JavaScript `URL` objects.
+
+```ts
+const stringToURL = z.codec(z.url(), z.instanceof(URL), {
+  decode: (urlString) => new URL(urlString),
+  encode: (url) => url.href,
+});
+
+// Usage
+z.decode(stringToURL, "https://example.com/path");  // => URL object
+z.encode(stringToURL, new URL("https://example.com"));  // => "https://example.com/"
+```
+
+### `stringToHttpURL`
+
+Converts HTTP/HTTPS URL strings to JavaScript `URL` objects.
+
+```ts
+const stringToHttpURL = z.codec(z.httpUrl(), z.instanceof(URL), {
+  decode: (urlString) => new URL(urlString),
+  encode: (url) => url.href,
+});
+
+// Usage
+z.decode(stringToHttpURL, "https://api.example.com/v1");  // => URL object
+z.encode(stringToHttpURL, url);                           // => "https://api.example.com/v1"
+```
+
+### `uriComponent`
+
+Encodes and decodes URI components using `encodeURIComponent()` and `decodeURIComponent()`.
+
+```ts
+const uriComponent = z.codec(z.string(), z.string(), {
+  decode: (encodedString) => decodeURIComponent(encodedString),
+  encode: (decodedString) => encodeURIComponent(decodedString),
+});
+
+// Usage
+z.decode(uriComponent, "Hello%20World%21");  // => "Hello World!"
+z.encode(uriComponent, "Hello World!");      // => "Hello%20World!"
+```
+
+### `stringToBoolean()`
+
+Converts string representations to boolean values. This is an alias for `z.stringbool()`.
+
+```ts
+const stringToBoolean = (options?: { truthy?: string[]; falsy?: string[] }) =>
+  z.stringbool(options);
+
+// Usage
+const codec = stringToBoolean();
+z.decode(codec, "true");   // => true
+z.decode(codec, "false");  // => false
+z.encode(codec, true);     // => "true"
+z.encode(codec, false);    // => "false"
+
+// With custom options
+const customCodec = stringToBoolean({ truthy: ["yes", "y"], falsy: ["no", "n"] });
+z.decode(customCodec, "yes");  // => true
+z.encode(customCodec, true);   // => "yes"
+```
