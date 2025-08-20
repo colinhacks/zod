@@ -35,6 +35,12 @@ const apiLibraries: ZodResource[] = [
     slug: "RobinTail/express-zod-api",
   },
   {
+    name: "nestjs-zod",
+    url: "https://github.com/BenLorantfy/nestjs-zod",
+    description: "Integrate nestjs and zod.  Create nestjs DTOs using zod, serialize with zod, and generate OpenAPI documentation from zod schemas",
+    slug: "BenLorantfy/nestjs-zod",
+  },
+  {
     name: "Zod Sockets",
     url: "https://github.com/RobinTail/zod-sockets",
     description: "Socket.IO solution with I/O validation, an AsyncAPI generator, and a type-safe events map.",
