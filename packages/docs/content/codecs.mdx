@@ -5,7 +5,15 @@ description: "Bidirectional data transformation with encode and decode"
 
 import { ThemedImage } from "@/components/themed-image";
 
-All Zod schemas (with some specific exceptions described below) are "codecs". More specifically, they can process inputs in both the forward ("decoding"/"parsing") and backward ("encoding") directions. You probably already know how to parse data with Zod:
+All Zod schemas (with some specific exceptions described below) are "codecs". More specifically, they can process inputs in both a forward and backward directions: 
+
+- Decoding: the "forward" direction. This is equivalent to regular `.parse()`. 
+- 
+
+> ⚠️ — By far the most important exception to this is the `.transform()` API, which performs a *unidirectional* transformation. This isn't compatible with `z.encode()`. If any `.transform()` exists anywhere in your schema, attempting a `z.encode()` operation will throw a *runtime error* (not a `ZodError`). To start processing data bi-directionally, you'll need to refactor all usage of `.transform()` to use `z.codec()`. 
+
+
+You probably already know how to parse data with Zod:
 
 ```ts
 import * as z from "zod";
@@ -70,6 +78,13 @@ This is particularly useful when parsing data at a network boundary. You can sha
   alt="Codecs encoding and decoding data across a network boundary" 
 />
 
+## Composability
+
+> **Note** — You can use `z.encode()` and `z.decode()` with any schema. It doesn't have to be a ZodCodec.
+
+Codecs are a schema like any other. You can nest them inside objects, arrays, pipes, etc. There are no rules on where you can use them!
+
+
 ## Type-safe inputs
 
 The usual `.parse()` method accepts `unknown` as input, and returns a value that matches the schema's inferred *output type*.
@@ -94,8 +109,16 @@ Here's a diagram demonstrating the differences between the type signatures for `
   alt="Codec directionality diagram showing bidirectional transformation between input and output schemas" 
 />
 
+## Async and safe variants
 
-## Safe and async variants
+As with `.transform()` and `.refine()`, codecs support async transforms.
+
+```ts
+const asyncCodec = z.codec(z.string(), z.number(), {
+  decode: async (str) => Number(str),
+  encode: async (num) => num.toString(),
+});
+```
 
 As with regular `parse()`, there are "safe" and "async" variants of `decode()` and `encode()`.
 
@@ -136,6 +159,47 @@ z.decode(stringToDate, "2024-01-15T10:30:00.000Z");
 
 z.encode(stringToDate, new Date("2024-01-15")); 
 // => string
+```
+
+
+### Pipes
+
+> **Fun fact** — Codecs are actually implemented internally as *subclass* of pipes that have been augmented with "interstitial" transform logic. 
+
+During regular decoding, a `ZodPipe<A, B>` schema will first parse the data with `A`, then pass it into `B`. As you might expect, during encoding, the data is first encoded with `B`, then passed into `A`.
+
+### Refinements
+
+All checks (`.refine()`, `.min()`, `.max()`, etc.) are still executed in both directions. 
+
+```ts
+const schema = stringToDate.refine((date) => date.getFullYear() > 2000, "Must be this millenium");
+
+z.encode(schema, new Date("2000-01-01"));
+// => Date
+
+z.encode(schema, new Date("1999-01-01"));
+// => ❌ ZodError: [
+//   {
+//     "code": "custom",
+//     "path": [],
+//     "message": "Must be this millenium"
+//   }
+// ]
+```
+
+To avoid unexpected errors in your custom `.refine()` logic, Zod performs two "passes" during `z.encode()`. The first pass ensures the input type conforms to the expected type (no `invalid_type` errors). If that passes, Zod performs the second pass which executes the refinement logic.
+
+This approach also supports "mutating transforms" like `z.string().trim()` or `z.string().toLowerCase()`:
+
+```ts
+const schema = z.string().trim();
+
+z.decode(schema, "  hello  ");
+// => "hello"
+
+z.encode(schema, "  hello  ");
+// => "hello"
 ```
 
 ### Defaults and prefaults
