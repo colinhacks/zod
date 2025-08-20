@@ -240,21 +240,18 @@ z.encode(successSchema, true);
 
 ## Examples
 
-{/* Zod includes several built-in codecs for common use cases: */}
-
-Below are some commonly necessary codecs. The implementations below have been tested. Feel free to copy/paste them into your project as needed.
+Below are implementations for a bunch of commonly-needed codecs. For the sake of customizability, these are not included as first-class APIs in Zod itself. Feel free to copy/paste them into your project and modify them as needed.
 
 ### `stringToNumber`
 
 Converts string representations of numbers to JavaScript `number` type using `parseFloat()`.
 
 ```ts
-const stringToNumber = z.codec(z.string(), z.number(), {
+const stringToNumber = z.codec(z.string().regex(z.regexes.number), z.number(), {
   decode: (str) => Number.parseFloat(str),
   encode: (num) => num.toString(),
 });
 
-// Usage
 z.decode(stringToNumber, "42.5");  // => 42.5
 z.encode(stringToNumber, 42.5);    // => "42.5"
 ```
@@ -264,12 +261,11 @@ z.encode(stringToNumber, 42.5);    // => "42.5"
 Converts string representations of integers to JavaScript `number` type using `parseInt()`.
 
 ```ts
-const stringToInt = z.codec(z.string(), z.int(), {
+const stringToInt = z.codec(z.string().regex(z.regexes.integer), z.int(), {
   decode: (str) => Number.parseInt(str, 10),
   encode: (num) => num.toString(),
 });
 
-// Usage
 z.decode(stringToInt, "42");  // => 42
 z.encode(stringToInt, 42);    // => "42"
 ```
@@ -284,7 +280,6 @@ const stringToBigInt = z.codec(z.string(), z.bigint(), {
   encode: (bigint) => bigint.toString(),
 });
 
-// Usage
 z.decode(stringToBigInt, "123456789012345678901234567890");  // => 123456789012345678901234567890n
 z.encode(stringToBigInt, 123456789012345678901234567890n);   // => "123456789012345678901234567890"
 ```
@@ -299,7 +294,6 @@ const numberToBigInt = z.codec(z.int(), z.bigint(), {
   encode: (bigint) => Number(bigint),
 });
 
-// Usage
 z.decode(numberToBigInt, 42);   // => 42n
 z.encode(numberToBigInt, 42n);  // => 42
 ```
@@ -314,24 +308,22 @@ const isoDatetimeToDate = z.codec(z.iso.datetime(), z.date(), {
   encode: (date) => date.toISOString(),
 });
 
-// Usage
 z.decode(isoDatetimeToDate, "2024-01-15T10:30:00.000Z");  // => Date object
 z.encode(isoDatetimeToDate, new Date("2024-01-15"));       // => "2024-01-15T00:00:00.000Z"
 ```
 
-### `unixSecondsToDate`
+### `epochSecondsToDate`
 
 Converts Unix timestamps (seconds since epoch) to JavaScript `Date` objects.
 
 ```ts
-const unixSecondsToDate = z.codec(z.int().min(0), z.date(), {
+const epochSecondsToDate = z.codec(z.int().min(0), z.date(), {
   decode: (unixSeconds) => new Date(unixSeconds * 1000),
   encode: (date) => Math.floor(date.getTime() / 1000),
 });
 
-// Usage
-z.decode(unixSecondsToDate, 1705314600);  // => Date object
-z.encode(unixSecondsToDate, new Date());  // => Unix timestamp in seconds
+z.decode(epochSecondsToDate, 1705314600);  // => Date object
+z.encode(epochSecondsToDate, new Date());  // => Unix timestamp in seconds
 ```
 
 ### `unixMillisToDate`
@@ -344,7 +336,6 @@ const unixMillisToDate = z.codec(z.int().min(0), z.date(), {
   encode: (date) => date.getTime(),
 });
 
-// Usage
 z.decode(unixMillisToDate, 1705314600000);  // => Date object
 z.encode(unixMillisToDate, new Date());     // => Unix timestamp in milliseconds
 ```
@@ -354,16 +345,14 @@ z.encode(unixMillisToDate, new Date());     // => Unix timestamp in milliseconds
 Parses JSON strings into structured data and serializes back to JSON.
 
 ```ts
-const json = <T extends z.core.$ZodType>(schema: T) =>
-  z.codec(z.string(), schema, {
-    decode: (jsonString) => JSON.parse(jsonString),
-    encode: (value) => JSON.stringify(value),
-  });
-
-// Usage
-const codec = json(z.object({ name: z.string(), age: z.number() }));
-z.decode(codec, '{"name":"Alice","age":30}');  // => { name: "Alice", age: 30 }
-z.encode(codec, { name: "Bob", age: 25 });     // => '{"name":"Bob","age":25}'
+const jsonCodec = z.codec(z.string(), z.json(), {
+  decode: (jsonString) => JSON.parse(jsonString),
+  encode: (value) => JSON.stringify(value),
+});
+: pipe the JSON codec into your expected schema
+const myCodec = jsonCodec.pipe(z.object({ name: z.string(), age: z.number() }));
+z.decode(myCodec, '{"name":"Alice","age":30}');  // => { name: "Alice", age: 30 }
+z.encode(myCodec, { name: "Bob", age: 25 });     // => '{"name":"Bob","age":25}'
 ```
 
 ### `utf8ToBytes`
@@ -376,7 +365,6 @@ const utf8ToBytes = z.codec(z.string(), z.instanceof(Uint8Array), {
   encode: (bytes) => new TextDecoder().decode(bytes),
 });
 
-// Usage
 z.decode(utf8ToBytes, "Hello, 世界!");  // => Uint8Array
 z.encode(utf8ToBytes, bytes);          // => "Hello, 世界!"
 ```
@@ -391,7 +379,6 @@ const bytesToUtf8 = z.codec(z.instanceof(Uint8Array), z.string(), {
   encode: (str) => new TextEncoder().encode(str),
 });
 
-// Usage
 z.decode(bytesToUtf8, bytes);          // => "Hello, 世界!"
 z.encode(bytesToUtf8, "Hello, 世界!");  // => Uint8Array
 ```
@@ -406,7 +393,6 @@ const base64ToBytes = z.codec(z.base64(), z.instanceof(Uint8Array), {
   encode: (bytes) => z.core.util.uint8ArrayToBase64(bytes),
 });
 
-// Usage
 z.decode(base64ToBytes, "SGVsbG8=");  // => Uint8Array([72, 101, 108, 108, 111])
 z.encode(base64ToBytes, bytes);       // => "SGVsbG8="
 ```
@@ -421,7 +407,6 @@ const base64urlToBytes = z.codec(z.base64url(), z.instanceof(Uint8Array), {
   encode: (bytes) => z.core.util.uint8ArrayToBase64url(bytes),
 });
 
-// Usage
 z.decode(base64urlToBytes, "SGVsbG8");  // => Uint8Array([72, 101, 108, 108, 111])
 z.encode(base64urlToBytes, bytes);      // => "SGVsbG8"
 ```
@@ -436,7 +421,6 @@ const hexToBytes = z.codec(z.hex(), z.instanceof(Uint8Array), {
   encode: (bytes) => z.core.util.uint8ArrayToHex(bytes),
 });
 
-// Usage
 z.decode(hexToBytes, "48656c6c6f");     // => Uint8Array([72, 101, 108, 108, 111])
 z.encode(hexToBytes, bytes);            // => "48656c6c6f"
 ```
@@ -451,7 +435,6 @@ const stringToURL = z.codec(z.url(), z.instanceof(URL), {
   encode: (url) => url.href,
 });
 
-// Usage
 z.decode(stringToURL, "https://example.com/path");  // => URL object
 z.encode(stringToURL, new URL("https://example.com"));  // => "https://example.com/"
 ```
@@ -466,7 +449,6 @@ const stringToHttpURL = z.codec(z.httpUrl(), z.instanceof(URL), {
   encode: (url) => url.href,
 });
 
-// Usage
 z.decode(stringToHttpURL, "https://api.example.com/v1");  // => URL object
 z.encode(stringToHttpURL, url);                           // => "https://api.example.com/v1"
 ```
@@ -481,7 +463,6 @@ const uriComponent = z.codec(z.string(), z.string(), {
   encode: (decodedString) => encodeURIComponent(decodedString),
 });
 
-// Usage
 z.decode(uriComponent, "Hello%20World%21");  // => "Hello World!"
 z.encode(uriComponent, "Hello World!");      // => "Hello%20World!"
 ```
@@ -494,7 +475,6 @@ Converts string representations to boolean values. This is an alias for `z.strin
 const stringToBoolean = (options?: { truthy?: string[]; falsy?: string[] }) =>
   z.stringbool(options);
 
-// Usage
 const codec = stringToBoolean();
 z.decode(codec, "true");   // => true
 z.decode(codec, "false");  // => false
