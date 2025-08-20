@@ -137,6 +137,9 @@ export const lowercase: RegExp = /^[^A-Z]*$/;
 // regex for string with no lowercase letters
 export const uppercase: RegExp = /^[^a-z]*$/;
 
+// regex for hexadecimal strings (any length)
+export const hex: RegExp = /^[0-9a-fA-F]*$/;
+
 // Hash regexes for different algorithms and encodings
 // Helper function to create base64 regex with exact length and padding
 function fixedBase64(bodyLength: number, padding: "" | "=" | "=="): RegExp {
