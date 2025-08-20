@@ -1,16 +1,20 @@
 import * as z from "zod/v4";
-import * as zMini from "zod/v4/mini";
 
-// Test z.hex() implementation in both versions
-const hexSchema = z.hex();
-const hexSchemaMini = zMini.hex();
+const stringToDate = z.codec(
+  z.iso.datetime(), // input schema: ISO date string
+  z.date(), // output schema: Date object
+  {
+    decode: (isoString) => new Date(isoString), // ISO string → Date
+    encode: (date) => date.toISOString(), // Date → ISO string
+  }
+);
 
-console.log("Testing z.hex() in Classic:");
-console.log("Valid hex '123abc':", hexSchema.safeParse("123abc"));
-console.log("Valid hex 'DEADBEEF':", hexSchema.safeParse("DEADBEEF"));
-console.log("Invalid hex 'xyz':", hexSchema.safeParse("xyz"));
+const schema = stringToDate.refine((date) => date.getFullYear() > 2000, {
+  message: "Must be a valid date",
+});
 
-console.log("\nTesting z.hex() in Mini:");
-console.log("Valid hex '123abc':", hexSchemaMini.safeParse("123abc"));
-console.log("Valid hex 'DEADBEEF':", hexSchemaMini.safeParse("DEADBEEF"));
-console.log("Invalid hex 'xyz':", hexSchemaMini.safeParse("xyz"));
+z.encode(schema, new Date("2000-01-01"));
+// => ZodError: Must be a valid date
+
+z.encode(schema, new Date("1999-01-01"));
+// => ✅
