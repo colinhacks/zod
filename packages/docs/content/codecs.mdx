@@ -5,10 +5,10 @@ description: "Bidirectional data transformation with encode and decode"
 
 import { ThemedImage } from "@/components/themed-image";
 
-All Zod schemas (with some specific exceptions described below) are "codecs". More specifically, they can process inputs in both a forward and backward directions: 
+All Zod schemas (with some specific exceptions described below) are "codecs". More specifically, they can process inputs in both the forward and backward direction: 
 
-- Decoding: the "forward" direction. This is equivalent to regular `.parse()`. 
-- 
+- *Decoding*: the "forward" direction. This is equivalent to regular `.parse()`. 
+- *Encoding*: the "backward" direction. 
 
 > ⚠️ — By far the most important exception to this is the `.transform()` API, which performs a *unidirectional* transformation. This isn't compatible with `z.encode()`. If any `.transform()` exists anywhere in your schema, attempting a `z.encode()` operation will throw a *runtime error* (not a `ZodError`). To start processing data bi-directionally, you'll need to refactor all usage of `.transform()` to use `z.codec()`. 
 
