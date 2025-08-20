@@ -1581,7 +1581,7 @@ export function _stringbool(
           inst: codec,
           continue: false,
         });
-        return false;
+        return {} as never;
       }
     }) as any,
     reverseTransform: ((input: boolean, _payload: schemas.ParsePayload<boolean>) => {
