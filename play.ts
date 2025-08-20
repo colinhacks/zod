@@ -1,6 +1,10 @@
 import * as z from "zod";
 
-const stringbool = z.stringbool({ truthy: ["yes", "y"], falsy: ["no", "n"] });
+const fn = z
+  .function({
+    input: [z.string()],
+    output: z.number(),
+  })
+  .implementAsync((data: string) => data.length);
 
-console.log(z.encode(stringbool, true)); // => "yes"
-console.log(z.encode(stringbool, false)); // => "no"
+console.log(await fn("hello"));

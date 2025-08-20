@@ -1994,6 +1994,71 @@ export function promise<T extends core.SomeType>(innerType: T): ZodPromise<T> {
   }) as any;
 }
 
+// ZodFunction
+export interface ZodFunction<
+  Args extends core.$ZodFunctionIn = core.$ZodFunctionIn,
+  Returns extends core.$ZodFunctionOut = core.$ZodFunctionOut,
+> extends _ZodType<core.$ZodFunctionInternals<Args, Returns>>,
+    core.$ZodFunction<Args, Returns> {
+  _def: core.$ZodFunctionDef<Args, Returns>;
+  _input: core.$InferInnerFunctionType<Args, Returns>;
+  _output: core.$InferOuterFunctionType<Args, Returns>;
+
+  input<const Items extends util.TupleItems, const Rest extends core.$ZodFunctionOut = core.$ZodFunctionOut>(
+    args: Items,
+    rest?: Rest
+  ): ZodFunction<core.$ZodTuple<Items, Rest>, Returns>;
+  input<NewArgs extends core.$ZodFunctionIn>(args: NewArgs): ZodFunction<NewArgs, Returns>;
+  input(...args: any[]): ZodFunction<any, Returns>;
+
+  output<NewReturns extends core.$ZodType>(output: NewReturns): ZodFunction<Args, NewReturns>;
+}
+
+export const ZodFunction: core.$constructor<ZodFunction> = /*@__PURE__*/ core.$constructor(
+  "ZodFunction",
+  (inst, def) => {
+    core.$ZodFunction.init(inst, def);
+    ZodType.init(inst, def);
+  }
+);
+
+export function _function(): ZodFunction;
+export function _function<const In extends Array<core.$ZodType> = Array<core.$ZodType>>(params: {
+  input: In;
+}): ZodFunction<ZodTuple<In, null>, core.$ZodFunctionOut>;
+export function _function<
+  const In extends Array<core.$ZodType> = Array<core.$ZodType>,
+  const Out extends core.$ZodFunctionOut = core.$ZodFunctionOut,
+>(params: {
+  input: In;
+  output: Out;
+}): ZodFunction<ZodTuple<In, null>, Out>;
+export function _function<const In extends core.$ZodFunctionIn = core.$ZodFunctionIn>(params: {
+  input: In;
+}): ZodFunction<In, core.$ZodFunctionOut>;
+export function _function<const Out extends core.$ZodFunctionOut = core.$ZodFunctionOut>(params: {
+  output: Out;
+}): ZodFunction<core.$ZodFunctionIn, Out>;
+export function _function<
+  In extends core.$ZodFunctionIn = core.$ZodFunctionIn,
+  Out extends core.$ZodType = core.$ZodType,
+>(params?: {
+  input: In;
+  output: Out;
+}): ZodFunction<In, Out>;
+export function _function(params?: {
+  output?: core.$ZodType;
+  input?: core.$ZodFunctionArgs | Array<core.$ZodType>;
+}): ZodFunction {
+  return new ZodFunction({
+    type: "function",
+    input: Array.isArray(params?.input) ? tuple(params?.input as any) : (params?.input ?? array(unknown())),
+    output: params?.output ?? unknown(),
+  });
+}
+
+export { _function as function };
+
 // ZodCustom
 export interface ZodCustom<O = unknown, I = unknown>
   extends _ZodType<core.$ZodCustomInternals<O, I>>,
