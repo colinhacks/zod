@@ -2865,10 +2865,6 @@ z.custom<...>((val) => ..., "custom error message");
 
 ## Functions
 
-<Callout type="warn">
-  In Zod 4, `z.function()` no longer returns a Zod schema.
-</Callout>
-
 Zod provides a `z.function()` utility for defining Zod-validated functions. This way, you can avoid intermixing validation code with your business logic.
 
 ```ts
@@ -2876,6 +2872,9 @@ const MyFunction = z.function({
   input: [z.string()], // parameters (must be an array or a ZodTuple)
   output: z.number()  // return type
 });
+
+type MyFunction = z.infer<typeof MyFunction>;
+// (input: string) => number
 ```
 
 Function schemas have an `.implement()` method which accepts a function and returns a new function that automatically validates its inputs and outputs.
@@ -2906,3 +2905,13 @@ const MyFunction = z.function({
 const computeTrimmedLength = MyFunction.implement((input) => input.trim.length);
 ```
 
+
+Use the `.implementAsync()` method to create an async function.
+
+```ts
+const computeTrimmedLengthAsync = MyFunction.implementAsync(
+  async (input) => input.trim().length
+);
+
+computeTrimmedLengthAsync("sandwich"); // => Promise<8>
+```

@@ -1665,3 +1665,68 @@ export function json(): ZodMiniJSONSchema {
   });
   return jsonSchema;
 }
+
+// ZodMiniFunction
+export interface ZodMiniFunction<
+  Args extends core.$ZodFunctionIn = core.$ZodFunctionIn,
+  Returns extends core.$ZodFunctionOut = core.$ZodFunctionOut,
+> extends _ZodMiniType<core.$ZodFunctionInternals<Args, Returns>>,
+    core.$ZodFunction<Args, Returns> {
+  _def: core.$ZodFunctionDef<Args, Returns>;
+  _input: core.$InferInnerFunctionType<Args, Returns>;
+  _output: core.$InferOuterFunctionType<Args, Returns>;
+
+  input<const Items extends util.TupleItems, const Rest extends core.$ZodFunctionOut = core.$ZodFunctionOut>(
+    args: Items,
+    rest?: Rest
+  ): ZodMiniFunction<ZodMiniTuple<Items, Rest>, Returns>;
+  input<NewArgs extends core.$ZodFunctionIn>(args: NewArgs): ZodMiniFunction<NewArgs, Returns>;
+  input(...args: any[]): ZodMiniFunction<any, Returns>;
+
+  output<NewReturns extends core.$ZodFunctionOut>(output: NewReturns): ZodMiniFunction<Args, NewReturns>;
+}
+
+export const ZodMiniFunction: core.$constructor<ZodMiniFunction> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniFunction",
+  (inst, def) => {
+    core.$ZodFunction.init(inst, def);
+    ZodMiniType.init(inst, def);
+  }
+);
+
+export function _function(): ZodMiniFunction;
+export function _function<const In extends Array<SomeType> = Array<SomeType>>(params: {
+  input: In;
+}): ZodMiniFunction<ZodMiniTuple<In, null>, core.$ZodFunctionOut>;
+export function _function<
+  const In extends Array<SomeType> = Array<SomeType>,
+  const Out extends core.$ZodFunctionOut = core.$ZodFunctionOut,
+>(params: {
+  input: In;
+  output: Out;
+}): ZodMiniFunction<ZodMiniTuple<In, null>, Out>;
+export function _function<const In extends core.$ZodFunctionIn = core.$ZodFunctionIn>(params: {
+  input: In;
+}): ZodMiniFunction<In, core.$ZodFunctionOut>;
+export function _function<const Out extends core.$ZodFunctionOut = core.$ZodFunctionOut>(params: {
+  output: Out;
+}): ZodMiniFunction<core.$ZodFunctionIn, Out>;
+export function _function<
+  In extends core.$ZodFunctionIn = core.$ZodFunctionIn,
+  Out extends core.$ZodFunctionOut = core.$ZodFunctionOut,
+>(params?: {
+  input: In;
+  output: Out;
+}): ZodMiniFunction<In, Out>;
+export function _function(params?: {
+  output?: core.$ZodFunctionOut;
+  input?: core.$ZodFunctionArgs | Array<SomeType>;
+}): ZodMiniFunction {
+  return new ZodMiniFunction({
+    type: "function",
+    input: Array.isArray(params?.input) ? tuple(params?.input as any) : (params?.input ?? array(unknown())),
+    output: params?.output ?? unknown(),
+  });
+}
+
+export { _function as function };
