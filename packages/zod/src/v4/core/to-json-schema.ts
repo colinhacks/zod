@@ -615,6 +615,12 @@ export class JSONSchemaGenerator {
             }
             break;
           }
+          case "function": {
+            if (this.unrepresentable === "throw") {
+              throw new Error("Function types cannot be represented in JSON Schema");
+            }
+            break;
+          }
           default: {
             def satisfies never;
           }
@@ -1020,6 +1026,9 @@ function isTransforming(
       return false;
     }
     case "catch": {
+      return false;
+    }
+    case "function": {
       return false;
     }
 

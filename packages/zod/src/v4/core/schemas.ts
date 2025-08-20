@@ -3,7 +3,7 @@ import * as checks from "./checks.js";
 import * as core from "./core.js";
 import { Doc } from "./doc.js";
 import type * as errors from "./errors.js";
-import { safeParse, safeParseAsync } from "./parse.js";
+import { parse, parseAsync, safeParse, safeParseAsync } from "./parse.js";
 import * as regexes from "./regexes.js";
 import type { StandardSchemaV1 } from "./standard-schema.js";
 import * as util from "./util.js";
@@ -3893,6 +3893,174 @@ export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> = /*@__
   }
 );
 
+//////////////////////////////////////////
+//////////////////////////////////////////
+//////////                      //////////
+//////////     $ZodFunction     //////////
+//////////                      //////////
+//////////////////////////////////////////
+//////////////////////////////////////////
+export type $ZodFunctionArgs = $ZodType<unknown[], unknown[]>;
+export type $ZodFunctionIn = $ZodFunctionArgs;
+export type $ZodFunctionOut = $ZodType;
+
+export type $InferInnerFunctionType<Args extends $ZodFunctionIn, Returns extends $ZodFunctionOut> = (
+  ...args: $ZodFunctionIn extends Args ? never[] : core.output<Args>
+) => core.input<Returns>;
+
+export type $InferInnerFunctionTypeAsync<Args extends $ZodFunctionIn, Returns extends $ZodFunctionOut> = (
+  ...args: $ZodFunctionIn extends Args ? never[] : core.output<Args>
+) => util.MaybeAsync<core.input<Returns>>;
+
+export type $InferOuterFunctionType<Args extends $ZodFunctionIn, Returns extends $ZodFunctionOut> = (
+  ...args: $ZodFunctionIn extends Args ? never[] : core.input<Args>
+) => core.output<Returns>;
+
+export type $InferOuterFunctionTypeAsync<Args extends $ZodFunctionIn, Returns extends $ZodFunctionOut> = (
+  ...args: $ZodFunctionIn extends Args ? never[] : core.input<Args>
+) => util.MaybeAsync<core.output<Returns>>;
+
+export interface $ZodFunctionDef<
+  In extends $ZodFunctionIn = $ZodFunctionIn,
+  Out extends $ZodFunctionOut = $ZodFunctionOut,
+> extends $ZodTypeDef {
+  type: "function";
+  input: In;
+  output: Out;
+}
+
+export interface $ZodFunctionInternals<Args extends $ZodFunctionIn, Returns extends $ZodFunctionOut>
+  extends $ZodTypeInternals<$InferOuterFunctionType<Args, Returns>, $InferInnerFunctionType<Args, Returns>> {
+  def: $ZodFunctionDef<Args, Returns>;
+  isst: errors.$ZodIssueInvalidType;
+}
+
+export interface $ZodFunction<
+  Args extends $ZodFunctionIn = $ZodFunctionIn,
+  Returns extends $ZodFunctionOut = $ZodFunctionOut,
+> extends $ZodType<any, any, $ZodFunctionInternals<Args, Returns>> {
+  /** @deprecated */
+  _def: $ZodFunctionDef<Args, Returns>;
+  _input: $InferInnerFunctionType<Args, Returns>;
+  _output: $InferOuterFunctionType<Args, Returns>;
+
+  implement<F extends $InferInnerFunctionType<Args, Returns>>(
+    func: F
+  ): // allow for return type inference
+  (
+    ...args: Parameters<this["_output"]>
+  ) => ReturnType<F> extends ReturnType<this["_output"]> ? ReturnType<F> : ReturnType<this["_output"]>;
+
+  implementAsync<F extends $InferInnerFunctionTypeAsync<Args, Returns>>(
+    func: F
+  ): F extends $InferOuterFunctionTypeAsync<Args, Returns> ? F : $InferOuterFunctionTypeAsync<Args, Returns>;
+
+  input<const Items extends util.TupleItems, const Rest extends $ZodFunctionOut = $ZodFunctionOut>(
+    args: Items,
+    rest?: Rest
+  ): $ZodFunction<$ZodTuple<Items, Rest>, Returns>;
+  input<NewArgs extends $ZodFunctionIn>(args: NewArgs): $ZodFunction<NewArgs, Returns>;
+  input(...args: any[]): $ZodFunction<any, Returns>;
+
+  output<NewReturns extends $ZodType>(output: NewReturns): $ZodFunction<Args, NewReturns>;
+}
+
+export interface $ZodFunctionParams<I extends $ZodFunctionIn, O extends $ZodType> {
+  input?: I;
+  output?: O;
+}
+
+export const $ZodFunction: core.$constructor<$ZodFunction> = /*@__PURE__*/ core.$constructor(
+  "$ZodFunction",
+  (inst, def) => {
+    $ZodType.init(inst, def);
+    inst._def = def;
+    inst._zod.def = def;
+
+    inst.implement = (func) => {
+      if (typeof func !== "function") {
+        throw new Error("implement() must be called with a function");
+      }
+      return function (this: any, ...args: never[]) {
+        const parsedArgs = inst._def.input ? parse(inst._def.input, args) : args;
+        const result = Reflect.apply(func, this, parsedArgs as never[]);
+        if (inst._def.output) {
+          return parse(inst._def.output, result);
+        }
+        return result as any;
+      };
+    };
+
+    inst.implementAsync = (func) => {
+      if (typeof func !== "function") {
+        throw new Error("implementAsync() must be called with a function");
+      }
+      return async function (this: any, ...args: never[]) {
+        const parsedArgs = inst._def.input ? await parseAsync(inst._def.input, args) : args;
+        const result = await Reflect.apply(func, this, parsedArgs as never[]);
+        if (inst._def.output) {
+          return await parseAsync(inst._def.output, result);
+        }
+        return result;
+      } as any;
+    };
+
+    inst._zod.parse = (payload, _ctx) => {
+      if (typeof payload.value !== "function") {
+        payload.issues.push({
+          code: "invalid_type",
+          expected: "function",
+          input: payload.value,
+          inst,
+        });
+        return payload;
+      }
+
+      // Check if output is a promise type to determine if we should use async implementation
+      const hasPromiseOutput = inst._def.output && inst._def.output._zod.def.type === "promise";
+
+      if (hasPromiseOutput) {
+        payload.value = inst.implementAsync(payload.value);
+      } else {
+        payload.value = inst.implement(payload.value);
+      }
+      return payload;
+    };
+
+    inst.input = (...args: any[]): $ZodFunction<any, any> => {
+      const F: any = inst.constructor;
+      if (Array.isArray(args[0])) {
+        return new F({
+          type: "function",
+          input: new $ZodTuple({
+            type: "tuple",
+            items: args[0],
+            rest: args[1],
+          }),
+          output: inst._def.output,
+        });
+      }
+
+      return new F({
+        type: "function",
+        input: args[0],
+        output: inst._def.output,
+      });
+    };
+
+    inst.output = (output) => {
+      const F: any = inst.constructor;
+      return new F({
+        type: "function",
+        input: inst._def.input,
+        output,
+      });
+    };
+
+    return inst;
+  }
+);
+
 /////////////////////////////////////////
 /////////////////////////////////////////
 //////////                     //////////
@@ -4065,6 +4233,7 @@ export type $ZodTypes =
   | $ZodSet
   | $ZodLiteral
   | $ZodEnum
+  | $ZodFunction
   | $ZodPromise
   | $ZodLazy
   | $ZodOptional
