@@ -450,6 +450,14 @@ export function url(params?: string | core.$ZodURLParams): ZodURL {
   return core._url(ZodURL, params);
 }
 
+export function httpUrl(params?: string | Omit<core.$ZodURLParams, "protocol" | "hostname">): ZodURL {
+  return core._url(ZodURL, {
+    protocol: /^https?$/,
+    hostname: core.regexes.domain,
+    ...util.normalizeParams(params),
+  });
+}
+
 // ZodEmoji
 export interface ZodEmoji extends ZodStringFormat<"emoji"> {
   _zod: core.$ZodEmojiInternals;
@@ -1606,6 +1614,10 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
     ZodType.init(inst, def);
 
     inst._zod.parse = (payload, _ctx) => {
+      if (_ctx.direction === "backward") {
+        throw new core.$ZodEncodeError(inst.constructor.name);
+      }
+
       (payload as core.$RefinementCtx).addIssue = (issue) => {
         if (typeof issue === "string") {
           payload.issues.push(util.issue(issue, payload.value, def));
@@ -1868,6 +1880,35 @@ export function pipe(in_: core.SomeType, out: core.SomeType) {
   });
 }
 
+// ZodCodec
+export interface ZodCodec<A extends core.SomeType = core.$ZodType, B extends core.SomeType = core.$ZodType>
+  extends ZodPipe<A, B>,
+    core.$ZodCodec<A, B> {
+  _zod: core.$ZodCodecInternals<A, B>;
+  def: core.$ZodCodecDef<A, B>;
+}
+export const ZodCodec: core.$constructor<ZodCodec> = /*@__PURE__*/ core.$constructor("ZodCodec", (inst, def) => {
+  ZodPipe.init(inst, def);
+  core.$ZodCodec.init(inst, def);
+});
+
+export function codec<const A extends core.SomeType, B extends core.SomeType = core.$ZodType>(
+  in_: A,
+  out: B,
+  params: {
+    decode: (value: core.output<A>, payload: core.ParsePayload<core.output<A>>) => core.input<B>;
+    encode: (value: core.input<B>, payload: core.ParsePayload<core.input<B>>) => core.output<A>;
+  }
+): ZodCodec<A, B> {
+  return new ZodCodec({
+    type: "pipe",
+    in: in_ as any as core.$ZodType,
+    out: out as any as core.$ZodType,
+    transform: params.decode as any,
+    reverseTransform: params.encode as any,
+  }) as any;
+}
+
 // ZodReadonly
 export interface ZodReadonly<T extends core.SomeType = core.$ZodType>
   extends _ZodType<core.$ZodReadonlyInternals<T>>,
@@ -2019,15 +2060,14 @@ function _instanceof<T extends typeof util.Class>(
 export { _instanceof as instanceof };
 
 // stringbool
-export const stringbool: (
-  _params?: string | core.$ZodStringBoolParams
-) => ZodPipe<ZodPipe<ZodString, ZodTransform<boolean, string>>, ZodBoolean> = (...args) =>
+export const stringbool: (_params?: string | core.$ZodStringBoolParams) => ZodCodec<ZodString, ZodBoolean> = (
+  ...args
+) =>
   core._stringbool(
     {
-      Pipe: ZodPipe,
+      Codec: ZodCodec,
       Boolean: ZodBoolean,
       String: ZodString,
-      Transform: ZodTransform,
     },
     ...args
   ) as any;

@@ -11,6 +11,7 @@ const Tags: Record<string, string> = {
   "/packages/mini": "New",
   "/json-schema": "New",
   "/metadata": "New",
+  "/codecs": "New",
   "/packages/v3": "Legacy",
 };
 export const SidebarItem = ({

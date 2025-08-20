@@ -269,14 +269,9 @@ test("perform transform with non-fatal issues", () => {
     .transform((val) => val.length)
     .pipe(z.number())
     .refine((_) => false);
-  expect(A.safeParse("asdfasdf").error!.issues).toHaveLength(2);
+  expect(A.safeParse("asdfasdf").error!.issues).toHaveLength(1);
   expect(A.safeParse("asdfasdf").error).toMatchInlineSnapshot(`
     [ZodError: [
-      {
-        "code": "custom",
-        "path": [],
-        "message": "Invalid input"
-      },
       {
         "code": "custom",
         "path": [],

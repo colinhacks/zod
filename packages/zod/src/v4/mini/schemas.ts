@@ -185,6 +185,14 @@ export function url(params?: string | core.$ZodURLParams): ZodMiniURL {
   return core._url(ZodMiniURL, params);
 }
 
+export function httpUrl(params?: string | Omit<core.$ZodURLParams, "protocol" | "hostname">): ZodMiniURL {
+  return core._url(ZodMiniURL, {
+    protocol: /^https?$/,
+    hostname: core.regexes.domain,
+    ...util.normalizeParams(params),
+  });
+}
+
 // ZodMiniEmoji
 export interface ZodMiniEmoji extends _ZodMiniString<core.$ZodEmojiInternals> {
   // _zod: core.$ZodEmojiInternals;
@@ -1426,6 +1434,38 @@ export function pipe<
   }) as any;
 }
 
+// ZodMiniCodec
+export interface ZodMiniCodec<A extends SomeType = core.$ZodType, B extends SomeType = core.$ZodType>
+  extends ZodMiniPipe<A, B>,
+    core.$ZodCodec<A, B> {
+  _zod: core.$ZodCodecInternals<A, B>;
+  def: core.$ZodCodecDef<A, B>;
+}
+export const ZodMiniCodec: core.$constructor<ZodMiniCodec> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniCodec",
+  (inst, def) => {
+    ZodMiniPipe.init(inst, def);
+    core.$ZodCodec.init(inst, def);
+  }
+);
+
+export function codec<const A extends SomeType, B extends core.SomeType = core.$ZodType>(
+  in_: A,
+  out: B,
+  params: {
+    decode: (value: core.output<A>, payload: core.ParsePayload<core.output<A>>) => core.input<B>;
+    encode: (value: core.input<B>, payload: core.ParsePayload<core.input<B>>) => core.output<A>;
+  }
+): ZodMiniCodec<A, B> {
+  return new ZodMiniCodec({
+    type: "pipe",
+    in: in_ as any as core.$ZodType,
+    out: out as any as core.$ZodType,
+    transform: params.decode as any,
+    reverseTransform: params.encode as any,
+  }) as any;
+}
+
 // /** @deprecated Use `z.pipe()` and `z.transform()` instead. */
 // export function preprocess<A, U extends core.$ZodType>(
 //   fn: (arg: unknown, ctx: core.ParsePayload) => A,
@@ -1585,18 +1625,16 @@ function _instanceof<T extends typeof Class>(
 export { _instanceof as instanceof };
 
 // stringbool
-export const stringbool: (
-  _params?: string | core.$ZodStringBoolParams
-) => ZodMiniPipe<ZodMiniPipe<ZodMiniString, ZodMiniTransform<boolean, string>>, ZodMiniBoolean> = (...args) =>
-  core._stringbool(
-    {
-      Pipe: ZodMiniPipe,
-      Boolean: ZodMiniBoolean,
-      String: ZodMiniString,
-      Transform: ZodMiniTransform,
-    },
-    ...args
-  ) as any;
+export const stringbool: (_params?: string | core.$ZodStringBoolParams) => ZodMiniCodec<ZodMiniString, ZodMiniBoolean> =
+  (...args) =>
+    core._stringbool(
+      {
+        Codec: ZodMiniCodec,
+        Boolean: ZodMiniBoolean,
+        String: ZodMiniString,
+      },
+      ...args
+    ) as any;
 
 // json
 
