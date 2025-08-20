@@ -354,7 +354,7 @@ z.encode(unixMillisToDate, new Date());     // => Unix timestamp in milliseconds
 Parses JSON strings into structured data and serializes back to JSON.
 
 ```ts
-const json = <T extends z.ZodTypeAny>(schema: T) =>
+const json = <T extends z.core.$ZodType>(schema: T) =>
   z.codec(z.string(), schema, {
     decode: (jsonString) => JSON.parse(jsonString),
     encode: (value) => JSON.stringify(value),
