@@ -2032,3 +2032,30 @@ export function preprocess<A, U extends core.SomeType, B = unknown>(
 ): ZodPipe<ZodTransform<A, B>, U> {
   return pipe(transform(fn as any), schema as any) as any;
 }
+
+// ZodJSONString
+export interface ZodJSONString extends ZodStringFormat<"json_string"> {
+  _zod: core.$ZodJSONStringInternals;
+}
+export const ZodJSONString: core.$constructor<ZodJSONString> = /*@__PURE__*/ core.$constructor(
+  "ZodJSONString",
+  (inst, def) => {
+    core.$ZodJSONString.init(inst, def);
+    ZodStringFormat.init(inst, def);
+  }
+);
+
+export function jsonString(params?: string | core.$ZodJSONStringParams): ZodJSONString;
+export function jsonString<T extends core.$ZodType>(
+  inner: T,
+  params?: string | core.$ZodJSONStringParams
+): ZodPipe<ZodTransform<any, string>, T>;
+export function jsonString(innerOrParams?: any, maybeParams?: any): any {
+  if (innerOrParams && typeof innerOrParams === "object" && "_zod" in innerOrParams) {
+    // inner schema provided: create a pipe String -> JSON.parse -> inner
+    const inner = innerOrParams as core.$ZodType;
+    const params = maybeParams;
+    return core._jsonStringPipe({ Pipe: ZodPipe, Transform: ZodTransform, String: ZodString }, inner, params);
+  }
+  return core._jsonString(ZodJSONString, innerOrParams);
+}

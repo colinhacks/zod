@@ -3906,3 +3906,33 @@ export type $ZodStringFormatTypes =
   | $ZodBase64URL
   | $ZodE164
   | $ZodJWT;
+
+//////////////////////////////   ZodJSONString   //////////////////////////////
+
+export interface $ZodJSONStringDef extends $ZodStringFormatDef<"json_string"> {}
+export interface $ZodJSONStringInternals extends $ZodStringFormatInternals<"json_string"> {}
+
+export interface $ZodJSONString extends $ZodType {
+  _zod: $ZodJSONStringInternals;
+}
+
+export const $ZodJSONString: core.$constructor<$ZodJSONString> = /*@__PURE__*/ core.$constructor(
+  "$ZodJSONString",
+  (inst, def) => {
+    $ZodStringFormat.init(inst, def);
+    inst._zod.check = (payload) => {
+      try {
+        JSON.parse(payload.value);
+        return;
+      } catch (_) {
+        payload.issues.push({
+          code: "invalid_format",
+          format: "json_string",
+          input: payload.value,
+          inst,
+          continue: !def.abort,
+        });
+      }
+    };
+  }
+);

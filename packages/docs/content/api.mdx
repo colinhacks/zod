@@ -242,6 +242,7 @@ z.ipv4();
 z.ipv6();
 z.cidrv4();        // ipv4 CIDR block
 z.cidrv6();        // ipv6 CIDR block
+z.jsonString();    // validates JSON syntax
 z.iso.date();
 z.iso.time();
 z.iso.datetime();
@@ -367,6 +368,40 @@ To normalize URLs, use the `normalize` flag. This will overwrite the input value
 new URL("HTTP://ExAmPle.com:80/./a/../b?X=1#f oo").href
 // => "http://example.com/b?X=1#f%20oo"
 ```
+
+### JSON Strings
+
+To validate that a string contains valid JSON syntax:
+
+```ts
+const schema = z.jsonString();
+
+schema.parse('{"name": "Alice", "age": 30}'); // ✅
+schema.parse('{"name": "Alice", "age": 30}'); // ✅ (returns original string)
+schema.parse("42"); // ✅
+schema.parse("[1, 2, 3]"); // ✅
+schema.parse("invalid json"); // ❌
+```
+
+When used without an inner schema, `z.jsonString()` validates JSON syntax and returns the original string. This is useful for validating JSON strings without parsing them.
+
+To parse JSON and validate the parsed value against a schema:
+
+```ts
+const userSchema = z.object({
+  name: z.string(),
+  age: z.number(),
+});
+
+const schema = z.jsonString(userSchema);
+
+schema.parse('{"name": "Alice", "age": 30}'); // ✅ { name: "Alice", age: 30 }
+schema.parse('{"name": "Alice", "age": "30"}'); // ❌ (age should be number)
+schema.parse('{"name": "Alice"}'); // ❌ (missing age)
+schema.parse("invalid json"); // ❌ (invalid JSON syntax)
+```
+
+The `z.jsonString()` method supports all JSON types (objects, arrays, strings, numbers, booleans, null) and provides proper error reporting for both JSON syntax errors and schema validation errors.
 
 ### ISO datetimes
 

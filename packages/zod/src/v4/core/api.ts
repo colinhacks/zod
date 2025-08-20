@@ -1629,3 +1629,71 @@ export function _stringFormat<Format extends string>(
   const inst = new Class(def);
   return inst as any;
 }
+
+// JSON String
+export type $ZodJSONStringParams = StringFormatParams<schemas.$ZodJSONString, "when">;
+export type $ZodCheckJSONStringParams = CheckStringFormatParams<schemas.$ZodJSONString, "when">;
+export function _jsonString<T extends schemas.$ZodJSONString>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodJSONStringParams | $ZodCheckJSONStringParams
+): T {
+  return new Class({
+    type: "string",
+    format: "json_string",
+    check: "string_format",
+    abort: false,
+    ...util.normalizeParams(params),
+  });
+}
+
+export function _jsonStringPipe(
+  Classes: {
+    Pipe?: typeof schemas.$ZodPipe;
+    Transform?: typeof schemas.$ZodTransform;
+    String?: typeof schemas.$ZodString;
+  },
+  inner: schemas.$ZodType,
+  _params?: string | $ZodJSONStringParams | $ZodCheckJSONStringParams
+): schemas.$ZodPipe<schemas.$ZodPipe<schemas.$ZodString, schemas.$ZodTransform<unknown, string>>, typeof inner> {
+  const params = util.normalizeParams(_params);
+
+  const _Pipe = Classes.Pipe ?? schemas.$ZodPipe;
+  const _String = Classes.String ?? schemas.$ZodString;
+  const _Transform = Classes.Transform ?? schemas.$ZodTransform;
+
+  const tx = new _Transform({
+    type: "transform",
+    transform: (input, payload: schemas.ParsePayload<unknown>) => {
+      try {
+        return JSON.parse(input as string);
+      } catch (_) {
+        payload.issues.push({
+          origin: "string",
+          code: "invalid_format",
+          format: "json_string",
+          input: payload.value as string,
+          inst: tx,
+          continue: false,
+        });
+        return {} as never;
+      }
+    },
+    error: params.error,
+  });
+
+  const innerPipe = new _Pipe({
+    type: "pipe",
+    in: new _String({ type: "string", error: params.error }),
+    out: tx,
+    error: params.error,
+  });
+
+  const outerPipe = new _Pipe({
+    type: "pipe",
+    in: innerPipe,
+    out: inner,
+    error: params.error,
+  });
+
+  return outerPipe as any;
+}
