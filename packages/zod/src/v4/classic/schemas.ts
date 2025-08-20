@@ -449,6 +449,14 @@ export function url(params?: string | core.$ZodURLParams): ZodURL {
   return core._url(ZodURL, params);
 }
 
+export function httpUrl(params?: string | Omit<core.$ZodURLParams, "protocol" | "hostname">): ZodURL {
+  return core._url(ZodURL, {
+    protocol: /^https?$/,
+    hostname: core.regexes.domain,
+    ...util.normalizeParams(params),
+  });
+}
+
 // ZodEmoji
 export interface ZodEmoji extends ZodStringFormat<"emoji"> {
   _zod: core.$ZodEmojiInternals;
@@ -1605,6 +1613,10 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
     ZodType.init(inst, def);
 
     inst._zod.parse = (payload, _ctx) => {
+      if (_ctx.direction === "backward") {
+        throw new core.$ZodEncodeError(inst.constructor.name);
+      }
+
       (payload as core.$RefinementCtx).addIssue = (issue) => {
         if (typeof issue === "string") {
           payload.issues.push(util.issue(issue, payload.value, def));

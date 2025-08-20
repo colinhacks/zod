@@ -3053,13 +3053,13 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
   "$ZodTransform",
   (inst, def) => {
     $ZodType.init(inst, def);
-    inst._zod.parse = (payload, _ctx) => {
-      if (_ctx.direction === "backward") {
-        throw new core.$ZodUnidirectionalError("ZodTransform");
+    inst._zod.parse = (payload, ctx) => {
+      if (ctx.direction === "backward") {
+        throw new core.$ZodEncodeError(inst.constructor.name);
       }
 
       const _out = def.transform(payload.value, payload);
-      if (_ctx.async) {
+      if (ctx.async) {
         const output = _out instanceof Promise ? _out : Promise.resolve(_out);
         return output.then((output) => {
           payload.value = output;
@@ -3294,7 +3294,6 @@ export const $ZodPrefault: core.$constructor<$ZodPrefault> = /*@__PURE__*/ core.
 
     inst._zod.parse = (payload, ctx) => {
       if (ctx.direction === "backward") {
-        // Reverse direction (encode): don't apply prefault, return inner result directly
         return def.innerType._zod.run(payload, ctx);
       }
 
@@ -3356,7 +3355,6 @@ function handleNonOptionalResult(payload: ParsePayload, inst: $ZodNonOptional) {
   if (!payload.issues.length && payload.value === undefined) {
     payload.issues.push({
       code: "invalid_type",
-
       expected: "nonoptional",
       input: payload.value,
       inst,
@@ -3435,7 +3433,7 @@ export const $ZodSuccess: core.$constructor<$ZodSuccess> = /*@__PURE__*/ core.$c
 
     inst._zod.parse = (payload, ctx) => {
       if (ctx.direction === "backward") {
-        throw new core.$ZodUnidirectionalError("ZodSuccess");
+        throw new core.$ZodEncodeError("ZodSuccess");
       }
 
       const result = def.innerType._zod.run(payload, ctx);
@@ -3491,7 +3489,6 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
 
   inst._zod.parse = (payload, ctx) => {
     if (ctx.direction === "backward") {
-      // Reverse direction (encode): don't apply catch, return inner result directly
       return def.innerType._zod.run(payload, ctx);
     }
 
@@ -3609,7 +3606,6 @@ export const $ZodPipe: core.$constructor<$ZodPipe> = /*@__PURE__*/ core.$constru
 
   inst._zod.parse = (payload, ctx) => {
     if (ctx.direction === "backward") {
-      // Reverse direction (encode): return inner result directly
       const right = def.out._zod.run(payload, ctx);
       if (right instanceof Promise) {
         return right.then((right) => handlePipeResult(right, def.in, ctx));

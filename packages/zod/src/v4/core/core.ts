@@ -78,9 +78,10 @@ export class $ZodAsyncError extends Error {
   }
 }
 
-export class $ZodUnidirectionalError extends Error {
+export class $ZodEncodeError extends Error {
   constructor(name: string) {
     super(`Encountered unidirectional transform during encode: ${name}`);
+    this.name = "ZodEncodeError";
   }
 }
 

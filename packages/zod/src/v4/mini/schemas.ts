@@ -182,6 +182,14 @@ export function url(params?: string | core.$ZodURLParams): ZodMiniURL {
   return core._url(ZodMiniURL, params);
 }
 
+export function httpUrl(params?: string | Omit<core.$ZodURLParams, "protocol" | "hostname">): ZodMiniURL {
+  return core._url(ZodMiniURL, {
+    protocol: /^https?$/,
+    hostname: core.regexes.domain,
+    ...util.normalizeParams(params),
+  });
+}
+
 // ZodMiniEmoji
 export interface ZodMiniEmoji extends _ZodMiniString<core.$ZodEmojiInternals> {
   // _zod: core.$ZodEmojiInternals;
