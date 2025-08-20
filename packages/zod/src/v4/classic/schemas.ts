@@ -705,6 +705,10 @@ export function hostname(_params?: string | core.$ZodStringFormatParams): ZodCus
   return core._stringFormat(ZodCustomStringFormat, "hostname", core.regexes.hostname, _params) as any;
 }
 
+export function hex(_params?: string | core.$ZodStringFormatParams): ZodCustomStringFormat<"hex"> {
+  return core._stringFormat(ZodCustomStringFormat, "hex", core.regexes.hex, _params) as any;
+}
+
 export function hash(
   alg: "md5" | "sha1" | "sha256" | "sha384" | "sha512",
   params?: {

@@ -448,6 +448,10 @@ export function hostname(_params?: string | core.$ZodStringFormatParams): ZodMin
   return core._stringFormat(ZodMiniCustomStringFormat, "hostname", core.regexes.hostname, _params) as any;
 }
 
+export function hex(_params?: string | core.$ZodStringFormatParams): ZodMiniCustomStringFormat<"hex"> {
+  return core._stringFormat(ZodMiniCustomStringFormat, "hex", core.regexes.hex, _params) as any;
+}
+
 export function hash(
   alg: "md5" | "sha1" | "sha256" | "sha384" | "sha512",
   params?: {
