@@ -1,3 +1,6 @@
-import * as z from "zod/v4";
+import * as z from "zod";
 
-z;
+const stringbool = z.stringbool({ truthy: ["yes", "y"], falsy: ["no", "n"] });
+
+console.log(z.encode(stringbool, true)); // => "yes"
+console.log(z.encode(stringbool, false)); // => "no"

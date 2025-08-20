@@ -2375,6 +2375,43 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
 </Accordion>
 </Accordions>
 
+## Codecs
+
+> **New in Zod 4.1** — Refer to the dedicated [Codecs](/codecs) page for more information.
+
+Codecs are a special kind of schema that implement *bidirectional transformations* between two other schemas.
+
+```ts
+const stringToDate = z.codec(
+  z.iso.datetime(),  // input schema: ISO date string
+  z.date(),          // output schema: Date object
+  {
+    decode: (isoString) => new Date(isoString), // ISO string → Date
+    encode: (date) => date.toISOString(),       // Date → ISO string
+  }
+);
+```
+
+A regular `.parse()` operations performs the *forward transform*. It calls the codec's `decode` function.
+
+```ts
+stringToDate.parse("2024-01-15T10:30:00.000Z"); // => Date
+```
+
+You can alternatively use the top-level `z.decode()` function. Unlike `.parse()` (which accepts `unknown` input), `z.decode()` expects a strongly-typed input (`string` in this example).
+
+```ts
+z.decode(stringToDate, "2024-01-15T10:30:00.000Z"); // => Date
+```
+
+To perform the *reverse transform*, use the inverse: `z.encode()`.
+
+```ts
+z.encode(stringToDate, new Date("2024-01-15")); // => "2024-01-15T00:00:00.000Z"
+```
+
+Refer to the dedicated [Codecs](/codecs) page for more information.
+
 ## Pipes
 
 Schemas can be chained together into "pipes". Pipes are primarily useful when used in conjunction with [Transforms](#transforms).
@@ -2399,7 +2436,9 @@ z.parse(stringToLength, "hello"); // => 5
 
 ## Transforms
 
-Transforms are a special kind of schema. Instead of validating input, they accept anything and perform some transformation on the data. To define a transform:
+> **Note** — For bi-directional transforms, use [codecs](/codecs).
+
+Transforms are a special kind of schema that perform a unidirectional transformation. Instead of validating input, they accept anything and perform some transformation on the data. To define a transform:
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">

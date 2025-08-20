@@ -25,11 +25,14 @@ export interface ParseContext<T extends errors.$ZodIssueBase = never> {
 /** @internal */
 export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> extends ParseContext<T> {
   readonly async?: boolean | undefined;
+  readonly direction?: "forward" | "backward";
 }
 
 export interface ParsePayload<T = unknown> {
   value: T;
   issues: errors.$ZodRawIssue[];
+  // assumed false by default
+  aborted?: boolean;
 }
 
 export type CheckFn<T> = (input: ParsePayload<T>) => util.MaybeAsync<void>;
@@ -243,9 +246,40 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
       return payload;
     };
 
-    inst._zod.run = (payload, ctx) => {
-      const result = inst._zod.parse(payload, ctx);
+    const handleChecksResult = (
+      checkResult: ParsePayload,
+      originalResult: ParsePayload,
+      ctx: ParseContextInternal
+    ): util.MaybeAsync<ParsePayload> => {
+      // if the checks mutated the value && there are no issues, re-parse the result
+      if (checkResult.value !== originalResult.value && !checkResult.issues.length)
+        return inst._zod.parse(checkResult, ctx);
+      return originalResult;
+    };
 
+    inst._zod.run = (payload, ctx) => {
+      if (ctx.direction === "backward") {
+        const initValue = payload.value;
+        const result = inst._zod.parse(payload, ctx);
+
+        if (result instanceof Promise) {
+          if (ctx.async === false) throw new core.$ZodAsyncError();
+          return result.then(async (result) => {
+            const checkResult = await runChecks({ value: initValue, issues: result.issues }, checks, ctx);
+            return handleChecksResult(checkResult, result, ctx);
+          });
+        }
+
+        const checkResult = runChecks({ value: initValue, issues: result.issues }, checks, ctx);
+        if (checkResult instanceof Promise) {
+          if (ctx.async === false) throw new core.$ZodAsyncError();
+          return checkResult.then((checkResult) => handleChecksResult(checkResult, result, ctx));
+        }
+        return handleChecksResult(checkResult, result, ctx);
+      }
+
+      // forward
+      const result = inst._zod.parse(payload, ctx);
       if (result instanceof Promise) {
         if (ctx.async === false) throw new core.$ZodAsyncError();
         return result.then((result) => runChecks(result, checks, ctx));
@@ -3019,9 +3053,13 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
   "$ZodTransform",
   (inst, def) => {
     $ZodType.init(inst, def);
-    inst._zod.parse = (payload, _ctx) => {
+    inst._zod.parse = (payload, ctx) => {
+      if (ctx.direction === "backward") {
+        throw new core.$ZodEncodeError(inst.constructor.name);
+      }
+
       const _out = def.transform(payload.value, payload);
-      if (_ctx.async) {
+      if (ctx.async) {
         const output = _out instanceof Promise ? _out : Promise.resolve(_out);
         return output.then((output) => {
           payload.value = output;
@@ -3144,6 +3182,7 @@ export const $ZodNullable: core.$constructor<$ZodNullable> = /*@__PURE__*/ core.
     });
 
     inst._zod.parse = (payload, ctx) => {
+      // Forward direction (decode): allow null to pass through
       if (payload.value === null) return payload;
       return def.innerType._zod.run(payload, ctx);
     };
@@ -3188,13 +3227,19 @@ export const $ZodDefault: core.$constructor<$ZodDefault> = /*@__PURE__*/ core.$c
     util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
 
     inst._zod.parse = (payload, ctx) => {
+      if (ctx.direction === "backward") {
+        return def.innerType._zod.run(payload, ctx);
+      }
+
+      // Forward direction (decode): apply defaults for undefined input
       if (payload.value === undefined) {
         payload.value = def.defaultValue;
         /**
-         * $ZodDefault always returns the default value immediately.
+         * $ZodDefault returns the default value immediately in forward direction.
          * It doesn't pass the default value into the validator ("prefault"). There's no reason to pass the default value through validation. The validity of the default is enforced by TypeScript statically. Otherwise, it's the responsibility of the user to ensure the default is valid. In the case of pipes with divergent in/out types, you can specify the default on the `in` schema of your ZodPipe to set a "prefault" for the pipe.   */
         return payload;
       }
+      // Forward direction: continue with default handling
       const result = def.innerType._zod.run(payload, ctx);
       if (result instanceof Promise) {
         return result.then((result) => handleDefaultResult(result, def));
@@ -3248,6 +3293,11 @@ export const $ZodPrefault: core.$constructor<$ZodPrefault> = /*@__PURE__*/ core.
     util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
 
     inst._zod.parse = (payload, ctx) => {
+      if (ctx.direction === "backward") {
+        return def.innerType._zod.run(payload, ctx);
+      }
+
+      // Forward direction (decode): apply prefault for undefined input
       if (payload.value === undefined) {
         payload.value = def.defaultValue;
       }
@@ -3305,7 +3355,6 @@ function handleNonOptionalResult(payload: ParsePayload, inst: $ZodNonOptional) {
   if (!payload.issues.length && payload.value === undefined) {
     payload.issues.push({
       code: "invalid_type",
-
       expected: "nonoptional",
       input: payload.value,
       inst,
@@ -3383,6 +3432,10 @@ export const $ZodSuccess: core.$constructor<$ZodSuccess> = /*@__PURE__*/ core.$c
     $ZodType.init(inst, def);
 
     inst._zod.parse = (payload, ctx) => {
+      if (ctx.direction === "backward") {
+        throw new core.$ZodEncodeError("ZodSuccess");
+      }
+
       const result = def.innerType._zod.run(payload, ctx);
       if (result instanceof Promise) {
         return result.then((result) => {
@@ -3435,6 +3488,11 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
   util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
 
   inst._zod.parse = (payload, ctx) => {
+    if (ctx.direction === "backward") {
+      return def.innerType._zod.run(payload, ctx);
+    }
+
+    // Forward direction (decode): apply catch logic
     const result = def.innerType._zod.run(payload, ctx);
     if (result instanceof Promise) {
       return result.then((result) => {
@@ -3519,6 +3577,10 @@ export interface $ZodPipeDef<A extends SomeType = $ZodType, B extends SomeType =
   type: "pipe";
   in: A;
   out: B;
+  /** Only defined inside $ZodCodec instances. */
+  transform?: (value: core.output<A>, payload: ParsePayload<core.output<A>>) => core.input<B>;
+  /** Only defined inside $ZodCodec instances. */
+  reverseTransform?: (value: core.input<B>, payload: ParsePayload<core.input<B>>) => core.output<A>;
 }
 
 export interface $ZodPipeInternals<A extends SomeType = $ZodType, B extends SomeType = $ZodType>
@@ -3543,19 +3605,107 @@ export const $ZodPipe: core.$constructor<$ZodPipe> = /*@__PURE__*/ core.$constru
   util.defineLazy(inst._zod, "propValues", () => def.in._zod.propValues);
 
   inst._zod.parse = (payload, ctx) => {
+    if (ctx.direction === "backward") {
+      const right = def.out._zod.run(payload, ctx);
+      if (right instanceof Promise) {
+        return right.then((right) => handlePipeResult(right, def.in, ctx));
+      }
+      return handlePipeResult(right, def.in, ctx);
+    }
+
     const left = def.in._zod.run(payload, ctx);
     if (left instanceof Promise) {
-      return left.then((left) => handlePipeResult(left, def, ctx));
+      return left.then((left) => handlePipeResult(left, def.out, ctx));
     }
-    return handlePipeResult(left, def, ctx);
+    return handlePipeResult(left, def.out, ctx);
   };
 });
 
-function handlePipeResult(left: ParsePayload, def: $ZodPipeDef, ctx: ParseContext) {
+function handlePipeResult(left: ParsePayload, next: $ZodType, ctx: ParseContextInternal) {
   if (left.issues.length) {
+    // prevent further checks
+    left.aborted = true;
     return left;
   }
-  return def.out._zod.run({ value: left.value, issues: left.issues }, ctx);
+  return next._zod.run({ value: left.value, issues: left.issues }, ctx);
+}
+
+////////////////////////////////////////////
+////////////////////////////////////////////
+//////////                        //////////
+//////////      $ZodCodec         //////////
+//////////                        //////////
+////////////////////////////////////////////
+////////////////////////////////////////////
+export interface $ZodCodecDef<A extends SomeType = $ZodType, B extends SomeType = $ZodType> extends $ZodPipeDef<A, B> {
+  transform: (value: core.output<A>, payload: ParsePayload<core.output<A>>) => core.input<B>;
+  reverseTransform: (value: core.input<B>, payload: ParsePayload<core.input<B>>) => core.output<A>;
+}
+
+export interface $ZodCodecInternals<A extends SomeType = $ZodType, B extends SomeType = $ZodType>
+  extends $ZodTypeInternals<core.output<B>, core.input<A>> {
+  def: $ZodCodecDef<A, B>;
+  isst: never;
+  values: A["_zod"]["values"];
+  optin: A["_zod"]["optin"];
+  optout: B["_zod"]["optout"];
+  propValues: A["_zod"]["propValues"];
+}
+
+export interface $ZodCodec<A extends SomeType = $ZodType, B extends SomeType = $ZodType> extends $ZodType {
+  _zod: $ZodCodecInternals<A, B>;
+}
+
+export const $ZodCodec: core.$constructor<$ZodCodec> = /*@__PURE__*/ core.$constructor("$ZodCodec", (inst, def) => {
+  $ZodType.init(inst, def);
+  util.defineLazy(inst._zod, "values", () => def.in._zod.values);
+  util.defineLazy(inst._zod, "optin", () => def.in._zod.optin);
+  util.defineLazy(inst._zod, "optout", () => def.out._zod.optout);
+  util.defineLazy(inst._zod, "propValues", () => def.in._zod.propValues);
+
+  inst._zod.parse = (payload, ctx) => {
+    const direction = ctx.direction || "forward";
+
+    if (direction === "forward") {
+      const left = def.in._zod.run(payload, ctx);
+      if (left instanceof Promise) {
+        return left.then((left) => handleCodecResult(left, def, ctx));
+      }
+      return handleCodecResult(left, def, ctx);
+    } else {
+      const left = def.out._zod.run(payload, ctx);
+      if (left instanceof Promise) {
+        return left.then((left) => handleCodecResult(left, def, ctx));
+      }
+      return handleCodecResult(left, def, ctx);
+    }
+  };
+});
+
+function handleCodecResult(left: ParsePayload, def: $ZodCodecDef, ctx: ParseContextInternal) {
+  if (left.issues.length) {
+    // prevent further checks
+    left.aborted = true;
+    return left;
+  }
+
+  const direction = ctx.direction || "forward";
+
+  if (direction === "forward") {
+    // Forward: A -> B, use decode (transform)
+    const transformed = def.transform(left.value, left);
+    if (transformed instanceof Promise) {
+      return transformed.then((value) => def.out._zod.run({ value, issues: left.issues }, ctx));
+    }
+    return def.out._zod.run({ value: transformed, issues: left.issues }, ctx);
+  } else {
+    // Backward: B -> A, use encode (reverseTransform)
+    const transformed = def.reverseTransform(left.value, left);
+    if (transformed instanceof Promise) {
+      return transformed.then((value) => def.in._zod.run({ value, issues: left.issues }, ctx));
+    }
+    return def.in._zod.run({ value: transformed, issues: left.issues }, ctx);
+  }
 }
 
 ////////////////////////////////////////////
@@ -3595,6 +3745,9 @@ export const $ZodReadonly: core.$constructor<$ZodReadonly> = /*@__PURE__*/ core.
     util.defineLazy(inst._zod, "optout", () => def.innerType._zod.optout);
 
     inst._zod.parse = (payload, ctx) => {
+      if (ctx.direction === "backward") {
+        return def.innerType._zod.run(payload, ctx);
+      }
       const result = def.innerType._zod.run(payload, ctx);
       if (result instanceof Promise) {
         return result.then(handleReadonlyResult);
