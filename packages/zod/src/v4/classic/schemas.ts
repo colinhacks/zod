@@ -1,6 +1,5 @@
 import * as core from "../core/index.js";
 import { util } from "../core/index.js";
-import type * as schemas from "../core/schemas.js";
 
 import * as checks from "./checks.js";
 import * as iso from "./iso.js";
@@ -2008,11 +2007,11 @@ export interface ZodFunction<
   input<const Items extends util.TupleItems, const Rest extends core.$ZodFunctionOut = core.$ZodFunctionOut>(
     args: Items,
     rest?: Rest
-  ): ZodFunction<schemas.$ZodTuple<Items, Rest>, Returns>;
+  ): ZodFunction<core.$ZodTuple<Items, Rest>, Returns>;
   input<NewArgs extends core.$ZodFunctionIn>(args: NewArgs): ZodFunction<NewArgs, Returns>;
   input(...args: any[]): ZodFunction<any, Returns>;
 
-  output<NewReturns extends schemas.$ZodType>(output: NewReturns): ZodFunction<Args, NewReturns>;
+  output<NewReturns extends core.$ZodType>(output: NewReturns): ZodFunction<Args, NewReturns>;
 }
 
 export const ZodFunction: core.$constructor<ZodFunction> = /*@__PURE__*/ core.$constructor(
@@ -2024,11 +2023,11 @@ export const ZodFunction: core.$constructor<ZodFunction> = /*@__PURE__*/ core.$c
 );
 
 export function _function(): ZodFunction;
-export function _function<const In extends Array<schemas.$ZodType> = Array<schemas.$ZodType>>(params: {
+export function _function<const In extends Array<core.$ZodType> = Array<core.$ZodType>>(params: {
   input: In;
 }): ZodFunction<ZodTuple<In, null>, core.$ZodFunctionOut>;
 export function _function<
-  const In extends Array<schemas.$ZodType> = Array<schemas.$ZodType>,
+  const In extends Array<core.$ZodType> = Array<core.$ZodType>,
   const Out extends core.$ZodFunctionOut = core.$ZodFunctionOut,
 >(params: {
   input: In;
@@ -2042,14 +2041,14 @@ export function _function<const Out extends core.$ZodFunctionOut = core.$ZodFunc
 }): ZodFunction<core.$ZodFunctionIn, Out>;
 export function _function<
   In extends core.$ZodFunctionIn = core.$ZodFunctionIn,
-  Out extends schemas.$ZodType = schemas.$ZodType,
+  Out extends core.$ZodType = core.$ZodType,
 >(params?: {
   input: In;
   output: Out;
 }): ZodFunction<In, Out>;
 export function _function(params?: {
-  output?: schemas.$ZodType;
-  input?: core.$ZodFunctionArgs | Array<schemas.$ZodType>;
+  output?: core.$ZodType;
+  input?: core.$ZodFunctionArgs | Array<core.$ZodType>;
 }): ZodFunction {
   return new ZodFunction({
     type: "function",
