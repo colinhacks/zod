@@ -1210,6 +1210,83 @@ This approach has a few advantages:
 4. If you wish, you can change the strictness level of the resulting schema by using `z.strictObject()` or `z.looseObject()`
 </Callout>
 
+### `.safeExtend()`
+
+The `.safeExtend()` method works similarly to `.extend()`, but it won't let you overwrite an existing properly with a non-assignable schema. In other words, the result of `.safeExtend()` will have an inferred type that [`extends`](https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#conditional-type-constraints) the original (in the TypeScript sense).
+
+```ts
+z.object({ a: z.string() }).safeExtend({ a: z.number().min(5) }); // ✅
+z.object({ a: z.string() }).safeExtend({ a: z.any() }); // ✅
+z.object({ a: z.string() }).safeExtend({ a: z.number() });
+//                                       ^  ❌ ZodNumber is not assignable 
+```
+
+This makes it possible to safely extend schemas that contain refinements. (Regular `.extend()` will throw an error when used on schemas with refinements.)
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+const UserSchema = z.object({
+  name: z.string(),
+  age: z.number()
+}).refine(user => user.age >= 18, {
+  message: "User must be at least 18 years old"
+});
+
+// ❌ This would throw an error:
+// const Extended = UserSchema.extend({ email: z.string() });
+
+// ✅ This works:
+const ExtendedUser = UserSchema.safeExtend({
+  email: z.string().email()
+});
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+const UserSchema = z.object({
+  name: z.string(),
+  age: z.number()
+}).refine(user => user.age >= 18, {
+  message: "User must be at least 18 years old"
+});
+
+// ❌ This would throw an error:
+// const Extended = z.extend(UserSchema, { email: z.string() });
+
+// ✅ This works:
+const ExtendedUser = z.safeExtend(UserSchema, {
+  email: z.string().email()
+});
+```
+</Tab>
+</Tabs>
+
+When using `.safeExtend()`, the original schema's refinements are preserved in the extended schema:
+
+```ts
+const result = ExtendedUser.parse({
+  name: "John",
+  age: 16, // This will fail the refinement
+  email: "john@example.com"
+});
+// ZodError: User must be at least 18 years old
+```
+
+<Callout type="info">
+**Type safety**: `.safeExtend()` provides compile-time type checking to prevent you from overriding existing fields with incompatible types. If you try to extend a schema with a field that already exists but has a different type, TypeScript will show an error.
+
+```ts
+const User = z.object({ name: z.string() });
+
+// ❌ TypeScript error - can't override string with number
+User.safeExtend({ name: z.number() });
+
+// ✅ This works - same type
+User.safeExtend({ name: z.string().min(2) });
+```
+</Callout>
+
 ### `.pick()`
 
 Inspired by TypeScript's built-in `Pick` and `Omit` utility types, Zod provides dedicated APIs for picking and omitting certain keys from an object schema.

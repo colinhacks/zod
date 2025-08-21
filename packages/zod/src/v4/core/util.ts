@@ -629,6 +629,12 @@ export function extend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): an
     throw new Error("Invalid input to extend: expected a plain object");
   }
 
+  const checks = schema._zod.def.checks;
+  const hasChecks = checks && checks.length > 0;
+  if (hasChecks) {
+    throw new Error("Object schemas containing refinements cannot be extended. Use `.safeExtend()` instead.");
+  }
+
   const def = mergeDefs(schema._zod.def, {
     get shape() {
       const _shape = { ...schema._zod.def.shape, ...shape };

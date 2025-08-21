@@ -587,3 +587,23 @@ test("index signature in shape", () => {
 
   expectTypeOf<schema>().toEqualTypeOf<Record<string, string>>();
 });
+
+test("extent() on object with refinements should throw", () => {
+  const schema = z
+    .object({
+      a: z.string(),
+    })
+    .refine(() => true);
+
+  expect(() => schema.extend({ b: z.string() })).toThrow();
+});
+
+test("safeExtend() on object with refinements should not throw", () => {
+  const schema = z
+    .object({
+      a: z.string(),
+    })
+    .refine(() => true);
+
+  expect(() => schema.safeExtend({ b: z.string() })).not.toThrow();
+});
