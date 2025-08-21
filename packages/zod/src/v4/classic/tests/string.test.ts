@@ -527,6 +527,7 @@ test("good uuid", () => {
     "9491d710-3185-5e06-8ea0-6a2f275345e0",
     "9491d710-3185-5e06-9ea0-6a2f275345e0",
     "00000000-0000-0000-0000-000000000000",
+    "ffffffff-ffff-ffff-ffff-ffffffffffff",
   ];
 
   for (const goodUuid of goodUuids) {
@@ -545,7 +546,6 @@ test(`bad uuid`, () => {
     "92e76bf9-28b3-4730-cd7f-cb6bc51f8c09", // Variant 2 - RFC 9562/4122: Reserved, Microsoft Corporation backward compatibility
     "invalid uuid",
     "9491d710-3185-4e06-bea0-6a2f275345e0X",
-    "ffffffff-ffff-ffff-ffff-ffffffffffff",
   ]) {
     const result = uuid.safeParse(badUuid);
     expect(result).toMatchObject({ success: false });

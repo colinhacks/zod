@@ -10,7 +10,7 @@ The project uses pnpm workspaces. Key commands:
 - `pnpm test` - Run all tests with Vitest
 - `pnpm test:watch` - Run tests in watch mode
 - `pnpm dev` - Execute code with tsx under source conditions
-- `pnpm dev:play` - Execute play.ts for experimentation
+- `pnpm dev <file>` - Execute `<file>` with tsx & proper resolution conditions. Usually use for `play.ts`.
 - `pnpm lint` - Run biome linter with auto-fix
 - `pnpm format` - Format code with biome
 - `pnpm fix` - Run both format and lint
@@ -88,7 +88,7 @@ The package uses conditional exports with:
 
 ## Development Workflow
 
-1. Use `play.ts` for experimentation with `pnpm dev:play`
+1. Use `play.ts` for initial experimentation with `pnpm dev play.ts`
 2. Write tests in appropriate `tests/` directories
 3. Build with `pnpm build` before testing changes
 4. Run linting/formatting with `pnpm fix`
