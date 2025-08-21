@@ -1,11 +1,3 @@
-import * as z from "zod/v4";
+import * as z from "zod/mini";
 
-const B = z
-  .codec(z.string().trim(), z.string().max(4), {
-    decode: (val) => val,
-    encode: (val) => val,
-  })
-  .check(z.trim());
-
-console.log(z.decode(B, " asdf "));
-console.log(z.encode(B, " asdf "));
+console.log(z.uuidv4().parse("00000000-0000-0000-0000-000000000000"));
