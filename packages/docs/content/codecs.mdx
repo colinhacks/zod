@@ -5,7 +5,9 @@ description: "Bidirectional data transformation with encode and decode"
 
 import { ThemedImage } from "@/components/themed-image";
 
-> **TLDR** — You can use `z.encode(<schema>, <input>)` to perform an _encode_ operation ("reverse parsing"). This will work with any schema but is primarily intended for use in conjunction with `z.codec()`. This most important gotcha is the `.transform()` API, which performs a *unidirectional* transformation. This isn't compatible with `z.encode()`; if you sue `.transform()` anywhere in your schema, attempting a `z.encode()` operation will throw a *runtime error* (not a `ZodError`). To fix this, you'll need to refactor all usage of `.transform()` to use `z.codec()`. 
+> **TLDR** — You can use `z.encode(<schema>, <input>)` to perform an _encode_ operation ("reverse parsing"). This will work with any schema but is primarily intended for use in conjunction with `z.codec()`. 
+>
+> This most important exception is the `.transform()` API, which performs a *unidirectional* transformation. This isn't compatible with `z.encode()` as Zod cannot reverse it in a sound way. If you use `.transform()` anywhere in your schema, attempting a `z.encode()` operation will throw a *runtime error* (not a `ZodError`). To fix this, you'll need to refactor all usage of `.transform()` to use `z.codec()`. 
 
 All Zod schemas (with one major exception described below) are "codecs". More specifically, they can process inputs in both the forward and backward direction: 
 
@@ -391,15 +393,43 @@ Parses JSON strings into structured data and serializes back to JSON.
 ```ts
 // uses JSON.parse()/JSON.stringify() to transform between string and JSON
 const jsonCodec = z.codec(z.string(), z.json(), {
-  decode: (jsonString) => JSON.parse(jsonString),
+  decode: (jsonString, ctx) => {
+    try {
+      return JSON.parse(jsonString);
+    } catch (err: any) {
+      ctx.issues.push({
+        code: "invalid_format",
+        format: "json_string",
+        input: jsonString,
+        message: err.message,
+      });
+      return z.NEVER;
+    }
+  },
   encode: (value) => JSON.stringify(value),
 });
+```
 
-// to further validate the resulting JSON data
-// pipe the result into another schema
-const myCodec = jsonCodec.pipe(z.object({ name: z.string(), age: z.number() }));
-z.decode(myCodec, '{"name":"Alice","age":30}');  // => { name: "Alice", age: 30 }
-z.encode(myCodec, { name: "Bob", age: 25 });     // => '{"name":"Bob","age":25}'
+To further validate the resulting JSON data, pipe the result into another schema.
+
+```ts
+const jsonStringToData = jsonCodec.pipe(z.object({ name: z.string(), age: z.number() }));
+
+z.decode(jsonStringToData, '~~invalid~~'); 
+// ZodError: [
+//   {
+//     "code": "invalid_format",
+//     "format": "json",
+//     "path": [],
+//     "message": "Invalid json"
+//   }
+// ]
+
+z.decode(myCodec, '{"name":"Alice","age":30}');  
+// => { name: "Alice", age: 30 }
+
+z.encode(myCodec, { name: "Bob", age: 25 });     
+// => '{"name":"Bob","age":25}'
 ```
 
 ### `utf8ToBytes`

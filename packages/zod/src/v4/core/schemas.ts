@@ -3668,20 +3668,20 @@ export const $ZodCodec: core.$constructor<$ZodCodec> = /*@__PURE__*/ core.$const
     if (direction === "forward") {
       const left = def.in._zod.run(payload, ctx);
       if (left instanceof Promise) {
-        return left.then((left) => handleCodecResult(left, def, ctx));
+        return left.then((left) => handleCodecInResult(left, def, ctx));
       }
-      return handleCodecResult(left, def, ctx);
+      return handleCodecInResult(left, def, ctx);
     } else {
       const left = def.out._zod.run(payload, ctx);
       if (left instanceof Promise) {
-        return left.then((left) => handleCodecResult(left, def, ctx));
+        return left.then((left) => handleCodecInResult(left, def, ctx));
       }
-      return handleCodecResult(left, def, ctx);
+      return handleCodecInResult(left, def, ctx);
     }
   };
 });
 
-function handleCodecResult(left: ParsePayload, def: $ZodCodecDef, ctx: ParseContextInternal) {
+function handleCodecInResult(left: ParsePayload, def: $ZodCodecDef, ctx: ParseContextInternal) {
   if (left.issues.length) {
     // prevent further checks
     left.aborted = true;
@@ -3691,20 +3691,28 @@ function handleCodecResult(left: ParsePayload, def: $ZodCodecDef, ctx: ParseCont
   const direction = ctx.direction || "forward";
 
   if (direction === "forward") {
-    // Forward: A -> B, use decode (transform)
     const transformed = def.transform(left.value, left);
     if (transformed instanceof Promise) {
-      return transformed.then((value) => def.out._zod.run({ value, issues: left.issues }, ctx));
+      return transformed.then((value) => handleCodecTxResult(left, value, def.out, ctx));
     }
-    return def.out._zod.run({ value: transformed, issues: left.issues }, ctx);
+    return handleCodecTxResult(left, transformed, def.out, ctx);
   } else {
-    // Backward: B -> A, use encode (reverseTransform)
     const transformed = def.reverseTransform(left.value, left);
     if (transformed instanceof Promise) {
-      return transformed.then((value) => def.in._zod.run({ value, issues: left.issues }, ctx));
+      return transformed.then((value) => handleCodecTxResult(left, value, def.in, ctx));
     }
-    return def.in._zod.run({ value: transformed, issues: left.issues }, ctx);
+    return handleCodecTxResult(left, transformed, def.in, ctx);
   }
+}
+
+function handleCodecTxResult(left: ParsePayload, value: any, nextSchema: SomeType, ctx: ParseContextInternal) {
+  // Check if transform added any issues
+  if (left.issues.length) {
+    left.aborted = true;
+    return left;
+  }
+
+  return nextSchema._zod.run({ value, issues: left.issues }, ctx);
 }
 
 ////////////////////////////////////////////
