@@ -4292,4 +4292,7 @@ export type $ZodStringFormatTypes =
   | $ZodBase64
   | $ZodBase64URL
   | $ZodE164
-  | $ZodJWT;
+  | $ZodJWT
+  | $ZodCustomStringFormat<"hex">
+  | $ZodCustomStringFormat<util.HashFormat>
+  | $ZodCustomStringFormat<"hostname">;

@@ -20,6 +20,10 @@ export type JWTAlgorithm =
   | "PS512"
   | "EdDSA"
   | (string & {});
+
+export type HashAlgorithm = "md5" | "sha1" | "sha256" | "sha384" | "sha512";
+export type HashEncoding = "hex" | "base64" | "base64url";
+export type HashFormat = `${HashAlgorithm}_${HashEncoding}`;
 export type IPVersion = "v4" | "v6";
 export type MimeTypes =
   | "application/json"

@@ -710,12 +710,12 @@ export function hex(_params?: string | core.$ZodStringFormatParams): ZodCustomSt
   return core._stringFormat(ZodCustomStringFormat, "hex", core.regexes.hex, _params) as any;
 }
 
-export function hash(
-  alg: "md5" | "sha1" | "sha256" | "sha384" | "sha512",
+export function hash<Alg extends util.HashAlgorithm, Enc extends util.HashEncoding = "hex">(
+  alg: Alg,
   params?: {
-    enc?: "hex" | "base64" | "base64url";
+    enc?: Enc;
   } & core.$ZodStringFormatParams
-): ZodCustomStringFormat {
+): ZodCustomStringFormat<`${Alg}_${Enc}`> {
   const enc = params?.enc ?? "hex";
   const format = `${alg}_${enc}` as const;
   const regex = core.regexes[format as keyof typeof core.regexes] as RegExp;
@@ -1435,7 +1435,6 @@ export interface ZodSet<T extends core.SomeType = core.$ZodType>
   extends _ZodType<core.$ZodSetInternals<T>>,
     core.$ZodSet<T> {
   min(minSize: number, params?: string | core.$ZodCheckMinSizeParams): this;
-  /** */
   nonempty(params?: string | core.$ZodCheckMinSizeParams): this;
   max(maxSize: number, params?: string | core.$ZodCheckMaxSizeParams): this;
   size(size: number, params?: string | core.$ZodCheckSizeEqualsParams): this;

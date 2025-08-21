@@ -21,10 +21,15 @@ test("hash() API — types and runtime across all alg/enc combinations", async (
   const input = "zodasklfjaasdf";
 
   // --- Type-level checks (ensure the literal format string is encoded in the return type)
-  expectTypeOf(hash("md5")).toEqualTypeOf<ZodCustomStringFormat>();
-  expectTypeOf(hash("sha1")).toEqualTypeOf<ZodCustomStringFormat>();
-  expectTypeOf(hash("sha256", { enc: "base64" as const })).toEqualTypeOf<ZodCustomStringFormat>();
-  expectTypeOf(hash("sha384", { enc: "base64url" as const })).toEqualTypeOf<ZodCustomStringFormat>();
+  expectTypeOf(hash("md5")).toEqualTypeOf<ZodCustomStringFormat<"md5_hex">>();
+  expectTypeOf(hash("sha1")).toEqualTypeOf<ZodCustomStringFormat<"sha1_hex">>();
+  expectTypeOf(hash("sha256", { enc: "base64" as const })).toEqualTypeOf<ZodCustomStringFormat<"sha256_base64">>();
+  expectTypeOf(hash("sha384", { enc: "base64url" as const })).toEqualTypeOf<
+    ZodCustomStringFormat<"sha384_base64url">
+  >();
+
+  // Test generic format types are correctly inferred and Enc defaults to "hex"
+  expectTypeOf(hash("sha256")).toEqualTypeOf<ZodCustomStringFormat<"sha256_hex">>();
 
   // --- Runtime matrix (success + a few sharp-edged failures per combo)
   for (const alg of algs) {
