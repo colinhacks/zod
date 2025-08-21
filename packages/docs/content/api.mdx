@@ -1221,71 +1221,36 @@ z.object({ a: z.string() }).safeExtend({ a: z.number() });
 //                                       ^  ❌ ZodNumber is not assignable 
 ```
 
-This makes it possible to safely extend schemas that contain refinements. (Regular `.extend()` will throw an error when used on schemas with refinements.)
+Use `.safeExtend()` to extend schemas that contain refinements. (Regular `.extend()` will throw an error when used on schemas with refinements.)
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-const UserSchema = z.object({
-  name: z.string(),
-  age: z.number()
-}).refine(user => user.age >= 18, {
-  message: "User must be at least 18 years old"
-});
+const Base = z.object({
+  a: z.string(),
+  b: z.string()
+}).refine(user => user.a === user.b);
 
-// ❌ This would throw an error:
-// const Extended = UserSchema.extend({ email: z.string() });
-
-// ✅ This works:
-const ExtendedUser = UserSchema.safeExtend({
-  email: z.string().email()
+// Extended inherits the refinements of Base
+const Extended = UserSchema.safeExtend({
+  a: z.string().min(10)
 });
 ```
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-const UserSchema = z.object({
-  name: z.string(),
-  age: z.number()
-}).refine(user => user.age >= 18, {
-  message: "User must be at least 18 years old"
-});
+const Base = z.object({
+  a: z.string(),
+  b: z.string()
+}).check(z.refine(user => user.a === user.b));
 
-// ❌ This would throw an error:
-// const Extended = z.extend(UserSchema, { email: z.string() });
-
-// ✅ This works:
-const ExtendedUser = z.safeExtend(UserSchema, {
-  email: z.string().email()
+// Extended inherits the refinements of Base
+const Extended = z.safeExtend(UserSchema, {
+  a: z.string().min(10)
 });
 ```
 </Tab>
 </Tabs>
-
-When using `.safeExtend()`, the original schema's refinements are preserved in the extended schema:
-
-```ts
-const result = ExtendedUser.parse({
-  name: "John",
-  age: 16, // This will fail the refinement
-  email: "john@example.com"
-});
-// ZodError: User must be at least 18 years old
-```
-
-<Callout type="info">
-**Type safety**: `.safeExtend()` provides compile-time type checking to prevent you from overriding existing fields with incompatible types. If you try to extend a schema with a field that already exists but has a different type, TypeScript will show an error.
-
-```ts
-const User = z.object({ name: z.string() });
-
-// ❌ TypeScript error - can't override string with number
-User.safeExtend({ name: z.number() });
-
-// ✅ This works - same type
-User.safeExtend({ name: z.string().min(2) });
-```
-</Callout>
 
 ### `.pick()`
 
