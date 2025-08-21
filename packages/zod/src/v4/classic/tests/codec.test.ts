@@ -395,6 +395,16 @@ test("mutating refinements", () => {
 
   expect(z.decode(A, " asdf ")).toMatchInlineSnapshot(`"asdf"`);
   expect(z.encode(A, " asdf ")).toMatchInlineSnapshot(`"asdf"`);
+
+  const B = z
+    .codec(z.string(), z.string(), {
+      decode: (val) => val,
+      encode: (val) => val,
+    })
+    .check(z.trim(), z.maxLength(4));
+
+  expect(z.decode(B, " asdf ")).toMatchInlineSnapshot(`"asdf"`);
+  expect(z.encode(B, " asdf ")).toMatchInlineSnapshot(`"asdf"`);
 });
 
 test("codec type enforcement - correct encode/decode signatures", () => {

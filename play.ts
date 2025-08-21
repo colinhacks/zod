@@ -1,12 +1,11 @@
 import * as z from "zod/v4";
 
-const stringPlusA = z.string().overwrite((val) => val + "a");
-const A = z
-  .codec(stringPlusA, stringPlusA, {
+const B = z
+  .codec(z.string().trim(), z.string().max(4), {
     decode: (val) => val,
     encode: (val) => val,
   })
-  .overwrite((val) => val + "a");
+  .check(z.trim());
 
-console.log(z.encode(A, ""));
-// A.parse("world");
+console.log(z.decode(B, " asdf "));
+console.log(z.encode(B, " asdf "));
