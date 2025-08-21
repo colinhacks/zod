@@ -491,3 +491,48 @@ test("codec input validation", () => {
   const invalidHttpResult = z.safeDecode(httpUrlCodec, "ftp://example.com");
   expect(invalidHttpResult.success).toBe(false);
 });
+
+// Test transform errors - these test errors added by transform functions
+test("codec transform error handling", () => {
+  // JSON codec that can fail during transform
+  const jsonCodec = z.codec(z.string(), z.json(), {
+    decode: (jsonString, ctx) => {
+      try {
+        return JSON.parse(jsonString);
+      } catch (err: any) {
+        ctx.issues.push({
+          code: "invalid_format",
+          format: "json",
+          input: jsonString,
+          message: err.message,
+        });
+        return z.NEVER;
+      }
+    },
+    encode: (value) => JSON.stringify(value),
+  });
+
+  // Test successful JSON parsing
+  const validResult = z.safeDecode(jsonCodec, '{"valid": "json"}');
+  expect(validResult.success).toBe(true);
+  if (validResult.success) {
+    expect(validResult.data).toEqual({ valid: "json" });
+  }
+
+  // Test invalid JSON that should create a single "invalid_format" issue
+  // Verifies that the transform error aborts before reaching the output schema
+  const invalidResult = z.safeDecode(jsonCodec, '{"invalid":,}');
+  expect(invalidResult.success).toBe(false);
+  if (!invalidResult.success) {
+    expect(invalidResult.error.issues).toMatchInlineSnapshot(`
+      [
+        {
+          "code": "invalid_format",
+          "format": "json",
+          "message": "Unexpected token ',', "{"invalid":,}" is not valid JSON",
+          "path": [],
+        },
+      ]
+    `);
+  }
+});
