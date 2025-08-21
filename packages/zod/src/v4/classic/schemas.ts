@@ -118,6 +118,7 @@ export interface _ZodType<out Internals extends core.$ZodTypeInternals = core.$Z
 export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$constructor("ZodType", (inst, def) => {
   core.$ZodType.init(inst, def);
   inst.def = def;
+  inst.type = def.type;
   Object.defineProperty(inst, "_def", { value: def });
 
   // base methods

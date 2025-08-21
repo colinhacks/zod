@@ -827,3 +827,18 @@ test("def typing", () => {
   z.string().catch("fallback").def.type satisfies "catch";
   z.file().def.type satisfies "file";
 });
+
+test("runtime type property exists and returns correct values", () => {
+  const stringSchema = z.string();
+  expect(stringSchema.type).toBe("string");
+});
+
+test("type narrowing works with type property", () => {
+  type ArrayOrRecord = z.ZodArray<z.ZodString> | z.ZodRecord<z.ZodString, z.ZodAny>;
+  const arraySchema = z.array(z.string()) as ArrayOrRecord;
+
+  if (arraySchema.type === "array") {
+    expectTypeOf(arraySchema).toEqualTypeOf<z.ZodArray<z.ZodString>>();
+    expect(arraySchema.element).toBeDefined();
+  }
+});
