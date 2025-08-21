@@ -882,3 +882,18 @@ test("defaulted object schema returns shallow clone", () => {
   expect(result1).not.toBe(result2);
   expect(result1).toEqual(result2);
 });
+
+test("runtime type property exists and returns correct values", () => {
+  const stringSchema = z.string();
+  expect(stringSchema.type).toBe("string");
+});
+
+test("type narrowing works with type property", () => {
+  type ArrayOrRecord = z.ZodMiniArray<z.ZodMiniString> | z.ZodMiniRecord<z.ZodMiniString<string>, z.ZodMiniAny>;
+  const arraySchema = z.array(z.string()) as ArrayOrRecord;
+
+  if (arraySchema.type === "array") {
+    expectTypeOf(arraySchema).toEqualTypeOf<z.ZodMiniArray<z.ZodMiniString<unknown>>>();
+    expect(arraySchema.def.element).toBeDefined();
+  }
+});
