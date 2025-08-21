@@ -1642,6 +1642,8 @@ const MyResult = z.discriminatedUnion("status", [
 ]);
 ```
 
+Each option should be an *object schema* whose discriminator prop (`status` in the example above) corresponds to some literal value or set of values, usually `z.enum()`, `z.literal()`, `z.null()`, or `z.undefined()`.
+
 {/* 
 <Callout>
   In Zod 3, you were required to specify the discriminator key as the first argument. This is no longer necessary, as Zod can now automatically detect the discriminator key.
