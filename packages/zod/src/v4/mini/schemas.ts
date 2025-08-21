@@ -1130,12 +1130,15 @@ export function set<Value extends SomeType>(valueType: Value, params?: string | 
 // ZodMiniEnum
 export interface ZodMiniEnum<T extends util.EnumLike = util.EnumLike> extends _ZodMiniType<core.$ZodEnumInternals<T>> {
   // _zod: core.$ZodEnumInternals<T>;
+  options: Array<T[keyof T]>;
 }
 export const ZodMiniEnum: core.$constructor<ZodMiniEnum> = /*@__PURE__*/ core.$constructor(
   "ZodMiniEnum",
   (inst, def) => {
     core.$ZodEnum.init(inst, def);
     ZodMiniType.init(inst, def);
+
+    inst.options = Object.values(def.entries);
   }
 );
 
