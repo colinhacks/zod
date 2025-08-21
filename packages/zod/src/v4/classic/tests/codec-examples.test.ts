@@ -39,15 +39,15 @@ const isoDatetimeToDate = () =>
     encode: (date) => date.toISOString(),
   });
 
-const unixSecondsToDate = () =>
+const epochSecondsToDate = () =>
   z.codec(z.int().min(0), z.date(), {
-    decode: (unixSeconds) => new Date(unixSeconds * 1000),
+    decode: (seconds) => new Date(seconds * 1000),
     encode: (date) => Math.floor(date.getTime() / 1000),
   });
 
-const unixMillisToDate = () =>
+const epochMillisToDate = () =>
   z.codec(z.int().min(0), z.date(), {
-    decode: (unixMillis) => new Date(unixMillis),
+    decode: (millis) => new Date(millis),
     encode: (date) => date.getTime(),
   });
 
@@ -227,8 +227,8 @@ test("isoDatetimeToDate codec", () => {
   expect(roundTrip).toBe("2024-12-25T15:45:30.123Z");
 });
 
-test("unixSecondsToDate codec", () => {
-  const codec = unixSecondsToDate();
+test("epochSecondsToDate codec", () => {
+  const codec = epochSecondsToDate();
 
   // Test decode
   const decoded = z.decode(codec, 1705314600);
@@ -245,8 +245,8 @@ test("unixSecondsToDate codec", () => {
   expect(roundTrip).toBe(1640995200);
 });
 
-test("unixMillisToDate codec", () => {
-  const codec = unixMillisToDate();
+test("epochMillisToDate codec", () => {
+  const codec = epochMillisToDate();
 
   // Test decode
   const decoded = z.decode(codec, 1705314600000);

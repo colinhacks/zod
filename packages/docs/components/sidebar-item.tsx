@@ -20,10 +20,6 @@ export const SidebarItem = ({
   item: PageTree.Item;
 }) => {
   const name = `${item.name}`;
-  // const isCode = name.startsWith("`") && name.endsWith("`");
-  // const tagMatch = name.match(/#(\w+)$/);
-  // const tag = tagMatch ? tagMatch[1] : null;
-  // const cleanName = tagMatch ? name.replace(/#\w+$/, "").trim() : name;
 
   const tag = Tags[item.url]; //?.toUpperCase();
   return (

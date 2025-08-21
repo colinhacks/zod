@@ -229,10 +229,12 @@ To validate against some common string formats:
 z.email();
 z.uuid();
 z.url();
+z.httpUrl();       // http or https URLs only
 z.hostname();
 z.emoji();         // validates a single emoji character
 z.base64();
 z.base64url();
+z.hex();
 z.jwt();
 z.nanoid();
 z.cuid();
@@ -242,6 +244,7 @@ z.ipv4();
 z.ipv6();
 z.cidrv4();        // ipv4 CIDR block
 z.cidrv6();        // ipv6 CIDR block
+z.hash("sha256");  // or "sha1", "sha384", "sha512", "md5"
 z.iso.date();
 z.iso.time();
 z.iso.datetime();
@@ -504,7 +507,7 @@ z.jwt();
 z.jwt({ alg: "HS256" });
 ```
 
-### Hash validation
+### Hashes
 
 To validate cryptographic hash values:
 
@@ -516,31 +519,27 @@ z.hash("sha384");
 z.hash("sha512");
 ```
 
-By default, hash validation expects hexadecimal encoding. You can specify a different encoding:
+By default, `z.hash()` expects hexadecimal encoding, as is conventional. You can specify a different encoding with the `enc` parameter:
 
 ```ts
-z.hash("sha256", { enc: "hex" });      // default
-z.hash("sha256", { enc: "base64" });   // base64 encoding
+z.hash("sha256", { enc: "hex" });       // default
+z.hash("sha256", { enc: "base64" });    // base64 encoding
 z.hash("sha256", { enc: "base64url" }); // base64url encoding (no padding)
 ```
 
-**Supported algorithms:**
+<Accordions>
+<Accordion title="Expected lengths and padding">
 
-- **MD5**: 32 hex chars, 24 base64 chars (22 + "=="), or 22 base64url chars
-- **SHA1**: 40 hex chars, 28 base64 chars (27 + "="), or 27 base64url chars  
-- **SHA256**: 64 hex chars, 44 base64 chars (43 + "="), or 43 base64url chars
-- **SHA384**: 96 hex chars, 64 base64 chars (no padding), or 64 base64url chars
-- **SHA512**: 128 hex chars, 88 base64 chars (86 + "=="), or 86 base64url chars
+| Algorithm / Encoding | `"hex"`  | `"base64"`  | `"base64url"`  |
+|-----------|-----------|--------------|-----------------|
+| `"md5"`   | 32        | 24 (22 + "==") | 22              |
+| `"sha1"`  | 40        | 28 (27 + "=")  | 27              |
+| `"sha256"`| 64        | 44 (43 + "=")  | 43              |
+| `"sha384"`| 96        | 64 (no padding)| 64              |
+| `"sha512"`| 128       | 88 (86 + "==") | 86              |
 
-```ts
-const md5hex = z.hash("md5");
-md5hex.parse("5d41402abc4b2a76b9719d911017c592"); // ✅
-md5hex.parse("5d41402abc4b2a76b9719d911017c59"); // ❌ too short
-
-const sha256base64 = z.hash("sha256", { enc: "base64" });
-sha256base64.parse("LPJNul+wow4m6DsqxbninhsWHlwfp0JecwQzYpOLmCQ="); // ✅
-sha256base64.parse("LPJNul+wow4m6DsqxbninhsWHlwfp0JecwQzYpOLmCQ"); // ❌ missing padding
-
+</Accordion>
+</Accordions>
 
 ### Custom formats
 
@@ -572,7 +571,7 @@ myFormat.parse("invalid input!");
 
 ## Template literals
 
-> **New in Zod 4**
+> **New** — Introduced in `zod@4.0`.
 
 To define a template literal schema:
 
@@ -2379,7 +2378,7 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
 
 ## Codecs
 
-> **New in Zod 4.1** — Refer to the dedicated [Codecs](/codecs) page for more information.
+> **New** — Introduced in `zod@4.1`. Refer to the dedicated [Codecs](/codecs) page for more information.
 
 Codecs are a special kind of schema that implement *bidirectional transformations* between two other schemas.
 
@@ -2412,7 +2411,25 @@ To perform the *reverse transform*, use the inverse: `z.encode()`.
 z.encode(stringToDate, new Date("2024-01-15")); // => "2024-01-15T00:00:00.000Z"
 ```
 
-Refer to the dedicated [Codecs](/codecs) page for more information.
+Refer to the dedicated [Codecs](/codecs) page for more information. That page contains implementations for commonly-needed codecs that you can copy/paste into your project:
+
+- [**`stringToNumber`**](/codecs#stringtonumber)
+- [**`stringToInt`**](/codecs#stringtoint)
+- [**`stringToBigInt`**](/codecs#stringtobigint)
+- [**`numberToBigInt`**](/codecs#numbertobigint)
+- [**`isoDatetimeToDate`**](/codecs#isodatetimetodate)
+- [**`epochSecondsToDate`**](/codecs#epochsecondstodate)
+- [**`epochMillisToDate`**](/codecs#epochmillistodate)
+- [**`jsonCodec`**](/codecs#jsoncodec)
+- [**`utf8ToBytes`**](/codecs#utf8tobytes)
+- [**`bytesToUtf8`**](/codecs#bytestoutf8)
+- [**`base64ToBytes`**](/codecs#base64tobytes)
+- [**`base64urlToBytes`**](/codecs#base64urltobytes)
+- [**`hexToBytes`**](/codecs#hextobytes)
+- [**`stringToURL`**](/codecs#stringtourl)
+- [**`stringToHttpURL`**](/codecs#stringtohttpurl)
+- [**`uriComponent`**](/codecs#uricomponent)
+- [**`stringToBoolean`**](/codecs#stringtoboolean)
 
 ## Pipes
 
@@ -2917,3 +2934,23 @@ const computeTrimmedLengthAsync = MyFunction.implementAsync(
 
 computeTrimmedLengthAsync("sandwich"); // => Promise<8>
 ```
+
+
+
+- edd4feaa — Closes #5127
+- 5d4a3159 — Closes #5116
+- f3f09556 — Closes #5108
+- 0114d5bd — #5122
+- 3b077c3a — #5121
+- 1e06af8e — #5113
+- b01b6f39 — #5052
+- 571ab0c3 — #5051
+- d3ea1119 — #5049
+- b8e3f877 — #4865
+
+
+
+
+
+
+- 571ab0c3 — Drop JIT in Zod Mini `z.object()` (reduces bundle size by 20%) (PR #5051)

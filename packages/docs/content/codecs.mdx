@@ -5,14 +5,16 @@ description: "Bidirectional data transformation with encode and decode"
 
 import { ThemedImage } from "@/components/themed-image";
 
+> ✨ **New** — Introduced in `zod@4.1`.
+
 > **TLDR** — You can use `z.encode(<schema>, <input>)` to perform an _encode_ operation ("reverse parsing"). This will work with any schema but is primarily intended for use in conjunction with `z.codec()`. 
 >
 > This most important exception is the `.transform()` API, which performs a *unidirectional* transformation. This isn't compatible with `z.encode()` as Zod cannot reverse it in a sound way. If you use `.transform()` anywhere in your schema, attempting a `z.encode()` operation will throw a *runtime error* (not a `ZodError`). To fix this, you'll need to refactor all usage of `.transform()` to use `z.codec()`. 
 
-All Zod schemas (with one major exception described below) are "codecs". More specifically, they can process inputs in both the forward and backward direction: 
+All Zod schemas (with one major exception described below) are "codecs". That is, they can process inputs in both the forward and backward direction: 
 
-- *Decoding*: the "forward" direction: `Input -> Output`. This is equivalent to regular `.parse()`.
-- *Encoding*: the "backward" direction: `Output -> Input`
+- *Decoding*: the "forward" direction: `Input -> Output`. This is what regular `.parse()` does.
+- *Encoding*: the "backward" direction: `Output -> Input`.
 
 
 You probably already know how to parse data with Zod:
@@ -286,7 +288,9 @@ z.encode(successSchema, true);
 
 ## Useful codecs
 
-Below are implementations for a bunch of commonly-needed codecs. For the sake of customizability, these are not included as first-class APIs in Zod itself. Feel free to copy/paste them into your project and modify them as needed.
+Below are implementations for a bunch of commonly-needed codecs. For the sake of customizability, these are not included as first-class APIs in Zod itself. Instead, you should copy/paste them into your project and modify them as needed.
+
+> **Note** — All of these codec implementations have been tested for correctness. 
 
 ### `stringToNumber`
 
@@ -364,7 +368,7 @@ Converts Unix timestamps (seconds since epoch) to JavaScript `Date` objects.
 
 ```ts
 const epochSecondsToDate = z.codec(z.int().min(0), z.date(), {
-  decode: (unixSeconds) => new Date(unixSeconds * 1000),
+  decode: (seconds) => new Date(seconds * 1000),
   encode: (date) => Math.floor(date.getTime() / 1000),
 });
 
@@ -372,18 +376,18 @@ z.decode(epochSecondsToDate, 1705314600);  // => Date object
 z.encode(epochSecondsToDate, new Date());  // => Unix timestamp in seconds
 ```
 
-### `unixMillisToDate`
+### `epochMillisToDate`
 
 Converts Unix timestamps (milliseconds since epoch) to JavaScript `Date` objects.
 
 ```ts
-const unixMillisToDate = z.codec(z.int().min(0), z.date(), {
-  decode: (unixMillis) => new Date(unixMillis),
+const epochMillisToDate = z.codec(z.int().min(0), z.date(), {
+  decode: (millis) => new Date(millis),
   encode: (date) => date.getTime(),
 });
 
-z.decode(unixMillisToDate, 1705314600000);  // => Date object
-z.encode(unixMillisToDate, new Date());     // => Unix timestamp in milliseconds
+z.decode(epochMillisToDate, 1705314600000);  // => Date object
+z.encode(epochMillisToDate, new Date());     // => Unix timestamp in milliseconds
 ```
 
 ### `jsonCodec`
