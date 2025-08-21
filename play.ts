@@ -1,15 +1,12 @@
 import * as z from "zod/v4";
 
-const A = z.discriminatedUnion("type", [
-  z.object({
-    type: z.number(),
-    a: z.string(),
-  }),
-  z.object({
-    type: z.string(),
-    b: z.string(),
-  }),
-]);
+const stringPlusA = z.string().overwrite((val) => val + "a");
+const A = z
+  .codec(stringPlusA, stringPlusA, {
+    decode: (val) => val,
+    encode: (val) => val,
+  })
+  .overwrite((val) => val + "a");
 
-A.parse({ type: 1, a: "a" });
-A.parse({ type: "b", b: "b" });
+console.log(z.encode(A, ""));
+// A.parse("world");
