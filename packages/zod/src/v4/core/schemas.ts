@@ -26,12 +26,13 @@ export interface ParseContext<T extends errors.$ZodIssueBase = never> {
 export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> extends ParseContext<T> {
   readonly async?: boolean | undefined;
   readonly direction?: "forward" | "backward";
+  readonly skipChecks?: boolean;
 }
 
 export interface ParsePayload<T = unknown> {
   value: T;
   issues: errors.$ZodRawIssue[];
-  // assumed false by default
+  /** A may to mark a whole payload as aborted. Used in codecs/pipes. */
   aborted?: boolean;
 }
 
@@ -245,36 +246,48 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
       return payload;
     };
 
-    const handleChecksResult = (
-      checkResult: ParsePayload,
-      originalResult: ParsePayload,
-      ctx: ParseContextInternal
-    ): util.MaybeAsync<ParsePayload> => {
-      // if the checks mutated the value && there are no issues, re-parse the result
-      if (checkResult.value !== originalResult.value && !checkResult.issues.length)
-        return inst._zod.parse(checkResult, ctx);
-      return originalResult;
+    // const handleChecksResult = (
+    //   checkResult: ParsePayload,
+    //   originalResult: ParsePayload,
+    //   ctx: ParseContextInternal
+    // ): util.MaybeAsync<ParsePayload> => {
+    //   // if the checks mutated the value && there are no issues, re-parse the result
+    //   if (checkResult.value !== originalResult.value && !checkResult.issues.length)
+    //     return inst._zod.parse(checkResult, ctx);
+    //   return originalResult;
+    // };
+    const handleCanaryResult = (canary: ParsePayload, payload: ParsePayload, ctx: ParseContextInternal) => {
+      // abort if the canary is aborted
+      if (util.aborted(canary)) {
+        canary.aborted = true;
+        return canary;
+      }
+
+      // run checks first, then
+      const checkResult = runChecks(payload, checks, ctx);
+      if (checkResult instanceof Promise) {
+        if (ctx.async === false) throw new core.$ZodAsyncError();
+        return checkResult.then((checkResult) => inst._zod.parse(checkResult, ctx));
+      }
+      return inst._zod.parse(checkResult, ctx);
     };
 
     inst._zod.run = (payload, ctx) => {
+      if (ctx.skipChecks) {
+        return inst._zod.parse(payload, ctx);
+      }
       if (ctx.direction === "backward") {
-        const initValue = payload.value;
-        const result = inst._zod.parse(payload, ctx);
+        // run canary
+        // initial pass (no checks)
+        const canary = inst._zod.parse({ value: payload.value, issues: [] }, { ...ctx, skipChecks: true });
 
-        if (result instanceof Promise) {
-          if (ctx.async === false) throw new core.$ZodAsyncError();
-          return result.then(async (result) => {
-            const checkResult = await runChecks({ value: initValue, issues: result.issues }, checks, ctx);
-            return handleChecksResult(checkResult, result, ctx);
+        if (canary instanceof Promise) {
+          return canary.then((canary) => {
+            return handleCanaryResult(canary, payload, ctx);
           });
         }
 
-        const checkResult = runChecks({ value: initValue, issues: result.issues }, checks, ctx);
-        if (checkResult instanceof Promise) {
-          if (ctx.async === false) throw new core.$ZodAsyncError();
-          return checkResult.then((checkResult) => handleChecksResult(checkResult, result, ctx));
-        }
-        return handleChecksResult(checkResult, result, ctx);
+        return handleCanaryResult(canary, payload, ctx);
       }
 
       // forward
@@ -3664,44 +3677,43 @@ export const $ZodCodec: core.$constructor<$ZodCodec> = /*@__PURE__*/ core.$const
 
   inst._zod.parse = (payload, ctx) => {
     const direction = ctx.direction || "forward";
-
     if (direction === "forward") {
       const left = def.in._zod.run(payload, ctx);
       if (left instanceof Promise) {
-        return left.then((left) => handleCodecInResult(left, def, ctx));
+        return left.then((left) => handleCodecAResult(left, def, ctx));
       }
-      return handleCodecInResult(left, def, ctx);
+      return handleCodecAResult(left, def, ctx);
     } else {
-      const left = def.out._zod.run(payload, ctx);
-      if (left instanceof Promise) {
-        return left.then((left) => handleCodecInResult(left, def, ctx));
+      const right = def.out._zod.run(payload, ctx);
+      if (right instanceof Promise) {
+        return right.then((right) => handleCodecAResult(right, def, ctx));
       }
-      return handleCodecInResult(left, def, ctx);
+      return handleCodecAResult(right, def, ctx);
     }
   };
 });
 
-function handleCodecInResult(left: ParsePayload, def: $ZodCodecDef, ctx: ParseContextInternal) {
-  if (left.issues.length) {
+function handleCodecAResult(result: ParsePayload, def: $ZodCodecDef, ctx: ParseContextInternal) {
+  if (result.issues.length) {
     // prevent further checks
-    left.aborted = true;
-    return left;
+    result.aborted = true;
+    return result;
   }
 
   const direction = ctx.direction || "forward";
 
   if (direction === "forward") {
-    const transformed = def.transform(left.value, left);
+    const transformed = def.transform(result.value, result);
     if (transformed instanceof Promise) {
-      return transformed.then((value) => handleCodecTxResult(left, value, def.out, ctx));
+      return transformed.then((value) => handleCodecTxResult(result, value, def.out, ctx));
     }
-    return handleCodecTxResult(left, transformed, def.out, ctx);
+    return handleCodecTxResult(result, transformed, def.out, ctx);
   } else {
-    const transformed = def.reverseTransform(left.value, left);
+    const transformed = def.reverseTransform(result.value, result);
     if (transformed instanceof Promise) {
-      return transformed.then((value) => handleCodecTxResult(left, value, def.in, ctx));
+      return transformed.then((value) => handleCodecTxResult(result, value, def.in, ctx));
     }
-    return handleCodecTxResult(left, transformed, def.in, ctx);
+    return handleCodecTxResult(result, transformed, def.in, ctx);
   }
 }
 

@@ -492,3 +492,31 @@ test("codec type enforcement - complex types", () => {
     }
   );
 });
+
+test("codex with overwrites", () => {
+  const stringPlusA = z.string().overwrite((val) => val + "a");
+  const A = z
+    .codec(stringPlusA, stringPlusA, {
+      decode: (val) => val,
+      encode: (val) => val,
+    })
+    .overwrite((val) => val + "a");
+
+  expect(z.decode(A, "")).toEqual("aaa");
+  expect(z.encode(A, "")).toEqual("aaa");
+
+  // @ts-expect-error
+  expect(z.safeEncode(A, Symbol("a"))).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": [],
+        "message": "Invalid input: expected string, received symbol"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+});
