@@ -162,13 +162,13 @@ test("catchall overrides strict", () => {
   });
 });
 
-test("optional keys are unset", async () => {
+test("optional keys are unset", () => {
   const SNamedEntity = z.object({
     id: z.string(),
     set: z.string().optional(),
     unset: z.string().optional(),
   });
-  const result = await SNamedEntity.parse({
+  const result = SNamedEntity.parse({
     id: "asdf",
     set: undefined,
   });
