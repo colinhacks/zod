@@ -38,7 +38,6 @@ z.coerce.bigint();    // BigInt(input)
 
 The coerced variant of these schemas attempts to convert the input value to the appropriate type.
 
-
 ```ts
 const schema = z.coerce.string();
 
@@ -58,7 +57,8 @@ const B = z.coerce.number<number>();
 type BInput = z.infer<typeof B>; // => number
 ```
 
-<Accordions type="single"><Accordion title="How coercion works in Zod">
+<Accordions type="single">
+<Accordion title="How coercion works in Zod">
   
   Zod coerces all inputs using the built-in constructors. 
 
@@ -89,7 +89,24 @@ type BInput = z.infer<typeof B>; // => number
 
   For total control over coercion logic, consider using [`z.transform()`](#transforms) or [`z.pipe()`](#pipes).
 
-</Accordion></Accordions>
+</Accordion>
+<Accordion title="Customizing the input type">
+  
+  By default the _input_ type of any `z.coerce` schema is `unknown`. In some cases, it may be preferable for the input type to be more specific. You can specify the input type with a generic parameter.
+
+  ```ts
+  const regular = z.coerce.string();
+  type RegularInput = z.input<typeof regularCoerce>; // => unknown
+  type RegularOutput = z.output<typeof regularCoerce>; // => string
+
+  const customInput = z.coerce.string<string>();
+  type CustomInput = z.input<typeof customInput>; // => string
+  type CustomOutput = z.output<typeof customInput>; // => string
+  ```
+
+</Accordion>
+</Accordions>
+
 
 
 ## Literals
