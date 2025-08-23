@@ -82,7 +82,7 @@ importers:
         version: 14.0.0
       tsdown:
         specifier: ^0.12.8
-        version: 0.12.8(typescript@5.9.2)
+        version: 0.12.8(typescript@5.5.4)
       tslib:
         specifier: ^2.8.1
         version: 2.8.1
@@ -90,8 +90,8 @@ importers:
         specifier: ^4.19.3
         version: 4.19.3
       typescript:
-        specifier: ^5.5.4
-        version: 5.9.2
+        specifier: ~5.5.4
+        version: 5.5.4
       vitest:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@22.13.13)(lightningcss@1.29.3)(terser@5.39.0)
@@ -103,7 +103,7 @@ importers:
         version: zod@3.24.3
       zshy:
         specifier: ^0.3.5
-        version: 0.3.5(typescript@5.9.2)
+        version: 0.3.5(typescript@5.5.4)
 
   packages/bench:
     devDependencies:
@@ -5354,6 +5354,11 @@ packages:
     resolution: {integrity: sha512-Ne+eE4r0/iWnpAxD852z3A+N0Bt5RN//NjJwRd2VFHEmrywxf5vsZlh4R6lixl6B+wz/8d+maTSAkN1FIkI3LQ==}
     engines: {node: '>=10'}
 
+  typescript@5.5.4:
+    resolution: {integrity: sha512-Mtq29sKDAEYP7aljRgtPOpTvOfbwRWlS6dPRzwjdE+C0R4brX/GUyhHSecbHMFLNBLcJIPt9nl9yG5TZ1weH+Q==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
   typescript@5.6.1-rc:
     resolution: {integrity: sha512-E3b2+1zEFu84jB0YQi9BORDjz9+jGbwwy1Zi3G0LUNw7a7cePUrHMRNy8aPh53nXpkFGVHSxIZo5vKTfYaFiBQ==}
     engines: {node: '>=14.17'}
@@ -10495,7 +10500,7 @@ snapshots:
       glob: 11.0.2
       package-json-from-dist: 1.0.1
 
-  rolldown-plugin-dts@0.13.11(rolldown@1.0.0-beta.15)(typescript@5.9.2):
+  rolldown-plugin-dts@0.13.11(rolldown@1.0.0-beta.15)(typescript@5.5.4):
     dependencies:
       '@babel/generator': 7.27.5
       '@babel/parser': 7.27.5
@@ -10507,7 +10512,7 @@ snapshots:
       get-tsconfig: 4.10.1
       rolldown: 1.0.0-beta.15
     optionalDependencies:
-      typescript: 5.9.2
+      typescript: 5.5.4
     transitivePeerDependencies:
       - oxc-resolver
       - supports-color
@@ -10908,7 +10913,7 @@ snapshots:
       resolve-import: 2.0.0
       rimraf: 6.0.1
       sync-content: 2.0.1
-      typescript: 5.9.2
+      typescript: 5.5.4
       walk-up-path: 4.0.0
 
   supports-color@2.0.0: {}
@@ -11017,7 +11022,7 @@ snapshots:
       '@ts-morph/common': 0.13.0
       code-block-writer: 11.0.3
 
-  tsdown@0.12.8(typescript@5.9.2):
+  tsdown@0.12.8(typescript@5.5.4):
     dependencies:
       ansis: 4.1.0
       cac: 6.7.14
@@ -11027,13 +11032,13 @@ snapshots:
       empathic: 1.1.0
       hookable: 5.5.3
       rolldown: 1.0.0-beta.15
-      rolldown-plugin-dts: 0.13.11(rolldown@1.0.0-beta.15)(typescript@5.9.2)
+      rolldown-plugin-dts: 0.13.11(rolldown@1.0.0-beta.15)(typescript@5.5.4)
       semver: 7.7.2
       tinyexec: 1.0.1
       tinyglobby: 0.2.14
       unconfig: 7.3.2
     optionalDependencies:
-      typescript: 5.9.2
+      typescript: 5.5.4
     transitivePeerDependencies:
       - '@typescript/native-preview'
       - oxc-resolver
@@ -11051,7 +11056,7 @@ snapshots:
       resolve-import: 2.0.0
       rimraf: 6.0.1
       sync-content: 2.0.1
-      typescript: 5.9.2
+      typescript: 5.5.4
       walk-up-path: 4.0.0
 
   tslib@2.8.1: {}
@@ -11072,6 +11077,8 @@ snapshots:
       - supports-color
 
   type-fest@0.20.2: {}
+
+  typescript@5.5.4: {}
 
   typescript@5.6.1-rc: {}
 
@@ -11398,11 +11405,11 @@ snapshots:
 
   zod@4.0.8: {}
 
-  zshy@0.3.5(typescript@5.9.2):
+  zshy@0.3.5(typescript@5.5.4):
     dependencies:
       arg: 5.0.2
       globby: 14.1.0
       table: 6.9.0
-      typescript: 5.9.2
+      typescript: 5.5.4
 
   zwitch@2.0.4: {}

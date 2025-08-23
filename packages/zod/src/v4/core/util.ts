@@ -858,7 +858,7 @@ export function cleanEnum(obj: Record<string, EnumValue>): EnumValue[] {
 }
 
 // Codec utility functions
-export function base64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
+export function base64ToUint8Array(base64: string): InstanceType<typeof Uint8Array> {
   const binaryString = atob(base64);
   const bytes = new Uint8Array(binaryString.length);
   for (let i = 0; i < binaryString.length; i++) {
@@ -875,7 +875,7 @@ export function uint8ArrayToBase64(bytes: Uint8Array): string {
   return btoa(binaryString);
 }
 
-export function base64urlToUint8Array(base64url: string): Uint8Array<ArrayBuffer> {
+export function base64urlToUint8Array(base64url: string): InstanceType<typeof Uint8Array> {
   const base64 = base64url.replace(/-/g, "+").replace(/_/g, "/");
   const padding = "=".repeat((4 - (base64.length % 4)) % 4);
   return base64ToUint8Array(base64 + padding);
@@ -885,7 +885,7 @@ export function uint8ArrayToBase64url(bytes: Uint8Array): string {
   return uint8ArrayToBase64(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 }
 
-export function hexToUint8Array(hex: string): Uint8Array<ArrayBuffer> {
+export function hexToUint8Array(hex: string): InstanceType<typeof Uint8Array> {
   const cleanHex = hex.replace(/^0x/, "");
   if (cleanHex.length % 2 !== 0) {
     throw new Error("Invalid hex string length");
