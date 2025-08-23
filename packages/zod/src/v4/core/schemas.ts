@@ -166,6 +166,8 @@ export interface $ZodType<
 > {
   _zod: Internals;
   "~standard": $ZodStandardSchema<this>;
+
+  with<TInputOverride = never, TOutputOverride = never>(): core.WithSchema<this, TInputOverride, TOutputOverride>;
 }
 export interface _$ZodType<T extends $ZodTypeInternals = $ZodTypeInternals>
   extends $ZodType<T["output"], T["input"], T> {}
@@ -267,6 +269,18 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
     version: 1 as const,
   };
 });
+
+$ZodType.prototype.with = function <TInputOverride = never, TOutputOverride = never>(
+  this: $ZodType
+): core.WithSchema<typeof this, TInputOverride, TOutputOverride> {
+  const newSchema = Object.create(Object.getPrototypeOf(this));
+  Object.assign(newSchema, this);
+  newSchema._zod = {
+    ...this._zod,
+  };
+
+  return newSchema as core.WithSchema<typeof this, TInputOverride, TOutputOverride>;
+};
 
 export { clone } from "./util.js";
 
