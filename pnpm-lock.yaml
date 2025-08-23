@@ -90,7 +90,7 @@ importers:
         specifier: ^4.19.3
         version: 4.19.3
       typescript:
-        specifier: ^5.9.2
+        specifier: ^5.5.4
         version: 5.9.2
       vitest:
         specifier: ^2.1.9
