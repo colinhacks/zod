@@ -21,7 +21,7 @@ export const guid: RegExp = /^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9
  * @param version Optionally specify a version 1-8. If no version is specified, all versions are supported. */
 export const uuid = (version?: number | undefined): RegExp => {
   if (!version)
-    return /^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000)$/;
+    return /^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$/;
   return new RegExp(
     `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-${version}[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$`
   );
@@ -136,3 +136,42 @@ export { _undefined as undefined };
 export const lowercase: RegExp = /^[^A-Z]*$/;
 // regex for string with no lowercase letters
 export const uppercase: RegExp = /^[^a-z]*$/;
+
+// regex for hexadecimal strings (any length)
+export const hex: RegExp = /^[0-9a-fA-F]*$/;
+
+// Hash regexes for different algorithms and encodings
+// Helper function to create base64 regex with exact length and padding
+function fixedBase64(bodyLength: number, padding: "" | "=" | "=="): RegExp {
+  return new RegExp(`^[A-Za-z0-9+/]{${bodyLength}}${padding}$`);
+}
+
+// Helper function to create base64url regex with exact length (no padding)
+function fixedBase64url(length: number): RegExp {
+  return new RegExp(`^[A-Za-z0-9-_]{${length}}$`);
+}
+
+// MD5 (16 bytes): base64 = 24 chars total (22 + "==")
+export const md5_hex: RegExp = /^[0-9a-fA-F]{32}$/;
+export const md5_base64: RegExp = /*@__PURE__*/ fixedBase64(22, "==");
+export const md5_base64url: RegExp = /*@__PURE__*/ fixedBase64url(22);
+
+// SHA1 (20 bytes): base64 = 28 chars total (27 + "=")
+export const sha1_hex: RegExp = /^[0-9a-fA-F]{40}$/;
+export const sha1_base64: RegExp = /*@__PURE__*/ fixedBase64(27, "=");
+export const sha1_base64url: RegExp = /*@__PURE__*/ fixedBase64url(27);
+
+// SHA256 (32 bytes): base64 = 44 chars total (43 + "=")
+export const sha256_hex: RegExp = /^[0-9a-fA-F]{64}$/;
+export const sha256_base64: RegExp = /*@__PURE__*/ fixedBase64(43, "=");
+export const sha256_base64url: RegExp = /*@__PURE__*/ fixedBase64url(43);
+
+// SHA384 (48 bytes): base64 = 64 chars total (no padding)
+export const sha384_hex: RegExp = /^[0-9a-fA-F]{96}$/;
+export const sha384_base64: RegExp = /*@__PURE__*/ fixedBase64(64, "");
+export const sha384_base64url: RegExp = /*@__PURE__*/ fixedBase64url(64);
+
+// SHA512 (64 bytes): base64 = 88 chars total (86 + "==")
+export const sha512_hex: RegExp = /^[0-9a-fA-F]{128}$/;
+export const sha512_base64: RegExp = /*@__PURE__*/ fixedBase64(86, "==");
+export const sha512_base64url: RegExp = /*@__PURE__*/ fixedBase64url(86);

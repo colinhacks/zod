@@ -109,7 +109,7 @@ describe("toJSONSchema", () => {
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "format": "uuid",
-        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000)$",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
         "type": "string",
       }
     `);
@@ -269,7 +269,7 @@ describe("toJSONSchema", () => {
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "format": "uuid",
-        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000)$",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
         "type": "string",
       }
     `);
@@ -548,6 +548,25 @@ describe("toJSONSchema", () => {
         "maximum": 10,
         "minimum": 5,
         "type": "number",
+      }
+    `);
+  });
+
+  test("nullable openapi", () => {
+    expect(z.toJSONSchema(z.string().nullable(), { target: "openapi-3.0" })).toMatchInlineSnapshot(`
+      {
+        "nullable": true,
+        "type": "string",
+      }
+    `);
+  });
+
+  test("union with null openapi", () => {
+    const schema = z.union([z.string(), z.null()]);
+    expect(z.toJSONSchema(schema, { target: "openapi-3.0" })).toMatchInlineSnapshot(`
+      {
+        "nullable": true,
+        "type": "string",
       }
     `);
   });

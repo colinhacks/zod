@@ -297,3 +297,19 @@ test("z.jwt", () => {
   // wrong type
   expect(() => z.parse(a, 123)).toThrow();
 });
+
+test("z.hash generic format", () => {
+  expect(z.hash("sha256").parse("a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3")).toBe(
+    "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"
+  );
+
+  // --- Type-level checks (ensure the literal format string is encoded in the return type)
+  expectTypeOf(z.hash("md5")).toEqualTypeOf<z.ZodMiniCustomStringFormat<"md5_hex">>();
+  expectTypeOf(z.hash("sha1")).toEqualTypeOf<z.ZodMiniCustomStringFormat<"sha1_hex">>();
+  expectTypeOf(z.hash("sha256", { enc: "base64" as const })).toEqualTypeOf<
+    z.ZodMiniCustomStringFormat<"sha256_base64">
+  >();
+  expectTypeOf(z.hash("sha384", { enc: "base64url" as const })).toEqualTypeOf<
+    z.ZodMiniCustomStringFormat<"sha384_base64url">
+  >();
+});

@@ -3,42 +3,42 @@ import * as z4lib from "zod4/v4";
 import * as z3 from "zod3";
 import { metabench } from "./metabench.js";
 
-const z3Schema = z3.object({
+const z3Schema = z3.strictObject({
   number: z3.number(),
   negNumber: z3.number(),
   maxNumber: z3.number(),
   string: z3.string(),
   longString: z3.string(),
   boolean: z3.boolean(),
-  deeplyNested: z3.object({
+  deeplyNested: z3.strictObject({
     foo: z3.string(),
     num: z3.number(),
     bool: z3.boolean(),
   })
 })
 
-const z4LibSchema = z4lib.object({
+const z4LibSchema = z4lib.strictObject({
   number: z4lib.number(),
   negNumber: z4lib.number(),
   maxNumber: z4lib.number(),
   string: z4lib.string(),
   longString: z4lib.string(),
   boolean: z4lib.boolean(),
-  deeplyNested: z4lib.object({
+  deeplyNested: z4lib.strictObject({
     foo: z4lib.string(),
     num: z4lib.number(),
     bool: z4lib.boolean(),
   }),
 });
 
-const z4Schema = z4.object({
+const z4Schema = z4.strictObject({
   number: z4.number(),
   negNumber: z4.number(),
   maxNumber: z4.number(),
   string: z4.string(),
   longString: z4.string(),
   boolean: z4.boolean(),
-  deeplyNested: z4.object({
+  deeplyNested: z4.strictObject({
     foo: z4.string(),
     num: z4.number(),
     bool: z4.boolean(),

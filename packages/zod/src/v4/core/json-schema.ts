@@ -104,6 +104,7 @@ export type JSONSchema = {
   deprecated?: boolean;
   readOnly?: boolean;
   writeOnly?: boolean;
+  nullable?: boolean;
   examples?: unknown[];
   format?: string;
   contentMediaType?: string;

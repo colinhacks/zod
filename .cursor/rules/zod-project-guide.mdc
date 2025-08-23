@@ -14,7 +14,7 @@ This is the Zod TypeScript-first schema validation library project. The project 
 ### Development
 - `pnpm dev` - Start development server with tsx
 - `pnpm dev:watch` - Start development server with watch mode
-- `pnpm dev:play` - Run play.ts file for testing
+- `pnpm dev:play` - Run play.ts file for quick experimentation.
 
 ### Testing
 - `pnpm test` - Run all tests with vitest

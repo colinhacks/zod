@@ -11,7 +11,6 @@ export {
   $output,
   $input,
   $brand,
-  function,
   clone,
   regexes,
   treeifyError,
