@@ -6,6 +6,7 @@
     "traceResolution": true,
     "customConditions": ["@zod/source"],
     "skipDefaultLibCheck": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": ["node"]
   }
 }
