@@ -1099,7 +1099,7 @@ const LooseDog = z.looseObject({
   name: z.string(),
 });
 
-Dog.parse({ name: "Yeller", extraKey: true });
+LooseDog.parse({ name: "Yeller", extraKey: true });
 // => { name: "Yeller", extraKey: true }
 ```
 
