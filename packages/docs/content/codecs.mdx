@@ -7,17 +7,14 @@ import { ThemedImage } from "@/components/themed-image";
 
 > ✨ **New** — Introduced in `zod@4.1`
 
-> **TLDR** — You can use `z.encode(<schema>, <input>)` to perform an _encode_ operation ("reverse parsing"). This will work with any schema but is primarily intended for use in conjunction with `z.codec()`. 
->
-> This most important exception is the `.transform()` API, which performs a *unidirectional* transformation. This isn't compatible with `z.encode()` as Zod cannot reverse it in a sound way. If you use `.transform()` anywhere in your schema, attempting a `z.encode()` operation will throw a *runtime error* (not a `ZodError`). To fix this, you'll need to refactor all usage of `.transform()` to use `z.codec()`. 
+> **TLDR** — You can use `z.encode(<schema>, <input>)` to perform an _encode_ operation ("reverse parsing"). This will work with any schema (except those containing `.transform()`) but is primarily intended for use in conjunction with `z.codec()`. 
 
-All Zod schemas (with one major exception described below) are "codecs". That is, they can process inputs in both the forward and backward direction: 
+Zod schemas are "codecs". That is, they can process inputs in both the forward and backward direction: 
 
 - *Decoding*: the "forward" direction: `Input -> Output`. This is what regular `.parse()` does.
 - *Encoding*: the "backward" direction: `Output -> Input`.
 
-
-You probably already know how to parse data with Zod:
+The regular `.parse()` method performs a *decode* operation (forward direction). 
 
 ```ts
 import * as z from "zod";
@@ -31,7 +28,7 @@ mySchema.parse("hello"); // => "hello"
 z.parse(mySchema, "hello"); // => "hello"
 ```
 
-Zod also provides dedicated functions for performing "decode" and "encode" operations. 
+For explicitness, Zod provides dedicated functions for performing "decode" and "encode" operations. 
 
 ```ts
 z.decode(mySchema, "hello"); // => "hello"
