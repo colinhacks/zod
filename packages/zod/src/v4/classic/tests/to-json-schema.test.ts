@@ -695,14 +695,16 @@ describe("toJSONSchema", () => {
     const schema = z.tuple([z.string(), z.number()]);
     expect(z.toJSONSchema(schema, { target: "openapi-3.0" })).toMatchInlineSnapshot(`
       {
-        "items": [
-          {
-            "type": "string",
-          },
-          {
-            "type": "number",
-          },
-        ],
+        "items": {
+          "oneOf": [
+            {
+              "type": "string",
+            },
+            {
+              "type": "number",
+            },
+          ],
+        },
         "maxItems": 2,
         "minItems": 2,
         "type": "array",
@@ -714,17 +716,19 @@ describe("toJSONSchema", () => {
     const schema = z.tuple([z.string(), z.number()]).rest(z.boolean());
     expect(z.toJSONSchema(schema, { target: "openapi-3.0" })).toMatchInlineSnapshot(`
       {
-        "items": [
-          {
-            "type": "string",
-          },
-          {
-            "type": "number",
-          },
-          {
-            "type": "boolean",
-          },
-        ],
+        "items": {
+          "oneOf": [
+            {
+              "type": "string",
+            },
+            {
+              "type": "number",
+            },
+            {
+              "type": "boolean",
+            },
+          ],
+        },
         "minItems": 2,
         "type": "array",
       }
