@@ -74,8 +74,8 @@ z.encode(stringToDate, new Date("2024-01-15T10:30:00.000Z"))
 This is particularly useful when parsing data at a network boundary. You can share a single Zod schema between your client and server, then use this single schema to convert between a network-friendly format (say, JSON) and a richer JavaScript representation.
 
 <ThemedImage 
-  lightSrc="/codecs-network-light.svg" 
-  darkSrc="/codecs-network-dark.svg" 
+  lightSrc="/codecs/codecs-network-light.svg" 
+  darkSrc="/codecs/codecs-network-dark.svg" 
   alt="Codecs encoding and decoding data across a network boundary" 
 />
 
@@ -105,8 +105,8 @@ z.encode(stringToDate, 12345);
 Here's a diagram demonstrating the differences between the type signatures for `parse()`, `decode()`, and `encode()`.
 
 <ThemedImage 
-  lightSrc="/codecs-light.png" 
-  darkSrc="/codecs-dark.png" 
+  lightSrc="/codecs/codecs-light.png" 
+  darkSrc="/codecs/codecs-dark.png" 
   alt="Codec directionality diagram showing bidirectional transformation between input and output schemas" 
 />
 
