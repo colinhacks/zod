@@ -653,6 +653,24 @@ describe("toJSONSchema", () => {
   });
 
   test("tuple", () => {
+    const schema = z.tuple([z.string(), z.number()]);
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "prefixItems": [
+          {
+            "type": "string",
+          },
+          {
+            "type": "number",
+          },
+        ],
+        "type": "array",
+      }
+    `);
+  });
+
+  test("tuple with rest", () => {
     const schema = z.tuple([z.string(), z.number()]).rest(z.boolean());
     expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
       {
@@ -668,6 +686,46 @@ describe("toJSONSchema", () => {
             "type": "number",
           },
         ],
+        "type": "array",
+      }
+    `);
+  });
+
+  test("tuple openapi", () => {
+    const schema = z.tuple([z.string(), z.number()]);
+    expect(z.toJSONSchema(schema, { target: "openapi-3.0" })).toMatchInlineSnapshot(`
+      {
+        "items": [
+          {
+            "type": "string",
+          },
+          {
+            "type": "number",
+          },
+        ],
+        "maxItems": 2,
+        "minItems": 2,
+        "type": "array",
+      }
+    `);
+  });
+
+  test("tuple with rest openapi", () => {
+    const schema = z.tuple([z.string(), z.number()]).rest(z.boolean());
+    expect(z.toJSONSchema(schema, { target: "openapi-3.0" })).toMatchInlineSnapshot(`
+      {
+        "items": [
+          {
+            "type": "string",
+          },
+          {
+            "type": "number",
+          },
+          {
+            "type": "boolean",
+          },
+        ],
+        "minItems": 2,
         "type": "array",
       }
     `);
