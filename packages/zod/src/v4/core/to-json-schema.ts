@@ -371,30 +371,32 @@ export class JSONSchemaGenerator {
             const prefixItems = def.items.map((x, i) =>
               this.process(x, { ...params, path: [...params.path, "prefixItems", i] })
             );
+            const rest = def.rest
+              ? this.process(def.rest, {
+                  ...params,
+                  path: [...params.path, "items"],
+                })
+              : null;
+
             if (this.target === "draft-2020-12") {
               json.prefixItems = prefixItems;
+              if (rest) {
+                json.items = rest;
+              }
+            } else if (this.target === "openapi-3.0") {
+              json.items = [...prefixItems];
+              if (rest) {
+                json.items.push(rest);
+              }
+              json.minItems = prefixItems.length;
+              if (!rest) {
+                json.maxItems = prefixItems.length;
+              }
             } else {
               json.items = prefixItems;
-            }
-
-            if (def.rest) {
-              const rest = this.process(def.rest, {
-                ...params,
-                path: [...params.path, "items"],
-              });
-              if (this.target === "draft-2020-12") {
-                json.items = rest;
-              } else {
+              if (rest) {
                 json.additionalItems = rest;
               }
-            }
-
-            // additionalItems
-            if (def.rest) {
-              json.items = this.process(def.rest, {
-                ...params,
-                path: [...params.path, "items"],
-              });
             }
 
             // length
