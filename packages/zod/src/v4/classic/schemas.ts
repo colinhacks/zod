@@ -55,6 +55,28 @@ export interface ZodType<
     params?: core.ParseContext<core.$ZodIssue>
   ) => Promise<parse.ZodSafeParseResult<core.output<this>>>;
 
+  // encoding/decoding
+  encode(data: core.output<this>, params?: core.ParseContext<core.$ZodIssue>): core.input<this>;
+  decode(data: core.input<this>, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;
+  encodeAsync(data: core.output<this>, params?: core.ParseContext<core.$ZodIssue>): Promise<core.input<this>>;
+  decodeAsync(data: core.input<this>, params?: core.ParseContext<core.$ZodIssue>): Promise<core.output<this>>;
+  safeEncode(
+    data: core.output<this>,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): parse.ZodSafeParseResult<core.input<this>>;
+  safeDecode(
+    data: core.input<this>,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): parse.ZodSafeParseResult<core.output<this>>;
+  safeEncodeAsync(
+    data: core.output<this>,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): Promise<parse.ZodSafeParseResult<core.input<this>>>;
+  safeDecodeAsync(
+    data: core.input<this>,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): Promise<parse.ZodSafeParseResult<core.output<this>>>;
+
   // refinements
   refine(check: (arg: core.output<this>) => unknown | Promise<unknown>, params?: string | core.$ZodCustomParams): this;
   superRefine(
@@ -149,6 +171,16 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   inst.parseAsync = async (data, params) => parse.parseAsync(inst, data, params, { callee: inst.parseAsync });
   inst.safeParseAsync = async (data, params) => parse.safeParseAsync(inst, data, params);
   inst.spa = inst.safeParseAsync;
+
+  // encoding/decoding
+  inst.encode = (data, params) => parse.encode(inst, data, params);
+  inst.decode = (data, params) => parse.decode(inst, data, params);
+  inst.encodeAsync = async (data, params) => parse.encodeAsync(inst, data, params);
+  inst.decodeAsync = async (data, params) => parse.decodeAsync(inst, data, params);
+  inst.safeEncode = (data, params) => parse.safeEncode(inst, data, params);
+  inst.safeDecode = (data, params) => parse.safeDecode(inst, data, params);
+  inst.safeEncodeAsync = async (data, params) => parse.safeEncodeAsync(inst, data, params);
+  inst.safeDecodeAsync = async (data, params) => parse.safeDecodeAsync(inst, data, params);
 
   // refinements
   inst.refine = (check, params) => inst.check(refine(check, params));
