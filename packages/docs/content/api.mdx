@@ -38,7 +38,6 @@ z.coerce.bigint();    // BigInt(input)
 
 The coerced variant of these schemas attempts to convert the input value to the appropriate type.
 
-
 ```ts
 const schema = z.coerce.string();
 
@@ -58,7 +57,8 @@ const B = z.coerce.number<number>();
 type BInput = z.infer<typeof B>; // => number
 ```
 
-<Accordions type="single"><Accordion title="How coercion works in Zod">
+<Accordions type="single">
+<Accordion title="How coercion works in Zod">
   
   Zod coerces all inputs using the built-in constructors. 
 
@@ -89,7 +89,24 @@ type BInput = z.infer<typeof B>; // => number
 
   For total control over coercion logic, consider using [`z.transform()`](#transforms) or [`z.pipe()`](#pipes).
 
-</Accordion></Accordions>
+</Accordion>
+<Accordion title="Customizing the input type">
+  
+  By default the _input_ type of any `z.coerce` schema is `unknown`. In some cases, it may be preferable for the input type to be more specific. You can specify the input type with a generic parameter.
+
+  ```ts
+  const regular = z.coerce.string();
+  type RegularInput = z.input<typeof regularCoerce>; // => unknown
+  type RegularOutput = z.output<typeof regularCoerce>; // => string
+
+  const customInput = z.coerce.string<string>();
+  type CustomInput = z.input<typeof customInput>; // => string
+  type CustomOutput = z.output<typeof customInput>; // => string
+  ```
+
+</Accordion>
+</Accordions>
+
 
 
 ## Literals
@@ -122,7 +139,7 @@ colors.parse("yellow"); // ❌
 
 To extract the set of allowed values from a literal schema:
 
-<Tabs groupId="lib" items={["Zod", "Zod Mini"]} persist>
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
 colors.values; // => Set<"red" | "green" | "blue">
@@ -229,10 +246,12 @@ To validate against some common string formats:
 z.email();
 z.uuid();
 z.url();
+z.httpUrl();       // http or https URLs only
 z.hostname();
 z.emoji();         // validates a single emoji character
 z.base64();
 z.base64url();
+z.hex();
 z.jwt();
 z.nanoid();
 z.cuid();
@@ -242,6 +261,7 @@ z.ipv4();
 z.ipv6();
 z.cidrv4();        // ipv4 CIDR block
 z.cidrv6();        // ipv6 CIDR block
+z.hash("sha256");  // or "sha1", "sha384", "sha512", "md5"
 z.jsonString();    // validates JSON syntax
 z.iso.date();
 z.iso.time();
@@ -539,9 +559,71 @@ z.jwt();
 z.jwt({ alg: "HS256" });
 ```
 
+### Hashes
+
+To validate cryptographic hash values:
+
+```ts
+z.hash("md5");
+z.hash("sha1");
+z.hash("sha256");
+z.hash("sha384");
+z.hash("sha512");
+```
+
+By default, `z.hash()` expects hexadecimal encoding, as is conventional. You can specify a different encoding with the `enc` parameter:
+
+```ts
+z.hash("sha256", { enc: "hex" });       // default
+z.hash("sha256", { enc: "base64" });    // base64 encoding
+z.hash("sha256", { enc: "base64url" }); // base64url encoding (no padding)
+```
+
+<Accordions>
+<Accordion title="Expected lengths and padding">
+
+| Algorithm / Encoding | `"hex"`  | `"base64"`  | `"base64url"`  |
+|-----------|-----------|--------------|-----------------|
+| `"md5"`   | 32        | 24 (22 + "==") | 22              |
+| `"sha1"`  | 40        | 28 (27 + "=")  | 27              |
+| `"sha256"`| 64        | 44 (43 + "=")  | 43              |
+| `"sha384"`| 96        | 64 (no padding)| 64              |
+| `"sha512"`| 128       | 88 (86 + "==") | 86              |
+
+</Accordion>
+</Accordions>
+
+### Custom formats
+
+To define your own string formats:
+
+```ts
+const coolId = z.stringFormat("cool-id", ()=>{
+  // arbitrary validation here
+  return val.length === 100 && val.startsWith("cool-");
+});
+
+// a regex is also accepted
+z.stringFormat("cool-id", /^cool-[a-z0-9]{95}$/);
+```
+
+This schema will produce `"invalid_format"` issues, which are more descriptive that the `"custom"` errors produces by refinements or `z.custom()`.
+
+```ts
+myFormat.parse("invalid input!");
+// ZodError: [
+//   {
+//     "code": "invalid_format",
+//     "format": "cool-id",
+//     "path": [],
+//     "message": "Invalid cool-id"
+//   }
+// ]
+```
+
 ## Template literals
 
-> **New in Zod 4**
+> **New** — Introduced in `zod@4.0`.
 
 To define a template literal schema:
 
@@ -1153,7 +1235,7 @@ const DogWithBreed = z.extend(Dog, {
 This API can be used to overwrite existing fields! Be careful with this power! If the two schemas share keys, B will override A.
 
 <Callout>
-**Alternative: spread syntax** — You can alternatively avoid `.extend()` altogether by creating a new object schema entirely. This makes the strictness level of the resulting schema visually obvious.
+**Alternative: spread syntax** — You can alternatively avoid `.extend()` altogether by creating a new object schema entirely. This makes the strictness level of the resulting schema visually obvious.
 
 ```ts
 const DogWithBreed = z.object({ // or z.strictObject() or z.looseObject()...
@@ -1176,9 +1258,51 @@ This approach has a few advantages:
 
 1. It uses language-level features ([spread syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax)) instead of library-specific APIs
 2. The same syntax works in Zod and Zod Mini
-3. It's more `tsc`-efficient — the `.extend()` method can be expensive on large schemas, and due to [a TypeScript limitation](https://github.com/microsoft/TypeScript/pull/61505) it gets quadratically more expensive when calls are chained
+3. It's more `tsc`-efficient — the `.extend()` method can be expensive on large schemas, and due to [a TypeScript limitation](https://github.com/microsoft/TypeScript/pull/61505) it gets quadratically more expensive when calls are chained
 4. If you wish, you can change the strictness level of the resulting schema by using `z.strictObject()` or `z.looseObject()`
 </Callout>
+
+### `.safeExtend()`
+
+The `.safeExtend()` method works similarly to `.extend()`, but it won't let you overwrite an existing properly with a non-assignable schema. In other words, the result of `.safeExtend()` will have an inferred type that [`extends`](https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#conditional-type-constraints) the original (in the TypeScript sense).
+
+```ts
+z.object({ a: z.string() }).safeExtend({ a: z.string().min(5) }); // ✅
+z.object({ a: z.string() }).safeExtend({ a: z.any() }); // ✅
+z.object({ a: z.string() }).safeExtend({ a: z.number() });
+//                                       ^  ❌ ZodNumber is not assignable 
+```
+
+Use `.safeExtend()` to extend schemas that contain refinements. (Regular `.extend()` will throw an error when used on schemas with refinements.)
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+const Base = z.object({
+  a: z.string(),
+  b: z.string()
+}).refine(user => user.a === user.b);
+
+// Extended inherits the refinements of Base
+const Extended = UserSchema.safeExtend({
+  a: z.string().min(10)
+});
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+const Base = z.object({
+  a: z.string(),
+  b: z.string()
+}).check(z.refine(user => user.a === user.b));
+
+// Extended inherits the refinements of Base
+const Extended = z.safeExtend(UserSchema, {
+  a: z.string().min(10)
+});
+```
+</Tab>
+</Tabs>
 
 ### `.pick()`
 
@@ -1610,6 +1734,8 @@ const MyResult = z.discriminatedUnion("status", [
   z.object({ status: z.literal("failed"), error: z.string() }),
 ]);
 ```
+
+Each option should be an *object schema* whose discriminator prop (`status` in the example above) corresponds to some literal value or set of values, usually `z.enum()`, `z.literal()`, `z.null()`, or `z.undefined()`.
 
 {/* 
 <Callout>
@@ -2098,7 +2224,7 @@ const userId = z.string().refine(async (id) => {
 
 #### `when`
 
-> **Note** — This is a power user feature and can absolutely be abused in ways that will increase the probability of uncaught errors originating from inside your refinements. 
+> **Note** — This is a power user feature and can absolutely be abused in ways that will increase the probability of uncaught errors originating from inside your refinements. 
 
 By default, refinements don't run if any *non-continuable* issues have already been encountered. Zod is careful to ensure the type signature of the value is correct before passing it into any refinement functions.
 
@@ -2137,7 +2263,7 @@ schema.parse({
 ```ts
 const schema = z
   .object({
-    password: z.string().min(8),
+    password: z.string().check(z.minLength(8)),
     confirmPassword: z.string(),
     anotherField: z.string(),
   })
@@ -2344,6 +2470,61 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
 </Accordion>
 </Accordions>
 
+## Codecs
+
+> **New** — Introduced in Zod 4.1. Refer to the dedicated [Codecs](/codecs) page for more information.
+
+Codecs are a special kind of schema that implement *bidirectional transformations* between two other schemas.
+
+```ts
+const stringToDate = z.codec(
+  z.iso.datetime(),  // input schema: ISO date string
+  z.date(),          // output schema: Date object
+  {
+    decode: (isoString) => new Date(isoString), // ISO string → Date
+    encode: (date) => date.toISOString(),       // Date → ISO string
+  }
+);
+```
+
+A regular `.parse()` operations performs the *forward transform*. It calls the codec's `decode` function.
+
+```ts
+stringToDate.parse("2024-01-15T10:30:00.000Z"); // => Date
+```
+
+You can alternatively use the top-level `z.decode()` function. Unlike `.parse()` (which accepts `unknown` input), `z.decode()` expects a strongly-typed input (`string` in this example).
+
+```ts
+z.decode(stringToDate, "2024-01-15T10:30:00.000Z"); // => Date
+```
+
+To perform the *reverse transform*, use the inverse: `z.encode()`.
+
+```ts
+z.encode(stringToDate, new Date("2024-01-15")); // => "2024-01-15T00:00:00.000Z"
+```
+
+Refer to the dedicated [Codecs](/codecs) page for more information. That page contains implementations for commonly-needed codecs that you can copy/paste into your project:
+
+- [**`stringToNumber`**](/codecs#stringtonumber)
+- [**`stringToInt`**](/codecs#stringtoint)
+- [**`stringToBigInt`**](/codecs#stringtobigint)
+- [**`numberToBigInt`**](/codecs#numbertobigint)
+- [**`isoDatetimeToDate`**](/codecs#isodatetimetodate)
+- [**`epochSecondsToDate`**](/codecs#epochsecondstodate)
+- [**`epochMillisToDate`**](/codecs#epochmillistodate)
+- [**`jsonCodec`**](/codecs#jsoncodec)
+- [**`utf8ToBytes`**](/codecs#utf8tobytes)
+- [**`bytesToUtf8`**](/codecs#bytestoutf8)
+- [**`base64ToBytes`**](/codecs#base64tobytes)
+- [**`base64urlToBytes`**](/codecs#base64urltobytes)
+- [**`hexToBytes`**](/codecs#hextobytes)
+- [**`stringToURL`**](/codecs#stringtourl)
+- [**`stringToHttpURL`**](/codecs#stringtohttpurl)
+- [**`uriComponent`**](/codecs#uricomponent)
+- [**`stringToBoolean`**](/codecs#stringtoboolean)
+
 ## Pipes
 
 Schemas can be chained together into "pipes". Pipes are primarily useful when used in conjunction with [Transforms](#transforms).
@@ -2368,7 +2549,9 @@ z.parse(stringToLength, "hello"); // => 5
 
 ## Transforms
 
-Transforms are a special kind of schema. Instead of validating input, they accept anything and perform some transformation on the data. To define a transform:
+> **Note** — For bi-directional transforms, use [codecs](/codecs).
+
+Transforms are a special kind of schema that perform a unidirectional transformation. Instead of validating input, they accept anything and perform some transformation on the data. To define a transform:
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -2795,10 +2978,6 @@ z.custom<...>((val) => ..., "custom error message");
 
 ## Functions
 
-<Callout type="warn">
-  In Zod 4, `z.function()` no longer returns a Zod schema.
-</Callout>
-
 Zod provides a `z.function()` utility for defining Zod-validated functions. This way, you can avoid intermixing validation code with your business logic.
 
 ```ts
@@ -2806,6 +2985,9 @@ const MyFunction = z.function({
   input: [z.string()], // parameters (must be an array or a ZodTuple)
   output: z.number()  // return type
 });
+
+type MyFunction = z.infer<typeof MyFunction>;
+// (input: string) => number
 ```
 
 Function schemas have an `.implement()` method which accepts a function and returns a new function that automatically validates its inputs and outputs.
@@ -2836,3 +3018,33 @@ const MyFunction = z.function({
 const computeTrimmedLength = MyFunction.implement((input) => input.trim.length);
 ```
 
+
+Use the `.implementAsync()` method to create an async function.
+
+```ts
+const computeTrimmedLengthAsync = MyFunction.implementAsync(
+  async (input) => input.trim().length
+);
+
+computeTrimmedLengthAsync("sandwich"); // => Promise<8>
+```
+
+
+
+- edd4feaa — Closes #5127
+- 5d4a3159 — Closes #5116
+- f3f09556 — Closes #5108
+- 0114d5bd — #5122
+- 3b077c3a — #5121
+- 1e06af8e — #5113
+- b01b6f39 — #5052
+- 571ab0c3 — #5051
+- d3ea1119 — #5049
+- b8e3f877 — #4865
+
+
+
+
+
+
+- 571ab0c3 — Drop JIT in Zod Mini `z.object()` (reduces bundle size by 20%) (PR #5051)

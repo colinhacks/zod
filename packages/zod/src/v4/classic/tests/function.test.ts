@@ -32,38 +32,38 @@ test("function inference 1", () => {
   expectTypeOf<func1>().toEqualTypeOf<(k: string) => number>();
 });
 
-// test("method parsing", () => {
-//   const methodObject = z.object({
-//     property: z.number(),
-//     method: z
-//       .function()
-//       .input(z.tuple([z.string()]))
-//       .output(z.number()),
-//   });
-//   const methodInstance = {
-//     property: 3,
-//     method: function (s: string) {
-//       return s.length + this.property;
-//     },
-//   };
-//   const parsed = methodObject.parse(methodInstance);
-//   expect(parsed.method("length=8")).toBe(11); // 8 length + 3 property
-// });
+test("method parsing", () => {
+  const methodObject = z.object({
+    property: z.number(),
+    method: z
+      .function()
+      .input(z.tuple([z.string()]))
+      .output(z.number()),
+  });
+  const methodInstance = {
+    property: 3,
+    method: function (s: string) {
+      return s.length + this.property;
+    },
+  };
+  const parsed = methodObject.parse(methodInstance);
+  expect(parsed.method("length=8")).toBe(11); // 8 length + 3 property
+});
 
-// test("async method parsing", async () => {
-//   const methodObject = z.object({
-//     property: z.number(),
-//     method: z.function().input(z.string()).output(z.promise(z.number())),
-//   });
-//   const methodInstance = {
-//     property: 3,
-//     method: async function (s: string) {
-//       return s.length + this.property;
-//     },
-//   };
-//   const parsed = methodObject.parse(methodInstance);
-//   expect(await parsed.method("length=8")).toBe(11); // 8 length + 3 property
-// });
+test("async method parsing", async () => {
+  const methodObject = z.object({
+    property: z.number(),
+    method: z.function().input([z.string()]).output(z.promise(z.number())),
+  });
+  const methodInstance = {
+    property: 3,
+    method: async function (s: string) {
+      return s.length + this.property;
+    },
+  };
+  const parsed = methodObject.parse(methodInstance);
+  expect(await parsed.method("length=8")).toBe(11); // 8 length + 3 property
+});
 
 test("args method", () => {
   const t1 = z.function();

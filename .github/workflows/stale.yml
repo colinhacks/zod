@@ -4,6 +4,8 @@ on:
   schedule:
     - cron: '0 0 * * *'     # every day at midnight UTC
   workflow_dispatch:
+permissions:
+  issues: write
 jobs:
   auto-close:
     runs-on: ubuntu-latest

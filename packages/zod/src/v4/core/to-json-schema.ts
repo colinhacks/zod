@@ -11,8 +11,9 @@ interface JSONSchemaGeneratorParams {
   /** The JSON Schema version to target.
    * - `"draft-2020-12"` — Default. JSON Schema Draft 2020-12
    * - `"draft-7"` — JSON Schema Draft 7
-   * - `"draft-4"` — JSON Schema Draft 4 */
-  target?: "draft-4" | "draft-7" | "draft-2020-12";
+   * - `"draft-4"` — JSON Schema Draft 4
+   * - `"openapi-3.0"` — OpenAPI 3.0 Schema Object */
+  target?: "draft-4" | "draft-7" | "draft-2020-12" | "openapi-3.0";
   /** How to handle unrepresentable types.
    * - `"throw"` — Default. Unrepresentable types throw an error
    * - `"any"` — Unrepresentable types become `{}` */
@@ -72,7 +73,7 @@ interface Seen {
 
 export class JSONSchemaGenerator {
   metadataRegistry: $ZodRegistry<Record<string, any>>;
-  target: "draft-4" | "draft-7" | "draft-2020-12";
+  target: "draft-4" | "draft-7" | "draft-2020-12" | "openapi-3.0";
   unrepresentable: "throw" | "any";
   override: (ctx: {
     zodSchema: schemas.$ZodTypes;
@@ -164,7 +165,9 @@ export class JSONSchemaGenerator {
               else if (regexes.length > 1) {
                 result.schema.allOf = [
                   ...regexes.map((regex) => ({
-                    ...(this.target === "draft-7" || this.target === "draft-4" ? ({ type: "string" } as const) : {}),
+                    ...(this.target === "draft-7" || this.target === "draft-4" || this.target === "openapi-3.0"
+                      ? ({ type: "string" } as const)
+                      : {}),
                     pattern: regex.source,
                   })),
                 ];
@@ -323,12 +326,24 @@ export class JSONSchemaGenerator {
           }
           case "union": {
             const json: JSONSchema.BaseSchema = _json as any;
-            json.anyOf = def.options.map((x, i) =>
+            const options = def.options.map((x, i) =>
               this.process(x, {
                 ...params,
                 path: [...params.path, "anyOf", i],
               })
             );
+            if (this.target === "openapi-3.0") {
+              const nonNull = options.filter((x) => (x as any).type !== "null");
+              const hasNull = nonNull.length !== options.length;
+              if (nonNull.length === 1) {
+                Object.assign(json, nonNull[0]!);
+              } else {
+                json.anyOf = nonNull;
+              }
+              if (hasNull) (json as any).nullable = true;
+            } else {
+              json.anyOf = options;
+            }
             break;
           }
           case "intersection": {
@@ -452,7 +467,7 @@ export class JSONSchemaGenerator {
             } else if (vals.length === 1) {
               const val = vals[0]!;
               json.type = val === null ? ("null" as const) : (typeof val as any);
-              if (this.target === "draft-4") {
+              if (this.target === "draft-4" || this.target === "openapi-3.0") {
                 json.enum = [val];
               } else {
                 json.const = val;
@@ -506,7 +521,13 @@ export class JSONSchemaGenerator {
 
           case "nullable": {
             const inner = this.process(def.innerType, params);
-            _json.anyOf = [inner, { type: "null" }];
+            if (this.target === "openapi-3.0") {
+              Object.assign(_json, inner);
+              (_json as any).nullable = true;
+              result.ref = def.innerType;
+            } else {
+              _json.anyOf = [inner, { type: "null" }];
+            }
             break;
           }
           case "nonoptional": {
@@ -591,6 +612,12 @@ export class JSONSchemaGenerator {
           case "custom": {
             if (this.unrepresentable === "throw") {
               throw new Error("Custom types cannot be represented in JSON Schema");
+            }
+            break;
+          }
+          case "function": {
+            if (this.unrepresentable === "throw") {
+              throw new Error("Function types cannot be represented in JSON Schema");
             }
             break;
           }
@@ -773,7 +800,10 @@ export class JSONSchemaGenerator {
 
         // merge referenced schema into current
         const refSchema = this.seen.get(ref)!.schema;
-        if (refSchema.$ref && (params.target === "draft-7" || params.target === "draft-4")) {
+        if (
+          refSchema.$ref &&
+          (params.target === "draft-7" || params.target === "draft-4" || params.target === "openapi-3.0")
+        ) {
           schema.allOf = schema.allOf ?? [];
           schema.allOf.push(refSchema);
         } else {
@@ -802,6 +832,8 @@ export class JSONSchemaGenerator {
       result.$schema = "http://json-schema.org/draft-07/schema#";
     } else if (this.target === "draft-4") {
       result.$schema = "http://json-schema.org/draft-04/schema#";
+    } else if (this.target === "openapi-3.0") {
+      // OpenAPI 3.0 schema objects should not include a $schema property
     } else {
       // @ts-ignore
       console.warn(`Invalid target: ${this.target}`);
@@ -994,6 +1026,9 @@ function isTransforming(
       return false;
     }
     case "catch": {
+      return false;
+    }
+    case "function": {
       return false;
     }
 

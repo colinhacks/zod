@@ -86,12 +86,8 @@ For convenience, Zod provides a global registry (`z.globalRegistry`) that can be
 export interface GlobalMeta {
   id?: string ;
   title?: string ;
-  description?: string ;
-  example?: unknown ;
-  examples?: 
-    | unknown[] // array-style (JSON Schema)
-    | Record<string, { value: unknown; [k: string]: unknown }>;  // map-style (OpenAPI)
-  deprecated?: boolean ;
+  description?: string;
+  deprecated?: boolean;
   [k: string]: unknown;
 }
 ```
@@ -107,6 +103,17 @@ const emailSchema = z.email().register(z.globalRegistry, {
   description: "Your email address",
   examples: ["first.last@example.com"]
 });
+```
+
+To globally augment the `GlobalMeta` interface, use [*declaration merging*](https://www.typescriptlang.org/docs/handbook/declaration-merging.html). Add the following anywhere in your codebase. Creating a `zod.d.ts` file in your project root is a common convention.
+
+```ts
+declare module "zod" {
+  interface GlobalMeta {
+    // add new fields here
+    examples?: unknown[];
+  }
+}
 ```
 
 ### `.meta()`

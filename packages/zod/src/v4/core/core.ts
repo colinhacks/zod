@@ -78,6 +78,13 @@ export class $ZodAsyncError extends Error {
   }
 }
 
+export class $ZodEncodeError extends Error {
+  constructor(name: string) {
+    super(`Encountered unidirectional transform during encode: ${name}`);
+    this.name = "ZodEncodeError";
+  }
+}
+
 ////////////////////////////  TYPE HELPERS  ///////////////////////////////////
 
 // export type input<T extends schemas.$ZodType> = T["_zod"]["input"];
@@ -86,32 +93,6 @@ export class $ZodAsyncError extends Error {
 // export type output<T extends schemas.$ZodType> = T["_zod"]["output"];
 export type input<T> = T extends { _zod: { input: any } } ? T["_zod"]["input"] : unknown;
 export type output<T> = T extends { _zod: { output: any } } ? T["_zod"]["output"] : unknown;
-
-// Mk2
-// export type input<T> = T extends { _zod: { "~input": any } }
-//   ? T["_zod"]["~input"]
-//   : T extends { _zod: { input: any } }
-//     ? T["_zod"]["input"]
-//     : never;
-// export type output<T> = T extends { _zod: { "~output": any } }
-//   ? T["_zod"]["~output"]
-//   : T extends { _zod: { output: any } }
-//     ? T["_zod"]["output"]
-//     : never;
-// Mk 3
-// export type input<T extends schemas.$ZodType> = T["_zod"]["input"];
-// export type output<T extends schemas.$ZodType> = T["_zod"]["output"];
-// Mk 4
-// export type input<T extends schemas.$ZodType> = T[] extends { _zod: { "~input": any } }
-//   ? T["_zod"]["~input"]
-//   : T extends { _zod: { input: any } }
-//     ? T["_zod"]["input"]
-//     : never;
-// export type output<T extends schemas.$ZodType> = T extends { _zod: { "~output": any } }
-//   ? T["_zod"]["~output"]
-//   : T extends { _zod: { output: any } }
-//     ? T["_zod"]["output"]
-//     : never;
 
 export type { output as infer };
 

@@ -167,8 +167,8 @@ describe("early termination options", () => {
 });
 
 describe("custom error paths", () => {
-  test("should use custom path in error message", async () => {
-    const result = await z
+  test("should use custom path in error message", () => {
+    const result = z
       .object({ password: z.string(), confirm: z.string() })
       .refine((data) => data.confirm === data.password, { path: ["confirm"] })
       .safeParse({ password: "asdf", confirm: "qewr" });
@@ -250,6 +250,79 @@ describe("superRefine functionality", () => {
     // Should pass with valid input
     const validArray = ["asfd", "qwer"];
     await expect(Strings.parseAsync(validArray)).resolves.toEqual(validArray);
+  });
+
+  test("should test continuability of custom issues", () => {
+    // Default continue behavior - allows subsequent refinements
+    const defaultContinue = z
+      .string()
+      .superRefine((_, ctx) => {
+        ctx.addIssue({ code: "custom", message: "First issue" });
+      })
+      .refine(() => false, "Second issue");
+
+    expect(defaultContinue.safeParse("test")).toMatchInlineSnapshot(`
+      {
+        "error": [ZodError: [
+        {
+          "code": "custom",
+          "message": "First issue",
+          "path": []
+        },
+        {
+          "code": "custom",
+          "path": [],
+          "message": "Second issue"
+        }
+      ]],
+        "success": false,
+      }
+    `);
+
+    // Explicit continue: false - prevents subsequent refinements
+    const explicitContinueFalse = z
+      .string()
+      .superRefine((_, ctx) => {
+        ctx.addIssue({ code: "custom", message: "First issue", continue: false });
+      })
+      .refine(() => false, "Second issue");
+
+    expect(explicitContinueFalse.safeParse("test")).toMatchInlineSnapshot(`
+      {
+        "error": [ZodError: [
+        {
+          "code": "custom",
+          "message": "First issue",
+          "path": []
+        }
+      ]],
+        "success": false,
+      }
+    `);
+
+    // Multiple issues in same refinement - both always added regardless of continue
+    const multipleInSame = z.string().superRefine((_, ctx) => {
+      ctx.addIssue({ code: "custom", message: "First", continue: false });
+      ctx.addIssue({ code: "custom", message: "Second" });
+    });
+
+    expect(multipleInSame.safeParse("test")).toMatchInlineSnapshot(`
+      {
+        "error": [ZodError: [
+        {
+          "code": "custom",
+          "message": "First",
+          "path": []
+        },
+        {
+          "code": "custom",
+          "message": "Second",
+          "path": []
+        }
+      ]],
+        "success": false,
+      }
+    `);
   });
 
   test("should accept string as shorthand for custom error message", () => {
@@ -431,9 +504,9 @@ test("when", () => {
     })
     .refine(
       (data) => {
-        console.log("running check...");
-        console.log(data);
-        console.log(data.password);
+        // console.log("running check...");
+        // console.log(data);
+        // console.log(data.password);
         return data.password === data.confirmPassword;
       },
       {

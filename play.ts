@@ -2,15 +2,17 @@ import { z } from "zod";
 
 z;
 
-// import { z } from "zod";
-const BrandedSchema = z.string().brand<"brand">();
-const WrappedSchema = z.object({ key: BrandedSchema });
+const stringToDate = z.codec(
+  z.iso.datetime(), // input schema: ISO string
+  z.date(), // output schema: Date object
+  {
+    decode: (isoString) => new Date(isoString), // string → Date
+    encode: (date) => date.toISOString(), // Date → string
+  }
+);
 
-type bso = typeof BrandedSchema._output;
-type basdfasdfso = typeof BrandedSchema._zod.output;
-type wso = (typeof WrappedSchema._output)["key"];
-type bso2 = z.output<typeof BrandedSchema>;
-type wso2 = z.output<typeof WrappedSchema>["key"];
+console.log(stringToDate.decode("2024-01-15T10:30:00.000Z")); // Date
+console.log(stringToDate.encode(new Date("2024-01-15"))); // "2024-01-15T00:00:00.000Z"
 
 // --- Runtime playground below ---
 function section(title: string) {
@@ -27,7 +29,7 @@ console.log("Array JSON:", jsonSchema.parse("[1, 2, 3]"));
 try {
   jsonSchema.parse("invalid json");
 } catch (err) {
-  console.log("Invalid JSON error:", err instanceof z.ZodError ? err.issues[0].code : err);
+  console.log("Invalid JSON error:", err instanceof z.ZodError ? err.issues[0].code : "unknown error");
 }
 
 // Basic object with coercion and validations

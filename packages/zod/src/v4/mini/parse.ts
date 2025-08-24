@@ -1,1 +1,14 @@
-export { parse, safeParse, parseAsync, safeParseAsync } from "../core/index.js";
+export {
+  parse,
+  safeParse,
+  parseAsync,
+  safeParseAsync,
+  encode,
+  decode,
+  encodeAsync,
+  decodeAsync,
+  safeEncode,
+  safeDecode,
+  safeEncodeAsync,
+  safeDecodeAsync,
+} from "../core/index.js";

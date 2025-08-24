@@ -93,7 +93,7 @@ importers:
         specifier: ^4.19.3
         version: 4.19.3
       typescript:
-        specifier: ^5.5.4
+        specifier: ~5.5.4
         version: 5.5.4
       vitest:
         specifier: ^2.1.9
@@ -115,7 +115,7 @@ importers:
         version: 2.1.19
       valibot:
         specifier: ^1.0.0
-        version: 1.0.0(typescript@5.8.2)
+        version: 1.0.0(typescript@5.9.2)
       zod:
         specifier: workspace:*
         version: link:../zod
@@ -231,7 +231,7 @@ importers:
         version: 0.4.4(rollup@4.37.0)
       '@rollup/plugin-typescript':
         specifier: ^12.1.2
-        version: 12.1.2(rollup@4.37.0)(tslib@2.8.1)(typescript@5.8.2)
+        version: 12.1.2(rollup@4.37.0)(tslib@2.8.1)(typescript@5.9.2)
       '@types/node':
         specifier: ^22.13.13
         version: 22.13.13
@@ -246,7 +246,7 @@ importers:
         version: 10.0.0
       valibot:
         specifier: ^1.0.0
-        version: 1.0.0(typescript@5.8.2)
+        version: 1.0.0(typescript@5.9.2)
       zod:
         specifier: workspace:*
         version: link:../zod
@@ -273,7 +273,7 @@ importers:
         version: 9.5.2
       valibot:
         specifier: ^1.0.0
-        version: 1.0.0(typescript@5.8.2)
+        version: 1.0.0(typescript@5.9.2)
       zod:
         specifier: workspace:*
         version: link:../zod
@@ -5375,6 +5375,11 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  typescript@5.9.2:
+    resolution: {integrity: sha512-CWBzXQrc/qOkhidw1OzBTQuYRbfyxDXJMVJ1XNwUHGROVmuaeiEm3OslpZ1RV96d7SKKjZKrSJu3+t/xlw3R9A==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
   unconfig@7.3.2:
     resolution: {integrity: sha512-nqG5NNL2wFVGZ0NA/aCFw0oJ2pxSf1lwg4Z5ill8wd7K4KX/rQbHlwbh+bjctXL5Ly1xtzHenHGOK0b+lG6JVg==}
 
@@ -7348,11 +7353,11 @@ snapshots:
     optionalDependencies:
       rollup: 4.37.0
 
-  '@rollup/plugin-typescript@12.1.2(rollup@4.37.0)(tslib@2.8.1)(typescript@5.8.2)':
+  '@rollup/plugin-typescript@12.1.2(rollup@4.37.0)(tslib@2.8.1)(typescript@5.9.2)':
     dependencies:
       '@rollup/pluginutils': 5.1.4(rollup@4.37.0)
       resolve: 1.22.10
-      typescript: 5.8.2
+      typescript: 5.9.2
     optionalDependencies:
       rollup: 4.37.0
       tslib: 2.8.1
@@ -10921,7 +10926,7 @@ snapshots:
       resolve-import: 2.0.0
       rimraf: 6.0.1
       sync-content: 2.0.1
-      typescript: 5.8.2
+      typescript: 5.5.4
       walk-up-path: 4.0.0
 
   supports-color@2.0.0: {}
@@ -11064,7 +11069,7 @@ snapshots:
       resolve-import: 2.0.0
       rimraf: 6.0.1
       sync-content: 2.0.1
-      typescript: 5.8.2
+      typescript: 5.5.4
       walk-up-path: 4.0.0
 
   tslib@2.8.1: {}
@@ -11091,6 +11096,8 @@ snapshots:
   typescript@5.6.1-rc: {}
 
   typescript@5.8.2: {}
+
+  typescript@5.9.2: {}
 
   unconfig@7.3.2:
     dependencies:
@@ -11215,9 +11222,9 @@ snapshots:
       is-typed-array: 1.1.15
       which-typed-array: 1.1.19
 
-  valibot@1.0.0(typescript@5.8.2):
+  valibot@1.0.0(typescript@5.9.2):
     optionalDependencies:
-      typescript: 5.8.2
+      typescript: 5.9.2
 
   validate-npm-package-license@3.0.4:
     dependencies:
