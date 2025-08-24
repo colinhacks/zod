@@ -571,6 +571,19 @@ describe("toJSONSchema", () => {
     `);
   });
 
+  test("number with exclusive min-max openapi", () => {
+    const schema = z.number().lt(100).gt(1);
+    expect(z.toJSONSchema(schema, { target: "openapi-3.0" })).toMatchInlineSnapshot(`
+      {
+        "exclusiveMaximum": true,
+        "exclusiveMinimum": true,
+        "maximum": 100,
+        "minimum": 1,
+        "type": "number",
+      }
+    `);
+  });
+
   test("arrays", () => {
     expect(z.toJSONSchema(z.array(z.string()))).toMatchInlineSnapshot(`
       {
