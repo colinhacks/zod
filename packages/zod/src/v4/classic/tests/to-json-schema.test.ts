@@ -652,6 +652,18 @@ describe("toJSONSchema", () => {
     `);
   });
 
+  test("record openapi", () => {
+    const schema = z.record(z.string(), z.boolean());
+    expect(z.toJSONSchema(schema, { target: "openapi-3.0" })).toMatchInlineSnapshot(`
+      {
+        "additionalProperties": {
+          "type": "boolean",
+        },
+        "type": "object",
+      }
+    `);
+  });
+
   test("tuple", () => {
     const schema = z.tuple([z.string(), z.number()]).rest(z.boolean());
     expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`

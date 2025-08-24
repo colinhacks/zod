@@ -409,7 +409,7 @@ export class JSONSchemaGenerator {
           case "record": {
             const json: JSONSchema.ObjectSchema = _json as any;
             json.type = "object";
-            if (this.target !== "draft-4") {
+            if (this.target === "draft-7" || this.target === "draft-2020-12") {
               json.propertyNames = this.process(def.keyType, {
                 ...params,
                 path: [...params.path, "propertyNames"],
