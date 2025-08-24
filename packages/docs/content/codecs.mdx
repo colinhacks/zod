@@ -7,41 +7,28 @@ import { ThemedImage } from "@/components/themed-image";
 
 > ✨ **New** — Introduced in `zod@4.1`
 
-> **TLDR** — You can use `z.encode(<schema>, <input>)` to perform an _encode_ operation ("reverse parsing"). This will work with any schema (except those containing `.transform()`) but is primarily intended for use in conjunction with `z.codec()`. 
+All Zod schemas can process inputs in both the forward and backward direction: 
 
-Zod schemas are "codecs". That is, they can process inputs in both the forward and backward direction: 
+- **Forward**: `Input` to `Output`
+  - `.parse()`
+  - `.decode()`
+- **Backward**: `Output` to `Input`
+  - `.encode()`
 
-- *Decoding*: the "forward" direction: `Input -> Output`. This is what regular `.parse()` does.
-- *Encoding*: the "backward" direction: `Output -> Input`.
-
-The regular `.parse()` method performs a *decode* operation (forward direction). 
-
-```ts
-import * as z from "zod";
-
-const mySchema = z.string();
-
-// method form
-mySchema.parse("hello"); // => "hello"
-
-// functional form
-z.parse(mySchema, "hello"); // => "hello"
-```
-
-For explicitness, Zod provides dedicated functions for performing "decode" and "encode" operations. 
+In most cases, this is a distinction without a difference. The input and output types are identical, so there's no difference between "forward" and "backward".
 
 ```ts
-z.decode(mySchema, "hello"); // => "hello"
-z.encode(mySchema, "hello"); // => "hello"
+const schema = z.string();
+
+type Input = z.input<typeof schema>;    // string
+type Output = z.output<typeof schema>;  // string
+
+schema.parse("asdf");   // => "asdf"
+schema.decode("asdf");  // => "asdf"
+schema.encode("asdf");  // => "asdf"
 ```
 
-In many cases (such as the string schema above), the input and output types of a Zod schema are identical, so `z.decode()` and `z.encode()` are functionally equivalent. But some schema types cause the input and output types to diverge:
-
-- `z.default()` (input is optional, output is not)
-- `z.transform()` (a unidirectional transformation)
-- `z.codec()` (bidirectional transformation)
-
-Most important of these is `z.codec()`, which is Zod's primary mechanism for defining bidirectional transformations.
+However, some schema types cause the input and output types to diverge, notably `z.codec()`. Codecs are a special type of schema that defines a *bi-directional transformation* between two other schemas.
 
 ```ts
 const stringToDate = z.codec(
@@ -52,9 +39,6 @@ const stringToDate = z.codec(
     encode: (date) => date.toISOString(),       // Date → ISO string
   }
 );
-
-type Input = z.input<typeof stringToDate>;   // => string
-type Output = z.output<typeof stringToDate>; // => Date
 ```
 
 In these cases, `z.decode()` and `z.encode()` behave quite differently.
@@ -62,10 +46,10 @@ In these cases, `z.decode()` and `z.encode()` behave quite differently.
 ```ts
 const payloadSchema = z.object({ startDate: stringToDate });
 
-z.decode(stringToDate, "2024-01-15T10:30:00.000Z")
+stringToDate.decode("2024-01-15T10:30:00.000Z")
 // => Date
 
-z.encode(stringToDate, new Date("2024-01-15T10:30:00.000Z"))
+stringToDate.encode(new Date("2024-01-15T10:30:00.000Z"))
 // => string
 ```
 
@@ -79,14 +63,14 @@ This is particularly useful when parsing data at a network boundary. You can sha
   alt="Codecs encoding and decoding data across a network boundary" 
 />
 
-## Composability
+### Composability
 
 > **Note** — You can use `z.encode()` and `z.decode()` with any schema. It doesn't have to be a ZodCodec.
 
 Codecs are a schema like any other. You can nest them inside objects, arrays, pipes, etc. There are no rules on where you can use them!
 
 
-## Type-safe inputs
+### Type-safe inputs
 
 The usual `.parse()` method accepts `unknown` as input, and returns a value that matches the schema's inferred *output type*.
 
@@ -110,7 +94,7 @@ Here's a diagram demonstrating the differences between the type signatures for `
   alt="Codec directionality diagram showing bidirectional transformation between input and output schemas" 
 />
 
-## Async and safe variants
+### Async and safe variants
 
 As with `.transform()` and `.refine()`, codecs support async transforms.
 
