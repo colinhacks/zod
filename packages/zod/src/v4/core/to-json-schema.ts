@@ -385,10 +385,10 @@ export class JSONSchemaGenerator {
               }
             } else if (this.target === "openapi-3.0") {
               json.items = {
-                oneOf: [...prefixItems],
+                anyOf: [...prefixItems],
               };
               if (rest) {
-                json.items.oneOf!.push(rest);
+                json.items.anyOf!.push(rest);
               }
               json.minItems = prefixItems.length;
               if (!rest) {

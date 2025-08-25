@@ -696,7 +696,7 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(schema, { target: "openapi-3.0" })).toMatchInlineSnapshot(`
       {
         "items": {
-          "oneOf": [
+          "anyOf": [
             {
               "type": "string",
             },
@@ -717,7 +717,7 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(schema, { target: "openapi-3.0" })).toMatchInlineSnapshot(`
       {
         "items": {
-          "oneOf": [
+          "anyOf": [
             {
               "type": "string",
             },
