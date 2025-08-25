@@ -105,9 +105,7 @@ Codecs are a schema like any other. You can nest them inside objects, arrays, pi
 
 ### Type-safe inputs
 
-The usual `.parse()` method accepts `unknown` as input, and returns a value that matches the schema's inferred *output type*.
-
-By constrast, the `z.decode()` and `z.encode()` functions have *strongly-typed inputs*. 
+While `.parse()` and `.decode()` behave identically at *runtime*, they have different type signatures. The `.parse()` method accepts `unknown` as input, and returns a value that matches the schema's inferred *output type*. By constrast, the `z.decode()` and `z.encode()` functions have *strongly-typed inputs*. 
 
 ```ts
 stringToDate.parse(12345); 
@@ -120,6 +118,7 @@ stringToDate.encode(12345);
 // ❌ TypeScript error: Argument of type 'number' is not assignable to parameter of type 'Date'.
 ```
 
+Why the difference? Encoding and decoding imply *transformation*. In many cases, the inputs to these methods
 Here's a diagram demonstrating the differences between the type signatures for `parse()`, `decode()`, and `encode()`.
 
 <ThemedImage 
@@ -405,50 +404,50 @@ epochMillisToDate.decode(1705314600000);  // => Date object
 epochMillisToDate.encode(new Date());     // => Unix timestamp in milliseconds
 ```
 
-### `jsonCodec`
+### `json(schema)`
 
-Parses JSON strings into structured data and serializes back to JSON.
+Parses JSON strings into structured data and serializes back to JSON. This generic function accepts an output schema to validate the parsed JSON data.
 
 ```ts
-// uses JSON.parse()/JSON.stringify() to transform between string and JSON
-const jsonCodec = z.codec(z.string(), z.json(), {
-  decode: (jsonString, ctx) => {
-    try {
-      return JSON.parse(jsonString);
-    } catch (err: any) {
-      ctx.issues.push({
-        code: "invalid_format",
-        format: "json_string",
-        input: jsonString,
-        message: err.message,
-      });
-      return z.NEVER;
-    }
-  },
-  encode: (value) => JSON.stringify(value),
-});
+const jsonCodec = <T extends z.core.$ZodType>(schema: T) =>
+  z.codec(z.string(), schema, {
+    decode: (jsonString, ctx) => {
+      try {
+        return JSON.parse(jsonString);
+      } catch (err: any) {
+        ctx.issues.push({
+          code: "invalid_format",
+          format: "json",
+          input: jsonString,
+          message: err.message,
+        });
+        return z.NEVER;
+      }
+    },
+    encode: (value) => JSON.stringify(value),
+  });
 ```
 
-To further validate the resulting JSON data, pipe the result into another schema.
+Usage example with a specific schema:
 
 ```ts
-const jsonStringToData = jsonCodec.pipe(z.object({ name: z.string(), age: z.number() }));
+const jsonToObject = json(z.object({ name: z.string(), age: z.number() }));
 
-jsonStringToData.decode('~~invalid~~'); 
+jsonToObject.decode('{"name":"Alice","age":30}');  
+// => { name: "Alice", age: 30 }
+
+jsonToObject.encode({ name: "Bob", age: 25 });     
+// => '{"name":"Bob","age":25}'
+
+jsonToObject.decode('~~invalid~~'); 
 // ZodError: [
 //   {
 //     "code": "invalid_format",
 //     "format": "json",
 //     "path": [],
-//     "message": "Invalid json"
+//     "message": "Unexpected token '~', \"~~invalid~~\" is not valid JSON"
 //   }
 // ]
-
-myCodec.decode('{"name":"Alice","age":30}');  
-// => { name: "Alice", age: 30 }
-
-myCodec.encode({ name: "Bob", age: 25 });     
-// => '{"name":"Bob","age":25}'
 ```
 
 ### `utf8ToBytes`
@@ -485,8 +484,8 @@ Converts base64 strings to `Uint8Array` byte arrays and vice versa.
 
 ```ts
 const base64ToBytes = z.codec(z.base64(), z.instanceof(Uint8Array), {
-  decode: (base64String) => z.core.util.base64ToUint8Array(base64String),
-  encode: (bytes) => z.core.util.uint8ArrayToBase64(bytes),
+  decode: (base64String) => z.util.base64ToUint8Array(base64String),
+  encode: (bytes) => z.util.uint8ArrayToBase64(bytes),
 });
 
 base64ToBytes.decode("SGVsbG8=");  // => Uint8Array([72, 101, 108, 108, 111])
@@ -499,8 +498,8 @@ Converts base64url strings (URL-safe base64) to `Uint8Array` byte arrays.
 
 ```ts
 const base64urlToBytes = z.codec(z.base64url(), z.instanceof(Uint8Array), {
-  decode: (base64urlString) => z.core.util.base64urlToUint8Array(base64urlString),
-  encode: (bytes) => z.core.util.uint8ArrayToBase64url(bytes),
+  decode: (base64urlString) => z.util.base64urlToUint8Array(base64urlString),
+  encode: (bytes) => z.util.uint8ArrayToBase64url(bytes),
 });
 
 base64urlToBytes.decode("SGVsbG8");  // => Uint8Array([72, 101, 108, 108, 111])
@@ -513,8 +512,8 @@ Converts hexadecimal strings to `Uint8Array` byte arrays and vice versa.
 
 ```ts
 const hexToBytes = z.codec(z.hex(), z.instanceof(Uint8Array), {
-  decode: (hexString) => z.core.util.hexToUint8Array(hexString),
-  encode: (bytes) => z.core.util.uint8ArrayToHex(bytes),
+  decode: (hexString) => z.util.hexToUint8Array(hexString),
+  encode: (bytes) => z.util.uint8ArrayToHex(bytes),
 });
 
 hexToBytes.decode("48656c6c6f");     // => Uint8Array([72, 101, 108, 108, 111])
