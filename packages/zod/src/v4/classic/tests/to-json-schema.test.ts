@@ -731,6 +731,95 @@ describe("toJSONSchema", () => {
     `);
   });
 
+  test("tuple draft-7", () => {
+    const schema = z.tuple([z.string(), z.number()]);
+    expect(z.toJSONSchema(schema, { target: "draft-7", io: "input" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "items": [
+          {
+            "type": "string",
+          },
+          {
+            "type": "number",
+          },
+        ],
+        "type": "array",
+      }
+    `);
+  });
+
+  test("tuple with rest draft-7", () => {
+    const schema = z.tuple([z.string(), z.number()]).rest(z.boolean());
+    expect(z.toJSONSchema(schema, { target: "draft-7", io: "input" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalItems": {
+          "type": "boolean",
+        },
+        "items": [
+          {
+            "type": "string",
+          },
+          {
+            "type": "number",
+          },
+        ],
+        "type": "array",
+      }
+    `);
+  });
+
+  test("tuple with rest draft-7 - issue #5151 regression test", () => {
+    // This test addresses issue #5151: tuple with rest elements and ids
+    // in draft-7 had incorrect internal path handling affecting complex scenarios
+    const primarySchema = z.string().meta({ id: "primary" });
+    const restSchema = z.number().meta({ id: "rest" });
+    const testSchema = z.tuple([primarySchema], restSchema);
+
+    // Test both final output structure AND internal path handling
+    const capturedPaths: string[] = [];
+    const result = z.toJSONSchema(testSchema, {
+      target: "draft-7",
+      override: (ctx) => capturedPaths.push(ctx.path.join("/")),
+    });
+
+    // Verify correct draft-7 structure with metadata extraction
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalItems": {
+          "$ref": "#/definitions/rest",
+        },
+        "definitions": {
+          "primary": {
+            "id": "primary",
+            "type": "string",
+          },
+          "rest": {
+            "id": "rest",
+            "type": "number",
+          },
+        },
+        "items": [
+          {
+            "$ref": "#/definitions/primary",
+          },
+        ],
+        "type": "array",
+      }
+    `);
+
+    // Verify internal paths are correct (this was the actual bug)
+    expect(capturedPaths).toContain("items/0"); // prefix items should use "items" path
+    expect(capturedPaths).toContain("additionalItems"); // rest should use "additionalItems" path
+    expect(capturedPaths).not.toContain("prefixItems/0"); // should not use draft-2020-12 paths
+
+    // Structural validations
+    expect(Array.isArray(result.items)).toBe(true);
+    expect(result.additionalItems).toBeDefined();
+  });
+
   test("promise", () => {
     const schema = z.promise(z.string());
     expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
@@ -1554,7 +1643,9 @@ test("unrepresentable literal values are ignored", () => {
     }
   `);
 
-  const b = z.z.toJSONSchema(z.literal([undefined, null, 5, BigInt(1324)]), { unrepresentable: "any" });
+  const b = z.z.toJSONSchema(z.literal([undefined, null, 5, BigInt(1324)]), {
+    unrepresentable: "any",
+  });
   expect(b).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1566,7 +1657,9 @@ test("unrepresentable literal values are ignored", () => {
     }
   `);
 
-  const c = z.z.toJSONSchema(z.literal([undefined]), { unrepresentable: "any" });
+  const c = z.z.toJSONSchema(z.literal([undefined]), {
+    unrepresentable: "any",
+  });
   expect(c).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1849,7 +1942,9 @@ test("basic registry", () => {
   myRegistry.add(User, { id: "User" });
   myRegistry.add(Post, { id: "Post" });
 
-  const result = z.z.toJSONSchema(myRegistry, { uri: (id) => `https://example.com/${id}.json` });
+  const result = z.z.toJSONSchema(myRegistry, {
+    uri: (id) => `https://example.com/${id}.json`,
+  });
   expect(result).toMatchInlineSnapshot(`
     {
       "schemas": {
