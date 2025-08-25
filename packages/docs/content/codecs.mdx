@@ -46,10 +46,10 @@ In these cases, `z.decode()` and `z.encode()` behave quite differently.
 ```ts
 const payloadSchema = z.object({ startDate: stringToDate });
 
-stringToDate.decode("2024-01-15T10:30:00.000Z")
+payloadSchema.decode("2024-01-15T10:30:00.000Z")
 // => Date
 
-stringToDate.encode(new Date("2024-01-15T10:30:00.000Z"))
+payloadSchema.encode(new Date("2024-01-15T10:30:00.000Z"))
 // => string
 ```
 
