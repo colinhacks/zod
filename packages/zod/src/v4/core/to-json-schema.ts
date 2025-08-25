@@ -183,7 +183,7 @@ export class JSONSchemaGenerator {
             else json.type = "number";
 
             if (typeof exclusiveMinimum === "number") {
-              if (this.target === "draft-4") {
+              if (this.target === "draft-4" || this.target === "openapi-3.0") {
                 json.minimum = exclusiveMinimum;
                 json.exclusiveMinimum = true;
               } else {
@@ -199,7 +199,7 @@ export class JSONSchemaGenerator {
             }
 
             if (typeof exclusiveMaximum === "number") {
-              if (this.target === "draft-4") {
+              if (this.target === "draft-4" || this.target === "openapi-3.0") {
                 json.maximum = exclusiveMaximum;
                 json.exclusiveMaximum = true;
               } else {
