@@ -431,7 +431,7 @@ const jsonCodec = <T extends z.core.$ZodType>(schema: T) =>
 Usage example with a specific schema:
 
 ```ts
-const jsonToObject = json(z.object({ name: z.string(), age: z.number() }));
+const jsonToObject = jsonCodec(z.object({ name: z.string(), age: z.number() }));
 
 jsonToObject.decode('{"name":"Alice","age":30}');  
 // => { name: "Alice", age: 30 }
