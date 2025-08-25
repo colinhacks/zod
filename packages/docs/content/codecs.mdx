@@ -158,7 +158,7 @@ During regular decoding, a `ZodPipe<A, B>` schema will first parse the data with
 All checks (`.refine()`, `.min()`, `.max()`, etc.) are still executed in both directions. 
 
 ```ts
-const schema = stringToDate.refine((date) => date.getFullYear() > 2000, "Must be this millenium");
+const schema = stringToDate.refine((date) => date.getFullYear() >= 2000, "Must be this millenium");
 
 z.encode(schema, new Date("2000-01-01"));
 // => Date
