@@ -561,23 +561,3 @@ const uriComponent = z.codec(z.string(), z.string(), {
 uriComponent.decode("Hello%20World%21");  // => "Hello World!"
 uriComponent.encode("Hello World!");      // => "Hello%20World!"
 ```
-
-### `stringToBoolean()`
-
-Converts string representations to boolean values. This is an alias for `z.stringbool()`.
-
-```ts
-const stringToBoolean = (options?: { truthy?: string[]; falsy?: string[] }) =>
-  z.stringbool(options);
-
-const codec = stringToBoolean();
-codec.decode("true");   // => true
-codec.decode("false");  // => false
-codec.encode(true);     // => "true"
-codec.encode(false);    // => "false"
-
-// With custom options
-const customCodec = stringToBoolean({ truthy: ["yes", "y"], falsy: ["no", "n"] });
-customCodec.decode("yes");  // => true
-customCodec.encode(true);   // => "yes"
-```
