@@ -903,3 +903,25 @@ const longString = z.string().refine((val) => val.length > 10, {
   - ZodEnum and ZodNativeEnum are merged
   - `.Values` and `.Enum` are removed. Use `.enum` instead.
   - `.options` is removed */}
+
+## New features
+
+### JSON String validation
+
+Zod 4 introduces `z.jsonString()` for validating and parsing JSON strings:
+
+```ts
+// Validate JSON syntax only
+const schema = z.jsonString();
+schema.parse('{"name": "Alice", "age": 30}'); // ✅ returns original string
+schema.parse("invalid json"); // ❌ throws error
+
+// Parse JSON and validate structure
+const userSchema = z.jsonString(z.object({
+  name: z.string(),
+  age: z.number(),
+}));
+userSchema.parse('{"name": "Alice", "age": 30}'); // ✅ returns { name: "Alice", age: 30 }
+```
+
+This feature is useful for validating JSON strings from external sources (like API responses or user input) and provides proper error reporting for both JSON syntax errors and schema validation errors.

@@ -1737,3 +1737,31 @@ export function _function(params?: {
 }
 
 export { _function as function };
+
+// ZodMiniJSONString
+export interface ZodMiniJSONString extends _ZodMiniString<core.$ZodJSONStringInternals> {}
+export const ZodMiniJSONString: core.$constructor<ZodMiniJSONString> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniJSONString",
+  (inst, def) => {
+    core.$ZodJSONString.init(inst, def);
+    ZodMiniStringFormat.init(inst, def);
+  }
+);
+
+export function jsonString(params?: string | core.$ZodJSONStringParams): ZodMiniJSONString;
+export function jsonString<T extends core.$ZodType>(
+  inner: T,
+  params?: string | core.$ZodJSONStringParams
+): ZodMiniPipe<ZodMiniTransform<any, string>, T>;
+export function jsonString(innerOrParams?: any, maybeParams?: any): any {
+  if (innerOrParams && typeof innerOrParams === "object" && "_zod" in innerOrParams) {
+    const inner = innerOrParams as core.$ZodType;
+    const params = maybeParams;
+    return core._jsonStringPipe(
+      { Pipe: ZodMiniPipe, Transform: ZodMiniTransform, String: ZodMiniString },
+      inner,
+      params
+    );
+  }
+  return core._jsonString(ZodMiniJSONString, innerOrParams);
+}

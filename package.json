@@ -18,6 +18,7 @@
     "@arethetypeswrong/cli": "^0.17.4",
     "@biomejs/biome": "^1.9.4",
     "@types/benchmark": "^2.1.5",
+    "@types/node": "^24.3.0",
     "@types/semver": "^7.7.0",
     "@web-std/file": "^3.0.3",
     "arktype": "^2.1.19",
