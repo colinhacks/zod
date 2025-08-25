@@ -368,13 +368,21 @@ export class JSONSchemaGenerator {
           case "tuple": {
             const json: JSONSchema.ArraySchema = _json as any;
             json.type = "array";
+
+            const prefixPath = this.target === "draft-2020-12" ? "prefixItems" : "items";
+            const restPath =
+              this.target === "draft-2020-12" ? "items" : this.target === "openapi-3.0" ? "items" : "additionalItems";
+
             const prefixItems = def.items.map((x, i) =>
-              this.process(x, { ...params, path: [...params.path, "prefixItems", i] })
+              this.process(x, {
+                ...params,
+                path: [...params.path, prefixPath, i],
+              })
             );
             const rest = def.rest
               ? this.process(def.rest, {
                   ...params,
-                  path: [...params.path, "items"],
+                  path: [...params.path, restPath, ...(this.target === "openapi-3.0" ? [def.items.length] : [])],
                 })
               : null;
 
