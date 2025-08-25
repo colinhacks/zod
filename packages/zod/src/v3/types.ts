@@ -854,7 +854,19 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           });
           status.dirty();
         }
-      } else if (check.kind === "cuid2") {
+      } else if (check.kind === "slug") {
+        const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+        if (!slugRegex.test(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "slug",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
+      }
+      else if (check.kind === "cuid2") {
         if (!cuid2Regex.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
@@ -1057,7 +1069,9 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   email(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "email", ...errorUtil.errToObj(message) });
   }
-
+  slug(message?: errorUtil.ErrMessage) {
+  return this._addCheck({ kind: "slug", message });
+}
   url(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "url", ...errorUtil.errToObj(message) });
   }
