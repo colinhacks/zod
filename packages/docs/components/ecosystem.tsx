@@ -35,6 +35,12 @@ const apiLibraries: ZodResource[] = [
     slug: "RobinTail/express-zod-api",
   },
   {
+    name: "nestjs-zod",
+    url: "https://github.com/BenLorantfy/nestjs-zod",
+    description: "Integrate nestjs and zod.  Create nestjs DTOs using zod, serialize with zod, and generate OpenAPI documentation from zod schemas",
+    slug: "BenLorantfy/nestjs-zod",
+  },
+  {
     name: "Zod Sockets",
     url: "https://github.com/RobinTail/zod-sockets",
     description: "Socket.IO solution with I/O validation, an AsyncAPI generator, and a type-safe events map.",
@@ -108,6 +114,12 @@ const zodToXConverters: ZodResource[] = [
     url: "https://github.com/matejchalk/zod2md",
     description: "Generate Markdown docs from Zod schemas",
     slug: "matejchalk/zod2md",
+  },
+  {
+    name: "prisma-zod-generator",
+    url: "https://github.com/omar-dulaimi/prisma-zod-generator",
+    description: "Generate Zod schemas from Prisma schema with full ZodObject method support",
+    slug: "omar-dulaimi/prisma-zod-generator",
   },
 ];
 
@@ -236,11 +248,7 @@ type ResourceTableProps = {
 async function ResourceTable({ resources }: ResourceTableProps) {
   await fetchStars(resources);
 
-  return (
-    <>
-      <Table resources={resources} />
-    </>
-  );
+  return <Table resources={resources} />;
 }
 
 export async function ApiLibraries() {

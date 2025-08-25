@@ -38,8 +38,9 @@ test("failing validations", () => {
         "origin": "file",
         "code": "too_small",
         "minimum": 5,
+        "inclusive": true,
         "path": [],
-        "message": "Too small: expected file to have >5 bytes"
+        "message": "Too small: expected file to have >=5 bytes"
       }
     ]],
       "success": false,
@@ -52,8 +53,9 @@ test("failing validations", () => {
         "origin": "file",
         "code": "too_big",
         "maximum": 8,
+        "inclusive": true,
         "path": [],
-        "message": "Too big: expected file to have <8 bytes"
+        "message": "Too big: expected file to have <=8 bytes"
       }
     ]],
       "success": false,

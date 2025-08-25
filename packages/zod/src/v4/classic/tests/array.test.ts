@@ -6,9 +6,9 @@ test("type inference", () => {
   expectTypeOf<z.infer<typeof schema>>().toEqualTypeOf<string[]>();
 });
 
-test("array min/max", async () => {
+test("array min/max", () => {
   const schema = z.array(z.string()).min(2).max(2);
-  const r1 = await schema.safeParse(["asdf"]);
+  const r1 = schema.safeParse(["asdf"]);
   expect(r1.success).toEqual(false);
   expect(r1.error!.issues).toMatchInlineSnapshot(`
     [
@@ -23,7 +23,7 @@ test("array min/max", async () => {
     ]
   `);
 
-  const r2 = await schema.safeParse(["asdf", "asdf", "asdf"]);
+  const r2 = schema.safeParse(["asdf", "asdf", "asdf"]);
   expect(r2.success).toEqual(false);
   expect(r2.error!.issues).toMatchInlineSnapshot(`
     [
@@ -39,11 +39,11 @@ test("array min/max", async () => {
   `);
 });
 
-test("array length", async () => {
+test("array length", () => {
   const schema = z.array(z.string()).length(2);
   schema.parse(["asdf", "asdf"]);
 
-  const r1 = await schema.safeParse(["asdf"]);
+  const r1 = schema.safeParse(["asdf"]);
   expect(r1.success).toEqual(false);
   expect(r1.error!.issues).toMatchInlineSnapshot(`
     [
@@ -59,7 +59,7 @@ test("array length", async () => {
     ]
   `);
 
-  const r2 = await schema.safeParse(["asdf", "asdf", "asdf"]);
+  const r2 = schema.safeParse(["asdf", "asdf", "asdf"]);
   expect(r2.success).toEqual(false);
   expect(r2.error!.issues).toMatchInlineSnapshot(`
     [

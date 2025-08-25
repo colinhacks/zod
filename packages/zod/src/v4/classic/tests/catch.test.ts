@@ -249,3 +249,28 @@ test("ctx.input", () => {
 
   expect(schema.parse(123)).toEqual("123");
 });
+
+test("direction-aware catch", () => {
+  const schema = z.string().catch("fallback");
+
+  // Forward direction (regular parse): catch should be applied
+  expect(schema.parse(123)).toBe("fallback");
+
+  // Reverse direction (encode): catch should NOT be applied, invalid value should fail validation
+  expect(z.safeEncode(schema, 123 as any)).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": [],
+        "message": "Invalid input: expected string, received number"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+
+  // But valid values should still work in reverse
+  expect(z.encode(schema, "world")).toBe("world");
+});

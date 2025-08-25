@@ -6,6 +6,7 @@
     "module": "NodeNext",
     "customConditions": [],
     "incremental": false,
-    "noEmit": true
+    "noEmit": true,
+    "types": ["node"]
   }
 }

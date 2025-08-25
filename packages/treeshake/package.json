@@ -6,7 +6,7 @@
   "scripts": {
     "bundle": "rollup -c rollup.config.js --input",
     "bundle:rollup": "rollup --input",
-    "bundle:esbuild": "esbuild --bundle ./in.ts --outfile=./out.js --bundle --format=esm"
+    "bundle:esbuild": "esbuild --bundle ./in.ts --conditions=@zod/source --outfile=./out.js --bundle --format=esm"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^28.0.3",

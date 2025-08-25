@@ -1,4 +1,8 @@
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { type ViteUserConfig, defineConfig } from "vitest/config";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   resolve: {
@@ -8,6 +12,7 @@ export default defineConfig({
     projects: ["packages/*"],
     watch: false,
     isolate: true,
+    setupFiles: [resolve(__dirname, "scripts/fail-on-console.ts")],
     typecheck: {
       include: ["**/*.test.ts"],
       enabled: true,

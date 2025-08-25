@@ -1476,7 +1476,7 @@ type RawIssue<T extends errors.$ZodIssueBase> = T extends any
       util.MakePartial<T, "message" | "path"> & {
         /** The schema or check that originated this issue. */
         readonly inst?: schemas.$ZodType | checks.$ZodCheck;
-        /** If `true`, Zod will continue executing checks/refinements after this issue. */
+        /** If `true`, Zod will execute subsequent checks/refinements instead of immediately aborting */
         readonly continue?: boolean | undefined;
       } & Record<string, unknown>
     >
@@ -1498,7 +1498,7 @@ export function _superRefine<T>(fn: (arg: T, payload: $RefinementCtx<T>) => void
         _issue.code ??= "custom";
         _issue.input ??= payload.value;
         _issue.inst ??= ch;
-        _issue.continue ??= !ch._zod.def.abort;
+        _issue.continue ??= !ch._zod.def.abort; // abort is always undefined, so this is always true...
         payload.issues.push(util.issue(_issue));
       }
     };
@@ -1536,16 +1536,12 @@ export interface $ZodStringBoolParams extends TypeParams {
 
 export function _stringbool(
   Classes: {
-    Pipe?: typeof schemas.$ZodPipe;
+    Codec?: typeof schemas.$ZodCodec;
     Boolean?: typeof schemas.$ZodBoolean;
-    Transform?: typeof schemas.$ZodTransform;
     String?: typeof schemas.$ZodString;
   },
   _params?: string | $ZodStringBoolParams
-): schemas.$ZodPipe<
-  schemas.$ZodPipe<schemas.$ZodString, schemas.$ZodTransform<boolean, string>>,
-  schemas.$ZodBoolean<boolean>
-> {
+): schemas.$ZodCodec<schemas.$ZodString, schemas.$ZodBoolean> {
   const params = util.normalizeParams(_params);
 
   let truthyArray = params.truthy ?? ["true", "1", "yes", "on", "y", "enabled"];
@@ -1558,15 +1554,19 @@ export function _stringbool(
   const truthySet = new Set(truthyArray);
   const falsySet = new Set(falsyArray);
 
-  const _Pipe = Classes.Pipe ?? schemas.$ZodPipe;
+  const _Codec = Classes.Codec ?? schemas.$ZodCodec;
   const _Boolean = Classes.Boolean ?? schemas.$ZodBoolean;
   const _String = Classes.String ?? schemas.$ZodString;
-  const _Transform = Classes.Transform ?? schemas.$ZodTransform;
 
-  const tx = new _Transform({
-    type: "transform",
-    transform: (input, payload: schemas.ParsePayload<unknown>) => {
-      let data: string = input as string;
+  const stringSchema = new _String({ type: "string", error: params.error });
+  const booleanSchema = new _Boolean({ type: "boolean", error: params.error });
+
+  const codec = new _Codec({
+    type: "pipe",
+    in: stringSchema as any,
+    out: booleanSchema as any,
+    transform: ((input: string, payload: schemas.ParsePayload<string>) => {
+      let data: string = input;
       if (params.case !== "sensitive") data = data.toLowerCase();
       if (truthySet.has(data)) {
         return true;
@@ -1578,33 +1578,23 @@ export function _stringbool(
           expected: "stringbool",
           values: [...truthySet, ...falsySet],
           input: payload.value,
-          inst: tx,
+          inst: codec,
           continue: false,
         });
         return {} as never;
       }
-    },
+    }) as any,
+    reverseTransform: ((input: boolean, _payload: schemas.ParsePayload<boolean>) => {
+      if (input === true) {
+        return truthyArray[0] || "true";
+      } else {
+        return falsyArray[0] || "false";
+      }
+    }) as any,
     error: params.error,
-  });
-  // params.error;
+  }) as any;
 
-  const innerPipe = new _Pipe({
-    type: "pipe",
-    in: new _String({ type: "string", error: params.error }),
-    out: tx,
-    error: params.error,
-  });
-
-  const outerPipe = new _Pipe({
-    type: "pipe",
-    in: innerPipe,
-    out: new _Boolean({
-      type: "boolean",
-      error: params.error,
-    }),
-    error: params.error,
-  });
-  return outerPipe as any;
+  return codec;
 }
 
 export function _stringFormat<Format extends string>(

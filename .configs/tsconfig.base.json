@@ -10,6 +10,7 @@
     "alwaysStrict": true,
     "noUncheckedIndexedAccess": false,
 
+    "types": [],
     "exactOptionalPropertyTypes": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,

@@ -527,6 +527,7 @@ test("good uuid", () => {
     "9491d710-3185-5e06-8ea0-6a2f275345e0",
     "9491d710-3185-5e06-9ea0-6a2f275345e0",
     "00000000-0000-0000-0000-000000000000",
+    "ffffffff-ffff-ffff-ffff-ffffffffffff",
   ];
 
   for (const goodUuid of goodUuids) {
@@ -545,7 +546,6 @@ test(`bad uuid`, () => {
     "92e76bf9-28b3-4730-cd7f-cb6bc51f8c09", // Variant 2 - RFC 9562/4122: Reserved, Microsoft Corporation backward compatibility
     "invalid uuid",
     "9491d710-3185-4e06-bea0-6a2f275345e0X",
-    "ffffffff-ffff-ffff-ffff-ffffffffffff",
   ]) {
     const result = uuid.safeParse(badUuid);
     expect(result).toMatchObject({ success: false });
@@ -993,4 +993,85 @@ test("hostname", () => {
   expect(() => hostname.parse("exa mple.com")).toThrow();
   expect(() => hostname.parse("-example.com")).toThrow();
   expect(() => hostname.parse("example..com")).toThrow();
+});
+
+test("hash validation", () => {
+  // MD5 tests
+  const md5hex = z.hash("md5");
+  const md5base64 = z.hash("md5", { enc: "base64" });
+  const md5base64url = z.hash("md5", { enc: "base64url" });
+
+  // Valid MD5 hashes
+  expect(md5hex.parse("5d41402abc4b2a76b9719d911017c592")).toBe("5d41402abc4b2a76b9719d911017c592");
+  expect(md5hex.parse("5D41402ABC4B2A76B9719D911017C592")).toBe("5D41402ABC4B2A76B9719D911017C592"); // uppercase
+  expect(md5base64.parse("XUFAKrxLKna5cZ2REBfFkg==")).toBe("XUFAKrxLKna5cZ2REBfFkg==");
+  expect(md5base64url.parse("XUFAKrxLKna5cZ2REBfFkg")).toBe("XUFAKrxLKna5cZ2REBfFkg");
+
+  // Invalid MD5 hashes
+  expect(() => md5hex.parse("5d41402abc4b2a76b9719d911017c59")).toThrow(); // too short
+  expect(() => md5hex.parse("5d41402abc4b2a76b9719d911017c592x")).toThrow(); // too long
+  expect(() => md5base64.parse("XUFAKrxLKna5cZ2REBfFkg=")).toThrow(); // wrong padding
+  expect(() => md5base64url.parse("XUFAKrxLKna5cZ2REBfFkg=")).toThrow(); // has padding
+
+  // SHA1 tests
+  const sha1hex = z.hash("sha1");
+  const sha1base64 = z.hash("sha1", { enc: "base64" });
+  const sha1base64url = z.hash("sha1", { enc: "base64url" });
+
+  // Valid SHA1 hashes
+  expect(sha1hex.parse("aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d")).toBe("aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d");
+  expect(sha1base64.parse("qvTGHdzF6KLavt4PO0gs2a6pQ00=")).toBe("qvTGHdzF6KLavt4PO0gs2a6pQ00=");
+  expect(sha1base64url.parse("qvTGHdzF6KLavt4PO0gs2a6pQ00")).toBe("qvTGHdzF6KLavt4PO0gs2a6pQ00");
+
+  // SHA256 tests
+  const sha256hex = z.hash("sha256");
+  const sha256base64 = z.hash("sha256", { enc: "base64" });
+  const sha256base64url = z.hash("sha256", { enc: "base64url" });
+
+  // Valid SHA256 hashes
+  expect(sha256hex.parse("2cf24dba4f21d4288094c4a2e2c2d6c6b0c3e0c8f0e0c8f0e0c8f0e0c8f0e0c8")).toBe(
+    "2cf24dba4f21d4288094c4a2e2c2d6c6b0c3e0c8f0e0c8f0e0c8f0e0c8f0e0c8"
+  );
+  expect(sha256base64.parse("LPJNul+wow4m6DsqxbninhsWHlwfp0JecwQzYpOLmCQ=")).toBe(
+    "LPJNul+wow4m6DsqxbninhsWHlwfp0JecwQzYpOLmCQ="
+  );
+  expect(sha256base64url.parse("LPJNul-wow4m6DsqxbninhsWHlwfp0JecwQzYpOLmCQ")).toBe(
+    "LPJNul-wow4m6DsqxbninhsWHlwfp0JecwQzYpOLmCQ"
+  );
+
+  // SHA384 tests (no padding in base64)
+  const sha384hex = z.hash("sha384");
+  const sha384base64 = z.hash("sha384", { enc: "base64" });
+
+  expect(
+    sha384hex.parse("59e1748777448c69de6b800d7a33bbfb9ff1b463e44354c3553bcdb9c666fa90125a3c79f90397bdf5f6a13de828684f")
+  ).toBe("59e1748777448c69de6b800d7a33bbfb9ff1b463e44354c3553bcdb9c666fa90125a3c79f90397bdf5f6a13de828684f");
+  expect(sha384base64.parse("WeF0h3dEjGneawDXozO7+5/xtGPkQ1TDVTvNucZm+pASWjx5+QOXvfX2oT3oKGhP")).toBe(
+    "WeF0h3dEjGneawDXozO7+5/xtGPkQ1TDVTvNucZm+pASWjx5+QOXvfX2oT3oKGhP"
+  );
+
+  // SHA512 tests
+  const sha512hex = z.hash("sha512");
+  const sha512base64 = z.hash("sha512", { enc: "base64" });
+
+  expect(
+    sha512hex.parse(
+      "9b71d224bd62f3785d96d46ad3ea3d73319bfbc2890caadae2dff72519673ca72323c3d99ba5c11d7c7acc6e14b8c5da0c4663475c2e5c3adef46f73bcdec043"
+    )
+  ).toBe(
+    "9b71d224bd62f3785d96d46ad3ea3d73319bfbc2890caadae2dff72519673ca72323c3d99ba5c11d7c7acc6e14b8c5da0c4663475c2e5c3adef46f73bcdec043"
+  );
+  expect(
+    sha512base64.parse("m3HSJL1i83hdltRq0+o9czGb+8KJDKra4t/3JRlnPKcjI8PZm6XBHXx6zG4UuMXaDEZjR1wuXDre9G9zvN7AQw==")
+  ).toBe("m3HSJL1i83hdltRq0+o9czGb+8KJDKra4t/3JRlnPKcjI8PZm6XBHXx6zG4UuMXaDEZjR1wuXDre9G9zvN7AQw==");
+
+  // Test default encoding (hex)
+  const defaultHash = z.hash("sha256");
+  expect(defaultHash.parse("2cf24dba4f21d4288094c4a2e2c2d6c6b0c3e0c8f0e0c8f0e0c8f0e0c8f0e0c8")).toBe(
+    "2cf24dba4f21d4288094c4a2e2c2d6c6b0c3e0c8f0e0c8f0e0c8f0e0c8f0e0c8"
+  );
+
+  // Test with custom error message
+  const hashWithMessage = z.hash("md5", { message: "Invalid MD5 hash" });
+  expect(() => hashWithMessage.parse("invalid")).toThrow("Invalid MD5 hash");
 });

@@ -20,6 +20,10 @@ export type JWTAlgorithm =
   | "PS512"
   | "EdDSA"
   | (string & {});
+
+export type HashAlgorithm = "md5" | "sha1" | "sha256" | "sha384" | "sha512";
+export type HashEncoding = "hex" | "base64" | "base64url";
+export type HashFormat = `${HashAlgorithm}_${HashEncoding}`;
 export type IPVersion = "v4" | "v6";
 export type MimeTypes =
   | "application/json"
@@ -625,6 +629,12 @@ export function extend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): an
     throw new Error("Invalid input to extend: expected a plain object");
   }
 
+  const checks = schema._zod.def.checks;
+  const hasChecks = checks && checks.length > 0;
+  if (hasChecks) {
+    throw new Error("Object schemas containing refinements cannot be extended. Use `.safeExtend()` instead.");
+  }
+
   const def = mergeDefs(schema._zod.def, {
     get shape() {
       const _shape = { ...schema._zod.def.shape, ...shape };
@@ -633,6 +643,22 @@ export function extend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): an
     },
     checks: [],
   });
+  return clone(schema, def) as any;
+}
+
+export function safeExtend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): any {
+  if (!isPlainObject(shape)) {
+    throw new Error("Invalid input to safeExtend: expected a plain object");
+  }
+  const def = {
+    ...schema._zod.def,
+    get shape() {
+      const _shape = { ...schema._zod.def.shape, ...shape };
+      assignProp(this, "shape", _shape); // self-caching
+      return _shape;
+    },
+    checks: schema._zod.def.checks,
+  } as any;
   return clone(schema, def) as any;
 }
 
@@ -742,6 +768,7 @@ export type Constructor<T, Def extends any[] = any[]> = new (...args: Def) => T;
 
 // invalid_type | too_big | too_small | invalid_format | not_multiple_of | unrecognized_keys | invalid_union | invalid_key | invalid_element | invalid_value | custom
 export function aborted(x: schemas.ParsePayload, startIndex = 0): boolean {
+  if (x.aborted === true) return true;
   for (let i = startIndex; i < x.issues.length; i++) {
     if (x.issues[i]?.continue !== true) {
       return true;
@@ -828,6 +855,52 @@ export function cleanEnum(obj: Record<string, EnumValue>): EnumValue[] {
       return Number.isNaN(Number.parseInt(k, 10));
     })
     .map((el) => el[1]);
+}
+
+// Codec utility functions
+export function base64ToUint8Array(base64: string): InstanceType<typeof Uint8Array> {
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+}
+
+export function uint8ArrayToBase64(bytes: Uint8Array): string {
+  let binaryString = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binaryString += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binaryString);
+}
+
+export function base64urlToUint8Array(base64url: string): InstanceType<typeof Uint8Array> {
+  const base64 = base64url.replace(/-/g, "+").replace(/_/g, "/");
+  const padding = "=".repeat((4 - (base64.length % 4)) % 4);
+  return base64ToUint8Array(base64 + padding);
+}
+
+export function uint8ArrayToBase64url(bytes: Uint8Array): string {
+  return uint8ArrayToBase64(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+}
+
+export function hexToUint8Array(hex: string): InstanceType<typeof Uint8Array> {
+  const cleanHex = hex.replace(/^0x/, "");
+  if (cleanHex.length % 2 !== 0) {
+    throw new Error("Invalid hex string length");
+  }
+  const bytes = new Uint8Array(cleanHex.length / 2);
+  for (let i = 0; i < cleanHex.length; i += 2) {
+    bytes[i / 2] = Number.parseInt(cleanHex.slice(i, i + 2), 16);
+  }
+  return bytes;
+}
+
+export function uint8ArrayToHex(bytes: Uint8Array): string {
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 // instanceof

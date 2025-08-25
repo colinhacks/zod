@@ -1,17 +1,15 @@
-import { z } from "zod/v4";
+import * as z from "zod";
 
 z;
 
-console.log(
-  z
-    .object({
-      a: z.string(),
-    })
-    .transform((data) => {
-      return {
-        ...data,
-        tx: true,
-      };
-    })
-    .safeParse({ a: "1" })
+const stringToDate = z.codec(
+  z.iso.datetime(), // input schema: ISO string
+  z.date(), // output schema: Date object
+  {
+    decode: (isoString) => new Date(isoString), // string → Date
+    encode: (date) => date.toISOString(), // Date → string
+  }
 );
+
+console.log(stringToDate.decode("2024-01-15T10:30:00.000Z")); // Date
+console.log(stringToDate.encode(new Date("2024-01-15"))); // "2024-01-15T00:00:00.000Z"
