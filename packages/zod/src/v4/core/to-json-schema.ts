@@ -392,9 +392,14 @@ export class JSONSchemaGenerator {
                 json.items = rest;
               }
             } else if (this.target === "openapi-3.0") {
+              const nonNullableItems = prefixItems.filter((it) => it.type !== "null");
               json.items = {
-                anyOf: [...prefixItems],
+                anyOf: [...nonNullableItems],
               };
+              if (prefixItems.length > nonNullableItems.length) {
+                json.items.nullable = true;
+              }
+
               if (rest) {
                 json.items.anyOf!.push(rest);
               }
