@@ -580,7 +580,10 @@ describe("toJSONSchema", () => {
   });
 
   test("nullable openapi-3.0", () => {
-    expect(z.toJSONSchema(z.string().nullable(), { target: "openapi-3.0" })).toMatchInlineSnapshot(`
+    const schema = z.string().nullable();
+    const jsonSchema = z.toJSONSchema(schema, { target: "openapi-3.0" });
+    validateOpenAPI30Schema(jsonSchema);
+    expect(jsonSchema).toMatchInlineSnapshot(`
       {
         "nullable": true,
         "type": "string",
@@ -590,7 +593,9 @@ describe("toJSONSchema", () => {
 
   test("union with null openapi-3.0", () => {
     const schema = z.union([z.string(), z.null()]);
-    expect(z.toJSONSchema(schema, { target: "openapi-3.0" })).toMatchInlineSnapshot(`
+    const jsonSchema = z.toJSONSchema(schema, { target: "openapi-3.0" });
+    validateOpenAPI30Schema(jsonSchema);
+    expect(jsonSchema).toMatchInlineSnapshot(`
       {
         "anyOf": [
           {
@@ -610,7 +615,9 @@ describe("toJSONSchema", () => {
 
   test("number with exclusive min-max openapi-3.0", () => {
     const schema = z.number().lt(100).gt(1);
-    expect(z.toJSONSchema(schema, { target: "openapi-3.0" })).toMatchInlineSnapshot(`
+    const jsonSchema = z.toJSONSchema(schema, { target: "openapi-3.0" });
+    validateOpenAPI30Schema(jsonSchema);
+    expect(jsonSchema).toMatchInlineSnapshot(`
       {
         "exclusiveMaximum": true,
         "exclusiveMinimum": true,
@@ -704,7 +711,9 @@ describe("toJSONSchema", () => {
 
   test("record openapi-3.0", () => {
     const schema = z.record(z.string(), z.boolean());
-    expect(z.toJSONSchema(schema, { target: "openapi-3.0" })).toMatchInlineSnapshot(`
+    const jsonSchema = z.toJSONSchema(schema, { target: "openapi-3.0" });
+    validateOpenAPI30Schema(jsonSchema);
+    expect(jsonSchema).toMatchInlineSnapshot(`
       {
         "additionalProperties": {
           "type": "boolean",
