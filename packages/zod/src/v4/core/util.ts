@@ -606,7 +606,9 @@ export function omit(schema: schemas.$ZodObject, mask: object): any {
 
   const def = mergeDefs(schema._zod.def, {
     get shape() {
-      const newShape: Writeable<schemas.$ZodShape> = { ...schema._zod.def.shape };
+      const newShape: Writeable<schemas.$ZodShape> = {
+        ...schema._zod.def.shape,
+      };
       for (const key in mask) {
         if (!(key in currDef.shape)) {
           throw new Error(`Unrecognized key: "${key}"`);
@@ -654,6 +656,63 @@ export function safeExtend(schema: schemas.$ZodObject, shape: schemas.$ZodShape)
     ...schema._zod.def,
     get shape() {
       const _shape = { ...schema._zod.def.shape, ...shape };
+      assignProp(this, "shape", _shape); // self-caching
+      return _shape;
+    },
+    checks: schema._zod.def.checks,
+  } as any;
+  return clone(schema, def) as any;
+}
+
+export function change(schema: schemas.$ZodObject, shape: schemas.$ZodShape): any {
+  if (!isPlainObject(shape)) {
+    throw new Error("Invalid input to change: expected a plain object");
+  }
+
+  const existingShape = schema._zod.def.shape;
+
+  // Validate that all keys in shape exist in the original schema
+  for (const key in shape) {
+    if (!(key in existingShape)) {
+      throw new Error(`Cannot change non-existing property: "${key}"`);
+    }
+  }
+
+  const checks = schema._zod.def.checks;
+  const hasChecks = checks && checks.length > 0;
+  if (hasChecks) {
+    throw new Error("Object schemas containing refinements cannot be changed. Use `.safeChange()` instead.");
+  }
+
+  const def = mergeDefs(schema._zod.def, {
+    get shape() {
+      const _shape = { ...existingShape, ...shape };
+      assignProp(this, "shape", _shape); // self-caching
+      return _shape;
+    },
+    checks: [],
+  });
+  return clone(schema, def) as any;
+}
+
+export function safeChange(schema: schemas.$ZodObject, shape: schemas.$ZodShape): any {
+  if (!isPlainObject(shape)) {
+    throw new Error("Invalid input to safeChange: expected a plain object");
+  }
+
+  const existingShape = schema._zod.def.shape;
+
+  // Validate that all keys in shape exist in the original schema
+  for (const key in shape) {
+    if (!(key in existingShape)) {
+      throw new Error(`Cannot change non-existing property: "${key}"`);
+    }
+  }
+
+  const def = {
+    ...schema._zod.def,
+    get shape() {
+      const _shape = { ...existingShape, ...shape };
       assignProp(this, "shape", _shape); // self-caching
       return _shape;
     },
