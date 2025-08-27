@@ -91,7 +91,7 @@ export interface $ZodIssueInvalidValue<Input = unknown> extends $ZodIssueBase {
 }
 
 export interface $ZodIssueCustom extends $ZodIssueBase {
-  readonly code: "custom";
+  readonly code: "custom" | (string & {});
   readonly params?: Record<string, any> | undefined;
   readonly input?: unknown;
 }
