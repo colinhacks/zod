@@ -528,9 +528,8 @@ export class JSONSchemaGenerator {
           case "nullable": {
             const inner = this.process(def.innerType, params);
             if (this.target === "openapi-3.0") {
-              Object.assign(_json, inner);
-              (_json as any).nullable = true;
               result.ref = def.innerType;
+              _json.nullable = true;
             } else {
               _json.anyOf = [inner, { type: "null" }];
             }
