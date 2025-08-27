@@ -592,8 +592,18 @@ describe("toJSONSchema", () => {
     const schema = z.union([z.string(), z.null()]);
     expect(z.toJSONSchema(schema, { target: "openapi-3.0" })).toMatchInlineSnapshot(`
       {
-        "nullable": true,
-        "type": "string",
+        "anyOf": [
+          {
+            "type": "string",
+          },
+          {
+            "enum": [
+              null,
+            ],
+            "nullable": true,
+            "type": "string",
+          },
+        ],
       }
     `);
   });
@@ -785,7 +795,7 @@ describe("toJSONSchema", () => {
             },
           ],
         },
-        "minItems": 2,
+        "minItems": 3,
         "type": "array",
       }
     `);
@@ -805,8 +815,14 @@ describe("toJSONSchema", () => {
             {
               "type": "number",
             },
+            {
+              "enum": [
+                null,
+              ],
+              "nullable": true,
+              "type": "string",
+            },
           ],
-          "nullable": true,
         },
         "maxItems": 3,
         "minItems": 3,
