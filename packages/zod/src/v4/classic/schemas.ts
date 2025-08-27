@@ -1117,6 +1117,16 @@ export type SafeExtendShape<Base extends core.$ZodShape, Ext extends core.$ZodLo
     : Ext[K];
 };
 
+export type SafeChangeShape<Base extends core.$ZodShape, Changes extends core.$ZodLooseShape> = {
+  [K in keyof Changes]: K extends keyof Base
+    ? core.output<Changes[K]> extends core.output<Base[K]>
+      ? core.input<Changes[K]> extends core.input<Base[K]>
+        ? Changes[K]
+        : never
+      : never
+    : never; // SafeChange doesn't allow new properties, only existing ones
+};
+
 export interface ZodObject<
   /** @ts-ignore Cast variance */
   out Shape extends core.$ZodShape = core.$ZodLooseShape,
@@ -1148,7 +1158,9 @@ export interface ZodObject<
 
   change<U extends Partial<Record<keyof Shape, core.SomeType>>>(shape: U): ZodObject<util.Extend<Shape, U>, Config>;
 
-  safeChange<U extends Partial<Record<keyof Shape, core.SomeType>>>(shape: U): ZodObject<util.Extend<Shape, U>, Config>;
+  safeChange<U extends Partial<Record<keyof Shape, core.SomeType>>>(
+    shape: SafeChangeShape<Shape, U> & Partial<Record<keyof Shape, core.SomeType>>
+  ): ZodObject<util.Extend<Shape, U>, Config>;
 
   /**
    * @deprecated Use [`A.extend(B.shape)`](https://zod.dev/api?id=extend) instead.

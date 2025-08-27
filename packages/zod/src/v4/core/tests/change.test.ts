@@ -124,6 +124,7 @@ test("safeChange throws error when adding new properties", () => {
   expect(() => {
     schema1.safeChange({
       email: z.string().email(),
+      // @ts-expect-error
       newProperty: z.string(),
     });
   }).toThrow('Cannot change non-existing property: "newProperty"');
