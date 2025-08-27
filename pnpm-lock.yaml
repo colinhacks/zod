@@ -254,7 +254,7 @@ importers:
         specifier: npm:zod@^3.24.0
         version: zod@3.24.3
       zod4:
-        specifier: npm:zod@^3.25.0
+        specifier: npm:zod@^3.25.1
         version: zod@3.25.67
 
   packages/tsc:

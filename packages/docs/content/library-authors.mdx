@@ -12,7 +12,7 @@ Zod `4.0.0` has been released on `npm`. This completes the incremental rollout p
 // package.json
 {
   "peerDependencies": {
-    "zod": "^3.25.0 || ^4.0.0"
+    "zod": "^3.25.1 || ^4.0.0"
   }
 }
 ```
@@ -45,7 +45,7 @@ Any library built on top of Zod should include `"zod"` in `"peerDependencies"`. 
 {
   // ...
   "peerDependencies": {
-    "zod": "^3.25.0 || ^4.0.0" // the "zod/v4" subpath was added in 3.25.0
+    "zod": "^3.25.1 || ^4.0.0" // the "zod/v4" subpath was added in 3.25.0
   }
 }
 ```
@@ -56,30 +56,30 @@ During development, you need to meet your own peer dependency requirement, to do
 // package.json
 {
   "peerDependencies": {
-    "zod": "^3.25.0 || ^4.0.0"
+    "zod": "^3.25.1 || ^4.0.0"
   },
   "devDependencies": {
     // generally, you should develop against the latest version of Zod
-    "zod": "^3.25.0 || ^4.0.0"
+    "zod": "^3.25.1 || ^4.0.0"
   }
 }
 ```
 
 ## How to support Zod 4?
 
-To support Zod 4, update the minimum version for your `"zod"` peer dependency to `^3.25.0 || ^4.0.0`. 
+To support Zod 4, update the minimum version for your `"zod"` peer dependency to `^3.25.1 || ^4.0.0`. 
 
 ```json
 // package.json
 {
   // ...
   "peerDependencies": {
-    "zod": "^3.25.0 || ^4.0.0"
+    "zod": "^3.25.1 || ^4.0.0"
   }
 }
 ```
 
-Starting with `v3.25.0`, the Zod 4 core package is available at the `"zod/v4/core"` subpath. Read the [Versioning in Zod 4](https://github.com/colinhacks/zod/issues/4371) writeup for full context on this versioning approach.
+Starting with `v3.25.1`, the Zod 4 core package is available at the `"zod/v4/core"` subpath. Read the [Versioning in Zod 4](https://github.com/colinhacks/zod/issues/4371) writeup for full context on this versioning approach.
 
 ```ts
 import * as z4 from "zod/v4/core";
@@ -100,11 +100,11 @@ You generally shouldn't be importing from any other paths. The Zod Core library 
 
 No, you should not need to publish a new major version of your library to support Zod 4 (unless you are dropping support for Zod 3, which isn't recommended). 
 
-You will need to bump your peer dependency to `^3.25.0`, thus your users will need to `npm upgrade zod`. But there were no breaking changes made to Zod 3 between `zod@3.24` and `zod@3.25`; in fact, there were no code changes whatsoever. As code changes will be required on the part of your users, I do not believe this constitutes a breaking change. I recommend against publishing a new major version.
+You will need to bump your peer dependency to `^3.25.1`, thus your users will need to `npm upgrade zod`. But there were no breaking changes made to Zod 3 between `zod@3.24` and `zod@3.25`; in fact, there were no code changes whatsoever. As code changes will be required on the part of your users, I do not believe this constitutes a breaking change. I recommend against publishing a new major version.
 
 ## How to support Zod 3 and Zod 4 simultaneously?
 
-Starting in `v3.25.0`, the package contains copies of both Zod 3 and Zod 4 at their respective subpaths. This makes it easy to support both versions simultaneously.
+Starting in `v3.25.1`, the package contains copies of both Zod 3 and Zod 4 at their respective subpaths. This makes it easy to support both versions simultaneously.
 
 ```ts
 import * as z3 from "zod/v3";

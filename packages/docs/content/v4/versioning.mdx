@@ -33,7 +33,7 @@ If you are using Zod 4, your existing imports (`"zod/v4"` and `"zod/v4-mini"`) w
 // package.json
 {
   "peerDependencies": {
-    "zod": "^3.25.0 || ^4.0.0"
+    "zod": "^3.25.1 || ^4.0.0"
   }
 }
 ```
@@ -54,7 +54,7 @@ This is a writeup of Zod 4's approach to versioning, with the goal of making it 
 
 The general approach:
 
-- Zod 4 will not initially be published as `zod@4.0.0` on npm. Instead it will be exported at a subpath (`"zod/v4"`) alongside `zod@3.25.0` 
+- Zod 4 will not initially be published as `zod@4.0.0` on npm. Instead it will be exported at a subpath (`"zod/v4"`) alongside `zod@3.25.1` 
 - Despite this, Zod 4 is considered stable and production-ready
 - Zod 3 will continue to be exported from the package root (`"zod"`) as well as a new subpath `"zod/v3"`. It will continue to receive bug fixes & stability improvements.
  
@@ -79,7 +79,7 @@ If I naively published `zod@4.0.0` to npm, the vast majority of the libraries in
   
 With subpath versioning, we solve this problem. it provides a straightforward way for libraries to support Zod 3 and Zod 4 (including Zod Mini) simultaneously. They can continue defining a single peerDependency on `"zod"`; no need for more arcane solutions like npm aliases, optional peer dependencies, a `"zod-compat"` package, or other such hacks.
 
-Libraries will need to bump the minimum version of their `"zod"` peer dependency to `zod@^3.25.0`. They can then reference both Zod 3 and Zod 4 in their implementation:
+Libraries will need to bump the minimum version of their `"zod"` peer dependency to `zod@^3.25.1`. They can then reference both Zod 3 and Zod 4 in their implementation:
 
   ```ts 
   import * as z3 from "zod/v3"
