@@ -236,7 +236,11 @@ export class JSONSchemaGenerator {
             break;
           }
           case "null": {
-            _json.type = "null";
+            if (this.target === "openapi-3.0") {
+              _json.type = "string";
+              _json.nullable = true;
+              _json.enum = [null];
+            } else _json.type = "null";
             break;
           }
           case "any": {
@@ -332,18 +336,7 @@ export class JSONSchemaGenerator {
                 path: [...params.path, "anyOf", i],
               })
             );
-            if (this.target === "openapi-3.0") {
-              const nonNull = options.filter((x) => (x as any).type !== "null");
-              const hasNull = nonNull.length !== options.length;
-              if (nonNull.length === 1) {
-                Object.assign(json, nonNull[0]!);
-              } else {
-                json.anyOf = nonNull;
-              }
-              if (hasNull) (json as any).nullable = true;
-            } else {
-              json.anyOf = options;
-            }
+            json.anyOf = options;
             break;
           }
           case "intersection": {
@@ -393,8 +386,9 @@ export class JSONSchemaGenerator {
               }
             } else if (this.target === "openapi-3.0") {
               json.items = {
-                anyOf: [...prefixItems],
+                anyOf: prefixItems,
               };
+
               if (rest) {
                 json.items.anyOf!.push(rest);
               }
@@ -534,9 +528,8 @@ export class JSONSchemaGenerator {
           case "nullable": {
             const inner = this.process(def.innerType, params);
             if (this.target === "openapi-3.0") {
-              Object.assign(_json, inner);
-              (_json as any).nullable = true;
               result.ref = def.innerType;
+              _json.nullable = true;
             } else {
               _json.anyOf = [inner, { type: "null" }];
             }

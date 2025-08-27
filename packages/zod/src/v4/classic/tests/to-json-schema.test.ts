@@ -1,6 +1,33 @@
+import { Validator } from "@seriousme/openapi-schema-validator";
 import { describe, expect, test } from "vitest";
 import * as z from "zod/v4";
 // import * as zCore from "zod/v4/core";
+
+const openAPI30Validator = new Validator();
+/** @see https://github.com/colinhacks/zod/issues/5147 */
+const validateOpenAPI30Schema = async (zodJSONSchema: Record<string, unknown>): Promise<true> => {
+  const res = await openAPI30Validator.validate({
+    openapi: "3.0.0",
+    info: {
+      title: "SampleApi",
+      description: "Sample backend service",
+      version: "1.0.0",
+    },
+    components: { schemas: { test: zodJSONSchema } },
+    paths: {},
+  });
+
+  if (!res.valid) {
+    // `console.error` should make `vitest` trow an unhandled error
+    // printing the validation messages in consoles
+    console.error(
+      `OpenAPI schema is not valid against ${openAPI30Validator.version}`,
+      JSON.stringify(res.errors, null, 2)
+    );
+  }
+
+  return true;
+};
 
 describe("toJSONSchema", () => {
   test("primitive types", () => {
@@ -552,7 +579,7 @@ describe("toJSONSchema", () => {
     `);
   });
 
-  test("nullable openapi", () => {
+  test("nullable openapi-3.0", () => {
     expect(z.toJSONSchema(z.string().nullable(), { target: "openapi-3.0" })).toMatchInlineSnapshot(`
       {
         "nullable": true,
@@ -561,17 +588,27 @@ describe("toJSONSchema", () => {
     `);
   });
 
-  test("union with null openapi", () => {
+  test("union with null openapi-3.0", () => {
     const schema = z.union([z.string(), z.null()]);
     expect(z.toJSONSchema(schema, { target: "openapi-3.0" })).toMatchInlineSnapshot(`
       {
-        "nullable": true,
-        "type": "string",
+        "anyOf": [
+          {
+            "type": "string",
+          },
+          {
+            "enum": [
+              null,
+            ],
+            "nullable": true,
+            "type": "string",
+          },
+        ],
       }
     `);
   });
 
-  test("number with exclusive min-max openapi", () => {
+  test("number with exclusive min-max openapi-3.0", () => {
     const schema = z.number().lt(100).gt(1);
     expect(z.toJSONSchema(schema, { target: "openapi-3.0" })).toMatchInlineSnapshot(`
       {
@@ -665,7 +702,7 @@ describe("toJSONSchema", () => {
     `);
   });
 
-  test("record openapi", () => {
+  test("record openapi-3.0", () => {
     const schema = z.record(z.string(), z.boolean());
     expect(z.toJSONSchema(schema, { target: "openapi-3.0" })).toMatchInlineSnapshot(`
       {
@@ -716,9 +753,11 @@ describe("toJSONSchema", () => {
     `);
   });
 
-  test("tuple openapi", () => {
+  test("tuple openapi-3.0", () => {
     const schema = z.tuple([z.string(), z.number()]);
-    expect(z.toJSONSchema(schema, { target: "openapi-3.0" })).toMatchInlineSnapshot(`
+    const jsonSchema = z.toJSONSchema(schema, { target: "openapi-3.0" });
+    validateOpenAPI30Schema(jsonSchema);
+    expect(jsonSchema).toMatchInlineSnapshot(`
       {
         "items": {
           "anyOf": [
@@ -737,9 +776,11 @@ describe("toJSONSchema", () => {
     `);
   });
 
-  test("tuple with rest openapi", () => {
+  test("tuple with rest openapi-3.0", () => {
     const schema = z.tuple([z.string(), z.number()]).rest(z.boolean());
-    expect(z.toJSONSchema(schema, { target: "openapi-3.0" })).toMatchInlineSnapshot(`
+    const jsonSchema = z.toJSONSchema(schema, { target: "openapi-3.0" });
+    validateOpenAPI30Schema(jsonSchema);
+    expect(jsonSchema).toMatchInlineSnapshot(`
       {
         "items": {
           "anyOf": [
@@ -754,7 +795,37 @@ describe("toJSONSchema", () => {
             },
           ],
         },
-        "minItems": 2,
+        "minItems": 3,
+        "type": "array",
+      }
+    `);
+  });
+
+  test("tuple with null openapi-3.0", () => {
+    const schema = z.tuple([z.string(), z.number(), z.null()]);
+    const jsonSchema = z.toJSONSchema(schema, { target: "openapi-3.0" });
+    validateOpenAPI30Schema(jsonSchema);
+    expect(jsonSchema).toMatchInlineSnapshot(`
+      {
+        "items": {
+          "anyOf": [
+            {
+              "type": "string",
+            },
+            {
+              "type": "number",
+            },
+            {
+              "enum": [
+                null,
+              ],
+              "nullable": true,
+              "type": "string",
+            },
+          ],
+        },
+        "maxItems": 3,
+        "minItems": 3,
         "type": "array",
       }
     `);
