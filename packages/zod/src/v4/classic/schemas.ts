@@ -2059,11 +2059,11 @@ export const ZodFunction: core.$constructor<ZodFunction> = /*@__PURE__*/ core.$c
 );
 
 export function _function(): ZodFunction;
-export function _function<const In extends Array<core.$ZodType> = Array<core.$ZodType>>(params: {
+export function _function<const In extends readonly [core.$ZodType, ...core.$ZodType[]]>(params: {
   input: In;
 }): ZodFunction<ZodTuple<In, null>, core.$ZodFunctionOut>;
 export function _function<
-  const In extends Array<core.$ZodType> = Array<core.$ZodType>,
+  const In extends readonly [core.$ZodType, ...core.$ZodType[]],
   const Out extends core.$ZodFunctionOut = core.$ZodFunctionOut,
 >(params: {
   input: In;

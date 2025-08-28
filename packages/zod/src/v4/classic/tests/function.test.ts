@@ -130,6 +130,46 @@ test("valid function run", () => {
   });
 });
 
+const args3 = [
+  z.object({
+    f1: z.number(),
+    f2: z.string().nullable(),
+    f3: z.array(z.boolean().optional()).optional(),
+  }),
+] as const;
+const returns3 = z.union([z.string(), z.number()]);
+
+const func3 = z.function({
+  input: args3,
+  output: returns3,
+});
+
+test("function inference 3", () => {
+  type func3 = (typeof func3)["_input"];
+
+  expectTypeOf<func3>().toEqualTypeOf<
+    (arg: {
+      f3?: (boolean | undefined)[] | undefined;
+      f1: number;
+      f2: string | null;
+    }) => string | number
+  >();
+});
+
+test("valid function run", () => {
+  const validFunc3Instance = func3.implement((_x) => {
+    _x.f2;
+    _x.f3![0];
+    return "adf" as any;
+  });
+
+  validFunc3Instance({
+    f1: 21,
+    f2: "asdf",
+    f3: [true, false],
+  });
+});
+
 test("input validation error", () => {
   const schema = z.function({
     input: z.tuple([z.string()]),
