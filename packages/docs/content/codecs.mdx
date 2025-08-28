@@ -64,7 +64,7 @@ In these cases, `z.decode()` and `z.encode()` behave quite differently.
 <Tabs items={['Zod', 'Zod Mini']}>
 <Tab value="Zod">
 ```ts
-const payloadSchema = z.object({ startDate: stringToDate });
+const payloadSchema = stringToDate
 
 payloadSchema.decode("2024-01-15T10:30:00.000Z")
 // => Date
@@ -75,7 +75,7 @@ payloadSchema.encode(new Date("2024-01-15T10:30:00.000Z"))
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-const payloadSchema = z.object({ startDate: stringToDate });
+const payloadSchema = stringToDate
 
 z.decode(stringToDate, "2024-01-15T10:30:00.000Z")
 // => Date
