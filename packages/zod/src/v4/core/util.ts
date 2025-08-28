@@ -395,6 +395,7 @@ export function isPlainObject(o: any): o is Record<PropertyKey, unknown> {
 
 export function shallowClone(o: any): any {
   if (isPlainObject(o)) return { ...o };
+  if (Array.isArray(o)) return [...o];
   return o;
 }
 
