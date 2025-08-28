@@ -1269,8 +1269,64 @@ const Extended = z.safeExtend(UserSchema, {
 </Tab>
 </Tabs>
 
-### `.pick()`
+### `.change()`
 
+The `.change()` method allows you to modify existing properties in an object schema. Unlike `.extend()`, which adds or overwrites properties, `.change()` specifically targets existing properties for modification.
+
+```ts
+const User = z.object({
+  name: z.string(),
+  age: z.number()
+});
+
+const StrictUser = User.change({
+  name: z.string().min(5) // Make name more restrictive
+});
+```
+
+### `.safeChange()`
+
+The `.safeChange()` method works similarly to `.change()`, but it won't let you modify an existing property with a non-assignable schema. This ensures type safety by maintaining compatibility with the original schema.
+
+```ts
+z.object({ a: z.string() }).safeChange({ a: z.string().min(5) }); // ✅
+z.object({ a: z.string() }).safeChange({ a: z.any() }); // ✅
+z.object({ a: z.string() }).safeChange({ a: z.number() });
+//                                       ^  ❌ ZodNumber is not assignable 
+```
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+const Base = z.object({
+  email: z.string(),
+  password: z.string()
+});
+
+// Safely change existing properties
+const Enhanced = Base.safeChange({
+  email: z.string().email(),
+  password: z.string().min(8)
+});
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+const Base = z.object({
+  email: z.string(),
+  password: z.string()
+});
+
+// Safely change existing properties
+const Enhanced = z.safeChange(Base, {
+  email: z.string().email(),
+  password: z.string().min(8)
+});
+```
+</Tab>
+</Tabs>
+
+### `.pick()`
 Inspired by TypeScript's built-in `Pick` and `Omit` utility types, Zod provides dedicated APIs for picking and omitting certain keys from an object schema.
 
 Starting from this initial schema:
