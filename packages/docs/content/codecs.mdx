@@ -64,19 +64,15 @@ In these cases, `z.decode()` and `z.encode()` behave quite differently.
 <Tabs items={['Zod', 'Zod Mini']}>
 <Tab value="Zod">
 ```ts
-const payloadSchema = z.object({ startDate: stringToDate });
-
-payloadSchema.decode("2024-01-15T10:30:00.000Z")
+stringToDate.decode("2024-01-15T10:30:00.000Z")
 // => Date
 
-payloadSchema.encode(new Date("2024-01-15T10:30:00.000Z"))
+stringToDate.encode(new Date("2024-01-15T10:30:00.000Z"))
 // => string
 ```
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-const payloadSchema = z.object({ startDate: stringToDate });
-
 z.decode(stringToDate, "2024-01-15T10:30:00.000Z")
 // => Date
 
@@ -101,6 +97,16 @@ This is particularly useful when parsing data at a network boundary. You can sha
 > **Note** — You can use `z.encode()` and `z.decode()` with any schema. It doesn't have to be a ZodCodec.
 
 Codecs are a schema like any other. You can nest them inside objects, arrays, pipes, etc. There are no rules on where you can use them!
+
+```ts
+const payloadSchema = z.object({ 
+  startDate: stringToDate 
+});
+
+payloadSchema.decode({
+  startDate: "2024-01-15T10:30:00.000Z"
+}); // => { startDate: Date }
+```
 
 
 ### Type-safe inputs

@@ -1,4 +1,23 @@
 import * as z from "zod";
 
-const schema = z.union([z.string(), z.null()]);
-console.log(z.toJSONSchema(schema, { target: "openapi-3.0" }));
+const myFunction = z.function({
+  input: [
+    z.object({
+      name: z.string(),
+      age: z.number().int(),
+    }),
+  ],
+  output: z.string(),
+});
+
+const fn = myFunction.implement((input) => {
+  input;
+  return `Hello ${input.name}, you are ${input.age} years old.`;
+});
+
+console.log(
+  fn({
+    name: "John",
+    age: 30,
+  })
+);

@@ -2914,32 +2914,6 @@ const jsonSchema = z.lazy(() => {
 ```
 
 
-## Custom
-
-You can create a Zod schema for any TypeScript type by using `z.custom()`. This is useful for creating schemas for types that are not supported by Zod out of the box, such as template string literals.
-
-```ts
-const px = z.custom<`${number}px`>((val) => {
-  return typeof val === "string" ? /^\d+px$/.test(val) : false;
-});
-
-type px = z.infer<typeof px>; // `${number}px`
-
-px.parse("42px"); // "42px"
-px.parse("42vw"); // throws;
-```
-
-If you don't provide a validation function, Zod will allow any value. This can be dangerous!
-
-```ts
-z.custom<{ arg: string }>(); // performs no validation
-```
-
-You can customize the error message and other options by passing a second argument. This parameter works the same way as the params parameter of [`.refine`](#refine).
-
-```ts
-z.custom<...>((val) => ..., "custom error message");
-```
 
 ## Functions
 
@@ -2994,22 +2968,29 @@ const computeTrimmedLengthAsync = MyFunction.implementAsync(
 computeTrimmedLengthAsync("sandwich"); // => Promise<8>
 ```
 
+## Custom
 
+You can create a Zod schema for any TypeScript type by using `z.custom()`. This is useful for creating schemas for types that are not supported by Zod out of the box, such as template string literals.
 
-- edd4feaa — Closes #5127
-- 5d4a3159 — Closes #5116
-- f3f09556 — Closes #5108
-- 0114d5bd — #5122
-- 3b077c3a — #5121
-- 1e06af8e — #5113
-- b01b6f39 — #5052
-- 571ab0c3 — #5051
-- d3ea1119 — #5049
-- b8e3f877 — #4865
+```ts
+const px = z.custom<`${number}px`>((val) => {
+  return typeof val === "string" ? /^\d+px$/.test(val) : false;
+});
 
+type px = z.infer<typeof px>; // `${number}px`
 
+px.parse("42px"); // "42px"
+px.parse("42vw"); // throws;
+```
 
+If you don't provide a validation function, Zod will allow any value. This can be dangerous!
 
+```ts
+z.custom<{ arg: string }>(); // performs no validation
+```
 
+You can customize the error message and other options by passing a second argument. This parameter works the same way as the params parameter of [`.refine`](#refine).
 
-- 571ab0c3 — Drop JIT in Zod Mini `z.object()` (reduces bundle size by 20%) (PR #5051)
+```ts
+z.custom<...>((val) => ..., "custom error message");
+```
