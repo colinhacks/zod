@@ -116,6 +116,12 @@ const zodToXConverters: ZodResource[] = [
     slug: "matejchalk/zod2md",
   },
   {
+    name: "prisma-zod-generator",
+    url: "https://github.com/omar-dulaimi/prisma-zod-generator",
+    description: "Generate Zod schemas from Prisma schema with full ZodObject method support",
+    slug: "omar-dulaimi/prisma-zod-generator",
+  },
+  {
     name: "@traversable/zod",
     url: "https://github.com/@traversable/zod",
     description: "Build your own \"Zod to x\" library, or pick one of 25+ off-the-shelf \"Zod to x\" transformers.",
