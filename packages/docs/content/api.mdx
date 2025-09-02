@@ -95,7 +95,7 @@ type BInput = z.infer<typeof B>; // => number
   By default the _input_ type of any `z.coerce` schema is `unknown`. In some cases, it may be preferable for the input type to be more specific. You can specify the input type with a generic parameter.
 
   ```ts
-  const regular = z.coerce.string();
+  const regularCoerce = z.coerce.string();
   type RegularInput = z.input<typeof regularCoerce>; // => unknown
   type RegularOutput = z.output<typeof regularCoerce>; // => string
 
