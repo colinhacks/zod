@@ -257,6 +257,7 @@ z.nanoid();
 z.cuid();
 z.cuid2();
 z.ulid();
+z.objectId();     // MongoDB ObjectId (24 hex chars)
 z.ipv4();
 z.ipv6();
 z.cidrv4();        // ipv4 CIDR block
@@ -330,6 +331,20 @@ The RFC 9562/4122 UUID spec requires the first two bits of byte 8 to be `10`. Ot
 
 ```ts
 z.guid();
+```
+
+### MongoDB ObjectIds
+
+To validate MongoDB ObjectId strings (24 hexadecimal characters):
+
+```ts
+z.objectId();
+```
+
+This accepts both lowercase and uppercase hex. For custom needs, you can use the underlying regex directly:
+
+```ts
+z.string().regex(z.regexes.objectid);
 ```
 
 ### URLs

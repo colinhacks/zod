@@ -67,6 +67,7 @@ const error: () => errors.$ZodErrorMap = () => {
     json_string: "JSON string",
     e164: "E.164 number",
     jwt: "JWT",
+    objectid: "MongoDB ObjectId",
     template_literal: "input",
   };
 

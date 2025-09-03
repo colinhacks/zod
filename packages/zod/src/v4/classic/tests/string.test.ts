@@ -775,6 +775,8 @@ test("format", () => {
   expect(z.string().date().format).toEqual("date");
   expect(z.string().time().format).toEqual("time");
   expect(z.string().duration().format).toEqual("duration");
+  // objectid
+  expect(z.objectId().format).toEqual("objectid");
 });
 
 test("min max getters", () => {
@@ -993,6 +995,18 @@ test("hostname", () => {
   expect(() => hostname.parse("exa mple.com")).toThrow();
   expect(() => hostname.parse("-example.com")).toThrow();
   expect(() => hostname.parse("example..com")).toThrow();
+});
+
+test("objectId validation", () => {
+  const oid = z.objectId();
+  // valid ObjectIds
+  expect(oid.safeParse("507f1f77bcf86cd799439011").success).toBe(true);
+  expect(oid.safeParse("507F1F77BCF86CD799439011").success).toBe(true);
+  // invalid: wrong length
+  expect(oid.safeParse("507f1f77bcf86cd79943901").success).toBe(false); // 23 chars
+  expect(oid.safeParse("507f1f77bcf86cd7994390112").success).toBe(false); // 25 chars
+  // invalid: non-hex
+  expect(oid.safeParse("zz7f1f77bcf86cd799439011").success).toBe(false);
 });
 
 test("hash validation", () => {
