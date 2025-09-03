@@ -102,6 +102,22 @@ export function _email<T extends schemas.$ZodEmail>(
   });
 }
 
+// Currency
+export type $ZodCurrencyParams = StringFormatParams<schemas.$ZodCurrency, "when">;
+export type $ZodCheckCurrencyParams = CheckStringFormatParams<schemas.$ZodCurrency, "when">;
+export function _currency<T extends schemas.$ZodCurrency>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodEmailParams | $ZodCheckEmailParams
+): T {
+  return new Class({
+    type: "string",
+    format: "currency",
+    check: "string_format",
+    abort: false,
+    ...util.normalizeParams(params),
+  });
+}
+
 // GUID
 export type $ZodGUIDParams = StringFormatParams<schemas.$ZodGUID, "pattern" | "when">;
 export type $ZodCheckGUIDParams = CheckStringFormatParams<schemas.$ZodGUID, "pattern" | "when">;
