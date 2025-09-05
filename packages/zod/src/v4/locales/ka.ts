@@ -22,7 +22,7 @@ export const parsedType = (data: any): string => {
       }
     }
   }
-  
+
   const typeMap: Record<string, string> = {
     string: "სტრინგი",
     boolean: "ბულეანი",
@@ -31,7 +31,7 @@ export const parsedType = (data: any): string => {
     symbol: "symbol",
     function: "ფუნქცია",
   };
-  
+
   return typeMap[t] ?? t;
 };
 
@@ -86,7 +86,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return `არასწორი შეყვანა: მოსალოდნელი ${issue.expected}, მიღებული ${parsedType(issue.input)}`;
 
       case "invalid_value":
-        if (issue.values.length === 1) return `არასწორი შეყვანა: მოსალოდნელი ${util.stringifyPrimitive(issue.values[0])}`;
+        if (issue.values.length === 1)
+          return `არასწორი შეყვანა: მოსალოდნელი ${util.stringifyPrimitive(issue.values[0])}`;
         return `არასწორი ვარიანტი: მოსალოდნელია ერთ-ერთი ${util.joinValues(issue.values, "|")}-დან`;
       case "too_big": {
         const adj = issue.inclusive ? "<=" : "<";
