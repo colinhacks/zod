@@ -7,7 +7,7 @@ import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 import { Callout } from "fumadocs-ui/components/callout"
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
-To validate data, you must first define a *schema*. Schemas represent *types*, from simple primitive values to complex nested objects and arrays. 
+To validate data, you must first define a *schema*. Schemas represent *types*, from simple primitive values to complex nested objects and arrays.
 
 ## Primitives
 
@@ -59,8 +59,8 @@ type BInput = z.infer<typeof B>; // => number
 
 <Accordions type="single">
 <Accordion title="How coercion works in Zod">
-  
-  Zod coerces all inputs using the built-in constructors. 
+
+  Zod coerces all inputs using the built-in constructors.
 
   | Zod API                  | Coercion                   |
   |--------------------------|----------------------------|
@@ -91,7 +91,7 @@ type BInput = z.infer<typeof B>; // => number
 
 </Accordion>
 <Accordion title="Customizing the input type">
-  
+
   By default the _input_ type of any `z.coerce` schema is `unknown`. In some cases, it may be preferable for the input type to be more specific. You can specify the input type with a generic parameter.
 
   ```ts
@@ -344,7 +344,7 @@ schema.parse("http://localhost"); // ✅
 schema.parse("mailto:noreply@zod.dev"); // ✅
 ```
 
-As you can see this is quite permissive. Internally this uses the `new URL()` constructor to validate inputs; this behavior may differ across platforms and runtimes but it's the mostly rigorous way to validate URIs/URLs on any given JS runtime/engine. 
+As you can see this is quite permissive. Internally this uses the `new URL()` constructor to validate inputs; this behavior may differ across platforms and runtimes but it's the mostly rigorous way to validate URIs/URLs on any given JS runtime/engine.
 
 To validate the hostname against a specific regex:
 
@@ -417,7 +417,7 @@ datetime.parse("2020-01-01T06:15:00+02");    // ❌
 datetime.parse("2020-01-01T06:15:00+0200");  // ❌
 
 // Z is still supported
-datetime.parse("2020-01-01T06:15:00Z"); // ✅ 
+datetime.parse("2020-01-01T06:15:00Z"); // ✅
 ```
 
 To allow unqualified (timezone-less) datetimes:
@@ -637,10 +637,10 @@ z.number().gt(5);
 z.number().gte(5);                     // alias .min(5)
 z.number().lt(5);
 z.number().lte(5);                     // alias .max(5)
-z.number().positive();       
-z.number().nonnegative();    
-z.number().negative(); 
-z.number().nonpositive(); 
+z.number().positive();
+z.number().nonnegative();
+z.number().negative();
+z.number().nonpositive();
 z.number().multipleOf(5);              // alias .step(5)
 ```
 </Tab>
@@ -650,10 +650,10 @@ z.number().check(z.gt(5));
 z.number().check(z.gte(5));            // alias .minimum(5)
 z.number().check(z.lt(5));
 z.number().check(z.lte(5));            // alias .maximum(5)
-z.number().check(z.positive()); 
-z.number().check(z.nonnegative()); 
-z.number().check(z.negative()); 
-z.number().check(z.nonpositive()); 
+z.number().check(z.positive());
+z.number().check(z.nonnegative());
+z.number().check(z.negative());
+z.number().check(z.nonpositive());
 z.number().check(z.multipleOf(5));     // alias .step(5)
 ```
 </Tab>
@@ -692,10 +692,10 @@ z.bigint().gt(5n);
 z.bigint().gte(5n);                    // alias `.min(5n)`
 z.bigint().lt(5n);
 z.bigint().lte(5n);                    // alias `.max(5n)`
-z.bigint().positive(); 
-z.bigint().nonnegative(); 
-z.bigint().negative(); 
-z.bigint().nonpositive(); 
+z.bigint().positive();
+z.bigint().nonnegative();
+z.bigint().negative();
+z.bigint().nonpositive();
 z.bigint().multipleOf(5n);             // alias `.step(5n)`
 ```
 </Tab>
@@ -705,10 +705,10 @@ z.bigint().check(z.gt(5n));
 z.bigint().check(z.gte(5n));           // alias `.minimum(5n)`
 z.bigint().check(z.lt(5n));
 z.bigint().check(z.lte(5n));           // alias `.maximum(5n)`
-z.bigint().check(z.positive()); 
-z.bigint().check(z.nonnegative()); 
-z.bigint().check(z.negative()); 
-z.bigint().check(z.nonpositive()); 
+z.bigint().check(z.positive());
+z.bigint().check(z.nonnegative());
+z.bigint().check(z.negative());
+z.bigint().check(z.nonpositive());
 z.bigint().check(z.multipleOf(5n));    // alias `.step(5n)`
 ```
 
@@ -758,7 +758,7 @@ z.date().check(z.maximum(new Date(), { error: "Too young!" }));
 </Tab>
 </Tabs>
 
-<div id="zod-enums" style={{height:"0px" }} /> 
+<div id="zod-enums" style={{height:"0px" }} />
 
 ## Enums
 
@@ -776,7 +776,7 @@ FishEnum.parse("Swordfish"); // => ❌
 
   ```ts
   const fish = ["Salmon", "Tuna", "Trout"];
-  
+
   const FishEnum = z.enum(fish);
   type FishEnum = z.infer<typeof FishEnum>; // string
   ```
@@ -804,12 +804,12 @@ FishEnum.parse("Salmon"); // => "Salmon"
 FishEnum.parse("Swordfish"); // => ❌
 ```
 
-You can also pass in an externally-declared TypeScript enum. 
+You can also pass in an externally-declared TypeScript enum.
 
 <Callout>
-**Zod 4** — This replaces the `z.nativeEnum()` API in Zod 3. 
+**Zod 4** — This replaces the `z.nativeEnum()` API in Zod 3.
 
-Note that using TypeScript's `enum` keyword is [not recommended](https://www.totaltypescript.com/why-i-dont-like-typescript-enums). 
+Note that using TypeScript's `enum` keyword is [not recommended](https://www.totaltypescript.com/why-i-dont-like-typescript-enums).
 </Callout>
 
 ```ts
@@ -859,7 +859,7 @@ const TunaOnly = FishEnum.exclude(["Salmon", "Trout"]);
 <Tab value="Zod Mini">
 ```ts
 // no equivalent
- 
+
 ```
 </Tab>
 </Tabs>
@@ -878,10 +878,25 @@ const SalmonAndTroutOnly = FishEnum.extract(["Salmon", "Trout"]);
 <Tab value="Zod Mini">
 ```ts
 // no equivalent
- 
+
 ```
 </Tab>
 </Tabs>
+
+### `z.looseEnum`
+
+To allow any string, but prefer a fixed set of values:
+
+```ts
+const FishEnum = z.looseEnum(["Salmon", "Tuna", "Trout"]);
+
+FishEnum.parse("Salmon");     // => "Salmon"
+FishEnum.parse("Swordfish");  // => "Swordfish" ✅ unknowns allowed
+FishEnum.parse(123);          // ❌ only strings allowed
+
+type FishEnum = z.infer<typeof FishEnum>;
+// => "Salmon" | "Tuna" | "Trout" | (string & {})
+```
 
 ## Stringbools [#stringbool]
 
@@ -1235,7 +1250,7 @@ The `.safeExtend()` method works similarly to `.extend()`, but it won't let you 
 z.object({ a: z.string() }).safeExtend({ a: z.string().min(5) }); // ✅
 z.object({ a: z.string() }).safeExtend({ a: z.any() }); // ✅
 z.object({ a: z.string() }).safeExtend({ a: z.number() });
-//                                       ^  ❌ ZodNumber is not assignable 
+//                                       ^  ❌ ZodNumber is not assignable
 ```
 
 Use `.safeExtend()` to extend schemas that contain refinements. (Regular `.extend()` will throw an error when used on schemas with refinements.)
@@ -1417,7 +1432,7 @@ type Category = z.infer<typeof Category>;
 // { name: string; subcategories: Category[] }
 ```
 
-<Callout type="warn"> 
+<Callout type="warn">
   Though recursive schemas are supported, passing cyclical data into Zod will cause an infinite loop.
 </Callout>
 
@@ -1471,7 +1486,7 @@ const Activity = z.object({
 
 {/* Some general rules of thumb for avoiding circularity  */}
 
-{/* 
+{/*
 <Accordions>
   <Accordion title="Resolving type errors in recursive schemas">
     Recursive type inference can by mysterious. TypeScript is capable of it in certain limited scenarios. Depending on what you're trying to do, you may encounter errors like this:
@@ -1480,8 +1495,8 @@ const Activity = z.object({
     export const Activity = z.object({
       name: z.string(),
       get children() {
-        // ^ ❌ 'children' implicitly has return type 'any' because it does not 
-        // have a return type annotation and is referenced directly or indirectly 
+        // ^ ❌ 'children' implicitly has return type 'any' because it does not
+        // have a return type annotation and is referenced directly or indirectly
         // in one of its return expressions.ts(7023)
 
         return z.optional(z.array(Activity)); //.optional();
@@ -1491,8 +1506,8 @@ const Activity = z.object({
 
     Here are a couple rules of thumb:
 
-    ### Object types only 
-    
+    ### Object types only
+
     Generally speaking, recursive inference only works with object types that are referencing each other. TypeScript has special handling for resolving getter-based recursive objects, which is what Zod relies on. If you try to add non-object types into the mix, you'll likely encounter errors.
 
     ```ts
@@ -1506,19 +1521,19 @@ const Activity = z.object({
     const ActivityArray = z.array(Activity);
     ```
 
-    Sometimes you can get around this limitation by defining 
+    Sometimes you can get around this limitation by defining
 
 
     ### Avoid nesting function calls
-    
+
     Functions like `z.array()` and `z.optional()` accept Zod schemas, so when you use them TypeScript will do some type-checking on their inputs to make sure they are valid. But type checking is the enemy of recursive type inference—it's hard for TypeScript to *check* and *infer* types at the same time. Methods do not have this problem, so prefer methods over functions when possible (sorry Zod Mini users).
 
     ```ts
     const Activity = z.object({
       name: z.string(),
       get subactivities() {
-        // ^ ❌ 'subactivities' implicitly has return type 'any' because it does not 
-        // have a return type annotation and is referenced directly or indirectly 
+        // ^ ❌ 'subactivities' implicitly has return type 'any' because it does not
+        // have a return type annotation and is referenced directly or indirectly
         // in one of its return expressions.ts(7023)
 
         return z.union([z.null(), Activity]);
@@ -1527,7 +1542,7 @@ const Activity = z.object({
     ```
 
     ### Fall back to type annotations on your getters
-    
+
     When in doubt, you can generally sidestep these issues with some carefully deployed type annotations on your getters. Due to the limitations described above, this is particularly necessary when using Zod Mini.
 
     ```ts
@@ -1702,7 +1717,7 @@ const MyResult = z.discriminatedUnion("status", [
 
 Each option should be an *object schema* whose discriminator prop (`status` in the example above) corresponds to some literal value or set of values, usually `z.enum()`, `z.literal()`, `z.null()`, or `z.undefined()`.
 
-{/* 
+{/*
 <Callout>
   In Zod 3, you were required to specify the discriminator key as the first argument. This is no longer necessary, as Zod can now automatically detect the discriminator key.
 
@@ -1740,7 +1755,7 @@ Each option should be an *object schema* whose discriminator prop (`status` in t
 
 ## Intersections
 
-Intersection types (`A & B`) represent a logical "AND". 
+Intersection types (`A & B`) represent a logical "AND".
 
 ```ts
 const a = z.union([z.number(), z.string()]);
@@ -1750,7 +1765,7 @@ const c = z.intersection(a, b);
 type c = z.infer<typeof c>; // => number
 ```
 
-This can be useful for intersecting two object types. 
+This can be useful for intersecting two object types.
 
 ```ts
 const Person = z.object({ name: z.string() });
@@ -1814,7 +1829,7 @@ const Person = z.record(Keys, z.string());
 If you want a *partial* record type, use `z.partialRecord()`. This skips the special exhaustiveness checks Zod normally runs with `z.enum()` and `z.literal()` key schemas.
 
 ```ts
-const Keys = z.enum(["id", "name", "email"]).or(z.never()); 
+const Keys = z.enum(["id", "name", "email"]).or(z.never());
 const Person = z.partialRecord(Keys, z.string());
 // { id?: string; name?: string; email?: string }
 ```
@@ -1827,7 +1842,7 @@ Though TypeScript lets you define `Record` types with `number` keys (e.g. `Recor
 ```ts
 const myObject = { 1: "one" };
 
-Object.keys(myObject); 
+Object.keys(myObject);
 // => ["1"]
 ```
 
@@ -2012,15 +2027,15 @@ const myString = z.string().check(z.refine((val) => val.length <= 255));
   Refinement functions should never throw. Instead they should return a falsy value to signal failure. Thrown errors are not caught by Zod.
 </Callout>
 
-#### `error` 
+#### `error`
 
 To customize the error message:
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-const myString = z.string().refine((val) => val.length > 8, { 
-  error: "Too short!" 
+const myString = z.string().refine((val) => val.length > 8, {
+  error: "Too short!"
 });
 ```
 </Tab>
@@ -2033,7 +2048,7 @@ const myString = z.string().check(
 </Tab>
 </Tabs>
 
-#### `abort` 
+#### `abort`
 
 By default, validation issues from checks are considered *continuable*; that is, Zod will execute *all* checks in sequence, even if one of them causes a validation error. This is usually desirable, as it means Zod can surface as many errors as possible in one go.
 
@@ -2043,7 +2058,7 @@ By default, validation issues from checks are considered *continuable*; that is,
 const myString = z.string()
   .refine((val) => val.length > 8, { error: "Too short!" })
   .refine((val) => val === val.toLowerCase(), { error: "Must be lowercase" });
-  
+
 
 const result = myString.safeParse("OH NO");
 result.error.issues;
@@ -2189,7 +2204,7 @@ const userId = z.string().refine(async (id) => {
 
 #### `when`
 
-> **Note** — This is a power user feature and can absolutely be abused in ways that will increase the probability of uncaught errors originating from inside your refinements. 
+> **Note** — This is a power user feature and can absolutely be abused in ways that will increase the probability of uncaught errors originating from inside your refinements.
 
 By default, refinements don't run if any *non-continuable* issues have already been encountered. Zod is careful to ensure the type signature of the value is correct before passing it into any refinement functions.
 
@@ -2307,24 +2322,24 @@ schema.parse({
 
 
 ### `.superRefine()`
-    
+
 
 The regular `.refine` API only generates a single issue with a `"custom"` error code, but `.superRefine()` makes it possible to create multiple issues using any of Zod's [internal issue types](https://github.com/colinhacks/zod/blob/main/packages/zod/src/v4/core/errors.ts).
 
-<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
-<Tab value="Zod">
-```ts
-const UniqueStringArray = z.array(z.string()).superRefine((val, ctx) => {
-  if (val.length > 3) {
-    ctx.addIssue({
-      code: "too_big",
-      maximum: 3,
-      origin: "array",
-      inclusive: true,
-      message: "Too many items 😡",
-      input: val,
-    });
-  }
+    <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+    <Tab value="Zod">
+    ```ts
+    const UniqueStringArray = z.array(z.string()).superRefine((val, ctx) => {
+      if (val.length > 3) {
+        ctx.addIssue({
+          code: "too_big",
+          maximum: 3,
+          origin: "array",
+          inclusive: true,
+          message: "Too many items 😡",
+          input: val,
+        });
+      }
 
   if (val.length !== new Set(val).size) {
     ctx.addIssue({
@@ -2342,15 +2357,15 @@ const UniqueStringArray = z.array(z.string()).superRefine((val, ctx) => {
 ```ts
 const UniqueStringArray = z.array(z.string()).check(
   z.superRefine((val, ctx) => {
-    if (val.length > 3) {
-      ctx.addIssue({
-        code: "too_big",
-        maximum: 3,
-        origin: "array",
-        inclusive: true,
-        message: "Too many items 😡",
-        input: val,
-      });
+  if (val.length > 3) {
+    ctx.addIssue({
+      code: "too_big",
+      maximum: 3,
+      origin: "array",
+      inclusive: true,
+      message: "Too many items 😡",
+      input: val,
+    });
     }
 
     if (val.length !== new Set(val).size) {
@@ -2362,9 +2377,9 @@ const UniqueStringArray = z.array(z.string()).check(
     }
   })
 );
-```
-</Tab>
-</Tabs>
+    ```
+    </Tab>
+    </Tabs>
 
 ### `.check()`
 
@@ -2611,7 +2626,7 @@ Piping some schema into a transform is a common pattern, so Zod provides a conve
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-const stringToLength = z.string().transform(val => val.length); 
+const stringToLength = z.string().transform(val => val.length);
 ```
 </Tab>
 <Tab value="Zod Mini">
@@ -2630,7 +2645,7 @@ const idToUser = z
   .string()
   .transform(async (id) => {
     // fetch user from database
-    return db.getUserById(id); 
+    return db.getUserById(id);
   });
 
 const user = await idToUser.parseAsync("abc123");
@@ -2642,7 +2657,7 @@ const idToUser = z.pipe(
   z.string(),
   z.transform(async (id) => {
     // fetch user from database
-    return db.getUserById(id); 
+    return db.getUserById(id);
   }));
 
 const user = await idToUser.parse("abc123");
@@ -2654,7 +2669,7 @@ const user = await idToUser.parse("abc123");
   If you use async transforms, you must use a `.parseAsync` or `.safeParseAsync` when parsing data! Otherwise Zod will throw an error.
 </Callout>
 
-### `.preprocess()` 
+### `.preprocess()`
 
 Piping a transform into another schema is another common pattern, so Zod provides a convenience `z.preprocess()` function.
 
@@ -2903,11 +2918,11 @@ This is a convenience API that returns the following union schema:
 ```ts
 const jsonSchema = z.lazy(() => {
   return z.union([
-    z.string(params), 
-    z.number(), 
-    z.boolean(), 
-    z.null(), 
-    z.array(jsonSchema), 
+    z.string(params),
+    z.number(),
+    z.boolean(),
+    z.null(),
+    z.array(jsonSchema),
     z.record(z.string(), jsonSchema)
   ]);
 });

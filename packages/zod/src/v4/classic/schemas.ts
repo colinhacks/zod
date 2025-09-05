@@ -1566,6 +1566,42 @@ function _enum(values: any, params?: string | core.$ZodEnumParams) {
 }
 export { _enum as enum };
 
+// ZodLooseEnum
+export interface ZodLooseEnum<
+  /** @ts-ignore Cast variance */
+  out T extends util.EnumLike = util.EnumLike,
+> extends _ZodType<core.$ZodLooseEnumInternals<T>>,
+    core.$ZodLooseEnum<T> {
+  enum: T;
+  options: Array<T[keyof T]>;
+}
+
+export const ZodLooseEnum: core.$constructor<ZodLooseEnum> = /*@__PURE__*/ core.$constructor(
+  "ZodLooseEnum",
+  (inst, def) => {
+    core.$ZodLooseEnum.init(inst, def);
+    ZodType.init(inst, def);
+    inst.enum = def.entries;
+    inst.options = Object.values(def.entries);
+  }
+);
+
+function _looseEnum<const T extends readonly string[]>(
+  values: T,
+  params?: string | core.$ZodEnumParams
+): ZodLooseEnum<util.ToEnum<T[number]>>;
+function _looseEnum<const T extends util.EnumLike>(entries: T, params?: string | core.$ZodEnumParams): ZodLooseEnum<T>;
+function _looseEnum(values: any, params?: string | core.$ZodEnumParams) {
+  const entries: any = Array.isArray(values) ? Object.fromEntries(values.map((v) => [v, v])) : values;
+  return new ZodLooseEnum({
+    type: "enum",
+    entries,
+    ...util.normalizeParams(params),
+  }) as any;
+}
+
+export { _looseEnum as looseEnum };
+
 /** @deprecated This API has been merged into `z.enum()`. Use `z.enum()` instead.
  *
  * ```ts
