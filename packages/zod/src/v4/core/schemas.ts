@@ -994,6 +994,23 @@ export const $ZodJWT: core.$constructor<$ZodJWT> = /*@__PURE__*/ core.$construct
   };
 });
 
+//////////////////////////////   ZodObjectId   //////////////////////////////
+
+export interface $ZodObjectIdDef extends $ZodStringFormatDef<"objectid"> {}
+export interface $ZodObjectIdInternals extends $ZodStringFormatInternals<"objectid"> {}
+
+export interface $ZodObjectId extends $ZodType {
+  _zod: $ZodObjectIdInternals;
+}
+
+export const $ZodObjectId: core.$constructor<$ZodObjectId> = /*@__PURE__*/ core.$constructor(
+  "$ZodObjectId",
+  (inst, def): void => {
+    def.pattern ??= regexes.objectid;
+    $ZodStringFormat.init(inst, def);
+  }
+);
+
 //////////////////////////////   ZodCustomStringFormat   //////////////////////////////
 
 export interface $ZodCustomStringFormatDef<Format extends string = string> extends $ZodStringFormatDef<Format> {
@@ -4272,6 +4289,7 @@ export type $ZodTypes =
 export type $ZodStringFormatTypes =
   | $ZodGUID
   | $ZodUUID
+  | $ZodObjectId
   | $ZodEmail
   | $ZodURL
   | $ZodEmoji

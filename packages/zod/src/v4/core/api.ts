@@ -441,6 +441,22 @@ export function _jwt<T extends schemas.$ZodJWT>(
   });
 }
 
+// ObjectId
+export type $ZodObjectIdParams = StringFormatParams<schemas.$ZodObjectId, "pattern" | "when">;
+export type $ZodCheckObjectIdParams = CheckStringFormatParams<schemas.$ZodObjectId, "pattern" | "when">;
+export function _objectId<T extends schemas.$ZodObjectId>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodObjectIdParams | $ZodCheckObjectIdParams
+): T {
+  return new Class({
+    type: "string",
+    format: "objectid",
+    check: "string_format",
+    abort: false,
+    ...util.normalizeParams(params),
+  });
+}
+
 export const TimePrecision = {
   Any: null,
   Minute: -1,

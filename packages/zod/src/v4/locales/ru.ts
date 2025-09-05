@@ -123,6 +123,7 @@ const error: () => errors.$ZodErrorMap = () => {
     json_string: "JSON строка",
     e164: "номер E.164",
     jwt: "JWT",
+    objectid: "MongoDB ObjectId",
     template_literal: "ввод",
   };
 

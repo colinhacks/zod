@@ -468,6 +468,22 @@ export function uuidv7(params?: string | core.$ZodUUIDv7Params): ZodUUID {
   return core._uuidv7(ZodUUID, params);
 }
 
+// ZodObjectId
+export interface ZodObjectId extends ZodStringFormat<"objectid"> {
+  _zod: core.$ZodObjectIdInternals;
+}
+export const ZodObjectId: core.$constructor<ZodObjectId> = /*@__PURE__*/ core.$constructor(
+  "ZodObjectId",
+  (inst, def) => {
+    core.$ZodObjectId.init(inst, def);
+    ZodStringFormat.init(inst, def);
+  }
+);
+
+export function objectId(params?: string | core.$ZodObjectIdParams): ZodObjectId {
+  return core._objectId(ZodObjectId, params);
+}
+
 // ZodURL
 export interface ZodURL extends ZodStringFormat<"url"> {
   _zod: core.$ZodURLInternals;
