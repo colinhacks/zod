@@ -30,7 +30,7 @@ export function CopyMarkdownButton({ content, className = "" }: CopyMarkdownButt
     >
       <div className="flex items-center gap-1.5">
         {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-        <span>Copy .md</span>
+        <span>Copy markdown</span>
       </div>
     </button>
   );
