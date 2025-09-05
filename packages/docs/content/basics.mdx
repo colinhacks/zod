@@ -5,7 +5,6 @@ description: "Basic usage guide covering schema definition, parsing data, error 
 
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 import { Callout } from "fumadocs-ui/components/callout";
-import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
 This page will walk you through the basics of creating schemas, parsing data, and using inferred types. For complete documentation on Zod's schema API, refer to [Defining schemas](/api).
 
@@ -36,24 +35,6 @@ const Player = z.object({
 </Tab>
 </Tabs>
 
-{/* <Accordions>
-<Accordion title='Why the "/v4" suffix?'>
-  To allow time for the ecosystem the migrate, there will be a transitionary period in which Zod 4 will be published alongside Zod 3 and consumable as a subpath import:
-
-  ```ts
-  import * as z from "zod"
-  ```
-
-  During this transition window:
-
-  1. Zod 4 is considered stable and production-ready
-  2. The `"zod"` package will continue to be published in the `3.x.x` version range on npm. The `/v4` subpath will be added in the `zod@3.25` release.
-  3. Zod 3 will continue to be exported from the package root (`"zod"`) as well as a new subpath (`"zod/v3"`). It will continue to receive bug fixes & stability improvements.
-
-  For a complete breakdown of the subpath versioning strategy, see the [associated writeup](https://github.com/colinhacks/zod/issues/4371).
-</Accordion>
-</Accordions> */}
-
 ## Parsing data
 
 Given any Zod schema, use `.parse` to validate an input. If it's valid, Zod returns a strongly-typed *deep clone* of the input. 
@@ -64,7 +45,7 @@ Player.parse({ username: "billie", xp: 100 });
 ```
 
 <Callout>
-**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](/api#transform), you'll need to use the `.parseAsync()` method instead. 
+**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](/api#refinements) or [transforms](/api#transforms), you'll need to use the `.parseAsync()` method instead.
 
 ```ts
 await Player.parseAsync({ username: "billie", xp: 100 }); 
@@ -140,7 +121,7 @@ if (!result.success) {
 ```
 
 <Callout>
-**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](/api#transform), you'll need to use the `.safeParseAsync()` method instead. 
+**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](/api#refinements) or [transforms](/api#transforms), you'll need to use the `.safeParseAsync()` method instead.
 
 ```ts
 await schema.safeParseAsync("hello");
