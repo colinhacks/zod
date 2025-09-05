@@ -44,7 +44,7 @@ export const rfc5322Email =
 
 /** A loose regex that allows Unicode characters, enforces length limits, and that's about it. */
 export const unicodeEmail = /^[^\s@"]{1,64}@[^\s@]{1,255}$/u;
-export const idnEmail = /^[^\s@"]{1,64}@[^\s@]{1,255}$/u;
+export const idnEmail = unicodeEmail;
 
 export const browserEmail: RegExp =
   /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
@@ -58,7 +58,7 @@ export function emoji(): RegExp {
 export const ipv4: RegExp =
   /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/;
 export const ipv6: RegExp =
-  /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|::|([0-9a-fA-F]{1,4})?::([0-9a-fA-F]{1,4}:?){0,6})$/;
+  /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$/;
 
 export const cidrv4: RegExp =
   /^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\/([0-9]|[1-2][0-9]|3[0-2])$/;
@@ -123,13 +123,13 @@ export const string = (params?: { minimum?: number | undefined; maximum?: number
   return new RegExp(`^${regex}$`);
 };
 
-export const bigint: RegExp = /^\d+n?$/;
-export const integer: RegExp = /^\d+$/;
-export const number: RegExp = /^-?\d+(?:\.\d+)?/i;
-export const boolean: RegExp = /true|false/i;
-const _null: RegExp = /null/i;
+export const bigint: RegExp = /^-?\d+n?$/;
+export const integer: RegExp = /^-?\d+$/;
+export const number: RegExp = /^-?\d+(?:\.\d+)?/;
+export const boolean: RegExp = /^(?:true|false)$/i;
+const _null: RegExp = /^null$/i;
 export { _null as null };
-const _undefined: RegExp = /undefined/i;
+const _undefined: RegExp = /^undefined$/i;
 export { _undefined as undefined };
 
 // regex for string with no uppercase letters
@@ -148,7 +148,7 @@ function fixedBase64(bodyLength: number, padding: "" | "=" | "=="): RegExp {
 
 // Helper function to create base64url regex with exact length (no padding)
 function fixedBase64url(length: number): RegExp {
-  return new RegExp(`^[A-Za-z0-9-_]{${length}}$`);
+  return new RegExp(`^[A-Za-z0-9_-]{${length}}$`);
 }
 
 // MD5 (16 bytes): base64 = 24 chars total (22 + "==")
