@@ -10,8 +10,39 @@ const error: () => errors.$ZodErrorMap = () => {
     set: { unit: "elementos", verb: "tener" },
   };
 
+  const TypeNames: Record<string, string> = {
+    string: "texto",
+    number: "número",
+    boolean: "booleano",
+    array: "arreglo",
+    object: "objeto",
+    set: "conjunto",
+    file: "archivo",
+    date: "fecha",
+    bigint: "número grande",
+    symbol: "símbolo",
+    undefined: "indefinido",
+    null: "nulo",
+    function: "función",
+    map: "mapa",
+    record: "registro",
+    tuple: "tupla",
+    enum: "enumeración",
+    union: "unión",
+    literal: "literal",
+    promise: "promesa",
+    void: "vacío",
+    never: "nunca",
+    unknown: "desconocido",
+    any: "cualquiera",
+  };
+
   function getSizing(origin: string): { unit: string; verb: string } | null {
     return Sizable[origin] ?? null;
+  }
+
+  function getTypeName(type: string): string {
+    return TypeNames[type] ?? type;
   }
 
   const parsedType = (data: any): string => {
@@ -19,18 +50,19 @@ const error: () => errors.$ZodErrorMap = () => {
 
     switch (t) {
       case "number": {
-        return Number.isNaN(data) ? "NaN" : "número";
+        return Number.isNaN(data) ? "NaN" : "number";
       }
       case "object": {
         if (Array.isArray(data)) {
-          return "arreglo";
+          return "array";
         }
         if (data === null) {
-          return "nulo";
+          return "null";
         }
         if (Object.getPrototypeOf(data) !== Object.prototype) {
           return data.constructor.name;
         }
+        return "object";
       }
     }
     return t;
@@ -72,7 +104,7 @@ const error: () => errors.$ZodErrorMap = () => {
   return (issue) => {
     switch (issue.code) {
       case "invalid_type":
-        return `Entrada inválida: se esperaba ${issue.expected}, recibido ${parsedType(issue.input)}`;
+        return `Entrada inválida: se esperaba ${getTypeName(issue.expected)}, recibido ${getTypeName(parsedType(issue.input))}`;
       // return `Entrada inválida: se esperaba ${issue.expected}, recibido ${util.getParsedType(issue.input)}`;
       case "invalid_value":
         if (issue.values.length === 1)
@@ -81,18 +113,20 @@ const error: () => errors.$ZodErrorMap = () => {
       case "too_big": {
         const adj = issue.inclusive ? "<=" : "<";
         const sizing = getSizing(issue.origin);
+        const origin = getTypeName(issue.origin);
         if (sizing)
-          return `Demasiado grande: se esperaba que ${issue.origin ?? "valor"} tuviera ${adj}${issue.maximum.toString()} ${sizing.unit ?? "elementos"}`;
-        return `Demasiado grande: se esperaba que ${issue.origin ?? "valor"} fuera ${adj}${issue.maximum.toString()}`;
+          return `Demasiado grande: se esperaba que ${origin ?? "valor"} tuviera ${adj}${issue.maximum.toString()} ${sizing.unit ?? "elementos"}`;
+        return `Demasiado grande: se esperaba que ${origin ?? "valor"} fuera ${adj}${issue.maximum.toString()}`;
       }
       case "too_small": {
         const adj = issue.inclusive ? ">=" : ">";
         const sizing = getSizing(issue.origin);
+        const origin = getTypeName(issue.origin);
         if (sizing) {
-          return `Demasiado pequeño: se esperaba que ${issue.origin} tuviera ${adj}${issue.minimum.toString()} ${sizing.unit}`;
+          return `Demasiado pequeño: se esperaba que ${origin} tuviera ${adj}${issue.minimum.toString()} ${sizing.unit}`;
         }
 
-        return `Demasiado pequeño: se esperaba que ${issue.origin} fuera ${adj}${issue.minimum.toString()}`;
+        return `Demasiado pequeño: se esperaba que ${origin} fuera ${adj}${issue.minimum.toString()}`;
       }
       case "invalid_format": {
         const _issue = issue as errors.$ZodStringFormatIssues;
@@ -107,11 +141,11 @@ const error: () => errors.$ZodErrorMap = () => {
       case "unrecognized_keys":
         return `Llave${issue.keys.length > 1 ? "s" : ""} desconocida${issue.keys.length > 1 ? "s" : ""}: ${util.joinValues(issue.keys, ", ")}`;
       case "invalid_key":
-        return `Llave inválida en ${issue.origin}`;
+        return `Llave inválida en ${getTypeName(issue.origin)}`;
       case "invalid_union":
         return "Entrada inválida";
       case "invalid_element":
-        return `Valor inválido en ${issue.origin}`;
+        return `Valor inválido en ${getTypeName(issue.origin)}`;
       default:
         return `Entrada inválida`;
     }
