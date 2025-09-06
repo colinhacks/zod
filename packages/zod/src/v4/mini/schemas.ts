@@ -58,7 +58,11 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
           checks: [
             ...(def.checks ?? []),
             ...checks.map((ch) =>
-              typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
+              typeof ch === "function"
+                ? {
+                    _zod: { check: ch, def: { check: "custom" }, onattach: [] },
+                  }
+                : ch
             ),
           ],
         }
@@ -833,11 +837,35 @@ export type SafeExtendShape<Base extends core.$ZodShape, Ext extends core.$ZodLo
     : Ext[K];
 };
 
+export type SafeChangeShape<Base extends core.$ZodShape, Changes extends core.$ZodLooseShape> = {
+  [K in keyof Changes]: K extends keyof Base
+    ? core.output<Changes[K]> extends core.output<Base[K]>
+      ? core.input<Changes[K]> extends core.input<Base[K]>
+        ? Changes[K]
+        : never
+      : never
+    : never;
+};
+
 export function safeExtend<T extends ZodMiniObject, U extends core.$ZodLooseShape>(
   schema: T,
   shape: SafeExtendShape<T["shape"], U>
 ): ZodMiniObject<util.Extend<T["shape"], U>, T["_zod"]["config"]> {
   return util.safeExtend(schema, shape as any);
+}
+
+export function change<T extends ZodMiniObject, U extends Partial<Record<keyof T["shape"], core.SomeType>>>(
+  schema: T,
+  shape: U
+): ZodMiniObject<util.Extend<T["shape"], U>, T["_zod"]["config"]> {
+  return util.change(schema, shape as any);
+}
+
+export function safeChange<T extends ZodMiniObject, U extends Partial<Record<keyof T["shape"], core.SomeType>>>(
+  schema: T,
+  shape: SafeChangeShape<T["shape"], U>
+): ZodMiniObject<util.Extend<T["shape"], U>, T["_zod"]["config"]> {
+  return util.safeChange(schema, shape as any);
 }
 
 /** @deprecated Identical to `z.extend(A, B)` */
@@ -1721,10 +1749,7 @@ export function _function<const Out extends core.$ZodFunctionOut = core.$ZodFunc
 export function _function<
   In extends core.$ZodFunctionIn = core.$ZodFunctionIn,
   Out extends core.$ZodFunctionOut = core.$ZodFunctionOut,
->(params?: {
-  input: In;
-  output: Out;
-}): ZodMiniFunction<In, Out>;
+>(params?: { input: In; output: Out }): ZodMiniFunction<In, Out>;
 export function _function(params?: {
   output?: core.$ZodFunctionOut;
   input?: core.$ZodFunctionArgs | Array<SomeType>;
