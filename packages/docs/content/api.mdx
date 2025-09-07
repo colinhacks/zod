@@ -51,10 +51,10 @@ The input type of these coerced schemas is `unknown` by default. To specify a mo
 
 ```ts
 const A = z.coerce.number();
-type AInput = z.infer<typeof A>; // => number
+type AInput = z.input<typeof A>; // => unknown
 
 const B = z.coerce.number<number>();
-type BInput = z.infer<typeof B>; // => number
+type BInput = z.input<typeof B>; // => number
 ```
 
 <Accordions type="single">
