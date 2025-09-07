@@ -73,7 +73,7 @@ const error: () => errors.$ZodErrorMap = () => {
     string,
     {
       unit: Record<UnitType, string>;
-      verb: Record<SizeableComparisonType, { inclusive: string, notInclusive: string }>;
+      verb: Record<SizeableComparisonType, { inclusive: string; notInclusive: string }>;
     }
   > = {
     string: {
@@ -152,8 +152,8 @@ const error: () => errors.$ZodErrorMap = () => {
     inclusive: boolean,
     targetShouldBe: SizeableComparisonType
   ): {
-    unit: string,
-    verb: string
+    unit: string;
+    verb: string;
   } | null {
     const result = Sizable[origin] ?? null;
     if (result === null) return result;
