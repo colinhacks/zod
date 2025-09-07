@@ -124,7 +124,7 @@ const zodToXConverters: ZodResource[] = [
   {
     name: "@traversable/zod",
     url: "https://github.com/traversable/schema/tree/main/packages/zod",
-    description: "Build your own \"Zod to x\" library, or pick one of 25+ off-the-shelf transformers.",
+    description: "Build your own \"Zod to x\" library, or pick one of 25+ off-the-shelf transformers",
     slug: "@traversable/zod",
   },
 ];
@@ -173,7 +173,7 @@ const mockingLibraries: ZodResource[] = [
   {
     name: "@traversable/zod-test",
     url: "https://github.com/traversable/schema/tree/main/packages/zod-test",
-    description: "Random zod schema generator built for fuzz testing. Includes generators for both valid and invalid data.",
+    description: "Random zod schema generator built for fuzz testing; includes generators for both valid and invalid data",
     slug: "@traversable/zod-test",
   },
 ];
