@@ -63,8 +63,8 @@ function getUnitTypeFromNumber(number: number): UnitType {
   const last = abs % 10;
   const last2 = abs % 100;
 
-  if((last2 >= 11 && last2 <= 19) || last === 0) return 'many';
-  if(last === 1) return 'one';
+  if ((last2 >= 11 && last2 <= 19) || last === 0) return 'many';
+  if (last === 1) return 'one';
   return 'few';
 }
 
@@ -240,9 +240,10 @@ const error: () => errors.$ZodErrorMap = () => {
         return `Rastas klaidingas raktas`;
       case "invalid_union":
         return "Klaidinga įvestis";
-      case "invalid_element":
+      case "invalid_element": {
         const origin = parsedTypeFromType(issue.origin);
         return `${capitalizeFirstCharacter(origin ?? issue.origin ?? 'reikšmė')} turi klaidingą įvestį`;
+      }
       default:
         return `Klaidinga įvestis`;
     }
