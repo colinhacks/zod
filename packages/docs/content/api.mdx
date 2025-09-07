@@ -1249,7 +1249,7 @@ const Base = z.object({
 }).refine(user => user.a === user.b);
 
 // Extended inherits the refinements of Base
-const Extended = UserSchema.safeExtend({
+const Extended = Base.safeExtend({
   a: z.string().min(10)
 });
 ```
