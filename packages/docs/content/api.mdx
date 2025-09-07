@@ -1770,7 +1770,7 @@ type EmployedPerson = z.infer<typeof EmployedPerson>;
 
 ## Records
 
-Record schemas are used to validate types such as `Record<string, number>`.
+Record schemas are used to validate types such as `Record<string, string>`.
 
 ```ts
 const IdCache = z.record(z.string(), z.string());
