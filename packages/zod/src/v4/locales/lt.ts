@@ -72,8 +72,8 @@ const error: () => errors.$ZodErrorMap = () => {
   const Sizable: Record<
     string,
     {
-      unit: Record<UnitType, string>,
-      verb: Record<SizeableComparisonType, { inclusive: string, notInclusive: string }>
+      unit: Record<UnitType, string>;
+      verb: Record<SizeableComparisonType, { inclusive: string, notInclusive: string }>;
     }
   > = {
     string: {
@@ -146,7 +146,12 @@ const error: () => errors.$ZodErrorMap = () => {
     },
   };
 
-  function getSizing(origin: string, unitType: UnitType, inclusive: boolean, targetShouldBe: SizeableComparisonType): {
+  function getSizing(
+    origin: string,
+    unitType: UnitType,
+    inclusive: boolean,
+    targetShouldBe: SizeableComparisonType
+  ): {
     unit: string,
     verb: string
   } | null {
@@ -205,7 +210,7 @@ const error: () => errors.$ZodErrorMap = () => {
           issue.origin,
           getUnitTypeFromNumber(Number(issue.maximum)),
           issue.inclusive ?? false,
-          "smaller",
+          "smaller"
         );
         if (sizing?.verb)
           return `${capitalizeFirstCharacter(origin ?? issue.origin ?? "reikšmė")} ${sizing.verb} ${issue.maximum.toString()} ${sizing.unit ?? "elementų"}`;
@@ -218,7 +223,7 @@ const error: () => errors.$ZodErrorMap = () => {
           issue.origin,
           getUnitTypeFromNumber(Number(issue.minimum)),
           issue.inclusive ?? false,
-          "bigger",
+          "bigger"
         );
         if (sizing?.verb)
           return `${capitalizeFirstCharacter(origin ?? issue.origin ?? "reikšmė")} ${sizing.verb} ${issue.minimum.toString()} ${sizing.unit ?? "elementų"}`;
