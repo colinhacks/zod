@@ -124,7 +124,7 @@ const zodToXConverters: ZodResource[] = [
   {
     name: "@traversable/zod",
     url: "https://github.com/@traversable/zod",
-    description: "Build your own \"Zod to x\" library, or pick one of 25+ off-the-shelf \"Zod to x\" transformers.",
+    description: "Build your own \"Zod to x\" library, or pick one of 25+ off-the-shelf transformers.",
     slug: "@traversable/zod",
   },
 ];
