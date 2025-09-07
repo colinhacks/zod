@@ -4,7 +4,10 @@ import * as util from "../core/util.js";
 
 export const parsedType = (data: any): string => {
   const t = typeof data;
+  return parsedTypeFromType(t, data);
+};
 
+const parsedTypeFromType = (t: string, data: any = undefined): string => {
   switch (t) {
     case "number": {
       return Number.isNaN(data) ? "NaN" : "skaičius";
@@ -18,7 +21,8 @@ export const parsedType = (data: any): string => {
     case "boolean": {
       return "loginė reikšmė"
     }
-    case "undefined": {
+    case "undefined":
+    case "void": {
       return "neapibrėžta reikšmė"
     }
     case "function": {
@@ -28,31 +32,51 @@ export const parsedType = (data: any): string => {
       return "simbolis"
     }
     case "object": {
-      if (Array.isArray(data)) {
-        return "masyvas";
-      }
-      if (data === null) {
-        return "nulinė reikšmė";
-      }
+      if (data === undefined) return 'nežinomas objektas';
+      if (data === null) return 'nulinė reikšmė';
 
+      if (Array.isArray(data)) return "masyvas";
       if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
         return data.constructor.name;
       }
+
+      return 'objektas';
+    }
+    //Zod types below
+    case 'null': {
+      return 'nulinė reikšmė'
     }
   }
+
   return t;
 };
 
+const capitalizeFirstCharacter = (text: string): string => {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+type UnitType = 'one' | 'few' | 'many';
 type SizeableComparisonType = 'smaller' | 'bigger';
+
+function getUnitTypeFromNumber(number: number): UnitType {
+  const abs = Math.abs(number);
+  const last = abs % 10;
+  const last2 = abs % 100;
+
+  if((last2 >= 11 && last2 <= 19) || last === 0) return 'many';
+  if(last === 1) return 'one';
+  return 'few';
+}
 
 const error: () => errors.$ZodErrorMap = () => {
   const Sizable: Record<string, {
-    unit: { one: string, many: string },
+    unit: Record<UnitType, string>,
     verb: Record<SizeableComparisonType, { inclusive: string, notInclusive: string }>
   }> = {
     string: {
       unit: {
         one: 'simbolis',
+        few: 'simboliai',
         many: 'simbolių',
       },
       verb: {
@@ -69,6 +93,7 @@ const error: () => errors.$ZodErrorMap = () => {
     file: {
       unit: {
         one: 'baitas',
+        few: 'baitai',
         many: 'baitų'
       },
       verb: {
@@ -84,7 +109,8 @@ const error: () => errors.$ZodErrorMap = () => {
     },
     array: {
       unit: {
-        one: 'elementas',
+        one: 'elementą',
+        few: 'elementus',
         many: 'elementų',
       },
       verb: {
@@ -100,7 +126,8 @@ const error: () => errors.$ZodErrorMap = () => {
     },
     set: {
       unit: {
-        one: "elementas",
+        one: "elementą",
+        few: 'elementus',
         many: "elementų",
       },
       verb: {
@@ -116,7 +143,7 @@ const error: () => errors.$ZodErrorMap = () => {
     },
   };
 
-  function getSizing(origin: string, single: boolean, inclusive: boolean, targetShouldBe: SizeableComparisonType): {
+  function getSizing(origin: string, unitType: UnitType, inclusive: boolean, targetShouldBe: SizeableComparisonType): {
     unit: string,
     verb: string
   } | null {
@@ -124,7 +151,7 @@ const error: () => errors.$ZodErrorMap = () => {
     if (result === null) return result;
 
     return {
-      unit: result.unit[single ? 'one' : 'many'],
+      unit: result.unit[unitType],
       verb: result.verb[targetShouldBe][inclusive ? 'inclusive' : 'notInclusive'],
     };
   }
@@ -165,33 +192,35 @@ const error: () => errors.$ZodErrorMap = () => {
   return (issue) => {
     switch (issue.code) {
       case "invalid_type":
-        return `Gautas tipas ${parsedType(issue.input)}, o tikėtasi - ${issue.expected}`;
+        return `Gautas tipas ${parsedType(issue.input)}, o tikėtasi - ${parsedTypeFromType(issue.expected)}`;
       case "invalid_value":
         if (issue.values.length === 1) return `Privalo būti ${util.stringifyPrimitive(issue.values[0])}`;
         return `Privalo būti vienas iš ${util.joinValues(issue.values, "|")} pasirinkimų`;
       case "too_big": {
+        const origin = parsedTypeFromType(issue.origin);
         const sizing = getSizing(
           issue.origin,
-          Number(issue.maximum) === 1,
+          getUnitTypeFromNumber(Number(issue.maximum)),
           issue.inclusive ?? false,
           'smaller'
         );
         if (sizing?.verb)
-          return `${issue.origin ?? "reikšmė"} ${sizing.verb} ${issue.maximum.toString()} ${sizing.unit ?? "elementų"}`;
+          return `${capitalizeFirstCharacter(origin ?? issue.origin ?? "reikšmė")} ${sizing.verb} ${issue.maximum.toString()} ${sizing.unit ?? "elementų"}`;
         const adj = issue.inclusive ? "ne didesnis kaip" : "mažesnis kaip";
-        return `${issue.origin ?? "value"} turi būti ${adj} ${issue.maximum.toString()} ${sizing?.unit}`;
+        return `${capitalizeFirstCharacter(origin ?? issue.origin ?? "reikšmė")} turi būti ${adj} ${issue.maximum.toString()} ${sizing?.unit}`;
       }
       case "too_small": {
+        const origin = parsedTypeFromType(issue.origin);
         const sizing = getSizing(
           issue.origin,
-          Number(issue.minimum) === 1,
+          getUnitTypeFromNumber(Number(issue.minimum)),
           issue.inclusive ?? false,
           'bigger',
         );
         if (sizing?.verb)
-          return `${issue.origin} ${sizing.verb} ${issue.minimum.toString()} ${sizing.unit ?? "elementų"}`;
+          return `${capitalizeFirstCharacter(origin ?? issue.origin ?? 'reikšmė')} ${sizing.verb} ${issue.minimum.toString()} ${sizing.unit ?? "elementų"}`;
         const adj = issue.inclusive ? "ne mažesnis kaip" : "didesnis kaip";
-        return `${issue.origin} turi būti ${adj} ${issue.minimum.toString()} ${sizing?.unit}`;
+        return `${capitalizeFirstCharacter(origin ?? issue.origin ?? 'reikšmė')} turi būti ${adj} ${issue.minimum.toString()} ${sizing?.unit}`;
       }
       case "invalid_format": {
         const _issue = issue as errors.$ZodStringFormatIssues;
@@ -212,7 +241,8 @@ const error: () => errors.$ZodErrorMap = () => {
       case "invalid_union":
         return "Klaidinga įvestis";
       case "invalid_element":
-        return `${issue.origin} turi klaidingą įvestį`;
+        const origin = parsedTypeFromType(issue.origin);
+        return `${capitalizeFirstCharacter(origin ?? issue.origin ?? 'reikšmė')} turi klaidingą įvestį`;
       default:
         return `Klaidinga įvestis`;
     }
