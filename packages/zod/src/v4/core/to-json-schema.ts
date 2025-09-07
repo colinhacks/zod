@@ -183,7 +183,7 @@ export class JSONSchemaGenerator {
             else json.type = "number";
 
             if (typeof exclusiveMinimum === "number") {
-              if (this.target === "draft-4") {
+              if (this.target === "draft-4" || this.target === "openapi-3.0") {
                 json.minimum = exclusiveMinimum;
                 json.exclusiveMinimum = true;
               } else {
@@ -199,7 +199,7 @@ export class JSONSchemaGenerator {
             }
 
             if (typeof exclusiveMaximum === "number") {
-              if (this.target === "draft-4") {
+              if (this.target === "draft-4" || this.target === "openapi-3.0") {
                 json.maximum = exclusiveMaximum;
                 json.exclusiveMaximum = true;
               } else {
@@ -236,7 +236,11 @@ export class JSONSchemaGenerator {
             break;
           }
           case "null": {
-            _json.type = "null";
+            if (this.target === "openapi-3.0") {
+              _json.type = "string";
+              _json.nullable = true;
+              _json.enum = [null];
+            } else _json.type = "null";
             break;
           }
           case "any": {
@@ -332,18 +336,7 @@ export class JSONSchemaGenerator {
                 path: [...params.path, "anyOf", i],
               })
             );
-            if (this.target === "openapi-3.0") {
-              const nonNull = options.filter((x) => (x as any).type !== "null");
-              const hasNull = nonNull.length !== options.length;
-              if (nonNull.length === 1) {
-                Object.assign(json, nonNull[0]!);
-              } else {
-                json.anyOf = nonNull;
-              }
-              if (hasNull) (json as any).nullable = true;
-            } else {
-              json.anyOf = options;
-            }
+            json.anyOf = options;
             break;
           }
           case "intersection": {
@@ -368,13 +361,21 @@ export class JSONSchemaGenerator {
           case "tuple": {
             const json: JSONSchema.ArraySchema = _json as any;
             json.type = "array";
+
+            const prefixPath = this.target === "draft-2020-12" ? "prefixItems" : "items";
+            const restPath =
+              this.target === "draft-2020-12" ? "items" : this.target === "openapi-3.0" ? "items" : "additionalItems";
+
             const prefixItems = def.items.map((x, i) =>
-              this.process(x, { ...params, path: [...params.path, "prefixItems", i] })
+              this.process(x, {
+                ...params,
+                path: [...params.path, prefixPath, i],
+              })
             );
             const rest = def.rest
               ? this.process(def.rest, {
                   ...params,
-                  path: [...params.path, "items"],
+                  path: [...params.path, restPath, ...(this.target === "openapi-3.0" ? [def.items.length] : [])],
                 })
               : null;
 
@@ -384,9 +385,12 @@ export class JSONSchemaGenerator {
                 json.items = rest;
               }
             } else if (this.target === "openapi-3.0") {
-              json.items = [...prefixItems];
+              json.items = {
+                anyOf: prefixItems,
+              };
+
               if (rest) {
-                json.items.push(rest);
+                json.items.anyOf!.push(rest);
               }
               json.minItems = prefixItems.length;
               if (!rest) {
@@ -411,7 +415,7 @@ export class JSONSchemaGenerator {
           case "record": {
             const json: JSONSchema.ObjectSchema = _json as any;
             json.type = "object";
-            if (this.target !== "draft-4") {
+            if (this.target === "draft-7" || this.target === "draft-2020-12") {
               json.propertyNames = this.process(def.keyType, {
                 ...params,
                 path: [...params.path, "propertyNames"],
@@ -524,9 +528,8 @@ export class JSONSchemaGenerator {
           case "nullable": {
             const inner = this.process(def.innerType, params);
             if (this.target === "openapi-3.0") {
-              Object.assign(_json, inner);
-              (_json as any).nullable = true;
               result.ref = def.innerType;
+              _json.nullable = true;
             } else {
               _json.anyOf = [inner, { type: "null" }];
             }

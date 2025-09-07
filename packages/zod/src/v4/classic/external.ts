@@ -27,6 +27,7 @@ export {
   flattenError,
   toJSONSchema,
   TimePrecision,
+  util,
   NEVER,
 } from "../core/index.js";
 

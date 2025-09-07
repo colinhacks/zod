@@ -1,11 +1,13 @@
+import { CopyMarkdownButton } from "@/components/copy-markdown-button";
 import { Heading } from "@/components/heading";
 import { Tabs } from "@/components/tabs";
+import { getLLMText } from "@/loaders/get-llm-text";
 import { source } from "@/loaders/source";
 import { Callout } from "fumadocs-ui/components/callout";
 import defaultMdxComponents, { createRelativeLink } from "fumadocs-ui/mdx";
-import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/page";
-import { notFound } from "next/navigation";
+import { DocsBody, DocsPage, DocsTitle } from "fumadocs-ui/page";
 import { Github } from "lucide-react";
+import { notFound } from "next/navigation";
 
 export const revalidate = 86400;
 
@@ -17,7 +19,7 @@ export default async function Page(props: {
   if (!page) notFound();
 
   const title = page.data.title;
-  const description = page.data.description;
+  const markdownContent = await getLLMText(page);
 
   const MDXContent = page.data.body;
   const toc = page.data.toc
@@ -26,46 +28,44 @@ export default async function Page(props: {
       return item;
     });
 
-  const editOnGithub = (
-    <h3 className="border-[var(--color-fd-border)] pb-0 mb-0 inline-flex items-center gap-1.5 text-sm text-fd-muted-foreground">
-      <a
-        href={`https://github.com/colinhacks/zod/blob/main/packages/docs/content/${page.file.path}`}
-        rel="noreferrer noopener"
-        target="_blank"
-        className="text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 text-sm no-underline"
-      >
-        <Github className="w-4 h-4 inline mr-[1px]" /> Edit this page
-      </a>
-    </h3>
-  )
-
   return (
-    <DocsPage
-      toc={toc}
-      tableOfContent={{ style: "clerk", single: false, header: editOnGithub }}
-      full={false}
-    
-    >
-      {title && title !== "Intro" ? <DocsTitle>{title}</DocsTitle> : null}
+    <DocsPage toc={toc} tableOfContent={{ style: "clerk", single: false }} full={false}>
+      {title && title !== "Intro" && (
+        <div className="mb-6">
+          <DocsTitle>{title}</DocsTitle>
+          <div className="h-2" />
+          <div className="flex items-center gap-2">
+            <CopyMarkdownButton content={markdownContent} />
+            <a
+              href={`https://github.com/colinhacks/zod/edit/main/packages/docs/content/${page.file.path}`}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="inline-flex items-center gap-1.5 px-2 py-1 text-xs text-fd-muted-foreground hover:text-fd-foreground border border-[var(--color-fd-border)] rounded hover:bg-fd-muted/50 transition-colors"
+            >
+              <Github className="w-3 h-3" />
+              Edit this page
+            </a>
+          </div>
+        </div>
+      )}
       {/* <DocsDescription>{description}</DocsDescription> */}
       <DocsBody {...{}}>
-      <MDXContent
-        components={{
-          ...defaultMdxComponents,
-          // this allows you to link to other pages with relative file paths
-          a: createRelativeLink(source, page),
-          // you can add other MDX components here
-          blockquote: Callout,
-          Tabs,
-          h1: (props) => <Heading as="h1" {...props} />,
-          h2: (props) => <Heading as="h2" {...props} />,
-          h3: (props) => <Heading as="h3" {...props} />,
-          h4: (props) => <Heading as="h4" {...props} />,
-          h5: (props) => <Heading as="h5" {...props} />,
-          h6: (props) => <Heading as="h6" {...props} />,
-        }}
-        
-      />
+        <MDXContent
+          components={{
+            ...defaultMdxComponents,
+            // this allows you to link to other pages with relative file paths
+            a: createRelativeLink(source, page),
+            // you can add other MDX components here
+            blockquote: Callout,
+            Tabs,
+            h1: (props) => <Heading as="h1" {...props} />,
+            h2: (props) => <Heading as="h2" {...props} />,
+            h3: (props) => <Heading as="h3" {...props} />,
+            h4: (props) => <Heading as="h4" {...props} />,
+            h5: (props) => <Heading as="h5" {...props} />,
+            h6: (props) => <Heading as="h6" {...props} />,
+          }}
+        />
       </DocsBody>
     </DocsPage>
   );

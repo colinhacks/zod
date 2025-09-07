@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import * as z from "zod/v4";
 
 // ============================================================================
-// Number/BigInt Codecs
+// stringToNumber
 // ============================================================================
 
 const stringToNumber = () =>
@@ -10,128 +10,6 @@ const stringToNumber = () =>
     decode: (str) => Number.parseFloat(str),
     encode: (num) => num.toString(),
   });
-
-const stringToInt = () =>
-  z.codec(z.string(), z.int(), {
-    decode: (str) => Number.parseInt(str, 10),
-    encode: (num) => num.toString(),
-  });
-
-const stringToBigInt = () =>
-  z.codec(z.string(), z.bigint(), {
-    decode: (str) => BigInt(str),
-    encode: (bigint) => bigint.toString(),
-  });
-
-const numberToBigInt = () =>
-  z.codec(z.int(), z.bigint(), {
-    decode: (num) => BigInt(num),
-    encode: (bigint) => Number(bigint),
-  });
-
-// ============================================================================
-// Date/Duration Codecs
-// ============================================================================
-
-const isoDatetimeToDate = () =>
-  z.codec(z.iso.datetime(), z.date(), {
-    decode: (isoString) => new Date(isoString),
-    encode: (date) => date.toISOString(),
-  });
-
-const epochSecondsToDate = () =>
-  z.codec(z.int().min(0), z.date(), {
-    decode: (seconds) => new Date(seconds * 1000),
-    encode: (date) => Math.floor(date.getTime() / 1000),
-  });
-
-const epochMillisToDate = () =>
-  z.codec(z.int().min(0), z.date(), {
-    decode: (millis) => new Date(millis),
-    encode: (date) => date.getTime(),
-  });
-
-// ============================================================================
-// JSON Codec
-// ============================================================================
-
-const json = <T extends z.ZodTypeAny>(schema: T) =>
-  z.codec(z.string(), schema, {
-    decode: (jsonString) => JSON.parse(jsonString),
-    encode: (value) => JSON.stringify(value),
-  });
-
-// ============================================================================
-// Text/Bytes Codecs
-// ============================================================================
-
-const utf8ToBytes = () =>
-  z.codec(z.string(), z.instanceof(Uint8Array), {
-    decode: (str) => new TextEncoder().encode(str),
-    encode: (bytes) => new TextDecoder().decode(bytes),
-  });
-
-const bytesToUtf8 = () =>
-  z.codec(z.instanceof(Uint8Array), z.string(), {
-    decode: (bytes) => new TextDecoder().decode(bytes),
-    encode: (str) => new TextEncoder().encode(str),
-  });
-
-// ============================================================================
-// Binary-to-text Codecs
-// ============================================================================
-
-// Using utility functions from z.core.util
-
-const base64 = () =>
-  z.codec(z.base64(), z.instanceof(Uint8Array), {
-    decode: (base64String) => z.core.util.base64ToUint8Array(base64String),
-    encode: (bytes) => z.core.util.uint8ArrayToBase64(bytes),
-  });
-
-const base64urlToBytes = () =>
-  z.codec(z.base64url(), z.instanceof(Uint8Array), {
-    decode: (base64urlString) => z.core.util.base64urlToUint8Array(base64urlString),
-    encode: (bytes) => z.core.util.uint8ArrayToBase64url(bytes),
-  });
-
-const hexToBytes = () =>
-  z.codec(z.hex(), z.instanceof(Uint8Array), {
-    decode: (hexString) => z.core.util.hexToUint8Array(hexString),
-    encode: (bytes) => z.core.util.uint8ArrayToHex(bytes),
-  });
-
-// ============================================================================
-// URL Codecs
-// ============================================================================
-
-const stringToURL = () =>
-  z.codec(z.url(), z.instanceof(URL), {
-    decode: (urlString) => new URL(urlString),
-    encode: (url) => url.href,
-  });
-
-const stringToHttpURL = () =>
-  z.codec(z.httpUrl(), z.instanceof(URL), {
-    decode: (urlString) => new URL(urlString),
-    encode: (url) => url.href,
-  });
-
-const uriComponent = () =>
-  z.codec(z.string(), z.string(), {
-    decode: (encodedString) => decodeURIComponent(encodedString),
-    encode: (decodedString) => encodeURIComponent(decodedString),
-  });
-
-// ============================================================================
-// Boolean Codec
-// ============================================================================
-
-const stringToBoolean = (options?: { truthy?: string[]; falsy?: string[] }) => z.stringbool(options);
-
-// ============================================================================
-// Tests
-// ============================================================================
 
 test("stringToNumber codec", () => {
   const codec = stringToNumber();
@@ -152,6 +30,16 @@ test("stringToNumber codec", () => {
   expect(roundTrip).toBe("3.14159");
 });
 
+// ============================================================================
+// stringToInt
+// ============================================================================
+
+const stringToInt = () =>
+  z.codec(z.string(), z.int(), {
+    decode: (str) => Number.parseInt(str, 10),
+    encode: (num) => num.toString(),
+  });
+
 test("stringToInt codec", () => {
   const codec = stringToInt();
 
@@ -170,6 +58,16 @@ test("stringToInt codec", () => {
   const roundTrip = z.encode(codec, z.decode(codec, original));
   expect(roundTrip).toBe("999");
 });
+
+// ============================================================================
+// stringToBigInt
+// ============================================================================
+
+const stringToBigInt = () =>
+  z.codec(z.string(), z.bigint(), {
+    decode: (str) => BigInt(str),
+    encode: (bigint) => bigint.toString(),
+  });
 
 test("stringToBigInt codec", () => {
   const codec = stringToBigInt();
@@ -190,6 +88,16 @@ test("stringToBigInt codec", () => {
   expect(roundTrip).toBe("987654321098765432109876543210");
 });
 
+// ============================================================================
+// numberToBigInt
+// ============================================================================
+
+const numberToBigInt = () =>
+  z.codec(z.int(), z.bigint(), {
+    decode: (num) => BigInt(num),
+    encode: (bigint) => Number(bigint),
+  });
+
 test("numberToBigInt codec", () => {
   const codec = numberToBigInt();
 
@@ -209,6 +117,16 @@ test("numberToBigInt codec", () => {
   expect(roundTrip).toBe(999);
 });
 
+// ============================================================================
+// isoDatetimeToDate
+// ============================================================================
+
+const isoDatetimeToDate = () =>
+  z.codec(z.iso.datetime(), z.date(), {
+    decode: (isoString) => new Date(isoString),
+    encode: (date) => date.toISOString(),
+  });
+
 test("isoDatetimeToDate codec", () => {
   const codec = isoDatetimeToDate();
 
@@ -226,6 +144,16 @@ test("isoDatetimeToDate codec", () => {
   const roundTrip = z.encode(codec, z.decode(codec, original));
   expect(roundTrip).toBe("2024-12-25T15:45:30.123Z");
 });
+
+// ============================================================================
+// epochSecondsToDate
+// ============================================================================
+
+const epochSecondsToDate = () =>
+  z.codec(z.int().min(0), z.date(), {
+    decode: (seconds) => new Date(seconds * 1000),
+    encode: (date) => Math.floor(date.getTime() / 1000),
+  });
 
 test("epochSecondsToDate codec", () => {
   const codec = epochSecondsToDate();
@@ -245,6 +173,16 @@ test("epochSecondsToDate codec", () => {
   expect(roundTrip).toBe(1640995200);
 });
 
+// ============================================================================
+// epochMillisToDate
+// ============================================================================
+
+const epochMillisToDate = () =>
+  z.codec(z.int().min(0), z.date(), {
+    decode: (millis) => new Date(millis),
+    encode: (date) => date.getTime(),
+  });
+
 test("epochMillisToDate codec", () => {
   const codec = epochMillisToDate();
 
@@ -263,8 +201,30 @@ test("epochMillisToDate codec", () => {
   expect(roundTrip).toBe(1640995200123);
 });
 
+// ============================================================================
+// json
+// ============================================================================
+
+const jsonCodec = <T extends z.core.$ZodType>(schema: T) =>
+  z.codec(z.string(), schema, {
+    decode: (jsonString, ctx) => {
+      try {
+        return JSON.parse(jsonString);
+      } catch (err: any) {
+        ctx.issues.push({
+          code: "invalid_format",
+          format: "json",
+          input: jsonString,
+          message: err.message,
+        });
+        return z.NEVER;
+      }
+    },
+    encode: (value) => JSON.stringify(value),
+  });
+
 test("json codec", () => {
-  const codec = json(z.object({ name: z.string(), age: z.number() }));
+  const codec = jsonCodec(z.object({ name: z.string(), age: z.number() }));
 
   // Test decode
   const decoded = z.decode(codec, '{"name":"Alice","age":30}');
@@ -280,6 +240,16 @@ test("json codec", () => {
   const roundTrip = z.encode(codec, parsed);
   expect(JSON.parse(roundTrip)).toEqual(JSON.parse(original));
 });
+
+// ============================================================================
+// utf8ToBytes
+// ============================================================================
+
+const utf8ToBytes = () =>
+  z.codec(z.string(), z.instanceof(Uint8Array), {
+    decode: (str) => new TextEncoder().encode(str),
+    encode: (bytes) => new TextDecoder().decode(bytes),
+  });
 
 test("utf8ToBytes codec", () => {
   const codec = utf8ToBytes();
@@ -298,6 +268,16 @@ test("utf8ToBytes codec", () => {
   const roundTrip = z.encode(codec, z.decode(codec, original));
   expect(roundTrip).toBe(original);
 });
+
+// ============================================================================
+// bytesToUtf8
+// ============================================================================
+
+const bytesToUtf8 = () =>
+  z.codec(z.instanceof(Uint8Array), z.string(), {
+    decode: (bytes) => new TextDecoder().decode(bytes),
+    encode: (str) => new TextEncoder().encode(str),
+  });
 
 test("bytesToUtf8 codec", () => {
   const codec = bytesToUtf8();
@@ -318,6 +298,16 @@ test("bytesToUtf8 codec", () => {
   expect(roundTrip).toEqual(original);
 });
 
+// ============================================================================
+// base64
+// ============================================================================
+
+const base64 = () =>
+  z.codec(z.base64(), z.instanceof(Uint8Array), {
+    decode: (base64String) => z.util.base64ToUint8Array(base64String),
+    encode: (bytes) => z.util.uint8ArrayToBase64(bytes),
+  });
+
 test("base64 codec", () => {
   const codec = base64();
 
@@ -336,6 +326,16 @@ test("base64 codec", () => {
   expect(roundTrip).toBe(original);
 });
 
+// ============================================================================
+// base64urlToBytes
+// ============================================================================
+
+const base64urlToBytes = () =>
+  z.codec(z.base64url(), z.instanceof(Uint8Array), {
+    decode: (base64urlString) => z.util.base64urlToUint8Array(base64urlString),
+    encode: (bytes) => z.util.uint8ArrayToBase64url(bytes),
+  });
+
 test("base64urlToBytes codec", () => {
   const codec = base64urlToBytes();
 
@@ -353,6 +353,16 @@ test("base64urlToBytes codec", () => {
   const roundTrip = z.encode(codec, z.decode(codec, original));
   expect(roundTrip).toBe(original);
 });
+
+// ============================================================================
+// hexToBytes
+// ============================================================================
+
+const hexToBytes = () =>
+  z.codec(z.hex(), z.instanceof(Uint8Array), {
+    decode: (hexString) => z.util.hexToUint8Array(hexString),
+    encode: (bytes) => z.util.uint8ArrayToHex(bytes),
+  });
 
 test("hexToBytes codec", () => {
   const codec = hexToBytes();
@@ -376,6 +386,16 @@ test("hexToBytes codec", () => {
   expect(roundTrip).toBe("deadbeef");
 });
 
+// ============================================================================
+// stringToURL
+// ============================================================================
+
+const stringToURL = () =>
+  z.codec(z.url(), z.instanceof(URL), {
+    decode: (urlString) => new URL(urlString),
+    encode: (url) => url.href,
+  });
+
 test("stringToURL codec", () => {
   const codec = stringToURL();
 
@@ -395,6 +415,16 @@ test("stringToURL codec", () => {
   const roundTrip = z.encode(codec, z.decode(codec, original));
   expect(roundTrip).toBe(original);
 });
+
+// ============================================================================
+// stringToHttpURL
+// ============================================================================
+
+const stringToHttpURL = () =>
+  z.codec(z.httpUrl(), z.instanceof(URL), {
+    decode: (urlString) => new URL(urlString),
+    encode: (url) => url.href,
+  });
 
 test("stringToHttpURL codec", () => {
   const codec = stringToHttpURL();
@@ -419,6 +449,16 @@ test("stringToHttpURL codec", () => {
   expect(roundTrip).toBe(original);
 });
 
+// ============================================================================
+// uriComponent
+// ============================================================================
+
+const uriComponent = () =>
+  z.codec(z.string(), z.string(), {
+    decode: (encodedString) => decodeURIComponent(encodedString),
+    encode: (decodedString) => encodeURIComponent(decodedString),
+  });
+
 test("uriComponent codec", () => {
   const codec = uriComponent();
 
@@ -441,6 +481,12 @@ test("uriComponent codec", () => {
   const decodedComplex = z.decode(codec, encodedComplex);
   expect(decodedComplex).toBe(complex);
 });
+
+// ============================================================================
+// stringToBoolean
+// ============================================================================
+
+const stringToBoolean = (options?: { truthy?: string[]; falsy?: string[] }) => z.stringbool(options);
 
 test("stringToBoolean codec", () => {
   const codec = stringToBoolean();
@@ -469,6 +515,10 @@ test("stringToBoolean codec", () => {
   expect(z.encode(customCodec, false)).toBe("no");
 });
 
+// ============================================================================
+// Error Handling Tests
+// ============================================================================
+
 // Test error cases - these test input validation, not transform errors
 test("codec input validation", () => {
   // Test invalid base64 format
@@ -495,25 +545,10 @@ test("codec input validation", () => {
 // Test transform errors - these test errors added by transform functions
 test("codec transform error handling", () => {
   // JSON codec that can fail during transform
-  const jsonCodec = z.codec(z.string(), z.json(), {
-    decode: (jsonString, ctx) => {
-      try {
-        return JSON.parse(jsonString);
-      } catch (err: any) {
-        ctx.issues.push({
-          code: "invalid_format",
-          format: "json",
-          input: jsonString,
-          message: err.message,
-        });
-        return z.NEVER;
-      }
-    },
-    encode: (value) => JSON.stringify(value),
-  });
+  const anyJSON = jsonCodec(z.json());
 
   // Test successful JSON parsing
-  const validResult = z.safeDecode(jsonCodec, '{"valid": "json"}');
+  const validResult = z.safeDecode(anyJSON, '{"valid": "json"}');
   expect(validResult.success).toBe(true);
   if (validResult.success) {
     expect(validResult.data).toEqual({ valid: "json" });
@@ -521,7 +556,7 @@ test("codec transform error handling", () => {
 
   // Test invalid JSON that should create a single "invalid_format" issue
   // Verifies that the transform error aborts before reaching the output schema
-  const invalidResult = z.safeDecode(jsonCodec, '{"invalid":,}');
+  const invalidResult = z.safeDecode(anyJSON, '{"invalid":,}');
   expect(invalidResult.success).toBe(false);
   if (!invalidResult.success) {
     expect(invalidResult.error.issues).toMatchInlineSnapshot(`
