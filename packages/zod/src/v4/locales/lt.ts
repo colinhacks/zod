@@ -1,4 +1,4 @@
-import type {$ZodStringFormats} from "../core/checks.js";
+import type { $ZodStringFormats } from "../core/checks.js";
 import type * as errors from "../core/errors.js";
 import * as util from "../core/util.js";
 
@@ -19,32 +19,32 @@ const parsedTypeFromType = (t: string, data: any = undefined): string => {
       return "eilutė";
     }
     case "boolean": {
-      return "loginė reikšmė"
+      return "loginė reikšmė";
     }
     case "undefined":
     case "void": {
-      return "neapibrėžta reikšmė"
+      return "neapibrėžta reikšmė";
     }
     case "function": {
-      return "funkcija"
+      return "funkcija";
     }
     case "symbol": {
-      return "simbolis"
+      return "simbolis";
     }
     case "object": {
-      if (data === undefined) return 'nežinomas objektas';
-      if (data === null) return 'nulinė reikšmė';
+      if (data === undefined) return "nežinomas objektas";
+      if (data === null) return "nulinė reikšmė";
 
       if (Array.isArray(data)) return "masyvas";
       if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
         return data.constructor.name;
       }
 
-      return 'objektas';
+      return "objektas";
     }
     //Zod types below
-    case 'null': {
-      return 'nulinė reikšmė'
+    case "null": {
+      return "nulinė reikšmė";
     }
   }
 
@@ -53,93 +53,96 @@ const parsedTypeFromType = (t: string, data: any = undefined): string => {
 
 const capitalizeFirstCharacter = (text: string): string => {
   return text.charAt(0).toUpperCase() + text.slice(1);
-}
+};
 
-type UnitType = 'one' | 'few' | 'many';
-type SizeableComparisonType = 'smaller' | 'bigger';
+type UnitType = "one" | "few" | "many";
+type SizeableComparisonType = "smaller" | "bigger";
 
 function getUnitTypeFromNumber(number: number): UnitType {
   const abs = Math.abs(number);
   const last = abs % 10;
   const last2 = abs % 100;
 
-  if ((last2 >= 11 && last2 <= 19) || last === 0) return 'many';
-  if (last === 1) return 'one';
-  return 'few';
+  if ((last2 >= 11 && last2 <= 19) || last === 0) return "many";
+  if (last === 1) return "one";
+  return "few";
 }
 
 const error: () => errors.$ZodErrorMap = () => {
-  const Sizable: Record<string, {
-    unit: Record<UnitType, string>,
-    verb: Record<SizeableComparisonType, { inclusive: string, notInclusive: string }>
-  }> = {
+  const Sizable: Record<
+    string,
+    {
+      unit: Record<UnitType, string>,
+      verb: Record<SizeableComparisonType, { inclusive: string, notInclusive: string }>
+    }
+  > = {
     string: {
       unit: {
-        one: 'simbolis',
-        few: 'simboliai',
-        many: 'simbolių',
+        one: "simbolis",
+        few: "simboliai",
+        many: "simbolių",
       },
       verb: {
         smaller: {
-          inclusive: 'turi būti ne ilgesnė kaip',
-          notInclusive: 'turi būti trumpesnė kaip'
+          inclusive: "turi būti ne ilgesnė kaip",
+          notInclusive: "turi būti trumpesnė kaip",
         },
         bigger: {
-          inclusive: 'turi būti ne trumpesnė kaip',
-          notInclusive: 'turi būti ilgesnė kaip'
-        }
-      }
+          inclusive: "turi būti ne trumpesnė kaip",
+          notInclusive: "turi būti ilgesnė kaip",
+        },
+      },
     },
     file: {
       unit: {
-        one: 'baitas',
-        few: 'baitai',
-        many: 'baitų'
+        one: "baitas",
+        few: "baitai",
+        many: "baitų",
       },
       verb: {
         smaller: {
-          inclusive: 'turi būti ne didesnis kaip',
-          notInclusive: 'turi būti mažesnis kaip'
+          inclusive: "turi būti ne didesnis kaip",
+          notInclusive: "turi būti mažesnis kaip",
         },
         bigger: {
-          inclusive: 'turi būti ne mažesnis kaip',
-          notInclusive: 'turi būti didesnis kaip'
-        }
-      }
+          inclusive: "turi būti ne mažesnis kaip",
+          notInclusive: "turi būti didesnis kaip",
+        },
+      },
     },
     array: {
       unit: {
-        one: 'elementą',
-        few: 'elementus',
-        many: 'elementų',
-      },
-      verb: {
-        smaller: {
-          inclusive: 'turi turėti ne daugiau kaip',
-          notInclusive: 'turi turėti mažiau kaip'
-        },
-        bigger: {
-          inclusive: 'turi turėti ne mažiau kaip',
-          notInclusive: 'turi turėti daugiau kaip'
-        }
-      }
-    },
-    set: {
-      unit: {
         one: "elementą",
-        few: 'elementus',
+        few: "elementus",
         many: "elementų",
       },
       verb: {
         smaller: {
-          inclusive: 'turi turėti ne daugiau kaip',
-          notInclusive: 'turi turėti mažiau kaip'
+          inclusive: "turi turėti ne daugiau kaip",
+          notInclusive: "turi turėti mažiau kaip",
         },
         bigger: {
-          inclusive: 'turi turėti ne mažiau kaip',
-          notInclusive: 'turi turėti daugiau kaip'
-        }
-      }
+          inclusive: "turi turėti ne mažiau kaip",
+          notInclusive: "turi turėti daugiau kaip",
+        },
+      },
+    },
+    set: {
+      unit: {
+        one: "elementą",
+        few: "elementus",
+        many: "elementų",
+      },
+      verb: {
+        smaller: {
+          inclusive: "turi turėti ne daugiau kaip",
+          notInclusive: "turi turėti mažiau kaip",
+        },
+        bigger: {
+          inclusive: "turi turėti ne mažiau kaip",
+          notInclusive: "turi turėti daugiau kaip",
+        },
+      },
     },
   };
 
@@ -152,7 +155,7 @@ const error: () => errors.$ZodErrorMap = () => {
 
     return {
       unit: result.unit[unitType],
-      verb: result.verb[targetShouldBe][inclusive ? 'inclusive' : 'notInclusive'],
+      verb: result.verb[targetShouldBe][inclusive ? "inclusive" : "notInclusive"],
     };
   }
 
@@ -202,7 +205,7 @@ const error: () => errors.$ZodErrorMap = () => {
           issue.origin,
           getUnitTypeFromNumber(Number(issue.maximum)),
           issue.inclusive ?? false,
-          'smaller'
+          "smaller",
         );
         if (sizing?.verb)
           return `${capitalizeFirstCharacter(origin ?? issue.origin ?? "reikšmė")} ${sizing.verb} ${issue.maximum.toString()} ${sizing.unit ?? "elementų"}`;
@@ -215,12 +218,12 @@ const error: () => errors.$ZodErrorMap = () => {
           issue.origin,
           getUnitTypeFromNumber(Number(issue.minimum)),
           issue.inclusive ?? false,
-          'bigger',
+          "bigger",
         );
         if (sizing?.verb)
-          return `${capitalizeFirstCharacter(origin ?? issue.origin ?? 'reikšmė')} ${sizing.verb} ${issue.minimum.toString()} ${sizing.unit ?? "elementų"}`;
+          return `${capitalizeFirstCharacter(origin ?? issue.origin ?? "reikšmė")} ${sizing.verb} ${issue.minimum.toString()} ${sizing.unit ?? "elementų"}`;
         const adj = issue.inclusive ? "ne mažesnis kaip" : "didesnis kaip";
-        return `${capitalizeFirstCharacter(origin ?? issue.origin ?? 'reikšmė')} turi būti ${adj} ${issue.minimum.toString()} ${sizing?.unit}`;
+        return `${capitalizeFirstCharacter(origin ?? issue.origin ?? "reikšmė")} turi būti ${adj} ${issue.minimum.toString()} ${sizing?.unit}`;
       }
       case "invalid_format": {
         const _issue = issue as errors.$ZodStringFormatIssues;
@@ -237,15 +240,15 @@ const error: () => errors.$ZodErrorMap = () => {
       case "unrecognized_keys":
         return `Neatpažint${issue.keys.length > 1 ? "i" : "as"} rakt${issue.keys.length > 1 ? "ai" : "as"}: ${util.joinValues(issue.keys, ", ")}`;
       case "invalid_key":
-        return `Rastas klaidingas raktas`;
+        return "Rastas klaidingas raktas";
       case "invalid_union":
         return "Klaidinga įvestis";
       case "invalid_element": {
         const origin = parsedTypeFromType(issue.origin);
-        return `${capitalizeFirstCharacter(origin ?? issue.origin ?? 'reikšmė')} turi klaidingą įvestį`;
+        return `${capitalizeFirstCharacter(origin ?? issue.origin ?? "reikšmė")} turi klaidingą įvestį`;
       }
       default:
-        return `Klaidinga įvestis`;
+        return "Klaidinga įvestis";
     }
   };
 };
