@@ -114,13 +114,7 @@ const zodToXConverters: ZodResource[] = [
     url: "https://github.com/matejchalk/zod2md",
     description: "Generate Markdown docs from Zod schemas",
     slug: "matejchalk/zod2md",
-  },
-  {
-    name: "prisma-zod-generator",
-    url: "https://github.com/omar-dulaimi/prisma-zod-generator",
-    description: "Generate Zod schemas from Prisma schema with full ZodObject method support",
-    slug: "omar-dulaimi/prisma-zod-generator",
-  },
+  }
 ];
 
 const xToZodConverters: ZodResource[] = [
@@ -148,6 +142,19 @@ const xToZodConverters: ZodResource[] = [
     url: "https://github.com/yuzheng14/valype",
     description: "Typescript's type definition to runtime validator (including zod).",
     slug: "yuzheng14/valype",
+  },
+  {
+    name: "Prisma Zod Generator",
+    url: "https://github.com/omar-dulaimi/prisma-zod-generator",
+    description: "Generates Zod schemas with input/result/pure variants, minimal/full/custom, selective emit/filtering, single/multi-file output, @zod rules, relation depth guards.",
+    slug: "omar-dulaimi/prisma-zod-generator",
+  },
+  {
+    name: "DRZL",
+    url: "https://github.com/use-drzl/drzl",
+    description:
+      "Drizzle ORM toolkit that can generate Zod validators from schema(s), plus typed services and strongly typed routers (oRPC/tRPC/etc).",
+    slug: "use-drzl/drzl",
   },
 ];
 
