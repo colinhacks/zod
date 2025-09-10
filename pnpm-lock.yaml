@@ -110,6 +110,9 @@ importers:
 
   packages/bench:
     devDependencies:
+      '@types/node':
+        specifier: ^22.10.5
+        version: 22.13.13
       arktype:
         specifier: ^2.1.19
         version: 2.1.19

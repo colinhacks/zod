@@ -1862,6 +1862,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
 
     const proms: Promise<any>[] = [];
     const shape = value.shape;
+
     for (const key of value.keys) {
       const el = shape[key]!;
       const r = el._zod.run({ value: input[key], issues: [] }, ctx);
@@ -1907,7 +1908,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
       }
 
       // A: preserve key order {
-      doc.write(`const newResult = {}`);
+      doc.write(`const newResult = {};`);
       for (const key of normalized.keys) {
         const id = ids[key];
         const k = util.esc(key);
@@ -1920,6 +1921,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
           })));
         }
         
+        
         if (${id}.value === undefined) {
           if (${k} in input) {
             newResult[${k}] = undefined;
@@ -1927,6 +1929,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         } else {
           newResult[${k}] = ${id}.value;
         }
+        
       `);
       }
 
