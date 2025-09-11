@@ -1249,7 +1249,7 @@ const Base = z.object({
 }).refine(user => user.a === user.b);
 
 // Extended inherits the refinements of Base
-const Extended = UserSchema.safeExtend({
+const Extended = Base.safeExtend({
   a: z.string().min(10)
 });
 ```
@@ -1262,7 +1262,7 @@ const Base = z.object({
 }).check(z.refine(user => user.a === user.b));
 
 // Extended inherits the refinements of Base
-const Extended = z.safeExtend(UserSchema, {
+const Extended = z.safeExtend(Base, {
   a: z.string().min(10)
 });
 ```
@@ -1770,7 +1770,7 @@ type EmployedPerson = z.infer<typeof EmployedPerson>;
 
 ## Records
 
-Record schemas are used to validate types such as `Record<string, number>`.
+Record schemas are used to validate types such as `Record<string, string>`.
 
 ```ts
 const IdCache = z.record(z.string(), z.string());
@@ -2046,7 +2046,7 @@ const myString = z.string()
   
 
 const result = myString.safeParse("OH NO");
-result.error.issues;
+result.error?.issues;
 /* [
   { "code": "custom", "message": "Too short!" },
   { "code": "custom", "message": "Must be lowercase" }
@@ -2061,7 +2061,7 @@ const myString = z.string().check(
 );
 
 const result = z.safeParse(myString, "OH NO");
-result.error.issues;
+result.error?.issues;
 /* [
   { "code": "custom", "message": "Too short!" },
   { "code": "custom", "message": "Must be lowercase" }
@@ -2082,7 +2082,7 @@ const myString = z.string()
 
 
 const result = myString.safeParse("OH NO");
-result.error!.issues;
+result.error?.issues;
 // => [{ "code": "custom", "message": "Too short!" }]
 ```
 </Tab>
@@ -2094,7 +2094,7 @@ const myString = z.string().check(
 );
 
 const result = z.safeParse(myString, "OH NO");
-result.error!.issues;
+result.error?.issues;
 // [ { "code": "custom", "message": "Too short!" }]
 ```
 </Tab>
