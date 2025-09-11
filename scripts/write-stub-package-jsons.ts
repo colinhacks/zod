@@ -1,9 +1,10 @@
 #!/usr/bin/env tsx
 
-import { existsSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { readdirSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const STUB_PACKAGE_JSON_CONTENT = `{ 
+  "type": "module",
   "main": "./index.cjs",
   "module": "./index.js",
   "types": "./index.d.cts" 
@@ -72,12 +73,6 @@ function writeStubPackageJsons() {
     processedDirs.add(dir);
 
     const packageJsonPath = join(zodPackageRoot, dir, "package.json");
-
-    // Check if package.json already exists
-    if (existsSync(packageJsonPath)) {
-      console.log(`✅ Skipping ${dir}/package.json - already exists`);
-      continue;
-    }
 
     // Write the stub package.json
     writeFileSync(packageJsonPath, STUB_PACKAGE_JSON_CONTENT, "utf8");
