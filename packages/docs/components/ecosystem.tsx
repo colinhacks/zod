@@ -155,6 +155,19 @@ const xToZodConverters: ZodResource[] = [
     description: "Typescript's type definition to runtime validator (including zod).",
     slug: "yuzheng14/valype",
   },
+  {
+    name: "Prisma Zod Generator",
+    url: "https://github.com/omar-dulaimi/prisma-zod-generator",
+    description: "Generates Zod schemas with input/result/pure variants, minimal/full/custom, selective emit/filtering, single/multi-file output, @zod rules, relation depth guards.",
+    slug: "omar-dulaimi/prisma-zod-generator",
+  },
+  {
+    name: "DRZL",
+    url: "https://github.com/use-drzl/drzl",
+    description:
+      "Drizzle ORM toolkit that can generate Zod validators from schema(s), plus typed services and strongly typed routers (oRPC/tRPC/etc).",
+    slug: "use-drzl/drzl",
+  },
 ];
 
 const mockingLibraries: ZodResource[] = [
