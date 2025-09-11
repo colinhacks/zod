@@ -4,3 +4,4 @@
 **/*.d.ts
 **/*.d.mts
 **/*.d.cts
+**/package.json
