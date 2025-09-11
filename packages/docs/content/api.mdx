@@ -51,10 +51,10 @@ The input type of these coerced schemas is `unknown` by default. To specify a mo
 
 ```ts
 const A = z.coerce.number();
-type AInput = z.infer<typeof A>; // => number
+type AInput = z.input<typeof A>; // => unknown
 
 const B = z.coerce.number<number>();
-type BInput = z.infer<typeof B>; // => number
+type BInput = z.input<typeof B>; // => number
 ```
 
 <Accordions type="single">
@@ -95,7 +95,7 @@ type BInput = z.infer<typeof B>; // => number
   By default the _input_ type of any `z.coerce` schema is `unknown`. In some cases, it may be preferable for the input type to be more specific. You can specify the input type with a generic parameter.
 
   ```ts
-  const regular = z.coerce.string();
+  const regularCoerce = z.coerce.string();
   type RegularInput = z.input<typeof regularCoerce>; // => unknown
   type RegularOutput = z.output<typeof regularCoerce>; // => string
 
@@ -572,7 +572,7 @@ const coolId = z.stringFormat("cool-id", ()=>{
 z.stringFormat("cool-id", /^cool-[a-z0-9]{95}$/);
 ```
 
-This schema will produce `"invalid_format"` issues, which are more descriptive that the `"custom"` errors produces by refinements or `z.custom()`.
+This schema will produce `"invalid_format"` issues, which are more descriptive than the `"custom"` errors produced by refinements or `z.custom()`.
 
 ```ts
 myFormat.parse("invalid input!");
@@ -1249,7 +1249,7 @@ const Base = z.object({
 }).refine(user => user.a === user.b);
 
 // Extended inherits the refinements of Base
-const Extended = UserSchema.safeExtend({
+const Extended = Base.safeExtend({
   a: z.string().min(10)
 });
 ```
@@ -1262,7 +1262,7 @@ const Base = z.object({
 }).check(z.refine(user => user.a === user.b));
 
 // Extended inherits the refinements of Base
-const Extended = z.safeExtend(UserSchema, {
+const Extended = z.safeExtend(Base, {
   a: z.string().min(10)
 });
 ```
@@ -1770,7 +1770,7 @@ type EmployedPerson = z.infer<typeof EmployedPerson>;
 
 ## Records
 
-Record schemas are used to validate types such as `Record<string, number>`.
+Record schemas are used to validate types such as `Record<string, string>`.
 
 ```ts
 const IdCache = z.record(z.string(), z.string());
@@ -2046,7 +2046,7 @@ const myString = z.string()
   
 
 const result = myString.safeParse("OH NO");
-result.error.issues;
+result.error?.issues;
 /* [
   { "code": "custom", "message": "Too short!" },
   { "code": "custom", "message": "Must be lowercase" }
@@ -2061,7 +2061,7 @@ const myString = z.string().check(
 );
 
 const result = z.safeParse(myString, "OH NO");
-result.error.issues;
+result.error?.issues;
 /* [
   { "code": "custom", "message": "Too short!" },
   { "code": "custom", "message": "Must be lowercase" }
@@ -2082,7 +2082,7 @@ const myString = z.string()
 
 
 const result = myString.safeParse("OH NO");
-result.error!.issues;
+result.error?.issues;
 // => [{ "code": "custom", "message": "Too short!" }]
 ```
 </Tab>
@@ -2094,7 +2094,7 @@ const myString = z.string().check(
 );
 
 const result = z.safeParse(myString, "OH NO");
-result.error!.issues;
+result.error?.issues;
 // [ { "code": "custom", "message": "Too short!" }]
 ```
 </Tab>
