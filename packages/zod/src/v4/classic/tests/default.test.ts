@@ -324,6 +324,14 @@ test("defaulted object schema returns shallow clone", () => {
   expect(result1).toEqual(result2);
 });
 
+test("defaulted array schema returns shallow clone", () => {
+  const schema = z.array(z.string()).default(["x"]);
+  const result1 = schema.parse(undefined);
+  const result2 = schema.parse(undefined);
+  expect(result1).not.toBe(result2);
+  expect(result1).toEqual(result2);
+});
+
 test("direction-aware defaults", () => {
   const schema = z.string().default("hello");
 
