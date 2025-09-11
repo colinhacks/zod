@@ -3593,9 +3593,9 @@ export interface $ZodPipeDef<A extends SomeType = $ZodType, B extends SomeType =
   in: A;
   out: B;
   /** Only defined inside $ZodCodec instances. */
-  transform?: (value: core.output<A>, payload: ParsePayload<core.output<A>>) => core.input<B>;
+  transform?: (value: core.output<A>, payload: ParsePayload<core.output<A>>) => util.MaybeAsync<core.input<B>>;
   /** Only defined inside $ZodCodec instances. */
-  reverseTransform?: (value: core.input<B>, payload: ParsePayload<core.input<B>>) => core.output<A>;
+  reverseTransform?: (value: core.input<B>, payload: ParsePayload<core.input<B>>) => util.MaybeAsync<core.output<A>>;
 }
 
 export interface $ZodPipeInternals<A extends SomeType = $ZodType, B extends SomeType = $ZodType>
@@ -3653,8 +3653,8 @@ function handlePipeResult(left: ParsePayload, next: $ZodType, ctx: ParseContextI
 ////////////////////////////////////////////
 ////////////////////////////////////////////
 export interface $ZodCodecDef<A extends SomeType = $ZodType, B extends SomeType = $ZodType> extends $ZodPipeDef<A, B> {
-  transform: (value: core.output<A>, payload: ParsePayload<core.output<A>>) => core.input<B>;
-  reverseTransform: (value: core.input<B>, payload: ParsePayload<core.input<B>>) => core.output<A>;
+  transform: (value: core.output<A>, payload: ParsePayload<core.output<A>>) => util.MaybeAsync<core.input<B>>;
+  reverseTransform: (value: core.input<B>, payload: ParsePayload<core.input<B>>) => util.MaybeAsync<core.output<A>>;
 }
 
 export interface $ZodCodecInternals<A extends SomeType = $ZodType, B extends SomeType = $ZodType>
