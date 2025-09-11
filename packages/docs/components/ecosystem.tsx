@@ -121,6 +121,12 @@ const zodToXConverters: ZodResource[] = [
     description: "Generate Zod schemas from Prisma schema with full ZodObject method support",
     slug: "omar-dulaimi/prisma-zod-generator",
   },
+  {
+    name: "@traversable/zod",
+    url: "https://github.com/traversable/schema/tree/main/packages/zod",
+    description: "Build your own \"Zod to x\" library, or pick one of 25+ off-the-shelf transformers",
+    slug: "@traversable/zod",
+  },
 ];
 
 const xToZodConverters: ZodResource[] = [
@@ -163,6 +169,12 @@ const mockingLibraries: ZodResource[] = [
     url: "https://zocker.sigrist.dev",
     description: "Generates valid, semantically meaningful data for your Zod schemas.",
     slug: "LorisSigrist/zocker",
+  },
+  {
+    name: "@traversable/zod-test",
+    url: "https://github.com/traversable/schema/tree/main/packages/zod-test",
+    description: "Random zod schema generator built for fuzz testing; includes generators for both valid and invalid data",
+    slug: "@traversable/zod-test",
   },
 ];
 
