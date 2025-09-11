@@ -830,9 +830,10 @@ export const $ZodCIDRv6: core.$constructor<$ZodCIDRv6> = /*@__PURE__*/ core.$con
     $ZodStringFormat.init(inst, def);
 
     inst._zod.check = (payload) => {
-      const [address, prefix] = payload.value.split("/");
+      const segments = payload.value.split("/");
+      const [address, prefix] = segments;
       try {
-        if (!prefix) throw new Error();
+        if (segments.length !== 2) throw new Error();
         const prefixNum = Number(prefix);
         if (`${prefixNum}` !== prefix) throw new Error();
         if (prefixNum < 0 || prefixNum > 128) throw new Error();
