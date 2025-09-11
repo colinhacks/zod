@@ -572,7 +572,7 @@ const coolId = z.stringFormat("cool-id", ()=>{
 z.stringFormat("cool-id", /^cool-[a-z0-9]{95}$/);
 ```
 
-This schema will produce `"invalid_format"` issues, which are more descriptive that the `"custom"` errors produces by refinements or `z.custom()`.
+This schema will produce `"invalid_format"` issues, which are more descriptive than the `"custom"` errors produced by refinements or `z.custom()`.
 
 ```ts
 myFormat.parse("invalid input!");
