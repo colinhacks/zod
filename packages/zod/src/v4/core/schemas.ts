@@ -1763,7 +1763,7 @@ export interface $ZodObject<
 function normalizeDef(def: $ZodObjectDef) {
   const keys = Object.keys(def.shape);
   for (const k of keys) {
-    if (!def.shape[k]._zod.traits.has("$ZodType")) {
+    if (!def.shape?.[k]?._zod?.traits?.has("$ZodType")) {
       throw new Error(`Invalid element at key "${k}": expected a Zod schema`);
     }
   }

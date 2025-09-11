@@ -1,3 +1,7 @@
-import * as z from "zod";
+import z from "zod";
 
-z;
+z.object({
+  inner: {
+    a: z.number(),
+  },
+}).parse({ inner: { a: 1 } });
