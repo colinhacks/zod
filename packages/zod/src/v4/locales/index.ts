@@ -18,6 +18,7 @@ export { default as id } from "./id.js";
 export { default as is } from "./is.js";
 export { default as it } from "./it.js";
 export { default as ja } from "./ja.js";
+export { default as ka } from "./ka.js";
 export { default as kh } from "./kh.js";
 export { default as ko } from "./ko.js";
 export { default as lt } from "./lt.js";
