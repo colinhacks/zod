@@ -3,7 +3,11 @@
 import { existsSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-const STUB_PACKAGE_JSON_CONTENT = `{ "types": "index.d.cts" }
+const STUB_PACKAGE_JSON_CONTENT = `{ 
+  "main": "./index.cjs",
+  "module": "./index.js",
+  "types": "./index.d.cts" 
+}
 `;
 
 /**
