@@ -73,7 +73,7 @@ const error: () => errors.$ZodErrorMap = () => {
   return (issue) => {
     switch (issue.code) {
       case "invalid_type":
-        return `无效输入：期望 ${issue.expected}，实际接收 ${parsedType(issue.input)}`;
+        return `无效输入：期望 ${issue.expected}，实际接收 ${issue.received ?? parsedType(issue.input)}`;
       case "invalid_value":
         if (issue.values.length === 1) return `无效输入：期望 ${util.stringifyPrimitive(issue.values[0])}`;
         return `无效选项：期望以下之一 ${util.joinValues(issue.values, "|")}`;

@@ -19,7 +19,7 @@ const error: () => errors.$ZodErrorMap = () => {
 
     switch (t) {
       case "number": {
-        return Number.isNaN(data) ? "NaN" : "číslo";
+        return Number.isNaN(data) ? "NaN" : !Number.isFinite(data) ? "Infinity" : "číslo";
       }
       case "string": {
         return "řetězec";
@@ -91,7 +91,7 @@ const error: () => errors.$ZodErrorMap = () => {
   return (issue) => {
     switch (issue.code) {
       case "invalid_type":
-        return `Neplatný vstup: očekáváno ${issue.expected}, obdrženo ${parsedType(issue.input)}`;
+        return `Neplatný vstup: očekáváno ${issue.expected}, obdrženo ${issue.received ?? parsedType(issue.input)}`;
       case "invalid_value":
         if (issue.values.length === 1) return `Neplatný vstup: očekáváno ${util.stringifyPrimitive(issue.values[0])}`;
         return `Neplatná možnost: očekávána jedna z hodnot ${util.joinValues(issue.values, "|")}`;
