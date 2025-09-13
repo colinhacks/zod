@@ -179,6 +179,12 @@ const poweredByZodProjects: ZodResource[] = [
     description: "A xlsx based resource validator using Zod schemas for data imports and more",
     slug: "sidwebworks/zod-xlsx",
   },
+  {
+    name: "bupkis",
+    url: "https://github.com/boneskull/bupkis",
+    description: "Uncommonly extensible assertions for the beautiful people",
+    slug: "boneskull/bupkis",
+  }
 ];
 
 const zodUtilities: ZodResource[] = [
