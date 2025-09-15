@@ -531,7 +531,7 @@ export class JSONSchemaGenerator {
               result.ref = def.innerType;
               _json.nullable = true;
             } else {
-              _json.anyOf = [inner, { type: "null" }];
+              _json.oneOf = [inner, { type: "null" }];
             }
             break;
           }
