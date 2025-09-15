@@ -1715,7 +1715,7 @@ test("extract schemas with id", () => {
           "$ref": "#/$defs/name",
         },
         "last_name": {
-          "anyOf": [
+          "oneOf": [
             {
               "$ref": "#/$defs/name",
             },
@@ -2214,7 +2214,7 @@ test("input type", () => {
           "type": "string",
         },
         "d": {
-          "anyOf": [
+          "oneOf": [
             {
               "type": "string",
             },
@@ -2281,7 +2281,7 @@ test("input type", () => {
           "type": "string",
         },
         "d": {
-          "anyOf": [
+          "oneOf": [
             {
               "type": "string",
             },
