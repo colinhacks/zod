@@ -1,10 +1,5 @@
-import * as z from "zod";
+const test = () => 1;
 
-z;
+test.something = () => 2;
 
-z.superRefine((val, ctx) => {
-  ctx.addIssue({
-    code: "custom",
-    message: "Custom message",
-  });
-});
+test.something;
