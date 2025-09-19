@@ -225,6 +225,12 @@ const zodUtilities: ZodResource[] = [
     description: "Interactive playground for testing and exploring Zod and Zod mini schemas in real-time.",
     slug: "marilari88/zod-playground",
   },
+   {
+    name: "eslint-plugin-zod-x",
+    url: "https://github.com/marcalexiei/eslint-plugin-zod-x",
+    description: "ESLint plugin that adds custom linting rules to enforce best practices when using Zod",
+    slug: "marcalexiei/eslint-plugin-zod-x",
+  },
 ];
 
 export {
