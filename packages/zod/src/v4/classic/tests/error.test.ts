@@ -709,3 +709,18 @@ test("error serialization", () => {
     `);
   }
 });
+
+test("error with object type message", () => {
+  const schema = z.object({
+    // name: z.string().min(5, { error: () => ({ message: { key: "test", values: { foo: "bar" } } }) }),
+    name: z.string().min(5, "too short"),
+  });
+
+  const obj = {
+    name: "tes",
+  };
+
+  const res = schema.safeParse(obj);
+  const parseMessageObj = JSON.parse(res.error?.message || "");
+  console.log(parseMessageObj);
+});
