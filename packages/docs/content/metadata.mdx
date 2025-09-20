@@ -151,7 +151,7 @@ Metadata is associated with a *specific schema instance.* This is important to k
 
 ```ts
 const A = z.string().meta({ description: "A cool string" });
-A.meta(); // => { hello: "true" }
+A.meta(); // => { description: "A cool string" }
 
 const B = A.refine(_ => true);
 B.meta(); // => undefined
