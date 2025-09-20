@@ -7,7 +7,7 @@ export const parsedType = (data: any): string => {
 
   switch (t) {
     case "number": {
-      return Number.isNaN(data) ? "NaN" : "number";
+      return Number.isNaN(data) ? "NaN" : !Number.isFinite(data) ? "Infinity" : "number";
     }
     case "object": {
       if (Array.isArray(data)) {
@@ -73,7 +73,7 @@ const error: () => errors.$ZodErrorMap = () => {
   return (issue) => {
     switch (issue.code) {
       case "invalid_type":
-        return `Geçersiz değer: beklenen ${issue.expected}, alınan ${parsedType(issue.input)}`;
+        return `Geçersiz değer: beklenen ${issue.expected}, alınan ${issue.received ?? parsedType(issue.input)}`;
       case "invalid_value":
         if (issue.values.length === 1) return `Geçersiz değer: beklenen ${util.stringifyPrimitive(issue.values[0])}`;
         return `Geçersiz seçenek: aşağıdakilerden biri olmalı: ${util.joinValues(issue.values, "|")}`;
