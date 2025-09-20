@@ -769,7 +769,7 @@ export function object<T extends core.$ZodLooseShape = Record<never, SomeType>>(
 ): ZodMiniObject<T, core.$strip> {
   const def: core.$ZodObjectDef = {
     type: "object",
-    shape: shape!,
+    shape: shape ?? {},
     ...util.normalizeParams(params),
   };
   return new ZodMiniObject(def) as any;

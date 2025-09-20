@@ -1827,7 +1827,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
   $ZodType.init(inst, def);
   // const sh = def.shape;
   const desc = Object.getOwnPropertyDescriptor(def, "shape");
-  if (!desc!.get) {
+  if (!desc?.get) {
     const sh = def.shape;
     Object.defineProperty(def, "shape", {
       get: () => {
