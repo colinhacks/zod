@@ -52,7 +52,12 @@ const apiLibraries: ZodResource[] = [
     description: "Type-safe JSON-RPC 2.0 client/server library using Zod.",
     slug: "danscan/zod-jsonrpc",
   },
-
+  {
+    name: "upfetch",
+    url: "https://github.com/L-Blondy/up-fetch",
+    description: "Advanced fetch client builder",
+    slug: "L-Blondy/up-fetch",
+  },
   // https://github.com/honojs/middleware/tree/main/packages/zod-validator
   // {
   //   name: "@hono/zod-validator",
