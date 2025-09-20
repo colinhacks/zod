@@ -1739,7 +1739,7 @@ export interface $ZodObjectDef<Shape extends $ZodShape = $ZodShape> extends $Zod
 
 export interface $ZodObjectInternals<
   /** @ts-ignore Cast variance */
-  out Shape extends Readonly<$ZodShape> = Readonly<$ZodShape>,
+  out Shape extends $ZodShape = $ZodShape,
   out Config extends $ZodObjectConfig = $ZodObjectConfig,
 > extends _$ZodTypeInternals {
   def: $ZodObjectDef<Shape>;
@@ -1825,6 +1825,21 @@ function handleCatchall(
 export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$constructor("$ZodObject", (inst, def) => {
   // requires cast because technically $ZodObject doesn't extend
   $ZodType.init(inst, def);
+  // const sh = def.shape;
+  const desc = Object.getOwnPropertyDescriptor(def, "shape");
+  if (!desc!.get) {
+    const sh = def.shape;
+    Object.defineProperty(def, "shape", {
+      get: () => {
+        const newSh = { ...sh };
+        Object.defineProperty(def, "shape", {
+          value: newSh,
+        });
+
+        return newSh;
+      },
+    });
+  }
 
   const _normalized = util.cached(() => normalizeDef(def));
 
@@ -1853,7 +1868,6 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       payload.issues.push({
         expected: "object",
         code: "invalid_type",
-
         input,
         inst,
       });
