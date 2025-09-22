@@ -1,3 +1,5 @@
+import type { $ZodIssueMessage } from "./errors.js";
+
 /** The Standard Schema interface. */
 export interface StandardSchemaV1<Input = unknown, Output = Input> {
   /** The Standard Schema properties. */
@@ -37,7 +39,7 @@ export declare namespace StandardSchemaV1 {
   /** The issue interface of the failure output. */
   export interface Issue {
     /** The error message of the issue. */
-    readonly message: string;
+    readonly message: $ZodIssueMessage;
     /** The path of the issue, if any. */
     readonly path?: ReadonlyArray<PropertyKey | PathSegment> | undefined;
   }

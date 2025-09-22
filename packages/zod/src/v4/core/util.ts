@@ -1,6 +1,7 @@
 import type * as checks from "./checks.js";
 import type { $ZodConfig } from "./core.js";
 import type * as errors from "./errors.js";
+import type { $ZodIssueMessage } from "./errors.js";
 import type * as schemas from "./schemas.js";
 
 // json
@@ -786,8 +787,11 @@ export function prefixIssues(path: PropertyKey, issues: errors.$ZodRawIssue[]): 
   });
 }
 
-export function unwrapMessage(message: string | { message: string } | undefined | null): string | undefined {
-  return typeof message === "string" ? message : message?.message;
+export function unwrapMessage(message: string | { message: $ZodIssueMessage } | undefined | null): string | undefined {
+  if (message === undefined) {
+    return undefined;
+  }
+  return typeof message === "string" ? message : toMessageString(message?.message || "");
 }
 
 export function finalizeIssue(
@@ -907,4 +911,12 @@ export function uint8ArrayToHex(bytes: Uint8Array): string {
 // instanceof
 export abstract class Class {
   constructor(..._args: any[]) {}
+}
+
+export function toMessageString(message: $ZodIssueMessage): string {
+  if (typeof message === "string") {
+    return message;
+  } else {
+    return JSON.stringify(message);
+  }
 }
