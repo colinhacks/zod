@@ -94,6 +94,7 @@ console.log(z3Schema.parse(DATA[0]));
 console.log(z4Schema.parse(DATA[0]));
 console.log(z4LibSchema.parse(DATA[0]));
 
+const inPlace = { inPlace: true }
 
 const bench = metabench("z.object() safeParse", {
   zod3() {
@@ -104,7 +105,8 @@ const bench = metabench("z.object() safeParse", {
   },
   zod4(){
     for (const _ of DATA) z4Schema.parse(_);
-  }
+  },
+  
   // zod4strict() {
   //   for (const _ of DATA) z4SchemaStrict.parse(_);
   // },

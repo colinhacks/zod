@@ -409,11 +409,11 @@ test("codec type enforcement - correct encode/decode signatures", () => {
     encode: (value: number) => String(value), // core.input<B> -> core.output<A>
   });
 
-  // These should compile without errors - correct types
-  expectTypeOf<(value: string, payload: z.core.ParsePayload<string>) => number>(
+  // These should compile without errors - correct types (async support)
+  expectTypeOf<(value: string, payload: z.core.ParsePayload<string>) => z.core.util.MaybeAsync<number>>(
     stringToNumberCodec.def.transform
   ).toBeFunction();
-  expectTypeOf<(value: number, payload: z.core.ParsePayload<number>) => string>(
+  expectTypeOf<(value: number, payload: z.core.ParsePayload<number>) => z.core.util.MaybeAsync<string>>(
     stringToNumberCodec.def.reverseTransform
   ).toBeFunction();
 
@@ -450,6 +450,36 @@ test("codec type enforcement - correct encode/decode signatures", () => {
   });
 });
 
+test("async codec functionality", async () => {
+  // Test that async encode/decode functions work properly
+  const asyncCodec = z.codec(z.string(), z.number(), {
+    decode: async (str) => {
+      await new Promise((resolve) => setTimeout(resolve, 1)); // Simulate async work
+      return Number.parseFloat(str);
+    },
+    encode: async (num) => {
+      await new Promise((resolve) => setTimeout(resolve, 1)); // Simulate async work
+      return num.toString();
+    },
+  });
+
+  // Test async decode/encode
+  const decoded = await z.decodeAsync(asyncCodec, "42.5");
+  expect(decoded).toBe(42.5);
+
+  const encoded = await z.encodeAsync(asyncCodec, 42.5);
+  expect(encoded).toBe("42.5");
+
+  // Test that both sync and async work
+  const mixedCodec = z.codec(z.string(), z.number(), {
+    decode: async (str) => Number.parseFloat(str),
+    encode: (num) => num.toString(), // sync encode
+  });
+
+  const mixedResult = await z.decodeAsync(mixedCodec, "123");
+  expect(mixedResult).toBe(123);
+});
+
 test("codec type enforcement - complex types", () => {
   type User = { id: number; name: string };
   type UserInput = { id: string; name: string };
@@ -463,11 +493,11 @@ test("codec type enforcement - complex types", () => {
     }
   );
 
-  // Verify correct types are inferred
-  expectTypeOf<(input: UserInput, payload: z.core.ParsePayload<UserInput>) => User>(
+  // Verify correct types are inferred (async support)
+  expectTypeOf<(input: UserInput, payload: z.core.ParsePayload<UserInput>) => z.core.util.MaybeAsync<User>>(
     userCodec.def.transform
   ).toBeFunction();
-  expectTypeOf<(user: User, payload: z.core.ParsePayload<User>) => UserInput>(
+  expectTypeOf<(user: User, payload: z.core.ParsePayload<User>) => z.core.util.MaybeAsync<UserInput>>(
     userCodec.def.reverseTransform
   ).toBeFunction();
 

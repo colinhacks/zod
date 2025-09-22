@@ -27,7 +27,7 @@ type MetadataType = object | undefined;
 export class $ZodRegistry<Meta extends MetadataType = MetadataType, Schema extends $ZodType = $ZodType> {
   _meta!: Meta;
   _schema!: Schema;
-  _map: Map<Schema, $replace<Meta, Schema>> = new Map();
+  _map: WeakMap<Schema, $replace<Meta, Schema>> = new WeakMap();
   _idmap: Map<string, Schema> = new Map();
 
   add<S extends Schema>(
@@ -46,7 +46,7 @@ export class $ZodRegistry<Meta extends MetadataType = MetadataType, Schema exten
   }
 
   clear(): this {
-    this._map = new Map();
+    this._map = new WeakMap();
     this._idmap = new Map();
     return this;
   }

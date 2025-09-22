@@ -919,6 +919,9 @@ test("CIDR v6 validation", () => {
   expect(cidrV6.safeParse("2001:db8::/abc").success).toBe(false); // Invalid prefix format
   expect(cidrV6.safeParse("not a cidr").success).toBe(false); // Invalid format
   expect(cidrV6.safeParse("192.168.0.0/24").success).toBe(false); // IPv4 CIDR in v6 validation
+  expect(cidrV6.safeParse("2001:0db8:85a3::/64/whatever-after").success).toBe(false);
+  expect(cidrV6.safeParse("22d9:f4a8:6a90:f3bf:dcaa:2beb:5fba:0000/112").success).toBe(true);
+  expect(cidrV6.safeParse("22d9:f4a8:6a90:f3bf:dcaa:2beb:5fba:0000/112/268").success).toBe(false);
 });
 
 test("E.164 validation", () => {

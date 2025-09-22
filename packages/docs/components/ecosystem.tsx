@@ -52,7 +52,12 @@ const apiLibraries: ZodResource[] = [
     description: "Type-safe JSON-RPC 2.0 client/server library using Zod.",
     slug: "danscan/zod-jsonrpc",
   },
-
+  {
+    name: "upfetch",
+    url: "https://github.com/L-Blondy/up-fetch",
+    description: "Advanced fetch client builder",
+    slug: "L-Blondy/up-fetch",
+  },
   // https://github.com/honojs/middleware/tree/main/packages/zod-validator
   // {
   //   name: "@hono/zod-validator",
@@ -121,6 +126,12 @@ const zodToXConverters: ZodResource[] = [
     description: "Generate Zod schemas from Prisma schema with full ZodObject method support",
     slug: "omar-dulaimi/prisma-zod-generator",
   },
+  {
+    name: "@traversable/zod",
+    url: "https://github.com/traversable/schema/tree/main/packages/zod",
+    description: "Build your own \"Zod to x\" library, or pick one of 25+ off-the-shelf transformers",
+    slug: "traversable/schema",
+  },
 ];
 
 const xToZodConverters: ZodResource[] = [
@@ -149,6 +160,19 @@ const xToZodConverters: ZodResource[] = [
     description: "Typescript's type definition to runtime validator (including zod).",
     slug: "yuzheng14/valype",
   },
+  {
+    name: "Prisma Zod Generator",
+    url: "https://github.com/omar-dulaimi/prisma-zod-generator",
+    description: "Generates Zod schemas with input/result/pure variants, minimal/full/custom, selective emit/filtering, single/multi-file output, @zod rules, relation depth guards.",
+    slug: "omar-dulaimi/prisma-zod-generator",
+  },
+  {
+    name: "DRZL",
+    url: "https://github.com/use-drzl/drzl",
+    description:
+      "Drizzle ORM toolkit that can generate Zod validators from schema(s), plus typed services and strongly typed routers (oRPC/tRPC/etc).",
+    slug: "use-drzl/drzl",
+  },
 ];
 
 const mockingLibraries: ZodResource[] = [
@@ -163,6 +187,12 @@ const mockingLibraries: ZodResource[] = [
     url: "https://zocker.sigrist.dev",
     description: "Generates valid, semantically meaningful data for your Zod schemas.",
     slug: "LorisSigrist/zocker",
+  },
+  {
+    name: "@traversable/zod-test",
+    url: "https://github.com/traversable/schema/tree/main/packages/zod-test",
+    description: "Random zod schema generator built for fuzz testing; includes generators for both valid and invalid data",
+    slug: "traversable/schema",
   },
 ];
 
@@ -185,6 +215,12 @@ const poweredByZodProjects: ZodResource[] = [
     description: "A xlsx based resource validator using Zod schemas for data imports and more",
     slug: "sidwebworks/zod-xlsx",
   },
+  {
+    name: "bupkis",
+    url: "https://github.com/boneskull/bupkis",
+    description: "Uncommonly extensible assertions for the beautiful people",
+    slug: "boneskull/bupkis",
+  }
 ];
 
 const zodUtilities: ZodResource[] = [
@@ -199,6 +235,12 @@ const zodUtilities: ZodResource[] = [
     url: "https://github.com/marilari88/zod-playground",
     description: "Interactive playground for testing and exploring Zod and Zod mini schemas in real-time.",
     slug: "marilari88/zod-playground",
+  },
+   {
+    name: "eslint-plugin-zod-x",
+    url: "https://github.com/marcalexiei/eslint-plugin-zod-x",
+    description: "ESLint plugin that adds custom linting rules to enforce best practices when using Zod",
+    slug: "marcalexiei/eslint-plugin-zod-x",
   },
 ];
 

@@ -1,6 +1,6 @@
 {
   "name": "@zod/zod",
-  "version": "4.1.5",
+  "version": "4.1.11",
   "exports": {
     "./package.json": "./package.json",
     ".": "./src/index.ts",

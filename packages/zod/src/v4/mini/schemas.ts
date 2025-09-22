@@ -769,10 +769,7 @@ export function object<T extends core.$ZodLooseShape = Record<never, SomeType>>(
 ): ZodMiniObject<T, core.$strip> {
   const def: core.$ZodObjectDef = {
     type: "object",
-    get shape() {
-      util.assignProp(this, "shape", { ...shape });
-      return this.shape;
-    },
+    shape: shape ?? {},
     ...util.normalizeParams(params),
   };
   return new ZodMiniObject(def) as any;
@@ -785,11 +782,7 @@ export function strictObject<T extends core.$ZodLooseShape>(
 ): ZodMiniObject<T, core.$strict> {
   return new ZodMiniObject({
     type: "object",
-    // shape: shape as core.$ZodLooseShape,
-    get shape() {
-      util.assignProp(this, "shape", { ...shape });
-      return this.shape;
-    },
+    shape,
     catchall: never(),
     ...util.normalizeParams(params),
   }) as any;
@@ -802,14 +795,7 @@ export function looseObject<T extends core.$ZodLooseShape>(
 ): ZodMiniObject<T, core.$loose> {
   return new ZodMiniObject({
     type: "object",
-    // shape: shape as core.$ZodLooseShape,
-    get shape() {
-      util.assignProp(this, "shape", { ...shape });
-      return this.shape;
-    },
-    // get optional() {
-    //   return util.optionalKeys(shape);
-    // },
+    shape,
     catchall: unknown(),
     ...util.normalizeParams(params),
   }) as any;
@@ -1460,8 +1446,8 @@ export function codec<const A extends SomeType, B extends core.SomeType = core.$
   in_: A,
   out: B,
   params: {
-    decode: (value: core.output<A>, payload: core.ParsePayload<core.output<A>>) => core.input<B>;
-    encode: (value: core.input<B>, payload: core.ParsePayload<core.input<B>>) => core.output<A>;
+    decode: (value: core.output<A>, payload: core.ParsePayload<core.output<A>>) => core.util.MaybeAsync<core.input<B>>;
+    encode: (value: core.input<B>, payload: core.ParsePayload<core.input<B>>) => core.util.MaybeAsync<core.output<A>>;
   }
 ): ZodMiniCodec<A, B> {
   return new ZodMiniCodec({
