@@ -254,7 +254,7 @@ export type $ZodFormattedError<T, U = string> = {
 
 export function formatError<T>(error: $ZodError<T>): $ZodFormattedError<T>;
 export function formatError<T, U>(error: $ZodError<T>, mapper?: (issue: $ZodIssue) => U): $ZodFormattedError<T, U>;
-export function formatError<T, U>(error: $ZodError, mapper = (issue: $ZodIssue) => issue.message as U) {
+export function formatError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIssue) => issue.message as U) {
   const fieldErrors: $ZodFormattedError<T> = { _errors: [] } as any;
   const processError = (error: { issues: $ZodIssue[] }) => {
     for (const issue of error.issues) {
@@ -303,7 +303,7 @@ export type $ZodErrorTree<T, U = string> = T extends util.Primitive
 export function treeifyError<T>(error: $ZodError<T>): $ZodErrorTree<T>;
 export function treeifyError<T, U>(error: $ZodError<T>, mapper?: (issue: $ZodIssue) => U): $ZodErrorTree<T, U>;
 export function treeifyError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIssue) => issue.message as U) {
-  const result: $ZodErrorTree<T> = { errors: [] } as any;
+  const result: $ZodErrorTree<T, U> = { errors: [] } as any;
   const processError = (error: { issues: $ZodIssue[] }, path: PropertyKey[] = []) => {
     for (const issue of error.issues) {
       if (issue.code === "invalid_union" && issue.errors.length) {
@@ -316,7 +316,7 @@ export function treeifyError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIss
       } else {
         const fullpath = [...path, ...issue.path];
         if (fullpath.length === 0) {
-          result.errors.push(mapper(issue) as string);
+          result.errors.push(mapper(issue));
           continue;
         }
 
