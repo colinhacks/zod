@@ -35,7 +35,6 @@
     "exports": {
       "./package.json": "./package.json",
       ".": "./src/index.ts",
-      "./v3": "./src/v3/index.ts",
       "./v4": "./src/v4/index.ts",
       "./v4/core": "./src/v4/core/index.ts"
     },
@@ -50,12 +49,6 @@
       "types": "./index.d.cts",
       "import": "./index.js",
       "require": "./index.cjs"
-    },
-    "./v3": {
-      "@zod/source": "./src/v3/index.ts",
-      "types": "./v3/index.d.cts",
-      "import": "./v3/index.js",
-      "require": "./v3/index.cjs"
     },
     "./v4": {
       "@zod/source": "./src/v4/index.ts",

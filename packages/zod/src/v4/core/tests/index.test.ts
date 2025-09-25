@@ -1,5 +1,5 @@
 import { expect, expectTypeOf, test } from "vitest";
-import * as z from "zod/v3";
+import * as z from "zod";
 
 test("test", () => {
   expect(true).toBe(true);
@@ -9,11 +9,10 @@ test("test2", () => {
   expect(() => z.string().parse(234)).toThrowErrorMatchingInlineSnapshot(`
     [ZodError: [
       {
-        "code": "invalid_type",
         "expected": "string",
-        "received": "number",
+        "code": "invalid_type",
         "path": [],
-        "message": "Expected string, received number"
+        "message": "Invalid input: expected string, received number"
       }
     ]]
   `);
@@ -33,13 +32,12 @@ test("async validation", async () => {
   expect(r1.error!).toMatchInlineSnapshot(`
     [ZodError: [
       {
-        "code": "invalid_type",
         "expected": "number",
-        "received": "string",
+        "code": "invalid_type",
         "path": [
           1
         ],
-        "message": "Expected number, received string"
+        "message": "Invalid input: expected number, received string"
       }
     ]]
   `);
