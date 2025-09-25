@@ -1,6 +1,6 @@
 {
-  "name": "zod",
-  "version": "4.1.9",
+  "name": "@exodus/zod",
+  "version": "4.1.9-exodus.0",
   "type": "module",
   "license": "MIT",
   "author": "Colin McDonnell <zod@colinhacks.com>",
