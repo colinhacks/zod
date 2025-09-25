@@ -75,7 +75,6 @@
     "build": "zshy --project tsconfig.build.json",
     "postbuild": "tsx ../../scripts/write-stub-package-jsons.ts && pnpm biome check --write .",
     "test:watch": "pnpm vitest",
-    "test": "pnpm vitest run",
-    "prepublishOnly": "tsx ../../scripts/check-versions.ts"
+    "test": "pnpm vitest run"
   }
 }
