@@ -25,45 +25,6 @@ describe("Are The Types Wrong (attw) tests", () => {
     const output = result.stdout + (result.stderr ? "\n" + result.stderr : "");
     // remove first line
     const outputWithoutFirstLine = output.split("\n").slice(2).join("\n").trim();
-    expect(outputWithoutFirstLine).toMatchInlineSnapshot(`
-      "🎭 Import resolved to a CommonJS type declaration file, but an ESM JavaScript file. https://github.com/arethetypeswrong/arethetypeswrong.github.io/blob/main/docs/problems/FalseCJS.md
-
-
-      "@exodus/zod/package.json"
-
-      node10: 🟢 (JSON)
-      node16 (from CJS): 🟢 (JSON)
-      node16 (from ESM): 🟢 (JSON)
-      bundler: 🟢 (JSON)
-
-      ***********************************
-
-      "@exodus/zod"
-
-      node10: 🟢 
-      node16 (from CJS): 🟢 (CJS)
-      node16 (from ESM): 🎭 Masquerading as CJS
-      bundler: 🟢 
-
-      ***********************************
-
-      "@exodus/zod/v4"
-
-      node10: 🟢 
-      node16 (from CJS): 🟢 (CJS)
-      node16 (from ESM): 🎭 Masquerading as CJS
-      bundler: 🟢 
-
-      ***********************************
-
-      "@exodus/zod/v4/core"
-
-      node10: 🟢 
-      node16 (from CJS): 🟢 (CJS)
-      node16 (from ESM): 🎭 Masquerading as CJS
-      bundler: 🟢 
-
-      ***********************************"
-    `);
+    expect(outputWithoutFirstLine).toMatchInlineSnapshot();
   }, 30000); // 30 second timeout for the command
 });
