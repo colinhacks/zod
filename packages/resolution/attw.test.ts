@@ -47,52 +47,7 @@ describe("Are The Types Wrong (attw) tests", () => {
 
       ***********************************
 
-      "zod/mini"
-
-      node10: 🟢 
-      node16 (from CJS): 🟢 (CJS)
-      node16 (from ESM): 🎭 Masquerading as CJS
-      bundler: 🟢 
-
-      ***********************************
-
-      "zod/locales"
-
-      node10: 🟢 
-      node16 (from CJS): 🟢 (CJS)
-      node16 (from ESM): 🎭 Masquerading as CJS
-      bundler: 🟢 
-
-      ***********************************
-
-      "zod/v3"
-
-      node10: 🟢 
-      node16 (from CJS): 🟢 (CJS)
-      node16 (from ESM): 🎭 Masquerading as CJS
-      bundler: 🟢 
-
-      ***********************************
-
       "zod/v4"
-
-      node10: 🟢 
-      node16 (from CJS): 🟢 (CJS)
-      node16 (from ESM): 🎭 Masquerading as CJS
-      bundler: 🟢 
-
-      ***********************************
-
-      "zod/v4-mini"
-
-      node10: 🟢 
-      node16 (from CJS): 🟢 (CJS)
-      node16 (from ESM): 🎭 Masquerading as CJS
-      bundler: 🟢 
-
-      ***********************************
-
-      "zod/v4/mini"
 
       node10: 🟢 
       node16 (from CJS): 🟢 (CJS)
@@ -107,24 +62,6 @@ describe("Are The Types Wrong (attw) tests", () => {
       node16 (from CJS): 🟢 (CJS)
       node16 (from ESM): 🎭 Masquerading as CJS
       bundler: 🟢 
-
-      ***********************************
-
-      "zod/v4/locales"
-
-      node10: 🟢 
-      node16 (from CJS): 🟢 (CJS)
-      node16 (from ESM): 🎭 Masquerading as CJS
-      bundler: 🟢 
-
-      ***********************************
-
-      "zod/v4/locales/*"
-
-      node10: (wildcard)
-      node16 (from CJS): (wildcard)
-      node16 (from ESM): (wildcard)
-      bundler: (wildcard)
 
       ***********************************"
     `);
