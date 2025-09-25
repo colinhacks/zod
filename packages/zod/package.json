@@ -12,13 +12,8 @@
   "funding": "https://github.com/sponsors/colinhacks",
   "sideEffects": false,
   "files": [
-    "src",
     "**/*.js",
-    "**/*.mjs",
-    "**/*.cjs",
     "**/*.d.ts",
-    "**/*.d.mts",
-    "**/*.d.cts",
     "**/package.json"
   ],
   "keywords": [
