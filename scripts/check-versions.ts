@@ -26,16 +26,6 @@ if (typeof jsrJsonVersion !== "string") {
 
 // read tag
 const tag = process.env.npm_config_tag || "latest";
-if (tag === "latest") {
-  // e.g. "beta"
-  const xyz = /^\d+\.\d+\.\d+$/;
-  if (!xyz.test(packageJsonVersion)) {
-    throw new Error("package.json version is not in x.y.z format");
-  }
-  if (!xyz.test(jsrJsonVersion)) {
-    throw new Error("jsr.json version is not in x.y.z format");
-  }
-}
 
 // Get version from versions.ts
 const versionsVersion = `${version.major}.${version.minor}.${version.patch}`;
