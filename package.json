@@ -29,7 +29,6 @@
     "execa": "^9.5.2",
     "globby": "^14.1.0",
     "husky": "^9.1.7",
-    "jsr": "^0.12.4",
     "lint-staged": "^16.1.0",
     "mitata": "^0.1.14",
     "prettier": "^3.5.3",
@@ -80,7 +79,6 @@
     "moltar": "pnpm bench object-moltar",
     "prepare": "husky",
     "postbuild": "biome format --write .",
-    "publish:jsr": "jsr publish --dry-run",
     "bundle:rollup": "rollup -c",
     "bundle:esbuild": "esbuild --bundle ./scratch/input.ts --outfile=./scratch/out_esbuild.js --bundle --format=esm"
   }

@@ -16,14 +16,6 @@ if (typeof packageJsonVersion !== "string") {
   throw new Error("package.json version is not a string");
 }
 
-// Read jsr.json version
-const jsrJsonPath = join(zodPackagePath, "jsr.json");
-const jsrJson = JSON.parse(readFileSync(jsrJsonPath, "utf8"));
-const jsrJsonVersion = jsrJson.version as string;
-if (typeof jsrJsonVersion !== "string") {
-  throw new Error("jsr.json version is not a string");
-}
-
 // read tag
 const tag = process.env.npm_config_tag || "latest";
 
@@ -33,16 +25,12 @@ const versionsVersion = `${version.major}.${version.minor}.${version.patch}`;
 // Compare  versions
 const isPackageJsonValid =
   tag === "latest" ? packageJsonVersion === versionsVersion : packageJsonVersion.startsWith(versionsVersion);
-const isJsrJsonValid =
-  tag === "latest" ? jsrJsonVersion === versionsVersion : jsrJsonVersion.startsWith(versionsVersion);
-if (!isPackageJsonValid || !isJsrJsonValid) {
+if (!isPackageJsonValid) {
   console.error(`❌ Version mismatch:`);
   console.error(`   package.json: ${packageJsonVersion}`);
-  console.error(`   jsr.json:    ${jsrJsonVersion}`);
   console.error(`   versions.ts:  ${versionsVersion}`);
   console.error(`   tag:          ${tag}`);
   console.error(`   isPackageJsonValid: ${isPackageJsonValid}`);
-  console.error(`   isJsrJsonValid: ${isJsrJsonValid}`);
   process.exit(1);
 } else {
   if (tag === "latest") {
