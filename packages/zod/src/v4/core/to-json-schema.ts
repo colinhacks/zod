@@ -900,7 +900,7 @@ export function toJSONSchema(
 ): any {
   if (input instanceof $ZodRegistry) {
     const gen = new JSONSchemaGenerator(_params);
-    const defs: any = {};
+    const defs: any = Object.create(null);
     for (const entry of input._idmap.entries()) {
       const [_, schema] = entry;
       gen.process(schema);

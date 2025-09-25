@@ -330,7 +330,7 @@ export function promiseAllObject<T extends object>(promisesObj: T): Promise<{ [k
   const promises = keys.map((key) => (promisesObj as any)[key]);
 
   return Promise.all(promises).then((results) => {
-    const resolvedObj: any = {};
+    const resolvedObj: any = Object.create(null);
     for (let i = 0; i < keys.length; i++) {
       resolvedObj[keys[i]!] = results[i];
     }

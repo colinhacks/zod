@@ -227,7 +227,7 @@ type _FlattenedError<T, U = string> = {
 export function flattenError<T>(error: $ZodError<T>): _FlattenedError<T>;
 export function flattenError<T, U>(error: $ZodError<T>, mapper?: (issue: $ZodIssue) => U): _FlattenedError<T, U>;
 export function flattenError(error: $ZodError, mapper = (issue: $ZodIssue) => issue.message): any {
-  const fieldErrors: any = {};
+  const fieldErrors: any = Object.create(null);
   const formErrors: any[] = [];
   for (const sub of error.issues) {
     if (sub.path.length > 0) {
