@@ -262,7 +262,7 @@ export class JSONSchemaGenerator {
             break;
           }
           case "never": {
-            _json.not = {};
+            _json.not = Object.create(null);
             break;
           }
           case "date": {
@@ -284,11 +284,11 @@ export class JSONSchemaGenerator {
           case "object": {
             const json: JSONSchema.ObjectSchema = _json as any;
             json.type = "object";
-            json.properties = {};
+            json.properties = Object.create(null) as Record<string, JSONSchema.Schema>;
             const shape = def.shape; // params.shapeCache.get(schema)!;
 
             for (const key in shape) {
-              json.properties[key] = this.process(shape[key]!, {
+              json.properties![key] = this.process(shape[key]!, {
                 ...params,
                 path: [...params.path, "properties", key],
               });
@@ -830,7 +830,7 @@ export class JSONSchemaGenerator {
       flattenRef(entry[0], { target: this.target });
     }
 
-    const result: JSONSchema.BaseSchema = {};
+    const result: JSONSchema.BaseSchema = Object.create(null);
     if (this.target === "draft-2020-12") {
       result.$schema = "https://json-schema.org/draft/2020-12/schema";
     } else if (this.target === "draft-7") {
@@ -853,7 +853,8 @@ export class JSONSchemaGenerator {
     Object.assign(result, root.def);
 
     // build defs object
-    const defs: JSONSchema.BaseSchema["$defs"] = params.external?.defs ?? {};
+    const defs: NonNullable<JSONSchema.BaseSchema["$defs"]> =
+      params.external?.defs ?? (Object.create(null) as NonNullable<JSONSchema.BaseSchema["$defs"]>);
     for (const entry of this.seen.entries()) {
       const seen = entry[1];
       if (seen.def && seen.defId) {
@@ -864,7 +865,7 @@ export class JSONSchemaGenerator {
     // set definitions in result
     if (params.external) {
     } else {
-      if (Object.keys(defs).length > 0) {
+      if (Object.keys(defs as any).length > 0) {
         if (this.target === "draft-2020-12") {
           result.$defs = defs;
         } else {
@@ -906,7 +907,7 @@ export function toJSONSchema(
       gen.process(schema);
     }
 
-    const schemas: Record<string, JSONSchema.BaseSchema> = {};
+    const schemas: Record<string, JSONSchema.BaseSchema> = Object.create(null);
     const external = {
       registry: input,
       uri: (_params as RegistryToJSONSchemaParams)?.uri,

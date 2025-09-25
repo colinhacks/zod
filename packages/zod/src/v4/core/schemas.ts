@@ -176,7 +176,7 @@ export interface _$ZodType<T extends $ZodTypeInternals = $ZodTypeInternals>
   extends $ZodType<T["output"], T["input"], T> {}
 
 export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constructor("$ZodType", (inst, def) => {
-  inst ??= {} as any;
+  inst ??= Object.create(null) as any;
 
   inst._zod.def = def; // set _def property
   inst._zod.bag = inst._zod.bag || {}; // initialize _bag object
@@ -1830,7 +1830,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
 
   util.defineLazy(inst._zod, "propValues", () => {
     const shape = def.shape;
-    const propValues: util.PropValues = {};
+    const propValues: util.PropValues = Object.create(null);
     for (const key in shape) {
       const field = shape[key]!._zod;
       if (field.values) {
@@ -1860,7 +1860,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       return payload;
     }
 
-    payload.value = {};
+    payload.value = Object.create(null);
 
     const proms: Promise<any>[] = [];
     const shape = value.shape;
@@ -1910,7 +1910,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
       }
 
       // A: preserve key order {
-      doc.write(`const newResult = {};`);
+      doc.write(`const newResult = Object.create(null);`);
       for (const key of normalized.keys) {
         const id = ids[key];
         const k = util.esc(key);
@@ -2137,7 +2137,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
 
     const _super = inst._zod.parse;
     util.defineLazy(inst._zod, "propValues", () => {
-      const propValues: util.PropValues = {};
+      const propValues: util.PropValues = Object.create(null);
       for (const option of def.options) {
         const pv = option._zod.propValues;
         if (!pv || Object.keys(pv).length === 0)
@@ -2578,7 +2578,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
 
     if (def.keyType._zod.values) {
       const values = def.keyType._zod.values!;
-      payload.value = {};
+      payload.value = Object.create(null);
       for (const key of values) {
         if (typeof key === "string" || typeof key === "number" || typeof key === "symbol") {
           const result = def.valueType._zod.run({ value: input[key], issues: [] }, ctx);
@@ -2618,7 +2618,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
         });
       }
     } else {
-      payload.value = {};
+      payload.value = Object.create(null);
       for (const key of Reflect.ownKeys(input)) {
         if (key === "__proto__") continue;
         const keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);

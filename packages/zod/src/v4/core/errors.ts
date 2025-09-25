@@ -337,7 +337,7 @@ export function treeifyError<T>(error: $ZodError, _mapper?: any) {
 
           const terminal = i === fullpath.length - 1;
           if (typeof el === "string") {
-            curr.properties ??= {};
+            curr.properties ??= Object.create(null);
             curr.properties[el] ??= { errors: [] };
             curr = curr.properties[el];
           } else {

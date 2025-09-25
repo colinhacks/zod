@@ -7,7 +7,7 @@ export interface $ZodConfig {
   localeError?: errors.$ZodErrorMap | undefined;
 }
 
-export const globalConfig: $ZodConfig = {};
+export const globalConfig: $ZodConfig = Object.create(null);
 
 export function config(config?: Partial<$ZodConfig>): $ZodConfig {
   if (config) Object.assign(globalConfig, config);

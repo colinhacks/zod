@@ -729,7 +729,7 @@ export const ZodCustomStringFormat: core.$constructor<ZodCustomStringFormat> = /
 export function stringFormat<Format extends string>(
   format: Format,
   fnOrRegex: ((arg: string) => util.MaybeAsync<unknown>) | RegExp,
-  _params: string | core.$ZodStringFormatParams = {}
+  _params: string | core.$ZodStringFormatParams = Object.create(null)
 ): ZodCustomStringFormat<Format> {
   return core._stringFormat(ZodCustomStringFormat, format, fnOrRegex, _params) as any;
 }
@@ -1520,7 +1520,7 @@ export const ZodEnum: core.$constructor<ZodEnum> = /*@__PURE__*/ core.$construct
   const keys = new Set(Object.keys(def.entries));
 
   inst.extract = (values, params) => {
-    const newEntries: Record<string, any> = {};
+    const newEntries: Record<string, any> = Object.create(null);
     for (const value of values) {
       if (keys.has(value)) {
         newEntries[value] = def.entries[value];
@@ -2124,7 +2124,7 @@ export function custom<O>(
 
 export function refine<T>(
   fn: (arg: NoInfer<T>) => util.MaybeAsync<unknown>,
-  _params: string | core.$ZodCustomParams = {}
+  _params: string | core.$ZodCustomParams = Object.create(null)
 ): core.$ZodCheck<T> {
   return core._refine(ZodCustom, fn, _params);
 }

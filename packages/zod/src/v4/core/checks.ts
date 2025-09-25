@@ -32,7 +32,7 @@ export interface $ZodCheck<in T = never> {
 export const $ZodCheck: core.$constructor<$ZodCheck<any>> = /*@__PURE__*/ core.$constructor(
   "$ZodCheck",
   (inst, def) => {
-    inst._zod ??= {} as any;
+    inst._zod ??= Object.create(null) as any;
     inst._zod.def = def;
     inst._zod.onattach ??= [];
   }

@@ -107,7 +107,7 @@ export interface $ZodConfig {
   jitless?: boolean | undefined;
 }
 
-export const globalConfig: $ZodConfig = {};
+export const globalConfig: $ZodConfig = Object.create(null);
 
 export function config(newConfig?: Partial<$ZodConfig>): $ZodConfig {
   if (newConfig) Object.assign(globalConfig, newConfig);

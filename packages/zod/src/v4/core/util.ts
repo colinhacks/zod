@@ -306,7 +306,7 @@ export function assignProp<T extends object, K extends PropertyKey>(
 }
 
 export function mergeDefs(...defs: Record<string, any>[]): any {
-  const mergedDescriptors: Record<string, PropertyDescriptor> = {};
+  const mergedDescriptors: Record<string, PropertyDescriptor> = Object.create(null);
 
   for (const def of defs) {
     const descriptors = Object.getOwnPropertyDescriptors(def);
@@ -584,7 +584,7 @@ export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>):
 
   const def = mergeDefs(schema._zod.def, {
     get shape() {
-      const newShape: Writeable<schemas.$ZodShape> = {};
+      const newShape: Writeable<schemas.$ZodShape> = Object.create(null);
       for (const key in mask) {
         if (!(key in currDef.shape)) {
           throw new Error(`Unrecognized key: "${key}"`);

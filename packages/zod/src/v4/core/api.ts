@@ -1214,7 +1214,7 @@ export function _enum(Class: util.SchemaClass<schemas.$ZodEnum>, values: any, pa
   // } else {
   //   Object.assign(entries, values);
   // }
-  // const entries: util.EnumLike = {};
+  // const entries: util.EnumLike = Object.create(null);
   // for (const val of values) {
   //   entries[val] = val;
   // }
@@ -1601,7 +1601,7 @@ export function _stringFormat<Format extends string>(
   Class: typeof schemas.$ZodCustomStringFormat,
   format: Format,
   fnOrRegex: ((arg: string) => util.MaybeAsync<unknown>) | RegExp,
-  _params: string | $ZodStringFormatParams = {}
+  _params: string | $ZodStringFormatParams = Object.create(null)
 ): schemas.$ZodCustomStringFormat<Format> {
   const params = util.normalizeParams(_params);
   const def: schemas.$ZodCustomStringFormatDef = {
