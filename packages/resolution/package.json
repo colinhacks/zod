@@ -29,6 +29,6 @@
     }
   },
   "dependencies": {
-    "zod": "workspace:*"
+    "zod": "workspace:@exodus/zod@*"
   }
 }
