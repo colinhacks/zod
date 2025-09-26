@@ -26,9 +26,7 @@ describe("Are The Types Wrong (attw) tests", () => {
     // remove first line
     const outputWithoutFirstLine = output.split("\n").slice(2).join("\n").trim();
     expect(outputWithoutFirstLine).toMatchInlineSnapshot(`
-      "💀 Import failed to resolve to type declarations or JavaScript files. https://github.com/arethetypeswrong/arethetypeswrong.github.io/blob/main/docs/problems/NoResolution.md
-
-      🐛 Import resolved to types through a conditional package.json export, but only after failing to resolve through an earlier condition. This behavior is a TypeScript bug (https://github.com/microsoft/TypeScript/issues/50762). It may misrepresent the runtime behavior of this import and should not be relied upon. https://github.com/arethetypeswrong/arethetypeswrong.github.io/blob/main/docs/problems/FallbackCondition.md
+      "⚠️ A require call resolved to an ESM JavaScript file, which is an error in Node and some bundlers. CommonJS consumers will need to use a dynamic import. https://github.com/arethetypeswrong/arethetypeswrong.github.io/blob/main/docs/problems/CJSResolvesToESM.md
 
 
       "@exodus/zod/package.json"
@@ -43,27 +41,27 @@ describe("Are The Types Wrong (attw) tests", () => {
       "@exodus/zod"
 
       node10: 🟢 
-      node16 (from CJS): 💀 Resolution failed
-      node16 (from ESM): 🐛 Used fallback condition
-      bundler: 🐛 Used fallback condition
+      node16 (from CJS): ⚠️ ESM (dynamic import only)
+      node16 (from ESM): 🟢 (ESM)
+      bundler: 🟢 
 
       ***********************************
 
       "@exodus/zod/v4"
 
       node10: 🟢 
-      node16 (from CJS): 💀 Resolution failed
-      node16 (from ESM): 🐛 Used fallback condition
-      bundler: 🐛 Used fallback condition
+      node16 (from CJS): ⚠️ ESM (dynamic import only)
+      node16 (from ESM): 🟢 (ESM)
+      bundler: 🟢 
 
       ***********************************
 
       "@exodus/zod/v4/core"
 
       node10: 🟢 
-      node16 (from CJS): 💀 Resolution failed
-      node16 (from ESM): 🐛 Used fallback condition
-      bundler: 🐛 Used fallback condition
+      node16 (from CJS): ⚠️ ESM (dynamic import only)
+      node16 (from ESM): 🟢 (ESM)
+      bundler: 🟢 
 
       ***********************************"
     `);
