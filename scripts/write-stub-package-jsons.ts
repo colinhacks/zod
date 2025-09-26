@@ -5,9 +5,9 @@ import { join } from "node:path";
 
 const STUB_PACKAGE_JSON_CONTENT = `{ 
   "type": "module",
-  "main": "./index.cjs",
+  "main": "./index.js",
   "module": "./index.js",
-  "types": "./index.d.cts" 
+  "types": "./index.d.ts"
 }
 `;
 

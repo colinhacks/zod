@@ -23,8 +23,8 @@
     "type",
     "inference"
   ],
-  "main": "./index.cjs",
-  "types": "./index.d.cts",
+  "main": "./index.js",
+  "types": "./index.d.ts",
   "module": "./index.js",
   "zshy": {
     "exports": {
@@ -35,27 +35,25 @@
     },
     "conditions": {
       "@zod/source": "src"
-    }
+    },
+    "cjs": false
   },
   "exports": {
     "./package.json": "./package.json",
     ".": {
       "@zod/source": "./src/index.ts",
-      "types": "./index.d.cts",
-      "import": "./index.js",
-      "require": "./index.cjs"
+      "types": "./index.d.ts",
+      "import": "./index.js"
     },
     "./v4": {
       "@zod/source": "./src/v4/index.ts",
-      "types": "./v4/index.d.cts",
-      "import": "./v4/index.js",
-      "require": "./v4/index.cjs"
+      "types": "./v4/index.d.ts",
+      "import": "./v4/index.js"
     },
     "./v4/core": {
       "@zod/source": "./src/v4/core/index.ts",
-      "types": "./v4/core/index.d.cts",
-      "import": "./v4/core/index.js",
-      "require": "./v4/core/index.cjs"
+      "types": "./v4/core/index.d.ts",
+      "import": "./v4/core/index.js"
     }
   },
   "repository": {
