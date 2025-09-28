@@ -99,6 +99,12 @@ const formIntegrations: ZodResource[] = [
     description: "Svelte 5 library for creating forms based on JSON schema.",
     slug: "x0k/svelte-jsonschema-form",
   },
+  {
+    name: "frrm",
+    url: "https://www.npmjs.com/package/frrm",
+    description: "Tiny 0.5kb Zod-based, HTML form abstraction that goes brr.",
+    slug: "schalkventer/frrm",
+  },
 ];
 
 const zodToXConverters: ZodResource[] = [
