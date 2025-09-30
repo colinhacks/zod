@@ -1161,7 +1161,7 @@ Dog.def.shape.age; // => number schema
   When a schema is transformed, the `shape` is accessed from the `in` or `out` key:
 
   ```ts
-  const Puppy = Dog.transform(({ name, age }) =>  age < 1);
+  const Puppy = Dog.transform(({ age }) => age < 1);
   Puppy.in.shape.name; // => string schema
   Puppy.in.shape.age; // => number schema
   Puppy.out; // => boolean schema
