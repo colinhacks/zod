@@ -50,3 +50,16 @@ console.log(
     },
   })
 );
+
+// Demo: OpenAPI 3.1 support
+const userSchema = z.object({
+  name: z.string(),
+  age: z.number().gt(0).lt(150),
+  email: z.string().nullable(),
+});
+
+console.log("\n=== OpenAPI 3.1 Support ===");
+console.log(JSON.stringify(z.toJSONSchema(userSchema, { target: "openapi-3.1" }), null, 2));
+
+console.log("\n=== OpenAPI 3.0 (for comparison) ===");
+console.log(JSON.stringify(z.toJSONSchema(userSchema, { target: "openapi-3.0" }), null, 2));

@@ -12,8 +12,9 @@ interface JSONSchemaGeneratorParams {
    * - `"draft-2020-12"` — Default. JSON Schema Draft 2020-12
    * - `"draft-7"` — JSON Schema Draft 7
    * - `"draft-4"` — JSON Schema Draft 4
-   * - `"openapi-3.0"` — OpenAPI 3.0 Schema Object */
-  target?: "draft-4" | "draft-7" | "draft-2020-12" | "openapi-3.0";
+   * - `"openapi-3.0"` — OpenAPI 3.0 Schema Object
+   * - `"openapi-3.1"` — OpenAPI 3.1 Schema Object */
+  target?: "draft-4" | "draft-7" | "draft-2020-12" | "openapi-3.0" | "openapi-3.1";
   /** How to handle unrepresentable types.
    * - `"throw"` — Default. Unrepresentable types throw an error
    * - `"any"` — Unrepresentable types become `{}` */
@@ -73,7 +74,7 @@ interface Seen {
 
 export class JSONSchemaGenerator {
   metadataRegistry: $ZodRegistry<Record<string, any>>;
-  target: "draft-4" | "draft-7" | "draft-2020-12" | "openapi-3.0";
+  target: "draft-4" | "draft-7" | "draft-2020-12" | "openapi-3.0" | "openapi-3.1";
   unrepresentable: "throw" | "any";
   override: (ctx: {
     zodSchema: schemas.$ZodTypes;
@@ -122,7 +123,12 @@ export class JSONSchemaGenerator {
     }
 
     // initialize
-    const result: Seen = { schema: {}, count: 1, cycle: undefined, path: _params.path };
+    const result: Seen = {
+      schema: {},
+      count: 1,
+      cycle: undefined,
+      path: _params.path,
+    };
     this.seen.set(schema, result);
 
     // custom method overrides default behavior
@@ -278,7 +284,10 @@ export class JSONSchemaGenerator {
             if (typeof maximum === "number") json.maxItems = maximum;
 
             json.type = "array";
-            json.items = this.process(def.element, { ...params, path: [...params.path, "items"] });
+            json.items = this.process(def.element, {
+              ...params,
+              path: [...params.path, "items"],
+            });
             break;
           }
           case "object": {
@@ -362,9 +371,14 @@ export class JSONSchemaGenerator {
             const json: JSONSchema.ArraySchema = _json as any;
             json.type = "array";
 
-            const prefixPath = this.target === "draft-2020-12" ? "prefixItems" : "items";
+            const prefixPath =
+              this.target === "draft-2020-12" || this.target === "openapi-3.1" ? "prefixItems" : "items";
             const restPath =
-              this.target === "draft-2020-12" ? "items" : this.target === "openapi-3.0" ? "items" : "additionalItems";
+              this.target === "draft-2020-12" || this.target === "openapi-3.1"
+                ? "items"
+                : this.target === "openapi-3.0"
+                  ? "items"
+                  : "additionalItems";
 
             const prefixItems = def.items.map((x, i) =>
               this.process(x, {
@@ -379,7 +393,7 @@ export class JSONSchemaGenerator {
                 })
               : null;
 
-            if (this.target === "draft-2020-12") {
+            if (this.target === "draft-2020-12" || this.target === "openapi-3.1") {
               json.prefixItems = prefixItems;
               if (rest) {
                 json.items = rest;
@@ -415,7 +429,7 @@ export class JSONSchemaGenerator {
           case "record": {
             const json: JSONSchema.ObjectSchema = _json as any;
             json.type = "object";
-            if (this.target === "draft-7" || this.target === "draft-2020-12") {
+            if (this.target === "draft-7" || this.target === "draft-2020-12" || this.target === "openapi-3.1") {
               json.propertyNames = this.process(def.keyType, {
                 ...params,
                 path: [...params.path, "propertyNames"],
@@ -505,7 +519,10 @@ export class JSONSchemaGenerator {
                 Object.assign(json, file);
               } else {
                 json.anyOf = mime.map((m) => {
-                  const mFile: JSONSchema.StringSchema = { ...file, contentMediaType: m };
+                  const mFile: JSONSchema.StringSchema = {
+                    ...file,
+                    contentMediaType: m,
+                  };
                   return mFile;
                 });
               }
@@ -678,7 +695,7 @@ export class JSONSchemaGenerator {
       // e.g. lazy
 
       // external is configured
-      const defsSegment = this.target === "draft-2020-12" ? "$defs" : "definitions";
+      const defsSegment = this.target === "draft-2020-12" || this.target === "openapi-3.1" ? "$defs" : "definitions";
       if (params.external) {
         const externalId = params.external.registry.get(entry[0])?.id; // ?? "__shared";// `__schema${this.counter++}`;
 
@@ -691,7 +708,10 @@ export class JSONSchemaGenerator {
         // otherwise, add to __shared
         const id: string = entry[1].defId ?? (entry[1].schema.id as string) ?? `schema${this.counter++}`;
         entry[1].defId = id; // set defId so it will be reused if needed
-        return { defId: id, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id}` };
+        return {
+          defId: id,
+          ref: `${uriGenerator("__shared")}#/${defsSegment}/${id}`,
+        };
       }
 
       if (entry[1] === root) {
@@ -839,6 +859,9 @@ export class JSONSchemaGenerator {
       result.$schema = "http://json-schema.org/draft-04/schema#";
     } else if (this.target === "openapi-3.0") {
       // OpenAPI 3.0 schema objects should not include a $schema property
+    } else if (this.target === "openapi-3.1") {
+      // OpenAPI 3.1 uses JSON Schema Draft 2020-12
+      result.$schema = "https://json-schema.org/draft/2020-12/schema";
     } else {
       // @ts-ignore
       console.warn(`Invalid target: ${this.target}`);
@@ -865,7 +888,7 @@ export class JSONSchemaGenerator {
     if (params.external) {
     } else {
       if (Object.keys(defs).length > 0) {
-        if (this.target === "draft-2020-12") {
+        if (this.target === "draft-2020-12" || this.target === "openapi-3.1") {
           result.$defs = defs;
         } else {
           result.definitions = defs;
@@ -921,7 +944,7 @@ export function toJSONSchema(
     }
 
     if (Object.keys(defs).length > 0) {
-      const defsSegment = gen.target === "draft-2020-12" ? "$defs" : "definitions";
+      const defsSegment = gen.target === "draft-2020-12" || gen.target === "openapi-3.1" ? "$defs" : "definitions";
       schemas.__shared = {
         [defsSegment]: defs,
       };
