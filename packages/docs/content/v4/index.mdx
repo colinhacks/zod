@@ -287,7 +287,7 @@ The core bundle is ~57% smaller in Zod 4 (2.3x). That's good! But we can do a lo
 Zod's method-heavy API is fundamentally difficult to tree-shake. Even our simple `z.boolean()` script pulls in the implementations of a bunch of methods we didn't use, like `.optional()`, `.array()`, etc. Writing slimmer implementations can only get you so far. That's where Zod Mini comes in. 
 
 ```sh
-npm install zod@^3.25.0
+npm install zod@^4.0.0
 ```
 
 It's a Zod variant with a functional, tree-shakable API that corresponds one-to-one with `zod`. Where Zod uses methods, Zod Mini generally uses wrapper functions:
