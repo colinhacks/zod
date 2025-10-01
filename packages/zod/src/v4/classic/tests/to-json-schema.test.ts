@@ -1186,6 +1186,50 @@ describe("toJSONSchema", () => {
     `);
   });
 
+  test("literal with multiple boolean values", () => {
+    const boolLiterals = z.literal([true, false]);
+    expect(z.toJSONSchema(boolLiterals)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "enum": [
+          true,
+          false,
+        ],
+        "type": "boolean",
+      }
+    `);
+  });
+
+  test("literal with multiple number values", () => {
+    const numLiterals = z.literal([1, 2, 3]);
+    expect(z.toJSONSchema(numLiterals)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "enum": [
+          1,
+          2,
+          3,
+        ],
+        "type": "number",
+      }
+    `);
+  });
+
+  test("literal with multiple string values", () => {
+    const strLiterals = z.literal(["a", "b", "c"]);
+    expect(z.toJSONSchema(strLiterals)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "enum": [
+          "a",
+          "b",
+          "c",
+        ],
+        "type": "string",
+      }
+    `);
+  });
+
   // pipe
   test("pipe", () => {
     const schema = z
