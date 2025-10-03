@@ -226,6 +226,12 @@ const poweredByZodProjects: ZodResource[] = [
     url: "https://github.com/boneskull/bupkis",
     description: "Uncommonly extensible assertions for the beautiful people",
     slug: "boneskull/bupkis",
+  },
+  {
+    name: "zodgres",
+    url: "https://github.com/endel/zodgres",
+    description: "Postgres.js + Zod: Database collections with static type inference and automatic migrations",
+    slug: "endel/zodgres",
   }
 ];
 
