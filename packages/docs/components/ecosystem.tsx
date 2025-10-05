@@ -37,7 +37,8 @@ const apiLibraries: ZodResource[] = [
   {
     name: "nestjs-zod",
     url: "https://github.com/BenLorantfy/nestjs-zod",
-    description: "Integrate nestjs and zod.  Create nestjs DTOs using zod, serialize with zod, and generate OpenAPI documentation from zod schemas",
+    description:
+      "Integrate nestjs and zod.  Create nestjs DTOs using zod, serialize with zod, and generate OpenAPI documentation from zod schemas",
     slug: "BenLorantfy/nestjs-zod",
   },
   {
@@ -135,7 +136,7 @@ const zodToXConverters: ZodResource[] = [
   {
     name: "@traversable/zod",
     url: "https://github.com/traversable/schema/tree/main/packages/zod",
-    description: "Build your own \"Zod to x\" library, or pick one of 25+ off-the-shelf transformers",
+    description: 'Build your own "Zod to x" library, or pick one of 25+ off-the-shelf transformers',
     slug: "traversable/schema",
   },
 ];
@@ -154,7 +155,6 @@ const xToZodConverters: ZodResource[] = [
     slug: "kubb-labs/kubb",
   },
   {
-
     name: "Hey API",
     url: "https://heyapi.dev/openapi-ts/plugins/zod",
     description: "The OpenAPI to TypeScript codegen. Generate clients, SDKs, validators, and more.",
@@ -169,7 +169,8 @@ const xToZodConverters: ZodResource[] = [
   {
     name: "Prisma Zod Generator",
     url: "https://github.com/omar-dulaimi/prisma-zod-generator",
-    description: "Generates Zod schemas with input/result/pure variants, minimal/full/custom, selective emit/filtering, single/multi-file output, @zod rules, relation depth guards.",
+    description:
+      "Generates Zod schemas with input/result/pure variants, minimal/full/custom, selective emit/filtering, single/multi-file output, @zod rules, relation depth guards.",
     slug: "omar-dulaimi/prisma-zod-generator",
   },
   {
@@ -197,7 +198,8 @@ const mockingLibraries: ZodResource[] = [
   {
     name: "@traversable/zod-test",
     url: "https://github.com/traversable/schema/tree/main/packages/zod-test",
-    description: "Random zod schema generator built for fuzz testing; includes generators for both valid and invalid data",
+    description:
+      "Random zod schema generator built for fuzz testing; includes generators for both valid and invalid data",
     slug: "traversable/schema",
   },
 ];
@@ -279,7 +281,7 @@ export function Table(props: { resources: ZodResource[] }) {
                 <code className="whitespace-nowrap">{resource.name}</code>
               </a>
             </td>
-            <td className="whitespace-nowrap">{`⭐️ ${resource.stars ?? "ERR"}`}</td>
+            <td className="whitespace-nowrap">{`⭐️ ${resource.stars ?? "—"}`}</td>
             {/* <td className="whitespace-nowrap">{`⭐️ ${resource.v4 ? "✅" : ""}`}</td> */}
             <td>{resource.description}</td>
           </tr>
