@@ -1,9 +1,7 @@
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
 const API_URL = "https://api.github.com/graphql";
 
-export async function fetchStars(
-  resources: { slug: string; stars?: number }[],
-) {
+export async function fetchStars(resources: { slug: string; stars?: number }[]) {
   try {
     if (resources.length === 0) return;
     const uniqueSlugs = Array.from(
@@ -13,8 +11,8 @@ export async function fetchStars(
           .map((r, id) => ({
             id,
             slug: r.slug,
-          })),
-      ),
+          }))
+      )
     );
 
     if (uniqueSlugs.length === 0) return;
@@ -40,7 +38,7 @@ export async function fetchStars(
 
     if (res.status > 400) {
       console.error(
-        "Failed to fetch GitHub stars. Make sure you are providing a valid GITHUB_TOKEN in packages/docs/.env",
+        "Failed to fetch GitHub stars. Make sure you are providing a valid GITHUB_TOKEN in packages/docs/.env"
       );
       if (process.env.NODE_ENV === "production") {
         throw new Error("Failed to fetch GitHub stars.");
