@@ -9,7 +9,7 @@
     "postinstall": "fumadocs-mdx"
   },
   "dependencies": {
-    "@inkeep/cxkit-react": "^0.5.80",
+    "@inkeep/cxkit-react": "^0.5.99",
     "@radix-ui/react-accordion": "^1.2.4",
     "@vercel/analytics": "^1.5.0",
     "@vercel/og": "^0.6.8",
