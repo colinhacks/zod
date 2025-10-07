@@ -36,6 +36,14 @@ function generateRedirects(idmap, page, origin = "/") {
 /** @type {import('next').NextConfig} */
 const config = {
   reactStrictMode: true,
+  async rewrites() {
+    return [
+      {
+        source: "/:path*.md{x}?",
+        destination: "/llms.mdx/:path*",
+      },
+    ];
+  },
   redirects() {
     const mainPageRedirects = [
       // INTRO
@@ -52,7 +60,7 @@ const config = {
           requirements: "requirements",
           "from-npm": "installation",
         },
-        "/"
+        "/",
       ),
 
       // ECOSYSTEM
@@ -68,7 +76,7 @@ const config = {
           "powered-by-zod": "powered-by-zod",
           "utilities-for-zod": "zod-utilities",
         },
-        "/ecosystem"
+        "/ecosystem",
       ),
 
       // BASIC USAGE
@@ -82,7 +90,7 @@ const config = {
           safeparse: "handling-errors",
           safeparseasync: "handling-errors",
         },
-        "/basics"
+        "/basics",
       ),
 
       // API
@@ -173,7 +181,7 @@ const config = {
           readonly: "readonly",
           pipe: "pipes",
         },
-        "/api"
+        "/api",
       ),
 
       // METADATA
@@ -181,7 +189,7 @@ const config = {
         {
           describe: "",
         },
-        "/metadata"
+        "/metadata",
       ),
 
       // FOR MAINTAINERS
@@ -191,7 +199,7 @@ const config = {
           "inferring-the-inferred-type": "how-to-accept-user-defined-schemas",
           "constraining-allowable-inputs": "how-to-accept-user-defined-schemas",
         },
-        "/library-authors"
+        "/library-authors",
       ),
 
       // FORMATTING ERRORS
@@ -200,14 +208,14 @@ const config = {
         {
           "error-formatting": "",
         },
-        "/error-formatting"
+        "/error-formatting",
       ),
 
       ...generateRedirects(
         {
           "error-handling": "handling-errors",
         },
-        "/basics"
+        "/basics",
       ),
 
       // DROPPED
@@ -238,7 +246,7 @@ const config = {
           zodparsedtype: "",
         },
         "/error-customization",
-        "/ERROR_HANDLING"
+        "/ERROR_HANDLING",
       ),
       ...generateRedirects(
         {
@@ -248,7 +256,7 @@ const config = {
           "flattening-errors": "zflattenerror",
         },
         "/error-formatting",
-        "/ERROR_HANDLING"
+        "/ERROR_HANDLING",
       ),
     ];
 
@@ -261,7 +269,11 @@ const config = {
       },
     ];
 
-    const redirects = [...mainPageRedirects, ...errorHandlingRedirects, ...changelogRedirects];
+    const redirects = [
+      ...mainPageRedirects,
+      ...errorHandlingRedirects,
+      ...changelogRedirects,
+    ];
     return redirects;
   },
 };
