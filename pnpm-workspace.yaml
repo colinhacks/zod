@@ -1,5 +1,13 @@
 packages:
   - packages/*
+
 hoistWorkspacePackages: false
-saveWorkspaceProtocol: false
+
 linkWorkspacePackages: true
+
+onlyBuiltDependencies:
+  - '@biomejs/biome'
+  - esbuild
+  - sharp
+
+saveWorkspaceProtocol: false
