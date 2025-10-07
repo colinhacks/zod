@@ -125,3 +125,31 @@ test("pick/omit/required/partial - do not allow unknown keys", () => {
   // @ts-expect-error
   expect(() => schema.partial({ $unknown: true }).safeParse({})).toThrow();
 });
+
+test("omit keep refine functions", () => {
+  const schema = z
+    .object({
+      value: z.number(),
+      allowsNegative: z.boolean(),
+      somethingElse: z.string(),
+    })
+    .refine(({ value, allowsNegative }) => {
+      if (allowsNegative) {
+        return true;
+      }
+      return value >= 0;
+    });
+
+  const schemaB = schema.omit({
+    somethingElse: true,
+  });
+
+  const schemaBsafeparsedBad = schemaB.safeParse({ value: -5, allowsNegative: false, somethingElse: "" });
+  expect(schemaBsafeparsedBad.success).toEqual(false);
+
+  const schemaBsafeparsedOk2 = schemaB.safeParse({ value: 5, allowsNegative: false, somethingElse: "" });
+  expect(schemaBsafeparsedOk2.success).toEqual(true);
+
+  const schemaBsafeparsedOk = schemaB.safeParse({ value: -5, allowsNegative: true, somethingElse: "" });
+  expect(schemaBsafeparsedOk.success).toEqual(true);
+});
