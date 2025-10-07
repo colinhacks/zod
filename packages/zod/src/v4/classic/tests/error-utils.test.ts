@@ -551,6 +551,24 @@ test("disc union treeify/format", () => {
   `);
 });
 
+test("prettifyError for Infinity and NaN", () => {
+  const numberSchema = z.number();
+
+  const infinityResult = numberSchema.safeParse(Number.POSITIVE_INFINITY);
+  expect(infinityResult.success).toBe(false);
+  if (!infinityResult.success) {
+    expect(z.prettifyError(infinityResult.error)).toMatchInlineSnapshot(
+      `"✖ Invalid input: expected number, received Infinity"`
+    );
+  }
+
+  const nanResult = numberSchema.safeParse(Number.NaN);
+  expect(nanResult.success).toBe(false);
+  if (!nanResult.success) {
+    expect(z.prettifyError(nanResult.error)).toMatchInlineSnapshot(`"✖ Invalid input: expected number, received NaN"`);
+  }
+});
+
 test("update message after adding issues", () => {
   const e = new z.ZodError([]);
   e.addIssue({

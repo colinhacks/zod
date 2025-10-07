@@ -19,7 +19,7 @@ const error: () => errors.$ZodErrorMap = () => {
 
     switch (t) {
       case "number": {
-        return Number.isNaN(data) ? "NaN" : "数値";
+        return Number.isNaN(data) ? "NaN" : !Number.isFinite(data) ? "Infinity" : "数値";
       }
       case "object": {
         if (Array.isArray(data)) {
@@ -73,7 +73,7 @@ const error: () => errors.$ZodErrorMap = () => {
   return (issue) => {
     switch (issue.code) {
       case "invalid_type":
-        return `無効な入力: ${issue.expected}が期待されましたが、${parsedType(issue.input)}が入力されました`;
+        return `無効な入力: ${issue.expected}が期待されましたが、${issue.received ?? parsedType(issue.input)}が入力されました`;
       case "invalid_value":
         if (issue.values.length === 1) return `無効な入力: ${util.stringifyPrimitive(issue.values[0])}が期待されました`;
         return `無効な選択: ${util.joinValues(issue.values, "、")}のいずれかである必要があります`;

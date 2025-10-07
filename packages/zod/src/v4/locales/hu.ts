@@ -19,7 +19,7 @@ const error: () => errors.$ZodErrorMap = () => {
 
     switch (t) {
       case "number": {
-        return Number.isNaN(data) ? "NaN" : "szám";
+        return Number.isNaN(data) ? "NaN" : !Number.isFinite(data) ? "Infinity" : "szám";
       }
       case "object": {
         if (Array.isArray(data)) {
@@ -73,7 +73,7 @@ const error: () => errors.$ZodErrorMap = () => {
   return (issue) => {
     switch (issue.code) {
       case "invalid_type":
-        return `Érvénytelen bemenet: a várt érték ${issue.expected}, a kapott érték ${parsedType(issue.input)}`;
+        return `Érvénytelen bemenet: a várt érték ${issue.expected}, a kapott érték ${issue.received ?? parsedType(issue.input)}`;
       // return `Invalid input: expected ${issue.expected}, received ${util.getParsedType(issue.input)}`;
       case "invalid_value":
         if (issue.values.length === 1)
