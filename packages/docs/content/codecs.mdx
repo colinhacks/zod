@@ -153,10 +153,10 @@ stringToDate.decode("2024-01-15T10:30:00.000Z");
 stringToDate.decodeAsync("2024-01-15T10:30:00.000Z"); 
 // => Promise<Date>
 
-stringToDate.decodeSafe("2024-01-15T10:30:00.000Z"); 
+stringToDate.safeDecode("2024-01-15T10:30:00.000Z"); 
 // => { success: true, data: Date } | { success: false, error: ZodError }
 
-stringToDate.decodeSafeAsync("2024-01-15T10:30:00.000Z"); 
+stringToDate.safeDecodeAsync("2024-01-15T10:30:00.000Z"); 
 // => Promise<{ success: true, data: Date } | { success: false, error: ZodError }>
 ```
 
