@@ -296,6 +296,29 @@ test("z.record", () => {
   expect(() => z.parse(c, { a: "hello", b: "world" })).toThrow();
   // extra keys
   expect(() => z.parse(c, { a: "hello", b: "world", c: "world", d: "world" })).toThrow();
+
+  // literal union keys
+  const d = z.record(z.union([z.literal("a"), z.literal(0)]), z.string());
+  type d = z.output<typeof d>;
+  expectTypeOf<d>().toEqualTypeOf<Record<"a" | 0, string>>();
+  expect(z.parse(d, { a: "hello", 0: "world" })).toEqual({
+    a: "hello",
+    0: "world",
+  });
+
+  // TypeScript enum keys
+  enum Enum {
+    A = 0,
+    B = "hi",
+  }
+
+  const e = z.record(z.enum(Enum), z.string());
+  type e = z.output<typeof e>;
+  expectTypeOf<e>().toEqualTypeOf<Record<Enum, string>>();
+  expect(z.parse(e, { [Enum.A]: "hello", [Enum.B]: "world" })).toEqual({
+    [Enum.A]: "hello",
+    [Enum.B]: "world",
+  });
 });
 
 test("z.map", () => {
