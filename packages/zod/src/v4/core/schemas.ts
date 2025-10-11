@@ -2593,8 +2593,10 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
     if (def.keyType._zod.values) {
       const values = def.keyType._zod.values!;
       payload.value = {};
+      const recordKeys = new Set<string | symbol>();
       for (const key of values) {
         if (typeof key === "string" || typeof key === "number" || typeof key === "symbol") {
+          recordKeys.add(typeof key === "number" ? key.toString() : key);
           const result = def.valueType._zod.run({ value: input[key], issues: [] }, ctx);
 
           if (result instanceof Promise) {
@@ -2617,7 +2619,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
 
       let unrecognized!: string[];
       for (const key in input) {
-        if (!values.has(key)) {
+        if (!recordKeys.has(key)) {
           unrecognized = unrecognized ?? [];
           unrecognized.push(key);
         }
