@@ -140,16 +140,16 @@ test("omit keep refine functions", () => {
       return value >= 0;
     });
 
-  const schemaB = schema.omit({
+  const schemaOmit = schema.omit({
     somethingElse: true,
   });
 
-  const schemaBsafeparsedBad = schemaB.safeParse({ value: -5, allowsNegative: false, somethingElse: "" });
+  const schemaBsafeparsedBad = schemaOmit.safeParse({ value: -5, allowsNegative: false, somethingElse: "" });
   expect(schemaBsafeparsedBad.success).toEqual(false);
 
-  const schemaBsafeparsedOk2 = schemaB.safeParse({ value: 5, allowsNegative: false, somethingElse: "" });
+  const schemaBsafeparsedOk2 = schemaOmit.safeParse({ value: 5, allowsNegative: false, somethingElse: "" });
   expect(schemaBsafeparsedOk2.success).toEqual(true);
 
-  const schemaBsafeparsedOk = schemaB.safeParse({ value: -5, allowsNegative: true, somethingElse: "" });
+  const schemaBsafeparsedOk = schemaOmit.safeParse({ value: -5, allowsNegative: true, somethingElse: "" });
   expect(schemaBsafeparsedOk.success).toEqual(true);
 });
