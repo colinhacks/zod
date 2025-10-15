@@ -130,15 +130,15 @@ test("pick with boolean instead true", () => {
   const mySchemaBarFalse = z.object({ foo: z.string(), bar: z.number() }).pick({ foo: true, bar: false });
   const mySchemaBarTrue = z.object({ foo: z.string(), bar: z.number() }).pick({ foo: true, bar: true });
 
-  const schemaBarFalseParsed = mySchemaBarFalse.safeParse({ foo: "ciao", bar: 10 });
-  expect(() => schemaBarFalseParsed.data?.bar).toBeUndefined();
-  expect(() => schemaBarFalseParsed.data?.foo).toBe("test");
+  const schemaBarFalseParsed = mySchemaBarFalse.safeParse({ foo: "test", bar: 10 });
+  expect(schemaBarFalseParsed.data?.bar).toBeUndefined();
+  expect(schemaBarFalseParsed.data?.foo).toBe("test");
 
-  const schemaBarFalseParsed2 = mySchemaBarFalse.safeParse({ foo: "ciao" });
-  expect(() => schemaBarFalseParsed2.data?.bar).toBeUndefined();
-  expect(() => schemaBarFalseParsed2.data?.foo).toBe("test");
+  const schemaBarFalseParsed2 = mySchemaBarFalse.safeParse({ foo: "test" });
+  expect(schemaBarFalseParsed2.data?.bar).toBeUndefined();
+  expect(schemaBarFalseParsed2.data?.foo).toBe("test");
 
-  const schemaBarTrueParsed = mySchemaBarTrue.safeParse({ foo: "ciao", bar: 10 });
-  expect(() => schemaBarTrueParsed.data?.bar).toBeTruthy();
-  expect(() => schemaBarTrueParsed.data?.foo).toBe("test");
+  const schemaBarTrueParsed = mySchemaBarTrue.safeParse({ foo: "test", bar: 10 });
+  expect(schemaBarTrueParsed.data?.bar).toBe(10);
+  expect(schemaBarTrueParsed.data?.foo).toBe("test");
 });
