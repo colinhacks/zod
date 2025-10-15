@@ -35,6 +35,8 @@ if (tag === "latest") {
   if (!xyz.test(jsrJsonVersion)) {
     throw new Error("jsr.json version is not in x.y.z format");
   }
+} else {
+  process.exit(0);
 }
 
 // Get version from versions.ts

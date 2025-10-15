@@ -19,7 +19,14 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
   initializer: (inst: T, def: D) => void,
   params?: { Parent?: typeof Class }
 ): $constructor<T, D> {
+  // const initCache = new WeakMap<any, boolean>();
   function init(inst: T, def: D) {
+    // if (initCache.get(def)) {
+    // console.log("skipping init", name);
+    // return;
+    // }
+    // console.log("init", name);
+    // initCache.set(def, true);
     Object.defineProperty(inst, "_zod", {
       value: inst._zod ?? {},
       enumerable: false,
