@@ -1,3 +1,4 @@
 import * as z from "zod";
 
-z;
+const a = z.uint32();
+console.log(a.parse(1234));
