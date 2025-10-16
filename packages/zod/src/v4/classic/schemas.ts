@@ -265,7 +265,6 @@ export const _ZodString: core.$constructor<_ZodString> = /*@__PURE__*/ core.$con
   inst.maxLength = bag.maximum ?? null;
 
   // validations
-  // if (inst.regex) throw new Error("regex already defined");
   inst.regex = (...args) => inst.check(checks.regex(...args));
   inst.includes = (...args) => inst.check(checks.includes(...args));
   inst.startsWith = (...args) => inst.check(checks.startsWith(...args));
