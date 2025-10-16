@@ -104,13 +104,6 @@ const bench = metabench("z.object() safeParse", {
   zod4() {
     for (const _ of DATA) z4Schema.parse(_);
   },
-
-  // zod4strict() {
-  //   for (const _ of DATA) z4SchemaStrict.parse(_);
-  // },
-  // zod4loose() {
-  //   for (const _ of DATA) z4SchemaLoose.parse(_);
-  // },
 });
 
 await bench.run();
