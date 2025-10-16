@@ -13,6 +13,21 @@ test("promise inference", () => {
   expectTypeOf<promSchemaType>().toEqualTypeOf<{ name: string; age: number }>();
 });
 
+test("double promise inference", () => {
+  const doubleProm = z.promise(promSchema);
+  type doublePromType = z.infer<typeof doubleProm>;
+  expectTypeOf<doublePromType>().toEqualTypeOf<Promise<{ name: string; age: number }>>();
+});
+
+test("async function inference", () => {
+  const func = z.function({
+    input: z.tuple([]),
+    output: promSchema,
+  });
+  type funcType = z.infer<typeof func>;
+  expectTypeOf<funcType>().toEqualTypeOf<() => Promise<{ name: string; age: number }>>();
+});
+
 test("promise parsing success", async () => {
   // expect(() => promSchema.parse(Promise.resolve({ name: "Bobby", age: 10 }))).toThrow();
   const pr = promSchema.parseAsync(Promise.resolve({ name: "Bobby", age: 10 }));

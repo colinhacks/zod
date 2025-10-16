@@ -1,3 +1,4 @@
+import type { ZodPromise } from "../classic/schemas.js";
 import type { $ZodTypeDiscriminable } from "./api.js";
 import * as checks from "./checks.js";
 import * as core from "./core.js";
@@ -3952,7 +3953,7 @@ export type $InferInnerFunctionTypeAsync<Args extends $ZodFunctionIn, Returns ex
 
 export type $InferOuterFunctionType<Args extends $ZodFunctionIn, Returns extends $ZodFunctionOut> = (
   ...args: $ZodFunctionIn extends Args ? never[] : core.input<Args>
-) => core.output<Returns>;
+) => Returns extends ZodPromise ? Promise<core.output<Returns>> : core.output<Returns>;
 
 export type $InferOuterFunctionTypeAsync<Args extends $ZodFunctionIn, Returns extends $ZodFunctionOut> = (
   ...args: $ZodFunctionIn extends Args ? never[] : core.input<Args>
@@ -4112,7 +4113,7 @@ export interface $ZodPromiseDef<T extends SomeType = $ZodType> extends $ZodTypeD
 }
 
 export interface $ZodPromiseInternals<T extends SomeType = $ZodType>
-  extends $ZodTypeInternals<Promise<core.output<T>>, util.MaybeAsync<core.input<T>>> {
+  extends $ZodTypeInternals<core.output<T>, util.MaybeAsync<core.input<T>>> {
   def: $ZodPromiseDef<T>;
   isst: never;
 }
