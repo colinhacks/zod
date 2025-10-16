@@ -1,3 +1,4 @@
+import type { ZodPromise } from "../classic/schemas.js";
 import type * as errors from "./errors.js";
 import type * as schemas from "./schemas.js";
 import type { Class } from "./util.js";
@@ -99,6 +100,10 @@ export type output<T> = T extends { _zod: { output: any } }
   : unknown;
 
 export type { output as infer };
+
+export type outputPossiblyAsync<T extends schemas.SomeType = schemas.$ZodType> = T extends ZodPromise
+  ? Promise<output<T>>
+  : output<T>;
 
 //////////////////////////////   CONFIG   ///////////////////////////////////////
 
