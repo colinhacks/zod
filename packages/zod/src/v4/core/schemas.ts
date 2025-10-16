@@ -4112,7 +4112,7 @@ export interface $ZodPromiseDef<T extends SomeType = $ZodType> extends $ZodTypeD
 }
 
 export interface $ZodPromiseInternals<T extends SomeType = $ZodType>
-  extends $ZodTypeInternals<core.output<T>, util.MaybeAsync<core.input<T>>> {
+  extends $ZodTypeInternals<Promise<core.output<T>>, util.MaybeAsync<core.input<T>>> {
   def: $ZodPromiseDef<T>;
   isst: never;
 }
