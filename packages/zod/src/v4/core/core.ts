@@ -1,3 +1,4 @@
+import type { ZodPromise } from "../classic/schemas.js";
 import type * as errors from "./errors.js";
 import type * as schemas from "./schemas.js";
 import type { Class } from "./util.js";
@@ -105,9 +106,17 @@ export class $ZodEncodeError extends Error {
 // export type input<T extends schemas.$ZodType> = T["_zod"]["input"];
 // export type output<T extends schemas.$ZodType> = T["_zod"]["output"];
 export type input<T> = T extends { _zod: { input: any } } ? T["_zod"]["input"] : unknown;
-export type output<T> = T extends { _zod: { output: any } } ? T["_zod"]["output"] : unknown;
+export type output<T> = T extends { _zod: { output: any } }
+  ? // ? T["_zod"] extends schemas.$ZodTypeInternals<any, ZodPromise>
+    //   ? Promise<T["_zod"]["output"]>
+    T["_zod"]["output"]
+  : unknown;
 
 export type { output as infer };
+
+export type outputPossiblyAsync<T extends schemas.SomeType = schemas.$ZodType> = T extends ZodPromise
+  ? Promise<output<T>>
+  : output<T>;
 
 //////////////////////////////   CONFIG   ///////////////////////////////////////
 
