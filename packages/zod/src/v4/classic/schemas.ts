@@ -265,6 +265,7 @@ export const _ZodString: core.$constructor<_ZodString> = /*@__PURE__*/ core.$con
   inst.maxLength = bag.maximum ?? null;
 
   // validations
+  // if (inst.regex) throw new Error("regex already defined");
   inst.regex = (...args) => inst.check(checks.regex(...args));
   inst.includes = (...args) => inst.check(checks.includes(...args));
   inst.startsWith = (...args) => inst.check(checks.startsWith(...args));
@@ -792,6 +793,7 @@ export interface ZodNumber extends _ZodNumber<core.$ZodNumberInternals<number>> 
 
 export const ZodNumber: core.$constructor<ZodNumber> = /*@__PURE__*/ core.$constructor("ZodNumber", (inst, def) => {
   core.$ZodNumber.init(inst, def);
+
   ZodType.init(inst, def);
 
   inst.gt = (value, params) => inst.check(checks.gt(value, params));

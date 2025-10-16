@@ -742,10 +742,8 @@ export interface $ZodIPv4 extends $ZodType {
 export const $ZodIPv4: core.$constructor<$ZodIPv4> = /*@__PURE__*/ core.$constructor("$ZodIPv4", (inst, def): void => {
   def.pattern ??= regexes.ipv4;
   $ZodStringFormat.init(inst, def);
-  inst._zod.onattach.push((inst) => {
-    const bag = inst._zod.bag as $ZodStringInternals<unknown>["bag"];
-    bag.format = `ipv4`;
-  });
+
+  inst._zod.bag.format = `ipv4`;
 });
 
 //////////////////////////////   ZodIPv6   //////////////////////////////
@@ -766,10 +764,7 @@ export const $ZodIPv6: core.$constructor<$ZodIPv6> = /*@__PURE__*/ core.$constru
   def.pattern ??= regexes.ipv6;
   $ZodStringFormat.init(inst, def);
 
-  inst._zod.onattach.push((inst) => {
-    const bag = inst._zod.bag as $ZodStringInternals<unknown>["bag"];
-    bag.format = `ipv6`;
-  });
+  inst._zod.bag.format = `ipv6`;
 
   inst._zod.check = (payload) => {
     try {
@@ -880,9 +875,7 @@ export const $ZodBase64: core.$constructor<$ZodBase64> = /*@__PURE__*/ core.$con
     def.pattern ??= regexes.base64;
     $ZodStringFormat.init(inst, def);
 
-    inst._zod.onattach.push((inst) => {
-      inst._zod.bag.contentEncoding = "base64";
-    });
+    inst._zod.bag.contentEncoding = "base64";
 
     inst._zod.check = (payload) => {
       if (isValidBase64(payload.value)) return;
@@ -919,9 +912,7 @@ export const $ZodBase64URL: core.$constructor<$ZodBase64URL> = /*@__PURE__*/ cor
     def.pattern ??= regexes.base64url;
     $ZodStringFormat.init(inst, def);
 
-    inst._zod.onattach.push((inst) => {
-      inst._zod.bag.contentEncoding = "base64url";
-    });
+    inst._zod.bag.contentEncoding = "base64url";
 
     inst._zod.check = (payload) => {
       if (isValidBase64URL(payload.value)) return;
@@ -1066,8 +1057,8 @@ export interface $ZodNumber<Input = unknown> extends $ZodType {
 
 export const $ZodNumber: core.$constructor<$ZodNumber> = /*@__PURE__*/ core.$constructor("$ZodNumber", (inst, def) => {
   $ZodType.init(inst, def);
-  inst._zod.pattern = inst._zod.bag.pattern ?? regexes.number;
 
+  inst._zod.pattern = inst._zod.bag.pattern ?? regexes.number;
   inst._zod.parse = (payload, _ctx) => {
     if (def.coerce)
       try {
@@ -1114,10 +1105,10 @@ export interface $ZodNumberFormat extends $ZodType {
 }
 
 export const $ZodNumberFormat: core.$constructor<$ZodNumberFormat> = /*@__PURE__*/ core.$constructor(
-  "$ZodNumber",
+  "$ZodNumberFormat",
   (inst, def) => {
     checks.$ZodCheckNumberFormat.init(inst, def);
-    $ZodNumber.init(inst, def); // no format checksp
+    $ZodNumber.init(inst, def); // no format checks
   }
 );
 
@@ -1238,7 +1229,7 @@ export interface $ZodBigIntFormat extends $ZodType {
 }
 
 export const $ZodBigIntFormat: core.$constructor<$ZodBigIntFormat> = /*@__PURE__*/ core.$constructor(
-  "$ZodBigInt",
+  "$ZodBigIntFormat",
   (inst, def) => {
     checks.$ZodCheckBigIntFormat.init(inst, def);
     $ZodBigInt.init(inst, def); // no format checks

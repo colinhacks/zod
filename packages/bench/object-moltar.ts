@@ -1,6 +1,6 @@
 import * as z4 from "zod/v4";
-import * as z4lib from "zod4/v4";
 import * as z3 from "zod3";
+import * as z4lib from "zod4/v4";
 import { metabench } from "./metabench.js";
 
 const z3Schema = z3.strictObject({
@@ -14,8 +14,8 @@ const z3Schema = z3.strictObject({
     foo: z3.string(),
     num: z3.number(),
     bool: z3.boolean(),
-  })
-})
+  }),
+});
 
 const z4LibSchema = z4lib.strictObject({
   number: z4lib.number(),
@@ -94,8 +94,6 @@ console.log(z3Schema.parse(DATA[0]));
 console.log(z4Schema.parse(DATA[0]));
 console.log(z4LibSchema.parse(DATA[0]));
 
-const inPlace = { inPlace: true }
-
 const bench = metabench("z.object() safeParse", {
   zod3() {
     for (const _ of DATA) z3Schema.parse(_);
@@ -103,16 +101,9 @@ const bench = metabench("z.object() safeParse", {
   zod4lib() {
     for (const _ of DATA) z4LibSchema.parse(_);
   },
-  zod4(){
+  zod4() {
     for (const _ of DATA) z4Schema.parse(_);
   },
-  
-  // zod4strict() {
-  //   for (const _ of DATA) z4SchemaStrict.parse(_);
-  // },
-  // zod4loose() {
-  //   for (const _ of DATA) z4SchemaLoose.parse(_);
-  // },
 });
 
 await bench.run();
