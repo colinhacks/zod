@@ -53,8 +53,8 @@ export class $ZodRegistry<Meta extends MetadataType = MetadataType, Schema exten
 
   remove(schema: Schema): this {
     const meta: any = this._map.get(schema);
-    if (meta && typeof meta === "object" && "id" in meta) {
-      this._idmap.delete(meta.id!);
+    if (meta?.id) {
+      this._idmap.delete(meta.id);
     }
     this._map.delete(schema);
     return this;
@@ -66,9 +66,8 @@ export class $ZodRegistry<Meta extends MetadataType = MetadataType, Schema exten
     // inherit metadata
     const p = schema._zod.parent as Schema;
     if (p) {
-      const pm: any = { ...(this.get(p) ?? {}) };
-      delete pm.id; // do not inherit id
-      const f = { ...pm, ...this._map.get(schema) } as any;
+      const { id, ...rest } = (this.get(p) ?? {}) as any;
+      const f = { ...rest, ...this._map.get(schema) } as any;
       return Object.keys(f).length ? f : undefined;
     }
     return this._map.get(schema) as any;

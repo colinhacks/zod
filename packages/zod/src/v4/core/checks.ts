@@ -611,8 +611,8 @@ export const $ZodCheckMaxLength: core.$constructor<$ZodCheckMaxLength> = /*@__PU
     };
 
     inst._zod.onattach.push((inst) => {
-      const curr = (inst._zod.bag.maximum ?? Number.POSITIVE_INFINITY) as number;
-      if (def.maximum < curr) inst._zod.bag.maximum = def.maximum;
+      const curr = (inst._zod.bag.maxLength ?? Number.POSITIVE_INFINITY) as number;
+      if (def.maximum < curr) inst._zod.bag.maxLength = def.maximum;
     });
 
     inst._zod.check = (payload) => {
@@ -662,8 +662,8 @@ export const $ZodCheckMinLength: core.$constructor<$ZodCheckMinLength> = /*@__PU
     };
 
     inst._zod.onattach.push((inst) => {
-      const curr = (inst._zod.bag.minimum ?? Number.NEGATIVE_INFINITY) as number;
-      if (def.minimum > curr) inst._zod.bag.minimum = def.minimum;
+      const curr = (inst._zod.bag.minLength ?? Number.NEGATIVE_INFINITY) as number;
+      if (def.minimum > curr) inst._zod.bag.minLength = def.minimum;
     });
 
     inst._zod.check = (payload) => {
@@ -715,9 +715,8 @@ export const $ZodCheckLengthEquals: core.$constructor<$ZodCheckLengthEquals> = /
 
     inst._zod.onattach.push((inst) => {
       const bag = inst._zod.bag;
-      bag.minimum = def.length;
-      bag.maximum = def.length;
-      bag.length = def.length;
+      bag.minLength = def.length;
+      bag.maxLength = def.length;
     });
 
     inst._zod.check = (payload) => {
@@ -799,6 +798,7 @@ export const $ZodCheckStringFormat: core.$constructor<$ZodCheckStringFormat> = /
       if (def.pattern) {
         bag.patterns ??= new Set();
         bag.patterns.add(def.pattern);
+        bag.pattern = def.pattern.source;
       }
     });
 
@@ -967,6 +967,7 @@ export const $ZodCheckIncludes: core.$constructor<$ZodCheckIncludes> = /*@__PURE
       const bag = inst._zod.bag as schemas.$ZodStringInternals<unknown>["bag"];
       bag.patterns ??= new Set();
       bag.patterns.add(pattern);
+      bag.pattern = pattern.source;
     });
 
     inst._zod.check = (payload) => {
@@ -1011,6 +1012,7 @@ export const $ZodCheckStartsWith: core.$constructor<$ZodCheckStartsWith> = /*@__
       const bag = inst._zod.bag as schemas.$ZodStringInternals<unknown>["bag"];
       bag.patterns ??= new Set();
       bag.patterns.add(pattern);
+      bag.pattern = pattern.source;
     });
 
     inst._zod.check = (payload) => {
@@ -1055,6 +1057,7 @@ export const $ZodCheckEndsWith: core.$constructor<$ZodCheckEndsWith> = /*@__PURE
       const bag = inst._zod.bag as schemas.$ZodStringInternals<unknown>["bag"];
       bag.patterns ??= new Set();
       bag.patterns.add(pattern);
+      bag.pattern = pattern.source;
     });
 
     inst._zod.check = (payload) => {
