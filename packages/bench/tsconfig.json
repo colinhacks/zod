@@ -7,6 +7,8 @@
     "customConditions": ["@zod/source"],
     "skipDefaultLibCheck": true,
     "skipLibCheck": true,
-    "types": ["node"]
+    "types": ["node"],
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
   }
 }
