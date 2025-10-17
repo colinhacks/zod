@@ -49,3 +49,42 @@ test("branded types", () => {
   // @ts-expect-error
   doStuff({ name: "hello there!" });
 });
+
+test("strict branded types", () => {
+  {
+    // with options object
+    const myStr = z.string().brand("myStr", {
+      strict: true,
+    });
+    type Input = z.input<typeof myStr>;
+    type Output = z.output<typeof myStr>;
+
+    expectTypeOf<Input>().toEqualTypeOf<string & z.$brand<"myStr">>();
+    expectTypeOf<Output>().toEqualTypeOf<string & z.$brand<"myStr">>();
+
+    z.string().brand("myStr", {
+      strict: true,
+      // @ts-expect-error foo is not a valid option
+      foo: "bar",
+    });
+  }
+
+  {
+    // with type argument
+    const myStr = z.string().brand<"myStr", { strict: true }>();
+    type Input = z.input<typeof myStr>;
+    type Output = z.output<typeof myStr>;
+
+    expectTypeOf<Input>().toEqualTypeOf<string & z.$brand<"myStr">>();
+    expectTypeOf<Output>().toEqualTypeOf<string & z.$brand<"myStr">>();
+
+    z.string().brand<
+      "myStr",
+      // @ts-expect-error foo is not a valid option
+      {
+        strict: true;
+        foo: "bar";
+      }
+    >();
+  }
+});
