@@ -749,7 +749,7 @@ test("z.json", () => {
 test("z.promise", async () => {
   const a = z.promise(z.string());
   type a = z.output<typeof a>;
-  expectTypeOf<a>().toEqualTypeOf<string>();
+  expectTypeOf<a>().toEqualTypeOf<Promise<string>>();
 
   expect(await z.safeParseAsync(a, Promise.resolve("hello"))).toMatchObject({
     success: true,
