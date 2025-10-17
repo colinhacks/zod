@@ -114,14 +114,14 @@ export type BuiltIn =
 export type MakeReadonly<T> = T extends Map<infer K, infer V>
   ? ReadonlyMap<K, V>
   : T extends Set<infer V>
-  ? ReadonlySet<V>
-  : T extends [infer Head, ...infer Tail]
-  ? readonly [Head, ...Tail]
-  : T extends Array<infer V>
-  ? ReadonlyArray<V>
-  : T extends BuiltIn
-  ? T
-  : Readonly<T>;
+    ? ReadonlySet<V>
+    : T extends [infer Head, ...infer Tail]
+      ? readonly [Head, ...Tail]
+      : T extends Array<infer V>
+        ? ReadonlyArray<V>
+        : T extends BuiltIn
+          ? T
+          : Readonly<T>;
 export type SomeObject = Record<PropertyKey, any>;
 export type Identity<T> = T;
 export type Flatten<T> = Identity<{ [k in keyof T]: T[k] }>;
@@ -140,12 +140,12 @@ export type NoNever<T> = Identity<{
 export type Extend<A extends SomeObject, B extends SomeObject> = Flatten<
   // fast path when there is no keys overlap
   keyof A & keyof B extends never
-  ? A & B
-  : {
-    [K in keyof A as K extends keyof B ? never : K]: A[K];
-  } & {
-    [K in keyof B]: B[K];
-  }
+    ? A & B
+    : {
+        [K in keyof A as K extends keyof B ? never : K]: A[K];
+      } & {
+        [K in keyof B]: B[K];
+      }
 >;
 
 export type TupleItems = ReadonlyArray<schemas.SomeType>;
@@ -482,18 +482,18 @@ export type EmptyToNever<T> = keyof T extends never ? never : T;
 export type Normalize<T> = T extends undefined
   ? never
   : T extends Record<any, any>
-  ? Flatten<
-    {
-      [k in keyof Omit<T, "error" | "message">]: T[k];
-    } & ("error" extends keyof T
-      ? {
-        error?: Exclude<T["error"], string>;
-        // path?: PropertyKey[] | undefined;
-        // message?: string | undefined;
-      }
-      : unknown)
-  >
-  : never;
+    ? Flatten<
+        {
+          [k in keyof Omit<T, "error" | "message">]: T[k];
+        } & ("error" extends keyof T
+          ? {
+              error?: Exclude<T["error"], string>;
+              // path?: PropertyKey[] | undefined;
+              // message?: string | undefined;
+            }
+          : unknown)
+      >
+    : never;
 
 export function normalizeParams<T>(_params: T): Normalize<T> {
   const params: any = _params;
@@ -698,9 +698,9 @@ export function partial(
           // if (oldShape[key]!._zod.optin === "optional") continue;
           shape[key] = Class
             ? new Class({
-              type: "optional",
-              innerType: oldShape[key]!,
-            })
+                type: "optional",
+                innerType: oldShape[key]!,
+              })
             : oldShape[key]!;
         }
       } else {
@@ -708,9 +708,9 @@ export function partial(
           // if (oldShape[key]!._zod.optin === "optional") continue;
           shape[key] = Class
             ? new Class({
-              type: "optional",
-              innerType: oldShape[key]!,
-            })
+                type: "optional",
+                innerType: oldShape[key]!,
+              })
             : oldShape[key]!;
         }
       }
