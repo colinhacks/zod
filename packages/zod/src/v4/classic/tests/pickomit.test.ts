@@ -17,7 +17,6 @@ test("pick parse - success", () => {
   const nameonlyFish = fish.pick({ name: true });
   nameonlyFish.parse({ name: "bob" });
 
-  // @ts-expect-error checking runtime picks `name` only.
   const anotherNameonlyFish = fish.pick({ name: true, age: false });
   anotherNameonlyFish.parse({ name: "bob" });
 });
@@ -32,7 +31,6 @@ test("pick parse - fail", () => {
   const bad2 = () => nameonlyFish.parse({ name: "bob", age: 12 } as any);
   const bad3 = () => nameonlyFish.parse({ age: 12 } as any);
 
-  // @ts-expect-error checking runtime picks `name` only.
   const anotherNameonlyFish = fish.pick({ name: true, age: false }).strict();
   const bad4 = () => anotherNameonlyFish.parse({ name: "bob", age: 12 } as any);
 
@@ -62,7 +60,6 @@ test("omit parse - success", () => {
   const nonameFish = fish.omit({ name: true });
   nonameFish.parse({ age: 12, nested: {} });
 
-  // @ts-expect-error checking runtime omits `name` only.
   const anotherNonameFish = fish.omit({ name: true, age: false });
   anotherNonameFish.parse({ age: 12, nested: {} });
 });
@@ -73,7 +70,6 @@ test("omit parse - fail", () => {
   const bad2 = () => nonameFish.parse({ age: 12 } as any);
   const bad3 = () => nonameFish.parse({} as any);
 
-  // @ts-expect-error checking runtime omits `name` only.
   const anotherNonameFish = fish.omit({ name: true, age: false });
   const bad4 = () => anotherNonameFish.parse({ nested: {} } as any);
 
