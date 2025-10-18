@@ -97,7 +97,7 @@ export type Whatever = {} | undefined | null;
 export type LoosePartial<T extends object> = InexactPartial<T> & {
   [k: string]: unknown;
 };
-export type Mask<Keys extends PropertyKey> = { [K in Keys]?: true };
+export type Mask<Keys extends PropertyKey> = { [K in Keys]?: boolean };
 export type Writeable<T> = { -readonly [P in keyof T]: T[P] } & {};
 export type InexactPartial<T> = {
   [P in keyof T]?: T[P] | undefined;

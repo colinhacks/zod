@@ -99,7 +99,6 @@ test("required with mask -- ignore falsy values", () => {
     country: z.string().optional(),
   });
 
-  // @ts-expect-error
   const requiredObject = object.required({ age: true, country: false });
   expect(requiredObject.shape.name).toBeInstanceOf(z.ZodString);
   expect(requiredObject.shape.age).toBeInstanceOf(z.ZodNonOptional);
@@ -134,7 +133,6 @@ test("partial with mask -- ignore falsy values", async () => {
     country: z.string(),
   });
 
-  // @ts-expect-error
   const masked = object.partial({ name: true, country: false }).strict();
 
   expect(masked.shape.name).toBeInstanceOf(z.ZodOptional);
