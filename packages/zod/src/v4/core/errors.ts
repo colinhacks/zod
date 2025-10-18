@@ -26,7 +26,7 @@ export interface $ZodIssueInvalidType<Input = unknown> extends $ZodIssueBase {
 export interface $ZodIssueTooBig<Input = unknown> extends $ZodIssueBase {
   readonly code: "too_big";
   readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
-  readonly maximum: number | bigint;
+  readonly maximum: number | bigint | Date;
   readonly inclusive?: boolean;
   readonly exact?: boolean;
   readonly input?: Input;
@@ -35,7 +35,7 @@ export interface $ZodIssueTooBig<Input = unknown> extends $ZodIssueBase {
 export interface $ZodIssueTooSmall<Input = unknown> extends $ZodIssueBase {
   readonly code: "too_small";
   readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
-  readonly minimum: number | bigint;
+  readonly minimum: number | bigint | Date;
   /** True if the allowable range includes the minimum */
   readonly inclusive?: boolean;
   /** True if the allowed value is fixed (e.g.` z.length(5)`), not a range (`z.minLength(5)`) */
