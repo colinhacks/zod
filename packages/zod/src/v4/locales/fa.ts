@@ -19,7 +19,7 @@ const error: () => errors.$ZodErrorMap = () => {
 
     switch (t) {
       case "number": {
-        return Number.isNaN(data) ? "NaN" : "عدد";
+        return Number.isNaN(data) ? "NaN" : !Number.isFinite(data) ? "Infinity" : "عدد";
       }
       case "object": {
         if (Array.isArray(data)) {
@@ -73,7 +73,7 @@ const error: () => errors.$ZodErrorMap = () => {
   return (issue) => {
     switch (issue.code) {
       case "invalid_type":
-        return `ورودی نامعتبر: می‌بایست ${issue.expected} می‌بود، ${parsedType(issue.input)} دریافت شد`;
+        return `ورودی نامعتبر: می‌بایست ${issue.expected} می‌بود، ${issue.received ?? parsedType(issue.input)} دریافت شد`;
       case "invalid_value":
         if (issue.values.length === 1) {
           return `ورودی نامعتبر: می‌بایست ${util.stringifyPrimitive(issue.values[0])} می‌بود`;

@@ -19,7 +19,7 @@ const error: () => errors.$ZodErrorMap = () => {
 
     switch (t) {
       case "number": {
-        return Number.isNaN(data) ? "NaN" : "number";
+        return Number.isNaN(data) ? "NaN" : !Number.isFinite(data) ? "Infinity" : "number";
       }
       case "object": {
         if (Array.isArray(data)) {
@@ -73,7 +73,7 @@ const error: () => errors.$ZodErrorMap = () => {
   return (issue) => {
     switch (issue.code) {
       case "invalid_type":
-        return `無效的輸入值：預期為 ${issue.expected}，但收到 ${parsedType(issue.input)}`;
+        return `無效的輸入值：預期為 ${issue.expected}，但收到 ${issue.received ?? parsedType(issue.input)}`;
       case "invalid_value":
         if (issue.values.length === 1) return `無效的輸入值：預期為 ${util.stringifyPrimitive(issue.values[0])}`;
         return `無效的選項：預期為以下其中之一 ${util.joinValues(issue.values, "|")}`;

@@ -7,7 +7,7 @@ export const parsedType = (data: any): string => {
 
   switch (t) {
     case "number": {
-      return Number.isNaN(data) ? "NaN" : "númer";
+      return Number.isNaN(data) ? "NaN" : !Number.isFinite(data) ? "Infinity" : "númer";
     }
     case "object": {
       if (Array.isArray(data)) {
@@ -73,7 +73,7 @@ const error: () => errors.$ZodErrorMap = () => {
   return (issue) => {
     switch (issue.code) {
       case "invalid_type":
-        return `Rangt gildi: Þú slóst inn ${parsedType(issue.input)} þar sem á að vera ${issue.expected}`;
+        return `Rangt gildi: Þú slóst inn ${issue.received ?? parsedType(issue.input)} þar sem á að vera ${issue.expected}`;
 
       case "invalid_value":
         if (issue.values.length === 1) return `Rangt gildi: gert ráð fyrir ${util.stringifyPrimitive(issue.values[0])}`;
