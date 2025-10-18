@@ -9,6 +9,7 @@ export default defineConfig({
     conditions: ["@zod/source"],
   },
   test: {
+    projects: ["packages/*"],
     watch: false,
     isolate: true,
     setupFiles: [resolve(__dirname, "scripts/fail-on-console.ts")],
