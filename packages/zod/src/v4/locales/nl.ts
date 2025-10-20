@@ -4,13 +4,13 @@ import * as util from "../core/util.js";
 
 const error: () => errors.$ZodErrorMap = () => {
   const Sizable = {
-    string: { big: 'lang', small: 'kort', unit: "tekens" },
-    file: { big: 'groot', small: 'klein', unit: "bytes" },
-    array: { big: 'veel', small: 'weining', unit: "elementen" },
-    set: { big: 'veel', small: 'weining', unit: "elementen" },
-  } satisfies Record<string, { big: string; small: string; unit: string }> ;
+    string: { big: "lang", small: "kort", unit: "tekens" },
+    file: { big: "groot", small: "klein", unit: "bytes" },
+    array: { big: "veel", small: "weining", unit: "elementen" },
+    set: { big: "veel", small: "weining", unit: "elementen" },
+  } satisfies Record<string, { big: string; small: string; unit: string }>;
 
-  function getSizing(origin: string): typeof Sizable[keyof typeof Sizable] | null {
+  function getSizing(origin: string): (typeof Sizable)[keyof typeof Sizable] | null {
     return Sizable[origin as keyof typeof Sizable] ?? null;
   }
 
