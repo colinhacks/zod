@@ -301,18 +301,35 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
     };
   }
 
-  inst["~standard"] = {
-    validate: (value: unknown) => {
-      try {
-        const r = safeParse(inst, value);
-        return r.success ? { value: r.data } : { issues: r.error?.issues };
-      } catch (_) {
-        return safeParseAsync(inst, value).then((r) => (r.success ? { value: r.data } : { issues: r.error?.issues }));
-      }
+  // Lazy initialize ~standard to avoid creating objects for every schema
+  Object.defineProperty(inst, "~standard", {
+    get() {
+      const standardSchema = {
+        validate: (value: unknown) => {
+          try {
+            const r = safeParse(inst, value);
+            return r.success ? { value: r.data } : { issues: r.error?.issues };
+          } catch (_) {
+            return safeParseAsync(inst, value).then((r) =>
+              r.success ? { value: r.data } : { issues: r.error?.issues }
+            );
+          }
+        },
+        vendor: "zod",
+        version: 1 as const,
+      };
+      // Cache the result after first access
+      Object.defineProperty(this, "~standard", {
+        value: standardSchema,
+        writable: false,
+        enumerable: false,
+        configurable: false,
+      });
+      return standardSchema;
     },
-    vendor: "zod",
-    version: 1 as const,
-  };
+    enumerable: false,
+    configurable: true,
+  });
 });
 
 export { clone } from "./util.js";
