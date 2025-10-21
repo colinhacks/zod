@@ -20,6 +20,7 @@ test("Dutch locale error messages", () => {
       origin: "string",
       maximum: 10,
       inclusive: true,
+      input: "test string that is too long",
     })
   ).toBe("Te groot: verwacht dat string te hebben <=10 tekens");
 
@@ -30,6 +31,7 @@ test("Dutch locale error messages", () => {
       origin: "array",
       minimum: 5,
       inclusive: false,
+      input: [1, 2],
     })
   ).toBe("Te klein: verwacht dat array te hebben >5 elementen");
 
@@ -38,6 +40,7 @@ test("Dutch locale error messages", () => {
     localeError({
       code: "invalid_format",
       format: "email",
+      input: "invalid-email",
     })
   ).toBe("Ongeldig: emailadres");
 });
