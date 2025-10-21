@@ -69,7 +69,7 @@
     "lint": "biome lint --write .",
     "lint:check": "biome lint .",
     "clean": "pnpm run -r clean",
-    "build": "pnpm run -r --filter '!@zod/docs' build",
+    "build": "pnpm run -r --filter zod build",
     "test:watch": "vitest",
     "test": "vitest run",
     "prepublishOnly": "pnpm run test && pnpm run build",
