@@ -3,14 +3,14 @@ import type * as errors from "../core/errors.js";
 import * as util from "../core/util.js";
 
 const error: () => errors.$ZodErrorMap = () => {
-  const Sizable: Record<string, { unit: string }> = {
-    string: { unit: "tekens" },
-    file: { unit: "bytes" },
-    array: { unit: "elementen" },
-    set: { unit: "elementen" },
+  const Sizable: Record<string, { unit: string; verb: string }> = {
+    string: { unit: "tekens", verb: "te hebben" },
+    file: { unit: "bytes", verb: "te hebben" },
+    array: { unit: "elementen", verb: "te hebben" },
+    set: { unit: "elementen", verb: "te hebben" },
   };
 
-  function getSizing(origin: string): { unit: string } | null {
+  function getSizing(origin: string): { unit: string; verb: string } | null {
     return Sizable[origin] ?? null;
   }
 
@@ -81,17 +81,17 @@ const error: () => errors.$ZodErrorMap = () => {
         const adj = issue.inclusive ? "<=" : "<";
         const sizing = getSizing(issue.origin);
         if (sizing)
-          return `Te lang: verwacht dat ${issue.origin ?? "waarde"} ${adj}${issue.maximum.toString()} ${sizing.unit ?? "elementen"} bevat`;
-        return `Te lang: verwacht dat ${issue.origin ?? "waarde"} ${adj}${issue.maximum.toString()} is`;
+          return `Te groot: verwacht dat ${issue.origin ?? "waarde"} ${sizing.verb} ${adj}${issue.maximum.toString()} ${sizing.unit ?? "elementen"}`;
+        return `Te groot: verwacht dat ${issue.origin ?? "waarde"} ${adj}${issue.maximum.toString()} is`;
       }
       case "too_small": {
         const adj = issue.inclusive ? ">=" : ">";
         const sizing = getSizing(issue.origin);
         if (sizing) {
-          return `Te kort: verwacht dat ${issue.origin} ${adj}${issue.minimum.toString()} ${sizing.unit} bevat`;
+          return `Te klein: verwacht dat ${issue.origin} ${sizing.verb} ${adj}${issue.minimum.toString()} ${sizing.unit}`;
         }
 
-        return `Te kort: verwacht dat ${issue.origin} ${adj}${issue.minimum.toString()} is`;
+        return `Te klein: verwacht dat ${issue.origin} ${adj}${issue.minimum.toString()} is`;
       }
       case "invalid_format": {
         const _issue = issue as errors.$ZodStringFormatIssues;
