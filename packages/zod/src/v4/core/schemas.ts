@@ -2933,7 +2933,8 @@ export const $ZodLiteral: core.$constructor<$ZodLiteral> = /*@__PURE__*/ core.$c
       throw new Error("Cannot create literal schema with no valid values");
     }
 
-    inst._zod.values = new Set<util.Literal>(def.values);
+    const values = new Set<util.Literal>(def.values);
+    inst._zod.values = values;
     inst._zod.pattern = new RegExp(
       `^(${def.values
 
@@ -2943,7 +2944,7 @@ export const $ZodLiteral: core.$constructor<$ZodLiteral> = /*@__PURE__*/ core.$c
 
     inst._zod.parse = (payload, _ctx) => {
       const input = payload.value;
-      if (inst._zod.values.has(input)) {
+      if (values.has(input)) {
         return payload;
       }
       payload.issues.push({

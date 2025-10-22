@@ -1,13 +1,7 @@
 import * as z from "zod";
 
-// import { z } from 'zod/v4';
+const Keys = z.literal(["id", "name", "email"]);
+const schema = z.partialRecord(Keys, z.string());
+type Schema = z.infer<typeof schema>;
 
-const OfferPriceCurrency = z.literal(["EUR", "USD"]);
-
-const OfferPricesSchema = z.partialRecord(OfferPriceCurrency, z.number());
-
-const testObject = { USD: 3 };
-
-const r = OfferPricesSchema.parse(testObject);
-
-console.log(r);
+schema.parse({ id: "1" });

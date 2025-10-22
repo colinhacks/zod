@@ -354,3 +354,44 @@ test("partial record", () => {
 
   expect(Person.def.keyType._zod.def.type).toEqual("enum");
 });
+
+test("partialRecord with z.literal([key, ...])", () => {
+  const Keys = z.literal(["id", "name", "email"]);
+  const schema = z.partialRecord(Keys, z.string());
+  type Schema = z.infer<typeof schema>;
+  expectTypeOf<Schema>().toEqualTypeOf<Partial<Record<"id" | "name" | "email", string>>>();
+
+  // Should parse valid partials
+  expect(schema.parse({})).toEqual({});
+  expect(schema.parse({ id: "1" })).toEqual({ id: "1" });
+  expect(schema.parse({ name: "n", email: "e@example.com" })).toEqual({ name: "n", email: "e@example.com" });
+
+  // Should fail with unrecognized key, error checked via inline snapshot
+  expect(schema.safeParse({ foo: "bar" })).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "code": "invalid_key",
+        "origin": "record",
+        "issues": [
+          {
+            "code": "invalid_value",
+            "values": [
+              "id",
+              "name",
+              "email"
+            ],
+            "path": [],
+            "message": "Invalid option: expected one of \\"id\\"|\\"name\\"|\\"email\\""
+          }
+        ],
+        "path": [
+          "foo"
+        ],
+        "message": "Invalid key in record"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+});
