@@ -947,98 +947,55 @@ function isTransforming(
   if (ctx.seen.has(_schema)) return false;
   ctx.seen.add(_schema);
 
-  const schema = _schema as schemas.$ZodTypes;
-  const def = schema._zod.def;
-  switch (def.type) {
-    case "string":
-    case "number":
-    case "bigint":
-    case "boolean":
-    case "date":
-    case "symbol":
-    case "undefined":
-    case "null":
-    case "any":
-    case "unknown":
-    case "never":
-    case "void":
-    case "literal":
-    case "enum":
-    case "nan":
-    case "file":
-    case "template_literal":
-      return false;
-    case "array": {
-      return isTransforming(def.element, ctx);
-    }
-    case "object": {
-      for (const key in def.shape) {
-        if (isTransforming(def.shape[key]!, ctx)) return true;
-      }
-      return false;
-    }
-    case "union": {
-      for (const option of def.options) {
-        if (isTransforming(option, ctx)) return true;
-      }
-      return false;
-    }
-    case "intersection": {
-      return isTransforming(def.left, ctx) || isTransforming(def.right, ctx);
-    }
-    case "tuple": {
-      for (const item of def.items) {
-        if (isTransforming(item, ctx)) return true;
-      }
-      if (def.rest && isTransforming(def.rest, ctx)) return true;
-      return false;
-    }
-    case "record": {
-      return isTransforming(def.keyType, ctx) || isTransforming(def.valueType, ctx);
-    }
-    case "map": {
-      return isTransforming(def.keyType, ctx) || isTransforming(def.valueType, ctx);
-    }
-    case "set": {
-      return isTransforming(def.valueType, ctx);
-    }
+  const def = (_schema as schemas.$ZodTypes)._zod.def;
 
-    // inner types
-    case "promise":
-    case "optional":
-    case "nonoptional":
-    case "nullable":
-    case "readonly":
-      return isTransforming(def.innerType, ctx);
-    case "lazy":
-      return isTransforming(def.getter(), ctx);
-    case "default": {
-      return isTransforming(def.innerType, ctx);
-    }
-    case "prefault": {
-      return isTransforming(def.innerType, ctx);
-    }
-    case "custom": {
-      return false;
-    }
-    case "transform": {
-      return true;
-    }
-    case "pipe": {
-      return isTransforming(def.in, ctx) || isTransforming(def.out, ctx);
-    }
-    case "success": {
-      return false;
-    }
-    case "catch": {
-      return false;
-    }
-    case "function": {
-      return false;
-    }
+  if (def.type === "transform") return true;
 
-    default:
-      def satisfies never;
+  if (def.type === "array") return isTransforming(def.element, ctx);
+  if (def.type === "set") return isTransforming(def.valueType, ctx);
+  if (def.type === "lazy") return isTransforming(def.getter(), ctx);
+
+  if (
+    def.type === "promise" ||
+    def.type === "optional" ||
+    def.type === "nonoptional" ||
+    def.type === "nullable" ||
+    def.type === "readonly" ||
+    def.type === "default" ||
+    def.type === "prefault"
+  ) {
+    return isTransforming(def.innerType, ctx);
   }
-  throw new Error(`Unknown schema type: ${(def as any).type}`);
+
+  if (def.type === "intersection") {
+    return isTransforming(def.left, ctx) || isTransforming(def.right, ctx);
+  }
+  if (def.type === "record" || def.type === "map") {
+    return isTransforming(def.keyType, ctx) || isTransforming(def.valueType, ctx);
+  }
+  if (def.type === "pipe") {
+    return isTransforming(def.in, ctx) || isTransforming(def.out, ctx);
+  }
+
+  if (def.type === "object") {
+    for (const key in def.shape) {
+      if (isTransforming(def.shape[key]!, ctx)) return true;
+    }
+    return false;
+  }
+  if (def.type === "union") {
+    for (const option of def.options) {
+      if (isTransforming(option, ctx)) return true;
+    }
+    return false;
+  }
+  if (def.type === "tuple") {
+    for (const item of def.items) {
+      if (isTransforming(item, ctx)) return true;
+    }
+    if (def.rest && isTransforming(def.rest, ctx)) return true;
+    return false;
+  }
+
+  return false;
 }

@@ -1,13 +1,13 @@
 import * as z from "zod";
 
-const a = z.uint32();
-console.log(a.parse(1234));
+// import { z } from 'zod/v4';
 
-const arg = z
-  .object({
-    a: z.string(),
-    b: z.string(),
-  })
-  .pick({} as Record<string, true>);
+const OfferPriceCurrency = z.literal(["EUR", "USD"]);
 
-arg.parse({});
+const OfferPricesSchema = z.partialRecord(OfferPriceCurrency, z.number());
+
+const testObject = { USD: 3 };
+
+const r = OfferPricesSchema.parse(testObject);
+
+console.log(r);
