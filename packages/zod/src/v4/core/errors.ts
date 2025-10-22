@@ -1,4 +1,4 @@
-import type { $ZodCheck, $ZodStringFormats } from "./checks.js";
+import type { $ZodCheck, $ZodNumberFormats, $ZodStringFormats } from "./checks.js";
 import { $constructor } from "./core.js";
 import type { $ZodType } from "./schemas.js";
 import type { StandardSchemaV1 } from "./standard-schema.js";
@@ -19,6 +19,7 @@ export interface $ZodIssueBase {
 ////////////////////////////////
 export interface $ZodIssueInvalidType<Input = unknown> extends $ZodIssueBase {
   readonly code: "invalid_type";
+  readonly format?: $ZodNumberFormats;
   readonly expected: $ZodType["_zod"]["def"]["type"];
   readonly input?: Input;
 }
