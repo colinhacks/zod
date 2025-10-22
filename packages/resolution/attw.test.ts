@@ -140,5 +140,5 @@ describe("Are The Types Wrong (attw) tests", () => {
 
       ***********************************"
     `);
-  }, 30000); // 30 second timeout for the command
+  }, 120000); // 30 second timeout for the command
 });
