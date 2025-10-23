@@ -150,7 +150,11 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
         checks: [
           ...(def.checks ?? []),
           ...checks.map((ch) =>
-            typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
+            typeof ch === "function"
+              ? {
+                  _zod: { check: ch, def: { check: "custom" }, onattach: [] },
+                }
+              : ch
           ),
         ],
       })
@@ -1112,6 +1116,16 @@ export type SafeExtendShape<Base extends core.$ZodShape, Ext extends core.$ZodLo
     : Ext[K];
 };
 
+export type SafeChangeShape<Base extends core.$ZodShape, Changes extends core.$ZodLooseShape> = {
+  [K in keyof Changes]: K extends keyof Base
+    ? core.output<Changes[K]> extends core.output<Base[K]>
+      ? core.input<Changes[K]> extends core.input<Base[K]>
+        ? Changes[K]
+        : never
+      : never
+    : never; // SafeChange doesn't allow new properties, only existing ones
+};
+
 export interface ZodObject<
   /** @ts-ignore Cast variance */
   out Shape extends core.$ZodShape = core.$ZodLooseShape,
@@ -1139,6 +1153,12 @@ export interface ZodObject<
 
   safeExtend<U extends core.$ZodLooseShape>(
     shape: SafeExtendShape<Shape, U> & Partial<Record<keyof Shape, core.SomeType>>
+  ): ZodObject<util.Extend<Shape, U>, Config>;
+
+  change<U extends Partial<Record<keyof Shape, core.SomeType>>>(shape: U): ZodObject<util.Extend<Shape, U>, Config>;
+
+  safeChange<U extends Partial<Record<keyof Shape, core.SomeType>>>(
+    shape: SafeChangeShape<Shape, U> & Partial<Record<keyof Shape, core.SomeType>>
   ): ZodObject<util.Extend<Shape, U>, Config>;
 
   /**
@@ -1200,7 +1220,11 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
   });
 
   inst.keyof = () => _enum(Object.keys(inst._zod.def.shape)) as any;
-  inst.catchall = (catchall) => inst.clone({ ...inst._zod.def, catchall: catchall as any as core.$ZodType }) as any;
+  inst.catchall = (catchall) =>
+    inst.clone({
+      ...inst._zod.def,
+      catchall: catchall as any as core.$ZodType,
+    }) as any;
   inst.passthrough = () => inst.clone({ ...inst._zod.def, catchall: unknown() });
   inst.loose = () => inst.clone({ ...inst._zod.def, catchall: unknown() });
   inst.strict = () => inst.clone({ ...inst._zod.def, catchall: never() });
@@ -1211,6 +1235,12 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
   };
   inst.safeExtend = (incoming: any) => {
     return util.safeExtend(inst, incoming);
+  };
+  inst.change = (incoming: any) => {
+    return util.change(inst, incoming);
+  };
+  inst.safeChange = (incoming: any) => {
+    return util.safeChange(inst, incoming);
   };
   inst.merge = (other) => util.merge(inst, other);
   inst.pick = (mask) => util.pick(inst, mask);
@@ -2058,10 +2088,7 @@ export function _function<const In extends ReadonlyArray<core.$ZodType>>(params:
 export function _function<
   const In extends ReadonlyArray<core.$ZodType>,
   const Out extends core.$ZodFunctionOut = core.$ZodFunctionOut,
->(params: {
-  input: In;
-  output: Out;
-}): ZodFunction<ZodTuple<In, null>, Out>;
+>(params: { input: In; output: Out }): ZodFunction<ZodTuple<In, null>, Out>;
 export function _function<const In extends core.$ZodFunctionIn = core.$ZodFunctionIn>(params: {
   input: In;
 }): ZodFunction<In, core.$ZodFunctionOut>;
@@ -2071,10 +2098,7 @@ export function _function<const Out extends core.$ZodFunctionOut = core.$ZodFunc
 export function _function<
   In extends core.$ZodFunctionIn = core.$ZodFunctionIn,
   Out extends core.$ZodType = core.$ZodType,
->(params?: {
-  input: In;
-  output: Out;
-}): ZodFunction<In, Out>;
+>(params?: { input: In; output: Out }): ZodFunction<In, Out>;
 export function _function(params?: {
   output?: core.$ZodType;
   input?: core.$ZodFunctionArgs | Array<core.$ZodType>;
