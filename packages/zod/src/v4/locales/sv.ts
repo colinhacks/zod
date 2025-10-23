@@ -19,7 +19,7 @@ const error: () => errors.$ZodErrorMap = () => {
 
     switch (t) {
       case "number": {
-        return Number.isNaN(data) ? "NaN" : "antal";
+        return Number.isNaN(data) ? "NaN" : !Number.isFinite(data) ? "Infinity" : "antal";
       }
       case "object": {
         if (Array.isArray(data)) {
@@ -73,7 +73,7 @@ const error: () => errors.$ZodErrorMap = () => {
   return (issue) => {
     switch (issue.code) {
       case "invalid_type":
-        return `Ogiltig inmatning: förväntat ${issue.expected}, fick ${parsedType(issue.input)}`;
+        return `Ogiltig inmatning: förväntat ${issue.expected}, fick ${issue.received ?? parsedType(issue.input)}`;
       case "invalid_value":
         if (issue.values.length === 1)
           return `Ogiltig inmatning: förväntat ${util.stringifyPrimitive(issue.values[0])}`;

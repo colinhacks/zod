@@ -10,6 +10,17 @@ test("z.number() basic validation", () => {
 test("NaN validation", () => {
   const schema = z.number();
   expect(() => schema.parse(Number.NaN)).toThrow();
+
+  const result = schema.safeParse(Number.NaN);
+  expect(result.success).toBe(false);
+  if (!result.success) {
+    expect(result.error.issues[0]).toMatchObject({
+      code: "invalid_type",
+      expected: "number",
+      received: "NaN",
+      message: "Invalid input: expected number, received NaN",
+    });
+  }
 });
 
 test("Infinity validation", () => {
@@ -22,7 +33,7 @@ test("Infinity validation", () => {
         "code": "invalid_type",
         "received": "Infinity",
         "path": [],
-        "message": "Invalid input: expected number, received number"
+        "message": "Invalid input: expected number, received Infinity"
       }
     ]],
       "success": false,
@@ -36,7 +47,7 @@ test("Infinity validation", () => {
         "code": "invalid_type",
         "received": "Infinity",
         "path": [],
-        "message": "Invalid input: expected number, received number"
+        "message": "Invalid input: expected number, received Infinity"
       }
     ]],
       "success": false,
@@ -178,7 +189,7 @@ test(".finite() validation", () => {
         "code": "invalid_type",
         "received": "Infinity",
         "path": [],
-        "message": "Invalid input: expected number, received number"
+        "message": "Invalid input: expected number, received Infinity"
       }
     ]],
       "success": false,
@@ -192,7 +203,7 @@ test(".finite() validation", () => {
         "code": "invalid_type",
         "received": "Infinity",
         "path": [],
-        "message": "Invalid input: expected number, received number"
+        "message": "Invalid input: expected number, received Infinity"
       }
     ]],
       "success": false,

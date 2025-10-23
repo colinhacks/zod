@@ -33,7 +33,7 @@ const error: () => errors.$ZodErrorMap = () => {
 
     switch (t) {
       case "number": {
-        return Number.isNaN(data) ? "NaN" : "tal";
+        return Number.isNaN(data) ? "NaN" : !Number.isFinite(data) ? "Infinity" : "tal";
       }
       case "object": {
         if (Array.isArray(data)) {
@@ -88,7 +88,7 @@ const error: () => errors.$ZodErrorMap = () => {
   return (issue) => {
     switch (issue.code) {
       case "invalid_type":
-        return `Ugyldigt input: forventede ${getTypeName(issue.expected)}, fik ${getTypeName(parsedType(issue.input))}`;
+        return `Ugyldigt input: forventede ${getTypeName(issue.expected)}, fik ${(issue as any).received ?? getTypeName(parsedType(issue.input))}`;
       case "invalid_value":
         if (issue.values.length === 1) return `Ugyldig værdi: forventede ${util.stringifyPrimitive(issue.values[0])}`;
         return `Ugyldigt valg: forventede en af følgende ${util.joinValues(issue.values, "|")}`;

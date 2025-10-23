@@ -7,7 +7,7 @@ export const parsedType = (data: any): string => {
 
   switch (t) {
     case "number": {
-      return Number.isNaN(data) ? "NaN" : "რიცხვი";
+      return Number.isNaN(data) ? "NaN" : !Number.isFinite(data) ? "Infinity" : "რიცხვი";
     }
     case "object": {
       if (Array.isArray(data)) {
@@ -83,7 +83,7 @@ const error: () => errors.$ZodErrorMap = () => {
   return (issue) => {
     switch (issue.code) {
       case "invalid_type":
-        return `არასწორი შეყვანა: მოსალოდნელი ${issue.expected}, მიღებული ${parsedType(issue.input)}`;
+        return `არასწორი შეყვანა: მოსალოდნელი ${issue.expected}, მიღებული ${issue.received ?? parsedType(issue.input)}`;
 
       case "invalid_value":
         if (issue.values.length === 1)

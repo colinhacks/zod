@@ -108,7 +108,7 @@ test("date schema", async () => {
         "code": "invalid_type",
         "received": "Invalid Date",
         "path": [],
-        "message": "Invalid input: expected date, received Date"
+        "message": "Invalid input: expected date, received Invalid Date"
       }
     ]],
       "success": false,
