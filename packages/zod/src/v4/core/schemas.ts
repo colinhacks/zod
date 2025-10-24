@@ -1718,6 +1718,7 @@ export type $strip = {
 export type $catchall<T extends SomeType> = {
   out: { [k: string]: core.output<T> };
   in: { [k: string]: core.input<T> };
+  catchall: T;
 };
 
 export type $ZodShape = Readonly<{ [k: string]: $ZodType }>;
