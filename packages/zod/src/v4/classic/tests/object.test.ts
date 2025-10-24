@@ -127,6 +127,11 @@ test("catchall inference", () => {
   const d1 = o1.parse({ first: "asdf", num: 1243 });
   // expectTypeOf<(typeof d1)["asdf"]>().toEqualTypeOf<number>();
   expectTypeOf<(typeof d1)["first"]>().toEqualTypeOf<string>();
+
+  type CatchAllSchema = typeof o1 extends z.ZodObject<any, infer Config extends z.core.$catchall<any>>
+    ? Config["catchall"]
+    : never;
+  expectTypeOf<CatchAllSchema>().toEqualTypeOf<z.ZodNumber>();
 });
 
 test("catchall overrides strict", () => {
