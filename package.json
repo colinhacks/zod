@@ -43,7 +43,7 @@
     "tsdown": "^0.12.8",
     "tslib": "^2.8.1",
     "tsx": "^4.19.3",
-    "typescript": "~5.5.4",
+    "typescript": "~5.9.3",
     "vitest": "^2.1.9",
     "zod": "workspace:*",
     "zod3": "npm:zod@~3.24.0",
