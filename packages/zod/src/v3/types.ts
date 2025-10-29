@@ -1078,8 +1078,8 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     return this.refinement((data) => regex.test(data), {
       validation,
       code: ZodIssueCode.invalid_string,
-      message: errObj.message,
-      customCode: errObj.code,
+      ...(errObj.message !== undefined && { message: errObj.message }),
+      ...(errObj.code !== undefined && { customCode: errObj.code }),
     });
   }
 
@@ -1429,8 +1429,8 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
             code: ZodIssueCode.invalid_type,
             expected: "integer",
             received: "float",
-            message: check.message,
-            customCode: check.code,
+            ...(check.message !== undefined && { message: check.message }),
+            ...(check.code !== undefined && { customCode: check.code }),
           });
           status.dirty();
         }
@@ -1444,8 +1444,8 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
             type: "number",
             inclusive: check.inclusive,
             exact: false,
-            message: check.message,
-            customCode: check.code,
+            ...(check.message !== undefined && { message: check.message }),
+            ...(check.code !== undefined && { customCode: check.code }),
           });
           status.dirty();
         }
@@ -1459,8 +1459,8 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
             type: "number",
             inclusive: check.inclusive,
             exact: false,
-            message: check.message,
-            customCode: check.code,
+            ...(check.message !== undefined && { message: check.message }),
+            ...(check.code !== undefined && { customCode: check.code }),
           });
           status.dirty();
         }
@@ -1470,8 +1470,8 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
           addIssueToContext(ctx, {
             code: ZodIssueCode.not_multiple_of,
             multipleOf: check.value,
-            message: check.message,
-            customCode: check.code,
+            ...(check.message !== undefined && { message: check.message }),
+            ...(check.code !== undefined && { customCode: check.code }),
           });
           status.dirty();
         }
@@ -1480,8 +1480,8 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.not_finite,
-            message: check.message,
-            customCode: check.code,
+            ...(check.message !== undefined && { message: check.message }),
+            ...(check.code !== undefined && { customCode: check.code }),
           });
           status.dirty();
         }
