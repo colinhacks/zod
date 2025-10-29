@@ -1074,10 +1074,12 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   }
 
   protected _regex(regex: RegExp, validation: StringValidation, message?: errorUtil.ErrMessage) {
+    const errObj = errorUtil.errToObj(message);
     return this.refinement((data) => regex.test(data), {
       validation,
       code: ZodIssueCode.invalid_string,
-      ...errorUtil.errToObj(message),
+      message: errObj.message,
+      customCode: errObj.code,
     });
   }
 
@@ -1378,11 +1380,11 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
 /////////////////////////////////////////
 /////////////////////////////////////////
 export type ZodNumberCheck =
-  | { kind: "min"; value: number; inclusive: boolean; message?: string | undefined }
-  | { kind: "max"; value: number; inclusive: boolean; message?: string | undefined }
-  | { kind: "int"; message?: string | undefined }
-  | { kind: "multipleOf"; value: number; message?: string | undefined }
-  | { kind: "finite"; message?: string | undefined };
+  | { kind: "min"; value: number; inclusive: boolean; message?: string | undefined; code?: string | undefined }
+  | { kind: "max"; value: number; inclusive: boolean; message?: string | undefined; code?: string | undefined }
+  | { kind: "int"; message?: string | undefined; code?: string | undefined }
+  | { kind: "multipleOf"; value: number; message?: string | undefined; code?: string | undefined }
+  | { kind: "finite"; message?: string | undefined; code?: string | undefined };
 
 // https://stackoverflow.com/questions/3966484/why-does-modulus-operator-return-fractional-number-in-javascript/31711034#31711034
 function floatSafeRemainder(val: number, step: number) {
@@ -1428,6 +1430,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
             expected: "integer",
             received: "float",
             message: check.message,
+            customCode: check.code,
           });
           status.dirty();
         }
@@ -1442,6 +1445,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
             inclusive: check.inclusive,
             exact: false,
             message: check.message,
+            customCode: check.code,
           });
           status.dirty();
         }
@@ -1456,6 +1460,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
             inclusive: check.inclusive,
             exact: false,
             message: check.message,
+            customCode: check.code,
           });
           status.dirty();
         }
@@ -1466,6 +1471,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
             code: ZodIssueCode.not_multiple_of,
             multipleOf: check.value,
             message: check.message,
+            customCode: check.code,
           });
           status.dirty();
         }
@@ -1475,6 +1481,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
           addIssueToContext(ctx, {
             code: ZodIssueCode.not_finite,
             message: check.message,
+            customCode: check.code,
           });
           status.dirty();
         }
@@ -1496,24 +1503,25 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
   };
 
   gte(value: number, message?: errorUtil.ErrMessage) {
-    return this.setLimit("min", value, true, errorUtil.toString(message));
+    return this.setLimit("min", value, true, message);
   }
   min = this.gte;
 
   gt(value: number, message?: errorUtil.ErrMessage) {
-    return this.setLimit("min", value, false, errorUtil.toString(message));
+    return this.setLimit("min", value, false, message);
   }
 
   lte(value: number, message?: errorUtil.ErrMessage) {
-    return this.setLimit("max", value, true, errorUtil.toString(message));
+    return this.setLimit("max", value, true, message);
   }
   max = this.lte;
 
   lt(value: number, message?: errorUtil.ErrMessage) {
-    return this.setLimit("max", value, false, errorUtil.toString(message));
+    return this.setLimit("max", value, false, message);
   }
 
-  protected setLimit(kind: "min" | "max", value: number, inclusive: boolean, message?: string) {
+  protected setLimit(kind: "min" | "max", value: number, inclusive: boolean, message?: errorUtil.ErrMessage) {
+    const errObj = errorUtil.errToObj(message);
     return new ZodNumber({
       ...this._def,
       checks: [
@@ -1522,7 +1530,8 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
           kind,
           value,
           inclusive,
-          message: errorUtil.toString(message),
+          message: errObj.message,
+          code: errObj.code,
         },
       ],
     });
@@ -1538,43 +1547,51 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
   int(message?: errorUtil.ErrMessage) {
     return this._addCheck({
       kind: "int",
-      message: errorUtil.toString(message),
+      ...errorUtil.errToObj(message),
     });
   }
 
   positive(message?: errorUtil.ErrMessage) {
+    const errObj = errorUtil.errToObj(message);
     return this._addCheck({
       kind: "min",
       value: 0,
       inclusive: false,
-      message: errorUtil.toString(message),
+      message: errObj.message,
+      code: errObj.code,
     });
   }
 
   negative(message?: errorUtil.ErrMessage) {
+    const errObj = errorUtil.errToObj(message);
     return this._addCheck({
       kind: "max",
       value: 0,
       inclusive: false,
-      message: errorUtil.toString(message),
+      message: errObj.message,
+      code: errObj.code,
     });
   }
 
   nonpositive(message?: errorUtil.ErrMessage) {
+    const errObj = errorUtil.errToObj(message);
     return this._addCheck({
       kind: "max",
       value: 0,
       inclusive: true,
-      message: errorUtil.toString(message),
+      message: errObj.message,
+      code: errObj.code,
     });
   }
 
   nonnegative(message?: errorUtil.ErrMessage) {
+    const errObj = errorUtil.errToObj(message);
     return this._addCheck({
       kind: "min",
       value: 0,
       inclusive: true,
-      message: errorUtil.toString(message),
+      message: errObj.message,
+      code: errObj.code,
     });
   }
 
@@ -1582,7 +1599,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
     return this._addCheck({
       kind: "multipleOf",
       value: value,
-      message: errorUtil.toString(message),
+      ...errorUtil.errToObj(message),
     });
   }
   step = this.multipleOf;
@@ -1590,21 +1607,24 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
   finite(message?: errorUtil.ErrMessage) {
     return this._addCheck({
       kind: "finite",
-      message: errorUtil.toString(message),
+      ...errorUtil.errToObj(message),
     });
   }
 
   safe(message?: errorUtil.ErrMessage) {
+    const errObj = errorUtil.errToObj(message);
     return this._addCheck({
       kind: "min",
       inclusive: true,
       value: Number.MIN_SAFE_INTEGER,
-      message: errorUtil.toString(message),
+      message: errObj.message,
+      code: errObj.code,
     })._addCheck({
       kind: "max",
       inclusive: true,
       value: Number.MAX_SAFE_INTEGER,
-      message: errorUtil.toString(message),
+      message: errObj.message,
+      code: errObj.code,
     });
   }
 

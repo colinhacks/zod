@@ -36,6 +36,7 @@ export type ZodIssueCode = keyof typeof ZodIssueCode;
 export type ZodIssueBase = {
   path: (string | number)[];
   message?: string | undefined;
+  customCode?: string | undefined;
 };
 
 export interface ZodInvalidTypeIssue extends ZodIssueBase {
@@ -148,7 +149,6 @@ export interface ZodNotFiniteIssue extends ZodIssueBase {
 export interface ZodCustomIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.custom;
   params?: { [k: string]: any };
-  customCode?: string;
 }
 
 export type DenormalizedError = { [k: string]: DenormalizedError | string[] };
