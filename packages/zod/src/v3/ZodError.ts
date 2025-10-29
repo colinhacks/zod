@@ -111,6 +111,7 @@ export type StringValidation =
 export interface ZodInvalidStringIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_string;
   validation: StringValidation;
+  customCode?: string;
 }
 
 export interface ZodTooSmallIssue extends ZodIssueBase {
@@ -119,6 +120,7 @@ export interface ZodTooSmallIssue extends ZodIssueBase {
   inclusive: boolean;
   exact?: boolean;
   type: "array" | "string" | "number" | "set" | "date" | "bigint";
+  customCode?: string;
 }
 
 export interface ZodTooBigIssue extends ZodIssueBase {
@@ -127,6 +129,7 @@ export interface ZodTooBigIssue extends ZodIssueBase {
   inclusive: boolean;
   exact?: boolean;
   type: "array" | "string" | "number" | "set" | "date" | "bigint";
+  customCode?: string;
 }
 
 export interface ZodInvalidIntersectionTypesIssue extends ZodIssueBase {
@@ -145,6 +148,7 @@ export interface ZodNotFiniteIssue extends ZodIssueBase {
 export interface ZodCustomIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.custom;
   params?: { [k: string]: any };
+  customCode?: string;
 }
 
 export type DenormalizedError = { [k: string]: DenormalizedError | string[] };
