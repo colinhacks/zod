@@ -543,47 +543,56 @@ export abstract class ZodType<Output = any, Def extends ZodTypeDef = ZodTypeDef,
 /////////////////////////////////////////
 export type IpVersion = "v4" | "v6";
 export type ZodStringCheck =
-  | { kind: "min"; value: number; message?: string | undefined }
-  | { kind: "max"; value: number; message?: string | undefined }
-  | { kind: "length"; value: number; message?: string | undefined }
-  | { kind: "email"; message?: string | undefined }
-  | { kind: "url"; message?: string | undefined }
-  | { kind: "emoji"; message?: string | undefined }
-  | { kind: "uuid"; message?: string | undefined }
-  | { kind: "nanoid"; message?: string | undefined }
-  | { kind: "cuid"; message?: string | undefined }
-  | { kind: "includes"; value: string; position?: number | undefined; message?: string | undefined }
-  | { kind: "cuid2"; message?: string | undefined }
-  | { kind: "ulid"; message?: string | undefined }
-  | { kind: "startsWith"; value: string; message?: string | undefined }
-  | { kind: "endsWith"; value: string; message?: string | undefined }
-  | { kind: "regex"; regex: RegExp; message?: string | undefined }
-  | { kind: "trim"; message?: string | undefined }
-  | { kind: "toLowerCase"; message?: string | undefined }
-  | { kind: "toUpperCase"; message?: string | undefined }
-  | { kind: "jwt"; alg?: string; message?: string | undefined }
+  | { kind: "min"; value: number; message?: string | undefined; code?: string | undefined }
+  | { kind: "max"; value: number; message?: string | undefined; code?: string | undefined }
+  | { kind: "length"; value: number; message?: string | undefined; code?: string | undefined }
+  | { kind: "email"; message?: string | undefined; code?: string | undefined }
+  | { kind: "url"; message?: string | undefined; code?: string | undefined }
+  | { kind: "emoji"; message?: string | undefined; code?: string | undefined }
+  | { kind: "uuid"; message?: string | undefined; code?: string | undefined }
+  | { kind: "nanoid"; message?: string | undefined; code?: string | undefined }
+  | { kind: "cuid"; message?: string | undefined; code?: string | undefined }
+  | {
+      kind: "includes";
+      value: string;
+      position?: number | undefined;
+      message?: string | undefined;
+      code?: string | undefined;
+    }
+  | { kind: "cuid2"; message?: string | undefined; code?: string | undefined }
+  | { kind: "ulid"; message?: string | undefined; code?: string | undefined }
+  | { kind: "startsWith"; value: string; message?: string | undefined; code?: string | undefined }
+  | { kind: "endsWith"; value: string; message?: string | undefined; code?: string | undefined }
+  | { kind: "regex"; regex: RegExp; message?: string | undefined; code?: string | undefined }
+  | { kind: "trim"; message?: string | undefined; code?: string | undefined }
+  | { kind: "toLowerCase"; message?: string | undefined; code?: string | undefined }
+  | { kind: "toUpperCase"; message?: string | undefined; code?: string | undefined }
+  | { kind: "jwt"; alg?: string; message?: string | undefined; code?: string | undefined }
   | {
       kind: "datetime";
       offset: boolean;
       local: boolean;
       precision: number | null;
       message?: string | undefined;
+      code?: string | undefined;
     }
   | {
       kind: "date";
       // withDate: true;
       message?: string | undefined;
+      code?: string | undefined;
     }
   | {
       kind: "time";
       precision: number | null;
       message?: string | undefined;
+      code?: string | undefined;
     }
-  | { kind: "duration"; message?: string | undefined }
-  | { kind: "ip"; version?: IpVersion | undefined; message?: string | undefined }
-  | { kind: "cidr"; version?: IpVersion | undefined; message?: string | undefined }
-  | { kind: "base64"; message?: string | undefined }
-  | { kind: "base64url"; message?: string | undefined };
+  | { kind: "duration"; message?: string | undefined; code?: string | undefined }
+  | { kind: "ip"; version?: IpVersion | undefined; message?: string | undefined; code?: string | undefined }
+  | { kind: "cidr"; version?: IpVersion | undefined; message?: string | undefined; code?: string | undefined }
+  | { kind: "base64"; message?: string | undefined; code?: string | undefined }
+  | { kind: "base64url"; message?: string | undefined; code?: string | undefined };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -759,6 +768,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
             inclusive: true,
             exact: false,
             message: check.message,
+            ...(check.code ? { customCode: check.code } : {}),
           });
           status.dirty();
         }
@@ -772,6 +782,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
             inclusive: true,
             exact: false,
             message: check.message,
+            ...(check.code ? { customCode: check.code } : {}),
           });
           status.dirty();
         }
@@ -788,6 +799,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
               inclusive: true,
               exact: true,
               message: check.message,
+              ...(check.code ? { customCode: check.code } : {}),
             });
           } else if (tooSmall) {
             addIssueToContext(ctx, {
@@ -797,6 +809,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
               inclusive: true,
               exact: true,
               message: check.message,
+              ...(check.code ? { customCode: check.code } : {}),
             });
           }
           status.dirty();
@@ -808,6 +821,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
             validation: "email",
             code: ZodIssueCode.invalid_string,
             message: check.message,
+            ...(check.code ? { customCode: check.code } : {}),
           });
           status.dirty();
         }
@@ -821,6 +835,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
             validation: "emoji",
             code: ZodIssueCode.invalid_string,
             message: check.message,
+            ...(check.code ? { customCode: check.code } : {}),
           });
           status.dirty();
         }
@@ -831,6 +846,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
             validation: "uuid",
             code: ZodIssueCode.invalid_string,
             message: check.message,
+            ...(check.code ? { customCode: check.code } : {}),
           });
           status.dirty();
         }
@@ -841,6 +857,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
             validation: "nanoid",
             code: ZodIssueCode.invalid_string,
             message: check.message,
+            ...(check.code ? { customCode: check.code } : {}),
           });
           status.dirty();
         }
@@ -851,6 +868,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
             validation: "cuid",
             code: ZodIssueCode.invalid_string,
             message: check.message,
+            ...(check.code ? { customCode: check.code } : {}),
           });
           status.dirty();
         }
@@ -861,6 +879,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
             validation: "cuid2",
             code: ZodIssueCode.invalid_string,
             message: check.message,
+            ...(check.code ? { customCode: check.code } : {}),
           });
           status.dirty();
         }
@@ -871,6 +890,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
             validation: "ulid",
             code: ZodIssueCode.invalid_string,
             message: check.message,
+            ...(check.code ? { customCode: check.code } : {}),
           });
           status.dirty();
         }
@@ -884,6 +904,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
             validation: "url",
             code: ZodIssueCode.invalid_string,
             message: check.message,
+            ...(check.code ? { customCode: check.code } : {}),
           });
           status.dirty();
         }
@@ -896,6 +917,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
             validation: "regex",
             code: ZodIssueCode.invalid_string,
             message: check.message,
+            ...(check.code ? { customCode: check.code } : {}),
           });
           status.dirty();
         }
@@ -908,6 +930,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
             code: ZodIssueCode.invalid_string,
             validation: { includes: check.value, position: check.position },
             message: check.message,
+            ...(check.code ? { customCode: check.code } : {}),
           });
           status.dirty();
         }
@@ -922,6 +945,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
             code: ZodIssueCode.invalid_string,
             validation: { startsWith: check.value },
             message: check.message,
+            ...(check.code ? { customCode: check.code } : {}),
           });
           status.dirty();
         }
@@ -932,6 +956,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
             code: ZodIssueCode.invalid_string,
             validation: { endsWith: check.value },
             message: check.message,
+            ...(check.code ? { customCode: check.code } : {}),
           });
           status.dirty();
         }
@@ -944,6 +969,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
             code: ZodIssueCode.invalid_string,
             validation: "datetime",
             message: check.message,
+            ...(check.code ? { customCode: check.code } : {}),
           });
           status.dirty();
         }
@@ -956,6 +982,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
             code: ZodIssueCode.invalid_string,
             validation: "date",
             message: check.message,
+            ...(check.code ? { customCode: check.code } : {}),
           });
           status.dirty();
         }
@@ -968,6 +995,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
             code: ZodIssueCode.invalid_string,
             validation: "time",
             message: check.message,
+            ...(check.code ? { customCode: check.code } : {}),
           });
           status.dirty();
         }
@@ -978,6 +1006,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
             validation: "duration",
             code: ZodIssueCode.invalid_string,
             message: check.message,
+            ...(check.code ? { customCode: check.code } : {}),
           });
           status.dirty();
         }
@@ -988,6 +1017,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
             validation: "ip",
             code: ZodIssueCode.invalid_string,
             message: check.message,
+            ...(check.code ? { customCode: check.code } : {}),
           });
           status.dirty();
         }
@@ -998,6 +1028,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
             validation: "jwt",
             code: ZodIssueCode.invalid_string,
             message: check.message,
+            ...(check.code ? { customCode: check.code } : {}),
           });
           status.dirty();
         }
@@ -1008,6 +1039,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
             validation: "cidr",
             code: ZodIssueCode.invalid_string,
             message: check.message,
+            ...(check.code ? { customCode: check.code } : {}),
           });
           status.dirty();
         }
@@ -1018,6 +1050,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
             validation: "base64",
             code: ZodIssueCode.invalid_string,
             message: check.message,
+            ...(check.code ? { customCode: check.code } : {}),
           });
           status.dirty();
         }
@@ -1028,6 +1061,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
             validation: "base64url",
             code: ZodIssueCode.invalid_string,
             message: check.message,
+            ...(check.code ? { customCode: check.code } : {}),
           });
           status.dirty();
         }
@@ -1040,10 +1074,12 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   }
 
   protected _regex(regex: RegExp, validation: StringValidation, message?: errorUtil.ErrMessage) {
+    const errObj = errorUtil.errToObj(message);
     return this.refinement((data) => regex.test(data), {
       validation,
       code: ZodIssueCode.invalid_string,
-      ...errorUtil.errToObj(message),
+      ...(errObj.message !== undefined && { message: errObj.message }),
+      ...(errObj.code !== undefined && { customCode: errObj.code }),
     });
   }
 
@@ -1344,11 +1380,11 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
 /////////////////////////////////////////
 /////////////////////////////////////////
 export type ZodNumberCheck =
-  | { kind: "min"; value: number; inclusive: boolean; message?: string | undefined }
-  | { kind: "max"; value: number; inclusive: boolean; message?: string | undefined }
-  | { kind: "int"; message?: string | undefined }
-  | { kind: "multipleOf"; value: number; message?: string | undefined }
-  | { kind: "finite"; message?: string | undefined };
+  | { kind: "min"; value: number; inclusive: boolean; message?: string | undefined; code?: string | undefined }
+  | { kind: "max"; value: number; inclusive: boolean; message?: string | undefined; code?: string | undefined }
+  | { kind: "int"; message?: string | undefined; code?: string | undefined }
+  | { kind: "multipleOf"; value: number; message?: string | undefined; code?: string | undefined }
+  | { kind: "finite"; message?: string | undefined; code?: string | undefined };
 
 // https://stackoverflow.com/questions/3966484/why-does-modulus-operator-return-fractional-number-in-javascript/31711034#31711034
 function floatSafeRemainder(val: number, step: number) {
@@ -1393,7 +1429,8 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
             code: ZodIssueCode.invalid_type,
             expected: "integer",
             received: "float",
-            message: check.message,
+            ...(check.message !== undefined && { message: check.message }),
+            ...(check.code !== undefined && { customCode: check.code }),
           });
           status.dirty();
         }
@@ -1407,7 +1444,8 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
             type: "number",
             inclusive: check.inclusive,
             exact: false,
-            message: check.message,
+            ...(check.message !== undefined && { message: check.message }),
+            ...(check.code !== undefined && { customCode: check.code }),
           });
           status.dirty();
         }
@@ -1421,7 +1459,8 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
             type: "number",
             inclusive: check.inclusive,
             exact: false,
-            message: check.message,
+            ...(check.message !== undefined && { message: check.message }),
+            ...(check.code !== undefined && { customCode: check.code }),
           });
           status.dirty();
         }
@@ -1431,7 +1470,8 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
           addIssueToContext(ctx, {
             code: ZodIssueCode.not_multiple_of,
             multipleOf: check.value,
-            message: check.message,
+            ...(check.message !== undefined && { message: check.message }),
+            ...(check.code !== undefined && { customCode: check.code }),
           });
           status.dirty();
         }
@@ -1440,7 +1480,8 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.not_finite,
-            message: check.message,
+            ...(check.message !== undefined && { message: check.message }),
+            ...(check.code !== undefined && { customCode: check.code }),
           });
           status.dirty();
         }
@@ -1462,24 +1503,25 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
   };
 
   gte(value: number, message?: errorUtil.ErrMessage) {
-    return this.setLimit("min", value, true, errorUtil.toString(message));
+    return this.setLimit("min", value, true, message);
   }
   min = this.gte;
 
   gt(value: number, message?: errorUtil.ErrMessage) {
-    return this.setLimit("min", value, false, errorUtil.toString(message));
+    return this.setLimit("min", value, false, message);
   }
 
   lte(value: number, message?: errorUtil.ErrMessage) {
-    return this.setLimit("max", value, true, errorUtil.toString(message));
+    return this.setLimit("max", value, true, message);
   }
   max = this.lte;
 
   lt(value: number, message?: errorUtil.ErrMessage) {
-    return this.setLimit("max", value, false, errorUtil.toString(message));
+    return this.setLimit("max", value, false, message);
   }
 
-  protected setLimit(kind: "min" | "max", value: number, inclusive: boolean, message?: string) {
+  protected setLimit(kind: "min" | "max", value: number, inclusive: boolean, message?: errorUtil.ErrMessage) {
+    const errObj = errorUtil.errToObj(message);
     return new ZodNumber({
       ...this._def,
       checks: [
@@ -1488,7 +1530,8 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
           kind,
           value,
           inclusive,
-          message: errorUtil.toString(message),
+          message: errObj.message,
+          code: errObj.code,
         },
       ],
     });
@@ -1504,43 +1547,51 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
   int(message?: errorUtil.ErrMessage) {
     return this._addCheck({
       kind: "int",
-      message: errorUtil.toString(message),
+      ...errorUtil.errToObj(message),
     });
   }
 
   positive(message?: errorUtil.ErrMessage) {
+    const errObj = errorUtil.errToObj(message);
     return this._addCheck({
       kind: "min",
       value: 0,
       inclusive: false,
-      message: errorUtil.toString(message),
+      message: errObj.message,
+      code: errObj.code,
     });
   }
 
   negative(message?: errorUtil.ErrMessage) {
+    const errObj = errorUtil.errToObj(message);
     return this._addCheck({
       kind: "max",
       value: 0,
       inclusive: false,
-      message: errorUtil.toString(message),
+      message: errObj.message,
+      code: errObj.code,
     });
   }
 
   nonpositive(message?: errorUtil.ErrMessage) {
+    const errObj = errorUtil.errToObj(message);
     return this._addCheck({
       kind: "max",
       value: 0,
       inclusive: true,
-      message: errorUtil.toString(message),
+      message: errObj.message,
+      code: errObj.code,
     });
   }
 
   nonnegative(message?: errorUtil.ErrMessage) {
+    const errObj = errorUtil.errToObj(message);
     return this._addCheck({
       kind: "min",
       value: 0,
       inclusive: true,
-      message: errorUtil.toString(message),
+      message: errObj.message,
+      code: errObj.code,
     });
   }
 
@@ -1548,7 +1599,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
     return this._addCheck({
       kind: "multipleOf",
       value: value,
-      message: errorUtil.toString(message),
+      ...errorUtil.errToObj(message),
     });
   }
   step = this.multipleOf;
@@ -1556,21 +1607,24 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
   finite(message?: errorUtil.ErrMessage) {
     return this._addCheck({
       kind: "finite",
-      message: errorUtil.toString(message),
+      ...errorUtil.errToObj(message),
     });
   }
 
   safe(message?: errorUtil.ErrMessage) {
+    const errObj = errorUtil.errToObj(message);
     return this._addCheck({
       kind: "min",
       inclusive: true,
       value: Number.MIN_SAFE_INTEGER,
-      message: errorUtil.toString(message),
+      message: errObj.message,
+      code: errObj.code,
     })._addCheck({
       kind: "max",
       inclusive: true,
       value: Number.MAX_SAFE_INTEGER,
-      message: errorUtil.toString(message),
+      message: errObj.message,
+      code: errObj.code,
     });
   }
 

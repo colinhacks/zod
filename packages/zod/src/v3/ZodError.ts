@@ -36,6 +36,7 @@ export type ZodIssueCode = keyof typeof ZodIssueCode;
 export type ZodIssueBase = {
   path: (string | number)[];
   message?: string | undefined;
+  customCode?: string | undefined;
 };
 
 export interface ZodInvalidTypeIssue extends ZodIssueBase {
@@ -111,6 +112,7 @@ export type StringValidation =
 export interface ZodInvalidStringIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_string;
   validation: StringValidation;
+  customCode?: string;
 }
 
 export interface ZodTooSmallIssue extends ZodIssueBase {
@@ -119,6 +121,7 @@ export interface ZodTooSmallIssue extends ZodIssueBase {
   inclusive: boolean;
   exact?: boolean;
   type: "array" | "string" | "number" | "set" | "date" | "bigint";
+  customCode?: string;
 }
 
 export interface ZodTooBigIssue extends ZodIssueBase {
@@ -127,6 +130,7 @@ export interface ZodTooBigIssue extends ZodIssueBase {
   inclusive: boolean;
   exact?: boolean;
   type: "array" | "string" | "number" | "set" | "date" | "bigint";
+  customCode?: string;
 }
 
 export interface ZodInvalidIntersectionTypesIssue extends ZodIssueBase {
