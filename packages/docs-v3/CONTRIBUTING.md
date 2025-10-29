@@ -36,10 +36,7 @@ The following steps will get you setup to contribute changes to this repo:
 
 2. Clone your forked repo: `git clone git@github.com:{your_username}/zod.git`
 
-3. Navigate into the project directory:
-```bash
-cd zod
-```
+3. Navigate into the project directory: `cd zod`
 
 4. Run `yarn` to install dependencies.
 
