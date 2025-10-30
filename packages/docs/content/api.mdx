@@ -1738,6 +1738,92 @@ Each option should be an *object schema* whose discriminator prop (`status` in t
 </Accordion>
 </Accordions>
 
+### Discriminated tuple unions
+
+Similar to discriminated unions for objects, Zod provides `z.discriminatedTupleUnion()` for efficiently parsing tuple unions with a discriminator at a specific position.
+
+```ts
+const Action = z.discriminatedTupleUnion(0, [
+  z.tuple([z.literal("create"), z.string(), z.object({ name: z.string() })]),
+  z.tuple([z.literal("update"), z.string(), z.object({ changes: z.record(z.any()) })]),
+  z.tuple([z.literal("delete"), z.string()]),
+]);
+
+type Action = z.infer<typeof Action>;
+// ["create", string, { name: string }]
+// | ["update", string, { changes: Record<string, any> }]
+// | ["delete", string]
+
+Action.parse(["create", "user-123", { name: "John" }]); // ✓
+Action.parse(["update", "user-123", { changes: { age: 30 } }]); // ✓
+Action.parse(["delete", "user-123"]); // ✓
+```
+
+The first argument is the **discriminator index** (0-based position in the tuple), and the second is an array of tuple schemas. Each tuple must have a distinguishable literal or enum value at that position.
+
+<Accordions type="single">
+<Accordion title="Performance benefits">
+
+  Like object-based discriminated unions, discriminated tuple unions use the discriminator value to quickly identify which schema to validate against, rather than trying each option sequentially. This makes them significantly faster for large unions.
+
+  ```ts
+  // Slower: tries each tuple in order
+  const SlowUnion = z.union([
+    z.tuple([z.literal("a"), z.string()]),
+    z.tuple([z.literal("b"), z.number()]),
+    z.tuple([z.literal("c"), z.boolean()]),
+  ]);
+
+  // Faster: uses discriminator to jump directly to the right schema
+  const FastUnion = z.discriminatedTupleUnion(0, [
+    z.tuple([z.literal("a"), z.string()]),
+    z.tuple([z.literal("b"), z.number()]),
+    z.tuple([z.literal("c"), z.boolean()]),
+  ]);
+  ```
+
+</Accordion>
+
+<Accordion title="Union fallback mode">
+
+  By default, if no discriminator matches, the error will indicate that no matching discriminator was found. However, you can enable `unionFallback` mode to fall back to checking all options when the discriminator doesn't match:
+
+  ```ts
+  const Action = z.discriminatedTupleUnion(
+    0,
+    [
+      z.tuple([z.literal("create"), z.string()]),
+      z.tuple([z.literal("delete"), z.string()]),
+    ],
+    { unionFallback: true }
+  );
+
+  // With unionFallback: true, will provide detailed error messages
+  // for all options when discriminator doesn't match
+  ```
+
+  This can be useful during development or when you want more detailed error messages at the cost of performance.
+
+</Accordion>
+
+<Accordion title="Discriminator at any position">
+
+  The discriminator can be at any position in the tuple, not just the first element:
+
+  ```ts
+  // Discriminator at position 1
+  const Message = z.discriminatedTupleUnion(1, [
+    z.tuple([z.string(), z.literal("text"), z.string()]),
+    z.tuple([z.string(), z.literal("image"), z.string(), z.number()]),
+  ]);
+
+  Message.parse(["user-123", "text", "Hello"]); // ✓
+  Message.parse(["user-456", "image", "photo.jpg", 1024]); // ✓
+  ```
+
+</Accordion>
+</Accordions>
+
 ## Intersections
 
 Intersection types (`A & B`) represent a logical "AND". 

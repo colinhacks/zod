@@ -1098,6 +1098,28 @@ export function _discriminatedUnion<
   }) as any;
 }
 
+// ZodDiscriminatedTupleUnion
+export type $ZodDiscriminatedTupleUnionParams = TypeParams<
+  schemas.$ZodDiscriminatedTupleUnion,
+  "options" | "discriminator"
+>;
+export function _discriminatedTupleUnion<
+  Types extends [schemas.$ZodTuple, ...schemas.$ZodTuple[]],
+  Disc extends number,
+>(
+  Class: util.SchemaClass<schemas.$ZodDiscriminatedTupleUnion>,
+  discriminator: Disc,
+  options: Types,
+  params?: string | $ZodDiscriminatedTupleUnionParams
+): schemas.$ZodDiscriminatedTupleUnion<Types, Disc> {
+  return new Class({
+    type: "union",
+    options,
+    discriminator,
+    ...util.normalizeParams(params),
+  }) as any;
+}
+
 // ZodIntersection
 export type $ZodIntersectionParams = TypeParams<schemas.$ZodIntersection, "left" | "right">;
 export function _intersection<T extends schemas.$ZodObject, U extends schemas.$ZodObject>(

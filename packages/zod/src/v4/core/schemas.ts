@@ -2212,6 +2212,103 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
     };
   });
 
+///////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////
+//////////                                       //////////
+//////////      $ZodDiscriminatedTupleUnion      //////////
+//////////                                       //////////
+///////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////
+
+export interface $ZodDiscriminatedTupleUnionDef<
+  Options extends readonly SomeType[] = readonly $ZodType[],
+  Disc extends number = number,
+> extends $ZodUnionDef<Options> {
+  discriminator: Disc;
+  unionFallback?: boolean;
+}
+
+export interface $ZodDiscriminatedTupleUnionInternals<
+  Options extends readonly SomeType[] = readonly $ZodType[],
+  Disc extends number = number,
+> extends $ZodUnionInternals<Options> {
+  def: $ZodDiscriminatedTupleUnionDef<Options, Disc>;
+}
+
+export interface $ZodDiscriminatedTupleUnion<
+  Options extends readonly SomeType[] = readonly $ZodType[],
+  Disc extends number = number,
+> extends $ZodType {
+  _zod: $ZodDiscriminatedTupleUnionInternals<Options, Disc>;
+}
+
+export const $ZodDiscriminatedTupleUnion: core.$constructor<$ZodDiscriminatedTupleUnion> =
+  /*@__PURE__*/
+  core.$constructor("$ZodDiscriminatedTupleUnion", (inst, def) => {
+    $ZodUnion.init(inst, def);
+
+    const _super = inst._zod.parse;
+
+    const disc = util.cached(() => {
+      const opts = def.options as $ZodTuple[];
+      const map: Map<util.Primitive, $ZodTuple> = new Map();
+      for (const o of opts) {
+        if (o._zod.def.items.length <= def.discriminator) {
+          throw new Error(`Invalid discriminated union option at index "${def.options.indexOf(o)}"`);
+        }
+        const field = o._zod.def.items[def.discriminator];
+        if (field._zod.values) {
+          if (!field._zod.values || field._zod.values.size === 0)
+            throw new Error(`Invalid discriminated union option at index "${def.options.indexOf(o)}"`);
+          for (const v of field._zod.values) {
+            if (map.has(v)) {
+              throw new Error(`Duplicate discriminator value "${String(v)}"`);
+            }
+            map.set(v, o);
+          }
+        }
+      }
+      return map;
+    });
+
+    inst._zod.parse = (payload, ctx) => {
+      const input = payload.value;
+      if (!Array.isArray(input)) {
+        payload.issues.push({
+          code: "invalid_type",
+
+          expected: "array",
+          input,
+          inst,
+        });
+        return payload;
+      }
+
+      const opt = disc.value.get(input?.[def.discriminator] as any);
+      if (opt) {
+        return opt._zod.run(payload, ctx) as any;
+      }
+
+      if (def.unionFallback) {
+        return _super(payload, ctx);
+      }
+
+      // no matching discriminator
+      payload.issues.push({
+        code: "invalid_union",
+
+        errors: [],
+        note: "No matching discriminator",
+        discriminator: def.discriminator.toString(),
+        input,
+        path: [def.discriminator],
+        inst,
+      });
+
+      return payload;
+    };
+  });
+
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
 //////////                            //////////
