@@ -1316,6 +1316,38 @@ export function discriminatedUnion<
   }) as any;
 }
 
+// ZodDiscriminatedTupleUnion
+export interface ZodDiscriminatedTupleUnion<
+  Options extends readonly core.SomeType[] = readonly core.$ZodType[],
+  Disc extends number = number,
+> extends ZodUnion<Options>,
+    core.$ZodDiscriminatedTupleUnion<Options, Disc> {
+  _zod: core.$ZodDiscriminatedTupleUnionInternals<Options, Disc>;
+  def: core.$ZodDiscriminatedTupleUnionDef<Options, Disc>;
+}
+export const ZodDiscriminatedTupleUnion: core.$constructor<ZodDiscriminatedTupleUnion> =
+  /*@__PURE__*/ core.$constructor("ZodDiscriminatedTupleUnion", (inst, def) => {
+    ZodUnion.init(inst, def);
+    core.$ZodDiscriminatedTupleUnion.init(inst, def);
+  });
+
+export function discriminatedTupleUnion<
+  Types extends readonly [core.$ZodTuple, ...core.$ZodTuple[]],
+  Disc extends number,
+>(
+  discriminator: Disc,
+  options: Types,
+  params?: string | core.$ZodDiscriminatedTupleUnionParams
+): ZodDiscriminatedTupleUnion<Types, Disc> {
+  // const [options, params] = args;
+  return new ZodDiscriminatedTupleUnion({
+    type: "union",
+    options,
+    discriminator,
+    ...util.normalizeParams(params),
+  }) as any;
+}
+
 // ZodIntersection
 export interface ZodIntersection<A extends core.SomeType = core.$ZodType, B extends core.SomeType = core.$ZodType>
   extends _ZodType<core.$ZodIntersectionInternals<A, B>>,
