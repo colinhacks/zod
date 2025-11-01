@@ -234,7 +234,7 @@ const poweredByZodProjects: ZodResource[] = [
     url: "https://github.com/lawvs/fn-sphere",
     description: "A Zod-first toolkit for building powerful, type-safe filter experiences across web apps.",
     slug: "lawvs/fn-sphere",
-  }
+  },
 ];
 
 const zodUtilities: ZodResource[] = [
@@ -261,7 +261,7 @@ const zodUtilities: ZodResource[] = [
     url: "https://github.com/lawvs/zod-compare",
     description: "A utility library for recursively comparing Zod schemas.",
     slug: "lawvs/zod-compare",
-  }
+  },
 ];
 
 export {
