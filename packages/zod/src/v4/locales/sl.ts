@@ -19,7 +19,7 @@ const error: () => errors.$ZodErrorMap = () => {
 
     switch (t) {
       case "number": {
-        return Number.isNaN(data) ? "NaN" : "število";
+        return Number.isNaN(data) ? "NaN" : !Number.isFinite(data) ? "Infinity" : "število";
       }
       case "object": {
         if (Array.isArray(data)) {
@@ -73,7 +73,7 @@ const error: () => errors.$ZodErrorMap = () => {
   return (issue) => {
     switch (issue.code) {
       case "invalid_type":
-        return `Neveljaven vnos: pričakovano ${issue.expected}, prejeto ${parsedType(issue.input)}`;
+        return `Neveljaven vnos: pričakovano ${issue.expected}, prejeto ${issue.received ?? parsedType(issue.input)}`;
       case "invalid_value":
         if (issue.values.length === 1)
           return `Neveljaven vnos: pričakovano ${util.stringifyPrimitive(issue.values[0])}`;

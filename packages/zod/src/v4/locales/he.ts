@@ -19,7 +19,7 @@ const error: () => errors.$ZodErrorMap = () => {
 
     switch (t) {
       case "number": {
-        return Number.isNaN(data) ? "NaN" : "number";
+        return Number.isNaN(data) ? "NaN" : !Number.isFinite(data) ? "Infinity" : "number";
       }
       case "object": {
         if (Array.isArray(data)) {
@@ -73,7 +73,7 @@ const error: () => errors.$ZodErrorMap = () => {
   return (issue) => {
     switch (issue.code) {
       case "invalid_type":
-        return `קלט לא תקין: צריך ${issue.expected}, התקבל ${parsedType(issue.input)}`;
+        return `קלט לא תקין: צריך ${issue.expected}, התקבל ${issue.received ?? parsedType(issue.input)}`;
       // return `Invalid input: expected ${issue.expected}, received ${util.getParsedType(issue.input)}`;
       case "invalid_value":
         if (issue.values.length === 1) return `קלט לא תקין: צריך ${util.stringifyPrimitive(issue.values[0])}`;

@@ -7,7 +7,7 @@ export const parsedType = (data: any): string => {
 
   switch (t) {
     case "number": {
-      return Number.isNaN(data) ? "NaN" : "number";
+      return Number.isNaN(data) ? "NaN" : !Number.isFinite(data) ? "Infinity" : "number";
     }
     case "object": {
       if (Array.isArray(data)) {
@@ -73,7 +73,7 @@ const error: () => errors.$ZodErrorMap = () => {
   return (issue) => {
     switch (issue.code) {
       case "invalid_type":
-        return `Invalid input: expected ${issue.expected}, received ${parsedType(issue.input)}`;
+        return `Invalid input: expected ${issue.expected}, received ${issue.received ?? parsedType(issue.input)}`;
 
       case "invalid_value":
         if (issue.values.length === 1) return `Invalid input: expected ${util.stringifyPrimitive(issue.values[0])}`;

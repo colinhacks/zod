@@ -10,7 +10,7 @@ export const parsedType = (data: any): string => {
 const parsedTypeFromType = (t: string, data: any = undefined): string => {
   switch (t) {
     case "number": {
-      return Number.isNaN(data) ? "NaN" : "skaičius";
+      return Number.isNaN(data) ? "NaN" : !Number.isFinite(data) ? "Infinity" : "skaičius";
     }
     case "bigint": {
       return "sveikasis skaičius";
@@ -200,7 +200,7 @@ const error: () => errors.$ZodErrorMap = () => {
   return (issue) => {
     switch (issue.code) {
       case "invalid_type":
-        return `Gautas tipas ${parsedType(issue.input)}, o tikėtasi - ${parsedTypeFromType(issue.expected)}`;
+        return `Gautas tipas ${issue.received ?? parsedType(issue.input)}, o tikėtasi - ${parsedTypeFromType(issue.expected)}`;
       case "invalid_value":
         if (issue.values.length === 1) return `Privalo būti ${util.stringifyPrimitive(issue.values[0])}`;
         return `Privalo būti vienas iš ${util.joinValues(issue.values, "|")} pasirinkimų`;
