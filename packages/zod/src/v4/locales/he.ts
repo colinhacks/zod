@@ -26,10 +26,7 @@ const error: () => errors.$ZodErrorMap = () => {
   };
 
   // Sizing units for size-related messages + localized origin labels
-  const Sizable: Record<
-    string,
-    { unit: string; verb: string }
-  > = {
+  const Sizable: Record<string, { unit: string; verb: string }> = {
     string: { unit: "אותיות", verb: "לכלול" },
     file: { unit: "בייטים", verb: "לכלול" },
     array: { unit: "פריטים", verb: "לכלול" },
@@ -55,9 +52,7 @@ const error: () => errors.$ZodErrorMap = () => {
     return gender === "f" ? "צריכה להיות" : "צריך להיות";
   };
 
-  const getSizing = (
-    origin?: string | null
-  ): { unit: string; verb: string } | null => {
+  const getSizing = (origin?: string | null): { unit: string; verb: string } | null => {
     if (!origin) return null;
     return Sizable[origin] ?? null;
   };
@@ -82,15 +77,13 @@ const error: () => errors.$ZodErrorMap = () => {
   };
 
   const Nouns: {
-    [k in $ZodStringFormats | (string & {})]?: string;
+    [k in $ZodStringFormats]: string;
   } = {
     regex: "קלט",
     email: "כתובת אימייל",
     url: "כתובת רשת",
     emoji: "אימוג'י",
     uuid: "UUID",
-    uuidv4: "UUIDv4",
-    uuidv6: "UUIDv6",
     nanoid: "nanoid",
     guid: "GUID",
     cuid: "cuid",
@@ -111,7 +104,11 @@ const error: () => errors.$ZodErrorMap = () => {
     json_string: "מחרוזת JSON",
     e164: "מספר E.164",
     jwt: "JWT",
-    template_literal: "קלט",
+    ends_with: "קלט",
+    includes: "קלט",
+    lowercase: "קלט",
+    starts_with: "קלט",
+    uppercase: "קלט",
   };
 
   return (issue) => {
@@ -123,8 +120,7 @@ const error: () => errors.$ZodErrorMap = () => {
         const expectedVerb = verbFor(expectedKey);
         // Received: show localized label if known, otherwise constructor/raw
         const receivedKey = parsedType(issue.input);
-        const received =
-          TypeNames[receivedKey]?.label ?? receivedKey;
+        const received = TypeNames[receivedKey]?.label ?? receivedKey;
         return `קלט לא תקין: ${expected} ${expectedVerb}, התקבל ${received}`;
       }
 
@@ -140,7 +136,7 @@ const error: () => errors.$ZodErrorMap = () => {
         const sizing = getSizing(issue.origin);
         const subject = withDefinite(issue.origin ?? "value");
         const be = verbFor(issue.origin ?? "value");
-        if (sizing && sizing.unit) {
+        if (sizing?.unit) {
           return `גדול מדי: ${subject} ${be} ${adj}${issue.maximum.toString()} ${sizing.unit}`;
         }
         return `גדול מדי: ${subject} ${be} ${adj}${issue.maximum.toString()}`;
@@ -151,7 +147,7 @@ const error: () => errors.$ZodErrorMap = () => {
         const sizing = getSizing(issue.origin);
         const subject = withDefinite(issue.origin ?? "value");
         const be = verbFor(issue.origin ?? "value");
-        if (sizing && sizing.unit) {
+        if (sizing?.unit) {
           return `קטן מדי: ${subject} ${be} ${adj}${issue.minimum.toString()} ${sizing.unit}`;
         }
         return `קטן מדי: ${subject} ${be} ${adj}${issue.minimum.toString()}`;
