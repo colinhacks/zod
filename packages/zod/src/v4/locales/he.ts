@@ -119,7 +119,7 @@ const error: () => errors.$ZodErrorMap = () => {
         const adj = issue.inclusive ? "<=" : "<";
         const sizing = getSizing(issue.origin);
         const originLabel = renderOriginLabel(issue.origin);
-        if (sizing && sizing.unit) {
+        if (sizing?.unit) {
           return `גדול מדי: ${originLabel} צריך להיות ${adj}${issue.maximum.toString()} ${sizing.unit}`;
         }
         return `גדול מדי: ${originLabel} צריך להיות ${adj}${issue.maximum.toString()}`;
@@ -129,7 +129,7 @@ const error: () => errors.$ZodErrorMap = () => {
         const adj = issue.inclusive ? ">=" : ">";
         const sizing = getSizing(issue.origin);
         const originLabel = renderOriginLabel(issue.origin);
-        if (sizing && sizing.unit) {
+        if (sizing?.unit) {
           return `קטן מדי: ${originLabel} צריך להיות ${adj}${issue.minimum.toString()} ${sizing.unit}`;
         }
         return `קטן מדי: ${originLabel} צריך להיות ${adj}${issue.minimum.toString()}`;
