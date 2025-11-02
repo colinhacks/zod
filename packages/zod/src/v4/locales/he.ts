@@ -3,38 +3,64 @@ import type * as errors from "../core/errors.js";
 import * as util from "../core/util.js";
 
 const error: () => errors.$ZodErrorMap = () => {
-  const Sizable: Record<string, { unit: string; verb: string }> = {
-    string: { unit: "אותיות", verb: "לכלול" },
-    file: { unit: "בייטים", verb: "לכלול" },
-    array: { unit: "פריטים", verb: "לכלול" },
-    set: { unit: "פריטים", verb: "לכלול" },
+  // Hebrew display names for types/origins
+  const TypeNames: Record<string, string> = {
+    string: "מחרוזת",
+    number: "מספר",
+    boolean: "בוליאני",
+    bigint: "BigInt",
+    date: "תאריך",
+    array: "מערך",
+    object: "אובייקט",
+    null: "null",
+    undefined: "לא הוגדר",
+    symbol: "סימבול",
+    function: "פונקציה",
+    map: "Map",
+    set: "קבוצה",
+    file: "קובץ",
+    promise: "Promise",
+    NaN: "NaN",
+    unknown: "לא ידוע",
+    value: "ערך",
   };
 
-  function getSizing(origin: string): { unit: string; verb: string } | null {
+  const translateType = (t: string | undefined | null): string => {
+    if (!t) return TypeNames.unknown;
+    return TypeNames[t] ?? t;
+  };
+
+  // Units for size-related messages (string/array/set/file)
+  const Sizable: Record<string, { unit: string; verb: string; originLabel: string }> = {
+    string: { unit: "אותיות", verb: "לכלול", originLabel: TypeNames.string },
+    file: { unit: "בייטים", verb: "לכלול", originLabel: TypeNames.file },
+    array: { unit: "פריטים", verb: "לכלול", originLabel: TypeNames.array },
+    set: { unit: "פריטים", verb: "לכלול", originLabel: TypeNames.set },
+    number: { unit: "", verb: "להיות", originLabel: TypeNames.number }, // number is not really "sizable", but we still relabel the origin
+  };
+
+  const getSizing = (origin: string | undefined | null): { unit: string; verb: string; originLabel: string } | null => {
+    if (!origin) return null;
     return Sizable[origin] ?? null;
-  }
+  };
 
   const parsedType = (data: any): string => {
     const t = typeof data;
-
     switch (t) {
       case "number": {
         return Number.isNaN(data) ? "NaN" : "number";
       }
       case "object": {
-        if (Array.isArray(data)) {
-          return "array";
-        }
-        if (data === null) {
-          return "null";
-        }
-
+        if (Array.isArray(data)) return "array";
+        if (data === null) return "null";
         if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
           return data.constructor.name;
         }
+        return "object";
       }
+      default:
+        return t;
     }
-    return t;
   };
 
   const Nouns: {
@@ -70,48 +96,73 @@ const error: () => errors.$ZodErrorMap = () => {
     template_literal: "קלט",
   };
 
+  const renderOriginLabel = (origin?: string | null): string => {
+    if (!origin) return TypeNames.value;
+    return translateType(origin);
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `קלט לא תקין: צריך ${issue.expected}, התקבל ${parsedType(issue.input)}`;
-      // return `Invalid input: expected ${issue.expected}, received ${util.getParsedType(issue.input)}`;
+      case "invalid_type": {
+        const expected = translateType(issue.expected as string);
+        const received = translateType(parsedType(issue.input));
+        return `קלט לא תקין: צריך ${expected}, התקבל ${received}`;
+      }
+
       case "invalid_value":
-        if (issue.values.length === 1) return `קלט לא תקין: צריך ${util.stringifyPrimitive(issue.values[0])}`;
-        return `קלט לא תקין: צריך אחת מהאפשרויות  ${util.joinValues(issue.values, "|")}`;
+        if (issue.values.length === 1) {
+          return `קלט לא תקין: צריך ${util.stringifyPrimitive(issue.values[0])}`;
+        }
+        return `קלט לא תקין: צריך אחת מהאפשרויות ${util.joinValues(issue.values, " | ")}`;
+
       case "too_big": {
         const adj = issue.inclusive ? "<=" : "<";
         const sizing = getSizing(issue.origin);
-        if (sizing)
-          return `גדול מדי: ${issue.origin ?? "value"} צריך להיות ${adj}${issue.maximum.toString()} ${sizing.unit ?? "elements"}`;
-        return `גדול מדי: ${issue.origin ?? "value"} צריך להיות ${adj}${issue.maximum.toString()}`;
+        const originLabel = renderOriginLabel(issue.origin);
+        if (sizing && sizing.unit) {
+          return `גדול מדי: ${originLabel} צריך להיות ${adj}${issue.maximum.toString()} ${sizing.unit}`;
+        }
+        return `גדול מדי: ${originLabel} צריך להיות ${adj}${issue.maximum.toString()}`;
       }
+
       case "too_small": {
         const adj = issue.inclusive ? ">=" : ">";
         const sizing = getSizing(issue.origin);
-        if (sizing) {
-          return `קטן מדי: ${issue.origin} צריך להיות ${adj}${issue.minimum.toString()} ${sizing.unit}`;
+        const originLabel = renderOriginLabel(issue.origin);
+        if (sizing && sizing.unit) {
+          return `קטן מדי: ${originLabel} צריך להיות ${adj}${issue.minimum.toString()} ${sizing.unit}`;
         }
-
-        return `קטן מדי: ${issue.origin} צריך להיות ${adj}${issue.minimum.toString()}`;
+        return `קטן מדי: ${originLabel} צריך להיות ${adj}${issue.minimum.toString()}`;
       }
+
       case "invalid_format": {
         const _issue = issue as errors.$ZodStringFormatIssues;
         if (_issue.format === "starts_with") return `מחרוזת לא תקינה: חייבת להתחיל ב"${_issue.prefix}"`;
-        if (_issue.format === "ends_with") return `מחרוזת לא תקינה: חייבת להסתיים ב "${_issue.suffix}"`;
+        if (_issue.format === "ends_with") return `מחרוזת לא תקינה: חייבת להסתיים ב"${_issue.suffix}"`;
         if (_issue.format === "includes") return `מחרוזת לא תקינה: חייבת לכלול "${_issue.includes}"`;
         if (_issue.format === "regex") return `מחרוזת לא תקינה: חייבת להתאים לתבנית ${_issue.pattern}`;
-        return `${Nouns[_issue.format] ?? issue.format} לא תקין`;
+        return `${Nouns[_issue.format] ?? _issue.format} לא תקין`;
       }
+
       case "not_multiple_of":
         return `מספר לא תקין: חייב להיות מכפלה של ${issue.divisor}`;
+
       case "unrecognized_keys":
         return `מפתח${issue.keys.length > 1 ? "ות" : ""} לא מזוה${issue.keys.length > 1 ? "ים" : "ה"}: ${util.joinValues(issue.keys, ", ")}`;
-      case "invalid_key":
-        return `מפתח לא תקין ב${issue.origin}`;
+
+      case "invalid_key": {
+        const originLabel = renderOriginLabel(issue.origin);
+        return `מפתח לא תקין ב${originLabel}`;
+      }
+
       case "invalid_union":
         return "קלט לא תקין";
-      case "invalid_element":
-        return `ערך לא תקין ב${issue.origin}`;
+
+      case "invalid_element": {
+        const originLabel = renderOriginLabel(issue.origin);
+        return `ערך לא תקין ב${originLabel}`;
+      }
+
       default:
         return `קלט לא תקין`;
     }
