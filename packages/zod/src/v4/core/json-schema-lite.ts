@@ -5,7 +5,10 @@ import type * as schemas from "./schemas.js";
 const cache = new WeakMap<schemas.$ZodType, JSONSchema.BaseSchema>();
 
 export interface JSONSchemaContext {
-  // Reserved for future development
+  /** Whether to extract the `"input"` or `"output"` type. Relevant to transforms, defaults, coerced primitives, etc.
+   * - `"input"` — Default. Convert the input schema.
+   * - `"output"` — Convert the output schema. */
+  io?: "input" | "output";
 }
 
 export function toJSON<T extends JSONSchema.BaseSchema>(
@@ -23,6 +26,7 @@ export function toJSON<T extends JSONSchema.BaseSchema>(
   const meta = globalRegistry._map.get(schema);
   if (meta) Object.assign(json, meta);
 
-  build(json, ctx ?? {});
+  const context = { io: "input" as const, ...ctx };
+  build(json, context);
   return json;
 }

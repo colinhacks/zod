@@ -128,10 +128,8 @@ describe("JSON Schema Generation", () => {
       const schema = z.int();
       expect(schema._zod.getJSONSchema()).toMatchInlineSnapshot(`
         {
-          "format": "safeint",
           "maximum": 9007199254740991,
           "minimum": -9007199254740991,
-          "pattern": /\\^-\\?\\\\d\\+\\$/,
           "type": "integer",
         }
       `);
@@ -181,7 +179,7 @@ describe("JSON Schema Generation", () => {
           "items": {
             "type": "string",
           },
-          "minLength": 1,
+          "minItems": 1,
           "type": "array",
         }
       `);
@@ -317,6 +315,7 @@ describe("JSON Schema Generation", () => {
             "green",
             "blue",
           ],
+          "type": "string",
         }
       `);
     });
@@ -327,9 +326,8 @@ describe("JSON Schema Generation", () => {
       const schema = z.literal("hello");
       expect(schema._zod.getJSONSchema()).toMatchInlineSnapshot(`
         {
-          "enum": [
-            "hello",
-          ],
+          "const": "hello",
+          "type": "string",
         }
       `);
     });
@@ -338,9 +336,8 @@ describe("JSON Schema Generation", () => {
       const schema = z.literal(42);
       expect(schema._zod.getJSONSchema()).toMatchInlineSnapshot(`
         {
-          "enum": [
-            42,
-          ],
+          "const": 42,
+          "type": "number",
         }
       `);
     });
@@ -351,9 +348,6 @@ describe("JSON Schema Generation", () => {
       const schema = z.tuple([z.string(), z.number()]);
       expect(schema._zod.getJSONSchema()).toMatchInlineSnapshot(`
         {
-          "items": false,
-          "maxItems": 2,
-          "minItems": 2,
           "prefixItems": [
             {
               "type": "string",

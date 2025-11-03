@@ -261,8 +261,8 @@ export const _ZodString: core.$constructor<_ZodString> = /*@__PURE__*/ core.$con
 
   const bag = inst._zod.bag;
   inst.format = bag.format ?? null;
-  inst.minLength = bag.minimum ?? null;
-  inst.maxLength = bag.maximum ?? null;
+  inst.minLength = (bag.minimum as number) ?? null;
+  inst.maxLength = (bag.maximum as number) ?? null;
 
   // validations
   inst.regex = (...args) => inst.check(checks.regex(...args));

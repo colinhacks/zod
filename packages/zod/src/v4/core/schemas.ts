@@ -374,6 +374,16 @@ export const $ZodString: core.$constructor<$ZodString> = /*@__PURE__*/ core.$con
     toJSON<JSONSchema.StringSchema>(inst, ctx, (json) => {
       json.type = "string";
 
+      // Convert generic minimum/maximum to string-specific field names
+      if (typeof json.minimum === "number") {
+        json.minLength = json.minimum;
+        delete (json as any).minimum;
+      }
+      if (typeof json.maximum === "number") {
+        json.maxLength = json.maximum;
+        delete (json as any).maximum;
+      }
+
       // Apply format mapping
       const format = json.format;
       if (format) json.format = stringFormatMap[format as checks.$ZodStringFormats] ?? format;
@@ -907,9 +917,9 @@ export const $ZodBase64: core.$constructor<$ZodBase64> = /*@__PURE__*/ core.$con
     def.pattern ??= regexes.base64;
     $ZodStringFormat.init(inst, def);
 
-    inst._zod.onattach.push((inst) => {
-      inst._zod.bag.contentEncoding = "base64";
-    });
+    // Set contentEncoding directly in the bag since onattach callbacks
+    // added after $ZodStringFormat.init won't be called
+    inst._zod.bag.contentEncoding = "base64";
 
     inst._zod.check = (payload) => {
       if (isValidBase64(payload.value)) return;
@@ -946,9 +956,9 @@ export const $ZodBase64URL: core.$constructor<$ZodBase64URL> = /*@__PURE__*/ cor
     def.pattern ??= regexes.base64url;
     $ZodStringFormat.init(inst, def);
 
-    inst._zod.onattach.push((inst) => {
-      inst._zod.bag.contentEncoding = "base64url";
-    });
+    // Set contentEncoding directly in the bag since onattach callbacks
+    // added after $ZodStringFormat.init won't be called
+    inst._zod.bag.contentEncoding = "base64url";
 
     inst._zod.check = (payload) => {
       if (isValidBase64URL(payload.value)) return;
@@ -1101,6 +1111,10 @@ export const $ZodNumber: core.$constructor<$ZodNumber> = /*@__PURE__*/ core.$con
       };
       const format = bag?.format;
       json.type = typeof format === "string" && format.includes("int") ? "integer" : "number";
+
+      // Clean up non-JSON-Schema bag fields
+      delete (json as any).format;
+      delete (json as any).pattern;
     });
 
   inst._zod.parse = (payload, _ctx) => {
@@ -1641,9 +1655,16 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
     toJSON<JSONSchema.ArraySchema>(inst, ctx, (json, context) => {
       json.type = "array";
       json.items = def.element._zod.getJSONSchema(context);
-      const bag = inst._zod.bag as { minimum?: number; maximum?: number };
-      if (typeof bag?.minimum === "number") json.minItems = bag.minimum;
-      if (typeof bag?.maximum === "number") json.maxItems = bag.maximum;
+
+      // Convert generic minimum/maximum to array-specific field names
+      if (typeof json.minimum === "number") {
+        json.minItems = json.minimum;
+        delete (json as any).minimum;
+      }
+      if (typeof json.maximum === "number") {
+        json.maxItems = json.maximum;
+        delete (json as any).maximum;
+      }
     });
 
   inst._zod.parse = (payload, ctx) => {
@@ -1895,15 +1916,22 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       for (const key of Object.keys(shape)) {
         const child = shape[key]!;
         properties[key] = child._zod.getJSONSchema(context);
-        if (child._zod.optin !== "optional") {
+        // Determine required fields based on io mode
+        const isRequired = context.io === "input" ? child._zod.optin === undefined : child._zod.optout === undefined;
+        if (isRequired) {
           required.push(key);
         }
       }
-      if (Object.keys(properties).length) json.properties = properties;
+      json.properties = properties;
       if (required.length) json.required = required;
       const catchall = def.catchall as $ZodType | undefined;
       if (catchall) {
         json.additionalProperties = catchall._zod.def.type === "never" ? false : catchall._zod.getJSONSchema(context);
+      } else {
+        // Match full implementation logic: false for output mode, omit for input mode
+        if (context.io === "output") {
+          json.additionalProperties = false;
+        }
       }
     });
   // const sh = def.shape;
@@ -2508,12 +2536,9 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
     toJSON<JSONSchema.ArraySchema>(inst, ctx, (json, context) => {
       json.type = "array";
       const items = def.items.map((item) => item._zod.getJSONSchema(context));
-      if (items.length) json.prefixItems = items;
+      json.prefixItems = items;
       if (def.rest) json.items = def.rest._zod.getJSONSchema(context);
-      else json.items = false;
-      const required = def.items.filter((item) => item._zod.optin !== "optional").length;
-      if (required) json.minItems = required;
-      if (!def.rest) json.maxItems = def.items.length;
+      // Don't set items to false or minItems/maxItems for basic compatibility
     });
   const items = def.items;
   const optStart = items.length - [...items].reverse().findIndex((item) => item._zod.optin !== "optional");
@@ -3000,6 +3025,11 @@ export const $ZodEnum: core.$constructor<$ZodEnum> = /*@__PURE__*/ core.$constru
       const list = Array.from(inst._zod.values ?? []);
       if (list.length) {
         json.enum = list as Array<string | number | boolean | null>;
+        // Infer type from the first value
+        const firstValue = list[0];
+        if (typeof firstValue === "string") json.type = "string";
+        else if (typeof firstValue === "number") json.type = "number";
+        else if (typeof firstValue === "boolean") json.type = "boolean";
       }
     });
 
@@ -3060,8 +3090,13 @@ export const $ZodLiteral: core.$constructor<$ZodLiteral> = /*@__PURE__*/ core.$c
     );
     inst._zod.getJSONSchema = (ctx) =>
       toJSON<JSONSchema.BaseSchema>(inst, ctx, (json) => {
-        const list = Array.from(inst._zod.values) as Array<string | number | boolean | null>;
-        json.enum = list;
+        const value = def.values[0]; // Take the first (and typically only) value
+        json.const = value as string | number | boolean | null;
+        // Infer type from the value
+        if (typeof value === "string") json.type = "string";
+        else if (typeof value === "number") json.type = "number";
+        else if (typeof value === "boolean") json.type = "boolean";
+        else if (value === null) json.type = "null";
       });
 
     inst._zod.parse = (payload, _ctx) => {
