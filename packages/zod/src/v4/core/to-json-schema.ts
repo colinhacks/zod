@@ -261,6 +261,7 @@ export class JSONSchemaGenerator {
       const { ref, defId } = makeURI(entry);
 
       seen.def = { ...seen.schema };
+
       // defId won't be set if the schema is a reference to an external schema
       if (defId) seen.defId = defId;
       // wipe away all properties except $ref

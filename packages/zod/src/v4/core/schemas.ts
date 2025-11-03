@@ -1600,13 +1600,7 @@ export interface $ZodDate<T = unknown> extends $ZodType {
 
 export const $ZodDate: core.$constructor<$ZodDate> = /*@__PURE__*/ core.$constructor("$ZodDate", (inst, def) => {
   $ZodType.init(inst, def);
-  inst._zod.getJSONSchema = (ctx) =>
-    toJSON<JSONSchema.StringSchema>(inst, ctx, [], (json) => {
-      json.type = "string";
-      json.format = "date-time";
-      const bag = inst._zod.bag as $ZodDateInternals<unknown>["bag"];
-      if (bag?.format) json.format = bag.format;
-    });
+  // Date cannot be represented in JSON Schema by default - uses default _error implementation
 
   inst._zod.parse = (payload, _ctx) => {
     if (def.coerce) {
@@ -3139,6 +3133,16 @@ export const $ZodLiteral: core.$constructor<$ZodLiteral> = /*@__PURE__*/ core.$c
     );
     inst._zod.getJSONSchema = (ctx) =>
       toJSON<JSONSchema.BaseSchema>(inst, ctx, [], (json, context) => {
+        // Validate that all values are valid JSON Schema literal values
+        for (const value of def.values) {
+          const isValid =
+            typeof value === "string" || typeof value === "number" || typeof value === "boolean" || value === null;
+          if (!isValid) {
+            (json as any)._error = "literal cannot be represented in JSON Schema";
+            return;
+          }
+        }
+
         const value = def.values[0]; // Take the first (and typically only) value
 
         // Infer type from the value
@@ -3148,9 +3152,13 @@ export const $ZodLiteral: core.$constructor<$ZodLiteral> = /*@__PURE__*/ core.$c
         else if (value === null) json.type = "null";
 
         if (context.target === "draft-4" || context.target === "openapi-3.0") {
-          json.enum = [value as string | number | boolean | null];
+          json.enum = def.values as Array<string | number | boolean | null>;
         } else {
-          json.const = value as string | number | boolean | null;
+          if (def.values.length === 1) {
+            json.const = value as string | number | boolean | null;
+          } else {
+            json.enum = def.values as Array<string | number | boolean | null>;
+          }
         }
       });
 
@@ -3248,6 +3256,34 @@ export interface $ZodFile extends $ZodType {
 
 export const $ZodFile: core.$constructor<$ZodFile> = /*@__PURE__*/ core.$constructor("$ZodFile", (inst, def) => {
   $ZodType.init(inst, def);
+  inst._zod.getJSONSchema = (ctx, pathSegment = []) =>
+    toJSON<JSONSchema.StringSchema>(inst, ctx, pathSegment, (json) => {
+      json.type = "string";
+      json.format = "binary";
+      json.contentEncoding = "binary";
+      const bag = inst._zod.bag as $ZodFileInternals["bag"];
+      if (bag?.minimum !== undefined) json.minLength = bag.minimum;
+      if (bag?.maximum !== undefined) json.maxLength = bag.maximum;
+      if (bag?.mime) {
+        if (bag.mime.length === 1) {
+          json.contentMediaType = bag.mime[0]!;
+        } else {
+          // Multiple mime types - use anyOf
+          const baseSchema = {
+            type: "string" as const,
+            format: "binary" as const,
+            contentEncoding: "binary" as const,
+          };
+          json.anyOf = bag.mime.map((mime) => ({
+            ...baseSchema,
+            contentMediaType: mime,
+          }));
+          // Remove the base properties since we're using anyOf
+          delete json.format;
+          delete json.contentEncoding;
+        }
+      }
+    });
 
   inst._zod.parse = (payload, _ctx) => {
     const input = payload.value;
@@ -3288,6 +3324,11 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
   "$ZodTransform",
   (inst, def) => {
     $ZodType.init(inst, def);
+    inst._zod.getJSONSchema = (ctx, pathSegment = []) => {
+      return toJSON<JSONSchema.BaseSchema>(inst, ctx, pathSegment, (json) => {
+        (json as any)._error = "Transforms cannot be represented in JSON Schema";
+      });
+    };
     inst._zod.parse = (payload, ctx) => {
       if (ctx.direction === "backward") {
         throw new core.$ZodEncodeError(inst.constructor.name);
@@ -3547,6 +3588,19 @@ export const $ZodPrefault: core.$constructor<$ZodPrefault> = /*@__PURE__*/ core.
     $ZodType.init(inst, def);
 
     inst._zod.optin = "optional";
+    inst._zod.getJSONSchema = (ctx, pathSegment = []) =>
+      toJSON<JSONSchema.BaseSchema>(inst, ctx, pathSegment, (json, context) => {
+        const inner = def.innerType._zod.getJSONSchema(context);
+        // Check if inner type is unrepresentable (e.g., transform)
+        if ("_error" in inner) {
+          (json as any)._error = "prefault cannot be represented in JSON Schema";
+          return;
+        }
+        Object.assign(json, inner);
+        // Set _prefault property - will be converted to default in input mode by to-json-schema.ts
+        const value = typeof def.defaultValue === "function" ? def.defaultValue() : def.defaultValue;
+        (json as any)._prefault = JSON.parse(JSON.stringify(value));
+      });
     util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
 
     inst._zod.parse = (payload, ctx) => {

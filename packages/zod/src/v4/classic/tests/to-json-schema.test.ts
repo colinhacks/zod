@@ -609,14 +609,9 @@ describe("toJSONSchema", () => {
   test("arrays", () => {
     expect(z.toJSONSchema(z.array(z.string()))).toMatchInlineSnapshot(`
       {
-        "$defs": {
-          "__schema0": {
-            "type": "string",
-          },
-        },
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "items": {
-          "$ref": "#/$defs/__schema0",
+          "type": "string",
         },
         "type": "array",
       }
