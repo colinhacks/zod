@@ -254,15 +254,15 @@ describe("toJSONSchema", () => {
   });
 
   test("unsupported schema types", () => {
-    expect(() => z.toJSONSchema(z.bigint())).toThrow("bigint cannot be represented in JSON Schema");
-    expect(() => z.toJSONSchema(z.int64())).toThrow("bigint cannot be represented in JSON Schema");
-    expect(() => z.toJSONSchema(z.symbol())).toThrow("symbol cannot be represented in JSON Schema");
-    expect(() => z.toJSONSchema(z.void())).toThrow("void cannot be represented in JSON Schema");
-    expect(() => z.toJSONSchema(z.undefined())).toThrow("undefined cannot be represented in JSON Schema");
-    expect(() => z.toJSONSchema(z.date())).toThrow("date cannot be represented in JSON Schema");
-    expect(() => z.toJSONSchema(z.map(z.string(), z.number()))).toThrow("map cannot be represented in JSON Schema");
-    expect(() => z.toJSONSchema(z.set(z.string()))).toThrow("set cannot be represented in JSON Schema");
-    expect(() => z.toJSONSchema(z.custom(() => true))).toThrow("custom cannot be represented in JSON Schema");
+    expect(() => z.toJSONSchema(z.bigint())).toThrow("BigInt cannot be represented in JSON Schema");
+    expect(() => z.toJSONSchema(z.int64())).toThrow("BigInt cannot be represented in JSON Schema");
+    expect(() => z.toJSONSchema(z.symbol())).toThrow("Symbols cannot be represented in JSON Schema");
+    expect(() => z.toJSONSchema(z.void())).toThrow("Void cannot be represented in JSON Schema");
+    expect(() => z.toJSONSchema(z.undefined())).toThrow("Undefined cannot be represented in JSON Schema");
+    expect(() => z.toJSONSchema(z.date())).toThrow("Date cannot be represented in JSON Schema");
+    expect(() => z.toJSONSchema(z.map(z.string(), z.number()))).toThrow("Map cannot be represented in JSON Schema");
+    expect(() => z.toJSONSchema(z.set(z.string()))).toThrow("Set cannot be represented in JSON Schema");
+    expect(() => z.toJSONSchema(z.custom(() => true))).toThrow("Custom types cannot be represented in JSON Schema");
 
     // Transform
     const transformSchema = z.string().transform((val) => Number.parseInt(val));
@@ -384,7 +384,6 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(z.string().regex(/asdf/))).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "format": "regex",
         "pattern": "asdf",
         "type": "string",
       }
@@ -405,8 +404,23 @@ describe("toJSONSchema", () => {
     ).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "format": "regex",
-        "pattern": "stuff",
+        "allOf": [
+          {
+            "pattern": "^hello.*",
+          },
+          {
+            "pattern": "cruel",
+          },
+          {
+            "pattern": "^.{10}dark",
+          },
+          {
+            "pattern": ".*world$",
+          },
+          {
+            "pattern": "stuff",
+          },
+        ],
         "type": "string",
       }
     `);
@@ -427,8 +441,28 @@ describe("toJSONSchema", () => {
     ).toMatchInlineSnapshot(`
       {
         "$schema": "http://json-schema.org/draft-07/schema#",
-        "format": "regex",
-        "pattern": "stuff",
+        "allOf": [
+          {
+            "pattern": "^hello.*",
+            "type": "string",
+          },
+          {
+            "pattern": "cruel",
+            "type": "string",
+          },
+          {
+            "pattern": "^.{10}dark",
+            "type": "string",
+          },
+          {
+            "pattern": ".*world$",
+            "type": "string",
+          },
+          {
+            "pattern": "stuff",
+            "type": "string",
+          },
+        ],
         "type": "string",
       }
     `);
@@ -457,7 +491,6 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(z.number().gt(5).gte(10))).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "exclusiveMinimum": 5,
         "minimum": 10,
         "type": "number",
       }
@@ -474,7 +507,6 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(z.number().lt(5).lt(3).lte(2))).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "exclusiveMaximum": 3,
         "maximum": 2,
         "type": "number",
       }
@@ -483,7 +515,6 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(z.number().lt(5).lte(3))).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "exclusiveMaximum": 5,
         "maximum": 3,
         "type": "number",
       }
@@ -539,8 +570,10 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(z.number().gt(5).lt(10), { target: "draft-4" })).toMatchInlineSnapshot(`
       {
         "$schema": "http://json-schema.org/draft-04/schema#",
-        "exclusiveMaximum": 10,
-        "exclusiveMinimum": 5,
+        "exclusiveMaximum": true,
+        "exclusiveMinimum": true,
+        "maximum": 10,
+        "minimum": 5,
         "type": "number",
       }
     `);
@@ -552,11 +585,6 @@ describe("toJSONSchema", () => {
     validateOpenAPI30Schema(jsonSchema);
     expect(jsonSchema).toMatchInlineSnapshot(`
       {
-        "definitions": {
-          "__schema0": {
-            "type": "string",
-          },
-        },
         "nullable": true,
         "type": "string",
       }
@@ -571,24 +599,16 @@ describe("toJSONSchema", () => {
       {
         "anyOf": [
           {
-            "$ref": "#/definitions/__schema0",
-          },
-          {
-            "$ref": "#/definitions/__schema1",
-          },
-        ],
-        "definitions": {
-          "__schema0": {
             "type": "string",
           },
-          "__schema1": {
+          {
             "enum": [
               null,
             ],
             "nullable": true,
             "type": "string",
           },
-        },
+        ],
       }
     `);
   });
@@ -599,8 +619,10 @@ describe("toJSONSchema", () => {
     validateOpenAPI30Schema(jsonSchema);
     expect(jsonSchema).toMatchInlineSnapshot(`
       {
-        "exclusiveMaximum": 100,
-        "exclusiveMinimum": 1,
+        "exclusiveMaximum": true,
+        "exclusiveMinimum": true,
+        "maximum": 100,
+        "minimum": 1,
         "type": "number",
       }
     `);
@@ -622,21 +644,13 @@ describe("toJSONSchema", () => {
     const schema = z.union([z.string(), z.number()]);
     expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
       {
-        "$defs": {
-          "__schema0": {
-            "type": "string",
-          },
-          "__schema1": {
-            "type": "number",
-          },
-        },
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "anyOf": [
           {
-            "$ref": "#/$defs/__schema0",
+            "type": "string",
           },
           {
-            "$ref": "#/$defs/__schema1",
+            "type": "number",
           },
         ],
       }
@@ -648,12 +662,13 @@ describe("toJSONSchema", () => {
 
     expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
       {
-        "$defs": {
-          "__schema0": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "allOf": [
+          {
             "additionalProperties": false,
             "properties": {
               "name": {
-                "$ref": "#/$defs/__schema1",
+                "type": "string",
               },
             },
             "required": [
@@ -661,32 +676,17 @@ describe("toJSONSchema", () => {
             ],
             "type": "object",
           },
-          "__schema1": {
-            "type": "string",
-          },
-          "__schema2": {
+          {
             "additionalProperties": false,
             "properties": {
               "age": {
-                "$ref": "#/$defs/__schema3",
+                "type": "number",
               },
             },
             "required": [
               "age",
             ],
             "type": "object",
-          },
-          "__schema3": {
-            "type": "number",
-          },
-        },
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "allOf": [
-          {
-            "$ref": "#/$defs/__schema0",
-          },
-          {
-            "$ref": "#/$defs/__schema2",
           },
         ],
       }
@@ -697,20 +697,12 @@ describe("toJSONSchema", () => {
     const schema = z.record(z.string(), z.boolean());
     expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
       {
-        "$defs": {
-          "__schema0": {
-            "type": "boolean",
-          },
-          "__schema1": {
-            "type": "string",
-          },
-        },
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {
-          "$ref": "#/$defs/__schema0",
+          "type": "boolean",
         },
         "propertyNames": {
-          "$ref": "#/$defs/__schema1",
+          "type": "string",
         },
         "type": "object",
       }
@@ -724,12 +716,7 @@ describe("toJSONSchema", () => {
     expect(jsonSchema).toMatchInlineSnapshot(`
       {
         "additionalProperties": {
-          "$ref": "#/definitions/__schema0",
-        },
-        "definitions": {
-          "__schema0": {
-            "type": "boolean",
-          },
+          "type": "boolean",
         },
         "type": "object",
       }
@@ -740,21 +727,13 @@ describe("toJSONSchema", () => {
     const schema = z.tuple([z.string(), z.number()]);
     expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
       {
-        "$defs": {
-          "__schema0": {
-            "type": "string",
-          },
-          "__schema1": {
-            "type": "number",
-          },
-        },
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "prefixItems": [
           {
-            "$ref": "#/$defs/__schema0",
+            "type": "string",
           },
           {
-            "$ref": "#/$defs/__schema1",
+            "type": "number",
           },
         ],
         "type": "array",
@@ -766,27 +745,16 @@ describe("toJSONSchema", () => {
     const schema = z.tuple([z.string(), z.number()]).rest(z.boolean());
     expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
       {
-        "$defs": {
-          "__schema0": {
-            "type": "string",
-          },
-          "__schema1": {
-            "type": "number",
-          },
-          "__schema2": {
-            "type": "boolean",
-          },
-        },
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "items": {
-          "$ref": "#/$defs/__schema2",
+          "type": "boolean",
         },
         "prefixItems": [
           {
-            "$ref": "#/$defs/__schema0",
+            "type": "string",
           },
           {
-            "$ref": "#/$defs/__schema1",
+            "type": "number",
           },
         ],
         "type": "array",
@@ -800,21 +768,13 @@ describe("toJSONSchema", () => {
     validateOpenAPI30Schema(jsonSchema);
     expect(jsonSchema).toMatchInlineSnapshot(`
       {
-        "definitions": {
-          "__schema0": {
-            "type": "string",
-          },
-          "__schema1": {
-            "type": "number",
-          },
-        },
         "items": {
           "anyOf": [
             {
-              "$ref": "#/definitions/__schema0",
+              "type": "string",
             },
             {
-              "$ref": "#/definitions/__schema1",
+              "type": "number",
             },
           ],
         },
@@ -831,27 +791,16 @@ describe("toJSONSchema", () => {
     validateOpenAPI30Schema(jsonSchema);
     expect(jsonSchema).toMatchInlineSnapshot(`
       {
-        "definitions": {
-          "__schema0": {
-            "type": "string",
-          },
-          "__schema1": {
-            "type": "number",
-          },
-          "__schema2": {
-            "type": "boolean",
-          },
-        },
         "items": {
           "anyOf": [
             {
-              "$ref": "#/definitions/__schema0",
+              "type": "string",
             },
             {
-              "$ref": "#/definitions/__schema1",
+              "type": "number",
             },
             {
-              "$ref": "#/definitions/__schema2",
+              "type": "boolean",
             },
           ],
         },
@@ -867,31 +816,20 @@ describe("toJSONSchema", () => {
     validateOpenAPI30Schema(jsonSchema);
     expect(jsonSchema).toMatchInlineSnapshot(`
       {
-        "definitions": {
-          "__schema0": {
-            "type": "string",
-          },
-          "__schema1": {
-            "type": "number",
-          },
-          "__schema2": {
-            "enum": [
-              null,
-            ],
-            "nullable": true,
-            "type": "string",
-          },
-        },
         "items": {
           "anyOf": [
             {
-              "$ref": "#/definitions/__schema0",
+              "type": "string",
             },
             {
-              "$ref": "#/definitions/__schema1",
+              "type": "number",
             },
             {
-              "$ref": "#/definitions/__schema2",
+              "enum": [
+                null,
+              ],
+              "nullable": true,
+              "type": "string",
             },
           ],
         },
@@ -907,20 +845,12 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(schema, { target: "draft-7", io: "input" })).toMatchInlineSnapshot(`
       {
         "$schema": "http://json-schema.org/draft-07/schema#",
-        "definitions": {
-          "__schema0": {
-            "type": "string",
-          },
-          "__schema1": {
-            "type": "number",
-          },
-        },
         "items": [
           {
-            "$ref": "#/definitions/__schema0",
+            "type": "string",
           },
           {
-            "$ref": "#/definitions/__schema1",
+            "type": "number",
           },
         ],
         "type": "array",
@@ -934,25 +864,14 @@ describe("toJSONSchema", () => {
       {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalItems": {
-          "$ref": "#/definitions/__schema2",
-        },
-        "definitions": {
-          "__schema0": {
-            "type": "string",
-          },
-          "__schema1": {
-            "type": "number",
-          },
-          "__schema2": {
-            "type": "boolean",
-          },
+          "type": "boolean",
         },
         "items": [
           {
-            "$ref": "#/definitions/__schema0",
+            "type": "string",
           },
           {
-            "$ref": "#/definitions/__schema1",
+            "type": "number",
           },
         ],
         "type": "array",
@@ -982,27 +901,11 @@ describe("toJSONSchema", () => {
           "$ref": "#/definitions/rest",
         },
         "definitions": {
-          "__schema0": {
-            "type": "string",
-          },
-          "__schema1": {
-            "type": "number",
-          },
           "primary": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/__schema0",
-              },
-            ],
             "id": "primary",
             "type": "string",
           },
           "rest": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/__schema1",
-              },
-            ],
             "id": "rest",
             "type": "number",
           },
@@ -1030,11 +933,6 @@ describe("toJSONSchema", () => {
     const schema = z.promise(z.string());
     expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
       {
-        "$defs": {
-          "__schema0": {
-            "type": "string",
-          },
-        },
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "string",
       }
@@ -1045,11 +943,6 @@ describe("toJSONSchema", () => {
     const schema = z.lazy(() => z.string());
     expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
       {
-        "$defs": {
-          "__schema0": {
-            "type": "string",
-          },
-        },
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "string",
       }
@@ -1161,11 +1054,6 @@ describe("toJSONSchema", () => {
       .pipe(z.number());
     expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
       {
-        "$defs": {
-          "__schema0": {
-            "type": "number",
-          },
-        },
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "number",
       }
@@ -1181,22 +1069,14 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(
       `
       {
-        "$defs": {
-          "__schema0": {
-            "type": "string",
-          },
-          "__schema1": {
-            "type": "number",
-          },
-        },
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
         "properties": {
           "age": {
-            "$ref": "#/$defs/__schema1",
+            "type": "number",
           },
           "name": {
-            "$ref": "#/$defs/__schema0",
+            "type": "string",
           },
         },
         "required": [
@@ -1215,16 +1095,11 @@ describe("toJSONSchema", () => {
     });
     expect(z.toJSONSchema(a)).toMatchInlineSnapshot(`
       {
-        "$defs": {
-          "__schema0": {
-            "type": "string",
-          },
-        },
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
         "properties": {
           "name": {
-            "$ref": "#/$defs/__schema0",
+            "type": "string",
           },
         },
         "required": [
@@ -1236,10 +1111,9 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(a, { io: "input" })).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "additionalProperties": false,
         "properties": {
           "name": {
-            "$ref": "#/$defs/__schema0",
+            "type": "string",
           },
         },
         "required": [
@@ -1264,7 +1138,7 @@ describe("toJSONSchema", () => {
         "additionalProperties": false,
         "properties": {
           "name": {
-            "$ref": "#/$defs/__schema0",
+            "type": "string",
           },
         },
         "required": [
@@ -1283,22 +1157,14 @@ describe("toJSONSchema", () => {
 
     expect(z.toJSONSchema(a)).toMatchInlineSnapshot(`
       {
-        "$defs": {
-          "__schema0": {
-            "type": "string",
-          },
-          "__schema1": {
-            "type": "number",
-          },
-        },
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
         "properties": {
           "age": {
-            "$ref": "#/$defs/__schema1",
+            "type": "number",
           },
           "name": {
-            "$ref": "#/$defs/__schema0",
+            "type": "string",
           },
         },
         "required": [
@@ -1317,21 +1183,13 @@ describe("toJSONSchema", () => {
 
     expect(z.toJSONSchema(b)).toMatchInlineSnapshot(`
       {
-        "$defs": {
-          "__schema0": {
-            "type": "string",
-          },
-          "__schema1": {
-            "type": "string",
-          },
-        },
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {
-          "$ref": "#/$defs/__schema1",
+          "type": "string",
         },
         "properties": {
           "name": {
-            "$ref": "#/$defs/__schema0",
+            "type": "string",
           },
         },
         "required": [
@@ -1347,19 +1205,11 @@ describe("toJSONSchema", () => {
 
     expect(z.toJSONSchema(c)).toMatchInlineSnapshot(`
       {
-        "$defs": {
-          "__schema0": {
-            "type": "string",
-          },
-          "__schema1": {},
-        },
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "additionalProperties": {
-          "$ref": "#/$defs/__schema1",
-        },
+        "additionalProperties": {},
         "properties": {
           "name": {
-            "$ref": "#/$defs/__schema0",
+            "type": "string",
           },
         },
         "required": [
@@ -1381,37 +1231,17 @@ describe("toJSONSchema", () => {
 
     expect(result).toMatchInlineSnapshot(`
       {
-        "$defs": {
-          "__schema0": {
-            "type": "string",
-          },
-          "__schema1": {
-            "type": "string",
-          },
-          "__schema2": {
-            "type": "string",
-          },
-          "__schema3": {
-            "type": "string",
-          },
-          "__schema4": {
-            "type": "string",
-          },
-          "__schema5": {
-            "type": "string",
-          },
-        },
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
         "properties": {
           "nonoptional": {
-            "$ref": "#/$defs/__schema3",
+            "type": "string",
           },
           "optional": {
-            "$ref": "#/$defs/__schema1",
+            "type": "string",
           },
           "required": {
-            "$ref": "#/$defs/__schema0",
+            "type": "string",
           },
         },
         "required": [
@@ -1437,28 +1267,17 @@ describe("toJSONSchema", () => {
     const result = z.toJSONSchema(categorySchema);
     expect(result).toMatchInlineSnapshot(`
       {
-        "$defs": {
-          "__schema0": {
-            "type": "string",
-          },
-          "__schema1": {
-            "items": {
-              "$ref": "#/$defs/__schema2",
-            },
-            "type": "array",
-          },
-          "__schema2": {
-            "type": "object",
-          },
-        },
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
         "properties": {
           "name": {
-            "$ref": "#/$defs/__schema0",
+            "type": "string",
           },
           "subcategories": {
-            "$ref": "#/$defs/__schema1",
+            "items": {
+              "$ref": "#",
+            },
+            "type": "array",
           },
         },
         "required": [
@@ -1479,25 +1298,14 @@ describe("toJSONSchema", () => {
     const result = z.toJSONSchema(userSchema);
     expect(result).toMatchInlineSnapshot(`
       {
-        "$defs": {
-          "__schema0": {
-            "type": "string",
-          },
-          "__schema1": {
-            "type": "number",
-          },
-          "__schema2": {
-            "type": "number",
-          },
-        },
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
         "properties": {
           "age": {
-            "$ref": "#/$defs/__schema1",
+            "type": "number",
           },
           "name": {
-            "$ref": "#/$defs/__schema0",
+            "type": "string",
           },
         },
         "required": [
@@ -1516,22 +1324,14 @@ describe("toJSONSchema", () => {
 
     expect(z.toJSONSchema(a)).toMatchInlineSnapshot(`
       {
-        "$defs": {
-          "__schema0": {
-            "type": "string",
-          },
-          "__schema1": {
-            "type": "number",
-          },
-        },
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
         "properties": {
           "age": {
-            "$ref": "#/$defs/__schema1",
+            "type": "number",
           },
           "name": {
-            "$ref": "#/$defs/__schema0",
+            "type": "string",
           },
         },
         "required": [
@@ -1550,21 +1350,13 @@ describe("toJSONSchema", () => {
 
     expect(z.toJSONSchema(b)).toMatchInlineSnapshot(`
       {
-        "$defs": {
-          "__schema0": {
-            "type": "string",
-          },
-          "__schema1": {
-            "type": "string",
-          },
-        },
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {
-          "$ref": "#/$defs/__schema1",
+          "type": "string",
         },
         "properties": {
           "name": {
-            "$ref": "#/$defs/__schema0",
+            "type": "string",
           },
         },
         "required": [
@@ -1580,19 +1372,11 @@ describe("toJSONSchema", () => {
 
     expect(z.toJSONSchema(c)).toMatchInlineSnapshot(`
       {
-        "$defs": {
-          "__schema0": {
-            "type": "string",
-          },
-          "__schema1": {},
-        },
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "additionalProperties": {
-          "$ref": "#/$defs/__schema1",
-        },
+        "additionalProperties": {},
         "properties": {
           "name": {
-            "$ref": "#/$defs/__schema0",
+            "type": "string",
           },
         },
         "required": [
@@ -1662,60 +1446,33 @@ describe("toJSONSchema", () => {
         "type": "object",
         "properties": {
           "name": {
-            "$ref": "#/$defs/__schema0"
+            "type": "string"
           },
           "files": {
-            "$ref": "#/$defs/__schema1"
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "parent": {
+                  "$ref": "#"
+                }
+              },
+              "required": [
+                "name",
+                "parent"
+              ],
+              "additionalProperties": false
+            }
           }
         },
         "required": [
           "name",
           "files"
         ],
-        "additionalProperties": false,
-        "$defs": {
-          "__schema0": {
-            "type": "string"
-          },
-          "__schema1": {
-            "type": "array",
-            "items": {
-              "$ref": "#/$defs/__schema2"
-            }
-          },
-          "__schema2": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "$ref": "#/$defs/__schema3"
-              },
-              "parent": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "$ref": "#/$defs/__schema0"
-                  },
-                  "files": {
-                    "$ref": "#/$defs/__schema1"
-                  }
-                },
-                "required": [
-                  "name",
-                  "files"
-                ],
-                "additionalProperties": false
-              }
-            },
-            "required": [
-              "name",
-              "parent"
-            ],
-            "additionalProperties": false
-          },
-          "__schema3": {
-            "type": "string"
-          }
-        }
+        "additionalProperties": false
       }"
     `
     );
@@ -1772,13 +1529,8 @@ test("override with refs", () => {
 
   expect(result).toMatchInlineSnapshot(`
     {
-      "$defs": {
-        "__schema0": {
-          "type": "STRING",
-        },
-      },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "string",
+      "type": "STRING",
     }
   `);
 });
@@ -1798,10 +1550,10 @@ test("override execution order", () => {
     {
       "anyOf": [
         {
-          "$ref": "#/$defs/__schema0",
+          "type": "string",
         },
         {
-          "$ref": "#/$defs/__schema1",
+          "type": "number",
         },
       ],
     }
@@ -1824,8 +1576,14 @@ test("override with path", () => {
 
   expect(capturedPaths).toMatchInlineSnapshot(`
     [
-      [],
-      [],
+      [
+        "properties",
+        "age",
+      ],
+      [
+        "properties",
+        "name",
+      ],
       [],
     ]
   `);
@@ -1841,11 +1599,6 @@ test("pipe", () => {
   const a = z.z.toJSONSchema(mySchema);
   expect(a).toMatchInlineSnapshot(`
     {
-      "$defs": {
-        "__schema0": {
-          "type": "number",
-        },
-      },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "number",
     }
@@ -1856,7 +1609,7 @@ test("pipe", () => {
   expect(b).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "number",
+      "type": "string",
     }
   `);
   // => { type: "string" }
@@ -1887,80 +1640,10 @@ test("passthrough schemas", () => {
           "additionalProperties": false,
           "properties": {
             "num": {
-              "$ref": "#/$defs/__schema1",
+              "type": "number",
             },
             "str": {
-              "$ref": "#/$defs/__schema2",
-            },
-          },
-          "required": [
-            "num",
-            "str",
-          ],
-          "type": "object",
-        },
-        "__schema1": {
-          "type": "number",
-        },
-        "__schema2": {
-          "type": "string",
-        },
-        "__schema3": {
-          "additionalProperties": false,
-          "properties": {
-            "num": {
-              "$ref": "#/$defs/__schema1",
-            },
-            "str": {
-              "$ref": "#/$defs/__schema2",
-            },
-          },
-          "required": [
-            "num",
-            "str",
-          ],
-          "type": "object",
-        },
-        "__schema4": {
-          "additionalProperties": false,
-          "properties": {
-            "num": {
-              "$ref": "#/$defs/__schema1",
-            },
-            "str": {
-              "$ref": "#/$defs/__schema2",
-            },
-          },
-          "required": [
-            "num",
-            "str",
-          ],
-          "type": "object",
-        },
-        "__schema5": {
-          "additionalProperties": false,
-          "properties": {
-            "num": {
-              "$ref": "#/$defs/__schema1",
-            },
-            "str": {
-              "$ref": "#/$defs/__schema2",
-            },
-          },
-          "required": [
-            "num",
-            "str",
-          ],
-          "type": "object",
-        },
-        "__schema6": {
-          "additionalProperties": false,
-          "properties": {
-            "num": {
-              "$ref": "#/$defs/__schema1",
-            },
-            "str": {
-              "$ref": "#/$defs/__schema2",
+              "type": "string",
             },
           },
           "required": [
@@ -1977,16 +1660,16 @@ test("passthrough schemas", () => {
           "$ref": "#/$defs/__schema0",
         },
         "b": {
-          "$ref": "#/$defs/__schema3",
+          "$ref": "#/$defs/__schema0",
         },
         "c": {
-          "$ref": "#/$defs/__schema4",
+          "$ref": "#/$defs/__schema0",
         },
         "d": {
-          "$ref": "#/$defs/__schema5",
+          "$ref": "#/$defs/__schema0",
         },
         "e": {
-          "$ref": "#/$defs/__schema6",
+          "$ref": "#/$defs/__schema0",
         },
       },
       "required": [
@@ -2013,24 +1696,7 @@ test("extract schemas with id", () => {
   expect(result).toMatchInlineSnapshot(`
     {
       "$defs": {
-        "__schema0": {
-          "type": "string",
-        },
-        "__schema1": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/name",
-            },
-            {
-              "type": "null",
-            },
-          ],
-        },
-        "__schema2": {
-          "type": "number",
-        },
         "age": {
-          "$ref": "#/$defs/__schema2",
           "id": "age",
           "type": "number",
         },
@@ -2049,7 +1715,14 @@ test("extract schemas with id", () => {
           "$ref": "#/$defs/name",
         },
         "last_name": {
-          "$ref": "#/$defs/__schema1",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name",
+            },
+            {
+              "type": "null",
+            },
+          ],
         },
         "middle_name": {
           "$ref": "#/$defs/name",
@@ -2070,8 +1743,12 @@ test("unrepresentable literal values are ignored", () => {
   expect(a).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "const": "hello",
-      "type": "string",
+      "enum": [
+        "hello",
+        null,
+        5,
+        1324,
+      ],
     }
   `);
 
@@ -2081,6 +1758,11 @@ test("unrepresentable literal values are ignored", () => {
   expect(b).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "enum": [
+        null,
+        5,
+        1324,
+      ],
     }
   `);
 
@@ -2106,21 +1788,7 @@ test("describe with id", () => {
   expect(a).toMatchInlineSnapshot(`
     {
       "$defs": {
-        "__schema0": {
-          "$ref": "#/$defs/jobId",
-          "description": "Current job",
-          "type": "string",
-        },
-        "__schema1": {
-          "type": "string",
-        },
-        "__schema2": {
-          "$ref": "#/$defs/jobId",
-          "description": "Previous job",
-          "type": "string",
-        },
         "jobId": {
-          "$ref": "#/$defs/__schema1",
           "id": "jobId",
           "type": "string",
         },
@@ -2129,10 +1797,12 @@ test("describe with id", () => {
       "additionalProperties": false,
       "properties": {
         "current": {
-          "$ref": "#/$defs/__schema0",
+          "$ref": "#/$defs/jobId",
+          "description": "Current job",
         },
         "previous": {
-          "$ref": "#/$defs/__schema2",
+          "$ref": "#/$defs/jobId",
+          "description": "Previous job",
         },
       },
       "required": [
@@ -2156,18 +1826,13 @@ test("overwrite id", () => {
   expect(a).toMatchInlineSnapshot(`
     {
       "$defs": {
-        "__schema0": {
-          "type": "string",
-        },
         "aaa": {
-          "$ref": "#/$defs/__schema0",
           "id": "aaa",
           "type": "string",
         },
         "bbb": {
           "$ref": "#/$defs/aaa",
           "id": "bbb",
-          "type": "string",
         },
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2200,10 +1865,13 @@ test("overwrite id", () => {
   expect(b).toMatchInlineSnapshot(`
     {
       "$defs": {
+        "aaa": {
+          "id": "aaa",
+          "type": "string",
+        },
         "ccc": {
           "$ref": "#/$defs/aaa",
           "id": "ccc",
-          "type": "string",
         },
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2236,44 +1904,16 @@ test("overwrite descriptions", () => {
   );
   expect(a).toMatchInlineSnapshot(`
     {
-      "$defs": {
-        "__schema0": {
-          "$ref": "#/$defs/__schema1",
-          "description": "d",
-          "type": "string",
-        },
-        "__schema1": {
-          "$ref": "#/$defs/__schema2",
-          "description": "c",
-          "type": "string",
-        },
-        "__schema2": {
-          "$ref": "#/$defs/__schema3",
-          "description": "b",
-          "type": "string",
-        },
-        "__schema3": {
-          "$ref": "#/$defs/__schema4",
-          "description": "a",
-          "type": "string",
-        },
-        "__schema4": {
-          "type": "string",
-        },
-        "__schema5": {
-          "$ref": "#/$defs/__schema1",
-          "description": "e",
-          "type": "string",
-        },
-      },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
       "properties": {
         "d": {
-          "$ref": "#/$defs/__schema0",
+          "description": "d",
+          "type": "string",
         },
         "e": {
-          "$ref": "#/$defs/__schema5",
+          "description": "e",
+          "type": "string",
         },
       },
       "required": [
@@ -2297,17 +1937,7 @@ test("overwrite descriptions", () => {
     {
       "$defs": {
         "__schema0": {
-          "$ref": "#/$defs/__schema1",
-          "description": "d",
-          "type": "string",
-        },
-        "__schema1": {
           "description": "c",
-          "type": "string",
-        },
-        "__schema2": {
-          "$ref": "#/$defs/__schema1",
-          "description": "e",
           "type": "string",
         },
       },
@@ -2316,9 +1946,11 @@ test("overwrite descriptions", () => {
       "properties": {
         "d": {
           "$ref": "#/$defs/__schema0",
+          "description": "d",
         },
         "e": {
-          "$ref": "#/$defs/__schema2",
+          "$ref": "#/$defs/__schema0",
+          "description": "e",
         },
       },
       "required": [
@@ -2360,7 +1992,6 @@ test("top-level readonly", () => {
     {
       "$defs": {
         "B": {
-          "$ref": "#/$defs/__schema3",
           "additionalProperties": false,
           "id": "B",
           "properties": {
@@ -2368,7 +1999,7 @@ test("top-level readonly", () => {
               "$ref": "#",
             },
             "name": {
-              "$ref": "#/$defs/__schema5",
+              "type": "string",
             },
           },
           "readOnly": true,
@@ -2377,81 +2008,8 @@ test("top-level readonly", () => {
             "a",
           ],
           "type": "object",
-        },
-        "__schema0": {
-          "additionalProperties": false,
-          "properties": {
-            "b": {
-              "$ref": "#/$defs/B",
-            },
-            "name": {
-              "$ref": "#/$defs/__schema2",
-            },
-          },
-          "readOnly": true,
-          "required": [
-            "name",
-            "b",
-          ],
-          "type": "object",
-        },
-        "__schema1": {
-          "additionalProperties": false,
-          "properties": {
-            "b": {
-              "$ref": "#/$defs/B",
-            },
-            "name": {
-              "$ref": "#/$defs/__schema2",
-            },
-          },
-          "required": [
-            "name",
-            "b",
-          ],
-          "type": "object",
-        },
-        "__schema2": {
-          "type": "string",
-        },
-        "__schema3": {
-          "additionalProperties": false,
-          "properties": {
-            "a": {
-              "$ref": "#",
-            },
-            "name": {
-              "$ref": "#/$defs/__schema5",
-            },
-          },
-          "readOnly": true,
-          "required": [
-            "name",
-            "a",
-          ],
-          "type": "object",
-        },
-        "__schema4": {
-          "additionalProperties": false,
-          "properties": {
-            "a": {
-              "$ref": "#",
-            },
-            "name": {
-              "$ref": "#/$defs/__schema5",
-            },
-          },
-          "required": [
-            "name",
-            "a",
-          ],
-          "type": "object",
-        },
-        "__schema5": {
-          "type": "string",
         },
       },
-      "$ref": "#/$defs/__schema0",
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
       "id": "A",
@@ -2460,7 +2018,7 @@ test("top-level readonly", () => {
           "$ref": "#/$defs/B",
         },
         "name": {
-          "$ref": "#/$defs/__schema2",
+          "type": "string",
         },
       },
       "readOnly": true,
@@ -2505,26 +2063,13 @@ test("basic registry", () => {
           "additionalProperties": false,
           "properties": {
             "author": {
-              "additionalProperties": false,
-              "properties": {
-                "name": {
-                  "$ref": "https://example.com/__shared.json#/$defs/schema0",
-                },
-                "posts": {
-                  "$ref": "https://example.com/__shared.json#/$defs/schema1",
-                },
-              },
-              "required": [
-                "name",
-                "posts",
-              ],
-              "type": "object",
+              "$ref": "https://example.com/User.json",
             },
             "content": {
-              "$ref": "https://example.com/__shared.json#/$defs/schema3",
+              "type": "string",
             },
             "title": {
-              "$ref": "https://example.com/__shared.json#/$defs/schema2",
+              "type": "string",
             },
           },
           "required": [
@@ -2540,10 +2085,13 @@ test("basic registry", () => {
           "additionalProperties": false,
           "properties": {
             "name": {
-              "$ref": "https://example.com/__shared.json#/$defs/schema0",
+              "type": "string",
             },
             "posts": {
-              "$ref": "https://example.com/__shared.json#/$defs/schema1",
+              "items": {
+                "$ref": "https://example.com/Post.json",
+              },
+              "type": "array",
             },
           },
           "required": [
@@ -2551,25 +2099,6 @@ test("basic registry", () => {
             "posts",
           ],
           "type": "object",
-        },
-        "__shared": {
-          "$defs": {
-            "schema0": {
-              "type": "string",
-            },
-            "schema1": {
-              "items": {
-                "$ref": "https://example.com/Post.json",
-              },
-              "type": "array",
-            },
-            "schema2": {
-              "type": "string",
-            },
-            "schema3": {
-              "type": "string",
-            },
-          },
         },
       },
     }
@@ -2581,16 +2110,6 @@ test("_ref", () => {
   const a = z.z.toJSONSchema(z.promise(z.string().describe("a")));
   expect(a).toMatchInlineSnapshot(`
     {
-      "$defs": {
-        "__schema0": {
-          "$ref": "#/$defs/__schema1",
-          "description": "a",
-          "type": "string",
-        },
-        "__schema1": {
-          "type": "string",
-        },
-      },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "description": "a",
       "type": "string",
@@ -2600,16 +2119,6 @@ test("_ref", () => {
   const b = z.z.toJSONSchema(z.lazy(() => z.string().describe("a")));
   expect(b).toMatchInlineSnapshot(`
     {
-      "$defs": {
-        "__schema0": {
-          "$ref": "#/$defs/__schema1",
-          "description": "a",
-          "type": "string",
-        },
-        "__schema1": {
-          "type": "string",
-        },
-      },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "description": "a",
       "type": "string",
@@ -2619,16 +2128,6 @@ test("_ref", () => {
   const c = z.z.toJSONSchema(z.optional(z.string().describe("a")));
   expect(c).toMatchInlineSnapshot(`
     {
-      "$defs": {
-        "__schema0": {
-          "$ref": "#/$defs/__schema1",
-          "description": "a",
-          "type": "string",
-        },
-        "__schema1": {
-          "type": "string",
-        },
-      },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "description": "a",
       "type": "string",
@@ -2647,11 +2146,6 @@ test("defaults/prefaults", () => {
   // a
   expect(z.toJSONSchema(a)).toMatchInlineSnapshot(`
     {
-      "$defs": {
-        "__schema0": {
-          "type": "number",
-        },
-      },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "number",
     }
@@ -2659,7 +2153,7 @@ test("defaults/prefaults", () => {
   expect(z.toJSONSchema(a, { io: "input" })).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "number",
+      "type": "string",
     }
   `);
 
@@ -2853,23 +2347,10 @@ test("examples on pipe", () => {
   const i = z.z.toJSONSchema(schema, { io: "input", unrepresentable: "any" });
   expect(i).toMatchInlineSnapshot(`
     {
-      "$defs": {
-        "__schema0": {
-          "type": "string",
-        },
-        "__schema1": {
-          "$ref": "#/$defs/__schema2",
-          "examples": [
-            "test",
-          ],
-          "type": "string",
-        },
-        "__schema2": {
-          "type": "string",
-        },
-      },
-      "$ref": "#/$defs/__schema0",
       "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "examples": [
+        "test",
+      ],
       "type": "string",
     }
   `);
@@ -2880,7 +2361,6 @@ test("examples on pipe", () => {
       "examples": [
         4,
       ],
-      "type": "string",
     }
   `);
 });
@@ -2938,11 +2418,6 @@ test("use output type for preprocess", () => {
 
   expect(z.toJSONSchema(a, { io: "input" })).toMatchInlineSnapshot(`
     {
-      "$defs": {
-        "__schema0": {
-          "type": "string",
-        },
-      },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "string",
     }
@@ -3002,47 +2477,10 @@ test("flatten simple intersections", () => {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "allOf": [
         {
-          "$ref": "#/definitions/__schema2",
-        },
-        {
-          "$ref": "#/definitions/__schema4",
-        },
-        {
-          "$ref": "#/definitions/__schema6",
-        },
-        {
-          "$ref": "#/definitions/__schema0",
-        },
-      ],
-      "definitions": {
-        "__schema0": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/__schema2",
-            },
-            {
-              "$ref": "#/definitions/__schema4",
-            },
-            {
-              "$ref": "#/definitions/__schema6",
-            },
-          ],
-        },
-        "__schema1": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/__schema2",
-            },
-            {
-              "$ref": "#/definitions/__schema4",
-            },
-          ],
-        },
-        "__schema2": {
           "additionalProperties": false,
           "properties": {
             "testNum": {
-              "$ref": "#/definitions/__schema3",
+              "type": "number",
             },
           },
           "required": [
@@ -3050,14 +2488,11 @@ test("flatten simple intersections", () => {
           ],
           "type": "object",
         },
-        "__schema3": {
-          "type": "number",
-        },
-        "__schema4": {
+        {
           "additionalProperties": false,
           "properties": {
             "testStr": {
-              "$ref": "#/definitions/__schema5",
+              "type": "string",
             },
           },
           "required": [
@@ -3065,14 +2500,11 @@ test("flatten simple intersections", () => {
           ],
           "type": "object",
         },
-        "__schema5": {
-          "type": "string",
-        },
-        "__schema6": {
+        {
           "additionalProperties": false,
           "properties": {
             "testBool": {
-              "$ref": "#/definitions/__schema7",
+              "type": "boolean",
             },
           },
           "required": [
@@ -3080,10 +2512,7 @@ test("flatten simple intersections", () => {
           ],
           "type": "object",
         },
-        "__schema7": {
-          "type": "boolean",
-        },
-      },
+      ],
       "description": "123",
     }
   `);
@@ -3164,7 +2593,7 @@ test("cycle detection - root", () => {
   });
 
   expect(() => z.toJSONSchema(schema, { cycles: "throw" })).toThrowErrorMatchingInlineSnapshot(`
-    [Error: Cycle detected: #//<root>
+    [Error: Cycle detected: #/properties/subcategories/items/<root>
 
     Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.]
   `);
@@ -3186,7 +2615,7 @@ test("cycle detection - mutual recursion", () => {
   });
 
   expect(() => z.toJSONSchema(A, { cycles: "throw" })).toThrowErrorMatchingInlineSnapshot(`
-    [Error: Cycle detected: #//<root>
+    [Error: Cycle detected: #/properties/subcategories/items/properties/subcategories/items/<root>
 
     Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.]
   `);

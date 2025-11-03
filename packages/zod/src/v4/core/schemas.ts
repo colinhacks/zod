@@ -1257,6 +1257,11 @@ export interface $ZodBigInt<T = unknown> extends $ZodType {
 
 export const $ZodBigInt: core.$constructor<$ZodBigInt> = /*@__PURE__*/ core.$constructor("$ZodBigInt", (inst, def) => {
   $ZodType.init(inst, def);
+  inst._zod.getJSONSchema = (ctx, pathSegment = []) => {
+    return toJSON<JSONSchema.BaseSchema>(inst, ctx, pathSegment, (json) => {
+      (json as any)._error = "BigInt cannot be represented in JSON Schema";
+    });
+  };
   inst._zod.pattern = regexes.bigint;
 
   inst._zod.parse = (payload, _ctx) => {
@@ -1322,6 +1327,11 @@ export interface $ZodSymbol extends $ZodType {
 
 export const $ZodSymbol: core.$constructor<$ZodSymbol> = /*@__PURE__*/ core.$constructor("$ZodSymbol", (inst, def) => {
   $ZodType.init(inst, def);
+  inst._zod.getJSONSchema = (ctx, pathSegment = []) => {
+    return toJSON<JSONSchema.BaseSchema>(inst, ctx, pathSegment, (json) => {
+      (json as any)._error = "Symbols cannot be represented in JSON Schema";
+    });
+  };
 
   inst._zod.parse = (payload, _ctx) => {
     const input = payload.value;
@@ -1363,6 +1373,11 @@ export const $ZodUndefined: core.$constructor<$ZodUndefined> = /*@__PURE__*/ cor
   "$ZodUndefined",
   (inst, def) => {
     $ZodType.init(inst, def);
+    inst._zod.getJSONSchema = (ctx, pathSegment = []) => {
+      return toJSON<JSONSchema.BaseSchema>(inst, ctx, pathSegment, (json) => {
+        (json as any)._error = "Undefined cannot be represented in JSON Schema";
+      });
+    };
     inst._zod.pattern = regexes.undefined;
     inst._zod.values = new Set([undefined]);
     inst._zod.optin = "optional";
@@ -1557,6 +1572,11 @@ export interface $ZodVoid extends $ZodType {
 
 export const $ZodVoid: core.$constructor<$ZodVoid> = /*@__PURE__*/ core.$constructor("$ZodVoid", (inst, def) => {
   $ZodType.init(inst, def);
+  inst._zod.getJSONSchema = (ctx, pathSegment = []) => {
+    return toJSON<JSONSchema.BaseSchema>(inst, ctx, pathSegment, (json) => {
+      (json as any)._error = "Void cannot be represented in JSON Schema";
+    });
+  };
 
   inst._zod.parse = (payload, _ctx) => {
     const input = payload.value;
@@ -1600,7 +1620,11 @@ export interface $ZodDate<T = unknown> extends $ZodType {
 
 export const $ZodDate: core.$constructor<$ZodDate> = /*@__PURE__*/ core.$constructor("$ZodDate", (inst, def) => {
   $ZodType.init(inst, def);
-  // Date cannot be represented in JSON Schema by default - uses default _error implementation
+  inst._zod.getJSONSchema = (ctx, pathSegment = []) => {
+    return toJSON<JSONSchema.BaseSchema>(inst, ctx, pathSegment, (json) => {
+      (json as any)._error = "Date cannot be represented in JSON Schema";
+    });
+  };
 
   inst._zod.parse = (payload, _ctx) => {
     if (def.coerce) {
@@ -2879,6 +2903,11 @@ export interface $ZodMap<Key extends SomeType = $ZodType, Value extends SomeType
 
 export const $ZodMap: core.$constructor<$ZodMap> = /*@__PURE__*/ core.$constructor("$ZodMap", (inst, def) => {
   $ZodType.init(inst, def);
+  inst._zod.getJSONSchema = (ctx, pathSegment = []) => {
+    return toJSON<JSONSchema.BaseSchema>(inst, ctx, pathSegment, (json) => {
+      (json as any)._error = "Map cannot be represented in JSON Schema";
+    });
+  };
 
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
@@ -2983,6 +3012,11 @@ export interface $ZodSet<T extends SomeType = $ZodType> extends $ZodType {
 
 export const $ZodSet: core.$constructor<$ZodSet> = /*@__PURE__*/ core.$constructor("$ZodSet", (inst, def) => {
   $ZodType.init(inst, def);
+  inst._zod.getJSONSchema = (ctx, pathSegment = []) => {
+    return toJSON<JSONSchema.BaseSchema>(inst, ctx, pathSegment, (json) => {
+      (json as any)._error = "Set cannot be represented in JSON Schema";
+    });
+  };
 
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
@@ -3799,6 +3833,25 @@ export interface $ZodCatch<T extends SomeType = $ZodType> extends $ZodType {
 
 export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$constructor("$ZodCatch", (inst, def) => {
   $ZodType.init(inst, def);
+  inst._zod.getJSONSchema = (ctx, pathSegment = []) =>
+    toJSON<JSONSchema.BaseSchema>(inst, ctx, pathSegment, (json, context) => {
+      const inner = def.innerType._zod.getJSONSchema(context);
+      // Check if inner type is unrepresentable (e.g., transform)
+      if ("_error" in inner) {
+        (json as any)._error = inner._error;
+        return;
+      }
+      Object.assign(json, inner);
+      // Try to get catch value - if it throws or accesses dynamic context, it's dynamic
+      let catchValue: any;
+      try {
+        catchValue = def.catchValue(undefined as any);
+      } catch {
+        (json as any)._error = "Dynamic catch values are not supported in JSON Schema";
+        return;
+      }
+      json.default = JSON.parse(JSON.stringify(catchValue));
+    });
   util.defineLazy(inst._zod, "optin", () => def.innerType._zod.optin);
   util.defineLazy(inst._zod, "optout", () => def.innerType._zod.optout);
   util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
@@ -4525,6 +4578,11 @@ export interface $ZodCustom<O = unknown, I = unknown> extends $ZodType {
 export const $ZodCustom: core.$constructor<$ZodCustom> = /*@__PURE__*/ core.$constructor("$ZodCustom", (inst, def) => {
   checks.$ZodCheck.init(inst, def);
   $ZodType.init(inst, def);
+  inst._zod.getJSONSchema = (ctx, pathSegment = []) => {
+    return toJSON<JSONSchema.BaseSchema>(inst, ctx, pathSegment, (json) => {
+      (json as any)._error = "Custom types cannot be represented in JSON Schema";
+    });
+  };
 
   inst._zod.parse = (payload, _) => {
     return payload;
