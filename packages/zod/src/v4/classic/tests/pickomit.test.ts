@@ -114,6 +114,7 @@ test("pick/omit/required/partial - do not allow unknown keys", () => {
     age: z.number(),
   });
 
+  // @ts-expect-error
   expect(() => schema.pick({ name: true, asdf: true }).safeParse({})).toThrow();
 
   // @ts-expect-error
