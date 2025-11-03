@@ -233,7 +233,7 @@ describe("Hebrew localization", () => {
       const result = schema.safeParse({ notANumber: "value" });
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain("מפתח לא תקין");
+        expect(result.error.issues[0].message).toBe("שדה לא תקין באובייקט");
       }
     });
   });

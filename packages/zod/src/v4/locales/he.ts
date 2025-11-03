@@ -225,8 +225,7 @@ const error: () => errors.$ZodErrorMap = () => {
         return `מפתח${issue.keys.length > 1 ? "ות" : ""} לא מזוה${issue.keys.length > 1 ? "ים" : "ה"}: ${util.joinValues(issue.keys, ", ")}`;
 
       case "invalid_key": {
-        const place = withDefinite(issue.origin ?? "object");
-        return `מפתח לא תקין ב${place}`;
+        return `שדה לא תקין באובייקט`;
       }
 
       case "invalid_union":
