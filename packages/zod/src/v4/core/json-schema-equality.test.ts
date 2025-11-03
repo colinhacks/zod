@@ -6,8 +6,28 @@ import * as z from "../classic/index.js";
  * for simple cases (no $defs, no custom registry, input mode).
  */
 
+import type { JSONSchemaContext } from "./json-schema-lite.js";
+
+const testContext: JSONSchemaContext = {
+  io: "input",
+  target: "draft-2020-12",
+  path: [],
+  schemaPath: [],
+  unrepresentable: "throw",
+  processor: (_schema, context, result) => {
+    // Check for unrepresentable types (indicated by _error property)
+    if ("_error" in result) {
+      if (context.unrepresentable === "throw") {
+        throw new Error((result as any)._error as string);
+      }
+      return {};
+    }
+    return result;
+  },
+};
+
 function assertEqualSchemas(_name: string, schema: any) {
-  const lite = schema._zod.getJSONSchema();
+  const lite = schema._zod.getJSONSchema(testContext);
   const full = z.toJSONSchema(schema, { io: "input" });
 
   // Remove $schema for comparison since lite version doesn't include it

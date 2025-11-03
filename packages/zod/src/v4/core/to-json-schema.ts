@@ -1,8 +1,6 @@
-import type * as checks from "./checks.js";
 import type * as JSONSchema from "./json-schema.js";
 import { $ZodRegistry, globalRegistry } from "./registries.js";
 import type * as schemas from "./schemas.js";
-import { getEnumValues } from "./util.js";
 
 interface JSONSchemaGeneratorParams {
   /** A registry used to look up metadata for each schema. Any schema with an `id` property will be extracted as a $def.
@@ -96,16 +94,6 @@ export class JSONSchemaGenerator {
   }
 
   process(schema: schemas.$ZodType, _params: ProcessParams = { path: [], schemaPath: [] }): JSONSchema.BaseSchema {
-    const def = (schema as schemas.$ZodTypes)._zod.def;
-
-    const formatMap: Partial<Record<checks.$ZodStringFormats, string | undefined>> = {
-      guid: "uuid",
-      url: "uri",
-      datetime: "date-time",
-      json_string: "json-string",
-      regex: "", // do not set
-    };
-
     // check for schema in seens
     const seen = this.seen.get(schema);
 
@@ -125,515 +113,72 @@ export class JSONSchemaGenerator {
     const result: Seen = { schema: {}, count: 1, cycle: undefined, path: _params.path };
     this.seen.set(schema, result);
 
-    // custom method overrides default behavior
-    const overrideSchema = schema._zod.toJSONSchema?.();
-    if (overrideSchema) {
-      result.schema = overrideSchema as any;
-    } else {
-      const params = {
-        ..._params,
-        schemaPath: [..._params.schemaPath, schema],
+    // Call getJSONSchema with inline processor - processor is called inside toJSON
+    const processedSchema = schema._zod.getJSONSchema(
+      {
+        io: this.io,
+        target: this.target,
         path: _params.path,
-      };
-
-      const parent = schema._zod.parent;
-
-      if (parent) {
-        // schema was cloned from another schema
-        result.ref = parent;
-        this.process(parent, params);
-        this.seen.get(parent)!.isParent = true;
-      } else {
-        const _json = result.schema;
-        switch (def.type) {
-          case "string": {
-            const json: JSONSchema.StringSchema = _json as any;
-            json.type = "string";
-            const { minimum, maximum, format, patterns, contentEncoding } = schema._zod
-              .bag as schemas.$ZodStringInternals<unknown>["bag"];
-            if (typeof minimum === "number") json.minLength = minimum;
-            if (typeof maximum === "number") json.maxLength = maximum;
-            // custom pattern overrides format
-            if (format) {
-              json.format = formatMap[format as checks.$ZodStringFormats] ?? format;
-              if (json.format === "") delete json.format; // empty format is not valid
-            }
-            if (contentEncoding) json.contentEncoding = contentEncoding;
-            if (patterns && patterns.size > 0) {
-              const regexes = [...patterns];
-              if (regexes.length === 1) json.pattern = regexes[0]!.source;
-              else if (regexes.length > 1) {
-                result.schema.allOf = [
-                  ...regexes.map((regex) => ({
-                    ...(this.target === "draft-7" || this.target === "draft-4" || this.target === "openapi-3.0"
-                      ? ({ type: "string" } as const)
-                      : {}),
-                    pattern: regex.source,
-                  })),
-                ];
-              }
-            }
-
-            break;
-          }
-          case "number": {
-            const json: JSONSchema.NumberSchema | JSONSchema.IntegerSchema = _json as any;
-            const { minimum, maximum, format, multipleOf, exclusiveMaximum, exclusiveMinimum } = schema._zod.bag;
-            if (typeof format === "string" && format.includes("int")) json.type = "integer";
-            else json.type = "number";
-
-            if (typeof exclusiveMinimum === "number") {
-              if (this.target === "draft-4" || this.target === "openapi-3.0") {
-                json.minimum = exclusiveMinimum;
-                json.exclusiveMinimum = true;
-              } else {
-                json.exclusiveMinimum = exclusiveMinimum;
-              }
-            }
-            if (typeof minimum === "number") {
-              json.minimum = minimum;
-              if (typeof exclusiveMinimum === "number" && this.target !== "draft-4") {
-                if (exclusiveMinimum >= minimum) delete json.minimum;
-                else delete json.exclusiveMinimum;
-              }
-            }
-
-            if (typeof exclusiveMaximum === "number") {
-              if (this.target === "draft-4" || this.target === "openapi-3.0") {
-                json.maximum = exclusiveMaximum;
-                json.exclusiveMaximum = true;
-              } else {
-                json.exclusiveMaximum = exclusiveMaximum;
-              }
-            }
-            if (typeof maximum === "number") {
-              json.maximum = maximum;
-              if (typeof exclusiveMaximum === "number" && this.target !== "draft-4") {
-                if (exclusiveMaximum <= maximum) delete json.maximum;
-                else delete json.exclusiveMaximum;
-              }
-            }
-
-            if (typeof multipleOf === "number") json.multipleOf = multipleOf;
-
-            break;
-          }
-          case "boolean": {
-            const json = _json as JSONSchema.BooleanSchema;
-            json.type = "boolean";
-            break;
-          }
-          case "bigint": {
+        schemaPath: [..._params.schemaPath, schema],
+        unrepresentable: this.unrepresentable,
+        processor: (currentSchema, context, getJSONSchemaResult) => {
+          // Check for unrepresentable types (indicated by _error property)
+          if ("_error" in getJSONSchemaResult) {
+            // Handle unrepresentable types according to settings
             if (this.unrepresentable === "throw") {
-              throw new Error("BigInt cannot be represented in JSON Schema");
+              throw new Error((getJSONSchemaResult as any)._error as string);
             }
-            break;
+            // For unrepresentable: "any", return empty schema (becomes {})
+            return {};
           }
-          case "symbol": {
-            if (this.unrepresentable === "throw") {
-              throw new Error("Symbols cannot be represented in JSON Schema");
-            }
-            break;
-          }
-          case "null": {
-            if (this.target === "openapi-3.0") {
-              _json.type = "string";
-              _json.nullable = true;
-              _json.enum = [null];
-            } else _json.type = "null";
-            break;
-          }
-          case "any": {
-            break;
-          }
-          case "unknown": {
-            break;
-          }
-          case "undefined": {
-            if (this.unrepresentable === "throw") {
-              throw new Error("Undefined cannot be represented in JSON Schema");
-            }
-            break;
-          }
-          case "void": {
-            if (this.unrepresentable === "throw") {
-              throw new Error("Void cannot be represented in JSON Schema");
-            }
-            break;
-          }
-          case "never": {
-            _json.not = {};
-            break;
-          }
-          case "date": {
-            if (this.unrepresentable === "throw") {
-              throw new Error("Date cannot be represented in JSON Schema");
-            }
-            break;
-          }
-          case "array": {
-            const json: JSONSchema.ArraySchema = _json as any;
-            const { minimum, maximum } = schema._zod.bag;
-            if (typeof minimum === "number") json.minItems = minimum;
-            if (typeof maximum === "number") json.maxItems = maximum;
 
-            json.type = "array";
-            json.items = this.process(def.element, { ...params, path: [...params.path, "items"] });
-            break;
-          }
-          case "object": {
-            const json: JSONSchema.ObjectSchema = _json as any;
-            json.type = "object";
-            json.properties = {};
-            const shape = def.shape; // params.shapeCache.get(schema)!;
-
-            for (const key in shape) {
-              json.properties[key] = this.process(shape[key]!, {
-                ...params,
-                path: [...params.path, "properties", key],
-              });
+          // Handle custom override methods
+          const overrideSchema = currentSchema._zod.toJSONSchema?.();
+          if (overrideSchema) {
+            const processed = overrideSchema as JSONSchema.BaseSchema;
+            // If this is the root schema, assign to result
+            if (currentSchema === schema) {
+              Object.assign(result.schema, processed);
             }
-
-            // required keys
-            const allKeys = new Set(Object.keys(shape));
-            // const optionalKeys = new Set(def.optional);
-            const requiredKeys = new Set(
-              [...allKeys].filter((key) => {
-                const v = def.shape[key]!._zod;
-                if (this.io === "input") {
-                  return v.optin === undefined;
-                } else {
-                  return v.optout === undefined;
-                }
-              })
-            );
-
-            if (requiredKeys.size > 0) {
-              json.required = Array.from(requiredKeys);
-            }
-
-            // catchall
-            if (def.catchall?._zod.def.type === "never") {
-              // strict
-              json.additionalProperties = false;
-            } else if (!def.catchall) {
-              // regular
-              if (this.io === "output") json.additionalProperties = false;
-            } else if (def.catchall) {
-              json.additionalProperties = this.process(def.catchall, {
-                ...params,
-                path: [...params.path, "additionalProperties"],
-              });
-            }
-
-            break;
+            return processed;
           }
-          case "union": {
-            const json: JSONSchema.BaseSchema = _json as any;
-            const options = def.options.map((x, i) =>
-              this.process(x, {
-                ...params,
-                path: [...params.path, "anyOf", i],
-              })
-            );
-            json.anyOf = options;
-            break;
-          }
-          case "intersection": {
-            const json: JSONSchema.BaseSchema = _json as any;
-            const a = this.process(def.left, {
-              ...params,
-              path: [...params.path, "allOf", 0],
+
+          // Handle parent relationships
+          const parent = currentSchema._zod.parent;
+          if (parent && currentSchema === schema) {
+            result.ref = parent;
+            this.process(parent, {
+              path: context.path,
+              schemaPath: context.schemaPath,
             });
-            const b = this.process(def.right, {
-              ...params,
-              path: [...params.path, "allOf", 1],
+            this.seen.get(parent)!.isParent = true;
+          }
+
+          // Cycle detection
+          const schemaPath = context.schemaPath;
+          const isCycle = schemaPath.slice(0, -1).includes(currentSchema);
+          if (isCycle && currentSchema === schema) {
+            result.cycle = context.path;
+          }
+
+          // For nested schemas (not the root), process them recursively
+          if (currentSchema !== schema) {
+            return this.process(currentSchema, {
+              path: context.path,
+              schemaPath: schemaPath,
             });
-
-            const isSimpleIntersection = (val: any) => "allOf" in val && Object.keys(val).length === 1;
-            const allOf = [
-              ...(isSimpleIntersection(a) ? (a.allOf as any[]) : [a]),
-              ...(isSimpleIntersection(b) ? (b.allOf as any[]) : [b]),
-            ];
-            json.allOf = allOf;
-            break;
-          }
-          case "tuple": {
-            const json: JSONSchema.ArraySchema = _json as any;
-            json.type = "array";
-
-            const prefixPath = this.target === "draft-2020-12" ? "prefixItems" : "items";
-            const restPath =
-              this.target === "draft-2020-12" ? "items" : this.target === "openapi-3.0" ? "items" : "additionalItems";
-
-            const prefixItems = def.items.map((x, i) =>
-              this.process(x, {
-                ...params,
-                path: [...params.path, prefixPath, i],
-              })
-            );
-            const rest = def.rest
-              ? this.process(def.rest, {
-                  ...params,
-                  path: [...params.path, restPath, ...(this.target === "openapi-3.0" ? [def.items.length] : [])],
-                })
-              : null;
-
-            if (this.target === "draft-2020-12") {
-              json.prefixItems = prefixItems;
-              if (rest) {
-                json.items = rest;
-              }
-            } else if (this.target === "openapi-3.0") {
-              json.items = {
-                anyOf: prefixItems,
-              };
-
-              if (rest) {
-                json.items.anyOf!.push(rest);
-              }
-              json.minItems = prefixItems.length;
-              if (!rest) {
-                json.maxItems = prefixItems.length;
-              }
-            } else {
-              json.items = prefixItems;
-              if (rest) {
-                json.additionalItems = rest;
-              }
-            }
-
-            // length
-            const { minimum, maximum } = schema._zod.bag as {
-              minimum?: number;
-              maximum?: number;
-            };
-            if (typeof minimum === "number") json.minItems = minimum;
-            if (typeof maximum === "number") json.maxItems = maximum;
-            break;
-          }
-          case "record": {
-            const json: JSONSchema.ObjectSchema = _json as any;
-            json.type = "object";
-            if (this.target === "draft-7" || this.target === "draft-2020-12") {
-              json.propertyNames = this.process(def.keyType, {
-                ...params,
-                path: [...params.path, "propertyNames"],
-              });
-            }
-            json.additionalProperties = this.process(def.valueType, {
-              ...params,
-              path: [...params.path, "additionalProperties"],
-            });
-            break;
-          }
-          case "map": {
-            if (this.unrepresentable === "throw") {
-              throw new Error("Map cannot be represented in JSON Schema");
-            }
-            break;
-          }
-          case "set": {
-            if (this.unrepresentable === "throw") {
-              throw new Error("Set cannot be represented in JSON Schema");
-            }
-            break;
-          }
-          case "enum": {
-            const json: JSONSchema.BaseSchema = _json as any;
-            const values = getEnumValues(def.entries);
-            // Number enums can have both string and number values
-            if (values.every((v) => typeof v === "number")) json.type = "number";
-            if (values.every((v) => typeof v === "string")) json.type = "string";
-            json.enum = values;
-            break;
-          }
-          case "literal": {
-            const json: JSONSchema.BaseSchema = _json as any;
-            const vals: (string | number | boolean | null)[] = [];
-            for (const val of def.values) {
-              if (val === undefined) {
-                if (this.unrepresentable === "throw") {
-                  throw new Error("Literal `undefined` cannot be represented in JSON Schema");
-                } else {
-                  // do not add to vals
-                }
-              } else if (typeof val === "bigint") {
-                if (this.unrepresentable === "throw") {
-                  throw new Error("BigInt literals cannot be represented in JSON Schema");
-                } else {
-                  vals.push(Number(val));
-                }
-              } else {
-                vals.push(val);
-              }
-            }
-            if (vals.length === 0) {
-              // do nothing (an undefined literal was stripped)
-            } else if (vals.length === 1) {
-              const val = vals[0]!;
-              json.type = val === null ? ("null" as const) : (typeof val as any);
-              if (this.target === "draft-4" || this.target === "openapi-3.0") {
-                json.enum = [val];
-              } else {
-                json.const = val;
-              }
-            } else {
-              if (vals.every((v) => typeof v === "number")) json.type = "number";
-              if (vals.every((v) => typeof v === "string")) json.type = "string";
-              if (vals.every((v) => typeof v === "boolean")) json.type = "string";
-              if (vals.every((v) => v === null)) json.type = "null";
-              json.enum = vals;
-            }
-            break;
           }
 
-          case "file": {
-            const json: JSONSchema.StringSchema = _json as any;
-            const file: JSONSchema.StringSchema = {
-              type: "string",
-              format: "binary",
-              contentEncoding: "binary",
-            };
+          // Normal case: return the schema from getJSONSchema
+          return getJSONSchemaResult;
+        },
+      },
+      []
+    );
 
-            const { minimum, maximum, mime } = schema._zod.bag as schemas.$ZodFileInternals["bag"];
-            if (minimum !== undefined) file.minLength = minimum;
-            if (maximum !== undefined) file.maxLength = maximum;
-            if (mime) {
-              if (mime.length === 1) {
-                file.contentMediaType = mime[0]!;
-                Object.assign(json, file);
-              } else {
-                json.anyOf = mime.map((m) => {
-                  const mFile: JSONSchema.StringSchema = { ...file, contentMediaType: m };
-                  return mFile;
-                });
-              }
-            } else {
-              Object.assign(json, file);
-            }
+    Object.assign(result.schema, processedSchema);
 
-            // if (this.unrepresentable === "throw") {
-            //   throw new Error("File cannot be represented in JSON Schema");
-            // }
-            break;
-          }
-          case "transform": {
-            if (this.unrepresentable === "throw") {
-              throw new Error("Transforms cannot be represented in JSON Schema");
-            }
-            break;
-          }
-
-          case "nullable": {
-            const inner = this.process(def.innerType, params);
-            if (this.target === "openapi-3.0") {
-              result.ref = def.innerType;
-              _json.nullable = true;
-            } else {
-              _json.anyOf = [inner, { type: "null" }];
-            }
-            break;
-          }
-          case "nonoptional": {
-            this.process(def.innerType, params);
-            result.ref = def.innerType;
-            break;
-          }
-          case "success": {
-            const json = _json as JSONSchema.BooleanSchema;
-            json.type = "boolean";
-            break;
-          }
-          case "default": {
-            this.process(def.innerType, params);
-            result.ref = def.innerType;
-            _json.default = JSON.parse(JSON.stringify(def.defaultValue));
-            break;
-          }
-          case "prefault": {
-            this.process(def.innerType, params);
-            result.ref = def.innerType;
-            if (this.io === "input") _json._prefault = JSON.parse(JSON.stringify(def.defaultValue));
-
-            break;
-          }
-          case "catch": {
-            // use conditionals
-            this.process(def.innerType, params);
-            result.ref = def.innerType;
-            let catchValue: any;
-            try {
-              catchValue = def.catchValue(undefined as any);
-            } catch {
-              throw new Error("Dynamic catch values are not supported in JSON Schema");
-            }
-            _json.default = catchValue;
-            break;
-          }
-          case "nan": {
-            if (this.unrepresentable === "throw") {
-              throw new Error("NaN cannot be represented in JSON Schema");
-            }
-            break;
-          }
-          case "template_literal": {
-            const json = _json as JSONSchema.StringSchema;
-            const pattern = schema._zod.pattern;
-            if (!pattern) throw new Error("Pattern not found in template literal");
-            json.type = "string";
-            json.pattern = pattern.source;
-            break;
-          }
-          case "pipe": {
-            const innerType = this.io === "input" ? (def.in._zod.def.type === "transform" ? def.out : def.in) : def.out;
-            this.process(innerType, params);
-            result.ref = innerType;
-            break;
-          }
-          case "readonly": {
-            this.process(def.innerType, params);
-            result.ref = def.innerType;
-            _json.readOnly = true;
-            break;
-          }
-          // passthrough types
-          case "promise": {
-            this.process(def.innerType, params);
-            result.ref = def.innerType;
-            break;
-          }
-          case "optional": {
-            this.process(def.innerType, params);
-            result.ref = def.innerType;
-            break;
-          }
-          case "lazy": {
-            const innerType = (schema as schemas.$ZodLazy)._zod.innerType;
-            this.process(innerType, params);
-            result.ref = innerType;
-            break;
-          }
-          case "custom": {
-            if (this.unrepresentable === "throw") {
-              throw new Error("Custom types cannot be represented in JSON Schema");
-            }
-            break;
-          }
-          case "function": {
-            if (this.unrepresentable === "throw") {
-              throw new Error("Function types cannot be represented in JSON Schema");
-            }
-            break;
-          }
-          default: {
-            def satisfies never;
-          }
-        }
-      }
-    }
-
-    // metadata
+    // metadata - apply metadata from our registry (may override global registry metadata)
     const meta = this.metadataRegistry.get(schema);
     if (meta) Object.assign(result.schema, meta);
 
