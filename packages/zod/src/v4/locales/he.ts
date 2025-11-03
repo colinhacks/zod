@@ -26,12 +26,12 @@ const error: () => errors.$ZodErrorMap = () => {
   };
 
   // Sizing units for size-related messages + localized origin labels
-  const Sizable: Record<string, { unit: string; verb: string }> = {
-    string: { unit: "אותיות", verb: "לכלול" },
-    file: { unit: "בייטים", verb: "לכלול" },
-    array: { unit: "פריטים", verb: "לכלול" },
-    set: { unit: "פריטים", verb: "לכלול" },
-    number: { unit: "", verb: "להיות" }, // no unit, but we still localize the origin
+  const Sizable: Record<string, { unit: string; shortLabel?: string; longLabel?: string }> = {
+    string: { unit: "תווים", shortLabel: "קצר", longLabel: "ארוך" },
+    file: { unit: "בייטים", shortLabel: "קטן", longLabel: "גדול" },
+    array: { unit: "פריטים", shortLabel: "קטן", longLabel: "גדול" },
+    set: { unit: "פריטים", shortLabel: "קטן", longLabel: "גדול" },
+    number: { unit: "", shortLabel: "קטן", longLabel: "גדול" }, // no unit
   };
 
   // Helpers — labels, articles, and verbs
@@ -52,7 +52,7 @@ const error: () => errors.$ZodErrorMap = () => {
     return gender === "f" ? "צריכה להיות" : "צריך להיות";
   };
 
-  const getSizing = (origin?: string | null): { unit: string; verb: string } | null => {
+  const getSizing = (origin?: string | null) => {
     if (!origin) return null;
     return Sizable[origin] ?? null;
   };
@@ -114,53 +114,108 @@ const error: () => errors.$ZodErrorMap = () => {
   return (issue) => {
     switch (issue.code) {
       case "invalid_type": {
-        // Expected type: show with ה׳ הידיעה and gendered verb
+        // Expected type: show without definite article for clearer Hebrew
         const expectedKey = issue.expected as string | undefined;
-        const expected = withDefinite(expectedKey);
-        const expectedVerb = verbFor(expectedKey);
+        const expected = typeLabel(expectedKey);
         // Received: show localized label if known, otherwise constructor/raw
         const receivedKey = parsedType(issue.input);
         const received = TypeNames[receivedKey]?.label ?? receivedKey;
-        return `קלט לא תקין: ${expected} ${expectedVerb}, התקבל ${received}`;
+        return `קלט לא תקין: צריך להיות ${expected}, התקבל ${received}`;
       }
 
       case "invalid_value": {
         if (issue.values.length === 1) {
-          return `קלט לא תקין: צריך ${util.stringifyPrimitive(issue.values[0])}`;
+          return `ערך לא תקין: הערך חייב להיות ${util.stringifyPrimitive(issue.values[0])}`;
         }
-        return `קלט לא תקין: צריך אחת מהאפשרויות ${util.joinValues(issue.values, " | ")}`;
+        // Join values with proper Hebrew formatting
+        const stringified = issue.values.map((v) => util.stringifyPrimitive(v));
+        if (issue.values.length === 2) {
+          return `ערך לא תקין: האפשרויות המתאימות הן ${stringified[0]} או ${stringified[1]}`;
+        }
+        // For 3+ values: "a", "b" או "c"
+        const lastValue = stringified[stringified.length - 1];
+        const restValues = stringified.slice(0, -1).join(", ");
+        return `ערך לא תקין: האפשרויות המתאימות הן ${restValues} או ${lastValue}`;
       }
 
       case "too_big": {
-        const adj = issue.inclusive ? "<=" : "<";
         const sizing = getSizing(issue.origin);
         const subject = withDefinite(issue.origin ?? "value");
+
+        if (issue.origin === "string") {
+          // Special handling for strings - more natural Hebrew
+          return `${sizing?.longLabel ?? "ארוך"} מדי: ${subject} צריכה להכיל ${issue.maximum.toString()} ${sizing?.unit ?? ""} ${issue.inclusive ? "או פחות" : "לכל היותר"}`.trim();
+        }
+
+        if (issue.origin === "number") {
+          // Natural Hebrew for numbers
+          const comparison = issue.inclusive ? `קטן או שווה ל-${issue.maximum}` : `קטן מ-${issue.maximum}`;
+          return `גדול מדי: ${subject} צריך להיות ${comparison}`;
+        }
+
+        if (issue.origin === "array" || issue.origin === "set") {
+          // Natural Hebrew for arrays and sets
+          const verb = issue.origin === "set" ? "צריכה" : "צריך";
+          const comparison = issue.inclusive
+            ? `${issue.maximum} ${sizing?.unit ?? ""} או פחות`
+            : `פחות מ-${issue.maximum} ${sizing?.unit ?? ""}`;
+          return `גדול מדי: ${subject} ${verb} להכיל ${comparison}`.trim();
+        }
+
+        const adj = issue.inclusive ? "<=" : "<";
         const be = verbFor(issue.origin ?? "value");
         if (sizing?.unit) {
-          return `גדול מדי: ${subject} ${be} ${adj}${issue.maximum.toString()} ${sizing.unit}`;
+          return `${sizing.longLabel} מדי: ${subject} ${be} ${adj}${issue.maximum.toString()} ${sizing.unit}`;
         }
-        return `גדול מדי: ${subject} ${be} ${adj}${issue.maximum.toString()}`;
+        return `${sizing?.longLabel ?? "גדול"} מדי: ${subject} ${be} ${adj}${issue.maximum.toString()}`;
       }
 
       case "too_small": {
-        const adj = issue.inclusive ? ">=" : ">";
         const sizing = getSizing(issue.origin);
         const subject = withDefinite(issue.origin ?? "value");
+
+        if (issue.origin === "string") {
+          // Special handling for strings - more natural Hebrew
+          return `${sizing?.shortLabel ?? "קצר"} מדי: ${subject} צריכה להכיל ${issue.minimum.toString()} ${sizing?.unit ?? ""} ${issue.inclusive ? "או יותר" : "לפחות"}`.trim();
+        }
+
+        if (issue.origin === "number") {
+          // Natural Hebrew for numbers
+          const comparison = issue.inclusive ? `גדול או שווה ל-${issue.minimum}` : `גדול מ-${issue.minimum}`;
+          return `קטן מדי: ${subject} צריך להיות ${comparison}`;
+        }
+
+        if (issue.origin === "array" || issue.origin === "set") {
+          // Natural Hebrew for arrays and sets
+          const verb = issue.origin === "set" ? "צריכה" : "צריך";
+          const comparison = issue.inclusive
+            ? `${issue.minimum} ${sizing?.unit ?? ""} או יותר`
+            : `יותר מ-${issue.minimum} ${sizing?.unit ?? ""}`;
+          return `קטן מדי: ${subject} ${verb} להכיל ${comparison}`.trim();
+        }
+
+        const adj = issue.inclusive ? ">=" : ">";
         const be = verbFor(issue.origin ?? "value");
         if (sizing?.unit) {
-          return `קטן מדי: ${subject} ${be} ${adj}${issue.minimum.toString()} ${sizing.unit}`;
+          return `${sizing.shortLabel} מדי: ${subject} ${be} ${adj}${issue.minimum.toString()} ${sizing.unit}`;
         }
-        return `קטן מדי: ${subject} ${be} ${adj}${issue.minimum.toString()}`;
+        return `${sizing?.shortLabel ?? "קטן"} מדי: ${subject} ${be} ${adj}${issue.minimum.toString()}`;
       }
 
       case "invalid_format": {
         const _issue = issue as errors.$ZodStringFormatIssues;
         // These apply to strings — use feminine grammar + ה׳ הידיעה
-        if (_issue.format === "starts_with") return `המחרוזת חייבת להתחיל ב"${_issue.prefix}"`;
-        if (_issue.format === "ends_with") return `המחרוזת חייבת להסתיים ב"${_issue.suffix}"`;
+        if (_issue.format === "starts_with") return `המחרוזת חייבת להתחיל ב "${_issue.prefix}"`;
+        if (_issue.format === "ends_with") return `המחרוזת חייבת להסתיים ב "${_issue.suffix}"`;
         if (_issue.format === "includes") return `המחרוזת חייבת לכלול "${_issue.includes}"`;
         if (_issue.format === "regex") return `המחרוזת חייבת להתאים לתבנית ${_issue.pattern}`;
-        return `${Nouns[_issue.format] ?? _issue.format} לא תקין`;
+
+        // Handle gender agreement for formats
+        const noun = Nouns[_issue.format] ?? _issue.format;
+        if (noun === "כתובת אימייל" || noun === "כתובת רשת") {
+          return `${noun} לא תקינה`;
+        }
+        return `${noun} לא תקין`;
       }
 
       case "not_multiple_of":
