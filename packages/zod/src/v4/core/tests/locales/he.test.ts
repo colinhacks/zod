@@ -31,7 +31,7 @@ describe("Hebrew localization", () => {
       const result = schema.safeParse([]);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe("קטן מדי: המערך צריך להכיל 1 פריטים או יותר");
+        expect(result.error.issues[0].message).toBe("קטן מדי: המערך צריך להכיל לפחות פריט אחד");
       }
     });
 
@@ -40,7 +40,7 @@ describe("Hebrew localization", () => {
       const result = schema.safeParse(new Set(["a"]));
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe("קטן מדי: הקבוצה צריכה להכיל 2 פריטים או יותר");
+        expect(result.error.issues[0].message).toBe("קטן מדי: הקבוצה (Set) צריכה להכיל 2 פריטים או יותר");
       }
     });
   });

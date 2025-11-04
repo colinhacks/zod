@@ -13,11 +13,11 @@ const error: () => errors.$ZodErrorMap = () => {
     array: { label: "מערך", gender: "m" },
     object: { label: "אובייקט", gender: "m" },
     null: { label: "ערך ריק (null)", gender: "m" },
-    undefined: { label: "ערך לא מוגדר", gender: "m" },
-    symbol: { label: "סימבול", gender: "m" },
+    undefined: { label: "ערך לא מוגדר (undefined)", gender: "m" },
+    symbol: { label: "סימבול (Symbol)", gender: "m" },
     function: { label: "פונקציה", gender: "f" },
     map: { label: "מפה (Map)", gender: "f" },
-    set: { label: "קבוצה", gender: "f" },
+    set: { label: "קבוצה (Set)", gender: "f" },
     file: { label: "קובץ", gender: "m" },
     promise: { label: "Promise", gender: "m" },
     NaN: { label: "NaN", gender: "m" },
@@ -77,38 +77,38 @@ const error: () => errors.$ZodErrorMap = () => {
   };
 
   const Nouns: {
-    [k in $ZodStringFormats]: string;
+    [k in $ZodStringFormats]: { label: string; gender: "m" | "f" };
   } = {
-    regex: "קלט",
-    email: "כתובת אימייל",
-    url: "כתובת רשת",
-    emoji: "אימוג'י",
-    uuid: "UUID",
-    nanoid: "nanoid",
-    guid: "GUID",
-    cuid: "cuid",
-    cuid2: "cuid2",
-    ulid: "ULID",
-    xid: "XID",
-    ksuid: "KSUID",
-    datetime: "תאריך וזמן ISO",
-    date: "תאריך ISO",
-    time: "זמן ISO",
-    duration: "משך זמן ISO",
-    ipv4: "כתובת IPv4",
-    ipv6: "כתובת IPv6",
-    cidrv4: "טווח IPv4",
-    cidrv6: "טווח IPv6",
-    base64: "מחרוזת בבסיס 64",
-    base64url: "מחרוזת בבסיס 64 לכתובות רשת",
-    json_string: "מחרוזת JSON",
-    e164: "מספר E.164",
-    jwt: "JWT",
-    ends_with: "קלט",
-    includes: "קלט",
-    lowercase: "קלט",
-    starts_with: "קלט",
-    uppercase: "קלט",
+    regex: { label: "קלט", gender: "m" },
+    email: { label: "כתובת אימייל", gender: "f" },
+    url: { label: "כתובת רשת", gender: "f" },
+    emoji: { label: "אימוג'י", gender: "m" },
+    uuid: { label: "UUID", gender: "m" },
+    nanoid: { label: "nanoid", gender: "m" },
+    guid: { label: "GUID", gender: "m" },
+    cuid: { label: "cuid", gender: "m" },
+    cuid2: { label: "cuid2", gender: "m" },
+    ulid: { label: "ULID", gender: "m" },
+    xid: { label: "XID", gender: "m" },
+    ksuid: { label: "KSUID", gender: "m" },
+    datetime: { label: "תאריך וזמן ISO", gender: "m" },
+    date: { label: "תאריך ISO", gender: "m" },
+    time: { label: "זמן ISO", gender: "m" },
+    duration: { label: "משך זמן ISO", gender: "m" },
+    ipv4: { label: "כתובת IPv4", gender: "f" },
+    ipv6: { label: "כתובת IPv6", gender: "f" },
+    cidrv4: { label: "טווח IPv4", gender: "m" },
+    cidrv6: { label: "טווח IPv6", gender: "m" },
+    base64: { label: "מחרוזת בבסיס 64", gender: "f" },
+    base64url: { label: "מחרוזת בבסיס 64 לכתובות רשת", gender: "f" },
+    json_string: { label: "מחרוזת JSON", gender: "f" },
+    e164: { label: "מספר E.164", gender: "m" },
+    jwt: { label: "JWT", gender: "m" },
+    ends_with: { label: "קלט", gender: "m" },
+    includes: { label: "קלט", gender: "m" },
+    lowercase: { label: "קלט", gender: "m" },
+    starts_with: { label: "קלט", gender: "m" },
+    uppercase: { label: "קלט", gender: "m" },
   };
 
   return (issue) => {
@@ -188,6 +188,13 @@ const error: () => errors.$ZodErrorMap = () => {
         if (issue.origin === "array" || issue.origin === "set") {
           // Natural Hebrew for arrays and sets
           const verb = issue.origin === "set" ? "צריכה" : "צריך";
+
+          // Special case for singular (minimum === 1)
+          if (issue.minimum === 1 && issue.inclusive) {
+            const singularPhrase = issue.origin === "set" ? "לפחות פריט אחד" : "לפחות פריט אחד";
+            return `קטן מדי: ${subject} ${verb} להכיל ${singularPhrase}`;
+          }
+
           const comparison = issue.inclusive
             ? `${issue.minimum} ${sizing?.unit ?? ""} או יותר`
             : `יותר מ-${issue.minimum} ${sizing?.unit ?? ""}`;
@@ -211,11 +218,11 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "regex") return `המחרוזת חייבת להתאים לתבנית ${_issue.pattern}`;
 
         // Handle gender agreement for formats
-        const noun = Nouns[_issue.format] ?? _issue.format;
-        if (noun === "כתובת אימייל" || noun === "כתובת רשת") {
-          return `${noun} לא תקינה`;
-        }
-        return `${noun} לא תקין`;
+        const nounEntry = Nouns[_issue.format];
+        const noun = nounEntry?.label ?? _issue.format;
+        const gender = nounEntry?.gender ?? "m";
+        const adjective = gender === "f" ? "תקינה" : "תקין";
+        return `${noun} לא ${adjective}`;
       }
 
       case "not_multiple_of":
