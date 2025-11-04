@@ -212,49 +212,6 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
       inst._zod.run = inst._zod.parse;
     });
   } else {
-    const runChecks = (
-      payload: ParsePayload,
-      checks: checks.$ZodCheck<never>[],
-      ctx?: ParseContextInternal | undefined
-    ): util.MaybeAsync<ParsePayload> => {
-      let isAborted = util.aborted(payload);
-
-      let asyncResult!: Promise<unknown> | undefined;
-      for (const ch of checks) {
-        if (ch._zod.def.when) {
-          const shouldRun = ch._zod.def.when(payload);
-          if (!shouldRun) continue;
-        } else if (isAborted) {
-          continue;
-        }
-        const currLen = payload.issues.length;
-        const _ = ch._zod.check(payload as any) as any as ParsePayload;
-
-        if (_ instanceof Promise && ctx?.async === false) {
-          throw new core.$ZodAsyncError();
-        }
-        if (asyncResult || _ instanceof Promise) {
-          asyncResult = (asyncResult ?? Promise.resolve()).then(async () => {
-            await _;
-            const nextLen = payload.issues.length;
-            if (nextLen === currLen) return;
-            if (!isAborted) isAborted = util.aborted(payload, currLen);
-          });
-        } else {
-          const nextLen = payload.issues.length;
-          if (nextLen === currLen) continue;
-          if (!isAborted) isAborted = util.aborted(payload, currLen);
-        }
-      }
-
-      if (asyncResult) {
-        return asyncResult.then(() => {
-          return payload;
-        });
-      }
-      return payload;
-    };
-
     // const handleChecksResult = (
     //   checkResult: ParsePayload,
     //   originalResult: ParsePayload,
@@ -265,6 +222,9 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
     //     return inst._zod.parse(checkResult, ctx);
     //   return originalResult;
     // };
+
+    const runChecks = checks[0]._zod["~runChecks"];
+
     const handleCanaryResult = (canary: ParsePayload, payload: ParsePayload, ctx: ParseContextInternal) => {
       // abort if the canary is aborted
       if (util.aborted(canary)) {

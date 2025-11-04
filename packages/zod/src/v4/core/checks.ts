@@ -23,6 +23,14 @@ export interface $ZodCheckInternals<T> {
   issc?: errors.$ZodIssueBase;
   check(payload: schemas.ParsePayload<T>): util.MaybeAsync<void>;
   onattach: ((schema: schemas.$ZodType) => void)[];
+  /**
+   * @internal
+   */
+  "~runChecks"(
+    payload: schemas.ParsePayload,
+    checks: $ZodCheck<never>[],
+    ctx?: schemas.ParseContextInternal | undefined
+  ): util.MaybeAsync<schemas.ParsePayload>;
 }
 
 export interface $ZodCheck<in T = never> {
@@ -35,6 +43,49 @@ export const $ZodCheck: core.$constructor<$ZodCheck<any>> = /*@__PURE__*/ core.$
     inst._zod ??= {} as any;
     inst._zod.def = def;
     inst._zod.onattach ??= [];
+    // Store runChecks on each check instance for tree-shaking
+    inst._zod["~runChecks"] ??= function runChecks(
+      payload: schemas.ParsePayload,
+      checks: $ZodCheck<never>[],
+      ctx?: schemas.ParseContextInternal | undefined
+    ): util.MaybeAsync<schemas.ParsePayload> {
+      let isAborted = util.aborted(payload);
+
+      let asyncResult!: Promise<unknown> | undefined;
+      for (const ch of checks) {
+        if (ch._zod.def.when) {
+          const shouldRun = ch._zod.def.when(payload);
+          if (!shouldRun) continue;
+        } else if (isAborted) {
+          continue;
+        }
+        const currLen = payload.issues.length;
+        const _ = ch._zod.check(payload as any) as any as schemas.ParsePayload;
+
+        if (_ instanceof Promise && ctx?.async === false) {
+          throw new core.$ZodAsyncError();
+        }
+        if (asyncResult || _ instanceof Promise) {
+          asyncResult = (asyncResult ?? Promise.resolve()).then(async () => {
+            await _;
+            const nextLen = payload.issues.length;
+            if (nextLen === currLen) return;
+            if (!isAborted) isAborted = util.aborted(payload, currLen);
+          });
+        } else {
+          const nextLen = payload.issues.length;
+          if (nextLen === currLen) continue;
+          if (!isAborted) isAborted = util.aborted(payload, currLen);
+        }
+      }
+
+      if (asyncResult) {
+        return asyncResult.then(() => {
+          return payload;
+        });
+      }
+      return payload;
+    };
   }
 );
 

@@ -21,14 +21,7 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
 ): $constructor<T, D> {
   function init(inst: T, def: D) {
     if (!inst._zod) {
-      Object.defineProperty(inst, "_zod", {
-        value: {
-          def,
-          constr: _,
-          traits: new Set(),
-        },
-        enumerable: false,
-      });
+      Object.defineProperty(inst, "_zod", { value: { def, constr: _, traits: new Set() }, enumerable: false });
     }
 
     if (inst._zod.traits.has(name)) {

@@ -27,7 +27,7 @@ export function toJSON<T extends JSONSchema.BaseSchema>(
   cache.set(schema, json);
   Object.assign(json, schema._zod.bag);
 
-  const meta = globalRegistry._map.get(schema);
+  const meta = globalRegistry.get(schema);
   if (meta) Object.assign(json, meta);
 
   const context = { io: "input" as const, target: "draft-2020-12" as const, ...ctx };
