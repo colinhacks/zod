@@ -46,9 +46,11 @@ test("z.object().check()", () => {
 
   type a = z.output<typeof a>;
 
-  a.check(({ value }) => {
-    expectTypeOf(value).toEqualTypeOf<a>();
-  });
+  a.check(
+    z.check(({ value }) => {
+      expectTypeOf(value).toEqualTypeOf<a>();
+    })
+  );
 });
 
 test("z.strictObject", () => {
