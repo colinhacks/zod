@@ -406,10 +406,6 @@ describe("JSON Schema Generation", () => {
     });
 
     it("handles recursive schemas", () => {
-      interface Category {
-        name: string;
-        subcategories?: Category[];
-      }
       const Category: any = z.lazy(() =>
         z.object({
           name: z.string(),
