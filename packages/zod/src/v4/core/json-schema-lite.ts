@@ -9,6 +9,25 @@ export interface JSONSchemaContext {
    * - `"input"` — Default. Convert the input schema.
    * - `"output"` — Convert the output schema. */
   io?: "input" | "output";
+  /** The JSON Schema version to target.
+   * - `"draft-2020-12"` — Default. JSON Schema Draft 2020-12
+   * - `"draft-7"` — JSON Schema Draft 7 */
+  target?: "draft-07" | "draft-2020-12";
+}
+
+export function strip(json: Record<string, any>, names: string[]): void {
+  for (const name of names) {
+    delete json[name];
+  }
+}
+
+export function copy(target: Record<string, any>, source: Record<string, any>, fields: string[]): void {
+  for (const field of fields) {
+    const value = source[field];
+    if (value !== undefined) {
+      target[field] = value;
+    }
+  }
 }
 
 export function toJSON<T extends JSONSchema.BaseSchema>(
@@ -26,7 +45,7 @@ export function toJSON<T extends JSONSchema.BaseSchema>(
   const meta = globalRegistry._map.get(schema);
   if (meta) Object.assign(json, meta);
 
-  const context = { io: "input" as const, ...ctx };
+  const context = { io: "input" as const, target: "draft-2020-12" as const, ...ctx };
   build(json, context);
   return json;
 }
