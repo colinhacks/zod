@@ -1,5 +1,6 @@
 import type { $ZodTypeDiscriminable } from "./api.js";
 import * as checks from "./checks.js";
+import { runChecks } from "./checks.js";
 import * as core from "./core.js";
 import { Doc } from "./doc.js";
 import type * as errors from "./errors.js";
@@ -222,8 +223,6 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
     //     return inst._zod.parse(checkResult, ctx);
     //   return originalResult;
     // };
-
-    const runChecks = checks[0]._zod["~runChecks"];
 
     const handleCanaryResult = (canary: ParsePayload, payload: ParsePayload, ctx: ParseContextInternal) => {
       // abort if the canary is aborted

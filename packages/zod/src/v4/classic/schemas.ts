@@ -1,5 +1,5 @@
 import * as core from "../core/index.js";
-import { util } from "../core/index.js";
+import { util, runChecks } from "../core/index.js";
 
 import * as checks from "./checks.js";
 import * as iso from "./iso.js";
@@ -150,7 +150,9 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
         checks: [
           ...(def.checks ?? []),
           ...checks.map((ch) =>
-            typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
+            typeof ch === "function"
+              ? { _zod: { check: ch, def: { check: "custom" }, onattach: [], "~runChecks": runChecks } }
+              : ch
           ),
         ],
       })

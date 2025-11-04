@@ -10,7 +10,15 @@ export interface ZodMiniType<
   out Internals extends core.$ZodTypeInternals<Output, Input> = core.$ZodTypeInternals<Output, Input>,
 > extends core.$ZodType<Output, Input, Internals> {
   type: Internals["def"]["type"];
-  check(...checks: (core.CheckFn<core.output<this>> | core.$ZodCheck<core.output<this>>)[]): this;
+
+  check(...checks: core.$ZodCheck<core.output<this>>[]): this;
+  /** @deprecated Plain functions cannot be passed into `.check()`. Instead, wrap the function in z.check().
+   *
+   * ```ts
+   * z.string().check(z.check((ctx) => { ... }));
+   * ```
+   */
+  check(...checks: core.CheckFn<core.output<this>>[]): this;
   clone(def?: Internals["def"], params?: { parent: boolean }): this;
   register<R extends core.$ZodRegistry>(
     registry: R,
@@ -52,15 +60,17 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
     inst.parseAsync = async (data, params) => parse.parseAsync(inst, data, params, { callee: inst.parseAsync });
     inst.safeParseAsync = async (data, params) => parse.safeParseAsync(inst, data, params);
     inst.check = (...checks) => {
+      for (const ch of checks) {
+        if (typeof ch === "function") {
+          throw new Error(
+            "[zod/mini] Plain functions cannot be passed into .check(). Wrap the check function first: z.check(fn)"
+          );
+        }
+      }
       return inst.clone(
         {
           ...def,
-          checks: [
-            ...(def.checks ?? []),
-            ...checks.map((ch) =>
-              typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
-            ),
-          ],
+          checks: [...((def.checks as any) ?? []), ...checks],
         }
         // { parent: true }
       );
