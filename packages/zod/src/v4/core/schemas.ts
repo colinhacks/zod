@@ -3,7 +3,7 @@ import * as checks from "./checks.js";
 import * as core from "./core.js";
 import { Doc } from "./doc.js";
 import type * as errors from "./errors.js";
-import { type JSONSchemaContext, copy, strip, toJSON } from "./json-schema-lite.js";
+import { type JSONSchemaContext, rename, strip, toJSON } from "./json-schema-lite.js";
 import type * as JSONSchema from "./json-schema.js";
 import { parse, parseAsync, safeParse, safeParseAsync } from "./parse.js";
 import * as regexes from "./regexes.js";
@@ -188,7 +188,7 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
   inst._zod.version = version;
   // Only set default getJSONSchema if not already set
   inst._zod.getJSONSchema ??= () => {
-    throw new Error(`Unsupported JSON Schema conversion for type "${def.type}"`);
+    throw new Error(`${def.type} cannot be represented in JSON Schema`);
   };
 
   const checks = [...(inst._zod.def.checks ?? [])];
@@ -373,25 +373,21 @@ export const $ZodString: core.$constructor<$ZodString> = /*@__PURE__*/ core.$con
   inst._zod.getJSONSchema = (ctx) =>
     toJSON<JSONSchema.StringSchema>(inst, ctx, (json) => {
       json.type = "string";
-      const bag = inst._zod.bag as $ZodStringInternals<unknown>["bag"];
-      const { minimum, maximum, format, patterns, contentEncoding } = bag ?? {};
+      const bag = (inst._zod.bag as $ZodStringInternals<unknown>["bag"]) ?? {};
+      const { format, patterns } = bag ?? {};
 
-      if (typeof minimum === "number") json.minLength = minimum;
-      if (typeof maximum === "number") json.maxLength = maximum;
+      rename(json, { minimum: "minLength", maximum: "maxLength" });
 
       if (format) {
         json.format = stringFormatMap[format as checks.$ZodStringFormats] ?? format;
-        if (json.format === "") delete json.format;
       }
-      if (contentEncoding) json.contentEncoding = contentEncoding;
 
-      if (patterns && patterns.size > 0) {
-        const regexes = [...patterns];
-        json.pattern = regexes[regexes.length - 1]!.source;
-      }
+      const p = [...(patterns ?? [])]?.[0]?.source;
+      if (p) json.pattern = p;
 
       strip(json, ["minimum", "maximum", "patterns"]);
     });
+
   inst._zod.parse = (payload, _) => {
     if (def.coerce)
       try {
@@ -1110,7 +1106,6 @@ export const $ZodNumber: core.$constructor<$ZodNumber> = /*@__PURE__*/ core.$con
     toJSON<JSONSchema.NumberSchema | JSONSchema.IntegerSchema>(inst, ctx, (json) => {
       const bag = inst._zod.bag;
       json.type = typeof bag.format === "string" && bag.format.includes("int") ? "integer" : "number";
-      copy(json, bag ?? {}, ["minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum", "multipleOf"]);
 
       strip(json, ["pattern"]);
     });
@@ -1254,9 +1249,6 @@ export interface $ZodBigInt<T = unknown> extends $ZodType {
 export const $ZodBigInt: core.$constructor<$ZodBigInt> = /*@__PURE__*/ core.$constructor("$ZodBigInt", (inst, def) => {
   $ZodType.init(inst, def);
   inst._zod.pattern = regexes.bigint;
-  inst._zod.getJSONSchema = () => {
-    throw new Error("BigInt cannot be represented in JSON Schema");
-  };
 
   inst._zod.parse = (payload, _ctx) => {
     if (def.coerce)
@@ -1592,9 +1584,6 @@ export interface $ZodDate<T = unknown> extends $ZodType {
 
 export const $ZodDate: core.$constructor<$ZodDate> = /*@__PURE__*/ core.$constructor("$ZodDate", (inst, def) => {
   $ZodType.init(inst, def);
-  inst._zod.getJSONSchema = () => {
-    throw new Error("Date cannot be represented in JSON Schema");
-  };
 
   inst._zod.parse = (payload, _ctx) => {
     if (def.coerce) {
@@ -1909,33 +1898,29 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
   // requires cast because technically $ZodObject doesn't extend
   $ZodType.init(inst, def);
   inst._zod.getJSONSchema = (ctx) =>
-    toJSON<JSONSchema.ObjectSchema>(inst, ctx, (json, context) => {
+    toJSON<JSONSchema.ObjectSchema>(inst, ctx, (json, ctx) => {
       json.type = "object";
       const shape = def.shape as $ZodShape;
-      const properties: Record<string, JSONSchema.BaseSchema> = {};
-      const required: string[] = [];
+      json.properties = {};
+      json.required = [];
       for (const key of Object.keys(shape)) {
         const child = shape[key]!;
-        properties[key] = child._zod.getJSONSchema(context);
-        // Determine required fields based on io mode
-        const isRequired = context.io === "input" ? child._zod.optin === undefined : child._zod.optout === undefined;
+        json.properties[key] = child._zod.getJSONSchema(ctx);
+        const isRequired = child._zod[ctx.io === "input" ? "optin" : "optout"] === undefined;
         if (isRequired) {
-          required.push(key);
+          json.required.push(key);
         }
       }
-      json.properties = properties;
-      if (required.length) json.required = required;
-      const catchall = def.catchall as $ZodType | undefined;
-      if (catchall) {
-        json.additionalProperties = catchall._zod.def.type === "never" ? false : catchall._zod.getJSONSchema(context);
+
+      if (def.catchall) {
+        json.additionalProperties = def.catchall._zod.getJSONSchema(ctx);
       } else {
-        // Match full implementation logic: false for output mode, omit for input mode
-        if (context.io === "output") {
+        if (ctx.io === "output") {
           json.additionalProperties = false;
         }
       }
     });
-  // const sh = def.shape;
+
   const desc = Object.getOwnPropertyDescriptor(def, "shape");
   if (!desc?.get) {
     const sh = def.shape;
@@ -2541,10 +2526,13 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
     toJSON<JSONSchema.ArraySchema>(inst, ctx, (json, context) => {
       json.type = "array";
       const items = def.items.map((item) => item._zod.getJSONSchema(context));
-      const target = context.target ?? "draft-2020-12";
-      if (target === "draft-2020-12") {
+      if (context.target === "draft-2020-12") {
         json.prefixItems = items;
-        if (def.rest) json.items = def.rest._zod.getJSONSchema(context);
+        if (def.rest) {
+          json.items = def.rest._zod.getJSONSchema(context);
+        } else {
+          json.items = false;
+        }
       } else {
         json.items = items;
         if (def.rest) json.additionalItems = def.rest._zod.getJSONSchema(context);
@@ -3099,6 +3087,7 @@ export const $ZodLiteral: core.$constructor<$ZodLiteral> = /*@__PURE__*/ core.$c
     );
     inst._zod.getJSONSchema = (ctx) =>
       toJSON<JSONSchema.BaseSchema>(inst, ctx, (json) => {
+        json.type = typeof def.values[0] as any;
         if (def.values.length === 1) {
           json.const = def.values[0] as string | number | boolean | null;
         } else {
@@ -4370,6 +4359,7 @@ export interface $ZodLazy<T extends SomeType = $ZodType> extends $ZodType {
 
 export const $ZodLazy: core.$constructor<$ZodLazy> = /*@__PURE__*/ core.$constructor("$ZodLazy", (inst, def) => {
   $ZodType.init(inst, def);
+
   inst._zod.getJSONSchema = (ctx) =>
     toJSON<JSONSchema.BaseSchema>(inst, ctx, (json, context) => {
       const resolved = inst._zod.innerType._zod.getJSONSchema(context);
@@ -4389,8 +4379,7 @@ export const $ZodLazy: core.$constructor<$ZodLazy> = /*@__PURE__*/ core.$constru
   util.defineLazy(inst._zod, "optin", () => inst._zod.innerType._zod.optin ?? undefined);
   util.defineLazy(inst._zod, "optout", () => inst._zod.innerType._zod.optout ?? undefined);
   inst._zod.parse = (payload, ctx) => {
-    const inner = inst._zod.innerType;
-    return inner._zod.run(payload, ctx);
+    return inst._zod.innerType._zod.run(payload, ctx);
   };
 });
 

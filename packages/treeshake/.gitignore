@@ -1,3 +1,4 @@
-out-*
 out.js
+out-*
 meta.json
+.temp-entry.ts

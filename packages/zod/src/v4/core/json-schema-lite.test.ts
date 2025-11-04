@@ -54,6 +54,17 @@ describe("JSON Schema Generation", () => {
       `);
     });
 
+    it("email with custom pattern", () => {
+      const schema = z.email({ pattern: /^[a-z]+@[a-z]+\.[a-z]+$/i });
+      expect(schema._zod.getJSONSchema()).toMatchInlineSnapshot(`
+        {
+          "format": "email",
+          "pattern": "^[a-z]+@[a-z]+\\.[a-z]+$",
+          "type": "string",
+        }
+      `);
+    });
+
     it("url", () => {
       const schema = z.url();
       expect(schema._zod.getJSONSchema()).toMatchInlineSnapshot(`
@@ -128,6 +139,7 @@ describe("JSON Schema Generation", () => {
       const schema = z.int();
       expect(schema._zod.getJSONSchema()).toMatchInlineSnapshot(`
         {
+          "format": "safeint",
           "maximum": 9007199254740991,
           "minimum": -9007199254740991,
           "type": "integer",
@@ -155,7 +167,12 @@ describe("JSON Schema Generation", () => {
 
     it("bigint throws", () => {
       const schema = z.bigint();
-      expect(() => schema._zod.getJSONSchema()).toThrow('Unsupported JSON Schema conversion for type "bigint"');
+      expect(() => schema._zod.getJSONSchema()).toThrow();
+      try {
+        schema._zod.getJSONSchema();
+      } catch (error) {
+        expect(error).toMatchInlineSnapshot(`[Error: bigint cannot be represented in JSON Schema]`);
+      }
     });
   });
 
@@ -348,6 +365,7 @@ describe("JSON Schema Generation", () => {
       const schema = z.tuple([z.string(), z.number()]);
       expect(schema._zod.getJSONSchema()).toMatchInlineSnapshot(`
         {
+          "items": false,
           "prefixItems": [
             {
               "type": "string",
@@ -431,15 +449,106 @@ describe("JSON Schema Generation", () => {
     });
   });
 
+  describe("Target versions", () => {
+    describe("draft-2020-12", () => {
+      it("tuple uses prefixItems", () => {
+        const schema = z.tuple([z.string(), z.number()]);
+        expect(schema._zod.getJSONSchema({ io: "input", target: "draft-2020-12" })).toMatchInlineSnapshot(`
+          {
+            "items": false,
+            "prefixItems": [
+              {
+                "type": "string",
+              },
+              {
+                "type": "number",
+              },
+            ],
+            "type": "array",
+          }
+        `);
+      });
+
+      it("tuple with rest uses prefixItems and items", () => {
+        const schema = z.tuple([z.string(), z.number()]).rest(z.boolean());
+        expect(schema._zod.getJSONSchema({ io: "input", target: "draft-2020-12" })).toMatchInlineSnapshot(`
+          {
+            "items": {
+              "type": "boolean",
+            },
+            "prefixItems": [
+              {
+                "type": "string",
+              },
+              {
+                "type": "number",
+              },
+            ],
+            "type": "array",
+          }
+        `);
+      });
+    });
+
+    describe("draft-07", () => {
+      it("tuple uses items array", () => {
+        const schema = z.tuple([z.string(), z.number()]);
+        expect(schema._zod.getJSONSchema({ io: "input", target: "draft-07" })).toMatchInlineSnapshot(`
+          {
+            "items": [
+              {
+                "type": "string",
+              },
+              {
+                "type": "number",
+              },
+            ],
+            "type": "array",
+          }
+        `);
+      });
+
+      it("tuple with rest uses items array and additionalItems", () => {
+        const schema = z.tuple([z.string(), z.number()]).rest(z.boolean());
+        expect(schema._zod.getJSONSchema({ io: "input", target: "draft-07" })).toMatchInlineSnapshot(`
+          {
+            "additionalItems": {
+              "type": "boolean",
+            },
+            "items": [
+              {
+                "type": "string",
+              },
+              {
+                "type": "number",
+              },
+            ],
+            "type": "array",
+          }
+        `);
+      });
+    });
+  });
+
   describe("Unsupported types", () => {
     it("symbol throws", () => {
       const schema = z.symbol();
-      expect(() => schema._zod.getJSONSchema()).toThrow('Unsupported JSON Schema conversion for type "symbol"');
+      expect(() => schema._zod.getJSONSchema()).toThrow();
+      try {
+        schema._zod.getJSONSchema();
+      } catch (error) {
+        expect(error).toMatchInlineSnapshot(`[Error: symbol cannot be represented in JSON Schema]`);
+      }
     });
 
     it("function throws", () => {
       const schema = z.function();
-      expect(() => schema._zod.getJSONSchema()).toThrow('Unsupported JSON Schema conversion for type "function"');
+      expect(() => schema._zod.getJSONSchema()).toThrow();
+      try {
+        schema._zod.getJSONSchema();
+      } catch (error) {
+        expect(error).toMatchInlineSnapshot(`[Error: function cannot be represented in JSON Schema]`);
+      }
     });
   });
 });
