@@ -2196,3 +2196,11 @@ export function preprocess<A, U extends core.SomeType, B = unknown>(
 ): ZodPipe<ZodTransform<A, B>, U> {
   return pipe(transform(fn as any), schema as any) as any;
 }
+
+// makeSchema
+
+export function makeSchema<T extends Record<string, any>>() {
+  return <S extends { [K in keyof T]-?: ZodType<T[K]> }>(shape: S) => {
+    return object(shape).strict() as ZodObject<S, core.$strict>;
+  };
+}
