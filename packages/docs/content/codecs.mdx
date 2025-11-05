@@ -111,7 +111,7 @@ payloadSchema.decode({
 
 ### Type-safe inputs
 
-While `.parse()` and `.decode()` behave identically at *runtime*, they have different type signatures. The `.parse()` method accepts `unknown` as input, and returns a value that matches the schema's inferred *output type*. By constrast, the `z.decode()` and `z.encode()` functions have *strongly-typed inputs*. 
+While `.parse()` and `.decode()` behave identically at *runtime*, they have different type signatures. The `.parse()` method accepts `unknown` as input, and returns a value that matches the schema's inferred *output type*. By contrast, the `z.decode()` and `z.encode()` functions have *strongly-typed inputs*. 
 
 ```ts
 stringToDate.parse(12345); 
@@ -166,7 +166,7 @@ There are some subtleties to how certain Zod schemas "reverse" their parse behav
 
 ### Codecs
 
-This one is fairly self-explanatory. Codecs encapsulate a bi-directional transformation between two types. During `z.decode()`, the `decode` transform is executed. During `z.encode()`, the `encode` transform is executed.
+This one is fairly self-explanatory. Codecs encapsulate a bi-directional transformation between two types. During `z.decode()`, the `decode` transform is executed.
 
 ```ts
 const stringToDate = z.codec(
@@ -197,7 +197,7 @@ During regular decoding, a `ZodPipe<A, B>` schema will first parse the data with
 All checks (`.refine()`, `.min()`, `.max()`, etc.) are still executed in both directions. 
 
 ```ts
-const schema = stringToDate.refine((date) => date.getFullYear() >= 2000, "Must be this millenium");
+const schema = stringToDate.refine((date) => date.getFullYear() >= 2000, "Must be this millennium");
 
 schema.encode(new Date("2000-01-01"));
 // => Date
@@ -259,7 +259,7 @@ stringWithCatch.encode(1234);
 
 > **Note** — [Stringbool](/api#stringbool) pre-dates the introduction of codecs in Zod. It has since been internally re-implemented as a codec. 
 
-The `z.stringbool()` API converts string values (`"true"`, `"false"`, `"yes"`, `"no"`, etc.) into `boolean`. By default, it will convert `true` to `"true"` and `false` to `"false"` during `z.encode()`..
+The `z.stringbool()` API converts string values (`"true"`, `"false"`, `"yes"`, `"no"`, etc.) into `boolean`. By default, it will convert `true` to `"true"` and `false` to `"false"` during `z.encode()`.
 
 ```ts
 const stringbool = z.stringbool();
