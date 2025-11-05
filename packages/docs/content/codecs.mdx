@@ -124,7 +124,7 @@ stringToDate.encode(12345);
 // ❌ TypeScript error: Argument of type 'number' is not assignable to parameter of type 'Date'.
 ```
 
-Why the difference? Encoding and decoding imply *transformation*. In many cases, the inputs to these methods
+Why the difference? Encoding and decoding imply *transformation*. In many cases, the inputs to these methods are already strongly typed in application code, so z.decode/z.encode accept strongly typed inputs to surface mistakes at compile time.
 Here's a diagram demonstrating the differences between the type signatures for `parse()`, `decode()`, and `encode()`.
 
 <ThemedImage 
