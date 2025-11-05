@@ -166,7 +166,7 @@ There are some subtleties to how certain Zod schemas "reverse" their parse behav
 
 ### Codecs
 
-This one is fairly self-explanatory. Codecs encapsulate a bi-directional transformation between two types. During `z.decode()`, the `decode` transform is executed.
+This one is fairly self-explanatory. Codecs encapsulate a bi-directional transformation between two types. `z.decode()` triggers the `decode` transform to convert input into a parsed value, while `z.encode()` triggers the `encode` transform to serialize it back.
 
 ```ts
 const stringToDate = z.codec(
