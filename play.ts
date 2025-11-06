@@ -1,34 +1,29 @@
 import * as z from "zod";
 
-// const Keys = z.literal(["id", "name", "email"]);
-// const schema = z.partialRecord(Keys, z.string());
-// type Schema = z.infer<typeof schema>;
+// Test the circular reference issue with z.lazy()
+const schema = z.lazy(() => z.tuple([schema]));
 
-// schema.parse({ id: "1" });
-
-// z.tuple([z.string()], z.number()).check(z.minLength(5));
-
-// Demonstrate optStart bug: when all items are optional, findIndex returns -1
-// This causes optStart = items.length - (-1) = items.length + 1
-// Which incorrectly rejects empty arrays for tuples with all optional items
-
-const allOptionalTuple = z.tuple([z.string().optional(), z.number().optional(), z.boolean().optional()]);
-
-// This should work (all items optional, empty array should be valid)
-// But currently fails because optStart = 3 - (-1) = 4, so tooSmall = 0 < 4 - 1 = 0 < 3
-console.log("Testing empty array with all optional tuple:");
+console.log("Testing circular lazy schema creation:");
 try {
-  const result = allOptionalTuple.parse([]);
-  console.log("✅ Success:", result);
+  // Try to access properties that depend on innerType during construction
+  // This should trigger the error if the bug exists
+  const _pattern = schema._zod.pattern;
+  const _optin = schema._zod.optin;
+  console.log("✅ Schema created successfully");
+  console.log("Pattern:", _pattern);
+  console.log("Optin:", _optin);
 } catch (error) {
-  console.log("❌ Error:", error);
+  console.log("❌ Error during schema creation:", error);
+  if (error instanceof Error) {
+    console.log("Message:", error.message);
+    console.log("Stack:", error.stack);
+  }
 }
 
-// This should also work (providing only some optional items)
-console.log("\nTesting partial array with all optional tuple:");
+console.log("\nTesting circular lazy schema parsing:");
 try {
-  const result = allOptionalTuple.parse(["hello"]);
-  console.log("✅ Success:", result);
+  const result = schema.parse([[]]);
+  console.log("✅ Parse Success:", result);
 } catch (error) {
-  console.log("❌ Error:", error);
+  console.log("❌ Parse Error:", error);
 }
