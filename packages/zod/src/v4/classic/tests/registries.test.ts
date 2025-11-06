@@ -164,7 +164,7 @@ test("loose examples", () => {
   });
 });
 
-test("function meta witout replacement", () => {
+test("function meta without replacement", () => {
   const myReg = z.registry<{
     defaulter: (arg: string, test: boolean) => number;
   }>();
