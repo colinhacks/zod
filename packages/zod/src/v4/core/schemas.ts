@@ -4166,8 +4166,8 @@ export const $ZodLazy: core.$constructor<$ZodLazy> = /*@__PURE__*/ core.$constru
   util.defineLazy(inst._zod, "innerType", () => def.getter() as $ZodType);
   util.defineLazy(inst._zod, "pattern", () => inst._zod.innerType._zod.pattern);
   util.defineLazy(inst._zod, "propValues", () => inst._zod.innerType._zod.propValues);
-  util.defineLazy(inst._zod, "optin", () => inst._zod.innerType._zod.optin ?? undefined);
-  util.defineLazy(inst._zod, "optout", () => inst._zod.innerType._zod.optout ?? undefined);
+  util.defineLazy(inst._zod, "optin", () => inst._zod.innerType?._zod.optin ?? undefined);
+  util.defineLazy(inst._zod, "optout", () => inst._zod.innerType?._zod.optout ?? undefined);
   inst._zod.parse = (payload, ctx) => {
     const inner = inst._zod.innerType;
     return inner._zod.run(payload, ctx);
