@@ -2411,7 +2411,6 @@ export interface $ZodTuple<
 export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$constructor("$ZodTuple", (inst, def) => {
   $ZodType.init(inst, def);
   const items = def.items;
-  const optStart = items.length - [...items].reverse().findIndex((item) => item._zod.optin !== "optional");
 
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
@@ -2427,6 +2426,9 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
 
     payload.value = [];
     const proms: Promise<any>[] = [];
+
+    const reversedIndex = [...items].reverse().findIndex((item) => item._zod.optin !== "optional");
+    const optStart = reversedIndex === -1 ? 0 : items.length - reversedIndex;
 
     if (!def.rest) {
       const tooBig = input.length > items.length;
