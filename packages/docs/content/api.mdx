@@ -365,10 +365,16 @@ schema.parse("http://example.com"); // ❌
 ```
 
 <Callout>
-  **Web URLs** — In many cases, you'll want to validate Web URLs specifically. Here's the recommended schema for doing so:
+  **Web URLs** — In many cases, you'll want to validate Web URLs specifically. For convenience, Zod provides `z.httpUrl()` as a shorthand:
 
   ```ts
-  const httpUrl = z.url({
+  z.httpUrl(); // validates HTTP/HTTPS URLs with valid domain names
+  ```
+
+  This is equivalent to:
+
+  ```ts
+  z.url({
     protocol: /^https?$/,
     hostname: z.regexes.domain
   });
@@ -388,101 +394,6 @@ new URL("HTTP://ExAmPle.com:80/./a/../b?X=1#f oo").href
 // => "http://example.com/b?X=1#f%20oo"
 ```
 
-### HTTP URLs
-
-For convenience, Zod provides `z.httpUrl()` as a shorthand for validating web URLs (HTTP or HTTPS only):
-
-```ts
-const schema = z.httpUrl();
-
-schema.parse("https://example.com"); // ✅
-schema.parse("http://example.com"); // ✅
-schema.parse("ftp://example.com"); // ❌
-schema.parse("mailto:user@example.com"); // ❌
-```
-
-This is equivalent to:
-
-```ts
-z.url({
-  protocol: /^https?$/,
-  hostname: z.regexes.domain
-});
-```
-
-### Hostnames
-
-To validate hostnames (domain names, localhost, or IP addresses):
-
-```ts
-const schema = z.hostname();
-
-schema.parse("example.com"); // ✅
-schema.parse("sub.example.com"); // ✅
-schema.parse("localhost"); // ✅
-schema.parse("192.168.1.1"); // ✅
-schema.parse("example.com:8080"); // ❌ (ports not allowed)
-schema.parse("http://example.com"); // ❌ (protocols not allowed)
-```
-
-### Emoji
-
-To validate that a string contains only emoji characters:
-
-```ts
-const schema = z.emoji();
-
-schema.parse("👋"); // ✅
-schema.parse("🍺👩‍🚀🫡"); // ✅
-schema.parse("💚💙💜"); // ✅
-schema.parse(":-)"); // ❌ (text emoticons not allowed)
-schema.parse("😀 is an emoji"); // ❌ (text not allowed)
-```
-
-### Base64
-
-To validate base64-encoded strings (with padding):
-
-```ts
-const schema = z.base64();
-
-schema.parse("SGVsbG8gV29ybGQ="); // ✅ "Hello World"
-schema.parse("VGhpcyBpcyBhbiBlbmNvZGVkIHN0cmluZw=="); // ✅
-schema.parse(""); // ✅ (empty string is valid)
-schema.parse("SGVsbG8gV29ybGQ"); // ❌ (missing padding)
-schema.parse("12345"); // ❌ (invalid length)
-```
-
-### Base64URL
-
-To validate base64url-encoded strings (URL-safe variant without padding):
-
-```ts
-const schema = z.base64url();
-
-schema.parse("SGVsbG8gV29ybGQ"); // ✅ "Hello World" (no padding)
-schema.parse("VGhpcyBpcyBhbiBlbmNvZGVkIHN0cmluZw"); // ✅
-schema.parse("w7_Dv8O-w74K"); // ✅ (uses - and _ instead of + and /)
-schema.parse("SGVsbG8gV29ybGQ="); // ❌ (padding not allowed)
-schema.parse("w7/Dv8O+w74K"); // ❌ (+ and / not allowed)
-```
-
-### Hexadecimal
-
-To validate hexadecimal strings:
-
-```ts
-const schema = z.hex();
-
-schema.parse("123abc"); // ✅
-schema.parse("DEADBEEF"); // ✅
-schema.parse("0123456789abcdefABCDEF"); // ✅
-schema.parse(""); // ✅ (empty string is valid)
-schema.parse("xyz"); // ❌
-schema.parse("123g"); // ❌
-schema.parse("hello world"); // ❌
-```
-
 ### JWTs
 
 Validate [JSON Web Tokens](https://jwt.io/).
@@ -490,77 +401,6 @@ Validate [JSON Web Tokens](https://jwt.io/).
 ```ts
 z.jwt();
 z.jwt({ alg: "HS256" });
-```
-
-### Nanoid
-
-Validates [Nanoid](https://github.com/ai/nanoid) format (21 character alphanumeric string with `_` and `-`):
-
-```ts
-const schema = z.nanoid();
-
-schema.parse("lfNZluvAxMkf7Q8C5H-QS"); // ✅
-schema.parse("mIU_4PJWikaU8fMbmkouz"); // ✅
-schema.parse("invalid-nanoid"); // ❌ (wrong length)
-```
-
-### CUID
-
-Validates [CUID](https://github.com/paralleldrive/cuid) format:
-
-```ts
-const schema = z.cuid();
-
-schema.parse("ckopqwooh000001la8mbi2im9"); // ✅
-schema.parse("cifjhdsfhsd-invalid-cuid"); // ❌
-```
-
-### CUID2
-
-Validates [CUID2](https://github.com/paralleldrive/cuid2) format (lowercase alphanumeric):
-
-```ts
-const schema = z.cuid2();
-
-schema.parse("tz4a98xxat96iws9zmbrgj3a"); // ✅
-schema.parse("a"); // ✅ (short strings allowed)
-schema.parse("tz4a98xxat96iws9zMbrgj3a"); // ❌ (uppercase not allowed)
-schema.parse("tz4a98xxat96iws-zmbrgj3a"); // ❌ (symbols not allowed)
-```
-
-### ULID
-
-Validates [ULID](https://github.com/ulid/spec) format (26 character Crockford Base32):
-
-```ts
-const schema = z.ulid();
-
-schema.parse("01ARZ3NDEKTSV4RRFFQ69G5FAV"); // ✅
-schema.parse("01arZ3nDeKTsV4RRffQ69G5FAV"); // ✅ (case insensitive)
-schema.parse("invalidulid"); // ❌ (wrong length)
-schema.parse("01ARZ3NDEKTSV4RRFFQ69G5FAVA"); // ❌ (too long)
-```
-
-### IP addresses
-
-```ts
-const ipv4 = z.ipv4();
-ipv4.parse("192.168.0.0"); // ✅
-
-const ipv6 = z.ipv6();
-ipv6.parse("2001:db8:85a3::8a2e:370:7334"); // ✅
-```
-
-### IP blocks (CIDR)
-
-Validate IP address ranges specified with [CIDR notation](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing).
-
-```ts
-const cidrv4 = z.string().cidrv4();
-cidrv4.parse("192.168.0.0/24"); // ✅
-
-const cidrv6 = z.string().cidrv6();
-cidrv6.parse("2001:db8::/32"); // ✅
 ```
 
 ### Hashes
