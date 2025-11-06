@@ -791,21 +791,33 @@ FishEnum.parse("Swordfish"); // => ❌
   ```
 </Callout>
 
-Enum-like object literals (`{ [key: string]: string | number }`) are supported. This validates against the property values, not the property names.
+Enum-like object literals (`{ [key: string]: string | number }`) are supported. 
 
 ```ts
 const Fish = {
-  First: "Salmon",
-  Second: "Tuna"
+  Salmon: 0,
+  Tuna: 1
 } as const
 
 const FishEnum = z.enum(Fish)
-FishEnum.parse("Salmon"); // => "Salmon"
-FishEnum.parse("First"); // => ❌
-FishEnum.parse("Swordfish"); // => ❌
+FishEnum.parse(Fish.Salmon); // => ✅
+FishEnum.parse(0); // => ✅
+FishEnum.parse(2); // => ❌
 ```
 
-You can also pass in an externally-declared TypeScript enum, which also validates against the values, not names.
+You can also pass in an externally-declared TypeScript enum.
+
+```ts
+enum Fish {
+  Salmon = 0,
+  Tuna = 1
+}
+
+const FishEnum = z.enum(Fish);
+FishEnum.parse(Fish.Salmon); // => ✅
+FishEnum.parse(0); // => ✅
+FishEnum.parse(2); // => ❌
+```
 
 <Callout>
 **Zod 4** — This replaces the `z.nativeEnum()` API in Zod 3. 
