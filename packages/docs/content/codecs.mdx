@@ -124,7 +124,7 @@ stringToDate.encode(12345);
 // ❌ TypeScript error: Argument of type 'number' is not assignable to parameter of type 'Date'.
 ```
 
-Why the difference? Encoding and decoding imply *transformation*. In many cases, the inputs to these methods
+Why the difference? Encoding and decoding imply *transformation*. In many cases, the inputs to these methods are already strongly typed in application code, so z.decode/z.encode accept strongly typed inputs to surface mistakes at compile time.
 Here's a diagram demonstrating the differences between the type signatures for `parse()`, `decode()`, and `encode()`.
 
 <ThemedImage 
@@ -166,7 +166,7 @@ There are some subtleties to how certain Zod schemas "reverse" their parse behav
 
 ### Codecs
 
-This one is fairly self-explanatory. Codecs encapsulate a bi-directional transformation between two types. During `z.decode()`, the `decode` transform is executed. During `z.encode()`, the `encode` transform is executed.
+This one is fairly self-explanatory. Codecs encapsulate a bi-directional transformation between two types. `z.decode()` triggers the `decode` transform to convert input into a parsed value, while `z.encode()` triggers the `encode` transform to serialize it back.
 
 ```ts
 const stringToDate = z.codec(
@@ -259,7 +259,7 @@ stringWithCatch.encode(1234);
 
 > **Note** — [Stringbool](/api#stringbool) pre-dates the introduction of codecs in Zod. It has since been internally re-implemented as a codec. 
 
-The `z.stringbool()` API converts string values (`"true"`, `"false"`, `"yes"`, `"no"`, etc.) into `boolean`. By default, it will convert `true` to `"true"` and `false` to `"false"` during `z.encode()`..
+The `z.stringbool()` API converts string values (`"true"`, `"false"`, `"yes"`, `"no"`, etc.) into `boolean`. By default, it will convert `true` to `"true"` and `false` to `"false"` during `z.encode()`.
 
 ```ts
 const stringbool = z.stringbool();
