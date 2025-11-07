@@ -345,6 +345,22 @@ export function _ipv6<T extends schemas.$ZodIPv6>(
   });
 }
 
+// MAC
+export type $ZodMACParams = StringFormatParams<schemas.$ZodMAC, "pattern" | "when" | "version">;
+export type $ZodCheckMACParams = CheckStringFormatParams<schemas.$ZodMAC, "pattern" | "when" | "version">;
+export function _mac<T extends schemas.$ZodMAC>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodMACParams | $ZodCheckMACParams
+): T {
+  return new Class({
+    type: "string",
+    format: "mac",
+    check: "string_format",
+    abort: false,
+    ...util.normalizeParams(params),
+  });
+}
+
 // CIDRv4
 export type $ZodCIDRv4Params = StringFormatParams<schemas.$ZodCIDRv4, "pattern" | "when">;
 export type $ZodCheckCIDRv4Params = CheckStringFormatParams<schemas.$ZodCIDRv4, "pattern" | "when">;
