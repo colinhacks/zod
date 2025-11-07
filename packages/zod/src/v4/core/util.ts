@@ -909,7 +909,14 @@ export abstract class Class {
   constructor(..._args: any[]) {}
 }
 
-// sayHello utility function
+/**
+ * Returns a greeting message.
+ * @param name - Optional name to include in the greeting
+ * @returns A greeting message
+ * @example
+ * sayHello() // "Hello!"
+ * sayHello("World") // "Hello, World!"
+ */
 export function sayHello(name?: string): string {
   return name ? `Hello, ${name}!` : "Hello!";
 }
