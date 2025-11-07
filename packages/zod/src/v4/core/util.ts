@@ -908,3 +908,8 @@ export function uint8ArrayToHex(bytes: Uint8Array): string {
 export abstract class Class {
   constructor(..._args: any[]) {}
 }
+
+// sayHello utility function
+export function sayHello(name?: string): string {
+  return name ? `Hello, ${name}!` : "Hello!";
+}
