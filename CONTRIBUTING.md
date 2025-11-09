@@ -77,7 +77,7 @@ Zod uses Vitest for testing. After implementing your contribution, write tests f
 
 ### Documentation
 
-The documentation site lives in packages/docs(content in packages/docs/content)
+The documentation site lives in `packages/docs` with content located at `packages/docs/content`
 . Be sure to document any API changes you implement.
 
 ## License
