@@ -550,7 +550,7 @@ export type ZodStringCheck =
   | { kind: "url"; message?: string | undefined }
   | { kind: "emoji"; message?: string | undefined }
   | { kind: "uuid"; message?: string | undefined }
-  | { kind: "nanoid"; value: number; message?: string }
+  | { kind: "nanoid"; value: number; message?: string | undefined }
   | { kind: "cuid"; message?: string | undefined }
   | { kind: "includes"; value: string; position?: number | undefined; message?: string | undefined }
   | { kind: "cuid2"; message?: string | undefined }
