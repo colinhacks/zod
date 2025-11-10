@@ -106,6 +106,12 @@ const formIntegrations: ZodResource[] = [
     description: "Tiny 0.5kb Zod-based, HTML form abstraction that goes brr.",
     slug: "schalkventer/frrm",
   },
+  {
+    name: "react-f3",
+    url: "https://www.npmjs.com/package/react-f3",
+    description: "Components, hooks & utilities for creating and managing delightfully simple form experiences in React.",
+    slug: "maanlamp/react-f3",
+  },
 ];
 
 const zodToXConverters: ZodResource[] = [
