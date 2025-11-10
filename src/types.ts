@@ -641,7 +641,7 @@ const ulidRegex = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
 const uuidRegex =
   /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/i;
 
-function nanoidRegex(length?: number): RegExp {
+function nanoidRegex(length: number): RegExp {
   return new RegExp(`^[a-z0-9_-]{${length}}$`, "i");
 }
 
