@@ -1,0 +1,25 @@
+{
+  "name": "@zod/treeshaking",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "bundle": "rollup -c rollup.config.js --input",
+    "bundle:rollup": "rollup --input",
+    "bundle:esbuild": "esbuild --bundle ./in.ts --conditions=@zod/source --outfile=./out.js --bundle --format=esm"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.3",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^12.1.2",
+    "@types/node": "^22.13.13",
+    "zod": "workspace:*",
+    "rollup": "^4.37.0",
+    "rollup-plugin-filesize": "^10.0.0",
+    "rollup-plugin-bundle-size": "^1.0.3",
+    "valibot": "^1.0.0",
+    "zod3": "npm:zod@^3.24.0",
+    "zod4": "npm:zod@^3.25.0"
+  }
+}

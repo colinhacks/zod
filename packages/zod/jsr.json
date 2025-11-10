@@ -1,0 +1,19 @@
+{
+  "name": "@zod/zod",
+  "version": "4.1.12",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": "./src/index.ts",
+    "./mini": "./src/v4/mini/index.ts",
+    "./v3": "./src/v3/index.ts",
+    "./v4": "./src/v4/index.ts",
+    "./v4-mini": "./src/v4-mini/index.ts",
+    "./v4/mini": "./src/v4/mini/index.ts",
+    "./v4/core": "./src/v4/core/index.ts",
+    "./v4/locales": "./src/v4/locales/index.ts"
+  },
+  "publish": {
+    "include": ["src", "LICENSE", "package.json", "README.md"],
+    "exclude": ["**/tests/**", "dist"]
+  }
+}
