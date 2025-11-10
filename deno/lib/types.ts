@@ -1120,7 +1120,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     return this._addCheck({ kind: "uuid", ...errorUtil.errToObj(message) });
   }
   nanoid(
-    arg1?: number | string | { length?: number; message?: string },
+    arg1?: number | string
     arg2?: { message?: string }
   ) {
     let length = 21;
