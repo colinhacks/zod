@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { PageTree } from "fumadocs-core/server";
 import {
   SidebarItem as InternalSidebarItem,
@@ -20,10 +21,19 @@ export const SidebarItem = ({
   item: PageTree.Item;
 }) => {
   const name = `${item.name}`;
+  const [shouldPrefetch, setShouldPrefetch] = useState(false);
 
   const tag = Tags[item.url]; //?.toUpperCase();
   return (
-    <InternalSidebarItem key={item.url} href={item.url} external={item.external} icon={item.icon}>
+    <InternalSidebarItem 
+      key={item.url} 
+      href={item.url} 
+      external={item.external} 
+      icon={item.icon}
+      // Only prefetch on hover to prevent all pages from being fetched on every page load
+      prefetch={shouldPrefetch}
+      onMouseEnter={() => setShouldPrefetch(true)}
+    >
       <div className="w-full flex flex-row justify-between">
         <p className="flex-grow">{name}</p>
         <p>
