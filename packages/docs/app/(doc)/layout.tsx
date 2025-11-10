@@ -6,6 +6,8 @@ import type { ReactNode } from "react";
 import { SidebarItem, SidebarSeparator } from "@/components/sidebar-item";
 import { SidebarLogo } from "@/components/sidebar-logo";
 
+export const dynamic = "force-static";
+
 const layoutProps: DocsLayoutProps = {
   ...baseOptions,
   tree: source.pageTree,

@@ -34,6 +34,7 @@ export async function fetchStars(resources: { slug: string; stars?: number }[]) 
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ query }),
+      next: { revalidate: 86400 }, // Cache for 1 day to match route revalidation
     });
 
     if (res.status > 400) {
