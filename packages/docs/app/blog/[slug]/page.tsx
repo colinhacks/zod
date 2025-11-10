@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ComponentType } from "react";
 
-export const revalidate = 3600;
+export const revalidate = false;
 
 export default async function Page(props: { params: Promise<{ slug: string }> }) {
   const params = await props.params;

@@ -13,6 +13,7 @@ const layoutProps: DocsLayoutProps = {
   sidebar: {
     hideSearch: false,
     collapsible: false,
+    prefetch: false, // Disable prefetching to prevent all pages from being fetched on every page load
     components: {
       Item: SidebarItem,
       Separator: SidebarSeparator,
