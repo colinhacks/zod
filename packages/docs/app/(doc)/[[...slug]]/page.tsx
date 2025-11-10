@@ -9,7 +9,7 @@ import { DocsBody, DocsPage, DocsTitle } from "fumadocs-ui/page";
 import { Github } from "lucide-react";
 import { notFound } from "next/navigation";
 
-export const revalidate = false;
+export const revalidate = 1;
 
 export default async function Page(props: {
   params: Promise<{ slug?: string[] }>;
