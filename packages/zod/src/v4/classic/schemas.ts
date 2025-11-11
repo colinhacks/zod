@@ -1146,13 +1146,13 @@ export interface ZodObject<
    */
   merge<U extends ZodObject>(other: U): ZodObject<util.Extend<Shape, U["shape"]>, U["_zod"]["config"]>;
 
-  pick<M extends util.Mask<keyof Shape>>(
-    mask: M
-  ): ZodObject<util.Flatten<Pick<Shape, Extract<keyof Shape, keyof M>>>, Config>;
+  pick<K extends keyof Shape>(
+    mask: Partial<Record<K, true>>
+  ): ZodObject<util.Flatten<Pick<Shape, Extract<keyof Shape, K>>>, Config>;
 
-  omit<M extends util.Mask<keyof Shape>>(
-    mask: M
-  ): ZodObject<util.Flatten<Omit<Shape, Extract<keyof Shape, keyof M>>>, Config>;
+  omit<K extends keyof Shape>(
+    mask: Partial<Record<K, true>>
+  ): ZodObject<util.Flatten<Omit<Shape, Extract<keyof Shape, K>>>, Config>;
 
   partial(): ZodObject<
     {
@@ -1160,11 +1160,11 @@ export interface ZodObject<
     },
     Config
   >;
-  partial<M extends util.Mask<keyof Shape>>(
-    mask: M
+  partial<K extends keyof Shape>(
+    mask: Partial<Record<K, true>>
   ): ZodObject<
     {
-      [k in keyof Shape]: k extends keyof M
+      [k in keyof Shape]: k extends K
         ? // Shape[k] extends OptionalInSchema
           //   ? Shape[k]
           //   :
@@ -1181,11 +1181,11 @@ export interface ZodObject<
     },
     Config
   >;
-  required<M extends util.Mask<keyof Shape>>(
-    mask: M
+  required<K extends keyof Shape>(
+    mask: Partial<Record<K, true>>
   ): ZodObject<
     {
-      [k in keyof Shape]: k extends keyof M ? ZodNonOptional<Shape[k]> : Shape[k];
+      [k in keyof Shape]: k extends K ? ZodNonOptional<Shape[k]> : Shape[k];
     },
     Config
   >;

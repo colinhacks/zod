@@ -835,19 +835,19 @@ export function merge(schema: ZodMiniObject, shape: any): ZodMiniObject {
   return util.extend(schema, shape);
 }
 
-export function pick<T extends ZodMiniObject, M extends util.Mask<keyof T["shape"]>>(
+export function pick<T extends ZodMiniObject, K extends keyof T["shape"]>(
   schema: T,
-  mask: M
-): ZodMiniObject<util.Flatten<Pick<T["shape"], keyof T["shape"] & keyof M>>, T["_zod"]["config"]> {
+  mask: Partial<Record<K, true>>
+): ZodMiniObject<util.Flatten<Pick<T["shape"], keyof T["shape"] & K>>, T["_zod"]["config"]> {
   return util.pick(schema, mask as any);
 }
 
 // .omit
 
-export function omit<T extends ZodMiniObject, const M extends util.Mask<keyof T["shape"]>>(
+export function omit<T extends ZodMiniObject, K extends keyof T["shape"]>(
   schema: T,
-  mask: M
-): ZodMiniObject<util.Flatten<Omit<T["shape"], keyof M>>, T["_zod"]["config"]> {
+  mask: Partial<Record<K, true>>
+): ZodMiniObject<util.Flatten<Omit<T["shape"], K>>, T["_zod"]["config"]> {
   return util.omit(schema, mask);
 }
 
@@ -859,12 +859,12 @@ export function partial<T extends ZodMiniObject>(
   },
   T["_zod"]["config"]
 >;
-export function partial<T extends ZodMiniObject, M extends util.Mask<keyof T["shape"]>>(
+export function partial<T extends ZodMiniObject, K extends keyof T["shape"]>(
   schema: T,
-  mask: M
+  mask: Partial<Record<K, true>>
 ): ZodMiniObject<
   {
-    [k in keyof T["shape"]]: k extends keyof M ? ZodMiniOptional<T["shape"][k]> : T["shape"][k];
+    [k in keyof T["shape"]]: k extends K ? ZodMiniOptional<T["shape"][k]> : T["shape"][k];
   },
   T["_zod"]["config"]
 >;
@@ -891,14 +891,14 @@ export function required<T extends ZodMiniObject>(
   },
   T["_zod"]["config"]
 >;
-export function required<T extends ZodMiniObject, M extends util.Mask<keyof T["shape"]>>(
+export function required<T extends ZodMiniObject, K extends keyof T["shape"]>(
   schema: T,
-  mask: M
+  mask: Partial<Record<K, true>>
 ): ZodMiniObject<
   util.Extend<
     T["shape"],
     {
-      [k in keyof M & keyof T["shape"]]: ZodMiniNonOptional<T["shape"][k]>;
+      [k in K & keyof T["shape"]]: ZodMiniNonOptional<T["shape"][k]>;
     }
   >,
   T["_zod"]["config"]
