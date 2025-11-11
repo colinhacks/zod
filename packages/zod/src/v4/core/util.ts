@@ -908,3 +908,15 @@ export function uint8ArrayToHex(bytes: Uint8Array): string {
 export abstract class Class {
   constructor(..._args: any[]) {}
 }
+
+/**
+ * Returns a greeting message.
+ * @param name - Optional name to include in the greeting
+ * @returns A greeting message
+ * @example
+ * sayHello() // "Hello!"
+ * sayHello("World") // "Hello, World!"
+ */
+export function sayHello(name?: string): string {
+  return name ? `Hello, ${name}!` : "Hello!";
+}
