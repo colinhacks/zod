@@ -77,7 +77,8 @@ Zod uses Vitest for testing. After implementing your contribution, write tests f
 
 ### Documentation
 
-The Zod documentation lives in the README.md. Be sure to document any API changes you implement.
+The documentation site lives in `packages/docs` with content located at `packages/docs/content`
+. Be sure to document any API changes you implement.
 
 ## License
 
