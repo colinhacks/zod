@@ -786,6 +786,37 @@ test("isPlainObject", () => {
   expect(z.core.util.isPlainObject("string")).toEqual(false);
   expect(z.core.util.isPlainObject(123)).toEqual(false);
   expect(z.core.util.isPlainObject(Symbol())).toEqual(false);
+  expect(z.core.util.isPlainObject({ constructor: "string" })).toEqual(true);
+  expect(z.core.util.isPlainObject({ constructor: 123 })).toEqual(true);
+  expect(z.core.util.isPlainObject({ constructor: null })).toEqual(true);
+  expect(z.core.util.isPlainObject({ constructor: undefined })).toEqual(true);
+  expect(z.core.util.isPlainObject({ constructor: true })).toEqual(true);
+  expect(z.core.util.isPlainObject({ constructor: {} })).toEqual(true);
+  expect(z.core.util.isPlainObject({ constructor: [] })).toEqual(true);
+});
+
+test("shallowClone with constructor field", () => {
+  const objWithConstructor = { constructor: "string", key: "value" };
+  const cloned = z.core.util.shallowClone(objWithConstructor);
+
+  expect(cloned).toEqual(objWithConstructor);
+  expect(cloned).not.toBe(objWithConstructor);
+  expect(cloned.constructor).toBe("string");
+  expect(cloned.key).toBe("value");
+
+  const testCases = [
+    { constructor: 123, data: "test" },
+    { constructor: null, data: "test" },
+    { constructor: true, data: "test" },
+    { constructor: {}, data: "test" },
+    { constructor: [], data: "test" },
+  ];
+
+  for (const testCase of testCases) {
+    const clonedCase = z.core.util.shallowClone(testCase);
+    expect(clonedCase).toEqual(testCase);
+    expect(clonedCase).not.toBe(testCase);
+  }
 });
 
 test("def typing", () => {
