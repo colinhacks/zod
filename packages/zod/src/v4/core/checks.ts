@@ -84,7 +84,7 @@ export const $ZodCheckLessThan: core.$constructor<$ZodCheckLessThan> = /*@__PURE
       payload.issues.push({
         origin,
         code: "too_big",
-        maximum: def.value as number,
+        maximum: typeof def.value === "object" ? def.value.getTime() : def.value,
         input: payload.value,
         inclusive: def.inclusive,
         inst,
@@ -135,7 +135,7 @@ export const $ZodCheckGreaterThan: core.$constructor<$ZodCheckGreaterThan> = /*@
       payload.issues.push({
         origin,
         code: "too_small",
-        minimum: def.value as number,
+        minimum: typeof def.value === "object" ? def.value.getTime() : def.value,
         input: payload.value,
         inclusive: def.inclusive,
         inst,
