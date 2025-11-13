@@ -3490,9 +3490,10 @@ export class ZodFour<T extends ZodTypeAny> extends ZodType<
   [T["_input"], T["_input"], T["_input"], T["_input"]]
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
-    return ZodTuple.create([this._def.items[0], this._def.items[1], this._def.items[2], this._def.items[3]])._parse(
-      input
-    ) as ParseReturnType<this["_output"]>;
+    return ZodTuple.create(this._def.items, {
+      errorMap: this._def.errorMap,
+      description: this._def.description,
+    })._parse(input) as ParseReturnType<this["_output"]>;
   }
 
   static create = <T extends ZodTypeAny>(schema: T, params?: RawCreateParams): ZodFour<T> => {
