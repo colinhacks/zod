@@ -366,6 +366,19 @@ export function cidrv6(params?: string | core.$ZodCIDRv6Params): ZodMiniCIDRv6 {
   return core._cidrv6(ZodMiniCIDRv6, params);
 }
 
+// ZodMiniMAC
+export interface ZodMiniMAC extends _ZodMiniString<core.$ZodMACInternals> {
+  // _zod: core.$ZodMACInternals;
+}
+export const ZodMiniMAC: core.$constructor<ZodMiniMAC> = /*@__PURE__*/ core.$constructor("ZodMiniMAC", (inst, def) => {
+  core.$ZodMAC.init(inst, def);
+  ZodMiniStringFormat.init(inst, def);
+});
+
+export function mac(params?: string | core.$ZodMACParams): ZodMiniMAC {
+  return core._mac(ZodMiniMAC, params);
+}
+
 // ZodMiniBase64
 export interface ZodMiniBase64 extends _ZodMiniString<core.$ZodBase64Internals> {
   // _zod: core.$ZodBase64Internals;

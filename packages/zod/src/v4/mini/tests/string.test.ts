@@ -241,6 +241,19 @@ test("z.ipv6", () => {
   expect(() => z.parse(a, 123)).toThrow();
 });
 
+test("z.mac", () => {
+  const a = z.mac();
+  // valid mac
+  expect(z.parse(a, "00:1A:2B:3C:4D:5E")).toEqual("00:1A:2B:3C:4D:5E");
+  expect(z.parse(a, "00-1a-2b-3c-4d-5e")).toEqual("00-1a-2b-3c-4d-5e");
+  // invalid mac
+  expect(() => z.parse(a, "00:1A:2B::4D:5E")).toThrow();
+  expect(() => z.parse(a, "00:1a-2B:3c-4D:5e")).toThrow();
+  expect(() => z.parse(a, "hello")).toThrow();
+  // wrong type
+  expect(() => z.parse(a, 123)).toThrow();
+});
+
 test("z.base64", () => {
   const a = z.base64();
   // valid base64

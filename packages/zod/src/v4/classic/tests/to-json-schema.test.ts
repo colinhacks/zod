@@ -132,6 +132,14 @@ describe("toJSONSchema", () => {
         "type": "string",
       }
     `);
+    expect(z.toJSONSchema(z.mac())).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "mac",
+        "pattern": "^(([0-9A-F]{2}([-:])[0-9A-F]{2}(\\3[0-9A-F]{2}){4})|([0-9a-f]{2}([-:])[0-9a-f]{2}(\\6[0-9a-f]{2}){4}))$",
+        "type": "string",
+      }
+    `);
     expect(z.toJSONSchema(z.uuid())).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -353,6 +361,15 @@ describe("toJSONSchema", () => {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "format": "ipv6",
         "pattern": "^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$",
+        "type": "string",
+      }
+    `);
+
+    expect(z.toJSONSchema(z.mac())).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "mac",
+        "pattern": "^(([0-9A-F]{2}([-:])[0-9A-F]{2}(\\3[0-9A-F]{2}){4})|([0-9a-f]{2}([-:])[0-9a-f]{2}(\\6[0-9a-f]{2}){4}))$",
         "type": "string",
       }
     `);
