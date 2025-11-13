@@ -775,6 +775,8 @@ test("format", () => {
   expect(z.string().date().format).toEqual("date");
   expect(z.string().time().format).toEqual("time");
   expect(z.string().duration().format).toEqual("duration");
+
+  expect(z.mac().format).toEqual("mac");
 });
 
 test("min max getters", () => {
@@ -883,6 +885,46 @@ test("IPv6 validation", () => {
 
   // Test specific error
   expect(() => ipv6.parse("254.164.77.1")).toThrow();
+});
+
+test("MAC validation", () => {
+  const mac = z.mac();
+
+  // Valid MAC addresses
+  const validMacs = [
+    "00:1A:2B:3C:4D:5E",
+    "FF:FF:FF:FF:FF:FF",
+    "01-23-45-67-89-AB",
+    "A1:B2:C3:D4:E5:F6",
+    "10:20:30:40:50:60",
+    "AA-BB-CC-DD-EE-FF",
+    "0a:1b:2c:3d:4e:5f",
+    "DE-AD-BE-EF-00-01",
+    "12:34:56:78:9A:BC",
+    "98-76-54-32-10-FF",
+  ];
+
+  // Invalid MAC addresses
+  const invalidMacs = [
+    "00:1A-2B:3C-4D:5E",
+    "00:1A:2B:3C:4D",
+    "00:1A:2B:3C:4D:5E:FF",
+    "00-1A-2B-3C-4D",
+    "00:1A:2B:3C:4D:GZ",
+    "00:1A:2B:3C:4D:5E:GG",
+    "123:45:67:89:AB:CD",
+    "00--1A:2B:3C:4D:5E",
+    "00:1A::2B:3C:4D:5E",
+    "00:1A:2B:3C:3C:2B:1A:00", // Disallow EUI-64
+    "00:1a:2B:3c:4D:5e", // Disallow mixed-case
+  ];
+
+  // MAC formats that are nonstandard but occassionally referenced, ex. https://www.postgresql.org/docs/17/datatype-net-types.html#DATATYPE-MACADDR
+  const disallowedNonstandardMacs = ["001A2B:3C4D5E", "001A:2B3C:4D5E", "001A2B3C4D5E", "00.1A.2B.3C.4D.5E"];
+
+  expect(validMacs.every((addr) => mac.safeParse(addr).success)).toBe(true);
+  expect(invalidMacs.every((addr) => mac.safeParse(addr).success)).toBe(false);
+  expect(disallowedNonstandardMacs.every((addr) => mac.safeParse(addr).success)).toBe(false);
 });
 
 test("CIDR v4 validation", () => {
