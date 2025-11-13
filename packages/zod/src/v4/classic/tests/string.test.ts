@@ -891,40 +891,38 @@ test("MAC validation", () => {
   const mac = z.mac();
 
   // Valid MAC addresses
-  const validMacs = [
-    "00:1A:2B:3C:4D:5E",
-    "FF:FF:FF:FF:FF:FF",
-    "01-23-45-67-89-AB",
-    "A1:B2:C3:D4:E5:F6",
-    "10:20:30:40:50:60",
-    "AA-BB-CC-DD-EE-FF",
-    "0a:1b:2c:3d:4e:5f",
-    "DE-AD-BE-EF-00-01",
-    "12:34:56:78:9A:BC",
-    "98-76-54-32-10-FF",
-  ];
+  expect(mac.safeParse("00:1A:2B:3C:4D:5E").success).toBe(true);
+  expect(mac.safeParse("FF:FF:FF:FF:FF:FF").success).toBe(true);
+  expect(mac.safeParse("00:11:22:33:44:55").success).toBe(true);
+  expect(mac.safeParse("01-23-45-67-89-AB").success).toBe(true);
+  expect(mac.safeParse("A1:B2:C3:D4:E5:F6").success).toBe(true);
+  expect(mac.safeParse("10:20:30:40:50:60").success).toBe(true);
+  expect(mac.safeParse("AA-BB-CC-DD-EE-FF").success).toBe(true);
+  expect(mac.safeParse("0a:1b:2c:3d:4e:5f").success).toBe(true);
+  expect(mac.safeParse("DE-AD-BE-EF-00-01").success).toBe(true);
+  expect(mac.safeParse("12:34:56:78:9A:BC").success).toBe(true);
+  expect(mac.safeParse("98-76-54-32-10-FF").success).toBe(true);
 
   // Invalid MAC addresses
-  const invalidMacs = [
-    "00:1A-2B:3C-4D:5E",
-    "00:1A:2B:3C:4D",
-    "00:1A:2B:3C:4D:5E:FF",
-    "00-1A-2B-3C-4D",
-    "00:1A:2B:3C:4D:GZ",
-    "00:1A:2B:3C:4D:5E:GG",
-    "123:45:67:89:AB:CD",
-    "00--1A:2B:3C:4D:5E",
-    "00:1A::2B:3C:4D:5E",
-    "00:1A:2B:3C:3C:2B:1A:00", // Disallow EUI-64
-    "00:1a:2B:3c:4D:5e", // Disallow mixed-case
-  ];
+  expect(mac.safeParse("00:1A-2B:3C-4D:5E").success).toBe(false);
+  expect(mac.safeParse("00:1A:2B:3C:4D").success).toBe(false);
+  expect(mac.safeParse("00:1A:2B:3C:4D").success).toBe(false);
+  expect(mac.safeParse("00-1A-2B-3C-4D").success).toBe(false);
+  expect(mac.safeParse("00:1A:2B:3C:4D:GZ").success).toBe(false);
+  expect(mac.safeParse("00:1A:2B:3C:4D:5E:GG").success).toBe(false);
+  expect(mac.safeParse("123:45:67:89:AB:CD").success).toBe(false);
+  expect(mac.safeParse("00--1A:2B:3C:4D:5E").success).toBe(false);
+  expect(mac.safeParse("00:1A::2B:3C:4D:5E").success).toBe(false);
+  expect(mac.safeParse("00:1A:2B:3C:3C:2B:1A:00").success).toBe(false); // Disallow EUI-64
+  expect(mac.safeParse("00:1a:2B:3c:4D:5e").success).toBe(false); // Disallow mixed-case
 
   // MAC formats that are nonstandard but occassionally referenced, ex. https://www.postgresql.org/docs/17/datatype-net-types.html#DATATYPE-MACADDR
-  const disallowedNonstandardMacs = ["001A2B:3C4D5E", "001A:2B3C:4D5E", "001A2B3C4D5E", "00.1A.2B.3C.4D.5E"];
-
-  expect(validMacs.every((addr) => mac.safeParse(addr).success)).toBe(true);
-  expect(invalidMacs.every((addr) => mac.safeParse(addr).success)).toBe(false);
-  expect(disallowedNonstandardMacs.every((addr) => mac.safeParse(addr).success)).toBe(false);
+  expect(mac.safeParse("00:1A:2B:3C:4D:5E:FF").success).toBe(false);
+  expect(mac.safeParse("001A2B:3C4D5E").success).toBe(false);
+  expect(mac.safeParse("001A:2B3C:4D5E").success).toBe(false);
+  expect(mac.safeParse("001A.2B3C.4D5E").success).toBe(false);
+  expect(mac.safeParse("001A2B3C4D5E").success).toBe(false);
+  expect(mac.safeParse("00.1A.2B.3C.4D.5E").success).toBe(false);
 });
 
 test("CIDR v4 validation", () => {

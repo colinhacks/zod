@@ -4320,6 +4320,7 @@ export type $ZodStringFormatTypes =
   | $ZodISODuration
   | $ZodIPv4
   | $ZodIPv6
+  | $ZodMAC
   | $ZodCIDRv4
   | $ZodCIDRv6
   | $ZodBase64
