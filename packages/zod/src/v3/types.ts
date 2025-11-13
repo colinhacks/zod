@@ -3479,6 +3479,36 @@ export class ZodTuple<
 /////////////////////////////////////////
 /////////////////////////////////////////
 //////////                     //////////
+//////////       ZodFour       //////////
+//////////                     //////////
+/////////////////////////////////////////
+/////////////////////////////////////////
+
+export class ZodFour<T extends ZodTypeAny> extends ZodType<
+  [T["_output"], T["_output"], T["_output"], T["_output"]],
+  ZodTupleDef<[T, T, T, T], null>,
+  [T["_input"], T["_input"], T["_input"], T["_input"]]
+> {
+  _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    return ZodTuple.create(this._def.items, {
+      errorMap: this._def.errorMap,
+      description: this._def.description,
+    })._parse(input) as ParseReturnType<this["_output"]>;
+  }
+
+  static create = <T extends ZodTypeAny>(schema: T, params?: RawCreateParams): ZodFour<T> => {
+    return new ZodFour({
+      items: [schema, schema, schema, schema],
+      typeName: ZodFirstPartyTypeKind.ZodTuple,
+      rest: null,
+      ...processCreateParams(params),
+    });
+  };
+}
+
+/////////////////////////////////////////
+/////////////////////////////////////////
+//////////                     //////////
 //////////      ZodRecord      //////////
 //////////                     //////////
 /////////////////////////////////////////
@@ -4024,6 +4054,37 @@ export class ZodLiteral<T> extends ZodType<T, ZodLiteralDef<T>, T> {
   static create = <Value extends Primitive>(value: Value, params?: RawCreateParams): ZodLiteral<Value> => {
     return new ZodLiteral({
       value: value,
+      typeName: ZodFirstPartyTypeKind.ZodLiteral,
+      ...processCreateParams(params),
+    });
+  };
+}
+
+//🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈
+//🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈
+//🦈🦈🦈🦈🦈                      🦈🦈🦈🦈🦈
+//🦈🦈🦈🦈🦈       ZodShark       🦈🦈🦈🦈🦈
+//🦈🦈🦈🦈🦈                      🦈🦈🦈🦈🦈
+//🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈
+//🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈🦈
+
+export class ZodShark extends ZodType<"🦈", ZodLiteralDef<"🦈">, "🦈"> {
+  _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    if (input.data !== "🦈") {
+      const ctx = this._getOrReturnCtx(input);
+      addIssueToContext(ctx, {
+        received: ctx.data,
+        code: ZodIssueCode.invalid_literal,
+        expected: "🦈",
+      });
+      return INVALID;
+    }
+    return { status: "valid", value: input.data };
+  }
+
+  static create = (params?: RawCreateParams): ZodShark => {
+    return new ZodShark({
+      value: "🦈",
       typeName: ZodFirstPartyTypeKind.ZodLiteral,
       ...processCreateParams(params),
     });
@@ -5012,6 +5073,8 @@ export type ZodFirstPartySchemaTypes =
   | ZodDiscriminatedUnion<any, any>
   | ZodIntersection<any, any>
   | ZodTuple<any, any>
+  | ZodFour<any>
+  | ZodShark
   | ZodRecord<any, any>
   | ZodMap<any>
   | ZodSet<any>
@@ -5063,6 +5126,9 @@ const unionType = ZodUnion.create;
 const discriminatedUnionType = ZodDiscriminatedUnion.create;
 const intersectionType = ZodIntersection.create;
 const tupleType = ZodTuple.create;
+// For some reason, exporting ZodFour.create directly produces weird errors in some environments
+const fourType = <T extends ZodTypeAny>(schema: T, params?: RawCreateParams) => ZodFour.create(schema, params);
+const sharkType = ZodShark.create;
 const recordType = ZodRecord.create;
 const mapType = ZodMap.create;
 const setType = ZodSet.create;
@@ -5129,6 +5195,8 @@ export {
   symbolType as symbol,
   effectsType as transformer,
   tupleType as tuple,
+  fourType as four,
+  sharkType as shark,
   undefinedType as undefined,
   unionType as union,
   unknownType as unknown,
