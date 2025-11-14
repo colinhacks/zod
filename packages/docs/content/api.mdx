@@ -1242,7 +1242,7 @@ This approach has a few advantages:
 
 ### `.safeExtend()`
 
-The `.safeExtend()` method works similarly to `.extend()`, but it won't let you overwrite an existing properly with a non-assignable schema. In other words, the result of `.safeExtend()` will have an inferred type that [`extends`](https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#conditional-type-constraints) the original (in the TypeScript sense).
+The `.safeExtend()` method works similarly to `.extend()`, but it won't let you overwrite an existing property with a non-assignable schema. In other words, the result of `.safeExtend()` will have an inferred type that [`extends`](https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#conditional-type-constraints) the original (in the TypeScript sense).
 
 ```ts
 z.object({ a: z.string() }).safeExtend({ a: z.string().min(5) }); // ✅
