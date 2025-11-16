@@ -20,7 +20,7 @@ test("globalRegistry", () => {
 });
 
 test("globalRegistry is singleton and attached to globalThis", () => {
-  expect(z.globalRegistry).toBe(globalThis.__zod_globalRegistry);
+  expect(z.globalRegistry).toBe((globalThis as any).__zod_globalRegistry);
 });
 
 test("z.registry", () => {
