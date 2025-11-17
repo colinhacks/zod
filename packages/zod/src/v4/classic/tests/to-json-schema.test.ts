@@ -657,6 +657,54 @@ describe("toJSONSchema", () => {
     `);
   });
 
+  test("discriminated unions", () => {
+    const schema = z.discriminatedUnion("type", [
+      z.object({ type: z.literal("success"), data: z.string() }),
+      z.object({ type: z.literal("error"), message: z.string() }),
+    ]);
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "type": "string",
+              },
+              "type": {
+                "const": "success",
+                "type": "string",
+              },
+            },
+            "required": [
+              "type",
+              "data",
+            ],
+            "type": "object",
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "message": {
+                "type": "string",
+              },
+              "type": {
+                "const": "error",
+                "type": "string",
+              },
+            },
+            "required": [
+              "type",
+              "message",
+            ],
+            "type": "object",
+          },
+        ],
+      }
+    `);
+  });
+
   test("intersections", () => {
     const schema = z.intersection(z.object({ name: z.string() }), z.object({ age: z.number() }));
 
