@@ -6,7 +6,14 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   resolve: {
-    conditions: ["@zod/source"],
+    conditions: ["@zod/source", "default"],
+    externalConditions: ["@zod/source", "default"],
+  },
+  ssr: {
+    resolve: {
+      conditions: ["@zod/source", "default"],
+      externalConditions: ["@zod/source", "default"],
+    },
   },
   test: {
     projects: ["packages/*"],
