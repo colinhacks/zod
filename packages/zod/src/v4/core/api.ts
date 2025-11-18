@@ -346,8 +346,8 @@ export function _ipv6<T extends schemas.$ZodIPv6>(
 }
 
 // MAC
-export type $ZodMACParams = StringFormatParams<schemas.$ZodMAC, "pattern" | "when" | "version">;
-export type $ZodCheckMACParams = CheckStringFormatParams<schemas.$ZodMAC, "pattern" | "when" | "version">;
+export type $ZodMACParams = StringFormatParams<schemas.$ZodMAC, "pattern" | "when">;
+export type $ZodCheckMACParams = CheckStringFormatParams<schemas.$ZodMAC, "pattern" | "when">;
 export function _mac<T extends schemas.$ZodMAC>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodMACParams | $ZodCheckMACParams

@@ -784,7 +784,7 @@ export const $ZodIPv6: core.$constructor<$ZodIPv6> = /*@__PURE__*/ core.$constru
 
 //////////////////////////////   ZodMAC   //////////////////////////////
 export interface $ZodMACDef extends $ZodStringFormatDef<"mac"> {
-  version?: "eui-48";
+  delimiter?: string;
 }
 
 export interface $ZodMACInternals extends $ZodStringFormatInternals<"mac"> {
@@ -796,7 +796,7 @@ export interface $ZodMAC extends $ZodType {
 }
 
 export const $ZodMAC: core.$constructor<$ZodMAC> = /*@__PURE__*/ core.$constructor("$ZodMAC", (inst, def): void => {
-  def.pattern ??= regexes.mac;
+  def.pattern ??= regexes.mac(def.delimiter);
   $ZodStringFormat.init(inst, def);
 
   inst._zod.bag.format = `mac`;

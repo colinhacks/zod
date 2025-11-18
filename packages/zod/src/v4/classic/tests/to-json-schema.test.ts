@@ -136,7 +136,23 @@ describe("toJSONSchema", () => {
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "format": "mac",
-        "pattern": "^(([0-9A-F]{2}([-:])[0-9A-F]{2}(\\3[0-9A-F]{2}){4})|([0-9a-f]{2}([-:])[0-9a-f]{2}(\\6[0-9a-f]{2}){4}))$",
+        "pattern": "^(([0-9A-F]{2}(:)[0-9A-F]{2}(\\3[0-9A-F]{2}){4})|([0-9a-f]{2}(:)[0-9a-f]{2}(\\6[0-9a-f]{2}){4}))$",
+        "type": "string",
+      }
+    `);
+    expect(z.toJSONSchema(z.mac({ delimiter: ":" }))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "mac",
+        "pattern": "^(([0-9A-F]{2}(:)[0-9A-F]{2}(\\3[0-9A-F]{2}){4})|([0-9a-f]{2}(:)[0-9a-f]{2}(\\6[0-9a-f]{2}){4}))$",
+        "type": "string",
+      }
+    `);
+    expect(z.toJSONSchema(z.mac({ delimiter: "-" }))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "mac",
+        "pattern": "^(([0-9A-F]{2}(-)[0-9A-F]{2}(\\3[0-9A-F]{2}){4})|([0-9a-f]{2}(-)[0-9a-f]{2}(\\6[0-9a-f]{2}){4}))$",
         "type": "string",
       }
     `);
@@ -369,7 +385,23 @@ describe("toJSONSchema", () => {
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "format": "mac",
-        "pattern": "^(([0-9A-F]{2}([-:])[0-9A-F]{2}(\\3[0-9A-F]{2}){4})|([0-9a-f]{2}([-:])[0-9a-f]{2}(\\6[0-9a-f]{2}){4}))$",
+        "pattern": "^(([0-9A-F]{2}(:)[0-9A-F]{2}(\\3[0-9A-F]{2}){4})|([0-9a-f]{2}(:)[0-9a-f]{2}(\\6[0-9a-f]{2}){4}))$",
+        "type": "string",
+      }
+    `);
+    expect(z.toJSONSchema(z.mac({ delimiter: ":" }))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "mac",
+        "pattern": "^(([0-9A-F]{2}(:)[0-9A-F]{2}(\\3[0-9A-F]{2}){4})|([0-9a-f]{2}(:)[0-9a-f]{2}(\\6[0-9a-f]{2}){4}))$",
+        "type": "string",
+      }
+    `);
+    expect(z.toJSONSchema(z.mac({ delimiter: "-" }))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "mac",
+        "pattern": "^(([0-9A-F]{2}(-)[0-9A-F]{2}(\\3[0-9A-F]{2}){4})|([0-9a-f]{2}(-)[0-9a-f]{2}(\\6[0-9a-f]{2}){4}))$",
         "type": "string",
       }
     `);

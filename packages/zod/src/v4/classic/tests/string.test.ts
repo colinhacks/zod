@@ -894,20 +894,20 @@ test("MAC validation", () => {
   expect(mac.safeParse("00:1A:2B:3C:4D:5E").success).toBe(true);
   expect(mac.safeParse("FF:FF:FF:FF:FF:FF").success).toBe(true);
   expect(mac.safeParse("00:11:22:33:44:55").success).toBe(true);
-  expect(mac.safeParse("01-23-45-67-89-AB").success).toBe(true);
   expect(mac.safeParse("A1:B2:C3:D4:E5:F6").success).toBe(true);
   expect(mac.safeParse("10:20:30:40:50:60").success).toBe(true);
-  expect(mac.safeParse("AA-BB-CC-DD-EE-FF").success).toBe(true);
   expect(mac.safeParse("0a:1b:2c:3d:4e:5f").success).toBe(true);
-  expect(mac.safeParse("DE-AD-BE-EF-00-01").success).toBe(true);
   expect(mac.safeParse("12:34:56:78:9A:BC").success).toBe(true);
-  expect(mac.safeParse("98-76-54-32-10-FF").success).toBe(true);
 
   // Invalid MAC addresses
   expect(mac.safeParse("00:1A-2B:3C-4D:5E").success).toBe(false);
   expect(mac.safeParse("00:1A:2B:3C:4D").success).toBe(false);
   expect(mac.safeParse("00:1A:2B:3C:4D").success).toBe(false);
   expect(mac.safeParse("00-1A-2B-3C-4D").success).toBe(false);
+  expect(mac.safeParse("01-23-45-67-89-AB").success).toBe(false); // Dash delimiter not accepted by default
+  expect(mac.safeParse("AA-BB-CC-DD-EE-FF").success).toBe(false); // Dash delimiter not accepted by default
+  expect(mac.safeParse("DE-AD-BE-EF-00-01").success).toBe(false); // Dash delimiter not accepted by default
+  expect(mac.safeParse("98-76-54-32-10-FF").success).toBe(false); // Dash delimiter not accepted by default
   expect(mac.safeParse("00:1A:2B:3C:4D:GZ").success).toBe(false);
   expect(mac.safeParse("00:1A:2B:3C:4D:5E:GG").success).toBe(false);
   expect(mac.safeParse("123:45:67:89:AB:CD").success).toBe(false);
@@ -923,6 +923,20 @@ test("MAC validation", () => {
   expect(mac.safeParse("001A.2B3C.4D5E").success).toBe(false);
   expect(mac.safeParse("001A2B3C4D5E").success).toBe(false);
   expect(mac.safeParse("00.1A.2B.3C.4D.5E").success).toBe(false);
+});
+
+test("MAC validation with custom delimiter", () => {
+  const colonMac = z.mac({ delimiter: ":" });
+  expect(colonMac.safeParse("00:1A:2B:3C:4D:5E").success).toBe(true);
+  expect(colonMac.safeParse("00-1A-2B-3C-4D-5E").success).toBe(false);
+
+  const dashMac = z.mac({ delimiter: "-" });
+  expect(dashMac.safeParse("00-1A-2B-3C-4D-5E").success).toBe(true);
+  expect(dashMac.safeParse("00:1A:2B:3C:4D:5E").success).toBe(false);
+
+  const colonOnlyMac = z.mac({ delimiter: ":" });
+  expect(colonOnlyMac.safeParse("00:1A:2B:3C:4D:5E").success).toBe(true);
+  expect(colonOnlyMac.safeParse("00-1A-2B-3C-4D-5E").success).toBe(false);
 });
 
 test("CIDR v4 validation", () => {
