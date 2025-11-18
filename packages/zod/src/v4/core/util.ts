@@ -583,8 +583,10 @@ export const BIGINT_FORMAT_RANGES: Record<checks.$ZodBigIntFormats, [bigint, big
 
 export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>): any {
   const currDef = schema._zod.def;
-
-  const def = mergeDefs(schema._zod.def, {
+  if ((currDef.checks ?? []).length > 0) {
+    throw new Error("Invalid .pick() on object schemas containing refinements");
+  }
+  const def = mergeDefs(currDef, {
     get shape() {
       const newShape: Writeable<schemas.$ZodShape> = {};
       for (const key in mask) {
@@ -606,10 +608,13 @@ export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>):
 
 export function omit(schema: schemas.$ZodObject, mask: object): any {
   const currDef = schema._zod.def;
+  if ((currDef.checks ?? []).length > 0) {
+    throw new Error("Invalid .omit() on object schemas containing refinements");
+  }
 
-  const def = mergeDefs(schema._zod.def, {
+  const def = mergeDefs(currDef, {
     get shape() {
-      const newShape: Writeable<schemas.$ZodShape> = { ...schema._zod.def.shape };
+      const newShape: Writeable<schemas.$ZodShape> = { ...currDef.shape };
       for (const key in mask) {
         if (!(key in currDef.shape)) {
           throw new Error(`Unrecognized key: "${key}"`);
@@ -635,7 +640,7 @@ export function extend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): an
   const checks = schema._zod.def.checks;
   const hasChecks = checks && checks.length > 0;
   if (hasChecks) {
-    throw new Error("Object schemas containing refinements cannot be extended. Use `.safeExtend()` instead.");
+    throw new Error("Invalid .extend() on object schemas containing refinements. Use .safeExtend() instead.");
   }
 
   const def = mergeDefs(schema._zod.def, {
