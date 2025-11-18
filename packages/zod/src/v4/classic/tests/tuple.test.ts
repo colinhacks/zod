@@ -145,6 +145,24 @@ test("tuple with optional elements followed by required", () => {
   }
 });
 
+test("tuple with all optional elements", () => {
+  const allOptionalTuple = z.tuple([z.string().optional(), z.number().optional(), z.boolean().optional()]);
+  expectTypeOf<typeof allOptionalTuple._output>().toEqualTypeOf<[string?, number?, boolean?]>();
+
+  // Empty array should be valid (all items optional)
+  expect(allOptionalTuple.parse([])).toEqual([]);
+
+  // Partial arrays should be valid
+  expect(allOptionalTuple.parse(["hello"])).toEqual(["hello"]);
+  expect(allOptionalTuple.parse(["hello", 42])).toEqual(["hello", 42]);
+
+  // Full array should be valid
+  expect(allOptionalTuple.parse(["hello", 42, true])).toEqual(["hello", 42, true]);
+
+  // Array that's too long should fail
+  expect(() => allOptionalTuple.parse(["hello", 42, true, "extra"])).toThrow();
+});
+
 test("tuple with rest schema", () => {
   const myTuple = z.tuple([z.string(), z.number()]).rest(z.boolean());
   expect(myTuple.parse(["asdf", 1234, true, false, true])).toEqual(["asdf", 1234, true, false, true]);

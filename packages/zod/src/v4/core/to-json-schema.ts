@@ -330,13 +330,20 @@ export class JSONSchemaGenerator {
           }
           case "union": {
             const json: JSONSchema.BaseSchema = _json as any;
+            // Discriminated unions use oneOf (exactly one match) instead of anyOf (one or more matches)
+            // because the discriminator field ensures mutual exclusivity between options in JSON Schema
+            const isDiscriminated = (def as any).discriminator !== undefined;
             const options = def.options.map((x, i) =>
               this.process(x, {
                 ...params,
-                path: [...params.path, "anyOf", i],
+                path: [...params.path, isDiscriminated ? "oneOf" : "anyOf", i],
               })
             );
-            json.anyOf = options;
+            if (isDiscriminated) {
+              json.oneOf = options;
+            } else {
+              json.anyOf = options;
+            }
             break;
           }
           case "intersection": {

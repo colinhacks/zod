@@ -1,5 +1,5 @@
 import { defineProject, mergeConfig } from "vitest/config";
-import rootConfig from "../../vitest.root.mjs";
+import rootConfig from "../../vitest.config.js";
 
 export default mergeConfig(
   rootConfig,
@@ -10,4 +10,4 @@ export default mergeConfig(
       },
     },
   })
-) as object;
+);

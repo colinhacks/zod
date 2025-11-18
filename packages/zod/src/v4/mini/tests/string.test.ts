@@ -241,6 +241,38 @@ test("z.ipv6", () => {
   expect(() => z.parse(a, 123)).toThrow();
 });
 
+test("z.mac", () => {
+  const a = z.mac();
+  // valid mac
+  expect(z.parse(a, "00:1A:2B:3C:4D:5E")).toEqual("00:1A:2B:3C:4D:5E");
+  // invalid mac (dash delimiter not accepted by default)
+  expect(() => z.parse(a, "01-23-45-67-89-AB")).toThrow();
+  expect(() => z.parse(a, "00:1A:2B::4D:5E")).toThrow();
+  expect(() => z.parse(a, "00:1a-2B:3c-4D:5e")).toThrow();
+  expect(() => z.parse(a, "hello")).toThrow();
+  // wrong type
+  expect(() => z.parse(a, 123)).toThrow();
+});
+
+test("z.mac with custom delimiter", () => {
+  const a = z.mac({ delimiter: ":" });
+  // valid mac with colon
+  expect(z.parse(a, "00:1A:2B:3C:4D:5E")).toEqual("00:1A:2B:3C:4D:5E");
+  // invalid mac with dash
+  expect(() => z.parse(a, "00-1A-2B-3C-4D-5E")).toThrow();
+
+  const b = z.mac({ delimiter: "-" });
+  // valid mac with dash
+  expect(z.parse(b, "00-1A-2B-3C-4D-5E")).toEqual("00-1A-2B-3C-4D-5E");
+  // invalid mac with colon
+  expect(() => z.parse(b, "00:1A:2B:3C:4D:5E")).toThrow();
+
+  const c = z.mac({ delimiter: ":" });
+  // colon-only mac
+  expect(z.parse(c, "00:1A:2B:3C:4D:5E")).toEqual("00:1A:2B:3C:4D:5E");
+  expect(() => z.parse(c, "00-1A-2B-3C-4D-5E")).toThrow();
+});
+
 test("z.base64", () => {
   const a = z.base64();
   // valid base64

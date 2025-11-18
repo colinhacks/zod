@@ -782,6 +782,26 @@ export const $ZodIPv6: core.$constructor<$ZodIPv6> = /*@__PURE__*/ core.$constru
   };
 });
 
+//////////////////////////////   ZodMAC   //////////////////////////////
+export interface $ZodMACDef extends $ZodStringFormatDef<"mac"> {
+  delimiter?: string;
+}
+
+export interface $ZodMACInternals extends $ZodStringFormatInternals<"mac"> {
+  def: $ZodMACDef;
+}
+
+export interface $ZodMAC extends $ZodType {
+  _zod: $ZodMACInternals;
+}
+
+export const $ZodMAC: core.$constructor<$ZodMAC> = /*@__PURE__*/ core.$constructor("$ZodMAC", (inst, def): void => {
+  def.pattern ??= regexes.mac(def.delimiter);
+  $ZodStringFormat.init(inst, def);
+
+  inst._zod.bag.format = `mac`;
+});
+
 //////////////////////////////   ZodCIDRv4   //////////////////////////////
 
 export interface $ZodCIDRv4Def extends $ZodStringFormatDef<"cidrv4"> {
@@ -1783,7 +1803,7 @@ function handleCatchall(
   const keySet = def.keySet;
   const _catchall = def.catchall!._zod;
   const t = _catchall.def.type;
-  for (const key of Object.keys(input)) {
+  for (const key in input) {
     if (keySet.has(key)) continue;
     if (t === "never") {
       unrecognized.push(key);
@@ -2411,7 +2431,6 @@ export interface $ZodTuple<
 export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$constructor("$ZodTuple", (inst, def) => {
   $ZodType.init(inst, def);
   const items = def.items;
-  const optStart = items.length - [...items].reverse().findIndex((item) => item._zod.optin !== "optional");
 
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
@@ -2427,6 +2446,9 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
 
     payload.value = [];
     const proms: Promise<any>[] = [];
+
+    const reversedIndex = [...items].reverse().findIndex((item) => item._zod.optin !== "optional");
+    const optStart = reversedIndex === -1 ? 0 : items.length - reversedIndex;
 
     if (!def.rest) {
       const tooBig = input.length > items.length;
@@ -3771,8 +3793,8 @@ export const $ZodReadonly: core.$constructor<$ZodReadonly> = /*@__PURE__*/ core.
     $ZodType.init(inst, def);
     util.defineLazy(inst._zod, "propValues", () => def.innerType._zod.propValues);
     util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
-    util.defineLazy(inst._zod, "optin", () => def.innerType._zod.optin);
-    util.defineLazy(inst._zod, "optout", () => def.innerType._zod.optout);
+    util.defineLazy(inst._zod, "optin", () => def.innerType?._zod?.optin);
+    util.defineLazy(inst._zod, "optout", () => def.innerType?._zod?.optout);
 
     inst._zod.parse = (payload, ctx) => {
       if (ctx.direction === "backward") {
@@ -4164,10 +4186,10 @@ export const $ZodLazy: core.$constructor<$ZodLazy> = /*@__PURE__*/ core.$constru
   //   return () => _innerType;
   // });
   util.defineLazy(inst._zod, "innerType", () => def.getter() as $ZodType);
-  util.defineLazy(inst._zod, "pattern", () => inst._zod.innerType._zod.pattern);
-  util.defineLazy(inst._zod, "propValues", () => inst._zod.innerType._zod.propValues);
-  util.defineLazy(inst._zod, "optin", () => inst._zod.innerType._zod.optin ?? undefined);
-  util.defineLazy(inst._zod, "optout", () => inst._zod.innerType._zod.optout ?? undefined);
+  util.defineLazy(inst._zod, "pattern", () => inst._zod.innerType?._zod?.pattern);
+  util.defineLazy(inst._zod, "propValues", () => inst._zod.innerType?._zod?.propValues);
+  util.defineLazy(inst._zod, "optin", () => inst._zod.innerType?._zod?.optin ?? undefined);
+  util.defineLazy(inst._zod, "optout", () => inst._zod.innerType?._zod?.optout ?? undefined);
   inst._zod.parse = (payload, ctx) => {
     const inner = inst._zod.innerType;
     return inner._zod.run(payload, ctx);
@@ -4298,6 +4320,7 @@ export type $ZodStringFormatTypes =
   | $ZodISODuration
   | $ZodIPv4
   | $ZodIPv6
+  | $ZodMAC
   | $ZodCIDRv4
   | $ZodCIDRv6
   | $ZodBase64

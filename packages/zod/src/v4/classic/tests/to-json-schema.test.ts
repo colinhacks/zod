@@ -132,6 +132,30 @@ describe("toJSONSchema", () => {
         "type": "string",
       }
     `);
+    expect(z.toJSONSchema(z.mac())).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "mac",
+        "pattern": "^(?:[0-9A-F]{2}:){5}[0-9A-F]{2}$|^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}$",
+        "type": "string",
+      }
+    `);
+    expect(z.toJSONSchema(z.mac({ delimiter: ":" }))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "mac",
+        "pattern": "^(?:[0-9A-F]{2}:){5}[0-9A-F]{2}$|^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}$",
+        "type": "string",
+      }
+    `);
+    expect(z.toJSONSchema(z.mac({ delimiter: "-" }))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "mac",
+        "pattern": "^(?:[0-9A-F]{2}-){5}[0-9A-F]{2}$|^(?:[0-9a-f]{2}-){5}[0-9a-f]{2}$",
+        "type": "string",
+      }
+    `);
     expect(z.toJSONSchema(z.uuid())).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -353,6 +377,31 @@ describe("toJSONSchema", () => {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "format": "ipv6",
         "pattern": "^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$",
+        "type": "string",
+      }
+    `);
+
+    expect(z.toJSONSchema(z.mac())).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "mac",
+        "pattern": "^(?:[0-9A-F]{2}:){5}[0-9A-F]{2}$|^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}$",
+        "type": "string",
+      }
+    `);
+    expect(z.toJSONSchema(z.mac({ delimiter: ":" }))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "mac",
+        "pattern": "^(?:[0-9A-F]{2}:){5}[0-9A-F]{2}$|^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}$",
+        "type": "string",
+      }
+    `);
+    expect(z.toJSONSchema(z.mac({ delimiter: "-" }))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "mac",
+        "pattern": "^(?:[0-9A-F]{2}-){5}[0-9A-F]{2}$|^(?:[0-9a-f]{2}-){5}[0-9a-f]{2}$",
         "type": "string",
       }
     `);
@@ -651,6 +700,54 @@ describe("toJSONSchema", () => {
           },
           {
             "type": "number",
+          },
+        ],
+      }
+    `);
+  });
+
+  test("discriminated unions", () => {
+    const schema = z.discriminatedUnion("type", [
+      z.object({ type: z.literal("success"), data: z.string() }),
+      z.object({ type: z.literal("error"), message: z.string() }),
+    ]);
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "type": "string",
+              },
+              "type": {
+                "const": "success",
+                "type": "string",
+              },
+            },
+            "required": [
+              "type",
+              "data",
+            ],
+            "type": "object",
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "message": {
+                "type": "string",
+              },
+              "type": {
+                "const": "error",
+                "type": "string",
+              },
+            },
+            "required": [
+              "type",
+              "message",
+            ],
+            "type": "object",
           },
         ],
       }

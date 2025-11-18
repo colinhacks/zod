@@ -106,6 +106,12 @@ const formIntegrations: ZodResource[] = [
     description: "Tiny 0.5kb Zod-based, HTML form abstraction that goes brr.",
     slug: "schalkventer/frrm",
   },
+  {
+    name: "react-f3",
+    url: "https://www.npmjs.com/package/react-f3",
+    description: "Components, hooks & utilities for creating and managing delightfully simple form experiences in React.",
+    slug: "maanlamp/react-f3",
+  },
 ];
 
 const zodToXConverters: ZodResource[] = [
@@ -138,6 +144,12 @@ const zodToXConverters: ZodResource[] = [
     url: "https://github.com/traversable/schema/tree/main/packages/zod",
     description: 'Build your own "Zod to x" library, or pick one of 25+ off-the-shelf transformers',
     slug: "traversable/schema",
+  },
+  {
+    name: "zod-to-mongo-schema",
+    url: "https://github.com/udohjeremiah/zod-to-mongo-schema",
+    description: "Convert Zod schemas to MongoDB-compatible JSON Schemas effortlessly",
+    slug: "udohjeremiah/zod-to-mongo-schema",
   },
 ];
 
@@ -235,6 +247,11 @@ const poweredByZodProjects: ZodResource[] = [
     description: "A Zod-first toolkit for building powerful, type-safe filter experiences across web apps.",
     slug: "lawvs/fn-sphere",
   },
+    name: "zodgres",
+    url: "https://github.com/endel/zodgres",
+    description: "Postgres.js + Zod: Database collections with static type inference and automatic migrations",
+    slug: "endel/zodgres",
+  }
 ];
 
 const zodUtilities: ZodResource[] = [

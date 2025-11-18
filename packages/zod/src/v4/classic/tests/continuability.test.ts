@@ -197,6 +197,28 @@ test("continuability", () => {
   `);
   expect(
     z
+      .mac()
+      .refine(() => false)
+      .safeParse("invalid_value").error!.issues
+  ).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "invalid_format",
+        "format": "mac",
+        "message": "Invalid MAC address",
+        "origin": "string",
+        "path": [],
+        "pattern": "/^(?:[0-9A-F]{2}:){5}[0-9A-F]{2}$|^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}$/",
+      },
+      {
+        "code": "custom",
+        "message": "Invalid input",
+        "path": [],
+      },
+    ]
+  `);
+  expect(
+    z
       .emoji()
       .refine(() => false)
       .safeParse("invalid_value").error!.issues
