@@ -1053,6 +1053,10 @@ export function _toLowerCase(): checks.$ZodCheckOverwrite<string> {
 export function _toUpperCase(): checks.$ZodCheckOverwrite<string> {
   return _overwrite((input) => input.toUpperCase());
 }
+// slugify
+export function _slugify(): checks.$ZodCheckOverwrite<string> {
+  return _overwrite((input) => util.slugify(input));
+}
 
 ///////  collections   ///////
 

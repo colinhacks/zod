@@ -803,6 +803,24 @@ test("lowerCase", () => {
   expect(z.string().toUpperCase().parse("asdf")).toEqual("ASDF");
 });
 
+test("slugify", () => {
+  expect(z.string().slugify().parse("Hello World")).toEqual("hello-world");
+  expect(z.string().slugify().parse("  Hello   World  ")).toEqual("hello-world");
+  expect(z.string().slugify().parse("Hello@World#123")).toEqual("helloworld123");
+  expect(z.string().slugify().parse("Hello-World")).toEqual("hello-world");
+  expect(z.string().slugify().parse("Hello_World")).toEqual("hello-world");
+  expect(z.string().slugify().parse("---Hello---World---")).toEqual("hello-world");
+  expect(z.string().slugify().parse("Hello  World")).toEqual("hello-world");
+  expect(z.string().slugify().parse("Hello!@#$%^&*()World")).toEqual("helloworld");
+
+  // can be used with check
+  expect(z.string().check(z.slugify()).parse("Hello World")).toEqual("hello-world");
+
+  // can be chained with other methods
+  expect(z.string().slugify().min(5).parse("Hello World")).toEqual("hello-world");
+  expect(() => z.string().slugify().min(20).parse("Hello World")).toThrow();
+});
+
 // test("IP validation", () => {
 //   const ipSchema = z.string().ip();
 

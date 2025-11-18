@@ -351,6 +351,15 @@ export function esc(str: string): string {
   return JSON.stringify(str);
 }
 
+export function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export const captureStackTrace: (targetObject: object, constructorOpt?: Function) => void = (
   "captureStackTrace" in Error ? Error.captureStackTrace : (..._args: any[]) => {}
 ) as any;
