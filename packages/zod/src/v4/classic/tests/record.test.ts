@@ -8,16 +8,28 @@ test("type inference", () => {
   const recordWithEnumKeys = z.record(z.enum(["Tuna", "Salmon"]), z.string());
   type recordWithEnumKeys = z.infer<typeof recordWithEnumKeys>;
 
-  const recordWithLiteralKey = z.record(z.literal(["Tuna", "Salmon"]), z.string());
+  const recordWithLiteralKey = z.record(z.literal(["Tuna", "Salmon", 21]), z.string());
   type recordWithLiteralKey = z.infer<typeof recordWithLiteralKey>;
 
-  const recordWithLiteralUnionKeys = z.record(z.union([z.literal("Tuna"), z.literal("Salmon")]), z.string());
+  const recordWithLiteralUnionKeys = z.record(
+    z.union([z.literal("Tuna"), z.literal("Salmon"), z.literal(21)]),
+    z.string()
+  );
   type recordWithLiteralUnionKeys = z.infer<typeof recordWithLiteralUnionKeys>;
+
+  enum Enum {
+    Tuna = 0,
+    Salmon = "Shark",
+  }
+
+  const recordWithTypescriptEnum = z.record(z.enum(Enum), z.string());
+  type recordWithTypescriptEnum = z.infer<typeof recordWithTypescriptEnum>;
 
   expectTypeOf<booleanRecord>().toEqualTypeOf<Record<string, boolean>>();
   expectTypeOf<recordWithEnumKeys>().toEqualTypeOf<Record<"Tuna" | "Salmon", string>>();
-  expectTypeOf<recordWithLiteralKey>().toEqualTypeOf<Record<"Tuna" | "Salmon", string>>();
-  expectTypeOf<recordWithLiteralUnionKeys>().toEqualTypeOf<Record<"Tuna" | "Salmon", string>>();
+  expectTypeOf<recordWithLiteralKey>().toEqualTypeOf<Record<"Tuna" | "Salmon" | 21, string>>();
+  expectTypeOf<recordWithLiteralUnionKeys>().toEqualTypeOf<Record<"Tuna" | "Salmon" | 21, string>>();
+  expectTypeOf<recordWithTypescriptEnum>().toEqualTypeOf<Record<Enum, string>>();
 });
 
 test("enum exhaustiveness", () => {
@@ -64,14 +76,76 @@ test("enum exhaustiveness", () => {
   `);
 });
 
+test("typescript enum exhaustiveness", () => {
+  enum BigFish {
+    Tuna = 0,
+    Salmon = "Shark",
+  }
+
+  const schema = z.record(z.enum(BigFish), z.string());
+  const value = {
+    [BigFish.Tuna]: "asdf",
+    [BigFish.Salmon]: "asdf",
+  };
+
+  expect(schema.parse(value)).toEqual(value);
+
+  expect(schema.safeParse({ [BigFish.Tuna]: "asdf", [BigFish.Salmon]: "asdf", Trout: "asdf" })).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "code": "unrecognized_keys",
+        "keys": [
+          "Trout"
+        ],
+        "path": [],
+        "message": "Unrecognized key: \\"Trout\\""
+      }
+    ]],
+      "success": false,
+    }
+  `);
+  expect(schema.safeParse({ [BigFish.Tuna]: "asdf" })).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": [
+          "Shark"
+        ],
+        "message": "Invalid input: expected string, received undefined"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+  expect(schema.safeParse({ [BigFish.Salmon]: "asdf" })).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": [
+          0
+        ],
+        "message": "Invalid input: expected string, received undefined"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+});
+
 test("literal exhaustiveness", () => {
-  const schema = z.record(z.literal(["Tuna", "Salmon"]), z.string());
+  const schema = z.record(z.literal(["Tuna", "Salmon", 21]), z.string());
   schema.parse({
     Tuna: "asdf",
     Salmon: "asdf",
+    21: "asdf",
   });
 
-  expect(schema.safeParse({ Tuna: "asdf", Salmon: "asdf", Trout: "asdf" })).toMatchInlineSnapshot(`
+  expect(schema.safeParse({ Tuna: "asdf", Salmon: "asdf", 21: "asdf", Trout: "asdf" })).toMatchInlineSnapshot(`
     {
       "error": [ZodError: [
       {
@@ -94,6 +168,14 @@ test("literal exhaustiveness", () => {
         "code": "invalid_type",
         "path": [
           "Salmon"
+        ],
+        "message": "Invalid input: expected string, received undefined"
+      },
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": [
+          21
         ],
         "message": "Invalid input: expected string, received undefined"
       }
@@ -143,13 +225,14 @@ test("pipe exhaustiveness", () => {
 });
 
 test("union exhaustiveness", () => {
-  const schema = z.record(z.union([z.literal("Tuna"), z.literal("Salmon")]), z.string());
-  expect(schema.parse({ Tuna: "asdf", Salmon: "asdf" })).toEqual({
+  const schema = z.record(z.union([z.literal("Tuna"), z.literal("Salmon"), z.literal(21)]), z.string());
+  expect(schema.parse({ Tuna: "asdf", Salmon: "asdf", 21: "asdf" })).toEqual({
     Tuna: "asdf",
     Salmon: "asdf",
+    21: "asdf",
   });
 
-  expect(schema.safeParse({ Tuna: "asdf", Salmon: "asdf", Trout: "asdf" })).toMatchInlineSnapshot(`
+  expect(schema.safeParse({ Tuna: "asdf", Salmon: "asdf", 21: "asdf", Trout: "asdf" })).toMatchInlineSnapshot(`
     {
       "error": [ZodError: [
       {
@@ -172,6 +255,14 @@ test("union exhaustiveness", () => {
         "code": "invalid_type",
         "path": [
           "Salmon"
+        ],
+        "message": "Invalid input: expected string, received undefined"
+      },
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": [
+          21
         ],
         "message": "Invalid input: expected string, received undefined"
       }
