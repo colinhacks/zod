@@ -3793,8 +3793,8 @@ export const $ZodReadonly: core.$constructor<$ZodReadonly> = /*@__PURE__*/ core.
     $ZodType.init(inst, def);
     util.defineLazy(inst._zod, "propValues", () => def.innerType._zod.propValues);
     util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
-    util.defineLazy(inst._zod, "optin", () => def.innerType._zod.optin);
-    util.defineLazy(inst._zod, "optout", () => def.innerType._zod.optout);
+    util.defineLazy(inst._zod, "optin", () => def.innerType?._zod?.optin);
+    util.defineLazy(inst._zod, "optout", () => def.innerType?._zod?.optout);
 
     inst._zod.parse = (payload, ctx) => {
       if (ctx.direction === "backward") {
@@ -4186,10 +4186,10 @@ export const $ZodLazy: core.$constructor<$ZodLazy> = /*@__PURE__*/ core.$constru
   //   return () => _innerType;
   // });
   util.defineLazy(inst._zod, "innerType", () => def.getter() as $ZodType);
-  util.defineLazy(inst._zod, "pattern", () => inst._zod.innerType?._zod.pattern);
-  util.defineLazy(inst._zod, "propValues", () => inst._zod.innerType?._zod.propValues);
-  util.defineLazy(inst._zod, "optin", () => inst._zod.innerType?._zod.optin ?? undefined);
-  util.defineLazy(inst._zod, "optout", () => inst._zod.innerType?._zod.optout ?? undefined);
+  util.defineLazy(inst._zod, "pattern", () => inst._zod.innerType?._zod?.pattern);
+  util.defineLazy(inst._zod, "propValues", () => inst._zod.innerType?._zod?.propValues);
+  util.defineLazy(inst._zod, "optin", () => inst._zod.innerType?._zod?.optin ?? undefined);
+  util.defineLazy(inst._zod, "optout", () => inst._zod.innerType?._zod?.optout ?? undefined);
   inst._zod.parse = (payload, ctx) => {
     const inner = inst._zod.innerType;
     return inner._zod.run(payload, ctx);
