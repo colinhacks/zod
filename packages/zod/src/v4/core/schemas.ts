@@ -2590,8 +2590,8 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
 
     const proms: Promise<any>[] = [];
 
-    if (def.keyType._zod.values) {
-      const values = def.keyType._zod.values!;
+    const values = def.keyType._zod.values;
+    if (values) {
       payload.value = {};
       const recordKeys = new Set<string | symbol>();
       for (const key of values) {
