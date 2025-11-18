@@ -1,6 +1,7 @@
 import * as checks from "./checks.js";
 import type * as core from "./core.js";
 import type * as errors from "./errors.js";
+import * as registries from "./registries.js";
 import * as schemas from "./schemas.js";
 import * as util from "./util.js";
 
@@ -1531,6 +1532,30 @@ export function _check<O = unknown>(fn: schemas.CheckFn<O>, params?: string | $Z
   });
 
   ch._zod.check = fn;
+  return ch;
+}
+
+export function describe<T>(description: string): checks.$ZodCheck<T> {
+  const ch = new checks.$ZodCheck({ check: "describe" });
+  ch._zod.onattach = [
+    (inst) => {
+      const existing = registries.globalRegistry.get(inst) ?? {};
+      registries.globalRegistry.add(inst, { ...existing, description });
+    },
+  ];
+  ch._zod.check = () => {}; // no-op check
+  return ch;
+}
+
+export function meta<T>(metadata: registries.GlobalMeta): checks.$ZodCheck<T> {
+  const ch = new checks.$ZodCheck({ check: "meta" });
+  ch._zod.onattach = [
+    (inst) => {
+      const existing = registries.globalRegistry.get(inst) ?? {};
+      registries.globalRegistry.add(inst, { ...existing, ...metadata });
+    },
+  ];
+  ch._zod.check = () => {}; // no-op check
   return ch;
 }
 

@@ -2142,6 +2142,10 @@ export function superRefine<T>(
   return core._superRefine(fn);
 }
 
+// Re-export describe and meta from core
+export const describe = core.describe;
+export const meta = core.meta;
+
 type ZodInstanceOfParams = core.Params<
   ZodCustom,
   core.$ZodIssueCustom,
