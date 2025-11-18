@@ -242,6 +242,11 @@ const poweredByZodProjects: ZodResource[] = [
     slug: "boneskull/bupkis",
   },
   {
+    name: "Fn Sphere",
+    url: "https://github.com/lawvs/fn-sphere",
+    description: "A Zod-first toolkit for building powerful, type-safe filter experiences across web apps.",
+    slug: "lawvs/fn-sphere",
+  },
     name: "zodgres",
     url: "https://github.com/endel/zodgres",
     description: "Postgres.js + Zod: Database collections with static type inference and automatic migrations",
@@ -262,11 +267,17 @@ const zodUtilities: ZodResource[] = [
     description: "Interactive playground for testing and exploring Zod and Zod mini schemas in real-time.",
     slug: "marilari88/zod-playground",
   },
-   {
+  {
     name: "eslint-plugin-zod-x",
     url: "https://github.com/marcalexiei/eslint-plugin-zod-x",
     description: "ESLint plugin that adds custom linting rules to enforce best practices when using Zod",
     slug: "marcalexiei/eslint-plugin-zod-x",
+  },
+  {
+    name: "Zod Compare",
+    url: "https://github.com/lawvs/zod-compare",
+    description: "A utility library for recursively comparing Zod schemas.",
+    slug: "lawvs/zod-compare",
   },
 ];
 
