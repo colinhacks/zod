@@ -247,6 +247,7 @@ const poweredByZodProjects: ZodResource[] = [
     description: "A Zod-first toolkit for building powerful, type-safe filter experiences across web apps.",
     slug: "lawvs/fn-sphere",
   },
+  {
     name: "zodgres",
     url: "https://github.com/endel/zodgres",
     description: "Postgres.js + Zod: Database collections with static type inference and automatic migrations",
