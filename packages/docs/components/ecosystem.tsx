@@ -145,6 +145,12 @@ const zodToXConverters: ZodResource[] = [
     description: 'Build your own "Zod to x" library, or pick one of 25+ off-the-shelf transformers',
     slug: "traversable/schema",
   },
+  {
+    name: "zod-to-mongo-schema",
+    url: "https://github.com/udohjeremiah/zod-to-mongo-schema",
+    description: "Convert Zod schemas to MongoDB-compatible JSON Schemas effortlessly",
+    slug: "udohjeremiah/zod-to-mongo-schema",
+  },
 ];
 
 const xToZodConverters: ZodResource[] = [
