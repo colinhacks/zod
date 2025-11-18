@@ -259,6 +259,7 @@ z.cuid2();
 z.ulid();
 z.ipv4();
 z.ipv6();
+z.mac();
 z.cidrv4();        // ipv4 CIDR block
 z.cidrv6();        // ipv6 CIDR block
 z.hash("sha256");  // or "sha1", "sha384", "sha512", "md5"
@@ -487,10 +488,10 @@ Use the `precision` parameter to constrain the allowable decimal precision.
 
 ```ts
 z.iso.time({ precision: -1 }); // HH:MM (minute precision)
-z.iso.time({ precision: 0 }); // HH:MM:SS (second precision)
-z.iso.time({ precision: 1 }); // HH:MM:SS.s (decisecond precision)
-z.iso.time({ precision: 2 }); // HH:MM:SS.ss (centisecond precision)
-z.iso.time({ precision: 3 }); // HH:MM:SS.sss (millisecond precision)
+z.iso.time({ precision: 0 });  // HH:MM:SS (second precision)
+z.iso.time({ precision: 1 });  // HH:MM:SS.s (decisecond precision)
+z.iso.time({ precision: 2 });  // HH:MM:SS.ss (centisecond precision)
+z.iso.time({ precision: 3 });  // HH:MM:SS.sss (millisecond precision)
 ```
 
 ### IP addresses
@@ -513,6 +514,22 @@ cidrv4.parse("192.168.0.0/24"); // ✅
 
 const cidrv6 = z.string().cidrv6();
 cidrv6.parse("2001:db8::/32"); // ✅
+```
+
+### MAC Addresses
+
+Validate standard 48-bit MAC address [IEEE 802](https://en.wikipedia.org/wiki/MAC_address).
+
+```ts
+const mac = z.mac(); 
+mac.parse("00:1A:2B:3C:4D:5E");  // ✅
+mac.parse("00-1a-2b-3c-4d-5e");  // ❌ colon-delimited by default
+mac.parse("001A:2B3C:4D5E");     // ❌ standard formats only
+mac.parse("00:1A:2b:3C:4d:5E");  // ❌ no mixed case
+
+// custom delimiter
+const dashMac = z.mac({ delimiter: "-" });
+dashMac.parse("00-1A-2B-3C-4D-5E"); // ✅
 ```
 
 ### JWTs

@@ -782,6 +782,26 @@ export const $ZodIPv6: core.$constructor<$ZodIPv6> = /*@__PURE__*/ core.$constru
   };
 });
 
+//////////////////////////////   ZodMAC   //////////////////////////////
+export interface $ZodMACDef extends $ZodStringFormatDef<"mac"> {
+  delimiter?: string;
+}
+
+export interface $ZodMACInternals extends $ZodStringFormatInternals<"mac"> {
+  def: $ZodMACDef;
+}
+
+export interface $ZodMAC extends $ZodType {
+  _zod: $ZodMACInternals;
+}
+
+export const $ZodMAC: core.$constructor<$ZodMAC> = /*@__PURE__*/ core.$constructor("$ZodMAC", (inst, def): void => {
+  def.pattern ??= regexes.mac(def.delimiter);
+  $ZodStringFormat.init(inst, def);
+
+  inst._zod.bag.format = `mac`;
+});
+
 //////////////////////////////   ZodCIDRv4   //////////////////////////////
 
 export interface $ZodCIDRv4Def extends $ZodStringFormatDef<"cidrv4"> {
@@ -4300,6 +4320,7 @@ export type $ZodStringFormatTypes =
   | $ZodISODuration
   | $ZodIPv4
   | $ZodIPv6
+  | $ZodMAC
   | $ZodCIDRv4
   | $ZodCIDRv6
   | $ZodBase64

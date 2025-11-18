@@ -614,6 +614,19 @@ export function ipv4(params?: string | core.$ZodIPv4Params): ZodIPv4 {
   return core._ipv4(ZodIPv4, params);
 }
 
+// ZodMAC
+export interface ZodMAC extends ZodStringFormat<"mac"> {
+  _zod: core.$ZodMACInternals;
+}
+export const ZodMAC: core.$constructor<ZodMAC> = /*@__PURE__*/ core.$constructor("ZodMAC", (inst, def) => {
+  // ZodStringFormat.init(inst, def);
+  core.$ZodMAC.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+export function mac(params?: string | core.$ZodMACParams): ZodMAC {
+  return core._mac(ZodMAC, params);
+}
+
 // ZodIPv6
 export interface ZodIPv6 extends ZodStringFormat<"ipv6"> {
   _zod: core.$ZodIPv6Internals;

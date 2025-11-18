@@ -1,29 +1,10 @@
 import * as z from "zod";
 
-// Test the circular reference issue with z.lazy()
-const schema = z.lazy(() => z.tuple([schema]));
+z;
 
-console.log("Testing circular lazy schema creation:");
-try {
-  // Try to access properties that depend on innerType during construction
-  // This should trigger the error if the bug exists
-  const _pattern = schema._zod.pattern;
-  const _optin = schema._zod.optin;
-  console.log("✅ Schema created successfully");
-  console.log("Pattern:", _pattern);
-  console.log("Optin:", _optin);
-} catch (error) {
-  console.log("❌ Error during schema creation:", error);
-  if (error instanceof Error) {
-    console.log("Message:", error.message);
-    console.log("Stack:", error.stack);
-  }
-}
+const mac = z.stringFormat(
+  "mac",
+  /^(([0-9A-F]{2}([-:])[0-9A-F]{2}(\3[0-9A-F]{2}){4})|([0-9a-f]{2}([-:])[0-9a-f]{2}(\6[0-9a-f]{2}){4}))$/
+);
 
-console.log("\nTesting circular lazy schema parsing:");
-try {
-  const result = schema.parse([[]]);
-  console.log("✅ Parse Success:", result);
-} catch (error) {
-  console.log("❌ Parse Error:", error);
-}
+mac.parse("00:1A:2B:3C:4D:5E");
