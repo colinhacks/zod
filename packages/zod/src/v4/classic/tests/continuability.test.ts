@@ -208,7 +208,7 @@ test("continuability", () => {
         "message": "Invalid MAC address",
         "origin": "string",
         "path": [],
-        "pattern": "/^(([0-9A-F]{2}(:)[0-9A-F]{2}(\\3[0-9A-F]{2}){4})|([0-9a-f]{2}(:)[0-9a-f]{2}(\\6[0-9a-f]{2}){4}))$/",
+        "pattern": "/^(?:[0-9A-F]{2}:){5}[0-9A-F]{2}$|^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}$/",
       },
       {
         "code": "custom",
