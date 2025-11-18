@@ -162,13 +162,13 @@ test("catchall overrides strict", () => {
   });
 });
 
-test("optional keys are unset", async () => {
+test("optional keys are unset", () => {
   const SNamedEntity = z.object({
     id: z.string(),
     set: z.string().optional(),
     unset: z.string().optional(),
   });
-  const result = await SNamedEntity.parse({
+  const result = SNamedEntity.parse({
     id: "asdf",
     set: undefined,
   });
@@ -435,6 +435,17 @@ test("extend() should have power to override existing key", () => {
   expectTypeOf<PersonWithNumberAsLastName>().toEqualTypeOf<{ firstName: string; lastName: number }>();
 });
 
+test("safeExtend() maintains refinements", () => {
+  const schema = z.object({ name: z.string().min(1) });
+  const extended = schema.safeExtend({ name: z.string().min(2) });
+  expect(() => extended.parse({ name: "" })).toThrow();
+  expect(extended.parse({ name: "ab" })).toEqual({ name: "ab" });
+  type Extended = z.infer<typeof extended>;
+  expectTypeOf<Extended>().toEqualTypeOf<{ name: string }>();
+  // @ts-expect-error
+  schema.safeExtend({ name: z.number() });
+});
+
 test("passthrough index signature", () => {
   const a = z.object({ a: z.string() });
   type a = z.infer<typeof a>;
@@ -575,4 +586,24 @@ test("index signature in shape", () => {
   type schema = z.infer<typeof schema>;
 
   expectTypeOf<schema>().toEqualTypeOf<Record<string, string>>();
+});
+
+test("extent() on object with refinements should throw", () => {
+  const schema = z
+    .object({
+      a: z.string(),
+    })
+    .refine(() => true);
+
+  expect(() => schema.extend({ b: z.string() })).toThrow();
+});
+
+test("safeExtend() on object with refinements should not throw", () => {
+  const schema = z
+    .object({
+      a: z.string(),
+    })
+    .refine(() => true);
+
+  expect(() => schema.safeExtend({ b: z.string() })).not.toThrow();
 });

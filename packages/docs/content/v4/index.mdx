@@ -287,7 +287,7 @@ The core bundle is ~57% smaller in Zod 4 (2.3x). That's good! But we can do a lo
 Zod's method-heavy API is fundamentally difficult to tree-shake. Even our simple `z.boolean()` script pulls in the implementations of a bunch of methods we didn't use, like `.optional()`, `.array()`, etc. Writing slimmer implementations can only get you so far. That's where Zod Mini comes in. 
 
 ```sh
-npm install zod@^3.25.0
+npm install zod@^4.0.0
 ```
 
 It's a Zod variant with a functional, tree-shakable API that corresponds one-to-one with `zod`. Where Zod uses methods, Zod Mini generally uses wrapper functions:
@@ -598,7 +598,7 @@ import * as z from "zod";
 z.config(z.locales.en());
 ```
 
-At the time of this writing only the English locale is available; There will be a call for pull request from the community shortly; this section will be updated with a list of supported languages as they become available.
+See the full list of supported locales in [Customizing errors](/error-customization#locales); this section is always updated with a list of supported languages as they become available.
 
 ## Error pretty-printing
 

@@ -35,6 +35,13 @@ const apiLibraries: ZodResource[] = [
     slug: "RobinTail/express-zod-api",
   },
   {
+    name: "nestjs-zod",
+    url: "https://github.com/BenLorantfy/nestjs-zod",
+    description:
+      "Integrate nestjs and zod.  Create nestjs DTOs using zod, serialize with zod, and generate OpenAPI documentation from zod schemas",
+    slug: "BenLorantfy/nestjs-zod",
+  },
+  {
     name: "Zod Sockets",
     url: "https://github.com/RobinTail/zod-sockets",
     description: "Socket.IO solution with I/O validation, an AsyncAPI generator, and a type-safe events map.",
@@ -46,7 +53,12 @@ const apiLibraries: ZodResource[] = [
     description: "Type-safe JSON-RPC 2.0 client/server library using Zod.",
     slug: "danscan/zod-jsonrpc",
   },
-
+  {
+    name: "upfetch",
+    url: "https://github.com/L-Blondy/up-fetch",
+    description: "Advanced fetch client builder",
+    slug: "L-Blondy/up-fetch",
+  },
   // https://github.com/honojs/middleware/tree/main/packages/zod-validator
   // {
   //   name: "@hono/zod-validator",
@@ -88,6 +100,18 @@ const formIntegrations: ZodResource[] = [
     description: "Svelte 5 library for creating forms based on JSON schema.",
     slug: "x0k/svelte-jsonschema-form",
   },
+  {
+    name: "frrm",
+    url: "https://www.npmjs.com/package/frrm",
+    description: "Tiny 0.5kb Zod-based, HTML form abstraction that goes brr.",
+    slug: "schalkventer/frrm",
+  },
+  {
+    name: "react-f3",
+    url: "https://www.npmjs.com/package/react-f3",
+    description: "Components, hooks & utilities for creating and managing delightfully simple form experiences in React.",
+    slug: "maanlamp/react-f3",
+  },
 ];
 
 const zodToXConverters: ZodResource[] = [
@@ -115,6 +139,12 @@ const zodToXConverters: ZodResource[] = [
     description: "Generate Zod schemas from Prisma schema with full ZodObject method support",
     slug: "omar-dulaimi/prisma-zod-generator",
   },
+  {
+    name: "@traversable/zod",
+    url: "https://github.com/traversable/schema/tree/main/packages/zod",
+    description: 'Build your own "Zod to x" library, or pick one of 25+ off-the-shelf transformers',
+    slug: "traversable/schema",
+  },
 ];
 
 const xToZodConverters: ZodResource[] = [
@@ -131,7 +161,6 @@ const xToZodConverters: ZodResource[] = [
     slug: "kubb-labs/kubb",
   },
   {
-
     name: "Hey API",
     url: "https://heyapi.dev/openapi-ts/plugins/zod",
     description: "The OpenAPI to TypeScript codegen. Generate clients, SDKs, validators, and more.",
@@ -142,6 +171,20 @@ const xToZodConverters: ZodResource[] = [
     url: "https://github.com/yuzheng14/valype",
     description: "Typescript's type definition to runtime validator (including zod).",
     slug: "yuzheng14/valype",
+  },
+  {
+    name: "Prisma Zod Generator",
+    url: "https://github.com/omar-dulaimi/prisma-zod-generator",
+    description:
+      "Generates Zod schemas with input/result/pure variants, minimal/full/custom, selective emit/filtering, single/multi-file output, @zod rules, relation depth guards.",
+    slug: "omar-dulaimi/prisma-zod-generator",
+  },
+  {
+    name: "DRZL",
+    url: "https://github.com/use-drzl/drzl",
+    description:
+      "Drizzle ORM toolkit that can generate Zod validators from schema(s), plus typed services and strongly typed routers (oRPC/tRPC/etc).",
+    slug: "use-drzl/drzl",
   },
 ];
 
@@ -157,6 +200,13 @@ const mockingLibraries: ZodResource[] = [
     url: "https://zocker.sigrist.dev",
     description: "Generates valid, semantically meaningful data for your Zod schemas.",
     slug: "LorisSigrist/zocker",
+  },
+  {
+    name: "@traversable/zod-test",
+    url: "https://github.com/traversable/schema/tree/main/packages/zod-test",
+    description:
+      "Random zod schema generator built for fuzz testing; includes generators for both valid and invalid data",
+    slug: "traversable/schema",
   },
 ];
 
@@ -179,6 +229,12 @@ const poweredByZodProjects: ZodResource[] = [
     description: "A xlsx based resource validator using Zod schemas for data imports and more",
     slug: "sidwebworks/zod-xlsx",
   },
+  {
+    name: "bupkis",
+    url: "https://github.com/boneskull/bupkis",
+    description: "Uncommonly extensible assertions for the beautiful people",
+    slug: "boneskull/bupkis",
+  }
 ];
 
 const zodUtilities: ZodResource[] = [
@@ -193,6 +249,12 @@ const zodUtilities: ZodResource[] = [
     url: "https://github.com/marilari88/zod-playground",
     description: "Interactive playground for testing and exploring Zod and Zod mini schemas in real-time.",
     slug: "marilari88/zod-playground",
+  },
+   {
+    name: "eslint-plugin-zod-x",
+    url: "https://github.com/marcalexiei/eslint-plugin-zod-x",
+    description: "ESLint plugin that adds custom linting rules to enforce best practices when using Zod",
+    slug: "marcalexiei/eslint-plugin-zod-x",
   },
 ];
 
@@ -225,7 +287,7 @@ export function Table(props: { resources: ZodResource[] }) {
                 <code className="whitespace-nowrap">{resource.name}</code>
               </a>
             </td>
-            <td className="whitespace-nowrap">{`⭐️ ${resource.stars ?? "ERR"}`}</td>
+            <td className="whitespace-nowrap">{`⭐️ ${resource.stars ?? "—"}`}</td>
             {/* <td className="whitespace-nowrap">{`⭐️ ${resource.v4 ? "✅" : ""}`}</td> */}
             <td>{resource.description}</td>
           </tr>

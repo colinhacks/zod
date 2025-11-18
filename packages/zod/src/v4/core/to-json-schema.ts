@@ -11,8 +11,9 @@ interface JSONSchemaGeneratorParams {
   /** The JSON Schema version to target.
    * - `"draft-2020-12"` — Default. JSON Schema Draft 2020-12
    * - `"draft-7"` — JSON Schema Draft 7
-   * - `"draft-4"` — JSON Schema Draft 4 */
-  target?: "draft-4" | "draft-7" | "draft-2020-12";
+   * - `"draft-4"` — JSON Schema Draft 4
+   * - `"openapi-3.0"` — OpenAPI 3.0 Schema Object */
+  target?: "draft-4" | "draft-7" | "draft-2020-12" | "openapi-3.0";
   /** How to handle unrepresentable types.
    * - `"throw"` — Default. Unrepresentable types throw an error
    * - `"any"` — Unrepresentable types become `{}` */
@@ -72,7 +73,7 @@ interface Seen {
 
 export class JSONSchemaGenerator {
   metadataRegistry: $ZodRegistry<Record<string, any>>;
-  target: "draft-4" | "draft-7" | "draft-2020-12";
+  target: "draft-4" | "draft-7" | "draft-2020-12" | "openapi-3.0";
   unrepresentable: "throw" | "any";
   override: (ctx: {
     zodSchema: schemas.$ZodTypes;
@@ -164,7 +165,9 @@ export class JSONSchemaGenerator {
               else if (regexes.length > 1) {
                 result.schema.allOf = [
                   ...regexes.map((regex) => ({
-                    ...(this.target === "draft-7" || this.target === "draft-4" ? ({ type: "string" } as const) : {}),
+                    ...(this.target === "draft-7" || this.target === "draft-4" || this.target === "openapi-3.0"
+                      ? ({ type: "string" } as const)
+                      : {}),
                     pattern: regex.source,
                   })),
                 ];
@@ -180,7 +183,7 @@ export class JSONSchemaGenerator {
             else json.type = "number";
 
             if (typeof exclusiveMinimum === "number") {
-              if (this.target === "draft-4") {
+              if (this.target === "draft-4" || this.target === "openapi-3.0") {
                 json.minimum = exclusiveMinimum;
                 json.exclusiveMinimum = true;
               } else {
@@ -196,7 +199,7 @@ export class JSONSchemaGenerator {
             }
 
             if (typeof exclusiveMaximum === "number") {
-              if (this.target === "draft-4") {
+              if (this.target === "draft-4" || this.target === "openapi-3.0") {
                 json.maximum = exclusiveMaximum;
                 json.exclusiveMaximum = true;
               } else {
@@ -233,7 +236,11 @@ export class JSONSchemaGenerator {
             break;
           }
           case "null": {
-            _json.type = "null";
+            if (this.target === "openapi-3.0") {
+              _json.type = "string";
+              _json.nullable = true;
+              _json.enum = [null];
+            } else _json.type = "null";
             break;
           }
           case "any": {
@@ -323,12 +330,20 @@ export class JSONSchemaGenerator {
           }
           case "union": {
             const json: JSONSchema.BaseSchema = _json as any;
-            json.anyOf = def.options.map((x, i) =>
+            // Discriminated unions use oneOf (exactly one match) instead of anyOf (one or more matches)
+            // because the discriminator field ensures mutual exclusivity between options in JSON Schema
+            const isDiscriminated = (def as any).discriminator !== undefined;
+            const options = def.options.map((x, i) =>
               this.process(x, {
                 ...params,
-                path: [...params.path, "anyOf", i],
+                path: [...params.path, isDiscriminated ? "oneOf" : "anyOf", i],
               })
             );
+            if (isDiscriminated) {
+              json.oneOf = options;
+            } else {
+              json.anyOf = options;
+            }
             break;
           }
           case "intersection": {
@@ -353,33 +368,46 @@ export class JSONSchemaGenerator {
           case "tuple": {
             const json: JSONSchema.ArraySchema = _json as any;
             json.type = "array";
+
+            const prefixPath = this.target === "draft-2020-12" ? "prefixItems" : "items";
+            const restPath =
+              this.target === "draft-2020-12" ? "items" : this.target === "openapi-3.0" ? "items" : "additionalItems";
+
             const prefixItems = def.items.map((x, i) =>
-              this.process(x, { ...params, path: [...params.path, "prefixItems", i] })
+              this.process(x, {
+                ...params,
+                path: [...params.path, prefixPath, i],
+              })
             );
+            const rest = def.rest
+              ? this.process(def.rest, {
+                  ...params,
+                  path: [...params.path, restPath, ...(this.target === "openapi-3.0" ? [def.items.length] : [])],
+                })
+              : null;
+
             if (this.target === "draft-2020-12") {
               json.prefixItems = prefixItems;
+              if (rest) {
+                json.items = rest;
+              }
+            } else if (this.target === "openapi-3.0") {
+              json.items = {
+                anyOf: prefixItems,
+              };
+
+              if (rest) {
+                json.items.anyOf!.push(rest);
+              }
+              json.minItems = prefixItems.length;
+              if (!rest) {
+                json.maxItems = prefixItems.length;
+              }
             } else {
               json.items = prefixItems;
-            }
-
-            if (def.rest) {
-              const rest = this.process(def.rest, {
-                ...params,
-                path: [...params.path, "items"],
-              });
-              if (this.target === "draft-2020-12") {
-                json.items = rest;
-              } else {
+              if (rest) {
                 json.additionalItems = rest;
               }
-            }
-
-            // additionalItems
-            if (def.rest) {
-              json.items = this.process(def.rest, {
-                ...params,
-                path: [...params.path, "items"],
-              });
             }
 
             // length
@@ -394,7 +422,7 @@ export class JSONSchemaGenerator {
           case "record": {
             const json: JSONSchema.ObjectSchema = _json as any;
             json.type = "object";
-            if (this.target !== "draft-4") {
+            if (this.target === "draft-7" || this.target === "draft-2020-12") {
               json.propertyNames = this.process(def.keyType, {
                 ...params,
                 path: [...params.path, "propertyNames"],
@@ -452,7 +480,7 @@ export class JSONSchemaGenerator {
             } else if (vals.length === 1) {
               const val = vals[0]!;
               json.type = val === null ? ("null" as const) : (typeof val as any);
-              if (this.target === "draft-4") {
+              if (this.target === "draft-4" || this.target === "openapi-3.0") {
                 json.enum = [val];
               } else {
                 json.const = val;
@@ -506,7 +534,12 @@ export class JSONSchemaGenerator {
 
           case "nullable": {
             const inner = this.process(def.innerType, params);
-            _json.anyOf = [inner, { type: "null" }];
+            if (this.target === "openapi-3.0") {
+              result.ref = def.innerType;
+              _json.nullable = true;
+            } else {
+              _json.anyOf = [inner, { type: "null" }];
+            }
             break;
           }
           case "nonoptional": {
@@ -591,6 +624,12 @@ export class JSONSchemaGenerator {
           case "custom": {
             if (this.unrepresentable === "throw") {
               throw new Error("Custom types cannot be represented in JSON Schema");
+            }
+            break;
+          }
+          case "function": {
+            if (this.unrepresentable === "throw") {
+              throw new Error("Function types cannot be represented in JSON Schema");
             }
             break;
           }
@@ -773,7 +812,10 @@ export class JSONSchemaGenerator {
 
         // merge referenced schema into current
         const refSchema = this.seen.get(ref)!.schema;
-        if (refSchema.$ref && (params.target === "draft-7" || params.target === "draft-4")) {
+        if (
+          refSchema.$ref &&
+          (params.target === "draft-7" || params.target === "draft-4" || params.target === "openapi-3.0")
+        ) {
           schema.allOf = schema.allOf ?? [];
           schema.allOf.push(refSchema);
         } else {
@@ -802,6 +844,8 @@ export class JSONSchemaGenerator {
       result.$schema = "http://json-schema.org/draft-07/schema#";
     } else if (this.target === "draft-4") {
       result.$schema = "http://json-schema.org/draft-04/schema#";
+    } else if (this.target === "openapi-3.0") {
+      // OpenAPI 3.0 schema objects should not include a $schema property
     } else {
       // @ts-ignore
       console.warn(`Invalid target: ${this.target}`);
@@ -910,95 +954,55 @@ function isTransforming(
   if (ctx.seen.has(_schema)) return false;
   ctx.seen.add(_schema);
 
-  const schema = _schema as schemas.$ZodTypes;
-  const def = schema._zod.def;
-  switch (def.type) {
-    case "string":
-    case "number":
-    case "bigint":
-    case "boolean":
-    case "date":
-    case "symbol":
-    case "undefined":
-    case "null":
-    case "any":
-    case "unknown":
-    case "never":
-    case "void":
-    case "literal":
-    case "enum":
-    case "nan":
-    case "file":
-    case "template_literal":
-      return false;
-    case "array": {
-      return isTransforming(def.element, ctx);
-    }
-    case "object": {
-      for (const key in def.shape) {
-        if (isTransforming(def.shape[key]!, ctx)) return true;
-      }
-      return false;
-    }
-    case "union": {
-      for (const option of def.options) {
-        if (isTransforming(option, ctx)) return true;
-      }
-      return false;
-    }
-    case "intersection": {
-      return isTransforming(def.left, ctx) || isTransforming(def.right, ctx);
-    }
-    case "tuple": {
-      for (const item of def.items) {
-        if (isTransforming(item, ctx)) return true;
-      }
-      if (def.rest && isTransforming(def.rest, ctx)) return true;
-      return false;
-    }
-    case "record": {
-      return isTransforming(def.keyType, ctx) || isTransforming(def.valueType, ctx);
-    }
-    case "map": {
-      return isTransforming(def.keyType, ctx) || isTransforming(def.valueType, ctx);
-    }
-    case "set": {
-      return isTransforming(def.valueType, ctx);
-    }
+  const def = (_schema as schemas.$ZodTypes)._zod.def;
 
-    // inner types
-    case "promise":
-    case "optional":
-    case "nonoptional":
-    case "nullable":
-    case "readonly":
-      return isTransforming(def.innerType, ctx);
-    case "lazy":
-      return isTransforming(def.getter(), ctx);
-    case "default": {
-      return isTransforming(def.innerType, ctx);
-    }
-    case "prefault": {
-      return isTransforming(def.innerType, ctx);
-    }
-    case "custom": {
-      return false;
-    }
-    case "transform": {
-      return true;
-    }
-    case "pipe": {
-      return isTransforming(def.in, ctx) || isTransforming(def.out, ctx);
-    }
-    case "success": {
-      return false;
-    }
-    case "catch": {
-      return false;
-    }
+  if (def.type === "transform") return true;
 
-    default:
-      def satisfies never;
+  if (def.type === "array") return isTransforming(def.element, ctx);
+  if (def.type === "set") return isTransforming(def.valueType, ctx);
+  if (def.type === "lazy") return isTransforming(def.getter(), ctx);
+
+  if (
+    def.type === "promise" ||
+    def.type === "optional" ||
+    def.type === "nonoptional" ||
+    def.type === "nullable" ||
+    def.type === "readonly" ||
+    def.type === "default" ||
+    def.type === "prefault"
+  ) {
+    return isTransforming(def.innerType, ctx);
   }
-  throw new Error(`Unknown schema type: ${(def as any).type}`);
+
+  if (def.type === "intersection") {
+    return isTransforming(def.left, ctx) || isTransforming(def.right, ctx);
+  }
+  if (def.type === "record" || def.type === "map") {
+    return isTransforming(def.keyType, ctx) || isTransforming(def.valueType, ctx);
+  }
+  if (def.type === "pipe") {
+    return isTransforming(def.in, ctx) || isTransforming(def.out, ctx);
+  }
+
+  if (def.type === "object") {
+    for (const key in def.shape) {
+      if (isTransforming(def.shape[key]!, ctx)) return true;
+    }
+    return false;
+  }
+  if (def.type === "union") {
+    for (const option of def.options) {
+      if (isTransforming(option, ctx)) return true;
+    }
+    return false;
+  }
+  if (def.type === "tuple") {
+    for (const item of def.items) {
+      if (isTransforming(item, ctx)) return true;
+    }
+    if (def.rest && isTransforming(def.rest, ctx)) return true;
+    return false;
+  }
+
+  return false;
 }

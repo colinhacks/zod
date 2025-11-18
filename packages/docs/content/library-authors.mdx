@@ -123,7 +123,7 @@ To differentiate between Zod 3 and Zod 4 schemas at runtime, check for the `"_zo
 import type * as z3 from "zod/v3";
 import type * as z4 from "zod/v4/core";
 
-declare const schema: z3.ZodTypeAny | v4.$ZodType;
+declare const schema: z3.ZodTypeAny | z4.$ZodType;
 
 if ("_zod" in schema) {
   schema._zod.def; // Zod 4 schema

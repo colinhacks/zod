@@ -19,6 +19,10 @@ test("globalRegistry", () => {
   expect(z.globalRegistry.has(a)).toEqual(false);
 });
 
+test("globalRegistry is singleton and attached to globalThis", () => {
+  expect(z.globalRegistry).toBe((globalThis as any).__zod_globalRegistry);
+});
+
 test("z.registry", () => {
   const fieldRegistry = z.registry<{ name: string; description: string }>();
 
@@ -164,7 +168,7 @@ test("loose examples", () => {
   });
 });
 
-test("function meta witout replacement", () => {
+test("function meta without replacement", () => {
   const myReg = z.registry<{
     defaulter: (arg: string, test: boolean) => number;
   }>();

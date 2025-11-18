@@ -32,38 +32,38 @@ test("function inference 1", () => {
   expectTypeOf<func1>().toEqualTypeOf<(k: string) => number>();
 });
 
-// test("method parsing", () => {
-//   const methodObject = z.object({
-//     property: z.number(),
-//     method: z
-//       .function()
-//       .input(z.tuple([z.string()]))
-//       .output(z.number()),
-//   });
-//   const methodInstance = {
-//     property: 3,
-//     method: function (s: string) {
-//       return s.length + this.property;
-//     },
-//   };
-//   const parsed = methodObject.parse(methodInstance);
-//   expect(parsed.method("length=8")).toBe(11); // 8 length + 3 property
-// });
+test("method parsing", () => {
+  const methodObject = z.object({
+    property: z.number(),
+    method: z
+      .function()
+      .input(z.tuple([z.string()]))
+      .output(z.number()),
+  });
+  const methodInstance = {
+    property: 3,
+    method: function (s: string) {
+      return s.length + this.property;
+    },
+  };
+  const parsed = methodObject.parse(methodInstance);
+  expect(parsed.method("length=8")).toBe(11); // 8 length + 3 property
+});
 
-// test("async method parsing", async () => {
-//   const methodObject = z.object({
-//     property: z.number(),
-//     method: z.function().input(z.string()).output(z.promise(z.number())),
-//   });
-//   const methodInstance = {
-//     property: 3,
-//     method: async function (s: string) {
-//       return s.length + this.property;
-//     },
-//   };
-//   const parsed = methodObject.parse(methodInstance);
-//   expect(await parsed.method("length=8")).toBe(11); // 8 length + 3 property
-// });
+test("async method parsing", async () => {
+  const methodObject = z.object({
+    property: z.number(),
+    method: z.function().input([z.string()]).output(z.promise(z.number())),
+  });
+  const methodInstance = {
+    property: 3,
+    method: async function (s: string) {
+      return s.length + this.property;
+    },
+  };
+  const parsed = methodObject.parse(methodInstance);
+  expect(await parsed.method("length=8")).toBe(11); // 8 length + 3 property
+});
 
 test("args method", () => {
   const t1 = z.function();
@@ -124,6 +124,46 @@ test("valid function run", () => {
   });
 
   validFunc2Instance({
+    f1: 21,
+    f2: "asdf",
+    f3: [true, false],
+  });
+});
+
+const args3 = [
+  z.object({
+    f1: z.number(),
+    f2: z.string().nullable(),
+    f3: z.array(z.boolean().optional()).optional(),
+  }),
+] as const;
+const returns3 = z.union([z.string(), z.number()]);
+
+const func3 = z.function({
+  input: args3,
+  output: returns3,
+});
+
+test("function inference 3", () => {
+  type func3 = (typeof func3)["_input"];
+
+  expectTypeOf<func3>().toEqualTypeOf<
+    (arg: {
+      f3?: (boolean | undefined)[] | undefined;
+      f1: number;
+      f2: string | null;
+    }) => string | number
+  >();
+});
+
+test("valid function run", () => {
+  const validFunc3Instance = func3.implement((_x) => {
+    _x.f2;
+    _x.f3![0];
+    return "adf" as any;
+  });
+
+  validFunc3Instance({
     f1: 21,
     f2: "asdf",
     f3: [true, false],

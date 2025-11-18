@@ -64,3 +64,43 @@ test("z.stringbool with custom error messages", () => {
 
   expect(() => a.parse("")).toThrowError("wrong!");
 });
+
+test("z.stringbool codec encoding", () => {
+  const schema = z.stringbool();
+
+  // Test encoding with default values
+  expect(z.encode(schema, true)).toEqual("true");
+  expect(z.encode(schema, false)).toEqual("false");
+});
+
+test("z.stringbool codec encoding with custom values", () => {
+  const schema = z.stringbool({
+    truthy: ["yes", "on", "1"],
+    falsy: ["no", "off", "0"],
+  });
+
+  // Should return first element of custom arrays
+  expect(z.encode(schema, true)).toEqual("yes");
+  expect(z.encode(schema, false)).toEqual("no");
+});
+
+test("z.stringbool codec round trip", () => {
+  const schema = z.stringbool({
+    truthy: ["enabled", "active"],
+    falsy: ["disabled", "inactive"],
+  });
+
+  // Test round trip: string -> boolean -> string
+  const decoded = z.decode(schema, "enabled");
+  expect(decoded).toEqual(true);
+
+  const encoded = z.encode(schema, decoded);
+  expect(encoded).toEqual("enabled"); // First element of truthy array
+
+  // Test with falsy value
+  const decodedFalse = z.decode(schema, "inactive");
+  expect(decodedFalse).toEqual(false);
+
+  const encodedFalse = z.encode(schema, decodedFalse);
+  expect(encodedFalse).toEqual("disabled"); // First element of falsy array
+});

@@ -11,12 +11,13 @@ on:
 
 jobs:
   test-node:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        node: ["latest"]
+        os: [ubuntu-latest]
+        node: ["lts/*"]
         typescript: ["5.5", "latest"]
-    name: Test with TypeScript ${{ matrix.typescript }} on Node ${{ matrix.node }}
+    name: Test with TypeScript ${{ matrix.typescript }} on Node ${{ matrix.node }} (${{ matrix.os }})
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

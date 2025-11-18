@@ -1,6 +1,33 @@
+import { Validator } from "@seriousme/openapi-schema-validator";
 import { describe, expect, test } from "vitest";
 import * as z from "zod/v4";
 // import * as zCore from "zod/v4/core";
+
+const openAPI30Validator = new Validator();
+/** @see https://github.com/colinhacks/zod/issues/5147 */
+const validateOpenAPI30Schema = async (zodJSONSchema: Record<string, unknown>): Promise<true> => {
+  const res = await openAPI30Validator.validate({
+    openapi: "3.0.0",
+    info: {
+      title: "SampleApi",
+      description: "Sample backend service",
+      version: "1.0.0",
+    },
+    components: { schemas: { test: zodJSONSchema } },
+    paths: {},
+  });
+
+  if (!res.valid) {
+    // `console.error` should make `vitest` trow an unhandled error
+    // printing the validation messages in consoles
+    console.error(
+      `OpenAPI schema is not valid against ${openAPI30Validator.version}`,
+      JSON.stringify(res.errors, null, 2)
+    );
+  }
+
+  return true;
+};
 
 describe("toJSONSchema", () => {
   test("primitive types", () => {
@@ -101,7 +128,31 @@ describe("toJSONSchema", () => {
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "format": "ipv6",
-        "pattern": "^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|::|([0-9a-fA-F]{1,4})?::([0-9a-fA-F]{1,4}:?){0,6})$",
+        "pattern": "^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$",
+        "type": "string",
+      }
+    `);
+    expect(z.toJSONSchema(z.mac())).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "mac",
+        "pattern": "^(?:[0-9A-F]{2}:){5}[0-9A-F]{2}$|^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}$",
+        "type": "string",
+      }
+    `);
+    expect(z.toJSONSchema(z.mac({ delimiter: ":" }))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "mac",
+        "pattern": "^(?:[0-9A-F]{2}:){5}[0-9A-F]{2}$|^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}$",
+        "type": "string",
+      }
+    `);
+    expect(z.toJSONSchema(z.mac({ delimiter: "-" }))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "mac",
+        "pattern": "^(?:[0-9A-F]{2}-){5}[0-9A-F]{2}$|^(?:[0-9a-f]{2}-){5}[0-9a-f]{2}$",
         "type": "string",
       }
     `);
@@ -109,7 +160,7 @@ describe("toJSONSchema", () => {
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "format": "uuid",
-        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000)$",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
         "type": "string",
       }
     `);
@@ -269,7 +320,7 @@ describe("toJSONSchema", () => {
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "format": "uuid",
-        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000)$",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
         "type": "string",
       }
     `);
@@ -325,7 +376,32 @@ describe("toJSONSchema", () => {
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "format": "ipv6",
-        "pattern": "^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|::|([0-9a-fA-F]{1,4})?::([0-9a-fA-F]{1,4}:?){0,6})$",
+        "pattern": "^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$",
+        "type": "string",
+      }
+    `);
+
+    expect(z.toJSONSchema(z.mac())).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "mac",
+        "pattern": "^(?:[0-9A-F]{2}:){5}[0-9A-F]{2}$|^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}$",
+        "type": "string",
+      }
+    `);
+    expect(z.toJSONSchema(z.mac({ delimiter: ":" }))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "mac",
+        "pattern": "^(?:[0-9A-F]{2}:){5}[0-9A-F]{2}$|^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}$",
+        "type": "string",
+      }
+    `);
+    expect(z.toJSONSchema(z.mac({ delimiter: "-" }))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "mac",
+        "pattern": "^(?:[0-9A-F]{2}-){5}[0-9A-F]{2}$|^(?:[0-9a-f]{2}-){5}[0-9a-f]{2}$",
         "type": "string",
       }
     `);
@@ -552,6 +628,55 @@ describe("toJSONSchema", () => {
     `);
   });
 
+  test("nullable openapi-3.0", () => {
+    const schema = z.string().nullable();
+    const jsonSchema = z.toJSONSchema(schema, { target: "openapi-3.0" });
+    validateOpenAPI30Schema(jsonSchema);
+    expect(jsonSchema).toMatchInlineSnapshot(`
+      {
+        "nullable": true,
+        "type": "string",
+      }
+    `);
+  });
+
+  test("union with null openapi-3.0", () => {
+    const schema = z.union([z.string(), z.null()]);
+    const jsonSchema = z.toJSONSchema(schema, { target: "openapi-3.0" });
+    validateOpenAPI30Schema(jsonSchema);
+    expect(jsonSchema).toMatchInlineSnapshot(`
+      {
+        "anyOf": [
+          {
+            "type": "string",
+          },
+          {
+            "enum": [
+              null,
+            ],
+            "nullable": true,
+            "type": "string",
+          },
+        ],
+      }
+    `);
+  });
+
+  test("number with exclusive min-max openapi-3.0", () => {
+    const schema = z.number().lt(100).gt(1);
+    const jsonSchema = z.toJSONSchema(schema, { target: "openapi-3.0" });
+    validateOpenAPI30Schema(jsonSchema);
+    expect(jsonSchema).toMatchInlineSnapshot(`
+      {
+        "exclusiveMaximum": true,
+        "exclusiveMinimum": true,
+        "maximum": 100,
+        "minimum": 1,
+        "type": "number",
+      }
+    `);
+  });
+
   test("arrays", () => {
     expect(z.toJSONSchema(z.array(z.string()))).toMatchInlineSnapshot(`
       {
@@ -575,6 +700,54 @@ describe("toJSONSchema", () => {
           },
           {
             "type": "number",
+          },
+        ],
+      }
+    `);
+  });
+
+  test("discriminated unions", () => {
+    const schema = z.discriminatedUnion("type", [
+      z.object({ type: z.literal("success"), data: z.string() }),
+      z.object({ type: z.literal("error"), message: z.string() }),
+    ]);
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "type": "string",
+              },
+              "type": {
+                "const": "success",
+                "type": "string",
+              },
+            },
+            "required": [
+              "type",
+              "data",
+            ],
+            "type": "object",
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "message": {
+                "type": "string",
+              },
+              "type": {
+                "const": "error",
+                "type": "string",
+              },
+            },
+            "required": [
+              "type",
+              "message",
+            ],
+            "type": "object",
           },
         ],
       }
@@ -633,7 +806,39 @@ describe("toJSONSchema", () => {
     `);
   });
 
+  test("record openapi-3.0", () => {
+    const schema = z.record(z.string(), z.boolean());
+    const jsonSchema = z.toJSONSchema(schema, { target: "openapi-3.0" });
+    validateOpenAPI30Schema(jsonSchema);
+    expect(jsonSchema).toMatchInlineSnapshot(`
+      {
+        "additionalProperties": {
+          "type": "boolean",
+        },
+        "type": "object",
+      }
+    `);
+  });
+
   test("tuple", () => {
+    const schema = z.tuple([z.string(), z.number()]);
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "prefixItems": [
+          {
+            "type": "string",
+          },
+          {
+            "type": "number",
+          },
+        ],
+        "type": "array",
+      }
+    `);
+  });
+
+  test("tuple with rest", () => {
     const schema = z.tuple([z.string(), z.number()]).rest(z.boolean());
     expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
       {
@@ -652,6 +857,173 @@ describe("toJSONSchema", () => {
         "type": "array",
       }
     `);
+  });
+
+  test("tuple openapi-3.0", () => {
+    const schema = z.tuple([z.string(), z.number()]);
+    const jsonSchema = z.toJSONSchema(schema, { target: "openapi-3.0" });
+    validateOpenAPI30Schema(jsonSchema);
+    expect(jsonSchema).toMatchInlineSnapshot(`
+      {
+        "items": {
+          "anyOf": [
+            {
+              "type": "string",
+            },
+            {
+              "type": "number",
+            },
+          ],
+        },
+        "maxItems": 2,
+        "minItems": 2,
+        "type": "array",
+      }
+    `);
+  });
+
+  test("tuple with rest openapi-3.0", () => {
+    const schema = z.tuple([z.string(), z.number()]).rest(z.boolean());
+    const jsonSchema = z.toJSONSchema(schema, { target: "openapi-3.0" });
+    validateOpenAPI30Schema(jsonSchema);
+    expect(jsonSchema).toMatchInlineSnapshot(`
+      {
+        "items": {
+          "anyOf": [
+            {
+              "type": "string",
+            },
+            {
+              "type": "number",
+            },
+            {
+              "type": "boolean",
+            },
+          ],
+        },
+        "minItems": 3,
+        "type": "array",
+      }
+    `);
+  });
+
+  test("tuple with null openapi-3.0", () => {
+    const schema = z.tuple([z.string(), z.number(), z.null()]);
+    const jsonSchema = z.toJSONSchema(schema, { target: "openapi-3.0" });
+    validateOpenAPI30Schema(jsonSchema);
+    expect(jsonSchema).toMatchInlineSnapshot(`
+      {
+        "items": {
+          "anyOf": [
+            {
+              "type": "string",
+            },
+            {
+              "type": "number",
+            },
+            {
+              "enum": [
+                null,
+              ],
+              "nullable": true,
+              "type": "string",
+            },
+          ],
+        },
+        "maxItems": 3,
+        "minItems": 3,
+        "type": "array",
+      }
+    `);
+  });
+
+  test("tuple draft-7", () => {
+    const schema = z.tuple([z.string(), z.number()]);
+    expect(z.toJSONSchema(schema, { target: "draft-7", io: "input" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "items": [
+          {
+            "type": "string",
+          },
+          {
+            "type": "number",
+          },
+        ],
+        "type": "array",
+      }
+    `);
+  });
+
+  test("tuple with rest draft-7", () => {
+    const schema = z.tuple([z.string(), z.number()]).rest(z.boolean());
+    expect(z.toJSONSchema(schema, { target: "draft-7", io: "input" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalItems": {
+          "type": "boolean",
+        },
+        "items": [
+          {
+            "type": "string",
+          },
+          {
+            "type": "number",
+          },
+        ],
+        "type": "array",
+      }
+    `);
+  });
+
+  test("tuple with rest draft-7 - issue #5151 regression test", () => {
+    // This test addresses issue #5151: tuple with rest elements and ids
+    // in draft-7 had incorrect internal path handling affecting complex scenarios
+    const primarySchema = z.string().meta({ id: "primary" });
+    const restSchema = z.number().meta({ id: "rest" });
+    const testSchema = z.tuple([primarySchema], restSchema);
+
+    // Test both final output structure AND internal path handling
+    const capturedPaths: string[] = [];
+    const result = z.toJSONSchema(testSchema, {
+      target: "draft-7",
+      override: (ctx) => capturedPaths.push(ctx.path.join("/")),
+    });
+
+    // Verify correct draft-7 structure with metadata extraction
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalItems": {
+          "$ref": "#/definitions/rest",
+        },
+        "definitions": {
+          "primary": {
+            "id": "primary",
+            "type": "string",
+          },
+          "rest": {
+            "id": "rest",
+            "type": "number",
+          },
+        },
+        "items": [
+          {
+            "$ref": "#/definitions/primary",
+          },
+        ],
+        "type": "array",
+      }
+    `);
+
+    // Verify internal paths are correct (this was the actual bug)
+    expect(capturedPaths).toContain("items/0"); // prefix items should use "items" path
+    expect(capturedPaths).toContain("additionalItems"); // rest should use "additionalItems" path
+    expect(capturedPaths).not.toContain("prefixItems/0"); // should not use draft-2020-12 paths
+
+    // Structural validations
+    expect(Array.isArray(result.items)).toBe(true);
+    expect(result.additionalItems).toBeDefined();
   });
 
   test("promise", () => {
@@ -1477,7 +1849,9 @@ test("unrepresentable literal values are ignored", () => {
     }
   `);
 
-  const b = z.z.toJSONSchema(z.literal([undefined, null, 5, BigInt(1324)]), { unrepresentable: "any" });
+  const b = z.z.toJSONSchema(z.literal([undefined, null, 5, BigInt(1324)]), {
+    unrepresentable: "any",
+  });
   expect(b).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1489,7 +1863,9 @@ test("unrepresentable literal values are ignored", () => {
     }
   `);
 
-  const c = z.z.toJSONSchema(z.literal([undefined]), { unrepresentable: "any" });
+  const c = z.z.toJSONSchema(z.literal([undefined]), {
+    unrepresentable: "any",
+  });
   expect(c).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1772,7 +2148,9 @@ test("basic registry", () => {
   myRegistry.add(User, { id: "User" });
   myRegistry.add(Post, { id: "Post" });
 
-  const result = z.z.toJSONSchema(myRegistry, { uri: (id) => `https://example.com/${id}.json` });
+  const result = z.z.toJSONSchema(myRegistry, {
+    uri: (id) => `https://example.com/${id}.json`,
+  });
   expect(result).toMatchInlineSnapshot(`
     {
       "schemas": {

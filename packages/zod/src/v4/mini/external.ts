@@ -11,7 +11,6 @@ export {
   $output,
   $input,
   $brand,
-  function,
   clone,
   regexes,
   treeifyError,
@@ -20,6 +19,7 @@ export {
   flattenError,
   toJSONSchema,
   TimePrecision,
+  util,
   NEVER,
 } from "../core/index.js";
 
