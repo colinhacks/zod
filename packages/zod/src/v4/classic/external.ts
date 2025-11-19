@@ -5,7 +5,8 @@ export * from "./errors.js";
 export * from "./parse.js";
 export * from "./compat.js";
 
-// zod-specified
+// Auto-configure English locale (most common case)
+// Other 46 locales are tree-shakeable via named exports
 import { config } from "../core/index.js";
 import en from "../locales/en.js";
 config(en());
@@ -31,7 +32,57 @@ export {
   NEVER,
 } from "../core/index.js";
 
-export * as locales from "../locales/index.js";
+// Locales exported individually to enable tree-shaking
+// Bundlers will only include the locales you actually use
+export {
+  en,
+  ar,
+  az,
+  be,
+  bg,
+  ca,
+  cs,
+  da,
+  de,
+  eo,
+  es,
+  fa,
+  fi,
+  fr,
+  frCA,
+  he,
+  hu,
+  id,
+  is,
+  it,
+  ja,
+  ka,
+  kh,
+  km,
+  ko,
+  lt,
+  mk,
+  ms,
+  nl,
+  no,
+  ota,
+  pl,
+  ps,
+  pt,
+  ru,
+  sl,
+  sv,
+  ta,
+  th,
+  tr,
+  ua,
+  uk,
+  ur,
+  vi,
+  yo,
+  zhCN,
+  zhTW,
+} from "../locales/index.js";
 
 // iso
 // must be exported from top-level
