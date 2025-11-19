@@ -226,14 +226,15 @@ mySchema.clone(mySchema._zod.def);
 
 ## No default locale
 
-While regular Zod automatically loads the English (`en`) locale, Zod Mini does not. This reduces the bundle size in scenarios where error messages are unnecessary, localized to a non-English language, or otherwise customized.
+While regular Zod automatically configures the English (`en`) locale, Zod Mini does not. This reduces the bundle size in scenarios where error messages are unnecessary, localized to a non-English language, or otherwise customized.
 
-This means, by default the `message` property of all issues will simply read `"Invalid input"`. To load the English locale:
+This means, by default the `message` property of all issues will simply read `"Invalid input"`. To configure the English locale:
 
 ```ts
-import * as z from "zod/mini"
+import * as z from "zod/mini";
+import { en } from "zod/v4/locales";
 
-z.config(z.locales.en());
+z.config(en());
 ```
 
-Refer to the [Locales](/error-customization#internationalization) docs for more on localization.
+Refer to the [Internationalization](/error-customization#internationalization) docs for more on localization.
