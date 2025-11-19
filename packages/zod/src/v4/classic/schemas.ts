@@ -260,6 +260,8 @@ export const _ZodString: core.$constructor<_ZodString> = /*@__PURE__*/ core.$con
   core.$ZodString.init(inst, def);
   ZodType.init(inst, def);
 
+  inst.toJSONSchema = () => core.stringToJSONSchema(inst);
+
   const bag = inst._zod.bag;
   inst.format = bag.format ?? null;
   inst.minLength = bag.minimum ?? null;
