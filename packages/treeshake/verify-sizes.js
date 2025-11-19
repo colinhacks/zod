@@ -1,4 +1,21 @@
 #!/usr/bin/env node
+/**
+ * Tree-Shaking Size Verification
+ * 
+ * Builds and measures bundle sizes for locale tree-shaking tests.
+ * Enforces 15% tolerance above expected sizes to catch regressions.
+ * 
+ * Test files:
+ *   - test-no-locales.ts: Core + English (baseline ~50KB)
+ *   - test-one-locale.ts: + German (~55KB)
+ *   - test-three-locales.ts: + de/fr/ja (~65KB)
+ *   - test-many-locales.ts: + 10 locales (~95KB)
+ * 
+ * Usage: pnpm verify:sizes
+ * 
+ * Outputs built bundles to dist/ (gitignored)
+ * Fails if any bundle exceeds expected size + 15% tolerance
+ */
 import { build } from "rollup";
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
