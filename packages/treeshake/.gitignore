@@ -1,1 +1,4 @@
 out.js
+dist/
+test-*.js
+test-*.js.map

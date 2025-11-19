@@ -1,0 +1,148 @@
+#!/usr/bin/env node
+import { build } from "rollup";
+import { nodeResolve } from "@rollup/plugin-node-resolve";
+import commonjs from "@rollup/plugin-commonjs";
+import terser from "@rollup/plugin-terser";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+import { statSync, mkdirSync } from "node:fs";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// Expected sizes (in KB) with 15% tolerance
+const EXPECTED_SIZES = {
+  "test-no-locales": 50,      // Core + English only
+  "test-one-locale": 55,       // + 1 additional locale (German)
+  "test-three-locales": 65,    // + 3 additional locales
+  "test-many-locales": 95,     // + 10 additional locales
+};
+
+const TOLERANCE = 0.15; // 15% tolerance
+
+const tests = [
+  { name: "test-no-locales", description: "Core + English (auto-configured)" },
+  { name: "test-one-locale", description: "Core + English + German" },
+  { name: "test-three-locales", description: "Core + English + de/fr/ja" },
+  { name: "test-many-locales", description: "Core + English + 10 locales" },
+];
+
+async function buildAndMeasure(testName) {
+  try {
+    const bundle = await build({
+      input: join(__dirname, `${testName}.ts`),
+      external: [],
+      plugins: [
+        nodeResolve({
+          extensions: [".js", ".ts"],
+          mainFields: ["module", "main"],
+        }),
+        commonjs(),
+        terser({
+          compress: {
+            passes: 2,
+          },
+        }),
+      ],
+    });
+
+    // Create dist directory if it doesn't exist
+    mkdirSync(join(__dirname, "dist"), { recursive: true });
+
+    // Write the bundle
+    await bundle.write({
+      file: join(__dirname, `dist/${testName}.js`),
+      format: "esm",
+    });
+
+    // Get the file size
+    const stats = statSync(join(__dirname, `dist/${testName}.js`));
+    const sizeKB = (stats.size / 1024).toFixed(2);
+
+    return { size: stats.size, sizeKB: parseFloat(sizeKB) };
+  } catch (error) {
+    console.error(`❌ Failed to build ${testName}:`, error.message);
+    throw error;
+  }
+}
+
+async function main() {
+  console.log("🔍 Tree-shaking Size Verification\n");
+  console.log("=".repeat(70));
+
+  const results = [];
+  let allPassed = true;
+
+  for (const test of tests) {
+    try {
+      const { sizeKB } = await buildAndMeasure(test.name);
+      const expectedSize = EXPECTED_SIZES[test.name];
+      const maxSize = expectedSize * (1 + TOLERANCE);
+      const minSize = expectedSize * (1 - TOLERANCE);
+      const passed = sizeKB <= maxSize;
+
+      results.push({
+        ...test,
+        sizeKB,
+        expectedSize,
+        maxSize,
+        passed,
+      });
+
+      if (!passed) {
+        allPassed = false;
+      }
+
+      const status = passed ? "✅ PASS" : "❌ FAIL";
+      console.log(`\n${status} ${test.name}`);
+      console.log(`  Description: ${test.description}`);
+      console.log(`  Actual size: ${sizeKB} KB`);
+      console.log(`  Expected: ${expectedSize} KB (max: ${maxSize.toFixed(2)} KB)`);
+
+      if (!passed) {
+        const diff = ((sizeKB - expectedSize) / expectedSize * 100).toFixed(1);
+        console.log(`  ⚠️  Size exceeded by ${diff}%`);
+      }
+    } catch (error) {
+      console.error(`\n❌ ERROR building ${test.name}`);
+      allPassed = false;
+    }
+  }
+
+  // Summary
+  console.log("\n" + "=".repeat(70));
+  console.log("\n📊 Summary:\n");
+  
+  const baseline = results[0];
+  for (let i = 0; i < results.length; i++) {
+    const result = results[i];
+    const diff = i > 0 ? (result.sizeKB - baseline.sizeKB).toFixed(2) : "baseline";
+    console.log(`${result.passed ? "✅" : "❌"} ${result.name.padEnd(25)} ${String(result.sizeKB).padStart(8)} KB  (+${diff === "baseline" ? "0.00" : diff} KB from baseline)`);
+  }
+
+  // Calculate savings vs old approach
+  const oldSize = 220; // Approximate size with all 47 locales
+  const newSize = baseline.sizeKB;
+  const savings = oldSize - newSize;
+  const savingsPercent = (savings / oldSize * 100).toFixed(1);
+
+  console.log(`\n💡 Bundle size savings: ${savings.toFixed(2)} KB (~${savingsPercent}% reduction)`);
+  console.log(`   Before tree-shaking: ~${oldSize} KB (all 47 locales)`);
+  console.log(`   After tree-shaking:  ~${newSize} KB (English only)`);
+
+  if (!allPassed) {
+    console.log("\n❌ Some size tests failed!");
+    console.log("   This might indicate:");
+    console.log("   - Regression in tree-shaking effectiveness");
+    console.log("   - New dependencies added");
+    console.log("   - Need to update expected size constants");
+    process.exit(1);
+  }
+
+  console.log("\n✅ All size tests passed!");
+  process.exit(0);
+}
+
+main().catch((error) => {
+  console.error("Fatal error:", error);
+  process.exit(1);
+});
