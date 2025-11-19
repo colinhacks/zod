@@ -190,6 +190,65 @@ emailSchema.meta({ description: "An email address" });
 </Tab>
 </Tabs>
 
+### `z.withExample()`
+
+The `z.withExample()` utility function provides a convenient way to attach example values to schemas by encoding them as JSON in the schema's description field.
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+const UserSchema = z.withExample(
+  z.object({
+    name: z.string(),
+    age: z.number(),
+  }),
+  { name: "John Doe", age: 30 }
+);
+
+UserSchema.description;
+// => '{"name":"John Doe","age":30}'
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+// no equivalent
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+```
+</Tab>
+</Tabs>
+
+This is particularly useful for documentation generation, API specifications, and AI-powered tools that benefit from concrete examples. The example value is type-checked against the schema's inferred type.
+
+```ts
+const AssemblySchema = z.withExample(
+  z.object({
+    type: z.literal("assembly"),
+    command: z.string(),
+    settings: z.object({
+      xref: z.boolean(),
+      custom_parts: z.boolean(),
+    }),
+  }),
+  {
+    type: "assembly",
+    command: "build",
+    settings: {
+      xref: true,
+      custom_parts: false,
+    },
+  }
+);
+
+// The example is stored in the description and can be retrieved
+const example = JSON.parse(AssemblySchema.description!);
+```
+
 ## Custom registries
 
 You've already seen a simple example of a custom registry:

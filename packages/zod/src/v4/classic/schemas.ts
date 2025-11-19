@@ -2148,6 +2148,29 @@ export function superRefine<T>(
 export const describe = core.describe;
 export const meta = core.meta;
 
+/**
+ * Attaches an example value to a schema by encoding it as JSON in the description.
+ * This is useful for documentation and schema introspection purposes.
+ *
+ * @example
+ * ```ts
+ * const UserSchema = z.withExample(
+ *   z.object({
+ *     name: z.string(),
+ *     age: z.number(),
+ *   }),
+ *   { name: 'John Doe', age: 30 }
+ * );
+ * ```
+ *
+ * @param schema - The Zod schema to attach an example to
+ * @param example - The example value (must match the schema's inferred type)
+ * @returns A new schema instance with the example encoded in its description
+ */
+export function withExample<T extends ZodType>(schema: T, example: core.infer<T>): T {
+  return schema.describe(JSON.stringify(example));
+}
+
 type ZodInstanceOfParams = core.Params<
   ZodCustom,
   core.$ZodIssueCustom,
