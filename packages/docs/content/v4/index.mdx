@@ -589,14 +589,18 @@ fileSchema.mime(["image/png"]); // MIME type
 
 ## Internationalization
 
-Zod 4 introduces a new `locales` API for globally translating error messages into different languages. 
+Zod 4 provides built-in support for translating error messages into 47+ languages with automatic tree-shaking.
 
 ```ts
-import * as z from "zod";
+import * as z from "zod/v4";
+import { de, fr } from "zod/v4"; // Tree-shakeable: only bundles imported locales
 
-// configure English locale (default)
-z.config(z.locales.en());
+// English is auto-configured by default
+// Switch to a different locale:
+z.config(de());
 ```
+
+**Bundle impact:** Default English adds ~4KB. Each additional locale adds ~4KB. Only locales you import are bundled.
 
 See the full list of supported locales in [Customizing errors](/error-customization#locales); this section is always updated with a list of supported languages as they become available.
 

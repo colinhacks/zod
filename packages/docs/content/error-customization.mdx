@@ -291,60 +291,60 @@ const result = schema.safeParse(12, {
 
 ## Internationalization
 
-To support internationalization of error message, Zod provides several built-in **locales**. These are exported from the `zod/v4/core` package.
+To support internationalization of error messages, Zod provides several built-in **locales**.
 
-> **Note** — The regular `zod` library automatically loads the `en` locale automatically. Zod Mini does not load any locale by default; instead all error messages default to `Invalid input`.
+> **Note** — Zod v4 automatically configures the `en` (English) locale by default. Zod Mini does not load any locale by default; instead all error messages default to `Invalid input`.
+
+### Using a different locale
+
+Import locales as named exports from `zod/v4` (fully tree-shakeable):
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-import * as z from "zod";
-import { en } from "zod/locales"
+import * as z from "zod/v4";
+import { de, fr } from "zod/v4"; // Import the locales you need
 
-z.config(en());
+z.config(de()); // Switch to German
 ```
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-import * as z from "zod/mini"
-import { en } from "zod/locales";
+import * as z from "zod/mini";
+import { en } from "zod/v4/locales";
 
-z.config(en());
+z.config(en()); // English must be configured manually in Mini
 ```
 </Tab>
 </Tabs>
 
-To lazily load a locale, consider dynamic imports:
+### Lazy-loading locales
+
+For optimal bundle size, you can dynamically import locales:
 
 ```ts
-import * as z from "zod";
+import * as z from "zod/v4";
 
 async function loadLocale(locale: string) {
-  const { default: locale } = await import(`zod/v4/locales/${locale}.js`);
-  z.config(locale());
-};
+  const { default: localeFn } = await import(`zod/v4/locales/${locale}.js`);
+  z.config(localeFn());
+}
 
-await loadLocale("fr");
+await loadLocale("fr"); // Load French dynamically
 ```
 
-For convenience, all locales are exported as `z.locales` from `"zod"`. In some bundlers, this may not be tree-shakable.
+### Tree-shaking
 
-<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
-<Tab value="Zod">
+Locales are exported as **named exports** for optimal tree-shaking. Only the locales you import will be included in your bundle:
+
 ```ts
-import * as z from "zod";
+import * as z from "zod/v4";
+import { de, fr, ja } from "zod/v4"; // Only these 3 locales bundled
 
-z.config(z.locales.en());
+// Default bundle: ~24KB (core + English)
+// With 3 extra locales: ~36KB (core + English + de + fr + ja)
+// Before v4.2: ~220KB (core + all 47 locales)
 ```
-</Tab>
-<Tab value="Zod Mini">
-```ts
-import * as z from "zod/mini"
-
-z.config(z.locales.en());
-```
-</Tab>
-</Tabs>
 
 ### Locales
 
@@ -426,4 +426,5 @@ Below is a quick reference for determining error precedence: if multiple error c
 4. **Locale error map** — A custom error map passed into `z.config()`.
 
   ```ts
-  z.config(z.locales.en());
+  import { en } from "zod/v4";
+  z.config(en());
