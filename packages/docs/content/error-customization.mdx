@@ -297,13 +297,14 @@ To support internationalization of error messages, Zod provides several built-in
 
 ### Using a different locale
 
-Import locales as named exports from `zod/v4` (fully tree-shakeable):
+Import locales directly from `zod/v4/locales/*` for guaranteed tree-shaking:
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
 import * as z from "zod/v4";
-import { de, fr } from "zod/v4"; // Import the locales you need
+import de from "zod/v4/locales/de";
+import fr from "zod/v4/locales/fr";
 
 z.config(de()); // Switch to German
 ```
@@ -311,7 +312,7 @@ z.config(de()); // Switch to German
 <Tab value="Zod Mini">
 ```ts
 import * as z from "zod/mini";
-import { en } from "zod/v4/locales";
+import en from "zod/v4/locales/en";
 
 z.config(en()); // English must be configured manually in Mini
 ```
@@ -335,15 +336,22 @@ await loadLocale("fr"); // Load French dynamically
 
 ### Tree-shaking
 
-Locales are exported as **named exports** for optimal tree-shaking. Only the locales you import will be included in your bundle:
+Import locales directly from their paths to ensure only the locales you need are bundled:
 
 ```ts
 import * as z from "zod/v4";
-import { de, fr, ja } from "zod/v4"; // Only these 3 locales bundled
+import de from "zod/v4/locales/de";
+import fr from "zod/v4/locales/fr";
+import ja from "zod/v4/locales/ja";
 
-// Default bundle: ~24KB (core + English)
+// Default bundle: ~24KB (core + English auto-configured)
 // With 3 extra locales: ~36KB (core + English + de + fr + ja)
 // Before v4.2: ~220KB (core + all 47 locales)
+```
+
+**Alternative:** You can also use named imports (should be tree-shakeable in modern bundlers):
+```ts
+import { de, fr } from "zod/v4";
 ```
 
 ### Locales
@@ -426,5 +434,5 @@ Below is a quick reference for determining error precedence: if multiple error c
 4. **Locale error map** — A custom error map passed into `z.config()`.
 
   ```ts
-  import { en } from "zod/v4";
+  import en from "zod/v4/locales/en";
   z.config(en());

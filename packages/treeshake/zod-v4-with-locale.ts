@@ -1,6 +1,6 @@
 // Test that other locales work when explicitly imported
 import * as z from "zod/v4";
-import { de } from "zod/v4";
+import de from "zod/v4/locales/de";
 
 // Switch from English (default) to German
 z.config(de());

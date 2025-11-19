@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import * as z from "zod/v4";
-import { tr } from "zod/v4";
+import tr from "../../../locales/tr.js";
 import { parsedType } from "../../../locales/tr.js";
 
 test("parsedType", () => {
