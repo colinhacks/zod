@@ -1967,12 +1967,10 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
     };
 
     let fastpass!: ReturnType<typeof generateFastpass>;
+    let fastpassError: unknown | null = null;
 
     const isObject = util.isObject;
     const jit = !core.globalConfig.jitless;
-    const allowsEval = util.allowsEval;
-
-    const fastEnabled = jit && allowsEval.value; // && !def.catchall;
     const catchall = def.catchall;
 
     let value!: typeof _normalized.value;
@@ -1990,13 +1988,29 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         return payload;
       }
 
-      if (jit && fastEnabled && ctx?.async === false && ctx.jitless !== true) {
-        // always synchronous
-        if (!fastpass) fastpass = generateFastpass(def.shape);
-        payload = fastpass(payload, ctx);
+      const canFastpass =
+        jit && util.allowsEval.value && ctx?.async === false && ctx.jitless !== true && !fastpassError;
 
-        if (!catchall) return payload;
-        return handleCatchall([], input, payload, ctx, value, inst);
+      if (canFastpass) {
+        // always synchronous
+        if (!fastpass) {
+          try {
+            fastpass = generateFastpass(def.shape);
+          } catch (err) {
+            fastpassError = err;
+          }
+        }
+
+        if (fastpass) {
+          try {
+            payload = fastpass(payload, ctx);
+
+            if (!catchall) return payload;
+            return handleCatchall([], input, payload, ctx, value, inst);
+          } catch (err) {
+            fastpassError = err;
+          }
+        }
       }
 
       return superParse(payload, ctx);
