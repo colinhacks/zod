@@ -16,7 +16,7 @@
  * Outputs built bundles to dist/ (gitignored)
  * Fails if any bundle exceeds expected size + 15% tolerance
  */
-import { build } from "rollup";
+import { rollup } from "rollup";
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
 import terser from "@rollup/plugin-terser";
@@ -27,11 +27,13 @@ import { statSync, mkdirSync } from "node:fs";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Expected sizes (in KB) with 15% tolerance
+// Note: Tree-shaking removes unused imports, so tests that import
+// but don't USE locales will have them stripped from the bundle.
 const EXPECTED_SIZES = {
-  "test-no-locales": 50,      // Core + English only
-  "test-one-locale": 55,       // + 1 additional locale (German)
-  "test-three-locales": 65,    // + 3 additional locales
-  "test-many-locales": 95,     // + 10 additional locales
+  "test-no-locales": 40,       // Core + English only
+  "test-one-locale": 42,       // + 1 additional locale (German) - USED
+  "test-three-locales": 42,    // Imports 3, but only USES de - others stripped
+  "test-many-locales": 42,     // Imports 10, but only USES de - others stripped
 };
 
 const TOLERANCE = 0.15; // 15% tolerance
@@ -45,7 +47,7 @@ const tests = [
 
 async function buildAndMeasure(testName) {
   try {
-    const bundle = await build({
+    const bundle = await rollup({
       input: join(__dirname, `${testName}.ts`),
       external: [],
       plugins: [
