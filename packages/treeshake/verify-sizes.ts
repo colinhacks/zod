@@ -18,7 +18,8 @@
  */
 import { rollup } from "rollup";
 import { nodeResolve } from "@rollup/plugin-node-resolve";
-import commonjs from "@rollup/plugin-commonjs";
+import typescript from "@rollup/plugin-typescript";
+// @ts-ignore - terser types issue
 import terser from "@rollup/plugin-terser";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -35,6 +36,8 @@ const EXPECTED_SIZES = {
   "test-three-locales": 42,         // Imports 3, but only USES de - others stripped
   "test-many-locales": 42,          // Imports 10, but only USES de - others stripped
   "test-five-used-locales": 52,     // Imports AND USES 5 locales - should be larger!
+  "test-v4mini-large-schema": 15,   // Mini with large schema (no English) - VERY small!
+  "test-v4-large-schema": 55,        // V4 with large schema (English + validations)
 };
 
 const TOLERANCE = 0.15; // 15% tolerance
@@ -45,6 +48,8 @@ const tests = [
   { name: "test-three-locales", description: "Core + English + de/fr/ja" },
   { name: "test-many-locales", description: "Core + English + 10 locales" },
   { name: "test-five-used-locales", description: "Core + English + 5 USED locales" },
+  { name: "test-v4mini-large-schema", description: "Mini + large schema (no locale)" },
+  { name: "test-v4-large-schema", description: "V4 + large schema (English)" },
 ];
 
 async function buildAndMeasure(testName) {
@@ -53,11 +58,18 @@ async function buildAndMeasure(testName) {
       input: join(__dirname, `${testName}.ts`),
       external: [],
       plugins: [
+        typescript({
+          tsconfig: false,
+          compilerOptions: {
+            target: "ES2020",
+            module: "ESNext",
+          },
+        }),
         nodeResolve({
           extensions: [".js", ".ts"],
           mainFields: ["module", "main"],
         }),
-        commonjs(),
+        // @ts-ignore
         terser({
           compress: {
             passes: 2,
@@ -149,6 +161,18 @@ async function main() {
   console.log(`\n💡 Bundle size savings: ${savings.toFixed(2)} KB (~${savingsPercent}% reduction)`);
   console.log(`   Before tree-shaking: ~${oldSize} KB (all 47 locales)`);
   console.log(`   After tree-shaking:  ~${newSize} KB (English only)`);
+
+  // Compare Mini vs V4
+  const miniResult = results.find(r => r.name === "test-v4mini-large-schema");
+  const v4Result = results.find(r => r.name === "test-v4-large-schema");
+  if (miniResult && v4Result) {
+    const diff = v4Result.sizeKB - miniResult.sizeKB;
+    const percent = ((diff / miniResult.sizeKB) * 100).toFixed(1);
+    console.log(`\n🔍 Mini vs V4 (with large schema):`);
+    console.log(`   Mini:  ${miniResult.sizeKB.toFixed(2)} KB (no English locale)`);
+    console.log(`   V4:    ${v4Result.sizeKB.toFixed(2)} KB (English auto-configured)`);
+    console.log(`   Difference: ${diff.toFixed(2)} KB (~${percent}% larger for English)`);
+  }
 
   if (!allPassed) {
     console.log("\n❌ Some size tests failed!");
