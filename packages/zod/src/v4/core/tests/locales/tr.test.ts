@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import * as z from "zod/v4";
+import { tr } from "zod/v4";
 import { parsedType } from "../../../locales/tr.js";
 
 test("parsedType", () => {
@@ -25,7 +26,7 @@ test("parsedType", () => {
 });
 
 test("locales - tr", () => {
-  z.config(z.locales.tr());
+  z.config(tr());
 
   const invalidType = z.number().safeParse("a");
   expect(invalidType.error!.issues[0].code).toBe("invalid_type");
