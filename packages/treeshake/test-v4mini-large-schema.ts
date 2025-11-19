@@ -1,5 +1,9 @@
-// Test: Zod Mini with large schema (no English locale)
+// Test: Zod Mini with large schema (+ English locale for fair comparison)
 import * as z from "zod/mini";
+import { en } from "zod/v4/locales";
+
+// Configure English (same as V4 auto-does)
+z.config(en());
 
 // Large schema to exercise the library (using Mini's limited API)
 const AddressSchema = z.object({
