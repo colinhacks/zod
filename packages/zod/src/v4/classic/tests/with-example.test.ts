@@ -4,20 +4,23 @@ import * as z from "zod/v4";
 
 test("withExample with string schema", () => {
   const exampleValue = "example@test.com";
-  const schema = z.withExample(z.string().email(), exampleValue);
-  expect(schema.description).toEqual(JSON.stringify(exampleValue));
+  const schema = z.string().email().withExample(exampleValue);
+  const meta = schema.meta();
+  expect(meta?.examples).toEqual([exampleValue]);
 });
 
 test("withExample with number schema", () => {
   const exampleValue = 42;
-  const schema = z.withExample(z.number(), exampleValue);
-  expect(schema.description).toEqual(JSON.stringify(exampleValue));
+  const schema = z.number().withExample(exampleValue);
+  const meta = schema.meta();
+  expect(meta?.examples).toEqual([exampleValue]);
 });
 
 test("withExample with boolean schema", () => {
   const exampleValue = true;
-  const schema = z.withExample(z.boolean(), exampleValue);
-  expect(schema.description).toEqual(JSON.stringify(exampleValue));
+  const schema = z.boolean().withExample(exampleValue);
+  const meta = schema.meta();
+  expect(meta?.examples).toEqual([exampleValue]);
 });
 
 test("withExample with object schema", () => {
@@ -26,17 +29,15 @@ test("withExample with object schema", () => {
     age: 30,
     email: "john@example.com",
   };
-  const schema = z.withExample(
-    z.object({
+  const schema = z
+    .object({
       name: z.string(),
       age: z.number(),
       email: z.string().email(),
-    }),
-    exampleValue
-  );
-  expect(schema.description).toEqual(JSON.stringify(exampleValue));
-  const parsedExample = JSON.parse(schema.description!);
-  expect(parsedExample).toEqual(exampleValue);
+    })
+    .withExample(exampleValue);
+  const meta = schema.meta();
+  expect(meta?.examples).toEqual([exampleValue]);
 });
 
 test("withExample with complex nested object", () => {
@@ -68,20 +69,18 @@ test("withExample with complex nested object", () => {
     z_msgId: 15,
   };
 
-  const AssemblyV2MessageSchema = z.withExample(
-    CommandMessage.merge(AssemblyV2SettingsSchema).extend({
+  const AssemblyV2MessageSchema = CommandMessage.merge(AssemblyV2SettingsSchema)
+    .extend({
       type: z.literal("assembly"),
       command: z.literal("akassembler3"),
       ak_id: z.string(),
       db_env: z.enum(["PROD", "DEV"]),
       z_msgId: z.number(),
-    }),
-    exampleValue
-  );
+    })
+    .withExample(exampleValue);
 
-  expect(AssemblyV2MessageSchema.description).toEqual(JSON.stringify(exampleValue));
-  const parsedExample = JSON.parse(AssemblyV2MessageSchema.description!);
-  expect(parsedExample).toEqual(exampleValue);
+  const meta = AssemblyV2MessageSchema.meta();
+  expect(meta?.examples).toEqual([exampleValue]);
 
   // Verify the schema still works for validation
   const result = AssemblyV2MessageSchema.safeParse(exampleValue);
@@ -93,19 +92,19 @@ test("withExample with complex nested object", () => {
 
 test("withExample with array schema", () => {
   const exampleValue = [1, 2, 3, 4, 5];
-  const schema = z.withExample(z.array(z.number()), exampleValue);
-  expect(schema.description).toEqual(JSON.stringify(exampleValue));
+  const schema = z.array(z.number()).withExample(exampleValue);
+  const meta = schema.meta();
+  expect(meta?.examples).toEqual([exampleValue]);
 });
 
 test("withExample preserves validation", () => {
   const exampleValue = { name: "Alice", age: 25 };
-  const schema = z.withExample(
-    z.object({
+  const schema = z
+    .object({
       name: z.string(),
       age: z.number().min(0),
-    }),
-    exampleValue
-  );
+    })
+    .withExample(exampleValue);
 
   // Valid data should pass
   expect(schema.safeParse({ name: "Bob", age: 30 }).success).toBe(true);
@@ -116,31 +115,31 @@ test("withExample preserves validation", () => {
 });
 
 test("withExample can be chained with other methods", () => {
-  const exampleValue = "test@example.com";
-  const baseSchema = z.withExample(z.string().email(), exampleValue);
+  const exampleValue1 = "test@example.com";
+  const exampleValue2 = "another@example.com";
+  const baseSchema = z.string().email().withExample(exampleValue1).withExample(exampleValue2);
   const schema = baseSchema.optional();
 
   expect(schema.safeParse(undefined).success).toBe(true);
-  expect(schema.safeParse("another@example.com").success).toBe(true);
+  expect(schema.safeParse("yet@example.com").success).toBe(true);
 
-  // Verify the base schema has the description
-  expect(baseSchema.description).toEqual(JSON.stringify(exampleValue));
+  // Verify the base schema has multiple examples
+  const meta = baseSchema.meta();
+  expect(meta?.examples).toEqual([exampleValue1, exampleValue2]);
 });
 
-test("withExample with null and undefined", () => {
+test("withExample with null", () => {
   const exampleValue = null;
-  const schema = z.withExample(z.null(), exampleValue);
-  expect(schema.description).toEqual(JSON.stringify(exampleValue));
+  const schema = z.null().withExample(exampleValue);
+  const meta = schema.meta();
+  expect(meta?.examples).toEqual([exampleValue]);
 });
 
 test("withExample retrieval via globalRegistry", () => {
   const exampleValue = { foo: "bar" };
-  const schema = z.withExample(z.object({ foo: z.string() }), exampleValue);
+  const schema = z.object({ foo: z.string() }).withExample(exampleValue);
 
-  // The example is stored in the description
-  expect(schema.description).toEqual(JSON.stringify(exampleValue));
-
-  // It should also be accessible via globalRegistry
+  // The example is accessible via globalRegistry
   const meta = z.core.globalRegistry.get(schema);
-  expect(meta?.description).toEqual(JSON.stringify(exampleValue));
+  expect(meta?.examples).toEqual([exampleValue]);
 });

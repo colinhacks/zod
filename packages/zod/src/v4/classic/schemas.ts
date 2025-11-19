@@ -113,6 +113,8 @@ export interface ZodType<
   meta(): core.$replace<core.GlobalMeta, this> | undefined;
   /** Returns a new instance that has been registered in `z.globalRegistry` with the specified metadata */
   meta(data: core.$replace<core.GlobalMeta, this>): this;
+  /** Attaches an example value to this schema via metadata */
+  withExample(example: core.output<this>): this;
 
   // helpers
   /** @deprecated Try safe-parsing `undefined` (this is what `isOptional` does internally):
@@ -220,6 +222,11 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
     const cl = inst.clone();
     core.globalRegistry.add(cl, args[0]);
     return cl as any;
+  };
+  inst.withExample = (example) => {
+    const currentMeta = inst.meta();
+    const currentExamples = Array.isArray(currentMeta?.examples) ? currentMeta.examples : [];
+    return inst.meta(Object.assign({}, currentMeta, { examples: currentExamples.concat([example]) }));
   };
 
   // helpers
@@ -2147,29 +2154,6 @@ export function superRefine<T>(
 // Re-export describe and meta from core
 export const describe = core.describe;
 export const meta = core.meta;
-
-/**
- * Attaches an example value to a schema by encoding it as JSON in the description.
- * This is useful for documentation and schema introspection purposes.
- *
- * @example
- * ```ts
- * const UserSchema = z.withExample(
- *   z.object({
- *     name: z.string(),
- *     age: z.number(),
- *   }),
- *   { name: 'John Doe', age: 30 }
- * );
- * ```
- *
- * @param schema - The Zod schema to attach an example to
- * @param example - The example value (must match the schema's inferred type)
- * @returns A new schema instance with the example encoded in its description
- */
-export function withExample<T extends ZodType>(schema: T, example: core.infer<T>): T {
-  return schema.describe(JSON.stringify(example));
-}
 
 type ZodInstanceOfParams = core.Params<
   ZodCustom,

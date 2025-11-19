@@ -190,23 +190,20 @@ emailSchema.meta({ description: "An email address" });
 </Tab>
 </Tabs>
 
-### `z.withExample()`
+### `.withExample()`
 
-The `z.withExample()` utility function provides a convenient way to attach example values to schemas by encoding them as JSON in the schema's description field.
+The `.withExample()` method attaches example values to schemas via metadata. Examples are stored in an array, allowing you to provide multiple examples for the same schema.
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-const UserSchema = z.withExample(
-  z.object({
-    name: z.string(),
-    age: z.number(),
-  }),
-  { name: "John Doe", age: 30 }
-);
+const UserSchema = z.object({
+  name: z.string(),
+  age: z.number(),
+}).withExample({ name: "John Doe", age: 30 });
 
-UserSchema.description;
-// => '{"name":"John Doe","age":30}'
+UserSchema.meta()?.examples;
+// => [{ name: "John Doe", age: 30 }]
 ```
 </Tab>
 <Tab value="Zod Mini">
@@ -218,35 +215,43 @@ UserSchema.description;
  
  
  
- 
 ```
 </Tab>
 </Tabs>
 
-This is particularly useful for documentation generation, API specifications, and AI-powered tools that benefit from concrete examples. The example value is type-checked against the schema's inferred type.
+This is particularly useful for documentation generation, API specifications, and AI-powered tools that benefit from concrete examples. The example value is **fully type-checked** against the schema's inferred type.
 
 ```ts
-const AssemblySchema = z.withExample(
-  z.object({
+// Multiple examples can be chained
+const ResponseSchema = z.object({
+  status: z.enum(["success", "error"]),
+  message: z.string(),
+})
+  .withExample({ status: "success", message: "Operation completed" })
+  .withExample({ status: "error", message: "Something went wrong" });
+
+ResponseSchema.meta()?.examples;
+// => [
+//   { status: "success", message: "Operation completed" },
+//   { status: "error", message: "Something went wrong" }
+// ]
+```
+
+Complex schemas that are merged, inherited, and unioned can be hard to understand at a glance. Examples make them immediately clear:
+
+```ts
+const AssemblySchema = CommandMessage.merge(Settings)
+  .extend({
     type: z.literal("assembly"),
     command: z.string(),
-    settings: z.object({
-      xref: z.boolean(),
-      custom_parts: z.boolean(),
-    }),
-  }),
-  {
+  })
+  .withExample({
+    action: "command",
     type: "assembly",
     command: "build",
-    settings: {
-      xref: true,
-      custom_parts: false,
-    },
-  }
-);
-
-// The example is stored in the description and can be retrieved
-const example = JSON.parse(AssemblySchema.description!);
+    name: "ASY_ART_90628285",
+    xref: true,
+  });
 ```
 
 ## Custom registries

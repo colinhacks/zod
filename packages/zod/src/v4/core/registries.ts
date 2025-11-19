@@ -84,6 +84,7 @@ export interface JSONSchemaMeta {
   title?: string | undefined;
   description?: string | undefined;
   deprecated?: boolean | undefined;
+  examples?: unknown[];
   [k: string]: unknown;
 }
 
