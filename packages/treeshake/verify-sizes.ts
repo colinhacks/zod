@@ -30,10 +30,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // Note: Tree-shaking removes unused imports, so tests that import
 // but don't USE locales will have them stripped from the bundle.
 const EXPECTED_SIZES = {
-  "test-no-locales": 40,       // Core + English only
-  "test-one-locale": 42,       // + 1 additional locale (German) - USED
-  "test-three-locales": 42,    // Imports 3, but only USES de - others stripped
-  "test-many-locales": 42,     // Imports 10, but only USES de - others stripped
+  "test-no-locales": 40,            // Core + English only
+  "test-one-locale": 42,            // + 1 additional locale (German) - USED
+  "test-three-locales": 42,         // Imports 3, but only USES de - others stripped
+  "test-many-locales": 42,          // Imports 10, but only USES de - others stripped
+  "test-five-used-locales": 52,     // Imports AND USES 5 locales - should be larger!
 };
 
 const TOLERANCE = 0.15; // 15% tolerance
@@ -43,6 +44,7 @@ const tests = [
   { name: "test-one-locale", description: "Core + English + German" },
   { name: "test-three-locales", description: "Core + English + de/fr/ja" },
   { name: "test-many-locales", description: "Core + English + 10 locales" },
+  { name: "test-five-used-locales", description: "Core + English + 5 USED locales" },
 ];
 
 async function buildAndMeasure(testName) {
