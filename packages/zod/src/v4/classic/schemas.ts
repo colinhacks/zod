@@ -113,6 +113,8 @@ export interface ZodType<
   meta(): core.$replace<core.GlobalMeta, this> | undefined;
   /** Returns a new instance that has been registered in `z.globalRegistry` with the specified metadata */
   meta(data: core.$replace<core.GlobalMeta, this>): this;
+  /** Attaches an example value to this schema via metadata */
+  withExample(example: core.output<this>): this;
 
   // helpers
   /** @deprecated Try safe-parsing `undefined` (this is what `isOptional` does internally):
@@ -220,6 +222,11 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
     const cl = inst.clone();
     core.globalRegistry.add(cl, args[0]);
     return cl as any;
+  };
+  inst.withExample = (example) => {
+    const currentMeta = inst.meta();
+    const currentExamples = Array.isArray(currentMeta?.examples) ? currentMeta.examples : [];
+    return inst.meta(Object.assign({}, currentMeta, { examples: currentExamples.concat([example]) }));
   };
 
   // helpers
