@@ -593,8 +593,7 @@ Zod 4 provides built-in support for translating error messages into 47+ language
 
 ```ts
 import * as z from "zod/v4";
-import de from "zod/v4/locales/de"; // Direct import for guaranteed tree-shaking
-import fr from "zod/v4/locales/fr";
+import { de, fr } from "zod/v4/locales"; // Tree-shakeable named imports
 
 // English is auto-configured by default
 // Switch to a different locale:
