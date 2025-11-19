@@ -2,28 +2,28 @@ import { expect, test } from "vitest";
 
 import * as z from "zod/v4";
 
-test("withExample with string schema", () => {
+test("withExample with a string schema", () => {
   const exampleValue = "example@test.com";
   const schema = z.string().email().withExample(exampleValue);
   const meta = schema.meta();
   expect(meta?.examples).toEqual([exampleValue]);
 });
 
-test("withExample with number schema", () => {
+test("withExample with a number schema", () => {
   const exampleValue = 42;
   const schema = z.number().withExample(exampleValue);
   const meta = schema.meta();
   expect(meta?.examples).toEqual([exampleValue]);
 });
 
-test("withExample with boolean schema", () => {
+test("withExample with a boolean schema", () => {
   const exampleValue = true;
   const schema = z.boolean().withExample(exampleValue);
   const meta = schema.meta();
   expect(meta?.examples).toEqual([exampleValue]);
 });
 
-test("withExample with object schema", () => {
+test("withExample with an object schema", () => {
   const exampleValue = {
     name: "John Doe",
     age: 30,
