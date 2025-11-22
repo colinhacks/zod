@@ -572,6 +572,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`fastify-zod-openapi`](https://github.com/samchungy/fastify-zod-openapi): Fastify type provider, validation, serialization and @fastify/swagger support for Zod schemas.
 - [`typeschema`](https://typeschema.com/): Universal adapter for schema validation.
 - [`zodex`](https://github.com/commonbaseapp/zodex): (De)serialization for zod schemas
+- [`convex-helpers`](https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/README.md#zod-validation): Use Zod to validate arguments and return values of Convex functions, and to create Convex database schemas.
 
 #### X to Zod
 
@@ -591,6 +592,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`java-to-zod`](https://github.com/ivangreene/java-to-zod): Convert POJOs to Zod schemas
 - [`Orval`](https://github.com/anymaniax/orval): Generate Zod schemas from OpenAPI schemas
 - [`Kubb`](https://github.com/kubb-labs/kubb): Generate SDKs and Zod schemas from your OpenAPI schemas
+- [`convex-helpers`](https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/README.md#zod-validation): Generate Zod schemas from Convex validators.
 
 #### Mocking
 
