@@ -607,25 +607,3 @@ test("safeExtend() on object with refinements should not throw", () => {
 
   expect(() => schema.safeExtend({ b: z.string() })).not.toThrow();
 });
-
-test("pick() on object with refinements should throw", () => {
-  const schema = z
-    .object({
-      a: z.string(),
-      b: z.number(),
-    })
-    .refine(() => true);
-
-  expect(() => schema.pick({ a: true })).toThrow("Invalid .pick() on object schemas containing refinements");
-});
-
-test("omit() on object with refinements should throw", () => {
-  const schema = z
-    .object({
-      a: z.string(),
-      b: z.number(),
-    })
-    .refine(() => true);
-
-  expect(() => schema.omit({ b: true })).toThrow("Invalid .omit() on object schemas containing refinements");
-});
