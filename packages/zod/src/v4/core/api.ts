@@ -1363,13 +1363,11 @@ export function _nativeEnum<T extends util.EnumLike>(
 
 // ZodLiteral
 export type $ZodLiteralParams = TypeParams<schemas.$ZodLiteral, "values">;
-// @__NO_SIDE_EFFECTS__
 export function _literal<const T extends Array<util.Literal>>(
   Class: util.SchemaClass<schemas.$ZodLiteral>,
   value: T,
   params?: string | $ZodLiteralParams
 ): schemas.$ZodLiteral<T[number]>;
-// @__NO_SIDE_EFFECTS__
 export function _literal<const T extends util.Literal>(
   Class: util.SchemaClass<schemas.$ZodLiteral>,
   value: T,
