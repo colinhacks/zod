@@ -1,16 +1,16 @@
 import type * as checks from "./checks.js";
 import type * as JSONSchema from "./json-schema.js";
 import { type $ZodRegistry, globalRegistry } from "./registries.js";
-import type * as schemas from "./schemas.js";
+import * as schemas from "./schemas.js";
 
-type Processor<T extends schemas.$ZodType> = (
-  ctx: ToJSONSchemaContext<T>,
+type Processor<T extends schemas.$ZodType = schemas.$ZodType> = (
   schema: T,
+  ctx: ToJSONSchemaContext<T>,
   json: JSONSchema.BaseSchema
 ) => void;
 
 interface JSONSchemaGeneratorParams<T extends schemas.$ZodType> {
-  processors: Record<string, Processor<T>>;
+  processors: Record<string, Processor>;
   /** A registry used to look up metadata for each schema. Any schema with an `id` property will be extracted as a $def.
    *  @default globalRegistry */
   metadata?: $ZodRegistry<Record<string, any>>;
@@ -45,7 +45,7 @@ interface JSONSchemaGeneratorParams<T extends schemas.$ZodType> {
     | undefined;
 }
 
-interface ProcessParams {
+export interface ProcessParams {
   schemaPath: schemas.$ZodType[];
   path: (string | number)[];
 }
@@ -86,7 +86,7 @@ interface Seen {
 }
 
 export interface ToJSONSchemaContext<T extends schemas.$ZodType> {
-  processors: Record<string, Processor<T>>;
+  processors: Record<string, Processor>;
   metadataRegistry: $ZodRegistry<Record<string, any>>;
   target: "draft-4" | "draft-7" | "draft-2020-12" | "openapi-3.0";
   unrepresentable: "throw" | "any";
@@ -142,9 +142,9 @@ const formatMap: Partial<Record<checks.$ZodStringFormats, string | undefined>> =
   regex: "", // do not set
 };
 
-function process<T extends schemas.$ZodType>(
-  ctx: ToJSONSchemaContext<T>,
+export function process<T extends schemas.$ZodType>(
   schema: T,
+  ctx: ToJSONSchemaContext<T>,
   _params: ProcessParams = { path: [], schemaPath: [] }
 ): JSONSchema.BaseSchema {
   const def = schema._zod.def as schemas.$ZodTypes["_zod"]["def"];
@@ -184,15 +184,17 @@ function process<T extends schemas.$ZodType>(
     if (parent) {
       // schema was cloned from another schema
       result.ref = parent;
-      process(ctx, parent, params);
+      process(parent, ctx, params);
       ctx.seen.get(parent)!.isParent = true;
+    } else if (schema._zod.processJSONSchema) {
+      schema._zod.processJSONSchema(ctx, result.schema, params);
     } else {
       const _json = result.schema;
       const processor = ctx.processors[def.type];
       if (!processor) {
-        throw new Error(`Zod Error: No processor found for type: ${def.type}`);
+        throw new Error(`[toJSONSchema]: Non-representable type encountered: ${def.type}`);
       }
-      processor(ctx, schema, _json);
+      processor(schema, ctx, _json);
     }
   }
 
@@ -516,7 +518,7 @@ function isTransforming(
   return false;
 }
 
-const stringProcessor: Processor<schemas.$ZodString> = (ctx, schema, _json) => {
+const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _json) => {
   const json = _json as JSONSchema.StringSchema;
   json.type = "string";
   const { minimum, maximum, format, patterns, contentEncoding } = schema._zod
@@ -549,7 +551,7 @@ const _toJSONSchemaSimple =
   (args: { processors: Record<string, Processor<any>> }) =>
   (schema: schemas.$ZodType, params?: ToJSONSchemaParams): JSONSchema.BaseSchema => {
     const ctx = initializeContext({ ...params, processors: args.processors });
-    process(ctx, schema);
+    process(schema, ctx);
     return finalize(ctx, schema);
   };
 
@@ -557,9 +559,18 @@ const _toJSONSchemaComposite =
   (args: { processors: Record<string, Processor<schemas.$ZodType>> }) =>
   (schema: schemas.$ZodType, params?: ToJSONSchemaParams): JSONSchema.BaseSchema => {
     const ctx = initializeContext({ ...params, processors: args.processors });
-    process(ctx, schema);
+    process(schema, ctx);
     extractDefs(ctx, schema);
     return finalize(ctx, schema);
   };
 
 export const stringToJSONSchema = _toJSONSchemaSimple({ processors: { string: stringProcessor } });
+
+const a = new schemas.$ZodString({
+  type: "string",
+});
+a._zod.processJSONSchema = (ctx, params) => stringProcessor(a, ctx, params);
+
+export function toJSONSchema(_schema: schemas.$ZodType, _params?: ToJSONSchemaParams): JSONSchema.BaseSchema {
+  throw new Error("Not implemented");
+}
