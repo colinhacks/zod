@@ -83,6 +83,6 @@
     "publish:jsr": "jsr publish --dry-run",
     "bundle:rollup": "rollup -c",
     "bundle:esbuild": "esbuild --bundle ./scratch/input.ts --outfile=./scratch/out_esbuild.js --bundle --format=esm",
-    "check:semver": "tsx scripts/check-semver.ts"
+    "check:semver": "tsx scripts/check-versions.ts"
   }
 }
