@@ -3972,7 +3972,7 @@ export type $InferOuterFunctionType<Args extends $ZodFunctionIn, Returns extends
 
 export type $InferOuterFunctionTypeAsync<Args extends $ZodFunctionIn, Returns extends $ZodFunctionOut> = (
   ...args: $ZodFunctionIn extends Args ? never[] : core.input<Args>
-) => util.MaybeAsync<core.output<Returns>>;
+) => Promise<core.output<Returns>>;
 
 export interface $ZodFunctionDef<
   In extends $ZodFunctionIn = $ZodFunctionIn,
