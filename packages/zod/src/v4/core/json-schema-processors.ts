@@ -2,7 +2,14 @@ import type * as checks from "./checks.js";
 import type * as JSONSchema from "./json-schema.js";
 import type { $ZodRegistry } from "./registries.js";
 import type * as schemas from "./schemas.js";
-import { type Processor, extractDefs, finalize, initializeContext, process } from "./to-json-schema.js";
+import {
+  type Processor,
+  type ZodStandardJSONSchemaPayload,
+  extractDefs,
+  finalize,
+  initializeContext,
+  process,
+} from "./to-json-schema.js";
 import { getEnumValues } from "./util.js";
 
 const formatMap: Partial<Record<checks.$ZodStringFormats, string | undefined>> = {
@@ -34,7 +41,7 @@ export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _jso
     else if (regexes.length > 1) {
       json.allOf = [
         ...regexes.map((regex) => ({
-          ...(ctx.target === "draft-7" || ctx.target === "draft-4" || ctx.target === "openapi-3.0"
+          ...(ctx.target === "draft-07" || ctx.target === "draft-04" || ctx.target === "openapi-3.0"
             ? ({ type: "string" } as const)
             : {}),
           pattern: regex.source,
@@ -51,7 +58,7 @@ export const numberProcessor: Processor<schemas.$ZodNumber> = (schema, ctx, _jso
   else json.type = "number";
 
   if (typeof exclusiveMinimum === "number") {
-    if (ctx.target === "draft-4" || ctx.target === "openapi-3.0") {
+    if (ctx.target === "draft-04" || ctx.target === "openapi-3.0") {
       json.minimum = exclusiveMinimum;
       json.exclusiveMinimum = true;
     } else {
@@ -67,7 +74,7 @@ export const numberProcessor: Processor<schemas.$ZodNumber> = (schema, ctx, _jso
   }
 
   if (typeof exclusiveMaximum === "number") {
-    if (ctx.target === "draft-4" || ctx.target === "openapi-3.0") {
+    if (ctx.target === "draft-04" || ctx.target === "openapi-3.0") {
       json.maximum = exclusiveMaximum;
       json.exclusiveMaximum = true;
     } else {
@@ -175,7 +182,7 @@ export const literalProcessor: Processor<schemas.$ZodLiteral> = (schema, ctx, js
   } else if (vals.length === 1) {
     const val = vals[0]!;
     json.type = val === null ? ("null" as const) : (typeof val as any);
-    if (ctx.target === "draft-4" || ctx.target === "openapi-3.0") {
+    if (ctx.target === "draft-04" || ctx.target === "openapi-3.0") {
       json.enum = [val];
     } else {
       json.const = val;
@@ -418,7 +425,7 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
   const json = _json as JSONSchema.ObjectSchema;
   const def = schema._zod.def as schemas.$ZodRecordDef;
   json.type = "object";
-  if (ctx.target === "draft-7" || ctx.target === "draft-2020-12") {
+  if (ctx.target === "draft-07" || ctx.target === "draft-2020-12") {
     json.propertyNames = process(def.keyType, ctx as any, {
       ...params,
       path: [...params.path, "propertyNames"],
@@ -568,10 +575,10 @@ export interface ToJSONSchemaParams {
   metadata?: $ZodRegistry<Record<string, any>>;
   /** The JSON Schema version to target.
    * - `"draft-2020-12"` — Default. JSON Schema Draft 2020-12
-   * - `"draft-7"` — JSON Schema Draft 7
-   * - `"draft-4"` — JSON Schema Draft 4
+   * - `"draft-07"` — JSON Schema Draft 7
+   * - `"draft-04"` — JSON Schema Draft 4
    * - `"openapi-3.0"` — OpenAPI 3.0 Schema Object */
-  target?: "draft-4" | "draft-7" | "draft-2020-12" | "openapi-3.0";
+  target?: "draft-04" | "draft-07" | "draft-2020-12" | "openapi-3.0" | ({} & string);
   /** How to handle unrepresentable types.
    * - `"throw"` — Default. Unrepresentable types throw an error
    * - `"any"` — Unrepresentable types become `{}` */
@@ -600,11 +607,14 @@ export interface RegistryToJSONSchemaParams extends ToJSONSchemaParams {
   uri?: (id: string) => string;
 }
 
-export function toJSONSchema(schema: schemas.$ZodType, params?: ToJSONSchemaParams): JSONSchema.BaseSchema;
+export function toJSONSchema<T extends schemas.$ZodType>(
+  schema: T,
+  params?: ToJSONSchemaParams
+): ZodStandardJSONSchemaPayload<T>;
 export function toJSONSchema(
   registry: $ZodRegistry<{ id?: string | undefined }>,
   params?: RegistryToJSONSchemaParams
-): { schemas: Record<string, JSONSchema.BaseSchema> };
+): { schemas: Record<string, ZodStandardJSONSchemaPayload<schemas.$ZodType>> };
 export function toJSONSchema(
   input: schemas.$ZodType | $ZodRegistry<{ id?: string | undefined }>,
   params?: ToJSONSchemaParams | RegistryToJSONSchemaParams
