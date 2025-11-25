@@ -509,10 +509,10 @@ ipv6.parse("2001:db8:85a3::8a2e:370:7334"); // ✅
 Validate IP address ranges specified with [CIDR notation](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing).
 
 ```ts
-const cidrv4 = z.string().cidrv4();
+const cidrv4 = z.cidrv4();
 cidrv4.parse("192.168.0.0/24"); // ✅
 
-const cidrv6 = z.string().cidrv6();
+const cidrv6 = z.cidrv6();
 cidrv6.parse("2001:db8::/32"); // ✅
 ```
 
