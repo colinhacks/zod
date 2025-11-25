@@ -70,12 +70,12 @@ interface Seen {
 }
 
 export interface ToJSONSchemaContext {
-  processors: Record<string, Processor>;
+  processors: Record<string, any>;
   metadataRegistry: $ZodRegistry<Record<string, any>>;
   target: "draft-04" | "draft-07" | "draft-2020-12" | "openapi-3.0" | ({} & string);
   unrepresentable: "throw" | "any";
   override: (ctx: {
-    zodSchema: schemas.$ZodTypes;
+    zodSchema: schemas.$ZodType;
     jsonSchema: JSONSchema.BaseSchema;
     path: (string | number)[];
   }) => void;
@@ -113,7 +113,7 @@ export function initializeContext(params: JSONSchemaGeneratorParams): ToJSONSche
     metadataRegistry: params?.metadata ?? globalRegistry,
     target,
     unrepresentable: params?.unrepresentable ?? "throw",
-    override: params?.override ?? (() => {}),
+    override: (params?.override as any) ?? (() => {}),
     io: params?.io ?? "output",
     counter: 0,
     seen: new Map(),

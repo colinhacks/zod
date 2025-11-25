@@ -153,7 +153,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
       output: createStandardJSONSchemaMethod(inst, "output"),
     },
   });
-  inst.toJSONSchema = createToJSONSchemaMethod(inst, processors.allProcessors);
+  inst.toJSONSchema = createToJSONSchemaMethod(inst, {});
 
   inst.def = def;
   inst.type = def.type;
