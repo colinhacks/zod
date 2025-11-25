@@ -38,7 +38,7 @@ describe("Are The Types Wrong (attw) tests", () => {
     // remove first line
     const outputWithoutFirstLine = output.split("\n").slice(2).join("\n").trim();
     expect(outputWithoutFirstLine).toMatchInlineSnapshot(`
-      "🎭 Import resolved to a CommonJS type declaration file, but an ESM JavaScript file. https://github.com/arethetypeswrong/arethetypeswrong.github.io/blob/main/docs/problems/FalseCJS.md
+      "No problems found 🌟
 
 
       "zod/package.json"
@@ -54,7 +54,7 @@ describe("Are The Types Wrong (attw) tests", () => {
 
       node10: 🟢 
       node16 (from CJS): 🟢 (CJS)
-      node16 (from ESM): 🎭 Masquerading as CJS
+      node16 (from ESM): 🟢 (ESM)
       bundler: 🟢 
 
       ***********************************
@@ -63,7 +63,7 @@ describe("Are The Types Wrong (attw) tests", () => {
 
       node10: 🟢 
       node16 (from CJS): 🟢 (CJS)
-      node16 (from ESM): 🎭 Masquerading as CJS
+      node16 (from ESM): 🟢 (ESM)
       bundler: 🟢 
 
       ***********************************
@@ -72,7 +72,7 @@ describe("Are The Types Wrong (attw) tests", () => {
 
       node10: 🟢 
       node16 (from CJS): 🟢 (CJS)
-      node16 (from ESM): 🎭 Masquerading as CJS
+      node16 (from ESM): 🟢 (ESM)
       bundler: 🟢 
 
       ***********************************
@@ -81,7 +81,7 @@ describe("Are The Types Wrong (attw) tests", () => {
 
       node10: 🟢 
       node16 (from CJS): 🟢 (CJS)
-      node16 (from ESM): 🎭 Masquerading as CJS
+      node16 (from ESM): 🟢 (ESM)
       bundler: 🟢 
 
       ***********************************
@@ -90,7 +90,7 @@ describe("Are The Types Wrong (attw) tests", () => {
 
       node10: 🟢 
       node16 (from CJS): 🟢 (CJS)
-      node16 (from ESM): 🎭 Masquerading as CJS
+      node16 (from ESM): 🟢 (ESM)
       bundler: 🟢 
 
       ***********************************
@@ -99,7 +99,7 @@ describe("Are The Types Wrong (attw) tests", () => {
 
       node10: 🟢 
       node16 (from CJS): 🟢 (CJS)
-      node16 (from ESM): 🎭 Masquerading as CJS
+      node16 (from ESM): 🟢 (ESM)
       bundler: 🟢 
 
       ***********************************
@@ -108,7 +108,7 @@ describe("Are The Types Wrong (attw) tests", () => {
 
       node10: 🟢 
       node16 (from CJS): 🟢 (CJS)
-      node16 (from ESM): 🎭 Masquerading as CJS
+      node16 (from ESM): 🟢 (ESM)
       bundler: 🟢 
 
       ***********************************
@@ -117,7 +117,7 @@ describe("Are The Types Wrong (attw) tests", () => {
 
       node10: 🟢 
       node16 (from CJS): 🟢 (CJS)
-      node16 (from ESM): 🎭 Masquerading as CJS
+      node16 (from ESM): 🟢 (ESM)
       bundler: 🟢 
 
       ***********************************
@@ -126,7 +126,7 @@ describe("Are The Types Wrong (attw) tests", () => {
 
       node10: 🟢 
       node16 (from CJS): 🟢 (CJS)
-      node16 (from ESM): 🎭 Masquerading as CJS
+      node16 (from ESM): 🟢 (ESM)
       bundler: 🟢 
 
       ***********************************

@@ -18,6 +18,7 @@ console.log(z7.string().parse("Hello, world!"));
 console.log(z8.string().parse("Hello, world!"));
 
 z4.config(fr());
+const _arg: z4.ZodErrorMap = fr().localeError;
 const schema = z4.object({
   name: z4.string(),
 });
