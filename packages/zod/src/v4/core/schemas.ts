@@ -150,7 +150,7 @@ export interface _$ZodTypeInternals {
 
   /** @internal  */
   processJSONSchema?:
-    | ((ctx: ToJSONSchemaContext<$ZodType<any, any>>, json: JSONSchema.BaseSchema, params: ProcessParams) => void)
+    | ((ctx: ToJSONSchemaContext, json: JSONSchema.BaseSchema, params: ProcessParams) => void)
     | undefined;
 
   /** An optional method used to override `toJSONSchema` logic. */
