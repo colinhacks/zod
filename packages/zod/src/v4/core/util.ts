@@ -199,7 +199,7 @@ export function assertNotEqual<A, B>(val: AssertNotEqual<A, B>): AssertNotEqual<
 export function assertIs<T>(_arg: T): void {}
 
 export function assertNever(_x: never): never {
-  throw new Error();
+  throw new Error("Unexpected value in exhaustive check");
 }
 export function assert<T>(_: any): asserts _ is T {}
 
