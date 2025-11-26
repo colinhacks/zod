@@ -172,12 +172,64 @@ test("mutual recursion with lazy", () => {
   expect(() => Alazy.parse({ val: "asdf" })).toThrow();
 });
 
-// TODO
 test("mutual recursion with cyclical data", () => {
+  interface CyclicalA {
+    val: number;
+    b: CyclicalB;
+  }
+
+  interface CyclicalB {
+    val: number;
+    a?: CyclicalA | undefined;
+  }
+
+  const Alazy: z.ZodType<CyclicalA> = z.lazy(() =>
+    z.object({
+      val: z.number(),
+      b: Blazy,
+    })
+  );
+
+  const Blazy: z.ZodType<CyclicalB> = z.lazy(() =>
+    z.object({
+      val: z.number(),
+      a: Alazy.optional(),
+    })
+  );
+
+  // Verify that the schemas can be created successfully
+  expect(Alazy).toBeDefined();
+  expect(Blazy).toBeDefined();
+
+  // Test that the schemas work with non-cyclical data
+  const nonCyclicalData = {
+    val: 1,
+    b: {
+      val: 2,
+      a: {
+        val: 3,
+        b: {
+          val: 4,
+        },
+      },
+    },
+  };
+  expect(Alazy.parse(nonCyclicalData)).toEqual(nonCyclicalData);
+
+  // Create cyclical data
   const a: any = { val: 1 };
   const b: any = { val: 2 };
   a.b = b;
   b.a = a;
+
+  // According to Zod documentation, cyclical data causes infinite loops when parsing.
+  // This test documents this known limitation. The schema creation and parsing of
+  // non-cyclical data works fine, but attempting to parse cyclical data will cause
+  // the parser to hang in an infinite loop. This is a known limitation of Zod.
+  // If Zod ever adds cycle detection, this test should be updated to verify
+  // that parsing either throws an error or handles cycles gracefully.
+  // Note: We don't actually attempt to parse the cyclical data here as it would
+  // cause the test to hang indefinitely.
 });
 
 test("complicated self-recursion", () => {
