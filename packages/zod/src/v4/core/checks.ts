@@ -323,6 +323,7 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
               note: "Integers must be within the safe integer range.",
               inst,
               origin,
+              inclusive: true,
               continue: !def.abort,
             });
           } else {
@@ -334,6 +335,7 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
               note: "Integers must be within the safe integer range.",
               inst,
               origin,
+              inclusive: true,
               continue: !def.abort,
             });
           }
@@ -360,7 +362,9 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
           input,
           code: "too_big",
           maximum,
+          inclusive: true,
           inst,
+          continue: !def.abort,
         } as any);
       }
     };
@@ -422,7 +426,9 @@ export const $ZodCheckBigIntFormat: core.$constructor<$ZodCheckBigIntFormat> = /
           input,
           code: "too_big",
           maximum,
+          inclusive: true,
           inst,
+          continue: !def.abort,
         } as any);
       }
     };
