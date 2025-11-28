@@ -12,7 +12,7 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 </Callout>
 
 
-To convert a Zod schema to JSON Schema, use the `z.toJSONSchema()` function.
+To convert a Zod (output) schema to JSON Schema, use the `z.toJSONSchema()` function. If you need the JSON Schema of the **input** type instead, see the [`io`](#io) section below.
 
 ```ts
 import * as z from "zod";
@@ -450,6 +450,25 @@ const jsonSchema = z.toJSONSchema(mySchema);
 
 const jsonSchema = z.toJSONSchema(mySchema, { io: "input" }); 
 // => { type: "string" }
+```
+
+Note that `z.transform()` is listed as an [unrepresentable](#unrepresentable) type—the output of a transformed schema cannot be converted to JSON Schema because the transformation function's return type has no JSON Schema equivalent. However, this does not mean the **input** schema is unconvertible. You can still extract the input type's JSON Schema using `io: "input"`:
+
+```ts
+const mySchema = z.object({
+  name: z.string(),
+  age: z.number(),
+}).transform((data) => ({ ...data, createdAt: new Date() }));
+
+z.toJSONSchema(mySchema);
+// => throws Error (transform is unrepresentable)
+
+z.toJSONSchema(mySchema, { io: "input" });
+// => {
+//   type: 'object',
+//   properties: { name: { type: 'string' }, age: { type: 'number' } },
+//   required: [ 'name', 'age' ],
+// }
 ```
 
 ## Registries
