@@ -1,25 +1,13 @@
 import * as z from "zod/v4";
-import type { StandardJSONSchemaV1 } from "./packages/zod/src/v4/core/standard-schema.js";
 
-function acceptSchema<T extends StandardJSONSchemaV1>(schema: T): StandardJSONSchemaV1.InferInput<T> {
-  return schema as any;
-}
+declare const declare: any;
 
-const _arg = acceptSchema(z.string());
+declare({ id: "my_thing", description: "hello there" }).type("string");
+declare({ description: "hello there" }).fn("string", ":", "number");
+// with({description: 'hello there'}).fn("string", ":", "number");
+// withMeta({description: 'hello there'}).fn("string", ":", "number");
 
-const a = z.toJSONSchema(
-  z.codec(z.string(), z.number(), {
-    decode: (value) => Number(value),
-    encode: (value) => String(value),
-  })
-);
-const b = a["~standard"].jsonSchema.input({ target: "draft-2020-12" });
-const c = a["~standard"].jsonSchema.output({ target: "draft-2020-12" });
-const d = a["~standard"].validate("123");
+const a = z.string().meta({ id: "asdf" });
+const myRegistry = z.registry();
 
-console.log({
-  a,
-  b,
-  c,
-  d,
-});
+z.toJSONSchema(a, { metadata: myRegistry });

@@ -70,7 +70,7 @@ interface Seen {
 }
 
 export interface ToJSONSchemaContext {
-  processors: Record<string, any>;
+  processors: Record<string, Processor>;
   metadataRegistry: $ZodRegistry<Record<string, any>>;
   target: "draft-04" | "draft-07" | "draft-2020-12" | "openapi-3.0" | ({} & string);
   unrepresentable: "throw" | "any";
