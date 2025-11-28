@@ -806,6 +806,31 @@ describe("toJSONSchema", () => {
     `);
   });
 
+  test("record with enum keys adds required", () => {
+    const schema = z.record(z.enum(["key1", "key2"]), z.number());
+
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": {
+          "type": "number",
+        },
+        "propertyNames": {
+          "enum": [
+            "key1",
+            "key2",
+          ],
+          "type": "string",
+        },
+        "required": [
+          "key1",
+          "key2",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
   test("record openapi-3.0", () => {
     const schema = z.record(z.string(), z.boolean());
     const jsonSchema = z.toJSONSchema(schema, { target: "openapi-3.0" });

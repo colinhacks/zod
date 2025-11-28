@@ -432,6 +432,18 @@ export class JSONSchemaGenerator {
               ...params,
               path: [...params.path, "additionalProperties"],
             });
+
+            const keyDef = (def.keyType as schemas.$ZodTypes)._zod.def;
+            if (keyDef.type === "enum") {
+              const enumValues = getEnumValues(keyDef.entries);
+
+              const stringEnumValues = enumValues.filter((v): v is string => typeof v === "string");
+
+              if (stringEnumValues.length > 0 && stringEnumValues.length === enumValues.length) {
+                json.required = stringEnumValues;
+              }
+            }
+
             break;
           }
           case "map": {
