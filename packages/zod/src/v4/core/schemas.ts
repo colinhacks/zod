@@ -3,9 +3,11 @@ import * as checks from "./checks.js";
 import * as core from "./core.js";
 import { Doc } from "./doc.js";
 import type * as errors from "./errors.js";
+import type * as JSONSchema from "./json-schema.js";
 import { parse, parseAsync, safeParse, safeParseAsync } from "./parse.js";
 import * as regexes from "./regexes.js";
 import type { StandardSchemaV1 } from "./standard-schema.js";
+import type { ProcessParams, ToJSONSchemaContext } from "./to-json-schema.js";
 import * as util from "./util.js";
 import { version } from "./versions.js";
 
@@ -145,6 +147,11 @@ export interface _$ZodTypeInternals {
 
   /** @internal The set of issues this schema might throw during type checking. */
   isst: errors.$ZodIssueBase;
+
+  /** @internal  */
+  processJSONSchema?:
+    | ((ctx: ToJSONSchemaContext, json: JSONSchema.BaseSchema, params: ProcessParams) => void)
+    | undefined;
 
   /** An optional method used to override `toJSONSchema` logic. */
   toJSONSchema?: () => unknown;
@@ -1768,9 +1775,7 @@ export interface $ZodObject<
   /** @ts-ignore Cast variance */
   out Shape extends Readonly<$ZodShape> = Readonly<$ZodShape>,
   out Params extends $ZodObjectConfig = $ZodObjectConfig,
-> extends $ZodType<any, any, $ZodObjectInternals<Shape, Params>> {
-  "~standard": $ZodStandardSchema<this>;
-}
+> extends $ZodType<any, any, $ZodObjectInternals<Shape, Params>> {}
 
 function normalizeDef(def: $ZodObjectDef) {
   const keys = Object.keys(def.shape);

@@ -55,3 +55,80 @@ test("length checks", async () => {
     }
   `);
 });
+
+test("schemas conform to StandardJSONSchemaV1", async () => {
+  const schema = z.codec(z.string(), z.number(), {
+    decode: (str) => Number.parseFloat(str),
+    encode: (num) => num.toString(),
+  });
+  expect(schema["~standard"].validate).toBeTypeOf("function");
+  expect(await schema["~standard"].validate("42")).toMatchInlineSnapshot(`
+		{
+		  "value": 42,
+		}
+	`);
+  expect(schema["~standard"].jsonSchema.input({ target: "draft-2020-12" })).toMatchInlineSnapshot(`
+		{
+		  "$schema": "https://json-schema.org/draft/2020-12/schema",
+		  "type": "string",
+		}
+	`);
+  expect(schema["~standard"].jsonSchema.output({ target: "draft-2020-12" })).toMatchInlineSnapshot(`
+		{
+		  "$schema": "https://json-schema.org/draft/2020-12/schema",
+		  "type": "number",
+		}
+	`);
+});
+
+test(".toJSONSchema() returns StandardJSONSchemaV1", async () => {
+  const codec = z.codec(z.string(), z.number(), {
+    decode: (str) => Number.parseFloat(str),
+    encode: (num) => num.toString(),
+  });
+  const result = codec.toJSONSchema();
+  expect(result["~standard"].validate).toBeTypeOf("function");
+  expect(await result["~standard"].validate("42")).toMatchInlineSnapshot(`
+		{
+		  "value": 42,
+		}
+	`);
+  expect(result["~standard"].jsonSchema.input({ target: "draft-2020-12" })).toMatchInlineSnapshot(`
+		{
+		  "$schema": "https://json-schema.org/draft/2020-12/schema",
+		  "type": "string",
+		}
+	`);
+  expect(result["~standard"].jsonSchema.output({ target: "draft-2020-12" })).toMatchInlineSnapshot(`
+		{
+		  "$schema": "https://json-schema.org/draft/2020-12/schema",
+		  "type": "number",
+		}
+	`);
+});
+
+test("z.toJSONSchema() returns StandardJSONSchemaV1", async () => {
+  const codec = z.codec(z.string(), z.number(), {
+    decode: (str) => Number.parseFloat(str),
+    encode: (num) => num.toString(),
+  });
+  const result = z.toJSONSchema(codec);
+  expect(result["~standard"].validate).toBeTypeOf("function");
+  expect(await result["~standard"].validate("42")).toMatchInlineSnapshot(`
+		{
+		  "value": 42,
+		}
+	`);
+  expect(result["~standard"].jsonSchema.input({ target: "draft-2020-12" })).toMatchInlineSnapshot(`
+		{
+		  "$schema": "https://json-schema.org/draft/2020-12/schema",
+		  "type": "string",
+		}
+	`);
+  expect(result["~standard"].jsonSchema.output({ target: "draft-2020-12" })).toMatchInlineSnapshot(`
+		{
+		  "$schema": "https://json-schema.org/draft/2020-12/schema",
+		  "type": "number",
+		}
+	`);
+});
