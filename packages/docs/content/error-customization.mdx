@@ -276,8 +276,8 @@ The `iss` object is a [discriminated union](https://www.typescriptlang.org/docs/
 > For a breakdown of all Zod issue codes, see the [`zod/v4/core`](/packages/core#issue-types) documentation.
 
 ```ts
-const result = schema.safeParse(12, {
-  error: (iss) => {
+z.config({
+  customError: (iss) => {
     if (iss.code === "invalid_type") {
       return `invalid type, expected ${iss.expected}`;
     }
@@ -285,8 +285,8 @@ const result = schema.safeParse(12, {
       return `minimum is ${iss.minimum}`;
     }
     // ...
-  }
-})
+  },
+});
 ```
 
 ## Internationalization
