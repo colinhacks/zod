@@ -151,6 +151,12 @@ const zodToXConverters: ZodResource[] = [
     description: "Convert Zod schemas to MongoDB-compatible JSON Schemas effortlessly",
     slug: "udohjeremiah/zod-to-mongo-schema",
   },
+  {
+    name: "convex-helpers",
+    url: "https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/README.md#zod-validation",
+    description: "Use Zod to validate arguments and return values of Convex functions, and to create Convex database schemas",
+    slug: "get-convex/convex-helpers",
+  },
 ];
 
 const xToZodConverters: ZodResource[] = [
@@ -192,6 +198,12 @@ const xToZodConverters: ZodResource[] = [
       "Drizzle ORM toolkit that can generate Zod validators from schema(s), plus typed services and strongly typed routers (oRPC/tRPC/etc).",
     slug: "use-drzl/drzl",
   },
+  {
+    name: "convex-helpers",
+    url: "https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/README.md#zod-validation",
+    description: "Generate Zod schemas from Convex validators",
+    slug: "get-convex/convex-helpers",
+  }
 ];
 
 const mockingLibraries: ZodResource[] = [
