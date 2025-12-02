@@ -17,7 +17,6 @@ export {
   prettifyError,
   formatError,
   flattenError,
-  toJSONSchema,
   TimePrecision,
   util,
   NEVER,
