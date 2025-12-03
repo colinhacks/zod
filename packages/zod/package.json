@@ -1,6 +1,6 @@
 {
   "name": "@exodus/zod",
-  "version": "4.1.9-exodus.1",
+  "version": "4.1.9-exodus.2",
   "type": "module",
   "license": "MIT",
   "author": "Colin McDonnell <zod@colinhacks.com>",
@@ -58,15 +58,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/colinhacks/zod.git"
+    "url": "git+https://github.com/ExodusMovement/zod.git"
   },
   "bugs": {
-    "url": "https://github.com/colinhacks/zod/issues"
+    "url": "https://github.com/ExodusMovement/zod/issues"
   },
   "support": {
     "backing": {
       "npm-funding": true
     }
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "clean": "git clean -xdf . -e node_modules",
