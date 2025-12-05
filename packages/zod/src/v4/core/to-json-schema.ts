@@ -250,9 +250,7 @@ export class JSONSchemaGenerator {
             break;
           }
           case "undefined": {
-            if (this.unrepresentable === "throw") {
-              throw new Error("Undefined cannot be represented in JSON Schema");
-            }
+            _json.type = "null";
             break;
           }
           case "void": {

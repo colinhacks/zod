@@ -55,9 +55,10 @@ describe("toJSONSchema", () => {
         "type": "null",
       }
     `);
-    expect(z.toJSONSchema(z.undefined(), { unrepresentable: "any" })).toMatchInlineSnapshot(`
+    expect(z.toJSONSchema(z.undefined())).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "null",
       }
     `);
     expect(z.toJSONSchema(z.any())).toMatchInlineSnapshot(`
@@ -282,7 +283,6 @@ describe("toJSONSchema", () => {
     expect(() => z.toJSONSchema(z.int64())).toThrow("BigInt cannot be represented in JSON Schema");
     expect(() => z.toJSONSchema(z.symbol())).toThrow("Symbols cannot be represented in JSON Schema");
     expect(() => z.toJSONSchema(z.void())).toThrow("Void cannot be represented in JSON Schema");
-    expect(() => z.toJSONSchema(z.undefined())).toThrow("Undefined cannot be represented in JSON Schema");
     expect(() => z.toJSONSchema(z.date())).toThrow("Date cannot be represented in JSON Schema");
     expect(() => z.toJSONSchema(z.map(z.string(), z.number()))).toThrow("Map cannot be represented in JSON Schema");
     expect(() => z.toJSONSchema(z.set(z.string()))).toThrow("Set cannot be represented in JSON Schema");
