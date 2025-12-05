@@ -37,6 +37,7 @@ All schema & checks are converted to their closest JSON Schema equivalent. Some 
 z.bigint(); // ❌
 z.int64(); // ❌
 z.symbol(); // ❌
+z.undefined(); // ❌
 z.void(); // ❌
 z.date(); // ❌
 z.map(); // ❌
@@ -170,17 +171,16 @@ z.file().min(1).max(1024 * 1024).mime("image/png");
 
 ## Nullability
 
-Zod converts both `undefined`/`null` to `{ type: "null" }` in JSON Schema.
+Zod converts `z.null()` to `{ type: "null" }` in JSON Schema.
 
 ```ts
-z.null(); 
-// => { type: "null" }
-
-z.undefined(); 
+z.null();
 // => { type: "null" }
 ```
 
-Similarly, `nullable` is represented via a union with `null`::
+Note that `z.undefined()` is unrepresentable in JSON Schema (see [below](#unrepresentable)).
+
+Similarly, `nullable` is represented via a union with `null`:
 
 ```ts
 z.nullable(z.string());
@@ -305,7 +305,7 @@ z.toJSONSchema(schema);
 // => { type: "string", whatever: 1234 }
 ```
 
-### `unrepresentable` 
+### `unrepresentable`
 
 The following APIs are not representable in JSON Schema. By default, Zod will throw an error if they are encountered. It is unsound to attempt a conversion to JSON Schema; you should modify your schemas  as they have no equivalent in JSON. An error will be thrown if any of these are encountered.
 
@@ -313,6 +313,7 @@ The following APIs are not representable in JSON Schema. By default, Zod will th
 z.bigint(); // ❌
 z.int64(); // ❌
 z.symbol(); // ❌
+z.undefined(); // ❌
 z.void(); // ❌
 z.date(); // ❌
 z.map(); // ❌
