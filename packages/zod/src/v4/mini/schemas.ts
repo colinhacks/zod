@@ -1649,7 +1649,7 @@ export const stringbool: (_params?: string | core.$ZodStringBoolParams) => ZodMi
 // json
 
 // json
-type _ZodMiniJSONSchema = ZodMiniUnion<
+export type _ZodMiniJSONSchema = ZodMiniUnion<
   [
     ZodMiniString,
     ZodMiniNumber,
@@ -1659,7 +1659,7 @@ type _ZodMiniJSONSchema = ZodMiniUnion<
     ZodMiniRecord<ZodMiniString<string>, ZodMiniJSONSchema>,
   ]
 >;
-type _ZodMiniJSONSchemaInternals = _ZodMiniJSONSchema["_zod"];
+export type _ZodMiniJSONSchemaInternals = _ZodMiniJSONSchema["_zod"];
 
 export interface ZodMiniJSONSchemaInternals extends _ZodMiniJSONSchemaInternals {
   output: util.JSONType;
