@@ -53,7 +53,17 @@ test("number coercion", () => {
 test("boolean coercion", () => {
   const schema = z.coerce.boolean();
   expect(schema.parse("true")).toEqual(true);
-  expect(schema.parse("false")).toEqual(true);
+  expect(schema.parse("false")).toEqual(false);
+  // Explicitly test that "false" string returns false (unlike Boolean("false") which returns true)
+  // This addresses: https://github.com/colinhacks/zod/issues/5501
+  expect(Boolean("false")).toEqual(true); // JavaScript Boolean() behavior
+  expect(schema.parse("false")).toEqual(false); // Zod's improved behavior
+  expect(schema.parse("False")).toEqual(false);
+  expect(schema.parse("FALSE")).toEqual(false);
+  expect(schema.parse(" false ")).toEqual(false);
+  expect(schema.parse("True")).toEqual(true);
+  expect(schema.parse("TRUE")).toEqual(true);
+  expect(schema.parse(" true ")).toEqual(true);
   expect(schema.parse("0")).toEqual(true);
   expect(schema.parse("1")).toEqual(true);
   expect(schema.parse("")).toEqual(false);
