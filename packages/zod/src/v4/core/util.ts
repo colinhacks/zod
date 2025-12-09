@@ -378,20 +378,20 @@ const canUseFunction = () => {
   }
 };
 
-const cachedAllowsEval = cached(canUseFunction);
+const cachedCanUseFunction = cached(canUseFunction);
+
+const userAgent = typeof navigator === "undefined" ? undefined : navigator?.userAgent;
+const isCloudflare = typeof userAgent === "string" && userAgent.includes("Cloudflare");
 
 export const allowsEval: { readonly value: boolean } = {
   get value() {
-    const ua = typeof navigator === "undefined" ? undefined : navigator?.userAgent;
-    const isCloudflare = typeof ua === "string" && ua.includes("Cloudflare");
-    const cfFlag = (globalThis as any)?.Cloudflare?.compatibilityFlags?.allow_eval_during_startup;
-
+    // Cloudflare allows using new Function in the module scope but not in the request scope
+    // There is no way to tell when the zod schema is being parsed so we have to check every time to be sure
     if (isCloudflare) {
-      if (cfFlag === false) return false;
       return canUseFunction();
     }
 
-    return cachedAllowsEval.value;
+    return cachedCanUseFunction.value;
   },
 };
 

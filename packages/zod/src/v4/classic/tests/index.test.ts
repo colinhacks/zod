@@ -875,6 +875,7 @@ test("object fast path falls back when JIT compilation is blocked at call site",
 });
 
 test("allowsEval caches for non-Cloudflare environments", async () => {
+  vi.resetModules();
   const first = await loadAllowsEvalValue();
 
   try {
