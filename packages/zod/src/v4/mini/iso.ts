@@ -12,6 +12,7 @@ export const ZodMiniISODateTime: core.$constructor<ZodMiniISODateTime> = /*@__PU
     schemas.ZodMiniStringFormat.init(inst, def);
   }
 );
+// @__NO_SIDE_EFFECTS__
 export function datetime(params?: string | core.$ZodISODateTimeParams): ZodMiniISODateTime {
   return core._isoDateTime(ZodMiniISODateTime, params);
 }
@@ -27,6 +28,7 @@ export const ZodMiniISODate: core.$constructor<ZodMiniISODate> = /*@__PURE__*/ c
     schemas.ZodMiniStringFormat.init(inst, def);
   }
 );
+// @__NO_SIDE_EFFECTS__
 export function date(params?: string | core.$ZodISODateParams): ZodMiniISODate {
   return core._isoDate(ZodMiniISODate, params);
 }
@@ -42,6 +44,7 @@ export const ZodMiniISOTime: core.$constructor<ZodMiniISOTime> = /*@__PURE__*/ c
     schemas.ZodMiniStringFormat.init(inst, def);
   }
 );
+// @__NO_SIDE_EFFECTS__
 export function time(params?: string | core.$ZodISOTimeParams): ZodMiniISOTime {
   return core._isoTime(ZodMiniISOTime, params);
 }
@@ -57,6 +60,7 @@ export const ZodMiniISODuration: core.$constructor<ZodMiniISODuration> = /*@__PU
     schemas.ZodMiniStringFormat.init(inst, def);
   }
 );
+// @__NO_SIDE_EFFECTS__
 export function duration(params?: string | core.$ZodISODurationParams): ZodMiniISODuration {
   return core._isoDuration(ZodMiniISODuration, params);
 }
