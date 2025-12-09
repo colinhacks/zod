@@ -378,24 +378,22 @@ const canUseFunction = () => {
   }
 };
 
-export const allowsEval: { readonly value: boolean } = (() => {
-  let cached: boolean | undefined;
+const cachedAllowsEval = cached(canUseFunction);
 
-  return {
-    get value() {
-      const ua = typeof navigator === "undefined" ? undefined : navigator?.userAgent;
-      const isCloudflare = typeof ua === "string" && ua.includes("Cloudflare");
+export const allowsEval: { readonly value: boolean } = {
+  get value() {
+    const ua = typeof navigator === "undefined" ? undefined : navigator?.userAgent;
+    const isCloudflare = typeof ua === "string" && ua.includes("Cloudflare");
+    const cfFlag = (globalThis as any)?.Cloudflare?.compatibilityFlags?.allow_eval_during_startup;
 
-      if (isCloudflare) {
-        // Cloudflare Workers can vary by compat flag; always re-check.
-        return canUseFunction();
-      }
+    if (isCloudflare) {
+      if (cfFlag === false) return false;
+      return canUseFunction();
+    }
 
-      cached ??= canUseFunction();
-      return cached;
-    },
-  };
-})();
+    return cachedAllowsEval.value;
+  },
+};
 
 export function isPlainObject(o: any): o is Record<PropertyKey, unknown> {
   if (isObject(o) === false) return false;
