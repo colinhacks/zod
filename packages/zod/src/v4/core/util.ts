@@ -630,7 +630,7 @@ export function omit(schema: schemas.$ZodObject, mask: object): any {
       assignProp(this, "shape", newShape); // self-caching
       return newShape;
     },
-    checks: [],
+    checks: currDef.checks,
   });
 
   return clone(schema, def);
