@@ -1164,7 +1164,21 @@ export const $ZodBoolean: core.$constructor<$ZodBoolean> = /*@__PURE__*/ core.$c
     inst._zod.parse = (payload, _ctx) => {
       if (def.coerce)
         try {
-          payload.value = Boolean(payload.value);
+          const value = payload.value;
+          // Handle string values "true" and "false" specially
+          if (typeof value === "string") {
+            const lowerValue = value.toLowerCase().trim();
+            if (lowerValue === "true") {
+              payload.value = true;
+            } else if (lowerValue === "false") {
+              payload.value = false;
+            } else {
+              // Fall back to standard Boolean coercion for other strings
+              payload.value = Boolean(value);
+            }
+          } else {
+            payload.value = Boolean(value);
+          }
         } catch (_) {}
       const input = payload.value;
       if (typeof input === "boolean") return payload;
