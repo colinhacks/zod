@@ -98,7 +98,7 @@ test("locales - uz", () => {
     .strict()
     .safeParse({ a: "a", b: 1, c: 2, d: 3 });
   expect(unrecognizedKeysMultiple.error!.issues[0].code).toBe("unrecognized_keys");
-  expect(unrecognizedKeysMultiple.error!.issues[0].message).toContain("Tani olinmagan kalitlar");
+  expect(unrecognizedKeysMultiple.error!.issues[0].message).toContain("Noma’lum kalitlar");
 
   const invalidElement = z.array(z.string()).safeParse([1, 2, 3]);
   expect(invalidElement.error!.issues[0].code).toBe("invalid_type");
