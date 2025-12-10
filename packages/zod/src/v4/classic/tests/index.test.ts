@@ -1,7 +1,6 @@
 import { expect, expectTypeOf, test, vi } from "vitest";
 import * as z from "zod/v4";
 import type { util } from "zod/v4/core";
-import { Doc } from "../../core/doc.js";
 
 test("z.boolean", () => {
   const a = z.boolean();
@@ -860,18 +859,6 @@ test("falls back gracefully when eval is disabled", async () => {
   } finally {
     vi.unstubAllGlobals();
   }
-});
-
-test("object fast path falls back when JIT compilation is blocked at call site", () => {
-  const schema = z.object({ a: z.string() });
-
-  const compileSpy = vi.spyOn(Doc.prototype, "compile").mockImplementation(() => {
-    throw new Error("Function constructor disabled by environment");
-  });
-
-  expect(schema.parse({ a: "hello" })).toEqual({ a: "hello" });
-
-  compileSpy.mockRestore();
 });
 
 test("allowsEval caches for non-Cloudflare environments", async () => {

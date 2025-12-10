@@ -1970,6 +1970,8 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
 
     const isObject = util.isObject;
     const jit = !core.globalConfig.jitless;
+    const allowsEval = util.allowsEval;
+    const fastEnabled = jit && allowsEval.value; // && !def.catchall;
     const catchall = def.catchall;
 
     let value!: typeof _normalized.value;
@@ -1987,7 +1989,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         return payload;
       }
 
-      if (jit && util.allowsEval.value && ctx?.async === false && ctx.jitless !== true) {
+      if (jit && fastEnabled && ctx?.async === false && ctx.jitless !== true) {
         // always synchronous
         if (!fastpass) fastpass = generateFastpass(def.shape);
         payload = fastpass(payload, ctx);
