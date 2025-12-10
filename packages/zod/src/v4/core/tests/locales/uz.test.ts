@@ -61,7 +61,7 @@ test("locales - uz", () => {
 
   const unrecognizedKeys = z.object({ a: z.string(), b: z.number() }).strict().safeParse({ a: "a", b: 1, c: 2 });
   expect(unrecognizedKeys.error!.issues[0].code).toBe("unrecognized_keys");
-  expect(unrecognizedKeys.error!.issues[0].message).toContain('Tani olinmagan kalit: "c"');
+  expect(unrecognizedKeys.error!.issues[0].message).toContain('Noma’lum kalit: "c"');
 
   const invalidUnion = z.union([z.string(), z.number()]).safeParse(true);
   expect(invalidUnion.error!.issues[0].code).toBe("invalid_union");
