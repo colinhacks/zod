@@ -104,7 +104,7 @@ const error: () => errors.$ZodErrorMap = () => {
       case "not_multiple_of":
         return `Noto‘g‘ri raqam: ${issue.divisor} ning karralisi bo‘lishi kerak`;
       case "unrecognized_keys":
-        return `Tani olinmagan kalit${issue.keys.length > 1 ? "lar" : ""}: ${util.joinValues(issue.keys, ", ")}`;
+        return `Noma’lum kalit${issue.keys.length > 1 ? "lar" : ""}: ${util.joinValues(issue.keys, ", ")}`;
       case "invalid_key":
         return `${issue.origin} dagi kalit noto‘g‘ri`;
       case "invalid_union":
