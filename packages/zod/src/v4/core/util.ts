@@ -368,12 +368,7 @@ export function isObject(data: any): data is Record<PropertyKey, unknown> {
   return typeof data === "object" && data !== null && !Array.isArray(data);
 }
 
-export const allowsEval: { value: boolean } = cached(() => {
-  // @ts-ignore
-  if (typeof navigator !== "undefined" && navigator?.userAgent?.includes("Cloudflare")) {
-    return false;
-  }
-
+const canUseFunction = () => {
   try {
     const F = Function;
     new F("");
@@ -381,7 +376,24 @@ export const allowsEval: { value: boolean } = cached(() => {
   } catch (_) {
     return false;
   }
-});
+};
+
+const cachedCanUseFunction = cached(canUseFunction);
+
+const userAgent = typeof navigator === "undefined" ? undefined : navigator?.userAgent;
+const isCloudflare = typeof userAgent === "string" && userAgent.includes("Cloudflare");
+
+export const allowsEval: { readonly value: boolean } = {
+  get value() {
+    // Cloudflare allows using new Function in the module scope but not in the request scope
+    // There is no way to tell when the zod schema is being parsed so we have to check every time to be sure
+    if (isCloudflare) {
+      return canUseFunction();
+    }
+
+    return cachedCanUseFunction.value;
+  },
+};
 
 export function isPlainObject(o: any): o is Record<PropertyKey, unknown> {
   if (isObject(o) === false) return false;

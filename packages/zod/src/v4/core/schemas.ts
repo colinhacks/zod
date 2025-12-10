@@ -1971,7 +1971,6 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
     const isObject = util.isObject;
     const jit = !core.globalConfig.jitless;
     const allowsEval = util.allowsEval;
-
     const fastEnabled = jit && allowsEval.value; // && !def.catchall;
     const catchall = def.catchall;
 
