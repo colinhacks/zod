@@ -14,7 +14,7 @@ const Test = z.object({
 test("object type inference", () => {
   type TestType = {
     f1: number;
-    f2?: string | undefined;
+    f2?: string;
     f3: string | null;
     f4: { t: string | boolean }[];
   };
