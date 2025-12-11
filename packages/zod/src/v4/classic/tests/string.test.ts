@@ -1023,6 +1023,8 @@ test("E.164 validation", () => {
     "+1 555 555 555", // space after plus sign
     "+1555 555 555", // space between numbers
     "+1555+555", // multiple plus signs
+    "+0000000", // leading zero country code
+    "+0123456789", // leading zero with more digits
     "+1555555555555555", // too long
     "+115abc55", // non numeric characters in number part
     "+1555555 ", // space after number
