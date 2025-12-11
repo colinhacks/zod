@@ -1911,6 +1911,52 @@ test("describe with id", () => {
   `);
 });
 
+test("override with id", () => {
+  const jobId = z.string().meta({ id: "jobIdFoo" });
+
+  const a = z.z.toJSONSchema(
+    z.object({
+      current: jobId.describe("Current job"),
+      previous: jobId.describe("Previous job"),
+    }),
+    {
+      override(ctx) {
+        if (ctx.path.join("/") === "$defs/jobIdFoo") {
+          ctx.jsonSchema.id = "jobIdChanged";
+        }
+      },
+    }
+  );
+
+  expect(a).toMatchInlineSnapshot(`
+    {
+      "$defs": {
+        "jobIdFoo": {
+          "id": "jobIdChanged",
+          "type": "string",
+        },
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "current": {
+          "$ref": "#/$defs/jobIdFoo",
+          "description": "Current job",
+        },
+        "previous": {
+          "$ref": "#/$defs/jobIdFoo",
+          "description": "Previous job",
+        },
+      },
+      "required": [
+        "current",
+        "previous",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
 test("overwrite id", () => {
   const jobId = z.string().meta({ id: "aaa" });
 

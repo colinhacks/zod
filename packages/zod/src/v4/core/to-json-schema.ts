@@ -861,9 +861,17 @@ export class JSONSchemaGenerator {
 
     // build defs object
     const defs: JSONSchema.BaseSchema["$defs"] = params.external?.defs ?? {};
+
+    const rootKey = this.target === "draft-2020-12" ? "$defs" : "definitions";
+
     for (const entry of this.seen.entries()) {
       const seen = entry[1];
       if (seen.def && seen.defId) {
+        this.override({
+          zodSchema: entry[0] as schemas.$ZodTypes,
+          jsonSchema: seen.def,
+          path: [rootKey, seen.defId],
+        });
         defs[seen.defId] = seen.def;
       }
     }
