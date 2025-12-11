@@ -713,13 +713,18 @@ describe("toJSONSchema", () => {
     ]);
     expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
       {
+        "$defs": {
+          "__schema0": {
+            "type": "string",
+          },
+        },
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "oneOf": [
           {
             "additionalProperties": false,
             "properties": {
               "data": {
-                "type": "string",
+                "$ref": "#/$defs/__schema0",
               },
               "type": {
                 "const": "success",
@@ -736,7 +741,7 @@ describe("toJSONSchema", () => {
             "additionalProperties": false,
             "properties": {
               "message": {
-                "type": "string",
+                "$ref": "#/$defs/__schema0",
               },
               "type": {
                 "const": "error",
@@ -1280,13 +1285,18 @@ describe("toJSONSchema", () => {
 
     expect(z.toJSONSchema(b)).toMatchInlineSnapshot(`
       {
+        "$defs": {
+          "__schema0": {
+            "type": "string",
+          },
+        },
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {
-          "type": "string",
+          "$ref": "#/$defs/__schema0",
         },
         "properties": {
           "name": {
-            "type": "string",
+            "$ref": "#/$defs/__schema0",
           },
         },
         "required": [
@@ -1328,17 +1338,22 @@ describe("toJSONSchema", () => {
 
     expect(result).toMatchInlineSnapshot(`
       {
+        "$defs": {
+          "__schema0": {
+            "type": "string",
+          },
+        },
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
         "properties": {
           "nonoptional": {
-            "type": "string",
+            "$ref": "#/$defs/__schema0",
           },
           "optional": {
-            "type": "string",
+            "$ref": "#/$defs/__schema0",
           },
           "required": {
-            "type": "string",
+            "$ref": "#/$defs/__schema0",
           },
         },
         "required": [
@@ -1447,13 +1462,18 @@ describe("toJSONSchema", () => {
 
     expect(z.toJSONSchema(b)).toMatchInlineSnapshot(`
       {
+        "$defs": {
+          "__schema0": {
+            "type": "string",
+          },
+        },
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {
-          "type": "string",
+          "$ref": "#/$defs/__schema0",
         },
         "properties": {
           "name": {
-            "type": "string",
+            "$ref": "#/$defs/__schema0",
           },
         },
         "required": [
@@ -1543,7 +1563,7 @@ describe("toJSONSchema", () => {
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "$ref": "#/$defs/__schema0"
           },
           "files": {
             "type": "array",
@@ -1551,7 +1571,7 @@ describe("toJSONSchema", () => {
               "type": "object",
               "properties": {
                 "name": {
-                  "type": "string"
+                  "$ref": "#/$defs/__schema0"
                 },
                 "parent": {
                   "$ref": "#"
@@ -1569,7 +1589,12 @@ describe("toJSONSchema", () => {
           "name",
           "files"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "$defs": {
+          "__schema0": {
+            "type": "string"
+          }
+        }
       }"
     `
     );
@@ -2001,16 +2026,22 @@ test("overwrite descriptions", () => {
   );
   expect(a).toMatchInlineSnapshot(`
     {
+      "$defs": {
+        "__schema0": {
+          "description": "c",
+          "type": "string",
+        },
+      },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
       "properties": {
         "d": {
+          "$ref": "#/$defs/__schema0",
           "description": "d",
-          "type": "string",
         },
         "e": {
+          "$ref": "#/$defs/__schema0",
           "description": "e",
-          "type": "string",
         },
       },
       "required": [
@@ -2096,7 +2127,7 @@ test("top-level readonly", () => {
               "$ref": "#",
             },
             "name": {
-              "type": "string",
+              "$ref": "#/$defs/__schema0",
             },
           },
           "readOnly": true,
@@ -2105,6 +2136,9 @@ test("top-level readonly", () => {
             "a",
           ],
           "type": "object",
+        },
+        "__schema0": {
+          "type": "string",
         },
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2115,7 +2149,7 @@ test("top-level readonly", () => {
           "$ref": "#/$defs/B",
         },
         "name": {
-          "type": "string",
+          "$ref": "#/$defs/__schema0",
         },
       },
       "readOnly": true,
@@ -2163,10 +2197,10 @@ test("basic registry", () => {
               "$ref": "https://example.com/User.json",
             },
             "content": {
-              "type": "string",
+              "$ref": "https://example.com/__shared.json#/$defs/schema0",
             },
             "title": {
-              "type": "string",
+              "$ref": "https://example.com/__shared.json#/$defs/schema0",
             },
           },
           "required": [
@@ -2182,7 +2216,7 @@ test("basic registry", () => {
           "additionalProperties": false,
           "properties": {
             "name": {
-              "type": "string",
+              "$ref": "https://example.com/__shared.json#/$defs/schema0",
             },
             "posts": {
               "items": {
@@ -2196,6 +2230,13 @@ test("basic registry", () => {
             "posts",
           ],
           "type": "object",
+        },
+        "__shared": {
+          "$defs": {
+            "schema0": {
+              "type": "string",
+            },
+          },
         },
       },
     }
@@ -2298,22 +2339,27 @@ test("input type", () => {
   });
   expect(z.toJSONSchema(schema, { io: "input" })).toMatchInlineSnapshot(`
     {
+      "$defs": {
+        "__schema0": {
+          "type": "string",
+        },
+      },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "properties": {
         "a": {
-          "type": "string",
+          "$ref": "#/$defs/__schema0",
         },
         "b": {
-          "type": "string",
+          "$ref": "#/$defs/__schema0",
         },
         "c": {
+          "$ref": "#/$defs/__schema0",
           "default": "hello",
-          "type": "string",
         },
         "d": {
           "anyOf": [
             {
-              "type": "string",
+              "$ref": "#/$defs/__schema0",
             },
             {
               "type": "null",
@@ -2321,12 +2367,12 @@ test("input type", () => {
           ],
         },
         "e": {
+          "$ref": "#/$defs/__schema0",
           "default": "hello",
-          "type": "string",
         },
         "f": {
+          "$ref": "#/$defs/__schema0",
           "default": "hello",
-          "type": "string",
         },
         "g": {
           "not": {},
@@ -2334,7 +2380,7 @@ test("input type", () => {
         "h": {
           "anyOf": [
             {
-              "type": "string",
+              "$ref": "#/$defs/__schema0",
             },
             {
               "default": 2,
@@ -2345,10 +2391,10 @@ test("input type", () => {
         "i": {
           "anyOf": [
             {
-              "type": "string",
+              "$ref": "#/$defs/__schema0",
             },
             {
-              "type": "string",
+              "$ref": "#/$defs/__schema0",
             },
           ],
         },
@@ -2364,23 +2410,28 @@ test("input type", () => {
   `);
   expect(z.toJSONSchema(schema, { io: "output" })).toMatchInlineSnapshot(`
     {
+      "$defs": {
+        "__schema0": {
+          "type": "string",
+        },
+      },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
       "properties": {
         "a": {
-          "type": "string",
+          "$ref": "#/$defs/__schema0",
         },
         "b": {
-          "type": "string",
+          "$ref": "#/$defs/__schema0",
         },
         "c": {
+          "$ref": "#/$defs/__schema0",
           "default": "hello",
-          "type": "string",
         },
         "d": {
           "anyOf": [
             {
-              "type": "string",
+              "$ref": "#/$defs/__schema0",
             },
             {
               "type": "null",
@@ -2388,11 +2439,11 @@ test("input type", () => {
           ],
         },
         "e": {
-          "type": "string",
+          "$ref": "#/$defs/__schema0",
         },
         "f": {
+          "$ref": "#/$defs/__schema0",
           "default": "hello",
-          "type": "string",
         },
         "g": {
           "not": {},
@@ -2400,7 +2451,7 @@ test("input type", () => {
         "h": {
           "anyOf": [
             {
-              "type": "string",
+              "$ref": "#/$defs/__schema0",
             },
             {
               "default": 2,
@@ -2411,10 +2462,10 @@ test("input type", () => {
         "i": {
           "anyOf": [
             {
-              "type": "string",
+              "$ref": "#/$defs/__schema0",
             },
             {
-              "type": "string",
+              "$ref": "#/$defs/__schema0",
             },
           ],
         },
@@ -2716,4 +2767,3406 @@ test("cycle detection - mutual recursion", () => {
 
     Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.]
   `);
+});
+
+// ============================================================================
+// COMPREHENSIVE CYCLE DETECTION TESTS
+// ============================================================================
+
+describe("cycles: throw - complex patterns", () => {
+  test("cycle through union type", () => {
+    const Node = z.object({
+      value: z.string(),
+      get child() {
+        return z.union([Node, z.null()]);
+      },
+    });
+
+    expect(() => z.toJSONSchema(Node, { cycles: "throw" })).toThrowErrorMatchingInlineSnapshot(`
+      [Error: Cycle detected: #/properties/child/anyOf/0/<root>
+
+      Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.]
+    `);
+  });
+
+  test("cycle through intersection type", () => {
+    const Base = z.object({ id: z.string() });
+    const Node = z.object({
+      name: z.string(),
+      get child() {
+        return z.intersection(Base, Node);
+      },
+    });
+
+    expect(() => z.toJSONSchema(Node, { cycles: "throw" })).toThrowErrorMatchingInlineSnapshot(`
+      [Error: Cycle detected: #/properties/child/allOf/1/<root>
+
+      Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.]
+    `);
+  });
+
+  test("cycle through tuple", () => {
+    const Node = z.object({
+      value: z.number(),
+      get pair() {
+        return z.tuple([z.string(), Node]);
+      },
+    });
+
+    expect(() => z.toJSONSchema(Node, { cycles: "throw" })).toThrowErrorMatchingInlineSnapshot(`
+      [Error: Cycle detected: #/properties/pair/prefixItems/1/<root>
+
+      Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.]
+    `);
+  });
+
+  test("cycle through record values", () => {
+    const Node = z.object({
+      name: z.string(),
+      get children() {
+        return z.record(z.string(), Node);
+      },
+    });
+
+    expect(() => z.toJSONSchema(Node, { cycles: "throw" })).toThrowErrorMatchingInlineSnapshot(`
+      [Error: Cycle detected: #/properties/children/additionalProperties/<root>
+
+      Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.]
+    `);
+  });
+
+  test("deep nesting - 3 levels before cycle", () => {
+    const Deep = z.object({
+      level1: z.object({
+        level2: z.object({
+          get level3() {
+            return Deep;
+          },
+        }),
+      }),
+    });
+
+    expect(() => z.toJSONSchema(Deep, { cycles: "throw" })).toThrowErrorMatchingInlineSnapshot(`
+      [Error: Cycle detected: #/properties/level1/properties/level2/properties/level3/<root>
+
+      Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.]
+    `);
+  });
+
+  test("cycle through nullable wrapper", () => {
+    const Node = z.object({
+      value: z.string(),
+      get next() {
+        return Node.nullable();
+      },
+    });
+
+    expect(() => z.toJSONSchema(Node, { cycles: "throw" })).toThrowErrorMatchingInlineSnapshot(`
+      [Error: Cycle detected: #/properties/next/<root>
+
+      Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.]
+    `);
+  });
+
+  test("cycle through optional wrapper", () => {
+    const Node = z.object({
+      value: z.string(),
+      get next() {
+        return Node.optional();
+      },
+    });
+
+    expect(() => z.toJSONSchema(Node, { cycles: "throw" })).toThrowErrorMatchingInlineSnapshot(`
+      [Error: Cycle detected: #/properties/next/<root>
+
+      Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.]
+    `);
+  });
+
+  test("three-way cycle: A -> B -> C -> A", () => {
+    const A = z.object({
+      name: z.literal("A"),
+      get b() {
+        return B;
+      },
+    });
+
+    const B = z.object({
+      name: z.literal("B"),
+      get c() {
+        return C;
+      },
+    });
+
+    const C = z.object({
+      name: z.literal("C"),
+      get a() {
+        return A;
+      },
+    });
+
+    expect(() => z.toJSONSchema(A, { cycles: "throw" })).toThrowErrorMatchingInlineSnapshot(`
+      [Error: Cycle detected: #/properties/b/properties/c/properties/a/<root>
+
+      Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.]
+    `);
+  });
+
+  test("cycle through z.lazy()", () => {
+    interface Node {
+      value: string;
+      children: Node[];
+    }
+
+    const Node: z.ZodType<Node> = z.object({
+      value: z.string(),
+      children: z.array(z.lazy(() => Node)),
+    });
+
+    expect(() => z.toJSONSchema(Node, { cycles: "throw" })).toThrowErrorMatchingInlineSnapshot(`
+      [Error: Cycle detected: #/properties/children/items/<root>
+
+      Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.]
+    `);
+  });
+});
+
+describe("cycles: ref - default behavior", () => {
+  test("self-recursive object produces $ref to root", () => {
+    const Category = z.object({
+      name: z.string(),
+      get subcategories() {
+        return z.array(Category);
+      },
+    });
+
+    const result = z.toJSONSchema(Category);
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+          },
+          "subcategories": {
+            "items": {
+              "$ref": "#",
+            },
+            "type": "array",
+          },
+        },
+        "required": [
+          "name",
+          "subcategories",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  test("mutually recursive schemas with meta ids produce named $defs", () => {
+    const Author = z
+      .object({
+        name: z.string(),
+        get books() {
+          return z.array(Book);
+        },
+      })
+      .meta({ id: "Author" });
+
+    const Book = z
+      .object({
+        title: z.string(),
+        get author() {
+          return Author;
+        },
+      })
+      .meta({ id: "Book" });
+
+    const result = z.toJSONSchema(Author);
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "$defs": {
+          "Book": {
+            "additionalProperties": false,
+            "id": "Book",
+            "properties": {
+              "author": {
+                "$ref": "#",
+              },
+              "title": {
+                "$ref": "#/$defs/__schema0",
+              },
+            },
+            "required": [
+              "title",
+              "author",
+            ],
+            "type": "object",
+          },
+          "__schema0": {
+            "type": "string",
+          },
+        },
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "id": "Author",
+        "properties": {
+          "books": {
+            "items": {
+              "$ref": "#/$defs/Book",
+            },
+            "type": "array",
+          },
+          "name": {
+            "$ref": "#/$defs/__schema0",
+          },
+        },
+        "required": [
+          "name",
+          "books",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  test("deep nested cycle produces correct $ref path", () => {
+    const Root = z.object({
+      level1: z.object({
+        level2: z.object({
+          get backToRoot() {
+            return Root;
+          },
+        }),
+      }),
+    });
+
+    const result = z.toJSONSchema(Root);
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "level1": {
+            "additionalProperties": false,
+            "properties": {
+              "level2": {
+                "additionalProperties": false,
+                "properties": {
+                  "backToRoot": {
+                    "$ref": "#",
+                  },
+                },
+                "required": [
+                  "backToRoot",
+                ],
+                "type": "object",
+              },
+            },
+            "required": [
+              "level2",
+            ],
+            "type": "object",
+          },
+        },
+        "required": [
+          "level1",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  test("cycle through union options", () => {
+    const Node = z.object({
+      value: z.number(),
+      get child() {
+        return z.union([Node, z.null()]);
+      },
+    });
+
+    const result = z.toJSONSchema(Node);
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "child": {
+            "anyOf": [
+              {
+                "$ref": "#",
+              },
+              {
+                "type": "null",
+              },
+            ],
+          },
+          "value": {
+            "type": "number",
+          },
+        },
+        "required": [
+          "value",
+          "child",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  test("cycle through intersection", () => {
+    const Base = z.object({ id: z.string() });
+    const Node = z.object({
+      name: z.string(),
+      get child() {
+        return z.intersection(Base, Node);
+      },
+    });
+
+    const result = z.toJSONSchema(Node);
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "$defs": {
+          "__schema0": {
+            "type": "string",
+          },
+        },
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "child": {
+            "allOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "$ref": "#/$defs/__schema0",
+                  },
+                },
+                "required": [
+                  "id",
+                ],
+                "type": "object",
+              },
+              {
+                "$ref": "#",
+              },
+            ],
+          },
+          "name": {
+            "$ref": "#/$defs/__schema0",
+          },
+        },
+        "required": [
+          "name",
+          "child",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  test("cycle through tuple elements", () => {
+    const Node = z.object({
+      value: z.number(),
+      get pair() {
+        return z.tuple([z.string(), Node]);
+      },
+    });
+
+    const result = z.toJSONSchema(Node);
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "pair": {
+            "prefixItems": [
+              {
+                "type": "string",
+              },
+              {
+                "$ref": "#",
+              },
+            ],
+            "type": "array",
+          },
+          "value": {
+            "type": "number",
+          },
+        },
+        "required": [
+          "value",
+          "pair",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  test("cycle through record values", () => {
+    const Node = z.object({
+      name: z.string(),
+      get children() {
+        return z.record(z.string(), Node);
+      },
+    });
+
+    const result = z.toJSONSchema(Node);
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "$defs": {
+          "__schema0": {
+            "type": "string",
+          },
+        },
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "children": {
+            "additionalProperties": {
+              "$ref": "#",
+            },
+            "propertyNames": {
+              "$ref": "#/$defs/__schema0",
+            },
+            "type": "object",
+          },
+          "name": {
+            "$ref": "#/$defs/__schema0",
+          },
+        },
+        "required": [
+          "name",
+          "children",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  test("three-way cycle: A -> B -> C -> A produces correct refs", () => {
+    const A = z
+      .object({
+        type: z.literal("A"),
+        get b() {
+          return B;
+        },
+      })
+      .meta({ id: "SchemaA" });
+
+    const B = z
+      .object({
+        type: z.literal("B"),
+        get c() {
+          return C;
+        },
+      })
+      .meta({ id: "SchemaB" });
+
+    const C = z
+      .object({
+        type: z.literal("C"),
+        get a() {
+          return A;
+        },
+      })
+      .meta({ id: "SchemaC" });
+
+    const result = z.toJSONSchema(A);
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "$defs": {
+          "SchemaB": {
+            "additionalProperties": false,
+            "id": "SchemaB",
+            "properties": {
+              "c": {
+                "$ref": "#/$defs/SchemaC",
+              },
+              "type": {
+                "const": "B",
+                "type": "string",
+              },
+            },
+            "required": [
+              "type",
+              "c",
+            ],
+            "type": "object",
+          },
+          "SchemaC": {
+            "additionalProperties": false,
+            "id": "SchemaC",
+            "properties": {
+              "a": {
+                "$ref": "#",
+              },
+              "type": {
+                "const": "C",
+                "type": "string",
+              },
+            },
+            "required": [
+              "type",
+              "a",
+            ],
+            "type": "object",
+          },
+        },
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "id": "SchemaA",
+        "properties": {
+          "b": {
+            "$ref": "#/$defs/SchemaB",
+          },
+          "type": {
+            "const": "A",
+            "type": "string",
+          },
+        },
+        "required": [
+          "type",
+          "b",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  test("cycle with nullable wrapper", () => {
+    const LinkedList = z.object({
+      value: z.number(),
+      get next() {
+        return LinkedList.nullable();
+      },
+    });
+
+    const result = z.toJSONSchema(LinkedList);
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "next": {
+            "anyOf": [
+              {
+                "$ref": "#",
+              },
+              {
+                "type": "null",
+              },
+            ],
+          },
+          "value": {
+            "type": "number",
+          },
+        },
+        "required": [
+          "value",
+          "next",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  test("cycle with optional wrapper", () => {
+    const TreeNode = z.object({
+      value: z.string(),
+      get parent() {
+        return TreeNode.optional();
+      },
+    });
+
+    const result = z.toJSONSchema(TreeNode);
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "parent": {
+            "$ref": "#",
+          },
+          "value": {
+            "type": "string",
+          },
+        },
+        "required": [
+          "value",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  test("cycle combined with reused: ref extracts both cycles and reused schemas", () => {
+    const Shared = z.object({
+      data: z.string(),
+    });
+
+    const Node = z.object({
+      meta1: Shared,
+      meta2: Shared, // reused
+      get children() {
+        return z.array(Node);
+      },
+    });
+
+    const result = z.toJSONSchema(Node, { reused: "ref" });
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "$defs": {
+          "__schema0": {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "data",
+            ],
+            "type": "object",
+          },
+        },
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "children": {
+            "items": {
+              "$ref": "#",
+            },
+            "type": "array",
+          },
+          "meta1": {
+            "$ref": "#/$defs/__schema0",
+          },
+          "meta2": {
+            "$ref": "#/$defs/__schema0",
+          },
+        },
+        "required": [
+          "meta1",
+          "meta2",
+          "children",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  test("multiple independent cycles in same schema", () => {
+    const TypeA = z.object({
+      name: z.literal("A"),
+      get self() {
+        return TypeA;
+      },
+    });
+
+    const TypeB = z.object({
+      name: z.literal("B"),
+      get self() {
+        return TypeB;
+      },
+    });
+
+    const Container = z.object({
+      get a() {
+        return TypeA;
+      },
+      get b() {
+        return TypeB;
+      },
+    });
+
+    const result = z.toJSONSchema(Container);
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "$defs": {
+          "__schema0": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "const": "A",
+                "type": "string",
+              },
+              "self": {
+                "$ref": "#/$defs/__schema0",
+              },
+            },
+            "required": [
+              "name",
+              "self",
+            ],
+            "type": "object",
+          },
+          "__schema1": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "const": "B",
+                "type": "string",
+              },
+              "self": {
+                "$ref": "#/$defs/__schema1",
+              },
+            },
+            "required": [
+              "name",
+              "self",
+            ],
+            "type": "object",
+          },
+        },
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "a": {
+            "$ref": "#/$defs/__schema0",
+          },
+          "b": {
+            "$ref": "#/$defs/__schema1",
+          },
+        },
+        "required": [
+          "a",
+          "b",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  test("cycle through z.lazy() with type annotation", () => {
+    interface TreeNode {
+      value: string;
+      children: TreeNode[];
+    }
+
+    const TreeNodeSchema: z.ZodType<TreeNode> = z.object({
+      value: z.string(),
+      children: z.array(z.lazy(() => TreeNodeSchema)),
+    });
+
+    const result = z.toJSONSchema(TreeNodeSchema);
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "children": {
+            "items": {
+              "$ref": "#",
+            },
+            "type": "array",
+          },
+          "value": {
+            "type": "string",
+          },
+        },
+        "required": [
+          "value",
+          "children",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  test("complex nested structure with multiple cycle entry points", () => {
+    const Inner = z.object({
+      id: z.string(),
+      get parent() {
+        return Outer;
+      },
+    });
+
+    const Outer = z.object({
+      name: z.string(),
+      get inner() {
+        return Inner;
+      },
+      get sibling() {
+        return Outer.optional();
+      },
+    });
+
+    const result = z.toJSONSchema(Outer);
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "$defs": {
+          "__schema0": {
+            "type": "string",
+          },
+        },
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "inner": {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/__schema0",
+              },
+              "parent": {
+                "$ref": "#",
+              },
+            },
+            "required": [
+              "id",
+              "parent",
+            ],
+            "type": "object",
+          },
+          "name": {
+            "$ref": "#/$defs/__schema0",
+          },
+          "sibling": {
+            "$ref": "#",
+          },
+        },
+        "required": [
+          "name",
+          "inner",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  test("draft-7 target uses definitions instead of $defs", () => {
+    const Node = z
+      .object({
+        value: z.string(),
+        get child() {
+          return Node;
+        },
+      })
+      .meta({ id: "Node" });
+
+    const Wrapper = z.object({
+      get root() {
+        return Node;
+      },
+    });
+
+    const result = z.toJSONSchema(Wrapper, { target: "draft-7" });
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "definitions": {
+          "Node": {
+            "additionalProperties": false,
+            "id": "Node",
+            "properties": {
+              "child": {
+                "$ref": "#/definitions/Node",
+              },
+              "value": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "value",
+              "child",
+            ],
+            "type": "object",
+          },
+        },
+        "properties": {
+          "root": {
+            "$ref": "#/definitions/Node",
+          },
+        },
+        "required": [
+          "root",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+});
+
+describe("registry + cycles", () => {
+  test("simple registry with mutually recursive schemas", () => {
+    const myRegistry = z.registry<{ id: string }>();
+
+    const User = z.object({
+      name: z.string(),
+      get posts() {
+        return z.array(Post);
+      },
+    });
+
+    const Post = z.object({
+      title: z.string(),
+      get author() {
+        return User;
+      },
+    });
+
+    myRegistry.add(User, { id: "User" });
+    myRegistry.add(Post, { id: "Post" });
+
+    const result = z.toJSONSchema(myRegistry);
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "schemas": {
+          "Post": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "author": {
+                "$ref": "User",
+              },
+              "title": {
+                "$ref": "__shared#/$defs/schema0",
+              },
+            },
+            "required": [
+              "title",
+              "author",
+            ],
+            "type": "object",
+          },
+          "User": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "$ref": "__shared#/$defs/schema0",
+              },
+              "posts": {
+                "items": {
+                  "$ref": "Post",
+                },
+                "type": "array",
+              },
+            },
+            "required": [
+              "name",
+              "posts",
+            ],
+            "type": "object",
+          },
+          "__shared": {
+            "$defs": {
+              "schema0": {
+                "type": "string",
+              },
+            },
+          },
+        },
+      }
+    `);
+  });
+
+  test("registry with self-recursive schema", () => {
+    const myRegistry = z.registry<{ id: string }>();
+
+    const Category = z.object({
+      name: z.string(),
+      get subcategories() {
+        return z.array(Category);
+      },
+    });
+
+    myRegistry.add(Category, { id: "Category" });
+
+    const result = z.toJSONSchema(myRegistry);
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "schemas": {
+          "Category": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+              },
+              "subcategories": {
+                "items": {
+                  "$ref": "Category",
+                },
+                "type": "array",
+              },
+            },
+            "required": [
+              "name",
+              "subcategories",
+            ],
+            "type": "object",
+          },
+        },
+      }
+    `);
+  });
+
+  test("registry with external URI generation and cycles", () => {
+    const myRegistry = z.registry<{ id: string }>();
+
+    const Author = z.object({
+      name: z.string(),
+      email: z.string().email(),
+      get books() {
+        return z.array(Book);
+      },
+    });
+
+    const Book = z.object({
+      title: z.string(),
+      isbn: z.string(),
+      get author() {
+        return Author;
+      },
+      get relatedBooks() {
+        return z.array(Book);
+      },
+    });
+
+    myRegistry.add(Author, { id: "Author" });
+    myRegistry.add(Book, { id: "Book" });
+
+    const result = z.toJSONSchema(myRegistry, {
+      uri: (id) => `https://api.library.com/schemas/${id}.json`,
+    });
+
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "schemas": {
+          "Author": {
+            "$id": "https://api.library.com/schemas/Author.json",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "books": {
+                "items": {
+                  "$ref": "https://api.library.com/schemas/Book.json",
+                },
+                "type": "array",
+              },
+              "email": {
+                "format": "email",
+                "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+                "type": "string",
+              },
+              "name": {
+                "$ref": "https://api.library.com/schemas/__shared.json#/$defs/schema0",
+              },
+            },
+            "required": [
+              "name",
+              "email",
+              "books",
+            ],
+            "type": "object",
+          },
+          "Book": {
+            "$id": "https://api.library.com/schemas/Book.json",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "author": {
+                "$ref": "https://api.library.com/schemas/Author.json",
+              },
+              "isbn": {
+                "$ref": "https://api.library.com/schemas/__shared.json#/$defs/schema0",
+              },
+              "relatedBooks": {
+                "items": {
+                  "$ref": "https://api.library.com/schemas/Book.json",
+                },
+                "type": "array",
+              },
+              "title": {
+                "$ref": "https://api.library.com/schemas/__shared.json#/$defs/schema0",
+              },
+            },
+            "required": [
+              "title",
+              "isbn",
+              "author",
+              "relatedBooks",
+            ],
+            "type": "object",
+          },
+          "__shared": {
+            "$defs": {
+              "schema0": {
+                "type": "string",
+              },
+            },
+          },
+        },
+      }
+    `);
+  });
+
+  test("registry with 3+ schemas in cycle: A -> B -> C -> A", () => {
+    const myRegistry = z.registry<{ id: string }>();
+
+    const Department = z.object({
+      name: z.string(),
+      get employees() {
+        return z.array(Employee);
+      },
+    });
+
+    const Employee = z.object({
+      name: z.string(),
+      get projects() {
+        return z.array(Project);
+      },
+    });
+
+    const Project = z.object({
+      title: z.string(),
+      get department() {
+        return Department;
+      },
+    });
+
+    myRegistry.add(Department, { id: "Department" });
+    myRegistry.add(Employee, { id: "Employee" });
+    myRegistry.add(Project, { id: "Project" });
+
+    const result = z.toJSONSchema(myRegistry, {
+      uri: (id) => `https://corp.com/api/${id}`,
+    });
+
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "schemas": {
+          "Department": {
+            "$id": "https://corp.com/api/Department",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "employees": {
+                "items": {
+                  "$ref": "https://corp.com/api/Employee",
+                },
+                "type": "array",
+              },
+              "name": {
+                "$ref": "https://corp.com/api/__shared#/$defs/schema0",
+              },
+            },
+            "required": [
+              "name",
+              "employees",
+            ],
+            "type": "object",
+          },
+          "Employee": {
+            "$id": "https://corp.com/api/Employee",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "$ref": "https://corp.com/api/__shared#/$defs/schema0",
+              },
+              "projects": {
+                "items": {
+                  "$ref": "https://corp.com/api/Project",
+                },
+                "type": "array",
+              },
+            },
+            "required": [
+              "name",
+              "projects",
+            ],
+            "type": "object",
+          },
+          "Project": {
+            "$id": "https://corp.com/api/Project",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "department": {
+                "$ref": "https://corp.com/api/Department",
+              },
+              "title": {
+                "$ref": "https://corp.com/api/__shared#/$defs/schema0",
+              },
+            },
+            "required": [
+              "title",
+              "department",
+            ],
+            "type": "object",
+          },
+          "__shared": {
+            "$defs": {
+              "schema0": {
+                "type": "string",
+              },
+            },
+          },
+        },
+      }
+    `);
+  });
+
+  test("registry with mixed: some schemas registered, some not, with cycles and reused", () => {
+    const myRegistry = z.registry<{ id: string }>();
+
+    // Unregistered shared schema
+    const Address = z.object({
+      street: z.string(),
+      city: z.string(),
+    });
+
+    const Person = z.object({
+      name: z.string(),
+      address: Address,
+      get employer() {
+        return Company.optional();
+      },
+    });
+
+    const Company = z.object({
+      name: z.string(),
+      address: Address, // reused unregistered schema
+      get employees() {
+        return z.array(Person);
+      },
+    });
+
+    myRegistry.add(Person, { id: "Person" });
+    myRegistry.add(Company, { id: "Company" });
+
+    // With reused: "ref", shared schemas should go to __shared
+    const result = z.toJSONSchema(myRegistry, {
+      uri: (id) => `https://example.com/${id}`,
+      reused: "ref",
+    });
+
+    // Address should end up in __shared since it's not registered but reused
+    expect(result.schemas.__shared).toBeDefined();
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "schemas": {
+          "Company": {
+            "$id": "https://example.com/Company",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "address": {
+                "$ref": "https://example.com/__shared#/$defs/schema1",
+              },
+              "employees": {
+                "items": {
+                  "$ref": "https://example.com/Person",
+                },
+                "type": "array",
+              },
+              "name": {
+                "$ref": "https://example.com/__shared#/$defs/schema0",
+              },
+            },
+            "required": [
+              "name",
+              "address",
+              "employees",
+            ],
+            "type": "object",
+          },
+          "Person": {
+            "$id": "https://example.com/Person",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "address": {
+                "$ref": "https://example.com/__shared#/$defs/schema1",
+              },
+              "employer": {
+                "$ref": "https://example.com/Company",
+              },
+              "name": {
+                "$ref": "https://example.com/__shared#/$defs/schema0",
+              },
+            },
+            "required": [
+              "name",
+              "address",
+            ],
+            "type": "object",
+          },
+          "__shared": {
+            "$defs": {
+              "schema0": {
+                "type": "string",
+              },
+              "schema1": {
+                "additionalProperties": false,
+                "properties": {
+                  "city": {
+                    "$ref": "https://example.com/__shared#/$defs/schema0",
+                  },
+                  "street": {
+                    "$ref": "https://example.com/__shared#/$defs/schema0",
+                  },
+                },
+                "required": [
+                  "street",
+                  "city",
+                ],
+                "type": "object",
+              },
+            },
+          },
+        },
+      }
+    `);
+  });
+
+  test("registry with deeply nested cycles", () => {
+    const myRegistry = z.registry<{ id: string }>();
+
+    const Root = z.object({
+      name: z.string(),
+      nested: z.object({
+        level1: z.object({
+          level2: z.object({
+            get backToRoot() {
+              return Root;
+            },
+          }),
+        }),
+      }),
+    });
+
+    myRegistry.add(Root, { id: "Root" });
+
+    const result = z.toJSONSchema(myRegistry, {
+      uri: (id) => `https://deep.com/${id}`,
+    });
+
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "schemas": {
+          "Root": {
+            "$id": "https://deep.com/Root",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+              },
+              "nested": {
+                "additionalProperties": false,
+                "properties": {
+                  "level1": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "level2": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "backToRoot": {
+                            "$ref": "https://deep.com/Root",
+                          },
+                        },
+                        "required": [
+                          "backToRoot",
+                        ],
+                        "type": "object",
+                      },
+                    },
+                    "required": [
+                      "level2",
+                    ],
+                    "type": "object",
+                  },
+                },
+                "required": [
+                  "level1",
+                ],
+                "type": "object",
+              },
+            },
+            "required": [
+              "name",
+              "nested",
+            ],
+            "type": "object",
+          },
+        },
+      }
+    `);
+  });
+
+  test("registry with multiple entry points into same cycle", () => {
+    const myRegistry = z.registry<{ id: string }>();
+
+    const Node = z.object({
+      value: z.string(),
+      get left() {
+        return Node.optional();
+      },
+      get right() {
+        return Node.optional();
+      },
+    });
+
+    // Two different schemas that reference the same cyclic Node
+    const TreeA = z.object({
+      name: z.literal("TreeA"),
+      get root() {
+        return Node;
+      },
+    });
+
+    const TreeB = z.object({
+      name: z.literal("TreeB"),
+      get root() {
+        return Node;
+      },
+    });
+
+    myRegistry.add(Node, { id: "Node" });
+    myRegistry.add(TreeA, { id: "TreeA" });
+    myRegistry.add(TreeB, { id: "TreeB" });
+
+    const result = z.toJSONSchema(myRegistry, {
+      uri: (id) => `https://trees.io/${id}`,
+    });
+
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "schemas": {
+          "Node": {
+            "$id": "https://trees.io/Node",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "left": {
+                "$ref": "https://trees.io/Node",
+              },
+              "right": {
+                "$ref": "https://trees.io/Node",
+              },
+              "value": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "value",
+            ],
+            "type": "object",
+          },
+          "TreeA": {
+            "$id": "https://trees.io/TreeA",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "const": "TreeA",
+                "type": "string",
+              },
+              "root": {
+                "$ref": "https://trees.io/Node",
+              },
+            },
+            "required": [
+              "name",
+              "root",
+            ],
+            "type": "object",
+          },
+          "TreeB": {
+            "$id": "https://trees.io/TreeB",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "const": "TreeB",
+                "type": "string",
+              },
+              "root": {
+                "$ref": "https://trees.io/Node",
+              },
+            },
+            "required": [
+              "name",
+              "root",
+            ],
+            "type": "object",
+          },
+        },
+      }
+    `);
+  });
+
+  test("registry with cycles through discriminated union", () => {
+    const myRegistry = z.registry<{ id: string }>();
+
+    const LeafNode = z.object({
+      type: z.literal("leaf"),
+      value: z.number(),
+    });
+
+    // Use z.lazy for forward reference to TreeNode
+    type TreeNodeType = z.infer<typeof LeafNode> | { type: "branch"; children: TreeNodeType[] };
+
+    const BranchNode = z.object({
+      type: z.literal("branch"),
+      children: z.array(z.lazy((): z.ZodType<TreeNodeType> => TreeNode)),
+    });
+
+    const TreeNode: z.ZodType<TreeNodeType> = z.discriminatedUnion("type", [LeafNode, BranchNode]);
+
+    myRegistry.add(LeafNode, { id: "LeafNode" });
+    myRegistry.add(BranchNode, { id: "BranchNode" });
+    myRegistry.add(TreeNode, { id: "TreeNode" });
+
+    const result = z.toJSONSchema(myRegistry, {
+      uri: (id) => `https://ast.dev/${id}`,
+    });
+
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "schemas": {
+          "BranchNode": {
+            "$id": "https://ast.dev/BranchNode",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "children": {
+                "items": {
+                  "$ref": "https://ast.dev/TreeNode",
+                },
+                "type": "array",
+              },
+              "type": {
+                "const": "branch",
+                "type": "string",
+              },
+            },
+            "required": [
+              "type",
+              "children",
+            ],
+            "type": "object",
+          },
+          "LeafNode": {
+            "$id": "https://ast.dev/LeafNode",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "leaf",
+                "type": "string",
+              },
+              "value": {
+                "type": "number",
+              },
+            },
+            "required": [
+              "type",
+              "value",
+            ],
+            "type": "object",
+          },
+          "TreeNode": {
+            "$id": "https://ast.dev/TreeNode",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "oneOf": [
+              {
+                "$ref": "https://ast.dev/LeafNode",
+              },
+              {
+                "$ref": "https://ast.dev/BranchNode",
+              },
+            ],
+          },
+        },
+      }
+    `);
+  });
+
+  test("registry without URI function uses local refs", () => {
+    const myRegistry = z.registry<{ id: string }>();
+
+    const Parent = z.object({
+      name: z.string(),
+      get children() {
+        return z.array(Child);
+      },
+    });
+
+    const Child = z.object({
+      name: z.string(),
+      get parent() {
+        return Parent;
+      },
+    });
+
+    myRegistry.add(Parent, { id: "Parent" });
+    myRegistry.add(Child, { id: "Child" });
+
+    // No uri function - should use simple local refs
+    const result = z.toJSONSchema(myRegistry);
+
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "schemas": {
+          "Child": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "$ref": "__shared#/$defs/schema0",
+              },
+              "parent": {
+                "$ref": "Parent",
+              },
+            },
+            "required": [
+              "name",
+              "parent",
+            ],
+            "type": "object",
+          },
+          "Parent": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "children": {
+                "items": {
+                  "$ref": "Child",
+                },
+                "type": "array",
+              },
+              "name": {
+                "$ref": "__shared#/$defs/schema0",
+              },
+            },
+            "required": [
+              "name",
+              "children",
+            ],
+            "type": "object",
+          },
+          "__shared": {
+            "$defs": {
+              "schema0": {
+                "type": "string",
+              },
+            },
+          },
+        },
+      }
+    `);
+  });
+
+  test("complex registry: graph structure with multiple node types", () => {
+    const myRegistry = z.registry<{ id: string }>();
+
+    const Edge = z.object({
+      weight: z.number(),
+      get source() {
+        return GraphNode;
+      },
+      get target() {
+        return GraphNode;
+      },
+    });
+
+    const GraphNode = z.object({
+      id: z.string(),
+      label: z.string(),
+      get outgoingEdges() {
+        return z.array(Edge);
+      },
+      get incomingEdges() {
+        return z.array(Edge);
+      },
+    });
+
+    const Graph = z.object({
+      name: z.string(),
+      get nodes() {
+        return z.array(GraphNode);
+      },
+      get edges() {
+        return z.array(Edge);
+      },
+    });
+
+    myRegistry.add(Edge, { id: "Edge" });
+    myRegistry.add(GraphNode, { id: "GraphNode" });
+    myRegistry.add(Graph, { id: "Graph" });
+
+    const result = z.toJSONSchema(myRegistry, {
+      uri: (id) => `https://graph.api/${id}.schema.json`,
+    });
+
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "schemas": {
+          "Edge": {
+            "$id": "https://graph.api/Edge.schema.json",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "source": {
+                "$ref": "https://graph.api/GraphNode.schema.json",
+              },
+              "target": {
+                "$ref": "https://graph.api/GraphNode.schema.json",
+              },
+              "weight": {
+                "type": "number",
+              },
+            },
+            "required": [
+              "weight",
+              "source",
+              "target",
+            ],
+            "type": "object",
+          },
+          "Graph": {
+            "$id": "https://graph.api/Graph.schema.json",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "edges": {
+                "items": {
+                  "$ref": "https://graph.api/Edge.schema.json",
+                },
+                "type": "array",
+              },
+              "name": {
+                "$ref": "https://graph.api/__shared.schema.json#/$defs/schema0",
+              },
+              "nodes": {
+                "items": {
+                  "$ref": "https://graph.api/GraphNode.schema.json",
+                },
+                "type": "array",
+              },
+            },
+            "required": [
+              "name",
+              "nodes",
+              "edges",
+            ],
+            "type": "object",
+          },
+          "GraphNode": {
+            "$id": "https://graph.api/GraphNode.schema.json",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "$ref": "https://graph.api/__shared.schema.json#/$defs/schema0",
+              },
+              "incomingEdges": {
+                "items": {
+                  "$ref": "https://graph.api/Edge.schema.json",
+                },
+                "type": "array",
+              },
+              "label": {
+                "$ref": "https://graph.api/__shared.schema.json#/$defs/schema0",
+              },
+              "outgoingEdges": {
+                "items": {
+                  "$ref": "https://graph.api/Edge.schema.json",
+                },
+                "type": "array",
+              },
+            },
+            "required": [
+              "id",
+              "label",
+              "outgoingEdges",
+              "incomingEdges",
+            ],
+            "type": "object",
+          },
+          "__shared": {
+            "$defs": {
+              "schema0": {
+                "type": "string",
+              },
+            },
+          },
+        },
+      }
+    `);
+  });
+
+  test("EXTREME: deeply nested enterprise data model with complex cycles", () => {
+    const myRegistry = z.registry<{ id: string }>();
+
+    // ========================================================================
+    // ORGANIZATION LAYER
+    // ========================================================================
+
+    const Address = z.object({
+      street: z.string(),
+      city: z.string(),
+      country: z.string(),
+      postalCode: z.string(),
+    });
+
+    const ContactInfo = z.object({
+      email: z.string().email(),
+      phone: z.string().optional(),
+      address: Address,
+    });
+
+    const Organization = z.object({
+      id: z.string().uuid(),
+      name: z.string(),
+      type: z.enum(["corporation", "nonprofit", "government", "startup"]),
+      contact: ContactInfo,
+      get parentOrganization() {
+        return Organization.optional();
+      },
+      get subsidiaries() {
+        return z.array(Organization);
+      },
+      get departments() {
+        return z.array(Department);
+      },
+      get employees() {
+        return z.array(Employee);
+      },
+    });
+
+    const Department = z.object({
+      id: z.string().uuid(),
+      name: z.string(),
+      budget: z.number(),
+      get organization() {
+        return Organization;
+      },
+      get parentDepartment() {
+        return Department.optional();
+      },
+      get subDepartments() {
+        return z.array(Department);
+      },
+      get manager() {
+        return Employee.optional();
+      },
+      get employees() {
+        return z.array(Employee);
+      },
+      get projects() {
+        return z.array(Project);
+      },
+    });
+
+    // ========================================================================
+    // EMPLOYEE LAYER
+    // ========================================================================
+
+    const Skill = z.object({
+      name: z.string(),
+      level: z.enum(["beginner", "intermediate", "advanced", "expert"]),
+      get certifications() {
+        return z.array(Certification);
+      },
+    });
+
+    const Certification = z.object({
+      name: z.string(),
+      issuedBy: z.string(),
+      issuedDate: z.string(),
+      expiryDate: z.string().optional(),
+      get skill() {
+        return Skill;
+      },
+      get employee() {
+        return Employee;
+      },
+    });
+
+    const Employee = z.object({
+      id: z.string().uuid(),
+      firstName: z.string(),
+      lastName: z.string(),
+      title: z.string(),
+      contact: ContactInfo,
+      hireDate: z.string(),
+      salary: z.number(),
+      get organization() {
+        return Organization;
+      },
+      get department() {
+        return Department;
+      },
+      get manager() {
+        return Employee.optional();
+      },
+      get directReports() {
+        return z.array(Employee);
+      },
+      get skills() {
+        return z.array(Skill);
+      },
+      get certifications() {
+        return z.array(Certification);
+      },
+      get projectAssignments() {
+        return z.array(ProjectAssignment);
+      },
+      get performanceReviews() {
+        return z.array(PerformanceReview);
+      },
+      get createdTasks() {
+        return z.array(Task);
+      },
+      get assignedTasks() {
+        return z.array(Task);
+      },
+    });
+
+    const PerformanceReview = z.object({
+      id: z.string().uuid(),
+      reviewDate: z.string(),
+      rating: z.number().min(1).max(5),
+      comments: z.string(),
+      get employee() {
+        return Employee;
+      },
+      get reviewer() {
+        return Employee;
+      },
+      get goals() {
+        return z.array(Goal);
+      },
+    });
+
+    const Goal = z.object({
+      id: z.string().uuid(),
+      title: z.string(),
+      description: z.string(),
+      targetDate: z.string(),
+      status: z.enum(["not_started", "in_progress", "completed", "cancelled"]),
+      get employee() {
+        return Employee;
+      },
+      get review() {
+        return PerformanceReview.optional();
+      },
+      get relatedTasks() {
+        return z.array(Task);
+      },
+    });
+
+    // ========================================================================
+    // PROJECT LAYER
+    // ========================================================================
+
+    const Project = z.object({
+      id: z.string().uuid(),
+      name: z.string(),
+      description: z.string(),
+      startDate: z.string(),
+      endDate: z.string().optional(),
+      status: z.enum(["planning", "active", "on_hold", "completed", "cancelled"]),
+      budget: z.number(),
+      get department() {
+        return Department;
+      },
+      get parentProject() {
+        return Project.optional();
+      },
+      get subProjects() {
+        return z.array(Project);
+      },
+      get projectLead() {
+        return Employee;
+      },
+      get assignments() {
+        return z.array(ProjectAssignment);
+      },
+      get milestones() {
+        return z.array(Milestone);
+      },
+      get tasks() {
+        return z.array(Task);
+      },
+      get relatedProjects() {
+        return z.array(Project);
+      },
+    });
+
+    const ProjectAssignment = z.object({
+      id: z.string().uuid(),
+      role: z.string(),
+      startDate: z.string(),
+      endDate: z.string().optional(),
+      allocationPercentage: z.number().min(0).max(100),
+      get project() {
+        return Project;
+      },
+      get employee() {
+        return Employee;
+      },
+    });
+
+    const Milestone = z.object({
+      id: z.string().uuid(),
+      name: z.string(),
+      description: z.string(),
+      dueDate: z.string(),
+      completedDate: z.string().optional(),
+      status: z.enum(["pending", "in_progress", "completed", "missed"]),
+      get project() {
+        return Project;
+      },
+      get tasks() {
+        return z.array(Task);
+      },
+      get dependencies() {
+        return z.array(Milestone);
+      },
+      get dependents() {
+        return z.array(Milestone);
+      },
+    });
+
+    // ========================================================================
+    // TASK LAYER
+    // ========================================================================
+
+    const TaskComment = z.object({
+      id: z.string().uuid(),
+      content: z.string(),
+      createdAt: z.string(),
+      updatedAt: z.string().optional(),
+      get author() {
+        return Employee;
+      },
+      get task() {
+        return Task;
+      },
+      get parentComment() {
+        return TaskComment.optional();
+      },
+      get replies() {
+        return z.array(TaskComment);
+      },
+    });
+
+    const TaskAttachment = z.object({
+      id: z.string().uuid(),
+      filename: z.string(),
+      mimeType: z.string(),
+      size: z.number(),
+      uploadedAt: z.string(),
+      get uploadedBy() {
+        return Employee;
+      },
+      get task() {
+        return Task;
+      },
+    });
+
+    const Task = z.object({
+      id: z.string().uuid(),
+      title: z.string(),
+      description: z.string(),
+      priority: z.enum(["low", "medium", "high", "critical"]),
+      status: z.enum(["backlog", "todo", "in_progress", "review", "done", "cancelled"]),
+      estimatedHours: z.number().optional(),
+      actualHours: z.number().optional(),
+      createdAt: z.string(),
+      updatedAt: z.string(),
+      dueDate: z.string().optional(),
+      get project() {
+        return Project;
+      },
+      get milestone() {
+        return Milestone.optional();
+      },
+      get createdBy() {
+        return Employee;
+      },
+      get assignee() {
+        return Employee.optional();
+      },
+      get parentTask() {
+        return Task.optional();
+      },
+      get subtasks() {
+        return z.array(Task);
+      },
+      get blockedBy() {
+        return z.array(Task);
+      },
+      get blocks() {
+        return z.array(Task);
+      },
+      get relatedTasks() {
+        return z.array(Task);
+      },
+      get comments() {
+        return z.array(TaskComment);
+      },
+      get attachments() {
+        return z.array(TaskAttachment);
+      },
+      get relatedGoals() {
+        return z.array(Goal);
+      },
+    });
+
+    // ========================================================================
+    // REGISTER ALL SCHEMAS
+    // ========================================================================
+
+    myRegistry.add(Address, { id: "Address" });
+    myRegistry.add(ContactInfo, { id: "ContactInfo" });
+    myRegistry.add(Organization, { id: "Organization" });
+    myRegistry.add(Department, { id: "Department" });
+    myRegistry.add(Skill, { id: "Skill" });
+    myRegistry.add(Certification, { id: "Certification" });
+    myRegistry.add(Employee, { id: "Employee" });
+    myRegistry.add(PerformanceReview, { id: "PerformanceReview" });
+    myRegistry.add(Goal, { id: "Goal" });
+    myRegistry.add(Project, { id: "Project" });
+    myRegistry.add(ProjectAssignment, { id: "ProjectAssignment" });
+    myRegistry.add(Milestone, { id: "Milestone" });
+    myRegistry.add(TaskComment, { id: "TaskComment" });
+    myRegistry.add(TaskAttachment, { id: "TaskAttachment" });
+    myRegistry.add(Task, { id: "Task" });
+
+    const result = z.toJSONSchema(myRegistry, {
+      uri: (id) => `https://enterprise.api/schemas/v1/${id}.json`,
+      dedupeContent: false, // Disable content dedup for this test to keep it focused on cycles
+    });
+
+    // Verify all schemas are generated (15 registered schemas)
+    expect(Object.keys(result.schemas)).toHaveLength(15);
+
+    // Cast to any for property access assertions
+    const schemas = result.schemas as any;
+
+    // Verify key circular references are resolved correctly
+    // Organization self-reference
+    expect(schemas.Organization.properties.parentOrganization.$ref).toBe(
+      "https://enterprise.api/schemas/v1/Organization.json"
+    );
+    expect(schemas.Organization.properties.subsidiaries.items.$ref).toBe(
+      "https://enterprise.api/schemas/v1/Organization.json"
+    );
+
+    // Department cycles
+    expect(schemas.Department.properties.parentDepartment.$ref).toBe(
+      "https://enterprise.api/schemas/v1/Department.json"
+    );
+    expect(schemas.Department.properties.subDepartments.items.$ref).toBe(
+      "https://enterprise.api/schemas/v1/Department.json"
+    );
+    expect(schemas.Department.properties.organization.$ref).toBe("https://enterprise.api/schemas/v1/Organization.json");
+
+    // Employee cycles - manager/directReports
+    expect(schemas.Employee.properties.manager.$ref).toBe("https://enterprise.api/schemas/v1/Employee.json");
+    expect(schemas.Employee.properties.directReports.items.$ref).toBe(
+      "https://enterprise.api/schemas/v1/Employee.json"
+    );
+
+    // Project cycles - parent/sub/related
+    expect(schemas.Project.properties.parentProject.$ref).toBe("https://enterprise.api/schemas/v1/Project.json");
+    expect(schemas.Project.properties.subProjects.items.$ref).toBe("https://enterprise.api/schemas/v1/Project.json");
+    expect(schemas.Project.properties.relatedProjects.items.$ref).toBe(
+      "https://enterprise.api/schemas/v1/Project.json"
+    );
+
+    // Task cycles - parent/subtasks/blocked/blocks/related
+    expect(schemas.Task.properties.parentTask.$ref).toBe("https://enterprise.api/schemas/v1/Task.json");
+    expect(schemas.Task.properties.subtasks.items.$ref).toBe("https://enterprise.api/schemas/v1/Task.json");
+    expect(schemas.Task.properties.blockedBy.items.$ref).toBe("https://enterprise.api/schemas/v1/Task.json");
+    expect(schemas.Task.properties.blocks.items.$ref).toBe("https://enterprise.api/schemas/v1/Task.json");
+    expect(schemas.Task.properties.relatedTasks.items.$ref).toBe("https://enterprise.api/schemas/v1/Task.json");
+
+    // Milestone dependencies cycle
+    expect(schemas.Milestone.properties.dependencies.items.$ref).toBe(
+      "https://enterprise.api/schemas/v1/Milestone.json"
+    );
+    expect(schemas.Milestone.properties.dependents.items.$ref).toBe("https://enterprise.api/schemas/v1/Milestone.json");
+
+    // TaskComment self-reference (threaded comments)
+    expect(schemas.TaskComment.properties.parentComment.$ref).toBe(
+      "https://enterprise.api/schemas/v1/TaskComment.json"
+    );
+    expect(schemas.TaskComment.properties.replies.items.$ref).toBe(
+      "https://enterprise.api/schemas/v1/TaskComment.json"
+    );
+
+    // Cross-entity references
+    expect(schemas.Employee.properties.organization.$ref).toBe("https://enterprise.api/schemas/v1/Organization.json");
+    expect(schemas.Employee.properties.department.$ref).toBe("https://enterprise.api/schemas/v1/Department.json");
+    expect(schemas.Task.properties.project.$ref).toBe("https://enterprise.api/schemas/v1/Project.json");
+    expect(schemas.Task.properties.milestone.$ref).toBe("https://enterprise.api/schemas/v1/Milestone.json");
+
+    // Skill <-> Certification bidirectional
+    expect(schemas.Skill.properties.certifications.items.$ref).toBe(
+      "https://enterprise.api/schemas/v1/Certification.json"
+    );
+    expect(schemas.Certification.properties.skill.$ref).toBe("https://enterprise.api/schemas/v1/Skill.json");
+
+    // PerformanceReview -> Employee (both employee and reviewer)
+    expect(schemas.PerformanceReview.properties.employee.$ref).toBe("https://enterprise.api/schemas/v1/Employee.json");
+    expect(schemas.PerformanceReview.properties.reviewer.$ref).toBe("https://enterprise.api/schemas/v1/Employee.json");
+
+    // Goal <-> Task bidirectional
+    expect(schemas.Goal.properties.relatedTasks.items.$ref).toBe("https://enterprise.api/schemas/v1/Task.json");
+    expect(schemas.Task.properties.relatedGoals.items.$ref).toBe("https://enterprise.api/schemas/v1/Goal.json");
+
+    // Full snapshot for complete verification
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "schemas": {
+          "Address": {
+            "$id": "https://enterprise.api/schemas/v1/Address.json",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "city": {
+                "type": "string",
+              },
+              "country": {
+                "type": "string",
+              },
+              "postalCode": {
+                "type": "string",
+              },
+              "street": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "street",
+              "city",
+              "country",
+              "postalCode",
+            ],
+            "type": "object",
+          },
+          "Certification": {
+            "$id": "https://enterprise.api/schemas/v1/Certification.json",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "employee": {
+                "$ref": "https://enterprise.api/schemas/v1/Employee.json",
+              },
+              "expiryDate": {
+                "type": "string",
+              },
+              "issuedBy": {
+                "type": "string",
+              },
+              "issuedDate": {
+                "type": "string",
+              },
+              "name": {
+                "type": "string",
+              },
+              "skill": {
+                "$ref": "https://enterprise.api/schemas/v1/Skill.json",
+              },
+            },
+            "required": [
+              "name",
+              "issuedBy",
+              "issuedDate",
+              "skill",
+              "employee",
+            ],
+            "type": "object",
+          },
+          "ContactInfo": {
+            "$id": "https://enterprise.api/schemas/v1/ContactInfo.json",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "address": {
+                "$ref": "https://enterprise.api/schemas/v1/Address.json",
+              },
+              "email": {
+                "format": "email",
+                "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+                "type": "string",
+              },
+              "phone": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "email",
+              "address",
+            ],
+            "type": "object",
+          },
+          "Department": {
+            "$id": "https://enterprise.api/schemas/v1/Department.json",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "budget": {
+                "type": "number",
+              },
+              "employees": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/Employee.json",
+                },
+                "type": "array",
+              },
+              "id": {
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "type": "string",
+              },
+              "manager": {
+                "$ref": "https://enterprise.api/schemas/v1/Employee.json",
+              },
+              "name": {
+                "type": "string",
+              },
+              "organization": {
+                "$ref": "https://enterprise.api/schemas/v1/Organization.json",
+              },
+              "parentDepartment": {
+                "$ref": "https://enterprise.api/schemas/v1/Department.json",
+              },
+              "projects": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/Project.json",
+                },
+                "type": "array",
+              },
+              "subDepartments": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/Department.json",
+                },
+                "type": "array",
+              },
+            },
+            "required": [
+              "id",
+              "name",
+              "budget",
+              "organization",
+              "subDepartments",
+              "employees",
+              "projects",
+            ],
+            "type": "object",
+          },
+          "Employee": {
+            "$id": "https://enterprise.api/schemas/v1/Employee.json",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "assignedTasks": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/Task.json",
+                },
+                "type": "array",
+              },
+              "certifications": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/Certification.json",
+                },
+                "type": "array",
+              },
+              "contact": {
+                "$ref": "https://enterprise.api/schemas/v1/ContactInfo.json",
+              },
+              "createdTasks": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/Task.json",
+                },
+                "type": "array",
+              },
+              "department": {
+                "$ref": "https://enterprise.api/schemas/v1/Department.json",
+              },
+              "directReports": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/Employee.json",
+                },
+                "type": "array",
+              },
+              "firstName": {
+                "type": "string",
+              },
+              "hireDate": {
+                "type": "string",
+              },
+              "id": {
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "type": "string",
+              },
+              "lastName": {
+                "type": "string",
+              },
+              "manager": {
+                "$ref": "https://enterprise.api/schemas/v1/Employee.json",
+              },
+              "organization": {
+                "$ref": "https://enterprise.api/schemas/v1/Organization.json",
+              },
+              "performanceReviews": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/PerformanceReview.json",
+                },
+                "type": "array",
+              },
+              "projectAssignments": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/ProjectAssignment.json",
+                },
+                "type": "array",
+              },
+              "salary": {
+                "type": "number",
+              },
+              "skills": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/Skill.json",
+                },
+                "type": "array",
+              },
+              "title": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "id",
+              "firstName",
+              "lastName",
+              "title",
+              "contact",
+              "hireDate",
+              "salary",
+              "organization",
+              "department",
+              "directReports",
+              "skills",
+              "certifications",
+              "projectAssignments",
+              "performanceReviews",
+              "createdTasks",
+              "assignedTasks",
+            ],
+            "type": "object",
+          },
+          "Goal": {
+            "$id": "https://enterprise.api/schemas/v1/Goal.json",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "description": {
+                "type": "string",
+              },
+              "employee": {
+                "$ref": "https://enterprise.api/schemas/v1/Employee.json",
+              },
+              "id": {
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "type": "string",
+              },
+              "relatedTasks": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/Task.json",
+                },
+                "type": "array",
+              },
+              "review": {
+                "$ref": "https://enterprise.api/schemas/v1/PerformanceReview.json",
+              },
+              "status": {
+                "enum": [
+                  "not_started",
+                  "in_progress",
+                  "completed",
+                  "cancelled",
+                ],
+                "type": "string",
+              },
+              "targetDate": {
+                "type": "string",
+              },
+              "title": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "id",
+              "title",
+              "description",
+              "targetDate",
+              "status",
+              "employee",
+              "relatedTasks",
+            ],
+            "type": "object",
+          },
+          "Milestone": {
+            "$id": "https://enterprise.api/schemas/v1/Milestone.json",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "completedDate": {
+                "type": "string",
+              },
+              "dependencies": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/Milestone.json",
+                },
+                "type": "array",
+              },
+              "dependents": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/Milestone.json",
+                },
+                "type": "array",
+              },
+              "description": {
+                "type": "string",
+              },
+              "dueDate": {
+                "type": "string",
+              },
+              "id": {
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "type": "string",
+              },
+              "name": {
+                "type": "string",
+              },
+              "project": {
+                "$ref": "https://enterprise.api/schemas/v1/Project.json",
+              },
+              "status": {
+                "enum": [
+                  "pending",
+                  "in_progress",
+                  "completed",
+                  "missed",
+                ],
+                "type": "string",
+              },
+              "tasks": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/Task.json",
+                },
+                "type": "array",
+              },
+            },
+            "required": [
+              "id",
+              "name",
+              "description",
+              "dueDate",
+              "status",
+              "project",
+              "tasks",
+              "dependencies",
+              "dependents",
+            ],
+            "type": "object",
+          },
+          "Organization": {
+            "$id": "https://enterprise.api/schemas/v1/Organization.json",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "contact": {
+                "$ref": "https://enterprise.api/schemas/v1/ContactInfo.json",
+              },
+              "departments": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/Department.json",
+                },
+                "type": "array",
+              },
+              "employees": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/Employee.json",
+                },
+                "type": "array",
+              },
+              "id": {
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "type": "string",
+              },
+              "name": {
+                "type": "string",
+              },
+              "parentOrganization": {
+                "$ref": "https://enterprise.api/schemas/v1/Organization.json",
+              },
+              "subsidiaries": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/Organization.json",
+                },
+                "type": "array",
+              },
+              "type": {
+                "enum": [
+                  "corporation",
+                  "nonprofit",
+                  "government",
+                  "startup",
+                ],
+                "type": "string",
+              },
+            },
+            "required": [
+              "id",
+              "name",
+              "type",
+              "contact",
+              "subsidiaries",
+              "departments",
+              "employees",
+            ],
+            "type": "object",
+          },
+          "PerformanceReview": {
+            "$id": "https://enterprise.api/schemas/v1/PerformanceReview.json",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "comments": {
+                "type": "string",
+              },
+              "employee": {
+                "$ref": "https://enterprise.api/schemas/v1/Employee.json",
+              },
+              "goals": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/Goal.json",
+                },
+                "type": "array",
+              },
+              "id": {
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "type": "string",
+              },
+              "rating": {
+                "maximum": 5,
+                "minimum": 1,
+                "type": "number",
+              },
+              "reviewDate": {
+                "type": "string",
+              },
+              "reviewer": {
+                "$ref": "https://enterprise.api/schemas/v1/Employee.json",
+              },
+            },
+            "required": [
+              "id",
+              "reviewDate",
+              "rating",
+              "comments",
+              "employee",
+              "reviewer",
+              "goals",
+            ],
+            "type": "object",
+          },
+          "Project": {
+            "$id": "https://enterprise.api/schemas/v1/Project.json",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "assignments": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/ProjectAssignment.json",
+                },
+                "type": "array",
+              },
+              "budget": {
+                "type": "number",
+              },
+              "department": {
+                "$ref": "https://enterprise.api/schemas/v1/Department.json",
+              },
+              "description": {
+                "type": "string",
+              },
+              "endDate": {
+                "type": "string",
+              },
+              "id": {
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "type": "string",
+              },
+              "milestones": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/Milestone.json",
+                },
+                "type": "array",
+              },
+              "name": {
+                "type": "string",
+              },
+              "parentProject": {
+                "$ref": "https://enterprise.api/schemas/v1/Project.json",
+              },
+              "projectLead": {
+                "$ref": "https://enterprise.api/schemas/v1/Employee.json",
+              },
+              "relatedProjects": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/Project.json",
+                },
+                "type": "array",
+              },
+              "startDate": {
+                "type": "string",
+              },
+              "status": {
+                "enum": [
+                  "planning",
+                  "active",
+                  "on_hold",
+                  "completed",
+                  "cancelled",
+                ],
+                "type": "string",
+              },
+              "subProjects": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/Project.json",
+                },
+                "type": "array",
+              },
+              "tasks": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/Task.json",
+                },
+                "type": "array",
+              },
+            },
+            "required": [
+              "id",
+              "name",
+              "description",
+              "startDate",
+              "status",
+              "budget",
+              "department",
+              "subProjects",
+              "projectLead",
+              "assignments",
+              "milestones",
+              "tasks",
+              "relatedProjects",
+            ],
+            "type": "object",
+          },
+          "ProjectAssignment": {
+            "$id": "https://enterprise.api/schemas/v1/ProjectAssignment.json",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "allocationPercentage": {
+                "maximum": 100,
+                "minimum": 0,
+                "type": "number",
+              },
+              "employee": {
+                "$ref": "https://enterprise.api/schemas/v1/Employee.json",
+              },
+              "endDate": {
+                "type": "string",
+              },
+              "id": {
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "type": "string",
+              },
+              "project": {
+                "$ref": "https://enterprise.api/schemas/v1/Project.json",
+              },
+              "role": {
+                "type": "string",
+              },
+              "startDate": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "id",
+              "role",
+              "startDate",
+              "allocationPercentage",
+              "project",
+              "employee",
+            ],
+            "type": "object",
+          },
+          "Skill": {
+            "$id": "https://enterprise.api/schemas/v1/Skill.json",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "certifications": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/Certification.json",
+                },
+                "type": "array",
+              },
+              "level": {
+                "enum": [
+                  "beginner",
+                  "intermediate",
+                  "advanced",
+                  "expert",
+                ],
+                "type": "string",
+              },
+              "name": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "name",
+              "level",
+              "certifications",
+            ],
+            "type": "object",
+          },
+          "Task": {
+            "$id": "https://enterprise.api/schemas/v1/Task.json",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "actualHours": {
+                "type": "number",
+              },
+              "assignee": {
+                "$ref": "https://enterprise.api/schemas/v1/Employee.json",
+              },
+              "attachments": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/TaskAttachment.json",
+                },
+                "type": "array",
+              },
+              "blockedBy": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/Task.json",
+                },
+                "type": "array",
+              },
+              "blocks": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/Task.json",
+                },
+                "type": "array",
+              },
+              "comments": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/TaskComment.json",
+                },
+                "type": "array",
+              },
+              "createdAt": {
+                "type": "string",
+              },
+              "createdBy": {
+                "$ref": "https://enterprise.api/schemas/v1/Employee.json",
+              },
+              "description": {
+                "type": "string",
+              },
+              "dueDate": {
+                "type": "string",
+              },
+              "estimatedHours": {
+                "type": "number",
+              },
+              "id": {
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "type": "string",
+              },
+              "milestone": {
+                "$ref": "https://enterprise.api/schemas/v1/Milestone.json",
+              },
+              "parentTask": {
+                "$ref": "https://enterprise.api/schemas/v1/Task.json",
+              },
+              "priority": {
+                "enum": [
+                  "low",
+                  "medium",
+                  "high",
+                  "critical",
+                ],
+                "type": "string",
+              },
+              "project": {
+                "$ref": "https://enterprise.api/schemas/v1/Project.json",
+              },
+              "relatedGoals": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/Goal.json",
+                },
+                "type": "array",
+              },
+              "relatedTasks": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/Task.json",
+                },
+                "type": "array",
+              },
+              "status": {
+                "enum": [
+                  "backlog",
+                  "todo",
+                  "in_progress",
+                  "review",
+                  "done",
+                  "cancelled",
+                ],
+                "type": "string",
+              },
+              "subtasks": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/Task.json",
+                },
+                "type": "array",
+              },
+              "title": {
+                "type": "string",
+              },
+              "updatedAt": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "id",
+              "title",
+              "description",
+              "priority",
+              "status",
+              "createdAt",
+              "updatedAt",
+              "project",
+              "createdBy",
+              "subtasks",
+              "blockedBy",
+              "blocks",
+              "relatedTasks",
+              "comments",
+              "attachments",
+              "relatedGoals",
+            ],
+            "type": "object",
+          },
+          "TaskAttachment": {
+            "$id": "https://enterprise.api/schemas/v1/TaskAttachment.json",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "filename": {
+                "type": "string",
+              },
+              "id": {
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "type": "string",
+              },
+              "mimeType": {
+                "type": "string",
+              },
+              "size": {
+                "type": "number",
+              },
+              "task": {
+                "$ref": "https://enterprise.api/schemas/v1/Task.json",
+              },
+              "uploadedAt": {
+                "type": "string",
+              },
+              "uploadedBy": {
+                "$ref": "https://enterprise.api/schemas/v1/Employee.json",
+              },
+            },
+            "required": [
+              "id",
+              "filename",
+              "mimeType",
+              "size",
+              "uploadedAt",
+              "uploadedBy",
+              "task",
+            ],
+            "type": "object",
+          },
+          "TaskComment": {
+            "$id": "https://enterprise.api/schemas/v1/TaskComment.json",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": false,
+            "properties": {
+              "author": {
+                "$ref": "https://enterprise.api/schemas/v1/Employee.json",
+              },
+              "content": {
+                "type": "string",
+              },
+              "createdAt": {
+                "type": "string",
+              },
+              "id": {
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "type": "string",
+              },
+              "parentComment": {
+                "$ref": "https://enterprise.api/schemas/v1/TaskComment.json",
+              },
+              "replies": {
+                "items": {
+                  "$ref": "https://enterprise.api/schemas/v1/TaskComment.json",
+                },
+                "type": "array",
+              },
+              "task": {
+                "$ref": "https://enterprise.api/schemas/v1/Task.json",
+              },
+              "updatedAt": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "id",
+              "content",
+              "createdAt",
+              "author",
+              "task",
+              "replies",
+            ],
+            "type": "object",
+          },
+        },
+      }
+    `);
+  });
+});
+
+describe("shared primitives optimization", () => {
+  test("reusing schema instances with reused:'ref' deduplicates identical schemas", () => {
+    // Define shared primitives ONCE - reuse everywhere
+    const UUID = z.string().uuid();
+    const Email = z.string().email();
+    const DateString = z.string().datetime();
+
+    // Multiple schemas all using the same UUID/Email/Date instances
+    const User = z.object({
+      id: UUID,
+      email: Email,
+      createdAt: DateString,
+      updatedAt: DateString,
+    });
+
+    const Organization = z.object({
+      id: UUID,
+      contactEmail: Email,
+      createdAt: DateString,
+    });
+
+    const Project = z.object({
+      id: UUID,
+      ownerId: UUID, // Same UUID instance used multiple times
+      createdAt: DateString,
+      modifiedAt: DateString,
+    });
+
+    // Combine into a single schema to demonstrate deduplication
+    const ApiResponse = z.object({
+      user: User,
+      organization: Organization,
+      project: Project,
+    });
+
+    // WITH dedupeContent:false - schemas are inlined (opt-out of default deduplication)
+    const inlinedResult = z.toJSONSchema(ApiResponse, { dedupeContent: false });
+    expect(inlinedResult.$defs).toBeUndefined(); // No $defs when deduplication is disabled
+
+    // WITH reused:"ref" - identical schemas extracted to $defs
+    const deduplicatedResult = z.toJSONSchema(ApiResponse, { reused: "ref" });
+
+    // UUID should appear only ONCE in $defs, rest are $refs
+    expect(deduplicatedResult.$defs).toBeDefined();
+    const defs = deduplicatedResult.$defs as Record<string, any>;
+
+    // Find the UUID definition
+    const uuidDef = Object.values(defs).find((def: any) => def.format === "uuid");
+    expect(uuidDef).toBeDefined();
+
+    // Find the email definition
+    const emailDef = Object.values(defs).find((def: any) => def.format === "email");
+    expect(emailDef).toBeDefined();
+
+    // Find the datetime definition
+    const datetimeDef = Object.values(defs).find((def: any) => def.format === "date-time");
+    expect(datetimeDef).toBeDefined();
+
+    // Verify the structure - $refs should replace inlined schemas
+    expect(deduplicatedResult).toMatchInlineSnapshot(`
+      {
+        "$defs": {
+          "__schema0": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string",
+          },
+          "__schema1": {
+            "format": "email",
+            "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+            "type": "string",
+          },
+          "__schema2": {
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            "type": "string",
+          },
+        },
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "organization": {
+            "additionalProperties": false,
+            "properties": {
+              "contactEmail": {
+                "$ref": "#/$defs/__schema1",
+              },
+              "createdAt": {
+                "$ref": "#/$defs/__schema2",
+              },
+              "id": {
+                "$ref": "#/$defs/__schema0",
+              },
+            },
+            "required": [
+              "id",
+              "contactEmail",
+              "createdAt",
+            ],
+            "type": "object",
+          },
+          "project": {
+            "additionalProperties": false,
+            "properties": {
+              "createdAt": {
+                "$ref": "#/$defs/__schema2",
+              },
+              "id": {
+                "$ref": "#/$defs/__schema0",
+              },
+              "modifiedAt": {
+                "$ref": "#/$defs/__schema2",
+              },
+              "ownerId": {
+                "$ref": "#/$defs/__schema0",
+              },
+            },
+            "required": [
+              "id",
+              "ownerId",
+              "createdAt",
+              "modifiedAt",
+            ],
+            "type": "object",
+          },
+          "user": {
+            "additionalProperties": false,
+            "properties": {
+              "createdAt": {
+                "$ref": "#/$defs/__schema2",
+              },
+              "email": {
+                "$ref": "#/$defs/__schema1",
+              },
+              "id": {
+                "$ref": "#/$defs/__schema0",
+              },
+              "updatedAt": {
+                "$ref": "#/$defs/__schema2",
+              },
+            },
+            "required": [
+              "id",
+              "email",
+              "createdAt",
+              "updatedAt",
+            ],
+            "type": "object",
+          },
+        },
+        "required": [
+          "user",
+          "organization",
+          "project",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  test("registry with shared primitives produces optimal external refs", () => {
+    const myRegistry = z.registry<{ id: string }>();
+
+    // Shared primitives registered with IDs
+    const UUID = z.string().uuid();
+    const Email = z.string().email();
+
+    myRegistry.add(UUID, { id: "UUID" });
+    myRegistry.add(Email, { id: "Email" });
+
+    // Entity schemas that reuse the primitives
+    const User = z.object({
+      id: UUID,
+      email: Email,
+      managerId: UUID.optional(),
+    });
+
+    const Team = z.object({
+      id: UUID,
+      leadId: UUID,
+      contactEmail: Email,
+    });
+
+    myRegistry.add(User, { id: "User" });
+    myRegistry.add(Team, { id: "Team" });
+
+    const result = z.toJSONSchema(myRegistry, {
+      uri: (id) => `https://api.example.com/schemas/${id}.json`,
+    });
+
+    // UUID and Email should be their own schemas with $refs
+    expect(result.schemas.UUID).toMatchInlineSnapshot(`
+      {
+        "$id": "https://api.example.com/schemas/UUID.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+        "type": "string",
+      }
+    `);
+
+    expect(result.schemas.Email).toMatchInlineSnapshot(`
+      {
+        "$id": "https://api.example.com/schemas/Email.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "email",
+        "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+        "type": "string",
+      }
+    `);
+
+    // User and Team should reference UUID and Email via external $refs
+    expect(result.schemas.User).toMatchInlineSnapshot(`
+      {
+        "$id": "https://api.example.com/schemas/User.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "$ref": "https://api.example.com/schemas/Email.json",
+          },
+          "id": {
+            "$ref": "https://api.example.com/schemas/UUID.json",
+          },
+          "managerId": {
+            "$ref": "https://api.example.com/schemas/UUID.json",
+          },
+        },
+        "required": [
+          "id",
+          "email",
+        ],
+        "type": "object",
+      }
+    `);
+
+    expect(result.schemas.Team).toMatchInlineSnapshot(`
+      {
+        "$id": "https://api.example.com/schemas/Team.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "contactEmail": {
+            "$ref": "https://api.example.com/schemas/Email.json",
+          },
+          "id": {
+            "$ref": "https://api.example.com/schemas/UUID.json",
+          },
+          "leadId": {
+            "$ref": "https://api.example.com/schemas/UUID.json",
+          },
+        },
+        "required": [
+          "id",
+          "leadId",
+          "contactEmail",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  test("content-based deduplication works automatically for separate instances", () => {
+    // Even with SEPARATE instances, content-based deduplication kicks in
+    const Schema = z.object({
+      id1: z.string().uuid(),
+      id2: z.string().uuid(),
+      id3: z.string().uuid(),
+      email1: z.string().email(),
+      email2: z.string().email(),
+    });
+
+    // Default behavior: content-based deduplication is ON
+    const deduplicatedResult = z.toJSONSchema(Schema);
+
+    // $defs are created for deduplicated content
+    expect(deduplicatedResult.$defs).toBeDefined();
+    expect(Object.keys(deduplicatedResult.$defs as object).length).toBe(2); // UUID and Email
+
+    // Opt-out: disable content-based deduplication
+    const inlinedResult = z.toJSONSchema(Schema, { dedupeContent: false });
+
+    // No $defs when deduplication is disabled
+    expect(inlinedResult.$defs).toBeUndefined();
+
+    // Size comparison: deduplicated should be smaller
+    const deduplicatedSize = JSON.stringify(deduplicatedResult).length;
+    const inlinedSize = JSON.stringify(inlinedResult).length;
+
+    expect(deduplicatedSize).toBeLessThan(inlinedSize);
+
+    // Savings should be significant (>30%)
+    const savingsPercent = ((inlinedSize - deduplicatedSize) / inlinedSize) * 100;
+    expect(savingsPercent).toBeGreaterThan(30);
+  });
 });
