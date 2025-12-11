@@ -2524,7 +2524,7 @@ function handleTupleResult(result: ParsePayload, final: ParsePayload<any[]>, ind
 //////////////////////////////////////////
 //////////////////////////////////////////
 
-export type $ZodRecordKey = $ZodType<string | number | symbol, string | number | symbol>; // $HasValues | $HasPattern;
+export type $ZodRecordKey = $ZodType<string | number | symbol, any>; // $HasValues | $HasPattern;
 export interface $ZodRecordDef<Key extends $ZodRecordKey = $ZodRecordKey, Value extends SomeType = $ZodType>
   extends $ZodTypeDef {
   type: "record";
