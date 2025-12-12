@@ -622,9 +622,9 @@ const atext = "(?:(?!\\.{2,})[a-z0-9!#$%&'*+\\-/=?^_`{|}~.])";
 const dotAtomText = (maxLength: "64" | "255") => `(?!\\.{1})${atext}{1,${maxLength}}(?<!\\.{1})`;
 const qtext = "[\\x21\\x23-\\x5b\\x5d-\\x7e]{1,62}";
 const quotedString = `"${qtext}"`;
-const local = `(?:${dotAtomText("64")}|${quotedString})`;
-const domain = `(?:${dotAtomText("255")})`;
-const emailRegex = new RegExp(`^${local}@${domain}$`, "i");
+const localPart = `(?:${dotAtomText("64")}|${quotedString})`;
+const domainPart = `(?:${dotAtomText("255")})`;
+const emailRegex = new RegExp(`^${localPart}@${domainPart}$`, "i");
 
 // from https://thekevinscott.com/emojis-in-javascript/#writing-a-regular-expression
 const _emojiRegex = `^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$`;
