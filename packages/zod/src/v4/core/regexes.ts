@@ -33,8 +33,13 @@ export const uuid6: RegExp = /*@__PURE__*/ uuid(6);
 export const uuid7: RegExp = /*@__PURE__*/ uuid(7);
 
 /** Practical email validation */
-export const email: RegExp =
-  /^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/;
+const atext = "(?:(?!\\.{2,})[a-z0-9!#$%&'*+\\-/=?^_`{|}~.])";
+const dotAtomText = (maxLength: "64" | "255") => `(?!\\.{1})${atext}{1,${maxLength}}(?<!\\.{1})`;
+const qtext = "[\\x21\\x23-\\x5b\\x5d-\\x7e]{1,62}";
+const quotedString = `"${qtext}"`;
+const localPart = `(?:${dotAtomText("64")}|${quotedString})`;
+const domainPart = `(?:${dotAtomText("255")})`;
+export const email: RegExp = new RegExp(`^${localPart}@${domainPart}$`, "i");
 
 /** Equivalent to the HTML5 input[type=email] validation implemented by browsers. Source: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/email */
 export const html5Email: RegExp =
