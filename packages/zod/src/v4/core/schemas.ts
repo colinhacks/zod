@@ -148,7 +148,7 @@ export interface _$ZodTypeInternals {
   /** @internal The set of issues this schema might throw during type checking. */
   isst: errors.$ZodIssueBase;
 
-  /** @internal  */
+  /** @internal Subject to change, not a public API. */
   processJSONSchema?:
     | ((ctx: ToJSONSchemaContext, json: JSONSchema.BaseSchema, params: ProcessParams) => void)
     | undefined;
@@ -253,16 +253,6 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
       return payload;
     };
 
-    // const handleChecksResult = (
-    //   checkResult: ParsePayload,
-    //   originalResult: ParsePayload,
-    //   ctx: ParseContextInternal
-    // ): util.MaybeAsync<ParsePayload> => {
-    //   // if the checks mutated the value && there are no issues, re-parse the result
-    //   if (checkResult.value !== originalResult.value && !checkResult.issues.length)
-    //     return inst._zod.parse(checkResult, ctx);
-    //   return originalResult;
-    // };
     const handleCanaryResult = (canary: ParsePayload, payload: ParsePayload, ctx: ParseContextInternal) => {
       // abort if the canary is aborted
       if (util.aborted(canary)) {

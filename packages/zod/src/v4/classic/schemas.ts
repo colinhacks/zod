@@ -34,7 +34,7 @@ export interface ZodType<
 
   "~standard": ZodStandardSchemaWithJSON<this>;
   /** Converts this schema to a JSON Schema representation. */
-  toJSONSchema(params?: processors.ToJSONSchemaParams): core.ZodStandardJSONSchemaPayload<this>;
+  toJSONSchema(params?: core.ToJSONSchemaParams): core.ZodStandardJSONSchemaPayload<this>;
 
   // base methods
   check(...checks: (core.CheckFn<core.output<this>> | core.$ZodCheck<core.output<this>>)[]): this;

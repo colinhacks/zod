@@ -1,9 +1,8 @@
 import { describe, expect, test } from "vitest";
 import * as z from "zod/v4";
-import type * as processors from "../../core/json-schema-processors.js";
 
 // Utility functions
-function expectMethodMatch(schema: z.ZodType, params?: processors.ToJSONSchemaParams): void {
+function expectMethodMatch(schema: z.ZodType, params?: z.core.ToJSONSchemaParams): void {
   const staticResult = z.toJSONSchema(schema, params);
   const methodResult = schema.toJSONSchema(params);
   expect(methodResult).toEqual(staticResult);

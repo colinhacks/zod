@@ -3,7 +3,6 @@ import type * as JSONSchema from "./json-schema.js";
 import { type $ZodRegistry, globalRegistry } from "./registries.js";
 import type * as schemas from "./schemas.js";
 import type { StandardJSONSchemaV1, StandardSchemaWithJSONProps } from "./standard-schema.js";
-import type { ToJSONSchemaParams } from "./to-json-schema.js";
 
 export type Processor<T extends schemas.$ZodType = schemas.$ZodType> = (
   schema: T,
@@ -12,7 +11,7 @@ export type Processor<T extends schemas.$ZodType = schemas.$ZodType> = (
   params: ProcessParams
 ) => void;
 
-interface JSONSchemaGeneratorParams {
+export interface JSONSchemaGeneratorParams {
   processors: Record<string, Processor>;
   /** A registry used to look up metadata for each schema. Any schema with an `id` property will be extracted as a $def.
    *  @default globalRegistry */
@@ -48,12 +47,24 @@ interface JSONSchemaGeneratorParams {
     | undefined;
 }
 
+/**
+ * Parameters for the toJSONSchema function.
+ */
+export type ToJSONSchemaParams = Omit<JSONSchemaGeneratorParams, "processors" | "external">;
+
+/**
+ * Parameters for the toJSONSchema function when passing a registry.
+ */
+export interface RegistryToJSONSchemaParams extends ToJSONSchemaParams {
+  uri?: (id: string) => string;
+}
+
 export interface ProcessParams {
   schemaPath: schemas.$ZodType[];
   path: (string | number)[];
 }
 
-interface Seen {
+export interface Seen {
   /** JSON Schema result for this Zod schema */
   schema: JSONSchema.BaseSchema;
   /** A cached version of the schema that doesn't get overwritten during ref resolution */
@@ -75,7 +86,8 @@ export interface ToJSONSchemaContext {
   target: "draft-04" | "draft-07" | "draft-2020-12" | "openapi-3.0" | ({} & string);
   unrepresentable: "throw" | "any";
   override: (ctx: {
-    zodSchema: schemas.$ZodTypes;
+    // must be schemas.$ZodType to prevent recursive type resolution error
+    zodSchema: schemas.$ZodType;
     jsonSchema: JSONSchema.BaseSchema;
     path: (string | number)[];
   }) => void;
@@ -540,119 +552,3 @@ export const createStandardJSONSchemaMethod =
     extractDefs(ctx, schema);
     return finalize(ctx, schema);
   };
-
-// Re-export from json-schema-processors
-export {
-  toJSONSchema,
-  allProcessors,
-  type ToJSONSchemaParams,
-  type RegistryToJSONSchemaParams,
-} from "./json-schema-processors.js";
-export * as processors from "./json-schema-processors.js";
-
-// ==================== LEGACY JSONSchemaGenerator CLASS ====================
-
-/**
- * Parameters for the emit method of JSONSchemaGenerator.
- * @deprecated Use toJSONSchema function instead
- */
-export interface EmitParams {
-  /** How to handle cycles.
-   * - `"ref"` — Default. Cycles will be broken using $defs
-   * - `"throw"` — Cycles will throw an error if encountered */
-  cycles?: "ref" | "throw";
-  /* How to handle reused schemas.
-   * - `"inline"` — Default. Reused schemas will be inlined
-   * - `"ref"` — Reused schemas will be extracted as $defs */
-  reused?: "ref" | "inline";
-
-  external?:
-    | {
-        registry: $ZodRegistry<{ id?: string | undefined }>;
-        uri?: ((id: string) => string) | undefined;
-        defs: Record<string, JSONSchema.BaseSchema>;
-      }
-    | undefined;
-}
-
-/**
- * Legacy class-based interface for JSON Schema generation.
- * This class wraps the new functional implementation to provide backward compatibility.
- *
- * @deprecated Use the `toJSONSchema` function instead for new code.
- *
- * @example
- * ```typescript
- * // Legacy usage (still supported)
- * const gen = new JSONSchemaGenerator({ target: "draft-07" });
- * gen.process(schema);
- * const result = gen.emit(schema);
- *
- * // Preferred modern usage
- * const result = toJSONSchema(schema, { target: "draft-07" });
- * ```
- */
-export class JSONSchemaGenerator {
-  private ctx: ToJSONSchemaContext;
-
-  /** @deprecated Access via ctx instead */
-  get metadataRegistry() {
-    return this.ctx.metadataRegistry;
-  }
-  /** @deprecated Access via ctx instead */
-  get target() {
-    return this.ctx.target;
-  }
-  /** @deprecated Access via ctx instead */
-  get unrepresentable() {
-    return this.ctx.unrepresentable;
-  }
-  /** @deprecated Access via ctx instead */
-  get override() {
-    return this.ctx.override;
-  }
-  /** @deprecated Access via ctx instead */
-  get io() {
-    return this.ctx.io;
-  }
-  /** @deprecated Access via ctx instead */
-  get counter() {
-    return this.ctx.counter;
-  }
-  set counter(value: number) {
-    this.ctx.counter = value;
-  }
-  /** @deprecated Access via ctx instead */
-  get seen() {
-    return this.ctx.seen;
-  }
-
-  constructor(params?: Omit<JSONSchemaGeneratorParams, "processors">) {
-    this.ctx = initializeContext({ ...params, processors: allProcessors });
-  }
-
-  /**
-   * Process a schema to prepare it for JSON Schema generation.
-   * This must be called before emit().
-   */
-  process(schema: schemas.$ZodType, _params: ProcessParams = { path: [], schemaPath: [] }): JSONSchema.BaseSchema {
-    return process(schema, this.ctx, _params);
-  }
-
-  /**
-   * Emit the final JSON Schema after processing.
-   * Must call process() first.
-   */
-  emit(schema: schemas.$ZodType, _params?: EmitParams): JSONSchema.BaseSchema {
-    // Apply emit params to the context
-    if (_params?.cycles) this.ctx.cycles = _params.cycles;
-    if (_params?.reused) this.ctx.reused = _params.reused;
-    if (_params?.external) this.ctx.external = _params.external;
-
-    extractDefs(this.ctx, schema);
-    return finalize(this.ctx, schema);
-  }
-}
-
-// Import allProcessors for the legacy class
-import { allProcessors } from "./json-schema-processors.js";

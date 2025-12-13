@@ -4,6 +4,8 @@ import type { $ZodRegistry } from "./registries.js";
 import type * as schemas from "./schemas.js";
 import {
   type Processor,
+  type RegistryToJSONSchemaParams,
+  type ToJSONSchemaParams,
   type ZodStandardJSONSchemaPayload,
   extractDefs,
   finalize,
@@ -568,44 +570,6 @@ export const allProcessors: Record<string, Processor<any>> = {
 };
 
 // ==================== TOP-LEVEL toJSONSchema ====================
-
-export interface ToJSONSchemaParams {
-  /** A registry used to look up metadata for each schema. Any schema with an `id` property will be extracted as a $def.
-   *  @default globalRegistry */
-  metadata?: $ZodRegistry<Record<string, any>>;
-  /** The JSON Schema version to target.
-   * - `"draft-2020-12"` — Default. JSON Schema Draft 2020-12
-   * - `"draft-07"` — JSON Schema Draft 7
-   * - `"draft-04"` — JSON Schema Draft 4
-   * - `"openapi-3.0"` — OpenAPI 3.0 Schema Object */
-  target?: "draft-04" | "draft-07" | "draft-2020-12" | "openapi-3.0" | ({} & string);
-  /** How to handle unrepresentable types.
-   * - `"throw"` — Default. Unrepresentable types throw an error
-   * - `"any"` — Unrepresentable types become `{}` */
-  unrepresentable?: "throw" | "any";
-  /** Arbitrary custom logic that can be used to modify the generated JSON Schema. */
-  override?: (ctx: {
-    zodSchema: schemas.$ZodTypes;
-    jsonSchema: JSONSchema.BaseSchema;
-    path: (string | number)[];
-  }) => void;
-  /** Whether to extract the `"input"` or `"output"` type. Relevant to transforms, defaults, coerced primitives, etc.
-   * - `"output"` — Default. Convert the output schema.
-   * - `"input"` — Convert the input schema. */
-  io?: "input" | "output";
-  /** How to handle cycles.
-   * - `"ref"` — Default. Cycles will be broken using $defs
-   * - `"throw"` — Cycles will throw an error if encountered */
-  cycles?: "ref" | "throw";
-  /* How to handle reused schemas.
-   * - `"inline"` — Default. Reused schemas will be inlined
-   * - `"ref"` — Reused schemas will be extracted as $defs */
-  reused?: "ref" | "inline";
-}
-
-export interface RegistryToJSONSchemaParams extends ToJSONSchemaParams {
-  uri?: (id: string) => string;
-}
 
 export function toJSONSchema<T extends schemas.$ZodType>(
   schema: T,
