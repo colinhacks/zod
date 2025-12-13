@@ -23,10 +23,8 @@ export type EmitParams = Pick<JSONSchemaGeneratorParams, "cycles" | "reused" | "
  */
 type JSONSchemaGeneratorConstructorParams = Pick<
   JSONSchemaGeneratorParams,
-  "metadata" | "unrepresentable" | "override" | "io"
-> & {
-  target?: "draft-4" | "draft-7" | "draft-2020-12" | "openapi-3.0";
-};
+  "metadata" | "target" | "unrepresentable" | "override" | "io"
+>;
 
 /**
  * Legacy class-based interface for JSON Schema generation.
@@ -47,7 +45,6 @@ type JSONSchemaGeneratorConstructorParams = Pick<
  */
 export class JSONSchemaGenerator {
   private ctx: ToJSONSchemaContext;
-  private _target: "draft-4" | "draft-7" | "draft-2020-12" | "openapi-3.0";
 
   /** @deprecated Access via ctx instead */
   get metadataRegistry() {
@@ -55,7 +52,7 @@ export class JSONSchemaGenerator {
   }
   /** @deprecated Access via ctx instead */
   get target() {
-    return this._target;
+    return this.ctx.target;
   }
   /** @deprecated Access via ctx instead */
   get unrepresentable() {
@@ -82,11 +79,8 @@ export class JSONSchemaGenerator {
   }
 
   constructor(params?: JSONSchemaGeneratorConstructorParams) {
-    // Store original target before normalization
-    this._target = params?.target ?? "draft-2020-12";
-
     // Normalize target for internal context
-    let normalizedTarget: ToJSONSchemaContext["target"] = this._target;
+    let normalizedTarget: ToJSONSchemaContext["target"] = params?.target ?? "draft-2020-12";
     if (normalizedTarget === "draft-4") normalizedTarget = "draft-04";
     if (normalizedTarget === "draft-7") normalizedTarget = "draft-07";
 

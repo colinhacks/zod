@@ -192,7 +192,7 @@ export const literalProcessor: Processor<schemas.$ZodLiteral> = (schema, ctx, js
   } else {
     if (vals.every((v) => typeof v === "number")) json.type = "number";
     if (vals.every((v) => typeof v === "string")) json.type = "string";
-    if (vals.every((v) => typeof v === "boolean")) json.type = "string";
+    if (vals.every((v) => typeof v === "boolean")) json.type = "boolean";
     if (vals.every((v) => v === null)) json.type = "null";
     json.enum = vals;
   }
