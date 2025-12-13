@@ -1,6 +1,6 @@
 import { Validator } from "@seriousme/openapi-schema-validator";
 import { describe, expect, test } from "vitest";
-import * as z from "zod/v4";
+import * as z from "zod";
 // import * as zCore from "zod/v4/core";
 
 const openAPI30Validator = new Validator();
@@ -623,6 +623,42 @@ describe("toJSONSchema", () => {
         "exclusiveMinimum": true,
         "maximum": 10,
         "minimum": 5,
+        "type": "number",
+      }
+    `);
+  });
+
+  test("target normalization draft-04 and draft-07", () => {
+    // Test that both old (draft-4, draft-7) and new (draft-04, draft-07) target formats work
+    // Test draft-04 / draft-4
+    expect(z.toJSONSchema(z.number().gt(5), { target: "draft-04" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "exclusiveMinimum": true,
+        "minimum": 5,
+        "type": "number",
+      }
+    `);
+    expect(z.toJSONSchema(z.number().gt(5), { target: "draft-4" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "exclusiveMinimum": true,
+        "minimum": 5,
+        "type": "number",
+      }
+    `);
+    // Test draft-07 / draft-7
+    expect(z.toJSONSchema(z.number().gt(5), { target: "draft-07" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "exclusiveMinimum": 5,
+        "type": "number",
+      }
+    `);
+    expect(z.toJSONSchema(z.number().gt(5), { target: "draft-7" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "exclusiveMinimum": 5,
         "type": "number",
       }
     `);
@@ -1577,7 +1613,7 @@ describe("toJSONSchema", () => {
 });
 
 test("override", () => {
-  const schema = z.z.toJSONSchema(z.string(), {
+  const schema = z.toJSONSchema(z.string(), {
     override: (ctx) => {
       ctx.zodSchema;
       ctx.jsonSchema;
@@ -1603,7 +1639,7 @@ test("override: do not run on references", () => {
     .pipe(z.date())
     .meta({ c: true })
     .brand("dateIn");
-  z.z.toJSONSchema(schema, {
+  z.toJSONSchema(schema, {
     unrepresentable: "any",
     io: "input",
     override(_) {
@@ -1616,7 +1652,7 @@ test("override: do not run on references", () => {
 
 test("override with refs", () => {
   const a = z.string().optional();
-  const result = z.z.toJSONSchema(a, {
+  const result = z.toJSONSchema(a, {
     override(ctx) {
       if (ctx.zodSchema._zod.def.type === "string") {
         ctx.jsonSchema.type = "STRING" as "string";
@@ -1635,7 +1671,7 @@ test("override with refs", () => {
 test("override execution order", () => {
   const schema = z.union([z.string(), z.number()]);
   let unionSchema!: any;
-  z.z.toJSONSchema(schema, {
+  z.toJSONSchema(schema, {
     override(ctx) {
       if (ctx.zodSchema._zod.def.type === "union") {
         unionSchema = ctx.jsonSchema;
@@ -1693,7 +1729,7 @@ test("pipe", () => {
     .pipe(z.number());
   // ZodPipe
 
-  const a = z.z.toJSONSchema(mySchema);
+  const a = z.toJSONSchema(mySchema);
   expect(a).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1702,7 +1738,7 @@ test("pipe", () => {
   `);
   // => { type: "number" }
 
-  const b = z.z.toJSONSchema(mySchema, { io: "input" });
+  const b = z.toJSONSchema(mySchema, { io: "input" });
   expect(b).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1727,7 +1763,7 @@ test("passthrough schemas", () => {
     e: z.pipe(Internal, Internal),
   });
 
-  const result = z.z.toJSONSchema(External, {
+  const result = z.toJSONSchema(External, {
     reused: "ref",
   });
   expect(result).toMatchInlineSnapshot(`
@@ -1782,7 +1818,7 @@ test("passthrough schemas", () => {
 
 test("extract schemas with id", () => {
   const name = z.string().meta({ id: "name" });
-  const result = z.z.toJSONSchema(
+  const result = z.toJSONSchema(
     z.object({
       first_name: name,
       last_name: name.nullable(),
@@ -1836,7 +1872,7 @@ test("extract schemas with id", () => {
 });
 
 test("unrepresentable literal values are ignored", () => {
-  const a = z.z.toJSONSchema(z.literal(["hello", null, 5, BigInt(1324), undefined]), { unrepresentable: "any" });
+  const a = z.toJSONSchema(z.literal(["hello", null, 5, BigInt(1324), undefined]), { unrepresentable: "any" });
   expect(a).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1849,7 +1885,7 @@ test("unrepresentable literal values are ignored", () => {
     }
   `);
 
-  const b = z.z.toJSONSchema(z.literal([undefined, null, 5, BigInt(1324)]), {
+  const b = z.toJSONSchema(z.literal([undefined, null, 5, BigInt(1324)]), {
     unrepresentable: "any",
   });
   expect(b).toMatchInlineSnapshot(`
@@ -1863,7 +1899,7 @@ test("unrepresentable literal values are ignored", () => {
     }
   `);
 
-  const c = z.z.toJSONSchema(z.literal([undefined]), {
+  const c = z.toJSONSchema(z.literal([undefined]), {
     unrepresentable: "any",
   });
   expect(c).toMatchInlineSnapshot(`
@@ -1876,7 +1912,7 @@ test("unrepresentable literal values are ignored", () => {
 test("describe with id", () => {
   const jobId = z.string().meta({ id: "jobId" });
 
-  const a = z.z.toJSONSchema(
+  const a = z.toJSONSchema(
     z.object({
       current: jobId.describe("Current job"),
       previous: jobId.describe("Previous job"),
@@ -1914,7 +1950,7 @@ test("describe with id", () => {
 test("overwrite id", () => {
   const jobId = z.string().meta({ id: "aaa" });
 
-  const a = z.z.toJSONSchema(
+  const a = z.toJSONSchema(
     z.object({
       current: jobId,
       previous: jobId.meta({ id: "bbb" }),
@@ -1950,7 +1986,7 @@ test("overwrite id", () => {
     }
   `);
 
-  const b = z.z.toJSONSchema(
+  const b = z.toJSONSchema(
     z.object({
       current: jobId,
       previous: jobId.meta({ id: "ccc" }),
@@ -1993,7 +2029,7 @@ test("overwrite id", () => {
 test("overwrite descriptions", () => {
   const field = z.string().describe("a").describe("b").describe("c");
 
-  const a = z.z.toJSONSchema(
+  const a = z.toJSONSchema(
     z.object({
       d: field.describe("d"),
       e: field.describe("e"),
@@ -2021,7 +2057,7 @@ test("overwrite descriptions", () => {
     }
   `);
 
-  const b = z.z.toJSONSchema(
+  const b = z.toJSONSchema(
     z.object({
       d: field.describe("d"),
       e: field.describe("e"),
@@ -2084,7 +2120,7 @@ test("top-level readonly", () => {
   // z.globalRegistry.add(B, { id: "B" });
   // .meta({ id: "B" });
 
-  const result = z.z.toJSONSchema(A);
+  const result = z.toJSONSchema(A);
   expect(result).toMatchInlineSnapshot(`
     {
       "$defs": {
@@ -2148,7 +2184,7 @@ test("basic registry", () => {
   myRegistry.add(User, { id: "User" });
   myRegistry.add(Post, { id: "Post" });
 
-  const result = z.z.toJSONSchema(myRegistry, {
+  const result = z.toJSONSchema(myRegistry, {
     uri: (id) => `https://example.com/${id}.json`,
   });
   expect(result).toMatchInlineSnapshot(`
@@ -2204,7 +2240,7 @@ test("basic registry", () => {
 
 test("_ref", () => {
   // const a = z.promise(z.string().describe("a"));
-  const a = z.z.toJSONSchema(z.promise(z.string().describe("a")));
+  const a = z.toJSONSchema(z.promise(z.string().describe("a")));
   expect(a).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2213,7 +2249,7 @@ test("_ref", () => {
     }
   `);
 
-  const b = z.z.toJSONSchema(z.lazy(() => z.string().describe("a")));
+  const b = z.toJSONSchema(z.lazy(() => z.string().describe("a")));
   expect(b).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2222,7 +2258,7 @@ test("_ref", () => {
     }
   `);
 
-  const c = z.z.toJSONSchema(z.optional(z.string().describe("a")));
+  const c = z.toJSONSchema(z.optional(z.string().describe("a")));
   expect(c).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2441,7 +2477,7 @@ test("examples on pipe", () => {
     // .pipe(z.transform(Number).meta({ examples: [4] }))
     .meta({ examples: [4] });
 
-  const i = z.z.toJSONSchema(schema, { io: "input", unrepresentable: "any" });
+  const i = z.toJSONSchema(schema, { io: "input", unrepresentable: "any" });
   expect(i).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2451,7 +2487,7 @@ test("examples on pipe", () => {
       "type": "string",
     }
   `);
-  const o = z.z.toJSONSchema(schema, { io: "output", unrepresentable: "any" });
+  const o = z.toJSONSchema(schema, { io: "output", unrepresentable: "any" });
   expect(o).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2463,21 +2499,21 @@ test("examples on pipe", () => {
 });
 
 // test("number checks", () => {
-//   expect(z.z.toJSONSchema(z.number().int())).toMatchInlineSnapshot(`
+//   expect(z.toJSONSchema(z.number().int())).toMatchInlineSnapshot(`
 //     {
 //       "maximum": 9007199254740991,
 //       "minimum": -9007199254740991,
 //       "type": "integer",
 //     }
 //   `);
-//   expect(z.z.toJSONSchema(z.int())).toMatchInlineSnapshot(`
+//   expect(z.toJSONSchema(z.int())).toMatchInlineSnapshot(`
 //     {
 //       "maximum": 9007199254740991,
 //       "minimum": -9007199254740991,
 //       "type": "integer",
 //     }
 //   `);
-//   expect(z.z.toJSONSchema(z.int().positive())).toMatchInlineSnapshot(`
+//   expect(z.toJSONSchema(z.int().positive())).toMatchInlineSnapshot(`
 //     {
 //       "exclusiveMinimum": 0,
 //       "maximum": 9007199254740991,
@@ -2485,14 +2521,14 @@ test("examples on pipe", () => {
 //       "type": "integer",
 //     }
 //   `);
-//   expect(z.z.toJSONSchema(z.int().nonnegative())).toMatchInlineSnapshot(`
+//   expect(z.toJSONSchema(z.int().nonnegative())).toMatchInlineSnapshot(`
 //     {
 //       "maximum": 9007199254740991,
 //       "minimum": 0,
 //       "type": "integer",
 //     }
 //   `);
-//   expect(z.z.toJSONSchema(z.int().gt(0))).toMatchInlineSnapshot(`
+//   expect(z.toJSONSchema(z.int().gt(0))).toMatchInlineSnapshot(`
 //     {
 //       "exclusiveMinimum": 0,
 //       "maximum": 9007199254740991,
@@ -2500,7 +2536,7 @@ test("examples on pipe", () => {
 //       "type": "integer",
 //     }
 //   `);
-//   expect(z.z.toJSONSchema(z.int().gte(0))).toMatchInlineSnapshot(`
+//   expect(z.toJSONSchema(z.int().gte(0))).toMatchInlineSnapshot(`
 //     {
 //       "maximum": 9007199254740991,
 //       "minimum": 0,

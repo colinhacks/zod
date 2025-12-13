@@ -3,9 +3,11 @@ import * as checks from "./checks.js";
 import * as core from "./core.js";
 import { Doc } from "./doc.js";
 import type * as errors from "./errors.js";
+import type * as JSONSchema from "./json-schema.js";
 import { parse, parseAsync, safeParse, safeParseAsync } from "./parse.js";
 import * as regexes from "./regexes.js";
 import type { StandardSchemaV1 } from "./standard-schema.js";
+import type { ProcessParams, ToJSONSchemaContext } from "./to-json-schema.js";
 import * as util from "./util.js";
 import { version } from "./versions.js";
 
@@ -146,6 +148,11 @@ export interface _$ZodTypeInternals {
   /** @internal The set of issues this schema might throw during type checking. */
   isst: errors.$ZodIssueBase;
 
+  /** @internal Subject to change, not a public API. */
+  processJSONSchema?:
+    | ((ctx: ToJSONSchemaContext, json: JSONSchema.BaseSchema, params: ProcessParams) => void)
+    | undefined;
+
   /** An optional method used to override `toJSONSchema` logic. */
   toJSONSchema?: () => unknown;
 
@@ -246,16 +253,6 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
       return payload;
     };
 
-    // const handleChecksResult = (
-    //   checkResult: ParsePayload,
-    //   originalResult: ParsePayload,
-    //   ctx: ParseContextInternal
-    // ): util.MaybeAsync<ParsePayload> => {
-    //   // if the checks mutated the value && there are no issues, re-parse the result
-    //   if (checkResult.value !== originalResult.value && !checkResult.issues.length)
-    //     return inst._zod.parse(checkResult, ctx);
-    //   return originalResult;
-    // };
     const handleCanaryResult = (canary: ParsePayload, payload: ParsePayload, ctx: ParseContextInternal) => {
       // abort if the canary is aborted
       if (util.aborted(canary)) {
@@ -1768,9 +1765,7 @@ export interface $ZodObject<
   /** @ts-ignore Cast variance */
   out Shape extends Readonly<$ZodShape> = Readonly<$ZodShape>,
   out Params extends $ZodObjectConfig = $ZodObjectConfig,
-> extends $ZodType<any, any, $ZodObjectInternals<Shape, Params>> {
-  "~standard": $ZodStandardSchema<this>;
-}
+> extends $ZodType<any, any, $ZodObjectInternals<Shape, Params>> {}
 
 function normalizeDef(def: $ZodObjectDef) {
   const keys = Object.keys(def.shape);
