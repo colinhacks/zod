@@ -2717,3 +2717,107 @@ test("cycle detection - mutual recursion", () => {
     Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.]
   `);
 });
+
+test("optional with default - JSON schema generation", () => {
+  // Test case for issue: optional().default() should properly generate JSON schema
+  // with both the optionality and default value represented correctly.
+  // Properties marked as optional with a default value should NOT be in the required array.
+
+  // Case 1: string field with optional().default()
+  // Expected: field should be optional (not in required array) with default value
+  const schema1 = z.object({
+    name: z.string().optional().default("John"),
+  });
+
+  expect(z.toJSONSchema(schema1)).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "default": "John",
+          "type": "string",
+        },
+      },
+      "type": "object",
+    }
+  `);
+
+  // Case 2: optional().default() on primitive type
+  const schema2 = z.string().optional().default("default value");
+  expect(z.toJSONSchema(schema2)).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "default": "default value",
+      "type": "string",
+    }
+  `);
+
+  // Case 3: number field with optional().default()
+  // Expected: field should be optional (not in required array) with default value
+  const schema3 = z.object({
+    age: z.number().optional().default(25),
+  });
+
+  expect(z.toJSONSchema(schema3)).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "age": {
+          "default": 25,
+          "type": "number",
+        },
+      },
+      "type": "object",
+    }
+  `);
+
+  // Case 4: default().optional() on primitive type (order matters)
+  const schema4 = z.string().default("default").optional();
+  expect(z.toJSONSchema(schema4)).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "default": "default",
+      "type": "string",
+    }
+  `);
+
+  // Case 5: object with mixed optional, default, and optional().default()
+  // Expected: only 'required' field should be in required array.
+  // Fields with .optional().default() should NOT be required.
+  // Fields with .default().optional() should NOT be required.
+  const schema5 = z.object({
+    required: z.string(),
+    optional_no_default: z.string().optional(),
+    optional_with_default: z.string().optional().default("fallback"),
+    default_with_optional: z.number().default(42).optional(),
+  });
+
+  expect(z.toJSONSchema(schema5)).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "default_with_optional": {
+          "default": 42,
+          "type": "number",
+        },
+        "optional_no_default": {
+          "type": "string",
+        },
+        "optional_with_default": {
+          "default": "fallback",
+          "type": "string",
+        },
+        "required": {
+          "type": "string",
+        },
+      },
+      "required": [
+        "required",
+      ],
+      "type": "object",
+    }
+  `);
+});

@@ -122,7 +122,12 @@ export class JSONSchemaGenerator {
     }
 
     // initialize
-    const result: Seen = { schema: {}, count: 1, cycle: undefined, path: _params.path };
+    const result: Seen = {
+      schema: {},
+      count: 1,
+      cycle: undefined,
+      path: _params.path,
+    };
     this.seen.set(schema, result);
 
     // custom method overrides default behavior
@@ -278,7 +283,10 @@ export class JSONSchemaGenerator {
             if (typeof maximum === "number") json.maxItems = maximum;
 
             json.type = "array";
-            json.items = this.process(def.element, { ...params, path: [...params.path, "items"] });
+            json.items = this.process(def.element, {
+              ...params,
+              path: [...params.path, "items"],
+            });
             break;
           }
           case "object": {
@@ -303,6 +311,14 @@ export class JSONSchemaGenerator {
                 if (this.io === "input") {
                   return v.optin === undefined;
                 } else {
+                  // For .optional().default() the outer optout is undefined but the
+                  // inner type (optional) has optout="optional", so check inner type
+                  if (v.def.type === "default" || v.def.type === "prefault") {
+                    const innerType = (v.def as any).innerType._zod;
+                    if (innerType.optout === "optional") {
+                      return false;
+                    }
+                  }
                   return v.optout === undefined;
                 }
               })
@@ -512,7 +528,10 @@ export class JSONSchemaGenerator {
                 Object.assign(json, file);
               } else {
                 json.anyOf = mime.map((m) => {
-                  const mFile: JSONSchema.StringSchema = { ...file, contentMediaType: m };
+                  const mFile: JSONSchema.StringSchema = {
+                    ...file,
+                    contentMediaType: m,
+                  };
                   return mFile;
                 });
               }
@@ -698,7 +717,10 @@ export class JSONSchemaGenerator {
         // otherwise, add to __shared
         const id: string = entry[1].defId ?? (entry[1].schema.id as string) ?? `schema${this.counter++}`;
         entry[1].defId = id; // set defId so it will be reused if needed
-        return { defId: id, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id}` };
+        return {
+          defId: id,
+          ref: `${uriGenerator("__shared")}#/${defsSegment}/${id}`,
+        };
       }
 
       if (entry[1] === root) {
