@@ -4475,6 +4475,12 @@ export { ZodEffects as ZodTransformer };
 //////////                       //////////
 ///////////////////////////////////////////
 ///////////////////////////////////////////
+
+// Helper type to conditionally add undefined based on exactOptionalPropertyTypes
+// When exactOptionalPropertyTypes is enabled, {} extends { x?: never } is true
+// When disabled, {} extends { x?: never } is false
+type AddUndefined<T> = {} extends { x?: never } ? T : T | undefined;
+
 export interface ZodOptionalDef<T extends ZodTypeAny = ZodTypeAny> extends ZodTypeDef {
   innerType: T;
   typeName: ZodFirstPartyTypeKind.ZodOptional;
@@ -4483,9 +4489,9 @@ export interface ZodOptionalDef<T extends ZodTypeAny = ZodTypeAny> extends ZodTy
 export type ZodOptionalType<T extends ZodTypeAny> = ZodOptional<T>;
 
 export class ZodOptional<T extends ZodTypeAny> extends ZodType<
-  T["_output"] | undefined,
+  AddUndefined<T["_output"]>,
   ZodOptionalDef<T>,
-  T["_input"] | undefined
+  AddUndefined<T["_input"]>
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const parsedType = this._getType(input);
