@@ -1,4 +1,5 @@
 export { default as ar } from "./ar.js";
+export { default as am } from "./am.js";
 export { default as az } from "./az.js";
 export { default as be } from "./be.js";
 export { default as bg } from "./bg.js";
