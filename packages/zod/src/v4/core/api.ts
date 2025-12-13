@@ -1,6 +1,8 @@
+import * as ajv from "./ajv.js";
 import * as checks from "./checks.js";
-import type * as core from "./core.js";
+import * as core from "./core.js";
 import type * as errors from "./errors.js";
+import type { JSONSchema } from "./json-schema.js";
 import * as registries from "./registries.js";
 import * as schemas from "./schemas.js";
 import * as util from "./util.js";
@@ -1663,4 +1665,87 @@ export function _stringFormat<Format extends string>(
 
   const inst = new Class(def);
   return inst as any;
+}
+
+/////////    JSON SCHEMA (AJV)   /////////
+
+export interface $ZodJSONSchemaDef extends schemas.$ZodCustomDef {
+  schema: JSONSchema;
+}
+
+export interface $ZodJSONSchemaInternals<T = unknown> extends schemas.$ZodCustomInternals<T> {
+  def: $ZodJSONSchemaDef;
+}
+
+export interface $ZodJSONSchema<T = unknown> extends schemas.$ZodCustom<T> {
+  _zod: $ZodJSONSchemaInternals<T>;
+  /** The JSON Schema definition used to create this schema. */
+  schema: JSONSchema;
+}
+
+export const $ZodJSONSchema: core.$constructor<$ZodJSONSchema> = /*@__PURE__*/ core.$constructor(
+  "$ZodJSONSchema",
+  (inst, def) => {
+    schemas.$ZodCustom.init(inst, def);
+
+    // Attach the schema to the instance
+    Object.defineProperty(inst, "schema", {
+      value: def.schema,
+      enumerable: true,
+      writable: false,
+      configurable: false,
+    });
+  },
+  { Parent: schemas.$ZodCustom }
+);
+
+export function _jsonSchema<T = unknown>(
+  Class: util.SchemaClass<schemas.$ZodCustom>,
+  schema: JSONSchema
+): $ZodJSONSchema<T> {
+  const ajvInstance = core.globalConfig.ajv;
+  if (!ajvInstance) {
+    throw new Error("AJV not configured. Call z.config({ ajv }) first.");
+  }
+
+  // Check cache for compiled validator
+  let validate = ajv.compiledSchemas.get(schema);
+  if (!validate) {
+    validate = ajvInstance.compile(schema);
+    ajv.compiledSchemas.set(schema, validate);
+  }
+
+  // Capture validate in closure for the check function
+  const capturedValidate = validate;
+
+  const def: $ZodJSONSchemaDef = {
+    type: "custom",
+    check: "custom",
+    schema,
+    fn: (data: unknown) => {
+      const valid = capturedValidate(data);
+      return valid;
+    },
+  };
+
+  // Create instance using the provided Class (so it has all methods)
+  const inst = new Class(def);
+
+  // Initialize with $ZodJSONSchema to attach the schema property
+  $ZodJSONSchema.init(inst as $ZodJSONSchema<T>, def);
+
+  // Override the check function to provide detailed error reporting
+  inst._zod.check = (payload) => {
+    const input = payload.value;
+    const valid = capturedValidate(input);
+
+    if (!valid && capturedValidate.errors) {
+      for (const err of capturedValidate.errors) {
+        const path = ajv.parseJsonPointer(err.instancePath);
+        payload.issues.push(ajv.mapAjvErrorToIssue(err, input, inst, path));
+      }
+    }
+  };
+
+  return inst as $ZodJSONSchema<T>;
 }

@@ -1740,3 +1740,28 @@ export function _function(params?: {
 }
 
 export { _function as function };
+
+// JSON Schema (AJV)
+
+/** A Zod schema created from a JSON Schema definition, validated using AJV. */
+export interface _ZodMiniAJVSchema<T = unknown>
+  extends ZodMiniCustom<T>,
+    Omit<core.$ZodJSONSchema<T>, "_zod" | "~standard"> {
+  _zod: core.$ZodJSONSchemaInternals<T>;
+}
+
+export const _ZodMiniAJVSchema: core.$constructor<_ZodMiniAJVSchema> = /*@__PURE__*/ core.$constructor(
+  "_ZodMiniAJVSchema",
+  (inst, def) => {
+    core.$ZodJSONSchema.init(inst, def);
+    ZodMiniCustom.init(inst, def);
+  }
+);
+
+/**
+ * Create a Zod schema from a JSON Schema definition.
+ * Requires AJV to be configured via `z.config({ ajv })`.
+ */
+export function jsonSchema<T = unknown>(schema: core.JSONSchema.JSONSchema): _ZodMiniAJVSchema<T> {
+  return core._jsonSchema(_ZodMiniAJVSchema as any, schema) as _ZodMiniAJVSchema<T>;
+}

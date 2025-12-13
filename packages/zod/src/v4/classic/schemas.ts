@@ -2307,3 +2307,45 @@ export function preprocess<A, U extends core.SomeType, B = unknown>(
 ): ZodPipe<ZodTransform<A, B>, U> {
   return pipe(transform(fn as any), schema as any) as any;
 }
+
+// JSON Schema (AJV)
+
+/** A Zod schema created from a JSON Schema definition, validated using AJV. */
+export interface _ZodAJVSchema<T = unknown> extends ZodCustom<T>, Omit<core.$ZodJSONSchema<T>, "_zod" | "~standard"> {
+  _zod: core.$ZodJSONSchemaInternals<T>;
+}
+
+export const _ZodAJVSchema: core.$constructor<_ZodAJVSchema> = /*@__PURE__*/ core.$constructor(
+  "_ZodAJVSchema",
+  (inst, def) => {
+    core.$ZodJSONSchema.init(inst, def);
+    ZodCustom.init(inst, def);
+  }
+);
+
+/**
+ * Create a Zod schema from a JSON Schema definition.
+ * Requires AJV to be configured via `z.config({ ajv })`.
+ *
+ * @example
+ * ```ts
+ * import Ajv from "ajv";
+ * import * as z from "zod/v4";
+ *
+ * z.config({ ajv: new Ajv() });
+ *
+ * const userSchema = z.jsonSchema({
+ *   type: "object",
+ *   properties: {
+ *     name: { type: "string" },
+ *     age: { type: "integer", minimum: 0 }
+ *   },
+ *   required: ["name", "age"]
+ * });
+ *
+ * userSchema.parse({ name: "Colin", age: 30 }); // OK
+ * ```
+ */
+export function jsonSchema<T = unknown>(schema: core.JSONSchema.JSONSchema): _ZodAJVSchema<T> {
+  return core._jsonSchema(_ZodAJVSchema as any, schema) as _ZodAJVSchema<T>;
+}
