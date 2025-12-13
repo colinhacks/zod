@@ -1,13 +1,26 @@
+import _Ajv from "ajv";
 import * as z from "zod/v4";
 
-declare const declare: any;
+const Ajv = typeof _Ajv === "function" ? _Ajv : (_Ajv as any).default;
 
-declare({ id: "my_thing", description: "hello there" }).type("string");
-declare({ description: "hello there" }).fn("string", ":", "number");
-// with({description: 'hello there'}).fn("string", ":", "number");
-// withMeta({description: 'hello there'}).fn("string", ":", "number");
+const ajv = new Ajv({ allErrors: true });
+z.config({ ajv });
 
-const a = z.string().meta({ id: "asdf" });
-const myRegistry = z.registry();
+const schema = z.jsonSchema({
+  type: "object",
+  properties: {
+    name: { type: "string" },
+    age: { type: "integer", minimum: 0 },
+  },
+  required: ["name", "age"],
+});
 
-z.toJSONSchema(a, { metadata: myRegistry });
+// Test cases
+const result = schema.safeParse({ name: "Colin" });
+console.log("Missing age:", result);
+
+const result2 = schema.safeParse({ name: "Colin", age: -5 });
+console.log("Negative age:", result2);
+
+const result3 = schema.safeParse({ name: "Colin", age: 30 });
+console.log("Valid:", result3);

@@ -111,6 +111,8 @@ export type { output as infer };
 
 //////////////////////////////   CONFIG   ///////////////////////////////////////
 
+import type * as ajv from "./ajv.js";
+
 export interface $ZodConfig {
   /** Custom error map. Overrides `config().localeError`. */
   customError?: errors.$ZodErrorMap | undefined;
@@ -118,6 +120,8 @@ export interface $ZodConfig {
   localeError?: errors.$ZodErrorMap | undefined;
   /** Disable JIT schema compilation. Useful in environments that disallow `eval`. */
   jitless?: boolean | undefined;
+  /** AJV instance for JSON Schema validation. */
+  ajv?: ajv.$AjvLike | undefined;
 }
 
 export const globalConfig: $ZodConfig = {};

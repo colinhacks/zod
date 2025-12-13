@@ -21,6 +21,8 @@
     "@types/benchmark": "^2.1.5",
     "@types/semver": "^7.7.0",
     "@web-std/file": "^3.0.3",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
     "arktype": "^2.1.19",
     "benchmark": "^2.1.4",
     "chalk": "^5.4.1",
