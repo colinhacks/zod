@@ -44,6 +44,10 @@ interface EmitParams {
    * - `"inline"` — Default. Reused schemas will be inlined
    * - `"ref"` — Reused schemas will be extracted as $defs */
   reused?: "ref" | "inline";
+  /** Whether to deduplicate schemas with identical JSON content.
+   * - `true` — Default. Identical schemas are extracted to $defs and referenced
+   * - `false` — Schemas are inlined even if they have identical content */
+  dedupeContent?: boolean;
 
   external?:
     | {
@@ -664,6 +668,7 @@ export class JSONSchemaGenerator {
     const params = {
       cycles: _params?.cycles ?? "ref",
       reused: _params?.reused ?? "inline",
+      dedupeContent: _params?.dedupeContent ?? true,
       // unrepresentable: _params?.unrepresentable ?? "throw",
       // uri: _params?.uri ?? ((id) => `${id}`),
       external: _params?.external ?? undefined,
@@ -749,6 +754,42 @@ export class JSONSchemaGenerator {
       }
     }
 
+    // content-based deduplication - group schemas by identical JSON content
+    // This creates a map of duplicate schemas that should reference the same $def
+    const contentDedupeMap = new Map<schemas.$ZodType, schemas.$ZodType>();
+    if (params.dedupeContent) {
+      const contentMap = new Map<string, schemas.$ZodType>();
+      for (const entry of this.seen.entries()) {
+        const seen = entry[1];
+        // Skip if already has $ref, is a wrapper type, or is a cycle
+        if (seen.schema.$ref || seen.ref || seen.cycle) continue;
+        // Skip empty schemas (any/unknown)
+        if (Object.keys(seen.schema).length === 0) continue;
+        // Skip complex schemas (objects, arrays with nested content) - only dedupe leaf types
+        if (seen.schema.type === "object" || seen.schema.type === "array") continue;
+        if (seen.schema.anyOf || seen.schema.oneOf || seen.schema.allOf) continue;
+
+        let hash: string;
+        try {
+          hash = JSON.stringify(seen.schema);
+        } catch {
+          // Skip if schema contains circular references
+          continue;
+        }
+        const existing = contentMap.get(hash);
+
+        if (existing) {
+          // Mark this schema to be deduplicated to the first occurrence
+          contentDedupeMap.set(entry[0], existing);
+          // Increment count of the first occurrence to trigger extraction
+          const existingSeen = this.seen.get(existing)!;
+          existingSeen.count++;
+        } else {
+          contentMap.set(hash, entry[0]);
+        }
+      }
+    }
+
     // extract schemas into $defs
     for (const entry of this.seen.entries()) {
       const seen = entry[1];
@@ -782,14 +823,30 @@ export class JSONSchemaGenerator {
         continue;
       }
 
-      // extract reused schemas
+      // extract reused schemas (either explicitly via reused:"ref" or via content deduplication)
       if (seen.count > 1) {
-        if (params.reused === "ref") {
+        if (params.reused === "ref" || params.dedupeContent) {
           extractToDef(entry);
           // biome-ignore lint:
           continue;
         }
       }
+    }
+
+    // convert content-deduplicated schemas to $refs pointing to the extracted $def
+    for (const [duplicate, original] of contentDedupeMap) {
+      const originalSeen = this.seen.get(original)!;
+      const duplicateSeen = this.seen.get(duplicate)!;
+
+      // Skip if the original wasn't extracted (shouldn't happen but be safe)
+      if (!originalSeen.schema.$ref) continue;
+
+      // Convert duplicate to just a $ref to the same target
+      const duplicateSchema = duplicateSeen.schema;
+      for (const key in duplicateSchema) {
+        delete duplicateSchema[key];
+      }
+      duplicateSchema.$ref = originalSeen.schema.$ref;
     }
 
     // flatten _refs
