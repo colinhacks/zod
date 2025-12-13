@@ -628,6 +628,42 @@ describe("toJSONSchema", () => {
     `);
   });
 
+  test("target normalization draft-04 and draft-07", () => {
+    // Test that both old (draft-4, draft-7) and new (draft-04, draft-07) target formats work
+    // Test draft-04 / draft-4
+    expect(z.toJSONSchema(z.number().gt(5), { target: "draft-04" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "exclusiveMinimum": true,
+        "minimum": 5,
+        "type": "number",
+      }
+    `);
+    expect(z.toJSONSchema(z.number().gt(5), { target: "draft-4" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "exclusiveMinimum": true,
+        "minimum": 5,
+        "type": "number",
+      }
+    `);
+    // Test draft-07 / draft-7
+    expect(z.toJSONSchema(z.number().gt(5), { target: "draft-07" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "exclusiveMinimum": 5,
+        "type": "number",
+      }
+    `);
+    expect(z.toJSONSchema(z.number().gt(5), { target: "draft-7" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "exclusiveMinimum": 5,
+        "type": "number",
+      }
+    `);
+  });
+
   test("nullable openapi-3.0", () => {
     const schema = z.string().nullable();
     const jsonSchema = z.toJSONSchema(schema, { target: "openapi-3.0" });

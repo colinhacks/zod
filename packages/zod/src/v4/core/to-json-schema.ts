@@ -32,7 +32,7 @@ export interface JSONSchemaGeneratorParams {
     jsonSchema: JSONSchema.BaseSchema;
     path: (string | number)[];
   }) => void;
-  /** Whether to extract the `"input"` or `"output"` type. Relevant to transforms, Error converting schema to JSON, defaults, coerced primitives, etc.
+  /** Whether to extract the `"input"` or `"output"` type. Relevant to transforms, defaults, coerced primitives, etc.
    * - `"output"` — Default. Convert the output schema.
    * - `"input"` — Convert the input schema. */
   io?: "input" | "output";

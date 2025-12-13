@@ -69,7 +69,7 @@ export const numberProcessor: Processor<schemas.$ZodNumber> = (schema, ctx, _jso
   }
   if (typeof minimum === "number") {
     json.minimum = minimum;
-    if (typeof exclusiveMinimum === "number" && ctx.target !== "draft-4") {
+    if (typeof exclusiveMinimum === "number" && ctx.target !== "draft-04") {
       if (exclusiveMinimum >= minimum) delete json.minimum;
       else delete json.exclusiveMinimum;
     }
@@ -85,7 +85,7 @@ export const numberProcessor: Processor<schemas.$ZodNumber> = (schema, ctx, _jso
   }
   if (typeof maximum === "number") {
     json.maximum = maximum;
-    if (typeof exclusiveMaximum === "number" && ctx.target !== "draft-4") {
+    if (typeof exclusiveMaximum === "number" && ctx.target !== "draft-04") {
       if (exclusiveMaximum <= maximum) delete json.maximum;
       else delete json.exclusiveMaximum;
     }
