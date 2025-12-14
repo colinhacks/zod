@@ -1856,11 +1856,11 @@ By default, `z.record()` errors on keys that don't match the key schema. Use `z.
 ```ts
 const schema = z.looseRecord(z.string().regex(/^S_/), z.string());
 
-// Keys matching pattern are validated
+// matching keys are validated
 schema.parse({ S_name: "John" }); // ✅
 schema.parse({ S_name: 123 }); // ❌ value must be string
 
-// Keys not matching pattern pass through unchanged
+// non-matching keys are passed through unchanged
 schema.parse({ S_name: "John", other: "value" }); 
 // => { S_name: "John", other: "value" }
 ```
@@ -1868,17 +1868,17 @@ schema.parse({ S_name: "John", other: "value" });
 Loose records are particularly useful when combined with intersections to model multiple pattern properties:
 
 ```ts
-const schema = z.intersection(
-  z.object({ name: z.string() }).passthrough(),
-  z.looseRecord(z.string().regex(/^S_/), z.string()),
-  z.looseRecord(z.string().regex(/^N_/), z.number())
-);
+const schema = z
+  .object({ name: z.string() })
+  .passthrough()
+  .and(z.looseRecord(z.string().regex(/^S_/), z.string()))
+  .and(z.looseRecord(z.string().regex(/^N_/), z.number()));
 
 schema.parse({ 
-  name: "John", 
-  S_foo: "bar",    // validated as string
-  N_count: 123,    // validated as number
-  other: "value"    // passes through unchanged
+  name: "John",
+  other: "value",    // passes through unchanged
+  S_foo: "bar",     // validated as string
+  N_count: 123,     // validated as number
 });
 ```
 

@@ -60,7 +60,6 @@ function resolveRef(ref: string, ctx: ConversionContext): JSONSchema.JSONSchema 
 
 function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext): ZodType {
   // Handle unsupported features
-  // Note: oneOf is handled same as anyOf in convertSchema
   if (schema.not !== undefined) {
     // Special case: { not: {} } represents never
     if (typeof schema.not === "object" && Object.keys(schema.not).length === 0) {
@@ -373,22 +372,11 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
           zodSchema = z.tuple(tupleItems as [ZodType, ...ZodType[]]);
         }
         // Apply minItems/maxItems constraints to tuples
-        if (typeof schema.minItems === "number" || typeof schema.maxItems === "number") {
-          zodSchema = (zodSchema as any).refine(
-            (val: unknown[]) => {
-              if (typeof schema.minItems === "number" && val.length < schema.minItems) return false;
-              if (typeof schema.maxItems === "number" && val.length > schema.maxItems) return false;
-              return true;
-            },
-            {
-              message:
-                typeof schema.minItems === "number" && typeof schema.maxItems === "number"
-                  ? `Array must have between ${schema.minItems} and ${schema.maxItems} items`
-                  : typeof schema.minItems === "number"
-                    ? `Array must have at least ${schema.minItems} items`
-                    : `Array must have at most ${schema.maxItems} items`,
-            }
-          );
+        if (typeof schema.minItems === "number") {
+          zodSchema = (zodSchema as any).check(z.minLength(schema.minItems));
+        }
+        if (typeof schema.maxItems === "number") {
+          zodSchema = (zodSchema as any).check(z.maxLength(schema.maxItems));
         }
       } else if (Array.isArray(items)) {
         // Tuple with items array (draft-7)
@@ -396,31 +384,18 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         const rest =
           schema.additionalItems && typeof schema.additionalItems === "object"
             ? convertSchema(schema.additionalItems as JSONSchema.JSONSchema, ctx)
-            : schema.additionalItems === false
-              ? z.never()
-              : undefined;
+            : undefined; // additionalItems: false means no rest, handled by default tuple behavior
         if (rest) {
           zodSchema = z.tuple(tupleItems as [ZodType, ...ZodType[]]).rest(rest);
         } else {
           zodSchema = z.tuple(tupleItems as [ZodType, ...ZodType[]]);
         }
         // Apply minItems/maxItems constraints to tuples
-        if (typeof schema.minItems === "number" || typeof schema.maxItems === "number") {
-          zodSchema = (zodSchema as any).refine(
-            (val: unknown[]) => {
-              if (typeof schema.minItems === "number" && val.length < schema.minItems) return false;
-              if (typeof schema.maxItems === "number" && val.length > schema.maxItems) return false;
-              return true;
-            },
-            {
-              message:
-                typeof schema.minItems === "number" && typeof schema.maxItems === "number"
-                  ? `Array must have between ${schema.minItems} and ${schema.maxItems} items`
-                  : typeof schema.minItems === "number"
-                    ? `Array must have at least ${schema.minItems} items`
-                    : `Array must have at most ${schema.maxItems} items`,
-            }
-          );
+        if (typeof schema.minItems === "number") {
+          zodSchema = (zodSchema as any).check(z.minLength(schema.minItems));
+        }
+        if (typeof schema.maxItems === "number") {
+          zodSchema = (zodSchema as any).check(z.maxLength(schema.maxItems));
         }
       } else if (items !== undefined) {
         // Regular array
@@ -449,7 +424,7 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
 
   // Apply metadata
   if (schema.description) {
-    zodSchema = (zodSchema as any).describe(schema.description);
+    zodSchema = zodSchema.describe(schema.description);
   }
   if (schema.default !== undefined) {
     zodSchema = (zodSchema as any).default(schema.default);
@@ -471,29 +446,29 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
   // Handle anyOf - wrap base schema with union
   if (schema.anyOf && Array.isArray(schema.anyOf)) {
     const options = schema.anyOf.map((s) => convertSchema(s, ctx));
-    if (hasExplicitType) {
-      options.unshift(baseSchema);
-    }
-    baseSchema = z.union(options as [ZodType, ZodType, ...ZodType[]]);
+    const anyOfUnion = z.union(options as [ZodType, ZodType, ...ZodType[]]);
+    baseSchema = hasExplicitType ? z.intersection(baseSchema, anyOfUnion) : anyOfUnion;
   }
 
   // Handle oneOf - exclusive union (exactly one must match)
   if (schema.oneOf && Array.isArray(schema.oneOf)) {
     const options = schema.oneOf.map((s) => convertSchema(s, ctx));
-    if (hasExplicitType) {
-      options.unshift(baseSchema);
-    }
-    baseSchema = z.union(options as [ZodType, ZodType, ...ZodType[]], { exclusive: true });
+    const oneOfUnion = z.union(options as [ZodType, ZodType, ...ZodType[]], { exclusive: true });
+    baseSchema = hasExplicitType ? z.intersection(baseSchema, oneOfUnion) : oneOfUnion;
   }
 
   // Handle allOf - wrap base schema with intersection
   if (schema.allOf && Array.isArray(schema.allOf)) {
-    let result = hasExplicitType ? baseSchema : convertSchema(schema.allOf[0]!, ctx);
-    const startIdx = hasExplicitType ? 0 : 1;
-    for (let i = startIdx; i < schema.allOf.length; i++) {
-      result = z.intersection(result, convertSchema(schema.allOf[i]!, ctx));
+    if (schema.allOf.length === 0) {
+      baseSchema = hasExplicitType ? baseSchema : z.any();
+    } else {
+      let result = hasExplicitType ? baseSchema : convertSchema(schema.allOf[0]!, ctx);
+      const startIdx = hasExplicitType ? 0 : 1;
+      for (let i = startIdx; i < schema.allOf.length; i++) {
+        result = z.intersection(result, convertSchema(schema.allOf[i]!, ctx));
+      }
+      baseSchema = result;
     }
-    baseSchema = result;
   }
 
   // Handle nullable (OpenAPI 3.0)

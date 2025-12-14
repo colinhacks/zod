@@ -179,13 +179,71 @@ test("allOf schema", () => {
   expect(result.age).toBe(30);
 });
 
-test("oneOf schema (treated like anyOf)", () => {
+test("allOf with empty array", () => {
+  // Empty allOf without explicit type returns any
+  const schema1 = fromJSONSchema({
+    allOf: [],
+  });
+  expect(schema1.parse("hello")).toBe("hello");
+  expect(schema1.parse(123)).toBe(123);
+  expect(schema1.parse({})).toEqual({});
+
+  // Empty allOf with explicit type returns base schema
+  const schema2 = fromJSONSchema({
+    type: "string",
+    allOf: [],
+  });
+  expect(schema2.parse("hello")).toBe("hello");
+  expect(() => schema2.parse(123)).toThrow();
+});
+
+test("oneOf schema (exclusive union)", () => {
   const schema = fromJSONSchema({
     oneOf: [{ type: "string" }, { type: "number" }],
   });
   expect(schema.parse("hello")).toBe("hello");
   expect(schema.parse(42)).toBe(42);
   expect(() => schema.parse(true)).toThrow();
+});
+
+test("type with anyOf creates intersection", () => {
+  // type: string AND (type:string,minLength:5 OR type:string,pattern:^a)
+  const schema = fromJSONSchema({
+    type: "string",
+    anyOf: [
+      { type: "string", minLength: 5 },
+      { type: "string", pattern: "^a" },
+    ],
+  });
+  // Should pass: string AND (minLength:5 OR pattern:^a) - matches minLength
+  expect(schema.parse("hello")).toBe("hello");
+  // Should pass: string AND (minLength:5 OR pattern:^a) - matches pattern
+  expect(schema.parse("abc")).toBe("abc");
+  // Should fail: string but neither minLength nor pattern match
+  expect(() => schema.parse("hi")).toThrow();
+  // Should fail: not a string
+  expect(() => schema.parse(123)).toThrow();
+});
+
+test("type with oneOf creates intersection", () => {
+  // type: string AND (exactly one of: type:string,minLength:5 OR type:string,pattern:^a)
+  const schema = fromJSONSchema({
+    type: "string",
+    oneOf: [
+      { type: "string", minLength: 5 },
+      { type: "string", pattern: "^a" },
+    ],
+  });
+  // Should pass: string AND minLength:5 (exactly one match - "hello" length 5 >= 5, doesn't start with 'a')
+  expect(schema.parse("hello")).toBe("hello");
+  // Should pass: string AND pattern:^a (exactly one match - "abc" starts with 'a', length 3 < 5)
+  expect(schema.parse("abc")).toBe("abc");
+  // Should fail: string but neither match
+  expect(() => schema.parse("hi")).toThrow();
+  // Should fail: not a string
+  expect(() => schema.parse(123)).toThrow();
+  // Should fail: matches both (length >= 5 AND starts with 'a') - exclusive union fails
+  expect(() => schema.parse("apple")).toThrow();
 });
 
 test("unevaluatedItems throws error", () => {
@@ -440,4 +498,40 @@ test("mixed enum types", () => {
   expect(schema.parse(42)).toBe(42);
   expect(schema.parse(true)).toBe(true);
   expect(schema.parse(null)).toBe(null);
+});
+
+test("nullable in OpenAPI 3.0", () => {
+  // General nullable case (not just enum: [null])
+  const stringSchema = fromJSONSchema(
+    {
+      type: "string",
+      nullable: true,
+    },
+    { defaultTarget: "openapi-3.0" }
+  );
+  expect(stringSchema.parse("hello")).toBe("hello");
+  expect(stringSchema.parse(null)).toBe(null);
+  expect(() => stringSchema.parse(123)).toThrow();
+
+  const numberSchema = fromJSONSchema(
+    {
+      type: "number",
+      nullable: true,
+    },
+    { defaultTarget: "openapi-3.0" }
+  );
+  expect(numberSchema.parse(42)).toBe(42);
+  expect(numberSchema.parse(null)).toBe(null);
+  expect(() => numberSchema.parse("string")).toThrow();
+
+  const objectSchema = fromJSONSchema(
+    {
+      type: "object",
+      properties: { name: { type: "string" } },
+      nullable: true,
+    },
+    { defaultTarget: "openapi-3.0" }
+  );
+  expect(objectSchema.parse({ name: "John" })).toEqual({ name: "John" });
+  expect(objectSchema.parse(null)).toBe(null);
 });
