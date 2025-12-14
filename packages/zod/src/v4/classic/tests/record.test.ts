@@ -486,3 +486,28 @@ test("partialRecord with z.literal([key, ...])", () => {
     }
   `);
 });
+
+test("record with number key", () => {
+  const numberKeyRecord = z.record(z.number(), z.string());
+  expect(numberKeyRecord.safeParse({}).success).toEqual(true);
+  expect(
+    numberKeyRecord.safeParse({
+      1234: "string",
+      5678: "string",
+    }).success
+  ).toEqual(true);
+
+  expect(
+    numberKeyRecord.safeParse({
+      1234: true,
+    }).success
+  ).toEqual(false);
+
+  expect(
+    numberKeyRecord.safeParse({
+      k1: "string",
+      k2: "string",
+      1234: "string",
+    }).success
+  ).toEqual(false);
+});
