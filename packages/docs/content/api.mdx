@@ -1849,6 +1849,39 @@ const Person = z.partialRecord(Keys, z.string());
 // { id?: string; name?: string; email?: string }
 ```
 
+### Loose records
+
+By default, `z.record()` errors on keys that don't match the key schema. Use `z.looseRecord()` to pass through non-matching keys unchanged. This is useful for modeling JSON Schema `patternProperties`, where only keys matching certain patterns are validated.
+
+```ts
+const schema = z.looseRecord(z.string().regex(/^S_/), z.string());
+
+// Keys matching pattern are validated
+schema.parse({ S_name: "John" }); // ✅
+schema.parse({ S_name: 123 }); // ❌ value must be string
+
+// Keys not matching pattern pass through unchanged
+schema.parse({ S_name: "John", other: "value" }); 
+// => { S_name: "John", other: "value" }
+```
+
+Loose records are particularly useful when combined with intersections to model multiple pattern properties:
+
+```ts
+const schema = z.intersection(
+  z.object({ name: z.string() }).passthrough(),
+  z.looseRecord(z.string().regex(/^S_/), z.string()),
+  z.looseRecord(z.string().regex(/^N_/), z.number())
+);
+
+schema.parse({ 
+  name: "John", 
+  S_foo: "bar",    // validated as string
+  N_count: 123,    // validated as number
+  other: "value"    // passes through unchanged
+});
+```
+
 <Accordions>
 <Accordion title="A note on numeric keys">
 

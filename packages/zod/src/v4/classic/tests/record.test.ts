@@ -486,3 +486,40 @@ test("partialRecord with z.literal([key, ...])", () => {
     }
   `);
 });
+
+test("looseRecord passes through non-matching keys", () => {
+  const schema = z.looseRecord(z.string().regex(/^S_/), z.string());
+
+  // Keys matching pattern are validated
+  expect(schema.parse({ S_name: "John" })).toEqual({ S_name: "John" });
+  expect(() => schema.parse({ S_name: 123 })).toThrow(); // wrong value type
+
+  // Keys not matching pattern pass through unchanged
+  expect(schema.parse({ S_name: "John", other: "value" })).toEqual({ S_name: "John", other: "value" });
+  expect(schema.parse({ S_name: "John", count: 123 })).toEqual({ S_name: "John", count: 123 });
+  expect(schema.parse({ other: "value" })).toEqual({ other: "value" });
+});
+
+test("intersection of loose records", () => {
+  const schema = z.intersection(
+    z.object({ name: z.string() }).passthrough(),
+    z.intersection(
+      z.looseRecord(z.string().regex(/^S_/), z.string()),
+      z.looseRecord(z.string().regex(/^N_/), z.number())
+    )
+  );
+
+  // Each pattern validates its matching keys
+  const result = schema.parse({ name: "John", S_foo: "bar", N_count: 123 });
+  expect(result.name).toBe("John");
+  expect(result.S_foo).toBe("bar");
+  expect(result.N_count).toBe(123);
+
+  // Keys not matching any pattern pass through
+  const result2 = schema.parse({ name: "John", S_foo: "bar", N_count: 123, other: "value" });
+  expect(result2.other).toBe("value");
+
+  // Validation errors still occur for matching keys
+  expect(() => schema.parse({ name: "John", S_foo: 123 })).toThrow(); // S_foo should be string
+  expect(() => schema.parse({ name: "John", N_count: "abc" })).toThrow(); // N_count should be number
+});

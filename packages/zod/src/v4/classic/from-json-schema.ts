@@ -239,11 +239,8 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         stringSchema = stringSchema.max(schema.maxLength);
       }
       if (schema.pattern) {
-        let pattern = schema.pattern;
-        // JSON Schema patterns should match the entire string
-        if (!pattern.startsWith("^")) pattern = "^" + pattern;
-        if (!pattern.endsWith("$")) pattern = pattern + "$";
-        stringSchema = stringSchema.regex(new RegExp(pattern));
+        // JSON Schema patterns are not implicitly anchored (match anywhere in string)
+        stringSchema = stringSchema.regex(new RegExp(schema.pattern));
       }
 
       zodSchema = stringSchema;
@@ -304,26 +301,39 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
 
       // Handle patternProperties
       if (schema.patternProperties) {
-        // patternProperties can be represented with z.record()
-        // If there are regular properties, we need to merge them
+        // patternProperties: keys matching pattern must satisfy corresponding schema
+        // Use loose records so non-matching keys pass through
         const patternProps = schema.patternProperties;
         const patternKeys = Object.keys(patternProps);
-        if (patternKeys.length > 0) {
-          // For now, take the first pattern property (could be enhanced)
-          const firstPattern = patternKeys[0]!;
-          const patternValue = convertSchema(patternProps[firstPattern] as JSONSchema.JSONSchema, ctx);
-          const keySchema = z.string().regex(new RegExp(firstPattern));
-          const recordSchema = z.record(keySchema, patternValue);
+        const looseRecords: ZodType[] = [];
 
-          // If there are regular properties, we need to intersect
-          if (Object.keys(shape).length > 0) {
-            const objectSchema = z.object(shape);
-            zodSchema = z.intersection(objectSchema, recordSchema);
-          } else {
-            zodSchema = recordSchema;
-          }
-          break;
+        for (const pattern of patternKeys) {
+          const patternValue = convertSchema(patternProps[pattern] as JSONSchema.JSONSchema, ctx);
+          const keySchema = z.string().regex(new RegExp(pattern));
+          looseRecords.push(z.looseRecord(keySchema, patternValue));
         }
+
+        // Build intersection: object schema + all pattern property records
+        const schemasToIntersect: ZodType[] = [];
+        if (Object.keys(shape).length > 0) {
+          // Use passthrough so patternProperties can validate additional keys
+          schemasToIntersect.push(z.object(shape).passthrough());
+        }
+        schemasToIntersect.push(...looseRecords);
+
+        if (schemasToIntersect.length === 0) {
+          zodSchema = z.object({}).passthrough();
+        } else if (schemasToIntersect.length === 1) {
+          zodSchema = schemasToIntersect[0]!;
+        } else {
+          // Chain intersections: (A & B) & C & D ...
+          let result = z.intersection(schemasToIntersect[0]!, schemasToIntersect[1]!);
+          for (let i = 2; i < schemasToIntersect.length; i++) {
+            result = z.intersection(result, schemasToIntersect[i]!);
+          }
+          zodSchema = result;
+        }
+        break;
       }
 
       // Handle additionalProperties
@@ -467,14 +477,13 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
     baseSchema = z.union(options as [ZodType, ZodType, ...ZodType[]]);
   }
 
-  // Handle oneOf - treat same as anyOf (both map to z.union)
-  // toJSONSchema outputs oneOf for discriminated unions
+  // Handle oneOf - exclusive union (exactly one must match)
   if (schema.oneOf && Array.isArray(schema.oneOf)) {
     const options = schema.oneOf.map((s) => convertSchema(s, ctx));
     if (hasExplicitType) {
       options.unshift(baseSchema);
     }
-    baseSchema = z.union(options as [ZodType, ZodType, ...ZodType[]]);
+    baseSchema = z.union(options as [ZodType, ZodType, ...ZodType[]], { exclusive: true });
   }
 
   // Handle allOf - wrap base schema with intersection

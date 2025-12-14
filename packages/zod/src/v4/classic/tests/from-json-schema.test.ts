@@ -21,6 +21,19 @@ test("string with constraints", () => {
   expect(() => schema.parse("Hello")).toThrow(); // pattern mismatch
 });
 
+test("pattern is not implicitly anchored", () => {
+  // JSON Schema patterns match anywhere in the string, not just the full string
+  const schema = fromJSONSchema({
+    type: "string",
+    pattern: "foo",
+  });
+  expect(schema.parse("foo")).toBe("foo");
+  expect(schema.parse("foobar")).toBe("foobar"); // matches at start
+  expect(schema.parse("barfoo")).toBe("barfoo"); // matches at end
+  expect(schema.parse("barfoobar")).toBe("barfoobar"); // matches in middle
+  expect(() => schema.parse("bar")).toThrow(); // no match
+});
+
 test("number schema", () => {
   const schema = fromJSONSchema({ type: "number" });
   expect(schema.parse(42)).toBe(42);
@@ -281,6 +294,38 @@ test("patternProperties with regular properties", () => {
   const result = schema.parse({ S_name: "John", S_extra: "value" }) as Record<string, string>;
   expect(result.S_name).toBe("John");
   expect(result.S_extra).toBe("value");
+});
+
+test("multiple patternProperties", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    patternProperties: {
+      "^S_": { type: "string" },
+      "^N_": { type: "number" },
+    },
+  });
+  const result = schema.parse({ S_name: "John", N_count: 123 }) as Record<string, string | number>;
+  expect(result.S_name).toBe("John");
+  expect(result.N_count).toBe(123);
+  // Keys not matching any pattern should pass through
+  const result2 = schema.parse({ S_name: "John", N_count: 123, other: "value" }) as Record<string, string | number>;
+  expect(result2.other).toBe("value");
+});
+
+test("multiple overlapping patternProperties", () => {
+  // If a key matches multiple patterns, value must satisfy all schemas
+  const schema = fromJSONSchema({
+    type: "object",
+    patternProperties: {
+      "^S_": { type: "string" },
+      "^S_N": { type: "string", minLength: 3 },
+    },
+  });
+  // S_name matches ^S_ but not ^S_N
+  expect(schema.parse({ S_name: "John" })).toEqual({ S_name: "John" });
+  // S_N matches both patterns - must satisfy both (string with minLength 3)
+  expect(schema.parse({ S_N: "abc" })).toEqual({ S_N: "abc" });
+  expect(() => schema.parse({ S_N: "ab" })).toThrow(); // too short for ^S_N pattern
 });
 
 test("default value", () => {

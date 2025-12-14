@@ -1488,6 +1488,20 @@ export function partialRecord<Key extends core.$ZodRecordKey, Value extends core
   }) as any;
 }
 
+export function looseRecord<Key extends core.$ZodRecordKey, Value extends core.SomeType>(
+  keyType: Key,
+  valueType: Value,
+  params?: string | core.$ZodRecordParams
+): ZodRecord<Key, Value> {
+  return new ZodRecord({
+    type: "record",
+    keyType,
+    valueType: valueType as any as core.$ZodType,
+    mode: "loose",
+    ...util.normalizeParams(params),
+  }) as any;
+}
+
 // ZodMap
 export interface ZodMap<Key extends core.SomeType = core.$ZodType, Value extends core.SomeType = core.$ZodType>
   extends _ZodType<core.$ZodMapInternals<Key, Value>>,
