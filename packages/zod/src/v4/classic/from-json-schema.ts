@@ -453,7 +453,7 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
   // Handle oneOf - exclusive union (exactly one must match)
   if (schema.oneOf && Array.isArray(schema.oneOf)) {
     const options = schema.oneOf.map((s) => convertSchema(s, ctx));
-    const oneOfUnion = z.union(options as [ZodType, ZodType, ...ZodType[]], { exclusive: true });
+    const oneOfUnion = z.xor(options as [ZodType, ZodType, ...ZodType[]]);
     baseSchema = hasExplicitType ? z.intersection(baseSchema, oneOfUnion) : oneOfUnion;
   }
 

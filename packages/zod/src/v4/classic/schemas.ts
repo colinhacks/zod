@@ -1334,6 +1334,35 @@ export function union<const T extends readonly core.SomeType[]>(
   }) as any;
 }
 
+// ZodXor
+export interface ZodXor<T extends readonly core.SomeType[] = readonly core.$ZodType[]>
+  extends _ZodType<core.$ZodXorInternals<T>>,
+    core.$ZodXor<T> {
+  "~standard": ZodStandardSchemaWithJSON<this>;
+  options: T;
+}
+export const ZodXor: core.$constructor<ZodXor> = /*@__PURE__*/ core.$constructor("ZodXor", (inst, def) => {
+  ZodUnion.init(inst, def);
+  core.$ZodXor.init(inst, def);
+  inst._zod.processJSONSchema = (ctx, json, params) => processors.unionProcessor(inst, ctx, json, params);
+  inst.options = def.options;
+});
+
+/** Creates an exclusive union (XOR) where exactly one option must match.
+ * Unlike regular unions that succeed when any option matches, xor fails if
+ * zero or more than one option matches the input. */
+export function xor<const T extends readonly core.SomeType[]>(
+  options: T,
+  params?: string | core.$ZodXorParams
+): ZodXor<T> {
+  return new ZodXor({
+    type: "union",
+    options: options as any as core.$ZodType[],
+    inclusive: false,
+    ...util.normalizeParams(params),
+  }) as any;
+}
+
 // ZodDiscriminatedUnion
 export interface ZodDiscriminatedUnion<
   Options extends readonly core.SomeType[] = readonly core.$ZodType[],

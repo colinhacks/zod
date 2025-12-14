@@ -2012,7 +2012,7 @@ export type $InferUnionInput<T extends SomeType> = T extends any ? core.input<T>
 export interface $ZodUnionDef<Options extends readonly SomeType[] = readonly $ZodType[]> extends $ZodTypeDef {
   type: "union";
   options: Options;
-  exclusive?: boolean;
+  inclusive?: boolean;
 }
 
 type IsOptionalIn<T extends SomeType> = T extends OptionalInSchema ? true : false;
@@ -2060,6 +2060,66 @@ function handleUnionResults(results: ParsePayload[], final: ParsePayload, inst: 
   return final;
 }
 
+export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$constructor("$ZodUnion", (inst, def) => {
+  $ZodType.init(inst, def);
+
+  util.defineLazy(inst._zod, "optin", () =>
+    def.options.some((o) => o._zod.optin === "optional") ? "optional" : undefined
+  );
+
+  util.defineLazy(inst._zod, "optout", () =>
+    def.options.some((o) => o._zod.optout === "optional") ? "optional" : undefined
+  );
+
+  util.defineLazy(inst._zod, "values", () => {
+    if (def.options.every((o) => o._zod.values)) {
+      return new Set<util.Primitive>(def.options.flatMap((option) => Array.from(option._zod.values!)));
+    }
+    return undefined;
+  });
+
+  util.defineLazy(inst._zod, "pattern", () => {
+    if (def.options.every((o) => o._zod.pattern)) {
+      const patterns = def.options.map((o) => o._zod.pattern);
+      return new RegExp(`^(${patterns.map((p) => util.cleanRegex(p!.source)).join("|")})$`);
+    }
+    return undefined;
+  });
+
+  const single = def.options.length === 1;
+  const first = def.options[0]._zod.run;
+
+  inst._zod.parse = (payload, ctx) => {
+    if (single) {
+      return first(payload, ctx);
+    }
+    let async = false;
+
+    const results: util.MaybeAsync<ParsePayload>[] = [];
+    for (const option of def.options) {
+      const result = option._zod.run(
+        {
+          value: payload.value,
+          issues: [],
+        },
+        ctx
+      );
+      if (result instanceof Promise) {
+        results.push(result);
+        async = true;
+      } else {
+        if (result.issues.length === 0) return result;
+        results.push(result);
+      }
+    }
+
+    if (!async) return handleUnionResults(results as ParsePayload[], payload, inst, ctx);
+    return Promise.all(results).then((results) => {
+      return handleUnionResults(results as ParsePayload[], payload, inst, ctx);
+    });
+  };
+});
+
 function handleExclusiveUnionResults(
   results: ParsePayload[],
   final: ParsePayload,
@@ -2095,35 +2155,18 @@ function handleExclusiveUnionResults(
   return final;
 }
 
-export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$constructor("$ZodUnion", (inst, def) => {
-  $ZodType.init(inst, def);
+export interface $ZodXorInternals<T extends readonly SomeType[] = readonly $ZodType[]> extends $ZodUnionInternals<T> {}
 
-  util.defineLazy(inst._zod, "optin", () =>
-    def.options.some((o) => o._zod.optin === "optional") ? "optional" : undefined
-  );
+export interface $ZodXor<T extends readonly SomeType[] = readonly $ZodType[]>
+  extends $ZodType<any, any, $ZodXorInternals<T>> {
+  _zod: $ZodXorInternals<T>;
+}
 
-  util.defineLazy(inst._zod, "optout", () =>
-    def.options.some((o) => o._zod.optout === "optional") ? "optional" : undefined
-  );
-
-  util.defineLazy(inst._zod, "values", () => {
-    if (def.options.every((o) => o._zod.values)) {
-      return new Set<util.Primitive>(def.options.flatMap((option) => Array.from(option._zod.values!)));
-    }
-    return undefined;
-  });
-
-  util.defineLazy(inst._zod, "pattern", () => {
-    if (def.options.every((o) => o._zod.pattern)) {
-      const patterns = def.options.map((o) => o._zod.pattern);
-      return new RegExp(`^(${patterns.map((p) => util.cleanRegex(p!.source)).join("|")})$`);
-    }
-    return undefined;
-  });
+export const $ZodXor: core.$constructor<$ZodXor> = /*@__PURE__*/ core.$constructor("$ZodXor", (inst, def) => {
+  $ZodUnion.init(inst, def);
 
   const single = def.options.length === 1;
   const first = def.options[0]._zod.run;
-  const exclusive = def.exclusive;
 
   inst._zod.parse = (payload, ctx) => {
     if (single) {
@@ -2144,22 +2187,13 @@ export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$const
         results.push(result);
         async = true;
       } else {
-        // Only short-circuit if NOT exclusive
-        if (!exclusive && result.issues.length === 0) return result;
         results.push(result);
       }
     }
 
-    if (exclusive) {
-      if (!async) return handleExclusiveUnionResults(results as ParsePayload[], payload, inst, ctx);
-      return Promise.all(results).then((results) => {
-        return handleExclusiveUnionResults(results as ParsePayload[], payload, inst, ctx);
-      });
-    }
-
-    if (!async) return handleUnionResults(results as ParsePayload[], payload, inst, ctx);
+    if (!async) return handleExclusiveUnionResults(results as ParsePayload[], payload, inst, ctx);
     return Promise.all(results).then((results) => {
-      return handleUnionResults(results as ParsePayload[], payload, inst, ctx);
+      return handleExclusiveUnionResults(results as ParsePayload[], payload, inst, ctx);
     });
   };
 });

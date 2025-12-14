@@ -1768,6 +1768,37 @@ Each option should be an *object schema* whose discriminator prop (`status` in t
 </Accordion>
 </Accordions>
 
+## Exclusive unions (XOR)
+
+An exclusive union (XOR) is a union where exactly one option must match. Unlike regular unions that succeed when any option matches, `z.xor()` fails if zero options match OR if multiple options match.
+
+```ts
+const schema = z.xor([z.string(), z.number()]);
+
+schema.parse("hello"); // ✅ passes
+schema.parse(42);      // ✅ passes
+schema.parse(true);    // ❌ fails (zero matches)
+```
+
+This is useful when you want to ensure mutual exclusivity between options:
+
+```ts
+// Validate that exactly ONE of these matches
+const payment = z.xor([
+  z.object({ type: z.literal("card"), cardNumber: z.string() }),
+  z.object({ type: z.literal("bank"), accountNumber: z.string() }),
+]);
+
+payment.parse({ type: "card", cardNumber: "1234" }); // ✅ passes
+```
+
+If the input could match multiple options, `z.xor()` will fail:
+
+```ts
+const overlapping = z.xor([z.string(), z.any()]);
+overlapping.parse("hello"); // ❌ fails (matches both string and any)
+```
+
 ## Intersections
 
 Intersection types (`A & B`) represent a logical "AND". 

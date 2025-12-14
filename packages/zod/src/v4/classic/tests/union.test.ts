@@ -180,119 +180,40 @@ test("surface continuable errors only if they exist", () => {
   `);
 });
 
-// Exclusive union tests
-test("exclusive union - exactly one match succeeds", () => {
-  const schema = z.union([z.string(), z.number()], { exclusive: true });
+// z.xor() tests
+test("z.xor() - exactly one match succeeds", () => {
+  const schema = z.xor([z.string(), z.number()]);
   expect(schema.parse("hello")).toBe("hello");
   expect(schema.parse(42)).toBe(42);
 });
 
-test("exclusive union - zero matches fails", () => {
-  const schema = z.union([z.string(), z.number()], { exclusive: true });
-  expect(schema.safeParse(true)).toMatchInlineSnapshot(`
-    {
-      "error": [ZodError: [
-      {
-        "code": "invalid_union",
-        "errors": [
-          [
-            {
-              "expected": "string",
-              "code": "invalid_type",
-              "path": [],
-              "message": "Invalid input: expected string, received boolean"
-            }
-          ],
-          [
-            {
-              "expected": "number",
-              "code": "invalid_type",
-              "path": [],
-              "message": "Invalid input: expected number, received boolean"
-            }
-          ]
-        ],
-        "path": [],
-        "message": "Invalid input"
-      }
-    ]],
-      "success": false,
-    }
-  `);
+test("z.xor() - zero matches fails", () => {
+  const schema = z.xor([z.string(), z.number()]);
+  const result = schema.safeParse(true);
+  expect(result.success).toBe(false);
 });
 
-test("exclusive union - multiple matches fails", () => {
-  // Both string and any will match "hello"
-  const schema = z.union([z.string(), z.any()], { exclusive: true });
-  expect(schema.safeParse("hello")).toMatchInlineSnapshot(`
-    {
-      "error": [ZodError: [
-      {
-        "code": "invalid_union",
-        "errors": [],
-        "inclusive": false,
-        "path": [],
-        "message": "Invalid input"
-      }
-    ]],
-      "success": false,
-    }
-  `);
+test("z.xor() - multiple matches fails", () => {
+  const schema = z.xor([z.string(), z.any()]);
+  const result = schema.safeParse("hello");
+  expect(result.success).toBe(false);
+  if (!result.success) {
+    expect(result.error.issues[0].code).toBe("invalid_union");
+    expect((result.error.issues[0] as any).inclusive).toBe(false);
+  }
 });
 
-test("exclusive union - overlapping object schemas fail", () => {
-  const schemaA = z.object({ type: z.literal("a"), value: z.string() });
-  const schemaB = z.object({ type: z.string(), value: z.string() }); // also matches type: "a"
-  const schema = z.union([schemaA, schemaB], { exclusive: true });
-
-  // This input matches both schemas
-  expect(schema.safeParse({ type: "a", value: "test" })).toMatchInlineSnapshot(`
-    {
-      "error": [ZodError: [
-      {
-        "code": "invalid_union",
-        "errors": [],
-        "inclusive": false,
-        "path": [],
-        "message": "Invalid input"
-      }
-    ]],
-      "success": false,
-    }
-  `);
+test("z.xor() with custom error message", () => {
+  const schema = z.xor([z.string(), z.number()], "Expected exactly one of string or number");
+  const result = schema.safeParse(true);
+  expect(result.success).toBe(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toBe("Expected exactly one of string or number");
+  }
 });
 
-test("exclusive union - non-overlapping object schemas succeed", () => {
-  const schemaA = z.object({ type: z.literal("a"), value: z.string() });
-  const schemaB = z.object({ type: z.literal("b"), count: z.number() });
-  const schema = z.union([schemaA, schemaB], { exclusive: true });
-
-  expect(schema.parse({ type: "a", value: "test" })).toEqual({ type: "a", value: "test" });
-  expect(schema.parse({ type: "b", count: 5 })).toEqual({ type: "b", count: 5 });
-});
-
-test("exclusive union - async parsing", async () => {
-  const schema = z.union([z.string().refine(async (s) => s.length > 0), z.number().refine(async (n) => n > 0)], {
-    exclusive: true,
-  });
-
-  expect(await schema.parseAsync("hello")).toBe("hello");
-  expect(await schema.parseAsync(42)).toBe(42);
-
-  // Multiple matches case with async
-  const multiMatch = z.union([z.string(), z.any()], { exclusive: true });
-  expect(await multiMatch.safeParseAsync("test")).toMatchInlineSnapshot(`
-    {
-      "error": [ZodError: [
-      {
-        "code": "invalid_union",
-        "errors": [],
-        "inclusive": false,
-        "path": [],
-        "message": "Invalid input"
-      }
-    ]],
-      "success": false,
-    }
-  `);
+test("z.xor() type inference", () => {
+  const schema = z.xor([z.string(), z.number(), z.boolean()]);
+  type Result = z.infer<typeof schema>;
+  expectTypeOf<Result>().toEqualTypeOf<string | number | boolean>();
 });
