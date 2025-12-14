@@ -2585,6 +2585,10 @@ export interface $ZodRecord<Key extends $ZodRecordKey = $ZodRecordKey, Value ext
 }
 
 export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$constructor("$ZodRecord", (inst, def) => {
+  if (def.keyType instanceof $ZodNumber) {
+    def.keyType._zod.def.coerce = true;
+  }
+
   $ZodType.init(inst, def);
 
   inst._zod.parse = (payload, ctx) => {
@@ -2650,9 +2654,6 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       payload.value = {};
       for (const key of Reflect.ownKeys(input)) {
         if (key === "__proto__") continue;
-        if (def.keyType instanceof $ZodNumber) {
-          def.keyType._zod.def.coerce = true;
-        }
         const keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
 
         if (keyResult instanceof Promise) {
