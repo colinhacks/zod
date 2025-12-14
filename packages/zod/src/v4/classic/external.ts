@@ -29,7 +29,7 @@ export {
   util,
   NEVER,
 } from "../core/index.js";
-export { toJSONSchema } from "../core/to-json-schema.js";
+export { toJSONSchema } from "../core/json-schema-processors.js";
 export { fromJSONSchema } from "./from-json-schema.js";
 
 export * as locales from "../locales/index.js";
