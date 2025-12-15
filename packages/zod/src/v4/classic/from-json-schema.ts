@@ -286,7 +286,6 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
     }
 
     case "object": {
-      // TODO: propertyNames is not supported
       const shape: Record<string, ZodType> = {};
       const properties = schema.properties || {};
       const requiredSet = new Set(schema.required || []);
@@ -296,6 +295,27 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         const propZodSchema = convertSchema(propSchema as JSONSchema.JSONSchema, ctx);
         // If not in required array, make it optional
         shape[key] = requiredSet.has(key) ? propZodSchema : propZodSchema.optional();
+      }
+
+      // Handle propertyNames
+      if (schema.propertyNames) {
+        const keySchema = convertSchema(schema.propertyNames, ctx) as ZodString;
+        const valueSchema =
+          schema.additionalProperties && typeof schema.additionalProperties === "object"
+            ? convertSchema(schema.additionalProperties as JSONSchema.JSONSchema, ctx)
+            : z.any();
+
+        // Case A: No properties (pure record)
+        if (Object.keys(shape).length === 0) {
+          zodSchema = z.record(keySchema, valueSchema);
+          break;
+        }
+
+        // Case B: With properties (intersection of object and looseRecord)
+        const objectSchema = z.object(shape).passthrough();
+        const recordSchema = z.looseRecord(keySchema, valueSchema);
+        zodSchema = z.intersection(objectSchema, recordSchema);
+        break;
       }
 
       // Handle patternProperties
@@ -484,6 +504,8 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
   return baseSchema;
 }
 
+/**
+ * Converts a JSON Schema to a Zod schema. This function should be considered semi-experimental. It's behavior is liable to change. */
 export function fromJSONSchema(schema: JSONSchema.JSONSchema | boolean, params?: FromJSONSchemaParams): ZodType {
   // Handle boolean schemas
   if (typeof schema === "boolean") {

@@ -333,16 +333,16 @@ export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _jso
 
 export const unionProcessor: Processor<schemas.$ZodUnion> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodUnionDef;
-  // Discriminated unions use oneOf (exactly one match) instead of anyOf (one or more matches)
-  // because the discriminator field ensures mutual exclusivity between options in JSON Schema
-  const isDiscriminated = (def as any).discriminator !== undefined;
+  // Exclusive unions (inclusive === false) use oneOf (exactly one match) instead of anyOf (one or more matches)
+  // This includes both z.xor() and discriminated unions
+  const isExclusive = def.inclusive === false;
   const options = def.options.map((x, i) =>
     process(x, ctx as any, {
       ...params,
-      path: [...params.path, isDiscriminated ? "oneOf" : "anyOf", i],
+      path: [...params.path, isExclusive ? "oneOf" : "anyOf", i],
     })
   );
-  if (isDiscriminated) {
+  if (isExclusive) {
     json.oneOf = options;
   } else {
     json.anyOf = options;
