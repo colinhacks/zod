@@ -2164,6 +2164,7 @@ export interface $ZodXor<T extends readonly SomeType[] = readonly $ZodType[]>
 
 export const $ZodXor: core.$constructor<$ZodXor> = /*@__PURE__*/ core.$constructor("$ZodXor", (inst, def) => {
   $ZodUnion.init(inst, def);
+  def.inclusive = false;
 
   const single = def.options.length === 1;
   const first = def.options[0]._zod.run;
@@ -2232,6 +2233,8 @@ export interface $ZodDiscriminatedUnion<
 export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
   /*@__PURE__*/
   core.$constructor("$ZodDiscriminatedUnion", (inst, def) => {
+    def.inclusive = false;
+
     $ZodUnion.init(inst, def);
 
     const _super = inst._zod.parse;
