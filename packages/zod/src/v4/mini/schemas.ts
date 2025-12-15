@@ -951,6 +951,31 @@ export function union<const T extends readonly SomeType[]>(
   }) as any;
 }
 
+// ZodMiniXor
+export interface ZodMiniXor<T extends readonly SomeType[] = readonly core.$ZodType[]>
+  extends _ZodMiniType<core.$ZodXorInternals<T>> {
+  // _zod: core.$ZodXorInternals<T>;
+}
+export const ZodMiniXor: core.$constructor<ZodMiniXor> = /*@__PURE__*/ core.$constructor("ZodMiniXor", (inst, def) => {
+  ZodMiniUnion.init(inst, def);
+  core.$ZodXor.init(inst, def);
+});
+
+/** Creates an exclusive union (XOR) where exactly one option must match.
+ * Unlike regular unions that succeed when any option matches, xor fails if
+ * zero or more than one option matches the input. */
+export function xor<const T extends readonly SomeType[]>(
+  options: T,
+  params?: string | core.$ZodXorParams
+): ZodMiniXor<T> {
+  return new ZodMiniXor({
+    type: "union",
+    options: options as any as core.$ZodType[],
+    inclusive: false,
+    ...util.normalizeParams(params),
+  }) as any;
+}
+
 // ZodMiniDiscriminatedUnion
 export interface ZodMiniDiscriminatedUnion<
   Options extends readonly SomeType[] = readonly core.$ZodType[],
@@ -1082,6 +1107,20 @@ export function partialRecord<Key extends core.$ZodRecordKey, Value extends Some
     type: "record",
     keyType: k,
     valueType: valueType as any,
+    ...util.normalizeParams(params),
+  }) as any;
+}
+
+export function looseRecord<Key extends core.$ZodRecordKey, Value extends SomeType>(
+  keyType: Key,
+  valueType: Value,
+  params?: string | core.$ZodRecordParams
+): ZodMiniRecord<Key, Value> {
+  return new ZodMiniRecord({
+    type: "record",
+    keyType,
+    valueType: valueType as any as core.$ZodType,
+    mode: "loose",
     ...util.normalizeParams(params),
   }) as any;
 }

@@ -2012,6 +2012,7 @@ export type $InferUnionInput<T extends SomeType> = T extends any ? core.input<T>
 export interface $ZodUnionDef<Options extends readonly SomeType[] = readonly $ZodType[]> extends $ZodTypeDef {
   type: "union";
   options: Options;
+  inclusive?: boolean;
 }
 
 type IsOptionalIn<T extends SomeType> = T extends OptionalInSchema ? true : false;
@@ -2119,6 +2120,85 @@ export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$const
   };
 });
 
+function handleExclusiveUnionResults(
+  results: ParsePayload[],
+  final: ParsePayload,
+  inst: $ZodUnion,
+  ctx?: ParseContext
+) {
+  const successes = results.filter((r) => r.issues.length === 0);
+
+  if (successes.length === 1) {
+    final.value = successes[0].value;
+    return final;
+  }
+
+  if (successes.length === 0) {
+    // No matches - same as regular union
+    final.issues.push({
+      code: "invalid_union",
+      input: final.value,
+      inst,
+      errors: results.map((result) => result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))),
+    });
+  } else {
+    // Multiple matches - exclusive union failure
+    final.issues.push({
+      code: "invalid_union",
+      input: final.value,
+      inst,
+      errors: [],
+      inclusive: false,
+    });
+  }
+
+  return final;
+}
+
+export interface $ZodXorInternals<T extends readonly SomeType[] = readonly $ZodType[]> extends $ZodUnionInternals<T> {}
+
+export interface $ZodXor<T extends readonly SomeType[] = readonly $ZodType[]>
+  extends $ZodType<any, any, $ZodXorInternals<T>> {
+  _zod: $ZodXorInternals<T>;
+}
+
+export const $ZodXor: core.$constructor<$ZodXor> = /*@__PURE__*/ core.$constructor("$ZodXor", (inst, def) => {
+  $ZodUnion.init(inst, def);
+  def.inclusive = false;
+
+  const single = def.options.length === 1;
+  const first = def.options[0]._zod.run;
+
+  inst._zod.parse = (payload, ctx) => {
+    if (single) {
+      return first(payload, ctx);
+    }
+    let async = false;
+
+    const results: util.MaybeAsync<ParsePayload>[] = [];
+    for (const option of def.options) {
+      const result = option._zod.run(
+        {
+          value: payload.value,
+          issues: [],
+        },
+        ctx
+      );
+      if (result instanceof Promise) {
+        results.push(result);
+        async = true;
+      } else {
+        results.push(result);
+      }
+    }
+
+    if (!async) return handleExclusiveUnionResults(results as ParsePayload[], payload, inst, ctx);
+    return Promise.all(results).then((results) => {
+      return handleExclusiveUnionResults(results as ParsePayload[], payload, inst, ctx);
+    });
+  };
+});
+
 //////////////////////////////////////////////////////
 //////////////////////////////////////////////////////
 //////////                                  //////////
@@ -2153,6 +2233,8 @@ export interface $ZodDiscriminatedUnion<
 export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
   /*@__PURE__*/
   core.$constructor("$ZodDiscriminatedUnion", (inst, def) => {
+    def.inclusive = false;
+
     $ZodUnion.init(inst, def);
 
     const _super = inst._zod.parse;
@@ -2525,6 +2607,8 @@ export interface $ZodRecordDef<Key extends $ZodRecordKey = $ZodRecordKey, Value 
   type: "record";
   keyType: Key;
   valueType: Value;
+  /** @default "strict" - errors on keys not matching keyType. "loose" passes through non-matching keys unchanged. */
+  mode?: "strict" | "loose";
 }
 
 // export type $InferZodRecordOutput<
@@ -2652,16 +2736,21 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
         }
 
         if (keyResult.issues.length) {
-          payload.issues.push({
-            code: "invalid_key",
+          if (def.mode === "loose") {
+            // Pass through unchanged
+            payload.value[key] = input[key];
+          } else {
+            // Default "strict" behavior: error on invalid key
+            payload.issues.push({
+              code: "invalid_key",
 
-            origin: "record",
-            issues: keyResult.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
-            input: key,
-            path: [key],
-            inst,
-          });
-          payload.value[keyResult.value as PropertyKey] = keyResult.value;
+              origin: "record",
+              issues: keyResult.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
+              input: key,
+              path: [key],
+              inst,
+            });
+          }
           continue;
         }
 

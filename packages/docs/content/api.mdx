@@ -1700,6 +1700,38 @@ console.log(optionalUrl.safeParse("not a valid url").success); // false
 
 <br/> */}
 
+## Exclusive unions (XOR)
+
+An exclusive union (XOR) is a union where exactly one option must match. Unlike regular unions that succeed when any option matches, `z.xor()` fails if zero options match OR if multiple options match.
+
+```ts
+const schema = z.xor([z.string(), z.number()]);
+
+schema.parse("hello"); // ✅ passes
+schema.parse(42);      // ✅ passes
+schema.parse(true);    // ❌ fails (zero matches)
+```
+
+This is useful when you want to ensure mutual exclusivity between options:
+
+```ts
+// Validate that exactly ONE of these matches
+const payment = z.xor([
+  z.object({ type: z.literal("card"), cardNumber: z.string() }),
+  z.object({ type: z.literal("bank"), accountNumber: z.string() }),
+]);
+
+payment.parse({ type: "card", cardNumber: "1234" }); // ✅ passes
+```
+
+If the input could match multiple options, `z.xor()` will fail:
+
+```ts
+const overlapping = z.xor([z.string(), z.any()]);
+overlapping.parse("hello"); // ❌ fails (matches both string and any)
+```
+
+
 ## Discriminated unions
 
 A [discriminated union](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions) is a special kind of union in which a) all the options are object schemas that b) share a particular key (the "discriminator"). Based on the value of the discriminator key, TypeScript is able to "narrow" the type signature as you'd expect.
@@ -1768,6 +1800,7 @@ Each option should be an *object schema* whose discriminator prop (`status` in t
 </Accordion>
 </Accordions>
 
+
 ## Intersections
 
 Intersection types (`A & B`) represent a logical "AND". 
@@ -1802,6 +1835,8 @@ type EmployedPerson = z.infer<typeof EmployedPerson>;
 
 Record schemas are used to validate types such as `Record<string, string>`.
 
+### `z.record`
+
 ```ts
 const IdCache = z.record(z.string(), z.string());
 type IdCache = z.infer<typeof IdCache>; // Record<string, string>
@@ -1828,6 +1863,9 @@ const Person = z.record(Keys, z.string());
 // { id: string; name: string; email: string }
 ```
 
+### `z.partialRecord`
+
+
 <Callout>
   **Zod 4** — In Zod 4, if you pass a `z.enum` as the first argument to `z.record()`, Zod will exhaustively check that all enum values exist in the input as keys. This behavior agrees with TypeScript:
 
@@ -1847,6 +1885,23 @@ If you want a *partial* record type, use `z.partialRecord()`. This skips the spe
 const Keys = z.enum(["id", "name", "email"]).or(z.never()); 
 const Person = z.partialRecord(Keys, z.string());
 // { id?: string; name?: string; email?: string }
+```
+
+### `z.looseRecord`
+
+By default, `z.record()` errors on keys that don't match the key schema. Use `z.looseRecord()` to pass through non-matching keys unchanged. This is particularly useful when combined with intersections to model multiple pattern properties:
+
+```ts
+const schema = z.object({ name: z.string() }).passthrough()
+  .and(z.looseRecord(z.string().regex(/^S_/), z.string()))
+  .and(z.looseRecord(z.string().regex(/^N_/), z.number()));
+
+schema.parse({ 
+  name: "John",
+  other: "value",    // passes through unchanged
+  S_foo: "bar",     // validated as string
+  N_count: 123,     // validated as number
+});
 ```
 
 <Accordions>

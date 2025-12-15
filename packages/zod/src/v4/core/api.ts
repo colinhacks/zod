@@ -1093,6 +1093,21 @@ export function _union<const T extends readonly schemas.$ZodObject[]>(
   }) as any;
 }
 
+// ZodXor
+export type $ZodXorParams = TypeParams<schemas.$ZodXor, "options">;
+export function _xor<const T extends readonly schemas.$ZodObject[]>(
+  Class: util.SchemaClass<schemas.$ZodXor>,
+  options: T,
+  params?: string | $ZodXorParams
+): schemas.$ZodXor<T> {
+  return new Class({
+    type: "union",
+    options,
+    inclusive: false,
+    ...util.normalizeParams(params),
+  }) as any;
+}
+
 // ZodDiscriminatedUnion
 export interface $ZodTypeDiscriminableInternals extends schemas.$ZodTypeInternals {
   propValues: util.PropValues;
