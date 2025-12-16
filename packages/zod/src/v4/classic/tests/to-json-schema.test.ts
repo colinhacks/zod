@@ -831,6 +831,35 @@ describe("toJSONSchema", () => {
     `);
   });
 
+  test("record filters enum values to strings and numbers for required", () => {
+    enum NumberEnum {
+      Zero = 0,
+      One = 1,
+    }
+    const schema = z.record(z.enum(NumberEnum), z.string());
+
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": {
+          "type": "string",
+        },
+        "propertyNames": {
+          "enum": [
+            0,
+            1,
+          ],
+          "type": "number",
+        },
+        "required": [
+          0,
+          1,
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
   test("record openapi-3.0", () => {
     const schema = z.record(z.string(), z.boolean());
     const jsonSchema = z.toJSONSchema(schema, { target: "openapi-3.0" });
