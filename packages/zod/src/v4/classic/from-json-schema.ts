@@ -1,6 +1,15 @@
 import type * as JSONSchema from "../core/json-schema.js";
-import * as z from "../index.js";
+import * as _checks from "./checks.js";
+import * as _iso from "./iso.js";
+import * as _schemas from "./schemas.js";
 import type { ZodNumber, ZodString, ZodType } from "./schemas.js";
+
+// Local z object to avoid circular dependency with ../index.js
+const z = {
+  ..._schemas,
+  ..._checks,
+  iso: _iso,
+};
 
 type JSONSchemaVersion = "draft-2020-12" | "draft-7" | "draft-4" | "openapi-3.0";
 

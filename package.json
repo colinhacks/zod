@@ -16,6 +16,7 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.17.4",
+    "madge": "^8.0.0",
     "@biomejs/biome": "^1.9.4",
     "@seriousme/openapi-schema-validator": "2.5.0",
     "@types/benchmark": "^2.1.5",
@@ -83,6 +84,7 @@
     "publish:jsr": "jsr publish --dry-run",
     "bundle:rollup": "rollup -c",
     "bundle:esbuild": "esbuild --bundle ./scratch/input.ts --outfile=./scratch/out_esbuild.js --bundle --format=esm",
-    "check:semver": "tsx scripts/check-versions.ts"
+    "check:semver": "tsx scripts/check-versions.ts",
+    "check:circular": "madge --circular --extensions ts --exclude '(v4/core|v3|iso\\.ts)' packages/zod/src"
   }
 }
