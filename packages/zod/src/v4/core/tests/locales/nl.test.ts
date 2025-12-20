@@ -39,6 +39,7 @@ test("Dutch locale error messages", () => {
   expect(
     localeError({
       code: "invalid_format",
+      origin: "string",
       format: "email",
       input: "invalid-email",
     })

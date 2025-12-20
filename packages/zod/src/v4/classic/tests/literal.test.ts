@@ -105,6 +105,7 @@ test("literal pattern", () => {
       "error": [ZodError: [
       {
         "code": "invalid_format",
+        "origin": "string",
         "format": "template_literal",
         "pattern": "^(1\\\\.1)$",
         "path": [],

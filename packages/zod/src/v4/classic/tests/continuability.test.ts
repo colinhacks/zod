@@ -82,6 +82,7 @@ test("continuability", () => {
         "code": "invalid_format",
         "format": "url",
         "message": "Invalid URL",
+        "origin": "string",
         "path": [],
       },
       {

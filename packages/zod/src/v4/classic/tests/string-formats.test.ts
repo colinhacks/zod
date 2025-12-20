@@ -44,6 +44,7 @@ test("z.stringFormat", () => {
       "error": [ZodError: [
       {
         "code": "invalid_format",
+        "origin": "string",
         "format": "creditCard",
         "path": [],
         "message": "Invalid credit card number"

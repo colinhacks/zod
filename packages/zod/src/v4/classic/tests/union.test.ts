@@ -165,6 +165,7 @@ test("surface continuable errors only if they exist", () => {
           [
             {
               "code": "invalid_format",
+              "origin": "string",
               "format": "jwt",
               "path": [],
               "message": "Invalid JWT"
