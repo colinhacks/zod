@@ -2730,7 +2730,18 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       payload.value = {};
       for (const key of Reflect.ownKeys(input)) {
         if (key === "__proto__") continue;
-        const keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
+
+        // For number key types, try to parse string keys as numbers
+        let keyValueForValidation: string | symbol | number = key;
+        if (def.keyType._zod.def.type === "number" && typeof key === "string") {
+          // Try to parse the string key as a number
+          const numericKey = Number(key);
+          if (!Number.isNaN(numericKey) && Number.isFinite(numericKey)) {
+            keyValueForValidation = numericKey;
+          }
+        }
+
+        const keyResult = def.keyType._zod.run({ value: keyValueForValidation, issues: [] }, ctx);
 
         if (keyResult instanceof Promise) {
           throw new Error("Async schemas not supported in object keys currently");
@@ -2763,14 +2774,16 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
               if (result.issues.length) {
                 payload.issues.push(...util.prefixIssues(key, result.issues));
               }
-              payload.value[keyResult.value as PropertyKey] = result.value;
+              // Always use the original string key for the output object
+              payload.value[key] = result.value;
             })
           );
         } else {
           if (result.issues.length) {
             payload.issues.push(...util.prefixIssues(key, result.issues));
           }
-          payload.value[keyResult.value as PropertyKey] = result.value;
+          // Always use the original string key for the output object
+          payload.value[key] = result.value;
         }
       }
     }

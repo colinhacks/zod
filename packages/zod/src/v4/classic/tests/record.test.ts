@@ -523,3 +523,78 @@ test("intersection of loose records", () => {
   expect(() => schema.parse({ name: "John", S_foo: 123 })).toThrow(); // S_foo should be string
   expect(() => schema.parse({ name: "John", N_count: "abc" })).toThrow(); // N_count should be number
 });
+
+test("record with number keys", () => {
+  // This is the test case from issue #5521
+  const schema = z.record(z.number(), z.number());
+
+  // Should parse successfully - string keys that represent numbers should be accepted
+  const result = schema.parse({ 1: 100, 2: 88, 3: 99, 4: 60 });
+  expect(result).toEqual({ "1": 100, "2": 88, "3": 99, "4": 60 });
+
+  // Should also work with actual string keys that are numeric
+  const result2 = schema.parse({ "1": 100, "2.5": 88, "3": 99 });
+  expect(result2).toEqual({ "1": 100, "2.5": 88, "3": 99 });
+
+  // Should fail for non-numeric keys
+  expect(schema.safeParse({ abc: 100 })).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "code": "invalid_key",
+        "origin": "record",
+        "issues": [
+          {
+            "expected": "number",
+            "code": "invalid_type",
+            "path": [],
+            "message": "Invalid input: expected number, received string"
+          }
+        ],
+        "path": [
+          "abc"
+        ],
+        "message": "Invalid key in record"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+
+  // Should work with mixed numeric and string number keys
+  const result3 = schema.parse({ 1: 100, "2": 88 });
+  expect(result3).toEqual({ "1": 100, "2": 88 });
+});
+
+test("record with number keys validates number constraints", () => {
+  const schema = z.record(z.number().int(), z.string());
+
+  // Should accept integer-like string keys
+  expect(schema.parse({ "1": "one", "2": "two" })).toEqual({ "1": "one", "2": "two" });
+
+  // Should reject non-integer numeric string keys
+  expect(schema.safeParse({ "1.5": "one-and-half" })).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "code": "invalid_key",
+        "origin": "record",
+        "issues": [
+          {
+            "expected": "int",
+            "format": "safeint",
+            "code": "invalid_type",
+            "path": [],
+            "message": "Invalid input: expected int, received number"
+          }
+        ],
+        "path": [
+          "1.5"
+        ],
+        "message": "Invalid key in record"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+});
