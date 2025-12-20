@@ -485,6 +485,7 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
         if (!def.hostname.test(url.hostname)) {
           payload.issues.push({
             code: "invalid_format",
+            origin: "string",
             format: "url",
             note: "Invalid hostname",
             pattern: def.hostname.source,
@@ -500,6 +501,7 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
         if (!def.protocol.test(url.protocol.endsWith(":") ? url.protocol.slice(0, -1) : url.protocol)) {
           payload.issues.push({
             code: "invalid_format",
+            origin: "string",
             format: "url",
             note: "Invalid protocol",
             pattern: def.protocol.source,
@@ -523,6 +525,7 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
     } catch (_) {
       payload.issues.push({
         code: "invalid_format",
+        origin: "string",
         format: "url",
         input: payload.value,
         inst,
@@ -771,6 +774,7 @@ export const $ZodIPv6: core.$constructor<$ZodIPv6> = /*@__PURE__*/ core.$constru
     } catch {
       payload.issues.push({
         code: "invalid_format",
+        origin: "string",
         format: "ipv6",
         input: payload.value,
         inst,
@@ -856,6 +860,7 @@ export const $ZodCIDRv6: core.$constructor<$ZodCIDRv6> = /*@__PURE__*/ core.$con
       } catch {
         payload.issues.push({
           code: "invalid_format",
+          origin: "string",
           format: "cidrv6",
           input: payload.value,
           inst,
@@ -899,6 +904,7 @@ export const $ZodBase64: core.$constructor<$ZodBase64> = /*@__PURE__*/ core.$con
 
       payload.issues.push({
         code: "invalid_format",
+        origin: "string",
         format: "base64",
         input: payload.value,
         inst,
@@ -936,6 +942,7 @@ export const $ZodBase64URL: core.$constructor<$ZodBase64URL> = /*@__PURE__*/ cor
 
       payload.issues.push({
         code: "invalid_format",
+        origin: "string",
         format: "base64url",
         input: payload.value,
         inst,
@@ -997,6 +1004,7 @@ export const $ZodJWT: core.$constructor<$ZodJWT> = /*@__PURE__*/ core.$construct
 
     payload.issues.push({
       code: "invalid_format",
+      origin: "string",
       format: "jwt",
       input: payload.value,
       inst,
@@ -1029,6 +1037,7 @@ export const $ZodCustomStringFormat: core.$constructor<$ZodCustomStringFormat> =
 
       payload.issues.push({
         code: "invalid_format",
+        origin: "string",
         format: def.format,
         input: payload.value,
         inst,
@@ -4021,6 +4030,7 @@ export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> = /*@__
           inst,
 
           code: "invalid_format",
+          origin: "string",
           format: def.format ?? "template_literal",
           pattern: inst._zod.pattern.source,
         });

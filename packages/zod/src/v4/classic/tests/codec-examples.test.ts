@@ -213,6 +213,7 @@ const jsonCodec = <T extends z.core.$ZodType>(schema: T) =>
       } catch (err: any) {
         ctx.issues.push({
           code: "invalid_format",
+          origin: "string",
           format: "json",
           input: jsonString,
           message: err.message,
@@ -565,6 +566,7 @@ test("codec transform error handling", () => {
           "code": "invalid_format",
           "format": "json",
           "message": "Unexpected token ',', "{"invalid":,}" is not valid JSON",
+          "origin": "string",
           "path": [],
         },
       ]

@@ -45,6 +45,7 @@ export interface $ZodIssueTooSmall<Input = unknown> extends $ZodIssueBase {
 
 export interface $ZodIssueInvalidStringFormat extends $ZodIssueBase {
   readonly code: "invalid_format";
+  readonly origin: "string";
   readonly format: $ZodStringFormats | (string & {});
   readonly pattern?: string;
   readonly input?: string;
