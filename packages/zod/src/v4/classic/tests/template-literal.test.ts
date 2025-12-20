@@ -763,6 +763,7 @@ test("template literal parsing - failure - issue format", () => {
       "error": [ZodError: [
       {
         "code": "invalid_format",
+        "origin": "string",
         "format": "template_literal",
         "pattern": "^hello.*$",
         "path": [],
