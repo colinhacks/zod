@@ -1833,7 +1833,21 @@ export interface ZodBooleanDef extends ZodTypeDef {
 export class ZodBoolean extends ZodType<boolean, ZodBooleanDef, boolean> {
   _parse(input: ParseInput): ParseReturnType<boolean> {
     if (this._def.coerce) {
-      input.data = Boolean(input.data);
+      // Enhanced boolean coercion that handles string representations
+      if (typeof input.data === "string") {
+        const lowerValue = input.data.toLowerCase();
+        if (["true", "1", "yes", "on", "y", "enabled"].includes(lowerValue)) {
+          input.data = true;
+        } else if (["false", "0", "no", "off", "n", "disabled"].includes(lowerValue)) {
+          input.data = false;
+        } else {
+          // Fall back to Boolean constructor for other string values (like empty string)
+          input.data = Boolean(input.data);
+        }
+      } else {
+        // Use Boolean constructor for non-string values
+        input.data = Boolean(input.data);
+      }
     }
     const parsedType = this._getType(input);
 

@@ -53,11 +53,34 @@ test("number coercion", () => {
 
 test("boolean coercion", () => {
   const schema = z.coerce.boolean();
+
+  // String truthy values
   expect(schema.parse("true")).toEqual(true);
-  expect(schema.parse("false")).toEqual(true);
-  expect(schema.parse("0")).toEqual(true);
   expect(schema.parse("1")).toEqual(true);
-  expect(schema.parse("")).toEqual(false);
+  expect(schema.parse("yes")).toEqual(true);
+  expect(schema.parse("on")).toEqual(true);
+  expect(schema.parse("y")).toEqual(true);
+  expect(schema.parse("enabled")).toEqual(true);
+
+  // String falsy values
+  expect(schema.parse("false")).toEqual(false); // Fixed: was true, now false
+  expect(schema.parse("0")).toEqual(false); // Fixed: was true, now false
+  expect(schema.parse("no")).toEqual(false);
+  expect(schema.parse("off")).toEqual(false);
+  expect(schema.parse("n")).toEqual(false);
+  expect(schema.parse("disabled")).toEqual(false);
+
+  // Case insensitive
+  expect(schema.parse("TRUE")).toEqual(true);
+  expect(schema.parse("FALSE")).toEqual(false);
+  expect(schema.parse("Yes")).toEqual(true);
+  expect(schema.parse("No")).toEqual(false);
+
+  // Other string values fall back to Boolean() behavior
+  expect(schema.parse("")).toEqual(false); // Empty string
+  expect(schema.parse("hello")).toEqual(true); // Non-empty string
+
+  // Non-string values use Boolean() behavior
   expect(schema.parse(1)).toEqual(true);
   expect(schema.parse(0)).toEqual(false);
   expect(schema.parse(-1)).toEqual(true);
