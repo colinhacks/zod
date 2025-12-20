@@ -31,11 +31,22 @@ export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _jso
     .bag as schemas.$ZodStringInternals<unknown>["bag"];
   if (typeof minimum === "number") json.minLength = minimum;
   if (typeof maximum === "number") json.maxLength = maximum;
-  // custom pattern overrides format
+
+  // Handle format, with special case for ISO time with non-standard precision
   if (format) {
-    json.format = formatMap[format as checks.$ZodStringFormats] ?? format;
-    if (json.format === "") delete json.format; // empty format is not valid
+    const shouldSkipTimeFormat =
+      format === "time" &&
+      schema._zod.def.type === "string" &&
+      "precision" in schema._zod.def &&
+      schema._zod.def.precision !== null &&
+      schema._zod.def.precision !== 0;
+
+    if (!shouldSkipTimeFormat) {
+      json.format = formatMap[format as checks.$ZodStringFormats] ?? format;
+      if (json.format === "") delete json.format; // empty format is not valid
+    }
   }
+
   if (contentEncoding) json.contentEncoding = contentEncoding;
   if (patterns && patterns.size > 0) {
     const regexes = [...patterns];

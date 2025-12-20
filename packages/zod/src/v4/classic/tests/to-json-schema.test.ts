@@ -2753,3 +2753,42 @@ test("cycle detection - mutual recursion", () => {
     Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.]
   `);
 });
+
+test("ISO time with precision should omit format when not standard seconds", () => {
+  // When precision is null (default) or 0 (seconds), format: "time" should be included
+  expect(z.toJSONSchema(z.iso.time({ precision: 0 }))).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "format": "time",
+      "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d$",
+      "type": "string",
+    }
+  `);
+
+  // When precision is -1 (minutes), format should be omitted to avoid JSON Schema incompatibility
+  expect(z.toJSONSchema(z.iso.time({ precision: -1 }))).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$",
+      "type": "string",
+    }
+  `);
+
+  // When precision is 1 (1 decimal place), format should be omitted
+  expect(z.toJSONSchema(z.iso.time({ precision: 1 }))).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{1}$",
+      "type": "string",
+    }
+  `);
+
+  // When precision is 3 (3 decimal places), format should be omitted
+  expect(z.toJSONSchema(z.iso.time({ precision: 3 }))).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}$",
+      "type": "string",
+    }
+  `);
+});
