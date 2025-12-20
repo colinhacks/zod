@@ -56,7 +56,7 @@ test("z.coerce.boolean", () => {
   expect(z.parse(a, true)).toEqual(true);
   expect(z.parse(a, false)).toEqual(false);
   expect(z.parse(a, "true")).toEqual(true);
-  expect(z.parse(a, "false")).toEqual(true);
+  expect(z.parse(a, "false")).toEqual(false);
   expect(z.parse(a, 1)).toEqual(true);
   expect(z.parse(a, 0)).toEqual(false);
   expect(z.parse(a, {})).toEqual(true);
