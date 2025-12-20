@@ -702,6 +702,7 @@ test("template literal parsing - failure - issue format", () => {
       "error": [ZodError: [
       {
         "code": "invalid_format",
+        "origin": "string",
         "format": "template_literal",
         "pattern": "^null$",
         "path": [],
@@ -716,6 +717,7 @@ test("template literal parsing - failure - issue format", () => {
       "error": [ZodError: [
       {
         "code": "invalid_format",
+        "origin": "string",
         "format": "template_literal",
         "pattern": "^[cC][^\\\\s-]{8,}ZZZ$",
         "path": [],
@@ -730,6 +732,7 @@ test("template literal parsing - failure - issue format", () => {
       "error": [ZodError: [
       {
         "code": "invalid_format",
+        "origin": "string",
         "format": "template_literal",
         "pattern": "^[\\\\s\\\\S]{5,10}$",
         "path": [],
@@ -744,6 +747,7 @@ test("template literal parsing - failure - issue format", () => {
       "error": [ZodError: [
       {
         "code": "invalid_format",
+        "origin": "string",
         "format": "template_literal",
         "pattern": "^mongodb:\\\\/\\\\/(\\\\w+:\\\\w+@)?\\\\w+:-?\\\\d+(\\\\/(\\\\w+)?(\\\\?(\\\\w+=\\\\w+(&\\\\w+=\\\\w+)*)?)?)?$",
         "path": [],

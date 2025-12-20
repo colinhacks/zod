@@ -82,6 +82,7 @@ test("continuability", () => {
         "code": "invalid_format",
         "format": "url",
         "message": "Invalid URL",
+        "origin": "string",
         "path": [],
       },
       {
@@ -102,6 +103,7 @@ test("continuability", () => {
         "code": "invalid_format",
         "format": "jwt",
         "message": "Invalid JWT",
+        "origin": "string",
         "path": [],
       },
       {
@@ -144,6 +146,7 @@ test("continuability", () => {
         "code": "invalid_format",
         "format": "cidrv6",
         "message": "Invalid IPv6 range",
+        "origin": "string",
         "path": [],
       },
       {
@@ -186,6 +189,7 @@ test("continuability", () => {
         "code": "invalid_format",
         "format": "ipv6",
         "message": "Invalid IPv6 address",
+        "origin": "string",
         "path": [],
       },
       {
