@@ -379,12 +379,11 @@ export function finalize<T extends schemas.$ZodType>(
     }
 
     // execute overrides
-    if (!seen.isParent)
-      ctx.override({
-        zodSchema: zodSchema as schemas.$ZodTypes,
-        jsonSchema: schema,
-        path: seen.path ?? [],
-      });
+    ctx.override({
+      zodSchema: zodSchema as schemas.$ZodTypes,
+      jsonSchema: schema,
+      path: seen.path ?? [],
+    });
   };
 
   for (const entry of [...ctx.seen.entries()].reverse()) {

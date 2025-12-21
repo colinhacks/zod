@@ -1629,7 +1629,7 @@ test("override", () => {
   `);
 });
 
-test("override: do not run on references", () => {
+test("override: run on all schemas", () => {
   let overrideCount = 0;
   const schema = z
     .union([z.string().date(), z.string().datetime(), z.string().datetime({ local: true })])
@@ -1647,7 +1647,32 @@ test("override: do not run on references", () => {
     },
   });
 
-  expect(overrideCount).toBe(6);
+  expect(overrideCount).toBe(9);
+});
+
+test("override: reused schema instances", () => {
+  const baseSchema = z.enum(["foo", "bar"]).meta({ foo: "bar" });
+
+  const objectSchema = z.object({
+    foo: baseSchema.meta({ bar: "zap" }),
+    baz: z.array(baseSchema),
+  });
+
+  const result = z.toJSONSchema(objectSchema, {
+    io: "output",
+    override: (ctx) => {
+      if (ctx.jsonSchema.type === "string") {
+        ctx.jsonSchema.thisShouldAlwaysAppear = "in the output";
+      }
+    },
+  });
+
+  // Verify that the override was applied to both instances of the schema
+  const fooProperty = result.properties?.foo as any;
+  const bazItems = (result.properties?.baz as any)?.items;
+
+  expect(fooProperty?.thisShouldAlwaysAppear).toBe("in the output");
+  expect(bazItems?.thisShouldAlwaysAppear).toBe("in the output");
 });
 
 test("override with refs", () => {
