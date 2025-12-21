@@ -593,9 +593,158 @@ const mySchema = z.unknown().refine((val): val is string => {
   return typeof val === "string"
 });
 
-type MySchema = z.infer<typeof mySchema>; 
+type MySchema = z.infer<typeof mySchema>;
 // Zod 3: `string`
 // Zod 4: still `unknown`
+```
+
+#### Migration guide
+
+If you were using type predicates in `.refine()` to narrow types, here are the recommended v4 patterns:
+
+**Pattern 1: Use `z.custom()` for type narrowing from unknown**
+
+```ts
+// ❌ Zod v3 (no longer works)
+const v3Schema = z.unknown().refine((val): val is string => {
+  return typeof val === "string";
+});
+
+// ✅ Zod v4
+const v4Schema = z.custom<string>((val): val is string => {
+  return typeof val === "string";
+});
+
+type V4Type = z.infer<typeof v4Schema>; // string
+```
+
+**Pattern 2: Use `.superRefine()` for complex type narrowing**
+
+```ts
+// ❌ Zod v3 (no longer works)
+const v3LiteralSchema = z.string().refine((val): val is "admin" => {
+  return val === "admin";
+});
+
+// ✅ Zod v4
+const v4LiteralSchema = z.string().superRefine((val, ctx): val is "admin" => {
+  if (val !== "admin") {
+    ctx.addIssue({
+      code: "custom",
+      message: `Expected "admin", got "${val}"`,
+    });
+    return false;
+  }
+  return true;
+});
+
+type V4LiteralType = z.infer<typeof v4LiteralSchema>; // "admin"
+```
+
+**Pattern 3: Use `.pipe()` for composition**
+
+```ts
+// ❌ Zod v3 (no longer works)
+const v3PipeSchema = z.unknown().refine((val): val is string => {
+  return typeof val === "string";
+});
+
+// ✅ Zod v4
+const v4PipeSchema = z.unknown().pipe(z.string());
+
+type V4PipeType = z.infer<typeof v4PipeSchema>; // string
+```
+
+**Pattern 4: Use direct schema definition when possible**
+
+```ts
+// ❌ Zod v3 (no longer works)
+interface AdminUser {
+  type: "admin";
+  permissions: string[];
+  name: string;
+}
+
+const v3UserSchema = z.object({
+  type: z.string(),
+  permissions: z.array(z.string()),
+  name: z.string(),
+}).refine((user): user is AdminUser => {
+  return user.type === "admin";
+});
+
+// ✅ Zod v4 - Option 1: Direct schema
+const v4DirectSchema = z.object({
+  type: z.literal("admin"),
+  permissions: z.array(z.string()),
+  name: z.string(),
+});
+
+// ✅ Zod v4 - Option 2: Discriminated union
+const v4UnionSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("admin"),
+    permissions: z.array(z.string()),
+    name: z.string(),
+  }),
+  z.object({
+    type: z.literal("user"),
+    permissions: z.array(z.string()).optional(),
+    name: z.string(),
+  }),
+]);
+
+// ✅ Zod v4 - Option 3: .superRefine() for custom logic
+const v4SuperRefineSchema = z.object({
+  type: z.string(),
+  permissions: z.array(z.string()),
+  name: z.string(),
+}).superRefine((user, ctx): user is AdminUser => {
+  if (user.type !== "admin") {
+    ctx.addIssue({
+      code: "custom",
+      message: "User must be an admin",
+      path: ["type"],
+    });
+    return false;
+  }
+  return true;
+});
+
+type V4UserType = z.infer<typeof v4DirectSchema>; // { type: "admin", permissions: string[], name: string }
+```
+
+**Pattern 5: External validation with type narrowing**
+
+```ts
+function checkExternalLogic(val: string): boolean {
+  // Complex validation requiring external state/API
+  return ["valid-1", "valid-2", "valid-3"].includes(val);
+}
+
+// ❌ Zod v3 (no longer works)
+const v3ExternalSchema = z.string().refine((val): val is "valid-1" | "valid-2" | "valid-3" => {
+  return checkExternalLogic(val);
+});
+
+// ✅ Zod v4 - Option 1: z.custom()
+const v4ExternalCustom = z.custom<"valid-1" | "valid-2" | "valid-3">((val): val is "valid-1" | "valid-2" | "valid-3" => {
+  return typeof val === "string" && checkExternalLogic(val);
+});
+
+// ✅ Zod v4 - Option 2: .superRefine() for better errors
+const v4ExternalSuperRefine = z.string().superRefine((val, ctx): val is "valid-1" | "valid-2" | "valid-3" => {
+  if (!checkExternalLogic(val)) {
+    ctx.addIssue({
+      code: "custom",
+      message: `"${val}" is not a valid value`,
+    });
+    return false;
+  }
+  return true;
+});
+
+type V4ExternalType = z.infer<typeof v4ExternalCustom>; // "valid-1" | "valid-2" | "valid-3"
 ```
 
 ### drops `ctx.path`
