@@ -45,7 +45,7 @@ try {
   const result = schema.parse(testDataInvalid);
   console.log("✅ Parse successful! Result:", result);
 } catch (error) {
-  console.log("❌ Parse failed (expected):", error.message.split('\n')[0]);
+  console.log("❌ Parse failed (expected):", error.message.split("\n")[0]);
 }
 
 console.log("\n🎉 All tests demonstrate that the fix is working correctly!");
