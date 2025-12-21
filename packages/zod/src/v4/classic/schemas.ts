@@ -284,14 +284,14 @@ export const _ZodString: core.$constructor<_ZodString> = /*@__PURE__*/ core.$con
   inst.maxLength = bag.maximum ?? null;
 
   // validations
-  inst.regex = (...args) => inst.check(checks.regex(...args));
-  inst.includes = (...args) => inst.check(checks.includes(...args));
-  inst.startsWith = (...args) => inst.check(checks.startsWith(...args));
-  inst.endsWith = (...args) => inst.check(checks.endsWith(...args));
-  inst.min = (...args) => inst.check(checks.minLength(...args));
-  inst.max = (...args) => inst.check(checks.maxLength(...args));
-  inst.length = (...args) => inst.check(checks.length(...args));
-  inst.nonempty = (...args) => inst.check(checks.minLength(1, ...args));
+  inst.regex = (regex, params) => inst.check(checks.regex(regex, params));
+  inst.includes = (value, params) => inst.check(checks.includes(value, params));
+  inst.startsWith = (value, params) => inst.check(checks.startsWith(value, params));
+  inst.endsWith = (value, params) => inst.check(checks.endsWith(value, params));
+  inst.min = (minLength, params) => inst.check(checks.minLength(minLength, params));
+  inst.max = (maxLength, params) => inst.check(checks.maxLength(maxLength, params));
+  inst.length = (len, params) => inst.check(checks.length(len, params));
+  inst.nonempty = (params) => inst.check(checks.minLength(1, params));
   inst.lowercase = (params) => inst.check(checks.lowercase(params));
   inst.uppercase = (params) => inst.check(checks.uppercase(params));
 
@@ -1575,10 +1575,10 @@ export const ZodSet: core.$constructor<ZodSet> = /*@__PURE__*/ core.$constructor
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.setProcessor(inst, ctx, json, params);
 
-  inst.min = (...args) => inst.check(core._minSize(...args));
+  inst.min = (minSize, params) => inst.check(core._minSize(minSize, params));
   inst.nonempty = (params) => inst.check(core._minSize(1, params));
-  inst.max = (...args) => inst.check(core._maxSize(...args));
-  inst.size = (...args) => inst.check(core._size(...args));
+  inst.max = (maxSize, params) => inst.check(core._maxSize(maxSize, params));
+  inst.size = (size, params) => inst.check(core._size(size, params));
 });
 
 export function set<Value extends core.SomeType>(
