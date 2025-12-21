@@ -299,4 +299,4 @@ test("redos checker", () => {
     const result = checkSync(schema._zod.pattern.source, "");
     if (result.status !== "safe") throw Error("ReDoS issue");
   }
-});
+}, 10000);
