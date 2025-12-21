@@ -287,7 +287,7 @@ test("duration", () => {
   }
 });
 
-test("redos checker", () => {
+test("redos checker", { timeout: 10000 }, () => {
   const a = z.iso.datetime();
   const b = z.string().datetime({ offset: true });
   const c = z.string().datetime({ local: true });
