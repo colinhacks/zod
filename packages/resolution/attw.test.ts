@@ -23,7 +23,7 @@ describe("Are The Types Wrong (attw) tests", () => {
         timeout: 5000,
       });
     } catch (error) {
-      console.warn("attw not available, skipping test");
+      // Skip test if attw is not available (don't use console.warn as it's blocked in tests)
       return;
     }
 

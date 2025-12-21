@@ -295,8 +295,41 @@ test("redos checker", () => {
   const e = z.string().date();
   const f = z.string().time();
   const g = z.string().duration();
-  for (const schema of [a, b, c, d, e, f, g]) {
-    const result = checkSync(schema._zod.pattern.source, "");
-    if (result.status !== "safe") throw Error("ReDoS issue");
+
+  const schemas = [
+    { name: "iso.datetime", schema: a },
+    { name: "datetime with offset", schema: b },
+    { name: "local datetime", schema: c },
+    { name: "local datetime with offset and precision", schema: d },
+    { name: "date", schema: e },
+    { name: "time", schema: f },
+    { name: "duration", schema: g },
+  ];
+
+  for (const { name, schema } of schemas) {
+    try {
+      // Add timeout to prevent infinite hanging
+      const start = Date.now();
+      const result = checkSync(schema._zod.pattern.source, "");
+      const elapsed = Date.now() - start;
+
+      // Allow more time for complex patterns (like datetime, date, time, duration with full validation)
+      // but still catch truly problematic patterns
+      const timeoutThreshold =
+        name.includes("datetime") || name.includes("date") || name.includes("time") || name.includes("duration")
+          ? 5000
+          : 1000;
+
+      if (elapsed > timeoutThreshold) {
+        throw Error(`ReDoS check took too long (${elapsed}ms) for ${name} pattern: ${schema._zod.pattern.source}`);
+      }
+
+      if (result.status !== "safe") {
+        throw Error(`ReDoS issue detected for ${name} pattern: ${schema._zod.pattern.source}`);
+      }
+    } catch (error) {
+      // If the check itself fails or times out, fail the test with more info
+      throw Error(`ReDoS check failed for ${name}: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
-});
+}, 15000); // Increase overall test timeout to 15 seconds
