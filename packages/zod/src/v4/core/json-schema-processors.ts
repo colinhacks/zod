@@ -36,15 +36,10 @@ export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _jso
     json.format = formatMap[format as checks.$ZodStringFormats] ?? format;
     if (json.format === "") delete json.format; // empty format is not valid
 
-    // For ISO time with non-standard precision, omit format: "time" as it conflicts with the pattern
+    // JSON Schema format: "time" requires a full time with offset or Z
+    // z.iso.time() does not include timezone information, so format: "time" should never be used
     if (format === "time") {
-      const def = schema._zod.def as any;
-      const precision = def.precision;
-      // RFC 3339 time format requires at least HH:MM:SS (precision >= 0)
-      // When precision is -1 (minute precision only), the pattern doesn't match the "time" format
-      if (precision === -1) {
-        delete json.format;
-      }
+      delete json.format;
     }
   }
   if (contentEncoding) json.contentEncoding = contentEncoding;
