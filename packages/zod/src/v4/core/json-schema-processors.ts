@@ -232,6 +232,7 @@ export const fileProcessor: Processor<schemas.$ZodFile> = (schema, _ctx, json, _
         const mFile: JSONSchema.StringSchema = { ...file, contentMediaType: m };
         return mFile;
       });
+      // Don't add properties to root when using anyOf
     }
   } else {
     Object.assign(_json, file);
