@@ -177,8 +177,25 @@ export function process<T extends schemas.$ZodType>(
     if (parent) {
       // schema was cloned from another schema
       result.ref = parent;
-      process(parent, ctx, params);
+      // Process the current schema to capture its specific properties (like bag)
+      // but mark the parent as processed to avoid duplication
+      const parentSeen = ctx.seen.get(parent);
+      if (!parentSeen) {
+        process(parent, ctx, params);
+      }
       ctx.seen.get(parent)!.isParent = true;
+
+      // Process current schema to capture its accumulated properties
+      if (schema._zod.processJSONSchema) {
+        schema._zod.processJSONSchema(ctx, result.schema, params);
+      } else {
+        const _json = result.schema;
+        const processor = ctx.processors[def.type];
+        if (!processor) {
+          throw new Error(`[toJSONSchema]: Non-representable type encountered: ${def.type}`);
+        }
+        processor(schema, ctx, _json, params);
+      }
     } else if (schema._zod.processJSONSchema) {
       schema._zod.processJSONSchema(ctx, result.schema, params);
     } else {
