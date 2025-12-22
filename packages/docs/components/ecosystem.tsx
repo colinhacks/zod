@@ -292,6 +292,12 @@ const zodUtilities: ZodResource[] = [
     description: "A utility library for recursively comparing Zod schemas.",
     slug: "lawvs/zod-compare",
   },
+  {
+    name: "zod-ir",
+    url: "https://github.com/Reza-kh80/zod-ir",
+    description: "Comprehensive validation for Iranian data structures (National Code, Bank Cards, Sheba, Crypto, etc) with smart metadata extraction (Bank Names, Logos). Zero dependencies.",
+    slug: "Reza-kh80/zod-ir",
+  },
 ];
 
 export {

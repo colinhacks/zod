@@ -625,6 +625,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`zod-sandbox`](https://github.com/nereumelo/zod-sandbox): Controlled environment for testing zod schemas. [Live demo](https://zod-sandbox.vercel.app/).
 - [`zod-dev`](https://github.com/schalkventer/zod-dev): Conditionally disables Zod runtime parsing in production.
 - [`zod-accelerator`](https://github.com/duplojs/duplojs-zod-accelerator): Accelerates Zod's throughput up to ~100x.
+- [`zod-ir`](https://github.com/Reza-kh80/zod-ir): Comprehensive validation for Iranian data structures (National Code, Bank Cards, Sheba, Crypto, etc) with **smart metadata extraction** (Bank Names, Logos). Zero dependencies.
 
 <br/>
 
