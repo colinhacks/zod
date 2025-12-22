@@ -253,7 +253,7 @@ export interface _ZodString<T extends core.$ZodStringInternals<unknown> = core.$
 
   // miscellaneous checks
   regex(regex: RegExp, params?: string | core.$ZodCheckRegexParams): this;
-  includes(value: string, params?: core.$ZodCheckIncludesParams): this;
+  includes(value: string, params?: string | core.$ZodCheckIncludesParams): this;
   startsWith(value: string, params?: string | core.$ZodCheckStartsWithParams): this;
   endsWith(value: string, params?: string | core.$ZodCheckEndsWithParams): this;
   min(minLength: number, params?: string | core.$ZodCheckMinLengthParams): this;
