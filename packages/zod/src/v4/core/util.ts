@@ -582,6 +582,12 @@ export const BIGINT_FORMAT_RANGES: Record<checks.$ZodBigIntFormats, [bigint, big
 export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>): any {
   const currDef = schema._zod.def;
 
+  const checks = currDef.checks;
+  const hasChecks = checks && checks.length > 0;
+  if (hasChecks) {
+    throw new Error(".pick() cannot be used on object schemas containing refinements");
+  }
+
   const def = mergeDefs(schema._zod.def, {
     get shape() {
       const newShape: Writeable<schemas.$ZodShape> = {};
@@ -604,6 +610,12 @@ export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>):
 
 export function omit(schema: schemas.$ZodObject, mask: object): any {
   const currDef = schema._zod.def;
+
+  const checks = currDef.checks;
+  const hasChecks = checks && checks.length > 0;
+  if (hasChecks) {
+    throw new Error(".omit() cannot be used on object schemas containing refinements");
+  }
 
   const def = mergeDefs(schema._zod.def, {
     get shape() {
