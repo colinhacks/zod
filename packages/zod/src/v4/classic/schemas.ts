@@ -1540,6 +1540,10 @@ export interface ZodMap<Key extends core.SomeType = core.$ZodType, Value extends
   "~standard": ZodStandardSchemaWithJSON<this>;
   keyType: Key;
   valueType: Value;
+  min(minSize: number, params?: string | core.$ZodCheckMinSizeParams): this;
+  nonempty(params?: string | core.$ZodCheckMinSizeParams): this;
+  max(maxSize: number, params?: string | core.$ZodCheckMaxSizeParams): this;
+  size(size: number, params?: string | core.$ZodCheckSizeEqualsParams): this;
 }
 export const ZodMap: core.$constructor<ZodMap> = /*@__PURE__*/ core.$constructor("ZodMap", (inst, def) => {
   core.$ZodMap.init(inst, def);
@@ -1547,6 +1551,10 @@ export const ZodMap: core.$constructor<ZodMap> = /*@__PURE__*/ core.$constructor
   inst._zod.processJSONSchema = (ctx, json, params) => processors.mapProcessor(inst, ctx, json, params);
   inst.keyType = def.keyType;
   inst.valueType = def.valueType;
+  inst.min = (...args) => inst.check(core._minSize(...args));
+  inst.nonempty = (params) => inst.check(core._minSize(1, params));
+  inst.max = (...args) => inst.check(core._maxSize(...args));
+  inst.size = (...args) => inst.check(core._size(...args));
 });
 
 export function map<Key extends core.SomeType, Value extends core.SomeType>(
