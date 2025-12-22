@@ -22,7 +22,7 @@ describe("Are The Types Wrong (attw) tests", () => {
         cwd: __dirname,
         timeout: 5000,
       });
-    } catch (error) {
+    } catch (_error) {
       console.warn("attw not available, skipping test");
       return;
     }

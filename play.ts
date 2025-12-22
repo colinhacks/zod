@@ -24,8 +24,6 @@ function testRoundTrip(name: string, schema: z.ZodType) {
   }
 }
 
-const x: `${bigint}` = "123n";
-
 console.log("=== Primitive Types ===\n");
 
 testRoundTrip("z.string()", z.string());
