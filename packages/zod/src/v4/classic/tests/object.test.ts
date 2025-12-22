@@ -422,17 +422,28 @@ test("extend() should return schema with new key", () => {
   expectTypeOf<PersonWithNickname>().toEqualTypeOf<{ firstName: string; lastName: string; nickName: string }>();
 });
 
-test("extend() should have power to override existing key", () => {
-  const PersonWithNumberAsLastName = personToExtend.extend({
+test("extend() should throw when overriding existing key", () => {
+  const schema = personToExtend.extend({
     lastName: z.number(),
   });
-  type PersonWithNumberAsLastName = z.infer<typeof PersonWithNumberAsLastName>;
+  // Error is thrown when shape is accessed (e.g., during parse)
+  expect(() => schema.parse({ firstName: "f", lastName: 42 })).toThrow(
+    '.extend() cannot overwrite existing key "lastName". Use .safeExtend() instead.'
+  );
+});
 
-  const expected = { firstName: "f", lastName: 42 };
-  const actual = PersonWithNumberAsLastName.parse(expected);
+test("safeExtend() should have power to override existing key", () => {
+  const PersonWithMinLastName = personToExtend.safeExtend({
+    lastName: z.string().min(3),
+  });
+  type PersonWithMinLastName = z.infer<typeof PersonWithMinLastName>;
+
+  const expected = { firstName: "f", lastName: "abc" };
+  const actual = PersonWithMinLastName.parse(expected);
 
   expect(actual).toEqual(expected);
-  expectTypeOf<PersonWithNumberAsLastName>().toEqualTypeOf<{ firstName: string; lastName: number }>();
+  expect(() => PersonWithMinLastName.parse({ firstName: "f", lastName: "ab" })).toThrow();
+  expectTypeOf<PersonWithMinLastName>().toEqualTypeOf<{ firstName: string; lastName: string }>();
 });
 
 test("safeExtend() maintains refinements", () => {

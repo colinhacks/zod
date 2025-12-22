@@ -1031,12 +1031,6 @@ z.never(); // inferred type: `never`
 
 ## Objects
 
-
-<Callout type="warn"> 
-  Object methods (`.pick()`, `.omit()`, `.extend()`, etc.) will discard the refinements defined on the base object. However, `.safeExtend()` will preserve them.
-</Callout>
-
-
 To define an object type:
 
 ```ts z.object
@@ -1112,8 +1106,6 @@ LooseDog.parse({ name: "Yeller", extraKey: true });
 ### `.catchall()`
 
 To define a *catchall schema* that will be used to validate any unrecognized keys:
-
-
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">

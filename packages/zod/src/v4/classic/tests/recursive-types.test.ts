@@ -308,19 +308,13 @@ test("object utilities with recursive types", () => {
     },
   });
 
-  // Test extend
+  // Test extend with new keys (extend throws when overwriting existing keys)
   const NodeOne = NodeBase.extend({
-    name: z.literal("nodeOne"),
-    get children() {
-      return z.array(Node);
-    },
+    type: z.literal("nodeOne"),
   });
 
   const NodeTwo = NodeBase.extend({
-    name: z.literal("nodeTwo"),
-    get children() {
-      return z.array(Node);
-    },
+    type: z.literal("nodeTwo"),
   });
 
   // Test pick
