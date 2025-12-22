@@ -470,6 +470,7 @@ describe("toJSONSchema", () => {
             "pattern": "stuff",
           },
         ],
+        "pattern": "^hello.*",
         "type": "string",
       }
     `);
@@ -512,6 +513,7 @@ describe("toJSONSchema", () => {
             "type": "string",
           },
         ],
+        "pattern": "^hello.*",
         "type": "string",
       }
     `);
@@ -540,6 +542,7 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(z.number().gt(5).gte(10))).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "exclusiveMinimum": 5,
         "minimum": 10,
         "type": "number",
       }
@@ -556,6 +559,7 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(z.number().lt(5).lt(3).lte(2))).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "exclusiveMaximum": 3,
         "maximum": 2,
         "type": "number",
       }
@@ -564,6 +568,7 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(z.number().lt(5).lte(3))).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "exclusiveMaximum": 5,
         "maximum": 3,
         "type": "number",
       }
@@ -1932,10 +1937,12 @@ test("describe with id", () => {
         "current": {
           "$ref": "#/$defs/jobId",
           "description": "Current job",
+          "type": "string",
         },
         "previous": {
           "$ref": "#/$defs/jobId",
           "description": "Previous job",
+          "type": "string",
         },
       },
       "required": [
@@ -1966,6 +1973,7 @@ test("overwrite id", () => {
         "bbb": {
           "$ref": "#/$defs/aaa",
           "id": "bbb",
+          "type": "string",
         },
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2005,6 +2013,7 @@ test("overwrite id", () => {
         "ccc": {
           "$ref": "#/$defs/aaa",
           "id": "ccc",
+          "type": "string",
         },
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2068,22 +2077,16 @@ test("overwrite descriptions", () => {
   );
   expect(b).toMatchInlineSnapshot(`
     {
-      "$defs": {
-        "__schema0": {
-          "description": "c",
-          "type": "string",
-        },
-      },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
       "properties": {
         "d": {
-          "$ref": "#/$defs/__schema0",
           "description": "d",
+          "type": "string",
         },
         "e": {
-          "$ref": "#/$defs/__schema0",
           "description": "e",
+          "type": "string",
         },
       },
       "required": [
@@ -2697,6 +2700,9 @@ test("z.file()", () => {
           "type": "string",
         },
       ],
+      "contentEncoding": "binary",
+      "format": "binary",
+      "type": "string",
     }
   `);
 });
@@ -2769,6 +2775,7 @@ test("metadata preservation through method chaining", () => {
       "properties": {
         "name": {
           "describe": "First name",
+          "minLength": 1,
           "title": "Name Field",
           "type": "string",
         },
@@ -2791,6 +2798,10 @@ test("metadata preservation through method chaining", () => {
       "additionalProperties": false,
       "properties": {
         "email": {
+          "format": "email",
+          "maxLength": 100,
+          "minLength": 5,
+          "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
           "title": "Email Address",
           "type": "string",
         },
@@ -2814,6 +2825,7 @@ test("metadata preservation through method chaining", () => {
       "properties": {
         "name": {
           "describe": "Last name",
+          "minLength": 1,
           "type": "string",
         },
       },
