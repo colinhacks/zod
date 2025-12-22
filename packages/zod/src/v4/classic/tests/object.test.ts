@@ -422,14 +422,17 @@ test("extend() should return schema with new key", () => {
   expectTypeOf<PersonWithNickname>().toEqualTypeOf<{ firstName: string; lastName: string; nickName: string }>();
 });
 
-test("extend() should throw when overriding existing key", () => {
-  const schema = personToExtend.extend({
+test("extend() should have power to override existing key", () => {
+  const PersonWithNumberAsLastName = personToExtend.extend({
     lastName: z.number(),
   });
-  // Error is thrown when shape is accessed (e.g., during parse)
-  expect(() => schema.parse({ firstName: "f", lastName: 42 })).toThrow(
-    '.extend() cannot overwrite existing key "lastName". Use .safeExtend() instead.'
-  );
+  type PersonWithNumberAsLastName = z.infer<typeof PersonWithNumberAsLastName>;
+
+  const expected = { firstName: "f", lastName: 42 };
+  const actual = PersonWithNumberAsLastName.parse(expected);
+
+  expect(actual).toEqual(expected);
+  expectTypeOf<PersonWithNumberAsLastName>().toEqualTypeOf<{ firstName: string; lastName: number }>();
 });
 
 test("safeExtend() should have power to override existing key", () => {

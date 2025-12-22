@@ -650,13 +650,7 @@ export function extend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): an
 
   const def = mergeDefs(schema._zod.def, {
     get shape() {
-      const existingShape = schema._zod.def.shape;
-      for (const key in shape) {
-        if (key in existingShape) {
-          throw new Error(`.extend() cannot overwrite existing key "${key}". Use .safeExtend() instead.`);
-        }
-      }
-      const _shape = { ...existingShape, ...shape };
+      const _shape = { ...schema._zod.def.shape, ...shape };
       assignProp(this, "shape", _shape); // self-caching
       return _shape;
     },
