@@ -2753,3 +2753,74 @@ test("cycle detection - mutual recursion", () => {
     Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.]
   `);
 });
+
+test("metadata preservation through method chaining", () => {
+  // Test for issue: .meta() is ignored in toJSONSchema unless it's the last chained method
+
+  // Case 1: meta() followed by method chaining should preserve metadata
+  const metaFirstSchema = z.object({
+    name: z.string().meta({ describe: "First name", title: "Name Field" }).min(1),
+  });
+
+  expect(z.toJSONSchema(metaFirstSchema)).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "describe": "First name",
+          "title": "Name Field",
+          "type": "string",
+        },
+      },
+      "required": [
+        "name",
+      ],
+      "type": "object",
+    }
+  `);
+
+  // Case 2: Multiple method chaining with meta() in the middle
+  const complexChainSchema = z.object({
+    email: z.string().meta({ title: "Email Address" }).email().min(5).max(100),
+  });
+
+  expect(z.toJSONSchema(complexChainSchema)).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "email": {
+          "title": "Email Address",
+          "type": "string",
+        },
+      },
+      "required": [
+        "email",
+      ],
+      "type": "object",
+    }
+  `);
+
+  // Case 3: Ensure meta() at end still works (regression check)
+  const metaLastSchema = z.object({
+    name: z.string().min(1).meta({ describe: "Last name" }),
+  });
+
+  expect(z.toJSONSchema(metaLastSchema)).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "describe": "Last name",
+          "type": "string",
+        },
+      },
+      "required": [
+        "name",
+      ],
+      "type": "object",
+    }
+  `);
+});

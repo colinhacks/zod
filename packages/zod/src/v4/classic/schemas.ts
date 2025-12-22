@@ -169,7 +169,8 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
             typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
           ),
         ],
-      })
+      }),
+      { parent: true }
     );
   };
   inst.clone = (def, params) => core.clone(inst, def, params);
