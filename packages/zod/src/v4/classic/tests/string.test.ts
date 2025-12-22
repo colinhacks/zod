@@ -35,6 +35,13 @@ test("includes", () => {
   expect(() => includesFromIndex2.parse("XincludesXX")).toThrow();
 });
 
+test("includes with string error message", () => {
+  const schema = z.string().includes("test", "must contain test");
+  schema.parse("this is a test");
+
+  expect(() => schema.parse("this is invalid")).toThrow();
+});
+
 test("startswith/endswith", () => {
   startsWith.parse("startsWithX");
   endsWith.parse("XendsWith");
