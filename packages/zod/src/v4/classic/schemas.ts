@@ -48,7 +48,9 @@ export interface ZodType<
       : ["Incompatible schema"]
   ): this;
 
-  brand<T extends PropertyKey = PropertyKey>(value?: T): PropertyKey extends T ? this : core.$ZodBranded<this, T>;
+  brand<T extends PropertyKey = PropertyKey, Dir extends "in" | "out" | "inout" = "out">(
+    value?: T
+  ): PropertyKey extends T ? this : core.$ZodBranded<this, T, Dir>;
 
   // parsing
   parse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;

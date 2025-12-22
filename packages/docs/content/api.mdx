@@ -2906,13 +2906,30 @@ Under the hood, this works by attaching a "brand" to the schema's inferred type.
 
 ```ts
 const Cat = z.object({ name: z.string() }).brand<"Cat">();
-type Cat = z.infer<typeof Cat>; // { name: string } & z.$brand<"Cat">
+type Cat = z.output<typeof Cat>; // { name: string } & z.$brand<"Cat">
 ```
 
 With this brand, any plain (unbranded) data structures are no longer assignable to the inferred type. You have to parse some data with the schema to get branded data.
 
-
 > Note that branded types do not affect the runtime result of `.parse`. It is a static-only construct.
+
+By default, only the *output type* is branded. 
+
+```ts
+const USD = z.string().brand<"USD">();
+
+type USDOutput = z.output<typeof USD>; // string & z.$brand<"USD">
+type USDInput = z.input<typeof USD>; // string
+```
+
+To customize this, pass a second generic to `.brand()` to specify the direction of the brand.
+
+```ts
+// requires Zod 4.2+
+z.string().brand<"Cat", "in">(); // output is branded (default)
+z.string().brand<"Cat", "out">(); // input is branded
+z.string().brand<"Cat", "inout">(); // both are branded
+```
 
 ## Readonly
 
