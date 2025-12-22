@@ -39,7 +39,21 @@ test("includes with string error message", () => {
   const schema = z.string().includes("test", "must contain test");
   schema.parse("this is a test");
 
-  expect(() => schema.parse("this is invalid")).toThrow();
+  expect(schema.safeParse("this is invalid")).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "origin": "string",
+        "code": "invalid_format",
+        "format": "includes",
+        "includes": "test",
+        "path": [],
+        "message": "must contain test"
+      }
+    ]],
+      "success": false,
+    }
+  `);
 });
 
 test("startswith/endswith", () => {
