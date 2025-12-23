@@ -694,6 +694,13 @@ export function partial(
   schema: schemas.$ZodObject,
   mask: object | undefined
 ): any {
+  const currDef = schema._zod.def;
+  const checks = currDef.checks;
+  const hasChecks = checks && checks.length > 0;
+  if (hasChecks) {
+    throw new Error(".partial() cannot be used on object schemas containing refinements");
+  }
+
   const def = mergeDefs(schema._zod.def, {
     get shape() {
       const oldShape = schema._zod.def.shape;
@@ -769,7 +776,6 @@ export function required(
       assignProp(this, "shape", shape); // self-caching
       return shape;
     },
-    checks: [],
   });
 
   return clone(schema, def) as any;
