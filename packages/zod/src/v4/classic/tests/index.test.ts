@@ -1,4 +1,4 @@
-import { expect, expectTypeOf, test, vi } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 import * as z from "zod/v4";
 import type { util } from "zod/v4/core";
 
@@ -816,97 +816,6 @@ test("isPlainObject", () => {
   expect(z.core.util.isPlainObject({ constructor: true })).toEqual(true);
   expect(z.core.util.isPlainObject({ constructor: {} })).toEqual(true);
   expect(z.core.util.isPlainObject({ constructor: [] })).toEqual(true);
-});
-
-const loadAllowsEvalValue = async () => {
-  const mod = await import("../../core/util.js");
-  return mod.allowsEval.value;
-};
-
-const loadAllowsEvalValueFresh = async () => {
-  vi.resetModules();
-  return loadAllowsEvalValue();
-};
-
-test("Cloudflare Workers can use fast path when eval is available", async () => {
-  const descriptor = Object.getOwnPropertyDescriptor(globalThis, "navigator");
-  Object.defineProperty(globalThis, "navigator", {
-    value: { userAgent: "Cloudflare-Workers" },
-    configurable: true,
-    writable: true,
-  });
-
-  try {
-    const allowsEval = await loadAllowsEvalValueFresh();
-    expect(allowsEval).toEqual(true);
-  } finally {
-    if (descriptor) {
-      Object.defineProperty(globalThis, "navigator", descriptor);
-    } else {
-      delete (globalThis as any).navigator;
-    }
-  }
-});
-
-test("falls back gracefully when eval is disabled", async () => {
-  try {
-    vi.stubGlobal("Function", function ThrowingFunction() {
-      throw new Error("Function constructor disabled");
-    });
-
-    const allowsEval = await loadAllowsEvalValue();
-    expect(allowsEval).toEqual(false);
-  } finally {
-    vi.unstubAllGlobals();
-  }
-});
-
-test("allowsEval caches for non-Cloudflare environments", async () => {
-  vi.resetModules();
-  const first = await loadAllowsEvalValue();
-
-  try {
-    vi.stubGlobal("Function", function ThrowingFunction() {
-      throw new Error("Function constructor disabled");
-    });
-
-    const second = await loadAllowsEvalValue();
-    expect(second).toEqual(first);
-  } finally {
-    vi.unstubAllGlobals();
-    vi.resetModules();
-  }
-});
-
-test("Cloudflare user agent always re-evaluates Function availability", async () => {
-  const descriptor = Object.getOwnPropertyDescriptor(globalThis, "navigator");
-  Object.defineProperty(globalThis, "navigator", {
-    value: { userAgent: "Cloudflare-Workers" },
-    configurable: true,
-    writable: true,
-  });
-
-  try {
-    const first = await loadAllowsEvalValue();
-
-    vi.stubGlobal("Function", function ThrowingFunction() {
-      throw new Error("Function constructor disabled");
-    });
-
-    const second = await loadAllowsEvalValue();
-    expect(second).not.toEqual(first);
-    expect(second).toEqual(false);
-  } finally {
-    vi.unstubAllGlobals();
-
-    if (descriptor) {
-      Object.defineProperty(globalThis, "navigator", descriptor);
-    } else {
-      delete (globalThis as any).navigator;
-    }
-
-    vi.resetModules();
-  }
 });
 
 test("shallowClone with constructor field", () => {

@@ -368,30 +368,27 @@ export function isObject(data: any): data is Record<PropertyKey, unknown> {
   return typeof data === "object" && data !== null && !Array.isArray(data);
 }
 
-const canUseFunction = () => {
-  try {
-    const F = Function;
-    new F("");
-    return true;
-  } catch (_) {
-    return false;
-  }
-};
-
-const cachedCanUseFunction = cached(canUseFunction);
-
 const userAgent = typeof navigator === "undefined" ? undefined : navigator?.userAgent;
 const isCloudflare = typeof userAgent === "string" && userAgent.includes("Cloudflare");
 
+let _allowsEval: boolean;
+try {
+  const F = Function;
+  new F("");
+  _allowsEval = true;
+} catch (_) {
+  _allowsEval = false;
+}
+
+if (isCloudflare && _allowsEval) {
+  Promise.resolve().then(() => {
+    _allowsEval = false;
+  });
+}
+
 export const allowsEval: { readonly value: boolean } = {
   get value() {
-    // Cloudflare allows using new Function in the module scope but not in the request scope
-    // There is no way to tell when the zod schema is being parsed so we have to check every time to be sure
-    if (isCloudflare) {
-      return canUseFunction();
-    }
-
-    return cachedCanUseFunction.value;
+    return _allowsEval;
   },
 };
 
