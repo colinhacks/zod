@@ -368,9 +368,6 @@ export function isObject(data: any): data is Record<PropertyKey, unknown> {
   return typeof data === "object" && data !== null && !Array.isArray(data);
 }
 
-const userAgent = typeof navigator === "undefined" ? undefined : navigator?.userAgent;
-const isCloudflare = typeof userAgent === "string" && userAgent.includes("Cloudflare");
-
 let _allowsEval: boolean;
 try {
   const F = Function;
@@ -381,7 +378,7 @@ try {
 }
 
 export const allowsEval: { readonly value: boolean } =
-  isCloudflare && _allowsEval
+  typeof navigator !== "undefined" && navigator.userAgent?.includes("Cloudflare") && _allowsEval
     ? (() => {
         let val = true;
         Promise.resolve().then(() => {
