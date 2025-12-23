@@ -1,4 +1,4 @@
-import { test } from "vitest";
+import { expect, test } from "vitest";
 import * as z from "zod/v3";
 
 const crazySchema = z.object({
@@ -40,7 +40,7 @@ const crazySchema = z.object({
 // });
 
 test("parse", () => {
-  crazySchema.parse({
+  const input = {
     tuple: ["asdf", 1234, true, null, undefined, "1234"],
     merged: { k1: "asdf", k2: 12 },
     union: ["asdf", 12, "asdf", 12, "asdf", 12],
@@ -52,5 +52,19 @@ test("parse", () => {
     nonstrict: { points: 1234 },
     numProm: Promise.resolve(12),
     lenfun: (x: string) => x.length,
-  });
+  };
+
+  const result = crazySchema.parse(input);
+
+  // Verify the parsed result structure
+  expect(result.tuple).toEqual(input.tuple);
+  expect(result.merged).toEqual(input.merged);
+  expect(result.union).toEqual(input.union);
+  expect(result.array).toEqual(input.array);
+  expect(result.sumMinLength).toEqual(input.sumMinLength);
+  expect(result.intersection).toEqual(input.intersection);
+  expect(result.enum).toEqual(input.enum);
+  expect(result.nonstrict).toEqual(input.nonstrict);
+  expect(result.numProm).toBeInstanceOf(Promise);
+  expect(typeof result.lenfun).toBe("function");
 });

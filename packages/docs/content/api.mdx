@@ -259,6 +259,7 @@ z.cuid2();
 z.ulid();
 z.ipv4();
 z.ipv6();
+z.mac();
 z.cidrv4();        // ipv4 CIDR block
 z.cidrv6();        // ipv6 CIDR block
 z.hash("sha256");  // or "sha1", "sha384", "sha512", "md5"
@@ -466,7 +467,7 @@ date.parse("2020-01-32"); // ❌
 
 ### ISO times
 
-The `z.iso.time()` method validates strings in the format `HH:MM[:SS[.s+]]`. By default seconds are optional, as are sub-second deciams.
+The `z.iso.time()` method validates strings in the format `HH:MM[:SS[.s+]]`. By default seconds are optional, as are sub-second decimals.
 
 ```ts
 const time = z.iso.time();
@@ -487,10 +488,10 @@ Use the `precision` parameter to constrain the allowable decimal precision.
 
 ```ts
 z.iso.time({ precision: -1 }); // HH:MM (minute precision)
-z.iso.time({ precision: 0 }); // HH:MM:SS (second precision)
-z.iso.time({ precision: 1 }); // HH:MM:SS.s (decisecond precision)
-z.iso.time({ precision: 2 }); // HH:MM:SS.ss (centisecond precision)
-z.iso.time({ precision: 3 }); // HH:MM:SS.sss (millisecond precision)
+z.iso.time({ precision: 0 });  // HH:MM:SS (second precision)
+z.iso.time({ precision: 1 });  // HH:MM:SS.s (decisecond precision)
+z.iso.time({ precision: 2 });  // HH:MM:SS.ss (centisecond precision)
+z.iso.time({ precision: 3 });  // HH:MM:SS.sss (millisecond precision)
 ```
 
 ### IP addresses
@@ -508,11 +509,27 @@ ipv6.parse("2001:db8:85a3::8a2e:370:7334"); // ✅
 Validate IP address ranges specified with [CIDR notation](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing).
 
 ```ts
-const cidrv4 = z.string().cidrv4();
+const cidrv4 = z.cidrv4();
 cidrv4.parse("192.168.0.0/24"); // ✅
 
-const cidrv6 = z.string().cidrv6();
+const cidrv6 = z.cidrv6();
 cidrv6.parse("2001:db8::/32"); // ✅
+```
+
+### MAC Addresses
+
+Validate standard 48-bit MAC address [IEEE 802](https://en.wikipedia.org/wiki/MAC_address).
+
+```ts
+const mac = z.mac(); 
+mac.parse("00:1A:2B:3C:4D:5E");  // ✅
+mac.parse("00-1a-2b-3c-4d-5e");  // ❌ colon-delimited by default
+mac.parse("001A:2B3C:4D5E");     // ❌ standard formats only
+mac.parse("00:1A:2b:3C:4d:5E");  // ❌ no mixed case
+
+// custom delimiter
+const dashMac = z.mac({ delimiter: "-" });
+dashMac.parse("00-1A-2B-3C-4D-5E"); // ✅
 ```
 
 ### JWTs
@@ -791,20 +808,33 @@ FishEnum.parse("Swordfish"); // => ❌
   ```
 </Callout>
 
-Enum-like object literals (`{ [key: string]: string | number }`) are supported.
+Enum-like object literals (`{ [key: string]: string | number }`) are supported. 
 
 ```ts
 const Fish = {
-  Salmon: "Salmon",
-  Tuna: "Tuna"
+  Salmon: 0,
+  Tuna: 1
 } as const
 
 const FishEnum = z.enum(Fish)
-FishEnum.parse("Salmon"); // => "Salmon"
-FishEnum.parse("Swordfish"); // => ❌
+FishEnum.parse(Fish.Salmon); // => ✅
+FishEnum.parse(0); // => ✅
+FishEnum.parse(2); // => ❌
 ```
 
-You can also pass in an externally-declared TypeScript enum. 
+You can also pass in an externally-declared TypeScript enum.
+
+```ts
+enum Fish {
+  Salmon = 0,
+  Tuna = 1
+}
+
+const FishEnum = z.enum(Fish);
+FishEnum.parse(Fish.Salmon); // => ✅
+FishEnum.parse(0); // => ✅
+FishEnum.parse(2); // => ❌
+```
 
 <Callout>
 **Zod 4** — This replaces the `z.nativeEnum()` API in Zod 3. 
@@ -1227,7 +1257,7 @@ This approach has a few advantages:
 
 ### `.safeExtend()`
 
-The `.safeExtend()` method works similarly to `.extend()`, but it won't let you overwrite an existing properly with a non-assignable schema. In other words, the result of `.safeExtend()` will have an inferred type that [`extends`](https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#conditional-type-constraints) the original (in the TypeScript sense).
+The `.safeExtend()` method works similarly to `.extend()`, but it won't let you overwrite an existing property with a non-assignable schema. In other words, the result of `.safeExtend()` will have an inferred type that [`extends`](https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#conditional-type-constraints) the original (in the TypeScript sense).
 
 ```ts
 z.object({ a: z.string() }).safeExtend({ a: z.string().min(5) }); // ✅
@@ -1668,6 +1698,38 @@ console.log(optionalUrl.safeParse("not a valid url").success); // false
 
 <br/> */}
 
+## Exclusive unions (XOR)
+
+An exclusive union (XOR) is a union where exactly one option must match. Unlike regular unions that succeed when any option matches, `z.xor()` fails if zero options match OR if multiple options match.
+
+```ts
+const schema = z.xor([z.string(), z.number()]);
+
+schema.parse("hello"); // ✅ passes
+schema.parse(42);      // ✅ passes
+schema.parse(true);    // ❌ fails (zero matches)
+```
+
+This is useful when you want to ensure mutual exclusivity between options:
+
+```ts
+// Validate that exactly ONE of these matches
+const payment = z.xor([
+  z.object({ type: z.literal("card"), cardNumber: z.string() }),
+  z.object({ type: z.literal("bank"), accountNumber: z.string() }),
+]);
+
+payment.parse({ type: "card", cardNumber: "1234" }); // ✅ passes
+```
+
+If the input could match multiple options, `z.xor()` will fail:
+
+```ts
+const overlapping = z.xor([z.string(), z.any()]);
+overlapping.parse("hello"); // ❌ fails (matches both string and any)
+```
+
+
 ## Discriminated unions
 
 A [discriminated union](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions) is a special kind of union in which a) all the options are object schemas that b) share a particular key (the "discriminator"). Based on the value of the discriminator key, TypeScript is able to "narrow" the type signature as you'd expect.
@@ -1736,6 +1798,7 @@ Each option should be an *object schema* whose discriminator prop (`status` in t
 </Accordion>
 </Accordions>
 
+
 ## Intersections
 
 Intersection types (`A & B`) represent a logical "AND". 
@@ -1770,6 +1833,8 @@ type EmployedPerson = z.infer<typeof EmployedPerson>;
 
 Record schemas are used to validate types such as `Record<string, string>`.
 
+### `z.record`
+
 ```ts
 const IdCache = z.record(z.string(), z.string());
 type IdCache = z.infer<typeof IdCache>; // Record<string, string>
@@ -1796,6 +1861,9 @@ const Person = z.record(Keys, z.string());
 // { id: string; name: string; email: string }
 ```
 
+### `z.partialRecord`
+
+
 <Callout>
   **Zod 4** — In Zod 4, if you pass a `z.enum` as the first argument to `z.record()`, Zod will exhaustively check that all enum values exist in the input as keys. This behavior agrees with TypeScript:
 
@@ -1815,6 +1883,23 @@ If you want a *partial* record type, use `z.partialRecord()`. This skips the spe
 const Keys = z.enum(["id", "name", "email"]).or(z.never()); 
 const Person = z.partialRecord(Keys, z.string());
 // { id?: string; name?: string; email?: string }
+```
+
+### `z.looseRecord`
+
+By default, `z.record()` errors on keys that don't match the key schema. Use `z.looseRecord()` to pass through non-matching keys unchanged. This is particularly useful when combined with intersections to model multiple pattern properties:
+
+```ts
+const schema = z.object({ name: z.string() }).passthrough()
+  .and(z.looseRecord(z.string().regex(/^S_/), z.string()))
+  .and(z.looseRecord(z.string().regex(/^N_/), z.number()));
+
+schema.parse({ 
+  name: "John",
+  other: "value",    // passes through unchanged
+  S_foo: "bar",     // validated as string
+  N_count: 123,     // validated as number
+});
 ```
 
 <Accordions>
@@ -2538,7 +2623,7 @@ z.parse(castToString, true); // => "true"
 </Tabs>
 
 <Callout type="warn">
-  Refinement functions should never throw. Thrown errors are not caught by Zod.
+  Transform functions should never throw. Thrown errors are not caught by Zod.
 </Callout>
 
 {/* The output type of the schema is inferred from the transform function:
@@ -2819,13 +2904,30 @@ Under the hood, this works by attaching a "brand" to the schema's inferred type.
 
 ```ts
 const Cat = z.object({ name: z.string() }).brand<"Cat">();
-type Cat = z.infer<typeof Cat>; // { name: string } & z.$brand<"Cat">
+type Cat = z.output<typeof Cat>; // { name: string } & z.$brand<"Cat">
 ```
 
 With this brand, any plain (unbranded) data structures are no longer assignable to the inferred type. You have to parse some data with the schema to get branded data.
 
-
 > Note that branded types do not affect the runtime result of `.parse`. It is a static-only construct.
+
+By default, only the *output type* is branded. 
+
+```ts
+const USD = z.string().brand<"USD">();
+
+type USDOutput = z.output<typeof USD>; // string & z.$brand<"USD">
+type USDInput = z.input<typeof USD>; // string
+```
+
+To customize this, pass a second generic to `.brand()` to specify the direction of the brand.
+
+```ts
+// requires Zod 4.2+
+z.string().brand<"Cat", "in">(); // output is branded (default)
+z.string().brand<"Cat", "out">(); // input is branded
+z.string().brand<"Cat", "inout">(); // both are branded
+```
 
 ## Readonly
 

@@ -1,8 +1,8 @@
-import * as zodNext from "../zod/src/index.js";
-import * as zod4 from "zod4";
 import * as zod3 from "zod3";
+import * as zod4 from "zod4";
+import * as zodNext from "../zod/src/index.js";
 
-export {zod3, zod4, zodNext}
+export { zod3, zod4, zodNext };
 export function makeSchema<T>(factory: (z: typeof zod4) => T) {
   return {
     zod3: factory(zod3 as any) as T,

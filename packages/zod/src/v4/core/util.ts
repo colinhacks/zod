@@ -199,7 +199,7 @@ export function assertNotEqual<A, B>(val: AssertNotEqual<A, B>): AssertNotEqual<
 export function assertIs<T>(_arg: T): void {}
 
 export function assertNever(_x: never): never {
-  throw new Error();
+  throw new Error("Unexpected value in exhaustive check");
 }
 export function assert<T>(_: any): asserts _ is T {}
 
@@ -351,6 +351,15 @@ export function esc(str: string): string {
   return JSON.stringify(str);
 }
 
+export function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export const captureStackTrace: (targetObject: object, constructorOpt?: Function) => void = (
   "captureStackTrace" in Error ? Error.captureStackTrace : (..._args: any[]) => {}
 ) as any;
@@ -380,6 +389,8 @@ export function isPlainObject(o: any): o is Record<PropertyKey, unknown> {
   // modified constructor
   const ctor = o.constructor;
   if (ctor === undefined) return true;
+
+  if (typeof ctor !== "function") return true;
 
   // modified prototype
   const prot = ctor.prototype;

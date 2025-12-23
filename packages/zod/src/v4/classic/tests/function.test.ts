@@ -274,6 +274,58 @@ test("function with async refinements", async () => {
   expect(results).toEqual(["fail", "success"]);
 });
 
+test("implement async with transforms", async () => {
+  const typeGuard = (data: string): data is "1234" => data === "1234";
+  const codeSchema = z.string().transform((data, ctx) => {
+    if (typeGuard(data)) {
+      return data;
+    } else {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Invalid code",
+      });
+      return z.NEVER;
+    }
+  });
+  const inputSchema = z.object({
+    code: codeSchema,
+  });
+  const outputSchema = z.object({
+    data: z.array(z.string()).default([]),
+  });
+  const fnImplementation = async (data: z.infer<typeof inputSchema>): Promise<z.infer<typeof outputSchema>> => {
+    return {
+      data: [data.code],
+    };
+  };
+  const schema = z.function().input([inputSchema]).output(outputSchema);
+
+  const func = schema.implementAsync(fnImplementation);
+  type TheInterface = {
+    myFunction: (data: z.infer<typeof inputSchema>) => Promise<z.infer<typeof outputSchema>>;
+  };
+  const theImplementation: TheInterface = {
+    myFunction: func,
+  };
+  const results = [];
+  try {
+    await theImplementation.myFunction({
+      code: "1234",
+    });
+    results.push("success");
+  } catch (_) {
+    results.push("fail");
+  }
+  try {
+    await func({ data: "asdflkjasdflkjsf" } as any);
+    results.push("success");
+  } catch (_) {
+    results.push("fail");
+  }
+
+  expect(results).toEqual(["success", "fail"]);
+});
+
 test("non async function with async refinements should fail", async () => {
   const func = z
     .function()

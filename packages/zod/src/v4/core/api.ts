@@ -1,6 +1,7 @@
 import * as checks from "./checks.js";
 import type * as core from "./core.js";
 import type * as errors from "./errors.js";
+import * as registries from "./registries.js";
 import * as schemas from "./schemas.js";
 import * as util from "./util.js";
 
@@ -339,6 +340,22 @@ export function _ipv6<T extends schemas.$ZodIPv6>(
   return new Class({
     type: "string",
     format: "ipv6",
+    check: "string_format",
+    abort: false,
+    ...util.normalizeParams(params),
+  });
+}
+
+// MAC
+export type $ZodMACParams = StringFormatParams<schemas.$ZodMAC, "pattern" | "when">;
+export type $ZodCheckMACParams = CheckStringFormatParams<schemas.$ZodMAC, "pattern" | "when">;
+export function _mac<T extends schemas.$ZodMAC>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodMACParams | $ZodCheckMACParams
+): T {
+  return new Class({
+    type: "string",
+    format: "mac",
     check: "string_format",
     abort: false,
     ...util.normalizeParams(params),
@@ -1036,6 +1053,10 @@ export function _toLowerCase(): checks.$ZodCheckOverwrite<string> {
 export function _toUpperCase(): checks.$ZodCheckOverwrite<string> {
   return _overwrite((input) => input.toUpperCase());
 }
+// slugify
+export function _slugify(): checks.$ZodCheckOverwrite<string> {
+  return _overwrite((input) => util.slugify(input));
+}
 
 ///////  collections   ///////
 
@@ -1068,6 +1089,21 @@ export function _union<const T extends readonly schemas.$ZodObject[]>(
   return new Class({
     type: "union",
     options,
+    ...util.normalizeParams(params),
+  }) as any;
+}
+
+// ZodXor
+export type $ZodXorParams = TypeParams<schemas.$ZodXor, "options">;
+export function _xor<const T extends readonly schemas.$ZodObject[]>(
+  Class: util.SchemaClass<schemas.$ZodXor>,
+  options: T,
+  params?: string | $ZodXorParams
+): schemas.$ZodXor<T> {
+  return new Class({
+    type: "union",
+    options,
+    inclusive: false,
     ...util.normalizeParams(params),
   }) as any;
 }
@@ -1515,6 +1551,30 @@ export function _check<O = unknown>(fn: schemas.CheckFn<O>, params?: string | $Z
   });
 
   ch._zod.check = fn;
+  return ch;
+}
+
+export function describe<T>(description: string): checks.$ZodCheck<T> {
+  const ch = new checks.$ZodCheck({ check: "describe" });
+  ch._zod.onattach = [
+    (inst) => {
+      const existing = registries.globalRegistry.get(inst) ?? {};
+      registries.globalRegistry.add(inst, { ...existing, description });
+    },
+  ];
+  ch._zod.check = () => {}; // no-op check
+  return ch;
+}
+
+export function meta<T>(metadata: registries.GlobalMeta): checks.$ZodCheck<T> {
+  const ch = new checks.$ZodCheck({ check: "meta" });
+  ch._zod.onattach = [
+    (inst) => {
+      const existing = registries.globalRegistry.get(inst) ?? {};
+      registries.globalRegistry.add(inst, { ...existing, ...metadata });
+    },
+  ];
+  ch._zod.check = () => {}; // no-op check
   return ch;
 }
 

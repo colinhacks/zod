@@ -302,6 +302,29 @@ test("z.record", () => {
   const d = z.record(z.enum(["a", "b"]).or(z.never()), z.string());
   type d = z.output<typeof d>;
   expectTypeOf<d>().toEqualTypeOf<Record<"a" | "b", string>>();
+
+  // literal union keys
+  const e = z.record(z.union([z.literal("a"), z.literal(0)]), z.string());
+  type e = z.output<typeof e>;
+  expectTypeOf<e>().toEqualTypeOf<Record<"a" | 0, string>>();
+  expect(z.parse(e, { a: "hello", 0: "world" })).toEqual({
+    a: "hello",
+    0: "world",
+  });
+
+  // TypeScript enum keys
+  enum Enum {
+    A = 0,
+    B = "hi",
+  }
+
+  const f = z.record(z.enum(Enum), z.string());
+  type f = z.output<typeof f>;
+  expectTypeOf<f>().toEqualTypeOf<Record<Enum, string>>();
+  expect(z.parse(f, { [Enum.A]: "hello", [Enum.B]: "world" })).toEqual({
+    [Enum.A]: "hello",
+    [Enum.B]: "world",
+  });
 });
 
 test("z.map", () => {
@@ -749,7 +772,7 @@ test("z.json", () => {
 test("z.promise", async () => {
   const a = z.promise(z.string());
   type a = z.output<typeof a>;
-  expectTypeOf<a>().toEqualTypeOf<string>();
+  expectTypeOf<a>().toEqualTypeOf<Promise<string>>();
 
   expect(await z.safeParseAsync(a, Promise.resolve("hello"))).toMatchObject({
     success: true,
@@ -786,6 +809,37 @@ test("isPlainObject", () => {
   expect(z.core.util.isPlainObject("string")).toEqual(false);
   expect(z.core.util.isPlainObject(123)).toEqual(false);
   expect(z.core.util.isPlainObject(Symbol())).toEqual(false);
+  expect(z.core.util.isPlainObject({ constructor: "string" })).toEqual(true);
+  expect(z.core.util.isPlainObject({ constructor: 123 })).toEqual(true);
+  expect(z.core.util.isPlainObject({ constructor: null })).toEqual(true);
+  expect(z.core.util.isPlainObject({ constructor: undefined })).toEqual(true);
+  expect(z.core.util.isPlainObject({ constructor: true })).toEqual(true);
+  expect(z.core.util.isPlainObject({ constructor: {} })).toEqual(true);
+  expect(z.core.util.isPlainObject({ constructor: [] })).toEqual(true);
+});
+
+test("shallowClone with constructor field", () => {
+  const objWithConstructor = { constructor: "string", key: "value" };
+  const cloned = z.core.util.shallowClone(objWithConstructor);
+
+  expect(cloned).toEqual(objWithConstructor);
+  expect(cloned).not.toBe(objWithConstructor);
+  expect(cloned.constructor).toBe("string");
+  expect(cloned.key).toBe("value");
+
+  const testCases = [
+    { constructor: 123, data: "test" },
+    { constructor: null, data: "test" },
+    { constructor: true, data: "test" },
+    { constructor: {}, data: "test" },
+    { constructor: [], data: "test" },
+  ];
+
+  for (const testCase of testCases) {
+    const clonedCase = z.core.util.shallowClone(testCase);
+    expect(clonedCase).toEqual(testCase);
+    expect(clonedCase).not.toBe(testCase);
+  }
 });
 
 test("def typing", () => {

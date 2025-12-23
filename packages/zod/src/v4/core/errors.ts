@@ -62,12 +62,23 @@ export interface $ZodIssueUnrecognizedKeys extends $ZodIssueBase {
   readonly input?: Record<string, unknown>;
 }
 
-export interface $ZodIssueInvalidUnion extends $ZodIssueBase {
+interface $ZodIssueInvalidUnionNoMatch extends $ZodIssueBase {
   readonly code: "invalid_union";
   readonly errors: $ZodIssue[][];
   readonly input?: unknown;
   readonly discriminator?: string | undefined;
+  readonly inclusive?: true;
 }
+
+interface $ZodIssueInvalidUnionMultipleMatch extends $ZodIssueBase {
+  readonly code: "invalid_union";
+  readonly errors: [];
+  readonly input?: unknown;
+  readonly discriminator?: string | undefined;
+  readonly inclusive: false;
+}
+
+export type $ZodIssueInvalidUnion = $ZodIssueInvalidUnionNoMatch | $ZodIssueInvalidUnionMultipleMatch;
 
 export interface $ZodIssueInvalidKey<Input = unknown> extends $ZodIssueBase {
   readonly code: "invalid_key";

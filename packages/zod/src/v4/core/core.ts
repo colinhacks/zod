@@ -20,21 +20,34 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
   params?: { Parent?: typeof Class }
 ): $constructor<T, D> {
   function init(inst: T, def: D) {
-    Object.defineProperty(inst, "_zod", {
-      value: inst._zod ?? {},
-      enumerable: false,
-    });
+    if (!inst._zod) {
+      Object.defineProperty(inst, "_zod", {
+        value: {
+          def,
+          constr: _,
+          traits: new Set(),
+        },
+        enumerable: false,
+      });
+    }
 
-    inst._zod.traits ??= new Set();
+    if (inst._zod.traits.has(name)) {
+      return;
+    }
 
     inst._zod.traits.add(name);
+
     initializer(inst, def);
+
     // support prototype modifications
-    for (const k in _.prototype) {
-      if (!(k in inst)) Object.defineProperty(inst, k, { value: _.prototype[k].bind(inst) });
+    const proto = _.prototype;
+    const keys = Object.keys(proto);
+    for (let i = 0; i < keys.length; i++) {
+      const k = keys[i]!;
+      if (!(k in inst)) {
+        (inst as any)[k] = proto[k].bind(inst);
+      }
     }
-    inst._zod.constr = _;
-    inst._zod.def = def;
   }
 
   // doesn't work if Parent has a constructor with arguments
@@ -69,8 +82,16 @@ export type $brand<T extends string | number | symbol = string | number | symbol
   [$brand]: { [k in T]: true };
 };
 
-export type $ZodBranded<T extends schemas.SomeType, Brand extends string | number | symbol> = T &
-  Record<"_zod", Record<"output", output<T> & $brand<Brand>>>;
+export type $ZodBranded<
+  T extends schemas.SomeType,
+  Brand extends string | number | symbol,
+  Dir extends "in" | "out" | "inout" = "out",
+> = T &
+  (Dir extends "inout"
+    ? { _zod: { input: input<T> & $brand<Brand>; output: output<T> & $brand<Brand> } }
+    : Dir extends "in"
+      ? { _zod: { input: input<T> & $brand<Brand> } }
+      : { _zod: { output: output<T> & $brand<Brand> } });
 
 export class $ZodAsyncError extends Error {
   constructor() {

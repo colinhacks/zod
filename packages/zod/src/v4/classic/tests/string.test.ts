@@ -35,6 +35,27 @@ test("includes", () => {
   expect(() => includesFromIndex2.parse("XincludesXX")).toThrow();
 });
 
+test("includes with string error message", () => {
+  const schema = z.string().includes("test", "must contain test");
+  schema.parse("this is a test");
+
+  expect(schema.safeParse("this is invalid")).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "origin": "string",
+        "code": "invalid_format",
+        "format": "includes",
+        "includes": "test",
+        "path": [],
+        "message": "must contain test"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+});
+
 test("startswith/endswith", () => {
   startsWith.parse("startsWithX");
   endsWith.parse("XendsWith");
@@ -775,6 +796,8 @@ test("format", () => {
   expect(z.string().date().format).toEqual("date");
   expect(z.string().time().format).toEqual("time");
   expect(z.string().duration().format).toEqual("duration");
+
+  expect(z.mac().format).toEqual("mac");
 });
 
 test("min max getters", () => {
@@ -799,6 +822,24 @@ test("trim", () => {
 test("lowerCase", () => {
   expect(z.string().toLowerCase().parse("ASDF")).toEqual("asdf");
   expect(z.string().toUpperCase().parse("asdf")).toEqual("ASDF");
+});
+
+test("slugify", () => {
+  expect(z.string().slugify().parse("Hello World")).toEqual("hello-world");
+  expect(z.string().slugify().parse("  Hello   World  ")).toEqual("hello-world");
+  expect(z.string().slugify().parse("Hello@World#123")).toEqual("helloworld123");
+  expect(z.string().slugify().parse("Hello-World")).toEqual("hello-world");
+  expect(z.string().slugify().parse("Hello_World")).toEqual("hello-world");
+  expect(z.string().slugify().parse("---Hello---World---")).toEqual("hello-world");
+  expect(z.string().slugify().parse("Hello  World")).toEqual("hello-world");
+  expect(z.string().slugify().parse("Hello!@#$%^&*()World")).toEqual("helloworld");
+
+  // can be used with check
+  expect(z.string().check(z.slugify()).parse("Hello World")).toEqual("hello-world");
+
+  // can be chained with other methods
+  expect(z.string().slugify().min(5).parse("Hello World")).toEqual("hello-world");
+  expect(() => z.string().slugify().min(20).parse("Hello World")).toThrow();
 });
 
 // test("IP validation", () => {
@@ -885,6 +926,58 @@ test("IPv6 validation", () => {
   expect(() => ipv6.parse("254.164.77.1")).toThrow();
 });
 
+test("MAC validation", () => {
+  const mac = z.mac();
+
+  // Valid MAC addresses
+  expect(mac.safeParse("00:1A:2B:3C:4D:5E").success).toBe(true);
+  expect(mac.safeParse("FF:FF:FF:FF:FF:FF").success).toBe(true);
+  expect(mac.safeParse("00:11:22:33:44:55").success).toBe(true);
+  expect(mac.safeParse("A1:B2:C3:D4:E5:F6").success).toBe(true);
+  expect(mac.safeParse("10:20:30:40:50:60").success).toBe(true);
+  expect(mac.safeParse("0a:1b:2c:3d:4e:5f").success).toBe(true);
+  expect(mac.safeParse("12:34:56:78:9A:BC").success).toBe(true);
+
+  // Invalid MAC addresses
+  expect(mac.safeParse("00:1A-2B:3C-4D:5E").success).toBe(false);
+  expect(mac.safeParse("00:1A:2B:3C:4D").success).toBe(false);
+  expect(mac.safeParse("00:1A:2B:3C:4D").success).toBe(false);
+  expect(mac.safeParse("00-1A-2B-3C-4D").success).toBe(false);
+  expect(mac.safeParse("01-23-45-67-89-AB").success).toBe(false); // Dash delimiter not accepted by default
+  expect(mac.safeParse("AA-BB-CC-DD-EE-FF").success).toBe(false); // Dash delimiter not accepted by default
+  expect(mac.safeParse("DE-AD-BE-EF-00-01").success).toBe(false); // Dash delimiter not accepted by default
+  expect(mac.safeParse("98-76-54-32-10-FF").success).toBe(false); // Dash delimiter not accepted by default
+  expect(mac.safeParse("00:1A:2B:3C:4D:GZ").success).toBe(false);
+  expect(mac.safeParse("00:1A:2B:3C:4D:5E:GG").success).toBe(false);
+  expect(mac.safeParse("123:45:67:89:AB:CD").success).toBe(false);
+  expect(mac.safeParse("00--1A:2B:3C:4D:5E").success).toBe(false);
+  expect(mac.safeParse("00:1A::2B:3C:4D:5E").success).toBe(false);
+  expect(mac.safeParse("00:1A:2B:3C:3C:2B:1A:00").success).toBe(false); // Disallow EUI-64
+  expect(mac.safeParse("00:1a:2B:3c:4D:5e").success).toBe(false); // Disallow mixed-case
+
+  // MAC formats that are nonstandard but occassionally referenced, ex. https://www.postgresql.org/docs/17/datatype-net-types.html#DATATYPE-MACADDR
+  expect(mac.safeParse("00:1A:2B:3C:4D:5E:FF").success).toBe(false);
+  expect(mac.safeParse("001A2B:3C4D5E").success).toBe(false);
+  expect(mac.safeParse("001A:2B3C:4D5E").success).toBe(false);
+  expect(mac.safeParse("001A.2B3C.4D5E").success).toBe(false);
+  expect(mac.safeParse("001A2B3C4D5E").success).toBe(false);
+  expect(mac.safeParse("00.1A.2B.3C.4D.5E").success).toBe(false);
+});
+
+test("MAC validation with custom delimiter", () => {
+  const colonMac = z.mac({ delimiter: ":" });
+  expect(colonMac.safeParse("00:1A:2B:3C:4D:5E").success).toBe(true);
+  expect(colonMac.safeParse("00-1A-2B-3C-4D-5E").success).toBe(false);
+
+  const dashMac = z.mac({ delimiter: "-" });
+  expect(dashMac.safeParse("00-1A-2B-3C-4D-5E").success).toBe(true);
+  expect(dashMac.safeParse("00:1A:2B:3C:4D:5E").success).toBe(false);
+
+  const colonOnlyMac = z.mac({ delimiter: ":" });
+  expect(colonOnlyMac.safeParse("00:1A:2B:3C:4D:5E").success).toBe(true);
+  expect(colonOnlyMac.safeParse("00-1A-2B-3C-4D-5E").success).toBe(false);
+});
+
 test("CIDR v4 validation", () => {
   const cidrV4 = z.string().cidrv4();
 
@@ -951,6 +1044,8 @@ test("E.164 validation", () => {
     "+1 555 555 555", // space after plus sign
     "+1555 555 555", // space between numbers
     "+1555+555", // multiple plus signs
+    "+0000000", // leading zero country code
+    "+0123456789", // leading zero with more digits
     "+1555555555555555", // too long
     "+115abc55", // non numeric characters in number part
     "+1555555 ", // space after number

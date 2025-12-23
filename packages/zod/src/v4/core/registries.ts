@@ -94,4 +94,15 @@ export function registry<T extends MetadataType = MetadataType, S extends $ZodTy
   return new $ZodRegistry<T, S>();
 }
 
-export const globalRegistry: $ZodRegistry<GlobalMeta> = /*@__PURE__*/ registry<GlobalMeta>();
+interface GlobalThisWithRegistry {
+  /**
+   * The globalRegistry instance shared across both CommonJS and ESM builds.
+   * By attaching the registry to `globalThis`, this property ensures a single, deduplicated instance
+   * is used regardless of whether the package is loaded via `require` (CJS) or `import` (ESM).
+   * This prevents dual package hazards and keeps registry state consistent.
+   */
+  __zod_globalRegistry?: $ZodRegistry<GlobalMeta>;
+}
+
+(globalThis as GlobalThisWithRegistry).__zod_globalRegistry ??= registry<GlobalMeta>();
+export const globalRegistry: $ZodRegistry<GlobalMeta> = (globalThis as GlobalThisWithRegistry).__zod_globalRegistry!;

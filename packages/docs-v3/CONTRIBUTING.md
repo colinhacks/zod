@@ -36,9 +36,11 @@ The following steps will get you setup to contribute changes to this repo:
 
 2. Clone your forked repo: `git clone git@github.com:{your_username}/zod.git`
 
-3. Run `yarn` to install dependencies.
+3. Navigate into the project directory: `cd zod`
 
-4. Start playing with the code! You can do some simple experimentation in [`playground.ts`](playground.ts) (see `yarn play` below) or start implementing a feature right away.
+4. Run `yarn` to install dependencies.
+
+5. Start playing with the code! You can do some simple experimentation in [`playground.ts`](playground.ts) (see `yarn play` below) or start implementing a feature right away.
 
 ## Alternative: VSCode Dev Container setup
 
