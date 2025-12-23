@@ -380,17 +380,20 @@ try {
   _allowsEval = false;
 }
 
-if (isCloudflare && _allowsEval) {
-  Promise.resolve().then(() => {
-    _allowsEval = false;
-  });
-}
-
-export const allowsEval: { readonly value: boolean } = {
-  get value() {
-    return _allowsEval;
-  },
-};
+export const allowsEval: { readonly value: boolean } =
+  isCloudflare && _allowsEval
+    ? (() => {
+        let val = true;
+        Promise.resolve().then(() => {
+          val = false;
+        });
+        return {
+          get value() {
+            return val;
+          },
+        };
+      })()
+    : { value: _allowsEval };
 
 export function isPlainObject(o: any): o is Record<PropertyKey, unknown> {
   if (isObject(o) === false) return false;
