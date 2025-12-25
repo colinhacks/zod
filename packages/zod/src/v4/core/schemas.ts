@@ -551,8 +551,12 @@ export const $ZodEmoji: core.$constructor<$ZodEmoji> = /*@__PURE__*/ core.$const
 
 //////////////////////////////   ZodNanoID   //////////////////////////////
 
-export interface $ZodNanoIDDef extends $ZodStringFormatDef<"nanoid"> {}
-export interface $ZodNanoIDInternals extends $ZodStringFormatInternals<"nanoid"> {}
+export interface $ZodNanoIDDef extends $ZodStringFormatDef<"nanoid"> {
+  length?: number | undefined;
+}
+export interface $ZodNanoIDInternals extends $ZodStringFormatInternals<"nanoid"> {
+  def: $ZodNanoIDDef;
+}
 
 export interface $ZodNanoID extends $ZodType {
   _zod: $ZodNanoIDInternals;
@@ -561,7 +565,8 @@ export interface $ZodNanoID extends $ZodType {
 export const $ZodNanoID: core.$constructor<$ZodNanoID> = /*@__PURE__*/ core.$constructor(
   "$ZodNanoID",
   (inst, def): void => {
-    def.pattern ??= regexes.nanoid;
+    const length = def.length ?? 21;
+    def.pattern ??= regexes.nanoid(length);
     $ZodStringFormat.init(inst, def);
   }
 );

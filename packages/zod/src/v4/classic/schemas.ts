@@ -327,7 +327,7 @@ export interface ZodString extends _ZodString<core.$ZodStringInternals<string>> 
   /** @deprecated Use `z.uuid()` instead. */
   uuidv7(params?: string | core.$ZodCheckUUIDParams): this;
   /** @deprecated Use `z.nanoid()` instead. */
-  nanoid(params?: string | core.$ZodCheckNanoIDParams): this;
+  nanoid(length?: number | string | core.$ZodCheckNanoIDParams, options?: { message?: string }): this;
   /** @deprecated Use `z.guid()` instead. */
   guid(params?: string | core.$ZodCheckGUIDParams): this;
   /** @deprecated Use `z.cuid()` instead. */
@@ -391,7 +391,16 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
   inst.uuidv4 = (params) => inst.check(core._uuidv4(ZodUUID, params));
   inst.uuidv6 = (params) => inst.check(core._uuidv6(ZodUUID, params));
   inst.uuidv7 = (params) => inst.check(core._uuidv7(ZodUUID, params));
-  inst.nanoid = (params) => inst.check(core._nanoid(ZodNanoID, params));
+  inst.nanoid = (length, options) => {
+    if (typeof length === "number") {
+      // Pass length as first argument and message string as second if provided
+      if (options?.message) {
+        return inst.check(core._nanoid(ZodNanoID, length, options.message));
+      }
+      return inst.check(core._nanoid(ZodNanoID, length));
+    }
+    return inst.check(core._nanoid(ZodNanoID, length));
+  };
   inst.guid = (params) => inst.check(core._guid(ZodGUID, params));
   inst.cuid = (params) => inst.check(core._cuid(ZodCUID, params));
   inst.cuid2 = (params) => inst.check(core._cuid2(ZodCUID2, params));

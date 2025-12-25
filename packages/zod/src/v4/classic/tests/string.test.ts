@@ -598,6 +598,22 @@ test("bad guid", () => {
   }
 });
 
+test("custom character length nanoid", () => {
+  const nanoid64 = z.string().nanoid(64);
+  const valid64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+  nanoid64.parse(valid64);
+
+  const nanoid64WithCustomError = z.string().nanoid(64, { message: "custom error" });
+  nanoid64WithCustomError.parse(valid64);
+
+  const shortId = "abc123";
+  const result = nanoid64WithCustomError.safeParse(shortId);
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toEqual("custom error");
+  }
+});
+
 test("cuid", () => {
   const cuid = z.string().cuid();
   cuid.parse("ckopqwooh000001la8mbi2im9");

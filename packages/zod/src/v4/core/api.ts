@@ -219,17 +219,23 @@ export function _emoji<T extends schemas.$ZodEmoji>(
 }
 
 // NanoID
-export type $ZodNanoIDParams = StringFormatParams<schemas.$ZodNanoID, "when">;
-export type $ZodCheckNanoIDParams = CheckStringFormatParams<schemas.$ZodNanoID, "when">;
+export type $ZodNanoIDParams = StringFormatParams<schemas.$ZodNanoID, "when" | "pattern" | "length">;
+export type $ZodCheckNanoIDParams = CheckStringFormatParams<schemas.$ZodNanoID, "when" | "pattern" | "length">;
 export function _nanoid<T extends schemas.$ZodNanoID>(
   Class: util.SchemaClass<T>,
-  params?: string | $ZodNanoIDParams | $ZodCheckNanoIDParams
+  paramsOrLength?: number | string | $ZodNanoIDParams | $ZodCheckNanoIDParams,
+  messageWhenLength?: string
 ): T {
+  const isLengthNumber = typeof paramsOrLength === "number";
+  const length = isLengthNumber ? paramsOrLength : undefined;
+  const params = isLengthNumber ? messageWhenLength : paramsOrLength;
+
   return new Class({
     type: "string",
     format: "nanoid",
     check: "string_format",
     abort: false,
+    ...(length !== undefined ? { length } : {}),
     ...util.normalizeParams(params),
   });
 }
