@@ -572,6 +572,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`fastify-zod-openapi`](https://github.com/samchungy/fastify-zod-openapi): Fastify type provider, validation, serialization and @fastify/swagger support for Zod schemas.
 - [`typeschema`](https://typeschema.com/): Universal adapter for schema validation.
 - [`zodex`](https://github.com/commonbaseapp/zodex): (De)serialization for zod schemas
+- [`convex-helpers`](https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/README.md#zod-validation): Use Zod to validate arguments and return values of Convex functions, and to create Convex database schemas.
 
 #### X to Zod
 
@@ -591,6 +592,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`java-to-zod`](https://github.com/ivangreene/java-to-zod): Convert POJOs to Zod schemas
 - [`Orval`](https://github.com/anymaniax/orval): Generate Zod schemas from OpenAPI schemas
 - [`Kubb`](https://github.com/kubb-labs/kubb): Generate SDKs and Zod schemas from your OpenAPI schemas
+- [`convex-helpers`](https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/README.md#zod-validation): Generate Zod schemas from Convex validators.
 
 #### Mocking
 
@@ -623,6 +625,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`zod-sandbox`](https://github.com/nereumelo/zod-sandbox): Controlled environment for testing zod schemas. [Live demo](https://zod-sandbox.vercel.app/).
 - [`zod-dev`](https://github.com/schalkventer/zod-dev): Conditionally disables Zod runtime parsing in production.
 - [`zod-accelerator`](https://github.com/duplojs/duplojs-zod-accelerator): Accelerates Zod's throughput up to ~100x.
+- [`zod-ir`](https://github.com/Reza-kh80/zod-ir): Comprehensive validation for Iranian data structures (National Code, Bank Cards, Sheba, Crypto, etc) with **smart metadata extraction** (Bank Names, Logos). Zero dependencies.
 
 <br/>
 

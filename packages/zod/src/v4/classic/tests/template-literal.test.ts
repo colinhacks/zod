@@ -43,6 +43,7 @@ const email = z.templateLiteral(["", z.string().email()]);
 // const ip = z.templateLiteral(["", z.string().ip()]);
 const ipv4 = z.templateLiteral(["", z.string().ipv4()]);
 const ipv6 = z.templateLiteral(["", z.string().ipv6()]);
+const mac = z.templateLiteral(["", z.mac()]);
 const ulid = z.templateLiteral(["", z.string().ulid()]);
 const uuid = z.templateLiteral(["", z.string().uuid()]);
 const stringAToZ = z.templateLiteral(["", z.string().regex(/^[a-z]+$/)]);
@@ -137,6 +138,7 @@ test("template literal type inference", () => {
   // expectTypeOf<z.infer<typeof ip>>().toEqualTypeOf<string>();
   expectTypeOf<z.infer<typeof ipv4>>().toEqualTypeOf<string>();
   expectTypeOf<z.infer<typeof ipv6>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof mac>>().toEqualTypeOf<string>();
   expectTypeOf<z.infer<typeof ulid>>().toEqualTypeOf<string>();
   expectTypeOf<z.infer<typeof uuid>>().toEqualTypeOf<string>();
   expectTypeOf<z.infer<typeof stringAToZ>>().toEqualTypeOf<string>();
@@ -361,6 +363,7 @@ test("template literal parsing - success - basic cases", () => {
   // ip.parse("c359:f57c:21e5:39eb:1187:e501:f936:b452");
   ipv4.parse("213.174.246.205");
   ipv6.parse("c359:f57c:21e5:39eb:1187:e501:f936:b452");
+  mac.parse("00:1A:2B:3C:4D:5E");
   ulid.parse("01GW3D2QZJBYB6P1Z1AE997VPW");
   uuid.parse("808989fd-3a6e-4af2-b607-737323a176f6");
   stringAToZ.parse("asudgaskhdgashd");
@@ -497,6 +500,8 @@ test("template literal parsing - failure - basic cases", () => {
   expect(() => ipv4.parse("c359:f57c:21e5:39eb:1187:e501:f936:b452")).toThrow();
   expect(() => ipv6.parse("c359:f57c:21e5:39eb:1187:e501:f936:b4521")).toThrow();
   expect(() => ipv6.parse("213.174.246.205")).toThrow();
+  expect(() => mac.parse("00:1A:2B:3C:4D:5E:6A:7B")).toThrow();
+  expect(() => mac.parse("00:1A:2B:3C")).toThrow();
   expect(() => ulid.parse("01GW3D2QZJBYB6P1Z1AE997VPW!")).toThrow();
   expect(() => uuid.parse("808989fd-3a6e-4af2-b607-737323a176f6Z")).toThrow();
   expect(() => uuid.parse("Z808989fd-3a6e-4af2-b607-737323a176f6")).toThrow();
@@ -567,6 +572,9 @@ test("regexes", () => {
   );
   expect(ipv6._zod.pattern.source).toMatchInlineSnapshot(
     `"^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$"`
+  );
+  expect(mac._zod.pattern.source).toMatchInlineSnapshot(
+    `"^(?:[0-9A-F]{2}:){5}[0-9A-F]{2}$|^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}$"`
   );
   expect(ulid._zod.pattern.source).toMatchInlineSnapshot(`"^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$"`);
   expect(uuid._zod.pattern.source).toMatchInlineSnapshot(

@@ -199,7 +199,7 @@ export function assertNotEqual<A, B>(val: AssertNotEqual<A, B>): AssertNotEqual<
 export function assertIs<T>(_arg: T): void {}
 
 export function assertNever(_x: never): never {
-  throw new Error();
+  throw new Error("Unexpected value in exhaustive check");
 }
 export function assert<T>(_: any): asserts _ is T {}
 
@@ -351,6 +351,15 @@ export function esc(str: string): string {
   return JSON.stringify(str);
 }
 
+export function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export const captureStackTrace: (targetObject: object, constructorOpt?: Function) => void = (
   "captureStackTrace" in Error ? Error.captureStackTrace : (..._args: any[]) => {}
 ) as any;
@@ -380,6 +389,8 @@ export function isPlainObject(o: any): o is Record<PropertyKey, unknown> {
   // modified constructor
   const ctor = o.constructor;
   if (ctor === undefined) return true;
+
+  if (typeof ctor !== "function") return true;
 
   // modified prototype
   const prot = ctor.prototype;
@@ -582,6 +593,12 @@ export const BIGINT_FORMAT_RANGES: Record<checks.$ZodBigIntFormats, [bigint, big
 export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>): any {
   const currDef = schema._zod.def;
 
+  const checks = currDef.checks;
+  const hasChecks = checks && checks.length > 0;
+  if (hasChecks) {
+    throw new Error(".pick() cannot be used on object schemas containing refinements");
+  }
+
   const def = mergeDefs(schema._zod.def, {
     get shape() {
       const newShape: Writeable<schemas.$ZodShape> = {};
@@ -604,6 +621,12 @@ export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>):
 
 export function omit(schema: schemas.$ZodObject, mask: object): any {
   const currDef = schema._zod.def;
+
+  const checks = currDef.checks;
+  const hasChecks = checks && checks.length > 0;
+  if (hasChecks) {
+    throw new Error(".omit() cannot be used on object schemas containing refinements");
+  }
 
   const def = mergeDefs(schema._zod.def, {
     get shape() {
@@ -651,15 +674,13 @@ export function safeExtend(schema: schemas.$ZodObject, shape: schemas.$ZodShape)
   if (!isPlainObject(shape)) {
     throw new Error("Invalid input to safeExtend: expected a plain object");
   }
-  const def = {
-    ...schema._zod.def,
+  const def = mergeDefs(schema._zod.def, {
     get shape() {
       const _shape = { ...schema._zod.def.shape, ...shape };
       assignProp(this, "shape", _shape); // self-caching
       return _shape;
     },
-    checks: schema._zod.def.checks,
-  } as any;
+  });
   return clone(schema, def) as any;
 }
 
@@ -684,6 +705,13 @@ export function partial(
   schema: schemas.$ZodObject,
   mask: object | undefined
 ): any {
+  const currDef = schema._zod.def;
+  const checks = currDef.checks;
+  const hasChecks = checks && checks.length > 0;
+  if (hasChecks) {
+    throw new Error(".partial() cannot be used on object schemas containing refinements");
+  }
+
   const def = mergeDefs(schema._zod.def, {
     get shape() {
       const oldShape = schema._zod.def.shape;
@@ -759,7 +787,6 @@ export function required(
       assignProp(this, "shape", shape); // self-caching
       return shape;
     },
-    checks: [],
   });
 
   return clone(schema, def) as any;

@@ -11,4 +11,6 @@ export * from "./registries.js";
 export * from "./doc.js";
 export * from "./api.js";
 export * from "./to-json-schema.js";
+export { toJSONSchema } from "./json-schema-processors.js";
+export { JSONSchemaGenerator } from "./json-schema-generator.js";
 export * as JSONSchema from "./json-schema.js";

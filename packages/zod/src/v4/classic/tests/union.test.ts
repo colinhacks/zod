@@ -179,3 +179,41 @@ test("surface continuable errors only if they exist", () => {
     }
   `);
 });
+
+// z.xor() tests
+test("z.xor() - exactly one match succeeds", () => {
+  const schema = z.xor([z.string(), z.number()]);
+  expect(schema.parse("hello")).toBe("hello");
+  expect(schema.parse(42)).toBe(42);
+});
+
+test("z.xor() - zero matches fails", () => {
+  const schema = z.xor([z.string(), z.number()]);
+  const result = schema.safeParse(true);
+  expect(result.success).toBe(false);
+});
+
+test("z.xor() - multiple matches fails", () => {
+  const schema = z.xor([z.string(), z.any()]);
+  const result = schema.safeParse("hello");
+  expect(result.success).toBe(false);
+  if (!result.success) {
+    expect(result.error.issues[0].code).toBe("invalid_union");
+    expect((result.error.issues[0] as any).inclusive).toBe(false);
+  }
+});
+
+test("z.xor() with custom error message", () => {
+  const schema = z.xor([z.string(), z.number()], "Expected exactly one of string or number");
+  const result = schema.safeParse(true);
+  expect(result.success).toBe(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toBe("Expected exactly one of string or number");
+  }
+});
+
+test("z.xor() type inference", () => {
+  const schema = z.xor([z.string(), z.number(), z.boolean()]);
+  type Result = z.infer<typeof schema>;
+  expectTypeOf<Result>().toEqualTypeOf<string | number | boolean>();
+});

@@ -6,8 +6,11 @@ import * as z from "zod/v3";
 const schema = z.nan();
 
 test("passing validations", () => {
-  schema.parse(Number.NaN);
-  schema.parse(Number("Not a number"));
+  const result1 = schema.parse(Number.NaN);
+  expect(Number.isNaN(result1)).toBe(true);
+
+  const result2 = schema.parse(Number("Not a number"));
+  expect(Number.isNaN(result2)).toBe(true);
 });
 
 test("failing validations", () => {

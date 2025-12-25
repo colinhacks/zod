@@ -20,9 +20,9 @@ export interface ZodMiniType<
         : [core.$replace<R["_meta"], this>]
       : ["Incompatible schema"]
   ): this;
-  brand<T extends PropertyKey = PropertyKey>(
+  brand<T extends PropertyKey = PropertyKey, Dir extends "in" | "out" | "inout" = "out">(
     value?: T
-  ): PropertyKey extends T ? this : this & Record<"_zod", Record<"output", core.output<this> & core.$brand<T>>>;
+  ): PropertyKey extends T ? this : core.$ZodBranded<this, T, Dir>;
 
   def: Internals["def"];
 
@@ -364,6 +364,19 @@ export const ZodMiniCIDRv6: core.$constructor<ZodMiniCIDRv6> = /*@__PURE__*/ cor
 
 export function cidrv6(params?: string | core.$ZodCIDRv6Params): ZodMiniCIDRv6 {
   return core._cidrv6(ZodMiniCIDRv6, params);
+}
+
+// ZodMiniMAC
+export interface ZodMiniMAC extends _ZodMiniString<core.$ZodMACInternals> {
+  // _zod: core.$ZodMACInternals;
+}
+export const ZodMiniMAC: core.$constructor<ZodMiniMAC> = /*@__PURE__*/ core.$constructor("ZodMiniMAC", (inst, def) => {
+  core.$ZodMAC.init(inst, def);
+  ZodMiniStringFormat.init(inst, def);
+});
+
+export function mac(params?: string | core.$ZodMACParams): ZodMiniMAC {
+  return core._mac(ZodMiniMAC, params);
 }
 
 // ZodMiniBase64
@@ -938,6 +951,31 @@ export function union<const T extends readonly SomeType[]>(
   }) as any;
 }
 
+// ZodMiniXor
+export interface ZodMiniXor<T extends readonly SomeType[] = readonly core.$ZodType[]>
+  extends _ZodMiniType<core.$ZodXorInternals<T>> {
+  // _zod: core.$ZodXorInternals<T>;
+}
+export const ZodMiniXor: core.$constructor<ZodMiniXor> = /*@__PURE__*/ core.$constructor("ZodMiniXor", (inst, def) => {
+  ZodMiniUnion.init(inst, def);
+  core.$ZodXor.init(inst, def);
+});
+
+/** Creates an exclusive union (XOR) where exactly one option must match.
+ * Unlike regular unions that succeed when any option matches, xor fails if
+ * zero or more than one option matches the input. */
+export function xor<const T extends readonly SomeType[]>(
+  options: T,
+  params?: string | core.$ZodXorParams
+): ZodMiniXor<T> {
+  return new ZodMiniXor({
+    type: "union",
+    options: options as any as core.$ZodType[],
+    inclusive: false,
+    ...util.normalizeParams(params),
+  }) as any;
+}
+
 // ZodMiniDiscriminatedUnion
 export interface ZodMiniDiscriminatedUnion<
   Options extends readonly SomeType[] = readonly core.$ZodType[],
@@ -1069,6 +1107,20 @@ export function partialRecord<Key extends core.$ZodRecordKey, Value extends Some
     type: "record",
     keyType: k,
     valueType: valueType as any,
+    ...util.normalizeParams(params),
+  }) as any;
+}
+
+export function looseRecord<Key extends core.$ZodRecordKey, Value extends SomeType>(
+  keyType: Key,
+  valueType: Value,
+  params?: string | core.$ZodRecordParams
+): ZodMiniRecord<Key, Value> {
+  return new ZodMiniRecord({
+    type: "record",
+    keyType,
+    valueType: valueType as any as core.$ZodType,
+    mode: "loose",
     ...util.normalizeParams(params),
   }) as any;
 }
@@ -1601,6 +1653,10 @@ export function superRefine<T>(
   return core._superRefine(fn);
 }
 
+// Re-export describe and meta from core
+export const describe = core.describe;
+export const meta = core.meta;
+
 // instanceof
 abstract class Class {
   constructor(..._args: any[]) {}
@@ -1632,7 +1688,7 @@ export const stringbool: (_params?: string | core.$ZodStringBoolParams) => ZodMi
 // json
 
 // json
-type _ZodMiniJSONSchema = ZodMiniUnion<
+export type _ZodMiniJSONSchema = ZodMiniUnion<
   [
     ZodMiniString,
     ZodMiniNumber,
@@ -1642,7 +1698,7 @@ type _ZodMiniJSONSchema = ZodMiniUnion<
     ZodMiniRecord<ZodMiniString<string>, ZodMiniJSONSchema>,
   ]
 >;
-type _ZodMiniJSONSchemaInternals = _ZodMiniJSONSchema["_zod"];
+export type _ZodMiniJSONSchemaInternals = _ZodMiniJSONSchema["_zod"];
 
 export interface ZodMiniJSONSchemaInternals extends _ZodMiniJSONSchemaInternals {
   output: util.JSONType;

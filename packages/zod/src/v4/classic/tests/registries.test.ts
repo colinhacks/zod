@@ -19,6 +19,10 @@ test("globalRegistry", () => {
   expect(z.globalRegistry.has(a)).toEqual(false);
 });
 
+test("globalRegistry is singleton and attached to globalThis", () => {
+  expect(z.globalRegistry).toBe((globalThis as any).__zod_globalRegistry);
+});
+
 test("z.registry", () => {
   const fieldRegistry = z.registry<{ name: string; description: string }>();
 

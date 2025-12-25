@@ -8,16 +8,28 @@ test("type inference", () => {
   const recordWithEnumKeys = z.record(z.enum(["Tuna", "Salmon"]), z.string());
   type recordWithEnumKeys = z.infer<typeof recordWithEnumKeys>;
 
-  const recordWithLiteralKey = z.record(z.literal(["Tuna", "Salmon"]), z.string());
+  const recordWithLiteralKey = z.record(z.literal(["Tuna", "Salmon", 21]), z.string());
   type recordWithLiteralKey = z.infer<typeof recordWithLiteralKey>;
 
-  const recordWithLiteralUnionKeys = z.record(z.union([z.literal("Tuna"), z.literal("Salmon")]), z.string());
+  const recordWithLiteralUnionKeys = z.record(
+    z.union([z.literal("Tuna"), z.literal("Salmon"), z.literal(21)]),
+    z.string()
+  );
   type recordWithLiteralUnionKeys = z.infer<typeof recordWithLiteralUnionKeys>;
+
+  enum Enum {
+    Tuna = 0,
+    Salmon = "Shark",
+  }
+
+  const recordWithTypescriptEnum = z.record(z.enum(Enum), z.string());
+  type recordWithTypescriptEnum = z.infer<typeof recordWithTypescriptEnum>;
 
   expectTypeOf<booleanRecord>().toEqualTypeOf<Record<string, boolean>>();
   expectTypeOf<recordWithEnumKeys>().toEqualTypeOf<Record<"Tuna" | "Salmon", string>>();
-  expectTypeOf<recordWithLiteralKey>().toEqualTypeOf<Record<"Tuna" | "Salmon", string>>();
-  expectTypeOf<recordWithLiteralUnionKeys>().toEqualTypeOf<Record<"Tuna" | "Salmon", string>>();
+  expectTypeOf<recordWithLiteralKey>().toEqualTypeOf<Record<"Tuna" | "Salmon" | 21, string>>();
+  expectTypeOf<recordWithLiteralUnionKeys>().toEqualTypeOf<Record<"Tuna" | "Salmon" | 21, string>>();
+  expectTypeOf<recordWithTypescriptEnum>().toEqualTypeOf<Record<Enum, string>>();
 });
 
 test("enum exhaustiveness", () => {
@@ -64,14 +76,76 @@ test("enum exhaustiveness", () => {
   `);
 });
 
+test("typescript enum exhaustiveness", () => {
+  enum BigFish {
+    Tuna = 0,
+    Salmon = "Shark",
+  }
+
+  const schema = z.record(z.enum(BigFish), z.string());
+  const value = {
+    [BigFish.Tuna]: "asdf",
+    [BigFish.Salmon]: "asdf",
+  };
+
+  expect(schema.parse(value)).toEqual(value);
+
+  expect(schema.safeParse({ [BigFish.Tuna]: "asdf", [BigFish.Salmon]: "asdf", Trout: "asdf" })).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "code": "unrecognized_keys",
+        "keys": [
+          "Trout"
+        ],
+        "path": [],
+        "message": "Unrecognized key: \\"Trout\\""
+      }
+    ]],
+      "success": false,
+    }
+  `);
+  expect(schema.safeParse({ [BigFish.Tuna]: "asdf" })).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": [
+          "Shark"
+        ],
+        "message": "Invalid input: expected string, received undefined"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+  expect(schema.safeParse({ [BigFish.Salmon]: "asdf" })).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": [
+          0
+        ],
+        "message": "Invalid input: expected string, received undefined"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+});
+
 test("literal exhaustiveness", () => {
-  const schema = z.record(z.literal(["Tuna", "Salmon"]), z.string());
+  const schema = z.record(z.literal(["Tuna", "Salmon", 21]), z.string());
   schema.parse({
     Tuna: "asdf",
     Salmon: "asdf",
+    21: "asdf",
   });
 
-  expect(schema.safeParse({ Tuna: "asdf", Salmon: "asdf", Trout: "asdf" })).toMatchInlineSnapshot(`
+  expect(schema.safeParse({ Tuna: "asdf", Salmon: "asdf", 21: "asdf", Trout: "asdf" })).toMatchInlineSnapshot(`
     {
       "error": [ZodError: [
       {
@@ -94,6 +168,14 @@ test("literal exhaustiveness", () => {
         "code": "invalid_type",
         "path": [
           "Salmon"
+        ],
+        "message": "Invalid input: expected string, received undefined"
+      },
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": [
+          21
         ],
         "message": "Invalid input: expected string, received undefined"
       }
@@ -143,13 +225,14 @@ test("pipe exhaustiveness", () => {
 });
 
 test("union exhaustiveness", () => {
-  const schema = z.record(z.union([z.literal("Tuna"), z.literal("Salmon")]), z.string());
-  expect(schema.parse({ Tuna: "asdf", Salmon: "asdf" })).toEqual({
+  const schema = z.record(z.union([z.literal("Tuna"), z.literal("Salmon"), z.literal(21)]), z.string());
+  expect(schema.parse({ Tuna: "asdf", Salmon: "asdf", 21: "asdf" })).toEqual({
     Tuna: "asdf",
     Salmon: "asdf",
+    21: "asdf",
   });
 
-  expect(schema.safeParse({ Tuna: "asdf", Salmon: "asdf", Trout: "asdf" })).toMatchInlineSnapshot(`
+  expect(schema.safeParse({ Tuna: "asdf", Salmon: "asdf", 21: "asdf", Trout: "asdf" })).toMatchInlineSnapshot(`
     {
       "error": [ZodError: [
       {
@@ -172,6 +255,14 @@ test("union exhaustiveness", () => {
         "code": "invalid_type",
         "path": [
           "Salmon"
+        ],
+        "message": "Invalid input: expected string, received undefined"
+      },
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": [
+          21
         ],
         "message": "Invalid input: expected string, received undefined"
       }
@@ -394,4 +485,41 @@ test("partialRecord with z.literal([key, ...])", () => {
       "success": false,
     }
   `);
+});
+
+test("looseRecord passes through non-matching keys", () => {
+  const schema = z.looseRecord(z.string().regex(/^S_/), z.string());
+
+  // Keys matching pattern are validated
+  expect(schema.parse({ S_name: "John" })).toEqual({ S_name: "John" });
+  expect(() => schema.parse({ S_name: 123 })).toThrow(); // wrong value type
+
+  // Keys not matching pattern pass through unchanged
+  expect(schema.parse({ S_name: "John", other: "value" })).toEqual({ S_name: "John", other: "value" });
+  expect(schema.parse({ S_name: "John", count: 123 })).toEqual({ S_name: "John", count: 123 });
+  expect(schema.parse({ other: "value" })).toEqual({ other: "value" });
+});
+
+test("intersection of loose records", () => {
+  const schema = z.intersection(
+    z.object({ name: z.string() }).passthrough(),
+    z.intersection(
+      z.looseRecord(z.string().regex(/^S_/), z.string()),
+      z.looseRecord(z.string().regex(/^N_/), z.number())
+    )
+  );
+
+  // Each pattern validates its matching keys
+  const result = schema.parse({ name: "John", S_foo: "bar", N_count: 123 });
+  expect(result.name).toBe("John");
+  expect(result.S_foo).toBe("bar");
+  expect(result.N_count).toBe(123);
+
+  // Keys not matching any pattern pass through
+  const result2 = schema.parse({ name: "John", S_foo: "bar", N_count: 123, other: "value" });
+  expect(result2.other).toBe("value");
+
+  // Validation errors still occur for matching keys
+  expect(() => schema.parse({ name: "John", S_foo: 123 })).toThrow(); // S_foo should be string
+  expect(() => schema.parse({ name: "John", N_count: "abc" })).toThrow(); // N_count should be number
 });

@@ -16,6 +16,7 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.17.4",
+    "madge": "^8.0.0",
     "@biomejs/biome": "^1.9.4",
     "@seriousme/openapi-schema-validator": "2.5.0",
     "@types/benchmark": "^2.1.5",
@@ -44,7 +45,7 @@
     "tslib": "^2.8.1",
     "tsx": "^4.19.3",
     "typescript": "~5.5.4",
-    "vitest": "^2.1.9",
+    "vitest": "^4.0.10",
     "zod": "workspace:*",
     "zod3": "npm:zod@~3.24.0",
     "zshy": "^0.4.2"
@@ -83,6 +84,7 @@
     "publish:jsr": "jsr publish --dry-run",
     "bundle:rollup": "rollup -c",
     "bundle:esbuild": "esbuild --bundle ./scratch/input.ts --outfile=./scratch/out_esbuild.js --bundle --format=esm",
-    "check:semver": "tsx scripts/check-semver.ts"
+    "check:semver": "tsx scripts/check-versions.ts",
+    "check:circular": "madge --circular --extensions ts --exclude '(v4/core|v3|iso\\.ts)' packages/zod/src"
   }
 }

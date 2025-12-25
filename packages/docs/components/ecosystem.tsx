@@ -106,6 +106,12 @@ const formIntegrations: ZodResource[] = [
     description: "Tiny 0.5kb Zod-based, HTML form abstraction that goes brr.",
     slug: "schalkventer/frrm",
   },
+  {
+    name: "react-f3",
+    url: "https://www.npmjs.com/package/react-f3",
+    description: "Components, hooks & utilities for creating and managing delightfully simple form experiences in React.",
+    slug: "maanlamp/react-f3",
+  },
 ];
 
 const zodToXConverters: ZodResource[] = [
@@ -138,6 +144,18 @@ const zodToXConverters: ZodResource[] = [
     url: "https://github.com/traversable/schema/tree/main/packages/zod",
     description: 'Build your own "Zod to x" library, or pick one of 25+ off-the-shelf transformers',
     slug: "traversable/schema",
+  },
+  {
+    name: "zod-to-mongo-schema",
+    url: "https://github.com/udohjeremiah/zod-to-mongo-schema",
+    description: "Convert Zod schemas to MongoDB-compatible JSON Schemas effortlessly",
+    slug: "udohjeremiah/zod-to-mongo-schema",
+  },
+  {
+    name: "convex-helpers",
+    url: "https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/README.md#zod-validation",
+    description: "Use Zod to validate arguments and return values of Convex functions, and to create Convex database schemas",
+    slug: "get-convex/convex-helpers",
   },
 ];
 
@@ -180,6 +198,12 @@ const xToZodConverters: ZodResource[] = [
       "Drizzle ORM toolkit that can generate Zod validators from schema(s), plus typed services and strongly typed routers (oRPC/tRPC/etc).",
     slug: "use-drzl/drzl",
   },
+  {
+    name: "convex-helpers",
+    url: "https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/README.md#zod-validation",
+    description: "Generate Zod schemas from Convex validators",
+    slug: "get-convex/convex-helpers",
+  }
 ];
 
 const mockingLibraries: ZodResource[] = [
@@ -228,6 +252,18 @@ const poweredByZodProjects: ZodResource[] = [
     url: "https://github.com/boneskull/bupkis",
     description: "Uncommonly extensible assertions for the beautiful people",
     slug: "boneskull/bupkis",
+  },
+  {
+    name: "Fn Sphere",
+    url: "https://github.com/lawvs/fn-sphere",
+    description: "A Zod-first toolkit for building powerful, type-safe filter experiences across web apps.",
+    slug: "lawvs/fn-sphere",
+  },
+  {
+    name: "zodgres",
+    url: "https://github.com/endel/zodgres",
+    description: "Postgres.js + Zod: Database collections with static type inference and automatic migrations",
+    slug: "endel/zodgres",
   }
 ];
 
@@ -244,11 +280,23 @@ const zodUtilities: ZodResource[] = [
     description: "Interactive playground for testing and exploring Zod and Zod mini schemas in real-time.",
     slug: "marilari88/zod-playground",
   },
-   {
+  {
     name: "eslint-plugin-zod-x",
     url: "https://github.com/marcalexiei/eslint-plugin-zod-x",
     description: "ESLint plugin that adds custom linting rules to enforce best practices when using Zod",
     slug: "marcalexiei/eslint-plugin-zod-x",
+  },
+  {
+    name: "Zod Compare",
+    url: "https://github.com/lawvs/zod-compare",
+    description: "A utility library for recursively comparing Zod schemas.",
+    slug: "lawvs/zod-compare",
+  },
+  {
+    name: "zod-ir",
+    url: "https://github.com/Reza-kh80/zod-ir",
+    description: "Comprehensive validation for Iranian data structures (National Code, Bank Cards, Sheba, Crypto, etc) with smart metadata extraction (Bank Names, Logos). Zero dependencies.",
+    slug: "Reza-kh80/zod-ir",
   },
 ];
 

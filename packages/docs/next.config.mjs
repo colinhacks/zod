@@ -257,7 +257,7 @@ const config = {
       {
         source: "/CHANGELOG",
         destination: "https://github.com/colinhacks/zod/releases",
-        permanent: false,
+        permanent: true, // Changed to permanent since changelog is permanently on GitHub
       },
     ];
 
