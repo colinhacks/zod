@@ -1074,17 +1074,22 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   }
   nanoid(arg1?: number | string | { length?: number; message?: string }, arg2?: { message?: string }) {
     let length = 21;
-    let message: string | undefined;
+    let message: errorUtil.ErrMessage | undefined;
 
-    // This workaround ensures backward compatibility for custom error message (existing calls still work)
-    // while enabling a new way to specify a custom length and message.
-    // old: nanoid("custom error") & new: nanoid(64, { message: "custom error" })
+    // Support legacy string-based message, numeric length with optional message, and object params.
     if (typeof arg1 === "string") {
       message = arg1;
     } else if (typeof arg1 === "number") {
       length = arg1;
-      if (arg2?.message) {
+      if (arg2?.message !== undefined) {
         message = arg2.message;
+      }
+    } else if (typeof arg1 === "object" && arg1 !== null) {
+      if (typeof arg1.length === "number") {
+        length = arg1.length;
+      }
+      if (arg1.message !== undefined) {
+        message = arg1.message;
       }
     }
 

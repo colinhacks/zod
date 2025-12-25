@@ -384,6 +384,28 @@ test("bad nanoid", () => {
   }
 });
 
+test("nanoid message from params object", () => {
+  const nanoid = z.string().nanoid({ message: "custom error" });
+  const result = nanoid.safeParse("invalid nanoid");
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toEqual("custom error");
+  }
+});
+
+test("nanoid length from params object", () => {
+  const nanoid64 = z.string().nanoid({ length: 64, message: "custom error" });
+  const valid64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+  nanoid64.parse(valid64);
+
+  const shortId = "abc123";
+  const result = nanoid64.safeParse(shortId);
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toEqual("custom error");
+  }
+});
+
 test("custom character length nanoid", () => {
   const nanoid64 = z.string().nanoid(64);
   const valid64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
