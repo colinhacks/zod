@@ -593,9 +593,86 @@ const mySchema = z.unknown().refine((val): val is string => {
   return typeof val === "string"
 });
 
-type MySchema = z.infer<typeof mySchema>; 
+type MySchema = z.infer<typeof mySchema>;
 // Zod 3: `string`
 // Zod 4: still `unknown`
+```
+
+#### Migration alternatives
+
+For type narrowing scenarios previously handled by type predicates in refinements, use these alternatives:
+
+**Option 1: `z.custom<T>()`** — Recommended for most type narrowing scenarios
+
+<Tabs groupId="lib" items={["Zod 4 (Recommended)", "Zod 3"]} persist>
+<Tab value="Zod 4 (Recommended)">
+```ts
+// ✅ Use z.custom() for type narrowing
+const specificValueSchema = z.custom<"specific-value">((val) => {
+  return checkExternalLogic(val);
+});
+
+type SpecificValue = z.infer<typeof specificValueSchema>;
+// => "specific-value"
+
+// More complex example
+const customTypeSchema = z.custom<{ id: number; type: "user" }>((val) => {
+  return typeof val === "object" &&
+         val !== null &&
+         "id" in val &&
+         "type" in val &&
+         val.type === "user";
+});
+```
+</Tab>
+<Tab value="Zod 3">
+```ts
+// ❌ This pattern no longer narrows types in Zod 4
+const mySchema = z.string().refine((val): val is "specific-value" => {
+  return checkExternalLogic(val);
+});
+```
+</Tab>
+</Tabs>
+
+**Option 2: Transform pattern** — Use when you need to transform the data
+
+```ts
+// Transform the validated input into the desired type
+const specificValueSchema = z.unknown()
+  .refine((val) => checkExternalLogic(val), "Custom validation failed")
+  .transform((val): "specific-value" => val as "specific-value");
+
+type SpecificValue = z.infer<typeof specificValueSchema>;
+// => "specific-value"
+```
+
+**Option 3: Union with refinement** — Use when you have multiple valid types
+
+```ts
+// Use union for multiple possible types, then refine
+const specificValueSchema = z.union([
+  z.literal("specific-value"),
+  z.string().refine((val) => checkExternalLogic(val))
+]).transform((val): "specific-value" => val as "specific-value");
+```
+
+**Option 4: Compose schemas** — Build up from simpler schemas
+
+```ts
+// Start with a more specific base schema
+const specificValueSchema = z.literal("specific-value")
+  .or(z.string().refine((val) => checkExternalLogic(val)))
+  .transform((val): "specific-value" => val as "specific-value");
+```
+
+**Error handling tip**: When using `z.custom()`, provide clear error messages:
+
+```ts
+const schema = z.custom<"specific-value">(
+  (val) => checkExternalLogic(val),
+  "Value must be a specific-value that passes external validation"
+);
 ```
 
 ### drops `ctx.path`
