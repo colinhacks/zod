@@ -593,6 +593,12 @@ export const BIGINT_FORMAT_RANGES: Record<checks.$ZodBigIntFormats, [bigint, big
 export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>): any {
   const currDef = schema._zod.def;
 
+  const checks = currDef.checks;
+  const hasChecks = checks && checks.length > 0;
+  if (hasChecks) {
+    throw new Error(".pick() cannot be used on object schemas containing refinements");
+  }
+
   const def = mergeDefs(schema._zod.def, {
     get shape() {
       const newShape: Writeable<schemas.$ZodShape> = {};
@@ -615,6 +621,12 @@ export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>):
 
 export function omit(schema: schemas.$ZodObject, mask: object): any {
   const currDef = schema._zod.def;
+
+  const checks = currDef.checks;
+  const hasChecks = checks && checks.length > 0;
+  if (hasChecks) {
+    throw new Error(".omit() cannot be used on object schemas containing refinements");
+  }
 
   const def = mergeDefs(schema._zod.def, {
     get shape() {
@@ -662,15 +674,13 @@ export function safeExtend(schema: schemas.$ZodObject, shape: schemas.$ZodShape)
   if (!isPlainObject(shape)) {
     throw new Error("Invalid input to safeExtend: expected a plain object");
   }
-  const def = {
-    ...schema._zod.def,
+  const def = mergeDefs(schema._zod.def, {
     get shape() {
       const _shape = { ...schema._zod.def.shape, ...shape };
       assignProp(this, "shape", _shape); // self-caching
       return _shape;
     },
-    checks: schema._zod.def.checks,
-  } as any;
+  });
   return clone(schema, def) as any;
 }
 
@@ -695,6 +705,13 @@ export function partial(
   schema: schemas.$ZodObject,
   mask: object | undefined
 ): any {
+  const currDef = schema._zod.def;
+  const checks = currDef.checks;
+  const hasChecks = checks && checks.length > 0;
+  if (hasChecks) {
+    throw new Error(".partial() cannot be used on object schemas containing refinements");
+  }
+
   const def = mergeDefs(schema._zod.def, {
     get shape() {
       const oldShape = schema._zod.def.shape;
@@ -770,7 +787,6 @@ export function required(
       assignProp(this, "shape", shape); // self-caching
       return shape;
     },
-    checks: [],
   });
 
   return clone(schema, def) as any;

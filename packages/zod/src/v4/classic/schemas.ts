@@ -48,7 +48,9 @@ export interface ZodType<
       : ["Incompatible schema"]
   ): this;
 
-  brand<T extends PropertyKey = PropertyKey>(value?: T): PropertyKey extends T ? this : core.$ZodBranded<this, T>;
+  brand<T extends PropertyKey = PropertyKey, Dir extends "in" | "out" | "inout" = "out">(
+    value?: T
+  ): PropertyKey extends T ? this : core.$ZodBranded<this, T, Dir>;
 
   // parsing
   parse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;
@@ -253,7 +255,7 @@ export interface _ZodString<T extends core.$ZodStringInternals<unknown> = core.$
 
   // miscellaneous checks
   regex(regex: RegExp, params?: string | core.$ZodCheckRegexParams): this;
-  includes(value: string, params?: core.$ZodCheckIncludesParams): this;
+  includes(value: string, params?: string | core.$ZodCheckIncludesParams): this;
   startsWith(value: string, params?: string | core.$ZodCheckStartsWithParams): this;
   endsWith(value: string, params?: string | core.$ZodCheckEndsWithParams): this;
   min(minLength: number, params?: string | core.$ZodCheckMinLengthParams): this;
@@ -1538,6 +1540,10 @@ export interface ZodMap<Key extends core.SomeType = core.$ZodType, Value extends
   "~standard": ZodStandardSchemaWithJSON<this>;
   keyType: Key;
   valueType: Value;
+  min(minSize: number, params?: string | core.$ZodCheckMinSizeParams): this;
+  nonempty(params?: string | core.$ZodCheckMinSizeParams): this;
+  max(maxSize: number, params?: string | core.$ZodCheckMaxSizeParams): this;
+  size(size: number, params?: string | core.$ZodCheckSizeEqualsParams): this;
 }
 export const ZodMap: core.$constructor<ZodMap> = /*@__PURE__*/ core.$constructor("ZodMap", (inst, def) => {
   core.$ZodMap.init(inst, def);
@@ -1545,6 +1551,10 @@ export const ZodMap: core.$constructor<ZodMap> = /*@__PURE__*/ core.$constructor
   inst._zod.processJSONSchema = (ctx, json, params) => processors.mapProcessor(inst, ctx, json, params);
   inst.keyType = def.keyType;
   inst.valueType = def.valueType;
+  inst.min = (...args) => inst.check(core._minSize(...args));
+  inst.nonempty = (params) => inst.check(core._minSize(1, params));
+  inst.max = (...args) => inst.check(core._maxSize(...args));
+  inst.size = (...args) => inst.check(core._size(...args));
 });
 
 export function map<Key extends core.SomeType, Value extends core.SomeType>(

@@ -1,16 +1,16 @@
 import { expect, test } from "vitest";
 import * as z from "zod/v4";
 
-test("extend chaining preserves and overrides properties", () => {
+test("safeExtend chaining preserves and overrides properties", () => {
   const schema1 = z.object({
     email: z.string(),
   });
 
-  const schema2 = schema1.extend({
+  const schema2 = schema1.safeExtend({
     email: schema1.shape.email.check(z.email()),
   });
 
-  const schema3 = schema2.extend({
+  const schema3 = schema2.safeExtend({
     email: schema2.shape.email.or(z.literal("")),
   });
 

@@ -35,6 +35,27 @@ test("includes", () => {
   expect(() => includesFromIndex2.parse("XincludesXX")).toThrow();
 });
 
+test("includes with string error message", () => {
+  const schema = z.string().includes("test", "must contain test");
+  schema.parse("this is a test");
+
+  expect(schema.safeParse("this is invalid")).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "origin": "string",
+        "code": "invalid_format",
+        "format": "includes",
+        "includes": "test",
+        "path": [],
+        "message": "must contain test"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+});
+
 test("startswith/endswith", () => {
   startsWith.parse("startsWithX");
   endsWith.parse("XendsWith");
