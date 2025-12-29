@@ -41,6 +41,7 @@ export { default as tr } from "./tr.js";
 export { default as ua } from "./ua.js";
 export { default as uk } from "./uk.js";
 export { default as ur } from "./ur.js";
+export { default as uz } from "./uz.js";
 export { default as vi } from "./vi.js";
 export { default as zhCN } from "./zh-CN.js";
 export { default as zhTW } from "./zh-TW.js";
