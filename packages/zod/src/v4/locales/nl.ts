@@ -80,9 +80,7 @@ const error: () => errors.$ZodErrorMap = () => {
       case "too_big": {
         const adj = issue.inclusive ? "<=" : "<";
         const sizing = getSizing(issue.origin);
-        const longName = issue.origin === 'date' ? 'laat'
-          : issue.origin === 'string' ? 'lang'
-          : 'groot';
+        const longName = issue.origin === "date" ? "laat" : issue.origin === "string" ? "lang" : "groot";
 
         if (sizing)
           return `Te ${longName}: verwacht dat ${issue.origin ?? "waarde"} ${adj}${issue.maximum.toString()} ${sizing.unit ?? "elementen"} ${sizing.verb}`;
@@ -91,9 +89,7 @@ const error: () => errors.$ZodErrorMap = () => {
       case "too_small": {
         const adj = issue.inclusive ? ">=" : ">";
         const sizing = getSizing(issue.origin);
-        const shortName = issue.origin === 'date' ? 'vroeg'
-          : issue.origin === 'string' ? 'kort'
-          : 'klein';
+        const shortName = issue.origin === "date" ? "vroeg" : issue.origin === "string" ? "kort" : "klein";
 
         if (sizing) {
           return `Te ${shortName}: verwacht dat ${issue.origin} ${adj}${issue.minimum.toString()} ${sizing.unit} ${sizing.verb}`;
