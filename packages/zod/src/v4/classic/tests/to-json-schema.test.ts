@@ -856,6 +856,60 @@ describe("toJSONSchema", () => {
     `);
   });
 
+  test("record with enum keys adds required", () => {
+    const schema = z.record(z.enum(["key1", "key2"]), z.number());
+
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": {
+          "type": "number",
+        },
+        "propertyNames": {
+          "enum": [
+            "key1",
+            "key2",
+          ],
+          "type": "string",
+        },
+        "required": [
+          "key1",
+          "key2",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  test("record filters enum values to strings and numbers for required", () => {
+    enum NumberEnum {
+      Zero = 0,
+      One = 1,
+    }
+    const schema = z.record(z.enum(NumberEnum), z.string());
+
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": {
+          "type": "string",
+        },
+        "propertyNames": {
+          "enum": [
+            0,
+            1,
+          ],
+          "type": "number",
+        },
+        "required": [
+          0,
+          1,
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
   test("tuple", () => {
     const schema = z.tuple([z.string(), z.number()]);
     expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`

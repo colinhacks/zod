@@ -437,6 +437,18 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
     ...params,
     path: [...params.path, "additionalProperties"],
   });
+
+  const keyDef = (def.keyType as schemas.$ZodTypes)._zod.def;
+  if (keyDef.type === "enum") {
+    const enumValues = getEnumValues(keyDef.entries);
+    const validEnumValues = enumValues.filter(
+      (v): v is string | number => typeof v === "string" || typeof v === "number"
+    );
+
+    if (validEnumValues.length > 0) {
+      json.required = validEnumValues as string[];
+    }
+  }
 };
 
 export const nullableProcessor: Processor<schemas.$ZodNullable> = (schema, ctx, json, params) => {
