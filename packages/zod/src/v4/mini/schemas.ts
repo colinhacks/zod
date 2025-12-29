@@ -1639,6 +1639,14 @@ export function custom<O = unknown, I = O>(
 }
 
 // refine
+export function refine<T, RefinedOutput extends T>(
+  fn: (arg: NoInfer<T>) => arg is RefinedOutput,
+  _params?: string | core.$ZodCustomParams
+): core.$ZodCheck<T> & { _zod: { output: RefinedOutput } };
+export function refine<T>(
+  fn: (arg: NoInfer<T>) => util.MaybeAsync<unknown>,
+  _params?: string | core.$ZodCustomParams
+): core.$ZodCheck<T>;
 export function refine<T>(
   fn: (arg: NoInfer<T>) => util.MaybeAsync<unknown>,
   _params: string | core.$ZodCustomParams = {}

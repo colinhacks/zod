@@ -88,6 +88,10 @@ export interface ZodType<
   ): Promise<parse.ZodSafeParseResult<core.output<this>>>;
 
   // refinements
+  refine<RefinedOutput extends core.output<this>>(
+    check: (arg: core.output<this>) => arg is RefinedOutput,
+    params?: string | core.$ZodCustomParams
+  ): core.$ZodRefined<this, RefinedOutput>;
   refine(check: (arg: core.output<this>) => unknown | Promise<unknown>, params?: string | core.$ZodCustomParams): this;
   superRefine(
     refinement: (arg: core.output<this>, ctx: core.$RefinementCtx<core.output<this>>) => void | Promise<void>
@@ -199,7 +203,8 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   inst.safeDecodeAsync = async (data, params) => parse.safeDecodeAsync(inst, data, params);
 
   // refinements
-  inst.refine = (check, params) => inst.check(refine(check, params));
+  inst.refine = (check: (arg: any) => unknown, params?: string | core.$ZodCustomParams) =>
+    inst.check(refine(check, params));
   inst.superRefine = (refinement) => inst.check(superRefine(refinement));
   inst.overwrite = (fn) => inst.check(checks.overwrite(fn));
 
@@ -2275,6 +2280,14 @@ export function custom<O>(
   return core._custom(ZodCustom, fn ?? (() => true), _params) as any;
 }
 
+export function refine<T, RefinedOutput extends T>(
+  fn: (arg: NoInfer<T>) => arg is RefinedOutput,
+  _params?: string | core.$ZodCustomParams
+): core.$ZodCheck<T> & { _zod: { output: RefinedOutput } };
+export function refine<T>(
+  fn: (arg: NoInfer<T>) => util.MaybeAsync<unknown>,
+  _params?: string | core.$ZodCustomParams
+): core.$ZodCheck<T>;
 export function refine<T>(
   fn: (arg: NoInfer<T>) => util.MaybeAsync<unknown>,
   _params: string | core.$ZodCustomParams = {}

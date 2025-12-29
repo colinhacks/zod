@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, expectTypeOf, test } from "vitest";
 import * as z from "zod/v4";
 
 describe("basic refinement functionality", () => {
@@ -602,4 +602,67 @@ test("when", () => {
       "success": false,
     }
   `);
+});
+
+describe("type predicate refinements", () => {
+  test("refine with type predicate narrows output type", () => {
+    const schema = z.string().refine((val): val is "specific" => val === "specific");
+
+    type SchemaInput = z.input<typeof schema>;
+    type SchemaOutput = z.infer<typeof schema>;
+
+    // Input type should remain string
+    expectTypeOf<SchemaInput>().toEqualTypeOf<string>();
+    // Output type should be narrowed to "specific"
+    expectTypeOf<SchemaOutput>().toEqualTypeOf<"specific">();
+
+    // Runtime behavior should still work
+    expect(schema.safeParse("specific").success).toBe(true);
+    expect(schema.safeParse("other").success).toBe(false);
+  });
+
+  test("refine with type predicate on unknown narrows to specific type", () => {
+    const schema = z.unknown().refine((val): val is string => typeof val === "string");
+
+    type SchemaOutput = z.infer<typeof schema>;
+
+    expectTypeOf<SchemaOutput>().toEqualTypeOf<string>();
+
+    expect(schema.safeParse("hello").success).toBe(true);
+    expect(schema.safeParse(123).success).toBe(false);
+  });
+
+  test("refine without type predicate preserves original type", () => {
+    const schema = z.string().refine((val) => val.length > 0);
+
+    type SchemaOutput = z.infer<typeof schema>;
+
+    // Should still be string, not narrowed
+    expectTypeOf<SchemaOutput>().toEqualTypeOf<string>();
+  });
+
+  test("refine with type predicate on nullable narrows to non-null", () => {
+    const schema = z
+      .string()
+      .nullable()
+      .refine((val): val is string => val !== null);
+
+    type SchemaOutput = z.infer<typeof schema>;
+
+    expectTypeOf<SchemaOutput>().toEqualTypeOf<string>();
+
+    expect(schema.safeParse("hello").success).toBe(true);
+    expect(schema.safeParse(null).success).toBe(false);
+  });
+
+  test("refine with type predicate narrowing number to literal", () => {
+    const schema = z.number().refine((val): val is 42 => val === 42);
+
+    type SchemaOutput = z.infer<typeof schema>;
+
+    expectTypeOf<SchemaOutput>().toEqualTypeOf<42>();
+
+    expect(schema.safeParse(42).success).toBe(true);
+    expect(schema.safeParse(43).success).toBe(false);
+  });
 });
