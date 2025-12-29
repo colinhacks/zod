@@ -1,5 +1,4 @@
 export { default as ar } from "./ar.js";
-export { default as am } from "./am.js";
 export { default as az } from "./az.js";
 export { default as be } from "./be.js";
 export { default as bg } from "./bg.js";
@@ -16,6 +15,7 @@ export { default as fr } from "./fr.js";
 export { default as frCA } from "./fr-CA.js";
 export { default as he } from "./he.js";
 export { default as hu } from "./hu.js";
+export { default as hy } from "./hy.js";
 export { default as id } from "./id.js";
 export { default as is } from "./is.js";
 export { default as it } from "./it.js";
