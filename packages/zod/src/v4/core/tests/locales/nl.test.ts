@@ -22,7 +22,7 @@ test("Dutch locale error messages", () => {
       inclusive: true,
       input: "test string that is too long",
     })
-  ).toBe("Te groot: verwacht dat string te hebben <=10 tekens");
+  ).toBe("Te lang: verwacht dat string <=10 tekens heeft");
 
   // Test too_small with sizing
   expect(
@@ -33,7 +33,7 @@ test("Dutch locale error messages", () => {
       inclusive: false,
       input: [1, 2],
     })
-  ).toBe("Te klein: verwacht dat array te hebben >5 elementen");
+  ).toBe("Te klein: verwacht dat array >5 elementen heeft");
 
   // Test invalid_format
   expect(
