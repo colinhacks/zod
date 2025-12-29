@@ -221,6 +221,21 @@ export function extractDefs<T extends schemas.$ZodType>(
 
   if (!root) throw new Error("Unprocessed schema. This is a bug in Zod.");
 
+  // Track ids to detect duplicates across different schemas
+  const idToSchema = new Map<string, schemas.$ZodType>();
+  for (const entry of ctx.seen.entries()) {
+    const id = ctx.metadataRegistry.get(entry[0])?.id;
+    if (id) {
+      const existing = idToSchema.get(id);
+      if (existing && existing !== entry[0]) {
+        throw new Error(
+          `Duplicate schema id "${id}" detected during JSON Schema conversion. Two different schemas cannot share the same id when converted together.`
+        );
+      }
+      idToSchema.set(id, entry[0]);
+    }
+  }
+
   // returns a ref to the schema
   // defId will be empty if the ref points to an external schema (or #)
   const makeURI = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): { ref: string; defId?: string } => {

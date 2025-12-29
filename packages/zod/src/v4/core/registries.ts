@@ -37,9 +37,6 @@ export class $ZodRegistry<Meta extends MetadataType = MetadataType, Schema exten
     const meta: any = _meta[0];
     this._map.set(schema, meta!);
     if (meta && typeof meta === "object" && "id" in meta) {
-      if (this._idmap.has(meta.id!)) {
-        throw new Error(`ID ${meta.id} already exists in the registry`);
-      }
       this._idmap.set(meta.id!, schema);
     }
     return this as any;

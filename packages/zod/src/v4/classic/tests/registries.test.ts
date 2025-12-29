@@ -206,3 +206,38 @@ test("test .clear()", () => {
   reg.clear();
   expect(reg.has(a)).toEqual(false);
 });
+
+test("re-registering same id silently overwrites", () => {
+  const reg = z.registry<z.core.GlobalMeta>();
+  const a = z.string();
+  const b = z.number();
+
+  reg.add(a, { id: "shared-id" });
+  reg.add(b, { id: "shared-id" });
+
+  // No error thrown, b now owns the id
+  expect(reg._idmap.get("shared-id")).toBe(b);
+});
+
+test("toJSONSchema throws on duplicate id across different schemas", () => {
+  const reg = z.registry<z.core.GlobalMeta>();
+  const a = z.string().register(reg, { id: "duplicate-id" });
+  const b = z.number().register(reg, { id: "duplicate-id" });
+
+  const wrapper = z.object({ a, b });
+
+  expect(() => z.toJSONSchema(wrapper, { metadata: reg })).toThrow(
+    'Duplicate schema id "duplicate-id" detected during JSON Schema conversion. Two different schemas cannot share the same id when converted together.'
+  );
+});
+
+test("toJSONSchema allows same schema with same id", () => {
+  const reg = z.registry<z.core.GlobalMeta>();
+  const shared = z.string().register(reg, { id: "shared-id" });
+
+  const wrapper = z.object({ a: shared, b: shared });
+
+  // Should not throw - same schema instance used twice
+  const result = z.toJSONSchema(wrapper, { metadata: reg });
+  expect(result.$defs?.["shared-id"]).toBeDefined();
+});
