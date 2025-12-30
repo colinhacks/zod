@@ -230,7 +230,7 @@ To constrain the input schema to a specific subclass:
 import * as z4 from "zod/v4/core";
 
 // only accepts object schemas
-function inferSchema<T>(schema: z4.$ZodObject) {
+function inferSchema<T extends z4.$ZodObject>(schema: T) {
   return schema;
 }
 ```

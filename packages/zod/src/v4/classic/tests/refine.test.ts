@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, expectTypeOf, test } from "vitest";
 import * as z from "zod/v4";
 
 describe("basic refinement functionality", () => {
@@ -416,84 +416,49 @@ describe("chained refinements", () => {
   });
 });
 
-// Commented tests can be uncommented once type-checking issues are resolved
-/*
-describe("type refinement", () => {
-  test("refinement type guard", () => {
-    const validationSchema = z.object({
-      a: z.string().refine((s): s is "a" => s === "a"),
-    });
-    type Input = z.input<typeof validationSchema>;
-    type Schema = z.infer<typeof validationSchema>;
+describe("type refinement with type guards", () => {
+  test("type guard narrows output type", () => {
+    const schema = z.string().refine((s): s is "a" => s === "a");
 
-    expectTypeOf<Input["a"]>().not.toEqualTypeOf<"a">();
-    expectTypeOf<Input["a"]>().toEqualTypeOf<string>();
-
-    expectTypeOf<Schema["a"]>().toEqualTypeOf<"a">();
-    expectTypeOf<Schema["a"]>().not.toEqualTypeOf<string>();
+    expectTypeOf<z.input<typeof schema>>().toEqualTypeOf<string>();
+    expectTypeOf<z.output<typeof schema>>().toEqualTypeOf<"a">();
   });
 
-  test("superRefine - type narrowing", () => {
-    type NarrowType = { type: string; age: number };
-    const schema = z
-      .object({
-        type: z.string(),
-        age: z.number(),
-      })
-      .nullable()
-      .superRefine((arg, ctx): arg is NarrowType => {
-        if (!arg) {
-          // still need to make a call to ctx.addIssue
-          ctx.addIssue({
-            input: arg,
-            code: "custom",
-            message: "cannot be null",
-            fatal: true,
-          });
-          return false;
-        }
-        return true;
-      });
+  test("non-type-guard refine does not narrow", () => {
+    const schema = z.string().refine((s) => s.length > 0);
 
-    expectTypeOf<z.infer<typeof schema>>().toEqualTypeOf<NarrowType>();
-
-    expect(schema.safeParse({ type: "test", age: 0 }).success).toEqual(true);
-    expect(schema.safeParse(null).success).toEqual(false);
+    expectTypeOf<z.input<typeof schema>>().toEqualTypeOf<string>();
+    expectTypeOf<z.output<typeof schema>>().toEqualTypeOf<string>();
   });
 
-  test("chained mixed refining types", () => {
-    type firstRefinement = { first: string; second: number; third: true };
-    type secondRefinement = { first: "bob"; second: number; third: true };
-    type thirdRefinement = { first: "bob"; second: 33; third: true };
-    const schema = z
-      .object({
-        first: z.string(),
-        second: z.number(),
-        third: z.boolean(),
-      })
-      .nullable()
-      .refine((arg): arg is firstRefinement => !!arg?.third)
-      .superRefine((arg, ctx): arg is secondRefinement => {
-        expectTypeOf<typeof arg>().toEqualTypeOf<firstRefinement>();
-        if (arg.first !== "bob") {
-          ctx.addIssue({
-            input: arg,
-            code: "custom",
-            message: "`first` property must be `bob`",
-          });
-          return false;
-        }
-        return true;
-      })
-      .refine((arg): arg is thirdRefinement => {
-        expectTypeOf<typeof arg>().toEqualTypeOf<secondRefinement>();
-        return arg.second === 33;
-      });
-
-    expectTypeOf<z.infer<typeof schema>>().toEqualTypeOf<thirdRefinement>();
-  });
+  // TODO: Implement type narrowing for superRefine
+  // test("superRefine - type narrowing", () => {
+  //   type NarrowType = { type: string; age: number };
+  //   const schema = z
+  //     .object({
+  //       type: z.string(),
+  //       age: z.number(),
+  //     })
+  //     .nullable()
+  //     .superRefine((arg, ctx): arg is NarrowType => {
+  //       if (!arg) {
+  //         ctx.addIssue({
+  //           input: arg,
+  //           code: "custom",
+  //           message: "cannot be null",
+  //           fatal: true,
+  //         });
+  //         return false;
+  //       }
+  //       return true;
+  //     });
+  //
+  //   expectTypeOf<z.infer<typeof schema>>().toEqualTypeOf<NarrowType>();
+  //
+  //   expect(schema.safeParse({ type: "test", age: 0 }).success).toEqual(true);
+  //   expect(schema.safeParse(null).success).toEqual(false);
+  // });
 });
-*/
 
 test("when", () => {
   const schema = z

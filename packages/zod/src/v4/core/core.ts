@@ -82,8 +82,18 @@ export type $brand<T extends string | number | symbol = string | number | symbol
   [$brand]: { [k in T]: true };
 };
 
-export type $ZodBranded<T extends schemas.SomeType, Brand extends string | number | symbol> = T &
-  Record<"_zod", Record<"output", output<T> & $brand<Brand>>>;
+export type $ZodBranded<
+  T extends schemas.SomeType,
+  Brand extends string | number | symbol,
+  Dir extends "in" | "out" | "inout" = "out",
+> = T &
+  (Dir extends "inout"
+    ? { _zod: { input: input<T> & $brand<Brand>; output: output<T> & $brand<Brand> } }
+    : Dir extends "in"
+      ? { _zod: { input: input<T> & $brand<Brand> } }
+      : { _zod: { output: output<T> & $brand<Brand> } });
+
+export type $ZodNarrow<T extends schemas.SomeType, Out> = T & { _zod: { output: Out } };
 
 export class $ZodAsyncError extends Error {
   constructor() {

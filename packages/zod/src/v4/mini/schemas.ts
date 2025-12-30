@@ -11,6 +11,10 @@ export interface ZodMiniType<
 > extends core.$ZodType<Output, Input, Internals> {
   type: Internals["def"]["type"];
   check(...checks: (core.CheckFn<core.output<this>> | core.$ZodCheck<core.output<this>>)[]): this;
+  refine<Ch extends (arg: core.output<this>) => unknown | Promise<unknown>>(
+    check: Ch,
+    params?: string | core.$ZodCustomParams
+  ): Ch extends (arg: any) => arg is infer R ? core.$ZodNarrow<this, R> : this;
   clone(def?: Internals["def"], params?: { parent: boolean }): this;
   register<R extends core.$ZodRegistry>(
     registry: R,
@@ -20,9 +24,9 @@ export interface ZodMiniType<
         : [core.$replace<R["_meta"], this>]
       : ["Incompatible schema"]
   ): this;
-  brand<T extends PropertyKey = PropertyKey>(
+  brand<T extends PropertyKey = PropertyKey, Dir extends "in" | "out" | "inout" = "out">(
     value?: T
-  ): PropertyKey extends T ? this : this & Record<"_zod", Record<"output", core.output<this> & core.$brand<T>>>;
+  ): PropertyKey extends T ? this : core.$ZodBranded<this, T, Dir>;
 
   def: Internals["def"];
 
@@ -65,6 +69,7 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
         // { parent: true }
       );
     };
+    inst.refine = (check, params) => inst.check(refine(check, params)) as never;
     inst.clone = (_def, params) => core.clone(inst, _def, params);
     inst.brand = () => inst as any;
     inst.register = ((reg: any, meta: any) => {

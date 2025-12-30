@@ -30,9 +30,10 @@ test("successful validation", () => {
       {
         "code": "too_big",
         "maximum": 2,
+        "inclusive": true,
         "origin": "array",
         "path": [],
-        "message": "Too big: expected array to have <2 items"
+        "message": "Too big: expected array to have <=2 items"
       }
     ]]
   `);
@@ -82,9 +83,10 @@ test("async validation", async () => {
       {
         "code": "too_big",
         "maximum": 2,
+        "inclusive": true,
         "origin": "array",
         "path": [],
-        "message": "Too big: expected array to have <2 items"
+        "message": "Too big: expected array to have <=2 items"
       }
     ]]
   `);

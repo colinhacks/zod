@@ -435,6 +435,20 @@ test("extend() should have power to override existing key", () => {
   expectTypeOf<PersonWithNumberAsLastName>().toEqualTypeOf<{ firstName: string; lastName: number }>();
 });
 
+test("safeExtend() should have power to override existing key", () => {
+  const PersonWithMinLastName = personToExtend.safeExtend({
+    lastName: z.string().min(3),
+  });
+  type PersonWithMinLastName = z.infer<typeof PersonWithMinLastName>;
+
+  const expected = { firstName: "f", lastName: "abc" };
+  const actual = PersonWithMinLastName.parse(expected);
+
+  expect(actual).toEqual(expected);
+  expect(() => PersonWithMinLastName.parse({ firstName: "f", lastName: "ab" })).toThrow();
+  expectTypeOf<PersonWithMinLastName>().toEqualTypeOf<{ firstName: string; lastName: string }>();
+});
+
 test("safeExtend() maintains refinements", () => {
   const schema = z.object({ name: z.string().min(1) });
   const extended = schema.safeExtend({ name: z.string().min(2) });

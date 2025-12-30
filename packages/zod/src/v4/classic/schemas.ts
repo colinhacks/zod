@@ -48,7 +48,9 @@ export interface ZodType<
       : ["Incompatible schema"]
   ): this;
 
-  brand<T extends PropertyKey = PropertyKey>(value?: T): PropertyKey extends T ? this : core.$ZodBranded<this, T>;
+  brand<T extends PropertyKey = PropertyKey, Dir extends "in" | "out" | "inout" = "out">(
+    value?: T
+  ): PropertyKey extends T ? this : core.$ZodBranded<this, T, Dir>;
 
   // parsing
   parse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;
@@ -86,7 +88,10 @@ export interface ZodType<
   ): Promise<parse.ZodSafeParseResult<core.output<this>>>;
 
   // refinements
-  refine(check: (arg: core.output<this>) => unknown | Promise<unknown>, params?: string | core.$ZodCustomParams): this;
+  refine<Ch extends (arg: core.output<this>) => unknown | Promise<unknown>>(
+    check: Ch,
+    params?: string | core.$ZodCustomParams
+  ): Ch extends (arg: any) => arg is infer R ? core.$ZodNarrow<this, R> : this;
   superRefine(
     refinement: (arg: core.output<this>, ctx: core.$RefinementCtx<core.output<this>>) => void | Promise<void>
   ): this;
@@ -198,7 +203,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   inst.safeDecodeAsync = async (data, params) => parse.safeDecodeAsync(inst, data, params);
 
   // refinements
-  inst.refine = (check, params) => inst.check(refine(check, params));
+  inst.refine = (check, params) => inst.check(refine(check, params)) as never;
   inst.superRefine = (refinement) => inst.check(superRefine(refinement));
   inst.overwrite = (fn) => inst.check(checks.overwrite(fn));
 
@@ -1539,6 +1544,10 @@ export interface ZodMap<Key extends core.SomeType = core.$ZodType, Value extends
   "~standard": ZodStandardSchemaWithJSON<this>;
   keyType: Key;
   valueType: Value;
+  min(minSize: number, params?: string | core.$ZodCheckMinSizeParams): this;
+  nonempty(params?: string | core.$ZodCheckMinSizeParams): this;
+  max(maxSize: number, params?: string | core.$ZodCheckMaxSizeParams): this;
+  size(size: number, params?: string | core.$ZodCheckSizeEqualsParams): this;
 }
 export const ZodMap: core.$constructor<ZodMap> = /*@__PURE__*/ core.$constructor("ZodMap", (inst, def) => {
   core.$ZodMap.init(inst, def);
@@ -1546,6 +1555,10 @@ export const ZodMap: core.$constructor<ZodMap> = /*@__PURE__*/ core.$constructor
   inst._zod.processJSONSchema = (ctx, json, params) => processors.mapProcessor(inst, ctx, json, params);
   inst.keyType = def.keyType;
   inst.valueType = def.valueType;
+  inst.min = (...args) => inst.check(core._minSize(...args));
+  inst.nonempty = (params) => inst.check(core._minSize(1, params));
+  inst.max = (...args) => inst.check(core._maxSize(...args));
+  inst.size = (...args) => inst.check(core._size(...args));
 });
 
 export function map<Key extends core.SomeType, Value extends core.SomeType>(

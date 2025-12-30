@@ -2533,7 +2533,9 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
       const tooSmall = input.length < optStart - 1;
       if (tooBig || tooSmall) {
         payload.issues.push({
-          ...(tooBig ? { code: "too_big", maximum: items.length } : { code: "too_small", minimum: items.length }),
+          ...(tooBig
+            ? { code: "too_big", maximum: items.length, inclusive: true }
+            : { code: "too_small", minimum: items.length }),
 
           input,
           inst,
@@ -2602,7 +2604,7 @@ function handleTupleResult(result: ParsePayload, final: ParsePayload<any[]>, ind
 //////////////////////////////////////////
 //////////////////////////////////////////
 
-export type $ZodRecordKey = $ZodType<string | number | symbol, string | number | symbol>; // $HasValues | $HasPattern;
+export type $ZodRecordKey = $ZodType<string | number | symbol, unknown>; // $HasValues | $HasPattern;
 export interface $ZodRecordDef<Key extends $ZodRecordKey = $ZodRecordKey, Value extends SomeType = $ZodType>
   extends $ZodTypeDef {
   type: "record";
@@ -2643,12 +2645,13 @@ export type $InferZodRecordOutput<
 //         ? Record<core.input<Key>, core.input<Value>>
 //         : Record<core.input<Key>, core.input<Value>>
 //   : Record<core.input<Key>, core.input<Value>>;
+
 export type $InferZodRecordInput<
   Key extends $ZodRecordKey = $ZodRecordKey,
   Value extends SomeType = $ZodType,
 > = Key extends $partial
-  ? Partial<Record<core.input<Key>, core.input<Value>>>
-  : Record<core.input<Key>, core.input<Value>>;
+  ? Partial<Record<core.input<Key> & PropertyKey, core.input<Value>>>
+  : Record<core.input<Key> & PropertyKey, core.input<Value>>;
 
 export interface $ZodRecordInternals<Key extends $ZodRecordKey = $ZodRecordKey, Value extends SomeType = $ZodType>
   extends $ZodTypeInternals<$InferZodRecordOutput<Key, Value>, $InferZodRecordInput<Key, Value>> {

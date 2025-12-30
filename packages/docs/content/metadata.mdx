@@ -135,9 +135,13 @@ const emailSchema = z.email().meta({
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-// no equivalent
-  
- 
+const emailSchema = z.email().check(
+  z.meta({ 
+    id: "email_address",
+    title: "Email address",
+    description: "Please enter a valid email address",
+  })
+);
 ```
 </Tab>
 </Tabs>
@@ -181,11 +185,10 @@ emailSchema.meta({ description: "An email address" });
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-// no equivalent
- 
- 
- 
- 
+const emailSchema = z.email().check(z.describe("An email address"));
+
+// equivalent to
+z.email().check(z.meta({ description: "An email address" }));
 ```
 </Tab>
 </Tabs>

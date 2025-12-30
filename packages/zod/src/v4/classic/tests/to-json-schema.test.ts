@@ -103,8 +103,28 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(z.iso.time())).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "format": "time",
         "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?$",
+        "type": "string",
+      }
+    `);
+    expect(z.toJSONSchema(z.iso.time({ precision: -1 }))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$",
+        "type": "string",
+      }
+    `);
+    expect(z.toJSONSchema(z.iso.time({ precision: 0 }))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d$",
+        "type": "string",
+      }
+    `);
+    expect(z.toJSONSchema(z.iso.time({ precision: 3 }))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}$",
         "type": "string",
       }
     `);
@@ -344,7 +364,6 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(z.iso.time())).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "format": "time",
         "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?$",
         "type": "string",
       }
@@ -856,6 +875,60 @@ describe("toJSONSchema", () => {
         "additionalProperties": {
           "type": "boolean",
         },
+        "type": "object",
+      }
+    `);
+  });
+
+  test("record with enum keys adds required", () => {
+    const schema = z.record(z.enum(["key1", "key2"]), z.number());
+
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": {
+          "type": "number",
+        },
+        "propertyNames": {
+          "enum": [
+            "key1",
+            "key2",
+          ],
+          "type": "string",
+        },
+        "required": [
+          "key1",
+          "key2",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  test("record filters enum values to strings and numbers for required", () => {
+    enum NumberEnum {
+      Zero = 0,
+      One = 1,
+    }
+    const schema = z.record(z.enum(NumberEnum), z.string());
+
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": {
+          "type": "string",
+        },
+        "propertyNames": {
+          "enum": [
+            0,
+            1,
+          ],
+          "type": "number",
+        },
+        "required": [
+          0,
+          1,
+        ],
         "type": "object",
       }
     `);
