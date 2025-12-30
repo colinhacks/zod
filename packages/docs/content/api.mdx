@@ -3094,3 +3094,44 @@ You can customize the error message and other options by passing a second argume
 ```ts
 z.custom<...>((val) => ..., "custom error message");
 ```
+
+## Apply
+
+Use `.apply()` to incorporate external functions into Zod's method chain:
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+function setCommonNumberChecks<T extends z.ZodNumber>(schema: T) {
+  return schema
+    .min(0)
+    .max(100);
+}
+
+const schema = z.number()
+  .apply(setCommonNumberChecks)
+  .nullable();
+
+schema.parse(0);  // => 0
+schema.parse(-1); // ❌ throws
+schema.parse(101); // ❌ throws
+schema.parse(null); // => null
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+function setCommonNumberChecks<T extends z.ZodMiniNumber>(schema: T) {
+  return schema.check(z.minimum(0), z.maximum(100));
+}
+
+const schema = z.nullable(
+  z.number().apply(setCommonNumberChecks)
+);
+
+z.parse(schema, 0);   // => 0
+z.parse(schema, -1);  // ❌ throws
+z.parse(schema, 101); // ❌ throws
+z.parse(schema, null); // => null
+```
+</Tab>
+</Tabs>

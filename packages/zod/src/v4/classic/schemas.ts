@@ -146,6 +146,7 @@ export interface ZodType<
    * ```
    */
   isNullable(): boolean;
+  apply<T>(fn: (schema: this) => T): T;
 }
 
 export interface _ZodType<out Internals extends core.$ZodTypeInternals = core.$ZodTypeInternals>
@@ -251,6 +252,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   // helpers
   inst.isOptional = () => inst.safeParse(undefined).success;
   inst.isNullable = () => inst.safeParse(null).success;
+  inst.apply = (fn) => fn(inst);
   return inst;
 });
 
