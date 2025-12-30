@@ -2733,10 +2733,27 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       payload.value = {};
       for (const key of Reflect.ownKeys(input)) {
         if (key === "__proto__") continue;
-        const keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
-
+        let keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
         if (keyResult instanceof Promise) {
           throw new Error("Async schemas not supported in object keys currently");
+        }
+
+        // Numeric string fallback: if key failed with "expected number", retry with Number(key)
+        const checkNumericKey =
+          typeof key === "string" &&
+          regexes.number.test(key) &&
+          keyResult.issues.length &&
+          keyResult.issues.some(
+            (iss) => iss.code === "invalid_type" && (iss as errors.$ZodIssueInvalidType).expected === "number"
+          );
+        if (checkNumericKey) {
+          const retryResult = def.keyType._zod.run({ value: Number(key), issues: [] }, ctx);
+          if (retryResult instanceof Promise) {
+            throw new Error("Async schemas not supported in object keys currently");
+          }
+          if (retryResult.issues.length === 0) {
+            keyResult = retryResult;
+          }
         }
 
         if (keyResult.issues.length) {
@@ -2747,7 +2764,6 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
             // Default "strict" behavior: error on invalid key
             payload.issues.push({
               code: "invalid_key",
-
               origin: "record",
               issues: keyResult.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
               input: key,

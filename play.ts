@@ -1,6 +1,1 @@
-import * as z from "zod";
-
-z;
-
-z.string().slugify().parse("Hello World");
-// => "hello-world"
+import * as z from "./packages/zod/src/v4/index.js";

@@ -1902,22 +1902,6 @@ schema.parse({
 });
 ```
 
-<Accordions>
-<Accordion title="A note on numeric keys">
-
-Though TypeScript lets you define `Record` types with `number` keys (e.g. `Record<number, unknown>`), numerical keys don't actually exist in JavaScript, which converts all keys to strings.
-
-```ts
-const myObject = { 1: "one" };
-
-Object.keys(myObject); 
-// => ["1"]
-```
-
-As you can see, JavaScript automatically casts all numeric keys to strings under the hood. As such, using `z.number()` as a key schema inside `z.record()` will always throw an error during parsing, but Zod allows it for the sake of parity with TypeScript's type system.
-
-</Accordion></Accordions>
-
 ## Maps
 
 ```ts
