@@ -2752,7 +2752,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
             throw new Error("Async schemas not supported in object keys currently");
           }
           if (retryResult.issues.length === 0) {
-            keyResult = retryResult;
+            keyResult = { value: String(retryResult.value), issues: [] };
           }
         }
 

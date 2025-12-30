@@ -1865,7 +1865,7 @@ const Person = z.record(Keys, z.string());
 
 ```ts
 const numberKeys = z.record(z.number(), z.string());
-schema.parse({ 
+numberKeys.parse({ 
   1: "one", // ✅
   2: "two", // ✅
   "1.5": "one", // ✅
