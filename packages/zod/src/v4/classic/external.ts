@@ -49,3 +49,7 @@ export type {
   ZodCoercedDate,
 } from "./coerce.js";
 export * as coerce from "./coerce.js";
+
+// plugins
+export { ext } from "./plugins.js";
+export type { ZodExtensions } from "./plugins.js";
