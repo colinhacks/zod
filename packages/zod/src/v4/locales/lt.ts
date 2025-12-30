@@ -2,50 +2,6 @@ import type { $ZodStringFormats } from "../core/checks.js";
 import type * as errors from "../core/errors.js";
 import * as util from "../core/util.js";
 
-const parsedTypeFromType = (t: string, data: any = undefined): string => {
-  switch (t) {
-    case "number": {
-      return Number.isNaN(data) ? "NaN" : "skaičius";
-    }
-    case "bigint": {
-      return "sveikasis skaičius";
-    }
-    case "string": {
-      return "eilutė";
-    }
-    case "boolean": {
-      return "loginė reikšmė";
-    }
-    case "undefined":
-    case "void": {
-      return "neapibrėžta reikšmė";
-    }
-    case "function": {
-      return "funkcija";
-    }
-    case "symbol": {
-      return "simbolis";
-    }
-    case "object": {
-      if (data === undefined) return "nežinomas objektas";
-      if (data === null) return "nulinė reikšmė";
-
-      if (Array.isArray(data)) return "masyvas";
-      if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-        return data.constructor.name;
-      }
-
-      return "objektas";
-    }
-    //Zod types below
-    case "null": {
-      return "nulinė reikšmė";
-    }
-  }
-
-  return t;
-};
-
 const capitalizeFirstCharacter = (text: string): string => {
   return text.charAt(0).toUpperCase() + text.slice(1);
 };
@@ -211,7 +167,7 @@ const error: () => errors.$ZodErrorMap = () => {
   return (issue) => {
     switch (issue.code) {
       case "invalid_type": {
-        const expected = TypeDictionary[issue.expected] ?? parsedTypeFromType(issue.expected);
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
         const receivedType = util.parsedType(issue.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue.expected)) {
@@ -223,7 +179,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (issue.values.length === 1) return `Privalo būti ${util.stringifyPrimitive(issue.values[0])}`;
         return `Privalo būti vienas iš ${util.joinValues(issue.values, "|")} pasirinkimų`;
       case "too_big": {
-        const origin = parsedTypeFromType(issue.origin);
+        const origin = TypeDictionary[issue.origin] ?? issue.origin;
         const sizing = getSizing(
           issue.origin,
           getUnitTypeFromNumber(Number(issue.maximum)),
@@ -236,7 +192,7 @@ const error: () => errors.$ZodErrorMap = () => {
         return `${capitalizeFirstCharacter(origin ?? issue.origin ?? "reikšmė")} turi būti ${adj} ${issue.maximum.toString()} ${sizing?.unit}`;
       }
       case "too_small": {
-        const origin = parsedTypeFromType(issue.origin);
+        const origin = TypeDictionary[issue.origin] ?? issue.origin;
         const sizing = getSizing(
           issue.origin,
           getUnitTypeFromNumber(Number(issue.minimum)),
@@ -267,7 +223,7 @@ const error: () => errors.$ZodErrorMap = () => {
       case "invalid_union":
         return "Klaidinga įvestis";
       case "invalid_element": {
-        const origin = parsedTypeFromType(issue.origin);
+        const origin = TypeDictionary[issue.origin] ?? issue.origin;
         return `${capitalizeFirstCharacter(origin ?? issue.origin ?? "reikšmė")} turi klaidingą įvestį`;
       }
       default:

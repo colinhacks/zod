@@ -10,39 +10,8 @@ const error: () => errors.$ZodErrorMap = () => {
     set: { unit: "elementos", verb: "tener" },
   };
 
-  const TypeNames: Record<string, string> = {
-    string: "texto",
-    number: "número",
-    boolean: "booleano",
-    array: "arreglo",
-    object: "objeto",
-    set: "conjunto",
-    file: "archivo",
-    date: "fecha",
-    bigint: "número grande",
-    symbol: "símbolo",
-    undefined: "indefinido",
-    null: "nulo",
-    function: "función",
-    map: "mapa",
-    record: "registro",
-    tuple: "tupla",
-    enum: "enumeración",
-    union: "unión",
-    literal: "literal",
-    promise: "promesa",
-    void: "vacío",
-    never: "nunca",
-    unknown: "desconocido",
-    any: "cualquiera",
-  };
-
   function getSizing(origin: string): { unit: string; verb: string } | null {
     return Sizable[origin] ?? null;
-  }
-
-  function getTypeName(type: string): string {
-    return TypeNames[type] ?? type;
   }
 
   const FormatDictionary: {
@@ -82,14 +51,38 @@ const error: () => errors.$ZodErrorMap = () => {
     [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
   } = {
     nan: "NaN",
+    string: "texto",
+    number: "número",
+    boolean: "booleano",
+    array: "arreglo",
+    object: "objeto",
+    set: "conjunto",
+    file: "archivo",
+    date: "fecha",
+    bigint: "número grande",
+    symbol: "símbolo",
+    undefined: "indefinido",
+    null: "nulo",
+    function: "función",
+    map: "mapa",
+    record: "registro",
+    tuple: "tupla",
+    enum: "enumeración",
+    union: "unión",
+    literal: "literal",
+    promise: "promesa",
+    void: "vacío",
+    never: "nunca",
+    unknown: "desconocido",
+    any: "cualquiera",
   };
 
   return (issue) => {
     switch (issue.code) {
       case "invalid_type": {
-        const expected = TypeDictionary[issue.expected] ?? getTypeName(issue.expected);
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
         const receivedType = util.parsedType(issue.input);
-        const received = TypeDictionary[receivedType] ?? getTypeName(receivedType);
+        const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue.expected)) {
           return `Entrada inválida: se esperaba instanceof ${issue.expected}, recibido ${received}`;
         }
@@ -102,7 +95,7 @@ const error: () => errors.$ZodErrorMap = () => {
       case "too_big": {
         const adj = issue.inclusive ? "<=" : "<";
         const sizing = getSizing(issue.origin);
-        const origin = getTypeName(issue.origin);
+        const origin = TypeDictionary[issue.origin] ?? issue.origin;
         if (sizing)
           return `Demasiado grande: se esperaba que ${origin ?? "valor"} tuviera ${adj}${issue.maximum.toString()} ${sizing.unit ?? "elementos"}`;
         return `Demasiado grande: se esperaba que ${origin ?? "valor"} fuera ${adj}${issue.maximum.toString()}`;
@@ -110,7 +103,7 @@ const error: () => errors.$ZodErrorMap = () => {
       case "too_small": {
         const adj = issue.inclusive ? ">=" : ">";
         const sizing = getSizing(issue.origin);
-        const origin = getTypeName(issue.origin);
+        const origin = TypeDictionary[issue.origin] ?? issue.origin;
         if (sizing) {
           return `Demasiado pequeño: se esperaba que ${origin} tuviera ${adj}${issue.minimum.toString()} ${sizing.unit}`;
         }
@@ -130,11 +123,11 @@ const error: () => errors.$ZodErrorMap = () => {
       case "unrecognized_keys":
         return `Llave${issue.keys.length > 1 ? "s" : ""} desconocida${issue.keys.length > 1 ? "s" : ""}: ${util.joinValues(issue.keys, ", ")}`;
       case "invalid_key":
-        return `Llave inválida en ${getTypeName(issue.origin)}`;
+        return `Llave inválida en ${TypeDictionary[issue.origin] ?? issue.origin}`;
       case "invalid_union":
         return "Entrada inválida";
       case "invalid_element":
-        return `Valor inválido en ${getTypeName(issue.origin)}`;
+        return `Valor inválido en ${TypeDictionary[issue.origin] ?? issue.origin}`;
       default:
         return `Entrada inválida`;
     }

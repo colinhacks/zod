@@ -10,22 +10,8 @@ const error: () => errors.$ZodErrorMap = () => {
     set: { unit: "elementer", verb: "indeholdt" },
   };
 
-  const TypeNames: Record<string, string> = {
-    string: "streng",
-    number: "tal",
-    boolean: "boolean",
-    array: "liste",
-    object: "objekt",
-    set: "sæt",
-    file: "fil",
-  };
-
   function getSizing(origin: string): { unit: string; verb: string } | null {
     return Sizable[origin] ?? null;
-  }
-
-  function getTypeName(type: string): string {
-    return TypeNames[type] ?? type;
   }
 
   const FormatDictionary: {
@@ -65,17 +51,21 @@ const error: () => errors.$ZodErrorMap = () => {
     [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
   } = {
     nan: "NaN",
+    string: "streng",
     number: "tal",
+    boolean: "boolean",
     array: "liste",
     object: "objekt",
+    set: "sæt",
+    file: "fil",
   };
 
   return (issue) => {
     switch (issue.code) {
       case "invalid_type": {
-        const expected = TypeDictionary[issue.expected] ?? getTypeName(issue.expected);
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
         const receivedType = util.parsedType(issue.input);
-        const received = TypeDictionary[receivedType] ?? getTypeName(receivedType);
+        const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue.expected)) {
           return `Ugyldigt input: forventede instanceof ${issue.expected}, fik ${received}`;
         }
@@ -87,7 +77,7 @@ const error: () => errors.$ZodErrorMap = () => {
       case "too_big": {
         const adj = issue.inclusive ? "<=" : "<";
         const sizing = getSizing(issue.origin);
-        const origin = getTypeName(issue.origin);
+        const origin = TypeDictionary[issue.origin] ?? issue.origin;
         if (sizing)
           return `For stor: forventede ${origin ?? "value"} ${sizing.verb} ${adj} ${issue.maximum.toString()} ${sizing.unit ?? "elementer"}`;
         return `For stor: forventede ${origin ?? "value"} havde ${adj} ${issue.maximum.toString()}`;
@@ -95,7 +85,7 @@ const error: () => errors.$ZodErrorMap = () => {
       case "too_small": {
         const adj = issue.inclusive ? ">=" : ">";
         const sizing = getSizing(issue.origin);
-        const origin = getTypeName(issue.origin);
+        const origin = TypeDictionary[issue.origin] ?? issue.origin;
         if (sizing) {
           return `For lille: forventede ${origin} ${sizing.verb} ${adj} ${issue.minimum.toString()} ${sizing.unit}`;
         }

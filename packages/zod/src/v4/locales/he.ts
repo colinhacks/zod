@@ -92,14 +92,15 @@ const error: () => errors.$ZodErrorMap = () => {
     uppercase: { label: "קלט", gender: "m" },
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+  };
+
   return (issue) => {
     switch (issue.code) {
       case "invalid_type": {
-        const TypeDictionary: {
-          [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
-        } = {
-          nan: "NaN",
-        };
         // Expected type: show without definite article for clearer Hebrew
         const expectedKey = issue.expected as string | undefined;
         const expected = TypeDictionary[expectedKey ?? ""] ?? typeLabel(expectedKey);
