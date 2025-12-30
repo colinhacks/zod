@@ -4,10 +4,10 @@ import * as util from "../core/util.js";
 
 const error: () => errors.$ZodErrorMap = () => {
   const Sizable: Record<string, { unit: string; verb: string }> = {
-    string: { unit: "belgi", verb: "bo'lishi kerak" },
-    file: { unit: "bayt", verb: "bo'lishi kerak" },
-    array: { unit: "element", verb: "bo'lishi kerak" },
-    set: { unit: "element", verb: "bo'lishi kerak" },
+    string: { unit: "belgi", verb: "bo‘lishi kerak" },
+    file: { unit: "bayt", verb: "bo‘lishi kerak" },
+    array: { unit: "element", verb: "bo‘lishi kerak" },
+    set: { unit: "element", verb: "bo‘lishi kerak" },
   };
 
   function getSizing(origin: string): { unit: string; verb: string } | null {
@@ -52,6 +52,8 @@ const error: () => errors.$ZodErrorMap = () => {
     [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
   } = {
     nan: "NaN",
+    number: "raqam",
+    array: "massiv",
   };
 
   return (issue) => {
@@ -61,9 +63,9 @@ const error: () => errors.$ZodErrorMap = () => {
         const receivedType = util.parsedType(issue.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue.expected)) {
-          return `Noto'g'ri kirish: kutilgan instanceof ${issue.expected}, qabul qilingan ${received}`;
+          return `Noto‘g‘ri kirish: kutilgan instanceof ${issue.expected}, qabul qilingan ${received}`;
         }
-        return `Noto'g'ri kirish: kutilgan ${expected}, qabul qilingan ${received}`;
+        return `Noto‘g‘ri kirish: kutilgan ${expected}, qabul qilingan ${received}`;
       }
       case "invalid_value":
         if (issue.values.length === 1) return `Noto‘g‘ri kirish: kutilgan ${util.stringifyPrimitive(issue.values[0])}`;
@@ -89,7 +91,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `Noto‘g‘ri satr: "${_issue.suffix}" bilan tugashi kerak`;
         if (_issue.format === "includes") return `Noto‘g‘ri satr: "${_issue.includes}" ni o‘z ichiga olishi kerak`;
         if (_issue.format === "regex") return `Noto‘g‘ri satr: ${_issue.pattern} shabloniga mos kelishi kerak`;
-        return `Noto'g'ri ${FormatDictionary[_issue.format] ?? issue.format}`;
+        return `Noto‘g‘ri ${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":
         return `Noto‘g‘ri raqam: ${issue.divisor} ning karralisi bo‘lishi kerak`;

@@ -196,6 +196,16 @@ const error: () => errors.$ZodErrorMap = () => {
     [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
   } = {
     nan: "NaN",
+    number: "skaičius",
+    bigint: "sveikasis skaičius",
+    string: "eilutė",
+    boolean: "loginė reikšmė",
+    undefined: "neapibrėžta reikšmė",
+    function: "funkcija",
+    symbol: "simbolis",
+    array: "masyvas",
+    object: "objektas",
+    null: "nulinė reikšmė",
   };
 
   return (issue) => {

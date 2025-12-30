@@ -107,6 +107,8 @@ const error: () => errors.$ZodErrorMap = () => {
     [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
   } = {
     nan: "NaN",
+    number: "число",
+    array: "массив",
   };
 
   return (issue) => {
