@@ -75,7 +75,10 @@ export interface Seen {
   /** Cycle path */
   cycle?: (string | number)[] | undefined;
   isParent?: boolean | undefined;
-  ref?: schemas.$ZodType | undefined | null;
+  /** Schema to inherit JSON Schema properties from (set by processor for wrappers) */
+  ref?: schemas.$ZodType | null;
+  /** Parent schema in the clone chain (for $ref propagation when parent is extracted) */
+  parent?: schemas.$ZodType | undefined;
   /** JSON Schema property path for this schema */
   path?: (string | number)[] | undefined;
 }
@@ -172,14 +175,7 @@ export function process<T extends schemas.$ZodType>(
       path: _params.path,
     };
 
-    const parent = schema._zod.parent as T;
-
-    if (parent) {
-      // schema was cloned from another schema
-      result.ref = parent;
-      process(parent, ctx, params);
-      ctx.seen.get(parent)!.isParent = true;
-    } else if (schema._zod.processJSONSchema) {
+    if (schema._zod.processJSONSchema) {
       schema._zod.processJSONSchema(ctx, result.schema, params);
     } else {
       const _json = result.schema;
@@ -188,6 +184,17 @@ export function process<T extends schemas.$ZodType>(
         throw new Error(`[toJSONSchema]: Non-representable type encountered: ${def.type}`);
       }
       processor(schema, ctx, _json, params);
+    }
+
+    const parent = schema._zod.parent as T;
+
+    if (parent) {
+      // Track parent separately from processor ref
+      result.parent = parent;
+      // Also set ref if processor didn't (for inheritance)
+      if (!result.ref) result.ref = parent;
+      process(parent, ctx, params);
+      ctx.seen.get(parent)!.isParent = true;
     }
   }
 
@@ -357,49 +364,89 @@ export function finalize<T extends schemas.$ZodType>(
   ctx: ToJSONSchemaContext,
   schema: T
 ): ZodStandardJSONSchemaPayload<T> {
-  //
-
-  // iterate over seen map;
   const root = ctx.seen.get(schema);
-
   if (!root) throw new Error("Unprocessed schema. This is a bug in Zod.");
 
-  // flatten _refs
+  // flatten refs - inherit properties from parent schemas
   const flattenRef = (zodSchema: schemas.$ZodType) => {
     const seen = ctx.seen.get(zodSchema)!;
-    const schema = seen.def ?? seen.schema;
 
+    // already processed
+    if (seen.ref === null) return;
+
+    const schema = seen.def ?? seen.schema;
     const _cached = { ...schema };
 
-    // already seen
-    if (seen.ref === null) {
-      return;
-    }
-
-    // flatten ref if defined
     const ref = seen.ref;
-    seen.ref = null; // prevent recursion
+    seen.ref = null; // prevent infinite recursion
+
     if (ref) {
       flattenRef(ref);
 
+      const refSeen = ctx.seen.get(ref)!;
+      const refSchema = refSeen.schema;
+
       // merge referenced schema into current
-      const refSchema = ctx.seen.get(ref)!.schema;
       if (refSchema.$ref && (ctx.target === "draft-07" || ctx.target === "draft-04" || ctx.target === "openapi-3.0")) {
+        // older drafts can't combine $ref with other properties
         schema.allOf = schema.allOf ?? [];
         schema.allOf.push(refSchema);
       } else {
         Object.assign(schema, refSchema);
-        Object.assign(schema, _cached); // prevent overwriting any fields in the original schema
+      }
+      // restore child's own properties (child wins)
+      Object.assign(schema, _cached);
+
+      const isParentRef = (zodSchema as any)._zod.parent === ref;
+
+      // For parent chain, child is a refinement - remove parent-only properties
+      if (isParentRef) {
+        for (const key in schema) {
+          if (key === "$ref" || key === "allOf") continue;
+          if (!(key in _cached)) {
+            delete schema[key];
+          }
+        }
+      }
+
+      // When ref was extracted to $defs, remove properties that match the definition
+      if (refSchema.$ref) {
+        for (const key in schema) {
+          if (key === "$ref" || key === "allOf") continue;
+          if (key in refSeen.def! && JSON.stringify(schema[key]) === JSON.stringify(refSeen.def![key])) {
+            delete schema[key];
+          }
+        }
+      }
+    }
+
+    // If parent was extracted (has $ref), propagate $ref to this schema
+    // This handles cases like: readonly().meta({id}).describe()
+    // where processor sets ref to innerType but parent should be referenced
+    if (seen.parent && seen.parent !== ref) {
+      // Ensure parent is processed first so its def has inherited properties
+      flattenRef(seen.parent);
+      const parentSeen = ctx.seen.get(seen.parent);
+      if (parentSeen?.schema.$ref) {
+        schema.$ref = parentSeen.schema.$ref;
+        // De-duplicate with parent's definition
+        if (parentSeen.def) {
+          for (const key in schema) {
+            if (key === "$ref" || key === "allOf") continue;
+            if (key in parentSeen.def && JSON.stringify(schema[key]) === JSON.stringify(parentSeen.def[key])) {
+              delete schema[key];
+            }
+          }
+        }
       }
     }
 
     // execute overrides
-    if (!seen.isParent)
-      ctx.override({
-        zodSchema: zodSchema as schemas.$ZodTypes,
-        jsonSchema: schema,
-        path: seen.path ?? [],
-      });
+    ctx.override({
+      zodSchema: zodSchema as schemas.$ZodTypes,
+      jsonSchema: schema,
+      path: seen.path ?? [],
+    });
   };
 
   for (const entry of [...ctx.seen.entries()].reverse()) {
