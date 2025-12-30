@@ -88,7 +88,10 @@ export interface ZodType<
   ): Promise<parse.ZodSafeParseResult<core.output<this>>>;
 
   // refinements
-  refine(check: (arg: core.output<this>) => unknown | Promise<unknown>, params?: string | core.$ZodCustomParams): this;
+  refine<Ch extends (arg: core.output<this>) => unknown | Promise<unknown>>(
+    check: Ch,
+    params?: string | core.$ZodCustomParams
+  ): Ch extends (arg: any) => arg is infer R ? core.$ZodNarrow<this, R> : this;
   superRefine(
     refinement: (arg: core.output<this>, ctx: core.$RefinementCtx<core.output<this>>) => void | Promise<void>
   ): this;
@@ -199,7 +202,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   inst.safeDecodeAsync = async (data, params) => parse.safeDecodeAsync(inst, data, params);
 
   // refinements
-  inst.refine = (check, params) => inst.check(refine(check, params));
+  inst.refine = (check, params) => inst.check(refine(check, params)) as never;
   inst.superRefine = (refinement) => inst.check(superRefine(refinement));
   inst.overwrite = (fn) => inst.check(checks.overwrite(fn));
 

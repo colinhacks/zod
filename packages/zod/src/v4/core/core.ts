@@ -93,6 +93,8 @@ export type $ZodBranded<
       ? { _zod: { input: input<T> & $brand<Brand> } }
       : { _zod: { output: output<T> & $brand<Brand> } });
 
+export type $ZodNarrow<T extends schemas.SomeType, Out> = T & { _zod: { output: Out } };
+
 export class $ZodAsyncError extends Error {
   constructor() {
     super(`Encountered Promise during synchronous parse. Use .parseAsync() instead.`);
