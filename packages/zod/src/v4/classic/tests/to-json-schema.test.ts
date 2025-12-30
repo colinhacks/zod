@@ -1720,7 +1720,7 @@ test("override: do not run on references", () => {
     },
   });
 
-  expect(overrideCount).toBe(6);
+  expect(overrideCount).toBe(12);
 });
 
 test("override with refs", () => {
@@ -2009,6 +2009,47 @@ test("describe with id", () => {
         "previous": {
           "$ref": "#/$defs/jobId",
           "description": "Previous job",
+        },
+      },
+      "required": [
+        "current",
+        "previous",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
+test("describe with id on wrapper", () => {
+  // Test that $ref propagation works when processor sets a different ref (readonly -> innerType)
+  // but parent was extracted due to having an id
+  const roJobId = z.string().readonly().meta({ id: "roJobId" });
+
+  const a = z.toJSONSchema(
+    z.object({
+      current: roJobId.describe("Current readonly job"),
+      previous: roJobId.describe("Previous readonly job"),
+    })
+  );
+  expect(a).toMatchInlineSnapshot(`
+    {
+      "$defs": {
+        "roJobId": {
+          "id": "roJobId",
+          "readOnly": true,
+          "type": "string",
+        },
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "current": {
+          "$ref": "#/$defs/roJobId",
+          "description": "Current readonly job",
+        },
+        "previous": {
+          "$ref": "#/$defs/roJobId",
+          "description": "Previous readonly job",
         },
       },
       "required": [
@@ -2754,22 +2795,17 @@ test("z.file()", () => {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "anyOf": [
         {
-          "contentEncoding": "binary",
           "contentMediaType": "image/png",
-          "format": "binary",
-          "maxLength": 10000,
-          "minLength": 1000,
-          "type": "string",
         },
         {
-          "contentEncoding": "binary",
           "contentMediaType": "image/jpg",
-          "format": "binary",
-          "maxLength": 10000,
-          "minLength": 1000,
-          "type": "string",
         },
       ],
+      "contentEncoding": "binary",
+      "format": "binary",
+      "maxLength": 10000,
+      "minLength": 1000,
+      "type": "string",
     }
   `);
 });

@@ -65,8 +65,8 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
               typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
             ),
           ],
-        }
-        // { parent: true }
+        },
+        { parent: true }
       );
     };
     inst.refine = (check, params) => inst.check(refine(check, params)) as never;

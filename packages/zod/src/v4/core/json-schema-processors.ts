@@ -234,10 +234,8 @@ export const fileProcessor: Processor<schemas.$ZodFile> = (schema, _ctx, json, _
       file.contentMediaType = mime[0]!;
       Object.assign(_json, file);
     } else {
-      _json.anyOf = mime.map((m) => {
-        const mFile: JSONSchema.StringSchema = { ...file, contentMediaType: m };
-        return mFile;
-      });
+      Object.assign(_json, file); // shared props at root
+      _json.anyOf = mime.map((m) => ({ contentMediaType: m })); // only contentMediaType differs
     }
   } else {
     Object.assign(_json, file);
