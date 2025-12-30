@@ -168,6 +168,33 @@ test("z.partial with mask", () => {
   expect(z.safeParse(partialSchemaWithMask, { name: "John" }).success).toBe(false);
 });
 
+test("z.pick/omit/partial/required - do not allow unknown keys", () => {
+  const schema = z.object({
+    name: z.string(),
+    age: z.number(),
+  });
+
+  // Mixed valid + invalid keys - throws at parse time (lazy evaluation)
+  // @ts-expect-error
+  expect(() => z.parse(z.pick(schema, { name: true, asdf: true }), {})).toThrow();
+  // @ts-expect-error
+  expect(() => z.parse(z.omit(schema, { name: true, asdf: true }), {})).toThrow();
+  // @ts-expect-error
+  expect(() => z.parse(z.partial(schema, { name: true, asdf: true }), {})).toThrow();
+  // @ts-expect-error
+  expect(() => z.parse(z.required(schema, { name: true, asdf: true }), {})).toThrow();
+
+  // Only invalid keys
+  // @ts-expect-error
+  expect(() => z.parse(z.pick(schema, { $unknown: true }), {})).toThrow();
+  // @ts-expect-error
+  expect(() => z.parse(z.omit(schema, { $unknown: true }), {})).toThrow();
+  // @ts-expect-error
+  expect(() => z.parse(z.partial(schema, { $unknown: true }), {})).toThrow();
+  // @ts-expect-error
+  expect(() => z.parse(z.required(schema, { $unknown: true }), {})).toThrow();
+});
+
 test("z.catchall", () => {
   // z.catchall()
   const schema = z.catchall(

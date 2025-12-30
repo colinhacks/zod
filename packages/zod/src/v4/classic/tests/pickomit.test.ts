@@ -114,8 +114,17 @@ test("pick/omit/required/partial - do not allow unknown keys", () => {
     age: z.number(),
   });
 
+  // Mixed valid + invalid keys
+  // @ts-expect-error
   expect(() => schema.pick({ name: true, asdf: true }).safeParse({})).toThrow();
+  // @ts-expect-error
+  expect(() => schema.omit({ name: true, asdf: true }).safeParse({})).toThrow();
+  // @ts-expect-error
+  expect(() => schema.partial({ name: true, asdf: true }).safeParse({})).toThrow();
+  // @ts-expect-error
+  expect(() => schema.required({ name: true, asdf: true }).safeParse({})).toThrow();
 
+  // Only invalid keys
   // @ts-expect-error
   expect(() => schema.pick({ $unknown: true }).safeParse({})).toThrow();
   // @ts-expect-error

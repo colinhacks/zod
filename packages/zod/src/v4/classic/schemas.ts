@@ -1204,11 +1204,11 @@ export interface ZodObject<
   merge<U extends ZodObject>(other: U): ZodObject<util.Extend<Shape, U["shape"]>, U["_zod"]["config"]>;
 
   pick<M extends util.Mask<keyof Shape>>(
-    mask: M
+    mask: M & Record<Exclude<keyof M, keyof Shape>, never>
   ): ZodObject<util.Flatten<Pick<Shape, Extract<keyof Shape, keyof M>>>, Config>;
 
   omit<M extends util.Mask<keyof Shape>>(
-    mask: M
+    mask: M & Record<Exclude<keyof M, keyof Shape>, never>
   ): ZodObject<util.Flatten<Omit<Shape, Extract<keyof Shape, keyof M>>>, Config>;
 
   partial(): ZodObject<
@@ -1218,7 +1218,7 @@ export interface ZodObject<
     Config
   >;
   partial<M extends util.Mask<keyof Shape>>(
-    mask: M
+    mask: M & Record<Exclude<keyof M, keyof Shape>, never>
   ): ZodObject<
     {
       [k in keyof Shape]: k extends keyof M
@@ -1239,7 +1239,7 @@ export interface ZodObject<
     Config
   >;
   required<M extends util.Mask<keyof Shape>>(
-    mask: M
+    mask: M & Record<Exclude<keyof M, keyof Shape>, never>
   ): ZodObject<
     {
       [k in keyof Shape]: k extends keyof M ? ZodNonOptional<Shape[k]> : Shape[k];
