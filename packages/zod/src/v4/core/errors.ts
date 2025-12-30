@@ -17,9 +17,33 @@ export interface $ZodIssueBase {
 ////////////////////////////////
 ////     issue subtypes     ////
 ////////////////////////////////
+export type $ZodInvalidTypeExpected =
+  | "string"
+  | "number"
+  | "int"
+  | "boolean"
+  | "bigint"
+  | "symbol"
+  | "undefined"
+  | "null"
+  | "never"
+  | "void"
+  | "date"
+  | "array"
+  | "object"
+  | "tuple"
+  | "record"
+  | "map"
+  | "set"
+  | "file"
+  | "nonoptional"
+  | "nan"
+  | "function"
+  | (string & {}); // class names for instanceof
+
 export interface $ZodIssueInvalidType<Input = unknown> extends $ZodIssueBase {
   readonly code: "invalid_type";
-  readonly expected: $ZodType["_zod"]["def"]["type"];
+  readonly expected: $ZodInvalidTypeExpected;
   readonly input?: Input;
 }
 

@@ -14,30 +14,7 @@ const error: () => errors.$ZodErrorMap = () => {
     return Sizable[origin] ?? null;
   }
 
-  const parsedType = (data: any): string => {
-    const t = typeof data;
-
-    switch (t) {
-      case "number": {
-        return Number.isNaN(data) ? "NaN" : "число";
-      }
-      case "object": {
-        if (Array.isArray(data)) {
-          return "масив";
-        }
-        if (data === null) {
-          return "null";
-        }
-
-        if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-          return data.constructor.name;
-        }
-      }
-    }
-    return t;
-  };
-
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "вхідні дані",
@@ -70,11 +47,25 @@ const error: () => errors.$ZodErrorMap = () => {
     template_literal: "вхідні дані",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+    number: "число",
+    array: "масив",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `Неправильні вхідні дані: очікується ${issue.expected}, отримано ${parsedType(issue.input)}`;
-      // return `Неправильні вхідні дані: очікується ${issue.expected}, отримано ${util.getParsedType(issue.input)}`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `Неправильні вхідні дані: очікується instanceof ${issue.expected}, отримано ${received}`;
+        }
+        return `Неправильні вхідні дані: очікується ${expected}, отримано ${received}`;
+      }
       case "invalid_value":
         if (issue.values.length === 1)
           return `Неправильні вхідні дані: очікується ${util.stringifyPrimitive(issue.values[0])}`;
@@ -101,7 +92,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `Неправильний рядок: повинен закінчуватися на "${_issue.suffix}"`;
         if (_issue.format === "includes") return `Неправильний рядок: повинен містити "${_issue.includes}"`;
         if (_issue.format === "regex") return `Неправильний рядок: повинен відповідати шаблону ${_issue.pattern}`;
-        return `Неправильний ${Nouns[_issue.format] ?? issue.format}`;
+        return `Неправильний ${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":
         return `Неправильне число: повинно бути кратним ${issue.divisor}`;

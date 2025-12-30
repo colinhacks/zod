@@ -859,6 +859,29 @@ export function getLengthableOrigin(input: any): "array" | "string" | "unknown" 
   return "unknown";
 }
 
+export function parsedType(data: unknown): errors.$ZodInvalidTypeExpected {
+  const t = typeof data;
+  switch (t) {
+    case "number": {
+      return Number.isNaN(data) ? "nan" : "number";
+    }
+    case "object": {
+      if (data === null) {
+        return "null";
+      }
+      if (Array.isArray(data)) {
+        return "array";
+      }
+
+      const obj = data as object;
+      if (obj && Object.getPrototypeOf(obj) !== Object.prototype && "constructor" in obj && obj.constructor) {
+        return (obj.constructor as { name: string }).name;
+      }
+    }
+  }
+  return t;
+}
+
 //////////    REFINES     //////////
 export function issue(_iss: string, input: any, inst: any): errors.$ZodRawIssue;
 export function issue(_iss: errors.$ZodRawIssue): errors.$ZodRawIssue;

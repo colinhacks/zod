@@ -4010,7 +4010,7 @@ export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> = /*@__
         payload.issues.push({
           input: payload.value,
           inst,
-          expected: "template_literal",
+          expected: "string",
           code: "invalid_type",
         });
         return payload;

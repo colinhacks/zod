@@ -1,35 +1,12 @@
 import { expect, test } from "vitest";
 import * as z from "zod/v4";
-import { parsedType } from "../../../locales/uz.js";
-
-test("parsedType", () => {
-  expect(parsedType("string")).toBe("string");
-  expect(parsedType(1)).toBe("raqam");
-  expect(parsedType(true)).toBe("boolean");
-  expect(parsedType(null)).toBe("null");
-  expect(parsedType(undefined)).toBe("undefined");
-  expect(parsedType([])).toBe("massiv");
-  expect(parsedType({})).toBe("object");
-  expect(parsedType(new Date())).toBe("Date");
-  expect(parsedType(new Map())).toBe("Map");
-  expect(parsedType(new Set())).toBe("Set");
-  expect(parsedType(new Error())).toBe("Error");
-
-  const nullPrototype = Object.create(null);
-  expect(parsedType(nullPrototype)).toBe("object");
-
-  const doubleNullPrototype = Object.create(Object.create(null));
-  expect(parsedType(doubleNullPrototype)).toBe("object");
-
-  expect(parsedType(Number.NaN)).toBe("NaN");
-});
 
 test("locales - uz", () => {
   z.config(z.locales.uz());
 
   const invalidType = z.number().safeParse("a");
   expect(invalidType.error!.issues[0].code).toBe("invalid_type");
-  expect(invalidType.error!.issues[0].message).toBe("Noto‘g‘ri kirish: kutilgan number, qabul qilingan string");
+  expect(invalidType.error!.issues[0].message).toBe("Noto‘g‘ri kirish: kutilgan raqam, qabul qilingan string");
 
   const invalidType2 = z.string().safeParse(1);
   expect(invalidType2.error!.issues[0].code).toBe("invalid_type");

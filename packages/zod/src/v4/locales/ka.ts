@@ -2,39 +2,6 @@ import type { $ZodStringFormats } from "../core/checks.js";
 import type * as errors from "../core/errors.js";
 import * as util from "../core/util.js";
 
-export const parsedType = (data: any): string => {
-  const t = typeof data;
-
-  switch (t) {
-    case "number": {
-      return Number.isNaN(data) ? "NaN" : "რიცხვი";
-    }
-    case "object": {
-      if (Array.isArray(data)) {
-        return "მასივი";
-      }
-      if (data === null) {
-        return "null";
-      }
-
-      if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-        return data.constructor.name;
-      }
-    }
-  }
-
-  const typeMap: Record<string, string> = {
-    string: "სტრინგი",
-    boolean: "ბულეანი",
-    undefined: "undefined",
-    bigint: "bigint",
-    symbol: "symbol",
-    function: "ფუნქცია",
-  };
-
-  return typeMap[t] ?? t;
-};
-
 const error: () => errors.$ZodErrorMap = () => {
   const Sizable: Record<string, { unit: string; verb: string }> = {
     string: { unit: "სიმბოლო", verb: "უნდა შეიცავდეს" },
@@ -47,7 +14,7 @@ const error: () => errors.$ZodErrorMap = () => {
     return Sizable[origin] ?? null;
   }
 
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "შეყვანა",
@@ -80,10 +47,28 @@ const error: () => errors.$ZodErrorMap = () => {
     template_literal: "შეყვანა",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+    number: "რიცხვი",
+    string: "სტრინგი",
+    boolean: "ბულეანი",
+    function: "ფუნქცია",
+    array: "მასივი",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `არასწორი შეყვანა: მოსალოდნელი ${issue.expected}, მიღებული ${parsedType(issue.input)}`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `არასწორი შეყვანა: მოსალოდნელი instanceof ${issue.expected}, მიღებული ${received}`;
+        }
+        return `არასწორი შეყვანა: მოსალოდნელი ${expected}, მიღებული ${received}`;
+      }
 
       case "invalid_value":
         if (issue.values.length === 1)
@@ -113,7 +98,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `არასწორი სტრინგი: უნდა მთავრდებოდეს "${_issue.suffix}"-ით`;
         if (_issue.format === "includes") return `არასწორი სტრინგი: უნდა შეიცავდეს "${_issue.includes}"-ს`;
         if (_issue.format === "regex") return `არასწორი სტრინგი: უნდა შეესაბამებოდეს შაბლონს ${_issue.pattern}`;
-        return `არასწორი ${Nouns[_issue.format] ?? issue.format}`;
+        return `არასწორი ${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":
         return `არასწორი რიცხვი: უნდა იყოს ${issue.divisor}-ის ჯერადი`;

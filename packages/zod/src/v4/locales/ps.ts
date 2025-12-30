@@ -14,29 +14,7 @@ const error: () => errors.$ZodErrorMap = () => {
     return Sizable[origin] ?? null;
   }
 
-  const parsedType = (data: any): string => {
-    const t = typeof data;
-
-    switch (t) {
-      case "number": {
-        return Number.isNaN(data) ? "NaN" : "عدد";
-      }
-      case "object": {
-        if (Array.isArray(data)) {
-          return "ارې";
-        }
-        if (data === null) {
-          return "null";
-        }
-        if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-          return data.constructor.name;
-        }
-      }
-    }
-    return t;
-  };
-
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "ورودي",
@@ -69,10 +47,25 @@ const error: () => errors.$ZodErrorMap = () => {
     template_literal: "ورودي",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+    number: "عدد",
+    array: "ارې",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `ناسم ورودي: باید ${issue.expected} وای, مګر ${parsedType(issue.input)} ترلاسه شو`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `ناسم ورودي: باید instanceof ${issue.expected} وای, مګر ${received} ترلاسه شو`;
+        }
+        return `ناسم ورودي: باید ${expected} وای, مګر ${received} ترلاسه شو`;
+      }
       case "invalid_value":
         if (issue.values.length === 1) {
           return `ناسم ورودي: باید ${util.stringifyPrimitive(issue.values[0])} وای`;
@@ -108,7 +101,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "regex") {
           return `ناسم متن: باید د ${_issue.pattern} سره مطابقت ولري`;
         }
-        return `${Nouns[_issue.format] ?? issue.format} ناسم دی`;
+        return `${FormatDictionary[_issue.format] ?? issue.format} ناسم دی`;
       }
       case "not_multiple_of":
         return `ناسم عدد: باید د ${issue.divisor} مضرب وي`;

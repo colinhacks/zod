@@ -57,26 +57,7 @@ const error: () => errors.$ZodErrorMap = () => {
     return Sizable[origin] ?? null;
   };
 
-  // Robust type parser for "received" — returns a key we understand or a constructor name
-  const parsedType = (data: any): string => {
-    const t = typeof data;
-    switch (t) {
-      case "number":
-        return Number.isNaN(data) ? "NaN" : "number";
-      case "object": {
-        if (Array.isArray(data)) return "array";
-        if (data === null) return "null";
-        if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-          return data.constructor.name; // keep as-is (e.g., "Date")
-        }
-        return "object";
-      }
-      default:
-        return t;
-    }
-  };
-
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats]: { label: string; gender: "m" | "f" };
   } = {
     regex: { label: "קלט", gender: "m" },
@@ -111,15 +92,24 @@ const error: () => errors.$ZodErrorMap = () => {
     uppercase: { label: "קלט", gender: "m" },
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+  };
+
   return (issue) => {
     switch (issue.code) {
       case "invalid_type": {
         // Expected type: show without definite article for clearer Hebrew
         const expectedKey = issue.expected as string | undefined;
-        const expected = typeLabel(expectedKey);
+        const expected = TypeDictionary[expectedKey ?? ""] ?? typeLabel(expectedKey);
         // Received: show localized label if known, otherwise constructor/raw
-        const receivedKey = parsedType(issue.input);
-        const received = TypeNames[receivedKey]?.label ?? receivedKey;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? TypeNames[receivedType]?.label ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `קלט לא תקין: צריך להיות instanceof ${issue.expected}, התקבל ${received}`;
+        }
         return `קלט לא תקין: צריך להיות ${expected}, התקבל ${received}`;
       }
 
@@ -218,7 +208,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "regex") return `המחרוזת חייבת להתאים לתבנית ${_issue.pattern}`;
 
         // Handle gender agreement for formats
-        const nounEntry = Nouns[_issue.format];
+        const nounEntry = FormatDictionary[_issue.format];
         const noun = nounEntry?.label ?? _issue.format;
         const gender = nounEntry?.gender ?? "m";
         const adjective = gender === "f" ? "תקינה" : "תקין";

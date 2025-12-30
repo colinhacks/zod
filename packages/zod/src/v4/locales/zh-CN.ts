@@ -14,30 +14,7 @@ const error: () => errors.$ZodErrorMap = () => {
     return Sizable[origin] ?? null;
   }
 
-  const parsedType = (data: any): string => {
-    const t = typeof data;
-
-    switch (t) {
-      case "number": {
-        return Number.isNaN(data) ? "非数字(NaN)" : "数字";
-      }
-      case "object": {
-        if (Array.isArray(data)) {
-          return "数组";
-        }
-        if (data === null) {
-          return "空值(null)";
-        }
-
-        if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-          return data.constructor.name;
-        }
-      }
-    }
-    return t;
-  };
-
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "输入",
@@ -70,10 +47,26 @@ const error: () => errors.$ZodErrorMap = () => {
     template_literal: "输入",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+    number: "数字",
+    array: "数组",
+    null: "空值(null)",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `无效输入：期望 ${issue.expected}，实际接收 ${parsedType(issue.input)}`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `无效输入：期望 instanceof ${issue.expected}，实际接收 ${received}`;
+        }
+        return `无效输入：期望 ${expected}，实际接收 ${received}`;
+      }
       case "invalid_value":
         if (issue.values.length === 1) return `无效输入：期望 ${util.stringifyPrimitive(issue.values[0])}`;
         return `无效选项：期望以下之一 ${util.joinValues(issue.values, "|")}`;
@@ -98,7 +91,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `无效字符串：必须以 "${_issue.suffix}" 结尾`;
         if (_issue.format === "includes") return `无效字符串：必须包含 "${_issue.includes}"`;
         if (_issue.format === "regex") return `无效字符串：必须满足正则表达式 ${_issue.pattern}`;
-        return `无效${Nouns[_issue.format] ?? issue.format}`;
+        return `无效${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":
         return `无效数字：必须是 ${issue.divisor} 的倍数`;

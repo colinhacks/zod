@@ -2306,9 +2306,7 @@ type ZodInstanceOfParams = core.Params<
 >;
 function _instanceof<T extends typeof util.Class>(
   cls: T,
-  params: ZodInstanceOfParams = {
-    error: `Input not instance of ${cls.name}`,
-  }
+  params: ZodInstanceOfParams = {}
 ): ZodCustom<InstanceType<T>, InstanceType<T>> {
   const inst = new ZodCustom({
     type: "custom",
@@ -2318,6 +2316,18 @@ function _instanceof<T extends typeof util.Class>(
     ...(util.normalizeParams(params) as any),
   });
   inst._zod.bag.Class = cls;
+  // Override check to emit invalid_type instead of custom
+  inst._zod.check = (payload) => {
+    if (!(payload.value instanceof cls)) {
+      payload.issues.push({
+        code: "invalid_type",
+        expected: cls.name,
+        input: payload.value,
+        inst,
+        path: [...(inst._zod.def.path ?? [])],
+      });
+    }
+  };
   return inst as any;
 }
 export { _instanceof as instanceof };

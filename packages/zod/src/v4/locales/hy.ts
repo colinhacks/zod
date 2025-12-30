@@ -57,30 +57,7 @@ const error: () => errors.$ZodErrorMap = () => {
     return Sizable[origin] ?? null;
   }
 
-  const parsedType = (data: any): string => {
-    const t = typeof data;
-
-    switch (t) {
-      case "number": {
-        return Number.isNaN(data) ? "NaN" : "թիվ";
-      }
-      case "object": {
-        if (Array.isArray(data)) {
-          return "զանգված";
-        }
-        if (data === null) {
-          return "null";
-        }
-
-        if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-          return data.constructor.name;
-        }
-      }
-    }
-    return t;
-  };
-
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "մուտք",
@@ -113,10 +90,25 @@ const error: () => errors.$ZodErrorMap = () => {
     template_literal: "մուտք",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+    number: "թիվ",
+    array: "զանգված",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `Սխալ մուտքագրում․ սպասվում էր ${issue.expected}, ստացվել է ${parsedType(issue.input)}`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `Սխալ մուտքագրում․ սպասվում էր instanceof ${issue.expected}, ստացվել է ${received}`;
+        }
+        return `Սխալ մուտքագրում․ սպասվում էր ${expected}, ստացվել է ${received}`;
+      }
       case "invalid_value":
         if (issue.values.length === 1)
           return `Սխալ մուտքագրում․ սպասվում էր ${util.stringifyPrimitive(issue.values[1])}`;
@@ -147,7 +139,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `Սխալ տող․ պետք է ավարտվի "${_issue.suffix}"-ով`;
         if (_issue.format === "includes") return `Սխալ տող․ պետք է պարունակի "${_issue.includes}"`;
         if (_issue.format === "regex") return `Սխալ տող․ պետք է համապատասխանի ${_issue.pattern} ձևաչափին`;
-        return `Սխալ ${Nouns[_issue.format] ?? issue.format}`;
+        return `Սխալ ${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":
         return `Սխալ թիվ․ պետք է բազմապատիկ լինի ${issue.divisor}-ի`;

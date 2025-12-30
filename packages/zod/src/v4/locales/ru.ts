@@ -70,30 +70,7 @@ const error: () => errors.$ZodErrorMap = () => {
     return Sizable[origin] ?? null;
   }
 
-  const parsedType = (data: any): string => {
-    const t = typeof data;
-
-    switch (t) {
-      case "number": {
-        return Number.isNaN(data) ? "NaN" : "число";
-      }
-      case "object": {
-        if (Array.isArray(data)) {
-          return "массив";
-        }
-        if (data === null) {
-          return "null";
-        }
-
-        if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-          return data.constructor.name;
-        }
-      }
-    }
-    return t;
-  };
-
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "ввод",
@@ -126,10 +103,25 @@ const error: () => errors.$ZodErrorMap = () => {
     template_literal: "ввод",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+    number: "число",
+    array: "массив",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `Неверный ввод: ожидалось ${issue.expected}, получено ${parsedType(issue.input)}`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `Неверный ввод: ожидалось instanceof ${issue.expected}, получено ${received}`;
+        }
+        return `Неверный ввод: ожидалось ${expected}, получено ${received}`;
+      }
       case "invalid_value":
         if (issue.values.length === 1) return `Неверный ввод: ожидалось ${util.stringifyPrimitive(issue.values[0])}`;
         return `Неверный вариант: ожидалось одно из ${util.joinValues(issue.values, "|")}`;
@@ -159,7 +151,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `Неверная строка: должна заканчиваться на "${_issue.suffix}"`;
         if (_issue.format === "includes") return `Неверная строка: должна содержать "${_issue.includes}"`;
         if (_issue.format === "regex") return `Неверная строка: должна соответствовать шаблону ${_issue.pattern}`;
-        return `Неверный ${Nouns[_issue.format] ?? issue.format}`;
+        return `Неверный ${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":
         return `Неверное число: должно быть кратным ${issue.divisor}`;
