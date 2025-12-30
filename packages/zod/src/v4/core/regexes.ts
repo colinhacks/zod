@@ -131,7 +131,7 @@ export const string = (params?: { minimum?: number | undefined; maximum?: number
 
 export const bigint: RegExp = /^-?\d+n?$/;
 export const integer: RegExp = /^-?\d+$/;
-export const number: RegExp = /^-?\d+(?:\.\d+)?/;
+export const number: RegExp = /^-?\d+(?:\.\d+)?$/;
 export const boolean: RegExp = /^(?:true|false)$/i;
 const _null: RegExp = /^null$/i;
 export { _null as null };

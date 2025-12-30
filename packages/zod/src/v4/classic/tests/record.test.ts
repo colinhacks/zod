@@ -523,3 +523,26 @@ test("intersection of loose records", () => {
   expect(() => schema.parse({ name: "John", S_foo: 123 })).toThrow(); // S_foo should be string
   expect(() => schema.parse({ name: "John", N_count: "abc" })).toThrow(); // N_count should be number
 });
+
+test("numeric string keys", () => {
+  const schema = z.record(z.number(), z.number());
+
+  // Numeric string keys work
+  expect(schema.parse({ 1: 100, 2: 200 })).toEqual({ 1: 100, 2: 200 });
+  expect(schema.parse({ "1.5": 100, "-3": 200 })).toEqual({ "1.5": 100, "-3": 200 });
+
+  // Non-numeric keys fail
+  expect(schema.safeParse({ abc: 100 }).success).toBe(false);
+
+  // Integer constraint is respected
+  const intSchema = z.record(z.number().int(), z.number());
+  expect(intSchema.parse({ 1: 100 })).toEqual({ 1: 100 });
+  expect(intSchema.safeParse({ "1.5": 100 }).success).toBe(false);
+
+  // Transforms on numeric keys work
+  const transformedSchema = z.record(
+    z.number().overwrite((n) => n * 2),
+    z.string()
+  );
+  expect(transformedSchema.parse({ 5: "five", 10: "ten" })).toEqual({ 10: "five", 20: "ten" });
+});
