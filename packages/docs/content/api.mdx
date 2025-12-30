@@ -1861,6 +1861,29 @@ const Person = z.record(Keys, z.string());
 // { id: string; name: string; email: string }
 ```
 
+**New** — As of v4.2, Zod properly supports numeric keys inside records in a way that more closely mirrors TypeScript itself. A `number` schema, when used as a record key, will validate that the key is a valid "numeric string". Additional numerical constraints (min, max, step, etc.) will also be validated.
+
+```ts
+const numberKeys = z.record(z.number(), z.string());
+schema.parse({ 
+  1: "one", // ✅
+  2: "two", // ✅
+  "1.5": "one", // ✅
+  "-3": "two", // ✅
+  abc: "one" // ❌
+});
+
+// further validation is also supported
+const intKeys = z.record(z.int().step(1).min(0).max(10), z.string());
+intKeys.parse({ 
+  0: "zero", // ✅
+  1: "one", // ✅
+  2: "two", // ✅
+  12: "twelve", // ❌
+  abc: "one" // ❌
+});
+```
+
 ### `z.partialRecord`
 
 
@@ -1901,6 +1924,7 @@ schema.parse({
   N_count: 123,     // validated as number
 });
 ```
+
 
 ## Maps
 
