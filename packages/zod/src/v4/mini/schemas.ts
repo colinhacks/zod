@@ -11,6 +11,10 @@ export interface ZodMiniType<
 > extends core.$ZodType<Output, Input, Internals> {
   type: Internals["def"]["type"];
   check(...checks: (core.CheckFn<core.output<this>> | core.$ZodCheck<core.output<this>>)[]): this;
+  refine<Ch extends (arg: core.output<this>) => unknown | Promise<unknown>>(
+    check: Ch,
+    params?: string | core.$ZodCustomParams
+  ): Ch extends (arg: any) => arg is infer R ? core.$ZodNarrow<this, R> : this;
   clone(def?: Internals["def"], params?: { parent: boolean }): this;
   register<R extends core.$ZodRegistry>(
     registry: R,
@@ -65,6 +69,7 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
         // { parent: true }
       );
     };
+    inst.refine = (check, params) => inst.check(refine(check, params)) as never;
     inst.clone = (_def, params) => core.clone(inst, _def, params);
     inst.brand = () => inst as any;
     inst.register = ((reg: any, meta: any) => {
@@ -1639,14 +1644,6 @@ export function custom<O = unknown, I = O>(
 }
 
 // refine
-export function refine<T, RefinedOutput extends T>(
-  fn: (arg: NoInfer<T>) => arg is RefinedOutput,
-  _params?: string | core.$ZodCustomParams
-): core.$ZodCheck<T> & { _zod: { output: RefinedOutput } };
-export function refine<T>(
-  fn: (arg: NoInfer<T>) => util.MaybeAsync<unknown>,
-  _params?: string | core.$ZodCustomParams
-): core.$ZodCheck<T>;
 export function refine<T>(
   fn: (arg: NoInfer<T>) => util.MaybeAsync<unknown>,
   _params: string | core.$ZodCustomParams = {}
