@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 
-test(() => {
+test("placeholder test", () => {
   expect(2).toBe(2);
 });
 // test("overload types", () => {
