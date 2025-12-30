@@ -11,6 +11,7 @@ export interface ZodMiniType<
 > extends core.$ZodType<Output, Input, Internals> {
   type: Internals["def"]["type"];
   check(...checks: (core.CheckFn<core.output<this>> | core.$ZodCheck<core.output<this>>)[]): this;
+  with(...checks: (core.CheckFn<core.output<this>> | core.$ZodCheck<core.output<this>>)[]): this;
   refine<Ch extends (arg: core.output<this>) => unknown | Promise<unknown>>(
     check: Ch,
     params?: string | core.$ZodCustomParams
@@ -69,6 +70,7 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
         { parent: true }
       );
     };
+    inst.with = inst.check;
     inst.refine = (check, params) => inst.check(refine(check, params)) as never;
     inst.clone = (_def, params) => core.clone(inst, _def, params);
     inst.brand = () => inst as any;

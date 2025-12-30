@@ -38,6 +38,7 @@ export interface ZodType<
 
   // base methods
   check(...checks: (core.CheckFn<core.output<this>> | core.$ZodCheck<core.output<this>>)[]): this;
+  with(...checks: (core.CheckFn<core.output<this>> | core.$ZodCheck<core.output<this>>)[]): this;
   clone(def?: Internals["def"], params?: { parent: boolean }): this;
   register<R extends core.$ZodRegistry>(
     registry: R,
@@ -180,6 +181,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
       }
     );
   };
+  inst.with = inst.check;
   inst.clone = (def, params) => core.clone(inst, def, params);
   inst.brand = () => inst as any;
   inst.register = ((reg: any, meta: any) => {

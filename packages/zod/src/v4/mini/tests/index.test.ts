@@ -672,6 +672,47 @@ test("z.check", () => {
   });
 });
 
+test("z.with (alias for z.check)", () => {
+  // .with() should work exactly the same as .check()
+  const a = z.any().with(
+    z.check<string>((ctx) => {
+      if (typeof ctx.value === "string") return;
+      ctx.issues.push({
+        code: "custom",
+        origin: "custom",
+        message: "Expected a string",
+        input: ctx.value,
+      });
+    })
+  );
+  expect(z.safeParse(a, "hello")).toMatchObject({
+    success: true,
+    data: "hello",
+  });
+  expect(z.safeParse(a, 123)).toMatchObject({
+    success: false,
+    error: { issues: [{ code: "custom", message: "Expected a string" }] },
+  });
+
+  // Test with refine
+  const b = z.string().with(z.refine((val) => val.length > 3, "Must be longer than 3"));
+  expect(z.safeParse(b, "hello").success).toBe(true);
+  expect(z.safeParse(b, "hi").success).toBe(false);
+
+  // Test with function
+  const c = z.string().with(({ value, issues }) => {
+    if (value.length <= 3) {
+      issues.push({
+        code: "custom",
+        input: value,
+        message: "Must be longer than 3",
+      });
+    }
+  });
+  expect(z.safeParse(c, "hello").success).toBe(true);
+  expect(z.safeParse(c, "hi").success).toBe(false);
+});
+
 test("z.instanceof", () => {
   class A {}
 
