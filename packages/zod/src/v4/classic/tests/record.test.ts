@@ -538,4 +538,11 @@ test("numeric string keys", () => {
   const intSchema = z.record(z.number().int(), z.number());
   expect(intSchema.parse({ 1: 100 })).toEqual({ 1: 100 });
   expect(intSchema.safeParse({ "1.5": 100 }).success).toBe(false);
+
+  // Transforms on numeric keys work
+  const transformedSchema = z.record(
+    z.number().overwrite((n) => n * 2),
+    z.string()
+  );
+  expect(transformedSchema.parse({ 5: "five", 10: "ten" })).toEqual({ 10: "five", 20: "ten" });
 });
