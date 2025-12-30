@@ -45,30 +45,7 @@ const error: () => errors.$ZodErrorMap = () => {
     return TypeNames[type] ?? type;
   }
 
-  const parsedType = (data: any): string => {
-    const t = typeof data;
-
-    switch (t) {
-      case "number": {
-        return Number.isNaN(data) ? "NaN" : "number";
-      }
-      case "object": {
-        if (Array.isArray(data)) {
-          return "array";
-        }
-        if (data === null) {
-          return "null";
-        }
-        if (Object.getPrototypeOf(data) !== Object.prototype) {
-          return data.constructor.name;
-        }
-        return "object";
-      }
-    }
-    return t;
-  };
-
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "entrada",
@@ -101,11 +78,23 @@ const error: () => errors.$ZodErrorMap = () => {
     template_literal: "entrada",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `Entrada inválida: se esperaba ${getTypeName(issue.expected)}, recibido ${getTypeName(parsedType(issue.input))}`;
-      // return `Entrada inválida: se esperaba ${issue.expected}, recibido ${util.getParsedType(issue.input)}`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? getTypeName(issue.expected);
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? getTypeName(receivedType);
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `Entrada inválida: se esperaba instanceof ${issue.expected}, recibido ${received}`;
+        }
+        return `Entrada inválida: se esperaba ${expected}, recibido ${received}`;
+      }
       case "invalid_value":
         if (issue.values.length === 1)
           return `Entrada inválida: se esperaba ${util.stringifyPrimitive(issue.values[0])}`;
@@ -134,7 +123,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `Cadena inválida: debe terminar en "${_issue.suffix}"`;
         if (_issue.format === "includes") return `Cadena inválida: debe incluir "${_issue.includes}"`;
         if (_issue.format === "regex") return `Cadena inválida: debe coincidir con el patrón ${_issue.pattern}`;
-        return `Inválido ${Nouns[_issue.format] ?? issue.format}`;
+        return `Inválido ${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":
         return `Número inválido: debe ser múltiplo de ${issue.divisor}`;

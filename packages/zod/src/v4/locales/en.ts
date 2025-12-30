@@ -2,29 +2,6 @@ import type { $ZodStringFormats } from "../core/checks.js";
 import type * as errors from "../core/errors.js";
 import * as util from "../core/util.js";
 
-export const parsedType = (data: any): string => {
-  const t = typeof data;
-
-  switch (t) {
-    case "number": {
-      return Number.isNaN(data) ? "NaN" : "number";
-    }
-    case "object": {
-      if (Array.isArray(data)) {
-        return "array";
-      }
-      if (data === null) {
-        return "null";
-      }
-
-      if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-        return data.constructor.name;
-      }
-    }
-  }
-  return t;
-};
-
 const error: () => errors.$ZodErrorMap = () => {
   const Sizable: Record<string, { unit: string; verb: string }> = {
     string: { unit: "characters", verb: "to have" },
@@ -38,7 +15,7 @@ const error: () => errors.$ZodErrorMap = () => {
     return Sizable[origin] ?? null;
   }
 
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "input",
@@ -72,10 +49,26 @@ const error: () => errors.$ZodErrorMap = () => {
     template_literal: "input",
   };
 
+  // type names: missing keys = do not translate (use raw value via ?? fallback)
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    // Compatibility: "nan" -> "NaN" for display
+    nan: "NaN",
+    // All other type names omitted - they fall back to raw values via ?? operator
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `Invalid input: expected ${issue.expected}, received ${parsedType(issue.input)}`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `Invalid input: expected instanceof ${issue.expected}, received ${received}`;
+        }
+        return `Invalid input: expected ${expected}, received ${received}`;
+      }
 
       case "invalid_value":
         if (issue.values.length === 1) return `Invalid input: expected ${util.stringifyPrimitive(issue.values[0])}`;
@@ -104,7 +97,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `Invalid string: must end with "${_issue.suffix}"`;
         if (_issue.format === "includes") return `Invalid string: must include "${_issue.includes}"`;
         if (_issue.format === "regex") return `Invalid string: must match pattern ${_issue.pattern}`;
-        return `Invalid ${Nouns[_issue.format] ?? issue.format}`;
+        return `Invalid ${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":
         return `Invalid number: must be a multiple of ${issue.divisor}`;

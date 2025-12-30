@@ -21,7 +21,7 @@ test("parsedType", () => {
   const doubleNullPrototype = Object.create(Object.create(null));
   expect(parsedType(doubleNullPrototype)).toBe("object");
 
-  expect(parsedType(Number.NaN)).toBe("NaN");
+  expect(parsedType(Number.NaN)).toBe("nan");
 });
 
 test("locales - uz", () => {

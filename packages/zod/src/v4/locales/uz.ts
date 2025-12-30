@@ -2,42 +2,19 @@ import type { $ZodStringFormats } from "../core/checks.js";
 import type * as errors from "../core/errors.js";
 import * as util from "../core/util.js";
 
-export const parsedType = (data: any): string => {
-  const t = typeof data;
-
-  switch (t) {
-    case "number": {
-      return Number.isNaN(data) ? "NaN" : "raqam";
-    }
-    case "object": {
-      if (Array.isArray(data)) {
-        return "massiv";
-      }
-      if (data === null) {
-        return "null";
-      }
-
-      if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-        return data.constructor.name;
-      }
-    }
-  }
-  return t;
-};
-
 const error: () => errors.$ZodErrorMap = () => {
   const Sizable: Record<string, { unit: string; verb: string }> = {
-    string: { unit: "belgi", verb: "bo‘lishi kerak" },
-    file: { unit: "bayt", verb: "bo‘lishi kerak" },
-    array: { unit: "element", verb: "bo‘lishi kerak" },
-    set: { unit: "element", verb: "bo‘lishi kerak" },
+    string: { unit: "belgi", verb: "bo'lishi kerak" },
+    file: { unit: "bayt", verb: "bo'lishi kerak" },
+    array: { unit: "element", verb: "bo'lishi kerak" },
+    set: { unit: "element", verb: "bo'lishi kerak" },
   };
 
   function getSizing(origin: string): { unit: string; verb: string } | null {
     return Sizable[origin] ?? null;
   }
 
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "kirish",
@@ -71,10 +48,23 @@ const error: () => errors.$ZodErrorMap = () => {
     template_literal: "kirish",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `Noto‘g‘ri kirish: kutilgan ${issue.expected}, qabul qilingan ${parsedType(issue.input)}`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `Noto'g'ri kirish: kutilgan instanceof ${issue.expected}, qabul qilingan ${received}`;
+        }
+        return `Noto'g'ri kirish: kutilgan ${expected}, qabul qilingan ${received}`;
+      }
       case "invalid_value":
         if (issue.values.length === 1) return `Noto‘g‘ri kirish: kutilgan ${util.stringifyPrimitive(issue.values[0])}`;
         return `Noto‘g‘ri variant: quyidagilardan biri kutilgan ${util.joinValues(issue.values, "|")}`;
@@ -99,7 +89,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `Noto‘g‘ri satr: "${_issue.suffix}" bilan tugashi kerak`;
         if (_issue.format === "includes") return `Noto‘g‘ri satr: "${_issue.includes}" ni o‘z ichiga olishi kerak`;
         if (_issue.format === "regex") return `Noto‘g‘ri satr: ${_issue.pattern} shabloniga mos kelishi kerak`;
-        return `Noto'g'ri ${Nouns[_issue.format] ?? issue.format}`;
+        return `Noto'g'ri ${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":
         return `Noto‘g‘ri raqam: ${issue.divisor} ning karralisi bo‘lishi kerak`;

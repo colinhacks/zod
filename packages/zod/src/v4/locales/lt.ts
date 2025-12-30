@@ -2,11 +2,6 @@ import type { $ZodStringFormats } from "../core/checks.js";
 import type * as errors from "../core/errors.js";
 import * as util from "../core/util.js";
 
-export const parsedType = (data: any): string => {
-  const t = typeof data;
-  return parsedTypeFromType(t, data);
-};
-
 const parsedTypeFromType = (t: string, data: any = undefined): string => {
   switch (t) {
     case "number": {
@@ -164,7 +159,7 @@ const error: () => errors.$ZodErrorMap = () => {
     };
   }
 
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "įvestis",
@@ -197,10 +192,23 @@ const error: () => errors.$ZodErrorMap = () => {
     template_literal: "įvestis",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `Gautas tipas ${parsedType(issue.input)}, o tikėtasi - ${parsedTypeFromType(issue.expected)}`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? parsedTypeFromType(issue.expected);
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `Gautas tipas ${received}, o tikėtasi - instanceof ${issue.expected}`;
+        }
+        return `Gautas tipas ${received}, o tikėtasi - ${expected}`;
+      }
       case "invalid_value":
         if (issue.values.length === 1) return `Privalo būti ${util.stringifyPrimitive(issue.values[0])}`;
         return `Privalo būti vienas iš ${util.joinValues(issue.values, "|")} pasirinkimų`;
@@ -238,7 +246,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `Eilutė privalo pasibaigti "${_issue.suffix}"`;
         if (_issue.format === "includes") return `Eilutė privalo įtraukti "${_issue.includes}"`;
         if (_issue.format === "regex") return `Eilutė privalo atitikti ${_issue.pattern}`;
-        return `Neteisingas ${Nouns[_issue.format] ?? issue.format}`;
+        return `Neteisingas ${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":
         return `Skaičius privalo būti ${issue.divisor} kartotinis.`;
