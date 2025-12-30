@@ -77,8 +77,6 @@ export interface Seen {
   isParent?: boolean | undefined;
   /** Schema to inherit JSON Schema properties from (set by processor for wrappers) */
   ref?: schemas.$ZodType | null;
-  /** Parent schema in the clone chain (for $ref propagation when parent is extracted) */
-  parent?: schemas.$ZodType | undefined;
   /** JSON Schema property path for this schema */
   path?: (string | number)[] | undefined;
 }
@@ -189,8 +187,6 @@ export function process<T extends schemas.$ZodType>(
     const parent = schema._zod.parent as T;
 
     if (parent) {
-      // Track parent separately from processor ref
-      result.parent = parent;
       // Also set ref if processor didn't (for inheritance)
       if (!result.ref) result.ref = parent;
       process(parent, ctx, params);
@@ -397,7 +393,7 @@ export function finalize<T extends schemas.$ZodType>(
       // restore child's own properties (child wins)
       Object.assign(schema, _cached);
 
-      const isParentRef = (zodSchema as any)._zod.parent === ref;
+      const isParentRef = zodSchema._zod.parent === ref;
 
       // For parent chain, child is a refinement - remove parent-only properties
       if (isParentRef) {
@@ -423,10 +419,11 @@ export function finalize<T extends schemas.$ZodType>(
     // If parent was extracted (has $ref), propagate $ref to this schema
     // This handles cases like: readonly().meta({id}).describe()
     // where processor sets ref to innerType but parent should be referenced
-    if (seen.parent && seen.parent !== ref) {
+    const parent = zodSchema._zod.parent;
+    if (parent && parent !== ref) {
       // Ensure parent is processed first so its def has inherited properties
-      flattenRef(seen.parent);
-      const parentSeen = ctx.seen.get(seen.parent);
+      flattenRef(parent);
+      const parentSeen = ctx.seen.get(parent);
       if (parentSeen?.schema.$ref) {
         schema.$ref = parentSeen.schema.$ref;
         // De-duplicate with parent's definition
