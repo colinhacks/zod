@@ -1913,15 +1913,17 @@ const Person = z.partialRecord(Keys, z.string());
 By default, `z.record()` errors on keys that don't match the key schema. Use `z.looseRecord()` to pass through non-matching keys unchanged. This is particularly useful when combined with intersections to model multiple pattern properties:
 
 ```ts
-const schema = z.object({ name: z.string() }).passthrough()
-  .and(z.looseRecord(z.string().regex(/^S_/), z.string()))
-  .and(z.looseRecord(z.string().regex(/^N_/), z.number()));
+const schema = z
+  .object({ name: z.string() })
+  .and(z.looseRecord(z.string().regex(/_phone$/), z.e164()));
+
+type schema = z.infer<typeof schema>;
+// => { name: string } & Record<string, string>
 
 schema.parse({ 
   name: "John",
-  other: "value",    // passes through unchanged
-  S_foo: "bar",     // validated as string
-  N_count: 123,     // validated as number
+  home_phone: "+12345678900",     // validated as phone number
+  work_phone: "+12345678900",     // validated as phone number
 });
 ```
 
