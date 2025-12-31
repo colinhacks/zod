@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import { fromJSONSchema } from "../from-json-schema.js";
+import * as z from "../index.js";
 
 test("basic string schema", () => {
   const schema = fromJSONSchema({ type: "string" });
@@ -534,4 +535,179 @@ test("nullable in OpenAPI 3.0", () => {
   );
   expect(objectSchema.parse({ name: "John" })).toEqual({ name: "John" });
   expect(objectSchema.parse(null)).toBe(null);
+});
+
+// Metadata extraction tests
+
+test("unrecognized keys stored in globalRegistry by default", () => {
+  const schema = fromJSONSchema({
+    type: "string",
+    title: "My String",
+    deprecated: true,
+    examples: ["hello", "world"],
+    "x-custom": "custom value",
+  });
+
+  const meta = z.globalRegistry.get(schema);
+  expect(meta).toBeDefined();
+  expect(meta?.title).toBe("My String");
+  expect(meta?.deprecated).toBe(true);
+  expect(meta?.examples).toEqual(["hello", "world"]);
+  expect((meta as any)?.["x-custom"]).toBe("custom value");
+
+  // Clean up
+  z.globalRegistry.remove(schema);
+});
+
+test("unrecognized keys stored in custom registry", () => {
+  const customRegistry = z.registry<{ title?: string; deprecated?: boolean }>();
+
+  const schema = fromJSONSchema(
+    {
+      type: "number",
+      title: "Age",
+      deprecated: true,
+    },
+    { registry: customRegistry }
+  );
+
+  // Should be in custom registry
+  const meta = customRegistry.get(schema);
+  expect(meta).toBeDefined();
+  expect(meta?.title).toBe("Age");
+  expect(meta?.deprecated).toBe(true);
+
+  // Should NOT be in globalRegistry
+  expect(z.globalRegistry.get(schema)).toBeUndefined();
+});
+
+test("$id and id are captured as metadata", () => {
+  const customRegistry = z.registry<{ $id?: string; id?: string }>();
+
+  const schema1 = fromJSONSchema(
+    {
+      $id: "https://example.com/schemas/user",
+      type: "object",
+    },
+    { registry: customRegistry }
+  );
+  expect(customRegistry.get(schema1)?.$id).toBe("https://example.com/schemas/user");
+
+  const schema2 = fromJSONSchema(
+    {
+      id: "legacy-id",
+      type: "string",
+    },
+    { registry: customRegistry }
+  );
+  expect(customRegistry.get(schema2)?.id).toBe("legacy-id");
+});
+
+test("x-* extension keys are captured as metadata", () => {
+  const customRegistry = z.registry<Record<string, unknown>>();
+
+  const schema = fromJSONSchema(
+    {
+      type: "string",
+      "x-openapi-example": "example value",
+      "x-internal": true,
+      "x-tags": ["api", "public"],
+    },
+    { registry: customRegistry }
+  );
+
+  const meta = customRegistry.get(schema);
+  expect(meta?.["x-openapi-example"]).toBe("example value");
+  expect(meta?.["x-internal"]).toBe(true);
+  expect(meta?.["x-tags"]).toEqual(["api", "public"]);
+});
+
+test("metadata on nested schemas", () => {
+  const customRegistry = z.registry<Record<string, unknown>>();
+
+  const parentSchema = fromJSONSchema(
+    {
+      type: "object",
+      title: "User",
+      properties: {
+        name: {
+          type: "string",
+          title: "Name",
+          "x-field-order": 1,
+        },
+        age: {
+          type: "number",
+          title: "Age",
+          deprecated: true,
+        },
+      },
+    },
+    { registry: customRegistry }
+  );
+
+  // Verify parent schema has its metadata
+  expect(customRegistry.get(parentSchema)?.title).toBe("User");
+
+  // We can't easily access nested schemas directly, but we can verify
+  // the registry is being used correctly by checking a separate schema
+  const simpleSchema = fromJSONSchema(
+    {
+      type: "string",
+      title: "Simple",
+    },
+    { registry: customRegistry }
+  );
+  expect(customRegistry.get(simpleSchema)?.title).toBe("Simple");
+});
+
+test("no metadata added when no unrecognized keys", () => {
+  const customRegistry = z.registry<Record<string, unknown>>();
+
+  const schema = fromJSONSchema(
+    {
+      type: "string",
+      minLength: 1,
+      maxLength: 100,
+      description: "A regular string",
+    },
+    { registry: customRegistry }
+  );
+
+  // description is handled via .describe(), so it shouldn't be in metadata
+  // All other keys are recognized, so no metadata should be added
+  expect(customRegistry.get(schema)).toBeUndefined();
+});
+
+test("writeOnly and examples are captured as metadata", () => {
+  const customRegistry = z.registry<{ writeOnly?: boolean; examples?: unknown[] }>();
+
+  const schema = fromJSONSchema(
+    {
+      type: "string",
+      writeOnly: true,
+      examples: ["password123", "secret"],
+    },
+    { registry: customRegistry }
+  );
+
+  const meta = customRegistry.get(schema);
+  expect(meta?.writeOnly).toBe(true);
+  expect(meta?.examples).toEqual(["password123", "secret"]);
+});
+
+test("$comment and $anchor are captured as metadata", () => {
+  const customRegistry = z.registry<{ $comment?: string; $anchor?: string }>();
+
+  const schema = fromJSONSchema(
+    {
+      type: "string",
+      $comment: "This is a developer note",
+      $anchor: "my-anchor",
+    },
+    { registry: customRegistry }
+  );
+
+  const meta = customRegistry.get(schema);
+  expect(meta?.$comment).toBe("This is a developer note");
+  expect(meta?.$anchor).toBe("my-anchor");
 });
