@@ -656,7 +656,14 @@ export function extend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): an
   const checks = schema._zod.def.checks;
   const hasChecks = checks && checks.length > 0;
   if (hasChecks) {
-    throw new Error("Object schemas containing refinements cannot be extended. Use `.safeExtend()` instead.");
+    // Only throw if new shape overlaps with existing shape
+    // Use getOwnPropertyDescriptor to check key existence without accessing values
+    const existingShape = schema._zod.def.shape;
+    for (const key in shape) {
+      if (Object.getOwnPropertyDescriptor(existingShape, key) !== undefined) {
+        throw new Error("Cannot overwrite keys on object schemas containing refinements. Use `.safeExtend()` instead.");
+      }
+    }
   }
 
   const def = mergeDefs(schema._zod.def, {
@@ -665,7 +672,6 @@ export function extend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): an
       assignProp(this, "shape", _shape); // self-caching
       return _shape;
     },
-    checks: [],
   });
   return clone(schema, def) as any;
 }
