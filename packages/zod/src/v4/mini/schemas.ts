@@ -1385,6 +1385,28 @@ export function optional<T extends SomeType>(innerType: T): ZodMiniOptional<T> {
   }) as any;
 }
 
+// ZodMiniExactOptional
+export interface ZodMiniExactOptional<T extends SomeType = core.$ZodType>
+  extends _ZodMiniType<core.$ZodExactOptionalInternals<T>>,
+    core.$ZodExactOptional<T> {
+  // _zod: core.$ZodExactOptionalInternals<T>;
+}
+export const ZodMiniExactOptional: core.$constructor<ZodMiniExactOptional> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniExactOptional",
+  (inst, def) => {
+    core.$ZodExactOptional.init(inst, def);
+    ZodMiniType.init(inst, def);
+  }
+);
+
+// @__NO_SIDE_EFFECTS__
+export function exactOptional<T extends SomeType>(innerType: T): ZodMiniExactOptional<T> {
+  return new ZodMiniExactOptional({
+    type: "optional",
+    innerType: innerType as any as core.$ZodType,
+  }) as any;
+}
+
 // ZodMiniNullable
 export interface ZodMiniNullable<T extends SomeType = core.$ZodType>
   extends _ZodMiniType<core.$ZodNullableInternals<T>> {

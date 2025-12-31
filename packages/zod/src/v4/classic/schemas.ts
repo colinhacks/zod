@@ -100,6 +100,7 @@ export interface ZodType<
 
   // wrappers
   optional(): ZodOptional<this>;
+  exactOptional(): ZodExactOptional<this>;
   nonoptional(params?: string | core.$ZodNonOptionalParams): ZodNonOptional<this>;
   nullable(): ZodNullable<this>;
   nullish(): ZodOptional<ZodNullable<this>>;
@@ -214,6 +215,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
 
   // wrappers
   inst.optional = () => optional(inst);
+  inst.exactOptional = () => exactOptional(inst);
   inst.nullable = () => nullable(inst);
   inst.nullish = () => optional(nullable(inst));
   inst.nonoptional = (params) => nonoptional(inst, params);
@@ -1840,6 +1842,31 @@ export const ZodOptional: core.$constructor<ZodOptional> = /*@__PURE__*/ core.$c
 
 export function optional<T extends core.SomeType>(innerType: T): ZodOptional<T> {
   return new ZodOptional({
+    type: "optional",
+    innerType: innerType as any as core.$ZodType,
+  }) as any;
+}
+
+// ZodExactOptional
+export interface ZodExactOptional<T extends core.SomeType = core.$ZodType>
+  extends _ZodType<core.$ZodExactOptionalInternals<T>>,
+    core.$ZodExactOptional<T> {
+  "~standard": ZodStandardSchemaWithJSON<this>;
+  unwrap(): T;
+}
+export const ZodExactOptional: core.$constructor<ZodExactOptional> = /*@__PURE__*/ core.$constructor(
+  "ZodExactOptional",
+  (inst, def) => {
+    core.$ZodExactOptional.init(inst, def);
+    ZodType.init(inst, def);
+    inst._zod.processJSONSchema = (ctx, json, params) => processors.optionalProcessor(inst, ctx, json, params);
+
+    inst.unwrap = () => inst._zod.def.innerType;
+  }
+);
+
+export function exactOptional<T extends core.SomeType>(innerType: T): ZodExactOptional<T> {
+  return new ZodExactOptional({
     type: "optional",
     innerType: innerType as any as core.$ZodType,
   }) as any;
