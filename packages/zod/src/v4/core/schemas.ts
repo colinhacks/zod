@@ -1708,14 +1708,14 @@ function handlePropertyResult(
   result: ParsePayload,
   final: ParsePayload,
   key: PropertyKey,
-  input: any
-  // isOptionalOut: boolean
+  input: any,
+  isOptionalOut: boolean
 ) {
   if (result.issues.length) {
     // For optional-out schemas, ignore errors on absent keys
-    // if (isOptionalOut && !(key in input)) {
-    //   return;
-    // }
+    if (isOptionalOut && !(key in input)) {
+      return;
+    }
     final.issues.push(...util.prefixIssues(key, result.issues));
   }
 
@@ -1809,7 +1809,7 @@ function handleCatchall(
   const keySet = def.keySet;
   const _catchall = def.catchall!._zod;
   const t = _catchall.def.type;
-  // const isOptionalOut = _catchall.optout === "optional";
+  const isOptionalOut = _catchall.optout === "optional";
   for (const key in input) {
     if (keySet.has(key)) continue;
     if (t === "never") {
@@ -1819,9 +1819,9 @@ function handleCatchall(
     const r = _catchall.run({ value: input[key], issues: [] }, ctx);
 
     if (r instanceof Promise) {
-      proms.push(r.then((r) => handlePropertyResult(r, payload, key, input)));
+      proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, isOptionalOut)));
     } else {
-      handlePropertyResult(r, payload, key, input);
+      handlePropertyResult(r, payload, key, input, isOptionalOut);
     }
   }
 
@@ -1899,13 +1899,13 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
 
     for (const key of value.keys) {
       const el = shape[key]!;
-      // const isOptionalOut = el._zod.optout === "optional";
+      const isOptionalOut = el._zod.optout === "optional";
 
       const r = el._zod.run({ value: input[key], issues: [] }, ctx);
       if (r instanceof Promise) {
-        proms.push(r.then((r) => handlePropertyResult(r, payload, key, input)));
+        proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, isOptionalOut)));
       } else {
-        handlePropertyResult(r, payload, key, input);
+        handlePropertyResult(r, payload, key, input, isOptionalOut);
       }
     }
 
