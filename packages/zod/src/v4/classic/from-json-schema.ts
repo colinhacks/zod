@@ -1,4 +1,5 @@
 import type * as JSONSchema from "../core/json-schema.js";
+import { globalRegistry, type $ZodRegistry } from "../core/registries.js";
 import * as _checks from "./checks.js";
 import * as _iso from "./iso.js";
 import * as _schemas from "./schemas.js";
@@ -15,6 +16,7 @@ type JSONSchemaVersion = "draft-2020-12" | "draft-7" | "draft-4" | "openapi-3.0"
 
 interface FromJSONSchemaParams {
   defaultTarget?: JSONSchemaVersion;
+  registry?: $ZodRegistry<any>;
 }
 
 interface ConversionContext {
@@ -23,7 +25,63 @@ interface ConversionContext {
   refs: Map<string, ZodType>;
   processing: Set<string>;
   rootSchema: JSONSchema.JSONSchema;
+  registry: $ZodRegistry<any>;
 }
+
+// Keys that are recognized and handled by the conversion logic
+const RECOGNIZED_KEYS = new Set([
+  // Schema identification
+  "$schema",
+  "$ref",
+  "$defs",
+  "definitions",
+  // Type
+  "type",
+  "enum",
+  "const",
+  // Composition
+  "anyOf",
+  "oneOf",
+  "allOf",
+  "not",
+  // Object
+  "properties",
+  "required",
+  "additionalProperties",
+  "patternProperties",
+  "propertyNames",
+  // Array
+  "items",
+  "prefixItems",
+  "additionalItems",
+  "minItems",
+  "maxItems",
+  // String
+  "minLength",
+  "maxLength",
+  "pattern",
+  "format",
+  // Number
+  "minimum",
+  "maximum",
+  "exclusiveMinimum",
+  "exclusiveMaximum",
+  "multipleOf",
+  // Already handled metadata
+  "description",
+  "default",
+  // Unsupported (error-throwing)
+  "unevaluatedItems",
+  "unevaluatedProperties",
+  "if",
+  "then",
+  "else",
+  "dependentSchemas",
+  "dependentRequired",
+  // OpenAPI
+  "nullable",
+  "readOnly",
+]);
 
 function detectVersion(schema: JSONSchema.JSONSchema, defaultTarget?: JSONSchemaVersion): JSONSchemaVersion {
   const $schema = schema.$schema;
@@ -510,6 +568,17 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
     baseSchema = z.readonly(baseSchema);
   }
 
+  // Collect unrecognized keys as metadata
+  const extraMeta: Record<string, unknown> = {};
+  for (const key of Object.keys(schema)) {
+    if (!RECOGNIZED_KEYS.has(key)) {
+      extraMeta[key] = schema[key];
+    }
+  }
+  if (Object.keys(extraMeta).length > 0) {
+    ctx.registry.add(baseSchema, extraMeta);
+  }
+
   return baseSchema;
 }
 
@@ -530,6 +599,7 @@ export function fromJSONSchema(schema: JSONSchema.JSONSchema | boolean, params?:
     refs: new Map(),
     processing: new Set(),
     rootSchema: schema,
+    registry: params?.registry ?? globalRegistry,
   };
 
   return convertSchema(schema, ctx);
