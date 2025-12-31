@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
-import * as z from "../index.js";
 import { fromJSONSchema } from "../from-json-schema.js";
+import * as z from "../index.js";
 
 test("basic string schema", () => {
   const schema = fromJSONSchema({ type: "string" });

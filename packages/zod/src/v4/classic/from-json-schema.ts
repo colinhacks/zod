@@ -1,5 +1,5 @@
 import type * as JSONSchema from "../core/json-schema.js";
-import { globalRegistry, type $ZodRegistry } from "../core/registries.js";
+import { type $ZodRegistry, globalRegistry } from "../core/registries.js";
 import * as _checks from "./checks.js";
 import * as _iso from "./iso.js";
 import * as _schemas from "./schemas.js";
