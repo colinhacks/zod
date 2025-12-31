@@ -597,7 +597,7 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
     }
   }
 
-  // Content keywords that should be captured as metadata
+  // Content keywords - store as metadata
   const contentMetadataKeys = ["contentEncoding", "contentMediaType", "contentSchema"];
   for (const key of contentMetadataKeys) {
     if (key in schema) {

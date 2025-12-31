@@ -711,3 +711,24 @@ test("$comment and $anchor are captured as metadata", () => {
   expect(meta?.$comment).toBe("This is a developer note");
   expect(meta?.$anchor).toBe("my-anchor");
 });
+
+test("contentEncoding and contentMediaType are stored as metadata", () => {
+  const customRegistry = z.registry<{ contentEncoding?: string; contentMediaType?: string }>();
+
+  const schema = fromJSONSchema(
+    {
+      type: "string",
+      contentEncoding: "base64",
+      contentMediaType: "image/png",
+    },
+    { registry: customRegistry }
+  );
+
+  // Should just be a string schema
+  expect(schema.parse("aGVsbG8gd29ybGQ=")).toBe("aGVsbG8gd29ybGQ=");
+
+  // Content keywords should be in metadata
+  const meta = customRegistry.get(schema);
+  expect(meta?.contentEncoding).toBe("base64");
+  expect(meta?.contentMediaType).toBe("image/png");
+});
