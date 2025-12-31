@@ -7,6 +7,10 @@ z4.config({
   jitless: true,
 });
 
+z4lib.config({
+  jitless: true,
+});
+
 const z3Schema = z3.strictObject({
   number: z3.number(),
   negNumber: z3.number(),
