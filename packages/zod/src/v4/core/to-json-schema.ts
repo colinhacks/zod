@@ -501,8 +501,8 @@ export function finalize<T extends schemas.$ZodType>(
       value: {
         ...schema["~standard"],
         jsonSchema: {
-          input: createStandardJSONSchemaMethod(schema, "input"),
-          output: createStandardJSONSchemaMethod(schema, "output"),
+          input: createStandardJSONSchemaMethod(schema, "input", ctx.processors),
+          output: createStandardJSONSchemaMethod(schema, "output", ctx.processors),
         },
       },
       enumerable: false,
@@ -603,10 +603,10 @@ export const createToJSONSchemaMethod =
  */
 type StandardJSONSchemaMethodParams = Parameters<StandardJSONSchemaV1["~standard"]["jsonSchema"]["input"]>[0];
 export const createStandardJSONSchemaMethod =
-  <T extends schemas.$ZodType>(schema: T, io: "input" | "output") =>
+  <T extends schemas.$ZodType>(schema: T, io: "input" | "output", processors: Record<string, Processor> = {}) =>
   (params?: StandardJSONSchemaMethodParams): JSONSchema.BaseSchema => {
     const { libraryOptions, target } = params ?? {};
-    const ctx = initializeContext({ ...(libraryOptions ?? {}), target, io, processors: {} });
+    const ctx = initializeContext({ ...(libraryOptions ?? {}), target, io, processors });
     process(schema, ctx);
     extractDefs(ctx, schema);
     return finalize(ctx, schema);
