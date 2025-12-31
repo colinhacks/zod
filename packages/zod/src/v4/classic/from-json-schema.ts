@@ -35,6 +35,14 @@ const RECOGNIZED_KEYS = new Set([
   "$ref",
   "$defs",
   "definitions",
+  // Core schema keywords
+  "$id",
+  "id",
+  "$comment",
+  "$anchor",
+  "$vocabulary",
+  "$dynamicRef",
+  "$dynamicAnchor",
   // Type
   "type",
   "enum",
@@ -50,12 +58,18 @@ const RECOGNIZED_KEYS = new Set([
   "additionalProperties",
   "patternProperties",
   "propertyNames",
+  "minProperties",
+  "maxProperties",
   // Array
   "items",
   "prefixItems",
   "additionalItems",
   "minItems",
   "maxItems",
+  "uniqueItems",
+  "contains",
+  "minContains",
+  "maxContains",
   // String
   "minLength",
   "maxLength",
@@ -70,6 +84,10 @@ const RECOGNIZED_KEYS = new Set([
   // Already handled metadata
   "description",
   "default",
+  // Content
+  "contentEncoding",
+  "contentMediaType",
+  "contentSchema",
   // Unsupported (error-throwing)
   "unevaluatedItems",
   "unevaluatedProperties",
@@ -568,13 +586,32 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
     baseSchema = z.readonly(baseSchema);
   }
 
-  // Collect unrecognized keys as metadata
+  // Collect metadata: core schema keywords and unrecognized keys
   const extraMeta: Record<string, unknown> = {};
+
+  // Core schema keywords that should be captured as metadata
+  const coreMetadataKeys = ["$id", "id", "$comment", "$anchor", "$vocabulary", "$dynamicRef", "$dynamicAnchor"];
+  for (const key of coreMetadataKeys) {
+    if (key in schema) {
+      extraMeta[key] = schema[key];
+    }
+  }
+
+  // Content keywords that should be captured as metadata
+  const contentMetadataKeys = ["contentEncoding", "contentMediaType", "contentSchema"];
+  for (const key of contentMetadataKeys) {
+    if (key in schema) {
+      extraMeta[key] = schema[key];
+    }
+  }
+
+  // Unrecognized keys (custom metadata)
   for (const key of Object.keys(schema)) {
     if (!RECOGNIZED_KEYS.has(key)) {
       extraMeta[key] = schema[key];
     }
   }
+
   if (Object.keys(extraMeta).length > 0) {
     ctx.registry.add(baseSchema, extraMeta);
   }
