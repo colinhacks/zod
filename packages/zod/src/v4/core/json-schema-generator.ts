@@ -1,9 +1,11 @@
 import { allProcessors } from "./json-schema-processors.js";
 import type * as JSONSchema from "./json-schema.js";
+import type { $ZodRegistry } from "./registries.js";
 import type * as schemas from "./schemas.js";
 import {
   type JSONSchemaGeneratorParams,
   type ProcessParams,
+  type Seen,
   type ToJSONSchemaContext,
   extractDefs,
   finalize,
@@ -47,7 +49,7 @@ export class JSONSchemaGenerator {
   private ctx: ToJSONSchemaContext;
 
   /** @deprecated Access via ctx instead */
-  get metadataRegistry() {
+  get metadataRegistry(): $ZodRegistry<Record<string, any>> {
     return this.ctx.metadataRegistry;
   }
   /** @deprecated Access via ctx instead */
@@ -74,7 +76,7 @@ export class JSONSchemaGenerator {
     this.ctx.counter = value;
   }
   /** @deprecated Access via ctx instead */
-  get seen() {
+  get seen(): Map<schemas.$ZodType, Seen> {
     return this.ctx.seen;
   }
 
