@@ -269,6 +269,12 @@ const poweredByZodProjects: ZodResource[] = [
 
 const zodUtilities: ZodResource[] = [
   {
+    name: "babel-plugin-zod-hoist",
+    url: "https://github.com/gajus/babel-plugin-zod-hoist",
+    description: "Babel plugin that optimizes Zod performance by hoisting schema definitions to the top of the file, avoiding repeated initialization overhead.",
+    slug: "gajus/babel-plugin-zod-hoist",
+  },
+  {
     name: "eslint-plugin-import-zod",
     url: "https://github.com/samchungy/eslint-plugin-import-zod",
     description: "ESLint plugin to enforce namespace imports for Zod.",
