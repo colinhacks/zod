@@ -929,6 +929,117 @@ describe("toJSONSchema", () => {
     `);
   });
 
+  test("strict record with regex key uses propertyNames", () => {
+    const schema = z.record(z.string().regex(/^label:[a-z]{2}$/), z.string());
+
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": {
+          "type": "string",
+        },
+        "propertyNames": {
+          "pattern": "^label:[a-z]{2}$",
+          "type": "string",
+        },
+        "type": "object",
+      }
+    `);
+  });
+
+  test("looseRecord with regex key uses patternProperties", () => {
+    const schema = z.looseRecord(z.string().regex(/^label:[a-z]{2}$/), z.string());
+
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "patternProperties": {
+          "^label:[a-z]{2}$": {
+            "type": "string",
+          },
+        },
+        "type": "object",
+      }
+    `);
+  });
+
+  test("looseRecord with multiple regex patterns uses patternProperties", () => {
+    const schema = z.looseRecord(
+      z
+        .string()
+        .regex(/^prefix_/)
+        .regex(/_suffix$/),
+      z.number()
+    );
+
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "patternProperties": {
+          "^prefix_": {
+            "type": "number",
+          },
+          "_suffix$": {
+            "type": "number",
+          },
+        },
+        "type": "object",
+      }
+    `);
+  });
+
+  test("looseRecord without regex key uses propertyNames", () => {
+    // looseRecord with plain string key should still use propertyNames
+    const schema = z.looseRecord(z.string(), z.boolean());
+
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": {
+          "type": "boolean",
+        },
+        "propertyNames": {
+          "type": "string",
+        },
+        "type": "object",
+      }
+    `);
+  });
+
+  test("intersection of object with looseRecord uses patternProperties", () => {
+    const zLabeled = z.object({ label: z.string() });
+    const zLocalizedLabeled = z.looseRecord(z.string().regex(/^label:[a-z]{2}$/), z.string());
+    const schema = zLabeled.and(zLocalizedLabeled);
+
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "allOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "label",
+            ],
+            "type": "object",
+          },
+          {
+            "patternProperties": {
+              "^label:[a-z]{2}$": {
+                "type": "string",
+              },
+            },
+            "type": "object",
+          },
+        ],
+      }
+    `);
+  });
+
   test("tuple", () => {
     const schema = z.tuple([z.string(), z.number()]);
     expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`

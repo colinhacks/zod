@@ -1,4 +1,4 @@
-# CLAUDE.md
+# AGENTS.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -34,3 +34,4 @@ The project uses pnpm workspaces. Key commands:
 - Ask before generating new files
 - Use `util.defineLazy()` for computed properties to avoid circular dependencies
 - Performance is critical - parameter reassignment is allowed for optimization
+- ALWAYS use the `gh` CLI to fetch GitHub information (issues, PRs, etc.) instead of relying on web search or assumptions

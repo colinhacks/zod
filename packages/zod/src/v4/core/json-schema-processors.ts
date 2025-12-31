@@ -431,26 +431,47 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
   const json = _json as JSONSchema.ObjectSchema;
   const def = schema._zod.def as schemas.$ZodRecordDef;
   json.type = "object";
-  if (ctx.target === "draft-07" || ctx.target === "draft-2020-12") {
-    json.propertyNames = process(def.keyType, ctx as any, {
+
+  // For looseRecord with regex patterns, use patternProperties
+  // This correctly represents "only validate keys matching the pattern" semantics
+  // and composes well with allOf (intersections)
+  const keyType = def.keyType as schemas.$ZodTypes;
+  const keyBag = keyType._zod.bag as schemas.$ZodStringInternals<unknown>["bag"] | undefined;
+  const patterns = keyBag?.patterns;
+
+  if (def.mode === "loose" && patterns && patterns.size > 0) {
+    // Use patternProperties for looseRecord with regex patterns
+    const valueSchema = process(def.valueType, ctx as any, {
       ...params,
-      path: [...params.path, "propertyNames"],
+      path: [...params.path, "patternProperties", "*"],
+    });
+    json.patternProperties = {};
+    for (const pattern of patterns) {
+      json.patternProperties[pattern.source] = valueSchema;
+    }
+  } else {
+    // Default behavior: use propertyNames + additionalProperties
+    if (ctx.target === "draft-07" || ctx.target === "draft-2020-12") {
+      json.propertyNames = process(def.keyType, ctx as any, {
+        ...params,
+        path: [...params.path, "propertyNames"],
+      });
+    }
+    json.additionalProperties = process(def.valueType, ctx as any, {
+      ...params,
+      path: [...params.path, "additionalProperties"],
     });
   }
-  json.additionalProperties = process(def.valueType, ctx as any, {
-    ...params,
-    path: [...params.path, "additionalProperties"],
-  });
 
-  const keyDef = (def.keyType as schemas.$ZodTypes)._zod.def;
-  if (keyDef.type === "enum") {
-    const enumValues = getEnumValues(keyDef.entries);
-    const validEnumValues = enumValues.filter(
+  // Add required for keys with discrete values (enum, literal, etc.)
+  const keyValues = keyType._zod.values;
+  if (keyValues) {
+    const validKeyValues = [...keyValues].filter(
       (v): v is string | number => typeof v === "string" || typeof v === "number"
     );
 
-    if (validEnumValues.length > 0) {
-      json.required = validEnumValues as string[];
+    if (validKeyValues.length > 0) {
+      json.required = validKeyValues as string[];
     }
   }
 };
