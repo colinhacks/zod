@@ -2421,12 +2421,39 @@ function mergeValues(
 }
 
 function handleIntersectionResults(result: ParsePayload, left: ParsePayload, right: ParsePayload): ParsePayload {
-  if (left.issues.length) {
-    result.issues.push(...left.issues);
+  // Track which side(s) report each key as unrecognized
+  const unrecKeys = new Map<string, { l?: true; r?: true }>();
+  let unrecIssue: errors.$ZodRawIssue | undefined;
+
+  for (const iss of left.issues) {
+    if (iss.code === "unrecognized_keys") {
+      unrecIssue ??= iss;
+      for (const k of iss.keys) {
+        if (!unrecKeys.has(k)) unrecKeys.set(k, {});
+        unrecKeys.get(k)!.l = true;
+      }
+    } else {
+      result.issues.push(iss);
+    }
   }
-  if (right.issues.length) {
-    result.issues.push(...right.issues);
+
+  for (const iss of right.issues) {
+    if (iss.code === "unrecognized_keys") {
+      for (const k of iss.keys) {
+        if (!unrecKeys.has(k)) unrecKeys.set(k, {});
+        unrecKeys.get(k)!.r = true;
+      }
+    } else {
+      result.issues.push(iss);
+    }
   }
+
+  // Report only keys unrecognized by BOTH sides
+  const bothKeys = [...unrecKeys].filter(([, f]) => f.l && f.r).map(([k]) => k);
+  if (bothKeys.length && unrecIssue) {
+    result.issues.push({ ...unrecIssue, keys: bothKeys });
+  }
+
   if (util.aborted(result)) return result;
 
   const merged = mergeValues(left.value, right.value);
