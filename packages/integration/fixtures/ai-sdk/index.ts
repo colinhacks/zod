@@ -1,9 +1,9 @@
 // This file tests that the Vercel AI SDK v5 works with Zod v4 without
 // "Type instantiation is excessively deep and possibly infinite" errors.
 
-import { z } from "zod";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
+import { z } from "zod";
 
 const result = await generateObject({
   model: openai("gpt-4.1-nano"),

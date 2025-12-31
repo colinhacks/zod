@@ -2,9 +2,9 @@
 // "Type instantiation is excessively deep and possibly infinite" errors.
 // See: https://github.com/colinhacks/zod/issues/XXXX
 
-import * as z from "zod";
 import { pgEnum, pgTable, serial } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
+import * as z from "zod";
 
 z.string();
 

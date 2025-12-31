@@ -42,12 +42,12 @@ const tupleSchema = z.tuple([z.string(), z.number(), z.boolean()]);
 const intersectionSchema = z.intersection(z.object({ a: z.string() }), z.object({ b: z.number() }));
 
 // Refinements and transforms
-const refinedSchema = z.string().refine((s) => s.length > 0);
-const transformedSchema = z.string().transform((s) => s.toUpperCase());
-const pipedSchema = z.string().pipe(z.string().min(1));
+const _refinedSchema = z.string().refine((s) => s.length > 0);
+const _transformedSchema = z.string().transform((s) => s.toUpperCase());
+const _pipedSchema = z.string().pipe(z.string().min(1));
 
 // Optional/nullable
-const optionalSchema = z.object({
+const _optionalSchema = z.object({
   required: z.string(),
   optional: z.string().optional(),
   nullable: z.string().nullable(),
