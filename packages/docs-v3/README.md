@@ -409,11 +409,6 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <br />
       <a style="text-decoration:none;" href="https://cybozu.co.jp/index.html" target="_blank">Cybozu</a>
     </td>
-    <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/147273133?s=200&v=4" height="50px;" alt="Juno logo" />
-      <br />
-      <a style="text-decoration:none;" href="https://juno.build/?utm_source=zod" target="_blank">Juno</a>
-    </td>
   </tr>
 </table>
 
