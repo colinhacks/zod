@@ -92,7 +92,7 @@ export interface ZodType<
   refine<Ch extends (arg: core.output<this>) => unknown | Promise<unknown>>(
     check: Ch,
     params?: string | core.$ZodCustomParams
-  ): Ch extends (arg: any) => arg is infer R ? core.$ZodNarrow<this, R> : this;
+  ): Ch extends (arg: any) => arg is infer R ? this & ZodType<R, core.input<this>> : this;
   superRefine(
     refinement: (arg: core.output<this>, ctx: core.$RefinementCtx<core.output<this>>) => void | Promise<void>
   ): this;
