@@ -524,6 +524,58 @@ test("intersection of loose records", () => {
   expect(() => schema.parse({ name: "John", N_count: "abc" })).toThrow(); // N_count should be number
 });
 
+test("object with looseRecord index signature", () => {
+  // Simulates TypeScript index signature: { label: string; [key: `label:${string}`]: string }
+  const schema = z.object({ label: z.string() }).and(z.looseRecord(z.string().regex(/^label:[a-z]{2}$/), z.string()));
+
+  type Schema = z.infer<typeof schema>;
+  expectTypeOf<Schema>().toEqualTypeOf<{ label: string } & Record<string, string>>();
+
+  // Valid: has required property and matching pattern keys
+  expect(schema.parse({ label: "Purple", "label:en": "Purple", "label:ru": "Пурпурный" })).toEqual({
+    label: "Purple",
+    "label:en": "Purple",
+    "label:ru": "Пурпурный",
+  });
+
+  // Valid: just required property
+  expect(schema.parse({ label: "Purple" })).toEqual({ label: "Purple" });
+
+  // Invalid: missing required property
+  expect(schema.safeParse({ "label:en": "Purple" })).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": [
+          "label"
+        ],
+        "message": "Invalid input: expected string, received undefined"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+
+  // Invalid: pattern key with wrong value type
+  expect(schema.safeParse({ label: "Purple", "label:en": 123 })).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": [
+          "label:en"
+        ],
+        "message": "Invalid input: expected string, received number"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+});
+
 test("numeric string keys", () => {
   const schema = z.record(z.number(), z.number());
 
