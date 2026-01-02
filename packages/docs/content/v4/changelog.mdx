@@ -36,7 +36,7 @@ Zod 4 standardizes the APIs for error customization under a single, unified `err
 
 ### deprecates `message`
 
-Replaces `message` with `error`. The `message` parameter is still supported but deprecated.
+Replaces `message` with `error`. The deprecation of the `message` parameter applies to schema-level error customization, but when adding custom issues in `superRefine` (or similar methods), the `message` property is still supported and expected.
 
 <Tabs groupId="error-message" items={["Zod 4", "Zod 3"]} persist>
 <Tab value="Zod 4">
