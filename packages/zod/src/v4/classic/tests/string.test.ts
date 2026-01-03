@@ -811,6 +811,25 @@ test("min max getters", () => {
   expect(z.string().maxLength).toEqual(null);
 });
 
+test("boundary cases with zero length", () => {
+  // Test length(0) - only empty string should pass
+  const lengthZero = z.string().length(0);
+  expect(lengthZero.parse("")).toEqual("");
+  expect(() => lengthZero.parse("a")).toThrow();
+
+  // Test min(0) - all strings including empty should pass
+  const minZero = z.string().min(0);
+  expect(minZero.parse("")).toEqual("");
+  expect(minZero.parse("a")).toEqual("a");
+  expect(minZero.parse("hello")).toEqual("hello");
+
+  // Test max(0) - only empty string should pass
+  const maxZero = z.string().max(0);
+  expect(maxZero.parse("")).toEqual("");
+  expect(() => maxZero.parse("a")).toThrow();
+  expect(() => maxZero.parse("hello")).toThrow();
+});
+
 test("trim", () => {
   expect(z.string().trim().min(2).parse(" 12 ")).toEqual("12");
 
