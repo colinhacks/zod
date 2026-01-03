@@ -2934,8 +2934,8 @@ To customize this, pass a second generic to `.brand()` to specify the direction 
 
 ```ts
 // requires Zod 4.2+
-z.string().brand<"Cat", "in">(); // output is branded (default)
-z.string().brand<"Cat", "out">(); // input is branded
+z.string().brand<"Cat", "out">(); // output is branded (default)
+z.string().brand<"Cat", "in">(); // input is branded
 z.string().brand<"Cat", "inout">(); // both are branded
 ```
 
