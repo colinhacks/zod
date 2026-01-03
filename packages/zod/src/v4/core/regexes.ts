@@ -124,6 +124,33 @@ export function datetime(args: {
   return new RegExp(`^${dateSource}T(?:${timeRegex})$`);
 }
 
+// ISO YearMonth format: YYYY-MM
+const yearMonthSource = `\\d{4}-(?:0[1-9]|1[0-2])`;
+export const yearMonth: RegExp = /*@__PURE__*/ new RegExp(`^${yearMonthSource}$`);
+
+// ISO MonthDay format: MM-DD or --MM-DD (HTML yearless date format)
+const monthDaySource = `(?:--)?(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-9]))`;
+export const monthDay: RegExp = /*@__PURE__*/ new RegExp(`^${monthDaySource}$`);
+
+// ISO Instant format: ISO datetime with required Z or offset
+export function instant(args: { precision?: number | null }): RegExp {
+  const time = timeSource({ precision: args.precision });
+  const offset = `(?:Z|[+-](?:[01]\\d|2[0-3]):[0-5]\\d)`;
+  return new RegExp(`^${dateSource}T${time}${offset}$`);
+}
+
+// ISO ZonedDateTime format: ISO datetime with offset and IANA time zone
+export function zonedDateTime(args: { precision?: number | null }): RegExp {
+  const time = timeSource({ precision: args.precision });
+  const offset = `[+-](?:[01]\\d|2[0-3]):[0-5]\\d`;
+  // IANA time zone name in brackets: [America/New_York], [Europe/Paris], etc.
+  // Time zone IDs can contain letters, digits, underscores, hyphens, forward slashes, and plus signs
+  const timeZone = `\\[[A-Za-z0-9_+\\-/]+\\]`;
+  // Optional calendar annotation
+  const calendar = `(?:\\[u-ca=[a-z0-9\\-]+\\])?`;
+  return new RegExp(`^${dateSource}T${time}${offset}${timeZone}${calendar}$`);
+}
+
 export const string = (params?: { minimum?: number | undefined; maximum?: number | undefined }): RegExp => {
   const regex = params ? `[\\s\\S]{${params?.minimum ?? 0},${params?.maximum ?? ""}}` : `[\\s\\S]*`;
   return new RegExp(`^${regex}$`);

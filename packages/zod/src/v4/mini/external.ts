@@ -34,6 +34,10 @@ export {
   ZodMiniISODate,
   ZodMiniISOTime,
   ZodMiniISODuration,
+  ZodMiniISOYearMonth,
+  ZodMiniISOMonthDay,
+  ZodMiniISOInstant,
+  ZodMiniISOZonedDateTime,
 } from "./iso.js";
 
 // coerce
