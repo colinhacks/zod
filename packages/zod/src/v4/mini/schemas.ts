@@ -1,5 +1,5 @@
 import * as core from "../core/index.js";
-import { util } from "../core/index.js";
+import * as util from "../core/util.js";
 import * as parse from "./parse.js";
 
 type SomeType = core.SomeType;
