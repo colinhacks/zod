@@ -1,12 +1,16 @@
+import { CopyMarkdownButton } from "@/components/copy-markdown-button";
 import { Heading } from "@/components/heading";
 import { Tabs } from "@/components/tabs";
+import { getLLMText } from "@/loaders/get-llm-text";
 import { source } from "@/loaders/source";
 import { Callout } from "fumadocs-ui/components/callout";
 import defaultMdxComponents, { createRelativeLink } from "fumadocs-ui/mdx";
-import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/page";
+import { DocsBody, DocsPage, DocsTitle } from "fumadocs-ui/page";
+import { Github } from "lucide-react";
 import { notFound } from "next/navigation";
 
 export const revalidate = 86400;
+export const dynamic = "force-static";
 
 export default async function Page(props: {
   params: Promise<{ slug?: string[] }>;
@@ -16,7 +20,7 @@ export default async function Page(props: {
   if (!page) notFound();
 
   const title = page.data.title;
-  const description = page.data.description;
+  const markdownContent = await getLLMText(page);
 
   const MDXContent = page.data.body;
   const toc = page.data.toc
@@ -26,19 +30,26 @@ export default async function Page(props: {
     });
 
   return (
-    <DocsPage
-      toc={toc}
-      tableOfContent={{ style: "clerk", single: false }}
-      full={false}
-      editOnGithub={{
-        owner: "colinhacks",
-        repo: "zod",
-        sha: "v4",
-        path: `packages/docs/content/${page.file.path}`,
-      }}
-    >
-      {title && title !== "Intro" ? <DocsTitle>{title}</DocsTitle> : null}
-      <DocsDescription>{description}</DocsDescription>
+    <DocsPage toc={toc} tableOfContent={{ style: "clerk", single: false }} full={false}>
+      {title && title !== "Intro" && (
+        <div className="mb-6">
+          <DocsTitle>{title}</DocsTitle>
+          <div className="h-2" />
+          <div className="flex items-center gap-2">
+            <CopyMarkdownButton content={markdownContent} />
+            <a
+              href={`https://github.com/colinhacks/zod/edit/main/packages/docs/content/${page.file.path}`}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="inline-flex items-center gap-1.5 px-2 py-1 text-xs text-fd-muted-foreground hover:text-fd-foreground border border-[var(--color-fd-border)] rounded hover:bg-fd-muted/50 transition-colors"
+            >
+              <Github className="w-3 h-3" />
+              Edit this page
+            </a>
+          </div>
+        </div>
+      )}
+      {/* <DocsDescription>{description}</DocsDescription> */}
       <DocsBody {...{}}>
         <MDXContent
           components={{

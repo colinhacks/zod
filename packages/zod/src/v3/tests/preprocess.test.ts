@@ -83,19 +83,18 @@ test("async preprocess ctx.addIssue with parse", async () => {
     return data;
   }, z.string());
 
-  expect(schema.parseAsync("asdf")).rejects.toThrow(
-    JSON.stringify(
-      [
-        {
-          code: "custom",
-          message: "custom error",
-          path: [],
-        },
-      ],
-      null,
-      2
-    )
-  );
+  expect(await schema.safeParseAsync("asdf")).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "code": "custom",
+        "message": "custom error",
+        "path": []
+      }
+    ]],
+      "success": false,
+    }
+  `);
 });
 
 test("preprocess ctx.addIssue with parseAsync", async () => {
@@ -136,9 +135,8 @@ test("z.NEVER in preprocess", () => {
   type foo = z.infer<typeof foo>;
   util.assertEqual<foo, number>(true);
   const arg = foo.safeParse(undefined);
-  if (!arg.success) {
-    expect(arg.error.issues[0].message).toEqual("bad");
-  }
+  expect(arg.error!.issues).toHaveLength(2);
+  expect(arg.error!.issues[0].message).toEqual("bad");
 });
 test("preprocess as the second property of object", () => {
   const schema = z.object({

@@ -84,3 +84,18 @@ test("nonoptional in object", () => {
     ]]
   `);
 });
+
+test("encoding", () => {
+  const schema = z.string().optional().nonoptional();
+  expect(z.encode(schema, "hello")).toEqual("hello");
+  expect(() => z.encode(schema, undefined as any)).toThrowErrorMatchingInlineSnapshot(`
+    [ZodError: [
+      {
+        "code": "invalid_type",
+        "expected": "nonoptional",
+        "path": [],
+        "message": "Invalid input: expected nonoptional, received undefined"
+      }
+    ]]
+  `);
+});

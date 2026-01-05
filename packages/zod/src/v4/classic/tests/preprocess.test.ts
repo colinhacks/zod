@@ -73,17 +73,18 @@ test("preprocess ctx.addIssue with parse", () => {
   `);
 });
 
-test("preprocess ctx.addIssue non-fatal by default", () => {
+test("preprocess ctx.addIssue fatal by default", () => {
   const schema = z.preprocess((data, ctx) => {
     ctx.addIssue({
       code: "custom",
       message: `custom error`,
     });
+
     return data;
   }, z.string());
   const result = schema.safeParse(1234);
 
-  expect(result.error!.issues).toHaveLength(2);
+  expect(result.error!.issues).toHaveLength(1);
   expect(result).toMatchInlineSnapshot(`
     {
       "error": [ZodError: [
@@ -91,12 +92,6 @@ test("preprocess ctx.addIssue non-fatal by default", () => {
         "code": "custom",
         "message": "custom error",
         "path": []
-      },
-      {
-        "expected": "string",
-        "code": "invalid_type",
-        "path": [],
-        "message": "Invalid input: expected string, received number"
       }
     ]],
       "success": false,
@@ -175,7 +170,7 @@ test("z.NEVER in preprocess", () => {
   expectTypeOf<foo>().toEqualTypeOf<number>();
   const result = foo.safeParse(undefined);
 
-  expect(result.error!.issues).toHaveLength(2);
+  expect(result.error!.issues).toHaveLength(1);
   expect(result).toMatchInlineSnapshot(`
     {
       "error": [ZodError: [
@@ -183,12 +178,6 @@ test("z.NEVER in preprocess", () => {
         "code": "custom",
         "message": "bad",
         "path": []
-      },
-      {
-        "expected": "number",
-        "code": "invalid_type",
-        "path": [],
-        "message": "Invalid input: expected number, received object"
       }
     ]],
       "success": false,
@@ -214,10 +203,11 @@ test("preprocess as the second property of object", () => {
         "origin": "string",
         "code": "too_small",
         "minimum": 1,
+        "inclusive": true,
         "path": [
           "nonEmptyStr"
         ],
-        "message": "Too small: expected string to have >1 characters"
+        "message": "Too small: expected string to have >=1 characters"
       },
       {
         "origin": "number",
@@ -268,5 +258,25 @@ test("preprocess validates with sibling errors", () => {
     ]],
       "success": false,
     }
+  `);
+});
+
+test("perform transform with non-fatal issues", () => {
+  const A = z
+    .string()
+    .refine((_) => false)
+    .min(4)
+    .transform((val) => val.length)
+    .pipe(z.number())
+    .refine((_) => false);
+  expect(A.safeParse("asdfasdf").error!.issues).toHaveLength(1);
+  expect(A.safeParse("asdfasdf").error).toMatchInlineSnapshot(`
+    [ZodError: [
+      {
+        "code": "custom",
+        "path": [],
+        "message": "Invalid input"
+      }
+    ]]
   `);
 });

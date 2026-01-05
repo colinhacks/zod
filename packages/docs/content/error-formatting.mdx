@@ -1,5 +1,6 @@
 ---
 title: Formatting errors
+description: "Utilities for formatting and displaying Zod errors"
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
@@ -10,7 +11,7 @@ Zod emphasizes _completeness_ and _correctness_ in its error reporting. In many 
 Consider this simple object schema.
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod";
 
 const schema = z.strictObject({
   username: z.string(),
@@ -18,7 +19,7 @@ const schema = z.strictObject({
 });
 ```
 
-Attempting to parse this invalid data results in an error containing two issues.
+Attempting to parse this invalid data results in an error containing three issues.
 
 ```ts
 const result = schema.safeParse({
@@ -150,7 +151,6 @@ This returns the following string:
 
 ## `z.flattenError()`
 
-
 While `z.treeifyError()` is useful for traversing a potentially complex nested structure, the majority of schemas are *flat*—just one level deep. In this case, use `z.flattenError()` to retrieve a clean, shallow error object.
 
 ```ts
@@ -169,8 +169,6 @@ const flattened = z.flattenError(result.error);
 The `formErrors` array contains any top-level errors (where `path` is `[]`). The `fieldErrors` object provides an array of errors for each field in the schema.
 
 ```ts
-flattened.fieldErrors.string; // => [ 'Invalid input: expected string, received number' ]
-flattened.fieldErrors.numbers; // => [ 'Invalid input: expected number, received string' ]
+flattened.fieldErrors.username; // => [ 'Invalid input: expected string, received number' ]
+flattened.fieldErrors.favoriteNumbers; // => [ 'Invalid input: expected number, received string' ]
 ```
-
-> **Note** — If you have issues with a `path` longer than one level, this function throws away some error information. 

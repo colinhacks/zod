@@ -114,6 +114,29 @@ test(".nonnegative() validation", () => {
   expect(() => schema.parse(-1)).toThrow();
 });
 
+test("multipleOf", () => {
+  const numbers = {
+    number3: 5.123,
+    number6: 5.123456,
+    number7: 5.1234567,
+    number8: 5.12345678,
+  };
+
+  const schemas = {
+    schema6: z.number().multipleOf(0.000001),
+    schema7: z.number().multipleOf(0.0000001),
+  };
+
+  expect(() => schemas.schema6.parse(numbers.number3)).not.toThrow();
+  expect(() => schemas.schema6.parse(numbers.number6)).not.toThrow();
+  expect(() => schemas.schema6.parse(numbers.number7)).toThrow();
+  expect(() => schemas.schema6.parse(numbers.number8)).toThrow();
+  expect(() => schemas.schema7.parse(numbers.number3)).not.toThrow();
+  expect(() => schemas.schema7.parse(numbers.number6)).not.toThrow();
+  expect(() => schemas.schema7.parse(numbers.number7)).not.toThrow();
+  expect(() => schemas.schema7.parse(numbers.number8)).toThrow();
+});
+
 test(".multipleOf() with positive divisor", () => {
   const schema = z.number().multipleOf(5);
   expect(schema.parse(15)).toEqual(15);
@@ -239,4 +262,9 @@ test("string format methods", () => {
   const a = z.int32().min(5);
   expect(a.parse(6)).toEqual(6);
   expect(() => a.parse(1)).toThrow();
+});
+
+test("error customization", () => {
+  z.number().gte(5, { error: (iss) => "Min: " + iss.minimum.valueOf() });
+  z.number().lte(5, { error: (iss) => "Max: " + iss.maximum.valueOf() });
 });

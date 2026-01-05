@@ -56,3 +56,17 @@ test("nested no undefined", () => {
 
   expect(outer.safeParse({ inner: undefined }).success).toEqual(false);
 });
+
+test("generic on output type", () => {
+  const createV4Schema = <Output>(opts: {
+    schema: z.ZodType<Output>;
+  }) => {
+    return opts.schema;
+  };
+
+  createV4Schema({
+    schema: z.object({
+      name: z.string(),
+    }),
+  })?._zod?.output?.name;
+});

@@ -13,18 +13,16 @@ export interface $ZodCheckDef {
   error?: errors.$ZodErrorMap<never> | undefined;
   /** If true, no later checks will be executed if this check fails. Default `false`. */
   abort?: boolean | undefined;
+  /** If provided, this check will only be executed if the function returns `true`. Defaults to `payload => z.util.isAborted(payload)`. */
+  when?: ((payload: schemas.ParsePayload) => boolean) | undefined;
 }
 
 export interface $ZodCheckInternals<T> {
   def: $ZodCheckDef;
   /** The set of issues this check might throw. */
   issc?: errors.$ZodIssueBase;
-  // "_check"(input: $ZodResult<T>): util.MaybeAsync<void>;
   check(payload: schemas.ParsePayload<T>): util.MaybeAsync<void>;
-  // _parseB(payload: ParsePayload<any>, ctx: ParseContext): util.MaybeAsync<ParsePayload>;
   onattach: ((schema: schemas.$ZodType) => void)[];
-  // "_async": boolean;
-  when?: ((payload: schemas.ParsePayload) => boolean) | undefined;
 }
 
 export interface $ZodCheck<in T = never> {
@@ -51,7 +49,7 @@ export interface $ZodCheckLessThanDef extends $ZodCheckDef {
 
 export interface $ZodCheckLessThanInternals<T extends util.Numeric = util.Numeric> extends $ZodCheckInternals<T> {
   def: $ZodCheckLessThanDef;
-  issc: errors.$ZodIssueTooSmall<T>;
+  issc: errors.$ZodIssueTooBig<T>;
 }
 
 const numericOriginMap = {
@@ -86,7 +84,7 @@ export const $ZodCheckLessThan: core.$constructor<$ZodCheckLessThan> = /*@__PURE
       payload.issues.push({
         origin,
         code: "too_big",
-        maximum: def.value as number,
+        maximum: typeof def.value === "object" ? def.value.getTime() : def.value,
         input: payload.value,
         inclusive: def.inclusive,
         inst,
@@ -135,9 +133,9 @@ export const $ZodCheckGreaterThan: core.$constructor<$ZodCheckGreaterThan> = /*@
       }
 
       payload.issues.push({
-        origin: origin as "number",
+        origin,
         code: "too_small",
-        minimum: def.value as number,
+        minimum: typeof def.value === "object" ? def.value.getTime() : def.value,
         input: payload.value,
         inclusive: def.inclusive,
         inst,
@@ -299,6 +297,7 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
             expected: origin,
             format: def.format,
             code: "invalid_type",
+            continue: false,
             input,
             inst,
           });
@@ -324,6 +323,7 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
               note: "Integers must be within the safe integer range.",
               inst,
               origin,
+              inclusive: true,
               continue: !def.abort,
             });
           } else {
@@ -335,6 +335,7 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
               note: "Integers must be within the safe integer range.",
               inst,
               origin,
+              inclusive: true,
               continue: !def.abort,
             });
           }
@@ -346,9 +347,9 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
       if (input < minimum) {
         payload.issues.push({
           origin: "number",
-          input: input as number,
+          input,
           code: "too_small",
-          minimum: minimum as number,
+          minimum,
           inclusive: true,
           inst,
           continue: !def.abort,
@@ -361,7 +362,9 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
           input,
           code: "too_big",
           maximum,
+          inclusive: true,
           inst,
+          continue: !def.abort,
         } as any);
       }
     };
@@ -423,7 +426,9 @@ export const $ZodCheckBigIntFormat: core.$constructor<$ZodCheckBigIntFormat> = /
           input,
           code: "too_big",
           maximum,
+          inclusive: true,
           inst,
+          continue: !def.abort,
         } as any);
       }
     };
@@ -452,7 +457,7 @@ export const $ZodCheckMaxSize: core.$constructor<$ZodCheckMaxSize> = /*@__PURE__
   (inst, def) => {
     $ZodCheck.init(inst, def);
 
-    inst._zod.when = (payload) => {
+    inst._zod.def.when ??= (payload) => {
       const val = payload.value;
       return !util.nullish(val) && (val as any).size !== undefined;
     };
@@ -471,6 +476,7 @@ export const $ZodCheckMaxSize: core.$constructor<$ZodCheckMaxSize> = /*@__PURE__
         origin: util.getSizableOrigin(input),
         code: "too_big",
         maximum: def.maximum,
+        inclusive: true,
         input,
         inst,
         continue: !def.abort,
@@ -501,7 +507,7 @@ export const $ZodCheckMinSize: core.$constructor<$ZodCheckMinSize> = /*@__PURE__
   (inst, def) => {
     $ZodCheck.init(inst, def);
 
-    inst._zod.when = (payload) => {
+    inst._zod.def.when ??= (payload) => {
       const val = payload.value;
       return !util.nullish(val) && (val as any).size !== undefined;
     };
@@ -520,6 +526,7 @@ export const $ZodCheckMinSize: core.$constructor<$ZodCheckMinSize> = /*@__PURE__
         origin: util.getSizableOrigin(input),
         code: "too_small",
         minimum: def.minimum,
+        inclusive: true,
         input,
         inst,
         continue: !def.abort,
@@ -550,7 +557,7 @@ export const $ZodCheckSizeEquals: core.$constructor<$ZodCheckSizeEquals> = /*@__
   (inst, def) => {
     $ZodCheck.init(inst, def);
 
-    inst._zod.when = (payload) => {
+    inst._zod.def.when ??= (payload) => {
       const val = payload.value;
       return !util.nullish(val) && (val as any).size !== undefined;
     };
@@ -571,6 +578,8 @@ export const $ZodCheckSizeEquals: core.$constructor<$ZodCheckSizeEquals> = /*@__
       payload.issues.push({
         origin: util.getSizableOrigin(input),
         ...(tooBig ? { code: "too_big", maximum: def.size } : { code: "too_small", minimum: def.size }),
+        inclusive: true,
+        exact: true,
         input: payload.value,
         inst,
         continue: !def.abort,
@@ -602,7 +611,7 @@ export const $ZodCheckMaxLength: core.$constructor<$ZodCheckMaxLength> = /*@__PU
   (inst, def) => {
     $ZodCheck.init(inst, def);
 
-    inst._zod.when = (payload) => {
+    inst._zod.def.when ??= (payload) => {
       const val = payload.value;
       return !util.nullish(val) && (val as any).length !== undefined;
     };
@@ -622,6 +631,7 @@ export const $ZodCheckMaxLength: core.$constructor<$ZodCheckMaxLength> = /*@__PU
         origin,
         code: "too_big",
         maximum: def.maximum,
+        inclusive: true,
         input,
         inst,
         continue: !def.abort,
@@ -652,7 +662,7 @@ export const $ZodCheckMinLength: core.$constructor<$ZodCheckMinLength> = /*@__PU
   (inst, def) => {
     $ZodCheck.init(inst, def);
 
-    inst._zod.when = (payload) => {
+    inst._zod.def.when ??= (payload) => {
       const val = payload.value;
       return !util.nullish(val) && (val as any).length !== undefined;
     };
@@ -672,6 +682,7 @@ export const $ZodCheckMinLength: core.$constructor<$ZodCheckMinLength> = /*@__PU
         origin,
         code: "too_small",
         minimum: def.minimum,
+        inclusive: true,
         input,
         inst,
         continue: !def.abort,
@@ -703,7 +714,7 @@ export const $ZodCheckLengthEquals: core.$constructor<$ZodCheckLengthEquals> = /
   (inst, def) => {
     $ZodCheck.init(inst, def);
 
-    inst._zod.when = (payload) => {
+    inst._zod.def.when ??= (payload) => {
       const val = payload.value;
       return !util.nullish(val) && (val as any).length !== undefined;
     };
@@ -724,6 +735,8 @@ export const $ZodCheckLengthEquals: core.$constructor<$ZodCheckLengthEquals> = /
       payload.issues.push({
         origin,
         ...(tooBig ? { code: "too_big", maximum: def.length } : { code: "too_small", minimum: def.length }),
+        inclusive: true,
+        exact: true,
         input: payload.value,
         inst,
         continue: !def.abort,
@@ -767,7 +780,7 @@ export type $ZodStringFormats =
   | "ends_with"
   | "includes"
   | "credit_card";
-export interface $ZodCheckStringFormatDef<Format extends $ZodStringFormats = $ZodStringFormats> extends $ZodCheckDef {
+export interface $ZodCheckStringFormatDef<Format extends string = string> extends $ZodCheckDef {
   check: "string_format";
   format: Format;
   pattern?: RegExp | undefined;
@@ -796,20 +809,21 @@ export const $ZodCheckStringFormat: core.$constructor<$ZodCheckStringFormat> = /
       }
     });
 
-    inst._zod.check ??= (payload) => {
-      if (!def.pattern) throw new Error("Not implemented.");
-      def.pattern.lastIndex = 0;
-      if (def.pattern.test(payload.value)) return;
-      payload.issues.push({
-        origin: "string",
-        code: "invalid_format",
-        format: def.format,
-        input: payload.value,
-        ...(def.pattern ? { pattern: def.pattern.toString() } : {}),
-        inst,
-        continue: !def.abort,
-      });
-    };
+    if (def.pattern)
+      inst._zod.check ??= (payload) => {
+        def.pattern!.lastIndex = 0;
+        if (def.pattern!.test(payload.value)) return;
+        payload.issues.push({
+          origin: "string",
+          code: "invalid_format",
+          format: def.format,
+          input: payload.value,
+          ...(def.pattern ? { pattern: def.pattern.toString() } : {}),
+          inst,
+          continue: !def.abort,
+        });
+      };
+    else inst._zod.check ??= () => {};
   }
 );
 
@@ -953,7 +967,8 @@ export const $ZodCheckIncludes: core.$constructor<$ZodCheckIncludes> = /*@__PURE
   (inst, def) => {
     $ZodCheck.init(inst, def);
 
-    const pattern = new RegExp(util.escapeRegex(def.includes));
+    const escapedRegex = util.escapeRegex(def.includes);
+    const pattern = new RegExp(typeof def.position === "number" ? `^.{${def.position}}${escapedRegex}` : escapedRegex);
     def.pattern = pattern;
     inst._zod.onattach.push((inst) => {
       const bag = inst._zod.bag as schemas.$ZodStringInternals<unknown>["bag"];
@@ -1123,12 +1138,12 @@ export interface $ZodCheckMimeTypeDef extends $ZodCheckDef {
   mime: util.MimeTypes[];
 }
 
-export interface $ZodCheckMimeTypeInternals<T extends File = File> extends $ZodCheckInternals<T> {
+export interface $ZodCheckMimeTypeInternals<T extends schemas.File = schemas.File> extends $ZodCheckInternals<T> {
   def: $ZodCheckMimeTypeDef;
   issc: errors.$ZodIssueInvalidValue;
 }
 
-export interface $ZodCheckMimeType<T extends File = File> extends $ZodCheck<T> {
+export interface $ZodCheckMimeType<T extends schemas.File = schemas.File> extends $ZodCheck<T> {
   _zod: $ZodCheckMimeTypeInternals<T>;
 }
 
@@ -1146,8 +1161,8 @@ export const $ZodCheckMimeType: core.$constructor<$ZodCheckMimeType> = /*@__PURE
         code: "invalid_value",
         values: def.mime,
         input: payload.value.type,
-        path: ["type"],
         inst,
+        continue: !def.abort,
       });
     };
   }
@@ -1276,26 +1291,4 @@ export type $ZodStringFormatChecks =
   | $ZodCheckIncludes
   | $ZodCheckStartsWith
   | $ZodCheckEndsWith
-  | schemas.$ZodGUID
-  | schemas.$ZodUUID
-  | schemas.$ZodEmail
-  | schemas.$ZodURL
-  | schemas.$ZodEmoji
-  | schemas.$ZodNanoID
-  | schemas.$ZodCUID
-  | schemas.$ZodCUID2
-  | schemas.$ZodULID
-  | schemas.$ZodXID
-  | schemas.$ZodKSUID
-  | schemas.$ZodISODateTime
-  | schemas.$ZodISODate
-  | schemas.$ZodISOTime
-  | schemas.$ZodISODuration
-  | schemas.$ZodIPv4
-  | schemas.$ZodIPv6
-  | schemas.$ZodCIDRv4
-  | schemas.$ZodCIDRv6
-  | schemas.$ZodBase64
-  | schemas.$ZodBase64URL
-  | schemas.$ZodE164
-  | schemas.$ZodJWT;
+  | schemas.$ZodStringFormatTypes; // union of string format schema types

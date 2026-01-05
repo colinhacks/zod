@@ -6,12 +6,13 @@
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
     "source.organizeImports.biome": "explicit",
-    "source.fixAll": "always",
-    "quickfix.biome": "explicit"
+    "source.fixAll.biome": "always"
   },
   "files.exclude": {
     "./scratch": false,
     "**/.tshy-build": true,
+    "**/*.{js,cjs,mjs}": true,
+    "**/*.d.{ts,cts,mts}": true,
     "**/dist": true,
     "**/lib": true
   },

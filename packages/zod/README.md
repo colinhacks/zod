@@ -10,7 +10,7 @@
 <br/>
 
 <p align="center">
-<a href="https://github.com/colinhacks/zod/actions?query=branch%3Amaster"><img src="https://github.com/colinhacks/zod/actions/workflows/test.yml/badge.svg?event=push&branch=master" alt="Zod CI status" /></a>
+<a href="https://github.com/colinhacks/zod/actions?query=branch%3Amain"><img src="https://github.com/colinhacks/zod/actions/workflows/test.yml/badge.svg?event=push&branch=main" alt="Zod CI status" /></a>
 <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/colinhacks/zod" alt="License"></a>
 <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/npm/dw/zod.svg" alt="npm"></a>
 <a href="https://discord.gg/KaSRdyX2vc" rel="nofollow"><img src="https://img.shields.io/discord/893487829802418277?label=Discord&logo=discord&logoColor=white" alt="discord server"></a>
@@ -58,7 +58,7 @@
 Zod is a TypeScript-first validation library. Define a schema and parse some data with it. You'll get back a strongly typed, validated result.
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod";
 
 const User = z.object({
   name: z.string(),
@@ -104,7 +104,7 @@ npm install zod
 Before you can do anything else, you need to define a schema. For the purposes of this guide, we'll use a simple object schema.
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod";
 
 const Player = z.object({
   username: z.string(),
@@ -121,7 +121,7 @@ Player.parse({ username: "billie", xp: 100 });
 // => returns { username: "billie", xp: 100 }
 ```
 
-**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](#transform), you'll need to use the `.parseAsync()` method instead.
+**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](https://zod.dev/api#refinements) or [transforms](https://zod.dev/api#transforms), you'll need to use the `.parseAsync()` method instead.
 
 ```ts
 const schema = z.string().refine(async (val) => val.length <= 8);
@@ -138,7 +138,7 @@ When validation fails, the `.parse()` method will throw a `ZodError` instance wi
 try {
   Player.parse({ username: 42, xp: "100" });
 } catch (err) {
-  if (error instanceof z.ZodError) {
+  if (err instanceof z.ZodError) {
     err.issues;
     /* [
       {

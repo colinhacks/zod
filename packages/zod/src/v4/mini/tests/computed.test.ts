@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import * as z from "zod/v4-mini";
+import * as z from "zod/mini";
 import { util as zc } from "zod/v4/core";
 
 test("min/max", () => {

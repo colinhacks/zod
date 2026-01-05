@@ -1,62 +1,70 @@
-import type * as checks from "./checks.js";
+import type * as core from "../core/index.js";
 import type * as JSONSchema from "./json-schema.js";
-import { $ZodRegistry, globalRegistry } from "./registries.js";
+import { type $ZodRegistry, globalRegistry } from "./registries.js";
 import type * as schemas from "./schemas.js";
+import type { StandardJSONSchemaV1, StandardSchemaWithJSONProps } from "./standard-schema.js";
 
-interface JSONSchemaGeneratorParams {
+export type Processor<T extends schemas.$ZodType = schemas.$ZodType> = (
+  schema: T,
+  ctx: ToJSONSchemaContext,
+  json: JSONSchema.BaseSchema,
+  params: ProcessParams
+) => void;
+
+export interface JSONSchemaGeneratorParams {
+  processors: Record<string, Processor>;
   /** A registry used to look up metadata for each schema. Any schema with an `id` property will be extracted as a $def.
    *  @default globalRegistry */
   metadata?: $ZodRegistry<Record<string, any>>;
   /** The JSON Schema version to target.
    * - `"draft-2020-12"` — Default. JSON Schema Draft 2020-12
-   * - `"draft-7"` — JSON Schema Draft 7 */
-  target?: "draft-7" | "draft-2020-12";
+   * - `"draft-07"` — JSON Schema Draft 7
+   * - `"draft-04"` — JSON Schema Draft 4
+   * - `"openapi-3.0"` — OpenAPI 3.0 Schema Object */
+  target?: "draft-04" | "draft-07" | "draft-2020-12" | "openapi-3.0" | ({} & string) | undefined;
   /** How to handle unrepresentable types.
    * - `"throw"` — Default. Unrepresentable types throw an error
    * - `"any"` — Unrepresentable types become `{}` */
   unrepresentable?: "throw" | "any";
   /** Arbitrary custom logic that can be used to modify the generated JSON Schema. */
-  override?: (ctx: { zodSchema: schemas.$ZodTypes; jsonSchema: JSONSchema.BaseSchema }) => void;
-  /** Whether to extract the `"input"` or `"output"` type. Relevant to transforms, Error converting schema to JSONz, defaults, coerced primitives, etc.
-   * - `"output" — Default. Convert the output schema.
+  override?: (ctx: {
+    zodSchema: schemas.$ZodTypes;
+    jsonSchema: JSONSchema.BaseSchema;
+    path: (string | number)[];
+  }) => void;
+  /** Whether to extract the `"input"` or `"output"` type. Relevant to transforms, defaults, coerced primitives, etc.
+   * - `"output"` — Default. Convert the output schema.
    * - `"input"` — Convert the input schema. */
   io?: "input" | "output";
-}
-
-interface ProcessParams {
-  schemaPath: schemas.$ZodType[];
-  path: (string | number)[];
-}
-
-interface EmitParams {
-  /** How to handle cycles.
-   * - `"ref"` — Default. Cycles will be broken using $defs
-   * - `"throw"` — Cycles will throw an error if encountered */
   cycles?: "ref" | "throw";
-  /* How to handle reused schemas.
-   * - `"inline"` — Default. Reused schemas will be inlined
-   * - `"ref"` — Reused schemas will be extracted as $defs */
   reused?: "ref" | "inline";
-
   external?:
     | {
-        /**  */
         registry: $ZodRegistry<{ id?: string | undefined }>;
-        uri: (id: string) => string;
+        uri?: ((id: string) => string) | undefined;
         defs: Record<string, JSONSchema.BaseSchema>;
       }
     | undefined;
 }
 
-const formatMap: Partial<Record<checks.$ZodStringFormats, string | undefined>> = {
-  guid: "uuid",
-  url: "uri",
-  datetime: "date-time",
-  json_string: "json-string",
-  regex: "", // do not set
-};
+/**
+ * Parameters for the toJSONSchema function.
+ */
+export type ToJSONSchemaParams = Omit<JSONSchemaGeneratorParams, "processors" | "external">;
 
-interface Seen {
+/**
+ * Parameters for the toJSONSchema function when passing a registry.
+ */
+export interface RegistryToJSONSchemaParams extends ToJSONSchemaParams {
+  uri?: (id: string) => string;
+}
+
+export interface ProcessParams {
+  schemaPath: schemas.$ZodType[];
+  path: (string | number)[];
+}
+
+export interface Seen {
   /** JSON Schema result for this Zod schema */
   schema: JSONSchema.BaseSchema;
   /** A cached version of the schema that doesn't get overwritten during ref resolution */
@@ -67,777 +75,444 @@ interface Seen {
   /** Cycle path */
   cycle?: (string | number)[] | undefined;
   isParent?: boolean | undefined;
-  ref?: schemas.$ZodType | undefined | null;
+  /** Schema to inherit JSON Schema properties from (set by processor for wrappers) */
+  ref?: schemas.$ZodType | null;
+  /** JSON Schema property path for this schema */
+  path?: (string | number)[] | undefined;
 }
 
-export class JSONSchemaGenerator {
+export interface ToJSONSchemaContext {
+  processors: Record<string, Processor>;
   metadataRegistry: $ZodRegistry<Record<string, any>>;
-  target: "draft-7" | "draft-2020-12";
+  target: "draft-04" | "draft-07" | "draft-2020-12" | "openapi-3.0" | ({} & string);
   unrepresentable: "throw" | "any";
-  override: (ctx: { zodSchema: schemas.$ZodTypes; jsonSchema: JSONSchema.BaseSchema }) => void;
+  override: (ctx: {
+    // must be schemas.$ZodType to prevent recursive type resolution error
+    zodSchema: schemas.$ZodType;
+    jsonSchema: JSONSchema.BaseSchema;
+    path: (string | number)[];
+  }) => void;
   io: "input" | "output";
-
-  counter = 0;
+  counter: number;
   seen: Map<schemas.$ZodType, Seen>;
+  cycles: "ref" | "throw";
+  reused: "ref" | "inline";
+  external?:
+    | {
+        registry: $ZodRegistry<{ id?: string | undefined }>;
+        uri?: ((id: string) => string) | undefined;
+        defs: Record<string, JSONSchema.BaseSchema>;
+      }
+    | undefined;
+}
 
-  constructor(params?: JSONSchemaGeneratorParams) {
-    this.metadataRegistry = params?.metadata ?? globalRegistry;
-    this.target = params?.target ?? "draft-2020-12";
-    this.unrepresentable = params?.unrepresentable ?? "throw";
-    this.override = params?.override ?? (() => {});
-    this.io = params?.io ?? "output";
+// function initializeContext<T extends schemas.$ZodType>(inputs: JSONSchemaGeneratorParams<T>): ToJSONSchemaContext<T> {
+//   return {
+//     processor: inputs.processor,
+//     metadataRegistry: inputs.metadata ?? globalRegistry,
+//     target: inputs.target ?? "draft-2020-12",
+//     unrepresentable: inputs.unrepresentable ?? "throw",
+//   };
+// }
 
-    this.seen = new Map();
+export function initializeContext(params: JSONSchemaGeneratorParams): ToJSONSchemaContext {
+  // Normalize target: convert old non-hyphenated versions to hyphenated versions
+  let target: ToJSONSchemaContext["target"] = params?.target ?? "draft-2020-12";
+  if (target === "draft-4") target = "draft-04";
+  if (target === "draft-7") target = "draft-07";
+
+  return {
+    processors: params.processors ?? {},
+    metadataRegistry: params?.metadata ?? globalRegistry,
+    target,
+    unrepresentable: params?.unrepresentable ?? "throw",
+    override: (params?.override as any) ?? (() => {}),
+    io: params?.io ?? "output",
+    counter: 0,
+    seen: new Map(),
+    cycles: params?.cycles ?? "ref",
+    reused: params?.reused ?? "inline",
+    external: params?.external ?? undefined,
+  };
+}
+
+export function process<T extends schemas.$ZodType>(
+  schema: T,
+  ctx: ToJSONSchemaContext,
+  _params: ProcessParams = { path: [], schemaPath: [] }
+): JSONSchema.BaseSchema {
+  const def = schema._zod.def as schemas.$ZodTypes["_zod"]["def"];
+
+  // check for schema in seens
+  const seen = ctx.seen.get(schema);
+
+  if (seen) {
+    seen.count++;
+
+    // check if cycle
+    const isCycle = _params.schemaPath.includes(schema);
+    if (isCycle) {
+      seen.cycle = _params.path;
+    }
+
+    return seen.schema;
   }
 
-  process(schema: schemas.$ZodType, _params: ProcessParams = { path: [], schemaPath: [] }): JSONSchema.BaseSchema {
-    const def = (schema as schemas.$ZodTypes)._zod.def;
+  // initialize
+  const result: Seen = { schema: {}, count: 1, cycle: undefined, path: _params.path };
+  ctx.seen.set(schema, result);
 
-    // check for schema in seens
-    const seen = this.seen.get(schema);
-
-    if (seen) {
-      seen.count++;
-
-      // check if cycle
-      const isCycle = _params.schemaPath.includes(schema);
-      if (isCycle) {
-        seen.cycle = _params.path;
-      }
-
-      return seen.schema;
-    }
-
-    // initialize
-    const result: Seen = { schema: {}, count: 1, cycle: undefined };
-    this.seen.set(schema, result);
-
-    if (schema._zod.toJSONSchema) {
-      // custom method overrides default behavior
-      result.schema = schema._zod.toJSONSchema() as any;
-    }
-
-    // check if external
-    // const ext = this.external?.registry.get(schema)?.id;
-    // if (ext) {
-    //   result.external = ext;
-    // }
-
+  // custom method overrides default behavior
+  const overrideSchema = schema._zod.toJSONSchema?.();
+  if (overrideSchema) {
+    result.schema = overrideSchema as any;
+  } else {
     const params = {
       ..._params,
       schemaPath: [..._params.schemaPath, schema],
       path: _params.path,
     };
 
-    const parent = schema._zod.parent;
-    // if (parent) {
-    //   // schema was cloned from another schema
-    //   result.ref = parent;
-    //   this.process(parent, params);
-    //   this.seen.get(parent)!.isParent = true;
-    // }
-
-    if (parent) {
-      // schema was cloned from another schema
-      result.ref = parent;
-      this.process(parent, params);
-      this.seen.get(parent)!.isParent = true;
+    if (schema._zod.processJSONSchema) {
+      schema._zod.processJSONSchema(ctx, result.schema, params);
     } else {
       const _json = result.schema;
-      switch (def.type) {
-        case "string": {
-          const json: JSONSchema.StringSchema = _json as any;
-          json.type = "string";
-          const { minimum, maximum, format, patterns, contentEncoding } = schema._zod
-            .bag as schemas.$ZodStringInternals<unknown>["bag"];
-          if (typeof minimum === "number") json.minLength = minimum;
-          if (typeof maximum === "number") json.maxLength = maximum;
-          // custom pattern overrides format
-          if (format) {
-            json.format = formatMap[format as checks.$ZodStringFormats] ?? format;
-            if (json.format === "") delete json.format; // empty format is not valid
-          }
-          if (contentEncoding) json.contentEncoding = contentEncoding;
-          if (patterns && patterns.size > 0) {
-            const regexes = [...patterns];
-            if (regexes.length === 1) json.pattern = regexes[0].source;
-            else if (regexes.length > 1) {
-              result.schema.allOf = [
-                ...regexes.map((regex) => ({
-                  ...(this.target === "draft-7" ? { type: "string" } : {}),
-                  pattern: regex.source,
-                })),
-              ];
-            }
-          }
-
-          break;
-        }
-        case "number": {
-          const json: JSONSchema.NumberSchema | JSONSchema.IntegerSchema = _json as any;
-          const { minimum, maximum, format, multipleOf, exclusiveMaximum, exclusiveMinimum } = schema._zod.bag;
-          if (typeof format === "string" && format.includes("int")) json.type = "integer";
-          else json.type = "number";
-
-          if (typeof exclusiveMinimum === "number") json.exclusiveMinimum = exclusiveMinimum;
-          if (typeof minimum === "number") {
-            json.minimum = minimum;
-            if (typeof exclusiveMinimum === "number") {
-              if (exclusiveMinimum >= minimum) delete json.minimum;
-              else delete json.exclusiveMinimum;
-            }
-          }
-
-          if (typeof exclusiveMaximum === "number") json.exclusiveMaximum = exclusiveMaximum;
-          if (typeof maximum === "number") {
-            json.maximum = maximum;
-            if (typeof exclusiveMaximum === "number") {
-              if (exclusiveMaximum <= maximum) delete json.maximum;
-              else delete json.exclusiveMaximum;
-            }
-          }
-
-          if (typeof multipleOf === "number") json.multipleOf = multipleOf;
-
-          break;
-        }
-        case "boolean": {
-          const json = _json as JSONSchema.BooleanSchema;
-          json.type = "boolean";
-          break;
-        }
-        case "bigint": {
-          if (this.unrepresentable === "throw") {
-            throw new Error("BigInt cannot be represented in JSON Schema");
-          }
-          break;
-        }
-        case "symbol": {
-          if (this.unrepresentable === "throw") {
-            throw new Error("Symbols cannot be represented in JSON Schema");
-          }
-          break;
-        }
-        case "undefined": {
-          const json = _json as JSONSchema.NullSchema;
-          json.type = "null";
-          break;
-        }
-        case "null": {
-          _json.type = "null";
-          break;
-        }
-        case "any": {
-          break;
-        }
-        case "unknown": {
-          break;
-        }
-        case "never": {
-          _json.not = {};
-          break;
-        }
-        case "void": {
-          if (this.unrepresentable === "throw") {
-            throw new Error("Void cannot be represented in JSON Schema");
-          }
-          break;
-        }
-        case "date": {
-          if (this.unrepresentable === "throw") {
-            throw new Error("Date cannot be represented in JSON Schema");
-          }
-          break;
-        }
-        case "array": {
-          const json: JSONSchema.ArraySchema = _json as any;
-          const { minimum, maximum } = schema._zod.bag;
-          if (typeof minimum === "number") json.minItems = minimum;
-          if (typeof maximum === "number") json.maxItems = maximum;
-
-          json.type = "array";
-          json.items = this.process(def.element, { ...params, path: [...params.path, "items"] });
-          break;
-        }
-        case "object": {
-          const json: JSONSchema.ObjectSchema = _json as any;
-          json.type = "object";
-          json.properties = {};
-          const shape = def.shape; // params.shapeCache.get(schema)!;
-
-          for (const key in shape) {
-            json.properties[key] = this.process(shape[key], {
-              ...params,
-              path: [...params.path, "properties", key],
-            });
-          }
-
-          // required keys
-          const allKeys = new Set(Object.keys(shape));
-          // const optionalKeys = new Set(def.optional);
-          const requiredKeys = new Set(
-            [...allKeys].filter((key) => {
-              const v = def.shape[key]._zod;
-              if (this.io === "input") {
-                return v.optin === undefined;
-              } else {
-                return v.optout === undefined;
-              }
-            })
-          );
-
-          if (requiredKeys.size > 0) {
-            json.required = Array.from(requiredKeys);
-          }
-
-          // catchall
-          if (def.catchall?._zod.def.type === "never") {
-            // strict
-            json.additionalProperties = false;
-          } else if (!def.catchall) {
-            // regular
-            if (this.io === "output") json.additionalProperties = false;
-          } else if (def.catchall) {
-            json.additionalProperties = this.process(def.catchall, {
-              ...params,
-              path: [...params.path, "additionalProperties"],
-            });
-          }
-
-          break;
-        }
-        case "union": {
-          const json: JSONSchema.BaseSchema = _json as any;
-          json.anyOf = def.options.map((x, i) =>
-            this.process(x, {
-              ...params,
-              path: [...params.path, "anyOf", i],
-            })
-          );
-          break;
-        }
-        case "intersection": {
-          const json: JSONSchema.BaseSchema = _json as any;
-          const a = this.process(def.left, {
-            ...params,
-            path: [...params.path, "allOf", 0],
-          });
-          const b = this.process(def.right, {
-            ...params,
-            path: [...params.path, "allOf", 1],
-          });
-
-          const isSimpleIntersection = (val: any) => "allOf" in val && Object.keys(val).length === 1;
-          const allOf = [
-            ...(isSimpleIntersection(a) ? (a.allOf as any[]) : [a]),
-            ...(isSimpleIntersection(b) ? (b.allOf as any[]) : [b]),
-          ];
-          json.allOf = allOf;
-          break;
-        }
-        case "tuple": {
-          const json: JSONSchema.ArraySchema = _json as any;
-          json.type = "array";
-          const prefixItems = def.items.map((x, i) =>
-            this.process(x, { ...params, path: [...params.path, "prefixItems", i] })
-          );
-          if (this.target === "draft-2020-12") {
-            json.prefixItems = prefixItems;
-          } else {
-            json.items = prefixItems;
-          }
-
-          if (def.rest) {
-            const rest = this.process(def.rest, {
-              ...params,
-              path: [...params.path, "items"],
-            });
-            if (this.target === "draft-2020-12") {
-              json.items = rest;
-            } else {
-              json.additionalItems = rest;
-            }
-          }
-
-          // additionalItems
-          if (def.rest) {
-            json.items = this.process(def.rest, {
-              ...params,
-              path: [...params.path, "items"],
-            });
-          }
-
-          // length
-          const { minimum, maximum } = schema._zod.bag as {
-            minimum?: number;
-            maximum?: number;
-          };
-          if (typeof minimum === "number") json.minItems = minimum;
-          if (typeof maximum === "number") json.maxItems = maximum;
-          break;
-        }
-        case "record": {
-          const json: JSONSchema.ObjectSchema = _json as any;
-          json.type = "object";
-          json.propertyNames = this.process(def.keyType, { ...params, path: [...params.path, "propertyNames"] });
-          json.additionalProperties = this.process(def.valueType, {
-            ...params,
-            path: [...params.path, "additionalProperties"],
-          });
-          break;
-        }
-        case "map": {
-          if (this.unrepresentable === "throw") {
-            throw new Error("Map cannot be represented in JSON Schema");
-          }
-          break;
-        }
-        case "set": {
-          if (this.unrepresentable === "throw") {
-            throw new Error("Set cannot be represented in JSON Schema");
-          }
-          break;
-        }
-        case "enum": {
-          const json: JSONSchema.BaseSchema = _json as any;
-          json.enum = Object.values(def.entries);
-          break;
-        }
-        case "literal": {
-          const json: JSONSchema.BaseSchema = _json as any;
-          const vals: (string | number | boolean | null)[] = [];
-          for (const val of def.values) {
-            if (val === undefined) {
-              if (this.unrepresentable === "throw") {
-                throw new Error("Literal `undefined` cannot be represented in JSON Schema");
-              } else {
-                // do not add to vals
-              }
-            } else if (typeof val === "bigint") {
-              if (this.unrepresentable === "throw") {
-                throw new Error("BigInt literals cannot be represented in JSON Schema");
-              } else {
-                vals.push(Number(val));
-              }
-            } else {
-              vals.push(val);
-            }
-          }
-          if (vals.length === 0) {
-            // do nothing (an undefined literal was stripped)
-          } else if (vals.length === 1) {
-            const val = vals[0];
-            json.const = val;
-          } else {
-            json.enum = vals;
-          }
-          break;
-        }
-
-        case "file": {
-          const json: JSONSchema.StringSchema = _json as any;
-          const file: JSONSchema.StringSchema = {
-            type: "string",
-            format: "binary",
-            contentEncoding: "binary",
-          };
-
-          const { minimum, maximum, mime } = schema._zod.bag as schemas.$ZodFileInternals["bag"];
-          if (minimum !== undefined) file.minLength = minimum;
-          if (maximum !== undefined) file.maxLength = maximum;
-          if (mime) {
-            if (mime.length === 1) {
-              file.contentMediaType = mime[0];
-              Object.assign(json, file);
-            } else {
-              json.anyOf = mime.map((m) => {
-                const mFile: JSONSchema.StringSchema = { ...file, contentMediaType: m };
-                return mFile;
-              });
-            }
-          } else {
-            Object.assign(json, file);
-          }
-
-          // if (this.unrepresentable === "throw") {
-          //   throw new Error("File cannot be represented in JSON Schema");
-          // }
-          break;
-        }
-        case "transform": {
-          if (this.unrepresentable === "throw") {
-            throw new Error("Transforms cannot be represented in JSON Schema");
-          }
-          break;
-        }
-
-        case "nullable": {
-          const inner = this.process(def.innerType, params);
-          _json.anyOf = [inner, { type: "null" }];
-          break;
-        }
-        case "nonoptional": {
-          this.process(def.innerType, params);
-          result.ref = def.innerType;
-          break;
-        }
-        case "success": {
-          const json = _json as JSONSchema.BooleanSchema;
-          json.type = "boolean";
-          break;
-        }
-        case "default": {
-          this.process(def.innerType, params);
-          result.ref = def.innerType;
-          _json.default = def.defaultValue;
-          break;
-        }
-        case "prefault": {
-          this.process(def.innerType, params);
-          result.ref = def.innerType;
-          if (this.io === "input") _json._prefault = def.defaultValue;
-
-          break;
-        }
-        case "catch": {
-          // use conditionals
-          this.process(def.innerType, params);
-          result.ref = def.innerType;
-          let catchValue: any;
-          try {
-            catchValue = def.catchValue(undefined as any);
-          } catch {
-            throw new Error("Dynamic catch values are not supported in JSON Schema");
-          }
-          _json.default = catchValue;
-          break;
-        }
-        case "nan": {
-          if (this.unrepresentable === "throw") {
-            throw new Error("NaN cannot be represented in JSON Schema");
-          }
-          break;
-        }
-        case "template_literal": {
-          const json = _json as JSONSchema.StringSchema;
-          const pattern = schema._zod.pattern;
-          if (!pattern) throw new Error("Pattern not found in template literal");
-          json.type = "string";
-          json.pattern = pattern.source;
-          break;
-        }
-        case "pipe": {
-          const innerType = this.io === "input" ? (def.in._zod.def.type === "transform" ? def.out : def.in) : def.out;
-          this.process(innerType, params);
-          result.ref = innerType;
-          break;
-        }
-        case "readonly": {
-          this.process(def.innerType, params);
-          result.ref = def.innerType;
-          _json.readOnly = true;
-          break;
-        }
-        // passthrough types
-        case "promise": {
-          this.process(def.innerType, params);
-          result.ref = def.innerType;
-          break;
-        }
-        case "optional": {
-          this.process(def.innerType, params);
-          result.ref = def.innerType;
-          break;
-        }
-        case "lazy": {
-          const innerType = (schema as schemas.$ZodLazy)._zod.innerType;
-          this.process(innerType, params);
-          result.ref = innerType;
-          break;
-        }
-        case "custom": {
-          if (this.unrepresentable === "throw") {
-            throw new Error("Custom types cannot be represented in JSON Schema");
-          }
-          break;
-        }
-        default: {
-          def satisfies never;
-        }
+      const processor = ctx.processors[def.type];
+      if (!processor) {
+        throw new Error(`[toJSONSchema]: Non-representable type encountered: ${def.type}`);
       }
+      processor(schema, ctx, _json, params);
     }
 
-    // metadata
-    const meta = this.metadataRegistry.get(schema);
-    if (meta) Object.assign(result.schema, meta);
+    const parent = schema._zod.parent as T;
 
-    if (this.io === "input" && isTransforming(schema)) {
-      // examples/defaults only apply to output type of pipe
-      delete result.schema.examples;
-      delete result.schema.default;
+    if (parent) {
+      // Also set ref if processor didn't (for inheritance)
+      if (!result.ref) result.ref = parent;
+      process(parent, ctx, params);
+      ctx.seen.get(parent)!.isParent = true;
     }
-
-    // set prefault as default
-    if (this.io === "input" && result.schema._prefault) result.schema.default ??= result.schema._prefault;
-    delete result.schema._prefault;
-
-    // pulling fresh from this.seen in case it was overwritten
-    const _result = this.seen.get(schema)!;
-
-    return _result.schema;
   }
 
-  emit(schema: schemas.$ZodType, _params?: EmitParams): JSONSchema.BaseSchema {
-    const params = {
-      cycles: _params?.cycles ?? "ref",
-      reused: _params?.reused ?? "inline",
-      // unrepresentable: _params?.unrepresentable ?? "throw",
-      // uri: _params?.uri ?? ((id) => `${id}`),
-      external: _params?.external ?? undefined,
-    } satisfies EmitParams;
+  // metadata
+  const meta = ctx.metadataRegistry.get(schema);
+  if (meta) Object.assign(result.schema, meta);
 
-    // iterate over seen map;
-    const root = this.seen.get(schema);
+  if (ctx.io === "input" && isTransforming(schema)) {
+    // examples/defaults only apply to output type of pipe
+    delete result.schema.examples;
+    delete result.schema.default;
+  }
 
-    if (!root) throw new Error("Unprocessed schema. This is a bug in Zod.");
+  // set prefault as default
+  if (ctx.io === "input" && result.schema._prefault) result.schema.default ??= result.schema._prefault;
+  delete result.schema._prefault;
 
-    // initialize result with root schema fields
-    // Object.assign(result, seen.cached);
+  // pulling fresh from ctx.seen in case it was overwritten
+  const _result = ctx.seen.get(schema)!;
 
-    const makeURI = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): { ref: string; defId?: string } => {
-      // comparing the seen objects because sometimes
-      // multiple schemas map to the same seen object.
-      // e.g. lazy
+  return _result.schema;
+}
 
-      // external is configured
-      const defsSegment = this.target === "draft-2020-12" ? "$defs" : "definitions";
-      if (params.external) {
-        const externalId = params.external.registry.get(entry[0])?.id; // ?? "__shared";// `__schema${this.counter++}`;
+export function extractDefs<T extends schemas.$ZodType>(
+  ctx: ToJSONSchemaContext,
+  schema: T
+  // params: EmitParams
+): void {
+  // iterate over seen map;
+  const root = ctx.seen.get(schema);
 
-        // check if schema is in the external registry
-        if (externalId) return { ref: params.external.uri(externalId) };
+  if (!root) throw new Error("Unprocessed schema. This is a bug in Zod.");
 
-        // otherwise, add to __shared
-        const id = entry[1].defId ?? entry[1].schema.id ?? `schema${this.counter++}`;
-        entry[1].defId = id;
-        return { defId: id, ref: `${params.external.uri("__shared")}#/${defsSegment}/${id}` };
+  // Track ids to detect duplicates across different schemas
+  const idToSchema = new Map<string, schemas.$ZodType>();
+  for (const entry of ctx.seen.entries()) {
+    const id = ctx.metadataRegistry.get(entry[0])?.id;
+    if (id) {
+      const existing = idToSchema.get(id);
+      if (existing && existing !== entry[0]) {
+        throw new Error(
+          `Duplicate schema id "${id}" detected during JSON Schema conversion. Two different schemas cannot share the same id when converted together.`
+        );
+      }
+      idToSchema.set(id, entry[0]);
+    }
+  }
+
+  // returns a ref to the schema
+  // defId will be empty if the ref points to an external schema (or #)
+  const makeURI = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): { ref: string; defId?: string } => {
+    // comparing the seen objects because sometimes
+    // multiple schemas map to the same seen object.
+    // e.g. lazy
+
+    // external is configured
+    const defsSegment = ctx.target === "draft-2020-12" ? "$defs" : "definitions";
+    if (ctx.external) {
+      const externalId = ctx.external.registry.get(entry[0])?.id; // ?? "__shared";// `__schema${ctx.counter++}`;
+
+      // check if schema is in the external registry
+      const uriGenerator = ctx.external.uri ?? ((id: string) => id);
+      if (externalId) {
+        return { ref: uriGenerator(externalId) };
       }
 
-      if (entry[1] === root) {
-        return { ref: "#" };
-      }
+      // otherwise, add to __shared
+      const id: string = entry[1].defId ?? (entry[1].schema.id as string) ?? `schema${ctx.counter++}`;
+      entry[1].defId = id; // set defId so it will be reused if needed
+      return { defId: id, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id}` };
+    }
 
-      // self-contained schema
-      const uriPrefix = `#`;
-      const defUriPrefix = `${uriPrefix}/${defsSegment}/`;
-      const defId = entry[1].schema.id ?? `__schema${this.counter++}`;
-      return { defId, ref: defUriPrefix + defId };
-    };
+    if (entry[1] === root) {
+      return { ref: "#" };
+    }
 
-    // stored cached version in `def` property
-    // remove all properties, set $ref
-    const extractToDef = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): void => {
-      if (entry[1].schema.$ref) {
-        return;
-      }
+    // self-contained schema
+    const uriPrefix = `#`;
+    const defUriPrefix = `${uriPrefix}/${defsSegment}/`;
+    const defId = entry[1].schema.id ?? `__schema${ctx.counter++}`;
+    return { defId, ref: defUriPrefix + defId };
+  };
+
+  // stored cached version in `def` property
+  // remove all properties, set $ref
+  const extractToDef = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): void => {
+    // if the schema is already a reference, do not extract it
+    if (entry[1].schema.$ref) {
+      return;
+    }
+    const seen = entry[1];
+    const { ref, defId } = makeURI(entry);
+
+    seen.def = { ...seen.schema };
+    // defId won't be set if the schema is a reference to an external schema
+    // or if the schema is the root schema
+    if (defId) seen.defId = defId;
+    // wipe away all properties except $ref
+    const schema = seen.schema;
+    for (const key in schema) {
+      delete schema[key];
+    }
+    schema.$ref = ref;
+  };
+
+  // throw on cycles
+
+  // break cycles
+  if (ctx.cycles === "throw") {
+    for (const entry of ctx.seen.entries()) {
       const seen = entry[1];
-      const { ref, defId } = makeURI(entry);
-
-      seen.def = { ...seen.schema };
-      // defId won't be set if the schema is a reference to an external schema
-      if (defId) seen.defId = defId;
-      // wipe away all properties except $ref
-      const schema = seen.schema;
-      for (const key in schema) {
-        delete schema[key];
-      }
-      schema.$ref = ref;
-    };
-
-    // extract schemas into $defs
-    for (const entry of this.seen.entries()) {
-      const seen = entry[1];
-
-      // convert root schema to # $ref
-      // also prevents root schema from being extracted
-      if (schema === entry[0]) {
-        // do not copy to defs...this is the root schema
-        extractToDef(entry);
-        continue;
-      }
-
-      // extract schemas that are in the external registry
-      if (params.external) {
-        const ext = params.external.registry.get(entry[0])?.id;
-        if (schema !== entry[0] && ext) {
-          extractToDef(entry);
-          continue;
-        }
-      }
-
-      // extract schemas with `id` meta
-      const id = this.metadataRegistry.get(entry[0])?.id;
-      if (id) {
-        extractToDef(entry);
-
-        continue;
-      }
-
-      // break cycles
       if (seen.cycle) {
-        if (params.cycles === "throw") {
-          throw new Error(
-            "Cycle detected: " +
-              `#/${seen.cycle?.join("/")}/<root>` +
-              '\n\nSet the `cycles` parameter to `"ref"` to resolve cyclical schemas with defs.'
-          );
-        } else if (params.cycles === "ref") {
-          extractToDef(entry);
-        }
+        throw new Error(
+          "Cycle detected: " +
+            `#/${seen.cycle?.join("/")}/<root>` +
+            '\n\nSet the `cycles` parameter to `"ref"` to resolve cyclical schemas with defs.'
+        );
+      }
+    }
+  }
+
+  // extract schemas into $defs
+  for (const entry of ctx.seen.entries()) {
+    const seen = entry[1];
+
+    // convert root schema to # $ref
+    if (schema === entry[0]) {
+      extractToDef(entry); // this has special handling for the root schema
+      continue;
+    }
+
+    // extract schemas that are in the external registry
+    if (ctx.external) {
+      const ext = ctx.external.registry.get(entry[0])?.id;
+      if (schema !== entry[0] && ext) {
+        extractToDef(entry);
         continue;
       }
+    }
 
-      // extract reused schemas
-      if (seen.count > 1) {
-        if (params.reused === "ref") {
-          extractToDef(entry);
-          // biome-ignore lint:
-          continue;
+    // extract schemas with `id` meta
+    const id = ctx.metadataRegistry.get(entry[0])?.id;
+    if (id) {
+      extractToDef(entry);
+      continue;
+    }
+
+    // break cycles
+    if (seen.cycle) {
+      // any
+      extractToDef(entry);
+      continue;
+    }
+
+    // extract reused schemas
+    if (seen.count > 1) {
+      if (ctx.reused === "ref") {
+        extractToDef(entry);
+        // biome-ignore lint:
+        continue;
+      }
+    }
+  }
+}
+
+export function finalize<T extends schemas.$ZodType>(
+  ctx: ToJSONSchemaContext,
+  schema: T
+): ZodStandardJSONSchemaPayload<T> {
+  const root = ctx.seen.get(schema);
+  if (!root) throw new Error("Unprocessed schema. This is a bug in Zod.");
+
+  // flatten refs - inherit properties from parent schemas
+  const flattenRef = (zodSchema: schemas.$ZodType) => {
+    const seen = ctx.seen.get(zodSchema)!;
+
+    // already processed
+    if (seen.ref === null) return;
+
+    const schema = seen.def ?? seen.schema;
+    const _cached = { ...schema };
+
+    const ref = seen.ref;
+    seen.ref = null; // prevent infinite recursion
+
+    if (ref) {
+      flattenRef(ref);
+
+      const refSeen = ctx.seen.get(ref)!;
+      const refSchema = refSeen.schema;
+
+      // merge referenced schema into current
+      if (refSchema.$ref && (ctx.target === "draft-07" || ctx.target === "draft-04" || ctx.target === "openapi-3.0")) {
+        // older drafts can't combine $ref with other properties
+        schema.allOf = schema.allOf ?? [];
+        schema.allOf.push(refSchema);
+      } else {
+        Object.assign(schema, refSchema);
+      }
+      // restore child's own properties (child wins)
+      Object.assign(schema, _cached);
+
+      const isParentRef = zodSchema._zod.parent === ref;
+
+      // For parent chain, child is a refinement - remove parent-only properties
+      if (isParentRef) {
+        for (const key in schema) {
+          if (key === "$ref" || key === "allOf") continue;
+          if (!(key in _cached)) {
+            delete schema[key];
+          }
+        }
+      }
+
+      // When ref was extracted to $defs, remove properties that match the definition
+      if (refSchema.$ref) {
+        for (const key in schema) {
+          if (key === "$ref" || key === "allOf") continue;
+          if (key in refSeen.def! && JSON.stringify(schema[key]) === JSON.stringify(refSeen.def![key])) {
+            delete schema[key];
+          }
         }
       }
     }
 
-    // flatten _refs
-    const flattenRef = (zodSchema: schemas.$ZodType, params: Pick<ToJSONSchemaParams, "target">) => {
-      const seen = this.seen.get(zodSchema)!;
-      const schema = seen.def ?? seen.schema;
-
-      const _cached = { ...schema };
-
-      // already seen
-      if (seen.ref === null) {
-        return;
-      }
-
-      // flatten ref if defined
-      const ref = seen.ref;
-      seen.ref = null; // prevent recursion
-      if (ref) {
-        flattenRef(ref, params);
-
-        // merge referenced schema into current
-        const refSchema = this.seen.get(ref)!.schema;
-        if (refSchema.$ref && params.target === "draft-7") {
-          schema.allOf = schema.allOf ?? [];
-          schema.allOf.push(refSchema);
-        } else {
-          Object.assign(schema, refSchema);
-          Object.assign(schema, _cached); // prevent overwriting any fields in the original schema
+    // If parent was extracted (has $ref), propagate $ref to this schema
+    // This handles cases like: readonly().meta({id}).describe()
+    // where processor sets ref to innerType but parent should be referenced
+    const parent = zodSchema._zod.parent;
+    if (parent && parent !== ref) {
+      // Ensure parent is processed first so its def has inherited properties
+      flattenRef(parent);
+      const parentSeen = ctx.seen.get(parent);
+      if (parentSeen?.schema.$ref) {
+        schema.$ref = parentSeen.schema.$ref;
+        // De-duplicate with parent's definition
+        if (parentSeen.def) {
+          for (const key in schema) {
+            if (key === "$ref" || key === "allOf") continue;
+            if (key in parentSeen.def && JSON.stringify(schema[key]) === JSON.stringify(parentSeen.def[key])) {
+              delete schema[key];
+            }
+          }
         }
       }
-
-      // execute overrides
-      if (!seen.isParent)
-        this.override({
-          zodSchema: zodSchema as schemas.$ZodTypes,
-          jsonSchema: schema,
-        });
-    };
-
-    for (const entry of [...this.seen.entries()].reverse()) {
-      flattenRef(entry[0], { target: this.target });
     }
 
-    const result: JSONSchema.BaseSchema = {};
-    if (this.target === "draft-2020-12") {
-      result.$schema = "https://json-schema.org/draft/2020-12/schema";
-    } else if (this.target === "draft-7") {
-      result.$schema = "http://json-schema.org/draft-07/schema#";
-    } else {
-      console.warn(`Invalid target: ${this.target}`);
+    // execute overrides
+    ctx.override({
+      zodSchema: zodSchema as schemas.$ZodTypes,
+      jsonSchema: schema,
+      path: seen.path ?? [],
+    });
+  };
+
+  for (const entry of [...ctx.seen.entries()].reverse()) {
+    flattenRef(entry[0]);
+  }
+
+  const result: JSONSchema.BaseSchema = {};
+  if (ctx.target === "draft-2020-12") {
+    result.$schema = "https://json-schema.org/draft/2020-12/schema";
+  } else if (ctx.target === "draft-07") {
+    result.$schema = "http://json-schema.org/draft-07/schema#";
+  } else if (ctx.target === "draft-04") {
+    result.$schema = "http://json-schema.org/draft-04/schema#";
+  } else if (ctx.target === "openapi-3.0") {
+    // OpenAPI 3.0 schema objects should not include a $schema property
+  } else {
+    // Arbitrary string values are allowed but won't have a $schema property set
+  }
+
+  if (ctx.external?.uri) {
+    const id = ctx.external.registry.get(schema)?.id;
+    if (!id) throw new Error("Schema is missing an `id` property");
+    result.$id = ctx.external.uri(id);
+  }
+
+  Object.assign(result, root.def ?? root.schema);
+
+  // build defs object
+  const defs: JSONSchema.BaseSchema["$defs"] = ctx.external?.defs ?? {};
+  for (const entry of ctx.seen.entries()) {
+    const seen = entry[1];
+    if (seen.def && seen.defId) {
+      defs[seen.defId] = seen.def;
     }
+  }
 
-    Object.assign(result, root.def);
-
-    // build defs object
-    const defs: JSONSchema.BaseSchema["$defs"] = params.external?.defs ?? {};
-    for (const entry of this.seen.entries()) {
-      const seen = entry[1];
-      if (seen.def && seen.defId) {
-        defs[seen.defId] = seen.def;
-      }
-    }
-
-    // set definitions in result
-    if (!params.external && Object.keys(defs).length > 0) {
-      if (this.target === "draft-2020-12") {
+  // set definitions in result
+  if (ctx.external) {
+  } else {
+    if (Object.keys(defs).length > 0) {
+      if (ctx.target === "draft-2020-12") {
         result.$defs = defs;
       } else {
         result.definitions = defs;
       }
     }
-
-    try {
-      // this "finalizes" this schema and ensures all cycles are removed
-      // each call to .emit() is functionally independent
-      // though the seen map is shared
-      return JSON.parse(JSON.stringify(result));
-    } catch (_err) {
-      throw new Error("Error converting schema to JSON.");
-    }
-  }
-}
-
-interface ToJSONSchemaParams extends Omit<JSONSchemaGeneratorParams & EmitParams, never> {}
-interface RegistryToJSONSchemaParams extends Omit<JSONSchemaGeneratorParams & EmitParams, never> {
-  uri?: (id: string) => string;
-}
-
-export function toJSONSchema(schema: schemas.$ZodType, _params?: ToJSONSchemaParams): JSONSchema.BaseSchema;
-export function toJSONSchema(
-  registry: $ZodRegistry<{ id?: string | undefined }>,
-  _params?: RegistryToJSONSchemaParams
-): { schemas: Record<string, JSONSchema.BaseSchema> };
-export function toJSONSchema(
-  input: schemas.$ZodType | $ZodRegistry<{ id?: string | undefined }>,
-  _params?: ToJSONSchemaParams
-): any {
-  if (input instanceof $ZodRegistry) {
-    const gen = new JSONSchemaGenerator(_params);
-    const defs: any = {};
-    for (const entry of input._idmap.entries()) {
-      const [_, schema] = entry;
-      gen.process(schema);
-    }
-
-    const schemas: Record<string, JSONSchema.BaseSchema> = {};
-    const external = {
-      registry: input,
-      uri: (_params as RegistryToJSONSchemaParams)?.uri || ((id) => id),
-      defs,
-    };
-    for (const entry of input._idmap.entries()) {
-      const [key, schema] = entry;
-      schemas[key] = gen.emit(schema, {
-        ..._params,
-        external,
-      });
-    }
-
-    if (Object.keys(defs).length > 0) {
-      const defsSegment = gen.target === "draft-2020-12" ? "$defs" : "definitions";
-      schemas.__shared = {
-        [defsSegment]: defs,
-      };
-    }
-
-    return { schemas };
   }
 
-  const gen = new JSONSchemaGenerator(_params);
-  gen.process(input);
+  try {
+    // this "finalizes" this schema and ensures all cycles are removed
+    // each call to finalize() is functionally independent
+    // though the seen map is shared
+    const finalized = JSON.parse(JSON.stringify(result));
+    Object.defineProperty(finalized, "~standard", {
+      value: {
+        ...schema["~standard"],
+        jsonSchema: {
+          input: createStandardJSONSchemaMethod(schema, "input", ctx.processors),
+          output: createStandardJSONSchemaMethod(schema, "output", ctx.processors),
+        },
+      },
+      enumerable: false,
+      writable: false,
+    });
 
-  return gen.emit(input, _params);
+    return finalized;
+  } catch (_err) {
+    throw new Error("Error converting schema to JSON.");
+  }
 }
 
 function isTransforming(
@@ -851,95 +526,88 @@ function isTransforming(
   if (ctx.seen.has(_schema)) return false;
   ctx.seen.add(_schema);
 
-  const schema = _schema as schemas.$ZodTypes;
-  const def = schema._zod.def;
-  switch (def.type) {
-    case "string":
-    case "number":
-    case "bigint":
-    case "boolean":
-    case "date":
-    case "symbol":
-    case "undefined":
-    case "null":
-    case "any":
-    case "unknown":
-    case "never":
-    case "void":
-    case "literal":
-    case "enum":
-    case "nan":
-    case "file":
-    case "template_literal":
-      return false;
-    case "array": {
-      return isTransforming(def.element, ctx);
-    }
-    case "object": {
-      for (const key in def.shape) {
-        if (isTransforming(def.shape[key], ctx)) return true;
-      }
-      return false;
-    }
-    case "union": {
-      for (const option of def.options) {
-        if (isTransforming(option, ctx)) return true;
-      }
-      return false;
-    }
-    case "intersection": {
-      return isTransforming(def.left, ctx) || isTransforming(def.right, ctx);
-    }
-    case "tuple": {
-      for (const item of def.items) {
-        if (isTransforming(item, ctx)) return true;
-      }
-      if (def.rest && isTransforming(def.rest, ctx)) return true;
-      return false;
-    }
-    case "record": {
-      return isTransforming(def.keyType, ctx) || isTransforming(def.valueType, ctx);
-    }
-    case "map": {
-      return isTransforming(def.keyType, ctx) || isTransforming(def.valueType, ctx);
-    }
-    case "set": {
-      return isTransforming(def.valueType, ctx);
-    }
+  const def = (_schema as schemas.$ZodTypes)._zod.def;
 
-    // inner types
-    case "promise":
-    case "optional":
-    case "nonoptional":
-    case "nullable":
-    case "readonly":
-      return isTransforming(def.innerType, ctx);
-    case "lazy":
-      return isTransforming(def.getter(), ctx);
-    case "default": {
-      return isTransforming(def.innerType, ctx);
-    }
-    case "prefault": {
-      return isTransforming(def.innerType, ctx);
-    }
-    case "custom": {
-      return false;
-    }
-    case "transform": {
-      return true;
-    }
-    case "pipe": {
-      return isTransforming(def.in, ctx) || isTransforming(def.out, ctx);
-    }
-    case "success": {
-      return false;
-    }
-    case "catch": {
-      return false;
-    }
+  if (def.type === "transform") return true;
 
-    default:
-      def satisfies never;
+  if (def.type === "array") return isTransforming(def.element, ctx);
+  if (def.type === "set") return isTransforming(def.valueType, ctx);
+  if (def.type === "lazy") return isTransforming(def.getter(), ctx);
+
+  if (
+    def.type === "promise" ||
+    def.type === "optional" ||
+    def.type === "nonoptional" ||
+    def.type === "nullable" ||
+    def.type === "readonly" ||
+    def.type === "default" ||
+    def.type === "prefault"
+  ) {
+    return isTransforming(def.innerType, ctx);
   }
-  throw new Error(`Unknown schema type: ${(def as any).type}`);
+
+  if (def.type === "intersection") {
+    return isTransforming(def.left, ctx) || isTransforming(def.right, ctx);
+  }
+  if (def.type === "record" || def.type === "map") {
+    return isTransforming(def.keyType, ctx) || isTransforming(def.valueType, ctx);
+  }
+  if (def.type === "pipe") {
+    return isTransforming(def.in, ctx) || isTransforming(def.out, ctx);
+  }
+
+  if (def.type === "object") {
+    for (const key in def.shape) {
+      if (isTransforming(def.shape[key]!, ctx)) return true;
+    }
+    return false;
+  }
+  if (def.type === "union") {
+    for (const option of def.options) {
+      if (isTransforming(option, ctx)) return true;
+    }
+    return false;
+  }
+  if (def.type === "tuple") {
+    for (const item of def.items) {
+      if (isTransforming(item, ctx)) return true;
+    }
+    if (def.rest && isTransforming(def.rest, ctx)) return true;
+    return false;
+  }
+
+  return false;
 }
+
+export type ZodStandardSchemaWithJSON<T> = StandardSchemaWithJSONProps<core.input<T>, core.output<T>>;
+export interface ZodStandardJSONSchemaPayload<T> extends JSONSchema.BaseSchema {
+  "~standard": ZodStandardSchemaWithJSON<T>;
+}
+
+/**
+ * Creates a toJSONSchema method for a schema instance.
+ * This encapsulates the logic of initializing context, processing, extracting defs, and finalizing.
+ */
+export const createToJSONSchemaMethod =
+  <T extends schemas.$ZodType>(schema: T, processors: Record<string, Processor> = {}) =>
+  (params?: ToJSONSchemaParams): ZodStandardJSONSchemaPayload<T> => {
+    const ctx = initializeContext({ ...params, processors });
+    process(schema, ctx);
+    extractDefs(ctx, schema);
+    return finalize(ctx, schema);
+  };
+
+/**
+ * Creates a toJSONSchema method for a schema instance.
+ * This encapsulates the logic of initializing context, processing, extracting defs, and finalizing.
+ */
+type StandardJSONSchemaMethodParams = Parameters<StandardJSONSchemaV1["~standard"]["jsonSchema"]["input"]>[0];
+export const createStandardJSONSchemaMethod =
+  <T extends schemas.$ZodType>(schema: T, io: "input" | "output", processors: Record<string, Processor> = {}) =>
+  (params?: StandardJSONSchemaMethodParams): JSONSchema.BaseSchema => {
+    const { libraryOptions, target } = params ?? {};
+    const ctx = initializeContext({ ...(libraryOptions ?? {}), target, io, processors });
+    process(schema, ctx);
+    extractDefs(ctx, schema);
+    return finalize(ctx, schema);
+  };

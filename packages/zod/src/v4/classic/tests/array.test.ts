@@ -6,15 +6,16 @@ test("type inference", () => {
   expectTypeOf<z.infer<typeof schema>>().toEqualTypeOf<string[]>();
 });
 
-test("array min/max", async () => {
+test("array min/max", () => {
   const schema = z.array(z.string()).min(2).max(2);
-  const r1 = await schema.safeParse(["asdf"]);
+  const r1 = schema.safeParse(["asdf"]);
   expect(r1.success).toEqual(false);
   expect(r1.error!.issues).toMatchInlineSnapshot(`
     [
       {
         "code": "too_small",
-        "message": "Too small: expected array to have >2 items",
+        "inclusive": true,
+        "message": "Too small: expected array to have >=2 items",
         "minimum": 2,
         "origin": "array",
         "path": [],
@@ -22,14 +23,15 @@ test("array min/max", async () => {
     ]
   `);
 
-  const r2 = await schema.safeParse(["asdf", "asdf", "asdf"]);
+  const r2 = schema.safeParse(["asdf", "asdf", "asdf"]);
   expect(r2.success).toEqual(false);
   expect(r2.error!.issues).toMatchInlineSnapshot(`
     [
       {
         "code": "too_big",
+        "inclusive": true,
         "maximum": 2,
-        "message": "Too big: expected array to have <2 items",
+        "message": "Too big: expected array to have <=2 items",
         "origin": "array",
         "path": [],
       },
@@ -37,17 +39,19 @@ test("array min/max", async () => {
   `);
 });
 
-test("array length", async () => {
+test("array length", () => {
   const schema = z.array(z.string()).length(2);
   schema.parse(["asdf", "asdf"]);
 
-  const r1 = await schema.safeParse(["asdf"]);
+  const r1 = schema.safeParse(["asdf"]);
   expect(r1.success).toEqual(false);
   expect(r1.error!.issues).toMatchInlineSnapshot(`
     [
       {
         "code": "too_small",
-        "message": "Too small: expected array to have >2 items",
+        "exact": true,
+        "inclusive": true,
+        "message": "Too small: expected array to have >=2 items",
         "minimum": 2,
         "origin": "array",
         "path": [],
@@ -55,14 +59,16 @@ test("array length", async () => {
     ]
   `);
 
-  const r2 = await schema.safeParse(["asdf", "asdf", "asdf"]);
+  const r2 = schema.safeParse(["asdf", "asdf", "asdf"]);
   expect(r2.success).toEqual(false);
   expect(r2.error!.issues).toMatchInlineSnapshot(`
     [
       {
         "code": "too_big",
+        "exact": true,
+        "inclusive": true,
         "maximum": 2,
-        "message": "Too big: expected array to have <2 items",
+        "message": "Too big: expected array to have <=2 items",
         "origin": "array",
         "path": [],
       },
@@ -122,10 +128,11 @@ test("continue parsing despite array size error", () => {
         "origin": "array",
         "code": "too_small",
         "minimum": 2,
+        "inclusive": true,
         "path": [
           "people"
         ],
-        "message": "Too small: expected array to have >2 items"
+        "message": "Too small: expected array to have >=2 items"
       }
     ]],
       "success": false,

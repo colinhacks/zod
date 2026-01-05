@@ -24,6 +24,9 @@ test("_values", () => {
 
   const post = z.literal("test").transform((_) => Math.random());
   expect(post._zod.values).toEqual(new Set(["test"]));
+
+  // Test that readonly literals pass through their values property
+  expect(z.literal("test").readonly()._zod.values).toEqual(new Set(["test"]));
 });
 
 test("valid parse - object", () => {
@@ -154,6 +157,7 @@ test("invalid discriminator value", () => {
         "code": "invalid_union",
         "errors": [],
         "note": "No matching discriminator",
+        "discriminator": "type",
         "path": [
           "type"
         ],
@@ -589,4 +593,69 @@ test("nested discriminated unions", () => {
       "status": "failed",
     }
   `);
+});
+
+test("readonly literal discriminator", () => {
+  const discUnion = z.discriminatedUnion("type", [
+    z.object({ type: z.literal("a").readonly(), a: z.string() }),
+    z.object({ type: z.literal("b"), b: z.number() }),
+  ]);
+
+  // Test that both discriminator values are correctly included in propValues
+  const propValues = discUnion._zod.propValues;
+  expect(propValues?.type?.has("a")).toBe(true);
+  expect(propValues?.type?.has("b")).toBe(true);
+
+  // Test that the discriminated union works correctly
+  const result1 = discUnion.parse({ type: "a", a: "hello" });
+  expect(result1).toEqual({ type: "a", a: "hello" });
+
+  const result2 = discUnion.parse({ type: "b", b: 42 });
+  expect(result2).toEqual({ type: "b", b: 42 });
+
+  // Test that invalid discriminator values are rejected
+  expect(() => {
+    discUnion.parse({ type: "c", a: "hello" });
+  }).toThrow();
+});
+
+test("pipes", () => {
+  const schema = z
+    .object({
+      type: z.literal("foo"),
+    })
+    .transform((s) => ({ ...s, v: 2 }));
+
+  expect(schema._zod.propValues).toMatchInlineSnapshot(`
+    {
+      "type": Set {
+        "foo",
+      },
+    }
+  `);
+
+  const schema2 = z.object({
+    type: z.literal("bar"),
+  });
+
+  const combinedSchema = z.discriminatedUnion("type", [schema, schema2], {
+    unionFallback: false,
+  });
+
+  combinedSchema.parse({
+    type: "foo",
+    v: 2,
+  });
+});
+
+test("def", () => {
+  const schema = z.discriminatedUnion(
+    "type",
+    [z.object({ type: z.literal("play") }), z.object({ type: z.literal("pause") })],
+    { unionFallback: true }
+  );
+
+  expect(schema.def).toBeDefined();
+  expect(schema.def.discriminator).toEqual("type");
+  expect(schema.def.unionFallback).toEqual(true);
 });

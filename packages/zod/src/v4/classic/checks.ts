@@ -27,4 +27,6 @@ export {
   _trim as trim,
   _toLowerCase as toLowerCase,
   _toUpperCase as toUpperCase,
-} from "zod/v4/core";
+  _slugify as slugify,
+  type $RefinementCtx as RefinementCtx,
+} from "../core/index.js";

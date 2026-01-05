@@ -1,35 +1,42 @@
 ---
 title: Migration guide
+description: "Complete changelog and migration guide for upgrading from Zod 3 to Zod 4"
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
 import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 
-> This migration guide aims to list the breaking changes in Zod 4 in order of highest to lowest impact. To learn more about the performance enhancements and new features of Zod 4, read the [introductory post](/v4).
+This migration guide aims to list the breaking changes in Zod 4 in order of highest to lowest impact. To learn more about the performance enhancements and new features of Zod 4, read the [introductory post](/v4). 
 
-To give the ecosystem time to migrate, Zod 4 will initially be published alongside Zod v3.25. To use Zod 4, upgrade to `zod@3.25.0` or later:
+{/* To give the ecosystem time to migrate, Zod 4 will initially be published alongside Zod v3.25. To use Zod 4, upgrade to `zod@3.25.0` or later: */}
 
 ```
-npm upgrade zod@^3.25.0
+npm install zod@^4.0.0
 ```
 
-Zod 4 is available at the `"/v4"` subpath:
+{/* Zod 4 is available at the `"/v4"` subpath:
 
 ```ts
-import { z } from "zod/v4";
-```
+import * as z from "zod";
+``` */}
+
+Many of Zod's behaviors and APIs have been made more intuitive and cohesive. The breaking changes described in this document often represent major quality-of-life improvements for Zod users. I strongly recommend reading this guide thoroughly.
 
 <Callout>
 **Note** — Zod 3 exported a number of undocumented quasi-internal utility types and functions that are not considered part of the public API. Changes to those are not documented here.
+</Callout>
+
+<Callout>
+**Unofficial codemod** — A community-maintained codemod [`zod-v3-to-v4`](https://github.com/nicoespeon/zod-v3-to-v4) is available. 
 </Callout>
 
 ## Error customization
 
 Zod 4 standardizes the APIs for error customization under a single, unified `error` param. Previously Zod's error customization APIs were fragmented and inconsistent. This is cleaned up in Zod 4. 
 
-### deprecates `message`
+### deprecates `message` parameter
 
-Replaces `message` with `error`. The `message` parameter is still supported but deprecated.
+Replaces `message` param with `error`. The old `message` parameter is still supported but deprecated.
 
 <Tabs groupId="error-message" items={["Zod 4", "Zod 3"]} persist>
 <Tab value="Zod 4">
@@ -172,7 +179,7 @@ Vitest uses special handling for `Error` subclasses that ignores enumerable prop
 The issue formats have been dramatically streamlined. 
 
 ```ts
-import { z } from "zod/v4"; // v4
+import * as z from "zod"; // v4
 
 type IssueFormats = 
   | z.core.$ZodIssueInvalidType
@@ -191,7 +198,7 @@ type IssueFormats =
 Below is the list of Zod 3 issues types and their Zod 4 equivalent:
 
 ```ts
-import { z } from "zod/v4"; // v3
+import * as z from "zod"; // v3
 
 export type IssueFormats =
   | z.ZodInvalidTypeIssue // ♻️ renamed to z.core.$ZodIssueInvalidType
@@ -320,6 +327,14 @@ z.string().email(); // ❌ deprecated
 z.email(); // ✅ 
 ```
 
+### stricter `.uuid()`
+
+The `z.uuid()` now validates UUIDs more strictly against the RFC 9562/4122 specification; specifically, the variant bits must be `10` per the spec. For a more permissive "UUID-like" validator, use `z.guid()`.
+
+```ts
+z.uuid(); // RFC 9562/4122 compliant UUID
+z.guid(); // any 8-4-4-4-12 hex pattern
+```
 
 ### no padding in `.base64url()` 
 
@@ -351,7 +366,7 @@ z.cidrv6() // ✅
 
 ## `z.coerce` updates
 
-The input type of all coerced booleans is now `unknown`. 
+The input type of all `z.coerce` schemas is now `unknown`. 
 
 ```ts
 const schema = z.coerce.string();
@@ -395,8 +410,19 @@ schema.parse(undefined); // => 4
 
 ## `z.object()`
 
-These modifier methods on the `ZodObject` class determine how the schema handles unknown keys. In Zod 4, this functionality now exists in top-level functions. This aligns better with Zod's declarative-first philosophy, and puts all object variants on equal footing. 
+### defaults applied within optional fields
 
+Defaults inside your properties are applied, even within optional fields. This aligns better with expectations and resolves a long-standing usability issue with Zod 3. This is a subtle change that may cause breakage in code paths that rely on key existence, etc.
+
+```ts
+const schema = z.object({
+  a: z.string().default("tuna").optional(),
+});
+
+schema.parse({});
+// Zod 4: { a: "tuna" }
+// Zod 3: {}
+```
 
 ### deprecates `.strict()` and `.passthrough()`
 
@@ -438,6 +464,26 @@ const mySchema = z.object({
 // Zod 3: { a?: any; b?: unknown };
 // Zod 4: { a: any; b: unknown };
 ```
+
+### deprecates `.merge()`
+
+The `.merge()` method on `ZodObject` has been deprecated in favor of `.extend()`. The `.extend()` method provides the same functionality, avoids ambiguity around strictness inheritance, and has better TypeScript performance.
+
+```ts
+// .merge (deprecated)
+const ExtendedSchema = BaseSchema.merge(AdditionalSchema);
+
+// .extend (recommended)
+const ExtendedSchema = BaseSchema.extend(AdditionalSchema.shape);
+
+// or use destructuring (best tsc performance)
+const ExtendedSchema = z.object({
+  ...BaseSchema.shape,
+  ...AdditionalSchema.shape,
+});
+```
+
+> **Note**: For even better TypeScript performance, consider using object destructuring instead of `.extend()`. See the [API documentation](/api?id=extend) for more details.
 
 ## `z.nativeEnum()` deprecated
 
@@ -573,6 +619,34 @@ const longString = z.string().refine(
 );
 ```
 
+{/* ## `.superRefine()` deprecated
+
+The `.superRefine()` method has been deprecated in favor of `.check()`. The `.check()` method provides the same functionality with a cleaner API. The `.check()` method is also available on Zod and Zod Mini schemas.
+
+```ts
+const UniqueStringArray = z.array(z.string()).check((ctx) => {
+  if (ctx.value.length > 3) {
+    ctx.issues.push({
+      code: "too_big",
+      maximum: 3,
+      origin: "array",
+      inclusive: true,
+      message: "Too many items 😡",
+      input: ctx.value
+    });
+  }
+
+  if (ctx.value.length !== new Set(ctx.value).size) {
+    ctx.issues.push({
+      code: "custom",
+      message: `No duplicates allowed.`,
+      input: ctx.value
+    });
+  }
+});
+``` */}
+
+
 ## `z.ostring()`, etc dropped
 
 The undocumented convenience methods `z.ostring()`, `z.onumber()`, etc. have been removed. These were shorthand methods for defining optional string schemas.
@@ -620,6 +694,13 @@ In Zod 4, this is no longer the case. The inferred type is what you'd expect, an
 ```ts
 const myRecord = z.record(z.enum(["a", "b", "c"]), z.number());
 // { a: number; b: number; c: number; }
+```
+
+To replicate the old behavior with optional keys, use `z.partialRecord()`:
+
+```ts
+const myRecord = z.partialRecord(z.enum(["a", "b", "c"]), z.number());
+// { a?: number; b?: number; c?: number; }
 ```
 
 ## `z.intersection()`
@@ -689,20 +770,20 @@ The need for `z.ZodTypeAny` has been eliminated; just use `z.ZodType` instead.
 
 ### adds `z.core`
 
-Many utility functions and types have been moved to the new `zod/v4/core` sub-package, to facilitate code sharing between `zod/v4` and `zod/v4-mini`. 
+Many utility functions and types have been moved to the new `zod/v4/core` sub-package, to facilitate code sharing between Zod and Zod Mini. 
 
 ```ts
-import { z } from "zod/v4/core";
+import * as z from "zod/v4/core";
 
 function handleError(iss: z.$ZodError) {
   // do stuff
 }
 ```
 
-For convenience, the contents of `zod/v4/core` are also re-exported from `zod/v4` and `zod/v4-mini` under the `z.core` namespace. 
+For convenience, the contents of `zod/v4/core` are also re-exported from `zod` and `zod/mini` under the `z.core` namespace. 
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod";
 
 function handleError(iss: z.core.$ZodError) {
   // do stuff
@@ -722,10 +803,10 @@ This doesn't affect the user-facing APIs, but it's an internal change worth high
 
 Previously both refinements and transformations lived inside a wrapper class called `ZodEffects`. That means adding either one to a schema would wrap the original schema in a `ZodEffects` instance. In Zod 4, refinements now live inside the schemas themselves. More accurately, each schema contains an array of "checks"; the concept of a "check" is new in Zod 4 and generalizes the concept of a refinement to include potentially side-effectful transforms like `z.toLowerCase()`. 
 
-This is particularly apparent in the `zod/v4-mini` API, which heavily relies on the `.check()` method to compose various validations together.
+This is particularly apparent in the Zod Mini API, which heavily relies on the `.check()` method to compose various validations together.
 
 ```ts
-import { z } from "zod/v4-mini";
+import * as z from "zod/mini";
 
 z.string().check(
   z.minLength(10),
@@ -740,7 +821,7 @@ z.string().check(
 Meanwhile, transforms have been moved into a dedicated `ZodTransform` class. This schema class represents an input transform; in fact, you can actually define standalone transformations now:
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod";
 
 const schema = z.transform(input => String(input));
 
@@ -769,7 +850,7 @@ Branding is now handled with a direct modification to the inferred type, instead
 {/* - Dropping support for ES5
   - Zod relies on `Set` internally */}
 
-{/* - ZodObject `.keyof()` now returns `ZodLiteral` not `ZodEnum` */}
+{/* - `z.keyof` now returns `ZodEnum` instead of `ZodLiteral` */}
 
 
 

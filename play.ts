@@ -1,15 +1,10 @@
-import { z } from "zod/v4";
+import * as z from "./packages/zod/src/v4/index.js";
 
-const User = z.string().optional();
+z;
 
-console.dir(z.toJSONSchema(User), { depth: null });
-// => {
-//   type: 'object',
-//   properties: { name: { type: 'string' }, friend: { '$ref': '#' } },
-//   required: [ 'name', 'friend' ]
-//   additionalProperties: false
-// }
+const schema = z.object({ name: z.string() }).and(z.looseRecord(z.string().regex(/_phone$/), z.e164()));
 
-z.toJSONSchema(z.globalRegistry, {
-  uri: (id) => `https://example.com/${id}.json`,
-});
+type _schema = z.infer<typeof schema>;
+// { name: string } & Record<string, string> & Record<string, number>
+
+z.e164();

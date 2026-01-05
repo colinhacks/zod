@@ -47,7 +47,7 @@ test("flat inference", () => {
   expectTypeOf<typeof readonlyNumberRecord._output>().toEqualTypeOf<Readonly<Record<string, number>>>();
   expectTypeOf<typeof readonlyObject._output>().toEqualTypeOf<{ readonly a: string; readonly 1: number }>();
   expectTypeOf<typeof readonlyEnum._output>().toEqualTypeOf<Readonly<testEnum>>();
-  expectTypeOf<typeof readonlyPromise._output>().toEqualTypeOf<string>();
+  expectTypeOf<typeof readonlyPromise._output>().toEqualTypeOf<Promise<string>>();
 });
 
 // test("deep inference", () => {
@@ -240,7 +240,7 @@ test("readonly and the get method", () => {
   expect(readonlyBigInt.parse(bigIntVal)).toEqual(bigIntVal);
   expect(readonlyBoolean.parse(true)).toEqual(true);
   const dateVal = new Date();
-  expect(readonlyDate.parse(new Date())).toEqual(dateVal);
+  expect(readonlyDate.parse(dateVal)).toEqual(dateVal);
   expect(readonlyUndefined.parse(undefined)).toEqual(undefined);
   expect(readonlyNull.parse(null)).toEqual(null);
   expect(readonlyAny.parse("whatever")).toEqual("whatever");

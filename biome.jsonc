@@ -60,7 +60,14 @@
     }
   },
   "files": {
+    "include": ["**/*.ts", "**/*.mts", "**/*.cts"],
     "ignore": [
+      "*.js",
+      "*.mjs",
+      "*.cjs",
+      "*.d.ts",
+      "*.d.cts",
+      "*.d.mts",
       "lib",
       "coverage",
       "dist",
@@ -69,7 +76,7 @@
       "experiments",
       "node_modules",
       ".next",
-      "packages/bench",
+
       "packages/treeshake",
       ".source"
     ]

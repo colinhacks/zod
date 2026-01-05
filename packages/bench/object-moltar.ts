@@ -1,23 +1,23 @@
 import * as z4 from "zod/v4";
-import * as z4lib from "./node_modules/zod/dist/esm/v4/index.js";
 import * as z3 from "zod3";
+import * as z4lib from "zod4/v4";
 import { metabench } from "./metabench.js";
 
-const z3Schema = z3.object({
+const z3Schema = z3.strictObject({
   number: z3.number(),
   negNumber: z3.number(),
   maxNumber: z3.number(),
   string: z3.string(),
   longString: z3.string(),
   boolean: z3.boolean(),
-  deeplyNested: z3.object({
+  deeplyNested: z3.strictObject({
     foo: z3.string(),
     num: z3.number(),
     bool: z3.boolean(),
-  }).strict()
-}).strict();
+  }),
+});
 
-const z4LibSchema = z4lib.object({
+const z4LibSchema = z4lib.strictObject({
   number: z4lib.number(),
   negNumber: z4lib.number(),
   maxNumber: z4lib.number(),
@@ -31,7 +31,7 @@ const z4LibSchema = z4lib.object({
   }),
 });
 
-const z4Schema = z4.object({
+const z4Schema = z4.strictObject({
   number: z4.number(),
   negNumber: z4.number(),
   maxNumber: z4.number(),
@@ -39,34 +39,6 @@ const z4Schema = z4.object({
   longString: z4.string(),
   boolean: z4.boolean(),
   deeplyNested: z4.strictObject({
-    foo: z4.string(),
-    num: z4.number(),
-    bool: z4.boolean(),
-  }),
-});
-
-const z4SchemaStrict = z4.strictObject({
-  number: z4.number(),
-  negNumber: z4.number(),
-  maxNumber: z4.number(),
-  string: z4.string(),
-  longString: z4.string(),
-  boolean: z4.boolean(),
-  deeplyNested: z4.strictObject({
-    foo: z4.string(),
-    num: z4.number(),
-    bool: z4.boolean(),
-  }),
-});
-
-const z4SchemaLoose = z4.object({
-  number: z4.number(),
-  negNumber: z4.number(),
-  maxNumber: z4.number(),
-  string: z4.string(),
-  longString: z4.string(),
-  boolean: z4.boolean(),
-  deeplyNested: z4.object({
     foo: z4.string(),
     num: z4.number(),
     bool: z4.boolean(),
@@ -92,23 +64,18 @@ const DATA = Array.from({ length: 1000 }, () =>
 
 console.log(z3Schema.parse(DATA[0]));
 console.log(z4Schema.parse(DATA[0]));
+console.log(z4LibSchema.parse(DATA[0]));
 
 const bench = metabench("z.object() safeParse", {
   zod3() {
     for (const _ of DATA) z3Schema.parse(_);
   },
-  // zod4lib() {
-  //   for (const _ of DATA) z4LibSchema.parse(_);
-  // },
-  zod4(){
+  zod4lib() {
+    for (const _ of DATA) z4LibSchema.parse(_);
+  },
+  zod4() {
     for (const _ of DATA) z4Schema.parse(_);
-  }
-  // zod4strict() {
-  //   for (const _ of DATA) z4SchemaStrict.parse(_);
-  // },
-  // zod4loose() {
-  //   for (const _ of DATA) z4SchemaLoose.parse(_);
-  // },
+  },
 });
 
 await bench.run();

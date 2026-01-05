@@ -162,13 +162,13 @@ test("catchall overrides strict", () => {
   });
 });
 
-test("optional keys are unset", async () => {
+test("optional keys are unset", () => {
   const SNamedEntity = z.object({
     id: z.string(),
     set: z.string().optional(),
     unset: z.string().optional(),
   });
-  const result = await SNamedEntity.parse({
+  const result = SNamedEntity.parse({
     id: "asdf",
     set: undefined,
   });
@@ -217,13 +217,22 @@ test("test inferred merged type", async () => {
   expectTypeOf<asdf>().toEqualTypeOf<{ a: number }>();
 });
 
+test("inferred type with Record shape", () => {
+  type A = z.ZodObject<Record<string, z.ZodType<string, number>>>;
+  expectTypeOf<z.infer<A>>().toEqualTypeOf<Record<string, string>>();
+  expectTypeOf<z.input<A>>().toEqualTypeOf<Record<string, number>>();
+
+  type B = z.ZodObject;
+  expectTypeOf<z.infer<B>>().toEqualTypeOf<Record<string, unknown>>();
+  expectTypeOf<z.input<B>>().toEqualTypeOf<Record<string, unknown>>();
+});
+
 test("inferred merged object type with optional properties", async () => {
   const Merged = z
     .object({ a: z.string(), b: z.string().optional() })
     .merge(z.object({ a: z.string().optional(), b: z.string() }));
   type Merged = z.infer<typeof Merged>;
   expectTypeOf<Merged>().toEqualTypeOf<{ a?: string; b: string }>();
-
   expectTypeOf<Merged>().toEqualTypeOf<{ a?: string; b: string }>();
 });
 
@@ -250,6 +259,21 @@ test("inferred enum type", async () => {
   });
   type Enum = z.infer<typeof Enum>;
   expectTypeOf<Enum>().toEqualTypeOf<"a" | "b">();
+});
+
+test("z.keyof returns enum", () => {
+  const User = z.object({ name: z.string(), age: z.number() });
+  const keysSchema = z.keyof(User);
+  expect(keysSchema.enum).toEqual({
+    name: "name",
+    age: "age",
+  });
+  expect(keysSchema._zod.def.entries).toEqual({
+    name: "name",
+    age: "age",
+  });
+  type Keys = z.infer<typeof keysSchema>;
+  expectTypeOf<Keys>().toEqualTypeOf<"name" | "age">();
 });
 
 test("inferred partial object type with optional properties", async () => {
@@ -411,6 +435,31 @@ test("extend() should have power to override existing key", () => {
   expectTypeOf<PersonWithNumberAsLastName>().toEqualTypeOf<{ firstName: string; lastName: number }>();
 });
 
+test("safeExtend() should have power to override existing key", () => {
+  const PersonWithMinLastName = personToExtend.safeExtend({
+    lastName: z.string().min(3),
+  });
+  type PersonWithMinLastName = z.infer<typeof PersonWithMinLastName>;
+
+  const expected = { firstName: "f", lastName: "abc" };
+  const actual = PersonWithMinLastName.parse(expected);
+
+  expect(actual).toEqual(expected);
+  expect(() => PersonWithMinLastName.parse({ firstName: "f", lastName: "ab" })).toThrow();
+  expectTypeOf<PersonWithMinLastName>().toEqualTypeOf<{ firstName: string; lastName: string }>();
+});
+
+test("safeExtend() maintains refinements", () => {
+  const schema = z.object({ name: z.string().min(1) });
+  const extended = schema.safeExtend({ name: z.string().min(2) });
+  expect(() => extended.parse({ name: "" })).toThrow();
+  expect(extended.parse({ name: "ab" })).toEqual({ name: "ab" });
+  type Extended = z.infer<typeof extended>;
+  expectTypeOf<Extended>().toEqualTypeOf<{ name: string }>();
+  // @ts-expect-error
+  schema.safeExtend({ name: z.number() });
+});
+
 test("passthrough index signature", () => {
   const a = z.object({ a: z.string() });
   type a = z.infer<typeof a>;
@@ -434,13 +483,35 @@ test("passthrough index signature", () => {
 // });
 
 test("assignability", () => {
-  z.object({ a: z.string() }) satisfies z.ZodObject;
-  z.object({ a: z.string() }).catchall(z.number()) satisfies z.ZodObject;
+  z.object({ a: z.string() }) satisfies z.ZodObject<{ a: z.ZodString }>;
+  z.object({ a: z.string() }).catchall(z.number()) satisfies z.ZodObject<{ a: z.ZodString }>;
   z.object({ a: z.string() }).strict() satisfies z.ZodObject;
   z.object({}) satisfies z.ZodObject;
-  z.object({ "a?": z.string() }) satisfies z.ZodObject;
-  z.object({ "?a": z.string() }) satisfies z.ZodObject;
 
+  z.looseObject({ name: z.string() }) satisfies z.ZodObject<
+    {
+      name: z.ZodString;
+    },
+    z.core.$loose
+  >;
+  z.looseObject({ name: z.string() }) satisfies z.ZodObject<{
+    name: z.ZodString;
+  }>;
+  z.strictObject({ name: z.string() }) satisfies z.ZodObject<
+    {
+      name: z.ZodString;
+    },
+    z.core.$loose
+  >;
+  z.strictObject({ name: z.string() }) satisfies z.ZodObject<
+    {
+      name: z.ZodString;
+    },
+    z.core.$strict
+  >;
+  z.object({ name: z.string() }) satisfies z.ZodObject<{
+    name: z.ZodString;
+  }>;
   z.object({
     a: z.string(),
     b: z.number(),
@@ -502,4 +573,68 @@ test("empty shape", () => {
 
   expect(() => a.parse([])).toThrow();
   expect(() => a.parse([], { jitless: true })).toThrow();
+});
+
+test("zodtype assignability", () => {
+  // Does not error
+  z.object({ hello: z.string().optional() }) satisfies z.ZodType<{ hello?: string | undefined }>;
+  z.object({ hello: z.string() }) satisfies z.ZodType<{ hello?: string | undefined }>;
+  // @ts-expect-error
+  z.object({}) satisfies z.ZodType<{ hello: string | undefined }>;
+  // @ts-expect-error
+  z.object({ hello: z.string().optional() }) satisfies z.ZodType<{ hello: string | undefined }>;
+  // @ts-expect-error
+  z.object({ hello: z.string().optional() }) satisfies z.ZodType<{ hello: string }>;
+  // @ts-expect-error
+  z.object({ hello: z.number() }) satisfies z.ZodType<{ hello?: string | undefined }>;
+});
+
+test("index signature in shape", () => {
+  function makeZodObj<const T extends string>(key: T) {
+    return z.looseObject({
+      [key]: z.string(),
+    });
+  }
+
+  const schema = makeZodObj("foo");
+  type schema = z.infer<typeof schema>;
+
+  expectTypeOf<schema>().toEqualTypeOf<Record<string, string>>();
+});
+
+test("extend() on object with refinements should throw when overwriting properties", () => {
+  const schema = z
+    .object({
+      a: z.string(),
+    })
+    .refine(() => true);
+
+  expect(() => schema.extend({ a: z.number() })).toThrow();
+});
+
+test("extend() on object with refinements should not throw when adding new properties", () => {
+  const schema = z
+    .object({
+      a: z.string(),
+    })
+    .refine((data) => data.a.length > 0);
+
+  // Should not throw since 'b' doesn't overlap with 'a'
+  const extended = schema.extend({ b: z.number() });
+
+  // Verify the extended schema works correctly
+  expect(extended.parse({ a: "hello", b: 42 })).toEqual({ a: "hello", b: 42 });
+
+  // Verify the original refinement still applies
+  expect(() => extended.parse({ a: "", b: 42 })).toThrow();
+});
+
+test("safeExtend() on object with refinements should not throw", () => {
+  const schema = z
+    .object({
+      a: z.string(),
+    })
+    .refine(() => true);
+
+  expect(() => schema.safeExtend({ b: z.string() })).not.toThrow();
 });

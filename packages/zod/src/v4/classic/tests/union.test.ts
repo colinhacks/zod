@@ -27,7 +27,7 @@ test("return valid over invalid", () => {
 });
 
 test("return errors from both union arms", () => {
-  const result = z.union([z.number(), z.string().refine(() => false)]).safeParse("a");
+  const result = z.union([z.number(), z.boolean()]).safeParse("a");
   expect(result.success).toEqual(false);
   if (!result.success) {
     expect(result.error.issues).toMatchInlineSnapshot(`
@@ -45,8 +45,9 @@ test("return errors from both union arms", () => {
             ],
             [
               {
-                "code": "custom",
-                "message": "Invalid input",
+                "code": "invalid_type",
+                "expected": "boolean",
+                "message": "Invalid input: expected boolean, received string",
                 "path": [],
               },
             ],
@@ -91,4 +92,128 @@ test("union values", () => {
       "c",
     }
   `);
+});
+
+test("non-aborted errors", () => {
+  const zItemTest = z.union([
+    z.object({
+      date: z.number(),
+      startDate: z.optional(z.null()),
+      endDate: z.optional(z.null()),
+    }),
+    z
+      .object({
+        date: z.optional(z.null()),
+        startDate: z.number(),
+        endDate: z.number(),
+      })
+      .refine((data) => data.startDate !== data.endDate, {
+        error: "startDate and endDate must be different",
+        path: ["endDate"],
+      }),
+  ]);
+
+  const res = zItemTest.safeParse({
+    date: null,
+    startDate: 1,
+    endDate: 1,
+  });
+
+  expect(res).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "code": "custom",
+        "path": [
+          "endDate"
+        ],
+        "message": "startDate and endDate must be different"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+});
+
+test("surface continuable errors only if they exist", () => {
+  const schema = z.union([z.boolean(), z.uuid(), z.jwt()]);
+
+  expect(schema.safeParse("asdf")).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "code": "invalid_union",
+        "errors": [
+          [
+            {
+              "expected": "boolean",
+              "code": "invalid_type",
+              "path": [],
+              "message": "Invalid input: expected boolean, received string"
+            }
+          ],
+          [
+            {
+              "origin": "string",
+              "code": "invalid_format",
+              "format": "uuid",
+              "pattern": "/^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$/",
+              "path": [],
+              "message": "Invalid UUID"
+            }
+          ],
+          [
+            {
+              "code": "invalid_format",
+              "format": "jwt",
+              "path": [],
+              "message": "Invalid JWT"
+            }
+          ]
+        ],
+        "path": [],
+        "message": "Invalid input"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+});
+
+// z.xor() tests
+test("z.xor() - exactly one match succeeds", () => {
+  const schema = z.xor([z.string(), z.number()]);
+  expect(schema.parse("hello")).toBe("hello");
+  expect(schema.parse(42)).toBe(42);
+});
+
+test("z.xor() - zero matches fails", () => {
+  const schema = z.xor([z.string(), z.number()]);
+  const result = schema.safeParse(true);
+  expect(result.success).toBe(false);
+});
+
+test("z.xor() - multiple matches fails", () => {
+  const schema = z.xor([z.string(), z.any()]);
+  const result = schema.safeParse("hello");
+  expect(result.success).toBe(false);
+  if (!result.success) {
+    expect(result.error.issues[0].code).toBe("invalid_union");
+    expect((result.error.issues[0] as any).inclusive).toBe(false);
+  }
+});
+
+test("z.xor() with custom error message", () => {
+  const schema = z.xor([z.string(), z.number()], "Expected exactly one of string or number");
+  const result = schema.safeParse(true);
+  expect(result.success).toBe(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toBe("Expected exactly one of string or number");
+  }
+});
+
+test("z.xor() type inference", () => {
+  const schema = z.xor([z.string(), z.number(), z.boolean()]);
+  type Result = z.infer<typeof schema>;
+  expectTypeOf<Result>().toEqualTypeOf<string | number | boolean>();
 });

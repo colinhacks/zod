@@ -45,11 +45,12 @@ test("nested refinements", () => {
         "origin": "string",
         "code": "too_small",
         "minimum": 1,
+        "inclusive": true,
         "path": [
           "nested",
           "confirm"
         ],
-        "message": "Too small: expected string to have >1 characters"
+        "message": "Too small: expected string to have >=1 characters"
       },
       {
         "code": "custom",
@@ -87,11 +88,12 @@ test("nested refinements", () => {
         "origin": "string",
         "code": "too_small",
         "minimum": 1,
+        "inclusive": true,
         "path": [
           "nested",
           "confirm"
         ],
-        "message": "Too small: expected string to have >1 characters"
+        "message": "Too small: expected string to have >=1 characters"
       },
       {
         "code": "custom",
@@ -127,7 +129,8 @@ test("nested refinements", () => {
       "issues": [
         {
           "code": "too_small",
-          "message": "Too small: expected string to have >1 characters",
+          "inclusive": true,
+          "message": "Too small: expected string to have >=1 characters",
           "minimum": 1,
           "origin": "string",
           "path": [

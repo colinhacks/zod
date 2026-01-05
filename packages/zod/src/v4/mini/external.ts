@@ -1,9 +1,9 @@
-export * as core from "zod/v4/core";
+export * as core from "../core/index.js";
 export * from "./parse.js";
 export * from "./schemas.js";
 export * from "./checks.js";
 
-export type { infer, output, input } from "zod/v4/core";
+export type { infer, output, input } from "../core/index.js";
 export {
   globalRegistry,
   registry,
@@ -11,17 +11,19 @@ export {
   $output,
   $input,
   $brand,
-  function,
   clone,
   regexes,
   treeifyError,
   prettifyError,
   formatError,
   flattenError,
-  toJSONSchema,
-  locales,
-} from "zod/v4/core";
+  TimePrecision,
+  util,
+  NEVER,
+} from "../core/index.js";
+export { toJSONSchema } from "../core/json-schema-processors.js";
 
+export * as locales from "../locales/index.js";
 /** A special constant with type `never` */
 // export const NEVER = {} as never;
 

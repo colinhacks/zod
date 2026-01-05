@@ -1,4 +1,5 @@
-import { writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
 
 export const ZOD = {
   imports: [`import * as z from "zod/v4";`],
@@ -175,6 +176,8 @@ export function generate(params: GenerateObjectsParams) {
 
   file.push(custom);
 
+  // Create directory if it doesn't exist
+  mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, file.join("\n"), { flag: "w" });
 }
 
@@ -304,6 +307,8 @@ export function generateExtendChain(params: GenerateExtendChainParams) {
     }
   }
 
+  // Create directory if it doesn't exist
+  mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, file.join("\n"), { flag: "w" });
 }
 
@@ -332,14 +337,14 @@ function generateFields(
     // keys.push(key);
     const randomTypeIndex = Math.floor(Math.random() * params.valueTypes.length);
     const randomChainMethodIndex = Math.floor(Math.random() * methods.length);
-    const randomType = params.valueTypes[randomTypeIndex];
+    const randomType = params.valueTypes[randomTypeIndex]!;
     // const randomChance = Math.random();
     // if (randomChance > 0.98) {
     //   const { schema: nestedSchema } = generateRandomZodSchema();
     //   schema += ` ${key}: ${nestedSchema},`;
     //   continue;
     // }
-    const type = randomType + methods[randomChainMethodIndex];
+    const type = randomType + methods[randomChainMethodIndex]!;
 
     fields.push({ key, schema: type });
     // schema += ` ${key}: ${type},`;

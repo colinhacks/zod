@@ -19,6 +19,10 @@ test("globalRegistry", () => {
   expect(z.globalRegistry.has(a)).toEqual(false);
 });
 
+test("globalRegistry is singleton and attached to globalThis", () => {
+  expect(z.globalRegistry).toBe((globalThis as any).__zod_globalRegistry);
+});
+
 test("z.registry", () => {
   const fieldRegistry = z.registry<{ name: string; description: string }>();
 
@@ -158,12 +162,82 @@ test("inherit across clone", () => {
   expect(C.meta()).toEqual({ a: true, b: true, description: "hello" });
 });
 
-test("register with replace", () => {
+test("loose examples", () => {
   z.string().register(z.globalRegistry, {
     examples: ["example"],
   });
-  z.string().register(z.globalRegistry, {
-    // @ts-expect-error
-    examples: [1234],
+});
+
+test("function meta without replacement", () => {
+  const myReg = z.registry<{
+    defaulter: (arg: string, test: boolean) => number;
+  }>();
+
+  const mySchema = z.date();
+  myReg.add(mySchema, {
+    defaulter: (arg, _test) => {
+      return arg.length;
+    },
   });
+
+  expect(myReg.get(mySchema)!.defaulter("hello", true)).toEqual(5);
+});
+
+test("function meta with replacement", () => {
+  const myReg = z.registry<{
+    defaulter: (arg: z.$input, test: boolean) => z.$output;
+  }>();
+
+  const mySchema = z.string().transform((val) => val.length);
+  myReg.add(mySchema, {
+    defaulter: (arg, _test) => {
+      return arg.length;
+    },
+  });
+
+  expect(myReg.get(mySchema)!.defaulter("hello", true)).toEqual(5);
+});
+
+test("test .clear()", () => {
+  const reg = z.registry();
+  const a = z.string();
+  reg.add(a);
+  expect(reg.has(a)).toEqual(true);
+  reg.clear();
+  expect(reg.has(a)).toEqual(false);
+});
+
+test("re-registering same id silently overwrites", () => {
+  const reg = z.registry<z.core.GlobalMeta>();
+  const a = z.string();
+  const b = z.number();
+
+  reg.add(a, { id: "shared-id" });
+  reg.add(b, { id: "shared-id" });
+
+  // No error thrown, b now owns the id
+  expect(reg._idmap.get("shared-id")).toBe(b);
+});
+
+test("toJSONSchema throws on duplicate id across different schemas", () => {
+  const reg = z.registry<z.core.GlobalMeta>();
+  const a = z.string().register(reg, { id: "duplicate-id" });
+  const b = z.number().register(reg, { id: "duplicate-id" });
+
+  const wrapper = z.object({ a, b });
+
+  expect(() => z.toJSONSchema(wrapper, { metadata: reg })).toThrow(
+    'Duplicate schema id "duplicate-id" detected during JSON Schema conversion. Two different schemas cannot share the same id when converted together.'
+  );
+});
+
+test("toJSONSchema allows same schema with same id", () => {
+  const reg = z.registry<z.core.GlobalMeta>();
+  const shared = z.string().register(reg, { id: "shared-id" });
+
+  const wrapper = z.object({ a: shared, b: shared });
+
+  // Should not throw - same schema instance used twice
+  const result = z.toJSONSchema(wrapper, { metadata: reg });
+  expect(result.$defs?.["shared-id"]).toBeDefined();
 });

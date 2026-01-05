@@ -1,5 +1,6 @@
 ---
 title: Customizing errors
+description: "Guide to customizing validation error messages and error handling patterns"
 ---
 
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
@@ -8,7 +9,7 @@ import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 In Zod, validation errors are surfaced as instances of the `z.core.$ZodError` class.
 
-> The `zod/v4` package uses a subclass of this called `z.ZodError` that implements some additional convenience methods.
+> The `ZodError` class in the `zod` package is a subclass that implements some additional convenience methods.
 
 Instances of `$ZodError` contain an `.issues` array. Each issue contains a human-readable `message` and additional structured metadata about the issue.
 
@@ -16,7 +17,7 @@ Instances of `$ZodError` contain an `.issues` array. Each issue contains a human
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod";
 
 const result = z.string().safeParse(12); // { success: false, error: ZodError }
 result.error.issues;
@@ -32,7 +33,7 @@ result.error.issues;
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-import { z } from "zod/v4-mini";
+import * as z from "zod/mini";
 
 const result = z.string().safeParse(12); // { success: false, error: z.core.$ZodError }
 result.error.issues;
@@ -178,7 +179,7 @@ z.string().min(5, {
 });
 ```
 
-Return `undefined` to avoid setting an error message. This is useful for customizing certain error messages but not others. Zod will yield control to the next error map in the [precedence chain](#error-precedence).
+Return `undefined` to avoid customizing the error message and fall back to the default message. (More specifically, Zod will yield control to the next error map in the [precedence chain](#error-precedence).) This is useful for selectively customizing certain error messages but not others.
 
 ```ts
 z.int64({
@@ -236,6 +237,26 @@ const result = schema.safeParse(12, {
 });
 ```
 
+### Include input in issues
+
+By default, Zod does not include input data in issues. This is to prevent unintentional logging of potentially sensitive input data. To include the input data in each issue, use the `reportInput` flag:
+
+```ts
+z.string().parse(12, {
+  reportInput: true
+})
+
+// ZodError: [
+//   {
+//     "expected": "string",
+//     "code": "invalid_type",
+//     "input": 12, // 👀
+//     "path": [],
+//     "message": "Invalid input: expected string, received number"
+//   }
+// ]
+```
+
 ## Global error customization
 
 To specify a global error map, use `z.config()` to set Zod's `customError` configuration setting:
@@ -255,8 +276,8 @@ The `iss` object is a [discriminated union](https://www.typescriptlang.org/docs/
 > For a breakdown of all Zod issue codes, see the [`zod/v4/core`](/packages/core#issue-types) documentation.
 
 ```ts
-const result = schema.safeParse(12, {
-  error: (iss) => {
+z.config({
+  customError: (iss) => {
     if (iss.code === "invalid_type") {
       return `invalid type, expected ${iss.expected}`;
     }
@@ -264,29 +285,29 @@ const result = schema.safeParse(12, {
       return `minimum is ${iss.minimum}`;
     }
     // ...
-  }
-})
+  },
+});
 ```
 
 ## Internationalization
 
 To support internationalization of error message, Zod provides several built-in **locales**. These are exported from the `zod/v4/core` package.
 
-> **Note** — The `zod/v4` library automatically loads the `en` locale automatically. The `zod/v4-mini` sub-package does not load any locale; instead all error messages default to `Invalid input`.
+> **Note** — The regular `zod` library loads the `en` locale automatically. Zod Mini does not load any locale by default; instead all error messages default to `Invalid input`.
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-import { z } from "zod/v4";
-import en from "zod/v4/locales/en.js"
+import * as z from "zod";
+import { en } from "zod/locales"
 
 z.config(en());
 ```
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-import { z } from "zod/v4-mini"
-import en from "zod/v4/locales/en.js"
+import * as z from "zod/mini"
+import { en } from "zod/locales";
 
 z.config(en());
 ```
@@ -296,7 +317,7 @@ z.config(en());
 To lazily load a locale, consider dynamic imports:
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod";
 
 async function loadLocale(locale: string) {
   const { default: locale } = await import(`zod/v4/locales/${locale}.js`);
@@ -306,19 +327,19 @@ async function loadLocale(locale: string) {
 await loadLocale("fr");
 ```
 
-For convenience, all locales are exported as `z.locales` from `zod/v4/locales`.
+For convenience, all locales are exported as `z.locales` from `"zod"`. In some bundlers, this may not be tree-shakable.
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod";
 
 z.config(z.locales.en());
 ```
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-import { z } from "zod/v4-mini"
+import * as z from "zod/mini"
 
 z.config(z.locales.en());
 ```
@@ -332,10 +353,13 @@ The following locales are available:
 - `ar` — Arabic
 - `az` — Azerbaijani
 - `be` — Belarusian
+- `bg` — Bulgarian
 - `ca` — Catalan
 - `cs` — Czech
+- `da` — Danish
 - `de` — German
 - `en` — English
+- `eo` — Esperanto
 - `es` — Spanish
 - `fa` — Farsi
 - `fi` — Finnish
@@ -343,16 +367,21 @@ The following locales are available:
 - `frCA` — Canadian French
 - `he` — Hebrew
 - `hu` — Hungarian
+- `hy` — Armenian
 - `id` — Indonesian
+- `is` — Icelandic
 - `it` — Italian
 - `ja` — Japanese
-- `kh` — Khmer
+- `ka` — Georgian
+- `km` — Khmer
 - `ko` — Korean
+- `lt` — Lithuanian
 - `mk` — Macedonian
 - `ms` — Malay
 - `nl` — Dutch
 - `no` — Norwegian
 - `ota` — Türkî
+- `ps` — Pashto
 - `pl` — Polish
 - `pt` — Portuguese
 - `ru` — Russian
@@ -361,11 +390,13 @@ The following locales are available:
 - `ta` — Tamil
 - `th` — Thai
 - `tr` — Türkçe
-- `ua` — Ukrainian
+- `uk` — Ukrainian
 - `ur` — Urdu
+- `uz` — Uzbek
 - `vi` — Tiếng Việt
 - `zhCN` — Simplified Chinese
 - `zhTW` — Traditional Chinese
+- `yo` — Yorùbá
 
 
 ## Error precedence

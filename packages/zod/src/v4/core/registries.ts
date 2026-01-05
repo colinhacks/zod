@@ -12,12 +12,18 @@ export type $replace<Meta, S extends $ZodType> = Meta extends $output
     ? core.input<S>
     : Meta extends (infer M)[]
       ? $replace<M, S>[]
-      : // handle objecs
-        Meta extends object
-        ? { [K in keyof Meta]: $replace<Meta[K], S> }
-        : Meta;
+      : Meta extends (...args: infer P) => infer R
+        ? (
+            ...args: {
+              [K in keyof P]: $replace<P[K], S>; // tuple
+            }
+          ) => $replace<R, S>
+        : // handle objects
+          Meta extends object
+          ? { [K in keyof Meta]: $replace<Meta[K], S> }
+          : Meta;
 
-type MetadataType = Record<string, unknown> | undefined;
+type MetadataType = object | undefined;
 export class $ZodRegistry<Meta extends MetadataType = MetadataType, Schema extends $ZodType = $ZodType> {
   _meta!: Meta;
   _schema!: Schema;
@@ -31,15 +37,22 @@ export class $ZodRegistry<Meta extends MetadataType = MetadataType, Schema exten
     const meta: any = _meta[0];
     this._map.set(schema, meta!);
     if (meta && typeof meta === "object" && "id" in meta) {
-      if (this._idmap.has(meta.id!)) {
-        throw new Error(`ID ${meta.id} already exists in the registry`);
-      }
       this._idmap.set(meta.id!, schema);
     }
     return this as any;
   }
 
+  clear(): this {
+    this._map = new WeakMap();
+    this._idmap = new Map();
+    return this;
+  }
+
   remove(schema: Schema): this {
+    const meta: any = this._map.get(schema);
+    if (meta && typeof meta === "object" && "id" in meta) {
+      this._idmap.delete(meta.id!);
+    }
     this._map.delete(schema);
     return this;
   }
@@ -52,7 +65,8 @@ export class $ZodRegistry<Meta extends MetadataType = MetadataType, Schema exten
     if (p) {
       const pm: any = { ...(this.get(p) ?? {}) };
       delete pm.id; // do not inherit id
-      return { ...pm, ...this._map.get(schema) } as any;
+      const f = { ...pm, ...this._map.get(schema) } as any;
+      return Object.keys(f).length ? f : undefined;
     }
     return this._map.get(schema) as any;
   }
@@ -66,18 +80,9 @@ export interface JSONSchemaMeta {
   id?: string | undefined;
   title?: string | undefined;
   description?: string | undefined;
-  examples?: $output[] | undefined;
+  deprecated?: boolean | undefined;
   [k: string]: unknown;
 }
-
-// export class $ZodJSONSchemaRegistry<
-//   Meta extends JSONSchemaMeta = JSONSchemaMeta,
-//   Schema extends $ZodType = $ZodType,
-// > extends $ZodRegistry<Meta, Schema> {
-//   toJSONSchema(_schema: Schema): object {
-//     return {};
-//   }
-// }
 
 export interface GlobalMeta extends JSONSchemaMeta {}
 
@@ -86,4 +91,15 @@ export function registry<T extends MetadataType = MetadataType, S extends $ZodTy
   return new $ZodRegistry<T, S>();
 }
 
-export const globalRegistry: $ZodRegistry<GlobalMeta> = /*@__PURE__*/ registry<GlobalMeta>();
+interface GlobalThisWithRegistry {
+  /**
+   * The globalRegistry instance shared across both CommonJS and ESM builds.
+   * By attaching the registry to `globalThis`, this property ensures a single, deduplicated instance
+   * is used regardless of whether the package is loaded via `require` (CJS) or `import` (ESM).
+   * This prevents dual package hazards and keeps registry state consistent.
+   */
+  __zod_globalRegistry?: $ZodRegistry<GlobalMeta>;
+}
+
+(globalThis as GlobalThisWithRegistry).__zod_globalRegistry ??= registry<GlobalMeta>();
+export const globalRegistry: $ZodRegistry<GlobalMeta> = (globalThis as GlobalThisWithRegistry).__zod_globalRegistry!;

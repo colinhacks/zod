@@ -1,6 +1,7 @@
 import type { $ZodCheck, $ZodStringFormats } from "./checks.js";
 import { $constructor } from "./core.js";
 import type { $ZodType } from "./schemas.js";
+import type { StandardSchemaV1 } from "./standard-schema.js";
 import * as util from "./util.js";
 
 ///////////////////////////
@@ -11,16 +12,39 @@ export interface $ZodIssueBase {
   readonly input?: unknown;
   readonly path: PropertyKey[];
   readonly message: string;
-  // [k: string]: unknown;
 }
 
 ////////////////////////////////
 ////     issue subtypes     ////
 ////////////////////////////////
+export type $ZodInvalidTypeExpected =
+  | "string"
+  | "number"
+  | "int"
+  | "boolean"
+  | "bigint"
+  | "symbol"
+  | "undefined"
+  | "null"
+  | "never"
+  | "void"
+  | "date"
+  | "array"
+  | "object"
+  | "tuple"
+  | "record"
+  | "map"
+  | "set"
+  | "file"
+  | "nonoptional"
+  | "nan"
+  | "function"
+  | (string & {}); // class names for instanceof
+
 export interface $ZodIssueInvalidType<Input = unknown> extends $ZodIssueBase {
   readonly code: "invalid_type";
-  readonly expected: $ZodType["_zod"]["def"]["type"];
-  readonly input: Input;
+  readonly expected: $ZodInvalidTypeExpected;
+  readonly input?: Input;
 }
 
 export interface $ZodIssueTooBig<Input = unknown> extends $ZodIssueBase {
@@ -28,47 +52,63 @@ export interface $ZodIssueTooBig<Input = unknown> extends $ZodIssueBase {
   readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
   readonly maximum: number | bigint;
   readonly inclusive?: boolean;
-  readonly input: Input;
+  readonly exact?: boolean;
+  readonly input?: Input;
 }
 
 export interface $ZodIssueTooSmall<Input = unknown> extends $ZodIssueBase {
   readonly code: "too_small";
   readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
   readonly minimum: number | bigint;
+  /** True if the allowable range includes the minimum */
   readonly inclusive?: boolean;
-  readonly input: Input;
+  /** True if the allowed value is fixed (e.g.` z.length(5)`), not a range (`z.minLength(5)`) */
+  readonly exact?: boolean;
+  readonly input?: Input;
 }
 
 export interface $ZodIssueInvalidStringFormat extends $ZodIssueBase {
   readonly code: "invalid_format";
   readonly format: $ZodStringFormats | (string & {});
   readonly pattern?: string;
-  readonly input: string;
+  readonly input?: string;
 }
 
 export interface $ZodIssueNotMultipleOf<Input extends number | bigint = number | bigint> extends $ZodIssueBase {
   readonly code: "not_multiple_of";
   readonly divisor: number;
-  readonly input: Input;
+  readonly input?: Input;
 }
 
 export interface $ZodIssueUnrecognizedKeys extends $ZodIssueBase {
   readonly code: "unrecognized_keys";
   readonly keys: string[];
-  readonly input: Record<string, unknown>;
+  readonly input?: Record<string, unknown>;
 }
 
-export interface $ZodIssueInvalidUnion extends $ZodIssueBase {
+interface $ZodIssueInvalidUnionNoMatch extends $ZodIssueBase {
   readonly code: "invalid_union";
   readonly errors: $ZodIssue[][];
-  readonly input: unknown;
+  readonly input?: unknown;
+  readonly discriminator?: string | undefined;
+  readonly inclusive?: true;
 }
+
+interface $ZodIssueInvalidUnionMultipleMatch extends $ZodIssueBase {
+  readonly code: "invalid_union";
+  readonly errors: [];
+  readonly input?: unknown;
+  readonly discriminator?: string | undefined;
+  readonly inclusive: false;
+}
+
+export type $ZodIssueInvalidUnion = $ZodIssueInvalidUnionNoMatch | $ZodIssueInvalidUnionMultipleMatch;
 
 export interface $ZodIssueInvalidKey<Input = unknown> extends $ZodIssueBase {
   readonly code: "invalid_key";
   readonly origin: "map" | "record";
   readonly issues: $ZodIssue[];
-  readonly input: Input;
+  readonly input?: Input;
 }
 
 export interface $ZodIssueInvalidElement<Input = unknown> extends $ZodIssueBase {
@@ -76,19 +116,19 @@ export interface $ZodIssueInvalidElement<Input = unknown> extends $ZodIssueBase 
   readonly origin: "map" | "set";
   readonly key: unknown;
   readonly issues: $ZodIssue[];
-  readonly input: Input;
+  readonly input?: Input;
 }
 
 export interface $ZodIssueInvalidValue<Input = unknown> extends $ZodIssueBase {
   readonly code: "invalid_value";
   readonly values: util.Primitive[];
-  readonly input: Input;
+  readonly input?: Input;
 }
 
 export interface $ZodIssueCustom extends $ZodIssueBase {
   readonly code: "custom";
   readonly params?: Record<string, any> | undefined;
-  readonly input: unknown;
+  readonly input?: unknown;
 }
 
 ////////////////////////////////////////////
@@ -151,17 +191,21 @@ export type $ZodIssue =
 
 export type $ZodIssueCode = $ZodIssue["code"];
 
-export type $ZodRawIssue<T extends $ZodIssueBase = $ZodIssue> = T extends any ? RawIssue<T> : never;
-type RawIssue<T extends $ZodIssueBase> = util.Flatten<
-  util.MakePartial<T, "message" | "path"> & {
-    /** The input data */
-    readonly input?: unknown;
-    /** The schema or check that originated this issue. */
-    readonly inst?: $ZodType | $ZodCheck;
-    /** @deprecated Internal use only. If `true`, Zod will continue executing validation despite this issue. */
-    readonly continue?: boolean | undefined;
-  } & Record<string, any>
->;
+export type $ZodInternalIssue<T extends $ZodIssueBase = $ZodIssue> = T extends any ? RawIssue<T> : never;
+type RawIssue<T extends $ZodIssueBase> = T extends any
+  ? util.Flatten<
+      util.MakePartial<T, "message" | "path"> & {
+        /** The input data */
+        readonly input: unknown;
+        /** The schema or check that originated this issue. */
+        readonly inst?: $ZodType | $ZodCheck;
+        /** If `true`, Zod will continue executing checks/refinements after this issue. */
+        readonly continue?: boolean | undefined;
+      } & Record<string, unknown>
+    >
+  : never;
+
+export type $ZodRawIssue<T extends $ZodIssueBase = $ZodIssue> = $ZodInternalIssue<T>;
 
 export interface $ZodErrorMap<T extends $ZodIssueBase = $ZodIssue> {
   // biome-ignore lint:
@@ -192,12 +236,11 @@ const initializer = (inst: $ZodError, def: $ZodIssue[]): void => {
     value: def,
     enumerable: false,
   });
-  Object.defineProperty(inst, "message", {
-    get() {
-      return JSON.stringify(def, util.jsonStringifyReplacer, 2);
-    },
-    enumerable: true,
-    // configurable: false,
+  inst.message = JSON.stringify(def, util.jsonStringifyReplacer, 2);
+
+  Object.defineProperty(inst, "toString", {
+    value: () => inst.message,
+    enumerable: false,
   });
 };
 
@@ -218,13 +261,13 @@ type _FlattenedError<T, U = string> = {
 
 export function flattenError<T>(error: $ZodError<T>): _FlattenedError<T>;
 export function flattenError<T, U>(error: $ZodError<T>, mapper?: (issue: $ZodIssue) => U): _FlattenedError<T, U>;
-export function flattenError(error: $ZodError, mapper = (issue: $ZodIssue) => issue.message): any {
-  const fieldErrors: any = {};
-  const formErrors: any[] = [];
+export function flattenError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIssue) => issue.message as U) {
+  const fieldErrors: Record<PropertyKey, any> = {};
+  const formErrors: U[] = [];
   for (const sub of error.issues) {
     if (sub.path.length > 0) {
-      fieldErrors[sub.path[0]] = fieldErrors[sub.path[0]] || [];
-      fieldErrors[sub.path[0]].push(mapper(sub));
+      fieldErrors[sub.path[0]!] = fieldErrors[sub.path[0]!] || [];
+      fieldErrors[sub.path[0]!].push(mapper(sub));
     } else {
       formErrors.push(mapper(sub));
     }
@@ -246,12 +289,7 @@ export type $ZodFormattedError<T, U = string> = {
 
 export function formatError<T>(error: $ZodError<T>): $ZodFormattedError<T>;
 export function formatError<T, U>(error: $ZodError<T>, mapper?: (issue: $ZodIssue) => U): $ZodFormattedError<T, U>;
-export function formatError<T>(error: $ZodError, _mapper?: any) {
-  const mapper: (issue: $ZodIssue) => any =
-    _mapper ||
-    function (issue: $ZodIssue) {
-      return issue.message;
-    };
+export function formatError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIssue) => issue.message as U) {
   const fieldErrors: $ZodFormattedError<T> = { _errors: [] } as any;
   const processError = (error: { issues: $ZodIssue[] }) => {
     for (const issue of error.issues) {
@@ -267,7 +305,7 @@ export function formatError<T>(error: $ZodError, _mapper?: any) {
         let curr: any = fieldErrors;
         let i = 0;
         while (i < issue.path.length) {
-          const el = issue.path[i];
+          const el = issue.path[i]!;
           const terminal = i === issue.path.length - 1;
 
           if (!terminal) {
@@ -287,26 +325,23 @@ export function formatError<T>(error: $ZodError, _mapper?: any) {
   return fieldErrors;
 }
 
-export type $ZodErrorTree<T, U = string> = T extends [any, ...any[]]
-  ? { errors: U[]; items?: { [K in keyof T]?: $ZodErrorTree<T[K], U> } }
-  : T extends any[]
-    ? { errors: U[]; items?: Array<$ZodErrorTree<T[number], U>> }
-    : T extends object
-      ? {
-          errors: U[];
-          properties?: { [K in keyof T]?: $ZodErrorTree<T[K], U> };
-        }
-      : { errors: U[] };
+export type $ZodErrorTree<T, U = string> = T extends util.Primitive
+  ? { errors: U[] }
+  : T extends [any, ...any[]]
+    ? { errors: U[]; items?: { [K in keyof T]?: $ZodErrorTree<T[K], U> } }
+    : T extends any[]
+      ? { errors: U[]; items?: Array<$ZodErrorTree<T[number], U>> }
+      : T extends object
+        ? {
+            errors: U[];
+            properties?: { [K in keyof T]?: $ZodErrorTree<T[K], U> };
+          }
+        : { errors: U[] };
 
 export function treeifyError<T>(error: $ZodError<T>): $ZodErrorTree<T>;
 export function treeifyError<T, U>(error: $ZodError<T>, mapper?: (issue: $ZodIssue) => U): $ZodErrorTree<T, U>;
-export function treeifyError<T>(error: $ZodError, _mapper?: any) {
-  const mapper: (issue: $ZodIssue) => any =
-    _mapper ||
-    function (issue: $ZodIssue) {
-      return issue.message;
-    };
-  const result: $ZodErrorTree<T> = { errors: [] } as any;
+export function treeifyError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIssue) => issue.message as U) {
+  const result: $ZodErrorTree<T, U> = { errors: [] } as any;
   const processError = (error: { issues: $ZodIssue[] }, path: PropertyKey[] = []) => {
     for (const issue of error.issues) {
       if (issue.code === "invalid_union" && issue.errors.length) {
@@ -326,7 +361,7 @@ export function treeifyError<T>(error: $ZodError, _mapper?: any) {
         let curr: any = result;
         let i = 0;
         while (i < fullpath.length) {
-          const el = fullpath[i];
+          const el = fullpath[i]!;
 
           const terminal = i === fullpath.length - 1;
           if (typeof el === "string") {
@@ -384,8 +419,9 @@ export function treeifyError<T>(error: $ZodError, _mapper?: any) {
  *   ✖ Invalid input: expected number
  * ```
  */
-export function toDotPath(path: (string | number | symbol)[]): string {
+export function toDotPath(_path: readonly (string | number | symbol | StandardSchemaV1.PathSegment)[]): string {
   const segs: string[] = [];
+  const path: PropertyKey[] = _path.map((seg: any) => (typeof seg === "object" ? seg.key : seg));
   for (const seg of path) {
     if (typeof seg === "number") segs.push(`[${seg}]`);
     else if (typeof seg === "symbol") segs.push(`[${JSON.stringify(String(seg))}]`);
@@ -399,14 +435,10 @@ export function toDotPath(path: (string | number | symbol)[]): string {
   return segs.join("");
 }
 
-interface BaseError {
-  issues: $ZodIssueBase[];
-}
-
-export function prettifyError(error: BaseError): string {
+export function prettifyError(error: StandardSchemaV1.FailureResult): string {
   const lines: string[] = [];
   // sort by path length
-  const issues = [...error.issues].sort((a, b) => a.path.length - b.path.length);
+  const issues = [...error.issues].sort((a, b) => (a.path ?? []).length - (b.path ?? []).length);
 
   // Process each issue
   for (const issue of issues) {

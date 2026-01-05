@@ -748,11 +748,13 @@ function isValidJWT(jwt: string, alg?: string): boolean {
   if (!jwtRegex.test(jwt)) return false;
   try {
     const [header] = jwt.split(".");
+    if (!header) return false;
     // Convert base64url to base64
     const base64 = header
       .replace(/-/g, "+")
       .replace(/_/g, "/")
       .padEnd(header.length + ((4 - (header.length % 4)) % 4), "=");
+    // @ts-ignore
     const decoded = JSON.parse(atob(base64));
     if (typeof decoded !== "object" || decoded === null) return false;
     if ("typ" in decoded && decoded?.typ !== "JWT") return false;
@@ -956,6 +958,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         }
       } else if (check.kind === "url") {
         try {
+          // @ts-ignore
           new URL(input.data);
         } catch {
           ctx = this._getOrReturnCtx(input, ctx);
@@ -2575,7 +2578,7 @@ export class ZodObject<
   Output = objectOutputType<T, Catchall, UnknownKeys>,
   Input = objectInputType<T, Catchall, UnknownKeys>,
 > extends ZodType<Output, ZodObjectDef<T, UnknownKeys, Catchall>, Input> {
-  private _cached: { shape: T; keys: string[] } | null = null;
+  _cached: { shape: T; keys: string[] } | null = null;
 
   _getCached(): { shape: T; keys: string[] } {
     if (this._cached !== null) return this._cached;
@@ -2616,7 +2619,7 @@ export class ZodObject<
       alwaysSet?: boolean;
     }[] = [];
     for (const key of shapeKeys) {
-      const keyValidator = shape[key];
+      const keyValidator = shape[key]!;
       const value = ctx.data[key];
       pairs.push({
         key: { status: "valid", value: key },
@@ -2926,7 +2929,7 @@ export class ZodObject<
    * @deprecated
    */
   deepPartial(): partialUtil.DeepPartial<this> {
-    return deepPartialify(this) as any;
+    return deepPartialify(this);
   }
 
   partial(): ZodObject<{ [k in keyof T]: ZodOptional<T[k]> }, UnknownKeys, Catchall>;
@@ -2943,7 +2946,7 @@ export class ZodObject<
     const newShape: any = {};
 
     for (const key of util.objectKeys(this.shape)) {
-      const fieldSchema = this.shape[key];
+      const fieldSchema = this.shape[key]!;
 
       if (mask && !mask[key]) {
         newShape[key] = fieldSchema;
@@ -3194,7 +3197,7 @@ const getDiscriminator = <T extends ZodTypeAny>(type: T): Primitive[] => {
     return type.options;
   } else if (type instanceof ZodNativeEnum) {
     // eslint-disable-next-line ban/ban
-    return util.objectValues(type.enum as any);
+    return util.objectValues(type.enum);
   } else if (type instanceof ZodDefault) {
     return getDiscriminator(type._def.innerType);
   } else if (type instanceof ZodUndefined) {
@@ -3431,7 +3434,7 @@ export class ZodIntersection<T extends ZodTypeAny, U extends ZodTypeAny> extends
         status.dirty();
       }
 
-      return { status: status.value, value: merged.data as any };
+      return { status: status.value, value: merged.data };
     };
 
     if (ctx.common.async) {
@@ -3955,7 +3958,7 @@ export class ZodFunction<Args extends ZodTuple<any, any>, Returns extends ZodTyp
         path: ctx.path,
         errorMaps: [ctx.common.contextualErrorMap, ctx.schemaErrorMap, getErrorMap(), defaultErrorMap].filter(
           (x) => !!x
-        ) as ZodErrorMap[],
+        ),
         issueData: {
           code: ZodIssueCode.invalid_arguments,
           argumentsError: error,
@@ -3969,7 +3972,7 @@ export class ZodFunction<Args extends ZodTuple<any, any>, Returns extends ZodTyp
         path: ctx.path,
         errorMaps: [ctx.common.contextualErrorMap, ctx.schemaErrorMap, getErrorMap(), defaultErrorMap].filter(
           (x) => !!x
-        ) as ZodErrorMap[],
+        ),
         issueData: {
           code: ZodIssueCode.invalid_return_type,
           returnTypeError: error,
@@ -4237,7 +4240,7 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<T[number],
     for (const val of this._def.values) {
       enumValues[val] = val;
     }
-    return enumValues as any;
+    return enumValues;
   }
 
   get Values(): Values<T> {
@@ -4245,7 +4248,7 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<T[number],
     for (const val of this._def.values) {
       enumValues[val] = val;
     }
-    return enumValues as any;
+    return enumValues;
   }
 
   get Enum(): Values<T> {
@@ -4253,7 +4256,7 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<T[number],
     for (const val of this._def.values) {
       enumValues[val] = val;
     }
-    return enumValues as any;
+    return enumValues;
   }
 
   extract<ToExtract extends readonly [T[number], ...T[number][]]>(
@@ -4323,7 +4326,7 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<T[keyof T], ZodNa
       });
       return INVALID;
     }
-    return OK(input.data as any);
+    return OK(input.data);
   }
 
   get enum() {

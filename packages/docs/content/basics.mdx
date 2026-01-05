@@ -1,10 +1,10 @@
 ---
 title: Basic usage
+description: "Basic usage guide covering schema definition, parsing data, error handling, and type inference"
 ---
 
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 import { Callout } from "fumadocs-ui/components/callout";
-import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
 This page will walk you through the basics of creating schemas, parsing data, and using inferred types. For complete documentation on Zod's schema API, refer to [Defining schemas](/api).
 
@@ -15,7 +15,7 @@ Before you can do anything else, you need to define a schema. For the purposes o
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-import { z } from "zod/v4"; 
+import * as z from "zod"; 
 
 const Player = z.object({ 
   username: z.string(),
@@ -25,7 +25,7 @@ const Player = z.object({
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-import { z } from "zod/v4-mini"
+import * as z from "zod/mini"
 
 const Player = z.object({ 
   username: z.string(),
@@ -34,24 +34,6 @@ const Player = z.object({
 ```
 </Tab>
 </Tabs>
-
-<Accordions>
-<Accordion title='Why the "/v4" suffix?'>
-  To allow time for the ecosystem the migrate, there will be a transitionary period in which Zod 4 will be published alongside Zod 3 and consumable as a subpath import:
-
-  ```ts
-  import { z } from "zod/v4"
-  ```
-
-  During this transition window:
-
-  1. Zod 4 is considered stable and production-ready
-  2. The `"zod"` package will continue to be published in the `3.x.x` version range on npm. The `/v4` subpath will be added in the `zod@3.25` release.
-  3. Zod 3 will continue to be exported from the package root (`"zod"`) as well as a new subpath (`"zod/v3"`). It will continue to receive bug fixes & stability improvements.
-
-  For a complete breakdown of the subpath versioning strategy, see the [associated writeup](https://github.com/colinhacks/zod/issues/4371).
-</Accordion>
-</Accordions>
 
 ## Parsing data
 
@@ -63,13 +45,10 @@ Player.parse({ username: "billie", xp: 100 });
 ```
 
 <Callout>
-**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](#transform), you'll need to use the `.parseAsync()` method instead. 
+**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](/api#refinements) or [transforms](/api#transforms), you'll need to use the `.parseAsync()` method instead.
 
 ```ts
-const schema = z.string().refine(async (val) => val.length <= 8);
-
-await schema.parseAsync("hello");
-// => "hello"
+await Player.parseAsync({ username: "billie", xp: 100 }); 
 ```
 </Callout>
 
@@ -142,13 +121,10 @@ if (!result.success) {
 ```
 
 <Callout>
-**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](#transform), you'll need to use the `.safeParseAsync()` method instead. 
+**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](/api#refinements) or [transforms](/api#transforms), you'll need to use the `.safeParseAsync()` method instead.
 
 ```ts
-const schema = z.string().refine(async (val) => val.length <= 8);
-
 await schema.safeParseAsync("hello");
-// => { success: true; data: "hello" }
 ```
 </Callout>
 

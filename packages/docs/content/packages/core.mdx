@@ -1,14 +1,15 @@
 ---
 title: Zod Core
+description: "Zod Core package - minimal core functionality for custom implementations"
 ---
 
 import { Callout } from "fumadocs-ui/components/callout"
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
-This sub-package exports the core classes and utilities that are consumed by `zod/v4` and `zod/v4-mini`. It is not intended to be used directly; instead it's designed to be extended by other packages. It implements:
+This sub-package exports the core classes and utilities that are consumed by Zod and Zod Mini. It is not intended to be used directly; instead it's designed to be extended by other packages. It implements:
 
 ```ts
-import { z } from "zod/v4/core";
+import * as z from "zod/v4/core";
 
 // the base class for all Zod schemas
 z.$ZodType;
@@ -65,7 +66,7 @@ export type $ZodTypes =
   | $ZodVoid
   | $ZodArray
   | $ZodObject
-  | $ZodUnion
+  | $ZodUnion // $ZodDiscriminatedUnion extends this
   | $ZodIntersection
   | $ZodTuple
   | $ZodRecord
@@ -83,7 +84,7 @@ export type $ZodTypes =
   | $ZodNonOptional
   | $ZodReadonly
   | $ZodNaN
-  | $ZodPipe
+  | $ZodPipe // $ZodCodec extends this
   | $ZodSuccess
   | $ZodCatch
   | $ZodFile;
@@ -121,9 +122,9 @@ export type $ZodTypes =
               - $ZodJWT
       - $ZodNumber
           - $ZodNumberFormat
-      - $ZodBoolean
       - $ZodBigInt
           - $ZodBigIntFormat
+      - $ZodBoolean
       - $ZodSymbol
       - $ZodUndefined
       - $ZodNull
@@ -154,6 +155,7 @@ export type $ZodTypes =
       - $ZodCatch
       - $ZodNaN
       - $ZodPipe
+          - $ZodCodec
       - $ZodReadonly
       - $ZodTemplateLiteral
       - $ZodCustom
@@ -164,7 +166,7 @@ export type $ZodTypes =
 
 ## Internals
 
-All `zod/v4/core` subclasses only contain a single property: `_zod`. This property is an object containing the schemas *internals*. The goal is to make `zod/v4/core` as extensible and unopinionated as possible. Other libraries can "build their own Zod" on top of these classes without `zod/v4/core` cluttering up the interface. Refer to the implementations of `zod/v4` and `zod/v4-mini` for examples of how to extend these classes. 
+All `zod/v4/core` subclasses only contain a single property: `_zod`. This property is an object containing the schemas *internals*. The goal is to make `zod/v4/core` as extensible and unopinionated as possible. Other libraries can "build their own Zod" on top of these classes without `zod/v4/core` cluttering up the interface. Refer to the implementations of `zod` and `zod/mini` for examples of how to extend these classes. 
 
 The `_zod` internals property contains some notable properties:
 
@@ -262,7 +264,7 @@ export class $ZodCheck<in T = unknown> {
 The `_zod` internals property contains some notable properties:
 
 - `.def` — The check's *definition*: this is the object you pass into the class's constructor to create the check. It completely describes the check, and it's JSON-serializable.
-  - `.def.check` — A string representing the check's type, e.g. `"min_lenth"`, `"less_than"`, `"string_format"`, etc.
+  - `.def.check` — A string representing the check's type, e.g. `"min_length"`, `"less_than"`, `"string_format"`, etc.
 - `.check()` — Contains the check's validation logic.
 
 `zod/v4/core` exports a number of subclasses that perform some common refinements. All first-party subclasses are exported as a union called `z.$ZodChecks`.
@@ -379,8 +381,8 @@ The base class for all errors in Zod is `$ZodError`.
 
 > For performance reasons, `$ZodError` *does not* extend the built-in `Error` class! So using `instanceof Error` will return `false`.
 
-- The `zod/v4` package implements a subclass of `$ZodError` called `ZodError` with some additional convenience methods.
-- The `zod/v4-mini` sub-package directly uses `$ZodError`
+- The `zod` package implements a subclass of `$ZodError` called `ZodError` with some additional convenience methods.
+- The `zod/mini` sub-package directly uses `$ZodError`
 
 ```ts
 export class $ZodError<T = unknown> implements Error {
@@ -418,7 +420,7 @@ export type $ZodIssue =
   | $ZodIssueCustom;
   ```
 
-For details on each type, refer to [the implementation](https://github.com/colinhacks/zod/blob/v4/packages/core/src/errors.ts).
+For details on each type, refer to [the implementation](https://github.com/colinhacks/zod/blob/main/packages/zod/src/v4/core/errors.ts).
 
 
 {/* ## Best practices

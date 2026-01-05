@@ -1,18 +1,20 @@
 {
   "compilerOptions": {
     "target": "es2020",
-    "lib": ["es6", "dom"],
+    "lib": ["es2020", "dom"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "jsx": "react",
 
     "strict": true,
     "alwaysStrict": true,
+    "noUncheckedIndexedAccess": false,
 
+    "types": [],
     "exactOptionalPropertyTypes": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "noUnusedLocals": false,
+    "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitAny": true,
     "noImplicitReturns": true,
@@ -29,7 +31,7 @@
     "downlevelIteration": true,
     "isolatedModules": true,
 
-    "pretty": true,
-    "customConditions": ["@zod/source"]
-  }
+    "pretty": true
+  },
+  "exclude": ["node_modules"]
 }

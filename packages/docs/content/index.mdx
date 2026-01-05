@@ -1,6 +1,7 @@
 ---
 title: "Intro"
 mode: "center"
+description: "Introduction to Zod - TypeScript-first schema validation library with static type inference"
 ---
 
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
@@ -11,13 +12,11 @@ import { Platinum } from '../components/platinum';
 import { Gold } from '../components/gold';
 import { Silver } from '../components/silver';
 import { Bronze } from '../components/bronze';
+import { HeroLogo } from '../components/hero-logo';
 
 
 <div className="flex flex-col items-stretch text-center">
-  <div style={{height:"170px"}}>
-    <img  className="block dark:hidden mx-auto my-0! h-full" alt="zod logo" src="/logo/logo-glow.png"  />
-    <img  className="hidden dark:block mx-auto my-0! h-full" alt="zod logo" src="/logo/logo-glow.png"  />
-  </div>
+  <HeroLogo />
   <h1 className="text-3xl font-bold">Zod</h1>
   <p className="mt-2 mb-1">TypeScript-first schema validation with static type inference<br/>by <a href="https://x.com/colinhacks">@colinhacks</a> </p>
   <br/>
@@ -86,7 +85,7 @@ import { Bronze } from '../components/bronze';
 Zod is a TypeScript-first validation library. Using Zod, you can define *schemas* you can use to validate data, from a simple `string` to a complex nested object.
 
 ```ts
-import { z } from "zod/v4";
+import * as z from "zod";
 
 const User = z.object({
   name: z.string(),
@@ -116,27 +115,14 @@ console.log(data.name);
 
 ## Installation
 
-{/* ### `npm` */}
 
 ```sh
-npm install zod       # npm
-deno add npm:zod      # deno
-yarn add zod          # yarn
-bun add zod           # bun
-pnpm add zod          # pnpm
+npm install zod
 ```
 
-Zod also publishes a canary version on every commit. To install the canary:
+> Zod is also available as `@zod/zod` on [jsr.io](https://jsr.io/@zod/zod).
 
-```sh
-npm install zod@canary       # npm
-deno add npm:zod@canary      # deno
-yarn add zod@canary          # yarn
-bun add zod@canary           # bun
-pnpm add zod@canary          # pnpm
-```
-
-{/* > The rest of this README assumes you are using npm and importing directly from the `"zod"` package. */}
+Zod provides an MCP server that can be used by agents to search Zod's docs. To add to your editor, follow [these instructions](https://share.inkeep.com/zod/mcp). Zod also provides an [llms.txt](https://zod.dev/llms.txt) file.
 
 ## Requirements
 
@@ -157,16 +143,24 @@ You must enable `strict` mode in your `tsconfig.json`. This is a best practice f
 }
 ```
 
-### `"moduleResolution"`
 
-Your `"moduleResolution"` should be set to one of the following. The legacy `"node"` and `"classic"` modes are not supported, as they do not support subpath imports.
+## Ecosystem
 
-- `"node16"` (default if `"module"` is set to `"node16"`/`"node18"`)
-- `"nodenext"` (default if `"module"` is set to `"nodenext"`)
-- `"bundler"`
+Zod has a thriving ecosystem of libraries, tools, and integrations. Refer to the [Ecosystem page](/ecosystem) for a complete list of libraries that support Zod or are built on top of it.
 
+- [Resources](/ecosystem?id=resources)
+- [API Libraries](/ecosystem?id=api-libraries)
+- [Form Integrations](/ecosystem?id=form-integrations)
+- [Zod to X](/ecosystem?id=zod-to-x)
+- [X to Zod](/ecosystem?id=x-to-zod)
+- [Mocking Libraries](/ecosystem?id=mocking-libraries)
+- [Powered by Zod](/ecosystem?id=powered-by-zod)
 
-<br/>
+I also contribute to the following projects, which I'd like to highlight:
+
+- [tRPC](https://trpc.io) - End-to-end typesafe APIs, with support for Zod schemas
+- [React Hook Form](https://react-hook-form.com) - Hook-based form validation with a [Zod resolver](https://react-hook-form.com/docs/useform#resolver)
+- [zshy](https://github.com/colinhacks/zshy) - Originally created as Zod's internal build tool. Bundler-free, batteries-included build tool for TypeScript libraries. Powered by `tsc`.
 
 ## Sponsors
 
@@ -194,3 +188,6 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
 ### Bronze
 
 <Bronze />
+
+<br />
+

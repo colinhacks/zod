@@ -1,5 +1,5 @@
 import { expect, expectTypeOf, test } from "vitest";
-import * as z from "zod/v4-mini";
+import * as z from "zod/mini";
 
 test("z.object", () => {
   const a = z.object({
@@ -34,6 +34,21 @@ test("z.object", () => {
   const obj = Object.create(null);
   obj.a = "foo";
   expect(schema.parse(obj)).toEqual({ a: "foo" });
+});
+
+test("z.object().check()", () => {
+  const a = z.object({
+    name: z.string(),
+    age: z.number(),
+    points: z.optional(z.number()),
+    "test?": z.boolean(),
+  });
+
+  type a = z.output<typeof a>;
+
+  a.check(({ value }) => {
+    expectTypeOf(value).toEqualTypeOf<a>();
+  });
 });
 
 test("z.strictObject", () => {
@@ -74,6 +89,12 @@ test("z.keyof", () => {
   type UserKeys = z.infer<typeof userKeysSchema>;
   expectTypeOf<UserKeys>().toEqualTypeOf<"name" | "age" | "email">();
   expect(userKeysSchema).toBeDefined();
+  expect(userKeysSchema._zod.def.type).toBe("enum");
+  expect(userKeysSchema._zod.def.entries).toEqual({
+    name: "name",
+    age: "age",
+    email: "email",
+  });
   expect(z.safeParse(userKeysSchema, "name").success).toBe(true);
   expect(z.safeParse(userKeysSchema, "age").success).toBe(true);
   expect(z.safeParse(userKeysSchema, "email").success).toBe(true);
@@ -93,6 +114,15 @@ test("z.extend", () => {
   }>();
   expect(extendedSchema).toBeDefined();
   expect(z.safeParse(extendedSchema, { name: "John", age: 30, isAdmin: true }).success).toBe(true);
+});
+
+test("z.safeExtend", () => {
+  const extended = z.safeExtend(userSchema, { name: z.string() });
+  expect(z.safeParse(extended, { name: "John", age: 30 }).success).toBe(true);
+  type Extended = z.infer<typeof extended>;
+  expectTypeOf<Extended>().toEqualTypeOf<{ name: string; age: number; email?: string }>();
+  // @ts-expect-error
+  z.safeExtend(userSchema, { name: z.number() });
 });
 
 test("z.pick", () => {
@@ -136,4 +166,62 @@ test("z.partial with mask", () => {
   }>();
   expect(z.safeParse(partialSchemaWithMask, { age: 30 }).success).toBe(true);
   expect(z.safeParse(partialSchemaWithMask, { name: "John" }).success).toBe(false);
+});
+
+test("z.pick/omit/partial/required - do not allow unknown keys", () => {
+  const schema = z.object({
+    name: z.string(),
+    age: z.number(),
+  });
+
+  // Mixed valid + invalid keys - throws at parse time (lazy evaluation)
+  // @ts-expect-error
+  expect(() => z.parse(z.pick(schema, { name: true, asdf: true }), {})).toThrow();
+  // @ts-expect-error
+  expect(() => z.parse(z.omit(schema, { name: true, asdf: true }), {})).toThrow();
+  // @ts-expect-error
+  expect(() => z.parse(z.partial(schema, { name: true, asdf: true }), {})).toThrow();
+  // @ts-expect-error
+  expect(() => z.parse(z.required(schema, { name: true, asdf: true }), {})).toThrow();
+
+  // Only invalid keys
+  // @ts-expect-error
+  expect(() => z.parse(z.pick(schema, { $unknown: true }), {})).toThrow();
+  // @ts-expect-error
+  expect(() => z.parse(z.omit(schema, { $unknown: true }), {})).toThrow();
+  // @ts-expect-error
+  expect(() => z.parse(z.partial(schema, { $unknown: true }), {})).toThrow();
+  // @ts-expect-error
+  expect(() => z.parse(z.required(schema, { $unknown: true }), {})).toThrow();
+});
+
+test("z.catchall", () => {
+  // z.catchall()
+  const schema = z.catchall(
+    z.object({
+      name: z.string(),
+      // age: z.number(),
+    }),
+    z.string()
+  );
+
+  type schemaIn = z.input<typeof schema>;
+  type schemaOut = z.output<typeof schema>;
+  expectTypeOf<schemaIn>().toEqualTypeOf<{
+    name: string;
+    [key: string]: string;
+  }>();
+
+  expectTypeOf<schemaOut>().toEqualTypeOf<{
+    name: string;
+    [key: string]: string;
+  }>();
+
+  schema.parse({
+    name: "john",
+    age: "30",
+    extra: "extra value",
+  });
+
+  expect(() => schema.parse({ name: "john", age: 30 })).toThrow();
 });

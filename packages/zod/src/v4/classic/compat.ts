@@ -1,6 +1,6 @@
 // Zod 3 compat layer
 
-import * as core from "zod/v4/core";
+import * as core from "../core/index.js";
 import type { ZodType } from "./schemas.js";
 
 export type {
@@ -10,7 +10,7 @@ export type {
   output as Infer,
   /** @deprecated Use `z.core.$$ZodFirstPartyTypes` instead */
   $ZodTypes as ZodFirstPartySchemaTypes,
-} from "zod/v4/core";
+} from "../core/index.js";
 
 /** @deprecated Use the raw string literal codes instead, e.g. "invalid_type". */
 export const ZodIssueCode = {
@@ -27,16 +27,6 @@ export const ZodIssueCode = {
   custom: "custom",
 } as const;
 
-/** @deprecated Not necessary in Zod 4. */
-type INVALID = { status: "aborted" };
-/** @deprecated Not necessary in Zod 4. */
-const INVALID: INVALID = Object.freeze({
-  status: "aborted",
-});
-
-/** A special constant with type `never` */
-export const NEVER = INVALID as never;
-
 /** @deprecated Use `z.$ZodFlattenedError` */
 export type inferFlattenedErrors<T extends core.$ZodType, U = string> = core.$ZodFlattenedError<core.output<T>, U>;
 
@@ -50,7 +40,7 @@ export type inferFormattedError<T extends core.$ZodType<any, any>, U = string> =
 export type BRAND<T extends string | number | symbol = string | number | symbol> = {
   [core.$brand]: { [k in T]: true };
 };
-export { $brand, config } from "zod/v4/core";
+export { $brand, config } from "../core/index.js";
 
 /** @deprecated Use `z.config(params)` instead. */
 export function setErrorMap(map: core.$ZodErrorMap): void {
@@ -73,4 +63,8 @@ export type {
   ZodType as Schema,
 };
 
+/** Included for Zod 3 compatibility */
 export type ZodRawShape = core.$ZodShape;
+
+/** @deprecated Do not use. Stub definition, only included for zod-to-json-schema compatibility. */
+export enum ZodFirstPartyTypeKind {}

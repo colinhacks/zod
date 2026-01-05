@@ -1,7 +1,7 @@
-#!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
-
-pnpm semver-check
-npx lint-staged --verbose
-
-
+if [ -n "$(git ls-files --others --exclude-standard)" ]; then
+  echo "ERROR: untracked files present"; 
+  git status;
+  exit 1
+fi
+pnpm check:semver
+lint-staged --verbose

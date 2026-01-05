@@ -20,6 +20,10 @@ export type JWTAlgorithm =
   | "PS512"
   | "EdDSA"
   | (string & {});
+
+export type HashAlgorithm = "md5" | "sha1" | "sha256" | "sha384" | "sha512";
+export type HashEncoding = "hex" | "base64" | "base64url";
+export type HashFormat = `${HashAlgorithm}_${HashEncoding}`;
 export type IPVersion = "v4" | "v6";
 export type MimeTypes =
   | "application/json"
@@ -123,6 +127,7 @@ export type Identity<T> = T;
 export type Flatten<T> = Identity<{ [k in keyof T]: T[k] }>;
 export type Mapped<T> = { [k in keyof T]: T[k] };
 export type Prettify<T> = {
+  // @ts-ignore
   [K in keyof T]: T[K];
 } & {};
 
@@ -143,7 +148,7 @@ export type Extend<A extends SomeObject, B extends SomeObject> = Flatten<
       }
 >;
 
-export type TupleItems = ReadonlyArray<schemas.$ZodType>;
+export type TupleItems = ReadonlyArray<schemas.SomeType>;
 export type AnyFunc = (...args: any[]) => any;
 export type IsProp<T, K extends keyof T> = T[K] extends AnyFunc ? never : K;
 export type MaybeAsync<T> = T | Promise<T>;
@@ -156,7 +161,7 @@ export type ExtractIndexSignature<T> = {
 };
 export type Keys<T extends object> = keyof OmitIndexSignature<T>;
 
-export type SchemaClass<T extends schemas.$ZodType> = {
+export type SchemaClass<T extends schemas.SomeType> = {
   new (def: T["_zod"]["def"]): T;
 };
 export type EnumValue = string | number; // | bigint | boolean | symbol;
@@ -179,13 +184,8 @@ export type SafeParseError<T> = {
   error: errors.$ZodError<T>;
 };
 
-// export type DiscriminatorMapElement = {
-//   values: Set<Primitive>;
-//   maps: DiscriminatorMap[];
-// };
 export type PropValues = Record<string, Set<Primitive>>;
 export type PrimitiveSet = Set<Primitive>;
-export type DiscriminatorMap = Map<Primitive, schemas.$ZodType>;
 
 // functions
 export function assertEqual<A, B>(val: AssertEqual<A, B>): AssertEqual<A, B> {
@@ -199,17 +199,16 @@ export function assertNotEqual<A, B>(val: AssertNotEqual<A, B>): AssertNotEqual<
 export function assertIs<T>(_arg: T): void {}
 
 export function assertNever(_x: never): never {
-  throw new Error();
+  throw new Error("Unexpected value in exhaustive check");
 }
 export function assert<T>(_: any): asserts _ is T {}
 
-export function getValidEnumValues(obj: any): any {
-  const validKeys = Object.keys(obj).filter((k: any) => typeof obj[obj[k]] !== "number");
-  const filtered: any = {};
-  for (const k of validKeys) {
-    filtered[k] = obj[k];
-  }
-  return Object.values(filtered);
+export function getEnumValues(entries: EnumLike): EnumValue[] {
+  const numericValues = Object.values(entries).filter((v) => typeof v === "number");
+  const values = Object.entries(entries)
+    .filter(([k, _]) => numericValues.indexOf(+k) === -1)
+    .map(([_, v]) => v);
+  return values;
 }
 
 export function joinValues<T extends Primitive[]>(array: T, separator = "|"): string {
@@ -247,23 +246,36 @@ export function cleanRegex(source: string): string {
 
 export function floatSafeRemainder(val: number, step: number): number {
   const valDecCount = (val.toString().split(".")[1] || "").length;
-  const stepDecCount = (step.toString().split(".")[1] || "").length;
+  const stepString = step.toString();
+  let stepDecCount = (stepString.split(".")[1] || "").length;
+  if (stepDecCount === 0 && /\d?e-\d?/.test(stepString)) {
+    const match = stepString.match(/\d?e-(\d?)/);
+    if (match?.[1]) {
+      stepDecCount = Number.parseInt(match[1]);
+    }
+  }
+
   const decCount = valDecCount > stepDecCount ? valDecCount : stepDecCount;
   const valInt = Number.parseInt(val.toFixed(decCount).replace(".", ""));
   const stepInt = Number.parseInt(step.toFixed(decCount).replace(".", ""));
   return (valInt % stepInt) / 10 ** decCount;
 }
 
+const EVALUATING = Symbol("evaluating");
+
 export function defineLazy<T, K extends keyof T>(object: T, key: K, getter: () => T[K]): void {
-  const set = false;
+  let value: T[K] | typeof EVALUATING | undefined = undefined;
   Object.defineProperty(object, key, {
     get() {
-      if (!set) {
-        const value = getter();
-        object[key] = value;
-        return value;
+      if (value === EVALUATING) {
+        // Circular reference detected, return undefined to break the cycle
+        return undefined as T[K];
       }
-      throw new Error("cached value already set");
+      if (value === undefined) {
+        value = EVALUATING;
+        value = getter();
+      }
+      return value;
     },
     set(v) {
       Object.defineProperty(object, key, {
@@ -274,6 +286,10 @@ export function defineLazy<T, K extends keyof T>(object: T, key: K, getter: () =
     },
     configurable: true,
   });
+}
+
+export function objectClone(obj: object) {
+  return Object.create(Object.getPrototypeOf(obj), Object.getOwnPropertyDescriptors(obj));
 }
 
 export function assignProp<T extends object, K extends PropertyKey>(
@@ -289,6 +305,21 @@ export function assignProp<T extends object, K extends PropertyKey>(
   });
 }
 
+export function mergeDefs(...defs: Record<string, any>[]): any {
+  const mergedDescriptors: Record<string, PropertyDescriptor> = {};
+
+  for (const def of defs) {
+    const descriptors = Object.getOwnPropertyDescriptors(def);
+    Object.assign(mergedDescriptors, descriptors);
+  }
+
+  return Object.defineProperties({}, mergedDescriptors);
+}
+
+export function cloneDef(schema: schemas.$ZodType): any {
+  return mergeDefs(schema._zod.def);
+}
+
 export function getElementAtPath(obj: any, path: (string | number)[] | null | undefined): any {
   if (!path) return obj;
   return path.reduce((acc, key) => acc?.[key], obj);
@@ -301,7 +332,7 @@ export function promiseAllObject<T extends object>(promisesObj: T): Promise<{ [k
   return Promise.all(promises).then((results) => {
     const resolvedObj: any = {};
     for (let i = 0; i < keys.length; i++) {
-      resolvedObj[keys[i]] = results[i];
+      resolvedObj[keys[i]!] = results[i];
     }
     return resolvedObj;
   });
@@ -320,11 +351,29 @@ export function esc(str: string): string {
   return JSON.stringify(str);
 }
 
+export function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+export const captureStackTrace: (targetObject: object, constructorOpt?: Function) => void = (
+  "captureStackTrace" in Error ? Error.captureStackTrace : (..._args: any[]) => {}
+) as any;
+
 export function isObject(data: any): data is Record<PropertyKey, unknown> {
   return typeof data === "object" && data !== null && !Array.isArray(data);
 }
 
 export const allowsEval: { value: boolean } = cached(() => {
+  // @ts-ignore
+  if (typeof navigator !== "undefined" && navigator?.userAgent?.includes("Cloudflare")) {
+    return false;
+  }
+
   try {
     const F = Function;
     new F("");
@@ -334,12 +383,31 @@ export const allowsEval: { value: boolean } = cached(() => {
   }
 });
 
-export function isPlainObject(data: any): data is Record<PropertyKey, unknown> {
-  return (
-    typeof data === "object" &&
-    data !== null &&
-    (Object.getPrototypeOf(data) === Object.prototype || Object.getPrototypeOf(data) === null)
-  );
+export function isPlainObject(o: any): o is Record<PropertyKey, unknown> {
+  if (isObject(o) === false) return false;
+
+  // modified constructor
+  const ctor = o.constructor;
+  if (ctor === undefined) return true;
+
+  if (typeof ctor !== "function") return true;
+
+  // modified prototype
+  const prot = ctor.prototype;
+  if (isObject(prot) === false) return false;
+
+  // ctor doesn't have static `isPrototypeOf`
+  if (Object.prototype.hasOwnProperty.call(prot, "isPrototypeOf") === false) {
+    return false;
+  }
+
+  return true;
+}
+
+export function shallowClone(o: any): any {
+  if (isPlainObject(o)) return { ...o };
+  if (Array.isArray(o)) return [...o];
+  return o;
 }
 
 export function numKeys(data: any): number {
@@ -396,6 +464,7 @@ export const getParsedType = (data: any): ParsedTypes => {
       if (typeof Date !== "undefined" && data instanceof Date) {
         return "date";
       }
+      // @ts-ignore
       if (typeof File !== "undefined" && data instanceof File) {
         return "file";
       }
@@ -448,7 +517,7 @@ export function normalizeParams<T>(_params: T): Normalize<T> {
   }
   delete params.message;
   if (typeof params.error === "string") return { ...params, error: () => params.error } as any;
-  return params as any;
+  return params;
 }
 
 export function createTransparentProxy<T extends object>(getter: () => T): T {
@@ -496,7 +565,7 @@ export function stringifyPrimitive(value: any): string {
 
 export function optionalKeys(shape: schemas.$ZodShape): string[] {
   return Object.keys(shape).filter((k) => {
-    return shape[k]._zod.optin === "optional" && shape[k]._zod.optout === "optional";
+    return shape[k]!._zod.optin === "optional" && shape[k]!._zod.optout === "optional";
   });
 }
 
@@ -522,68 +591,119 @@ export const BIGINT_FORMAT_RANGES: Record<checks.$ZodBigIntFormats, [bigint, big
 };
 
 export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>): any {
-  const newShape: Writeable<schemas.$ZodShape> = {};
-  const currDef = schema._zod.def; //.shape;
+  const currDef = schema._zod.def;
 
-  for (const key in mask) {
-    if (!(key in currDef.shape)) {
-      throw new Error(`Unrecognized key: "${key}"`);
-    }
-    if (!mask[key]) continue;
-
-    // pick key
-    newShape[key] = currDef.shape[key];
+  const checks = currDef.checks;
+  const hasChecks = checks && checks.length > 0;
+  if (hasChecks) {
+    throw new Error(".pick() cannot be used on object schemas containing refinements");
   }
 
-  return clone(schema, {
-    ...schema._zod.def,
-    shape: newShape,
+  const def = mergeDefs(schema._zod.def, {
+    get shape() {
+      const newShape: Writeable<schemas.$ZodShape> = {};
+      for (const key in mask) {
+        if (!(key in currDef.shape)) {
+          throw new Error(`Unrecognized key: "${key}"`);
+        }
+        if (!mask[key]) continue;
+        newShape[key] = currDef.shape[key]!;
+      }
+
+      assignProp(this, "shape", newShape); // self-caching
+      return newShape;
+    },
     checks: [],
-  }) as any;
+  });
+
+  return clone(schema, def) as any;
 }
 
 export function omit(schema: schemas.$ZodObject, mask: object): any {
-  const newShape: Writeable<schemas.$ZodShape> = { ...schema._zod.def.shape };
-  const currDef = schema._zod.def; //.shape;
-  for (const key in mask) {
-    if (!(key in currDef.shape)) {
-      throw new Error(`Unrecognized key: "${key}"`);
-    }
-    if (!(mask as any)[key]) continue;
+  const currDef = schema._zod.def;
 
-    delete newShape[key];
+  const checks = currDef.checks;
+  const hasChecks = checks && checks.length > 0;
+  if (hasChecks) {
+    throw new Error(".omit() cannot be used on object schemas containing refinements");
   }
-  return clone(schema, {
-    ...schema._zod.def,
-    shape: newShape,
+
+  const def = mergeDefs(schema._zod.def, {
+    get shape() {
+      const newShape: Writeable<schemas.$ZodShape> = { ...schema._zod.def.shape };
+      for (const key in mask) {
+        if (!(key in currDef.shape)) {
+          throw new Error(`Unrecognized key: "${key}"`);
+        }
+        if (!(mask as any)[key]) continue;
+
+        delete newShape[key];
+      }
+      assignProp(this, "shape", newShape); // self-caching
+      return newShape;
+    },
     checks: [],
   });
+
+  return clone(schema, def);
 }
 
 export function extend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): any {
-  const def = {
-    ...schema._zod.def,
+  if (!isPlainObject(shape)) {
+    throw new Error("Invalid input to extend: expected a plain object");
+  }
+
+  const checks = schema._zod.def.checks;
+  const hasChecks = checks && checks.length > 0;
+  if (hasChecks) {
+    // Only throw if new shape overlaps with existing shape
+    // Use getOwnPropertyDescriptor to check key existence without accessing values
+    const existingShape = schema._zod.def.shape;
+    for (const key in shape) {
+      if (Object.getOwnPropertyDescriptor(existingShape, key) !== undefined) {
+        throw new Error("Cannot overwrite keys on object schemas containing refinements. Use `.safeExtend()` instead.");
+      }
+    }
+  }
+
+  const def = mergeDefs(schema._zod.def, {
     get shape() {
       const _shape = { ...schema._zod.def.shape, ...shape };
       assignProp(this, "shape", _shape); // self-caching
       return _shape;
     },
-    checks: [], // delete existing checks
-  } as any;
+  });
+  return clone(schema, def) as any;
+}
+
+export function safeExtend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): any {
+  if (!isPlainObject(shape)) {
+    throw new Error("Invalid input to safeExtend: expected a plain object");
+  }
+  const def = mergeDefs(schema._zod.def, {
+    get shape() {
+      const _shape = { ...schema._zod.def.shape, ...shape };
+      assignProp(this, "shape", _shape); // self-caching
+      return _shape;
+    },
+  });
   return clone(schema, def) as any;
 }
 
 export function merge(a: schemas.$ZodObject, b: schemas.$ZodObject): any {
-  return clone(a, {
-    ...a._zod.def,
+  const def = mergeDefs(a._zod.def, {
     get shape() {
       const _shape = { ...a._zod.def.shape, ...b._zod.def.shape };
       assignProp(this, "shape", _shape); // self-caching
       return _shape;
     },
-    catchall: b._zod.def.catchall,
+    get catchall() {
+      return b._zod.def.catchall;
+    },
     checks: [], // delete existing checks
-  }) as any;
+  });
+
+  return clone(a, def) as any;
 }
 
 export function partial(
@@ -591,38 +711,51 @@ export function partial(
   schema: schemas.$ZodObject,
   mask: object | undefined
 ): any {
-  const oldShape = schema._zod.def.shape;
-  const shape: Writeable<schemas.$ZodShape> = { ...oldShape };
-
-  if (mask) {
-    for (const key in mask) {
-      if (!(key in oldShape)) {
-        throw new Error(`Unrecognized key: "${key}"`);
-      }
-      if (!(mask as any)[key]) continue;
-      shape[key] = Class
-        ? new Class({
-            type: "optional",
-            innerType: oldShape[key],
-          })
-        : oldShape[key];
-    }
-  } else {
-    for (const key in oldShape) {
-      shape[key] = Class
-        ? new Class({
-            type: "optional",
-            innerType: oldShape[key],
-          })
-        : oldShape[key];
-    }
+  const currDef = schema._zod.def;
+  const checks = currDef.checks;
+  const hasChecks = checks && checks.length > 0;
+  if (hasChecks) {
+    throw new Error(".partial() cannot be used on object schemas containing refinements");
   }
 
-  return clone(schema, {
-    ...schema._zod.def,
-    shape,
+  const def = mergeDefs(schema._zod.def, {
+    get shape() {
+      const oldShape = schema._zod.def.shape;
+      const shape: Writeable<schemas.$ZodShape> = { ...oldShape };
+
+      if (mask) {
+        for (const key in mask) {
+          if (!(key in oldShape)) {
+            throw new Error(`Unrecognized key: "${key}"`);
+          }
+          if (!(mask as any)[key]) continue;
+          // if (oldShape[key]!._zod.optin === "optional") continue;
+          shape[key] = Class
+            ? new Class({
+                type: "optional",
+                innerType: oldShape[key]!,
+              })
+            : oldShape[key]!;
+        }
+      } else {
+        for (const key in oldShape) {
+          // if (oldShape[key]!._zod.optin === "optional") continue;
+          shape[key] = Class
+            ? new Class({
+                type: "optional",
+                innerType: oldShape[key]!,
+              })
+            : oldShape[key]!;
+        }
+      }
+
+      assignProp(this, "shape", shape); // self-caching
+      return shape;
+    },
     checks: [],
-  }) as any;
+  });
+
+  return clone(schema, def) as any;
 }
 
 export function required(
@@ -630,44 +763,50 @@ export function required(
   schema: schemas.$ZodObject,
   mask: object | undefined
 ): any {
-  const oldShape = schema._zod.def.shape;
-  const shape: Writeable<schemas.$ZodShape> = { ...oldShape };
+  const def = mergeDefs(schema._zod.def, {
+    get shape() {
+      const oldShape = schema._zod.def.shape;
+      const shape: Writeable<schemas.$ZodShape> = { ...oldShape };
 
-  if (mask) {
-    for (const key in mask) {
-      if (!(key in shape)) {
-        throw new Error(`Unrecognized key: "${key}"`);
+      if (mask) {
+        for (const key in mask) {
+          if (!(key in shape)) {
+            throw new Error(`Unrecognized key: "${key}"`);
+          }
+          if (!(mask as any)[key]) continue;
+          // overwrite with non-optional
+          shape[key] = new Class({
+            type: "nonoptional",
+            innerType: oldShape[key]!,
+          });
+        }
+      } else {
+        for (const key in oldShape) {
+          // overwrite with non-optional
+          shape[key] = new Class({
+            type: "nonoptional",
+            innerType: oldShape[key]!,
+          });
+        }
       }
-      if (!(mask as any)[key]) continue;
-      // overwrite with non-optional
-      shape[key] = new Class({
-        type: "nonoptional",
-        innerType: oldShape[key],
-      });
-    }
-  } else {
-    for (const key in oldShape) {
-      // overwrite with non-optional
-      shape[key] = new Class({
-        type: "nonoptional",
-        innerType: oldShape[key],
-      });
-    }
-  }
 
-  return clone(schema, {
-    ...schema._zod.def,
-    shape,
-    // optional: [],
-    checks: [],
-  }) as any;
+      assignProp(this, "shape", shape); // self-caching
+      return shape;
+    },
+  });
+
+  return clone(schema, def) as any;
 }
 
 export type Constructor<T, Def extends any[] = any[]> = new (...args: Def) => T;
 
+// invalid_type | too_big | too_small | invalid_format | not_multiple_of | unrecognized_keys | invalid_union | invalid_key | invalid_element | invalid_value | custom
 export function aborted(x: schemas.ParsePayload, startIndex = 0): boolean {
+  if (x.aborted === true) return true;
   for (let i = startIndex; i < x.issues.length; i++) {
-    if (x.issues[i].continue !== true) return true;
+    if (x.issues[i]?.continue !== true) {
+      return true;
+    }
   }
   return false;
 }
@@ -715,6 +854,7 @@ export function finalizeIssue(
 export function getSizableOrigin(input: any): "set" | "map" | "file" | "unknown" {
   if (input instanceof Set) return "set";
   if (input instanceof Map) return "map";
+  // @ts-ignore
   if (input instanceof File) return "file";
   return "unknown";
 }
@@ -723,6 +863,29 @@ export function getLengthableOrigin(input: any): "array" | "string" | "unknown" 
   if (Array.isArray(input)) return "array";
   if (typeof input === "string") return "string";
   return "unknown";
+}
+
+export function parsedType(data: unknown): errors.$ZodInvalidTypeExpected {
+  const t = typeof data;
+  switch (t) {
+    case "number": {
+      return Number.isNaN(data) ? "nan" : "number";
+    }
+    case "object": {
+      if (data === null) {
+        return "null";
+      }
+      if (Array.isArray(data)) {
+        return "array";
+      }
+
+      const obj = data as object;
+      if (obj && Object.getPrototypeOf(obj) !== Object.prototype && "constructor" in obj && obj.constructor) {
+        return (obj.constructor as { name: string }).name;
+      }
+    }
+  }
+  return t;
 }
 
 //////////    REFINES     //////////
@@ -749,6 +912,52 @@ export function cleanEnum(obj: Record<string, EnumValue>): EnumValue[] {
       return Number.isNaN(Number.parseInt(k, 10));
     })
     .map((el) => el[1]);
+}
+
+// Codec utility functions
+export function base64ToUint8Array(base64: string): InstanceType<typeof Uint8Array> {
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+}
+
+export function uint8ArrayToBase64(bytes: Uint8Array): string {
+  let binaryString = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binaryString += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binaryString);
+}
+
+export function base64urlToUint8Array(base64url: string): InstanceType<typeof Uint8Array> {
+  const base64 = base64url.replace(/-/g, "+").replace(/_/g, "/");
+  const padding = "=".repeat((4 - (base64.length % 4)) % 4);
+  return base64ToUint8Array(base64 + padding);
+}
+
+export function uint8ArrayToBase64url(bytes: Uint8Array): string {
+  return uint8ArrayToBase64(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+}
+
+export function hexToUint8Array(hex: string): InstanceType<typeof Uint8Array> {
+  const cleanHex = hex.replace(/^0x/, "");
+  if (cleanHex.length % 2 !== 0) {
+    throw new Error("Invalid hex string length");
+  }
+  const bytes = new Uint8Array(cleanHex.length / 2);
+  for (let i = 0; i < cleanHex.length; i += 2) {
+    bytes[i / 2] = Number.parseInt(cleanHex.slice(i, i + 2), 16);
+  }
+  return bytes;
+}
+
+export function uint8ArrayToHex(bytes: Uint8Array): string {
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 // instanceof

@@ -6,8 +6,9 @@
     "arktype": "^2.1.19",
     "valibot": "^1.0.0",
     "zod": "workspace:*",
-    "zodnext": "npm:zod@^3.25.0",
-    "zod3": "npm:zod@^3.23.7"
+    "zod3": "npm:zod@~3.24.0",
+    "zod4": "npm:zod@4.0.8",
+    "@types/node": "^22.10.5"
   },
   "scripts": {
     "bench": "tsx --conditions @zod/source index.ts"

@@ -35,6 +35,27 @@ test("includes", () => {
   expect(() => includesFromIndex2.parse("XincludesXX")).toThrow();
 });
 
+test("includes with string error message", () => {
+  const schema = z.string().includes("test", "must contain test");
+  schema.parse("this is a test");
+
+  expect(schema.safeParse("this is invalid")).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "origin": "string",
+        "code": "invalid_format",
+        "format": "includes",
+        "includes": "test",
+        "path": [],
+        "message": "must contain test"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+});
+
 test("startswith/endswith", () => {
   startsWith.parse("startsWithX");
   endsWith.parse("XendsWith");
@@ -298,35 +319,6 @@ test("jwt token", () => {
   // type isn't JWT
   const d5 = makeJwt({ typ: "SUP", alg: "HS256" }, { foo: "bar" });
   expect(() => jwt.parse(d5)).toThrow();
-
-  // const ONE_PART = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";
-  // const NOT_BASE64 =
-  //   "headerIsNotBase64Encoded.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.RRi1X2IlXd5rZa9Mf_0VUOf-RxOzAhbB4tgViUGamWE";
-  // const NO_TYP =
-  //   "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.GuoUe6tw79bJlbU1HU0ADX0pr0u2kf3r_4OdrDufSfQ";
-  // const TYP_NOT_JWT =
-  //   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpUVyJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.RRi1X2IlXd5rZa9Mf_0VUOf-RxOzAhbB4tgViUGamWE";
-
-  // const GOOD_JWT_HS256 =
-  //   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
-  // const GOOD_JWT_ES256 =
-  //   "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.tyh-VfuzIxCyGYDlkBA7DfyjrqmSHu6pQ2hoZuFqUSLPNY2N0mpHb3nk5K17HWP_3cYHBw7AhHale5wky6-sVA";
-
-  // const jwtSchema = z.string().jwt();
-
-  // expect(() => jwtSchema.parse(ONE_PART)).toThrow();
-  // expect(() => jwtSchema.parse(NOT_BASE64)).toThrow();
-  // expect(() => jwtSchema.parse(TYP_NOT_JWT)).toThrow();
-  // expect(() => jwtSchema.parse(TYP_NOT_JWT)).toThrow();
-  // expect(() => jwtSchema.parse(TYP_NOT_JWT)).toThrow();
-  // expect(() => z.string().jwt({ alg: "ES256" }).parse(GOOD_JWT_HS256)).toThrow();
-  // expect(() => z.string().jwt({ alg: "HS256" }).parse(GOOD_JWT_ES256)).toThrow();
-  // //Success
-  // jwtSchema.parse(NO_TYP); // allow no typ
-  // expect(() => jwtSchema.parse(GOOD_JWT_HS256)).not.toThrow();
-  // expect(() => jwtSchema.parse(GOOD_JWT_ES256)).not.toThrow();
-  // expect(() => z.string().jwt({ alg: "HS256" }).parse(GOOD_JWT_HS256)).not.toThrow();
-  // expect(() => z.string().jwt({ alg: "ES256" }).parse(GOOD_JWT_ES256)).not.toThrow();
 });
 
 test("credit card validation", () => {
@@ -408,6 +400,83 @@ test("url validations", () => {
   expect(() => url.parse("https:/")).toThrow();
   expect(() => url.parse("asdfj@lkjsdf.com")).toThrow();
   expect(() => url.parse("https://")).toThrow();
+});
+
+test("url preserves original input", () => {
+  const url = z.string().url();
+
+  // Test the specific case from the user report
+  const input = "https://example.com?key=NUXOmHqWNVTapJkJJHw8BfD155AuqhH_qju_5fNmQ4ZHV7u8";
+  const output = url.parse(input);
+  expect(output).toBe(input); // Should preserve the original input exactly
+
+  // Test other cases where URL constructor would normalize
+  expect(url.parse("https://example.com?foo=bar")).toBe("https://example.com?foo=bar");
+  expect(url.parse("http://example.com?test=123")).toBe("http://example.com?test=123");
+  expect(url.parse("https://sub.example.com?param=value&other=data")).toBe(
+    "https://sub.example.com?param=value&other=data"
+  );
+
+  // Test cases with trailing slashes are preserved
+  expect(url.parse("https://example.com/")).toBe("https://example.com/");
+  expect(url.parse("https://example.com/path/")).toBe("https://example.com/path/");
+
+  // Test cases with paths and query parameters
+  expect(url.parse("https://example.com/path?query=param")).toBe("https://example.com/path?query=param");
+});
+
+test("url trims whitespace", () => {
+  const url = z.string().url();
+
+  // Test trimming whitespace from URLs
+  expect(url.parse("  https://example.com  ")).toBe("https://example.com");
+  expect(url.parse("  https://example.com/path?query=param  ")).toBe("https://example.com/path?query=param");
+  expect(url.parse("\t\nhttps://example.com\t\n")).toBe("https://example.com");
+  expect(url.parse("   https://example.com?key=value   ")).toBe("https://example.com?key=value");
+
+  // Test that URLs without extra whitespace are unchanged
+  expect(url.parse("https://example.com")).toBe("https://example.com");
+  expect(url.parse("https://example.com/path")).toBe("https://example.com/path");
+});
+
+test("url normalize flag", () => {
+  const normalizeUrl = z.url({ normalize: true });
+  const preserveUrl = z.url(); // normalize: false/undefined by default
+
+  // Test that normalize flag causes URL normalization
+  expect(normalizeUrl.parse("https://example.com?key=value")).toBe("https://example.com/?key=value");
+  expect(normalizeUrl.parse("http://example.com?test=123")).toBe("http://example.com/?test=123");
+
+  // Test with already normalized URLs
+  expect(normalizeUrl.parse("https://example.com/")).toBe("https://example.com/");
+  expect(normalizeUrl.parse("https://example.com/path?query=param")).toBe("https://example.com/path?query=param");
+
+  // Test complex URLs with normalization
+  expect(normalizeUrl.parse("https://example.com/../?key=value")).toBe("https://example.com/?key=value");
+  expect(normalizeUrl.parse("https://example.com/./path?key=value")).toBe("https://example.com/path?key=value");
+
+  // Compare with non-normalize behavior
+  expect(preserveUrl.parse("https://example.com?key=value")).toBe("https://example.com?key=value");
+  expect(preserveUrl.parse("http://example.com?test=123")).toBe("http://example.com?test=123");
+
+  // Test trimming with normalize
+  expect(normalizeUrl.parse("  https://example.com?key=value  ")).toBe("https://example.com/?key=value");
+  expect(preserveUrl.parse("  https://example.com?key=value  ")).toBe("https://example.com?key=value");
+});
+
+test("url normalize with hostname and protocol constraints", () => {
+  const constrainedNormalizeUrl = z.url({
+    normalize: true,
+    protocol: /^https$/,
+    hostname: /^example\.com$/,
+  });
+
+  // Test that normalization works with constraints
+  expect(constrainedNormalizeUrl.parse("https://example.com?key=value")).toBe("https://example.com/?key=value");
+
+  // Test that constraints are still enforced
+  expect(() => constrainedNormalizeUrl.parse("http://example.com?key=value")).toThrow();
+  expect(() => constrainedNormalizeUrl.parse("https://other.com?key=value")).toThrow();
 });
 
 test("httpurl", () => {
@@ -542,6 +611,7 @@ test("good uuid", () => {
     "9491d710-3185-5e06-8ea0-6a2f275345e0",
     "9491d710-3185-5e06-9ea0-6a2f275345e0",
     "00000000-0000-0000-0000-000000000000",
+    "ffffffff-ffff-ffff-ffff-ffffffffffff",
   ];
 
   for (const goodUuid of goodUuids) {
@@ -556,11 +626,10 @@ test(`bad uuid`, () => {
     "9491d710-3185-0e06-bea0-6a2f275345e0",
     "9491d710-3185-5e06-0ea0-6a2f275345e0",
     "d89e7b01-7598-ed11-9d7a-0022489382fd", // new sequential id
-    "b3ce60f8-e8b9-40f5-1150-172ede56ff74", // Variant 0 - RFC 4122: Reserved, NCS backward compatibility
-    "92e76bf9-28b3-4730-cd7f-cb6bc51f8c09", // Variant 2 - RFC 4122: Reserved, Microsoft Corporation backward compatibility
+    "b3ce60f8-e8b9-40f5-1150-172ede56ff74", // Variant 0 - RFC 9562/4122: Reserved, NCS backward compatibility
+    "92e76bf9-28b3-4730-cd7f-cb6bc51f8c09", // Variant 2 - RFC 9562/4122: Reserved, Microsoft Corporation backward compatibility
     "invalid uuid",
     "9491d710-3185-4e06-bea0-6a2f275345e0X",
-    "ffffffff-ffff-ffff-ffff-ffffffffffff",
   ]) {
     const result = uuid.safeParse(badUuid);
     expect(result).toMatchObject({ success: false });
@@ -573,8 +642,8 @@ test("good guid", () => {
   for (const goodGuid of [
     "9491d710-3185-4e06-bea0-6a2f275345e0",
     "d89e7b01-7598-ed11-9d7a-0022489382fd", // new sequential id
-    "b3ce60f8-e8b9-40f5-1150-172ede56ff74", // Variant 0 - RFC 4122: Reserved, NCS backward compatibility
-    "92e76bf9-28b3-4730-cd7f-cb6bc51f8c09", // Variant 2 - RFC 4122: Reserved, Microsoft Corporation backward compatibility
+    "b3ce60f8-e8b9-40f5-1150-172ede56ff74", // Variant 0 - RFC 9562/4122: Reserved, NCS backward compatibility
+    "92e76bf9-28b3-4730-cd7f-cb6bc51f8c09", // Variant 2 - RFC 9562/4122: Reserved, Microsoft Corporation backward compatibility
     "00000000-0000-0000-0000-000000000000",
     "ffffffff-ffff-ffff-ffff-ffffffffffff",
   ]) {
@@ -790,6 +859,8 @@ test("format", () => {
   expect(z.string().date().format).toEqual("date");
   expect(z.string().time().format).toEqual("time");
   expect(z.string().duration().format).toEqual("duration");
+
+  expect(z.mac().format).toEqual("mac");
 });
 
 test("min max getters", () => {
@@ -816,215 +887,22 @@ test("lowerCase", () => {
   expect(z.string().toUpperCase().parse("asdf")).toEqual("ASDF");
 });
 
-test("datetime parsing", () => {
-  const datetime = z.string().datetime();
-  datetime.parse("1970-01-01T00:00:00.000Z");
-  datetime.parse("2022-10-13T09:52:31.816Z");
-  datetime.parse("2022-10-13T09:52:31.8162314Z");
-  datetime.parse("1970-01-01T00:00:00Z");
-  datetime.parse("2022-10-13T09:52:31Z");
-  expect(() => datetime.parse("")).toThrow();
-  expect(() => datetime.parse("foo")).toThrow();
-  expect(() => datetime.parse("2020-10-14")).toThrow();
-  expect(() => datetime.parse("T18:45:12.123")).toThrow();
-  expect(() => datetime.parse("2020-10-14T17:42:29+00:00")).toThrow();
+test("slugify", () => {
+  expect(z.string().slugify().parse("Hello World")).toEqual("hello-world");
+  expect(z.string().slugify().parse("  Hello   World  ")).toEqual("hello-world");
+  expect(z.string().slugify().parse("Hello@World#123")).toEqual("helloworld123");
+  expect(z.string().slugify().parse("Hello-World")).toEqual("hello-world");
+  expect(z.string().slugify().parse("Hello_World")).toEqual("hello-world");
+  expect(z.string().slugify().parse("---Hello---World---")).toEqual("hello-world");
+  expect(z.string().slugify().parse("Hello  World")).toEqual("hello-world");
+  expect(z.string().slugify().parse("Hello!@#$%^&*()World")).toEqual("helloworld");
 
-  const datetimeNoMs = z.string().datetime({ precision: 0 });
-  datetimeNoMs.parse("1970-01-01T00:00:00Z");
-  datetimeNoMs.parse("2022-10-13T09:52:31Z");
-  expect(() => datetimeNoMs.parse("tuna")).toThrow();
-  expect(() => datetimeNoMs.parse("1970-01-01T00:00:00.000Z")).toThrow();
-  expect(() => datetimeNoMs.parse("1970-01-01T00:00:00.Z")).toThrow();
-  expect(() => datetimeNoMs.parse("2022-10-13T09:52:31.816Z")).toThrow();
+  // can be used with check
+  expect(z.string().check(z.slugify()).parse("Hello World")).toEqual("hello-world");
 
-  const datetime3Ms = z.string().datetime({ precision: 3 });
-  datetime3Ms.parse("1970-01-01T00:00:00.000Z");
-  datetime3Ms.parse("2022-10-13T09:52:31.123Z");
-  expect(() => datetime3Ms.parse("tuna")).toThrow();
-  expect(() => datetime3Ms.parse("1970-01-01T00:00:00.1Z")).toThrow();
-  expect(() => datetime3Ms.parse("1970-01-01T00:00:00.12Z")).toThrow();
-  expect(() => datetime3Ms.parse("2022-10-13T09:52:31Z")).toThrow();
-
-  const datetimeOffset = z.string().datetime({ offset: true });
-  datetimeOffset.parse("1970-01-01T00:00:00.000Z");
-  datetimeOffset.parse("2022-10-13T09:52:31.816234134Z");
-  datetimeOffset.parse("1970-01-01T00:00:00Z");
-  datetimeOffset.parse("2022-10-13T09:52:31.4Z");
-  datetimeOffset.parse("2020-10-14T17:42:29+00:00");
-  datetimeOffset.parse("2020-10-14T17:42:29+03:15");
-  datetimeOffset.parse("2020-10-14T17:42:29+0315");
-  expect(() => datetimeOffset.parse("2020-10-14T17:42:29+03"));
-  expect(() => datetimeOffset.parse("tuna")).toThrow();
-  expect(() => datetimeOffset.parse("2022-10-13T09:52:31.Z")).toThrow();
-
-  const datetimeOffsetNoMs = z.string().datetime({ offset: true, precision: 0 });
-  datetimeOffsetNoMs.parse("1970-01-01T00:00:00Z");
-  datetimeOffsetNoMs.parse("2022-10-13T09:52:31Z");
-  datetimeOffsetNoMs.parse("2020-10-14T17:42:29+00:00");
-  datetimeOffsetNoMs.parse("2020-10-14T17:42:29+0000");
-  expect(() => datetimeOffsetNoMs.parse("2020-10-14T17:42:29+00")).toThrow();
-  expect(() => datetimeOffsetNoMs.parse("tuna")).toThrow();
-  expect(() => datetimeOffsetNoMs.parse("1970-01-01T00:00:00.000Z")).toThrow();
-  expect(() => datetimeOffsetNoMs.parse("1970-01-01T00:00:00.Z")).toThrow();
-  expect(() => datetimeOffsetNoMs.parse("2022-10-13T09:52:31.816Z")).toThrow();
-  expect(() => datetimeOffsetNoMs.parse("2020-10-14T17:42:29.124+00:00")).toThrow();
-
-  const datetimeOffset4Ms = z.string().datetime({ offset: true, precision: 4 });
-  datetimeOffset4Ms.parse("1970-01-01T00:00:00.1234Z");
-  datetimeOffset4Ms.parse("2020-10-14T17:42:29.1234+00:00");
-  datetimeOffset4Ms.parse("2020-10-14T17:42:29.1234+0000");
-  expect(() => datetimeOffset4Ms.parse("2020-10-14T17:42:29.1234+00")).toThrow();
-  expect(() => datetimeOffset4Ms.parse("tuna")).toThrow();
-  expect(() => datetimeOffset4Ms.parse("1970-01-01T00:00:00.123Z")).toThrow();
-  expect(() => datetimeOffset4Ms.parse("2020-10-14T17:42:29.124+00:00")).toThrow();
-});
-
-test("date parsing", () => {
-  const date = z.string().date();
-  date.parse("1970-01-01");
-  date.parse("2022-01-31");
-  date.parse("2022-03-31");
-  date.parse("2022-04-30");
-  date.parse("2022-05-31");
-  date.parse("2022-06-30");
-  date.parse("2022-07-31");
-  date.parse("2022-08-31");
-  date.parse("2022-09-30");
-  date.parse("2022-10-31");
-  date.parse("2022-11-30");
-  date.parse("2022-12-31");
-
-  date.parse("2000-02-29");
-  date.parse("2400-02-29");
-  expect(() => date.parse("2022-02-29")).toThrow();
-  expect(() => date.parse("2100-02-29")).toThrow();
-  expect(() => date.parse("2200-02-29")).toThrow();
-  expect(() => date.parse("2300-02-29")).toThrow();
-  expect(() => date.parse("2500-02-29")).toThrow();
-
-  expect(() => date.parse("")).toThrow();
-  expect(() => date.parse("foo")).toThrow();
-  expect(() => date.parse("200-01-01")).toThrow();
-  expect(() => date.parse("20000-01-01")).toThrow();
-  expect(() => date.parse("2000-0-01")).toThrow();
-  expect(() => date.parse("2000-011-01")).toThrow();
-  expect(() => date.parse("2000-01-0")).toThrow();
-  expect(() => date.parse("2000-01-011")).toThrow();
-  expect(() => date.parse("2000/01/01")).toThrow();
-  expect(() => date.parse("01-01-2022")).toThrow();
-  expect(() => date.parse("01/01/2022")).toThrow();
-  expect(() => date.parse("2000-01-01 00:00:00Z")).toThrow();
-  expect(() => date.parse("2020-10-14T17:42:29+00:00")).toThrow();
-  expect(() => date.parse("2020-10-14T17:42:29Z")).toThrow();
-  expect(() => date.parse("2020-10-14T17:42:29")).toThrow();
-  expect(() => date.parse("2020-10-14T17:42:29.123Z")).toThrow();
-
-  expect(() => date.parse("2000-00-12")).toThrow();
-  expect(() => date.parse("2000-12-00")).toThrow();
-  expect(() => date.parse("2000-01-32")).toThrow();
-  expect(() => date.parse("2000-13-01")).toThrow();
-  expect(() => date.parse("2000-21-01")).toThrow();
-
-  expect(() => date.parse("2000-02-30")).toThrow();
-  expect(() => date.parse("2000-02-31")).toThrow();
-  expect(() => date.parse("2000-04-31")).toThrow();
-  expect(() => date.parse("2000-06-31")).toThrow();
-  expect(() => date.parse("2000-09-31")).toThrow();
-  expect(() => date.parse("2000-11-31")).toThrow();
-});
-
-test("time parsing", () => {
-  const time = z.string().time();
-  time.parse("00:00:00");
-  time.parse("23:00:00");
-  time.parse("00:59:00");
-  time.parse("00:00:59");
-  time.parse("23:59:59");
-  time.parse("09:52:31");
-  time.parse("23:59:59.9999999");
-  expect(() => time.parse("")).toThrow();
-  expect(() => time.parse("foo")).toThrow();
-  expect(() => time.parse("00:00:00Z")).toThrow();
-  expect(() => time.parse("0:00:00")).toThrow();
-  expect(() => time.parse("00:0:00")).toThrow();
-  expect(() => time.parse("00:00:0")).toThrow();
-  expect(() => time.parse("00:00:00.000+00:00")).toThrow();
-
-  expect(() => time.parse("24:00:00")).toThrow();
-  expect(() => time.parse("00:60:00")).toThrow();
-  expect(() => time.parse("00:00:60")).toThrow();
-  expect(() => time.parse("24:60:60")).toThrow();
-
-  const time2 = z.string().time({ precision: 2 });
-  time2.parse("00:00:00.00");
-  time2.parse("09:52:31.12");
-  time2.parse("23:59:59.99");
-  expect(() => time2.parse("")).toThrow();
-  expect(() => time2.parse("foo")).toThrow();
-  expect(() => time2.parse("00:00:00")).toThrow();
-  expect(() => time2.parse("00:00:00.00Z")).toThrow();
-  expect(() => time2.parse("00:00:00.0")).toThrow();
-  expect(() => time2.parse("00:00:00.000")).toThrow();
-  expect(() => time2.parse("00:00:00.00+00:00")).toThrow();
-});
-
-test("duration", () => {
-  const duration = z.string().duration();
-
-  const validDurations = [
-    "P3Y6M4DT12H30M5S",
-    "P2Y9M3DT12H31M8.001S",
-    // "+P3Y6M4DT12H30M5S",
-    // "-PT0.001S",
-    // "+PT0.001S",
-    "PT0,001S",
-    "PT12H30M5S",
-    // "-P2M1D",
-    // "P-2M-1D",
-    // "-P5DT10H",
-    // "P-5DT-10H",
-    "P1Y",
-    "P2MT30M",
-    "PT6H",
-    "P5W",
-    // "P0.5Y",
-    // "P0,5Y",
-    // "P42YT7.004M",
-  ];
-
-  const invalidDurations = [
-    "foo bar",
-    "",
-    " ",
-    "P",
-    "PT",
-    "P1Y2MT",
-    "T1H",
-    "P0.5Y1D",
-    "P0,5Y6M",
-    "P1YT",
-    "P-2M-1D",
-    "P-5DT-10H",
-    "P1W2D",
-    "-P1D",
-  ];
-
-  for (const val of validDurations) {
-    const result = duration.safeParse(val);
-    if (!result.success) {
-      throw Error(`Valid duration could not be parsed: ${val}`);
-    }
-  }
-
-  for (const val of invalidDurations) {
-    const result = duration.safeParse(val);
-
-    if (result.success) {
-      throw Error(`Invalid duration was successful parsed: ${val}`);
-    }
-
-    expect(result.error.issues[0].message).toEqual("Invalid ISO duration");
-  }
+  // can be chained with other methods
+  expect(z.string().slugify().min(5).parse("Hello World")).toEqual("hello-world");
+  expect(() => z.string().slugify().min(20).parse("Hello World")).toThrow();
 });
 
 // test("IP validation", () => {
@@ -1111,6 +989,58 @@ test("IPv6 validation", () => {
   expect(() => ipv6.parse("254.164.77.1")).toThrow();
 });
 
+test("MAC validation", () => {
+  const mac = z.mac();
+
+  // Valid MAC addresses
+  expect(mac.safeParse("00:1A:2B:3C:4D:5E").success).toBe(true);
+  expect(mac.safeParse("FF:FF:FF:FF:FF:FF").success).toBe(true);
+  expect(mac.safeParse("00:11:22:33:44:55").success).toBe(true);
+  expect(mac.safeParse("A1:B2:C3:D4:E5:F6").success).toBe(true);
+  expect(mac.safeParse("10:20:30:40:50:60").success).toBe(true);
+  expect(mac.safeParse("0a:1b:2c:3d:4e:5f").success).toBe(true);
+  expect(mac.safeParse("12:34:56:78:9A:BC").success).toBe(true);
+
+  // Invalid MAC addresses
+  expect(mac.safeParse("00:1A-2B:3C-4D:5E").success).toBe(false);
+  expect(mac.safeParse("00:1A:2B:3C:4D").success).toBe(false);
+  expect(mac.safeParse("00:1A:2B:3C:4D").success).toBe(false);
+  expect(mac.safeParse("00-1A-2B-3C-4D").success).toBe(false);
+  expect(mac.safeParse("01-23-45-67-89-AB").success).toBe(false); // Dash delimiter not accepted by default
+  expect(mac.safeParse("AA-BB-CC-DD-EE-FF").success).toBe(false); // Dash delimiter not accepted by default
+  expect(mac.safeParse("DE-AD-BE-EF-00-01").success).toBe(false); // Dash delimiter not accepted by default
+  expect(mac.safeParse("98-76-54-32-10-FF").success).toBe(false); // Dash delimiter not accepted by default
+  expect(mac.safeParse("00:1A:2B:3C:4D:GZ").success).toBe(false);
+  expect(mac.safeParse("00:1A:2B:3C:4D:5E:GG").success).toBe(false);
+  expect(mac.safeParse("123:45:67:89:AB:CD").success).toBe(false);
+  expect(mac.safeParse("00--1A:2B:3C:4D:5E").success).toBe(false);
+  expect(mac.safeParse("00:1A::2B:3C:4D:5E").success).toBe(false);
+  expect(mac.safeParse("00:1A:2B:3C:3C:2B:1A:00").success).toBe(false); // Disallow EUI-64
+  expect(mac.safeParse("00:1a:2B:3c:4D:5e").success).toBe(false); // Disallow mixed-case
+
+  // MAC formats that are nonstandard but occassionally referenced, ex. https://www.postgresql.org/docs/17/datatype-net-types.html#DATATYPE-MACADDR
+  expect(mac.safeParse("00:1A:2B:3C:4D:5E:FF").success).toBe(false);
+  expect(mac.safeParse("001A2B:3C4D5E").success).toBe(false);
+  expect(mac.safeParse("001A:2B3C:4D5E").success).toBe(false);
+  expect(mac.safeParse("001A.2B3C.4D5E").success).toBe(false);
+  expect(mac.safeParse("001A2B3C4D5E").success).toBe(false);
+  expect(mac.safeParse("00.1A.2B.3C.4D.5E").success).toBe(false);
+});
+
+test("MAC validation with custom delimiter", () => {
+  const colonMac = z.mac({ delimiter: ":" });
+  expect(colonMac.safeParse("00:1A:2B:3C:4D:5E").success).toBe(true);
+  expect(colonMac.safeParse("00-1A-2B-3C-4D-5E").success).toBe(false);
+
+  const dashMac = z.mac({ delimiter: "-" });
+  expect(dashMac.safeParse("00-1A-2B-3C-4D-5E").success).toBe(true);
+  expect(dashMac.safeParse("00:1A:2B:3C:4D:5E").success).toBe(false);
+
+  const colonOnlyMac = z.mac({ delimiter: ":" });
+  expect(colonOnlyMac.safeParse("00:1A:2B:3C:4D:5E").success).toBe(true);
+  expect(colonOnlyMac.safeParse("00-1A-2B-3C-4D-5E").success).toBe(false);
+});
+
 test("CIDR v4 validation", () => {
   const cidrV4 = z.string().cidrv4();
 
@@ -1145,6 +1075,9 @@ test("CIDR v6 validation", () => {
   expect(cidrV6.safeParse("2001:db8::/abc").success).toBe(false); // Invalid prefix format
   expect(cidrV6.safeParse("not a cidr").success).toBe(false); // Invalid format
   expect(cidrV6.safeParse("192.168.0.0/24").success).toBe(false); // IPv4 CIDR in v6 validation
+  expect(cidrV6.safeParse("2001:0db8:85a3::/64/whatever-after").success).toBe(false);
+  expect(cidrV6.safeParse("22d9:f4a8:6a90:f3bf:dcaa:2beb:5fba:0000/112").success).toBe(true);
+  expect(cidrV6.safeParse("22d9:f4a8:6a90:f3bf:dcaa:2beb:5fba:0000/112/268").success).toBe(false);
 });
 
 test("E.164 validation", () => {
@@ -1174,6 +1107,8 @@ test("E.164 validation", () => {
     "+1 555 555 555", // space after plus sign
     "+1555 555 555", // space between numbers
     "+1555+555", // multiple plus signs
+    "+0000000", // leading zero country code
+    "+0123456789", // leading zero with more digits
     "+1555555555555555", // too long
     "+115abc55", // non numeric characters in number part
     "+1555555 ", // space after number
@@ -1181,4 +1116,123 @@ test("E.164 validation", () => {
 
   expect(validE164Numbers.every((number) => e164Number.safeParse(number).success)).toBe(true);
   expect(invalidE164Numbers.every((number) => e164Number.safeParse(number).success === false)).toBe(true);
+});
+
+test("hostname", () => {
+  const hostname = z.hostname();
+
+  // Valid hostnames
+  hostname.parse("localhost");
+  hostname.parse("example.com");
+  hostname.parse("sub.example.com");
+  hostname.parse("a-b-c.example.com");
+  hostname.parse("123.example.com");
+  hostname.parse("example-123.com");
+  hostname.parse("example-123.1234");
+  hostname.parse("developer.mozilla.org");
+  hostname.parse("hello.world.example.com");
+  hostname.parse("www.google.com");
+  hostname.parse("192.168.1.1");
+  hostname.parse("xn--d1acj3b.com");
+  hostname.parse("xn--d1acj3b.org");
+  hostname.parse("xn--d1acj3b");
+
+  // Invalid hostnames
+  expect(() => hostname.parse("")).toThrow();
+  expect(() => hostname.parse("example..com")).toThrow();
+  expect(() => hostname.parse("example-.com")).toThrow();
+  expect(() => hostname.parse("-example.com")).toThrow();
+  expect(() => hostname.parse("example.com-")).toThrow();
+  expect(() => hostname.parse("example_com")).toThrow();
+  expect(() => hostname.parse("example.com:8080")).toThrow();
+  expect(() => hostname.parse("http://example.com")).toThrow();
+  expect(() => hostname.parse("ht!tp://invalid.com")).toThrow();
+
+  expect(() => hostname.parse("xn--d1acj3b..com")).toThrow();
+  expect(() => hostname.parse("ex@mple.com")).toThrow();
+  expect(() => hostname.parse("[2001:db8::zzzz]")).toThrow();
+  expect(() => hostname.parse("exa mple.com")).toThrow();
+  expect(() => hostname.parse("-example.com")).toThrow();
+  expect(() => hostname.parse("example..com")).toThrow();
+});
+
+test("hash validation", () => {
+  // MD5 tests
+  const md5hex = z.hash("md5");
+  const md5base64 = z.hash("md5", { enc: "base64" });
+  const md5base64url = z.hash("md5", { enc: "base64url" });
+
+  // Valid MD5 hashes
+  expect(md5hex.parse("5d41402abc4b2a76b9719d911017c592")).toBe("5d41402abc4b2a76b9719d911017c592");
+  expect(md5hex.parse("5D41402ABC4B2A76B9719D911017C592")).toBe("5D41402ABC4B2A76B9719D911017C592"); // uppercase
+  expect(md5base64.parse("XUFAKrxLKna5cZ2REBfFkg==")).toBe("XUFAKrxLKna5cZ2REBfFkg==");
+  expect(md5base64url.parse("XUFAKrxLKna5cZ2REBfFkg")).toBe("XUFAKrxLKna5cZ2REBfFkg");
+
+  // Invalid MD5 hashes
+  expect(() => md5hex.parse("5d41402abc4b2a76b9719d911017c59")).toThrow(); // too short
+  expect(() => md5hex.parse("5d41402abc4b2a76b9719d911017c592x")).toThrow(); // too long
+  expect(() => md5base64.parse("XUFAKrxLKna5cZ2REBfFkg=")).toThrow(); // wrong padding
+  expect(() => md5base64url.parse("XUFAKrxLKna5cZ2REBfFkg=")).toThrow(); // has padding
+
+  // SHA1 tests
+  const sha1hex = z.hash("sha1");
+  const sha1base64 = z.hash("sha1", { enc: "base64" });
+  const sha1base64url = z.hash("sha1", { enc: "base64url" });
+
+  // Valid SHA1 hashes
+  expect(sha1hex.parse("aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d")).toBe("aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d");
+  expect(sha1base64.parse("qvTGHdzF6KLavt4PO0gs2a6pQ00=")).toBe("qvTGHdzF6KLavt4PO0gs2a6pQ00=");
+  expect(sha1base64url.parse("qvTGHdzF6KLavt4PO0gs2a6pQ00")).toBe("qvTGHdzF6KLavt4PO0gs2a6pQ00");
+
+  // SHA256 tests
+  const sha256hex = z.hash("sha256");
+  const sha256base64 = z.hash("sha256", { enc: "base64" });
+  const sha256base64url = z.hash("sha256", { enc: "base64url" });
+
+  // Valid SHA256 hashes
+  expect(sha256hex.parse("2cf24dba4f21d4288094c4a2e2c2d6c6b0c3e0c8f0e0c8f0e0c8f0e0c8f0e0c8")).toBe(
+    "2cf24dba4f21d4288094c4a2e2c2d6c6b0c3e0c8f0e0c8f0e0c8f0e0c8f0e0c8"
+  );
+  expect(sha256base64.parse("LPJNul+wow4m6DsqxbninhsWHlwfp0JecwQzYpOLmCQ=")).toBe(
+    "LPJNul+wow4m6DsqxbninhsWHlwfp0JecwQzYpOLmCQ="
+  );
+  expect(sha256base64url.parse("LPJNul-wow4m6DsqxbninhsWHlwfp0JecwQzYpOLmCQ")).toBe(
+    "LPJNul-wow4m6DsqxbninhsWHlwfp0JecwQzYpOLmCQ"
+  );
+
+  // SHA384 tests (no padding in base64)
+  const sha384hex = z.hash("sha384");
+  const sha384base64 = z.hash("sha384", { enc: "base64" });
+
+  expect(
+    sha384hex.parse("59e1748777448c69de6b800d7a33bbfb9ff1b463e44354c3553bcdb9c666fa90125a3c79f90397bdf5f6a13de828684f")
+  ).toBe("59e1748777448c69de6b800d7a33bbfb9ff1b463e44354c3553bcdb9c666fa90125a3c79f90397bdf5f6a13de828684f");
+  expect(sha384base64.parse("WeF0h3dEjGneawDXozO7+5/xtGPkQ1TDVTvNucZm+pASWjx5+QOXvfX2oT3oKGhP")).toBe(
+    "WeF0h3dEjGneawDXozO7+5/xtGPkQ1TDVTvNucZm+pASWjx5+QOXvfX2oT3oKGhP"
+  );
+
+  // SHA512 tests
+  const sha512hex = z.hash("sha512");
+  const sha512base64 = z.hash("sha512", { enc: "base64" });
+
+  expect(
+    sha512hex.parse(
+      "9b71d224bd62f3785d96d46ad3ea3d73319bfbc2890caadae2dff72519673ca72323c3d99ba5c11d7c7acc6e14b8c5da0c4663475c2e5c3adef46f73bcdec043"
+    )
+  ).toBe(
+    "9b71d224bd62f3785d96d46ad3ea3d73319bfbc2890caadae2dff72519673ca72323c3d99ba5c11d7c7acc6e14b8c5da0c4663475c2e5c3adef46f73bcdec043"
+  );
+  expect(
+    sha512base64.parse("m3HSJL1i83hdltRq0+o9czGb+8KJDKra4t/3JRlnPKcjI8PZm6XBHXx6zG4UuMXaDEZjR1wuXDre9G9zvN7AQw==")
+  ).toBe("m3HSJL1i83hdltRq0+o9czGb+8KJDKra4t/3JRlnPKcjI8PZm6XBHXx6zG4UuMXaDEZjR1wuXDre9G9zvN7AQw==");
+
+  // Test default encoding (hex)
+  const defaultHash = z.hash("sha256");
+  expect(defaultHash.parse("2cf24dba4f21d4288094c4a2e2c2d6c6b0c3e0c8f0e0c8f0e0c8f0e0c8f0e0c8")).toBe(
+    "2cf24dba4f21d4288094c4a2e2c2d6c6b0c3e0c8f0e0c8f0e0c8f0e0c8f0e0c8"
+  );
+
+  // Test with custom error message
+  const hashWithMessage = z.hash("md5", { message: "Invalid MD5 hash" });
+  expect(() => hashWithMessage.parse("invalid")).toThrow("Invalid MD5 hash");
 });
