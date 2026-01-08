@@ -319,7 +319,7 @@ z.toJSONSchema(mySchema, {
 });
 ```
 
-Note that unrepresentable types will throw an `Error` before this functions is called. If you are trying to define custom behavior for an unrepresentable type, you'll need to use set the `unrepresentable: "any"` alongside `override`.
+Note that unrepresentable types will throw an `Error` before this function is called. If you are trying to define custom behavior for an unrepresentable type, you'll need to set the `unrepresentable: "any"` alongside `override`.
 
 ```ts
 // support z.date() as ISO datetime strings
@@ -489,7 +489,7 @@ z.optional(z.string());
 
 {/* ### Pipes
 
-Pipes contain and input and and output schema. Zod uses the *output schema* for JSON Schema conversion. */}
+Pipes contain an input and an output schema. Zod uses the *output schema* for JSON Schema conversion. */}
 
 
 
