@@ -558,6 +558,72 @@ export function _isoDuration<T extends schemas.$ZodISODuration>(
   });
 }
 
+// ISOYearMonth
+export type $ZodISOYearMonthParams = StringFormatParams<schemas.$ZodISOYearMonth, "pattern" | "when">;
+export type $ZodCheckISOYearMonthParams = CheckStringFormatParams<schemas.$ZodISOYearMonth, "pattern" | "when">;
+// @__NO_SIDE_EFFECTS__
+export function _isoYearMonth<T extends schemas.$ZodISOYearMonth>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodISOYearMonthParams | $ZodCheckISOYearMonthParams
+): T {
+  return new Class({
+    type: "string",
+    format: "yearMonth",
+    check: "string_format",
+    ...util.normalizeParams(params),
+  });
+}
+
+// ISOMonthDay
+export type $ZodISOMonthDayParams = StringFormatParams<schemas.$ZodISOMonthDay, "pattern" | "when">;
+export type $ZodCheckISOMonthDayParams = CheckStringFormatParams<schemas.$ZodISOMonthDay, "pattern" | "when">;
+// @__NO_SIDE_EFFECTS__
+export function _isoMonthDay<T extends schemas.$ZodISOMonthDay>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodISOMonthDayParams | $ZodCheckISOMonthDayParams
+): T {
+  return new Class({
+    type: "string",
+    format: "monthDay",
+    check: "string_format",
+    ...util.normalizeParams(params),
+  });
+}
+
+// ISOInstant
+export type $ZodISOInstantParams = StringFormatParams<schemas.$ZodISOInstant, "pattern" | "when">;
+export type $ZodCheckISOInstantParams = CheckStringFormatParams<schemas.$ZodISOInstant, "pattern" | "when">;
+// @__NO_SIDE_EFFECTS__
+export function _isoInstant<T extends schemas.$ZodISOInstant>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodISOInstantParams | $ZodCheckISOInstantParams
+): T {
+  return new Class({
+    type: "string",
+    format: "instant",
+    check: "string_format",
+    precision: null,
+    ...util.normalizeParams(params),
+  });
+}
+
+// ISOZonedDateTime
+export type $ZodISOZonedDateTimeParams = StringFormatParams<schemas.$ZodISOZonedDateTime, "pattern" | "when">;
+export type $ZodCheckISOZonedDateTimeParams = CheckStringFormatParams<schemas.$ZodISOZonedDateTime, "pattern" | "when">;
+// @__NO_SIDE_EFFECTS__
+export function _isoZonedDateTime<T extends schemas.$ZodISOZonedDateTime>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodISOZonedDateTimeParams | $ZodCheckISOZonedDateTimeParams
+): T {
+  return new Class({
+    type: "string",
+    format: "zonedDateTime",
+    check: "string_format",
+    precision: null,
+    ...util.normalizeParams(params),
+  });
+}
+
 // Number
 export type $ZodNumberParams = TypeParams<schemas.$ZodNumber<number>, "coerce">;
 export type $ZodNumberFormatParams = CheckTypeParams<schemas.$ZodNumberFormat, "format" | "coerce">;
