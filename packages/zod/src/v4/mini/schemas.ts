@@ -1878,11 +1878,23 @@ export const ZodMiniFunction: core.$constructor<ZodMiniFunction> = /*@__PURE__*/
 );
 
 export function _function(): ZodMiniFunction;
+// Accept mutable arrays
 export function _function<const In extends Array<SomeType> = Array<SomeType>>(params: {
   input: In;
 }): ZodMiniFunction<ZodMiniTuple<In, null>, core.$ZodFunctionOut>;
 export function _function<
   const In extends Array<SomeType> = Array<SomeType>,
+  const Out extends core.$ZodFunctionOut = core.$ZodFunctionOut,
+>(params: {
+  input: In;
+  output: Out;
+}): ZodMiniFunction<ZodMiniTuple<In, null>, Out>;
+// Accept readonly arrays
+export function _function<const In extends ReadonlyArray<SomeType> = ReadonlyArray<SomeType>>(params: {
+  input: In;
+}): ZodMiniFunction<ZodMiniTuple<In, null>, core.$ZodFunctionOut>;
+export function _function<
+  const In extends ReadonlyArray<SomeType> = ReadonlyArray<SomeType>,
   const Out extends core.$ZodFunctionOut = core.$ZodFunctionOut,
 >(params: {
   input: In;
@@ -1904,11 +1916,15 @@ export function _function<
 // @__NO_SIDE_EFFECTS__
 export function _function(params?: {
   output?: core.$ZodFunctionOut;
-  input?: core.$ZodFunctionArgs | Array<SomeType>;
+  input?: core.$ZodFunctionArgs | Array<SomeType> | ReadonlyArray<SomeType>;
 }): ZodMiniFunction {
+  const _input: core.$ZodFunctionArgs = Array.isArray(params?.input)
+    ? (tuple(params?.input as any) as any)
+    : ((params?.input ?? array(unknown())) as core.$ZodFunctionArgs);
+
   return new ZodMiniFunction({
     type: "function",
-    input: Array.isArray(params?.input) ? tuple(params?.input as any) : (params?.input ?? array(unknown())),
+    input: _input,
     output: params?.output ?? unknown(),
   });
 }
