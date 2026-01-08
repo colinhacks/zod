@@ -1,6 +1,14 @@
 export const Gold = () => {
   const companies = [
     {
+      name: "Brand.dev",
+      description: "API for logos, colors, and company info",
+      logoDark: "https://avatars.githubusercontent.com/brand-dot-dev",
+      logoLight: "https://avatars.githubusercontent.com/brand-dot-dev",
+      url: "brand.dev",
+      href: "https://brand.dev/?utm_source=zod",
+    },
+    {
       name: "Courier",
       description: "The API platform for sending notifications",
       logoDark: "https://github.com/user-attachments/assets/6b09506a-78de-47e8-a8c1-792efe31910a",
