@@ -3080,17 +3080,21 @@ computeTrimmedLengthAsync("sandwich"); // => Promise<8>
 
 ## Custom
 
-You can create a Zod schema for any TypeScript type by using `z.custom()`. This is useful for creating schemas for types that are not supported by Zod out of the box, such as template string literals.
+You can create a Zod schema for any TypeScript type by using `z.custom()`. This is useful for creating schemas for types that are not supported by Zod out of the box, such as class instances or values from third-party libraries.
+
 
 ```ts
-const px = z.custom<`${number}px`>((val) => {
-  return typeof val === "string" ? /^\d+px$/.test(val) : false;
-});
+class UserId {
+  constructor(public value: string) {}
+}
 
-type px = z.infer<typeof px>; // `${number}px`
+const UserIdSchema = z.custom<UserId>(
+  (val) => val instanceof UserId
+);
 
-px.parse("42px"); // "42px"
-px.parse("42vw"); // throws;
+UserIdSchema.parse(new UserId("abc")); // ✅ ok
+UserIdSchema.parse("abc"); // ❌ throws
+
 ```
 
 If you don't provide a validation function, Zod will allow any value. This can be dangerous!
@@ -3103,6 +3107,22 @@ You can customize the error message and other options by passing a second argume
 
 ```ts
 z.custom<...>((val) => ..., "custom error message");
+```
+
+**Note**
+For template string literals, prefer using [`z.templateLiteral()`](#templateliteral) instead of `z.custom()`.
+
+```ts
+const px = z.templateLiteral([
+  z.number(),
+  z.literal("px"),
+]);
+
+type Px = z.infer<typeof px>; // `${number}px`
+
+px.parse("42px"); // "42px"
+px.parse("42vw"); // ❌ throws
+
 ```
 
 ## Apply
