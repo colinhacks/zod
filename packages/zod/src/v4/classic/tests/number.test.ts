@@ -264,6 +264,31 @@ test("string format methods", () => {
   expect(() => a.parse(1)).toThrow();
 });
 
+test("negative zero edge case", () => {
+  const schema = z.number();
+  const negativeZero = -0;
+  const positiveZero = 0;
+
+  // Both -0 and 0 should be valid (parse succeeds)
+  expect(schema.safeParse(negativeZero).success).toBe(true);
+  expect(schema.safeParse(positiveZero).success).toBe(true);
+  // Note: -0 is normalized to 0 after parsing
+  expect(schema.parse(negativeZero) === 0).toBe(true);
+  expect(schema.parse(positiveZero)).toEqual(0);
+
+  // With positive() constraint, both should be invalid (0 is not positive)
+  const positiveSchema = z.number().positive();
+  expect(() => positiveSchema.parse(negativeZero)).toThrow();
+  expect(() => positiveSchema.parse(positiveZero)).toThrow();
+
+  // With nonnegative(), both should be valid (0 is non-negative)
+  const nonnegativeSchema = z.number().nonnegative();
+  expect(nonnegativeSchema.safeParse(negativeZero).success).toBe(true);
+  expect(nonnegativeSchema.safeParse(positiveZero).success).toBe(true);
+  expect(nonnegativeSchema.parse(negativeZero) === 0).toBe(true);
+  expect(nonnegativeSchema.parse(positiveZero)).toEqual(0);
+});
+
 test("error customization", () => {
   z.number().gte(5, { error: (iss) => "Min: " + iss.minimum.valueOf() });
   z.number().lte(5, { error: (iss) => "Max: " + iss.maximum.valueOf() });
