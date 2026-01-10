@@ -1017,6 +1017,97 @@ test("CIDR v6 validation", () => {
   expect(cidrV6.safeParse("22d9:f4a8:6a90:f3bf:dcaa:2beb:5fba:0000/112/268").success).toBe(false);
 });
 
+test("IPv4 Range validation", () => {
+  // Invalid CIDR prefix length throws at construction
+  expect(() => z.ipv4Range("192.168.1.0/33")).toThrow();
+  expect(() => z.ipv4Range("192.168.1.0/-1")).toThrow();
+  expect(() => z.ipv4Range("192.168.1.0/abc")).toThrow();
+
+  // Valid IPs in range
+  const schema = z.ipv4Range("192.168.1.0/24");
+  expect(schema.safeParse("192.168.1.0").success).toBe(true); // Network address
+  expect(schema.safeParse("192.168.1.10").success).toBe(true);
+  expect(schema.safeParse("192.168.1.255").success).toBe(true); // Broadcast
+
+  // IPs out of range
+  expect(schema.safeParse("192.168.2.10").success).toBe(false);
+  expect(schema.safeParse("10.0.0.1").success).toBe(false);
+
+  // Invalid IP format
+  expect(schema.safeParse("invalid").success).toBe(false);
+  expect(schema.safeParse("256.0.0.1").success).toBe(false);
+  expect(schema.safeParse("192.168.1").success).toBe(false);
+  expect(schema.safeParse("").success).toBe(false);
+
+  // /0 (all IPs allowed)
+  const allSchema = z.ipv4Range("0.0.0.0/0");
+  expect(allSchema.safeParse("0.0.0.0").success).toBe(true);
+  expect(allSchema.safeParse("255.255.255.255").success).toBe(true);
+
+  // /32 (single IP)
+  const singleSchema = z.ipv4Range("192.168.1.1/32");
+  expect(singleSchema.safeParse("192.168.1.1").success).toBe(true);
+  expect(singleSchema.safeParse("192.168.1.2").success).toBe(false);
+
+  // Various private ranges
+  expect(z.ipv4Range("10.0.0.0/8").safeParse("10.255.255.255").success).toBe(true);
+  expect(z.ipv4Range("172.16.0.0/12").safeParse("172.31.255.255").success).toBe(true);
+  expect(z.ipv4Range("192.168.0.0/16").safeParse("192.168.255.255").success).toBe(true);
+});
+
+test("IPv6 Range validation", () => {
+  // Invalid CIDR prefix length throws at construction
+  expect(() => z.ipv6Range("2001:db8::/129")).toThrow();
+  expect(() => z.ipv6Range("2001:db8::/-1")).toThrow();
+
+  // Valid IPs in range
+  const schema = z.ipv6Range("2001:db8::/32");
+  expect(schema.safeParse("2001:db8::1").success).toBe(true);
+  expect(schema.safeParse("2001:db8:1234:5678:abcd:ef01:2345:6789").success).toBe(true);
+  expect(schema.safeParse("2001:db8:ffff:ffff:ffff:ffff:ffff:ffff").success).toBe(true);
+
+  // IPs out of range
+  expect(schema.safeParse("2001:db9::1").success).toBe(false);
+  expect(schema.safeParse("fe80::1").success).toBe(false);
+  expect(schema.safeParse("::1").success).toBe(false);
+
+  // Invalid IP format
+  expect(schema.safeParse("invalid").success).toBe(false);
+  expect(schema.safeParse("192.168.1.1").success).toBe(false); // IPv4
+
+  // Link-local
+  expect(z.ipv6Range("fe80::/10").safeParse("fe80::1").success).toBe(true);
+  expect(z.ipv6Range("fe80::/10").safeParse("febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff").success).toBe(true);
+
+  // /128 (single IP)
+  expect(z.ipv6Range("::1/128").safeParse("::1").success).toBe(true);
+  expect(z.ipv6Range("::1/128").safeParse("::2").success).toBe(false);
+
+  // Loopback
+  expect(z.ipv6Range("::/0").safeParse("::1").success).toBe(true);
+  expect(z.ipv6Range("::/0").safeParse("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff").success).toBe(true);
+});
+
+test("IP Range - method chaining", () => {
+  // z.string() method chaining
+  const schema = z.string().ipv4Range("192.168.1.0/24");
+  expect(schema.safeParse("192.168.1.10").success).toBe(true);
+  expect(schema.safeParse("192.168.2.10").success).toBe(false);
+
+  const schemaV6 = z.string().ipv6Range("2001:db8::/32");
+  expect(schemaV6.safeParse("2001:db8::1").success).toBe(true);
+  expect(schemaV6.safeParse("2001:db9::1").success).toBe(false);
+});
+
+test("IP Range - custom error message", () => {
+  const schema = z.ipv4Range("192.168.1.0/24", "IP must be in range");
+  const result = schema.safeParse("192.168.2.1");
+  expect(result.success).toBe(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toBe("IP must be in range");
+  }
+});
+
 test("E.164 validation", () => {
   const e164Number = z.string().e164();
   expect(e164Number.safeParse("+1555555").success).toBe(true);

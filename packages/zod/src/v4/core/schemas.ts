@@ -866,6 +866,161 @@ export const $ZodCIDRv6: core.$constructor<$ZodCIDRv6> = /*@__PURE__*/ core.$con
   }
 );
 
+//////////////////////////////   ZodIPv4Range   //////////////////////////////
+
+function ipv4ToBinary(ip: string): string | null {
+  const parts = ip.split(".");
+  if (parts.length !== 4) return null;
+
+  let binary = "";
+  for (const part of parts) {
+    const num = Number.parseInt(part, 10);
+    if (Number.isNaN(num) || num < 0 || num > 255 || part !== String(num)) return null;
+    binary += num.toString(2).padStart(8, "0");
+  }
+  return binary;
+}
+
+function isIPv4InRange(ip: string, cidr: string): boolean {
+  const [rangeIp, prefixLengthStr] = cidr.split("/");
+  if (!rangeIp || !prefixLengthStr) return false;
+
+  const prefixLength = Number.parseInt(prefixLengthStr, 10);
+  if (Number.isNaN(prefixLength) || prefixLength < 0 || prefixLength > 32) return false;
+
+  const ipBinary = ipv4ToBinary(ip);
+  const rangeBinary = ipv4ToBinary(rangeIp);
+
+  if (!ipBinary || !rangeBinary) return false;
+
+  return ipBinary.substring(0, prefixLength) === rangeBinary.substring(0, prefixLength);
+}
+
+export interface $ZodIPv4RangeDef extends $ZodStringFormatDef<"ipv4_range"> {
+  cidr: string;
+}
+
+export interface $ZodIPv4RangeInternals extends $ZodStringFormatInternals<"ipv4_range"> {
+  def: $ZodIPv4RangeDef;
+}
+
+export interface $ZodIPv4Range extends $ZodType {
+  _zod: $ZodIPv4RangeInternals;
+}
+
+export const $ZodIPv4Range: core.$constructor<$ZodIPv4Range> = /*@__PURE__*/ core.$constructor(
+  "$ZodIPv4Range",
+  (inst, def): void => {
+    const [, prefixStr] = def.cidr.split("/");
+    const prefix = Number.parseInt(prefixStr || "", 10);
+    if (Number.isNaN(prefix) || prefix < 0 || prefix > 32) {
+      throw new Error(`Invalid IPv4 CIDR prefix length: ${prefixStr}`);
+    }
+
+    $ZodStringFormat.init(inst, def);
+
+    inst._zod.check = (payload) => {
+      if (isIPv4InRange(payload.value, def.cidr)) return;
+
+      payload.issues.push({
+        code: "invalid_format",
+        format: "ipv4_range",
+        input: payload.value,
+        inst,
+        continue: !def.abort,
+      });
+    };
+  }
+);
+
+//////////////////////////////   ZodIPv6Range   //////////////////////////////
+
+function ipv6ToBinary(ip: string): string | null {
+  // Handle :: expansion
+  const doubleColonIndex = ip.indexOf("::");
+  let segments: string[];
+
+  if (doubleColonIndex !== -1) {
+    // Check for multiple ::
+    if (ip.indexOf("::", doubleColonIndex + 1) !== -1) return null;
+
+    const before = ip.substring(0, doubleColonIndex);
+    const after = ip.substring(doubleColonIndex + 2);
+
+    const beforeSegments = before ? before.split(":") : [];
+    const afterSegments = after ? after.split(":") : [];
+
+    const zeroCount = 8 - beforeSegments.length - afterSegments.length;
+    if (zeroCount < 0) return null;
+
+    segments = [...beforeSegments, ...Array(zeroCount).fill("0"), ...afterSegments];
+  } else {
+    segments = ip.split(":");
+  }
+
+  if (segments.length !== 8) return null;
+
+  const fullSegments: string[] = [];
+  for (const segment of segments) {
+    if (!/^[0-9a-fA-F]{1,4}$/.test(segment)) return null;
+    fullSegments.push(segment.padStart(4, "0"));
+  }
+
+  return fullSegments.map((segment) => Number.parseInt(segment, 16).toString(2).padStart(16, "0")).join("");
+}
+
+function isIPv6InRange(ip: string, cidr: string): boolean {
+  const [rangeIp, prefixLengthStr] = cidr.split("/");
+  if (!rangeIp || !prefixLengthStr) return false;
+
+  const prefixLength = Number.parseInt(prefixLengthStr, 10);
+  if (Number.isNaN(prefixLength) || prefixLength < 0 || prefixLength > 128) return false;
+
+  const ipBinary = ipv6ToBinary(ip);
+  const rangeBinary = ipv6ToBinary(rangeIp);
+
+  if (!ipBinary || !rangeBinary) return false;
+
+  return ipBinary.substring(0, prefixLength) === rangeBinary.substring(0, prefixLength);
+}
+
+export interface $ZodIPv6RangeDef extends $ZodStringFormatDef<"ipv6_range"> {
+  cidr: string;
+}
+
+export interface $ZodIPv6RangeInternals extends $ZodStringFormatInternals<"ipv6_range"> {
+  def: $ZodIPv6RangeDef;
+}
+
+export interface $ZodIPv6Range extends $ZodType {
+  _zod: $ZodIPv6RangeInternals;
+}
+
+export const $ZodIPv6Range: core.$constructor<$ZodIPv6Range> = /*@__PURE__*/ core.$constructor(
+  "$ZodIPv6Range",
+  (inst, def): void => {
+    const [, prefixStr] = def.cidr.split("/");
+    const prefix = Number.parseInt(prefixStr || "", 10);
+    if (Number.isNaN(prefix) || prefix < 0 || prefix > 128) {
+      throw new Error(`Invalid IPv6 CIDR prefix length: ${prefixStr}`);
+    }
+
+    $ZodStringFormat.init(inst, def);
+
+    inst._zod.check = (payload) => {
+      if (isIPv6InRange(payload.value, def.cidr)) return;
+
+      payload.issues.push({
+        code: "invalid_format",
+        format: "ipv6_range",
+        input: payload.value,
+        inst,
+        continue: !def.abort,
+      });
+    };
+  }
+);
+
 //////////////////////////////   ZodBase64   //////////////////////////////
 export function isValidBase64(data: string): boolean {
   if (data === "") return true;
