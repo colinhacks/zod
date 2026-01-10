@@ -113,7 +113,7 @@ payloadSchema.decode({
 
 While `.parse()` and `.decode()` behave identically at *runtime*, they have different type signatures. The `.parse()` method accepts `unknown` as input, and returns a value that matches the schema's inferred *output type*. By contrast, the `z.decode()` and `z.encode()` functions have *strongly-typed inputs*. 
 
-```ts
+```tsinto
 stringToDate.parse(12345); 
 // no complaints from TypeScript (fails at runtime)
 
@@ -578,7 +578,7 @@ type Indices<T extends readonly any[]> = Exclude<Partial<T>['length'], T['length
 type FruitIndex = Indices<typeof fruits>; // 0 | 1 | 2 | 3 | 4
 
 export const fruitEnumToString = z.codec(
-    z.union(fruits.map((_r, i) => z.literal(i as FruitIndex))), // what's in the source data
+    z.union(fruits.map((_fruit, i) => z.literal(i as FruitIndex))), // what's in the source data
     z.enum(fruits), // what's in the app for readability
     {
         encode: str => fruits.indexOf(str) as FruitIndex,
