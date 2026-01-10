@@ -390,6 +390,40 @@ export function cidrv6(params?: string | core.$ZodCIDRv6Params): ZodMiniCIDRv6 {
   return core._cidrv6(ZodMiniCIDRv6, params);
 }
 
+// ZodMiniIPv4Range
+export interface ZodMiniIPv4Range extends _ZodMiniString<core.$ZodIPv4RangeInternals> {
+  // _zod: core.$ZodIPv4RangeInternals;
+}
+export const ZodMiniIPv4Range: core.$constructor<ZodMiniIPv4Range> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniIPv4Range",
+  (inst, def) => {
+    core.$ZodIPv4Range.init(inst, def);
+    ZodMiniStringFormat.init(inst, def);
+  }
+);
+
+// @__NO_SIDE_EFFECTS__
+export function ipv4Range(cidr: string, params?: string | core.$ZodIPv4RangeParams): ZodMiniIPv4Range {
+  return core._ipv4Range(ZodMiniIPv4Range, cidr, params);
+}
+
+// ZodMiniIPv6Range
+export interface ZodMiniIPv6Range extends _ZodMiniString<core.$ZodIPv6RangeInternals> {
+  // _zod: core.$ZodIPv6RangeInternals;
+}
+export const ZodMiniIPv6Range: core.$constructor<ZodMiniIPv6Range> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniIPv6Range",
+  (inst, def) => {
+    core.$ZodIPv6Range.init(inst, def);
+    ZodMiniStringFormat.init(inst, def);
+  }
+);
+
+// @__NO_SIDE_EFFECTS__
+export function ipv6Range(cidr: string, params?: string | core.$ZodIPv6RangeParams): ZodMiniIPv6Range {
+  return core._ipv6Range(ZodMiniIPv6Range, cidr, params);
+}
+
 // ZodMiniMAC
 export interface ZodMiniMAC extends _ZodMiniString<core.$ZodMACInternals> {
   // _zod: core.$ZodMACInternals;
