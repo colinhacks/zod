@@ -567,3 +567,30 @@ const uriComponent = z.codec(z.string(), z.string(), {
 uriComponent.decode("Hello%20World%21");  // => "Hello World!"
 uriComponent.encode("Hello World!");      // => "Hello%20World!"
 ```
+
+### `enumToString`
+
+Converts integer enums to strings. Both the strings and integers are type safe.
+
+```ts
+const fruits = ['Apples', 'Bananas', 'Oranges', 'Peaches', 'Pears'] as const;
+type Indices<T extends readonly any[]> = Exclude<Partial<T>['length'], T['length']>;
+type FruitIndex = Indices<typeof fruits>; // 0 | 1 | 2 | 3 | 4
+
+export const fruitEnumToString = z.codec(
+    z.union(fruits.map((_r, i) => z.literal(i as FruitIndex))), // what's in the source data
+    z.enum(fruits), // what's in the app for readability
+    {
+        encode: str => fruits.indexOf(str) as FruitIndex,
+        decode: num => fruits[num],
+    }
+);
+
+fruitEnumToString.decode(0); // => 'Apples';
+fruitEnumToString.decode(10); // ZodError + TypeScript error
+fruitEnumToString.decode('Potato') // ZodError + TypeScript error
+
+fruitEnumToString.encode('Apples'); // => 0;
+fruitEnumToString.encode('Potato'); // ZodError + TypeScript error
+fruitEnumToString.encode(1); // ZodError + TypeScript error
+```
