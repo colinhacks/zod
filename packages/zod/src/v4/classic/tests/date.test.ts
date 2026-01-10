@@ -60,3 +60,57 @@ test("min max getters", () => {
   expect(maxCheck.maxDate).toEqual(benchmarkDate);
   expect(maxCheck.max(beforeBenchmarkDate).maxDate).toEqual(beforeBenchmarkDate);
 });
+
+test("invalid string error message", () => {
+  const schema = z.coerce.date();
+  const result = schema.safeParse("www");
+
+  expect(result.success).toEqual(false);
+  expect(result.error!.issues).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "invalid_type",
+        "expected": "date",
+        "message": "Invalid input: expected date, received string",
+        "path": [],
+        "received": "Invalid Date",
+      },
+    ]
+  `);
+});
+
+test("invalid number error message", () => {
+  const schema = z.coerce.date();
+  const result = schema.safeParse(Number.NaN);
+
+  expect(result.success).toEqual(false);
+  expect(result.error!.issues).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "invalid_type",
+        "expected": "date",
+        "message": "Invalid input: expected date, received NaN",
+        "path": [],
+        "received": "Invalid Date",
+      },
+    ]
+  `);
+});
+
+test("invalid date object error message", () => {
+  const schema = z.coerce.date();
+  const result = schema.safeParse(new Date("invalid"));
+
+  expect(result.success).toEqual(false);
+  expect(result.error!.issues).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "invalid_type",
+        "expected": "date",
+        "message": "Invalid input: expected date, received Date",
+        "path": [],
+        "received": "Invalid Date",
+      },
+    ]
+  `);
+});

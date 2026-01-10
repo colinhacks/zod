@@ -1538,6 +1538,7 @@ export const $ZodDate: core.$constructor<$ZodDate> = /*@__PURE__*/ core.$constru
   $ZodType.init(inst, def);
 
   inst._zod.parse = (payload, _ctx) => {
+    const originalInput = payload.value;
     if (def.coerce) {
       try {
         payload.value = new Date(payload.value as string | number | Date);
@@ -1552,7 +1553,7 @@ export const $ZodDate: core.$constructor<$ZodDate> = /*@__PURE__*/ core.$constru
       expected: "date",
       code: "invalid_type",
 
-      input,
+      input: originalInput,
       ...(isDate ? { received: "Invalid Date" } : {}),
       inst,
     });
