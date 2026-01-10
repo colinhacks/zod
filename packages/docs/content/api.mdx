@@ -262,6 +262,8 @@ z.ipv6();
 z.mac();
 z.cidrv4();        // ipv4 CIDR block
 z.cidrv6();        // ipv6 CIDR block
+z.ipv4Range("192.168.1.0/24");  // ipv4 range validation
+z.ipv6Range("2001:db8::/32");   // ipv6 range validation
 z.hash("sha256");  // or "sha1", "sha384", "sha512", "md5"
 z.iso.date();
 z.iso.time();
@@ -514,6 +516,20 @@ cidrv4.parse("192.168.0.0/24"); // ✅
 
 const cidrv6 = z.cidrv6();
 cidrv6.parse("2001:db8::/32"); // ✅
+```
+
+### IP Range Validation
+
+Validate that an IP address falls within a specified CIDR range.
+
+```ts
+const schema = z.ipv4Range("192.168.1.0/24");
+schema.parse("192.168.1.10");   // ✅
+schema.parse("192.168.2.10");   // ❌ out of range
+
+const v6Schema = z.ipv6Range("2001:db8::/32");
+v6Schema.parse("2001:db8::1");  // ✅
+v6Schema.parse("2001:db9::1");  // ❌ out of range
 ```
 
 ### MAC Addresses
