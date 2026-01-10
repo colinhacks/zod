@@ -8,7 +8,7 @@ import { ThemedImage } from "@/components/themed-image";
 
 > ✨ **New** — Introduced in `zod@4.1`
 
-All Zod schemas can process inputs in both the forward and backward direction: 
+All Zod schemas can process inputs in both the forward and backward direction:
 
 - **Forward**: `Input` to `Output`
   - `.parse()`
@@ -86,10 +86,10 @@ z.encode(stringToDate, new Date("2024-01-15T10:30:00.000Z"))
 
 This is particularly useful when parsing data at a network boundary. You can share a single Zod schema between your client and server, then use this single schema to convert between a network-friendly format (say, JSON) and a richer JavaScript representation.
 
-<ThemedImage 
-  lightSrc="/codecs/codecs-network-light.svg" 
-  darkSrc="/codecs/codecs-network-dark.svg" 
-  alt="Codecs encoding and decoding data across a network boundary" 
+<ThemedImage
+  lightSrc="/codecs/codecs-network-light.svg"
+  darkSrc="/codecs/codecs-network-dark.svg"
+  alt="Codecs encoding and decoding data across a network boundary"
 />
 
 ### Composability
@@ -99,8 +99,8 @@ This is particularly useful when parsing data at a network boundary. You can sha
 Codecs are a schema like any other. You can nest them inside objects, arrays, pipes, etc. There are no rules on where you can use them!
 
 ```ts
-const payloadSchema = z.object({ 
-  startDate: stringToDate 
+const payloadSchema = z.object({
+  startDate: stringToDate
 });
 
 payloadSchema.decode({
@@ -111,26 +111,26 @@ payloadSchema.decode({
 
 ### Type-safe inputs
 
-While `.parse()` and `.decode()` behave identically at *runtime*, they have different type signatures. The `.parse()` method accepts `unknown` as input, and returns a value that matches the schema's inferred *output type*. By contrast, the `z.decode()` and `z.encode()` functions have *strongly-typed inputs*. 
+While `.parse()` and `.decode()` behave identically at *runtime*, they have different type signatures. The `.parse()` method accepts `unknown` as input, and returns a value that matches the schema's inferred *output type*. By contrast, the `z.decode()` and `z.encode()` functions have *strongly-typed inputs*.
 
-```tsinto
-stringToDate.parse(12345); 
+```ts
+stringToDate.parse(12345);
 // no complaints from TypeScript (fails at runtime)
 
-stringToDate.decode(12345); 
+stringToDate.decode(12345);
 // ❌ TypeScript error: Argument of type 'number' is not assignable to parameter of type 'string'.
 
-stringToDate.encode(12345); 
+stringToDate.encode(12345);
 // ❌ TypeScript error: Argument of type 'number' is not assignable to parameter of type 'Date'.
 ```
 
 Why the difference? Encoding and decoding imply *transformation*. In many cases, the inputs to these methods are already strongly typed in application code, so z.decode/z.encode accept strongly typed inputs to surface mistakes at compile time.
 Here's a diagram demonstrating the differences between the type signatures for `parse()`, `decode()`, and `encode()`.
 
-<ThemedImage 
-  lightSrc="/codecs/codecs-light.png" 
-  darkSrc="/codecs/codecs-dark.png" 
-  alt="Codec directionality diagram showing bidirectional transformation between input and output schemas" 
+<ThemedImage
+  lightSrc="/codecs/codecs-light.png"
+  darkSrc="/codecs/codecs-dark.png"
+  alt="Codec directionality diagram showing bidirectional transformation between input and output schemas"
 />
 
 ### Async and safe variants
@@ -147,22 +147,22 @@ const asyncCodec = z.codec(z.string(), z.number(), {
 As with regular `parse()`, there are "safe" and "async" variants of `decode()` and `encode()`.
 
 ```ts
-stringToDate.decode("2024-01-15T10:30:00.000Z"); 
+stringToDate.decode("2024-01-15T10:30:00.000Z");
 // => Date
 
-stringToDate.decodeAsync("2024-01-15T10:30:00.000Z"); 
+stringToDate.decodeAsync("2024-01-15T10:30:00.000Z");
 // => Promise<Date>
 
-stringToDate.safeDecode("2024-01-15T10:30:00.000Z"); 
+stringToDate.safeDecode("2024-01-15T10:30:00.000Z");
 // => { success: true, data: Date } | { success: false, error: ZodError }
 
-stringToDate.safeDecodeAsync("2024-01-15T10:30:00.000Z"); 
+stringToDate.safeDecodeAsync("2024-01-15T10:30:00.000Z");
 // => Promise<{ success: true, data: Date } | { success: false, error: ZodError }>
 ```
 
 ## How encoding works
 
-There are some subtleties to how certain Zod schemas "reverse" their parse behavior. 
+There are some subtleties to how certain Zod schemas "reverse" their parse behavior.
 
 ### Codecs
 
@@ -178,23 +178,23 @@ const stringToDate = z.codec(
   }
 );
 
-stringToDate.decode("2024-01-15T10:30:00.000Z"); 
+stringToDate.decode("2024-01-15T10:30:00.000Z");
 // => Date
 
-stringToDate.encode(new Date("2024-01-15")); 
+stringToDate.encode(new Date("2024-01-15"));
 // => string
 ```
 
 
 ### Pipes
 
-> **Fun fact** — Codecs are actually implemented internally as *subclass* of pipes that have been augmented with "interstitial" transform logic. 
+> **Fun fact** — Codecs are actually implemented internally as *subclass* of pipes that have been augmented with "interstitial" transform logic.
 
 During regular decoding, a `ZodPipe<A, B>` schema will first parse the data with `A`, then pass it into `B`. As you might expect, during encoding, the data is first encoded with `B`, then passed into `A`.
 
 ### Refinements
 
-All checks (`.refine()`, `.min()`, `.max()`, etc.) are still executed in both directions. 
+All checks (`.refine()`, `.min()`, `.max()`, etc.) are still executed in both directions.
 
 ```ts
 const schema = stringToDate.refine((date) => date.getFullYear() >= 2000, "Must be this millennium");
@@ -228,18 +228,18 @@ schema.encode("  hello  ");
 
 ### Defaults and prefaults
 
-Defaults and prefaults are only applied in the "forward" direction. 
+Defaults and prefaults are only applied in the "forward" direction.
 ```ts
 const stringWithDefault = z.string().default("hello");
 
-stringWithDefault.decode(undefined); 
+stringWithDefault.decode(undefined);
 // => "hello"
 
-stringWithDefault.encode(undefined); 
+stringWithDefault.encode(undefined);
 // => ZodError: Expected string, received undefined
 ```
 
-When you attach a default value to a schema, the input becomes optional (`| undefined`) but the output does not. As such, `undefined` is not a valid input to `z.encode()` and defaults/prefaults will not be applied. 
+When you attach a default value to a schema, the input becomes optional (`| undefined`) but the output does not. As such, `undefined` is not a valid input to `z.encode()` and defaults/prefaults will not be applied.
 
 ### Catch
 
@@ -248,16 +248,16 @@ Similarly, `.catch()` is only applied in the "forward" direction.
 ```ts
 const stringWithCatch = z.string().catch("hello");
 
-stringWithCatch.decode(1234); 
+stringWithCatch.decode(1234);
 // => "hello"
 
-stringWithCatch.encode(1234); 
+stringWithCatch.encode(1234);
 // => ZodError: Expected string, received number
 ```
 
 ### Stringbool
 
-> **Note** — [Stringbool](/api#stringbool) pre-dates the introduction of codecs in Zod. It has since been internally re-implemented as a codec. 
+> **Note** — [Stringbool](/api#stringbool) pre-dates the introduction of codecs in Zod. It has since been internally re-implemented as a codec.
 
 The `z.stringbool()` API converts string values (`"true"`, `"false"`, `"yes"`, `"no"`, etc.) into `boolean`. By default, it will convert `true` to `"true"` and `false` to `"false"` during `z.encode()`.
 
@@ -282,12 +282,12 @@ stringbool.encode(false);   // => "no"
 
 ### Transforms
 
-⚠️ — The `.transform()` API implements a *unidirectional* transformation. If any `.transform()` exists anywhere in your schema, attempting a `z.encode()` operation will throw a *runtime error* (not a `ZodError`). 
+⚠️ — The `.transform()` API implements a *unidirectional* transformation. If any `.transform()` exists anywhere in your schema, attempting a `z.encode()` operation will throw a *runtime error* (not a `ZodError`).
 
 ```ts
 const schema = z.string().transform(val => val.length);
 
-schema.encode(1234); 
+schema.encode(1234);
 // ❌ Error: Encountered unidirectional transform during encode: ZodTransform
 ```
 
@@ -298,10 +298,10 @@ schema.encode(1234);
 ```ts
 const successSchema = z.success(z.string());
 
-z.decode(successSchema, "hello"); 
+z.decode(successSchema, "hello");
 // => true
 
-z.encode(successSchema, true);    
+z.encode(successSchema, true);
 // ❌ Error: Encountered unidirectional transform during encode: ZodSuccess
 ``` */}
 
@@ -310,7 +310,7 @@ z.encode(successSchema, true);
 
 Below are implementations for a bunch of commonly-needed codecs. For the sake of customizability, these are not included as first-class APIs in Zod itself. Instead, you should copy/paste them into your project and modify them as needed.
 
-> **Note** — All of these codec implementations have been tested for correctness. 
+> **Note** — All of these codec implementations have been tested for correctness.
 
 ### `stringToNumber`
 
@@ -439,13 +439,13 @@ Usage example with a specific schema:
 ```ts
 const jsonToObject = jsonCodec(z.object({ name: z.string(), age: z.number() }));
 
-jsonToObject.decode('{"name":"Alice","age":30}');  
+jsonToObject.decode('{"name":"Alice","age":30}');
 // => { name: "Alice", age: 30 }
 
-jsonToObject.encode({ name: "Bob", age: 25 });     
+jsonToObject.encode({ name: "Bob", age: 25 });
 // => '{"name":"Bob","age":25}'
 
-jsonToObject.decode('~~invalid~~'); 
+jsonToObject.decode('~~invalid~~');
 // ZodError: [
 //   {
 //     "code": "invalid_format",
@@ -578,12 +578,12 @@ type Indices<T extends readonly any[]> = Exclude<Partial<T>['length'], T['length
 type FruitIndex = Indices<typeof fruits>; // 0 | 1 | 2 | 3 | 4
 
 export const fruitEnumToString = z.codec(
-    z.union(fruits.map((_fruit, i) => z.literal(i as FruitIndex))), // what's in the source data
-    z.enum(fruits), // what's in the app for readability
-    {
-        encode: str => fruits.indexOf(str) as FruitIndex,
-        decode: num => fruits[num],
-    }
+  z.union(fruits.map((_fruit, i) => z.literal(i as FruitIndex))), // what's in the source data
+  z.enum(fruits), // what's in the app for readability
+  {
+    encode: str => fruits.indexOf(str) as FruitIndex,
+    decode: num => fruits[num],
+  }
 );
 
 fruitEnumToString.decode(0); // => 'Apples';
