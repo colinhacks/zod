@@ -1964,7 +1964,6 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
             })));
           }
         }
-        
         if (${id}.value === undefined) {
           if (${k} in input) {
             newResult[${k}] = undefined;
@@ -1972,7 +1971,6 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         } else {
           newResult[${k}] = ${id}.value;
         }
-        
       `);
         } else {
           doc.write(`
@@ -1982,7 +1980,6 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
             path: iss.path ? [${k}, ...iss.path] : [${k}]
           })));
         }
-        
         if (${id}.value === undefined) {
           if (${k} in input) {
             newResult[${k}] = undefined;
@@ -1990,7 +1987,6 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         } else {
           newResult[${k}] = ${id}.value;
         }
-        
       `);
         }
       }
@@ -2079,6 +2075,20 @@ function handleUnionResults(results: ParsePayload[], final: ParsePayload, inst: 
   for (const result of results) {
     if (result.issues.length === 0) {
       final.value = result.value;
+      return final;
+    }
+  }
+
+  // Check if any option only has unrecognized_keys errors
+  // This allows union to work correctly in intersection context where
+  // the unrecognized keys might be handled by the other side
+  for (const result of results) {
+    const hasOnlyUnrecKeys = result.issues.length > 0 && result.issues.every((iss) => iss.code === "unrecognized_keys");
+    if (hasOnlyUnrecKeys) {
+      // Return this result with the unrecognized_keys errors
+      // The intersection handler will filter out keys that are recognized by the other side
+      final.value = result.value;
+      final.issues.push(...result.issues);
       return final;
     }
   }

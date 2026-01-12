@@ -217,3 +217,29 @@ test("z.xor() type inference", () => {
   type Result = z.infer<typeof schema>;
   expectTypeOf<Result>().toEqualTypeOf<string | number | boolean>();
 });
+
+test("intersected union: strict + strict", () => {
+  const union = z.union([z.strictObject({ a: z.string() }), z.strictObject({ b: z.number() })]);
+  const schema = z.intersection(union, z.strictObject({ c: z.boolean() }));
+  const result = schema.safeParse({ a: "hello", c: true });
+  expect(result.error).toBeUndefined();
+  expect(result.success).toBe(true);
+
+  const result2 = schema.safeParse({ a: "hello", f: "abc", c: true });
+  expect(result2.success).toBe(false);
+});
+
+test("intersected union: strict + strip", () => {
+  const union = z.union([z.strictObject({ a: z.string() }), z.object({ b: z.number() })]);
+  const schema = z.intersection(union, z.strictObject({ c: z.boolean() }));
+  const result = schema.safeParse({ a: "hello", c: true });
+  expect(result.success).toBe(true);
+
+  // key `a` is in `strictObject`, so it should fail
+  const result2 = schema.safeParse({ a: "hello", f: "abc", c: true });
+  expect(result2.success).toBe(false);
+  // key `b` is in strip `object`, so it should succeed and strip `f`
+  const result3 = schema.safeParse({ b: 123, f: "abc", c: true });
+  expect(result3.success).toBe(true);
+  expect(result3.data).toEqual({ b: 123, c: true });
+});
