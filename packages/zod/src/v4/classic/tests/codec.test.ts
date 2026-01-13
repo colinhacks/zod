@@ -503,7 +503,7 @@ test("codec type enforcement - complex types", () => {
   );
 });
 
-test("codex with overwrites", () => {
+test("codec with overwrites", () => {
   const stringPlusA = z.string().overwrite((val) => val + "a");
   const A = z
     .codec(stringPlusA, stringPlusA, {
