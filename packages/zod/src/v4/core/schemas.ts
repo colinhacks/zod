@@ -1935,6 +1935,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         return `shape[${k}]._zod.run({ value: input[${k}], issues: [] }, ctx)`;
       };
 
+      doc.write(`const promises = [];`);
       doc.write(`const input = payload.value;`);
 
       const ids: any = Object.create(null);
@@ -1956,39 +1957,79 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         if (isOptionalOut) {
           // For optional-out schemas, ignore errors on absent keys
           doc.write(`
-        if (${id}.issues.length) {
-          if (${k} in input) {
-            payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
-              ...iss,
-              path: iss.path ? [${k}, ...iss.path] : [${k}]
-            })));
-          }
-        }
-        
-        if (${id}.value === undefined) {
-          if (${k} in input) {
-            newResult[${k}] = undefined;
-          }
+        if (${id} instanceof Promise) {
+          promises.push(${id}.then(result => {
+            if (result.value === undefined) {
+              if (${k} in input) {
+                newResult[${k}] = undefined;
+              }
+            } else {
+              newResult[${k}] = result.value;
+            }
+
+            if (result.issues.length) {
+              if (${k} in input) {
+                return result.issues.map(iss => ({
+                  ...iss,
+                  path: iss.path ? [${k}, ...iss.path] : [${k}]
+                }))
+              }
+            }
+          }));
         } else {
-          newResult[${k}] = ${id}.value;
+          if (${id}.issues.length) {
+            if (${k} in input) {
+              payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
+                ...iss,
+                path: iss.path ? [${k}, ...iss.path] : [${k}]
+              })));
+            }
+          }
+          
+          if (${id}.value === undefined) {
+            if (${k} in input) {
+              newResult[${k}] = undefined;
+            }
+          } else {
+            newResult[${k}] = ${id}.value;
+          }
         }
         
       `);
         } else {
           doc.write(`
-        if (${id}.issues.length) {
-          payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
-            ...iss,
-            path: iss.path ? [${k}, ...iss.path] : [${k}]
-          })));
-        }
-        
-        if (${id}.value === undefined) {
-          if (${k} in input) {
-            newResult[${k}] = undefined;
-          }
+        if (${id} instanceof Promise) {
+          promises.push(${id}.then(result => {
+            if (result.value === undefined) {
+              if (${k} in input) {
+                newResult[${k}] = undefined;
+              }
+            } else {
+              newResult[${k}] = result.value;
+            }
+
+            if (result.issues.length) {
+              return result.issues.map(iss => ({
+                ...iss,
+                path: iss.path ? [${k}, ...iss.path] : [${k}]
+              }))
+            }
+          }));
         } else {
-          newResult[${k}] = ${id}.value;
+          if (${id}.issues.length) {
+            payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
+              ...iss,
+              path: iss.path ? [${k}, ...iss.path] : [${k}]
+            })));
+          }
+          
+          if (${id}.value === undefined) {
+            if (${k} in input) {
+              newResult[${k}] = undefined;
+            }
+          } else {
+            newResult[${k}] = ${id}.value;
+          }
         }
         
       `);
@@ -1996,6 +2037,16 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
       }
 
       doc.write(`payload.value = newResult;`);
+      doc.write(`if (promises.length) {
+  return Promise.all(promises).then(fieldPromises =>
+      fieldPromises
+        .filter(Boolean)
+        .reduce((acc, current) => acc.concat(current), [])
+    ).then((issues) => {
+      payload.issues = payload.issues.concat(issues);
+      return payload;
+    });
+  }`);
       doc.write(`return payload;`);
       const fn = doc.compile();
       return (payload: any, ctx: any) => fn(shape, payload, ctx);
