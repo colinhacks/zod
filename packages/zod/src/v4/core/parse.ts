@@ -14,7 +14,7 @@ export type $Parse = <T extends schemas.$ZodType>(
 ) => core.output<T>;
 
 export const _parse: (_Err: $ZodErrorClass) => $Parse = (_Err) => (schema, value, _ctx, _params) => {
-  const ctx: schemas.ParseContextInternal = _ctx ? Object.assign(_ctx, { async: false }) : { async: false };
+  const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: false } : { async: false };
   const result = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) {
     throw new core.$ZodAsyncError();
@@ -37,7 +37,7 @@ export type $ParseAsync = <T extends schemas.$ZodType>(
 ) => Promise<core.output<T>>;
 
 export const _parseAsync: (_Err: $ZodErrorClass) => $ParseAsync = (_Err) => async (schema, value, _ctx, params) => {
-  const ctx: schemas.ParseContextInternal = _ctx ? Object.assign(_ctx, { async: true }) : { async: true };
+  const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: true } : { async: true };
   let result = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) result = await result;
   if (result.issues.length) {
@@ -79,7 +79,7 @@ export type $SafeParseAsync = <T extends schemas.$ZodType>(
 ) => Promise<util.SafeParseResult<core.output<T>>>;
 
 export const _safeParseAsync: (_Err: $ZodErrorClass) => $SafeParseAsync = (_Err) => async (schema, value, _ctx) => {
-  const ctx: schemas.ParseContextInternal = _ctx ? Object.assign(_ctx, { async: true }) : { async: true };
+  const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: true } : { async: true };
   let result = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) result = await result;
 
@@ -101,7 +101,7 @@ export type $Encode = <T extends schemas.$ZodType>(
 ) => core.input<T>;
 
 export const _encode: (_Err: $ZodErrorClass) => $Encode = (_Err) => (schema, value, _ctx) => {
-  const ctx = _ctx ? Object.assign(_ctx, { direction: "backward" as const }) : { direction: "backward" as const };
+  const ctx = _ctx ? { ..._ctx, direction: "backward" as const } : { direction: "backward" as const };
   return _parse(_Err)(schema, value, ctx as any) as any;
 };
 
@@ -126,7 +126,7 @@ export type $EncodeAsync = <T extends schemas.$ZodType>(
 ) => Promise<core.input<T>>;
 
 export const _encodeAsync: (_Err: $ZodErrorClass) => $EncodeAsync = (_Err) => async (schema, value, _ctx) => {
-  const ctx = _ctx ? Object.assign(_ctx, { direction: "backward" as const }) : { direction: "backward" as const };
+  const ctx = _ctx ? { ..._ctx, direction: "backward" as const } : { direction: "backward" as const };
   return _parseAsync(_Err)(schema, value, ctx as any) as any;
 };
 
@@ -151,7 +151,7 @@ export type $SafeEncode = <T extends schemas.$ZodType>(
 ) => util.SafeParseResult<core.input<T>>;
 
 export const _safeEncode: (_Err: $ZodErrorClass) => $SafeEncode = (_Err) => (schema, value, _ctx) => {
-  const ctx = _ctx ? Object.assign(_ctx, { direction: "backward" as const }) : { direction: "backward" as const };
+  const ctx = _ctx ? { ..._ctx, direction: "backward" as const } : { direction: "backward" as const };
   return _safeParse(_Err)(schema, value, ctx as any) as any;
 };
 
@@ -176,7 +176,7 @@ export type $SafeEncodeAsync = <T extends schemas.$ZodType>(
 ) => Promise<util.SafeParseResult<core.input<T>>>;
 
 export const _safeEncodeAsync: (_Err: $ZodErrorClass) => $SafeEncodeAsync = (_Err) => async (schema, value, _ctx) => {
-  const ctx = _ctx ? Object.assign(_ctx, { direction: "backward" as const }) : { direction: "backward" as const };
+  const ctx = _ctx ? { ..._ctx, direction: "backward" as const } : { direction: "backward" as const };
   return _safeParseAsync(_Err)(schema, value, ctx as any) as any;
 };
 
