@@ -409,7 +409,7 @@ export function finalize<T extends schemas.$ZodType>(
       if (refSchema.$ref) {
         for (const key in schema) {
           if (key === "$ref" || key === "allOf") continue;
-          if (key in refSeen.def! && JSON.stringify(schema[key]) === JSON.stringify(refSeen.def![key])) {
+          if (refSeen.def && key in refSeen.def && JSON.stringify(schema[key]) === JSON.stringify(refSeen.def[key])) {
             delete schema[key];
           }
         }
