@@ -271,3 +271,17 @@ test("z.discriminatedUnion with empty options constructs and rejects", () => {
     expect((obj.error.issues[0] as any).options).toEqual([]);
   }
 });
+
+test("tuple union optimizer - deep nested recursive schema", () => {
+  const schema: z.ZodType<any> = z.lazy(() =>
+    z.union([...[...Array(1000).keys()].map((i) => z.tuple([z.literal(`key-${i}`), schema])), z.string()])
+  );
+
+  let data: unknown = "leaf-value";
+  for (let i = 0; i < 1000; i++) {
+    data = [`key-${i % 1000}`, data];
+  }
+
+  const result = schema.parse(data);
+  expect(result).toBeDefined();
+});
