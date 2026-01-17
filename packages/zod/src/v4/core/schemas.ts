@@ -2100,6 +2100,38 @@ function handleUnionResults(results: ParsePayload[], final: ParsePayload, inst: 
   return final;
 }
 
+function detectTupleDiscriminator(options: readonly SomeType[]): { map: Map<util.Primitive, $ZodTuple> } | null {
+  // Skip optimization if there are fewer than 3 options
+  if (options.length < 3) return null;
+
+  const tuples: $ZodTuple[] = [];
+  for (const option of options) {
+    if (option._zod.def.type === "tuple") tuples.push(option as $ZodTuple);
+  }
+
+  // Skip optimization if there are fewer than 2 tuple options
+  if (tuples.length < 2) return null;
+  const map = new Map<util.Primitive, $ZodTuple>();
+
+  for (const tuple of tuples) {
+    const items = tuple._zod.def.items;
+    // Skip if the tuple has no discriminative values
+    if (!items?.length) return null;
+
+    const values = items[0]._zod.values;
+    // Skip if the first item has no discriminative values
+    if (!values?.size) return null;
+
+    for (const value of values) {
+      // Skip if a value maps to multiple tuples
+      if (map.has(value)) return null;
+      map.set(value, tuple);
+    }
+  }
+
+  return { map };
+}
+
 export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$constructor("$ZodUnion", (inst, def) => {
   $ZodType.init(inst, def);
 
@@ -2128,6 +2160,7 @@ export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$const
 
   const single = def.options.length === 1;
   const first = def.options[0]._zod.run;
+  const tupleDisc = util.cached(() => detectTupleDiscriminator(def.options));
 
   inst._zod.parse = (payload, ctx) => {
     if (single) {
@@ -2136,7 +2169,27 @@ export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$const
     let async = false;
 
     const results: util.MaybeAsync<ParsePayload>[] = [];
+    const disc = tupleDisc.value;
+    const opt = disc?.map.get(payload.value[0]);
+
+    if (Array.isArray(payload.value) && disc && !opt) {
+      results.push({
+        issues: [
+          {
+            code: "invalid_value",
+            message: "Expected a valid tuple discriminator value",
+            input: payload.value,
+            inst,
+            path: [0],
+            values: Array.from(disc.map.keys()),
+          },
+        ],
+        value: payload.value,
+      });
+    }
+
     for (const option of def.options) {
+      if (Array.isArray(payload.value) && disc && opt !== option) continue;
       const result = option._zod.run(
         {
           value: payload.value,
