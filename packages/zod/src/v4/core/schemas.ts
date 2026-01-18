@@ -2170,7 +2170,7 @@ export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$const
 
     const results: util.MaybeAsync<ParsePayload>[] = [];
     const disc = tupleDisc.value;
-    const opt = disc?.map.get(payload.value[0]);
+    const opt = Array.isArray(payload.value) ? disc?.map.get(payload.value[0]) : undefined;
 
     if (Array.isArray(payload.value) && disc && !opt) {
       results.push({
