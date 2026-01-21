@@ -6,11 +6,6 @@ on:
       prompt:
         type: string
         description: 'Agent prompt'
-  workflow_call:
-    inputs:
-      prompt:
-        description: 'Agent prompt'
-        type: string
 
 permissions:
   id-token: write
