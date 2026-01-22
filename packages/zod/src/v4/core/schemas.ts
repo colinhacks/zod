@@ -118,7 +118,7 @@ export interface _$ZodTypeInternals {
   /** @internal */
   optin?: "optional" | undefined;
   /** @internal */
-  optout?: "optional" | undefined;
+  optout?: "optional" | "includeUndefined" | undefined;
 
   /** @internal The set of literal values that will pass validation. Must be an exhaustive set. Used to determine optionality in z.record().
    *
@@ -1306,6 +1306,8 @@ export interface $ZodUndefinedInternals extends $ZodTypeInternals<undefined, und
   def: $ZodUndefinedDef;
   values: util.PrimitiveSet;
   isst: errors.$ZodIssueInvalidType;
+  optin: "optional";
+  optout: "includeUndefined";
 }
 
 export interface $ZodUndefined extends $ZodType {
@@ -1319,7 +1321,7 @@ export const $ZodUndefined: core.$constructor<$ZodUndefined> = /*@__PURE__*/ cor
     inst._zod.pattern = regexes.undefined;
     inst._zod.values = new Set([undefined]);
     inst._zod.optin = "optional";
-    inst._zod.optout = "optional";
+    inst._zod.optout = "includeUndefined";
 
     inst._zod.parse = (payload, _ctx) => {
       const input = payload.value;
@@ -1643,7 +1645,7 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
 //////////////////////////////////////////
 //////////////////////////////////////////
 
-type OptionalOutSchema = { _zod: { optout: "optional" } };
+type OptionalOutSchema = { _zod: { optout: "optional" | "includeUndefined" } };
 type OptionalInSchema = { _zod: { optin: "optional" } };
 
 export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = string extends keyof T
@@ -2067,7 +2069,9 @@ export interface $ZodUnionInternals<T extends readonly SomeType[] = readonly $Zo
   input: $InferUnionInput<T[number]>;
   // if any element in the union is optional, then the union is optional
   optin: IsOptionalIn<T[number]> extends false ? "optional" | undefined : "optional";
-  optout: IsOptionalOut<T[number]> extends false ? "optional" | undefined : "optional";
+  optout: IsOptionalOut<T[number]> extends false
+    ? "optional" | "includeUndefined" | undefined
+    : "optional" | "includeUndefined";
 }
 
 export interface $ZodUnion<T extends readonly SomeType[] = readonly $ZodType[]>
@@ -2107,9 +2111,12 @@ export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$const
     def.options.some((o) => o._zod.optin === "optional") ? "optional" : undefined
   );
 
-  util.defineLazy(inst._zod, "optout", () =>
-    def.options.some((o) => o._zod.optout === "optional") ? "optional" : undefined
-  );
+  util.defineLazy(inst._zod, "optout", () => {
+    const optouts = def.options.map((o) => o._zod.optout);
+    if (optouts.some((o) => o === "optional")) return "optional";
+    if (optouts.some((o) => o === "includeUndefined")) return "includeUndefined";
+    return undefined;
+  });
 
   util.defineLazy(inst._zod, "values", () => {
     if (def.options.every((o) => o._zod.values)) {
@@ -2549,7 +2556,7 @@ type TupleOutputTypeWithOptionals<T extends util.TupleItems> = T extends readonl
   ...infer Prefix extends SomeType[],
   infer Tail extends SomeType,
 ]
-  ? Tail["_zod"]["optout"] extends "optional"
+  ? Tail["_zod"]["optout"] extends "optional" | "includeUndefined"
     ? [...TupleOutputTypeWithOptionals<Prefix>, core.output<Tail>?]
     : TupleOutputTypeNoOptionals<T>
   : [];
@@ -3310,7 +3317,7 @@ export interface $ZodOptionalInternals<T extends SomeType = $ZodType>
   extends $ZodTypeInternals<core.output<T> | undefined, core.input<T> | undefined> {
   def: $ZodOptionalDef<T>;
   optin: "optional";
-  optout: "optional";
+  optout: "includeUndefined";
   isst: never;
   values: T["_zod"]["values"];
   pattern: T["_zod"]["pattern"];
@@ -3332,7 +3339,7 @@ export const $ZodOptional: core.$constructor<$ZodOptional> = /*@__PURE__*/ core.
   (inst, def) => {
     $ZodType.init(inst, def);
     inst._zod.optin = "optional";
-    inst._zod.optout = "optional";
+    inst._zod.optout = "includeUndefined";
 
     util.defineLazy(inst._zod, "values", () => {
       return def.innerType._zod.values ? new Set([...def.innerType._zod.values, undefined]) : undefined;
@@ -3368,10 +3375,14 @@ export const $ZodOptional: core.$constructor<$ZodOptional> = /*@__PURE__*/ core.
 export interface $ZodExactOptionalDef<T extends SomeType = $ZodType> extends $ZodOptionalDef<T> {}
 
 // Internals extends $ZodOptionalInternals but narrows output/input types (removes | undefined)
-export interface $ZodExactOptionalInternals<T extends SomeType = $ZodType> extends $ZodOptionalInternals<T> {
+export interface $ZodExactOptionalInternals<T extends SomeType = $ZodType>
+  extends $ZodTypeInternals<core.output<T>, core.input<T>> {
   def: $ZodExactOptionalDef<T>;
-  output: core.output<T>; // NO | undefined (narrowed from parent)
-  input: core.input<T>; // NO | undefined (narrowed from parent)
+  optin: "optional";
+  optout: "optional";
+  isst: never;
+  values: T["_zod"]["values"];
+  pattern: T["_zod"]["pattern"];
 }
 
 export interface $ZodExactOptional<T extends SomeType = $ZodType> extends $ZodType {
@@ -3382,7 +3393,10 @@ export const $ZodExactOptional: core.$constructor<$ZodExactOptional> = /*@__PURE
   "$ZodExactOptional",
   (inst, def) => {
     // Call parent init - inherits optin/optout = "optional"
-    $ZodOptional.init(inst, def);
+    // $ZodOptional.init(inst, def);
+    $ZodType.init(inst, def);
+    inst._zod.optin = "optional";
+    inst._zod.optout = "optional";
 
     // Override values/pattern to NOT add undefined
     util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
@@ -3464,7 +3478,7 @@ export interface $ZodDefaultInternals<T extends SomeType = $ZodType>
   extends $ZodTypeInternals<util.NoUndefined<core.output<T>>, core.input<T> | undefined> {
   def: $ZodDefaultDef<T>;
   optin: "optional";
-  optout?: "optional" | undefined; // required
+  optout?: "optional" | "includeUndefined" | undefined; // required
   isst: never;
   values: T["_zod"]["values"];
 }
@@ -3531,7 +3545,7 @@ export interface $ZodPrefaultInternals<T extends SomeType = $ZodType>
   extends $ZodTypeInternals<util.NoUndefined<core.output<T>>, core.input<T> | undefined> {
   def: $ZodPrefaultDef<T>;
   optin: "optional";
-  optout?: "optional" | undefined;
+  optout?: "optional" | "includeUndefined" | undefined;
   isst: never;
   values: T["_zod"]["values"];
 }
@@ -3580,7 +3594,7 @@ export interface $ZodNonOptionalInternals<T extends SomeType = $ZodType>
   isst: errors.$ZodIssueInvalidType;
   values: T["_zod"]["values"];
   optin: "optional" | undefined;
-  optout: "optional" | undefined;
+  optout: "optional" | "includeUndefined" | undefined;
 }
 
 export interface $ZodNonOptional<T extends SomeType = $ZodType> extends $ZodType {
@@ -3675,7 +3689,7 @@ export interface $ZodSuccessInternals<T extends SomeType = $ZodType> extends $Zo
   def: $ZodSuccessDef<T>;
   isst: never;
   optin: T["_zod"]["optin"];
-  optout: "optional" | undefined;
+  optout: "optional" | "includeUndefined" | undefined;
 }
 
 export interface $ZodSuccess<T extends SomeType = $ZodType> extends $ZodType {
