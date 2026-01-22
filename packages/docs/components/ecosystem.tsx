@@ -203,6 +203,12 @@ const xToZodConverters: ZodResource[] = [
     url: "https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/README.md#zod-validation",
     description: "Generate Zod schemas from Convex validators",
     slug: "get-convex/convex-helpers",
+  },
+  {
+    name: "Hono Takibi",
+    url: "https://github.com/nakita628/hono-takibi",
+    description: "Hono Takibi is a code generator from OpenAPI to @hono/zod-openapi",
+    slug: "nakita628/hono-takibi",
   }
 ];
 
