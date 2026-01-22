@@ -487,6 +487,38 @@ test("partialRecord with z.literal([key, ...])", () => {
   `);
 });
 
+test("partialRecord with numeric literal keys", () => {
+  const Keys = z.literal([1, 2, 3]);
+  const schema = z.partialRecord(Keys, z.string());
+  type Schema = z.infer<typeof schema>;
+  expectTypeOf<Schema>().toEqualTypeOf<Partial<Record<1 | 2 | 3, string>>>();
+
+  // Should parse valid partials with numeric keys (as strings in JS objects)
+  expect(schema.parse({})).toEqual({});
+  expect(schema.parse({ 1: "one" })).toEqual({ 1: "one" });
+  expect(schema.parse({ 2: "two", 3: "three" })).toEqual({ 2: "two", 3: "three" });
+
+  // Should fail with unrecognized key
+  expect(schema.safeParse({ 4: "four" }).success).toBe(false);
+});
+
+test("partialRecord with union of string and numeric literal keys", () => {
+  const StringKeys = z.literal(["a", "b", "c"]);
+  const NumericKeys = z.literal([1, 2, 3]);
+  const schema = z.partialRecord(z.union([StringKeys, NumericKeys]), z.string());
+  type Schema = z.infer<typeof schema>;
+  expectTypeOf<Schema>().toEqualTypeOf<Partial<Record<"a" | "b" | "c" | 1 | 2 | 3, string>>>();
+
+  // Should parse valid partials with mixed keys
+  expect(schema.parse({})).toEqual({});
+  expect(schema.parse({ a: "1", 2: "4" })).toEqual({ a: "1", 2: "4" });
+  expect(schema.parse({ a: "a", b: "b", 1: "1", 2: "2" })).toEqual({ a: "a", b: "b", 1: "1", 2: "2" });
+
+  // Should fail with unrecognized key
+  expect(schema.safeParse({ d: "d" }).success).toBe(false);
+  expect(schema.safeParse({ 4: "4" }).success).toBe(false);
+});
+
 test("looseRecord passes through non-matching keys", () => {
   const schema = z.looseRecord(z.string().regex(/^S_/), z.string());
 
