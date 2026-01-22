@@ -207,7 +207,7 @@ const xToZodConverters: ZodResource[] = [
   {
     name: "Hono Takibi",
     url: "https://github.com/nakita628/hono-takibi",
-    description: "Hono Takibi is a CLI tool that generates Hono routes from OpenAPI specifications.",
+    description: "Hono Takibi is a code generator from OpenAPI to @hono/zod-openapi",
     slug: "nakita628/hono-takibi",
   }
 ];
