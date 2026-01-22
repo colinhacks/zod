@@ -2491,6 +2491,21 @@ test("_ref", () => {
       "type": "string",
     }
   `);
+
+  const d = z.toJSONSchema(z.string().meta({ id: "foo" }).describe("bar").optional());
+  expect(d).toMatchInlineSnapshot(`
+    {
+      "$defs": {
+        "foo": {
+          "id": "foo",
+          "type": "string",
+        },
+      },
+      "$ref": "#/$defs/foo",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "description": "bar",
+    }
+  `);
 });
 
 test("defaults/prefaults", () => {
