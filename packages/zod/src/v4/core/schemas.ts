@@ -2804,14 +2804,9 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
           throw new Error("Async schemas not supported in object keys currently");
         }
 
-        // Numeric string fallback: if key failed with "expected number", retry with Number(key)
-        const checkNumericKey =
-          typeof key === "string" &&
-          regexes.number.test(key) &&
-          keyResult.issues.length &&
-          keyResult.issues.some(
-            (iss) => iss.code === "invalid_type" && (iss as errors.$ZodIssueInvalidType).expected === "number"
-          );
+        // Numeric string fallback: if key is a numeric string and failed, retry with Number(key)
+        // This handles z.number(), z.literal([1, 2, 3]), and unions containing numeric literals
+        const checkNumericKey = typeof key === "string" && regexes.number.test(key) && keyResult.issues.length;
         if (checkNumericKey) {
           const retryResult = def.keyType._zod.run({ value: Number(key), issues: [] }, ctx);
           if (retryResult instanceof Promise) {

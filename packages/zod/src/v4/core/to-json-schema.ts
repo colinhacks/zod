@@ -406,10 +406,10 @@ export function finalize<T extends schemas.$ZodType>(
       }
 
       // When ref was extracted to $defs, remove properties that match the definition
-      if (refSchema.$ref) {
+      if (refSchema.$ref && refSeen.def) {
         for (const key in schema) {
           if (key === "$ref" || key === "allOf") continue;
-          if (key in refSeen.def! && JSON.stringify(schema[key]) === JSON.stringify(refSeen.def![key])) {
+          if (key in refSeen.def && JSON.stringify(schema[key]) === JSON.stringify(refSeen.def[key])) {
             delete schema[key];
           }
         }

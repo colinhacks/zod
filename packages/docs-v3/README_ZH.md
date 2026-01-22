@@ -1932,7 +1932,7 @@ Tuples
 Recursive Types
 Function Schemas
 
-<abbr title="For instance, Yup allows custmo error messages with the syntax yup.number().min(5, 'Number must be more than 5!')">Validation Messages</abbr>
+<abbr title="For instance, Yup allows custom error messages with the syntax yup.number().min(5, 'Number must be more than 5!')">Validation Messages</abbr>
 Immutable instances
 Type Guards
 Validity Checking
