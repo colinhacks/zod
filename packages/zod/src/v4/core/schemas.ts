@@ -29,6 +29,10 @@ export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> ex
   readonly async?: boolean | undefined;
   readonly direction?: "forward" | "backward";
   readonly skipChecks?: boolean;
+  /** @internal Track visited objects for circular reference detection.
+   * Maps (input object, schema instance) -> output object to handle the case where
+   * the same object is parsed by different schemas (e.g., in intersections). */
+  readonly visited?: WeakMap<object, WeakMap<object, object>>;
 }
 
 export interface ParsePayload<T = unknown> {
@@ -1608,7 +1612,32 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
       return payload;
     }
 
+    // Circular reference detection: check if we've already seen this (array, schema) pair
+    const visited = ctx?.visited;
+    if (visited) {
+      const schemaMap = visited.get(input);
+      if (schemaMap) {
+        const cached = schemaMap.get(inst);
+        if (cached !== undefined) {
+          // Already validated (or being validated) by THIS schema - return cached output
+          payload.value = cached;
+          return payload;
+        }
+      }
+    }
+
     payload.value = Array(input.length);
+
+    // Store the mapping before recursing (so circular refs can find it)
+    if (visited) {
+      let schemaMap = visited.get(input);
+      if (!schemaMap) {
+        schemaMap = new WeakMap();
+        visited.set(input, schemaMap);
+      }
+      schemaMap.set(inst, payload.value);
+    }
+
     const proms: Promise<any>[] = [];
     for (let i = 0; i < input.length; i++) {
       const item = input[i];
@@ -1892,7 +1921,31 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       return payload;
     }
 
+    // Circular reference detection: check if we've already seen this (object, schema) pair
+    const visited = ctx?.visited;
+    if (visited) {
+      const schemaMap = visited.get(input);
+      if (schemaMap) {
+        const cached = schemaMap.get(inst);
+        if (cached !== undefined) {
+          // Already validated (or being validated) by THIS schema - return cached output
+          payload.value = cached;
+          return payload;
+        }
+      }
+    }
+
     payload.value = {};
+
+    // Store the mapping before recursing (so circular refs can find it)
+    if (visited) {
+      let schemaMap = visited.get(input);
+      if (!schemaMap) {
+        schemaMap = new WeakMap();
+        visited.set(input, schemaMap);
+      }
+      schemaMap.set(inst, payload.value);
+    }
 
     const proms: Promise<any>[] = [];
     const shape = value.shape;
@@ -2025,7 +2078,23 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         return payload;
       }
 
-      if (jit && fastEnabled && ctx?.async === false && ctx.jitless !== true) {
+      // Circular reference detection: check if we've already seen this (object, schema) pair
+      const visited = ctx?.visited;
+      if (visited) {
+        const schemaMap = visited.get(input);
+        if (schemaMap) {
+          const cached = schemaMap.get(inst);
+          if (cached !== undefined) {
+            // Already validated (or being validated) by THIS schema - return cached output
+            payload.value = cached;
+            return payload;
+          }
+        }
+      }
+
+      // When visited tracking is enabled, we skip JIT and use superParse
+      // This ensures we can properly track circular references
+      if (!visited && jit && fastEnabled && ctx?.async === false && ctx.jitless !== true) {
         // always synchronous
         if (!fastpass) fastpass = generateFastpass(def.shape);
         payload = fastpass(payload, ctx);

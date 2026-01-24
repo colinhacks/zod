@@ -14,7 +14,10 @@ export type $Parse = <T extends schemas.$ZodType>(
 ) => core.output<T>;
 
 export const _parse: (_Err: $ZodErrorClass) => $Parse = (_Err) => (schema, value, _ctx, _params) => {
-  const ctx: schemas.ParseContextInternal = _ctx ? Object.assign(_ctx, { async: false }) : { async: false };
+  const ctxInternal = _ctx as schemas.ParseContextInternal | undefined;
+  const ctx: schemas.ParseContextInternal = _ctx
+    ? Object.assign(_ctx, { async: false, visited: ctxInternal?.visited ?? new WeakMap() })
+    : { async: false, visited: new WeakMap() };
   const result = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) {
     throw new core.$ZodAsyncError();
@@ -37,7 +40,10 @@ export type $ParseAsync = <T extends schemas.$ZodType>(
 ) => Promise<core.output<T>>;
 
 export const _parseAsync: (_Err: $ZodErrorClass) => $ParseAsync = (_Err) => async (schema, value, _ctx, params) => {
-  const ctx: schemas.ParseContextInternal = _ctx ? Object.assign(_ctx, { async: true }) : { async: true };
+  const ctxInternal = _ctx as schemas.ParseContextInternal | undefined;
+  const ctx: schemas.ParseContextInternal = _ctx
+    ? Object.assign(_ctx, { async: true, visited: ctxInternal?.visited ?? new WeakMap() })
+    : { async: true, visited: new WeakMap() };
   let result = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) result = await result;
   if (result.issues.length) {
@@ -57,7 +63,10 @@ export type $SafeParse = <T extends schemas.$ZodType>(
 ) => util.SafeParseResult<core.output<T>>;
 
 export const _safeParse: (_Err: $ZodErrorClass) => $SafeParse = (_Err) => (schema, value, _ctx) => {
-  const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: false } : { async: false };
+  const ctxInternal = _ctx as schemas.ParseContextInternal | undefined;
+  const ctx: schemas.ParseContextInternal = _ctx
+    ? { ..._ctx, async: false, visited: ctxInternal?.visited ?? new WeakMap() }
+    : { async: false, visited: new WeakMap() };
   const result = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) {
     throw new core.$ZodAsyncError();
@@ -79,7 +88,10 @@ export type $SafeParseAsync = <T extends schemas.$ZodType>(
 ) => Promise<util.SafeParseResult<core.output<T>>>;
 
 export const _safeParseAsync: (_Err: $ZodErrorClass) => $SafeParseAsync = (_Err) => async (schema, value, _ctx) => {
-  const ctx: schemas.ParseContextInternal = _ctx ? Object.assign(_ctx, { async: true }) : { async: true };
+  const ctxInternal = _ctx as schemas.ParseContextInternal | undefined;
+  const ctx: schemas.ParseContextInternal = _ctx
+    ? Object.assign(_ctx, { async: true, visited: ctxInternal?.visited ?? new WeakMap() })
+    : { async: true, visited: new WeakMap() };
   let result = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) result = await result;
 
