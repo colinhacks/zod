@@ -2705,7 +2705,42 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
       return payload;
     }
 
+    // Check if we need circular reference tracking
+    // We need it if there are any object/array elements that could create cycles
+    let visited = ctx?.visited;
+    const needsTracking = input.some((item) => typeof item === "object" && item !== null);
+
+    if (needsTracking) {
+      // Lazily initialize visited if not already set
+      if (!visited) {
+        visited = new WeakMap();
+        (ctx as any).visited = visited;
+      }
+
+      // Check if we've already seen this (tuple, schema) pair
+      const schemaMap = visited.get(input);
+      if (schemaMap) {
+        const cached = schemaMap.get(inst);
+        if (cached !== undefined) {
+          // Already validated (or being validated) by THIS schema - return cached output
+          payload.value = cached;
+          return payload;
+        }
+      }
+    }
+
     payload.value = [];
+
+    // Store the mapping before recursing (so circular refs can find it)
+    if (visited && needsTracking) {
+      let schemaMap = visited.get(input);
+      if (!schemaMap) {
+        schemaMap = new WeakMap();
+        visited.set(input, schemaMap);
+      }
+      schemaMap.set(inst, payload.value);
+    }
+
     const proms: Promise<any>[] = [];
 
     const reversedIndex = [...items].reverse().findIndex((item) => item._zod.optin !== "optional");
