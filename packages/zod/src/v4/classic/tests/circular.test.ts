@@ -90,4 +90,65 @@ describe("circular object validation", () => {
     const result = NodeSchema.safeParse(node);
     expect(result.success).toBe(false);
   });
+
+  it("should report errors in mutually recursive circular objects", () => {
+    // A -> B -> A where B has invalid data
+    const ASchema: z.ZodType<any> = z.object({
+      name: z.string(),
+      ref: z.lazy(() => BSchema),
+    });
+
+    const BSchema: z.ZodType<any> = z.object({
+      value: z.number(), // Will be invalid
+      ref: z.lazy(() => ASchema),
+    });
+
+    const a: any = { name: "valid", ref: null };
+    const b: any = { value: "not a number", ref: a }; // Invalid!
+    a.ref = b;
+
+    const result = ASchema.safeParse(a);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      // Error should be reported for b.value
+      expect(result.error.issues.length).toBeGreaterThan(0);
+      expect(result.error.issues[0].path).toContain("ref");
+    }
+  });
+
+  it("should report errors in array with circular references", () => {
+    const NodeSchema: z.ZodType<any> = z.object({
+      values: z.array(z.union([z.lazy(() => NodeSchema), z.number()])),
+    });
+
+    // Create object where the array has: [circular, invalid, circular]
+    const node: any = { values: [] };
+    node.values.push(node); // circular
+    node.values.push("not a number"); // invalid
+    node.values.push(node); // circular again
+
+    const result = NodeSchema.safeParse(node);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      // Should have error for the invalid element
+      expect(result.error.issues.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("should preserve circular structure in output", () => {
+    const NodeSchema: z.ZodType<any> = z.object({
+      id: z.number(),
+      next: z.lazy(() => NodeSchema).optional(),
+    });
+
+    const node: any = { id: 1 };
+    node.next = node;
+
+    const result = NodeSchema.safeParse(node);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      // The output should preserve the circular structure
+      expect(result.data.next).toBe(result.data);
+    }
+  });
 });

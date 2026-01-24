@@ -1612,9 +1612,19 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
       return payload;
     }
 
-    // Circular reference detection: check if we've already seen this (array, schema) pair
-    const visited = ctx?.visited;
-    if (visited) {
+    // Check if we need circular reference tracking
+    // We need it if there are any object/array elements that could create cycles
+    let visited = ctx?.visited;
+    const needsTracking = input.some((item) => typeof item === "object" && item !== null);
+
+    if (needsTracking) {
+      // Lazily initialize visited if not already set
+      if (!visited) {
+        visited = new WeakMap();
+        (ctx as any).visited = visited;
+      }
+
+      // Check if we've already seen this (array, schema) pair
       const schemaMap = visited.get(input);
       if (schemaMap) {
         const cached = schemaMap.get(inst);
@@ -1629,7 +1639,7 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
     payload.value = Array(input.length);
 
     // Store the mapping before recursing (so circular refs can find it)
-    if (visited) {
+    if (visited && needsTracking) {
       let schemaMap = visited.get(input);
       if (!schemaMap) {
         schemaMap = new WeakMap();
@@ -1921,9 +1931,28 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       return payload;
     }
 
-    // Circular reference detection: check if we've already seen this (object, schema) pair
-    const visited = ctx?.visited;
-    if (visited) {
+    // Check if we need circular reference tracking
+    // We need it if there are any nested object/array values that could create cycles
+    let visited = ctx?.visited;
+    let needsTracking = !!visited;
+    if (!needsTracking) {
+      for (const key in input) {
+        const v = input[key];
+        if (typeof v === "object" && v !== null) {
+          needsTracking = true;
+          break;
+        }
+      }
+    }
+
+    if (needsTracking) {
+      // Lazily initialize visited if not already set
+      if (!visited) {
+        visited = new WeakMap();
+        (ctx as any).visited = visited;
+      }
+
+      // Check if we've already seen this (object, schema) pair
       const schemaMap = visited.get(input);
       if (schemaMap) {
         const cached = schemaMap.get(inst);
@@ -1938,7 +1967,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     payload.value = {};
 
     // Store the mapping before recursing (so circular refs can find it)
-    if (visited) {
+    if (visited && needsTracking) {
       let schemaMap = visited.get(input);
       if (!schemaMap) {
         schemaMap = new WeakMap();
@@ -2078,9 +2107,28 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         return payload;
       }
 
-      // Circular reference detection: check if we've already seen this (object, schema) pair
-      const visited = ctx?.visited;
-      if (visited) {
+      // Check if we need circular reference tracking
+      // We need it if there are any nested object/array values that could create cycles
+      let visited = ctx?.visited;
+      let needsTracking = !!visited;
+      if (!needsTracking) {
+        for (const key in input) {
+          const v = input[key];
+          if (typeof v === "object" && v !== null) {
+            needsTracking = true;
+            break;
+          }
+        }
+      }
+
+      if (needsTracking) {
+        // Lazily initialize visited if not already set
+        if (!visited) {
+          visited = new WeakMap();
+          (ctx as any).visited = visited;
+        }
+
+        // Check if we've already seen this (object, schema) pair
         const schemaMap = visited.get(input);
         if (schemaMap) {
           const cached = schemaMap.get(inst);
@@ -2092,9 +2140,9 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         }
       }
 
-      // When visited tracking is enabled, we skip JIT and use superParse
-      // This ensures we can properly track circular references
-      if (!visited && jit && fastEnabled && ctx?.async === false && ctx.jitless !== true) {
+      // JIT can only be used when there are no nested objects that could create cycles
+      // Once visited tracking is enabled, we must use superParse to properly track references
+      if (!needsTracking && jit && fastEnabled && ctx?.async === false && ctx?.jitless !== true) {
         // always synchronous
         if (!fastpass) fastpass = generateFastpass(def.shape);
         payload = fastpass(payload, ctx);
