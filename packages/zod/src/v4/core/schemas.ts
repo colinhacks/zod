@@ -2614,7 +2614,8 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
     let i = -1;
     for (const item of items) {
       i++;
-      if (i >= input.length && i >= optStart && item._zod.def.type !== "default") continue;
+      if (i >= input.length && i >= optStart && item._zod.def.type !== "default" && item._zod.def.type !== "prefault")
+        continue;
       const result = item._zod.run(
         {
           value: input[i],

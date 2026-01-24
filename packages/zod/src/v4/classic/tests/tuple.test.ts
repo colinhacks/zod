@@ -181,6 +181,10 @@ test("tuple with default elements", () => {
   expect(multipleDefaults.parse(["hello"])).toEqual(["hello", 42, true]);
   expect(multipleDefaults.parse(["hello", 100])).toEqual(["hello", 100, true]);
   expect(multipleDefaults.parse(["hello", 100, false])).toEqual(["hello", 100, false]);
+
+  // Prefault should also work
+  const withPrefault = z.tuple([z.string(), z.string().prefault("delta")]);
+  expect(withPrefault.parse(["alpha"])).toEqual(["alpha", "delta"]);
 });
 
 test("tuple with rest schema", () => {
