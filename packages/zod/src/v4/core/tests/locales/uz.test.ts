@@ -80,4 +80,26 @@ test("locales - uz", () => {
   const invalidElement = z.array(z.string()).safeParse([1, 2, 3]);
   expect(invalidElement.error!.issues[0].code).toBe("invalid_type");
   expect(invalidElement.error!.issues[0].message).toContain("raqam");
+
+  const tooSmallMap = z
+    .map(z.string(), z.string())
+    .min(3)
+    .safeParse(new Map([["a", "b"]]));
+  expect(tooSmallMap.error!.issues[0].code).toBe("too_small");
+  expect(tooSmallMap.error!.issues[0].message).toContain("yozuv");
+  expect(tooSmallMap.error!.issues[0].message).toContain("bo‘lishi kerak");
+
+  const tooBigMap = z
+    .map(z.string(), z.string())
+    .max(2)
+    .safeParse(
+      new Map([
+        ["a", "b"],
+        ["c", "d"],
+        ["e", "f"],
+      ])
+    );
+  expect(tooBigMap.error!.issues[0].code).toBe("too_big");
+  expect(tooBigMap.error!.issues[0].message).toContain("yozuv");
+  expect(tooBigMap.error!.issues[0].message).toContain("bo‘lishi kerak");
 });
