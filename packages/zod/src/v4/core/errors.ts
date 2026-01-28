@@ -330,7 +330,7 @@ export type $ZodErrorTree<T, U = string> = T extends util.Primitive
   : T extends [any, ...any[]]
     ? { errors: U[]; items?: { [K in keyof T]?: $ZodErrorTree<T[K], U> } }
     : T extends any[]
-      ? { errors: U[]; items?: Array<$ZodErrorTree<T[number], U>> }
+      ? { errors: U[]; items?: Array<$ZodErrorTree<T[number], U> | undefined> }
       : T extends object
         ? { errors: U[]; properties?: { [K in keyof T]?: $ZodErrorTree<T[K], U> } }
         : { errors: U[] };
