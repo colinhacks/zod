@@ -155,7 +155,7 @@ test("exactOptional unwrap", () => {
 test("exactOptional optionality", () => {
   const a = z.string().exactOptional();
   expect(a._zod.optin).toEqual("optional");
-  expect(a._zod.optout).toEqual("optional");
+  expect(a._zod.optout).toEqual("exactOptional");
   expectTypeOf<typeof a._zod.optin>().toEqualTypeOf<"optional">();
   expectTypeOf<typeof a._zod.optout>().toEqualTypeOf<"optional">();
 });
