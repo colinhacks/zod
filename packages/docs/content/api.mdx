@@ -2206,7 +2206,7 @@ const passwordForm = z
     confirm: z.string(),
   })
   .refine((data) => data.password === data.confirm, {
-    message: "Passwords don't match",
+    error: "Passwords don't match",
     path: ["confirm"], // path of error
   });
 ```
@@ -2219,7 +2219,7 @@ const passwordForm = z
     confirm: z.string(),
   })
   .check(z.refine((data) => data.password === data.confirm, {
-    message: "Passwords don't match",
+    error: "Passwords don't match",
     path: ["confirm"], // path of error
   }));
 ```
