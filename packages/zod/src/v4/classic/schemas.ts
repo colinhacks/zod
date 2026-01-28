@@ -1857,9 +1857,9 @@ export interface ZodExactOptional<T extends core.SomeType = core.$ZodType>
 export const ZodExactOptional: core.$constructor<ZodExactOptional> = /*@__PURE__*/ core.$constructor(
   "ZodExactOptional",
   (inst, def) => {
-    core.$ZodExactOptional.init(inst, def);
+    core.$ZodExactOptional.init(inst as any, def);
     ZodType.init(inst, def);
-    inst._zod.processJSONSchema = (ctx, json, params) => processors.optionalProcessor(inst, ctx, json, params);
+    inst._zod.processJSONSchema = (ctx, json, params) => processors.optionalProcessor(inst as any, ctx, json, params);
 
     inst.unwrap = () => inst._zod.def.innerType;
   }

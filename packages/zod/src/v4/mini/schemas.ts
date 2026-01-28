@@ -1389,7 +1389,7 @@ export interface ZodMiniExactOptional<T extends SomeType = core.$ZodType>
 export const ZodMiniExactOptional: core.$constructor<ZodMiniExactOptional> = /*@__PURE__*/ core.$constructor(
   "ZodMiniExactOptional",
   (inst, def) => {
-    core.$ZodExactOptional.init(inst, def);
+    core.$ZodExactOptional.init(inst as any, def);
     ZodMiniType.init(inst, def);
   }
 );

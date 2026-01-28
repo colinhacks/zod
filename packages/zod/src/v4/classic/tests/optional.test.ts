@@ -24,7 +24,7 @@ test("optionality", () => {
 
   const b = z.string().optional();
   expect(b._zod.optin).toEqual("optional");
-  expect(b._zod.optout).toEqual("optional");
+  expect(b._zod.optout).toEqual("includeUndefined");
 
   const c = z.string().default("asdf");
   expect(c._zod.optin).toEqual("optional");
@@ -32,7 +32,7 @@ test("optionality", () => {
 
   const d = z.string().optional().nullable();
   expect(d._zod.optin).toEqual("optional");
-  expect(d._zod.optout).toEqual("optional");
+  expect(d._zod.optout).toEqual("includeUndefined");
 
   const e = z.string().default("asdf").nullable();
   expect(e._zod.optin).toEqual("optional");
@@ -41,22 +41,22 @@ test("optionality", () => {
   // z.undefined should NOT be optional
   const f = z.undefined();
   expect(f._zod.optin).toEqual("optional");
-  expect(f._zod.optout).toEqual("optional");
-  expectTypeOf<typeof f._zod.optin>().toEqualTypeOf<"optional" | undefined>();
-  expectTypeOf<typeof f._zod.optout>().toEqualTypeOf<"optional" | undefined>();
+  expect(f._zod.optout).toEqual("includeUndefined");
+  expectTypeOf<typeof f._zod.optin>().toEqualTypeOf<"optional">();
+  expectTypeOf<typeof f._zod.optout>().toEqualTypeOf<"includeUndefined">();
 
   // z.union should be optional if any of the types are optional
   const g = z.union([z.string(), z.undefined()]);
   expect(g._zod.optin).toEqual("optional");
-  expect(g._zod.optout).toEqual("optional");
-  expectTypeOf<typeof g._zod.optin>().toEqualTypeOf<"optional" | undefined>();
-  expectTypeOf<typeof g._zod.optout>().toEqualTypeOf<"optional" | undefined>();
+  expect(g._zod.optout).toEqual("includeUndefined");
+  expectTypeOf<typeof g._zod.optin>().toEqualTypeOf<"optional">();
+  expectTypeOf<typeof g._zod.optout>().toEqualTypeOf<"optional" | "includeUndefined">();
 
   const h = z.union([z.string(), z.optional(z.string())]);
   expect(h._zod.optin).toEqual("optional");
-  expect(h._zod.optout).toEqual("optional");
+  expect(h._zod.optout).toEqual("includeUndefined");
   expectTypeOf<typeof h._zod.optin>().toEqualTypeOf<"optional">();
-  expectTypeOf<typeof h._zod.optout>().toEqualTypeOf<"optional">();
+  expectTypeOf<typeof h._zod.optout>().toEqualTypeOf<"optional" | "includeUndefined">();
 });
 
 test("pipe optionality", () => {
@@ -65,16 +65,16 @@ test("pipe optionality", () => {
   expect(a._zod.optin).toEqual("optional");
   expect(a._zod.optout).toEqual(undefined);
   expectTypeOf<typeof a._zod.optin>().toEqualTypeOf<"optional">();
-  expectTypeOf<typeof a._zod.optout>().toEqualTypeOf<"optional" | undefined>();
+  expectTypeOf<typeof a._zod.optout>().toEqualTypeOf<"optional" | "includeUndefined" | undefined>();
 
   const b = z
     .string()
     .transform((val) => (Math.random() ? val : undefined))
     .pipe(z.string().optional());
   expect(b._zod.optin).toEqual(undefined);
-  expect(b._zod.optout).toEqual("optional");
+  expect(b._zod.optout).toEqual("includeUndefined");
   expectTypeOf<typeof b._zod.optin>().toEqualTypeOf<"optional" | undefined>();
-  expectTypeOf<typeof b._zod.optout>().toEqualTypeOf<"optional">();
+  expectTypeOf<typeof b._zod.optout>().toEqualTypeOf<"includeUndefined">();
 
   const c = z.string().default("asdf").pipe(z.string());
   expect(c._zod.optin).toEqual("optional");
@@ -220,4 +220,20 @@ test("exactOptional vs optional comparison", () => {
 
   // exactOptional() rejects explicit undefined
   expect(exactOptionalSchema.safeParse({ a: undefined }).success).toEqual(false);
+});
+
+test("superRefine on optional field in object", () => {
+  const schema = z.object({
+    field: z
+      .any()
+      .optional()
+      .superRefine((_val, ctx) => {
+        ctx.addIssue({ code: "custom", message: "should fail" });
+      }),
+  });
+
+  // Should fail - superRefine adds an issue even for absent keys
+  expect(schema.safeParse({}).success).toEqual(false);
+  expect(schema.safeParse({ field: undefined }).success).toEqual(false);
+  expect(schema.safeParse({ field: "asdf" }).success).toEqual(false);
 });

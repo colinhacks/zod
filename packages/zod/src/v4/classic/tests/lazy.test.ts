@@ -40,7 +40,7 @@ test("opt passthrough", () => {
   expect(z.lazy(() => z.string())._zod.optout).toEqual(undefined);
 
   expect(z.lazy(() => z.string().optional())._zod.optin).toEqual("optional");
-  expect(z.lazy(() => z.string().optional())._zod.optout).toEqual("optional");
+  expect(z.lazy(() => z.string().optional())._zod.optout).toEqual("includeUndefined");
 
   expect(z.lazy(() => z.string().default("asdf"))._zod.optin).toEqual("optional");
   expect(z.lazy(() => z.string().default("asdf"))._zod.optout).toEqual(undefined);
