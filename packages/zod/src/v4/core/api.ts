@@ -415,6 +415,44 @@ export function _cidrv6<T extends schemas.$ZodCIDRv6>(
   });
 }
 
+// IPv4Range
+export type $ZodIPv4RangeParams = StringFormatParams<schemas.$ZodIPv4Range, "pattern" | "when" | "cidr">;
+export type $ZodCheckIPv4RangeParams = CheckStringFormatParams<schemas.$ZodIPv4Range, "pattern" | "when" | "cidr">;
+// @__NO_SIDE_EFFECTS__
+export function _ipv4Range<T extends schemas.$ZodIPv4Range>(
+  Class: util.SchemaClass<T>,
+  cidr: string,
+  params?: string | $ZodIPv4RangeParams | $ZodCheckIPv4RangeParams
+): T {
+  return new Class({
+    type: "string",
+    format: "ipv4_range",
+    check: "string_format",
+    abort: false,
+    cidr,
+    ...util.normalizeParams(params),
+  });
+}
+
+// IPv6Range
+export type $ZodIPv6RangeParams = StringFormatParams<schemas.$ZodIPv6Range, "pattern" | "when" | "cidr">;
+export type $ZodCheckIPv6RangeParams = CheckStringFormatParams<schemas.$ZodIPv6Range, "pattern" | "when" | "cidr">;
+// @__NO_SIDE_EFFECTS__
+export function _ipv6Range<T extends schemas.$ZodIPv6Range>(
+  Class: util.SchemaClass<T>,
+  cidr: string,
+  params?: string | $ZodIPv6RangeParams | $ZodCheckIPv6RangeParams
+): T {
+  return new Class({
+    type: "string",
+    format: "ipv6_range",
+    check: "string_format",
+    abort: false,
+    cidr,
+    ...util.normalizeParams(params),
+  });
+}
+
 // Base64
 export type $ZodBase64Params = StringFormatParams<schemas.$ZodBase64, "pattern" | "when">;
 export type $ZodCheckBase64Params = CheckStringFormatParams<schemas.$ZodBase64, "pattern" | "when">;

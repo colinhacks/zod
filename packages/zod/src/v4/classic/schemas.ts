@@ -368,6 +368,10 @@ export interface ZodString extends _ZodString<core.$ZodStringInternals<string>> 
   cidrv4(params?: string | core.$ZodCheckCIDRv4Params): this;
   /** @deprecated Use `z.cidrv6()` instead. */
   cidrv6(params?: string | core.$ZodCheckCIDRv6Params): this;
+  /** @deprecated Use `z.ipv4Range()` instead. */
+  ipv4Range(cidr: string, params?: string | core.$ZodIPv4RangeParams): this;
+  /** @deprecated Use `z.ipv6Range()` instead. */
+  ipv6Range(cidr: string, params?: string | core.$ZodIPv6RangeParams): this;
   /** @deprecated Use `z.e164()` instead. */
   e164(params?: string | core.$ZodCheckE164Params): this;
 
@@ -416,6 +420,8 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
   inst.ipv6 = (params) => inst.check(core._ipv6(ZodIPv6, params));
   inst.cidrv4 = (params) => inst.check(core._cidrv4(ZodCIDRv4, params));
   inst.cidrv6 = (params) => inst.check(core._cidrv6(ZodCIDRv6, params));
+  inst.ipv4Range = (cidr, params) => inst.check(core._ipv4Range(ZodIPv4Range, cidr, params));
+  inst.ipv6Range = (cidr, params) => inst.check(core._ipv6Range(ZodIPv6Range, cidr, params));
   inst.e164 = (params) => inst.check(core._e164(ZodE164, params));
 
   // iso
@@ -698,6 +704,36 @@ export const ZodCIDRv6: core.$constructor<ZodCIDRv6> = /*@__PURE__*/ core.$const
 
 export function cidrv6(params?: string | core.$ZodCIDRv6Params): ZodCIDRv6 {
   return core._cidrv6(ZodCIDRv6, params);
+}
+
+// ZodIPv4Range
+export interface ZodIPv4Range extends ZodStringFormat<"ipv4_range"> {
+  _zod: core.$ZodIPv4RangeInternals;
+}
+export const ZodIPv4Range: core.$constructor<ZodIPv4Range> = /*@__PURE__*/ core.$constructor(
+  "ZodIPv4Range",
+  (inst, def) => {
+    core.$ZodIPv4Range.init(inst, def);
+    ZodStringFormat.init(inst, def);
+  }
+);
+export function ipv4Range(cidr: string, params?: string | core.$ZodIPv4RangeParams): ZodIPv4Range {
+  return core._ipv4Range(ZodIPv4Range, cidr, params);
+}
+
+// ZodIPv6Range
+export interface ZodIPv6Range extends ZodStringFormat<"ipv6_range"> {
+  _zod: core.$ZodIPv6RangeInternals;
+}
+export const ZodIPv6Range: core.$constructor<ZodIPv6Range> = /*@__PURE__*/ core.$constructor(
+  "ZodIPv6Range",
+  (inst, def) => {
+    core.$ZodIPv6Range.init(inst, def);
+    ZodStringFormat.init(inst, def);
+  }
+);
+export function ipv6Range(cidr: string, params?: string | core.$ZodIPv6RangeParams): ZodIPv6Range {
+  return core._ipv6Range(ZodIPv6Range, cidr, params);
 }
 
 // ZodBase64
