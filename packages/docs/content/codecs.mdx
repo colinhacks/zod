@@ -108,6 +108,12 @@ payloadSchema.decode({
 }); // => { startDate: Date }
 ```
 
+<Callout type="warn">
+  Use codecs as discriminators in `z.discriminatedUnion()` with caution.
+  Discriminated unions select branches using the input schema (`in`) only. When a discriminator is implemented as a `z.codec()`, this fast path does not work correctly in the `encode()` direction and may result in **"No matching discriminator"** errors.
+  As a workaround, enable `{ unionFallback: true }` or avoid codecs in the discriminator field.
+</Callout>
+
 
 ### Type-safe inputs
 
