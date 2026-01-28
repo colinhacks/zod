@@ -90,6 +90,7 @@ const error: () => errors.$ZodErrorMap = () => {
     lowercase: { label: "קלט", gender: "m" },
     starts_with: { label: "קלט", gender: "m" },
     uppercase: { label: "קלט", gender: "m" },
+    credit_card: { label: "מספר כרטיס אשראי", gender: "m" },
   };
 
   const TypeDictionary: {

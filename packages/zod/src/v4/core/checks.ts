@@ -778,7 +778,8 @@ export type $ZodStringFormats =
   | "jwt"
   | "starts_with"
   | "ends_with"
-  | "includes";
+  | "includes"
+  | "credit_card";
 export interface $ZodCheckStringFormatDef<Format extends string = string> extends $ZodCheckDef {
   check: "string_format";
   format: Format;
