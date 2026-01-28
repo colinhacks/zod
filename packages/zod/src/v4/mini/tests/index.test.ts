@@ -165,6 +165,98 @@ test("z.iso.duration", () => {
   expect(z.safeParse(b, d2).success).toEqual(false);
 });
 
+test("z.iso.yearMonth", () => {
+  const d1 = "2022-02";
+  const d2 = "2022-12";
+  const d3 = "2022-13"; // invalid month
+  const d4 = "2022-00"; // invalid month
+  const d5 = "bad data";
+
+  const a = z.iso.yearMonth();
+  expect(z.safeParse(a, d1).success).toEqual(true);
+  expect(z.safeParse(a, d2).success).toEqual(true);
+  expect(z.safeParse(a, d3).success).toEqual(false);
+  expect(z.safeParse(a, d4).success).toEqual(false);
+  expect(z.safeParse(a, d5).success).toEqual(false);
+
+  const b = z.string().check(z.iso.yearMonth());
+  expect(z.safeParse(b, d1).success).toEqual(true);
+  expect(z.safeParse(b, d5).success).toEqual(false);
+});
+
+test("z.iso.monthDay", () => {
+  const d1 = "12-25";
+  const d2 = "--12-25";
+  const d3 = "02-29"; // valid in format
+  const d4 = "02-30"; // invalid day
+  const d5 = "13-01"; // invalid month
+  const d6 = "bad data";
+
+  const a = z.iso.monthDay();
+  expect(z.safeParse(a, d1).success).toEqual(true);
+  expect(z.safeParse(a, d2).success).toEqual(true);
+  expect(z.safeParse(a, d3).success).toEqual(true);
+  expect(z.safeParse(a, d4).success).toEqual(false);
+  expect(z.safeParse(a, d5).success).toEqual(false);
+  expect(z.safeParse(a, d6).success).toEqual(false);
+
+  const b = z.string().check(z.iso.monthDay());
+  expect(z.safeParse(b, d1).success).toEqual(true);
+  expect(z.safeParse(b, d6).success).toEqual(false);
+});
+
+test("z.iso.instant", () => {
+  const d1 = "2022-02-28T03:06:00Z";
+  const d2 = "2022-02-28T03:06:00.092121729Z";
+  const d3 = "2022-02-28T03:06:00+02:00";
+  const d4 = "2022-02-28T03:06:00-05:00";
+  const d5 = "2022-02-28T03:06:00"; // missing offset
+  const d6 = "bad data";
+
+  const a = z.iso.instant();
+  expect(z.safeParse(a, d1).success).toEqual(true);
+  expect(z.safeParse(a, d2).success).toEqual(true);
+  expect(z.safeParse(a, d3).success).toEqual(true);
+  expect(z.safeParse(a, d4).success).toEqual(true);
+  expect(z.safeParse(a, d5).success).toEqual(false);
+  expect(z.safeParse(a, d6).success).toEqual(false);
+
+  const b = z.iso.instant({ precision: 3 });
+  expect(z.safeParse(b, d1).success).toEqual(false);
+  expect(z.safeParse(b, "2022-02-28T03:06:00.092Z").success).toEqual(true);
+
+  const c = z.string().check(z.iso.instant());
+  expect(z.safeParse(c, d1).success).toEqual(true);
+  expect(z.safeParse(c, d6).success).toEqual(false);
+});
+
+test("z.iso.zonedDateTime", () => {
+  const d1 = "2022-02-28T11:06:00+08:00[Asia/Shanghai]";
+  const d2 = "2022-02-28T03:06:00-05:00[America/New_York]";
+  const d3 = "2022-02-28T11:06:00.092121729+08:00[Asia/Shanghai]";
+  const d4 = "2022-02-28T11:06:00+08:00[Asia/Shanghai][u-ca=chinese]";
+  const d5 = "2022-02-28T11:06:00+08:00"; // missing time zone
+  const d6 = "2022-02-28T11:06:00Z[UTC]"; // Z instead of offset
+  const d7 = "bad data";
+
+  const a = z.iso.zonedDateTime();
+  expect(z.safeParse(a, d1).success).toEqual(true);
+  expect(z.safeParse(a, d2).success).toEqual(true);
+  expect(z.safeParse(a, d3).success).toEqual(true);
+  expect(z.safeParse(a, d4).success).toEqual(true);
+  expect(z.safeParse(a, d5).success).toEqual(false);
+  expect(z.safeParse(a, d6).success).toEqual(false);
+  expect(z.safeParse(a, d7).success).toEqual(false);
+
+  const b = z.iso.zonedDateTime({ precision: 3 });
+  expect(z.safeParse(b, d1).success).toEqual(false);
+  expect(z.safeParse(b, "2022-02-28T11:06:00.092+08:00[Asia/Shanghai]").success).toEqual(true);
+
+  const c = z.string().check(z.iso.zonedDateTime());
+  expect(z.safeParse(c, d1).success).toEqual(true);
+  expect(z.safeParse(c, d7).success).toEqual(false);
+});
+
 test("z.undefined", () => {
   const a = z.undefined();
   expect(z.parse(a, undefined)).toEqual(undefined);
