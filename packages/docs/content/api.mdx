@@ -654,7 +654,7 @@ z.number().gt(5);
 z.number().gte(5);                     // alias .min(5)
 z.number().lt(5);
 z.number().lte(5);                     // alias .max(5)
-z.number().positive();       
+z.number().positive();                 // alias .gt(0)
 z.number().nonnegative();    
 z.number().negative(); 
 z.number().nonpositive(); 
@@ -667,7 +667,7 @@ z.number().check(z.gt(5));
 z.number().check(z.gte(5));            // alias .minimum(5)
 z.number().check(z.lt(5));
 z.number().check(z.lte(5));            // alias .maximum(5)
-z.number().check(z.positive()); 
+z.number().check(z.positive());        // alias .gt(0)
 z.number().check(z.nonnegative()); 
 z.number().check(z.negative()); 
 z.number().check(z.nonpositive()); 
@@ -709,7 +709,7 @@ z.bigint().gt(5n);
 z.bigint().gte(5n);                    // alias `.min(5n)`
 z.bigint().lt(5n);
 z.bigint().lte(5n);                    // alias `.max(5n)`
-z.bigint().positive(); 
+z.bigint().positive();                 // alias `.gt(0n)`
 z.bigint().nonnegative(); 
 z.bigint().negative(); 
 z.bigint().nonpositive(); 
@@ -722,7 +722,7 @@ z.bigint().check(z.gt(5n));
 z.bigint().check(z.gte(5n));           // alias `.minimum(5n)`
 z.bigint().check(z.lt(5n));
 z.bigint().check(z.lte(5n));           // alias `.maximum(5n)`
-z.bigint().check(z.positive()); 
+z.bigint().check(z.positive());        // alias `.gt(0n)` 
 z.bigint().check(z.nonnegative()); 
 z.bigint().check(z.negative()); 
 z.bigint().check(z.nonpositive()); 
