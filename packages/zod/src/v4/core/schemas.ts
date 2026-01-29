@@ -481,10 +481,9 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
       // Check for valid URL format before passing to URL constructor
       // URLs must have a protocol followed by :// (not just :)
       // This prevents strings like "http:example.com" or "https:/path" from being accepted
-      // Only apply this strict validation for http/https URLs (httpUrl validator)
-      if (def.protocol && def.protocol.source === "^https?$") {
-        const protocolMatch = trimmed.match(/^([a-zA-Z][a-zA-Z0-9+.-]*):\/\//);
-        if (!protocolMatch) {
+      // Apply this strict validation for http/https URLs (httpUrl validator)
+      if (def.protocol && /https?/.test(def.protocol.source)) {
+        if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed)) {
           payload.issues.push({
             code: "invalid_format",
             format: "url",
