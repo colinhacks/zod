@@ -35,12 +35,6 @@ export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _jso
   if (format) {
     json.format = formatMap[format as checks.$ZodStringFormats] ?? format;
     if (json.format === "") delete json.format; // empty format is not valid
-
-    // JSON Schema format: "time" requires a full time with offset or Z
-    // z.iso.time() does not include timezone information, so format: "time" should never be used
-    if (format === "time") {
-      delete json.format;
-    }
   }
   if (contentEncoding) json.contentEncoding = contentEncoding;
   if (patterns && patterns.size > 0) {
