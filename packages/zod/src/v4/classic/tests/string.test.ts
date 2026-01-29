@@ -454,6 +454,12 @@ test("httpurl", () => {
   ).toThrow();
   expect(() => httpUrl.parse("http://asdf.c")).toThrow();
   expect(() => httpUrl.parse("mailto:asdf@lckj.com")).toThrow();
+  // missing // after protocol
+  expect(() => httpUrl.parse("http:example.com")).toThrow();
+  expect(() => httpUrl.parse("https:example.com")).toThrow();
+  // missing one /
+  expect(() => httpUrl.parse("https:/www.google.com")).toThrow();
+  expect(() => httpUrl.parse("http:/example.com")).toThrow();
 });
 
 test("url error overrides", () => {

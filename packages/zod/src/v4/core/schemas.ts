@@ -477,6 +477,25 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
     try {
       // Trim whitespace from input
       const trimmed = payload.value.trim();
+
+      // Check for valid URL format before passing to URL constructor
+      // URLs must have a protocol followed by :// (not just :)
+      // This prevents strings like "http:example.com" or "https:/path" from being accepted
+      // Apply this strict validation for http/https URLs (httpUrl validator)
+      if (def.protocol && /https?/.test(def.protocol.source)) {
+        if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed)) {
+          payload.issues.push({
+            code: "invalid_format",
+            format: "url",
+            note: "Invalid URL format",
+            input: payload.value,
+            inst,
+            continue: !def.abort,
+          });
+          return;
+        }
+      }
+
       // @ts-ignore
       const url = new URL(trimmed);
 
