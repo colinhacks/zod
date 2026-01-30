@@ -34,7 +34,7 @@ export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> ex
 export interface ParsePayload<T = unknown> {
   value: T;
   issues: errors.$ZodRawIssue[];
-  /** A may to mark a whole payload as aborted. Used in codecs/pipes. */
+  /** A way to mark a whole payload as aborted. Used in codecs/pipes. */
   aborted?: boolean;
 }
 
