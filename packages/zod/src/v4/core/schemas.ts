@@ -220,6 +220,7 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
       let asyncResult!: Promise<unknown> | undefined;
       for (const ch of checks) {
         if (ch._zod.def.when) {
+          if (util.explicitlyAborted(payload)) continue;
           const shouldRun = ch._zod.def.when(payload);
           if (!shouldRun) continue;
         } else if (isAborted) {
