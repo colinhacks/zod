@@ -7,7 +7,8 @@ const STUB_PACKAGE_JSON_CONTENT = `{
   "type": "module",
   "main": "./index.cjs",
   "module": "./index.js",
-  "types": "./index.d.cts" 
+  "types": "./index.d.cts",
+  "sideEffects": false 
 }
 `;
 
