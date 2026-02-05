@@ -153,6 +153,22 @@ test(".multipleOf() with negative divisor", () => {
   expect(() => schema.parse(7.5)).toThrow();
 });
 
+test(".multipleOf() with scientific notation (multi-digit exponents)", () => {
+  // Regression test for https://github.com/colinhacks/zod/pull/5687
+  // The regex was using \d? which only matches single-digit exponents
+  const schema = z.number().multipleOf(1e-10);
+
+  // These should all pass - they are valid multiples of 1e-10
+  expect(schema.parse(1e-10)).toEqual(1e-10);
+  expect(schema.parse(5e-10)).toEqual(5e-10);
+  expect(schema.parse(1e-9)).toEqual(1e-9); // 10 * 1e-10
+
+  // Test with 1e-15 (exponent = 15, two digits)
+  const schema15 = z.number().multipleOf(1e-15);
+  expect(schema15.parse(1e-15)).toEqual(1e-15);
+  expect(schema15.parse(3e-15)).toEqual(3e-15);
+});
+
 test(".step() validation", () => {
   const schemaPointOne = z.number().step(0.1);
   const schemaPointZeroZeroZeroOne = z.number().step(0.0001);
