@@ -103,6 +103,7 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(z.iso.time())).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "time",
         "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?$",
         "type": "string",
       }
@@ -110,6 +111,7 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(z.iso.time({ precision: -1 }))).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "time",
         "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$",
         "type": "string",
       }
@@ -117,6 +119,7 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(z.iso.time({ precision: 0 }))).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "time",
         "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d$",
         "type": "string",
       }
@@ -124,6 +127,7 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(z.iso.time({ precision: 3 }))).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "time",
         "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}$",
         "type": "string",
       }
@@ -364,6 +368,7 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(z.iso.time())).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "time",
         "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?$",
         "type": "string",
       }
