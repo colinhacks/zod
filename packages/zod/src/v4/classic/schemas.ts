@@ -516,7 +516,7 @@ export function url(params?: string | core.$ZodURLParams): ZodURL {
 
 export function httpUrl(params?: string | Omit<core.$ZodURLParams, "protocol" | "hostname">): ZodURL {
   return core._url(ZodURL, {
-    protocol: /^https?$/,
+    protocol: core.regexes.httpProtocol,
     hostname: core.regexes.domain,
     ...util.normalizeParams(params),
   });

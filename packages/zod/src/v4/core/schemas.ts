@@ -478,6 +478,23 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
     try {
       // Trim whitespace from input
       const trimmed = payload.value.trim();
+
+      // When normalize is off, require :// for http/https URLs
+      // This prevents strings like "http:example.com" or "https:/path" from being silently accepted
+      if (!def.normalize && def.protocol?.source === regexes.httpProtocol.source) {
+        if (!/^https?:\/\//i.test(trimmed)) {
+          payload.issues.push({
+            code: "invalid_format",
+            format: "url",
+            note: "Invalid URL format",
+            input: payload.value,
+            inst,
+            continue: !def.abort,
+          });
+          return;
+        }
+      }
+
       // @ts-ignore
       const url = new URL(trimmed);
 
