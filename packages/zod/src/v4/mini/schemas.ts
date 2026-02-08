@@ -200,7 +200,7 @@ export function url(params?: string | core.$ZodURLParams): ZodMiniURL {
 // @__NO_SIDE_EFFECTS__
 export function httpUrl(params?: string | Omit<core.$ZodURLParams, "protocol" | "hostname">): ZodMiniURL {
   return core._url(ZodMiniURL, {
-    protocol: /^https?$/,
+    protocol: core.regexes.httpProtocol,
     hostname: core.regexes.domain,
     ...util.normalizeParams(params),
   });
