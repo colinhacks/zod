@@ -28,7 +28,6 @@
     "esModuleInterop": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "downlevelIteration": true,
     "isolatedModules": true,
 
     "pretty": true
