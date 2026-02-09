@@ -647,6 +647,47 @@ describe("toJSONSchema", () => {
     `);
   });
 
+  test("number constraints intersection draft-04", () => {
+    // When both minimum (from .int()) and exclusiveMinimum (from .positive()) exist,
+    // the more restrictive constraint should be used
+    expect(z.toJSONSchema(z.number().int().positive().lte(65535), { target: "draft-04" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "exclusiveMinimum": true,
+        "maximum": 65535,
+        "minimum": 0,
+        "type": "integer",
+      }
+    `);
+    // Same for openapi-3.0
+    expect(z.toJSONSchema(z.number().int().positive().lte(65535), { target: "openapi-3.0" })).toMatchInlineSnapshot(`
+      {
+        "exclusiveMinimum": true,
+        "maximum": 65535,
+        "minimum": 0,
+        "type": "integer",
+      }
+    `);
+    // When inclusive minimum is more restrictive than exclusive minimum
+    expect(z.toJSONSchema(z.number().gt(3).gte(10), { target: "draft-04" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "minimum": 10,
+        "type": "number",
+      }
+    `);
+    // Same logic for maximum constraints
+    expect(z.toJSONSchema(z.number().int().negative(), { target: "draft-04" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "exclusiveMaximum": true,
+        "maximum": 0,
+        "minimum": -9007199254740991,
+        "type": "integer",
+      }
+    `);
+  });
+
   test("target normalization draft-04 and draft-07", () => {
     // Test that both old (draft-4, draft-7) and new (draft-04, draft-07) target formats work
     // Test draft-04 / draft-4
