@@ -1,4 +1,4 @@
-import { expect, expectTypeOf, test } from "vitest";
+import { expect, expectTypeOf, test, vi } from "vitest";
 import * as z from "zod/v4";
 
 test("type inference", () => {
@@ -175,6 +175,33 @@ test("parse should fail given sparse array", () => {
       "success": false,
     }
   `);
+});
+
+test("skip per-item parsing on noop validators", () => {
+  const noopSchemas = [z.unknown(), z.any()];
+
+  const input = [1, "string", { obj: "ect" }, null];
+
+  for (const noopSchema of noopSchemas) {
+    const noopSchemaSpy = vi.spyOn(noopSchema._zod, "run");
+
+    const checkSchema = noopSchema.check(() => {});
+
+    const checkSchemaSpy = vi.spyOn(checkSchema._zod, "run");
+
+    try {
+      const result = z.array(checkSchema).parse(input);
+
+      expect(result).toEqual(input);
+
+      expect(noopSchemaSpy).not.toHaveBeenCalled();
+
+      expect(checkSchemaSpy).toBeCalledTimes(input.length);
+    } finally {
+      noopSchemaSpy.mockRestore();
+      checkSchemaSpy.mockRestore();
+    }
+  }
 });
 
 // const unique = z.string().array().unique();
