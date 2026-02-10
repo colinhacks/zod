@@ -353,6 +353,128 @@ export const unionProcessor: Processor<schemas.$ZodUnion> = (schema, ctx, json, 
   }
 };
 
+const compositionKeywords = ["allOf", "oneOf", "anyOf"] as const;
+
+// Collect property names from a JSON schema object, recursing into composition keywords.
+function collectPropertyNames(entry: JSONSchema.JSONSchema, names = new Set<string>()): Set<string> {
+  if (entry.properties) {
+    for (const key of Object.keys(entry.properties)) {
+      names.add(key);
+    }
+  }
+  for (const keyword of compositionKeywords) {
+    if (Array.isArray(entry[keyword])) {
+      for (const variant of entry[keyword]) {
+        collectPropertyNames(variant, names);
+      }
+    }
+  }
+  return names;
+}
+
+// Whether a JSON schema object restricts additional properties (directly or via composition).
+function isStrict(entry: JSONSchema.JSONSchema): boolean {
+  if (entry.additionalProperties === false) return true;
+  if (entry.unevaluatedProperties === false) return true;
+  // allOf: any strict child makes the entry strict (all must match)
+  if (Array.isArray(entry.allOf) && entry.allOf.some(isStrict)) return true;
+  // oneOf/anyOf: every child must be strict (only one needs to match)
+  for (const keyword of ["oneOf", "anyOf"] as const) {
+    if (Array.isArray(entry[keyword]) && entry[keyword].length > 0 && entry[keyword].every(isStrict)) return true;
+  }
+  return false;
+}
+
+// Clone and remove additionalProperties: false, recursing into composition keywords.
+// Returns the original object unchanged if it was already loose.
+function makeLoose(entry: JSONSchema.JSONSchema): JSONSchema.JSONSchema {
+  let cloned = false;
+  if (entry.additionalProperties === false || entry.unevaluatedProperties === false) {
+    entry = { ...entry };
+    cloned = true;
+    delete entry.additionalProperties;
+    delete entry.unevaluatedProperties;
+  }
+  for (const keyword of compositionKeywords) {
+    const original = entry[keyword];
+    if (Array.isArray(original)) {
+      const mapped = original.map(makeLoose);
+      if (mapped.some((v, i) => v !== original[i])) {
+        if (!cloned) {
+          entry = { ...entry };
+          cloned = true;
+        }
+        entry[keyword] = mapped;
+      }
+    }
+  }
+  return entry;
+}
+
+// Clone and add {} placeholders for missing sibling properties on entries with
+// additionalProperties: false, recursing into composition keywords.
+// Returns the original object unchanged if nothing needed to be added.
+function addSiblingPropertyPlaceholders(entry: JSONSchema.JSONSchema, allNames: Set<string>): JSONSchema.JSONSchema {
+  let cloned = false;
+  if (entry.additionalProperties === false && entry.properties) {
+    const missing: string[] = [];
+    for (const name of allNames) {
+      if (!(name in entry.properties)) missing.push(name);
+    }
+    if (missing.length > 0) {
+      const properties = { ...entry.properties };
+      entry = { ...entry, properties };
+      cloned = true;
+      for (const name of missing) {
+        properties[name] = {};
+      }
+    }
+  }
+  for (const keyword of compositionKeywords) {
+    const original = entry[keyword];
+    if (Array.isArray(original)) {
+      const mapped = original.map((v: JSONSchema.JSONSchema) => addSiblingPropertyPlaceholders(v, allNames));
+      if (mapped.some((v, i) => v !== original[i])) {
+        if (!cloned) {
+          entry = { ...entry };
+          cloned = true;
+        }
+        entry[keyword] = mapped;
+      }
+    }
+  }
+  return entry;
+}
+
+// In JSON Schema, additionalProperties only considers properties in the same schema object,
+// not sibling allOf entries. This makes allOf with strict objects unsatisfiable: each entry
+// rejects the other's properties. Fix by post-processing the allOf array.
+function fixAllOfAdditionalProperties(
+  allOf: JSONSchema.JSONSchema[],
+  json: JSONSchema.JSONSchema,
+  target: string
+): void {
+  if (target === "draft-2020-12" && allOf.every(isStrict)) {
+    // When all entries are strict, replace per-entry additionalProperties: false with
+    // unevaluatedProperties: false on the wrapper, which sees properties from all subschemas.
+    for (let i = 0; i < allOf.length; i++) {
+      allOf[i] = makeLoose(allOf[i]);
+    }
+    json.unevaluatedProperties = false;
+    return;
+  }
+
+  // For older drafts (or when not all entries are strict), add {} placeholders so each
+  // entry's additionalProperties: false won't reject sibling entries' property names.
+  const allNames = new Set<string>();
+  for (const entry of allOf) {
+    collectPropertyNames(entry, allNames);
+  }
+  for (let i = 0; i < allOf.length; i++) {
+    allOf[i] = addSiblingPropertyPlaceholders(allOf[i], allNames);
+  }
+}
+
 export const intersectionProcessor: Processor<schemas.$ZodIntersection> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodIntersectionDef;
   const a = process(def.left, ctx as any, {
@@ -369,6 +491,9 @@ export const intersectionProcessor: Processor<schemas.$ZodIntersection> = (schem
     ...(isSimpleIntersection(a) ? (a.allOf as any[]) : [a]),
     ...(isSimpleIntersection(b) ? (b.allOf as any[]) : [b]),
   ];
+
+  fixAllOfAdditionalProperties(allOf, json, ctx.target);
+
   json.allOf = allOf;
 };
 
