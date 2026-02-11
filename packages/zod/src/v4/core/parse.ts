@@ -193,3 +193,71 @@ export const _safeDecodeAsync: (_Err: $ZodErrorClass) => $SafeDecodeAsync = (_Er
 };
 
 export const safeDecodeAsync: $SafeDecodeAsync = /* @__PURE__*/ _safeDecodeAsync(errors.$ZodRealError);
+
+///////////        VALIDATE OUTPUT       ///////////
+
+export type $ValidateOutput = <T extends schemas.$ZodType>(
+  schema: T,
+  value: core.output<T>,
+  _ctx?: schemas.ParseContext<errors.$ZodIssue>,
+  _params?: { callee?: util.AnyFunc; Err?: $ZodErrorClass }
+) => core.output<T>;
+
+export const _validateOutput: (_Err: $ZodErrorClass) => $ValidateOutput = (_Err) => (schema, value, _ctx, _params) => {
+  const ctx = _ctx
+    ? Object.assign(_ctx, { direction: "validate-output" as const })
+    : { direction: "validate-output" as const };
+  return _parse(_Err)(schema, value, ctx as any, _params);
+};
+
+export const validateOutput: $ValidateOutput = /* @__PURE__*/ _validateOutput(errors.$ZodRealError);
+
+export type $ValidateOutputAsync = <T extends schemas.$ZodType>(
+  schema: T,
+  value: core.output<T>,
+  _ctx?: schemas.ParseContext<errors.$ZodIssue>,
+  _params?: { callee?: util.AnyFunc; Err?: $ZodErrorClass }
+) => Promise<core.output<T>>;
+
+export const _validateOutputAsync: (_Err: $ZodErrorClass) => $ValidateOutputAsync =
+  (_Err) => async (schema, value, _ctx, _params) => {
+    const ctx = _ctx
+      ? Object.assign(_ctx, { direction: "validate-output" as const })
+      : { direction: "validate-output" as const };
+    return _parseAsync(_Err)(schema, value, ctx as any, _params);
+  };
+
+export const validateOutputAsync: $ValidateOutputAsync = /* @__PURE__*/ _validateOutputAsync(errors.$ZodRealError);
+
+export type $SafeValidateOutput = <T extends schemas.$ZodType>(
+  schema: T,
+  value: core.output<T>,
+  _ctx?: schemas.ParseContext<errors.$ZodIssue>
+) => util.SafeParseResult<core.output<T>>;
+
+export const _safeValidateOutput: (_Err: $ZodErrorClass) => $SafeValidateOutput = (_Err) => (schema, value, _ctx) => {
+  const ctx = _ctx
+    ? Object.assign(_ctx, { direction: "validate-output" as const })
+    : { direction: "validate-output" as const };
+  return _safeParse(_Err)(schema, value, ctx as any) as any;
+};
+
+export const safeValidateOutput: $SafeValidateOutput = /* @__PURE__*/ _safeValidateOutput(errors.$ZodRealError);
+
+export type $SafeValidateOutputAsync = <T extends schemas.$ZodType>(
+  schema: T,
+  value: core.output<T>,
+  _ctx?: schemas.ParseContext<errors.$ZodIssue>
+) => Promise<util.SafeParseResult<core.output<T>>>;
+
+export const _safeValidateOutputAsync: (_Err: $ZodErrorClass) => $SafeValidateOutputAsync =
+  (_Err) => async (schema, value, _ctx) => {
+    const ctx = _ctx
+      ? Object.assign(_ctx, { direction: "validate-output" as const })
+      : { direction: "validate-output" as const };
+    return _safeParseAsync(_Err)(schema, value, ctx as any) as any;
+  };
+
+export const safeValidateOutputAsync: $SafeValidateOutputAsync = /* @__PURE__*/ _safeValidateOutputAsync(
+  errors.$ZodRealError
+);
