@@ -256,6 +256,10 @@ The `.flatten()` method on `ZodError` has also been deprecated. Instead use the 
 
 This API was identical to `.flatten()`. It exists for historical reasons and isn't documented.
 
+### drops `.errors`
+
+This API was an alias for `issues` in Zod v3 but has been removed. Use `.issues` instead.
+
 ### deprecates `.addIssue()` and `.addIssues()`
 
 Directly push to `err.issues` array instead, if necessary.
