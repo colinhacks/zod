@@ -1794,6 +1794,96 @@ describe("toJSONSchema", () => {
     `
     );
   });
+
+  test("recursive schema with openapi-3.0 uses components/schemas refs", () => {
+    const Recursive: z.ZodType = z.lazy(() => z.object({ child: Recursive.optional() }));
+    const Schema = z.object({ data: Recursive });
+
+    const result = z.toJSONSchema(Schema, { target: "openapi-3.0" });
+
+    // OpenAPI 3.0 should use #/components/schemas/ refs, not #/definitions/
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "additionalProperties": false,
+        "components": {
+          "schemas": {
+            "__schema0": {
+              "additionalProperties": false,
+              "properties": {
+                "child": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/__schema0",
+                    },
+                  ],
+                },
+              },
+              "type": "object",
+            },
+          },
+        },
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/__schema0",
+          },
+        },
+        "required": [
+          "data",
+        ],
+        "type": "object",
+      }
+    `);
+
+    // Verify no #/definitions/ refs exist
+    const json = JSON.stringify(result);
+    expect(json).not.toContain("#/definitions/");
+    expect(json).not.toContain('"definitions"');
+  });
+
+  test("recursive schema with openapi-3.0 self-referencing root", () => {
+    interface Category {
+      name: string;
+      subcategories: Category[];
+    }
+
+    const categorySchema: z.ZodType<Category> = z.object({
+      name: z.string(),
+      subcategories: z.array(z.lazy(() => categorySchema)),
+    });
+
+    const result = z.toJSONSchema(categorySchema, { target: "openapi-3.0" });
+
+    // Self-referencing root schemas should still use # (not #/definitions/)
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+          },
+          "subcategories": {
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#",
+                },
+              ],
+            },
+            "type": "array",
+          },
+        },
+        "required": [
+          "name",
+          "subcategories",
+        ],
+        "type": "object",
+      }
+    `);
+
+    // Verify no #/definitions/ refs exist
+    const json = JSON.stringify(result);
+    expect(json).not.toContain("#/definitions/");
+  });
 });
 
 test("override", () => {
