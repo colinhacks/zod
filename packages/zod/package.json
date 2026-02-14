@@ -54,100 +54,100 @@
     ".": {
       "@zod/source": "./src/index.ts",
       "import": {
-        "default": "./index.js",
-        "types": "./index.d.ts"
+        "types": "./index.d.ts",
+        "default": "./index.js"
       },
       "require": {
-        "default": "./index.cjs",
-        "types": "./index.d.cts"
+        "types": "./index.d.cts",
+        "default": "./index.cjs"
       }
     },
     "./mini": {
       "@zod/source": "./src/mini/index.ts",
       "import": {
-        "default": "./mini/index.js",
-        "types": "./mini/index.d.ts"
+        "types": "./mini/index.d.ts",
+        "default": "./mini/index.js"
       },
       "require": {
-        "default": "./mini/index.cjs",
-        "types": "./mini/index.d.cts"
+        "types": "./mini/index.d.cts",
+        "default": "./mini/index.cjs"
       }
     },
     "./locales": {
       "@zod/source": "./src/locales/index.ts",
       "import": {
-        "default": "./locales/index.js",
-        "types": "./locales/index.d.ts"
+        "types": "./locales/index.d.ts",
+        "default": "./locales/index.js"
       },
       "require": {
-        "default": "./locales/index.cjs",
-        "types": "./locales/index.d.cts"
+        "types": "./locales/index.d.cts",
+        "default": "./locales/index.cjs"
       }
     },
     "./v3": {
       "@zod/source": "./src/v3/index.ts",
       "import": {
-        "default": "./v3/index.js",
-        "types": "./v3/index.d.ts"
+        "types": "./v3/index.d.ts",
+        "default": "./v3/index.js"
       },
       "require": {
-        "default": "./v3/index.cjs",
-        "types": "./v3/index.d.cts"
+        "types": "./v3/index.d.cts",
+        "default": "./v3/index.cjs"
       }
     },
     "./v4": {
       "@zod/source": "./src/v4/index.ts",
       "import": {
-        "default": "./v4/index.js",
-        "types": "./v4/index.d.ts"
+        "types": "./v4/index.d.ts",
+        "default": "./v4/index.js"
       },
       "require": {
-        "default": "./v4/index.cjs",
-        "types": "./v4/index.d.cts"
+        "types": "./v4/index.d.cts",
+        "default": "./v4/index.cjs"
       }
     },
     "./v4-mini": {
       "@zod/source": "./src/v4-mini/index.ts",
       "import": {
-        "default": "./v4-mini/index.js",
-        "types": "./v4-mini/index.d.ts"
+        "types": "./v4-mini/index.d.ts",
+        "default": "./v4-mini/index.js"
       },
       "require": {
-        "default": "./v4-mini/index.cjs",
-        "types": "./v4-mini/index.d.cts"
+        "types": "./v4-mini/index.d.cts",
+        "default": "./v4-mini/index.cjs"
       }
     },
     "./v4/mini": {
       "@zod/source": "./src/v4/mini/index.ts",
       "import": {
-        "default": "./v4/mini/index.js",
-        "types": "./v4/mini/index.d.ts"
+        "types": "./v4/mini/index.d.ts",
+        "default": "./v4/mini/index.js"
       },
       "require": {
-        "default": "./v4/mini/index.cjs",
-        "types": "./v4/mini/index.d.cts"
+        "types": "./v4/mini/index.d.cts",
+        "default": "./v4/mini/index.cjs"
       }
     },
     "./v4/core": {
       "@zod/source": "./src/v4/core/index.ts",
       "import": {
-        "default": "./v4/core/index.js",
-        "types": "./v4/core/index.d.ts"
+        "types": "./v4/core/index.d.ts",
+        "default": "./v4/core/index.js"
       },
       "require": {
-        "default": "./v4/core/index.cjs",
-        "types": "./v4/core/index.d.cts"
+        "types": "./v4/core/index.d.cts",
+        "default": "./v4/core/index.cjs"
       }
     },
     "./v4/locales": {
       "@zod/source": "./src/v4/locales/index.ts",
       "import": {
-        "default": "./v4/locales/index.js",
-        "types": "./v4/locales/index.d.ts"
+        "types": "./v4/locales/index.d.ts",
+        "default": "./v4/locales/index.js"
       },
       "require": {
-        "default": "./v4/locales/index.cjs",
-        "types": "./v4/locales/index.d.cts"
+        "types": "./v4/locales/index.d.cts",
+        "default": "./v4/locales/index.cjs"
       }
     },
     "./v4/locales/*": {
