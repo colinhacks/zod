@@ -1133,6 +1133,16 @@ export function _toLowerCase(): checks.$ZodCheckOverwrite<string> {
 export function _toUpperCase(): checks.$ZodCheckOverwrite<string> {
   return _overwrite((input) => input.toUpperCase());
 }
+// Capitalize
+// @__NO_SIDE_EFFECTS__
+export function _capitalize(): checks.$ZodCheckOverwrite<string> {
+  return _overwrite((input) => input.charAt(0).toUpperCase() + input.slice(1).toLowerCase());
+}
+// titleCase
+// @__NO_SIDE_EFFECTS__
+export function _titleCase(): checks.$ZodCheckOverwrite<string> {
+  return _overwrite((input) => input.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()));
+}
 // slugify
 // @__NO_SIDE_EFFECTS__
 export function _slugify(): checks.$ZodCheckOverwrite<string> {

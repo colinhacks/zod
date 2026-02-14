@@ -847,6 +847,8 @@ test("trim", () => {
 test("lowerCase", () => {
   expect(z.string().toLowerCase().parse("ASDF")).toEqual("asdf");
   expect(z.string().toUpperCase().parse("asdf")).toEqual("ASDF");
+  expect(z.string().capitalize().parse("alice")).toEqual("Alice");
+  expect(z.string().titleCase().parse("the great gatsby")).toEqual("The Great Gatsby");
 });
 
 test("slugify", () => {

@@ -393,6 +393,8 @@ z.normalize();
 z.trim();
 z.toLowerCase();
 z.toUpperCase();
+z.capitalize();
+z.titleCase();
 ```
 
 
@@ -908,7 +910,7 @@ z.number().overwrite(val => val ** 2).max(100);
 // => ZodNumber
 ```
 
-> The existing `.trim()`, `.toLowerCase()` and `.toUpperCase()` methods have been reimplemented using `.overwrite()`.
+> The existing `.trim()`, `.toLowerCase()`, `.toUpperCase()`, `.capitalize()`, and `.titleCase()` methods have been reimplemented using `.overwrite()`.
 
 ## An extensible foundation: `zod/v4/core`
 

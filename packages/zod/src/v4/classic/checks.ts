@@ -17,6 +17,8 @@ export {
   _regex as regex,
   _lowercase as lowercase,
   _uppercase as uppercase,
+  _capitalize as capitalize,
+  _titleCase as titleCase,
   _includes as includes,
   _startsWith as startsWith,
   _endsWith as endsWith,
