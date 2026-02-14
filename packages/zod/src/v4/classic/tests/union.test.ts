@@ -94,6 +94,23 @@ test("union values", () => {
   `);
 });
 
+test("informative error for union of literals", () => {
+  const MySchemaType = z.union([z.literal("a"), z.literal("b")]);
+  const MySchema = z.object({
+    type: MySchemaType,
+  });
+
+  const result = MySchema.safeParse({ type: "c" });
+  expect(result.success).toBe(false);
+  if (!result.success) {
+    expect(result.error.issues[0].path).toEqual(["type"]);
+    expect(result.error.issues[0].message).toContain("expected one of");
+    expect(result.error.issues[0].message).toContain('"a"');
+    expect(result.error.issues[0].message).toContain('"b"');
+    expect(result.error.issues[0].message).toContain('"c"');
+  }
+});
+
 test("non-aborted errors", () => {
   const zItemTest = z.union([
     z.object({
