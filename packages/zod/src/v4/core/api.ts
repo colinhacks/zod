@@ -1141,7 +1141,12 @@ export function _capitalize(): checks.$ZodCheckOverwrite<string> {
 // titleCase
 // @__NO_SIDE_EFFECTS__
 export function _titleCase(): checks.$ZodCheckOverwrite<string> {
-  return _overwrite((input) => input.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()));
+  return _overwrite((input) =>
+    input
+      .split(/\s+/u)
+      .map((word) => (word ? word[0].toLocaleUpperCase() + word.slice(1) : ""))
+      .join(" ")
+  );
 }
 // slugify
 // @__NO_SIDE_EFFECTS__

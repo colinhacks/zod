@@ -847,8 +847,29 @@ test("trim", () => {
 test("lowerCase", () => {
   expect(z.string().toLowerCase().parse("ASDF")).toEqual("asdf");
   expect(z.string().toUpperCase().parse("asdf")).toEqual("ASDF");
-  expect(z.string().capitalize().parse("alice")).toEqual("Alice");
-  expect(z.string().titleCase().parse("the great gatsby")).toEqual("The Great Gatsby");
+});
+
+test("capitalize", () => {
+  const schema = z.string().capitalize();
+  expect(schema.parse("hello world")).toBe("Hello world");
+  expect(schema.parse("HELLO WORLD")).toBe("Hello world");
+  expect(schema.parse("HELLO")).toBe("Hello");
+  expect(schema.parse("h")).toBe("H");
+  expect(schema.parse("123ABC")).toBe("123abc");
+  expect(schema.parse(" hello")).toBe(" hello");
+  expect(schema.parse("")).toBe("");
+});
+
+test("titleCase", () => {
+  const schema = z.string().titleCase();
+  expect(schema.parse("hello world")).toBe("Hello World");
+  expect(schema.parse("Hello World")).toBe("Hello World");
+  expect(schema.parse("the great gatsby")).toBe("The Great Gatsby");
+  expect(schema.parse("hELLO wORLD")).toBe("HELLO WORLD");
+  expect(schema.parse("  hello   world  ")).toBe(" Hello World ");
+  expect(schema.parse("hello-world")).toBe("Hello-world");
+  expect(schema.parse("hello, world!")).toBe("Hello, World!");
+  expect(schema.parse("")).toBe("");
 });
 
 test("slugify", () => {
