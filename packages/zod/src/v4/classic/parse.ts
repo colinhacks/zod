@@ -10,14 +10,14 @@ export const parse: <T extends core.$ZodType>(
   value: unknown,
   _ctx?: core.ParseContext<core.$ZodIssue>,
   _params?: { callee?: core.util.AnyFunc; Err?: core.$ZodErrorClass }
-) => core.output<T> = /* @__PURE__ */ core._parse(ZodRealError) as any;
+) => core.output<T> = /* @__PURE__ */ core._parse(ZodRealError);
 
 export const parseAsync: <T extends core.$ZodType>(
   schema: T,
   value: unknown,
   _ctx?: core.ParseContext<core.$ZodIssue>,
   _params?: { callee?: core.util.AnyFunc; Err?: core.$ZodErrorClass }
-) => Promise<core.output<T>> = /* @__PURE__ */ core._parseAsync(ZodRealError) as any;
+) => Promise<core.output<T>> = /* @__PURE__ */ core._parseAsync(ZodRealError);
 
 export const safeParse: <T extends core.$ZodType>(
   schema: T,
@@ -37,25 +37,25 @@ export const encode: <T extends core.$ZodType>(
   schema: T,
   value: core.output<T>,
   _ctx?: core.ParseContext<core.$ZodIssue>
-) => core.input<T> = /* @__PURE__ */ core._encode(ZodRealError) as any;
+) => core.input<T> = /* @__PURE__ */ core._encode(ZodRealError);
 
 export const decode: <T extends core.$ZodType>(
   schema: T,
   value: core.input<T>,
   _ctx?: core.ParseContext<core.$ZodIssue>
-) => core.output<T> = /* @__PURE__ */ core._decode(ZodRealError) as any;
+) => core.output<T> = /* @__PURE__ */ core._decode(ZodRealError);
 
 export const encodeAsync: <T extends core.$ZodType>(
   schema: T,
   value: core.output<T>,
   _ctx?: core.ParseContext<core.$ZodIssue>
-) => Promise<core.input<T>> = /* @__PURE__ */ core._encodeAsync(ZodRealError) as any;
+) => Promise<core.input<T>> = /* @__PURE__ */ core._encodeAsync(ZodRealError);
 
 export const decodeAsync: <T extends core.$ZodType>(
   schema: T,
   value: core.input<T>,
   _ctx?: core.ParseContext<core.$ZodIssue>
-) => Promise<core.output<T>> = /* @__PURE__ */ core._decodeAsync(ZodRealError) as any;
+) => Promise<core.output<T>> = /* @__PURE__ */ core._decodeAsync(ZodRealError);
 
 export const safeEncode: <T extends core.$ZodType>(
   schema: T,

@@ -428,7 +428,7 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
 export function string(params?: string | core.$ZodStringParams): ZodString;
 export function string<T extends string>(params?: string | core.$ZodStringParams): core.$ZodType<T, T>;
 export function string(params?: string | core.$ZodStringParams): ZodString {
-  return core._string(ZodString, params) as any;
+  return core._string(ZodString, params);
 }
 
 // ZodStringFormat
@@ -874,7 +874,7 @@ export const ZodNumber: core.$constructor<ZodNumber> = /*@__PURE__*/ core.$const
 });
 
 export function number(params?: string | core.$ZodNumberParams): ZodNumber {
-  return core._number(ZodNumber, params) as any;
+  return core._number(ZodNumber, params);
 }
 
 // ZodNumberFormat
@@ -929,7 +929,7 @@ export const ZodBoolean: core.$constructor<ZodBoolean> = /*@__PURE__*/ core.$con
 });
 
 export function boolean(params?: string | core.$ZodBooleanParams): ZodBoolean {
-  return core._boolean(ZodBoolean, params) as any;
+  return core._boolean(ZodBoolean, params);
 }
 
 // bigint
@@ -980,7 +980,7 @@ export const ZodBigInt: core.$constructor<ZodBigInt> = /*@__PURE__*/ core.$const
 });
 
 export function bigint(params?: string | core.$ZodBigIntParams): ZodBigInt {
-  return core._bigint(ZodBigInt, params) as any;
+  return core._bigint(ZodBigInt, params);
 }
 // bigint formats
 
@@ -1143,7 +1143,7 @@ export const ZodArray: core.$constructor<ZodArray> = /*@__PURE__*/ core.$constru
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.arrayProcessor(inst, ctx, json, params);
 
-  inst.element = def.element as any;
+  inst.element = def.element;
   inst.min = (minLength, params) => inst.check(checks.minLength(minLength, params));
   inst.nonempty = (params) => inst.check(checks.minLength(1, params));
   inst.max = (maxLength, params) => inst.check(checks.maxLength(maxLength, params));
@@ -1702,7 +1702,7 @@ export function nativeEnum<T extends util.EnumLike>(entries: T, params?: string 
     type: "enum",
     entries,
     ...util.normalizeParams(params),
-  }) as any as ZodEnum<T>;
+  }) as ZodEnum<T>;
 }
 
 // ZodLiteral
