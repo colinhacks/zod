@@ -66,6 +66,12 @@ export const Bronze = () => {
       url: "clipboardhealth.com/engineering",
       href: "https://www.clipboardhealth.com/engineering",
     },
+    {
+      name: "Mintlify",
+      logoSrc: "https://avatars.githubusercontent.com/u/93011474?s=200&v=4",
+      url: "mintlify.com",
+      href: "https://mintlify.com",
+    },
   ];
 
   return (

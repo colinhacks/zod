@@ -82,6 +82,12 @@ export const Silver = () => {
       logoSrc: "https://avatars.githubusercontent.com/u/16199997?s=200&v=4",
       url: "mux.link/zod",
       href: "https://mux.link/zod",
+    },
+    {
+      name: "Sanity",
+      logoSrc: "https://avatars.githubusercontent.com/u/17177659?s=200&v=4",
+      url: "sanity.io",
+      href: "https://www.sanity.io/",
     }
   ];
 
