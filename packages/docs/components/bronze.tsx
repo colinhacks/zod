@@ -1,6 +1,12 @@
 export const Bronze = () => {
   const companies = [
     {
+      name: "Mintlify",
+      logoSrc: "https://avatars.githubusercontent.com/u/93011474?s=200&v=4",
+      url: "mintlify.com",
+      href: "https://mintlify.com",
+    },
+    {
       name: "Val Town",
       logoSrc: "https://github.com/user-attachments/assets/95305fc4-4da6-4bf8-aea4-bae8f5893e5d",
       url: "val.town",
@@ -65,12 +71,6 @@ export const Bronze = () => {
       logoSrc: "https://avatars.githubusercontent.com/u/28880063?s=200&v=4",
       url: "clipboardhealth.com/engineering",
       href: "https://www.clipboardhealth.com/engineering",
-    },
-    {
-      name: "Mintlify",
-      logoSrc: "https://avatars.githubusercontent.com/u/93011474?s=200&v=4",
-      url: "mintlify.com",
-      href: "https://mintlify.com",
     },
   ];
 
