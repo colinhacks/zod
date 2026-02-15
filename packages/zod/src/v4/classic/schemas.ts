@@ -174,7 +174,11 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
         checks: [
           ...(def.checks ?? []),
           ...checks.map((ch) =>
-            typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
+            typeof ch === "function"
+              ? {
+                  _zod: { check: ch, def: { check: "custom" }, onattach: [] },
+                }
+              : ch
           ),
         ],
       }),
@@ -282,6 +286,8 @@ export interface _ZodString<T extends core.$ZodStringInternals<unknown> = core.$
   normalize(form?: "NFC" | "NFD" | "NFKC" | "NFKD" | (string & {})): this;
   toLowerCase(): this;
   toUpperCase(): this;
+  titleCase(): this;
+  capitalize(): this;
   slugify(): this;
 }
 
@@ -314,6 +320,8 @@ export const _ZodString: core.$constructor<_ZodString> = /*@__PURE__*/ core.$con
   inst.normalize = (...args) => inst.check(checks.normalize(...args));
   inst.toLowerCase = () => inst.check(checks.toLowerCase());
   inst.toUpperCase = () => inst.check(checks.toUpperCase());
+  inst.capitalize = () => inst.check(checks.capitalize());
+  inst.titleCase = () => inst.check(checks.titleCase());
   inst.slugify = () => inst.check(checks.slugify());
 });
 
@@ -1264,7 +1272,11 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
   });
 
   inst.keyof = () => _enum(Object.keys(inst._zod.def.shape)) as any;
-  inst.catchall = (catchall) => inst.clone({ ...inst._zod.def, catchall: catchall as any as core.$ZodType }) as any;
+  inst.catchall = (catchall) =>
+    inst.clone({
+      ...inst._zod.def,
+      catchall: catchall as any as core.$ZodType,
+    }) as any;
   inst.passthrough = () => inst.clone({ ...inst._zod.def, catchall: unknown() });
   inst.loose = () => inst.clone({ ...inst._zod.def, catchall: unknown() });
   inst.strict = () => inst.clone({ ...inst._zod.def, catchall: never() });
@@ -2246,16 +2258,14 @@ export const ZodFunction: core.$constructor<ZodFunction> = /*@__PURE__*/ core.$c
 );
 
 export function _function(): ZodFunction;
-export function _function<const In extends ReadonlyArray<core.$ZodType>>(params: {
-  input: In;
-}): ZodFunction<ZodTuple<In, null>, core.$ZodFunctionOut>;
+export function _function<const In extends ReadonlyArray<core.$ZodType>>(params: { input: In }): ZodFunction<
+  ZodTuple<In, null>,
+  core.$ZodFunctionOut
+>;
 export function _function<
   const In extends ReadonlyArray<core.$ZodType>,
   const Out extends core.$ZodFunctionOut = core.$ZodFunctionOut,
->(params: {
-  input: In;
-  output: Out;
-}): ZodFunction<ZodTuple<In, null>, Out>;
+>(params: { input: In; output: Out }): ZodFunction<ZodTuple<In, null>, Out>;
 export function _function<const In extends core.$ZodFunctionIn = core.$ZodFunctionIn>(params: {
   input: In;
 }): ZodFunction<In, core.$ZodFunctionOut>;
@@ -2265,10 +2275,7 @@ export function _function<const Out extends core.$ZodFunctionOut = core.$ZodFunc
 export function _function<
   In extends core.$ZodFunctionIn = core.$ZodFunctionIn,
   Out extends core.$ZodType = core.$ZodType,
->(params?: {
-  input: In;
-  output: Out;
-}): ZodFunction<In, Out>;
+>(params?: { input: In; output: Out }): ZodFunction<In, Out>;
 export function _function(params?: {
   output?: core.$ZodType;
   input?: core.$ZodFunctionArgs | Array<core.$ZodType>;

@@ -1133,6 +1133,21 @@ export function _toLowerCase(): checks.$ZodCheckOverwrite<string> {
 export function _toUpperCase(): checks.$ZodCheckOverwrite<string> {
   return _overwrite((input) => input.toUpperCase());
 }
+// capitalize
+// @__NO_SIDE_EFFECTS__
+export function _capitalize(): checks.$ZodCheckOverwrite<string> {
+  return _overwrite((input) => input.charAt(0).toUpperCase() + input.slice(1).toLowerCase());
+}
+// titleCase
+// @__NO_SIDE_EFFECTS__
+export function _titleCase(): checks.$ZodCheckOverwrite<string> {
+  return _overwrite((input) =>
+    input
+      .split(/\s+/u)
+      .map((word) => (word ? word[0].toLocaleUpperCase() + word.slice(1) : ""))
+      .join(" ")
+  );
+}
 // slugify
 // @__NO_SIDE_EFFECTS__
 export function _slugify(): checks.$ZodCheckOverwrite<string> {

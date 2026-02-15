@@ -225,6 +225,8 @@ To perform some simple string transforms:
 z.string().trim(); // trim whitespace
 z.string().toLowerCase(); // toLowerCase
 z.string().toUpperCase(); // toUpperCase
+z.string().capitalize(); // uppercase first character + lowercase remainder
+z.string().titleCase(); // capitalize each space-separated word
 z.string().normalize(); // normalize unicode characters
 ```
 </Tab>
@@ -237,6 +239,8 @@ z.string().check(z.normalize()); // normalize unicode characters
 ```
 </Tab>
 </Tabs>
+
+In Zod, `z.string().capitalize()` is opinionated: it uppercases the first character and lowercases the rest of the string. For example, `"HELLO WORLD"` becomes `"Hello world"`.
 
 ## String formats
 
