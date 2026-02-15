@@ -1625,6 +1625,12 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
       });
       return payload;
     }
+    // We can skip per-item parsing if the element schema is truly open-ended (no checks and unknown/any)
+    if (["unknown", "any"].includes(def.element._zod.def.type) && !def.element._zod.def.checks?.length) {
+      payload.value = input;
+
+      return payload;
+    }
 
     payload.value = Array(input.length);
     const proms: Promise<any>[] = [];
