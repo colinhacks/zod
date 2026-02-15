@@ -560,3 +560,366 @@ test("async codec functionality", async () => {
   const mixedResult = await z.decodeAsync(mixedCodec, "123");
   expect(mixedResult).toBe(123);
 });
+
+test("validateOutput - valid output passes", () => {
+  // Create a schema with codec
+  const formSchema = z.object({
+    age: z.codec(z.string().regex(/^\d+$/), z.number().int().min(0), {
+      decode: (str) => Number.parseInt(str, 10),
+      encode: (num) => num.toString(),
+    }),
+    name: z.string(),
+  });
+
+  // Client submits data, form validates and transforms
+  const transformed = formSchema.parse({ age: "30", name: "Alice" });
+  expect(transformed).toEqual({ age: 30, name: "Alice" });
+
+  // Server re-validates the already-transformed data
+  const validated = z.validateOutput(formSchema, transformed);
+  expect(validated).toEqual({ age: 30, name: "Alice" });
+  expect(typeof validated.age).toBe("number");
+});
+
+test("validateOutput - invalid output throws", () => {
+  const formSchema = z.object({
+    age: z.codec(z.string().regex(/^\d+$/), z.number().int().min(0), {
+      decode: (str) => Number.parseInt(str, 10),
+      encode: (num) => num.toString(),
+    }),
+    name: z.string(),
+  });
+
+  // Invalid data: age is negative
+  expect(() => {
+    z.validateOutput(formSchema, { age: -5, name: "Bob" });
+  }).toThrow();
+});
+
+test("validateOutput - validates against output schema not input", () => {
+  const schema = z.object({
+    value: z.codec(
+      z
+        .string()
+        .regex(/^\d+$/), // Input must be string matching digits
+      z
+        .number()
+        .int()
+        .min(0)
+        .max(100), // Output must be number 0-100
+      {
+        decode: (str) => Number.parseInt(str, 10),
+        encode: (num) => num.toString(),
+      }
+    ),
+  });
+
+  // Valid number should pass (validating output, not input)
+  const result = z.validateOutput(schema, { value: 50 });
+  expect(result).toEqual({ value: 50 });
+
+  // Invalid number should fail (outside range)
+  expect(() => z.validateOutput(schema, { value: 150 })).toThrow();
+
+  // String should fail (validateOutput expects output type = number)
+  expect(() => z.validateOutput(schema, { value: "50" } as any)).toThrow();
+});
+
+test("validateOutput - works with refinements on output schema", () => {
+  // Put the refinement on the output schema, not the codec
+  const schema = z.object({
+    value: z.codec(
+      z.string().regex(/^\d+$/),
+      z
+        .number()
+        .int()
+        .refine((val) => val % 2 === 0, { error: "Must be even" }),
+      {
+        decode: (str) => Number.parseInt(str, 10),
+        encode: (num) => num.toString(),
+      }
+    ),
+  });
+
+  // Even number passes
+  expect(z.validateOutput(schema, { value: 42 })).toEqual({ value: 42 });
+
+  // Odd number fails
+  expect(() => z.validateOutput(schema, { value: 43 })).toThrow();
+});
+
+test("safeValidateOutput - success case", () => {
+  const schema = z.object({
+    value: z.codec(z.string(), z.number().min(0), {
+      decode: (str) => Number.parseFloat(str),
+      encode: (num) => num.toString(),
+    }),
+  });
+
+  const result = z.safeValidateOutput(schema, { value: 42.5 });
+  expect(result.success).toBe(true);
+  if (result.success) {
+    expect(result.data).toEqual({ value: 42.5 });
+  }
+});
+
+test("safeValidateOutput - failure case", () => {
+  const schema = z.object({
+    value: z.codec(z.string(), z.number().min(0), {
+      decode: (str) => Number.parseFloat(str),
+      encode: (num) => num.toString(),
+    }),
+  });
+
+  const result = z.safeValidateOutput(schema, { value: -10 });
+  expect(result.success).toBe(false);
+  if (!result.success) {
+    expect(result.error.issues).toMatchInlineSnapshot(`
+      [
+        {
+          "code": "too_small",
+          "inclusive": true,
+          "message": "Too small: expected number to be >=0",
+          "minimum": 0,
+          "origin": "number",
+          "path": [
+            "value",
+          ],
+        },
+      ]
+    `);
+  }
+});
+
+test("validateOutputAsync - valid output", async () => {
+  const schema = z.object({
+    value: z.codec(
+      z.string(),
+      z
+        .number()
+        .int()
+        .superRefine(async (val, ctx) => {
+          // Simulate async validation (e.g., checking database)
+          if (val < 0) {
+            ctx.addIssue({ code: "custom", error: "Must be non-negative" });
+          }
+        }),
+      {
+        decode: (str) => Number.parseInt(str, 10),
+        encode: (num) => num.toString(),
+      }
+    ),
+  });
+
+  const result = await z.validateOutputAsync(schema, { value: 42 });
+  expect(result).toEqual({ value: 42 });
+});
+
+test("validateOutputAsync - invalid output", async () => {
+  const schema = z.object({
+    value: z.codec(
+      z.string(),
+      z
+        .number()
+        .int()
+        .superRefine(async (val, ctx) => {
+          if (val < 0) {
+            ctx.addIssue({ code: "custom", error: "Must be non-negative" });
+          }
+        }),
+      {
+        decode: (str) => Number.parseInt(str, 10),
+        encode: (num) => num.toString(),
+      }
+    ),
+  });
+
+  await expect(z.validateOutputAsync(schema, { value: -5 })).rejects.toThrow();
+});
+
+test("safeValidateOutputAsync - success", async () => {
+  const schema = z.object({
+    value: z.codec(z.string(), z.number().min(0), {
+      decode: (str) => Number.parseFloat(str),
+      encode: (num) => num.toString(),
+    }),
+  });
+
+  const result = await z.safeValidateOutputAsync(schema, { value: 42.5 });
+  expect(result.success).toBe(true);
+  if (result.success) {
+    expect(result.data).toEqual({ value: 42.5 });
+  }
+});
+
+test("safeValidateOutputAsync - failure", async () => {
+  const schema = z.object({
+    value: z.codec(z.string(), z.number().min(0), {
+      decode: (str) => Number.parseFloat(str),
+      encode: (num) => num.toString(),
+    }),
+  });
+
+  const result = await z.safeValidateOutputAsync(schema, { value: -10 });
+  expect(result.success).toBe(false);
+  if (!result.success) {
+    expect(result.error.issues).toMatchInlineSnapshot(`
+      [
+        {
+          "code": "too_small",
+          "inclusive": true,
+          "message": "Too small: expected number to be >=0",
+          "minimum": 0,
+          "origin": "number",
+          "path": [
+            "value",
+          ],
+        },
+      ]
+    `);
+  }
+});
+
+test("validateOutput - nested codec in object", () => {
+  const formSchema = z.object({
+    user: z.object({
+      id: z.codec(z.string().regex(/^\d+$/), z.number().int().positive(), {
+        decode: (str) => Number.parseInt(str, 10),
+        encode: (num) => num.toString(),
+      }),
+      email: z.string().email(),
+    }),
+  });
+
+  // Valid transformed data
+  const data = { user: { id: 123, email: "test@example.com" } };
+
+  const validated = z.validateOutput(formSchema, data);
+  expect(validated).toEqual(data);
+});
+
+test("validateOutput - complex form example", () => {
+  // Real-world example: form handling
+  const formSchema = z.object({
+    age: z.codec(z.string().regex(/^\d+$/), z.number().int().min(18).max(120), {
+      decode: (str) => Number.parseInt(str, 10),
+      encode: (num) => num.toString(),
+    }),
+    salary: z.codec(z.string().regex(/^\d+(\.\d{2})?$/), z.number().min(0), {
+      decode: (str) => Number.parseFloat(str),
+      encode: (num) => num.toFixed(2),
+    }),
+    active: z.codec(z.enum(["true", "false"]), z.boolean(), {
+      decode: (str) => str === "true",
+      encode: (bool) => (bool ? "true" : "false"),
+    }),
+  });
+
+  // Client-side: User submits form
+  const formData = { age: "25", salary: "50000.00", active: "true" };
+  const parsed = formSchema.parse(formData);
+  expect(parsed).toEqual({ age: 25, salary: 50000, active: true });
+
+  // Server-side: Re-validate transformed data
+  const validated = z.validateOutput(formSchema, parsed);
+  expect(validated).toEqual({ age: 25, salary: 50000, active: true });
+
+  // Server-side: Invalid transformed data fails
+  expect(() => {
+    z.validateOutput(formSchema, { age: 15, salary: 50000, active: true }); // age < 18
+  }).toThrow();
+});
+
+test("validateOutput - wrong type fails validation", () => {
+  const schema = z.object({
+    value: z.codec(z.string(), z.number(), {
+      decode: (str) => Number.parseFloat(str),
+      encode: (num) => num.toString(),
+    }),
+  });
+
+  // String instead of number should fail
+  expect(() => z.validateOutput(schema, { value: "42" } as any)).toThrow();
+
+  // Boolean instead of number should fail
+  expect(() => z.validateOutput(schema, { value: true } as any)).toThrow();
+});
+
+test("schema.validateOutput() - method API works", () => {
+  const schema = z.object({
+    num: z.codec(z.string().regex(/^\d+$/), z.number().int().min(0), {
+      decode: (str) => Number.parseInt(str, 10),
+      encode: (num) => num.toString(),
+    }),
+    name: z.string(),
+  });
+
+  // Valid output passes
+  const validated = schema.validateOutput({ num: 42, name: "Alice" });
+  expect(validated).toEqual({ num: 42, name: "Alice" });
+
+  // Invalid output throws
+  expect(() => schema.validateOutput({ num: -5, name: "Bob" })).toThrow();
+  expect(() => schema.validateOutput({ num: "42" as any, name: "Bob" })).toThrow();
+});
+
+test("schema.validateOutputAsync() - method API works", async () => {
+  const schema = z.object({
+    value: z.codec(
+      z.string(),
+      z
+        .number()
+        .int()
+        .superRefine(async (val, ctx) => {
+          if (val < 0) {
+            ctx.addIssue({ code: "custom", error: "Must be non-negative" });
+          }
+        }),
+      {
+        decode: (str) => Number.parseInt(str, 10),
+        encode: (num) => num.toString(),
+      }
+    ),
+  });
+
+  const result = await schema.validateOutputAsync({ value: 42 });
+  expect(result).toEqual({ value: 42 });
+
+  await expect(schema.validateOutputAsync({ value: -5 })).rejects.toThrow();
+});
+
+test("schema.safeValidateOutput() - method API works", () => {
+  const schema = z.object({
+    value: z.codec(z.string(), z.number().min(0), {
+      decode: (str) => Number.parseFloat(str),
+      encode: (num) => num.toString(),
+    }),
+  });
+
+  const successResult = schema.safeValidateOutput({ value: 42.5 });
+  expect(successResult.success).toBe(true);
+  if (successResult.success) {
+    expect(successResult.data).toEqual({ value: 42.5 });
+  }
+
+  const failResult = schema.safeValidateOutput({ value: -10 });
+  expect(failResult.success).toBe(false);
+});
+
+test("schema.safeValidateOutputAsync() - method API works", async () => {
+  const schema = z.object({
+    value: z.codec(z.string(), z.number().min(0), {
+      decode: (str) => Number.parseFloat(str),
+      encode: (num) => num.toString(),
+    }),
+  });
+
+  const successResult = await schema.safeValidateOutputAsync({ value: 42.5 });
+  expect(successResult.success).toBe(true);
+  if (successResult.success) {
+    expect(successResult.data).toEqual({ value: 42.5 });
+  }
+
+  const failResult = await schema.safeValidateOutputAsync({ value: -10 });
+  expect(failResult.success).toBe(false);
+});

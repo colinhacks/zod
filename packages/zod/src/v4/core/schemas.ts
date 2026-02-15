@@ -27,7 +27,7 @@ export interface ParseContext<T extends errors.$ZodIssueBase = never> {
 /** @internal */
 export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> extends ParseContext<T> {
   readonly async?: boolean | undefined;
-  readonly direction?: "forward" | "backward";
+  readonly direction?: "forward" | "backward" | "validate-output";
   readonly skipChecks?: boolean;
 }
 
@@ -3940,6 +3940,9 @@ export const $ZodCodec: core.$constructor<$ZodCodec> = /*@__PURE__*/ core.$const
         return left.then((left) => handleCodecAResult(left, def, ctx));
       }
       return handleCodecAResult(left, def, ctx);
+    } else if (direction === "validate-output") {
+      // Validate-output: just validate against output schema without transformation
+      return def.out._zod.run(payload, ctx);
     } else {
       const right = def.out._zod.run(payload, ctx);
       if (right instanceof Promise) {

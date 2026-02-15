@@ -527,3 +527,75 @@ test("codec type enforcement - complex types", () => {
     }
   );
 });
+
+test("schema.validateOutput() - method API works", () => {
+  const schema = z.codec(z.string().check(z.regex(/^\d+$/)), z.number().check(z.minimum(0)), {
+    decode: (str) => Number.parseInt(str, 10),
+    encode: (num) => num.toString(),
+  });
+  const formSchema = z.object({
+    num: schema,
+    name: z.string(),
+  });
+
+  // Valid output passes
+  const validated = formSchema.validateOutput({ num: 42, name: "Alice" });
+  expect(validated).toEqual({ num: 42, name: "Alice" });
+
+  // Invalid output throws
+  expect(() => formSchema.validateOutput({ num: -5, name: "Bob" })).toThrow();
+  expect(() => formSchema.validateOutput({ num: "42" as any, name: "Bob" })).toThrow();
+});
+
+test("schema.validateOutputAsync() - method API works", async () => {
+  const schema = z
+    .codec(z.string(), z.number(), {
+      decode: (str) => Number.parseInt(str, 10),
+      encode: (num) => num.toString(),
+    })
+    .check(
+      z.refine(async (val) => val >= 0, {
+        error: "Must be non-negative",
+      })
+    );
+  const formSchema = z.object({ value: schema });
+
+  const result = await formSchema.validateOutputAsync({ value: 42 });
+  expect(result).toEqual({ value: 42 });
+
+  await expect(formSchema.validateOutputAsync({ value: -5 })).rejects.toThrow();
+});
+
+test("schema.safeValidateOutput() - method API works", () => {
+  const schema = z.codec(z.string(), z.number().check(z.minimum(0)), {
+    decode: (str) => Number.parseFloat(str),
+    encode: (num) => num.toString(),
+  });
+  const formSchema = z.object({ value: schema });
+
+  const successResult = formSchema.safeValidateOutput({ value: 42.5 });
+  expect(successResult.success).toBe(true);
+  if (successResult.success) {
+    expect(successResult.data).toEqual({ value: 42.5 });
+  }
+
+  const failResult = formSchema.safeValidateOutput({ value: -10 });
+  expect(failResult.success).toBe(false);
+});
+
+test("schema.safeValidateOutputAsync() - method API works", async () => {
+  const schema = z.codec(z.string(), z.number().check(z.minimum(0)), {
+    decode: (str) => Number.parseFloat(str),
+    encode: (num) => num.toString(),
+  });
+  const formSchema = z.object({ value: schema });
+
+  const successResult = await formSchema.safeValidateOutputAsync({ value: 42.5 });
+  expect(successResult.success).toBe(true);
+  if (successResult.success) {
+    expect(successResult.data).toEqual({ value: 42.5 });
+  }
+
+  const failResult = await formSchema.safeValidateOutputAsync({ value: -10 });
+  expect(failResult.success).toBe(false);
+});
