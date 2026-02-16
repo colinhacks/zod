@@ -1385,15 +1385,6 @@ export function pipe<
   }) as any;
 }
 
-// /** @deprecated Use `z.pipe()` and `z.transform()` instead. */
-// export function preprocess<A, U extends core.$ZodType>(
-//   fn: (arg: unknown, ctx: core.ParsePayload) => A,
-//   schema: U,
-//   params?: ZodPreprocessParams
-// ): ZodPipe<ZodTransform<A, unknown>, U> {
-//   return pipe(transform(fn as any, params), schema as any, params);
-// }
-
 // ZodMiniReadonly
 export interface ZodMiniReadonly<T extends SomeType = core.$ZodType>
   extends _ZodMiniType<core.$ZodReadonlyInternals<T>> {
