@@ -136,7 +136,7 @@ export interface $ZodIssueCustom extends $ZodIssueBase {
 ////////////////////////////////////////////
 
 export interface $ZodIssueStringCommonFormats extends $ZodIssueInvalidStringFormat {
-  format: Exclude<$ZodStringFormats, "regex" | "jwt" | "starts_with" | "ends_with" | "includes">;
+  format: Exclude<$ZodStringFormats, "regex" | "jwt" | "starts_with" | "ends_with" | "includes" | "credit_card">;
 }
 
 export interface $ZodIssueStringInvalidRegex extends $ZodIssueInvalidStringFormat {
@@ -332,7 +332,10 @@ export type $ZodErrorTree<T, U = string> = T extends util.Primitive
     : T extends any[]
       ? { errors: U[]; items?: Array<$ZodErrorTree<T[number], U>> }
       : T extends object
-        ? { errors: U[]; properties?: { [K in keyof T]?: $ZodErrorTree<T[K], U> } }
+        ? {
+            errors: U[];
+            properties?: { [K in keyof T]?: $ZodErrorTree<T[K], U> };
+          }
         : { errors: U[] };
 
 export function treeifyError<T>(error: $ZodError<T>): $ZodErrorTree<T>;

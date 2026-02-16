@@ -174,7 +174,11 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
         checks: [
           ...(def.checks ?? []),
           ...checks.map((ch) =>
-            typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
+            typeof ch === "function"
+              ? {
+                  _zod: { check: ch, def: { check: "custom" }, onattach: [] },
+                }
+              : ch
           ),
         ],
       }),
@@ -388,6 +392,8 @@ export interface ZodString extends _ZodString<core.$ZodStringInternals<string>> 
   ): this;
   /** @deprecated Use `z.iso.duration()` instead. */
   duration(params?: string | core.$ZodCheckISODurationParams): this;
+  /** @deprecated Use `z.creditCard()` instead. */
+  creditCard(params?: string | core.$ZodCheckCreditCardParams): this;
 }
 
 export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$constructor("ZodString", (inst, def) => {
@@ -417,6 +423,7 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
   inst.cidrv4 = (params) => inst.check(core._cidrv4(ZodCIDRv4, params));
   inst.cidrv6 = (params) => inst.check(core._cidrv6(ZodCIDRv6, params));
   inst.e164 = (params) => inst.check(core._e164(ZodE164, params));
+  inst.creditCard = (params) => inst.check(core._creditCard(ZodCreditCard, params));
 
   // iso
   inst.datetime = (params) => inst.check(iso.datetime(params as any));
@@ -755,6 +762,21 @@ export const ZodJWT: core.$constructor<ZodJWT> = /*@__PURE__*/ core.$constructor
 
 export function jwt(params?: string | core.$ZodJWTParams): ZodJWT {
   return core._jwt(ZodJWT, params);
+}
+
+// ZodCreditCard
+export interface ZodCreditCard extends ZodStringFormat<"credit_card"> {
+  _zod: core.$ZodCreditCardInternals;
+}
+export const ZodCreditCard: core.$constructor<ZodCreditCard> = /*@__PURE__*/ core.$constructor(
+  "ZodCreditCard",
+  (inst, def) => {
+    core.$ZodCreditCard.init(inst, def);
+    ZodStringFormat.init(inst, def);
+  }
+);
+export function creditCard(): ZodCreditCard {
+  return core._creditCard(ZodCreditCard);
 }
 
 // ZodCustomStringFormat

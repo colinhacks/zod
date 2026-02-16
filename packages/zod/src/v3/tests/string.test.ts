@@ -551,6 +551,17 @@ test("checks getters", () => {
   expect(z.string().ulid().isIP).toEqual(false);
   expect(z.string().ulid().isCIDR).toEqual(false);
   expect(z.string().ulid().isULID).toEqual(true);
+
+  expect(z.string().creditCard().isEmail).toEqual(false);
+  expect(z.string().creditCard().isURL).toEqual(false);
+  expect(z.string().creditCard().isCUID).toEqual(false);
+  expect(z.string().creditCard().isCUID2).toEqual(false);
+  expect(z.string().creditCard().isUUID).toEqual(false);
+  expect(z.string().creditCard().isNANOID).toEqual(false);
+  expect(z.string().creditCard().isIP).toEqual(false);
+  expect(z.string().creditCard().isCIDR).toEqual(false);
+  expect(z.string().creditCard().isULID).toEqual(false);
+  expect(z.string().creditCard().isCreditCard).toEqual(true);
 });
 
 test("min max getters", () => {
@@ -913,4 +924,67 @@ test("CIDR validation", () => {
   const cidrSchema = z.string().cidr();
   expect(validCidrs.every((ip) => cidrSchema.safeParse(ip).success)).toBe(true);
   expect(invalidCidrs.every((ip) => cidrSchema.safeParse(ip).success === false)).toBe(true);
+});
+
+test("credit card validation", () => {
+  const creditCard = z.string().creditCard("Invalid credit card number");
+
+  // Valid credit card numbers
+  const validCreditCards = [
+    "378282246310005", // American Express
+    "371449635398431", // American Express
+    "3056930009020004", // Diners Club
+    "36227206271667", // Diners Club
+    "6011111111111117", // Discover
+    "6011000990139424", // Discover
+    "6011981111111113", // Discover
+    "3530111333300000", // JCB
+    "3566002020360505", // JCB
+    "5555555555554444", // MasterCard
+    "2223003122003222", // MasterCard
+    "5200828282828210", // MasterCard
+    "5105105105105100", // MasterCard
+    "6200000000000005", // UnionPay
+    "6200000000000047", // UnionPay
+    "6205500000000000004", // UnionPay
+    "4242424242424242", // Visa
+    "4000056655665556", // Visa
+    "4000 0025 0000 1001", // include spaces
+    "4000-0503-6000-0001", // include spaces
+    "5555-0503-6000-0080", // include dash
+  ];
+
+  validCreditCards.map((cc) => {
+    expect(creditCard.safeParse(cc).success).toEqual(true);
+  });
+
+  // Invalid credit card numbers
+  const invalidCreditCards = [
+    "1234567890123456", // invalid number
+    "4111111111111", // too short
+    "5500000000000000000", // too long
+    "DE6200000000000005", // contains letter
+    "6011000A90139424", // contains letter
+    "37828224631000E", // contains letter
+    "40000025 0000-1001", // mixed divider
+    "5555-55250000 1001", // mixed divider
+    "5555 55555555-4444", // mixed divider
+    "7530111333300000", // invalid provider
+    "1105105105105100", // invalid provider
+    "9000056655665556", // invalid provider
+    "5200828282828211", // invalid checksum
+    "371449635398434", // invalid checksum
+    "", // empty string
+    " ", // only white space
+    "-", // only dash
+    "\n", // newline
+  ];
+
+  invalidCreditCards.map((cc) => {
+    const result = creditCard.safeParse(cc);
+    expect(result.success).toEqual(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toEqual("Invalid credit card number");
+    }
+  });
 });

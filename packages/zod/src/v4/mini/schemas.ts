@@ -60,7 +60,11 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
           checks: [
             ...(def.checks ?? []),
             ...checks.map((ch) =>
-              typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
+              typeof ch === "function"
+                ? {
+                    _zod: { check: ch, def: { check: "custom" }, onattach: [] },
+                  }
+                : ch
             ),
           ],
         },
@@ -465,6 +469,22 @@ export const ZodMiniJWT: core.$constructor<ZodMiniJWT> = /*@__PURE__*/ core.$con
 // @__NO_SIDE_EFFECTS__
 export function jwt(params?: string | core.$ZodJWTParams): ZodMiniJWT {
   return core._jwt(ZodMiniJWT, params);
+}
+
+// ZodMiniCreditCard
+export interface ZodMiniCreditCard extends ZodMiniStringFormat<"credit_card"> {
+  _zod: core.$ZodCreditCardInternals;
+}
+export const ZodMiniCreditCard: core.$constructor<ZodMiniCreditCard> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniCreditCard",
+  (inst, def) => {
+    core.$ZodCreditCard.init(inst, def);
+    ZodMiniStringFormat.init(inst, def);
+  }
+);
+
+export function creditCard(params?: string | core.$ZodCreditCardParams): ZodMiniCreditCard {
+  return core._creditCard(ZodMiniCreditCard, params);
 }
 
 // ZodMiniCustomStringFormat

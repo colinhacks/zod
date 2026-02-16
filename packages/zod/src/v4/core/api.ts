@@ -483,6 +483,22 @@ export function _jwt<T extends schemas.$ZodJWT>(
   });
 }
 
+// CreditCard
+export type $ZodCreditCardParams = StringFormatParams<schemas.$ZodCreditCard>;
+export type $ZodCheckCreditCardParams = CheckStringFormatParams<schemas.$ZodCreditCard>;
+export function _creditCard<T extends schemas.$ZodCreditCard>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodJWTParams | $ZodCheckJWTParams
+): T {
+  return new Class({
+    type: "string",
+    format: "credit_card",
+    check: "string_format",
+    abort: false,
+    ...util.normalizeParams(params),
+  });
+}
+
 export const TimePrecision = {
   Any: null,
   Minute: -1,
@@ -490,6 +506,7 @@ export const TimePrecision = {
   Millisecond: 3,
   Microsecond: 6,
 } as const;
+
 // ISODateTime
 export type $ZodISODateTimeParams = StringFormatParams<schemas.$ZodISODateTime, "pattern" | "when">;
 export type $ZodCheckISODateTimeParams = CheckStringFormatParams<schemas.$ZodISODateTime, "pattern" | "when">;

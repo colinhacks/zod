@@ -1023,6 +1023,99 @@ export const $ZodJWT: core.$constructor<$ZodJWT> = /*@__PURE__*/ core.$construct
   };
 });
 
+//////////////////////////////   ZodCreditCard   //////////////////////////////
+/**
+ * Credit card regex.
+ */
+const creditCardRegex = /^(?:\d{14,19}|\d{4}(?: \d{3,6}){2,4}|\d{4}(?:-\d{3,6}){2,4})$/u;
+
+/**
+ * Sanitize regex.
+ */
+const creditSanitizeRegex = /[- ]/gu;
+
+/**
+ * Provider regex list.
+ */
+const creditByProviderRegexList = [
+  // American Express
+  /^3[47]\d{13}$/u,
+  // Diners Club
+  /^3(?:0[0-5]|[68]\d)\d{11,13}$/u,
+  // Discover
+  /^6(?:011|5\d{2})\d{12,15}$/u,
+  // JCB
+  /^(?:2131|1800|35\d{3})\d{11}$/u,
+  // Mastercard
+  /^5[1-5]\d{2}|(?:222\d|22[3-9]\d|2[3-6]\d{2}|27[01]\d|2720)\d{12}$/u,
+  // UnionPay
+  /^(?:6[27]\d{14,17}|81\d{14,17})$/u,
+  // Visa
+  /^4\d{12}(?:\d{3,6})?$/u,
+];
+
+/**
+ * Non-digit regex.
+ */
+const nonDigitRegex = /\D/gu;
+
+function isValidCreditCard(cardNumber: string): boolean {
+  const sanitizedCardNumber = cardNumber.replace(creditSanitizeRegex, "");
+  const isLuhnAlgo = (sanitizedCardNumber: string): boolean => {
+    // Remove any non-digit chars
+    const number = sanitizedCardNumber.replace(nonDigitRegex, "");
+
+    // Create necessary variables
+    let length = number.length;
+    let bit = 1;
+    let sum = 0;
+
+    // Calculate sum of algorithm
+    while (length) {
+      const value = +number[--length];
+      bit ^= 1;
+      sum += bit ? [0, 2, 4, 6, 8, 1, 3, 5, 7, 9][value] : value;
+    }
+
+    // Return whether its valid
+    return sum % 10 === 0;
+  };
+
+  return (
+    creditCardRegex.test(cardNumber) &&
+    // Remove any hyphens and blanks
+    sanitizedCardNumber !== "" &&
+    // Check if it matches a provider
+    creditByProviderRegexList.some((regex) => regex.test(sanitizedCardNumber!)) &&
+    // Check if passes luhn algorithm
+    isLuhnAlgo(sanitizedCardNumber)
+  );
+}
+
+export interface $ZodCreditCardInternals extends $ZodStringFormatInternals<"credit_card"> {}
+
+export interface $ZodCreditCard extends $ZodType {
+  _zod: $ZodCreditCardInternals;
+}
+
+export const $ZodCreditCard: core.$constructor<$ZodCreditCard> = /*@__PURE__*/ core.$constructor(
+  "$ZodCreditCard",
+  (inst, def): void => {
+    $ZodStringFormat.init(inst, def);
+    inst._zod.check = (payload) => {
+      if (isValidCreditCard(payload.value)) return;
+
+      payload.issues.push({
+        code: "invalid_format",
+        format: "credit_card",
+        input: payload.value,
+        inst,
+        continue: !def.abort,
+      });
+    };
+  }
+);
+
 //////////////////////////////   ZodCustomStringFormat   //////////////////////////////
 
 export interface $ZodCustomStringFormatDef<Format extends string = string> extends $ZodStringFormatDef<Format> {
@@ -1746,7 +1839,10 @@ function handlePropertyResult(
   }
 }
 
-export type $ZodObjectConfig = { out: Record<string, unknown>; in: Record<string, unknown> };
+export type $ZodObjectConfig = {
+  out: Record<string, unknown>;
+  in: Record<string, unknown>;
+};
 
 export type $loose = {
   out: Record<string, unknown>;
@@ -4551,6 +4647,7 @@ export type $ZodStringFormatTypes =
   | $ZodBase64URL
   | $ZodE164
   | $ZodJWT
+  | $ZodCreditCard
   | $ZodCustomStringFormat<"hex">
   | $ZodCustomStringFormat<util.HashFormat>
   | $ZodCustomStringFormat<"hostname">;
