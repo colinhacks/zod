@@ -65,35 +65,47 @@ export const numberProcessor: Processor<schemas.$ZodNumber> = (schema, ctx, _jso
   if (typeof format === "string" && format.includes("int")) json.type = "integer";
   else json.type = "number";
 
-  if (typeof exclusiveMinimum === "number") {
-    if (ctx.target === "draft-04" || ctx.target === "openapi-3.0") {
+  const haveMinimum = typeof minimum === "number";
+  const haveExclusiveMinimum = typeof exclusiveMinimum === "number";
+  const haveMaximum = typeof maximum === "number";
+  const haveExclusiveMaximum = typeof exclusiveMaximum === "number";
+
+  // If both minimum and exclusiveMinimum are present, use the one that is more
+  // restrictive
+  const useExclusiveMinimum = haveExclusiveMinimum && exclusiveMinimum >= (minimum ?? Number.NEGATIVE_INFINITY);
+  const useExclusiveMaximum = haveExclusiveMaximum && exclusiveMaximum <= (maximum ?? Number.POSITIVE_INFINITY);
+
+  // Handle minimum/exclusiveMinimum
+  // In draft-04/openapi-3.0, exclusiveMinimum is a boolean flag on the minimum field
+  // In draft-2020-12/openapi-3.1, they are separate numeric properties
+  if (ctx.target === "draft-04" || ctx.target === "openapi-3.0") {
+    if (useExclusiveMinimum) {
       json.minimum = exclusiveMinimum;
       json.exclusiveMinimum = true;
-    } else {
-      json.exclusiveMinimum = exclusiveMinimum;
+    } else if (haveMinimum) {
+      json.minimum = minimum;
     }
-  }
-  if (typeof minimum === "number") {
-    json.minimum = minimum;
-    if (typeof exclusiveMinimum === "number" && ctx.target !== "draft-04") {
-      if (exclusiveMinimum >= minimum) delete json.minimum;
-      else delete json.exclusiveMinimum;
+  } else {
+    if (useExclusiveMinimum) {
+      json.exclusiveMinimum = exclusiveMinimum;
+    } else if (haveMinimum) {
+      json.minimum = minimum;
     }
   }
 
-  if (typeof exclusiveMaximum === "number") {
-    if (ctx.target === "draft-04" || ctx.target === "openapi-3.0") {
+  // Handle maximum/exclusiveMaximum (same pattern as minimum)
+  if (ctx.target === "draft-04" || ctx.target === "openapi-3.0") {
+    if (useExclusiveMaximum) {
       json.maximum = exclusiveMaximum;
       json.exclusiveMaximum = true;
-    } else {
-      json.exclusiveMaximum = exclusiveMaximum;
+    } else if (haveMaximum) {
+      json.maximum = maximum;
     }
-  }
-  if (typeof maximum === "number") {
-    json.maximum = maximum;
-    if (typeof exclusiveMaximum === "number" && ctx.target !== "draft-04") {
-      if (exclusiveMaximum <= maximum) delete json.maximum;
-      else delete json.exclusiveMaximum;
+  } else {
+    if (useExclusiveMaximum) {
+      json.exclusiveMaximum = exclusiveMaximum;
+    } else if (haveMaximum) {
+      json.maximum = maximum;
     }
   }
 
@@ -286,7 +298,10 @@ export const arrayProcessor: Processor<schemas.$ZodArray> = (schema, ctx, _json,
   if (typeof maximum === "number") json.maxItems = maximum;
 
   json.type = "array";
-  json.items = process(def.element, ctx as any, { ...params, path: [...params.path, "items"] });
+  json.items = process(def.element, ctx as any, {
+    ...params,
+    path: [...params.path, "items"],
+  });
 };
 
 export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _json, params) => {
