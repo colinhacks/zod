@@ -119,3 +119,10 @@ test("z.json() should accept objects with non-enumerable properties", () => {
   const result = schema.safeParse(input);
   expect(result.success).toBe(true);
 });
+
+test("z.json() accepts z.toJSONSchema() output", () => {
+  const schema = z.object({ name: z.string() });
+  const jsonSchema = z.toJSONSchema(schema);
+
+  expect(z.json().safeParse(jsonSchema).success).toBe(true);
+});
