@@ -41,6 +41,8 @@ const error: () => errors.$ZodErrorMap = () => {
     mac: "MAC address",
     cidrv4: "IPv4 range",
     cidrv6: "IPv6 range",
+    ipv4_range: "IPv4 address range",
+    ipv6_range: "IPv6 address range",
     base64: "base64-encoded string",
     base64url: "base64url-encoded string",
     json_string: "JSON string",

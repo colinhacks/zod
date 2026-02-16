@@ -80,6 +80,8 @@ const error: () => errors.$ZodErrorMap = () => {
     ipv6: { label: "כתובת IPv6", gender: "f" },
     cidrv4: { label: "טווח IPv4", gender: "m" },
     cidrv6: { label: "טווח IPv6", gender: "m" },
+    ipv4_range: { label: "טווח כתובות IPv4", gender: "m" },
+    ipv6_range: { label: "טווח כתובות IPv6", gender: "m" },
     base64: { label: "מחרוזת בבסיס 64", gender: "f" },
     base64url: { label: "מחרוזת בבסיס 64 לכתובות רשת", gender: "f" },
     json_string: { label: "מחרוזת JSON", gender: "f" },
