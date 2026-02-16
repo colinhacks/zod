@@ -165,6 +165,28 @@ test("tuple with all optional elements", () => {
   expect(() => allOptionalTuple.parse(["hello", 42, true, "extra"])).toThrow();
 });
 
+test("tuple with default elements", () => {
+  // Issue #5229: default values should be applied for missing tuple elements
+  const tupleWithDefault = z.tuple([z.string(), z.string().default("bravo")]);
+  expectTypeOf<typeof tupleWithDefault._output>().toEqualTypeOf<[string, string]>();
+
+  // Full array should work as expected
+  expect(tupleWithDefault.parse(["alpha", "charlie"])).toEqual(["alpha", "charlie"]);
+
+  // Missing element should use default value
+  expect(tupleWithDefault.parse(["alpha"])).toEqual(["alpha", "bravo"]);
+
+  // Multiple defaults
+  const multipleDefaults = z.tuple([z.string(), z.number().default(42), z.boolean().default(true)]);
+  expect(multipleDefaults.parse(["hello"])).toEqual(["hello", 42, true]);
+  expect(multipleDefaults.parse(["hello", 100])).toEqual(["hello", 100, true]);
+  expect(multipleDefaults.parse(["hello", 100, false])).toEqual(["hello", 100, false]);
+
+  // Prefault should also work
+  const withPrefault = z.tuple([z.string(), z.string().prefault("delta")]);
+  expect(withPrefault.parse(["alpha"])).toEqual(["alpha", "delta"]);
+});
+
 test("tuple with rest schema", () => {
   const myTuple = z.tuple([z.string(), z.number()]).rest(z.boolean());
   expect(myTuple.parse(["asdf", 1234, true, false, true])).toEqual(["asdf", 1234, true, false, true]);
