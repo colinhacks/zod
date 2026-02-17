@@ -1917,7 +1917,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
 
     for (const key of value.keys) {
       const el = shape[key]!;
-      const isOptionalOut = el._zod.optout === "optional";
+      const isOptionalOut = (el._zod.optout as any) === "exactOptional";
 
       const r = el._zod.run({ value: input[key], issues: [] }, ctx);
       if (r instanceof Promise) {
@@ -1967,7 +1967,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         const id = ids[key];
         const k = util.esc(key);
         const schema = shape[key];
-        const isOptionalOut = schema?._zod?.optout === "optional";
+        const isOptionalOut = (schema?._zod?.optout as any) === "exactOptional";
 
         doc.write(`const ${id} = ${parseStr(key)};`);
 
@@ -2125,9 +2125,11 @@ export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$const
     def.options.some((o) => o._zod.optin === "optional") ? "optional" : undefined
   );
 
-  util.defineLazy(inst._zod, "optout", () =>
-    def.options.some((o) => o._zod.optout === "optional") ? "optional" : undefined
-  );
+  util.defineLazy(inst._zod, "optout", () => {
+    if (def.options.some((o) => o._zod.optout === "optional")) return "optional";
+    if (def.options.some((o) => (o._zod.optout as any) === "exactOptional")) return "exactOptional" as any;
+    return undefined;
+  });
 
   util.defineLazy(inst._zod, "values", () => {
     if (def.options.every((o) => o._zod.values)) {
@@ -3396,6 +3398,7 @@ export const $ZodExactOptional: core.$constructor<$ZodExactOptional> = /*@__PURE
   (inst, def) => {
     // Call parent init - inherits optin/optout = "optional"
     $ZodOptional.init(inst, def);
+    inst._zod.optout = "exactOptional" as any;
 
     // Override values/pattern to NOT add undefined
     util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
