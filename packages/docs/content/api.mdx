@@ -267,6 +267,10 @@ z.iso.date();
 z.iso.time();
 z.iso.datetime();
 z.iso.duration();
+z.iso.yearMonth();
+z.iso.monthDay();
+z.iso.instant();
+z.iso.zonedDateTime();
 ```
 
 ### Emails
@@ -492,6 +496,92 @@ z.iso.time({ precision: 0 });  // HH:MM:SS (second precision)
 z.iso.time({ precision: 1 });  // HH:MM:SS.s (decisecond precision)
 z.iso.time({ precision: 2 });  // HH:MM:SS.ss (centisecond precision)
 z.iso.time({ precision: 3 });  // HH:MM:SS.sss (millisecond precision)
+```
+
+### ISO durations
+
+The `z.iso.duration()` method validates ISO 8601 duration strings in the format `P[n]Y[n]M[n]DT[n]H[n]M[n]S`.
+
+```ts
+const duration = z.iso.duration();
+
+duration.parse("P3Y6M4DT12H30M5S"); // ✅
+duration.parse("P1W"); // ✅ (1 week)
+duration.parse("PT1H"); // ✅ (1 hour)
+duration.parse("P1DT12H"); // ✅ (1 day and 12 hours)
+duration.parse("invalid"); // ❌
+```
+
+### ISO year-month
+
+The `z.iso.yearMonth()` method validates strings representing a year and month in the format `YYYY-MM`, as defined by the [Temporal proposal](https://tc39.es/proposal-temporal/docs/).
+
+```ts
+const yearMonth = z.iso.yearMonth();
+
+yearMonth.parse("2022-02"); // ✅
+yearMonth.parse("2022-12"); // ✅
+yearMonth.parse("2022-13"); // ❌ (invalid month)
+yearMonth.parse("2022-1"); // ❌ (must be zero-padded)
+```
+
+### ISO month-day
+
+The `z.iso.monthDay()` method validates strings representing a month and day (without year) in the format `MM-DD` or `--MM-DD`, as defined by the [Temporal proposal](https://tc39.es/proposal-temporal/docs/).
+
+```ts
+const monthDay = z.iso.monthDay();
+
+monthDay.parse("12-25"); // ✅
+monthDay.parse("--12-25"); // ✅ (HTML yearless date format)
+monthDay.parse("02-29"); // ✅
+monthDay.parse("02-30"); // ❌ (invalid day for February)
+monthDay.parse("13-01"); // ❌ (invalid month)
+```
+
+### ISO instant
+
+The `z.iso.instant()` method validates ISO 8601 timestamps with a required UTC offset (either `Z` or `±HH:MM`), representing an exact point in time. This corresponds to `Temporal.Instant` from the [Temporal proposal](https://tc39.es/proposal-temporal/docs/).
+
+```ts
+const instant = z.iso.instant();
+
+instant.parse("2022-02-28T03:06:00Z"); // ✅
+instant.parse("2022-02-28T03:06:00.092121729Z"); // ✅ (arbitrary precision)
+instant.parse("2022-02-28T03:06:00+02:00"); // ✅
+instant.parse("2022-02-28T03:06:00-05:00"); // ✅
+instant.parse("2022-02-28T03:06:00"); // ❌ (offset required)
+```
+
+Use the `precision` parameter to constrain decimal precision:
+
+```ts
+const instant = z.iso.instant({ precision: 3 });
+instant.parse("2022-02-28T03:06:00Z"); // ❌
+instant.parse("2022-02-28T03:06:00.092Z"); // ✅
+```
+
+### ISO zoned date-time
+
+The `z.iso.zonedDateTime()` method validates ISO 8601 timestamps with both an offset and an IANA time zone identifier in brackets, as defined by the [Temporal proposal](https://tc39.es/proposal-temporal/docs/). This corresponds to `Temporal.ZonedDateTime`.
+
+```ts
+const zonedDateTime = z.iso.zonedDateTime();
+
+zonedDateTime.parse("2022-02-28T11:06:00+08:00[Asia/Shanghai]"); // ✅
+zonedDateTime.parse("2022-02-28T03:06:00-05:00[America/New_York]"); // ✅
+zonedDateTime.parse("2022-02-28T11:06:00.092121729+08:00[Asia/Shanghai]"); // ✅
+zonedDateTime.parse("2022-02-28T11:06:00+08:00[Asia/Shanghai][u-ca=chinese]"); // ✅ (with calendar)
+zonedDateTime.parse("2022-02-28T11:06:00+08:00"); // ❌ (time zone required)
+zonedDateTime.parse("2022-02-28T11:06:00Z[UTC]"); // ❌ (Z not allowed, use offset)
+```
+
+Use the `precision` parameter to constrain decimal precision:
+
+```ts
+const zonedDateTime = z.iso.zonedDateTime({ precision: 3 });
+zonedDateTime.parse("2022-02-28T11:06:00+08:00[Asia/Shanghai]"); // ❌
+zonedDateTime.parse("2022-02-28T11:06:00.092+08:00[Asia/Shanghai]"); // ✅
 ```
 
 ### IP addresses

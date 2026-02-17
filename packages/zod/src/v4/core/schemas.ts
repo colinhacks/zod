@@ -740,6 +740,84 @@ export const $ZodISODuration: core.$constructor<$ZodISODuration> = /*@__PURE__*/
   }
 );
 
+//////////////////////////////   ZodISOYearMonth   //////////////////////////////
+
+export interface $ZodISOYearMonthDef extends $ZodStringFormatDef<"yearMonth"> {}
+export interface $ZodISOYearMonthInternals extends $ZodStringFormatInternals<"yearMonth"> {}
+
+export interface $ZodISOYearMonth extends $ZodType {
+  _zod: $ZodISOYearMonthInternals;
+}
+
+export const $ZodISOYearMonth: core.$constructor<$ZodISOYearMonth> = /*@__PURE__*/ core.$constructor(
+  "$ZodISOYearMonth",
+  (inst, def): void => {
+    def.pattern ??= regexes.yearMonth;
+    $ZodStringFormat.init(inst, def);
+  }
+);
+
+//////////////////////////////   ZodISOMonthDay   //////////////////////////////
+
+export interface $ZodISOMonthDayDef extends $ZodStringFormatDef<"monthDay"> {}
+export interface $ZodISOMonthDayInternals extends $ZodStringFormatInternals<"monthDay"> {}
+
+export interface $ZodISOMonthDay extends $ZodType {
+  _zod: $ZodISOMonthDayInternals;
+}
+
+export const $ZodISOMonthDay: core.$constructor<$ZodISOMonthDay> = /*@__PURE__*/ core.$constructor(
+  "$ZodISOMonthDay",
+  (inst, def): void => {
+    def.pattern ??= regexes.monthDay;
+    $ZodStringFormat.init(inst, def);
+  }
+);
+
+//////////////////////////////   ZodISOInstant   //////////////////////////////
+
+export interface $ZodISOInstantDef extends $ZodStringFormatDef<"instant"> {
+  precision?: number | null;
+}
+
+export interface $ZodISOInstantInternals extends $ZodStringFormatInternals<"instant"> {
+  def: $ZodISOInstantDef;
+}
+
+export interface $ZodISOInstant extends $ZodType {
+  _zod: $ZodISOInstantInternals;
+}
+
+export const $ZodISOInstant: core.$constructor<$ZodISOInstant> = /*@__PURE__*/ core.$constructor(
+  "$ZodISOInstant",
+  (inst, def): void => {
+    def.pattern ??= regexes.instant(def);
+    $ZodStringFormat.init(inst, def);
+  }
+);
+
+//////////////////////////////   ZodISOZonedDateTime   //////////////////////////////
+
+export interface $ZodISOZonedDateTimeDef extends $ZodStringFormatDef<"zonedDateTime"> {
+  precision?: number | null;
+}
+
+export interface $ZodISOZonedDateTimeInternals extends $ZodStringFormatInternals<"zonedDateTime"> {
+  def: $ZodISOZonedDateTimeDef;
+}
+
+export interface $ZodISOZonedDateTime extends $ZodType {
+  _zod: $ZodISOZonedDateTimeInternals;
+}
+
+export const $ZodISOZonedDateTime: core.$constructor<$ZodISOZonedDateTime> = /*@__PURE__*/ core.$constructor(
+  "$ZodISOZonedDateTime",
+  (inst, def): void => {
+    def.pattern ??= regexes.zonedDateTime(def);
+    $ZodStringFormat.init(inst, def);
+  }
+);
+
 //////////////////////////////   ZodIPv4   //////////////////////////////
 
 export interface $ZodIPv4Def extends $ZodStringFormatDef<"ipv4"> {
