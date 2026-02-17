@@ -432,3 +432,66 @@ test("xor", () => {
     data: z.union([z.object({ name: z.string(), a: z.number() }), z.object({ name: z.string(), b: z.number() })]),
   });
 });
+
+test("union type inference in object properties - issue #2654", () => {
+  // Test case 1: string or string array
+  const EventNameSchema = z.string().or(z.array(z.string()));
+  type EventName = z.infer<typeof EventNameSchema>;
+
+  const EventSchema = z.object({
+    name: z.string().or(z.array(z.string())),
+  });
+
+  type EventWithName = z.infer<typeof EventSchema>;
+  type EventName2 = EventWithName["name"];
+
+  // EventName2 should be: string | string[]
+  // Not: (string | string[]) & (string | string[] | undefined)
+  util.assertEqual<EventName, EventName2>(true);
+  util.assertEqual<EventName2, string | string[]>(true);
+
+  // Runtime validation
+  expect(EventSchema.parse({ name: "test" })).toEqual({ name: "test" });
+  expect(EventSchema.parse({ name: ["test1", "test2"] })).toEqual({ name: ["test1", "test2"] });
+
+  // Test case 2: array or record
+  const ValuesSchema = z.string().array().or(z.record(z.string()));
+  type Values = z.infer<typeof ValuesSchema>;
+
+  const ObjectWithValues = z.object({
+    values: z.string().array().or(z.record(z.string())),
+  });
+
+  type ObjectWithValuesType = z.infer<typeof ObjectWithValues>;
+  type ValuesType = ObjectWithValuesType["values"];
+
+  util.assertEqual<Values, ValuesType>(true);
+  util.assertEqual<ValuesType, string[] | Record<string, string>>(true);
+
+  expect(ObjectWithValues.parse({ values: ["a", "b"] })).toEqual({ values: ["a", "b"] });
+  expect(ObjectWithValues.parse({ values: { key: "value" } })).toEqual({ values: { key: "value" } });
+
+  // Test case 3: enum or record
+  const role = z.enum(["Administrator", "Writer", "Readonly"]);
+  const rolesPerLocale = z.record(role.optional());
+  const repositoryRole = role.or(rolesPerLocale);
+
+  const RoleSchema = z.object({
+    role: repositoryRole,
+  });
+
+  type RoleType = z.infer<typeof RoleSchema>;
+  type RoleField = RoleType["role"];
+  type ExpectedRoleField =
+    | "Administrator"
+    | "Writer"
+    | "Readonly"
+    | Record<string, "Administrator" | "Writer" | "Readonly" | undefined>;
+
+  util.assertEqual<RoleField, ExpectedRoleField>(true);
+
+  expect(RoleSchema.parse({ role: "Administrator" })).toEqual({ role: "Administrator" });
+  expect(RoleSchema.parse({ role: { en: "Writer", fr: "Readonly" } })).toEqual({
+    role: { en: "Writer", fr: "Readonly" },
+  });
+});
