@@ -4378,6 +4378,8 @@ export const $ZodPromise: core.$constructor<$ZodPromise> = /*@__PURE__*/ core.$c
 //////////////////////////////////////////
 //////////////////////////////////////////
 
+const LAZY_PARSE_MEMO = Symbol("zod.lazy.memo");
+
 export interface $ZodLazyDef<T extends SomeType = $ZodType> extends $ZodTypeDef {
   type: "lazy";
   getter: () => T;
@@ -4416,6 +4418,42 @@ export const $ZodLazy: core.$constructor<$ZodLazy> = /*@__PURE__*/ core.$constru
   util.defineLazy(inst._zod, "optout", () => inst._zod.innerType?._zod?.optout ?? undefined);
   inst._zod.parse = (payload, ctx) => {
     const inner = inst._zod.innerType;
+    const value = payload.value;
+
+    if (typeof value === "object" && value !== null) {
+      let memoRoot = (ctx as any)[LAZY_PARSE_MEMO] as
+        | WeakMap<object, Map<$ZodLazy, util.MaybeAsync<ParsePayload>>>
+        | undefined;
+      if (!memoRoot) {
+        memoRoot = new WeakMap<object, Map<$ZodLazy, util.MaybeAsync<ParsePayload>>>();
+        (ctx as any)[LAZY_PARSE_MEMO] = memoRoot;
+      }
+      let schemaCache = memoRoot.get(value) as Map<$ZodLazy, util.MaybeAsync<ParsePayload>> | undefined;
+
+      if (!schemaCache) {
+        schemaCache = new Map();
+        memoRoot.set(value, schemaCache);
+      } else {
+        const cached = schemaCache.get(inst);
+        if (cached) {
+          return cached;
+        }
+      }
+
+      schemaCache.set(inst, payload);
+      const result = inner._zod.run(payload, ctx);
+      if (result instanceof Promise) {
+        const memoized = result.then((resolved) => {
+          schemaCache!.set(inst, resolved);
+          return resolved;
+        });
+        schemaCache.set(inst, memoized);
+        return memoized;
+      }
+      schemaCache.set(inst, result);
+      return result;
+    }
+
     return inner._zod.run(payload, ctx);
   };
 });
