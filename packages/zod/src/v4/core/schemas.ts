@@ -29,6 +29,10 @@ export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> ex
   readonly async?: boolean | undefined;
   readonly direction?: "forward" | "backward";
   readonly skipChecks?: boolean;
+  /** @internal Track visited objects for circular reference detection.
+   * Maps (input object, schema instance) -> output object to handle the case where
+   * the same object is parsed by different schemas (e.g., in intersections). */
+  readonly visited?: WeakMap<object, WeakMap<object, object>>;
 }
 
 export interface ParsePayload<T = unknown> {
@@ -39,6 +43,81 @@ export interface ParsePayload<T = unknown> {
 }
 
 export type CheckFn<T> = (input: ParsePayload<T>) => util.MaybeAsync<void>;
+
+/////////////////////////////   CIRCULAR REFERENCE HELPERS   //////////////////////////////
+
+/**
+ * Check if we need circular reference tracking for the given input.
+ * Returns true if the input contains any nested objects/arrays that could create cycles.
+ */
+function needsCircularTracking(
+  input: Iterable<unknown> | Record<string, unknown>,
+  ctx?: ParseContextInternal
+): boolean {
+  if (ctx?.visited) return true;
+  if (Array.isArray(input) || input instanceof Set) {
+    for (const item of input as Iterable<unknown>) {
+      if (typeof item === "object" && item !== null) return true;
+    }
+  } else if (input instanceof Map) {
+    for (const [, value] of input) {
+      if (typeof value === "object" && value !== null) return true;
+    }
+  } else {
+    for (const key in input) {
+      const v = (input as Record<string, unknown>)[key];
+      if (typeof v === "object" && v !== null) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Check if we've already seen this (input, schema) pair during parsing.
+ * If so, return the cached output to prevent infinite recursion.
+ * Also initializes the visited map if needed.
+ */
+function checkCircularRef(
+  input: object,
+  inst: object,
+  ctx?: ParseContextInternal
+): { cached: true; value: object } | { cached: false; visited: WeakMap<object, WeakMap<object, object>> } | null {
+  if (!ctx) return null;
+
+  let visited = ctx.visited;
+  if (!visited) {
+    visited = new WeakMap();
+    (ctx as any).visited = visited;
+  }
+
+  const schemaMap = visited.get(input);
+  if (schemaMap) {
+    const cached = schemaMap.get(inst);
+    if (cached !== undefined) {
+      return { cached: true, value: cached };
+    }
+  }
+
+  return { cached: false, visited };
+}
+
+/**
+ * Register a (input, schema) -> output mapping for circular reference tracking.
+ * Call this BEFORE recursing into child schemas.
+ */
+function registerCircularRef(
+  input: object,
+  inst: object,
+  output: object,
+  visited: WeakMap<object, WeakMap<object, object>>
+): void {
+  let schemaMap = visited.get(input);
+  if (!schemaMap) {
+    schemaMap = new WeakMap();
+    visited.set(input, schemaMap);
+  }
+  schemaMap.set(inst, output);
+}
 
 /////////////////////////////   SCHEMAS   //////////////////////////////
 
@@ -1626,7 +1705,19 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
       return payload;
     }
 
+    // Circular reference tracking
+    const tracking = needsCircularTracking(input, ctx) ? checkCircularRef(input, inst, ctx) : null;
+    if (tracking?.cached) {
+      payload.value = tracking.value;
+      return payload;
+    }
+
     payload.value = Array(input.length);
+
+    if (tracking && !tracking.cached) {
+      registerCircularRef(input, inst, payload.value, tracking.visited);
+    }
+
     const proms: Promise<any>[] = [];
     for (let i = 0; i < input.length; i++) {
       const item = input[i];
@@ -1910,7 +2001,18 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       return payload;
     }
 
+    // Circular reference tracking
+    const tracking = needsCircularTracking(input, ctx) ? checkCircularRef(input, inst, ctx) : null;
+    if (tracking?.cached) {
+      payload.value = tracking.value;
+      return payload;
+    }
+
     payload.value = {};
+
+    if (tracking && !tracking.cached) {
+      registerCircularRef(input, inst, payload.value, tracking.visited);
+    }
 
     const proms: Promise<any>[] = [];
     const shape = value.shape;
@@ -2043,7 +2145,17 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         return payload;
       }
 
-      if (jit && fastEnabled && ctx?.async === false && ctx.jitless !== true) {
+      // Circular reference tracking
+      const needsTracking = needsCircularTracking(input, ctx);
+      const tracking = needsTracking ? checkCircularRef(input, inst, ctx) : null;
+      if (tracking?.cached) {
+        payload.value = tracking.value;
+        return payload;
+      }
+
+      // JIT can only be used when there are no nested objects that could create cycles
+      // Once visited tracking is enabled, we must use superParse to properly track references
+      if (!needsTracking && jit && fastEnabled && ctx?.async === false && ctx?.jitless !== true) {
         // always synchronous
         if (!fastpass) fastpass = generateFastpass(def.shape);
         payload = fastpass(payload, ctx);
@@ -2606,7 +2718,19 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
       return payload;
     }
 
+    // Circular reference tracking
+    const tracking = needsCircularTracking(input, ctx) ? checkCircularRef(input, inst, ctx) : null;
+    if (tracking?.cached) {
+      payload.value = tracking.value;
+      return payload;
+    }
+
     payload.value = [];
+
+    if (tracking && !tracking.cached) {
+      registerCircularRef(input, inst, payload.value, tracking.visited);
+    }
+
     const proms: Promise<any>[] = [];
 
     const reversedIndex = [...items].reverse().findIndex((item) => item._zod.optin !== "optional");
@@ -2768,11 +2892,23 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       return payload;
     }
 
+    // Circular reference tracking
+    const tracking = needsCircularTracking(input, ctx) ? checkCircularRef(input, inst, ctx) : null;
+    if (tracking?.cached) {
+      payload.value = tracking.value;
+      return payload;
+    }
+
+    payload.value = {};
+
+    if (tracking && !tracking.cached) {
+      registerCircularRef(input, inst, payload.value, tracking.visited);
+    }
+
     const proms: Promise<any>[] = [];
 
     const values = def.keyType._zod.values;
     if (values) {
-      payload.value = {};
       const recordKeys = new Set<string | symbol>();
       for (const key of values) {
         if (typeof key === "string" || typeof key === "number" || typeof key === "symbol") {
@@ -2814,7 +2950,6 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
         });
       }
     } else {
-      payload.value = {};
       for (const key of Reflect.ownKeys(input)) {
         if (key === "__proto__") continue;
         let keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
@@ -2921,8 +3056,19 @@ export const $ZodMap: core.$constructor<$ZodMap> = /*@__PURE__*/ core.$construct
       return payload;
     }
 
+    // Circular reference tracking
+    const tracking = needsCircularTracking(input, ctx) ? checkCircularRef(input, inst, ctx) : null;
+    if (tracking?.cached) {
+      payload.value = tracking.value;
+      return payload;
+    }
+
     const proms: Promise<any>[] = [];
     payload.value = new Map();
+
+    if (tracking && !tracking.cached) {
+      registerCircularRef(input, inst, payload.value, tracking.visited);
+    }
 
     for (const [key, value] of input) {
       const keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
@@ -3024,8 +3170,20 @@ export const $ZodSet: core.$constructor<$ZodSet> = /*@__PURE__*/ core.$construct
       return payload;
     }
 
+    // Circular reference tracking
+    const tracking = needsCircularTracking(input, ctx) ? checkCircularRef(input, inst, ctx) : null;
+    if (tracking?.cached) {
+      payload.value = tracking.value;
+      return payload;
+    }
+
     const proms: Promise<any>[] = [];
     payload.value = new Set();
+
+    if (tracking && !tracking.cached) {
+      registerCircularRef(input, inst, payload.value, tracking.visited);
+    }
+
     for (const item of input) {
       const result = def.valueType._zod.run({ value: item, issues: [] }, ctx);
       if (result instanceof Promise) {
