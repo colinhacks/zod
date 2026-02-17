@@ -1941,6 +1941,8 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
     // requires cast because technically $ZodObject doesn't extend
     $ZodObject.init(inst, def);
 
+    const visitedNodes = new Set();
+
     const superParse = inst._zod.parse;
     const _normalized = util.cached(() => normalizeDef(def));
 
@@ -2043,6 +2045,15 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         return payload;
       }
 
+      if (visitedNodes.has(input)) {
+        return {
+          value: input,
+          issues: [],
+        };
+      }
+
+      visitedNodes.add(input);
+
       if (jit && fastEnabled && ctx?.async === false && ctx.jitless !== true) {
         // always synchronous
         if (!fastpass) fastpass = generateFastpass(def.shape);
@@ -2054,6 +2065,8 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
 
       return superParse(payload, ctx);
     };
+
+    visitedNodes.clear();
   }
 );
 
