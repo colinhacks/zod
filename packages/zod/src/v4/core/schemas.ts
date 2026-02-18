@@ -2354,10 +2354,10 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
       // no matching discriminator
       payload.issues.push({
         code: "invalid_union",
-
         errors: [],
         note: "No matching discriminator",
         discriminator: def.discriminator,
+        options: Array.from(disc.value.keys()),
         input,
         path: [def.discriminator],
         inst,
