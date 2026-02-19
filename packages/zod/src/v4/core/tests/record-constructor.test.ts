@@ -65,3 +65,64 @@ test("record should work with different key types and constructor field", () => 
   const result = enumSchema.parse({ constructor: "value1", key: "value2" });
   expect(result).toEqual({ constructor: "value1", key: "value2" });
 });
+
+test("record should skip non-enumerable properties", () => {
+  const schema = z.record(z.string(), z.string());
+
+  const input = { key: "value" };
+  Object.defineProperty(input, "~standard", {
+    value: { validate: () => {}, vendor: "zod", version: 1 },
+    enumerable: false,
+    writable: false,
+    configurable: false,
+  });
+
+  const result = schema.safeParse(input);
+  expect(result.success).toBe(true);
+  if (result.success) {
+    expect(result.data).toEqual({ key: "value" });
+    expect("~standard" in result.data).toBe(false);
+  }
+});
+
+test("record should still validate enumerable properties", () => {
+  const schema = z.record(z.string(), z.string());
+
+  const input = { key: "value", bad: 123 };
+  Object.defineProperty(input, "hidden", {
+    value: "should be ignored",
+    enumerable: false,
+  });
+
+  const result = schema.safeParse(input);
+  expect(result.success).toBe(false);
+});
+
+test("z.json() should accept objects with non-enumerable properties", () => {
+  const schema = z.json();
+
+  const input = { name: "test", count: 42 };
+  Object.defineProperty(input, "~standard", {
+    value: {
+      validate: () => {},
+      vendor: "zod",
+      version: 1,
+      jsonSchema: {
+        input: () => {},
+        output: () => {},
+      },
+    },
+    enumerable: false,
+    configurable: false,
+  });
+
+  const result = schema.safeParse(input);
+  expect(result.success).toBe(true);
+});
+
+test("z.json() accepts z.toJSONSchema() output", () => {
+  const schema = z.object({ name: z.string() });
+  const jsonSchema = z.toJSONSchema(schema);
+
+  expect(z.json().safeParse(jsonSchema).success).toBe(true);
+});
