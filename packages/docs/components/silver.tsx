@@ -1,6 +1,12 @@
 export const Silver = () => {
   const companies = [
     {
+      name: "Sanity",
+      logoSrc: "https://avatars.githubusercontent.com/u/17177659?s=200&v=4",
+      url: "sanity.io",
+      href: "https://www.sanity.io/",
+    },
+    {
       name: "Subtotal",
       logoSrc: "https://avatars.githubusercontent.com/u/176449348?s=200&v=4",
       url: "subtotal.com",
