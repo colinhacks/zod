@@ -2522,7 +2522,6 @@ function handleIntersectionResults(result: ParsePayload, left: ParsePayload, rig
   result.value = merged.data;
   return result;
 }
-
 /////////////////////////////////////////
 /////////////////////////////////////////
 //////////                     //////////

@@ -196,3 +196,23 @@ test("invalid deep merge of object and array combination", async () => {
     `[Error: Unmergable intersection. Error path: ["students",0,"name"]]`
   );
 });
+test("object intersection: strict + strip", () => {
+  const A = z.strictObject({ a: z.string() });
+  const B = z.object({ b: z.string() });
+  const C = z.intersection(A, B);
+
+  expect(C.parse({ a: "foo", b: "bar" })).toEqual({ a: "foo", b: "bar" }); // Keys recognized by either side should work
+
+  expect(C.parse({ a: "foo", b: "bar", c: "extra" })).toEqual({ a: "foo", b: "bar" }); // Extra keys are stripped (follows strip behavior from B)
+});
+
+test("object intersection: strict + strict", () => {
+  const A = z.strictObject({ a: z.string() });
+  const B = z.strictObject({ b: z.string() });
+  const C = z.intersection(A, B);
+
+  expect(C.parse({ a: "foo", b: "bar" })).toEqual({ a: "foo", b: "bar" }); // Keys recognized by either side should work
+
+  const result = C.safeParse({ a: "foo", b: "bar", c: "extra" }); // Keys unrecognized by BOTH sides should error
+  expect(result.success).toEqual(false);
+});
