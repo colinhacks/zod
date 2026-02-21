@@ -368,12 +368,7 @@ export function isObject(data: any): data is Record<PropertyKey, unknown> {
   return typeof data === "object" && data !== null && !Array.isArray(data);
 }
 
-export const allowsEval: { value: boolean } = cached(() => {
-  // @ts-ignore
-  if (typeof navigator !== "undefined" && navigator?.userAgent?.includes("Cloudflare")) {
-    return false;
-  }
-
+function canUseFunctionConstructor(): boolean {
   try {
     const F = Function;
     new F("");
@@ -381,7 +376,12 @@ export const allowsEval: { value: boolean } = cached(() => {
   } catch (_) {
     return false;
   }
-});
+}
+
+export const allowsEval: { value: boolean } = cached(canUseFunctionConstructor);
+
+/** @internal */
+export const JIT_COMPILE_BAG_KEY = "__zod_jit_compile";
 
 export function isPlainObject(o: any): o is Record<PropertyKey, unknown> {
   if (isObject(o) === false) return false;

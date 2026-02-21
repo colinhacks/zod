@@ -600,6 +600,32 @@ z.config(z.locales.en());
 
 See the full list of supported locales in [Customizing errors](/error-customization#locales); this section is always updated with a list of supported languages as they become available.
 
+## Precompiling object schemas for startup-restricted runtimes
+
+In some runtimes, `new Function` is only available during startup. Zod's object fast-path uses generated functions, so those schemas must be compiled while that window is open.
+
+You can do this explicitly with `z.precompile(...)`:
+
+```ts
+import * as z from "zod";
+
+const User = z.object({
+  id: z.uuidv4(),
+  email: z.email(),
+});
+
+// Call at module scope during startup.
+z.precompile(User);
+```
+
+`z.precompile` is best-effort and safe to call in all environments:
+
+- It traverses the schema graph and compiles object fast-paths where possible.
+- If compilation is unavailable, parsing falls back to the non-JIT path.
+- It only helps schemas that are reachable from the value(s) you pass in.
+
+This is mainly useful for edge runtimes (for example Cloudflare Workers) where startup and request phases have different `eval` policies.
+
 ## Error pretty-printing
 
 The popularity of the [`zod-validation-error`](https://www.npmjs.com/package/zod-validation-error) package demonstrates that there's significant demand for an official API for pretty-printing errors. If you are using that package currently, by all means continue using it. 

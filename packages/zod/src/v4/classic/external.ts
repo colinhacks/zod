@@ -27,6 +27,7 @@ export {
   flattenError,
   TimePrecision,
   util,
+  precompile,
   NEVER,
 } from "../core/index.js";
 export { toJSONSchema } from "../core/json-schema-processors.js";
