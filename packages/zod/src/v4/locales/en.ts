@@ -46,6 +46,7 @@ const error: () => errors.$ZodErrorMap = () => {
     json_string: "JSON string",
     e164: "E.164 number",
     jwt: "JWT",
+    cron: "cron expression",
     template_literal: "input",
   };
 

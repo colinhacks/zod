@@ -467,6 +467,23 @@ export function jwt(params?: string | core.$ZodJWTParams): ZodMiniJWT {
   return core._jwt(ZodMiniJWT, params);
 }
 
+// ZodMiniCron
+export interface ZodMiniCron extends _ZodMiniString<core.$ZodCronInternals> {
+  // _zod: core.$ZodCronInternals;
+}
+export const ZodMiniCron: core.$constructor<ZodMiniCron> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniCron",
+  (inst, def) => {
+    core.$ZodCron.init(inst, def);
+    ZodMiniStringFormat.init(inst, def);
+  }
+);
+
+// @__NO_SIDE_EFFECTS__
+export function cron(params?: string | core.$ZodCronParams): ZodMiniCron {
+  return core._cron(ZodMiniCron, params);
+}
+
 // ZodMiniCustomStringFormat
 export interface ZodMiniCustomStringFormat<Format extends string = string>
   extends ZodMiniStringFormat<Format>,
