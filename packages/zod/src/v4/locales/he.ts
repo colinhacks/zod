@@ -85,6 +85,7 @@ const error: () => errors.$ZodErrorMap = () => {
     json_string: { label: "מחרוזת JSON", gender: "f" },
     e164: { label: "מספר E.164", gender: "m" },
     jwt: { label: "JWT", gender: "m" },
+    cron: { label: "ביטוי cron", gender: "m" },
     ends_with: { label: "קלט", gender: "m" },
     includes: { label: "קלט", gender: "m" },
     lowercase: { label: "קלט", gender: "m" },

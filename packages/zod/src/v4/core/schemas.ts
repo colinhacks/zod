@@ -1023,6 +1023,86 @@ export const $ZodJWT: core.$constructor<$ZodJWT> = /*@__PURE__*/ core.$construct
   };
 });
 
+//////////////////////////////   ZodCron   //////////////////////////////
+
+const _CRON_FIELD_RANGES: readonly (readonly [number, number])[] = [
+  [0, 59], // minute
+  [0, 23], // hour
+  [1, 31], // day-of-month
+  [1, 12], // month
+  [0, 6], // day-of-week
+];
+
+function _cronInRange(value: string, min: number, max: number): boolean {
+  const n = Number.parseInt(value, 10);
+  return n >= min && n <= max;
+}
+
+function _isValidCronItem(item: string, min: number, max: number): boolean {
+  const slashIndex = item.indexOf("/");
+  let base: string;
+  if (slashIndex !== -1) {
+    const step = item.slice(slashIndex + 1);
+    if (!/^\d+$/u.test(step) || Number.parseInt(step, 10) < 1) return false;
+    base = item.slice(0, slashIndex);
+  } else {
+    base = item;
+  }
+
+  if (base === "*") return true;
+
+  const dashIndex = base.indexOf("-");
+  if (dashIndex !== -1) {
+    const from = base.slice(0, dashIndex);
+    const to = base.slice(dashIndex + 1);
+    return (
+      /^\d+$/u.test(from) &&
+      /^\d+$/u.test(to) &&
+      _cronInRange(from, min, max) &&
+      _cronInRange(to, min, max) &&
+      Number.parseInt(from, 10) <= Number.parseInt(to, 10)
+    );
+  }
+
+  return /^\d+$/u.test(base) && _cronInRange(base, min, max);
+}
+
+function _isValidCronField(field: string, min: number, max: number): boolean {
+  if (field.length === 0) return false;
+  return field.split(",").every((item) => _isValidCronItem(item, min, max));
+}
+
+export function isValidCron(input: string): boolean {
+  const fields = input.split(" ");
+  return (
+    fields.length === 5 &&
+    fields.every((field, index) => {
+      const range = _CRON_FIELD_RANGES[index]!;
+      return _isValidCronField(field, range[0], range[1]);
+    })
+  );
+}
+
+export interface $ZodCronDef extends $ZodStringFormatDef<"cron"> {}
+export interface $ZodCronInternals extends $ZodStringFormatInternals<"cron"> {}
+export interface $ZodCron extends $ZodType {
+  _zod: $ZodCronInternals;
+}
+
+export const $ZodCron: core.$constructor<$ZodCron> = /*@__PURE__*/ core.$constructor("$ZodCron", (inst, def): void => {
+  $ZodStringFormat.init(inst, def);
+  inst._zod.check = (payload) => {
+    if (isValidCron(payload.value)) return;
+    payload.issues.push({
+      code: "invalid_format",
+      format: "cron",
+      input: payload.value,
+      inst,
+      continue: !def.abort,
+    });
+  };
+});
+
 //////////////////////////////   ZodCustomStringFormat   //////////////////////////////
 
 export interface $ZodCustomStringFormatDef<Format extends string = string> extends $ZodStringFormatDef<Format> {
@@ -4551,6 +4631,7 @@ export type $ZodStringFormatTypes =
   | $ZodBase64URL
   | $ZodE164
   | $ZodJWT
+  | $ZodCron
   | $ZodCustomStringFormat<"hex">
   | $ZodCustomStringFormat<util.HashFormat>
   | $ZodCustomStringFormat<"hostname">;

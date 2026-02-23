@@ -370,6 +370,8 @@ export interface ZodString extends _ZodString<core.$ZodStringInternals<string>> 
   cidrv6(params?: string | core.$ZodCheckCIDRv6Params): this;
   /** @deprecated Use `z.e164()` instead. */
   e164(params?: string | core.$ZodCheckE164Params): this;
+  /** @deprecated Use `z.cron()` instead. */
+  cron(params?: string | core.$ZodCheckCronParams): this;
 
   // ISO 8601 checks
   /** @deprecated Use `z.iso.datetime()` instead. */
@@ -417,6 +419,7 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
   inst.cidrv4 = (params) => inst.check(core._cidrv4(ZodCIDRv4, params));
   inst.cidrv6 = (params) => inst.check(core._cidrv6(ZodCIDRv6, params));
   inst.e164 = (params) => inst.check(core._e164(ZodE164, params));
+  inst.cron = (params) => inst.check(core._cron(ZodCron, params));
 
   // iso
   inst.datetime = (params) => inst.check(iso.datetime(params as any));
@@ -755,6 +758,19 @@ export const ZodJWT: core.$constructor<ZodJWT> = /*@__PURE__*/ core.$constructor
 
 export function jwt(params?: string | core.$ZodJWTParams): ZodJWT {
   return core._jwt(ZodJWT, params);
+}
+
+// ZodCron
+export interface ZodCron extends ZodStringFormat<"cron"> {
+  _zod: core.$ZodCronInternals;
+}
+export const ZodCron: core.$constructor<ZodCron> = /*@__PURE__*/ core.$constructor("ZodCron", (inst, def) => {
+  core.$ZodCron.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+
+export function cron(params?: string | core.$ZodCronParams): ZodCron {
+  return core._cron(ZodCron, params);
 }
 
 // ZodCustomStringFormat

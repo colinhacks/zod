@@ -483,6 +483,23 @@ export function _jwt<T extends schemas.$ZodJWT>(
   });
 }
 
+// Cron
+export type $ZodCronParams = StringFormatParams<schemas.$ZodCron, "pattern" | "when">;
+export type $ZodCheckCronParams = CheckStringFormatParams<schemas.$ZodCron, "pattern" | "when">;
+// @__NO_SIDE_EFFECTS__
+export function _cron<T extends schemas.$ZodCron>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodCronParams | $ZodCheckCronParams
+): T {
+  return new Class({
+    type: "string",
+    format: "cron",
+    check: "string_format",
+    abort: false,
+    ...util.normalizeParams(params),
+  });
+}
+
 export const TimePrecision = {
   Any: null,
   Minute: -1,

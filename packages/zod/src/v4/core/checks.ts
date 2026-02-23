@@ -776,6 +776,7 @@ export type $ZodStringFormats =
   | "uppercase"
   | "regex"
   | "jwt"
+  | "cron"
   | "starts_with"
   | "ends_with"
   | "includes";
