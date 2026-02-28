@@ -93,8 +93,20 @@ console.log(data.name);
 
 ## Installation
 
+# npm
 ```sh
 npm install zod
+```
+
+
+# pnpm
+```sh
+pnpm install zod
+```
+
+# jsr (Deno)
+```sh
+deno add jsr:@zod/zod
 ```
 
 <br/>
