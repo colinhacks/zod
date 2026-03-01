@@ -51,6 +51,7 @@ const error: () => errors.$ZodErrorMap = () => {
     [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
   } = {
     nan: "NaN",
+    infinity: "Infinity",
     number: "数字",
     array: "数组",
     null: "空值(null)",
