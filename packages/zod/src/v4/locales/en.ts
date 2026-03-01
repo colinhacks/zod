@@ -53,9 +53,9 @@ const error: () => errors.$ZodErrorMap = () => {
   const TypeDictionary: {
     [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
   } = {
-    // Compatibility: "nan" -> "NaN" for display
+    // Compatibility: lowercase internal keys -> human-readable display strings
     nan: "NaN",
-    // All other type names omitted - they fall back to raw values via ?? operator
+    infinity: "Infinity",
   };
 
   return (issue) => {
