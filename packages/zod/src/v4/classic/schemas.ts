@@ -94,7 +94,8 @@ export interface ZodType<
     params?: string | core.$ZodCustomParams
   ): Ch extends (arg: any) => arg is infer R ? this & ZodType<R, core.input<this>> : this;
   superRefine(
-    refinement: (arg: core.output<this>, ctx: core.$RefinementCtx<core.output<this>>) => void | Promise<void>
+    refinement: (arg: core.output<this>, ctx: core.$RefinementCtx<core.output<this>>) => void | Promise<void>,
+    params?: string | core.$ZodCustomParams
   ): this;
   overwrite(fn: (x: core.output<this>) => core.output<this>): this;
 
@@ -210,7 +211,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
 
   // refinements
   inst.refine = (check, params) => inst.check(refine(check, params)) as never;
-  inst.superRefine = (refinement) => inst.check(superRefine(refinement));
+  inst.superRefine = (refinement, params) => inst.check(superRefine(refinement, params));
   inst.overwrite = (fn) => inst.check(checks.overwrite(fn));
 
   // wrappers
@@ -2321,9 +2322,10 @@ export function refine<T>(
 
 // superRefine
 export function superRefine<T>(
-  fn: (arg: T, payload: core.$RefinementCtx<T>) => void | Promise<void>
+  fn: (arg: T, payload: core.$RefinementCtx<T>) => void | Promise<void>,
+  params?: string | core.$ZodCustomParams
 ): core.$ZodCheck<T> {
-  return core._superRefine(fn);
+  return core._superRefine(fn, params);
 }
 
 // Re-export describe and meta from core
