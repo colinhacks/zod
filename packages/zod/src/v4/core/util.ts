@@ -840,12 +840,14 @@ export function finalizeIssue(
   ctx: schemas.ParseContextInternal | undefined,
   config: $ZodConfig
 ): errors.$ZodIssue {
-  const full = { ...iss, path: iss.path ?? [] } as errors.$ZodIssue;
+  // Destructure out internal properties to avoid V8 deoptimization from delete
+  const { inst, continue: continueFn, input, ...rest } = iss as any;
+  const full = { ...rest, path: iss.path ?? [] } as errors.$ZodIssue;
 
   // for backwards compatibility
   if (!iss.message) {
     const message =
-      unwrapMessage(iss.inst?._zod.def?.error?.(iss as never)) ??
+      unwrapMessage(inst?._zod.def?.error?.(iss as never)) ??
       unwrapMessage(ctx?.error?.(iss as never)) ??
       unwrapMessage(config.customError?.(iss)) ??
       unwrapMessage(config.localeError?.(iss)) ??
@@ -853,11 +855,9 @@ export function finalizeIssue(
     (full as any).message = message;
   }
 
-  // delete (full as any).def;
-  delete (full as any).inst;
-  delete (full as any).continue;
-  if (!ctx?.reportInput) {
-    delete (full as any).input;
+  // Include input only if reportInput is enabled
+  if (ctx?.reportInput) {
+    (full as any).input = input;
   }
 
   return full;
