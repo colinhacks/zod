@@ -1219,11 +1219,9 @@ describe("toJSONSchema", () => {
         },
         "definitions": {
           "primary": {
-            "id": "primary",
             "type": "string",
           },
           "rest": {
-            "id": "rest",
             "type": "number",
           },
         },
@@ -2014,11 +2012,9 @@ test("extract schemas with id", () => {
     {
       "$defs": {
         "age": {
-          "id": "age",
           "type": "number",
         },
         "name": {
-          "id": "name",
           "type": "string",
         },
       },
@@ -2106,7 +2102,6 @@ test("describe with id", () => {
     {
       "$defs": {
         "jobId": {
-          "id": "jobId",
           "type": "string",
         },
       },
@@ -2146,7 +2141,6 @@ test("describe with id on wrapper", () => {
     {
       "$defs": {
         "roJobId": {
-          "id": "roJobId",
           "readOnly": true,
           "type": "string",
         },
@@ -2185,12 +2179,10 @@ test("overwrite id", () => {
     {
       "$defs": {
         "aaa": {
-          "id": "aaa",
           "type": "string",
         },
         "bbb": {
           "$ref": "#/$defs/aaa",
-          "id": "bbb",
         },
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2224,12 +2216,10 @@ test("overwrite id", () => {
     {
       "$defs": {
         "aaa": {
-          "id": "aaa",
           "type": "string",
         },
         "ccc": {
           "$ref": "#/$defs/aaa",
-          "id": "ccc",
         },
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2351,7 +2341,6 @@ test("top-level readonly", () => {
       "$defs": {
         "B": {
           "additionalProperties": false,
-          "id": "B",
           "properties": {
             "a": {
               "$ref": "#",
@@ -2497,7 +2486,6 @@ test("_ref", () => {
     {
       "$defs": {
         "foo": {
-          "id": "foo",
           "type": "string",
         },
       },
