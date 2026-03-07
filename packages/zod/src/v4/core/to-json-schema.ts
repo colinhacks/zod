@@ -287,7 +287,12 @@ export function extractDefs<T extends schemas.$ZodType>(
     seen.def = { ...seen.schema };
     // defId won't be set if the schema is a reference to an external schema
     // or if the schema is the root schema
-    if (defId) seen.defId = defId;
+    if (defId) {
+      seen.defId = defId;
+      // The `id` is already encoded as the $defs key — strip it from the
+      // definition body to avoid redundant (and technically invalid) output.
+      if (seen.def.id === defId) delete seen.def.id;
+    }
     // wipe away all properties except $ref
     const schema = seen.schema;
     for (const key in schema) {
