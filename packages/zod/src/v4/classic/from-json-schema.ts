@@ -143,12 +143,22 @@ function resolveRef(ref: string, ctx: ConversionContext): JSONSchema.JSONSchema 
   throw new Error(`Reference not found: ${ref}`);
 }
 
+function applyBaseMetadata(zodSchema: ZodType, schema: JSONSchema.JSONSchema): ZodType {
+  if (schema.description) {
+    zodSchema = zodSchema.describe(schema.description);
+  }
+  if (schema.default !== undefined) {
+    zodSchema = (zodSchema as any).default(schema.default);
+  }
+  return zodSchema;
+}
+
 function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext): ZodType {
   // Handle unsupported features
   if (schema.not !== undefined) {
     // Special case: { not: {} } represents never
     if (typeof schema.not === "object" && Object.keys(schema.not).length === 0) {
-      return z.never();
+      return applyBaseMetadata(z.never(), schema);
     }
     throw new Error("not is not supported in Zod (except { not: {} } for never)");
   }
@@ -201,34 +211,33 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
       enumValues.length === 1 &&
       enumValues[0] === null
     ) {
-      return z.null();
+      return applyBaseMetadata(z.null(), schema);
     }
 
     if (enumValues.length === 0) {
-      return z.never();
+      return applyBaseMetadata(z.never(), schema);
     }
     if (enumValues.length === 1) {
-      return z.literal(enumValues[0]!);
+      return applyBaseMetadata(z.literal(enumValues[0]!), schema);
     }
     // Check if all values are strings
     if (enumValues.every((v) => typeof v === "string")) {
-      return z.enum(enumValues as [string, ...string[]]);
+      return applyBaseMetadata(z.enum(enumValues as [string, ...string[]]), schema);
     }
     // Mixed types - use union of literals
     const literalSchemas = enumValues.map((v) => z.literal(v));
     if (literalSchemas.length < 2) {
-      return literalSchemas[0]!;
+      return applyBaseMetadata(literalSchemas[0]!, schema);
     }
-    return z.union([literalSchemas[0]!, literalSchemas[1]!, ...literalSchemas.slice(2)] as [
-      ZodType,
-      ZodType,
-      ...ZodType[],
-    ]);
+    return applyBaseMetadata(
+      z.union([literalSchemas[0]!, literalSchemas[1]!, ...literalSchemas.slice(2)] as [ZodType, ZodType, ...ZodType[]]),
+      schema
+    );
   }
 
   // Handle const
   if (schema.const !== undefined) {
-    return z.literal(schema.const);
+    return applyBaseMetadata(z.literal(schema.const), schema);
   }
 
   // Handle type

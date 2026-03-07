@@ -732,3 +732,46 @@ test("contentEncoding and contentMediaType are stored as metadata", () => {
   expect(meta?.contentEncoding).toBe("base64");
   expect(meta?.contentMediaType).toBe("image/png");
 });
+
+test("description on enum schema is applied", () => {
+  const schema = fromJSONSchema({
+    enum: ["red", "green", "blue"],
+    description: "A color value",
+  });
+  expect(schema.description).toBe("A color value");
+  expect(schema.parse("red")).toBe("red");
+});
+
+test("description on const schema is applied", () => {
+  const schema = fromJSONSchema({
+    const: "hello",
+    description: "A greeting",
+  });
+  expect(schema.description).toBe("A greeting");
+  expect(schema.parse("hello")).toBe("hello");
+});
+
+test("description on not: {} (never) schema is applied", () => {
+  const schema = fromJSONSchema({
+    not: {},
+    description: "A never schema",
+  });
+  expect(schema.description).toBe("A never schema");
+  expect(() => schema.parse("anything")).toThrow();
+});
+
+test("default on enum schema is applied", () => {
+  const schema = fromJSONSchema({
+    enum: ["red", "green", "blue"],
+    default: "red",
+  });
+  expect(schema.parse(undefined)).toBe("red");
+});
+
+test("default on const schema is applied", () => {
+  const schema = fromJSONSchema({
+    const: "hello",
+    default: "hello",
+  });
+  expect(schema.parse(undefined)).toBe("hello");
+});
