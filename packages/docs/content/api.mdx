@@ -3080,17 +3080,15 @@ computeTrimmedLengthAsync("sandwich"); // => Promise<8>
 
 ## Custom
 
-You can create a Zod schema for any TypeScript type by using `z.custom()`. This is useful for creating schemas for types that are not supported by Zod out of the box, such as template string literals.
+You can create a Zod schema for any TypeScript type by using `z.custom()`. This is useful for validating class instances or other complex types.
 
 ```ts
-const px = z.custom<`${number}px`>((val) => {
-  return typeof val === "string" ? /^\d+px$/.test(val) : false;
-});
+const myFileSchema = z.custom<File>((val) => val instanceof File);
 
-type px = z.infer<typeof px>; // `${number}px`
+type myFile = z.infer<typeof myFileSchema>; // File
 
-px.parse("42px"); // "42px"
-px.parse("42vw"); // throws;
+myFileSchema.parse(new File([], "test.txt")); // passes
+myFileSchema.parse({ name: "fake" }); // throws
 ```
 
 If you don't provide a validation function, Zod will allow any value. This can be dangerous!

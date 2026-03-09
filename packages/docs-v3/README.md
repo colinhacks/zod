@@ -2155,12 +2155,10 @@ This returns a `ZodEffects` instance. `ZodEffects` is a wrapper class that conta
 
 ## Custom schemas
 
-You can create a Zod schema for any TypeScript type by using `z.custom()`. This is useful for creating schemas for types that are not supported by Zod out of the box, such as template string literals.
+You can create a Zod schema for any TypeScript type by using `z.custom()`. This is useful for validating class instances or other complex types.
 
 ```ts
-const px = z.custom<`${number}px`>((val) => {
-  return typeof val === "string" ? /^\d+px$/.test(val) : false;
-});
+const myFileSchema = z.custom<File>((val) => val instanceof File);
 
 type px = z.infer<typeof px>; // `${number}px`
 
