@@ -630,3 +630,29 @@ test("numeric string keys", () => {
   );
   expect(transformedSchema.parse({ 5: "five", 10: "ten" })).toEqual({ 10: "five", 20: "ten" });
 });
+
+test("record with literal key transform applies key transformation", () => {
+  // When a record has finite key values (literal/enum) and a key transform,
+  // the output keys should be transformed (consistent with partialRecord)
+  const schema = z.record(
+    z.literal("a").transform(() => "b" as const),
+    z.string()
+  );
+  expect(schema.parse({ a: "hello" })).toEqual({ b: "hello" });
+});
+
+test("record with enum key transform applies key transformation", () => {
+  const schema = z.record(
+    z.enum(["x", "y"]).transform((k) => k.toUpperCase()),
+    z.number()
+  );
+  expect(schema.parse({ x: 1, y: 2 })).toEqual({ X: 1, Y: 2 });
+});
+
+test("record key transform is consistent with partialRecord", () => {
+  const keySchema = z.literal("a").transform(() => "b" as const);
+
+  const recordResult = z.record(keySchema, z.string()).parse({ a: "hello" });
+  const partialResult = z.partialRecord(keySchema, z.string()).parse({ a: "hello" });
+  expect(recordResult).toEqual(partialResult);
+});
