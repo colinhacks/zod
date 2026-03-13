@@ -2347,7 +2347,11 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
         return opt._zod.run(payload, ctx) as any;
       }
 
-      if (def.unionFallback) {
+      // Fall back to union matching when the fast discriminator path fails:
+      // - explicitly enabled via unionFallback, or
+      // - during backward direction (encode), since codec-based discriminators
+      //   have different values in forward vs backward directions
+      if (def.unionFallback || ctx.direction === "backward") {
         return _super(payload, ctx);
       }
 
