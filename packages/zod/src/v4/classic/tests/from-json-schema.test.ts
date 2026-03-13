@@ -732,3 +732,94 @@ test("contentEncoding and contentMediaType are stored as metadata", () => {
   expect(meta?.contentEncoding).toBe("base64");
   expect(meta?.contentMediaType).toBe("image/png");
 });
+
+test("circular object reference (dereferenced schema)", () => {
+  // Simulates a fully-dereferenced JSON Schema where object identity creates cycles
+  const person: any = {
+    type: "object",
+    properties: {
+      name: { type: "string" },
+    },
+    required: ["name"],
+  };
+  // Create circular reference: person.properties.bestFriend -> person
+  person.properties.bestFriend = person;
+
+  const schema = fromJSONSchema(person);
+  expect(schema.parse({ name: "Alice", bestFriend: { name: "Bob" } })).toEqual({
+    name: "Alice",
+    bestFriend: { name: "Bob" },
+  });
+  // Nested circular usage
+  expect(
+    schema.parse({
+      name: "Alice",
+      bestFriend: { name: "Bob", bestFriend: { name: "Charlie" } },
+    })
+  ).toEqual({
+    name: "Alice",
+    bestFriend: { name: "Bob", bestFriend: { name: "Charlie" } },
+  });
+});
+
+test("circular array reference (dereferenced schema)", () => {
+  const node: any = {
+    type: "object",
+    properties: {
+      value: { type: "number" },
+    },
+    required: ["value"],
+  };
+  // node.properties.children is an array of node (circular)
+  node.properties.children = {
+    type: "array",
+    items: node,
+  };
+
+  const schema = fromJSONSchema(node);
+  expect(
+    schema.parse({
+      value: 1,
+      children: [
+        { value: 2, children: [] },
+        { value: 3, children: [{ value: 4 }] },
+      ],
+    })
+  ).toEqual({
+    value: 1,
+    children: [
+      { value: 2, children: [] },
+      { value: 3, children: [{ value: 4 }] },
+    ],
+  });
+});
+
+test("mutual circular reference (dereferenced schema)", () => {
+  const parent: any = {
+    type: "object",
+    properties: {
+      name: { type: "string" },
+    },
+    required: ["name"],
+  };
+  const child: any = {
+    type: "object",
+    properties: {
+      name: { type: "string" },
+      parent: parent,
+    },
+    required: ["name"],
+  };
+  parent.properties.children = { type: "array", items: child };
+
+  const schema = fromJSONSchema(parent);
+  expect(
+    schema.parse({
+      name: "Parent",
+      children: [{ name: "Child", parent: { name: "Parent" } }],
+    })
+  ).toEqual({
+    name: "Parent",
+    children: [{ name: "Child", parent: { name: "Parent" } }],
+  });
+});

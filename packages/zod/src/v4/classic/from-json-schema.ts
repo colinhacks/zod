@@ -26,6 +26,10 @@ interface ConversionContext {
   processing: Set<string>;
   rootSchema: JSONSchema.JSONSchema;
   registry: $ZodRegistry<any>;
+  /** Tracks already-converted schema objects by identity (for dereferenced schemas) */
+  schemaObjects: WeakMap<object, ZodType>;
+  /** Tracks schema objects currently being converted (cycle detection) */
+  processingSchemas: WeakSet<object>;
 }
 
 // Keys that are recognized and handled by the conversion logic
@@ -543,6 +547,23 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
     return schema ? z.any() : z.never();
   }
 
+  // Object-identity cycle detection for dereferenced schemas
+  const cached = ctx.schemaObjects.get(schema);
+  if (cached) return cached;
+
+  if (ctx.processingSchemas.has(schema)) {
+    // Circular reference by object identity — use lazy
+    return z.lazy(() => {
+      const resolved = ctx.schemaObjects.get(schema);
+      if (!resolved) {
+        throw new Error("Circular reference not resolved");
+      }
+      return resolved;
+    });
+  }
+
+  ctx.processingSchemas.add(schema);
+
   // Convert base schema first (ignoring composition keywords)
   let baseSchema = convertBaseSchema(schema, ctx);
   const hasExplicitType = schema.type || schema.enum !== undefined || schema.const !== undefined;
@@ -616,6 +637,9 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
     ctx.registry.add(baseSchema, extraMeta);
   }
 
+  ctx.schemaObjects.set(schema, baseSchema);
+  ctx.processingSchemas.delete(schema);
+
   return baseSchema;
 }
 
@@ -637,6 +661,8 @@ export function fromJSONSchema(schema: JSONSchema.JSONSchema | boolean, params?:
     processing: new Set(),
     rootSchema: schema,
     registry: params?.registry ?? globalRegistry,
+    schemaObjects: new WeakMap(),
+    processingSchemas: new WeakSet(),
   };
 
   return convertSchema(schema, ctx);
