@@ -2097,10 +2097,20 @@ export interface ZodCodec<A extends core.SomeType = core.$ZodType, B extends cor
   "~standard": ZodStandardSchemaWithJSON<this>;
   _zod: core.$ZodCodecInternals<A, B>;
   def: core.$ZodCodecDef<A, B>;
+  invert(): ZodCodec<B, A>;
 }
 export const ZodCodec: core.$constructor<ZodCodec> = /*@__PURE__*/ core.$constructor("ZodCodec", (inst, def) => {
   ZodPipe.init(inst, def);
   core.$ZodCodec.init(inst, def);
+
+  inst.invert = () =>
+    new ZodCodec({
+      type: "pipe",
+      in: def.out,
+      out: def.in,
+      transform: def.reverseTransform,
+      reverseTransform: def.transform,
+    }) as any;
 });
 
 export function codec<const A extends core.SomeType, B extends core.SomeType = core.$ZodType>(
