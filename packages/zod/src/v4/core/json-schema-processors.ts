@@ -650,7 +650,7 @@ export function toJSONSchema(
     }
 
     if (Object.keys(defs).length > 0) {
-      const defsSegment = ctx.target === "draft-2020-12" ? "$defs" : "definitions";
+      const defsSegment = ctx.target === "draft-04" || ctx.target === "draft-07" ? "definitions" : "$defs";
       schemas.__shared = {
         [defsSegment]: defs,
       };

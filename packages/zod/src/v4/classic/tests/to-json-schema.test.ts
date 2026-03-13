@@ -1157,6 +1157,45 @@ describe("toJSONSchema", () => {
     `);
   });
 
+  test("recursive schema openapi-3.0 uses $defs", () => {
+    const Recursive: z.ZodType = z.lazy(() => z.object({ child: Recursive.optional() }));
+    const Schema = z.object({ data: Recursive });
+    const jsonSchema = z.toJSONSchema(Schema, { target: "openapi-3.0" });
+    // OpenAPI 3.0 should not use "definitions" — it is a Swagger 2.0 / JSON Schema
+    // Draft 4 concept not recognized by OpenAPI 3.0 Schema Objects.
+    expect(jsonSchema).not.toHaveProperty("definitions");
+    expect(jsonSchema).toHaveProperty("$defs");
+    expect(jsonSchema).toMatchInlineSnapshot(`
+      {
+        "$defs": {
+          "__schema0": {
+            "additionalProperties": false,
+            "properties": {
+              "child": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/__schema0",
+                  },
+                ],
+              },
+            },
+            "type": "object",
+          },
+        },
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "$ref": "#/$defs/__schema0",
+          },
+        },
+        "required": [
+          "data",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
   test("tuple draft-7", () => {
     const schema = z.tuple([z.string(), z.number()]);
     expect(z.toJSONSchema(schema, { target: "draft-7", io: "input" })).toMatchInlineSnapshot(`

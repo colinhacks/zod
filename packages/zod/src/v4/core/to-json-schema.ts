@@ -247,7 +247,7 @@ export function extractDefs<T extends schemas.$ZodType>(
     // e.g. lazy
 
     // external is configured
-    const defsSegment = ctx.target === "draft-2020-12" ? "$defs" : "definitions";
+    const defsSegment = ctx.target === "draft-04" || ctx.target === "draft-07" ? "definitions" : "$defs";
     if (ctx.external) {
       const externalId = ctx.external.registry.get(entry[0])?.id; // ?? "__shared";// `__schema${ctx.counter++}`;
 
@@ -484,10 +484,10 @@ export function finalize<T extends schemas.$ZodType>(
   if (ctx.external) {
   } else {
     if (Object.keys(defs).length > 0) {
-      if (ctx.target === "draft-2020-12") {
-        result.$defs = defs;
-      } else {
+      if (ctx.target === "draft-04" || ctx.target === "draft-07") {
         result.definitions = defs;
+      } else {
+        result.$defs = defs;
       }
     }
   }
