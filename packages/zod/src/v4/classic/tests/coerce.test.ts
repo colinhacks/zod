@@ -158,3 +158,14 @@ test("override input type", () => {
   type output = z.infer<typeof a>;
   expectTypeOf<output>().toEqualTypeOf<string>();
 });
+
+test("coerced types are not assignable from non-coerced", () => {
+  // ZodNumber should NOT be assignable to ZodCoercedNumber
+  // This prevents passing z.number() where z.coerce.number() is expected,
+  // which would fail at runtime since non-coerced schemas don't coerce input.
+  expectTypeOf(z.number()).not.toMatchTypeOf<z.ZodCoercedNumber>();
+  expectTypeOf(z.string()).not.toMatchTypeOf<z.ZodCoercedString>();
+  expectTypeOf(z.boolean()).not.toMatchTypeOf<z.ZodCoercedBoolean>();
+  expectTypeOf(z.bigint()).not.toMatchTypeOf<z.ZodCoercedBigInt>();
+  expectTypeOf(z.date()).not.toMatchTypeOf<z.ZodCoercedDate>();
+});
