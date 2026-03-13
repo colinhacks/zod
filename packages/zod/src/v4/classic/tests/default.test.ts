@@ -363,3 +363,60 @@ test("direction-aware defaults", () => {
     }
   `);
 });
+
+test("default({}) cascades inner field defaults", () => {
+  const inner = z.object({
+    name: z.string().default("untitled"),
+    count: z.number().default(0),
+  });
+  const schema = inner.default({} as z.output<typeof inner>);
+
+  // parse(undefined) should equal parse({})
+  expect(schema.parse(undefined)).toEqual({ name: "untitled", count: 0 });
+  expect(schema.parse({})).toEqual({ name: "untitled", count: 0 });
+  expect(schema.parse(undefined)).toEqual(schema.parse({}));
+});
+
+test("nested objects with cascading defaults", () => {
+  const revenue = z.object({
+    users: z.number().default(1000),
+    price: z.number().default(29),
+  });
+  const costs = z.object({
+    team_size: z.number().default(5),
+    salary: z.number().default(10_000),
+  });
+  const outer = z.object({
+    revenue: revenue.default({} as z.output<typeof revenue>),
+    costs: costs.default({} as z.output<typeof costs>),
+  });
+  const config = outer.default({} as z.output<typeof outer>);
+
+  expect(config.parse(undefined)).toEqual({
+    revenue: { users: 1000, price: 29 },
+    costs: { team_size: 5, salary: 10_000 },
+  });
+});
+
+test("default({}) with partial override preserves explicit values", () => {
+  const inner = z.object({
+    a: z.string().default("alpha"),
+    b: z.string().default("beta"),
+  });
+  const schema = inner.default({ a: "custom" } as z.output<typeof inner>);
+
+  // Explicit value in default should be kept, missing field should get inner default
+  expect(schema.parse(undefined)).toEqual({ a: "custom", b: "beta" });
+});
+
+test("default({}) returns distinct shallow clones", () => {
+  const inner = z.object({
+    items: z.array(z.string()).default([]),
+  });
+  const schema = inner.default({} as z.output<typeof inner>);
+
+  const r1 = schema.parse(undefined);
+  const r2 = schema.parse(undefined);
+  expect(r1).toEqual(r2);
+  expect(r1).not.toBe(r2);
+});

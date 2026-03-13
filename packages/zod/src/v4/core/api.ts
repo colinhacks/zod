@@ -1454,6 +1454,19 @@ export function _default<T extends schemas.$ZodObject>(
   innerType: T,
   defaultValue: util.NoUndefined<core.output<T>> | (() => util.NoUndefined<core.output<T>>)
 ): schemas.$ZodDefault<T> {
+  // Cascade inner defaults: when the inner type is an object schema and
+  // the default is a static plain object, parse it through the inner schema
+  // so nested field-level defaults are applied at definition time.
+  if (
+    typeof defaultValue !== "function" &&
+    util.isPlainObject(defaultValue) &&
+    (innerType as any)._zod?.def?.type === "object"
+  ) {
+    const result = (innerType as any)._zod.run({ value: { ...defaultValue }, issues: [] }, { async: false });
+    if (!(result instanceof Promise) && result.issues.length === 0) {
+      defaultValue = result.value;
+    }
+  }
   return new Class({
     type: "default",
     innerType,
