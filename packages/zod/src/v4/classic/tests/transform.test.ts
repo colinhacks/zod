@@ -359,3 +359,33 @@ test("encode error", () => {
     `[ZodEncodeError: Encountered unidirectional transform during encode: ZodTransform]`
   );
 });
+
+test("standalone z.transform ctx.addIssue", () => {
+  const schema = z.transform((input: string, ctx) => {
+    if (input.length < 3) {
+      ctx.addIssue({
+        code: "custom",
+        message: "too short",
+      });
+    }
+    return input.toUpperCase();
+  });
+
+  const good = schema.safeParse("hello");
+  expect(good.success).toBe(true);
+  if (good.success) {
+    expect(good.data).toBe("HELLO");
+  }
+
+  const bad = schema.safeParse("hi");
+  expect(bad.success).toBe(false);
+});
+
+test("standalone z.transform ctx.addIssue type check", () => {
+  // Verify that ctx.addIssue is available in the type system
+  const _schema = z.transform((_input: string, ctx) => {
+    // This should compile without errors — ctx.addIssue should be typed
+    expectTypeOf(ctx.addIssue).toBeFunction();
+    return _input;
+  });
+});
