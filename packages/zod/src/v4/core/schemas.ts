@@ -2777,6 +2777,14 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       for (const key of values) {
         if (typeof key === "string" || typeof key === "number" || typeof key === "symbol") {
           recordKeys.add(typeof key === "number" ? key.toString() : key);
+
+          // Run key through the key schema to apply any transforms
+          const keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
+          if (keyResult instanceof Promise) {
+            throw new Error("Async schemas not supported in object keys currently");
+          }
+          const outputKey = keyResult.issues.length === 0 ? (keyResult.value as PropertyKey) : key;
+
           const result = def.valueType._zod.run({ value: input[key], issues: [] }, ctx);
 
           if (result instanceof Promise) {
@@ -2785,14 +2793,14 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
                 if (result.issues.length) {
                   payload.issues.push(...util.prefixIssues(key, result.issues));
                 }
-                payload.value[key] = result.value;
+                payload.value[outputKey] = result.value;
               })
             );
           } else {
             if (result.issues.length) {
               payload.issues.push(...util.prefixIssues(key, result.issues));
             }
-            payload.value[key] = result.value;
+            payload.value[outputKey] = result.value;
           }
         }
       }
