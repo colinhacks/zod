@@ -270,6 +270,12 @@ const poweredByZodProjects: ZodResource[] = [
     url: "https://github.com/endel/zodgres",
     description: "Postgres.js + Zod: Database collections with static type inference and automatic migrations",
     slug: "endel/zodgres",
+  },
+  {
+    name: "fullproduct.dev",
+    url: "https://fullproduct.dev?via=zod-v4-docs",
+    description: "Zod powered Universal App Starterkit using schemas as the single source of truth",
+    slug: "FullProduct-dev/green-stack-starter-demo",
   }
 ];
 
