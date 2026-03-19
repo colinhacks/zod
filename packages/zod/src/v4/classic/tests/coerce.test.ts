@@ -158,3 +158,18 @@ test("override input type", () => {
   type output = z.infer<typeof a>;
   expectTypeOf<output>().toEqualTypeOf<string>();
 });
+
+test("string coercion preserves input type after startsWith/endsWith", () => {
+  const prefixed = z.coerce.string().startsWith("hello");
+  const suffixed = z.coerce.string<number>().endsWith("world");
+
+  type prefixedInput = z.input<typeof prefixed>;
+  type prefixedOutput = z.output<typeof prefixed>;
+  type suffixedInput = z.input<typeof suffixed>;
+  type suffixedOutput = z.output<typeof suffixed>;
+
+  expectTypeOf<prefixedInput>().toEqualTypeOf<unknown>();
+  expectTypeOf<prefixedOutput>().toEqualTypeOf<`hello${string}`>();
+  expectTypeOf<suffixedInput>().toEqualTypeOf<number>();
+  expectTypeOf<suffixedOutput>().toEqualTypeOf<`${string}world`>();
+});

@@ -6,6 +6,18 @@ test("assignability", () => {
   // $ZodString
   z.string() satisfies z.core.$ZodString;
   z.string() satisfies z.ZodString;
+  z.string().startsWith("hello") satisfies z.core.$ZodString;
+  z.string().startsWith("hello") satisfies z.ZodString;
+  z.string().endsWith("world") satisfies z.core.$ZodString;
+  z.string().endsWith("world") satisfies z.ZodString;
+  z.string().startsWith("hello").endsWith("world") satisfies z.core.$ZodString;
+  z.string().startsWith("hello").endsWith("world") satisfies z.ZodString;
+  z.string().endsWith("world").startsWith("hello") satisfies z.core.$ZodString;
+  z.string().endsWith("world").startsWith("hello") satisfies z.ZodString;
+  z.string().startsWith("hello").includes("loworl") satisfies z.core.$ZodString;
+  z.string().startsWith("hello").includes("loworl") satisfies z.ZodString;
+  z.string().endsWith("world").includes("loworl") satisfies z.core.$ZodString;
+  z.string().endsWith("world").includes("loworl") satisfies z.ZodString;
 
   // $ZodNumber
   z.number() satisfies z.core.$ZodNumber;

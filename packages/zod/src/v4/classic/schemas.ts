@@ -153,6 +153,68 @@ export interface ZodType<
 export interface _ZodType<out Internals extends core.$ZodTypeInternals = core.$ZodTypeInternals>
   extends ZodType<any, any, Internals> {}
 
+type _ZodStringWithOutput<
+  Schema extends _ZodString,
+  Output extends string,
+  Input = Schema["_zod"]["input"],
+  HasStartsWith extends boolean = _ZodStringHasStartsWith<Schema>,
+  HasEndsWith extends boolean = _ZodStringHasEndsWith<Schema>,
+> = util.Omit<Schema, keyof ZodType | "startsWith" | "endsWith"> &
+  ZodType<
+    Output,
+    Input,
+    util.Omit<Schema["_zod"], "output" | "input"> &
+      core.$ZodTypeInternals<Output, Input> &
+      (HasStartsWith extends true ? { _zodStartsWith: true } : {}) &
+      (HasEndsWith extends true ? { _zodEndsWith: true } : {})
+  > &
+  (HasEndsWith extends true
+    ? {
+        startsWith<Prefix extends string>(
+          value: Prefix,
+          params?: string | core.$ZodCheckStartsWithParams
+        ): _ZodStringWithOutput<Schema, _ZodStringWithBrands<string, Output>, Input, true, true>;
+      }
+    : {}) & {
+    startsWith<Prefix extends string>(
+      value: Prefix,
+      params?: string | core.$ZodCheckStartsWithParams
+    ): _ZodStringWithOutput<Schema, _ZodStringStartsWithOutput<Output, Prefix>, Input, true, HasEndsWith>;
+  } & (HasStartsWith extends true
+    ? {
+        endsWith<Suffix extends string>(
+          value: Suffix,
+          params?: string | core.$ZodCheckEndsWithParams
+        ): _ZodStringWithOutput<Schema, _ZodStringWithBrands<string, Output>, Input, true, true>;
+      }
+    : {}) & {
+    endsWith<Suffix extends string>(
+      value: Suffix,
+      params?: string | core.$ZodCheckEndsWithParams
+    ): _ZodStringWithOutput<Schema, _ZodStringEndsWithOutput<Output, Suffix>, Input, HasStartsWith, true>;
+  };
+
+type _ZodStringHasStartsWith<Schema extends _ZodString> = Schema["_zod"] extends { _zodStartsWith: true }
+  ? true
+  : false;
+type _ZodStringHasEndsWith<Schema extends _ZodString> = Schema["_zod"] extends { _zodEndsWith: true } ? true : false;
+
+type _ZodStringBrandRecord<Output extends string> = Output extends { [core.$brand]: infer BrandRecord }
+  ? BrandRecord
+  : never;
+
+type _ZodStringWithBrands<Base extends string, Output extends string> = [_ZodStringBrandRecord<Output>] extends [never]
+  ? Base
+  : Base & { [core.$brand]: _ZodStringBrandRecord<Output> };
+
+type _ZodStringStartsWithOutput<Output extends string, Prefix extends string> = string extends Output
+  ? `${Prefix}${string}`
+  : Output & `${Prefix}${string}`;
+
+type _ZodStringEndsWithOutput<Output extends string, Suffix extends string> = string extends Output
+  ? `${string}${Suffix}`
+  : Output & `${string}${Suffix}`;
+
 export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$constructor("ZodType", (inst, def) => {
   core.$ZodType.init(inst, def);
   Object.assign(inst["~standard"], {
@@ -268,8 +330,26 @@ export interface _ZodString<T extends core.$ZodStringInternals<unknown> = core.$
   // miscellaneous checks
   regex(regex: RegExp, params?: string | core.$ZodCheckRegexParams): this;
   includes(value: string, params?: string | core.$ZodCheckIncludesParams): this;
-  startsWith(value: string, params?: string | core.$ZodCheckStartsWithParams): this;
-  endsWith(value: string, params?: string | core.$ZodCheckEndsWithParams): this;
+  startsWith<Prefix extends string>(
+    value: Prefix,
+    params?: string | core.$ZodCheckStartsWithParams
+  ): _ZodStringWithOutput<
+    this,
+    _ZodStringStartsWithOutput<core.output<this> & string, Prefix>,
+    core.input<this>,
+    true,
+    _ZodStringHasEndsWith<this>
+  >;
+  endsWith<Suffix extends string>(
+    value: Suffix,
+    params?: string | core.$ZodCheckEndsWithParams
+  ): _ZodStringWithOutput<
+    this,
+    _ZodStringEndsWithOutput<core.output<this> & string, Suffix>,
+    core.input<this>,
+    _ZodStringHasStartsWith<this>,
+    true
+  >;
   min(minLength: number, params?: string | core.$ZodCheckMinLengthParams): this;
   max(maxLength: number, params?: string | core.$ZodCheckMaxLengthParams): this;
   length(len: number, params?: string | core.$ZodCheckLengthEqualsParams): this;
@@ -300,8 +380,36 @@ export const _ZodString: core.$constructor<_ZodString> = /*@__PURE__*/ core.$con
   // validations
   inst.regex = (...args) => inst.check(checks.regex(...args));
   inst.includes = (...args) => inst.check(checks.includes(...args));
-  inst.startsWith = (...args) => inst.check(checks.startsWith(...args));
-  inst.endsWith = (...args) => inst.check(checks.endsWith(...args));
+  function startsWith<Prefix extends string>(
+    this: typeof inst,
+    value: Prefix,
+    params?: string | core.$ZodCheckStartsWithParams
+  ): _ZodStringWithOutput<
+    typeof inst,
+    _ZodStringStartsWithOutput<core.output<typeof inst> & string, Prefix>,
+    core.input<typeof inst>,
+    true,
+    _ZodStringHasEndsWith<typeof inst>
+  >;
+  function startsWith(this: typeof inst, value: string, params?: string | core.$ZodCheckStartsWithParams) {
+    return inst.check(checks.startsWith(value, params));
+  }
+  function endsWith<Suffix extends string>(
+    this: typeof inst,
+    value: Suffix,
+    params?: string | core.$ZodCheckEndsWithParams
+  ): _ZodStringWithOutput<
+    typeof inst,
+    _ZodStringEndsWithOutput<core.output<typeof inst> & string, Suffix>,
+    core.input<typeof inst>,
+    _ZodStringHasStartsWith<typeof inst>,
+    true
+  >;
+  function endsWith(this: typeof inst, value: string, params?: string | core.$ZodCheckEndsWithParams) {
+    return inst.check(checks.endsWith(value, params));
+  }
+  inst.startsWith = startsWith;
+  inst.endsWith = endsWith;
   inst.min = (...args) => inst.check(checks.minLength(...args));
   inst.max = (...args) => inst.check(checks.maxLength(...args));
   inst.length = (...args) => inst.check(checks.length(...args));

@@ -55,6 +55,12 @@ const stringLen5 = z.templateLiteral(["", z.string().length(5)]);
 const stringMin5Max10 = z.templateLiteral(["", z.string().min(5).max(10)]);
 const stringStartsWithMax5 = z.templateLiteral(["", z.string().startsWith("hello").max(5)]);
 const brandedString = z.templateLiteral(["", z.string().min(1).brand("myBrand")]);
+const dynamicPrefix = "hello" as string;
+const dynamicSuffix = "world" as string;
+const dynamicStringStartsWith = z.templateLiteral(["", z.string().startsWith(dynamicPrefix)]);
+const dynamicStringEndsWith = z.templateLiteral(["", z.string().endsWith(dynamicSuffix)]);
+const chainedStringStartsEnds = z.string().startsWith("hello").endsWith("world");
+const chainedStringEndsStarts = z.string().endsWith("world").startsWith("hello");
 // const anything = z.templateLiteral(["", z.any()]);
 
 const url = z.templateLiteral(["https://", z.string().regex(/\w+/), ".", z.enum(["com", "net"])]);
@@ -142,8 +148,12 @@ test("template literal type inference", () => {
   expectTypeOf<z.infer<typeof ulid>>().toEqualTypeOf<string>();
   expectTypeOf<z.infer<typeof uuid>>().toEqualTypeOf<string>();
   expectTypeOf<z.infer<typeof stringAToZ>>().toEqualTypeOf<string>();
-  expectTypeOf<z.infer<typeof stringStartsWith>>().toEqualTypeOf<string>();
-  expectTypeOf<z.infer<typeof stringEndsWith>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof stringStartsWith>>().toEqualTypeOf<`hello${string}`>();
+  expectTypeOf<z.infer<typeof stringEndsWith>>().toEqualTypeOf<`${string}world`>();
+  expectTypeOf<z.infer<typeof dynamicStringStartsWith>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof dynamicStringEndsWith>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof chainedStringStartsEnds>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof chainedStringEndsStarts>>().toEqualTypeOf<string>();
   expectTypeOf<z.infer<typeof stringMax5>>().toEqualTypeOf<string>();
   expectTypeOf<z.infer<typeof stringMin5>>().toEqualTypeOf<string>();
   expectTypeOf<z.infer<typeof stringLen5>>().toEqualTypeOf<string>();

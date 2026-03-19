@@ -104,3 +104,25 @@ test("brand direction: inout", () => {
   expectTypeOf<Input>().toEqualTypeOf<string & z.$brand<"A">>();
   expectTypeOf<Output>().toEqualTypeOf<string & z.$brand<"A">>();
 });
+
+test("startsWith/endsWith preserve brand direction", () => {
+  const outputBranded = z.string().brand<"A">().startsWith("hello");
+  const inputBranded = z.string().brand<"A", "in">().endsWith("world");
+  const inoutBranded = z.string().brand<"A", "inout">().startsWith("hello");
+
+  type outputBrandedInput = z.input<typeof outputBranded>;
+  type outputBrandedOutput = z.output<typeof outputBranded>;
+  type inputBrandedInput = z.input<typeof inputBranded>;
+  type inputBrandedOutput = z.output<typeof inputBranded>;
+  type inoutBrandedInput = z.input<typeof inoutBranded>;
+  type inoutBrandedOutput = z.output<typeof inoutBranded>;
+
+  expectTypeOf<outputBrandedInput>().toEqualTypeOf<string>();
+  expectTypeOf<outputBrandedOutput>().toEqualTypeOf<`hello${string}` & z.$brand<"A">>();
+
+  expectTypeOf<inputBrandedInput>().toEqualTypeOf<string & z.$brand<"A">>();
+  expectTypeOf<inputBrandedOutput>().toEqualTypeOf<`${string}world`>();
+
+  expectTypeOf<inoutBrandedInput>().toEqualTypeOf<string & z.$brand<"A">>();
+  expectTypeOf<inoutBrandedOutput>().toEqualTypeOf<`hello${string}` & z.$brand<"A">>();
+});
