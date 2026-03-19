@@ -556,7 +556,15 @@ export const optionalProcessor: Processor<schemas.$ZodOptional> = (schema, ctx, 
 };
 
 export const lazyProcessor: Processor<schemas.$ZodLazy> = (schema, ctx, _json, params) => {
-  const innerType = (schema as schemas.$ZodLazy)._zod.innerType;
+  // For clones of lazy schemas (e.g. via .describe()/.meta()), walk up to the
+  // root lazy and reuse its cached innerType. Each clone would otherwise
+  // re-evaluate the getter, producing new schema objects per recursion level
+  // and causing a stack overflow on recursive schemas.
+  let root = schema as schemas.$ZodLazy;
+  while (root._zod.parent && (root._zod.parent as schemas.$ZodType)._zod.def.type === "lazy") {
+    root = root._zod.parent as schemas.$ZodLazy;
+  }
+  const innerType = root._zod.innerType;
   process(innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = innerType;

@@ -2988,3 +2988,18 @@ test("cycle detection - mutual recursion", () => {
     Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.]
   `);
 });
+
+test("recursive lazy with describe does not stack overflow", () => {
+  const NodeSchema: z.ZodType = z.lazy(() =>
+    z
+      .object({
+        value: z.string().describe("node value"),
+        children: z.array(NodeSchema.describe("child node")).optional().describe("child list"),
+      })
+      .describe("tree node")
+  );
+
+  const result = z.toJSONSchema(NodeSchema, { cycles: "ref", reused: "ref" });
+  expect(result).toBeDefined();
+  expect(result.$defs).toBeDefined();
+});
