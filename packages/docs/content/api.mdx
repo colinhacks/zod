@@ -1829,6 +1829,27 @@ type EmployedPerson = z.infer<typeof EmployedPerson>;
   When merging object schemas, prefer [`A.extend(B)`](#extend) over intersections. Using `.extend()` will give you a new object schema, whereas `z.intersection(A, B)` returns a `ZodIntersection` instance which lacks common object methods like `pick` and `omit`.
 </Callout>
 
+### `.and()`
+
+For convenience, you can use the `.and()` method as shorthand for `z.intersection()`:
+
+```ts
+const Person = z.object({ name: z.string() });
+const Employee = z.object({ role: z.string() });
+
+// These are equivalent:
+const EmployedPerson1 = z.intersection(Person, Employee);
+const EmployedPerson2 = Person.and(Employee);
+```
+
+This is particularly useful when chaining with other methods:
+
+```ts
+const schema = z
+  .object({ name: z.string() })
+  .and(z.looseRecord(z.string().regex(/_phone$/), z.e164()));
+```
+
 ## Records
 
 Record schemas are used to validate types such as `Record<string, string>`.
