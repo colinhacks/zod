@@ -1674,11 +1674,22 @@ stringOrNumber.def.options; // [ZodString, ZodNumber]
 </Tab>
 </Tabs>
 
-{/* For convenience, you can also use the [`.or` method](#or):
+### `.or()`
+
+For convenience, you can use the `.or()` method as shorthand for `z.union()`:
 
 ```ts
-const stringOrNumber = z.string().or(z.number());
-``` */}
+// These are equivalent:
+const stringOrNumber1 = z.union([z.string(), z.number()]);
+const stringOrNumber2 = z.string().or(z.number());
+```
+
+This is particularly useful when chaining:
+
+```ts
+const schema = z.string().url().or(z.string().email());
+// Accepts either a valid URL or email
+```
 
 {/* **Optional string validation:**
 
