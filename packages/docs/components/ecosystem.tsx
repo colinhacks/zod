@@ -310,6 +310,12 @@ const zodUtilities: ZodResource[] = [
     description: "Comprehensive validation for Iranian data structures (National Code, Bank Cards, Sheba, Crypto, etc) with smart metadata extraction (Bank Names, Logos). Zero dependencies.",
     slug: "Reza-kh80/zod-ir",
   },
+  {
+    name: "Zod AOT",
+    url: "https://github.com/wakita181009/zod-aot",
+    description: "Compile Zod schemas into zero-overhead validation functions at build time. 2-64x faster validation with no code changes.",
+    slug: "wakita181009/zod-aot",
+  },
 ];
 
 export {
