@@ -2344,19 +2344,20 @@ An error on `anotherField` will prevent the password confirmation check from exe
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-const schema = z
-  .object({
-    password: z.string().min(8),
-    confirmPassword: z.string(),
-    anotherField: z.string(),
-  })
+const baseSchema = z.object({
+  password: z.string().min(8),
+  confirmPassword: z.string(),
+  anotherField: z.string(),
+});
+
+const schema = baseSchema
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
 
     // run if password & confirmPassword are valid
     when(payload) { // [!code ++]
-      return schema // [!code ++]
+      return baseSchema // [!code ++]
         .pick({ password: true, confirmPassword: true }) // [!code ++]
         .safeParse(payload.value).success; // [!code ++]
     },  // [!code ++]
