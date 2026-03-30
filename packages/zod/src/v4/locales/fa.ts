@@ -44,6 +44,7 @@ const error: () => errors.$ZodErrorMap = () => {
     json_string: "JSON رشته",
     e164: "E.164 عدد",
     jwt: "JWT",
+    semver: "semver",
     template_literal: "ورودی",
   };
 

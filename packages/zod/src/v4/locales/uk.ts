@@ -44,6 +44,7 @@ const error: () => errors.$ZodErrorMap = () => {
     json_string: "рядок JSON",
     e164: "номер E.164",
     jwt: "JWT",
+    semver: "semver",
     template_literal: "вхідні дані",
   };
 

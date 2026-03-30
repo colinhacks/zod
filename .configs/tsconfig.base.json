@@ -29,6 +29,7 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "isolatedModules": true,
+    "ignoreDeprecations": "5.0",
 
     "pretty": true
   },

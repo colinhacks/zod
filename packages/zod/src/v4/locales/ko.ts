@@ -44,6 +44,7 @@ const error: () => errors.$ZodErrorMap = () => {
     json_string: "JSON 문자열",
     e164: "E.164 번호",
     jwt: "JWT",
+    semver: "semver",
     template_literal: "입력",
   };
 

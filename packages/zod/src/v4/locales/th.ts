@@ -44,6 +44,7 @@ const error: () => errors.$ZodErrorMap = () => {
     json_string: "ข้อความแบบ JSON",
     e164: "เบอร์โทรศัพท์ระหว่างประเทศ (E.164)",
     jwt: "โทเคน JWT",
+    semver: "semver",
     template_literal: "ข้อมูลที่ป้อน",
   };
 

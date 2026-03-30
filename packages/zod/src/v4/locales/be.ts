@@ -100,6 +100,7 @@ const error: () => errors.$ZodErrorMap = () => {
     json_string: "JSON радок",
     e164: "нумар E.164",
     jwt: "JWT",
+    semver: "semver",
     template_literal: "увод",
   };
 
