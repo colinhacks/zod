@@ -330,6 +330,23 @@ export function _ksuid<T extends schemas.$ZodKSUID>(
   });
 }
 
+// Semver
+export type $ZodSemverParams = StringFormatParams<schemas.$ZodSemver, "pattern" | "when">;
+export type $ZodCheckSemverParams = CheckStringFormatParams<schemas.$ZodSemver, "pattern" | "when">;
+// @__NO_SIDE_EFFECTS__
+export function _semver<T extends schemas.$ZodSemver>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodSemverParams | $ZodCheckSemverParams
+): T {
+  return new Class({
+    type: "string",
+    format: "semver",
+    check: "string_format",
+    abort: false,
+    ...util.normalizeParams(params),
+  });
+}
+
 // IPv4
 export type $ZodIPv4Params = StringFormatParams<schemas.$ZodIPv4, "pattern" | "when" | "version">;
 export type $ZodCheckIPv4Params = CheckStringFormatParams<schemas.$ZodIPv4, "pattern" | "when" | "version">;

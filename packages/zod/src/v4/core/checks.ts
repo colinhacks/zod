@@ -778,7 +778,8 @@ export type $ZodStringFormats =
   | "jwt"
   | "starts_with"
   | "ends_with"
-  | "includes";
+  | "includes"
+  | "semver";
 export interface $ZodCheckStringFormatDef<Format extends string = string> extends $ZodCheckDef {
   check: "string_format";
   format: Format;
@@ -940,6 +941,28 @@ export const $ZodCheckUpperCase: core.$constructor<$ZodCheckUpperCase> = /*@__PU
   "$ZodCheckUpperCase",
   (inst, def) => {
     def.pattern ??= regexes.uppercase;
+    $ZodCheckStringFormat.init(inst, def);
+  }
+);
+
+////////////////////////////////////
+/////    $ZodCheckSemver    /////
+////////////////////////////////////
+export interface $ZodCheckSemverDef extends $ZodCheckStringFormatDef<"semver"> {}
+
+export interface $ZodCheckSemverInternals extends $ZodCheckInternals<string> {
+  def: $ZodCheckSemverDef;
+  issc: errors.$ZodIssueInvalidStringFormat;
+}
+
+export interface $ZodCheckSemver extends $ZodCheck<string> {
+  _zod: $ZodCheckSemverInternals;
+}
+
+export const $ZodCheckSemver: core.$constructor<$ZodCheckSemver> = /*@__PURE__*/ core.$constructor(
+  "$ZodCheckSemver",
+  (inst, def) => {
+    def.pattern ??= regexes.semver;
     $ZodCheckStringFormat.init(inst, def);
   }
 );

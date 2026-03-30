@@ -139,6 +139,8 @@ const _null: RegExp = /^null$/i;
 export { _null as null };
 const _undefined: RegExp = /^undefined$/i;
 export { _undefined as undefined };
+export const semver: RegExp =
+  /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
 
 // regex for string with no uppercase letters
 export const lowercase: RegExp = /^[^A-Z]*$/;

@@ -660,6 +660,23 @@ export const $ZodKSUID: core.$constructor<$ZodKSUID> = /*@__PURE__*/ core.$const
   }
 );
 
+//////////////////////////////   ZodSemver   //////////////////////////////
+
+export interface $ZodSemverDef extends $ZodStringFormatDef<"semver"> {}
+export interface $ZodSemverInternals extends $ZodStringFormatInternals<"semver"> {}
+
+export interface $ZodSemver extends $ZodType {
+  _zod: $ZodSemverInternals;
+}
+
+export const $ZodSemver: core.$constructor<$ZodSemver> = /*@__PURE__*/ core.$constructor(
+  "$ZodSemver",
+  (inst, def): void => {
+    def.pattern ??= regexes.semver;
+    $ZodStringFormat.init(inst, def);
+  }
+);
+
 //////////////////////////////   ZodISODateTime   //////////////////////////////
 
 export interface $ZodISODateTimeDef extends $ZodStringFormatDef<"datetime"> {
