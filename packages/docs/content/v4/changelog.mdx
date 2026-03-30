@@ -708,9 +708,9 @@ const myRecord = z.partialRecord(z.enum(["a", "b", "c"]), z.number());
 
 ### throws `Error` on merge conflict
 
-Zod intersection parses the input against two schemas, then attempts to merge the results. In Zod 3, when the results were unmergable, Zod threw a `ZodError` with a special `"invalid_intersection_types"` issue. 
+Zod intersection parses the input against two schemas, then attempts to merge the results. In Zod 3, when the results were unmergeable, Zod threw a `ZodError` with a special `"invalid_intersection_types"` issue. 
 
-In Zod 4, this will throw a regular `Error` instead. The existence of unmergable results indicates a structural problem with the schema: an intersection of two incompatible types. Thus, a regular error is more appropriate than a validation error. 
+In Zod 4, this will throw a regular `Error` instead. The existence of unmergeable results indicates a structural problem with the schema: an intersection of two incompatible types. Thus, a regular error is more appropriate than a validation error. 
 
 
 
