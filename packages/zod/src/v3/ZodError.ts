@@ -104,6 +104,7 @@ export type StringValidation =
   | "base64"
   | "jwt"
   | "base64url"
+  | "semver"
   | { includes: string; position?: number | undefined }
   | { startsWith: string }
   | { endsWith: string };

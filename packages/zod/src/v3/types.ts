@@ -583,7 +583,8 @@ export type ZodStringCheck =
   | { kind: "ip"; version?: IpVersion | undefined; message?: string | undefined }
   | { kind: "cidr"; version?: IpVersion | undefined; message?: string | undefined }
   | { kind: "base64"; message?: string | undefined }
-  | { kind: "base64url"; message?: string | undefined };
+  | { kind: "base64url"; message?: string | undefined }
+  | { kind: "semver"; message?: string | undefined };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -599,6 +600,8 @@ const ulidRegex = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
 const uuidRegex = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/i;
 const nanoidRegex = /^[a-z0-9_-]{21}$/i;
 const jwtRegex = /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$/;
+const semverRegex =
+  /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
 const durationRegex =
   /^[-+]?P(?!$)(?:(?:[-+]?\d+Y)|(?:[-+]?\d+[.,]\d+Y$))?(?:(?:[-+]?\d+M)|(?:[-+]?\d+[.,]\d+M$))?(?:(?:[-+]?\d+W)|(?:[-+]?\d+[.,]\d+W$))?(?:(?:[-+]?\d+D)|(?:[-+]?\d+[.,]\d+D$))?(?:T(?=[\d+-])(?:(?:[-+]?\d+H)|(?:[-+]?\d+[.,]\d+H$))?(?:(?:[-+]?\d+M)|(?:[-+]?\d+[.,]\d+M$))?(?:[-+]?\d+(?:[.,]\d+)?S)?)??$/;
 
@@ -1031,6 +1034,16 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           });
           status.dirty();
         }
+      } else if (check.kind === "semver") {
+        if (!semverRegex.test(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "semver",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else {
         util.assertNever(check);
       }
@@ -1091,6 +1104,10 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
       kind: "base64url",
       ...errorUtil.errToObj(message),
     });
+  }
+
+  semver(message?: errorUtil.ErrMessage) {
+    return this._addCheck({ kind: "semver", ...errorUtil.errToObj(message) });
   }
 
   jwt(options?: { alg?: string; message?: string | undefined }) {
@@ -1304,6 +1321,10 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   get isBase64url() {
     // base64url encoding is a modification of base64 that can safely be used in URLs and filenames
     return !!this._def.checks.find((ch) => ch.kind === "base64url");
+  }
+
+  get isSemver() {
+    return !!this._def.checks.find((ch) => ch.kind === "semver");
   }
 
   get minLength() {

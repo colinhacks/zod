@@ -551,6 +551,7 @@ test("checks getters", () => {
   expect(z.string().ulid().isIP).toEqual(false);
   expect(z.string().ulid().isCIDR).toEqual(false);
   expect(z.string().ulid().isULID).toEqual(true);
+  expect(z.string().semver().isSemver).toEqual(true);
 });
 
 test("min max getters", () => {
@@ -913,4 +914,55 @@ test("CIDR validation", () => {
   const cidrSchema = z.string().cidr();
   expect(validCidrs.every((ip) => cidrSchema.safeParse(ip).success)).toBe(true);
   expect(invalidCidrs.every((ip) => cidrSchema.safeParse(ip).success === false)).toBe(true);
+});
+
+test("semver validation", () => {
+  const semver = z.string().semver();
+  const validSemvers = [
+    "0.0.4",
+    "1.2.3",
+    "10.20.30",
+    "1.1.2-prerelease+meta",
+    "1.1.2+meta",
+    "1.1.2+meta-valid",
+    "1.0.0-alpha",
+    "1.0.0-beta",
+    "1.0.0-alpha.beta",
+    "1.0.0-alpha.beta.1",
+    "1.0.0-alpha.1",
+    "1.0.0-alpha0.valid",
+    "1.0.0-alpha.0",
+    "1.0.1-alpha.1227242222",
+    "1.0.0-alpha+001",
+    "1.0.0+21AF26D3----117B344092BD",
+    "1.0.0-beta+exp.sha.5114f85",
+    "1.1.2-alpha.1.2",
+  ];
+  const invalidSemvers = [
+    "1",
+    "1.2",
+    "1.2.3-0123",
+    "1.2.3-0123.0123",
+    "1.1.2+.123",
+    "+invalid",
+    "-invalid",
+    "-invalid.01",
+    "alpha",
+    "alpha.beta",
+    "alpha.beta.1",
+    "alpha.1",
+    "alpha+beta",
+    "1.2.3.DEV",
+    "1.2.3-BETA.",
+    "v1.2.3",
+    "1.2.3.4",
+    "1.2.3-08",
+  ];
+
+  for (const s of validSemvers) {
+    expect(semver.safeParse(s).success).toBe(true);
+  }
+  for (const s of invalidSemvers) {
+    expect(semver.safeParse(s).success).toBe(false);
+  }
 });
