@@ -58,7 +58,7 @@ importers:
         version: 16.1.0
       madge:
         specifier: ^8.0.0
-        version: 8.0.0(typescript@5.5.4)
+        version: 8.0.0(typescript@6.0.2)
       mitata:
         specifier: ^0.1.14
         version: 0.1.14
@@ -88,7 +88,7 @@ importers:
         version: 14.0.0
       tsdown:
         specifier: ^0.12.8
-        version: 0.12.8(typescript@5.5.4)
+        version: 0.12.8(typescript@6.0.2)
       tslib:
         specifier: ^2.8.1
         version: 2.8.1
@@ -96,8 +96,8 @@ importers:
         specifier: ^4.19.3
         version: 4.19.3
       typescript:
-        specifier: ~5.5.4
-        version: 5.5.4
+        specifier: ~6.0.2
+        version: 6.0.2
       vitest:
         specifier: ^4.0.10
         version: 4.0.10(@types/debug@4.1.12)(@types/node@22.13.13)(jiti@2.4.2)(lightningcss@1.29.3)(terser@5.39.0)(tsx@4.19.3)(yaml@2.8.0)
@@ -109,7 +109,7 @@ importers:
         version: zod@3.24.3
       zshy:
         specifier: ^0.4.2
-        version: 0.4.2(typescript@5.5.4)
+        version: 0.4.2(typescript@6.0.2)
 
   packages/bench:
     devDependencies:
@@ -121,7 +121,7 @@ importers:
         version: 2.1.19
       valibot:
         specifier: ^1.0.0
-        version: 1.0.0(typescript@5.9.2)
+        version: 1.0.0(typescript@6.0.2)
       zod:
         specifier: workspace:*
         version: link:../zod
@@ -262,7 +262,7 @@ importers:
         version: 0.4.4(rollup@4.37.0)
       '@rollup/plugin-typescript':
         specifier: ^12.1.2
-        version: 12.1.2(rollup@4.37.0)(tslib@2.8.1)(typescript@5.9.2)
+        version: 12.1.2(rollup@4.37.0)(tslib@2.8.1)(typescript@6.0.2)
       '@types/node':
         specifier: ^22.13.13
         version: 22.13.13
@@ -277,7 +277,7 @@ importers:
         version: 10.0.0
       valibot:
         specifier: ^1.0.0
-        version: 1.0.0(typescript@5.9.2)
+        version: 1.0.0(typescript@6.0.2)
       zod:
         specifier: workspace:*
         version: link:../zod
@@ -304,7 +304,7 @@ importers:
         version: 9.5.2
       valibot:
         specifier: ^1.0.0
-        version: 1.0.0(typescript@5.9.2)
+        version: 1.0.0(typescript@6.0.2)
       zod:
         specifier: workspace:*
         version: link:../zod
@@ -3924,21 +3924,23 @@ packages:
 
   glob@10.4.5:
     resolution: {integrity: sha512-7Bv8RF0k6xjo7d4A/PxYLbUCfb6c+Vpd2/mB2yRDlew7Jb5hEXiCD9ibfO7wpk8i4sevK6DFny9h7EYbM3/sHg==}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
     hasBin: true
 
   glob@11.0.2:
     resolution: {integrity: sha512-YT7U7Vye+t5fZ/QMkBFrTJ7ZQxInIUjwyAjVj84CYXqgBdv30MFUPGnBR6sQaVq6Is15wYJUsnzTuWaGRBhBAQ==}
     engines: {node: 20 || >=22}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
     hasBin: true
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
-    deprecated: Glob versions prior to v9 are no longer supported
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   glob@8.1.0:
     resolution: {integrity: sha512-r8hpEjiQEYlF2QU0df3dS+nxxSIreXQS1qRhMJM0Q5NDdR386C7jb7Hwwod8Fgiuex+k0GFjgft18yvxm5XoCQ==}
     engines: {node: '>=12'}
-    deprecated: Glob versions prior to v9 are no longer supported
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   globby@14.1.0:
     resolution: {integrity: sha512-0Ia46fDOaT7k4og1PDW4YbodWWr3scS2vAr2lTbsplOt2WkKp0vQbkI9wKis/T5LV/dqPjO3bpS/z6GTJB82LA==}
@@ -5797,6 +5799,7 @@ packages:
   tar@6.2.1:
     resolution: {integrity: sha512-DZ4yORTwrbTj/7MZYq2w+/ZFdI6OZ/f9SFHR+71gIVUZhOQPHzVCLpvRnPgyaMpfWxxk/4ONva3GQSyNIKRv6A==}
     engines: {node: '>=10'}
+    deprecated: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   terser@5.39.0:
     resolution: {integrity: sha512-LBAhFyLho16harJoWMg/nZsQYgTrg5jXOn2nCYjRUcZZEdE3qa2zb8QEDRUGVZBW4rlazf2fxkg8tztybTaqWw==}
@@ -5914,11 +5917,6 @@ packages:
     resolution: {integrity: sha512-Ne+eE4r0/iWnpAxD852z3A+N0Bt5RN//NjJwRd2VFHEmrywxf5vsZlh4R6lixl6B+wz/8d+maTSAkN1FIkI3LQ==}
     engines: {node: '>=10'}
 
-  typescript@5.5.4:
-    resolution: {integrity: sha512-Mtq29sKDAEYP7aljRgtPOpTvOfbwRWlS6dPRzwjdE+C0R4brX/GUyhHSecbHMFLNBLcJIPt9nl9yG5TZ1weH+Q==}
-    engines: {node: '>=14.17'}
-    hasBin: true
-
   typescript@5.6.1-rc:
     resolution: {integrity: sha512-E3b2+1zEFu84jB0YQi9BORDjz9+jGbwwy1Zi3G0LUNw7a7cePUrHMRNy8aPh53nXpkFGVHSxIZo5vKTfYaFiBQ==}
     engines: {node: '>=14.17'}
@@ -5931,6 +5929,11 @@ packages:
 
   typescript@5.9.2:
     resolution: {integrity: sha512-CWBzXQrc/qOkhidw1OzBTQuYRbfyxDXJMVJ1XNwUHGROVmuaeiEm3OslpZ1RV96d7SKKjZKrSJu3+t/xlw3R9A==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
+  typescript@6.0.2:
+    resolution: {integrity: sha512-bGdAIrZ0wiGDo5l8c++HWtbaNCWTS4UTv7RaTH/ThVIgjkveJt83m74bBHMJkuCbslY8ixgLBVZJIOiQlQTjfQ==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -7878,11 +7881,11 @@ snapshots:
     optionalDependencies:
       rollup: 4.37.0
 
-  '@rollup/plugin-typescript@12.1.2(rollup@4.37.0)(tslib@2.8.1)(typescript@5.9.2)':
+  '@rollup/plugin-typescript@12.1.2(rollup@4.37.0)(tslib@2.8.1)(typescript@6.0.2)':
     dependencies:
       '@rollup/pluginutils': 5.1.4(rollup@4.37.0)
       resolve: 1.22.10
-      typescript: 5.9.2
+      typescript: 6.0.2
     optionalDependencies:
       rollup: 4.37.0
       tslib: 2.8.1
@@ -10147,7 +10150,7 @@ snapshots:
     dependencies:
       react: 19.0.0
 
-  madge@8.0.0(typescript@5.5.4):
+  madge@8.0.0(typescript@6.0.2):
     dependencies:
       chalk: 4.1.2
       commander: 7.2.0
@@ -10162,7 +10165,7 @@ snapshots:
       ts-graphviz: 2.1.6
       walkdir: 0.4.1
     optionalDependencies:
-      typescript: 5.5.4
+      typescript: 6.0.2
     transitivePeerDependencies:
       - supports-color
 
@@ -11489,7 +11492,7 @@ snapshots:
       glob: 11.0.2
       package-json-from-dist: 1.0.1
 
-  rolldown-plugin-dts@0.13.11(rolldown@1.0.0-beta.15)(typescript@5.5.4):
+  rolldown-plugin-dts@0.13.11(rolldown@1.0.0-beta.15)(typescript@6.0.2):
     dependencies:
       '@babel/generator': 7.27.5
       '@babel/parser': 7.27.5
@@ -11501,7 +11504,7 @@ snapshots:
       get-tsconfig: 4.10.1
       rolldown: 1.0.0-beta.15
     optionalDependencies:
-      typescript: 5.5.4
+      typescript: 6.0.2
     transitivePeerDependencies:
       - oxc-resolver
       - supports-color
@@ -12082,7 +12085,7 @@ snapshots:
       minimist: 1.2.8
       strip-bom: 3.0.0
 
-  tsdown@0.12.8(typescript@5.5.4):
+  tsdown@0.12.8(typescript@6.0.2):
     dependencies:
       ansis: 4.1.0
       cac: 6.7.14
@@ -12092,13 +12095,13 @@ snapshots:
       empathic: 1.1.0
       hookable: 5.5.3
       rolldown: 1.0.0-beta.15
-      rolldown-plugin-dts: 0.13.11(rolldown@1.0.0-beta.15)(typescript@5.5.4)
+      rolldown-plugin-dts: 0.13.11(rolldown@1.0.0-beta.15)(typescript@6.0.2)
       semver: 7.7.2
       tinyexec: 1.0.1
       tinyglobby: 0.2.14
       unconfig: 7.3.2
     optionalDependencies:
-      typescript: 5.5.4
+      typescript: 6.0.2
     transitivePeerDependencies:
       - '@typescript/native-preview'
       - oxc-resolver
@@ -12138,13 +12141,13 @@ snapshots:
 
   type-fest@0.20.2: {}
 
-  typescript@5.5.4: {}
-
   typescript@5.6.1-rc: {}
 
   typescript@5.8.2: {}
 
   typescript@5.9.2: {}
+
+  typescript@6.0.2: {}
 
   unconfig@7.3.2:
     dependencies:
@@ -12267,9 +12270,9 @@ snapshots:
       is-typed-array: 1.1.15
       which-typed-array: 1.1.19
 
-  valibot@1.0.0(typescript@5.9.2):
+  valibot@1.0.0(typescript@6.0.2):
     optionalDependencies:
-      typescript: 5.9.2
+      typescript: 6.0.2
 
   validate-npm-package-license@3.0.4:
     dependencies:
@@ -12463,11 +12466,11 @@ snapshots:
 
   zod@4.0.8: {}
 
-  zshy@0.4.2(typescript@5.5.4):
+  zshy@0.4.2(typescript@6.0.2):
     dependencies:
       arg: 5.0.2
       globby: 14.1.0
       table: 6.9.0
-      typescript: 5.5.4
+      typescript: 6.0.2
 
   zwitch@2.0.4: {}

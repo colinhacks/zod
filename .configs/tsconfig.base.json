@@ -3,7 +3,8 @@
     "target": "es2020",
     "lib": ["es2020", "dom"],
     "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "moduleResolution": "nodenext",
+    "ignoreDeprecations": "6.0",
     "jsx": "react",
 
     "strict": true,
