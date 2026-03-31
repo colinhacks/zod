@@ -3,7 +3,7 @@ title: Basic usage
 description: "Basic usage guide covering schema definition, parsing data, error handling, and type inference"
 ---
 
-import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 import { Callout } from "fumadocs-ui/components/callout";
 
 This page will walk you through the basics of creating schemas, parsing data, and using inferred types. For complete documentation on Zod's schema API, refer to [Defining schemas](/api).
@@ -15,32 +15,34 @@ Before you can do anything else, you need to define a schema. For the purposes o
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-import * as z from "zod"; 
+import * as z from "zod";
 
-const Player = z.object({ 
-  username: z.string(),
-  xp: z.number()
+const Player = z.object({
+username: z.string(),
+xp: z.number()
 });
-```
+
+````
 </Tab>
 <Tab value="Zod Mini">
 ```ts
 import * as z from "zod/mini"
 
-const Player = z.object({ 
+const Player = z.object({
   username: z.string(),
   xp: z.number()
 });
-```
+````
+
 </Tab>
 </Tabs>
 
 ## Parsing data
 
-Given any Zod schema, use `.parse` to validate an input. If it's valid, Zod returns a strongly-typed *deep clone* of the input. 
+Given any Zod schema, use `.parse` to validate an input. If it's valid, Zod returns a strongly-typed _deep clone_ of the input.
 
 ```ts
-Player.parse({ username: "billie", xp: 100 }); 
+Player.parse({ username: "billie", xp: 100 });
 // => returns { username: "billie", xp: 100 }
 ```
 
@@ -48,8 +50,9 @@ Player.parse({ username: "billie", xp: 100 });
 **Note** — If your schema uses certain asynchronous APIs like `async` [refinements](/api#refinements) or [transforms](/api#transforms), you'll need to use the `.parseAsync()` method instead.
 
 ```ts
-await Player.parseAsync({ username: "billie", xp: 100 }); 
+await Player.parseAsync({ username: "billie", xp: 100 });
 ```
+
 </Callout>
 
 ## Handling errors
@@ -114,9 +117,9 @@ To avoid a `try/catch` block, you can use the `.safeParse()` method to get back 
 ```ts
 const result = Player.safeParse({ username: 42, xp: "100" });
 if (!result.success) {
-  result.error;   // ZodError instance
+  result.error; // ZodError instance
 } else {
-  result.data;    // { username: string; xp: number }
+  result.data; // { username: string; xp: number }
 }
 ```
 
@@ -126,6 +129,7 @@ if (!result.success) {
 ```ts
 await schema.safeParseAsync("hello");
 ```
+
 </Callout>
 
 ## Inferring types
@@ -133,9 +137,9 @@ await schema.safeParseAsync("hello");
 Zod infers a static type from your schema definitions. You can extract this type with the `z.infer<>` utility and use it however you like.
 
 ```ts
-const Player = z.object({ 
+const Player = z.object({
   username: z.string(),
-  xp: z.number()
+  xp: z.number(),
 });
 
 // extract the inferred type

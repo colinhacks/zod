@@ -4,37 +4,79 @@ mode: "center"
 description: "Introduction to Zod - TypeScript-first schema validation library with static type inference"
 ---
 
-import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
-import { Tabs } from 'fumadocs-ui/components/tabs';
+import { Accordion, Accordions } from "fumadocs-ui/components/accordion";
+import { Tabs } from "fumadocs-ui/components/tabs";
 
-import { Featured } from '../components/featured';
-import { Platinum } from '../components/platinum';
-import { Gold } from '../components/gold';
-import { Silver } from '../components/silver';
-import { Bronze } from '../components/bronze';
-import { HeroLogo } from '../components/hero-logo';
-
+import { Featured } from "../components/featured";
+import { Platinum } from "../components/platinum";
+import { Gold } from "../components/gold";
+import { Silver } from "../components/silver";
+import { Bronze } from "../components/bronze";
+import { HeroLogo } from "../components/hero-logo";
 
 <div className="flex flex-col items-stretch text-center">
   <HeroLogo />
   <h1 className="text-3xl font-bold">Zod</h1>
-  <p className="mt-2 mb-1">TypeScript-first schema validation with static type inference<br/>by <a href="https://x.com/colinhacks">@colinhacks</a> </p>
-  <br/>
-  <div  className="flex flex-row flex-wrap justify-center gap-1 py-2">
-    <a className="border-none" href="https://github.com/colinhacks/zod/actions?query=branch%3Amain">
-      <img className="h-[20px] m-0!" src="https://github.com/colinhacks/zod/actions/workflows/test.yml/badge.svg?event=push&branch=main" alt="Zod CI status" />
+  <p className="mt-2 mb-1">
+    TypeScript-first schema validation with static type inference
+    <br />
+    by <a href="https://x.com/colinhacks">@colinhacks</a>{" "}
+  </p>
+  <br />
+  <div className="flex flex-row flex-wrap justify-center gap-1 py-2">
+    <a
+      className="border-none"
+      href="https://github.com/colinhacks/zod/actions?query=branch%3Amain"
+    >
+      <img
+        className="h-[20px] m-0!"
+        src="https://github.com/colinhacks/zod/actions/workflows/test.yml/badge.svg?event=push&branch=main"
+        alt="Zod CI status"
+      />
     </a>
-    <a className="border-none" href="https://twitter.com/colinhacks" rel="nofollow">
-      <img  className="h-[20px] m-0!" src="https://img.shields.io/badge/created%20by-@colinhacks-4BBAAB.svg" alt="Created by Colin McDonnell" />
+    <a
+      className="border-none"
+      href="https://twitter.com/colinhacks"
+      rel="nofollow"
+    >
+      <img
+        className="h-[20px] m-0!"
+        src="https://img.shields.io/badge/created%20by-@colinhacks-4BBAAB.svg"
+        alt="Created by Colin McDonnell"
+      />
     </a>
-    <a className="border-none" href="https://opensource.org/licenses/MIT" rel="nofollow">
-      <img  className="h-[20px] m-0!" src="https://img.shields.io/github/license/colinhacks/zod" alt="License" />
+    <a
+      className="border-none"
+      href="https://opensource.org/licenses/MIT"
+      rel="nofollow"
+    >
+      <img
+        className="h-[20px] m-0!"
+        src="https://img.shields.io/github/license/colinhacks/zod"
+        alt="License"
+      />
     </a>
-    <a className="border-none" href="https://www.npmjs.com/package/zod" rel="nofollow">
-      <img  className="h-[20px] m-0!" src="https://img.shields.io/npm/dw/zod.svg" alt="npm" />
+    <a
+      className="border-none"
+      href="https://www.npmjs.com/package/zod"
+      rel="nofollow"
+    >
+      <img
+        className="h-[20px] m-0!"
+        src="https://img.shields.io/npm/dw/zod.svg"
+        alt="npm"
+      />
     </a>
-    <a className="border-none" href="https://github.com/colinhacks/zod" rel="nofollow">
-      <img  className="h-[20px] m-0!" src="https://img.shields.io/github/stars/colinhacks/zod" alt="stars" />
+    <a
+      className="border-none"
+      href="https://github.com/colinhacks/zod"
+      rel="nofollow"
+    >
+      <img
+        className="h-[20px] m-0!"
+        src="https://img.shields.io/github/stars/colinhacks/zod"
+        alt="stars"
+      />
     </a>
   </div>
   <div className="flex flex-row justify-center gap-1">
@@ -49,10 +91,11 @@ import { HeroLogo } from '../components/hero-logo';
   </div>
 </div>
 
-<br/>
+<br />
 
-{/* <ParamField path="param" type="string">
-  An example of a parameter field
+{/\* <ParamField path="param" type="string">
+An example of a parameter field
+
 </ParamField>
 
 <ParamField query="filter" type="string" default="none" required>
@@ -65,24 +108,33 @@ import { HeroLogo } from '../components/hero-logo';
 
 <div className="mt-5 font-gray-100 mx-auto text-center pt-12">
   <span className="">
-    Zod 4 is now stable! Read the <a rel="noopener noreferrer" href="/v4" alt="zod 4 release notes">release notes here</a>.
+    Zod 4 is now stable! Read the{" "}
+    <a rel="noopener noreferrer" href="/v4" alt="zod 4 release notes">
+      release notes here
+    </a>
+    .
   </span>
 </div>
 
-<br /><br /><br />
+<br />
+<br />
+<br />
 
-<Featured data={{
-  name: "Jazz",
-  link: "https://jazz.tools/?utm_source=zod",
-  lightImage: "https://raw.githubusercontent.com/garden-co/jazz/938f6767e46cdfded60e50d99bf3b533f4809c68/homepage/homepage/public/Zod%20sponsor%20message.png",
-  
-  darkImage: "https://raw.githubusercontent.com/garden-co/jazz/938f6767e46cdfded60e50d99bf3b533f4809c68/homepage/homepage/public/Zod%20sponsor%20message.png",
-}} />
+<Featured
+  data={{
+    name: "Jazz",
+    link: "https://jazz.tools/?utm_source=zod",
+    lightImage:
+      "https://raw.githubusercontent.com/garden-co/jazz/938f6767e46cdfded60e50d99bf3b533f4809c68/homepage/homepage/public/Zod%20sponsor%20message.png",
 
+    darkImage:
+      "https://raw.githubusercontent.com/garden-co/jazz/938f6767e46cdfded60e50d99bf3b533f4809c68/homepage/homepage/public/Zod%20sponsor%20message.png",
+  }}
+/>
 
 ## Introduction
 
-Zod is a TypeScript-first validation library. Using Zod, you can define *schemas* you can use to validate data, from a simple `string` to a complex nested object.
+Zod is a TypeScript-first validation library. Using Zod, you can define _schemas_ you can use to validate data, from a simple `string` to a complex nested object.
 
 ```ts
 import * as z from "zod";
@@ -92,7 +144,9 @@ const User = z.object({
 });
 
 // some untrusted data...
-const input = { /* stuff */ };
+const input = {
+  /* stuff */
+};
 
 // the parsed result is validated and type safe!
 const data = User.parse(input);
@@ -112,9 +166,7 @@ console.log(data.name);
 - Built-in JSON Schema conversion
 - Extensive ecosystem
 
-
 ## Installation
-
 
 ```sh
 npm install zod
@@ -126,12 +178,12 @@ Zod provides an MCP server that can be used by agents to search Zod's docs. To a
 
 ## Requirements
 
-Zod is tested against *TypeScript v5.5* and later. Older versions may work but are not officially supported.
+Zod is tested against _TypeScript v5.5_ and later. Older versions may work but are not officially supported.
 
 ### `"strict"`
 
 You must enable `strict` mode in your `tsconfig.json`. This is a best practice for all TypeScript projects.
-  
+
 ```ts
 // tsconfig.json
 {
@@ -142,7 +194,6 @@ You must enable `strict` mode in your `tsconfig.json`. This is a best practice f
   }
 }
 ```
-
 
 ## Ecosystem
 
@@ -166,28 +217,26 @@ I also contribute to the following projects, which I'd like to highlight:
 
 Sponsorship at any level is appreciated and encouraged. If you built a paid product using Zod, consider one of the [corporate tiers](https://github.com/sponsors/colinhacks).
 
-
 ### Platinum
 
 <Platinum />
 
-<br/>
+<br />
 
 ### Gold
 
 <Gold />
 
-<br/>
+<br />
 
 ### Silver
 
 <Silver />
 
-<br/>
+<br />
 
 ### Bronze
 
 <Bronze />
 
 <br />
-

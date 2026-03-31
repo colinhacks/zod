@@ -3,7 +3,7 @@ title: Zod
 description: "Internals and structure of the Zod library"
 ---
 
-The `zod/v4` package is the "flagship" library of the Zod ecosystem. It strikes a balance between developer experience and bundle size that's ideal for the vast majority of applications. 
+The `zod/v4` package is the "flagship" library of the Zod ecosystem. It strikes a balance between developer experience and bundle size that's ideal for the vast majority of applications.
 
 > If you have uncommonly strict constraints around bundle size, consider [Zod Mini](/packages/mini).
 
@@ -22,10 +22,7 @@ const schema = z.object({
 The API relies on methods to provide a concise, chainable, autocomplete-friendly way to define complex types.
 
 ```ts
-z.string()
-  .min(5)
-  .max(10)
-  .toLowerCase();
+z.string().min(5).max(10).toLowerCase();
 ```
 
 All schemas extend the `z.ZodType` base class, which in turn extends `z.$ZodType` from [`zod/v4/core`](/packages/core). All instance of `ZodType` implement the following methods:
@@ -40,7 +37,6 @@ mySchema.parse(data);
 mySchema.safeParse(data);
 mySchema.parseAsync(data);
 mySchema.safeParseAsync(data);
-
 
 // refinements
 mySchema.refine(refinementFunc);

@@ -3,7 +3,7 @@ title: Customizing errors
 description: "Guide to customizing validation error messages and error handling patterns"
 ---
 
-import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 
 {/* ## `$ZodError` */}
 
@@ -13,7 +13,6 @@ In Zod, validation errors are surfaced as instances of the `z.core.$ZodError` cl
 
 Instances of `$ZodError` contain an `.issues` array. Each issue contains a human-readable `message` and additional structured metadata about the issue.
 
-
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
@@ -22,14 +21,15 @@ import * as z from "zod";
 const result = z.string().safeParse(12); // { success: false, error: ZodError }
 result.error.issues;
 // [
-//   {
-//     expected: 'string',
-//     code: 'invalid_type',
-//     path: [],
-//     message: 'Invalid input: expected string, received number'
-//   }
+// {
+// expected: 'string',
+// code: 'invalid_type',
+// path: [],
+// message: 'Invalid input: expected string, received number'
+// }
 // ]
-```
+
+````
 </Tab>
 <Tab value="Zod Mini">
 ```ts
@@ -45,7 +45,7 @@ result.error.issues;
 //     message: 'Invalid input'
 //   }
 // ]
-```
+````
 
 </Tab>
 </Tabs>
@@ -53,7 +53,6 @@ result.error.issues;
 {/* ## Customization */}
 
 Every issue contains a `message` property with a human-readable error message. Error messages can be customized in a number of ways.
-
 
 ## The `error` param
 
@@ -82,28 +81,18 @@ z.string("Not a string!").parse(12);
 All `z` functions and schema methods accept custom errors.
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
-<Tab value="Zod">
-```ts
-z.string("Bad!");
-z.string().min(5, "Too short!");
-z.uuid("Bad UUID!");
-z.iso.date("Bad date!");
-z.array(z.string(), "Not an array!");
-z.array(z.string()).min(5, "Too few items!");
-z.set(z.string(), "Bad set!");
-```
-</Tab>
-<Tab value="Zod Mini">
-```ts
-z.string("Bad!");
-z.string().check(z.minLength(5, "Too short!"));
-z.uuid("Bad UUID!");
-z.iso.date("Bad date!");
-z.array(z.string(), "Bad array!");
-z.array(z.string()).check(z.minLength(5, "Too few items!"));
-z.set(z.string(), "Bad set!");
-```
-</Tab>
+  <Tab value="Zod">
+    ```ts z.string("Bad!"); z.string().min(5, "Too short!"); z.uuid("Bad
+    UUID!"); z.iso.date("Bad date!"); z.array(z.string(), "Not an array!");
+    z.array(z.string()).min(5, "Too few items!"); z.set(z.string(), "Bad set!");
+    ```
+  </Tab>
+  <Tab value="Zod Mini">
+    ```ts z.string("Bad!"); z.string().check(z.minLength(5, "Too short!"));
+    z.uuid("Bad UUID!"); z.iso.date("Bad date!"); z.array(z.string(), "Bad
+    array!"); z.array(z.string()).check(z.minLength(5, "Too few items!"));
+    z.set(z.string(), "Bad set!"); ```
+  </Tab>
 </Tabs>
 
 If you prefer, you can pass a params object with an `error` parameter instead.
@@ -134,22 +123,23 @@ z.set(z.string(), { error: "Bad set!" });
 </Tab>
 </Tabs>
 
-
 The `error` param optionally accepts a function. An error customization function is known as an **error map** in Zod terminology. The error map will run at parse time if a validation error occurs.
 
 ```ts
-z.string({ error: ()=>`[${Date.now()}]: Validation failure.` });
+z.string({ error: () => `[${Date.now()}]: Validation failure.` });
 ```
 
 <Callout>
-**Note** — In Zod v3, there were separate params for `message` (a string) and `errorMap` (a function). These have been unified in Zod 4 as `error`.
+  **Note** — In Zod v3, there were separate params for `message` (a string) and
+  `errorMap` (a function). These have been unified in Zod 4 as `error`.
 </Callout>
 
 The error map receives a context object you can use to customize the error message based on the validation issue.
 
 ```ts
 z.string({
-  error: (iss) => iss.input === undefined ? "Field is required." : "Invalid input."
+  error: (iss) =>
+    iss.input === undefined ? "Field is required." : "Invalid input.",
 });
 ```
 
@@ -197,17 +187,17 @@ z.int64({
 
 ## Per-parse error customization
 
-To customize errors on a *per-parse* basis, pass an error map into the parse method:
+To customize errors on a _per-parse_ basis, pass an error map into the parse method:
 
 ```ts
 const schema = z.string();
 
 schema.parse(12, {
-  error: iss => "per-parse custom error"
+  error: (iss) => "per-parse custom error",
 });
 ```
 
-This has *lower precedence* than any schema-level custom messages.
+This has _lower precedence_ than any schema-level custom messages.
 
 ```ts
 const schema = z.string({ error: "highest priority" });
@@ -233,7 +223,7 @@ const result = schema.safeParse(12, {
       return `minimum is ${iss.minimum}`;
     }
     // ...
-  }
+  },
 });
 ```
 
@@ -243,8 +233,8 @@ By default, Zod does not include input data in issues. This is to prevent uninte
 
 ```ts
 z.string().parse(12, {
-  reportInput: true
-})
+  reportInput: true,
+});
 
 // ZodError: [
 //   {
@@ -269,7 +259,7 @@ z.config({
 });
 ```
 
-Global error messages have *lower precedence* than schema-level or per-parse error messages.
+Global error messages have _lower precedence_ than schema-level or per-parse error messages.
 
 The `iss` object is a [discriminated union](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions) of all possible issue types. Use the `code` property to discriminate between them.
 
@@ -302,7 +292,8 @@ import * as z from "zod";
 import { en } from "zod/locales"
 
 z.config(en());
-```
+
+````
 </Tab>
 <Tab value="Zod Mini">
 ```ts
@@ -310,7 +301,8 @@ import * as z from "zod/mini"
 import { en } from "zod/locales";
 
 z.config(en());
-```
+````
+
 </Tab>
 </Tabs>
 
@@ -322,7 +314,7 @@ import * as z from "zod";
 async function loadLocale(locale: string) {
   const { default: locale } = await import(`zod/v4/locales/${locale}.js`);
   z.config(locale());
-};
+}
 
 await loadLocale("fr");
 ```
@@ -335,14 +327,16 @@ For convenience, all locales are exported as `z.locales` from `"zod"`. In some b
 import * as z from "zod";
 
 z.config(z.locales.en());
-```
+
+````
 </Tab>
 <Tab value="Zod Mini">
 ```ts
 import * as z from "zod/mini"
 
 z.config(z.locales.en());
-```
+````
+
 </Tab>
 </Tabs>
 
@@ -398,34 +392,34 @@ The following locales are available:
 - `zhTW` — Traditional Chinese
 - `yo` — Yorùbá
 
-
 ## Error precedence
 
-Below is a quick reference for determining error precedence: if multiple error customizations have been defined, which one takes priority? From *highest to lowest* priority:
+Below is a quick reference for determining error precedence: if multiple error customizations have been defined, which one takes priority? From _highest to lowest_ priority:
 
 1. **Schema-level error** — Any error message "hard coded" into a schema definition.
 
-  ```ts
-  z.string("Not a string!");
-  ```
+```ts
+z.string("Not a string!");
+```
 
 2. **Per-parse error** — A custom error map passed into the `.parse()` method.
 
-  ```ts
-  z.string().parse(12, {
-    error: (iss) => "My custom error"
-  });
-  ```
+```ts
+z.string().parse(12, {
+  error: (iss) => "My custom error",
+});
+```
 
 3. **Global error map** — A custom error map passed into `z.config()`.
 
-  ```ts
-  z.config({
-    customError: (iss) => "My custom error"
-  });
-  ```
+```ts
+z.config({
+  customError: (iss) => "My custom error",
+});
+```
 
 4. **Locale error map** — A custom error map passed into `z.config()`.
 
-  ```ts
-  z.config(z.locales.en());
+```ts
+z.config(z.locales.en());
+```
