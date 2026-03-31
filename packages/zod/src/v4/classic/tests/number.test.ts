@@ -169,6 +169,14 @@ test(".multipleOf() with scientific notation (multi-digit exponents)", () => {
   expect(schema15.parse(3e-15)).toEqual(3e-15);
 });
 
+test(".multipleOf() floating point bugs with scientific notation in val", () => {
+  // Regression test for https://github.com/colinhacks/zod/issues/5792
+  const schema = z.number().multipleOf(1e-7);
+  expect(schema.safeParse(3e-7).success).toBe(true);
+  expect(schema.safeParse(2.5e-7).success).toBe(false);
+  expect(schema.safeParse(3.3e-7).success).toBe(false);
+});
+
 test(".step() validation", () => {
   const schemaPointOne = z.number().step(0.1);
   const schemaPointZeroZeroZeroOne = z.number().step(0.0001);

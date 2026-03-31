@@ -174,3 +174,10 @@ test("finite getter", () => {
   expect(z.number().min(5).max(10).isFinite).toEqual(true);
   expect(safe.isFinite).toEqual(true);
 });
+
+test("multipleOf floating point bugs with scientific notation in val", () => {
+  const schema = z.number().multipleOf(1e-7);
+  expect(schema.safeParse(3e-7).success).toBe(true);
+  expect(schema.safeParse(2.5e-7).success).toBe(false);
+  expect(schema.safeParse(3.3e-7).success).toBe(false);
+});

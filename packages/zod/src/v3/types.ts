@@ -1352,8 +1352,22 @@ export type ZodNumberCheck =
 
 // https://stackoverflow.com/questions/3966484/why-does-modulus-operator-return-fractional-number-in-javascript/31711034#31711034
 function floatSafeRemainder(val: number, step: number) {
-  const valDecCount = (val.toString().split(".")[1] || "").length;
-  const stepDecCount = (step.toString().split(".")[1] || "").length;
+  const valString = val.toString();
+  const stepString = step.toString();
+
+  const getDecCount = (str: string) => {
+    const eIndex = str.indexOf("e-");
+    if (eIndex > -1) {
+      const parts = str.split("e-");
+      const decimalPart = parts[0]?.split(".")[1] || "";
+      return decimalPart.length + Number.parseInt(parts[1] || "0", 10);
+    }
+    return (str.split(".")[1] || "").length;
+  };
+
+  const valDecCount = getDecCount(valString);
+  const stepDecCount = getDecCount(stepString);
+
   const decCount = valDecCount > stepDecCount ? valDecCount : stepDecCount;
   const valInt = Number.parseInt(val.toFixed(decCount).replace(".", ""));
   const stepInt = Number.parseInt(step.toFixed(decCount).replace(".", ""));

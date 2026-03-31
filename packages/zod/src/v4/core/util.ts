@@ -245,15 +245,21 @@ export function cleanRegex(source: string): string {
 }
 
 export function floatSafeRemainder(val: number, step: number): number {
-  const valDecCount = (val.toString().split(".")[1] || "").length;
+  const valString = val.toString();
   const stepString = step.toString();
-  let stepDecCount = (stepString.split(".")[1] || "").length;
-  if (stepDecCount === 0 && /\d?e-\d+/.test(stepString)) {
-    const match = stepString.match(/\d?e-(\d+)/);
-    if (match?.[1]) {
-      stepDecCount = Number.parseInt(match[1]);
+
+  const getDecCount = (str: string) => {
+    const eIndex = str.indexOf("e-");
+    if (eIndex > -1) {
+      const parts = str.split("e-");
+      const decimalPart = parts[0]?.split(".")[1] || "";
+      return decimalPart.length + Number.parseInt(parts[1] || "0", 10);
     }
-  }
+    return (str.split(".")[1] || "").length;
+  };
+
+  const valDecCount = getDecCount(valString);
+  const stepDecCount = getDecCount(stepString);
 
   const decCount = valDecCount > stepDecCount ? valDecCount : stepDecCount;
   const valInt = Number.parseInt(val.toFixed(decCount).replace(".", ""));
