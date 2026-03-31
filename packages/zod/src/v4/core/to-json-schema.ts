@@ -141,6 +141,11 @@ export function process<T extends schemas.$ZodType>(
   ctx: ToJSONSchemaContext,
   _params: ProcessParams = { path: [], schemaPath: [] }
 ): JSONSchema.BaseSchema {
+  // Guard against undefined or non-Zod schema inputs. This can happen when
+  // recordProcessor passes def.valueType which may be undefined for some
+  // schemas generated from JSON Schema → Zod conversion.
+  if (!schema || !schema._zod) return {};
+
   const def = schema._zod.def as schemas.$ZodTypes["_zod"]["def"];
 
   // check for schema in seens
@@ -521,6 +526,10 @@ function isTransforming(
     seen: Set<schemas.$ZodType>;
   }
 ): boolean {
+  // Guard against undefined or non-Zod schema inputs. Recursive calls from
+  // record/map/set types may pass def.valueType which can be undefined.
+  if (!_schema || !(_schema as any)._zod) return false;
+
   const ctx = _ctx ?? { seen: new Set() };
 
   if (ctx.seen.has(_schema)) return false;
