@@ -4,7 +4,7 @@
     "lib": ["es2020", "dom"],
     "module": "NodeNext",
     "moduleResolution": "nodenext",
-    "ignoreDeprecations": "6.0",
+
     "jsx": "react",
 
     "strict": true,

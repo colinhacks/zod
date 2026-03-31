@@ -4,5 +4,6 @@
     "rootDir": "src",
     "outDir": ".",
     "customConditions": ["@zod/source"],
+    "ignoreDeprecations": "6.0",
   }
 }
