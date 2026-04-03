@@ -26,6 +26,14 @@ jobs:
       - uses: pnpm/action-setup@v4
       - run: pnpm install
       - run: pnpm add typescript@${{ matrix.typescript }} -w
+      - name: Use TS6-compatible tsconfig (zshy hardcodes deprecated moduleResolution=node10)
+        run: |
+          TS_MAJOR=$(npx tsc --version | awk '{print $2}' | cut -d. -f1)
+          if [ "$TS_MAJOR" -ge 6 ]; then
+            find . -name 'tsconfig*.json' -not -path '*/node_modules/*' -not -name 'tsconfig.base.ts6.json' \
+              -exec sed -i 's/tsconfig\.base\.json/tsconfig.base.ts6.json/g' {} +
+            echo "Switched tsconfig extends to tsconfig.base.ts6.json for TypeScript $TS_MAJOR"
+          fity
       - run: pnpm build
       - run: pnpm test
       - run: pnpm run --filter @zod/resolution test:all
