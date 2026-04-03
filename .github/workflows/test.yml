@@ -26,6 +26,20 @@ jobs:
       - uses: pnpm/action-setup@v4
       - run: pnpm install
       - run: pnpm add typescript@${{ matrix.typescript }} -w
+      - name: Patch for TypeScript 6+ (zshy hardcodes deprecated moduleResolution=node10)
+        run: |
+          TS_MAJOR=$(npx tsc --version | awk '{print $2}' | cut -d. -f1)
+          if [ "$TS_MAJOR" -ge 6 ]; then
+            pnpm add typescript@${{ matrix.typescript }} --filter @zod/resolution --filter @zod/integration
+            node -e "
+              const fs = require('fs');
+              const p = '.configs/tsconfig.base.json';
+              const c = JSON.parse(fs.readFileSync(p, 'utf8'));
+              c.compilerOptions.ignoreDeprecations = '6.0';
+              fs.writeFileSync(p, JSON.stringify(c, null, 2) + '\n');
+            "
+            echo 'Patched tsconfig and updated subpackage TypeScript for TS6+'
+          fi
       - run: pnpm build
       - run: pnpm test
       - run: pnpm run --filter @zod/resolution test:all

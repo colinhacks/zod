@@ -107,7 +107,9 @@ test("async validation", async () => {
 
 test("tuple with optional elements", () => {
   const myTuple = z.tuple([z.string(), z.number().optional(), z.string().optional()]).rest(z.boolean());
-  expectTypeOf<typeof myTuple._output>().toEqualTypeOf<[string, number?, string?, ...boolean[]]>();
+  expectTypeOf<typeof myTuple._output>().toEqualTypeOf<
+    [string, (number | undefined)?, (string | undefined)?, ...boolean[]]
+  >();
 
   const goodData = [["asdf"], ["asdf", 1234], ["asdf", 1234, "asdf"], ["asdf", 1234, "asdf", true, false, true]];
   for (const data of goodData) {
@@ -149,7 +151,9 @@ test("tuple with optional elements followed by required", () => {
 
 test("tuple with all optional elements", () => {
   const allOptionalTuple = z.tuple([z.string().optional(), z.number().optional(), z.boolean().optional()]);
-  expectTypeOf<typeof allOptionalTuple._output>().toEqualTypeOf<[string?, number?, boolean?]>();
+  expectTypeOf<typeof allOptionalTuple._output>().toEqualTypeOf<
+    [(string | undefined)?, (number | undefined)?, (boolean | undefined)?]
+  >();
 
   // Empty array should be valid (all items optional)
   expect(allOptionalTuple.parse([])).toEqual([]);

@@ -16,7 +16,7 @@ type TestFormErrors = z.inferFlattenedErrors<typeof Test>;
 test("default flattened errors type inference", () => {
   type TestTypeErrors = {
     formErrors: string[];
-    fieldErrors: { [P in keyof z.TypeOf<typeof Test>]?: string[] | undefined };
+    fieldErrors: { [P in keyof z.TypeOf<typeof Test>]?: string[] };
   };
 
   util.assertEqual<z.inferFlattenedErrors<typeof Test>, TestTypeErrors>(true);
@@ -28,7 +28,7 @@ test("custom flattened errors type inference", () => {
   type TestTypeErrors = {
     formErrors: ErrorType[];
     fieldErrors: {
-      [P in keyof z.TypeOf<typeof Test>]?: ErrorType[] | undefined;
+      [P in keyof z.TypeOf<typeof Test>]?: ErrorType[];
     };
   };
 
@@ -40,7 +40,7 @@ test("custom flattened errors type inference", () => {
 test("form errors type inference", () => {
   type TestTypeErrors = {
     formErrors: string[];
-    fieldErrors: { [P in keyof z.TypeOf<typeof Test>]?: string[] | undefined };
+    fieldErrors: { [P in keyof z.TypeOf<typeof Test>]?: string[] };
   };
 
   util.assertEqual<z.inferFlattenedErrors<typeof Test>, TestTypeErrors>(true);
