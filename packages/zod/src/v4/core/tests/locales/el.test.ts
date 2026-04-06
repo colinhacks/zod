@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import { z } from "../../../../index.js";
 import el from "../../../locales/el.js";
 
-test("Greek locale - type name translations in too_small errors", () => {
+test("Greek locale - too_small errors", () => {
   z.config(el());
 
   // Test string type translation
@@ -38,7 +38,7 @@ test("Greek locale - type name translations in too_small errors", () => {
   }
 });
 
-test("Greek locale - type name translations in too_big errors", () => {
+test("Greek locale - too_big errors", () => {
   z.config(el());
 
   // Test string type translation
@@ -66,7 +66,7 @@ test("Greek locale - type name translations in too_big errors", () => {
   }
 });
 
-test("Greek locale - type name translations in invalid_type errors", () => {
+test("Greek locale - invalid_type errors", () => {
   z.config(el());
 
   // Test string expected, number received
@@ -135,6 +135,17 @@ test("Greek locale - other error cases", () => {
   expect(strictResult.success).toBe(false);
   if (!strictResult.success) {
     expect(strictResult.error.issues[0].message).toBe('Άγνωστο κλειδί: "b"');
+  }
+
+  // Test unrecognized_keys (multiple keys)
+  const strictMultipleResult = strictSchema.safeParse({
+    a: "test",
+    b: "extra",
+    c: "another",
+  });
+  expect(strictMultipleResult.success).toBe(false);
+  if (!strictMultipleResult.success) {
+    expect(strictMultipleResult.error.issues[0].message).toBe('Άγνωστα κλειδιά: "b", "c"');
   }
 
   // Test invalid_union

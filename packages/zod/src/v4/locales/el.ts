@@ -98,7 +98,7 @@ const error: () => errors.$ZodErrorMap = () => {
       case "not_multiple_of":
         return `Μη έγκυρος αριθμός: πρέπει να είναι πολλαπλάσιο του ${issue.divisor}`;
       case "unrecognized_keys":
-        return `Άγνωστο${issue.keys.length > 1 ? "ι" : ""} κλειδ${issue.keys.length > 1 ? "ιά" : "ί"}: ${util.joinValues(issue.keys, ", ")}`;
+        return `Άγνωστ${issue.keys.length > 1 ? "α" : "ο"} κλειδ${issue.keys.length > 1 ? "ιά" : "ί"}: ${util.joinValues(issue.keys, ", ")}`;
       case "invalid_key":
         return `Μη έγκυρο κλειδί στο ${issue.origin}`;
       case "invalid_union":
