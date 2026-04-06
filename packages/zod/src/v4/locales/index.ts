@@ -6,6 +6,7 @@ export { default as ca } from "./ca.js";
 export { default as cs } from "./cs.js";
 export { default as da } from "./da.js";
 export { default as de } from "./de.js";
+export { default as el } from "./el.js";
 export { default as en } from "./en.js";
 export { default as eo } from "./eo.js";
 export { default as es } from "./es.js";
