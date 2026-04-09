@@ -270,7 +270,13 @@ const poweredByZodProjects: ZodResource[] = [
     url: "https://github.com/endel/zodgres",
     description: "Postgres.js + Zod: Database collections with static type inference and automatic migrations",
     slug: "endel/zodgres",
-  }
+  },
+  {
+    name: "validex",
+    url: "https://github.com/chiptoma/validex",
+    description: "25 tree-shakeable validation rules for common fields (email, phone, password, etc.) with structured error codes, i18n, and framework adapters.",
+    slug: "chiptoma/validex",
+  },
 ];
 
 const zodUtilities: ZodResource[] = [
