@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import { fromJSONSchema } from "../from-json-schema.js";
 import * as z from "../index.js";
 
@@ -731,4 +731,56 @@ test("contentEncoding and contentMediaType are stored as metadata", () => {
   const meta = customRegistry.get(schema);
   expect(meta?.contentEncoding).toBe("base64");
   expect(meta?.contentMediaType).toBe("image/png");
+});
+
+// fromJSONSchema validates pattern / patternProperties keys before new RegExp to limit ReDoS risk
+describe("JSON Schema pattern safety (ReDoS mitigation)", () => {
+  test("rejects string patterns with nested quantifiers (e.g. (a+)+)", () => {
+    expect(() => fromJSONSchema({ type: "string", pattern: "(a+)+b" })).toThrow(
+      /nested quantifiers can cause unsafe regular expression matching cost/
+    );
+  });
+
+  test("rejects patternProperties keys with nested quantifiers", () => {
+    expect(() =>
+      fromJSONSchema({
+        type: "object",
+        patternProperties: {
+          "(x+)+y": { type: "string" },
+        },
+      })
+    ).toThrow(/nested quantifiers can cause unsafe regular expression matching cost/);
+  });
+
+  test("rejects pattern strings above the maximum supported length", () => {
+    const pattern = "a".repeat(4097);
+    expect(() => fromJSONSchema({ type: "string", pattern })).toThrow(/exceeds maximum supported length \(4096\)/);
+  });
+
+  test("accepts common string patterns without nested quantifiers", () => {
+    const schema = fromJSONSchema({
+      type: "string",
+      pattern: "^[a-z]+$",
+    });
+    expect(schema.parse("hello")).toBe("hello");
+    expect(() => schema.parse("Hello")).toThrow();
+  });
+
+  test("accepts alternation groups with a single outer quantifier ((?:foo|bar)+)", () => {
+    const schema = fromJSONSchema({
+      type: "string",
+      pattern: "(?:foo|bar)+",
+    });
+    expect(schema.parse("foobar")).toBe("foobar");
+  });
+
+  test("patternProperties with typical key patterns still converts", () => {
+    const schema = fromJSONSchema({
+      type: "object",
+      patternProperties: {
+        "^S_": { type: "string" },
+      },
+    });
+    expect(schema.parse({ S_name: "John" })).toEqual({ S_name: "John" });
+  });
 });

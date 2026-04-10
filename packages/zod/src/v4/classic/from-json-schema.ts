@@ -101,6 +101,108 @@ const RECOGNIZED_KEYS = new Set([
   "readOnly",
 ]);
 
+// JSON Schema pattern strings feed into RegExp; cap length and reject nested quantifiers on groups
+// (e.g. (a+)+) to reduce ReDoS risk. Heuristic only, not full regexp safety analysis.
+function validateJsonSchemaRegExpSource(source: string): void {
+  const maxLen = 4096;
+  if (source.length > maxLen) {
+    throw new Error(`JSON Schema pattern exceeds maximum supported length (${maxLen}) for safe conversion`);
+  }
+
+  const frames: { innerHadQuantifier: boolean }[] = [];
+  let inClass = false;
+  let i = 0;
+
+  const isQuantifierStart = (j: number): boolean => {
+    if (j >= source.length) return false;
+    const ch = source[j]!;
+    if (ch === "*" || ch === "+" || ch === "?") return true;
+    if (ch === "{") return /^\{\d/.test(source.slice(j));
+    return false;
+  };
+
+  const consumeQuantifiers = (start: number): number => {
+    let j = start;
+    while (j < source.length) {
+      if (source[j] === "\\") {
+        j += 2;
+        continue;
+      }
+      if (!isQuantifierStart(j)) break;
+      if (source[j] === "{") {
+        j += 1;
+        while (j < source.length && source[j] !== "}") {
+          if (source[j] === "\\") j += 2;
+          else j += 1;
+        }
+        j += 1;
+      } else {
+        j += 1;
+        if (j < source.length && source[j] === "?") j += 1;
+      }
+    }
+    return j;
+  };
+
+  while (i < source.length) {
+    const c = source[i]!;
+    if (c === "\\") {
+      i += 2;
+      continue;
+    }
+    if (inClass) {
+      if (c === "]") inClass = false;
+      i += 1;
+      continue;
+    }
+    if (c === "[") {
+      inClass = true;
+      i += 1;
+      continue;
+    }
+    if (c === "(") {
+      frames.push({ innerHadQuantifier: false });
+      i += 1;
+      if (i < source.length && source[i] === "?") {
+        i += 1;
+        if (i < source.length) {
+          const ext = source[i]!;
+          if (ext === ":" || ext === "=" || ext === "!") {
+            i += 1;
+          } else if (ext === "<" && i + 1 < source.length) {
+            const ext2 = source[i + 1]!;
+            if (ext2 === "=" || ext2 === "!") i += 2;
+            else i += 1;
+          }
+        }
+      }
+      continue;
+    }
+    if (c === ")") {
+      const fr = frames.pop();
+      i += 1;
+      if (fr?.innerHadQuantifier && isQuantifierStart(i)) {
+        throw new Error(
+          "JSON Schema pattern is not supported: nested quantifiers can cause unsafe regular expression matching cost"
+        );
+      }
+      if (frames.length > 0 && fr?.innerHadQuantifier) {
+        frames[frames.length - 1]!.innerHadQuantifier = true;
+      }
+      continue;
+    }
+    if (isQuantifierStart(i)) {
+      const next = consumeQuantifiers(i);
+      if (frames.length > 0) {
+        frames[frames.length - 1]!.innerHadQuantifier = true;
+      }
+      i = next;
+      continue;
+    }
+    i += 1;
+  }
+}
+
 function detectVersion(schema: JSONSchema.JSONSchema, defaultTarget?: JSONSchemaVersion): JSONSchemaVersion {
   const $schema = schema.$schema;
 
@@ -324,6 +426,8 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
       }
       if (schema.pattern) {
         // JSON Schema patterns are not implicitly anchored (match anywhere in string)
+        // Validate regexp source before compiling (length cap, nested quantifiers) to reduce ReDoS risk
+        validateJsonSchemaRegExpSource(schema.pattern);
         stringSchema = stringSchema.regex(new RegExp(schema.pattern));
       }
 
@@ -412,6 +516,7 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         const looseRecords: ZodType[] = [];
 
         for (const pattern of patternKeys) {
+          validateJsonSchemaRegExpSource(pattern);
           const patternValue = convertSchema(patternProps[pattern] as JSONSchema.JSONSchema, ctx);
           const keySchema = z.string().regex(new RegExp(pattern));
           looseRecords.push(z.looseRecord(keySchema, patternValue));
