@@ -3,8 +3,8 @@
   "compilerOptions": {
     "lib": ["dom", "dom.iterable", "esnext"],
     "customConditions": ["@zod/source"],
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "types": []
   },
   "include": ["**/*.ts", "**/*.mts", "**/*.cts"],
