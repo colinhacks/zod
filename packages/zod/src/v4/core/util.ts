@@ -369,7 +369,7 @@ export function isObject(data: any): data is Record<PropertyKey, unknown> {
 }
 
 export const allowsEval: { value: boolean } = cached(() => {
-  // trying to feature detect can cause a CSP error, so this provides a way for users opt-out globally,
+  // trying to feature detect can cause a CSP error, so this provides a way for users to opt out globally,
   // before the library is loaded
   if (typeof window !== "undefined" && (window as any).ZOD_NO_EVAL === true) {
     return false;
