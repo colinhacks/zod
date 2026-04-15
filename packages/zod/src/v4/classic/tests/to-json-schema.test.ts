@@ -2560,6 +2560,33 @@ test("defaults/prefaults", () => {
   `);
 });
 
+test("falsy prefault values are emitted as defaults", () => {
+  // https://github.com/colinhacks/zod/issues/5824
+  expect(z.boolean().prefault(false).toJSONSchema({ io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "default": false,
+      "type": "boolean",
+    }
+  `);
+
+  expect(z.number().prefault(0).toJSONSchema({ io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "default": 0,
+      "type": "number",
+    }
+  `);
+
+  expect(z.string().prefault("").toJSONSchema({ io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "default": "",
+      "type": "string",
+    }
+  `);
+});
+
 test("input type", () => {
   const schema = z.object({
     a: z.string(),
