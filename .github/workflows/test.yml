@@ -13,10 +13,11 @@ jobs:
   test-node:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest]
         node: ["lts/*"]
-        typescript: ["5.5", "latest"]
+        typescript: ["5.5", "6", "latest"]
     name: Test with TypeScript ${{ matrix.typescript }} on Node ${{ matrix.node }} (${{ matrix.os }})
     steps:
       - uses: actions/checkout@v4
@@ -26,6 +27,16 @@ jobs:
       - uses: pnpm/action-setup@v4
       - run: pnpm install
       - run: pnpm add typescript@${{ matrix.typescript }} -w
+      - run: |
+          # add "ignoreDeprecations": "6.0" in typescript 7
+          TSCONFIG='.configs/tsconfig.base.json'
+          if [[ "${{ matrix.typescript }}" == "6" || "${{ matrix.typescript }}" == "latest" ]]; then
+            jq '.compilerOptions.ignoreDeprecations="6.0"' $TSCONFIG > $TSCONFIG-fixed
+            [[ $? -eq 0 ]] || exit 1
+            mv $TSCONFIG-fixed $TSCONFIG
+            echo modified $TSCONFIG
+            jq '.' $TSCONFIG
+          fi
       - run: pnpm build
       - run: pnpm test
       - run: pnpm run --filter @zod/resolution test:all
