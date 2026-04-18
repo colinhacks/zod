@@ -194,33 +194,43 @@ test("email validations", () => {
 test("base64 validations", () => {
   const validBase64Strings = [
     "SGVsbG8gV29ybGQ=", // "Hello World"
+    "SGVsbG8gV29ybGQ", // "Hello World" with no padding
+    " SGVsbG8gV29ybGQ\n", // "Hello World" untrimmed
+    "SGVs bG8gV29ybGQ", // "Hello World" with a space in the middle
+    "   SG Vs b G8g V29 y bGQ   ", // "Hello World" with arbitrary spaces
+    "SGVs\nbG8g \fV29y \rbGQ ", // "Hello World" with chars that match /\s/ excluding \v no padding
+    "SGVs\nbG8g \fV29y \rbGQ =", // "Hello World" with chars that match /\s/ excluding \v and padding
+    "SGVsbG8gV29ybGQ", // Missing padding
     "VGhpcyBpcyBhbiBlbmNvZGVkIHN0cmluZw==", // "This is an encoded string"
+    "VGhpcyBpcyBhbiBlbmNvZGVkIHN0cmluZw", // Missing padding
     "TWFueSBoYW5kcyBtYWtlIGxpZ2h0IHdvcms=", // "Many hands make light work"
     "UGF0aWVuY2UgaXMgdGhlIGtleSB0byBzdWNjZXNz", // "Patience is the key to success"
     "QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // "Base64 encoding is fun"
     "MTIzNDU2Nzg5MA==", // "1234567890"
     "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo=", // "abcdefghijklmnopqrstuvwxyz"
     "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo=", // "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo", // Missing padding
     "ISIkJSMmJyonKCk=", // "!\"#$%&'()*"
     "", // Empty string is technically a valid base64
   ];
 
   for (const str of validBase64Strings) {
-    expect(str + z.string().base64().safeParse(str).success).toBe(`${str}true`);
+    const escapedStr = JSON.stringify(str).slice(1, -1);
+    expect(escapedStr + z.string().base64().safeParse(str).success).toBe(`${escapedStr}true`);
   }
 
   const invalidBase64Strings = [
-    "12345", // Not padded correctly, not a multiple of 4 characters
-    "SGVsbG8gV29ybGQ", // Missing padding
-    "VGhpcyBpcyBhbiBlbmNvZGVkIHN0cmluZw", // Missing padding
+    "12345", // length % 4 === 1
+    "1 2345", // length % 4 === 1 check ignores whitespace
     "!UGF0aWVuY2UgaXMgdGhlIGtleSB0byBzdWNjZXNz", // Invalid character '!'
     "?QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // Invalid character '?'
     ".MTIzND2Nzg5MC4=", // Invalid character '.'
-    "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo", // Missing padding
+    "SGVsbG8gV29ybGQ\v", // "\v matches /\s/, but is not allowed by atob"
   ];
 
   for (const str of invalidBase64Strings) {
-    expect(str + z.string().base64().safeParse(str).success).toBe(`${str}false`);
+    const escapedStr = JSON.stringify(str).slice(1, -1);
+    expect(escapedStr + z.string().base64().safeParse(str).success).toBe(`${escapedStr}false`);
   }
 });
 

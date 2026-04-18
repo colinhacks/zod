@@ -277,11 +277,13 @@ test("z.base64", () => {
   const a = z.base64();
   // valid base64
   expect(z.parse(a, "SGVsbG8gd29ybGQ=")).toEqual("SGVsbG8gd29ybGQ=");
+  expect(z.parse(a, "SGVs bG8g d29yb GQ=")).toEqual("SGVs bG8g d29yb GQ=");
+  expect(z.parse(a, "SGVsbG8gd29ybGQ")).toEqual("SGVsbG8gd29ybGQ");
   expect(z.parse(a, "U29tZSBvdGhlciBzdHJpbmc=")).toEqual("U29tZSBvdGhlciBzdHJpbmc=");
+  expect(z.parse(a, "U29tZSBvdGhlciBzdHJpbmc")).toEqual("U29tZSBvdGhlciBzdHJpbmc");
   // invalid base64
-  expect(() => z.parse(a, "SGVsbG8gd29ybGQ")).toThrow();
-  expect(() => z.parse(a, "U29tZSBvdGhlciBzdHJpbmc")).toThrow();
   expect(() => z.parse(a, "hello")).toThrow();
+  expect(() => z.parse(a, "SGVsbG8gd29ybGQ==")).toThrow(); // incorrect padding
   // wrong type
   expect(() => z.parse(a, 123)).toThrow();
 });
