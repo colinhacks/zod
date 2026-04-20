@@ -4,6 +4,55 @@ import * as parse from "./parse.js";
 
 type SomeType = core.SomeType;
 
+// Maps (internalProto, key) pairs already initialized — avoids repeated setup
+const _protoInitMap = new WeakMap<object, Set<string>>();
+
+/**
+ * Sets shared methods on the *internal* prototype layer of inst's concrete constructor
+ * (once per concrete type per key). See core.ts `$internalProto` for design rationale.
+ */
+function _initProto(inst: object, key: string, methods: Record<string, Function>): void {
+  const proto = (inst as any)._zod?.constr?.[core.$internalProto] ?? Object.getPrototypeOf(inst);
+  let keys = _protoInitMap.get(proto);
+  if (!keys) {
+    keys = new Set();
+    _protoInitMap.set(proto, keys);
+  }
+  if (keys.has(key)) return;
+  keys.add(key);
+  Object.assign(proto as any, methods);
+}
+
+// Shared mini builder methods (use `this` instead of per-instance closure over `inst`)
+function _sharedMiniCheck(this: any, ...checks: any[]) {
+  const def = this._zod.def;
+  return this.clone(
+    {
+      ...def,
+      checks: [
+        ...(def.checks ?? []),
+        ...checks.map((ch: any) =>
+          typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
+        ),
+      ],
+    },
+    { parent: true }
+  );
+}
+function _sharedMiniClone(this: any, _def?: any, params?: any) {
+  return core.clone(this, _def, params);
+}
+function _sharedMiniBrand(this: any) {
+  return this;
+}
+function _sharedMiniRegister(this: any, reg: any, meta: any) {
+  reg.add(this, meta);
+  return this;
+}
+function _sharedMiniApply(this: any, fn: any) {
+  return fn(this);
+}
+
 export interface ZodMiniType<
   out Output = unknown,
   out Input = unknown,
@@ -49,36 +98,21 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
 
     inst.def = def;
     inst.type = def.type;
+    // Parse-family: kept as per-instance closures so detached usage works
+    //   const parse = schema.parse; parse("hello"); // must work
     inst.parse = (data, params) => parse.parse(inst, data, params, { callee: inst.parse });
     inst.safeParse = (data, params) => parse.safeParse(inst, data, params);
     inst.parseAsync = async (data, params) => parse.parseAsync(inst, data, params, { callee: inst.parseAsync });
     inst.safeParseAsync = async (data, params) => parse.safeParseAsync(inst, data, params);
-    inst.check = (...checks) => {
-      return inst.clone(
-        {
-          ...def,
-          checks: [
-            ...(def.checks ?? []),
-            ...checks.map((ch) =>
-              typeof ch === "function"
-                ? {
-                    _zod: { check: ch, def: { check: "custom" }, onattach: [] },
-                  }
-                : ch
-            ),
-          ],
-        },
-        { parent: true }
-      );
-    };
-    inst.with = inst.check;
-    inst.clone = (_def, params) => core.clone(inst, _def, params);
-    inst.brand = () => inst as any;
-    inst.register = ((reg: any, meta: any) => {
-      reg.add(inst, meta);
-      return inst;
-    }) as any;
-    inst.apply = (fn) => fn(inst);
+    // Builder methods: placed on the internal prototype once per concrete type
+    _initProto(inst, "ZodMiniType", {
+      check: _sharedMiniCheck,
+      with: _sharedMiniCheck,
+      clone: _sharedMiniClone,
+      brand: _sharedMiniBrand,
+      register: _sharedMiniRegister,
+      apply: _sharedMiniApply,
+    });
   }
 );
 

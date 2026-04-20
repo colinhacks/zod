@@ -14,6 +14,21 @@ export const NEVER: never = Object.freeze({
   status: "aborted",
 }) as never;
 
+/**
+ * Symbol used to access the internal prototype of a Zod constructor.
+ *
+ * Each constructor created by `$constructor` maintains two prototype layers:
+ *   inst → _.prototype (user-visible; copy-loop targets this)
+ *            └── internalProto (library methods set by _initProto go here)
+ *
+ * Keeping library methods one layer below the user-visible prototype means the
+ * copy-loop is a no-op for default schemas (_.prototype is empty), which
+ * prevents V8 dictionary-mode degradation caused by too many own properties.
+ * User prototype extensions still work exactly as before: adding a method to
+ * e.g. `z.ZodType.prototype` triggers the copy-loop for every new instance.
+ */
+export const $internalProto: unique symbol = Symbol("zod.internalProto");
+
 export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T["_zod"]["def"]>(
   name: string,
   initializer: (inst: T, def: D) => void,
@@ -40,6 +55,11 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
     initializer(inst, def);
 
     // support prototype modifications
+    // _.prototype is the user-visible layer (empty by default).  When users add
+    // methods there (e.g. z.ZodType.prototype.myHelper = fn) those methods are
+    // copied to new instances here, preserving the original extension contract.
+    // Library methods live on internalProto (one level below), so they are
+    // never enumerated by Object.keys(_.prototype) and never copied to instances.
     const proto = _.prototype;
     const keys = Object.keys(proto);
     for (let i = 0; i < keys.length; i++) {
@@ -55,6 +75,12 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
   class Definition extends Parent {}
   Object.defineProperty(Definition, "name", { value: name });
 
+  // Internal prototype layer: library-owned methods (_initProto targets this).
+  // Sits between _.prototype (user space) and the Parent prototype so that
+  // Object.keys(_.prototype) always returns only user-added keys.
+  const internalProto = Object.create(params?.Parent?.prototype ?? Object.prototype);
+  Object.setPrototypeOf(Definition.prototype, internalProto);
+
   function _(this: any, def: D) {
     const inst = params?.Parent ? new Definition() : this;
     init(inst, def);
@@ -65,6 +91,8 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
     return inst;
   }
 
+  // Expose internalProto so that _initProto (in schemas.ts) can find it.
+  Object.defineProperty(_, $internalProto, { value: internalProto });
   Object.defineProperty(_, "init", { value: init });
   Object.defineProperty(_, Symbol.hasInstance, {
     value: (inst: any) => {
@@ -73,6 +101,11 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
     },
   });
   Object.defineProperty(_, "name", { value: name });
+
+  // Wire _.prototype → internalProto so that instance prototype chain is:
+  //   inst → _.prototype (user space) → internalProto (library space) → Parent
+  Object.setPrototypeOf(_.prototype, internalProto);
+
   return _ as any;
 }
 
