@@ -65,3 +65,11 @@ test("record should work with different key types and constructor field", () => 
   const result = enumSchema.parse({ constructor: "value1", key: "value2" });
   expect(result).toEqual({ constructor: "value1", key: "value2" });
 });
+
+test("transforms record keys", () => {
+  const schema = z.record(
+    z.string().transform((k) => k.toUpperCase()),
+    z.number()
+  );
+  expect(schema.parse({ hello: 1, world: 2 })).toEqual({ HELLO: 1, WORLD: 2 });
+});
