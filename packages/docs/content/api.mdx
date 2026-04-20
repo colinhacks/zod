@@ -588,6 +588,15 @@ const coolId = z.stringFormat("cool-id", ()=>{
 // a regex is also accepted
 z.stringFormat("cool-id", /^cool-[a-z0-9]{95}$/);
 ```
+> ⚠️ **Note**
+> `z.stringFormat()` is not chainable on `z.string()` or `z.coerce.string()`.
+> To use it with coercion, combine it via `.pipe()`:
+>
+> ```ts
+> z.coerce.string().pipe(
+>   z.stringFormat("cool-id", /^cool-[a-z0-9]{95}$/)
+> );
+> ```
 
 This schema will produce `"invalid_format"` issues, which are more descriptive than the `"custom"` errors produced by refinements or `z.custom()`.
 
