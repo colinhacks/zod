@@ -169,3 +169,11 @@ test("dont parse undefined values", () => {
     foo: undefined,
   });
 });
+
+test("transforms record keys", () => {
+  const schema = z.record(
+    z.string().transform((k) => k.toUpperCase()),
+    z.number()
+  );
+  expect(schema.parse({ hello: 1, world: 2 })).toEqual({ HELLO: 1, WORLD: 2 });
+});
