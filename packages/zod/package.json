@@ -126,7 +126,7 @@
   },
   "scripts": {
     "clean": "git clean -xdf . -e node_modules",
-    "build": "zshy --project tsconfig.build.json",
+    "build": "node -e \"require('child_process').execSync('zshy --project tsconfig.build' + (parseInt(require('typescript').version) >= 6 ? '.ts6' : '') + '.json', {stdio:'inherit'})\"",
     "postbuild": "tsx ../../scripts/write-stub-package-jsons.ts && pnpm biome check --write .",
     "test:watch": "pnpm vitest",
     "test": "pnpm vitest run",

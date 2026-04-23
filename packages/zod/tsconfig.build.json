@@ -3,7 +3,6 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": ".",
-    "customConditions": ["@zod/source"],
-    "ignoreDeprecations": "6.0"
+    "customConditions": ["@zod/source"]
   }
 }
