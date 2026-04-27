@@ -270,6 +270,12 @@ const poweredByZodProjects: ZodResource[] = [
     url: "https://github.com/endel/zodgres",
     description: "Postgres.js + Zod: Database collections with static type inference and automatic migrations",
     slug: "endel/zodgres",
+  },
+  {
+    name: "json-up",
+    url: "https://github.com/Nano-Collective/json-up",
+    description: "A fast, type-safe JSON migration tool with Zod schema validation.",
+    slug: "Nano-Collective/json-up",
   }
 ];
 

@@ -1814,7 +1814,7 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
 );
 
 export function transform<I = unknown, O = I>(
-  fn: (input: I, ctx: core.ParsePayload) => O
+  fn: (input: I, ctx: core.$RefinementCtx) => O
 ): ZodTransform<Awaited<O>, I> {
   return new ZodTransform({
     type: "transform",

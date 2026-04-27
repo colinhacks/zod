@@ -349,7 +349,6 @@ Zod converts the following schema types to the equivalent JSON Schema `format`:
 z.email(); // => { type: "string", format: "email" }
 z.iso.datetime(); // => { type: "string", format: "date-time" }
 z.iso.date(); // => { type: "string", format: "date" }
-z.iso.time(); // => { type: "string", format: "time" }
 z.iso.duration(); // => { type: "string", format: "duration" }
 z.ipv4(); // => { type: "string", format: "ipv4" }
 z.ipv6(); // => { type: "string", format: "ipv6" }
@@ -367,6 +366,7 @@ z.base64(); // => { type: "string", contentEncoding: "base64" }
 All other string formats are supported via `pattern`:
 
 ```ts
+z.iso.time();
 z.base64url();
 z.cuid();
 z.emoji();

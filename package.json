@@ -48,7 +48,7 @@
     "vitest": "^4.0.10",
     "zod": "workspace:*",
     "zod3": "npm:zod@~3.24.0",
-    "zshy": "^0.4.2"
+    "zshy": "^0.7.1"
   },
   "lint-staged": {
     "packages/*/src/**/*.ts": [

@@ -657,7 +657,6 @@ test("z.formatError nested union preserves parent path", () => {
   expect(formatted.parent.child._errors).toContain("Expected number");
   expect(formatted.parent._errors).toContain("Expected string");
 });
-
 test("z.treeifyError nested union preserves parent path", () => {
   // When a nested invalid_union appears inside another invalid_union,
   // the inner errors must stay nested under their parent path, not flatten to root.

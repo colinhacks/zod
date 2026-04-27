@@ -108,8 +108,8 @@ importers:
         specifier: npm:zod@~3.24.0
         version: zod@3.24.3
       zshy:
-        specifier: ^0.4.2
-        version: 0.4.2(typescript@5.5.4)
+        specifier: ^0.7.1
+        version: 0.7.1(typescript@5.5.4)
 
   packages/bench:
     devDependencies:
@@ -121,7 +121,7 @@ importers:
         version: 2.1.19
       valibot:
         specifier: ^1.0.0
-        version: 1.0.0(typescript@5.9.2)
+        version: 1.0.0(typescript@6.0.3)
       zod:
         specifier: workspace:*
         version: link:../zod
@@ -262,7 +262,7 @@ importers:
         version: 0.4.4(rollup@4.37.0)
       '@rollup/plugin-typescript':
         specifier: ^12.1.2
-        version: 12.1.2(rollup@4.37.0)(tslib@2.8.1)(typescript@5.9.2)
+        version: 12.1.2(rollup@4.37.0)(tslib@2.8.1)(typescript@6.0.3)
       '@types/node':
         specifier: ^22.13.13
         version: 22.13.13
@@ -277,7 +277,7 @@ importers:
         version: 10.0.0
       valibot:
         specifier: ^1.0.0
-        version: 1.0.0(typescript@5.9.2)
+        version: 1.0.0(typescript@6.0.3)
       zod:
         specifier: workspace:*
         version: link:../zod
@@ -304,7 +304,7 @@ importers:
         version: 9.5.2
       valibot:
         specifier: ^1.0.0
-        version: 1.0.0(typescript@5.9.2)
+        version: 1.0.0(typescript@6.0.3)
       zod:
         specifier: workspace:*
         version: link:../zod
@@ -3924,21 +3924,23 @@ packages:
 
   glob@10.4.5:
     resolution: {integrity: sha512-7Bv8RF0k6xjo7d4A/PxYLbUCfb6c+Vpd2/mB2yRDlew7Jb5hEXiCD9ibfO7wpk8i4sevK6DFny9h7EYbM3/sHg==}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
     hasBin: true
 
   glob@11.0.2:
     resolution: {integrity: sha512-YT7U7Vye+t5fZ/QMkBFrTJ7ZQxInIUjwyAjVj84CYXqgBdv30MFUPGnBR6sQaVq6Is15wYJUsnzTuWaGRBhBAQ==}
     engines: {node: 20 || >=22}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
     hasBin: true
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
-    deprecated: Glob versions prior to v9 are no longer supported
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   glob@8.1.0:
     resolution: {integrity: sha512-r8hpEjiQEYlF2QU0df3dS+nxxSIreXQS1qRhMJM0Q5NDdR386C7jb7Hwwod8Fgiuex+k0GFjgft18yvxm5XoCQ==}
     engines: {node: '>=12'}
-    deprecated: Glob versions prior to v9 are no longer supported
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   globby@14.1.0:
     resolution: {integrity: sha512-0Ia46fDOaT7k4og1PDW4YbodWWr3scS2vAr2lTbsplOt2WkKp0vQbkI9wKis/T5LV/dqPjO3bpS/z6GTJB82LA==}
@@ -5934,6 +5936,11 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  typescript@6.0.3:
+    resolution: {integrity: sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
   unconfig@7.3.2:
     resolution: {integrity: sha512-nqG5NNL2wFVGZ0NA/aCFw0oJ2pxSf1lwg4Z5ill8wd7K4KX/rQbHlwbh+bjctXL5Ly1xtzHenHGOK0b+lG6JVg==}
 
@@ -6265,8 +6272,8 @@ packages:
   zod@4.0.8:
     resolution: {integrity: sha512-+MSh9cZU9r3QKlHqrgHMTSr3QwMGv4PLfR0M4N/sYWV5/x67HgXEhIGObdBkpnX8G78pTgWnIrBL2lZcNJOtfg==}
 
-  zshy@0.4.2:
-    resolution: {integrity: sha512-q3OkMn4dXqVhwihg/XT5Rd/9kK38hFCpq+fM2uorXy8GjBMFjOSwW9P8wFHIBZQsyUakBFn/s7j7no8L2FU91w==}
+  zshy@0.7.1:
+    resolution: {integrity: sha512-2+w7ZTnaKWkRtOYzOTjofTq2kNHzu+s1On+FOE2O0BO0MbBzbkjuv5Ybr0qcSjA7aEWQutfTWri5ZJls3isTgg==}
     hasBin: true
     peerDependencies:
       typescript: '>5.5.0'
@@ -7878,11 +7885,11 @@ snapshots:
     optionalDependencies:
       rollup: 4.37.0
 
-  '@rollup/plugin-typescript@12.1.2(rollup@4.37.0)(tslib@2.8.1)(typescript@5.9.2)':
+  '@rollup/plugin-typescript@12.1.2(rollup@4.37.0)(tslib@2.8.1)(typescript@6.0.3)':
     dependencies:
       '@rollup/pluginutils': 5.1.4(rollup@4.37.0)
       resolve: 1.22.10
-      typescript: 5.9.2
+      typescript: 6.0.3
     optionalDependencies:
       rollup: 4.37.0
       tslib: 2.8.1
@@ -12146,6 +12153,8 @@ snapshots:
 
   typescript@5.9.2: {}
 
+  typescript@6.0.3: {}
+
   unconfig@7.3.2:
     dependencies:
       '@quansync/fs': 0.1.3
@@ -12267,9 +12276,9 @@ snapshots:
       is-typed-array: 1.1.15
       which-typed-array: 1.1.19
 
-  valibot@1.0.0(typescript@5.9.2):
+  valibot@1.0.0(typescript@6.0.3):
     optionalDependencies:
-      typescript: 5.9.2
+      typescript: 6.0.3
 
   validate-npm-package-license@3.0.4:
     dependencies:
@@ -12463,10 +12472,10 @@ snapshots:
 
   zod@4.0.8: {}
 
-  zshy@0.4.2(typescript@5.5.4):
+  zshy@0.7.1(typescript@5.5.4):
     dependencies:
       arg: 5.0.2
-      globby: 14.1.0
+      fast-glob: 3.3.3
       table: 6.9.0
       typescript: 5.5.4
 
