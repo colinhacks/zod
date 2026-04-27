@@ -225,7 +225,7 @@ test("all errors", () => {
       (val) => {
         return val.a === val.b;
       },
-      { message: "Must be equal" },
+      { message: "Must be equal" }
     );
 
   const r1 = schema.safeParse({
@@ -258,8 +258,7 @@ test("all errors", () => {
     }
   `);
 
-  expect(z.core.flattenError(r2.error!, (iss) => iss.message.toUpperCase()))
-    .toMatchInlineSnapshot(`
+  expect(z.core.flattenError(r2.error!, (iss) => iss.message.toUpperCase())).toMatchInlineSnapshot(`
     {
       "fieldErrors": {
         "a": [
@@ -274,8 +273,7 @@ test("all errors", () => {
   `);
   // Test identity
 
-  expect(z.core.flattenError(r2.error!, (i: z.ZodIssue) => i))
-    .toMatchInlineSnapshot(`
+  expect(z.core.flattenError(r2.error!, (i: z.ZodIssue) => i)).toMatchInlineSnapshot(`
     {
       "fieldErrors": {
         "a": [
@@ -304,10 +302,7 @@ test("all errors", () => {
   `);
 
   // Test mapping
-  const f1 = z.core.flattenError(
-    r2.error!,
-    (i: z.ZodIssue) => i.message.length,
-  );
+  const f1 = z.core.flattenError(r2.error!, (i: z.ZodIssue) => i.message.length);
   expect(f1).toMatchInlineSnapshot(`
     {
       "fieldErrors": {
@@ -465,51 +460,39 @@ test("z.prettifyError", () => {
 });
 
 test("z.toDotPath", () => {
-  expect(z.core.toDotPath(["a", "b", 0, "c"])).toMatchInlineSnapshot(
-    `"a.b[0].c"`,
-  );
+  expect(z.core.toDotPath(["a", "b", 0, "c"])).toMatchInlineSnapshot(`"a.b[0].c"`);
 
-  expect(z.core.toDotPath(["a", Symbol("b"), 0, "c"])).toMatchInlineSnapshot(
-    `"a["Symbol(b)"][0].c"`,
-  );
+  expect(z.core.toDotPath(["a", Symbol("b"), 0, "c"])).toMatchInlineSnapshot(`"a["Symbol(b)"][0].c"`);
 
   // Test with periods in keys
-  expect(z.core.toDotPath(["user.name", "first.last"])).toMatchInlineSnapshot(
-    `"["user.name"]["first.last"]"`,
-  );
+  expect(z.core.toDotPath(["user.name", "first.last"])).toMatchInlineSnapshot(`"["user.name"]["first.last"]"`);
 
   // Test with special characters
-  expect(
-    z.core.toDotPath(["user", "$special", Symbol("#symbol")]),
-  ).toMatchInlineSnapshot(`"user.$special["Symbol(#symbol)"]"`);
+  expect(z.core.toDotPath(["user", "$special", Symbol("#symbol")])).toMatchInlineSnapshot(
+    `"user.$special["Symbol(#symbol)"]"`
+  );
 
   // Test with dots and quotes
-  expect(
-    z.core.toDotPath(["search", `query("foo.bar"="abc")`]),
-  ).toMatchInlineSnapshot(`"search["query(\\"foo.bar\\"=\\"abc\\")"]"`);
+  expect(z.core.toDotPath(["search", `query("foo.bar"="abc")`])).toMatchInlineSnapshot(
+    `"search["query(\\"foo.bar\\"=\\"abc\\")"]"`
+  );
 
   // Test with newlines
-  expect(z.core.toDotPath(["search", `foo\nbar`])).toMatchInlineSnapshot(
-    `"search["foo\\nbar"]"`,
-  );
+  expect(z.core.toDotPath(["search", `foo\nbar`])).toMatchInlineSnapshot(`"search["foo\\nbar"]"`);
 
   // Test with empty strings
   expect(z.core.toDotPath(["", "empty"])).toMatchInlineSnapshot(`".empty"`);
 
   // Test with array indices
-  expect(z.core.toDotPath(["items", 0, 1, 2])).toMatchInlineSnapshot(
-    `"items[0][1][2]"`,
-  );
+  expect(z.core.toDotPath(["items", 0, 1, 2])).toMatchInlineSnapshot(`"items[0][1][2]"`);
 
   // Test with mixed path elements
-  expect(
-    z.core.toDotPath(["users", "user.config", 0, "settings.theme"]),
-  ).toMatchInlineSnapshot(`"users["user.config"][0]["settings.theme"]"`);
+  expect(z.core.toDotPath(["users", "user.config", 0, "settings.theme"])).toMatchInlineSnapshot(
+    `"users["user.config"][0]["settings.theme"]"`
+  );
 
   // Test with square brackets in keys
-  expect(z.core.toDotPath(["data[0]", "value"])).toMatchInlineSnapshot(
-    `"["data[0]"].value"`,
-  );
+  expect(z.core.toDotPath(["data[0]", "value"])).toMatchInlineSnapshot(`"["data[0]"].value"`);
 
   // Test with empty path
   expect(z.core.toDotPath([])).toMatchInlineSnapshot(`""`);
@@ -542,7 +525,7 @@ test("disc union treeify/format", () => {
     ],
     {
       error: "Invalid discriminator",
-    },
+    }
   );
 
   const error = schema.safeParse({ foo: "invalid" }).error;
@@ -672,12 +655,8 @@ test("z.treeifyError nested union preserves parent path", () => {
   expect(tree.properties).not.toHaveProperty("child");
   expect(tree.properties).toHaveProperty("parent");
   expect(tree.properties.parent.properties).toHaveProperty("child");
-  expect(tree.properties.parent.properties.child.errors).toContain(
-    "Expected string",
-  );
-  expect(tree.properties.parent.properties.child.errors).toContain(
-    "Expected number",
-  );
+  expect(tree.properties.parent.properties.child.errors).toContain("Expected string");
+  expect(tree.properties.parent.properties.child.errors).toContain("Expected number");
   expect(tree.properties.parent.errors).toContain("Expected string");
 });
 
@@ -747,7 +726,7 @@ test("z.treeifyError nested union with real schema", () => {
   const schema = z.string().or(
     z.object({
       settings: z.object({ name: z.string() }).and(innerUnion),
-    }),
+    })
   );
 
   const result = schema.safeParse({
@@ -760,9 +739,7 @@ test("z.treeifyError nested union with real schema", () => {
 
     // All settings-related errors should be under "settings", not at root
     if (tree.properties?.settings) {
-      for (const key of Object.keys(
-        tree.properties.settings.properties ?? {},
-      )) {
+      for (const key of Object.keys(tree.properties.settings.properties ?? {})) {
         // Every sub-property under settings should NOT also appear at root
         if (key !== "settings") {
           expect(tree.properties).not.toHaveProperty(key);
