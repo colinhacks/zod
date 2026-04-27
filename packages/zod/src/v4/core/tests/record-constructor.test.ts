@@ -66,7 +66,7 @@ test("record should work with different key types and constructor field", () => 
   expect(result).toEqual({ constructor: "value1", key: "value2" });
 });
 
-test("record should skip non-enumerable properties", () => {
+test("record should skip non-enumerable own properties", () => {
   const schema = z.record(z.string(), z.string());
 
   const input = { key: "value" };
@@ -85,7 +85,7 @@ test("record should skip non-enumerable properties", () => {
   }
 });
 
-test("record should still validate enumerable properties", () => {
+test("record fails on enumerable invalid values even when non-enumerable properties are present", () => {
   const schema = z.record(z.string(), z.string());
 
   const input = { key: "value", bad: 123 };
@@ -98,29 +98,26 @@ test("record should still validate enumerable properties", () => {
   expect(result.success).toBe(false);
 });
 
-test("z.json() should accept objects with non-enumerable properties", () => {
-  const schema = z.json();
+test("record validates enumerable Symbol keys and skips non-enumerable Symbol keys", () => {
+  const enumerableSym = Symbol.for("included");
+  const nonEnumerableSym = Symbol.for("hidden");
+  const schema = z.record(z.symbol(), z.string());
 
-  const input = { name: "test", count: 42 };
-  Object.defineProperty(input, "~standard", {
-    value: {
-      validate: () => {},
-      vendor: "zod",
-      version: 1,
-      jsonSchema: {
-        input: () => {},
-        output: () => {},
-      },
-    },
+  const input: Record<symbol, unknown> = { [enumerableSym]: "value" };
+  Object.defineProperty(input, nonEnumerableSym, {
+    value: 123,
     enumerable: false,
-    configurable: false,
   });
 
   const result = schema.safeParse(input);
   expect(result.success).toBe(true);
+  if (result.success) {
+    expect(result.data[enumerableSym]).toBe("value");
+    expect(Object.prototype.hasOwnProperty.call(result.data, nonEnumerableSym)).toBe(false);
+  }
 });
 
-test("z.json() accepts z.toJSONSchema() output", () => {
+test("z.json() accepts z.toJSONSchema() output (issue #5714)", () => {
   const schema = z.object({ name: z.string() });
   const jsonSchema = z.toJSONSchema(schema);
 
