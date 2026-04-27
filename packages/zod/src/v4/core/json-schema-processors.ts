@@ -65,48 +65,31 @@ export const numberProcessor: Processor<schemas.$ZodNumber> = (schema, ctx, _jso
   if (typeof format === "string" && format.includes("int")) json.type = "integer";
   else json.type = "number";
 
-  const haveMinimum = typeof minimum === "number";
-  const haveExclusiveMinimum = typeof exclusiveMinimum === "number";
-  const haveMaximum = typeof maximum === "number";
-  const haveExclusiveMaximum = typeof exclusiveMaximum === "number";
+  // when both minimum and exclusiveMinimum exist, pick the more restrictive one
+  const exMin = typeof exclusiveMinimum === "number" && exclusiveMinimum >= (minimum ?? Number.NEGATIVE_INFINITY);
+  const exMax = typeof exclusiveMaximum === "number" && exclusiveMaximum <= (maximum ?? Number.POSITIVE_INFINITY);
+  const legacy = ctx.target === "draft-04" || ctx.target === "openapi-3.0";
 
-  // If both minimum and exclusiveMinimum are present, use the one that is more
-  // restrictive
-  const useExclusiveMinimum = haveExclusiveMinimum && exclusiveMinimum >= (minimum ?? Number.NEGATIVE_INFINITY);
-  const useExclusiveMaximum = haveExclusiveMaximum && exclusiveMaximum <= (maximum ?? Number.POSITIVE_INFINITY);
-
-  // Handle minimum/exclusiveMinimum
-  // In draft-04/openapi-3.0, exclusiveMinimum is a boolean flag on the minimum field
-  // In draft-2020-12/openapi-3.1, they are separate numeric properties
-  if (ctx.target === "draft-04" || ctx.target === "openapi-3.0") {
-    if (useExclusiveMinimum) {
+  if (exMin) {
+    if (legacy) {
       json.minimum = exclusiveMinimum;
       json.exclusiveMinimum = true;
-    } else if (haveMinimum) {
-      json.minimum = minimum;
-    }
-  } else {
-    if (useExclusiveMinimum) {
+    } else {
       json.exclusiveMinimum = exclusiveMinimum;
-    } else if (haveMinimum) {
-      json.minimum = minimum;
     }
+  } else if (typeof minimum === "number") {
+    json.minimum = minimum;
   }
 
-  // Handle maximum/exclusiveMaximum (same pattern as minimum)
-  if (ctx.target === "draft-04" || ctx.target === "openapi-3.0") {
-    if (useExclusiveMaximum) {
+  if (exMax) {
+    if (legacy) {
       json.maximum = exclusiveMaximum;
       json.exclusiveMaximum = true;
-    } else if (haveMaximum) {
-      json.maximum = maximum;
-    }
-  } else {
-    if (useExclusiveMaximum) {
+    } else {
       json.exclusiveMaximum = exclusiveMaximum;
-    } else if (haveMaximum) {
-      json.maximum = maximum;
     }
+  } else if (typeof maximum === "number") {
+    json.maximum = maximum;
   }
 
   if (typeof multipleOf === "number") json.multipleOf = multipleOf;
