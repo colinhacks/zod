@@ -95,7 +95,7 @@ export interface ZodType<
   ): Ch extends (arg: any) => arg is infer R ? this & ZodType<R, core.input<this>> : this;
   superRefine(
     refinement: (arg: core.output<this>, ctx: core.$RefinementCtx<core.output<this>>) => void | Promise<void>,
-    params?: string | core.$ZodCustomParams
+    params?: core.$ZodSuperRefineParams
   ): this;
   overwrite(fn: (x: core.output<this>) => core.output<this>): this;
 
@@ -2323,7 +2323,7 @@ export function refine<T>(
 // superRefine
 export function superRefine<T>(
   fn: (arg: T, payload: core.$RefinementCtx<T>) => void | Promise<void>,
-  params?: string | core.$ZodCustomParams
+  params?: core.$ZodSuperRefineParams
 ): core.$ZodCheck<T> {
   return core._superRefine(fn, params);
 }
