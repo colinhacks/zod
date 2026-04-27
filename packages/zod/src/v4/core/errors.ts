@@ -291,32 +291,35 @@ export function formatError<T>(error: $ZodError<T>): $ZodFormattedError<T>;
 export function formatError<T, U>(error: $ZodError<T>, mapper?: (issue: $ZodIssue) => U): $ZodFormattedError<T, U>;
 export function formatError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIssue) => issue.message as U) {
   const fieldErrors: $ZodFormattedError<T> = { _errors: [] } as any;
-  const processError = (error: { issues: $ZodIssue[] }) => {
+  const processError = (error: { issues: $ZodIssue[] }, path: PropertyKey[] = []) => {
     for (const issue of error.issues) {
       if (issue.code === "invalid_union" && issue.errors.length) {
-        issue.errors.map((issues) => processError({ issues }));
+        issue.errors.map((issues) => processError({ issues }, [...path, ...issue.path]));
       } else if (issue.code === "invalid_key") {
-        processError({ issues: issue.issues });
+        processError({ issues: issue.issues }, [...path, ...issue.path]);
       } else if (issue.code === "invalid_element") {
-        processError({ issues: issue.issues });
-      } else if (issue.path.length === 0) {
-        (fieldErrors as any)._errors.push(mapper(issue));
+        processError({ issues: issue.issues }, [...path, ...issue.path]);
       } else {
-        let curr: any = fieldErrors;
-        let i = 0;
-        while (i < issue.path.length) {
-          const el = issue.path[i]!;
-          const terminal = i === issue.path.length - 1;
+        const fullpath = [...path, ...issue.path];
+        if (fullpath.length === 0) {
+          (fieldErrors as any)._errors.push(mapper(issue));
+        } else {
+          let curr: any = fieldErrors;
+          let i = 0;
+          while (i < fullpath.length) {
+            const el = fullpath[i]!;
+            const terminal = i === fullpath.length - 1;
 
-          if (!terminal) {
-            curr[el] = curr[el] || { _errors: [] };
-          } else {
-            curr[el] = curr[el] || { _errors: [] };
-            curr[el]._errors.push(mapper(issue));
+            if (!terminal) {
+              curr[el] = curr[el] || { _errors: [] };
+            } else {
+              curr[el] = curr[el] || { _errors: [] };
+              curr[el]._errors.push(mapper(issue));
+            }
+
+            curr = curr[el];
+            i++;
           }
-
-          curr = curr[el];
-          i++;
         }
       }
     }

@@ -600,6 +600,64 @@ test("update message after adding issues", () => {
   `);
 });
 
+test("z.formatError nested union preserves parent path", () => {
+  const syntheticError = new z.ZodError([
+    {
+      code: "invalid_union",
+      path: ["parent"],
+      message: "Invalid input",
+      errors: [
+        [
+          {
+            code: "invalid_type",
+            expected: "string",
+            path: [],
+            message: "Expected string",
+            input: {},
+          },
+        ],
+        [
+          {
+            code: "invalid_union",
+            path: ["child"],
+            message: "Invalid input",
+            errors: [
+              [
+                {
+                  code: "invalid_type",
+                  expected: "string",
+                  path: [],
+                  message: "Expected string",
+                  input: true,
+                },
+              ],
+              [
+                {
+                  code: "invalid_type",
+                  expected: "number",
+                  path: [],
+                  message: "Expected number",
+                  input: true,
+                },
+              ],
+            ],
+          },
+        ],
+      ],
+    },
+  ] as any);
+
+  const formatted: any = z.formatError(syntheticError);
+
+  // "child" must be nested under "parent", not at root
+  expect(formatted).not.toHaveProperty("child");
+  expect(formatted).toHaveProperty("parent");
+  expect(formatted.parent).toHaveProperty("child");
+  expect(formatted.parent.child._errors).toContain("Expected string");
+  expect(formatted.parent.child._errors).toContain("Expected number");
+  expect(formatted.parent._errors).toContain("Expected string");
+});
+
 test("z.treeifyError nested union preserves parent path", () => {
   // When a nested invalid_union appears inside another invalid_union,
   // the inner errors must stay nested under their parent path, not flatten to root.
