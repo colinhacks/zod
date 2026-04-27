@@ -107,3 +107,19 @@ test("z.stringFormat", () => {
     `/\\^\\(\\?:\\\\d\\{14,19\\}\\|\\\\d\\{4\\}\\(\\?: \\\\d\\{3,6\\}\\)\\{2,4\\}\\|\\\\d\\{4\\}\\(\\?:-\\\\d\\{3,6\\}\\)\\{2,4\\}\\)\\$/u`
   );
 });
+
+test("z.hex", () => {
+  const hexSchema = z.hex();
+
+  // Valid hex strings
+  expect(hexSchema.safeParse("").success).toBe(true); // Empty string is valid hex
+  expect(hexSchema.safeParse("123abc").success).toBe(true);
+  expect(hexSchema.safeParse("DEADBEEF").success).toBe(true);
+  expect(hexSchema.safeParse("0123456789abcdefABCDEF").success).toBe(true);
+
+  // Invalid hex strings
+  expect(hexSchema.safeParse("xyz").success).toBe(false);
+  expect(hexSchema.safeParse("123g").success).toBe(false);
+  expect(hexSchema.safeParse("hello world").success).toBe(false);
+  expect(hexSchema.safeParse("123-abc").success).toBe(false);
+});

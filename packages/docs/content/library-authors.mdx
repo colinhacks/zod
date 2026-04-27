@@ -1,5 +1,6 @@
 ---
 title: For library authors
+description: "Guidelines and best practices for library authors integrating with Zod"
 ---
 
 import { Callout } from "fumadocs-ui/components/callout"
@@ -122,7 +123,7 @@ To differentiate between Zod 3 and Zod 4 schemas at runtime, check for the `"_zo
 import type * as z3 from "zod/v3";
 import type * as z4 from "zod/v4/core";
 
-declare const schema: z3.ZodTypeAny | v4.$ZodType;
+declare const schema: z3.ZodTypeAny | z4.$ZodType;
 
 if ("_zod" in schema) {
   schema._zod.def; // Zod 4 schema
@@ -229,7 +230,7 @@ To constrain the input schema to a specific subclass:
 import * as z4 from "zod/v4/core";
 
 // only accepts object schemas
-function inferSchema<T>(schema: z4.$ZodObject) {
+function inferSchema<T extends z4.$ZodObject>(schema: T) {
   return schema;
 }
 ```

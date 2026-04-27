@@ -10,7 +10,8 @@ const func1 = z.function(args1, returns1);
 
 test("function parsing", () => {
   const parsed = func1.parse((arg: any) => arg.length);
-  parsed("asdf");
+  const result = parsed("asdf");
+  expect(result).toBe(4);
 });
 
 test("parsed function fail 1", () => {
@@ -226,8 +227,11 @@ test("allow extra parameters", () => {
 test("params and returnType getters", () => {
   const func = z.function().args(z.string()).returns(z.string());
 
-  func.parameters().items[0].parse("asdf");
-  func.returnType().parse("asdf");
+  const paramResult = func.parameters().items[0].parse("asdf");
+  expect(paramResult).toBe("asdf");
+
+  const returnResult = func.returnType().parse("asdf");
+  expect(returnResult).toBe("asdf");
 });
 
 test("inference with transforms", () => {

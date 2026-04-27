@@ -311,3 +311,55 @@ test("partial should not clobber defaults", () => {
     }
   `);
 });
+
+test("defaulted object schema returns shallow clone", () => {
+  const schema = z
+    .object({
+      a: z.string(),
+    })
+    .default({ a: "x" });
+  const result1 = schema.parse(undefined);
+  const result2 = schema.parse(undefined);
+  expect(result1).not.toBe(result2);
+  expect(result1).toEqual(result2);
+});
+
+test("defaulted array schema returns shallow clone", () => {
+  const schema = z.array(z.string()).default(["x"]);
+  const result1 = schema.parse(undefined);
+  const result2 = schema.parse(undefined);
+  expect(result1).not.toBe(result2);
+  expect(result1).toEqual(result2);
+});
+
+test("direction-aware defaults", () => {
+  const schema = z.string().default("hello");
+
+  // Forward direction (regular parse): defaults should be applied
+  expect(schema.parse(undefined)).toBe("hello");
+  expect(schema.parse("hello")).toBe("hello");
+
+  // Reverse direction (encode): defaults should NOT be applied, undefined should fail validation
+  expect(() => z.encode(schema, undefined as any)).toThrow();
+
+  // But valid values should still work in reverse
+  expect(z.safeEncode(schema, "world")).toMatchInlineSnapshot(`
+    {
+      "data": "world",
+      "success": true,
+    }
+  `);
+  expect(z.safeEncode(schema, undefined as any)).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": [],
+        "message": "Invalid input: expected string, received undefined"
+      }
+    ]],
+      "success": false,
+    }
+  `);
+});

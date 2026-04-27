@@ -1,6 +1,7 @@
 ---
 title: "Intro"
 mode: "center"
+description: "Introduction to Zod - TypeScript-first schema validation library with static type inference"
 ---
 
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
@@ -114,26 +115,14 @@ console.log(data.name);
 
 ## Installation
 
-{/* ### `npm` */}
 
 ```sh
-npm install zod       # npm
-deno add npm:zod      # deno
-yarn add zod          # yarn
-bun add zod           # bun
-pnpm add zod          # pnpm
+npm install zod
 ```
 
-Zod also publishes a canary version on every commit. To install the canary:
+> Zod is also available as `@zod/zod` on [jsr.io](https://jsr.io/@zod/zod).
 
-```sh
-npm install zod@canary       # npm
-deno add npm:zod@canary      # deno
-yarn add zod@canary          # yarn
-bun add zod@canary           # bun
-pnpm add zod@canary          # pnpm
-```
-
+Zod provides an MCP server that can be used by agents to search Zod's docs. To add to your editor, follow [these instructions](https://share.inkeep.com/zod/mcp). Zod also provides an [llms.txt](https://zod.dev/llms.txt) file.
 
 ## Requirements
 
@@ -154,7 +143,6 @@ You must enable `strict` mode in your `tsconfig.json`. This is a best practice f
 }
 ```
 
-<br/>
 
 ## Ecosystem
 

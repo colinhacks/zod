@@ -14,30 +14,7 @@ const error: () => errors.$ZodErrorMap = () => {
     return Sizable[origin] ?? null;
   }
 
-  const parsedType = (data: any): string => {
-    const t = typeof data;
-
-    switch (t) {
-      case "number": {
-        return Number.isNaN(data) ? "NaN" : "数値";
-      }
-      case "object": {
-        if (Array.isArray(data)) {
-          return "配列";
-        }
-        if (data === null) {
-          return "null";
-        }
-
-        if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-          return data.constructor.name;
-        }
-      }
-    }
-    return t;
-  };
-
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "入力値",
@@ -70,10 +47,25 @@ const error: () => errors.$ZodErrorMap = () => {
     template_literal: "入力値",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+    number: "数値",
+    array: "配列",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `無効な入力: ${issue.expected}が期待されましたが、${parsedType(issue.input)}が入力されました`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `無効な入力: instanceof ${issue.expected}が期待されましたが、${received}が入力されました`;
+        }
+        return `無効な入力: ${expected}が期待されましたが、${received}が入力されました`;
+      }
       case "invalid_value":
         if (issue.values.length === 1) return `無効な入力: ${util.stringifyPrimitive(issue.values[0])}が期待されました`;
         return `無効な選択: ${util.joinValues(issue.values, "、")}のいずれかである必要があります`;
@@ -97,7 +89,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `無効な文字列: "${_issue.suffix}"で終わる必要があります`;
         if (_issue.format === "includes") return `無効な文字列: "${_issue.includes}"を含む必要があります`;
         if (_issue.format === "regex") return `無効な文字列: パターン${_issue.pattern}に一致する必要があります`;
-        return `無効な${Nouns[_issue.format] ?? issue.format}`;
+        return `無効な${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":
         return `無効な数値: ${issue.divisor}の倍数である必要があります`;

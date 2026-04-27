@@ -121,3 +121,103 @@ test("pipe optionality inside objects", () => {
     e: string;
   }>();
 });
+
+test("optional prop with pipe", () => {
+  const schema = z.object({
+    id: z
+      .union([z.number(), z.string().nullish()])
+      .transform((val) => (val === null || val === undefined ? val : Number(val)))
+      .pipe(z.number())
+      .optional(),
+  });
+
+  schema.parse({});
+  schema.parse({}, { jitless: true });
+});
+
+// exactOptional tests
+test(".exactOptional()", () => {
+  const schema = z.string().exactOptional();
+  expect(schema.parse("asdf")).toEqual("asdf");
+  expect(schema.safeParse(undefined).success).toEqual(false);
+  expect(schema.safeParse(null).success).toEqual(false);
+
+  // Type should NOT include undefined
+  expectTypeOf<typeof schema._output>().toEqualTypeOf<string>();
+  expectTypeOf<typeof schema._input>().toEqualTypeOf<string>();
+});
+
+test("exactOptional unwrap", () => {
+  const unwrapped = z.string().exactOptional().unwrap();
+  expect(unwrapped).toBeInstanceOf(z.ZodString);
+});
+
+test("exactOptional optionality", () => {
+  const a = z.string().exactOptional();
+  expect(a._zod.optin).toEqual("optional");
+  expect(a._zod.optout).toEqual("optional");
+  expectTypeOf<typeof a._zod.optin>().toEqualTypeOf<"optional">();
+  expectTypeOf<typeof a._zod.optout>().toEqualTypeOf<"optional">();
+});
+
+test("exactOptional in objects - absent keys", () => {
+  const schema = z.object({
+    a: z.string().exactOptional(),
+  });
+
+  // Absent key should pass
+  expect(schema.parse({})).toEqual({});
+  expect(schema.parse({}, { jitless: true })).toEqual({});
+
+  // Present key with valid value should pass
+  expect(schema.parse({ a: "hello" })).toEqual({ a: "hello" });
+  expect(schema.parse({ a: "hello" }, { jitless: true })).toEqual({ a: "hello" });
+});
+
+test("exactOptional in objects - explicit undefined rejected", () => {
+  const schema = z.object({
+    a: z.string().exactOptional(),
+  });
+
+  // Explicit undefined should fail
+  expect(schema.safeParse({ a: undefined }).success).toEqual(false);
+  expect(schema.safeParse({ a: undefined }, { jitless: true }).success).toEqual(false);
+});
+
+test("exactOptional type inference in objects", () => {
+  const schema = z.object({
+    a: z.string().exactOptional(),
+    b: z.string().optional(),
+  });
+
+  type SchemaIn = z.input<typeof schema>;
+  expectTypeOf<SchemaIn>().toEqualTypeOf<{
+    a?: string;
+    b?: string | undefined;
+  }>();
+
+  type SchemaOut = z.output<typeof schema>;
+  expectTypeOf<SchemaOut>().toEqualTypeOf<{
+    a?: string;
+    b?: string | undefined;
+  }>();
+});
+
+test("exactOptional vs optional comparison", () => {
+  const optionalSchema = z.object({ a: z.string().optional() });
+  const exactOptionalSchema = z.object({ a: z.string().exactOptional() });
+
+  // Both accept absent keys
+  expect(optionalSchema.parse({})).toEqual({});
+  expect(exactOptionalSchema.parse({})).toEqual({});
+
+  // Both accept valid values
+  expect(optionalSchema.parse({ a: "hi" })).toEqual({ a: "hi" });
+  expect(exactOptionalSchema.parse({ a: "hi" })).toEqual({ a: "hi" });
+
+  // optional() accepts explicit undefined
+  expect(optionalSchema.parse({ a: undefined })).toEqual({ a: undefined });
+
+  // exactOptional() rejects explicit undefined
+  expect(exactOptionalSchema.safeParse({ a: undefined }).success).toEqual(false);
+});

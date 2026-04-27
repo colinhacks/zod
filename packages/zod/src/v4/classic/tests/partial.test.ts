@@ -338,3 +338,90 @@ test("optional with check", () => {
     }
   `);
 });
+
+test("partial - throws error on schema with refinements", () => {
+  const baseSchema = z.object({
+    id: z.string(),
+    name: z.string(),
+    items: z.string().array(),
+  });
+
+  const refinedSchema = baseSchema.superRefine((val, ctx) => {
+    if (val.items.length === 0) {
+      ctx.addIssue({
+        message: "Must have at least one item",
+        code: "custom",
+        path: ["items"],
+      });
+    }
+  });
+
+  expect(() => refinedSchema.partial()).toThrow(".partial() cannot be used on object schemas containing refinements");
+});
+
+test("partial - throws error on schema with refine", () => {
+  const baseSchema = z.object({
+    password: z.string(),
+    confirmPassword: z.string(),
+  });
+
+  const refinedSchema = baseSchema.refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords must match",
+  });
+
+  expect(() => refinedSchema.partial()).toThrow(".partial() cannot be used on object schemas containing refinements");
+});
+
+test("required - preserves refinements", () => {
+  const baseSchema = z.object({
+    name: z.string().optional(),
+    age: z.number().optional(),
+  });
+
+  const refinedSchema = baseSchema.superRefine((val, ctx) => {
+    if (val.name === "admin") {
+      ctx.addIssue({
+        message: "Name cannot be admin",
+        code: "custom",
+        path: ["name"],
+      });
+    }
+  });
+
+  const requiredSchema = refinedSchema.required();
+
+  // The refinement should still be applied
+  const result = requiredSchema.safeParse({ name: "admin", age: 25 });
+  expect(result.success).toBe(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toBe("Name cannot be admin");
+  }
+
+  // Valid data should pass
+  const validResult = requiredSchema.safeParse({ name: "user", age: 25 });
+  expect(validResult.success).toBe(true);
+});
+
+test("required - refinement is executed on required schema", () => {
+  const baseSchema = z.object({
+    password: z.string().optional(),
+    confirmPassword: z.string().optional(),
+  });
+
+  const refinedSchema = baseSchema.refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords must match",
+  });
+
+  const requiredSchema = refinedSchema.required();
+
+  // Mismatched passwords should fail refinement
+  const result = requiredSchema.safeParse({ password: "abc", confirmPassword: "xyz" });
+  expect(result.success).toBe(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toBe("Passwords must match");
+  }
+
+  // Matching passwords should pass
+  const validResult = requiredSchema.safeParse({ password: "abc", confirmPassword: "abc" });
+  expect(validResult.success).toBe(true);
+});

@@ -409,11 +409,6 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <br />
       <a style="text-decoration:none;" href="https://cybozu.co.jp/index.html" target="_blank">Cybozu</a>
     </td>
-    <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/147273133?s=200&v=4" height="50px;" alt="Juno logo" />
-      <br />
-      <a style="text-decoration:none;" href="https://juno.build/?utm_source=zod" target="_blank">Juno</a>
-    </td>
   </tr>
 </table>
 
@@ -572,6 +567,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`fastify-zod-openapi`](https://github.com/samchungy/fastify-zod-openapi): Fastify type provider, validation, serialization and @fastify/swagger support for Zod schemas.
 - [`typeschema`](https://typeschema.com/): Universal adapter for schema validation.
 - [`zodex`](https://github.com/commonbaseapp/zodex): (De)serialization for zod schemas
+- [`convex-helpers`](https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/README.md#zod-validation): Use Zod to validate arguments and return values of Convex functions, and to create Convex database schemas.
 
 #### X to Zod
 
@@ -591,6 +587,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`java-to-zod`](https://github.com/ivangreene/java-to-zod): Convert POJOs to Zod schemas
 - [`Orval`](https://github.com/anymaniax/orval): Generate Zod schemas from OpenAPI schemas
 - [`Kubb`](https://github.com/kubb-labs/kubb): Generate SDKs and Zod schemas from your OpenAPI schemas
+- [`convex-helpers`](https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/README.md#zod-validation): Generate Zod schemas from Convex validators.
 
 #### Mocking
 
@@ -611,7 +608,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`zod-xlsx`](https://github.com/sidwebworks/zod-xlsx): A xlsx based resource validator using Zod schemas.
 - [`znv`](https://github.com/lostfictions/znv): Type-safe environment parsing and validation for Node.js with Zod schemas.
 - [`zod-config`](https://github.com/alexmarqs/zod-config): Load configurations across multiple sources with flexible adapters, ensuring type safety with Zod.
-- [`unplugin-environment`](https://github.com/r17x/js/tree/main/packages/unplugin-environment#readme): A plugin for loading enviroment variables safely with schema validation, simple with virtual module, type-safe with intellisense, and better DX 🔥 🚀 👷. Powered by Zod.
+- [`unplugin-environment`](https://github.com/r17x/js/tree/main/packages/unplugin-environment#readme): A plugin for loading environment variables safely with schema validation, simple with virtual module, type-safe with intellisense, and better DX 🔥 🚀 👷. Powered by Zod.
 - [`zod-struct`](https://codeberg.org/reesericci/zod-struct): Create runtime-checked structs with Zod.
 - [`zod-csv`](https://github.com/bartoszgolebiowski/zod-csv): Validation helpers for zod for parsing CSV data.
 - [`fullproduct.dev`](https://fullproduct.dev?identity=freelancers&v=z3): Universal Expo + Next.js App Starter that uses Zod schemas as the single source of truth to keep generated MDX docs, GraphQL, database models, forms, and fetcher functions in sync.
@@ -623,6 +620,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`zod-sandbox`](https://github.com/nereumelo/zod-sandbox): Controlled environment for testing zod schemas. [Live demo](https://zod-sandbox.vercel.app/).
 - [`zod-dev`](https://github.com/schalkventer/zod-dev): Conditionally disables Zod runtime parsing in production.
 - [`zod-accelerator`](https://github.com/duplojs/duplojs-zod-accelerator): Accelerates Zod's throughput up to ~100x.
+- [`zod-ir`](https://github.com/Reza-kh80/zod-ir): Comprehensive validation for Iranian data structures (National Code, Bank Cards, Sheba, Crypto, etc) with **smart metadata extraction** (Bank Names, Logos). Zero dependencies.
 
 <br/>
 

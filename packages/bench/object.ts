@@ -1,7 +1,7 @@
+import * as v from "valibot";
 import * as z4 from "zod/v4";
 import * as z3 from "zod3";
 import { metabench } from "./metabench.js";
-import * as v from "valibot";
 
 const z3Schema = z3.object({
   string: z3.string(),
@@ -32,7 +32,6 @@ const DATA = Array.from({ length: 1000 }, () =>
 console.log(z3Schema.parse(DATA[0]));
 console.log(z4Schema.parse(DATA[0]));
 console.log(v.parse(valibotSchema, DATA[0]));
-
 
 const bench = metabench("z.object().parse", {
   zod3() {

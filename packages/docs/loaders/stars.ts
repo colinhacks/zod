@@ -34,7 +34,18 @@ export async function fetchStars(resources: { slug: string; stars?: number }[]) 
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ query }),
+      next: { revalidate: 86400 }, // Cache for 1 day to match route revalidation
     });
+
+    if (res.status > 400) {
+      console.error(
+        "Failed to fetch GitHub stars. Make sure you are providing a valid GITHUB_TOKEN in packages/docs/.env"
+      );
+      if (process.env.NODE_ENV === "production") {
+        throw new Error("Failed to fetch GitHub stars.");
+      }
+      return;
+    }
 
     const json = await res.json();
 
@@ -61,6 +72,9 @@ export async function fetchStars(resources: { slug: string; stars?: number }[]) 
     resources.sort((a, b) => (b.stars || 0) - (a.stars || 0));
   } catch (_) {
     console.log(_);
-    throw new Error("Failed to fetch GitHub stars");
+
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("Failed to fetch GitHub stars");
+    }
   }
 }

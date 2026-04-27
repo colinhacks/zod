@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { parsedType } from "../../../locales/en.js";
+import { parsedType } from "../../util.js";
 
 test("parsedType", () => {
   expect(parsedType("string")).toBe("string");

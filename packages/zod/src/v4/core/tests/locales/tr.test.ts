@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import * as z from "zod/v4";
-import { parsedType } from "../../../locales/tr.js";
+import { parsedType } from "../../util.js";
 
 test("parsedType", () => {
   expect(parsedType("string")).toBe("string");
@@ -21,7 +21,7 @@ test("parsedType", () => {
   const doubleNullPrototype = Object.create(Object.create(null));
   expect(parsedType(doubleNullPrototype)).toBe("object");
 
-  expect(parsedType(Number.NaN)).toBe("NaN");
+  expect(parsedType(Number.NaN)).toBe("nan");
 });
 
 test("locales - tr", () => {

@@ -1,5 +1,6 @@
 ---
 title: Migration guide
+description: "Complete changelog and migration guide for upgrading from Zod 3 to Zod 4"
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
@@ -10,7 +11,7 @@ This migration guide aims to list the breaking changes in Zod 4 in order of high
 {/* To give the ecosystem time to migrate, Zod 4 will initially be published alongside Zod v3.25. To use Zod 4, upgrade to `zod@3.25.0` or later: */}
 
 ```
-npm upgrade zod@^4.0.0
+npm install zod@^4.0.0
 ```
 
 {/* Zod 4 is available at the `"/v4"` subpath:
@@ -33,9 +34,9 @@ Many of Zod's behaviors and APIs have been made more intuitive and cohesive. The
 
 Zod 4 standardizes the APIs for error customization under a single, unified `error` param. Previously Zod's error customization APIs were fragmented and inconsistent. This is cleaned up in Zod 4. 
 
-### deprecates `message`
+### deprecates `message` parameter
 
-Replaces `message` with `error`. The `message` parameter is still supported but deprecated.
+Replaces `message` param with `error`. The old `message` parameter is still supported but deprecated.
 
 <Tabs groupId="error-message" items={["Zod 4", "Zod 3"]} persist>
 <Tab value="Zod 4">
@@ -254,6 +255,10 @@ The `.flatten()` method on `ZodError` has also been deprecated. Instead use the 
 ### drops `.formErrors` 
 
 This API was identical to `.flatten()`. It exists for historical reasons and isn't documented.
+
+### drops `.errors`
+
+This API was an alias for `.issues` in Zod v3 but has been removed. Use `.issues` instead.
 
 ### deprecates `.addIssue()` and `.addIssues()`
 
@@ -849,7 +854,7 @@ Branding is now handled with a direct modification to the inferred type, instead
 {/* - Dropping support for ES5
   - Zod relies on `Set` internally */}
 
-{/* - ZodObject `.keyof()` now returns `ZodLiteral` not `ZodEnum` */}
+{/* - `z.keyof` now returns `ZodEnum` instead of `ZodLiteral` */}
 
 
 

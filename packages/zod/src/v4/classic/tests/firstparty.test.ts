@@ -82,6 +82,8 @@ test("first party switch", () => {
       break;
     case "lazy":
       break;
+    case "function":
+      break;
     default:
       expectTypeOf(def).toEqualTypeOf<never>();
   }
@@ -167,6 +169,8 @@ test("$ZodSchemaTypes", () => {
     case "file":
       break;
     case "lazy":
+      break;
+    case "function":
       break;
 
     default:

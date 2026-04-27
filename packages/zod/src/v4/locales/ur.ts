@@ -14,30 +14,7 @@ const error: () => errors.$ZodErrorMap = () => {
     return Sizable[origin] ?? null;
   }
 
-  const parsedType = (data: any): string => {
-    const t = typeof data;
-
-    switch (t) {
-      case "number": {
-        return Number.isNaN(data) ? "NaN" : "نمبر";
-      }
-      case "object": {
-        if (Array.isArray(data)) {
-          return "آرے";
-        }
-        if (data === null) {
-          return "نل";
-        }
-
-        if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-          return data.constructor.name;
-        }
-      }
-    }
-    return t;
-  };
-
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "ان پٹ",
@@ -70,10 +47,26 @@ const error: () => errors.$ZodErrorMap = () => {
     template_literal: "ان پٹ",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+    number: "نمبر",
+    array: "آرے",
+    null: "نل",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `غلط ان پٹ: ${issue.expected} متوقع تھا، ${parsedType(issue.input)} موصول ہوا`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `غلط ان پٹ: instanceof ${issue.expected} متوقع تھا، ${received} موصول ہوا`;
+        }
+        return `غلط ان پٹ: ${expected} متوقع تھا، ${received} موصول ہوا`;
+      }
       case "invalid_value":
         if (issue.values.length === 1) return `غلط ان پٹ: ${util.stringifyPrimitive(issue.values[0])} متوقع تھا`;
         return `غلط آپشن: ${util.joinValues(issue.values, "|")} میں سے ایک متوقع تھا`;
@@ -101,7 +94,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `غلط سٹرنگ: "${_issue.suffix}" پر ختم ہونا چاہیے`;
         if (_issue.format === "includes") return `غلط سٹرنگ: "${_issue.includes}" شامل ہونا چاہیے`;
         if (_issue.format === "regex") return `غلط سٹرنگ: پیٹرن ${_issue.pattern} سے میچ ہونا چاہیے`;
-        return `غلط ${Nouns[_issue.format] ?? issue.format}`;
+        return `غلط ${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":
         return `غلط نمبر: ${issue.divisor} کا مضاعف ہونا چاہیے`;

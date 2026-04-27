@@ -296,6 +296,29 @@ test("z.record", () => {
   expect(() => z.parse(c, { a: "hello", b: "world" })).toThrow();
   // extra keys
   expect(() => z.parse(c, { a: "hello", b: "world", c: "world", d: "world" })).toThrow();
+
+  // literal union keys
+  const d = z.record(z.union([z.literal("a"), z.literal(0)]), z.string());
+  type d = z.output<typeof d>;
+  expectTypeOf<d>().toEqualTypeOf<Record<"a" | 0, string>>();
+  expect(z.parse(d, { a: "hello", 0: "world" })).toEqual({
+    a: "hello",
+    0: "world",
+  });
+
+  // TypeScript enum keys
+  enum Enum {
+    A = 0,
+    B = "hi",
+  }
+
+  const e = z.record(z.enum(Enum), z.string());
+  type e = z.output<typeof e>;
+  expectTypeOf<e>().toEqualTypeOf<Record<Enum, string>>();
+  expect(z.parse(e, { [Enum.A]: "hello", [Enum.B]: "world" })).toEqual({
+    [Enum.A]: "hello",
+    [Enum.B]: "world",
+  });
 });
 
 test("z.map", () => {
@@ -649,6 +672,47 @@ test("z.check", () => {
   });
 });
 
+test("z.with (alias for z.check)", () => {
+  // .with() should work exactly the same as .check()
+  const a = z.any().with(
+    z.check<string>((ctx) => {
+      if (typeof ctx.value === "string") return;
+      ctx.issues.push({
+        code: "custom",
+        origin: "custom",
+        message: "Expected a string",
+        input: ctx.value,
+      });
+    })
+  );
+  expect(z.safeParse(a, "hello")).toMatchObject({
+    success: true,
+    data: "hello",
+  });
+  expect(z.safeParse(a, 123)).toMatchObject({
+    success: false,
+    error: { issues: [{ code: "custom", message: "Expected a string" }] },
+  });
+
+  // Test with refine
+  const b = z.string().with(z.refine((val) => val.length > 3, "Must be longer than 3"));
+  expect(z.safeParse(b, "hello").success).toBe(true);
+  expect(z.safeParse(b, "hi").success).toBe(false);
+
+  // Test with function
+  const c = z.string().with(({ value, issues }) => {
+    if (value.length <= 3) {
+      issues.push({
+        code: "custom",
+        input: value,
+        message: "Must be longer than 3",
+      });
+    }
+  });
+  expect(z.safeParse(c, "hello").success).toBe(true);
+  expect(z.safeParse(c, "hi").success).toBe(false);
+});
+
 test("z.instanceof", () => {
   class A {}
 
@@ -789,7 +853,7 @@ test("z.stringbool", () => {
 test("z.promise", async () => {
   const a = z.promise(z.string());
   type a = z.output<typeof a>;
-  expectTypeOf<a>().toEqualTypeOf<string>();
+  expectTypeOf<a>().toEqualTypeOf<Promise<string>>();
 
   expect(await z.safeParseAsync(a, Promise.resolve("hello"))).toMatchObject({
     success: true,
@@ -868,4 +932,32 @@ test("def typing", () => {
   z.success(z.string()).def.type satisfies "success";
   z.catch(z.string(), "fallback").def.type satisfies "catch";
   z.file().def.type satisfies "file";
+});
+
+test("defaulted object schema returns shallow clone", () => {
+  const schema = z._default(
+    z.object({
+      a: z.string(),
+    }),
+    { a: "x" }
+  );
+  const result1 = schema.parse(undefined);
+  const result2 = schema.parse(undefined);
+  expect(result1).not.toBe(result2);
+  expect(result1).toEqual(result2);
+});
+
+test("runtime type property exists and returns correct values", () => {
+  const stringSchema = z.string();
+  expect(stringSchema.type).toBe("string");
+});
+
+test("type narrowing works with type property", () => {
+  type ArrayOrRecord = z.ZodMiniArray<z.ZodMiniString> | z.ZodMiniRecord<z.ZodMiniString<string>, z.ZodMiniAny>;
+  const arraySchema = z.array(z.string()) as ArrayOrRecord;
+
+  if (arraySchema.type === "array") {
+    expectTypeOf(arraySchema).toEqualTypeOf<z.ZodMiniArray<z.ZodMiniString<unknown>>>();
+    expect(arraySchema.def.element).toBeDefined();
+  }
 });

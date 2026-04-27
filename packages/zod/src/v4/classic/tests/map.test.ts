@@ -4,6 +4,12 @@ import * as z from "zod/v4";
 const stringMap = z.map(z.string(), z.string());
 type stringMap = z.infer<typeof stringMap>;
 
+const minTwo = stringMap.min(2);
+const maxTwo = stringMap.max(2);
+const justTwo = stringMap.size(2);
+const nonEmpty = stringMap.nonempty();
+const nonEmptyMax = stringMap.nonempty().max(2);
+
 test("type inference", () => {
   expectTypeOf<stringMap>().toEqualTypeOf<Map<string, string>>();
 });
@@ -22,6 +28,75 @@ test("valid parse", () => {
       "second" => "bar",
     }
   `);
+});
+
+test("valid parse: size-related methods", () => {
+  expect(() => {
+    minTwo.parse(
+      new Map([
+        ["a", "b"],
+        ["c", "d"],
+      ])
+    );
+    minTwo.parse(
+      new Map([
+        ["a", "b"],
+        ["c", "d"],
+        ["e", "f"],
+      ])
+    );
+    maxTwo.parse(
+      new Map([
+        ["a", "b"],
+        ["c", "d"],
+      ])
+    );
+    maxTwo.parse(new Map([["a", "b"]]));
+    justTwo.parse(
+      new Map([
+        ["a", "b"],
+        ["c", "d"],
+      ])
+    );
+    nonEmpty.parse(new Map([["a", "b"]]));
+    nonEmptyMax.parse(
+      new Map([
+        ["a", "b"],
+        ["c", "d"],
+      ])
+    );
+  }).not.toThrow();
+
+  const sizeZeroResult = stringMap.parse(new Map());
+  expect(sizeZeroResult.size).toBe(0);
+
+  const sizeTwoResult = minTwo.parse(
+    new Map([
+      ["a", "b"],
+      ["c", "d"],
+    ])
+  );
+  expect(sizeTwoResult.size).toBe(2);
+});
+
+test("failing when parsing empty map in nonempty ", () => {
+  const result = nonEmpty.safeParse(new Map());
+  expect(result.success).toEqual(false);
+  expect(result.error!.issues.length).toEqual(1);
+  expect(result.error!.issues[0].code).toEqual("too_small");
+});
+
+test("failing when map is bigger than max() ", () => {
+  const result = maxTwo.safeParse(
+    new Map([
+      ["a", "b"],
+      ["c", "d"],
+      ["e", "f"],
+    ])
+  );
+  expect(result.success).toEqual(false);
+  expect(result.error!.issues.length).toEqual(1);
+  expect(result.error!.issues[0].code).toEqual("too_big");
 });
 
 test("valid parse async", async () => {
@@ -192,5 +267,64 @@ test("map with object keys", () => {
         "message": "Invalid input: expected object, received string"
       }
     ]]
+  `);
+});
+
+test("min/max", async () => {
+  const schema = stringMap.min(4).max(5);
+
+  const r1 = schema.safeParse(
+    new Map([
+      ["a", "a"],
+      ["b", "b"],
+      ["c", "c"],
+      ["d", "d"],
+    ])
+  );
+  expect(r1.success).toEqual(true);
+
+  const r2 = schema.safeParse(
+    new Map([
+      ["a", "a"],
+      ["b", "b"],
+      ["c", "c"],
+    ])
+  );
+  expect(r2.success).toEqual(false);
+  expect(r2.error!.issues).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "too_small",
+        "inclusive": true,
+        "message": "Too small: expected map to have >=4 entries",
+        "minimum": 4,
+        "origin": "map",
+        "path": [],
+      },
+    ]
+  `);
+
+  const r3 = schema.safeParse(
+    new Map([
+      ["a", "a"],
+      ["b", "b"],
+      ["c", "c"],
+      ["d", "d"],
+      ["e", "e"],
+      ["f", "f"],
+    ])
+  );
+  expect(r3.success).toEqual(false);
+  expect(r3.error!.issues).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "too_big",
+        "inclusive": true,
+        "maximum": 5,
+        "message": "Too big: expected map to have <=5 entries",
+        "origin": "map",
+        "path": [],
+      },
+    ]
   `);
 });

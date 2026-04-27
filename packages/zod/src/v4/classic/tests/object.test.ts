@@ -162,13 +162,13 @@ test("catchall overrides strict", () => {
   });
 });
 
-test("optional keys are unset", async () => {
+test("optional keys are unset", () => {
   const SNamedEntity = z.object({
     id: z.string(),
     set: z.string().optional(),
     unset: z.string().optional(),
   });
-  const result = await SNamedEntity.parse({
+  const result = SNamedEntity.parse({
     id: "asdf",
     set: undefined,
   });
@@ -259,6 +259,21 @@ test("inferred enum type", async () => {
   });
   type Enum = z.infer<typeof Enum>;
   expectTypeOf<Enum>().toEqualTypeOf<"a" | "b">();
+});
+
+test("z.keyof returns enum", () => {
+  const User = z.object({ name: z.string(), age: z.number() });
+  const keysSchema = z.keyof(User);
+  expect(keysSchema.enum).toEqual({
+    name: "name",
+    age: "age",
+  });
+  expect(keysSchema._zod.def.entries).toEqual({
+    name: "name",
+    age: "age",
+  });
+  type Keys = z.infer<typeof keysSchema>;
+  expectTypeOf<Keys>().toEqualTypeOf<"name" | "age">();
 });
 
 test("inferred partial object type with optional properties", async () => {
@@ -420,6 +435,31 @@ test("extend() should have power to override existing key", () => {
   expectTypeOf<PersonWithNumberAsLastName>().toEqualTypeOf<{ firstName: string; lastName: number }>();
 });
 
+test("safeExtend() should have power to override existing key", () => {
+  const PersonWithMinLastName = personToExtend.safeExtend({
+    lastName: z.string().min(3),
+  });
+  type PersonWithMinLastName = z.infer<typeof PersonWithMinLastName>;
+
+  const expected = { firstName: "f", lastName: "abc" };
+  const actual = PersonWithMinLastName.parse(expected);
+
+  expect(actual).toEqual(expected);
+  expect(() => PersonWithMinLastName.parse({ firstName: "f", lastName: "ab" })).toThrow();
+  expectTypeOf<PersonWithMinLastName>().toEqualTypeOf<{ firstName: string; lastName: string }>();
+});
+
+test("safeExtend() maintains refinements", () => {
+  const schema = z.object({ name: z.string().min(1) });
+  const extended = schema.safeExtend({ name: z.string().min(2) });
+  expect(() => extended.parse({ name: "" })).toThrow();
+  expect(extended.parse({ name: "ab" })).toEqual({ name: "ab" });
+  type Extended = z.infer<typeof extended>;
+  expectTypeOf<Extended>().toEqualTypeOf<{ name: string }>();
+  // @ts-expect-error
+  schema.safeExtend({ name: z.number() });
+});
+
 test("passthrough index signature", () => {
   const a = z.object({ a: z.string() });
   type a = z.infer<typeof a>;
@@ -560,4 +600,41 @@ test("index signature in shape", () => {
   type schema = z.infer<typeof schema>;
 
   expectTypeOf<schema>().toEqualTypeOf<Record<string, string>>();
+});
+
+test("extend() on object with refinements should throw when overwriting properties", () => {
+  const schema = z
+    .object({
+      a: z.string(),
+    })
+    .refine(() => true);
+
+  expect(() => schema.extend({ a: z.number() })).toThrow();
+});
+
+test("extend() on object with refinements should not throw when adding new properties", () => {
+  const schema = z
+    .object({
+      a: z.string(),
+    })
+    .refine((data) => data.a.length > 0);
+
+  // Should not throw since 'b' doesn't overlap with 'a'
+  const extended = schema.extend({ b: z.number() });
+
+  // Verify the extended schema works correctly
+  expect(extended.parse({ a: "hello", b: 42 })).toEqual({ a: "hello", b: 42 });
+
+  // Verify the original refinement still applies
+  expect(() => extended.parse({ a: "", b: 42 })).toThrow();
+});
+
+test("safeExtend() on object with refinements should not throw", () => {
+  const schema = z
+    .object({
+      a: z.string(),
+    })
+    .refine(() => true);
+
+  expect(() => schema.safeExtend({ b: z.string() })).not.toThrow();
 });

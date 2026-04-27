@@ -45,7 +45,10 @@ export type Schema =
 export type _JSONSchema = boolean | JSONSchema;
 export type JSONSchema = {
   [k: string]: unknown;
-  $schema?: "https://json-schema.org/draft/2020-12/schema" | "http://json-schema.org/draft-07/schema#";
+  $schema?:
+    | "https://json-schema.org/draft/2020-12/schema"
+    | "http://json-schema.org/draft-07/schema#"
+    | "http://json-schema.org/draft-04/schema#";
   $id?: string;
   $anchor?: string;
   $ref?: string;
@@ -75,9 +78,9 @@ export type JSONSchema = {
   not?: _JSONSchema;
   multipleOf?: number;
   maximum?: number;
-  exclusiveMaximum?: number;
+  exclusiveMaximum?: number | boolean;
   minimum?: number;
-  exclusiveMinimum?: number;
+  exclusiveMinimum?: number | boolean;
   maxLength?: number;
   minLength?: number;
   pattern?: string;
@@ -101,6 +104,7 @@ export type JSONSchema = {
   deprecated?: boolean;
   readOnly?: boolean;
   writeOnly?: boolean;
+  nullable?: boolean;
   examples?: unknown[];
   format?: string;
   contentMediaType?: string;

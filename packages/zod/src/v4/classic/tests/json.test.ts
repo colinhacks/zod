@@ -1,7 +1,8 @@
-import { test } from "vitest";
-// import * as z from "zod/v4";
+import { expect, test } from "vitest";
 
-test(() => {});
+test("placeholder test", () => {
+  expect(2).toBe(2);
+});
 // test("overload types", () => {
 //   const schema = z.string().json();
 //   util.assertEqual<typeof schema, z.ZodString>(true);

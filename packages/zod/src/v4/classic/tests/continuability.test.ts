@@ -62,7 +62,7 @@ test("continuability", () => {
         "message": "Invalid UUID",
         "origin": "string",
         "path": [],
-        "pattern": "/^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000)$/",
+        "pattern": "/^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$/",
       },
       {
         "code": "custom",
@@ -187,6 +187,28 @@ test("continuability", () => {
         "format": "ipv6",
         "message": "Invalid IPv6 address",
         "path": [],
+      },
+      {
+        "code": "custom",
+        "message": "Invalid input",
+        "path": [],
+      },
+    ]
+  `);
+  expect(
+    z
+      .mac()
+      .refine(() => false)
+      .safeParse("invalid_value").error!.issues
+  ).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "invalid_format",
+        "format": "mac",
+        "message": "Invalid MAC address",
+        "origin": "string",
+        "path": [],
+        "pattern": "/^(?:[0-9A-F]{2}:){5}[0-9A-F]{2}$|^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}$/",
       },
       {
         "code": "custom",

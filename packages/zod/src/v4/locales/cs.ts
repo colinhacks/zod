@@ -14,48 +14,7 @@ const error: () => errors.$ZodErrorMap = () => {
     return Sizable[origin] ?? null;
   }
 
-  const parsedType = (data: any): string => {
-    const t = typeof data;
-
-    switch (t) {
-      case "number": {
-        return Number.isNaN(data) ? "NaN" : "číslo";
-      }
-      case "string": {
-        return "řetězec";
-      }
-      case "boolean": {
-        return "boolean";
-      }
-      case "bigint": {
-        return "bigint";
-      }
-      case "function": {
-        return "funkce";
-      }
-      case "symbol": {
-        return "symbol";
-      }
-      case "undefined": {
-        return "undefined";
-      }
-      case "object": {
-        if (Array.isArray(data)) {
-          return "pole";
-        }
-        if (data === null) {
-          return "null";
-        }
-
-        if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-          return data.constructor.name;
-        }
-      }
-    }
-    return t;
-  };
-
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "regulární výraz",
@@ -88,10 +47,27 @@ const error: () => errors.$ZodErrorMap = () => {
     template_literal: "vstup",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+    number: "číslo",
+    string: "řetězec",
+    function: "funkce",
+    array: "pole",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `Neplatný vstup: očekáváno ${issue.expected}, obdrženo ${parsedType(issue.input)}`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `Neplatný vstup: očekáváno instanceof ${issue.expected}, obdrženo ${received}`;
+        }
+        return `Neplatný vstup: očekáváno ${expected}, obdrženo ${received}`;
+      }
       case "invalid_value":
         if (issue.values.length === 1) return `Neplatný vstup: očekáváno ${util.stringifyPrimitive(issue.values[0])}`;
         return `Neplatná možnost: očekávána jedna z hodnot ${util.joinValues(issue.values, "|")}`;
@@ -117,7 +93,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `Neplatný řetězec: musí končit na "${_issue.suffix}"`;
         if (_issue.format === "includes") return `Neplatný řetězec: musí obsahovat "${_issue.includes}"`;
         if (_issue.format === "regex") return `Neplatný řetězec: musí odpovídat vzoru ${_issue.pattern}`;
-        return `Neplatný formát ${Nouns[_issue.format] ?? issue.format}`;
+        return `Neplatný formát ${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":
         return `Neplatné číslo: musí být násobkem ${issue.divisor}`;

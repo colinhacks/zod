@@ -28,11 +28,12 @@ test("successful validation", () => {
   expect(r2.error!).toMatchInlineSnapshot(`
     [ZodError: [
       {
-        "origin": "array",
         "code": "too_big",
         "maximum": 2,
+        "inclusive": true,
+        "origin": "array",
         "path": [],
-        "message": "Too big: expected array to have <2 items"
+        "message": "Too big: expected array to have <=2 items"
       }
     ]]
   `);
@@ -80,11 +81,12 @@ test("async validation", async () => {
   expect(r2.error!).toMatchInlineSnapshot(`
     [ZodError: [
       {
-        "origin": "array",
         "code": "too_big",
         "maximum": 2,
+        "inclusive": true,
+        "origin": "array",
         "path": [],
-        "message": "Too big: expected array to have <2 items"
+        "message": "Too big: expected array to have <=2 items"
       }
     ]]
   `);
@@ -143,6 +145,24 @@ test("tuple with optional elements followed by required", () => {
   for (const data of badData) {
     expect(() => myTuple.parse(data)).toThrow();
   }
+});
+
+test("tuple with all optional elements", () => {
+  const allOptionalTuple = z.tuple([z.string().optional(), z.number().optional(), z.boolean().optional()]);
+  expectTypeOf<typeof allOptionalTuple._output>().toEqualTypeOf<[string?, number?, boolean?]>();
+
+  // Empty array should be valid (all items optional)
+  expect(allOptionalTuple.parse([])).toEqual([]);
+
+  // Partial arrays should be valid
+  expect(allOptionalTuple.parse(["hello"])).toEqual(["hello"]);
+  expect(allOptionalTuple.parse(["hello", 42])).toEqual(["hello", 42]);
+
+  // Full array should be valid
+  expect(allOptionalTuple.parse(["hello", 42, true])).toEqual(["hello", 42, true]);
+
+  // Array that's too long should fail
+  expect(() => allOptionalTuple.parse(["hello", 42, true, "extra"])).toThrow();
 });
 
 test("tuple with rest schema", () => {

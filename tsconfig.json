@@ -5,8 +5,8 @@
     "customConditions": ["@zod/source"],
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "types": ["node"]
+    "types": []
   },
   "include": ["**/*.ts", "**/*.mts", "**/*.cts"],
-  "exclude": ["**/*.d.ts", "**/*.d.cts", "**/*.d.mts", "packages/docs"]
+  "exclude": ["**/*.d.ts", "**/*.d.cts", "**/*.d.mts", "packages/docs", "vitest.root.mjs"]
 }

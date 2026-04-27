@@ -20,6 +20,10 @@ export type JWTAlgorithm =
   | "PS512"
   | "EdDSA"
   | (string & {});
+
+export type HashAlgorithm = "md5" | "sha1" | "sha256" | "sha384" | "sha512";
+export type HashEncoding = "hex" | "base64" | "base64url";
+export type HashFormat = `${HashAlgorithm}_${HashEncoding}`;
 export type IPVersion = "v4" | "v6";
 export type MimeTypes =
   | "application/json"
@@ -123,6 +127,7 @@ export type Identity<T> = T;
 export type Flatten<T> = Identity<{ [k in keyof T]: T[k] }>;
 export type Mapped<T> = { [k in keyof T]: T[k] };
 export type Prettify<T> = {
+  // @ts-ignore
   [K in keyof T]: T[K];
 } & {};
 
@@ -194,7 +199,7 @@ export function assertNotEqual<A, B>(val: AssertNotEqual<A, B>): AssertNotEqual<
 export function assertIs<T>(_arg: T): void {}
 
 export function assertNever(_x: never): never {
-  throw new Error();
+  throw new Error("Unexpected value in exhaustive check");
 }
 export function assert<T>(_: any): asserts _ is T {}
 
@@ -241,23 +246,36 @@ export function cleanRegex(source: string): string {
 
 export function floatSafeRemainder(val: number, step: number): number {
   const valDecCount = (val.toString().split(".")[1] || "").length;
-  const stepDecCount = (step.toString().split(".")[1] || "").length;
+  const stepString = step.toString();
+  let stepDecCount = (stepString.split(".")[1] || "").length;
+  if (stepDecCount === 0 && /\d?e-\d+/.test(stepString)) {
+    const match = stepString.match(/\d?e-(\d+)/);
+    if (match?.[1]) {
+      stepDecCount = Number.parseInt(match[1]);
+    }
+  }
+
   const decCount = valDecCount > stepDecCount ? valDecCount : stepDecCount;
   const valInt = Number.parseInt(val.toFixed(decCount).replace(".", ""));
   const stepInt = Number.parseInt(step.toFixed(decCount).replace(".", ""));
   return (valInt % stepInt) / 10 ** decCount;
 }
 
+const EVALUATING = Symbol("evaluating");
+
 export function defineLazy<T, K extends keyof T>(object: T, key: K, getter: () => T[K]): void {
-  const set = false;
+  let value: T[K] | typeof EVALUATING | undefined = undefined;
   Object.defineProperty(object, key, {
     get() {
-      if (!set) {
-        const value = getter();
-        object[key] = value;
-        return value;
+      if (value === EVALUATING) {
+        // Circular reference detected, return undefined to break the cycle
+        return undefined as T[K];
       }
-      throw new Error("cached value already set");
+      if (value === undefined) {
+        value = EVALUATING;
+        value = getter();
+      }
+      return value;
     },
     set(v) {
       Object.defineProperty(object, key, {
@@ -268,6 +286,10 @@ export function defineLazy<T, K extends keyof T>(object: T, key: K, getter: () =
     },
     configurable: true,
   });
+}
+
+export function objectClone(obj: object) {
+  return Object.create(Object.getPrototypeOf(obj), Object.getOwnPropertyDescriptors(obj));
 }
 
 export function assignProp<T extends object, K extends PropertyKey>(
@@ -329,6 +351,15 @@ export function esc(str: string): string {
   return JSON.stringify(str);
 }
 
+export function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export const captureStackTrace: (targetObject: object, constructorOpt?: Function) => void = (
   "captureStackTrace" in Error ? Error.captureStackTrace : (..._args: any[]) => {}
 ) as any;
@@ -359,6 +390,8 @@ export function isPlainObject(o: any): o is Record<PropertyKey, unknown> {
   const ctor = o.constructor;
   if (ctor === undefined) return true;
 
+  if (typeof ctor !== "function") return true;
+
   // modified prototype
   const prot = ctor.prototype;
   if (isObject(prot) === false) return false;
@@ -369,6 +402,12 @@ export function isPlainObject(o: any): o is Record<PropertyKey, unknown> {
   }
 
   return true;
+}
+
+export function shallowClone(o: any): any {
+  if (isPlainObject(o)) return { ...o };
+  if (Array.isArray(o)) return [...o];
+  return o;
 }
 
 export function numKeys(data: any): number {
@@ -554,6 +593,12 @@ export const BIGINT_FORMAT_RANGES: Record<checks.$ZodBigIntFormats, [bigint, big
 export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>): any {
   const currDef = schema._zod.def;
 
+  const checks = currDef.checks;
+  const hasChecks = checks && checks.length > 0;
+  if (hasChecks) {
+    throw new Error(".pick() cannot be used on object schemas containing refinements");
+  }
+
   const def = mergeDefs(schema._zod.def, {
     get shape() {
       const newShape: Writeable<schemas.$ZodShape> = {};
@@ -576,6 +621,12 @@ export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>):
 
 export function omit(schema: schemas.$ZodObject, mask: object): any {
   const currDef = schema._zod.def;
+
+  const checks = currDef.checks;
+  const hasChecks = checks && checks.length > 0;
+  if (hasChecks) {
+    throw new Error(".omit() cannot be used on object schemas containing refinements");
+  }
 
   const def = mergeDefs(schema._zod.def, {
     get shape() {
@@ -602,13 +653,39 @@ export function extend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): an
     throw new Error("Invalid input to extend: expected a plain object");
   }
 
+  const checks = schema._zod.def.checks;
+  const hasChecks = checks && checks.length > 0;
+  if (hasChecks) {
+    // Only throw if new shape overlaps with existing shape
+    // Use getOwnPropertyDescriptor to check key existence without accessing values
+    const existingShape = schema._zod.def.shape;
+    for (const key in shape) {
+      if (Object.getOwnPropertyDescriptor(existingShape, key) !== undefined) {
+        throw new Error("Cannot overwrite keys on object schemas containing refinements. Use `.safeExtend()` instead.");
+      }
+    }
+  }
+
   const def = mergeDefs(schema._zod.def, {
     get shape() {
       const _shape = { ...schema._zod.def.shape, ...shape };
       assignProp(this, "shape", _shape); // self-caching
       return _shape;
     },
-    checks: [],
+  });
+  return clone(schema, def) as any;
+}
+
+export function safeExtend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): any {
+  if (!isPlainObject(shape)) {
+    throw new Error("Invalid input to safeExtend: expected a plain object");
+  }
+  const def = mergeDefs(schema._zod.def, {
+    get shape() {
+      const _shape = { ...schema._zod.def.shape, ...shape };
+      assignProp(this, "shape", _shape); // self-caching
+      return _shape;
+    },
   });
   return clone(schema, def) as any;
 }
@@ -634,6 +711,13 @@ export function partial(
   schema: schemas.$ZodObject,
   mask: object | undefined
 ): any {
+  const currDef = schema._zod.def;
+  const checks = currDef.checks;
+  const hasChecks = checks && checks.length > 0;
+  if (hasChecks) {
+    throw new Error(".partial() cannot be used on object schemas containing refinements");
+  }
+
   const def = mergeDefs(schema._zod.def, {
     get shape() {
       const oldShape = schema._zod.def.shape;
@@ -709,7 +793,6 @@ export function required(
       assignProp(this, "shape", shape); // self-caching
       return shape;
     },
-    checks: [],
   });
 
   return clone(schema, def) as any;
@@ -717,9 +800,23 @@ export function required(
 
 export type Constructor<T, Def extends any[] = any[]> = new (...args: Def) => T;
 
+// invalid_type | too_big | too_small | invalid_format | not_multiple_of | unrecognized_keys | invalid_union | invalid_key | invalid_element | invalid_value | custom
 export function aborted(x: schemas.ParsePayload, startIndex = 0): boolean {
+  if (x.aborted === true) return true;
   for (let i = startIndex; i < x.issues.length; i++) {
     if (x.issues[i]?.continue !== true) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Checks for explicit abort (continue === false), as opposed to implicit abort (continue === undefined).
+// Used to respect `abort: true` in .refine() even for checks that have a `when` function.
+export function explicitlyAborted(x: schemas.ParsePayload, startIndex = 0): boolean {
+  if (x.aborted === true) return true;
+  for (let i = startIndex; i < x.issues.length; i++) {
+    if (x.issues[i]?.continue === false) {
       return true;
     }
   }
@@ -780,6 +877,29 @@ export function getLengthableOrigin(input: any): "array" | "string" | "unknown" 
   return "unknown";
 }
 
+export function parsedType(data: unknown): errors.$ZodInvalidTypeExpected {
+  const t = typeof data;
+  switch (t) {
+    case "number": {
+      return Number.isNaN(data) ? "nan" : "number";
+    }
+    case "object": {
+      if (data === null) {
+        return "null";
+      }
+      if (Array.isArray(data)) {
+        return "array";
+      }
+
+      const obj = data as object;
+      if (obj && Object.getPrototypeOf(obj) !== Object.prototype && "constructor" in obj && obj.constructor) {
+        return (obj.constructor as { name: string }).name;
+      }
+    }
+  }
+  return t;
+}
+
 //////////    REFINES     //////////
 export function issue(_iss: string, input: any, inst: any): errors.$ZodRawIssue;
 export function issue(_iss: errors.$ZodRawIssue): errors.$ZodRawIssue;
@@ -804,6 +924,52 @@ export function cleanEnum(obj: Record<string, EnumValue>): EnumValue[] {
       return Number.isNaN(Number.parseInt(k, 10));
     })
     .map((el) => el[1]);
+}
+
+// Codec utility functions
+export function base64ToUint8Array(base64: string): InstanceType<typeof Uint8Array> {
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+}
+
+export function uint8ArrayToBase64(bytes: Uint8Array): string {
+  let binaryString = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binaryString += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binaryString);
+}
+
+export function base64urlToUint8Array(base64url: string): InstanceType<typeof Uint8Array> {
+  const base64 = base64url.replace(/-/g, "+").replace(/_/g, "/");
+  const padding = "=".repeat((4 - (base64.length % 4)) % 4);
+  return base64ToUint8Array(base64 + padding);
+}
+
+export function uint8ArrayToBase64url(bytes: Uint8Array): string {
+  return uint8ArrayToBase64(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+}
+
+export function hexToUint8Array(hex: string): InstanceType<typeof Uint8Array> {
+  const cleanHex = hex.replace(/^0x/, "");
+  if (cleanHex.length % 2 !== 0) {
+    throw new Error("Invalid hex string length");
+  }
+  const bytes = new Uint8Array(cleanHex.length / 2);
+  for (let i = 0; i < cleanHex.length; i += 2) {
+    bytes[i / 2] = Number.parseInt(cleanHex.slice(i, i + 2), 16);
+  }
+  return bytes;
+}
+
+export function uint8ArrayToHex(bytes: Uint8Array): string {
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 // instanceof

@@ -1,5 +1,5 @@
 import * as core from "../core/index.js";
-import { util } from "../core/index.js";
+import * as util from "../core/util.js";
 import * as parse from "./parse.js";
 
 type SomeType = core.SomeType;
@@ -9,7 +9,9 @@ export interface ZodMiniType<
   out Input = unknown,
   out Internals extends core.$ZodTypeInternals<Output, Input> = core.$ZodTypeInternals<Output, Input>,
 > extends core.$ZodType<Output, Input, Internals> {
+  type: Internals["def"]["type"];
   check(...checks: (core.CheckFn<core.output<this>> | core.$ZodCheck<core.output<this>>)[]): this;
+  with(...checks: (core.CheckFn<core.output<this>> | core.$ZodCheck<core.output<this>>)[]): this;
   clone(def?: Internals["def"], params?: { parent: boolean }): this;
   register<R extends core.$ZodRegistry>(
     registry: R,
@@ -19,9 +21,9 @@ export interface ZodMiniType<
         : [core.$replace<R["_meta"], this>]
       : ["Incompatible schema"]
   ): this;
-  brand<T extends PropertyKey = PropertyKey>(
+  brand<T extends PropertyKey = PropertyKey, Dir extends "in" | "out" | "inout" = "out">(
     value?: T
-  ): PropertyKey extends T ? this : this & Record<"_zod", Record<"output", core.output<this> & core.$brand<T>>>;
+  ): PropertyKey extends T ? this : core.$ZodBranded<this, T, Dir>;
 
   def: Internals["def"];
 
@@ -32,6 +34,7 @@ export interface ZodMiniType<
     data: unknown,
     params?: core.ParseContext<core.$ZodIssue>
   ): Promise<util.SafeParseResult<core.output<this>>>;
+  apply<T>(fn: (schema: this) => T): T;
 }
 
 interface _ZodMiniType<out Internals extends core.$ZodTypeInternals = core.$ZodTypeInternals>
@@ -43,7 +46,9 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
     if (!inst._zod) throw new Error("Uninitialized schema in ZodMiniType.");
 
     core.$ZodType.init(inst, def);
+
     inst.def = def;
+    inst.type = def.type;
     inst.parse = (data, params) => parse.parse(inst, data, params, { callee: inst.parse });
     inst.safeParse = (data, params) => parse.safeParse(inst, data, params);
     inst.parseAsync = async (data, params) => parse.parseAsync(inst, data, params, { callee: inst.parseAsync });
@@ -55,19 +60,25 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
           checks: [
             ...(def.checks ?? []),
             ...checks.map((ch) =>
-              typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
+              typeof ch === "function"
+                ? {
+                    _zod: { check: ch, def: { check: "custom" }, onattach: [] },
+                  }
+                : ch
             ),
           ],
-        }
-        // { parent: true }
+        },
+        { parent: true }
       );
     };
+    inst.with = inst.check;
     inst.clone = (_def, params) => core.clone(inst, _def, params);
     inst.brand = () => inst as any;
     inst.register = ((reg: any, meta: any) => {
       reg.add(inst, meta);
       return inst;
     }) as any;
+    inst.apply = (fn) => fn(inst);
   }
 );
 
@@ -89,6 +100,7 @@ export const ZodMiniString: core.$constructor<ZodMiniString> = /*@__PURE__*/ cor
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function string(params?: string | core.$ZodStringParams): ZodMiniString<string> {
   return core._string(ZodMiniString, params) as any;
 }
@@ -117,6 +129,7 @@ export const ZodMiniEmail: core.$constructor<ZodMiniEmail> = /*@__PURE__*/ core.
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function email(params?: string | core.$ZodEmailParams): ZodMiniEmail {
   return core._email(ZodMiniEmail, params);
 }
@@ -133,6 +146,7 @@ export const ZodMiniGUID: core.$constructor<ZodMiniGUID> = /*@__PURE__*/ core.$c
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function guid(params?: string | core.$ZodGUIDParams): ZodMiniGUID {
   return core._guid(ZodMiniGUID, params);
 }
@@ -149,22 +163,26 @@ export const ZodMiniUUID: core.$constructor<ZodMiniUUID> = /*@__PURE__*/ core.$c
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function uuid(params?: string | core.$ZodUUIDParams): ZodMiniUUID {
   return core._uuid(ZodMiniUUID, params);
 }
 
+// @__NO_SIDE_EFFECTS__
 export function uuidv4(params?: string | core.$ZodUUIDv4Params): ZodMiniUUID {
   return core._uuidv4(ZodMiniUUID, params);
 }
 
 // ZodMiniUUIDv6
 
+// @__NO_SIDE_EFFECTS__
 export function uuidv6(params?: string | core.$ZodUUIDv6Params): ZodMiniUUID {
   return core._uuidv6(ZodMiniUUID, params);
 }
 
 // ZodMiniUUIDv7
 
+// @__NO_SIDE_EFFECTS__
 export function uuidv7(params?: string | core.$ZodUUIDv7Params): ZodMiniUUID {
   return core._uuidv7(ZodMiniUUID, params);
 }
@@ -178,8 +196,18 @@ export const ZodMiniURL: core.$constructor<ZodMiniURL> = /*@__PURE__*/ core.$con
   ZodMiniStringFormat.init(inst, def);
 });
 
+// @__NO_SIDE_EFFECTS__
 export function url(params?: string | core.$ZodURLParams): ZodMiniURL {
   return core._url(ZodMiniURL, params);
+}
+
+// @__NO_SIDE_EFFECTS__
+export function httpUrl(params?: string | Omit<core.$ZodURLParams, "protocol" | "hostname">): ZodMiniURL {
+  return core._url(ZodMiniURL, {
+    protocol: core.regexes.httpProtocol,
+    hostname: core.regexes.domain,
+    ...util.normalizeParams(params),
+  });
 }
 
 // ZodMiniEmoji
@@ -194,6 +222,7 @@ export const ZodMiniEmoji: core.$constructor<ZodMiniEmoji> = /*@__PURE__*/ core.
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function emoji(params?: string | core.$ZodEmojiParams): ZodMiniEmoji {
   return core._emoji(ZodMiniEmoji, params);
 }
@@ -210,6 +239,7 @@ export const ZodMiniNanoID: core.$constructor<ZodMiniNanoID> = /*@__PURE__*/ cor
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function nanoid(params?: string | core.$ZodNanoIDParams): ZodMiniNanoID {
   return core._nanoid(ZodMiniNanoID, params);
 }
@@ -226,6 +256,7 @@ export const ZodMiniCUID: core.$constructor<ZodMiniCUID> = /*@__PURE__*/ core.$c
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function cuid(params?: string | core.$ZodCUIDParams): ZodMiniCUID {
   return core._cuid(ZodMiniCUID, params);
 }
@@ -242,6 +273,7 @@ export const ZodMiniCUID2: core.$constructor<ZodMiniCUID2> = /*@__PURE__*/ core.
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function cuid2(params?: string | core.$ZodCUID2Params): ZodMiniCUID2 {
   return core._cuid2(ZodMiniCUID2, params);
 }
@@ -258,6 +290,7 @@ export const ZodMiniULID: core.$constructor<ZodMiniULID> = /*@__PURE__*/ core.$c
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function ulid(params?: string | core.$ZodULIDParams): ZodMiniULID {
   return core._ulid(ZodMiniULID, params);
 }
@@ -271,6 +304,7 @@ export const ZodMiniXID: core.$constructor<ZodMiniXID> = /*@__PURE__*/ core.$con
   ZodMiniStringFormat.init(inst, def);
 });
 
+// @__NO_SIDE_EFFECTS__
 export function xid(params?: string | core.$ZodXIDParams): ZodMiniXID {
   return core._xid(ZodMiniXID, params);
 }
@@ -287,6 +321,7 @@ export const ZodMiniKSUID: core.$constructor<ZodMiniKSUID> = /*@__PURE__*/ core.
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function ksuid(params?: string | core.$ZodKSUIDParams): ZodMiniKSUID {
   return core._ksuid(ZodMiniKSUID, params);
 }
@@ -303,6 +338,7 @@ export const ZodMiniIPv4: core.$constructor<ZodMiniIPv4> = /*@__PURE__*/ core.$c
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function ipv4(params?: string | core.$ZodIPv4Params): ZodMiniIPv4 {
   return core._ipv4(ZodMiniIPv4, params);
 }
@@ -319,6 +355,7 @@ export const ZodMiniIPv6: core.$constructor<ZodMiniIPv6> = /*@__PURE__*/ core.$c
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function ipv6(params?: string | core.$ZodIPv6Params): ZodMiniIPv6 {
   return core._ipv6(ZodMiniIPv6, params);
 }
@@ -335,6 +372,7 @@ export const ZodMiniCIDRv4: core.$constructor<ZodMiniCIDRv4> = /*@__PURE__*/ cor
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function cidrv4(params?: string | core.$ZodCIDRv4Params): ZodMiniCIDRv4 {
   return core._cidrv4(ZodMiniCIDRv4, params);
 }
@@ -351,8 +389,23 @@ export const ZodMiniCIDRv6: core.$constructor<ZodMiniCIDRv6> = /*@__PURE__*/ cor
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function cidrv6(params?: string | core.$ZodCIDRv6Params): ZodMiniCIDRv6 {
   return core._cidrv6(ZodMiniCIDRv6, params);
+}
+
+// ZodMiniMAC
+export interface ZodMiniMAC extends _ZodMiniString<core.$ZodMACInternals> {
+  // _zod: core.$ZodMACInternals;
+}
+export const ZodMiniMAC: core.$constructor<ZodMiniMAC> = /*@__PURE__*/ core.$constructor("ZodMiniMAC", (inst, def) => {
+  core.$ZodMAC.init(inst, def);
+  ZodMiniStringFormat.init(inst, def);
+});
+
+// @__NO_SIDE_EFFECTS__
+export function mac(params?: string | core.$ZodMACParams): ZodMiniMAC {
+  return core._mac(ZodMiniMAC, params);
 }
 
 // ZodMiniBase64
@@ -366,6 +419,7 @@ export const ZodMiniBase64: core.$constructor<ZodMiniBase64> = /*@__PURE__*/ cor
     ZodMiniStringFormat.init(inst, def);
   }
 );
+// @__NO_SIDE_EFFECTS__
 export function base64(params?: string | core.$ZodBase64Params): ZodMiniBase64 {
   return core._base64(ZodMiniBase64, params);
 }
@@ -381,6 +435,7 @@ export const ZodMiniBase64URL: core.$constructor<ZodMiniBase64URL> = /*@__PURE__
     ZodMiniStringFormat.init(inst, def);
   }
 );
+// @__NO_SIDE_EFFECTS__
 export function base64url(params?: string | core.$ZodBase64URLParams): ZodMiniBase64URL {
   return core._base64url(ZodMiniBase64URL, params);
 }
@@ -397,6 +452,7 @@ export const ZodMiniE164: core.$constructor<ZodMiniE164> = /*@__PURE__*/ core.$c
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function e164(params?: string | core.$ZodE164Params): ZodMiniE164 {
   return core._e164(ZodMiniE164, params);
 }
@@ -410,6 +466,7 @@ export const ZodMiniJWT: core.$constructor<ZodMiniJWT> = /*@__PURE__*/ core.$con
   ZodMiniStringFormat.init(inst, def);
 });
 
+// @__NO_SIDE_EFFECTS__
 export function jwt(params?: string | core.$ZodJWTParams): ZodMiniJWT {
   return core._jwt(ZodMiniJWT, params);
 }
@@ -428,12 +485,38 @@ export const ZodMiniCustomStringFormat: core.$constructor<ZodMiniCustomStringFor
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function stringFormat<Format extends string>(
   format: Format,
   fnOrRegex: ((arg: string) => util.MaybeAsync<unknown>) | RegExp,
   _params: string | core.$ZodStringFormatParams = {}
 ): ZodMiniCustomStringFormat<Format> {
   return core._stringFormat(ZodMiniCustomStringFormat, format, fnOrRegex, _params) as any;
+}
+
+// @__NO_SIDE_EFFECTS__
+export function hostname(_params?: string | core.$ZodStringFormatParams): ZodMiniCustomStringFormat<"hostname"> {
+  return core._stringFormat(ZodMiniCustomStringFormat, "hostname", core.regexes.hostname, _params) as any;
+}
+
+// @__NO_SIDE_EFFECTS__
+export function hex(_params?: string | core.$ZodStringFormatParams): ZodMiniCustomStringFormat<"hex"> {
+  return core._stringFormat(ZodMiniCustomStringFormat, "hex", core.regexes.hex, _params) as any;
+}
+
+// @__NO_SIDE_EFFECTS__
+export function hash<Alg extends util.HashAlgorithm, Enc extends util.HashEncoding = "hex">(
+  alg: Alg,
+  params?: {
+    enc?: Enc;
+  } & core.$ZodStringFormatParams
+): ZodMiniCustomStringFormat<`${Alg}_${Enc}`> {
+  const enc = params?.enc ?? "hex";
+  const format = `${alg}_${enc}` as const;
+  const regex = core.regexes[format as keyof typeof core.regexes] as RegExp;
+  // check for unrecognized format
+  if (!regex) throw new Error(`Unrecognized hash format: ${format}`);
+  return core._stringFormat(ZodMiniCustomStringFormat, format, regex, params) as any;
 }
 
 // ZodMiniNumber
@@ -453,6 +536,7 @@ export const ZodMiniNumber: core.$constructor<ZodMiniNumber> = /*@__PURE__*/ cor
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function number(params?: string | core.$ZodNumberParams): ZodMiniNumber<number> {
   return core._number(ZodMiniNumber, params) as any;
 }
@@ -469,30 +553,35 @@ export const ZodMiniNumberFormat: core.$constructor<ZodMiniNumberFormat> = /*@__
 
 // int
 
+// @__NO_SIDE_EFFECTS__
 export function int(params?: string | core.$ZodCheckNumberFormatParams): ZodMiniNumberFormat {
   return core._int(ZodMiniNumberFormat, params);
 }
 
 // float32
 
+// @__NO_SIDE_EFFECTS__
 export function float32(params?: string | core.$ZodCheckNumberFormatParams): ZodMiniNumberFormat {
   return core._float32(ZodMiniNumberFormat, params);
 }
 
 // float64
 
+// @__NO_SIDE_EFFECTS__
 export function float64(params?: string | core.$ZodCheckNumberFormatParams): ZodMiniNumberFormat {
   return core._float64(ZodMiniNumberFormat, params);
 }
 
 // int32
 
+// @__NO_SIDE_EFFECTS__
 export function int32(params?: string | core.$ZodCheckNumberFormatParams): ZodMiniNumberFormat {
   return core._int32(ZodMiniNumberFormat, params);
 }
 
 // uint32
 
+// @__NO_SIDE_EFFECTS__
 export function uint32(params?: string | core.$ZodCheckNumberFormatParams): ZodMiniNumberFormat {
   return core._uint32(ZodMiniNumberFormat, params);
 }
@@ -509,6 +598,7 @@ export const ZodMiniBoolean: core.$constructor<ZodMiniBoolean> = /*@__PURE__*/ c
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function boolean(params?: string | core.$ZodBooleanParams): ZodMiniBoolean<boolean> {
   return core._boolean(ZodMiniBoolean, params) as any;
 }
@@ -525,6 +615,7 @@ export const ZodMiniBigInt: core.$constructor<ZodMiniBigInt> = /*@__PURE__*/ cor
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function bigint(params?: string | core.$ZodBigIntParams): ZodMiniBigInt<bigint> {
   return core._bigint(ZodMiniBigInt, params) as any;
 }
@@ -545,12 +636,14 @@ export const ZodMiniBigIntFormat: core.$constructor<ZodMiniBigIntFormat> = /*@__
 
 // int64
 
+// @__NO_SIDE_EFFECTS__
 export function int64(params?: string | core.$ZodBigIntFormatParams): ZodMiniBigIntFormat {
   return core._int64(ZodMiniBigIntFormat, params);
 }
 
 // uint64
 
+// @__NO_SIDE_EFFECTS__
 export function uint64(params?: string | core.$ZodBigIntFormatParams): ZodMiniBigIntFormat {
   return core._uint64(ZodMiniBigIntFormat, params);
 }
@@ -567,6 +660,7 @@ export const ZodMiniSymbol: core.$constructor<ZodMiniSymbol> = /*@__PURE__*/ cor
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function symbol(params?: string | core.$ZodSymbolParams): ZodMiniSymbol {
   return core._symbol(ZodMiniSymbol, params) as any;
 }
@@ -583,6 +677,7 @@ export const ZodMiniUndefined: core.$constructor<ZodMiniUndefined> = /*@__PURE__
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 function _undefined(params?: string | core.$ZodUndefinedParams): ZodMiniUndefined {
   return core._undefined(ZodMiniUndefined, params) as any;
 }
@@ -600,6 +695,7 @@ export const ZodMiniNull: core.$constructor<ZodMiniNull> = /*@__PURE__*/ core.$c
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 function _null(params?: string | core.$ZodNullParams): ZodMiniNull {
   return core._null(ZodMiniNull, params) as any;
 }
@@ -614,6 +710,7 @@ export const ZodMiniAny: core.$constructor<ZodMiniAny> = /*@__PURE__*/ core.$con
   ZodMiniType.init(inst, def);
 });
 
+// @__NO_SIDE_EFFECTS__
 export function any(): ZodMiniAny {
   return core._any(ZodMiniAny) as any;
 }
@@ -630,6 +727,7 @@ export const ZodMiniUnknown: core.$constructor<ZodMiniUnknown> = /*@__PURE__*/ c
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function unknown(): ZodMiniUnknown {
   return core._unknown(ZodMiniUnknown) as any;
 }
@@ -646,6 +744,7 @@ export const ZodMiniNever: core.$constructor<ZodMiniNever> = /*@__PURE__*/ core.
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function never(params?: string | core.$ZodNeverParams): ZodMiniNever {
   return core._never(ZodMiniNever, params) as any;
 }
@@ -662,6 +761,7 @@ export const ZodMiniVoid: core.$constructor<ZodMiniVoid> = /*@__PURE__*/ core.$c
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 function _void(params?: string | core.$ZodVoidParams): ZodMiniVoid {
   return core._void(ZodMiniVoid, params) as any;
 }
@@ -680,6 +780,7 @@ export const ZodMiniDate: core.$constructor<ZodMiniDate> = /*@__PURE__*/ core.$c
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function date(params?: string | core.$ZodDateParams): ZodMiniDate<Date> {
   return core._date(ZodMiniDate, params) as any;
 }
@@ -699,6 +800,7 @@ export const ZodMiniArray: core.$constructor<ZodMiniArray> = /*@__PURE__*/ core.
 );
 
 export function array<T extends SomeType>(element: T, params?: string | core.$ZodArrayParams): ZodMiniArray<T>;
+// @__NO_SIDE_EFFECTS__
 export function array<T extends SomeType>(element: SomeType, params?: any): ZodMiniArray<T> {
   return new ZodMiniArray({
     type: "array",
@@ -708,9 +810,10 @@ export function array<T extends SomeType>(element: SomeType, params?: any): ZodM
 }
 
 // .keyof
-export function keyof<T extends ZodMiniObject>(schema: T): ZodMiniLiteral<Exclude<keyof T["shape"], symbol>> {
+// @__NO_SIDE_EFFECTS__
+export function keyof<T extends ZodMiniObject>(schema: T): ZodMiniEnum<util.KeysEnum<T["shape"]>> {
   const shape = schema._zod.def.shape;
-  return literal(Object.keys(shape)) as any;
+  return _enum(Object.keys(shape)) as any;
 }
 
 // ZodMiniObject
@@ -730,59 +833,49 @@ export const ZodMiniObject: core.$constructor<ZodMiniObject> = /*@__PURE__*/ cor
     util.defineLazy(inst, "shape", () => def.shape);
   }
 );
+// @__NO_SIDE_EFFECTS__
 export function object<T extends core.$ZodLooseShape = Record<never, SomeType>>(
   shape?: T,
   params?: string | core.$ZodObjectParams
 ): ZodMiniObject<T, core.$strip> {
   const def: core.$ZodObjectDef = {
     type: "object",
-    get shape() {
-      util.assignProp(this, "shape", { ...shape });
-      return this.shape;
-    },
+    shape: shape ?? {},
     ...util.normalizeParams(params),
   };
   return new ZodMiniObject(def) as any;
 }
 
 // strictObject
+// @__NO_SIDE_EFFECTS__
 export function strictObject<T extends core.$ZodLooseShape>(
   shape: T,
   params?: string | core.$ZodObjectParams
 ): ZodMiniObject<T, core.$strict> {
   return new ZodMiniObject({
     type: "object",
-    // shape: shape as core.$ZodLooseShape,
-    get shape() {
-      util.assignProp(this, "shape", { ...shape });
-      return this.shape;
-    },
+    shape,
     catchall: never(),
     ...util.normalizeParams(params),
   }) as any;
 }
 
 // looseObject
+// @__NO_SIDE_EFFECTS__
 export function looseObject<T extends core.$ZodLooseShape>(
   shape: T,
   params?: string | core.$ZodObjectParams
 ): ZodMiniObject<T, core.$loose> {
   return new ZodMiniObject({
     type: "object",
-    // shape: shape as core.$ZodLooseShape,
-    get shape() {
-      util.assignProp(this, "shape", { ...shape });
-      return this.shape;
-    },
-    // get optional() {
-    //   return util.optionalKeys(shape);
-    // },
+    shape,
     catchall: unknown(),
     ...util.normalizeParams(params),
   }) as any;
 }
 
 // object methods
+// @__NO_SIDE_EFFECTS__
 export function extend<T extends ZodMiniObject, U extends core.$ZodLooseShape>(
   schema: T,
   shape: U
@@ -790,31 +883,53 @@ export function extend<T extends ZodMiniObject, U extends core.$ZodLooseShape>(
   return util.extend(schema, shape);
 }
 
+export type SafeExtendShape<Base extends core.$ZodShape, Ext extends core.$ZodLooseShape> = {
+  [K in keyof Ext]: K extends keyof Base
+    ? core.output<Ext[K]> extends core.output<Base[K]>
+      ? core.input<Ext[K]> extends core.input<Base[K]>
+        ? Ext[K]
+        : never
+      : never
+    : Ext[K];
+};
+
+// @__NO_SIDE_EFFECTS__
+export function safeExtend<T extends ZodMiniObject, U extends core.$ZodLooseShape>(
+  schema: T,
+  shape: SafeExtendShape<T["shape"], U>
+): ZodMiniObject<util.Extend<T["shape"], U>, T["_zod"]["config"]> {
+  return util.safeExtend(schema, shape as any);
+}
+
 /** @deprecated Identical to `z.extend(A, B)` */
 export function merge<T extends ZodMiniObject, U extends ZodMiniObject>(
   a: T,
   b: U
 ): ZodMiniObject<util.Extend<T["shape"], U["shape"]>, T["_zod"]["config"]>;
+// @__NO_SIDE_EFFECTS__
 export function merge(schema: ZodMiniObject, shape: any): ZodMiniObject {
   return util.extend(schema, shape);
 }
 
+// @__NO_SIDE_EFFECTS__
 export function pick<T extends ZodMiniObject, M extends util.Mask<keyof T["shape"]>>(
   schema: T,
-  mask: M
+  mask: M & Record<Exclude<keyof M, keyof T["shape"]>, never>
 ): ZodMiniObject<util.Flatten<Pick<T["shape"], keyof T["shape"] & keyof M>>, T["_zod"]["config"]> {
   return util.pick(schema, mask as any);
 }
 
 // .omit
 
-export function omit<T extends ZodMiniObject, const M extends util.Mask<keyof T["shape"]>>(
+// @__NO_SIDE_EFFECTS__
+export function omit<T extends ZodMiniObject, M extends util.Mask<keyof T["shape"]>>(
   schema: T,
-  mask: M
+  mask: M & Record<Exclude<keyof M, keyof T["shape"]>, never>
 ): ZodMiniObject<util.Flatten<Omit<T["shape"], keyof M>>, T["_zod"]["config"]> {
   return util.omit(schema, mask);
 }
 
+// @__NO_SIDE_EFFECTS__
 export function partial<T extends ZodMiniObject>(
   schema: T
 ): ZodMiniObject<
@@ -823,15 +938,17 @@ export function partial<T extends ZodMiniObject>(
   },
   T["_zod"]["config"]
 >;
+// @__NO_SIDE_EFFECTS__
 export function partial<T extends ZodMiniObject, M extends util.Mask<keyof T["shape"]>>(
   schema: T,
-  mask: M
+  mask: M & Record<Exclude<keyof M, keyof T["shape"]>, never>
 ): ZodMiniObject<
   {
     [k in keyof T["shape"]]: k extends keyof M ? ZodMiniOptional<T["shape"][k]> : T["shape"][k];
   },
   T["_zod"]["config"]
 >;
+// @__NO_SIDE_EFFECTS__
 export function partial(schema: ZodMiniObject, mask?: object) {
   return util.partial(ZodMiniOptional, schema, mask);
 }
@@ -847,6 +964,7 @@ export type RequiredInterfaceShape<
   }
 >;
 
+// @__NO_SIDE_EFFECTS__
 export function required<T extends ZodMiniObject>(
   schema: T
 ): ZodMiniObject<
@@ -855,9 +973,10 @@ export function required<T extends ZodMiniObject>(
   },
   T["_zod"]["config"]
 >;
+// @__NO_SIDE_EFFECTS__
 export function required<T extends ZodMiniObject, M extends util.Mask<keyof T["shape"]>>(
   schema: T,
-  mask: M
+  mask: M & Record<Exclude<keyof M, keyof T["shape"]>, never>
 ): ZodMiniObject<
   util.Extend<
     T["shape"],
@@ -867,10 +986,12 @@ export function required<T extends ZodMiniObject, M extends util.Mask<keyof T["s
   >,
   T["_zod"]["config"]
 >;
+// @__NO_SIDE_EFFECTS__
 export function required(schema: ZodMiniObject, mask?: object) {
   return util.required(ZodMiniNonOptional, schema, mask);
 }
 
+// @__NO_SIDE_EFFECTS__
 export function catchall<T extends ZodMiniObject, U extends SomeType>(
   inst: T,
   catchall: U
@@ -891,6 +1012,7 @@ export const ZodMiniUnion: core.$constructor<ZodMiniUnion> = /*@__PURE__*/ core.
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function union<const T extends readonly SomeType[]>(
   options: T,
   params?: string | core.$ZodUnionParams
@@ -902,10 +1024,37 @@ export function union<const T extends readonly SomeType[]>(
   }) as any;
 }
 
+// ZodMiniXor
+export interface ZodMiniXor<T extends readonly SomeType[] = readonly core.$ZodType[]>
+  extends _ZodMiniType<core.$ZodXorInternals<T>> {
+  // _zod: core.$ZodXorInternals<T>;
+}
+export const ZodMiniXor: core.$constructor<ZodMiniXor> = /*@__PURE__*/ core.$constructor("ZodMiniXor", (inst, def) => {
+  ZodMiniUnion.init(inst, def);
+  core.$ZodXor.init(inst, def);
+});
+
+/** Creates an exclusive union (XOR) where exactly one option must match.
+ * Unlike regular unions that succeed when any option matches, xor fails if
+ * zero or more than one option matches the input. */
+export function xor<const T extends readonly SomeType[]>(
+  options: T,
+  params?: string | core.$ZodXorParams
+): ZodMiniXor<T> {
+  return new ZodMiniXor({
+    type: "union",
+    options: options as any as core.$ZodType[],
+    inclusive: false,
+    ...util.normalizeParams(params),
+  }) as any;
+}
+
 // ZodMiniDiscriminatedUnion
-export interface ZodMiniDiscriminatedUnion<Options extends readonly SomeType[] = readonly core.$ZodType[]>
-  extends ZodMiniUnion<Options> {
-  _zod: core.$ZodDiscriminatedUnionInternals<Options>;
+export interface ZodMiniDiscriminatedUnion<
+  Options extends readonly SomeType[] = readonly core.$ZodType[],
+  Disc extends string = string,
+> extends ZodMiniUnion<Options> {
+  _zod: core.$ZodDiscriminatedUnionInternals<Options, Disc>;
 }
 export const ZodMiniDiscriminatedUnion: core.$constructor<ZodMiniDiscriminatedUnion> = /*@__PURE__*/ core.$constructor(
   "ZodMiniDiscriminatedUnion",
@@ -915,19 +1064,21 @@ export const ZodMiniDiscriminatedUnion: core.$constructor<ZodMiniDiscriminatedUn
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function discriminatedUnion<
   Types extends readonly [core.$ZodTypeDiscriminable, ...core.$ZodTypeDiscriminable[]],
+  Disc extends string,
 >(
-  discriminator: string,
+  discriminator: Disc,
   options: Types,
   params?: string | core.$ZodDiscriminatedUnionParams
-): ZodMiniDiscriminatedUnion<Types> {
+): ZodMiniDiscriminatedUnion<Types, Disc> {
   return new ZodMiniDiscriminatedUnion({
     type: "union",
     options,
     discriminator,
     ...util.normalizeParams(params),
-  }) as ZodMiniDiscriminatedUnion<Types>;
+  }) as ZodMiniDiscriminatedUnion<Types, Disc>;
 }
 
 // ZodMiniIntersection
@@ -943,6 +1094,7 @@ export const ZodMiniIntersection: core.$constructor<ZodMiniIntersection> = /*@__
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function intersection<T extends SomeType, U extends SomeType>(left: T, right: U): ZodMiniIntersection<T, U> {
   return new ZodMiniIntersection({
     type: "intersection",
@@ -976,6 +1128,7 @@ export function tuple<const T extends readonly [SomeType, ...SomeType[]], Rest e
   params?: string | core.$ZodTupleParams
 ): ZodMiniTuple<T, Rest>;
 export function tuple(items: [], params?: string | core.$ZodTupleParams): ZodMiniTuple<[], null>;
+// @__NO_SIDE_EFFECTS__
 export function tuple(
   items: SomeType[],
   _paramsOrRest?: string | core.$ZodTupleParams | SomeType,
@@ -1007,6 +1160,7 @@ export const ZodMiniRecord: core.$constructor<ZodMiniRecord> = /*@__PURE__*/ cor
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function record<Key extends core.$ZodRecordKey, Value extends SomeType>(
   keyType: Key,
   valueType: Value,
@@ -1019,6 +1173,7 @@ export function record<Key extends core.$ZodRecordKey, Value extends SomeType>(
     ...util.normalizeParams(params),
   }) as any;
 }
+// @__NO_SIDE_EFFECTS__
 export function partialRecord<Key extends core.$ZodRecordKey, Value extends SomeType>(
   keyType: Key,
   valueType: Value,
@@ -1034,6 +1189,20 @@ export function partialRecord<Key extends core.$ZodRecordKey, Value extends Some
   }) as any;
 }
 
+export function looseRecord<Key extends core.$ZodRecordKey, Value extends SomeType>(
+  keyType: Key,
+  valueType: Value,
+  params?: string | core.$ZodRecordParams
+): ZodMiniRecord<Key, Value> {
+  return new ZodMiniRecord({
+    type: "record",
+    keyType,
+    valueType: valueType as any as core.$ZodType,
+    mode: "loose",
+    ...util.normalizeParams(params),
+  }) as any;
+}
+
 // ZodMiniMap
 export interface ZodMiniMap<Key extends SomeType = core.$ZodType, Value extends SomeType = core.$ZodType>
   extends _ZodMiniType<core.$ZodMapInternals<Key, Value>> {
@@ -1044,6 +1213,7 @@ export const ZodMiniMap: core.$constructor<ZodMiniMap> = /*@__PURE__*/ core.$con
   ZodMiniType.init(inst, def);
 });
 
+// @__NO_SIDE_EFFECTS__
 export function map<Key extends SomeType, Value extends SomeType>(
   keyType: Key,
   valueType: Value,
@@ -1066,6 +1236,7 @@ export const ZodMiniSet: core.$constructor<ZodMiniSet> = /*@__PURE__*/ core.$con
   ZodMiniType.init(inst, def);
 });
 
+// @__NO_SIDE_EFFECTS__
 export function set<Value extends SomeType>(valueType: Value, params?: string | core.$ZodSetParams): ZodMiniSet<Value> {
   return new ZodMiniSet({
     type: "set",
@@ -1077,12 +1248,15 @@ export function set<Value extends SomeType>(valueType: Value, params?: string | 
 // ZodMiniEnum
 export interface ZodMiniEnum<T extends util.EnumLike = util.EnumLike> extends _ZodMiniType<core.$ZodEnumInternals<T>> {
   // _zod: core.$ZodEnumInternals<T>;
+  options: Array<T[keyof T]>;
 }
 export const ZodMiniEnum: core.$constructor<ZodMiniEnum> = /*@__PURE__*/ core.$constructor(
   "ZodMiniEnum",
   (inst, def) => {
     core.$ZodEnum.init(inst, def);
     ZodMiniType.init(inst, def);
+
+    inst.options = Object.values(def.entries);
   }
 );
 
@@ -1091,6 +1265,7 @@ function _enum<const T extends readonly string[]>(
   params?: string | core.$ZodEnumParams
 ): ZodMiniEnum<util.ToEnum<T[number]>>;
 function _enum<T extends util.EnumLike>(entries: T, params?: string | core.$ZodEnumParams): ZodMiniEnum<T>;
+// @__NO_SIDE_EFFECTS__
 function _enum(values: any, params?: string | core.$ZodEnumParams) {
   const entries: any = Array.isArray(values) ? Object.fromEntries(values.map((v) => [v, v])) : values;
 
@@ -1102,6 +1277,7 @@ function _enum(values: any, params?: string | core.$ZodEnumParams) {
 }
 export { _enum as enum };
 
+// @__NO_SIDE_EFFECTS__
 /** @deprecated This API has been merged into `z.enum()`. Use `z.enum()` instead.
  *
  * ```ts
@@ -1138,6 +1314,7 @@ export function literal<const T extends util.Literal>(
   value: T,
   params?: string | core.$ZodLiteralParams
 ): ZodMiniLiteral<T>;
+// @__NO_SIDE_EFFECTS__
 export function literal(value: any, params: any) {
   return new ZodMiniLiteral({
     type: "literal",
@@ -1158,6 +1335,7 @@ export const ZodMiniFile: core.$constructor<ZodMiniFile> = /*@__PURE__*/ core.$c
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function file(params?: string | core.$ZodFileParams): ZodMiniFile {
   return core._file(ZodMiniFile, params) as any;
 }
@@ -1174,6 +1352,7 @@ export const ZodMiniTransform: core.$constructor<ZodMiniTransform> = /*@__PURE__
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function transform<I = unknown, O = I>(
   fn: (input: I, ctx: core.ParsePayload) => O
 ): ZodMiniTransform<Awaited<O>, I> {
@@ -1197,8 +1376,31 @@ export const ZodMiniOptional: core.$constructor<ZodMiniOptional> = /*@__PURE__*/
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function optional<T extends SomeType>(innerType: T): ZodMiniOptional<T> {
   return new ZodMiniOptional({
+    type: "optional",
+    innerType: innerType as any as core.$ZodType,
+  }) as any;
+}
+
+// ZodMiniExactOptional
+export interface ZodMiniExactOptional<T extends SomeType = core.$ZodType>
+  extends _ZodMiniType<core.$ZodExactOptionalInternals<T>>,
+    core.$ZodExactOptional<T> {
+  // _zod: core.$ZodExactOptionalInternals<T>;
+}
+export const ZodMiniExactOptional: core.$constructor<ZodMiniExactOptional> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniExactOptional",
+  (inst, def) => {
+    core.$ZodExactOptional.init(inst, def);
+    ZodMiniType.init(inst, def);
+  }
+);
+
+// @__NO_SIDE_EFFECTS__
+export function exactOptional<T extends SomeType>(innerType: T): ZodMiniExactOptional<T> {
+  return new ZodMiniExactOptional({
     type: "optional",
     innerType: innerType as any as core.$ZodType,
   }) as any;
@@ -1217,6 +1419,7 @@ export const ZodMiniNullable: core.$constructor<ZodMiniNullable> = /*@__PURE__*/
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function nullable<T extends SomeType>(innerType: T): ZodMiniNullable<T> {
   return new ZodMiniNullable({
     type: "nullable",
@@ -1225,6 +1428,7 @@ export function nullable<T extends SomeType>(innerType: T): ZodMiniNullable<T> {
 }
 
 // nullish
+// @__NO_SIDE_EFFECTS__
 export function nullish<T extends SomeType>(innerType: T): ZodMiniOptional<ZodMiniNullable<T>> {
   return optional(nullable(innerType));
 }
@@ -1241,6 +1445,7 @@ export const ZodMiniDefault: core.$constructor<ZodMiniDefault> = /*@__PURE__*/ c
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function _default<T extends SomeType>(
   innerType: T,
   defaultValue: util.NoUndefined<core.output<T>> | (() => util.NoUndefined<core.output<T>>)
@@ -1249,7 +1454,7 @@ export function _default<T extends SomeType>(
     type: "default",
     innerType: innerType as any as core.$ZodType,
     get defaultValue() {
-      return typeof defaultValue === "function" ? (defaultValue as Function)() : defaultValue;
+      return typeof defaultValue === "function" ? (defaultValue as Function)() : util.shallowClone(defaultValue);
     },
   }) as any;
 }
@@ -1266,6 +1471,7 @@ export const ZodMiniPrefault: core.$constructor<ZodMiniPrefault> = /*@__PURE__*/
     ZodMiniType.init(inst, def);
   }
 );
+// @__NO_SIDE_EFFECTS__
 export function prefault<T extends SomeType>(
   innerType: T,
   defaultValue: util.NoUndefined<core.input<T>> | (() => util.NoUndefined<core.input<T>>)
@@ -1274,7 +1480,7 @@ export function prefault<T extends SomeType>(
     type: "prefault",
     innerType: innerType as any as core.$ZodType,
     get defaultValue() {
-      return typeof defaultValue === "function" ? (defaultValue as Function)() : defaultValue;
+      return typeof defaultValue === "function" ? (defaultValue as Function)() : util.shallowClone(defaultValue);
     },
   }) as any;
 }
@@ -1292,6 +1498,7 @@ export const ZodMiniNonOptional: core.$constructor<ZodMiniNonOptional> = /*@__PU
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function nonoptional<T extends SomeType>(
   innerType: T,
   params?: string | core.$ZodNonOptionalParams
@@ -1315,6 +1522,7 @@ export const ZodMiniSuccess: core.$constructor<ZodMiniSuccess> = /*@__PURE__*/ c
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function success<T extends SomeType>(innerType: T): ZodMiniSuccess<T> {
   return new ZodMiniSuccess({
     type: "success",
@@ -1334,6 +1542,7 @@ export const ZodMiniCatch: core.$constructor<ZodMiniCatch> = /*@__PURE__*/ core.
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 function _catch<T extends SomeType>(
   innerType: T,
   catchValue: core.output<T> | ((ctx: core.$ZodCatchCtx) => core.output<T>)
@@ -1357,6 +1566,7 @@ export const ZodMiniNaN: core.$constructor<ZodMiniNaN> = /*@__PURE__*/ core.$con
   ZodMiniType.init(inst, def);
 });
 
+// @__NO_SIDE_EFFECTS__
 export function nan(params?: string | core.$ZodNaNParams): ZodMiniNaN {
   return core._nan(ZodMiniNaN, params) as any;
 }
@@ -1374,6 +1584,7 @@ export const ZodMiniPipe: core.$constructor<ZodMiniPipe> = /*@__PURE__*/ core.$c
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function pipe<
   const A extends SomeType,
   B extends core.$ZodType<unknown, core.output<A>> = core.$ZodType<unknown, core.output<A>>,
@@ -1382,6 +1593,39 @@ export function pipe<
     type: "pipe",
     in: in_ as any as core.$ZodType,
     out: out as any as core.$ZodType,
+  }) as any;
+}
+
+// ZodMiniCodec
+export interface ZodMiniCodec<A extends SomeType = core.$ZodType, B extends SomeType = core.$ZodType>
+  extends ZodMiniPipe<A, B>,
+    core.$ZodCodec<A, B> {
+  _zod: core.$ZodCodecInternals<A, B>;
+  def: core.$ZodCodecDef<A, B>;
+}
+export const ZodMiniCodec: core.$constructor<ZodMiniCodec> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniCodec",
+  (inst, def) => {
+    ZodMiniPipe.init(inst, def);
+    core.$ZodCodec.init(inst, def);
+  }
+);
+
+// @__NO_SIDE_EFFECTS__
+export function codec<const A extends SomeType, B extends core.SomeType = core.$ZodType>(
+  in_: A,
+  out: B,
+  params: {
+    decode: (value: core.output<A>, payload: core.ParsePayload<core.output<A>>) => core.util.MaybeAsync<core.input<B>>;
+    encode: (value: core.input<B>, payload: core.ParsePayload<core.input<B>>) => core.util.MaybeAsync<core.output<A>>;
+  }
+): ZodMiniCodec<A, B> {
+  return new ZodMiniCodec({
+    type: "pipe",
+    in: in_ as any as core.$ZodType,
+    out: out as any as core.$ZodType,
+    transform: params.decode as any,
+    reverseTransform: params.encode as any,
   }) as any;
 }
 
@@ -1398,6 +1642,7 @@ export const ZodMiniReadonly: core.$constructor<ZodMiniReadonly> = /*@__PURE__*/
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function readonly<T extends SomeType>(innerType: T): ZodMiniReadonly<T> {
   return new ZodMiniReadonly({
     type: "readonly",
@@ -1418,6 +1663,7 @@ export const ZodMiniTemplateLiteral: core.$constructor<ZodMiniTemplateLiteral> =
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function templateLiteral<const Parts extends core.$ZodTemplateLiteralPart[]>(
   parts: Parts,
   params?: string | core.$ZodTemplateLiteralParams
@@ -1444,6 +1690,7 @@ export const ZodMiniLazy: core.$constructor<ZodMiniLazy> = /*@__PURE__*/ core.$c
 // export function lazy<T extends object>(getter: () => T): T {
 //   return util.createTransparentProxy<T>(getter);
 // }
+// @__NO_SIDE_EFFECTS__
 function _lazy<T extends SomeType>(getter: () => T): ZodMiniLazy<T> {
   return new ZodMiniLazy({
     type: "lazy",
@@ -1464,6 +1711,7 @@ export const ZodMiniPromise: core.$constructor<ZodMiniPromise> = /*@__PURE__*/ c
   }
 );
 
+// @__NO_SIDE_EFFECTS__
 export function promise<T extends SomeType>(innerType: T): ZodMiniPromise<T> {
   return new ZodMiniPromise({
     type: "promise",
@@ -1484,6 +1732,7 @@ export const ZodMiniCustom: core.$constructor<ZodMiniCustom> = /*@__PURE__*/ cor
 );
 
 // custom checks
+// @__NO_SIDE_EFFECTS__
 export function check<O = unknown>(fn: core.CheckFn<O>, params?: string | core.$ZodCustomParams): core.$ZodCheck<O> {
   const ch = new core.$ZodCheck({
     check: "custom",
@@ -1496,6 +1745,7 @@ export function check<O = unknown>(fn: core.CheckFn<O>, params?: string | core.$
 
 // ZodCustom
 // custom schema
+// @__NO_SIDE_EFFECTS__
 export function custom<O = unknown, I = O>(
   fn?: (data: O) => unknown,
   _params?: string | core.$ZodCustomParams | undefined
@@ -1504,6 +1754,7 @@ export function custom<O = unknown, I = O>(
 }
 
 // refine
+// @__NO_SIDE_EFFECTS__
 export function refine<T>(
   fn: (arg: NoInfer<T>) => util.MaybeAsync<unknown>,
   _params: string | core.$ZodCustomParams = {}
@@ -1511,40 +1762,61 @@ export function refine<T>(
   return core._refine(ZodMiniCustom, fn, _params);
 }
 
+// superRefine
+// @__NO_SIDE_EFFECTS__
+export function superRefine<T>(
+  fn: (arg: T, payload: core.$RefinementCtx<T>) => void | Promise<void>
+): core.$ZodCheck<T> {
+  return core._superRefine(fn);
+}
+
+// Re-export describe and meta from core
+export const describe = core.describe;
+export const meta = core.meta;
+
 // instanceof
 abstract class Class {
   constructor(..._args: any[]) {}
 }
+// @__NO_SIDE_EFFECTS__
 function _instanceof<T extends typeof Class>(
   cls: T,
-  params: core.$ZodCustomParams = {
-    error: `Input not instance of ${cls.name}`,
-  }
+  params: core.$ZodCustomParams = {}
 ): ZodMiniCustom<InstanceType<T>, InstanceType<T>> {
   const inst = custom((data) => data instanceof cls, params);
   inst._zod.bag.Class = cls;
+  // Override check to emit invalid_type instead of custom
+  inst._zod.check = (payload) => {
+    if (!(payload.value instanceof cls)) {
+      payload.issues.push({
+        code: "invalid_type",
+        expected: cls.name,
+        input: payload.value,
+        inst,
+        path: [...(inst._zod.def.path ?? [])],
+      });
+    }
+  };
   return inst as any;
 }
 export { _instanceof as instanceof };
 
 // stringbool
-export const stringbool: (
-  _params?: string | core.$ZodStringBoolParams
-) => ZodMiniPipe<ZodMiniPipe<ZodMiniString, ZodMiniTransform<boolean, string>>, ZodMiniBoolean> = (...args) =>
-  core._stringbool(
-    {
-      Pipe: ZodMiniPipe,
-      Boolean: ZodMiniBoolean,
-      String: ZodMiniString,
-      Transform: ZodMiniTransform,
-    },
-    ...args
-  ) as any;
+export const stringbool: (_params?: string | core.$ZodStringBoolParams) => ZodMiniCodec<ZodMiniString, ZodMiniBoolean> =
+  (...args) =>
+    core._stringbool(
+      {
+        Codec: ZodMiniCodec,
+        Boolean: ZodMiniBoolean,
+        String: ZodMiniString,
+      },
+      ...args
+    ) as any;
 
 // json
 
 // json
-type _ZodMiniJSONSchema = ZodMiniUnion<
+export type _ZodMiniJSONSchema = ZodMiniUnion<
   [
     ZodMiniString,
     ZodMiniNumber,
@@ -1554,7 +1826,7 @@ type _ZodMiniJSONSchema = ZodMiniUnion<
     ZodMiniRecord<ZodMiniString<string>, ZodMiniJSONSchema>,
   ]
 >;
-type _ZodMiniJSONSchemaInternals = _ZodMiniJSONSchema["_zod"];
+export type _ZodMiniJSONSchemaInternals = _ZodMiniJSONSchema["_zod"];
 
 export interface ZodMiniJSONSchemaInternals extends _ZodMiniJSONSchemaInternals {
   output: util.JSONType;
@@ -1564,9 +1836,73 @@ export interface ZodMiniJSONSchema extends _ZodMiniJSONSchema {
   _zod: ZodMiniJSONSchemaInternals;
 }
 
+// @__NO_SIDE_EFFECTS__
 export function json(): ZodMiniJSONSchema {
   const jsonSchema: any = _lazy(() => {
     return union([string(), number(), boolean(), _null(), array(jsonSchema), record(string(), jsonSchema)]);
   });
   return jsonSchema;
 }
+
+// ZodMiniFunction
+export interface ZodMiniFunction<
+  Args extends core.$ZodFunctionIn = core.$ZodFunctionIn,
+  Returns extends core.$ZodFunctionOut = core.$ZodFunctionOut,
+> extends _ZodMiniType<core.$ZodFunctionInternals<Args, Returns>>,
+    core.$ZodFunction<Args, Returns> {
+  _def: core.$ZodFunctionDef<Args, Returns>;
+  _input: core.$InferInnerFunctionType<Args, Returns>;
+  _output: core.$InferOuterFunctionType<Args, Returns>;
+
+  input<const Items extends util.TupleItems, const Rest extends core.$ZodFunctionOut = core.$ZodFunctionOut>(
+    args: Items,
+    rest?: Rest
+  ): ZodMiniFunction<ZodMiniTuple<Items, Rest>, Returns>;
+  input<NewArgs extends core.$ZodFunctionIn>(args: NewArgs): ZodMiniFunction<NewArgs, Returns>;
+  input(...args: any[]): ZodMiniFunction<any, Returns>;
+
+  output<NewReturns extends core.$ZodFunctionOut>(output: NewReturns): ZodMiniFunction<Args, NewReturns>;
+}
+
+export const ZodMiniFunction: core.$constructor<ZodMiniFunction> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniFunction",
+  (inst, def) => {
+    core.$ZodFunction.init(inst, def);
+    ZodMiniType.init(inst, def);
+  }
+);
+
+export function _function(): ZodMiniFunction;
+export function _function<const In extends Array<SomeType> = Array<SomeType>>(params: {
+  input: In;
+}): ZodMiniFunction<ZodMiniTuple<In, null>, core.$ZodFunctionOut>;
+export function _function<
+  const In extends Array<SomeType> = Array<SomeType>,
+  const Out extends core.$ZodFunctionOut = core.$ZodFunctionOut,
+>(params: {
+  input: In;
+  output: Out;
+}): ZodMiniFunction<ZodMiniTuple<In, null>, Out>;
+export function _function<const In extends core.$ZodFunctionIn = core.$ZodFunctionIn>(params: {
+  input: In;
+}): ZodMiniFunction<In, core.$ZodFunctionOut>;
+export function _function<const Out extends core.$ZodFunctionOut = core.$ZodFunctionOut>(params: {
+  output: Out;
+}): ZodMiniFunction<core.$ZodFunctionIn, Out>;
+export function _function<
+  In extends core.$ZodFunctionIn = core.$ZodFunctionIn,
+  Out extends core.$ZodFunctionOut = core.$ZodFunctionOut,
+>(params?: { input: In; output: Out }): ZodMiniFunction<In, Out>;
+// @__NO_SIDE_EFFECTS__
+export function _function(params?: {
+  output?: core.$ZodFunctionOut;
+  input?: core.$ZodFunctionArgs | Array<SomeType>;
+}): ZodMiniFunction {
+  return new ZodMiniFunction({
+    type: "function",
+    input: Array.isArray(params?.input) ? tuple(params?.input as any) : (params?.input ?? array(unknown())),
+    output: params?.output ?? unknown(),
+  });
+}
+
+export { _function as function };

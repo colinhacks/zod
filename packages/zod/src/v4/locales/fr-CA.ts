@@ -14,30 +14,7 @@ const error: () => errors.$ZodErrorMap = () => {
     return Sizable[origin] ?? null;
   }
 
-  const parsedType = (data: any): string => {
-    const t = typeof data;
-
-    switch (t) {
-      case "number": {
-        return Number.isNaN(data) ? "NaN" : "number";
-      }
-      case "object": {
-        if (Array.isArray(data)) {
-          return "array";
-        }
-        if (data === null) {
-          return "null";
-        }
-
-        if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-          return data.constructor.name;
-        }
-      }
-    }
-    return t;
-  };
-
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "entrée",
@@ -70,10 +47,23 @@ const error: () => errors.$ZodErrorMap = () => {
     template_literal: "entrée",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `Entrée invalide : attendu ${issue.expected}, reçu ${parsedType(issue.input)}`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `Entrée invalide : attendu instanceof ${issue.expected}, reçu ${received}`;
+        }
+        return `Entrée invalide : attendu ${expected}, reçu ${received}`;
+      }
       case "invalid_value":
         if (issue.values.length === 1) return `Entrée invalide : attendu ${util.stringifyPrimitive(issue.values[0])}`;
         return `Option invalide : attendu l'une des valeurs suivantes ${util.joinValues(issue.values, "|")}`;
@@ -101,7 +91,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `Chaîne invalide : doit se terminer par "${_issue.suffix}"`;
         if (_issue.format === "includes") return `Chaîne invalide : doit inclure "${_issue.includes}"`;
         if (_issue.format === "regex") return `Chaîne invalide : doit correspondre au motif ${_issue.pattern}`;
-        return `${Nouns[_issue.format] ?? issue.format} invalide`;
+        return `${FormatDictionary[_issue.format] ?? issue.format} invalide`;
       }
       case "not_multiple_of":
         return `Nombre invalide : doit être un multiple de ${issue.divisor}`;

@@ -296,7 +296,7 @@ export class ZodError<T = any> extends Error {
   flatten(): typeToFlattenedError<T>;
   flatten<U>(mapper?: (issue: ZodIssue) => U): typeToFlattenedError<T, U>;
   flatten<U = string>(mapper: (issue: ZodIssue) => U = (issue: ZodIssue) => issue.message as any): any {
-    const fieldErrors: any = {};
+    const fieldErrors: any = Object.create(null);
     const formErrors: U[] = [];
     for (const sub of this.issues) {
       if (sub.path.length > 0) {

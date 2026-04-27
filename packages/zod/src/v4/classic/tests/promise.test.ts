@@ -10,7 +10,7 @@ const promSchema = z.promise(
 
 test("promise inference", () => {
   type promSchemaType = z.infer<typeof promSchema>;
-  expectTypeOf<promSchemaType>().toEqualTypeOf<{ name: string; age: number }>();
+  expectTypeOf<promSchemaType>().toEqualTypeOf<Promise<{ name: string; age: number }>>();
 });
 
 test("promise parsing success", async () => {

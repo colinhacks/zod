@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "target": "es2020",
+    "lib": ["es2020", "dom"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "jsx": "react",
@@ -9,6 +10,7 @@
     "alwaysStrict": true,
     "noUncheckedIndexedAccess": false,
 
+    "types": [],
     "exactOptionalPropertyTypes": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
@@ -26,7 +28,6 @@
     "esModuleInterop": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "downlevelIteration": true,
     "isolatedModules": true,
 
     "pretty": true

@@ -352,3 +352,27 @@ test("do not continue by default", () => {
     }
   `);
 });
+
+test("encode error", () => {
+  const schema = z.string().transform((val) => val.length);
+  expect(() => z.encode(schema, 1234)).toThrowErrorMatchingInlineSnapshot(
+    `[ZodEncodeError: Encountered unidirectional transform during encode: ZodTransform]`
+  );
+});
+
+test("transform context should have addIssue", () => {
+  const schema = z.transform((val, ctx) => {
+    ctx.addIssue({
+      code: "custom",
+      message: "Not valid",
+    });
+    return val;
+  });
+
+  const result = schema.safeParse("test");
+
+  expect(result.success).toBe(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toBe("Not valid");
+  }
+});

@@ -47,7 +47,7 @@ test("flat inference", () => {
   expectTypeOf<typeof readonlyNumberRecord._output>().toEqualTypeOf<Readonly<Record<string, number>>>();
   expectTypeOf<typeof readonlyObject._output>().toEqualTypeOf<{ readonly a: string; readonly 1: number }>();
   expectTypeOf<typeof readonlyEnum._output>().toEqualTypeOf<Readonly<testEnum>>();
-  expectTypeOf<typeof readonlyPromise._output>().toEqualTypeOf<string>();
+  expectTypeOf<typeof readonlyPromise._output>().toEqualTypeOf<Promise<string>>();
 });
 
 // test("deep inference", () => {

@@ -260,6 +260,45 @@ test("mutual recursion with meta", () => {
   expectTypeOf<B>().toEqualTypeOf<_B>();
 });
 
+test("intersection with recursive types", () => {
+  const A = z.discriminatedUnion("type", [
+    z.object({
+      type: z.literal("CONTAINER"),
+    }),
+    z.object({
+      type: z.literal("SCREEN"),
+      config: z.object({ x: z.number(), y: z.number() }),
+    }),
+  ]);
+  // type A = z.infer<typeof A>;
+
+  const B = z.object({
+    get children() {
+      return z.array(C).optional();
+    },
+  });
+  // type B = z.infer<typeof B>;
+
+  const C = z.intersection(A, B);
+  type C = z.infer<typeof C>;
+
+  type _C = (
+    | {
+        type: "CONTAINER";
+      }
+    | {
+        type: "SCREEN";
+        config: {
+          x: number;
+          y: number;
+        };
+      }
+  ) & {
+    children?: _C[] | undefined;
+  };
+  expectTypeOf<C>().toEqualTypeOf<_C>();
+});
+
 test("object utilities with recursive types", () => {
   const NodeBase = z.object({
     id: z.string(),
@@ -269,7 +308,7 @@ test("object utilities with recursive types", () => {
     },
   });
 
-  // Test extend
+  // Test extend with new keys (extend throws when overwriting existing keys)
   const NodeOne = NodeBase.extend({
     name: z.literal("nodeOne"),
     get children() {
@@ -325,6 +364,21 @@ test("object utilities with recursive types", () => {
     RequiredNode,
     RequiredMaskedNode,
   ]);
+});
+
+test("tuple with recursive types", () => {
+  const TaskListNodeSchema = z.strictObject({
+    type: z.literal("taskList"),
+    get content() {
+      return z.array(z.tuple([TaskListNodeSchema, z.union([TaskListNodeSchema])])).min(1);
+    },
+  });
+  type TaskListNodeSchema = z.infer<typeof TaskListNodeSchema>;
+  type _TaskListNodeSchema = {
+    type: "taskList";
+    content: [_TaskListNodeSchema, _TaskListNodeSchema][];
+  };
+  expectTypeOf<TaskListNodeSchema>().toEqualTypeOf<_TaskListNodeSchema>();
 });
 
 test("recursion compatibility", () => {
@@ -392,6 +446,68 @@ test("recursion compatibility", () => {
   });
 });
 
+test("recursive object with .check()", () => {
+  const Category = z
+    .object({
+      id: z.string(),
+      name: z.string(),
+      get subcategories() {
+        return z.array(Category).optional();
+      },
+    })
+    .check((ctx) => {
+      // Check for duplicate IDs among direct subcategories
+      if (ctx.value.subcategories) {
+        const siblingIds = new Set<string>();
+        ctx.value.subcategories.forEach((sub, index) => {
+          if (siblingIds.has(sub.id)) {
+            ctx.issues.push({
+              code: "custom",
+              message: `Duplicate sibling ID found: ${sub.id}`,
+              path: ["subcategories", index, "id"],
+              input: ctx.value,
+            });
+          }
+          siblingIds.add(sub.id);
+        });
+      }
+    });
+
+  // Valid - siblings have unique IDs
+  const validData = {
+    id: "electronics",
+    name: "Electronics",
+    subcategories: [
+      {
+        id: "computers",
+        name: "Computers",
+        subcategories: [
+          { id: "laptops", name: "Laptops" },
+          { id: "desktops", name: "Desktops" },
+        ],
+      },
+      {
+        id: "phones",
+        name: "Phones",
+      },
+    ],
+  };
+
+  // Invalid - duplicate sibling IDs
+  const invalidData = {
+    id: "electronics",
+    name: "Electronics",
+    subcategories: [
+      { id: "computers", name: "Computers" },
+      { id: "phones", name: "Phones" },
+      { id: "computers", name: "Computers Again" }, // Duplicate at index 2
+    ],
+  };
+
+  expect(() => Category.parse(validData)).not.toThrow();
+  expect(() => Category.parse(invalidData)).toThrow();
+});
+
 // biome-ignore lint: sadf
 export type RecursiveA = z.ZodUnion<
   [
@@ -421,3 +537,46 @@ export type RecursiveA = z.ZodUnion<
     }>,
   ]
 >;
+
+test("recursive type with `id` meta", () => {
+  const AType = z.object({
+    type: z.literal("a"),
+    name: z.string(),
+  });
+
+  const BType = z.object({
+    type: z.literal("b"),
+    name: z.string(),
+  });
+
+  const CType = z.object({
+    type: z.literal("c"),
+    name: z.string(),
+  });
+
+  const Schema = z.object({
+    type: z.literal("special").meta({ description: "Type" }),
+    config: z.object({
+      title: z.string().meta({ description: "Title" }),
+      get elements() {
+        return z.array(z.discriminatedUnion("type", [AType, BType, CType])).meta({
+          id: "SpecialElements",
+          title: "SpecialElements",
+          description: "Array of elements",
+        });
+      },
+    }),
+  });
+
+  Schema.parse({
+    type: "special",
+    config: {
+      title: "Special",
+      elements: [
+        { type: "a", name: "John" },
+        { type: "b", name: "Jane" },
+        { type: "c", name: "Jim" },
+      ],
+    },
+  });
+});

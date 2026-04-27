@@ -1,5 +1,6 @@
 ---
 title: Zod Core
+description: "Zod Core package - minimal core functionality for custom implementations"
 ---
 
 import { Callout } from "fumadocs-ui/components/callout"
@@ -65,7 +66,7 @@ export type $ZodTypes =
   | $ZodVoid
   | $ZodArray
   | $ZodObject
-  | $ZodUnion
+  | $ZodUnion // $ZodDiscriminatedUnion extends this
   | $ZodIntersection
   | $ZodTuple
   | $ZodRecord
@@ -83,7 +84,7 @@ export type $ZodTypes =
   | $ZodNonOptional
   | $ZodReadonly
   | $ZodNaN
-  | $ZodPipe
+  | $ZodPipe // $ZodCodec extends this
   | $ZodSuccess
   | $ZodCatch
   | $ZodFile;
@@ -121,9 +122,9 @@ export type $ZodTypes =
               - $ZodJWT
       - $ZodNumber
           - $ZodNumberFormat
-      - $ZodBoolean
       - $ZodBigInt
           - $ZodBigIntFormat
+      - $ZodBoolean
       - $ZodSymbol
       - $ZodUndefined
       - $ZodNull
@@ -154,6 +155,7 @@ export type $ZodTypes =
       - $ZodCatch
       - $ZodNaN
       - $ZodPipe
+          - $ZodCodec
       - $ZodReadonly
       - $ZodTemplateLiteral
       - $ZodCustom

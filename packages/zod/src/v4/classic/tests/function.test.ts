@@ -32,38 +32,38 @@ test("function inference 1", () => {
   expectTypeOf<func1>().toEqualTypeOf<(k: string) => number>();
 });
 
-// test("method parsing", () => {
-//   const methodObject = z.object({
-//     property: z.number(),
-//     method: z
-//       .function()
-//       .input(z.tuple([z.string()]))
-//       .output(z.number()),
-//   });
-//   const methodInstance = {
-//     property: 3,
-//     method: function (s: string) {
-//       return s.length + this.property;
-//     },
-//   };
-//   const parsed = methodObject.parse(methodInstance);
-//   expect(parsed.method("length=8")).toBe(11); // 8 length + 3 property
-// });
+test("method parsing", () => {
+  const methodObject = z.object({
+    property: z.number(),
+    method: z
+      .function()
+      .input(z.tuple([z.string()]))
+      .output(z.number()),
+  });
+  const methodInstance = {
+    property: 3,
+    method: function (s: string) {
+      return s.length + this.property;
+    },
+  };
+  const parsed = methodObject.parse(methodInstance);
+  expect(parsed.method("length=8")).toBe(11); // 8 length + 3 property
+});
 
-// test("async method parsing", async () => {
-//   const methodObject = z.object({
-//     property: z.number(),
-//     method: z.function().input(z.string()).output(z.promise(z.number())),
-//   });
-//   const methodInstance = {
-//     property: 3,
-//     method: async function (s: string) {
-//       return s.length + this.property;
-//     },
-//   };
-//   const parsed = methodObject.parse(methodInstance);
-//   expect(await parsed.method("length=8")).toBe(11); // 8 length + 3 property
-// });
+test("async method parsing", async () => {
+  const methodObject = z.object({
+    property: z.number(),
+    method: z.function().input([z.string()]).output(z.promise(z.number())),
+  });
+  const methodInstance = {
+    property: 3,
+    method: async function (s: string) {
+      return s.length + this.property;
+    },
+  };
+  const parsed = methodObject.parse(methodInstance);
+  expect(await parsed.method("length=8")).toBe(11); // 8 length + 3 property
+});
 
 test("args method", () => {
   const t1 = z.function();
@@ -124,6 +124,46 @@ test("valid function run", () => {
   });
 
   validFunc2Instance({
+    f1: 21,
+    f2: "asdf",
+    f3: [true, false],
+  });
+});
+
+const args3 = [
+  z.object({
+    f1: z.number(),
+    f2: z.string().nullable(),
+    f3: z.array(z.boolean().optional()).optional(),
+  }),
+] as const;
+const returns3 = z.union([z.string(), z.number()]);
+
+const func3 = z.function({
+  input: args3,
+  output: returns3,
+});
+
+test("function inference 3", () => {
+  type func3 = (typeof func3)["_input"];
+
+  expectTypeOf<func3>().toEqualTypeOf<
+    (arg: {
+      f3?: (boolean | undefined)[] | undefined;
+      f1: number;
+      f2: string | null;
+    }) => string | number
+  >();
+});
+
+test("valid function run", () => {
+  const validFunc3Instance = func3.implement((_x) => {
+    _x.f2;
+    _x.f3![0];
+    return "adf" as any;
+  });
+
+  validFunc3Instance({
     f1: 21,
     f2: "asdf",
     f3: [true, false],
@@ -232,6 +272,58 @@ test("function with async refinements", async () => {
   }
 
   expect(results).toEqual(["fail", "success"]);
+});
+
+test("implement async with transforms", async () => {
+  const typeGuard = (data: string): data is "1234" => data === "1234";
+  const codeSchema = z.string().transform((data, ctx) => {
+    if (typeGuard(data)) {
+      return data;
+    } else {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Invalid code",
+      });
+      return z.NEVER;
+    }
+  });
+  const inputSchema = z.object({
+    code: codeSchema,
+  });
+  const outputSchema = z.object({
+    data: z.array(z.string()).default([]),
+  });
+  const fnImplementation = async (data: z.infer<typeof inputSchema>): Promise<z.infer<typeof outputSchema>> => {
+    return {
+      data: [data.code],
+    };
+  };
+  const schema = z.function().input([inputSchema]).output(outputSchema);
+
+  const func = schema.implementAsync(fnImplementation);
+  type TheInterface = {
+    myFunction: (data: z.infer<typeof inputSchema>) => Promise<z.infer<typeof outputSchema>>;
+  };
+  const theImplementation: TheInterface = {
+    myFunction: func,
+  };
+  const results = [];
+  try {
+    await theImplementation.myFunction({
+      code: "1234",
+    });
+    results.push("success");
+  } catch (_) {
+    results.push("fail");
+  }
+  try {
+    await func({ data: "asdflkjasdflkjsf" } as any);
+    results.push("success");
+  } catch (_) {
+    results.push("fail");
+  }
+
+  expect(results).toEqual(["success", "fail"]);
 });
 
 test("non async function with async refinements should fail", async () => {

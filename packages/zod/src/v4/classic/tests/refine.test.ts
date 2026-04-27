@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, expectTypeOf, test } from "vitest";
 import * as z from "zod/v4";
 
 describe("basic refinement functionality", () => {
@@ -167,8 +167,8 @@ describe("early termination options", () => {
 });
 
 describe("custom error paths", () => {
-  test("should use custom path in error message", async () => {
-    const result = await z
+  test("should use custom path in error message", () => {
+    const result = z
       .object({ password: z.string(), confirm: z.string() })
       .refine((data) => data.confirm === data.password, { path: ["confirm"] })
       .safeParse({ password: "asdf", confirm: "qewr" });
@@ -250,6 +250,79 @@ describe("superRefine functionality", () => {
     // Should pass with valid input
     const validArray = ["asfd", "qwer"];
     await expect(Strings.parseAsync(validArray)).resolves.toEqual(validArray);
+  });
+
+  test("should test continuability of custom issues", () => {
+    // Default continue behavior - allows subsequent refinements
+    const defaultContinue = z
+      .string()
+      .superRefine((_, ctx) => {
+        ctx.addIssue({ code: "custom", message: "First issue" });
+      })
+      .refine(() => false, "Second issue");
+
+    expect(defaultContinue.safeParse("test")).toMatchInlineSnapshot(`
+      {
+        "error": [ZodError: [
+        {
+          "code": "custom",
+          "message": "First issue",
+          "path": []
+        },
+        {
+          "code": "custom",
+          "path": [],
+          "message": "Second issue"
+        }
+      ]],
+        "success": false,
+      }
+    `);
+
+    // Explicit continue: false - prevents subsequent refinements
+    const explicitContinueFalse = z
+      .string()
+      .superRefine((_, ctx) => {
+        ctx.addIssue({ code: "custom", message: "First issue", continue: false });
+      })
+      .refine(() => false, "Second issue");
+
+    expect(explicitContinueFalse.safeParse("test")).toMatchInlineSnapshot(`
+      {
+        "error": [ZodError: [
+        {
+          "code": "custom",
+          "message": "First issue",
+          "path": []
+        }
+      ]],
+        "success": false,
+      }
+    `);
+
+    // Multiple issues in same refinement - both always added regardless of continue
+    const multipleInSame = z.string().superRefine((_, ctx) => {
+      ctx.addIssue({ code: "custom", message: "First", continue: false });
+      ctx.addIssue({ code: "custom", message: "Second" });
+    });
+
+    expect(multipleInSame.safeParse("test")).toMatchInlineSnapshot(`
+      {
+        "error": [ZodError: [
+        {
+          "code": "custom",
+          "message": "First",
+          "path": []
+        },
+        {
+          "code": "custom",
+          "message": "Second",
+          "path": []
+        }
+      ]],
+        "success": false,
+      }
+    `);
   });
 
   test("should accept string as shorthand for custom error message", () => {
@@ -343,84 +416,49 @@ describe("chained refinements", () => {
   });
 });
 
-// Commented tests can be uncommented once type-checking issues are resolved
-/*
-describe("type refinement", () => {
-  test("refinement type guard", () => {
-    const validationSchema = z.object({
-      a: z.string().refine((s): s is "a" => s === "a"),
-    });
-    type Input = z.input<typeof validationSchema>;
-    type Schema = z.infer<typeof validationSchema>;
+describe("type refinement with type guards", () => {
+  test("type guard narrows output type", () => {
+    const schema = z.string().refine((s): s is "a" => s === "a");
 
-    expectTypeOf<Input["a"]>().not.toEqualTypeOf<"a">();
-    expectTypeOf<Input["a"]>().toEqualTypeOf<string>();
-
-    expectTypeOf<Schema["a"]>().toEqualTypeOf<"a">();
-    expectTypeOf<Schema["a"]>().not.toEqualTypeOf<string>();
+    expectTypeOf<z.input<typeof schema>>().toEqualTypeOf<string>();
+    expectTypeOf<z.output<typeof schema>>().toEqualTypeOf<"a">();
   });
 
-  test("superRefine - type narrowing", () => {
-    type NarrowType = { type: string; age: number };
-    const schema = z
-      .object({
-        type: z.string(),
-        age: z.number(),
-      })
-      .nullable()
-      .superRefine((arg, ctx): arg is NarrowType => {
-        if (!arg) {
-          // still need to make a call to ctx.addIssue
-          ctx.addIssue({
-            input: arg,
-            code: "custom",
-            message: "cannot be null",
-            fatal: true,
-          });
-          return false;
-        }
-        return true;
-      });
+  test("non-type-guard refine does not narrow", () => {
+    const schema = z.string().refine((s) => s.length > 0);
 
-    expectTypeOf<z.infer<typeof schema>>().toEqualTypeOf<NarrowType>();
-
-    expect(schema.safeParse({ type: "test", age: 0 }).success).toEqual(true);
-    expect(schema.safeParse(null).success).toEqual(false);
+    expectTypeOf<z.input<typeof schema>>().toEqualTypeOf<string>();
+    expectTypeOf<z.output<typeof schema>>().toEqualTypeOf<string>();
   });
 
-  test("chained mixed refining types", () => {
-    type firstRefinement = { first: string; second: number; third: true };
-    type secondRefinement = { first: "bob"; second: number; third: true };
-    type thirdRefinement = { first: "bob"; second: 33; third: true };
-    const schema = z
-      .object({
-        first: z.string(),
-        second: z.number(),
-        third: z.boolean(),
-      })
-      .nullable()
-      .refine((arg): arg is firstRefinement => !!arg?.third)
-      .superRefine((arg, ctx): arg is secondRefinement => {
-        expectTypeOf<typeof arg>().toEqualTypeOf<firstRefinement>();
-        if (arg.first !== "bob") {
-          ctx.addIssue({
-            input: arg,
-            code: "custom",
-            message: "`first` property must be `bob`",
-          });
-          return false;
-        }
-        return true;
-      })
-      .refine((arg): arg is thirdRefinement => {
-        expectTypeOf<typeof arg>().toEqualTypeOf<secondRefinement>();
-        return arg.second === 33;
-      });
-
-    expectTypeOf<z.infer<typeof schema>>().toEqualTypeOf<thirdRefinement>();
-  });
+  // TODO: Implement type narrowing for superRefine
+  // test("superRefine - type narrowing", () => {
+  //   type NarrowType = { type: string; age: number };
+  //   const schema = z
+  //     .object({
+  //       type: z.string(),
+  //       age: z.number(),
+  //     })
+  //     .nullable()
+  //     .superRefine((arg, ctx): arg is NarrowType => {
+  //       if (!arg) {
+  //         ctx.addIssue({
+  //           input: arg,
+  //           code: "custom",
+  //           message: "cannot be null",
+  //           fatal: true,
+  //         });
+  //         return false;
+  //       }
+  //       return true;
+  //     });
+  //
+  //   expectTypeOf<z.infer<typeof schema>>().toEqualTypeOf<NarrowType>();
+  //
+  //   expect(schema.safeParse({ type: "test", age: 0 }).success).toEqual(true);
+  //   expect(schema.safeParse(null).success).toEqual(false);
+  // });
 });
-*/
 
 test("when", () => {
   const schema = z
@@ -431,9 +469,9 @@ test("when", () => {
     })
     .refine(
       (data) => {
-        console.log("running check...");
-        console.log(data);
-        console.log(data.password);
+        // console.log("running check...");
+        // console.log(data);
+        // console.log(data.password);
         return data.password === data.confirmPassword;
       },
       {

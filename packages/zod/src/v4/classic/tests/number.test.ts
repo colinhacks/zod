@@ -114,6 +114,29 @@ test(".nonnegative() validation", () => {
   expect(() => schema.parse(-1)).toThrow();
 });
 
+test("multipleOf", () => {
+  const numbers = {
+    number3: 5.123,
+    number6: 5.123456,
+    number7: 5.1234567,
+    number8: 5.12345678,
+  };
+
+  const schemas = {
+    schema6: z.number().multipleOf(0.000001),
+    schema7: z.number().multipleOf(0.0000001),
+  };
+
+  expect(() => schemas.schema6.parse(numbers.number3)).not.toThrow();
+  expect(() => schemas.schema6.parse(numbers.number6)).not.toThrow();
+  expect(() => schemas.schema6.parse(numbers.number7)).toThrow();
+  expect(() => schemas.schema6.parse(numbers.number8)).toThrow();
+  expect(() => schemas.schema7.parse(numbers.number3)).not.toThrow();
+  expect(() => schemas.schema7.parse(numbers.number6)).not.toThrow();
+  expect(() => schemas.schema7.parse(numbers.number7)).not.toThrow();
+  expect(() => schemas.schema7.parse(numbers.number8)).toThrow();
+});
+
 test(".multipleOf() with positive divisor", () => {
   const schema = z.number().multipleOf(5);
   expect(schema.parse(15)).toEqual(15);
@@ -128,6 +151,22 @@ test(".multipleOf() with negative divisor", () => {
   expect(schema.parse(15)).toEqual(15);
   expect(() => schema.parse(-7.5)).toThrow();
   expect(() => schema.parse(7.5)).toThrow();
+});
+
+test(".multipleOf() with scientific notation (multi-digit exponents)", () => {
+  // Regression test for https://github.com/colinhacks/zod/pull/5687
+  // The regex was using \d? which only matches single-digit exponents
+  const schema = z.number().multipleOf(1e-10);
+
+  // These should all pass - they are valid multiples of 1e-10
+  expect(schema.parse(1e-10)).toEqual(1e-10);
+  expect(schema.parse(5e-10)).toEqual(5e-10);
+  expect(schema.parse(1e-9)).toEqual(1e-9); // 10 * 1e-10
+
+  // Test with 1e-15 (exponent = 15, two digits)
+  const schema15 = z.number().multipleOf(1e-15);
+  expect(schema15.parse(1e-15)).toEqual(1e-15);
+  expect(schema15.parse(3e-15)).toEqual(3e-15);
 });
 
 test(".step() validation", () => {
@@ -239,6 +278,31 @@ test("string format methods", () => {
   const a = z.int32().min(5);
   expect(a.parse(6)).toEqual(6);
   expect(() => a.parse(1)).toThrow();
+});
+
+test("negative zero edge case", () => {
+  const schema = z.number();
+  const negativeZero = -0;
+  const positiveZero = 0;
+
+  // Both -0 and 0 should be valid (parse succeeds)
+  expect(schema.safeParse(negativeZero).success).toBe(true);
+  expect(schema.safeParse(positiveZero).success).toBe(true);
+  // Note: -0 is normalized to 0 after parsing
+  expect(schema.parse(negativeZero) === 0).toBe(true);
+  expect(schema.parse(positiveZero)).toEqual(0);
+
+  // With positive() constraint, both should be invalid (0 is not positive)
+  const positiveSchema = z.number().positive();
+  expect(() => positiveSchema.parse(negativeZero)).toThrow();
+  expect(() => positiveSchema.parse(positiveZero)).toThrow();
+
+  // With nonnegative(), both should be valid (0 is non-negative)
+  const nonnegativeSchema = z.number().nonnegative();
+  expect(nonnegativeSchema.safeParse(negativeZero).success).toBe(true);
+  expect(nonnegativeSchema.safeParse(positiveZero).success).toBe(true);
+  expect(nonnegativeSchema.parse(negativeZero) === 0).toBe(true);
+  expect(nonnegativeSchema.parse(positiveZero)).toEqual(0);
 });
 
 test("error customization", () => {

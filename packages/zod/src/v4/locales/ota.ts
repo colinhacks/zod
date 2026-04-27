@@ -14,30 +14,7 @@ const error: () => errors.$ZodErrorMap = () => {
     return Sizable[origin] ?? null;
   }
 
-  const parsedType = (data: any): string => {
-    const t = typeof data;
-
-    switch (t) {
-      case "number": {
-        return Number.isNaN(data) ? "NaN" : "numara";
-      }
-      case "object": {
-        if (Array.isArray(data)) {
-          return "saf";
-        }
-        if (data === null) {
-          return "gayb";
-        }
-
-        if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-          return data.constructor.name;
-        }
-      }
-    }
-    return t;
-  };
-
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "giren",
@@ -70,11 +47,26 @@ const error: () => errors.$ZodErrorMap = () => {
     template_literal: "giren",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+    number: "numara",
+    array: "saf",
+    null: "gayb",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `Fâsit giren: umulan ${issue.expected}, alınan ${parsedType(issue.input)}`;
-      // return `Fâsit giren: umulan ${issue.expected}, alınan ${util.getParsedType(issue.input)}`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `Fâsit giren: umulan instanceof ${issue.expected}, alınan ${received}`;
+        }
+        return `Fâsit giren: umulan ${expected}, alınan ${received}`;
+      }
       case "invalid_value":
         if (issue.values.length === 1) return `Fâsit giren: umulan ${util.stringifyPrimitive(issue.values[0])}`;
         return `Fâsit tercih: mûteberler ${util.joinValues(issue.values, "|")}`;
@@ -100,7 +92,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `Fâsit metin: "${_issue.suffix}" ile bitmeli.`;
         if (_issue.format === "includes") return `Fâsit metin: "${_issue.includes}" ihtivâ etmeli.`;
         if (_issue.format === "regex") return `Fâsit metin: ${_issue.pattern} nakşına uymalı.`;
-        return `Fâsit ${Nouns[_issue.format] ?? issue.format}`;
+        return `Fâsit ${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":
         return `Fâsit sayı: ${issue.divisor} katı olmalıydı.`;

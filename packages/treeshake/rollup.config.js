@@ -14,14 +14,10 @@ export default {
     // sourcemap: true, // Generate sourcemaps for easier debugging
   },
   plugins: [
-    resolve({
-      
-    }), // Resolve node_modules
+    resolve(), // Resolve node_modules
     commonjs(), // Convert CommonJS modules to ES6
     typescript(), // Compile TypeScript
-    // bundleSize(),
     filesize(), // Display bundle size
-    // terser(),
   ],
   treeshake: {
     preset: "smallest",

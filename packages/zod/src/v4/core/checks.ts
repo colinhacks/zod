@@ -84,7 +84,7 @@ export const $ZodCheckLessThan: core.$constructor<$ZodCheckLessThan> = /*@__PURE
       payload.issues.push({
         origin,
         code: "too_big",
-        maximum: def.value as number,
+        maximum: typeof def.value === "object" ? def.value.getTime() : def.value,
         input: payload.value,
         inclusive: def.inclusive,
         inst,
@@ -135,7 +135,7 @@ export const $ZodCheckGreaterThan: core.$constructor<$ZodCheckGreaterThan> = /*@
       payload.issues.push({
         origin,
         code: "too_small",
-        minimum: def.value as number,
+        minimum: typeof def.value === "object" ? def.value.getTime() : def.value,
         input: payload.value,
         inclusive: def.inclusive,
         inst,
@@ -297,6 +297,7 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
             expected: origin,
             format: def.format,
             code: "invalid_type",
+            continue: false,
             input,
             inst,
           });
@@ -322,6 +323,7 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
               note: "Integers must be within the safe integer range.",
               inst,
               origin,
+              inclusive: true,
               continue: !def.abort,
             });
           } else {
@@ -333,6 +335,7 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
               note: "Integers must be within the safe integer range.",
               inst,
               origin,
+              inclusive: true,
               continue: !def.abort,
             });
           }
@@ -359,7 +362,9 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
           input,
           code: "too_big",
           maximum,
+          inclusive: true,
           inst,
+          continue: !def.abort,
         } as any);
       }
     };
@@ -421,7 +426,9 @@ export const $ZodCheckBigIntFormat: core.$constructor<$ZodCheckBigIntFormat> = /
           input,
           code: "too_big",
           maximum,
+          inclusive: true,
           inst,
+          continue: !def.abort,
         } as any);
       }
     };
@@ -469,6 +476,7 @@ export const $ZodCheckMaxSize: core.$constructor<$ZodCheckMaxSize> = /*@__PURE__
         origin: util.getSizableOrigin(input),
         code: "too_big",
         maximum: def.maximum,
+        inclusive: true,
         input,
         inst,
         continue: !def.abort,
@@ -518,6 +526,7 @@ export const $ZodCheckMinSize: core.$constructor<$ZodCheckMinSize> = /*@__PURE__
         origin: util.getSizableOrigin(input),
         code: "too_small",
         minimum: def.minimum,
+        inclusive: true,
         input,
         inst,
         continue: !def.abort,
@@ -1152,6 +1161,7 @@ export const $ZodCheckMimeType: core.$constructor<$ZodCheckMimeType> = /*@__PURE
         values: def.mime,
         input: payload.value.type,
         inst,
+        continue: !def.abort,
       });
     };
   }
