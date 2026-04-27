@@ -241,9 +241,19 @@ export function nanoid(params?: string | core.$ZodNanoIDParams): ZodMiniNanoID {
 }
 
 // ZodMiniCUID
+/**
+ * @deprecated CUID v1 is deprecated by its authors due to information leakage
+ * (timestamps embedded in the id). Use {@link ZodMiniCUID2} instead.
+ * See https://github.com/paralleldrive/cuid.
+ */
 export interface ZodMiniCUID extends _ZodMiniString<core.$ZodCUIDInternals> {
   // _zod: core.$ZodCUIDInternals;
 }
+/**
+ * @deprecated CUID v1 is deprecated by its authors due to information leakage
+ * (timestamps embedded in the id). Use {@link ZodMiniCUID2} instead.
+ * See https://github.com/paralleldrive/cuid.
+ */
 export const ZodMiniCUID: core.$constructor<ZodMiniCUID> = /*@__PURE__*/ core.$constructor(
   "ZodMiniCUID",
   (inst, def) => {
@@ -252,6 +262,13 @@ export const ZodMiniCUID: core.$constructor<ZodMiniCUID> = /*@__PURE__*/ core.$c
   }
 );
 
+/**
+ * Validates a CUID v1 string.
+ *
+ * @deprecated CUID v1 is deprecated by its authors due to information leakage
+ * (timestamps embedded in the id). Use {@link cuid2 | `z.cuid2()`} instead.
+ * See https://github.com/paralleldrive/cuid.
+ */
 // @__NO_SIDE_EFFECTS__
 export function cuid(params?: string | core.$ZodCUIDParams): ZodMiniCUID {
   return core._cuid(ZodMiniCUID, params);

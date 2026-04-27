@@ -586,13 +586,33 @@ export const $ZodNanoID: core.$constructor<$ZodNanoID> = /*@__PURE__*/ core.$con
 
 //////////////////////////////   ZodCUID   //////////////////////////////
 
+/**
+ * @deprecated CUID v1 is deprecated by its authors due to information leakage
+ * (timestamps embedded in the id). Use {@link $ZodCUID2} instead.
+ * See https://github.com/paralleldrive/cuid.
+ */
 export interface $ZodCUIDDef extends $ZodStringFormatDef<"cuid"> {}
+/**
+ * @deprecated CUID v1 is deprecated by its authors due to information leakage
+ * (timestamps embedded in the id). Use {@link $ZodCUID2} instead.
+ * See https://github.com/paralleldrive/cuid.
+ */
 export interface $ZodCUIDInternals extends $ZodStringFormatInternals<"cuid"> {}
 
+/**
+ * @deprecated CUID v1 is deprecated by its authors due to information leakage
+ * (timestamps embedded in the id). Use {@link $ZodCUID2} instead.
+ * See https://github.com/paralleldrive/cuid.
+ */
 export interface $ZodCUID extends $ZodType {
   _zod: $ZodCUIDInternals;
 }
 
+/**
+ * @deprecated CUID v1 is deprecated by its authors due to information leakage
+ * (timestamps embedded in the id). Use {@link $ZodCUID2} instead.
+ * See https://github.com/paralleldrive/cuid.
+ */
 export const $ZodCUID: core.$constructor<$ZodCUID> = /*@__PURE__*/ core.$constructor("$ZodCUID", (inst, def): void => {
   def.pattern ??= regexes.cuid;
   $ZodStringFormat.init(inst, def);

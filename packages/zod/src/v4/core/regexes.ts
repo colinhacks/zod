@@ -1,6 +1,11 @@
 import * as util from "./util.js";
 
-export const cuid: RegExp = /^[cC][^\s-]{8,}$/;
+/**
+ * @deprecated CUID v1 is deprecated by its authors due to information leakage
+ * (timestamps embedded in the id). Use {@link cuid2} instead.
+ * See https://github.com/paralleldrive/cuid.
+ */
+export const cuid: RegExp = /^[cC][0-9a-z]{6,}$/;
 export const cuid2: RegExp = /^[0-9a-z]+$/;
 export const ulid: RegExp = /^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$/;
 export const xid: RegExp = /^[0-9a-vA-V]{20}$/;

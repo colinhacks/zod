@@ -246,8 +246,23 @@ export function _nanoid<T extends schemas.$ZodNanoID>(
 }
 
 // CUID
+/**
+ * @deprecated CUID v1 is deprecated by its authors due to information leakage
+ * (timestamps embedded in the id). Use {@link _cuid2} instead.
+ * See https://github.com/paralleldrive/cuid.
+ */
 export type $ZodCUIDParams = StringFormatParams<schemas.$ZodCUID, "when">;
+/**
+ * @deprecated CUID v1 is deprecated by its authors due to information leakage
+ * (timestamps embedded in the id). Use {@link _cuid2} instead.
+ * See https://github.com/paralleldrive/cuid.
+ */
 export type $ZodCheckCUIDParams = CheckStringFormatParams<schemas.$ZodCUID, "when">;
+/**
+ * @deprecated CUID v1 is deprecated by its authors due to information leakage
+ * (timestamps embedded in the id). Use {@link _cuid2} instead.
+ * See https://github.com/paralleldrive/cuid.
+ */
 // @__NO_SIDE_EFFECTS__
 export function _cuid<T extends schemas.$ZodCUID>(
   Class: util.SchemaClass<T>,

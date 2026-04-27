@@ -342,7 +342,11 @@ export interface ZodString extends _ZodString<core.$ZodStringInternals<string>> 
   nanoid(params?: string | core.$ZodCheckNanoIDParams): this;
   /** @deprecated Use `z.guid()` instead. */
   guid(params?: string | core.$ZodCheckGUIDParams): this;
-  /** @deprecated Use `z.cuid()` instead. */
+  /**
+   * @deprecated CUID v1 is deprecated by its authors due to information leakage
+   * (timestamps embedded in the id). Use `z.cuid2()` instead.
+   * See https://github.com/paralleldrive/cuid.
+   */
   cuid(params?: string | core.$ZodCheckCUIDParams): this;
   /** @deprecated Use `z.cuid2()` instead. */
   cuid2(params?: string | core.$ZodCheckCUID2Params): this;
@@ -551,15 +555,32 @@ export function nanoid(params?: string | core.$ZodNanoIDParams): ZodNanoID {
 }
 
 // ZodCUID
+/**
+ * @deprecated CUID v1 is deprecated by its authors due to information leakage
+ * (timestamps embedded in the id). Use {@link ZodCUID2} instead.
+ * See https://github.com/paralleldrive/cuid.
+ */
 export interface ZodCUID extends ZodStringFormat<"cuid"> {
   _zod: core.$ZodCUIDInternals;
 }
+/**
+ * @deprecated CUID v1 is deprecated by its authors due to information leakage
+ * (timestamps embedded in the id). Use {@link ZodCUID2} instead.
+ * See https://github.com/paralleldrive/cuid.
+ */
 export const ZodCUID: core.$constructor<ZodCUID> = /*@__PURE__*/ core.$constructor("ZodCUID", (inst, def) => {
   // ZodStringFormat.init(inst, def);
   core.$ZodCUID.init(inst, def);
   ZodStringFormat.init(inst, def);
 });
 
+/**
+ * Validates a CUID v1 string.
+ *
+ * @deprecated CUID v1 is deprecated by its authors due to information leakage
+ * (timestamps embedded in the id). Use {@link cuid2 | `z.cuid2()`} instead.
+ * See https://github.com/paralleldrive/cuid.
+ */
 export function cuid(params?: string | core.$ZodCUIDParams): ZodCUID {
   return core._cuid(ZodCUID, params);
 }
