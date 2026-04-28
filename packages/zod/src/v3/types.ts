@@ -591,7 +591,7 @@ export interface ZodStringDef extends ZodTypeDef {
   coerce: boolean;
 }
 
-const cuidRegex = /^c[^\s-]{8,}$/i;
+const cuidRegex = /^c[0-9a-z]{8,}$/;
 const cuid2Regex = /^[0-9a-z]+$/;
 const ulidRegex = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
 // const uuidRegex =
