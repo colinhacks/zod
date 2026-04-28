@@ -389,6 +389,7 @@ export interface ZodString extends _ZodString<core.$ZodStringInternals<string>> 
   ): this;
   /** @deprecated Use `z.iso.duration()` instead. */
   duration(params?: string | core.$ZodCheckISODurationParams): this;
+  script(name: string, params?: string | core.$ZodCheckScriptParams): this;
 }
 
 export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$constructor("ZodString", (inst, def) => {
@@ -418,6 +419,7 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
   inst.cidrv4 = (params) => inst.check(core._cidrv4(ZodCIDRv4, params));
   inst.cidrv6 = (params) => inst.check(core._cidrv6(ZodCIDRv6, params));
   inst.e164 = (params) => inst.check(core._e164(ZodE164, params));
+  inst.script = (name, params) => inst.check(core._script(ZodScript, name, params));
 
   // iso
   inst.datetime = (params) => inst.check(iso.datetime(params as any));
@@ -535,6 +537,18 @@ export const ZodEmoji: core.$constructor<ZodEmoji> = /*@__PURE__*/ core.$constru
 
 export function emoji(params?: string | core.$ZodEmojiParams): ZodEmoji {
   return core._emoji(ZodEmoji, params);
+}
+
+// ZodScript
+export interface ZodScript extends ZodStringFormat<"script"> {
+  _zod: core.$ZodScriptInternals;
+}
+export const ZodScript: core.$constructor<ZodScript> = /*@__PURE__*/ core.$constructor("ZodScript", (inst, def) => {
+  core.$ZodScript.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+export function script(name: string, params?: string | core.$ZodScriptParams): ZodScript {
+  return core._script(ZodScript, name, params);
 }
 
 // ZodNanoID

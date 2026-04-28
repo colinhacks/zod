@@ -183,3 +183,7 @@ export const sha384_base64url: RegExp = /*@__PURE__*/ fixedBase64url(64);
 export const sha512_hex: RegExp = /^[0-9a-fA-F]{128}$/;
 export const sha512_base64: RegExp = /*@__PURE__*/ fixedBase64(86, "==");
 export const sha512_base64url: RegExp = /*@__PURE__*/ fixedBase64url(86);
+
+export function script(name: string): RegExp {
+  return new RegExp(`^\\p{Script=${name}}+$`, "u");
+}

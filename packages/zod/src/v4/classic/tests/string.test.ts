@@ -507,6 +507,31 @@ test("emoji validations", () => {
   expect(() => emoji.parse("stuff😀")).toThrow();
 });
 
+test("script validations", () => {
+  const arabic = z.script("Arabic");
+  arabic.parse("مرحبا");
+  arabic.parse("عالم");
+  arabic.parse("أمين");
+  expect(() => arabic.parse("hello")).toThrow();
+  expect(() => arabic.parse("مرحبا123")).toThrow();
+
+  const latin = z.script("Latin");
+  latin.parse("hello");
+  expect(() => latin.parse("مرحبا")).toThrow();
+
+  const cyrillic = z.string().script("Cyrillic");
+  cyrillic.parse("привет");
+  expect(() => cyrillic.parse("hello")).toThrow();
+
+  expect(() => z.script("NotAScript")).toThrow(SyntaxError);
+
+  const result = arabic.safeParse("hello");
+  expect(result.success).toBe(false);
+  if (!result.success) {
+    expect(result.error.issues[0].code).toBe("invalid_format");
+  }
+});
+
 test("nanoid", () => {
   const nanoid = z.string().nanoid("custom error");
   nanoid.parse("lfNZluvAxMkf7Q8C5H-QS");
