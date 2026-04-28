@@ -362,13 +362,8 @@ export function isObject(data: any): data is Record<PropertyKey, unknown> {
 }
 
 export const allowsEval: { value: boolean } = cached(() => {
-  // Users on strict Content-Security-Policy environments (no `unsafe-eval`)
-  // can opt out of the JIT fast-path with `z.config({ jitless: true })`.
-  // Honouring it here — before the `new Function("")` probe — prevents a
-  // one-shot `securitypolicyviolation` report at the probe site, which
-  // Chrome's DevTools surfaces as an Issue even though the error is caught.
-  // Callers must set `jitless` at application entry, before any schema is
-  // parsed, since this getter is memoised via `cached()`.
+  // Skip the probe under `jitless`: strict CSPs report the caught `new Function`
+  // as a `securitypolicyviolation` even though the throw is swallowed.
   if (globalConfig.jitless) {
     return false;
   }
