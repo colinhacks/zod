@@ -2126,6 +2126,45 @@ test("describe with id", () => {
   `);
 });
 
+test("id is stripped from $defs entries (draft-2020-12)", () => {
+  // The `id` in `.meta()` is a registration tag — it determines the $defs key
+  // but should not leak into the definition body, where it is redundant.
+  const inner = z.string().meta({ id: "Inner" });
+  const result = z.toJSONSchema(z.object({ a: inner, b: inner }));
+  expect(result.$defs?.Inner).toEqual({ type: "string" });
+  expect((result.$defs?.Inner as any).id).toBeUndefined();
+});
+
+test("id is stripped from definitions entries (draft-04)", () => {
+  // In draft-04, `id` is a reserved keyword that sets a base URI for the
+  // subschema. Leaking Zod's registration tag here is semantically wrong, so
+  // ensure it is stripped.
+  const inner = z.string().meta({ id: "Inner" });
+  const result = z.toJSONSchema(z.object({ a: inner, b: inner }), { target: "draft-04" }) as any;
+  expect(result.definitions?.Inner).toEqual({ type: "string" });
+  expect(result.definitions?.Inner?.id).toBeUndefined();
+});
+
+test("id is stripped from root schema", () => {
+  // The registration tag should not appear on the root either.
+  const A = z.object({ name: z.string() }).meta({ id: "A" });
+  const result = z.toJSONSchema(A);
+  expect((result as any).id).toBeUndefined();
+});
+
+test("id is observable in override callback", () => {
+  // The strip happens after override callbacks run, so userland override code
+  // can still read `jsonSchema.id` if it wants to.
+  const inner = z.string().meta({ id: "Inner" });
+  const seenIds: Array<string | undefined> = [];
+  z.toJSONSchema(z.object({ a: inner }), {
+    override: ({ jsonSchema }) => {
+      if (jsonSchema.id !== undefined) seenIds.push(jsonSchema.id as string);
+    },
+  });
+  expect(seenIds).toContain("Inner");
+});
+
 test("describe with id on wrapper", () => {
   // Test that $ref propagation works when processor sets a different ref (readonly -> innerType)
   // but parent was extracted due to having an id
@@ -2359,7 +2398,6 @@ test("top-level readonly", () => {
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
-      "id": "A",
       "properties": {
         "b": {
           "$ref": "#/$defs/B",
