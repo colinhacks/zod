@@ -228,6 +228,25 @@ test("z.union", () => {
   expect(() => z.parse(a, true)).toThrow();
 });
 
+test("z.union([]) / z.xor([]) / z.discriminatedUnion(_, []) construct and reject all input", () => {
+  for (const schema of [z.union([]), z.xor([])]) {
+    const r = schema.safeParse("anything");
+    expect(r.success).toEqual(false);
+    if (!r.success) {
+      expect(r.error.issues[0].code).toBe("invalid_union");
+      expect((r.error.issues[0] as any).errors).toEqual([]);
+    }
+  }
+  const disc = z.discriminatedUnion("type", [] as any);
+  const r = disc.safeParse({ type: "x" });
+  expect(r.success).toEqual(false);
+  if (!r.success) {
+    expect(r.error.issues[0].code).toBe("invalid_union");
+    expect((r.error.issues[0] as any).errors).toEqual([]);
+    expect((r.error.issues[0] as any).options).toEqual([]);
+  }
+});
+
 test("z.intersection", () => {
   const a = z.intersection(z.object({ a: z.string() }), z.object({ b: z.number() }));
   expect(z.parse(a, { a: "hello", b: 123 })).toEqual({ a: "hello", b: 123 });
