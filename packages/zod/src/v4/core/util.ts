@@ -685,6 +685,9 @@ export function safeExtend(schema: schemas.$ZodObject, shape: schemas.$ZodShape)
 }
 
 export function merge(a: schemas.$ZodObject, b: schemas.$ZodObject): any {
+  if (a._zod.def.checks?.length) {
+    throw new Error(".merge() cannot be used on object schemas containing refinements. Use .safeExtend() instead.");
+  }
   const def = mergeDefs(a._zod.def, {
     get shape() {
       const _shape = { ...a._zod.def.shape, ...b._zod.def.shape };
@@ -694,7 +697,7 @@ export function merge(a: schemas.$ZodObject, b: schemas.$ZodObject): any {
     get catchall() {
       return b._zod.def.catchall;
     },
-    checks: [], // delete existing checks
+    checks: b._zod.def.checks ?? [],
   });
 
   return clone(a, def) as any;

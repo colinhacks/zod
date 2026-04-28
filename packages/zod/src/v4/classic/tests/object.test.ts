@@ -406,6 +406,36 @@ test("unknownkeys merging", () => {
   expect(c._zod.def.catchall).toBeInstanceOf(core.$ZodNever);
 });
 
+test("merge() throws when receiver has refinements", () => {
+  const a = z
+    .object({
+      password: z.string(),
+      confirmPassword: z.string(),
+    })
+    .refine((data) => data.password === data.confirmPassword);
+
+  const b = z.object({ email: z.string() });
+
+  expect(() => a.merge(b)).toThrow(".merge() cannot be used on object schemas containing refinements");
+});
+
+test("merge() throws when receiver has superRefine", () => {
+  const a = z.object({ x: z.string() }).superRefine(() => {});
+  const b = z.object({ y: z.number() });
+
+  expect(() => a.merge(b)).toThrow(".merge() cannot be used on object schemas containing refinements");
+});
+
+test("merge() preserves refinements on the second schema", () => {
+  const a = z.object({ name: z.string() });
+  const b = z.object({ age: z.number() }).refine((data) => data.age >= 18, { message: "Must be 18+" });
+
+  const merged = a.merge(b);
+
+  expect(merged.parse({ name: "n", age: 21 })).toEqual({ name: "n", age: 21 });
+  expect(() => merged.parse({ name: "n", age: 12 })).toThrow("Must be 18+");
+});
+
 const personToExtend = z.object({
   firstName: z.string(),
   lastName: z.string(),
