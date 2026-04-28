@@ -561,24 +561,21 @@ test("async codec functionality", async () => {
   expect(mixedResult).toBe(123);
 });
 
-test("invert basic", () => {
-  const inverted = isoDateCodec.invert();
+test("invertCodec basic", () => {
+  const inverted = z.invertCodec(isoDateCodec);
 
-  // Inverted codec: Date (in) → ISO string (out)
-  // Forward decoding: Date → string
   const testDate = new Date("2024-01-15T10:30:00.000Z");
   const decoded = z.decode(inverted, testDate);
   expect(typeof decoded).toBe("string");
   expect(decoded).toBe("2024-01-15T10:30:00.000Z");
 
-  // Backward encoding: string → Date
   const encoded = z.encode(inverted, "2024-01-15T10:30:00.000Z");
   expect(encoded).toBeInstanceOf(Date);
   expect(encoded.toISOString()).toBe("2024-01-15T10:30:00.000Z");
 });
 
-test("invert round trip", () => {
-  const inverted = isoDateCodec.invert();
+test("invertCodec round trip", () => {
+  const inverted = z.invertCodec(isoDateCodec);
   const testDate = new Date("2024-06-01T12:00:00.000Z");
 
   const toStr = z.decode(inverted, testDate);
@@ -586,22 +583,19 @@ test("invert round trip", () => {
   expect(backToDate.toISOString()).toBe(testDate.toISOString());
 });
 
-test("invert types", () => {
-  const inverted = isoDateCodec.invert();
+test("invertCodec types", () => {
+  const inverted = z.invertCodec(isoDateCodec);
 
-  // Original: input = string, output = Date
-  // Inverted: input = Date, output = string
   type InvIn = z.input<typeof inverted>;
   type InvOut = z.output<typeof inverted>;
   expectTypeOf<InvIn>().toEqualTypeOf<Date>();
   expectTypeOf<InvOut>().toEqualTypeOf<string>();
 });
 
-test("invert is its own inverse", () => {
-  const doubleInverted = isoDateCodec.invert().invert();
+test("invertCodec is its own inverse", () => {
+  const doubleInverted = z.invertCodec(z.invertCodec(isoDateCodec));
   const testIsoString = "2024-03-10T08:00:00.000Z";
 
-  // Double invert should behave like the original
   const decoded = z.decode(doubleInverted, testIsoString);
   expect(decoded).toBeInstanceOf(Date);
   expect(decoded.toISOString()).toBe(testIsoString);
@@ -610,14 +604,13 @@ test("invert is its own inverse", () => {
   expect(encoded).toBe(testIsoString);
 });
 
-test("invert with pipe", () => {
+test("invertCodec with custom codec", () => {
   const intToString = z.codec(z.int(), z.string().regex(/^\d+$/), {
     decode: (num) => num.toString(),
     encode: (str) => Number.parseInt(str, 10),
   });
 
-  // Inverted: string → int
-  const stringToInt = intToString.invert();
+  const stringToInt = z.invertCodec(intToString);
   const result = z.decode(stringToInt, "42");
   expect(result).toBe(42);
 

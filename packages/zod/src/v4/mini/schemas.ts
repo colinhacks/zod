@@ -1602,22 +1602,12 @@ export interface ZodMiniCodec<A extends SomeType = core.$ZodType, B extends Some
     core.$ZodCodec<A, B> {
   _zod: core.$ZodCodecInternals<A, B>;
   def: core.$ZodCodecDef<A, B>;
-  invert(): ZodMiniCodec<B, A>;
 }
 export const ZodMiniCodec: core.$constructor<ZodMiniCodec> = /*@__PURE__*/ core.$constructor(
   "ZodMiniCodec",
   (inst, def) => {
     ZodMiniPipe.init(inst, def);
     core.$ZodCodec.init(inst, def);
-
-    inst.invert = () =>
-      new ZodMiniCodec({
-        type: "pipe",
-        in: def.out,
-        out: def.in,
-        transform: def.reverseTransform,
-        reverseTransform: def.transform,
-      }) as any;
   }
 );
 
@@ -1636,6 +1626,18 @@ export function codec<const A extends SomeType, B extends core.SomeType = core.$
     out: out as any as core.$ZodType,
     transform: params.decode as any,
     reverseTransform: params.encode as any,
+  }) as any;
+}
+
+// @__NO_SIDE_EFFECTS__
+export function invertCodec<A extends SomeType, B extends SomeType>(codec: ZodMiniCodec<A, B>): ZodMiniCodec<B, A> {
+  const def = codec._zod.def;
+  return new ZodMiniCodec({
+    type: "pipe",
+    in: def.out as any,
+    out: def.in as any,
+    transform: def.reverseTransform as any,
+    reverseTransform: def.transform as any,
   }) as any;
 }
 
