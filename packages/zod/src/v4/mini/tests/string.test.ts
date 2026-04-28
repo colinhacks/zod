@@ -181,17 +181,11 @@ test("z.cuid", () => {
   const a = z.cuid();
   expect(z.parse(a, "cixs7y0c0000f7x3b1z6m3w6r")).toEqual("cixs7y0c0000f7x3b1z6m3w6r");
   expect(z.parse(a, "ckopqwooh000001la8mbi2im9")).toEqual("ckopqwooh000001la8mbi2im9");
-
-  // Invalid: too short
   expect(() => z.parse(a, "abc")).toThrow();
-
-  // Invalid: special characters should be rejected
   expect(() => z.parse(a, "cixs7y0c0000f7x3b1z6m3w6r'")).toThrow();
   expect(() => z.parse(a, 'cixs7y0c0000f7x3b1z6m3w6r"')).toThrow();
   expect(() => z.parse(a, "cixs7y0c0000f7x3b1z6m3w6r;")).toThrow();
   expect(() => z.parse(a, "cixs7y0c0000f7x3b1z6m3w6r\\")).toThrow();
-
-  // Invalid: uppercase C should be rejected
   expect(() => z.parse(a, "Cixs7y0c0000f7x3b1z6m3w6r")).toThrow();
 });
 

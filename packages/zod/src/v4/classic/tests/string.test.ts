@@ -608,20 +608,13 @@ test("cuid", () => {
   const cuid = z.string().cuid();
   cuid.parse("ckopqwooh000001la8mbi2im9");
   cuid.parse("cixs7y0c0000f7x3b1z6m3w6r");
-
-  // Invalid: too short
   expect(() => cuid.parse("abc")).toThrow();
-
-  // Invalid: special characters should be rejected
   expect(() => cuid.parse("ckopqwooh000001la8mbi2im9'")).toThrow();
   expect(() => cuid.parse('ckopqwooh000001la8mbi2im9"')).toThrow();
   expect(() => cuid.parse("ckopqwooh000001la8mbi2im9;")).toThrow();
   expect(() => cuid.parse("ckopqwooh000001la8mbi2im9\\")).toThrow();
-
-  // Invalid: uppercase C should be rejected
   expect(() => cuid.parse("Ckopqwooh000001la8mbi2im9")).toThrow();
 
-  // Verify error message
   const result = cuid.safeParse("invalid-cuid");
   expect(result).toMatchObject({ success: false });
   expect(result.error!.issues[0].message).toEqual("Invalid cuid");
