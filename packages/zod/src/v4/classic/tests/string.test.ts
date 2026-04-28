@@ -519,9 +519,12 @@ test("script validations", () => {
   latin.parse("hello");
   expect(() => latin.parse("مرحبا")).toThrow();
 
-  const cyrillic = z.string().script("Cyrillic");
+  const cyrillic = z.script("Cyrillic");
   cyrillic.parse("привет");
   expect(() => cyrillic.parse("hello")).toThrow();
+
+  // method form is equivalent to the standalone factory
+  expect(() => z.string().script("Cyrillic").parse("hello")).toThrow();
 
   expect(() => z.script("NotAScript")).toThrow(SyntaxError);
 
