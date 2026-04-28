@@ -212,7 +212,7 @@ describe("toJSONSchema", () => {
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "format": "cuid",
-        "pattern": "^[c][0-9a-z]{8,}$",
+        "pattern": "^c[0-9a-z]{8,}$",
         "type": "string",
       }
     `);

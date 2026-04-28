@@ -386,10 +386,9 @@ test("bad nanoid", () => {
 
 test("cuid", () => {
   const cuid = z.string().cuid();
-  // Valid CUID (lowercase c, alphanumeric only)
   cuid.parse("ckopqwooh000001la8mbi2im9");
 
-  // Invalid: SQL special characters should be rejected
+  // Invalid: special characters should be rejected
   expect(() => cuid.parse("ckopqwooh000001la8mbi2im9'")).toThrow();
   expect(() => cuid.parse('ckopqwooh000001la8mbi2im9"')).toThrow();
   expect(() => cuid.parse("ckopqwooh000001la8mbi2im9;")).toThrow();
