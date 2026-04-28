@@ -478,10 +478,10 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         }
         // Apply minItems/maxItems constraints to tuples
         if (typeof schema.minItems === "number") {
-          zodSchema = (zodSchema as any).check(z.minLength(schema.minItems));
+          zodSchema = zodSchema.check(z.minLength(schema.minItems));
         }
         if (typeof schema.maxItems === "number") {
-          zodSchema = (zodSchema as any).check(z.maxLength(schema.maxItems));
+          zodSchema = zodSchema.check(z.maxLength(schema.maxItems));
         }
       } else if (Array.isArray(items)) {
         // Tuple with items array (draft-7)
@@ -497,10 +497,10 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         }
         // Apply minItems/maxItems constraints to tuples
         if (typeof schema.minItems === "number") {
-          zodSchema = (zodSchema as any).check(z.minLength(schema.minItems));
+          zodSchema = zodSchema.check(z.minLength(schema.minItems));
         }
         if (typeof schema.maxItems === "number") {
-          zodSchema = (zodSchema as any).check(z.maxLength(schema.maxItems));
+          zodSchema = zodSchema.check(z.maxLength(schema.maxItems));
         }
       } else if (items !== undefined) {
         // Regular array
@@ -509,10 +509,10 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
 
         // Apply constraints
         if (typeof schema.minItems === "number") {
-          arraySchema = (arraySchema as any).min(schema.minItems);
+          arraySchema = arraySchema.min(schema.minItems);
         }
         if (typeof schema.maxItems === "number") {
-          arraySchema = (arraySchema as any).max(schema.maxItems);
+          arraySchema = arraySchema.max(schema.maxItems);
         }
 
         zodSchema = arraySchema;

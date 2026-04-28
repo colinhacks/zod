@@ -2354,10 +2354,10 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
       // no matching discriminator
       payload.issues.push({
         code: "invalid_union",
-
         errors: [],
         note: "No matching discriminator",
         discriminator: def.discriminator,
+        options: Array.from(disc.value.keys()),
         input,
         path: [def.discriminator],
         inst,
@@ -2815,8 +2815,10 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       }
     } else {
       payload.value = {};
+      // Reflect.ownKeys for Symbol-key support; filter non-enumerable to match z.object()
       for (const key of Reflect.ownKeys(input)) {
         if (key === "__proto__") continue;
+        if (!Object.prototype.propertyIsEnumerable.call(input, key)) continue;
         let keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
         if (keyResult instanceof Promise) {
           throw new Error("Async schemas not supported in object keys currently");

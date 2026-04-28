@@ -60,7 +60,11 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
           checks: [
             ...(def.checks ?? []),
             ...checks.map((ch) =>
-              typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
+              typeof ch === "function"
+                ? {
+                    _zod: { check: ch, def: { check: "custom" }, onattach: [] },
+                  }
+                : ch
             ),
           ],
         },
@@ -1625,15 +1629,6 @@ export function codec<const A extends SomeType, B extends core.SomeType = core.$
   }) as any;
 }
 
-// /** @deprecated Use `z.pipe()` and `z.transform()` instead. */
-// export function preprocess<A, U extends core.$ZodType>(
-//   fn: (arg: unknown, ctx: core.ParsePayload) => A,
-//   schema: U,
-//   params?: ZodPreprocessParams
-// ): ZodPipe<ZodTransform<A, unknown>, U> {
-//   return pipe(transform(fn as any, params), schema as any, params);
-// }
-
 // ZodMiniReadonly
 export interface ZodMiniReadonly<T extends SomeType = core.$ZodType>
   extends _ZodMiniType<core.$ZodReadonlyInternals<T>> {
@@ -1770,9 +1765,10 @@ export function refine<T>(
 // superRefine
 // @__NO_SIDE_EFFECTS__
 export function superRefine<T>(
-  fn: (arg: T, payload: core.$RefinementCtx<T>) => void | Promise<void>
+  fn: (arg: T, payload: core.$RefinementCtx<T>) => void | Promise<void>,
+  params?: core.$ZodSuperRefineParams
 ): core.$ZodCheck<T> {
-  return core._superRefine(fn);
+  return core._superRefine(fn, params);
 }
 
 // Re-export describe and meta from core
@@ -1897,10 +1893,7 @@ export function _function<const Out extends core.$ZodFunctionOut = core.$ZodFunc
 export function _function<
   In extends core.$ZodFunctionIn = core.$ZodFunctionIn,
   Out extends core.$ZodFunctionOut = core.$ZodFunctionOut,
->(params?: {
-  input: In;
-  output: Out;
-}): ZodMiniFunction<In, Out>;
+>(params?: { input: In; output: Out }): ZodMiniFunction<In, Out>;
 // @__NO_SIDE_EFFECTS__
 export function _function(params?: {
   output?: core.$ZodFunctionOut;

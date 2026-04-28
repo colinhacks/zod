@@ -65,3 +65,61 @@ test("record should work with different key types and constructor field", () => 
   const result = enumSchema.parse({ constructor: "value1", key: "value2" });
   expect(result).toEqual({ constructor: "value1", key: "value2" });
 });
+
+test("record should skip non-enumerable own properties", () => {
+  const schema = z.record(z.string(), z.string());
+
+  const input = { key: "value" };
+  Object.defineProperty(input, "~standard", {
+    value: { validate: () => {}, vendor: "zod", version: 1 },
+    enumerable: false,
+    writable: false,
+    configurable: false,
+  });
+
+  const result = schema.safeParse(input);
+  expect(result.success).toBe(true);
+  if (result.success) {
+    expect(result.data).toEqual({ key: "value" });
+    expect("~standard" in result.data).toBe(false);
+  }
+});
+
+test("record fails on enumerable invalid values even when non-enumerable properties are present", () => {
+  const schema = z.record(z.string(), z.string());
+
+  const input = { key: "value", bad: 123 };
+  Object.defineProperty(input, "hidden", {
+    value: "should be ignored",
+    enumerable: false,
+  });
+
+  const result = schema.safeParse(input);
+  expect(result.success).toBe(false);
+});
+
+test("record validates enumerable Symbol keys and skips non-enumerable Symbol keys", () => {
+  const enumerableSym = Symbol.for("included");
+  const nonEnumerableSym = Symbol.for("hidden");
+  const schema = z.record(z.symbol(), z.string());
+
+  const input: Record<symbol, unknown> = { [enumerableSym]: "value" };
+  Object.defineProperty(input, nonEnumerableSym, {
+    value: 123,
+    enumerable: false,
+  });
+
+  const result = schema.safeParse(input);
+  expect(result.success).toBe(true);
+  if (result.success) {
+    expect(result.data[enumerableSym]).toBe("value");
+    expect(Object.prototype.hasOwnProperty.call(result.data, nonEnumerableSym)).toBe(false);
+  }
+});
+
+test("z.json() accepts z.toJSONSchema() output (issue #5714)", () => {
+  const schema = z.object({ name: z.string() });
+  const jsonSchema = z.toJSONSchema(schema);
+
+  expect(z.json().safeParse(jsonSchema).success).toBe(true);
+});

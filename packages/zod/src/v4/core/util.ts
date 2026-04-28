@@ -840,27 +840,21 @@ export function finalizeIssue(
   ctx: schemas.ParseContextInternal | undefined,
   config: $ZodConfig
 ): errors.$ZodIssue {
-  const full = { ...iss, path: iss.path ?? [] } as errors.$ZodIssue;
-
-  // for backwards compatibility
-  if (!iss.message) {
-    const message =
-      unwrapMessage(iss.inst?._zod.def?.error?.(iss as never)) ??
+  const message = iss.message
+    ? iss.message
+    : (unwrapMessage(iss.inst?._zod.def?.error?.(iss as never)) ??
       unwrapMessage(ctx?.error?.(iss as never)) ??
       unwrapMessage(config.customError?.(iss)) ??
       unwrapMessage(config.localeError?.(iss)) ??
-      "Invalid input";
-    (full as any).message = message;
-  }
+      "Invalid input");
 
-  // delete (full as any).def;
-  delete (full as any).inst;
-  delete (full as any).continue;
-  if (!ctx?.reportInput) {
-    delete (full as any).input;
+  const { inst: _inst, continue: _continue, input: _input, ...rest } = iss as any;
+  rest.path ??= [];
+  rest.message = message;
+  if (ctx?.reportInput) {
+    rest.input = _input;
   }
-
-  return full;
+  return rest;
 }
 
 export function getSizableOrigin(input: any): "set" | "map" | "file" | "unknown" {

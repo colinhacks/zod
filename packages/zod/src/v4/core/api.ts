@@ -1633,8 +1633,16 @@ export interface $RefinementCtx<T = unknown> extends schemas.ParsePayload<T> {
   addIssue(arg: string | $ZodSuperRefineIssue): void;
 }
 
+export interface $ZodSuperRefineParams {
+  /** If provided, the refinement runs only when this returns `true`. By default, it is skipped if prior parsing produced aborting issues. */
+  when?: ((payload: schemas.ParsePayload) => boolean) | undefined;
+}
+
 // @__NO_SIDE_EFFECTS__
-export function _superRefine<T>(fn: (arg: T, payload: $RefinementCtx<T>) => void | Promise<void>): checks.$ZodCheck<T> {
+export function _superRefine<T>(
+  fn: (arg: T, payload: $RefinementCtx<T>) => void | Promise<void>,
+  params?: $ZodSuperRefineParams
+): checks.$ZodCheck<T> {
   const ch = _check<T>((payload) => {
     (payload as $RefinementCtx).addIssue = (issue) => {
       if (typeof issue === "string") {
@@ -1652,7 +1660,7 @@ export function _superRefine<T>(fn: (arg: T, payload: $RefinementCtx<T>) => void
     };
 
     return fn(payload.value, payload as $RefinementCtx<T>);
-  });
+  }, params);
   return ch;
 }
 

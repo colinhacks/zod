@@ -158,10 +158,14 @@ test("invalid discriminator value", () => {
         "errors": [],
         "note": "No matching discriminator",
         "discriminator": "type",
+        "options": [
+          "a",
+          "b"
+        ],
         "path": [
           "type"
         ],
-        "message": "Invalid input"
+        "message": "Invalid discriminator value. Expected 'a' | 'b'"
       }
     ]],
       "success": false,

@@ -580,7 +580,7 @@ z.hash("sha256", { enc: "base64url" }); // base64url encoding (no padding)
 To define your own string formats:
 
 ```ts
-const coolId = z.stringFormat("cool-id", ()=>{
+const coolId = z.stringFormat("cool-id", (val)=>{
   // arbitrary validation here
   return val.length === 100 && val.startsWith("cool-");
 });

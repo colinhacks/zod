@@ -175,7 +175,7 @@ const xToZodConverters: ZodResource[] = [
   {
     name: "Hey API",
     url: "https://heyapi.dev/openapi-ts/plugins/zod",
-    description: "The OpenAPI to TypeScript codegen. Generate clients, SDKs, validators, and more.",
+    description: "OpenAPI to TypeScript codegen. Production-ready SDKs, Zod schemas, TanStack Query hooks, and 20+ plugins. Used by Vercel, OpenCode, and PayPal.",
     slug: "hey-api/openapi-ts",
   },
   {
@@ -270,6 +270,12 @@ const poweredByZodProjects: ZodResource[] = [
     url: "https://github.com/endel/zodgres",
     description: "Postgres.js + Zod: Database collections with static type inference and automatic migrations",
     slug: "endel/zodgres",
+  },
+  {
+    name: "json-up",
+    url: "https://github.com/Nano-Collective/json-up",
+    description: "A fast, type-safe JSON migration tool with Zod schema validation.",
+    slug: "Nano-Collective/json-up",
   }
 ];
 
