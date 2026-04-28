@@ -205,7 +205,7 @@ export function process<T extends schemas.$ZodType>(
   }
 
   // set prefault as default
-  if (ctx.io === "input" && result.schema._prefault) result.schema.default ??= result.schema._prefault;
+  if (ctx.io === "input" && "_prefault" in result.schema) result.schema.default ??= result.schema._prefault;
   delete result.schema._prefault;
 
   // pulling fresh from ctx.seen in case it was overwritten

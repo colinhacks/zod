@@ -2627,6 +2627,38 @@ test("defaults/prefaults", () => {
   `);
 });
 
+test("falsy prefaults (false, 0, empty string)", () => {
+  // boolean prefault false
+  const a = z.boolean().prefault(false);
+  expect(z.toJSONSchema(a, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "default": false,
+      "type": "boolean",
+    }
+  `);
+
+  // number prefault 0
+  const b = z.number().prefault(0);
+  expect(z.toJSONSchema(b, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "default": 0,
+      "type": "number",
+    }
+  `);
+
+  // string prefault empty string
+  const c = z.string().prefault("");
+  expect(z.toJSONSchema(c, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "default": "",
+      "type": "string",
+    }
+  `);
+});
+
 test("input type", () => {
   const schema = z.object({
     a: z.string(),
