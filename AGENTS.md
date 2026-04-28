@@ -37,6 +37,7 @@ The project uses pnpm workspaces. Key commands:
 - ALWAYS use the `gh` CLI to fetch GitHub information (issues, PRs, etc.) instead of relying on web search or assumptions
 - Keep JSDoc as minimal as possible. A self-explanatory type or symbol name needs no doc comment. When a comment is genuinely required, write one short sentence describing behavior — not history, rationale, or examples. Don't add interface-level JSDoc that just restates the interface name.
 - When you've modified a PR (or opened/closed/commented on one), include the PR URL liberally in summary messages — at minimum once at the end of any reply that touched it
+- NEVER bump the version in `packages/zod/package.json` (or any package's `package.json`). A version bump is the only thing that triggers a release; everything else (including direct pushes to `main`) is recoverable until that happens. If a version bump is genuinely needed, ask first.
 
 ## Iterating on a contributor PR in a worktree
 
@@ -88,3 +89,24 @@ When posting on a maintainer's behalf via `gh` (PR comments, issue comments, rev
   - `> _Comment written with AI assistance._` (top of comment, blockquoted)
   - `_Note: this comment was produced by an AI coding assistant._` (inline italic)
 - When posting comments with code samples via `gh`, do NOT pass the body inline through a heredoc that requires escaping backticks. Backslash-escaped backticks (`` \` ``) inside a `$(cat <<'EOF' ... EOF)` body get sent to GitHub literally and break inline code and template literals inside fenced blocks. Instead, write the comment to a file and pass it via `--body-file <path>` (for `gh pr/issue comment`) or `-F body=@<path>` (for `gh api`). This preserves backticks and `${...}` exactly as written.
+
+## Pushing to a new branch (don't accidentally push to main)
+
+When the user asks for a "new PR" or "new branch", the work has to land on a non-`main` ref on the remote. The footgun: `git worktree add <path> -b <branch> origin/main` (and `git checkout -b <branch> origin/main`) silently set the new branch's upstream to `refs/heads/main` because the start point is a remote-tracking ref. A subsequent `git push -u origin <branch>` then pushes to `refs/heads/main`, not to a new remote branch. Two of these in a row have happened.
+
+Avoid by being explicit on the first push:
+
+```bash
+# Always use a refspec on the initial push so the remote ref name is unambiguous.
+git push -u origin <branch>:refs/heads/<branch>
+```
+
+Then verify the output. The line you want to see is:
+
+```
+* [new branch]      <branch> -> <branch>
+```
+
+If the right-hand side says `main`, the push went to main — abort or revert.
+
+Use `git push origin HEAD:refs/heads/<branch>` for subsequent pushes if you didn't `-u` originally. Don't rely on `git push -u origin <branch>` alone — its behavior depends on the upstream config, which `worktree add -b ... origin/main` set wrong for you.
