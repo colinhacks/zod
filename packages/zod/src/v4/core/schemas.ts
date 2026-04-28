@@ -449,11 +449,30 @@ export interface $ZodEmail extends $ZodType {
   _zod: $ZodEmailInternals;
 }
 
+// RFC 5321 §4.5.3.1.3 limits the maximum total email address length to 254 chars.
+const EMAIL_MAX_LENGTH = 254;
+
 export const $ZodEmail: core.$constructor<$ZodEmail> = /*@__PURE__*/ core.$constructor(
   "$ZodEmail",
   (inst, def): void => {
     def.pattern ??= regexes.email;
     $ZodStringFormat.init(inst, def);
+    const patternCheck = inst._zod.check!;
+    inst._zod.check = (payload) => {
+      if (payload.value.length > EMAIL_MAX_LENGTH) {
+        payload.issues.push({
+          origin: "string",
+          code: "too_big",
+          maximum: EMAIL_MAX_LENGTH,
+          inclusive: true,
+          input: payload.value,
+          inst,
+          continue: !def.abort,
+        });
+        return;
+      }
+      patternCheck(payload);
+    };
   }
 );
 

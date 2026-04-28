@@ -30,6 +30,25 @@ test("string format methods", () => {
   expect(e.safeParse("EMAIL@EXAMPLE.COM").success).toBe(false); // Negative
 });
 
+test("z.email() rejects addresses longer than 254 characters (RFC 5321)", () => {
+  const schema = z.email();
+  // "@example.com" = 12 chars; fill the remaining budget with the local part
+  const domain = "@example.com";
+  const addr254 = "a".repeat(254 - domain.length) + domain; // exactly 254
+  const addr255 = "a".repeat(255 - domain.length) + domain; // exactly 255
+
+  expect(addr254.length).toBe(254);
+  expect(addr255.length).toBe(255);
+
+  expect(schema.safeParse(addr254).success).toBe(true);
+
+  const result = schema.safeParse(addr255);
+  expect(result.success).toBe(false);
+  if (!result.success) {
+    expect(result.error.issues[0].code).toBe("too_big");
+  }
+});
+
 test("z.stringFormat", () => {
   const ccRegex = /^(?:\d{14,19}|\d{4}(?: \d{3,6}){2,4}|\d{4}(?:-\d{3,6}){2,4})$/u;
 
