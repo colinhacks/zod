@@ -1,6 +1,6 @@
 import * as util from "./util.js";
 
-export const cuid: RegExp = /^[cC][^\s-]{8,}$/;
+export const cuid: RegExp = /^[c][0-9a-z]{8,}$/;
 export const cuid2: RegExp = /^[0-9a-z]+$/;
 export const ulid: RegExp = /^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$/;
 export const xid: RegExp = /^[0-9a-vA-V]{20}$/;

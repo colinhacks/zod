@@ -179,8 +179,21 @@ test("z.nanoid", () => {
 
 test("z.cuid", () => {
   const a = z.cuid();
+  // Valid CUIDs (lowercase c, alphanumeric only)
   expect(z.parse(a, "cixs7y0c0000f7x3b1z6m3w6r")).toEqual("cixs7y0c0000f7x3b1z6m3w6r");
+  expect(z.parse(a, "ckopqwooh000001la8mbi2im9")).toEqual("ckopqwooh000001la8mbi2im9");
+
+  // Invalid: too short
   expect(() => z.parse(a, "abc")).toThrow();
+
+  // Invalid: SQL special characters should be rejected
+  expect(() => z.parse(a, "cixs7y0c0000f7x3b1z6m3w6r'")).toThrow();
+  expect(() => z.parse(a, 'cixs7y0c0000f7x3b1z6m3w6r"')).toThrow();
+  expect(() => z.parse(a, "cixs7y0c0000f7x3b1z6m3w6r;")).toThrow();
+  expect(() => z.parse(a, "cixs7y0c0000f7x3b1z6m3w6r\\")).toThrow();
+
+  // Invalid: uppercase C should be rejected (CUID spec uses lowercase c)
+  expect(() => z.parse(a, "Cixs7y0c0000f7x3b1z6m3w6r")).toThrow();
 });
 
 test("z.cuid2", () => {
