@@ -4402,14 +4402,14 @@ export interface $ZodLazy<T extends SomeType = $ZodType> extends $ZodType {
 export const $ZodLazy: core.$constructor<$ZodLazy> = /*@__PURE__*/ core.$constructor("$ZodLazy", (inst, def) => {
   $ZodType.init(inst, def);
 
-  // let _innerType!: any;
-  // util.defineLazy(def, "getter", () => {
-  //   if (!_innerType) {
-  //     _innerType = def.getter();
-  //   }
-  //   return () => _innerType;
-  // });
-  util.defineLazy(inst._zod, "innerType", () => def.getter() as $ZodType);
+  // Cache the resolved inner type on the shared `def` so all clones of this
+  // lazy (e.g. via `.describe()`/`.meta()`) share the same inner instance,
+  // preserving identity for cycle detection on recursive schemas.
+  util.defineLazy(inst._zod, "innerType", () => {
+    const d = def as $ZodLazyDef & { _cachedInner?: $ZodType };
+    if (!d._cachedInner) d._cachedInner = def.getter() as $ZodType;
+    return d._cachedInner;
+  });
   util.defineLazy(inst._zod, "pattern", () => inst._zod.innerType?._zod?.pattern);
   util.defineLazy(inst._zod, "propValues", () => inst._zod.innerType?._zod?.propValues);
   util.defineLazy(inst._zod, "optin", () => inst._zod.innerType?._zod?.optin ?? undefined);
