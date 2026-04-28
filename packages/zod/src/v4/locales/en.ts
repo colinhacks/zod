@@ -64,6 +64,9 @@ const error: () => errors.$ZodErrorMap = () => {
         const expected = TypeDictionary[issue.expected] ?? issue.expected;
         const receivedType = util.parsedType(issue.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
+        if (typeof issue.expected === "string" && /^[A-Z]/.test(issue.expected)) {
+          return `Invalid input: expected instanceof ${issue.expected}, received ${received}`;
+        }
         return `Invalid input: expected ${expected}, received ${received}`;
       }
 
