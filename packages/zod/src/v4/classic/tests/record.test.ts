@@ -630,3 +630,27 @@ test("numeric string keys", () => {
   );
   expect(transformedSchema.parse({ 5: "five", 10: "ten" })).toEqual({ 10: "five", 20: "ten" });
 });
+
+test("v3-compat single-arg form: z.record(valueType)", () => {
+  // single arg should default keyType to z.string() and use the arg as valueType
+  const schema = (z.record as any)(z.number());
+  expect(schema.keyType._zod.def.type).toEqual("string");
+  expect(schema.valueType._zod.def.type).toEqual("number");
+
+  expect(schema.parse({ a: 1, b: 2 })).toEqual({ a: 1, b: 2 });
+  expect(schema.safeParse({ a: "x" }).success).toBe(false);
+
+  // params still flow through in the single-arg form
+  const withMessage = (z.record as any)(z.number(), "must be a number record");
+  expect(withMessage.keyType._zod.def.type).toEqual("string");
+  expect(withMessage.valueType._zod.def.type).toEqual("number");
+
+  // toJSONSchema should produce a well-formed schema (regression: previously produced
+  // additionalProperties from undefined valueType, crashing process())
+  const json = z.toJSONSchema(schema);
+  expect(json).toMatchObject({
+    type: "object",
+    propertyNames: { type: "string" },
+    additionalProperties: { type: "number" },
+  });
+});

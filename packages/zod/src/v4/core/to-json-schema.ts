@@ -471,11 +471,19 @@ export function finalize<T extends schemas.$ZodType>(
 
   Object.assign(result, root.def ?? root.schema);
 
+  // The `id` in `.meta()` is a Zod-specific registration tag used to extract
+  // schemas into $defs — it is not user-facing JSON Schema metadata. Strip it
+  // from the output body where it would otherwise leak. The id is preserved
+  // implicitly via the $defs key (and via $ref paths).
+  const rootMetaId = ctx.metadataRegistry.get(schema)?.id;
+  if (rootMetaId !== undefined && result.id === rootMetaId) delete result.id;
+
   // build defs object
   const defs: JSONSchema.BaseSchema["$defs"] = ctx.external?.defs ?? {};
   for (const entry of ctx.seen.entries()) {
     const seen = entry[1];
     if (seen.def && seen.defId) {
+      if (seen.def.id === seen.defId) delete seen.def.id;
       defs[seen.defId] = seen.def;
     }
   }

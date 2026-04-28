@@ -580,7 +580,7 @@ z.hash("sha256", { enc: "base64url" }); // base64url encoding (no padding)
 To define your own string formats:
 
 ```ts
-const coolId = z.stringFormat("cool-id", ()=>{
+const coolId = z.stringFormat("cool-id", (val)=>{
   // arbitrary validation here
   return val.length === 100 && val.startsWith("cool-");
 });
@@ -2344,19 +2344,20 @@ An error on `anotherField` will prevent the password confirmation check from exe
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-const schema = z
-  .object({
-    password: z.string().min(8),
-    confirmPassword: z.string(),
-    anotherField: z.string(),
-  })
+const baseSchema = z.object({
+  password: z.string().min(8),
+  confirmPassword: z.string(),
+  anotherField: z.string(),
+});
+
+const schema = baseSchema
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
 
     // run if password & confirmPassword are valid
     when(payload) { // [!code ++]
-      return schema // [!code ++]
+      return baseSchema // [!code ++]
         .pick({ password: true, confirmPassword: true }) // [!code ++]
         .safeParse(payload.value).success; // [!code ++]
     },  // [!code ++]
@@ -3080,17 +3081,15 @@ computeTrimmedLengthAsync("sandwich"); // => Promise<8>
 
 ## Custom
 
-You can create a Zod schema for any TypeScript type by using `z.custom()`. This is useful for creating schemas for types that are not supported by Zod out of the box, such as template string literals.
+You can create a Zod schema for any TypeScript type by using `z.custom()`. This is useful for validating types from third-party libraries or any other type that isn't covered by a built-in schema. For class instances, prefer [`z.instanceof()`](#instanceof); for template literal types, prefer [`z.templateLiteral()`](#template-literals).
 
 ```ts
-const px = z.custom<`${number}px`>((val) => {
-  return typeof val === "string" ? /^\d+px$/.test(val) : false;
-});
+import { Decimal } from "decimal.js";
 
-type px = z.infer<typeof px>; // `${number}px`
+const decimalSchema = z.custom<Decimal>((val) => Decimal.isDecimal(val));
 
-px.parse("42px"); // "42px"
-px.parse("42vw"); // throws;
+decimalSchema.parse(new Decimal("1.5")); // passes
+decimalSchema.parse("1.5");              // throws
 ```
 
 If you don't provide a validation function, Zod will allow any value. This can be dangerous!

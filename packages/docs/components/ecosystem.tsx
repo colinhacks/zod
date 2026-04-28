@@ -175,7 +175,7 @@ const xToZodConverters: ZodResource[] = [
   {
     name: "Hey API",
     url: "https://heyapi.dev/openapi-ts/plugins/zod",
-    description: "The OpenAPI to TypeScript codegen. Generate clients, SDKs, validators, and more.",
+    description: "OpenAPI to TypeScript codegen. Production-ready SDKs, Zod schemas, TanStack Query hooks, and 20+ plugins. Used by Vercel, OpenCode, and PayPal.",
     slug: "hey-api/openapi-ts",
   },
   {
@@ -277,6 +277,12 @@ const poweredByZodProjects: ZodResource[] = [
     description: "25 tree-shakeable validation rules for common fields (email, phone, password, etc.) with structured error codes, i18n, and framework adapters.",
     slug: "chiptoma/validex",
   },
+  {
+    name: "json-up",
+    url: "https://github.com/Nano-Collective/json-up",
+    description: "A fast, type-safe JSON migration tool with Zod schema validation.",
+    slug: "Nano-Collective/json-up",
+  },
 ];
 
 const zodUtilities: ZodResource[] = [
@@ -315,6 +321,12 @@ const zodUtilities: ZodResource[] = [
     url: "https://github.com/Reza-kh80/zod-ir",
     description: "Comprehensive validation for Iranian data structures (National Code, Bank Cards, Sheba, Crypto, etc) with smart metadata extraction (Bank Names, Logos). Zero dependencies.",
     slug: "Reza-kh80/zod-ir",
+  },
+  {
+    name: "Zod AOT",
+    url: "https://github.com/wakita181009/zod-aot",
+    description: "Compile Zod schemas into zero-overhead validation functions at build time. 2-64x faster validation with no code changes.",
+    slug: "wakita181009/zod-aot",
   },
 ];
 

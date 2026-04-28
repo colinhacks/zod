@@ -33,7 +33,7 @@ test("recursion with z.lazy", () => {
   type Category = z.infer<typeof Category>;
   interface _Category {
     name: string;
-    subcategories?: _Category[];
+    subcategories?: _Category[] | undefined;
   }
   expectTypeOf<Category>().toEqualTypeOf<_Category>();
 });

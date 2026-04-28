@@ -232,8 +232,7 @@ test("inferred merged object type with optional properties", async () => {
     .object({ a: z.string(), b: z.string().optional() })
     .merge(z.object({ a: z.string().optional(), b: z.string() }));
   type Merged = z.infer<typeof Merged>;
-  expectTypeOf<Merged>().toEqualTypeOf<{ a?: string; b: string }>();
-  expectTypeOf<Merged>().toEqualTypeOf<{ a?: string; b: string }>();
+  expectTypeOf<Merged>().toEqualTypeOf<{ a?: string | undefined; b: string }>();
 });
 
 test("inferred unioned object type with optional properties", async () => {
@@ -242,7 +241,9 @@ test("inferred unioned object type with optional properties", async () => {
     z.object({ a: z.string().optional(), b: z.string() }),
   ]);
   type Unioned = z.infer<typeof Unioned>;
-  expectTypeOf<Unioned>().toEqualTypeOf<{ a: string; b?: string } | { a?: string; b: string }>();
+  expectTypeOf<Unioned>().toEqualTypeOf<
+    { a: string; b?: string | undefined } | { a?: string | undefined; b: string }
+  >();
 });
 
 test("inferred enum type", async () => {
@@ -279,13 +280,13 @@ test("z.keyof returns enum", () => {
 test("inferred partial object type with optional properties", async () => {
   const Partial = z.object({ a: z.string(), b: z.string().optional() }).partial();
   type Partial = z.infer<typeof Partial>;
-  expectTypeOf<Partial>().toEqualTypeOf<{ a?: string; b?: string }>();
+  expectTypeOf<Partial>().toEqualTypeOf<{ a?: string | undefined; b?: string | undefined }>();
 });
 
 test("inferred picked object type with optional properties", async () => {
   const Picked = z.object({ a: z.string(), b: z.string().optional() }).pick({ b: true });
   type Picked = z.infer<typeof Picked>;
-  expectTypeOf<Picked>().toEqualTypeOf<{ b?: string }>();
+  expectTypeOf<Picked>().toEqualTypeOf<{ b?: string | undefined }>();
 });
 
 test("inferred type for unknown/any keys", () => {

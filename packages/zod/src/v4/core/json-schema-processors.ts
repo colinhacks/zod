@@ -65,36 +65,31 @@ export const numberProcessor: Processor<schemas.$ZodNumber> = (schema, ctx, _jso
   if (typeof format === "string" && format.includes("int")) json.type = "integer";
   else json.type = "number";
 
-  if (typeof exclusiveMinimum === "number") {
-    if (ctx.target === "draft-04" || ctx.target === "openapi-3.0") {
+  // when both minimum and exclusiveMinimum exist, pick the more restrictive one
+  const exMin = typeof exclusiveMinimum === "number" && exclusiveMinimum >= (minimum ?? Number.NEGATIVE_INFINITY);
+  const exMax = typeof exclusiveMaximum === "number" && exclusiveMaximum <= (maximum ?? Number.POSITIVE_INFINITY);
+  const legacy = ctx.target === "draft-04" || ctx.target === "openapi-3.0";
+
+  if (exMin) {
+    if (legacy) {
       json.minimum = exclusiveMinimum;
       json.exclusiveMinimum = true;
     } else {
       json.exclusiveMinimum = exclusiveMinimum;
     }
-  }
-  if (typeof minimum === "number") {
+  } else if (typeof minimum === "number") {
     json.minimum = minimum;
-    if (typeof exclusiveMinimum === "number" && ctx.target !== "draft-04") {
-      if (exclusiveMinimum >= minimum) delete json.minimum;
-      else delete json.exclusiveMinimum;
-    }
   }
 
-  if (typeof exclusiveMaximum === "number") {
-    if (ctx.target === "draft-04" || ctx.target === "openapi-3.0") {
+  if (exMax) {
+    if (legacy) {
       json.maximum = exclusiveMaximum;
       json.exclusiveMaximum = true;
     } else {
       json.exclusiveMaximum = exclusiveMaximum;
     }
-  }
-  if (typeof maximum === "number") {
+  } else if (typeof maximum === "number") {
     json.maximum = maximum;
-    if (typeof exclusiveMaximum === "number" && ctx.target !== "draft-04") {
-      if (exclusiveMaximum <= maximum) delete json.maximum;
-      else delete json.exclusiveMaximum;
-    }
   }
 
   if (typeof multipleOf === "number") json.multipleOf = multipleOf;
@@ -286,7 +281,10 @@ export const arrayProcessor: Processor<schemas.$ZodArray> = (schema, ctx, _json,
   if (typeof maximum === "number") json.maxItems = maximum;
 
   json.type = "array";
-  json.items = process(def.element, ctx as any, { ...params, path: [...params.path, "items"] });
+  json.items = process(def.element, ctx as any, {
+    ...params,
+    path: [...params.path, "items"],
+  });
 };
 
 export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _json, params) => {

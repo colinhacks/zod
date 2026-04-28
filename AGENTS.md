@@ -35,3 +35,56 @@ The project uses pnpm workspaces. Key commands:
 - Use `util.defineLazy()` for computed properties to avoid circular dependencies
 - Performance is critical - parameter reassignment is allowed for optimization
 - ALWAYS use the `gh` CLI to fetch GitHub information (issues, PRs, etc.) instead of relying on web search or assumptions
+- Keep JSDoc as minimal as possible. A self-explanatory type or symbol name needs no doc comment. When a comment is genuinely required, write one short sentence describing behavior — not history, rationale, or examples. Don't add interface-level JSDoc that just restates the interface name.
+- When you've modified a PR (or opened/closed/commented on one), include the PR URL liberally in summary messages — at minimum once at the end of any reply that touched it
+
+## Iterating on a contributor PR in a worktree
+
+When asked to make changes on top of an open PR (e.g. as a maintainer review suggestion), use a worktree so `main` stays clean:
+
+```bash
+# 1. Fetch the PR as a local branch and create a worktree for it
+git fetch origin pull/<N>/head:pr-<N>
+git worktree add ~/.cursor/worktrees/zod/pr-<N> pr-<N>
+cd ~/.cursor/worktrees/zod/pr-<N>
+pnpm install --frozen-lockfile   # fast, pnpm store is shared across worktrees
+
+# 2. Look up the PR's head info — you'll need the contributor's fork URL
+#    and the head ref name to push back.
+gh pr view <N> --repo colinhacks/zod \
+  --json headRefName,headRepositoryOwner,maintainerCanModify
+
+# 3. If maintainerCanModify is true, add the fork as a remote and push to
+#    the PR's head ref (NOT to your local branch name).
+git remote add <contributor> git@github.com:<contributor>/zod.git
+git push <contributor> pr-<N>:<headRefName>                 # first push
+git push <contributor> pr-<N>:<headRefName> --force-with-lease   # for amends
+```
+
+Notes:
+- Do NOT use `gh pr checkout --detach` for this — it moves your *current* working tree into detached HEAD instead of creating a worktree.
+- Husky pre-commit runs biome format/lint via lint-staged; pre-push runs the full vitest suite. Both are fast and act as a safety net — don't bypass with `--no-verify` unless you have a specific reason.
+- When done, clean up: `git worktree remove ~/.cursor/worktrees/zod/pr-<N>` and `git branch -D pr-<N>` (and optionally `git remote remove <contributor>`).
+
+## Commenting on issues and PRs
+
+When posting on a maintainer's behalf via `gh` (PR comments, issue comments, reviews), match the house tone. The register is authoritative and friendly — concise, not bubbly, not over-explaining, not effusive. Comments come from a maintainer handing down decisions, not negotiating them. Friendly does not mean deferential.
+
+- Exclamation points are fine in moderation, especially to soften a decline or close out a thread ("Thanks for looking into this!"). Don't stack them and don't sprinkle them through technical writeups.
+- Skip effusive praise: "Great work", "Awesome", "Nice catch", "Thanks so much for this". A simple "Thanks for the PR" or "Thanks for looking into this" reads warmer without tipping into bubbly.
+- No "PTAL", "WDYT", or sign-off flourishes asking the contributor to re-review changes the maintainer pushed on top. State what changed and the merge intent. ("LGTM" is fine as a literal verdict at the end of a substantive review, not as a sign-off.)
+- When the user gives you exact wording for a comment, use it verbatim (fixing only obvious typos). Do not "improve" their phrasing to match this style guide — their direct instruction wins.
+- Lead with the decision or action: "Going to merge as-is." "Closing this out." "I'd be open to a top-level utility but not as a method." Then the reasoning.
+- First person, owned opinions. "I don't think this should be a method." "I'm hesitant to add this." Don't hide behind passive voice or "we could perhaps consider".
+- Speak with authority. No hedging ("maybe", "I think perhaps", "if that's okay"), no apologizing for decisions, no asking permission to land changes the maintainer has already made. Decisions are stated as decisions.
+- Be direct when declining, but not curt. "out of scope", "behaving as intended", "this is more complicated than it looks" — firm, with a concrete reason. A friendly closer ("thanks for looking into this") is fine.
+- Cross-reference by number: `#4433`, `commit 2f8414bc`, `merged in #5718`. Concrete and verifiable.
+- Length matches substance. Default to 1–4 sentences. Go long only when the content earns it (root-cause writeups, benchmark results, pointing to a canonical thread).
+- Use prose with inline backticks for symbols. Reach for fenced code blocks only when showing non-trivial code is genuinely clearer than describing it.
+- No emojis in substantive comments. A solitary `👍` in a casual one-liner is rare-but-allowed.
+- Bot mentions are bare imperatives: `@pullfrog review`, `@pullfrog fix merge conflicts`, `@pullfrog re-review fresh.`
+- When pushing a follow-up on top of a contributor's PR, state what changed, why it differs from the original approach, and that the maintainer is merging. Never ask the contributor to review the maintainer's changes — they are final, not a proposal. Don't thank them for "letting" the maintainer rewrite their work.
+- Disclose AI authorship when a comment was substantively drafted by an assistant. Use one of:
+  - `> _Comment written with AI assistance._` (top of comment, blockquoted)
+  - `_Note: this comment was produced by an AI coding assistant._` (inline italic)
+- When posting comments with code samples via `gh`, do NOT pass the body inline through a heredoc that requires escaping backticks. Backslash-escaped backticks (`` \` ``) inside a `$(cat <<'EOF' ... EOF)` body get sent to GitHub literally and break inline code and template literals inside fenced blocks. Instead, write the comment to a file and pass it via `--body-file <path>` (for `gh pr/issue comment`) or `-F body=@<path>` (for `gh api`). This preserves backticks and `${...}` exactly as written.

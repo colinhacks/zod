@@ -158,10 +158,14 @@ test("invalid discriminator value", () => {
         "errors": [],
         "note": "No matching discriminator",
         "discriminator": "type",
+        "options": [
+          "a",
+          "b"
+        ],
         "path": [
           "type"
         ],
-        "message": "Invalid input"
+        "message": "Invalid discriminator value. Expected 'a' | 'b'"
       }
     ]],
       "success": false,
@@ -658,4 +662,30 @@ test("def", () => {
   expect(schema.def).toBeDefined();
   expect(schema.def.discriminator).toEqual("type");
   expect(schema.def.unionFallback).toEqual(true);
+});
+
+test("encode with codec discriminator", () => {
+  const codec1 = z.codec(z.literal(1), z.literal("one"), {
+    decode: () => "one" as const,
+    encode: () => 1 as const,
+  });
+
+  const codec2 = z.codec(z.literal(2), z.literal("two"), {
+    decode: () => "two" as const,
+    encode: () => 2 as const,
+  });
+
+  const schema = z.discriminatedUnion("type", [
+    z.object({ type: codec1, value: z.string() }),
+    z.object({ type: codec2, value: z.number() }),
+  ]);
+
+  // decode (forward) should work
+  const decoded = schema.decode({ type: 1, value: "hello" });
+  expect(decoded).toEqual({ type: "one", value: "hello" });
+
+  // encode (backward) should also work — the discriminator values differ
+  // between forward (1, 2) and backward ("one", "two") directions
+  const encoded = z.encode(schema, { type: "one", value: "hello" });
+  expect(encoded).toEqual({ type: 1, value: "hello" });
 });

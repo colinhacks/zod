@@ -11,6 +11,7 @@ import en from "../locales/en.js";
 config(en());
 
 export type { infer, output, input } from "../core/index.js";
+export type { JSONType } from "../core/util.js";
 export {
   globalRegistry,
   type GlobalMeta,

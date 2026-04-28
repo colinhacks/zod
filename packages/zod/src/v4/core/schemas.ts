@@ -2347,17 +2347,21 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
         return opt._zod.run(payload, ctx) as any;
       }
 
-      if (def.unionFallback) {
+      // Fall back to union matching when the fast discriminator path fails:
+      // - explicitly enabled via unionFallback, or
+      // - during backward direction (encode), since codec-based discriminators
+      //   have different values in forward vs backward directions
+      if (def.unionFallback || ctx.direction === "backward") {
         return _super(payload, ctx);
       }
 
       // no matching discriminator
       payload.issues.push({
         code: "invalid_union",
-
         errors: [],
         note: "No matching discriminator",
         discriminator: def.discriminator,
+        options: Array.from(disc.value.keys()),
         input,
         path: [def.discriminator],
         inst,
@@ -2815,8 +2819,10 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       }
     } else {
       payload.value = {};
+      // Reflect.ownKeys for Symbol-key support; filter non-enumerable to match z.object()
       for (const key of Reflect.ownKeys(input)) {
         if (key === "__proto__") continue;
+        if (!Object.prototype.propertyIsEnumerable.call(input, key)) continue;
         let keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
         if (keyResult instanceof Promise) {
           throw new Error("Async schemas not supported in object keys currently");
@@ -4402,14 +4408,14 @@ export interface $ZodLazy<T extends SomeType = $ZodType> extends $ZodType {
 export const $ZodLazy: core.$constructor<$ZodLazy> = /*@__PURE__*/ core.$constructor("$ZodLazy", (inst, def) => {
   $ZodType.init(inst, def);
 
-  // let _innerType!: any;
-  // util.defineLazy(def, "getter", () => {
-  //   if (!_innerType) {
-  //     _innerType = def.getter();
-  //   }
-  //   return () => _innerType;
-  // });
-  util.defineLazy(inst._zod, "innerType", () => def.getter() as $ZodType);
+  // Cache the resolved inner type on the shared `def` so all clones of this
+  // lazy (e.g. via `.describe()`/`.meta()`) share the same inner instance,
+  // preserving identity for cycle detection on recursive schemas.
+  util.defineLazy(inst._zod, "innerType", () => {
+    const d = def as $ZodLazyDef & { _cachedInner?: $ZodType };
+    if (!d._cachedInner) d._cachedInner = def.getter() as $ZodType;
+    return d._cachedInner;
+  });
   util.defineLazy(inst._zod, "pattern", () => inst._zod.innerType?._zod?.pattern);
   util.defineLazy(inst._zod, "propValues", () => inst._zod.innerType?._zod?.propValues);
   util.defineLazy(inst._zod, "optin", () => inst._zod.innerType?._zod?.optin ?? undefined);

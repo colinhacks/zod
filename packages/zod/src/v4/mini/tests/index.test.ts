@@ -247,7 +247,7 @@ test("z.tuple", () => {
   const b = z.tuple([z.string(), z.number(), z.optional(z.string())], z.boolean());
   type b = z.output<typeof b>;
 
-  expectTypeOf<b>().toEqualTypeOf<[string, number, string?, ...boolean[]]>();
+  expectTypeOf<b>().toEqualTypeOf<[string, number, (string | undefined)?, ...boolean[]]>();
   const datas = [
     ["hello", 123],
     ["hello", 123, "world"],
@@ -265,7 +265,7 @@ test("z.tuple", () => {
   const cArgs = [z.string(), z.number(), z.optional(z.string())] as const;
   const c = z.tuple(cArgs, z.boolean());
   type c = z.output<typeof c>;
-  expectTypeOf<c>().toEqualTypeOf<[string, number, string?, ...boolean[]]>();
+  expectTypeOf<c>().toEqualTypeOf<[string, number, (string | undefined)?, ...boolean[]]>();
 });
 
 test("z.record", () => {
@@ -319,6 +319,12 @@ test("z.record", () => {
     [Enum.A]: "hello",
     [Enum.B]: "world",
   });
+
+  // v3-compat single-arg form: z.record(valueType) defaults keyType to z.string()
+  const f = (z.record as any)(z.number());
+  expect(f._zod.def.keyType._zod.def.type).toEqual("string");
+  expect(f._zod.def.valueType._zod.def.type).toEqual("number");
+  expect(z.parse(f, { a: 1, b: 2 })).toEqual({ a: 1, b: 2 });
 });
 
 test("z.map", () => {

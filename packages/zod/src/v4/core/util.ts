@@ -245,20 +245,12 @@ export function cleanRegex(source: string): string {
 }
 
 export function floatSafeRemainder(val: number, step: number): number {
-  const valDecCount = (val.toString().split(".")[1] || "").length;
-  const stepString = step.toString();
-  let stepDecCount = (stepString.split(".")[1] || "").length;
-  if (stepDecCount === 0 && /\d?e-\d+/.test(stepString)) {
-    const match = stepString.match(/\d?e-(\d+)/);
-    if (match?.[1]) {
-      stepDecCount = Number.parseInt(match[1]);
-    }
-  }
-
-  const decCount = valDecCount > stepDecCount ? valDecCount : stepDecCount;
-  const valInt = Number.parseInt(val.toFixed(decCount).replace(".", ""));
-  const stepInt = Number.parseInt(step.toFixed(decCount).replace(".", ""));
-  return (valInt % stepInt) / 10 ** decCount;
+  const ratio = val / step;
+  const roundedRatio = Math.round(ratio);
+  // Use a relative epsilon scaled to the magnitude of the result
+  const tolerance = Number.EPSILON * Math.max(Math.abs(ratio), 1);
+  if (Math.abs(ratio - roundedRatio) < tolerance) return 0;
+  return ratio - roundedRatio;
 }
 
 const EVALUATING = Symbol("evaluating");
@@ -840,27 +832,21 @@ export function finalizeIssue(
   ctx: schemas.ParseContextInternal | undefined,
   config: $ZodConfig
 ): errors.$ZodIssue {
-  const full = { ...iss, path: iss.path ?? [] } as errors.$ZodIssue;
-
-  // for backwards compatibility
-  if (!iss.message) {
-    const message =
-      unwrapMessage(iss.inst?._zod.def?.error?.(iss as never)) ??
+  const message = iss.message
+    ? iss.message
+    : (unwrapMessage(iss.inst?._zod.def?.error?.(iss as never)) ??
       unwrapMessage(ctx?.error?.(iss as never)) ??
       unwrapMessage(config.customError?.(iss)) ??
       unwrapMessage(config.localeError?.(iss)) ??
-      "Invalid input";
-    (full as any).message = message;
-  }
+      "Invalid input");
 
-  // delete (full as any).def;
-  delete (full as any).inst;
-  delete (full as any).continue;
-  if (!ctx?.reportInput) {
-    delete (full as any).input;
+  const { inst: _inst, continue: _continue, input: _input, ...rest } = iss as any;
+  rest.path ??= [];
+  rest.message = message;
+  if (ctx?.reportInput) {
+    rest.input = _input;
   }
-
-  return full;
+  return rest;
 }
 
 export function getSizableOrigin(input: any): "set" | "map" | "file" | "unknown" {

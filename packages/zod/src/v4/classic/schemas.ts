@@ -94,7 +94,8 @@ export interface ZodType<
     params?: string | core.$ZodCustomParams
   ): Ch extends (arg: any) => arg is infer R ? this & ZodType<R, core.input<this>> : this;
   superRefine(
-    refinement: (arg: core.output<this>, ctx: core.$RefinementCtx<core.output<this>>) => void | Promise<void>
+    refinement: (arg: core.output<this>, ctx: core.$RefinementCtx<core.output<this>>) => void | Promise<void>,
+    params?: core.$ZodSuperRefineParams
   ): this;
   overwrite(fn: (x: core.output<this>) => core.output<this>): this;
 
@@ -210,7 +211,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
 
   // refinements
   inst.refine = (check, params) => inst.check(refine(check, params)) as never;
-  inst.superRefine = (refinement) => inst.check(superRefine(refinement));
+  inst.superRefine = (refinement, params) => inst.check(superRefine(refinement, params));
   inst.overwrite = (fn) => inst.check(checks.overwrite(fn));
 
   // wrappers
@@ -428,7 +429,7 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
 export function string(params?: string | core.$ZodStringParams): ZodString;
 export function string<T extends string>(params?: string | core.$ZodStringParams): core.$ZodType<T, T>;
 export function string(params?: string | core.$ZodStringParams): ZodString {
-  return core._string(ZodString, params) as any;
+  return core._string(ZodString, params);
 }
 
 // ZodStringFormat
@@ -874,7 +875,7 @@ export const ZodNumber: core.$constructor<ZodNumber> = /*@__PURE__*/ core.$const
 });
 
 export function number(params?: string | core.$ZodNumberParams): ZodNumber {
-  return core._number(ZodNumber, params) as any;
+  return core._number(ZodNumber, params);
 }
 
 // ZodNumberFormat
@@ -929,7 +930,7 @@ export const ZodBoolean: core.$constructor<ZodBoolean> = /*@__PURE__*/ core.$con
 });
 
 export function boolean(params?: string | core.$ZodBooleanParams): ZodBoolean {
-  return core._boolean(ZodBoolean, params) as any;
+  return core._boolean(ZodBoolean, params);
 }
 
 // bigint
@@ -980,7 +981,7 @@ export const ZodBigInt: core.$constructor<ZodBigInt> = /*@__PURE__*/ core.$const
 });
 
 export function bigint(params?: string | core.$ZodBigIntParams): ZodBigInt {
-  return core._bigint(ZodBigInt, params) as any;
+  return core._bigint(ZodBigInt, params);
 }
 // bigint formats
 
@@ -1143,7 +1144,7 @@ export const ZodArray: core.$constructor<ZodArray> = /*@__PURE__*/ core.$constru
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.arrayProcessor(inst, ctx, json, params);
 
-  inst.element = def.element as any;
+  inst.element = def.element;
   inst.min = (minLength, params) => inst.check(checks.minLength(minLength, params));
   inst.nonempty = (params) => inst.check(checks.minLength(1, params));
   inst.max = (maxLength, params) => inst.check(checks.maxLength(maxLength, params));
@@ -1508,6 +1509,15 @@ export function record<Key extends core.$ZodRecordKey, Value extends core.SomeTy
   valueType: Value,
   params?: string | core.$ZodRecordParams
 ): ZodRecord<Key, Value> {
+  // v3-compat: z.record(valueType, params?) — defaults keyType to z.string()
+  if (!valueType || !(valueType as any)._zod) {
+    return new ZodRecord({
+      type: "record",
+      keyType: string() as any,
+      valueType: keyType as any as core.$ZodType,
+      ...util.normalizeParams(valueType as string | core.$ZodRecordParams | undefined),
+    }) as any;
+  }
   return new ZodRecord({
     type: "record",
     keyType,
@@ -1702,7 +1712,7 @@ export function nativeEnum<T extends util.EnumLike>(entries: T, params?: string 
     type: "enum",
     entries,
     ...util.normalizeParams(params),
-  }) as any as ZodEnum<T>;
+  }) as ZodEnum<T>;
 }
 
 // ZodLiteral
@@ -1814,7 +1824,7 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
 );
 
 export function transform<I = unknown, O = I>(
-  fn: (input: I, ctx: core.ParsePayload) => O
+  fn: (input: I, ctx: core.$RefinementCtx) => O
 ): ZodTransform<Awaited<O>, I> {
   return new ZodTransform({
     type: "transform",
@@ -2120,6 +2130,17 @@ export function codec<const A extends core.SomeType, B extends core.SomeType = c
   }) as any;
 }
 
+export function invertCodec<A extends core.SomeType, B extends core.SomeType>(codec: ZodCodec<A, B>): ZodCodec<B, A> {
+  const def = codec._zod.def;
+  return new ZodCodec({
+    type: "pipe",
+    in: def.out as any,
+    out: def.in as any,
+    transform: def.reverseTransform as any,
+    reverseTransform: def.transform as any,
+  }) as any;
+}
+
 // ZodReadonly
 export interface ZodReadonly<T extends core.SomeType = core.$ZodType>
   extends _ZodType<core.$ZodReadonlyInternals<T>>,
@@ -2321,9 +2342,10 @@ export function refine<T>(
 
 // superRefine
 export function superRefine<T>(
-  fn: (arg: T, payload: core.$RefinementCtx<T>) => void | Promise<void>
+  fn: (arg: T, payload: core.$RefinementCtx<T>) => void | Promise<void>,
+  params?: core.$ZodSuperRefineParams
 ): core.$ZodCheck<T> {
-  return core._superRefine(fn);
+  return core._superRefine(fn, params);
 }
 
 // Re-export describe and meta from core
@@ -2400,7 +2422,6 @@ export function json(params?: string | core.$ZodCustomParams): ZodJSONSchema {
 
 // preprocess
 
-// /** @deprecated Use `z.pipe()` and `z.transform()` instead. */
 export function preprocess<A, U extends core.SomeType, B = unknown>(
   fn: (arg: B, ctx: core.$RefinementCtx) => A,
   schema: U
