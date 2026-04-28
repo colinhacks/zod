@@ -1301,7 +1301,7 @@ export function object<T extends core.$ZodLooseShape = Partial<Record<never, cor
 export function strictObject<T extends core.$ZodLooseShape>(
   shape: T,
   params?: string | core.$ZodObjectParams
-): ZodObject<T, core.$strict> {
+): ZodObject<util.Writeable<T>, core.$strict> {
   return new ZodObject({
     type: "object",
     shape,
@@ -1315,7 +1315,7 @@ export function strictObject<T extends core.$ZodLooseShape>(
 export function looseObject<T extends core.$ZodLooseShape>(
   shape: T,
   params?: string | core.$ZodObjectParams
-): ZodObject<T, core.$loose> {
+): ZodObject<util.Writeable<T>, core.$loose> {
   return new ZodObject({
     type: "object",
     shape,

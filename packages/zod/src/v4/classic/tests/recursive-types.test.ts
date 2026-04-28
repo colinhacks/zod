@@ -135,6 +135,11 @@ test("pick and omit with getter", () => {
   }
   expectTypeOf<Category>().toEqualTypeOf<_Category>();
 
+  // Shape should not surface `readonly` modifiers from getter-defined keys.
+  // object/strictObject/looseObject all pass shape through util.Writeable<T>.
+  type Shape = (typeof Category)["shape"];
+  expectTypeOf<Shape>().toEqualTypeOf<{ name: z.ZodString; subcategories: z.ZodArray<typeof Category> }>();
+
   const PickedCategory = Category.pick({ name: true });
   const OmittedCategory = Category.omit({ subcategories: true });
 
