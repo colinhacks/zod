@@ -887,6 +887,8 @@ export const $ZodCIDRv6: core.$constructor<$ZodCIDRv6> = /*@__PURE__*/ core.$con
 //////////////////////////////   ZodBase64   //////////////////////////////
 export function isValidBase64(data: string): boolean {
   if (data === "") return true;
+  // atob ignores whitespace, so reject it up front.
+  if (/\s/.test(data)) return false;
   if (data.length % 4 !== 0) return false;
   try {
     // @ts-ignore
