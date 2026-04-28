@@ -39,9 +39,8 @@ jobs:
 
       - id: publish
         name: Publish to NPM
-        uses: JS-DevTools/npm-publish@v3
+        uses: JS-DevTools/npm-publish@v4
         with:
-          token: ${{ secrets.NPM_TOKEN }}
           # dry-run: true
           provenance: true
           package: ./packages/zod
@@ -64,9 +63,8 @@ jobs:
 
       - name: Publish canary
         if: ${{ !steps.publish.outputs.type }}
-        uses: JS-DevTools/npm-publish@v3
+        uses: JS-DevTools/npm-publish@v4
         with:
-          token: ${{ secrets.NPM_TOKEN }}
           dry-run: false
           provenance: true
           tag: canary
