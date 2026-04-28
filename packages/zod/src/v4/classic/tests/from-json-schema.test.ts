@@ -775,3 +775,67 @@ test("default on const schema is applied", () => {
   });
   expect(schema.parse(undefined)).toBe("hello");
 });
+
+test("description and default on enum schema are both applied", () => {
+  const schema = fromJSONSchema({
+    enum: ["red", "green", "blue"],
+    description: "A color value",
+    default: "red",
+  });
+  expect(schema.description).toBe("A color value");
+  expect(schema.parse(undefined)).toBe("red");
+  expect(schema.parse("green")).toBe("green");
+});
+
+test("description on type-array schema is applied", () => {
+  const schema = fromJSONSchema({
+    type: ["string", "number"],
+    description: "A string or number",
+  } as any);
+  expect(schema.description).toBe("A string or number");
+  expect(schema.parse("hello")).toBe("hello");
+  expect(schema.parse(42)).toBe(42);
+});
+
+test("default on type-array schema is applied", () => {
+  const schema = fromJSONSchema({
+    type: ["string", "number"],
+    default: "fallback",
+  } as any);
+  expect(schema.parse(undefined)).toBe("fallback");
+  expect(schema.parse("hello")).toBe("hello");
+  expect(schema.parse(42)).toBe(42);
+});
+
+test("description on schema with anyOf is applied to the outer schema", () => {
+  const schema = fromJSONSchema({
+    description: "Either a string or a number",
+    anyOf: [{ type: "string" }, { type: "number" }],
+  });
+  expect(schema.description).toBe("Either a string or a number");
+  expect(schema.parse("hello")).toBe("hello");
+  expect(schema.parse(42)).toBe(42);
+});
+
+test("default on schema with anyOf is applied to the outer schema", () => {
+  const schema = fromJSONSchema({
+    default: "fallback",
+    anyOf: [{ type: "string" }, { type: "number" }],
+  });
+  expect(schema.parse(undefined)).toBe("fallback");
+  expect(schema.parse(42)).toBe(42);
+});
+
+test("description and unrecognized metadata coexist on the same schema", () => {
+  const customRegistry = z.registry<{ "x-custom"?: string; description?: string }>();
+  const schema = fromJSONSchema(
+    {
+      type: "string",
+      description: "A custom string",
+      "x-custom": "value",
+    },
+    { registry: customRegistry }
+  );
+  expect(schema.description).toBe("A custom string");
+  expect(customRegistry.get(schema)?.["x-custom"]).toBe("value");
+});

@@ -143,22 +143,12 @@ function resolveRef(ref: string, ctx: ConversionContext): JSONSchema.JSONSchema 
   throw new Error(`Reference not found: ${ref}`);
 }
 
-function applyBaseMetadata(zodSchema: ZodType, schema: JSONSchema.JSONSchema): ZodType {
-  if (schema.description) {
-    zodSchema = zodSchema.describe(schema.description);
-  }
-  if (schema.default !== undefined) {
-    zodSchema = (zodSchema as any).default(schema.default);
-  }
-  return zodSchema;
-}
-
 function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext): ZodType {
   // Handle unsupported features
   if (schema.not !== undefined) {
     // Special case: { not: {} } represents never
     if (typeof schema.not === "object" && Object.keys(schema.not).length === 0) {
-      return applyBaseMetadata(z.never(), schema);
+      return z.never();
     }
     throw new Error("not is not supported in Zod (except { not: {} } for never)");
   }
@@ -211,33 +201,34 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
       enumValues.length === 1 &&
       enumValues[0] === null
     ) {
-      return applyBaseMetadata(z.null(), schema);
+      return z.null();
     }
 
     if (enumValues.length === 0) {
-      return applyBaseMetadata(z.never(), schema);
+      return z.never();
     }
     if (enumValues.length === 1) {
-      return applyBaseMetadata(z.literal(enumValues[0]!), schema);
+      return z.literal(enumValues[0]!);
     }
     // Check if all values are strings
     if (enumValues.every((v) => typeof v === "string")) {
-      return applyBaseMetadata(z.enum(enumValues as [string, ...string[]]), schema);
+      return z.enum(enumValues as [string, ...string[]]);
     }
     // Mixed types - use union of literals
     const literalSchemas = enumValues.map((v) => z.literal(v));
     if (literalSchemas.length < 2) {
-      return applyBaseMetadata(literalSchemas[0]!, schema);
+      return literalSchemas[0]!;
     }
-    return applyBaseMetadata(
-      z.union([literalSchemas[0]!, literalSchemas[1]!, ...literalSchemas.slice(2)] as [ZodType, ZodType, ...ZodType[]]),
-      schema
-    );
+    return z.union([literalSchemas[0]!, literalSchemas[1]!, ...literalSchemas.slice(2)] as [
+      ZodType,
+      ZodType,
+      ...ZodType[],
+    ]);
   }
 
   // Handle const
   if (schema.const !== undefined) {
-    return applyBaseMetadata(z.literal(schema.const), schema);
+    return z.literal(schema.const);
   }
 
   // Handle type
@@ -536,14 +527,6 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
       throw new Error(`Unsupported type: ${type}`);
   }
 
-  // Apply metadata
-  if (schema.description) {
-    zodSchema = zodSchema.describe(schema.description);
-  }
-  if (schema.default !== undefined) {
-    zodSchema = (zodSchema as any).default(schema.default);
-  }
-
   return zodSchema;
 }
 
@@ -595,10 +578,18 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
     baseSchema = z.readonly(baseSchema);
   }
 
-  // Collect metadata: core schema keywords and unrecognized keys
+  // Apply `default` so it wraps the fully-composed schema. This ensures
+  // `parse(undefined) -> default` works regardless of which branch of
+  // `convertBaseSchema` produced the inner schema (enum/const/not/typed/etc.).
+  if (schema.default !== undefined) {
+    baseSchema = baseSchema.default(schema.default);
+  }
+
+  // Collect non-description annotation metadata into the user-supplied
+  // registry. Description is handled separately below via `.describe()` to
+  // preserve the contract that `schema.description` reads from globalRegistry.
   const extraMeta: Record<string, unknown> = {};
 
-  // Core schema keywords that should be captured as metadata
   const coreMetadataKeys = ["$id", "id", "$comment", "$anchor", "$vocabulary", "$dynamicRef", "$dynamicAnchor"];
   for (const key of coreMetadataKeys) {
     if (key in schema) {
@@ -606,7 +597,6 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
     }
   }
 
-  // Content keywords - store as metadata
   const contentMetadataKeys = ["contentEncoding", "contentMediaType", "contentSchema"];
   for (const key of contentMetadataKeys) {
     if (key in schema) {
@@ -614,7 +604,6 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
     }
   }
 
-  // Unrecognized keys (custom metadata)
   for (const key of Object.keys(schema)) {
     if (!RECOGNIZED_KEYS.has(key)) {
       extraMeta[key] = schema[key];
@@ -623,6 +612,13 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
 
   if (Object.keys(extraMeta).length > 0) {
     ctx.registry.add(baseSchema, extraMeta);
+  }
+
+  // Apply description last. `.describe()` clones the schema and sets
+  // `_zod.parent` on the clone, so registry lookups on the returned reference
+  // still resolve `extraMeta` via parent inheritance.
+  if (schema.description) {
+    baseSchema = baseSchema.describe(schema.description);
   }
 
   return baseSchema;
