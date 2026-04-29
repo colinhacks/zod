@@ -210,7 +210,26 @@ test("tuple keeps length-1 array for missing `.optional()` elements", () => {
   expect(out).toEqual(["alpha"]);
   expect(out.length).toEqual(1);
 
-  expect(z.tuple([z.string(), z.undefined()]).parse(["alpha"])).toHaveLength(1);
+  // `z.undefined()` is NOT a synonym for `.optional()` — its value type is
+  // *must be undefined*, so the slot is required input. Omitting it triggers
+  // a single `too_small` (no element-level errors, matching v3's abort
+  // semantics); passing explicit `undefined` succeeds and is preserved.
+  expect(z.tuple([z.string(), z.undefined()]).safeParse(["alpha"]).error!.issues).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "too_small",
+        "inclusive": true,
+        "message": "Too small: expected array to have >=2 items",
+        "minimum": 2,
+        "origin": "array",
+        "path": [],
+      },
+    ]
+  `);
+  expect(z.tuple([z.string(), z.undefined()]).parse(["alpha", undefined])).toHaveLength(2);
+
+  // `.optional().nullable()` still trims — `.optional()` propagates the
+  // optin/optout flags through the nullable wrapper.
   expect(z.tuple([z.string(), z.string().optional().nullable()]).parse(["alpha"])).toHaveLength(1);
 
   // Multiple trailing optionals trim the same way — we don't fill the tail
@@ -338,10 +357,20 @@ test("tuple does NOT break when a required slot fails past input length", () => 
   // A required slot (no `.optional()` chain, so optout !== "optional") past
   // input length must still surface an issue rather than silently swallowing
   // it. Otherwise we'd accept arbitrarily short tuples for required-tail
-  // schemas.
+  // schemas. The precheck collapses this into a single `too_small`.
   const schema = z.tuple([z.string(), z.string()]);
-  const r = schema.safeParse(["alpha"]);
-  expect(r.success).toBe(false);
+  expect(schema.safeParse(["alpha"]).error!.issues).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "too_small",
+        "inclusive": true,
+        "message": "Too small: expected array to have >=2 items",
+        "minimum": 2,
+        "origin": "array",
+        "path": [],
+      },
+    ]
+  `);
 });
 
 test("tuple with rest schema", () => {
