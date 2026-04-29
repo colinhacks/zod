@@ -1845,12 +1845,14 @@ function handleCatchall(
   inst: $ZodObject
 ) {
   const unrecognized: string[] = [];
-  // iterate over input keys
   const keySet = def.keySet;
   const _catchall = def.catchall!._zod;
   const t = _catchall.def.type;
   const isOptionalOut = _catchall.optout === "optional";
   for (const key in input) {
+    // skip __proto__ so it can't replace the result prototype via the
+    // assignment setter on the plain {} we build into
+    if (key === "__proto__") continue;
     if (keySet.has(key)) continue;
     if (t === "never") {
       unrecognized.push(key);

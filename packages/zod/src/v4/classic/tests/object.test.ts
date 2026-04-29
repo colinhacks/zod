@@ -1,4 +1,4 @@
-import { expect, expectTypeOf, test } from "vitest";
+import { describe, expect, expectTypeOf, test } from "vitest";
 import * as z from "zod/v4";
 import * as core from "zod/v4/core";
 
@@ -668,4 +668,50 @@ test("safeExtend() on object with refinements should not throw", () => {
     .refine(() => true);
 
   expect(() => schema.safeExtend({ b: z.string() })).not.toThrow();
+});
+
+// __proto__ in input must not replace the prototype of the parsed object via
+// the assignment setter on the result {}.
+// https://github.com/colinhacks/zod/security/advisories/GHSA-r34p-xfmx-58wv
+// https://github.com/colinhacks/zod/security/advisories/GHSA-84jv-fqfx-wxhr
+describe("__proto__ in object catchall paths", () => {
+  const protoInput = () => JSON.parse('{"__proto__":{"isAdmin":true},"name":"alice"}');
+
+  test("looseObject drops __proto__ and preserves Object.prototype", () => {
+    const schema = z.looseObject({ name: z.string() });
+    const parsed = schema.parse(protoInput());
+    expect(Object.keys(parsed)).toEqual(["name"]);
+    expect((parsed as any).isAdmin).toBeUndefined();
+    expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+  });
+
+  test("passthrough drops __proto__", () => {
+    const schema = z.object({ name: z.string() }).passthrough();
+    const parsed = schema.parse(protoInput());
+    expect((parsed as any).isAdmin).toBeUndefined();
+    expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+  });
+
+  test("catchall(unknown) drops __proto__", () => {
+    const schema = z.object({ name: z.string() }).catchall(z.unknown());
+    const parsed = schema.parse(protoInput());
+    expect((parsed as any).isAdmin).toBeUndefined();
+    expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+  });
+
+  test("safeParseAsync + jitless drops __proto__", async () => {
+    const schema = z.looseObject({ name: z.string() });
+    const result = await schema.safeParseAsync(protoInput(), { jitless: true } as any);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect((result.data as any).isAdmin).toBeUndefined();
+      expect(Object.getPrototypeOf(result.data)).toBe(Object.prototype);
+    }
+  });
+
+  test("strict does not surface __proto__ as unrecognized", () => {
+    const schema = z.object({ name: z.string() }).strict();
+    const result = schema.safeParse(protoInput());
+    expect(result.success).toBe(true);
+  });
 });
