@@ -1967,7 +1967,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
     const _normalized = util.cached(() => normalizeDef(def));
 
     const generateFastpass = (shape: any) => {
-      const doc = new Doc(["shape", "payload", "ctx"]);
+      const doc = new Doc(["shape", "payload", "ctx", "inst", "keySet"]);
       const normalized = _normalized.value;
 
       const parseStr = (key: string) => {
@@ -2035,10 +2035,25 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         }
       }
 
+      // Inline strict-keys check when catchall is `never()` (i.e. strictObject).
+      // Replaces a closure call to handleCatchall + an eager `unrecognized: []`
+      // allocation per parse with an inline `for…in` against the precompiled
+      // `keySet`, allocating `_unr` only on first miss.
+      const _catchall = def.catchall?._zod;
+      const inlineStrict = _catchall?.def?.type === "never";
+      if (inlineStrict) {
+        doc.write(`let _unr;`);
+        doc.write(`for (const _k in input) {`);
+        doc.write(`  if (!keySet.has(_k)) { if (!_unr) _unr = []; _unr.push(_k); }`);
+        doc.write(`}`);
+        doc.write(`if (_unr) payload.issues.push({ code: "unrecognized_keys", keys: _unr, input, inst });`);
+      }
+
       doc.write(`payload.value = newResult;`);
       doc.write(`return payload;`);
       const fn = doc.compile();
-      return (payload: any, ctx: any) => fn(shape, payload, ctx);
+      const keySet = normalized.keySet;
+      return (payload: any, ctx: any) => fn(shape, payload, ctx, inst, keySet);
     };
 
     let fastpass!: ReturnType<typeof generateFastpass>;
@@ -2049,11 +2064,13 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
 
     const fastEnabled = jit && allowsEval.value; // && !def.catchall;
     const catchall = def.catchall;
+    // Precompute strict-vs-other catchall once: strict-keys check is emitted
+    // inline by the fastpass, so we can skip handleCatchall entirely on the hot path.
+    const _isStrictCatchall = catchall ? catchall._zod.def.type === "never" : false;
 
     let value!: typeof _normalized.value;
 
     inst._zod.parse = (payload, ctx) => {
-      value ??= _normalized.value;
       const input = payload.value;
       if (!isObject(input)) {
         payload.issues.push({
@@ -2070,7 +2087,10 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         if (!fastpass) fastpass = generateFastpass(def.shape);
         payload = fastpass(payload, ctx);
 
-        if (!catchall) return payload;
+        // Strict-keys check is emitted inline by the fastpass for `catchall =
+        // never()`; skip the handleCatchall closure entirely in that case.
+        if (!catchall || _isStrictCatchall) return payload;
+        value ??= _normalized.value;
         return handleCatchall([], input, payload, ctx, value, inst);
       }
 
