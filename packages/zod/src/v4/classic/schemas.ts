@@ -8,44 +8,35 @@ import * as checks from "./checks.js";
 import * as iso from "./iso.js";
 import * as parse from "./parse.js";
 
-// Lazy-bind layer for builder methods.
+// Lazy-bind builder methods.
 //
 // Builder methods (`.optional`, `.array`, `.refine`, ...) live as
-// non-enumerable getters on a library-owned prototype layer inserted
-// between `constr.prototype` (where user extensions live) and the
-// parent prototype. On first access from any instance the getter
-// allocates `fn.bind(this)` and caches it as an own property on the
-// instance — so detached usage (`const m = schema.optional; m()`)
-// still works, and the per-instance allocation only happens for
-// methods actually touched.
+// non-enumerable getters on each concrete schema constructor's
+// prototype. On first access from an instance the getter allocates
+// `fn.bind(this)` and caches it as an own property on that instance,
+// so detached usage (`const m = schema.optional; m()`) still works
+// and the per-instance allocation only happens for methods actually
+// touched.
 //
-// One layer per concrete constructor; one install per (layer, group).
-const _layerCache = /* @__PURE__ */ new WeakMap<any, any>();
-const _installedGroups = /* @__PURE__ */ new WeakMap<any, Set<string>>();
+// One install per (prototype, group), memoized by `_installedGroups`.
+const _installedGroups = /* @__PURE__ */ new WeakMap<object, Set<string>>();
 
 function _installLazyMethods(
   inst: object,
   group: string,
   methods: Record<string, (this: any, ...args: any[]) => any>
 ): void {
-  const constr = (inst as any)._zod.constr;
-  let layer = _layerCache.get(constr);
-  if (!layer) {
-    const userProto = constr.prototype;
-    layer = Object.create(Object.getPrototypeOf(userProto));
-    Object.setPrototypeOf(userProto, layer);
-    _layerCache.set(constr, layer);
-  }
-  let installed = _installedGroups.get(layer);
+  const proto = Object.getPrototypeOf(inst);
+  let installed = _installedGroups.get(proto);
   if (!installed) {
     installed = new Set();
-    _installedGroups.set(layer, installed);
+    _installedGroups.set(proto, installed);
   }
   if (installed.has(group)) return;
   installed.add(group);
   for (const key in methods) {
     const fn = methods[key]!;
-    Object.defineProperty(layer, key, {
+    Object.defineProperty(proto, key, {
       configurable: true,
       enumerable: false,
       get(this: any) {
