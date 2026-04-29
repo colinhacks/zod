@@ -2662,20 +2662,21 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
       }
     }
 
-    // Mirror $ZodObject: run every item, passing `undefined` for slots past
-    // the input. Each schema decides what undefined means — `.optional()`
-    // and `z.undefined()` pass it through, `.default()`/`.prefault()` (and
-    // any chain wrapping one) substitute their value, required schemas
-    // fail. `handleTupleResult` swallows the failure for absent optional-out
-    // slots, the same way `handlePropertyResult` does for absent keys.
+    // Run every item in parallel, collecting results into an indexed array.
+    // We process them in order during `finalize` so we can break on the
+    // first absent-optional error: once a slot rejects `undefined`, the
+    // tuple is malformed at that index and any later defaults must NOT fire.
+    const itemResults: ParsePayload[] = new Array(items.length);
     for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      const isOptionalOut = item._zod.optout === "optional";
-      const result = item._zod.run({ value: input[i], issues: [] }, ctx);
-      if (result instanceof Promise) {
-        proms.push(result.then((r) => handleTupleResult(r, payload, i, input, isOptionalOut)));
+      const r = items[i]._zod.run({ value: input[i], issues: [] }, ctx);
+      if (r instanceof Promise) {
+        proms.push(
+          r.then((rr) => {
+            itemResults[i] = rr;
+          })
+        );
       } else {
-        handleTupleResult(result, payload, i, input, isOptionalOut);
+        itemResults[i] = r;
       }
     }
 
@@ -2686,19 +2687,38 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
         i++;
         const result = def.rest._zod.run({ value: el, issues: [] }, ctx);
         if (result instanceof Promise) {
-          proms.push(result.then((r) => handleTupleResult(r, payload, i, input, false)));
+          proms.push(result.then((r) => handleTupleResult(r, payload, i)));
         } else {
-          handleTupleResult(result, payload, i, input, false);
+          handleTupleResult(result, payload, i);
         }
       }
     }
 
-    // Trim trailing slots whose schema produced `undefined` for absent input
-    // (mirrors the object parser dropping absent optional keys). Only items
-    // past `input.length` with `optout === "optional"` are eligible — a
-    // `.default()` past input always materializes, breaking the trim.
     const finalize = () => {
-      for (let i = items.length - 1; i >= input.length; i--) {
+      // Walk results in order. Mirror $ZodObject's swallow-on-absent-optional
+      // rule, but for a tuple "absent" is a positional concept: once we
+      // swallow at index k, every later index is also absent-or-corrupted,
+      // so we truncate the result there and stop processing — including
+      // skipping any later defaults.
+      for (let i = 0; i < items.length; i++) {
+        const r = itemResults[i];
+        const isOptionalOut = items[i]._zod.optout === "optional";
+        const isPresent = i < input.length;
+        if (r.issues.length) {
+          if (isOptionalOut && !isPresent) {
+            payload.value.length = i;
+            break;
+          }
+          payload.issues.push(...util.prefixIssues(i, r.issues));
+        }
+        payload.value[i] = r.value;
+      }
+
+      // Drop trailing slots that produced `undefined` for absent input
+      // (the array analog of an absent optional key on an object). Runs
+      // after a truncate too, so optional slots between the last real
+      // input and the rejected slot collapse away as well.
+      for (let i = payload.value.length - 1; i >= input.length; i--) {
         if (items[i]._zod.optout === "optional" && payload.value[i] === undefined) {
           payload.value.length = i;
         } else {
@@ -2713,16 +2733,8 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
   };
 });
 
-function handleTupleResult(
-  result: ParsePayload,
-  final: ParsePayload<any[]>,
-  index: number,
-  input: unknown[],
-  isOptionalOut: boolean
-) {
+function handleTupleResult(result: ParsePayload, final: ParsePayload<any[]>, index: number) {
   if (result.issues.length) {
-    // mirror $ZodObject: swallow errors from absent optional-out slots
-    if (isOptionalOut && index >= input.length) return;
     final.issues.push(...util.prefixIssues(index, result.issues));
   }
   final.value[index] = result.value;

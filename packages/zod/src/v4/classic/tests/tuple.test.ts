@@ -246,6 +246,55 @@ test("tuple result is dense when optional precedes a default", () => {
   expect(1 in out && 3 in out).toEqual(true);
 });
 
+test("tuple breaks and truncates on first absent-optional rejection", () => {
+  // An `.optional()` slot that rejects `undefined` (e.g. via a refine) past
+  // optStart must (a) swallow the issue, (b) truncate the result there, and
+  // (c) NOT materialize any later defaults — otherwise the parser would
+  // happily fill in slots after a slot it just decided was missing/invalid.
+  const refusesUndefined = z
+    .string()
+    .optional()
+    .refine((s) => s !== undefined, "must not be undefined");
+
+  const trailingDefault = z.tuple([z.string(), refusesUndefined, z.string().default("d")]);
+  const r1 = trailingDefault.safeParse(["alpha"]);
+  expect(r1.success).toBe(true);
+  expect(r1.data).toEqual(["alpha"]);
+
+  // Optional slots BEFORE the rejected one collapse away with the truncate
+  // (mirrors the trailing-trim behaviour for absent optionals).
+  const beforeReject = z.tuple([z.string(), z.string().optional(), refusesUndefined, z.string().default("d")]);
+  expect(beforeReject.safeParse(["alpha"]).data).toEqual(["alpha"]);
+
+  // No default after — truncate still applies, no spurious issue surfaces.
+  const noTrailingDefault = z.tuple([z.string(), refusesUndefined]);
+  const r3 = noTrailingDefault.safeParse(["alpha"]);
+  expect(r3.success).toBe(true);
+  expect(r3.data).toEqual(["alpha"]);
+});
+
+test("tuple breaks on absent-optional rejection under async parse", async () => {
+  const refusesUndefined = z
+    .string()
+    .optional()
+    .refine(async (s) => s !== undefined, "must not be undefined");
+
+  const schema = z.tuple([z.string(), refusesUndefined, z.string().default("d")]);
+  const r = await schema.safeParseAsync(["alpha"]);
+  expect(r.success).toBe(true);
+  expect(r.data).toEqual(["alpha"]);
+});
+
+test("tuple does NOT break when a required slot fails past input length", () => {
+  // A required slot (no `.optional()` chain, so optout !== "optional") past
+  // input length must still surface an issue rather than silently swallowing
+  // it. Otherwise we'd accept arbitrarily short tuples for required-tail
+  // schemas.
+  const schema = z.tuple([z.string(), z.string()]);
+  const r = schema.safeParse(["alpha"]);
+  expect(r.success).toBe(false);
+});
+
 test("tuple with rest schema", () => {
   const myTuple = z.tuple([z.string(), z.number()]).rest(z.boolean());
   expect(myTuple.parse(["asdf", 1234, true, false, true])).toEqual(["asdf", 1234, true, false, true]);
