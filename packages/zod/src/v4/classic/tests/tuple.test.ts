@@ -174,7 +174,7 @@ test("tuple fills defaults for missing trailing elements", () => {
   // filled in when the input array is shorter than the tuple.
   const t = z.tuple([z.string(), z.string().default("bravo")]);
   expectTypeOf<typeof t._output>().toEqualTypeOf<[string, string]>();
-  expectTypeOf<typeof t._input>().toEqualTypeOf<[string, string?]>();
+  expectTypeOf<typeof t._input>().toEqualTypeOf<[string, (string | undefined)?]>();
 
   expect(t.parse(["alpha", "charlie"])).toEqual(["alpha", "charlie"]);
   expect(t.parse(["alpha"])).toEqual(["alpha", "bravo"]);
