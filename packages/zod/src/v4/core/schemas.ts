@@ -2706,9 +2706,8 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
 
     // Run every item in parallel, collecting results into an indexed
     // array. The post-processing in `handleTupleResults` walks them in
-    // order so it can break on the first absent-optional error: once a
-    // slot rejects `undefined`, the tuple is malformed at that index and
-    // any later defaults must NOT fire.
+    // order so it can decide whether an absent optional-output error can
+    // truncate the tail or must be reported to preserve required output.
     const itemResults: ParsePayload[] = new Array(items.length);
     for (let i = 0; i < items.length; i++) {
       const r = items[i]._zod.run({ value: input[i], issues: [] }, ctx);
@@ -2762,17 +2761,23 @@ function handleTupleResults(
   items: readonly $ZodType[],
   input: unknown[]
 ) {
+  const hasRequiredOutputAfter: boolean[] = new Array(items.length);
+  let hasRequiredOutput = false;
+  for (let i = items.length - 1; i >= 0; i--) {
+    hasRequiredOutputAfter[i] = hasRequiredOutput;
+    if (items[i]._zod.optout !== "optional") hasRequiredOutput = true;
+  }
+
   // Walk results in order. Mirror $ZodObject's swallow-on-absent-optional
-  // rule, but for a tuple "absent" is a positional concept: once we
-  // swallow at index k, every later index is also absent-or-corrupted,
-  // so we truncate the result there and stop processing — including
-  // skipping any later defaults.
+  // rule, but only when the remaining tuple output tail is optional too. If a
+  // later slot has required output (e.g. `.default()`), truncation would return
+  // a value that does not satisfy the tuple's output type.
   for (let i = 0; i < items.length; i++) {
     const r = itemResults[i];
     const isOptionalOut = items[i]._zod.optout === "optional";
     const isPresent = i < input.length;
     if (r.issues.length) {
-      if (isOptionalOut && !isPresent) {
+      if (isOptionalOut && !isPresent && !hasRequiredOutputAfter[i]) {
         final.value.length = i;
         break;
       }

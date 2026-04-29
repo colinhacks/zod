@@ -282,11 +282,10 @@ test("tuple result is dense when optional precedes a default", () => {
   expect(1 in out && 3 in out).toEqual(true);
 });
 
-test("tuple breaks and truncates on first absent-optional rejection", () => {
-  // An `.optional()` slot that rejects `undefined` (e.g. via a refine) past
-  // optStart must (a) swallow the issue, (b) truncate the result there, and
-  // (c) NOT materialize any later defaults — otherwise the parser would
-  // happily fill in slots after a slot it just decided was missing/invalid.
+test("tuple truncates absent optional rejections only when the output tail is optional", () => {
+  // An absent optional-output slot can only be swallowed when every later
+  // output slot is optional too. If a later default would make the output tail
+  // required, truncating would violate the tuple's output type.
   const refusesUndefined = z
     .string()
     .optional()
@@ -294,13 +293,15 @@ test("tuple breaks and truncates on first absent-optional rejection", () => {
 
   const trailingDefault = z.tuple([z.string(), refusesUndefined, z.string().default("d")]);
   const r1 = trailingDefault.safeParse(["alpha"]);
-  expect(r1.success).toBe(true);
-  expect(r1.data).toEqual(["alpha"]);
+  expect(r1.success).toBe(false);
+  expect(r1.error!.issues[0].path).toEqual([1]);
 
-  // Optional slots BEFORE the rejected one collapse away with the truncate
-  // (mirrors the trailing-trim behaviour for absent optionals).
+  // Optional slots BEFORE the rejected one still cannot hide a later required
+  // output slot.
   const beforeReject = z.tuple([z.string(), z.string().optional(), refusesUndefined, z.string().default("d")]);
-  expect(beforeReject.safeParse(["alpha"]).data).toEqual(["alpha"]);
+  const r2 = beforeReject.safeParse(["alpha"]);
+  expect(r2.success).toBe(false);
+  expect(r2.error!.issues[0].path).toEqual([2]);
 
   // No default after — truncate still applies, no spurious issue surfaces.
   const noTrailingDefault = z.tuple([z.string(), refusesUndefined]);
@@ -309,7 +310,7 @@ test("tuple breaks and truncates on first absent-optional rejection", () => {
   expect(r3.data).toEqual(["alpha"]);
 });
 
-test("tuple breaks on absent-optional rejection under async parse", async () => {
+test("tuple rejects absent optional before required output under async parse", async () => {
   const refusesUndefined = z
     .string()
     .optional()
@@ -317,8 +318,24 @@ test("tuple breaks on absent-optional rejection under async parse", async () => 
 
   const schema = z.tuple([z.string(), refusesUndefined, z.string().default("d")]);
   const r = await schema.safeParseAsync(["alpha"]);
-  expect(r.success).toBe(true);
-  expect(r.data).toEqual(["alpha"]);
+  expect(r.success).toBe(false);
+  expect(r.error!.issues[0].path).toEqual([1]);
+});
+
+test("tuple rejects absent exact optional before defaulted output", () => {
+  const schema = z.tuple([z.string(), z.string().exactOptional(), z.string().default("fallback")]);
+  expectTypeOf<typeof schema._output>().toEqualTypeOf<[string, string, string]>();
+
+  const missingExact = schema.safeParse(["alpha"]);
+  expect(missingExact.success).toBe(false);
+  expect(missingExact.error!.issues[0].path).toEqual([1]);
+
+  expect(schema.parse(["alpha", "bravo"])).toEqual(["alpha", "bravo", "fallback"]);
+  expect(schema.safeParse(["alpha", undefined]).success).toBe(false);
+
+  // With no later required output slot, exact optional still behaves like an
+  // omitted tuple tail and truncates cleanly.
+  expect(z.tuple([z.string(), z.string().exactOptional(), z.string().optional()]).parse(["alpha"])).toEqual(["alpha"]);
 });
 
 test("tuple preserves explicit undefined inside input even for optional-out schemas", () => {
