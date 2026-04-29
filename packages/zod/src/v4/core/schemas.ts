@@ -1358,7 +1358,6 @@ export const $ZodUndefined: core.$constructor<$ZodUndefined> = /*@__PURE__*/ cor
     $ZodType.init(inst, def);
     inst._zod.pattern = regexes.undefined;
     inst._zod.values = new Set([undefined]);
-    inst._zod.optin = "optional";
 
     inst._zod.parse = (payload, _ctx) => {
       const input = payload.value;
