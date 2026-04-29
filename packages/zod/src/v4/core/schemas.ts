@@ -2665,7 +2665,10 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
     let i = -1;
     for (const item of items) {
       i++;
-      if (i >= input.length) if (i >= optStart) continue;
+      // `optout === "optional"` means running with undefined yields undefined,
+      // so skipping is a no-op. `.default()`/`.prefault()` (and any chain
+      // wrapping one) have a defined output type and fall through to run.
+      if (i >= input.length && item._zod.optout === "optional") continue;
       const result = item._zod.run(
         {
           value: input[i],

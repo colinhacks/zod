@@ -169,6 +169,51 @@ test("tuple with all optional elements", () => {
   expect(() => allOptionalTuple.parse(["hello", 42, true, "extra"])).toThrow();
 });
 
+test("tuple fills defaults for missing trailing elements", () => {
+  // Issue #5229: trailing `.default()`/`.prefault()` elements should be
+  // filled in when the input array is shorter than the tuple.
+  const t = z.tuple([z.string(), z.string().default("bravo")]);
+  expectTypeOf<typeof t._output>().toEqualTypeOf<[string, string]>();
+  expectTypeOf<typeof t._input>().toEqualTypeOf<[string, string?]>();
+
+  expect(t.parse(["alpha", "charlie"])).toEqual(["alpha", "charlie"]);
+  expect(t.parse(["alpha"])).toEqual(["alpha", "bravo"]);
+
+  // Multiple trailing defaults
+  const multi = z.tuple([z.string(), z.number().default(42), z.boolean().default(true)]);
+  expect(multi.parse(["hello"])).toEqual(["hello", 42, true]);
+  expect(multi.parse(["hello", 100])).toEqual(["hello", 100, true]);
+  expect(multi.parse(["hello", 100, false])).toEqual(["hello", 100, false]);
+
+  // Prefault parity
+  expect(z.tuple([z.string(), z.string().prefault("delta")]).parse(["alpha"])).toEqual(["alpha", "delta"]);
+
+  // Defaults wrapped in modifiers: `optout` propagates through these, so the
+  // fix is not type-name specific.
+  expect(z.tuple([z.string(), z.string().default("x").nullable()]).parse(["alpha"])).toEqual(["alpha", "x"]);
+  expect(z.tuple([z.string(), z.string().default("x").readonly()]).parse(["alpha"])).toEqual(["alpha", "x"]);
+  expect(z.tuple([z.string(), z.string().default("x").catch("y")]).parse(["alpha"])).toEqual(["alpha", "x"]);
+  expect(z.tuple([z.string(), z.string().default("x").pipe(z.string())]).parse(["alpha"])).toEqual(["alpha", "x"]);
+});
+
+test("tuple fills defaults under async parse", async () => {
+  const t = z.tuple([z.string(), z.string().default("zulu")]);
+  await expect(t.parseAsync(["alpha"])).resolves.toEqual(["alpha", "zulu"]);
+});
+
+test("tuple keeps length-1 array for missing `.optional()` elements", () => {
+  // Backwards compat: a trailing `.optional()` element that is omitted from
+  // the input must NOT be filled with `undefined` — the result stays length-1.
+  // Only schemas that produce a defined value get materialized.
+  const t = z.tuple([z.string(), z.string().optional()]);
+  const out = t.parse(["alpha"]);
+  expect(out).toEqual(["alpha"]);
+  expect(out.length).toEqual(1);
+
+  expect(z.tuple([z.string(), z.undefined()]).parse(["alpha"])).toHaveLength(1);
+  expect(z.tuple([z.string(), z.string().optional().nullable()]).parse(["alpha"])).toHaveLength(1);
+});
+
 test("tuple with rest schema", () => {
   const myTuple = z.tuple([z.string(), z.number()]).rest(z.boolean());
   expect(myTuple.parse(["asdf", 1234, true, false, true])).toEqual(["asdf", 1234, true, false, true]);
