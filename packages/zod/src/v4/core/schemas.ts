@@ -2662,33 +2662,20 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
       }
     }
 
-    // Find the highest index that must materialize: any slot past
-    // `input.length` whose schema fills missing input (`optout !==
-    // "optional"`, i.e. `.default()`, `.prefault()`, or any chain wrapping
-    // one). Run every slot before `runUntil` so `.optional()` items reached
-    // while padding for a later default produce explicit `undefined`
-    // instead of a sparse hole.
-    let runUntil = Math.min(input.length, items.length);
-    for (let j = items.length - 1; j >= runUntil; j--) {
-      if (items[j]._zod.optout !== "optional") {
-        runUntil = j + 1;
-        break;
-      }
-    }
-
-    for (let i = 0; i < runUntil; i++) {
-      const result = items[i]._zod.run(
-        {
-          value: input[i],
-          issues: [],
-        },
-        ctx
-      );
-
+    // Mirror $ZodObject: run every item, passing `undefined` for slots past
+    // the input. Each schema decides what undefined means — `.optional()`
+    // and `z.undefined()` pass it through, `.default()`/`.prefault()` (and
+    // any chain wrapping one) substitute their value, required schemas
+    // fail. `handleTupleResult` swallows the failure for absent optional-out
+    // slots, the same way `handlePropertyResult` does for absent keys.
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      const isOptionalOut = item._zod.optout === "optional";
+      const result = item._zod.run({ value: input[i], issues: [] }, ctx);
       if (result instanceof Promise) {
-        proms.push(result.then((result) => handleTupleResult(result, payload, i)));
+        proms.push(result.then((r) => handleTupleResult(r, payload, i, input, isOptionalOut)));
       } else {
-        handleTupleResult(result, payload, i);
+        handleTupleResult(result, payload, i, input, isOptionalOut);
       }
     }
 
@@ -2697,29 +2684,45 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
       const rest = input.slice(items.length);
       for (const el of rest) {
         i++;
-        const result = def.rest._zod.run(
-          {
-            value: el,
-            issues: [],
-          },
-          ctx
-        );
-
+        const result = def.rest._zod.run({ value: el, issues: [] }, ctx);
         if (result instanceof Promise) {
-          proms.push(result.then((result) => handleTupleResult(result, payload, i)));
+          proms.push(result.then((r) => handleTupleResult(r, payload, i, input, false)));
         } else {
-          handleTupleResult(result, payload, i);
+          handleTupleResult(result, payload, i, input, false);
         }
       }
     }
 
-    if (proms.length) return Promise.all(proms).then(() => payload);
-    return payload;
+    // Trim trailing slots whose schema produced `undefined` for absent input
+    // (mirrors the object parser dropping absent optional keys). Only items
+    // past `input.length` with `optout === "optional"` are eligible — a
+    // `.default()` past input always materializes, breaking the trim.
+    const finalize = () => {
+      for (let i = items.length - 1; i >= input.length; i--) {
+        if (items[i]._zod.optout === "optional" && payload.value[i] === undefined) {
+          payload.value.length = i;
+        } else {
+          break;
+        }
+      }
+      return payload;
+    };
+
+    if (proms.length) return Promise.all(proms).then(finalize);
+    return finalize();
   };
 });
 
-function handleTupleResult(result: ParsePayload, final: ParsePayload<any[]>, index: number) {
+function handleTupleResult(
+  result: ParsePayload,
+  final: ParsePayload<any[]>,
+  index: number,
+  input: unknown[],
+  isOptionalOut: boolean
+) {
   if (result.issues.length) {
+    // mirror $ZodObject: swallow errors from absent optional-out slots
+    if (isOptionalOut && index >= input.length) return;
     final.issues.push(...util.prefixIssues(index, result.issues));
   }
   final.value[index] = result.value;
