@@ -1220,11 +1220,11 @@ export interface ZodObject<
   /** This is the default behavior. This method call is likely unnecessary. */
   strip(): ZodObject<Shape, core.$strip>;
 
-  extend<U extends core.$ZodLooseShape>(shape: U): ZodObject<util.Extend<Shape, U>, Config>;
+  extend<U extends core.$ZodLooseShape>(shape: U): ZodObject<util.Extend<Shape, util.Writeable<U>>, Config>;
 
   safeExtend<U extends core.$ZodLooseShape>(
     shape: SafeExtendShape<Shape, U> & Partial<Record<keyof Shape, core.SomeType>>
-  ): ZodObject<util.Extend<Shape, U>, Config>;
+  ): ZodObject<util.Extend<Shape, util.Writeable<U>>, Config>;
 
   /**
    * @deprecated Use [`A.extend(B.shape)`](https://zod.dev/api?id=extend) instead.
@@ -1241,7 +1241,7 @@ export interface ZodObject<
 
   partial(): ZodObject<
     {
-      [k in keyof Shape]: ZodOptional<Shape[k]>;
+      -readonly [k in keyof Shape]: ZodOptional<Shape[k]>;
     },
     Config
   >;
@@ -1249,7 +1249,7 @@ export interface ZodObject<
     mask: M & Record<Exclude<keyof M, keyof Shape>, never>
   ): ZodObject<
     {
-      [k in keyof Shape]: k extends keyof M
+      -readonly [k in keyof Shape]: k extends keyof M
         ? // Shape[k] extends OptionalInSchema
           //   ? Shape[k]
           //   :
@@ -1262,7 +1262,7 @@ export interface ZodObject<
   // required
   required(): ZodObject<
     {
-      [k in keyof Shape]: ZodNonOptional<Shape[k]>;
+      -readonly [k in keyof Shape]: ZodNonOptional<Shape[k]>;
     },
     Config
   >;
@@ -1270,7 +1270,7 @@ export interface ZodObject<
     mask: M & Record<Exclude<keyof M, keyof Shape>, never>
   ): ZodObject<
     {
-      [k in keyof Shape]: k extends keyof M ? ZodNonOptional<Shape[k]> : Shape[k];
+      -readonly [k in keyof Shape]: k extends keyof M ? ZodNonOptional<Shape[k]> : Shape[k];
     },
     Config
   >;

@@ -273,3 +273,53 @@ test("recursion compatibility", () => {
     },
   });
 });
+
+test("shape stays writeable through object/strictObject/looseObject/extend with getters", () => {
+  const Cat = z.object({
+    name: z.string(),
+    get sub(): z.ZodMiniArray<typeof Cat> {
+      return z.array(Cat);
+    },
+  });
+  type CatShape = (typeof Cat)["shape"];
+  expectTypeOf<CatShape>().toEqualTypeOf<{
+    name: z.ZodMiniString<string>;
+    sub: z.ZodMiniArray<typeof Cat>;
+  }>();
+
+  const StrictCat = z.strictObject({
+    name: z.string(),
+    get sub(): z.ZodMiniArray<typeof StrictCat> {
+      return z.array(StrictCat);
+    },
+  });
+  type StrictShape = (typeof StrictCat)["shape"];
+  expectTypeOf<StrictShape>().toEqualTypeOf<{
+    name: z.ZodMiniString<string>;
+    sub: z.ZodMiniArray<typeof StrictCat>;
+  }>();
+
+  const LooseCat = z.looseObject({
+    name: z.string(),
+    get sub(): z.ZodMiniArray<typeof LooseCat> {
+      return z.array(LooseCat);
+    },
+  });
+  type LooseShape = (typeof LooseCat)["shape"];
+  expectTypeOf<LooseShape>().toEqualTypeOf<{
+    name: z.ZodMiniString<string>;
+    sub: z.ZodMiniArray<typeof LooseCat>;
+  }>();
+
+  const Base = z.object({ name: z.string() });
+  const Extended = z.extend(Base, {
+    get sub(): z.ZodMiniArray<typeof Extended> {
+      return z.array(Extended);
+    },
+  });
+  type ExtendedShape = (typeof Extended)["shape"];
+  expectTypeOf<ExtendedShape>().toEqualTypeOf<{
+    name: z.ZodMiniString<string>;
+    sub: z.ZodMiniArray<typeof Extended>;
+  }>();
+});

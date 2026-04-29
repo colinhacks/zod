@@ -153,6 +153,50 @@ test("pick and omit with getter", () => {
   expect(() => OmittedCategory.parse({ name: "test", subcategories: [] })).toThrow();
 });
 
+test("shape stays writeable through extend/safeExtend/partial/required", () => {
+  const Base = z.object({ name: z.string() });
+
+  const Extended = Base.extend({
+    get sub() {
+      return z.array(Extended);
+    },
+  });
+  type ExtendedShape = (typeof Extended)["shape"];
+  expectTypeOf<ExtendedShape>().toEqualTypeOf<{
+    name: z.ZodString;
+    sub: z.ZodArray<typeof Extended>;
+  }>();
+
+  const SafeExt = Base.safeExtend({ extra: z.string() } as const);
+  type SafeExtShape = (typeof SafeExt)["shape"];
+  expectTypeOf<SafeExtShape>().toEqualTypeOf<{
+    name: z.ZodString;
+    extra: z.ZodString;
+  }>();
+
+  const FromConst = Base.extend({ a: z.string(), b: z.number() } as const);
+  type FromConstShape = (typeof FromConst)["shape"];
+  expectTypeOf<FromConstShape>().toEqualTypeOf<{
+    name: z.ZodString;
+    a: z.ZodString;
+    b: z.ZodNumber;
+  }>();
+
+  const PartialExtended = Extended.partial();
+  type PartialShape = (typeof PartialExtended)["shape"];
+  expectTypeOf<PartialShape>().toEqualTypeOf<{
+    name: z.ZodOptional<z.ZodString>;
+    sub: z.ZodOptional<z.ZodArray<typeof Extended>>;
+  }>();
+
+  const RequiredExtended = Extended.required();
+  type RequiredShape = (typeof RequiredExtended)["shape"];
+  expectTypeOf<RequiredShape>().toEqualTypeOf<{
+    name: z.ZodNonOptional<z.ZodString>;
+    sub: z.ZodNonOptional<z.ZodArray<typeof Extended>>;
+  }>();
+});
+
 test("deferred self-recursion", () => {
   const Feature = z.object({
     title: z.string(),
