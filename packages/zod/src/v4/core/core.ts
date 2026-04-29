@@ -9,57 +9,6 @@ export interface $constructor<T extends ZodTrait, D = T["_zod"]["def"]> {
   init(inst: T, def: D): asserts inst is T;
 }
 
-/**
- * Symbol used to access the internal prototype of a Zod constructor.
- *
- * Each constructor created by `$constructor` maintains two prototype layers:
- *   inst → _.prototype (user-visible; copy-loop targets this)
- *            └── internalProto (library methods set by _initLazy go here)
- *
- * Library methods placed on internalProto are inherited (not own properties)
- * which keeps instances under V8's fast-property threshold.
- */
-export const $internalProto: unique symbol = Symbol("zod.internalProto");
-
-/**
- * Define a method on `proto` such that the FIRST time it is accessed on an
- * instance, a `bind`-equivalent thunk is allocated and cached as an
- * enumerable own property on that instance. Subsequent accesses skip the
- * getter entirely.
- *
- * This preserves detached usage (`const m = schema.optional; m()` works
- * because `m` is a bound function with `this` pre-resolved) while only
- * allocating closures for methods actually accessed.
- */
-export function defineLazy(proto: object, key: string | symbol, sharedFn: (...args: any[]) => any): void {
-  Object.defineProperty(proto, key, {
-    configurable: true,
-    enumerable: false,
-    get(this: any) {
-      // `bind` is roughly equivalent in cost to allocating a closure that
-      // captures `this`. We cache the result on the instance so this getter
-      // fires at most once per (instance, method).
-      const bound = sharedFn.bind(this);
-      Object.defineProperty(this, key, {
-        configurable: true,
-        writable: true,
-        enumerable: true,
-        value: bound,
-      });
-      return bound;
-    },
-    set(this: any, v: unknown) {
-      // Allow user reassignment / extension of the method on a specific instance.
-      Object.defineProperty(this, key, {
-        configurable: true,
-        writable: true,
-        enumerable: true,
-        value: v,
-      });
-    },
-  });
-}
-
 /** A special constant with type `never` */
 export const NEVER: never = /*@__PURE__*/ Object.freeze({
   status: "aborted",
@@ -106,13 +55,6 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
   class Definition extends Parent {}
   Object.defineProperty(Definition, "name", { value: name });
 
-  // Internal prototype layer: library-owned space for shared methods. Sits
-  // between `_.prototype` (user space, empty by default) and the parent
-  // prototype, so `Object.keys(_.prototype)` never enumerates library
-  // methods and the copy-loop above stays a no-op for default schemas.
-  const internalProto = Object.create(params?.Parent?.prototype ?? Object.prototype);
-  Object.setPrototypeOf(Definition.prototype, internalProto);
-
   function _(this: any, def: D) {
     const inst = params?.Parent ? new Definition() : this;
     init(inst, def);
@@ -123,7 +65,6 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
     return inst;
   }
 
-  Object.defineProperty(_, $internalProto, { value: internalProto });
   Object.defineProperty(_, "init", { value: init });
   Object.defineProperty(_, Symbol.hasInstance, {
     value: (inst: any) => {
@@ -132,11 +73,6 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
     },
   });
   Object.defineProperty(_, "name", { value: name });
-
-  // Wire `_.prototype → internalProto` so the chain reads:
-  //   inst → _.prototype (user space) → internalProto (library) → Parent
-  Object.setPrototypeOf(_.prototype, internalProto);
-
   return _ as any;
 }
 
