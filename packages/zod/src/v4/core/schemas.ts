@@ -2677,14 +2677,14 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
     payload.value = [];
     const proms: Promise<any>[] = [];
 
-    const optStart = getTupleOptStart(items, "optin");
-    const outputOptStart = getTupleOptStart(items, "optout");
+    const optinStart = getTupleOptStart(items, "optin");
+    const optoutStart = getTupleOptStart(items, "optout");
 
     if (!def.rest) {
-      if (input.length < optStart) {
+      if (input.length < optinStart) {
         payload.issues.push({
           code: "too_small",
-          minimum: optStart,
+          minimum: optinStart,
           inclusive: true,
           input,
           inst,
@@ -2737,9 +2737,9 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
     }
 
     if (proms.length) {
-      return Promise.all(proms).then(() => handleTupleResults(itemResults, payload, items, input, outputOptStart));
+      return Promise.all(proms).then(() => handleTupleResults(itemResults, payload, items, input, optoutStart));
     }
-    return handleTupleResults(itemResults, payload, items, input, outputOptStart);
+    return handleTupleResults(itemResults, payload, items, input, optoutStart);
   };
 });
 
@@ -2762,17 +2762,17 @@ function handleTupleResults(
   final: ParsePayload<any[]>,
   items: readonly $ZodType[],
   input: unknown[],
-  outputOptStart: number
+  optoutStart: number
 ) {
   // Walk results in order. Mirror $ZodObject's swallow-on-absent-optional
-  // rule, but only after `outputOptStart`: the first index where the output
+  // rule, but only after `optoutStart`: the first index where the output
   // tuple tail can be absent.
   for (let i = 0; i < items.length; i++) {
     const r = itemResults[i];
     const isOptionalOut = items[i]._zod.optout === "optional";
     const isPresent = i < input.length;
     if (r.issues.length) {
-      if (isOptionalOut && !isPresent && i >= outputOptStart) {
+      if (isOptionalOut && !isPresent && i >= optoutStart) {
         final.value.length = i;
         break;
       }
