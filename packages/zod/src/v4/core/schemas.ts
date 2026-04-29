@@ -2769,10 +2769,9 @@ function handleTupleResults(
   // tuple tail can be absent.
   for (let i = 0; i < items.length; i++) {
     const r = itemResults[i];
-    const isOptionalOut = items[i]._zod.optout === "optional";
     const isPresent = i < input.length;
     if (r.issues.length) {
-      if (isOptionalOut && !isPresent && i >= optoutStart) {
+      if (!isPresent && i >= optoutStart) {
         final.value.length = i;
         break;
       }
