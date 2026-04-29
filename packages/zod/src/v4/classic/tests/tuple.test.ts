@@ -214,6 +214,38 @@ test("tuple keeps length-1 array for missing `.optional()` elements", () => {
   expect(z.tuple([z.string(), z.string().optional().nullable()]).parse(["alpha"])).toHaveLength(1);
 });
 
+test("tuple result is dense when optional precedes a default", () => {
+  // `.optional()` before a `.default()` must produce an explicit `undefined`
+  // (not a sparse hole), otherwise `1 in r`, `JSON.stringify`, `Object.keys`,
+  // and iteration all behave wrong.
+  const t = z.tuple([z.string(), z.string().optional(), z.string().default("z")]);
+  const r = t.parse(["alpha"]);
+  expect(r).toEqual(["alpha", undefined, "z"]);
+  expect(r.length).toEqual(3);
+  expect(1 in r).toEqual(true);
+  expect(JSON.stringify(r)).toEqual('["alpha",null,"z"]');
+
+  // Trailing optional after a default is still dropped (no later default
+  // forces it to materialize).
+  expect(z.tuple([z.string(), z.string().default("d"), z.string().optional()]).parse(["alpha"])).toEqual([
+    "alpha",
+    "d",
+  ]);
+
+  // Multiple interleaved optional/default — every slot up to the last
+  // default must be present and dense.
+  const interleaved = z.tuple([
+    z.string(),
+    z.string().optional(),
+    z.string().default("d"),
+    z.string().optional(),
+    z.string().default("e"),
+  ]);
+  const out = interleaved.parse(["alpha"]);
+  expect(out).toEqual(["alpha", undefined, "d", undefined, "e"]);
+  expect(1 in out && 3 in out).toEqual(true);
+});
+
 test("tuple with rest schema", () => {
   const myTuple = z.tuple([z.string(), z.number()]).rest(z.boolean());
   expect(myTuple.parse(["asdf", 1234, true, false, true])).toEqual(["asdf", 1234, true, false, true]);

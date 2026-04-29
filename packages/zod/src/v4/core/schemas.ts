@@ -2662,14 +2662,22 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
       }
     }
 
-    let i = -1;
-    for (const item of items) {
-      i++;
-      // `optout === "optional"` means running with undefined yields undefined,
-      // so skipping is a no-op. `.default()`/`.prefault()` (and any chain
-      // wrapping one) have a defined output type and fall through to run.
-      if (i >= input.length && item._zod.optout === "optional") continue;
-      const result = item._zod.run(
+    // Find the highest index that must materialize: any slot past
+    // `input.length` whose schema fills missing input (`optout !==
+    // "optional"`, i.e. `.default()`, `.prefault()`, or any chain wrapping
+    // one). Run every slot before `runUntil` so `.optional()` items reached
+    // while padding for a later default produce explicit `undefined`
+    // instead of a sparse hole.
+    let runUntil = Math.min(input.length, items.length);
+    for (let j = items.length - 1; j >= runUntil; j--) {
+      if (items[j]._zod.optout !== "optional") {
+        runUntil = j + 1;
+        break;
+      }
+    }
+
+    for (let i = 0; i < runUntil; i++) {
+      const result = items[i]._zod.run(
         {
           value: input[i],
           issues: [],
@@ -2685,6 +2693,7 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
     }
 
     if (def.rest) {
+      let i = items.length - 1;
       const rest = input.slice(items.length);
       for (const el of rest) {
         i++;
