@@ -212,6 +212,23 @@ test("tuple keeps length-1 array for missing `.optional()` elements", () => {
 
   expect(z.tuple([z.string(), z.undefined()]).parse(["alpha"])).toHaveLength(1);
   expect(z.tuple([z.string(), z.string().optional().nullable()]).parse(["alpha"])).toHaveLength(1);
+
+  // Multiple trailing optionals trim the same way — we don't fill the tail
+  // with literal `undefined`s.
+  const many = z.tuple([z.string(), z.string().optional(), z.string().optional(), z.string().optional()]);
+  expect(many.parse(["alpha"])).toEqual(["alpha"]);
+  expect(many.parse(["alpha", "beta"])).toEqual(["alpha", "beta"]);
+
+  // Explicit `undefined` inside `input.length` IS preserved — only slots
+  // past the input get trimmed.
+  const r = many.parse(["alpha", undefined]);
+  expect(r.length).toEqual(2);
+  expect(1 in r).toEqual(true);
+
+  // Trailing optionals after a default that fires are still trimmed.
+  expect(
+    z.tuple([z.string(), z.string().default("d"), z.string().optional(), z.string().optional()]).parse(["alpha"])
+  ).toEqual(["alpha", "d"]);
 });
 
 test("tuple result is dense when optional precedes a default", () => {
