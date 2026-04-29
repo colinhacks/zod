@@ -253,13 +253,13 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   // detachability preserved (`const m = schema.optional; m()` works), and
   // shared underlying function references across all instances.
   _installLazyMethods(inst, "ZodType", {
-    check(...chks: any[]) {
+    check(...chks) {
       const def = this.def;
       return this.clone(
         util.mergeDefs(def, {
           checks: [
             ...(def.checks ?? []),
-            ...chks.map((ch: any) =>
+            ...chks.map((ch) =>
               typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
             ),
           ],
@@ -267,26 +267,26 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
         { parent: true }
       );
     },
-    with(...chks: any[]) {
+    with(...chks) {
       return this.check(...chks);
     },
-    clone(def?: any, params?: any) {
+    clone(def, params) {
       return core.clone(this, def, params);
     },
     brand() {
       return this;
     },
-    register(reg: any, meta: any) {
+    register(reg, meta) {
       reg.add(this, meta);
       return this;
     },
-    refine(check: any, params?: any) {
+    refine(check, params) {
       return this.check(refine(check, params));
     },
-    superRefine(refinement: any, params?: any) {
+    superRefine(refinement, params) {
       return this.check(superRefine(refinement, params));
     },
-    overwrite(fn: any) {
+    overwrite(fn) {
       return this.check(checks.overwrite(fn));
     },
     optional() {
@@ -301,37 +301,37 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
     nullish() {
       return optional(nullable(this));
     },
-    nonoptional(params?: any) {
+    nonoptional(params) {
       return nonoptional(this, params);
     },
     array() {
       return array(this);
     },
-    or(arg: any) {
+    or(arg) {
       return union([this, arg]);
     },
-    and(arg: any) {
+    and(arg) {
       return intersection(this, arg);
     },
-    transform(tx: any) {
+    transform(tx) {
       return pipe(this, transform(tx));
     },
-    default(d: any) {
+    default(d) {
       return _default(this, d);
     },
-    prefault(d: any) {
+    prefault(d) {
       return prefault(this, d);
     },
-    catch(params: any) {
+    catch(params) {
       return _catch(this, params);
     },
-    pipe(target: any) {
+    pipe(target) {
       return pipe(this, target);
     },
     readonly() {
       return readonly(this);
     },
-    describe(description: string) {
+    describe(description) {
       const cl = this.clone();
       core.globalRegistry.add(cl, { description });
       return cl;
@@ -339,7 +339,8 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
     meta(...args: any[]): any {
       // overloaded: meta() returns the registered metadata, meta(data)
       // returns a clone with `data` registered. The mapped type picks
-      // up the second overload, so we return `any` to satisfy both.
+      // up the second overload, so we accept variadic any-args and
+      // return `any` to satisfy both at runtime.
       if (args.length === 0) return core.globalRegistry.get(this);
       const cl = this.clone();
       core.globalRegistry.add(cl, args[0]);
@@ -351,7 +352,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
     isNullable() {
       return this.safeParse(null).success;
     },
-    apply(fn: any) {
+    apply(fn) {
       return fn(this);
     },
   });
@@ -404,40 +405,40 @@ export const _ZodString: core.$constructor<_ZodString> = /*@__PURE__*/ core.$con
   inst.maxLength = bag.maximum ?? null;
 
   _installLazyMethods(inst, "_ZodString", {
-    regex(...args: any[]) {
+    regex(...args) {
       return this.check((checks.regex as any)(...args));
     },
-    includes(...args: any[]) {
+    includes(...args) {
       return this.check((checks.includes as any)(...args));
     },
-    startsWith(...args: any[]) {
+    startsWith(...args) {
       return this.check((checks.startsWith as any)(...args));
     },
-    endsWith(...args: any[]) {
+    endsWith(...args) {
       return this.check((checks.endsWith as any)(...args));
     },
-    min(...args: any[]) {
+    min(...args) {
       return this.check((checks.minLength as any)(...args));
     },
-    max(...args: any[]) {
+    max(...args) {
       return this.check((checks.maxLength as any)(...args));
     },
-    length(...args: any[]) {
+    length(...args) {
       return this.check((checks.length as any)(...args));
     },
-    nonempty(...args: any[]) {
+    nonempty(...args) {
       return this.check((checks.minLength as any)(1, ...args));
     },
-    lowercase(params?: any) {
+    lowercase(params) {
       return this.check(checks.lowercase(params));
     },
-    uppercase(params?: any) {
+    uppercase(params) {
       return this.check(checks.uppercase(params));
     },
     trim() {
       return this.check(checks.trim());
     },
-    normalize(...args: any[]) {
+    normalize(...args) {
       return this.check(checks.normalize(...args));
     },
     toLowerCase() {
@@ -1002,46 +1003,46 @@ export const ZodNumber: core.$constructor<ZodNumber> = /*@__PURE__*/ core.$const
   inst._zod.processJSONSchema = (ctx, json, params) => processors.numberProcessor(inst, ctx, json, params);
 
   _installLazyMethods(inst, "ZodNumber", {
-    gt(value: number, params?: any) {
+    gt(value, params) {
       return this.check(checks.gt(value, params));
     },
-    gte(value: number, params?: any) {
+    gte(value, params) {
       return this.check(checks.gte(value, params));
     },
-    min(value: number, params?: any) {
+    min(value, params) {
       return this.check(checks.gte(value, params));
     },
-    lt(value: number, params?: any) {
+    lt(value, params) {
       return this.check(checks.lt(value, params));
     },
-    lte(value: number, params?: any) {
+    lte(value, params) {
       return this.check(checks.lte(value, params));
     },
-    max(value: number, params?: any) {
+    max(value, params) {
       return this.check(checks.lte(value, params));
     },
-    int(params?: any) {
+    int(params) {
       return this.check(int(params));
     },
-    safe(params?: any) {
+    safe(params) {
       return this.check(int(params));
     },
-    positive(params?: any) {
+    positive(params) {
       return this.check(checks.gt(0, params));
     },
-    nonnegative(params?: any) {
+    nonnegative(params) {
       return this.check(checks.gte(0, params));
     },
-    negative(params?: any) {
+    negative(params) {
       return this.check(checks.lt(0, params));
     },
-    nonpositive(params?: any) {
+    nonpositive(params) {
       return this.check(checks.lte(0, params));
     },
-    multipleOf(value: number, params?: any) {
+    multipleOf(value, params) {
       return this.check(checks.multipleOf(value, params));
     },
-    step(value: number, params?: any) {
+    step(value, params) {
       return this.check(checks.multipleOf(value, params));
     },
     finite() {
@@ -1331,16 +1332,16 @@ export const ZodArray: core.$constructor<ZodArray> = /*@__PURE__*/ core.$constru
 
   inst.element = def.element;
   _installLazyMethods(inst, "ZodArray", {
-    min(n: number, params?: any) {
+    min(n, params) {
       return this.check(checks.minLength(n, params));
     },
-    nonempty(params?: any) {
+    nonempty(params) {
       return this.check(checks.minLength(1, params));
     },
-    max(n: number, params?: any) {
+    max(n, params) {
       return this.check(checks.maxLength(n, params));
     },
-    length(n: number, params?: any) {
+    length(n, params) {
       return this.check(checks.length(n, params));
     },
     unwrap() {
@@ -1464,8 +1465,8 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
     keyof() {
       return _enum(Object.keys(this._zod.def.shape));
     },
-    catchall(catchall: any) {
-      return this.clone({ ...this._zod.def, catchall });
+    catchall(catchall) {
+      return this.clone({ ...this._zod.def, catchall: catchall as any });
     },
     passthrough() {
       return this.clone({ ...this._zod.def, catchall: unknown() });
@@ -1479,25 +1480,25 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
     strip() {
       return this.clone({ ...this._zod.def, catchall: undefined });
     },
-    extend(incoming: any) {
+    extend(incoming) {
       return util.extend(this, incoming);
     },
-    safeExtend(incoming: any) {
+    safeExtend(incoming) {
       return util.safeExtend(this, incoming);
     },
-    merge(other: any) {
+    merge(other) {
       return util.merge(this, other);
     },
-    pick(mask: any) {
+    pick(mask) {
       return util.pick(this, mask);
     },
-    omit(mask: any) {
+    omit(mask) {
       return util.omit(this, mask);
     },
-    partial(...args: any[]) {
+    partial(...args) {
       return util.partial(ZodOptional, this, args[0]);
     },
-    required(...args: any[]) {
+    required(...args) {
       return util.required(ZodNonOptional, this, args[0]);
     },
   });
