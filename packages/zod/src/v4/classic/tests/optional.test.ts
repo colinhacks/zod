@@ -135,6 +135,52 @@ test("optional prop with pipe", () => {
   schema.parse({}, { jitless: true });
 });
 
+test("object absent keys require optin optional", () => {
+  const valueUndefined = z.object({
+    value: z.undefined(),
+    union: z.union([z.string(), z.undefined()]),
+  });
+
+  expect(valueUndefined.safeParse({}).error!.issues).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "invalid_type",
+        "expected": "nonoptional",
+        "message": "Invalid input: expected nonoptional, received undefined",
+        "path": [
+          "value",
+        ],
+      },
+      {
+        "code": "invalid_type",
+        "expected": "nonoptional",
+        "message": "Invalid input: expected nonoptional, received undefined",
+        "path": [
+          "union",
+        ],
+      },
+    ]
+  `);
+  expect(valueUndefined.safeParse({}, { jitless: true }).success).toEqual(false);
+  expect(valueUndefined.parse({ value: undefined, union: undefined })).toEqual({
+    value: undefined,
+    union: undefined,
+  });
+
+  const optionalOutOnly = z.object({
+    value: z
+      .string()
+      .transform((val) => (Math.random() ? val : undefined))
+      .pipe(z.string().optional()),
+  });
+  expect(optionalOutOnly.safeParse({}).success).toEqual(false);
+  expect(optionalOutOnly.safeParse({}, { jitless: true }).success).toEqual(false);
+
+  const defaulted = z.object({ value: z.string().default("fallback") });
+  expect(defaulted.parse({})).toEqual({ value: "fallback" });
+  expect(defaulted.parse({}, { jitless: true })).toEqual({ value: "fallback" });
+});
+
 // exactOptional tests
 test(".exactOptional()", () => {
   const schema = z.string().exactOptional();

@@ -1747,18 +1747,32 @@ function handlePropertyResult(
   final: ParsePayload,
   key: PropertyKey,
   input: any,
+  isOptionalIn: boolean,
   isOptionalOut: boolean
 ) {
+  const isPresent = key in input;
   if (result.issues.length) {
-    // For optional-out schemas, ignore errors on absent keys
-    if (isOptionalOut && !(key in input)) {
+    // For optional-in/out schemas, ignore errors on absent keys.
+    if (isOptionalIn && isOptionalOut && !isPresent) {
       return;
     }
     final.issues.push(...util.prefixIssues(key, result.issues));
   }
 
+  if (!isPresent && !isOptionalIn) {
+    if (!result.issues.length) {
+      final.issues.push({
+        code: "invalid_type",
+        expected: "nonoptional",
+        input: undefined,
+        path: [key],
+      });
+    }
+    return;
+  }
+
   if (result.value === undefined) {
-    if (key in input) {
+    if (isPresent) {
       (final.value as any)[key] = undefined;
     }
   } else {
@@ -1846,6 +1860,7 @@ function handleCatchall(
   const keySet = def.keySet;
   const _catchall = def.catchall!._zod;
   const t = _catchall.def.type;
+  const isOptionalIn = _catchall.optin === "optional";
   const isOptionalOut = _catchall.optout === "optional";
   for (const key in input) {
     // skip __proto__ so it can't replace the result prototype via the
@@ -1859,9 +1874,9 @@ function handleCatchall(
     const r = _catchall.run({ value: input[key], issues: [] }, ctx);
 
     if (r instanceof Promise) {
-      proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, isOptionalOut)));
+      proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, isOptionalIn, isOptionalOut)));
     } else {
-      handlePropertyResult(r, payload, key, input, isOptionalOut);
+      handlePropertyResult(r, payload, key, input, isOptionalIn, isOptionalOut);
     }
   }
 
@@ -1939,13 +1954,14 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
 
     for (const key of value.keys) {
       const el = shape[key]!;
+      const isOptionalIn = el._zod.optin === "optional";
       const isOptionalOut = el._zod.optout === "optional";
 
       const r = el._zod.run({ value: input[key], issues: [] }, ctx);
       if (r instanceof Promise) {
-        proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, isOptionalOut)));
+        proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, isOptionalIn, isOptionalOut)));
       } else {
-        handlePropertyResult(r, payload, key, input, isOptionalOut);
+        handlePropertyResult(r, payload, key, input, isOptionalIn, isOptionalOut);
       }
     }
 
@@ -1989,12 +2005,13 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         const id = ids[key];
         const k = util.esc(key);
         const schema = shape[key];
+        const isOptionalIn = schema?._zod?.optin === "optional";
         const isOptionalOut = schema?._zod?.optout === "optional";
 
         doc.write(`const ${id} = ${parseStr(key)};`);
 
-        if (isOptionalOut) {
-          // For optional-out schemas, ignore errors on absent keys
+        if (isOptionalIn && isOptionalOut) {
+          // For optional-in/out schemas, ignore errors on absent keys
           doc.write(`
         if (${id}.issues.length) {
           if (${k} in input) {
@@ -2011,6 +2028,33 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
           }
         } else {
           newResult[${k}] = ${id}.value;
+        }
+        
+      `);
+        } else if (!isOptionalIn) {
+          doc.write(`
+        const ${id}_present = ${k} in input;
+        if (${id}.issues.length) {
+          payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
+            ...iss,
+            path: iss.path ? [${k}, ...iss.path] : [${k}]
+          })));
+        }
+        if (!${id}_present && !${id}.issues.length) {
+          payload.issues.push({
+            code: "invalid_type",
+            expected: "nonoptional",
+            input: undefined,
+            path: [${k}]
+          });
+        }
+        
+        if (${id}_present) {
+          if (${id}.value === undefined) {
+            newResult[${k}] = undefined;
+          } else {
+            newResult[${k}] = ${id}.value;
+          }
         }
         
       `);

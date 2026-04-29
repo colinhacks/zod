@@ -156,7 +156,33 @@ test("catch/prefault/default", () => {
     f: z.string().prefault("prefault value"),
   });
 
-  expect(mySchema.parse({})).toMatchInlineSnapshot(`
+  expect(mySchema.safeParse({}).error!.issues).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "invalid_type",
+        "expected": "nonoptional",
+        "message": "Invalid input: expected nonoptional, received undefined",
+        "path": [
+          "d",
+        ],
+      },
+    ]
+  `);
+
+  expect(mySchema.safeParse({}, { jitless: true }).error!.issues).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "invalid_type",
+        "expected": "nonoptional",
+        "message": "Invalid input: expected nonoptional, received undefined",
+        "path": [
+          "d",
+        ],
+      },
+    ]
+  `);
+
+  expect(mySchema.parse({ d: undefined })).toMatchInlineSnapshot(`
     {
       "b": "default value",
       "c": "prefault value",
@@ -166,7 +192,7 @@ test("catch/prefault/default", () => {
     }
   `);
 
-  expect(mySchema.parse({}, { jitless: true })).toMatchInlineSnapshot(`
+  expect(mySchema.parse({ d: undefined }, { jitless: true })).toMatchInlineSnapshot(`
     {
       "b": "default value",
       "c": "prefault value",
