@@ -302,6 +302,38 @@ test("tuple breaks on absent-optional rejection under async parse", async () => 
   expect(r.data).toEqual(["alpha"]);
 });
 
+test("tuple preserves explicit undefined inside input even for optional-out schemas", () => {
+  // The trim only runs for slots PAST `input.length`. An explicit `undefined`
+  // value supplied by the caller at index < input.length must survive, even
+  // when the schema produces undefined as a valid output (e.g.
+  // `z.string().or(z.undefined())`, `z.string().optional()`, `z.undefined()`).
+  const orUndefined = z.tuple([z.string(), z.string().or(z.undefined())]);
+  const r1 = orUndefined.parse(["alpha", undefined]);
+  expect(r1.length).toEqual(2);
+  expect(r1[1]).toBeUndefined();
+  expect(1 in r1).toEqual(true);
+  expect(JSON.stringify(r1)).toEqual('["alpha",null]');
+
+  // Same for `.optional()`.
+  const opt = z.tuple([z.string(), z.string().optional()]);
+  const r2 = opt.parse(["alpha", undefined]);
+  expect(r2.length).toEqual(2);
+  expect(1 in r2).toEqual(true);
+
+  // Same for `z.undefined()` literal.
+  const lit = z.tuple([z.string(), z.undefined()]);
+  const r3 = lit.parse(["alpha", undefined]);
+  expect(r3.length).toEqual(2);
+  expect(1 in r3).toEqual(true);
+
+  // Mid-tuple explicit undefined surrounded by defined values is also kept.
+  const mid = z.tuple([z.string(), z.string().or(z.undefined()), z.string()]);
+  const r4 = mid.parse(["alpha", undefined, "gamma"]);
+  expect(r4).toEqual(["alpha", undefined, "gamma"]);
+  expect(r4.length).toEqual(3);
+  expect(1 in r4).toEqual(true);
+});
+
 test("tuple does NOT break when a required slot fails past input length", () => {
   // A required slot (no `.optional()` chain, so optout !== "optional") past
   // input length must still surface an issue rather than silently swallowing
