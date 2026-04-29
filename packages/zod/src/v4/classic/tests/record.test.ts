@@ -273,37 +273,64 @@ test("union exhaustiveness", () => {
 });
 
 test("applies transforms on the key schema (#5296)", () => {
-  // Single literal with transform — was returning the original key before the fix.
   const single = z.record(
     z.literal("a").transform(() => "b" as const),
     z.string()
   );
   expect(single.parse({ a: "John" })).toEqual({ b: "John" });
 
-  // Multi-value literal with transform — each known input value is run through
-  // the keyType to derive the output property name.
   const multi = z.record(
     z.literal(["a", "b"]).transform((k) => k.toUpperCase()),
     z.number()
   );
   expect(multi.parse({ a: 1, b: 2 })).toEqual({ A: 1, B: 2 });
 
-  // Required-key semantics are preserved: missing input keys still error.
+  // required-key semantics still hold when the keyType has a known value set
   expect(multi.safeParse({ a: 1 }).success).toBe(false);
 
-  // Enum + transform.
   const en = z.record(
     z.enum(["a", "b"]).transform((k) => k.toUpperCase()),
     z.number()
   );
   expect(en.parse({ a: 1, b: 2 })).toEqual({ A: 1, B: 2 });
 
-  // Behavior matches partialRecord (which already applied transforms).
+  // matches partialRecord, which already applied transforms
   const part = z.partialRecord(
     z.literal("a").transform(() => "b" as const),
     z.string()
   );
   expect(part.parse({ a: "John" })).toEqual({ b: "John" });
+});
+
+test("surfaces key schema refinement failures as invalid_key", () => {
+  // refine rejects "b" but it's still in the literal's value set
+  const schema = z.record(
+    z.literal(["a", "b"]).refine((k) => k === "a", { message: "only 'a' is allowed" }),
+    z.string()
+  );
+
+  expect(schema.safeParse({ a: "ok", b: "nope" })).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "code": "invalid_key",
+        "origin": "record",
+        "issues": [
+          {
+            "code": "custom",
+            "path": [],
+            "message": "only 'a' is allowed"
+          }
+        ],
+        "path": [
+          "b"
+        ],
+        "message": "Invalid key in record"
+      }
+    ]],
+      "success": false,
+    }
+  `);
 });
 
 test("string record parse - pass", () => {
