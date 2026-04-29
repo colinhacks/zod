@@ -21,11 +21,17 @@ import * as parse from "./parse.js";
 // One install per (prototype, group), memoized by `_installedGroups`.
 const _installedGroups = /* @__PURE__ */ new WeakMap<object, Set<string>>();
 
-function _installLazyMethods(
-  inst: object,
-  group: string,
-  methods: Record<string, (this: any, ...args: any[]) => any>
-): void {
+/**
+ * Methods of `T` reshaped so each body has `this: T` and matches the
+ * declared (args, return) of the corresponding interface method. Allows
+ * us to type-check inline method-shorthand bodies against the
+ * `ZodType` / `_ZodString` / etc. interface declarations.
+ */
+type _LazyMethodsOf<T> = Partial<{
+  [K in keyof T]: T[K] extends (...args: infer A) => infer R ? (this: T, ...args: A) => R : never;
+}>;
+
+function _installLazyMethods<T extends object>(inst: T, group: string, methods: _LazyMethodsOf<T>): void {
   const proto = Object.getPrototypeOf(inst);
   let installed = _installedGroups.get(proto);
   if (!installed) {
@@ -330,7 +336,10 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
       core.globalRegistry.add(cl, { description });
       return cl;
     },
-    meta(...args: any[]) {
+    meta(...args: any[]): any {
+      // overloaded: meta() returns the registered metadata, meta(data)
+      // returns a clone with `data` registered. The mapped type picks
+      // up the second overload, so we return `any` to satisfy both.
       if (args.length === 0) return core.globalRegistry.get(this);
       const cl = this.clone();
       core.globalRegistry.add(cl, args[0]);
