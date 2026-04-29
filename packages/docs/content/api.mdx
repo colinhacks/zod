@@ -248,6 +248,7 @@ z.uuid();
 z.url();
 z.httpUrl();       // http or https URLs only
 z.hostname();
+z.e164();          // E.164 phone numbers
 z.emoji();         // validates a single emoji character
 z.base64();
 z.base64url();
@@ -388,6 +389,19 @@ To normalize URLs, use the `normalize` flag. This will overwrite the input value
 new URL("HTTP://ExAmPle.com:80/./a/../b?X=1#f oo").href
 // => "http://example.com/b?X=1#f%20oo"
 ```
+
+### Phone numbers
+
+To validate phone numbers in E.164 format:
+
+```ts
+const phone = z.e164();
+
+phone.parse("+15555555555"); // ✅
+phone.parse("555-555-5555"); // ❌
+```
+
+This schema validates strings with a leading `+`, a non-zero country code, and 7 to 15 digits total.
 
 ### ISO datetimes
 
