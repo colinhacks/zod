@@ -6,7 +6,7 @@ description: "Bidirectional transformations with encode and decode"
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 import { ThemedImage } from "@/components/themed-image";
 
-> ✨ **New** — Introduced in `zod@4.1`
+> Introduced in `zod@4.1`.
 
 All Zod schemas can process inputs in both the forward and backward direction: 
 
@@ -188,7 +188,7 @@ stringToDate.encode(new Date("2024-01-15"));
 
 ### Pipes
 
-> **Fun fact** — Codecs are actually implemented internally as *subclass* of pipes that have been augmented with "interstitial" transform logic. 
+> **Fun fact** — Codecs are implemented internally as *subclasses* of pipes with "interstitial" transform logic. 
 
 During regular decoding, a `ZodPipe<A, B>` schema will first parse the data with `A`, then pass it into `B`. As you might expect, during encoding, the data is first encoded with `B`, then passed into `A`.
 
@@ -310,7 +310,7 @@ z.encode(successSchema, true);
 
 Below are implementations for a bunch of commonly-needed codecs. For the sake of customizability, these are not included as first-class APIs in Zod itself. Instead, you should copy/paste them into your project and modify them as needed.
 
-> **Note** — All of these codec implementations have been tested for correctness. 
+> **Note** — The codec implementations below are tested for correctness. 
 
 ### `stringToNumber`
 

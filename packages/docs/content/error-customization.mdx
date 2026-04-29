@@ -141,10 +141,6 @@ The `error` param optionally accepts a function. An error customization function
 z.string({ error: ()=>`[${Date.now()}]: Validation failure.` });
 ```
 
-<Callout>
-**Note** — In Zod v3, there were separate params for `message` (a string) and `errorMap` (a function). These have been unified in Zod 4 as `error`.
-</Callout>
-
 The error map receives a context object you can use to customize the error message based on the validation issue.
 
 ```ts

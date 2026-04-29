@@ -605,7 +605,7 @@ myFormat.parse("invalid input!");
 
 ## Template literals
 
-> **New** — Introduced in `zod@4.0`.
+> Introduced in `zod@4.0`.
 
 To define a template literal schema:
 
@@ -837,7 +837,7 @@ FishEnum.parse(2); // => ❌
 ```
 
 <Callout>
-**Zod 4** — This replaces the `z.nativeEnum()` API in Zod 3. 
+Use `z.enum()` for externally declared TypeScript enums. The `z.nativeEnum()` API is deprecated.
 
 Note that using TypeScript's `enum` keyword is [not recommended](https://www.totaltypescript.com/why-i-dont-like-typescript-enums). 
 </Callout>
@@ -915,9 +915,9 @@ const SalmonAndTroutOnly = FishEnum.extract(["Salmon", "Trout"]);
 
 ## Stringbools [#stringbool]
 
-> **💎 New in Zod 4**
+> Introduced in `zod@4.0`.
 
-In some cases (e.g. parsing environment variables) it's valuable to parse certain string "boolish" values to a plain `boolean` value. To support this, Zod 4 introduces `z.stringbool()`:
+In some cases (e.g. parsing environment variables) it's valuable to parse certain string "boolish" values to a plain `boolean` value. Use `z.stringbool()` for this:
 
 ```ts
 const strbool = z.stringbool();
@@ -1762,20 +1762,6 @@ const MyResult = z.discriminatedUnion("status", [
 
 Each option should be an *object schema* whose discriminator prop (`status` in the example above) corresponds to some literal value or set of values, usually `z.enum()`, `z.literal()`, `z.null()`, or `z.undefined()`.
 
-{/* 
-<Callout>
-  In Zod 3, you were required to specify the discriminator key as the first argument. This is no longer necessary, as Zod can now automatically detect the discriminator key.
-
-  ```ts
-  const MyResult = z.discriminatedUnion("status", [
-    z.object({ status: z.literal("success"), data: z.string() }),
-    z.object({ status: z.literal("failed"), error: z.string() }),
-  ]);
-  ```
-
-  If Zod can't find a discriminator key, it will throw an error at schema creation time.
-</Callout> */}
-
 <Accordions type="single">
 <Accordion title="Nesting discriminated unions">
 
@@ -1861,7 +1847,7 @@ const Person = z.record(Keys, z.string());
 // { id: string; name: string; email: string }
 ```
 
-**New** — As of v4.2, Zod properly supports numeric keys inside records in a way that more closely mirrors TypeScript itself. A `number` schema, when used as a record key, will validate that the key is a valid "numeric string". Additional numerical constraints (min, max, step, etc.) will also be validated.
+Zod supports numeric keys inside records in a way that closely mirrors TypeScript itself. A `number` schema, when used as a record key, will validate that the key is a valid "numeric string". Additional numerical constraints (min, max, step, etc.) will also be validated.
 
 ```ts
 const numberKeys = z.record(z.number(), z.string());
@@ -1888,7 +1874,7 @@ intKeys.parse({
 
 
 <Callout>
-  **Zod 4** — In Zod 4, if you pass a `z.enum` as the first argument to `z.record()`, Zod will exhaustively check that all enum values exist in the input as keys. This behavior agrees with TypeScript:
+  If you pass a `z.enum` as the first argument to `z.record()`, Zod will exhaustively check that all enum values exist in the input as keys. This behavior agrees with TypeScript:
 
   ```ts
   type MyRecord = Record<"a" | "b", string>;
@@ -1896,7 +1882,7 @@ intKeys.parse({
   const myRecord: MyRecord = { a: "foo" }; // ❌ missing required key `b`
   ```
 
-  In Zod 3, exhaustiveness was not checked. To replicate the old behavior, use `z.partialRecord()`.
+  For partial key sets, use `z.partialRecord()`.
 
 </Callout>
 
@@ -2005,7 +1991,7 @@ fileSchema.check(
 ## Promises
 
 <Callout type="warn">
-  **Deprecated** — `z.promise()` is deprecated in Zod 4. There are vanishingly few valid uses cases for a `Promise` schema. If you suspect a value might be a `Promise`, simply `await` it before parsing it with Zod.
+  **Deprecated** — `z.promise()` is deprecated. There are vanishingly few valid uses cases for a `Promise` schema. If you suspect a value might be a `Promise`, simply `await` it before parsing it with Zod.
 </Callout>
 
 <Accordions type="single"><Accordion title="See z.promise() documentation">
@@ -2531,7 +2517,7 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
 
 ## Codecs
 
-> **New** — Introduced in Zod 4.1. Refer to the dedicated [Codecs](/codecs) page for more information.
+> Introduced in `zod@4.1`. Refer to the dedicated [Codecs](/codecs) page for more information.
 
 Codecs are a special kind of schema that implement *bidirectional transformations* between two other schemas.
 
@@ -2918,7 +2904,7 @@ const Cat = z.object({ name: z.string() }).brand<"Cat">();
 type Cat = z.output<typeof Cat>; // { name: string } & z.$brand<"Cat">
 ```
 
-With this brand, any plain (unbranded) data structures are no longer assignable to the inferred type. You have to parse some data with the schema to get branded data.
+With this brand, plain (unbranded) data structures are not assignable to the inferred type. You have to parse some data with the schema to get branded data.
 
 > Note that branded types do not affect the runtime result of `.parse`. It is a static-only construct.
 
@@ -2961,7 +2947,7 @@ type ReadonlyUser = z.infer<typeof ReadonlyUser>;
 </Tab>
 </Tabs>
 
-The inferred type of the new schemas will be marked as `readonly`. Note that in TypeScript, this only affects objects, arrays, tuples, `Set`, and `Map`:
+The inferred type is marked as `readonly`. Note that in TypeScript, this only affects objects, arrays, tuples, `Set`, and `Map`:
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
