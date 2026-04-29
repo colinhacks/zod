@@ -2677,8 +2677,8 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
     payload.value = [];
     const proms: Promise<any>[] = [];
 
-    const reversedIndex = [...items].reverse().findIndex((item) => item._zod.optin !== "optional");
-    const optStart = reversedIndex === -1 ? 0 : items.length - reversedIndex;
+    const optStart = getTupleOptStart(items, "optin");
+    const outputOptStart = getTupleOptStart(items, "optout");
 
     if (!def.rest) {
       if (input.length < optStart) {
@@ -2736,10 +2736,19 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
       }
     }
 
-    if (proms.length) return Promise.all(proms).then(() => handleTupleResults(itemResults, payload, items, input));
-    return handleTupleResults(itemResults, payload, items, input);
+    if (proms.length) {
+      return Promise.all(proms).then(() => handleTupleResults(itemResults, payload, items, input, outputOptStart));
+    }
+    return handleTupleResults(itemResults, payload, items, input, outputOptStart);
   };
 });
+
+function getTupleOptStart(items: readonly $ZodType[], key: "optin" | "optout") {
+  for (let i = items.length - 1; i >= 0; i--) {
+    if (items[i]._zod[key] !== "optional") return i + 1;
+  }
+  return 0;
+}
 
 function handleTupleResult(result: ParsePayload, final: ParsePayload<any[]>, index: number) {
   if (result.issues.length) {
@@ -2748,36 +2757,22 @@ function handleTupleResult(result: ParsePayload, final: ParsePayload<any[]>, ind
   final.value[index] = result.value;
 }
 
-// Post-processes the per-item results collected by the tuple parser.
-// `optStart` is intentionally NOT consulted here — it's an input-length
-// concern handled by the `too_small` precheck at the top of parse. This
-// step is purely about output shaping, which is governed by `optout`:
-// a `.default()` tail item sits inside the optStart region (its `optin`
-// is optional), but it must NOT be dropped or have its errors swallowed
-// because it materializes a defined value (`optout !== "optional"`).
 function handleTupleResults(
   itemResults: ParsePayload[],
   final: ParsePayload<any[]>,
   items: readonly $ZodType[],
-  input: unknown[]
+  input: unknown[],
+  outputOptStart: number
 ) {
-  const hasRequiredOutputAfter: boolean[] = new Array(items.length);
-  let hasRequiredOutput = false;
-  for (let i = items.length - 1; i >= 0; i--) {
-    hasRequiredOutputAfter[i] = hasRequiredOutput;
-    if (items[i]._zod.optout !== "optional") hasRequiredOutput = true;
-  }
-
   // Walk results in order. Mirror $ZodObject's swallow-on-absent-optional
-  // rule, but only when the remaining tuple output tail is optional too. If a
-  // later slot has required output (e.g. `.default()`), truncation would return
-  // a value that does not satisfy the tuple's output type.
+  // rule, but only after `outputOptStart`: the first index where the output
+  // tuple tail can be absent.
   for (let i = 0; i < items.length; i++) {
     const r = itemResults[i];
     const isOptionalOut = items[i]._zod.optout === "optional";
     const isPresent = i < input.length;
     if (r.issues.length) {
-      if (isOptionalOut && !isPresent && !hasRequiredOutputAfter[i]) {
+      if (isOptionalOut && !isPresent && i >= outputOptStart) {
         final.value.length = i;
         break;
       }
