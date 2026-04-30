@@ -29,11 +29,13 @@ export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> ex
   readonly async?: boolean | undefined;
   readonly direction?: "forward" | "backward";
   readonly skipChecks?: boolean;
+  readonly deferUnrecognizedKeys?: boolean;
 }
 
 export interface ParsePayload<T = unknown> {
   value: T;
   issues: errors.$ZodRawIssue[];
+  deferredUnrecognizedKeys?: errors.$ZodRawIssue[];
   /** A way to mark a whole payload as aborted. Used in codecs/pipes. */
   aborted?: boolean;
 }
@@ -1852,7 +1854,7 @@ function handleCatchall(
   proms: Promise<any>[],
   input: any,
   payload: ParsePayload,
-  ctx: ParseContext,
+  ctx: ParseContextInternal,
   def: ReturnType<typeof normalizeDef>,
   inst: $ZodObject
 ) {
@@ -1881,12 +1883,18 @@ function handleCatchall(
   }
 
   if (unrecognized.length) {
-    payload.issues.push({
+    const issue: errors.$ZodRawIssue = {
       code: "unrecognized_keys",
       keys: unrecognized,
       input,
       inst,
-    });
+    };
+    if (ctx.deferUnrecognizedKeys) {
+      payload.deferredUnrecognizedKeys ??= [];
+      payload.deferredUnrecognizedKeys.push(issue);
+    } else {
+      payload.issues.push(issue);
+    }
   }
 
   if (!proms.length) return payload;
@@ -2472,17 +2480,18 @@ export const $ZodIntersection: core.$constructor<$ZodIntersection> = /*@__PURE__
 
     inst._zod.parse = (payload, ctx) => {
       const input = payload.value;
-      const left = def.left._zod.run({ value: input, issues: [] }, ctx);
-      const right = def.right._zod.run({ value: input, issues: [] }, ctx);
+      const intersectCtx = { ...ctx, deferUnrecognizedKeys: true };
+      const left = def.left._zod.run({ value: input, issues: [] }, intersectCtx);
+      const right = def.right._zod.run({ value: input, issues: [] }, intersectCtx);
       const async = left instanceof Promise || right instanceof Promise;
 
       if (async) {
         return Promise.all([left, right]).then(([left, right]) => {
-          return handleIntersectionResults(payload, left, right);
+          return handleIntersectionResults(payload, left, right, ctx);
         });
       }
 
-      return handleIntersectionResults(payload, left, right);
+      return handleIntersectionResults(payload, left, right, ctx);
     };
   }
 );
@@ -2545,12 +2554,17 @@ function mergeValues(
   return { valid: false, mergeErrorPath: [] };
 }
 
-function handleIntersectionResults(result: ParsePayload, left: ParsePayload, right: ParsePayload): ParsePayload {
+function handleIntersectionResults(
+  result: ParsePayload,
+  left: ParsePayload,
+  right: ParsePayload,
+  ctx: ParseContextInternal
+): ParsePayload {
   // Track which side(s) report each key as unrecognized
   const unrecKeys = new Map<string, { l?: true; r?: true }>();
   let unrecIssue: errors.$ZodRawIssue | undefined;
 
-  for (const iss of left.issues) {
+  for (const iss of left.issues.concat(left.deferredUnrecognizedKeys ?? [])) {
     if (iss.code === "unrecognized_keys") {
       unrecIssue ??= iss;
       for (const k of iss.keys) {
@@ -2562,7 +2576,7 @@ function handleIntersectionResults(result: ParsePayload, left: ParsePayload, rig
     }
   }
 
-  for (const iss of right.issues) {
+  for (const iss of right.issues.concat(right.deferredUnrecognizedKeys ?? [])) {
     if (iss.code === "unrecognized_keys") {
       for (const k of iss.keys) {
         if (!unrecKeys.has(k)) unrecKeys.set(k, {});
@@ -2576,14 +2590,19 @@ function handleIntersectionResults(result: ParsePayload, left: ParsePayload, rig
   // Report only keys unrecognized by BOTH sides
   const bothKeys = [...unrecKeys].filter(([, f]) => f.l && f.r).map(([k]) => k);
   if (bothKeys.length && unrecIssue) {
-    result.issues.push({ ...unrecIssue, keys: bothKeys });
+    const issue = { ...unrecIssue, keys: bothKeys };
+    if (ctx.deferUnrecognizedKeys) {
+      result.deferredUnrecognizedKeys ??= [];
+      result.deferredUnrecognizedKeys.push(issue);
+    } else {
+      result.issues.push(issue);
+    }
   }
-
-  if (util.aborted(result)) return result;
 
   const merged = mergeValues(left.value, right.value);
 
   if (!merged.valid) {
+    if (util.aborted(result)) return result;
     throw new Error(`Unmergable intersection. Error path: ` + `${JSON.stringify(merged.mergeErrorPath)}`);
   }
 
@@ -4030,7 +4049,9 @@ function handlePipeResult(left: ParsePayload, next: $ZodType, ctx: ParseContextI
     left.aborted = true;
     return left;
   }
-  return next._zod.run({ value: left.value, issues: left.issues }, ctx);
+  const payload: ParsePayload = { value: left.value, issues: left.issues };
+  if (left.deferredUnrecognizedKeys) payload.deferredUnrecognizedKeys = left.deferredUnrecognizedKeys;
+  return next._zod.run(payload, ctx);
 }
 
 ////////////////////////////////////////////

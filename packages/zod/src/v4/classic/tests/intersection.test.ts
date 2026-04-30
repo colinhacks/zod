@@ -1,4 +1,4 @@
-import { expect, expectTypeOf, test } from "vitest";
+import { expect, expectTypeOf, test, vi } from "vitest";
 import type { util } from "zod/v4/core";
 
 import * as z from "zod/v4";
@@ -65,6 +65,116 @@ test("object intersection: strict + strict", () => {
       },
     ]
   `);
+});
+
+test("strict object intersection runs checks after unrecognized keys are reconciled", () => {
+  const spy = vi.fn();
+  const alwaysFailingCheck = (payload: z.core.ParsePayload) => {
+    spy();
+    payload.issues.push({
+      code: "custom",
+      input: payload.value,
+      message: "This check always fails",
+    });
+  };
+
+  const schema = z.intersection(
+    z.strictObject({ x: z.string() }).check(alwaysFailingCheck),
+    z.strictObject({ a: z.string() }).check(alwaysFailingCheck)
+  );
+
+  const result = schema.safeParse({ x: "test", a: "hello" });
+  expect(spy).toHaveBeenCalledTimes(2);
+  expect(result.error?.issues).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "custom",
+        "message": "This check always fails",
+        "path": [],
+      },
+      {
+        "code": "custom",
+        "message": "This check always fails",
+        "path": [],
+      },
+    ]
+  `);
+});
+
+test("strict object intersection runs superRefine after unrecognized keys are reconciled", () => {
+  const spy = vi.fn();
+  const alwaysFailingSuperRefine = (_data: unknown, ctx: z.RefinementCtx) => {
+    spy();
+    ctx.addIssue({
+      code: "custom",
+      message: "This check always fails",
+    });
+  };
+
+  const schema = z.intersection(
+    z.strictObject({ x: z.string() }).superRefine(alwaysFailingSuperRefine),
+    z.strictObject({ a: z.string() }).superRefine(alwaysFailingSuperRefine)
+  );
+
+  const result = schema.safeParse({ x: "test", a: "hello" });
+  expect(spy).toHaveBeenCalledTimes(2);
+  expect(result.error?.issues).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "custom",
+        "message": "This check always fails",
+        "path": [],
+      },
+      {
+        "code": "custom",
+        "message": "This check always fails",
+        "path": [],
+      },
+    ]
+  `);
+});
+
+test("strict object intersection runs transforms after unrecognized keys are reconciled", () => {
+  const spy = vi.fn();
+  const transformFn = <T extends object>(data: T) => {
+    spy();
+    return { ...data, transformed: true };
+  };
+
+  const schema = z.intersection(
+    z.strictObject({ x: z.string() }).transform(transformFn),
+    z.strictObject({ a: z.string() }).transform(transformFn)
+  );
+
+  expect(schema.parse({ x: "test", a: "hello" })).toEqual({
+    x: "test",
+    a: "hello",
+    transformed: true,
+  });
+  expect(spy).toHaveBeenCalledTimes(2);
+});
+
+test("nested strict object intersection preserves merged value with defaults", () => {
+  const inner = z.intersection(
+    z.strictObject({
+      x: z.string().default("X default"),
+      y: z.number(),
+    }),
+    z.strictObject({
+      z: z.boolean(),
+    })
+  );
+
+  const schema = z.intersection(inner, z.strictObject({ a: z.string() }));
+  type Schema = z.output<typeof schema>;
+  expectTypeOf<Schema>().toEqualTypeOf<{ x: string; y: number } & { z: boolean } & { a: string }>();
+
+  expect(schema.parse({ y: 34, z: true, a: "hello" })).toEqual({
+    x: "X default",
+    y: 34,
+    z: true,
+    a: "hello",
+  });
 });
 
 test("deep intersection", () => {
