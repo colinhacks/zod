@@ -229,7 +229,7 @@ describe("Hebrew localization", () => {
     });
 
     test("invalid_key in object", () => {
-      const schema = z.record(z.number(), z.string());
+      const schema = z.strictRecord(z.number(), z.string());
       const result = schema.safeParse({ notANumber: "value" });
       expect(result.success).toBe(false);
       if (!result.success) {
