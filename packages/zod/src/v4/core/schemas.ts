@@ -29,7 +29,7 @@ export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> ex
   readonly async?: boolean | undefined;
   readonly direction?: "forward" | "backward";
   readonly skipChecks?: boolean;
-  readonly deferUnrecognizedKeys?: boolean;
+  readonly loosen?: boolean;
 }
 
 export interface ParsePayload<T = unknown> {
@@ -1889,7 +1889,7 @@ function handleCatchall(
       input,
       inst,
     };
-    if (ctx.deferUnrecognizedKeys) {
+    if (ctx.loosen) {
       payload.deferredUnrecognizedKeys ??= [];
       payload.deferredUnrecognizedKeys.push(issue);
     } else {
@@ -2480,7 +2480,7 @@ export const $ZodIntersection: core.$constructor<$ZodIntersection> = /*@__PURE__
 
     inst._zod.parse = (payload, ctx) => {
       const input = payload.value;
-      const intersectCtx = { ...ctx, deferUnrecognizedKeys: true };
+      const intersectCtx = { ...ctx, loosen: true };
       const left = def.left._zod.run({ value: input, issues: [] }, intersectCtx);
       const right = def.right._zod.run({ value: input, issues: [] }, intersectCtx);
       const async = left instanceof Promise || right instanceof Promise;
@@ -2591,7 +2591,7 @@ function handleIntersectionResults(
   const bothKeys = [...unrecKeys].filter(([, f]) => f.l && f.r).map(([k]) => k);
   if (bothKeys.length && unrecIssue) {
     const issue = { ...unrecIssue, keys: bothKeys };
-    if (ctx.deferUnrecognizedKeys) {
+    if (ctx.loosen) {
       result.deferredUnrecognizedKeys ??= [];
       result.deferredUnrecognizedKeys.push(issue);
     } else {
