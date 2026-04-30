@@ -101,6 +101,7 @@ test("pipe optionality inside objects", () => {
       .string()
       .transform((val) => (Math.random() ? val : undefined))
       .pipe(z.string().default("asdf")),
+    f: z.string().optional().pipe(z.string()).pipe(z.string()),
   });
 
   type SchemaIn = z.input<typeof schema>;
@@ -110,6 +111,7 @@ test("pipe optionality inside objects", () => {
     c?: string | undefined;
     d: string;
     e: string;
+    f?: string | undefined;
   }>();
 
   type SchemaOut = z.output<typeof schema>;
@@ -119,6 +121,7 @@ test("pipe optionality inside objects", () => {
     c: string;
     d?: string | undefined;
     e: string;
+    f: string;
   }>();
 });
 

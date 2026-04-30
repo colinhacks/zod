@@ -587,6 +587,13 @@ export type RecursiveA = z.ZodUnion<
   ]
 >;
 
+test("recursive core pipe type", () => {
+  type RecursiveCorePipe = z.core.$ZodPipe<RecursiveCorePipeBar, z.core.$ZodTransform>;
+  type RecursiveCorePipeBar = z.core.$ZodString | RecursiveCorePipe;
+
+  expectTypeOf<RecursiveCorePipe>().toMatchTypeOf<z.core.$ZodPipe>();
+});
+
 test("recursive type with `id` meta", () => {
   const AType = z.object({
     type: z.literal("a"),

@@ -1600,8 +1600,14 @@ export function nan(params?: string | core.$ZodNaNParams): ZodMiniNaN {
 // ZodMiniPipe
 export interface ZodMiniPipe<A extends SomeType = core.$ZodType, B extends SomeType = core.$ZodType>
   extends _ZodMiniType<core.$ZodPipeInternals<A, B>> {
-  // _zod: core.$ZodPipeInternals<A, B>;
+  _zod: core.$ZodPipeInternals<A, B> & {
+    values: A["_zod"]["values"];
+    optin: A["_zod"]["optin"];
+    optout: B["_zod"]["optout"];
+    propValues: A["_zod"]["propValues"];
+  };
 }
+
 export const ZodMiniPipe: core.$constructor<ZodMiniPipe> = /*@__PURE__*/ core.$constructor(
   "ZodMiniPipe",
   (inst, def) => {
@@ -1626,7 +1632,12 @@ export function pipe<
 export interface ZodMiniCodec<A extends SomeType = core.$ZodType, B extends SomeType = core.$ZodType>
   extends ZodMiniPipe<A, B>,
     core.$ZodCodec<A, B> {
-  _zod: core.$ZodCodecInternals<A, B>;
+  _zod: core.$ZodCodecInternals<A, B> & {
+    values: A["_zod"]["values"];
+    optin: A["_zod"]["optin"];
+    optout: B["_zod"]["optout"];
+    propValues: A["_zod"]["propValues"];
+  };
   def: core.$ZodCodecDef<A, B>;
 }
 export const ZodMiniCodec: core.$constructor<ZodMiniCodec> = /*@__PURE__*/ core.$constructor(

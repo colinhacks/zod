@@ -2295,9 +2295,16 @@ export interface ZodPipe<A extends core.SomeType = core.$ZodType, B extends core
   extends _ZodType<core.$ZodPipeInternals<A, B>>,
     core.$ZodPipe<A, B> {
   "~standard": ZodStandardSchemaWithJSON<this>;
+  _zod: core.$ZodPipeInternals<A, B> & {
+    values: A["_zod"]["values"];
+    optin: A["_zod"]["optin"];
+    optout: B["_zod"]["optout"];
+    propValues: A["_zod"]["propValues"];
+  };
   in: A;
   out: B;
 }
+
 export const ZodPipe: core.$constructor<ZodPipe> = /*@__PURE__*/ core.$constructor("ZodPipe", (inst, def) => {
   core.$ZodPipe.init(inst, def);
   ZodType.init(inst, def);
@@ -2325,7 +2332,12 @@ export interface ZodCodec<A extends core.SomeType = core.$ZodType, B extends cor
   extends ZodPipe<A, B>,
     core.$ZodCodec<A, B> {
   "~standard": ZodStandardSchemaWithJSON<this>;
-  _zod: core.$ZodCodecInternals<A, B>;
+  _zod: core.$ZodCodecInternals<A, B> & {
+    values: A["_zod"]["values"];
+    optin: A["_zod"]["optin"];
+    optout: B["_zod"]["optout"];
+    propValues: A["_zod"]["propValues"];
+  };
   def: core.$ZodCodecDef<A, B>;
 }
 export const ZodCodec: core.$constructor<ZodCodec> = /*@__PURE__*/ core.$constructor("ZodCodec", (inst, def) => {

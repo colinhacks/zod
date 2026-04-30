@@ -3990,10 +3990,10 @@ export interface $ZodPipeInternals<A extends SomeType = $ZodType, B extends Some
   extends $ZodTypeInternals<core.output<B>, core.input<A>> {
   def: $ZodPipeDef<A, B>;
   isst: never;
-  values: A["_zod"]["values"];
-  optin: A["_zod"]["optin"];
-  optout: B["_zod"]["optout"];
-  propValues: A["_zod"]["propValues"];
+  values?: util.PrimitiveSet | undefined;
+  optin?: "optional" | undefined;
+  optout?: "optional" | undefined;
+  propValues?: util.PropValues | undefined;
 }
 
 export interface $ZodPipe<A extends SomeType = $ZodType, B extends SomeType = $ZodType> extends $ZodType {
@@ -4046,13 +4046,8 @@ export interface $ZodCodecDef<A extends SomeType = $ZodType, B extends SomeType 
 }
 
 export interface $ZodCodecInternals<A extends SomeType = $ZodType, B extends SomeType = $ZodType>
-  extends $ZodTypeInternals<core.output<B>, core.input<A>> {
+  extends $ZodPipeInternals<A, B> {
   def: $ZodCodecDef<A, B>;
-  isst: never;
-  values: A["_zod"]["values"];
-  optin: A["_zod"]["optin"];
-  optout: B["_zod"]["optout"];
-  propValues: A["_zod"]["propValues"];
 }
 
 export interface $ZodCodec<A extends SomeType = $ZodType, B extends SomeType = $ZodType> extends $ZodType {
