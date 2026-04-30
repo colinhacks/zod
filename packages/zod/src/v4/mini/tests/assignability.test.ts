@@ -120,13 +120,13 @@ test("schemaForType", () => {
   type Company = {
     id: string;
     name: string;
-    webAddress?: string | null;
+    webAddress: string | null;
   };
 
   const CompanySchema = z.object({
     id: z.string(),
     name: z.string(),
-    webAddress: z.optional(z.nullable(z.string())),
+    webAddress: z.nullable(z.string()),
   });
   const Company = z.schemaForType<Company>()(CompanySchema);
 
@@ -162,7 +162,7 @@ test("schemaForType", () => {
     z.object({
       id: z.string(),
       name: z.string(),
-      webAddress: z.optional(z.nullable(z.string())),
+      webAddress: z.nullable(z.string()),
       extra: z.string(),
     })
   );
@@ -172,7 +172,7 @@ test("schemaForType", () => {
     z.object({
       id: z.number(),
       name: z.string(),
-      webAddress: z.optional(z.nullable(z.string())),
+      webAddress: z.nullable(z.string()),
     })
   );
 });

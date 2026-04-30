@@ -161,13 +161,13 @@ test("schemaForType", () => {
   type Company = {
     id: string;
     name: string;
-    webAddress?: string | null;
+    webAddress: string | null;
   };
 
   const CompanySchema = z.object({
     id: z.string(),
     name: z.string(),
-    webAddress: z.string().url().nullish(),
+    webAddress: z.string().url().nullable(),
   });
   const Company = z.schemaForType<Company>()(CompanySchema);
 
@@ -206,12 +206,12 @@ test("schemaForType", () => {
   expectTypeOf<z.output<typeof Complex>>().toEqualTypeOf<Complex>();
 
   type Items = {
-    items: { value?: string }[];
+    items: { value: string }[];
   };
 
   const Items = z.schemaForType<Items>()(
     z.object({
-      items: z.array(z.object({ value: z.string().optional() })),
+      items: z.array(z.object({ value: z.string() })),
     })
   );
   expectTypeOf<z.output<typeof Items>>().toEqualTypeOf<Items>();
@@ -244,7 +244,7 @@ test("schemaForType", () => {
     z.object({
       id: z.string(),
       name: z.string(),
-      webAddress: z.string().url().nullish(),
+      webAddress: z.string().url().nullable(),
       extra: z.string(),
     })
   );
@@ -254,7 +254,7 @@ test("schemaForType", () => {
     z.object({
       id: z.number(),
       name: z.string(),
-      webAddress: z.string().url().nullish(),
+      webAddress: z.string().url().nullable(),
     })
   );
 
