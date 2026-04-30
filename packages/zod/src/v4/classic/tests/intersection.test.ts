@@ -55,6 +55,28 @@ test("object intersection: strict + strict", () => {
   expect(C.parse({ a: "foo", b: "bar", c: "extra" })).toEqual({ a: "foo", b: "bar" });
 });
 
+test("strict object can be composed with a refined object", () => {
+  const intersection = z
+    .object({ key1: z.boolean() })
+    .strict()
+    .and(z.object({ key2: z.boolean() }).refine(({ key2 }) => key2));
+
+  expect(intersection.parse({ key1: true, key2: true })).toEqual({
+    key1: true,
+    key2: true,
+  });
+
+  const merged = z
+    .object({ key1: z.boolean() })
+    .strict()
+    .merge(z.object({ key2: z.boolean() }).refine(({ key2 }) => key2));
+
+  expect(merged.parse({ key1: true, key2: true })).toEqual({
+    key1: true,
+    key2: true,
+  });
+});
+
 test("strict object intersection runs checks after unrecognized keys are reconciled", () => {
   const spy = vi.fn();
   const alwaysFailingCheck = (payload: z.core.ParsePayload) => {
