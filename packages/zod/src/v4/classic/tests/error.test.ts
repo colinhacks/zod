@@ -541,10 +541,10 @@ test("z.config customError ", () => {
   z.config({ customError: undefined });
 });
 
-test("z.config customError receives schema for metadata", () => {
+test("z.config customError receives schema parameter for metadata", () => {
   z.config({
-    customError: (iss) => {
-      const title = iss.schema ? z.globalRegistry.get(iss.schema)?.title : undefined;
+    customError: (iss, schema) => {
+      const title = schema ? z.globalRegistry.get(schema)?.title : undefined;
       return title ? `${title}: ${iss.code}` : undefined;
     },
   });

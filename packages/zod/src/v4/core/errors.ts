@@ -200,8 +200,6 @@ type RawIssue<T extends $ZodIssueBase> = T extends any
         readonly input: unknown;
         /** The schema or check that originated this issue. */
         readonly inst?: $ZodType | $ZodCheck;
-        /** The schema responsible for this issue. */
-        readonly schema?: $ZodType;
         /** If `true`, Zod will continue executing checks/refinements after this issue. */
         readonly continue?: boolean | undefined;
       } & Record<string, unknown>
@@ -212,7 +210,7 @@ export type $ZodRawIssue<T extends $ZodIssueBase = $ZodIssue> = $ZodInternalIssu
 
 export interface $ZodErrorMap<T extends $ZodIssueBase = $ZodIssue> {
   // biome-ignore lint:
-  (issue: $ZodRawIssue<T>): { message: string } | string | undefined | null;
+  (issue: $ZodRawIssue<T>, schema?: $ZodType): { message: string } | string | undefined | null;
 }
 
 ////////////////////////    ERROR CLASS   ////////////////////////

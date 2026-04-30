@@ -1640,8 +1640,6 @@ type RawIssue<T extends errors.$ZodIssueBase> = T extends any
       util.MakePartial<T, "message" | "path"> & {
         /** The schema or check that originated this issue. */
         readonly inst?: schemas.$ZodType | checks.$ZodCheck;
-        /** The schema responsible for this issue. */
-        readonly schema?: schemas.$ZodType;
         /** If `true`, Zod will execute subsequent checks/refinements instead of immediately aborting */
         readonly continue?: boolean | undefined;
       } & Record<string, unknown>
