@@ -35,7 +35,6 @@ export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> ex
 export interface ParsePayload<T = unknown> {
   value: T;
   issues: errors.$ZodRawIssue[];
-  deferredUnrecognizedKeys?: errors.$ZodRawIssue[];
   /** A way to mark a whole payload as aborted. Used in codecs/pipes. */
   aborted?: boolean;
 }
@@ -1883,18 +1882,13 @@ function handleCatchall(
   }
 
   if (unrecognized.length) {
-    const issue: errors.$ZodRawIssue = {
+    payload.issues.push({
       code: "unrecognized_keys",
       keys: unrecognized,
       input,
       inst,
-    };
-    if (ctx.loosen) {
-      payload.deferredUnrecognizedKeys ??= [];
-      payload.deferredUnrecognizedKeys.push(issue);
-    } else {
-      payload.issues.push(issue);
-    }
+      continue: ctx.loosen ? true : undefined,
+    });
   }
 
   if (!proms.length) return payload;
@@ -2564,7 +2558,7 @@ function handleIntersectionResults(
   const unrecKeys = new Map<string, { l?: true; r?: true }>();
   let unrecIssue: errors.$ZodRawIssue | undefined;
 
-  for (const iss of left.issues.concat(left.deferredUnrecognizedKeys ?? [])) {
+  for (const iss of left.issues) {
     if (iss.code === "unrecognized_keys") {
       unrecIssue ??= iss;
       for (const k of iss.keys) {
@@ -2576,7 +2570,7 @@ function handleIntersectionResults(
     }
   }
 
-  for (const iss of right.issues.concat(right.deferredUnrecognizedKeys ?? [])) {
+  for (const iss of right.issues) {
     if (iss.code === "unrecognized_keys") {
       for (const k of iss.keys) {
         if (!unrecKeys.has(k)) unrecKeys.set(k, {});
@@ -2592,11 +2586,11 @@ function handleIntersectionResults(
   if (bothKeys.length && unrecIssue) {
     const issue = { ...unrecIssue, keys: bothKeys };
     if (ctx.loosen) {
-      result.deferredUnrecognizedKeys ??= [];
-      result.deferredUnrecognizedKeys.push(issue);
+      issue.continue = true;
     } else {
-      result.issues.push(issue);
+      delete issue.continue;
     }
+    result.issues.push(issue);
   }
 
   const merged = mergeValues(left.value, right.value);
@@ -4044,14 +4038,18 @@ export const $ZodPipe: core.$constructor<$ZodPipe> = /*@__PURE__*/ core.$constru
 });
 
 function handlePipeResult(left: ParsePayload, next: $ZodType, ctx: ParseContextInternal) {
-  if (left.issues.length) {
+  if (left.issues.length && !allowsContinuablePipeIssues(left, ctx)) {
     // prevent further checks
     left.aborted = true;
     return left;
   }
-  const payload: ParsePayload = { value: left.value, issues: left.issues };
-  if (left.deferredUnrecognizedKeys) payload.deferredUnrecognizedKeys = left.deferredUnrecognizedKeys;
-  return next._zod.run(payload, ctx);
+  return next._zod.run({ value: left.value, issues: left.issues }, ctx);
+}
+
+function allowsContinuablePipeIssues(left: ParsePayload, ctx: ParseContextInternal): boolean {
+  return (
+    ctx.loosen === true && left.issues.every((issue) => issue.code === "unrecognized_keys" && issue.continue === true)
+  );
 }
 
 ////////////////////////////////////////////
