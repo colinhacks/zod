@@ -2057,12 +2057,29 @@ TestSchema.parse("whatever"); // ❌
 To validate a particular property of a class instance against a Zod schema:
 
 ```ts
-const blobSchema = z.instanceof(URL).check(
-  z.property("protocol", z.literal("https:" as string, "Only HTTPS allowed"))
-);
+const blobSchema = z.instanceof(URL).properties({
+  protocol: z.literal("https:" as string, "Only HTTPS allowed"),
+  hostname: z.string().regex(z.regexes.domain),
+});
 
 blobSchema.parse(new URL("https://example.com")); // ✅
 blobSchema.parse(new URL("http://example.com")); // ❌
+blobSchema.parse(new URL("https://localhost")); // ❌
+```
+
+The top-level `z.properties()` API generalizes `z.property()` to validate multiple properties at once.
+
+```ts
+const httpsUrl = z.instanceof(URL).check(
+  z.properties({
+    protocol: z.literal("https:" as string),
+    hostname: z.string().regex(z.regexes.domain),
+  })
+);
+
+httpsUrl.parse(new URL("https://example.com")); // ✅
+httpsUrl.parse(new URL("http://example.com")); // ❌
+httpsUrl.parse(new URL("https://localhost")); // ❌
 ```
 
 The `z.property()` API works with any data type (but it's most useful when used in conjunction with `z.instanceof()`).

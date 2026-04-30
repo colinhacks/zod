@@ -23,6 +23,7 @@ export {
   _startsWith as startsWith,
   _endsWith as endsWith,
   _property as property,
+  _properties as properties,
   _mime as mime,
   _overwrite as overwrite,
   _normalize as normalize,

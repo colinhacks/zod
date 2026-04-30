@@ -2535,6 +2535,23 @@ export const ZodCustom: core.$constructor<ZodCustom> = /*@__PURE__*/ core.$const
   inst._zod.processJSONSchema = (ctx, json, params) => processors.customProcessor(inst, ctx, json, params);
 });
 
+export interface ZodInstanceOf<T extends typeof util.Class = typeof util.Class>
+  extends ZodCustom<InstanceType<T>, InstanceType<T>> {
+  properties<Shape extends core.$ZodShape>(shape: Shape, params?: string | core.$ZodCheckPropertiesParams): this;
+}
+
+export const ZodInstanceOf: core.$constructor<ZodInstanceOf> = /*@__PURE__*/ core.$constructor(
+  "ZodInstanceOf",
+  (inst, def) => {
+    ZodCustom.init(inst, def);
+    _installLazyMethods(inst, "ZodInstanceOf", {
+      properties(shape, params) {
+        return this.check(checks.properties(shape, params));
+      },
+    });
+  }
+);
+
 // custom checks
 export function check<O = unknown>(fn: core.CheckFn<O>): core.$ZodCheck<O> {
   const ch = new core.$ZodCheck({
@@ -2577,11 +2594,8 @@ type ZodInstanceOfParams = core.Params<
   core.$ZodIssueCustom,
   "type" | "check" | "checks" | "fn" | "abort" | "error" | "params" | "path"
 >;
-function _instanceof<T extends typeof util.Class>(
-  cls: T,
-  params: ZodInstanceOfParams = {}
-): ZodCustom<InstanceType<T>, InstanceType<T>> {
-  const inst = new ZodCustom({
+function _instanceof<T extends typeof util.Class>(cls: T, params: ZodInstanceOfParams = {}): ZodInstanceOf<T> {
+  const inst = new ZodInstanceOf({
     type: "custom",
     check: "custom",
     fn: (data) => data instanceof cls,

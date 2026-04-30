@@ -1130,6 +1130,53 @@ export const $ZodCheckProperty: core.$constructor<$ZodCheckProperty> = /*@__PURE
 );
 
 ///////////////////////////////////
+/////    $ZodCheckProperties  /////
+///////////////////////////////////
+export interface $ZodCheckPropertiesDef extends $ZodCheckDef {
+  check: "properties";
+  shape: schemas.$ZodShape;
+}
+
+export interface $ZodCheckPropertiesInternals<T extends object = object> extends $ZodCheckInternals<T> {
+  def: $ZodCheckPropertiesDef;
+  issc: errors.$ZodIssue;
+}
+
+export interface $ZodCheckProperties<T extends object = object> extends $ZodCheck<T> {
+  _zod: $ZodCheckPropertiesInternals<T>;
+}
+
+export const $ZodCheckProperties: core.$constructor<$ZodCheckProperties> = /*@__PURE__*/ core.$constructor(
+  "$ZodCheckProperties",
+  (inst, def) => {
+    $ZodCheck.init(inst, def);
+
+    inst._zod.check = (payload) => {
+      const proms: Promise<void>[] = [];
+      for (const property of Object.keys(def.shape)) {
+        const schema = def.shape[property]!;
+        const result = schema._zod.run(
+          {
+            value: (payload.value as any)[property],
+            issues: [],
+          },
+          {}
+        );
+
+        if (result instanceof Promise) {
+          proms.push(result.then((result) => handleCheckPropertyResult(result, payload, property)));
+        } else {
+          handleCheckPropertyResult(result, payload, property);
+        }
+      }
+
+      if (proms.length) return Promise.all(proms).then(() => undefined);
+      return;
+    };
+  }
+);
+
+///////////////////////////////////
 /////    $ZodCheckMimeType    /////
 ///////////////////////////////////
 export interface $ZodCheckMimeTypeDef extends $ZodCheckDef {
@@ -1280,6 +1327,7 @@ export type $ZodChecks =
   | $ZodCheckLengthEquals
   | $ZodCheckStringFormat
   | $ZodCheckProperty
+  | $ZodCheckProperties
   | $ZodCheckMimeType
   | $ZodCheckOverwrite;
 
