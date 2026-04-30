@@ -145,26 +145,6 @@ type Player = z.infer<typeof Player>;
 const player: Player = { username: "billie", xp: 100 };
 ```
 
-<Callout>
-In most cases, you should define your schema first and infer the TypeScript type from it. If you need to write a schema against an externally defined type, you can use `satisfies` to check that the schema's output is assignable to it:
-
-```ts
-type Player = {
-  username: string;
-  xp: number;
-};
-
-const Player = z.object({
-  username: z.string(),
-  xp: z.number(),
-}) satisfies z.ZodType<Player>;
-```
-
-For Zod Mini, use `z.ZodMiniType<Player>` instead.
-
-This keeps Zod's schema-first model while giving you a TypeScript check against an existing type. It is an assignability check, not an exact type equality check; extra object properties and omitted optional properties may still pass.
-</Callout>
-
 In some cases, the input & output types of a schema can diverge. For instance, the `.transform()` API can convert the input from one type to another. In these cases, you can extract the input and output types independently:
 
 ```ts
