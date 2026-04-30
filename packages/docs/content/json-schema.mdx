@@ -1,6 +1,6 @@
 ---
 title: "JSON Schema"
-description: "How to convert Zod schemas to JSON Schema"
+description: "How to convert between Zod schemas and JSON Schema"
 ---
 
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
@@ -46,6 +46,52 @@ z.transform(); // ❌
 z.nan(); // ❌
 z.custom(); // ❌
 ```
+
+## Validating JSON Schema
+
+To validate data with an existing JSON Schema, use `z.jsonSchema()`. This creates a Zod schema that delegates validation to [AJV](https://ajv.js.org/).
+
+```ts
+import Ajv from "ajv";
+import * as z from "zod";
+
+const ajv = new Ajv({ allErrors: true });
+
+const User = z.jsonSchema(
+  {
+    type: "object",
+    properties: {
+      name: { type: "string" },
+      age: { type: "integer", minimum: 0 },
+    },
+    required: ["name", "age"],
+    additionalProperties: false,
+  },
+  { ajv }
+);
+
+User.parse({ name: "Colin", age: 30 }); // => { name: "Colin", age: 30 }
+User.parse({ name: "Colin" }); // throws ZodError
+```
+
+You can also configure an AJV instance globally:
+
+```ts
+import Ajv from "ajv";
+import * as z from "zod";
+
+z.config({ ajv: new Ajv() });
+
+const User = z.jsonSchema({
+  type: "object",
+  properties: {
+    name: { type: "string" },
+  },
+  required: ["name"],
+});
+```
+
+When both are provided, the local `{ ajv }` option takes precedence. Compiled validators are cached by AJV instance and JSON Schema object identity, so reuse schema objects in performance-sensitive paths.
 
 ## String formats
 

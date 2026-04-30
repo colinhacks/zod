@@ -1760,8 +1760,11 @@ export const _ZodMiniAJVSchema: core.$constructor<_ZodMiniAJVSchema> = /*@__PURE
 
 /**
  * Create a Zod schema from a JSON Schema definition.
- * Requires AJV to be configured via `z.config({ ajv })`.
+ * Pass an AJV instance locally or configure one globally with `z.config({ ajv })`.
  */
-export function jsonSchema<T = unknown>(schema: core.JSONSchema.JSONSchema): _ZodMiniAJVSchema<T> {
-  return core._jsonSchema(_ZodMiniAJVSchema as any, schema) as _ZodMiniAJVSchema<T>;
+export function jsonSchema<T = unknown>(
+  schema: core.JSONSchema.JSONSchema,
+  params?: core.$ZodJSONSchemaParams
+): _ZodMiniAJVSchema<T> {
+  return core._jsonSchema(_ZodMiniAJVSchema as any, schema, params) as _ZodMiniAJVSchema<T>;
 }

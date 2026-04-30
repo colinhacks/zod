@@ -1683,6 +1683,11 @@ export interface $ZodJSONSchema<T = unknown> extends schemas.$ZodCustom<T> {
   schema: JSONSchema;
 }
 
+export interface $ZodJSONSchemaParams {
+  /** AJV instance for validating this JSON Schema. Overrides the globally configured AJV instance. */
+  ajv?: ajv.$AjvLike | undefined;
+}
+
 export const $ZodJSONSchema: core.$constructor<$ZodJSONSchema> = /*@__PURE__*/ core.$constructor(
   "$ZodJSONSchema",
   (inst, def) => {
@@ -1701,18 +1706,25 @@ export const $ZodJSONSchema: core.$constructor<$ZodJSONSchema> = /*@__PURE__*/ c
 
 export function _jsonSchema<T = unknown>(
   Class: util.SchemaClass<schemas.$ZodCustom>,
-  schema: JSONSchema
+  schema: JSONSchema,
+  params?: $ZodJSONSchemaParams
 ): $ZodJSONSchema<T> {
-  const ajvInstance = core.globalConfig.ajv;
+  const ajvInstance = params?.ajv ?? core.globalConfig.ajv;
   if (!ajvInstance) {
-    throw new Error("AJV not configured. Call z.config({ ajv }) first.");
+    throw new Error("AJV not configured. Pass { ajv } or call z.config({ ajv }) first.");
   }
 
   // Check cache for compiled validator
-  let validate = ajv.compiledSchemas.get(schema);
+  let schemaCache = ajv.compiledSchemas.get(ajvInstance);
+  if (!schemaCache) {
+    schemaCache = new WeakMap();
+    ajv.compiledSchemas.set(ajvInstance, schemaCache);
+  }
+
+  let validate = schemaCache.get(schema);
   if (!validate) {
     validate = ajvInstance.compile(schema);
-    ajv.compiledSchemas.set(schema, validate);
+    schemaCache.set(schema, validate);
   }
 
   // Capture validate in closure for the check function

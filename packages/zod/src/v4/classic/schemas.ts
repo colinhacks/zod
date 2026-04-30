@@ -2325,7 +2325,7 @@ export const _ZodAJVSchema: core.$constructor<_ZodAJVSchema> = /*@__PURE__*/ cor
 
 /**
  * Create a Zod schema from a JSON Schema definition.
- * Requires AJV to be configured via `z.config({ ajv })`.
+ * Pass an AJV instance locally or configure one globally with `z.config({ ajv })`.
  *
  * @example
  * ```ts
@@ -2346,6 +2346,9 @@ export const _ZodAJVSchema: core.$constructor<_ZodAJVSchema> = /*@__PURE__*/ cor
  * userSchema.parse({ name: "Colin", age: 30 }); // OK
  * ```
  */
-export function jsonSchema<T = unknown>(schema: core.JSONSchema.JSONSchema): _ZodAJVSchema<T> {
-  return core._jsonSchema(_ZodAJVSchema as any, schema) as _ZodAJVSchema<T>;
+export function jsonSchema<T = unknown>(
+  schema: core.JSONSchema.JSONSchema,
+  params?: core.$ZodJSONSchemaParams
+): _ZodAJVSchema<T> {
+  return core._jsonSchema(_ZodAJVSchema as any, schema, params) as _ZodAJVSchema<T>;
 }

@@ -196,8 +196,8 @@ import type * as errors from "./errors.js";
 import type * as schemas from "./schemas.js";
 import * as util from "./util.js";
 
-/** WeakMap cache for compiled JSON Schema validators */
-export const compiledSchemas = /* @__PURE__*/ new WeakMap<object, $AjvValidateFunction>();
+/** WeakMap cache for compiled JSON Schema validators, scoped per AJV instance. */
+export const compiledSchemas = /* @__PURE__*/ new WeakMap<$AjvLike, WeakMap<object, $AjvValidateFunction>>();
 
 /**
  * Parse a JSON Pointer (RFC 6901) into a Zod path array.

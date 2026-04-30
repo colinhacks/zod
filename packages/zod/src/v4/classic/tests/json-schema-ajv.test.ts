@@ -262,6 +262,50 @@ describe("z.jsonSchema() error handling", () => {
       }
     }
   });
+
+  test("accepts a local AJV instance", () => {
+    const savedAjv = z.core.globalConfig.ajv;
+    delete (z.core.globalConfig as any).ajv;
+
+    try {
+      const schema = z.jsonSchema({ type: "string" }, { ajv: new Ajv() });
+      expect(schema.safeParse("hello").success).toBe(true);
+      expect(schema.safeParse(123).success).toBe(false);
+    } finally {
+      if (savedAjv) {
+        z.core.globalConfig.ajv = savedAjv;
+      }
+    }
+  });
+
+  test("local AJV overrides global config and uses a separate compile cache", () => {
+    const savedAjv = z.core.globalConfig.ajv;
+    const globalAjv = new Ajv();
+    globalAjv.addFormat("startsWith", /^a/);
+    const localAjv = new Ajv();
+    localAjv.addFormat("startsWith", /^b/);
+    const jsonSchemaObj = {
+      type: "string" as const,
+      format: "startsWith",
+    };
+
+    try {
+      z.config({ ajv: globalAjv });
+      const globalSchema = z.jsonSchema(jsonSchemaObj);
+      const localSchema = z.jsonSchema(jsonSchemaObj, { ajv: localAjv });
+
+      expect(globalSchema.safeParse("apple").success).toBe(true);
+      expect(globalSchema.safeParse("banana").success).toBe(false);
+      expect(localSchema.safeParse("banana").success).toBe(true);
+      expect(localSchema.safeParse("apple").success).toBe(false);
+    } finally {
+      if (savedAjv) {
+        z.core.globalConfig.ajv = savedAjv;
+      } else {
+        delete (z.core.globalConfig as any).ajv;
+      }
+    }
+  });
 });
 
 describe("JSON Pointer decoding", () => {
