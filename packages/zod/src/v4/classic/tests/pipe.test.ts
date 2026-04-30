@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 
 import * as z from "zod/v4";
 
@@ -13,6 +13,37 @@ test("string to number pipe async", async () => {
     .transform(async (val) => Number(val))
     .pipe(z.number());
   expect(await schema.parseAsync("1234")).toEqual(1234);
+});
+
+test("pipe contextually types transforms", () => {
+  const schema = z.string().pipe(z.transform((val) => val.toUpperCase()));
+  expectTypeOf<z.output<typeof schema>>().toEqualTypeOf<string>();
+
+  // @ts-expect-error incompatible pipe targets are still rejected
+  z.string().pipe(z.number());
+});
+
+test("pipe branded output to unbranded input", () => {
+  const zodBrand = z.string().brand<"myBrand">();
+  const inputSchema = z.object({
+    a: z.number(),
+    c: zodBrand,
+  });
+  const validateSchema = z.object({
+    a: z.number(),
+    c: zodBrand,
+  });
+
+  const testSchemaPipeline = inputSchema.transform((input) => input).pipe(validateSchema);
+  const testSchemaPipeline2 = inputSchema.pipe(validateSchema);
+  const testSchemaPipeline3 = inputSchema.pipe(inputSchema);
+
+  expectTypeOf<z.output<typeof testSchemaPipeline>>().toEqualTypeOf<{
+    a: number;
+    c: string & z.core.$brand<"myBrand">;
+  }>();
+  expectTypeOf<z.output<typeof testSchemaPipeline2>>().toEqualTypeOf<z.output<typeof validateSchema>>();
+  expectTypeOf<z.output<typeof testSchemaPipeline3>>().toEqualTypeOf<z.output<typeof inputSchema>>();
 });
 
 test("string with default fallback", () => {
