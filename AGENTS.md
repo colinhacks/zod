@@ -34,6 +34,7 @@ The project uses pnpm workspaces. Key commands:
 - Ask before generating new files
 - Use `util.defineLazy()` for computed properties to avoid circular dependencies
 - Performance is critical - parameter reassignment is allowed for optimization
+- Do not allocate helper functions, wrapper objects, arrays, or closures in parsing fast paths. Keep no-error parse paths allocation-free unless an existing local pattern already allocates there and the change cannot reasonably avoid it.
 - ALWAYS use the `gh` CLI to fetch GitHub information (issues, PRs, etc.) instead of relying on web search or assumptions
 - Keep JSDoc as minimal as possible. A self-explanatory type or symbol name needs no doc comment. When a comment is genuinely required, write one short sentence describing behavior — not history, rationale, or examples. Don't add interface-level JSDoc that just restates the interface name.
 - When you've modified a PR (or opened/closed/commented on one), include the PR URL liberally in summary messages — at minimum once at the end of any reply that touched it

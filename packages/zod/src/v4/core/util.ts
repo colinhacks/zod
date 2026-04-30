@@ -851,10 +851,8 @@ export function finalizeIssue(
   ctx: schemas.ParseContextInternal | undefined,
   config: $ZodConfig
 ): errors.$ZodIssue {
-  const schema =
-    iss.schema ??
-    (((iss.inst as any)?._zod?.traits?.has("$ZodType") ? iss.inst : undefined) as schemas.$ZodType | undefined);
-  const issue = schema ? { ...iss, schema } : iss;
+  const issue = iss as errors.$ZodRawIssue & { schema?: schemas.$ZodType };
+  if (!issue.schema && iss.inst) issue.schema = iss.inst as schemas.$ZodType;
   const message = iss.message
     ? iss.message
     : (unwrapMessage(iss.inst?._zod.def?.error?.(issue as never)) ??
