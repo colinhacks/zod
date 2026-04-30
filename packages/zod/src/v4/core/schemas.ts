@@ -1869,6 +1869,7 @@ function handleCatchall(
     if (key === "__proto__") continue;
     if (keySet.has(key)) continue;
     if (t === "never") {
+      if (ctx.loosen) continue;
       unrecognized.push(key);
       continue;
     }
@@ -1887,7 +1888,6 @@ function handleCatchall(
       keys: unrecognized,
       input,
       inst,
-      continue: ctx.loosen ? true : undefined,
     });
   }
 
@@ -2481,11 +2481,11 @@ export const $ZodIntersection: core.$constructor<$ZodIntersection> = /*@__PURE__
 
       if (async) {
         return Promise.all([left, right]).then(([left, right]) => {
-          return handleIntersectionResults(payload, left, right, ctx);
+          return handleIntersectionResults(payload, left, right);
         });
       }
 
-      return handleIntersectionResults(payload, left, right, ctx);
+      return handleIntersectionResults(payload, left, right);
     };
   }
 );
@@ -2548,12 +2548,7 @@ function mergeValues(
   return { valid: false, mergeErrorPath: [] };
 }
 
-function handleIntersectionResults(
-  result: ParsePayload,
-  left: ParsePayload,
-  right: ParsePayload,
-  ctx: ParseContextInternal
-): ParsePayload {
+function handleIntersectionResults(result: ParsePayload, left: ParsePayload, right: ParsePayload): ParsePayload {
   // Track which side(s) report each key as unrecognized
   const unrecKeys = new Map<string, { l?: true; r?: true }>();
   let unrecIssue: errors.$ZodRawIssue | undefined;
@@ -2584,13 +2579,7 @@ function handleIntersectionResults(
   // Report only keys unrecognized by BOTH sides
   const bothKeys = [...unrecKeys].filter(([, f]) => f.l && f.r).map(([k]) => k);
   if (bothKeys.length && unrecIssue) {
-    const issue = { ...unrecIssue, keys: bothKeys };
-    if (ctx.loosen) {
-      issue.continue = true;
-    } else {
-      delete issue.continue;
-    }
-    result.issues.push(issue);
+    result.issues.push({ ...unrecIssue, keys: bothKeys });
   }
 
   const merged = mergeValues(left.value, right.value);
@@ -4038,18 +4027,12 @@ export const $ZodPipe: core.$constructor<$ZodPipe> = /*@__PURE__*/ core.$constru
 });
 
 function handlePipeResult(left: ParsePayload, next: $ZodType, ctx: ParseContextInternal) {
-  if (left.issues.length && !allowsContinuablePipeIssues(left, ctx)) {
+  if (left.issues.length) {
     // prevent further checks
     left.aborted = true;
     return left;
   }
   return next._zod.run({ value: left.value, issues: left.issues }, ctx);
-}
-
-function allowsContinuablePipeIssues(left: ParsePayload, ctx: ParseContextInternal): boolean {
-  return (
-    ctx.loosen === true && left.issues.every((issue) => issue.code === "unrecognized_keys" && issue.continue === true)
-  );
 }
 
 ////////////////////////////////////////////

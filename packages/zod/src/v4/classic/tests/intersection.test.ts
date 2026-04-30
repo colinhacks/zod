@@ -51,20 +51,8 @@ test("object intersection: strict + strict", () => {
   // Keys recognized by either side should work
   expect(C.parse({ a: "foo", b: "bar" })).toEqual({ a: "foo", b: "bar" });
 
-  // Keys unrecognized by BOTH sides should error
-  const result = C.safeParse({ a: "foo", b: "bar", c: "extra" });
-  expect(result.error?.issues).toMatchInlineSnapshot(`
-    [
-      {
-        "code": "unrecognized_keys",
-        "keys": [
-          "c",
-        ],
-        "message": "Unrecognized key: "c"",
-        "path": [],
-      },
-    ]
-  `);
+  // Extra keys are stripped under the intersection's loosened object parsing
+  expect(C.parse({ a: "foo", b: "bar", c: "extra" })).toEqual({ a: "foo", b: "bar" });
 });
 
 test("strict object intersection runs checks after unrecognized keys are reconciled", () => {
