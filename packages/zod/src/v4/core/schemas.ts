@@ -2579,11 +2579,10 @@ function handleIntersectionResults(result: ParsePayload, left: ParsePayload, rig
     result.issues.push({ ...unrecIssue, keys: bothKeys });
   }
 
-  if (util.aborted(result)) return result;
-
   const merged = mergeValues(left.value, right.value);
 
   if (!merged.valid) {
+    if (util.aborted(result)) return result;
     throw new Error(`Unmergable intersection. Error path: ` + `${JSON.stringify(merged.mergeErrorPath)}`);
   }
 

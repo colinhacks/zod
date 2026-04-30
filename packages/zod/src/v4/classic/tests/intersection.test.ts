@@ -67,6 +67,29 @@ test("object intersection: strict + strict", () => {
   `);
 });
 
+test("nested strict object intersection preserves merged value with defaults", () => {
+  const inner = z.intersection(
+    z.strictObject({
+      x: z.string().default("X default"),
+      y: z.number(),
+    }),
+    z.strictObject({
+      z: z.boolean(),
+    })
+  );
+
+  const schema = z.intersection(inner, z.strictObject({ a: z.string() }));
+  type Schema = z.output<typeof schema>;
+  expectTypeOf<Schema>().toEqualTypeOf<{ x: string; y: number } & { z: boolean } & { a: string }>();
+
+  expect(schema.parse({ y: 34, z: true, a: "hello" })).toEqual({
+    x: "X default",
+    y: 34,
+    z: true,
+    a: "hello",
+  });
+});
+
 test("deep intersection", () => {
   const Animal = z.object({
     properties: z.object({
