@@ -86,6 +86,12 @@ export type ParsedTypes =
 export type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <V>() => V extends U ? 1 : 2 ? true : false;
 export type AssertNotEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <V>() => V extends U ? 1 : 2 ? false : true;
 export type AssertExtends<T, U> = T extends U ? T : never;
+type SchemaForTypeMismatch<T, S extends schemas.$ZodType> = {
+  "types do not match": {
+    expected: T;
+    received: S["_zod"]["output"];
+  };
+};
 export type IsAny<T> = 0 extends 1 & T ? true : false;
 export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 export type OmitKeys<T, K extends string> = Pick<T, Exclude<keyof T, K>>;
@@ -112,6 +118,78 @@ export type BuiltIn =
   | Generator
   | Promise<unknown>
   | RegExp;
+type SchemaForTypeReadonlyKeys<T extends object> = {
+  [K in keyof T]-?: AssertEqual<{ [Q in K]: T[K] }, { -readonly [Q in K]: T[K] }> extends true ? never : K;
+}[keyof T];
+type SchemaForTypeOptionalKeys<T extends object> = {
+  [K in keyof T]-?: {} extends Pick<T, K> ? K : never;
+}[keyof T];
+type SchemaForTypePropertiesEqual<T extends object, U extends object> = false extends {
+  [K in keyof T & keyof U]: K extends SchemaForTypeOptionalKeys<T>
+    ? SchemaForTypeEqual<Exclude<T[K], undefined>, Exclude<U[K], undefined>>
+    : SchemaForTypeEqual<T[K], U[K]>;
+}[keyof T & keyof U]
+  ? false
+  : true;
+type SchemaForTypeObjectEqual<T extends object, U extends object> = AssertEqual<keyof T, keyof U> extends true
+  ? AssertEqual<SchemaForTypeOptionalKeys<T>, SchemaForTypeOptionalKeys<U>> extends true
+    ? AssertEqual<SchemaForTypeReadonlyKeys<T>, SchemaForTypeReadonlyKeys<U>> extends true
+      ? SchemaForTypePropertiesEqual<T, U>
+      : false
+    : false
+  : false;
+type SchemaForTypeIsReadonlyArray<T extends readonly unknown[]> = T extends unknown[] ? false : true;
+type SchemaForTypeArrayEqual<T extends readonly unknown[], U> = U extends readonly unknown[]
+  ? number extends T["length"]
+    ? number extends U["length"]
+      ? AssertEqual<SchemaForTypeIsReadonlyArray<T>, SchemaForTypeIsReadonlyArray<U>> extends true
+        ? SchemaForTypeEqual<T[number], U[number]>
+        : false
+      : false
+    : AssertEqual<T, U>
+  : false;
+type SchemaForTypeEqual<T, U> = IsAny<T> extends true
+  ? IsAny<U> extends true
+    ? true
+    : false
+  : IsAny<U> extends true
+    ? false
+    : AssertEqual<T, U> extends true
+      ? true
+      : T extends BuiltIn
+        ? false
+        : U extends BuiltIn
+          ? false
+          : T extends Map<infer TK, infer TV>
+            ? U extends Map<infer UK, infer UV>
+              ? false extends [SchemaForTypeEqual<TK, UK>, SchemaForTypeEqual<TV, UV>][number]
+                ? false
+                : true
+              : false
+            : T extends ReadonlyMap<infer TK, infer TV>
+              ? U extends ReadonlyMap<infer UK, infer UV>
+                ? false extends [SchemaForTypeEqual<TK, UK>, SchemaForTypeEqual<TV, UV>][number]
+                  ? false
+                  : true
+                : false
+              : T extends Set<infer TV>
+                ? U extends Set<infer UV>
+                  ? SchemaForTypeEqual<TV, UV>
+                  : false
+                : T extends ReadonlySet<infer TV>
+                  ? U extends ReadonlySet<infer UV>
+                    ? SchemaForTypeEqual<TV, UV>
+                    : false
+                  : T extends readonly unknown[]
+                    ? SchemaForTypeArrayEqual<T, U>
+                    : T extends object
+                      ? U extends object
+                        ? SchemaForTypeObjectEqual<T, U>
+                        : false
+                      : false;
+type SchemaForTypeResult<S extends schemas.$ZodType, T> = Omit<S, "_zod"> & {
+  _zod: Omit<S["_zod"], "output"> & { output: T };
+};
 export type MakeReadonly<T> = T extends Map<infer K, infer V>
   ? ReadonlyMap<K, V>
   : T extends Set<infer V>
@@ -195,6 +273,12 @@ export function assertEqual<A, B>(val: AssertEqual<A, B>): AssertEqual<A, B> {
 
 export function assertNotEqual<A, B>(val: AssertNotEqual<A, B>): AssertNotEqual<A, B> {
   return val;
+}
+
+export function schemaForType<T>(): <S extends schemas.$ZodType>(
+  schema: S & (SchemaForTypeEqual<S["_zod"]["output"], T> extends true ? unknown : SchemaForTypeMismatch<T, S>)
+) => SchemaForTypeResult<S, T> {
+  return (schema) => schema as any;
 }
 
 export function assertIs<T>(_arg: T): void {}

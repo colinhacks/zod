@@ -1,4 +1,4 @@
-import { test } from "vitest";
+import { expectTypeOf, test } from "vitest";
 
 import * as z from "zod/mini";
 
@@ -114,6 +114,67 @@ test("assignability", () => {
 
   // $ZodFile
   z.file() satisfies z.core.$ZodFile;
+});
+
+test("schemaForType", () => {
+  type Company = {
+    id: string;
+    name: string;
+    webAddress?: string | null;
+  };
+
+  const CompanySchema = z.object({
+    id: z.string(),
+    name: z.string(),
+    webAddress: z.optional(z.nullable(z.string())),
+  });
+  const Company = z.schemaForType<Company>()(CompanySchema);
+
+  expectTypeOf<z.output<typeof Company>>().toEqualTypeOf<Company>();
+
+  const CoreCompany = z.core.schemaForType<Company>()(CompanySchema);
+  expectTypeOf<z.output<typeof CoreCompany>>().toEqualTypeOf<Company>();
+
+  const UtilCompany = z.core.util.schemaForType<Company>()(CompanySchema);
+  expectTypeOf<z.output<typeof UtilCompany>>().toEqualTypeOf<Company>();
+
+  const Transformed = z.schemaForType<{ count: number }>()(
+    z.object({
+      count: z.pipe(
+        z.string(),
+        z.transform((value) => value.length)
+      ),
+    })
+  );
+  expectTypeOf<z.input<typeof Transformed>>().toEqualTypeOf<{ count: string }>();
+  expectTypeOf<z.output<typeof Transformed>>().toEqualTypeOf<{ count: number }>();
+
+  z.schemaForType<Company>()(
+    // @ts-expect-error missing optional keys still fail exact output matching
+    z.object({
+      id: z.string(),
+      name: z.string(),
+    })
+  );
+
+  z.schemaForType<Company>()(
+    // @ts-expect-error extra keys fail exact output matching
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      webAddress: z.optional(z.nullable(z.string())),
+      extra: z.string(),
+    })
+  );
+
+  z.schemaForType<Company>()(
+    // @ts-expect-error wrong property output fails matching
+    z.object({
+      id: z.number(),
+      name: z.string(),
+      webAddress: z.optional(z.nullable(z.string())),
+    })
+  );
 });
 
 test("assignability with type narrowing", () => {

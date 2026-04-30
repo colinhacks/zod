@@ -1,6 +1,7 @@
 import { expectTypeOf, test } from "vitest";
 
 import * as z from "zod/v4";
+import * as core from "zod/v4/core";
 
 test("assignability", () => {
   // $ZodString
@@ -154,6 +155,121 @@ test("assignability", () => {
   // $ZodFile
   z.file() satisfies z.core.$ZodFile;
   z.file() satisfies z.ZodFile;
+});
+
+test("schemaForType", () => {
+  type Company = {
+    id: string;
+    name: string;
+    webAddress?: string | null;
+  };
+
+  const CompanySchema = z.object({
+    id: z.string(),
+    name: z.string(),
+    webAddress: z.string().url().nullish(),
+  });
+  const Company = z.schemaForType<Company>()(CompanySchema);
+
+  Company.shape.id.min(1);
+  expectTypeOf<z.output<typeof Company>>().toEqualTypeOf<Company>();
+
+  const CoreCompany = core.schemaForType<Company>()(CompanySchema);
+  expectTypeOf<core.output<typeof CoreCompany>>().toEqualTypeOf<Company>();
+
+  const UtilCompany = z.core.util.schemaForType<Company>()(CompanySchema);
+  expectTypeOf<z.output<typeof UtilCompany>>().toEqualTypeOf<Company>();
+
+  type Complex = {
+    kind: "company";
+    nested: {
+      founded: Date;
+      tags: string[];
+    };
+    scores: Record<"a" | "b", number>;
+    tuple: [string, number];
+    status: "active" | "inactive";
+  };
+
+  const Complex = z.schemaForType<Complex>()(
+    z.object({
+      kind: z.literal("company"),
+      nested: z.object({
+        founded: z.date(),
+        tags: z.array(z.string()),
+      }),
+      scores: z.record(z.enum(["a", "b"]), z.number()),
+      tuple: z.tuple([z.string(), z.number()]),
+      status: z.union([z.literal("active"), z.literal("inactive")]),
+    })
+  );
+  expectTypeOf<z.output<typeof Complex>>().toEqualTypeOf<Complex>();
+
+  type Items = {
+    items: { value?: string }[];
+  };
+
+  const Items = z.schemaForType<Items>()(
+    z.object({
+      items: z.array(z.object({ value: z.string().optional() })),
+    })
+  );
+  expectTypeOf<z.output<typeof Items>>().toEqualTypeOf<Items>();
+
+  type ReadonlyItem = Readonly<{
+    id: string;
+  }>;
+
+  const ReadonlyItem = z.schemaForType<ReadonlyItem>()(z.object({ id: z.string() }).readonly());
+  expectTypeOf<z.output<typeof ReadonlyItem>>().toEqualTypeOf<ReadonlyItem>();
+
+  const Transformed = z.schemaForType<{ count: number }>()(
+    z.object({
+      count: z.string().transform((value) => value.length),
+    })
+  );
+  expectTypeOf<z.input<typeof Transformed>>().toEqualTypeOf<{ count: string }>();
+  expectTypeOf<z.output<typeof Transformed>>().toEqualTypeOf<{ count: number }>();
+
+  z.schemaForType<Company>()(
+    // @ts-expect-error missing optional keys still fail exact output matching
+    z.object({
+      id: z.string(),
+      name: z.string(),
+    })
+  );
+
+  z.schemaForType<Company>()(
+    // @ts-expect-error extra keys fail exact output matching
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      webAddress: z.string().url().nullish(),
+      extra: z.string(),
+    })
+  );
+
+  z.schemaForType<Company>()(
+    // @ts-expect-error wrong property output fails matching
+    z.object({
+      id: z.number(),
+      name: z.string(),
+      webAddress: z.string().url().nullish(),
+    })
+  );
+
+  z.schemaForType<ReadonlyItem>()(
+    // @ts-expect-error readonly output is required
+    z.object({
+      id: z.string(),
+    })
+  );
+
+  // @ts-expect-error any is only an exact match for any
+  z.schemaForType<string>()(z.any());
+
+  // @ts-expect-error schemaForType checks output, not input
+  z.schemaForType<string>()(z.string().transform((value) => value.length));
 });
 
 test("checks", () => {
