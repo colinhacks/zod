@@ -541,6 +541,35 @@ test("z.config customError ", () => {
   z.config({ customError: undefined });
 });
 
+test("z.config customError receives schema for metadata", () => {
+  z.config({
+    customError: (iss) => {
+      const title = iss.schema ? z.globalRegistry.get(iss.schema)?.title : undefined;
+      return title ? `${title}: ${iss.code}` : undefined;
+    },
+  });
+
+  try {
+    const base = z.string().meta({ title: "Name" });
+    const baseResult = base.safeParse(1234);
+    expect(baseResult.success).toBe(false);
+    expect(baseResult.error!.issues[0].message).toEqual("Name: invalid_type");
+    expect("schema" in baseResult.error!.issues[0]).toBe(false);
+
+    const checkResult = base.min(10).safeParse("short");
+    expect(checkResult.success).toBe(false);
+    expect(checkResult.error!.issues[0].message).toEqual("Name: too_small");
+    expect("schema" in checkResult.error!.issues[0]).toBe(false);
+
+    const refinedResult = base.refine((value) => value.length > 10).safeParse("short");
+    expect(refinedResult.success).toBe(false);
+    expect(refinedResult.error!.issues[0].message).toEqual("Name: custom");
+    expect("schema" in refinedResult.error!.issues[0]).toBe(false);
+  } finally {
+    z.config({ customError: undefined });
+  }
+});
+
 // test("invalid and required", () => {
 //   const str = z.string({
 //     invalid_type_error: "Invalid name",

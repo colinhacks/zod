@@ -200,6 +200,8 @@ type RawIssue<T extends $ZodIssueBase> = T extends any
         readonly input: unknown;
         /** The schema or check that originated this issue. */
         readonly inst?: $ZodType | $ZodCheck;
+        /** The schema responsible for this issue. */
+        readonly schema?: $ZodType;
         /** If `true`, Zod will continue executing checks/refinements after this issue. */
         readonly continue?: boolean | undefined;
       } & Record<string, unknown>
