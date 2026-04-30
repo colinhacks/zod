@@ -24,6 +24,33 @@ test("async preprocess", async () => {
   `);
 });
 
+test("preprocess return type checking", () => {
+  const stringArray = z.string().array();
+  const numberSchema = z.number();
+  const objectSchema = z.object({ value: z.string() });
+  const stringWithDefault = z.string().default("x");
+
+  z.preprocess((val) => String(val), z.string());
+  z.preprocess((data) => [data], stringArray);
+  z.preprocess((data) => ({ value: data }), objectSchema);
+  z.preprocess(() => undefined, stringWithDefault);
+  z.preprocess<unknown[], typeof stringArray>((data) => [data], stringArray);
+  z.preprocess<number, typeof numberSchema, string>((val) => val.length, numberSchema);
+
+  // @ts-expect-error return type is not compatible with schema input
+  z.preprocess(() => 4, z.string());
+  // @ts-expect-error async return type is not compatible with schema input
+  z.preprocess(async () => 4, z.string());
+  // @ts-expect-error union includes a value not compatible with schema input
+  z.preprocess(() => (Math.random() ? "x" : 4), z.string());
+  // @ts-expect-error array element union includes a value not compatible with schema input
+  z.preprocess(() => [] as (string | number)[], stringArray);
+  // @ts-expect-error object property is not compatible with schema input
+  z.preprocess(() => ({ value: 4 }), objectSchema);
+  // @ts-expect-error undefined is not compatible with schema input
+  z.preprocess(() => undefined, z.string());
+});
+
 test("ctx.addIssue accepts string", () => {
   const schema = z.preprocess((_, ctx) => {
     ctx.addIssue("bad stuff");
