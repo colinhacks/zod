@@ -8,6 +8,9 @@ test("type inference", () => {
   const recordWithEnumKeys = z.record(z.enum(["Tuna", "Salmon"]), z.string());
   type recordWithEnumKeys = z.infer<typeof recordWithEnumKeys>;
 
+  const strictRecordWithEnumKeys = z.strictRecord(z.enum(["Tuna", "Salmon"]), z.string());
+  type strictRecordWithEnumKeys = z.infer<typeof strictRecordWithEnumKeys>;
+
   const recordWithLiteralKey = z.record(z.literal(["Tuna", "Salmon", 21]), z.string());
   type recordWithLiteralKey = z.infer<typeof recordWithLiteralKey>;
 
@@ -27,6 +30,7 @@ test("type inference", () => {
 
   expectTypeOf<booleanRecord>().toEqualTypeOf<Record<string, boolean>>();
   expectTypeOf<recordWithEnumKeys>().toEqualTypeOf<Record<"Tuna" | "Salmon", string>>();
+  expectTypeOf<strictRecordWithEnumKeys>().toEqualTypeOf<Record<"Tuna" | "Salmon", string>>();
   expectTypeOf<recordWithLiteralKey>().toEqualTypeOf<Record<"Tuna" | "Salmon" | 21, string>>();
   expectTypeOf<recordWithLiteralUnionKeys>().toEqualTypeOf<Record<"Tuna" | "Salmon" | 21, string>>();
   expectTypeOf<recordWithTypescriptEnum>().toEqualTypeOf<Record<Enum, string>>();
@@ -44,21 +48,10 @@ test("enum exhaustiveness", () => {
     Salmon: "asdf",
   });
 
-  expect(schema.safeParse({ Tuna: "asdf", Salmon: "asdf", Trout: "asdf" })).toMatchInlineSnapshot(`
-    {
-      "error": [ZodError: [
-      {
-        "code": "unrecognized_keys",
-        "keys": [
-          "Trout"
-        ],
-        "path": [],
-        "message": "Unrecognized key: \\"Trout\\""
-      }
-    ]],
-      "success": false,
-    }
-  `);
+  expect(schema.parse({ Tuna: "asdf", Salmon: "asdf", Trout: "asdf" })).toEqual({
+    Tuna: "asdf",
+    Salmon: "asdf",
+  });
   expect(schema.safeParse({ Tuna: "asdf" })).toMatchInlineSnapshot(`
     {
       "error": [ZodError: [
@@ -76,21 +69,9 @@ test("enum exhaustiveness", () => {
   `);
 });
 
-test("typescript enum exhaustiveness", () => {
-  enum BigFish {
-    Tuna = 0,
-    Salmon = "Shark",
-  }
-
-  const schema = z.record(z.enum(BigFish), z.string());
-  const value = {
-    [BigFish.Tuna]: "asdf",
-    [BigFish.Salmon]: "asdf",
-  };
-
-  expect(schema.parse(value)).toEqual(value);
-
-  expect(schema.safeParse({ [BigFish.Tuna]: "asdf", [BigFish.Salmon]: "asdf", Trout: "asdf" })).toMatchInlineSnapshot(`
+test("strictRecord rejects unrecognized enum keys", () => {
+  const schema = z.strictRecord(z.enum(["Tuna", "Salmon"]), z.string());
+  expect(schema.safeParse({ Tuna: "asdf", Salmon: "asdf", Trout: "asdf" })).toMatchInlineSnapshot(`
     {
       "error": [ZodError: [
       {
@@ -105,6 +86,33 @@ test("typescript enum exhaustiveness", () => {
       "success": false,
     }
   `);
+  expect(schema.safeParse({ Tuna: "asdf" }).success).toBe(false);
+});
+
+test("looseRecord passes through unrecognized enum keys", () => {
+  const schema = z.looseRecord(z.enum(["Tuna", "Salmon"]), z.string());
+  expect(schema.parse({ Tuna: "asdf", Salmon: "asdf", Trout: 123 })).toEqual({
+    Tuna: "asdf",
+    Salmon: "asdf",
+    Trout: 123,
+  });
+});
+
+test("typescript enum exhaustiveness", () => {
+  enum BigFish {
+    Tuna = 0,
+    Salmon = "Shark",
+  }
+
+  const schema = z.record(z.enum(BigFish), z.string());
+  const value = {
+    [BigFish.Tuna]: "asdf",
+    [BigFish.Salmon]: "asdf",
+  };
+
+  expect(schema.parse(value)).toEqual(value);
+
+  expect(schema.parse({ [BigFish.Tuna]: "asdf", [BigFish.Salmon]: "asdf", Trout: "asdf" })).toEqual(value);
   expect(schema.safeParse({ [BigFish.Tuna]: "asdf" })).toMatchInlineSnapshot(`
     {
       "error": [ZodError: [
@@ -145,21 +153,11 @@ test("literal exhaustiveness", () => {
     21: "asdf",
   });
 
-  expect(schema.safeParse({ Tuna: "asdf", Salmon: "asdf", 21: "asdf", Trout: "asdf" })).toMatchInlineSnapshot(`
-    {
-      "error": [ZodError: [
-      {
-        "code": "unrecognized_keys",
-        "keys": [
-          "Trout"
-        ],
-        "path": [],
-        "message": "Unrecognized key: \\"Trout\\""
-      }
-    ]],
-      "success": false,
-    }
-  `);
+  expect(schema.parse({ Tuna: "asdf", Salmon: "asdf", 21: "asdf", Trout: "asdf" })).toEqual({
+    Tuna: "asdf",
+    Salmon: "asdf",
+    21: "asdf",
+  });
   expect(schema.safeParse({ Tuna: "asdf" })).toMatchInlineSnapshot(`
     {
       "error": [ZodError: [
@@ -192,21 +190,10 @@ test("pipe exhaustiveness", () => {
     Salmon: "asdf",
   });
 
-  expect(schema.safeParse({ Tuna: "asdf", Salmon: "asdf", Trout: "asdf" })).toMatchInlineSnapshot(`
-    {
-      "error": [ZodError: [
-      {
-        "code": "unrecognized_keys",
-        "keys": [
-          "Trout"
-        ],
-        "path": [],
-        "message": "Unrecognized key: \\"Trout\\""
-      }
-    ]],
-      "success": false,
-    }
-  `);
+  expect(schema.parse({ Tuna: "asdf", Salmon: "asdf", Trout: "asdf" })).toEqual({
+    Tuna: "asdf",
+    Salmon: "asdf",
+  });
   expect(schema.safeParse({ Tuna: "asdf" })).toMatchInlineSnapshot(`
     {
       "error": [ZodError: [
@@ -232,21 +219,11 @@ test("union exhaustiveness", () => {
     21: "asdf",
   });
 
-  expect(schema.safeParse({ Tuna: "asdf", Salmon: "asdf", 21: "asdf", Trout: "asdf" })).toMatchInlineSnapshot(`
-    {
-      "error": [ZodError: [
-      {
-        "code": "unrecognized_keys",
-        "keys": [
-          "Trout"
-        ],
-        "path": [],
-        "message": "Unrecognized key: \\"Trout\\""
-      }
-    ]],
-      "success": false,
-    }
-  `);
+  expect(schema.parse({ Tuna: "asdf", Salmon: "asdf", 21: "asdf", Trout: "asdf" })).toEqual({
+    Tuna: "asdf",
+    Salmon: "asdf",
+    21: "asdf",
+  });
   expect(schema.safeParse({ Tuna: "asdf" })).toMatchInlineSnapshot(`
     {
       "error": [ZodError: [
@@ -518,34 +495,8 @@ test("partialRecord with z.literal([key, ...])", () => {
   expect(schema.parse({ id: "1" })).toEqual({ id: "1" });
   expect(schema.parse({ name: "n", email: "e@example.com" })).toEqual({ name: "n", email: "e@example.com" });
 
-  // Should fail with unrecognized key, error checked via inline snapshot
-  expect(schema.safeParse({ foo: "bar" })).toMatchInlineSnapshot(`
-    {
-      "error": [ZodError: [
-      {
-        "code": "invalid_key",
-        "origin": "record",
-        "issues": [
-          {
-            "code": "invalid_value",
-            "values": [
-              "id",
-              "name",
-              "email"
-            ],
-            "path": [],
-            "message": "Invalid option: expected one of \\"id\\"|\\"name\\"|\\"email\\""
-          }
-        ],
-        "path": [
-          "foo"
-        ],
-        "message": "Invalid key in record"
-      }
-    ]],
-      "success": false,
-    }
-  `);
+  // Should strip unrecognized keys
+  expect(schema.parse({ foo: "bar" })).toEqual({});
 });
 
 test("partialRecord with numeric literal keys", () => {
@@ -559,8 +510,8 @@ test("partialRecord with numeric literal keys", () => {
   expect(schema.parse({ 1: "one" })).toEqual({ 1: "one" });
   expect(schema.parse({ 2: "two", 3: "three" })).toEqual({ 2: "two", 3: "three" });
 
-  // Should fail with unrecognized key
-  expect(schema.safeParse({ 4: "four" }).success).toBe(false);
+  // Should strip unrecognized keys
+  expect(schema.parse({ 4: "four" })).toEqual({});
 });
 
 test("partialRecord with union of string and numeric literal keys", () => {
@@ -575,9 +526,53 @@ test("partialRecord with union of string and numeric literal keys", () => {
   expect(schema.parse({ a: "1", 2: "4" })).toEqual({ a: "1", 2: "4" });
   expect(schema.parse({ a: "a", b: "b", 1: "1", 2: "2" })).toEqual({ a: "a", b: "b", 1: "1", 2: "2" });
 
-  // Should fail with unrecognized key
-  expect(schema.safeParse({ d: "d" }).success).toBe(false);
-  expect(schema.safeParse({ 4: "4" }).success).toBe(false);
+  // Should strip unrecognized keys
+  expect(schema.parse({ d: "d" })).toEqual({});
+  expect(schema.parse({ 4: "4" })).toEqual({});
+});
+
+test("record strips non-matching keys", () => {
+  const schema = z.record(z.string().regex(/^S_/), z.string());
+
+  // Keys matching pattern are validated
+  expect(schema.parse({ S_name: "John" })).toEqual({ S_name: "John" });
+  expect(() => schema.parse({ S_name: 123 })).toThrow(); // wrong value type
+
+  // Keys not matching pattern are stripped
+  expect(schema.parse({ S_name: "John", other: "value" })).toEqual({ S_name: "John" });
+  expect(schema.parse({ S_name: "John", count: 123 })).toEqual({ S_name: "John" });
+  expect(schema.parse({ other: "value" })).toEqual({});
+});
+
+test("strictRecord rejects non-matching keys", () => {
+  const schema = z.strictRecord(z.string().regex(/^S_/), z.string());
+
+  expect(schema.parse({ S_name: "John" })).toEqual({ S_name: "John" });
+  expect(schema.safeParse({ S_name: "John", other: "value" })).toMatchInlineSnapshot(`
+    {
+      "error": [ZodError: [
+      {
+        "code": "invalid_key",
+        "origin": "record",
+        "issues": [
+          {
+            "origin": "string",
+            "code": "invalid_format",
+            "format": "regex",
+            "pattern": "/^S_/",
+            "path": [],
+            "message": "Invalid string: must match pattern /^S_/"
+          }
+        ],
+        "path": [
+          "other"
+        ],
+        "message": "Invalid key in record"
+      }
+    ]],
+      "success": false,
+    }
+  `);
 });
 
 test("looseRecord passes through non-matching keys", () => {
@@ -676,13 +671,17 @@ test("numeric string keys", () => {
   expect(schema.parse({ 1: 100, 2: 200 })).toEqual({ 1: 100, 2: 200 });
   expect(schema.parse({ "1.5": 100, "-3": 200 })).toEqual({ "1.5": 100, "-3": 200 });
 
-  // Non-numeric keys fail
-  expect(schema.safeParse({ abc: 100 }).success).toBe(false);
+  // Non-numeric keys are stripped
+  expect(schema.parse({ abc: 100 })).toEqual({});
 
   // Integer constraint is respected
   const intSchema = z.record(z.number().int(), z.number());
   expect(intSchema.parse({ 1: 100 })).toEqual({ 1: 100 });
-  expect(intSchema.safeParse({ "1.5": 100 }).success).toBe(false);
+  expect(intSchema.parse({ "1.5": 100 })).toEqual({});
+
+  // strictRecord keeps the old invalid-key behavior
+  const strictIntSchema = z.strictRecord(z.number().int(), z.number());
+  expect(strictIntSchema.safeParse({ "1.5": 100 }).success).toBe(false);
 
   // Transforms on numeric keys work
   const transformedSchema = z.record(
