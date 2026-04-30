@@ -1861,7 +1861,7 @@ const Person = z.record(Keys, z.string());
 // { id: string; name: string; email: string }
 ```
 
-By default, keys that don't match the key schema are stripped from the parsed result.
+By default, properties whose keys don't match the key schema are stripped from the parsed result. Values for matching keys are still parsed against the value schema.
 
 Zod supports numeric keys inside records in a way that closely mirrors TypeScript itself. A `number` schema, when used as a record key, will validate that the key is a valid "numeric string". Additional numerical constraints (min, max, step, etc.) will also be validated.
 
