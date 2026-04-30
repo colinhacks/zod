@@ -1,4 +1,4 @@
-import { expect, expectTypeOf, test } from "vitest";
+import { expect, expectTypeOf, test, vi } from "vitest";
 import type { util } from "zod/v4/core";
 
 import * as z from "zod/v4";
@@ -65,6 +65,82 @@ test("object intersection: strict + strict", () => {
       },
     ]
   `);
+});
+
+test("strict object intersection runs refinements after sibling keys are reconciled", () => {
+  const spy = vi.fn();
+  const alwaysFailingSuperRefine = (_data: unknown, ctx: z.RefinementCtx) => {
+    spy();
+    ctx.addIssue({
+      code: "custom",
+      message: "This check always fails",
+    });
+  };
+
+  const schema = z.intersection(
+    z.strictObject({ x: z.string() }).superRefine(alwaysFailingSuperRefine),
+    z.strictObject({ a: z.string() }).superRefine(alwaysFailingSuperRefine)
+  );
+
+  const result = schema.safeParse({ x: "test", a: "hello" });
+  expect(spy).toHaveBeenCalledTimes(2);
+  expect(result.error?.issues).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "custom",
+        "message": "This check always fails",
+        "path": [],
+      },
+      {
+        "code": "custom",
+        "message": "This check always fails",
+        "path": [],
+      },
+    ]
+  `);
+});
+
+test("strict object intersection runs transforms after sibling keys are reconciled", () => {
+  const spy = vi.fn();
+  const transformFn = <T extends object>(data: T) => {
+    spy();
+    return { ...data, transformed: true };
+  };
+
+  const schema = z.intersection(
+    z.strictObject({ x: z.string() }).transform(transformFn),
+    z.strictObject({ a: z.string() }).transform(transformFn)
+  );
+
+  const result = schema.safeParse({ x: "test", a: "hello" });
+  expect(spy).toHaveBeenCalledTimes(2);
+  expect(result.data).toEqual({
+    x: "test",
+    a: "hello",
+    transformed: true,
+  });
+});
+
+test("nested strict object intersection applies defaults after sibling keys are reconciled", () => {
+  const inner = z.intersection(
+    z.strictObject({
+      x: z.string().default("X default"),
+      y: z.number(),
+    }),
+    z.strictObject({
+      z: z.boolean(),
+    })
+  );
+
+  const schema = z.intersection(inner, z.strictObject({ a: z.string() }));
+  const result = schema.safeParse({ y: 34, z: true, a: "hello" });
+
+  expect(result.data).toEqual({
+    x: "X default",
+    y: 34,
+    z: true,
+    a: "hello",
+  });
 });
 
 test("deep intersection", () => {

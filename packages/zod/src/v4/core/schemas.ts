@@ -24,11 +24,14 @@ export interface ParseContext<T extends errors.$ZodIssueBase = never> {
   // readonly abortEarly?: boolean;
 }
 
+type IntersectionKeySet = ReadonlySet<string> | "all";
+
 /** @internal */
 export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> extends ParseContext<T> {
   readonly async?: boolean | undefined;
   readonly direction?: "forward" | "backward";
   readonly skipChecks?: boolean;
+  readonly intersectionKeySet?: IntersectionKeySet;
 }
 
 export interface ParsePayload<T = unknown> {
@@ -1852,7 +1855,7 @@ function handleCatchall(
   proms: Promise<any>[],
   input: any,
   payload: ParsePayload,
-  ctx: ParseContext,
+  ctx: ParseContextInternal,
   def: ReturnType<typeof normalizeDef>,
   inst: $ZodObject
 ) {
@@ -1868,6 +1871,7 @@ function handleCatchall(
     if (key === "__proto__") continue;
     if (keySet.has(key)) continue;
     if (t === "never") {
+      if (allowsIntersectionKey(ctx.intersectionKeySet, key)) continue;
       unrecognized.push(key);
       continue;
     }
@@ -2472,8 +2476,8 @@ export const $ZodIntersection: core.$constructor<$ZodIntersection> = /*@__PURE__
 
     inst._zod.parse = (payload, ctx) => {
       const input = payload.value;
-      const left = def.left._zod.run({ value: input, issues: [] }, ctx);
-      const right = def.right._zod.run({ value: input, issues: [] }, ctx);
+      const left = def.left._zod.run({ value: input, issues: [] }, extendIntersectionKeySet(ctx, def.right));
+      const right = def.right._zod.run({ value: input, issues: [] }, extendIntersectionKeySet(ctx, def.left));
       const async = left instanceof Promise || right instanceof Promise;
 
       if (async) {
@@ -2486,6 +2490,64 @@ export const $ZodIntersection: core.$constructor<$ZodIntersection> = /*@__PURE__
     };
   }
 );
+
+function allowsIntersectionKey(keySet: IntersectionKeySet | undefined, key: string): boolean {
+  return keySet === "all" || keySet?.has(key) === true;
+}
+
+function extendIntersectionKeySet(ctx: ParseContextInternal, schema: SomeType): ParseContextInternal {
+  const keySet = getIntersectionKeySet(schema);
+  if (!keySet) return ctx;
+
+  const merged = mergeIntersectionKeySets(ctx.intersectionKeySet, keySet);
+  return merged === ctx.intersectionKeySet ? ctx : { ...ctx, intersectionKeySet: merged };
+}
+
+function mergeIntersectionKeySets(left: IntersectionKeySet | undefined, right: IntersectionKeySet): IntersectionKeySet {
+  if (left === "all" || right === "all") return "all";
+  if (!left) return right;
+
+  const merged = new Set(left);
+  for (const key of right) merged.add(key);
+  return merged;
+}
+
+function getIntersectionKeySet(schema: SomeType, seen = new Set<SomeType>()): IntersectionKeySet | undefined {
+  if (seen.has(schema)) return undefined;
+  seen.add(schema);
+
+  const def = schema._zod.def as any;
+  switch (def.type) {
+    case "object": {
+      const catchall = def.catchall?._zod.def.type;
+      return catchall === "never" ? new Set(Object.keys(def.shape)) : "all";
+    }
+    case "intersection":
+      return mergeIntersectionKeySets(
+        getIntersectionKeySet(def.left, seen),
+        getIntersectionKeySet(def.right, seen) ?? new Set()
+      );
+    case "pipe":
+      return getIntersectionKeySet(def.in, seen);
+    case "readonly":
+    case "nullable":
+    case "optional":
+    case "nonoptional":
+    case "default":
+    case "prefault":
+    case "catch":
+    case "success":
+      return getIntersectionKeySet(def.innerType, seen);
+    case "lazy":
+      return getIntersectionKeySet((schema._zod as any).innerType, seen);
+    case "any":
+    case "unknown":
+    case "record":
+      return "all";
+    default:
+      return undefined;
+  }
+}
 
 function mergeValues(
   a: any,
