@@ -29,6 +29,14 @@ jobs:
       - uses: pnpm/action-setup@v4
       - run: pnpm install
       - run: pnpm add typescript@${{ matrix.typescript }} -w
+      # baseUrl in packages/docs/tsconfig.json is deprecated under TS 6
+      # and vitest's typecheck integration surfaces it as an unhandled
+      # error; TS 5.5 rejects "6.0", so inject only on newer matrix entries.
+      - if: matrix.typescript != '5.5'
+        run: |
+          TSCONFIG=packages/docs/tsconfig.json
+          jq '.compilerOptions.ignoreDeprecations = "6.0"' "$TSCONFIG" > "$TSCONFIG.tmp"
+          mv "$TSCONFIG.tmp" "$TSCONFIG"
       - run: pnpm build
       - run: pnpm test
       - run: pnpm run --filter @zod/resolution test:all
