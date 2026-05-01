@@ -2,6 +2,8 @@ export * as core from "../core/index.js";
 export * from "./parse.js";
 export * from "./schemas.js";
 export * from "./checks.js";
+export { deepPartial } from "./deep-partial.js";
+export { mapOnSchema } from "../core/map-on-schema.js";
 
 export type { infer, output, input } from "../core/index.js";
 export type { JSONType } from "../core/util.js";
