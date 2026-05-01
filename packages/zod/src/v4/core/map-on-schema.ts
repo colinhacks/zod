@@ -42,7 +42,7 @@ export function mapOnSchema<T extends AnyZod>(schema: T, fn: (s: AnyZod) => AnyZ
       case "object": {
         const oldShape = def.shape as Record<string, AnyZod>;
         const newShape: Record<string, AnyZod> = {};
-        for (const k in oldShape) newShape[k] = visit(oldShape[k]!);
+        for (const k of Object.keys(oldShape)) newShape[k] = visit(oldShape[k]!);
         return patch(s, { shape: newShape });
       }
       case "array":
@@ -85,5 +85,5 @@ export function mapOnSchema<T extends AnyZod>(schema: T, fn: (s: AnyZod) => AnyZ
     }
   }
 
-  return fn(mapInner(schema)) as T;
+  return visit(schema) as T;
 }

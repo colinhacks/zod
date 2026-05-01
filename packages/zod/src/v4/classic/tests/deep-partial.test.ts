@@ -186,6 +186,19 @@ describe("mapOnSchema", () => {
     expect(calls).toBe(3);
   });
 
+  test("root is cached: lazy self-reference does not re-invoke fn at parse-time", () => {
+    let Self: z.ZodType;
+    let calls = 0;
+    Self = z.object({ self: z.lazy(() => Self).optional() });
+    const result = mapOnSchema(Self, (s) => {
+      calls++;
+      return s;
+    });
+    const baseline = calls;
+    result.parse({ self: { self: { self: {} } } });
+    expect(calls).toBe(baseline);
+  });
+
   test("unknown def.type falls through unchanged", () => {
     const customSchema: any = z.string();
     customSchema._zod.def = { ...customSchema._zod.def, type: "myCustomType" };
