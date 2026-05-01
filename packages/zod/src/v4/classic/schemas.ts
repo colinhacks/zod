@@ -5,7 +5,6 @@ import type { StandardSchemaWithJSONProps } from "../core/standard-schema.js";
 import { createStandardJSONSchemaMethod, createToJSONSchemaMethod } from "../core/to-json-schema.js";
 
 import * as checks from "./checks.js";
-import * as iso from "./iso.js";
 import * as parse from "./parse.js";
 
 // Lazy-bind builder methods.
@@ -559,10 +558,10 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
   inst.e164 = (params) => inst.check(core._e164(ZodE164, params));
 
   // iso
-  inst.datetime = (params) => inst.check(iso.datetime(params as any));
-  inst.date = (params) => inst.check(iso.date(params as any));
-  inst.time = (params) => inst.check(iso.time(params as any));
-  inst.duration = (params) => inst.check(iso.duration(params as any));
+  inst.datetime = (params) => inst.check(core._isoDateTime(ZodISODateTime, params as any));
+  inst.date = (params) => inst.check(core._isoDate(ZodISODate, params as any));
+  inst.time = (params) => inst.check(core._isoTime(ZodISOTime, params as any));
+  inst.duration = (params) => inst.check(core._isoDuration(ZodISODuration, params as any));
 });
 
 export function string(params?: string | core.$ZodStringParams): ZodString;
@@ -579,6 +578,72 @@ export const ZodStringFormat: core.$constructor<ZodStringFormat> = /*@__PURE__*/
   (inst, def) => {
     core.$ZodStringFormat.init(inst, def);
     _ZodString.init(inst, def);
+  }
+);
+
+//////////////////////////////////////////////
+//////////////////////////////////////////////
+//////////                          //////////
+//////////      ZodISODateTime      //////////
+//////////                          //////////
+//////////////////////////////////////////////
+//////////////////////////////////////////////
+export interface ZodISODateTime extends ZodStringFormat {
+  _zod: core.$ZodISODateTimeInternals;
+}
+export const ZodISODateTime: core.$constructor<ZodISODateTime> = /*@__PURE__*/ core.$constructor(
+  "ZodISODateTime",
+  (inst, def) => {
+    core.$ZodISODateTime.init(inst, def);
+    ZodStringFormat.init(inst, def);
+  }
+);
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+//////////                      //////////
+//////////      ZodISODate      //////////
+//////////                      //////////
+//////////////////////////////////////////
+//////////////////////////////////////////
+export interface ZodISODate extends ZodStringFormat {
+  _zod: core.$ZodISODateInternals;
+}
+export const ZodISODate: core.$constructor<ZodISODate> = /*@__PURE__*/ core.$constructor("ZodISODate", (inst, def) => {
+  core.$ZodISODate.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+//////////                      //////////
+//////////      ZodISOTime      //////////
+//////////                      //////////
+//////////////////////////////////////////
+//////////////////////////////////////////
+export interface ZodISOTime extends ZodStringFormat {
+  _zod: core.$ZodISOTimeInternals;
+}
+export const ZodISOTime: core.$constructor<ZodISOTime> = /*@__PURE__*/ core.$constructor("ZodISOTime", (inst, def) => {
+  core.$ZodISOTime.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+
+//////////////////////////////////////////////
+//////////////////////////////////////////////
+//////////                          //////////
+//////////      ZodISODuration      //////////
+//////////                          //////////
+//////////////////////////////////////////////
+//////////////////////////////////////////////
+export interface ZodISODuration extends ZodStringFormat {
+  _zod: core.$ZodISODurationInternals;
+}
+export const ZodISODuration: core.$constructor<ZodISODuration> = /*@__PURE__*/ core.$constructor(
+  "ZodISODuration",
+  (inst, def) => {
+    core.$ZodISODuration.init(inst, def);
+    ZodStringFormat.init(inst, def);
   }
 );
 
