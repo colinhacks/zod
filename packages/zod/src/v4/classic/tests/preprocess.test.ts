@@ -303,10 +303,6 @@ test("preprocess is a structural subtype of ZodPipe", () => {
   expect(schema._zod.def.type).toBe("pipe");
 });
 
-// Preprocess `fn` can map any input to a B-accepted value, so `values` and
-// `propValues` (which describe the *input* set) must not be inherited from B.
-// Otherwise the discriminated-union disc map and record-key enumerator
-// short-circuit on B's literal set before the preprocess fn ever runs.
 test("preprocess does not propagate values/propValues from inner schema", () => {
   const inner = z.preprocess((v) => v, z.literal("test"));
   expect(inner._zod.values).toBeUndefined();

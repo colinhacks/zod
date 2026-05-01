@@ -143,7 +143,7 @@ test("assignability", () => {
   z.unknown().pipe(z.number()) satisfies z.core.$ZodPipe;
   z.unknown().pipe(z.number()) satisfies z.ZodPipe;
 
-  // $ZodPreprocess (structural subtype of $ZodPipe<$ZodTransform, B>)
+  // $ZodPreprocess
   z.preprocess((v) => v, z.number()) satisfies z.core.$ZodPreprocess;
   z.preprocess((v) => v, z.number()) satisfies z.ZodPreprocess;
   z.preprocess((v) => v, z.number()) satisfies z.core.$ZodPipe<z.core.$ZodTransform, z.ZodNumber>;

@@ -4125,23 +4125,6 @@ function handleCodecTxResult(left: ParsePayload, value: any, nextSchema: SomeTyp
 //////////                             //////////
 /////////////////////////////////////////////////
 /////////////////////////////////////////////////
-// Preprocess is a structural subtype of $ZodPipe<$ZodTransform, B> whose
-// only deviation from a vanilla pipe is its presence surface: `optin` and
-// `optout` defer to B (the inner schema) instead of A (the leading
-// transform). The runtime parse, the def shape, and `def.in._zod` are all
-// the same as the legacy `pipe(transform(fn), schema)` form — we just
-// override the static optionality lazies.
-//
-// Asymmetry between presence (optin/optout) and input-set descriptors
-// (values/propValues): presence semantics describe whether the *outer*
-// container can omit this slot, and preprocess is transparent to that — we
-// want `z.preprocess(fn, schema.optional())` and `z.preprocess(fn,
-// schema).optional()` to be equivalent. By contrast, `values` and
-// `propValues` describe the literal *input* set the schema accepts. The
-// preprocess `fn` can map any input to a B-accepted value, so deferring
-// those to B would corrupt the discriminated-union disc map and the
-// record-key enumerator. They stay inherited from A (the transform), which
-// has neither — matching the legacy form exactly.
 export interface $ZodPreprocessDef<B extends SomeType = $ZodType> extends $ZodPipeDef<$ZodTransform, B> {
   in: $ZodTransform;
   out: B;

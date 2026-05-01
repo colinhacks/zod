@@ -2362,11 +2362,6 @@ export function invertCodec<A extends core.SomeType, B extends core.SomeType>(co
 }
 
 // ZodPreprocess
-// Subtype of ZodPipe whose `optin`/`optout` defer to B (the inner schema)
-// instead of A. Runtime structure is identical to `pipe(transform(fn),
-// schema)` — `def.in` is a real ZodTransform and the parse function is
-// inherited from ZodPipe unchanged. The override is purely a static
-// metadata override so object containers see B's presence semantics.
 export interface ZodPreprocess<B extends core.SomeType = core.$ZodType>
   extends ZodPipe<core.$ZodTransform, B>,
     core.$ZodPreprocess<B> {

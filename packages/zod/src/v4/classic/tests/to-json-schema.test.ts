@@ -2897,9 +2897,6 @@ test("use output type for preprocess", () => {
 });
 
 test("strip output-side examples from input JSON schema for codec", () => {
-  // Codec is implicitly transforming (decode/encode), so examples attached
-  // to the codec describe the OUTPUT representation and must not leak into
-  // the INPUT JSON schema.
   const codec = z
     .codec(z.string(), z.number(), { decode: (s) => Number(s), encode: (n) => String(n) })
     .meta({ examples: [42] });
