@@ -10,8 +10,8 @@ export interface ZodMiniType<
   out Internals extends core.$ZodTypeInternals<Output, Input> = core.$ZodTypeInternals<Output, Input>,
 > extends core.$ZodType<Output, Input, Internals> {
   type: Internals["def"]["type"];
-  check(...checks: (core.CheckFn<core.output<this>> | core.$ZodCheck<core.output<this>>)[]): this;
-  with(...checks: (core.CheckFn<core.output<this>> | core.$ZodCheck<core.output<this>>)[]): this;
+  check(...checks: (core.CheckFn<this["_zod"]["output"]> | core.$ZodCheck<this["_zod"]["output"]>)[]): this;
+  with(...checks: (core.CheckFn<this["_zod"]["output"]> | core.$ZodCheck<this["_zod"]["output"]>)[]): this;
   clone(def?: Internals["def"], params?: { parent: boolean }): this;
   register<R extends core.$ZodRegistry>(
     registry: R,
@@ -27,13 +27,13 @@ export interface ZodMiniType<
 
   def: Internals["def"];
 
-  parse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;
-  safeParse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): util.SafeParseResult<core.output<this>>;
-  parseAsync(data: unknown, params?: core.ParseContext<core.$ZodIssue>): Promise<core.output<this>>;
+  parse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): this["_zod"]["output"];
+  safeParse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): util.SafeParseResult<this["_zod"]["output"]>;
+  parseAsync(data: unknown, params?: core.ParseContext<core.$ZodIssue>): Promise<this["_zod"]["output"]>;
   safeParseAsync(
     data: unknown,
     params?: core.ParseContext<core.$ZodIssue>
-  ): Promise<util.SafeParseResult<core.output<this>>>;
+  ): Promise<util.SafeParseResult<this["_zod"]["output"]>>;
   apply<T>(fn: (schema: this) => T): T;
 }
 

@@ -117,6 +117,17 @@ export class $ZodEncodeError extends Error {
 export type input<T> = T extends { _zod: { input: any } } ? T["_zod"]["input"] : unknown;
 export type output<T> = T extends { _zod: { output: any } } ? T["_zod"]["output"] : unknown;
 
+/**
+ * Strict variant of `output` that preserves the correlation between an
+ * indexed-access type key and the schema output type. Use this in place of
+ * `output` when working with patterns like `output<Schemas[K]>` where the
+ * generic key `K` would otherwise be lost (see issue #5154).
+ */
+export type outputStrict<T extends { _zod: { output: any } }> = T["_zod"]["output"];
+
+/** Strict variant of `input`. See {@link outputStrict}. */
+export type inputStrict<T extends { _zod: { input: any } }> = T["_zod"]["input"];
+
 export type { output as infer };
 
 //////////////////////////////   CONFIG   ///////////////////////////////////////

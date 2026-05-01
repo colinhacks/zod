@@ -96,8 +96,8 @@ export interface ZodType<
   toJSONSchema(params?: core.ToJSONSchemaParams): core.ZodStandardJSONSchemaPayload<this>;
 
   // base methods
-  check(...checks: (core.CheckFn<core.output<this>> | core.$ZodCheck<core.output<this>>)[]): this;
-  with(...checks: (core.CheckFn<core.output<this>> | core.$ZodCheck<core.output<this>>)[]): this;
+  check(...checks: (core.CheckFn<this["_zod"]["output"]> | core.$ZodCheck<this["_zod"]["output"]>)[]): this;
+  with(...checks: (core.CheckFn<this["_zod"]["output"]> | core.$ZodCheck<this["_zod"]["output"]>)[]): this;
   clone(def?: Internals["def"], params?: { parent: boolean }): this;
   register<R extends core.$ZodRegistry>(
     registry: R,
@@ -113,50 +113,53 @@ export interface ZodType<
   ): PropertyKey extends T ? this : core.$ZodBranded<this, T, Dir>;
 
   // parsing
-  parse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;
-  safeParse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): parse.ZodSafeParseResult<core.output<this>>;
-  parseAsync(data: unknown, params?: core.ParseContext<core.$ZodIssue>): Promise<core.output<this>>;
+  parse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): this["_zod"]["output"];
+  safeParse(
+    data: unknown,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): parse.ZodSafeParseResult<this["_zod"]["output"]>;
+  parseAsync(data: unknown, params?: core.ParseContext<core.$ZodIssue>): Promise<this["_zod"]["output"]>;
   safeParseAsync(
     data: unknown,
     params?: core.ParseContext<core.$ZodIssue>
-  ): Promise<parse.ZodSafeParseResult<core.output<this>>>;
+  ): Promise<parse.ZodSafeParseResult<this["_zod"]["output"]>>;
   spa: (
     data: unknown,
     params?: core.ParseContext<core.$ZodIssue>
-  ) => Promise<parse.ZodSafeParseResult<core.output<this>>>;
+  ) => Promise<parse.ZodSafeParseResult<this["_zod"]["output"]>>;
 
   // encoding/decoding
-  encode(data: core.output<this>, params?: core.ParseContext<core.$ZodIssue>): core.input<this>;
-  decode(data: core.input<this>, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;
-  encodeAsync(data: core.output<this>, params?: core.ParseContext<core.$ZodIssue>): Promise<core.input<this>>;
-  decodeAsync(data: core.input<this>, params?: core.ParseContext<core.$ZodIssue>): Promise<core.output<this>>;
+  encode(data: this["_zod"]["output"], params?: core.ParseContext<core.$ZodIssue>): this["_zod"]["input"];
+  decode(data: this["_zod"]["input"], params?: core.ParseContext<core.$ZodIssue>): this["_zod"]["output"];
+  encodeAsync(data: this["_zod"]["output"], params?: core.ParseContext<core.$ZodIssue>): Promise<this["_zod"]["input"]>;
+  decodeAsync(data: this["_zod"]["input"], params?: core.ParseContext<core.$ZodIssue>): Promise<this["_zod"]["output"]>;
   safeEncode(
-    data: core.output<this>,
+    data: this["_zod"]["output"],
     params?: core.ParseContext<core.$ZodIssue>
-  ): parse.ZodSafeParseResult<core.input<this>>;
+  ): parse.ZodSafeParseResult<this["_zod"]["input"]>;
   safeDecode(
-    data: core.input<this>,
+    data: this["_zod"]["input"],
     params?: core.ParseContext<core.$ZodIssue>
-  ): parse.ZodSafeParseResult<core.output<this>>;
+  ): parse.ZodSafeParseResult<this["_zod"]["output"]>;
   safeEncodeAsync(
-    data: core.output<this>,
+    data: this["_zod"]["output"],
     params?: core.ParseContext<core.$ZodIssue>
-  ): Promise<parse.ZodSafeParseResult<core.input<this>>>;
+  ): Promise<parse.ZodSafeParseResult<this["_zod"]["input"]>>;
   safeDecodeAsync(
-    data: core.input<this>,
+    data: this["_zod"]["input"],
     params?: core.ParseContext<core.$ZodIssue>
-  ): Promise<parse.ZodSafeParseResult<core.output<this>>>;
+  ): Promise<parse.ZodSafeParseResult<this["_zod"]["output"]>>;
 
   // refinements
-  refine<Ch extends (arg: core.output<this>) => unknown | Promise<unknown>>(
+  refine<Ch extends (arg: this["_zod"]["output"]) => unknown | Promise<unknown>>(
     check: Ch,
     params?: string | core.$ZodCustomParams
-  ): Ch extends (arg: any) => arg is infer R ? this & ZodType<R, core.input<this>> : this;
+  ): Ch extends (arg: any) => arg is infer R ? this & ZodType<R, this["_zod"]["input"]> : this;
   superRefine(
-    refinement: (arg: core.output<this>, ctx: core.$RefinementCtx<core.output<this>>) => void | Promise<void>,
+    refinement: (arg: this["_zod"]["output"], ctx: core.$RefinementCtx<this["_zod"]["output"]>) => void | Promise<void>,
     params?: core.$ZodSuperRefineParams
   ): this;
-  overwrite(fn: (x: core.output<this>) => core.output<this>): this;
+  overwrite(fn: (x: this["_zod"]["output"]) => this["_zod"]["output"]): this;
 
   // wrappers
   optional(): ZodOptional<this>;
@@ -164,20 +167,23 @@ export interface ZodType<
   nonoptional(params?: string | core.$ZodNonOptionalParams): ZodNonOptional<this>;
   nullable(): ZodNullable<this>;
   nullish(): ZodOptional<ZodNullable<this>>;
-  default(def: util.NoUndefined<core.output<this>>): ZodDefault<this>;
-  default(def: () => util.NoUndefined<core.output<this>>): ZodDefault<this>;
-  prefault(def: () => core.input<this>): ZodPrefault<this>;
-  prefault(def: core.input<this>): ZodPrefault<this>;
+  default(def: util.NoUndefined<this["_zod"]["output"]>): ZodDefault<this>;
+  default(def: () => util.NoUndefined<this["_zod"]["output"]>): ZodDefault<this>;
+  prefault(def: () => this["_zod"]["input"]): ZodPrefault<this>;
+  prefault(def: this["_zod"]["input"]): ZodPrefault<this>;
   array(): ZodArray<this>;
   or<T extends core.SomeType>(option: T): ZodUnion<[this, T]>;
   and<T extends core.SomeType>(incoming: T): ZodIntersection<this, T>;
   transform<NewOut>(
-    transform: (arg: core.output<this>, ctx: core.$RefinementCtx<core.output<this>>) => NewOut | Promise<NewOut>
-  ): ZodPipe<this, ZodTransform<Awaited<NewOut>, core.output<this>>>;
-  catch(def: core.output<this>): ZodCatch<this>;
-  catch(def: (ctx: core.$ZodCatchCtx) => core.output<this>): ZodCatch<this>;
-  pipe<T extends core.$ZodType<any, core.output<this>>>(
-    target: T | core.$ZodType<any, core.output<this>>
+    transform: (
+      arg: this["_zod"]["output"],
+      ctx: core.$RefinementCtx<this["_zod"]["output"]>
+    ) => NewOut | Promise<NewOut>
+  ): ZodPipe<this, ZodTransform<Awaited<NewOut>, this["_zod"]["output"]>>;
+  catch(def: this["_zod"]["output"]): ZodCatch<this>;
+  catch(def: (ctx: core.$ZodCatchCtx) => this["_zod"]["output"]): ZodCatch<this>;
+  pipe<T extends core.$ZodType<any, this["_zod"]["output"]>>(
+    target: T | core.$ZodType<any, this["_zod"]["output"]>
   ): ZodPipe<this, T>;
   readonly(): ZodReadonly<this>;
 
