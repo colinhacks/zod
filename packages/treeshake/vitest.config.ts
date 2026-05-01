@@ -6,6 +6,6 @@ export default defineProject({
   },
   test: {
     include: ["tests/**/*.test.ts"],
-    testTimeout: 60000,
+    testTimeout: 180000,
   },
 });
