@@ -518,7 +518,10 @@ export const catchProcessor: Processor<schemas.$ZodCatch> = (schema, ctx, json, 
   try {
     catchValue = def.catchValue(undefined as any);
   } catch {
-    throw new Error("Dynamic catch values are not supported in JSON Schema");
+    if (ctx.unrepresentable === "throw") {
+      throw new Error("Dynamic catch values are not supported in JSON Schema");
+    }
+    return;
   }
   json.default = catchValue;
 };
