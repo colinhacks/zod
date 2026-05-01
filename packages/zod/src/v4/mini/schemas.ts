@@ -28,12 +28,15 @@ export interface ZodMiniType<
   def: Internals["def"];
 
   parse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;
-  safeParse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): util.SafeParseResult<core.output<this>>;
+  safeParse(
+    data: unknown,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): util.SafeParseResult<core.output<this>, core.input<this>>;
   parseAsync(data: unknown, params?: core.ParseContext<core.$ZodIssue>): Promise<core.output<this>>;
   safeParseAsync(
     data: unknown,
     params?: core.ParseContext<core.$ZodIssue>
-  ): Promise<util.SafeParseResult<core.output<this>>>;
+  ): Promise<util.SafeParseResult<core.output<this>, core.input<this>>>;
   apply<T>(fn: (schema: this) => T): T;
 }
 

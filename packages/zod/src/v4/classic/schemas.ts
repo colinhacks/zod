@@ -114,16 +114,19 @@ export interface ZodType<
 
   // parsing
   parse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;
-  safeParse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): parse.ZodSafeParseResult<core.output<this>>;
+  safeParse(
+    data: unknown,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): parse.ZodSafeParseResult<core.output<this>, core.input<this>>;
   parseAsync(data: unknown, params?: core.ParseContext<core.$ZodIssue>): Promise<core.output<this>>;
   safeParseAsync(
     data: unknown,
     params?: core.ParseContext<core.$ZodIssue>
-  ): Promise<parse.ZodSafeParseResult<core.output<this>>>;
+  ): Promise<parse.ZodSafeParseResult<core.output<this>, core.input<this>>>;
   spa: (
     data: unknown,
     params?: core.ParseContext<core.$ZodIssue>
-  ) => Promise<parse.ZodSafeParseResult<core.output<this>>>;
+  ) => Promise<parse.ZodSafeParseResult<core.output<this>, core.input<this>>>;
 
   // encoding/decoding
   encode(data: core.output<this>, params?: core.ParseContext<core.$ZodIssue>): core.input<this>;
@@ -133,19 +136,19 @@ export interface ZodType<
   safeEncode(
     data: core.output<this>,
     params?: core.ParseContext<core.$ZodIssue>
-  ): parse.ZodSafeParseResult<core.input<this>>;
+  ): parse.ZodSafeParseResult<core.input<this>, core.output<this>>;
   safeDecode(
     data: core.input<this>,
     params?: core.ParseContext<core.$ZodIssue>
-  ): parse.ZodSafeParseResult<core.output<this>>;
+  ): parse.ZodSafeParseResult<core.output<this>, core.input<this>>;
   safeEncodeAsync(
     data: core.output<this>,
     params?: core.ParseContext<core.$ZodIssue>
-  ): Promise<parse.ZodSafeParseResult<core.input<this>>>;
+  ): Promise<parse.ZodSafeParseResult<core.input<this>, core.output<this>>>;
   safeDecodeAsync(
     data: core.input<this>,
     params?: core.ParseContext<core.$ZodIssue>
-  ): Promise<parse.ZodSafeParseResult<core.output<this>>>;
+  ): Promise<parse.ZodSafeParseResult<core.output<this>, core.input<this>>>;
 
   // refinements
   refine<Ch extends (arg: core.output<this>) => unknown | Promise<unknown>>(

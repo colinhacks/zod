@@ -28,11 +28,11 @@ export const ZodIssueCode = {
 } as const;
 
 /** @deprecated Use `z.$ZodFlattenedError` */
-export type inferFlattenedErrors<T extends core.$ZodType, U = string> = core.$ZodFlattenedError<core.output<T>, U>;
+export type inferFlattenedErrors<T extends core.$ZodType, U = string> = core.$ZodFlattenedError<core.input<T>, U>;
 
 /** @deprecated Use `z.$ZodFormattedError` */
 export type inferFormattedError<T extends core.$ZodType<any, any>, U = string> = core.$ZodFormattedError<
-  core.output<T>,
+  core.input<T>,
   U
 >;
 

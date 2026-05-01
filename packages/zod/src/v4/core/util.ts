@@ -177,7 +177,7 @@ export type PrimitiveArray = Array<Primitive>;
 export type HasSize = { size: number };
 export type HasLength = { length: number }; // string | Array<unknown> | Set<unknown> | File;
 export type Numeric = number | bigint | Date;
-export type SafeParseResult<T> = SafeParseSuccess<T> | SafeParseError<T>;
+export type SafeParseResult<O, I = O> = SafeParseSuccess<O> | SafeParseError<I>;
 export type SafeParseSuccess<T> = { success: true; data: T; error?: never };
 export type SafeParseError<T> = {
   success: false;
