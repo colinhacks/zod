@@ -280,3 +280,25 @@ test("perform transform with non-fatal issues", () => {
     ]]
   `);
 });
+
+// https://github.com/colinhacks/zod/issues/5917
+test("optional propagates through preprocess inside object", () => {
+  const outer = z.object({ x: z.preprocess((v) => v, z.number()).optional() });
+  const inner = z.object({ x: z.preprocess((v) => v, z.number().optional()) });
+
+  expect(outer.safeParse({}).success).toBe(true);
+  expect(inner.safeParse({}).success).toBe(true);
+
+  expect(outer.safeParse({ x: 1 })).toEqual({ success: true, data: { x: 1 } });
+  expect(inner.safeParse({ x: 1 })).toEqual({ success: true, data: { x: 1 } });
+
+  expect(inner._zod.def.shape.x._zod.optin).toBe("optional");
+  expect(inner._zod.def.shape.x._zod.optout).toBe("optional");
+});
+
+test("preprocess is a structural subtype of ZodPipe", () => {
+  const schema = z.preprocess((v) => v, z.string());
+  expect(schema).toBeInstanceOf(z.ZodPipe);
+  expect(schema).toBeInstanceOf(z.ZodPreprocess);
+  expect(schema._zod.def.type).toBe("pipe");
+});

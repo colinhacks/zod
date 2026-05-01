@@ -561,6 +561,7 @@ function isTransforming(
     return isTransforming(def.keyType, ctx) || isTransforming(def.valueType, ctx);
   }
   if (def.type === "pipe") {
+    if (_schema._zod.traits.has("$ZodPreprocess")) return true;
     return isTransforming(def.in, ctx) || isTransforming(def.out, ctx);
   }
 

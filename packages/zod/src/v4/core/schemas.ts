@@ -4118,6 +4118,70 @@ function handleCodecTxResult(left: ParsePayload, value: any, nextSchema: SomeTyp
   return nextSchema._zod.run({ value, issues: left.issues }, ctx);
 }
 
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+//////////                             //////////
+//////////      $ZodPreprocess         //////////
+//////////                             //////////
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+// Preprocess is a structural subtype of $ZodPipe whose `def.type` stays "pipe".
+// It pins `def.in` to a synthetic permissive schema and exposes B's optionality
+// surface (optin/optout/values/propValues) instead of A's. Detect via
+// `inst._zod.traits.has("$ZodPreprocess")`.
+export interface $ZodPreprocessDef<B extends SomeType = $ZodType> extends $ZodPipeDef<$ZodType, B> {
+  in: $ZodType;
+  out: B;
+  transform: (value: unknown, payload: ParsePayload<unknown>) => util.MaybeAsync<core.input<B>>;
+}
+
+export interface $ZodPreprocessInternals<B extends SomeType = $ZodType> extends $ZodPipeInternals<$ZodType, B> {
+  def: $ZodPreprocessDef<B>;
+  values: B["_zod"]["values"];
+  optin: B["_zod"]["optin"];
+  optout: B["_zod"]["optout"];
+  propValues: B["_zod"]["propValues"];
+}
+
+export interface $ZodPreprocess<B extends SomeType = $ZodType> extends $ZodPipe<$ZodType, B> {
+  _zod: $ZodPreprocessInternals<B>;
+}
+
+export const $ZodPreprocess: core.$constructor<$ZodPreprocess> = /*@__PURE__*/ core.$constructor(
+  "$ZodPreprocess",
+  (inst, def) => {
+    $ZodPipe.init(inst, def);
+    // Override the lazies installed by $ZodPipe so optionality surface defers
+    // to B (the inner schema) instead of A (the synthetic permissive input).
+    util.defineLazy(inst._zod, "values", () => def.out._zod.values);
+    util.defineLazy(inst._zod, "optin", () => def.out._zod.optin);
+    util.defineLazy(inst._zod, "optout", () => def.out._zod.optout);
+    util.defineLazy(inst._zod, "propValues", () => def.out._zod.propValues);
+
+    inst._zod.parse = (payload, ctx) => {
+      if (ctx.direction === "backward") {
+        throw new core.$ZodEncodeError(inst.constructor.name);
+      }
+
+      const _out = def.transform(payload.value, payload);
+      if (ctx.async) {
+        const output = _out instanceof Promise ? _out : Promise.resolve(_out);
+        return output.then((output) => {
+          payload.value = output;
+          return handlePipeResult(payload, def.out, ctx);
+        });
+      }
+
+      if (_out instanceof Promise) {
+        throw new core.$ZodAsyncError();
+      }
+
+      payload.value = _out;
+      return handlePipeResult(payload, def.out, ctx);
+    };
+  }
+);
+
 ////////////////////////////////////////////
 ////////////////////////////////////////////
 //////////                        //////////
