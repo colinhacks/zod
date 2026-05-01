@@ -561,7 +561,10 @@ function isTransforming(
     return isTransforming(def.keyType, ctx) || isTransforming(def.valueType, ctx);
   }
   if (def.type === "pipe") {
-    if (_schema._zod.traits.has("$ZodPreprocess")) return true;
+    // Preprocess and codec embed an implicit transform fn that the
+    // recursive checks below can't see (their def.in/def.out are
+    // validating schemas). Detect them via traits.
+    if (_schema._zod.traits.has("$ZodPreprocess") || _schema._zod.traits.has("$ZodCodec")) return true;
     return isTransforming(def.in, ctx) || isTransforming(def.out, ctx);
   }
 

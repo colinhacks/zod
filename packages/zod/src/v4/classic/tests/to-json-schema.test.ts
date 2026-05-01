@@ -2896,6 +2896,31 @@ test("use output type for preprocess", () => {
   `);
 });
 
+test("strip output-side examples from input JSON schema for codec", () => {
+  // Codec is implicitly transforming (decode/encode), so examples attached
+  // to the codec describe the OUTPUT representation and must not leak into
+  // the INPUT JSON schema.
+  const codec = z
+    .codec(z.string(), z.number(), { decode: (s) => Number(s), encode: (n) => String(n) })
+    .meta({ examples: [42] });
+
+  expect(z.toJSONSchema(codec, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+    }
+  `);
+  expect(z.toJSONSchema(codec, { io: "output" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "examples": [
+        42,
+      ],
+      "type": "number",
+    }
+  `);
+});
+
 // test("isTransforming", () => {
 //   const tx = z.core.isTransforming;
 //   expect(tx(z.string())).toEqual(false);
