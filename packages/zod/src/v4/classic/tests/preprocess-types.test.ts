@@ -4,10 +4,10 @@ import * as z from "zod/v4";
 // These are pure type-level checks. They run no assertions, so the value of
 // the test is in the `expectTypeOf` calls — failures surface as type errors.
 
-test("ZodPreprocess<B> is assignable to ZodPipe<$ZodType, B>", () => {
+test("ZodPreprocess<B> is assignable to ZodPipe<$ZodTransform, B>", () => {
   const pre = z.preprocess((v) => v, z.string().optional());
-  const _asPipe: z.ZodPipe<z.core.$ZodType, z.ZodOptional<z.ZodString>> = pre;
-  const _asCorePipe: z.core.$ZodPipe<z.core.$ZodType, z.ZodOptional<z.ZodString>> = pre;
+  const _asPipe: z.ZodPipe<z.core.$ZodTransform, z.ZodOptional<z.ZodString>> = pre;
+  const _asCorePipe: z.core.$ZodPipe<z.core.$ZodTransform, z.ZodOptional<z.ZodString>> = pre;
   expectTypeOf(_asPipe).toMatchTypeOf<z.ZodPipe>();
   expectTypeOf(_asCorePipe).toMatchTypeOf<z.core.$ZodPipe>();
 });

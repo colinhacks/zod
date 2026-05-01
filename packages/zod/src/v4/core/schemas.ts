@@ -4125,37 +4125,35 @@ function handleCodecTxResult(left: ParsePayload, value: any, nextSchema: SomeTyp
 //////////                             //////////
 /////////////////////////////////////////////////
 /////////////////////////////////////////////////
-// Preprocess is a structural subtype of $ZodPipe whose `def.type` stays "pipe".
-// It pins `def.in` to a synthetic permissive schema and re-exposes B's
-// presence surface (optin/optout). Detect via
-// `inst._zod.traits.has("$ZodPreprocess")`.
+// Preprocess is a structural subtype of $ZodPipe<$ZodTransform, B> whose
+// only deviation from a vanilla pipe is its presence surface: `optin` and
+// `optout` defer to B (the inner schema) instead of A (the leading
+// transform). The runtime parse, the def shape, and `def.in._zod` are all
+// the same as the legacy `pipe(transform(fn), schema)` form — we just
+// override the static optionality lazies.
 //
 // Asymmetry between presence (optin/optout) and input-set descriptors
 // (values/propValues): presence semantics describe whether the *outer*
 // container can omit this slot, and preprocess is transparent to that — we
 // want `z.preprocess(fn, schema.optional())` and `z.preprocess(fn,
-// schema).optional()` to be equivalent.
-//
-// `values` and `propValues`, by contrast, are claims about the *input* set
-// the schema accepts. The preprocess `fn` can map any input to a B-accepted
-// value, so the actual input set is unknowable statically. Deferring them
-// to B would corrupt the discriminated-union disc map (which uses
-// `propValues` as a fast-path) and the record-key enumerator (which uses
-// `values` to iterate expected keys). Both must stay `undefined`, matching
-// the legacy `pipe(transform, ...)` form.
-export interface $ZodPreprocessDef<B extends SomeType = $ZodType> extends $ZodPipeDef<$ZodType, B> {
-  in: $ZodType;
+// schema).optional()` to be equivalent. By contrast, `values` and
+// `propValues` describe the literal *input* set the schema accepts. The
+// preprocess `fn` can map any input to a B-accepted value, so deferring
+// those to B would corrupt the discriminated-union disc map and the
+// record-key enumerator. They stay inherited from A (the transform), which
+// has neither — matching the legacy form exactly.
+export interface $ZodPreprocessDef<B extends SomeType = $ZodType> extends $ZodPipeDef<$ZodTransform, B> {
+  in: $ZodTransform;
   out: B;
-  transform: (value: unknown, payload: ParsePayload<unknown>) => util.MaybeAsync<core.input<B>>;
 }
 
-export interface $ZodPreprocessInternals<B extends SomeType = $ZodType> extends $ZodPipeInternals<$ZodType, B> {
+export interface $ZodPreprocessInternals<B extends SomeType = $ZodType> extends $ZodPipeInternals<$ZodTransform, B> {
   def: $ZodPreprocessDef<B>;
   optin: B["_zod"]["optin"];
   optout: B["_zod"]["optout"];
 }
 
-export interface $ZodPreprocess<B extends SomeType = $ZodType> extends $ZodPipe<$ZodType, B> {
+export interface $ZodPreprocess<B extends SomeType = $ZodType> extends $ZodPipe<$ZodTransform, B> {
   _zod: $ZodPreprocessInternals<B>;
 }
 
@@ -4163,33 +4161,8 @@ export const $ZodPreprocess: core.$constructor<$ZodPreprocess> = /*@__PURE__*/ c
   "$ZodPreprocess",
   (inst, def) => {
     $ZodPipe.init(inst, def);
-    // Override the lazies installed by $ZodPipe so presence semantics defer
-    // to B. Leave `values` and `propValues` as A's (undefined for the
-    // synthetic z.unknown() input) — see comment above for why.
     util.defineLazy(inst._zod, "optin", () => def.out._zod.optin);
     util.defineLazy(inst._zod, "optout", () => def.out._zod.optout);
-
-    inst._zod.parse = (payload, ctx) => {
-      if (ctx.direction === "backward") {
-        throw new core.$ZodEncodeError(inst.constructor.name);
-      }
-
-      const _out = def.transform(payload.value, payload);
-      if (ctx.async) {
-        const output = _out instanceof Promise ? _out : Promise.resolve(_out);
-        return output.then((output) => {
-          payload.value = output;
-          return handlePipeResult(payload, def.out, ctx);
-        });
-      }
-
-      if (_out instanceof Promise) {
-        throw new core.$ZodAsyncError();
-      }
-
-      payload.value = _out;
-      return handlePipeResult(payload, def.out, ctx);
-    };
   }
 );
 

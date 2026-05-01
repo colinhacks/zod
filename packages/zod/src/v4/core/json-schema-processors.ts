@@ -525,11 +525,12 @@ export const catchProcessor: Processor<schemas.$ZodCatch> = (schema, ctx, json, 
 
 export const pipeProcessor: Processor<schemas.$ZodPipe> = (schema, ctx, _json, params) => {
   const def = schema._zod.def as schemas.$ZodPipeDef;
-  // Use B for input-side JSON schema when the input contributes no validation:
-  // either a ZodPreprocess (synthetic z.unknown() input) or a legacy
-  // pipe(transform, ...) form. Both detected via traits for consistency.
-  const inIsPassthrough = schema._zod.traits.has("$ZodPreprocess") || def.in._zod.traits.has("$ZodTransform");
-  const innerType = ctx.io === "input" ? (inIsPassthrough ? def.out : def.in) : def.out;
+  // For input-side JSON schema, fall through to B when the input slot is
+  // itself a transform (no input-side validation). Covers both the legacy
+  // `pipe(transform, ...)` form and `z.preprocess` (whose `def.in` is a
+  // real ZodTransform).
+  const inIsTransform = def.in._zod.traits.has("$ZodTransform");
+  const innerType = ctx.io === "input" ? (inIsTransform ? def.out : def.in) : def.out;
   process(innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = innerType;

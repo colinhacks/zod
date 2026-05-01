@@ -2362,11 +2362,13 @@ export function invertCodec<A extends core.SomeType, B extends core.SomeType>(co
 }
 
 // ZodPreprocess
-// Subtype of ZodPipe whose `optin`/`optout`/`values`/`propValues` defer to B
-// (the inner schema) instead of A. The `def.in` slot holds a permissive
-// pass-through schema (z.unknown()) so no input-side validation runs.
+// Subtype of ZodPipe whose `optin`/`optout` defer to B (the inner schema)
+// instead of A. Runtime structure is identical to `pipe(transform(fn),
+// schema)` — `def.in` is a real ZodTransform and the parse function is
+// inherited from ZodPipe unchanged. The override is purely a static
+// metadata override so object containers see B's presence semantics.
 export interface ZodPreprocess<B extends core.SomeType = core.$ZodType>
-  extends ZodPipe<core.$ZodType, B>,
+  extends ZodPipe<core.$ZodTransform, B>,
     core.$ZodPreprocess<B> {
   "~standard": ZodStandardSchemaWithJSON<this>;
   _zod: core.$ZodPreprocessInternals<B>;
@@ -2377,55 +2379,8 @@ export const ZodPreprocess: core.$constructor<ZodPreprocess> = /*@__PURE__*/ cor
   (inst, def) => {
     ZodPipe.init(inst, def);
     core.$ZodPreprocess.init(inst, def);
-
-    // Override parse so the user-supplied transform receives a payload with
-    // `addIssue` attached (mirroring classic ZodTransform behavior).
-    inst._zod.parse = (payload, ctx) => {
-      if (ctx.direction === "backward") {
-        throw new core.$ZodEncodeError(inst.constructor.name);
-      }
-
-      (payload as core.$RefinementCtx).addIssue = (issue) => {
-        if (typeof issue === "string") {
-          payload.issues.push(core.util.issue(issue, payload.value, def));
-        } else {
-          // for Zod 3 backwards compatibility
-          const _issue = issue as any;
-
-          if (_issue.fatal) _issue.continue = false;
-          _issue.code ??= "custom";
-          _issue.input ??= payload.value;
-          _issue.inst ??= inst;
-          payload.issues.push(core.util.issue(_issue));
-        }
-      };
-
-      const _out = def.transform(payload.value, payload);
-      if (ctx.async) {
-        const output = _out instanceof Promise ? _out : Promise.resolve(_out);
-        return output.then((output) => {
-          payload.value = output;
-          return handlePreprocessResult(payload, def.out, ctx);
-        });
-      }
-
-      if (_out instanceof Promise) {
-        throw new core.$ZodAsyncError();
-      }
-
-      payload.value = _out;
-      return handlePreprocessResult(payload, def.out, ctx);
-    };
   }
 );
-
-function handlePreprocessResult(left: core.ParsePayload, next: core.$ZodType, ctx: core.ParseContextInternal) {
-  if (left.issues.length) {
-    left.aborted = true;
-    return left;
-  }
-  return next._zod.run({ value: left.value, issues: left.issues }, ctx);
-}
 
 // ZodReadonly
 export interface ZodReadonly<T extends core.SomeType = core.$ZodType>
@@ -2714,8 +2669,7 @@ export function preprocess<A, U extends core.SomeType, B = unknown>(
 ): ZodPreprocess<U> {
   return new ZodPreprocess({
     type: "pipe",
-    in: unknown() as any as core.$ZodType,
+    in: transform(fn as any) as any as core.$ZodTransform,
     out: schema as any as core.$ZodType,
-    transform: fn as any,
   }) as any;
 }
