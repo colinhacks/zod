@@ -985,9 +985,9 @@ export interface _ZodNumber<Internals extends core.$ZodNumberInternals = core.$Z
   finite(params?: unknown): this;
 
   /** Constrain to a valid latitude (`[-90, 90]`). Sugar over `.gte(-90).lte(90)`. */
-  latitude(params?: string | core.$ZodCheckLessThanParams): this;
+  latitude(params?: string): this;
   /** Constrain to a valid longitude (`[-180, 180]`). Sugar over `.gte(-180).lte(180)`. */
-  longitude(params?: string | core.$ZodCheckLessThanParams): this;
+  longitude(params?: string): this;
 
   minValue: number | null;
   maxValue: number | null;
@@ -1054,10 +1054,10 @@ export const ZodNumber: core.$constructor<ZodNumber> = /*@__PURE__*/ core.$const
       return this;
     },
     latitude(params) {
-      return this.check(checks.gte(-90)).check(checks.lte(90, params));
+      return this.check(checks.gte(-90, params)).check(checks.lte(90, params));
     },
     longitude(params) {
-      return this.check(checks.gte(-180)).check(checks.lte(180, params));
+      return this.check(checks.gte(-180, params)).check(checks.lte(180, params));
     },
   });
 

@@ -48,8 +48,10 @@ describe("z.latitude / z.longitude (classic)", () => {
   test("propagates the inferred output type as `number`", () => {
     const lat = z.latitude();
     type T = z.output<typeof lat>;
-    const v: T = 0;
-    expect(v).toBe(0);
+    // Mutual-extends check: T is exactly `number`, not a sub/supertype.
+    type _assert = [T] extends [number] ? ([number] extends [T] ? true : false) : false;
+    const _: _assert = true;
+    void _;
   });
 
   test("error messages reference the actual bound (no new error code)", () => {
