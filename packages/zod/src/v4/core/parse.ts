@@ -50,6 +50,30 @@ export const _parseAsync: (_Err: $ZodErrorClass) => $ParseAsync = (_Err) => asyn
 
 export const parseAsync: $ParseAsync = /* @__PURE__*/ _parseAsync(errors.$ZodRealError);
 
+export type $ParseMaybeAsync = <T extends schemas.$ZodType>(
+  schema: T,
+  value: unknown,
+  _ctx?: schemas.ParseContext<errors.$ZodIssue>,
+  _params?: { callee?: util.AnyFunc; Err?: $ZodErrorClass }
+) => util.MaybeAsync<core.output<T>>;
+
+export const _parseMaybeAsync: (_Err: $ZodErrorClass) => $ParseMaybeAsync =
+  (_Err) => (schema, value, _ctx, _params) => {
+    const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: true } : { async: true };
+    const finalize = (r: schemas.ParsePayload) => {
+      if (r.issues.length) {
+        const e = new (_params?.Err ?? _Err)(r.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())));
+        util.captureStackTrace(e, _params?.callee);
+        throw e;
+      }
+      return r.value as core.output<typeof schema>;
+    };
+    const result = schema._zod.run({ value, issues: [] }, ctx);
+    return result instanceof Promise ? result.then(finalize) : finalize(result);
+  };
+
+export const parseMaybeAsync: $ParseMaybeAsync = /* @__PURE__*/ _parseMaybeAsync(errors.$ZodRealError);
+
 export type $SafeParse = <T extends schemas.$ZodType>(
   schema: T,
   value: unknown,
@@ -92,6 +116,24 @@ export const _safeParseAsync: (_Err: $ZodErrorClass) => $SafeParseAsync = (_Err)
 };
 
 export const safeParseAsync: $SafeParseAsync = /* @__PURE__*/ _safeParseAsync(errors.$ZodRealError);
+
+export type $SafeParseMaybeAsync = <T extends schemas.$ZodType>(
+  schema: T,
+  value: unknown,
+  _ctx?: schemas.ParseContext<errors.$ZodIssue>
+) => util.MaybeAsync<util.SafeParseResult<core.output<T>>>;
+
+export const _safeParseMaybeAsync: (_Err: $ZodErrorClass) => $SafeParseMaybeAsync = (_Err) => (schema, value, _ctx) => {
+  const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: true } : { async: true };
+  const finalize = (r: schemas.ParsePayload) =>
+    r.issues.length
+      ? { success: false, error: new _Err(r.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))) }
+      : { success: true, data: r.value };
+  const result = schema._zod.run({ value, issues: [] }, ctx);
+  return (result instanceof Promise ? result.then(finalize) : finalize(result)) as any;
+};
+
+export const safeParseMaybeAsync: $SafeParseMaybeAsync = /* @__PURE__*/ _safeParseMaybeAsync(errors.$ZodRealError);
 
 // Codec functions
 export type $Encode = <T extends schemas.$ZodType>(

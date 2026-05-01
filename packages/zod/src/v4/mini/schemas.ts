@@ -34,6 +34,11 @@ export interface ZodMiniType<
     data: unknown,
     params?: core.ParseContext<core.$ZodIssue>
   ): Promise<util.SafeParseResult<core.output<this>>>;
+  parseMaybeAsync(data: unknown, params?: core.ParseContext<core.$ZodIssue>): util.MaybeAsync<core.output<this>>;
+  safeParseMaybeAsync(
+    data: unknown,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): util.MaybeAsync<util.SafeParseResult<core.output<this>>>;
   apply<T>(fn: (schema: this) => T): T;
 }
 
@@ -53,6 +58,9 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
     inst.safeParse = (data, params) => parse.safeParse(inst, data, params);
     inst.parseAsync = async (data, params) => parse.parseAsync(inst, data, params, { callee: inst.parseAsync });
     inst.safeParseAsync = async (data, params) => parse.safeParseAsync(inst, data, params);
+    inst.parseMaybeAsync = (data, params) =>
+      parse.parseMaybeAsync(inst, data, params, { callee: inst.parseMaybeAsync });
+    inst.safeParseMaybeAsync = (data, params) => parse.safeParseMaybeAsync(inst, data, params);
     inst.check = (...checks) => {
       return inst.clone(
         {

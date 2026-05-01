@@ -4,7 +4,7 @@ import * as core from "./core.js";
 import { Doc } from "./doc.js";
 import type * as errors from "./errors.js";
 import type * as JSONSchema from "./json-schema.js";
-import { parse, parseAsync, safeParse, safeParseAsync } from "./parse.js";
+import { parse, parseAsync, safeParseMaybeAsync } from "./parse.js";
 import * as regexes from "./regexes.js";
 import type { StandardSchemaV1 } from "./standard-schema.js";
 import type { ProcessParams, ToJSONSchemaContext } from "./to-json-schema.js";
@@ -302,12 +302,11 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
   // Lazy initialize ~standard to avoid creating objects for every schema
   util.defineLazy(inst, "~standard", () => ({
     validate: (value: unknown) => {
-      try {
-        const r = safeParse(inst, value);
-        return r.success ? { value: r.data } : { issues: r.error?.issues };
-      } catch (_) {
-        return safeParseAsync(inst, value).then((r) => (r.success ? { value: r.data } : { issues: r.error?.issues }));
+      const r = safeParseMaybeAsync(inst, value);
+      if (r instanceof Promise) {
+        return r.then((rr) => (rr.success ? { value: rr.data } : { issues: rr.error?.issues }));
       }
+      return r.success ? { value: r.data } : { issues: r.error?.issues };
     },
     vendor: "zod",
     version: 1 as const,

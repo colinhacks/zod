@@ -116,6 +116,11 @@ export interface ZodType<
   parse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;
   safeParse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): parse.ZodSafeParseResult<core.output<this>>;
   parseAsync(data: unknown, params?: core.ParseContext<core.$ZodIssue>): Promise<core.output<this>>;
+  parseMaybeAsync(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.util.MaybeAsync<core.output<this>>;
+  safeParseMaybeAsync(
+    data: unknown,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): core.util.MaybeAsync<parse.ZodSafeParseResult<core.output<this>>>;
   safeParseAsync(
     data: unknown,
     params?: core.ParseContext<core.$ZodIssue>
@@ -236,6 +241,8 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   inst.safeParse = (data, params) => parse.safeParse(inst, data, params);
   inst.parseAsync = async (data, params) => parse.parseAsync(inst, data, params, { callee: inst.parseAsync });
   inst.safeParseAsync = async (data, params) => parse.safeParseAsync(inst, data, params);
+  inst.parseMaybeAsync = (data, params) => parse.parseMaybeAsync(inst, data, params, { callee: inst.parseMaybeAsync });
+  inst.safeParseMaybeAsync = (data, params) => parse.safeParseMaybeAsync(inst, data, params);
   inst.spa = inst.safeParseAsync;
   inst.encode = (data, params) => parse.encode(inst, data, params);
   inst.decode = (data, params) => parse.decode(inst, data, params);
