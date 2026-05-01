@@ -26,6 +26,12 @@ export interface JSONSchemaGeneratorParams {
    * - `"throw"` — Default. Unrepresentable types throw an error
    * - `"any"` — Unrepresentable types become `{}` */
   unrepresentable?: "throw" | "any";
+  /** How to encode `z.union(...)` (inclusive unions).
+   * - `"anyOf"` — Default. Matches JSON Schema spec semantics (one or more match).
+   * - `"oneOf"` — Emit `oneOf` instead. Useful for consumers that don't accept
+   *   `anyOf` (e.g. Google Gemini Function Calling). `z.xor()` and discriminated
+   *   unions are unaffected — they always emit `oneOf`. */
+  union?: "anyOf" | "oneOf";
   /** Arbitrary custom logic that can be used to modify the generated JSON Schema. */
   override?: (ctx: {
     zodSchema: schemas.$ZodTypes;
@@ -86,6 +92,7 @@ export interface ToJSONSchemaContext {
   metadataRegistry: $ZodRegistry<Record<string, any>>;
   target: "draft-04" | "draft-07" | "draft-2020-12" | "openapi-3.0" | ({} & string);
   unrepresentable: "throw" | "any";
+  union: "anyOf" | "oneOf";
   override: (ctx: {
     // must be schemas.$ZodType to prevent recursive type resolution error
     zodSchema: schemas.$ZodType;
@@ -126,6 +133,7 @@ export function initializeContext(params: JSONSchemaGeneratorParams): ToJSONSche
     metadataRegistry: params?.metadata ?? globalRegistry,
     target,
     unrepresentable: params?.unrepresentable ?? "throw",
+    union: params?.union ?? "anyOf",
     override: (params?.override as any) ?? (() => {}),
     io: params?.io ?? "output",
     counter: 0,

@@ -335,20 +335,18 @@ export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _jso
 
 export const unionProcessor: Processor<schemas.$ZodUnion> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodUnionDef;
-  // Exclusive unions (inclusive === false) use oneOf (exactly one match) instead of anyOf (one or more matches)
-  // This includes both z.xor() and discriminated unions
+  // Exclusive unions (z.xor / discriminated union) always emit oneOf.
+  // Inclusive unions default to anyOf, but the caller can opt into oneOf
+  // via `union: "oneOf"` for consumers that don't accept anyOf.
   const isExclusive = def.inclusive === false;
+  const keyword: "oneOf" | "anyOf" = isExclusive || ctx.union === "oneOf" ? "oneOf" : "anyOf";
   const options = def.options.map((x, i) =>
     process(x, ctx as any, {
       ...params,
-      path: [...params.path, isExclusive ? "oneOf" : "anyOf", i],
+      path: [...params.path, keyword, i],
     })
   );
-  if (isExclusive) {
-    json.oneOf = options;
-  } else {
-    json.anyOf = options;
-  }
+  json[keyword] = options;
 };
 
 export const intersectionProcessor: Processor<schemas.$ZodIntersection> = (schema, ctx, json, params) => {
