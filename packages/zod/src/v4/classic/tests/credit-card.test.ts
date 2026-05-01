@@ -33,6 +33,12 @@ describe("z.creditCard", () => {
     expect(() => z.creditCard().parse("9999999999999995")).toThrow();
   });
 
+  test("rejects 13-digit Luhn-valid Mastercard-prefix (regex precedence regression)", () => {
+    // `5[1-5]\d{2}|...` without grouping would let 13-digit `5100000000003` through —
+    // real Mastercards are always 16 digits.
+    expect(() => z.creditCard().parse("5100000000003")).toThrow();
+  });
+
   test("rejects non-digit / wrong-length input", () => {
     expect(() => z.creditCard().parse("not-a-card")).toThrow();
     expect(() => z.creditCard().parse("411111")).toThrow();
@@ -52,5 +58,13 @@ describe("z.creditCard", () => {
     const optional = z.creditCard().optional();
     expect(optional.parse(undefined)).toBe(undefined);
     expect(optional.parse("4111111111111111")).toBe("4111111111111111");
+  });
+
+  test("z.string().creditCard() chainable form (deprecated, parity with .jwt() / .e164())", () => {
+    const schema = z.string().creditCard();
+    expect(schema.parse("4111111111111111")).toBe("4111111111111111");
+    expect(() => schema.parse("4111111111111112")).toThrow();
+    // Composes with other string checks.
+    expect(() => z.string().min(20).creditCard().parse("4111111111111111")).toThrow();
   });
 });

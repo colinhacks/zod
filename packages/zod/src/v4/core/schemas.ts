@@ -1002,16 +1002,14 @@ export const $ZodE164: core.$constructor<$ZodE164> = /*@__PURE__*/ core.$constru
 //////////////////////////////   ZodCreditCard   //////////////////////////////
 
 const CC_SANITIZE = /[- ]/g;
-const CC_NON_DIGIT = /\D/g;
 
-/** Luhn checksum. Adapted from valibot (MIT). */
-function isLuhnAlgo(input: string): boolean {
-  const number = input.replace(CC_NON_DIGIT, "");
-  let length = number.length;
+/** Luhn checksum on a digit-only string. Adapted from valibot (MIT). */
+function isLuhnAlgo(digits: string): boolean {
+  let length = digits.length;
   let bit = 1;
   let sum = 0;
   while (length) {
-    const value = +number[--length]!;
+    const value = +digits[--length]!;
     bit ^= 1;
     sum += bit ? [0, 2, 4, 6, 8, 1, 3, 5, 7, 9][value]! : value;
   }
