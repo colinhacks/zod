@@ -4126,9 +4126,23 @@ function handleCodecTxResult(left: ParsePayload, value: any, nextSchema: SomeTyp
 /////////////////////////////////////////////////
 /////////////////////////////////////////////////
 // Preprocess is a structural subtype of $ZodPipe whose `def.type` stays "pipe".
-// It pins `def.in` to a synthetic permissive schema and exposes B's optionality
-// surface (optin/optout/values/propValues) instead of A's. Detect via
+// It pins `def.in` to a synthetic permissive schema and re-exposes B's
+// presence surface (optin/optout). Detect via
 // `inst._zod.traits.has("$ZodPreprocess")`.
+//
+// Asymmetry between presence (optin/optout) and input-set descriptors
+// (values/propValues): presence semantics describe whether the *outer*
+// container can omit this slot, and preprocess is transparent to that — we
+// want `z.preprocess(fn, schema.optional())` and `z.preprocess(fn,
+// schema).optional()` to be equivalent.
+//
+// `values` and `propValues`, by contrast, are claims about the *input* set
+// the schema accepts. The preprocess `fn` can map any input to a B-accepted
+// value, so the actual input set is unknowable statically. Deferring them
+// to B would corrupt the discriminated-union disc map (which uses
+// `propValues` as a fast-path) and the record-key enumerator (which uses
+// `values` to iterate expected keys). Both must stay `undefined`, matching
+// the legacy `pipe(transform, ...)` form.
 export interface $ZodPreprocessDef<B extends SomeType = $ZodType> extends $ZodPipeDef<$ZodType, B> {
   in: $ZodType;
   out: B;
@@ -4137,10 +4151,8 @@ export interface $ZodPreprocessDef<B extends SomeType = $ZodType> extends $ZodPi
 
 export interface $ZodPreprocessInternals<B extends SomeType = $ZodType> extends $ZodPipeInternals<$ZodType, B> {
   def: $ZodPreprocessDef<B>;
-  values: B["_zod"]["values"];
   optin: B["_zod"]["optin"];
   optout: B["_zod"]["optout"];
-  propValues: B["_zod"]["propValues"];
 }
 
 export interface $ZodPreprocess<B extends SomeType = $ZodType> extends $ZodPipe<$ZodType, B> {
@@ -4151,12 +4163,11 @@ export const $ZodPreprocess: core.$constructor<$ZodPreprocess> = /*@__PURE__*/ c
   "$ZodPreprocess",
   (inst, def) => {
     $ZodPipe.init(inst, def);
-    // Override the lazies installed by $ZodPipe so optionality surface defers
-    // to B (the inner schema) instead of A (the synthetic permissive input).
-    util.defineLazy(inst._zod, "values", () => def.out._zod.values);
+    // Override the lazies installed by $ZodPipe so presence semantics defer
+    // to B. Leave `values` and `propValues` as A's (undefined for the
+    // synthetic z.unknown() input) — see comment above for why.
     util.defineLazy(inst._zod, "optin", () => def.out._zod.optin);
     util.defineLazy(inst._zod, "optout", () => def.out._zod.optout);
-    util.defineLazy(inst._zod, "propValues", () => def.out._zod.propValues);
 
     inst._zod.parse = (payload, ctx) => {
       if (ctx.direction === "backward") {

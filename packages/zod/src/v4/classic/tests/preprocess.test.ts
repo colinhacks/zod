@@ -302,3 +302,29 @@ test("preprocess is a structural subtype of ZodPipe", () => {
   expect(schema).toBeInstanceOf(z.ZodPreprocess);
   expect(schema._zod.def.type).toBe("pipe");
 });
+
+// Preprocess `fn` can map any input to a B-accepted value, so `values` and
+// `propValues` (which describe the *input* set) must not be inherited from B.
+// Otherwise the discriminated-union disc map and record-key enumerator
+// short-circuit on B's literal set before the preprocess fn ever runs.
+test("preprocess does not propagate values/propValues from inner schema", () => {
+  const inner = z.preprocess((v) => v, z.literal("test"));
+  expect(inner._zod.values).toBeUndefined();
+  expect(inner._zod.propValues).toBeUndefined();
+});
+
+test("preprocess as discriminator throws at construction (no propValues to inherit)", () => {
+  const schema = z.discriminatedUnion("kind", [
+    z.object({ kind: z.preprocess((v: any) => String(v).toUpperCase(), z.literal("A")), a: z.string() }),
+    z.object({ kind: z.preprocess((v: any) => String(v).toUpperCase(), z.literal("B")), b: z.number() }),
+  ]);
+  expect(() => schema.parse({ kind: "a", a: "x" })).toThrow(/Invalid discriminated union option/);
+});
+
+test("preprocess as record key does not restrict accepted keys", () => {
+  const schema = z.record(
+    z.preprocess((v: any) => String(v).toLowerCase(), z.enum(["a", "b"])),
+    z.string()
+  );
+  expect(schema.safeParse({ A: "x", B: "y" })).toEqual({ success: true, data: { a: "x", b: "y" } });
+});
