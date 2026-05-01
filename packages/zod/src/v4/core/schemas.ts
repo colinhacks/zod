@@ -3991,7 +3991,7 @@ export interface $ZodPipeInternals<A extends SomeType = $ZodType, B extends Some
   def: $ZodPipeDef<A, B>;
   isst: never;
   values: A["_zod"]["values"];
-  optin: A["_zod"]["optin"];
+  optin: A["_zod"]["optin"] | B["_zod"]["optin"];
   optout: B["_zod"]["optout"];
   propValues: A["_zod"]["propValues"];
 }
@@ -4003,7 +4003,7 @@ export interface $ZodPipe<A extends SomeType = $ZodType, B extends SomeType = $Z
 export const $ZodPipe: core.$constructor<$ZodPipe> = /*@__PURE__*/ core.$constructor("$ZodPipe", (inst, def) => {
   $ZodType.init(inst, def);
   util.defineLazy(inst._zod, "values", () => def.in._zod.values);
-  util.defineLazy(inst._zod, "optin", () => def.in._zod.optin);
+  util.defineLazy(inst._zod, "optin", () => def.in._zod.optin ?? def.out._zod.optin);
   util.defineLazy(inst._zod, "optout", () => def.out._zod.optout);
   util.defineLazy(inst._zod, "propValues", () => def.in._zod.propValues);
 
