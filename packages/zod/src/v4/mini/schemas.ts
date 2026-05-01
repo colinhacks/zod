@@ -1,5 +1,6 @@
 import * as core from "../core/index.js";
 import * as util from "../core/util.js";
+import * as checks from "./checks.js";
 import * as parse from "./parse.js";
 
 type SomeType = core.SomeType;
@@ -556,6 +557,16 @@ export const ZodMiniNumber: core.$constructor<ZodMiniNumber> = /*@__PURE__*/ cor
 // @__NO_SIDE_EFFECTS__
 export function number(params?: string | core.$ZodNumberParams): ZodMiniNumber<number> {
   return core._number(ZodMiniNumber, params) as any;
+}
+
+// latitude / longitude — sugar over number().gte(-90/-180).lte(90/180).
+// @__NO_SIDE_EFFECTS__
+export function latitude(params?: string | core.$ZodNumberParams): ZodMiniNumber<number> {
+  return number(params).check(checks.gte(-90)).check(checks.lte(90));
+}
+// @__NO_SIDE_EFFECTS__
+export function longitude(params?: string | core.$ZodNumberParams): ZodMiniNumber<number> {
+  return number(params).check(checks.gte(-180)).check(checks.lte(180));
 }
 
 // ZodMiniNumberFormat

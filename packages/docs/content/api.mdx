@@ -673,6 +673,10 @@ z.number().nonnegative();
 z.number().negative(); 
 z.number().nonpositive(); 
 z.number().multipleOf(5);              // alias .step(5)
+z.number().latitude();                 // alias .gte(-90).lte(90)
+z.number().longitude();                // alias .gte(-180).lte(180)
+z.latitude();                          // alias z.number().latitude()
+z.longitude();                         // alias z.number().longitude()
 ```
 </Tab>
 <Tab value="Zod Mini">
@@ -686,6 +690,10 @@ z.number().check(z.nonnegative());
 z.number().check(z.negative()); 
 z.number().check(z.nonpositive()); 
 z.number().check(z.multipleOf(5));     // alias .step(5)
+// no .latitude()/.longitude() chainable in mini
+// (functional only — see below)
+z.latitude();                          // number in [-90, 90]
+z.longitude();                         // number in [-180, 180]
 ```
 </Tab>
 </Tabs>
