@@ -32,6 +32,8 @@ export {
 } from "../core/index.js";
 export { toJSONSchema } from "../core/json-schema-processors.js";
 export { fromJSONSchema } from "./from-json-schema.js";
+export { deepPartial } from "./deep-partial.js";
+export { mapOnSchema } from "../core/map-on-schema.js";
 
 export * as locales from "../locales/index.js";
 
