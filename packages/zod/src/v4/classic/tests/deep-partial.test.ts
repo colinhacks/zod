@@ -134,10 +134,7 @@ describe("deepPartial", () => {
 
   test("wrapper composition (optional + default + readonly)", () => {
     const schema = z.object({
-      x: z
-        .object({ a: z.string() })
-        .default({ a: "hi" })
-        .readonly(),
+      x: z.object({ a: z.string() }).default({ a: "hi" }).readonly(),
     });
     const partial = deepPartial(schema);
     expect(partial.parse({})).toEqual({ x: { a: "hi" } });
@@ -152,9 +149,7 @@ describe("deepPartial", () => {
   });
 
   test("pipe input and output are both recursed", () => {
-    const schema = z
-      .object({ a: z.string() })
-      .pipe(z.object({ a: z.string() }));
+    const schema = z.object({ a: z.string() }).pipe(z.object({ a: z.string() }));
     const partial = deepPartial(schema);
     // Both sides of the pipe should accept missing fields.
     expect(partial.parse({})).toEqual({});
@@ -187,9 +182,8 @@ describe("mapOnSchema", () => {
   });
 
   test("root is cached: lazy self-reference does not re-invoke fn at parse-time", () => {
-    let Self: z.ZodType;
     let calls = 0;
-    Self = z.object({ self: z.lazy(() => Self).optional() });
+    const Self: z.ZodType = z.object({ self: z.lazy(() => Self).optional() });
     const result = mapOnSchema(Self, (s) => {
       calls++;
       return s;
@@ -206,4 +200,3 @@ describe("mapOnSchema", () => {
     expect(result).toBe(customSchema);
   });
 });
-

@@ -34,6 +34,11 @@ export { toJSONSchema } from "../core/json-schema-processors.js";
 export { fromJSONSchema } from "./from-json-schema.js";
 export { deepPartial } from "./deep-partial.js";
 export { mapOnSchema } from "../core/map-on-schema.js";
+// `inputOf` / `outputOf` are destructure-safe aliases for `in` / `out`
+// (which are JS reserved keywords; `import { in } from "zod"` is a syntax
+// error). The reserved forms remain exported for the dominant call-site
+// pattern (`z.in(s)`, `z.out(s)`) per @colinhacks's proposal in #5224.
+export { inOf as in, outOf as out, inOf as inputOf, outOf as outputOf } from "./in-out.js";
 
 export * as locales from "../locales/index.js";
 

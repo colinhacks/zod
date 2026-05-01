@@ -1,8 +1,8 @@
 // Traversal pattern adapted from Jaen's v3 `mapOnSchema` (Apache-2.0):
 // https://gist.github.com/jaens/7e15ae1984bb338c86eb5e452dee3010
 
-import { clone } from "./util.js";
 import type * as schemas from "./schemas.js";
+import { clone } from "./util.js";
 
 const RESOLVING: unique symbol = Symbol("mapOnSchema/resolving");
 type Resolving = typeof RESOLVING;
