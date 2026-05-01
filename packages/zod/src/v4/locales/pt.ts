@@ -43,6 +43,7 @@ const error: () => errors.$ZodErrorMap = () => {
     base64url: "URL codificada em base64",
     json_string: "texto JSON",
     e164: "número E.164",
+    credit_card: "número de cartão de crédito",
     jwt: "JWT",
     template_literal: "entrada",
   };

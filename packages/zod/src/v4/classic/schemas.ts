@@ -900,6 +900,22 @@ export function e164(params?: string | core.$ZodE164Params): ZodE164 {
   return core._e164(ZodE164, params);
 }
 
+// ZodCreditCard
+export interface ZodCreditCard extends ZodStringFormat<"credit_card"> {
+  _zod: core.$ZodCreditCardInternals;
+}
+export const ZodCreditCard: core.$constructor<ZodCreditCard> = /*@__PURE__*/ core.$constructor(
+  "ZodCreditCard",
+  (inst, def) => {
+    core.$ZodCreditCard.init(inst, def);
+    ZodStringFormat.init(inst, def);
+  }
+);
+
+export function creditCard(params?: string | core.$ZodCreditCardParams): ZodCreditCard {
+  return core._creditCard(ZodCreditCard, params);
+}
+
 // ZodJWT
 export interface ZodJWT extends ZodStringFormat<"jwt"> {
   _zod: core.$ZodJWTInternals;
