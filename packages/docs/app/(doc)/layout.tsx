@@ -8,7 +8,7 @@ import { SidebarLogo } from "@/components/sidebar-logo";
 
 export const dynamic = "force-static";
 
-const layoutProps: DocsLayoutProps = {
+export const layoutProps: DocsLayoutProps = {
   ...baseOptions,
   tree: source.pageTree,
 

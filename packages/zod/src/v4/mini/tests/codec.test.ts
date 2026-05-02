@@ -527,3 +527,22 @@ test("codec type enforcement - complex types", () => {
     }
   );
 });
+
+test("invertCodec", () => {
+  const inverted = z.invertCodec(isoDateCodec);
+
+  type InvIn = z.input<typeof inverted>;
+  type InvOut = z.output<typeof inverted>;
+  expectTypeOf<InvIn>().toEqualTypeOf<Date>();
+  expectTypeOf<InvOut>().toEqualTypeOf<string>();
+
+  const testDate = new Date("2024-01-15T10:30:00.000Z");
+  expect(z.decode(inverted, testDate)).toBe("2024-01-15T10:30:00.000Z");
+
+  const encoded = z.encode(inverted, "2024-01-15T10:30:00.000Z");
+  expect(encoded).toBeInstanceOf(Date);
+  expect(encoded.toISOString()).toBe("2024-01-15T10:30:00.000Z");
+
+  const doubleInverted = z.invertCodec(z.invertCodec(isoDateCodec));
+  expect(z.decode(doubleInverted, "2024-01-15T10:30:00.000Z")).toBeInstanceOf(Date);
+});

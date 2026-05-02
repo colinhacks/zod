@@ -1,6 +1,22 @@
 export const Gold = () => {
   const companies = [
     {
+      name: "Zernio",
+      description: "Social APIs for developers and AI agents",
+      logoDark: "https://avatars.githubusercontent.com/u/256836318?v=4",
+      logoLight: "https://avatars.githubusercontent.com/u/256836318?v=4",
+      url: "zernio.com",
+      href: "https://zernio.com/?utm_source=zod",
+    },
+    {
+      name: "Brand.dev",
+      description: "API for logos, colors, and company info",
+      logoDark: "https://avatars.githubusercontent.com/brand-dot-dev",
+      logoLight: "https://avatars.githubusercontent.com/brand-dot-dev",
+      url: "brand.dev",
+      href: "https://brand.dev/?utm_source=zod",
+    },
+    {
       name: "Courier",
       description: "The API platform for sending notifications",
       logoDark: "https://github.com/user-attachments/assets/6b09506a-78de-47e8-a8c1-792efe31910a",

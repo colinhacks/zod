@@ -1,4 +1,5 @@
 import type * as checks from "./checks.js";
+import { globalConfig } from "./core.js";
 import type { $ZodConfig } from "./core.js";
 import type * as errors from "./errors.js";
 import type * as schemas from "./schemas.js";
@@ -245,23 +246,15 @@ export function cleanRegex(source: string): string {
 }
 
 export function floatSafeRemainder(val: number, step: number): number {
-  const valDecCount = (val.toString().split(".")[1] || "").length;
-  const stepString = step.toString();
-  let stepDecCount = (stepString.split(".")[1] || "").length;
-  if (stepDecCount === 0 && /\d?e-\d?/.test(stepString)) {
-    const match = stepString.match(/\d?e-(\d?)/);
-    if (match?.[1]) {
-      stepDecCount = Number.parseInt(match[1]);
-    }
-  }
-
-  const decCount = valDecCount > stepDecCount ? valDecCount : stepDecCount;
-  const valInt = Number.parseInt(val.toFixed(decCount).replace(".", ""));
-  const stepInt = Number.parseInt(step.toFixed(decCount).replace(".", ""));
-  return (valInt % stepInt) / 10 ** decCount;
+  const ratio = val / step;
+  const roundedRatio = Math.round(ratio);
+  // Use a relative epsilon scaled to the magnitude of the result
+  const tolerance = Number.EPSILON * Math.max(Math.abs(ratio), 1);
+  if (Math.abs(ratio - roundedRatio) < tolerance) return 0;
+  return ratio - roundedRatio;
 }
 
-const EVALUATING = Symbol("evaluating");
+const EVALUATING = /* @__PURE__*/ Symbol("evaluating");
 
 export function defineLazy<T, K extends keyof T>(object: T, key: K, getter: () => T[K]): void {
   let value: T[K] | typeof EVALUATING | undefined = undefined;
@@ -368,7 +361,13 @@ export function isObject(data: any): data is Record<PropertyKey, unknown> {
   return typeof data === "object" && data !== null && !Array.isArray(data);
 }
 
-export const allowsEval: { value: boolean } = cached(() => {
+export const allowsEval: { value: boolean } = /* @__PURE__*/ cached(() => {
+  // Skip the probe under `jitless`: strict CSPs report the caught `new Function`
+  // as a `securitypolicyviolation` even though the throw is swallowed.
+  if (globalConfig.jitless) {
+    return false;
+  }
+
   // @ts-ignore
   if (typeof navigator !== "undefined" && navigator?.userAgent?.includes("Cloudflare")) {
     return false;
@@ -407,6 +406,8 @@ export function isPlainObject(o: any): o is Record<PropertyKey, unknown> {
 export function shallowClone(o: any): any {
   if (isPlainObject(o)) return { ...o };
   if (Array.isArray(o)) return [...o];
+  if (o instanceof Map) return new Map(o);
+  if (o instanceof Set) return new Set(o);
   return o;
 }
 
@@ -475,8 +476,15 @@ export const getParsedType = (data: any): ParsedTypes => {
   }
 };
 
-export const propertyKeyTypes: Set<string> = new Set(["string", "number", "symbol"]);
-export const primitiveTypes: Set<string> = new Set(["string", "number", "bigint", "boolean", "symbol", "undefined"]);
+export const propertyKeyTypes: Set<string> = /* @__PURE__*/ new Set(["string", "number", "symbol"]);
+export const primitiveTypes: Set<string> = /* @__PURE__*/ new Set([
+  "string",
+  "number",
+  "bigint",
+  "boolean",
+  "symbol",
+  "undefined",
+]);
 export function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -691,6 +699,9 @@ export function safeExtend(schema: schemas.$ZodObject, shape: schemas.$ZodShape)
 }
 
 export function merge(a: schemas.$ZodObject, b: schemas.$ZodObject): any {
+  if (a._zod.def.checks?.length) {
+    throw new Error(".merge() cannot be used on object schemas containing refinements. Use .safeExtend() instead.");
+  }
   const def = mergeDefs(a._zod.def, {
     get shape() {
       const _shape = { ...a._zod.def.shape, ...b._zod.def.shape };
@@ -700,7 +711,7 @@ export function merge(a: schemas.$ZodObject, b: schemas.$ZodObject): any {
     get catchall() {
       return b._zod.def.catchall;
     },
-    checks: [], // delete existing checks
+    checks: b._zod.def.checks ?? [],
   });
 
   return clone(a, def) as any;
@@ -811,6 +822,18 @@ export function aborted(x: schemas.ParsePayload, startIndex = 0): boolean {
   return false;
 }
 
+// Checks for explicit abort (continue === false), as opposed to implicit abort (continue === undefined).
+// Used to respect `abort: true` in .refine() even for checks that have a `when` function.
+export function explicitlyAborted(x: schemas.ParsePayload, startIndex = 0): boolean {
+  if (x.aborted === true) return true;
+  for (let i = startIndex; i < x.issues.length; i++) {
+    if (x.issues[i]?.continue === false) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function prefixIssues(path: PropertyKey, issues: errors.$ZodRawIssue[]): errors.$ZodRawIssue[] {
   return issues.map((iss) => {
     (iss as any).path ??= [];
@@ -828,27 +851,21 @@ export function finalizeIssue(
   ctx: schemas.ParseContextInternal | undefined,
   config: $ZodConfig
 ): errors.$ZodIssue {
-  const full = { ...iss, path: iss.path ?? [] } as errors.$ZodIssue;
-
-  // for backwards compatibility
-  if (!iss.message) {
-    const message =
-      unwrapMessage(iss.inst?._zod.def?.error?.(iss as never)) ??
+  const message = iss.message
+    ? iss.message
+    : (unwrapMessage(iss.inst?._zod.def?.error?.(iss as never)) ??
       unwrapMessage(ctx?.error?.(iss as never)) ??
       unwrapMessage(config.customError?.(iss)) ??
       unwrapMessage(config.localeError?.(iss)) ??
-      "Invalid input";
-    (full as any).message = message;
-  }
+      "Invalid input");
 
-  // delete (full as any).def;
-  delete (full as any).inst;
-  delete (full as any).continue;
-  if (!ctx?.reportInput) {
-    delete (full as any).input;
+  const { inst: _inst, continue: _continue, input: _input, ...rest } = iss as any;
+  rest.path ??= [];
+  rest.message = message;
+  if (ctx?.reportInput) {
+    rest.input = _input;
   }
-
-  return full;
+  return rest;
 }
 
 export function getSizableOrigin(input: any): "set" | "map" | "file" | "unknown" {

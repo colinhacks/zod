@@ -8,7 +8,7 @@
     "@ai-sdk/openai": "^3.0.2",
     "@types/node": "^22.13.13",
     "ai": "^6.0.5",
-    "drizzle-orm": "^0.45.1",
+    "drizzle-orm": "^0.45.2",
     "drizzle-zod": "^0.8.3",
     "typescript": "^5.8.2"
   },

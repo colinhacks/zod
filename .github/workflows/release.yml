@@ -11,7 +11,57 @@ on:
       - ".github/workflows/release.yml"
 
 jobs:
+  test-node:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node: ["lts/*"]
+        typescript: ["5.5", "latest"]
+    name: Test with TypeScript ${{ matrix.typescript }} on Node ${{ matrix.node }} (${{ matrix.os }})
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install
+      - run: pnpm add typescript@${{ matrix.typescript }} -w
+      - run: pnpm build
+      - run: pnpm test
+      - run: pnpm run --filter @zod/resolution test:all
+      - run: pnpm run --filter @zod/integration test:all
+
+  lint:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ["latest"]
+    name: Lint on Node ${{ matrix.node }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install
+      - run: pnpm format:check
+      - run: pnpm lint:check
+
+  check-circular:
+    runs-on: ubuntu-latest
+    name: Check for circular dependencies
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "latest"
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install
+      - run: pnpm check:circular
+
   build_and_publish:
+    needs: [test-node, lint, check-circular]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -25,8 +75,12 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-      
+          node-version: 24
+          registry-url: https://registry.npmjs.org/
+
+      - name: Upgrade npm to latest (required for trusted publishing >=11.5.1)
+        run: npm install -g npm@latest
+
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         
@@ -39,9 +93,8 @@ jobs:
 
       - id: publish
         name: Publish to NPM
-        uses: JS-DevTools/npm-publish@v3
+        uses: JS-DevTools/npm-publish@v4
         with:
-          token: ${{ secrets.NPM_TOKEN }}
           # dry-run: true
           provenance: true
           package: ./packages/zod
@@ -64,9 +117,8 @@ jobs:
 
       - name: Publish canary
         if: ${{ !steps.publish.outputs.type }}
-        uses: JS-DevTools/npm-publish@v3
+        uses: JS-DevTools/npm-publish@v4
         with:
-          token: ${{ secrets.NPM_TOKEN }}
           dry-run: false
           provenance: true
           tag: canary

@@ -80,7 +80,10 @@ test(".flatten()", () => {
 
 test("custom .flatten()", () => {
   type ErrorType = { message: string; code: number };
-  const flattened = parsed.error!.flatten((iss) => ({ message: iss.message, code: 1234 }));
+  const flattened = parsed.error!.flatten((iss) => ({
+    message: iss.message,
+    code: 1234,
+  }));
   expectTypeOf(flattened).toMatchTypeOf<{
     formErrors: ErrorType[];
     fieldErrors: {
@@ -160,7 +163,10 @@ test(".format()", () => {
 
 test("custom .format()", () => {
   type ErrorType = { message: string; code: number };
-  const formatted = parsed.error!.format((iss) => ({ message: iss.message, code: 1234 }));
+  const formatted = parsed.error!.format((iss) => ({
+    message: iss.message,
+    code: 1234,
+  }));
   expectTypeOf(formatted).toMatchTypeOf<{
     _errors: ErrorType[];
     f2?: { _errors: ErrorType[] };
@@ -592,4 +598,210 @@ test("update message after adding issues", () => {
       }
     ]"
   `);
+});
+
+test("z.formatError nested union preserves parent path", () => {
+  const syntheticError = new z.ZodError([
+    {
+      code: "invalid_union",
+      path: ["parent"],
+      message: "Invalid input",
+      errors: [
+        [
+          {
+            code: "invalid_type",
+            expected: "string",
+            path: [],
+            message: "Expected string",
+            input: {},
+          },
+        ],
+        [
+          {
+            code: "invalid_union",
+            path: ["child"],
+            message: "Invalid input",
+            errors: [
+              [
+                {
+                  code: "invalid_type",
+                  expected: "string",
+                  path: [],
+                  message: "Expected string",
+                  input: true,
+                },
+              ],
+              [
+                {
+                  code: "invalid_type",
+                  expected: "number",
+                  path: [],
+                  message: "Expected number",
+                  input: true,
+                },
+              ],
+            ],
+          },
+        ],
+      ],
+    },
+  ] as any);
+
+  const formatted: any = z.formatError(syntheticError);
+
+  // "child" must be nested under "parent", not at root
+  expect(formatted).not.toHaveProperty("child");
+  expect(formatted).toHaveProperty("parent");
+  expect(formatted.parent).toHaveProperty("child");
+  expect(formatted.parent.child._errors).toContain("Expected string");
+  expect(formatted.parent.child._errors).toContain("Expected number");
+  expect(formatted.parent._errors).toContain("Expected string");
+});
+test("z.treeifyError nested union preserves parent path", () => {
+  // When a nested invalid_union appears inside another invalid_union,
+  // the inner errors must stay nested under their parent path, not flatten to root.
+  const syntheticError = new z.ZodError([
+    {
+      code: "invalid_union",
+      path: ["parent"],
+      message: "Invalid input",
+      errors: [
+        [
+          {
+            code: "invalid_type",
+            expected: "string",
+            path: [],
+            message: "Expected string",
+            input: {},
+          },
+        ],
+        [
+          {
+            code: "invalid_union",
+            path: ["child"],
+            message: "Invalid input",
+            errors: [
+              [
+                {
+                  code: "invalid_type",
+                  expected: "string",
+                  path: [],
+                  message: "Expected string",
+                  input: true,
+                },
+              ],
+              [
+                {
+                  code: "invalid_type",
+                  expected: "number",
+                  path: [],
+                  message: "Expected number",
+                  input: true,
+                },
+              ],
+            ],
+          },
+        ],
+      ],
+    },
+  ] as any);
+
+  const tree: any = z.treeifyError(syntheticError);
+
+  // "child" must be nested under "parent", not at root
+  expect(tree.properties).not.toHaveProperty("child");
+  expect(tree.properties).toHaveProperty("parent");
+  expect(tree.properties.parent.properties).toHaveProperty("child");
+  expect(tree.properties.parent.properties.child.errors).toContain("Expected string");
+  expect(tree.properties.parent.properties.child.errors).toContain("Expected number");
+  expect(tree.properties.parent.errors).toContain("Expected string");
+});
+
+test("z.treeifyError deeply nested union (4 levels) preserves full path", () => {
+  // a > b > c > d — each level wrapped in an invalid_union
+  const syntheticError = new z.ZodError([
+    {
+      code: "invalid_union",
+      path: ["a"],
+      message: "Invalid input",
+      errors: [
+        [
+          {
+            code: "invalid_union",
+            path: ["b"],
+            message: "Invalid input",
+            errors: [
+              [
+                {
+                  code: "invalid_union",
+                  path: ["c"],
+                  message: "Invalid input",
+                  errors: [
+                    [
+                      {
+                        code: "invalid_type",
+                        expected: "string",
+                        path: ["d"],
+                        message: "Expected string",
+                        input: 123,
+                      },
+                    ],
+                  ],
+                },
+              ],
+            ],
+          },
+        ],
+      ],
+    },
+  ] as any);
+
+  const tree: any = z.treeifyError(syntheticError);
+
+  // The full path must be preserved: a.b.c.d
+  expect(tree.properties).toHaveProperty("a");
+  expect(tree.properties).not.toHaveProperty("b");
+  expect(tree.properties).not.toHaveProperty("c");
+
+  const lvlA = tree.properties.a;
+  expect(lvlA.properties).toHaveProperty("b");
+
+  const lvlB = lvlA.properties.b;
+  expect(lvlB.properties).toHaveProperty("c");
+
+  const lvlC = lvlB.properties.c;
+  expect(lvlC.properties).toHaveProperty("d");
+  expect(lvlC.properties.d.errors).toContain("Expected string");
+});
+
+test("z.treeifyError nested union with real schema", () => {
+  const innerUnion = z.union([
+    z.object({ type: z.literal("a"), value: z.string() }),
+    z.object({ type: z.literal("b"), value: z.number() }),
+  ]);
+
+  const schema = z.string().or(
+    z.object({
+      settings: z.object({ name: z.string() }).and(innerUnion),
+    })
+  );
+
+  const result = schema.safeParse({
+    settings: { name: 123, type: "x", value: true },
+  });
+
+  expect(result.success).toBe(false);
+  if (!result.success) {
+    const tree: any = z.treeifyError(result.error);
+
+    // All settings-related errors should be under "settings", not at root
+    expect(tree.properties).toHaveProperty("settings");
+    const settingsProperties = tree.properties.settings.properties ?? {};
+    for (const key of Object.keys(settingsProperties)) {
+      // Every sub-property under settings should NOT also appear at root
+      if (key !== "settings") {
+        expect(tree.properties).not.toHaveProperty(key);
+      }
+    }
+  }
 });

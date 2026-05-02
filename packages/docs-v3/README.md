@@ -38,22 +38,6 @@
 <br/>
 <br/>
 
-<h2 align="center">Featured sponsor: Jazz</h2>
-
-<div align="center">
-  <a href="https://jazz.tools/?utm_source=zod">
-    <picture width="95%" >
-      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/garden-co/jazz/938f6767e46cdfded60e50d99bf3b533f4809c68/homepage/homepage/public/Zod%20sponsor%20message.png">
-      <img alt="jazz logo" src="https://raw.githubusercontent.com/garden-co/jazz/938f6767e46cdfded60e50d99bf3b533f4809c68/homepage/homepage/public/Zod%20sponsor%20message.png" width="95%">
-    </picture>
-  </a>
-  <br/>
-  <p><sub>Learn more about <a target="_blank" rel="noopener noreferrer" href="mailto:sponsorship@colinhacks.com">featured sponsorships</a></sub></p>
-</div>
-
-<br/>
-<br/>
-
 ## Table of contents
 
 > These docs have been translated into [Chinese](./README_ZH.md) and [Korean](./README_KO.md).

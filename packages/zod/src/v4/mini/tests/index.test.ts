@@ -228,6 +228,30 @@ test("z.union", () => {
   expect(() => z.parse(a, true)).toThrow();
 });
 
+test("z.union([]) / z.xor([]) / z.discriminatedUnion(_, []) construct and reject all input", () => {
+  for (const schema of [z.union([]), z.xor([])]) {
+    const r = schema.safeParse("anything");
+    expect(r.success).toEqual(false);
+    if (!r.success) {
+      expect(r.error.issues[0].code).toBe("invalid_union");
+      expect((r.error.issues[0] as any).errors).toEqual([]);
+    }
+  }
+  const disc = z.discriminatedUnion("type", [] as any);
+  const r = disc.safeParse({ type: "x" });
+  expect(r.success).toEqual(false);
+  if (!r.success) {
+    expect(r.error.issues[0].code).toBe("invalid_union");
+    expect((r.error.issues[0] as any).errors).toEqual([]);
+    expect((r.error.issues[0] as any).options).toEqual([]);
+  }
+});
+
+test("z.discriminatedUnion rejects object options missing the discriminator at type level", () => {
+  // @ts-expect-error missing discriminator property
+  z.discriminatedUnion("type", [z.object({ value: z.string() })]);
+});
+
 test("z.intersection", () => {
   const a = z.intersection(z.object({ a: z.string() }), z.object({ b: z.number() }));
   expect(z.parse(a, { a: "hello", b: 123 })).toEqual({ a: "hello", b: 123 });
@@ -247,7 +271,7 @@ test("z.tuple", () => {
   const b = z.tuple([z.string(), z.number(), z.optional(z.string())], z.boolean());
   type b = z.output<typeof b>;
 
-  expectTypeOf<b>().toEqualTypeOf<[string, number, string?, ...boolean[]]>();
+  expectTypeOf<b>().toEqualTypeOf<[string, number, (string | undefined)?, ...boolean[]]>();
   const datas = [
     ["hello", 123],
     ["hello", 123, "world"],
@@ -265,7 +289,7 @@ test("z.tuple", () => {
   const cArgs = [z.string(), z.number(), z.optional(z.string())] as const;
   const c = z.tuple(cArgs, z.boolean());
   type c = z.output<typeof c>;
-  expectTypeOf<c>().toEqualTypeOf<[string, number, string?, ...boolean[]]>();
+  expectTypeOf<c>().toEqualTypeOf<[string, number, (string | undefined)?, ...boolean[]]>();
 });
 
 test("z.record", () => {
@@ -319,6 +343,12 @@ test("z.record", () => {
     [Enum.A]: "hello",
     [Enum.B]: "world",
   });
+
+  // v3-compat single-arg form: z.record(valueType) defaults keyType to z.string()
+  const f = (z.record as any)(z.number());
+  expect(f._zod.def.keyType._zod.def.type).toEqual("string");
+  expect(f._zod.def.valueType._zod.def.type).toEqual("number");
+  expect(z.parse(f, { a: 1, b: 2 })).toEqual({ a: 1, b: 2 });
 });
 
 test("z.map", () => {

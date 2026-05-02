@@ -280,3 +280,47 @@ test("perform transform with non-fatal issues", () => {
     ]]
   `);
 });
+
+// https://github.com/colinhacks/zod/issues/5917
+test("optional propagates through preprocess inside object", () => {
+  const outer = z.object({ x: z.preprocess((v) => v, z.number()).optional() });
+  const inner = z.object({ x: z.preprocess((v) => v, z.number().optional()) });
+
+  expect(outer.safeParse({}).success).toBe(true);
+  expect(inner.safeParse({}).success).toBe(true);
+
+  expect(outer.safeParse({ x: 1 })).toEqual({ success: true, data: { x: 1 } });
+  expect(inner.safeParse({ x: 1 })).toEqual({ success: true, data: { x: 1 } });
+
+  expect(inner._zod.def.shape.x._zod.optin).toBe("optional");
+  expect(inner._zod.def.shape.x._zod.optout).toBe("optional");
+});
+
+test("preprocess is a structural subtype of ZodPipe", () => {
+  const schema = z.preprocess((v) => v, z.string());
+  expect(schema).toBeInstanceOf(z.ZodPipe);
+  expect(schema).toBeInstanceOf(z.ZodPreprocess);
+  expect(schema._zod.def.type).toBe("pipe");
+});
+
+test("preprocess does not propagate values/propValues from inner schema", () => {
+  const inner = z.preprocess((v) => v, z.literal("test"));
+  expect(inner._zod.values).toBeUndefined();
+  expect(inner._zod.propValues).toBeUndefined();
+});
+
+test("preprocess as discriminator throws at construction (no propValues to inherit)", () => {
+  const schema = z.discriminatedUnion("kind", [
+    z.object({ kind: z.preprocess((v: any) => String(v).toUpperCase(), z.literal("A")), a: z.string() }),
+    z.object({ kind: z.preprocess((v: any) => String(v).toUpperCase(), z.literal("B")), b: z.number() }),
+  ]);
+  expect(() => schema.parse({ kind: "a", a: "x" })).toThrow(/Invalid discriminated union option/);
+});
+
+test("preprocess as record key does not restrict accepted keys", () => {
+  const schema = z.record(
+    z.preprocess((v: any) => String(v).toLowerCase(), z.enum(["a", "b"])),
+    z.string()
+  );
+  expect(schema.safeParse({ A: "x", B: "y" })).toEqual({ success: true, data: { a: "x", b: "y" } });
+});

@@ -29,7 +29,7 @@ interface ConversionContext {
 }
 
 // Keys that are recognized and handled by the conversion logic
-const RECOGNIZED_KEYS = new Set([
+const RECOGNIZED_KEYS = /*@__PURE__*/ new Set([
   // Schema identification
   "$schema",
   "$ref",
@@ -478,10 +478,10 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         }
         // Apply minItems/maxItems constraints to tuples
         if (typeof schema.minItems === "number") {
-          zodSchema = (zodSchema as any).check(z.minLength(schema.minItems));
+          zodSchema = zodSchema.check(z.minLength(schema.minItems));
         }
         if (typeof schema.maxItems === "number") {
-          zodSchema = (zodSchema as any).check(z.maxLength(schema.maxItems));
+          zodSchema = zodSchema.check(z.maxLength(schema.maxItems));
         }
       } else if (Array.isArray(items)) {
         // Tuple with items array (draft-7)
@@ -497,10 +497,10 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         }
         // Apply minItems/maxItems constraints to tuples
         if (typeof schema.minItems === "number") {
-          zodSchema = (zodSchema as any).check(z.minLength(schema.minItems));
+          zodSchema = zodSchema.check(z.minLength(schema.minItems));
         }
         if (typeof schema.maxItems === "number") {
-          zodSchema = (zodSchema as any).check(z.maxLength(schema.maxItems));
+          zodSchema = zodSchema.check(z.maxLength(schema.maxItems));
         }
       } else if (items !== undefined) {
         // Regular array
@@ -509,10 +509,10 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
 
         // Apply constraints
         if (typeof schema.minItems === "number") {
-          arraySchema = (arraySchema as any).min(schema.minItems);
+          arraySchema = arraySchema.min(schema.minItems);
         }
         if (typeof schema.maxItems === "number") {
-          arraySchema = (arraySchema as any).max(schema.maxItems);
+          arraySchema = arraySchema.max(schema.maxItems);
         }
 
         zodSchema = arraySchema;
@@ -525,14 +525,6 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
 
     default:
       throw new Error(`Unsupported type: ${type}`);
-  }
-
-  // Apply metadata
-  if (schema.description) {
-    zodSchema = zodSchema.describe(schema.description);
-  }
-  if (schema.default !== undefined) {
-    zodSchema = (zodSchema as any).default(schema.default);
   }
 
   return zodSchema;
@@ -586,10 +578,18 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
     baseSchema = z.readonly(baseSchema);
   }
 
-  // Collect metadata: core schema keywords and unrecognized keys
+  // Apply `default` so it wraps the fully-composed schema. This ensures
+  // `parse(undefined) -> default` works regardless of which branch of
+  // `convertBaseSchema` produced the inner schema (enum/const/not/typed/etc.).
+  if (schema.default !== undefined) {
+    baseSchema = baseSchema.default(schema.default);
+  }
+
+  // Collect non-description annotation metadata into the user-supplied
+  // registry. Description is handled separately below via `.describe()` to
+  // preserve the contract that `schema.description` reads from globalRegistry.
   const extraMeta: Record<string, unknown> = {};
 
-  // Core schema keywords that should be captured as metadata
   const coreMetadataKeys = ["$id", "id", "$comment", "$anchor", "$vocabulary", "$dynamicRef", "$dynamicAnchor"];
   for (const key of coreMetadataKeys) {
     if (key in schema) {
@@ -597,7 +597,6 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
     }
   }
 
-  // Content keywords - store as metadata
   const contentMetadataKeys = ["contentEncoding", "contentMediaType", "contentSchema"];
   for (const key of contentMetadataKeys) {
     if (key in schema) {
@@ -605,7 +604,6 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
     }
   }
 
-  // Unrecognized keys (custom metadata)
   for (const key of Object.keys(schema)) {
     if (!RECOGNIZED_KEYS.has(key)) {
       extraMeta[key] = schema[key];
@@ -614,6 +612,13 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
 
   if (Object.keys(extraMeta).length > 0) {
     ctx.registry.add(baseSchema, extraMeta);
+  }
+
+  // Apply description last. `.describe()` clones the schema and sets
+  // `_zod.parent` on the clone, so registry lookups on the returned reference
+  // still resolve `extraMeta` via parent inheritance.
+  if (schema.description) {
+    baseSchema = baseSchema.describe(schema.description);
   }
 
   return baseSchema;
@@ -627,17 +632,28 @@ export function fromJSONSchema(schema: JSONSchema.JSONSchema | boolean, params?:
     return schema ? z.any() : z.never();
   }
 
-  const version = detectVersion(schema, params?.defaultTarget);
-  const defs = (schema.$defs || schema.definitions || {}) as Record<string, JSONSchema.JSONSchema>;
+  // Normalize input via a JSON round-trip. This guarantees the converter
+  // walks a plain, finite, JSON-valid object graph: cyclic inputs fail here,
+  // getter/Proxy-based properties are materialized into static values, and
+  // class instances collapse to plain objects.
+  let normalized: JSONSchema.JSONSchema;
+  try {
+    normalized = JSON.parse(JSON.stringify(schema));
+  } catch {
+    throw new Error("fromJSONSchema input is not valid JSON (possibly cyclic); use $defs/$ref for recursive schemas");
+  }
+
+  const version = detectVersion(normalized, params?.defaultTarget);
+  const defs = (normalized.$defs || normalized.definitions || {}) as Record<string, JSONSchema.JSONSchema>;
 
   const ctx: ConversionContext = {
     version,
     defs,
     refs: new Map(),
     processing: new Set(),
-    rootSchema: schema,
+    rootSchema: normalized,
     registry: params?.registry ?? globalRegistry,
   };
 
-  return convertSchema(schema, ctx);
+  return convertSchema(normalized, ctx);
 }

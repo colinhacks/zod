@@ -103,6 +103,10 @@ const error: () => errors.$ZodErrorMap = () => {
       case "invalid_key":
         return `Invalid key in ${issue.origin}`;
       case "invalid_union":
+        if (issue.options && Array.isArray(issue.options) && issue.options.length > 0) {
+          const opts = issue.options.map((o) => `'${o}'`).join(" | ");
+          return `Invalid discriminator value. Expected ${opts}`;
+        }
         return "Invalid input";
       case "invalid_element":
         return `Invalid value in ${issue.origin}`;

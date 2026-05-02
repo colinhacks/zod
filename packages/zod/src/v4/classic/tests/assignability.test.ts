@@ -143,6 +143,12 @@ test("assignability", () => {
   z.unknown().pipe(z.number()) satisfies z.core.$ZodPipe;
   z.unknown().pipe(z.number()) satisfies z.ZodPipe;
 
+  // $ZodPreprocess
+  z.preprocess((v) => v, z.number()) satisfies z.core.$ZodPreprocess;
+  z.preprocess((v) => v, z.number()) satisfies z.ZodPreprocess;
+  z.preprocess((v) => v, z.number()) satisfies z.core.$ZodPipe<z.core.$ZodTransform, z.ZodNumber>;
+  z.preprocess((v) => v, z.number()) satisfies z.ZodPipe<z.core.$ZodTransform, z.ZodNumber>;
+
   // $ZodSuccess
   z.success(z.string()) satisfies z.core.$ZodSuccess;
   z.success(z.string()) satisfies z.ZodSuccess;

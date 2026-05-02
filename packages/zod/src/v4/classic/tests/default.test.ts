@@ -332,6 +332,50 @@ test("defaulted array schema returns shallow clone", () => {
   expect(result1).toEqual(result2);
 });
 
+test("defaulted Map schema returns shallow clone", () => {
+  const schema = z.map(z.string(), z.number()).default(new Map([["a", 1]]));
+  const result1 = schema.parse(undefined);
+  const result2 = schema.parse(undefined);
+  expect(result1).not.toBe(result2);
+  expect(result1).toEqual(result2);
+});
+
+test("defaulted Set schema returns shallow clone", () => {
+  const schema = z.set(z.string()).default(new Set(["x"]));
+  const result1 = schema.parse(undefined);
+  const result2 = schema.parse(undefined);
+  expect(result1).not.toBe(result2);
+  expect(result1).toEqual(result2);
+});
+
+test("mutations on defaulted Map do not affect subsequent parses", () => {
+  const schema = z.map(z.string(), z.number()).default(new Map());
+  const result1 = schema.parse(undefined);
+  const result2 = schema.parse(undefined);
+  result1.set("key1", 1);
+  result2.set("key2", 2);
+  expect(result1.size).toBe(1);
+  expect(result1.get("key1")).toBe(1);
+  expect(result1.has("key2")).toBe(false);
+  expect(result2.size).toBe(1);
+  expect(result2.get("key2")).toBe(2);
+  expect(result2.has("key1")).toBe(false);
+});
+
+test("mutations on defaulted Set do not affect subsequent parses", () => {
+  const schema = z.set(z.string()).default(new Set());
+  const result1 = schema.parse(undefined);
+  const result2 = schema.parse(undefined);
+  result1.add("item1");
+  result2.add("item2");
+  expect(result1.size).toBe(1);
+  expect(result1.has("item1")).toBe(true);
+  expect(result1.has("item2")).toBe(false);
+  expect(result2.size).toBe(1);
+  expect(result2.has("item2")).toBe(true);
+  expect(result2.has("item1")).toBe(false);
+});
+
 test("direction-aware defaults", () => {
   const schema = z.string().default("hello");
 

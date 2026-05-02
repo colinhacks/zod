@@ -205,7 +205,7 @@ export function process<T extends schemas.$ZodType>(
   }
 
   // set prefault as default
-  if (ctx.io === "input" && result.schema._prefault) result.schema.default ??= result.schema._prefault;
+  if (ctx.io === "input" && "_prefault" in result.schema) result.schema.default ??= result.schema._prefault;
   delete result.schema._prefault;
 
   // pulling fresh from ctx.seen in case it was overwritten
@@ -406,10 +406,10 @@ export function finalize<T extends schemas.$ZodType>(
       }
 
       // When ref was extracted to $defs, remove properties that match the definition
-      if (refSchema.$ref) {
+      if (refSchema.$ref && refSeen.def) {
         for (const key in schema) {
           if (key === "$ref" || key === "allOf") continue;
-          if (key in refSeen.def! && JSON.stringify(schema[key]) === JSON.stringify(refSeen.def![key])) {
+          if (key in refSeen.def && JSON.stringify(schema[key]) === JSON.stringify(refSeen.def[key])) {
             delete schema[key];
           }
         }
@@ -471,11 +471,19 @@ export function finalize<T extends schemas.$ZodType>(
 
   Object.assign(result, root.def ?? root.schema);
 
+  // The `id` in `.meta()` is a Zod-specific registration tag used to extract
+  // schemas into $defs — it is not user-facing JSON Schema metadata. Strip it
+  // from the output body where it would otherwise leak. The id is preserved
+  // implicitly via the $defs key (and via $ref paths).
+  const rootMetaId = ctx.metadataRegistry.get(schema)?.id;
+  if (rootMetaId !== undefined && result.id === rootMetaId) delete result.id;
+
   // build defs object
   const defs: JSONSchema.BaseSchema["$defs"] = ctx.external?.defs ?? {};
   for (const entry of ctx.seen.entries()) {
     const seen = entry[1];
     if (seen.def && seen.defId) {
+      if (seen.def.id === seen.defId) delete seen.def.id;
       defs[seen.defId] = seen.def;
     }
   }
@@ -553,6 +561,7 @@ function isTransforming(
     return isTransforming(def.keyType, ctx) || isTransforming(def.valueType, ctx);
   }
   if (def.type === "pipe") {
+    if (_schema._zod.traits.has("$ZodCodec")) return true;
     return isTransforming(def.in, ctx) || isTransforming(def.out, ctx);
   }
 

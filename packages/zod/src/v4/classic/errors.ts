@@ -61,8 +61,8 @@ const initializer = (inst: ZodError, issues: core.$ZodIssue[]) => {
   //   },
   // });
 };
-export const ZodError: core.$constructor<ZodError> = core.$constructor("ZodError", initializer);
-export const ZodRealError: core.$constructor<ZodError> = core.$constructor("ZodError", initializer, {
+export const ZodError: core.$constructor<ZodError> = /*@__PURE__*/ core.$constructor("ZodError", initializer);
+export const ZodRealError: core.$constructor<ZodError> = /*@__PURE__*/ core.$constructor("ZodError", initializer, {
   Parent: Error,
 });
 

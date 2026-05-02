@@ -282,6 +282,11 @@ test("z.base64", () => {
   expect(() => z.parse(a, "SGVsbG8gd29ybGQ")).toThrow();
   expect(() => z.parse(a, "U29tZSBvdGhlciBzdHJpbmc")).toThrow();
   expect(() => z.parse(a, "hello")).toThrow();
+  // whitespace is not allowed (atob would otherwise strip it)
+  expect(() => z.parse(a, "123 ")).toThrow();
+  expect(() => z.parse(a, "SGVsbG8gd29ybGQ= ")).toThrow();
+  expect(() => z.parse(a, "SGVsbG8gd29ybGQ=\n")).toThrow();
+  expect(() => z.parse(a, "SGVs bG8gd29ybGQ=")).toThrow();
   // wrong type
   expect(() => z.parse(a, 123)).toThrow();
 });

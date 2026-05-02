@@ -217,6 +217,16 @@ test("base64 validations", () => {
     "?QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // Invalid character '?'
     ".MTIzND2Nzg5MC4=", // Invalid character '.'
     "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo", // Missing padding
+    // Whitespace is not part of canonical base64 (RFC 4648 §3.3) — atob() strips
+    // whitespace internally before validating, so the length check alone would
+    // accept "123 " etc.
+    "123 ", // bypasses length-mod-4 via trailing whitespace
+    "SGVsbG8gV29ybGQ= ", // trailing space
+    " SGVsbG8gV29ybGQ=", // leading space
+    "SGVsbG8gV29ybGQ=\n", // trailing newline
+    "SGVs bG8gV29ybGQ=", // internal space
+    "SGVs\nbG8gV29ybGQ=", // internal newline
+    "SGVs\tbG8gV29ybGQ=", // internal tab
   ];
 
   for (const str of invalidBase64Strings) {
@@ -454,6 +464,12 @@ test("httpurl", () => {
   ).toThrow();
   expect(() => httpUrl.parse("http://asdf.c")).toThrow();
   expect(() => httpUrl.parse("mailto:asdf@lckj.com")).toThrow();
+  // missing // after protocol
+  expect(() => httpUrl.parse("http:example.com")).toThrow();
+  expect(() => httpUrl.parse("https:example.com")).toThrow();
+  // missing one /
+  expect(() => httpUrl.parse("https:/www.google.com")).toThrow();
+  expect(() => httpUrl.parse("http:/example.com")).toThrow();
 });
 
 test("url error overrides", () => {
@@ -611,12 +627,26 @@ test("cuid", () => {
         "origin": "string",
         "code": "invalid_format",
         "format": "cuid",
-        "pattern": "/^[cC][^\\\\s-]{8,}$/",
+        "pattern": "/^[cC][0-9a-z]{6,}$/",
         "path": [],
         "message": "Invalid cuid"
       }
     ]]
   `);
+
+  // Strings containing non-base36 characters that the old denylist regex
+  // (/^[cC][^\s-]{8,}$/) accepted. The new regex restricts the body to
+  // [0-9a-z], matching the actual CUID v1 base36 format. See #3621.
+  const previouslyAcceptedNonCuids = [
+    "cly63t164000245zw008pggon';select1;", // SQLi-shaped (no whitespace, no hyphen)
+    "c<script>alert(1)</script>aaaaaa", // XSS-shaped
+    "c{};alert(1)//", // bracket / curly chars
+    "C0123_45678", // underscore is not base36
+    "cAAAAAAAAA", // uppercase letters in body are not base36 (CUIDs are lowercase)
+  ];
+  for (const s of previouslyAcceptedNonCuids) {
+    expect(cuid.safeParse(s).success).toBe(false);
+  }
 });
 
 test("cuid2", () => {
@@ -809,6 +839,25 @@ test("min max getters", () => {
   expect(z.string().max(5).max(1).maxLength).toEqual(1);
   expect(z.string().max(5).max(10).maxLength).toEqual(5);
   expect(z.string().maxLength).toEqual(null);
+});
+
+test("boundary cases with zero length", () => {
+  // Test length(0) - only empty string should pass
+  const lengthZero = z.string().length(0);
+  expect(lengthZero.parse("")).toEqual("");
+  expect(() => lengthZero.parse("a")).toThrow();
+
+  // Test min(0) - all strings including empty should pass
+  const minZero = z.string().min(0);
+  expect(minZero.parse("")).toEqual("");
+  expect(minZero.parse("a")).toEqual("a");
+  expect(minZero.parse("hello")).toEqual("hello");
+
+  // Test max(0) - only empty string should pass
+  const maxZero = z.string().max(0);
+  expect(maxZero.parse("")).toEqual("");
+  expect(() => maxZero.parse("a")).toThrow();
+  expect(() => maxZero.parse("hello")).toThrow();
 });
 
 test("trim", () => {

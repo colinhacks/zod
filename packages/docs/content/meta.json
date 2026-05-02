@@ -1,10 +1,6 @@
 {
   "root": true,
   "pages": [
-    "---Zod 4---",
-    "v4/index",
-    "v4/changelog",
-
     "---Documentation---",
     "index",
     "basics",

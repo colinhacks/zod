@@ -29,7 +29,7 @@ if (success !== `{"success":true,"data":{"name":"John Doe"}}`) {
 const failure = JSON.stringify(schema.safeParse({ name: 123 }));
 if (
   failure !==
-  '{"success":false,"error":{"name":"ZodError","message":"[\\n  {\\n    \\"expected\\": \\"string\\",\\n    \\"code\\": \\"invalid_type\\",\\n    \\"path\\": [\\n      \\"name\\"\\n    ],\\n    \\"message\\": \\"Entrée invalide : string attendu, nombre reçu\\"\\n  }\\n]"}}'
+  '{"success":false,"error":{"name":"ZodError","message":"[\\n  {\\n    \\"expected\\": \\"string\\",\\n    \\"code\\": \\"invalid_type\\",\\n    \\"path\\": [\\n      \\"name\\"\\n    ],\\n    \\"message\\": \\"Entrée invalide : chaîne attendu, nombre reçu\\"\\n  }\\n]"}}'
 ) {
   throw new Error();
 }

@@ -39,9 +39,9 @@ const error: () => errors.$ZodErrorMap = () => {
     ipv6: "IPv6 მისამართი",
     cidrv4: "IPv4 დიაპაზონი",
     cidrv6: "IPv6 დიაპაზონი",
-    base64: "base64-კოდირებული სტრინგი",
-    base64url: "base64url-კოდირებული სტრინგი",
-    json_string: "JSON სტრინგი",
+    base64: "base64-კოდირებული ველი",
+    base64url: "base64url-კოდირებული ველი",
+    json_string: "JSON ველი",
     e164: "E.164 ნომერი",
     jwt: "JWT",
     template_literal: "შეყვანა",
@@ -52,7 +52,7 @@ const error: () => errors.$ZodErrorMap = () => {
   } = {
     nan: "NaN",
     number: "რიცხვი",
-    string: "სტრინგი",
+    string: "ველი",
     boolean: "ბულეანი",
     function: "ფუნქცია",
     array: "მასივი",
@@ -93,11 +93,11 @@ const error: () => errors.$ZodErrorMap = () => {
       case "invalid_format": {
         const _issue = issue as errors.$ZodStringFormatIssues;
         if (_issue.format === "starts_with") {
-          return `არასწორი სტრინგი: უნდა იწყებოდეს "${_issue.prefix}"-ით`;
+          return `არასწორი ველი: უნდა იწყებოდეს "${_issue.prefix}"-ით`;
         }
-        if (_issue.format === "ends_with") return `არასწორი სტრინგი: უნდა მთავრდებოდეს "${_issue.suffix}"-ით`;
-        if (_issue.format === "includes") return `არასწორი სტრინგი: უნდა შეიცავდეს "${_issue.includes}"-ს`;
-        if (_issue.format === "regex") return `არასწორი სტრინგი: უნდა შეესაბამებოდეს შაბლონს ${_issue.pattern}`;
+        if (_issue.format === "ends_with") return `არასწორი ველი: უნდა მთავრდებოდეს "${_issue.suffix}"-ით`;
+        if (_issue.format === "includes") return `არასწორი ველი: უნდა შეიცავდეს "${_issue.includes}"-ს`;
+        if (_issue.format === "regex") return `არასწორი ველი: უნდა შეესაბამებოდეს შაბლონს ${_issue.pattern}`;
         return `არასწორი ${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":

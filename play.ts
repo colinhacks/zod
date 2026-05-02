@@ -1,10 +1,10 @@
-import * as z from "./packages/zod/src/v4/index.js";
+import { z } from "zod";
 
-z;
+const formDate = z.iso
+  .datetime({ offset: true })
+  .or(z.literal(""))
+  .transform((v) => (v === "" ? null : v));
 
-const schema = z.object({ name: z.string() }).and(z.looseRecord(z.string().regex(/_phone$/), z.e164()));
-
-type _schema = z.infer<typeof schema>;
-// { name: string } & Record<string, string> & Record<string, number>
-
-z.e164();
+console.log("empty:", formDate.safeParse(""));
+console.log("valid:", formDate.safeParse("2024-01-15T10:30:00.000Z"));
+console.log("invalid:", formDate.safeParse("not-a-date"));

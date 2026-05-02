@@ -246,8 +246,23 @@ export function _nanoid<T extends schemas.$ZodNanoID>(
 }
 
 // CUID
+/**
+ * @deprecated CUID v1 is deprecated by its authors due to information leakage
+ * (timestamps embedded in the id). Use {@link _cuid2} instead.
+ * See https://github.com/paralleldrive/cuid.
+ */
 export type $ZodCUIDParams = StringFormatParams<schemas.$ZodCUID, "when">;
+/**
+ * @deprecated CUID v1 is deprecated by its authors due to information leakage
+ * (timestamps embedded in the id). Use {@link _cuid2} instead.
+ * See https://github.com/paralleldrive/cuid.
+ */
 export type $ZodCheckCUIDParams = CheckStringFormatParams<schemas.$ZodCUID, "when">;
+/**
+ * @deprecated CUID v1 is deprecated by its authors due to information leakage
+ * (timestamps embedded in the id). Use {@link _cuid2} instead.
+ * See https://github.com/paralleldrive/cuid.
+ */
 // @__NO_SIDE_EFFECTS__
 export function _cuid<T extends schemas.$ZodCUID>(
   Class: util.SchemaClass<T>,
@@ -1192,17 +1207,19 @@ export function _xor<const T extends readonly schemas.$ZodObject[]>(
 }
 
 // ZodDiscriminatedUnion
-export interface $ZodTypeDiscriminableInternals extends schemas.$ZodTypeInternals {
+export interface $ZodTypeDiscriminableInternals<Disc extends string = string>
+  extends schemas.$ZodTypeInternals<unknown, { [K in Disc]?: unknown }> {
   propValues: util.PropValues;
 }
 
-export interface $ZodTypeDiscriminable extends schemas.$ZodType {
-  _zod: $ZodTypeDiscriminableInternals;
+export interface $ZodTypeDiscriminable<Disc extends string = string> extends schemas.$ZodType {
+  _zod: $ZodTypeDiscriminableInternals<Disc>;
 }
+
 export type $ZodDiscriminatedUnionParams = TypeParams<schemas.$ZodDiscriminatedUnion, "options" | "discriminator">;
 // @__NO_SIDE_EFFECTS__
 export function _discriminatedUnion<
-  Types extends [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]],
+  Types extends [$ZodTypeDiscriminable<Disc>, ...$ZodTypeDiscriminable<Disc>[]],
   Disc extends string,
 >(
   Class: util.SchemaClass<schemas.$ZodDiscriminatedUnion>,
@@ -1633,8 +1650,16 @@ export interface $RefinementCtx<T = unknown> extends schemas.ParsePayload<T> {
   addIssue(arg: string | $ZodSuperRefineIssue): void;
 }
 
+export interface $ZodSuperRefineParams {
+  /** If provided, the refinement runs only when this returns `true`. By default, it is skipped if prior parsing produced aborting issues. */
+  when?: ((payload: schemas.ParsePayload) => boolean) | undefined;
+}
+
 // @__NO_SIDE_EFFECTS__
-export function _superRefine<T>(fn: (arg: T, payload: $RefinementCtx<T>) => void | Promise<void>): checks.$ZodCheck<T> {
+export function _superRefine<T>(
+  fn: (arg: T, payload: $RefinementCtx<T>) => void | Promise<void>,
+  params?: $ZodSuperRefineParams
+): checks.$ZodCheck<T> {
   const ch = _check<T>((payload) => {
     (payload as $RefinementCtx).addIssue = (issue) => {
       if (typeof issue === "string") {
@@ -1652,7 +1677,7 @@ export function _superRefine<T>(fn: (arg: T, payload: $RefinementCtx<T>) => void
     };
 
     return fn(payload.value, payload as $RefinementCtx<T>);
-  });
+  }, params);
   return ch;
 }
 
