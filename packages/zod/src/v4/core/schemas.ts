@@ -3222,7 +3222,7 @@ export const $ZodEnum: core.$constructor<$ZodEnum> = /*@__PURE__*/ core.$constru
   inst._zod.pattern = new RegExp(
     `^(${values
       .filter((k) => util.propertyKeyTypes.has(typeof k))
-      .map((o) => (typeof o === "string" ? util.escapeRegex(o) : o.toString()))
+      .map((o) => util.escapeRegex(o.toString()))
       .join("|")})$`
   );
 
