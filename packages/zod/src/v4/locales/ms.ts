@@ -86,7 +86,10 @@ const error: () => errors.$ZodErrorMap = () => {
       }
       case "invalid_format": {
         const _issue = issue as errors.$ZodStringFormatIssues;
-        if (_issue.format === "starts_with") return `String tidak sah: mesti bermula dengan "${_issue.prefix}"`;
+        if (_issue.format === "starts_with") {
+          const p = Array.isArray(_issue.prefix) ? _issue.prefix.map((v) => `"${v}"`).join(", ") : `"${_issue.prefix}"`;
+          return `String tidak sah: mesti bermula dengan ${p}`;
+        }
         if (_issue.format === "ends_with") return `String tidak sah: mesti berakhir dengan "${_issue.suffix}"`;
         if (_issue.format === "includes") return `String tidak sah: mesti mengandungi "${_issue.includes}"`;
         if (_issue.format === "regex") return `String tidak sah: mesti sepadan dengan corak ${_issue.pattern}`;

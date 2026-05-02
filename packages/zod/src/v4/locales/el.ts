@@ -90,7 +90,8 @@ const error: () => errors.$ZodErrorMap = () => {
       case "invalid_format": {
         const _issue = issue as errors.$ZodStringFormatIssues;
         if (_issue.format === "starts_with") {
-          return `Μη έγκυρη συμβολοσειρά: πρέπει να ξεκινά με "${_issue.prefix}"`;
+          const p = Array.isArray(_issue.prefix) ? _issue.prefix.map((v) => `"${v}"`).join(", ") : `"${_issue.prefix}"`;
+          return `Μη έγκυρη συμβολοσειρά: πρέπει να ξεκινά με ${p}`;
         }
         if (_issue.format === "ends_with") return `Μη έγκυρη συμβολοσειρά: πρέπει να τελειώνει με "${_issue.suffix}"`;
         if (_issue.format === "includes") return `Μη έγκυρη συμβολοσειρά: πρέπει να περιέχει "${_issue.includes}"`;

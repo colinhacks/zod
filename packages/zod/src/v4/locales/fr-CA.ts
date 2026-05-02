@@ -86,7 +86,8 @@ const error: () => errors.$ZodErrorMap = () => {
       case "invalid_format": {
         const _issue = issue as errors.$ZodStringFormatIssues;
         if (_issue.format === "starts_with") {
-          return `Chaîne invalide : doit commencer par "${_issue.prefix}"`;
+          const p = Array.isArray(_issue.prefix) ? _issue.prefix.map((v) => `"${v}"`).join(", ") : `"${_issue.prefix}"`;
+          return `Chaîne invalide : doit commencer par ${p}`;
         }
         if (_issue.format === "ends_with") return `Chaîne invalide : doit se terminer par "${_issue.suffix}"`;
         if (_issue.format === "includes") return `Chaîne invalide : doit inclure "${_issue.includes}"`;

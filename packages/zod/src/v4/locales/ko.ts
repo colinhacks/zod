@@ -91,7 +91,8 @@ const error: () => errors.$ZodErrorMap = () => {
       case "invalid_format": {
         const _issue = issue as errors.$ZodStringFormatIssues;
         if (_issue.format === "starts_with") {
-          return `잘못된 문자열: "${_issue.prefix}"(으)로 시작해야 합니다`;
+          const p = Array.isArray(_issue.prefix) ? _issue.prefix.map((v) => `"${v}"`).join(", ") : `"${_issue.prefix}"`;
+          return `잘못된 문자열: ${p}(으)로 시작해야 합니다`;
         }
         if (_issue.format === "ends_with") return `잘못된 문자열: "${_issue.suffix}"(으)로 끝나야 합니다`;
         if (_issue.format === "includes") return `잘못된 문자열: "${_issue.includes}"을(를) 포함해야 합니다`;

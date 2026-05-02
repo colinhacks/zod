@@ -102,7 +102,10 @@ const error: () => errors.$ZodErrorMap = () => {
       }
       case "invalid_format": {
         const _issue = issue as errors.$ZodStringFormatIssues;
-        if (_issue.format === "starts_with") return `Neispravan tekst: mora započinjati s "${_issue.prefix}"`;
+        if (_issue.format === "starts_with") {
+          const p = Array.isArray(_issue.prefix) ? _issue.prefix.map((v) => `"${v}"`).join(", ") : `"${_issue.prefix}"`;
+          return `Neispravan tekst: mora započinjati s ${p}`;
+        }
         if (_issue.format === "ends_with") return `Neispravan tekst: mora završavati s "${_issue.suffix}"`;
         if (_issue.format === "includes") return `Neispravan tekst: mora sadržavati "${_issue.includes}"`;
         if (_issue.format === "regex") return `Neispravan tekst: mora odgovarati uzorku ${_issue.pattern}`;

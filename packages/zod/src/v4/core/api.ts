@@ -1074,7 +1074,10 @@ export type $ZodCheckStartsWithParams = CheckParams<
   "prefix" | "format" | "when" | "pattern"
 >;
 // @__NO_SIDE_EFFECTS__
-export function _startsWith(prefix: string, params?: string | $ZodCheckStartsWithParams): checks.$ZodCheckStartsWith {
+export function _startsWith(
+  prefix: string | string[],
+  params?: string | $ZodCheckStartsWithParams
+): checks.$ZodCheckStartsWith {
   return new checks.$ZodCheckStartsWith({
     check: "string_format",
     format: "starts_with",

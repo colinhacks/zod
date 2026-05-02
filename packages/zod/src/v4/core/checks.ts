@@ -994,7 +994,7 @@ export const $ZodCheckIncludes: core.$constructor<$ZodCheckIncludes> = /*@__PURE
 /////    $ZodCheckStartsWith    /////
 /////////////////////////////////////
 export interface $ZodCheckStartsWithDef extends $ZodCheckStringFormatDef<"starts_with"> {
-  prefix: string;
+  prefix: string | string[];
 }
 
 export interface $ZodCheckStartsWithInternals extends $ZodCheckInternals<string> {
@@ -1011,7 +1011,12 @@ export const $ZodCheckStartsWith: core.$constructor<$ZodCheckStartsWith> = /*@__
   (inst, def) => {
     $ZodCheck.init(inst, def);
 
-    const pattern = new RegExp(`^${util.escapeRegex(def.prefix)}.*`);
+    const prefixes = Array.isArray(def.prefix) ? def.prefix : [def.prefix];
+    const pattern = !Array.isArray(def.prefix)
+      ? new RegExp(`^${util.escapeRegex(def.prefix)}.*`)
+      : prefixes.length > 0
+        ? new RegExp(`^(${prefixes.map(util.escapeRegex).join("|")}).*`)
+        : /(?!)/;
     def.pattern ??= pattern;
     inst._zod.onattach.push((inst) => {
       const bag = inst._zod.bag as schemas.$ZodStringInternals<unknown>["bag"];
@@ -1020,7 +1025,7 @@ export const $ZodCheckStartsWith: core.$constructor<$ZodCheckStartsWith> = /*@__
     });
 
     inst._zod.check = (payload) => {
-      if (payload.value.startsWith(def.prefix)) return;
+      if (prefixes.some((p) => payload.value.startsWith(p))) return;
       payload.issues.push({
         origin: "string",
         code: "invalid_format",

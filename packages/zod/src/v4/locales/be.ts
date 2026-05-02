@@ -147,7 +147,10 @@ const error: () => errors.$ZodErrorMap = () => {
       }
       case "invalid_format": {
         const _issue = issue as errors.$ZodStringFormatIssues;
-        if (_issue.format === "starts_with") return `Няправільны радок: павінен пачынацца з "${_issue.prefix}"`;
+        if (_issue.format === "starts_with") {
+          const p = Array.isArray(_issue.prefix) ? _issue.prefix.map((v) => `"${v}"`).join(", ") : `"${_issue.prefix}"`;
+          return `Няправільны радок: павінен пачынацца з ${p}`;
+        }
         if (_issue.format === "ends_with") return `Няправільны радок: павінен заканчвацца на "${_issue.suffix}"`;
         if (_issue.format === "includes") return `Няправільны радок: павінен змяшчаць "${_issue.includes}"`;
         if (_issue.format === "regex") return `Няправільны радок: павінен адпавядаць шаблону ${_issue.pattern}`;

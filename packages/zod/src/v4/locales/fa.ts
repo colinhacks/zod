@@ -90,7 +90,8 @@ const error: () => errors.$ZodErrorMap = () => {
       case "invalid_format": {
         const _issue = issue as errors.$ZodStringFormatIssues;
         if (_issue.format === "starts_with") {
-          return `رشته نامعتبر: باید با "${_issue.prefix}" شروع شود`;
+          const p = Array.isArray(_issue.prefix) ? _issue.prefix.map((v) => `"${v}"`).join(", ") : `"${_issue.prefix}"`;
+          return `رشته نامعتبر: باید با ${p} شروع شود`;
         }
         if (_issue.format === "ends_with") {
           return `رشته نامعتبر: باید با "${_issue.suffix}" تمام شود`;

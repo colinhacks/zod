@@ -64,6 +64,37 @@ test("startswith/endswith", () => {
   expect(() => endsWith.parse("x")).toThrow();
 });
 
+test("startsWith with array of prefixes", () => {
+  const schema = z.string().startsWith(["foo_", "bar_", "baz_"]);
+
+  schema.parse("foo_hello");
+  schema.parse("bar_world");
+  schema.parse("baz_test");
+
+  expect(() => schema.parse("qux_nope")).toThrow();
+  expect(() => schema.parse("")).toThrow();
+});
+
+test("startsWith array error contains all prefixes", () => {
+  const schema = z.string().startsWith(["foo_", "bar_"]);
+  const result = schema.safeParse("nope");
+
+  expect(result.success).toBe(false);
+  expect(result.error!.issues[0]).toMatchObject({
+    code: "invalid_format",
+    format: "starts_with",
+    prefix: ["foo_", "bar_"],
+  });
+});
+
+test("startsWith array error message", () => {
+  const schema = z.string().startsWith(["foo_", "bar_"]);
+  const result = schema.safeParse("nope");
+
+  expect(result.success).toBe(false);
+  expect(result.error!.issues[0].message).toBe(`Invalid string: must start with "foo_" or "bar_"`);
+});
+
 test("email validations", () => {
   const validEmails = [
     `email@domain.com`,

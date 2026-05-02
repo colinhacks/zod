@@ -89,7 +89,8 @@ const error: () => errors.$ZodErrorMap = () => {
       case "invalid_format": {
         const _issue = issue as errors.$ZodStringFormatIssues;
         if (_issue.format === "starts_with") {
-          return `Невалиден низ: трябва да започва с "${_issue.prefix}"`;
+          const p = Array.isArray(_issue.prefix) ? _issue.prefix.map((v) => `"${v}"`).join(", ") : `"${_issue.prefix}"`;
+          return `Невалиден низ: трябва да започва с ${p}`;
         }
         if (_issue.format === "ends_with") return `Невалиден низ: трябва да завършва с "${_issue.suffix}"`;
         if (_issue.format === "includes") return `Невалиден низ: трябва да включва "${_issue.includes}"`;

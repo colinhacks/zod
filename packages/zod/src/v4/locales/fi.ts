@@ -90,7 +90,10 @@ const error: () => errors.$ZodErrorMap = () => {
       }
       case "invalid_format": {
         const _issue = issue as errors.$ZodStringFormatIssues;
-        if (_issue.format === "starts_with") return `Virheellinen syöte: täytyy alkaa "${_issue.prefix}"`;
+        if (_issue.format === "starts_with") {
+          const p = Array.isArray(_issue.prefix) ? _issue.prefix.map((v) => `"${v}"`).join(", ") : `"${_issue.prefix}"`;
+          return `Virheellinen syöte: täytyy alkaa ${p}`;
+        }
         if (_issue.format === "ends_with") return `Virheellinen syöte: täytyy loppua "${_issue.suffix}"`;
         if (_issue.format === "includes") return `Virheellinen syöte: täytyy sisältää "${_issue.includes}"`;
         if (_issue.format === "regex") {
