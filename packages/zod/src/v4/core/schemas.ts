@@ -1759,7 +1759,7 @@ function handlePropertyResult(
     final.issues.push(...util.prefixIssues(key, result.issues));
   }
 
-  if (!isPresent && !isOptionalIn) {
+  if (!isPresent && !isOptionalIn && result.value === undefined) {
     if (!result.issues.length) {
       final.issues.push({
         code: "invalid_type",
@@ -2040,7 +2040,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
             path: iss.path ? [${k}, ...iss.path] : [${k}]
           })));
         }
-        if (!${id}_present && !${id}.issues.length) {
+        if (!${id}_present && !${id}.issues.length && ${id}.value === undefined) {
           payload.issues.push({
             code: "invalid_type",
             expected: "nonoptional",
@@ -2049,7 +2049,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
           });
         }
 
-        if (${id}_present) {
+        if (${id}_present || ${id}.value !== undefined) {
           if (${id}.value === undefined) {
             newResult[${k}] = undefined;
           } else {

@@ -128,8 +128,8 @@ test("native enum", () => {
     fruit: z.nativeEnum(Fruits).catch(Fruits.apple),
   });
 
-  expect(schema.safeParse({}).success).toEqual(false);
-  expect(schema.safeParse({}, { jitless: true }).success).toEqual(false);
+  expect(schema.parse({})).toEqual({ fruit: Fruits.apple });
+  expect(schema.parse({}, { jitless: true })).toEqual({ fruit: Fruits.apple });
   expect(schema.parse({ fruit: 15 })).toEqual({ fruit: Fruits.apple });
 });
 
@@ -138,10 +138,21 @@ test("enum", () => {
     fruit: z.enum(["apple", "orange"]).catch("apple"),
   });
 
-  expect(schema.safeParse({}).success).toEqual(false);
-  expect(schema.safeParse({}, { jitless: true }).success).toEqual(false);
+  expect(schema.parse({})).toEqual({ fruit: "apple" });
+  expect(schema.parse({}, { jitless: true })).toEqual({ fruit: "apple" });
   expect(schema.parse({ fruit: true })).toEqual({ fruit: "apple" });
   expect(schema.parse({ fruit: 15 })).toEqual({ fruit: "apple" });
+});
+
+test("preprocess + catch on absent key (#5937)", () => {
+  const schema = z.object({
+    area: z.preprocess((v) => (v ? v.toString().split(",") : []), z.array(z.string())).catch([]),
+  });
+
+  expect(schema.parse({})).toEqual({ area: [] });
+  expect(schema.parse({}, { jitless: true })).toEqual({ area: [] });
+  expect(schema.parse({ area: "a,b,c" })).toEqual({ area: ["a", "b", "c"] });
+  expect(schema.parse({ area: 123 })).toEqual({ area: ["123"] });
 });
 
 test("reported issues with nested usage", () => {
