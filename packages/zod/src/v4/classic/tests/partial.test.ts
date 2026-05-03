@@ -161,10 +161,11 @@ test("catch/prefault/default", () => {
       {
         "code": "invalid_type",
         "expected": "nonoptional",
-        "message": "Invalid input: expected nonoptional, received undefined",
+        "message": "Invalid input: missing required property",
         "path": [
           "d",
         ],
+        "received": "missing",
       },
     ]
   `);
@@ -174,10 +175,11 @@ test("catch/prefault/default", () => {
       {
         "code": "invalid_type",
         "expected": "nonoptional",
-        "message": "Invalid input: expected nonoptional, received undefined",
+        "message": "Invalid input: missing required property",
         "path": [
           "d",
         ],
+        "received": "missing",
       },
     ]
   `);
