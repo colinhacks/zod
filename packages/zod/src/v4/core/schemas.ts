@@ -36,6 +36,8 @@ export interface ParsePayload<T = unknown> {
   issues: errors.$ZodRawIssue[];
   /** A way to mark a whole payload as aborted. Used in codecs/pipes. */
   aborted?: boolean;
+  /** @internal Set when $ZodCatch substitutes its catchValue. */
+  caught?: boolean;
 }
 
 export type CheckFn<T> = (input: ParsePayload<T>) => util.MaybeAsync<void>;
@@ -3468,7 +3470,7 @@ export interface $ZodOptional<T extends SomeType = $ZodType> extends $ZodType {
 }
 
 function handleOptionalResult(result: ParsePayload, input: unknown) {
-  if (result.issues.length && input === undefined) {
+  if (input === undefined && (result.issues.length || result.caught)) {
     return { issues: [], value: undefined };
   }
   return result;
@@ -3491,9 +3493,10 @@ export const $ZodOptional: core.$constructor<$ZodOptional> = /*@__PURE__*/ core.
 
     inst._zod.parse = (payload, ctx) => {
       if (def.innerType._zod.optin === "optional") {
+        const input = payload.value;
         const result = def.innerType._zod.run(payload, ctx);
-        if (result instanceof Promise) return result.then((r) => handleOptionalResult(r, payload.value));
-        return handleOptionalResult(result, payload.value);
+        if (result instanceof Promise) return result.then((r) => handleOptionalResult(r, input));
+        return handleOptionalResult(result, input);
       }
       if (payload.value === undefined) {
         return payload;
@@ -3886,7 +3889,7 @@ export interface $ZodCatch<T extends SomeType = $ZodType> extends $ZodType {
 
 export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$constructor("$ZodCatch", (inst, def) => {
   $ZodType.init(inst, def);
-  util.defineLazy(inst._zod, "optin", () => def.innerType._zod.optin);
+  inst._zod.optin = "optional";
   util.defineLazy(inst._zod, "optout", () => def.innerType._zod.optout);
   util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
 
@@ -3909,6 +3912,7 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
             input: payload.value,
           });
           payload.issues = [];
+          payload.caught = true;
         }
 
         return payload;
@@ -3926,6 +3930,7 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
       });
 
       payload.issues = [];
+      payload.caught = true;
     }
 
     return payload;

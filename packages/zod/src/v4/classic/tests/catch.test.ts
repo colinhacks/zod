@@ -128,8 +128,9 @@ test("native enum", () => {
     fruit: z.nativeEnum(Fruits).catch(Fruits.apple),
   });
 
-  expect(schema.safeParse({}).success).toEqual(false);
-  expect(schema.safeParse({}, { jitless: true }).success).toEqual(false);
+  // Absent keys flow through to the catch handler.
+  expect(schema.parse({})).toEqual({ fruit: Fruits.apple });
+  expect(schema.parse({}, { jitless: true })).toEqual({ fruit: Fruits.apple });
   expect(schema.parse({ fruit: 15 })).toEqual({ fruit: Fruits.apple });
 });
 
@@ -138,8 +139,8 @@ test("enum", () => {
     fruit: z.enum(["apple", "orange"]).catch("apple"),
   });
 
-  expect(schema.safeParse({}).success).toEqual(false);
-  expect(schema.safeParse({}, { jitless: true }).success).toEqual(false);
+  expect(schema.parse({})).toEqual({ fruit: "apple" });
+  expect(schema.parse({}, { jitless: true })).toEqual({ fruit: "apple" });
   expect(schema.parse({ fruit: true })).toEqual({ fruit: "apple" });
   expect(schema.parse({ fruit: 15 })).toEqual({ fruit: "apple" });
 });
