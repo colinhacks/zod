@@ -3422,6 +3422,7 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
   "$ZodTransform",
   (inst, def) => {
     $ZodType.init(inst, def);
+    inst._zod.optin = "optional";
     inst._zod.parse = (payload, ctx) => {
       if (ctx.direction === "backward") {
         throw new core.$ZodEncodeError(inst.constructor.name);
@@ -4154,8 +4155,6 @@ export const $ZodPreprocess: core.$constructor<$ZodPreprocess> = /*@__PURE__*/ c
   "$ZodPreprocess",
   (inst, def) => {
     $ZodPipe.init(inst, def);
-    inst._zod.optin = "optional";
-    util.defineLazy(inst._zod, "optout", () => def.out._zod.optout);
   }
 );
 
