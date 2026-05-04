@@ -236,10 +236,10 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   inst.parseAsync = async (data, params) => parse.parseAsync(inst, data, params, { callee: inst.parseAsync });
   inst.safeParseAsync = async (data, params) => parse.safeParseAsync(inst, data, params);
   inst.spa = inst.safeParseAsync;
-  inst.encode = (data, params) => parse.encode(inst, data, params);
-  inst.decode = (data, params) => parse.decode(inst, data, params);
-  inst.encodeAsync = async (data, params) => parse.encodeAsync(inst, data, params);
-  inst.decodeAsync = async (data, params) => parse.decodeAsync(inst, data, params);
+  inst.encode = (data, params) => parse.encode(inst, data, params, { callee: inst.encode });
+  inst.decode = (data, params) => parse.decode(inst, data, params, { callee: inst.decode });
+  inst.encodeAsync = async (data, params) => parse.encodeAsync(inst, data, params, { callee: inst.encodeAsync });
+  inst.decodeAsync = async (data, params) => parse.decodeAsync(inst, data, params, { callee: inst.decodeAsync });
   inst.safeEncode = (data, params) => parse.safeEncode(inst, data, params);
   inst.safeDecode = (data, params) => parse.safeDecode(inst, data, params);
   inst.safeEncodeAsync = async (data, params) => parse.safeEncodeAsync(inst, data, params);
