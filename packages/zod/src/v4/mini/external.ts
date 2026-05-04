@@ -5,9 +5,9 @@ export * from "./checks.js";
 export { deepPartial } from "./deep-partial.js";
 export { visit } from "../core/visit.js";
 export type { VisitFn, VisitHandlers } from "../core/visit.js";
-export { inOf as inputOf, outOf as outputOf } from "./in-out.js";
+export { input, output } from "./in-out.js";
 
-export type { infer, output, input } from "../core/index.js";
+export type { infer } from "../core/index.js";
 export type { JSONType } from "../core/util.js";
 export {
   globalRegistry,

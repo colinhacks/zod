@@ -1,28 +1,27 @@
 import { describe, expect, test } from "vitest";
 import * as z from "zod";
-import { inputOf, outputOf } from "zod";
 
-describe("z.inputOf / z.outputOf", () => {
-  test("flat codec: in/out give the right side", () => {
+describe("z.input / z.output", () => {
+  test("flat codec: input/output give the right side", () => {
     const c = z.codec(z.string(), z.bigint(), {
       decode: (s) => BigInt(s),
       encode: (n) => n.toString(),
     });
-    expect(inputOf(c).parse("1")).toBe("1");
-    expect(outputOf(c).parse(1n)).toBe(1n);
+    expect(z.input(c).parse("1")).toBe("1");
+    expect(z.output(c).parse(1n)).toBe(1n);
   });
 
-  test("codec nested in object: outputOf works recursively (regression #5224)", () => {
+  test("codec nested in object: output works recursively (regression #5224)", () => {
     const c = z.codec(z.string(), z.bigint(), {
       decode: (s) => BigInt(s),
       encode: (n) => n.toString(),
     });
     const obj = z.object({ b: c });
 
-    const decoded = outputOf(obj);
+    const decoded = z.output(obj);
     expect(decoded.parse({ b: 1n })).toEqual({ b: 1n });
 
-    const encoded = inputOf(obj);
+    const encoded = z.input(obj);
     expect(encoded.parse({ b: "1" })).toEqual({ b: "1" });
   });
 
@@ -36,8 +35,8 @@ describe("z.inputOf / z.outputOf", () => {
     });
 
     const fullCodec = z.codec(
-      z.record(inputOf(keyCodec), inputOf(valueObject)),
-      z.map(outputOf(keyCodec), outputOf(valueObject)),
+      z.record(z.input(keyCodec), z.input(valueObject)),
+      z.map(z.output(keyCodec), z.output(valueObject)),
       {
         decode: (input) => {
           const m = new Map<"a" | "b", { n: bigint }>();
@@ -62,7 +61,21 @@ describe("z.inputOf / z.outputOf", () => {
 
   test("schema without pipes is returned with identity (no clone)", () => {
     const s = z.object({ a: z.string() });
-    expect(inputOf(s)).toBe(s);
-    expect(outputOf(s)).toBe(s);
+    expect(z.input(s)).toBe(s);
+    expect(z.output(s)).toBe(s);
+  });
+
+  test("runtime `z.input` agrees with type-level `z.input<T>`", () => {
+    const c = z.codec(z.string(), z.bigint(), {
+      decode: (s) => BigInt(s),
+      encode: (n) => n.toString(),
+    });
+    const obj = z.object({ b: c });
+
+    // Runtime: parse the input shape.
+    const parsed = z.input(obj).parse({ b: "1" });
+    // Type: matches the declared input type.
+    const asType: z.input<typeof obj> = parsed;
+    expect(asType).toEqual({ b: "1" });
   });
 });
