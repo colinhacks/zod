@@ -27,6 +27,30 @@ test("instanceof", async () => {
   expectTypeOf<Test>().toEqualTypeOf<z.infer<typeof TestSchema>>();
 });
 
+test("instanceof properties", () => {
+  const httpsUrl = z.instanceof(URL).properties({
+    protocol: z.literal("https:" as string),
+    hostname: z.string().regex(z.regexes.domain),
+  });
+  const httpsUrlWithPath = httpsUrl.properties({ pathname: z.string().startsWith("/") });
+
+  expectTypeOf<URL>().toEqualTypeOf<z.infer<typeof httpsUrlWithPath>>();
+  expect(httpsUrlWithPath.safeParse(new URL("https://example.com")).success).toBe(true);
+  expect(httpsUrl.safeParse(new URL("http://example.com")).success).toBe(false);
+  expect(httpsUrl.safeParse(new URL("https://localhost")).success).toBe(false);
+});
+
+test("properties check", () => {
+  const stringWithLength = z.string().check(z.properties({ length: z.number().min(5) }));
+
+  expect(stringWithLength.safeParse("hello").success).toBe(true);
+  const result = stringWithLength.safeParse("hi");
+  expect(result.success).toBe(false);
+  if (!result.success) {
+    expect(result.error.issues[0]?.path).toEqual(["length"]);
+  }
+});
+
 test("instanceof fatal", () => {
   const schema = z.instanceof(Date).refine((d) => d.toString());
   const res = schema.safeParse(null);
