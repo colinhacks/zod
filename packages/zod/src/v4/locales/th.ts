@@ -43,6 +43,7 @@ const error: () => errors.$ZodErrorMap = () => {
     base64url: "ข้อความแบบ Base64 สำหรับ URL",
     json_string: "ข้อความแบบ JSON",
     e164: "เบอร์โทรศัพท์ระหว่างประเทศ (E.164)",
+    credit_card: "หมายเลขบัตรเครดิต",
     jwt: "โทเคน JWT",
     template_literal: "ข้อมูลที่ป้อน",
   };

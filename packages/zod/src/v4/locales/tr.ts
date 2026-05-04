@@ -43,6 +43,7 @@ const error: () => errors.$ZodErrorMap = () => {
     base64url: "base64url ile şifrelenmiş metin",
     json_string: "JSON dizesi",
     e164: "E.164 sayısı",
+    credit_card: "kredi kartı numarası",
     jwt: "JWT",
     template_literal: "Şablon dizesi",
   };

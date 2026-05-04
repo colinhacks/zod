@@ -509,6 +509,8 @@ export interface ZodString extends _ZodString<core.$ZodStringInternals<string>> 
   cidrv6(params?: string | core.$ZodCheckCIDRv6Params): this;
   /** @deprecated Use `z.e164()` instead. */
   e164(params?: string | core.$ZodCheckE164Params): this;
+  /** @deprecated Use `z.creditCard()` instead. */
+  creditCard(params?: string | core.$ZodCheckCreditCardParams): this;
 
   // ISO 8601 checks
   /** @deprecated Use `z.iso.datetime()` instead. */
@@ -556,6 +558,7 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
   inst.cidrv4 = (params) => inst.check(core._cidrv4(ZodCIDRv4, params));
   inst.cidrv6 = (params) => inst.check(core._cidrv6(ZodCIDRv6, params));
   inst.e164 = (params) => inst.check(core._e164(ZodE164, params));
+  inst.creditCard = (params) => inst.check(core._creditCard(ZodCreditCard, params));
 
   // iso
   inst.datetime = (params) => inst.check(core._isoDateTime(ZodISODateTime, params as any));
@@ -963,6 +966,22 @@ export const ZodE164: core.$constructor<ZodE164> = /*@__PURE__*/ core.$construct
 
 export function e164(params?: string | core.$ZodE164Params): ZodE164 {
   return core._e164(ZodE164, params);
+}
+
+// ZodCreditCard
+export interface ZodCreditCard extends ZodStringFormat<"credit_card"> {
+  _zod: core.$ZodCreditCardInternals;
+}
+export const ZodCreditCard: core.$constructor<ZodCreditCard> = /*@__PURE__*/ core.$constructor(
+  "ZodCreditCard",
+  (inst, def) => {
+    core.$ZodCreditCard.init(inst, def);
+    ZodStringFormat.init(inst, def);
+  }
+);
+
+export function creditCard(params?: string | core.$ZodCreditCardParams): ZodCreditCard {
+  return core._creditCard(ZodCreditCard, params);
 }
 
 // ZodJWT
