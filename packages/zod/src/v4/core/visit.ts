@@ -31,9 +31,9 @@ export type VisitHandlers = { [K in Kind]?: (node: AnyZod) => AnyZod };
  * including user-defined types whose `def.type` is not one of the
  * built-in variants.
  */
-export function visit<T extends AnyZod>(schema: T, fn: VisitFn): T;
-export function visit<T extends AnyZod>(schema: T, handlers: VisitHandlers): T;
-export function visit<T extends AnyZod>(schema: T, fnOrHandlers: VisitFn | VisitHandlers): T {
+export function visit<T extends schemas.SomeType>(schema: T, fn: VisitFn): T;
+export function visit<T extends schemas.SomeType>(schema: T, handlers: VisitHandlers): T;
+export function visit<T extends schemas.SomeType>(schema: T, fnOrHandlers: VisitFn | VisitHandlers): T {
   const fn: VisitFn =
     typeof fnOrHandlers === "function"
       ? fnOrHandlers
@@ -187,5 +187,5 @@ export function visit<T extends AnyZod>(schema: T, fnOrHandlers: VisitFn | Visit
     }
   }
 
-  return run(schema) as T;
+  return run(schema as unknown as AnyZod) as unknown as T;
 }

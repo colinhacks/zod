@@ -1,10 +1,12 @@
 import * as core from "../core/index.js";
 import type * as schemas from "./schemas.js";
 
-// Re-alias the type-level helpers so the runtime `input` / `output`
-// exports can share the same name without collision with the type
-// re-export at the external-module level. TS tracks types and values
-// in separate namespaces.
+// Local aliases for the type-level helpers so the runtime `input` /
+// `output` exports can share the same name with them. TS tracks types
+// and values in separate namespaces within a module, but a `export type
+// { X } from A` + `export { X } from B` pair at a barrel collides as a
+// duplicate identifier, so co-location is the only re-export path that
+// works.
 export type input<T> = core.input<T>;
 export type output<T> = core.output<T>;
 

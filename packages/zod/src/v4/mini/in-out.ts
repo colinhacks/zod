@@ -1,6 +1,7 @@
 import * as core from "../core/index.js";
 import type * as schemas from "./schemas.js";
 
+// See `classic/in-out.ts` for why these aliases exist.
 export type input<T> = core.input<T>;
 export type output<T> = core.output<T>;
 
