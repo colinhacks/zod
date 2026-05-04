@@ -2815,8 +2815,8 @@ export interface $ZodRecordDef<Key extends $ZodRecordKey = $ZodRecordKey, Value 
   type: "record";
   keyType: Key;
   valueType: Value;
-  /** @default "strict" - errors on keys not matching keyType. "loose" passes through non-matching keys unchanged. */
-  mode?: "strict" | "loose";
+  /** @default "strip" - removes keys not matching keyType. "strict" errors. "loose" passes through unchanged. */
+  mode?: "strict" | "strip" | "loose";
 }
 
 // export type $InferZodRecordOutput<
@@ -2891,6 +2891,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
 
     const proms: Promise<any>[] = [];
 
+    const mode = def.mode ?? "strip";
     const values = def.keyType._zod.values;
     if (values) {
       payload.value = {};
@@ -2935,10 +2936,15 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       }
 
       let unrecognized!: string[];
-      for (const key in input) {
+      for (const key of Object.keys(input)) {
+        if (key === "__proto__") continue;
         if (!recordKeys.has(key)) {
-          unrecognized = unrecognized ?? [];
-          unrecognized.push(key);
+          if (mode === "loose") {
+            payload.value[key] = input[key];
+          } else if (mode === "strict") {
+            unrecognized = unrecognized ?? [];
+            unrecognized.push(key);
+          }
         }
       }
       if (unrecognized && unrecognized.length > 0) {
@@ -2975,11 +2981,10 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
         }
 
         if (keyResult.issues.length) {
-          if (def.mode === "loose") {
+          if (mode === "loose") {
             // Pass through unchanged
             payload.value[key] = input[key];
-          } else {
-            // Default "strict" behavior: error on invalid key
+          } else if (mode === "strict") {
             payload.issues.push({
               code: "invalid_key",
               origin: "record",

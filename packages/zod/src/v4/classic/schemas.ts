@@ -1800,6 +1800,7 @@ export function record<Key extends core.$ZodRecordKey, Value extends core.SomeTy
       type: "record",
       keyType: string() as any,
       valueType: keyType as any as core.$ZodType,
+      mode: "strip",
       ...util.normalizeParams(valueType as string | core.$ZodRecordParams | undefined),
     }) as any;
   }
@@ -1807,6 +1808,7 @@ export function record<Key extends core.$ZodRecordKey, Value extends core.SomeTy
     type: "record",
     keyType,
     valueType: valueType as any as core.$ZodType,
+    mode: "strip",
     ...util.normalizeParams(params),
   }) as any;
 }
@@ -1822,6 +1824,21 @@ export function partialRecord<Key extends core.$ZodRecordKey, Value extends core
     type: "record",
     keyType: k,
     valueType: valueType as any,
+    mode: "strip",
+    ...util.normalizeParams(params),
+  }) as any;
+}
+
+export function strictRecord<Key extends core.$ZodRecordKey, Value extends core.SomeType>(
+  keyType: Key,
+  valueType: Value,
+  params?: string | core.$ZodRecordParams
+): ZodRecord<Key, Value> {
+  return new ZodRecord({
+    type: "record",
+    keyType,
+    valueType: valueType as any as core.$ZodType,
+    mode: "strict",
     ...util.normalizeParams(params),
   }) as any;
 }

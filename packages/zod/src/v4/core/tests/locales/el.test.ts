@@ -115,7 +115,7 @@ test("Greek locale - other error cases", () => {
   }
 
   // Test invalid_key with record (only "map" | "record" produce invalid_key)
-  const recordSchema = z.record(z.number(), z.string());
+  const recordSchema = z.strictRecord(z.number(), z.string());
   const recordResult = recordSchema.safeParse({ notANumber: "value" });
   expect(recordResult.success).toBe(false);
   if (!recordResult.success) {
