@@ -3,8 +3,9 @@ export * from "./parse.js";
 export * from "./schemas.js";
 export * from "./checks.js";
 export { deepPartial } from "./deep-partial.js";
-export { mapOnSchema } from "../core/map-on-schema.js";
-export { inOf as in, outOf as out, inOf as inputOf, outOf as outputOf } from "./in-out.js";
+export { visit } from "../core/visit.js";
+export type { VisitFn, VisitHandlers } from "../core/visit.js";
+export { inOf as inputOf, outOf as outputOf } from "./in-out.js";
 
 export type { infer, output, input } from "../core/index.js";
 export type { JSONType } from "../core/util.js";

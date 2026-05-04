@@ -15,12 +15,11 @@ type DeepPartialValue<T> = T extends Date | RegExp | ((...args: any[]) => any)
 export function deepPartial<T extends core.$ZodType>(
   schema: T
 ): schemas.ZodMiniType<DeepPartialValue<core.output<T>>, DeepPartialValue<core.input<T>>> {
-  return core.mapOnSchema(schema, (s) => {
-    const def = s._zod.def as any;
-    if (def.type === "object") return schemas.partial(s as schemas.ZodMiniObject);
-    if (def.type === "union" && def.discriminator !== undefined) {
-      return schemas.union(def.options);
-    }
-    return s;
+  return core.visit(schema, {
+    object: (s) => schemas.partial(s as schemas.ZodMiniObject),
+    union: (s) => {
+      const def = s._zod.def as any;
+      return def.discriminator !== undefined ? schemas.union(def.options) : s;
+    },
   }) as any;
 }

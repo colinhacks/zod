@@ -1,9 +1,6 @@
 import { describe, expect, expectTypeOf, test } from "vitest";
 import * as z from "zod";
-import * as core from "../../core/index.js";
 import { deepPartial } from "../deep-partial.js";
-
-const { mapOnSchema } = core;
 
 describe("deepPartial", () => {
   test("makes shallow object optional", () => {
@@ -109,7 +106,6 @@ describe("deepPartial", () => {
     const partial = deepPartial(schema);
     expect(partial.parse({ kind: "a", a: "x" })).toEqual({ kind: "a", a: "x" });
     expect(partial.parse({ kind: "b", b: 1 })).toEqual({ kind: "b", b: 1 });
-    // With discriminator partial, an empty object matches the first option.
     expect(partial.parse({})).toEqual({});
   });
 
@@ -151,40 +147,60 @@ describe("deepPartial", () => {
   test("pipe input and output are both recursed", () => {
     const schema = z.object({ a: z.string() }).pipe(z.object({ a: z.string() }));
     const partial = deepPartial(schema);
-    // Both sides of the pipe should accept missing fields.
     expect(partial.parse({})).toEqual({});
   });
 });
 
-describe("mapOnSchema", () => {
-  test("identity rewrite preserves parse semantics", () => {
+describe("z.visit", () => {
+  test("identity callback returns the input schema unchanged", () => {
     const schema = z.object({ a: z.string(), nested: z.object({ b: z.number() }) });
-    const same = mapOnSchema(schema, (s) => s);
-    expect(same.parse({ a: "x", nested: { b: 1 } })).toEqual({ a: "x", nested: { b: 1 } });
+    expect(z.visit(schema, (s) => s)).toBe(schema);
   });
 
-  test("can target a specific def.type", () => {
+  test("empty handler map returns the input schema unchanged", () => {
+    const schema = z.object({ a: z.string(), nested: z.object({ b: z.number() }) });
+    expect(z.visit(schema, {})).toBe(schema);
+  });
+
+  test("only nodes touched by a handler are re-cloned; siblings keep identity", () => {
+    const a = z.string();
+    const b = z.number();
+    const schema = z.object({ a, b });
+    const result = z.visit(schema, { number: () => z.string() });
+    // `a` was not rewritten; its reference flows through.
+    expect((result._zod.def as any).shape.a).toBe(a);
+    // `b` was rewritten; parent is a new clone.
+    expect(result).not.toBe(schema);
+  });
+
+  test("callback: can target a specific def.type", () => {
     const schema = z.object({ a: z.string(), b: z.number() });
-    const allStrings = mapOnSchema(schema, (s) => (s._zod.def.type === "number" ? z.string() : s));
+    const allStrings = z.visit(schema, (s) => (s._zod.def.type === "number" ? z.string() : s));
     expect(allStrings.parse({ a: "x", b: "y" } as any)).toEqual({ a: "x", b: "y" });
   });
 
-  test("visits shared sub-schema only once", () => {
-    // schema has 3 unique nodes: schema, inner (referenced twice), inner.shape.a (z.string()).
+  test("handler map: dispatches by kind; unhandled kinds pass through", () => {
+    const schema = z.object({ a: z.string(), b: z.number() });
+    const result = z.visit(schema, { number: () => z.string() });
+    expect(result.parse({ a: "x", b: "y" } as any)).toEqual({ a: "x", b: "y" });
+  });
+
+  test("visits shared sub-schemas only once", () => {
     const inner = z.object({ a: z.string() });
     const schema = z.object({ x: inner, y: inner });
     let calls = 0;
-    mapOnSchema(schema, (s) => {
+    z.visit(schema, (s) => {
       calls++;
       return s;
     });
+    // 3 unique nodes: schema, inner (shared), inner.shape.a (z.string()).
     expect(calls).toBe(3);
   });
 
   test("root is cached: lazy self-reference does not re-invoke fn at parse-time", () => {
     let calls = 0;
     const Self: z.ZodType = z.object({ self: z.lazy(() => Self).optional() });
-    const result = mapOnSchema(Self, (s) => {
+    const result = z.visit(Self, (s) => {
       calls++;
       return s;
     });
@@ -193,10 +209,10 @@ describe("mapOnSchema", () => {
     expect(calls).toBe(baseline);
   });
 
-  test("unknown def.type falls through unchanged", () => {
+  test("unknown def.type falls through unchanged (handler map form)", () => {
     const customSchema: any = z.string();
     customSchema._zod.def = { ...customSchema._zod.def, type: "myCustomType" };
-    const result = mapOnSchema(customSchema, (s) => s);
+    const result = z.visit(customSchema, { object: (o) => o });
     expect(result).toBe(customSchema);
   });
 });
