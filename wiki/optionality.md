@@ -296,11 +296,27 @@ z.transform((v) => v ?? "X").optional().parse(undefined)
 // → undefined  (optional invokes transform; fn runs; fallback=true; clobbers)
 
 z.object({ a: z.transform((v) => v ?? "X") }).parse({})
-// → { a: "X" }  (only on the prototype; transform.optin = "optional" runtime)
-//   without prototype: FAIL
+// → { a: "X" }  (transform.optin = "optional" runtime; obj invokes transform with undef)
 
 z.object({ a: z.string().transform((s) => s + "!") }).parse({})
 // → THROW  (pipe.optin = string.optin = undefined — transform on OUT side doesn't drive optin)
+
+z.object({ a: z.unknown().transform((v) => String(v ?? "X")).pipe(z.string()) }).parse({})
+// → THROW  (outer pipe.optin = inner pipe.optin = unknown.optin = undefined — transform is
+//   on the OUT side of the inner pipe, which is on the IN side of the outer pipe; the leading
+//   `z.unknown()` drives optin and it's not "optional")
+//
+//   Compare to z.preprocess(fn, T):
+//     z.preprocess(fn, T) === pipe(transform(fn), T)         — transform IS def.in of the only pipe
+//     z.unknown().transform(fn).pipe(T) === pipe(pipe(unknown, transform), T)  — there's an
+//                                                                                inner pipe with
+//                                                                                z.unknown() on
+//                                                                                the in side
+//
+//   Preprocess accepts absent because its leading position is the transform itself.
+//   The unknown.transform.pipe(T) shape doesn't, because its leading position is z.unknown().
+//   If you want preprocess-like absence-handling, use z.preprocess; if you specifically want
+//   strict input typing on the leading slot, the unknown.transform.pipe shape gives that.
 
 // === Coerce / unknown / any (intentionally strict on absent) ===
 
