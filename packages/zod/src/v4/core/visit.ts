@@ -1,7 +1,7 @@
 // Traversal pattern adapted from Jaen's v3 `mapOnSchema` (Apache-2.0):
 // https://gist.github.com/jaens/7e15ae1984bb338c86eb5e452dee3010
 
-import type * as schemas from "./schemas.js";
+import * as schemas from "./schemas.js";
 import { clone } from "./util.js";
 
 const RESOLVING: unique symbol = Symbol("z.visit/resolving");
@@ -16,8 +16,13 @@ export type VisitHandlers = { [K in Kind]?: (node: AnyZod) => AnyZod };
 /**
  * Bottom-up rewrite of a schema tree. Every node is visited after its
  * children have been mapped; the returned schema replaces the node.
- * Shared sub-schemas are visited once; lazy nodes defer traversal until
- * parse-time. Direct (non-`lazy`) cycles throw.
+ * Shared sub-schemas are visited once.
+ *
+ * Cycles are handled transparently. `z.lazy` nodes defer traversal until
+ * parse-time. Non-lazy cycles (typical in v4's getter-based recursive
+ * object pattern) are broken by inserting a `z.lazy` placeholder that
+ * resolves through the cache at parse-time — by which point the cycle's
+ * final mapped schema has been computed.
  *
  * Branches are only re-cloned when a child reference actually changes,
  * so an identity transform returns the input schema unchanged.
@@ -47,7 +52,14 @@ export function visit<T extends schemas.SomeType>(schema: T, fnOrHandlers: Visit
   function run(s: AnyZod): AnyZod {
     const cached = cache.get(s);
     if (cached === RESOLVING) {
-      throw new Error("z.visit: encountered a non-lazy schema cycle");
+      // Non-lazy cycle (e.g. getter-based recursive objects). Insert a
+      // `$ZodLazy` that dereferences the cache at parse-time; by then
+      // the outer visit call will have populated `cache.get(s)` with
+      // the final mapped schema, so parsing sees the rewritten node.
+      return new schemas.$ZodLazy({
+        type: "lazy",
+        getter: () => cache.get(s) as AnyZod,
+      });
     }
     if (cached !== undefined) return cached;
     cache.set(s, RESOLVING);

@@ -1,6 +1,7 @@
 import * as core from "../core/index.js";
 import * as schemas from "./schemas.js";
 
+/** Mini counterpart of `classic/deep-partial.ts`'s `DeepPartial`. */
 // biome-ignore format: preserve vertical layout for readability.
 export type DeepPartial<T extends core.SomeType> =
   T extends schemas.ZodMiniObject<infer Shape, infer Config>
@@ -45,6 +46,12 @@ export type DeepPartial<T extends core.SomeType> =
     ? schemas.ZodMiniCatch<DeepPartial<Inner>>
   : T extends schemas.ZodMiniReadonly<infer Inner>
     ? schemas.ZodMiniReadonly<DeepPartial<Inner>>
+  : T extends schemas.ZodMiniSuccess<infer Inner>
+    ? schemas.ZodMiniSuccess<DeepPartial<Inner>>
+  : T extends schemas.ZodMiniPromise<infer Inner>
+    ? schemas.ZodMiniPromise<DeepPartial<Inner>>
+  : T extends schemas.ZodMiniCodec<infer A, infer B>
+    ? schemas.ZodMiniCodec<DeepPartial<A>, DeepPartial<B>>
   : T extends schemas.ZodMiniPipe<infer A, infer B>
     ? schemas.ZodMiniPipe<DeepPartial<A>, DeepPartial<B>>
   : T extends schemas.ZodMiniLazy<infer Inner>
@@ -53,11 +60,9 @@ export type DeepPartial<T extends core.SomeType> =
 
 /** See `classic/deep-partial.ts`. Mini variant uses `mini.partial(...)`. */
 export function deepPartial<T extends core.SomeType>(schema: T): DeepPartial<T> {
-  return core.visit(schema, {
-    object: (s) => schemas.partial(s as schemas.ZodMiniObject),
-    union: (s) => {
-      const def = s._zod.def as any;
-      return def.discriminator !== undefined ? schemas.union(def.options) : s;
-    },
-  }) as any;
+  return core.deepPartialImpl(
+    schema,
+    (s) => schemas.partial(s as schemas.ZodMiniObject) as core.$ZodType,
+    (opts) => schemas.union(opts as schemas.ZodMiniType[]) as core.$ZodType
+  ) as unknown as DeepPartial<T>;
 }

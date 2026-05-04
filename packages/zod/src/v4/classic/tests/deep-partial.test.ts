@@ -99,6 +99,21 @@ describe("deepPartial", () => {
     expectTypeOf(innerShape.age).toExtend<z.ZodOptional<z.ZodNumber>>();
   });
 
+  test("recursive self-reference (via getter) is typeable (no TS depth explosion)", () => {
+    const Category = z.object({
+      name: z.string(),
+      get subcategories() {
+        return z.array(Category).optional();
+      },
+    });
+    const partial = deepPartial(Category);
+    expectTypeOf(partial).toExtend<z.ZodObject>();
+    // Should not blow up TS recursion depth. We don't assert on the
+    // inner recursive reference — depth-limited DeepPartial shells out
+    // after one unfold.
+    expect(partial.parse({ subcategories: [{}] })).toEqual({ subcategories: [{}] });
+  });
+
   test("preserves ZodArray / ZodTuple / ZodUnion wrappers", () => {
     const arr = deepPartial(z.array(z.object({ a: z.string() })));
     expectTypeOf(arr).toExtend<z.ZodArray>();
@@ -173,6 +188,58 @@ describe("deepPartial", () => {
   test("pipe input and output are both recursed", () => {
     const schema = z.object({ a: z.string() }).pipe(z.object({ a: z.string() }));
     const partial = deepPartial(schema);
+    expect(partial.parse({})).toEqual({});
+  });
+
+  test("tuple elements stay required — only *objects inside* become partial", () => {
+    const schema = z.tuple([z.object({ a: z.string() }), z.string()]);
+    const partial = deepPartial(schema);
+    // Positional items remain required: the second item (z.string) must be present.
+    expect(() => partial.parse([{}])).toThrow();
+    expect(partial.parse([{}, "x"])).toEqual([{}, "x"]);
+    // The object INSIDE the tuple has its fields made optional.
+    expect(partial.parse([{ a: "y" }, "x"])).toEqual([{ a: "y" }, "x"]);
+  });
+
+  test("intersection: both sides are deep-partialed independently", () => {
+    const schema = z.intersection(
+      z.object({ a: z.object({ inner: z.string() }) }),
+      z.object({ b: z.object({ inner: z.number() }) })
+    );
+    const partial = deepPartial(schema);
+    expectTypeOf(partial).toExtend<z.ZodIntersection>();
+    // Inner objects on either side accept their field as optional.
+    expect(partial.parse({ a: {}, b: {} })).toEqual({ a: {}, b: {} });
+    // Top-level props also optional (deepPartial partials both object sides).
+    expect(partial.parse({})).toEqual({});
+  });
+
+  test("ZodPromise: inner is recursed", () => {
+    const schema = z.promise(z.object({ a: z.string() }));
+    const partial = deepPartial(schema);
+    expectTypeOf(partial).toExtend<z.ZodPromise>();
+  });
+
+  test("ZodSuccess: inner is recursed", () => {
+    const schema = z.success(z.object({ a: z.string() }));
+    const partial = deepPartial(schema);
+    expectTypeOf(partial).toExtend<z.ZodSuccess>();
+  });
+
+  test("ZodCodec: both sides recursed; preserved as ZodCodec (not degraded to ZodPipe)", () => {
+    const schema = z.codec(z.object({ a: z.string() }), z.object({ a: z.string() }), {
+      decode: (v) => v,
+      encode: (v) => v,
+    });
+    const partial = deepPartial(schema);
+    expectTypeOf(partial).toExtend<z.ZodCodec>();
+    expect(partial.parse({})).toEqual({});
+  });
+
+  test("ZodPreprocess: inner is recursed; preserved as ZodPreprocess (not degraded to ZodPipe)", () => {
+    const schema = z.preprocess((v) => v, z.object({ a: z.string() }));
+    const partial = deepPartial(schema);
+    expectTypeOf(partial).toExtend<z.ZodPreprocess>();
     expect(partial.parse({})).toEqual({});
   });
 });

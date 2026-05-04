@@ -2,9 +2,18 @@ import * as core from "../core/index.js";
 import * as schemas from "./schemas.js";
 
 /**
- * Recursive schema transform: walks the input schema tree and rebuilds
- * it with every `ZodObject` shape made optional at every level. Leaves
- * and unrecognized subtypes are preserved as-is.
+ * Recursively re-types a Zod schema so every `ZodObject` shape has all
+ * of its fields made optional. Generic wrappers (`ZodArray`, `ZodTuple`,
+ * `ZodUnion`, `ZodPipe`, etc.) distribute the transform into their
+ * inner schemas so inference stays structural end-to-end.
+ *
+ * Ordering note: `ZodCodec` and `ZodPreprocess` are matched *before*
+ * `ZodPipe` because they extend it; catching them first preserves the
+ * subtype in the inferred output. `ZodDiscriminatedUnion` degrades to
+ * `ZodUnion` because a partialed discriminator defeats the fast-path
+ * lookup (see `deepPartial` runtime).
+ *
+ * Leaves and any unrecognized subtypes fall through to `T` unchanged.
  */
 // biome-ignore format: preserve vertical layout for readability.
 export type DeepPartial<T extends core.SomeType> =
@@ -50,6 +59,14 @@ export type DeepPartial<T extends core.SomeType> =
     ? schemas.ZodCatch<DeepPartial<Inner>>
   : T extends schemas.ZodReadonly<infer Inner>
     ? schemas.ZodReadonly<DeepPartial<Inner>>
+  : T extends schemas.ZodSuccess<infer Inner>
+    ? schemas.ZodSuccess<DeepPartial<Inner>>
+  : T extends schemas.ZodPromise<infer Inner>
+    ? schemas.ZodPromise<DeepPartial<Inner>>
+  : T extends schemas.ZodCodec<infer A, infer B>
+    ? schemas.ZodCodec<DeepPartial<A>, DeepPartial<B>>
+  : T extends schemas.ZodPreprocess<infer B>
+    ? schemas.ZodPreprocess<DeepPartial<B>>
   : T extends schemas.ZodPipe<infer A, infer B>
     ? schemas.ZodPipe<DeepPartial<A>, DeepPartial<B>>
   : T extends schemas.ZodLazy<infer Inner>
@@ -57,21 +74,15 @@ export type DeepPartial<T extends core.SomeType> =
   : T;
 
 /**
- * Returns a schema where every nested object's properties are made
- * optional, recursively. Built on {@link core.visit}; terminates on
- * lazy cycles and visits shared sub-schemas once. Non-object nodes
- * are left untouched.
+ * Returns a schema where every nested object's properties are optional,
+ * recursively. Built on {@link core.deepPartialImpl}; terminates on lazy
+ * cycles and visits shared sub-schemas once. Non-object nodes are
+ * preserved as-is.
  */
 export function deepPartial<T extends core.SomeType>(schema: T): DeepPartial<T> {
-  return core.visit(schema, {
-    object: (s) => (s as schemas.ZodObject).partial(),
-    // Making a discriminator optional collapses the fast-path lookup
-    // (every option gets `undefined` as a possible discriminator).
-    // Degrade to a plain union over the already-partialed options —
-    // validation semantics are preserved via try-each.
-    union: (s) => {
-      const def = s._zod.def as any;
-      return def.discriminator !== undefined ? schemas.union(def.options) : s;
-    },
-  }) as any;
+  return core.deepPartialImpl(
+    schema,
+    (s) => (s as schemas.ZodObject).partial() as core.$ZodType,
+    (opts) => schemas.union(opts as schemas.ZodType[]) as core.$ZodType
+  ) as unknown as DeepPartial<T>;
 }
