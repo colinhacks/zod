@@ -71,6 +71,13 @@ export interface ZodType<
   parse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;
   safeParse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): parse.ZodSafeParseResult<core.output<this>>;
   parseAsync(data: unknown, params?: core.ParseContext<core.$ZodIssue>): Promise<core.output<this>>;
+  /** Sync when possible, a Promise once async. Sync steps before the first async one run twice on the first async parse. */
+  parseMaybeAsync(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.util.MaybeAsync<core.output<this>>;
+  /** Safe variant of `parseMaybeAsync`. */
+  safeParseMaybeAsync(
+    data: unknown,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): core.util.MaybeAsync<parse.ZodSafeParseResult<core.output<this>>>;
   safeParseAsync(
     data: unknown,
     params?: core.ParseContext<core.$ZodIssue>
@@ -305,6 +312,12 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
     },
     async safeParseAsync(data, params) {
       return parse.safeParseAsync(this, data, params);
+    },
+    parseMaybeAsync: function _parseMaybeAsync(data, params) {
+      return parse.parseMaybeAsync(this, data, params, { callee: _parseMaybeAsync });
+    },
+    safeParseMaybeAsync(data, params) {
+      return parse.safeParseMaybeAsync(this, data, params);
     },
     // `spa` is an alias: same function object as `safeParseAsync`, as before.
     get spa(): ZodType["safeParseAsync"] {
