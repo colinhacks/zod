@@ -1599,6 +1599,24 @@ export function xor<const T extends readonly core.SomeType[]>(
 }
 
 // ZodDiscriminatedUnion
+type DiscriminatorValue<Options extends readonly core.SomeType[], Disc extends string> = {
+  [I in keyof Options]: Options[I] extends { _zod: { output: infer Out } }
+    ? Out extends Record<Disc, infer V>
+      ? V
+      : never
+    : never;
+}[number];
+
+type DiscriminatedOption<Options extends readonly core.SomeType[], Disc extends string, V> = {
+  [I in keyof Options]: Options[I] extends { _zod: { output: infer Out } }
+    ? Out extends Record<Disc, infer OV>
+      ? V extends OV
+        ? Options[I]
+        : never
+      : never
+    : never;
+}[number];
+
 export interface ZodDiscriminatedUnion<
   Options extends readonly core.SomeType[] = readonly core.$ZodType[],
   Disc extends string = string,
@@ -1607,12 +1625,22 @@ export interface ZodDiscriminatedUnion<
   "~standard": ZodStandardSchemaWithJSON<this>;
   _zod: core.$ZodDiscriminatedUnionInternals<Options, Disc>;
   def: core.$ZodDiscriminatedUnionDef<Options, Disc>;
+  /** Returns the option schema matching the given discriminator value. */
+  get<V extends DiscriminatorValue<Options, Disc>>(value: V): DiscriminatedOption<Options, Disc, V>;
+  /** A read-only map from each valid discriminator value to its corresponding option schema. */
+  readonly optionsMap: ReadonlyMap<DiscriminatorValue<Options, Disc>, Options[number]>;
 }
 export const ZodDiscriminatedUnion: core.$constructor<ZodDiscriminatedUnion> = /*@__PURE__*/ core.$constructor(
   "ZodDiscriminatedUnion",
   (inst, def) => {
     ZodUnion.init(inst, def);
     core.$ZodDiscriminatedUnion.init(inst, def);
+    _installLazyMethods(inst, "ZodDiscriminatedUnion", {
+      get(value: any) {
+        return this._zod.optionsMap.get(value) as any;
+      },
+    } as any);
+    util.defineLazy(inst, "optionsMap", () => inst._zod.optionsMap as any);
   }
 );
 
