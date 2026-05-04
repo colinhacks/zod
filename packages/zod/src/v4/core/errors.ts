@@ -210,7 +210,7 @@ export type $ZodRawIssue<T extends $ZodIssueBase = $ZodIssue> = $ZodInternalIssu
 
 export interface $ZodErrorMap<T extends $ZodIssueBase = $ZodIssue> {
   // biome-ignore lint:
-  (issue: $ZodRawIssue<T>): { message: string } | string | undefined | null;
+  (issue: $ZodRawIssue<T>, schema?: $ZodType): { message: string } | string | undefined | null;
 }
 
 ////////////////////////    ERROR CLASS   ////////////////////////
