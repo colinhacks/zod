@@ -2748,6 +2748,101 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
   };
 });
 
+// JIT-enabled tuple constructor — opt-in via `$ZodTupleJIT.init`. Mirrors
+// the $ZodObject / $ZodObjectJIT split: classic tuples extend this one,
+// mini stays on plain $ZodTuple to keep its eval-free runtime guarantee.
+export const $ZodTupleJIT: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$constructor(
+  "$ZodTupleJIT",
+  (inst, def) => {
+    $ZodTuple.init(inst, def);
+
+    const items = def.items;
+    const superParse = inst._zod.parse;
+    const generateFastpass = () => {
+      const optoutStart = getTupleOptStart(items, "optout");
+      const hasRest = !!def.rest;
+      const doc = new Doc(["items", "rest", "inst", "payload", "ctx"]);
+      doc.write(`const input = payload.value;`);
+      if (!hasRest) {
+        const optinStart = getTupleOptStart(items, "optin");
+        if (optinStart > 0) {
+          doc.write(`if (input.length < ${optinStart}) {
+          payload.issues.push({ code: "too_small", minimum: ${optinStart}, inclusive: true, input, inst, origin: "array" });
+          return payload;
+        }`);
+        }
+        doc.write(`if (input.length > ${items.length}) {
+        payload.issues.push({ code: "too_big", maximum: ${items.length}, inclusive: true, input, inst, origin: "array" });
+      }`);
+      }
+      doc.write(`payload.value = [];`);
+      for (let i = 0; i < items.length; i++) {
+        // Inline per-item logic from `handleTupleResults`. The optout
+        // tail-truncation rule only fires when an absent input
+        // (i >= input.length) produces issues at index i >= optoutStart.
+        doc.write(`{
+        const r_${i} = items[${i}]._zod.run({ value: input[${i}], issues: [] }, ctx);
+        if (r_${i}.issues.length) {
+          ${i >= optoutStart ? `if (${i} >= input.length) { return payload; }` : ``}
+          payload.issues = payload.issues.concat(r_${i}.issues.map(iss => ({
+            ...iss,
+            path: iss.path ? [${i}, ...iss.path] : [${i}]
+          })));
+        }
+        payload.value[${i}] = r_${i}.value;
+      }`);
+      }
+      if (hasRest) {
+        doc.write(`for (let i = ${items.length}; i < input.length; i++) {
+        const r = rest._zod.run({ value: input[i], issues: [] }, ctx);
+        if (r.issues.length) {
+          payload.issues = payload.issues.concat(r.issues.map(iss => ({
+            ...iss,
+            path: iss.path ? [i, ...iss.path] : [i]
+          })));
+        }
+        payload.value[i] = r.value;
+      }`);
+      }
+      if (optoutStart < items.length) {
+        // Mirror handleTupleResults's trailing-undefined truncation.
+        doc.write(`for (let i = payload.value.length - 1; i >= input.length; i--) {
+        if (items[i] && items[i]._zod.optout === "optional" && payload.value[i] === undefined) {
+          payload.value.length = i;
+        } else { break; }
+      }`);
+      }
+      doc.write(`return payload;`);
+      const fn = doc.compile();
+      return (payload: any, ctx: any) => fn(items, def.rest, inst, payload, ctx);
+    };
+
+    let fastpass!: ReturnType<typeof generateFastpass>;
+    const jit = !core.globalConfig.jitless;
+    const fastEnabled = jit && util.allowsEval.value;
+
+    inst._zod.parse = (payload, ctx) => {
+      const input = payload.value;
+      if (!Array.isArray(input)) {
+        payload.issues.push({
+          input,
+          inst,
+          expected: "tuple",
+          code: "invalid_type",
+        });
+        return payload;
+      }
+
+      if (jit && fastEnabled && ctx?.async === false && ctx.jitless !== true) {
+        if (!fastpass) fastpass = generateFastpass();
+        return fastpass(payload, ctx);
+      }
+
+      return superParse(payload, ctx);
+    };
+  }
+);
+
 function getTupleOptStart(items: readonly $ZodType[], key: "optin" | "optout") {
   for (let i = items.length - 1; i >= 0; i--) {
     if (items[i]._zod[key] !== "optional") return i + 1;
