@@ -84,6 +84,32 @@ describe("deepPartial", () => {
     expectTypeOf<keyof PartialOut>().toEqualTypeOf<keyof Out>();
   });
 
+  test("preserves ZodObject structural type; `.shape` is accessible", () => {
+    const schema = z.object({
+      name: z.string(),
+      nested: z.object({ age: z.number() }),
+    });
+    const partial = deepPartial(schema);
+    expectTypeOf(partial).toExtend<z.ZodObject>();
+    // Each shape entry is a ZodOptional wrapping the deep-partialed inner.
+    expectTypeOf(partial.shape.name).toExtend<z.ZodOptional<z.ZodString>>();
+    expectTypeOf(partial.shape.nested).toExtend<z.ZodOptional<z.ZodObject>>();
+    // Nested shape access is still typed.
+    const innerShape = partial.shape.nested._zod.def.innerType.shape;
+    expectTypeOf(innerShape.age).toExtend<z.ZodOptional<z.ZodNumber>>();
+  });
+
+  test("preserves ZodArray / ZodTuple / ZodUnion wrappers", () => {
+    const arr = deepPartial(z.array(z.object({ a: z.string() })));
+    expectTypeOf(arr).toExtend<z.ZodArray>();
+
+    const tup = deepPartial(z.tuple([z.object({ a: z.string() }), z.object({ b: z.number() })]));
+    expectTypeOf(tup).toExtend<z.ZodTuple>();
+
+    const uni = deepPartial(z.union([z.object({ a: z.string() }), z.object({ b: z.number() })]));
+    expectTypeOf(uni).toExtend<z.ZodUnion>();
+  });
+
   test("3-level deep nesting", () => {
     const schema = z.object({
       a: z.object({
