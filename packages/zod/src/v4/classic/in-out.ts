@@ -7,9 +7,9 @@ import type * as schemas from "./schemas.js";
  * original schema's parse/decode pipeline.
  */
 export function inOf<T extends core.$ZodType>(schema: T): schemas.ZodType<core.input<T>, core.input<T>> {
-  return core.mapOnSchema(schema, (s) =>
-    s._zod.def.type === "pipe" ? ((s._zod.def as any).in as core.$ZodType) : s
-  ) as any;
+  return core.visit(schema, {
+    pipe: (s) => (s._zod.def as any).in as core.$ZodType,
+  }) as any;
 }
 
 /**
@@ -18,7 +18,7 @@ export function inOf<T extends core.$ZodType>(schema: T): schemas.ZodType<core.i
  * original schema's parse/decode pipeline.
  */
 export function outOf<T extends core.$ZodType>(schema: T): schemas.ZodType<core.output<T>, core.output<T>> {
-  return core.mapOnSchema(schema, (s) =>
-    s._zod.def.type === "pipe" ? ((s._zod.def as any).out as core.$ZodType) : s
-  ) as any;
+  return core.visit(schema, {
+    pipe: (s) => (s._zod.def as any).out as core.$ZodType,
+  }) as any;
 }
