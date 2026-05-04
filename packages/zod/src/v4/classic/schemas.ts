@@ -2660,8 +2660,45 @@ export function json(params?: string | core.$ZodCustomParams): ZodJSONSchema {
 
 // preprocess
 
+type _IsUnknown<T> = util.IsAny<T> extends true
+  ? false
+  : unknown extends T
+    ? [T] extends [unknown]
+      ? true
+      : false
+    : false;
+type _IsExactlyVoid<T> = [void] extends [T] ? ([T] extends [void] ? true : false) : false;
+type _AllTrue<T> = false extends T ? false : true;
+type _IsPreprocessAssignableTo<A, B> = util.IsAny<A> extends true
+  ? true
+  : _IsUnknown<A> extends true
+    ? true
+    : [A] extends [B]
+      ? true
+      : keyof A extends never
+        ? [B] extends [A]
+          ? true
+          : false
+        : A extends readonly (infer AElement)[]
+          ? B extends readonly (infer BElement)[]
+            ? _IsPreprocessAssignableTo<AElement, BElement>
+            : false
+          : B extends object
+            ? A extends object
+              ? _AllTrue<
+                  { [K in keyof B]-?: K extends keyof A ? _IsPreprocessAssignableTo<A[K], B[K]> : false }[keyof B]
+                >
+              : false
+            : false;
+type _IsPreprocessAssignable<A, U extends core.SomeType> = _IsPreprocessAssignableTo<Awaited<A>, core.input<U>>;
+type _PreprocessReturn<A, U extends core.SomeType> = _IsExactlyVoid<Awaited<A>> extends true
+  ? A
+  : _IsPreprocessAssignable<A, U> extends true
+    ? A
+    : never;
+
 export function preprocess<A, U extends core.SomeType, B = unknown>(
-  fn: (arg: B, ctx: core.$RefinementCtx) => A,
+  fn: (arg: B, ctx: core.$RefinementCtx) => _PreprocessReturn<A, U>,
   schema: U
 ): ZodPreprocess<U> {
   return new ZodPreprocess({
