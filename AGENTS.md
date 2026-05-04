@@ -41,6 +41,30 @@ The project uses pnpm workspaces. Key commands:
 - When creating a PR, do not include a separate test plan section in the body. Link to any relevant issues under discussion, and use the same copywriting guidelines from "Commenting on issues and PRs": concise maintainer voice, prose over templates, and validation details only when they are material to the reader.
 - NEVER bump the version in `packages/zod/package.json` (or any package's `package.json`). A version bump is the only thing that triggers a release; everything else (including direct pushes to `main`) is recoverable until that happens. If a version bump is genuinely needed, ask first.
 
+## Cutting a release
+
+Only do this when the user explicitly asks. Pushing a version bump to `main` triggers `.github/workflows/release.yml`, which publishes to npm + JSR and creates a `v<version>` GitHub release. There is no undo.
+
+Three files must be bumped together — `pnpm check:semver` runs in pre-commit and `prepublishOnly`, and will fail the commit if they disagree:
+
+- `packages/zod/package.json` — `version`
+- `packages/zod/jsr.json` — `version`
+- `packages/zod/src/v4/core/versions.ts` — `major` / `minor` / `patch`
+
+Procedure:
+
+```bash
+# Make sure main is clean and up to date first.
+git checkout main && git pull
+
+# Bump all three files to the new x.y.z, then:
+git add packages/zod/package.json packages/zod/jsr.json packages/zod/src/v4/core/versions.ts
+git commit -m "<x.y.z>"   # commit message is just the version, e.g. "4.4.3"
+git push origin main
+```
+
+The release workflow only fires on changes under `packages/zod/package.json`, `packages/zod/src/**`, or the workflow file itself, so the bump must include `package.json`. Watch the Actions tab to confirm `build_and_publish` succeeds.
+
 ## Iterating on a contributor PR in a worktree
 
 When asked to make changes on top of an open PR (e.g. as a maintainer review suggestion), use a worktree so `main` stays clean:

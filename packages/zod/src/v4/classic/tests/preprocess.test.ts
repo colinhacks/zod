@@ -281,6 +281,31 @@ test("perform transform with non-fatal issues", () => {
   `);
 });
 
+test("preprocess accepts absent object keys (4.3 parity)", () => {
+  const schema = z.object({ a: z.preprocess((v) => v ?? "X", z.string()) });
+  expect(schema.parse({})).toEqual({ a: "X" });
+  expect(schema.parse({ a: "hi" })).toEqual({ a: "hi" });
+  expect(schema.parse({ a: undefined })).toEqual({ a: "X" });
+
+  // Outer optional clobbers preprocess output on undefined input
+  expect(
+    z
+      .preprocess((v) => v ?? "X", z.string())
+      .optional()
+      .parse(undefined)
+  ).toBeUndefined();
+  expect(
+    z
+      .preprocess((v) => v ?? "X", z.string())
+      .optional()
+      .parse("hi")
+  ).toBe("hi");
+  expect(z.object({ a: z.preprocess((v) => v ?? "X", z.string()).optional() }).parse({})).toEqual({});
+
+  // Top-level direct call unchanged
+  expect(z.preprocess((v) => v ?? "X", z.string()).parse(undefined)).toBe("X");
+});
+
 // https://github.com/colinhacks/zod/issues/5917
 test("optional propagates through preprocess inside object", () => {
   const outer = z.object({ x: z.preprocess((v) => v, z.number()).optional() });

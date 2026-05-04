@@ -11,7 +11,8 @@ export const Silver = () => {
       logoSrc: "https://avatars.githubusercontent.com/u/176449348?s=200&v=4",
       url: "subtotal.com",
       href: "https://www.subtotal.com/?utm_source=zod",
-    },{
+    },
+    {
       name: "Nitric",
       logoSrc: "https://avatars.githubusercontent.com/u/72055470?s=200&v=4",
       url: "nitric.io",
@@ -36,22 +37,10 @@ export const Silver = () => {
       href: "https://scalar.com/",
     },
     {
-      name: "Trigger.dev",
-      logoSrc: "https://avatars.githubusercontent.com/u/95297378?s=200&v=4",
-      url: "trigger.dev",
-      href: "https://trigger.dev",
-    },
-    {
       name: "Transloadit",
       logoSrc: "https://avatars.githubusercontent.com/u/125754?s=200&v=4",
       url: "transloadit.com",
       href: "https://transloadit.com/?utm_source=zod&utm_medium=referral&utm_campaign=sponsorship&utm_content=github",
-    },
-    {
-      name: "Infisical",
-      logoSrc: "https://avatars.githubusercontent.com/u/107880645?s=200&v=4",
-      url: "infisical.com",
-      href: "https://infisical.com",
     },
     {
       name: "Whop",
@@ -88,7 +77,25 @@ export const Silver = () => {
       logoSrc: "https://avatars.githubusercontent.com/u/16199997?s=200&v=4",
       url: "mux.link/zod",
       href: "https://mux.link/zod",
-    }
+    },
+    {
+      name: "Cybozu",
+      logoSrc: "https://avatars.githubusercontent.com/u/76428554?s=200&v=4",
+      url: "cybozu.co.jp",
+      href: "https://www.cybozu.co.jp/",
+    },
+    {
+      name: "9thCO",
+      logoSrc: "https://avatars.githubusercontent.com/u/117220588?s=200&v=4",
+      url: "9thco.com",
+      href: "https://www.9thco.com/?utm_source=zod",
+    },
+    {
+      name: "Ferry Health",
+      logoSrc: "https://avatars.githubusercontent.com/u/158637456?s=200&v=4",
+      url: "ferry.health",
+      href: "https://ferry.health/?utm_source=zod",
+    },
   ];
 
   return (
