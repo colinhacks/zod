@@ -214,7 +214,7 @@ const xToZodConverters: ZodResource[] = [
     name: "@apical-ts/craft",
     url: "https://gunzip.github.io/apical-ts/",
     description: "An OpenAPI-to-TypeScript generator for building type-safe clients and servers with Zod.",
-    slug: "apical-ts/craft",
+    slug: "gunzip/apical-ts",
   }
 ];
 
