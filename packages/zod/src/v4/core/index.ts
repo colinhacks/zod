@@ -16,3 +16,4 @@ export { JSONSchemaGenerator } from "./json-schema-generator.js";
 export * as JSONSchema from "./json-schema.js";
 export { visit } from "./visit.js";
 export type { VisitFn, VisitHandlers } from "./visit.js";
+export { deepPartialImpl } from "./deep-partial.js";
