@@ -3461,19 +3461,25 @@ export interface $ZodOptionalDef<T extends SomeType = $ZodType> extends $ZodType
   innerType: T;
 }
 
-export interface $ZodOptionalInternals<T extends SomeType = $ZodType>
-  extends $ZodTypeInternals<core.output<T> | undefined, core.input<T> | undefined> {
+export interface $ZodOptionalInternals<
+  T extends SomeType = $ZodType,
+  Meta extends $ZodWrapperMetadataBase = $ZodWrapperMetadataBase,
+> extends $ZodTypeInternals<core.output<T> | undefined, core.input<T> | undefined> {
   def: $ZodOptionalDef<T>;
   optin: "optional";
   optout: "optional";
   isst: never;
-  values: T["_zod"]["values"];
-  pattern: T["_zod"]["pattern"];
+  values: Meta["values"];
+  pattern: Meta["pattern"];
 }
 
 export interface $ZodOptional<T extends SomeType = $ZodType> extends $ZodType {
   _zod: $ZodOptionalInternals<T>;
 }
+
+export type $ZodOptionalExact<T extends SomeType = $ZodType> = $ZodOptional<T> & {
+  _zod: $ZodOptionalInternals<T, $ZodWrapperMetadataExact<T>>;
+};
 
 function handleOptionalResult(result: ParsePayload, input: unknown) {
   if (input === undefined && (result.issues.length || result.fallback)) {
@@ -3524,7 +3530,10 @@ export const $ZodOptional: core.$constructor<$ZodOptional> = /*@__PURE__*/ core.
 export interface $ZodExactOptionalDef<T extends SomeType = $ZodType> extends $ZodOptionalDef<T> {}
 
 // Internals extends $ZodOptionalInternals but narrows output/input types (removes | undefined)
-export interface $ZodExactOptionalInternals<T extends SomeType = $ZodType> extends $ZodOptionalInternals<T> {
+export interface $ZodExactOptionalInternals<
+  T extends SomeType = $ZodType,
+  Meta extends $ZodWrapperMetadataBase = $ZodWrapperMetadataBase,
+> extends $ZodOptionalInternals<T, Meta> {
   def: $ZodExactOptionalDef<T>;
   output: core.output<T>; // NO | undefined (narrowed from parent)
   input: core.input<T>; // NO | undefined (narrowed from parent)
@@ -3533,6 +3542,10 @@ export interface $ZodExactOptionalInternals<T extends SomeType = $ZodType> exten
 export interface $ZodExactOptional<T extends SomeType = $ZodType> extends $ZodType {
   _zod: $ZodExactOptionalInternals<T>;
 }
+
+export type $ZodExactOptionalExact<T extends SomeType = $ZodType> = $ZodExactOptional<T> & {
+  _zod: $ZodExactOptionalInternals<T, $ZodWrapperMetadataExact<T>>;
+};
 
 export const $ZodExactOptional: core.$constructor<$ZodExactOptional> = /*@__PURE__*/ core.$constructor(
   "$ZodExactOptional",
@@ -3563,19 +3576,25 @@ export interface $ZodNullableDef<T extends SomeType = $ZodType> extends $ZodType
   innerType: T;
 }
 
-export interface $ZodNullableInternals<T extends SomeType = $ZodType>
-  extends $ZodTypeInternals<core.output<T> | null, core.input<T> | null> {
+export interface $ZodNullableInternals<
+  T extends SomeType = $ZodType,
+  Meta extends $ZodWrapperMetadataBase = $ZodWrapperMetadataBase,
+> extends $ZodTypeInternals<core.output<T> | null, core.input<T> | null> {
   def: $ZodNullableDef<T>;
-  optin: T["_zod"]["optin"];
-  optout: T["_zod"]["optout"];
+  optin: Meta["optin"];
+  optout: Meta["optout"];
   isst: never;
-  values: T["_zod"]["values"];
-  pattern: T["_zod"]["pattern"];
+  values: Meta["values"];
+  pattern: Meta["pattern"];
 }
 
 export interface $ZodNullable<T extends SomeType = $ZodType> extends $ZodType {
   _zod: $ZodNullableInternals<T>;
 }
+
+export type $ZodNullableExact<T extends SomeType = $ZodType> = $ZodNullable<T> & {
+  _zod: $ZodNullableInternals<T, $ZodWrapperMetadataExact<T>>;
+};
 
 export const $ZodNullable: core.$constructor<$ZodNullable> = /*@__PURE__*/ core.$constructor(
   "$ZodNullable",
@@ -3616,18 +3635,24 @@ export interface $ZodDefaultDef<T extends SomeType = $ZodType> extends $ZodTypeD
   defaultValue: util.NoUndefined<core.output<T>>;
 }
 
-export interface $ZodDefaultInternals<T extends SomeType = $ZodType>
-  extends $ZodTypeInternals<util.NoUndefined<core.output<T>>, core.input<T> | undefined> {
+export interface $ZodDefaultInternals<
+  T extends SomeType = $ZodType,
+  Meta extends $ZodWrapperMetadataBase = $ZodWrapperMetadataBase,
+> extends $ZodTypeInternals<util.NoUndefined<core.output<T>>, core.input<T> | undefined> {
   def: $ZodDefaultDef<T>;
   optin: "optional";
   optout?: "optional" | undefined; // required
   isst: never;
-  values: T["_zod"]["values"];
+  values: Meta["values"];
 }
 
 export interface $ZodDefault<T extends SomeType = $ZodType> extends $ZodType {
   _zod: $ZodDefaultInternals<T>;
 }
+
+export type $ZodDefaultExact<T extends SomeType = $ZodType> = $ZodDefault<T> & {
+  _zod: $ZodDefaultInternals<T, $ZodWrapperMetadataExact<T>>;
+};
 
 export const $ZodDefault: core.$constructor<$ZodDefault> = /*@__PURE__*/ core.$constructor(
   "$ZodDefault",
@@ -3683,18 +3708,24 @@ export interface $ZodPrefaultDef<T extends SomeType = $ZodType> extends $ZodType
   defaultValue: core.input<T>;
 }
 
-export interface $ZodPrefaultInternals<T extends SomeType = $ZodType>
-  extends $ZodTypeInternals<util.NoUndefined<core.output<T>>, core.input<T> | undefined> {
+export interface $ZodPrefaultInternals<
+  T extends SomeType = $ZodType,
+  Meta extends $ZodWrapperMetadataBase = $ZodWrapperMetadataBase,
+> extends $ZodTypeInternals<util.NoUndefined<core.output<T>>, core.input<T> | undefined> {
   def: $ZodPrefaultDef<T>;
   optin: "optional";
   optout?: "optional" | undefined;
   isst: never;
-  values: T["_zod"]["values"];
+  values: Meta["values"];
 }
 
 export interface $ZodPrefault<T extends SomeType = $ZodType> extends $ZodType {
   _zod: $ZodPrefaultInternals<T>;
 }
+
+export type $ZodPrefaultExact<T extends SomeType = $ZodType> = $ZodPrefault<T> & {
+  _zod: $ZodPrefaultInternals<T, $ZodWrapperMetadataExact<T>>;
+};
 
 export const $ZodPrefault: core.$constructor<$ZodPrefault> = /*@__PURE__*/ core.$constructor(
   "$ZodPrefault",
@@ -3730,11 +3761,13 @@ export interface $ZodNonOptionalDef<T extends SomeType = $ZodType> extends $ZodT
   innerType: T;
 }
 
-export interface $ZodNonOptionalInternals<T extends SomeType = $ZodType>
-  extends $ZodTypeInternals<util.NoUndefined<core.output<T>>, util.NoUndefined<core.input<T>>> {
+export interface $ZodNonOptionalInternals<
+  T extends SomeType = $ZodType,
+  Meta extends $ZodWrapperMetadataBase = $ZodWrapperMetadataBase,
+> extends $ZodTypeInternals<util.NoUndefined<core.output<T>>, util.NoUndefined<core.input<T>>> {
   def: $ZodNonOptionalDef<T>;
   isst: errors.$ZodIssueInvalidType;
-  values: T["_zod"]["values"];
+  values: Meta["values"];
   optin: "optional" | undefined;
   optout: "optional" | undefined;
 }
@@ -3742,6 +3775,10 @@ export interface $ZodNonOptionalInternals<T extends SomeType = $ZodType>
 export interface $ZodNonOptional<T extends SomeType = $ZodType> extends $ZodType {
   _zod: $ZodNonOptionalInternals<T>;
 }
+
+export type $ZodNonOptionalExact<T extends SomeType = $ZodType> = $ZodNonOptional<T> & {
+  _zod: $ZodNonOptionalInternals<T, $ZodWrapperMetadataExact<T>>;
+};
 
 export const $ZodNonOptional: core.$constructor<$ZodNonOptional> = /*@__PURE__*/ core.$constructor(
   "$ZodNonOptional",
@@ -3827,16 +3864,23 @@ export interface $ZodSuccessDef<T extends SomeType = $ZodType> extends $ZodTypeD
   innerType: T;
 }
 
-export interface $ZodSuccessInternals<T extends SomeType = $ZodType> extends $ZodTypeInternals<boolean, core.input<T>> {
+export interface $ZodSuccessInternals<
+  T extends SomeType = $ZodType,
+  Meta extends $ZodWrapperMetadataBase = $ZodWrapperMetadataBase,
+> extends $ZodTypeInternals<boolean, core.input<T>> {
   def: $ZodSuccessDef<T>;
   isst: never;
-  optin: T["_zod"]["optin"];
+  optin: Meta["optin"];
   optout: "optional" | undefined;
 }
 
 export interface $ZodSuccess<T extends SomeType = $ZodType> extends $ZodType {
   _zod: $ZodSuccessInternals<T>;
 }
+
+export type $ZodSuccessExact<T extends SomeType = $ZodType> = $ZodSuccess<T> & {
+  _zod: $ZodSuccessInternals<T, $ZodWrapperMetadataExact<T>>;
+};
 
 export const $ZodSuccess: core.$constructor<$ZodSuccess> = /*@__PURE__*/ core.$constructor(
   "$ZodSuccess",
@@ -3880,18 +3924,24 @@ export interface $ZodCatchDef<T extends SomeType = $ZodType> extends $ZodTypeDef
   catchValue: (ctx: $ZodCatchCtx) => unknown;
 }
 
-export interface $ZodCatchInternals<T extends SomeType = $ZodType>
-  extends $ZodTypeInternals<core.output<T>, core.input<T>> {
+export interface $ZodCatchInternals<
+  T extends SomeType = $ZodType,
+  Meta extends $ZodWrapperMetadataBase = $ZodWrapperMetadataBase,
+> extends $ZodTypeInternals<core.output<T>, core.input<T>> {
   def: $ZodCatchDef<T>;
-  optin: T["_zod"]["optin"];
-  optout: T["_zod"]["optout"];
+  optin: Meta["optin"];
+  optout: Meta["optout"];
   isst: never;
-  values: T["_zod"]["values"];
+  values: Meta["values"];
 }
 
 export interface $ZodCatch<T extends SomeType = $ZodType> extends $ZodType {
   _zod: $ZodCatchInternals<T>;
 }
+
+export type $ZodCatchExact<T extends SomeType = $ZodType> = $ZodCatch<T> & {
+  _zod: $ZodCatchInternals<T, $ZodWrapperMetadataExact<T>>;
+};
 
 export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$constructor("$ZodCatch", (inst, def) => {
   $ZodType.init(inst, def);
@@ -3997,19 +4047,60 @@ export interface $ZodPipeDef<A extends SomeType = $ZodType, B extends SomeType =
   reverseTransform?: (value: core.input<B>, payload: ParsePayload<core.input<B>>) => util.MaybeAsync<core.output<A>>;
 }
 
-export interface $ZodPipeInternals<A extends SomeType = $ZodType, B extends SomeType = $ZodType>
-  extends $ZodTypeInternals<core.output<B>, core.input<A>> {
-  def: $ZodPipeDef<A, B>;
-  isst: never;
+/** Recursion-safe wrapper metadata. The fields use the same broad shapes as
+ * `$ZodTypeInternals`, so they don't force evaluation of an inner `T["_zod"]`,
+ * which would expand forever for self-referential aliases. See #4611. */
+export type $ZodWrapperMetadataBase = {
+  values?: util.PrimitiveSet | undefined;
+  optin?: "optional" | undefined;
+  optout?: "optional" | undefined;
+  propValues?: util.PropValues | undefined;
+  pattern?: RegExp | undefined;
+};
+
+/** Exact wrapper metadata bubbled up from the wrapped schema. Used by
+ * classic/mini where the precise metadata is needed for downstream type math. */
+export type $ZodWrapperMetadataExact<T extends SomeType> = {
+  values: T["_zod"]["values"];
+  optin: T["_zod"]["optin"];
+  optout: T["_zod"]["optout"];
+  propValues: T["_zod"]["propValues"];
+  pattern: T["_zod"]["pattern"];
+};
+
+/** Exact pipe/codec metadata bubbled up from the wrapped schemas. Used by
+ * classic/mini where the precise metadata is needed for downstream type math. */
+export type $ZodPipeMetadataExact<A extends SomeType, B extends SomeType> = {
   values: A["_zod"]["values"];
   optin: A["_zod"]["optin"];
   optout: B["_zod"]["optout"];
   propValues: A["_zod"]["propValues"];
+};
+
+/** @deprecated Alias retained so external code that imported the pipe-only
+ * name keeps compiling. Prefer `$ZodWrapperMetadataBase`. */
+export type $ZodPipeMetadataBase = $ZodWrapperMetadataBase;
+
+export interface $ZodPipeInternals<
+  A extends SomeType = $ZodType,
+  B extends SomeType = $ZodType,
+  Meta extends $ZodWrapperMetadataBase = $ZodWrapperMetadataBase,
+> extends $ZodTypeInternals<core.output<B>, core.input<A>> {
+  def: $ZodPipeDef<A, B>;
+  isst: never;
+  values: Meta["values"];
+  optin: Meta["optin"];
+  optout: Meta["optout"];
+  propValues: Meta["propValues"];
 }
 
 export interface $ZodPipe<A extends SomeType = $ZodType, B extends SomeType = $ZodType> extends $ZodType {
   _zod: $ZodPipeInternals<A, B>;
 }
+
+export type $ZodPipeExact<A extends SomeType = $ZodType, B extends SomeType = $ZodType> = $ZodPipe<A, B> & {
+  _zod: $ZodPipeInternals<A, B, $ZodPipeMetadataExact<A, B>>;
+};
 
 export const $ZodPipe: core.$constructor<$ZodPipe> = /*@__PURE__*/ core.$constructor("$ZodPipe", (inst, def) => {
   $ZodType.init(inst, def);
@@ -4056,19 +4147,26 @@ export interface $ZodCodecDef<A extends SomeType = $ZodType, B extends SomeType 
   reverseTransform: (value: core.input<B>, payload: ParsePayload<core.input<B>>) => util.MaybeAsync<core.output<A>>;
 }
 
-export interface $ZodCodecInternals<A extends SomeType = $ZodType, B extends SomeType = $ZodType>
-  extends $ZodTypeInternals<core.output<B>, core.input<A>> {
+export interface $ZodCodecInternals<
+  A extends SomeType = $ZodType,
+  B extends SomeType = $ZodType,
+  Meta extends $ZodWrapperMetadataBase = $ZodWrapperMetadataBase,
+> extends $ZodTypeInternals<core.output<B>, core.input<A>> {
   def: $ZodCodecDef<A, B>;
   isst: never;
-  values: A["_zod"]["values"];
-  optin: A["_zod"]["optin"];
-  optout: B["_zod"]["optout"];
-  propValues: A["_zod"]["propValues"];
+  values: Meta["values"];
+  optin: Meta["optin"];
+  optout: Meta["optout"];
+  propValues: Meta["propValues"];
 }
 
 export interface $ZodCodec<A extends SomeType = $ZodType, B extends SomeType = $ZodType> extends $ZodType {
   _zod: $ZodCodecInternals<A, B>;
 }
+
+export type $ZodCodecExact<A extends SomeType = $ZodType, B extends SomeType = $ZodType> = $ZodCodec<A, B> & {
+  _zod: $ZodCodecInternals<A, B, $ZodPipeMetadataExact<A, B>>;
+};
 
 export const $ZodCodec: core.$constructor<$ZodCodec> = /*@__PURE__*/ core.$constructor("$ZodCodec", (inst, def) => {
   $ZodType.init(inst, def);
@@ -4141,15 +4239,22 @@ export interface $ZodPreprocessDef<B extends SomeType = $ZodType> extends $ZodPi
   out: B;
 }
 
-export interface $ZodPreprocessInternals<B extends SomeType = $ZodType> extends $ZodPipeInternals<$ZodTransform, B> {
+export interface $ZodPreprocessInternals<
+  B extends SomeType = $ZodType,
+  Meta extends $ZodWrapperMetadataBase = $ZodWrapperMetadataBase,
+> extends $ZodPipeInternals<$ZodTransform, B, Meta> {
   def: $ZodPreprocessDef<B>;
-  optin: B["_zod"]["optin"];
-  optout: B["_zod"]["optout"];
+  optin: Meta["optin"];
+  optout: Meta["optout"];
 }
 
 export interface $ZodPreprocess<B extends SomeType = $ZodType> extends $ZodPipe<$ZodTransform, B> {
   _zod: $ZodPreprocessInternals<B>;
 }
+
+export type $ZodPreprocessExact<B extends SomeType = $ZodType> = $ZodPreprocess<B> & {
+  _zod: $ZodPreprocessInternals<B, $ZodWrapperMetadataExact<B>>;
+};
 
 export const $ZodPreprocess: core.$constructor<$ZodPreprocess> = /*@__PURE__*/ core.$constructor(
   "$ZodPreprocess",
@@ -4171,19 +4276,25 @@ export interface $ZodReadonlyDef<T extends SomeType = $ZodType> extends $ZodType
   innerType: T;
 }
 
-export interface $ZodReadonlyInternals<T extends SomeType = $ZodType>
-  extends $ZodTypeInternals<util.MakeReadonly<core.output<T>>, util.MakeReadonly<core.input<T>>> {
+export interface $ZodReadonlyInternals<
+  T extends SomeType = $ZodType,
+  Meta extends $ZodWrapperMetadataBase = $ZodWrapperMetadataBase,
+> extends $ZodTypeInternals<util.MakeReadonly<core.output<T>>, util.MakeReadonly<core.input<T>>> {
   def: $ZodReadonlyDef<T>;
-  optin: T["_zod"]["optin"];
-  optout: T["_zod"]["optout"];
+  optin: Meta["optin"];
+  optout: Meta["optout"];
   isst: never;
-  propValues: T["_zod"]["propValues"];
-  values: T["_zod"]["values"];
+  propValues: Meta["propValues"];
+  values: Meta["values"];
 }
 
 export interface $ZodReadonly<T extends SomeType = $ZodType> extends $ZodType {
   _zod: $ZodReadonlyInternals<T>;
 }
+
+export type $ZodReadonlyExact<T extends SomeType = $ZodType> = $ZodReadonly<T> & {
+  _zod: $ZodReadonlyInternals<T, $ZodWrapperMetadataExact<T>>;
+};
 
 export const $ZodReadonly: core.$constructor<$ZodReadonly> = /*@__PURE__*/ core.$constructor(
   "$ZodReadonly",
@@ -4557,21 +4668,27 @@ export interface $ZodLazyDef<T extends SomeType = $ZodType> extends $ZodTypeDef 
   getter: () => T;
 }
 
-export interface $ZodLazyInternals<T extends SomeType = $ZodType>
-  extends $ZodTypeInternals<core.output<T>, core.input<T>> {
+export interface $ZodLazyInternals<
+  T extends SomeType = $ZodType,
+  Meta extends $ZodWrapperMetadataBase = $ZodWrapperMetadataBase,
+> extends $ZodTypeInternals<core.output<T>, core.input<T>> {
   def: $ZodLazyDef<T>;
   isst: never;
   /** Auto-cached way to retrieve the inner schema */
   innerType: T;
-  pattern: T["_zod"]["pattern"];
-  propValues: T["_zod"]["propValues"];
-  optin: T["_zod"]["optin"];
-  optout: T["_zod"]["optout"];
+  pattern: Meta["pattern"];
+  propValues: Meta["propValues"];
+  optin: Meta["optin"];
+  optout: Meta["optout"];
 }
 
 export interface $ZodLazy<T extends SomeType = $ZodType> extends $ZodType {
   _zod: $ZodLazyInternals<T>;
 }
+
+export type $ZodLazyExact<T extends SomeType = $ZodType> = $ZodLazy<T> & {
+  _zod: $ZodLazyInternals<T, $ZodWrapperMetadataExact<T>>;
+};
 
 export const $ZodLazy: core.$constructor<$ZodLazy> = /*@__PURE__*/ core.$constructor("$ZodLazy", (inst, def) => {
   $ZodType.init(inst, def);
