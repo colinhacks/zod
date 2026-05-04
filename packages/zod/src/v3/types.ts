@@ -583,8 +583,7 @@ export type ZodStringCheck =
   | { kind: "ip"; version?: IpVersion | undefined; message?: string | undefined }
   | { kind: "cidr"; version?: IpVersion | undefined; message?: string | undefined }
   | { kind: "base64"; message?: string | undefined }
-  | { kind: "base64url"; message?: string | undefined }
-  | { kind: "creditCard"; message?: string | undefined };
+  | { kind: "base64url"; message?: string | undefined };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -727,40 +726,6 @@ function isValidCidr(ip: string, version?: IpVersion) {
   }
 
   return false;
-}
-
-// Adapted from valibot (https://github.com/fabian-hiller/valibot, MIT). v4 has the
-// equivalent in `src/v4/core/regexes.ts` + `src/v4/core/schemas.ts`; v3 keeps its
-// own copy because v3 is intentionally isolated from v4 internals.
-const creditCardRegex = /^(?:\d{13,19}|\d{4}(?: \d{3,6}){2,4}|\d{4}(?:-\d{3,6}){2,4})$/;
-const creditSanitizeRegex = /[- ]/g;
-const creditByProviderRegexList: ReadonlyArray<RegExp> = [
-  /^3[47]\d{13}$/, // American Express
-  /^3(?:0[0-5]|[68]\d)\d{11,13}$/, // Diners Club
-  /^6(?:011|5\d{2})\d{12,15}$/, // Discover
-  /^(?:2131|1800|35\d{3})\d{11}$/, // JCB
-  /^(?:5[1-5]\d{2}|222\d|22[3-9]\d|2[3-6]\d{2}|27[01]\d|2720)\d{12}$/, // Mastercard
-  /^(?:6[27]\d{14,17}|81\d{14,17})$/, // UnionPay
-  /^4\d{12}(?:\d{3,6})?$/, // Visa
-];
-
-function isLuhnAlgo(digits: string): boolean {
-  let length = digits.length;
-  let bit = 1;
-  let sum = 0;
-  while (length) {
-    const value = +digits[--length];
-    bit ^= 1;
-    sum += bit ? [0, 2, 4, 6, 8, 1, 3, 5, 7, 9][value] : value;
-  }
-  return sum % 10 === 0;
-}
-
-function isValidCreditCard(cardNumber: string): boolean {
-  if (!creditCardRegex.test(cardNumber)) return false;
-  const sanitized = cardNumber.replace(creditSanitizeRegex, "");
-  if (!creditByProviderRegexList.some((re) => re.test(sanitized))) return false;
-  return isLuhnAlgo(sanitized);
 }
 
 export class ZodString extends ZodType<string, ZodStringDef, string> {
@@ -1066,16 +1031,6 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           });
           status.dirty();
         }
-      } else if (check.kind === "creditCard") {
-        if (!isValidCreditCard(input.data)) {
-          ctx = this._getOrReturnCtx(input, ctx);
-          addIssueToContext(ctx, {
-            validation: "creditCard",
-            code: ZodIssueCode.invalid_string,
-            message: check.message,
-          });
-          status.dirty();
-        }
       } else {
         util.assertNever(check);
       }
@@ -1136,9 +1091,6 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
       kind: "base64url",
       ...errorUtil.errToObj(message),
     });
-  }
-  creditCard(message?: errorUtil.ErrMessage) {
-    return this._addCheck({ kind: "creditCard", ...errorUtil.errToObj(message) });
   }
 
   jwt(options?: { alg?: string; message?: string | undefined }) {
@@ -1352,9 +1304,6 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   get isBase64url() {
     // base64url encoding is a modification of base64 that can safely be used in URLs and filenames
     return !!this._def.checks.find((ch) => ch.kind === "base64url");
-  }
-  get isCreditCard() {
-    return !!this._def.checks.find((ch) => ch.kind === "creditCard");
   }
 
   get minLength() {
