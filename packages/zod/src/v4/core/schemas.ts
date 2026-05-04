@@ -38,7 +38,8 @@ export interface ParsePayload<T = unknown> {
   aborted?: boolean;
   /** @internal Marks a value as a fallback that an outer wrapper (e.g.
    * $ZodOptional) may override with its own interpretation when input was
-   * undefined. Currently set by $ZodCatch when catchValue substitutes. */
+   * undefined. Set by $ZodCatch when catchValue substitutes and by every
+   * $ZodTransform invocation. */
   fallback?: boolean | undefined;
 }
 
@@ -3431,6 +3432,7 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
         const output = _out instanceof Promise ? _out : Promise.resolve(_out);
         return output.then((output) => {
           payload.value = output;
+          payload.fallback = true;
           return payload;
         });
       }
@@ -3440,6 +3442,7 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
       }
 
       payload.value = _out;
+      payload.fallback = true;
       return payload;
     };
   }
@@ -4151,7 +4154,7 @@ export const $ZodPreprocess: core.$constructor<$ZodPreprocess> = /*@__PURE__*/ c
   "$ZodPreprocess",
   (inst, def) => {
     $ZodPipe.init(inst, def);
-    util.defineLazy(inst._zod, "optin", () => def.out._zod.optin);
+    inst._zod.optin = "optional";
     util.defineLazy(inst._zod, "optout", () => def.out._zod.optout);
   }
 );
