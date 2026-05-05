@@ -34,7 +34,7 @@ export interface ZodMiniType<
     data: unknown,
     params?: core.ParseContext<core.$ZodIssue>
   ): Promise<util.SafeParseResult<core.output<this>>>;
-  apply<T>(fn: (schema: this) => T): T;
+  apply<T, TArgs extends unknown[] = []>(fn: (schema: this, ...args: TArgs) => T, ...args: TArgs): T;
 }
 
 interface _ZodMiniType<out Internals extends core.$ZodTypeInternals = core.$ZodTypeInternals>
@@ -78,7 +78,7 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
       reg.add(inst, meta);
       return inst;
     }) as any;
-    inst.apply = (fn) => fn(inst);
+    inst.apply = (fn, ...args) => fn(inst, ...args);
   }
 );
 

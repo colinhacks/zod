@@ -206,7 +206,7 @@ export interface ZodType<
    * ```
    */
   isNullable(): boolean;
-  apply<T>(fn: (schema: this) => T): T;
+  apply<T, TArgs extends unknown[] = []>(fn: (schema: this, ...args: TArgs) => T, ...args: TArgs): T;
 }
 
 export interface _ZodType<out Internals extends core.$ZodTypeInternals = core.$ZodTypeInternals>
@@ -351,8 +351,8 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
     isNullable() {
       return this.safeParse(null).success;
     },
-    apply(fn) {
-      return fn(this);
+    apply(fn, ...args) {
+      return fn(this, ...args);
     },
   });
   Object.defineProperty(inst, "description", {
