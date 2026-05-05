@@ -3,9 +3,19 @@ import { util } from "../core/index.js";
 import * as processors from "../core/json-schema-processors.js";
 import type { StandardSchemaWithJSONProps } from "../core/standard-schema.js";
 import { createStandardJSONSchemaMethod, createToJSONSchemaMethod } from "../core/to-json-schema.js";
+import en from "../locales/en.js";
 
 import * as checks from "./checks.js";
 import * as parse from "./parse.js";
+
+// Register English as the default locale on first ZodType construction. Hooked
+// into the `ZodType` `$constructor` (rather than a top-level `config(en())` in
+// `external.ts`) so bundlers honoring `sideEffects: false` can't tree-shake it
+// out — see #5953, #5725. An explicit `z.config(z.locales.xx())` call wins
+// regardless of order, since this only sets the default when none is present.
+function _ensureDefaultLocale(): void {
+  if (!core.globalConfig.localeError) core.config(en());
+}
 
 // Lazy-bind builder methods.
 //
@@ -213,6 +223,7 @@ export interface _ZodType<out Internals extends core.$ZodTypeInternals = core.$Z
   extends ZodType<any, any, Internals> {}
 
 export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$constructor("ZodType", (inst, def) => {
+  _ensureDefaultLocale();
   core.$ZodType.init(inst, def);
   Object.assign(inst["~standard"], {
     jsonSchema: {
