@@ -3,14 +3,25 @@
 import { readdirSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-const STUB_PACKAGE_JSON_CONTENT = `{ 
+// Files in the import chain to v4/classic/external.js's `config(en())` —
+// every link must be flagged, not just the terminal.
+const SIDE_EFFECTFUL_STUBS: Record<string, readonly string[]> = {
+  v4: ["./index.js", "./index.cjs"],
+  "v4/classic": ["./index.js", "./index.cjs", "./external.js", "./external.cjs"],
+};
+
+function stubFor(dir: string): string {
+  const normalized = dir.split(/[\\/]/).join("/");
+  const sideEffects: false | readonly string[] = SIDE_EFFECTFUL_STUBS[normalized] ?? false;
+  return `{
   "type": "module",
   "main": "./index.cjs",
   "module": "./index.js",
   "types": "./index.d.cts",
-  "sideEffects": false
+  "sideEffects": ${JSON.stringify(sideEffects)}
 }
 `;
+}
 
 /**
  * Recursively find all index.d.cts files in a directory
@@ -76,7 +87,7 @@ function writeStubPackageJsons() {
     const packageJsonPath = join(zodPackageRoot, dir, "package.json");
 
     // Write the stub package.json
-    writeFileSync(packageJsonPath, STUB_PACKAGE_JSON_CONTENT, "utf8");
+    writeFileSync(packageJsonPath, stubFor(dir), "utf8");
     console.log(`✅ Created ${dir}/package.json`);
   }
 
