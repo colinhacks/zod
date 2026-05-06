@@ -1293,6 +1293,12 @@ export const $ZodCheckTemporal: core.$constructor<$ZodCheckTemporal> = /*@__PURE
   (inst, def) => {
     $ZodCheck.init(inst, def);
 
+    inst._zod.onattach.push((inst) => {
+      const { bag } = inst._zod;
+      if (def.results.includes(-1) && def.results.includes(0)) bag.minimum = def.class.from(def.value);
+      if (def.results.includes(1) && def.results.includes(0)) bag.maximum = def.class.from(def.value);
+    });
+
     inst._zod.check = (payload) => {
       const result = def.class.compare(payload.value, def.value);
 
