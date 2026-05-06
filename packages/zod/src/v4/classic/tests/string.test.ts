@@ -441,6 +441,9 @@ test("httpurl", () => {
   // subdomains
   httpUrl.parse("https://sub.example.com");
   httpUrl.parse("http://sub.example.com");
+  // underscores in labels (uncommon but valid in DNS hostnames)
+  httpUrl.parse("https://foo_bar.example.com");
+  httpUrl.parse("https://exa_mple.com");
   // paths
   httpUrl.parse("https://example.com/path/to/resource");
   httpUrl.parse("http://example.com/path/to/resource");

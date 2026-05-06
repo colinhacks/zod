@@ -81,10 +81,12 @@ export const base64url: RegExp = /^[A-Za-z0-9_-]*$/;
 
 // based on https://stackoverflow.com/questions/106179/regular-expression-to-match-dns-hostname-or-ip-address
 // export const hostname: RegExp = /^([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+$/;
+// `hostname` follows the strict RFC 1035 LDH rule (no underscores) and is used by `z.hostname()`.
+// `domain` is used as the URL host check for `z.httpUrl()`, where RFC 3986 / WHATWG URL allow `_`.
 export const hostname: RegExp =
   /^(?=.{1,253}\.?$)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[-0-9a-zA-Z]{0,61}[0-9a-zA-Z])?)*\.?$/;
 
-export const domain: RegExp = /^([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
+export const domain: RegExp = /^([a-zA-Z0-9](?:[a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
 
 export const httpProtocol: RegExp = /^https?$/;
 
