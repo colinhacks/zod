@@ -1384,6 +1384,9 @@ export interface _ZodTemporal<
 > extends _ZodType<T> {
   min(value: Like, params?: string | core.$ZodCheckTemporalParams): this;
   max(value: Like, params?: string | core.$ZodCheckTemporalParams): this;
+  before(value: Like, params?: string | core.$ZodCheckTemporalParams): this;
+  after(value: Like, params?: string | core.$ZodCheckTemporalParams): this;
+  equals(value: Like, params?: string | core.$ZodCheckTemporalParams): this;
 
   minimum: Instance | null;
   maximum: Instance | null;
@@ -1402,6 +1405,9 @@ export const ZodTemporal: core.$constructor<ZodTemporal> = /*@__PURE__*/ core.$c
 
     inst.min = (value, params) => inst.check(checks.compareTemporal(def.class, value, [0, 1], params));
     inst.max = (value, params) => inst.check(checks.compareTemporal(def.class, value, [0, -1], params));
+    inst.before = (value, params) => inst.check(checks.compareTemporal(def.class, value, [-1], params));
+    inst.after = (value, params) => inst.check(checks.compareTemporal(def.class, value, [1], params));
+    inst.equals = (value, params) => inst.check(checks.compareTemporal(def.class, value, [0], params));
 
     const { bag } = inst._zod;
     inst.minimum = bag.minimum ? def.class.from(bag.minimum) : null;
