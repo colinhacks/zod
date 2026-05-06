@@ -1308,7 +1308,7 @@ export const $ZodCheckTemporal: core.$constructor<$ZodCheckTemporal> = /*@__PURE
       if (def.results.includes(result)) return;
 
       payload.issues.push({
-        expected: def.results.map((r) => meaningMap[r]),
+        expected: def.results.map((r) => meaningMap[r]).join(" or "),
         received: meaningMap[result],
         code: "invalid_temporal",
         input: payload.value,
