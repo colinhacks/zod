@@ -113,6 +113,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return `ورودی نامعتبر`;
       case "invalid_element":
         return `مقدار نامعتبر در ${issue.origin}`;
+      case "invalid_temporal":
+        return `نامعتبر ${issue.origin}: مقدار مورد انتظار ${issue.expected} بود اما ${issue.received} بود`;
       default:
         return `ورودی نامعتبر`;
     }

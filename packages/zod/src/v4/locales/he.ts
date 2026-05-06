@@ -233,6 +233,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return `ערך לא תקין ב${place}`;
       }
 
+      case "invalid_temporal":
+        return `לא חוקי ${issue.origin}: ציפה שהערך יהיה ${issue.expected} אך זה היה ${issue.received}`;
       default:
         return `קלט לא תקין`;
     }

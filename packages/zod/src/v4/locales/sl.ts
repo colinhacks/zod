@@ -105,6 +105,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Neveljaven vnos";
       case "invalid_element":
         return `Neveljavna vrednost v ${issue.origin}`;
+      case "invalid_temporal":
+        return `Neveljaven ${issue.origin}: pričakovana vrednost je bila ${issue.expected}, vendar je bila ${issue.received}`;
       default:
         return "Neveljaven vnos";
     }

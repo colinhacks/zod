@@ -103,6 +103,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Entrada inválida";
       case "invalid_element":
         return `Valor inválido em ${issue.origin}`;
+      case "invalid_temporal":
+        return `${issue.origin} inválido: valor esperado era ${issue.expected} mas foi ${issue.received}`;
       default:
         return `Campo inválido`;
     }

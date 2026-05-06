@@ -106,6 +106,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "ข้อมูลไม่ถูกต้อง: ไม่ตรงกับรูปแบบยูเนียนที่กำหนดไว้";
       case "invalid_element":
         return `ข้อมูลไม่ถูกต้องใน ${issue.origin}`;
+      case "invalid_temporal":
+        return `${issue.origin} ไม่ถูกต้อง: ค่าที่คาดหวังคือ ${issue.expected} แต่กลับเป็น ${issue.received}`;
       default:
         return `ข้อมูลไม่ถูกต้อง`;
     }

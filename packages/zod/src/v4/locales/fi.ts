@@ -108,6 +108,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Virheellinen unioni";
       case "invalid_element":
         return "Virheellinen arvo joukossa";
+      case "invalid_temporal":
+        return `Virheellinen ${issue.origin}: odotettu arvo oli ${issue.expected} mutta se oli ${issue.received}`;
       default:
         return `Virheellinen syöte`;
     }

@@ -108,6 +108,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Ongeldige invoer";
       case "invalid_element":
         return `Ongeldige waarde in ${issue.origin}`;
+      case "invalid_temporal":
+        return `Ongeldige ${issue.origin}: verwachte waarde was ${issue.expected} maar was ${issue.received}`;
       default:
         return `Ongeldige invoer`;
     }

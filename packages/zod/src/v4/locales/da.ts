@@ -110,6 +110,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Ugyldigt input: matcher ingen af de tilladte typer";
       case "invalid_element":
         return `Ugyldig værdi i ${issue.origin}`;
+      case "invalid_temporal":
+        return `Ugyldig ${issue.origin}: forventede værdien var ${issue.expected}, men det var ${issue.received}`;
       default:
         return `Ugyldigt input`;
     }

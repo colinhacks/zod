@@ -106,6 +106,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Rangt gildi";
       case "invalid_element":
         return `Rangt gildi í ${issue.origin}`;
+      case "invalid_temporal":
+        return `Ógilt ${issue.origin}: gert var ráð fyrir að gildið væri ${issue.expected} en það var ${issue.received}`;
       default:
         return `Rangt gildi`;
     }

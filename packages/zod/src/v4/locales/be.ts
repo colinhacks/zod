@@ -163,6 +163,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Няправільны ўвод";
       case "invalid_element":
         return `Няправільнае значэнне ў ${issue.origin}`;
+      case "invalid_temporal":
+        return `Няслушны ${issue.origin}: чаканае значэнне ${issue.expected}, але было ${issue.received}`;
       default:
         return `Няправільны ўвод`;
     }
