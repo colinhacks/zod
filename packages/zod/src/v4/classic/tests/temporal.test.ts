@@ -119,3 +119,50 @@ test("zonedDateTime", () => {
   maxCheck.parse(zonedBeforeStr);
   expect(maxCheck.safeParse(zonedAfterStr).success).toBe(false);
 });
+
+test("additional temporal interactions", () => {
+  const schema = z.plainDate();
+  const base = "2026-05-06";
+  const earlier = "2026-05-05";
+  const later = "2026-05-07";
+
+  // before, after, equals checks
+  const beforeCheck = schema.before(base);
+  beforeCheck.parse(earlier);
+  expect(beforeCheck.safeParse(base).success).toBe(false);
+  expect(beforeCheck.safeParse(later).success).toBe(false);
+
+  const afterCheck = schema.after(base);
+  afterCheck.parse(later);
+  expect(afterCheck.safeParse(base).success).toBe(false);
+  expect(afterCheck.safeParse(earlier).success).toBe(false);
+
+  const equalsCheck = schema.equals(base);
+  equalsCheck.parse(base);
+  expect(equalsCheck.safeParse(earlier).success).toBe(false);
+  expect(equalsCheck.safeParse(later).success).toBe(false);
+
+  // object-input tests
+  const objDate = { year: 2026, month: 1, day: 1 };
+  expect(schema.parse(objDate).toString()).toEqual(Temporal.PlainDate.from(objDate).toString());
+
+  // invalid-input tests
+  expect(schema.safeParse("garbage").success).toBe(false);
+  expect(schema.safeParse(null).success).toBe(false);
+  expect(schema.safeParse({ nonsense: true }).success).toBe(false);
+
+  // getters
+  const minMaxSchema = schema.min(earlier).max(later);
+  expect(minMaxSchema.minimum?.toString()).toEqual(Temporal.PlainDate.from(earlier).toString());
+  expect(minMaxSchema.maximum?.toString()).toEqual(Temporal.PlainDate.from(later).toString());
+
+  // issue shape
+  const result = afterCheck.safeParse(earlier);
+  expect(result.success).toBe(false);
+  if (!result.success) {
+    const issue = result.error.issues[0];
+    expect(issue.code).toBe("invalid_temporal");
+    expect((issue as any).expected).toEqual("after");
+    expect((issue as any).received).toBe("before");
+  }
+});
