@@ -29,13 +29,13 @@ test("instant", () => {
 
   expect(schema.parse(benchStr).toString()).toEqual(Temporal.Instant.from(benchStr).toString());
 
+  minCheck.parse(benchStr);
   minCheck.parse(afterStr);
   expect(minCheck.safeParse(beforeStr).success).toBe(false);
-  expect(minCheck.safeParse(benchStr).success).toBe(false);
 
+  maxCheck.parse(benchStr);
   maxCheck.parse(beforeStr);
   expect(maxCheck.safeParse(afterStr).success).toBe(false);
-  expect(maxCheck.safeParse(benchStr).success).toBe(false);
 });
 
 test("plainDate", () => {
@@ -45,13 +45,13 @@ test("plainDate", () => {
 
   expect(schema.parse(dateBenchStr).toString()).toEqual(Temporal.PlainDate.from(dateBenchStr).toString());
 
+  minCheck.parse(dateBenchStr);
   minCheck.parse(dateAfterStr);
   expect(minCheck.safeParse(dateBeforeStr).success).toBe(false);
-  expect(minCheck.safeParse(dateBenchStr).success).toBe(false);
 
+  maxCheck.parse(dateBenchStr);
   maxCheck.parse(dateBeforeStr);
   expect(maxCheck.safeParse(dateAfterStr).success).toBe(false);
-  expect(maxCheck.safeParse(dateBenchStr).success).toBe(false);
 });
 
 test("plainDateTime", () => {
@@ -63,13 +63,13 @@ test("plainDateTime", () => {
     Temporal.PlainDateTime.from(benchStr.slice(0, -1)).toString()
   );
 
+  minCheck.parse(benchStr.slice(0, -1));
   minCheck.parse(afterStr.slice(0, -1));
   expect(minCheck.safeParse(beforeStr.slice(0, -1)).success).toBe(false);
-  expect(minCheck.safeParse(benchStr.slice(0, -1)).success).toBe(false);
 
+  maxCheck.parse(benchStr.slice(0, -1));
   maxCheck.parse(beforeStr.slice(0, -1));
   expect(maxCheck.safeParse(afterStr.slice(0, -1)).success).toBe(false);
-  expect(maxCheck.safeParse(benchStr.slice(0, -1)).success).toBe(false);
 });
 
 test("plainTime", () => {
@@ -79,13 +79,13 @@ test("plainTime", () => {
 
   expect(schema.parse(timeBenchStr).toString()).toEqual(Temporal.PlainTime.from(timeBenchStr).toString());
 
+  minCheck.parse(timeBenchStr);
   minCheck.parse(timeAfterStr);
   expect(minCheck.safeParse(timeBeforeStr).success).toBe(false);
-  expect(minCheck.safeParse(timeBenchStr).success).toBe(false);
 
+  maxCheck.parse(timeBenchStr);
   maxCheck.parse(timeBeforeStr);
   expect(maxCheck.safeParse(timeAfterStr).success).toBe(false);
-  expect(maxCheck.safeParse(timeBenchStr).success).toBe(false);
 });
 
 test("plainYearMonth", () => {
@@ -95,13 +95,13 @@ test("plainYearMonth", () => {
 
   expect(schema.parse(ymBenchStr).toString()).toEqual(Temporal.PlainYearMonth.from(ymBenchStr).toString());
 
+  minCheck.parse(ymBenchStr);
   minCheck.parse(ymAfterStr);
   expect(minCheck.safeParse(ymBeforeStr).success).toBe(false);
-  expect(minCheck.safeParse(ymBenchStr).success).toBe(false);
 
+  maxCheck.parse(ymBenchStr);
   maxCheck.parse(ymBeforeStr);
   expect(maxCheck.safeParse(ymAfterStr).success).toBe(false);
-  expect(maxCheck.safeParse(ymBenchStr).success).toBe(false);
 });
 
 test("zonedDateTime", () => {
@@ -111,11 +111,11 @@ test("zonedDateTime", () => {
 
   expect(schema.parse(zonedBenchStr).toString()).toEqual(Temporal.ZonedDateTime.from(zonedBenchStr).toString());
 
+  minCheck.parse(zonedBenchStr);
   minCheck.parse(zonedAfterStr);
   expect(minCheck.safeParse(zonedBeforeStr).success).toBe(false);
-  expect(minCheck.safeParse(zonedBenchStr).success).toBe(false);
 
+  maxCheck.parse(zonedBenchStr);
   maxCheck.parse(zonedBeforeStr);
   expect(maxCheck.safeParse(zonedAfterStr).success).toBe(false);
-  expect(maxCheck.safeParse(zonedBenchStr).success).toBe(false);
 });
