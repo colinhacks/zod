@@ -380,6 +380,16 @@ type schemaInput = z.input<typeof schema>;
 // Zod 4: unknown;
 ```
 
+A missing key on an object schema with a `z.coerce.*` field now errors. Use `.default()` to declare the fallback explicitly.
+
+```ts
+const schema = z.object({ foo: z.coerce.boolean() });
+schema.parse({});
+
+// Zod 3: { foo: false }
+// Zod 4: ZodError: Invalid input: expected nonoptional, received undefined
+```
+
 ## `.default()` updates
 
 The application of `.default()` has changed in a subtle way. If the input is `undefined`, `ZodDefault` short-circuits the parsing process and returns the default value. The default value must be assignable to the *output type*.
