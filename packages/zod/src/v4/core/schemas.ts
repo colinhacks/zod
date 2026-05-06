@@ -1646,7 +1646,7 @@ export const $ZodTemporal: core.$constructor<$ZodTemporal> = /*@__PURE__*/ core.
           expected: "temporal",
           code: "invalid_type",
           input,
-          received: "Invalid " + def.class.name,
+          ...(input instanceof def.class ? { received: "Invalid " + def.class.name } : {}),
           inst,
         });
       }
