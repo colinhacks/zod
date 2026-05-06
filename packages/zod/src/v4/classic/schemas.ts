@@ -1403,6 +1403,7 @@ export const ZodTemporal: core.$constructor<ZodTemporal> = /*@__PURE__*/ core.$c
 
     inst._zod.processJSONSchema = (ctx, json, params) => processors.temporalProcessor(inst, ctx, json, params);
 
+    // NOTE: we use these names instead of gt/lt/gte/lte because "less/greater than" doesn't make sense for dates and times.
     inst.min = (value, params) => inst.check(checks.compareTemporal(def.class, value, [0, 1], params));
     inst.max = (value, params) => inst.check(checks.compareTemporal(def.class, value, [0, -1], params));
     inst.before = (value, params) => inst.check(checks.compareTemporal(def.class, value, [-1], params));

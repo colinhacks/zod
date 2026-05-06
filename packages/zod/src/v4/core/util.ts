@@ -986,4 +986,5 @@ export interface TemporalClass<Like, Instance> {
   from(like: Like): Instance;
   compare(one: Like, two: Like): number;
   name: string;
+  new (...args: any[]): Instance;
 }

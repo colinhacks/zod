@@ -131,7 +131,14 @@ export interface $ZodIssueInvalidTemporal<Input = unknown> extends $ZodIssueBase
   readonly code: "invalid_temporal";
   readonly expected: string;
   readonly received: "before" | "equal" | "after";
-  readonly className: string;
+  readonly origin:
+    | "Instant"
+    | "PlainDate"
+    | "PlainDateTime"
+    | "PlainTime"
+    | "PlainYearMonth"
+    | "ZonedDateTime"
+    | (string & {});
   readonly input?: Input;
 }
 
