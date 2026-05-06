@@ -1396,6 +1396,7 @@ export const ZodTemporal: core.$constructor<ZodTemporal> = /*@__PURE__*/ core.$c
   "ZodTemporal",
   (inst, def) => {
     core.$ZodTemporal.init(inst, def);
+    ZodType.init(inst, def);
 
     inst._zod.processJSONSchema = (ctx, json, params) => processors.temporalProcessor(inst, ctx, json, params);
 
