@@ -1620,7 +1620,7 @@ export interface $ZodTemporalDef<Like, Instance> extends $ZodTypeDef {
 
 export interface $ZodTemporalInternals<Like, Instance, T = unknown> extends $ZodTypeInternals<Instance, T> {
   def: $ZodTemporalDef<Like, Instance>;
-  isst: errors.$ZodIssueInvalidType;
+  isst: errors.$ZodIssueInvalidType | errors.$ZodIssueInvalidTemporal;
   bag: util.LoosePartial<{
     minimum: Like;
     maximum: Like;
@@ -1646,7 +1646,7 @@ export const $ZodTemporal: core.$constructor<$ZodTemporal> = /*@__PURE__*/ core.
           expected: "temporal",
           code: "invalid_type",
           input,
-          ...(input instanceof def.class ? { received: "Invalid " + def.class.name } : {}),
+          received: "Invalid " + def.class.name,
           inst,
         });
       }

@@ -1400,8 +1400,8 @@ export const ZodTemporal: core.$constructor<ZodTemporal> = /*@__PURE__*/ core.$c
 
     inst._zod.processJSONSchema = (ctx, json, params) => processors.temporalProcessor(inst, ctx, json, params);
 
-    inst.min = (value, params) => inst.check(checks.afterTemporal(def.class, value, params));
-    inst.max = (value, params) => inst.check(checks.beforeTemporal(def.class, value, params));
+    inst.min = (value, params) => inst.check(checks.compareTemporal(def.class, value, [0, -1], params));
+    inst.max = (value, params) => inst.check(checks.compareTemporal(def.class, value, [0, 1], params));
 
     const { bag } = inst._zod;
     inst.minimum = bag.minimum ? def.class.from(bag.minimum) : null;

@@ -930,32 +930,18 @@ export function _zonedDateTime<T extends schemas.$ZodZonedDateTime>(
   });
 }
 
-export type $ZodCheckTemporalParams = CheckParams<checks.$ZodCheckTemporal, "class" | "result" | "value" | "when">;
+export type $ZodCheckTemporalParams = CheckParams<checks.$ZodCheckTemporal, "class" | "results" | "value" | "when">;
 
 // @__NO_SIDE_EFFECTS__
-export function _beforeTemporal<Like, Instance>(
+export function _compareTemporal<Like, Instance>(
   Class: util.TemporalClass<Like, Instance>,
   value: Like,
+  results: (0 | 1 | -1)[],
   params?: string | $ZodCheckTemporalParams
 ) {
   return new checks.$ZodCheckTemporal({
     check: "temporal_compare",
-    result: -1,
-    value,
-    class: Class,
-    ...util.normalizeParams(params),
-  });
-}
-
-// @__NO_SIDE_EFFECTS__
-export function _afterTemporal<Like, Instance>(
-  Class: util.TemporalClass<Like, Instance>,
-  value: Like,
-  params?: string | $ZodCheckTemporalParams
-) {
-  return new checks.$ZodCheckTemporal({
-    check: "temporal_compare",
-    result: 1,
+    results,
     value,
     class: Class,
     ...util.normalizeParams(params),

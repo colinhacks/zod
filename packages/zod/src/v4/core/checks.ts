@@ -1276,7 +1276,7 @@ export interface $ZodCheckTemporalDef<Like, Instance> extends $ZodCheckDef {
   check: "temporal_compare";
   class: util.TemporalClass<Like, Instance>;
   value: Like;
-  result: -1 | 0 | 1;
+  results: (-1 | 0 | 1)[];
 }
 
 export interface $ZodCheckTemporalInternals<Like, Instance, T = unknown> extends $ZodCheckInternals<T> {
@@ -1296,12 +1296,13 @@ export const $ZodCheckTemporal: core.$constructor<$ZodCheckTemporal> = /*@__PURE
     inst._zod.check = (payload) => {
       const result = def.class.compare(payload.value, def.value);
 
-      if (result === def.result) return;
+      if (result !== 0 && result !== 1 && result !== -1)
+        throw new Error("Invalid temporal comparison result: " + result);
 
-      if (result !== 0 && result !== 1 && result !== -1) return;
+      if (def.results.includes(result)) return;
 
       payload.issues.push({
-        expected: meaningMap[def.result],
+        expected: def.results.map((r) => meaningMap[r]),
         received: meaningMap[result],
         code: "invalid_temporal",
         input: payload.value,
