@@ -28,5 +28,7 @@ export {
   _toLowerCase as toLowerCase,
   _toUpperCase as toUpperCase,
   _slugify as slugify,
+  _beforeTemporal as beforeTemporal,
+  _afterTemporal as afterTemporal,
   type $RefinementCtx as RefinementCtx,
 } from "../core/index.js";

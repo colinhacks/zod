@@ -840,6 +840,128 @@ export function _coercedDate<T extends schemas.$ZodDate>(
   });
 }
 
+// strips types that are not exposed in the public factory
+export type TemporalParams<
+  T extends schemas.$ZodTemporal = schemas.$ZodTemporal & { _isst: never },
+  AlsoOmit extends Exclude<keyof T["_zod"]["def"], "type" | "checks" | "error" | "class"> = never,
+> = Params<T, NonNullable<T["_zod"]["isst"]>, "type" | "checks" | "error" | "class" | AlsoOmit>;
+
+// Instant
+export type $ZodInstantParams = TemporalParams<schemas.$ZodInstant>;
+// @__NO_SIDE_EFFECTS__
+export function _instant<T extends schemas.$ZodInstant>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodInstantParams
+): T {
+  return new Class({
+    type: "temporal",
+    class: Temporal.Instant,
+    ...util.normalizeParams(params),
+  });
+}
+
+// PlainDate
+export type $ZodPlainDateParams = TemporalParams<schemas.$ZodPlainDate>;
+// @__NO_SIDE_EFFECTS__
+export function _plainDate<T extends schemas.$ZodPlainDate>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodPlainDateParams
+): T {
+  return new Class({
+    type: "temporal",
+    class: Temporal.PlainDate,
+    ...util.normalizeParams(params),
+  });
+}
+
+// PlainDateTime
+export type $ZodPlainDateTimeParams = TemporalParams<schemas.$ZodPlainDateTime>;
+// @__NO_SIDE_EFFECTS__
+export function _plainDateTime<T extends schemas.$ZodPlainDateTime>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodPlainDateTimeParams
+): T {
+  return new Class({
+    type: "temporal",
+    class: Temporal.PlainDateTime,
+    ...util.normalizeParams(params),
+  });
+}
+
+// PlainTime
+export type $ZodPlainTimeParams = TemporalParams<schemas.$ZodPlainTime>;
+// @__NO_SIDE_EFFECTS__
+export function _plainTime<T extends schemas.$ZodPlainTime>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodPlainTimeParams
+): T {
+  return new Class({
+    type: "temporal",
+    class: Temporal.PlainTime,
+    ...util.normalizeParams(params),
+  });
+}
+
+// PlainYearMonth
+export type $ZodPlainYearMonthParams = TemporalParams<schemas.$ZodPlainYearMonth>;
+// @__NO_SIDE_EFFECTS__
+export function _plainYearMonth<T extends schemas.$ZodPlainYearMonth>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodPlainYearMonthParams
+): T {
+  return new Class({
+    type: "temporal",
+    class: Temporal.PlainYearMonth,
+    ...util.normalizeParams(params),
+  });
+}
+
+// ZonedDateTime
+export type $ZodZonedDateTimeParams = TemporalParams<schemas.$ZodZonedDateTime>;
+// @__NO_SIDE_EFFECTS__
+export function _zonedDateTime<T extends schemas.$ZodZonedDateTime>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodZonedDateTimeParams
+): T {
+  return new Class({
+    type: "temporal",
+    class: Temporal.ZonedDateTime,
+    ...util.normalizeParams(params),
+  });
+}
+
+export type $ZodCheckTemporalParams = CheckParams<checks.$ZodCheckTemporal, "class" | "result" | "value" | "when">;
+
+// @__NO_SIDE_EFFECTS__
+export function _beforeTemporal<Like, Instance>(
+  Class: util.TemporalClass<Like, Instance>,
+  value: Like,
+  params?: string | $ZodCheckTemporalParams
+) {
+  return new checks.$ZodCheckTemporal({
+    check: "temporal_compare",
+    result: -1,
+    value,
+    class: Class,
+    ...util.normalizeParams(params),
+  });
+}
+
+// @__NO_SIDE_EFFECTS__
+export function _afterTemporal<Like, Instance>(
+  Class: util.TemporalClass<Like, Instance>,
+  value: Like,
+  params?: string | $ZodCheckTemporalParams
+) {
+  return new checks.$ZodCheckTemporal({
+    check: "temporal_compare",
+    result: 1,
+    value,
+    class: Class,
+    ...util.normalizeParams(params),
+  });
+}
+
 // NaN
 export type $ZodNaNParams = TypeParams<schemas.$ZodNaN>;
 // @__NO_SIDE_EFFECTS__

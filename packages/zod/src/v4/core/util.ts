@@ -981,3 +981,8 @@ export function uint8ArrayToHex(bytes: Uint8Array): string {
 export abstract class Class {
   constructor(..._args: any[]) {}
 }
+
+export interface TemporalClass<Like, Instance> extends Function {
+  from(like: Like): Instance;
+  compare(one: Like, two: Like): number;
+}

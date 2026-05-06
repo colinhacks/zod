@@ -1266,6 +1266,51 @@ export const $ZodCheckOverwrite: core.$constructor<$ZodCheckOverwrite> = /*@__PU
 //     };
 //   });
 
+const meaningMap = {
+  [-1]: "before",
+  0: "equal",
+  1: "after",
+} as const;
+
+export interface $ZodCheckTemporalDef<Like, Instance> extends $ZodCheckDef {
+  check: "temporal_compare";
+  class: util.TemporalClass<Like, Instance>;
+  value: Like;
+  result: -1 | 0 | 1;
+}
+
+export interface $ZodCheckTemporalInternals<Like, Instance, T = unknown> extends $ZodCheckInternals<T> {
+  def: $ZodCheckTemporalDef<Like, Instance>;
+  issc: errors.$ZodIssueInvalidTemporal;
+}
+
+export interface $ZodCheckTemporal<Like = unknown, Instance = unknown, T = unknown> extends $ZodCheck<T> {
+  _zod: $ZodCheckTemporalInternals<Like, Instance, T>;
+}
+
+export const $ZodCheckTemporal: core.$constructor<$ZodCheckTemporal> = /*@__PURE__*/ core.$constructor(
+  "$ZodCheckTemporal",
+  (inst, def) => {
+    $ZodCheck.init(inst, def);
+
+    inst._zod.check = (payload) => {
+      const result = def.class.compare(payload.value, def.value);
+
+      if (result === def.result) return;
+
+      if (result !== 0 && result !== 1 && result !== -1) return;
+
+      payload.issues.push({
+        expected: meaningMap[def.result],
+        received: meaningMap[result],
+        code: "invalid_temporal",
+        input: payload.value,
+        inst,
+      });
+    };
+  }
+);
+
 export type $ZodChecks =
   | $ZodCheckLessThan
   | $ZodCheckGreaterThan
@@ -1281,7 +1326,8 @@ export type $ZodChecks =
   | $ZodCheckStringFormat
   | $ZodCheckProperty
   | $ZodCheckMimeType
-  | $ZodCheckOverwrite;
+  | $ZodCheckOverwrite
+  | $ZodCheckTemporal;
 
 export type $ZodStringFormatChecks =
   | $ZodCheckRegex
