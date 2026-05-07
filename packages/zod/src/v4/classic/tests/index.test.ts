@@ -501,6 +501,18 @@ test("z.preprocess", () => {
   // expect(() => z.parse(a, Symbol("asdf"))).toThrow();
 });
 
+test("z.preprocess narrows input type from annotated arg (#5966)", () => {
+  const trimmed = z.preprocess((val: string | null | undefined) => val?.trim() ?? "", z.string());
+  expectTypeOf<z.input<typeof trimmed>>().toEqualTypeOf<string | null | undefined>();
+  expectTypeOf<z.output<typeof trimmed>>().toEqualTypeOf<string>();
+});
+
+test("z.preprocess defaults input to unknown when arg is unannotated", () => {
+  const wrapped = z.preprocess((val) => val, z.string());
+  expectTypeOf<z.input<typeof wrapped>>().toEqualTypeOf<unknown>();
+  expectTypeOf<z.output<typeof wrapped>>().toEqualTypeOf<string>();
+});
+
 // test("z.preprocess async", () => {
 //   const a = z.preprocess(async (val) => String(val), z.string());
 //   type a = z.output<typeof a>;
