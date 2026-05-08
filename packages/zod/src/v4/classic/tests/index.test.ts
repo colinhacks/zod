@@ -843,6 +843,7 @@ test("z.promise", async () => {
 test("isPlainObject", () => {
   expect(z.core.util.isPlainObject({})).toEqual(true);
   expect(z.core.util.isPlainObject(Object.create(null))).toEqual(true);
+  expect(z.core.util.isPlainObject(Object.create({}))).toEqual(false);
   expect(z.core.util.isPlainObject([])).toEqual(false);
   expect(z.core.util.isPlainObject(new Date())).toEqual(false);
   expect(z.core.util.isPlainObject(null)).toEqual(false);
@@ -857,6 +858,16 @@ test("isPlainObject", () => {
   expect(z.core.util.isPlainObject({ constructor: true })).toEqual(true);
   expect(z.core.util.isPlainObject({ constructor: {} })).toEqual(true);
   expect(z.core.util.isPlainObject({ constructor: [] })).toEqual(true);
+  expect(z.core.util.isPlainObject(new Proxy({}, {}))).toEqual(true);
+  expect(z.core.util.isPlainObject(new Proxy({ plainKey: 1 }, {}))).toEqual(true);
+  expect(z.core.util.isPlainObject(new Proxy(new Date(), {
+    get(target, _prop, _receiver) {
+      return target;
+    },
+  }))).toEqual(false)
+  function ObjectConstructor() {}
+  // @ts-expect-error to allow testing crafted objects
+  expect(z.core.util.isPlainObject(new ObjectConstructor())).toEqual(false);
 });
 
 test("shallowClone with constructor field", () => {

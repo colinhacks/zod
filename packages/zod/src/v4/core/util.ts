@@ -383,24 +383,17 @@ export const allowsEval: { value: boolean } = /* @__PURE__*/ cached(() => {
 });
 
 export function isPlainObject(o: any): o is Record<PropertyKey, unknown> {
-  if (isObject(o) === false) return false;
-
-  // modified constructor
-  const ctor = o.constructor;
-  if (ctor === undefined) return true;
-
-  if (typeof ctor !== "function") return true;
-
-  // modified prototype
-  const prot = ctor.prototype;
-  if (isObject(prot) === false) return false;
-
-  // ctor doesn't have static `isPrototypeOf`
-  if (Object.prototype.hasOwnProperty.call(prot, "isPrototypeOf") === false) {
+  if (o === null || typeof o !== "object") {
     return false;
   }
 
-  return true;
+  const proto = Object.getPrototypeOf(o) as typeof Object.prototype | null;
+  return (
+    proto === null ||
+    proto === Object.prototype ||
+    // Required to support node:vm.runInNewContext({})
+    Object.getPrototypeOf(proto) === null
+  );
 }
 
 export function shallowClone(o: any): any {
