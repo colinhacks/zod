@@ -843,7 +843,9 @@ test("z.promise", async () => {
 test("isPlainObject", () => {
   expect(z.core.util.isPlainObject({})).toEqual(true);
   expect(z.core.util.isPlainObject(Object.create(null))).toEqual(true);
+  expect(z.core.util.isPlainObject(Object.create(Object.create(null)))).toEqual(true);
   expect(z.core.util.isPlainObject(Object.create({}))).toEqual(false);
+  expect(z.core.util.isPlainObject(Object.create(Object.create({})))).toEqual(false);
   expect(z.core.util.isPlainObject([])).toEqual(false);
   expect(z.core.util.isPlainObject(new Date())).toEqual(false);
   expect(z.core.util.isPlainObject(null)).toEqual(false);
