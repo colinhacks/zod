@@ -860,11 +860,15 @@ test("isPlainObject", () => {
   expect(z.core.util.isPlainObject({ constructor: [] })).toEqual(true);
   expect(z.core.util.isPlainObject(new Proxy({}, {}))).toEqual(true);
   expect(z.core.util.isPlainObject(new Proxy({ plainKey: 1 }, {}))).toEqual(true);
-  expect(z.core.util.isPlainObject(new Proxy(new Date(), {
-    get(target, _prop, _receiver) {
-      return target;
-    },
-  }))).toEqual(false)
+  expect(
+    z.core.util.isPlainObject(
+      new Proxy(new Date(), {
+        get(target, _prop, _receiver) {
+          return target;
+        },
+      })
+    )
+  ).toEqual(false);
   function ObjectConstructor() {}
   // @ts-expect-error to allow testing crafted objects
   expect(z.core.util.isPlainObject(new ObjectConstructor())).toEqual(false);
