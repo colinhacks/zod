@@ -4077,10 +4077,6 @@ export type $ZodPipeMetadataExact<A extends SomeType, B extends SomeType> = {
   propValues: A["_zod"]["propValues"];
 };
 
-/** @deprecated Alias retained so external code that imported the pipe-only
- * name keeps compiling. Prefer `$ZodWrapperMetadataBase`. */
-export type $ZodPipeMetadataBase = $ZodWrapperMetadataBase;
-
 export interface $ZodPipeInternals<
   A extends SomeType = $ZodType,
   B extends SomeType = $ZodType,
