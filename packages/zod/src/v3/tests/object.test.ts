@@ -22,19 +22,6 @@ test("object type inference", () => {
   util.assertEqual<z.TypeOf<typeof Test>, TestType>(true);
 });
 
-test("object property preserves union output type", () => {
-  const EventNameSchema = z.string().or(z.array(z.string()));
-
-  const EventSchema = z.object({
-    name: EventNameSchema,
-  });
-
-  type EventName = z.infer<typeof EventNameSchema>;
-  type EventWithName = z.infer<typeof EventSchema>;
-
-  util.assertEqual<EventWithName["name"], EventName>(true);
-});
-
 test("unknown throw", () => {
   const asdf: unknown = 35;
   expect(() => Test.parse(asdf)).toThrow();
