@@ -22,6 +22,15 @@ test("object type inference", () => {
   util.assertEqual<z.TypeOf<typeof Test>, TestType>(true);
 });
 
+test("union property inference", () => {
+  const EventSchema = z.object({
+    name: z.string().or(z.array(z.string())),
+  });
+
+  type EventWithName = z.infer<typeof EventSchema>;
+  util.assertEqual<EventWithName["name"], string | string[]>(true);
+});
+
 test("unknown throw", () => {
   const asdf: unknown = 35;
   expect(() => Test.parse(asdf)).toThrow();
