@@ -246,6 +246,44 @@ test("inferred unioned object type with optional properties", async () => {
   >();
 });
 
+test("object property unions infer the same type as standalone unions", () => {
+  const EventNameSchema = z.string().or(z.array(z.string()));
+  const EventSchema = z.object({
+    name: z.string().or(z.array(z.string())),
+  });
+
+  type EventName = z.infer<typeof EventNameSchema>;
+  type EventNameFromObject = z.infer<typeof EventSchema>["name"];
+
+  expectTypeOf<EventNameFromObject>().toEqualTypeOf<EventName>();
+  expectTypeOf<EventNameFromObject>().toEqualTypeOf<string | string[]>();
+
+  const ValuesSchema = z.array(z.string()).or(z.record(z.string(), z.string()));
+  const ValuesObjectSchema = z.object({
+    values: z.array(z.string()).or(z.record(z.string(), z.string())),
+  });
+
+  type Values = z.infer<typeof ValuesSchema>;
+  type ValuesFromObject = z.infer<typeof ValuesObjectSchema>["values"];
+
+  expectTypeOf<ValuesFromObject>().toEqualTypeOf<Values>();
+  expectTypeOf<ValuesFromObject>().toEqualTypeOf<string[] | Record<string, string>>();
+
+  const RoleSchema = z.enum(["Administrator", "Writer", "Readonly"]);
+  const RepositoryRoleSchema = RoleSchema.or(z.record(z.string(), RoleSchema.optional()));
+  const RepositorySchema = z.object({
+    role: RepositoryRoleSchema,
+  });
+
+  type RepositoryRole = z.infer<typeof RepositoryRoleSchema>;
+  type RepositoryRoleFromObject = z.infer<typeof RepositorySchema>["role"];
+
+  expectTypeOf<RepositoryRoleFromObject>().toEqualTypeOf<RepositoryRole>();
+  expectTypeOf<RepositoryRoleFromObject>().toEqualTypeOf<
+    "Administrator" | "Writer" | "Readonly" | Record<string, "Administrator" | "Writer" | "Readonly" | undefined>
+  >();
+});
+
 test("inferred enum type", async () => {
   const Enum = z.object({ a: z.string(), b: z.string().optional() }).keyof();
 
