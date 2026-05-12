@@ -188,6 +188,18 @@ export interface ZodType<
   /** Returns a new instance that has been registered in `z.globalRegistry` with the specified metadata */
   meta(data: core.$replace<core.GlobalMeta, this>): this;
 
+  mask(value: core.output<this> | core.output<this>[] | ((seed: string) => core.output<this>)): this;
+  parseAndMask(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;
+  safeParseAndMask(
+    data: unknown,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): parse.ZodSafeParseResult<core.output<this>>;
+  parseAndMaskAsync(data: unknown, params?: core.ParseContext<core.$ZodIssue>): Promise<core.output<this>>;
+  safeParseAndMaskAsync(
+    data: unknown,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): Promise<parse.ZodSafeParseResult<core.output<this>>>;
+
   // helpers
   /** @deprecated Try safe-parsing `undefined` (this is what `isOptional` does internally):
    *
@@ -244,6 +256,11 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   inst.safeDecode = (data, params) => parse.safeDecode(inst, data, params);
   inst.safeEncodeAsync = async (data, params) => parse.safeEncodeAsync(inst, data, params);
   inst.safeDecodeAsync = async (data, params) => parse.safeDecodeAsync(inst, data, params);
+  inst.parseAndMask = (data, params) => parse.parseAndMask(inst, data, params, { callee: inst.parseAndMask });
+  inst.safeParseAndMask = (data, params) => parse.safeParseAndMask(inst, data, params);
+  inst.parseAndMaskAsync = async (data, params) =>
+    parse.parseAndMaskAsync(inst, data, params, { callee: inst.parseAndMaskAsync });
+  inst.safeParseAndMaskAsync = async (data, params) => parse.safeParseAndMaskAsync(inst, data, params);
 
   // All builder methods are placed on the internal prototype as lazy-bind
   // getters. On first access per-instance, a bound thunk is allocated and
@@ -344,6 +361,9 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
       const cl = this.clone();
       core.globalRegistry.add(cl, args[0]);
       return cl;
+    },
+    mask(maskValue) {
+      return this.check(core._mask(maskValue));
     },
     isOptional() {
       return this.safeParse(undefined).success;

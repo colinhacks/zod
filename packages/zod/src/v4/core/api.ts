@@ -1718,6 +1718,18 @@ export function meta<T>(metadata: registries.GlobalMeta): checks.$ZodCheck<T> {
   return ch;
 }
 
+// @__NO_SIDE_EFFECTS__
+export function _mask<T>(maskValue: T | T[] | ((seed: string) => T)): checks.$ZodCheck<T> {
+  const ch = new checks.$ZodCheck({ check: "mask" });
+  ch._zod.onattach = [
+    (inst) => {
+      inst._zod.bag.mask = maskValue;
+    },
+  ];
+  ch._zod.check = () => {}; // no-op check
+  return ch;
+}
+
 // export type $ZodCustomParams = CheckTypeParams<schemas.$ZodCustom, "fn">
 
 /////////    STRINGBOOL   /////////

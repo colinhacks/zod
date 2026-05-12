@@ -3172,3 +3172,113 @@ z.parse(schema, null); // => null
 ```
 </Tab>
 </Tabs>
+
+## Masking
+
+Use `.mask()` to mark schema fields for PII masking. Then use `.parseAndMask()` instead of `.parse()` to validate data *and* replace masked fields in a single step.
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+const User = z.object({
+  id: z.string(),
+  name: z.string().mask("REDACTED"),
+  email: z.string().mask((seed) => `${seed}@example.com`),
+  role: z.string().mask(["viewer", "editor"]),
+});
+
+User.parseAndMask({
+  id: "usr_1",
+  name: "Alice",
+  email: "alice@real.com",
+  role: "admin",
+});
+// => { id: "usr_1", name: "REDACTED", email: "usr_1@example.com", role: "viewer" }
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+const User = z.object({
+  id: z.string(),
+  name: z.string().check(z._mask("REDACTED")),
+  email: z.string().check(z._mask((seed) => `${seed}@example.com`)),
+  role: z.string().check(z._mask(["viewer", "editor"])),
+});
+
+const parsed = z.parseAndMask(User, {
+  id: "usr_1",
+  name: "Alice",
+  email: "alice@real.com",
+  role: "admin",
+});
+// => { id: "usr_1", name: "REDACTED", email: "usr_1@example.com", role: "viewer" }
+```
+</Tab>
+</Tabs>
+
+### Mask types
+
+The `.mask()` method accepts three kinds of values. The mask value must match the schema's output type — passing a number to a string schema is a type error.
+
+| Mask type | Example | Behavior |
+|---|---|---|
+| Single value | `z.string().mask("***")` | Always replaces with that value |
+| Array | `z.string().mask(["A", "B"])` | Deterministic pick based on a hashed seed |
+| Function | `z.string().mask((seed) => ...)` | Called with the entity seed |
+
+Masking works with any schema type:
+
+```ts
+z.string().mask("hidden");
+z.number().mask(0);
+z.boolean().mask(false);
+z.number().mask([10, 20, 30]);
+z.boolean().mask([true, false]);
+```
+
+### Seed resolution
+
+When masking objects, Zod resolves a *seed* for deterministic masking. If the object has an `id` field, its value is used as the seed. Otherwise, a composite seed is derived from masked string fields.
+
+```ts
+const schema = z.object({
+  id: z.string(),
+  name: z.string().mask(["Alice", "Bob", "Charlie"]),
+});
+
+schema.parseAndMask({ id: "usr_1", name: "Real Name" });
+schema.parseAndMask({ id: "usr_1", name: "Other Name" });
+// same id => same masked name, regardless of the real name
+```
+
+### `.parseAndMask()` / `.safeParseAndMask()`
+
+Every schema exposes parse-and-mask methods that mirror the standard parse methods:
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+schema.parseAndMask(data);          // throws on invalid input
+schema.safeParseAndMask(data);      // returns a result object
+
+await schema.parseAndMaskAsync(data);
+await schema.safeParseAndMaskAsync(data);
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+z.parseAndMask(schema, data);       // throws on invalid input
+z.safeParseAndMask(schema, data);   // returns a result object
+
+await z.parseAndMaskAsync(schema, data);
+await z.safeParseAndMaskAsync(schema, data);
+```
+</Tab>
+</Tabs>
+
+<Callout>
+  These methods first validate the input (identical to `.parse()` / `.safeParse()`), then walk the schema tree and replace masked values. If validation fails, masking is skipped — you get the same `ZodError` you'd get from `.parse()`.
+</Callout>
+
+The masking walker recursively handles objects, arrays, optionals, nullables, defaults, readonly, unions, discriminated unions, pipes, and lazy schemas. `undefined` and `null` values always pass through unmasked.
+
