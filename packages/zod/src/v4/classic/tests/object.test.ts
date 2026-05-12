@@ -20,6 +20,17 @@ test("object type inference", () => {
   expectTypeOf<z.TypeOf<typeof Test>>().toEqualTypeOf<TestType>();
 });
 
+test("object property inference preserves union schemas", () => {
+  const EventNameSchema = z.string().or(z.array(z.string()));
+  expectTypeOf<z.infer<typeof EventNameSchema>>().toEqualTypeOf<string | string[]>();
+
+  const EventSchema = z.object({
+    name: z.string().or(z.array(z.string())),
+  });
+  type Event = z.infer<typeof EventSchema>;
+  expectTypeOf<Event["name"]>().toEqualTypeOf<string | string[]>();
+});
+
 test("unknown throw", () => {
   const asdf: unknown = 35;
   expect(() => Test.parse(asdf)).toThrow();
