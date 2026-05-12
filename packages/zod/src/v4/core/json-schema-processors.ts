@@ -416,13 +416,14 @@ function makeLoose(entry: JSONSchema.JSONSchema): JSONSchema.JSONSchema {
 // Returns the original object unchanged if nothing needed to be added.
 function addSiblingPropertyPlaceholders(entry: JSONSchema.JSONSchema, allNames: Set<string>): JSONSchema.JSONSchema {
   let cloned = false;
-  if (entry.additionalProperties === false && entry.properties) {
+  if (entry.additionalProperties === false) {
+    const existing = entry.properties ?? {};
     const missing: string[] = [];
     for (const name of allNames) {
-      if (!(name in entry.properties)) missing.push(name);
+      if (!(name in existing)) missing.push(name);
     }
     if (missing.length > 0) {
-      const properties = { ...entry.properties };
+      const properties = { ...existing };
       entry = { ...entry, properties };
       cloned = true;
       for (const name of missing) {
@@ -454,7 +455,8 @@ function fixAllOfAdditionalProperties(
   json: JSONSchema.JSONSchema,
   target: string
 ): void {
-  if (target === "draft-2020-12" && allOf.every(isStrict)) {
+  const supportsUnevaluatedProperties = target !== "draft-04" && target !== "draft-07" && target !== "openapi-3.0";
+  if (supportsUnevaluatedProperties && allOf.every(isStrict)) {
     // When all entries are strict, replace per-entry additionalProperties: false with
     // unevaluatedProperties: false on the wrapper, which sees properties from all subschemas.
     for (let i = 0; i < allOf.length; i++) {
