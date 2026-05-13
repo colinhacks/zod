@@ -1,6 +1,30 @@
 import { expect, test } from "vitest";
 import * as z from "zod/v4";
 
+test("parse ignores mask", () => {
+  const schema = z.object({ a: z.string().mask("***"), b: z.number().mask(0) });
+  expect(schema.parse({ a: "real", b: 42 })).toEqual({ a: "real", b: 42 });
+});
+
+test("safeParse ignores mask", () => {
+  const schema = z.object({ a: z.string().mask("***") });
+  const r = schema.safeParse({ a: "real" });
+  expect(r.success).toBe(true);
+  if (r.success) expect(r.data.a).toBe("real");
+});
+
+test("parseAsync ignores mask", async () => {
+  const schema = z.object({ a: z.string().mask("***") });
+  expect(await schema.parseAsync({ a: "real" })).toEqual({ a: "real" });
+});
+
+test("safeParseAsync ignores mask", async () => {
+  const schema = z.object({ a: z.string().mask("***") });
+  const r = await schema.safeParseAsync({ a: "real" });
+  expect(r.success).toBe(true);
+  if (r.success) expect(r.data.a).toBe("real");
+});
+
 test("static string mask", () => {
   const schema = z.object({ a: z.string().mask("***") });
   expect(schema.parseAndMask({ a: "asdf" })).toEqual({ a: "***" });
