@@ -3238,7 +3238,7 @@ z.boolean().mask([true, false]);
 
 ### Seed resolution
 
-When masking objects, Zod resolves a *seed* for deterministic masking. If the object has an `id` field, its value is used as the seed. Otherwise, a composite seed is derived from masked string fields.
+When masking objects, Zod resolves a *seed* for deterministic masking. If the object has an `id` field (of type `string`, `number`, or `bigint`), its value is used as the seed. Otherwise, a composite seed is derived from masked string fields.
 
 ```ts
 const schema = z.object({
@@ -3250,6 +3250,19 @@ schema.parseAndMask({ id: "usr_1", name: "Real Name" });
 schema.parseAndMask({ id: "usr_1", name: "Other Name" });
 // same id => same masked name, regardless of the real name
 ```
+
+For schemas using other key patterns (e.g. `_id`, `userId`), use the function mask form for explicit seed control:
+
+```ts
+const schema = z.object({
+  _id: z.string(),
+  name: z.string().mask((seed) => `user-${seed}`),
+});
+```
+
+<Callout>
+  The deterministic pick algorithm for array masks is stable within a major version. Test fixtures built against `mask([...])` output will not break across patch or minor releases.
+</Callout>
 
 ### `.parseAndMask()` / `.safeParseAndMask()`
 
@@ -3280,5 +3293,5 @@ await z.safeParseAndMaskAsync(schema, data);
   These methods first validate the input (identical to `.parse()` / `.safeParse()`), then walk the schema tree and replace masked values. If validation fails, masking is skipped — you get the same `ZodError` you'd get from `.parse()`.
 </Callout>
 
-The masking walker recursively handles objects, arrays, optionals, nullables, defaults, readonly, unions, discriminated unions, pipes, and lazy schemas. `undefined` and `null` values always pass through unmasked.
+The masking walker recursively handles objects, arrays, records, tuples, maps, sets, optionals, nullables, defaults, readonly, unions, discriminated unions, pipes, and lazy schemas. `undefined` and `null` values always pass through unmasked.
 

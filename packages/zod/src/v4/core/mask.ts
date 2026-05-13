@@ -11,7 +11,8 @@ function resolveSeed(
   data: Record<string, unknown>,
   parentSeed: string
 ): string {
-  if (typeof data.id === "string" && data.id) return data.id;
+  const id = data.id;
+  if (id != null && (typeof id === "string" || typeof id === "number" || typeof id === "bigint")) return String(id);
   let composite = "";
   for (const key in shape) {
     if (shape[key]!._zod.bag.mask && typeof data[key] === "string") composite += data[key];

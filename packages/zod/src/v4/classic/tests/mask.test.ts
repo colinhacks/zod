@@ -39,6 +39,14 @@ test("seed from id field", () => {
   expect(r.id).toBe("id1");
 });
 
+test("seed from numeric id field", () => {
+  const schema = z.object({
+    id: z.number(),
+    s: z.string().mask((seed) => `s-${seed}`),
+  });
+  expect(schema.parseAndMask({ id: 42, s: "hidden" }).s).toBe("s-42");
+});
+
 test("composite seed when no id", () => {
   const schema = z.object({
     a: z.string().mask(["X", "Y"]),
