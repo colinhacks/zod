@@ -152,6 +152,11 @@ test("pipe", () => {
   expect(schema.parseAndMask({ a: "asdf" })).toEqual({ a: "M" });
 });
 
+test("success preserves boolean", () => {
+  const schema = z.object({ ok: z.success(z.string().mask("M")) });
+  expect(schema.parseAndMask({ ok: "valid" })).toEqual({ ok: true });
+});
+
 test("unmasked fields pass through", () => {
   const schema = z.object({ a: z.string(), b: z.string().mask("R") });
   const r = schema.parseAndMask({ a: "hello", b: "hidden" });

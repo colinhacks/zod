@@ -38,7 +38,6 @@ function hasMask(schema: schemas.$ZodType, seen: WeakSet<schemas.$ZodType> = new
     case "readonly":
     case "catch":
     case "nonoptional":
-    case "success":
     case "prefault":
       return hasMask(def.innerType, seen);
     case "pipe":
@@ -93,7 +92,6 @@ export function applyMask<T>(schema: schemas.$ZodType, data: T, seed: string, ke
     case "readonly":
     case "catch":
     case "nonoptional":
-    case "success":
     case "prefault":
       return applyMask(def.innerType, data, seed, key, inp);
     case "pipe":
@@ -162,7 +160,6 @@ export async function applyMaskAsync<T>(
     case "readonly":
     case "catch":
     case "nonoptional":
-    case "success":
     case "prefault":
       return applyMaskAsync(def.innerType, data, seed, key, inp);
     case "pipe":
