@@ -3256,7 +3256,7 @@ schema.parseAndMask({ id: "usr_1", name: "Other Name" });
 
 
 <Callout>
-  The deterministic pick algorithm for array masks is stable within a major version. Test fixtures built against `mask([...])` output will not break across patch or minor releases.
+  The deterministic pick algorithm for array masks is stable within a major version — exact picks for known seeds are pinned by fixture tests. Test fixtures built against `mask([...])` output will not break across patch or minor releases.
 </Callout>
 
 ### `.parseAndMask()` / `.safeParseAndMask()`

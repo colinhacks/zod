@@ -1,5 +1,6 @@
 import type * as schemas from "./schemas.js";
 
+// DJB2 hash — frozen; exact picks from array masks are pinned in mask.test.ts.
 function hash(str: string): number {
   let h = 5381;
   for (let i = 0; i < str.length; i++) h = (h * 33) ^ str.charCodeAt(i);

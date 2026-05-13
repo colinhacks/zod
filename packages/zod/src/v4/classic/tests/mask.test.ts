@@ -409,3 +409,23 @@ test("mask type safety", () => {
   // @ts-expect-error - string array not assignable to number mask
   z.number().mask(["a", "b"]);
 });
+
+// Pinned picks — these lock the DJB2 hash + seed + key salting algorithm.
+// Changing hash() or the salt format breaks these and the documented stability promise.
+test("pinned string array mask picks", () => {
+  const opts = ["Alice", "Bob", "Charlie", "Diana", "Eve"];
+  const schema = z.object({ id: z.string(), name: z.string().mask(opts) });
+  expect(schema.parseAndMask({ id: "usr_1", name: "ignored" }).name).toBe("Charlie");
+  expect(schema.parseAndMask({ id: "usr_2", name: "ignored" }).name).toBe("Charlie");
+  expect(schema.parseAndMask({ id: "usr_3", name: "ignored" }).name).toBe("Bob");
+  expect(schema.parseAndMask({ id: "42", name: "ignored" }).name).toBe("Alice");
+  expect(schema.parseAndMask({ id: "abc", name: "ignored" }).name).toBe("Charlie");
+});
+
+test("pinned number array mask picks", () => {
+  const opts = [10, 20, 30];
+  const schema = z.object({ id: z.string(), n: z.number().mask(opts) });
+  expect(schema.parseAndMask({ id: "usr_1", n: 999 }).n).toBe(10);
+  expect(schema.parseAndMask({ id: "usr_2", n: 999 }).n).toBe(10);
+  expect(schema.parseAndMask({ id: "42", n: 999 }).n).toBe(20);
+});
