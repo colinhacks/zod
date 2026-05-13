@@ -61,6 +61,28 @@ function hasMask(schema: schemas.$ZodType, seen: WeakSet<schemas.$ZodType> = new
   }
 }
 
+function inputSchema(schema: schemas.$ZodType): schemas.$ZodType {
+  const def: any = schema._zod.def;
+  switch (def.type) {
+    case "pipe":
+      return inputSchema(def.in);
+    case "transform":
+      return schema;
+    case "optional":
+    case "nullable":
+    case "default":
+    case "readonly":
+    case "catch":
+    case "nonoptional":
+    case "prefault":
+      return inputSchema(def.innerType);
+    case "lazy":
+      return inputSchema(def.getter());
+    default:
+      return schema;
+  }
+}
+
 export function applyMask<T>(schema: schemas.$ZodType, data: T, seed: string, key = "", input?: unknown): T {
   if (data == null) return data;
 
@@ -148,7 +170,8 @@ export function applyMask<T>(schema: schemas.$ZodType, data: T, seed: string, ke
       return applyMask(def.in, data, seed, key, inp);
     case "union": {
       for (const option of def.options as schemas.$ZodType[]) {
-        const result = option._zod.run({ value: inp, issues: [] }, { async: false });
+        const base = inputSchema(option);
+        const result = base._zod.run({ value: inp, issues: [] }, { async: false });
         if (!(result instanceof Promise) && result.issues.length === 0) return applyMask(option, data, seed, key, inp);
       }
       return data;
@@ -257,9 +280,10 @@ export async function applyMaskAsync<T>(
       return applyMaskAsync(def.in, data, seed, key, inp);
     case "union": {
       for (const option of def.options as schemas.$ZodType[]) {
-        let result = option._zod.run({ value: inp, issues: [] }, { async: true });
-        if (result instanceof Promise) result = await result;
-        if (result.issues.length === 0) return applyMaskAsync(option, data, seed, key, inp);
+        const base = inputSchema(option);
+        const result = base._zod.run({ value: inp, issues: [] }, { async: false });
+        if (!(result instanceof Promise) && result.issues.length === 0)
+          return applyMaskAsync(option, data, seed, key, inp);
       }
       return data;
     }
