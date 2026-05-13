@@ -256,11 +256,6 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   inst.safeDecode = (data, params) => parse.safeDecode(inst, data, params);
   inst.safeEncodeAsync = async (data, params) => parse.safeEncodeAsync(inst, data, params);
   inst.safeDecodeAsync = async (data, params) => parse.safeDecodeAsync(inst, data, params);
-  inst.parseAndMask = (data, params) => parse.parseAndMask(inst, data, params, { callee: inst.parseAndMask });
-  inst.safeParseAndMask = (data, params) => parse.safeParseAndMask(inst, data, params);
-  inst.parseAndMaskAsync = async (data, params) =>
-    parse.parseAndMaskAsync(inst, data, params, { callee: inst.parseAndMaskAsync });
-  inst.safeParseAndMaskAsync = async (data, params) => parse.safeParseAndMaskAsync(inst, data, params);
 
   // All builder methods are placed on the internal prototype as lazy-bind
   // getters. On first access per-instance, a bound thunk is allocated and
@@ -364,6 +359,18 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
     },
     mask(maskValue) {
       return this.check(core._mask(maskValue));
+    },
+    parseAndMask(data, params) {
+      return parse.parseAndMask(this, data, params, { callee: this.parseAndMask });
+    },
+    safeParseAndMask(data, params) {
+      return parse.safeParseAndMask(this, data, params);
+    },
+    async parseAndMaskAsync(data, params) {
+      return parse.parseAndMaskAsync(this, data, params, { callee: this.parseAndMaskAsync });
+    },
+    async safeParseAndMaskAsync(data, params) {
+      return parse.safeParseAndMaskAsync(this, data, params);
     },
     isOptional() {
       return this.safeParse(undefined).success;
