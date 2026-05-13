@@ -236,6 +236,22 @@ test("safeParseAndMaskAsync error", async () => {
   expect(r.success).toBe(false);
 });
 
+test("pipe with transform and nested union masks correctly", () => {
+  const schema = z.object({
+    v: z
+      .string()
+      .transform((s) => JSON.parse(s) as { k: string; s: string })
+      .pipe(
+        z.union([
+          z.object({ k: z.literal("a"), s: z.string().mask("M") }),
+          z.object({ k: z.literal("b"), s: z.string() }),
+        ])
+      ),
+  });
+  expect(schema.parseAndMask({ v: '{"k":"a","s":"secret"}' }).v.s).toBe("M");
+  expect(schema.parseAndMask({ v: '{"k":"b","s":"visible"}' }).v.s).toBe("visible");
+});
+
 test("async transform with mask", async () => {
   const schema = z.object({
     a: z

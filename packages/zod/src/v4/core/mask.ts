@@ -144,7 +144,7 @@ export function applyMask<T>(schema: schemas.$ZodType, data: T, seed: string, ke
     case "prefault":
       return applyMask(def.innerType, data, seed, key, inp);
     case "pipe":
-      if (hasMask(def.out)) return applyMask(def.out, data, seed, key, inp);
+      if (hasMask(def.out)) return applyMask(def.out, data, seed, key, data);
       return applyMask(def.in, data, seed, key, inp);
     case "union": {
       for (const option of def.options as schemas.$ZodType[]) {
@@ -253,7 +253,7 @@ export async function applyMaskAsync<T>(
     case "prefault":
       return applyMaskAsync(def.innerType, data, seed, key, inp);
     case "pipe":
-      if (hasMask(def.out)) return applyMaskAsync(def.out, data, seed, key, inp);
+      if (hasMask(def.out)) return applyMaskAsync(def.out, data, seed, key, data);
       return applyMaskAsync(def.in, data, seed, key, inp);
     case "union": {
       for (const option of def.options as schemas.$ZodType[]) {
