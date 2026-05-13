@@ -247,6 +247,14 @@ test("deeply nested", () => {
   expect(schema.parseAndMask({ l1: { l2: { l3: { s: "asdf" } } } }).l1.l2.l3.s).toBe("D");
 });
 
+test("recursive lazy schema does not blow stack", () => {
+  type Tree = { v: string; children: Tree[] };
+  const Tree: z.ZodType<Tree> = z.lazy(() => z.object({ v: z.string(), children: z.array(Tree) }));
+  const schema = z.object({ tree: Tree.pipe(z.any()) });
+  const data = { tree: { v: "root", children: [{ v: "leaf", children: [] }] } };
+  expect(schema.parseAndMask(data)).toEqual(data);
+});
+
 test("number single value mask", () => {
   const schema = z.object({ n: z.number().mask(0) });
   expect(schema.parseAndMask({ n: 1234 })).toEqual({ n: 0 });

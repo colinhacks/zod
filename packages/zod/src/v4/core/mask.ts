@@ -19,17 +19,19 @@ function resolveSeed(
   return composite || parentSeed;
 }
 
-function hasMask(schema: schemas.$ZodType): boolean {
+function hasMask(schema: schemas.$ZodType, seen: WeakSet<schemas.$ZodType> = new WeakSet()): boolean {
+  if (seen.has(schema)) return false;
+  seen.add(schema);
   if (schema._zod.bag.mask !== undefined) return true;
   const def: any = schema._zod.def;
   switch (def.type) {
     case "object":
       for (const k in def.shape) {
-        if (hasMask(def.shape[k]!)) return true;
+        if (hasMask(def.shape[k]!, seen)) return true;
       }
       return false;
     case "array":
-      return hasMask(def.element);
+      return hasMask(def.element, seen);
     case "optional":
     case "nullable":
     case "default":
@@ -38,13 +40,13 @@ function hasMask(schema: schemas.$ZodType): boolean {
     case "nonoptional":
     case "success":
     case "prefault":
-      return hasMask(def.innerType);
+      return hasMask(def.innerType, seen);
     case "pipe":
-      return hasMask(def.in) || hasMask(def.out);
+      return hasMask(def.in, seen) || hasMask(def.out, seen);
     case "union":
-      return def.options.some((o: schemas.$ZodType) => hasMask(o));
+      return def.options.some((o: schemas.$ZodType) => hasMask(o, seen));
     case "lazy":
-      return hasMask(def.getter());
+      return hasMask(def.getter(), seen);
     default:
       return false;
   }
