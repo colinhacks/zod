@@ -286,9 +286,9 @@ export async function applyMaskAsync<T>(
     case "union": {
       for (const option of def.options as schemas.$ZodType[]) {
         const base = inputSchema(option);
-        const result = base._zod.run({ value: inp, issues: [] }, { async: false });
-        if (!(result instanceof Promise) && result.issues.length === 0)
-          return applyMaskAsync(option, data, seed, key, inp);
+        let result = base._zod.run({ value: inp, issues: [] }, { async: true });
+        if (result instanceof Promise) result = await result;
+        if (result.issues.length === 0) return applyMaskAsync(option, data, seed, key, inp);
       }
       return data;
     }

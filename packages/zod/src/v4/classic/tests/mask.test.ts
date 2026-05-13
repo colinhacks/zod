@@ -338,6 +338,20 @@ test("async union masking does not re-fire transforms", async () => {
   expect(count).toBe(1);
 });
 
+test("async union with async refine on input schema", async () => {
+  const schema = z.object({
+    v: z.union([
+      z
+        .string()
+        .refine(async () => true)
+        .mask("M"),
+      z.number(),
+    ]),
+  });
+  expect((await schema.parseAndMaskAsync({ v: "hello" })).v).toBe("M");
+  expect((await schema.parseAndMaskAsync({ v: 42 })).v).toBe(42);
+});
+
 test("z.parseAndMask function form", () => {
   const schema = z.object({ a: z.string().mask("M") });
   expect(z.parseAndMask(schema, { a: "asdf" })).toEqual({ a: "M" });
