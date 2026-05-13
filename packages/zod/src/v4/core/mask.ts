@@ -151,9 +151,11 @@ export function applyMask<T>(schema: schemas.$ZodType, data: T, seed: string, ke
     }
     case "set": {
       if (!(data instanceof Set)) return data;
+      const inpIter = inp instanceof Set ? inp.values() : data.values();
       const result = new Set();
       for (const v of data) {
-        result.add(v != null ? applyMask(def.valueType, v, seed, key) : v);
+        const iv = inpIter.next().value;
+        result.add(v != null ? applyMask(def.valueType, v, seed, key, iv) : v);
       }
       return result as T;
     }
@@ -261,9 +263,11 @@ export async function applyMaskAsync<T>(
     }
     case "set": {
       if (!(data instanceof Set)) return data;
+      const inpIter = inp instanceof Set ? inp.values() : data.values();
       const result = new Set();
       for (const v of data) {
-        result.add(v != null ? await applyMaskAsync(def.valueType, v, seed, key) : v);
+        const iv = inpIter.next().value;
+        result.add(v != null ? await applyMaskAsync(def.valueType, v, seed, key, iv) : v);
       }
       return result as T;
     }
