@@ -32,6 +32,15 @@ function hasMask(schema: schemas.$ZodType, seen: WeakSet<schemas.$ZodType> = new
       return false;
     case "array":
       return hasMask(def.element, seen);
+    case "record":
+      return hasMask(def.valueType, seen);
+    case "tuple":
+      if (def.items.some((item: schemas.$ZodType) => hasMask(item, seen))) return true;
+      return def.rest ? hasMask(def.rest, seen) : false;
+    case "map":
+      return hasMask(def.valueType, seen);
+    case "set":
+      return hasMask(def.valueType, seen);
     case "optional":
     case "nullable":
     case "default":
@@ -85,6 +94,45 @@ export function applyMask<T>(schema: schemas.$ZodType, data: T, seed: string, ke
       if (!Array.isArray(data)) return data;
       const inputArr = Array.isArray(inp) ? inp : data;
       return data.map((item, i) => applyMask(def.element, item, seed, key, inputArr[i])) as T;
+    }
+    case "record": {
+      if (typeof data !== "object" || data === null || Array.isArray(data)) return data;
+      const rec = data as Record<string, unknown>;
+      const inpRec = (typeof inp === "object" && inp !== null && !Array.isArray(inp) ? inp : rec) as Record<
+        string,
+        unknown
+      >;
+      const result: Record<string, unknown> = {};
+      for (const k in rec) {
+        result[k] = rec[k] != null ? applyMask(def.valueType, rec[k], seed, k, inpRec[k]) : rec[k];
+      }
+      return result as T;
+    }
+    case "tuple": {
+      if (!Array.isArray(data)) return data;
+      const inputArr = Array.isArray(inp) ? inp : data;
+      const items = def.items as schemas.$ZodType[];
+      return data.map((item, i) => {
+        const schema = i < items.length ? items[i]! : def.rest;
+        return schema && item != null ? applyMask(schema, item, seed, key, inputArr[i]) : item;
+      }) as T;
+    }
+    case "map": {
+      if (!(data instanceof Map)) return data;
+      const inpMap = inp instanceof Map ? inp : data;
+      const result = new Map();
+      for (const [k, v] of data) {
+        result.set(k, v != null ? applyMask(def.valueType, v, seed, String(k), inpMap.get(k)) : v);
+      }
+      return result as T;
+    }
+    case "set": {
+      if (!(data instanceof Set)) return data;
+      const result = new Set();
+      for (const v of data) {
+        result.add(v != null ? applyMask(def.valueType, v, seed, key) : v);
+      }
+      return result as T;
     }
     case "optional":
     case "nullable":
@@ -153,6 +201,47 @@ export async function applyMaskAsync<T>(
       return Promise.all(
         data.map((item, i) => applyMaskAsync(def.element, item, seed, key, inputArr[i]))
       ) as Promise<T>;
+    }
+    case "record": {
+      if (typeof data !== "object" || data === null || Array.isArray(data)) return data;
+      const rec = data as Record<string, unknown>;
+      const inpRec = (typeof inp === "object" && inp !== null && !Array.isArray(inp) ? inp : rec) as Record<
+        string,
+        unknown
+      >;
+      const result: Record<string, unknown> = {};
+      for (const k in rec) {
+        result[k] = rec[k] != null ? await applyMaskAsync(def.valueType, rec[k], seed, k, inpRec[k]) : rec[k];
+      }
+      return result as T;
+    }
+    case "tuple": {
+      if (!Array.isArray(data)) return data;
+      const inputArr = Array.isArray(inp) ? inp : data;
+      const items = def.items as schemas.$ZodType[];
+      return Promise.all(
+        data.map((item, i) => {
+          const schema = i < items.length ? items[i]! : def.rest;
+          return schema && item != null ? applyMaskAsync(schema, item, seed, key, inputArr[i]) : item;
+        })
+      ) as Promise<T>;
+    }
+    case "map": {
+      if (!(data instanceof Map)) return data;
+      const inpMap = inp instanceof Map ? inp : data;
+      const result = new Map();
+      for (const [k, v] of data) {
+        result.set(k, v != null ? await applyMaskAsync(def.valueType, v, seed, String(k), inpMap.get(k)) : v);
+      }
+      return result as T;
+    }
+    case "set": {
+      if (!(data instanceof Set)) return data;
+      const result = new Set();
+      for (const v of data) {
+        result.add(v != null ? await applyMaskAsync(def.valueType, v, seed, key) : v);
+      }
+      return result as T;
     }
     case "optional":
     case "nullable":

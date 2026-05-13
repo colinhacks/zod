@@ -157,6 +157,28 @@ test("success preserves boolean", () => {
   expect(schema.parseAndMask({ ok: "valid" })).toEqual({ ok: true });
 });
 
+test("record masks values", () => {
+  const schema = z.object({ r: z.record(z.string(), z.string().mask("X")) });
+  expect(schema.parseAndMask({ r: { a: "1", b: "2" } })).toEqual({ r: { a: "X", b: "X" } });
+});
+
+test("tuple masks items", () => {
+  const schema = z.object({ t: z.tuple([z.string().mask("A"), z.number().mask(0)]) });
+  expect(schema.parseAndMask({ t: ["hello", 42] })).toEqual({ t: ["A", 0] });
+});
+
+test("map masks values", () => {
+  const schema = z.object({ m: z.map(z.string(), z.string().mask("X")) });
+  const r = schema.parseAndMask({ m: new Map([["a", "1"]]) });
+  expect(r.m.get("a")).toBe("X");
+});
+
+test("set masks values", () => {
+  const schema = z.object({ s: z.set(z.string().mask("X")) });
+  const r = schema.parseAndMask({ s: new Set(["a", "b"]) });
+  expect(r.s).toEqual(new Set(["X"]));
+});
+
 test("unmasked fields pass through", () => {
   const schema = z.object({ a: z.string(), b: z.string().mask("R") });
   const r = schema.parseAndMask({ a: "hello", b: "hidden" });
