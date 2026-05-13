@@ -3250,15 +3250,10 @@ schema.parseAndMask({ id: "usr_1", name: "Real Name" });
 schema.parseAndMask({ id: "usr_1", name: "Other Name" });
 // same id => same masked name, regardless of the real name
 ```
+<Callout>
+  Only a field named exactly `id` (of type `string`, `number`, or `bigint`) is used as the seed. Other key patterns like `_id` or `userId` are not recognized — the seed will fall back to a composite of masked string field values.
+</Callout>
 
-For schemas using other key patterns (e.g. `_id`, `userId`), use the function mask form for explicit seed control:
-
-```ts
-const schema = z.object({
-  _id: z.string(),
-  name: z.string().mask((seed) => `user-${seed}`),
-});
-```
 
 <Callout>
   The deterministic pick algorithm for array masks is stable within a major version. Test fixtures built against `mask([...])` output will not break across patch or minor releases.
