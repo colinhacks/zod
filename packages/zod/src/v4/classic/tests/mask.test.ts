@@ -123,6 +123,20 @@ test("union", () => {
   expect(schema.parseAndMask({ v: { t: "b", s: "bar" } }).v.s).toBe("Y");
 });
 
+test("union with transform matches original branch", () => {
+  const schema = z.object({
+    v: z.union([
+      z
+        .string()
+        .mask("MASKED")
+        .transform((s) => Number(s)),
+      z.number().mask(0),
+    ]),
+  });
+  expect(schema.parseAndMask({ v: "42" }).v).toBe("MASKED");
+  expect(schema.parseAndMask({ v: 99 }).v).toBe(0);
+});
+
 test("discriminated union", () => {
   const schema = z.object({
     v: z.discriminatedUnion("t", [

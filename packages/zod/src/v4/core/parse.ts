@@ -104,7 +104,7 @@ export type $ParseAndMask = <T extends schemas.$ZodType>(
 
 export const _parseAndMask: (_Err: $ZodErrorClass) => $ParseAndMask = (_Err) => (schema, value, _ctx, _params) => {
   const parsed = _parse(_Err)(schema, value, _ctx, _params);
-  return applyMask(schema, parsed, "");
+  return applyMask(schema, parsed, "", "", value);
 };
 
 export const parseAndMask: $ParseAndMask = /* @__PURE__*/ _parseAndMask(errors.$ZodRealError);
@@ -119,7 +119,7 @@ export type $ParseAndMaskAsync = <T extends schemas.$ZodType>(
 export const _parseAndMaskAsync: (_Err: $ZodErrorClass) => $ParseAndMaskAsync =
   (_Err) => async (schema, value, _ctx, _params) => {
     const parsed = await _parseAsync(_Err)(schema, value, _ctx, _params);
-    return applyMask(schema, parsed, "");
+    return applyMask(schema, parsed, "", "", value);
   };
 
 export const parseAndMaskAsync: $ParseAndMaskAsync = /* @__PURE__*/ _parseAndMaskAsync(errors.$ZodRealError);
@@ -133,7 +133,7 @@ export type $SafeParseAndMask = <T extends schemas.$ZodType>(
 export const _safeParseAndMask: (_Err: $ZodErrorClass) => $SafeParseAndMask = (_Err) => (schema, value, _ctx) => {
   const result = _safeParse(_Err)(schema, value, _ctx);
   if (!result.success) return result;
-  return { success: true, data: applyMask(schema, result.data, "") } as any;
+  return { success: true, data: applyMask(schema, result.data, "", "", value) } as any;
 };
 
 export const safeParseAndMask: $SafeParseAndMask = /* @__PURE__*/ _safeParseAndMask(errors.$ZodRealError);
@@ -148,7 +148,7 @@ export const _safeParseAndMaskAsync: (_Err: $ZodErrorClass) => $SafeParseAndMask
   (_Err) => async (schema, value, _ctx) => {
     const result = await _safeParseAsync(_Err)(schema, value, _ctx);
     if (!result.success) return result;
-    return { success: true, data: applyMask(schema, result.data, "") } as any;
+    return { success: true, data: applyMask(schema, result.data, "", "", value) } as any;
   };
 
 export const safeParseAndMaskAsync: $SafeParseAndMaskAsync = /* @__PURE__*/ _safeParseAndMaskAsync(
