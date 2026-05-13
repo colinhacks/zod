@@ -211,6 +211,20 @@ test("async transform with mask", async () => {
   expect(await schema.parseAndMaskAsync({ a: "  asdf  " })).toEqual({ a: "M" });
 });
 
+test("async union branch masks correctly", async () => {
+  const schema = z.object({
+    v: z.union([
+      z
+        .string()
+        .mask("MASKED")
+        .transform(async (s) => s.toUpperCase()),
+      z.number(),
+    ]),
+  });
+  expect((await schema.parseAndMaskAsync({ v: "hello" })).v).toBe("MASKED");
+  expect((await schema.parseAndMaskAsync({ v: 42 })).v).toBe(42);
+});
+
 test("z.parseAndMask function form", () => {
   const schema = z.object({ a: z.string().mask("M") });
   expect(z.parseAndMask(schema, { a: "asdf" })).toEqual({ a: "M" });
