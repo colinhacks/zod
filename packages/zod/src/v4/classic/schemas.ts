@@ -145,6 +145,16 @@ export interface ZodType<
     data: core.input<this>,
     params?: core.ParseContext<core.$ZodIssue>
   ): Promise<parse.ZodSafeParseResult<core.output<this>>>;
+  validateOutput(data: core.output<this>, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;
+  validateOutputAsync(data: core.output<this>, params?: core.ParseContext<core.$ZodIssue>): Promise<core.output<this>>;
+  safeValidateOutput(
+    data: core.output<this>,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): parse.ZodSafeParseResult<core.output<this>>;
+  safeValidateOutputAsync(
+    data: core.output<this>,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): Promise<parse.ZodSafeParseResult<core.output<this>>>;
 
   // refinements
   refine<Ch extends (arg: core.output<this>) => unknown | Promise<unknown>>(
@@ -244,6 +254,10 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   inst.safeDecode = (data, params) => parse.safeDecode(inst, data, params);
   inst.safeEncodeAsync = async (data, params) => parse.safeEncodeAsync(inst, data, params);
   inst.safeDecodeAsync = async (data, params) => parse.safeDecodeAsync(inst, data, params);
+  inst.validateOutput = (data, params) => parse.validateOutput(inst, data, params);
+  inst.validateOutputAsync = async (data, params) => parse.validateOutputAsync(inst, data, params);
+  inst.safeValidateOutput = (data, params) => parse.safeValidateOutput(inst, data, params);
+  inst.safeValidateOutputAsync = async (data, params) => parse.safeValidateOutputAsync(inst, data, params);
 
   // All builder methods are placed on the internal prototype as lazy-bind
   // getters. On first access per-instance, a bound thunk is allocated and

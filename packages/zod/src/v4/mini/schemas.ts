@@ -34,6 +34,16 @@ export interface ZodMiniType<
     data: unknown,
     params?: core.ParseContext<core.$ZodIssue>
   ): Promise<util.SafeParseResult<core.output<this>>>;
+  validateOutput(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;
+  safeValidateOutput(
+    data: unknown,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): util.SafeParseResult<core.output<this>>;
+  validateOutputAsync(data: unknown, params?: core.ParseContext<core.$ZodIssue>): Promise<core.output<this>>;
+  safeValidateOutputAsync(
+    data: unknown,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): Promise<util.SafeParseResult<core.output<this>>>;
   apply<T>(fn: (schema: this) => T): T;
 }
 
@@ -53,6 +63,10 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
     inst.safeParse = (data, params) => parse.safeParse(inst, data, params);
     inst.parseAsync = async (data, params) => parse.parseAsync(inst, data, params, { callee: inst.parseAsync });
     inst.safeParseAsync = async (data, params) => parse.safeParseAsync(inst, data, params);
+    inst.validateOutput = (data, params) => parse.validateOutput(inst, data, params);
+    inst.safeValidateOutput = (data, params) => parse.safeValidateOutput(inst, data, params);
+    inst.validateOutputAsync = async (data, params) => parse.validateOutputAsync(inst, data, params);
+    inst.safeValidateOutputAsync = async (data, params) => parse.safeValidateOutputAsync(inst, data, params);
     inst.check = (...checks) => {
       return inst.clone(
         {
