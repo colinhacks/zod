@@ -2127,6 +2127,31 @@ const myString = z.string().check(
 </Tab>
 </Tabs>
 
+The `error` option also accepts a **function** for dynamic error messages. The function receives the raw issue object, including `iss.input` (the value that failed validation):
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+const myString = z.string().refine(
+  (val) => val.startsWith("hello"),
+  {
+    error: (iss) => `Expected greeting, got "${iss.input}"`,
+  }
+);
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+const myString = z.string().check(
+  z.refine(
+    (val) => val.startsWith("hello"),
+    { error: (iss) => `Expected greeting, got "${iss.input}"` }
+  )
+);
+```
+</Tab>
+</Tabs>
+
 #### `abort` 
 
 By default, validation issues from checks are considered *continuable*; that is, Zod will execute *all* checks in sequence, even if one of them causes a validation error. This is usually desirable, as it means Zod can surface as many errors as possible in one go.
