@@ -68,7 +68,7 @@ const error: () => errors.$ZodErrorMap = () => {
     map: "carte",
     set: "ensemble",
     file: "fichier",
-    nonoptional: "non-optionnel",
+    nonoptional: "non optionnel",
     nan: "NaN",
     function: "fonction",
   };
