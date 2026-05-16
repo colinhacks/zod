@@ -715,3 +715,16 @@ describe("__proto__ in object catchall paths", () => {
     expect(result.success).toBe(true);
   });
 });
+
+test("object property union inference matches standalone union", () => {
+  const EventNameSchema = z.string().or(z.array(z.string()));
+  type EventName = z.infer<typeof EventNameSchema>;
+
+  const EventSchema = z.object({
+    name: z.string().or(z.array(z.string())),
+  });
+  type EventWithName = z.infer<typeof EventSchema>;
+
+  expectTypeOf<EventWithName["name"]>().toEqualTypeOf<EventName>();
+  expectTypeOf<EventWithName["name"]>().toEqualTypeOf<string | string[]>();
+});
