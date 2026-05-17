@@ -106,7 +106,7 @@ function generateChecks(doc: Doc, ctx: CompileContext, schema: SomeType, accesso
         generateLessThanCheck(doc, def, currentAccessor);
         break;
       case "multiple_of":
-        generateMultipleOfCheck(doc, def, currentAccessor);
+        generateMultipleOfCheck(doc, ctx, def, currentAccessor);
         break;
       case "number_format":
         generateNumberFormatCheck(doc, def, currentAccessor);
@@ -179,19 +179,21 @@ function generateLessThanCheck(doc: Doc, def: checks.$ZodCheckLessThanDef, acces
   }
 }
 
-function generateMultipleOfCheck(doc: Doc, def: checks.$ZodCheckMultipleOfDef, accessor: string): void {
+function generateMultipleOfCheck(
+  doc: Doc,
+  ctx: CompileContext,
+  def: checks.$ZodCheckMultipleOfDef,
+  accessor: string
+): void {
   if (typeof def.value === "bigint") {
     doc.write(`if (${accessor} % ${def.value}n !== 0n) return INVALID;`);
   } else {
-    // Mirror util.floatSafeRemainder: ratio-based comparison with a relative
-    // epsilon. Fixes false negatives on scientific-notation steps like 1e-7.
-    doc.write(`{`);
-    doc.indented((d) => {
-      d.write(`const _r = ${accessor} / ${def.value};`);
-      d.write(`const _rr = Math.round(_r);`);
-      d.write(`if (Math.abs(_r - _rr) >= Number.EPSILON * Math.max(Math.abs(_r), 1)) return INVALID;`);
-    });
-    doc.write(`}`);
+    // Float `%` has well-known precision issues for sub-integer steps
+    // (`1.5 % 0.1`, `2.5e-7 % 1e-7`). Defer to util.floatSafeRemainder so the
+    // exact tolerance logic stays in one place — single function call is fine
+    // since `multipleOf` runs at most once per number.
+    const remainder = addConstant(ctx, util.floatSafeRemainder);
+    doc.write(`if (${remainder}(${accessor}, ${def.value}) !== 0) return INVALID;`);
   }
 }
 
