@@ -40,62 +40,62 @@ function justReturn(input: Record<string, unknown>) {
 // Build object literal all at once
 function buildLiteral(input: Record<string, unknown>) {
   return {
-    a: input["a"],
-    b: input["b"],
-    c: input["c"],
-    d: input["d"],
-    e: input["e"],
-    f: input["f"],
-    g: input["g"],
-    h: input["h"],
-    i: input["i"],
-    j: input["j"],
-    k: input["k"],
-    l: input["l"],
-    m: input["m"],
-    n: input["n"],
-    o: input["o"],
-    p: input["p"],
-    q: input["q"],
-    r: input["r"],
-    s: input["s"],
-    t: input["t"],
-    u: input["u"],
-    v: input["v"],
-    w: input["w"],
-    x: input["x"],
-    y: input["y"],
+    a: input.a,
+    b: input.b,
+    c: input.c,
+    d: input.d,
+    e: input.e,
+    f: input.f,
+    g: input.g,
+    h: input.h,
+    i: input.i,
+    j: input.j,
+    k: input.k,
+    l: input.l,
+    m: input.m,
+    n: input.n,
+    o: input.o,
+    p: input.p,
+    q: input.q,
+    r: input.r,
+    s: input.s,
+    t: input.t,
+    u: input.u,
+    v: input.v,
+    w: input.w,
+    x: input.x,
+    y: input.y,
   };
 }
 
 // Build incrementally (property by property)
 function buildIncremental(input: Record<string, unknown>) {
   const out: Record<string, unknown> = {};
-  out["a"] = input["a"];
-  out["b"] = input["b"];
-  out["c"] = input["c"];
-  out["d"] = input["d"];
-  out["e"] = input["e"];
-  out["f"] = input["f"];
-  out["g"] = input["g"];
-  out["h"] = input["h"];
-  out["i"] = input["i"];
-  out["j"] = input["j"];
-  out["k"] = input["k"];
-  out["l"] = input["l"];
-  out["m"] = input["m"];
-  out["n"] = input["n"];
-  out["o"] = input["o"];
-  out["p"] = input["p"];
-  out["q"] = input["q"];
-  out["r"] = input["r"];
-  out["s"] = input["s"];
-  out["t"] = input["t"];
-  out["u"] = input["u"];
-  out["v"] = input["v"];
-  out["w"] = input["w"];
-  out["x"] = input["x"];
-  out["y"] = input["y"];
+  out.a = input.a;
+  out.b = input.b;
+  out.c = input.c;
+  out.d = input.d;
+  out.e = input.e;
+  out.f = input.f;
+  out.g = input.g;
+  out.h = input.h;
+  out.i = input.i;
+  out.j = input.j;
+  out.k = input.k;
+  out.l = input.l;
+  out.m = input.m;
+  out.n = input.n;
+  out.o = input.o;
+  out.p = input.p;
+  out.q = input.q;
+  out.r = input.r;
+  out.s = input.s;
+  out.t = input.t;
+  out.u = input.u;
+  out.v = input.v;
+  out.w = input.w;
+  out.x = input.x;
+  out.y = input.y;
   return out;
 }
 
@@ -138,86 +138,86 @@ await bench.run();
 // =============================================================================
 
 function validateAndReturn(input: Record<string, unknown>) {
-  if (typeof input["a"] !== "string") return undefined;
-  if (typeof input["b"] !== "string") return undefined;
-  if (typeof input["c"] !== "string") return undefined;
-  if (typeof input["d"] !== "string") return undefined;
-  if (typeof input["e"] !== "string") return undefined;
-  if (typeof input["f"] !== "string") return undefined;
-  if (typeof input["g"] !== "string") return undefined;
-  if (typeof input["h"] !== "string") return undefined;
-  if (typeof input["i"] !== "string") return undefined;
-  if (typeof input["j"] !== "string") return undefined;
-  if (typeof input["k"] !== "string") return undefined;
-  if (typeof input["l"] !== "string") return undefined;
-  if (typeof input["m"] !== "string") return undefined;
-  if (typeof input["n"] !== "string") return undefined;
-  if (typeof input["o"] !== "string") return undefined;
-  if (typeof input["p"] !== "string") return undefined;
-  if (typeof input["q"] !== "string") return undefined;
-  if (typeof input["r"] !== "string") return undefined;
-  if (typeof input["s"] !== "string") return undefined;
-  if (typeof input["t"] !== "string") return undefined;
-  if (typeof input["u"] !== "string") return undefined;
-  if (typeof input["v"] !== "string") return undefined;
-  if (typeof input["w"] !== "string") return undefined;
-  if (typeof input["x"] !== "string") return undefined;
-  if (typeof input["y"] !== "string") return undefined;
+  if (typeof input.a !== "string") return undefined;
+  if (typeof input.b !== "string") return undefined;
+  if (typeof input.c !== "string") return undefined;
+  if (typeof input.d !== "string") return undefined;
+  if (typeof input.e !== "string") return undefined;
+  if (typeof input.f !== "string") return undefined;
+  if (typeof input.g !== "string") return undefined;
+  if (typeof input.h !== "string") return undefined;
+  if (typeof input.i !== "string") return undefined;
+  if (typeof input.j !== "string") return undefined;
+  if (typeof input.k !== "string") return undefined;
+  if (typeof input.l !== "string") return undefined;
+  if (typeof input.m !== "string") return undefined;
+  if (typeof input.n !== "string") return undefined;
+  if (typeof input.o !== "string") return undefined;
+  if (typeof input.p !== "string") return undefined;
+  if (typeof input.q !== "string") return undefined;
+  if (typeof input.r !== "string") return undefined;
+  if (typeof input.s !== "string") return undefined;
+  if (typeof input.t !== "string") return undefined;
+  if (typeof input.u !== "string") return undefined;
+  if (typeof input.v !== "string") return undefined;
+  if (typeof input.w !== "string") return undefined;
+  if (typeof input.x !== "string") return undefined;
+  if (typeof input.y !== "string") return undefined;
   return input;
 }
 
 function validateAndBuildLiteral(input: Record<string, unknown>) {
-  if (typeof input["a"] !== "string") return undefined;
-  if (typeof input["b"] !== "string") return undefined;
-  if (typeof input["c"] !== "string") return undefined;
-  if (typeof input["d"] !== "string") return undefined;
-  if (typeof input["e"] !== "string") return undefined;
-  if (typeof input["f"] !== "string") return undefined;
-  if (typeof input["g"] !== "string") return undefined;
-  if (typeof input["h"] !== "string") return undefined;
-  if (typeof input["i"] !== "string") return undefined;
-  if (typeof input["j"] !== "string") return undefined;
-  if (typeof input["k"] !== "string") return undefined;
-  if (typeof input["l"] !== "string") return undefined;
-  if (typeof input["m"] !== "string") return undefined;
-  if (typeof input["n"] !== "string") return undefined;
-  if (typeof input["o"] !== "string") return undefined;
-  if (typeof input["p"] !== "string") return undefined;
-  if (typeof input["q"] !== "string") return undefined;
-  if (typeof input["r"] !== "string") return undefined;
-  if (typeof input["s"] !== "string") return undefined;
-  if (typeof input["t"] !== "string") return undefined;
-  if (typeof input["u"] !== "string") return undefined;
-  if (typeof input["v"] !== "string") return undefined;
-  if (typeof input["w"] !== "string") return undefined;
-  if (typeof input["x"] !== "string") return undefined;
-  if (typeof input["y"] !== "string") return undefined;
+  if (typeof input.a !== "string") return undefined;
+  if (typeof input.b !== "string") return undefined;
+  if (typeof input.c !== "string") return undefined;
+  if (typeof input.d !== "string") return undefined;
+  if (typeof input.e !== "string") return undefined;
+  if (typeof input.f !== "string") return undefined;
+  if (typeof input.g !== "string") return undefined;
+  if (typeof input.h !== "string") return undefined;
+  if (typeof input.i !== "string") return undefined;
+  if (typeof input.j !== "string") return undefined;
+  if (typeof input.k !== "string") return undefined;
+  if (typeof input.l !== "string") return undefined;
+  if (typeof input.m !== "string") return undefined;
+  if (typeof input.n !== "string") return undefined;
+  if (typeof input.o !== "string") return undefined;
+  if (typeof input.p !== "string") return undefined;
+  if (typeof input.q !== "string") return undefined;
+  if (typeof input.r !== "string") return undefined;
+  if (typeof input.s !== "string") return undefined;
+  if (typeof input.t !== "string") return undefined;
+  if (typeof input.u !== "string") return undefined;
+  if (typeof input.v !== "string") return undefined;
+  if (typeof input.w !== "string") return undefined;
+  if (typeof input.x !== "string") return undefined;
+  if (typeof input.y !== "string") return undefined;
   return {
-    a: input["a"],
-    b: input["b"],
-    c: input["c"],
-    d: input["d"],
-    e: input["e"],
-    f: input["f"],
-    g: input["g"],
-    h: input["h"],
-    i: input["i"],
-    j: input["j"],
-    k: input["k"],
-    l: input["l"],
-    m: input["m"],
-    n: input["n"],
-    o: input["o"],
-    p: input["p"],
-    q: input["q"],
-    r: input["r"],
-    s: input["s"],
-    t: input["t"],
-    u: input["u"],
-    v: input["v"],
-    w: input["w"],
-    x: input["x"],
-    y: input["y"],
+    a: input.a,
+    b: input.b,
+    c: input.c,
+    d: input.d,
+    e: input.e,
+    f: input.f,
+    g: input.g,
+    h: input.h,
+    i: input.i,
+    j: input.j,
+    k: input.k,
+    l: input.l,
+    m: input.m,
+    n: input.n,
+    o: input.o,
+    p: input.p,
+    q: input.q,
+    r: input.r,
+    s: input.s,
+    t: input.t,
+    u: input.u,
+    v: input.v,
+    w: input.w,
+    x: input.x,
+    y: input.y,
   };
 }
 

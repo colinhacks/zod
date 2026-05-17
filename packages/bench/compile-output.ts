@@ -13,18 +13,18 @@ const DATA_SIMPLE = Array.from({ length: 1000 }, () => ({
 function validateOnly(input: unknown): boolean {
   if (typeof input !== "object" || input === null) return false;
   const obj = input as Record<string, unknown>;
-  if (typeof obj["name"] !== "string") return false;
-  if (typeof obj["age"] !== "number") return false;
-  if (typeof obj["active"] !== "boolean") return false;
+  if (typeof obj.name !== "string") return false;
+  if (typeof obj.age !== "number") return false;
+  if (typeof obj.active !== "boolean") return false;
   return true;
 }
 
 function validateAndReturn(input: unknown): object | undefined {
   if (typeof input !== "object" || input === null) return undefined;
   const obj = input as Record<string, unknown>;
-  if (typeof obj["name"] !== "string") return undefined;
-  if (typeof obj["age"] !== "number") return undefined;
-  if (typeof obj["active"] !== "boolean") return undefined;
+  if (typeof obj.name !== "string") return undefined;
+  if (typeof obj.age !== "number") return undefined;
+  if (typeof obj.active !== "boolean") return undefined;
   return obj;
 }
 
@@ -68,8 +68,8 @@ function stripDelete(input: Record<string, unknown>): Record<string, unknown> {
 
 function stripBuildNew(input: Record<string, unknown>): Record<string, unknown> {
   return {
-    name: input["name"],
-    age: input["age"],
+    name: input.name,
+    age: input.age,
   };
 }
 
@@ -115,20 +115,20 @@ const DATA_NEEDS_TRIM = Array.from({ length: 1000 }, () => ({
 const trim = (s: string) => s.trim();
 
 function transformMutate(input: Record<string, unknown>): Record<string, unknown> {
-  input["name"] = trim(input["name"] as string);
+  input.name = trim(input.name as string);
   return input;
 }
 
 function transformClone(input: Record<string, unknown>): Record<string, unknown> {
   const output = { ...input };
-  output["name"] = trim(input["name"] as string);
+  output.name = trim(input.name as string);
   return output;
 }
 
 function transformBuildNew(input: Record<string, unknown>): Record<string, unknown> {
   return {
-    name: trim(input["name"] as string),
-    age: input["age"],
+    name: trim(input.name as string),
+    age: input.age,
   };
 }
 
@@ -235,21 +235,20 @@ const DATA_MULTI = Array.from({ length: 1000 }, () => ({
 }));
 
 const toLowerCase = (s: string) => s.toLowerCase();
-const toUpperCase = (s: string) => s.toUpperCase();
 
 function multiMutate(input: Record<string, unknown>): Record<string, unknown> {
-  input["firstName"] = trim(input["firstName"] as string);
-  input["lastName"] = trim(input["lastName"] as string);
-  input["email"] = toLowerCase(trim(input["email"] as string));
+  input.firstName = trim(input.firstName as string);
+  input.lastName = trim(input.lastName as string);
+  input.email = toLowerCase(trim(input.email as string));
   return input;
 }
 
 function multiBuildNew(input: Record<string, unknown>): Record<string, unknown> {
   return {
-    firstName: trim(input["firstName"] as string),
-    lastName: trim(input["lastName"] as string),
-    email: toLowerCase(trim(input["email"] as string)),
-    unchanged: input["unchanged"],
+    firstName: trim(input.firstName as string),
+    lastName: trim(input.lastName as string),
+    email: toLowerCase(trim(input.email as string)),
+    unchanged: input.unchanged,
   };
 }
 

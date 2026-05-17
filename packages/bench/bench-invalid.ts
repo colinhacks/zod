@@ -70,7 +70,7 @@ const arkSchema = type({
   },
 });
 
-let sink: any;
+export let sink: any;
 
 metabench("valid: check method comparison", {
   "=== INVALID"() {
