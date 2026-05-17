@@ -183,7 +183,15 @@ function generateMultipleOfCheck(doc: Doc, def: checks.$ZodCheckMultipleOfDef, a
   if (typeof def.value === "bigint") {
     doc.write(`if (${accessor} % ${def.value}n !== 0n) return INVALID;`);
   } else {
-    doc.write(`if (${accessor} % ${def.value} !== 0) return INVALID;`);
+    // Mirror util.floatSafeRemainder: ratio-based comparison with a relative
+    // epsilon. Fixes false negatives on scientific-notation steps like 1e-7.
+    doc.write(`{`);
+    doc.indented((d) => {
+      d.write(`const _r = ${accessor} / ${def.value};`);
+      d.write(`const _rr = Math.round(_r);`);
+      d.write(`if (Math.abs(_r - _rr) >= Number.EPSILON * Math.max(Math.abs(_r), 1)) return INVALID;`);
+    });
+    doc.write(`}`);
   }
 }
 
@@ -465,7 +473,7 @@ function generateCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor
       typeAccessor = generateArrayCheck(doc, ctx, schema, accessor);
       break;
     case "literal":
-      typeAccessor = generateLiteralCheck(doc, schema, accessor);
+      typeAccessor = generateLiteralCheck(doc, ctx, schema, accessor);
       break;
     case "enum":
       typeAccessor = generateEnumCheck(doc, ctx, schema, accessor);
@@ -664,11 +672,16 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
         doc.write(`const ${unknownKeysVar} = {};`);
         doc.write(`for (const k in ${accessor}) {`);
         doc.indented((d) => {
+          // Skip __proto__: assigning to obj["__proto__"] on a plain {} replaces
+          // the prototype via the setter rather than adding an own property.
+          // Mirrors the runtime fix in $ZodObject catchall (#5898).
+          d.write(`if (k === "__proto__") continue;`);
           d.write(`if (!${knownSet}.has(k)) ${unknownKeysVar}[k] = ${accessor}[k];`);
         });
         doc.write(`}`);
       } else {
-        // No known keys - just spread all input
+        // No known keys - just spread all input. Spread copies enumerable own
+        // properties as data slots, so __proto__ can't reach the setter.
         unknownKeysVar = accessor;
       }
     } else {
@@ -678,6 +691,7 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
       doc.write(`const ${unknownKeysVar} = {};`);
       doc.write(`for (const k in ${accessor}) {`);
       doc.indented((d) => {
+        d.write(`if (k === "__proto__") continue;`);
         d.write(`if (!${knownSet}.has(k)) {`);
         d.indented((d2) => {
           const valVar = newVar(ctx);
@@ -757,16 +771,27 @@ function generateArrayCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
   return outputVar;
 }
 
-function generateLiteralCheck(doc: Doc, schema: SomeType, accessor: string): string {
+function generateLiteralCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
   const def = schema._zod.def as unknown as { values: unknown[] };
-  const value = def.values[0];
+  const values = def.values;
 
+  // Multi-value literals (z.literal(["a", "b", c])) use Set.has so every
+  // allowed value participates. Single-value stays inlined for speed.
+  if (values.length > 1) {
+    const literalSet = addConstant(ctx, new Set(values));
+    doc.write(`if (!${literalSet}.has(${accessor})) return INVALID;`);
+    return accessor;
+  }
+
+  const value = values[0];
   if (typeof value === "string") {
     doc.write(`if (${accessor} !== ${util.esc(value)}) return INVALID;`);
   } else if (typeof value === "number" || typeof value === "boolean") {
     doc.write(`if (${accessor} !== ${value}) return INVALID;`);
   } else if (value === null) {
     doc.write(`if (${accessor} !== null) return INVALID;`);
+  } else if (value === undefined) {
+    doc.write(`if (${accessor} !== undefined) return INVALID;`);
   } else if (typeof value === "bigint") {
     doc.write(`if (${accessor} !== ${value}n) return INVALID;`);
   } else {
@@ -798,10 +823,13 @@ function generateDefaultCheck(doc: Doc, ctx: CompileContext, schema: SomeType, a
   // Default allows undefined (replaces with default value), otherwise validates inner type
   if (defaultGetter) {
     const defaultFn = addConstant(ctx, defaultGetter);
+    const cloneFn = addConstant(ctx, util.shallowClone);
     doc.write(`let ${outputVar};`);
     doc.write(`if (${accessor} === undefined) {`);
     doc.indented((d) => {
-      d.write(`${outputVar} = ${defaultFn}();`);
+      // Shallow-clone the default so callers can mutate the result without
+      // affecting subsequent parses (#5855 — also covers Map/Set).
+      d.write(`${outputVar} = ${cloneFn}(${defaultFn}());`);
     });
     doc.write(`} else {`);
     doc.indented((d) => {
@@ -836,26 +864,49 @@ function generateTupleCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
 
   doc.write(`if (!Array.isArray(${accessor})) return INVALID;`);
 
-  // Check length bounds
+  // Mirror the runtime's getTupleOptStart: find the first index where every
+  // subsequent slot accepts `undefined` (i.e. is optional on input). Anything
+  // shorter than this is too_small; trailing absent slots are legal.
+  const optinStart = getTupleOptStart(items);
+
+  // Length bounds
   if (rest) {
-    // With rest: minimum length is items.length
-    doc.write(`if (${accessor}.length < ${items.length}) return INVALID;`);
+    // With rest: minimum length is the last required input slot
+    doc.write(`if (${accessor}.length < ${optinStart}) return INVALID;`);
   } else {
-    // No rest: exact length
-    doc.write(`if (${accessor}.length !== ${items.length}) return INVALID;`);
+    // No rest: input must be in [optinStart, items.length]
+    doc.write(`if (${accessor}.length < ${optinStart} || ${accessor}.length > ${items.length}) return INVALID;`);
   }
 
-  // Build output array
+  // Build output array sized to actual input length (capped at items.length
+  // when there's no rest). Absent trailing optional slots stay absent.
   const outputVar = newVar(ctx);
-  doc.write(`const ${outputVar} = new Array(${accessor}.length);`);
+  if (rest) {
+    doc.write(`const ${outputVar} = new Array(${accessor}.length);`);
+  } else {
+    doc.write(`const ${outputVar} = new Array(Math.min(${accessor}.length, ${items.length}));`);
+  }
 
   // Validate and collect each fixed item
   for (let i = 0; i < items.length; i++) {
     const itemSchema = items[i]!;
-    const elemVar = newVar(ctx);
-    doc.write(`const ${elemVar} = ${accessor}[${i}];`);
-    const elemOutput = generateCheck(doc, ctx, itemSchema, elemVar);
-    doc.write(`${outputVar}[${i}] = ${elemOutput};`);
+    if (i >= optinStart) {
+      // Slot is optional on input: only validate (and emit into output) when
+      // the input actually has this index. Otherwise leave the output sparse.
+      doc.write(`if (${i} < ${accessor}.length) {`);
+      doc.indented((d) => {
+        const elemVar = newVar(ctx);
+        d.write(`const ${elemVar} = ${accessor}[${i}];`);
+        const elemOutput = generateCheck(d, ctx, itemSchema, elemVar);
+        d.write(`${outputVar}[${i}] = ${elemOutput};`);
+      });
+      doc.write(`}`);
+    } else {
+      const elemVar = newVar(ctx);
+      doc.write(`const ${elemVar} = ${accessor}[${i}];`);
+      const elemOutput = generateCheck(doc, ctx, itemSchema, elemVar);
+      doc.write(`${outputVar}[${i}] = ${elemOutput};`);
+    }
   }
 
   // Validate and collect rest elements if present
@@ -872,6 +923,13 @@ function generateTupleCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
   }
 
   return outputVar;
+}
+
+function getTupleOptStart(items: SomeType[]): number {
+  for (let i = items.length - 1; i >= 0; i--) {
+    if (items[i]!._zod.optin !== "optional") return i + 1;
+  }
+  return 0;
 }
 
 function generateUnionCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {

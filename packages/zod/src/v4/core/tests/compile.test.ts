@@ -1030,3 +1030,63 @@ test("matches Zod: overwrite with validation", () => {
   expectMatch(schema, "abc");
   expectMatch(schema, 123);
 });
+
+// === Regressions tracking main ===
+
+test("object catchall ignores __proto__ key (#5898)", () => {
+  // Passthrough variant
+  const loose = compile(z.looseObject({ name: z.string() }));
+  const polluted = JSON.parse('{"name":"ok","__proto__":{"polluted":true}}');
+  const out = valid(loose, polluted) as Record<string, unknown>;
+  expect(Object.getPrototypeOf(out)).toBe(Object.prototype);
+  expect((out as { polluted?: unknown }).polluted).toBeUndefined();
+
+  // Schema-typed catchall
+  const typed = compile(z.object({ name: z.string() }).catchall(z.number()));
+  const out2 = valid(typed, JSON.parse('{"name":"ok","extra":1}')) as Record<string, unknown>;
+  expect(Object.getPrototypeOf(out2)).toBe(Object.prototype);
+});
+
+test("multipleOf with sub-integer step uses float tolerance (#5793)", () => {
+  const aot = compile(z.number().multipleOf(1e-7));
+  expect(valid(aot, 0)).toBe(0);
+  expect(valid(aot, 1e-7)).toBe(1e-7);
+  expect(valid(aot, 3e-7)).toBe(3e-7);
+  invalid(aot, 2.5e-7);
+  invalid(aot, 1.5e-7);
+});
+
+test("tuple with trailing optionals accepts short input (#5661)", () => {
+  const schema = z.tuple([z.string(), z.number().optional()]);
+  const aot = compile(schema);
+  expect(valid(aot, ["a"])).toEqual(["a"]);
+  expect(valid(aot, ["a", 1])).toEqual(["a", 1]);
+  invalid(aot, []);
+  invalid(aot, ["a", "b"]);
+  invalid(aot, ["a", 1, "extra"]);
+});
+
+test("default() shallow-clones Map/Set/array/object (#5855)", () => {
+  const mapSchema = z.map(z.string(), z.number()).default(new Map([["a", 1]]));
+  const mapFn = compile(mapSchema);
+  const m1 = valid(mapFn, undefined) as Map<string, number>;
+  const m2 = valid(mapFn, undefined) as Map<string, number>;
+  expect(m1).not.toBe(m2);
+  m1.set("b", 2);
+  expect(m2.has("b")).toBe(false);
+
+  const setSchema = z.set(z.string()).default(new Set(["x"]));
+  const setFn = compile(setSchema);
+  const s1 = valid(setFn, undefined) as Set<string>;
+  const s2 = valid(setFn, undefined) as Set<string>;
+  expect(s1).not.toBe(s2);
+});
+
+test("multi-value literal accepts each value", () => {
+  const aot = compile(z.literal(["a", "b", 1]));
+  expect(valid(aot, "a")).toBe("a");
+  expect(valid(aot, "b")).toBe("b");
+  expect(valid(aot, 1)).toBe(1);
+  invalid(aot, "c");
+  invalid(aot, 2);
+});
