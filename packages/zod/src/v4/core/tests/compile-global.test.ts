@@ -14,6 +14,12 @@ test("zod/compile sets globalConfig.postProcessor", () => {
   expect(typeof core.globalConfig.postProcessor).toBe("function");
 });
 
+test("z.compile is exported from the public namespace", () => {
+  expect(typeof z.compile).toBe("function");
+  const schema = z.compile(z.object({ name: z.string() }));
+  expect(schema.parse({ name: "ok" })).toEqual({ name: "ok" });
+});
+
 test("schemas constructed after import are compiled on first parse", () => {
   const schema = z.object({ name: z.string(), age: z.number() });
 

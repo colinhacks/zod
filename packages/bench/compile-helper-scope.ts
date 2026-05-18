@@ -4,10 +4,7 @@ import { isValidBase64URL, isValidJWT } from "zod/v4/core";
 import { metabench } from "./metabench.js";
 
 const DATA = Array.from({ length: 1000 }, () => "SGVsbG8gV29ybGQ");
-const JWT_DATA = Array.from(
-  { length: 1000 },
-  () => "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.signature"
-);
+const JWT_DATA = Array.from({ length: 1000 }, () => "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.signature");
 
 const base64url = z.string().base64url();
 const compiledBase64url = zcore.compile(base64url);

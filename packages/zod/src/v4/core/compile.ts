@@ -9,7 +9,11 @@ import * as util from "./util.js";
 export const INVALID: unique symbol = Symbol.for("zod.compile.invalid");
 export type INVALID = typeof INVALID;
 
-type CompiledFastpass<T> = ((input: unknown) => T | INVALID) & { code: string };
+interface CompileFastpassOptions {
+  debug?: boolean | undefined;
+}
+
+type CompiledFastpass<T> = ((input: unknown) => T | INVALID) & { code?: string | undefined };
 
 /** Thrown by `compile()` when the schema contains async refinements or transforms. */
 export class ZodCompileAsyncError extends Error {
@@ -142,7 +146,10 @@ function installCompiledUserMethods<T extends SomeType>(
  * input and returns either the parsed/transformed value or the `INVALID`
  * sentinel. Internal — consumers should use `compile()`.
  */
-export function compileFastpass<T extends SomeType>(schema: T): CompiledFastpass<core.output<T>> {
+export function compileFastpass<T extends SomeType>(
+  schema: T,
+  options?: CompileFastpassOptions
+): CompiledFastpass<core.output<T>> {
   const ctx: CompileContext = {
     constants: new Map(),
     constantCounter: 0,
@@ -159,13 +166,19 @@ export function compileFastpass<T extends SomeType>(schema: T): CompiledFastpass
   const constantValues = [INVALID, ...ctx.constants.values()];
 
   const code = doc.content.join("\n");
-  const fullCode = constantNames.length > 0 ? `// Constants: ${constantNames.join(", ")}\n${code}` : code;
+  const fullCode = options?.debug
+    ? constantNames.length > 0
+      ? `// Constants: ${constantNames.join(", ")}\n${code}`
+      : code
+    : "";
 
   const F = Function;
   const factoryCode = `return (input) => {\n${code}\n}`;
   const factory = new F(...constantNames, factoryCode);
   const fn = factory(...constantValues) as CompiledFastpass<core.output<T>>;
-  fn.code = fullCode;
+  if (options?.debug) {
+    fn.code = fullCode;
+  }
   return fn;
 }
 

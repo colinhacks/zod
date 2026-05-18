@@ -28,10 +28,7 @@ export default defineConfig({
     isolate: true,
     silent: true,
     include: ["packages/zod/src/**/*.test.ts"],
-    setupFiles: [
-      resolve(__dirname, "scripts/fail-on-console.ts"),
-      resolve(__dirname, "scripts/enable-compile.ts"),
-    ],
+    setupFiles: [resolve(__dirname, "scripts/fail-on-console.ts"), resolve(__dirname, "scripts/enable-compile.ts")],
     typecheck: { enabled: false },
   },
 }) as ViteUserConfig;

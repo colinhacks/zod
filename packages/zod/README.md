@@ -113,6 +113,22 @@ await schema.parseAsync("hello");
 // => "hello"
 ```
 
+### AOT compilation
+
+For hot validation paths, `z.compile(schema)` returns a schema clone with an ahead-of-time compiled fast path. Valid inputs take the compiled path; invalid inputs fall back to the regular parser so error reporting stays identical.
+
+```ts
+const CompiledPlayer = z.compile(Player);
+
+CompiledPlayer.parse({ username: "billie", xp: 100 });
+```
+
+To enable compilation globally for schemas constructed after import:
+
+```ts
+import "zod/compile";
+```
+
 ### Handling errors
 
 When validation fails, the `.parse()` method will throw a `ZodError` instance with granular information about the validation issues.
