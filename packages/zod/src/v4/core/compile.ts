@@ -844,33 +844,6 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
     const propType = propSchema._zod.def.type;
     const propAccessor = `${accessor}[${util.esc(key)}]`;
 
-    // exactOptional is optional at the object layer but rejects explicit
-    // `undefined` at the child layer. Runtime handles this by only invoking
-    // the child parser when the key is present. Mirror that here: absent key
-    // leaves the output unset; present `undefined` delegates to the inner
-    // schema and fails.
-    if (isExactOptional(propSchema)) {
-      const exactDef = propSchema._zod.def as unknown as { innerType: SomeType };
-      const outputVar = newVar(ctx);
-      doc.write(`let ${outputVar};`);
-      doc.write(`if (${util.esc(key)} in ${accessor}) {`);
-      doc.indented((d) => {
-        const innerOutput = generateCheck(d, ctx, exactDef.innerType, propAccessor);
-        d.write(`${outputVar} = ${innerOutput};`);
-      });
-      doc.write(`}`);
-      propOutputs[key] = outputVar;
-      continue;
-    }
-
-    // Required keys (optin != optional) MUST be present in the input. Reading
-    // `input[k]` for an absent key returns undefined silently, which would
-    // pass schemas like `z.undefined()` or `z.union([z.string(), z.undefined()])`
-    // even though the runtime rejects absent keys for those.
-    if (propSchema._zod.optin !== "optional") {
-      doc.write(`if (!(${util.esc(key)} in ${accessor})) return INVALID;`);
-    }
-
     // For complex types, cache in variable first
     let inputVar = propAccessor;
     if (propType === "object" || propType === "array" || propType === "tuple") {
@@ -878,9 +851,42 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
       doc.write(`const ${inputVar} = ${propAccessor};`);
     }
 
-    // Generate check and get output accessor
-    const outputAccessor = generateCheck(doc, ctx, propSchema, inputVar);
-    propOutputs[key] = outputAccessor;
+    if (propSchema._zod.optin === "optional") {
+      // Runtime runs optional-in properties even when absent, then ignores
+      // issues on absent keys only when the output is optional too. This is
+      // what makes exactOptional compositional: the child rejects explicit
+      // undefined, while the object layer suppresses that failure only for an
+      // actually absent key.
+      const outputVar = newVar(ctx);
+      doc.write(`let ${outputVar} = (() => {`);
+      doc.indented((d) => {
+        const outputAccessor = generateCheck(d, ctx, propSchema, inputVar);
+        d.write(`return ${outputAccessor};`);
+      });
+      doc.write(`})();`);
+
+      if (propSchema._zod.optout === "optional") {
+        doc.write(`if (${outputVar} === INVALID) {`);
+        doc.indented((d) => {
+          d.write(`if (${util.esc(key)} in ${accessor}) return INVALID;`);
+          d.write(`${outputVar} = undefined;`);
+        });
+        doc.write(`}`);
+      } else {
+        doc.write(`if (${outputVar} === INVALID) return INVALID;`);
+      }
+      propOutputs[key] = outputVar;
+    } else {
+      // Required keys (optin != optional) MUST be present in the input. Reading
+      // `input[k]` for an absent key returns undefined silently, which would
+      // pass schemas like `z.undefined()` or `z.union([z.string(), z.undefined()])`
+      // even though the runtime rejects absent keys for those.
+      doc.write(`if (!(${util.esc(key)} in ${accessor})) return INVALID;`);
+
+      // Generate check and get output accessor
+      const outputAccessor = generateCheck(doc, ctx, propSchema, inputVar);
+      propOutputs[key] = outputAccessor;
+    }
   }
 
   // Handle catchall
