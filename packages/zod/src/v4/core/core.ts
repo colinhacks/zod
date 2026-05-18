@@ -62,6 +62,11 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
     for (const fn of inst._zod.deferred) {
       fn();
     }
+    // Global post-processor hook. Internal: installed by `import "zod/compile"`
+    // to enable AOT compilation for every constructed schema. The post-processor
+    // is expected to be reentrancy-guarded by its own implementation.
+    const pp = (globalThis as GlobalThisWithConfig).__zod_globalConfig?.postProcessor;
+    if (pp) pp(inst);
     return inst;
   }
 
@@ -128,6 +133,13 @@ export interface $ZodConfig {
   localeError?: errors.$ZodErrorMap | undefined;
   /** Disable JIT schema compilation. Useful in environments that disallow `eval`. */
   jitless?: boolean | undefined;
+  /**
+   * Internal: post-processor invoked on every freshly-constructed schema
+   * instance, after init and deferred fns run. Set by `import "zod/compile"`
+   * to install AOT compilation. Not part of the public API.
+   * @internal
+   */
+  postProcessor?: ((inst: any) => void) | undefined;
 }
 
 interface GlobalThisWithConfig {

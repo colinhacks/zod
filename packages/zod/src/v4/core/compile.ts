@@ -58,6 +58,15 @@ export function compile<T extends SomeType>(schema: T): T {
   const fast = compileFastpass(schema);
   const clone = util.clone(schema as any) as T;
 
+  // Capture the source-of-truth runtime eagerly. If schema._zod.run is itself
+  // a shim installed by global-mode (`__originalRun` set), unwrap past it.
+  // Otherwise capturing the live property lazily would let a later self-
+  // replacement of schema._zod.run feed our wrapper back into itself.
+  const liveRun = schema._zod.run as ((p: ParsePayload, c: ParseContextInternal) => any) & {
+    __originalRun?: (p: ParsePayload, c: ParseContextInternal) => any;
+  };
+  const originalRun = liveRun.__originalRun ?? liveRun;
+
   // Delegate to the *original* schema's run on bypass/fallback (not the
   // clone's). The original closed over its own `inst` at construction time;
   // issue payloads use that reference to derive things like the class name
@@ -66,7 +75,7 @@ export function compile<T extends SomeType>(schema: T): T {
   // messages from the original schema.
   clone._zod.run = (payload: ParsePayload, ctx: ParseContextInternal): any => {
     if (ctx?.async || ctx?.direction === "backward" || ctx?.skipChecks) {
-      return schema._zod.run(payload, ctx);
+      return originalRun(payload, ctx);
     }
 
     const out = fast(payload.value);
@@ -74,7 +83,7 @@ export function compile<T extends SomeType>(schema: T): T {
       payload.value = out;
       return payload;
     }
-    return schema._zod.run(payload, ctx);
+    return originalRun(payload, ctx);
   };
 
   return clone;
@@ -847,7 +856,14 @@ function generateLiteralCheck(doc: Doc, ctx: CompileContext, schema: SomeType, a
 }
 
 function generateEnumCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
-  const values = (schema._zod as unknown as { values: Set<unknown> }).values;
+  const values = (schema._zod as unknown as { values?: Set<unknown> }).values;
+  // `_zod.values` is cleared by z.partialRecord and similar helpers when they
+  // want a schema that *infers* like an enum but isn't structurally enumerated.
+  // Without a known value set the fast path can't check membership; fall back.
+  if (!values) {
+    doc.write(`return INVALID;`);
+    return accessor;
+  }
   const enumSet = addConstant(ctx, values);
   doc.write(`if (!${enumSet}.has(${accessor})) return INVALID;`);
   return accessor;
@@ -1061,23 +1077,25 @@ function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
 
   doc.write(`const ${outputVar} = {};`);
 
-  // Records with enum/literal key types have "exhaustive" semantics at
-  // runtime: every enum value must be present in the input. The fast path
-  // doesn't model that yet, and partial output would silently pass. Force
-  // fallback for enum/literal-keyed records so the runtime can do the
-  // exhaustiveness check. Dynamic-key records still take the fast path.
-  // TODO(phase 4): re-add an exhaustiveness-aware enum-key fast path.
+  // Force fallback for any non-plain-string key schema. Runtime applies the
+  // keyType to each input key (validating + transforming); the fast path
+  // doesn't model that. Even a plain `z.string()` with checks (regex,
+  // length, refine, etc.) needs the runtime. We only take the fast path for
+  // bare `z.string()` keys with no checks.
+  // Also: records with enum/literal key types have "exhaustive" semantics
+  // (every value must be present); that's only handled by the runtime.
+  // TODO(phase 4): specialized codegen per key-type shape.
   const keyType = def.keyType._zod.def.type;
-  if (keyType === "enum" || keyType === "literal") {
+  const keyHasChecks = (def.keyType._zod.def.checks?.length ?? 0) > 0;
+  if (keyType !== "string" || keyHasChecks) {
     doc.write(`return INVALID;`);
     return outputVar;
   }
 
-  // Dynamic keys: iterate input keys and validate each value. Runtime uses
-  // Reflect.ownKeys for symbol-key support; for...in is enumerable-string-only,
-  // so symbol-keyed records will fall back to runtime via the unrecognized
-  // path (the runtime ignores keys for dynamic key schemas — divergence is
-  // limited to symbol keys, which is documented in wiki/compile.md).
+  // Plain z.string() keys: iterate input keys, validate each value.
+  // Runtime uses Reflect.ownKeys for symbol-key support; for...in is
+  // enumerable-string-only — symbol-keyed inputs differ. Documented in
+  // wiki/compile.md as a known gap.
   doc.write(`for (const ${kVar} in ${accessor}) {`);
   doc.indented((d) => {
     d.write(`if (${kVar} === "__proto__") continue;`);
