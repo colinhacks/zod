@@ -1367,14 +1367,41 @@ function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
 
   doc.write(`const ${outputVar} = {};`);
 
-  // Force fallback for any non-plain-string key schema. Runtime applies the
-  // keyType to each input key (validating + transforming); the fast path
-  // doesn't model that. Even a plain `z.string()` with checks (regex,
+  // Exhaustive records: keyType has a known value set (enum/literal/etc.).
+  // Runtime validates every known key, applies key transforms to choose the
+  // output key, and rejects unrecognized string keys. Generate the same shape.
+  const keyValues = (def.keyType._zod as unknown as { values?: Set<unknown> }).values;
+  if (keyValues) {
+    const inputKeys: Array<string | symbol> = [];
+    for (const key of keyValues) {
+      if (!(typeof key === "string" || typeof key === "number" || typeof key === "symbol")) {
+        throw new ZodCompileUnsupportedError(`record key value ${String(key)}`);
+      }
+
+      const inputKey = typeof key === "number" ? key.toString() : key;
+      inputKeys.push(inputKey);
+
+      const keyConst = addConstant(ctx, key);
+      const outKey = generateCheck(doc, ctx, def.keyType, keyConst);
+      const inputAccessor = `${accessor}[${literalPropertyKey(ctx, inputKey)}]`;
+      const valOutput = generateCheck(doc, ctx, def.valueType, inputAccessor);
+      doc.write(`${outputVar}[${outKey}] = ${valOutput};`);
+    }
+
+    const knownKeysConst = addConstant(ctx, new Set(inputKeys));
+    doc.write(`for (const ${kVar} in ${accessor}) {`);
+    doc.indented((d) => {
+      d.write(`if (!${knownKeysConst}.has(${kVar})) return INVALID;`);
+    });
+    doc.write(`}`);
+    return outputVar;
+  }
+
+  // Force fallback for any other non-plain-string key schema. Runtime applies
+  // the keyType to each input key (validating + transforming); the fast path
+  // doesn't model that yet. Even a plain `z.string()` with checks (regex,
   // length, refine, etc.) needs the runtime. We only take the fast path for
   // bare `z.string()` keys with no checks.
-  // Also: records with enum/literal key types have "exhaustive" semantics
-  // (every value must be present); that's only handled by the runtime.
-  // TODO(phase 4): specialized codegen per key-type shape.
   const keyType = def.keyType._zod.def.type;
   const keyHasChecks = (def.keyType._zod.def.checks?.length ?? 0) > 0;
   if (keyType !== "string" || keyHasChecks) {
@@ -1399,6 +1426,11 @@ function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
   doc.write(`}`);
 
   return outputVar;
+}
+
+function literalPropertyKey(ctx: CompileContext, key: string | symbol): string {
+  if (typeof key === "string") return util.esc(key);
+  return addConstant(ctx, key);
 }
 
 function generateMapCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {

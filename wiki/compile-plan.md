@@ -178,8 +178,8 @@ Detection lives in `packages/zod/src/v4/core/compile.ts` — search for `ZodComp
 ## Still-open polish (Phase 5)
 
 - **Discriminated-union optimization** — done. Specialized discriminator-branch codegen now runs before the generic xor fallback. Benchmark beats arktype in a 3-branch DU case.
-- **Record key schema transforms** (`#5891`): records with enum/literal keys force fallback today. Could re-add a codegen that runs the key schema per-known-key and uses the transformed value as the output property name.
-- **Record symbol keys**: runtime uses `Reflect.ownKeys`; compile uses `for...in` (enumerable-string-only). Documented gap; affects ~nobody.
+- **Record key schema transforms** — done for exhaustive records. Codegen now iterates known key values, runs the key schema once per key, and uses the transformed key as the output property. Differential coverage added.
+- **Record symbol keys** — done. Dynamic records now use `Reflect.ownKeys` + `propertyIsEnumerable`, matching runtime behavior.
 - **URL/httpurl runtime helper**: if we extract URL validation/normalization into a pure helper (like `isValidBase64URL` / `isValidJWT`), compile can hoist it and stop force-falling back for URLs too.
 - **Bench parity** — run `packages/bench/compile-*.ts` to confirm the schema-wrapper + force-fallback overhead hasn't eroded the 8x figure significantly.
 - **Tree-shaking/API decision** — esbuild bundle fixture shows `packages/zod/src/compile.ts` (global side-effect module) is dropped unless `import "zod/compile"` is present, but `packages/zod/src/v4/core/compile.ts` is retained by ordinary `import * as z from "zod"` because the public namespace exposes `z.compile`. To make the compiler fully tree-shakeable for namespace imports, the per-schema API would need to move off the main namespace (e.g. named export from `zod/compile`), or accept that `z.compile` trades bundle size for discoverability.

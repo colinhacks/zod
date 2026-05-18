@@ -191,6 +191,14 @@ test("record enum key", () => {
   differential(z.record(z.enum(["a", "b"]), z.number()), [{ a: 1, b: 2 }, { a: 1, c: 3 }, {}]);
 });
 
+test("record enum key transform applies to output keys", () => {
+  const schema = z.record(
+    z.enum(["a", "b"]).transform((key) => (key === "a" ? "x" : "y")),
+    z.number()
+  );
+  differential(schema, [{ a: 1, b: 2 }, { a: 1 }, { a: 1, b: "bad" }]);
+});
+
 test("map", () => {
   differential(z.map(z.string(), z.number()), [new Map(), new Map([["a", 1]]), new Map([["a", "x" as any]]), {}]);
 });
