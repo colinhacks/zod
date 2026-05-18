@@ -48,8 +48,9 @@ test("number", () => {
   expect(valid(aot, 123)).toBe(123);
   expect(valid(aot, 0)).toBe(0);
   expect(valid(aot, -5.5)).toBe(-5.5);
-  expect(valid(aot, Number.POSITIVE_INFINITY)).toBe(Number.POSITIVE_INFINITY);
-  invalid(aot, Number.NaN); // NaN rejected by z.number()
+  invalid(aot, Number.NaN); // z.number() rejects NaN
+  invalid(aot, Number.POSITIVE_INFINITY); // z.number() rejects Infinity
+  invalid(aot, Number.NEGATIVE_INFINITY);
   invalid(aot, "123");
   invalid(aot, null);
 });
@@ -639,10 +640,14 @@ test("record basic", () => {
 });
 
 test("record with enum keys", () => {
+  // Records with enum/literal keys have exhaustive semantics: every enum
+  // value must be present in the input. Compile currently forces fallback
+  // for this case (see compile.ts generateRecordCheck), so behavior matches
+  // the runtime by delegation.
   const aot = compile(z.record(z.enum(["a", "b"]), z.number()));
-  expect(valid(aot, { a: 1 })).toEqual({ a: 1 });
   expect(valid(aot, { a: 1, b: 2 })).toEqual({ a: 1, b: 2 });
-  invalid(aot, { c: 3 });
+  invalid(aot, { a: 1 }); // missing required key b
+  invalid(aot, { c: 3 }); // unknown key
 });
 
 test("matches Zod: record", () => {

@@ -597,7 +597,8 @@ function generateStringCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
 }
 
 function generateNumberCheck(doc: Doc, accessor: string): string {
-  doc.write(`if (typeof ${accessor} !== "number" || Number.isNaN(${accessor})) return INVALID;`);
+  // Runtime z.number() rejects NaN and ±Infinity. Number.isFinite covers both.
+  doc.write(`if (typeof ${accessor} !== "number" || !Number.isFinite(${accessor})) return INVALID;`);
   return accessor;
 }
 
@@ -1060,34 +1061,31 @@ function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
 
   doc.write(`const ${outputVar} = {};`);
 
-  // Get key type - if it has values (enum), we know the valid keys
-  const keySchema = def.keyType;
-  const keyType = keySchema._zod.def.type;
-
+  // Records with enum/literal key types have "exhaustive" semantics at
+  // runtime: every enum value must be present in the input. The fast path
+  // doesn't model that yet, and partial output would silently pass. Force
+  // fallback for enum/literal-keyed records so the runtime can do the
+  // exhaustiveness check. Dynamic-key records still take the fast path.
+  // TODO(phase 4): re-add an exhaustiveness-aware enum-key fast path.
+  const keyType = def.keyType._zod.def.type;
   if (keyType === "enum" || keyType === "literal") {
-    // Enumerated keys - check only those keys exist
-    const keyValues = (keySchema._zod as unknown as { values: Set<string> }).values;
-    const keysConst = addConstant(ctx, keyValues);
-    doc.write(`for (const ${kVar} in ${accessor}) {`);
-    doc.indented((d) => {
-      d.write(`if (!${keysConst}.has(${kVar})) return INVALID;`);
-      d.write(`const ${valVar} = ${accessor}[${kVar}];`);
-      const valOutput = generateCheck(d, ctx, def.valueType, valVar);
-      d.write(`${outputVar}[${kVar}] = ${valOutput};`);
-    });
-    doc.write(`}`);
-  } else {
-    // Dynamic keys - validate all keys and values
-    doc.write(`for (const ${kVar} in ${accessor}) {`);
-    doc.indented((d) => {
-      // Skip __proto__
-      d.write(`if (${kVar} === "__proto__") continue;`);
-      d.write(`const ${valVar} = ${accessor}[${kVar}];`);
-      const valOutput = generateCheck(d, ctx, def.valueType, valVar);
-      d.write(`${outputVar}[${kVar}] = ${valOutput};`);
-    });
-    doc.write(`}`);
+    doc.write(`return INVALID;`);
+    return outputVar;
   }
+
+  // Dynamic keys: iterate input keys and validate each value. Runtime uses
+  // Reflect.ownKeys for symbol-key support; for...in is enumerable-string-only,
+  // so symbol-keyed records will fall back to runtime via the unrecognized
+  // path (the runtime ignores keys for dynamic key schemas — divergence is
+  // limited to symbol keys, which is documented in wiki/compile.md).
+  doc.write(`for (const ${kVar} in ${accessor}) {`);
+  doc.indented((d) => {
+    d.write(`if (${kVar} === "__proto__") continue;`);
+    d.write(`const ${valVar} = ${accessor}[${kVar}];`);
+    const valOutput = generateCheck(d, ctx, def.valueType, valVar);
+    d.write(`${outputVar}[${kVar}] = ${valOutput};`);
+  });
+  doc.write(`}`);
 
   return outputVar;
 }
@@ -1181,19 +1179,39 @@ function generateLazyCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acce
 }
 
 function generatePipeCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
-  const def = schema._zod.def as unknown as { in: SomeType; out: SomeType; transform?: (value: unknown) => unknown };
+  const def = schema._zod.def as unknown as {
+    in: SomeType;
+    out: SomeType;
+    transform?: (value: unknown, payload: unknown) => unknown;
+  };
 
   // Validate input type first
   const inputOutput = generateCheck(doc, ctx, def.in, accessor);
 
   if (def.transform) {
-    // Apply transform and validate output
+    // Apply transform and validate output. The transform may read its second
+    // `payload` argument (codec transforms like z.stringbool() push issues
+    // there) so wrap the call in a helper that spoofs a payload. If the
+    // transform pushes issues or throws, signal INVALID and let the wrapper
+    // fall back to the runtime.
     if (isAsyncFunction(def.transform)) {
       throw new ZodCompileAsyncError("z.compile: async transforms in pipes are not supported");
     }
-    const transformConst = addConstant(ctx, def.transform);
+    const transformFn = def.transform;
+    const helperFn = (value: unknown): unknown => {
+      const fakePayload = { value, issues: [] as unknown[] };
+      try {
+        const result = transformFn(value, fakePayload as any);
+        if (result instanceof Promise) return INVALID;
+        return fakePayload.issues.length === 0 ? result : INVALID;
+      } catch {
+        return INVALID;
+      }
+    };
+    const helperConst = addConstant(ctx, helperFn);
     const transformedVar = newVar(ctx);
-    doc.write(`const ${transformedVar} = ${transformConst}(${inputOutput});`);
+    doc.write(`const ${transformedVar} = ${helperConst}(${inputOutput});`);
+    doc.write(`if (${transformedVar} === INVALID) return INVALID;`);
     return generateCheck(doc, ctx, def.out, transformedVar);
   } else {
     // No transform - validate output type on same value
