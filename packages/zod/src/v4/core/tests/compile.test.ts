@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 
 import * as z from "../../index.js";
-import { ZodCompileAsyncError, compile } from "../compile.js";
+import { ZodCompileAsyncError, ZodCompileUnsupportedError, compile } from "../compile.js";
 
 // Differential helper: assert compiled schema matches the original on a value.
 function expectMatch(schema: z.ZodType, value: unknown) {
@@ -207,11 +207,11 @@ test("default", () => {
   invalid(aot, 123);
 });
 
-test("prefault", () => {
-  const aot = compile(z.string().prefault("hello"));
-  expect(valid(aot, "world")).toBe("world");
-  expect(valid(aot, undefined)).toBe("hello"); // prefault applies
-  invalid(aot, 123);
+test("prefault is unsupported (runtime runs default through inner)", () => {
+  // Runtime applies the prefault value through the inner schema's checks/
+  // transforms (e.g. `z.string().trim().prefault("  x  ")` trims to "x").
+  // The fast path can't model that.
+  expect(() => compile(z.string().prefault("hello"))).toThrow(ZodCompileUnsupportedError);
 });
 
 test("nonoptional", () => {
@@ -505,13 +505,10 @@ test("uuid", () => {
   invalid(aot, "550e8400-e29b-41d4-a716");
 });
 
-test("url", () => {
-  const aot = compile(z.url());
-  expect(valid(aot, "https://example.com")).toBe("https://example.com");
-  expect(valid(aot, "http://localhost:3000/path")).toBe("http://localhost:3000/path");
-  expect(valid(aot, "ftp://files.example.com")).toBe("ftp://files.example.com");
-  invalid(aot, "not a url");
-  invalid(aot, "example.com");
+test("url is unsupported (runtime trims/normalizes/etc.)", () => {
+  // z.url() runtime behavior includes trimming and option-aware normalization
+  // that the fast path can't model. Throws so global mode falls back.
+  expect(() => compile(z.url())).toThrow(ZodCompileUnsupportedError);
 });
 
 test("ipv4", () => {
@@ -528,8 +525,7 @@ test("matches Zod: string formats", () => {
   expectMatch(z.email(), "invalid");
   expectMatch(z.uuid(), "550e8400-e29b-41d4-a716-446655440000");
   expectMatch(z.uuid(), "not-a-uuid");
-  expectMatch(z.url(), "https://example.com");
-  expectMatch(z.url(), "not a url");
+  // z.url() intentionally throws at compile time (see "url is unsupported").
 });
 
 // === Tuple ===
@@ -614,18 +610,12 @@ test("matches Zod: union", () => {
 
 // === Intersection ===
 
-test("intersection of objects", () => {
-  const aot = compile(z.intersection(z.object({ name: z.string() }), z.object({ age: z.number() })));
-  expect(valid(aot, { name: "Alice", age: 30 })).toEqual({ name: "Alice", age: 30 });
-  invalid(aot, { name: "Alice" });
-  invalid(aot, { age: 30 });
-});
-
-test("matches Zod: intersection", () => {
-  const schema = z.intersection(z.object({ a: z.string() }), z.object({ b: z.number() }));
-  expectMatch(schema, { a: "hello", b: 42 });
-  expectMatch(schema, { a: "hello" });
-  expectMatch(schema, { b: 42 });
+test("intersection is unsupported and throws at compile time", () => {
+  // The fast path can't model intersection's deep-merge semantics; runtime
+  // owns it via the global shim's fallback. Direct `z.compile(intersection)`
+  // surfaces this as ZodCompileUnsupportedError so callers know not to try.
+  const schema = z.intersection(z.object({ name: z.string() }), z.object({ age: z.number() }));
+  expect(() => compile(schema)).toThrow(ZodCompileUnsupportedError);
 });
 
 // === Record ===

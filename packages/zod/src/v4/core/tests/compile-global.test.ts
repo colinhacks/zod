@@ -1,27 +1,14 @@
 // Tests the `zod/compile` subpath module — the user-facing API for enabling
-// global AOT compilation. This file is run under the default test suite (NOT
-// compile-mode) because it intentionally toggles the post-processor on/off to
-// validate the import side effect.
-//
-// Manages its own globalConfig.postProcessor state with beforeAll/afterAll so
-// it doesn't pollute other test files that share the worker.
+// global AOT compilation. Importing this file (or running it under
+// compile-mode where the setup file already imported `zod/compile`) installs
+// the post-processor for the duration of this vitest worker. Vitest's
+// `isolate: true` puts each test file in its own worker, so the install
+// doesn't leak to other files.
 
-import { afterAll, beforeAll, expect, test } from "vitest";
+import { expect, test } from "vitest";
+import "zod/compile";
 import * as z from "zod/v4";
 import * as core from "zod/v4/core";
-
-const savedPostProcessor = core.globalConfig.postProcessor;
-
-beforeAll(async () => {
-  core.globalConfig.postProcessor = undefined;
-  // Dynamic import so the side effect happens after we've cleared any
-  // pre-existing post-processor.
-  await import("zod/compile");
-});
-
-afterAll(() => {
-  core.globalConfig.postProcessor = savedPostProcessor;
-});
 
 test("zod/compile sets globalConfig.postProcessor", () => {
   expect(typeof core.globalConfig.postProcessor).toBe("function");

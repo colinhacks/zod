@@ -18,6 +18,20 @@ export class ZodCompileAsyncError extends Error {
   }
 }
 
+/**
+ * Thrown by `compile()` when the schema contains a feature whose semantics the
+ * fast path can't fully model. The shim in `zod/compile` catches this and
+ * falls back permanently to the runtime parser for that schema. Users calling
+ * `z.compile(s)` explicitly will see this thrown and should not catch it —
+ * they should not be compiling that schema.
+ */
+export class ZodCompileUnsupportedError extends Error {
+  constructor(feature: string) {
+    super(`z.compile does not support ${feature}; this schema must use the runtime parser`);
+    this.name = "ZodCompileUnsupportedError";
+  }
+}
+
 interface CompileContext {
   constants: Map<string, unknown>;
   constantCounter: number;
@@ -258,6 +272,11 @@ function generateNumberFormatCheck(doc: Doc, def: checks.$ZodCheckNumberFormatDe
       doc.write(`if (!Number.isInteger(${accessor}) || ${accessor} < 0 || ${accessor} > 4294967295) return INVALID;`);
       break;
     case "float32":
+      // Float32 range per util.NUMBER_FORMAT_RANGES
+      doc.write(
+        `if (!Number.isFinite(${accessor}) || ${accessor} < -3.4028234663852886e38 || ${accessor} > 3.4028234663852886e38) return INVALID;`
+      );
+      break;
     case "float64":
       doc.write(`if (!Number.isFinite(${accessor})) return INVALID;`);
       break;
@@ -388,7 +407,20 @@ type StringFormatDef =
 type SupportedStringFormat = "regex" | "lowercase" | "uppercase" | "includes" | "starts_with" | "ends_with";
 
 function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFormatDef, accessor: string): void {
-  // If a pattern is provided, use regex check for all format types
+  // Some string formats do runtime validation beyond their advertised pattern
+  // (base64 whitespace rejection, base64url's atob check, jwt structural
+  // validation, url's normalize/hostname/protocol options). For those, force
+  // fallback so the runtime's check runs and produces the right answer.
+  const fmt = def.format;
+  if (fmt === "url" || fmt === "base64" || fmt === "base64url" || fmt === "jwt" || fmt === "httpurl") {
+    throw new ZodCompileUnsupportedError(`z.${fmt}() — runtime check beyond pattern`);
+  }
+  const formatDef = def as unknown as { normalize?: boolean; hostname?: unknown; protocol?: unknown };
+  if (formatDef.normalize || formatDef.hostname !== undefined || formatDef.protocol !== undefined) {
+    throw new ZodCompileUnsupportedError(`z.url({normalize|hostname|protocol}) — runtime options`);
+  }
+
+  // If a pattern is provided, use regex check for all other format types
   if (def.pattern) {
     const patternConst = addConstant(ctx, def.pattern);
     doc.write(`${patternConst}.lastIndex = 0;`);
@@ -479,7 +511,7 @@ function generateCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor
       typeAccessor = generateStringCheck(doc, ctx, schema, accessor);
       break;
     case "number":
-      typeAccessor = generateNumberCheck(doc, accessor);
+      typeAccessor = generateNumberCheck(doc, schema, accessor);
       break;
     case "boolean":
       typeAccessor = generateBooleanCheck(doc, accessor);
@@ -532,7 +564,14 @@ function generateCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor
     case "enum":
       typeAccessor = generateEnumCheck(doc, ctx, schema, accessor);
       break;
-    case "readonly":
+    case "readonly": {
+      const innerOut = generateWrapperCheck(doc, ctx, schema, accessor);
+      // Runtime freezes the parsed value (schemas.ts handleReadonlyResult).
+      const frozenVar = newVar(ctx);
+      doc.write(`const ${frozenVar} = Object.freeze(${innerOut});`);
+      typeAccessor = frozenVar;
+      break;
+    }
     case "success":
       typeAccessor = generateWrapperCheck(doc, ctx, schema, accessor);
       break;
@@ -593,21 +632,50 @@ function generateStringCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
   doc.write(`if (typeof ${accessor} !== "string") return INVALID;`);
 
   // Handle string format patterns (email, uuid, etc.)
-  const def = schema._zod.def as unknown as { pattern?: RegExp; format?: string };
+  const def = schema._zod.def as unknown as {
+    pattern?: RegExp;
+    format?: string;
+    normalize?: boolean;
+    hostname?: unknown;
+    protocol?: unknown;
+  };
+
+  // httpurl/base64url/jwt do runtime validation beyond their advertised
+  // pattern. base64 has been hardened with a whitespace check in main
+  // (#5888). url has runtime normalization/options behavior (mini z.url()
+  // even trims whitespace by default). Force fallback for all of these.
+  if (
+    def.format === "url" ||
+    def.format === "httpurl" ||
+    def.format === "base64" ||
+    def.format === "base64url" ||
+    def.format === "jwt" ||
+    def.normalize ||
+    def.hostname !== undefined ||
+    def.protocol !== undefined
+  ) {
+    throw new ZodCompileUnsupportedError(`z.${def.format ?? "string"} — runtime check beyond pattern`);
+  }
+
   if (def.pattern) {
     const patternConst = addConstant(ctx, def.pattern);
     doc.write(`${patternConst}.lastIndex = 0;`);
     doc.write(`if (!${patternConst}.test(${accessor})) return INVALID;`);
-  } else if (def.format === "url") {
-    // URL validation uses try/catch with new URL()
-    doc.write(`try { new URL(${accessor}); } catch { return INVALID; }`);
   }
   return accessor;
 }
 
-function generateNumberCheck(doc: Doc, accessor: string): string {
+function generateNumberCheck(doc: Doc, schema: SomeType, accessor: string): string {
   // Runtime z.number() rejects NaN and ±Infinity. Number.isFinite covers both.
   doc.write(`if (typeof ${accessor} !== "number" || !Number.isFinite(${accessor})) return INVALID;`);
+
+  // Mini factories like z.int(), z.int32(), z.uint32(), z.float32() bake a
+  // number_format check into the schema def itself (not into def.checks).
+  // Apply the same constraint here.
+  const def = schema._zod.def as unknown as { check?: string; format?: string };
+  if (def.check === "number_format" && def.format) {
+    generateNumberFormatCheck(doc, { format: def.format } as checks.$ZodCheckNumberFormatDef, accessor);
+  }
   return accessor;
 }
 
@@ -683,6 +751,14 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
     const propSchema = shape[key]!;
     const propType = propSchema._zod.def.type;
     const propAccessor = `${accessor}[${util.esc(key)}]`;
+
+    // Required keys (optin != optional) MUST be present in the input. Reading
+    // `input[k]` for an absent key returns undefined silently, which would
+    // pass schemas like `z.undefined()` or `z.union([z.string(), z.undefined()])`
+    // even though the runtime rejects absent keys for those.
+    if (propSchema._zod.optin !== "optional") {
+      doc.write(`if (!(${util.esc(key)} in ${accessor})) return INVALID;`);
+    }
 
     // For complex types, cache in variable first
     let inputVar = propAccessor;
@@ -761,26 +837,53 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
   }
   // else: strip mode (no catchall) - unknown keys ignored, only include known keys
 
-  // Build output object literal
+  // Build output object preserving the schema's declared key order. For each
+  // key:
+  //   - optout != "optional" → always include (required, or default/prefault).
+  //   - optout == "optional" AND input had the key → include with value.
+  //   - optout == "optional" AND input did not have the key → omit (runtime
+  //     drops absent optional keys; explicit `undefined` is preserved).
   const outputVar = newVar(ctx);
-  const propLiterals = keys.map((k) => `${util.esc(k)}: ${propOutputs[k]}`).join(", ");
 
   if (unknownKeysVar && unknownKeysVar !== accessor) {
-    // Include unknown keys via spread
-    doc.write(`const ${outputVar} = { ...${unknownKeysVar}, ${propLiterals} };`);
+    doc.write(`const ${outputVar} = { ...${unknownKeysVar} };`);
   } else if (unknownKeysVar === accessor) {
-    // All keys are unknown (empty shape with passthrough)
     doc.write(`const ${outputVar} = { ...${accessor} };`);
   } else {
-    // Just known properties
-    doc.write(`const ${outputVar} = { ${propLiterals} };`);
+    doc.write(`const ${outputVar} = {};`);
+  }
+
+  for (const k of keys) {
+    if (shape[k]!._zod.optout === "optional") {
+      doc.write(`if (${util.esc(k)} in ${accessor}) ${outputVar}[${util.esc(k)}] = ${propOutputs[k]};`);
+    } else {
+      doc.write(`${outputVar}[${util.esc(k)}] = ${propOutputs[k]};`);
+    }
   }
 
   return outputVar;
 }
 
 function generateOptionalCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
+  // exactOptional ("key may be absent, but explicit `undefined` is invalid")
+  // is structurally type:"optional" but with overridden parse that doesn't
+  // accept undefined. The fast path can't tell "absent" from "present and
+  // undefined" so it would incorrectly accept explicit undefined here.
+  // Force fallback.
+  if ((schema._zod as any).traits?.has?.("$ZodExactOptional")) {
+    throw new ZodCompileUnsupportedError("z.exactOptional — runtime distinguishes absent vs explicit undefined");
+  }
+
   const def = schema._zod.def as unknown as { innerType: SomeType };
+
+  // Optional-wrapping-default ("apply default through the optional") requires
+  // running the default's getter when input is undefined. Fast path's "skip
+  // inner entirely if undefined" would lose the default.
+  const innerType = def.innerType._zod.def.type;
+  if (innerType === "default" || innerType === "prefault") {
+    throw new ZodCompileUnsupportedError("optional wrapping default — runtime applies default through optional");
+  }
+
   const outputVar = newVar(ctx);
   doc.write(`let ${outputVar};`);
   doc.write(`if (${accessor} !== undefined) {`);
@@ -876,6 +979,22 @@ function generateWrapperCheck(doc: Doc, ctx: CompileContext, schema: SomeType, a
 
 function generateDefaultCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
   const def = schema._zod.def as unknown as { innerType: SomeType };
+
+  // prefault differs from default: undefined-input → run the prefault value
+  // *through* the inner schema (so checks, transforms, overwrites apply).
+  // The current codegen would return the raw default value. Force fallback.
+  if (schema._zod.def.type === "prefault") {
+    throw new ZodCompileUnsupportedError("z.prefault — runtime runs default through inner");
+  }
+
+  // "Apply default at output" — when inner is a transform/pipe/codec, the
+  // runtime applies the default if the *transformed* value is undefined, not
+  // just the input. The fast path can't see the transform's output to decide.
+  const innerType = def.innerType._zod.def.type;
+  if (innerType === "transform" || innerType === "pipe") {
+    throw new ZodCompileUnsupportedError("default wrapping transform/pipe — runtime applies default at output");
+  }
+
   const outputVar = newVar(ctx);
 
   // Get the default value getter from the property descriptor
@@ -923,6 +1042,21 @@ function generateTupleCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
   const def = schema._zod.def as unknown as { items: SomeType[]; rest: SomeType | null };
   const items = def.items;
   const rest = def.rest;
+
+  // Tuple-with-defaults and exactOptional-tuple-items have non-trivial
+  // output-shaping rules at runtime (dense vs truncated, defaults applied at
+  // output side, etc.). The fast path's simple element-by-element loop
+  // doesn't model any of that. Detection via optin/optout: an item whose
+  // optin==optional but optout!=optional has a default/prefault somewhere in
+  // its wrapper chain that fills in the missing slot. Force fallback.
+  for (const item of items) {
+    if (item._zod.optin === "optional" && item._zod.optout !== "optional") {
+      throw new ZodCompileUnsupportedError("tuple with item that fills a missing slot (default/prefault)");
+    }
+    if ((item._zod as any).traits?.has?.("$ZodExactOptional")) {
+      throw new ZodCompileUnsupportedError("tuple with exactOptional item");
+    }
+  }
 
   doc.write(`if (!Array.isArray(${accessor})) return INVALID;`);
 
@@ -995,8 +1129,14 @@ function getTupleOptStart(items: SomeType[]): number {
 }
 
 function generateUnionCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
-  const def = schema._zod.def as unknown as { options: SomeType[] };
+  const def = schema._zod.def as unknown as { options: SomeType[]; inclusive?: boolean };
   const options = def.options;
+
+  // z.xor (exclusive union) requires *exactly one* option to match; the fast
+  // path's "first match wins" semantics would silently accept multi-match.
+  if (def.inclusive === false) {
+    throw new ZodCompileUnsupportedError("z.xor — exclusive union requires exactly-one-match");
+  }
 
   if (options.length === 0) {
     doc.write("return INVALID;");
@@ -1042,34 +1182,23 @@ function generateUnionCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
   return outputVar;
 }
 
-function generateIntersectionCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
-  const def = schema._zod.def as unknown as { left: SomeType; right: SomeType };
-
-  // Both schemas must pass
-  const leftOutput = generateCheck(doc, ctx, def.left, accessor);
-  const rightOutput = generateCheck(doc, ctx, def.right, accessor);
-
-  // For intersections of objects, merge the outputs
-  const leftType = def.left._zod.def.type;
-  const rightType = def.right._zod.def.type;
-
-  if (leftType === "object" && rightType === "object") {
-    // Merge both object outputs
-    const outputVar = newVar(ctx);
-    doc.write(`const ${outputVar} = { ...${leftOutput}, ...${rightOutput} };`);
-    return outputVar;
-  }
-
-  // For non-objects, return the right side (they should be the same value)
-  return rightOutput;
+function generateIntersectionCheck(_doc: Doc, _ctx: CompileContext, _schema: SomeType, _accessor: string): string {
+  // Intersection runtime does deep recursive merge of overlapping object/
+  // array values plus rich incompatibility errors. The fast path's shallow
+  // `{...left, ...right}` silently produces wrong output for nested merges
+  // and accepts incompatible array merges that the runtime rejects. Force
+  // fallback for the whole intersection.
+  throw new ZodCompileUnsupportedError("z.intersection — runtime deep-merge semantics");
 }
 
 function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
   const def = schema._zod.def as unknown as { keyType: SomeType; valueType: SomeType };
 
-  doc.write(
-    `if (typeof ${accessor} !== "object" || ${accessor} === null || Array.isArray(${accessor})) return INVALID;`
-  );
+  // Use util.isPlainObject (rejects Date, Map, Set, class instances, etc.) to
+  // match runtime behavior. Hoisted call instead of inline so this stays a
+  // single source of truth with the runtime parser.
+  const isPlainObjectConst = addConstant(ctx, util.isPlainObject);
+  doc.write(`if (!${isPlainObjectConst}(${accessor})) return INVALID;`);
 
   const outputVar = newVar(ctx);
   const kVar = newVar(ctx);

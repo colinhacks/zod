@@ -1,6 +1,5 @@
-import { compile } from "./packages/zod/src/v4/core/compile.js";
-import * as z from "./packages/zod/src/v4/index.js";
+import { z } from "./packages/zod/src/v4/index.js";
 
-const schema = z.object({ name: z.string(), age: z.number() });
-const validate = compile(schema);
-console.log(validate({ name: "Alice", age: 30 }));
+const rec = z.record(z.string(), z.string());
+const result = rec.safeParse(new Date());
+process.stdout.write(`record runtime: success=${result.success}, error=${JSON.stringify(result.error?.issues, null, 2)}\n`);

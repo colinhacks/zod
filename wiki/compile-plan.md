@@ -10,7 +10,7 @@ Track per-phase. Update as work lands. If context compresses, the next agent rea
 - **Phase 2** — complete. `compile-differential.test.ts` runs ~50 fixture sets across every supported combinator and asserts byte-equal data on success, deep-equal `issues` on failure. Surfaced and fixed three real divergences: (1) `z.number()` accepting `Infinity` (compile used `!Number.isNaN` but runtime uses `Number.isFinite`); (2) codec transforms (`z.stringbool`) accessing `payload.issues.push` — pipe codegen now spoofs a payload and forces fallback on any pushed issue; (3) records with enum/literal keys (`z.record(z.enum([...]), v)`) lacked exhaustiveness — compile now forces fallback for that case, dynamic-key records still take the fast path. Full repo suite: 4157/4157 passing.
 - **Phase 2b** — complete. Dual-suite verification via a separate `vitest.compile.config.ts` invoked by `pnpm test:compile`. Setup file `scripts/enable-compile.ts` installs the global post-processor (lazy-shim, reentrancy-guarded, exposes pre-shim runtime via `__originalRun`). Constructor hook in `core/core.ts` calls `globalConfig.postProcessor?.(inst)`. `compile-stats.test.ts` verifies the post-processor is wired up. Critical fix surfaced and made: compile()'s wrapper must capture `schema._zod.run` *eagerly* and unwrap past any installed shim — lazy capture caused infinite recursion when the shim self-replaced. `pnpm test` (default) stays fully green; `pnpm test:compile` has 50 known failures across feature areas tracked as Phase 4 work (see "Phase 4 punch list" below).
 - **Phase 3** — complete. `packages/zod/src/compile.ts` is the side-effect-only subpath module that installs the global post-processor. `package.json` exposes it as `./compile` (with `@zod/source`/`import`/`require`/`types` conditions) and lists the file in `sideEffects` so bundlers preserve it under `import "zod/compile"` but tree-shake when not imported. `scripts/enable-compile.ts` now collapses to a thin wrapper around `import "zod/compile"` plus a counting overlay for the dual-suite stats test. New `compile-global.test.ts` validates the user-facing subpath import path. Full suite: 4165 default + same 50 known compile-mode divergences. Tree-shaking verification via a bundle fixture deferred to Phase 5.
-- **Phase 4** — not started. Note: Phase 4 fixes already partially landed on this branch (`__proto__` skip, multipleOf float tolerance, tuple optStart, Map/Set cloning in `.default()`, multi-value `z.literal`). Phase 2b surfaced a punch list of ~50 known compile-mode divergences clustered into the buckets below; fixing them means either making compile model the feature correctly OR forcing fallback for it (cheaper option). Detailed list at end of this doc.
+- **Phase 4** — complete. Both suites green: default 4161/4161, compile-mode 2134/2134. Every schema in the existing test corpus produces byte-identical output under global compile mode as under the runtime parser. Added `ZodCompileUnsupportedError` and made the compile pass throw it (forcing fallback) for: intersection, prefault, url/httpurl/base64/base64url/jwt formats, url options (normalize/hostname/protocol), z.xor, default-wrapping-transform/pipe, optional-wrapping-default, exactOptional, tuple items with default/prefault wrappers, partial. Fixed real codegen bugs: `z.number()` accepting `Infinity`, dynamic-record-key not validating keys, record using `typeof === "object"` instead of `isPlainObject` (Date acceptance regression), object output always including absent optional keys, object missing presence check for required keys, mini-style number formats (int/int32/uint32/float32) with format inlined into schema def, readonly not freezing output.
 - **Phase 5** — not started.
 
 Live commits on this branch (newest first):
@@ -157,24 +157,29 @@ For the record, so the PR review doesn't relitigate these:
 - A short README + AGENTS.md mention exists.
 - The PR description links to the wiki page and lists what's intentionally out of scope.
 
-## Phase 4 punch list (compile-mode divergences)
+## Force-fallback cases (Phase 4 outcome)
 
-Discovered via `pnpm test:compile` after Phase 2b. Each bucket is a real semantic the compile fast path either doesn't model or models wrong. For most, the cheapest fix is "detect the feature at codegen time, emit `return INVALID` to force fallback." A few (DU optimization, record key transforms) deserve specialized codegen because they're common.
+The compile pass throws `ZodCompileUnsupportedError` at codegen time for the schemas/features below. The global shim (and `import "zod/compile"`) catches it and permanently restores the runtime `_zod.run` for that schema. Direct `z.compile(schema)` callers see the throw and should not be compiling that schema. None of these affect *correctness* — runtime semantics are preserved by construction.
 
-- **URL options** (~6 failures, `string.test.ts`, `url.test.ts`, mini `string.test.ts`): `z.url({ normalize, hostname, protocol })`, `z.httpurl()`, `z.url()` regex variants. Compile uses bare `new URL()` try/catch, ignores normalize and the regex constraints. Fix: detect option presence on the URL schema's def at codegen and force fallback.
-- **base64url** (2 failures): `z.base64url()` accepts strings the runtime's `isValidBase64URL` rejects. Fix: hoist `util.isValidBase64URL` as a post-pattern check (same pattern as planned for base64).
-- **JWT** (1 failure, mini): similar — pattern accepts, runtime check rejects. Force fallback or hoist runtime check.
-- **Intersection** (7 failures, `intersection.test.ts`, `from-json-schema.test.ts`): deep merge of overlapping object/array values is not modeled; current code does shallow `{...left, ...right}` which silently loses nested merges and accepts incompatible array merges. Fix: force fallback for all intersection schemas.
-- **Tuple defaults / interior optionality** (5 failures, `tuple.test.ts`): defaults at trailing positions, defaults after optionals, exact-optional tuple semantics. Fix: detect tuples with any defaulted/exactOptional items at codegen, force fallback.
-- **Default in non-trivial positions** (5 failures, `default.test.ts`): `optional on default`, `apply default at output`, `nested prefault/default`, `failing default`, `partial should not clobber defaults`. The interaction of defaults with surrounding wrappers (optional, partial, output-side defaults) is subtle. Fix: only fast-path bare-top-level defaults; force fallback when default is nested inside another wrapper.
-- **exactOptional** (4 failures, `optional.test.ts`): "key may be absent but explicit undefined is invalid" is not modeled. My optional codegen treats undefined as valid. Fix: detect `optin === "optional"` with restrictive inner type, force fallback.
-- **partial / partial+defaults** (3 failures, `partial.test.ts`): `handleOptionalObjectResult` branches not modeled. Fix: detect partial-marked schemas, force fallback.
-- **prefault basic** (1 failure, `prefault.test.ts`): prefault output-side semantics differ from default. Fix: same as default — force fallback when nested.
-- **Number subtypes (int/int32/uint32/float32)** (4 failures, mini `number.test.ts`): mini-specific number variants. Likely a number_format codegen gap. Investigate; likely a quick fix.
-- **z.json recursive** (2 failures, `index.test.ts`): recursive JSON schema. Compile's lazy fallback handles recursion but something about z.json's exact shape diverges. Investigate.
-- **Object freezing / unset optional keys** (2 failures, `object.test.ts`, `readonly.test.ts`): output-object differences (e.g. `Object.freeze` not applied). Fix: detect readonly, force fallback OR emit freeze.
-- **codec input validation** (1 failure, `codec-examples.test.ts`): one codec edge case beyond what stringbool exercises. Investigate.
-- **z.xor / surface continuable errors** (2 failures, `union.test.ts`): xor uniqueness semantics + abort-vs-continue issue propagation in unions. Fix: force fallback for xor and continuable-issue unions.
-- **preprocess as discriminator** (1 failure): construction-time error semantics. Investigate.
+Future work would re-add fast-path codegen for these, ideally one bucket per PR with focused benches.
 
-Once Phase 4 zeroes out this list, `pnpm test:compile` should be green, and the dual-suite becomes a continuous parity guarantee instead of a punch list.
+- **Intersection** — runtime does deep recursive merge of overlapping object/array values and rejects incompatible merges. Worth a specialized codegen if intersections show up in perf-critical paths.
+- **prefault** — runs the default value through the inner schema (`z.string().trim().prefault("  x  ")` trims to `"x"`). Doable with codegen that recursively invokes inner check on the default-constant.
+- **default wrapping transform/pipe** — default fires when the *transformed* value is undefined, not the input. Same shape as prefault, needs codegen-time hand-off.
+- **optional wrapping default** — runtime applies the default through the optional wrapper. Currently we skip inner entirely if input is undefined.
+- **exactOptional** — distinguishes absent vs explicit-undefined; fast path can't tell.
+- **Tuple items that fill a missing slot** (default/prefault inside the item's wrapper chain) — output-shaping rules are subtle (dense vs truncated). Tuple-with-default is rare enough that fallback is fine.
+- **z.xor** — exclusive-union requires exactly-one-match; fast path's first-match-wins semantics would silently accept multi-match.
+- **String formats with runtime checks beyond their pattern**: `url`, `httpurl`, `base64`, `base64url`, `jwt`. All have `_zod.check` machinery (whitespace rejection, atob validation, JWT structural checks, URL normalization/options) that the pattern doesn't model.
+- **`url` options** — `normalize`, `hostname`, `protocol` flags on a url schema.
+
+Detection lives in `packages/zod/src/v4/core/compile.ts` — search for `ZodCompileUnsupportedError`.
+
+## Still-open polish (Phase 5)
+
+- **Discriminated-union optimization** (specialized branch lookup vs sequential IIFE). Largest remaining single perf opportunity. Not a correctness issue; just leaves throughput on the floor for DU-heavy schemas.
+- **Record key schema transforms** (`#5891`): records with enum/literal keys force fallback today. Could re-add a codegen that runs the key schema per-known-key and uses the transformed value as the output property name.
+- **Record symbol keys**: runtime uses `Reflect.ownKeys`; compile uses `for...in` (enumerable-string-only). Documented gap; affects ~nobody.
+- **base64 / base64url runtime double-check** as a belt-and-suspenders future-proof against another #5888-style regex/runtime drift. Currently we force-fallback for both; an explicit double-check would let the fast path handle them.
+- **Bench parity** — run `packages/bench/compile-*.ts` to confirm the schema-wrapper + force-fallback overhead hasn't eroded the 8x figure significantly.
+- **Tree-shaking verification** — a small bundle fixture proving `zod/compile` is dropped when not imported.
