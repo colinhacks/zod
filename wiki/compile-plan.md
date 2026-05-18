@@ -183,3 +183,7 @@ Detection lives in `packages/zod/src/v4/core/compile.ts` — search for `ZodComp
 - **URL/httpurl runtime helper**: if we extract URL validation/normalization into a pure helper (like `isValidBase64URL` / `isValidJWT`), compile can hoist it and stop force-falling back for URLs too.
 - **Bench parity** — run `packages/bench/compile-*.ts` to confirm the schema-wrapper + force-fallback overhead hasn't eroded the 8x figure significantly.
 - **Tree-shaking/API decision** — esbuild bundle fixture shows `packages/zod/src/compile.ts` (global side-effect module) is dropped unless `import "zod/compile"` is present, but `packages/zod/src/v4/core/compile.ts` is retained by ordinary `import * as z from "zod"` because the public namespace exposes `z.compile`. To make the compiler fully tree-shakeable for namespace imports, the per-schema API would need to move off the main namespace (e.g. named export from `zod/compile`), or accept that `z.compile` trades bundle size for discoverability.
+
+Completed polish after this list was written:
+
+- **Record symbol keys** — done. Dynamic `z.record(z.string(), value)` now uses `Reflect.ownKeys` plus `propertyIsEnumerable` and rejects enumerable symbol keys, matching the runtime. Differential coverage added.

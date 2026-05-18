@@ -1382,13 +1382,16 @@ function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
     return outputVar;
   }
 
-  // Plain z.string() keys: iterate input keys, validate each value.
-  // Runtime uses Reflect.ownKeys for symbol-key support; for...in is
-  // enumerable-string-only — symbol-keyed inputs differ. Documented in
-  // wiki/compile.md as a known gap.
-  doc.write(`for (const ${kVar} in ${accessor}) {`);
+  // Plain z.string() keys: iterate enumerable own keys and validate each
+  // value. Runtime uses Reflect.ownKeys so symbol keys participate in
+  // validation; matching that here prevents silently accepting objects with
+  // enumerable Symbol keys under z.record(z.string(), ...).
+  const propIsEnumerable = addConstant(ctx, Object.prototype.propertyIsEnumerable);
+  doc.write(`for (const ${kVar} of Reflect.ownKeys(${accessor})) {`);
   doc.indented((d) => {
     d.write(`if (${kVar} === "__proto__") continue;`);
+    d.write(`if (!${propIsEnumerable}.call(${accessor}, ${kVar})) continue;`);
+    d.write(`if (typeof ${kVar} !== "string") return INVALID;`);
     d.write(`const ${valVar} = ${accessor}[${kVar}];`);
     const valOutput = generateCheck(d, ctx, def.valueType, valVar);
     d.write(`${outputVar}[${kVar}] = ${valOutput};`);

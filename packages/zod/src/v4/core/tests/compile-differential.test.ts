@@ -181,6 +181,12 @@ test("record dynamic key", () => {
   differential(z.record(z.string(), z.number()), [{}, { a: 1, b: 2 }, { a: "x" }]);
 });
 
+test("record dynamic key rejects enumerable symbol keys", () => {
+  const key = Symbol("record-key");
+  const input = { a: 1, [key]: 2 };
+  differential(z.record(z.string(), z.number()), [input]);
+});
+
 test("record enum key", () => {
   differential(z.record(z.enum(["a", "b"]), z.number()), [{ a: 1, b: 2 }, { a: 1, c: 3 }, {}]);
 });
