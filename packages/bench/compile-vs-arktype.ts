@@ -55,11 +55,16 @@ const arktypeArray = type("number[]");
 const zodArrayOfObjects = z.array(z.object({ id: z.number(), name: z.string() }));
 const arktypeArrayOfObjects = type({ id: "number", name: "string" }).array();
 
-// Compiled Zod validators
+// Compiled Zod schemas (public API) + raw fast paths (lower-level primitive)
 const zodSimpleCompiled = zcore.compile(zodSimple);
 const zodNestedCompiled = zcore.compile(zodNested);
 const zodArrayCompiled = zcore.compile(zodArray);
 const zodArrayOfObjectsCompiled = zcore.compile(zodArrayOfObjects);
+
+const zodSimpleFastpass = zcore.compileFastpass(zodSimple);
+const zodNestedFastpass = zcore.compileFastpass(zodNested);
+const zodArrayFastpass = zcore.compileFastpass(zodArray);
+const zodArrayOfObjectsFastpass = zcore.compileFastpass(zodArrayOfObjects);
 
 // ============================================
 // TEST DATA
@@ -141,12 +146,14 @@ function handwrittenArray(input: unknown): number[] | typeof INVALID {
 
 console.log("=== Correctness Check ===");
 console.log("Zod safeParse simple:", zodSimple.safeParse(simpleData).success);
-console.log("z.compile() simple:", zodSimpleCompiled(simpleData) !== undefined);
+console.log("z.compile() simple:", zodSimpleCompiled.safeParse(simpleData).success);
+console.log("z.compileFastpass() simple:", zodSimpleFastpass(simpleData) !== zcore.INVALID);
 console.log("Arktype simple:", !(arktypeSimple(simpleData) instanceof type.errors));
 console.log("Handwritten simple:", handwrittenSimple(simpleData) !== INVALID);
 console.log("");
 console.log("Zod safeParse nested:", zodNested.safeParse(nestedData).success);
-console.log("z.compile() nested:", zodNestedCompiled(nestedData) !== undefined);
+console.log("z.compile() nested:", zodNestedCompiled.safeParse(nestedData).success);
+console.log("z.compileFastpass() nested:", zodNestedFastpass(nestedData) !== zcore.INVALID);
 console.log("Arktype nested:", !(arktypeNested(nestedData) instanceof type.errors));
 console.log("Handwritten nested:", handwrittenNested(nestedData) !== INVALID);
 console.log("");
@@ -173,57 +180,69 @@ console.log("");
 // BENCHMARKS
 // ============================================
 
-metabench("simple object { name, age }", {
+await metabench("simple object { name, age }", {
   handwritten() {
     return handwrittenSimple(simpleData);
   },
   arktype() {
     return arktypeSimple(simpleData);
   },
-  "z.compile()"() {
-    return zodSimpleCompiled(simpleData);
+  "z.compile().safeParse"() {
+    return zodSimpleCompiled.safeParse(simpleData);
+  },
+  "z.compileFastpass()"() {
+    return zodSimpleFastpass(simpleData);
   },
   "zod safeParse"() {
     return zodSimple.safeParse(simpleData);
   },
 }).run();
 
-metabench("nested object (moltar schema)", {
+await metabench("nested object (moltar schema)", {
   handwritten() {
     return handwrittenNested(nestedData);
   },
   arktype() {
     return arktypeNested(nestedData);
   },
-  "z.compile()"() {
-    return zodNestedCompiled(nestedData);
+  "z.compile().safeParse"() {
+    return zodNestedCompiled.safeParse(nestedData);
+  },
+  "z.compileFastpass()"() {
+    return zodNestedFastpass(nestedData);
   },
   "zod safeParse"() {
     return zodNested.safeParse(nestedData);
   },
 }).run();
 
-metabench("array of 100 numbers", {
+await metabench("array of 100 numbers", {
   handwritten() {
     return handwrittenArray(arrayData);
   },
   arktype() {
     return arktypeArray(arrayData);
   },
-  "z.compile()"() {
-    return zodArrayCompiled(arrayData);
+  "z.compile().safeParse"() {
+    return zodArrayCompiled.safeParse(arrayData);
+  },
+  "z.compileFastpass()"() {
+    return zodArrayFastpass(arrayData);
   },
   "zod safeParse"() {
     return zodArray.safeParse(arrayData);
   },
 }).run();
 
-metabench("array of 50 objects", {
+await metabench("array of 50 objects", {
   arktype() {
     return arktypeArrayOfObjects(arrayOfObjectsData);
   },
-  "z.compile()"() {
-    return zodArrayOfObjectsCompiled(arrayOfObjectsData);
+  "z.compile().safeParse"() {
+    return zodArrayOfObjectsCompiled.safeParse(arrayOfObjectsData);
+  },
+  "z.compileFastpass()"() {
+    return zodArrayOfObjectsFastpass(arrayOfObjectsData);
   },
   "zod safeParse"() {
     return zodArrayOfObjects.safeParse(arrayOfObjectsData);

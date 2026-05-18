@@ -40,6 +40,8 @@ core.globalConfig.postProcessor = (inst: any) => {
     try {
       const compiled = compile(inst);
       inst._zod.run = compiled._zod.run;
+      if (typeof compiled.safeParse === "function") inst.safeParse = compiled.safeParse;
+      if (typeof compiled.parse === "function") inst.parse = compiled.parse;
     } catch {
       // Permanent fallback for unsupported schemas.
       inst._zod.run = originalRun;

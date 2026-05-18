@@ -100,7 +100,40 @@ export function compile<T extends SomeType>(schema: T): T {
     return originalRun(payload, ctx);
   };
 
+  installCompiledUserMethods(clone, schema, fast);
+
   return clone;
+}
+
+function installCompiledUserMethods<T extends SomeType>(
+  target: T,
+  source: T,
+  fast: CompiledFastpass<core.output<T>>
+): void {
+  const targetAny = target as any;
+  const sourceAny = source as any;
+
+  if (typeof sourceAny.safeParse === "function") {
+    const originalSafeParse = sourceAny.safeParse;
+    targetAny.safeParse = (data: unknown, params?: unknown) => {
+      const out = fast(data);
+      if (out !== INVALID) {
+        return { success: true, data: out };
+      }
+      return originalSafeParse(data, params);
+    };
+  }
+
+  if (typeof sourceAny.parse === "function") {
+    const originalParse = sourceAny.parse;
+    targetAny.parse = (data: unknown, params?: unknown) => {
+      const out = fast(data);
+      if (out !== INVALID) {
+        return out;
+      }
+      return originalParse(data, params);
+    };
+  }
 }
 
 /**
@@ -844,20 +877,32 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
   //   - optout == "optional" AND input did not have the key → omit (runtime
   //     drops absent optional keys; explicit `undefined` is preserved).
   const outputVar = newVar(ctx);
+  const hasOmittableKeys = keys.some((k) => shape[k]!._zod.optout === "optional");
 
-  if (unknownKeysVar && unknownKeysVar !== accessor) {
-    doc.write(`const ${outputVar} = { ...${unknownKeysVar} };`);
-  } else if (unknownKeysVar === accessor) {
-    doc.write(`const ${outputVar} = { ...${accessor} };`);
-  } else {
-    doc.write(`const ${outputVar} = {};`);
-  }
-
-  for (const k of keys) {
-    if (shape[k]!._zod.optout === "optional") {
-      doc.write(`if (${util.esc(k)} in ${accessor}) ${outputVar}[${util.esc(k)}] = ${propOutputs[k]};`);
+  if (!hasOmittableKeys) {
+    const propLiterals = keys.map((k) => `${util.esc(k)}: ${propOutputs[k]}`).join(", ");
+    if (unknownKeysVar && unknownKeysVar !== accessor) {
+      doc.write(`const ${outputVar} = { ...${unknownKeysVar}, ${propLiterals} };`);
+    } else if (unknownKeysVar === accessor) {
+      doc.write(`const ${outputVar} = { ...${accessor}, ${propLiterals} };`);
     } else {
-      doc.write(`${outputVar}[${util.esc(k)}] = ${propOutputs[k]};`);
+      doc.write(`const ${outputVar} = { ${propLiterals} };`);
+    }
+  } else {
+    if (unknownKeysVar && unknownKeysVar !== accessor) {
+      doc.write(`const ${outputVar} = { ...${unknownKeysVar} };`);
+    } else if (unknownKeysVar === accessor) {
+      doc.write(`const ${outputVar} = { ...${accessor} };`);
+    } else {
+      doc.write(`const ${outputVar} = {};`);
+    }
+
+    for (const k of keys) {
+      if (shape[k]!._zod.optout === "optional") {
+        doc.write(`if (${util.esc(k)} in ${accessor}) ${outputVar}[${util.esc(k)}] = ${propOutputs[k]};`);
+      } else {
+        doc.write(`${outputVar}[${util.esc(k)}] = ${propOutputs[k]};`);
+      }
     }
   }
 
