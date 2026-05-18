@@ -300,6 +300,21 @@ test("object with optional property", () => {
   invalid(aot, { name: "Alice", age: "30" });
 });
 
+test("object required undefined-accepting properties distinguish absence", () => {
+  const cases = [
+    z.object({ value: z.undefined() }),
+    z.object({ value: z.union([z.string(), z.undefined()]) }),
+    z.object({ value: z.any() }),
+    z.object({ value: z.unknown() }),
+  ];
+
+  for (const schema of cases) {
+    const aot = compile(schema);
+    invalid(aot, {});
+    expect(valid(aot, { value: undefined })).toEqual({ value: undefined });
+  }
+});
+
 test("strictObject", () => {
   const aot = compile(z.strictObject({ name: z.string() }));
   expect(valid(aot, { name: "Alice" })).toEqual({ name: "Alice" });
@@ -1069,6 +1084,35 @@ test("tuple with trailing optionals accepts short input (#5661)", () => {
   invalid(aot, []);
   invalid(aot, ["a", "b"]);
   invalid(aot, ["a", 1, "extra"]);
+});
+
+test("tuple exactOptional rejects explicit undefined but accepts absence", () => {
+  const aot = compile(z.tuple([z.string().exactOptional()]));
+  expect(valid(aot, [])).toEqual([]);
+  expect(valid(aot, ["x"])).toEqual(["x"]);
+  invalid(aot, [undefined]);
+  invalid(aot, [1]);
+});
+
+test("tuple mixed required and exactOptional", () => {
+  const aot = compile(z.tuple([z.number(), z.string().exactOptional(), z.boolean().exactOptional()]));
+  expect(valid(aot, [1])).toEqual([1]);
+  expect(valid(aot, [1, "x"])).toEqual([1, "x"]);
+  expect(valid(aot, [1, "x", true])).toEqual([1, "x", true]);
+  invalid(aot, []);
+  invalid(aot, [1, undefined]);
+  invalid(aot, [1, "x", undefined]);
+  invalid(aot, [1, "x", true, "extra"]);
+});
+
+test("tuple optional vs exactOptional differ on explicit undefined", () => {
+  const opt = compile(z.tuple([z.string().optional()]));
+  expect(valid(opt, [])).toEqual([]);
+  expect(valid(opt, [undefined])).toEqual([undefined]);
+
+  const exact = compile(z.tuple([z.string().exactOptional()]));
+  expect(valid(exact, [])).toEqual([]);
+  invalid(exact, [undefined]);
 });
 
 test("default() shallow-clones Map/Set/array/object (#5855)", () => {

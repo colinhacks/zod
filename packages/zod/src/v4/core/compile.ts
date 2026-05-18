@@ -877,11 +877,9 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
       }
       propOutputs[key] = outputVar;
     } else {
-      // Required keys (optin != optional) MUST be present in the input. Reading
-      // `input[k]` for an absent key returns undefined silently, which would
-      // pass schemas like `z.undefined()` or `z.union([z.string(), z.undefined()])`
-      // even though the runtime rejects absent keys for those.
-      doc.write(`if (!(${util.esc(key)} in ${accessor})) return INVALID;`);
+      if (requiresPresenceCheck(propSchema)) {
+        doc.write(`if (!(${util.esc(key)} in ${accessor})) return INVALID;`);
+      }
 
       // Generate check and get output accessor
       const outputAccessor = generateCheck(doc, ctx, propSchema, inputVar);
@@ -1046,6 +1044,78 @@ function generateOptionalCheck(doc: Doc, ctx: CompileContext, schema: SomeType, 
 
 function isExactOptional(schema: SomeType): boolean {
   return (schema._zod as { traits?: Set<string> }).traits?.has("$ZodExactOptional") === true;
+}
+
+// A required object key whose value-level fast path would silently accept an
+// absent key (which reads as `undefined`) needs an explicit `key in input`
+// guard. Without it, schemas like `z.undefined()` / `z.any()` / unions
+// containing undefined would pass for missing properties even though the
+// runtime rejects them.
+function requiresPresenceCheck(schema: SomeType): boolean {
+  return schema._zod.optin !== "optional" && fastPathAcceptsAbsence(schema);
+}
+
+function fastPathAcceptsAbsence(schema: SomeType): boolean {
+  const def = schema._zod.def as {
+    type: string;
+    values?: unknown[];
+    innerType?: SomeType;
+    options?: SomeType[];
+    in?: SomeType;
+    out?: SomeType;
+    left?: SomeType;
+    right?: SomeType;
+  };
+
+  switch (def.type) {
+    case "any":
+    case "unknown":
+    case "undefined":
+    case "void":
+    case "default":
+    case "prefault":
+    case "transform":
+    case "custom":
+    case "lazy":
+      return true;
+    case "string":
+    case "number":
+    case "boolean":
+    case "bigint":
+    case "symbol":
+    case "null":
+    case "never":
+    case "nan":
+    case "date":
+    case "object":
+    case "array":
+    case "tuple":
+    case "record":
+    case "map":
+    case "set":
+    case "file":
+    case "template_literal":
+    case "nonoptional":
+      return false;
+    case "literal":
+      return !!def.values?.includes(undefined);
+    case "enum":
+      return !!(schema._zod as unknown as { values?: Set<unknown> }).values?.has(undefined);
+    case "optional":
+    case "nullable":
+    case "readonly":
+    case "success":
+      return def.innerType ? fastPathAcceptsAbsence(def.innerType) : true;
+    case "union":
+      return def.options ? def.options.some(fastPathAcceptsAbsence) : true;
+    case "intersection":
+      if (!def.left || !def.right) return true;
+      return fastPathAcceptsAbsence(def.left) && fastPathAcceptsAbsence(def.right);
+    case "pipe":
+      return def.in ? fastPathAcceptsAbsence(def.in) : true;
+    default:
+      return true;
+  }
 }
 
 function schemaMaySetFallback(schema: SomeType): boolean {
@@ -1214,12 +1284,6 @@ function generateTupleCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
   const def = schema._zod.def as unknown as { items: SomeType[]; rest: SomeType | null };
   const items = def.items;
   const rest = def.rest;
-
-  for (const item of items) {
-    if ((item._zod as any).traits?.has?.("$ZodExactOptional")) {
-      throw new ZodCompileUnsupportedError("tuple with exactOptional item");
-    }
-  }
 
   doc.write(`if (!Array.isArray(${accessor})) return INVALID;`);
 

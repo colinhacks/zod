@@ -168,6 +168,25 @@ test("tuple optional-output tail can still fill or truncate", () => {
   differential(z.tuple([z.string().min(3).prefault("x").optional()]), [[], ["abcd"], ["x"], [1]]);
 });
 
+test("tuple with exactOptional distinguishes absent from explicit undefined", () => {
+  differential(z.tuple([z.string().exactOptional()]), [[], ["x"], [undefined], [1]]);
+  differential(z.tuple([z.number(), z.string().exactOptional()]), [
+    [1],
+    [1, "x"],
+    [1, undefined],
+    [],
+    [1, "x", "extra"],
+  ]);
+  differential(z.tuple([z.string().optional(), z.number().exactOptional()]), [
+    [],
+    ["x"],
+    ["x", 1],
+    [undefined],
+    [undefined, undefined],
+    ["x", "bad"],
+  ]);
+});
+
 test("object simple", () => {
   differential(z.object({ name: z.string(), age: z.number() }), [
     { name: "a", age: 1 },
