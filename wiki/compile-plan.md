@@ -2,6 +2,25 @@
 
 Plan to land everything in `wiki/compile.md`. Phases are ordered by dependency; each phase ends in a green test suite. Items within a phase are roughly commit-sized.
 
+## Current status
+
+Track per-phase. Update as work lands. If context compresses, the next agent reads this section first.
+
+- **Phase 1** — complete. `compile()` now returns a cloned schema with replaced `_zod.run`. Fast path delegates to the *original* schema's `_zod.run` on bypass (backward/async/skipChecks) and on `INVALID` fallback — this preserves `inst` references so error messages match. `compileFastpass()` exposed internally for direct fast-path use (Phase 2 will use it). Eager async detection throws `ZodCompileAsyncError` for `.refine`/`.transform`/overwrite/pipe-transform/custom-fn. Tests migrated to schema API. Full repo suite: 4055/4055 passing.
+- **Phase 2** — not started.
+- **Phase 2b** — not started. Dual-suite verification via vitest projects (was a separate proposal in `.cursor/plans/`, will integrate into this doc when reached).
+- **Phase 3** — not started.
+- **Phase 4** — not started. Note: Phase 4 fixes already partially landed on this branch (`__proto__` skip, multipleOf float tolerance, tuple optStart, Map/Set cloning in `.default()`, multi-value `z.literal`). Remaining: record key transforms, record symbol keys, base64 double-check, discriminated union optimization.
+- **Phase 5** — not started.
+
+Live commits on this branch (newest first):
+- `36225b9f` wiki: capture z.compile design decisions
+- `a9e28f0d` wiki: implementation + test plan for z.compile
+- `ac063f28` WIP: hoist util.floatSafeRemainder in compiled multipleOf
+- `30d3aaf7` WIP: align compile with main behaviors
+- `3539cfc1` WIP
+- `7e64b278` WIP
+
 ## Phase 1 — Convert `compile()` to schema-clone + fallback
 
 The current branch returns `((input) => T | INVALID) & { code: string }`. We need it to return a cloned schema with a replaced `_zod.run` that calls the compiled fast path first and falls back to the original `_zod.run` on `INVALID`. This is the largest single change in the plan and rewrites the existing test suite's call sites.

@@ -1,31 +1,35 @@
 import { expect, test } from "vitest";
 
 import * as z from "../../index.js";
-import { INVALID, compile } from "../compile.js";
+import { ZodCompileAsyncError, compile } from "../compile.js";
 
-// Helper to verify AOT matches Zod behavior
-// Now we check that valid inputs return data and invalid return INVALID
+// Differential helper: assert compiled schema matches the original on a value.
 function expectMatch(schema: z.ZodType, value: unknown) {
-  const aot = compile(schema);
-  const zodResult = schema.safeParse(value);
-  if (zodResult.success) {
-    const aotResult = aot(value);
-    // For deep equality of parsed data
-    expect(aotResult).toEqual(zodResult.data);
-  } else {
-    expect(aot(value)).toBe(INVALID);
+  const compiled = compile(schema);
+  const original = schema.safeParse(value);
+  const fast = compiled.safeParse(value);
+
+  expect(fast.success).toBe(original.success);
+  if (original.success && fast.success) {
+    expect(fast.data).toEqual(original.data);
+  } else if (!original.success && !fast.success) {
+    expect(fast.error.issues).toEqual(original.error.issues);
   }
 }
 
-// Helper for simple valid/invalid checks
-function valid<T>(aot: (input: unknown) => T | typeof INVALID, value: unknown): T {
-  const result = aot(value);
-  expect(result).not.toBe(INVALID);
-  return result as T;
+// Parse and assert success; return the parsed data for further assertions.
+function valid<T extends z.ZodType>(schema: T, value: unknown): z.output<T> {
+  const result = schema.safeParse(value);
+  if (!result.success) {
+    throw new Error(`expected success, got issues: ${JSON.stringify(result.error.issues)}`);
+  }
+  return result.data;
 }
 
-function invalid(aot: (input: unknown) => unknown, value: unknown) {
-  expect(aot(value)).toBe(INVALID);
+// Parse and assert failure.
+function invalid(schema: z.ZodType, value: unknown) {
+  const result = schema.safeParse(value);
+  expect(result.success).toBe(false);
 }
 
 // === Primitives ===
@@ -77,9 +81,7 @@ test("symbol", () => {
 
 test("undefined", () => {
   const aot = compile(z.undefined());
-  // Can't use valid() helper when undefined is a valid output
-  expect(aot(undefined)).toBe(undefined);
-  // But we can verify other values are rejected
+  expect(valid(aot, undefined)).toBe(undefined);
   invalid(aot, null);
   invalid(aot, 0);
 });
@@ -93,8 +95,7 @@ test("null", () => {
 
 test("void", () => {
   const aot = compile(z.void());
-  // void accepts undefined - can't use valid() helper
-  expect(aot(undefined)).toBe(undefined);
+  expect(valid(aot, undefined)).toBe(undefined);
   invalid(aot, null);
   invalid(aot, 0);
 });
@@ -123,17 +124,17 @@ test("date", () => {
 
 test("any", () => {
   const aot = compile(z.any());
-  expect(aot(null)).toBe(null);
-  expect(aot(undefined)).toBe(undefined);
-  expect(aot(123)).toBe(123);
-  expect(aot({ nested: { deep: true } })).toEqual({ nested: { deep: true } });
+  expect(valid(aot, null)).toBe(null);
+  expect(valid(aot, undefined)).toBe(undefined);
+  expect(valid(aot, 123)).toBe(123);
+  expect(valid(aot, { nested: { deep: true } })).toEqual({ nested: { deep: true } });
 });
 
 test("unknown", () => {
   const aot = compile(z.unknown());
-  expect(aot(null)).toBe(null);
-  expect(aot(undefined)).toBe(undefined);
-  expect(aot(123)).toBe(123);
+  expect(valid(aot, null)).toBe(null);
+  expect(valid(aot, undefined)).toBe(undefined);
+  expect(valid(aot, 123)).toBe(123);
 });
 
 test("never", () => {
@@ -230,7 +231,7 @@ test("success", () => {
 test("optional", () => {
   const aot = compile(z.optional(z.string()));
   expect(valid(aot, "hello")).toBe("hello");
-  expect(aot(undefined)).toBe(undefined); // undefined is valid output
+  expect(valid(aot, undefined)).toBe(undefined);
   invalid(aot, null);
   invalid(aot, 123);
 });
@@ -846,8 +847,8 @@ test("matches Zod: bigint format", () => {
 test("nullish", () => {
   const aot = compile(z.string().nullish());
   expect(valid(aot, "hello")).toBe("hello");
-  expect(aot(null)).toBe(null);
-  expect(aot(undefined)).toBe(undefined); // undefined is valid output
+  expect(valid(aot, null)).toBe(null);
+  expect(valid(aot, undefined)).toBe(undefined);
   invalid(aot, 123);
 });
 
@@ -1089,4 +1090,91 @@ test("multi-value literal accepts each value", () => {
   expect(valid(aot, 1)).toBe(1);
   invalid(aot, "c");
   invalid(aot, 2);
+});
+
+// === Phase 1: schema-clone + fallback contract ===
+
+test("compile returns a fresh clone; original schema is untouched", () => {
+  const original = z.object({ name: z.string() });
+  const originalRun = original._zod.run;
+  const compiled = compile(original);
+  expect(compiled).not.toBe(original);
+  expect(original._zod.run).toBe(originalRun);
+  expect(compiled._zod.run).not.toBe(originalRun);
+  // shape def is shared by reference; cloning is structural at the top
+  expect(compiled._zod.def).toBe(original._zod.def);
+});
+
+test("fallback produces ZodError identical to the original schema", () => {
+  const schema = z.object({ name: z.string(), age: z.number().min(0) });
+  const compiled = compile(schema);
+  const cases: unknown[] = [
+    { name: 123, age: 30 },
+    { name: "ok", age: -5 },
+    { name: "ok", age: "thirty" },
+    null,
+    [],
+    { name: "ok" },
+  ];
+  for (const value of cases) {
+    const a = schema.safeParse(value);
+    const b = compiled.safeParse(value);
+    expect(b.success).toBe(a.success);
+    if (!a.success && !b.success) {
+      expect(b.error.issues).toEqual(a.error.issues);
+    }
+  }
+});
+
+test("fallback preserves instanceof class name in error message", () => {
+  class User {}
+  const schema = z.instanceof(User);
+  const compiled = compile(schema);
+  expect(compiled.safeParse(new User()).success).toBe(true);
+  const bad = compiled.safeParse({});
+  expect(bad.success).toBe(false);
+  if (!bad.success) {
+    // The error must come from the original schema's runtime, which captured
+    // `inst` referring to the original. Class name surfaces in the message.
+    expect(bad.error.issues[0]?.message).toMatch(/User/);
+  }
+});
+
+test("compile bypasses fast path for backward direction (codec encode)", () => {
+  const codec = z.stringbool();
+  const compiled = compile(codec);
+  expect(compiled.safeParse("true").data).toBe(true);
+  expect(compiled.safeParse("false").data).toBe(false);
+  expect(compiled.encode(true)).toBe("true");
+  expect(compiled.encode(false)).toBe("false");
+});
+
+test("compile bypasses fast path for safeParseAsync", async () => {
+  const schema = z.string().min(3);
+  const compiled = compile(schema);
+  const r = await compiled.safeParseAsync("ok");
+  expect(r.success).toBe(false);
+  const ok = await compiled.safeParseAsync("hello");
+  expect(ok.success).toBe(true);
+});
+
+test("ZodCompileAsyncError thrown on async refinement", () => {
+  const schema = z.string().refine(async () => true);
+  expect(() => compile(schema)).toThrow(ZodCompileAsyncError);
+});
+
+test("ZodCompileAsyncError thrown on async transform", () => {
+  const schema = z.string().transform(async (s) => s.length);
+  expect(() => compile(schema)).toThrow(ZodCompileAsyncError);
+});
+
+test("compiled clone is composable inside another schema", () => {
+  const inner = z.object({ name: z.string() });
+  const compiledInner = compile(inner);
+  const outer = z.object({ user: compiledInner, count: z.number() });
+  const r = outer.safeParse({ user: { name: "ok" }, count: 1 });
+  expect(r.success).toBe(true);
+  if (r.success) expect(r.data).toEqual({ user: { name: "ok" }, count: 1 });
+  const bad = outer.safeParse({ user: { name: 1 }, count: 1 });
+  expect(bad.success).toBe(false);
 });

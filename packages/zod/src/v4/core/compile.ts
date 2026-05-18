@@ -1,14 +1,22 @@
 import type * as checks from "./checks.js";
 import type * as core from "./core.js";
 import { Doc } from "./doc.js";
-import type { SomeType } from "./schemas.js";
+import type { ParseContextInternal, ParsePayload, SomeType } from "./schemas.js";
 import * as util from "./util.js";
 
-/** Sentinel value returned by compiled functions when validation fails */
-export const INVALID = Symbol.for("zod.compile.invalid");
+/** Sentinel value returned by the compiled fast path when validation fails. Internal. */
+export const INVALID: unique symbol = Symbol.for("zod.compile.invalid");
 export type INVALID = typeof INVALID;
 
-type CompiledParser<T> = ((input: unknown) => T | INVALID) & { code: string };
+type CompiledFastpass<T> = ((input: unknown) => T | INVALID) & { code: string };
+
+/** Thrown by `compile()` when the schema contains async refinements or transforms. */
+export class ZodCompileAsyncError extends Error {
+  constructor(message = "z.compile does not support async refinements, transforms, or checks") {
+    super(message);
+    this.name = "ZodCompileAsyncError";
+  }
+}
 
 interface CompileContext {
   constants: Map<string, unknown>;
@@ -36,18 +44,48 @@ type SupportedCheck =
   | { _zod: { def: { check: "custom"; fn?: (value: unknown) => boolean }; check?: (payload: unknown) => unknown } };
 
 /**
- * AOT compile a Zod schema into a standalone parsing function.
+ * AOT-compile a Zod schema. Returns a clone whose `_zod.run` calls a generated
+ * fast path first and falls back to the original runtime parser on failure.
  *
- * The generated function returns the parsed/transformed output if validation
- * succeeds, or `INVALID` symbol if validation fails. It always returns a new
- * object/array (never mutates or returns the input directly).
- *
- * Supported schema types: string, number, boolean, object, array, tuple,
- * union, intersection, record, map, set, and more.
- *
- * Not supported: async validation
+ * - Forward direction only. Backward (encode), async, and `skipChecks` paths
+ *   bypass the fast path and use the runtime directly.
+ * - Throws `ZodCompileAsyncError` at compile time if the schema contains any
+ *   async refinement/transform/check. Async detection is static: the
+ *   `isAsyncFunction` probe runs on every hoisted user function.
+ * - The original schema is unchanged. The clone shares children by reference.
  */
-export function compile<T extends SomeType>(schema: T): CompiledParser<core.output<T>> {
+export function compile<T extends SomeType>(schema: T): T {
+  const fast = compileFastpass(schema);
+  const clone = util.clone(schema as any) as T;
+
+  // Delegate to the *original* schema's run on bypass/fallback (not the
+  // clone's). The original closed over its own `inst` at construction time;
+  // issue payloads use that reference to derive things like the class name
+  // for `z.instanceof(Test)`. Calling the clone's freshly-initialized run
+  // would push issues with `inst === clone`, producing diverging error
+  // messages from the original schema.
+  clone._zod.run = (payload: ParsePayload, ctx: ParseContextInternal): any => {
+    if (ctx?.async || ctx?.direction === "backward" || ctx?.skipChecks) {
+      return schema._zod.run(payload, ctx);
+    }
+
+    const out = fast(payload.value);
+    if (out !== INVALID) {
+      payload.value = out;
+      return payload;
+    }
+    return schema._zod.run(payload, ctx);
+  };
+
+  return clone;
+}
+
+/**
+ * Generate the standalone fast-path validator. Returns a function that takes an
+ * input and returns either the parsed/transformed value or the `INVALID`
+ * sentinel. Internal — consumers should use `compile()`.
+ */
+export function compileFastpass<T extends SomeType>(schema: T): CompiledFastpass<core.output<T>> {
   const ctx: CompileContext = {
     constants: new Map(),
     constantCounter: 0,
@@ -66,11 +104,10 @@ export function compile<T extends SomeType>(schema: T): CompiledParser<core.outp
   const code = doc.content.join("\n");
   const fullCode = constantNames.length > 0 ? `// Constants: ${constantNames.join(", ")}\n${code}` : code;
 
-  // Create function with constants as closure variables
   const F = Function;
   const factoryCode = `return (input) => {\n${code}\n}`;
   const factory = new F(...constantNames, factoryCode);
-  const fn = factory(...constantValues) as CompiledParser<core.output<T>>;
+  const fn = factory(...constantValues) as CompiledFastpass<core.output<T>>;
   fn.code = fullCode;
   return fn;
 }
@@ -276,7 +313,7 @@ function generateOverwriteCheck(
 
   // Check for async transform
   if (isAsyncFunction(tx)) {
-    throw new Error("AOT compilation does not support async overwrite transforms");
+    throw new ZodCompileAsyncError("z.compile: async overwrite transforms are not supported");
   }
 
   // Hoist the transform function as a constant and apply it
@@ -292,9 +329,15 @@ function generateCustomRefineCheck(doc: Doc, ctx: CompileContext, check: CustomC
 
   if (def.fn) {
     // Simple predicate function (from .refine())
+    if (isAsyncFunction(def.fn)) {
+      throw new ZodCompileAsyncError("z.compile: async .refine() predicates are not supported");
+    }
     const fnConst = addConstant(ctx, def.fn);
     doc.write(`if (!${fnConst}(${accessor})) return INVALID;`);
   } else if (check._zod.check) {
+    if (isAsyncFunction(check._zod.check)) {
+      throw new ZodCompileAsyncError("z.compile: async .superRefine() / check functions are not supported");
+    }
     // SuperRefine or other check function - need to spoof context
     // Create a helper that runs the check and returns true if no issues
     const checkFn = check._zod.check;
@@ -1146,7 +1189,7 @@ function generatePipeCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acce
   if (def.transform) {
     // Apply transform and validate output
     if (isAsyncFunction(def.transform)) {
-      throw new Error("AOT compilation does not support async transforms in pipes");
+      throw new ZodCompileAsyncError("z.compile: async transforms in pipes are not supported");
     }
     const transformConst = addConstant(ctx, def.transform);
     const transformedVar = newVar(ctx);
@@ -1172,7 +1215,7 @@ function generateCustomCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
   if (def.fn) {
     // Check for async function
     if (isAsyncFunction(def.fn)) {
-      throw new Error("AOT compilation does not support async custom predicates");
+      throw new ZodCompileAsyncError("z.compile: async custom predicates are not supported");
     }
     // Custom schema with a predicate function (e.g., z.instanceof)
     const fnConst = addConstant(ctx, def.fn);
@@ -1191,7 +1234,7 @@ function generateTransformCheck(doc: Doc, ctx: CompileContext, schema: SomeType,
   if (def.transform) {
     // Check for async transform
     if (isAsyncFunction(def.transform)) {
-      throw new Error("AOT compilation does not support async transforms");
+      throw new ZodCompileAsyncError("z.compile: async transforms are not supported");
     }
 
     // Create a helper that runs the transform and returns the result or INVALID on error
