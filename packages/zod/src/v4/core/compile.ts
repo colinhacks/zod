@@ -1,7 +1,7 @@
 import type * as checks from "./checks.js";
 import type * as core from "./core.js";
 import { Doc } from "./doc.js";
-import { isValidBase64, isValidBase64URL, isValidJWT } from "./schemas.js";
+import { isValidBase64, isValidBase64URL, isValidJWT, parseValidURL } from "./schemas.js";
 import type { ParseContextInternal, ParsePayload, SomeType } from "./schemas.js";
 import * as util from "./util.js";
 
@@ -475,11 +475,23 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
     return;
   }
   if (fmt === "url" || fmt === "httpurl") {
-    throw new ZodCompileUnsupportedError(`z.${fmt}() — runtime check beyond pattern`);
+    const validator = addConstant(ctx, parseValidURL);
+    const defConst = addConstant(ctx, def);
+    const outputVar = newVar(ctx);
+    doc.write(`const ${outputVar} = ${validator}(${accessor}, ${defConst});`);
+    doc.write(`if (${outputVar} === undefined) return INVALID;`);
+    doc.write(`${accessor} = ${outputVar};`);
+    return;
   }
   const formatDef = def as unknown as { normalize?: boolean; hostname?: unknown; protocol?: unknown };
   if (formatDef.normalize || formatDef.hostname !== undefined || formatDef.protocol !== undefined) {
-    throw new ZodCompileUnsupportedError(`z.url({normalize|hostname|protocol}) — runtime options`);
+    const validator = addConstant(ctx, parseValidURL);
+    const defConst = addConstant(ctx, def);
+    const outputVar = newVar(ctx);
+    doc.write(`const ${outputVar} = ${validator}(${accessor}, ${defConst});`);
+    doc.write(`if (${outputVar} === undefined) return INVALID;`);
+    doc.write(`${accessor} = ${outputVar};`);
+    return;
   }
 
   // If a pattern is provided, use regex check for all other format types
@@ -703,9 +715,8 @@ function generateStringCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
   };
 
   // URL/httpurl have runtime normalization/options behavior (mini z.url() even
-  // trims whitespace by default). Force fallback. Pure string utility formats
-  // like base64/base64url/jwt are handled by generateStringFormatCheck above or
-  // by the schema-level helper block below.
+  // trims whitespace by default). Hoist the shared helper so output
+  // normalization and option checks stay in sync with runtime semantics.
   if (
     def.format === "url" ||
     def.format === "httpurl" ||
@@ -713,7 +724,12 @@ function generateStringCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
     def.hostname !== undefined ||
     def.protocol !== undefined
   ) {
-    throw new ZodCompileUnsupportedError(`z.${def.format ?? "string"} — runtime check beyond pattern`);
+    const validator = addConstant(ctx, parseValidURL);
+    const defConst = addConstant(ctx, def);
+    const outputVar = newVar(ctx);
+    doc.write(`const ${outputVar} = ${validator}(${accessor}, ${defConst});`);
+    doc.write(`if (${outputVar} === undefined) return INVALID;`);
+    return outputVar;
   }
 
   if (def.format === "base64") {

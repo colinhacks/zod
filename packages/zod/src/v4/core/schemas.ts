@@ -477,6 +477,41 @@ export interface $ZodURL extends $ZodType {
   _zod: $ZodURLInternals;
 }
 
+export function parseValidURL(
+  data: string,
+  def: Pick<$ZodURLDef, "hostname" | "protocol" | "normalize">
+): string | undefined {
+  const trimmed = data.trim();
+
+  // When normalize is off, require :// for http/https URLs. This prevents
+  // strings like "http:example.com" or "https:/path" from being silently
+  // accepted by URL.
+  if (!def.normalize && def.protocol?.source === regexes.httpProtocol.source && !/^https?:\/\//i.test(trimmed)) {
+    return undefined;
+  }
+
+  let url: URL;
+  try {
+    // @ts-ignore
+    url = new URL(trimmed);
+  } catch {
+    return undefined;
+  }
+
+  if (def.hostname) {
+    def.hostname.lastIndex = 0;
+    if (!def.hostname.test(url.hostname)) return undefined;
+  }
+
+  if (def.protocol) {
+    def.protocol.lastIndex = 0;
+    const protocol = url.protocol.endsWith(":") ? url.protocol.slice(0, -1) : url.protocol;
+    if (!def.protocol.test(protocol)) return undefined;
+  }
+
+  return def.normalize ? url.href : trimmed;
+}
+
 export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$constructor("$ZodURL", (inst, def) => {
   $ZodStringFormat.init(inst, def);
   inst._zod.check = (payload) => {

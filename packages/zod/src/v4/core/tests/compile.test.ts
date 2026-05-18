@@ -505,10 +505,13 @@ test("uuid", () => {
   invalid(aot, "550e8400-e29b-41d4-a716");
 });
 
-test("url is unsupported (runtime trims/normalizes/etc.)", () => {
-  // z.url() runtime behavior includes trimming and option-aware normalization
-  // that the fast path can't model. Throws so global mode falls back.
-  expect(() => compile(z.url())).toThrow(ZodCompileUnsupportedError);
+test("url", () => {
+  const aot = compile(z.url());
+  expect(valid(aot, "https://example.com")).toBe("https://example.com");
+  expect(valid(aot, "  https://example.com  ")).toBe("https://example.com");
+  expect(valid(aot, "http://localhost:3000/path")).toBe("http://localhost:3000/path");
+  invalid(aot, "not a url");
+  invalid(aot, "example.com");
 });
 
 test("ipv4", () => {

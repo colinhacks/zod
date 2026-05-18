@@ -170,8 +170,7 @@ Future work would re-add fast-path codegen for these, ideally one bucket per PR 
 - **exactOptional** — distinguishes absent vs explicit-undefined; fast path can't tell.
 - **Tuple items that fill a missing slot** (default/prefault inside the item's wrapper chain) — output-shaping rules are subtle (dense vs truncated). Tuple-with-default is rare enough that fallback is fine.
 - **z.xor** — exclusive-union requires exactly-one-match; fast path's first-match-wins semantics would silently accept multi-match.
-- **String formats with URL runtime behavior**: `url`, `httpurl`, and URL schemas with `normalize`, `hostname`, or `protocol` options. The runtime trims/normalizes and applies option-specific constraints that are not represented by the pattern. `base64`, `base64url`, and `jwt` no longer force fallback — the compiler hoists the runtime utility validators and calls them from the generated fast path.
-- **`url` options** — `normalize`, `hostname`, `protocol` flags on a url schema.
+- **String formats with custom runtime behavior** — mostly done. `url`/`httpurl`/URL options now use exported `parseValidURL` via a hoisted helper. `base64`, `base64url`, and `jwt` use hoisted runtime validators. No longer force-fallback.
 
 Detection lives in `packages/zod/src/v4/core/compile.ts` — search for `ZodCompileUnsupportedError`.
 
@@ -180,7 +179,7 @@ Detection lives in `packages/zod/src/v4/core/compile.ts` — search for `ZodComp
 - **Discriminated-union optimization** — done. Specialized discriminator-branch codegen now runs before the generic xor fallback. Benchmark beats arktype in a 3-branch DU case.
 - **Record key schema transforms** — done for exhaustive records. Codegen now iterates known key values, runs the key schema once per key, and uses the transformed key as the output property. Differential coverage added.
 - **Record symbol keys** — done. Dynamic records now use `Reflect.ownKeys` + `propertyIsEnumerable`, matching runtime behavior.
-- **URL/httpurl runtime helper**: if we extract URL validation/normalization into a pure helper (like `isValidBase64URL` / `isValidJWT`), compile can hoist it and stop force-falling back for URLs too.
+- **URL/httpurl runtime helper** — done. Extracted `parseValidURL` and hoisted it in the compiler. Helper benchmark: URL compiled `.safeParse` **4.04k ops/sec** vs runtime zod `.safeParse` **3.58k**.
 - **Bench parity** — run `packages/bench/compile-*.ts` to confirm the schema-wrapper + force-fallback overhead hasn't eroded the 8x figure significantly.
 - **Tree-shaking/API decision** — esbuild bundle fixture shows `packages/zod/src/compile.ts` (global side-effect module) is dropped unless `import "zod/compile"` is present, but `packages/zod/src/v4/core/compile.ts` is retained by ordinary `import * as z from "zod"` because the public namespace exposes `z.compile`. To make the compiler fully tree-shakeable for namespace imports, the per-schema API would need to move off the main namespace (e.g. named export from `zod/compile`), or accept that `z.compile` trades bundle size for discoverability.
 
