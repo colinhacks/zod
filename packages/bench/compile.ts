@@ -17,8 +17,10 @@ const schema = z4.strictObject({
   }),
 });
 
-// AOT compiled validator
-const aotValidator = z4core.compile(schema);
+// AOT compiled schema (wraps fast path + runtime fallback)
+const compiledSchema = z4core.compile(schema);
+// Raw fast-path function (no fallback wrapper) for direct comparison
+const aotValidator = z4core.compileFastpass(schema);
 
 // Test data
 const DATA = Array.from({ length: 1000 }, () =>
@@ -40,15 +42,18 @@ const DATA = Array.from({ length: 1000 }, () =>
 
 // Verify correctness
 console.log("=== Correctness Check ===");
-console.log("AOT valid:", aotValidator(DATA[0]));
-console.log("Zod valid:", schema.safeParse(DATA[0]).success);
-console.log("Zod JIT valid:", schema.safeParse(DATA[0]).success);
-console.log("Zod non-JIT valid:", schema.safeParse(DATA[0], { jitless: true }).success);
+console.log("AOT raw fast path:", aotValidator(DATA[0]));
+console.log("Compiled schema.safeParse:", compiledSchema.safeParse(DATA[0]).success);
+console.log("Zod JIT:", schema.safeParse(DATA[0]).success);
+console.log("Zod non-JIT:", schema.safeParse(DATA[0], { jitless: true }).success);
 console.log("");
 
 const bench = metabench("z.compile() vs z.safeParse()", {
-  "AOT compiled"() {
+  "AOT raw fast path"() {
     for (const d of DATA) aotValidator(d);
+  },
+  "Compiled schema.safeParse (wrapped)"() {
+    for (const d of DATA) compiledSchema.safeParse(d);
   },
   "Zod JIT"() {
     for (const d of DATA) schema.safeParse(d);

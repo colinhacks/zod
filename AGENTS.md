@@ -14,6 +14,7 @@ The project uses pnpm workspaces. Key commands:
 - `pnpm vitest run <path> --update` - Update snapshots for specific test file
 - `pnpm test:watch` - Run tests in watch mode
 - `pnpm vitest run --coverage` - Run tests with coverage report
+- `pnpm test:compile` - Re-run zod tests with global AOT compilation enabled (see `wiki/compile.md`)
 - `pnpm dev` - Execute code with tsx under source conditions
 - `pnpm dev <file>` - Execute `<file>` with tsx & proper resolution conditions. Usually use for `play.ts`.
 - `pnpm dev:play` - Quick alias to run play.ts for experimentation
