@@ -844,6 +844,25 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
     const propType = propSchema._zod.def.type;
     const propAccessor = `${accessor}[${util.esc(key)}]`;
 
+    // exactOptional is optional at the object layer but rejects explicit
+    // `undefined` at the child layer. Runtime handles this by only invoking
+    // the child parser when the key is present. Mirror that here: absent key
+    // leaves the output unset; present `undefined` delegates to the inner
+    // schema and fails.
+    if (isExactOptional(propSchema)) {
+      const exactDef = propSchema._zod.def as unknown as { innerType: SomeType };
+      const outputVar = newVar(ctx);
+      doc.write(`let ${outputVar};`);
+      doc.write(`if (${util.esc(key)} in ${accessor}) {`);
+      doc.indented((d) => {
+        const innerOutput = generateCheck(d, ctx, exactDef.innerType, propAccessor);
+        d.write(`${outputVar} = ${innerOutput};`);
+      });
+      doc.write(`}`);
+      propOutputs[key] = outputVar;
+      continue;
+    }
+
     // Required keys (optin != optional) MUST be present in the input. Reading
     // `input[k]` for an absent key returns undefined silently, which would
     // pass schemas like `z.undefined()` or `z.union([z.string(), z.undefined()])`
@@ -958,7 +977,9 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
 
     for (const k of keys) {
       if (shape[k]!._zod.optout === "optional") {
-        doc.write(`if (${util.esc(k)} in ${accessor}) ${outputVar}[${util.esc(k)}] = ${propOutputs[k]};`);
+        doc.write(
+          `if (${util.esc(k)} in ${accessor} || ${propOutputs[k]} !== undefined) ${outputVar}[${util.esc(k)}] = ${propOutputs[k]};`
+        );
       } else {
         doc.write(`${outputVar}[${util.esc(k)}] = ${propOutputs[k]};`);
       }
@@ -969,23 +990,41 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
 }
 
 function generateOptionalCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
-  // exactOptional ("key may be absent, but explicit `undefined` is invalid")
-  // is structurally type:"optional" but with overridden parse that doesn't
-  // accept undefined. The fast path can't tell "absent" from "present and
-  // undefined" so it would incorrectly accept explicit undefined here.
-  // Force fallback.
-  if ((schema._zod as any).traits?.has?.("$ZodExactOptional")) {
-    throw new ZodCompileUnsupportedError("z.exactOptional — runtime distinguishes absent vs explicit undefined");
+  const def = schema._zod.def as unknown as { innerType: SomeType };
+  if (isExactOptional(schema)) {
+    return generateCheck(doc, ctx, def.innerType, accessor);
   }
 
-  const def = schema._zod.def as unknown as { innerType: SomeType };
-
-  // Optional-wrapping-default ("apply default through the optional") requires
-  // running the default's getter when input is undefined. Fast path's "skip
-  // inner entirely if undefined" would lose the default.
   const innerType = def.innerType._zod.def.type;
+
   if (innerType === "default" || innerType === "prefault") {
-    throw new ZodCompileUnsupportedError("optional wrapping default — runtime applies default through optional");
+    if (innerType === "prefault") {
+      const prefaultInner = (def.innerType._zod.def as unknown as { innerType?: SomeType }).innerType;
+      if (prefaultInner && schemaMaySetFallback(prefaultInner)) {
+        throw new ZodCompileUnsupportedError("optional wrapping prefault with fallback-producing inner");
+      }
+    }
+
+    const outputVar = newVar(ctx);
+    const branchVar = newVar(ctx);
+    doc.write(`let ${outputVar};`);
+    doc.write(`if (${accessor} === undefined) {`);
+    doc.indented((d) => {
+      d.write(`const ${branchVar} = (() => {`);
+      d.indented((d2) => {
+        const innerOutput = generateCheck(d2, ctx, def.innerType, accessor);
+        d2.write(`return ${innerOutput};`);
+      });
+      d.write(`})();`);
+      d.write(`if (${branchVar} !== INVALID) ${outputVar} = ${branchVar};`);
+    });
+    doc.write(`} else {`);
+    doc.indented((d) => {
+      const innerOutput = generateCheck(d, ctx, def.innerType, accessor);
+      d.write(`${outputVar} = ${innerOutput};`);
+    });
+    doc.write(`}`);
+    return outputVar;
   }
 
   const outputVar = newVar(ctx);
@@ -997,6 +1036,31 @@ function generateOptionalCheck(doc: Doc, ctx: CompileContext, schema: SomeType, 
   });
   doc.write(`}`);
   return outputVar;
+}
+
+function isExactOptional(schema: SomeType): boolean {
+  return (schema._zod as { traits?: Set<string> }).traits?.has("$ZodExactOptional") === true;
+}
+
+function schemaMaySetFallback(schema: SomeType): boolean {
+  const def = schema._zod.def as { type: string; innerType?: SomeType; in?: SomeType; out?: SomeType };
+  switch (def.type) {
+    case "transform":
+    case "catch":
+      return true;
+    case "pipe":
+      return !!((def.in && schemaMaySetFallback(def.in)) || (def.out && schemaMaySetFallback(def.out)));
+    case "optional":
+    case "nullable":
+    case "readonly":
+    case "success":
+    case "default":
+    case "prefault":
+    case "nonoptional":
+      return !!(def.innerType && schemaMaySetFallback(def.innerType));
+    default:
+      return false;
+  }
 }
 
 function generateNullableCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
@@ -1084,26 +1148,24 @@ function generateWrapperCheck(doc: Doc, ctx: CompileContext, schema: SomeType, a
 function generateDefaultCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
   const def = schema._zod.def as unknown as { innerType: SomeType };
 
-  // prefault differs from default: undefined-input → run the prefault value
-  // *through* the inner schema (so checks, transforms, overwrites apply).
-  // The current codegen would return the raw default value. Force fallback.
-  if (schema._zod.def.type === "prefault") {
-    throw new ZodCompileUnsupportedError("z.prefault — runtime runs default through inner");
-  }
-
-  // "Apply default at output" — when inner is a transform/pipe/codec, the
-  // runtime applies the default if the *transformed* value is undefined, not
-  // just the input. The fast path can't see the transform's output to decide.
-  const innerType = def.innerType._zod.def.type;
-  if (innerType === "transform" || innerType === "pipe") {
-    throw new ZodCompileUnsupportedError("default wrapping transform/pipe — runtime applies default at output");
-  }
-
-  const outputVar = newVar(ctx);
-
   // Get the default value getter from the property descriptor
   const descriptor = Object.getOwnPropertyDescriptor(schema._zod.def, "defaultValue");
   const defaultGetter = descriptor?.get;
+
+  // prefault differs from default: undefined-input is first replaced with the
+  // prefault value, then run through the inner schema.
+  if (schema._zod.def.type === "prefault") {
+    if (!defaultGetter) {
+      return generateCheck(doc, ctx, def.innerType, accessor);
+    }
+    const defaultFn = addConstant(ctx, defaultGetter);
+    const inputVar = newVar(ctx);
+    doc.write(`let ${inputVar} = ${accessor};`);
+    doc.write(`if (${accessor} === undefined) ${inputVar} = ${defaultFn}();`);
+    return generateCheck(doc, ctx, def.innerType, inputVar);
+  }
+
+  const outputVar = newVar(ctx);
 
   // Default allows undefined (replaces with default value), otherwise validates inner type
   if (defaultGetter) {
@@ -1119,7 +1181,7 @@ function generateDefaultCheck(doc: Doc, ctx: CompileContext, schema: SomeType, a
     doc.write(`} else {`);
     doc.indented((d) => {
       const innerOutput = generateCheck(d, ctx, def.innerType, accessor);
-      d.write(`${outputVar} = ${innerOutput};`);
+      d.write(`${outputVar} = ${innerOutput} === undefined ? ${cloneFn}(${defaultFn}()) : ${innerOutput};`);
     });
     doc.write(`}`);
   } else {
@@ -1147,16 +1209,7 @@ function generateTupleCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
   const items = def.items;
   const rest = def.rest;
 
-  // Tuple-with-defaults and exactOptional-tuple-items have non-trivial
-  // output-shaping rules at runtime (dense vs truncated, defaults applied at
-  // output side, etc.). The fast path's simple element-by-element loop
-  // doesn't model any of that. Detection via optin/optout: an item whose
-  // optin==optional but optout!=optional has a default/prefault somewhere in
-  // its wrapper chain that fills in the missing slot. Force fallback.
   for (const item of items) {
-    if (item._zod.optin === "optional" && item._zod.optout !== "optional") {
-      throw new ZodCompileUnsupportedError("tuple with item that fills a missing slot (default/prefault)");
-    }
     if ((item._zod as any).traits?.has?.("$ZodExactOptional")) {
       throw new ZodCompileUnsupportedError("tuple with exactOptional item");
     }
@@ -1167,7 +1220,8 @@ function generateTupleCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
   // Mirror the runtime's getTupleOptStart: find the first index where every
   // subsequent slot accepts `undefined` (i.e. is optional on input). Anything
   // shorter than this is too_small; trailing absent slots are legal.
-  const optinStart = getTupleOptStart(items);
+  const optinStart = getTupleOptStart(items, "optin");
+  const optoutStart = getTupleOptStart(items, "optout");
 
   // Length bounds
   if (rest) {
@@ -1178,27 +1232,39 @@ function generateTupleCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
     doc.write(`if (${accessor}.length < ${optinStart} || ${accessor}.length > ${items.length}) return INVALID;`);
   }
 
-  // Build output array sized to actual input length (capped at items.length
-  // when there's no rest). Absent trailing optional slots stay absent.
+  // Build the output in assignment order so absent optional-output tail slots
+  // can truncate while default/prefault slots still fill missing positions.
   const outputVar = newVar(ctx);
-  if (rest) {
-    doc.write(`const ${outputVar} = new Array(${accessor}.length);`);
-  } else {
-    doc.write(`const ${outputVar} = new Array(Math.min(${accessor}.length, ${items.length}));`);
-  }
+  doc.write(`const ${outputVar} = [];`);
 
   // Validate and collect each fixed item
   for (let i = 0; i < items.length; i++) {
     const itemSchema = items[i]!;
-    if (i >= optinStart) {
-      // Slot is optional on input: only validate (and emit into output) when
-      // the input actually has this index. Otherwise leave the output sparse.
-      doc.write(`if (${i} < ${accessor}.length) {`);
+    if (i >= optoutStart) {
+      doc.write(`if (${outputVar}.length === ${i}) {`);
       doc.indented((d) => {
-        const elemVar = newVar(ctx);
-        d.write(`const ${elemVar} = ${accessor}[${i}];`);
-        const elemOutput = generateCheck(d, ctx, itemSchema, elemVar);
-        d.write(`${outputVar}[${i}] = ${elemOutput};`);
+        d.write(`if (${i} < ${accessor}.length) {`);
+        d.indented((d2) => {
+          const elemVar = newVar(ctx);
+          d2.write(`const ${elemVar} = ${accessor}[${i}];`);
+          const elemOutput = generateCheck(d2, ctx, itemSchema, elemVar);
+          d2.write(`${outputVar}[${i}] = ${elemOutput};`);
+        });
+        d.write(`} else {`);
+        d.indented((d2) => {
+          const elemVar = newVar(ctx);
+          const branchVar = newVar(ctx);
+          d2.write(`const ${elemVar} = undefined;`);
+          d2.write(`const ${branchVar} = (() => {`);
+          d2.indented((d3) => {
+            const elemOutput = generateCheck(d3, ctx, itemSchema, elemVar);
+            d3.write(`return ${elemOutput};`);
+          });
+          d2.write(`})();`);
+          d2.write(`if (${branchVar} === INVALID || ${branchVar} === undefined) ${outputVar}.length = ${i};`);
+          d2.write(`else ${outputVar}[${i}] = ${branchVar};`);
+        });
+        d.write(`}`);
       });
       doc.write(`}`);
     } else {
@@ -1225,9 +1291,9 @@ function generateTupleCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
   return outputVar;
 }
 
-function getTupleOptStart(items: SomeType[]): number {
+function getTupleOptStart(items: SomeType[], key: "optin" | "optout"): number {
   for (let i = items.length - 1; i >= 0; i--) {
-    if (items[i]!._zod.optin !== "optional") return i + 1;
+    if (items[i]!._zod[key] !== "optional") return i + 1;
   }
   return 0;
 }
@@ -1253,7 +1319,7 @@ function generateUnionCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
   // z.xor (exclusive union) requires *exactly one* option to match; the fast
   // path's "first match wins" semantics would silently accept multi-match.
   if (def.inclusive === false) {
-    throw new ZodCompileUnsupportedError("z.xor — exclusive union requires exactly-one-match");
+    return generateXorCheck(doc, ctx, def, accessor);
   }
 
   if (options.length === 0) {
@@ -1297,6 +1363,42 @@ function generateUnionCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
   }
 
   doc.write(`if (${outputVar} === INVALID) return INVALID;`);
+  return outputVar;
+}
+
+function generateXorCheck(
+  doc: Doc,
+  ctx: CompileContext,
+  def: { options: SomeType[]; inclusive?: boolean },
+  accessor: string
+): string {
+  if (def.options.length === 0) {
+    doc.write("return INVALID;");
+    return accessor;
+  }
+
+  const countVar = newVar(ctx);
+  const outputVar = newVar(ctx);
+  doc.write(`let ${countVar} = 0;`);
+  doc.write(`let ${outputVar};`);
+
+  for (const option of def.options) {
+    const branchVar = newVar(ctx);
+    doc.write(`const ${branchVar} = (() => {`);
+    doc.indented((d) => {
+      const branchOutput = generateCheck(d, ctx, option, accessor);
+      d.write(`return ${branchOutput};`);
+    });
+    doc.write(`})();`);
+    doc.write(`if (${branchVar} !== INVALID) {`);
+    doc.indented((d) => {
+      d.write(`${countVar}++;`);
+      d.write(`${outputVar} = ${branchVar};`);
+    });
+    doc.write(`}`);
+  }
+
+  doc.write(`if (${countVar} !== 1) return INVALID;`);
   return outputVar;
 }
 

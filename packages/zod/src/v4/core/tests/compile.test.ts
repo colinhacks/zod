@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 
 import * as z from "../../index.js";
-import { ZodCompileAsyncError, ZodCompileUnsupportedError, compile } from "../compile.js";
+import { ZodCompileAsyncError, compile } from "../compile.js";
 
 // Differential helper: assert compiled schema matches the original on a value.
 function expectMatch(schema: z.ZodType, value: unknown) {
@@ -207,11 +207,11 @@ test("default", () => {
   invalid(aot, 123);
 });
 
-test("prefault is unsupported (runtime runs default through inner)", () => {
-  // Runtime applies the prefault value through the inner schema's checks/
-  // transforms (e.g. `z.string().trim().prefault("  x  ")` trims to "x").
-  // The fast path can't model that.
-  expect(() => compile(z.string().prefault("hello"))).toThrow(ZodCompileUnsupportedError);
+test("prefault", () => {
+  const aot = compile(z.string().trim().prefault("  hello  "));
+  expect(valid(aot, "world")).toBe("world");
+  expect(valid(aot, undefined)).toBe("hello");
+  invalid(aot, 123);
 });
 
 test("nonoptional", () => {

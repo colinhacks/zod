@@ -102,6 +102,31 @@ test("default", () => {
   differential(z.string().default("fallback"), ["hi", undefined, null, 1]);
 });
 
+test("prefault runs default through inner schema", () => {
+  differential(z.string().trim().prefault("  fallback  "), ["hi", undefined, null, 1]);
+  differential(z.string().min(3).prefault("x"), [undefined, "abcd"]);
+});
+
+test("optional wrapping default/prefault", () => {
+  differential(z.string().default("fallback").optional(), ["hi", undefined, null, 1]);
+  differential(z.string().trim().prefault("  fallback  ").optional(), ["hi", undefined, null, 1]);
+  differential(z.string().min(3).prefault("x").optional(), [undefined, "abcd", "x", null]);
+});
+
+test("exactOptional top-level rejects undefined", () => {
+  differential(z.string().exactOptional(), ["hi", undefined, null, 1]);
+});
+
+test("default applies after transform output", () => {
+  differential(
+    z
+      .string()
+      .transform((value) => (value === "missing" ? undefined : value))
+      .default("fallback"),
+    ["hi", "missing", undefined, 1]
+  );
+});
+
 test("readonly", () => {
   differential(z.string().readonly(), ["hello", 1, null]);
 });
@@ -132,6 +157,17 @@ test("tuple with trailing optional", () => {
   differential(z.tuple([z.string(), z.number().optional()]), [["a"], ["a", 1], [], ["a", "x"]]);
 });
 
+test("tuple with missing slots filled by default/prefault", () => {
+  differential(z.tuple([z.string().default("fallback")]), [[], ["x"], [1]]);
+  differential(z.tuple([z.string().trim().prefault("  fallback  ")]), [[], ["  x  "], [1]]);
+  differential(z.tuple([z.string().default("fallback"), z.number().optional()]), [[], ["x"], ["x", 1], ["x", "bad"]]);
+});
+
+test("tuple optional-output tail can still fill or truncate", () => {
+  differential(z.tuple([z.string().default("fallback").optional()]), [[], ["x"], [undefined], [1]]);
+  differential(z.tuple([z.string().min(3).prefault("x").optional()]), [[], ["abcd"], ["x"], [1]]);
+});
+
 test("object simple", () => {
   differential(z.object({ name: z.string(), age: z.number() }), [
     { name: "a", age: 1 },
@@ -159,6 +195,27 @@ test("object with optional + default", () => {
     { a: "x", b: 5 },
     { a: 1 },
   ]);
+});
+
+test("object with optional wrapping default/prefault", () => {
+  differential(
+    z.object({
+      a: z.string().default("fallback").optional(),
+      b: z.string().trim().prefault("  trimmed  ").optional(),
+      c: z.string().min(3).prefault("x").optional(),
+    }),
+    [{}, { a: undefined, b: undefined, c: undefined }, { a: "x", b: " y ", c: "abc" }, { a: null }]
+  );
+});
+
+test("object with exactOptional distinguishes absent from explicit undefined", () => {
+  differential(
+    z.object({
+      exact: z.string().exactOptional(),
+      loose: z.string().optional(),
+    }),
+    [{}, { exact: "x" }, { exact: undefined }, { loose: undefined }, { exact: null }]
+  );
 });
 
 test("strictObject", () => {
@@ -215,6 +272,14 @@ test("union of primitives", () => {
 
 test("union all-literals (Set optimization)", () => {
   differential(z.union([z.literal("a"), z.literal("b"), z.literal("c")]), ["a", "b", "c", "d", 1]);
+});
+
+test("xor exactly one branch", () => {
+  differential(z.xor([z.string(), z.number()]), ["a", 1, true, null]);
+});
+
+test("xor multiple matches fails", () => {
+  differential(z.xor([z.string(), z.any()]), ["a", 1, null]);
 });
 
 test("intersection of objects", () => {
