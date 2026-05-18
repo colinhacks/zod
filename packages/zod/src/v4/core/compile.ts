@@ -1,7 +1,7 @@
 import type * as checks from "./checks.js";
 import type * as core from "./core.js";
 import { Doc } from "./doc.js";
-import { isValidBase64, isValidBase64URL, isValidJWT, parseValidURL } from "./schemas.js";
+import { isValidBase64, isValidBase64URL, isValidJWT, mergeValues, parseValidURL } from "./schemas.js";
 import type { ParseContextInternal, ParsePayload, SomeType } from "./schemas.js";
 import * as util from "./util.js";
 
@@ -1359,13 +1359,19 @@ function literalEquality(ctx: CompileContext, accessor: string, value: unknown):
   throw new ZodCompileUnsupportedError(`literal discriminator value ${String(value)}`);
 }
 
-function generateIntersectionCheck(_doc: Doc, _ctx: CompileContext, _schema: SomeType, _accessor: string): string {
-  // Intersection runtime does deep recursive merge of overlapping object/
-  // array values plus rich incompatibility errors. The fast path's shallow
-  // `{...left, ...right}` silently produces wrong output for nested merges
-  // and accepts incompatible array merges that the runtime rejects. Force
-  // fallback for the whole intersection.
-  throw new ZodCompileUnsupportedError("z.intersection — runtime deep-merge semantics");
+function generateIntersectionCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
+  const def = schema._zod.def as unknown as { left: SomeType; right: SomeType };
+  const leftOutput = generateCheck(doc, ctx, def.left, accessor);
+  const rightOutput = generateCheck(doc, ctx, def.right, accessor);
+
+  // Hoist the runtime merge helper so recursive object/array merge semantics
+  // stay in one place. If the merge is invalid, return INVALID and let the
+  // runtime fallback construct canonical errors.
+  const mergeConst = addConstant(ctx, mergeValues);
+  const mergedVar = newVar(ctx);
+  doc.write(`const ${mergedVar} = ${mergeConst}(${leftOutput}, ${rightOutput});`);
+  doc.write(`if (!${mergedVar}.valid) return INVALID;`);
+  return `${mergedVar}.data`;
 }
 
 function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {

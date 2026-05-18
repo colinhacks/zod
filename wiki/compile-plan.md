@@ -163,7 +163,7 @@ The compile pass throws `ZodCompileUnsupportedError` at codegen time for the sch
 
 Future work would re-add fast-path codegen for these, ideally one bucket per PR with focused benches.
 
-- **Intersection** — runtime does deep recursive merge of overlapping object/array values and rejects incompatible merges. Worth a specialized codegen if intersections show up in perf-critical paths.
+- **Intersection** — done. Left/right validation is compiled, then the compiler hoists runtime `mergeValues` for the deep recursive merge. If merge fails, fast path returns `INVALID` and runtime fallback produces canonical errors. Bench: deep-merge intersection `z.compile().safeParse` **4.78M ops/sec** vs runtime **2.56M** (~1.9x).
 - **prefault** — runs the default value through the inner schema (`z.string().trim().prefault("  x  ")` trims to `"x"`). Doable with codegen that recursively invokes inner check on the default-constant.
 - **default wrapping transform/pipe** — default fires when the *transformed* value is undefined, not the input. Same shape as prefault, needs codegen-time hand-off.
 - **optional wrapping default** — runtime applies the default through the optional wrapper. Currently we skip inner entirely if input is undefined.

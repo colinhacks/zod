@@ -613,12 +613,18 @@ test("matches Zod: union", () => {
 
 // === Intersection ===
 
-test("intersection is unsupported and throws at compile time", () => {
-  // The fast path can't model intersection's deep-merge semantics; runtime
-  // owns it via the global shim's fallback. Direct `z.compile(intersection)`
-  // surfaces this as ZodCompileUnsupportedError so callers know not to try.
-  const schema = z.intersection(z.object({ name: z.string() }), z.object({ age: z.number() }));
-  expect(() => compile(schema)).toThrow(ZodCompileUnsupportedError);
+test("intersection of objects", () => {
+  const aot = compile(z.intersection(z.object({ name: z.string() }), z.object({ age: z.number() })));
+  expect(valid(aot, { name: "Alice", age: 30 })).toEqual({ name: "Alice", age: 30 });
+  invalid(aot, { name: "Alice" });
+  invalid(aot, { age: 30 });
+});
+
+test("intersection deep merge", () => {
+  const aot = compile(
+    z.intersection(z.object({ nested: z.object({ a: z.string() }) }), z.object({ nested: z.object({ b: z.number() }) }))
+  );
+  expect(valid(aot, { nested: { a: "x", b: 1 } })).toEqual({ nested: { a: "x", b: 1 } });
 });
 
 // === Record ===

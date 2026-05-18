@@ -2527,7 +2527,7 @@ export const $ZodIntersection: core.$constructor<$ZodIntersection> = /*@__PURE__
   }
 );
 
-function mergeValues(
+export function mergeValues(
   a: any,
   b: any
 ): { valid: true; data: any } | { valid: false; mergeErrorPath: (string | number)[] } {

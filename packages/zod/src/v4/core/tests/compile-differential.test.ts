@@ -217,9 +217,23 @@ test("union all-literals (Set optimization)", () => {
   differential(z.union([z.literal("a"), z.literal("b"), z.literal("c")]), ["a", "b", "c", "d", 1]);
 });
 
-// intersection deliberately throws ZodCompileUnsupportedError at compile time
-// (see compile.ts generateIntersectionCheck). The differential is meaningful
-// only for schemas that actually compile.
+test("intersection of objects", () => {
+  differential(z.intersection(z.object({ a: z.string() }), z.object({ b: z.number() })), [
+    { a: "x", b: 1 },
+    { a: "x" },
+    { a: 1, b: 1 },
+  ]);
+});
+
+test("intersection deep merge", () => {
+  differential(
+    z.intersection(
+      z.object({ nested: z.object({ a: z.string() }) }),
+      z.object({ nested: z.object({ b: z.number() }) })
+    ),
+    [{ nested: { a: "x", b: 1 } }, { nested: { a: "x" } }, { nested: { b: 1 } }, { nested: { a: "x", b: "bad" } }]
+  );
+});
 
 // --- string formats & checks ---
 

@@ -69,18 +69,26 @@ const arktypeDiscriminated = type({
   .or({ kind: "'count'", value: "number" })
   .or({ kind: "'flag'", value: "boolean" });
 
+// Intersection / deep merge
+const zodIntersection = z.intersection(
+  z.object({ nested: z.object({ a: z.string() }) }),
+  z.object({ nested: z.object({ b: z.number() }) })
+);
+
 // Compiled Zod schemas (public API) + raw fast paths (lower-level primitive)
 const zodSimpleCompiled = zcore.compile(zodSimple);
 const zodNestedCompiled = zcore.compile(zodNested);
 const zodArrayCompiled = zcore.compile(zodArray);
 const zodArrayOfObjectsCompiled = zcore.compile(zodArrayOfObjects);
 const zodDiscriminatedCompiled = zcore.compile(zodDiscriminated);
+const zodIntersectionCompiled = zcore.compile(zodIntersection);
 
 const zodSimpleFastpass = zcore.compileFastpass(zodSimple);
 const zodNestedFastpass = zcore.compileFastpass(zodNested);
 const zodArrayFastpass = zcore.compileFastpass(zodArray);
 const zodArrayOfObjectsFastpass = zcore.compileFastpass(zodArrayOfObjects);
 const zodDiscriminatedFastpass = zcore.compileFastpass(zodDiscriminated);
+const zodIntersectionFastpass = zcore.compileFastpass(zodIntersection);
 
 // ============================================
 // TEST DATA
@@ -106,6 +114,7 @@ const nestedData = {
 const arrayData = Array.from({ length: 100 }, (_, i) => i);
 const arrayOfObjectsData = Array.from({ length: 50 }, (_, i) => ({ id: i, name: `Item ${i}` }));
 const discriminatedData = { kind: "count", value: 123 };
+const intersectionData = { nested: { a: "x", b: 123 } };
 
 // ============================================
 // HANDWRITTEN VALIDATORS (baseline)
@@ -278,5 +287,17 @@ await metabench("discriminated union (3 branches)", {
   },
   "zod safeParse"() {
     return zodDiscriminated.safeParse(discriminatedData);
+  },
+}).run();
+
+await metabench("intersection deep merge", {
+  "z.compile().safeParse"() {
+    return zodIntersectionCompiled.safeParse(intersectionData);
+  },
+  "z.compileFastpass()"() {
+    return zodIntersectionFastpass(intersectionData);
+  },
+  "zod safeParse"() {
+    return zodIntersection.safeParse(intersectionData);
   },
 }).run();
