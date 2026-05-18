@@ -55,16 +55,32 @@ const arktypeArray = type("number[]");
 const zodArrayOfObjects = z.array(z.object({ id: z.number(), name: z.string() }));
 const arktypeArrayOfObjects = type({ id: "number", name: "string" }).array();
 
+// Discriminated union
+const zodDiscriminated = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("text"), value: z.string() }),
+  z.object({ kind: z.literal("count"), value: z.number() }),
+  z.object({ kind: z.literal("flag"), value: z.boolean() }),
+]);
+
+const arktypeDiscriminated = type({
+  kind: "'text'",
+  value: "string",
+})
+  .or({ kind: "'count'", value: "number" })
+  .or({ kind: "'flag'", value: "boolean" });
+
 // Compiled Zod schemas (public API) + raw fast paths (lower-level primitive)
 const zodSimpleCompiled = zcore.compile(zodSimple);
 const zodNestedCompiled = zcore.compile(zodNested);
 const zodArrayCompiled = zcore.compile(zodArray);
 const zodArrayOfObjectsCompiled = zcore.compile(zodArrayOfObjects);
+const zodDiscriminatedCompiled = zcore.compile(zodDiscriminated);
 
 const zodSimpleFastpass = zcore.compileFastpass(zodSimple);
 const zodNestedFastpass = zcore.compileFastpass(zodNested);
 const zodArrayFastpass = zcore.compileFastpass(zodArray);
 const zodArrayOfObjectsFastpass = zcore.compileFastpass(zodArrayOfObjects);
+const zodDiscriminatedFastpass = zcore.compileFastpass(zodDiscriminated);
 
 // ============================================
 // TEST DATA
@@ -89,6 +105,7 @@ const nestedData = {
 
 const arrayData = Array.from({ length: 100 }, (_, i) => i);
 const arrayOfObjectsData = Array.from({ length: 50 }, (_, i) => ({ id: i, name: `Item ${i}` }));
+const discriminatedData = { kind: "count", value: 123 };
 
 // ============================================
 // HANDWRITTEN VALIDATORS (baseline)
@@ -246,5 +263,20 @@ await metabench("array of 50 objects", {
   },
   "zod safeParse"() {
     return zodArrayOfObjects.safeParse(arrayOfObjectsData);
+  },
+}).run();
+
+await metabench("discriminated union (3 branches)", {
+  arktype() {
+    return arktypeDiscriminated(discriminatedData);
+  },
+  "z.compile().safeParse"() {
+    return zodDiscriminatedCompiled.safeParse(discriminatedData);
+  },
+  "z.compileFastpass()"() {
+    return zodDiscriminatedFastpass(discriminatedData);
+  },
+  "zod safeParse"() {
+    return zodDiscriminated.safeParse(discriminatedData);
   },
 }).run();

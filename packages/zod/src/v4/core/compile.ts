@@ -1217,8 +1217,22 @@ function getTupleOptStart(items: SomeType[]): number {
 }
 
 function generateUnionCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
-  const def = schema._zod.def as unknown as { options: SomeType[]; inclusive?: boolean };
+  const def = schema._zod.def as unknown as {
+    options: SomeType[];
+    inclusive?: boolean;
+    discriminator?: string;
+    unionFallback?: boolean;
+  };
   const options = def.options;
+
+  if (def.discriminator) {
+    return generateDiscriminatedUnionCheck(
+      doc,
+      ctx,
+      def as { options: SomeType[]; discriminator: string; unionFallback?: boolean },
+      accessor
+    );
+  }
 
   // z.xor (exclusive union) requires *exactly one* option to match; the fast
   // path's "first match wins" semantics would silently accept multi-match.
@@ -1268,6 +1282,65 @@ function generateUnionCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
 
   doc.write(`if (${outputVar} === INVALID) return INVALID;`);
   return outputVar;
+}
+
+function generateDiscriminatedUnionCheck(
+  doc: Doc,
+  ctx: CompileContext,
+  def: { options: SomeType[]; discriminator: string; unionFallback?: boolean },
+  accessor: string
+): string {
+  if (def.unionFallback) {
+    throw new ZodCompileUnsupportedError("discriminated union with unionFallback");
+  }
+
+  if (def.options.length === 0) {
+    doc.write("return INVALID;");
+    return accessor;
+  }
+
+  const discVar = newVar(ctx);
+  const outputVar = newVar(ctx);
+  doc.write(`const ${discVar} = ${accessor}?.[${util.esc(def.discriminator)}];`);
+  doc.write(`let ${outputVar};`);
+
+  let firstBranch = true;
+  for (const option of def.options) {
+    const values = option._zod.propValues?.[def.discriminator];
+    if (!values || values.size === 0) {
+      throw new ZodCompileUnsupportedError("discriminated union option without static discriminator values");
+    }
+
+    const conditions = Array.from(values, (value) => literalEquality(ctx, discVar, value));
+    const prefix = firstBranch ? "if" : "else if";
+    doc.write(`${prefix} (${conditions.join(" || ")}) {`);
+    doc.indented((d) => {
+      const branchOutput = generateCheck(d, ctx, option, accessor);
+      d.write(`${outputVar} = ${branchOutput};`);
+    });
+    doc.write(`}`);
+    firstBranch = false;
+  }
+
+  doc.write(`else { return INVALID; }`);
+  return outputVar;
+}
+
+function literalEquality(ctx: CompileContext, accessor: string, value: unknown): string {
+  if (typeof value === "string") return `${accessor} === ${util.esc(value)}`;
+  if (typeof value === "number") {
+    if (Number.isNaN(value)) return `Number.isNaN(${accessor})`;
+    return `${accessor} === ${value}`;
+  }
+  if (typeof value === "boolean") return `${accessor} === ${value}`;
+  if (value === null) return `${accessor} === null`;
+  if (value === undefined) return `${accessor} === undefined`;
+  if (typeof value === "bigint") return `${accessor} === ${value}n`;
+  if (typeof value === "symbol") {
+    const symbolConst = addConstant(ctx, value);
+    return `${accessor} === ${symbolConst}`;
+  }
+  throw new ZodCompileUnsupportedError(`literal discriminator value ${String(value)}`);
 }
 
 function generateIntersectionCheck(_doc: Doc, _ctx: CompileContext, _schema: SomeType, _accessor: string): string {
