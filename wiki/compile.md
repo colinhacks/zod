@@ -7,9 +7,13 @@ WIP AOT compiler for v4 schemas. Lives on the `z.compile` branch. Supersedes the
 Two entry points, intentionally non-overlapping:
 
 - `z.compile(schema)` — returns a cloned schema whose `_zod.run` runs an AOT-compiled fast path, falling back to the original `_zod.run` on failure. Eager compile at call time. Original schema untouched. Clone is a normal `ZodType` — `.parse`, `.safeParse`, `.refine`, `.extend`, intersection, pipe, etc. all work as usual.
-- `import "zod/compile"` — installs a global post-processor that wraps every newly-constructed schema with a one-shot lazy compile shim. Backed by a subpath export whose backing module is marked `sideEffects: true` in `package.json`; nothing else in `zod` references it, so bundles that don't import it drop the compiler entirely.
+- `import "zod/compile"` — installs a global post-processor that wraps every newly-constructed schema with a one-shot lazy compile shim. Backed by a subpath export whose backing module is marked `sideEffects: true` in `package.json`.
 
 There is no `z.compile()` no-arg form. Different shapes for different jobs: explicit per-schema compile vs. project-wide opt-in.
+
+### Tree-shaking note
+
+`z.compile` is exported from the main `zod` namespace for discoverability. That means namespace imports like `import * as z from "zod"` keep `core/compile.ts` reachable in current esbuild checks. The side-effect module `zod/compile` itself is only retained when imported, but the compiler core is not fully tree-shakeable while `z.compile` is part of the main namespace. Making the compiler fully tree-shakeable for namespace users would require moving the per-schema API off the main namespace (for example, a named export from `zod/compile`) or accepting a less discoverable API.
 
 ## Failure model
 
@@ -45,7 +49,7 @@ Reentrancy: the post-processor short-circuits when a module-local `compiling` fl
 
 Where the compiler emits a check whose logic also lives in `util.*` or the runtime parser, hoist the runtime function via `addConstant(ctx, fn)` and emit a call. One source of truth; future fixes propagate automatically; eliminates the silent-drift class of bug that fix(v4) commits keep producing.
 
-Already done: `util.floatSafeRemainder` for `multipleOf`, `util.shallowClone` for default's cloning, hoisted regex patterns for all string formats, hoisted user `.refine` / `.transform` / `.overwrite` functions.
+Already done: `util.floatSafeRemainder` for `multipleOf`, `util.shallowClone` for default's cloning, `parseValidURL`, `isValidBase64`, `isValidBase64URL`, `isValidJWT`, hoisted regex patterns for string formats, and hoisted user `.refine` / `.transform` / `.overwrite` functions.
 
 Inline only when the operation is 1–3 bytecodes of language-native ops (`typeof`, `===`, `Array.isArray`, `instanceof`, basic comparisons, property access). Wrapping `typeof x === "string"` in a util call would be strictly worse.
 
@@ -66,7 +70,6 @@ Children of the cloned schema are shared by reference with the original. `z.comp
 
 ## Open
 
-- **Discriminated-union optimization.** Currently `z.discriminatedUnion` falls through `generateUnionCheck`, which tries each option sequentially via IIFE. The single largest remaining perf opportunity. Compile path should use the discriminator key for direct branch lookup.
-- **Record key schema transforms** (#5891). Compiled record's enum/literal-key fast path doesn't run key schemas, so `.transform()` on the key type is dropped. Either skip the fast path when the key schema has any check/transform, or run the key schema once per known key during codegen.
-- **Record symbol keys** (#5719). Runtime uses `Reflect.ownKeys` so symbol keys participate. Compile uses `for...in`, which is enumerable-string-only. Symbol keys are silently dropped.
-- **base64 / base64url** runtime check. `z.base64()` has both a regex pattern and `isValidBase64` runtime check (#5888 fixed an atob whitespace bypass). Compile uses only the pattern. The regex is strict enough today, but hoisting `util.isValidBase64` as a second check would future-proof against the same drift class.
+- **Tree-shaking/API decision.** Keep `z.compile` on the main namespace and accept that namespace imports retain `core/compile.ts`, or move per-schema compile to `zod/compile` for better tree-shaking.
+- **Runtime islands.** Unsupported subtrees currently force fallback for the whole schema in direct `z.compile(schema)` mode. A future optimization could emit calls to the original runtime parser for only unsupported leaves/subtrees while compiling the surrounding object/array structure.
+- **Array output policy.** Arktype often wins array benchmarks because it can return the input for validation-only arrays. Zod semantics return parsed output (fresh arrays/objects). Any move toward input reuse would be a deliberate semantic/performance tradeoff, not an incidental optimization.

@@ -125,15 +125,15 @@ These came out of the earlier review and aren't yet fixed:
 
 ## Phase 5 — Polish + release prep
 
-- [ ] Remove `play.ts` changes from the WIP commits before opening the PR (it's user scratch, doesn't belong on the branch).
-- [ ] Drop the `.code` property from compiled functions (or gate it behind a `{ debug: true }` option in `compile()`). It's useful for development but bloats memory in production.
-- [ ] Verify `pnpm build` produces a clean ESM bundle and that the `zod/compile` subpath resolves correctly under both `import` and `require` conditions.
-- [ ] Run the full repo test suite (`pnpm vitest run`), not just compile-related tests.
-- [ ] Run `pnpm check:semver` + the rest of the prepublish gates.
-- [ ] Verify dts emit: the cloned-schema return type from `compile<T>(s: T): T` should preserve `T` exactly, with no widening or branding.
-- [ ] Run the benches in `packages/bench/compile-*.ts`. Confirm the schema-wrapper overhead hasn't eroded the headline 8x figure significantly. If it has, profile and reduce wrapper cost (likely candidates: `Object.assign` of `_zod`, indirect-call cost of the wrapper function vs direct compiled fn).
-- [ ] Update `AGENTS.md` with a one-line note that `z.compile` exists and the subpath enables it globally.
-- [ ] Decide on README copy. Probably one short section under "Performance" with an example, a perf number, and a link to the wiki doc.
+- [x] Remove `play.ts` changes from the WIP commits before opening the PR (it's user scratch, doesn't belong on the branch).
+- [x] Drop the `.code` property from compiled functions (or gate it behind a `{ debug: true }` option in `compile()`). It's useful for development but bloats memory in production.
+- [x] Verify `pnpm build` produces a clean ESM bundle and that the `zod/compile` subpath resolves correctly under both `import` and `require` conditions.
+- [x] Run the full repo test suite (`pnpm vitest run`), not just compile-related tests.
+- [x] Run `pnpm check:semver` + the rest of the prepublish gates.
+- [x] Verify dts emit: the cloned-schema return type from `compile<T>(s: T): T` should preserve `T` exactly, with no widening or branding.
+- [x] Run the benches in `packages/bench/compile-*.ts`. Confirm the schema-wrapper overhead hasn't eroded the headline 8x figure significantly. If it has, profile and reduce wrapper cost (likely candidates: `Object.assign` of `_zod`, indirect-call cost of the wrapper function vs direct compiled fn).
+- [x] Update `AGENTS.md` with a one-line note that `z.compile` exists and the subpath enables it globally.
+- [x] Decide on README copy. Probably one short section under "Performance" with an example, a perf number, and a link to the wiki doc.
 
 ## Things explicitly out of scope for v1
 
@@ -151,7 +151,7 @@ For the record, so the PR review doesn't relitigate these:
 
 - All five phases land in their own commits (or commit groups), no force-pushes that lose history.
 - Differential harness is green across the full combinator matrix.
-- Bundle-size test confirms tree-shaking works in real bundlers.
+- Bundle-size test documents the tree-shaking/API tradeoff: `zod/compile` side-effect module tree-shakes unless imported, but top-level `z.compile` keeps `core/compile.ts` reachable under namespace imports.
 - Benches confirm the schema-wrapper overhead is in single-digit %, not 2x.
 - The wiki page (`wiki/compile.md`) matches the shipped behavior.
 - A short README + AGENTS.md mention exists.
