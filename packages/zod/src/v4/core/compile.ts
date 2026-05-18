@@ -1,6 +1,7 @@
 import type * as checks from "./checks.js";
 import type * as core from "./core.js";
 import { Doc } from "./doc.js";
+import { isValidBase64, isValidBase64URL, isValidJWT } from "./schemas.js";
 import type { ParseContextInternal, ParsePayload, SomeType } from "./schemas.js";
 import * as util from "./util.js";
 
@@ -440,12 +441,27 @@ type StringFormatDef =
 type SupportedStringFormat = "regex" | "lowercase" | "uppercase" | "includes" | "starts_with" | "ends_with";
 
 function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFormatDef, accessor: string): void {
-  // Some string formats do runtime validation beyond their advertised pattern
-  // (base64 whitespace rejection, base64url's atob check, jwt structural
-  // validation, url's normalize/hostname/protocol options). For those, force
-  // fallback so the runtime's check runs and produces the right answer.
+  // Some string formats do runtime validation beyond their advertised pattern.
+  // For cheap pure utility checks, hoist the runtime function and call it so
+  // the fast path stays correct without cloning the utility logic into codegen.
   const fmt = def.format;
-  if (fmt === "url" || fmt === "base64" || fmt === "base64url" || fmt === "jwt" || fmt === "httpurl") {
+  if (fmt === "base64") {
+    const validator = addConstant(ctx, isValidBase64);
+    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    return;
+  }
+  if (fmt === "base64url") {
+    const validator = addConstant(ctx, isValidBase64URL);
+    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    return;
+  }
+  if (fmt === "jwt") {
+    const validator = addConstant(ctx, isValidJWT);
+    const alg = addConstant(ctx, (def as unknown as { alg?: util.JWTAlgorithm }).alg ?? null);
+    doc.write(`if (!${validator}(${accessor}, ${alg})) return INVALID;`);
+    return;
+  }
+  if (fmt === "url" || fmt === "httpurl") {
     throw new ZodCompileUnsupportedError(`z.${fmt}() — runtime check beyond pattern`);
   }
   const formatDef = def as unknown as { normalize?: boolean; hostname?: unknown; protocol?: unknown };
@@ -673,21 +689,35 @@ function generateStringCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
     protocol?: unknown;
   };
 
-  // httpurl/base64url/jwt do runtime validation beyond their advertised
-  // pattern. base64 has been hardened with a whitespace check in main
-  // (#5888). url has runtime normalization/options behavior (mini z.url()
-  // even trims whitespace by default). Force fallback for all of these.
+  // URL/httpurl have runtime normalization/options behavior (mini z.url() even
+  // trims whitespace by default). Force fallback. Pure string utility formats
+  // like base64/base64url/jwt are handled by generateStringFormatCheck above or
+  // by the schema-level helper block below.
   if (
     def.format === "url" ||
     def.format === "httpurl" ||
-    def.format === "base64" ||
-    def.format === "base64url" ||
-    def.format === "jwt" ||
     def.normalize ||
     def.hostname !== undefined ||
     def.protocol !== undefined
   ) {
     throw new ZodCompileUnsupportedError(`z.${def.format ?? "string"} — runtime check beyond pattern`);
+  }
+
+  if (def.format === "base64") {
+    const validator = addConstant(ctx, isValidBase64);
+    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    return accessor;
+  }
+  if (def.format === "base64url") {
+    const validator = addConstant(ctx, isValidBase64URL);
+    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    return accessor;
+  }
+  if (def.format === "jwt") {
+    const validator = addConstant(ctx, isValidJWT);
+    const alg = addConstant(ctx, (def as unknown as { alg?: util.JWTAlgorithm }).alg ?? null);
+    doc.write(`if (!${validator}(${accessor}, ${alg})) return INVALID;`);
+    return accessor;
   }
 
   if (def.pattern) {
