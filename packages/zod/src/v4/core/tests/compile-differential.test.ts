@@ -392,6 +392,43 @@ test("superRefine adds issues", () => {
   differential(schema, ["a@b", "ab", 1]);
 });
 
+// --- catch ---
+
+test("catch primitive", () => {
+  differential(z.catch(z.string(), "fb"), ["x", "", 1, null, undefined]);
+});
+
+test("catch inside object property", () => {
+  differential(z.object({ name: z.catch(z.string().min(2), "anon") }), [
+    { name: "Alice" },
+    { name: "x" },
+    { name: 42 },
+    {},
+  ]);
+});
+
+test("catch with function reading issues", () => {
+  differential(
+    z.catch(z.string().min(5), (ctx) => `e:${ctx.error.issues.length}`),
+    ["abcdef", "ab", 42, undefined]
+  );
+});
+
+// --- runtime islands ---
+
+test("xor inside object falls back per-property via runtime island", () => {
+  differential(z.object({ x: z.xor([z.string(), z.number()]), y: z.boolean() }), [
+    { x: "a", y: true },
+    { x: 1, y: false },
+    { x: true, y: true },
+    { x: "a", y: 1 },
+  ]);
+});
+
+test("xor inside array element via runtime island", () => {
+  differential(z.array(z.xor([z.string(), z.number()])), [[], ["a", 1, "b"], ["a", true]]);
+});
+
 // --- pathological / regression cases ---
 
 test("__proto__ in object catchall", () => {

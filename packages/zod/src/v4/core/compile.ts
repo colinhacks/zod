@@ -1,5 +1,5 @@
 import type * as checks from "./checks.js";
-import type * as core from "./core.js";
+import * as core from "./core.js";
 import { Doc } from "./doc.js";
 import {
   isValidBase64,
@@ -202,6 +202,55 @@ function addConstant(ctx: CompileContext, value: unknown): string {
 
 function newVar(ctx: CompileContext): string {
   return `v${ctx.varCounter++}`;
+}
+
+// Runtime helper called from inside the compiled fast path. Black-boxes a
+// child schema by running its `_zod.run` with a fresh payload. Returns either
+// the parsed value, INVALID (validation failed, triggers outer fallback), or
+// signals async-boundary-violation by returning INVALID when the run resolves
+// asynchronously. Used by the runtime-island pattern (see `compileChild`).
+function runtimeRun(schema: SomeType, value: unknown): unknown {
+  const result = (schema._zod.run as (p: ParsePayload, c: ParseContextInternal) => any)(
+    { value, issues: [] },
+    {} as ParseContextInternal
+  );
+  if (result && typeof (result as Promise<unknown>).then === "function") return INVALID;
+  const r = result as { value: unknown; issues: unknown[] };
+  return r.issues.length === 0 ? r.value : INVALID;
+}
+
+// Try to compile `schema` against `accessor`. If `generateCheck` throws
+// `ZodCompileUnsupportedError`, the doc + ctx state is rolled back and a
+// runtime island is emitted instead — the child schema is invoked through
+// `runtimeRun` at parse time and treated as a black box. Anything else thrown
+// propagates (e.g. `ZodCompileAsyncError`).
+function compileChild(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
+  const contentLen = doc.content.length;
+  const constantCount = ctx.constants.size;
+  const constantCounter = ctx.constantCounter;
+  const varCounter = ctx.varCounter;
+  try {
+    return generateCheck(doc, ctx, schema, accessor);
+  } catch (err) {
+    if (!(err instanceof ZodCompileUnsupportedError)) throw err;
+    doc.content.length = contentLen;
+    if (ctx.constants.size > constantCount) {
+      const trailing = Array.from(ctx.constants.keys()).slice(constantCount);
+      for (const k of trailing) ctx.constants.delete(k);
+    }
+    ctx.constantCounter = constantCounter;
+    ctx.varCounter = varCounter;
+    return emitRuntimeIsland(doc, ctx, schema, accessor);
+  }
+}
+
+function emitRuntimeIsland(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
+  const schemaConst = addConstant(ctx, schema);
+  const runConst = addConstant(ctx, runtimeRun);
+  const outVar = newVar(ctx);
+  doc.write(`const ${outVar} = ${runConst}(${schemaConst}, ${accessor});`);
+  doc.write(`if (${outVar} === INVALID) return INVALID;`);
+  return outVar;
 }
 
 function generateChecks(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
@@ -590,7 +639,8 @@ type SupportedSchemaType =
   | "lazy"
   | "pipe"
   | "custom"
-  | "transform";
+  | "transform"
+  | "catch";
 
 function generateCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
   const def = schema._zod.def;
@@ -709,6 +759,9 @@ function generateCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor
       break;
     case "transform":
       typeAccessor = generateTransformCheck(doc, ctx, schema, accessor);
+      break;
+    case "catch":
+      typeAccessor = generateCatchCheck(doc, ctx, schema, accessor);
       break;
     default: {
       void (type satisfies never);
@@ -891,7 +944,7 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
       const outputVar = newVar(ctx);
       doc.write(`let ${outputVar} = (() => {`);
       doc.indented((d) => {
-        const outputAccessor = generateCheck(d, ctx, propSchema, inputVar);
+        const outputAccessor = compileChild(d, ctx, propSchema, inputVar);
         d.write(`return ${outputAccessor};`);
       });
       doc.write(`})();`);
@@ -913,7 +966,7 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
       }
 
       // Generate check and get output accessor
-      const outputAccessor = generateCheck(doc, ctx, propSchema, inputVar);
+      const outputAccessor = compileChild(doc, ctx, propSchema, inputVar);
       propOutputs[key] = outputAccessor;
     }
   }
@@ -973,7 +1026,7 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
         d.indented((d2) => {
           const valVar = newVar(ctx);
           d2.write(`const ${valVar} = ${accessor}[k];`);
-          const outputVar = generateCheck(d2, ctx, catchall, valVar);
+          const outputVar = compileChild(d2, ctx, catchall, valVar);
           d2.write(`${unknownKeysVar}[k] = ${outputVar};`);
         });
         d.write(`}`);
@@ -1137,6 +1190,10 @@ function fastPathAcceptsAbsence(schema: SomeType): boolean {
     case "readonly":
     case "success":
       return def.innerType ? fastPathAcceptsAbsence(def.innerType) : true;
+    case "catch":
+      // catch always produces a value (inner may fail → catchValue substitutes),
+      // so it accepts an absent key regardless of inner.
+      return true;
     case "union":
       return def.options ? def.options.some(fastPathAcceptsAbsence) : true;
     case "intersection":
@@ -1196,7 +1253,7 @@ function generateArrayCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
   doc.write(`for (let ${iVar} = 0; ${iVar} < ${accessor}.length; ${iVar}++) {`);
   doc.indented((d) => {
     d.write(`const ${elemVar} = ${accessor}[${iVar}];`);
-    const elemOutput = generateCheck(d, ctx, def.element, elemVar);
+    const elemOutput = compileChild(d, ctx, def.element, elemVar);
     d.write(`${outputVar}[${iVar}] = ${elemOutput};`);
   });
   doc.write(`}`);
@@ -1348,7 +1405,7 @@ function generateTupleCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
         d.indented((d2) => {
           const elemVar = newVar(ctx);
           d2.write(`const ${elemVar} = ${accessor}[${i}];`);
-          const elemOutput = generateCheck(d2, ctx, itemSchema, elemVar);
+          const elemOutput = compileChild(d2, ctx, itemSchema, elemVar);
           d2.write(`${outputVar}[${i}] = ${elemOutput};`);
         });
         d.write(`} else {`);
@@ -1358,7 +1415,7 @@ function generateTupleCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
           d2.write(`const ${elemVar} = undefined;`);
           d2.write(`const ${branchVar} = (() => {`);
           d2.indented((d3) => {
-            const elemOutput = generateCheck(d3, ctx, itemSchema, elemVar);
+            const elemOutput = compileChild(d3, ctx, itemSchema, elemVar);
             d3.write(`return ${elemOutput};`);
           });
           d2.write(`})();`);
@@ -1371,7 +1428,7 @@ function generateTupleCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
     } else {
       const elemVar = newVar(ctx);
       doc.write(`const ${elemVar} = ${accessor}[${i}];`);
-      const elemOutput = generateCheck(doc, ctx, itemSchema, elemVar);
+      const elemOutput = compileChild(doc, ctx, itemSchema, elemVar);
       doc.write(`${outputVar}[${i}] = ${elemOutput};`);
     }
   }
@@ -1383,7 +1440,7 @@ function generateTupleCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
     doc.write(`for (let ${iVar} = ${items.length}; ${iVar} < ${accessor}.length; ${iVar}++) {`);
     doc.indented((d) => {
       d.write(`const ${elemVar} = ${accessor}[${iVar}];`);
-      const elemOutput = generateCheck(d, ctx, rest, elemVar);
+      const elemOutput = compileChild(d, ctx, rest, elemVar);
       d.write(`${outputVar}[${iVar}] = ${elemOutput};`);
     });
     doc.write(`}`);
@@ -1564,8 +1621,8 @@ function literalEquality(ctx: CompileContext, accessor: string, value: unknown):
 
 function generateIntersectionCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
   const def = schema._zod.def as unknown as { left: SomeType; right: SomeType };
-  const leftOutput = generateCheck(doc, ctx, def.left, accessor);
-  const rightOutput = generateCheck(doc, ctx, def.right, accessor);
+  const leftOutput = compileChild(doc, ctx, def.left, accessor);
+  const rightOutput = compileChild(doc, ctx, def.right, accessor);
 
   // Hoist the runtime merge helper so recursive object/array merge semantics
   // stay in one place. If the merge is invalid, return INVALID and let the
@@ -1609,7 +1666,7 @@ function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
       const keyConst = addConstant(ctx, key);
       const outKey = generateCheck(doc, ctx, def.keyType, keyConst);
       const inputAccessor = `${accessor}[${literalPropertyKey(ctx, inputKey)}]`;
-      const valOutput = generateCheck(doc, ctx, def.valueType, inputAccessor);
+      const valOutput = compileChild(doc, ctx, def.valueType, inputAccessor);
       doc.write(`${outputVar}[${outKey}] = ${valOutput};`);
     }
 
@@ -1645,7 +1702,7 @@ function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
     d.write(`if (!${propIsEnumerable}.call(${accessor}, ${kVar})) continue;`);
     d.write(`if (typeof ${kVar} !== "string") return INVALID;`);
     d.write(`const ${valVar} = ${accessor}[${kVar}];`);
-    const valOutput = generateCheck(d, ctx, def.valueType, valVar);
+    const valOutput = compileChild(d, ctx, def.valueType, valVar);
     d.write(`${outputVar}[${kVar}] = ${valOutput};`);
   });
   doc.write(`}`);
@@ -1810,6 +1867,54 @@ function generateCustomCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
     throw new ZodCompileUnsupportedError("custom schema without a predicate function");
   }
   return accessor;
+}
+
+// Runtime helper: handle inner-schema failure inside a compiled `catch`. Runs
+// the inner runtime once to get canonical issues, finalizes them, and calls
+// the catchValue with a $ZodCatchCtx-shaped payload. Returns INVALID if the
+// inner schema resolves asynchronously (forces outer fallback).
+function runtimeCatch(innerSchema: SomeType, catchValue: (ctx: any) => unknown, value: unknown): unknown {
+  const result = (innerSchema._zod.run as (p: ParsePayload, c: ParseContextInternal) => any)(
+    { value, issues: [] },
+    {} as ParseContextInternal
+  );
+  if (result && typeof (result as Promise<unknown>).then === "function") return INVALID;
+  const r = result as { value: unknown; issues: any[] };
+  if (r.issues.length === 0) return r.value;
+  const config = core.config();
+  const finalized = r.issues.map((iss) => util.finalizeIssue(iss, undefined, config));
+  return catchValue({
+    value: r.value,
+    issues: [],
+    error: { issues: finalized },
+    input: r.value,
+  });
+}
+
+function generateCatchCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
+  const def = schema._zod.def as unknown as {
+    innerType: SomeType;
+    catchValue: (ctx: any) => unknown;
+  };
+
+  const outputVar = newVar(ctx);
+  doc.write(`let ${outputVar} = (() => {`);
+  doc.indented((d) => {
+    const innerOut = compileChild(d, ctx, def.innerType, accessor);
+    d.write(`return ${innerOut};`);
+  });
+  doc.write(`})();`);
+
+  const catchConst = addConstant(ctx, def.catchValue);
+  const innerConst = addConstant(ctx, def.innerType);
+  const catchHelperConst = addConstant(ctx, runtimeCatch);
+  doc.write(`if (${outputVar} === INVALID) {`);
+  doc.indented((d) => {
+    d.write(`${outputVar} = ${catchHelperConst}(${innerConst}, ${catchConst}, ${accessor});`);
+    d.write(`if (${outputVar} === INVALID) return INVALID;`);
+  });
+  doc.write(`}`);
+  return outputVar;
 }
 
 function generateTransformCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {

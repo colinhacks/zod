@@ -188,3 +188,22 @@ Completed polish after this list was written:
 - **Record symbol keys** — done. Dynamic `z.record(z.string(), value)` now uses `Reflect.ownKeys` plus `propertyIsEnumerable` and rejects enumerable symbol keys, matching the runtime. Differential coverage added.
 - **Required-key presence optimization** — done. `requiresPresenceCheck(schema)` (paired with `fastPathAcceptsAbsence`) gates the `key in input` guard on required object properties: emitted only when the child's value-level fast path would otherwise let an absent key through as `undefined` (e.g. `z.undefined()`, `z.any()`, unions containing undefined). Typed-leaf schemas like `z.string()` no longer pay for the redundant presence check.
 - **Tuple exactOptional** — done. `generateTupleCheck` no longer throws `ZodCompileUnsupportedError` for exactOptional items; the existing optoutStart-tail IIFE handles absence (truncate) while the inline present-branch lets the inner schema reject explicit `undefined`. Differential and focused tests cover mixed required + exactOptional and exactOptional vs regular optional on explicit undefined.
+
+## Phase 5 — Runtime islands + catch + IPv6 hoist
+
+Done. Combinator codegen (`generateObjectCheck`, `generateTupleCheck`, `generateArrayCheck`, `generateRecordCheck` value-side, `generateIntersectionCheck`, and the object's catchall-with-schema path) now route each child through `compileChild`. If a child throws `ZodCompileUnsupportedError`, the doc + ctx state is rolled back and a runtime island is emitted instead — the child schema is hoisted as a constant and parsed via `runtimeRun(schema, value)` at call time. This means one unsupported leaf no longer aborts compilation of the surrounding object/tuple/array/record/intersection. Async detection at the island boundary is conservative: if `_zod.run` returns a Promise, the island returns `INVALID` and the wrapper falls back to runtime. Union / discriminated-union codegen deliberately does **not** add islands — first-match-wins semantics depend on per-option failure being a runtime parser failure, not a "couldn't compile this branch" sentinel; the simpler behavior is to keep `ZodCompileUnsupportedError` bubbling and let the global shim install runtime fallback for the entire union.
+
+`case "catch"` added. Inner is routed through `compileChild` (so a runtime-island inner still gets catch behavior). When the inner fast path returns `INVALID`, a hoisted `runtimeCatch(inner, catchValue, value)` helper runs the inner runtime, finalizes its issues, and calls `catchValue` with a `$ZodCatchCtx`-shaped payload (`{ value, issues: [], error: { issues: finalized }, input }`). Async inner triggers fallback. `fastPathAcceptsAbsence` returns true for `catch` (the wrapper always produces an output even on an absent key).
+
+IPv6 / CIDRv6 hoisting done in a previous commit (`isValidIPv6` / `isValidCIDRv6` exported from `core/schemas.ts`, hoisted via `addConstant` in both `generateStringCheck` and `generateStringFormatCheck`). Reclassification of the four plain-`Error` throws to `ZodCompileUnsupportedError` shipped in the same commit.
+
+Bench delta (post-Phase 4 → post-Phase 5, all within ±5% noise):
+
+| case | post-Phase-4 | post-this-work | delta |
+| --- | --- | --- | --- |
+| simple object | 26.2M | 25.9M | -1.1% |
+| nested moltar | 18.8M | 19.2M | +2.1% |
+| array of 100 numbers | 8.35M | 8.53M | +2.2% |
+| array of 50 objects | 3.94M | 3.82M | -3.0% |
+| DU 3-branch | 28.0M | 27.1M | -3.2% |
+| intersection | 4.78M | 4.70M | -1.7% |

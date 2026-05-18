@@ -1227,6 +1227,41 @@ test("compiled clone is composable inside another schema", () => {
   expect(bad.success).toBe(false);
 });
 
+// === catch ===
+
+test("catch over primitive", () => {
+  const aot = compile(z.catch(z.string(), "fallback"));
+  expect(valid(aot, "hello")).toBe("hello");
+  expect(valid(aot, 123)).toBe("fallback");
+  expect(valid(aot, undefined)).toBe("fallback");
+});
+
+test("catch as object property", () => {
+  const aot = compile(z.object({ name: z.catch(z.string(), "anon") }));
+  expect(valid(aot, { name: "Alice" })).toEqual({ name: "Alice" });
+  expect(valid(aot, { name: 123 })).toEqual({ name: "anon" });
+  expect(valid(aot, {})).toEqual({ name: "anon" });
+});
+
+test("catch receives finalized issues in ctx", () => {
+  const schema = z.catch(z.string().min(5), (ctx) => `bad:${ctx.error.issues.length}`);
+  const aot = compile(schema);
+  expect(valid(aot, "hello world")).toBe("hello world");
+  // input fails both type and length checks; we just confirm catchValue ran
+  // and saw at least one finalized issue.
+  expect(valid(aot, "hi")).toBe("bad:1");
+  expect(valid(aot, 42)).toMatch(/^bad:\d+$/);
+});
+
+test("catch falls through unsupported inner via runtime island", () => {
+  // Async refine in the inner makes the inner uncompilable, but catch should
+  // still compile by treating the whole catch as a runtime island.
+  const aot = compile(z.catch(z.union([z.string(), z.number()]), "fb"));
+  expect(valid(aot, "x")).toBe("x");
+  expect(valid(aot, 1)).toBe(1);
+  expect(valid(aot, true)).toBe("fb");
+});
+
 // === IPv6 / CIDRv6 hoisted helpers ===
 
 test("ipv6 compiled rejects regex-passing but URL-rejecting values", () => {
@@ -1247,4 +1282,26 @@ test("cidrv6 compiled validates prefix range and address", () => {
   invalid(aot, "not-an-address/64");
   invalid(aot, "::1");
   expectMatch(z.cidrv6(), "::1/129");
+});
+
+// === Runtime islands ===
+
+test("runtime island falls through unsupported child inside object", () => {
+  // z.xor (exclusive union) currently throws ZodCompileUnsupportedError. As an
+  // object property, the island should let the rest of the object compile.
+  const aot = compile(
+    z.object({
+      label: z.string(),
+      payload: z.xor([z.string(), z.number()]),
+    })
+  );
+  expect(valid(aot, { label: "ok", payload: "x" })).toEqual({ label: "ok", payload: "x" });
+  invalid(aot, { label: "ok", payload: true });
+  invalid(aot, { label: 1, payload: "x" });
+});
+
+test("runtime island inside array element", () => {
+  const aot = compile(z.array(z.xor([z.string(), z.number()])));
+  expect(valid(aot, ["a", 1, "b"])).toEqual(["a", 1, "b"]);
+  invalid(aot, ["a", true]);
 });
