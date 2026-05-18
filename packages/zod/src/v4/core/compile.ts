@@ -1,7 +1,15 @@
 import type * as checks from "./checks.js";
 import type * as core from "./core.js";
 import { Doc } from "./doc.js";
-import { isValidBase64, isValidBase64URL, isValidJWT, mergeValues, parseValidURL } from "./schemas.js";
+import {
+  isValidBase64,
+  isValidBase64URL,
+  isValidCIDRv6,
+  isValidIPv6,
+  isValidJWT,
+  mergeValues,
+  parseValidURL,
+} from "./schemas.js";
 import type { ParseContextInternal, ParsePayload, SomeType } from "./schemas.js";
 import * as util from "./util.js";
 
@@ -474,6 +482,16 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
     doc.write(`if (!${validator}(${accessor}, ${alg})) return INVALID;`);
     return;
   }
+  if (fmt === "ipv6") {
+    const validator = addConstant(ctx, isValidIPv6);
+    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    return;
+  }
+  if (fmt === "cidrv6") {
+    const validator = addConstant(ctx, isValidCIDRv6);
+    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    return;
+  }
   if (fmt === "url" || fmt === "httpurl") {
     const validator = addConstant(ctx, parseValidURL);
     const defConst = addConstant(ctx, def);
@@ -530,7 +548,7 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
     }
     default: {
       void (format satisfies never);
-      throw new Error(`Unsupported string format for AOT compilation: ${format}`);
+      throw new ZodCompileUnsupportedError(`string format ${format}`);
     }
   }
 }
@@ -694,7 +712,7 @@ function generateCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor
       break;
     default: {
       void (type satisfies never);
-      throw new Error(`Unsupported schema type for AOT compilation: ${type}`);
+      throw new ZodCompileUnsupportedError(`schema type ${type}`);
     }
   }
 
@@ -746,6 +764,19 @@ function generateStringCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
     const validator = addConstant(ctx, isValidJWT);
     const alg = addConstant(ctx, (def as unknown as { alg?: util.JWTAlgorithm }).alg ?? null);
     doc.write(`if (!${validator}(${accessor}, ${alg})) return INVALID;`);
+    return accessor;
+  }
+  if (def.format === "ipv6") {
+    // Runtime $ZodIPv6 validates via new URL("http://[value]"), not the regex.
+    // The pattern in def.pattern is advisory only — match runtime semantics by
+    // using the hoisted helper instead of regex.test.
+    const validator = addConstant(ctx, isValidIPv6);
+    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    return accessor;
+  }
+  if (def.format === "cidrv6") {
+    const validator = addConstant(ctx, isValidCIDRv6);
+    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
     return accessor;
   }
 
@@ -1197,7 +1228,7 @@ function generateLiteralCheck(doc: Doc, ctx: CompileContext, schema: SomeType, a
   } else if (typeof value === "bigint") {
     doc.write(`if (${accessor} !== ${value}n) return INVALID;`);
   } else {
-    throw new Error(`Unsupported literal type for AOT compilation: ${typeof value}`);
+    throw new ZodCompileUnsupportedError(`literal type ${typeof value}`);
   }
   return accessor;
 }
@@ -1776,7 +1807,7 @@ function generateCustomCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
     const fnConst = addConstant(ctx, def.fn);
     doc.write(`if (!${fnConst}(${accessor})) return INVALID;`);
   } else {
-    throw new Error("AOT compilation does not support custom schemas without a predicate function");
+    throw new ZodCompileUnsupportedError("custom schema without a predicate function");
   }
   return accessor;
 }

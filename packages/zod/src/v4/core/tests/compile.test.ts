@@ -1226,3 +1226,25 @@ test("compiled clone is composable inside another schema", () => {
   const bad = outer.safeParse({ user: { name: 1 }, count: 1 });
   expect(bad.success).toBe(false);
 });
+
+// === IPv6 / CIDRv6 hoisted helpers ===
+
+test("ipv6 compiled rejects regex-passing but URL-rejecting values", () => {
+  const aot = compile(z.ipv6());
+  expect(valid(aot, "::1")).toBe("::1");
+  expect(valid(aot, "2001:db8::1")).toBe("2001:db8::1");
+  // "0:0:0:0:0:0:0:1:1" matches the IPv6 regex but `new URL` rejects it.
+  invalid(aot, "0:0:0:0:0:0:0:1:1");
+  // Differential: confirm runtime and compiled agree on this fixture.
+  expectMatch(z.ipv6(), "0:0:0:0:0:0:0:1:1");
+});
+
+test("cidrv6 compiled validates prefix range and address", () => {
+  const aot = compile(z.cidrv6());
+  expect(valid(aot, "::1/128")).toBe("::1/128");
+  invalid(aot, "::1/129");
+  invalid(aot, "::1/-1");
+  invalid(aot, "not-an-address/64");
+  invalid(aot, "::1");
+  expectMatch(z.cidrv6(), "::1/129");
+});
