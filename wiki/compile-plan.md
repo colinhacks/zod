@@ -207,3 +207,87 @@ Bench delta (post-Phase 4 → post-Phase 5, all within ±5% noise):
 | array of 50 objects | 3.94M | 3.82M | -3.0% |
 | DU 3-branch | 28.0M | 27.1M | -3.2% |
 | intersection | 4.78M | 4.70M | -1.7% |
+
+## Phase 6 — Post-launch ecosystem PRs
+
+Action plan to ship in the week after `z.compile` lands on npm. Items are roughly priority-ordered within each section: §6.1 upstream benchmark PRs first (canonical citations), §6.2 competitor doc PRs (where Zod-perf claims are quoted publicly), §6.3 internal docs, §6.4 adjacent ecosystem (only verified cases), §6.5 social acknowledgements, §6.6 our own launch artifacts.
+
+The PR voice across all external repos: ego-free, factual, "Zod 4 now ships an opt-in AOT compiler that closes this gap on X cases — adding a variant / updating the comparison to reflect both modes." Most maintainers will accept; some won't; either is fine.
+
+### 6.1 — Benchmark repos (upstream `zod-compiled` variant)
+
+1. **`open-circle/schema-benchmarks`** — `schemas/libraries/zod/benchmarks.ts`. Add a third parsing variant alongside the existing `safeParse` + `jitless` entries, plus install `zod/compile` once at module load. The repo already discriminates variants via `optimizeType` (typia uses `"precompiled"`); add `optimizeType: "compile"` and a `note: "compile"` parsing entry. There is already an empty `schemas/libraries/zod/download_compiled/` directory in the tree, so the maintainers (Fabian Hiller + EskiMojo14) have likely anticipated this — coordinate via issue first to confirm shape, then PR. Same patch the in-flight bench worker is producing locally can serve as the basis. Quote the current shape from `benchmarks.ts`: `parsing: { allErrors: [ { run(data) { return schema.safeParse(data); }, ... }, { run(data) { return schema.safeParse(data, { jitless: true }); }, ... note: "jitless", optimizeType: "none" } ] }` — append a third entry returning `compiledSchema.safeParse(data)`. *Why:* this is the canonical cross-library bench (18 libs, daily-updated, cited by `valibot.dev` and several blog posts). Without a compiled variant, every external citation of "Zod runtime perf" will keep pointing at the un-compiled number. *PR shape:* small, but needs a 5-minute issue thread with the maintainers first to confirm whether `compile` is a `note` on the existing zod entry or a separate `zod-compiled` library row. *Open question:* whether `import "zod/compile"` global mode is fair game in a shared-process bench (could leak compilation across libraries via the constructor hook) — recommend the explicit `z.compile(schema)` shape per-entry instead.
+
+2. **`moltar/typescript-runtime-type-benchmarks`** — `cases/zod4.ts`. Already pulls `zod@next` via `"zod4": "npm:zod@next"` in `package.json`, so once `z.compile` is on npm the bump is mechanical. Add a `cases/zod4-compiled.ts` mirroring the existing four cases (`parseSafe`, `parseStrict`, `assertLoose`, `assertStrict`) but with `z.compile(dataType)` inside the factory. *Why:* this is the bench that ArkType's homepage chart sources from (`arktype.io` "20x faster than Zod4" — see §6.2.1). Until a compiled case exists in Moltar, ArkType's chart legitimately reflects un-compiled Zod 4. *PR shape:* small, mechanical. *Open question:* whether to bump `zod` (currently `3.25.76`) and `zod4` (`zod@next`) to specific pinned versions in the same PR; recommend pin in a separate PR so the compiled-case PR is purely additive.
+
+3. **`arktypeio/typescript-runtime-type-benchmarks`** — Verified to be a stale fork of Moltar (8 stars, identical `cases/zod.ts`, no zod4 case before the upstream merge). It is not the active source of arktype.io's chart — the homepage component (`ark/docs/components/RuntimeBenchmarksGraph.tsx`) just hard-codes `ArkType ⚡ 14 nanoseconds` / `Zod 👍 281 nanoseconds`, citing Moltar in the `(source)` link. Skip a fork-specific PR; upstreaming to Moltar covers it.
+
+4. **`naruaway/valibot-benchmarks`** — `config.ts`. Currently `libs: ["valibot", "zod"], baseline: "zod", target: "valibot"`. PR to add a `valibot@compiled-zod` baseline variant or pin Zod to the post-`z.compile` version. The harness loads libraries from `./libs/<name>` or `node_modules`, so an extra `libs/zod@compiled/` directory installing `zod` and side-effect-importing `zod/compile` is the cleanest shape. *Why:* this is the harness Fabian links to from `valibot.dev`'s comparison guidance; cited indirectly in the Mar 23 blog post. *PR shape:* small, but parent repo (`naruaway`) is unofficial and may be unresponsive — `nimeshnayaju` maintains a fork, so the fallback is to PR the fork or carry our own. *Open question:* whether to coordinate with Fabian first since he's downstream of both forks.
+
+5. **`DZakh/sury`** — `packages/sury/README.md`. The Comparison table cites `Zod@4.0.0-beta`, `Parse with the same schema 8,437 ops/ms` and `Create schema & parse once 6 ops/ms`. PR to bump the Zod column to the current 4.x release with both un-compiled and compiled numbers, ideally as two rows (`Zod 4 / Zod 4 + z.compile`) or one row with `8,437 ops/ms (compiled: X)`. *Why:* small, citable artifact — Sury actively positions itself as the fastest, and `Zod@4.0.0-beta` is more than a year stale. *PR shape:* small, README-only. *Open question:* whether DZakh will accept a comparison-table revision from us; he's friendly but particular about positioning — open as a draft and let him counter-propose the row shape.
+
+### 6.2 — Competitor docs that cite Zod perf
+
+6. **`arktypeio/arktype`** — `ark/docs/components/RuntimeBenchmarksGraph.tsx`. The homepage chart hard-codes `"ArkType ⚡ 14 nanoseconds"` / `"Zod 👍 281 nanoseconds"` with the caption `"20x faster than Zod4 and 2,000x faster than Yup at runtime"` (also in the prose body of `arktype.io` and likely a sibling `.mdx` page in `ark/docs/content/`). PR to update the Zod bar to reflect `z.compile`'d numbers, or add a third bar (`Zod (compiled)`), with a one-sentence footnote that "Zod 4 now ships an opt-in compiler (`z.compile` / `import 'zod/compile'`)" and updated Moltar source link. *Why:* highest-visibility citation of Zod perf in the ecosystem; the "20x" framing has been quoted on HN, Twitter, and in migration writeups. *PR shape:* nontrivial — needs discussion with David Blass first (he already said in issue #1303 he was planning a "comparisons section" with more nuance). Lead with the Moltar PR from §6.1.2 landing first so the chart has a real number to cite. *Open question:* whether David accepts a PR vs writing his own update; default to opening an issue with the proposed change attached.
+
+7. **`fabian-hiller/valibot`** — `valibot.dev` site (blog/`why-migrate-to-valibot.mdx`, dated 2026-03-23). The post claims `"the same schema is initialized in 54 μs and therefore 16x faster than Zod v4"`, citing `schemabenchmarks.dev/initialization`. `z.compile` is a *runtime* optimization that lazy-compiles on first parse, so the initialization-only claim is unchanged — but the post follows immediately with `"Valibot might not (yet) win every benchmark. But if you care about the full package instead of a single number, Valibot offers one of the best overall tradeoffs, also for runtime performance"`, which the new runtime numbers do shift. PR shape is *not* "edit the post" but rather: get §6.1.1 (schemabenchmarks compiled variant) merged so the linked-from-this-post bench updates automatically. *Why:* Fabian co-maintains schemabenchmarks; a clean upstream there is more leverage than an editorial PR. *PR shape:* indirect — no direct PR to valibot.dev needed if §6.1.1 lands. *Open question:* whether to additionally suggest a one-line edit to the runtime-performance sentence after schemabenchmarks updates; default no, his framing is fair.
+
+8. **`fabian-hiller/valibot`** — `website/src/routes/(layout)/guides/comparison.mdx` (`valibot.dev/guides/comparison/`). Performance section reads: `"Roughly speaking, the library is about twice as fast as Zod v3, and has similar runtime performance to Zod v4 (including Zod Mini), but is much slower than Typia and TypeBox, because we don't yet use a compiler that can generate highly optimized runtime code, and our implementation doesn't allow the use of the Function constructor."` The "similar runtime to Zod v4" half is now stale for compiled Zod. PR to clarify: "similar runtime performance to Zod v4 in default mode; Zod v4's opt-in compiler closes most of the gap to Typia/TypeBox on supported schemas." *Why:* this is the page Valibot users land on when comparing libraries; same authority as the blog post. *PR shape:* small, one-paragraph edit. *Open question:* none — Fabian generally accepts factual updates to this page.
+
+9. **`DZakh/sury`** — `packages/sury/README.md` Comparison table (covered in §6.1.5; listing here for symmetry across categories).
+
+10. **TypeBox, Effect Schema, Typia READMEs** — verified, no PR needed.
+    - `sinclairzx81/typebox/readme.md`: perf tables compare against AJV8 only, not Zod. No Zod-relative claim.
+    - `Effect-TS/effect/packages/effect/schema-vs-zod.md`: only a single Zod mention, on `discriminatedUnion` ergonomics. No perf claim.
+    - `samchon/typia/README.md` + `typia.io/docs/pure/`: explicit Zod mention in `pure/` is qualitative ("schema is the source of truth — your TypeScript types are downstream"); perf claims target `class-validator` and `class-transformer`, not Zod. No PR target.
+
+11. **Smaller validators (`runtypes`, `superstruct`, `io-ts`, `decoders`, `@sinclair/typemap`, `@railway-ts/pipelines`, `ata-validator`, `Valleys`)** — scanned, none carry a Zod-specific runtime-perf claim in their README or docs (most predate Zod 4 entirely and benchmark against each other or AJV). No PR targets.
+
+### 6.3 — Internal Zod repo and docs site
+
+12. **`colinhacks/zod`** — `packages/zod/README.md`. Add a short Performance section after Features (current README has none — Features lists "Tiny: `2kb` core bundle" but no runtime-perf note). One paragraph plus a 5-line code example: `import "zod/compile"` for global lazy compilation, or `z.compile(schema)` for explicit. Mention the design constraint (forward-direction sync only, async throws `ZodCompileAsyncError`). Link to `wiki/compile.md`. *Why:* the npm README is the highest-traffic Zod doc surface; cited by `npmjs.com/package/zod`. *PR shape:* small, maintainer self-merge.
+
+13. **`colinhacks/zod`** — `packages/docs/content/api.mdx` (and likely a new `packages/docs/content/compile.mdx`). Add a top-level docs page documenting `z.compile` and `import "zod/compile"`, the unsupported-schema fallback, the async error, and the bundle-tradeoff for namespace imports (per §Phase 5 "Tree-shaking/API decision"). Cross-link from `packages/docs/content/v4/index.mdx` and add a changelog entry to `packages/docs/content/v4/changelog.mdx`. *Why:* the public docs are how almost every user discovers a new API; without a dedicated page `z.compile` will look like an undocumented namespace export. *PR shape:* nontrivial — needs full reference page covering signature, supported schemas, fallback semantics (including the post-Phase-5 runtime-island behavior — a single unsupported leaf no longer kills compilation of the surrounding object/tuple/array/record/intersection), perf numbers, and the global-mode subpath. Same PR as §6.12 or split, maintainer choice.
+
+14. **`colinhacks/zod`** — `packages/docs/content/v4/changelog.mdx`. Single entry under the post-release version describing `z.compile` and `import "zod/compile"`, with a link to the new docs page. *Why:* changelog is the primary release-note channel. *PR shape:* trivial.
+
+15. **`standard-schema/standard-schema`** — repo verification only, no PR needed unless a discrepancy surfaces. `z.compile(schema)` returns a *clone* with a replaced `_zod.run`; the `~standard` property is preserved through `util.clone`. Spot-check by reading `_zod['~standard']` off a compiled schema in a one-line test before launch and confirm `vendor: "zod"` and `validate` still work via the wrapper. If something is off, the fix lives in `core/compile.ts`, not the spec repo.
+
+### 6.4 — Adjacent ecosystem libraries
+
+16. **`t3-oss/t3-env`** — README docs page does not currently mention Zod runtime perf or startup cost; the value of `import "zod/compile"` is limited (env validation runs once at process start, compile fee is paid eagerly via the global shim, no net win on a single schema). *Skip unless a maintainer asks.*
+
+17. **`trpc/trpc`** — `www/docs/server/validators.mdx` and adjacent perf-tip pages do not currently quote Zod parsing cost; per-request validation does benefit from `z.compile` but the win is marginal compared to network/serialization. *Skip unless we get explicit interest from the tRPC team.*
+
+18. **`react-hook-form/resolvers`** — Zod resolver is a thin adapter; no perf claims in the docs. *Skip.*
+
+19. **`@hookform/resolvers`, NestJS Zod adapters, hono validation, fastify-type-provider-zod** — same shape; thin adapters, no perf claims. *Skip.*
+
+Bar for this section is intentionally high: only PR these if the doc surface currently carries a perf claim that `z.compile` would change. None do, as of verification on 2026-05-18.
+
+### 6.5 — Social posts to acknowledge / respond to on launch
+
+Not PRs, but worth a public reply (single tweet or comment) when `z.compile` ships, so the launch is discoverable from the threads where users were already discussing the perf gap.
+
+- **HN, 2025-04: `news.ycombinator.com/item?id=43665540`** — "ArkType: Ergonomic TS validator 100x faster than Zod." Highest-impact thread on Zod runtime perf in the last cycle. Top comments discuss runtime size and the validation-vs-init tradeoff; a follow-up "Zod 4 now ships an opt-in compiler that closes most of this gap (link to compiled Moltar)" is on-topic. *Action:* one-line comment + repo link, post once §6.1.2 and the docs PR are live.
+- **HN, 2025-06: `news.ycombinator.com/item?id=44031120`** — "Zod 4 looks good but even with their latest improvements, ArkType is still an order of magnitude faster." Same shape: one factual reply pointing at the compiled bench. Do not respond if §6.1.2 hasn't landed yet.
+- **GitHub, 2025-02: `arktypeio/arktype#1303`** — "Address misleading performance benchmarks." David ssalbdivad replied that initialization tradeoffs would get a docs treatment "in an upcoming release." Worth a single follow-up linking the §6.2.6 PR once opened.
+- **Valibot blog, 2026-03-23: `valibot.dev/blog/why-migrate-to-valibot/`** — "16x faster than Zod v4" (initialization). Quote-tweeted by Fabian. No reply needed *to the post* — the §6.1.1 schemabenchmarks PR is the substantive answer. If Fabian quote-tweets again post-launch, a single "compiled Zod numbers now upstreamed in schemabenchmarks" reply suffices.
+- **Sury / DZakh — Dev.to articles linked from `DZakh/sury` README** — "Welcome Sury - The fastest schema with next-gen DX" and "ReScript Schema unique features" both cite Zod runtime perf inline. No reply needed unless DZakh declines the §6.1.5 README PR.
+
+### 6.6 — Launch-day artifacts the Zod team ships
+
+- **Changelog + release notes** — §6.14, on the version-bump commit.
+- **README Performance section** — §6.12.
+- **Docs page + reference** — §6.13.
+- **Wiki canonical writeup** — `wiki/compile.md` (already maintained; verify it matches shipped behavior before tagging release).
+- **Blog post or X thread by `@colinhacks`** — short writeup with one chart (compiled vs runtime vs arktype on the Moltar simple object) and a code sample showing both `z.compile(schema)` and `import "zod/compile"`. Lead with the design constraint (sync forward only, falls back transparently, runtime-island salvage for partially-unsupported schemas), not the perf number — the perf number is the closer.
+- **Example repo or playground link** — optional. A `zod/compile-playground` repo with a Next.js or tRPC starter using `import "zod/compile"` is high-leverage if anyone screenshots a "before/after" comparison, but not blocking. *Defer unless requested.*
+- **Two-column Moltar layout** — listed in §6.1.2; this is the chart we ship in the blog post.
+
+### Open risks / coordination items
+
+- **Bundle-size tradeoff disclosure.** Per Phase 5's Tree-shaking/API decision: `import * as z from "zod"` retains `core/compile.ts` because `z.compile` is on the namespace. The docs page (§6.13) needs to call this out explicitly so the Valibot "Zod ships its compiler whether you use it or not" rebuttal lands with us first, not them. One paragraph, factual.
+- **Coordinating with Fabian Hiller.** Schemabenchmarks PR (§6.1.1) and Valibot comparison PR (§6.2.8) both touch his projects. Open the schemabenchmarks issue first and let it set the bench shape; the Valibot doc PR follows from that result.
+- **Coordinating with David Blass.** ArkType homepage chart (§6.2.6) is the loudest single update we want made externally. Issue, not PR, until he opts in.
+- **Async-throw discoverability.** The doc pages (§6.13) need a prominent `ZodCompileAsyncError` callout. Several adjacent ecosystem libs (`tRPC`, server-side resolvers) wrap user schemas they don't control — they'll hit this if they auto-enable `import "zod/compile"` for users with async refinements. A short "do not auto-enable for arbitrary user schemas" note in the docs prevents a class of bug reports.
