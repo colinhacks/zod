@@ -16,7 +16,7 @@ export default defineConfig({
     },
   },
   test: {
-    projects: ["packages/*"],
+    projects: ["packages/*", "./vitest.compile.config.ts"],
     watch: false,
     isolate: true,
     setupFiles: [resolve(__dirname, "scripts/fail-on-console.ts")],

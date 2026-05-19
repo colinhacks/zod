@@ -7,14 +7,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 The project uses pnpm workspaces. Key commands:
 
 - `pnpm build` - Build all packages (runs recursive build command)
-- `pnpm vitest run` - Run all tests with Vitest
+- `pnpm vitest run` - Run all tests with Vitest. Includes the compile-mode project, which re-runs the zod tests with global AOT compilation enabled (see `wiki/compile.md`).
 - `pnpm vitest run <path>` - Run specific test file (e.g., `packages/zod/src/v4/classic/tests/string.test.ts`)
 - `pnpm vitest run <path> -t "<pattern>"` - Run specific test(s) within a file (e.g., `-t "MAC"`)
 - `pnpm vitest run --update` - Update all test snapshots
 - `pnpm vitest run <path> --update` - Update snapshots for specific test file
 - `pnpm test:watch` - Run tests in watch mode
 - `pnpm vitest run --coverage` - Run tests with coverage report
-- `pnpm test:compile` - Re-run zod tests with global AOT compilation enabled (see `wiki/compile.md`)
+- `pnpm test:compile` - Focused alias for just the compile-mode project. Already covered by `pnpm test`; use this when iterating on compile-related changes.
 - `pnpm dev` - Execute code with tsx under source conditions
 - `pnpm dev <file>` - Execute `<file>` with tsx & proper resolution conditions. Usually use for `play.ts`.
 - `pnpm dev:play` - Quick alias to run play.ts for experimentation
