@@ -10,8 +10,8 @@ This page is primarily intended for consumption by *library authors* who are bui
 
 > If you are a library author and think this page should include some additional guidance, please open an issue!
 
-<Callout type="warn">
-**Zod 3 is functionally end-of-life.** It still receives security fixes and unambiguous bug fixes, but no new features will land on `zod@3.x`. For any new library — or any new major version of an existing library — target Zod 4 only. See [How to support Zod 3 alongside Zod 4?](#how-to-support-zod-3-alongside-zod-4) for the dual-support pattern, intended for maintainers extending existing libraries.
+<Callout>
+Zod 3 is functionally end-of-life. It still receives security fixes and unambiguous bug fixes, but no new features will land on `zod@3.x`. For any new library — or any new major version of an existing library — target Zod 4 only. See [How to support Zod 3 alongside Zod 4?](#how-to-support-zod-3-alongside-zod-4) for the dual-support pattern, intended for maintainers extending existing libraries.
 </Callout>
 
 ## Do I need to depend on Zod?
@@ -73,7 +73,7 @@ For full context on this versioning approach, see the [Versioning in Zod 4](http
 
 ## How to support Zod 3 alongside Zod 4?
 
-<Callout type="warn">
+<Callout>
 This section is for maintainers of existing libraries with Zod 3 users. For new libraries (or new major versions of existing libraries), support `^4.0.0` only — Zod 3 is functionally end-of-life and won't receive new features.
 </Callout>
 
