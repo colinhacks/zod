@@ -45,6 +45,12 @@ test("optionality", () => {
   expectTypeOf<typeof f._zod.optin>().toEqualTypeOf<"optional" | undefined>();
   expectTypeOf<typeof f._zod.optout>().toEqualTypeOf<"optional" | undefined>();
 
+  const any = z.any();
+  expect(any._zod.optin).toEqual("optional");
+  expect(any._zod.optout).toEqual(undefined);
+  expectTypeOf<typeof any._zod.optin>().toEqualTypeOf<"optional">();
+  expectTypeOf<typeof any._zod.optout>().toEqualTypeOf<"optional" | undefined>();
+
   // z.union should be optional if any of the types are optional
   const g = z.union([z.string(), z.undefined()]);
   expect(g._zod.optin).toEqual(undefined);
@@ -166,6 +172,11 @@ test("object absent keys require optin optional", () => {
     value: undefined,
     union: undefined,
   });
+
+  const valueAny = z.object({ value: z.any() });
+  expect(valueAny.parse({})).toEqual({});
+  expect(valueAny.parse({}, { jitless: true })).toEqual({});
+  expect(valueAny.parse({ value: undefined })).toEqual({ value: undefined });
 
   const optionalOutOnly = z.object({
     value: z
