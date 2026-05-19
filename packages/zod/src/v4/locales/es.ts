@@ -112,7 +112,10 @@ const error: () => errors.$ZodErrorMap = () => {
       }
       case "invalid_format": {
         const _issue = issue as errors.$ZodStringFormatIssues;
-        if (_issue.format === "starts_with") return `Cadena inválida: debe comenzar con "${_issue.prefix}"`;
+        if (_issue.format === "starts_with") {
+          const p = Array.isArray(_issue.prefix) ? _issue.prefix.map((v) => `"${v}"`).join(", ") : `"${_issue.prefix}"`;
+          return `Cadena inválida: debe comenzar con ${p}`;
+        }
         if (_issue.format === "ends_with") return `Cadena inválida: debe terminar en "${_issue.suffix}"`;
         if (_issue.format === "includes") return `Cadena inválida: debe incluir "${_issue.includes}"`;
         if (_issue.format === "regex") return `Cadena inválida: debe coincidir con el patrón ${_issue.pattern}`;

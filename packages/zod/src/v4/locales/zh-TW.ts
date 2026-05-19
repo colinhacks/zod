@@ -85,7 +85,8 @@ const error: () => errors.$ZodErrorMap = () => {
       case "invalid_format": {
         const _issue = issue as errors.$ZodStringFormatIssues;
         if (_issue.format === "starts_with") {
-          return `無效的字串：必須以 "${_issue.prefix}" 開頭`;
+          const p = Array.isArray(_issue.prefix) ? _issue.prefix.map((v) => `"${v}"`).join(", ") : `"${_issue.prefix}"`;
+          return `無效的字串：必須以 ${p} 開頭`;
         }
         if (_issue.format === "ends_with") return `無效的字串：必須以 "${_issue.suffix}" 結尾`;
         if (_issue.format === "includes") return `無效的字串：必須包含 "${_issue.includes}"`;

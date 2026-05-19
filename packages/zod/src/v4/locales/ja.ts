@@ -85,7 +85,10 @@ const error: () => errors.$ZodErrorMap = () => {
       }
       case "invalid_format": {
         const _issue = issue as errors.$ZodStringFormatIssues;
-        if (_issue.format === "starts_with") return `無効な文字列: "${_issue.prefix}"で始まる必要があります`;
+        if (_issue.format === "starts_with") {
+          const p = Array.isArray(_issue.prefix) ? _issue.prefix.map((v) => `"${v}"`).join(", ") : `"${_issue.prefix}"`;
+          return `無効な文字列: ${p}で始まる必要があります`;
+        }
         if (_issue.format === "ends_with") return `無効な文字列: "${_issue.suffix}"で終わる必要があります`;
         if (_issue.format === "includes") return `無効な文字列: "${_issue.includes}"を含む必要があります`;
         if (_issue.format === "regex") return `無効な文字列: パターン${_issue.pattern}に一致する必要があります`;

@@ -152,7 +152,7 @@ export interface $ZodIssueStringInvalidJWT extends $ZodIssueInvalidStringFormat 
 
 export interface $ZodIssueStringStartsWith extends $ZodIssueInvalidStringFormat {
   format: "starts_with";
-  prefix: string;
+  prefix: string | string[];
 }
 
 export interface $ZodIssueStringEndsWith extends $ZodIssueInvalidStringFormat {
