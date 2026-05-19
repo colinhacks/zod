@@ -12,10 +12,7 @@ import * as z from "zod/v4";
 import * as core from "zod/v4/core";
 
 describe("locale exposed in error map context (#5989)", () => {
-  afterEach(() => {
-    // Prevent config mutations from bleeding into other test files.
-  afterEach(() => {
-    // Prevent config mutations from bleeding into other test files.
+  // Prevent config mutations from bleeding into other test files.
   afterEach(() => {
     // Prevent config mutations from bleeding into other test files.
     delete (core.globalConfig as any).locale;
