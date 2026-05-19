@@ -851,6 +851,10 @@ export function finalizeIssue(
   ctx: schemas.ParseContextInternal | undefined,
   config: $ZodConfig
 ): errors.$ZodIssue {
+  // Stamp the active locale onto the raw issue before any error map sees it.
+  if (config.locale !== undefined) {
+    (iss as any).locale = config.locale; // ← ADD THIS
+  }
   const message = iss.message
     ? iss.message
     : (unwrapMessage(iss.inst?._zod.def?.error?.(iss as never)) ??
