@@ -477,11 +477,30 @@ export interface $ZodURL extends $ZodType {
   _zod: $ZodURLInternals;
 }
 
+// URL.canParse: Node 18.17+, Safari 17+; fall back for older runtimes.
+const urlCanParse: (s: string) => boolean =
+  typeof URL.canParse === "function"
+    ? URL.canParse.bind(URL)
+    : (s) => {
+        try {
+          new URL(s);
+          return true;
+        } catch {
+          return false;
+        }
+      };
+
 export function parseValidURL(
   data: string,
   def: Pick<$ZodURLDef, "hostname" | "protocol" | "normalize">
 ): string | undefined {
   const trimmed = data.trim();
+
+  // Bare z.url() (no hostname/protocol/normalize options) skips the parsed-URL
+  // path entirely. URL.canParse avoids the try/catch on invalid input.
+  if (!def.hostname && !def.protocol && !def.normalize) {
+    return urlCanParse(trimmed) ? trimmed : undefined;
+  }
 
   // When normalize is off, require :// for http/https URLs. This prevents
   // strings like "http:example.com" or "https:/path" from being silently
