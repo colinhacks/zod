@@ -16,15 +16,11 @@ describe("locale exposed in error map context (#5989)", () => {
     // Prevent config mutations from bleeding into other test files.
   afterEach(() => {
     // Prevent config mutations from bleeding into other test files.
+  afterEach(() => {
+    // Prevent config mutations from bleeding into other test files.
     delete (core.globalConfig as any).locale;
     delete core.globalConfig.customError;
   });
-    delete core.globalConfig.customError;
-  });
-
-  // ---------------------------------------------------------------------------
-  // 1. Global customError map reads locale
-  // ---------------------------------------------------------------------------
   test("global customError receives the active locale from z.config()", () => {
     const observed: (string | undefined)[] = [];
     (core.globalConfig as any).locale = "fr";
