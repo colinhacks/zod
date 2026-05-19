@@ -853,7 +853,7 @@ export function finalizeIssue(
 ): errors.$ZodIssue {
   // Stamp the active locale onto the raw issue before any error map sees it.
   if (config.locale !== undefined) {
-    (iss as any).locale = config.locale; // ← ADD THIS
+    (iss as any).locale = config.locale;
   }
   const message = iss.message
     ? iss.message
