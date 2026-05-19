@@ -32,6 +32,33 @@ export const safeParseAsync: <T extends core.$ZodType>(
   _ctx?: core.ParseContext<core.$ZodIssue>
 ) => Promise<ZodSafeParseResult<core.output<T>>> = /* @__PURE__ */ core._safeParseAsync(ZodRealError) as any;
 
+// Parse-and-mask functions
+export const parseAndMask: <T extends core.$ZodType>(
+  schema: T,
+  value: unknown,
+  _ctx?: core.ParseContext<core.$ZodIssue>,
+  _params?: { callee?: core.util.AnyFunc; Err?: core.$ZodErrorClass }
+) => core.output<T> = /* @__PURE__ */ core._parseAndMask(ZodRealError);
+
+export const parseAndMaskAsync: <T extends core.$ZodType>(
+  schema: T,
+  value: unknown,
+  _ctx?: core.ParseContext<core.$ZodIssue>,
+  _params?: { callee?: core.util.AnyFunc; Err?: core.$ZodErrorClass }
+) => Promise<core.output<T>> = /* @__PURE__ */ core._parseAndMaskAsync(ZodRealError);
+
+export const safeParseAndMask: <T extends core.$ZodType>(
+  schema: T,
+  value: unknown,
+  _ctx?: core.ParseContext<core.$ZodIssue>
+) => ZodSafeParseResult<core.output<T>> = /* @__PURE__ */ core._safeParseAndMask(ZodRealError) as any;
+
+export const safeParseAndMaskAsync: <T extends core.$ZodType>(
+  schema: T,
+  value: unknown,
+  _ctx?: core.ParseContext<core.$ZodIssue>
+) => Promise<ZodSafeParseResult<core.output<T>>> = /* @__PURE__ */ core._safeParseAndMaskAsync(ZodRealError) as any;
+
 // Codec functions
 export const encode: <T extends core.$ZodType>(
   schema: T,

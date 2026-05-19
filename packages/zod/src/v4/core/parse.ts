@@ -1,5 +1,6 @@
 import * as core from "./core.js";
 import * as errors from "./errors.js";
+import { applyMask, applyMaskAsync } from "./mask.js";
 import type * as schemas from "./schemas.js";
 import * as util from "./util.js";
 
@@ -92,6 +93,67 @@ export const _safeParseAsync: (_Err: $ZodErrorClass) => $SafeParseAsync = (_Err)
 };
 
 export const safeParseAsync: $SafeParseAsync = /* @__PURE__*/ _safeParseAsync(errors.$ZodRealError);
+
+// Parse-and-mask functions
+export type $ParseAndMask = <T extends schemas.$ZodType>(
+  schema: T,
+  value: unknown,
+  _ctx?: schemas.ParseContext<errors.$ZodIssue>,
+  _params?: { callee?: util.AnyFunc; Err?: $ZodErrorClass }
+) => core.output<T>;
+
+export const _parseAndMask: (_Err: $ZodErrorClass) => $ParseAndMask = (_Err) => (schema, value, _ctx, _params) => {
+  const parsed = _parse(_Err)(schema, value, _ctx, _params);
+  return applyMask(schema, parsed, "", "", value);
+};
+
+export const parseAndMask: $ParseAndMask = /* @__PURE__*/ _parseAndMask(errors.$ZodRealError);
+
+export type $ParseAndMaskAsync = <T extends schemas.$ZodType>(
+  schema: T,
+  value: unknown,
+  _ctx?: schemas.ParseContext<errors.$ZodIssue>,
+  _params?: { callee?: util.AnyFunc; Err?: $ZodErrorClass }
+) => Promise<core.output<T>>;
+
+export const _parseAndMaskAsync: (_Err: $ZodErrorClass) => $ParseAndMaskAsync =
+  (_Err) => async (schema, value, _ctx, _params) => {
+    const parsed = await _parseAsync(_Err)(schema, value, _ctx, _params);
+    return applyMaskAsync(schema, parsed, "", "", value);
+  };
+
+export const parseAndMaskAsync: $ParseAndMaskAsync = /* @__PURE__*/ _parseAndMaskAsync(errors.$ZodRealError);
+
+export type $SafeParseAndMask = <T extends schemas.$ZodType>(
+  schema: T,
+  value: unknown,
+  _ctx?: schemas.ParseContext<errors.$ZodIssue>
+) => util.SafeParseResult<core.output<T>>;
+
+export const _safeParseAndMask: (_Err: $ZodErrorClass) => $SafeParseAndMask = (_Err) => (schema, value, _ctx) => {
+  const result = _safeParse(_Err)(schema, value, _ctx);
+  if (!result.success) return result;
+  return { success: true, data: applyMask(schema, result.data, "", "", value) } as any;
+};
+
+export const safeParseAndMask: $SafeParseAndMask = /* @__PURE__*/ _safeParseAndMask(errors.$ZodRealError);
+
+export type $SafeParseAndMaskAsync = <T extends schemas.$ZodType>(
+  schema: T,
+  value: unknown,
+  _ctx?: schemas.ParseContext<errors.$ZodIssue>
+) => Promise<util.SafeParseResult<core.output<T>>>;
+
+export const _safeParseAndMaskAsync: (_Err: $ZodErrorClass) => $SafeParseAndMaskAsync =
+  (_Err) => async (schema, value, _ctx) => {
+    const result = await _safeParseAsync(_Err)(schema, value, _ctx);
+    if (!result.success) return result;
+    return { success: true, data: await applyMaskAsync(schema, result.data, "", "", value) } as any;
+  };
+
+export const safeParseAndMaskAsync: $SafeParseAndMaskAsync = /* @__PURE__*/ _safeParseAndMaskAsync(
+  errors.$ZodRealError
+);
 
 // Codec functions
 export type $Encode = <T extends schemas.$ZodType>(

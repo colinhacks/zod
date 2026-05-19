@@ -188,6 +188,18 @@ export interface ZodType<
   /** Returns a new instance that has been registered in `z.globalRegistry` with the specified metadata */
   meta(data: core.$replace<core.GlobalMeta, this>): this;
 
+  mask(value: core.output<this> | core.output<this>[] | ((seed: string) => core.output<this>)): this;
+  parseAndMask(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;
+  safeParseAndMask(
+    data: unknown,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): parse.ZodSafeParseResult<core.output<this>>;
+  parseAndMaskAsync(data: unknown, params?: core.ParseContext<core.$ZodIssue>): Promise<core.output<this>>;
+  safeParseAndMaskAsync(
+    data: unknown,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): Promise<parse.ZodSafeParseResult<core.output<this>>>;
+
   // helpers
   /** @deprecated Try safe-parsing `undefined` (this is what `isOptional` does internally):
    *
@@ -344,6 +356,21 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
       const cl = this.clone();
       core.globalRegistry.add(cl, args[0]);
       return cl;
+    },
+    mask(maskValue) {
+      return this.check(core._mask(maskValue));
+    },
+    parseAndMask(data, params) {
+      return parse.parseAndMask(this, data, params, { callee: this.parseAndMask });
+    },
+    safeParseAndMask(data, params) {
+      return parse.safeParseAndMask(this, data, params);
+    },
+    async parseAndMaskAsync(data, params) {
+      return parse.parseAndMaskAsync(this, data, params, { callee: this.parseAndMaskAsync });
+    },
+    async safeParseAndMaskAsync(data, params) {
+      return parse.safeParseAndMaskAsync(this, data, params);
     },
     isOptional() {
       return this.safeParse(undefined).success;
