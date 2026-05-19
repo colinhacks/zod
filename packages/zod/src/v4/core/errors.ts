@@ -12,6 +12,7 @@ export interface $ZodIssueBase {
   readonly input?: unknown;
   readonly path: PropertyKey[];
   readonly message: string;
+  readonly locale?: string | undefined;
 }
 
 ////////////////////////////////
