@@ -129,8 +129,7 @@ export interface $ZodConfig {
   /** Disable JIT schema compilation. Useful in environments that disallow `eval`. */
   jitless?: boolean | undefined;
 
-  /** BCP 47 locale tag (e.g. "fr", "de", "ja"). Forwarded into every
-   *  $ZodRawIssue so error-map functions can branch on it. */
+  /** Active locale tag, surfaced on every issue's `locale` field. */
   locale?: string | undefined;
 }
 
