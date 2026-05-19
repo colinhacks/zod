@@ -53,6 +53,40 @@ test("date max", () => {
   `);
 });
 
+test("date min with number timestamp", () => {
+  const result = z.date().min(benchmarkDate.getTime()).safeParse(beforeBenchmarkDate);
+  expect(result.success).toEqual(false);
+  expect(result.error!.issues).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "too_small",
+        "inclusive": true,
+        "message": "Too small: expected date to be >=1667606400000",
+        "minimum": 1667606400000,
+        "origin": "date",
+        "path": [],
+      },
+    ]
+  `);
+});
+
+test("date max with number timestamp", () => {
+  const result = z.date().max(benchmarkDate.getTime()).safeParse(afterBenchmarkDate);
+  expect(result.success).toEqual(false);
+  expect(result.error!.issues).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "too_big",
+        "inclusive": true,
+        "maximum": 1667606400000,
+        "message": "Too big: expected date to be <=1667606400000",
+        "origin": "date",
+        "path": [],
+      },
+    ]
+  `);
+});
+
 test("min max getters", () => {
   expect(minCheck.minDate).toEqual(benchmarkDate);
   expect(minCheck.min(afterBenchmarkDate).minDate).toEqual(afterBenchmarkDate);
