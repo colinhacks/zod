@@ -10,7 +10,7 @@ import { config } from "../core/index.js";
 import en from "../locales/en.js";
 config(en());
 
-export type { infer, output, input } from "../core/index.js";
+export type { infer } from "../core/index.js";
 export type { JSONType } from "../core/util.js";
 export {
   globalRegistry,
@@ -32,6 +32,13 @@ export {
 } from "../core/index.js";
 export { toJSONSchema } from "../core/json-schema-processors.js";
 export { fromJSONSchema } from "./from-json-schema.js";
+export { deepPartial } from "./deep-partial.js";
+export { visit } from "../core/visit.js";
+export type { VisitFn, VisitHandlers } from "../core/visit.js";
+// `z.input` and `z.output` are the runtime counterparts to the
+// type-level `z.input<T>` / `z.output<T>`. Types and values share the
+// same name cleanly since they live in separate TS namespaces.
+export { input, output } from "./in-out.js";
 
 export * as locales from "../locales/index.js";
 
