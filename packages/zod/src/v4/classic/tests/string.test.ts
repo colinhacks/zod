@@ -464,6 +464,14 @@ test("httpurl", () => {
   ).toThrow();
   expect(() => httpUrl.parse("http://asdf.c")).toThrow();
   expect(() => httpUrl.parse("mailto:asdf@lckj.com")).toThrow();
+  // TLD longer than 63 characters
+  expect(() => httpUrl.parse("http://example." + "a".repeat(64))).toThrow();
+  // domain exceeding 253 character total limit
+  expect(() =>
+    httpUrl.parse(
+      "http://" + "a".repeat(63) + "." + "b".repeat(63) + "." + "c".repeat(63) + "." + "d".repeat(63) + ".com"
+    )
+  ).toThrow();
   // missing // after protocol
   expect(() => httpUrl.parse("http:example.com")).toThrow();
   expect(() => httpUrl.parse("https:example.com")).toThrow();
