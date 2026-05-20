@@ -549,7 +549,8 @@ function isTransforming(
     def.type === "nullable" ||
     def.type === "readonly" ||
     def.type === "default" ||
-    def.type === "prefault"
+    def.type === "prefault" ||
+    def.type === "catch"
   ) {
     return isTransforming(def.innerType, ctx);
   }

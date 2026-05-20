@@ -543,7 +543,6 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
   inst.uuidv6 = (params) => inst.check(core._uuidv6(ZodUUID, params));
   inst.uuidv7 = (params) => inst.check(core._uuidv7(ZodUUID, params));
   inst.nanoid = (params) => inst.check(core._nanoid(ZodNanoID, params));
-  inst.guid = (params) => inst.check(core._guid(ZodGUID, params));
   inst.cuid = (params) => inst.check(core._cuid(ZodCUID, params));
   inst.cuid2 = (params) => inst.check(core._cuid2(ZodCUID2, params));
   inst.ulid = (params) => inst.check(core._ulid(ZodULID, params));
