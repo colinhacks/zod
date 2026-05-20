@@ -1049,6 +1049,11 @@ export interface _ZodNumber<Internals extends core.$ZodNumberInternals = core.$Z
   /** @deprecated In v4 and later, z.number() does not allow infinite values by default. This is a no-op. */
   finite(params?: unknown): this;
 
+  /** Constrain to a valid latitude (`[-90, 90]`). Sugar over `.gte(-90).lte(90)`. */
+  latitude(params?: string): this;
+  /** Constrain to a valid longitude (`[-180, 180]`). Sugar over `.gte(-180).lte(180)`. */
+  longitude(params?: string): this;
+
   minValue: number | null;
   maxValue: number | null;
   /** @deprecated Check the `format` property instead.  */
@@ -1113,6 +1118,12 @@ export const ZodNumber: core.$constructor<ZodNumber> = /*@__PURE__*/ core.$const
     finite() {
       return this;
     },
+    latitude(params) {
+      return this.check(checks.gte(-90, params)).check(checks.lte(90, params));
+    },
+    longitude(params) {
+      return this.check(checks.gte(-180, params)).check(checks.lte(180, params));
+    },
   });
 
   const bag = inst._zod.bag;
@@ -1127,6 +1138,15 @@ export const ZodNumber: core.$constructor<ZodNumber> = /*@__PURE__*/ core.$const
 
 export function number(params?: string | core.$ZodNumberParams): ZodNumber {
   return core._number(ZodNumber, params);
+}
+
+// latitude / longitude — sugar over number().gte(-90/-180).lte(90/180), so
+// no new schema class, no new error code, no locale entries.
+export function latitude(params?: string | core.$ZodNumberParams): ZodNumber {
+  return number(params).gte(-90).lte(90);
+}
+export function longitude(params?: string | core.$ZodNumberParams): ZodNumber {
+  return number(params).gte(-180).lte(180);
 }
 
 // ZodNumberFormat
