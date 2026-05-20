@@ -128,6 +128,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Entrada inválida";
       case "invalid_element":
         return `Valor inválido en ${TypeDictionary[issue.origin] ?? issue.origin}`;
+      case "invalid_temporal":
+        return `Valor ${issue.origin} no válido: se esperaba ${issue.expected} pero fue ${issue.received}`;
       default:
         return `Entrada inválida`;
     }

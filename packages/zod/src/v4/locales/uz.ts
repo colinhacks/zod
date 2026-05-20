@@ -104,6 +104,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Noto‘g‘ri kirish";
       case "invalid_element":
         return `${issue.origin} da noto‘g‘ri qiymat`;
+      case "invalid_temporal":
+        return `Noto'g'ri ${issue.origin}: kutilgan qiymat ${issue.expected} edi, ammo ${issue.received} bo'ldi`;
       default:
         return `Noto‘g‘ri kirish`;
     }

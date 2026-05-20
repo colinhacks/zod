@@ -104,6 +104,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Érvénytelen bemenet";
       case "invalid_element":
         return `Érvénytelen érték: ${issue.origin}`;
+      case "invalid_temporal":
+        return `Érvénytelen ${issue.origin}: a várt érték ${issue.expected} volt, de ${issue.received} lett`;
       default:
         return `Érvénytelen bemenet`;
     }

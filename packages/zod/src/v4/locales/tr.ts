@@ -98,6 +98,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Geçersiz değer";
       case "invalid_element":
         return `${issue.origin} içinde geçersiz değer`;
+      case "invalid_temporal":
+        return `Geçersiz ${issue.origin}: beklenen değer ${issue.expected} olması gerekiyordu ancak ${issue.received} idi`;
       default:
         return `Geçersiz değer`;
     }

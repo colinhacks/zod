@@ -226,6 +226,8 @@ const error: () => errors.$ZodErrorMap = () => {
         const origin = TypeDictionary[issue.origin] ?? issue.origin;
         return `${capitalizeFirstCharacter(origin ?? issue.origin ?? "reikšmė")} turi klaidingą įvestį`;
       }
+      case "invalid_temporal":
+        return `Neteisingas ${issue.origin}: tikėtasi reikšmė buvo ${issue.expected}, bet buvo ${issue.received}`;
       default:
         return "Klaidinga įvestis";
     }

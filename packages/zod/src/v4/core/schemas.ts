@@ -62,6 +62,7 @@ export interface $ZodTypeDef {
     | "any"
     | "unknown"
     | "date"
+    | "temporal"
     | "object"
     | "record"
     | "file"
@@ -1603,6 +1604,156 @@ export const $ZodDate: core.$constructor<$ZodDate> = /*@__PURE__*/ core.$constru
     return payload;
   };
 });
+
+///////////////////////////////////////
+///////////////////////////////////////
+//////////                     ////////
+//////////     $ZodTemporal    ////////
+//////////                     ////////
+///////////////////////////////////////
+///////////////////////////////////////
+
+export interface $ZodTemporalDef<Like, Instance> extends $ZodTypeDef {
+  type: "temporal";
+  class: util.TemporalClass<Like, Instance>;
+}
+
+export interface $ZodTemporalInternals<Like, Instance, T = unknown> extends $ZodTypeInternals<Instance, T> {
+  def: $ZodTemporalDef<Like, Instance>;
+  isst: errors.$ZodIssueInvalidType | errors.$ZodIssueInvalidTemporal;
+  bag: util.LoosePartial<{
+    minimum: Like;
+    maximum: Like;
+  }>;
+}
+
+export interface $ZodTemporal<T = unknown> extends $ZodType {
+  _zod: $ZodTemporalInternals<any, any, T>;
+}
+
+export const $ZodTemporal: core.$constructor<$ZodTemporal> = /*@__PURE__*/ core.$constructor(
+  "$ZodTemporal",
+  (inst, def) => {
+    $ZodType.init(inst, def);
+
+    inst._zod.parse = (payload, _ctx) => {
+      const input = payload.value;
+
+      try {
+        payload.value = def.class.from(input);
+      } catch {
+        payload.issues.push({
+          expected: "temporal",
+          code: "invalid_type",
+          input,
+          ...(input instanceof def.class ? { received: "Invalid " + def.class.name } : {}),
+          inst,
+        });
+      }
+
+      return payload;
+    };
+  }
+);
+
+//////////////////////////////   ZodInstant   //////////////////////////////
+export interface $ZodInstantDef extends $ZodTemporalDef<Temporal.InstantLike, Temporal.Instant> {}
+export interface $ZodInstantInternals extends $ZodTemporalInternals<Temporal.InstantLike, Temporal.Instant> {}
+
+export interface $ZodInstant extends $ZodType {
+  _zod: $ZodInstantInternals;
+}
+
+export const $ZodInstant: core.$constructor<$ZodInstant> = /*@__PURE__*/ core.$constructor(
+  "$ZodInstant",
+  (inst, def): void => {
+    def.class ??= Temporal.Instant;
+    $ZodTemporal.init(inst, def);
+  }
+);
+
+//////////////////////////////   ZodPlainDate   //////////////////////////////
+export interface $ZodPlainDateDef extends $ZodTemporalDef<Temporal.PlainDateLike, Temporal.PlainDate> {}
+export interface $ZodPlainDateInternals extends $ZodTemporalInternals<Temporal.PlainDateLike, Temporal.PlainDate> {}
+
+export interface $ZodPlainDate extends $ZodType {
+  _zod: $ZodPlainDateInternals;
+}
+
+export const $ZodPlainDate: core.$constructor<$ZodPlainDate> = /*@__PURE__*/ core.$constructor(
+  "$ZodPlainDate",
+  (inst, def): void => {
+    def.class ??= Temporal.PlainDate;
+    $ZodTemporal.init(inst, def);
+  }
+);
+
+//////////////////////////////   ZodPlainDateTime   //////////////////////////////
+export interface $ZodPlainDateTimeDef extends $ZodTemporalDef<Temporal.PlainDateTimeLike, Temporal.PlainDateTime> {}
+export interface $ZodPlainDateTimeInternals
+  extends $ZodTemporalInternals<Temporal.PlainDateTimeLike, Temporal.PlainDateTime> {}
+
+export interface $ZodPlainDateTime extends $ZodType {
+  _zod: $ZodPlainDateTimeInternals;
+}
+
+export const $ZodPlainDateTime: core.$constructor<$ZodPlainDateTime> = /*@__PURE__*/ core.$constructor(
+  "$ZodPlainDateTime",
+  (inst, def): void => {
+    def.class ??= Temporal.PlainDateTime;
+    $ZodTemporal.init(inst, def);
+  }
+);
+
+//////////////////////////////   ZodPlainTime   //////////////////////////////
+export interface $ZodPlainTimeDef extends $ZodTemporalDef<Temporal.PlainTimeLike, Temporal.PlainTime> {}
+export interface $ZodPlainTimeInternals extends $ZodTemporalInternals<Temporal.PlainTimeLike, Temporal.PlainTime> {}
+
+export interface $ZodPlainTime extends $ZodType {
+  _zod: $ZodPlainTimeInternals;
+}
+
+export const $ZodPlainTime: core.$constructor<$ZodPlainTime> = /*@__PURE__*/ core.$constructor(
+  "$ZodPlainTime",
+  (inst, def): void => {
+    def.class ??= Temporal.PlainTime;
+    $ZodTemporal.init(inst, def);
+  }
+);
+
+//////////////////////////////   ZodPlainYearMonth   //////////////////////////////
+export interface $ZodPlainYearMonthDef extends $ZodTemporalDef<Temporal.PlainYearMonthLike, Temporal.PlainYearMonth> {}
+export interface $ZodPlainYearMonthInternals
+  extends $ZodTemporalInternals<Temporal.PlainYearMonthLike, Temporal.PlainYearMonth> {}
+
+export interface $ZodPlainYearMonth extends $ZodType {
+  _zod: $ZodPlainYearMonthInternals;
+}
+
+export const $ZodPlainYearMonth: core.$constructor<$ZodPlainYearMonth> = /*@__PURE__*/ core.$constructor(
+  "$ZodPlainYearMonth",
+  (inst, def): void => {
+    def.class ??= Temporal.PlainYearMonth;
+    $ZodTemporal.init(inst, def);
+  }
+);
+
+//////////////////////////////   ZodZonedDateTime  //////////////////////////////
+export interface $ZodZonedDateTimeDef extends $ZodTemporalDef<Temporal.ZonedDateTimeLike, Temporal.ZonedDateTime> {}
+export interface $ZodZonedDateTimeInternals
+  extends $ZodTemporalInternals<Temporal.ZonedDateTimeLike, Temporal.ZonedDateTime> {}
+
+export interface $ZodZonedDateTime extends $ZodType {
+  _zod: $ZodZonedDateTimeInternals;
+}
+
+export const $ZodZonedDateTime: core.$constructor<$ZodZonedDateTime> = /*@__PURE__*/ core.$constructor(
+  "$ZodZonedDateTime",
+  (inst, def): void => {
+    def.class ??= Temporal.ZonedDateTime;
+    $ZodTemporal.init(inst, def);
+  }
+);
 
 /////////////////////////////////////////
 /////////////////////////////////////////
@@ -4665,6 +4816,7 @@ export type $ZodTypes =
   | $ZodBigInt
   | $ZodBoolean
   | $ZodDate
+  | $ZodTemporal
   | $ZodSymbol
   | $ZodUndefined
   | $ZodNullable

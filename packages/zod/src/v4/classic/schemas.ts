@@ -1377,6 +1377,131 @@ export function date(params?: string | core.$ZodDateParams): ZodDate {
   return core._date(ZodDate, params);
 }
 
+export interface _ZodTemporal<
+  Like,
+  Instance,
+  T extends core.$ZodTemporalInternals<Like, Instance> = core.$ZodTemporalInternals<Like, Instance>,
+> extends _ZodType<T> {
+  min(value: Like, params?: string | core.$ZodCheckTemporalParams): this;
+  max(value: Like, params?: string | core.$ZodCheckTemporalParams): this;
+  before(value: Like, params?: string | core.$ZodCheckTemporalParams): this;
+  after(value: Like, params?: string | core.$ZodCheckTemporalParams): this;
+  equals(value: Like, params?: string | core.$ZodCheckTemporalParams): this;
+
+  minimum: Instance | null;
+  maximum: Instance | null;
+}
+
+export interface ZodTemporal<Like = unknown, Instance = unknown>
+  extends _ZodTemporal<Like, Instance, core.$ZodTemporalInternals<Like, Instance>> {}
+
+export const ZodTemporal: core.$constructor<ZodTemporal> = /*@__PURE__*/ core.$constructor(
+  "ZodTemporal",
+  (inst, def) => {
+    core.$ZodTemporal.init(inst, def);
+    ZodType.init(inst, def);
+
+    inst._zod.processJSONSchema = (ctx, json, params) => processors.temporalProcessor(inst, ctx, json, params);
+
+    // NOTE: we use these names instead of gt/lt/gte/lte because "less/greater than" doesn't make sense for dates and times.
+    inst.min = (value, params) => inst.check(checks.compareTemporal(def.class, value, [0, 1], params));
+    inst.max = (value, params) => inst.check(checks.compareTemporal(def.class, value, [0, -1], params));
+    inst.before = (value, params) => inst.check(checks.compareTemporal(def.class, value, [-1], params));
+    inst.after = (value, params) => inst.check(checks.compareTemporal(def.class, value, [1], params));
+    inst.equals = (value, params) => inst.check(checks.compareTemporal(def.class, value, [0], params));
+
+    const { bag } = inst._zod;
+    inst.minimum = bag.minimum ? def.class.from(bag.minimum) : null;
+    inst.maximum = bag.maximum ? def.class.from(bag.maximum) : null;
+  }
+);
+
+// ZodInstant
+export interface ZodInstant extends _ZodTemporal<Temporal.InstantLike, Temporal.Instant, core.$ZodInstantInternals> {}
+export const ZodInstant: core.$constructor<ZodInstant> = /*@__PURE__*/ core.$constructor("ZodInstant", (inst, def) => {
+  core.$ZodInstant.init(inst, def);
+  ZodTemporal.init(inst, def);
+});
+
+export function instant(params?: string | core.$ZodInstantParams): ZodInstant {
+  return core._instant(ZodInstant, params);
+}
+
+// ZodPlainDate
+export interface ZodPlainDate
+  extends _ZodTemporal<Temporal.PlainDateLike, Temporal.PlainDate, core.$ZodPlainDateInternals> {}
+export const ZodPlainDate: core.$constructor<ZodPlainDate> = /*@__PURE__*/ core.$constructor(
+  "ZodPlainDate",
+  (inst, def) => {
+    core.$ZodPlainDate.init(inst, def);
+    ZodTemporal.init(inst, def);
+  }
+);
+
+export function plainDate(params?: string | core.$ZodPlainDateParams): ZodPlainDate {
+  return core._plainDate(ZodPlainDate, params);
+}
+
+// ZodPlainDateTime
+export interface ZodPlainDateTime
+  extends _ZodTemporal<Temporal.PlainDateTimeLike, Temporal.PlainDateTime, core.$ZodPlainDateTimeInternals> {}
+export const ZodPlainDateTime: core.$constructor<ZodPlainDateTime> = /*@__PURE__*/ core.$constructor(
+  "ZodPlainDateTime",
+  (inst, def) => {
+    core.$ZodPlainDateTime.init(inst, def);
+    ZodTemporal.init(inst, def);
+  }
+);
+
+export function plainDateTime(params?: string | core.$ZodPlainDateTimeParams): ZodPlainDateTime {
+  return core._plainDateTime(ZodPlainDateTime, params);
+}
+
+// ZodPlainTime
+export interface ZodPlainTime
+  extends _ZodTemporal<Temporal.PlainTimeLike, Temporal.PlainTime, core.$ZodPlainTimeInternals> {}
+export const ZodPlainTime: core.$constructor<ZodPlainTime> = /*@__PURE__*/ core.$constructor(
+  "ZodPlainTime",
+  (inst, def) => {
+    core.$ZodPlainTime.init(inst, def);
+    ZodTemporal.init(inst, def);
+  }
+);
+
+export function plainTime(params?: string | core.$ZodPlainTimeParams): ZodPlainTime {
+  return core._plainTime(ZodPlainTime, params);
+}
+
+// ZodPlainYearMonth
+export interface ZodPlainYearMonth
+  extends _ZodTemporal<Temporal.PlainYearMonthLike, Temporal.PlainYearMonth, core.$ZodPlainYearMonthInternals> {}
+export const ZodPlainYearMonth: core.$constructor<ZodPlainYearMonth> = /*@__PURE__*/ core.$constructor(
+  "ZodPlainYearMonth",
+  (inst, def) => {
+    core.$ZodPlainYearMonth.init(inst, def);
+    ZodTemporal.init(inst, def);
+  }
+);
+
+export function plainYearMonth(params?: string | core.$ZodPlainYearMonthParams): ZodPlainYearMonth {
+  return core._plainYearMonth(ZodPlainYearMonth, params);
+}
+
+// ZodZonedDateTime
+export interface ZodZonedDateTime
+  extends _ZodTemporal<Temporal.ZonedDateTimeLike, Temporal.ZonedDateTime, core.$ZodZonedDateTimeInternals> {}
+export const ZodZonedDateTime: core.$constructor<ZodZonedDateTime> = /*@__PURE__*/ core.$constructor(
+  "ZodZonedDateTime",
+  (inst, def) => {
+    core.$ZodZonedDateTime.init(inst, def);
+    ZodTemporal.init(inst, def);
+  }
+);
+
+export function zonedDateTime(params?: string | core.$ZodZonedDateTimeParams): ZodZonedDateTime {
+  return core._zonedDateTime(ZodZonedDateTime, params);
+}
+
 // ZodArray
 export interface ZodArray<T extends core.SomeType = core.$ZodType>
   extends _ZodType<core.$ZodArrayInternals<T>>,
