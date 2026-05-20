@@ -18,10 +18,18 @@ export interface JSONSchemaGeneratorParams {
   metadata?: $ZodRegistry<Record<string, any>>;
   /** The JSON Schema version to target.
    * - `"draft-2020-12"` — Default. JSON Schema Draft 2020-12
-   * - `"draft-07"` — JSON Schema Draft 7
-   * - `"draft-04"` — JSON Schema Draft 4
+   * - `"draft-07"` — JSON Schema Draft 7 (alias: `"draft-7"`)
+   * - `"draft-04"` — JSON Schema Draft 4 (alias: `"draft-4"`)
    * - `"openapi-3.0"` — OpenAPI 3.0 Schema Object */
-  target?: "draft-04" | "draft-07" | "draft-2020-12" | "openapi-3.0" | ({} & string) | undefined;
+  target?:
+    | "draft-04"
+    | "draft-07"
+    | "draft-2020-12"
+    | "openapi-3.0"
+    | "draft-4"
+    | "draft-7"
+    | ({} & string)
+    | undefined;
   /** How to handle unrepresentable types.
    * - `"throw"` — Default. Unrepresentable types throw an error
    * - `"any"` — Unrepresentable types become `{}` */
@@ -84,7 +92,7 @@ export interface Seen {
 export interface ToJSONSchemaContext {
   processors: Record<string, Processor>;
   metadataRegistry: $ZodRegistry<Record<string, any>>;
-  target: "draft-04" | "draft-07" | "draft-2020-12" | "openapi-3.0" | ({} & string);
+  target: "draft-04" | "draft-07" | "draft-2020-12" | "openapi-3.0" | "draft-4" | "draft-7" | ({} & string);
   unrepresentable: "throw" | "any";
   override: (ctx: {
     // must be schemas.$ZodType to prevent recursive type resolution error
