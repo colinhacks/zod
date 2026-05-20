@@ -15,6 +15,29 @@ test("string to number pipe async", async () => {
   expect(await schema.parseAsync("1234")).toEqual(1234);
 });
 
+test("pipe preserves contextual typing and compatibility checks", () => {
+  z.string().pipe(z.transform((val) => val.toUpperCase()));
+
+  // @ts-expect-error incompatible pipe targets are still rejected
+  z.string().pipe(z.number());
+});
+
+test("pipe accepts branded output into unbranded input", () => {
+  const zodBrand = z.string().brand<"myBrand">();
+  const inputSchema = z.object({
+    a: z.number(),
+    c: zodBrand,
+  });
+  const validateSchema = z.object({
+    a: z.number(),
+    c: zodBrand,
+  });
+
+  inputSchema.transform((input) => input).pipe(validateSchema);
+  inputSchema.pipe(validateSchema);
+  inputSchema.pipe(inputSchema);
+});
+
 test("string with default fallback", () => {
   const stringWithDefault = z
     .pipe(

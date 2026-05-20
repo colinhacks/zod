@@ -178,6 +178,10 @@ export interface ZodType<
   pipe<T extends core.$ZodType<any, core.output<this>>>(
     target: T | core.$ZodType<any, core.output<this>>
   ): ZodPipe<this, T>;
+  pipe<const T extends core.SomeType>(
+    target: T,
+    ...rest: core.output<this> extends core.input<T> ? [] : ["Incompatible pipe target"]
+  ): ZodPipe<this, T>;
   readonly(): ZodReadonly<this>;
 
   /** Returns a new instance that has been registered in `z.globalRegistry` with the specified description */
@@ -325,7 +329,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
       return _catch(this, params);
     },
     pipe(target) {
-      return pipe(this, target);
+      return pipe(this, target as core.$ZodType);
     },
     readonly() {
       return readonly(this);
