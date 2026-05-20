@@ -61,6 +61,9 @@ const error: () => errors.$ZodErrorMap = () => {
   return (issue) => {
     switch (issue.code) {
       case "invalid_type": {
+        if (issue.received === "missing") {
+          return `Invalid input: missing required property`;
+        }
         const expected = TypeDictionary[issue.expected] ?? issue.expected;
         const receivedType = util.parsedType(issue.input);
         const received = TypeDictionary[receivedType] ?? receivedType;

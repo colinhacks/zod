@@ -146,18 +146,20 @@ test("object absent keys require optin optional", () => {
       {
         "code": "invalid_type",
         "expected": "nonoptional",
-        "message": "Invalid input: expected nonoptional, received undefined",
+        "message": "Invalid input: missing required property",
         "path": [
           "value",
         ],
+        "received": "missing",
       },
       {
         "code": "invalid_type",
         "expected": "nonoptional",
-        "message": "Invalid input: expected nonoptional, received undefined",
+        "message": "Invalid input: missing required property",
         "path": [
           "union",
         ],
+        "received": "missing",
       },
     ]
   `);

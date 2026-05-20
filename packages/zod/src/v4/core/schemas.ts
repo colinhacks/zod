@@ -1771,6 +1771,7 @@ function handlePropertyResult(
         expected: "nonoptional",
         input: undefined,
         path: [key],
+        received: "missing",
       });
     }
     return;
@@ -2050,7 +2051,8 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
             code: "invalid_type",
             expected: "nonoptional",
             input: undefined,
-            path: [${k}]
+            path: [${k}],
+            received: "missing"
           });
         }
 
