@@ -2121,9 +2121,10 @@ export function transform<I = unknown, O = I>(
 
 // ZodOptional
 export interface ZodOptional<T extends core.SomeType = core.$ZodType>
-  extends _ZodType<core.$ZodOptionalInternals<T>>,
+  extends _ZodType<core.$ZodOptionalInternals<T, core.$ZodWrapperMetadataExact<T>>>,
     core.$ZodOptional<T> {
   "~standard": ZodStandardSchemaWithJSON<this>;
+  _zod: core.$ZodOptionalInternals<T, core.$ZodWrapperMetadataExact<T>>;
   unwrap(): T;
 }
 export const ZodOptional: core.$constructor<ZodOptional> = /*@__PURE__*/ core.$constructor(
@@ -2146,9 +2147,10 @@ export function optional<T extends core.SomeType>(innerType: T): ZodOptional<T> 
 
 // ZodExactOptional
 export interface ZodExactOptional<T extends core.SomeType = core.$ZodType>
-  extends _ZodType<core.$ZodExactOptionalInternals<T>>,
+  extends _ZodType<core.$ZodExactOptionalInternals<T, core.$ZodWrapperMetadataExact<T>>>,
     core.$ZodExactOptional<T> {
   "~standard": ZodStandardSchemaWithJSON<this>;
+  _zod: core.$ZodExactOptionalInternals<T, core.$ZodWrapperMetadataExact<T>>;
   unwrap(): T;
 }
 export const ZodExactOptional: core.$constructor<ZodExactOptional> = /*@__PURE__*/ core.$constructor(
@@ -2171,9 +2173,10 @@ export function exactOptional<T extends core.SomeType>(innerType: T): ZodExactOp
 
 // ZodNullable
 export interface ZodNullable<T extends core.SomeType = core.$ZodType>
-  extends _ZodType<core.$ZodNullableInternals<T>>,
+  extends _ZodType<core.$ZodNullableInternals<T, core.$ZodWrapperMetadataExact<T>>>,
     core.$ZodNullable<T> {
   "~standard": ZodStandardSchemaWithJSON<this>;
+  _zod: core.$ZodNullableInternals<T, core.$ZodWrapperMetadataExact<T>>;
   unwrap(): T;
 }
 export const ZodNullable: core.$constructor<ZodNullable> = /*@__PURE__*/ core.$constructor(
@@ -2201,9 +2204,10 @@ export function nullish<T extends core.SomeType>(innerType: T): ZodOptional<ZodN
 
 // ZodDefault
 export interface ZodDefault<T extends core.SomeType = core.$ZodType>
-  extends _ZodType<core.$ZodDefaultInternals<T>>,
+  extends _ZodType<core.$ZodDefaultInternals<T, core.$ZodWrapperMetadataExact<T>>>,
     core.$ZodDefault<T> {
   "~standard": ZodStandardSchemaWithJSON<this>;
+  _zod: core.$ZodDefaultInternals<T, core.$ZodWrapperMetadataExact<T>>;
   unwrap(): T;
   /** @deprecated Use `.unwrap()` instead. */
   removeDefault(): T;
@@ -2232,9 +2236,10 @@ export function _default<T extends core.SomeType>(
 
 // ZodPrefault
 export interface ZodPrefault<T extends core.SomeType = core.$ZodType>
-  extends _ZodType<core.$ZodPrefaultInternals<T>>,
+  extends _ZodType<core.$ZodPrefaultInternals<T, core.$ZodWrapperMetadataExact<T>>>,
     core.$ZodPrefault<T> {
   "~standard": ZodStandardSchemaWithJSON<this>;
+  _zod: core.$ZodPrefaultInternals<T, core.$ZodWrapperMetadataExact<T>>;
   unwrap(): T;
 }
 export const ZodPrefault: core.$constructor<ZodPrefault> = /*@__PURE__*/ core.$constructor(
@@ -2262,9 +2267,10 @@ export function prefault<T extends core.SomeType>(
 
 // ZodNonOptional
 export interface ZodNonOptional<T extends core.SomeType = core.$ZodType>
-  extends _ZodType<core.$ZodNonOptionalInternals<T>>,
+  extends _ZodType<core.$ZodNonOptionalInternals<T, core.$ZodWrapperMetadataExact<T>>>,
     core.$ZodNonOptional<T> {
   "~standard": ZodStandardSchemaWithJSON<this>;
+  _zod: core.$ZodNonOptionalInternals<T, core.$ZodWrapperMetadataExact<T>>;
   unwrap(): T;
 }
 export const ZodNonOptional: core.$constructor<ZodNonOptional> = /*@__PURE__*/ core.$constructor(
@@ -2291,9 +2297,10 @@ export function nonoptional<T extends core.SomeType>(
 
 // ZodSuccess
 export interface ZodSuccess<T extends core.SomeType = core.$ZodType>
-  extends _ZodType<core.$ZodSuccessInternals<T>>,
+  extends _ZodType<core.$ZodSuccessInternals<T, core.$ZodWrapperMetadataExact<T>>>,
     core.$ZodSuccess<T> {
   "~standard": ZodStandardSchemaWithJSON<this>;
+  _zod: core.$ZodSuccessInternals<T, core.$ZodWrapperMetadataExact<T>>;
   unwrap(): T;
 }
 export const ZodSuccess: core.$constructor<ZodSuccess> = /*@__PURE__*/ core.$constructor("ZodSuccess", (inst, def) => {
@@ -2313,9 +2320,10 @@ export function success<T extends core.SomeType>(innerType: T): ZodSuccess<T> {
 
 // ZodCatch
 export interface ZodCatch<T extends core.SomeType = core.$ZodType>
-  extends _ZodType<core.$ZodCatchInternals<T>>,
+  extends _ZodType<core.$ZodCatchInternals<T, core.$ZodWrapperMetadataExact<T>>>,
     core.$ZodCatch<T> {
   "~standard": ZodStandardSchemaWithJSON<this>;
+  _zod: core.$ZodCatchInternals<T, core.$ZodWrapperMetadataExact<T>>;
   unwrap(): T;
   /** @deprecated Use `.unwrap()` instead. */
   removeCatch(): T;
@@ -2359,9 +2367,10 @@ export function nan(params?: string | core.$ZodNaNParams): ZodNaN {
 
 // ZodPipe
 export interface ZodPipe<A extends core.SomeType = core.$ZodType, B extends core.SomeType = core.$ZodType>
-  extends _ZodType<core.$ZodPipeInternals<A, B>>,
+  extends _ZodType<core.$ZodPipeInternals<A, B, core.$ZodPipeMetadataExact<A, B>>>,
     core.$ZodPipe<A, B> {
   "~standard": ZodStandardSchemaWithJSON<this>;
+  _zod: core.$ZodPipeInternals<A, B, core.$ZodPipeMetadataExact<A, B>>;
   in: A;
   out: B;
 }
@@ -2392,7 +2401,7 @@ export interface ZodCodec<A extends core.SomeType = core.$ZodType, B extends cor
   extends ZodPipe<A, B>,
     core.$ZodCodec<A, B> {
   "~standard": ZodStandardSchemaWithJSON<this>;
-  _zod: core.$ZodCodecInternals<A, B>;
+  _zod: core.$ZodCodecInternals<A, B, core.$ZodPipeMetadataExact<A, B>>;
   def: core.$ZodCodecDef<A, B>;
 }
 export const ZodCodec: core.$constructor<ZodCodec> = /*@__PURE__*/ core.$constructor("ZodCodec", (inst, def) => {
@@ -2433,7 +2442,7 @@ export interface ZodPreprocess<B extends core.SomeType = core.$ZodType>
   extends ZodPipe<core.$ZodTransform, B>,
     core.$ZodPreprocess<B> {
   "~standard": ZodStandardSchemaWithJSON<this>;
-  _zod: core.$ZodPreprocessInternals<B>;
+  _zod: core.$ZodPreprocessInternals<B, core.$ZodWrapperMetadataExact<B>>;
   def: core.$ZodPreprocessDef<B>;
 }
 export const ZodPreprocess: core.$constructor<ZodPreprocess> = /*@__PURE__*/ core.$constructor(
@@ -2446,9 +2455,10 @@ export const ZodPreprocess: core.$constructor<ZodPreprocess> = /*@__PURE__*/ cor
 
 // ZodReadonly
 export interface ZodReadonly<T extends core.SomeType = core.$ZodType>
-  extends _ZodType<core.$ZodReadonlyInternals<T>>,
+  extends _ZodType<core.$ZodReadonlyInternals<T, core.$ZodWrapperMetadataExact<T>>>,
     core.$ZodReadonly<T> {
   "~standard": ZodStandardSchemaWithJSON<this>;
+  _zod: core.$ZodReadonlyInternals<T, core.$ZodWrapperMetadataExact<T>>;
   unwrap(): T;
 }
 export const ZodReadonly: core.$constructor<ZodReadonly> = /*@__PURE__*/ core.$constructor(
@@ -2497,9 +2507,10 @@ export function templateLiteral<const Parts extends core.$ZodTemplateLiteralPart
 
 // ZodLazy
 export interface ZodLazy<T extends core.SomeType = core.$ZodType>
-  extends _ZodType<core.$ZodLazyInternals<T>>,
+  extends _ZodType<core.$ZodLazyInternals<T, core.$ZodWrapperMetadataExact<T>>>,
     core.$ZodLazy<T> {
   "~standard": ZodStandardSchemaWithJSON<this>;
+  _zod: core.$ZodLazyInternals<T, core.$ZodWrapperMetadataExact<T>>;
   unwrap(): T;
 }
 export const ZodLazy: core.$constructor<ZodLazy> = /*@__PURE__*/ core.$constructor("ZodLazy", (inst, def) => {
