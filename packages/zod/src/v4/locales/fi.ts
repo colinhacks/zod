@@ -47,6 +47,7 @@ const error: () => errors.$ZodErrorMap = () => {
     base64url: "base64url-koodattu merkkijono",
     json_string: "JSON-merkkijono",
     e164: "E.164-luku",
+    credit_card: "luottokortin numero",
     jwt: "JWT",
     template_literal: "templaattimerkkijono",
   };

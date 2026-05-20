@@ -43,6 +43,7 @@ const error: () => errors.$ZodErrorMap = () => {
     base64url: "řetězec zakódovaný ve formátu base64url",
     json_string: "řetězec ve formátu JSON",
     e164: "číslo E.164",
+    credit_card: "číslo kreditní karty",
     jwt: "JWT",
     template_literal: "vstup",
   };

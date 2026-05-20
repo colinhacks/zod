@@ -144,6 +144,7 @@ const error: () => errors.$ZodErrorMap = () => {
     base64url: "base64url užkoduota eilutė",
     json_string: "JSON eilutė",
     e164: "E.164 numeris",
+    credit_card: "kredito kortelės numeris",
     jwt: "JWT",
     template_literal: "įvestis",
   };

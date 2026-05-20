@@ -43,6 +43,7 @@ const error: () => errors.$ZodErrorMap = () => {
     base64url: "base64url kodiran niz",
     json_string: "JSON niz",
     e164: "E.164 številka",
+    credit_card: "številka kreditne kartice",
     jwt: "JWT",
     template_literal: "vnos",
   };
