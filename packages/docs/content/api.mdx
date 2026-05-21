@@ -2127,6 +2127,60 @@ const myString = z.string().check(
 </Tab>
 </Tabs>
 
+#### Dynamic error messages
+
+The `error` param also accepts a function. The function receives a raw issue context object and must return a `string` or `{ message: string }`. This is useful for generating input-aware error messages or for integrating with an i18n library.
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+const Username = z
+  .string()
+  .refine(
+    (val) => /^[a-z0-9_]+$/.test(val),
+    {
+      error: (iss) =>
+        `"${String(iss.input)}" is not a valid username. Use only lowercase letters, numbers, and underscores.`,
+    }
+  );
+
+Username.parse("Hello World!");
+// ❌ ZodError: "Hello World!" is not a valid username. Use only lowercase letters, numbers, and underscores.
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+const Username = z.string().check(
+  z.refine(
+    (val) => /^[a-z0-9_]+$/.test(val),
+    {
+      error: (iss) =>
+        `"${String(iss.input)}" is not a valid username. Use only lowercase letters, numbers, and underscores.`,
+    }
+  )
+);
+
+z.parse(Username, "Hello World!");
+// ❌ ZodError: "Hello World!" is not a valid username. Use only lowercase letters, numbers, and underscores.
+```
+</Tab>
+</Tabs>
+
+For i18n-aware messages, call your translation function inside the error function:
+
+```ts
+// t() is your i18n translation function
+const minLength = 8;
+const Password = z.string().refine(
+  (val) => val.length >= minLength,
+  { error: () => t("errors.password_too_short", { min: minLength }) }
+);
+```
+
+<Callout>
+  See [Customizing errors](/error-customization#the-error-param) for the full list of properties available on the issue context object passed to the error function.
+</Callout>
+
 #### `abort` 
 
 By default, validation issues from checks are considered *continuable*; that is, Zod will execute *all* checks in sequence, even if one of them causes a validation error. This is usually desirable, as it means Zod can surface as many errors as possible in one go.
@@ -2461,6 +2515,44 @@ const UniqueStringArray = z.array(z.string()).check(
 ```
 </Tab>
 </Tabs>
+
+### Combining `.refine()` and `.superRefine()`
+
+Use `.refine()` for simple boolean checks and `.superRefine()` when you need to emit multiple issues or control issue codes. Both can be chained on the same schema; all checks run in order (subject to `abort` / continuable logic).
+
+```ts
+const Password = z
+  .string()
+  // Simple boolean checks with user-friendly messages
+  .refine((val) => val.length >= 8, { error: "Must be at least 8 characters.", abort: true })
+  .refine((val) => val.length <= 64, { error: "Must be at most 64 characters." })
+  // Multiple targeted issues via superRefine
+  .superRefine((val, ctx) => {
+    if (!/[A-Z]/.test(val)) {
+      ctx.addIssue({ code: "custom", message: "Must contain at least one uppercase letter.", input: val });
+    }
+    if (!/[0-9]/.test(val)) {
+      ctx.addIssue({ code: "custom", message: "Must contain at least one number.", input: val });
+    }
+    if (!/[^A-Za-z0-9]/.test(val)) {
+      ctx.addIssue({ code: "custom", message: "Must contain at least one special character.", input: val });
+    }
+  });
+
+const result = Password.safeParse("hello");
+result.error?.issues;
+/* [
+  { code: "custom", message: "Must be at least 8 characters." }
+  // abort:true stops subsequent checks once this fails
+] */
+
+const result2 = Password.safeParse("hello world!");
+result2.error?.issues;
+/* [
+  { code: "custom", message: "Must contain at least one uppercase letter." },
+  { code: "custom", message: "Must contain at least one number." }
+] */
+```
 
 ### `.check()`
 
