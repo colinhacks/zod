@@ -1422,6 +1422,18 @@ describe("toJSONSchema", () => {
     `);
   });
 
+  test("preprocess object properties use inner optionality in input mode", () => {
+    const schema = z.object({
+      noPreprocess: z.string(),
+      withPreprocess: z.preprocess((val) => val, z.string()),
+      optionalPreprocess: z.preprocess((val) => val, z.string().optional()),
+    });
+
+    const jsonSchema = z.toJSONSchema(schema, { io: "input" }) as z.core.JSONSchema.ObjectSchema;
+
+    expect(jsonSchema.required).toEqual(["noPreprocess", "withPreprocess"]);
+  });
+
   test("simple objects", () => {
     const schema = z.object({
       name: z.string(),

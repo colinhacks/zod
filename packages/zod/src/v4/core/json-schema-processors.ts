@@ -307,6 +307,9 @@ export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _jso
     [...allKeys].filter((key) => {
       const v = def.shape[key]!._zod;
       if (ctx.io === "input") {
+        if (v.traits.has("$ZodPreprocess")) {
+          return (v.def as schemas.$ZodPreprocessDef).out._zod.optin === undefined;
+        }
         return v.optin === undefined;
       } else {
         return v.optout === undefined;
