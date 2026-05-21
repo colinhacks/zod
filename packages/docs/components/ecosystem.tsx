@@ -305,10 +305,10 @@ const zodUtilities: ZodResource[] = [
     slug: "marilari88/zod-playground",
   },
   {
-    name: "eslint-plugin-zod",
-    url: "https://github.com/marcalexiei/eslint-plugin-zod",
-    description: "ESLint plugin that adds custom linting rules to enforce best practices when using Zod",
-    slug: "marcalexiei/eslint-plugin-zod",
+    name: "eslint-zod",
+    url: "https://github.com/marcalexiei/eslint-zod",
+    description: "ESLint plugins that add custom linting rules to enforce best practices when using Zod and/or Zod Mini.",
+    slug: "marcalexiei/eslint-zod",
   },
   {
     name: "Zod Compare",
