@@ -1207,14 +1207,33 @@ export function _xor<const T extends readonly schemas.$ZodObject[]>(
 }
 
 // ZodDiscriminatedUnion
-export interface $ZodTypeDiscriminableInternals<Disc extends string = string>
-  extends schemas.$ZodTypeInternals<unknown, { [K in Disc]?: unknown }> {
+export interface $ZodTypeDiscriminableInternals {
   propValues: util.PropValues;
 }
 
-export interface $ZodTypeDiscriminable<Disc extends string = string> extends schemas.$ZodType {
-  _zod: $ZodTypeDiscriminableInternals<Disc>;
-}
+/**
+ * Constraint for `discriminatedUnion` options: each option must expose the
+ * discriminator key.
+ *
+ * The shape of this type is load-bearing for recursion support. It is based on
+ * `SomeType` (not `$ZodType`) and deliberately does not constrain the option's
+ * `output`/`input` directly; for object schemas the discriminator key is checked
+ * against `def.shape`, not the resolved input type. Constraining `$ZodType`
+ * (which carries `~standard`, referencing `input`/`output`) or constraining the
+ * `input` of object options would force their inferred input to be evaluated
+ * while the constraint is checked. For mutually-recursive getter schemas — whose
+ * input references the union itself — that eager evaluation makes TypeScript
+ * report circularity errors (ts2615/ts7022) and collapse the inferred type to
+ * `any`, even though the equivalent `union` infers correctly. Non-object options
+ * (e.g. pipes/transforms, which have no `shape`) fall back to checking the
+ * inferred input, preserving the previous behavior for those options.
+ */
+export type $ZodTypeDiscriminable<Disc extends string = string> = schemas.SomeType & {
+  _zod: $ZodTypeDiscriminableInternals;
+} & (
+    | { _zod: { def: { shape: { [K in Disc]: schemas.SomeType } } } }
+    | { _zod: { def: { shape?: undefined }; input: { [K in Disc]?: unknown } } }
+  );
 
 export type $ZodDiscriminatedUnionParams = TypeParams<schemas.$ZodDiscriminatedUnion, "options" | "discriminator">;
 // @__NO_SIDE_EFFECTS__
@@ -1229,7 +1248,7 @@ export function _discriminatedUnion<
 ): schemas.$ZodDiscriminatedUnion<Types, Disc> {
   return new Class({
     type: "union",
-    options,
+    options: options as any as schemas.$ZodType[],
     discriminator,
     ...util.normalizeParams(params),
   }) as any;
