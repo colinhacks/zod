@@ -18,6 +18,10 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
   **Experimental** — The `z.fromJSONSchema()` function is experimental and is not considered part of Zod's stable API. It is likely to undergo implementation changes in future releases.
 </Callout>
 
+<Callout type="info">
+  **Note on Tuples:** Per Draft-07 and Draft-2020-12 specifications, positional tuples generated via `prefixItems` or `items[]` arrays are open-ended by default and will append `.rest(z.any())`. To enforce a strict, closed tuple boundary, you must explicitly declare `items: false` or `additionalItems: false` within your source JSON Schema.
+</Callout>
+
 Zod provides `z.fromJSONSchema()` to convert a JSON Schema into a Zod schema.
 
 ```ts
