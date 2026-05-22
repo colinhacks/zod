@@ -3,6 +3,7 @@ import { util } from "../core/index.js";
 import * as processors from "../core/json-schema-processors.js";
 import type { StandardSchemaWithJSONProps } from "../core/standard-schema.js";
 import { createStandardJSONSchemaMethod, createToJSONSchemaMethod } from "../core/to-json-schema.js";
+import { toOutputSchema } from "../core/to-output-schema.js";
 
 import * as checks from "./checks.js";
 import * as iso from "./iso.js";
@@ -147,6 +148,11 @@ export interface ZodType<
     params?: core.ParseContext<core.$ZodIssue>
   ): Promise<parse.ZodSafeParseResult<core.output<this>>>;
 
+  // output schema
+  /** Returns a new schema that validates the *output* (decoded) shape,
+   *  with all pipes/codecs resolved to their `.out` schemas. */
+  outputSchema(): this;
+
   // refinements
   refine<Ch extends (arg: core.output<this>) => unknown | Promise<unknown>>(
     check: Ch,
@@ -245,6 +251,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   inst.safeDecode = (data, params) => parse.safeDecode(inst, data, params);
   inst.safeEncodeAsync = async (data, params) => parse.safeEncodeAsync(inst, data, params);
   inst.safeDecodeAsync = async (data, params) => parse.safeDecodeAsync(inst, data, params);
+  inst.outputSchema = () => toOutputSchema(inst) as any;
 
   // All builder methods are placed on the internal prototype as lazy-bind
   // getters. On first access per-instance, a bound thunk is allocated and

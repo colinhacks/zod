@@ -31,6 +31,7 @@ export {
   NEVER,
 } from "../core/index.js";
 export { toJSONSchema } from "../core/json-schema-processors.js";
+export { toOutputSchema } from "../core/to-output-schema.js";
 export { fromJSONSchema } from "./from-json-schema.js";
 
 export * as locales from "../locales/index.js";
