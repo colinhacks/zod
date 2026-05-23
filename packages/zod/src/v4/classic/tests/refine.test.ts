@@ -75,6 +75,27 @@ describe("refinement with custom error messages", () => {
 });
 
 describe("async refinements", () => {
+  async function withPatchedPromise<T>(fn: (NativePromise: PromiseConstructor) => Promise<T>): Promise<T> {
+    const NativePromise = globalThis.Promise;
+    class ZoneAwarePromise<T> extends NativePromise<T> {}
+
+    Object.defineProperty(globalThis, "Promise", {
+      configurable: true,
+      value: ZoneAwarePromise,
+      writable: true,
+    });
+
+    try {
+      return await fn(NativePromise);
+    } finally {
+      Object.defineProperty(globalThis, "Promise", {
+        configurable: true,
+        value: NativePromise,
+        writable: true,
+      });
+    }
+  }
+
   test("should support async refinement functions", async () => {
     const validationSchema = z
       .object({
@@ -104,6 +125,167 @@ describe("async refinements", () => {
         confirmPassword: "different",
       })
     ).rejects.toThrow();
+  });
+
+  test("should support async superRefine when global Promise is patched", async () => {
+    await withPatchedPromise(async (NativePromise) => {
+      const schema = z.object({ email: z.string() }).superRefine(async (_data, ctx) => {
+        await NativePromise.resolve();
+        ctx.addIssue({
+          code: "custom",
+          message: "Always fails",
+          path: ["email"],
+        });
+      });
+
+      const result = await schema.safeParseAsync({ email: "test@example.com" });
+
+      expect(result.success).toEqual(false);
+      if (!result.success) {
+        expect(result.error.issues).toMatchObject([
+          {
+            code: "custom",
+            message: "Always fails",
+            path: ["email"],
+          },
+        ]);
+      }
+    });
+  });
+
+  test.each([
+    [
+      "transform result",
+      async (NativePromise: PromiseConstructor) => {
+        const schema = z.string().transform(async (value) => {
+          await NativePromise.resolve();
+          return value.length;
+        });
+
+        const result = await schema.safeParseAsync("zod");
+
+        expect(result.success).toEqual(true);
+        if (result.success) {
+          expect(result.data).toEqual(3);
+        }
+      },
+    ],
+    [
+      "pipe input",
+      async (NativePromise: PromiseConstructor) => {
+        const schema = z
+          .string()
+          .transform(async (value) => {
+            await NativePromise.resolve();
+            return value.length;
+          })
+          .pipe(z.number().min(3));
+
+        const result = await schema.safeParseAsync("zod");
+
+        expect(result.success).toEqual(true);
+        if (result.success) {
+          expect(result.data).toEqual(3);
+        }
+      },
+    ],
+    [
+      "array element",
+      async (NativePromise: PromiseConstructor) => {
+        const schema = z.array(
+          z.string().transform(async (value) => {
+            await NativePromise.resolve();
+            return value.toUpperCase();
+          })
+        );
+
+        const result = await schema.safeParseAsync(["ok"]);
+
+        expect(result.success).toEqual(true);
+        if (result.success) {
+          expect(result.data).toEqual(["OK"]);
+        }
+      },
+    ],
+    [
+      "tuple item",
+      async (NativePromise: PromiseConstructor) => {
+        const schema = z.tuple([
+          z.string().transform(async (value) => {
+            await NativePromise.resolve();
+            return value.toUpperCase();
+          }),
+        ]);
+
+        const result = await schema.safeParseAsync(["ok"]);
+
+        expect(result.success).toEqual(true);
+        if (result.success) {
+          expect(result.data).toEqual(["OK"]);
+        }
+      },
+    ],
+    [
+      "record value",
+      async (NativePromise: PromiseConstructor) => {
+        const schema = z.record(
+          z.string(),
+          z.string().transform(async (value) => {
+            await NativePromise.resolve();
+            return value.toUpperCase();
+          })
+        );
+
+        const result = await schema.safeParseAsync({ key: "ok" });
+
+        expect(result.success).toEqual(true);
+        if (result.success) {
+          expect(result.data).toEqual({ key: "OK" });
+        }
+      },
+    ],
+    [
+      "union branch",
+      async (NativePromise: PromiseConstructor) => {
+        const schema = z.union([
+          z.string().transform(async (value) => {
+            await NativePromise.resolve();
+            return value.toUpperCase();
+          }),
+          z.number(),
+        ]);
+
+        const result = await schema.safeParseAsync("ok");
+
+        expect(result.success).toEqual(true);
+        if (result.success) {
+          expect(result.data).toEqual("OK");
+        }
+      },
+    ],
+    [
+      "intersection side",
+      async (NativePromise: PromiseConstructor) => {
+        const schema = z.intersection(
+          z.object({
+            left: z.string().transform(async (value) => {
+              await NativePromise.resolve();
+              return value.toUpperCase();
+            }),
+          }),
+          z.object({ right: z.number() })
+        );
+
+        const result = await schema.safeParseAsync({ left: "ok", right: 1 });
+
+        expect(result.success).toEqual(true);
+        if (result.success) {
+          expect(result.data).toEqual({ left: "OK", right: 1 });
+        }
+      },
+    ],
+  ])("should await async %s when global Promise is patched", async (_name, assertSchema) => {
+    await withPatchedPromise(assertSchema);
   });
 });
 
