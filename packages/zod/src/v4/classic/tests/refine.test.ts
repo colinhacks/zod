@@ -105,6 +105,47 @@ describe("async refinements", () => {
       })
     ).rejects.toThrow();
   });
+
+  test("should support async superRefine when global Promise is patched", async () => {
+    const NativePromise = globalThis.Promise;
+    class ZoneAwarePromise<T> extends NativePromise<T> {}
+
+    Object.defineProperty(globalThis, "Promise", {
+      configurable: true,
+      value: ZoneAwarePromise,
+      writable: true,
+    });
+
+    try {
+      const schema = z.object({ email: z.string() }).superRefine(async (_data, ctx) => {
+        await NativePromise.resolve();
+        ctx.addIssue({
+          code: "custom",
+          message: "Always fails",
+          path: ["email"],
+        });
+      });
+
+      const result = await schema.safeParseAsync({ email: "test@example.com" });
+
+      expect(result.success).toEqual(false);
+      if (!result.success) {
+        expect(result.error.issues).toMatchObject([
+          {
+            code: "custom",
+            message: "Always fails",
+            path: ["email"],
+          },
+        ]);
+      }
+    } finally {
+      Object.defineProperty(globalThis, "Promise", {
+        configurable: true,
+        value: NativePromise,
+        writable: true,
+      });
+    }
+  });
 });
 
 describe("early termination options", () => {

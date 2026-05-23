@@ -2096,7 +2096,7 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
       };
 
       const output = def.transform(payload.value, payload);
-      if (output instanceof Promise) {
+      if (util.isPromise(output)) {
         return output.then((output) => {
           payload.value = output;
           payload.fallback = true;
