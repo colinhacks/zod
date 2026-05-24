@@ -486,7 +486,7 @@ describe("toJSONSchema", () => {
             "pattern": "cruel",
           },
           {
-            "pattern": "^.{10}dark",
+            "pattern": "^.{10,}dark",
           },
           {
             "pattern": ".*world$",
@@ -525,7 +525,7 @@ describe("toJSONSchema", () => {
             "type": "string",
           },
           {
-            "pattern": "^.{10}dark",
+            "pattern": "^.{10,}dark",
             "type": "string",
           },
           {
@@ -540,6 +540,19 @@ describe("toJSONSchema", () => {
         "type": "string",
       }
     `);
+  });
+
+  test("includes with position emits a pattern matching runtime semantics", () => {
+    // String.prototype.includes(sub, position) matches `sub` at `position` OR
+    // LATER, so the JSON Schema pattern must allow >= position leading chars.
+    const schema = z.string().includes("foo", { position: 2 });
+    const json = z.toJSONSchema(schema) as { pattern?: string };
+    expect(json.pattern).toBe("^.{2,}foo");
+
+    const re = new RegExp(json.pattern!);
+    for (const input of ["xxfoo", "xxxfoo", "xfoo", "ab"]) {
+      expect(re.test(input)).toBe(schema.safeParse(input).success);
+    }
   });
 
   test("number constraints", () => {
