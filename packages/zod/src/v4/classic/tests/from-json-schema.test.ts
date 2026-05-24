@@ -67,7 +67,11 @@ test("draft-04 boolean exclusive bounds do not emit a redundant inclusive bound"
   expect(() => schema.parse(10)).toThrow();
   expect(schema.parse(7)).toBe(7);
   // the inclusive .min()/.max() must be skipped so only the exclusive checks remain
-  const checks = (schema as any)._zod.def.checks.map((c: any) => [c._zod.def.check, c._zod.def.value, c._zod.def.inclusive]);
+  const checks = (schema as any)._zod.def.checks.map((c: any) => [
+    c._zod.def.check,
+    c._zod.def.value,
+    c._zod.def.inclusive,
+  ]);
   expect(checks).toEqual([
     ["greater_than", 5, false],
     ["less_than", 10, false],
