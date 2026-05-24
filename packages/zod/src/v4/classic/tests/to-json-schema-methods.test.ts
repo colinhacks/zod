@@ -274,6 +274,10 @@ describe("toJSONSchema method", () => {
       expectMethodMatch(z.record(z.string(), z.number()));
     });
 
+    test("strict record", () => {
+      expectMethodMatch(z.strictRecord(z.string(), z.number()));
+    });
+
     test("union", () => {
       expectMethodMatch(z.union([z.string(), z.number()]));
     });

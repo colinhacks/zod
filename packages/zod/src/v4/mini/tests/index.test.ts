@@ -318,8 +318,15 @@ test("z.record", () => {
   });
   // missing keys
   expect(() => z.parse(c, { a: "hello", b: "world" })).toThrow();
-  // extra keys
-  expect(() => z.parse(c, { a: "hello", b: "world", c: "world", d: "world" })).toThrow();
+  // extra keys are stripped
+  expect(z.parse(c, { a: "hello", b: "world", c: "world", d: "world" })).toEqual({
+    a: "hello",
+    b: "world",
+    c: "world",
+  });
+
+  const strictC = z.strictRecord(z.enum(["a", "b", "c"]), z.string());
+  expect(() => z.parse(strictC, { a: "hello", b: "world", c: "world", d: "world" })).toThrow();
 
   // literal union keys
   const d = z.record(z.union([z.literal("a"), z.literal(0)]), z.string());

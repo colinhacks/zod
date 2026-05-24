@@ -1856,13 +1856,15 @@ const AnyObject = z.record(Keys, z.unknown());
 // Record<string | number | symbol, unknown>
 ```
 
-To create an object schemas containing keys defined by an enum:
+To create an object schema containing keys defined by an enum:
 
 ```ts
 const Keys = z.enum(["id", "name", "email"]);
 const Person = z.record(Keys, z.string());
 // { id: string; name: string; email: string }
 ```
+
+By default, properties whose keys don't match the key schema are stripped from the parsed result. Values for matching keys are still parsed against the value schema.
 
 Zod supports numeric keys inside records in a way that closely mirrors TypeScript itself. A `number` schema, when used as a record key, will validate that the key is a valid "numeric string". Additional numerical constraints (min, max, step, etc.) will also be validated.
 
@@ -1873,7 +1875,7 @@ numberKeys.parse({
   2: "two", // ✅
   "1.5": "one", // ✅
   "-3": "two", // ✅
-  abc: "one" // ❌
+  abc: "one" // stripped
 });
 
 // further validation is also supported
@@ -1882,8 +1884,8 @@ intKeys.parse({
   0: "zero", // ✅
   1: "one", // ✅
   2: "two", // ✅
-  12: "twelve", // ❌
-  abc: "one" // ❌
+  12: "twelve", // stripped
+  abc: "one" // stripped
 });
 ```
 
@@ -1911,9 +1913,25 @@ const Person = z.partialRecord(Keys, z.string());
 // { id?: string; name?: string; email?: string }
 ```
 
+### `z.strictRecord`
+
+Use `z.strictRecord()` to error on keys that don't match the key schema.
+
+```ts
+const Keys = z.enum(["id", "name", "email"]);
+const Person = z.strictRecord(Keys, z.string());
+
+Person.parse({
+  id: "123",
+  name: "Ada",
+  email: "ada@example.com",
+  extra: "unknown", // ❌ unrecognized key
+});
+```
+
 ### `z.looseRecord`
 
-By default, `z.record()` errors on keys that don't match the key schema. Use `z.looseRecord()` to pass through non-matching keys unchanged. This is particularly useful when combined with intersections to model multiple pattern properties:
+Use `z.looseRecord()` to pass through keys that don't match the key schema unchanged. This is particularly useful when combined with intersections to model multiple pattern properties:
 
 ```ts
 const schema = z

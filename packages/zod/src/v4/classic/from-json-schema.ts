@@ -392,7 +392,7 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
 
         // Case A: No properties (pure record)
         if (Object.keys(shape).length === 0) {
-          zodSchema = z.record(keySchema, valueSchema);
+          zodSchema = z.strictRecord(keySchema, valueSchema);
           break;
         }
 
