@@ -2199,6 +2199,50 @@ test("id is stripped from root schema", () => {
   expect((result as any).id).toBeUndefined();
 });
 
+test("root schema with id is hoisted into $defs", () => {
+  const A = z.object({ name: z.string() }).meta({ id: "A" });
+  const result = z.toJSONSchema(A);
+
+  expect(result).toEqual({
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    $ref: "#/$defs/A",
+    $defs: {
+      A: {
+        type: "object",
+        properties: {
+          name: {
+            type: "string",
+          },
+        },
+        required: ["name"],
+        additionalProperties: false,
+      },
+    },
+  });
+});
+
+test("root schema with id uses definitions on legacy targets", () => {
+  const A = z.object({ name: z.string() }).meta({ id: "A" });
+  const result = z.toJSONSchema(A, { target: "draft-07" });
+
+  expect(result).toEqual({
+    $schema: "http://json-schema.org/draft-07/schema#",
+    $ref: "#/definitions/A",
+    definitions: {
+      A: {
+        type: "object",
+        properties: {
+          name: {
+            type: "string",
+          },
+        },
+        required: ["name"],
+        additionalProperties: false,
+      },
+    },
+  });
+});
+
 test("id is observable in override callback", () => {
   // The strip happens after override callbacks run, so userland override code
   // can still read `jsonSchema.id` if it wants to.
@@ -2422,45 +2466,40 @@ test("top-level readonly", () => {
   // .meta({ id: "B" });
 
   const result = z.toJSONSchema(A);
-  expect(result).toMatchInlineSnapshot(`
-    {
-      "$defs": {
-        "B": {
-          "additionalProperties": false,
-          "properties": {
-            "a": {
-              "$ref": "#",
-            },
-            "name": {
-              "type": "string",
-            },
+  expect(result).toEqual({
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    $ref: "#/$defs/A",
+    $defs: {
+      A: {
+        additionalProperties: false,
+        properties: {
+          b: {
+            $ref: "#/$defs/B",
           },
-          "readOnly": true,
-          "required": [
-            "name",
-            "a",
-          ],
-          "type": "object",
+          name: {
+            type: "string",
+          },
         },
+        readOnly: true,
+        required: ["name", "b"],
+        type: "object",
       },
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "additionalProperties": false,
-      "properties": {
-        "b": {
-          "$ref": "#/$defs/B",
+      B: {
+        additionalProperties: false,
+        properties: {
+          a: {
+            $ref: "#/$defs/A",
+          },
+          name: {
+            type: "string",
+          },
         },
-        "name": {
-          "type": "string",
-        },
+        readOnly: true,
+        required: ["name", "a"],
+        type: "object",
       },
-      "readOnly": true,
-      "required": [
-        "name",
-        "b",
-      ],
-      "type": "object",
-    }
-  `);
+    },
+  });
 });
 
 test("basic registry", () => {
