@@ -92,6 +92,23 @@ export const httpProtocol: RegExp = /^https?$/;
 // E.164: leading digit must be 1-9; total digits (excluding '+') between 7-15
 export const e164: RegExp = /^\+[1-9]\d{6,14}$/;
 
+// Credit card: 13–19 digits total, optionally separated by single spaces or hyphens.
+// Matches what the input may look like before sanitization; the per-provider
+// regex list (below) and the Luhn check are run against the digits only.
+export const creditCard: RegExp = /^(?:\d{13,19}|\d{4}(?: \d{3,6}){2,4}|\d{4}(?:-\d{3,6}){2,4})$/;
+
+// Per-issuer credit card regexes. Adapted from valibot
+// (https://github.com/fabian-hiller/valibot, MIT — `library/src/actions/creditCard/creditCard.ts`).
+export const creditCardProviders: ReadonlyArray<RegExp> = [
+  /^3[47]\d{13}$/, // American Express
+  /^3(?:0[0-5]|[68]\d)\d{11,13}$/, // Diners Club
+  /^6(?:011|5\d{2})\d{12,15}$/, // Discover
+  /^(?:2131|1800|35\d{3})\d{11}$/, // JCB
+  /^(?:5[1-5]\d{2}|222\d|22[3-9]\d|2[3-6]\d{2}|27[01]\d|2720)\d{12}$/, // Mastercard
+  /^(?:6[27]\d{14,17}|81\d{14,17})$/, // UnionPay
+  /^4\d{12}(?:\d{3,6})?$/, // Visa
+];
+
 // const dateSource = `((\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-((0[13578]|1[02])-(0[1-9]|[12]\\d|3[01])|(0[469]|11)-(0[1-9]|[12]\\d|30)|(02)-(0[1-9]|1\\d|2[0-8])))`;
 const dateSource = `(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))`;
 export const date: RegExp = /*@__PURE__*/ new RegExp(`^${dateSource}$`);

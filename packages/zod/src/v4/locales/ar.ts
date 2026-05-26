@@ -43,6 +43,7 @@ const error: () => errors.$ZodErrorMap = () => {
     base64url: "نَص بترميز base64url-encoded",
     json_string: "نَص على هيئة JSON",
     e164: "رقم هاتف بمعيار E.164",
+    credit_card: "رقم بطاقة الائتمان",
     jwt: "JWT",
     template_literal: "مدخل",
   };
