@@ -58,12 +58,19 @@ const error: () => errors.$ZodErrorMap = () => {
     // All other type names omitted - they fall back to raw values via ?? operator
   };
 
+  function getTypeName(type: errors.$ZodInvalidTypeExpected, input?: unknown): string {
+    if (type === "number" && typeof input === "number" && !Number.isFinite(input)) {
+      return String(input);
+    }
+    return TypeDictionary[type] ?? type;
+  }
+
   return (issue) => {
     switch (issue.code) {
       case "invalid_type": {
-        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const expected = getTypeName(issue.expected);
         const receivedType = util.parsedType(issue.input);
-        const received = TypeDictionary[receivedType] ?? receivedType;
+        const received = getTypeName(receivedType, issue.input);
         return `Invalid input: expected ${expected}, received ${received}`;
       }
 
