@@ -175,6 +175,20 @@ z.string().min(5, {
 });
 ```
 
+Error maps also receive the schema associated with the issue as a second argument. This is useful for metadata-driven messages, especially for checks and refinements where `iss.inst` points to the check that originated the issue.
+
+```ts
+z.config({
+  customError: (iss, schema) => {
+    const label = schema ? z.globalRegistry.get(schema)?.title : undefined;
+    return label ? `${label}: Invalid input` : undefined;
+  },
+});
+
+const name = z.string().min(2).meta({ title: "Name" });
+name.parse("A"); // => throws "Name: Invalid input"
+```
+
 Return `undefined` to avoid customizing the error message and fall back to the default message. (More specifically, Zod will yield control to the next error map in the [precedence chain](#error-precedence).) This is useful for selectively customizing certain error messages but not others.
 
 ```ts

@@ -223,6 +223,7 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
       let isAborted = util.aborted(payload);
 
       let asyncResult!: Promise<unknown> | undefined;
+
       for (const ch of checks) {
         if (ch._zod.def.when) {
           if (util.explicitlyAborted(payload)) continue;
@@ -242,11 +243,17 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
             await _;
             const nextLen = payload.issues.length;
             if (nextLen === currLen) return;
+            for (let i = currLen; i < nextLen; i++) {
+              (payload.issues[i]! as any).schema ??= inst;
+            }
             if (!isAborted) isAborted = util.aborted(payload, currLen);
           });
         } else {
           const nextLen = payload.issues.length;
           if (nextLen === currLen) continue;
+          for (let i = currLen; i < nextLen; i++) {
+            (payload.issues[i]! as any).schema ??= inst;
+          }
           if (!isAborted) isAborted = util.aborted(payload, currLen);
         }
       }

@@ -851,15 +851,16 @@ export function finalizeIssue(
   ctx: schemas.ParseContextInternal | undefined,
   config: $ZodConfig
 ): errors.$ZodIssue {
+  const schema = ((iss as any).schema ?? iss.inst) as schemas.$ZodType | undefined;
   const message = iss.message
     ? iss.message
-    : (unwrapMessage(iss.inst?._zod.def?.error?.(iss as never)) ??
-      unwrapMessage(ctx?.error?.(iss as never)) ??
-      unwrapMessage(config.customError?.(iss)) ??
-      unwrapMessage(config.localeError?.(iss)) ??
+    : (unwrapMessage(iss.inst?._zod.def?.error?.(iss as never, schema as never)) ??
+      unwrapMessage(ctx?.error?.(iss as never, schema as never)) ??
+      unwrapMessage(config.customError?.(iss, schema)) ??
+      unwrapMessage(config.localeError?.(iss, schema)) ??
       "Invalid input");
 
-  const { inst: _inst, continue: _continue, input: _input, ...rest } = iss as any;
+  const { inst: _inst, schema: _schema, continue: _continue, input: _input, ...rest } = iss as any;
   rest.path ??= [];
   rest.message = message;
   if (ctx?.reportInput) {
