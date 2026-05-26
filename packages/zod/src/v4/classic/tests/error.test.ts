@@ -2,6 +2,36 @@ import { inspect } from "node:util";
 import { expect, test } from "vitest";
 import * as z from "zod/v4";
 
+function getThrownError(fn: () => unknown): unknown {
+  try {
+    fn();
+  } catch (error) {
+    return error;
+  }
+  throw new Error("Expected function to throw");
+}
+
+async function getRejectedError(fn: () => Promise<unknown>): Promise<unknown> {
+  try {
+    await fn();
+  } catch (error) {
+    return error;
+  }
+  throw new Error("Expected function to reject");
+}
+
+function expectFirstStackFrameAtCallsite(error: unknown): void {
+  expect(error).toBeInstanceOf(Error);
+  const stack = (error as Error).stack;
+  expect(stack).toEqual(expect.any(String));
+
+  const firstFrame = stack!.split("\n").find((line) => line.trim().startsWith("at "));
+  expect(firstFrame).toBeDefined();
+  expect(firstFrame).toContain("error.test.ts");
+  expect(firstFrame).not.toContain("core/parse.ts");
+  expect(firstFrame).not.toContain("classic/schemas.ts");
+}
+
 test("error creation", () => {
   const err1 = new z.ZodError([]);
 
@@ -681,6 +711,44 @@ test("error inheritance", () => {
     expect(e2).toBeInstanceOf(z.ZodRealError);
     // expect(e2).toBeInstanceOf(Error);
   }
+});
+
+test("parse errors capture the caller stack frame", async () => {
+  const schema = z.string();
+  const parse = schema.parse;
+  const parseAsync = schema.parseAsync;
+
+  expectFirstStackFrameAtCallsite(getThrownError(() => schema.parse(123)));
+  expectFirstStackFrameAtCallsite(getThrownError(() => parse(123)));
+  expectFirstStackFrameAtCallsite(getThrownError(() => z.parse(schema, 123)));
+
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => schema.parseAsync(123)));
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => parseAsync(123)));
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => z.parseAsync(schema, 123)));
+});
+
+test("codec errors capture the caller stack frame", async () => {
+  const schema = z.string();
+  const encode = schema.encode;
+  const decode = schema.decode;
+  const encodeAsync = schema.encodeAsync;
+  const decodeAsync = schema.decodeAsync;
+
+  expectFirstStackFrameAtCallsite(getThrownError(() => schema.encode(123 as any)));
+  expectFirstStackFrameAtCallsite(getThrownError(() => encode(123 as any)));
+  expectFirstStackFrameAtCallsite(getThrownError(() => z.encode(schema, 123 as any)));
+
+  expectFirstStackFrameAtCallsite(getThrownError(() => schema.decode(123 as any)));
+  expectFirstStackFrameAtCallsite(getThrownError(() => decode(123 as any)));
+  expectFirstStackFrameAtCallsite(getThrownError(() => z.decode(schema, 123 as any)));
+
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => schema.encodeAsync(123 as any)));
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => encodeAsync(123 as any)));
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => z.encodeAsync(schema, 123 as any)));
+
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => schema.decodeAsync(123 as any)));
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => decodeAsync(123 as any)));
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => z.decodeAsync(schema, 123 as any)));
 });
 
 test("error serialization", () => {
