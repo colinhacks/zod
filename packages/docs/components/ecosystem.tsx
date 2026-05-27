@@ -209,6 +209,13 @@ const xToZodConverters: ZodResource[] = [
     url: "https://github.com/nakita628/hono-takibi",
     description: "Hono Takibi is a code generator from OpenAPI to @hono/zod-openapi",
     slug: "nakita628/hono-takibi",
+  },
+  {
+    name: "tauri-typegen",
+    url: "https://github.com/thwbh/tauri-typegen",
+    description: 
+      "tauri-typegen allows you to generate Zod schemas and validation hooks for the Rust @tauri-apps/tauri cross-platform application framework.",
+    slug: "thwbh/tauri-typegen"
   }
 ];
 
