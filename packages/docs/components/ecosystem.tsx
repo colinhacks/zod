@@ -213,9 +213,9 @@ const xToZodConverters: ZodResource[] = [
   {
     name: "tauri-typegen",
     url: "https://github.com/thwbh/tauri-typegen",
-    description: 
+    description:
       "tauri-typegen allows you to generate Zod schemas and validation hooks for the Rust @tauri-apps/tauri cross-platform application framework.",
-    slug: "thwbh/tauri-typegen"
+    slug: "thwbh/tauri-typegen",
   }
 ];
 
