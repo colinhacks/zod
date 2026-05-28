@@ -887,7 +887,8 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           if (
             url.origin === "null" &&
             !url.hostname &&
-            /^[0-9a-f]{1,4}:/i.test(url.protocol)
+            /^[0-9a-f]{1,4}:/i.test(url.protocol) &&
+            url.pathname.includes(":")
           ) {
             throw new Error("Invalid URL");
           }

@@ -343,6 +343,12 @@ test("url validations", () => {
 
   url.parse("c:");
 
+  // Bare IPv6 addresses should be rejected (no URI scheme)
+  expect(() => url.parse("fe80::1")).toThrow();
+  expect(() => url.parse("fe80::abcd:1234")).toThrow();
+  // Known opaque schemes like mailto: should still work
+  url.parse("mailto:test@test.com");
+
   expect(() => url.parse("asdf")).toThrow();
   expect(() => url.parse("https:/")).toThrow();
   expect(() => url.parse("asdfj@lkjsdf.com")).toThrow();

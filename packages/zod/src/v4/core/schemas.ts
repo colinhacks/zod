@@ -510,7 +510,8 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
       if (
         url.origin === "null" &&
         !url.hostname &&
-        /^[0-9a-f]{1,4}:/i.test(url.protocol)
+        /^[0-9a-f]{1,4}:/i.test(url.protocol) &&
+        url.pathname.includes(":")
       ) {
         payload.issues.push({
           code: "invalid_format",
