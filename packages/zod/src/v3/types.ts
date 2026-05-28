@@ -877,7 +877,21 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
       } else if (check.kind === "url") {
         try {
           // @ts-ignore
-          new URL(input.data);
+          const url = new URL(input.data);
+          // Reject bare IPv6 addresses like "fe80::1" where the URL parser
+          // treats the first hex group as a scheme and the rest as a path.
+          // A valid scheme always has a legitimate hostname or origin,
+          // or follows the `scheme:...` pattern (e.g. `mailto:`).
+          // When parsed as a scheme, an IPv6 hex prefix looks like "fe80:" —
+          // check for this pattern to reject without an allowlist.
+          if (
+            url.origin === "null" &&
+            !url.hostname &&
+            /^[0-9a-f]{1,4}:/i.test(url.protocol) &&
+            url.pathname.includes(":")
+          ) {
+            throw new Error("Invalid URL");
+          }
         } catch {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {

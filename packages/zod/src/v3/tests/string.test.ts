@@ -300,6 +300,11 @@ test("url validations", () => {
   expect(() => url.parse("asdf")).toThrow();
   expect(() => url.parse("https:/")).toThrow();
   expect(() => url.parse("asdfj@lkjsdf.com")).toThrow();
+  // IPv6 addresses without proper scheme should be rejected
+  expect(() => url.parse("fe80::1")).toThrow();
+  expect(() => url.parse("fe80::abcd:1234")).toThrow();
+  // Known opaque schemes like mailto: should still work
+  url.parse("mailto:test@test.com");
 });
 
 test("url error overrides", () => {
