@@ -877,7 +877,17 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
       } else if (check.kind === "url") {
         try {
           // @ts-ignore
-          new URL(input.data);
+          const url = new URL(input.data);
+          // Reject strings like "fe80::1" where the parser treats "fe80" as a
+          // scheme but the resulting URL has no real origin or hostname.
+          // Valid URLs with no origin (file:, blob:, data:, mailto:) are exempted.
+          if (
+            url.origin === "null" &&
+            !url.hostname &&
+            !["file:", "blob:", "data:", "mailto:"].includes(url.protocol)
+          ) {
+            throw new Error("Invalid URL");
+          }
         } catch {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
