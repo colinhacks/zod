@@ -464,6 +464,16 @@ test("httpurl", () => {
   ).toThrow();
   expect(() => httpUrl.parse("http://asdf.c")).toThrow();
   expect(() => httpUrl.parse("mailto:asdf@lckj.com")).toThrow();
+  // total host length over the RFC 1035 limit of 253 chars (built from valid-length labels)
+  const longHost = `${`${"a".repeat(50)}.`.repeat(5)}com`; // 5 * 51 + 3 = 258 chars
+  expect(longHost.length).toBeGreaterThan(253);
+  expect(() => httpUrl.parse(`http://${longHost}`)).toThrow();
+  // TLD over the 63-char label limit
+  expect(() => httpUrl.parse(`http://example.${"a".repeat(64)}`)).toThrow();
+  // a host at the 253-char boundary is still accepted
+  const maxHost = `${`${"a".repeat(61)}.`.repeat(4)}aaa`; // 4 * 62 + 3 = 251 chars
+  expect(maxHost.length).toBeLessThanOrEqual(253);
+  httpUrl.parse(`http://${maxHost}`);
   // missing // after protocol
   expect(() => httpUrl.parse("http:example.com")).toThrow();
   expect(() => httpUrl.parse("https:example.com")).toThrow();
