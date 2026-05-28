@@ -878,13 +878,16 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         try {
           // @ts-ignore
           const url = new URL(input.data);
-          // Reject strings like "fe80::1" where the parser treats "fe80" as a
-          // scheme but the resulting URL has no real origin or hostname.
-          // Valid URLs with no origin (file:, blob:, data:, mailto:) are exempted.
+          // Reject bare IPv6 addresses like "fe80::1" where the URL parser
+          // treats the first hex group as a scheme and the rest as a path.
+          // A valid scheme always has a legitimate hostname or origin,
+          // or follows the `scheme:...` pattern (e.g. `mailto:`).
+          // When parsed as a scheme, an IPv6 hex prefix looks like "fe80:" —
+          // check for this pattern to reject without an allowlist.
           if (
             url.origin === "null" &&
             !url.hostname &&
-            !["file:", "blob:", "data:", "mailto:"].includes(url.protocol)
+            /^[0-9a-f]{1,4}:/i.test(url.protocol)
           ) {
             throw new Error("Invalid URL");
           }

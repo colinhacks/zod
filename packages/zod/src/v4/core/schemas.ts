@@ -503,6 +503,26 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
       // @ts-ignore
       const url = new URL(trimmed);
 
+      // Reject bare IPv6 addresses like "fe80::1" where the URL parser
+      // treats the first hex group as a scheme and the rest as a path.
+      // When parsed as a scheme, an IPv6 hex prefix looks like "fe80:" —
+      // check for this pattern to reject without an allowlist.
+      if (
+        url.origin === "null" &&
+        !url.hostname &&
+        /^[0-9a-f]{1,4}:/i.test(url.protocol)
+      ) {
+        payload.issues.push({
+          code: "invalid_format",
+          format: "url",
+          note: "Invalid URL",
+          input: payload.value,
+          inst,
+          continue: !def.abort,
+        });
+        return;
+      }
+
       if (def.hostname) {
         def.hostname.lastIndex = 0;
         if (!def.hostname.test(url.hostname)) {
