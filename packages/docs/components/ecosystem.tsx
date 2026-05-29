@@ -283,6 +283,12 @@ const poweredByZodProjects: ZodResource[] = [
     description: "A fast, type-safe JSON migration tool with Zod schema validation.",
     slug: "Nano-Collective/json-up",
   },
+  {
+    name: "@chrock-studio/override",
+    url: "https://jsr.io/@chrock-studio/overload",
+    description: "Type-safe runtime function overloading that allows runtime dispatch based on argument types.",
+    slug: "chrock-studio/toolbox",
+  }
 ];
 
 const zodUtilities: ZodResource[] = [
@@ -328,6 +334,12 @@ const zodUtilities: ZodResource[] = [
     description: "Compile Zod schemas into zero-overhead validation functions at build time. 2-64x faster validation with no code changes.",
     slug: "wakita181009/zod-aot",
   },
+  {
+    name: "@chrock-studio/zod-utils",
+    url: "https://jsr.io/@chrock-studio/zod-utils",
+    description: "Zod utilities library providing enhanced functionality (e.g. Rich Domain Mode) for Zod schemas.",
+    slug: "chrock-studio/toolbox",
+  }
 ];
 
 export {
