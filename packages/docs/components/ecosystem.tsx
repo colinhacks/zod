@@ -284,10 +284,10 @@ const poweredByZodProjects: ZodResource[] = [
     slug: "Nano-Collective/json-up",
   },
   {
-    name: "@chrock-studio/override",
+    name: "@chrock-studio/overload",
     url: "https://jsr.io/@chrock-studio/overload",
     description: "A lightweight, type-safe runtime function overloading library that allows runtime dispatch based on argument types.",
-    slug: "chrock-studio/toolbox",
+    slug: "chrock-studio/toolbox/tree/main/packages/overload",
   }
 ];
 
@@ -338,7 +338,7 @@ const zodUtilities: ZodResource[] = [
     name: "@chrock-studio/zod-utils",
     url: "https://jsr.io/@chrock-studio/zod-utils",
     description: "A collection of Zod utilities focusing on enhanced functionality (e.g. classless Rich Domain Models while maintaining pure data structures).",
-    slug: "chrock-studio/toolbox",
+    slug: "chrock-studio/toolbox/tree/main/packages/zod-utils",
   }
 ];
 
