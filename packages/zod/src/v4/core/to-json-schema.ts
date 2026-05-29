@@ -260,7 +260,8 @@ export function extractDefs<T extends schemas.$ZodType>(
       // otherwise, add to __shared
       const id: string = entry[1].defId ?? (entry[1].schema.id as string) ?? `schema${ctx.counter++}`;
       entry[1].defId = id; // set defId so it will be reused if needed
-      return { defId: id, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id}` };
+      const encodedId = id.replace(/~/g, "~0").replace(/\//g, "~1");
+      return { defId: id, ref: `${uriGenerator("__shared")}#/${defsSegment}/${encodedId}` };
     }
 
     if (entry[1] === root) {
@@ -271,7 +272,11 @@ export function extractDefs<T extends schemas.$ZodType>(
     const uriPrefix = `#`;
     const defUriPrefix = `${uriPrefix}/${defsSegment}/`;
     const defId = entry[1].schema.id ?? `__schema${ctx.counter++}`;
-    return { defId, ref: defUriPrefix + defId };
+    // RFC 6901 §3: in a JSON Pointer reference token, '~' must be encoded as '~0'
+    // and '/' must be encoded as '~1'. The $defs key itself is a plain JSON object
+    // key and does NOT need escaping — only the $ref pointer path does.
+    const encodedDefId = defId.replace(/~/g, "~0").replace(/\//g, "~1");
+    return { defId, ref: defUriPrefix + encodedDefId };
   };
 
   // stored cached version in `def` property
