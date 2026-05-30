@@ -3221,6 +3221,9 @@ export const $ZodEnum: core.$constructor<$ZodEnum> = /*@__PURE__*/ core.$constru
   $ZodType.init(inst, def);
 
   const values = util.getEnumValues(def.entries);
+  if (values.length === 0) {
+    throw new Error("Cannot create enum schema with no valid values");
+  }
   const valuesSet = new Set<util.Primitive>(values);
   inst._zod.values = valuesSet;
 
