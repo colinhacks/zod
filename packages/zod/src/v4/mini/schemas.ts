@@ -559,7 +559,9 @@ export function number(params?: string | core.$ZodNumberParams): ZodMiniNumber<n
 }
 
 // ZodMiniNumberFormat
-export interface ZodMiniNumberFormat extends _ZodMiniNumber<core.$ZodNumberFormatInternals>, core.$ZodNumberFormat {}
+export interface ZodMiniNumberFormat<Format extends core.$ZodNumberFormats = core.$ZodNumberFormats>
+  extends _ZodMiniNumber<core.$ZodNumberFormatInternals<Format>>,
+    core.$ZodNumberFormat<Format> {}
 export const ZodMiniNumberFormat: core.$constructor<ZodMiniNumberFormat> = /*@__PURE__*/ core.$constructor(
   "ZodMiniNumberFormat",
   (inst, def) => {
@@ -571,36 +573,36 @@ export const ZodMiniNumberFormat: core.$constructor<ZodMiniNumberFormat> = /*@__
 // int
 
 // @__NO_SIDE_EFFECTS__
-export function int(params?: string | core.$ZodCheckNumberFormatParams): ZodMiniNumberFormat {
-  return core._int(ZodMiniNumberFormat, params);
+export function int(params?: string | core.$ZodCheckNumberFormatParams): ZodMiniNumberFormat<"safeint"> {
+  return core._int(ZodMiniNumberFormat, params) as ZodMiniNumberFormat<"safeint">;
 }
 
 // float32
 
 // @__NO_SIDE_EFFECTS__
-export function float32(params?: string | core.$ZodCheckNumberFormatParams): ZodMiniNumberFormat {
-  return core._float32(ZodMiniNumberFormat, params);
+export function float32(params?: string | core.$ZodCheckNumberFormatParams): ZodMiniNumberFormat<"float32"> {
+  return core._float32(ZodMiniNumberFormat, params) as ZodMiniNumberFormat<"float32">;
 }
 
 // float64
 
 // @__NO_SIDE_EFFECTS__
-export function float64(params?: string | core.$ZodCheckNumberFormatParams): ZodMiniNumberFormat {
-  return core._float64(ZodMiniNumberFormat, params);
+export function float64(params?: string | core.$ZodCheckNumberFormatParams): ZodMiniNumberFormat<"float64"> {
+  return core._float64(ZodMiniNumberFormat, params) as ZodMiniNumberFormat<"float64">;
 }
 
 // int32
 
 // @__NO_SIDE_EFFECTS__
-export function int32(params?: string | core.$ZodCheckNumberFormatParams): ZodMiniNumberFormat {
-  return core._int32(ZodMiniNumberFormat, params);
+export function int32(params?: string | core.$ZodCheckNumberFormatParams): ZodMiniNumberFormat<"int32"> {
+  return core._int32(ZodMiniNumberFormat, params) as ZodMiniNumberFormat<"int32">;
 }
 
 // uint32
 
 // @__NO_SIDE_EFFECTS__
-export function uint32(params?: string | core.$ZodCheckNumberFormatParams): ZodMiniNumberFormat {
-  return core._uint32(ZodMiniNumberFormat, params);
+export function uint32(params?: string | core.$ZodCheckNumberFormatParams): ZodMiniNumberFormat<"uint32"> {
+  return core._uint32(ZodMiniNumberFormat, params) as ZodMiniNumberFormat<"uint32">;
 }
 
 // ZodMiniBoolean

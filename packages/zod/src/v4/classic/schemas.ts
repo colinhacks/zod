@@ -1,5 +1,5 @@
 import * as core from "../core/index.js";
-import { util } from "../core/index.js";
+import { type $ZodNumberFormats, util } from "../core/index.js";
 import * as processors from "../core/json-schema-processors.js";
 import type { StandardSchemaWithJSONProps } from "../core/standard-schema.js";
 import { createStandardJSONSchemaMethod, createToJSONSchemaMethod } from "../core/to-json-schema.js";
@@ -1130,8 +1130,8 @@ export function number(params?: string | core.$ZodNumberParams): ZodNumber {
 }
 
 // ZodNumberFormat
-export interface ZodNumberFormat extends ZodNumber {
-  _zod: core.$ZodNumberFormatInternals;
+export interface ZodNumberFormat<Format extends $ZodNumberFormats = $ZodNumberFormats> extends ZodNumber {
+  _zod: core.$ZodNumberFormatInternals<Format>;
 }
 export const ZodNumberFormat: core.$constructor<ZodNumberFormat> = /*@__PURE__*/ core.$constructor(
   "ZodNumberFormat",
@@ -1142,33 +1142,33 @@ export const ZodNumberFormat: core.$constructor<ZodNumberFormat> = /*@__PURE__*/
 );
 
 // int
-export interface ZodInt extends ZodNumberFormat {}
+export interface ZodInt extends ZodNumberFormat<"safeint"> {}
 export function int(params?: string | core.$ZodCheckNumberFormatParams): ZodInt {
-  return core._int(ZodNumberFormat, params);
+  return core._int(ZodNumberFormat, params) as ZodInt;
 }
 
 // float32
-export interface ZodFloat32 extends ZodNumberFormat {}
+export interface ZodFloat32 extends ZodNumberFormat<"float32"> {}
 export function float32(params?: string | core.$ZodCheckNumberFormatParams): ZodFloat32 {
-  return core._float32(ZodNumberFormat, params);
+  return core._float32(ZodNumberFormat, params) as ZodFloat32;
 }
 
 // float64
-export interface ZodFloat64 extends ZodNumberFormat {}
+export interface ZodFloat64 extends ZodNumberFormat<"float64"> {}
 export function float64(params?: string | core.$ZodCheckNumberFormatParams): ZodFloat64 {
-  return core._float64(ZodNumberFormat, params);
+  return core._float64(ZodNumberFormat, params) as ZodFloat64;
 }
 
 // int32
-export interface ZodInt32 extends ZodNumberFormat {}
+export interface ZodInt32 extends ZodNumberFormat<"int32"> {}
 export function int32(params?: string | core.$ZodCheckNumberFormatParams): ZodInt32 {
-  return core._int32(ZodNumberFormat, params);
+  return core._int32(ZodNumberFormat, params) as ZodInt32;
 }
 
 // uint32
-export interface ZodUInt32 extends ZodNumberFormat {}
+export interface ZodUInt32 extends ZodNumberFormat<"uint32"> {}
 export function uint32(params?: string | core.$ZodCheckNumberFormatParams): ZodUInt32 {
-  return core._uint32(ZodNumberFormat, params);
+  return core._uint32(ZodNumberFormat, params) as ZodUInt32;
 }
 
 // boolean

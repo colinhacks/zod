@@ -1,5 +1,6 @@
 import type { $ZodTypeDiscriminable } from "./api.js";
 import * as checks from "./checks.js";
+import type { $ZodNumberFormats } from "./checks.js";
 import * as core from "./core.js";
 import { Doc } from "./doc.js";
 import type * as errors from "./errors.js";
@@ -1155,15 +1156,19 @@ export const $ZodNumber: core.$constructor<$ZodNumber> = /*@__PURE__*/ core.$con
 ///////////////////////////////////////////////
 //////////      ZodNumberFormat      //////////
 ///////////////////////////////////////////////
-export interface $ZodNumberFormatDef extends $ZodNumberDef, checks.$ZodCheckNumberFormatDef {}
+export interface $ZodNumberFormatDef<Format extends $ZodNumberFormats = $ZodNumberFormats>
+  extends $ZodNumberDef,
+    checks.$ZodCheckNumberFormatDef<Format> {}
 
-export interface $ZodNumberFormatInternals extends $ZodNumberInternals<number>, checks.$ZodCheckNumberFormatInternals {
-  def: $ZodNumberFormatDef;
+export interface $ZodNumberFormatInternals<Format extends $ZodNumberFormats = $ZodNumberFormats>
+  extends $ZodNumberInternals<number>,
+    checks.$ZodCheckNumberFormatInternals<Format> {
+  def: $ZodNumberFormatDef<Format>;
   isst: errors.$ZodIssueInvalidType;
 }
 
-export interface $ZodNumberFormat extends $ZodType {
-  _zod: $ZodNumberFormatInternals;
+export interface $ZodNumberFormat<Format extends $ZodNumberFormats = $ZodNumberFormats> extends $ZodType {
+  _zod: $ZodNumberFormatInternals<Format>;
 }
 
 export const $ZodNumberFormat: core.$constructor<$ZodNumberFormat> = /*@__PURE__*/ core.$constructor(

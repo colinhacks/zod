@@ -243,22 +243,23 @@ export const $ZodCheckMultipleOf: core.$constructor<$ZodCheckMultipleOf<number |
 
 export type $ZodNumberFormats = "int32" | "uint32" | "float32" | "float64" | "safeint";
 
-export interface $ZodCheckNumberFormatDef extends $ZodCheckDef {
+export interface $ZodCheckNumberFormatDef<Format extends $ZodNumberFormats = $ZodNumberFormats> extends $ZodCheckDef {
   check: "number_format";
-  format: $ZodNumberFormats;
+  format: Format;
   // abort?: boolean;
 }
 
-export interface $ZodCheckNumberFormatInternals extends $ZodCheckInternals<number> {
-  def: $ZodCheckNumberFormatDef;
+export interface $ZodCheckNumberFormatInternals<Format extends $ZodNumberFormats = $ZodNumberFormats>
+  extends $ZodCheckInternals<number> {
+  def: $ZodCheckNumberFormatDef<Format>;
   issc: errors.$ZodIssueInvalidType | errors.$ZodIssueTooBig<"number"> | errors.$ZodIssueTooSmall<"number">;
   // bag: util.LoosePartial<{
   //   minimum?: number | undefined;
   // }>;
 }
 
-export interface $ZodCheckNumberFormat extends $ZodCheck<number> {
-  _zod: $ZodCheckNumberFormatInternals;
+export interface $ZodCheckNumberFormat<Format extends $ZodNumberFormats = $ZodNumberFormats> extends $ZodCheck<number> {
+  _zod: $ZodCheckNumberFormatInternals<Format>;
 }
 
 export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /*@__PURE__*/ core.$constructor(
