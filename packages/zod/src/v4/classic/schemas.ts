@@ -1,5 +1,5 @@
 import * as core from "../core/index.js";
-import { type $ZodNumberFormats, util } from "../core/index.js";
+import { util, type $ZodNumberFormats } from "../core/index.js";
 import * as processors from "../core/json-schema-processors.js";
 import type { StandardSchemaWithJSONProps } from "../core/standard-schema.js";
 import { createStandardJSONSchemaMethod, createToJSONSchemaMethod } from "../core/to-json-schema.js";
