@@ -1,4 +1,5 @@
 import * as core from "../core/index.js";
+import type { $ZodBigIntFormats } from "../core/index.js";
 import * as util from "../core/util.js";
 import * as parse from "./parse.js";
 
@@ -642,8 +643,9 @@ export function bigint(params?: string | core.$ZodBigIntParams): ZodMiniBigInt<b
 // bigint formats
 
 // ZodMiniBigIntFormat
-export interface ZodMiniBigIntFormat extends _ZodMiniType<core.$ZodBigIntFormatInternals> {
-  // _zod: core.$ZodBigIntFormatInternals;
+export interface ZodMiniBigIntFormat<Format extends $ZodBigIntFormats = $ZodBigIntFormats>
+  extends _ZodMiniType<core.$ZodBigIntFormatInternals<Format>> {
+  // _zod: core.$ZodBigIntFormatInternals<Format>;
 }
 export const ZodMiniBigIntFormat: core.$constructor<ZodMiniBigIntFormat> = /*@__PURE__*/ core.$constructor(
   "ZodMiniBigIntFormat",
@@ -656,15 +658,15 @@ export const ZodMiniBigIntFormat: core.$constructor<ZodMiniBigIntFormat> = /*@__
 // int64
 
 // @__NO_SIDE_EFFECTS__
-export function int64(params?: string | core.$ZodBigIntFormatParams): ZodMiniBigIntFormat {
-  return core._int64(ZodMiniBigIntFormat, params);
+export function int64(params?: string | core.$ZodBigIntFormatParams): ZodMiniBigIntFormat<"int64"> {
+  return core._int64(ZodMiniBigIntFormat, params) as ZodMiniBigIntFormat<"int64">;
 }
 
 // uint64
 
 // @__NO_SIDE_EFFECTS__
-export function uint64(params?: string | core.$ZodBigIntFormatParams): ZodMiniBigIntFormat {
-  return core._uint64(ZodMiniBigIntFormat, params);
+export function uint64(params?: string | core.$ZodBigIntFormatParams): ZodMiniBigIntFormat<"uint64"> {
+  return core._uint64(ZodMiniBigIntFormat, params) as ZodMiniBigIntFormat<"uint64">;
 }
 
 // ZodMiniSymbol

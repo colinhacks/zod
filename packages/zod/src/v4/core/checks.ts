@@ -378,18 +378,19 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
 
 export type $ZodBigIntFormats = "int64" | "uint64";
 
-export interface $ZodCheckBigIntFormatDef extends $ZodCheckDef {
+export interface $ZodCheckBigIntFormatDef<Format extends $ZodBigIntFormats = $ZodBigIntFormats> extends $ZodCheckDef {
   check: "bigint_format";
-  format: $ZodBigIntFormats | undefined;
+  format: Format;
 }
 
-export interface $ZodCheckBigIntFormatInternals extends $ZodCheckInternals<bigint> {
-  def: $ZodCheckBigIntFormatDef;
+export interface $ZodCheckBigIntFormatInternals<Format extends $ZodBigIntFormats = $ZodBigIntFormats>
+  extends $ZodCheckInternals<bigint> {
+  def: $ZodCheckBigIntFormatDef<Format>;
   issc: errors.$ZodIssueTooBig<"bigint"> | errors.$ZodIssueTooSmall<"bigint">;
 }
 
-export interface $ZodCheckBigIntFormat extends $ZodCheck<bigint> {
-  _zod: $ZodCheckBigIntFormatInternals;
+export interface $ZodCheckBigIntFormat<Format extends $ZodBigIntFormats = $ZodBigIntFormats> extends $ZodCheck<bigint> {
+  _zod: $ZodCheckBigIntFormatInternals<Format>;
 }
 
 export const $ZodCheckBigIntFormat: core.$constructor<$ZodCheckBigIntFormat> = /*@__PURE__*/ core.$constructor(

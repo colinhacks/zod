@@ -1,6 +1,7 @@
 import type { $ZodTypeDiscriminable } from "./api.js";
 import * as checks from "./checks.js";
 import type { $ZodNumberFormats } from "./checks.js";
+import type { $ZodBigIntFormats } from "./checks.js";
 import * as core from "./core.js";
 import { Doc } from "./doc.js";
 import type * as errors from "./errors.js";
@@ -1283,16 +1284,20 @@ export const $ZodBigInt: core.$constructor<$ZodBigInt> = /*@__PURE__*/ core.$con
 ///////////////////////////////////////////////
 //////////      ZodBigIntFormat      //////////
 ///////////////////////////////////////////////
-export interface $ZodBigIntFormatDef extends $ZodBigIntDef, checks.$ZodCheckBigIntFormatDef {
+export interface $ZodBigIntFormatDef<Format extends $ZodBigIntFormats = $ZodBigIntFormats>
+  extends $ZodBigIntDef,
+    checks.$ZodCheckBigIntFormatDef<Format> {
   check: "bigint_format";
 }
 
-export interface $ZodBigIntFormatInternals extends $ZodBigIntInternals<bigint>, checks.$ZodCheckBigIntFormatInternals {
-  def: $ZodBigIntFormatDef;
+export interface $ZodBigIntFormatInternals<Format extends $ZodBigIntFormats = $ZodBigIntFormats>
+  extends $ZodBigIntInternals<bigint>,
+    checks.$ZodCheckBigIntFormatInternals<Format> {
+  def: $ZodBigIntFormatDef<Format>;
 }
 
-export interface $ZodBigIntFormat extends $ZodType {
-  _zod: $ZodBigIntFormatInternals;
+export interface $ZodBigIntFormat<Format extends $ZodBigIntFormats = $ZodBigIntFormats> extends $ZodType {
+  _zod: $ZodBigIntFormatInternals<Format>;
 }
 
 export const $ZodBigIntFormat: core.$constructor<$ZodBigIntFormat> = /*@__PURE__*/ core.$constructor(

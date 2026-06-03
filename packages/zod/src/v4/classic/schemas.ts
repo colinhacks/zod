@@ -1,3 +1,4 @@
+import type { $ZodBigIntFormats } from "../core/checks.js";
 import * as core from "../core/index.js";
 import { util, type $ZodNumberFormats } from "../core/index.js";
 import * as processors from "../core/json-schema-processors.js";
@@ -1237,8 +1238,8 @@ export function bigint(params?: string | core.$ZodBigIntParams): ZodBigInt {
 // bigint formats
 
 // ZodBigIntFormat
-export interface ZodBigIntFormat extends ZodBigInt {
-  _zod: core.$ZodBigIntFormatInternals;
+export interface ZodBigIntFormat<Format extends $ZodBigIntFormats = $ZodBigIntFormats> extends ZodBigInt {
+  _zod: core.$ZodBigIntFormatInternals<Format>;
 }
 export const ZodBigIntFormat: core.$constructor<ZodBigIntFormat> = /*@__PURE__*/ core.$constructor(
   "ZodBigIntFormat",
@@ -1249,13 +1250,13 @@ export const ZodBigIntFormat: core.$constructor<ZodBigIntFormat> = /*@__PURE__*/
 );
 
 // int64
-export function int64(params?: string | core.$ZodBigIntFormatParams): ZodBigIntFormat {
-  return core._int64(ZodBigIntFormat, params);
+export function int64(params?: string | core.$ZodBigIntFormatParams): ZodBigIntFormat<"int64"> {
+  return core._int64(ZodBigIntFormat, params) as ZodBigIntFormat<"int64">;
 }
 
 // uint64
-export function uint64(params?: string | core.$ZodBigIntFormatParams): ZodBigIntFormat {
-  return core._uint64(ZodBigIntFormat, params);
+export function uint64(params?: string | core.$ZodBigIntFormatParams): ZodBigIntFormat<"uint64"> {
+  return core._uint64(ZodBigIntFormat, params) as ZodBigIntFormat<"uint64">;
 }
 
 // symbol
