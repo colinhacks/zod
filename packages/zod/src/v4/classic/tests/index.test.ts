@@ -736,6 +736,26 @@ test("z.refine", () => {
   expect(() => z.parse(a, "hi")).toThrow();
 });
 
+test("z.superRefine preserves explicit nullish issue input", () => {
+  const schema = z.string().check(
+    z.superRefine((_, ctx) => {
+      ctx.addIssue({ code: "custom", message: "default" });
+      ctx.addIssue({ code: "custom", message: "null", input: null });
+      ctx.addIssue({ code: "custom", message: "undefined", input: undefined });
+    })
+  );
+
+  const result = z.safeParse(schema, "sensitive", { reportInput: true });
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues).toHaveLength(3);
+    expect(result.error.issues[0].input).toEqual("sensitive");
+    expect(result.error.issues[1].input).toEqual(null);
+    expect(result.error.issues[2]).toHaveProperty("input");
+    expect(result.error.issues[2].input).toEqual(undefined);
+  }
+});
+
 // test("z.superRefine", () => {
 //   const a = z.number([
 //     z.superRefine((val, ctx) => {

@@ -338,6 +338,24 @@ describe("superRefine functionality", () => {
     }
   });
 
+  test("should preserve explicit nullish issue input", () => {
+    const schema = z.string().superRefine((_, ctx) => {
+      ctx.addIssue({ code: "custom", message: "default" });
+      ctx.addIssue({ code: "custom", message: "null", input: null });
+      ctx.addIssue({ code: "custom", message: "undefined", input: undefined });
+    });
+
+    const result = schema.safeParse("sensitive", { reportInput: true });
+    expect(result.success).toEqual(false);
+    if (!result.success) {
+      expect(result.error.issues).toHaveLength(3);
+      expect(result.error.issues[0].input).toEqual("sensitive");
+      expect(result.error.issues[1].input).toEqual(null);
+      expect(result.error.issues[2]).toHaveProperty("input");
+      expect(result.error.issues[2].input).toEqual(undefined);
+    }
+  });
+
   test("should respect fatal flag in superRefine", () => {
     const schema = z
       .string()

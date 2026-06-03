@@ -1669,7 +1669,7 @@ export function _superRefine<T>(
         const _issue: any = issue;
         if (_issue.fatal) _issue.continue = false;
         _issue.code ??= "custom";
-        _issue.input ??= payload.value;
+        if (!("input" in _issue)) _issue.input = payload.value;
         _issue.inst ??= ch;
         _issue.continue ??= !ch._zod.def.abort; // abort is always undefined, so this is always true...
         payload.issues.push(util.issue(_issue));
