@@ -157,6 +157,63 @@ type MySchemaOut = z.output<typeof mySchema>; // equivalent to z.infer<typeof my
 // number
 ```
 
+## Writing generic functions
+
+You can write reusable functions that accept Zod schemas as parameters while preserving full type inference.
+
+When attempting to write a function that accepts a Zod schema, it's tempting to do this:
+
+```ts
+function inferSchema<T>(schema: z.ZodType<T>) {
+  return schema;
+}
+
+inferSchema(z.string());
+// => ZodType<string>
+```
+
+This loses schema subclass information. No matter what you pass in, `schema` is typed as `ZodType` — you can't call string-specific methods like `.min()` on the result.
+
+The correct approach extends the `ZodType` type itself, letting TypeScript infer the specific subclass:
+
+```ts
+function inferSchema<T extends z.ZodType>(schema: T) {
+  return schema;
+}
+
+inferSchema(z.string());
+// => ZodString ✅
+```
+
+### Extracting the inferred type
+
+When you parse data inside a generic function, use `z.infer<T>` or `z.output<T>` to recover the output type:
+
+```ts
+function parseData<T extends z.ZodType>(data: unknown, schema: T): z.output<T> {
+  return schema.parse(data);
+}
+
+parseData("hello", z.string());
+// => string
+```
+
+You can constrain the allowable output type by narrowing the generic parameter:
+
+```ts
+function makeSchemaOptional<T extends z.ZodType<string>>(schema: T) {
+  return schema.optional();
+}
+
+makeSchemaOptional(z.string());
+// works fine
+
+makeSchemaOptional(z.number());
+// ❌ Type 'number' is not assignable to type 'string'
+```
+
+For a deeper treatment — including patterns for library authors, Zod Mini support, and Zod 3/4 dual-support — see [For library authors](/library-authors#how-to-accept-user-defined-schemas).
+
 ---
 
 Now that we have the basics covered, let's jump into the Schema API.
