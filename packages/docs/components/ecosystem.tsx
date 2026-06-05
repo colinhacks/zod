@@ -157,11 +157,10 @@ const zodToXConverters: ZodResource[] = [
     description: "Use Zod to validate arguments and return values of Convex functions, and to create Convex database schemas",
     slug: "get-convex/convex-helpers",
   },
-  ,
   {
     name: "@nullix/zod-mongoose",
     url: "https://zodmongoose.com/",
-    description: "Convert zod schema's into typesafe mongoose schemas with full transparent mongoose options and helpers",
+    description: "Convert zod schemas into typesafe mongoose schemas with full transparent mongoose options and helpers",
     slug: "Harm-Nullix/zod-mongoose",
   },
 ];
