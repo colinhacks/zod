@@ -448,3 +448,48 @@ test("required - refinement is executed on required schema", () => {
   const validResult = requiredSchema.safeParse({ password: "abc", confirmPassword: "abc" });
   expect(validResult.success).toBe(true);
 });
+
+test("exactPartial - shallow inference", () => {
+  const shallow = nested.exactPartial();
+  type shallow = z.infer<typeof shallow>;
+  expectTypeOf<shallow>().toEqualTypeOf<{
+    name?: string;
+    age?: number;
+    outer?: { inner: string };
+    array?: { asdf: string }[];
+  }>();
+});
+
+test("exactPartial - wraps fields in ZodExactOptional", () => {
+  const object = z.object({ name: z.string(), age: z.number() });
+  const exact = object.exactPartial();
+  expect(exact.shape.name).toBeInstanceOf(z.ZodExactOptional);
+  expect(exact.shape.age).toBeInstanceOf(z.ZodExactOptional);
+  expect(exact.shape.name.unwrap()).toBeInstanceOf(z.ZodString);
+});
+
+test("exactPartial - absent keys pass, explicit undefined rejected", () => {
+  const exact = z.object({ name: z.string(), age: z.number() }).exactPartial();
+  expect(exact.parse({})).toEqual({});
+  expect(exact.parse({ name: "asdf" })).toEqual({ name: "asdf" });
+  expect(exact.safeParse({ name: undefined }).success).toBe(false);
+});
+
+test("exactPartial with mask", () => {
+  const object = z.object({ name: z.string(), age: z.number(), country: z.string() });
+  const masked = object.exactPartial({ name: true, age: true });
+  expect(masked.shape.name).toBeInstanceOf(z.ZodExactOptional);
+  expect(masked.shape.age).toBeInstanceOf(z.ZodExactOptional);
+  expect(masked.shape.country).toBeInstanceOf(z.ZodString);
+
+  type masked = z.infer<typeof masked>;
+  expectTypeOf<masked>().toEqualTypeOf<{ name?: string; age?: number; country: string }>();
+
+  expect(masked.parse({ country: "US" })).toEqual({ country: "US" });
+  expect(masked.safeParse({ country: "US", name: undefined }).success).toBe(false);
+});
+
+test("exactPartial - throws on schema with refinements", () => {
+  const refined = z.object({ name: z.string() }).refine(() => true);
+  expect(() => refined.exactPartial()).toThrow(".partial() cannot be used on object schemas containing refinements");
+});
