@@ -3,14 +3,12 @@
 import * as core from "../core/index.js";
 import type { ZodType } from "./schemas.js";
 
-export type {
-  /** @deprecated Use `z.output<T>` instead. */
-  output as TypeOf,
-  /** @deprecated Use `z.output<T>` instead. */
-  output as Infer,
-  /** @deprecated Use `z.core.$$ZodFirstPartyTypes` instead */
-  $ZodTypes as ZodFirstPartySchemaTypes,
-} from "../core/index.js";
+/** @deprecated Use `z.output<T>` instead. */
+export type TypeOf<T> = core.output<T>;
+/** @deprecated Use `z.output<T>` instead. */
+export type Infer<T> = core.output<T>;
+/** @deprecated Use `z.core.$$ZodFirstPartyTypes` instead */
+export type ZodFirstPartySchemaTypes = core.$ZodTypes;
 
 /** @deprecated Use the raw string literal codes instead, e.g. "invalid_type". */
 export const ZodIssueCode = {
@@ -54,14 +52,12 @@ export function getErrorMap(): core.$ZodErrorMap<core.$ZodIssue> | undefined {
   return core.config().customError;
 }
 
-export type {
-  /** @deprecated Use z.ZodType (without generics) instead. */
-  ZodType as ZodTypeAny,
-  /** @deprecated Use `z.ZodType` */
-  ZodType as ZodSchema,
-  /** @deprecated Use `z.ZodType` */
-  ZodType as Schema,
-};
+/** @deprecated Use z.ZodType (without generics) instead. */
+export type ZodTypeAny = ZodType;
+/** @deprecated Use `z.ZodType` */
+export type ZodSchema = ZodType;
+/** @deprecated Use `z.ZodType` */
+export type Schema = ZodType;
 
 /** Included for Zod 3 compatibility */
 export type ZodRawShape = core.$ZodShape;
