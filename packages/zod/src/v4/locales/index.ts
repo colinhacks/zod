@@ -38,6 +38,7 @@ export { default as pt } from "./pt.js";
 export { default as ro } from "./ro.js";
 export { default as ru } from "./ru.js";
 export { default as sl } from "./sl.js";
+export { default as sk } from "./sk.js";
 export { default as sv } from "./sv.js";
 export { default as ta } from "./ta.js";
 export { default as th } from "./th.js";
