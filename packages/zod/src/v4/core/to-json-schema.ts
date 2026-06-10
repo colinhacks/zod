@@ -263,13 +263,18 @@ export function extractDefs<T extends schemas.$ZodType>(
       return { defId: id, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id}` };
     }
 
+    const uriPrefix = `#`;
+    const defUriPrefix = `${uriPrefix}/${defsSegment}/`;
+
     if (entry[1] === root) {
-      return { ref: "#" };
+      const rootDefId = entry[1].schema.id;
+      if (rootDefId) {
+        return { defId: rootDefId, ref: defUriPrefix + rootDefId };
+      }
+      return { ref: uriPrefix };
     }
 
     // self-contained schema
-    const uriPrefix = `#`;
-    const defUriPrefix = `${uriPrefix}/${defsSegment}/`;
     const defId = entry[1].schema.id ?? `__schema${ctx.counter++}`;
     return { defId, ref: defUriPrefix + defId };
   };
@@ -469,7 +474,8 @@ export function finalize<T extends schemas.$ZodType>(
     result.$id = ctx.external.uri(id);
   }
 
-  Object.assign(result, root.def ?? root.schema);
+  const rootSchema = root.defId ? root.schema : (root.def ?? root.schema);
+  Object.assign(result, rootSchema);
 
   // The `id` in `.meta()` is a Zod-specific registration tag used to extract
   // schemas into $defs — it is not user-facing JSON Schema metadata. Strip it
