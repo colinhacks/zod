@@ -40,8 +40,8 @@ const error: () => errors.$ZodErrorMap = () => {
     ipv4: "o endereço IPv4",
     ipv6: "o endereço IPv6",
     mac: "o endereço MAC",
-    cidrv4: "o intervalo de endereços IPv4",
-    cidrv6: "o intervalo de endereços IPv6",
+    cidrv4: "a faixa de endereços IPv4",
+    cidrv6: "a faixa de endereços IPv6",
     base64: "o texto codificado em base64",
     base64url: "o texto codificado em base64url",
     json_string: "o texto JSON",
@@ -73,11 +73,11 @@ const error: () => errors.$ZodErrorMap = () => {
     date: { name: "data", articles: Gender.feminine },
     array: { name: "vetor", articles: Gender.masculine },
     object: { name: "objeto", articles: Gender.masculine },
-    tuple: { name: "tuplo", articles: Gender.masculine },
-    record: { name: "registo", articles: Gender.masculine },
+    tuple: { name: "tuple", articles: Gender.feminine },
+    record: { name: "registro", articles: Gender.masculine },
     map: { name: "mapa", articles: Gender.masculine },
     set: { name: "conjunto", articles: Gender.masculine },
-    file: { name: "ficheiro", articles: Gender.masculine },
+    file: { name: "arquivo", articles: Gender.masculine },
     nonoptional: { name: "valor não opcional", articles: Gender.masculine },
     nan: { name: 'valor "NaN"', articles: Gender.masculine }, // Compatibility: "nan" -> "NaN" for display
     function: { name: "função", articles: Gender.feminine },
@@ -107,22 +107,24 @@ const error: () => errors.$ZodErrorMap = () => {
         const adj = issue.inclusive ? "<=" : "<";
         const sizing = getSizing(issue.origin);
         if (sizing)
-          return `Demasiado grande: esperava que ${translateOriginWithArticle(issue.origin, "definite")} tivesse ${adj} ${issue.maximum.toString()} ${sizing.unit ?? "elementos"}`;
-        return `Demasiado grande: esperava que ${translateOriginWithArticle(issue.origin, "definite")} fosse ${adj} ${issue.maximum.toString()}`;
+          return `Grande demais: esperava que ${translateOriginWithArticle(issue.origin, "definite")} tivesse ${adj} ${issue.maximum.toString()} ${sizing.unit ?? "elementos"}`;
+        return `Grande demais: esperava que ${translateOriginWithArticle(issue.origin, "definite")} fosse ${adj} ${issue.maximum.toString()}`;
       }
       case "too_small": {
         const adj = issue.inclusive ? ">=" : ">";
         const sizing = getSizing(issue.origin);
         if (sizing) {
-          return `Demasiado pequeno: esperava que ${translateOriginWithArticle(issue.origin, "definite")} tivesse ${adj} ${issue.minimum.toString()} ${sizing.unit ?? "elementos"}`;
+          return `Pequeno demais: esperava que ${translateOriginWithArticle(issue.origin, "definite")} tivesse ${adj} ${issue.minimum.toString()} ${sizing.unit ?? "elementos"}`;
         }
 
-        return `Demasiado pequeno: esperava que ${translateOriginWithArticle(issue.origin, "definite")} fosse ${adj} ${issue.minimum.toString()}`;
+        return `Pequeno demais: esperava que ${translateOriginWithArticle(issue.origin, "definite")} fosse ${adj} ${issue.minimum.toString()}`;
       }
       case "invalid_format": {
         const _issue = issue as errors.$ZodStringFormatIssues;
-        if (_issue.format === "starts_with") return `Texto inválido: deve começar por "${_issue.prefix}"`;
-        if (_issue.format === "ends_with") return `Texto inválido: deve terminar em "${_issue.suffix}"`;
+        if (_issue.format === "starts_with") {
+          return `Texto inválido: deve começar com "${_issue.prefix}"`;
+        }
+        if (_issue.format === "ends_with") return `Texto inválido: deve terminar com "${_issue.suffix}"`;
         if (_issue.format === "includes") return `Texto inválido: deve incluir "${_issue.includes}"`;
         if (_issue.format === "regex") return `Texto inválido: deve corresponder ao padrão ${_issue.pattern}`;
         return `Formato d${FormatDictionary[_issue.format] ?? issue.format} inválido`;
