@@ -2628,7 +2628,49 @@ test("defaults/prefaults", () => {
   expect(z.toJSONSchema(c, { io: "input" })).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "default": 1234,
       "type": "string",
+    }
+  `);
+});
+
+test("default is preserved through identity transform in input mode", () => {
+  // z.string().transform(s => s) is a pass-through — the input type is still string
+  // and the default "hello" is a valid string, so it should appear in io:"input"
+  const withTransform = z
+    .string()
+    .transform((s) => s)
+    .default("hello");
+  expect(z.toJSONSchema(withTransform, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "default": "hello",
+      "type": "string",
+    }
+  `);
+
+  // nested: union containing an object with a transform inside a default
+  const nested = z.union([z.boolean(), z.object({ a: z.string().transform((x) => x) })]).default(false);
+  expect(z.toJSONSchema(nested, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "anyOf": [
+        {
+          "type": "boolean",
+        },
+        {
+          "properties": {
+            "a": {
+              "type": "string",
+            },
+          },
+          "required": [
+            "a",
+          ],
+          "type": "object",
+        },
+      ],
+      "default": false,
     }
   `);
 });
