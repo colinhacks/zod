@@ -432,3 +432,16 @@ test("xor", () => {
     data: z.union([z.object({ name: z.string(), a: z.number() }), z.object({ name: z.string(), b: z.number() })]),
   });
 });
+
+// https://github.com/colinhacks/zod/issues/2654
+test("union property inference inside object (issue 2654)", () => {
+  const EventNameSchema = z.string().or(z.array(z.string()));
+  type EventName = z.infer<typeof EventNameSchema>;
+  util.assertEqual<EventName, string | string[]>(true);
+
+  const EventSchema = z.object({
+    name: z.string().or(z.array(z.string())),
+  });
+  type EventNameFromObject = z.infer<typeof EventSchema>["name"];
+  util.assertEqual<EventNameFromObject, string | string[]>(true);
+});
