@@ -3129,3 +3129,32 @@ test("recursive lazy with describe does not stack overflow", () => {
   expect(result).toBeDefined();
   expect(result.$defs).toBeDefined();
 });
+
+// RFC 6901: $ref pointer tokens must escape '~' → '~0' and '/' → '~1'
+// but the $defs key itself is a plain JSON object key and stays unescaped.
+// See https://github.com/colinhacks/zod/issues/6027
+test("toJSONSchema encodes '/' in meta id as '~1' in $ref pointer (RFC 6901)", () => {
+  const User = z.object({ name: z.string() }).meta({ id: "Shared/User" });
+  const result = z.toJSONSchema(z.object({ User }));
+
+  // $defs key uses the raw id (plain object key — no escaping needed)
+  expect(result.$defs).toHaveProperty("Shared/User");
+  // $ref pointer encodes '/' as '~1'
+  expect((result as any).properties.User.$ref).toBe("#/$defs/Shared~1User");
+});
+
+test("toJSONSchema encodes '~' in meta id as '~0' in $ref pointer (RFC 6901)", () => {
+  const Model = z.object({ value: z.number() }).meta({ id: "My~Model" });
+  const result = z.toJSONSchema(z.object({ Model }));
+
+  expect(result.$defs).toHaveProperty("My~Model");
+  expect((result as any).properties.Model.$ref).toBe("#/$defs/My~0Model");
+});
+
+test("toJSONSchema encodes both '~' and '/' in meta id in $ref pointer (RFC 6901)", () => {
+  const Schema = z.object({ x: z.string() }).meta({ id: "Shared/User~" });
+  const result = z.toJSONSchema(z.object({ Schema }));
+
+  expect(result.$defs).toHaveProperty("Shared/User~");
+  expect((result as any).properties.Schema.$ref).toBe("#/$defs/Shared~1User~0");
+});
