@@ -744,7 +744,12 @@ function generateCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor
       break;
     }
     case "success":
-      typeAccessor = generateWrapperCheck(doc, ctx, schema, accessor);
+      // Runtime output is `issues.length === 0`. The fast path only reaches
+      // here when the inner check passed (failure returns INVALID and the
+      // runtime fallback reproduces the inner issues), so the output is
+      // always `true`.
+      generateWrapperCheck(doc, ctx, schema, accessor);
+      typeAccessor = "true";
       break;
     case "default":
     case "prefault":

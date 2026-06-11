@@ -223,8 +223,11 @@ test("nonoptional", () => {
 
 test("success", () => {
   const aot = compile(z.success(z.string()));
-  expect(valid(aot, "hello")).toBe("hello");
+  expect(valid(aot, "hello")).toBe(true);
   invalid(aot, 123);
+  expectMatch(z.success(z.string()), "hello");
+  expectMatch(z.success(z.string()), 123);
+  expectMatch(z.object({ ok: z.success(z.number()) }), { ok: 5 });
 });
 
 // === Optional & Nullable ===
