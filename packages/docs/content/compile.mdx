@@ -1,0 +1,86 @@
+---
+title: AOT compilation
+description: "Ahead-of-time schema compilation for hot validation paths"
+---
+
+For hot validation paths, Zod can compile a schema into a specialized validator ahead of time. The compiled fast path typically parses several times faster than the standard parser, with identical results and identical errors.
+
+There are two ways to opt in.
+
+## `z.compile()`
+
+Compiles a single schema eagerly and returns a clone with the fast path installed.
+
+```ts
+import * as z from "zod";
+
+const Player = z.object({
+  username: z.string(),
+  xp: z.number(),
+});
+
+const CompiledPlayer = z.compile(Player);
+
+CompiledPlayer.parse({ username: "billie", xp: 100 });
+CompiledPlayer.safeParse({ username: "billie", xp: 100 });
+```
+
+The clone is a regular Zod schema — `.parse()`, `.safeParse()`, type inference, Standard Schema integration, and composition all work as usual. The original schema is unchanged.
+
+One thing to keep in mind: methods that derive a *new* schema (`.refine()`, `.extend()`, `.optional()`, `.meta()`, …) return uncompiled schemas. Compile the final schema, not an intermediate:
+
+```ts
+// ❌ the .refine() result is not compiled
+const schema = z.compile(z.string()).refine((val) => val.length > 1);
+
+// ✅ compile last
+const schema2 = z.compile(z.string().refine((val) => val.length > 1));
+```
+
+## `import "zod/compile"`
+
+Enables compilation globally. Every schema constructed *after* this import is compiled automatically on its first parse.
+
+```ts
+import "zod/compile"; // must come before modules that define schemas
+import * as z from "zod";
+
+const schema = z.object({ name: z.string() });
+schema.parse({ name: "ok" }); // compiled on first parse
+```
+
+Module evaluation order matters: schemas constructed before the import are not affected. Place the import at the top of your application entry point.
+
+Compilation is lazy (first parse), so intermediate schemas created during builder chains cost nothing extra.
+
+## Error parity
+
+The compiled fast path is a happy-path validator. When an input fails validation — or requires anything the fast path doesn't support — Zod transparently falls back to the standard parser, which produces the exact same `ZodError` as the uncompiled schema. There is no separate compiled error path to drift out of sync.
+
+Two consequences worth knowing:
+
+- Invalid inputs pay for both the fast path and the fallback. If your workload is dominated by invalid inputs, compilation won't help (it also won't change any behavior).
+- Refinements and transforms may run twice on invalid input — once in the fast path, once in the fallback. They run exactly once on valid input, and never more than twice.
+
+## Unsupported schemas
+
+Compilation is sync and forward-only. `z.compile()` throws if the schema can't be fully modeled:
+
+- **`ZodCompileAsyncError`** — the schema contains an async refinement, transform, or check.
+- **`ZodCompileUnsupportedError`** — the schema uses a construct the fast path can't reproduce exactly (e.g. `z.xor()`, checks with custom `when` conditions).
+
+Inside containers (objects, arrays, tuples, records, intersections), an unsupported *child* doesn't prevent compilation — the child runs on the standard parser while the surrounding structure stays compiled.
+
+Under global mode, schemas that fail to compile silently keep using the standard parser. There is no behavioral difference — only the speedup is lost. For this reason, avoid enabling global mode in a library on behalf of your users; leave the choice to the application.
+
+Encode operations (`z.encode()`, codec `"backward"` direction) and async parsing always use the standard parser.
+
+## Content Security Policy
+
+Compilation uses `new Function`, which is unavailable in CSP/no-`eval` environments. Global mode automatically stands down when `jitless` is set:
+
+```ts
+z.config({ jitless: true });
+```
+
+Calling `z.compile()` directly is treated as an explicit opt-in and throws `ZodCompileUnsupportedError` if code generation is unavailable.

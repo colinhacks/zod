@@ -1,19 +1,19 @@
 # z.compile
 
-WIP AOT compiler for v4 schemas. Lives on the `z.compile` branch. Supersedes the exploratory notes in `feat/compile.md` and `feat/compile-output.md`.
+AOT compiler for v4 schemas. Lives on the `z.compile` branch.
 
 ## Surface
 
 Two entry points, intentionally non-overlapping:
 
-- `z.compile(schema)` — returns a cloned schema whose `_zod.run` runs an AOT-compiled fast path, falling back to the original `_zod.run` on failure. Eager compile at call time. Original schema untouched. Clone is a normal `ZodType` — `.parse`, `.safeParse`, `.refine`, `.extend`, intersection, pipe, etc. all work as usual.
+- `z.compile(schema)` — returns a cloned schema whose `_zod.run` runs an AOT-compiled fast path, falling back to the original `_zod.run` on failure. Eager compile at call time. Original schema untouched. Clone is a normal `ZodType` — `.parse`, `.safeParse`, `.refine`, `.extend`, intersection, pipe, etc. all work as usual. Note that derivations (`.refine`, `.extend`, `.optional`, `.meta`, …) construct *new* schemas that do not inherit the fast path — compile the final schema, not an intermediate.
 - `import "zod/compile"` — installs a global post-processor that wraps every newly-constructed schema with a one-shot lazy compile shim. Backed by a subpath export whose backing module is marked `sideEffects: true` in `package.json`.
 
 There is no `z.compile()` no-arg form. Different shapes for different jobs: explicit per-schema compile vs. project-wide opt-in.
 
 ### Tree-shaking note
 
-`z.compile` is exported from the main `zod` namespace for discoverability. That means namespace imports like `import * as z from "zod"` keep `core/compile.ts` reachable in current esbuild checks. The side-effect module `zod/compile` itself is only retained when imported, but the compiler core is not fully tree-shakeable while `z.compile` is part of the main namespace. Making the compiler fully tree-shakeable for namespace users would require moving the per-schema API off the main namespace (for example, a named export from `zod/compile`) or accepting a less discoverable API.
+`z.compile` is exported from the main `zod` namespace. Measured against the built dist (esbuild and Rollup, minified): both bundlers fully drop `core/compile.ts` (~25-28 KB minified) from a namespace import when `z.compile` is unused — the earlier concern that namespace imports retain the compiler did not survive measurement. The cost only materializes when the namespace object escapes static analysis (re-exporting the whole namespace, dynamic property access). The side-effect module `zod/compile` is retained only when imported, via the `sideEffects` allowlist in `package.json`. Decision: `z.compile` stays on the main namespace.
 
 ## Failure model
 
@@ -22,14 +22,15 @@ The compiled fast path is a happy-path validator. It returns the parsed/transfor
 Consequences:
 
 - 100% error parity with uncompiled Zod by construction. The fast path never produces errors; the runtime is the only source of `ZodError`s. We don't maintain a second error-path implementation, which is the main reason this design is preferable to arktype's dual `Allows` + `Apply` codegen.
-- User-supplied `.refine` / `.transform` / `.superRefine` callbacks run twice on invalid input — once in the fast path, once in the runtime fallback. This matches Zod's existing Standard Schema sync-then-async behavior, which has shipped without complaints. Acceptable.
-- Success-path *value* parity is the compiler's responsibility, verified via differential tests against the runtime. It is not free; it has to be earned per schema type and per check.
+- User-supplied `.refine` / `.transform` / `.superRefine` callbacks run **at most twice** on invalid input — once in the fast path, once in the runtime fallback. This matches Zod's existing Standard Schema sync-then-async behavior. The bound is enforced, including under global mode where every nested schema carries its own compiled wrapper: when a wrapper falls back it flags the parse ctx, and downstream compiled wrappers skip their fast paths for the rest of that parse.
+- Success-path *value* parity is the compiler's responsibility, verified via differential tests against the runtime (key order, `undefined`-valued vs absent keys, array holes, frozenness, and NaN/-0 included — plus a per-fixture assertion that the fast path actually produced the value rather than silently falling back). It is not free; it has to be earned per schema type and per check.
+- Anything the fast path can't model *exactly* throws `ZodCompileUnsupportedError` at codegen time — there are no silently-dead always-fallback fast paths and no plain `Error` escapes, and a `new Function` failure (malformed codegen, CSP rejection) is converted to the same type. Containers island unsupported children; unions don't (a falsely-rejecting branch would corrupt match semantics), and `z.xor` always falls back for the same reason. Custom `when`-gated checks, NaN/Invalid-Date comparison bounds, and `__proto__` shape/record keys also force fallback.
 
 ## Scope cuts
 
 - **Forward direction only.** Codec encode / `ctx.direction === "backward"` paths skip the fast path and go straight to the runtime. The wrapper checks `ctx.direction` and bails on backward. Add backward codegen later if benches motivate it.
 - **No async.** The compiler eagerly throws if it encounters an async refinement, transform, or check during the codegen walk. There is no affordance for promises anywhere in generated code. `safeParseAsync` skips the fast path.
-- **No CSP / jitless guard.** Calling `z.compile` or importing `zod/compile` is an explicit opt-in to `new Function`. Environments that forbid eval shouldn't reach for this. The existing global `jitless` config governs the lazy JIT, not AOT; the two are independent.
+- **jitless.** Global mode respects `config().jitless`: the shim restores the runtime parser instead of compiling, so `import "zod/compile"` is inert in CSP/no-eval environments. Calling `z.compile(schema)` explicitly remains an explicit opt-in to `new Function`; under CSP it throws `ZodCompileUnsupportedError` rather than a raw `EvalError`.
 
 ## Output construction
 
@@ -68,8 +69,11 @@ Children of the cloned schema are shared by reference with the original. `z.comp
 - **In-place mutation of the input schema.** Considered. Cloning avoids the mutation-surprise footgun for library code that takes user schemas as inputs.
 - **Public `globalConfig.postProcessor`.** Internal implementation detail. Not documented as part of the public config surface. If multiple consumers ever need to register hooks, this becomes a registry, not a single slot.
 
+## Runtime islands
+
+Object, tuple, array, record (value side), intersection, and catch codegen route children through `compileChild`. A child that throws `ZodCompileUnsupportedError` is rolled back and replaced with a hoisted runtime call (`runtimeRun(schema, value)`), so one unsupported leaf doesn't abort compilation of the surrounding structure. Unions and discriminated unions deliberately do **not** island: first-match/exactly-one semantics require per-branch failures to mean "the runtime would reject", not "couldn't compile".
+
 ## Open
 
-- **Tree-shaking/API decision.** Keep `z.compile` on the main namespace and accept that namespace imports retain `core/compile.ts`, or move per-schema compile to `zod/compile` for better tree-shaking.
-- **Runtime islands.** Unsupported subtrees currently force fallback for the whole schema in direct `z.compile(schema)` mode. A future optimization could emit calls to the original runtime parser for only unsupported leaves/subtrees while compiling the surrounding object/array structure.
 - **Array output policy.** Arktype often wins array benchmarks because it can return the input for validation-only arrays. Zod semantics return parsed output (fresh arrays/objects). Any move toward input reuse would be a deliberate semantic/performance tradeoff, not an incidental optimization.
+- **Registry identity.** The compiled clone inherits registry metadata through `_zod.parent` like any derived schema, which by registry design excludes `id`. `z.toJSONSchema(z.compile(s))` therefore loses a registered `id`; pass the original to `toJSONSchema` if `$defs` identity matters.
