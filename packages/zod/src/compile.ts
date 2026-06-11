@@ -39,9 +39,12 @@ core.globalConfig.postProcessor = (inst: any) => {
     compiling = true;
     try {
       const compiled = compile(inst);
+      // Only the run wrapper is installed. Copying the compiled parse/
+      // safeParse closures here would make their INVALID fallback re-enter
+      // this instance's methods — which now route through the compiled run —
+      // executing user callbacks a third time on invalid input. The
+      // method → wrapper path runs them exactly twice.
       inst._zod.run = compiled._zod.run;
-      if (typeof compiled.safeParse === "function") inst.safeParse = compiled.safeParse;
-      if (typeof compiled.parse === "function") inst.parse = compiled.parse;
     } catch {
       // Permanent fallback for unsupported schemas.
       inst._zod.run = originalRun;

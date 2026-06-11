@@ -17,6 +17,10 @@ import * as util from "./util.js";
 export const INVALID: unique symbol = Symbol.for("zod.compile.invalid");
 export type INVALID = typeof INVALID;
 
+// Set on the parse ctx when a compiled wrapper falls back to the runtime, so
+// nested compiled wrappers skip their fast paths for the rest of that parse.
+const FALLBACK_FLAG: unique symbol = Symbol.for("zod.compile.fallback");
+
 interface CompileFastpassOptions {
   debug?: boolean | undefined;
 }
@@ -100,8 +104,13 @@ export function compile<T extends SomeType>(schema: T): T {
   // for `z.instanceof(Test)`. Calling the clone's freshly-initialized run
   // would push issues with `inst === clone`, producing diverging error
   // messages from the original schema.
-  clone._zod.run = (payload: ParsePayload, ctx: ParseContextInternal): any => {
-    if (ctx?.async || ctx?.direction === "backward" || ctx?.skipChecks) {
+  const wrapped = (payload: ParsePayload, ctx: ParseContextInternal): any => {
+    if (
+      ctx?.async ||
+      ctx?.direction === "backward" ||
+      ctx?.skipChecks ||
+      (ctx as Record<symbol, unknown> | undefined)?.[FALLBACK_FLAG]
+    ) {
       return originalRun(payload, ctx);
     }
 
@@ -110,10 +119,23 @@ export function compile<T extends SomeType>(schema: T): T {
       payload.value = out;
       return payload;
     }
+    // Mark this parse as runtime-driven: under global mode every nested
+    // schema carries its own compiled wrapper, and without the flag the
+    // parent's runtime fallback re-enters each child's fast path, running
+    // user callbacks a third time on invalid input.
+    if (ctx) (ctx as Record<symbol, unknown>)[FALLBACK_FLAG] = true;
     return originalRun(payload, ctx);
   };
+  // Let later compiles of (or through) this run unwrap to the true runtime —
+  // both the global shim and repeated z.compile calls rely on this.
+  (wrapped as { __originalRun?: typeof originalRun }).__originalRun = originalRun;
+  clone._zod.run = wrapped;
 
-  installCompiledUserMethods(clone, schema, fast);
+  // The fast parse/safeParse closures fall back through the source schema's
+  // methods. If the source is shim- or wrapper-managed, those methods route
+  // into a compiled run and would execute user callbacks a third time on
+  // invalid input — the plain method → wrapper path is exactly 2x, so skip.
+  if (!liveRun.__originalRun) installCompiledUserMethods(clone, schema, fast);
 
   return clone;
 }

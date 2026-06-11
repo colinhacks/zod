@@ -35,6 +35,31 @@ test("schemas constructed after import are compiled on first parse", () => {
   expect(bad.success).toBe(false);
 });
 
+test("user callbacks run at most twice on invalid input", () => {
+  let refines = 0;
+  const schema = z.object({
+    a: z.string().refine((v) => {
+      refines++;
+      return v.length > 1;
+    }),
+  });
+  schema.safeParse({ a: "ok" }); // trigger lazy compile
+
+  refines = 0;
+  expect(schema.safeParse({ a: "x" }).success).toBe(false);
+  expect(refines).toBe(2);
+
+  refines = 0;
+  expect(() => schema.parse({ a: "x" })).toThrow();
+  expect(refines).toBe(2);
+
+  // Explicit z.compile of a shim-managed schema keeps the same contract.
+  const compiled = z.compile(schema);
+  refines = 0;
+  expect(compiled.safeParse({ a: "x" }).success).toBe(false);
+  expect(refines).toBe(2);
+});
+
 test("schemas with unsupported features fall back without crashing", () => {
   const schema = z.string().refine(async () => true);
   // First call attempts compile, falls back. Subsequent calls use runtime.
