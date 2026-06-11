@@ -311,10 +311,14 @@ export function formatError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIssu
             const el = fullpath[i]!;
             const terminal = i === fullpath.length - 1;
 
-            if (!terminal) {
-              curr[el] = curr[el] || { _errors: [] };
-            } else {
-              curr[el] = curr[el] || { _errors: [] };
+            // Guard against path segments that collide with inherited
+            // Object.prototype members (e.g. "toString", "constructor"). Using
+            // `curr[el] || ...` would return the inherited member instead of
+            // undefined, leaving `curr` without an `_errors` array and throwing.
+            if (!Object.prototype.hasOwnProperty.call(curr, el)) {
+              curr[el] = { _errors: [] };
+            }
+            if (terminal) {
               curr[el]._errors.push(mapper(issue));
             }
 

@@ -709,3 +709,22 @@ test("error serialization", () => {
     `);
   }
 });
+
+test("formatError does not throw on Object.prototype keys in path", () => {
+  // Regression test: a path segment matching an inherited Object.prototype
+  // member (e.g. "toString", "constructor") used to make formatError throw a
+  // TypeError because `curr[el] || {...}` returned the inherited member.
+  const schema = z.object({
+    toString: z.string(),
+    constructor: z.string(),
+    valueOf: z.string(),
+  });
+  const result = schema.safeParse({});
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    const formatted = z.formatError(result.error) as any;
+    expect(formatted.toString._errors.length).toBeGreaterThan(0);
+    expect(formatted.constructor._errors.length).toBeGreaterThan(0);
+    expect(formatted.valueOf._errors.length).toBeGreaterThan(0);
+  }
+});
