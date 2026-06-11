@@ -1389,6 +1389,49 @@ test("strict objects reject inherited enumerable keys like the runtime", () => {
   expectMatch(withOptional, JSON.parse('{"a":"x","__proto__":{}}'));
 });
 
+test("object output parity: key order, undefined keys, inherited keys, getters", () => {
+  // Loose object: shape keys precede unknown keys in the output.
+  const loose = z.looseObject({ a: z.string() });
+  const looseIn = { x: 1, a: "q", y: 2 };
+  expect(Object.keys(compile(loose).parse(looseIn) as object)).toEqual(Object.keys(loose.parse(looseIn)));
+
+  const cat = z.object({ a: z.string() }).catchall(z.number());
+  const catIn = { x: 1, a: "q" };
+  expect(Object.keys(compile(cat).parse(catIn) as object)).toEqual(Object.keys(cat.parse(catIn)));
+
+  // optin-optional/optout-required prop: absent key omitted, explicit
+  // undefined preserved (runtime handlePropertyResult rule).
+  const tf = z.object({
+    a: z
+      .string()
+      .optional()
+      .transform((v) => v),
+  });
+  expect("a" in (compile(tf).parse({}) as object)).toBe(false);
+  expect("a" in tf.parse({})).toBe(false);
+  const opt = z.object({ a: z.string().optional() });
+  expect(Object.keys(compile(opt).parse({ a: undefined }) as object)).toEqual(["a"]);
+
+  // Empty-shape loose: inherited enumerable keys included, own __proto__ dropped.
+  const empty = z.looseObject({});
+  const inherited = Object.assign(Object.create({ extra: 1 }), { own: 2 });
+  expect(compile(empty).parse(inherited)).toEqual({ own: 2, extra: 1 });
+  expect(empty.parse(inherited)).toEqual({ own: 2, extra: 1 });
+  const protoIn = JSON.parse('{"__proto__":{"polluted":1},"x":2}');
+  expect(Object.keys(compile(empty).parse(protoIn) as object)).toEqual(Object.keys(empty.parse(protoIn)));
+
+  // Getters are read exactly once, like the runtime.
+  let reads = 0;
+  const getterIn = {
+    get a() {
+      reads++;
+      return "v";
+    },
+  };
+  expect(compile(z.object({ a: z.string().min(1) })).parse(getterIn)).toEqual({ a: "v" });
+  expect(reads).toBe(1);
+});
+
 // === Error taxonomy ===
 
 test("unsupported features throw ZodCompileUnsupportedError, not raw errors", () => {

@@ -988,15 +988,10 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
   // Validate each property and collect output accessors
   for (const key of keys) {
     const propSchema = shape[key]!;
-    const propType = propSchema._zod.def.type;
-    const propAccessor = `${accessor}[${util.esc(key)}]`;
-
-    // For complex types, cache in variable first
-    let inputVar = propAccessor;
-    if (propType === "object" || propType === "array" || propType === "tuple") {
-      inputVar = newVar(ctx);
-      doc.write(`const ${inputVar} = ${propAccessor};`);
-    }
+    // Always cache the property read: the runtime reads input[key] exactly
+    // once, so a getter must not be re-read by checks or output assembly.
+    const inputVar = newVar(ctx);
+    doc.write(`const ${inputVar} = ${accessor}[${util.esc(key)}];`);
 
     if (propSchema._zod.optin === "optional") {
       // Runtime runs optional-in properties even when absent, then ignores
@@ -1036,7 +1031,7 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
 
   // Handle catchall
   const catchall = def.catchall;
-  let unknownKeysVar: string | null = null;
+  let unknownKeysMode: "none" | "passthrough" | "schema" = "none";
 
   if (catchall) {
     const catchallType = catchall._zod.def.type;
@@ -1070,83 +1065,58 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
         doc.write(`if (Object.keys(${accessor}).length > ${keys.length}) return INVALID;`);
       }
     } else if ((catchallType === "unknown" || catchallType === "any") && !catchall._zod.def.checks?.length) {
-      // Loose/passthrough: include unknown keys in output (no validation)
-      if (keys.length > 0) {
-        unknownKeysVar = newVar(ctx);
-        const knownSet = addConstant(ctx, new Set(keys));
-        doc.write(`const ${unknownKeysVar} = {};`);
-        doc.write(`for (const k in ${accessor}) {`);
-        doc.indented((d) => {
-          // Skip __proto__: assigning to obj["__proto__"] on a plain {} replaces
-          // the prototype via the setter rather than adding an own property.
-          // Mirrors the runtime fix in $ZodObject catchall (#5898).
-          d.write(`if (k === "__proto__") continue;`);
-          d.write(`if (!${knownSet}.has(k)) ${unknownKeysVar}[k] = ${accessor}[k];`);
-        });
-        doc.write(`}`);
-      } else {
-        // No known keys - just spread all input. Spread copies enumerable own
-        // properties as data slots, so __proto__ can't reach the setter.
-        unknownKeysVar = accessor;
-      }
+      unknownKeysMode = "passthrough";
     } else {
-      // Catchall with schema: validate each unknown key against catchall
-      unknownKeysVar = newVar(ctx);
-      const knownSet = addConstant(ctx, new Set(keys));
-      doc.write(`const ${unknownKeysVar} = {};`);
-      doc.write(`for (const k in ${accessor}) {`);
-      doc.indented((d) => {
-        d.write(`if (k === "__proto__") continue;`);
-        d.write(`if (!${knownSet}.has(k)) {`);
-        d.indented((d2) => {
-          const valVar = newVar(ctx);
-          d2.write(`const ${valVar} = ${accessor}[k];`);
-          const outputVar = compileChild(d2, ctx, catchall, valVar);
-          d2.write(`${unknownKeysVar}[k] = ${outputVar};`);
-        });
-        d.write(`}`);
-      });
-      doc.write(`}`);
+      unknownKeysMode = "schema";
     }
   }
   // else: strip mode (no catchall) - unknown keys ignored, only include known keys
 
-  // Build output object preserving the schema's declared key order. For each
-  // key:
-  //   - optout != "optional" → always include (required, or default/prefault).
-  //   - optout == "optional" AND input had the key → include with value.
-  //   - optout == "optional" AND input did not have the key → omit (runtime
-  //     drops absent optional keys; explicit `undefined` is preserved).
+  // Build the output: shape keys first in declared order (the runtime assigns
+  // them before its catchall loop), then unknown keys in for...in order.
+  // Runtime inclusion rule (handlePropertyResult): a key is included iff its
+  // output value !== undefined OR the key is present on the input. Props that
+  // can never output undefined keep the fast object-literal form.
   const outputVar = newVar(ctx);
-  const hasOmittableKeys = keys.some((k) => shape[k]!._zod.optout === "optional");
+  const hasConditionalKeys = keys.some((k) => mayOutputUndefined(shape[k]!));
 
-  if (!hasOmittableKeys) {
+  if (!hasConditionalKeys) {
     const propLiterals = keys.map((k) => `${util.esc(k)}: ${propOutputs[k]}`).join(", ");
-    if (unknownKeysVar && unknownKeysVar !== accessor) {
-      doc.write(`const ${outputVar} = { ...${unknownKeysVar}, ${propLiterals} };`);
-    } else if (unknownKeysVar === accessor) {
-      doc.write(`const ${outputVar} = { ...${accessor}, ${propLiterals} };`);
-    } else {
-      doc.write(`const ${outputVar} = { ${propLiterals} };`);
-    }
+    doc.write(`const ${outputVar} = { ${propLiterals} };`);
   } else {
-    if (unknownKeysVar && unknownKeysVar !== accessor) {
-      doc.write(`const ${outputVar} = { ...${unknownKeysVar} };`);
-    } else if (unknownKeysVar === accessor) {
-      doc.write(`const ${outputVar} = { ...${accessor} };`);
-    } else {
-      doc.write(`const ${outputVar} = {};`);
-    }
-
+    doc.write(`const ${outputVar} = {};`);
     for (const k of keys) {
-      if (shape[k]!._zod.optout === "optional") {
+      if (mayOutputUndefined(shape[k]!)) {
         doc.write(
-          `if (${util.esc(k)} in ${accessor} || ${propOutputs[k]} !== undefined) ${outputVar}[${util.esc(k)}] = ${propOutputs[k]};`
+          `if (${propOutputs[k]} !== undefined || ${util.esc(k)} in ${accessor}) ${outputVar}[${util.esc(k)}] = ${propOutputs[k]};`
         );
       } else {
         doc.write(`${outputVar}[${util.esc(k)}] = ${propOutputs[k]};`);
       }
     }
+  }
+
+  if (unknownKeysMode !== "none") {
+    // Unknown keys are written directly into the output after shape keys —
+    // for...in (like the runtime) so inherited enumerables participate.
+    const knownSet = keys.length > 0 ? addConstant(ctx, new Set(keys)) : null;
+    doc.write(`for (const k in ${accessor}) {`);
+    doc.indented((d) => {
+      // Skip __proto__: assigning obj["__proto__"] on a plain {} replaces the
+      // prototype via the setter rather than adding an own property. Mirrors
+      // the runtime catchall fix (#5898).
+      d.write(`if (k === "__proto__") continue;`);
+      if (knownSet) d.write(`if (${knownSet}.has(k)) continue;`);
+      if (unknownKeysMode === "passthrough") {
+        d.write(`${outputVar}[k] = ${accessor}[k];`);
+      } else {
+        const valVar = newVar(ctx);
+        d.write(`const ${valVar} = ${accessor}[k];`);
+        const catchallOut = compileChild(d, ctx, catchall!, valVar);
+        d.write(`${outputVar}[k] = ${catchallOut};`);
+      }
+    });
+    doc.write(`}`);
   }
 
   return outputVar;
@@ -1277,6 +1247,61 @@ function fastPathAcceptsAbsence(schema: SomeType): boolean {
     case "pipe":
       return def.in ? fastPathAcceptsAbsence(def.in) : true;
     default:
+      return true;
+  }
+}
+
+// Whether a schema's success-path output can be `undefined`. Object output
+// assembly gives such props the runtime's value-or-presence inclusion rule;
+// everything else keeps the unconditional object-literal slot.
+function mayOutputUndefined(schema: SomeType): boolean {
+  const def = schema._zod.def as {
+    type: string;
+    values?: unknown[];
+    innerType?: SomeType;
+    options?: SomeType[];
+    out?: SomeType;
+    left?: SomeType;
+    right?: SomeType;
+  };
+  switch (def.type) {
+    case "string":
+    case "number":
+    case "boolean":
+    case "bigint":
+    case "symbol":
+    case "null":
+    case "nan":
+    case "date":
+    case "object":
+    case "array":
+    case "tuple":
+    case "record":
+    case "map":
+    case "set":
+    case "file":
+    case "template_literal":
+    case "never":
+    case "success":
+      return false;
+    case "literal":
+      return !!def.values?.includes(undefined);
+    case "enum":
+      return !!(schema._zod as unknown as { values?: Set<unknown> }).values?.has(undefined);
+    case "optional":
+      return true;
+    case "nullable":
+    case "readonly":
+    case "nonoptional":
+      return def.innerType ? mayOutputUndefined(def.innerType) : true;
+    case "union":
+      return def.options ? def.options.some(mayOutputUndefined) : true;
+    case "intersection":
+      return !def.left || !def.right || mayOutputUndefined(def.left) || mayOutputUndefined(def.right);
+    case "pipe":
+      return def.out ? mayOutputUndefined(def.out) : true;
+    default:
+      // any/unknown/undefined/void/default/prefault/transform/custom/lazy/catch
       return true;
   }
 }
