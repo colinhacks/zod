@@ -302,7 +302,7 @@ function generateChecks(doc: Doc, ctx: CompileContext, schema: SomeType, accesso
         doc.write(`if (${currentAccessor}.size !== ${def.size}) return INVALID;`);
         break;
       case "string_format":
-        generateStringFormatCheck(doc, ctx, def, currentAccessor);
+        currentAccessor = generateStringFormatCheck(doc, ctx, def, currentAccessor);
         break;
       case "custom":
         generateCustomRefineCheck(doc, ctx, check as CustomCheck, currentAccessor);
@@ -538,7 +538,11 @@ type StringFormatDef =
 
 type SupportedStringFormat = "regex" | "lowercase" | "uppercase" | "includes" | "starts_with" | "ends_with";
 
-function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFormatDef, accessor: string): void {
+// Returns the accessor holding the (possibly normalized) value after the
+// check — url/normalize formats produce a new value like overwrite does.
+// Never assigns to the incoming accessor: it may be a `const` or a property
+// expression on user input.
+function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFormatDef, accessor: string): string {
   // Some string formats do runtime validation beyond their advertised pattern.
   // For cheap pure utility checks, hoist the runtime function and call it so
   // the fast path stays correct without cloning the utility logic into codegen.
@@ -546,47 +550,43 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
   if (fmt === "base64") {
     const validator = addConstant(ctx, isValidBase64);
     doc.write(`if (!${validator}(${accessor})) return INVALID;`);
-    return;
+    return accessor;
   }
   if (fmt === "base64url") {
     const validator = addConstant(ctx, isValidBase64URL);
     doc.write(`if (!${validator}(${accessor})) return INVALID;`);
-    return;
+    return accessor;
   }
   if (fmt === "jwt") {
     const validator = addConstant(ctx, isValidJWT);
     const alg = addConstant(ctx, (def as unknown as { alg?: util.JWTAlgorithm }).alg ?? null);
     doc.write(`if (!${validator}(${accessor}, ${alg})) return INVALID;`);
-    return;
+    return accessor;
   }
   if (fmt === "ipv6") {
     const validator = addConstant(ctx, isValidIPv6);
     doc.write(`if (!${validator}(${accessor})) return INVALID;`);
-    return;
+    return accessor;
   }
   if (fmt === "cidrv6") {
     const validator = addConstant(ctx, isValidCIDRv6);
     doc.write(`if (!${validator}(${accessor})) return INVALID;`);
-    return;
-  }
-  if (fmt === "url" || fmt === "httpurl") {
-    const validator = addConstant(ctx, parseValidURL);
-    const defConst = addConstant(ctx, def);
-    const outputVar = newVar(ctx);
-    doc.write(`const ${outputVar} = ${validator}(${accessor}, ${defConst});`);
-    doc.write(`if (${outputVar} === undefined) return INVALID;`);
-    doc.write(`${accessor} = ${outputVar};`);
-    return;
+    return accessor;
   }
   const formatDef = def as unknown as { normalize?: boolean; hostname?: unknown; protocol?: unknown };
-  if (formatDef.normalize || formatDef.hostname !== undefined || formatDef.protocol !== undefined) {
+  if (
+    fmt === "url" ||
+    fmt === "httpurl" ||
+    formatDef.normalize ||
+    formatDef.hostname !== undefined ||
+    formatDef.protocol !== undefined
+  ) {
     const validator = addConstant(ctx, parseValidURL);
     const defConst = addConstant(ctx, def);
     const outputVar = newVar(ctx);
     doc.write(`const ${outputVar} = ${validator}(${accessor}, ${defConst});`);
     doc.write(`if (${outputVar} === undefined) return INVALID;`);
-    doc.write(`${accessor} = ${outputVar};`);
-    return;
+    return outputVar;
   }
 
   // If a pattern is provided, use regex check for all other format types
@@ -594,7 +594,7 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
     const patternConst = addConstant(ctx, def.pattern);
     doc.write(`${patternConst}.lastIndex = 0;`);
     doc.write(`if (!${patternConst}.test(${accessor})) return INVALID;`);
-    return;
+    return accessor;
   }
 
   const format = def.format as SupportedStringFormat;
@@ -628,6 +628,7 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
       throw new ZodCompileUnsupportedError(`string format ${format}`);
     }
   }
+  return accessor;
 }
 
 // Union of all schema types we support in AOT compilation

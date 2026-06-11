@@ -1306,6 +1306,21 @@ test("runtime island inside array element", () => {
   invalid(aot, ["a", true]);
 });
 
+test("url string-format check never assigns to its accessor", () => {
+  // const accessor (array element): previously emitted `elem = normalized`,
+  // a TypeError on valid input.
+  const arr = compile(z.array(z.string().url()));
+  expect(valid(arr, ["https://example.com"])).toEqual(["https://example.com"]);
+  invalid(arr, ["not a url"]);
+
+  // property accessor: previously wrote the normalized value back into the
+  // caller's input object.
+  const padded = " https://example.com ";
+  const input = { u: padded };
+  expectMatch(z.object({ u: z.string().url() }), input);
+  expect(input.u).toBe(padded);
+});
+
 test("lazy schemas with checked or defaulted descendants parse without crashing", () => {
   // Inner runtime run must receive a ctx — checks read ctx.skipChecks,
   // default/transform read ctx.direction.
