@@ -239,6 +239,12 @@ export function extractDefs<T extends schemas.$ZodType>(
     }
   }
 
+  // RFC 6901 §3 — `~` must escape to `~0` and `/` to `~1` inside reference
+  // tokens. The replacement order matters: encode `~` first so that a `/`
+  // turning into `~1` is not later re-encoded as `~01`. The `$defs` key
+  // itself stays raw — only the pointer path needs escaping.
+  const encodeJsonPointerToken = (token: string): string => token.replace(/~/g, "~0").replace(/\//g, "~1");
+
   // returns a ref to the schema
   // defId will be empty if the ref points to an external schema (or #)
   const makeURI = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): { ref: string; defId?: string } => {
@@ -260,7 +266,7 @@ export function extractDefs<T extends schemas.$ZodType>(
       // otherwise, add to __shared
       const id: string = entry[1].defId ?? (entry[1].schema.id as string) ?? `schema${ctx.counter++}`;
       entry[1].defId = id; // set defId so it will be reused if needed
-      return { defId: id, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id}` };
+      return { defId: id, ref: `${uriGenerator("__shared")}#/${defsSegment}/${encodeJsonPointerToken(id)}` };
     }
 
     if (entry[1] === root) {
@@ -271,7 +277,7 @@ export function extractDefs<T extends schemas.$ZodType>(
     const uriPrefix = `#`;
     const defUriPrefix = `${uriPrefix}/${defsSegment}/`;
     const defId = entry[1].schema.id ?? `__schema${ctx.counter++}`;
-    return { defId, ref: defUriPrefix + defId };
+    return { defId, ref: defUriPrefix + encodeJsonPointerToken(defId) };
   };
 
   // stored cached version in `def` property

@@ -2212,6 +2212,28 @@ test("id is observable in override callback", () => {
   expect(seenIds).toContain("Inner");
 });
 
+test("$ref encodes `/` and `~` per RFC 6901 (issue #6027)", () => {
+  // RFC 6901 §3 requires `~` and `/` to be escaped inside reference tokens
+  // (as `~0` and `~1` respectively). The `$defs` key stays raw — only the
+  // pointer path needs encoding.
+  const User = z.object({ name: z.string() }).meta({ id: "Shared/User~" });
+  const result = z.toJSONSchema(z.object({ User }));
+
+  expect((result.properties?.User as any).$ref).toBe("#/$defs/Shared~1User~0");
+  expect(result.$defs).toHaveProperty("Shared/User~");
+});
+
+test("$ref encoding handles slash and tilde independently", () => {
+  // Order matters: `~` is encoded before `/`, otherwise a `/` turning into
+  // `~1` would be re-encoded as `~01` on the second pass.
+  const A = z.string().meta({ id: "a/b" });
+  const B = z.string().meta({ id: "c~d" });
+  const result = z.toJSONSchema(z.object({ a: A, b: B }));
+
+  expect((result.properties?.a as any).$ref).toBe("#/$defs/a~1b");
+  expect((result.properties?.b as any).$ref).toBe("#/$defs/c~0d");
+});
+
 test("describe with id on wrapper", () => {
   // Test that $ref propagation works when processor sets a different ref (readonly -> innerType)
   // but parent was extracted due to having an id
