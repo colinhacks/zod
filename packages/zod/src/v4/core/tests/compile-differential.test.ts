@@ -1,10 +1,13 @@
 import { expect, test } from "vitest";
 
 import * as z from "../../index.js";
-import { compile } from "../compile.js";
+import { INVALID, compile, compileFastpass } from "../compile.js";
 
 // Differential harness: assert compiled schema agrees with the original on every
-// fixture. Success path: data deep-equal. Failure path: issues deep-equal.
+// fixture. Success path: data identical (incl. key order and undefined-vs-absent,
+// which toEqual cannot see) AND the fast path actually produced the value (a
+// fixture set that silently falls back on valid inputs tests nothing). Failure
+// path: issues deep-equal (errors always come from the runtime fallback).
 function describe(value: unknown): string {
   try {
     return JSON.stringify(value, (_k, v) => (typeof v === "bigint" ? `${v}n` : v));
@@ -13,14 +16,63 @@ function describe(value: unknown): string {
   }
 }
 
-function differential(schema: z.ZodType, inputs: unknown[]) {
+// Stricter-than-toEqual structural identity: own-key order, symbol keys,
+// undefined-valued vs absent keys, array holes, frozenness, NaN/-0.
+function assertIdentical(actual: unknown, expected: unknown, path: string): void {
+  if (Object.is(actual, expected)) return;
+  if (actual === null || expected === null || typeof expected !== "object" || typeof actual !== "object") {
+    expect(actual, `value mismatch at ${path}`).toEqual(expected);
+    expect(Object.is(actual, expected), `Object.is mismatch at ${path} (NaN/-0?)`).toBe(true);
+    return;
+  }
+  expect(Object.getPrototypeOf(actual), `prototype mismatch at ${path}`).toBe(Object.getPrototypeOf(expected));
+  expect(Object.isFrozen(actual), `frozenness mismatch at ${path}`).toBe(Object.isFrozen(expected));
+  if (expected instanceof Date) {
+    expect((actual as Date).getTime(), `Date mismatch at ${path}`).toBe(expected.getTime());
+    return;
+  }
+  if (expected instanceof Map) {
+    expect([...(actual as Map<unknown, unknown>).entries()], `Map mismatch at ${path}`).toEqual([
+      ...expected.entries(),
+    ]);
+    return;
+  }
+  if (expected instanceof Set) {
+    expect([...(actual as Set<unknown>)], `Set mismatch at ${path}`).toEqual([...expected]);
+    return;
+  }
+  if (Array.isArray(expected)) {
+    expect((actual as unknown[]).length, `length mismatch at ${path}`).toBe(expected.length);
+    for (let i = 0; i < expected.length; i++) {
+      expect(i in (actual as object), `hole mismatch at ${path}[${i}]`).toBe(i in expected);
+      if (i in expected) assertIdentical((actual as unknown[])[i], expected[i], `${path}[${i}]`);
+    }
+    return;
+  }
+  const actualKeys = Reflect.ownKeys(actual as object);
+  const expectedKeys = Reflect.ownKeys(expected as object);
+  expect(actualKeys, `key set/order mismatch at ${path}`).toEqual(expectedKeys);
+  for (const k of expectedKeys) {
+    assertIdentical(
+      (actual as Record<PropertyKey, unknown>)[k],
+      (expected as Record<PropertyKey, unknown>)[k],
+      `${path}.${String(k)}`
+    );
+  }
+}
+
+function differential(schema: z.ZodType, inputs: unknown[], opts?: { fallbackOk?: boolean }) {
   const compiled = compile(schema);
+  const fast = compileFastpass(schema);
   for (const input of inputs) {
     const a = schema.safeParse(input);
     const b = compiled.safeParse(input);
     expect(b.success, `success mismatch for input ${describe(input)}`).toBe(a.success);
     if (a.success && b.success) {
-      expect(b.data, `data mismatch for input ${describe(input)}`).toEqual(a.data);
+      if (!opts?.fallbackOk) {
+        expect(fast(input) === INVALID, `fast path fell back on valid input ${describe(input)}`).toBe(false);
+      }
+      assertIdentical(b.data, a.data, "$");
     } else if (!a.success && !b.success) {
       expect(b.error.issues, `issues mismatch for input ${describe(input)}`).toEqual(a.error.issues);
     }
