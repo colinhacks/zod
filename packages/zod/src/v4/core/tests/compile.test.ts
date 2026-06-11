@@ -1306,6 +1306,19 @@ test("runtime island inside array element", () => {
   invalid(aot, ["a", true]);
 });
 
+test("lazy schemas with checked or defaulted descendants parse without crashing", () => {
+  // Inner runtime run must receive a ctx — checks read ctx.skipChecks,
+  // default/transform read ctx.direction.
+  const aot = compile(z.lazy(() => z.string().min(2)));
+  expect(valid(aot, "abc")).toEqual("abc");
+  invalid(aot, "a");
+
+  const tree: z.ZodType = z.lazy(() => z.object({ v: z.number().int(), kids: z.array(tree).default([]) }));
+  const aotTree = compile(tree);
+  expect(valid(aotTree, { v: 1, kids: [{ v: 2 }] })).toEqual({ v: 1, kids: [{ v: 2, kids: [] }] });
+  invalid(aotTree, { v: 1.5 });
+});
+
 // === Error taxonomy ===
 
 test("unsupported features throw ZodCompileUnsupportedError, not raw errors", () => {
