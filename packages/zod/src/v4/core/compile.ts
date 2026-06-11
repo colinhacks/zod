@@ -261,6 +261,16 @@ function emitRuntimeIsland(doc: Doc, ctx: CompileContext, schema: SomeType, acce
   return outVar;
 }
 
+// Check classes whose `when` is auto-defaulted at init (checks.ts `when ??=`).
+const WHEN_DEFAULTED_CHECKS = new Set([
+  "max_size",
+  "min_size",
+  "size_equals",
+  "max_length",
+  "min_length",
+  "length_equals",
+]);
+
 function generateChecks(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
   const schemaChecks = schema._zod.def.checks as SupportedCheck[] | undefined;
   if (!schemaChecks || schemaChecks.length === 0) return accessor;
@@ -270,6 +280,15 @@ function generateChecks(doc: Doc, ctx: CompileContext, schema: SomeType, accesso
 
   for (const check of schemaChecks) {
     const def = check._zod.def;
+    // Custom `when` gates make the runtime skip a check conditionally; the
+    // fast path always runs it, which diverges (dangerously so for
+    // value-mutating checks). The six size/length classes auto-default `when`
+    // to "skip after aborting issues" — satisfied by the fast path's
+    // bail-on-first-failure, and they never mutate values, so they stay
+    // compilable.
+    if ((def as { when?: unknown }).when && !WHEN_DEFAULTED_CHECKS.has(def.check)) {
+      throw new ZodCompileUnsupportedError(`check with a custom "when" condition`);
+    }
     switch (def.check) {
       case "greater_than":
         generateGreaterThanCheck(doc, ctx, def, currentAccessor);
@@ -493,7 +512,11 @@ function generateCustomRefineCheck(doc: Doc, ctx: CompileContext, check: CustomC
       throw new ZodCompileAsyncError("z.compile: async .refine() predicates are not supported");
     }
     const fnConst = addConstant(ctx, def.fn);
-    doc.write(`if (!${fnConst}(${accessor})) return INVALID;`);
+    // A Promise result is truthy; treat it as INVALID so the runtime fallback
+    // reproduces the canonical $ZodAsyncError instead of silently passing.
+    const resVar = newVar(ctx);
+    doc.write(`const ${resVar} = ${fnConst}(${accessor});`);
+    doc.write(`if (${resVar} instanceof Promise || !${resVar}) return INVALID;`);
   } else if (check._zod.check) {
     if (isAsyncFunction(check._zod.check)) {
       throw new ZodCompileAsyncError("z.compile: async .superRefine() / check functions are not supported");
@@ -1516,10 +1539,12 @@ function generateUnionCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
     );
   }
 
-  // z.xor (exclusive union) requires *exactly one* option to match; the fast
-  // path's "first match wins" semantics would silently accept multi-match.
+  // z.xor requires *exactly one* option to match. Match-counting in the fast
+  // path is only sound if every branch is exactly as strict as the runtime —
+  // any falsely-rejecting branch silently turns a multi-match rejection into
+  // an accept. Force the runtime for this rare combinator.
   if (def.inclusive === false) {
-    return generateXorCheck(doc, ctx, def, accessor);
+    throw new ZodCompileUnsupportedError("exclusive unions (z.xor)");
   }
 
   if (options.length === 0) {
@@ -1531,10 +1556,14 @@ function generateUnionCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
     return generateCheck(doc, ctx, options[0]!, accessor);
   }
 
-  // Check if all options are literals - use Set optimization
-  const allLiterals = options.every((opt) => opt._zod.def.type === "literal");
+  // Check if all options are bare literals - use Set optimization. A literal
+  // option carrying checks (e.g. .refine) must take the general path or the
+  // Set would accept values its checks reject.
+  const allLiterals = options.every(
+    (opt) => opt._zod.def.type === "literal" && !(opt._zod.def.checks as unknown[] | undefined)?.length
+  );
   if (allLiterals) {
-    const values = new Set(options.map((opt) => (opt._zod.def as unknown as { values: unknown[] }).values[0]));
+    const values = new Set(options.flatMap((opt) => (opt._zod.def as unknown as { values: unknown[] }).values));
     const valuesConst = addConstant(ctx, values);
     doc.write(`if (!${valuesConst}.has(${accessor})) return INVALID;`);
     return accessor;
@@ -1563,42 +1592,6 @@ function generateUnionCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
   }
 
   doc.write(`if (${outputVar} === INVALID) return INVALID;`);
-  return outputVar;
-}
-
-function generateXorCheck(
-  doc: Doc,
-  ctx: CompileContext,
-  def: { options: SomeType[]; inclusive?: boolean },
-  accessor: string
-): string {
-  if (def.options.length === 0) {
-    doc.write("return INVALID;");
-    return accessor;
-  }
-
-  const countVar = newVar(ctx);
-  const outputVar = newVar(ctx);
-  doc.write(`let ${countVar} = 0;`);
-  doc.write(`let ${outputVar};`);
-
-  for (const option of def.options) {
-    const branchVar = newVar(ctx);
-    doc.write(`const ${branchVar} = (() => {`);
-    doc.indented((d) => {
-      const branchOutput = generateCheck(d, ctx, option, accessor);
-      d.write(`return ${branchOutput};`);
-    });
-    doc.write(`})();`);
-    doc.write(`if (${branchVar} !== INVALID) {`);
-    doc.indented((d) => {
-      d.write(`${countVar}++;`);
-      d.write(`${outputVar} = ${branchVar};`);
-    });
-    doc.write(`}`);
-  }
-
-  doc.write(`if (${countVar} !== 1) return INVALID;`);
   return outputVar;
 }
 

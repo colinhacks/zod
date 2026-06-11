@@ -293,12 +293,12 @@ test("union all-literals (Set optimization)", () => {
   differential(z.union([z.literal("a"), z.literal("b"), z.literal("c")]), ["a", "b", "c", "d", 1]);
 });
 
-test("xor exactly one branch", () => {
-  differential(z.xor([z.string(), z.number()]), ["a", 1, true, null]);
-});
-
-test("xor multiple matches fails", () => {
-  differential(z.xor([z.string(), z.any()]), ["a", 1, null]);
+test("xor is unsupported directly; parity holds through a container island", () => {
+  // Exactly-one-match counting is unsound against any falsely-rejecting
+  // branch, so xor always uses the runtime.
+  expect(() => compile(z.xor([z.string(), z.number()]))).toThrow();
+  differential(z.object({ v: z.xor([z.string(), z.number()]) }), [{ v: "a" }, { v: 1 }, { v: true }, { v: null }]);
+  differential(z.object({ v: z.xor([z.string(), z.any()]) }), [{ v: "a" }, { v: 1 }, { v: null }]);
 });
 
 test("intersection of objects", () => {

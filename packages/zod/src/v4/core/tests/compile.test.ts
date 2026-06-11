@@ -1337,6 +1337,46 @@ test("lazy schemas with checked or defaulted descendants parse without crashing"
   invalid(aotTree, { v: 1.5 });
 });
 
+test("sync refine returning a Promise rejects like the runtime", () => {
+  const schema = z.string().refine((() => Promise.resolve(true)) as unknown as (v: string) => boolean);
+  const aot = compile(schema);
+  let runtimeErr: string | undefined;
+  let compiledErr: string | undefined;
+  try {
+    schema.parse("x");
+  } catch (e) {
+    runtimeErr = (e as Error).name;
+  }
+  try {
+    aot.parse("x");
+  } catch (e) {
+    compiledErr = (e as Error).name;
+  }
+  expect(runtimeErr).toBeDefined();
+  expect(compiledErr).toBe(runtimeErr);
+});
+
+test("literal-union Set optimization respects checks and multi-value literals", () => {
+  const withCheck = z.union([z.literal("a").refine(() => false), z.literal("b")]);
+  expectMatch(withCheck, "a"); // runtime rejects via refine; compiled must too
+  expectMatch(withCheck, "b");
+
+  const multi = z.union([z.literal(["a", "b"]), z.literal("c")]);
+  for (const v of ["a", "b", "c", "d"]) expectMatch(multi, v);
+});
+
+test("xor and custom when-gated checks force runtime fallback", () => {
+  expect(() => compile(z.xor([z.string(), z.number()]))).toThrow(ZodCompileUnsupportedError);
+  // Multi-match must reject — verified through the object island.
+  expectMatch(z.object({ v: z.xor([z.number(), z.number().int()]) }), { v: 2 });
+  expectMatch(z.object({ v: z.xor([z.number(), z.number().int()]) }), { v: 1.5 });
+
+  const gated = z.number().gt(5);
+  (gated._zod.def.checks![0]!._zod.def as { when?: unknown }).when = () => false;
+  expect(() => compile(gated)).toThrow(ZodCompileUnsupportedError);
+  expectMatch(z.object({ n: gated }), { n: 3 }); // runtime skips the gated check
+});
+
 // === Error taxonomy ===
 
 test("unsupported features throw ZodCompileUnsupportedError, not raw errors", () => {
