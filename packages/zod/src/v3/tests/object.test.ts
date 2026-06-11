@@ -217,6 +217,20 @@ test("inferred merged object type with optional properties", async () => {
   // util.assertEqual<Merged, { a?: string | undefined; b: string }>(true);
 });
 
+test("inferred property type from inline union schema (#2654)", () => {
+  const EventNameSchema = z.string().or(z.array(z.string()));
+  type EventName = z.infer<typeof EventNameSchema>;
+
+  const EventSchema = z.object({
+    name: z.string().or(z.array(z.string())),
+  });
+  type EventName2 = z.infer<typeof EventSchema>["name"];
+
+  util.assertEqual<EventName, string | string[]>(true);
+  util.assertEqual<EventName2, string | string[]>(true);
+  util.assertEqual<EventName2, EventName>(true);
+});
+
 test("inferred unioned object type with optional properties", async () => {
   const Unioned = z.union([
     z.object({ a: z.string(), b: z.string().optional() }),
