@@ -1435,6 +1435,7 @@ export interface $ZodAnyDef extends $ZodTypeDef {
 
 export interface $ZodAnyInternals extends $ZodTypeInternals<any, any> {
   def: $ZodAnyDef;
+  optin: "optional";
   isst: never;
 }
 
@@ -1444,6 +1445,7 @@ export interface $ZodAny extends $ZodType {
 
 export const $ZodAny: core.$constructor<$ZodAny> = /*@__PURE__*/ core.$constructor("$ZodAny", (inst, def) => {
   $ZodType.init(inst, def);
+  inst._zod.optin = "optional";
 
   inst._zod.parse = (payload) => payload;
 });
