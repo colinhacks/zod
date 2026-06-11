@@ -83,7 +83,7 @@ const error: () => errors.$ZodErrorMap = () => {
         const postfix = ["ا", "و", "ۆ", "وو", "ە", "ی", "ێ"].some((p) => received.endsWith(p)) ? "یە" : "ە";
         const isEnglish = /^[a-zA-Z]+$/.test(received);
         if (receivedType === "null" || receivedType === "undefined") return `داواکراوە`;
-        return ` چاوەڕوانکراوە ${expected} بێت، بەڵام ${received}${isEnglish ? "" : postfix}`;
+        return `چاوەڕوانکراوە ${expected} بێت، بەڵام ${received}${isEnglish ? "" : postfix}`;
       }
 
       case "invalid_value":
