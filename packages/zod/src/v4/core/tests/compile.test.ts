@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 
 import * as z from "../../index.js";
-import { ZodCompileAsyncError, compile } from "../compile.js";
+import { ZodCompileAsyncError, ZodCompileUnsupportedError, compile } from "../compile.js";
 
 // Differential helper: assert compiled schema matches the original on a value.
 function expectMatch(schema: z.ZodType, value: unknown) {
@@ -1304,4 +1304,28 @@ test("runtime island inside array element", () => {
   const aot = compile(z.array(z.xor([z.string(), z.number()])));
   expect(valid(aot, ["a", 1, "b"])).toEqual(["a", 1, "b"]);
   invalid(aot, ["a", true]);
+});
+
+// === Error taxonomy ===
+
+test("unsupported features throw ZodCompileUnsupportedError, not raw errors", () => {
+  // __proto__ shape key: output object literal would set the prototype.
+  expect(() => compile(z.object({ ["__proto__"]: z.string() }))).toThrow(ZodCompileUnsupportedError);
+  // Record key schemas with checks need runtime key transforms.
+  expect(() => compile(z.record(z.string().min(2), z.number()))).toThrow(ZodCompileUnsupportedError);
+  // NaN comparison bounds can't compile to a faithful comparison.
+  expect(() => compile(z.number().gt(Number.NaN))).toThrow(ZodCompileUnsupportedError);
+  // Unsupported children still island inside containers.
+  const aot = compile(z.object({ a: z.string(), rec: z.record(z.string().min(2), z.number()) }));
+  expect(valid(aot, { a: "x", rec: { ab: 1 } })).toEqual({ a: "x", rec: { ab: 1 } });
+  invalid(aot, { a: "x", rec: { b: 1 } });
+});
+
+test("date min/max bounds compile with runtime parity", () => {
+  const schema = z.date().min(new Date("2024-01-01")).max(new Date("2025-01-01"));
+  const aot = compile(schema);
+  const inputs = [new Date("2024-06-15"), new Date("2024-01-01"), new Date("2023-12-31"), new Date("2025-01-02")];
+  for (const input of inputs) expectMatch(schema, input);
+  expect(valid(aot, inputs[0])).toEqual(inputs[0]);
+  invalid(aot, inputs[2]);
 });

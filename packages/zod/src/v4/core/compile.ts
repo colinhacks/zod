@@ -182,8 +182,16 @@ export function compileFastpass<T extends SomeType>(
 
   const F = Function;
   const factoryCode = `return (input) => {\n${code}\n}`;
-  const factory = new F(...constantNames, factoryCode);
-  const fn = factory(...constantValues) as CompiledFastpass<core.output<T>>;
+  let fn: CompiledFastpass<core.output<T>>;
+  try {
+    const factory = new F(...constantNames, factoryCode);
+    fn = factory(...constantValues) as CompiledFastpass<core.output<T>>;
+  } catch (err) {
+    // Malformed generated code (or a CSP environment rejecting `new Function`)
+    // surfaces as a typed error so the global shim falls back to the runtime
+    // instead of crashing with a raw SyntaxError/EvalError.
+    throw new ZodCompileUnsupportedError(`this schema (generated code failed to evaluate: ${(err as Error).message})`);
+  }
   if (options?.debug) {
     fn.code = fullCode;
   }
@@ -264,10 +272,10 @@ function generateChecks(doc: Doc, ctx: CompileContext, schema: SomeType, accesso
     const def = check._zod.def;
     switch (def.check) {
       case "greater_than":
-        generateGreaterThanCheck(doc, def, currentAccessor);
+        generateGreaterThanCheck(doc, ctx, def, currentAccessor);
         break;
       case "less_than":
-        generateLessThanCheck(doc, def, currentAccessor);
+        generateLessThanCheck(doc, ctx, def, currentAccessor);
         break;
       case "multiple_of":
         generateMultipleOfCheck(doc, ctx, def, currentAccessor);
@@ -317,7 +325,7 @@ function generateChecks(doc: Doc, ctx: CompileContext, schema: SomeType, accesso
       }
       default: {
         void (def satisfies never);
-        throw new Error(`Unsupported check type for AOT compilation: ${(def as { check: string }).check}`);
+        throw new ZodCompileUnsupportedError(`check type ${(def as { check: string }).check}`);
       }
     }
   }
@@ -325,22 +333,42 @@ function generateChecks(doc: Doc, ctx: CompileContext, schema: SomeType, accesso
   return currentAccessor;
 }
 
-function generateGreaterThanCheck(doc: Doc, def: checks.$ZodCheckGreaterThanDef, accessor: string): void {
-  const op = def.inclusive ? "<" : "<=";
-  if (typeof def.value === "bigint") {
-    doc.write(`if (${accessor} ${op} ${def.value}n) return INVALID;`);
-  } else {
-    doc.write(`if (${accessor} ${op} ${def.value}) return INVALID;`);
+// Emit a source operand for a gt/lt bound. Numbers inline; Dates hoist as a
+// constant (relational operators compare via valueOf). NaN and Invalid Date
+// bounds can't compile to a comparison that matches runtime semantics.
+function comparisonOperand(ctx: CompileContext, value: number | bigint | Date): string {
+  if (typeof value === "bigint") return `${value}n`;
+  if (typeof value === "number") {
+    if (Number.isNaN(value)) throw new ZodCompileUnsupportedError("comparison check with NaN bound");
+    return `${value}`;
   }
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) {
+      throw new ZodCompileUnsupportedError("comparison check with Invalid Date bound");
+    }
+    return addConstant(ctx, value);
+  }
+  throw new ZodCompileUnsupportedError(`comparison check bound of type ${typeof value}`);
 }
 
-function generateLessThanCheck(doc: Doc, def: checks.$ZodCheckLessThanDef, accessor: string): void {
+function generateGreaterThanCheck(
+  doc: Doc,
+  ctx: CompileContext,
+  def: checks.$ZodCheckGreaterThanDef,
+  accessor: string
+): void {
+  const op = def.inclusive ? "<" : "<=";
+  doc.write(`if (${accessor} ${op} ${comparisonOperand(ctx, def.value)}) return INVALID;`);
+}
+
+function generateLessThanCheck(
+  doc: Doc,
+  ctx: CompileContext,
+  def: checks.$ZodCheckLessThanDef,
+  accessor: string
+): void {
   const op = def.inclusive ? ">" : ">=";
-  if (typeof def.value === "bigint") {
-    doc.write(`if (${accessor} ${op} ${def.value}n) return INVALID;`);
-  } else {
-    doc.write(`if (${accessor} ${op} ${def.value}) return INVALID;`);
-  }
+  doc.write(`if (${accessor} ${op} ${comparisonOperand(ctx, def.value)}) return INVALID;`);
 }
 
 function generateMultipleOfCheck(
@@ -386,7 +414,7 @@ function generateNumberFormatCheck(doc: Doc, def: checks.$ZodCheckNumberFormatDe
       break;
     default: {
       void (format satisfies never);
-      throw new Error(`Unsupported number format for AOT compilation: ${format}`);
+      throw new ZodCompileUnsupportedError(`number format ${format}`);
     }
   }
 }
@@ -403,7 +431,7 @@ function generateBigIntFormatCheck(doc: Doc, def: checks.$ZodCheckBigIntFormatDe
       break;
     default: {
       void (format satisfies never);
-      throw new Error(`Unsupported bigint format for AOT compilation: ${format}`);
+      throw new ZodCompileUnsupportedError(`bigint format ${format}`);
     }
   }
 }
@@ -440,7 +468,7 @@ function generateOverwriteCheck(
 ): void {
   const tx = check._zod.def.tx;
   if (!tx) {
-    throw new Error("Overwrite check missing transform function (tx)");
+    throw new ZodCompileUnsupportedError("overwrite check without a transform function");
   }
 
   // Check for async transform
@@ -495,7 +523,7 @@ function generateCustomRefineCheck(doc: Doc, ctx: CompileContext, check: CustomC
     const helperConst = addConstant(ctx, helperFn);
     doc.write(`if (!${helperConst}(${accessor})) return INVALID;`);
   } else {
-    throw new Error("Unsupported custom check - no predicate or check function found");
+    throw new ZodCompileUnsupportedError("custom check without a predicate or check function");
   }
 }
 
@@ -919,6 +947,12 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
   const shape = def.shape;
   const keys = Object.keys(shape);
 
+  // `__proto__` as an own shape key can't be expressed in an output object
+  // literal (the literal form sets the prototype instead of an own property).
+  if (keys.includes("__proto__")) {
+    throw new ZodCompileUnsupportedError('object shape key "__proto__"');
+  }
+
   // Map from key to output accessor for that property
   const propOutputs: Record<string, string> = {};
 
@@ -1294,10 +1328,12 @@ function generateEnumCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acce
   const values = (schema._zod as unknown as { values?: Set<unknown> }).values;
   // `_zod.values` is cleared by z.partialRecord and similar helpers when they
   // want a schema that *infers* like an enum but isn't structurally enumerated.
-  // Without a known value set the fast path can't check membership; fall back.
+  // Without a known value set the fast path can't check membership. Throw
+  // (rather than emit `return INVALID`) so containers island this child and
+  // unions fall back whole — a falsely-rejecting branch inside xor would
+  // otherwise corrupt the match count into a false accept.
   if (!values) {
-    doc.write(`return INVALID;`);
-    return accessor;
+    throw new ZodCompileUnsupportedError("enum schema without enumerated values");
   }
   const enumSet = addConstant(ctx, values);
   doc.write(`if (!${enumSet}.has(${accessor})) return INVALID;`);
@@ -1661,6 +1697,10 @@ function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
       }
 
       const inputKey = typeof key === "number" ? key.toString() : key;
+      if (inputKey === "__proto__") {
+        // `out["__proto__"] = v` would hit the prototype setter on the output.
+        throw new ZodCompileUnsupportedError('record key "__proto__"');
+      }
       inputKeys.push(inputKey);
 
       const keyConst = addConstant(ctx, key);
@@ -1679,16 +1719,16 @@ function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
     return outputVar;
   }
 
-  // Force fallback for any other non-plain-string key schema. Runtime applies
-  // the keyType to each input key (validating + transforming); the fast path
+  // Any other non-plain-string key schema is unsupported. Runtime applies the
+  // keyType to each input key (validating + transforming); the fast path
   // doesn't model that yet. Even a plain `z.string()` with checks (regex,
-  // length, refine, etc.) needs the runtime. We only take the fast path for
-  // bare `z.string()` keys with no checks.
+  // length, refine, etc.) needs the runtime. Throw (rather than emit
+  // `return INVALID`) so containers island this record and direct callers get
+  // a signal instead of a silently dead fast path.
   const keyType = def.keyType._zod.def.type;
   const keyHasChecks = (def.keyType._zod.def.checks?.length ?? 0) > 0;
   if (keyType !== "string" || keyHasChecks) {
-    doc.write(`return INVALID;`);
-    return outputVar;
+    throw new ZodCompileUnsupportedError("record key schemas other than bare z.string()");
   }
 
   // Plain z.string() keys: iterate enumerable own keys and validate each
