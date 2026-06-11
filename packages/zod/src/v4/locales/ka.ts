@@ -43,6 +43,7 @@ const error: () => errors.$ZodErrorMap = () => {
     base64url: "base64url-კოდირებული ველი",
     json_string: "JSON ველი",
     e164: "E.164 ნომერი",
+    credit_card: "საკრედიტო ბარათის ნომერი",
     jwt: "JWT",
     template_literal: "შეყვანა",
   };
