@@ -2628,6 +2628,35 @@ test("defaults/prefaults", () => {
   expect(z.toJSONSchema(c, { io: "input" })).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "default": 1234,
+      "type": "string",
+    }
+  `);
+});
+
+test("default preserved through pipe/transform (issue #6049)", () => {
+  // z.string().transform(s => s).default("hello") should emit default: "hello" in io: "input" mode
+  const schema = z
+    .string()
+    .transform((s) => s)
+    .default("hello");
+  expect(z.toJSONSchema(schema, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "default": "hello",
+      "type": "string",
+    }
+  `);
+  // With a proper output terminus, default appears in output mode too
+  const schemaWithPipe = z
+    .string()
+    .transform((s) => s.toUpperCase())
+    .pipe(z.string())
+    .default("hello");
+  expect(z.toJSONSchema(schemaWithPipe, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "default": "hello",
       "type": "string",
     }
   `);

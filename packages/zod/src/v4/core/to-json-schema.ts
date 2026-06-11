@@ -201,7 +201,10 @@ export function process<T extends schemas.$ZodType>(
   if (ctx.io === "input" && isTransforming(schema)) {
     // examples/defaults only apply to output type of pipe
     delete result.schema.examples;
-    delete result.schema.default;
+    // ZodDefault explicitly declares the input-side default — preserve it even when the inner type transforms
+    if (def.type !== "default") {
+      delete result.schema.default;
+    }
   }
 
   // set prefault as default
