@@ -1500,6 +1500,22 @@ export interface ZodObject<
     Config
   >;
 
+  // exactPartial
+  exactPartial(): ZodObject<
+    {
+      -readonly [k in keyof Shape]: ZodExactOptional<Shape[k]>;
+    },
+    Config
+  >;
+  exactPartial<M extends util.Mask<keyof Shape>>(
+    mask: M & Record<Exclude<keyof M, keyof Shape>, never>
+  ): ZodObject<
+    {
+      -readonly [k in keyof Shape]: k extends keyof M ? ZodExactOptional<Shape[k]> : Shape[k];
+    },
+    Config
+  >;
+
   // required
   required(): ZodObject<
     {
@@ -1562,6 +1578,9 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
     },
     partial(...args) {
       return util.partial(ZodOptional, this, args[0]);
+    },
+    exactPartial(...args) {
+      return util.partial(ZodExactOptional, this, args[0]);
     },
     required(...args) {
       return util.required(ZodNonOptional, this, args[0]);
