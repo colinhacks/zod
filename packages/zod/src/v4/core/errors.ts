@@ -370,7 +370,10 @@ export function treeifyError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIss
           const terminal = i === fullpath.length - 1;
           if (typeof el === "string") {
             curr.properties ??= {};
-            curr.properties[el] ??= { errors: [] };
+            // Guard against prototype-polluted keys (toString, valueOf, etc.)
+            if (!Object.hasOwn(curr.properties, el)) {
+              curr.properties[el] = { errors: [] };
+            }
             curr = curr.properties[el];
           } else {
             curr.items ??= [];
