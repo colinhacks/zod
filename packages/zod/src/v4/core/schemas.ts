@@ -2348,6 +2348,7 @@ export interface $ZodDiscriminatedUnionInternals<
 > extends $ZodUnionInternals<Options> {
   def: $ZodDiscriminatedUnionDef<Options, Disc>;
   propValues: util.PropValues;
+  optionsMap: ReadonlyMap<util.Primitive, Options[number]>;
 }
 
 export interface $ZodDiscriminatedUnion<
@@ -2381,7 +2382,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
       return propValues;
     });
 
-    const disc = util.cached(() => {
+    util.defineLazy(inst._zod, "optionsMap", () => {
       const opts = def.options as $ZodTypeDiscriminable[];
       const map: Map<util.Primitive, $ZodType> = new Map();
       for (const o of opts) {
@@ -2395,7 +2396,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
           map.set(v, o);
         }
       }
-      return map;
+      return map as ReadonlyMap<util.Primitive, $ZodType>;
     });
 
     inst._zod.parse = (payload, ctx) => {
@@ -2411,7 +2412,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
         return payload;
       }
 
-      const opt = disc.value.get(input?.[def.discriminator] as any);
+      const opt = inst._zod.optionsMap.get(input?.[def.discriminator] as any);
       if (opt) {
         return opt._zod.run(payload, ctx) as any;
       }
@@ -2430,7 +2431,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
         errors: [],
         note: "No matching discriminator",
         discriminator: def.discriminator,
-        options: Array.from(disc.value.keys()),
+        options: Array.from(inst._zod.optionsMap.keys()),
         input,
         path: [def.discriminator],
         inst,

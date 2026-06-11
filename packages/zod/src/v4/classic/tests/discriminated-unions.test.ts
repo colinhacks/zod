@@ -692,3 +692,35 @@ test("encode with codec discriminator", () => {
   const encoded = z.encode(schema, { type: "one", value: "hello" });
   expect(encoded).toEqual({ type: 1, value: "hello" });
 });
+
+test("optionsMap and get(value) — by-discriminator lookup", () => {
+  const fruit = z.object({ type: z.literal("fruit"), seeds: z.boolean() });
+  const veg = z.object({ type: z.literal("vegetable"), leafy: z.boolean() });
+  const schema = z.discriminatedUnion("type", [fruit, veg]);
+
+  expect(schema.optionsMap).toBeInstanceOf(Map);
+  expect(Array.from(schema.optionsMap.keys())).toEqual(["fruit", "vegetable"]);
+  expect(schema.optionsMap.get("fruit")).toBe(fruit);
+  expect(schema.optionsMap.get("vegetable")).toBe(veg);
+
+  const got = schema.get("fruit");
+  expect(got).toBe(fruit);
+  expectTypeOf(got).toEqualTypeOf<typeof fruit>();
+
+  expectTypeOf(schema.get("vegetable")).toEqualTypeOf<typeof veg>();
+
+  // @ts-expect-error — "unknown" is not a valid discriminator value
+  schema.get("unknown");
+});
+
+test("get(value) — single member with multiple discriminator values", () => {
+  const a = z.object({ type: z.literal(["x", "y"]), payload: z.string() });
+  const b = z.object({ type: z.literal("z"), payload: z.number() });
+  const schema = z.discriminatedUnion("type", [a, b]);
+
+  expect(schema.get("x")).toBe(a);
+  expect(schema.get("y")).toBe(a);
+  expect(schema.get("z")).toBe(b);
+  expectTypeOf(schema.get("x")).toEqualTypeOf<typeof a>();
+  expectTypeOf(schema.get("z")).toEqualTypeOf<typeof b>();
+});
