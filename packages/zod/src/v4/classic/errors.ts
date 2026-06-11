@@ -66,14 +66,12 @@ export const ZodRealError: core.$constructor<ZodError> = /*@__PURE__*/ core.$con
   Parent: Error,
 });
 
-export type {
-  /** @deprecated Use `z.core.$ZodFlattenedError` instead. */
-  $ZodFlattenedError as ZodFlattenedError,
-  /** @deprecated Use `z.core.$ZodFormattedError` instead. */
-  $ZodFormattedError as ZodFormattedError,
-  /** @deprecated Use `z.core.$ZodErrorMap` instead. */
-  $ZodErrorMap as ZodErrorMap,
-} from "../core/index.js";
+/** @deprecated Use `z.core.$ZodFlattenedError` instead. */
+export type ZodFlattenedError<T, U = string> = core.$ZodFlattenedError<T, U>;
+/** @deprecated Use `z.core.$ZodFormattedError` instead. */
+export type ZodFormattedError<T, U = string> = core.$ZodFormattedError<T, U>;
+/** @deprecated Use `z.core.$ZodErrorMap` instead. */
+export type ZodErrorMap<T extends core.$ZodIssueBase = core.$ZodIssue> = core.$ZodErrorMap<T>;
 
 /** @deprecated Use `z.core.$ZodRawIssue` instead. */
 export type IssueData = core.$ZodRawIssue;
