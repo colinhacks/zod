@@ -2193,11 +2193,11 @@ export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$const
   $ZodType.init(inst, def);
 
   util.defineLazy(inst._zod, "optin", () =>
-    def.options.some((o) => o._zod.optin === "optional") ? "optional" : undefined
+    def.options.some((o) => o._zod.optin === "optional" || o._zod.values?.has(undefined)) ? "optional" : undefined
   );
 
   util.defineLazy(inst._zod, "optout", () =>
-    def.options.some((o) => o._zod.optout === "optional") ? "optional" : undefined
+    def.options.some((o) => o._zod.optout === "optional" || o._zod.values?.has(undefined)) ? "optional" : undefined
   );
 
   util.defineLazy(inst._zod, "values", () => {
