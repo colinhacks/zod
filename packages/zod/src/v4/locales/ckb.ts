@@ -97,8 +97,8 @@ const error: () => errors.$ZodErrorMap = () => {
       }
       case "too_small": {
         const sizing = getSizing(issue.origin);
-        if (sizing) return `پێویستە بە لایەنی زۆرەوە ${issue.minimum.toString()} ${sizing.unit} ${sizing.verb}`;
-        return `پێویستە بە لایەنی زۆرەوە ${issue.minimum.toString()} بێت`;
+        if (sizing) return `پێویستە بە لایەنی کەمەوە ${issue.minimum.toString()} ${sizing.unit} ${sizing.verb}`;
+        return `پێویستە بە لایەنی کەمەوە ${issue.minimum.toString()} بێت`;
       }
       case "invalid_format": {
         const _issue = issue as errors.$ZodStringFormatIssues;
