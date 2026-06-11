@@ -419,6 +419,27 @@ test("passthrough index signature", () => {
   util.assertEqual<{ a: string } & { [k: string]: unknown }, b>(true);
 });
 
+test("nested union inference (#2654)", () => {
+  // a union schema should infer to the same type whether used standalone or
+  // nested inside an object — not `T & (T | undefined)`
+  const EventNameSchema = z.string().or(z.array(z.string()));
+  type EventName = z.infer<typeof EventNameSchema>;
+  util.assertEqual<EventName, string | string[]>(true);
+
+  const EventSchema = z.object({
+    name: z.string().or(z.array(z.string())),
+  });
+  type EventWithName = z.infer<typeof EventSchema>;
+  util.assertEqual<EventWithName, { name: string | string[] }>(true);
+  util.assertEqual<EventWithName["name"], string | string[]>(true);
+
+  const recordSchema = z.object({
+    values: z.string().array().or(z.record(z.string())),
+  });
+  type RecordType = z.infer<typeof recordSchema>;
+  util.assertEqual<RecordType, { values: string[] | Record<string, string> }>(true);
+});
+
 test("xor", () => {
   type Without<T, U> = { [P in Exclude<keyof T, keyof U>]?: never };
   type XOR<T, U> = T extends object ? (U extends object ? (Without<T, U> & U) | (Without<U, T> & T) : U) : T;
