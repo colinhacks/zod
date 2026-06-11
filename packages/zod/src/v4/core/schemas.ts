@@ -29,6 +29,7 @@ export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> ex
   readonly async?: boolean | undefined;
   readonly direction?: "forward" | "backward";
   readonly skipChecks?: boolean;
+  readonly loosen?: boolean;
 }
 
 export interface ParsePayload<T = unknown> {
@@ -1857,7 +1858,7 @@ function handleCatchall(
   proms: Promise<any>[],
   input: any,
   payload: ParsePayload,
-  ctx: ParseContext,
+  ctx: ParseContextInternal,
   def: ReturnType<typeof normalizeDef>,
   inst: $ZodObject
 ) {
@@ -1873,6 +1874,7 @@ function handleCatchall(
     if (key === "__proto__") continue;
     if (keySet.has(key)) continue;
     if (t === "never") {
+      if (ctx.loosen) continue;
       unrecognized.push(key);
       continue;
     }
@@ -2477,8 +2479,9 @@ export const $ZodIntersection: core.$constructor<$ZodIntersection> = /*@__PURE__
 
     inst._zod.parse = (payload, ctx) => {
       const input = payload.value;
-      const left = def.left._zod.run({ value: input, issues: [] }, ctx);
-      const right = def.right._zod.run({ value: input, issues: [] }, ctx);
+      const intersectCtx = { ...ctx, loosen: true };
+      const left = def.left._zod.run({ value: input, issues: [] }, intersectCtx);
+      const right = def.right._zod.run({ value: input, issues: [] }, intersectCtx);
       const async = left instanceof Promise || right instanceof Promise;
 
       if (async) {
@@ -2584,11 +2587,10 @@ function handleIntersectionResults(result: ParsePayload, left: ParsePayload, rig
     result.issues.push({ ...unrecIssue, keys: bothKeys });
   }
 
-  if (util.aborted(result)) return result;
-
   const merged = mergeValues(left.value, right.value);
 
   if (!merged.valid) {
+    if (util.aborted(result)) return result;
     throw new Error(`Unmergable intersection. Error path: ` + `${JSON.stringify(merged.mergeErrorPath)}`);
   }
 
