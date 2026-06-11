@@ -17,6 +17,7 @@
     "./v4/locales/be": "./src/v4/locales/be.ts",
     "./v4/locales/bg": "./src/v4/locales/bg.ts",
     "./v4/locales/ca": "./src/v4/locales/ca.ts",
+    "./v4/locales/ckb": "./src/v4/locales/ckb.ts",
     "./v4/locales/cs": "./src/v4/locales/cs.ts",
     "./v4/locales/da": "./src/v4/locales/da.ts",
     "./v4/locales/de": "./src/v4/locales/de.ts",
