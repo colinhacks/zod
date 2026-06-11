@@ -1377,6 +1377,18 @@ test("xor and custom when-gated checks force runtime fallback", () => {
   expectMatch(z.object({ n: gated }), { n: 3 }); // runtime skips the gated check
 });
 
+test("strict objects reject inherited enumerable keys like the runtime", () => {
+  const schema = z.strictObject({ a: z.string() });
+  expectMatch(schema, Object.assign(Object.create({ extra: 1 }), { a: "x" }));
+  expectMatch(schema, { a: "x" });
+  // Own __proto__ keys are skipped by the runtime, not unrecognized.
+  expectMatch(schema, JSON.parse('{"a":"x","__proto__":{"polluted":true}}'));
+
+  const withOptional = z.strictObject({ a: z.string(), b: z.string().optional() });
+  expectMatch(withOptional, Object.assign(Object.create({ extra: 1 }), { a: "x" }));
+  expectMatch(withOptional, JSON.parse('{"a":"x","__proto__":{}}'));
+});
+
 // === Error taxonomy ===
 
 test("unsupported features throw ZodCompileUnsupportedError, not raw errors", () => {

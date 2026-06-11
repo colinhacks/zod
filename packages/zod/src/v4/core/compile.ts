@@ -1042,7 +1042,9 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
     const catchallType = catchall._zod.def.type;
 
     if (catchallType === "never") {
-      // Strict object: reject unknown keys
+      // Strict object: reject unknown keys. Runtime iterates with for...in
+      // (inherited enumerable keys count as unrecognized; own __proto__ is
+      // skipped, see #5898).
       const hasOptional = keys.some((k) => shape[k]!._zod.optin === "optional");
 
       if (hasOptional) {
@@ -1050,11 +1052,21 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
         const condition = keys.map((k) => `k !== ${util.esc(k)}`).join(" && ");
         doc.write(`for (const k in ${accessor}) {`);
         doc.indented((d) => {
+          d.write(`if (k === "__proto__") continue;`);
           d.write(`if (${condition}) return INVALID;`);
         });
         doc.write(`}`);
       } else {
-        // All required: key count is sufficient (wrong keys fail property checks)
+        // All required: own-key count suffices (wrong keys fail property
+        // checks) — but only for plain prototypes, where for...in can't see
+        // inherited enumerables the count misses. Anything else falls back.
+        // getPrototypeOf and Object.prototype are hoisted: closure-slot reads
+        // beat global lookups inside Function-constructed code.
+        const getProtoConst = addConstant(ctx, Object.getPrototypeOf);
+        const objProtoConst = addConstant(ctx, Object.prototype);
+        const protoVar = newVar(ctx);
+        doc.write(`const ${protoVar} = ${getProtoConst}(${accessor});`);
+        doc.write(`if (${protoVar} !== ${objProtoConst} && ${protoVar} !== null) return INVALID;`);
         doc.write(`if (Object.keys(${accessor}).length > ${keys.length}) return INVALID;`);
       }
     } else if ((catchallType === "unknown" || catchallType === "any") && !catchall._zod.def.checks?.length) {
