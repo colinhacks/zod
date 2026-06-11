@@ -118,4 +118,3 @@ await metabench("single z.base64() validator — invalid length", {
     return base64.safeParse(INVALID_LENGTH);
   },
 }).run();
-
