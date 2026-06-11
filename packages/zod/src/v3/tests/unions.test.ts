@@ -2,6 +2,7 @@
 import { expect, test } from "vitest";
 
 import * as z from "zod/v3";
+import { util } from "../helpers/util.js";
 
 test("function parsing", () => {
   const schema = z.union([z.string().refine(() => false), z.number().refine(() => false)]);
@@ -54,4 +55,12 @@ test("readonly union", async () => {
   const union = z.union(options);
   union.parse("asdf");
   union.parse(12);
+});
+
+test("union nested in object infers cleanly (issue #2654)", () => {
+  const EventSchema = z.object({
+    name: z.string().or(z.array(z.string())),
+  });
+  type Inferred = z.infer<typeof EventSchema>;
+  util.assertEqual<Inferred, { name: string | string[] }>(true);
 });
