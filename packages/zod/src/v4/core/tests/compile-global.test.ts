@@ -60,6 +60,19 @@ test("user callbacks run at most twice on invalid input", () => {
   expect(refines).toBe(2);
 });
 
+test("global mode respects the jitless config", () => {
+  core.config({ jitless: true });
+  try {
+    const schema = z.object({ a: z.string() });
+    expect(schema.safeParse({ a: "x" }).success).toBe(true);
+    // The shim restored the runtime parser instead of compiling: a compiled
+    // wrapper carries __originalRun, the bare runtime does not.
+    expect((schema._zod.run as { __originalRun?: unknown }).__originalRun).toBeUndefined();
+  } finally {
+    core.config({ jitless: undefined });
+  }
+});
+
 test("schemas with unsupported features fall back without crashing", () => {
   const schema = z.string().refine(async () => true);
   // First call attempts compile, falls back. Subsequent calls use runtime.

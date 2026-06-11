@@ -1854,11 +1854,11 @@ function generateSetCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acces
 }
 
 function generateFileCheck(doc: Doc, accessor: string): string {
-  // File is only available in browser environments
-  doc.write(`if (typeof File !== "undefined" && !(${accessor} instanceof File)) return INVALID;`);
-  doc.write(
-    `if (typeof File === "undefined" && !(${accessor} && typeof ${accessor} === "object" && "name" in ${accessor} && "size" in ${accessor})) return INVALID;`
-  );
+  // Runtime $ZodFile is a bare `instanceof File`, including the implicit
+  // global lookup. The previous duck-typed fallback accepted arbitrary
+  // {name, size} objects in File-less environments — behavior the runtime
+  // never had.
+  doc.write(`if (!(${accessor} instanceof File)) return INVALID;`);
   return accessor;
 }
 

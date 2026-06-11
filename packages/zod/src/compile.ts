@@ -38,6 +38,13 @@ core.globalConfig.postProcessor = (inst: any) => {
 
     compiling = true;
     try {
+      // Respect the jitless config: it exists precisely so CSP/no-eval
+      // environments never reach `new Function`. Global mode must not bypass
+      // it (explicit z.compile calls remain an explicit opt-in).
+      if (core.globalConfig.jitless) {
+        inst._zod.run = originalRun;
+        return originalRun(payload, ctx);
+      }
       const compiled = compile(inst);
       // Only the run wrapper is installed. Copying the compiled parse/
       // safeParse closures here would make their INVALID fallback re-enter
