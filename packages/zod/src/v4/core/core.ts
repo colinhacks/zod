@@ -128,6 +128,8 @@ export interface $ZodConfig {
   localeError?: errors.$ZodErrorMap | undefined;
   /** Disable JIT schema compilation. Useful in environments that disallow `eval`. */
   jitless?: boolean | undefined;
+  /** Inject a custom regex tester (e.g., RE2) */
+  regexTester?: ((regex: RegExp) => { test: (val: string) => boolean }) | undefined;
 }
 
 interface GlobalThisWithConfig {
@@ -150,4 +152,28 @@ export const globalConfig: $ZodConfig = (globalThis as GlobalThisWithConfig).__z
 export function config(newConfig?: Partial<$ZodConfig>): $ZodConfig {
   if (newConfig) Object.assign(globalConfig, newConfig);
   return globalConfig;
+}
+
+let lastRegexTester: $ZodConfig["regexTester"];
+let testerCache = new WeakMap<RegExp, { test: (val: string) => boolean }>();
+
+export function testRegex(regex: RegExp, value: string): boolean {
+  // Clear the cache if the user dynamically updates the global config
+  if (lastRegexTester !== globalConfig.regexTester) {
+    testerCache = new WeakMap();
+    lastRegexTester = globalConfig.regexTester;
+  }
+
+  let tester = testerCache.get(regex);
+  if (!tester) {
+    tester = globalConfig.regexTester ? globalConfig.regexTester(regex) : regex;
+    testerCache.set(regex, tester);
+  }
+
+  // Reset stateful native regexes
+  if (tester === regex) {
+    regex.lastIndex = 0;
+  }
+
+  return tester.test(value);
 }

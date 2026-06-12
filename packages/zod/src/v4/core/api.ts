@@ -1,5 +1,6 @@
 import * as checks from "./checks.js";
 import type * as core from "./core.js";
+import { testRegex } from "./core.js";
 import type * as errors from "./errors.js";
 import * as registries from "./registries.js";
 import * as schemas from "./schemas.js";
@@ -1811,7 +1812,7 @@ export function _stringFormat<Format extends string>(
     check: "string_format",
     type: "string",
     format,
-    fn: typeof fnOrRegex === "function" ? fnOrRegex : (val) => fnOrRegex.test(val),
+    fn: typeof fnOrRegex === "function" ? fnOrRegex : (val) => testRegex(fnOrRegex, val as string),
     ...params,
   };
   if (fnOrRegex instanceof RegExp) {
