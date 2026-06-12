@@ -3129,3 +3129,11 @@ test("recursive lazy with describe does not stack overflow", () => {
   expect(result).toBeDefined();
   expect(result.$defs).toBeDefined();
 });
+
+
+test("ref tokens are RFC 6901 encoded when id contains / or ~", () => {
+  const inner = z.string().meta({ id: "Shared/User~" });
+  const result = z.toJSONSchema(z.object({ a: inner }));
+  expect(result.$defs!["Shared/User~"]).toEqual({ type: "string" });
+  expect((result.properties!.a as any).$ref).toBe("#/$defs/Shared~1User~0");
+});
