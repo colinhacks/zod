@@ -10,6 +10,7 @@
     "metadata",
     "json-schema",
     "codecs",
+    "compile",
     "ecosystem",
     "library-authors",
     "---Packages---",

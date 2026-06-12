@@ -113,6 +113,31 @@ await schema.parseAsync("hello");
 // => "hello"
 ```
 
+### AOT compilation
+
+For hot validation paths, `z.compile(schema)` returns a schema clone with an ahead-of-time compiled fast path. Valid inputs take the compiled path; invalid inputs fall back to the regular parser so error reporting stays identical.
+
+```ts
+const CompiledPlayer = z.compile(Player);
+
+CompiledPlayer.parse({ username: "billie", xp: 100 });
+```
+
+To enable compilation globally for schemas constructed after import:
+
+```ts
+import "zod/compile"; // place before modules that define schemas
+```
+
+Things to know:
+
+- Compilation uses `new Function`. Global mode is automatically disabled when `z.config({ jitless: true })` is set (e.g. CSP environments); calling `z.compile()` directly is an explicit opt-in.
+- Schemas with async refinements or transforms can't be compiled — `z.compile()` throws `ZodCompileAsyncError`; other unsupported constructs throw `ZodCompileUnsupportedError`. In global mode such schemas silently keep using the regular parser.
+- On invalid input, refinements and transforms may run twice (fast path, then fallback).
+- Deriving a new schema from a compiled one (`.refine()`, `.extend()`, etc.) returns an uncompiled schema — compile the final schema.
+
+See [`compile` docs](https://zod.dev/compile) for details.
+
 ### Handling errors
 
 When validation fails, the `.parse()` method will throw a `ZodError` instance with granular information about the validation issues.
