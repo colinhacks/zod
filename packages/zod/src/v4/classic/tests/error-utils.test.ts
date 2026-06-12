@@ -805,3 +805,15 @@ test("z.treeifyError nested union with real schema", () => {
     }
   }
 });
+
+test("z.treeifyError handles Object.prototype keys in path", () => {
+  const schema = z.object({ toString: z.string() });
+  const result = schema.safeParse({});
+  expect(result.success).toBe(false);
+  if (!result.success) {
+    const tree: any = z.treeifyError(result.error);
+    expect(tree.properties).toHaveProperty("toString");
+    expect(tree.properties.toString.errors).toHaveLength(1);
+    expect(tree.properties.toString.errors[0]).toContain("expected string");
+  }
+});
