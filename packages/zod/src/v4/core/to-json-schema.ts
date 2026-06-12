@@ -241,6 +241,9 @@ export function extractDefs<T extends schemas.$ZodType>(
 
   // returns a ref to the schema
   // defId will be empty if the ref points to an external schema (or #)
+  // RFC 6901: encode ~ and / in JSON Pointer reference tokens
+  const encodeRefToken = (id: string) => id.replaceAll("~", "~0").replaceAll("/", "~1");
+
   const makeURI = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): { ref: string; defId?: string } => {
     // comparing the seen objects because sometimes
     // multiple schemas map to the same seen object.
@@ -260,7 +263,7 @@ export function extractDefs<T extends schemas.$ZodType>(
       // otherwise, add to __shared
       const id: string = entry[1].defId ?? (entry[1].schema.id as string) ?? `schema${ctx.counter++}`;
       entry[1].defId = id; // set defId so it will be reused if needed
-      return { defId: id, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id}` };
+      return { defId: id, ref: `${uriGenerator("__shared")}#/${defsSegment}/${encodeRefToken(id)}` };
     }
 
     if (entry[1] === root) {
@@ -271,7 +274,7 @@ export function extractDefs<T extends schemas.$ZodType>(
     const uriPrefix = `#`;
     const defUriPrefix = `${uriPrefix}/${defsSegment}/`;
     const defId = entry[1].schema.id ?? `__schema${ctx.counter++}`;
-    return { defId, ref: defUriPrefix + defId };
+    return { defId, ref: defUriPrefix + encodeRefToken(defId) };
   };
 
   // stored cached version in `def` property
