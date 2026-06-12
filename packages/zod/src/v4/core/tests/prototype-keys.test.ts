@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+﻿import { expect, test } from "vitest";
 import * as z from "zod/v4";
 
 test("z.treeifyError handles prototype keys", () => {
