@@ -105,6 +105,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Nieprawidłowe dane wejściowe";
       case "invalid_element":
         return `Nieprawidłowa wartość w ${issue.origin}`;
+      case "invalid_temporal":
+        return `Nieprawidłowy ${issue.origin}: oczekiwana wartość to ${issue.expected}, ale wynosiła ${issue.received}`;
       default:
         return `Nieprawidłowe dane wejściowe`;
     }

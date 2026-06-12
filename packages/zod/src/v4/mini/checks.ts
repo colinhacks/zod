@@ -29,4 +29,5 @@ export {
   _trim as trim,
   _toLowerCase as toLowerCase,
   _toUpperCase as toUpperCase,
+  _compareTemporal as compareTemporal,
 } from "../core/index.js";

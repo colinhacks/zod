@@ -105,6 +105,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Nevalida enigo";
       case "invalid_element":
         return `Nevalida valoro en ${issue.origin}`;
+      case "invalid_temporal":
+        return `Nevalida ${issue.origin}: atendita valoro estis ${issue.expected} sed ĝi estis ${issue.received}`;
       default:
         return `Nevalida enigo`;
     }

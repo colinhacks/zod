@@ -103,6 +103,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Ugyldig input";
       case "invalid_element":
         return `Ugyldig verdi i ${issue.origin}`;
+      case "invalid_temporal":
+        return `Ugyldig ${issue.origin}: forventet verdi var ${issue.expected}, men den var ${issue.received}`;
       default:
         return `Ugyldig input`;
     }
