@@ -347,6 +347,19 @@ test("url validations", () => {
   expect(() => url.parse("https:/")).toThrow();
   expect(() => url.parse("asdfj@lkjsdf.com")).toThrow();
   expect(() => url.parse("https://")).toThrow();
+
+  // bare IPv6 addresses must not be accepted as URLs
+  expect(() => url.parse("fe80::1")).toThrow();
+  expect(() => url.parse("fe80::abcd:1234")).toThrow();
+  expect(() => url.parse("fe80:0000:0000:0000:0000:0000:0000:0001")).toThrow();
+  expect(() => url.parse("abcd::1")).toThrow();
+  expect(() => url.parse("::1")).toThrow();
+  expect(() => url.parse("2001:db8::1")).toThrow();
+
+  // valid URLs containing IPv6 in brackets must still be accepted
+  url.parse("http://[::1]");
+  url.parse("http://[2001:db8::1]");
+  url.parse("http://[fe80::1]");
 });
 
 test("url preserves original input", () => {
