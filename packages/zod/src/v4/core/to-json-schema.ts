@@ -242,7 +242,7 @@ export function extractDefs<T extends schemas.$ZodType>(
   // returns a ref to the schema
   // defId will be empty if the ref points to an external schema (or #)
   // RFC 6901: encode ~ and / in JSON Pointer reference tokens
-  const encodeRefToken = (id: string) => id.replaceAll("~", "~0").replaceAll("/", "~1");
+  const encodeRefToken = (id: string) => id.replace(/~/g, "~0").replace(/\//g, "~1");
 
   const makeURI = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): { ref: string; defId?: string } => {
     // comparing the seen objects because sometimes
