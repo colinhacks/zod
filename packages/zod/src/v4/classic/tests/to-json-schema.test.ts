@@ -3115,6 +3115,18 @@ test("cycle detection - mutual recursion", () => {
   `);
 });
 
+test("RFC 6901: $ref pointer tokens escape ~ and / in meta id", () => {
+  // When a schema's meta id contains / or ~, the $defs key stays unescaped
+  // but the $ref URI fragment must encode per RFC 6901: ~ -> ~0, / -> ~1
+  const User = z.object({ name: z.string() }).meta({ id: "Shared/User~" });
+  const result = z.toJSONSchema(z.object({ User }));
+
+  // $defs key uses the original id (unescaped)
+  expect(result.$defs!["Shared/User~"]).toBeDefined();
+  // $ref pointer path must be RFC 6901 encoded
+  expect((result.properties as any).User.$ref).toBe("#/$defs/Shared~1User~0");
+});
+
 test("recursive lazy with describe does not stack overflow", () => {
   const NodeSchema: z.ZodType = z.lazy(() =>
     z
