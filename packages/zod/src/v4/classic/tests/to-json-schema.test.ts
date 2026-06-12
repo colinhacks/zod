@@ -1,4 +1,4 @@
-import { Validator } from "@seriousme/openapi-schema-validator";
+﻿import { Validator } from "@seriousme/openapi-schema-validator";
 import { describe, expect, test } from "vitest";
 import * as z from "zod";
 // import * as zCore from "zod/v4/core";
@@ -2174,7 +2174,7 @@ test("describe with id", () => {
 });
 
 test("id is stripped from $defs entries (draft-2020-12)", () => {
-  // The `id` in `.meta()` is a registration tag — it determines the $defs key
+  // The `id` in `.meta()` is a registration tag 鈥?it determines the $defs key
   // but should not leak into the definition body, where it is redundant.
   const inner = z.string().meta({ id: "Inner" });
   const result = z.toJSONSchema(z.object({ a: inner, b: inner }));
@@ -3137,3 +3137,4 @@ test("ref tokens are RFC 6901 encoded when id contains / or ~", () => {
   expect(result.$defs!["Shared/User~"]).toEqual({ type: "string" });
   expect((result.properties!.a as any).$ref).toBe("#/$defs/Shared~1User~0");
 });
+
