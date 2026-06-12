@@ -2088,7 +2088,7 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
 
           if (_issue.fatal) _issue.continue = false;
           _issue.code ??= "custom";
-          _issue.input ??= payload.value;
+          if (!("input" in _issue)) _issue.input = payload.value;
           _issue.inst ??= inst;
           // _issue.continue ??= true;
           payload.issues.push(util.issue(_issue));
