@@ -371,7 +371,7 @@ export function treeifyError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIss
           if (typeof el === "string") {
             curr.properties ??= {};
             // Guard against prototype-polluted keys (toString, valueOf, etc.)
-            if (!Object.hasOwn(curr.properties, el)) {
+            if (!Object.prototype.hasOwnProperty.call(curr.properties, el)) {
               curr.properties[el] = { errors: [] };
             }
             curr = curr.properties[el];
