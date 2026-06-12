@@ -133,7 +133,9 @@ To allow multiple literal values:
 ```ts
 const colors = z.literal(["red", "green", "blue"]);
 
-colors.parse("green"); // 鉁?colors.parse("yellow"); // 鉂?```
+colors.parse("green"); // ✅
+colors.parse("yellow"); // ❌
+```
 
 To extract the set of allowed values from a literal schema:
 
@@ -212,7 +214,7 @@ z.string().check(z.endsWith("zzz"));
 z.string().check(z.includes("---"));
 z.string().check(z.uppercase());
 z.string().check(z.lowercase());
-  z.string().check(z.nonempty());
+z.string().check(z.nonempty());
 ```
 </Tab>
 </Tabs>
@@ -341,7 +343,10 @@ To validate any WHATWG-compatible URL:
 ```ts
 const schema = z.url();
 
-schema.parse("https://example.com"); // 鉁?schema.parse("http://localhost"); // 鉁?schema.parse("mailto:noreply@zod.dev"); // 鉁?```
+schema.parse("https://example.com"); // ✅
+schema.parse("http://localhost"); // ✅
+schema.parse("mailto:noreply@zod.dev"); // ✅
+```
 
 As you can see this is quite permissive. Internally this uses the `new URL()` constructor to validate inputs; this behavior may differ across platforms and runtimes but it's the mostly rigorous way to validate URIs/URLs on any given JS runtime/engine. 
 
@@ -350,17 +355,21 @@ To validate the hostname against a specific regex:
 ```ts
 const schema = z.url({ hostname: /^example\.com$/ });
 
-schema.parse("https://example.com"); // 鉁?schema.parse("https://zombo.com"); // 鉂?```
+schema.parse("https://example.com"); // ✅
+schema.parse("https://zombo.com"); // ❌
+```
 
 To validate the protocol against a specific regex, use the `protocol` param.
 
 ```ts
 const schema = z.url({ protocol: /^https$/ });
 
-schema.parse("https://example.com"); // 鉁?schema.parse("http://example.com"); // 鉂?```
+schema.parse("https://example.com"); // ✅
+schema.parse("http://example.com"); // ❌
+```
 
 <Callout>
-  **Web URLs** 鈥?In many cases, you'll want to validate Web URLs specifically. Here's the recommended schema for doing so:
+  **Web URLs** — In many cases, you'll want to validate Web URLs specifically. Here's the recommended schema for doing so:
 
   ```ts
   const httpUrl = z.url({
@@ -390,7 +399,9 @@ To validate phone numbers in E.164 format:
 ```ts
 const phone = z.e164();
 
-phone.parse("+15555555555"); // 鉁?phone.parse("555-555-5555"); // 鉂?```
+phone.parse("+15555555555"); // ✅
+phone.parse("555-555-5555"); // ❌
+```
 
 This schema validates strings with a leading `+`, a non-zero country code, and 7 to 15 digits total.
 
@@ -403,9 +414,11 @@ The `z.iso.datetime()` method enforces ISO 8601; by default, no timezone offsets
 ```ts
 const datetime = z.iso.datetime();
 
-datetime.parse("2020-01-01T06:15:00Z"); // 鉁?datetime.parse("2020-01-01T06:15:00.123Z"); // 鉁?datetime.parse("2020-01-01T06:15:00.123456Z"); // 鉁?(arbitrary precision)
-datetime.parse("2020-01-01T06:15:00+02:00"); // 鉂?(offsets not allowed)
-datetime.parse("2020-01-01T06:15:00"); // 鉂?(local not allowed)
+datetime.parse("2020-01-01T06:15:00Z"); // ✅
+datetime.parse("2020-01-01T06:15:00.123Z"); // ✅
+datetime.parse("2020-01-01T06:15:00.123456Z"); // ✅ (arbitrary precision)
+datetime.parse("2020-01-01T06:15:00+02:00"); // ❌ (offsets not allowed)
+datetime.parse("2020-01-01T06:15:00"); // ❌ (local not allowed)
 ```
 
 To allow timezone offsets:
@@ -414,31 +427,47 @@ To allow timezone offsets:
 const datetime = z.iso.datetime({ offset: true });
 
 // allows timezone offsets
-datetime.parse("2020-01-01T06:15:00+02:00"); // 鉁?
+datetime.parse("2020-01-01T06:15:00+02:00"); // ✅
+
 // basic offsets not allowed
-datetime.parse("2020-01-01T06:15:00+02");    // 鉂?datetime.parse("2020-01-01T06:15:00+0200");  // 鉂?
+datetime.parse("2020-01-01T06:15:00+02");    // ❌
+datetime.parse("2020-01-01T06:15:00+0200");  // ❌
+
 // Z is still supported
-datetime.parse("2020-01-01T06:15:00Z"); // 鉁?
+datetime.parse("2020-01-01T06:15:00Z"); // ✅ 
 ```
 
 To allow unqualified (timezone-less) datetimes:
 
 ```ts
 const schema = z.iso.datetime({ local: true });
-schema.parse("2020-01-01T06:15:01"); // 鉁?schema.parse("2020-01-01T06:15"); // 鉁?seconds optional
+schema.parse("2020-01-01T06:15:01"); // ✅
+schema.parse("2020-01-01T06:15"); // ✅ seconds optional
 ```
 
 To constrain the allowable time `precision`. By default, seconds are optional and arbitrary sub-second precision is allowed.
 
 ```ts
 const a = z.iso.datetime();
-a.parse("2020-01-01T06:15Z"); // 鉁?a.parse("2020-01-01T06:15:00Z"); // 鉁?a.parse("2020-01-01T06:15:00.123Z"); // 鉁?
+a.parse("2020-01-01T06:15Z"); // ✅
+a.parse("2020-01-01T06:15:00Z"); // ✅
+a.parse("2020-01-01T06:15:00.123Z"); // ✅
+
 const b = z.iso.datetime({ precision: -1 }); // minute precision (no seconds)
-b.parse("2020-01-01T06:15Z"); // 鉁?b.parse("2020-01-01T06:15:00Z"); // 鉂?b.parse("2020-01-01T06:15:00.123Z"); // 鉂?
+b.parse("2020-01-01T06:15Z"); // ✅
+b.parse("2020-01-01T06:15:00Z"); // ❌
+b.parse("2020-01-01T06:15:00.123Z"); // ❌
+
 const c = z.iso.datetime({ precision: 0 }); // second precision only
-c.parse("2020-01-01T06:15Z"); // 鉂?c.parse("2020-01-01T06:15:00Z"); // 鉁?c.parse("2020-01-01T06:15:00.123Z"); // 鉂?
+c.parse("2020-01-01T06:15Z"); // ❌
+c.parse("2020-01-01T06:15:00Z"); // ✅
+c.parse("2020-01-01T06:15:00.123Z"); // ❌
+
 const d = z.iso.datetime({ precision: 3 }); // millisecond precision only
-d.parse("2020-01-01T06:15Z"); // 鉂?d.parse("2020-01-01T06:15:00Z"); // 鉂?d.parse("2020-01-01T06:15:00.123Z"); // 鉁?```
+d.parse("2020-01-01T06:15Z"); // ❌
+d.parse("2020-01-01T06:15:00Z"); // ❌
+d.parse("2020-01-01T06:15:00.123Z"); // ✅
+```
 
 ### ISO dates
 
@@ -447,7 +476,10 @@ The `z.iso.date()` method validates strings in the format `YYYY-MM-DD`.
 ```ts
 const date = z.iso.date();
 
-date.parse("2020-01-01"); // 鉁?date.parse("2020-1-1"); // 鉂?date.parse("2020-01-32"); // 鉂?```
+date.parse("2020-01-01"); // ✅
+date.parse("2020-1-1"); // ❌
+date.parse("2020-01-32"); // ❌
+```
 
 ### ISO times
 
@@ -456,14 +488,16 @@ The `z.iso.time()` method validates strings in the format `HH:MM[:SS[.s+]]`. By 
 ```ts
 const time = z.iso.time();
 
-time.parse("03:15"); // 鉁?time.parse("03:15:00"); // 鉁?time.parse("03:15:00.9999999"); // 鉁?(arbitrary precision)
+time.parse("03:15"); // ✅
+time.parse("03:15:00"); // ✅
+time.parse("03:15:00.9999999"); // ✅ (arbitrary precision)
 ```
 
 No offsets of any kind are allowed.
 
 ```ts
-time.parse("03:15:00Z"); // 鉂?(no `Z` allowed)
-time.parse("03:15:00+02:00"); // 鉂?(no offsets allowed)
+time.parse("03:15:00Z"); // ❌ (no `Z` allowed)
+time.parse("03:15:00+02:00"); // ❌ (no offsets allowed)
 ```
 
 Use the `precision` parameter to constrain the allowable decimal precision.
@@ -480,9 +514,11 @@ z.iso.time({ precision: 3 });  // HH:MM:SS.sss (millisecond precision)
 
 ```ts
 const ipv4 = z.ipv4();
-ipv4.parse("192.168.0.0"); // 鉁?
+ipv4.parse("192.168.0.0"); // ✅
+
 const ipv6 = z.ipv6();
-ipv6.parse("2001:db8:85a3::8a2e:370:7334"); // 鉁?```
+ipv6.parse("2001:db8:85a3::8a2e:370:7334"); // ✅
+```
 
 ### IP blocks (CIDR)
 
@@ -490,9 +526,11 @@ Validate IP address ranges specified with [CIDR notation](https://en.wikipedia.o
 
 ```ts
 const cidrv4 = z.cidrv4();
-cidrv4.parse("192.168.0.0/24"); // 鉁?
+cidrv4.parse("192.168.0.0/24"); // ✅
+
 const cidrv6 = z.cidrv6();
-cidrv6.parse("2001:db8::/32"); // 鉁?```
+cidrv6.parse("2001:db8::/32"); // ✅
+```
 
 ### MAC Addresses
 
@@ -500,13 +538,15 @@ Validate standard 48-bit MAC address [IEEE 802](https://en.wikipedia.org/wiki/MA
 
 ```ts
 const mac = z.mac(); 
-mac.parse("00:1A:2B:3C:4D:5E");  // 鉁?mac.parse("00-1a-2b-3c-4d-5e");  // 鉂?colon-delimited by default
-mac.parse("001A:2B3C:4D5E");     // 鉂?standard formats only
-mac.parse("00:1A:2b:3C:4d:5E");  // 鉂?no mixed case
+mac.parse("00:1A:2B:3C:4D:5E");  // ✅
+mac.parse("00-1a-2b-3c-4d-5e");  // ❌ colon-delimited by default
+mac.parse("001A:2B3C:4D5E");     // ❌ standard formats only
+mac.parse("00:1A:2b:3C:4d:5E");  // ❌ no mixed case
 
 // custom delimiter
 const dashMac = z.mac({ delimiter: "-" });
-dashMac.parse("00-1A-2B-3C-4D-5E"); // 鉁?```
+dashMac.parse("00-1A-2B-3C-4D-5E"); // ✅
+```
 
 ### JWTs
 
@@ -616,7 +656,10 @@ Use `z.number()` to validate numbers. It allows any finite number.
 ```ts
 const schema = z.number();
 
-schema.parse(3.14);      // 鉁?schema.parse(NaN);       // 鉂?schema.parse(Infinity);  // 鉂?```
+schema.parse(3.14);      // ✅
+schema.parse(NaN);       // ❌
+schema.parse(Infinity);  // ❌
+```
 
 Zod implements a handful of number-specific validations:
 
@@ -652,7 +695,9 @@ z.number().check(z.multipleOf(5));     // alias .step(5)
 If (for some reason) you want to validate `NaN`, use `z.nan()`.
 
 ```ts
-z.nan().parse(NaN);              // 鉁?z.nan().parse("anything else");  // 鉂?```
+z.nan().parse(NaN);              // ✅
+z.nan().parse("anything else");  // ❌
+```
 
 ## Integers
 
@@ -756,10 +801,11 @@ Use `z.enum` to validate inputs against a fixed set of allowable _string_ values
 const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
 
 FishEnum.parse("Salmon"); // => "Salmon"
-FishEnum.parse("Swordfish"); // => 鉂?```
+FishEnum.parse("Swordfish"); // => ❌
+```
 
 <Callout>
-  Careful 鈥?If you declare your string array as a variable, Zod won't be able to properly infer the exact values of each element.
+  Careful — If you declare your string array as a variable, Zod won't be able to properly infer the exact values of each element.
 
   ```ts
   const fish = ["Salmon", "Tuna", "Trout"];
@@ -787,7 +833,10 @@ const Fish = {
 } as const
 
 const FishEnum = z.enum(Fish)
-FishEnum.parse(Fish.Salmon); // => 鉁?FishEnum.parse(0); // => 鉁?FishEnum.parse(2); // => 鉂?```
+FishEnum.parse(Fish.Salmon); // => ✅
+FishEnum.parse(0); // => ✅
+FishEnum.parse(2); // => ❌
+```
 
 You can also pass in an externally-declared TypeScript enum.
 
@@ -798,7 +847,10 @@ enum Fish {
 }
 
 const FishEnum = z.enum(Fish);
-FishEnum.parse(Fish.Salmon); // => 鉁?FishEnum.parse(0); // => 鉁?FishEnum.parse(2); // => 鉂?```
+FishEnum.parse(Fish.Salmon); // => ✅
+FishEnum.parse(0); // => ✅
+FishEnum.parse(2); // => ❌
+```
 
 <Callout>
 Use `z.enum()` for externally declared TypeScript enums. The `z.nativeEnum()` API is deprecated.
@@ -1047,7 +1099,8 @@ const Dog = z.object({
   age: z.number().optional(),
 });
 
-Dog.parse({ name: "Yeller" }); // 鉁?```
+Dog.parse({ name: "Yeller" }); // ✅
+```
 </Tab>
 <Tab value="Zod Mini">
 ```ts z.object
@@ -1056,7 +1109,8 @@ const Dog = z.object({
   age: z.optional(z.number())
 });
 
-Dog.parse({ name: "Yeller" }); // 鉁?```
+Dog.parse({ name: "Yeller" }); // ✅
+```
 </Tab>
 </Tabs>
 
@@ -1079,7 +1133,7 @@ const StrictDog = z.strictObject({
 });
 
 StrictDog.parse({ name: "Yeller", extraKey: true });
-// 鉂?throws
+// ❌ throws
 ```
 
 ### `z.looseObject`
@@ -1110,7 +1164,9 @@ const DogWithStrings = z
   .catchall(z.string());
 
 
-DogWithStrings.parse({ name: "Yeller", extraKey: "extraValue" }); // 鉁?DogWithStrings.parse({ name: "Yeller", extraKey: 42 }); // 鉂?```
+DogWithStrings.parse({ name: "Yeller", extraKey: "extraValue" }); // ✅
+DogWithStrings.parse({ name: "Yeller", extraKey: 42 }); // ❌
+```
 </Tab>
 <Tab value="Zod Mini">
 ```ts z.object
@@ -1122,7 +1178,9 @@ const DogWithStrings = z.catchall(
   z.string()
 );
 
-DogWithStrings.parse({ name: "Yeller", extraKey: "extraValue" }); // 鉁?DogWithStrings.parse({ name: "Yeller", extraKey: 42 }); // 鉂?```
+DogWithStrings.parse({ name: "Yeller", extraKey: "extraValue" }); // ✅
+DogWithStrings.parse({ name: "Yeller", extraKey: 42 }); // ❌
+```
 </Tab>
 </Tabs>
 
@@ -1189,7 +1247,7 @@ const DogWithBreed = z.extend(Dog, {
 This API can be used to overwrite existing fields! Be careful with this power! If the two schemas share keys, B will override A.
 
 <Callout>
-**Alternative: spread syntax** 鈥?You can alternatively avoid `.extend()` altogether by creating a new object schema entirely. This makes the strictness level of the resulting schema visually obvious.
+**Alternative: spread syntax** — You can alternatively avoid `.extend()` altogether by creating a new object schema entirely. This makes the strictness level of the resulting schema visually obvious.
 
 ```ts
 const DogWithBreed = z.object({ // or z.strictObject() or z.looseObject()...
@@ -1212,7 +1270,7 @@ This approach has a few advantages:
 
 1. It uses language-level features ([spread syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax)) instead of library-specific APIs
 2. The same syntax works in Zod and Zod Mini
-3. It's more `tsc`-efficient 鈥?the `.extend()` method can be expensive on large schemas, and due to [a TypeScript limitation](https://github.com/microsoft/TypeScript/pull/61505) it gets quadratically more expensive when calls are chained
+3. It's more `tsc`-efficient — the `.extend()` method can be expensive on large schemas, and due to [a TypeScript limitation](https://github.com/microsoft/TypeScript/pull/61505) it gets quadratically more expensive when calls are chained
 4. If you wish, you can change the strictness level of the resulting schema by using `z.strictObject()` or `z.looseObject()`
 </Callout>
 
@@ -1221,8 +1279,10 @@ This approach has a few advantages:
 The `.safeExtend()` method works similarly to `.extend()`, but it won't let you overwrite an existing property with a non-assignable schema. In other words, the result of `.safeExtend()` will have an inferred type that [`extends`](https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#conditional-type-constraints) the original (in the TypeScript sense).
 
 ```ts
-z.object({ a: z.string() }).safeExtend({ a: z.string().min(5) }); // 鉁?z.object({ a: z.string() }).safeExtend({ a: z.any() }); // 鉁?z.object({ a: z.string() }).safeExtend({ a: z.number() });
-//                                       ^  鉂?ZodNumber is not assignable 
+z.object({ a: z.string() }).safeExtend({ a: z.string().min(5) }); // ✅
+z.object({ a: z.string() }).safeExtend({ a: z.any() }); // ✅
+z.object({ a: z.string() }).safeExtend({ a: z.number() });
+//                                       ^  ❌ ZodNumber is not assignable 
 ```
 
 Use `.safeExtend()` to extend schemas that contain refinements. (Regular `.extend()` will throw an error when used on schemas with refinements.)
@@ -1436,7 +1496,7 @@ Due to TypeScript limitations, recursive type inference can be finicky, and it o
 const Activity = z.object({
   name: z.string(),
   get subactivities() {
-    // ^ 鉂?'subactivities' implicitly has return type 'any' because it does not
+    // ^ ❌ 'subactivities' implicitly has return type 'any' because it does not
     // have a return type annotation and is referenced directly or indirectly
     // in one of its return expressions.ts(7023)
 
@@ -1467,7 +1527,7 @@ const Activity = z.object({
     export const Activity = z.object({
       name: z.string(),
       get children() {
-        // ^ 鉂?'children' implicitly has return type 'any' because it does not 
+        // ^ ❌ 'children' implicitly has return type 'any' because it does not 
         // have a return type annotation and is referenced directly or indirectly 
         // in one of its return expressions.ts(7023)
 
@@ -1485,7 +1545,7 @@ const Activity = z.object({
     ```ts
     const Activity = z.object({
       name: z.string(),
-      get children() { // 鉂?type error
+      get children() { // ❌ type error
         return z.optional(ActivityArray);
       },
     });
@@ -1498,13 +1558,13 @@ const Activity = z.object({
 
     ### Avoid nesting function calls
     
-    Functions like `z.array()` and `z.optional()` accept Zod schemas, so when you use them TypeScript will do some type-checking on their inputs to make sure they are valid. But type checking is the enemy of recursive type inference鈥攊t's hard for TypeScript to *check* and *infer* types at the same time. Methods do not have this problem, so prefer methods over functions when possible (sorry Zod Mini users).
+    Functions like `z.array()` and `z.optional()` accept Zod schemas, so when you use them TypeScript will do some type-checking on their inputs to make sure they are valid. But type checking is the enemy of recursive type inference—it's hard for TypeScript to *check* and *infer* types at the same time. Methods do not have this problem, so prefer methods over functions when possible (sorry Zod Mini users).
 
     ```ts
     const Activity = z.object({
       name: z.string(),
       get subactivities() {
-        // ^ 鉂?'subactivities' implicitly has return type 'any' because it does not 
+        // ^ ❌ 'subactivities' implicitly has return type 'any' because it does not 
         // have a return type annotation and is referenced directly or indirectly 
         // in one of its return expressions.ts(7023)
 
@@ -1664,9 +1724,9 @@ An exclusive union (XOR) is a union where exactly one option must match. Unlike 
 ```ts
 const schema = z.xor([z.string(), z.number()]);
 
-schema.parse("hello"); // 鉁?passes
-schema.parse(42);      // 鉁?passes
-schema.parse(true);    // 鉂?fails (zero matches)
+schema.parse("hello"); // ✅ passes
+schema.parse(42);      // ✅ passes
+schema.parse(true);    // ❌ fails (zero matches)
 ```
 
 This is useful when you want to ensure mutual exclusivity between options:
@@ -1678,14 +1738,14 @@ const payment = z.xor([
   z.object({ type: z.literal("bank"), accountNumber: z.string() }),
 ]);
 
-payment.parse({ type: "card", cardNumber: "1234" }); // 鉁?passes
+payment.parse({ type: "card", cardNumber: "1234" }); // ✅ passes
 ```
 
 If the input could match multiple options, `z.xor()` will fail:
 
 ```ts
 const overlapping = z.xor([z.string(), z.any()]);
-overlapping.parse("hello"); // 鉂?fails (matches both string and any)
+overlapping.parse("hello"); // ❌ fails (matches both string and any)
 ```
 
 
@@ -1707,7 +1767,7 @@ function handleResult(result: MyResult){
 }
 ```
 
-You could represent it with a regular `z.union()`. But regular unions are *naive*鈥攖hey check the input against each option in order and return the first one that passes. This can be slow for large unions.
+You could represent it with a regular `z.union()`. But regular unions are *naive*—they check the input against each option in order and return the first one that passes. This can be slow for large unions.
 
 So Zod provides a `z.discriminatedUnion()` API that uses a *discriminator key* to make parsing more efficient.
 
@@ -1811,12 +1871,22 @@ Zod supports numeric keys inside records in a way that closely mirrors TypeScrip
 ```ts
 const numberKeys = z.record(z.number(), z.string());
 numberKeys.parse({ 
-  1: "one", // 鉁?  2: "two", // 鉁?  "1.5": "one", // 鉁?  "-3": "two", // 鉁?  abc: "one" // 鉂?});
+  1: "one", // ✅
+  2: "two", // ✅
+  "1.5": "one", // ✅
+  "-3": "two", // ✅
+  abc: "one" // ❌
+});
 
 // further validation is also supported
 const intKeys = z.record(z.int().step(1).min(0).max(10), z.string());
 intKeys.parse({ 
-  0: "zero", // 鉁?  1: "one", // 鉁?  2: "two", // 鉁?  12: "twelve", // 鉂?  abc: "one" // 鉂?});
+  0: "zero", // ✅
+  1: "one", // ✅
+  2: "two", // ✅
+  12: "twelve", // ❌
+  abc: "one" // ❌
+});
 ```
 
 ### `z.partialRecord`
@@ -1827,7 +1897,8 @@ intKeys.parse({
 
   ```ts
   type MyRecord = Record<"a" | "b", string>;
-  const myRecord: MyRecord = { a: "foo", b: "bar" }; // 鉁?  const myRecord: MyRecord = { a: "foo" }; // 鉂?missing required key `b`
+  const myRecord: MyRecord = { a: "foo", b: "bar" }; // ✅
+  const myRecord: MyRecord = { a: "foo" }; // ❌ missing required key `b`
   ```
 
   For partial key sets, use `z.partialRecord()`.
@@ -1937,7 +2008,7 @@ fileSchema.check(z.mime(["image/png", "image/jpeg"])); // multiple MIME types
 ## Promises
 
 <Callout type="warn">
-  **Deprecated** 鈥?`z.promise()` is deprecated. There are vanishingly few valid uses cases for a `Promise` schema. If you suspect a value might be a `Promise`, simply `await` it before parsing it with Zod.
+  **Deprecated** — `z.promise()` is deprecated. There are vanishingly few valid uses cases for a `Promise` schema. If you suspect a value might be a `Promise`, simply `await` it before parsing it with Zod.
 </Callout>
 
 <Accordions type="single"><Accordion title="See z.promise() documentation">
@@ -1980,7 +2051,9 @@ class Test {
 
 const TestSchema = z.instanceof(Test);
 
-TestSchema.parse(new Test()); // 鉁?TestSchema.parse("whatever"); // 鉂?```
+TestSchema.parse(new Test()); // ✅
+TestSchema.parse("whatever"); // ❌
+```
 
 ### Property
 
@@ -1991,7 +2064,9 @@ const blobSchema = z.instanceof(URL).check(
   z.property("protocol", z.literal("https:" as string, "Only HTTPS allowed"))
 );
 
-blobSchema.parse(new URL("https://example.com")); // 鉁?blobSchema.parse(new URL("http://example.com")); // 鉂?```
+blobSchema.parse(new URL("https://example.com")); // ✅
+blobSchema.parse(new URL("http://example.com")); // ❌
+```
 
 The `z.property()` API works with any data type (but it's most useful when used in conjunction with `z.instanceof()`).
 
@@ -2000,7 +2075,9 @@ const blobSchema = z.string().check(
   z.property("length", z.number().min(10))
 );
 
-blobSchema.parse("hello there!"); // 鉁?blobSchema.parse("hello."); // 鉂?```
+blobSchema.parse("hello there!"); // ✅
+blobSchema.parse("hello."); // ❌
+```
 
 ## Refinements
 
@@ -2208,7 +2285,7 @@ const userId = z.string().refine(async (id) => {
 
 #### `when`
 
-> **Note** 鈥?This is a power user feature and can absolutely be abused in ways that will increase the probability of uncaught errors originating from inside your refinements. 
+> **Note** — This is a power user feature and can absolutely be abused in ways that will increase the probability of uncaught errors originating from inside your refinements. 
 
 By default, refinements don't run if any *non-continuable* issues have already been encountered. Zod is careful to ensure the type signature of the value is correct before passing it into any refinement functions.
 
@@ -2239,7 +2316,7 @@ const schema = z
 schema.parse({
   password: "asdf",
   confirmPassword: "asdf",
-  anotherField: 1234 // 鉂?this error will prevent the password check from running
+  anotherField: 1234 // ❌ this error will prevent the password check from running
 });
 ```
 </Tab>
@@ -2259,7 +2336,7 @@ const schema = z
 schema.parse({
   password: "asdf",
   confirmPassword: "asdf",
-  anotherField: 1234 // 鉂?this error will prevent the password check from running
+  anotherField: 1234 // ❌ this error will prevent the password check from running
 });
 ```
 </Tab>
@@ -2292,7 +2369,7 @@ const schema = baseSchema
 schema.parse({
   password: "asdf",
   confirmPassword: "asdf",
-  anotherField: 1234 // 鉂?this error will not prevent the password check from running
+  anotherField: 1234 // ❌ this error will not prevent the password check from running
 });
 ```
 </Tab>
@@ -2320,7 +2397,7 @@ const schema = z
 schema.parse({
   password: "asdf",
   confirmPassword: "asdf",
-  anotherField: 1234 // 鉂?this error will prevent the password check from running
+  anotherField: 1234 // ❌ this error will prevent the password check from running
 });
 ```
 </Tab>
@@ -2342,7 +2419,7 @@ const UniqueStringArray = z.array(z.string()).superRefine((val, ctx) => {
       maximum: 3,
       origin: "array",
       inclusive: true,
-      message: "Too many items 馃槨",
+      message: "Too many items 😡",
       input: val,
     });
   }
@@ -2369,7 +2446,7 @@ const UniqueStringArray = z.array(z.string()).check(
         maximum: 3,
         origin: "array",
         inclusive: true,
-        message: "Too many items 馃槨",
+        message: "Too many items 😡",
         input: val,
       });
     }
@@ -2390,7 +2467,7 @@ const UniqueStringArray = z.array(z.string()).check(
 ### `.check()`
 
 <Callout>
-**Note** 鈥?The `.check()` API is a more low-level API that's generally more complex than `.superRefine()`. It can be faster in performance-sensitive code paths, but it's also more verbose.
+**Note** — The `.check()` API is a more low-level API that's generally more complex than `.superRefine()`. It can be faster in performance-sensitive code paths, but it's also more verbose.
 </Callout>
 
 <Accordions>
@@ -2408,7 +2485,7 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
       maximum: 3,
       origin: "array",
       inclusive: true,
-      message: "Too many items 馃槨",
+      message: "Too many items 😡",
       input: ctx.value
     });
   }
@@ -2435,7 +2512,7 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
       maximum: 3,
       origin: "array",
       inclusive: true,
-      message: "Too many items 馃槨",
+      message: "Too many items 😡",
       input: ctx.value
     });
   }
@@ -2467,8 +2544,8 @@ const stringToDate = z.codec(
   z.iso.datetime(),  // input schema: ISO date string
   z.date(),          // output schema: Date object
   {
-    decode: (isoString) => new Date(isoString), // ISO string 鈫?Date
-    encode: (date) => date.toISOString(),       // Date 鈫?ISO string
+    decode: (isoString) => new Date(isoString), // ISO string → Date
+    encode: (date) => date.toISOString(),       // Date → ISO string
   }
 );
 ```
@@ -2544,7 +2621,7 @@ z.parse(stringToLength, "hello"); // => 5
 
 ## Transforms
 
-> **Note** 鈥?For bi-directional transforms, use [codecs](/codecs).
+> **Note** — For bi-directional transforms, use [codecs](/codecs).
 
 Transforms are a special kind of schema that perform a unidirectional transformation. Instead of validating input, they accept anything and perform some transformation on the data. To define a transform:
 
@@ -2859,7 +2936,7 @@ type Cat = z.infer<typeof Cat>; // { name: string } & z.$brand<"Cat">
 type Dog = z.infer<typeof Dog>; // { name: string } & z.$brand<"Dog">
 
 const pluto = Dog.parse({ name: "pluto" });
-const simba: Cat = pluto; // 鉂?not allowed
+const simba: Cat = pluto; // ❌ not allowed
 ```
 
 Under the hood, this works by attaching a "brand" to the schema's inferred type.
@@ -3073,8 +3150,8 @@ const schema = z.number()
   .nullable();
 
 schema.parse(0);  // => 0
-schema.parse(-1); // 鉂?throws
-schema.parse(101); // 鉂?throws
+schema.parse(-1); // ❌ throws
+schema.parse(101); // ❌ throws
 schema.parse(null); // => null
 ```
 </Tab>
@@ -3091,8 +3168,8 @@ const schema = z.nullable(
 );
 
 z.parse(schema, 0);   // => 0
-z.parse(schema, -1);  // 鉂?throws
-z.parse(schema, 101); // 鉂?throws
+z.parse(schema, -1);  // ❌ throws
+z.parse(schema, 101); // ❌ throws
 z.parse(schema, null); // => null
 ```
 </Tab>
