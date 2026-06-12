@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import * as z from "zod/v3";
+import * as z from "zod/v4";
 
 test("z.treeifyError handles prototype keys", () => {
   const schema = z.object({ toString: z.string() });
