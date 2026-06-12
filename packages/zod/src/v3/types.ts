@@ -876,8 +876,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         }
       } else if (check.kind === "url") {
         try {
-          // @ts-ignore
-          const url = new URL(input.data);
+          new URL(input.data);
           // Reject bare IPv6 addresses misinterpreted as URLs
           if (ipv6Regex.test(input.data)) {
             throw new Error("bare IPv6 address");
