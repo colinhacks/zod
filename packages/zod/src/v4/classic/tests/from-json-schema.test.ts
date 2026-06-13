@@ -54,6 +54,30 @@ test("number with constraints", () => {
   expect(() => schema.parse(47)).toThrow(); // not multiple of 5
 });
 
+test("draft-04 boolean exclusive bounds do not emit a redundant inclusive bound", () => {
+  const schema = fromJSONSchema({
+    type: "number",
+    minimum: 5,
+    maximum: 10,
+    exclusiveMinimum: true,
+    exclusiveMaximum: true,
+  } as any);
+  // exclusive on both ends: boundaries rejected, interior accepted
+  expect(() => schema.parse(5)).toThrow();
+  expect(() => schema.parse(10)).toThrow();
+  expect(schema.parse(7)).toBe(7);
+  // the inclusive .min()/.max() must be skipped so only the exclusive checks remain
+  const checks = (schema as any)._zod.def.checks.map((c: any) => [
+    c._zod.def.check,
+    c._zod.def.value,
+    c._zod.def.inclusive,
+  ]);
+  expect(checks).toEqual([
+    ["greater_than", 5, false],
+    ["less_than", 10, false],
+  ]);
+});
+
 test("integer schema", () => {
   const schema = fromJSONSchema({ type: "integer" });
   expect(schema.parse(42)).toBe(42);
