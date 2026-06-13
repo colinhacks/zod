@@ -143,6 +143,30 @@ test("tuple with items array (draft-7)", () => {
   expect(() => schema.parse(["hello", 42, "extra"])).toThrow();
 });
 
+test("tuple with items array and additionalItems: true (draft-7) allows extra items", () => {
+  const schema = fromJSONSchema({
+    $schema: "http://json-schema.org/draft-07/schema#",
+    type: "array",
+    items: [{ type: "string" }, { type: "number" }],
+    additionalItems: true,
+  });
+  expect(schema.parse(["hello", 42])).toEqual(["hello", 42]);
+  // additionalItems: true => extra items of any type are permitted
+  expect(schema.parse(["hello", 42, "extra", true])).toEqual(["hello", 42, "extra", true]);
+});
+
+test("tuple with prefixItems and items: true (draft-2020-12) allows extra items", () => {
+  const schema = fromJSONSchema({
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "array",
+    prefixItems: [{ type: "string" }, { type: "number" }],
+    items: true,
+  });
+  expect(schema.parse(["hello", 42])).toEqual(["hello", 42]);
+  // items: true => additional items beyond the prefix are permitted
+  expect(schema.parse(["hello", 42, "extra", true])).toEqual(["hello", 42, "extra", true]);
+});
+
 test("enum schema", () => {
   const schema = fromJSONSchema({
     enum: ["red", "green", "blue"],
