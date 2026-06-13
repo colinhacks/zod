@@ -2212,6 +2212,15 @@ test("id is observable in override callback", () => {
   expect(seenIds).toContain("Inner");
 });
 
+test("$ref pointer encodes / and ~ in meta id (RFC 6901)", () => {
+  // ids with slashes or tildes need RFC 6901 encoding in the $ref pointer path
+  // but the $defs key should remain the raw id
+  const User = z.object({ name: z.string() }).meta({ id: "Shared/User~" });
+  const result = z.toJSONSchema(z.object({ user: User }));
+  expect((result as any).$defs?.["Shared/User~"]).toBeDefined();
+  expect((result.properties as any)?.user?.$ref).toBe("#/$defs/Shared~1User~0");
+});
+
 test("describe with id on wrapper", () => {
   // Test that $ref propagation works when processor sets a different ref (readonly -> innerType)
   // but parent was extracted due to having an id
