@@ -1,4 +1,3 @@
-import type { $ZodTypeDiscriminable } from "./api.js";
 import * as checks from "./checks.js";
 import * as core from "./core.js";
 import { Doc } from "./doc.js";
@@ -2382,7 +2381,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
     });
 
     const disc = util.cached(() => {
-      const opts = def.options as $ZodTypeDiscriminable[];
+      const opts = def.options;
       const map: Map<util.Primitive, $ZodType> = new Map();
       for (const o of opts) {
         const values = o._zod.propValues?.[def.discriminator];

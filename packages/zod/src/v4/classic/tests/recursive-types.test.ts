@@ -629,3 +629,51 @@ test("recursive type with `id` meta", () => {
     },
   });
 });
+
+test("mutual recursion through discriminatedUnion getter", () => {
+  // Mutually-recursive getter variants that recurse back through the union.
+  // Previously z.discriminatedUnion broke inference here (ts7022/ts2615 -> any),
+  // while the equivalent z.union worked. Both should now infer the same type.
+  // Children are optional so the recursion has a terminating runtime value.
+  const variantA = z.object({
+    kind: z.literal("a"),
+    get child() {
+      return tree.optional();
+    },
+  });
+
+  const variantB = z.object({
+    kind: z.literal("b"),
+    get sibling() {
+      return tree.optional();
+    },
+  });
+
+  const tree = z.discriminatedUnion("kind", [variantA, variantB]);
+  type Tree = z.input<typeof tree>;
+
+  type _Tree =
+    | {
+        kind: "a";
+        child?: _Tree | undefined;
+      }
+    | {
+        kind: "b";
+        sibling?: _Tree | undefined;
+      };
+
+  // The inferred type must be the recursive union shape, not `any`.
+  expectTypeOf<Tree>().toEqualTypeOf<_Tree>();
+  expectTypeOf<Tree>().not.toBeAny();
+
+  // discriminatedUnion and the union equivalent must infer the same type.
+  const treeUnion = z.union([variantA, variantB]);
+  expectTypeOf<z.input<typeof tree>>().toEqualTypeOf<z.input<typeof treeUnion>>();
+
+  // Runtime still works, including the discriminator fast path.
+  expect(tree.parse({ kind: "a", child: { kind: "b", sibling: { kind: "a" } } })).toEqual({
+    kind: "a",
+    child: { kind: "b", sibling: { kind: "a" } },
+  });
+  expect(() => tree.parse({ kind: "c" })).toThrow();
+});
