@@ -23,7 +23,7 @@ The project uses pnpm workspaces. Key commands:
 
 ## Rules
 
-- Node.js v24+ required (use nvm if needed); pnpm v10.12.1
+- Node.js v24+ and pnpm v11.6.0 required (managed via Volta)
 - ES modules are used throughout (`"type": "module"`)
 - All tests must be written in TypeScript - never use JavaScript
 - Use `play.ts` for quick experimentation; use proper tests for all permanent test cases

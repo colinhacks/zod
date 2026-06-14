@@ -1,7 +1,7 @@
 {
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@10.12.1",
+  "packageManager": "pnpm@11.6.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/colinhacks/zod.git"
@@ -87,5 +87,9 @@
     "bundle:esbuild": "esbuild --bundle ./scratch/input.ts --outfile=./scratch/out_esbuild.js --bundle --format=esm",
     "check:semver": "tsx scripts/check-versions.ts",
     "check:circular": "madge --circular --extensions ts --exclude '(v4/core|v3)' packages/zod/src"
+  },
+  "volta": {
+    "node": "24.16.0",
+    "pnpm": "11.6.0"
   }
 }
