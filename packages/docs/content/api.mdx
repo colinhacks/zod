@@ -217,6 +217,10 @@ z.string().check(z.lowercase());
 </Tab>
 </Tabs>
 
+<Callout>
+  `z.string().regex()` validates a string **against** a regular expression pattern. To validate that a value **is** a `RegExp` instance, use [`z.instanceof(RegExp)`](#instanceof).
+</Callout>
+
 To perform some simple string transforms:
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
@@ -2051,6 +2055,16 @@ const TestSchema = z.instanceof(Test);
 
 TestSchema.parse(new Test()); // ✅
 TestSchema.parse("whatever"); // ❌
+```
+
+This works with any class, including built-ins like `RegExp`, `URL`, `Error`, etc.
+
+```ts
+const RegExpSchema = z.instanceof(RegExp);
+
+RegExpSchema.parse(/abc/);             // ✅
+RegExpSchema.parse(new RegExp("abc")); // ✅
+RegExpSchema.parse("abc");             // ❌
 ```
 
 ### Property
