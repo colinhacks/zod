@@ -3129,3 +3129,183 @@ test("recursive lazy with describe does not stack overflow", () => {
   expect(result).toBeDefined();
   expect(result.$defs).toBeDefined();
 });
+
+test("JSON Pointer escaping - tilde in schema id", () => {
+  const tildeSchema = z.string().meta({ id: "my~tilde" });
+  const result = z.toJSONSchema(
+    z.object({
+      value: tildeSchema,
+    })
+  );
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "$defs": {
+        "my~tilde": {
+          "type": "string",
+        },
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/my~0tilde",
+        },
+      },
+      "required": [
+        "value",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
+test("JSON Pointer escaping - slash in schema id", () => {
+  const slashSchema = z.number().meta({ id: "path/to/schema" });
+  const result = z.toJSONSchema(
+    z.object({
+      value: slashSchema,
+    })
+  );
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "$defs": {
+        "path/to/schema": {
+          "type": "number",
+        },
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/path~1to~1schema",
+        },
+      },
+      "required": [
+        "value",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
+test("JSON Pointer escaping - tilde and slash together", () => {
+  const mixedSchema = z.boolean().meta({ id: "a~b/c" });
+  const result = z.toJSONSchema(
+    z.object({
+      value: mixedSchema,
+    })
+  );
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "$defs": {
+        "a~b/c": {
+          "type": "boolean",
+        },
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/a~0b~1c",
+        },
+      },
+      "required": [
+        "value",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
+test("JSON Pointer escaping - multiple tildes and slashes", () => {
+  const complexSchema = z.string().meta({ id: "~/~~//~1" });
+  const result = z.toJSONSchema(
+    z.object({
+      value: complexSchema,
+    })
+  );
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "$defs": {
+        "~/~~//~1": {
+          "type": "string",
+        },
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/~0~1~0~0~1~1~01",
+        },
+      },
+      "required": [
+        "value",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
+test("JSON Pointer escaping - reused ref with tilde in id", () => {
+  const tildeSchema = z.string().meta({ id: "foo~bar" });
+  const result = z.toJSONSchema(
+    z.object({
+      a: tildeSchema,
+      b: tildeSchema,
+    }),
+    { reused: "ref" }
+  );
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "$defs": {
+        "foo~bar": {
+          "type": "string",
+        },
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "a": {
+          "$ref": "#/$defs/foo~0bar",
+        },
+        "b": {
+          "$ref": "#/$defs/foo~0bar",
+        },
+      },
+      "required": [
+        "a",
+        "b",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
+test("JSON Pointer escaping - registry with slash in id", () => {
+  const myRegistry = z.registry<{ id: string }>();
+  const SchemaA = z.string().meta({ id: "a/b" });
+  const SchemaB = z.number().meta({ id: "c~d" });
+
+  myRegistry.add(SchemaA, { id: "a/b" });
+  myRegistry.add(SchemaB, { id: "c~d" });
+
+  const result = z.toJSONSchema(myRegistry, {
+    uri: (id) => `https://example.com/${id}.json`,
+  });
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "schemas": {
+        "a/b": {
+          "$id": "https://example.com/a/b.json",
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "string",
+        },
+        "c~d": {
+          "$id": "https://example.com/c~d.json",
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "number",
+        },
+      },
+    }
+  `);
+});
