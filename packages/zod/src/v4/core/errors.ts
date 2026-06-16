@@ -346,6 +346,7 @@ export function treeifyError<T>(error: $ZodError<T>): $ZodErrorTree<T>;
 export function treeifyError<T, U>(error: $ZodError<T>, mapper?: (issue: $ZodIssue) => U): $ZodErrorTree<T, U>;
 export function treeifyError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIssue) => issue.message as U) {
   const result: $ZodErrorTree<T, U> = { errors: [] } as any;
+  const createProperties = () => Object.create(null) as Record<string, $ZodErrorTree<unknown, U>>;
   const processError = (error: { issues: $ZodIssue[] }, path: PropertyKey[] = []) => {
     for (const issue of error.issues) {
       if (issue.code === "invalid_union" && issue.errors.length) {
@@ -369,7 +370,7 @@ export function treeifyError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIss
 
           const terminal = i === fullpath.length - 1;
           if (typeof el === "string") {
-            curr.properties ??= {};
+            curr.properties ??= createProperties();
             curr.properties[el] ??= { errors: [] };
             curr = curr.properties[el];
           } else {

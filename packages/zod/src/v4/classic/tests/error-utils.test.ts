@@ -447,6 +447,45 @@ test("z.treeifyError 2", () => {
   `);
 });
 
+test("z.treeifyError handles Object.prototype property names", () => {
+  const schema = z.object({
+    toString: z.string(),
+    constructor: z.number(),
+  });
+
+  const result = schema.safeParse({
+    toString: 123,
+    constructor: "nope",
+  });
+
+  const tree: any = z.treeifyError(result.error!);
+
+  expect(Object.prototype.hasOwnProperty.call(tree.properties, "toString")).toBe(true);
+  expect(tree.properties.toString.errors).toEqual(["Invalid input: expected string, received number"]);
+  expect(Object.prototype.hasOwnProperty.call(tree.properties, "constructor")).toBe(true);
+  expect(tree.properties.constructor.errors).toEqual(["Invalid input: expected number, received string"]);
+});
+
+test("z.treeifyError preserves mixed object and array paths with prototype property names", () => {
+  const schema = z.object({
+    users: z.array(
+      z.object({
+        toString: z.string(),
+      })
+    ),
+  });
+
+  const result = schema.safeParse({
+    users: [{ toString: 123 }],
+  });
+
+  const tree: any = z.treeifyError(result.error!);
+
+  expect(tree.properties.users.items[0].properties.toString.errors).toEqual([
+    "Invalid input: expected string, received number",
+  ]);
+});
+
 test("z.prettifyError", () => {
   expect(z.prettifyError(result.error!)).toMatchInlineSnapshot(`
     "✖ Unrecognized key: "extra"
