@@ -683,6 +683,12 @@ test("ulid", () => {
   const caseInsensitive = ulid.safeParse("01arZ3nDeKTsV4RRffQ69G5FAV");
   expect(caseInsensitive.success).toEqual(true);
 
+  // The largest valid ULID is 7ZZZZZZZZZZZZZZZZZZZZZZZZZ per the spec.
+  // First characters 8 and 9 would exceed 2^48-1 and must be rejected.
+  expect(ulid.safeParse("7ZZZZZZZZZZZZZZZZZZZZZZZZZ").success).toEqual(true);
+  expect(ulid.safeParse("8AAAAAAAAAAAAAAAAAAAAAAAAA").success).toEqual(false);
+  expect(ulid.safeParse("9AAAAAAAAAAAAAAAAAAAAAAAAA").success).toEqual(false);
+
   expect(result.error!.issues[0].message).toEqual("Invalid ULID");
   expect(result.error).toMatchInlineSnapshot(`
     [ZodError: [
@@ -690,7 +696,7 @@ test("ulid", () => {
         "origin": "string",
         "code": "invalid_format",
         "format": "ulid",
-        "pattern": "/^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$/",
+        "pattern": "/^[0-7][0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$/",
         "path": [],
         "message": "Invalid ULID"
       }
