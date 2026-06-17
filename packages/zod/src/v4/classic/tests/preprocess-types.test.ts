@@ -23,4 +23,8 @@ test("ZodPreprocess input/output inference", () => {
   const pre = z.preprocess((v) => v, z.number().optional());
   expectTypeOf<z.output<typeof pre>>().toEqualTypeOf<number | undefined>();
   expectTypeOf<z.input<typeof pre>>().toEqualTypeOf<unknown>();
+
+  const preTypedInput = z.preprocess((v: number | null | undefined) => v ?? undefined, z.number().optional());
+  expectTypeOf<z.output<typeof preTypedInput>>().toEqualTypeOf<number | undefined>();
+  expectTypeOf<z.input<typeof preTypedInput>>().toEqualTypeOf<number | null | undefined>();
 });

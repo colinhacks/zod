@@ -4136,19 +4136,22 @@ function handleCodecTxResult(left: ParsePayload, value: any, nextSchema: SomeTyp
 //////////                             //////////
 /////////////////////////////////////////////////
 /////////////////////////////////////////////////
-export interface $ZodPreprocessDef<B extends SomeType = $ZodType> extends $ZodPipeDef<$ZodTransform, B> {
-  in: $ZodTransform;
-  out: B;
+export interface $ZodPreprocessDef<U extends SomeType = $ZodType, A = unknown, B = unknown>
+  extends $ZodPipeDef<$ZodTransform<A, B>, U> {
+  in: $ZodTransform<A, B>;
+  out: U;
 }
 
-export interface $ZodPreprocessInternals<B extends SomeType = $ZodType> extends $ZodPipeInternals<$ZodTransform, B> {
-  def: $ZodPreprocessDef<B>;
-  optin: B["_zod"]["optin"];
-  optout: B["_zod"]["optout"];
+export interface $ZodPreprocessInternals<U extends SomeType = $ZodType, A = unknown, B = unknown>
+  extends $ZodPipeInternals<$ZodTransform<A, B>, U> {
+  def: $ZodPreprocessDef<U, A, B>;
+  optin: U["_zod"]["optin"];
+  optout: U["_zod"]["optout"];
 }
 
-export interface $ZodPreprocess<B extends SomeType = $ZodType> extends $ZodPipe<$ZodTransform, B> {
-  _zod: $ZodPreprocessInternals<B>;
+export interface $ZodPreprocess<U extends SomeType = $ZodType, A = unknown, B = unknown>
+  extends $ZodPipe<$ZodTransform<A, B>, U> {
+  _zod: $ZodPreprocessInternals<U, A, B>;
 }
 
 export const $ZodPreprocess: core.$constructor<$ZodPreprocess> = /*@__PURE__*/ core.$constructor(
