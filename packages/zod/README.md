@@ -78,6 +78,7 @@ console.log(data.name);
 
 ```sh
 npm install zod
+deno install zod
 ```
 
 <br/>
