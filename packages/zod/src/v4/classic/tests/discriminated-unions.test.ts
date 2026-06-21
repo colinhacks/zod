@@ -372,6 +372,35 @@ test("valid - literals with .default or .pipe", () => {
   });
 });
 
+test("valid - .default() discriminator with key absent from input", () => {
+  // When the discriminator field is wrapped in .default(), omitting the key
+  // from the input (input[discriminator] === undefined) should still route to
+  // the correct branch — ZodDefault will supply the default value once that
+  // branch's object schema is invoked.  Previously this threw
+  // "No matching discriminator" because `undefined` was never added to the
+  // discriminator lookup map.
+  const schema = z.discriminatedUnion("type", [
+    z.object({
+      type: z.literal("foo").default("foo"),
+      a: z.string(),
+    }),
+    z.object({
+      type: z.literal("bar"),
+      b: z.string(),
+    }),
+  ]);
+
+  // Explicit discriminator value still works
+  expect(schema.parse({ type: "foo", a: "hello" })).toEqual({ type: "foo", a: "hello" });
+
+  // Missing discriminator key routes to the branch whose field has .default()
+  expect(schema.parse({ a: "hello" })).toEqual({ type: "foo", a: "hello" });
+
+  // Wrong explicit discriminator value still fails
+  const fail = schema.safeParse({ type: "unknown", a: "hello" });
+  expect(fail.success).toBe(false);
+});
+
 test("enum and nativeEnum", () => {
   enum MyEnum {
     d = 0,
