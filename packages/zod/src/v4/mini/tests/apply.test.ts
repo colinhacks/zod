@@ -22,3 +22,15 @@ test("The callback's return value becomes the apply's return value.", () => {
   expect(result).toBe(symbol);
   expectTypeOf<typeof result>().toEqualTypeOf<symbol>();
 });
+
+test("apply forwards rest arguments to mapper function", () => {
+  const applyWithArgs = (schema: z.ZodMiniNumber, min: number, max: number) =>
+    schema.check(z.minimum(min), z.maximum(max));
+
+  const schema = z.number().apply(applyWithArgs, 0, 100);
+
+  expect(() => z.parse(schema, -1)).toThrowError();
+  expect(() => z.parse(schema, 101)).toThrowError();
+  expect(z.parse(schema, 50)).toBe(50);
+  expectTypeOf<z.infer<typeof schema>>().toEqualTypeOf<number>();
+});
