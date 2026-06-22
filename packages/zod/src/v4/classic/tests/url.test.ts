@@ -11,3 +11,25 @@ test("url regex", () => {
     "^example\\.com$"
   );
 });
+
+test("bare IPv6 addresses are not valid URLs (#6031)", () => {
+  const url = z.url();
+  // The URL constructor mis-parses IPv6 addresses whose first group starts
+  // with a hex letter (e.g. "fe80::1") as `scheme:opaque-path`; reject them.
+  for (const addr of [
+    "::1",
+    "2001:db8::1",
+    "fe80::1",
+    "fe80::abcd:1234",
+    "fe80:0000:0000:0000:0000:0000:0000:0001",
+    "dead:beef:dead:beef:dead:beef:dead:beef",
+  ]) {
+    expect(url.safeParse(addr).success, addr).toBe(false);
+  }
+
+  // A bracketed IPv6 host inside a real URL stays valid; so do schemed URIs
+  // whose opaque part happens to look hex-ish.
+  for (const valid of ["http://[2001:db8::1]", "https://example.com", "c:", "mailto:foo@bar.com", "face:b00c"]) {
+    expect(url.safeParse(valid).success, valid).toBe(true);
+  }
+});
