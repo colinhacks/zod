@@ -53,6 +53,16 @@ test("date max", () => {
   `);
 });
 
+test("date min/max origin is 'date' for a numeric timestamp bound (#5980)", () => {
+  const minRes = z.date().min(benchmarkDate.getTime()).safeParse(beforeBenchmarkDate);
+  expect(minRes.success).toEqual(false);
+  expect(minRes.error!.issues[0]!).toHaveProperty("origin", "date");
+
+  const maxRes = z.date().max(benchmarkDate.getTime()).safeParse(afterBenchmarkDate);
+  expect(maxRes.success).toEqual(false);
+  expect(maxRes.error!.issues[0]!).toHaveProperty("origin", "date");
+});
+
 test("min max getters", () => {
   expect(minCheck.minDate).toEqual(benchmarkDate);
   expect(minCheck.min(afterBenchmarkDate).minDate).toEqual(afterBenchmarkDate);
