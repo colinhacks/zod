@@ -2901,6 +2901,39 @@ test("use output type for preprocess", () => {
   `);
 });
 
+test("object property with preprocess stays required in input JSON schema", () => {
+  const schema = z.object({
+    noPreprocess: z.string(),
+    withPreprocess: z.preprocess((v) => v, z.string()),
+    optionalPreprocess: z.preprocess((v) => v, z.string().optional()),
+  });
+
+  // A preprocessed property is only optional when its inner schema is — the
+  // transform wrapper must not make a required property optional in the input
+  // JSON schema (matches runtime: `schema.parse({})` rejects `withPreprocess`).
+  expect(z.toJSONSchema(schema, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "noPreprocess": {
+          "type": "string",
+        },
+        "optionalPreprocess": {
+          "type": "string",
+        },
+        "withPreprocess": {
+          "type": "string",
+        },
+      },
+      "required": [
+        "noPreprocess",
+        "withPreprocess",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
 test("strip output-side examples from input JSON schema for codec", () => {
   const codec = z
     .codec(z.string(), z.number(), { decode: (s) => Number(s), encode: (n) => String(n) })
