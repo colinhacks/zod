@@ -195,8 +195,17 @@ export function process<T extends schemas.$ZodType>(
   }
 
   // metadata
+  // Keywords derived from the schema itself take precedence over metadata:
+  // metadata may only contribute keys Zod did not already produce (description,
+  // examples, custom vocabulary, or a `type` for an otherwise-unrepresentable
+  // schema). This prevents `z.string().meta({ type: "number" })` from emitting a
+  // `type` that contradicts the actual schema.
   const meta = ctx.metadataRegistry.get(schema);
-  if (meta) Object.assign(result.schema, meta);
+  if (meta) {
+    for (const key in meta) {
+      if (!(key in result.schema)) result.schema[key] = meta[key];
+    }
+  }
 
   if (ctx.io === "input" && isTransforming(schema)) {
     // examples/defaults only apply to output type of pipe
