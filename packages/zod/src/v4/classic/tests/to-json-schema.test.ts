@@ -2182,6 +2182,28 @@ test("id is stripped from $defs entries (draft-2020-12)", () => {
   expect((result.$defs?.Inner as any).id).toBeUndefined();
 });
 
+test("$ref pointer is RFC 6901 encoded when id contains / or ~ (#6027)", () => {
+  // Per RFC 6901, a JSON Pointer reference token must escape `~` -> `~0` and
+  // `/` -> `~1`. The `$ref` pointer path needs this encoding; the `$defs` key
+  // itself is a plain object key and stays the raw id.
+  const User = z.object({ name: z.string() }).meta({ id: "Shared/User~" });
+  const result = z.toJSONSchema(z.object({ User }));
+  expect((result.properties?.User as any).$ref).toBe("#/$defs/Shared~1User~0");
+  expect(result.$defs?.["Shared/User~"]).toEqual({
+    type: "object",
+    properties: { name: { type: "string" } },
+    required: ["name"],
+    additionalProperties: false,
+  });
+});
+
+test("$ref pointer is RFC 6901 encoded for draft-04 definitions (#6027)", () => {
+  const User = z.object({ name: z.string() }).meta({ id: "a/b~c" });
+  const result = z.toJSONSchema(z.object({ User }), { target: "draft-04" }) as any;
+  expect(result.properties?.User?.$ref).toBe("#/definitions/a~1b~0c");
+  expect(result.definitions?.["a/b~c"]).toBeDefined();
+});
+
 test("id is stripped from definitions entries (draft-04)", () => {
   // In draft-04, `id` is a reserved keyword that sets a base URI for the
   // subschema. Leaking Zod's registration tag here is semantically wrong, so
