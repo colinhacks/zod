@@ -1841,6 +1841,34 @@ describe("toJSONSchema", () => {
   });
 });
 
+test("metadata does not override Zod-derived keywords", () => {
+  // `type` is derived from the schema and must not be clobbered by metadata.
+  expect(z.toJSONSchema(z.string().meta({ type: "number" } as any))).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+    }
+  `);
+
+  // Metadata still contributes keys Zod did not produce.
+  expect(z.toJSONSchema(z.string().meta({ description: "a name", format: "email" } as any))).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "description": "a name",
+      "format": "email",
+      "type": "string",
+    }
+  `);
+
+  // Metadata may still supply `type` for an otherwise-unrepresentable schema.
+  expect(z.toJSONSchema(z.unknown().meta({ type: "string" } as any))).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+    }
+  `);
+});
+
 test("override", () => {
   const schema = z.toJSONSchema(z.string(), {
     override: (ctx) => {
