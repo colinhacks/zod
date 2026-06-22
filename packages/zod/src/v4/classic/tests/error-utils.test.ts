@@ -447,6 +447,25 @@ test("z.treeifyError 2", () => {
   `);
 });
 
+test("z.treeifyError handles keys inherited from Object.prototype (#6070)", () => {
+  const schema = z.object({
+    toString: z.string(),
+    valueOf: z.number(),
+    constructor: z.boolean(),
+    hasOwnProperty: z.string(),
+  });
+
+  const result = schema.safeParse({});
+  expect(result.success).toEqual(false);
+
+  // Previously threw: TypeError: Cannot read properties of undefined (reading 'push')
+  const tree = z.treeifyError(result.error!);
+  expect(tree.properties?.toString?.errors.length).toBeGreaterThan(0);
+  expect(tree.properties?.valueOf?.errors.length).toBeGreaterThan(0);
+  expect(tree.properties?.constructor?.errors.length).toBeGreaterThan(0);
+  expect(tree.properties?.hasOwnProperty?.errors.length).toBeGreaterThan(0);
+});
+
 test("z.prettifyError", () => {
   expect(z.prettifyError(result.error!)).toMatchInlineSnapshot(`
     "✖ Unrecognized key: "extra"
