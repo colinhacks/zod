@@ -370,7 +370,13 @@ export function treeifyError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIss
           const terminal = i === fullpath.length - 1;
           if (typeof el === "string") {
             curr.properties ??= {};
-            curr.properties[el] ??= { errors: [] };
+            // Use a hasOwnProperty guard instead of `??=`: a path segment whose
+            // name is inherited from Object.prototype (e.g. "toString", "valueOf",
+            // "constructor") would otherwise resolve to the prototype member and
+            // skip initialization, throwing on the later `curr.errors.push`. (#6070)
+            if (!Object.prototype.hasOwnProperty.call(curr.properties, el)) {
+              curr.properties[el] = { errors: [] };
+            }
             curr = curr.properties[el];
           } else {
             curr.items ??= [];
