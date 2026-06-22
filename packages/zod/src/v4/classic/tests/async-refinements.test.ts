@@ -66,3 +66,30 @@ test("async refine that uses value", async () => {
   expect(r2.success).toBe(true);
   expect(r2.data).toEqual("asdf123");
 });
+
+test("async refinements/transforms survive a patched global Promise (#6019)", async () => {
+  // Zone.js / Angular NgZone / @opentelemetry/context-zone replace
+  // globalThis.Promise with a subclass. A native promise returned by a user
+  // `async` refinement is not `instanceof` that subclass, so zod must not rely
+  // on `instanceof Promise` to detect async results.
+  const RealPromise = globalThis.Promise;
+  class ZoneAwarePromise<T> extends RealPromise<T> {}
+  (globalThis as any).Promise = ZoneAwarePromise;
+  try {
+    // Sanity check: this is the condition that triggered the bug.
+    expect((async () => {})() instanceof globalThis.Promise).toBe(false);
+
+    const refine = z.object({ email: z.string() }).superRefine(async (_data, ctx) => {
+      await new RealPromise<void>((r) => setTimeout(r, 1));
+      ctx.addIssue({ code: "custom", message: "always fails", path: ["email"] });
+    });
+    const refineResult = await refine.safeParseAsync({ email: "test@example.com" });
+    expect(refineResult.success).toBe(false);
+    expect(refineResult.error?.issues.map((i) => i.message)).toEqual(["always fails"]);
+
+    const transform = z.string().transform(async (s) => s.toUpperCase());
+    expect(await transform.parseAsync("hi")).toEqual("HI");
+  } finally {
+    (globalThis as any).Promise = RealPromise;
+  }
+});
