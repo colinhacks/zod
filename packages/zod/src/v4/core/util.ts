@@ -886,7 +886,12 @@ export function parsedType(data: unknown): errors.$ZodInvalidTypeExpected {
   const t = typeof data;
   switch (t) {
     case "number": {
-      return Number.isNaN(data) ? "nan" : "number";
+      // Non-finite numbers are reported distinctly so the message matches the
+      // issue's `received` field (e.g. `z.number().parse(Infinity)`), instead
+      // of the confusing "expected number, received number".
+      if (Number.isNaN(data)) return "nan";
+      if (!Number.isFinite(data)) return "Infinity";
+      return "number";
     }
     case "object": {
       if (data === null) {
