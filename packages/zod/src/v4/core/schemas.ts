@@ -484,6 +484,31 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
       // Trim whitespace from input
       const trimmed = payload.value.trim();
 
+      // A bare IPv6 address (e.g. "fe80::1") is not a URL. The URL constructor
+      // mis-parses addresses whose first group starts with a hex letter as
+      // `scheme:opaque-path`, so it would otherwise accept them. Reject any
+      // input that is itself a valid IPv6 literal. The cheap pre-check (only
+      // hex digits, colons, dots and zone `%`, and no `/`) keeps schemed URIs
+      // such as "c:" or "mailto:x" — and ordinary URLs — out of this branch.
+      if (trimmed.includes(":") && !trimmed.includes("/") && /^[0-9a-fA-F:.%]+$/.test(trimmed)) {
+        try {
+          // @ts-ignore
+          new URL(`http://[${trimmed}]`);
+          // The probe succeeded, so `trimmed` is a valid bare IPv6 address.
+          payload.issues.push({
+            code: "invalid_format",
+            format: "url",
+            note: "Invalid URL format",
+            input: payload.value,
+            inst,
+            continue: !def.abort,
+          });
+          return;
+        } catch {
+          // Not a bare IPv6 address; fall through to normal URL handling.
+        }
+      }
+
       // When normalize is off, require :// for http/https URLs
       // This prevents strings like "http:example.com" or "https:/path" from being silently accepted
       if (!def.normalize && def.protocol?.source === regexes.httpProtocol.source) {
