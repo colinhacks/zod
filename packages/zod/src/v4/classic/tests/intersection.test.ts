@@ -67,6 +67,47 @@ test("object intersection: strict + strict", () => {
   `);
 });
 
+test("strict intersection runs checks/superRefine/transform on each branch (#5663)", () => {
+  // Each strict branch flags the other branch's keys as unrecognized; those
+  // issues are reconciled away, but they must not skip the branch's own checks.
+  let superRefineCalls = 0;
+  const sr = z.intersection(
+    z.strictObject({ x: z.string() }).superRefine((_d, ctx) => {
+      superRefineCalls++;
+      ctx.addIssue({ code: "custom", message: "fail-left" });
+    }),
+    z.strictObject({ a: z.string() }).superRefine((_d, ctx) => {
+      superRefineCalls++;
+      ctx.addIssue({ code: "custom", message: "fail-right" });
+    })
+  );
+  const srResult = sr.safeParse({ x: "test", a: "hello" });
+  expect(superRefineCalls).toBe(2);
+  expect(srResult.success).toBe(false);
+  expect(srResult.error?.issues.map((i) => i.message).sort()).toEqual(["fail-left", "fail-right"]);
+
+  // `.refine()` likewise runs and can fail the parse.
+  const rf = z.intersection(
+    z.strictObject({ x: z.string() }).refine((d) => d.x === "ok", "bad-x"),
+    z.strictObject({ a: z.string() })
+  );
+  expect(rf.safeParse({ x: "no", a: "hello" }).success).toBe(false);
+  expect(rf.safeParse({ x: "ok", a: "hello" }).success).toBe(true);
+
+  // `.transform()` on a strict branch runs and its output is merged.
+  let transformCalls = 0;
+  const tx = z.intersection(
+    z.strictObject({ x: z.string() }).transform((v) => {
+      transformCalls++;
+      return { ...v, x: v.x.toUpperCase() };
+    }),
+    z.strictObject({ a: z.string() })
+  );
+  const txResult = tx.safeParse({ x: "test", a: "hello" });
+  expect(transformCalls).toBe(1);
+  expect(txResult).toMatchObject({ success: true, data: { x: "TEST", a: "hello" } });
+});
+
 test("deep intersection", () => {
   const Animal = z.object({
     properties: z.object({

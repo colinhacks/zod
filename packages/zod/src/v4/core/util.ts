@@ -822,6 +822,21 @@ export function aborted(x: schemas.ParsePayload, startIndex = 0): boolean {
   return false;
 }
 
+// Like `aborted`, but ignores `unrecognized_keys` issues. Used when parsing the
+// branches of an intersection: each strict branch flags the other branch's keys
+// as unrecognized, and those issues are reconciled by handleIntersectionResults,
+// so they must not skip the branch's own checks.
+export function abortedExceptUnrecognizedKeys(x: schemas.ParsePayload, startIndex = 0): boolean {
+  if (x.aborted === true) return true;
+  for (let i = startIndex; i < x.issues.length; i++) {
+    const iss = x.issues[i];
+    if (iss?.continue !== true && iss?.code !== "unrecognized_keys") {
+      return true;
+    }
+  }
+  return false;
+}
+
 // Checks for explicit abort (continue === false), as opposed to implicit abort (continue === undefined).
 // Used to respect `abort: true` in .refine() even for checks that have a `when` function.
 export function explicitlyAborted(x: schemas.ParsePayload, startIndex = 0): boolean {
