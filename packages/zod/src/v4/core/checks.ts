@@ -1119,7 +1119,7 @@ export const $ZodCheckProperty: core.$constructor<$ZodCheckProperty> = /*@__PURE
         {}
       );
 
-      if (result instanceof Promise) {
+      if (util.isPromise(result)) {
         return result.then((result) => handleCheckPropertyResult(result, payload, def.property));
       }
 

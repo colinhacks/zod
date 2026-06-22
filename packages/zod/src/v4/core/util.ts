@@ -811,6 +811,17 @@ export function required(
 
 export type Constructor<T, Def extends any[] = any[]> = new (...args: Def) => T;
 
+// Robustly detect a Promise, including instances created before `globalThis.Promise`
+// was replaced by a subclass (Zone.js's `ZoneAwarePromise`, Angular NgZone,
+// `@opentelemetry/context-zone`, etc.). A native promise returned from a user
+// `async` refinement/transform is not `instanceof` the patched global, so a plain
+// `x instanceof Promise` check would treat it as a sync value and silently drop
+// the async result. The `[object Promise]` tag is shared across promise
+// subclasses and realms while excluding ordinary thenable objects.
+export function isPromise(x: unknown): x is Promise<unknown> {
+  return x instanceof Promise || Object.prototype.toString.call(x) === "[object Promise]";
+}
+
 // invalid_type | too_big | too_small | invalid_format | not_multiple_of | unrecognized_keys | invalid_union | invalid_key | invalid_element | invalid_value | custom
 export function aborted(x: schemas.ParsePayload, startIndex = 0): boolean {
   if (x.aborted === true) return true;
