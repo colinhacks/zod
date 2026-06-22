@@ -602,31 +602,25 @@ test("index signature in shape", () => {
   expectTypeOf<schema>().toEqualTypeOf<Record<string, string>>();
 });
 
-test("extend() on object with refinements should throw when overwriting properties", () => {
+test("extend() on object with refinements should allow adding non-overlapping properties", () => {
+  const schema = z
+    .object({
+      a: z.string(),
+    })
+    .refine(() => true);
+  expect(() => schema.extend({ b: z.string() })).not.toThrow();
+});
+
+test("extend() on object with refinements should still reject overlapping keys", () => {
   const schema = z
     .object({
       a: z.string(),
     })
     .refine(() => true);
 
-  expect(() => schema.extend({ a: z.number() })).toThrow();
-});
-
-test("extend() on object with refinements should not throw when adding new properties", () => {
-  const schema = z
-    .object({
-      a: z.string(),
-    })
-    .refine((data) => data.a.length > 0);
-
-  // Should not throw since 'b' doesn't overlap with 'a'
-  const extended = schema.extend({ b: z.number() });
-
-  // Verify the extended schema works correctly
-  expect(extended.parse({ a: "hello", b: 42 })).toEqual({ a: "hello", b: 42 });
-
-  // Verify the original refinement still applies
-  expect(() => extended.parse({ a: "", b: 42 })).toThrow();
+  expect(() => schema.extend({ a: z.number() })).toThrow(
+    "Cannot overwrite keys on object schemas containing refinements. Use `.safeExtend()` instead."
+  );
 });
 
 test("safeExtend() on object with refinements should not throw", () => {
