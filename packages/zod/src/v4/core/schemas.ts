@@ -29,6 +29,12 @@ export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> ex
   readonly async?: boolean | undefined;
   readonly direction?: "forward" | "backward";
   readonly skipChecks?: boolean;
+  /** @internal When set, `unrecognized_keys` issues do not abort a schema's
+   * checks. Set while parsing the branches of an intersection: each strict
+   * branch flags the *other* branch's keys as unrecognized, and those issues
+   * are reconciled afterward by `handleIntersectionResults`, so they must not
+   * skip the branch's own checks/transforms. */
+  readonly nonAbortingUnrecognizedKeys?: boolean;
 }
 
 export interface ParsePayload<T = unknown> {
@@ -220,7 +226,9 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
       checks: checks.$ZodCheck<never>[],
       ctx?: ParseContextInternal | undefined
     ): util.MaybeAsync<ParsePayload> => {
-      let isAborted = util.aborted(payload);
+      let isAborted = ctx?.nonAbortingUnrecognizedKeys
+        ? util.abortedExceptUnrecognizedKeys(payload)
+        : util.aborted(payload);
 
       let asyncResult!: Promise<unknown> | undefined;
       for (const ch of checks) {
@@ -2477,8 +2485,13 @@ export const $ZodIntersection: core.$constructor<$ZodIntersection> = /*@__PURE__
 
     inst._zod.parse = (payload, ctx) => {
       const input = payload.value;
-      const left = def.left._zod.run({ value: input, issues: [] }, ctx);
-      const right = def.right._zod.run({ value: input, issues: [] }, ctx);
+      // Each branch sees the full input, so a strict branch flags the other
+      // branch's keys as unrecognized. Those issues are reconciled below by
+      // handleIntersectionResults; they must not abort each branch's own
+      // checks/transforms, so parse the branches in non-aborting mode.
+      const branchCtx = ctx.nonAbortingUnrecognizedKeys ? ctx : { ...ctx, nonAbortingUnrecognizedKeys: true };
+      const left = def.left._zod.run({ value: input, issues: [] }, branchCtx);
+      const right = def.right._zod.run({ value: input, issues: [] }, branchCtx);
       const async = left instanceof Promise || right instanceof Promise;
 
       if (async) {
@@ -4036,7 +4049,14 @@ export const $ZodPipe: core.$constructor<$ZodPipe> = /*@__PURE__*/ core.$constru
 });
 
 function handlePipeResult(left: ParsePayload, next: $ZodType, ctx: ParseContextInternal) {
-  if (left.issues.length) {
+  // When parsing an intersection branch, `unrecognized_keys` issues are
+  // reconciled later (see handleIntersectionResults) and must not stop the pipe
+  // from running its `out` step (e.g. a `.transform()` on a strict object). Any
+  // other issue still aborts; the unrecognized issues are carried forward.
+  const blocking = ctx.nonAbortingUnrecognizedKeys
+    ? left.issues.some((iss) => iss.code !== "unrecognized_keys")
+    : left.issues.length > 0;
+  if (blocking) {
     // prevent further checks
     left.aborted = true;
     return left;
