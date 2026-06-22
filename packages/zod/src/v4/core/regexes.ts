@@ -84,7 +84,10 @@ export const base64url: RegExp = /^[A-Za-z0-9_-]*$/;
 export const hostname: RegExp =
   /^(?=.{1,253}\.?$)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[-0-9a-zA-Z]{0,61}[0-9a-zA-Z])?)*\.?$/;
 
-export const domain: RegExp = /^([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
+// RFC 1035 length limits are enforced (matching `hostname` above): the total
+// length is capped at 253 characters and every label — including the TLD — at
+// 63. (#5965)
+export const domain: RegExp = /^(?=.{1,253}$)([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/;
 
 export const httpProtocol: RegExp = /^https?$/;
 
