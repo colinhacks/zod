@@ -430,7 +430,7 @@ test("httpurl", () => {
   const httpUrl = z.url({
     protocol: /^https?$/,
     hostname: z.regexes.domain,
-    // /^([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/
+    // /^([a-zA-Z0-9](?:[a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/
   });
 
   httpUrl.parse("https://example.com");
@@ -441,6 +441,10 @@ test("httpurl", () => {
   // subdomains
   httpUrl.parse("https://sub.example.com");
   httpUrl.parse("http://sub.example.com");
+  // underscores inside hostname labels (accepted by the WHATWG URL parser) — #5960
+  httpUrl.parse("https://foo_bar.example.com");
+  httpUrl.parse("https://exa_mple.com");
+  httpUrl.parse("https://julia_artberg.artstation.com");
   // paths
   httpUrl.parse("https://example.com/path/to/resource");
   httpUrl.parse("http://example.com/path/to/resource");
@@ -457,6 +461,8 @@ test("httpurl", () => {
   expect(() => httpUrl.parse("http://")).toThrow();
   expect(() => httpUrl.parse("http://localhost")).toThrow();
   expect(() => httpUrl.parse("http://-asdf.com")).toThrow();
+  // underscore is only allowed inside a label, not at its start/end — #5960
+  expect(() => httpUrl.parse("http://_asdf.com")).toThrow();
   expect(() =>
     httpUrl.parse(
       "http://asdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdf.com"
