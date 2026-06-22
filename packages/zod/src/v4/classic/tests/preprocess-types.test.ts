@@ -22,5 +22,12 @@ test("ZodPreprocess optin/optout defer to B", () => {
 test("ZodPreprocess input/output inference", () => {
   const pre = z.preprocess((v) => v, z.number().optional());
   expectTypeOf<z.output<typeof pre>>().toEqualTypeOf<number | undefined>();
+  // An un-annotated preprocessor arg leaves the input as `unknown`.
   expectTypeOf<z.input<typeof pre>>().toEqualTypeOf<unknown>();
+});
+
+test("ZodPreprocess infers input from annotated preprocessor arg (#5966)", () => {
+  const trimmed = z.preprocess((val: string | null | undefined) => val?.trim() ?? "", z.string());
+  expectTypeOf<z.input<typeof trimmed>>().toEqualTypeOf<string | null | undefined>();
+  expectTypeOf<z.output<typeof trimmed>>().toEqualTypeOf<string>();
 });
