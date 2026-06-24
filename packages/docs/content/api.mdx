@@ -1210,13 +1210,13 @@ To create a `ZodEnum` schema from the keys of an object schema:
 <Tab value="Zod">
 ```ts
 const keySchema = Dog.keyof();
-// => ZodEnum<["name", "age"]>
+// => ZodEnum<{ name: "name"; age: "age" }>
 ```
 </Tab>
 <Tab value="Zod Mini">
 ```ts
 const keySchema = z.keyof(Dog);
-// => ZodEnum<["name", "age"]>
+// => ZodEnum<{ name: "name"; age: "age" }>
 ```
 </Tab>
 </Tabs>
