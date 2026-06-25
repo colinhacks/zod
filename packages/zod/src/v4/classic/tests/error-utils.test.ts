@@ -805,3 +805,34 @@ test("z.treeifyError nested union with real schema", () => {
     }
   }
 });
+
+test("z.formatError does not crash on Object.prototype-named keys", () => {
+  // A field whose name shadows an Object.prototype member used to make the
+  // accumulator resolve to the inherited member and throw "Cannot read
+  // properties of undefined (reading 'push')".
+  for (const key of ["constructor", "toString", "valueOf", "hasOwnProperty", "isPrototypeOf"]) {
+    const schema = z.object({ [key]: z.number() });
+    const result = schema.safeParse({ [key]: "not a number" });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const formatted: any = z.formatError(result.error);
+      expect(Array.isArray(formatted[key]?._errors)).toBe(true);
+      expect(formatted[key]._errors.length).toBeGreaterThan(0);
+    }
+  }
+});
+
+test("z.formatError does not crash or pollute Object.prototype on __proto__ paths", () => {
+  // single-level "__proto__" path: must not throw
+  const single = new z.ZodError([{ code: "custom", path: ["__proto__"], message: "boom", input: undefined }] as any);
+  expect(() => z.formatError(single)).not.toThrow();
+
+  // nested "__proto__" path: must not mutate the global Object.prototype
+  const nested = new z.ZodError([
+    { code: "custom", path: ["__proto__", "polluted"], message: "boom", input: undefined },
+  ] as any);
+  const formatted: any = z.formatError(nested);
+  expect(({} as any).polluted).toBeUndefined();
+  // the error is still represented under an own "__proto__" key
+  expect(formatted.__proto__?.polluted?._errors).toEqual(["boom"]);
+});

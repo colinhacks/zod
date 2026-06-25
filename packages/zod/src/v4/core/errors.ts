@@ -311,14 +311,27 @@ export function formatError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIssu
             const el = fullpath[i]!;
             const terminal = i === fullpath.length - 1;
 
-            if (!terminal) {
-              curr[el] = curr[el] || { _errors: [] };
-            } else {
-              curr[el] = curr[el] || { _errors: [] };
-              curr[el]._errors.push(mapper(issue));
+            // A path segment may name an `Object.prototype` member (e.g.
+            // "constructor", "toString") or "__proto__". A plain `curr[el]`
+            // read would resolve to the inherited member, and a plain
+            // `curr[el] = ...` for "__proto__" would invoke the prototype
+            // setter — walking into and polluting the prototype chain instead
+            // of building the tree. Use an own-property check plus
+            // `defineProperty` so every node is a fresh own data property and
+            // the inherited accessor is never triggered.
+            if (!Object.prototype.hasOwnProperty.call(curr, el)) {
+              Object.defineProperty(curr, el, {
+                value: { _errors: [] },
+                writable: true,
+                enumerable: true,
+                configurable: true,
+              });
             }
 
             curr = curr[el];
+            if (terminal) {
+              curr._errors.push(mapper(issue));
+            }
             i++;
           }
         }
