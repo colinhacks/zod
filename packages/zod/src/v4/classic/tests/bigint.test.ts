@@ -45,6 +45,20 @@ test("failing validations", () => {
   expect(() => multipleOfFive.parse(BigInt(13))).toThrow();
 });
 
+test("multipleOf zero divisor returns result object instead of throwing", () => {
+  const schema = z.bigint().multipleOf(BigInt(0));
+
+  // safeParse must return a result object, never throw a RangeError
+  const result = schema.safeParse(BigInt(5));
+  expect(result.success).toEqual(false);
+
+  // zero is a multiple of zero
+  expect(schema.safeParse(BigInt(0)).success).toEqual(true);
+
+  // parse must throw a ZodError, not a RangeError
+  expect(() => schema.parse(BigInt(5))).toThrow(z.ZodError);
+});
+
 test("min max getters", () => {
   expect(z.bigint().min(BigInt(5)).minValue).toEqual(BigInt(5));
   expect(z.bigint().min(BigInt(5)).min(BigInt(10)).minValue).toEqual(BigInt(10));
