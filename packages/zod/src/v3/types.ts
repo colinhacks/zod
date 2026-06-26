@@ -3460,6 +3460,17 @@ export class ZodTuple<
     });
   }
 
+  partial(): ZodTuple<
+    { [K in keyof T]: T[K] extends ZodTypeAny ? ZodOptional<T[K]> : never } & (ZodTupleItems | []),
+    Rest extends ZodTypeAny ? ZodOptional<Rest> : null
+  > {
+    return new ZodTuple({
+      ...this._def,
+      items: this._def.items.map((item: any) => item.optional()) as any,
+      rest: this._def.rest ? this._def.rest.optional() : null,
+    }) as any;
+  }
+
   static create = <Items extends [ZodTypeAny, ...ZodTypeAny[]] | []>(
     schemas: Items,
     params?: RawCreateParams
