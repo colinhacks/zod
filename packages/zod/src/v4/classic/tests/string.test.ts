@@ -961,6 +961,18 @@ test("IPv6 validation", () => {
   expect(ipv6.safeParse("::ffff:c000:0280").success).toBe(true); // IPv4-mapped IPv6 address
   expect(ipv6.safeParse("64:ff9b::192.168.0.1").success).toBe(true); // IPv4/IPv6 translation
 
+  const pattern = new RegExp(z.toJSONSchema(ipv6).pattern as string);
+  for (const input of [
+    "2001:db8::1",
+    "::1",
+    "2001:db8::192.168.0.1",
+    "::ffff:192.168.0.1",
+    "64:ff9b::192.168.0.1",
+    "a6ea::2454:a5ce:94.105.123.75",
+  ]) {
+    expect(pattern.test(input)).toBe(true);
+  }
+
   // Invalid IPv6 addresses
   expect(ipv6.safeParse("d329:1be4:25b4:db47:a9d1:dc71:4926:992c:14af").success).toBe(false);
   expect(ipv6.safeParse("d5e7:7214:2b78::3906:85e6:53cc:709:32ba").success).toBe(false);
