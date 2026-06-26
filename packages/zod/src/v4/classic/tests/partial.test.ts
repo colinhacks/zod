@@ -491,5 +491,7 @@ test("exactPartial with mask", () => {
 
 test("exactPartial - throws on schema with refinements", () => {
   const refined = z.object({ name: z.string() }).refine(() => true);
-  expect(() => refined.exactPartial()).toThrow(".partial() cannot be used on object schemas containing refinements");
+  expect(() => refined.exactPartial()).toThrow(
+    ".exactPartial() cannot be used on object schemas containing refinements"
+  );
 });

@@ -1580,7 +1580,7 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
       return util.partial(ZodOptional, this, args[0]);
     },
     exactPartial(...args) {
-      return util.partial(ZodExactOptional, this, args[0]);
+      return util.partial(ZodExactOptional, this, args[0], { name: "exactPartial" });
     },
     required(...args) {
       return util.required(ZodNonOptional, this, args[0]);

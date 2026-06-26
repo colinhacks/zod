@@ -720,13 +720,14 @@ export function merge(a: schemas.$ZodObject, b: schemas.$ZodObject): any {
 export function partial(
   Class: SchemaClass<schemas.$ZodOptional> | null,
   schema: schemas.$ZodObject,
-  mask: object | undefined
+  mask: object | undefined,
+  { name = "partial" } = {}
 ): any {
   const currDef = schema._zod.def;
   const checks = currDef.checks;
   const hasChecks = checks && checks.length > 0;
   if (hasChecks) {
-    throw new Error(".partial() cannot be used on object schemas containing refinements");
+    throw new Error(`.${name}() cannot be used on object schemas containing refinements`);
   }
 
   const def = mergeDefs(schema._zod.def, {
