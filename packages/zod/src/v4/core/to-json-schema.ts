@@ -214,6 +214,11 @@ export function process<T extends schemas.$ZodType>(
   return _result.schema;
 }
 
+// RFC 6901 §3: `~` → `~0` and `/` → `~1` (in that order) when used as a JSON Pointer token.
+function encodeJsonPointerToken(token: string): string {
+  return token.replace(/~/g, "~0").replace(/\//g, "~1");
+}
+
 export function extractDefs<T extends schemas.$ZodType>(
   ctx: ToJSONSchemaContext,
   schema: T
@@ -260,7 +265,7 @@ export function extractDefs<T extends schemas.$ZodType>(
       // otherwise, add to __shared
       const id: string = entry[1].defId ?? (entry[1].schema.id as string) ?? `schema${ctx.counter++}`;
       entry[1].defId = id; // set defId so it will be reused if needed
-      return { defId: id, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id}` };
+      return { defId: id, ref: `${uriGenerator("__shared")}#/${defsSegment}/${encodeJsonPointerToken(id)}` };
     }
 
     if (entry[1] === root) {
@@ -271,7 +276,7 @@ export function extractDefs<T extends schemas.$ZodType>(
     const uriPrefix = `#`;
     const defUriPrefix = `${uriPrefix}/${defsSegment}/`;
     const defId = entry[1].schema.id ?? `__schema${ctx.counter++}`;
-    return { defId, ref: defUriPrefix + defId };
+    return { defId, ref: defUriPrefix + encodeJsonPointerToken(defId) };
   };
 
   // stored cached version in `def` property
