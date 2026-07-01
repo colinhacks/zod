@@ -3129,3 +3129,12 @@ test("recursive lazy with describe does not stack overflow", () => {
   expect(result).toBeDefined();
   expect(result.$defs).toBeDefined();
 });
+
+test("meta id with '/' and '~' is RFC 6901 encoded in $ref but preserved as-is in $defs key", () => {
+  const User = z.object({ name: z.string() }).meta({ id: "Shared/User~" });
+  const result = z.toJSONSchema(z.object({ User }));
+  // The $defs key is a plain JSON object key — no encoding needed there
+  expect((result as any).$defs["Shared/User~"]).toBeDefined();
+  // The $ref pointer token must escape ~ as ~0 and / as ~1 (RFC 6901)
+  expect((result as any).properties.User.$ref).toBe("#/$defs/Shared~1User~0");
+});
