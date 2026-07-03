@@ -2625,10 +2625,62 @@ test("defaults/prefaults", () => {
       "type": "number",
     }
   `);
+  // The default value (1234) is preserved on the input schema even though it
+  // does not match the input type (string). The default is explicitly set by
+  // the user and is surfaced as-is; it is the user's responsibility to supply
+  // a type-compatible default value.
   expect(z.toJSONSchema(c, { io: "input" })).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "default": 1234,
       "type": "string",
+    }
+  `);
+});
+
+test("default is preserved when inner schema contains a transform (issue #6049)", () => {
+  // Identity transform: default value is a valid string, must appear on input schema
+  const withIdentityTransform = z
+    .string()
+    .transform((s) => s)
+    .default("hello");
+  expect(z.toJSONSchema(withIdentityTransform, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "default": "hello",
+      "type": "string",
+    }
+  `);
+  // Output schema: transform is unrepresentable by default, use unrepresentable:"any"
+  expect(z.toJSONSchema(withIdentityTransform, { unrepresentable: "any" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "default": "hello",
+    }
+  `);
+
+  // Union with a nested transform: default must also be preserved on input schema
+  const withUnionTransform = z.union([z.boolean(), z.object({ a: z.string().transform((x) => x) })]).default(false);
+  expect(z.toJSONSchema(withUnionTransform, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "anyOf": [
+        {
+          "type": "boolean",
+        },
+        {
+          "properties": {
+            "a": {
+              "type": "string",
+            },
+          },
+          "required": [
+            "a",
+          ],
+          "type": "object",
+        },
+      ],
+      "default": false,
     }
   `);
 });
