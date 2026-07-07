@@ -2173,6 +2173,16 @@ test("describe with id", () => {
   `);
 });
 
+test("$ref pointer escapes RFC 6901 special characters in meta id", () => {
+  const User = z.object({ name: z.string() }).meta({ id: "Shared/User~" });
+  const result = z.toJSONSchema(z.object({ User })) as any;
+
+  // The $defs key is a plain object key and stays raw.
+  expect(result.$defs["Shared/User~"]).toBeDefined();
+  // The $ref pointer escapes `/` as `~1` and `~` as `~0` (RFC 6901).
+  expect(result.properties.User.$ref).toBe("#/$defs/Shared~1User~0");
+});
+
 test("id is stripped from $defs entries (draft-2020-12)", () => {
   // The `id` in `.meta()` is a registration tag — it determines the $defs key
   // but should not leak into the definition body, where it is redundant.
