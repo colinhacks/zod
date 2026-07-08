@@ -1,5 +1,5 @@
 import { expect, expectTypeOf, test } from "vitest";
-import * as z from "zod/v4";
+import * as z from "../index.js";
 
 enum testEnum {
   A = 0,
@@ -175,14 +175,26 @@ test("readonly inference", () => {
   const readonlyStringArray = z.string().array().readonly();
   const readonlyStringTuple = z.tuple([z.string()]).readonly();
   const deepReadonly = z.object({ a: z.string() }).readonly();
+  const nestedReadonlyObject = z.object({ a: z.object({ b: z.number() }).readonly() }).readonly();
 
   type readonlyStringArray = z.infer<typeof readonlyStringArray>;
   type readonlyStringTuple = z.infer<typeof readonlyStringTuple>;
   type deepReadonly = z.infer<typeof deepReadonly>;
+  type nestedReadonlyObject = z.infer<typeof nestedReadonlyObject>;
 
   expectTypeOf<readonlyStringArray>().toEqualTypeOf<readonly string[]>();
   expectTypeOf<readonlyStringTuple>().toEqualTypeOf<readonly [string]>();
   expectTypeOf<deepReadonly>().toEqualTypeOf<{ readonly a: string }>();
+  expectTypeOf<nestedReadonlyObject>().toEqualTypeOf<{
+    readonly a: {
+      readonly b: number;
+    };
+  }>();
+  expectTypeOf<typeof nestedReadonlyObject._output>().toEqualTypeOf<{
+    readonly a: {
+      readonly b: number;
+    };
+  }>();
 });
 
 test("readonly parse", () => {
