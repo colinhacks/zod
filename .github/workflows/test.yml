@@ -19,7 +19,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         node: ["lts/*"]
-        typescript: ["5.5", "latest"]
+        typescript: ["5.5", "6.0"]
     name: Test with TypeScript ${{ matrix.typescript }} on Node ${{ matrix.node }} (${{ matrix.os }})
     steps:
       - uses: actions/checkout@v4
