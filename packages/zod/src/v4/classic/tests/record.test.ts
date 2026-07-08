@@ -25,11 +25,17 @@ test("type inference", () => {
   const recordWithTypescriptEnum = z.record(z.enum(Enum), z.string());
   type recordWithTypescriptEnum = z.infer<typeof recordWithTypescriptEnum>;
 
+  const recordWithEnumKeysAndDefault = z.record(z.enum(["UP", "DOWN"]), z.string().default("unknown"));
+  type recordWithEnumKeysAndDefaultInput = z.input<typeof recordWithEnumKeysAndDefault>;
+  type recordWithEnumKeysAndDefaultOutput = z.output<typeof recordWithEnumKeysAndDefault>;
+
   expectTypeOf<booleanRecord>().toEqualTypeOf<Record<string, boolean>>();
   expectTypeOf<recordWithEnumKeys>().toEqualTypeOf<Record<"Tuna" | "Salmon", string>>();
   expectTypeOf<recordWithLiteralKey>().toEqualTypeOf<Record<"Tuna" | "Salmon" | 21, string>>();
   expectTypeOf<recordWithLiteralUnionKeys>().toEqualTypeOf<Record<"Tuna" | "Salmon" | 21, string>>();
   expectTypeOf<recordWithTypescriptEnum>().toEqualTypeOf<Record<Enum, string>>();
+  expectTypeOf<recordWithEnumKeysAndDefaultInput>().toEqualTypeOf<Partial<Record<"UP" | "DOWN", string | undefined>>>();
+  expectTypeOf<recordWithEnumKeysAndDefaultOutput>().toEqualTypeOf<Record<"UP" | "DOWN", string>>();
 });
 
 test("enum exhaustiveness", () => {
