@@ -717,6 +717,14 @@ export function merge(a: schemas.$ZodObject, b: schemas.$ZodObject): any {
   return clone(a, def) as any;
 }
 
+// Field kinds `.partial()` leaves untouched: already input-optional AND
+// producing a deliberate value for absent input (never a clobbered fallback),
+// so wrapping them in `ZodOptional` would only nest the type / broaden the
+// output. Mirrors `PartialField` in the classic layer. catch/transform/
+// preprocess are intentionally excluded: their runtime `optin` is "optional"
+// but the wrapping `ZodOptional` still does real work (clobbering fallback).
+const partialSkipTypes = new Set(["optional", "default", "prefault"]);
+
 export function partial(
   Class: SchemaClass<schemas.$ZodOptional> | null,
   schema: schemas.$ZodObject,
@@ -740,7 +748,7 @@ export function partial(
             throw new Error(`Unrecognized key: "${key}"`);
           }
           if (!(mask as any)[key]) continue;
-          // if (oldShape[key]!._zod.optin === "optional") continue;
+          if (partialSkipTypes.has(oldShape[key]!._zod.def.type)) continue;
           shape[key] = Class
             ? new Class({
                 type: "optional",
@@ -750,7 +758,7 @@ export function partial(
         }
       } else {
         for (const key in oldShape) {
-          // if (oldShape[key]!._zod.optin === "optional") continue;
+          if (partialSkipTypes.has(oldShape[key]!._zod.def.type)) continue;
           shape[key] = Class
             ? new Class({
                 type: "optional",

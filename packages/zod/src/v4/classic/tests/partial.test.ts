@@ -8,6 +8,7 @@ const nested = z.object({
     inner: z.string(),
   }),
   array: z.array(z.object({ asdf: z.string() })),
+  default: z.number().default(1),
 });
 
 test("shallow inference", () => {
@@ -19,6 +20,7 @@ test("shallow inference", () => {
     age?: number | undefined;
     outer?: { inner: string } | undefined;
     array?: { asdf: string }[] | undefined;
+    default: number;
   }>();
 });
 
@@ -119,7 +121,8 @@ test("partial with mask", async () => {
 
   expect(masked.shape.name).toBeInstanceOf(z.ZodOptional);
   expect(masked.shape.age).toBeInstanceOf(z.ZodOptional);
-  expect(masked.shape.field).toBeInstanceOf(z.ZodOptional);
+  // `field` is already optional-in via its default, so it's left untouched
+  expect(masked.shape.field).toBeInstanceOf(z.ZodDefault);
   expect(masked.shape.country).toBeInstanceOf(z.ZodString);
 
   masked.parse({ country: "US" });
@@ -198,6 +201,58 @@ test("catch/prefault/default", () => {
       "f": "prefault value",
     }
   `);
+});
+
+test("partial for optional/prefault/default", () => {
+  const schema = z.object({
+    required: z.string(),
+    opt: z.string().optional(),
+    a: z.string().default("a"),
+    b: z.string().prefault("b"),
+  });
+
+  const partialed = schema.partial();
+  expect(partialed.shape.required).toBeInstanceOf(z.ZodOptional);
+  expect(partialed.shape.required.unwrap()).toBeInstanceOf(z.ZodString);
+  expect(partialed.shape.opt).toBeInstanceOf(z.ZodOptional);
+  expect(partialed.shape.opt.unwrap()).toBeInstanceOf(z.ZodString);
+  expect(partialed.shape.a).toBeInstanceOf(z.ZodDefault);
+  expect(partialed.shape.a.unwrap()).toBeInstanceOf(z.ZodString);
+  expect(partialed.shape.b).toBeInstanceOf(z.ZodPrefault);
+  expect(partialed.shape.b.unwrap()).toBeInstanceOf(z.ZodString);
+
+  const masked = schema.partial({ opt: true, a: true, b: true });
+  expect(masked.shape.opt).toBeInstanceOf(z.ZodOptional);
+  expect(masked.shape.opt.unwrap()).toBeInstanceOf(z.ZodString);
+  expect(masked.shape.a).toBeInstanceOf(z.ZodDefault);
+  expect(masked.shape.a.unwrap()).toBeInstanceOf(z.ZodString);
+  expect(masked.shape.b).toBeInstanceOf(z.ZodPrefault);
+  expect(masked.shape.b.unwrap()).toBeInstanceOf(z.ZodString);
+});
+
+test("partial keeps accurate types and preserves fallback fields", () => {
+  const schema = z.object({
+    opt: z.string().optional(),
+    def: z.string().default("d"),
+    caught: z.string().catch("c"),
+    pre: z.preprocess((v) => v ?? "p", z.string()),
+  });
+  const p = schema.partial();
+
+  // optional is not re-wrapped and the default is not broadened to `| undefined`
+  // (the default always produces a value, so `def` stays a required output key)
+  expectTypeOf<z.output<typeof p>>().toEqualTypeOf<{
+    opt?: string | undefined;
+    def: string;
+    caught?: string | undefined;
+    pre?: string | undefined;
+  }>();
+
+  // catch/preprocess report optin "optional" at runtime but produce a clobbered
+  // fallback, so they stay wrapped: absent input stays absent, matching the type
+  expect(p.shape.caught).toBeInstanceOf(z.ZodOptional);
+  expect(p.shape.pre).toBeInstanceOf(z.ZodOptional);
+  expect(p.parse({})).toEqual({ def: "d" });
 });
 
 test("handleOptionalObjectResult branches", () => {
