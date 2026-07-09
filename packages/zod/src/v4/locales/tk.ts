@@ -60,9 +60,6 @@ const error: () => errors.$ZodErrorMap = () => {
         const expected = TypeDictionary[issue.expected] ?? issue.expected;
         const receivedType = util.parsedType(issue.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
-        if (/^[A-Z]/.test(issue.expected)) {
-          return `Nädogry baha: garaşylan instanceof ${issue.expected}, alynan ${received}`;
-        }
         return `Nädogry baha: garaşylan ${expected} ýerine ${received} alyndy`;
       }
       case "invalid_value":
@@ -72,14 +69,14 @@ const error: () => errors.$ZodErrorMap = () => {
         const adj = issue.inclusive ? "<=" : "<";
         const sizing = getSizing(issue.origin);
         if (sizing)
-          return `Has uly: garaşylýan ${issue.origin ?? "baha"} ${adj}${issue.maximum.toString()} ${sizing.unit ?? "element"}`;
-        return `Has uly: garaşylýan ${issue.origin ?? "baha"} ${adj}${issue.maximum.toString()}`;
+          return `Has uly: garaşylýan ${issue.origin ?? "baha"} ${adj} ${issue.maximum.toString()} ${sizing.unit ?? "element"}`;
+        return `Has uly: garaşylýan ${issue.origin ?? "baha"} ${adj} ${issue.maximum.toString()}`;
       }
       case "too_small": {
         const adj = issue.inclusive ? ">=" : ">";
         const sizing = getSizing(issue.origin);
-        if (sizing) return `Has kiçi: garaşylýan ${issue.origin} ${adj}${issue.minimum.toString()} ${sizing.unit}`;
-        return `Has kiçi: garaşylýan ${issue.origin} ${adj}${issue.minimum.toString()}`;
+        if (sizing) return `Has kiçi: garaşylýan ${issue.origin} ${adj} ${issue.minimum.toString()} ${sizing.unit}`;
+        return `Has kiçi: garaşylýan ${issue.origin} ${adj} ${issue.minimum.toString()}`;
       }
       case "invalid_format": {
         const _issue = issue as errors.$ZodStringFormatIssues;
