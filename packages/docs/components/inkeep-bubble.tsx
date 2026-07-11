@@ -3,7 +3,7 @@
 import { InkeepChatButton, type InkeepChatButtonProps } from "@inkeep/cxkit-react";
 import { useEffect, useState } from "react";
 
-export function InkeepBubble() {
+export function InkeepBubble({ apiKey }: { apiKey: string }) {
   // color mode sync target
   const [syncTarget, setSyncTarget] = useState<HTMLElement | null>(null);
 
@@ -14,7 +14,7 @@ export function InkeepBubble() {
 
   const config = {
     baseSettings: {
-      apiKey: process.env.NEXT_PUBLIC_INKEEP_KEY!, // required
+      apiKey, // required
       primaryBrandColor: "#EE63C0", // your brand color, widget color scheme is derived from this
       organizationDisplayName: "Zod",
       // ...optional settings
