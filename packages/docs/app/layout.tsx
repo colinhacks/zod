@@ -33,7 +33,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             Read the announcement.
           </a>
         </Banner>
-        <InkeepBubble apiKey={process.env.INKEEP_KEY!} />
+        {process.env.INKEEP_KEY && <InkeepBubble apiKey={process.env.INKEEP_KEY} />}
         <Analytics />
         <RootProvider
           search={{
