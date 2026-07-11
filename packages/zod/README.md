@@ -71,6 +71,17 @@ console.log(data.name);
 - Works with TypeScript and plain JS
 - Built-in JSON Schema conversion
 - Extensive ecosystem
+- **Type-safe generics** for reusable schemas
+
+## Type-safe generics
+
+Define reusable schemas with generics for type-safe APIs:
+
+```ts
+function createSchema<T>(schema: z.ZodType<T>) {
+  return schema;
+}
+```
 
 <br/>
 
