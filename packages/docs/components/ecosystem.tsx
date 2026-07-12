@@ -146,10 +146,10 @@ const zodToXConverters: ZodResource[] = [
     slug: "traversable/schema",
   },
   {
-    name: "zod-to-mongo-schema",
-    url: "https://github.com/udohjeremiah/zod-to-mongo-schema",
+    name: "zod-mongo-schema",
+    url: "https://github.com/udohjeremiah/zod-mongo-schema",
     description: "Convert Zod schemas to MongoDB-compatible JSON Schemas effortlessly",
-    slug: "udohjeremiah/zod-to-mongo-schema",
+    slug: "udohjeremiah/zod-mongo-schema",
   },
   {
     name: "convex-helpers",
