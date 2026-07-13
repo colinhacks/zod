@@ -43,6 +43,14 @@ test("fails validation when number is invalid", () => {
   expect(() => schema.parse(fd({ age: "-5" }))).toThrow();
 });
 
+test("treats empty number fields as undefined", () => {
+  const optionalSchema = z.formData({ age: z.number().optional() });
+  expect(optionalSchema.parse(fd({ age: "" }))).toEqual({ age: undefined });
+
+  const requiredSchema = z.formData({ age: z.number() });
+  expect(() => requiredSchema.parse(fd({ age: "" }))).toThrow();
+});
+
 // ---------------------------------------------------------------------------
 // Boolean / checkbox coercion
 // ---------------------------------------------------------------------------
@@ -123,6 +131,12 @@ test("passes File objects through unchanged", () => {
   form.append("avatar", file);
   const result = schema.parse(form);
   expect(result.avatar).toBe(file);
+});
+
+test("rejects File values for non-file fields", () => {
+  const schema = z.formData({ name: z.string() });
+  const result = schema.safeParse(fd({ name: new File(["content"], "name.txt") }));
+  expect(result.success).toBe(false);
 });
 
 // ---------------------------------------------------------------------------

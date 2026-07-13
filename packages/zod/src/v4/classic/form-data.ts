@@ -11,7 +11,11 @@
  *   - ZodDate / ZodCoercedDate      → new Date(value)
  *   - ZodArray                      → FormData.getAll(key) (multi-value)
  *   - ZodFile                       → raw File entry from FormData.get(key)
- *   - ZodString / everything else   → string as-is
+ *   - ZodString / everything else   → string as-is; non-string entries pass through
+ *
+ * Empty string values for number and date fields are treated as undefined,
+ * so required fields reject empty inputs. For numbers, this differs from
+ * z.coerce.number(), where Number("") produces 0.
  *
  * Keys absent from FormData are omitted from the coerced object so that
  * optional / default / nullable schemas in the shape work as expected.
@@ -89,14 +93,18 @@ function _isArray(s: core.SomeType): boolean {
 
 /**
  * Coerce a raw string FormData entry to the type expected by `schema`.
- * Returns the coerced value, or `undefined` for absent checkboxes.
+ * Returns the coerced value, or `undefined` for empty number/date entries.
  */
 function _coerceEntry(schema: core.SomeType, rawValue: string | File | null): unknown {
   if (_isFile(schema)) {
     return rawValue; // pass File objects through unchanged
   }
 
-  const str = rawValue as string | null;
+  // Preserve files for non-file schemas so validation rejects them instead of
+  // coercion throwing or turning them into an unrelated value.
+  if (rawValue !== null && typeof rawValue !== "string") return rawValue;
+
+  const str = rawValue;
 
   if (_isNumber(schema)) {
     if (str === null || str === "") return undefined;
@@ -179,6 +187,10 @@ export type ZodFormData<T extends core.$ZodLooseShape> = schemas.ZodPipe<
  *
  * const parsed = schema.parse(await request.formData());
  * //    ^? { username: string; age: number; rememberMe: boolean; avatarFile?: File; tags: string[] }
+ *
+ * Empty string values for number fields are treated as undefined, so required
+ * number fields reject them. Unlike `z.coerce.number()`, this does not turn
+ * an empty string into 0.
  */
 export function formData<T extends core.$ZodLooseShape>(
   shape: T,
