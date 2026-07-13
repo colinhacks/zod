@@ -2633,6 +2633,47 @@ test("defaults/prefaults", () => {
   `);
 });
 
+test("keep input-valid default on transforming schema (#6049)", () => {
+  // default value matches the input type (string) → preserved in input mode
+  const a = z
+    .string()
+    .transform((s) => s)
+    .default("hello");
+  expect(z.toJSONSchema(a, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "default": "hello",
+      "type": "string",
+    }
+  `);
+  expect(z.toJSONSchema(a, { io: "output", unrepresentable: "any" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "default": "hello",
+    }
+  `);
+
+  // survives when nested in an object property
+  const obj = z.object({
+    name: z
+      .string()
+      .transform((s) => s.trim())
+      .default("anon"),
+  });
+  expect(z.toJSONSchema(obj, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "name": {
+          "default": "anon",
+          "type": "string",
+        },
+      },
+      "type": "object",
+    }
+  `);
+});
+
 test("falsy prefaults (false, 0, empty string)", () => {
   // boolean prefault false
   const a = z.boolean().prefault(false);

@@ -201,7 +201,14 @@ export function process<T extends schemas.$ZodType>(
   if (ctx.io === "input" && isTransforming(schema)) {
     // examples/defaults only apply to output type of pipe
     delete result.schema.examples;
-    delete result.schema.default;
+    // A `.default()` value is output-typed, so on a transforming schema it may not match the input
+    // type (#4557 strips it for that reason). Keep it only when it is valid input — i.e. its JSON
+    // type matches the resolved input schema (#6049).
+    const keepDefault =
+      def.type === "default" && defaultMatchesInputType(result.schema.default, resolveInputType(result.ref, ctx));
+    if (!keepDefault) {
+      delete result.schema.default;
+    }
   }
 
   // set prefault as default
@@ -521,6 +528,31 @@ export function finalize<T extends schemas.$ZodType>(
   } catch (_err) {
     throw new Error("Error converting schema to JSON.");
   }
+}
+
+// Follow the `ref` chain of a seen schema to the first concrete JSON `type`. A `.default()` node only
+// records `default` on its own schema; its input type lives on the schema it refs (see defaultProcessor).
+function resolveInputType(start: schemas.$ZodType | null | undefined, ctx: ToJSONSchemaContext) {
+  const guard = new Set<schemas.$ZodType>();
+  let cur: schemas.$ZodType | null | undefined = start;
+  while (cur && !guard.has(cur)) {
+    guard.add(cur);
+    const seen = ctx.seen.get(cur);
+    if (!seen) return undefined;
+    if (seen.schema.type !== undefined) return seen.schema.type;
+    cur = seen.ref;
+  }
+  return undefined;
+}
+
+// Whether a `.default()` value is a valid instance of the schema's resolved input type. Decides if the
+// default survives input-mode extraction on a transforming schema (#6049 keeps it, #4557 strips it).
+function defaultMatchesInputType(value: unknown, type: JSONSchema.BaseSchema["type"]): boolean {
+  if (type === undefined) return false;
+  const jsonType = value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
+  const expected = jsonType === "number" ? ["number", "integer"] : [jsonType];
+  const declared = Array.isArray(type) ? type : [type];
+  return expected.some((t) => declared.includes(t as any));
 }
 
 function isTransforming(
