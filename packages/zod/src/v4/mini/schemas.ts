@@ -951,7 +951,9 @@ export function partial<T extends ZodMiniObject>(
   schema: T
 ): ZodMiniObject<
   {
-    -readonly [k in keyof T["shape"]]: ZodMiniOptional<T["shape"][k]>;
+    -readonly [k in keyof T["shape"]]: T["shape"][k] extends { _zod: { optin: "optional" } }
+      ? T["shape"][k]
+      : ZodMiniOptional<T["shape"][k]>;
   },
   T["_zod"]["config"]
 >;
@@ -961,7 +963,11 @@ export function partial<T extends ZodMiniObject, M extends util.Mask<keyof T["sh
   mask: M & Record<Exclude<keyof M, keyof T["shape"]>, never>
 ): ZodMiniObject<
   {
-    -readonly [k in keyof T["shape"]]: k extends keyof M ? ZodMiniOptional<T["shape"][k]> : T["shape"][k];
+    -readonly [k in keyof T["shape"]]: k extends keyof M
+      ? T["shape"][k] extends { _zod: { optin: "optional" } }
+        ? T["shape"][k]
+        : ZodMiniOptional<T["shape"][k]>
+      : T["shape"][k];
   },
   T["_zod"]["config"]
 >;

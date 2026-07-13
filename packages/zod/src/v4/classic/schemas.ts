@@ -1437,6 +1437,18 @@ export type SafeExtendShape<Base extends core.$ZodShape, Ext extends core.$ZodLo
     : Ext[K];
 };
 
+// `.partial()` leaves a field untouched when it already accepts absent input
+// *and* produces a deliberate value for it (`optional`, `default`, `prefault`);
+// otherwise it wraps in `ZodOptional`. Keyed on `def.type` rather than `optin`
+// on purpose: `catch`/`transform`/`preprocess` also report `optin: "optional"`
+// at runtime, but their static optin defers to the inner type, and the wrapping
+// `ZodOptional` does real work for them (clobbering their fallback on absent
+// input). Matching on `def.type` keeps the inferred type and the runtime shape
+// in sync for every schema.
+type PartialField<T extends core.SomeType> = T extends { _zod: { def: { type: "optional" | "default" | "prefault" } } }
+  ? T
+  : ZodOptional<T>;
+
 export interface ZodObject<
   /** @ts-ignore Cast variance */
   out Shape extends core.$ZodShape = core.$ZodLooseShape,
@@ -1482,7 +1494,7 @@ export interface ZodObject<
 
   partial(): ZodObject<
     {
-      -readonly [k in keyof Shape]: ZodOptional<Shape[k]>;
+      -readonly [k in keyof Shape]: PartialField<Shape[k]>;
     },
     Config
   >;
@@ -1490,12 +1502,7 @@ export interface ZodObject<
     mask: M & Record<Exclude<keyof M, keyof Shape>, never>
   ): ZodObject<
     {
-      -readonly [k in keyof Shape]: k extends keyof M
-        ? // Shape[k] extends OptionalInSchema
-          //   ? Shape[k]
-          //   :
-          ZodOptional<Shape[k]>
-        : Shape[k];
+      -readonly [k in keyof Shape]: k extends keyof M ? PartialField<Shape[k]> : Shape[k];
     },
     Config
   >;

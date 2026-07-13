@@ -3883,7 +3883,7 @@ export interface $ZodCatchDef<T extends SomeType = $ZodType> extends $ZodTypeDef
 export interface $ZodCatchInternals<T extends SomeType = $ZodType>
   extends $ZodTypeInternals<core.output<T>, core.input<T>> {
   def: $ZodCatchDef<T>;
-  optin: T["_zod"]["optin"];
+  optin: "optional";
   optout: T["_zod"]["optout"];
   isst: never;
   values: T["_zod"]["values"];
