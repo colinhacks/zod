@@ -556,6 +556,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`zod-form-renderer`](https://github.com/thepeaklab/zod-form-renderer): Auto-infer form fields from zod schema and render them with react-hook-form with E2E type safety.
 - [`antd-zod`](https://github.com/MrBr/antd-zod): Zod adapter for Ant Design form fields validation.
 - [`frrm`](https://github.com/schalkventer/frrm): Tiny 0.5kb Zod-based, HTML form abstraction that goes brr.
+- [`Attaform`](https://attaform.dev): Type-safe, Zod-first form library for Vue 3 and Nuxt, with first-class support for both Zod 3 and Zod 4.
 
 #### Zod to X
 
