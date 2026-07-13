@@ -28,11 +28,15 @@ jobs:
           node-version: ${{ matrix.node }}
       - uses: pnpm/action-setup@v4
       - run: pnpm install
-      - run: pnpm add typescript@${{ matrix.typescript }} -w
+      # Build and run the workspace-pinned suites before installing the matrix TypeScript:
+      # zshy resolves the root TypeScript and doesn't support TS 7 (see #6185), and the
+      # @zod/resolution harness invokes zshy internally. resolution/integration pin their
+      # own typescript, so only `pnpm test` is meant to vary with the matrix.
       - run: pnpm build
-      - run: pnpm test
       - run: pnpm run --filter @zod/resolution test:all
       - run: pnpm run --filter @zod/integration test:all
+      - run: pnpm add typescript@${{ matrix.typescript }} -w
+      - run: pnpm test
 
   lint:
     runs-on: ubuntu-latest
