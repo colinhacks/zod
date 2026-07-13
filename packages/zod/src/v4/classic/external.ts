@@ -50,3 +50,6 @@ export type {
   ZodCoercedDate,
 } from "./coerce.js";
 export * as coerce from "./coerce.js";
+
+// formData
+export { formData, type ZodFormData } from "./form-data.js";
