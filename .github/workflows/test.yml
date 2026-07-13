@@ -28,8 +28,10 @@ jobs:
           node-version: ${{ matrix.node }}
       - uses: pnpm/action-setup@v4
       - run: pnpm install
-      - run: pnpm add typescript@${{ matrix.typescript }} -w
+      # Build with the lockfile's pinned TypeScript — zshy doesn't support TS 7 (see #6185).
+      # The matrix TypeScript applies to the test steps below, which is what the matrix is for.
       - run: pnpm build
+      - run: pnpm add typescript@${{ matrix.typescript }} -w
       - run: pnpm test
       - run: pnpm run --filter @zod/resolution test:all
       - run: pnpm run --filter @zod/integration test:all
