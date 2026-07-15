@@ -19,7 +19,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         node: ["lts/*"]
-        typescript: ["5.5", "latest"]
+        typescript: ["5.5", "5"]
     name: Test with TypeScript ${{ matrix.typescript }} on Node ${{ matrix.node }} (${{ matrix.os }})
     steps:
       - uses: actions/checkout@v4
@@ -28,8 +28,8 @@ jobs:
           node-version: ${{ matrix.node }}
       - uses: pnpm/action-setup@v4
       - run: pnpm install
-      - run: pnpm add typescript@${{ matrix.typescript }} -w
       - run: pnpm build
+      - run: pnpm add typescript@${{ matrix.typescript }} -w
       - run: pnpm test
       - run: pnpm run --filter @zod/resolution test:all
       - run: pnpm run --filter @zod/integration test:all
