@@ -328,6 +328,12 @@ const zodUtilities: ZodResource[] = [
     description: "Compile Zod schemas into zero-overhead validation functions at build time. 2-64x faster validation with no code changes.",
     slug: "wakita181009/zod-aot",
   },
+    {
+    name: "oxlint-plugin-import-zod",
+    url: "https://github.com/samchungy/oxlint-plugin-import-zod",
+    description: "Oxlint plugin to enforce namespace imports for Zod.",
+    slug: "samchungy/oxlint-plugin-import-zod",
+  },
 ];
 
 export {
