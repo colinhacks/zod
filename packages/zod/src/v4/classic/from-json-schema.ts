@@ -119,6 +119,13 @@ function detectVersion(schema: JSONSchema.JSONSchema, defaultTarget?: JSONSchema
   return defaultTarget ?? "draft-2020-12";
 }
 
+function applyMinItems(items: ZodType[], minItems: number): ZodType[] {
+  if (minItems <= 0) {
+    return items.map((item) => item.optional());
+  }
+  return items.map((item, index) => (index < minItems ? item : item.optional()));
+}
+
 function resolveRef(ref: string, ctx: ConversionContext): JSONSchema.JSONSchema {
   if (!ref.startsWith("#")) {
     throw new Error("External $ref is not supported, only local refs (#/...) are allowed");
@@ -495,16 +502,15 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
 
       if (prefixItems && Array.isArray(prefixItems)) {
         // Tuple with prefixItems (draft-2020-12)
+        const minItems = typeof schema.minItems === "number" ? schema.minItems : 0;
         const tupleItems = prefixItems.map((item) => convertSchema(item as JSONSchema.JSONSchema, ctx));
+        const positionalItems = applyMinItems(tupleItems, minItems);
         const rest =
           items && typeof items === "object" && !Array.isArray(items)
             ? convertSchema(items as JSONSchema.JSONSchema, ctx)
             : undefined;
-        if (rest) {
-          zodSchema = z.tuple(tupleItems as [ZodType, ...ZodType[]]).rest(rest);
-        } else {
-          zodSchema = z.tuple(tupleItems as [ZodType, ...ZodType[]]);
-        }
+        const tupleSchema = z.tuple(positionalItems as [ZodType, ...ZodType[]]);
+        zodSchema = rest ? tupleSchema.rest(rest) : tupleSchema;
         // Apply minItems/maxItems constraints to tuples
         if (typeof schema.minItems === "number") {
           zodSchema = zodSchema.check(z.minLength(schema.minItems));
@@ -514,16 +520,15 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         }
       } else if (Array.isArray(items)) {
         // Tuple with items array (draft-7)
+        const minItems = typeof schema.minItems === "number" ? schema.minItems : 0;
         const tupleItems = items.map((item) => convertSchema(item as JSONSchema.JSONSchema, ctx));
+        const positionalItems = applyMinItems(tupleItems, minItems);
         const rest =
           schema.additionalItems && typeof schema.additionalItems === "object"
             ? convertSchema(schema.additionalItems as JSONSchema.JSONSchema, ctx)
             : undefined; // additionalItems: false means no rest, handled by default tuple behavior
-        if (rest) {
-          zodSchema = z.tuple(tupleItems as [ZodType, ...ZodType[]]).rest(rest);
-        } else {
-          zodSchema = z.tuple(tupleItems as [ZodType, ...ZodType[]]);
-        }
+        const tupleSchema = z.tuple(positionalItems as [ZodType, ...ZodType[]]);
+        zodSchema = rest ? tupleSchema.rest(rest) : tupleSchema;
         // Apply minItems/maxItems constraints to tuples
         if (typeof schema.minItems === "number") {
           zodSchema = zodSchema.check(z.minLength(schema.minItems));
