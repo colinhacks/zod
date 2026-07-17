@@ -311,7 +311,7 @@ const poweredByZodProjects: ZodResource[] = [
   {
     name: "ArkEnv",
     url: "https://github.com/yamcodes/arkenv",
-    description: "Typesafe environment variables validated with Zod, for Node.js, Vite, Bun, Next.js, and Nuxt.",
+    description: "Environment variable validation from editor to runtime.",
     slug: "yamcodes/arkenv",
   },
 ];
