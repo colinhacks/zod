@@ -307,7 +307,13 @@ const poweredByZodProjects: ZodResource[] = [
     url: "https://jsr.io/@chrock-studio/overload",
     description: "A lightweight, type-safe runtime function overloading library that allows runtime dispatch based on argument types.",
     slug: "chrock-studio/toolbox/tree/main/packages/overload",
-  }
+  },
+  {
+    name: "ArkEnv",
+    url: "https://github.com/yamcodes/arkenv",
+    description: "Typesafe environment variables validated with Zod, for Node.js, Vite, Bun, Next.js, and Nuxt.",
+    slug: "yamcodes/arkenv",
+  },
 ];
 
 const zodUtilities: ZodResource[] = [
