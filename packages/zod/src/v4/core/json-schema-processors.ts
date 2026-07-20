@@ -493,12 +493,22 @@ export const nonoptionalProcessor: Processor<schemas.$ZodNonOptional> = (schema,
   seen.ref = def.innerType;
 };
 
+function serializeDefaultValue(value: any, unrepresentable: "throw" | "any"): any {
+  if (typeof value === "bigint") {
+    if (unrepresentable === "throw") {
+      throw new Error("BigInt defaults cannot be represented in JSON Schema");
+    }
+    return Number(value);
+  }
+  return JSON.parse(JSON.stringify(value));
+}
+
 export const defaultProcessor: Processor<schemas.$ZodDefault> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodDefaultDef;
   process(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
-  json.default = JSON.parse(JSON.stringify(def.defaultValue));
+  json.default = serializeDefaultValue(def.defaultValue, ctx.unrepresentable);
 };
 
 export const prefaultProcessor: Processor<schemas.$ZodPrefault> = (schema, ctx, json, params) => {
@@ -506,7 +516,7 @@ export const prefaultProcessor: Processor<schemas.$ZodPrefault> = (schema, ctx, 
   process(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
-  if (ctx.io === "input") json._prefault = JSON.parse(JSON.stringify(def.defaultValue));
+  if (ctx.io === "input") json._prefault = serializeDefaultValue(def.defaultValue, ctx.unrepresentable);
 };
 
 export const catchProcessor: Processor<schemas.$ZodCatch> = (schema, ctx, json, params) => {

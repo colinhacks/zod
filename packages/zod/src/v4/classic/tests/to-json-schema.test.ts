@@ -333,6 +333,43 @@ describe("toJSONSchema", () => {
     `);
   });
 
+  test("bigint defaults", () => {
+    expect(z.toJSONSchema(z.bigint().default(0n), { unrepresentable: "any" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "default": 0,
+      }
+    `);
+
+    const schema = z.object({
+      startAt: z.coerce.bigint().optional().default(0n),
+    });
+    expect(
+      z.toJSONSchema(schema, {
+        io: "input",
+        unrepresentable: "any",
+        override: ({ zodSchema, jsonSchema }) => {
+          if ((zodSchema as any)._zod.def.type === "bigint") {
+            jsonSchema.type = "integer";
+            jsonSchema.format = "int64";
+          }
+        },
+      })
+    ).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "properties": {
+          "startAt": {
+            "default": 0,
+            "format": "int64",
+            "type": "integer",
+          },
+        },
+        "type": "object",
+      }
+    `);
+  });
+
   test("string formats", () => {
     expect(z.toJSONSchema(z.string().email())).toMatchInlineSnapshot(`
       {
