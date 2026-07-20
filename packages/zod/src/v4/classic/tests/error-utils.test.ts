@@ -805,3 +805,25 @@ test("z.treeifyError nested union with real schema", () => {
     }
   }
 });
+
+// Regression: an issue path element that collides with an inherited property
+// name (e.g. "__proto__", "constructor") must not crash the error formatters
+// or mutate any prototype. Such paths are reachable through the public API via
+// a custom issue path (superRefine/check), e.g. when validating dynamic field
+// names taken from user input.
+test("formatError handles __proto__ / inherited-name path elements", () => {
+  for (const key of ["__proto__", "constructor", "toString", "hasOwnProperty"]) {
+    const schema = z.string().check((ctx) => {
+      ctx.issues.push({ code: "custom", message: "bad", path: [key], input: ctx.value });
+    });
+    const err = schema.safeParse("x").error!;
+    const formatted = z.formatError(err) as any;
+    expect(Object.prototype.hasOwnProperty.call(formatted, key)).toBe(true);
+    expect(formatted[key]._errors).toEqual(["bad"]);
+    const tree = z.treeifyError(err) as any;
+    expect(Object.prototype.hasOwnProperty.call(tree.properties, key)).toBe(true);
+    expect(tree.properties[key].errors).toEqual(["bad"]);
+  }
+  // no prototype pollution occurred
+  expect(({} as any).bad).toBeUndefined();
+});
