@@ -805,3 +805,29 @@ test("z.treeifyError nested union with real schema", () => {
     }
   }
 });
+
+const prototypePropertyNames = ["__proto__", "constructor", "toString", "hasOwnProperty", "valueOf"] as const;
+
+test.each(prototypePropertyNames)("z.formatError handles Object.prototype property path: %s", (name) => {
+  const schema = z.object({ data: z.string() }).superRefine((_, ctx) => {
+    ctx.addIssue({ code: "custom", message: "invalid value", path: [name] });
+  });
+  const result = schema.safeParse({ data: "hello" });
+  expect(result.success).toBe(false);
+  const formatted = z.formatError(result.error!);
+  expect(Object.prototype.hasOwnProperty.call(formatted, name)).toBe(true);
+  expect(Object.getPrototypeOf(formatted)).toBe(Object.prototype);
+  expect((formatted as any)[name]._errors).toEqual(["invalid value"]);
+});
+
+test.each(prototypePropertyNames)("z.treeifyError handles Object.prototype property path: %s", (name) => {
+  const schema = z.object({ data: z.string() }).superRefine((_, ctx) => {
+    ctx.addIssue({ code: "custom", message: "invalid value", path: [name] });
+  });
+  const result = schema.safeParse({ data: "hello" });
+  expect(result.success).toBe(false);
+  const tree = z.treeifyError(result.error!);
+  expect(Object.prototype.hasOwnProperty.call(tree.properties, name)).toBe(true);
+  expect(Object.getPrototypeOf(tree.properties)).toBe(Object.prototype);
+  expect((tree as any).properties[name].errors).toEqual(["invalid value"]);
+});

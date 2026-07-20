@@ -311,10 +311,19 @@ export function formatError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIssu
             const el = fullpath[i]!;
             const terminal = i === fullpath.length - 1;
 
-            if (!terminal) {
-              curr[el] = curr[el] || { _errors: [] };
-            } else {
-              curr[el] = curr[el] || { _errors: [] };
+            if (!Object.prototype.hasOwnProperty.call(curr, el)) {
+              if (el === "__proto__") {
+                Object.defineProperty(curr, el, {
+                  value: { _errors: [] },
+                  writable: true,
+                  enumerable: true,
+                  configurable: true,
+                });
+              } else {
+                curr[el] = { _errors: [] };
+              }
+            }
+            if (terminal) {
               curr[el]._errors.push(mapper(issue));
             }
 
@@ -370,7 +379,18 @@ export function treeifyError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIss
           const terminal = i === fullpath.length - 1;
           if (typeof el === "string") {
             curr.properties ??= {};
-            curr.properties[el] ??= { errors: [] };
+            if (!Object.prototype.hasOwnProperty.call(curr.properties, el)) {
+              if (el === "__proto__") {
+                Object.defineProperty(curr.properties, el, {
+                  value: { errors: [] },
+                  writable: true,
+                  enumerable: true,
+                  configurable: true,
+                });
+              } else {
+                curr.properties[el] = { errors: [] };
+              }
+            }
             curr = curr.properties[el];
           } else {
             curr.items ??= [];
