@@ -3159,3 +3159,11 @@ test("__proto__ def id emits a resolvable $ref", () => {
   expect(json.properties.a.$ref).toBe("#/$defs/__proto__");
   expect(json.$defs.__proto__).toBeDefined();
 });
+
+test("$ref pointer encodes / and ~ in defId (issue #6027)", () => {
+  const inner = z.string().meta({ id: "foo/bar~baz" });
+  const result = z.toJSONSchema(z.object({ a: inner, b: inner }));
+  expect(result.$defs).toEqual({ "foo/bar~baz": { type: "string" } });
+  expect((result.properties as any).a).toEqual({ $ref: "#/$defs/foo~1bar~0baz" });
+  expect((result.properties as any).b).toEqual({ $ref: "#/$defs/foo~1bar~0baz" });
+});
