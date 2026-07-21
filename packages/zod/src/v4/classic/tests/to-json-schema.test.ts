@@ -3129,3 +3129,11 @@ test("recursive lazy with describe does not stack overflow", () => {
   expect(result).toBeDefined();
   expect(result.$defs).toBeDefined();
 });
+
+test("$ref pointer encodes / and ~ in defId (issue #6027)", () => {
+  const inner = z.string().meta({ id: "foo/bar~baz" });
+  const result = z.toJSONSchema(z.object({ a: inner, b: inner }));
+  expect(result.$defs).toEqual({ "foo/bar~baz": { type: "string" } });
+  expect((result.properties as any).a).toEqual({ $ref: "#/$defs/foo~1bar~0baz" });
+  expect((result.properties as any).b).toEqual({ $ref: "#/$defs/foo~1bar~0baz" });
+});
