@@ -16,6 +16,14 @@ test("basic datetime parsing", () => {
   expect(() => datetime.parse("2020-10-14T17:42:29+00:00")).toThrow();
 });
 
+test("datetime parsing with extended year (issue #6154)", () => {
+  const datetime = z.string().datetime();
+  datetime.parse("+010000-01-01T00:00:00.000Z");
+  datetime.parse("-000100-01-01T00:00:00.000Z");
+  expect(() => datetime.parse("20000-01-01T00:00:00.000Z")).toThrow();
+  expect(() => datetime.parse("+010000-13-01T00:00:00.000Z")).toThrow();
+});
+
 test("datetime parsing with precision -1", () => {
   const datetimeNoMs = z.string().datetime({ precision: -1, offset: true, local: true });
   datetimeNoMs.parse("1970-01-01T00:00Z");
