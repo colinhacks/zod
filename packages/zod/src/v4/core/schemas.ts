@@ -1870,7 +1870,10 @@ function handleCatchall(
   for (const key in input) {
     // skip __proto__ so it can't replace the result prototype via the
     // assignment setter on the plain {} we build into
-    if (key === "__proto__") continue;
+    if (key === "__proto__") {
+      if (t === "never") unrecognized.push(key);
+      continue;
+    }
     if (keySet.has(key)) continue;
     if (t === "never") {
       unrecognized.push(key);
