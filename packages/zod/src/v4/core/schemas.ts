@@ -1868,9 +1868,13 @@ function handleCatchall(
   const isOptionalIn = _catchall.optin === "optional";
   const isOptionalOut = _catchall.optout === "optional";
   for (const key in input) {
-    // skip __proto__ so it can't replace the result prototype via the
-    // assignment setter on the plain {} we build into
-    if (key === "__proto__") continue;
+    // Don't copy __proto__ into the result; assignment to a plain {} would
+    // replace the result prototype. But in strict mode it is still an
+    // unknown key, so report it before skipping.
+    if (key === "__proto__") {
+      if (t === "never") unrecognized.push(key);
+      continue;
+    }
     if (keySet.has(key)) continue;
     if (t === "never") {
       unrecognized.push(key);
