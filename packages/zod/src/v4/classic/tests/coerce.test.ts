@@ -75,6 +75,19 @@ test("boolean coercion", () => {
   expect(schema.parse(new Date(1670139203496))).toEqual(true);
 });
 
+test("coerced boolean object property tolerates an absent key (#5957)", () => {
+  const schema = z.object({ foo: z.coerce.boolean() });
+  const result = schema.safeParse({});
+  expect(result.success).toBe(true);
+  expect(result.data).toEqual({ foo: false });
+});
+
+test("non-coerced boolean object property is still required", () => {
+  const schema = z.object({ foo: z.boolean() });
+  const result = schema.safeParse({});
+  expect(result.success).toBe(false);
+});
+
 test("bigint coercion", () => {
   const schema = z.coerce.bigint();
   expect(schema.parse("5")).toEqual(BigInt(5));
