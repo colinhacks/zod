@@ -2674,6 +2674,40 @@ test("keep input-valid default on transforming schema (#6049)", () => {
   `);
 });
 
+test("strip type-mismatched default on transforming schema (#4557)", () => {
+  // default is output-typed (number) but the input type is string → still stripped in input mode
+  const a = z
+    .string()
+    .transform((v) => v.length)
+    .pipe(z.number())
+    .default(1234);
+  expect(z.toJSONSchema(a, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+    }
+  `);
+  expect(z.toJSONSchema(a, { io: "output" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "default": 1234,
+      "type": "number",
+    }
+  `);
+
+  // same polarity without an explicit .pipe()
+  const b = z
+    .string()
+    .transform((s) => s.length)
+    .default(42);
+  expect(z.toJSONSchema(b, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+    }
+  `);
+});
+
 test("falsy prefaults (false, 0, empty string)", () => {
   // boolean prefault false
   const a = z.boolean().prefault(false);

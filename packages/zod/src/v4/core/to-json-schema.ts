@@ -204,6 +204,8 @@ export function process<T extends schemas.$ZodType>(
     // A `.default()` value is output-typed, so on a transforming schema it may not match the input
     // type (#4557 strips it for that reason). Keep it only when it is valid input — i.e. its JSON
     // type matches the resolved input schema (#6049).
+    // Only `default` needs this check: `.prefault()` is input-typed by definition (it is substituted
+    // *before* parsing), so it is always valid input and is emitted unconditionally just below.
     const keepDefault =
       def.type === "default" && defaultMatchesInputType(result.schema.default, resolveInputType(result.ref, ctx));
     if (!keepDefault) {
@@ -532,6 +534,9 @@ export function finalize<T extends schemas.$ZodType>(
 
 // Follow the `ref` chain of a seen schema to the first concrete JSON `type`. A `.default()` node only
 // records `default` on its own schema; its input type lives on the schema it refs (see defaultProcessor).
+// Returns `undefined` when the chain is cyclic, unprocessed, or never reaches a typed schema (e.g. a
+// union or `z.any()`); callers treat that as "input type unknown", which strips the default — the
+// conservative choice, matching the pre-#6049 behavior.
 function resolveInputType(start: schemas.$ZodType | null | undefined, ctx: ToJSONSchemaContext) {
   const guard = new Set<schemas.$ZodType>();
   let cur: schemas.$ZodType | null | undefined = start;
@@ -550,9 +555,12 @@ function resolveInputType(start: schemas.$ZodType | null | undefined, ctx: ToJSO
 function defaultMatchesInputType(value: unknown, type: JSONSchema.BaseSchema["type"]): boolean {
   if (type === undefined) return false;
   const jsonType = value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
-  const expected = jsonType === "number" ? ["number", "integer"] : [jsonType];
-  const declared = Array.isArray(type) ? type : [type];
-  return expected.some((t) => declared.includes(t as any));
+  // a JSON number satisfies both `number` and `integer` declarations
+  const expected: string[] = jsonType === "number" ? ["number", "integer"] : [jsonType];
+  // `type` is a single keyword in our types, but JSON Schema permits an array of them and an
+  // `override`/metadata hook can produce one, so accept both shapes.
+  const declared = new Set<string>(Array.isArray(type) ? type : [type]);
+  return expected.some((t) => declared.has(t));
 }
 
 function isTransforming(
