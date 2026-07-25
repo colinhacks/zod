@@ -1204,6 +1204,8 @@ export const $ZodBoolean: core.$constructor<$ZodBoolean> = /*@__PURE__*/ core.$c
     $ZodType.init(inst, def);
     inst._zod.pattern = regexes.boolean;
 
+    if (def.coerce) inst._zod.optin = "optional";
+
     inst._zod.parse = (payload, _ctx) => {
       if (def.coerce)
         try {
@@ -1445,6 +1447,7 @@ export interface $ZodAny extends $ZodType {
 export const $ZodAny: core.$constructor<$ZodAny> = /*@__PURE__*/ core.$constructor("$ZodAny", (inst, def) => {
   $ZodType.init(inst, def);
 
+  inst._zod.optin = "optional";
   inst._zod.parse = (payload) => payload;
 });
 
@@ -1474,6 +1477,7 @@ export const $ZodUnknown: core.$constructor<$ZodUnknown> = /*@__PURE__*/ core.$c
   (inst, def) => {
     $ZodType.init(inst, def);
 
+    inst._zod.optin = "optional";
     inst._zod.parse = (payload) => payload;
   }
 );
