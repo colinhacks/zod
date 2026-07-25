@@ -468,12 +468,17 @@ function fixAllOfAdditionalProperties(
 
   // For older drafts (or when not all entries are strict), add {} placeholders so each
   // entry's additionalProperties: false won't reject sibling entries' property names.
-  const allNames = new Set<string>();
-  for (const entry of allOf) {
-    collectPropertyNames(entry, allNames);
-  }
+  // Each entry only gets the names of the *other* entries: a name declared within the same
+  // entry belongs to a branch of that entry's own oneOf/anyOf, and a placeholder for it would
+  // let the branch that doesn't declare it accept the value unchecked.
+  const namesPerEntry = allOf.map((entry) => collectPropertyNames(entry));
   for (let i = 0; i < allOf.length; i++) {
-    allOf[i] = addSiblingPropertyPlaceholders(allOf[i], allNames);
+    const siblingNames = new Set<string>();
+    for (let j = 0; j < allOf.length; j++) {
+      if (j === i) continue;
+      for (const name of namesPerEntry[j]) siblingNames.add(name);
+    }
+    allOf[i] = addSiblingPropertyPlaceholders(allOf[i], siblingNames);
   }
 }
 

@@ -1211,7 +1211,6 @@ describe("toJSONSchema", () => {
               {
                 "additionalProperties": false,
                 "properties": {
-                  "count": {},
                   "name": {},
                   "type": {
                     "const": "a",
@@ -1238,7 +1237,6 @@ describe("toJSONSchema", () => {
                     "const": "b",
                     "type": "string",
                   },
-                  "value": {},
                 },
                 "required": [
                   "type",
