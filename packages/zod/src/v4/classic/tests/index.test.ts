@@ -150,6 +150,14 @@ test("z.iso.time", () => {
   expect(z.safeParse(c, d1).success).toEqual(true);
   expect(z.safeParse(c, d2).success).toEqual(true);
   expect(z.safeParse(c, d3).success).toEqual(false);
+
+  // offset: true allows timezone suffixes (Z, +HH:MM, -HH:MM)
+  const withOffset = z.iso.time({ offset: true });
+  expect(z.safeParse(withOffset, "10:15:30Z").success).toEqual(true);
+  expect(z.safeParse(withOffset, "10:15:30+02:00").success).toEqual(true);
+  expect(z.safeParse(withOffset, "10:15:30-05:30").success).toEqual(true);
+  expect(z.safeParse(withOffset, "10:15:30").success).toEqual(false); // no offset — rejected when offset required
+  expect(z.safeParse(withOffset, "bad data").success).toEqual(false);
 });
 
 test("z.iso.duration", () => {

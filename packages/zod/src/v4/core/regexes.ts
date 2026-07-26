@@ -110,9 +110,14 @@ function timeSource(args: { precision?: number | null | undefined }) {
 }
 export function time(args: {
   precision?: number | null;
+  offset?: boolean;
   // local?: boolean;
 }): RegExp {
-  return new RegExp(`^${timeSource(args)}$`);
+  const t = timeSource(args);
+  if (args.offset) {
+    return new RegExp(`^${t}(?:Z|[+-](?:[01]\\d|2[0-3]):[0-5]\\d)$`);
+  }
+  return new RegExp(`^${t}$`);
 }
 
 // Adapted from https://stackoverflow.com/a/3143231
