@@ -268,6 +268,21 @@ test("exactOptional vs optional comparison", () => {
   expect(exactOptionalSchema.safeParse({ a: undefined }).success).toEqual(false);
 });
 
+test("exactOptional with coercion", () => {
+  // Absent key should not produce value
+  expect(z.object({ a: z.coerce.number().exactOptional() }).parse({})).toEqual({});
+  expect(z.object({ a: z.coerce.string().exactOptional() }).parse({})).toEqual({});
+  expect(z.object({ a: z.coerce.boolean().exactOptional() }).parse({})).toEqual({});
+  expect(z.object({ a: z.coerce.bigint().exactOptional() }).parse({})).toEqual({});
+  expect(z.object({ a: z.coerce.date().exactOptional() }).parse({})).toEqual({});
+
+  // Explicit undefined should still reject with coercion
+  expect(z.object({ a: z.coerce.number().exactOptional() }).safeParse({ a: undefined }).success).toEqual(false);
+
+  // Present value with coercion should still work
+  expect(z.object({ a: z.coerce.number().exactOptional() }).parse({ a: "42" })).toEqual({ a: 42 });
+});
+
 // Defensive inference coverage: every schema that propagates `optout` participates
 // in object-key optionality inference. If anyone ever changes the set of values that
 // `optout` can take (or how OptionalOutSchema matches them), these assertions must

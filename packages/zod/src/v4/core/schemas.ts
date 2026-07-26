@@ -3544,9 +3544,18 @@ export const $ZodExactOptional: core.$constructor<$ZodExactOptional> = /*@__PURE
     util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
     util.defineLazy(inst._zod, "pattern", () => def.innerType._zod.pattern);
 
-    // Override parse to just delegate (no undefined handling)
     inst._zod.parse = (payload, ctx) => {
-      return def.innerType._zod.run(payload, ctx);
+      const wasUndefined = payload.value === undefined;
+      const result = def.innerType._zod.run(payload, ctx);
+      if (wasUndefined) {
+        const overwrite = (r: ParsePayload) => {
+          r.value = undefined;
+          return r;
+        };
+        if (result instanceof Promise) return result.then(overwrite);
+        return overwrite(result);
+      }
+      return result;
     };
   }
 );
