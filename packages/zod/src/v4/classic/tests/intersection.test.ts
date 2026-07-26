@@ -190,7 +190,7 @@ test("invalid deep merge of object and array combination", async () => {
     })
   );
 
-  const students = [{ name: "John", surname": "Doe" }];
+  const students = [{ name: "John", surname: "Doe" }];
 
   expect(() => Registry.parse({ students })).toThrowErrorMatchingInlineSnapshot(
     `[Error: Unmergable intersection. Error path: ["students",0,"name"]]`
