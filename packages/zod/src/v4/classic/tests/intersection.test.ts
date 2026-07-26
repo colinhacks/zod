@@ -204,7 +204,9 @@ test("object and record intersection: record should not validate keys owned by t
   // the object side. If the record's valueType didn't match the object's
   // field shapes, this produced a spurious validation failure even though
   // the object side already validated those keys correctly.
-  const Config = z.object({ name: z.object({ first: z.string() }) }).and(z.record(z.string(), z.object({ sub: z.string() })));
+  const Config = z
+    .object({ name: z.object({ first: z.string() }) })
+    .and(z.record(z.string(), z.object({ sub: z.string() })));
 
   const valid = { name: { first: "Ada" }, extra: { sub: "value" } };
   expect(Config.parse(valid)).toEqual(valid);
