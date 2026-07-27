@@ -1204,6 +1204,11 @@ export const $ZodBoolean: core.$constructor<$ZodBoolean> = /*@__PURE__*/ core.$c
     $ZodType.init(inst, def);
     inst._zod.pattern = regexes.boolean;
 
+    // A coercing boolean accepts undefined (Boolean(undefined) === false),
+    // so an absent object key should be coerced rather than rejected as a
+    // missing required property.
+    if (def.coerce) inst._zod.optin = "optional";
+
     inst._zod.parse = (payload, _ctx) => {
       if (def.coerce)
         try {
@@ -1445,6 +1450,9 @@ export interface $ZodAny extends $ZodType {
 export const $ZodAny: core.$constructor<$ZodAny> = /*@__PURE__*/ core.$constructor("$ZodAny", (inst, def) => {
   $ZodType.init(inst, def);
 
+  // `any` accepts undefined as a valid value, so an absent object key
+  // should not be treated as a missing required property either.
+  inst._zod.optin = "optional";
   inst._zod.parse = (payload) => payload;
 });
 
@@ -1474,6 +1482,9 @@ export const $ZodUnknown: core.$constructor<$ZodUnknown> = /*@__PURE__*/ core.$c
   (inst, def) => {
     $ZodType.init(inst, def);
 
+    // Same as `any`: unknown accepts undefined, so an absent object key
+    // should not be treated as a missing required property.
+    inst._zod.optin = "optional";
     inst._zod.parse = (payload) => payload;
   }
 );

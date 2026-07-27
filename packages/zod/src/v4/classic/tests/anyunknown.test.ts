@@ -24,3 +24,17 @@ test("check never inference", () => {
   expect(() => t1.parse("asdf")).toThrow();
   expect(() => t1.parse(null)).toThrow();
 });
+
+test("any object property tolerates an absent key (#5997)", () => {
+  const schema = z.object({ foo: z.any() });
+  const result = schema.safeParse({});
+  expect(result.success).toBe(true);
+  expect(result.data).toEqual({});
+});
+
+test("unknown object property tolerates an absent key", () => {
+  const schema = z.object({ foo: z.unknown() });
+  const result = schema.safeParse({});
+  expect(result.success).toBe(true);
+  expect(result.data).toEqual({});
+});
