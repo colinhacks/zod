@@ -196,3 +196,33 @@ test("invalid deep merge of object and array combination", async () => {
     `[Error: Unmergable intersection. Error path: ["students",0,"name"]]`
   );
 });
+
+test("object and record intersection: record should not validate keys owned by the object side", () => {
+  // Regression test for https://github.com/colinhacks/zod/issues/2573
+  // Previously, the record side of an object & record intersection ran
+  // against the *entire* input, including keys that structurally belong to
+  // the object side. If the record's valueType didn't match the object's
+  // field shapes, this produced a spurious validation failure even though
+  // the object side already validated those keys correctly.
+  const Config = z
+    .object({ name: z.object({ first: z.string() }) })
+    .and(z.record(z.string(), z.object({ sub: z.string() })));
+
+  const valid = { name: { first: "Ada" }, extra: { sub: "value" } };
+  expect(Config.parse(valid)).toEqual(valid);
+
+  // Symmetric case: record on the left, object on the right.
+  const ConfigReversed = z
+    .record(z.string(), z.object({ sub: z.string() }))
+    .and(z.object({ name: z.object({ first: z.string() }) }));
+  expect(ConfigReversed.parse(valid)).toEqual(valid);
+
+  // A key that is genuinely invalid under the record's valueType (and not
+  // owned by the object's shape) should still fail as before.
+  const invalid = { name: { first: "Ada" }, extra: { notSub: 1 } };
+  expect(() => Config.parse(invalid)).toThrow();
+
+  // The object side's own validation errors must still surface correctly.
+  const invalidObjectSide = { name: { first: 1 }, extra: { sub: "value" } };
+  expect(() => Config.parse(invalidObjectSide)).toThrow();
+});

@@ -2477,8 +2477,10 @@ export const $ZodIntersection: core.$constructor<$ZodIntersection> = /*@__PURE__
 
     inst._zod.parse = (payload, ctx) => {
       const input = payload.value;
-      const left = def.left._zod.run({ value: input, issues: [] }, ctx);
-      const right = def.right._zod.run({ value: input, issues: [] }, ctx);
+      const leftInput = getIntersectionSideInput(def.left, def.right, input);
+      const rightInput = getIntersectionSideInput(def.right, def.left, input);
+      const left = def.left._zod.run({ value: leftInput, issues: [] }, ctx);
+      const right = def.right._zod.run({ value: rightInput, issues: [] }, ctx);
       const async = left instanceof Promise || right instanceof Promise;
 
       if (async) {
@@ -2491,6 +2493,26 @@ export const $ZodIntersection: core.$constructor<$ZodIntersection> = /*@__PURE__
     };
   }
 );
+
+// When intersecting an object schema with a record schema, the record side
+// should not attempt to validate keys that structurally belong to the object
+// schema's own shape. Without this, a record valueType that doesn't match the
+// object's field shapes causes spurious validation failures on keys that the
+// object side already owns and validates correctly (see zod issue #2573).
+function getIntersectionSideInput(thisSchema: SomeType, otherSchema: SomeType, input: unknown): unknown {
+  const thisType = (thisSchema as any)?._zod?.def?.type;
+  const otherType = (otherSchema as any)?._zod?.def?.type;
+  if (thisType === "record" && otherType === "object" && util.isPlainObject(input)) {
+    const shape = (otherSchema as any)._zod.def.shape as Record<string, unknown>;
+    const shapeKeys = new Set(Object.keys(shape));
+    const filtered: Record<string, unknown> = {};
+    for (const key of Object.keys(input as Record<string, unknown>)) {
+      if (!shapeKeys.has(key)) filtered[key] = (input as Record<string, unknown>)[key];
+    }
+    return filtered;
+  }
+  return input;
+}
 
 function mergeValues(
   a: any,
