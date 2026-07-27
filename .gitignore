@@ -28,3 +28,4 @@ triage/
 tmp/
 .worktrees/
 research/
+*.patch

@@ -1,6 +1,23 @@
 import { expect, test } from "vitest";
 
+import type * as errors from "../../core/errors.js";
+import en from "../../locales/en.js";
 import * as z from "zod/v4";
+
+test("English locale falls back to a generic value when origin is missing", () => {
+  const localeError = en().localeError;
+  const issue = {
+    code: "too_small",
+    minimum: 4,
+    exact: true,
+    inclusive: true,
+    origin: undefined as never,
+    path: [],
+    message: "",
+  } as unknown as errors.$ZodIssue;
+
+  expect(localeError(issue as never)).toBe("Too small: expected value to be exactly 4");
+});
 
 test("string length", async () => {
   try {
