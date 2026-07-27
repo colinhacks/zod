@@ -1448,18 +1448,18 @@ export interface ZodObject<
 
   keyof(): ZodEnum<util.ToEnum<keyof Shape & string>>;
   /** Define a schema to validate all unrecognized keys. This overrides the existing strict/loose behavior. */
-  catchall<T extends core.SomeType>(schema: T): ZodObject<Shape, core.$catchall<T>>;
+  catchall<T extends core.SomeType>(schema: T): ZodObject<this["shape"], core.$catchall<T>>;
 
   /** @deprecated Use `z.looseObject()` or `.loose()` instead. */
-  passthrough(): ZodObject<Shape, core.$loose>;
+  passthrough(): ZodObject<this["shape"], core.$loose>;
   /** Consider `z.looseObject(A.shape)` instead */
-  loose(): ZodObject<Shape, core.$loose>;
+  loose(): ZodObject<this["shape"], core.$loose>;
 
   /** Consider `z.strictObject(A.shape)` instead */
-  strict(): ZodObject<Shape, core.$strict>;
+  strict(): ZodObject<this["shape"], core.$strict>;
 
   /** This is the default behavior. This method call is likely unnecessary. */
-  strip(): ZodObject<Shape, core.$strip>;
+  strip(): ZodObject<this["shape"], core.$strip>;
 
   extend<U extends core.$ZodLooseShape>(shape: U): ZodObject<util.Extend<Shape, util.Writeable<U>>, Config>;
 
