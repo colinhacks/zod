@@ -248,8 +248,11 @@ export function cleanRegex(source: string): string {
 export function floatSafeRemainder(val: number, step: number): number {
   const ratio = val / step;
   const roundedRatio = Math.round(ratio);
-  // Use a relative epsilon scaled to the magnitude of the result
-  const tolerance = Number.EPSILON * Math.max(Math.abs(ratio), 1);
+  // The quotient val / step accumulates rounding error from representing
+  // `val` and `step` as floats and from the division itself, so allow a few
+  // ULPs of tolerance. A single ULP (the previous value) rejected exact decimal
+  // multiples such as 2.03 === 29 * 0.07, whose quotient lands ~1.1 ULP away.
+  const tolerance = 4 * Number.EPSILON * Math.max(Math.abs(ratio), 1);
   if (Math.abs(ratio - roundedRatio) < tolerance) return 0;
   return ratio - roundedRatio;
 }
