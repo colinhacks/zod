@@ -311,10 +311,21 @@ export function formatError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIssu
             const el = fullpath[i]!;
             const terminal = i === fullpath.length - 1;
 
-            if (!terminal) {
-              curr[el] = curr[el] || { _errors: [] };
-            } else {
-              curr[el] = curr[el] || { _errors: [] };
+            // A path element may collide with an inherited property name such as
+            // "__proto__" or "constructor". Truthiness checks read the prototype
+            // (so no node is created, then ._errors.push throws), and bracket
+            // assignment of "__proto__" hits the setter instead of creating an
+            // own key. Guard the read with hasOwnProperty and create the node
+            // with defineProperty so any path element becomes a real own key.
+            if (!Object.prototype.hasOwnProperty.call(curr, el)) {
+              Object.defineProperty(curr, el, {
+                value: { _errors: [] },
+                enumerable: true,
+                writable: true,
+                configurable: true,
+              });
+            }
+            if (terminal) {
               curr[el]._errors.push(mapper(issue));
             }
 
@@ -370,7 +381,19 @@ export function treeifyError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIss
           const terminal = i === fullpath.length - 1;
           if (typeof el === "string") {
             curr.properties ??= {};
-            curr.properties[el] ??= { errors: [] };
+            // el may collide with an inherited property name ("__proto__",
+            // "constructor", ...); ??= reads the prototype so the node is never
+            // created and curr.errors.push throws. Guard with hasOwnProperty and
+            // create the node with defineProperty so "__proto__" becomes a real
+            // own key rather than invoking the prototype setter.
+            if (!Object.prototype.hasOwnProperty.call(curr.properties, el)) {
+              Object.defineProperty(curr.properties, el, {
+                value: { errors: [] },
+                enumerable: true,
+                writable: true,
+                configurable: true,
+              });
+            }
             curr = curr.properties[el];
           } else {
             curr.items ??= [];
