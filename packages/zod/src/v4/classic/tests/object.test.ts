@@ -709,9 +709,15 @@ describe("__proto__ in object catchall paths", () => {
     }
   });
 
-  test("strict does not surface __proto__ as unrecognized", () => {
+  test("strict surfaces __proto__ as unrecognized", () => {
     const schema = z.object({ name: z.string() }).strict();
     const result = schema.safeParse(protoInput());
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].code).toBe("unrecognized_keys");
+      if (result.error.issues[0].code === "unrecognized_keys") {
+        expect(result.error.issues[0].keys).toContain("__proto__");
+      }
+    }
   });
 });
