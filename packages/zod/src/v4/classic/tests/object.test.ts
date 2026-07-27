@@ -720,4 +720,25 @@ describe("__proto__ in object catchall paths", () => {
       }
     }
   });
+
+  test("strict does not report inherited __proto__ from prototype chain", () => {
+    // for...in iterates enumerable inherited keys. __proto__ is an accessor
+    // on Object.prototype, not an enumerable key — so it's never visited.
+    // Properties inside the __proto__ object (e.g. isAdmin) ARE iterated
+    // and reported as unrecognized. This test documents that boundary.
+    const input = Object.create({ __proto__: { isAdmin: true } });
+    input.name = "alice";
+    const schema = z.object({ name: z.string() }).strict();
+    const result = schema.safeParse(input);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].code).toBe("unrecognized_keys");
+      if (result.error.issues[0].code === "unrecognized_keys") {
+        // isAdmin is inherited via the prototype chain and iterated by for...in
+        expect(result.error.issues[0].keys).toContain("isAdmin");
+        // __proto__ itself is not an enumerable key, so it's not reported
+        expect(result.error.issues[0].keys).not.toContain("__proto__");
+      }
+    }
+  });
 });

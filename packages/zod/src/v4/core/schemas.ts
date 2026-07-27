@@ -1870,6 +1870,10 @@ function handleCatchall(
   for (const key in input) {
     // skip __proto__ so it can't replace the result prototype via the
     // assignment setter on the plain {} we build into
+    // Only report as unrecognized in strict mode (t === "never") because
+    // passthrough/strip/catchall silently drop __proto__ by design — the key
+    // is never copied into the result regardless of mode, so there's nothing
+    // to report in non-strict modes.
     if (key === "__proto__") {
       if (t === "never") unrecognized.push(key);
       continue;
