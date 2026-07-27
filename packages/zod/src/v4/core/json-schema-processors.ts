@@ -396,6 +396,8 @@ export const tupleProcessor: Processor<schemas.$ZodTuple> = (schema, ctx, _json,
     json.prefixItems = prefixItems;
     if (rest) {
       json.items = rest;
+    } else {
+      json.items = false;
     }
   } else if (ctx.target === "openapi-3.0") {
     json.items = {
@@ -413,14 +415,19 @@ export const tupleProcessor: Processor<schemas.$ZodTuple> = (schema, ctx, _json,
     json.items = prefixItems;
     if (rest) {
       json.additionalItems = rest;
+    } else {
+      json.additionalItems = false;
     }
   }
 
-  // length
   const { minimum, maximum } = schema._zod.bag as {
     minimum?: number;
     maximum?: number;
   };
+  if (!rest) {
+    if (typeof minimum !== "number") json.minItems = prefixItems.length;
+    if (typeof maximum !== "number") json.maxItems = prefixItems.length;
+  }
   if (typeof minimum === "number") json.minItems = minimum;
   if (typeof maximum === "number") json.maxItems = maximum;
 };

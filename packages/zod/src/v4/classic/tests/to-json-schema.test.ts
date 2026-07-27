@@ -1092,6 +1092,9 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "items": false,
+        "maxItems": 2,
+        "minItems": 2,
         "prefixItems": [
           {
             "type": "string",
@@ -1209,6 +1212,7 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(schema, { target: "draft-7", io: "input" })).toMatchInlineSnapshot(`
       {
         "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalItems": false,
         "items": [
           {
             "type": "string",
@@ -1217,6 +1221,8 @@ describe("toJSONSchema", () => {
             "type": "number",
           },
         ],
+        "maxItems": 2,
+        "minItems": 2,
         "type": "array",
       }
     `);
