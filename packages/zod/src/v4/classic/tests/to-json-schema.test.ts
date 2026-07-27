@@ -2665,6 +2665,19 @@ test("falsy prefaults (false, 0, empty string)", () => {
   `);
 });
 
+test("bigint default toJSONSchema", () => {
+  const a = z.coerce.bigint().optional().default(0n);
+  expect(() => z.toJSONSchema(a, { unrepresentable: "any" })).not.toThrow();
+  expect(z.toJSONSchema(a, { unrepresentable: "any" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "default": 0,
+    }
+  `);
+  const b = z.coerce.bigint().prefault(0n);
+  expect(() => z.toJSONSchema(b, { unrepresentable: "any", io: "input" })).not.toThrow();
+});
+
 test("input type", () => {
   const schema = z.object({
     a: z.string(),

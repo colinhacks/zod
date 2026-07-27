@@ -498,7 +498,8 @@ export const defaultProcessor: Processor<schemas.$ZodDefault> = (schema, ctx, js
   process(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
-  json.default = JSON.parse(JSON.stringify(def.defaultValue));
+  const dv = typeof def.defaultValue === "bigint" ? Number(def.defaultValue) : def.defaultValue;
+  json.default = JSON.parse(JSON.stringify(dv));
 };
 
 export const prefaultProcessor: Processor<schemas.$ZodPrefault> = (schema, ctx, json, params) => {
@@ -506,7 +507,10 @@ export const prefaultProcessor: Processor<schemas.$ZodPrefault> = (schema, ctx, 
   process(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
-  if (ctx.io === "input") json._prefault = JSON.parse(JSON.stringify(def.defaultValue));
+  if (ctx.io === "input") {
+    const dv = typeof def.defaultValue === "bigint" ? Number(def.defaultValue) : def.defaultValue;
+    json._prefault = JSON.parse(JSON.stringify(dv));
+  }
 };
 
 export const catchProcessor: Processor<schemas.$ZodCatch> = (schema, ctx, json, params) => {
