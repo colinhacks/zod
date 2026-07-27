@@ -82,6 +82,12 @@ export interface $ZodIssueNotMultipleOf<Input extends number | bigint = number |
 
 export interface $ZodIssueUnrecognizedKeys extends $ZodIssueBase {
   readonly code: "unrecognized_keys";
+  /**
+   * The unrecognized key names. May include "__proto__" as a literal string.
+   * Consumers should treat these as raw strings — avoid passing them through
+   * Object.assign, spread, or JSON.parse without sanitization, as "__proto__"
+   * can re-introduce prototype pollution if re-interpreted as an accessor.
+   */
   readonly keys: string[];
   readonly input?: Record<string, unknown>;
 }
