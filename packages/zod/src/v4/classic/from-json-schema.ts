@@ -406,24 +406,24 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
       // Handle patternProperties
       if (schema.patternProperties) {
         // patternProperties: keys matching pattern must satisfy corresponding schema
-        // Use loose records so non-matching keys pass through
         const patternProps = schema.patternProperties;
         const patternKeys = Object.keys(patternProps);
-        const looseRecords: ZodType[] = [];
+        const records: ZodType[] = [];
 
+        // When additionalProperties is false, use strict records so non-matching keys are rejected
+        const recordFn = schema.additionalProperties === false ? z.record : z.looseRecord;
         for (const pattern of patternKeys) {
           const patternValue = convertSchema(patternProps[pattern] as JSONSchema.JSONSchema, ctx);
           const keySchema = z.string().regex(new RegExp(pattern));
-          looseRecords.push(z.looseRecord(keySchema, patternValue));
+          records.push(recordFn(keySchema, patternValue));
         }
 
         // Build intersection: object schema + all pattern property records
         const schemasToIntersect: ZodType[] = [];
         if (Object.keys(shape).length > 0) {
-          // Use passthrough so patternProperties can validate additional keys
           schemasToIntersect.push(z.object(shape).passthrough());
         }
-        schemasToIntersect.push(...looseRecords);
+        schemasToIntersect.push(...records);
 
         if (schemasToIntersect.length === 0) {
           zodSchema = z.object({}).passthrough();
