@@ -194,9 +194,12 @@ export function process<T extends schemas.$ZodType>(
     }
   }
 
-  // metadata
+  // metadata (schema-derived fields take precedence)
   const meta = ctx.metadataRegistry.get(schema);
-  if (meta) Object.assign(result.schema, meta);
+  if (meta) {
+    const { type: _t, ...metaRest } = meta;
+    Object.assign(result.schema, metaRest);
+  }
 
   if (ctx.io === "input" && isTransforming(schema)) {
     // examples/defaults only apply to output type of pipe
