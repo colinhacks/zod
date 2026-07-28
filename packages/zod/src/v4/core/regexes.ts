@@ -92,8 +92,11 @@ export const httpProtocol: RegExp = /^https?$/;
 // E.164: leading digit must be 1-9; total digits (excluding '+') between 7-15
 export const e164: RegExp = /^\+[1-9]\d{6,14}$/;
 
-// const dateSource = `((\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-((0[13578]|1[02])-(0[1-9]|[12]\\d|3[01])|(0[469]|11)-(0[1-9]|[12]\\d|30)|(02)-(0[1-9]|1\\d|2[0-8])))`;
-const dateSource = `(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))`;
+// 4-digit year with leap year validation
+const dateStandard = `(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8]))`;
+// Extended year (+/- 6 digits) with basic month-day validation
+const dateExtended = `[+-]\\d{6}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8]))`;
+const dateSource = `(?:${dateStandard}|${dateExtended})`;
 export const date: RegExp = /*@__PURE__*/ new RegExp(`^${dateSource}$`);
 
 function timeSource(args: { precision?: number | null | undefined }) {
