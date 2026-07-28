@@ -153,6 +153,9 @@ export type TupleItems = ReadonlyArray<schemas.SomeType>;
 export type AnyFunc = (...args: any[]) => any;
 export type IsProp<T, K extends keyof T> = T[K] extends AnyFunc ? never : K;
 export type MaybeAsync<T> = T | Promise<T>;
+export function isThenable(value: unknown): value is Promise<unknown> {
+  return value != null && typeof (value as any).then === "function";
+}
 export type KeyOf<T> = keyof OmitIndexSignature<T>;
 export type OmitIndexSignature<T> = {
   [K in keyof T as string extends K ? never : K extends string ? K : never]: T[K];

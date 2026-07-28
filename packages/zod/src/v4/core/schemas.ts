@@ -234,10 +234,10 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
         const currLen = payload.issues.length;
         const _ = ch._zod.check(payload as any) as any as ParsePayload;
 
-        if (_ instanceof Promise && ctx?.async === false) {
+        if (util.isThenable(_) && ctx?.async === false) {
           throw new core.$ZodAsyncError();
         }
-        if (asyncResult || _ instanceof Promise) {
+        if (asyncResult || util.isThenable(_)) {
           asyncResult = (asyncResult ?? Promise.resolve()).then(async () => {
             await _;
             const nextLen = payload.issues.length;
@@ -268,7 +268,7 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
 
       // run checks first, then
       const checkResult = runChecks(payload, checks, ctx);
-      if (checkResult instanceof Promise) {
+      if (util.isThenable(checkResult)) {
         if (ctx.async === false) throw new core.$ZodAsyncError();
         return checkResult.then((checkResult) => inst._zod.parse(checkResult, ctx));
       }
@@ -284,7 +284,7 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
         // initial pass (no checks)
         const canary = inst._zod.parse({ value: payload.value, issues: [] }, { ...ctx, skipChecks: true });
 
-        if (canary instanceof Promise) {
+        if (util.isThenable(canary)) {
           return canary.then((canary) => {
             return handleCanaryResult(canary, payload, ctx);
           });
@@ -295,7 +295,7 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
 
       // forward
       const result = inst._zod.parse(payload, ctx);
-      if (result instanceof Promise) {
+      if (util.isThenable(result)) {
         if (ctx.async === false) throw new core.$ZodAsyncError();
         return result.then((result) => runChecks(result, checks, ctx));
       }
