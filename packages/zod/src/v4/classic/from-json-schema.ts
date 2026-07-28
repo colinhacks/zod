@@ -468,7 +468,12 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
 
       if (prefixItems && Array.isArray(prefixItems)) {
         // Tuple with prefixItems (draft-2020-12)
-        const tupleItems = prefixItems.map((item) => convertSchema(item as JSONSchema.JSONSchema, ctx));
+        // Without minItems, prefix items beyond the minimum are optional-out so shorter arrays are valid
+        const minRequired = typeof schema.minItems === "number" ? schema.minItems : 0;
+        let tupleItems: ZodType[] = prefixItems.map((item, i) => {
+          const schema = convertSchema(item as JSONSchema.JSONSchema, ctx);
+          return i >= minRequired ? schema.optional() : schema;
+        });
         const rest =
           items && typeof items === "object" && !Array.isArray(items)
             ? convertSchema(items as JSONSchema.JSONSchema, ctx)
@@ -487,7 +492,12 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         }
       } else if (Array.isArray(items)) {
         // Tuple with items array (draft-7)
-        const tupleItems = items.map((item) => convertSchema(item as JSONSchema.JSONSchema, ctx));
+        // Without minItems, array-form items beyond the minimum are optional-out so shorter arrays are valid
+        const minRequired = typeof schema.minItems === "number" ? schema.minItems : 0;
+        let tupleItems: ZodType[] = items.map((item, i) => {
+          const schema = convertSchema(item as JSONSchema.JSONSchema, ctx);
+          return i >= minRequired ? schema.optional() : schema;
+        });
         const rest =
           schema.additionalItems && typeof schema.additionalItems === "object"
             ? convertSchema(schema.additionalItems as JSONSchema.JSONSchema, ctx)

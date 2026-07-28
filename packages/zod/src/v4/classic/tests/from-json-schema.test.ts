@@ -128,7 +128,9 @@ test("tuple with prefixItems (draft-2020-12)", () => {
     prefixItems: [{ type: "string" }, { type: "number" }],
   });
   expect(schema.parse(["hello", 42])).toEqual(["hello", 42]);
-  expect(() => schema.parse(["hello"])).toThrow();
+  // Without minItems, shorter arrays are valid — present items are validated positionally
+  expect(schema.parse(["hello"])).toEqual(["hello"]);
+  expect(schema.parse([])).toEqual([]);
   expect(() => schema.parse(["hello", "world"])).toThrow();
 });
 
@@ -140,7 +142,13 @@ test("tuple with items array (draft-7)", () => {
     additionalItems: false,
   });
   expect(schema.parse(["hello", 42])).toEqual(["hello", 42]);
+  // Without minItems, shorter arrays are valid
+  expect(schema.parse(["hello"])).toEqual(["hello"]);
+  expect(schema.parse([])).toEqual([]);
+  // Additional items beyond the positional schemas are still rejected
   expect(() => schema.parse(["hello", 42, "extra"])).toThrow();
+  // Wrong type at position 1 still fails
+  expect(() => schema.parse(["hello", "world"])).toThrow();
 });
 
 test("enum schema", () => {
