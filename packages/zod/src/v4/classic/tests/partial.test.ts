@@ -119,7 +119,8 @@ test("partial with mask", async () => {
 
   expect(masked.shape.name).toBeInstanceOf(z.ZodOptional);
   expect(masked.shape.age).toBeInstanceOf(z.ZodOptional);
-  expect(masked.shape.field).toBeInstanceOf(z.ZodOptional);
+  // field already has optin via .default(), so .partial() doesn't double-wrap
+  expect(masked.shape.field).toBeInstanceOf(z.ZodDefault);
   expect(masked.shape.country).toBeInstanceOf(z.ZodString);
 
   masked.parse({ country: "US" });
