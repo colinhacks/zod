@@ -2725,8 +2725,8 @@ export function json(params?: string | core.$ZodCustomParams): ZodJSONSchema {
 
 // preprocess
 
-export function preprocess<A, U extends core.SomeType, B = unknown>(
-  fn: (arg: B, ctx: core.$RefinementCtx) => A,
+export function preprocess<U extends core.$ZodType, B = unknown>(
+  fn: (arg: B, ctx: core.$RefinementCtx) => core.input<U>,
   schema: U
 ): ZodPreprocess<U> {
   return new ZodPreprocess({
