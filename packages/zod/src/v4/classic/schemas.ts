@@ -1365,8 +1365,28 @@ export const ZodDate: core.$constructor<ZodDate> = /*@__PURE__*/ core.$construct
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.dateProcessor(inst, ctx, json, params);
 
-  inst.min = (value, params) => inst.check(checks.gte(value, params));
-  inst.max = (value, params) => inst.check(checks.lte(value, params));
+  inst.min = (value, params) => {
+    const gteCheck = checks.gte(value, params);
+    const origCheck = gteCheck._zod.check;
+    gteCheck._zod.check = (payload) => {
+      origCheck(payload);
+      for (const issue of payload.issues) {
+        if ("origin" in issue) (issue as any).origin = "date";
+      }
+    };
+    return inst.check(gteCheck);
+  };
+  inst.max = (value, params) => {
+    const lteCheck = checks.lte(value, params);
+    const origCheck = lteCheck._zod.check;
+    lteCheck._zod.check = (payload) => {
+      origCheck(payload);
+      for (const issue of payload.issues) {
+        if ("origin" in issue) (issue as any).origin = "date";
+      }
+    };
+    return inst.check(lteCheck);
+  };
 
   const c = inst._zod.bag;
   inst.minDate = c.minimum ? new Date(c.minimum) : null;
