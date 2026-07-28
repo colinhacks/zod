@@ -493,12 +493,16 @@ export const nonoptionalProcessor: Processor<schemas.$ZodNonOptional> = (schema,
   seen.ref = def.innerType;
 };
 
+function serializeDefault(val: unknown): unknown {
+  return JSON.parse(JSON.stringify(val, (_, v) => (typeof v === "bigint" ? Number(v) : v)));
+}
+
 export const defaultProcessor: Processor<schemas.$ZodDefault> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodDefaultDef;
   process(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
-  json.default = JSON.parse(JSON.stringify(def.defaultValue));
+  json.default = serializeDefault(def.defaultValue);
 };
 
 export const prefaultProcessor: Processor<schemas.$ZodPrefault> = (schema, ctx, json, params) => {
@@ -506,7 +510,7 @@ export const prefaultProcessor: Processor<schemas.$ZodPrefault> = (schema, ctx, 
   process(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
-  if (ctx.io === "input") json._prefault = JSON.parse(JSON.stringify(def.defaultValue));
+  if (ctx.io === "input") json._prefault = serializeDefault(def.defaultValue);
 };
 
 export const catchProcessor: Processor<schemas.$ZodCatch> = (schema, ctx, json, params) => {
