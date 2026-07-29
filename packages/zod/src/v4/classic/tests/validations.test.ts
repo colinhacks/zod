@@ -1,8 +1,8 @@
 import { expect, test } from "vitest";
 
+import * as z from "zod/v4";
 import type * as errors from "../../core/errors.js";
 import en from "../../locales/en.js";
-import * as z from "zod/v4";
 
 test("English locale falls back to a generic value when origin is missing", () => {
   const localeError = en().localeError;
