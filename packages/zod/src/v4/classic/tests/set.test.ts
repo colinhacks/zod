@@ -85,6 +85,12 @@ test("failing when set is bigger than max() ", () => {
   expect(result.error!.issues[0].code).toEqual("too_big");
 });
 
+test("size() uses exact-length wording", () => {
+  const result = justTwo.safeParse(new Set(["one"]));
+  expect(result.success).toEqual(false);
+  expect(result.error!.issues[0].message).toBe("Too small: expected set to have exactly 2 items");
+});
+
 test("doesn’t throw when an empty set is given", () => {
   const result = stringSet.safeParse(new Set([]));
   expect(result.success).toEqual(true);
