@@ -2045,6 +2045,40 @@ test("passthrough schemas", () => {
   `);
 });
 
+test("$ref pointer encodes / and ~ per RFC 6901", () => {
+  const User = z.object({ name: z.string() }).meta({ id: "Shared/User~" });
+  const result = z.toJSONSchema(z.object({ User }));
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "$defs": {
+        "Shared/User~": {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+            },
+          },
+          "required": [
+            "name",
+          ],
+          "type": "object",
+        },
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "User": {
+          "$ref": "#/$defs/Shared~1User~0",
+        },
+      },
+      "required": [
+        "User",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
 test("extract schemas with id", () => {
   const name = z.string().meta({ id: "name" });
   const result = z.toJSONSchema(
