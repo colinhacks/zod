@@ -457,6 +457,18 @@ test("string format - uuid", () => {
   expect(schema.parse(uuid)).toBe(uuid);
 });
 
+test("string format - date-time", () => {
+  const schema = fromJSONSchema({
+    type: "string",
+    format: "date-time",
+  });
+  expect(schema.parse("2026-07-29T14:30:00Z")).toBe("2026-07-29T14:30:00Z");
+  expect(schema.parse("2026-07-29T16:30:00+02:00")).toBe("2026-07-29T16:30:00+02:00");
+  expect(schema.parse("2026-07-29T16:30:00-05:00")).toBe("2026-07-29T16:30:00-05:00");
+  expect(() => schema.parse("2026-07-29T16:30:00")).toThrow();
+  expect(() => schema.parse("invalid")).toThrow();
+});
+
 test("exclusiveMinimum and exclusiveMaximum", () => {
   const schema = fromJSONSchema({
     type: "number",
