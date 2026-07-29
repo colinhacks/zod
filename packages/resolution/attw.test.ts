@@ -16,14 +16,14 @@ describe("Are The Types Wrong (attw) tests", () => {
       return;
     }
 
-    // Check if attw is available before running the test
+    // Check if attw is available before running the test.
+    // Avoid emitting console output here because the test harness fails on any console call.
     try {
       await execa("pnpm", ["attw", "--version"], {
         cwd: __dirname,
         timeout: 5000,
       });
-    } catch (_: any) {
-      console.warn("attw not available, skipping test");
+    } catch {
       return;
     }
 
