@@ -457,6 +457,15 @@ test("string format - uuid", () => {
   expect(schema.parse(uuid)).toBe(uuid);
 });
 
+test("string format - hostname", () => {
+  const schema = fromJSONSchema({
+    type: "string",
+    format: "hostname",
+  });
+  expect(schema.parse("example.com")).toBe("example.com");
+  expect(() => schema.parse("not a hostname!")).toThrow();
+});
+
 test("exclusiveMinimum and exclusiveMaximum", () => {
   const schema = fromJSONSchema({
     type: "number",

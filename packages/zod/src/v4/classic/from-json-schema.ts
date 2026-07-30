@@ -278,6 +278,8 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
           stringSchema = stringSchema.check(z.iso.time());
         } else if (format === "duration") {
           stringSchema = stringSchema.check(z.iso.duration());
+        } else if (format === "hostname") {
+          stringSchema = stringSchema.check(z.hostname());
         } else if (format === "ipv4") {
           stringSchema = stringSchema.check(z.ipv4());
         } else if (format === "ipv6") {
