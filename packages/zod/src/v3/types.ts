@@ -1574,6 +1574,34 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
     });
   }
 
+  latitude(message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "min",
+      value: -90,
+      inclusive: true,
+      message: errorUtil.toString(message),
+    })._addCheck({
+      kind: "max",
+      value: 90,
+      inclusive: true,
+      message: errorUtil.toString(message),
+    });
+  }
+
+  longitude(message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "min",
+      value: -180,
+      inclusive: true,
+      message: errorUtil.toString(message),
+    })._addCheck({
+      kind: "max",
+      value: 180,
+      inclusive: true,
+      message: errorUtil.toString(message),
+    });
+  }
+
   get minValue() {
     let min: number | null = null;
     for (const ch of this._def.checks) {

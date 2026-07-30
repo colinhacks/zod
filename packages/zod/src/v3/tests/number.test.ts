@@ -18,6 +18,8 @@ const multipleOfFive = z.number().multipleOf(5);
 const multipleOfNegativeFive = z.number().multipleOf(-5);
 const finite = z.number().finite();
 const safe = z.number().safe();
+const latitude = z.number().latitude();
+const longitude = z.number().longitude();
 const stepPointOne = z.number().step(0.1);
 const stepPointZeroZeroZeroOne = z.number().step(0.0001);
 const stepSixPointFour = z.number().step(6.4);
@@ -60,6 +62,12 @@ test("passing validations", () => {
   finite.parse(123);
   safe.parse(Number.MIN_SAFE_INTEGER);
   safe.parse(Number.MAX_SAFE_INTEGER);
+  latitude.parse(0);
+  latitude.parse(90);
+  latitude.parse(-90);
+  longitude.parse(0);
+  longitude.parse(180);
+  longitude.parse(-180);
   stepPointOne.parse(6);
   stepPointOne.parse(6.1);
   stepPointOne.parse(6.1);
@@ -89,6 +97,10 @@ test("failing validations", () => {
   expect(() => finite.parse(Number.NEGATIVE_INFINITY)).toThrow();
   expect(() => safe.parse(Number.MIN_SAFE_INTEGER - 1)).toThrow();
   expect(() => safe.parse(Number.MAX_SAFE_INTEGER + 1)).toThrow();
+  expect(() => latitude.parse(90.1)).toThrow();
+  expect(() => latitude.parse(-90.1)).toThrow();
+  expect(() => longitude.parse(180.1)).toThrow();
+  expect(() => longitude.parse(-180.1)).toThrow();
 
   expect(() => stepPointOne.parse(6.11)).toThrow();
   expect(() => stepPointOne.parse(6.1000000001)).toThrow();
