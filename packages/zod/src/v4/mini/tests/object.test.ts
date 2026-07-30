@@ -225,3 +225,12 @@ test("z.catchall", () => {
 
   expect(() => schema.parse({ name: "john", age: 30 })).toThrow();
 });
+
+test("z.merge", () => {
+  const A = z.object({ a: z.string() });
+  const B = { b: z.number() };
+  const merged = z.merge(A, B);
+  type Merged = z.output<typeof merged>;
+  expectTypeOf<Merged>().toEqualTypeOf<{ a: string; b: number }>();
+  expect(merged.parse({ a: "hello", b: 42 })).toEqual({ a: "hello", b: 42 });
+});
