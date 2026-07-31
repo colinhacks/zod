@@ -2,6 +2,7 @@ import type * as checks from "./checks.js";
 import { globalConfig } from "./core.js";
 import type { $ZodConfig } from "./core.js";
 import type * as errors from "./errors.js";
+import type { $ZodIssueMessage } from "./errors.js";
 import type * as schemas from "./schemas.js";
 
 // json
@@ -842,8 +843,11 @@ export function prefixIssues(path: PropertyKey, issues: errors.$ZodRawIssue[]): 
   });
 }
 
-export function unwrapMessage(message: string | { message: string } | undefined | null): string | undefined {
-  return typeof message === "string" ? message : message?.message;
+export function unwrapMessage(message: string | { message: $ZodIssueMessage } | undefined | null): string | undefined {
+  if (message === undefined) {
+    return undefined;
+  }
+  return typeof message === "string" ? message : toMessageString(message?.message || "");
 }
 
 export function finalizeIssue(
@@ -975,6 +979,14 @@ export function uint8ArrayToHex(bytes: Uint8Array): string {
   return Array.from(bytes)
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
+}
+
+export function toMessageString(message: $ZodIssueMessage): string {
+  if (typeof message === "string") {
+    return message;
+  } else {
+    return JSON.stringify(message);
+  }
 }
 
 // instanceof

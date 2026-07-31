@@ -3,6 +3,9 @@ import { $constructor } from "./core.js";
 import type { $ZodType } from "./schemas.js";
 import type { StandardSchemaV1 } from "./standard-schema.js";
 import * as util from "./util.js";
+import { toMessageString } from "./util.js";
+
+export type $ZodIssueMessage = string | { key: string; values?: object };
 
 ///////////////////////////
 ////     base type     ////
@@ -11,7 +14,7 @@ export interface $ZodIssueBase {
   readonly code?: string;
   readonly input?: unknown;
   readonly path: PropertyKey[];
-  readonly message: string;
+  readonly message: $ZodIssueMessage;
 }
 
 ////////////////////////////////
@@ -210,7 +213,7 @@ export type $ZodRawIssue<T extends $ZodIssueBase = $ZodIssue> = $ZodInternalIssu
 
 export interface $ZodErrorMap<T extends $ZodIssueBase = $ZodIssue> {
   // biome-ignore lint:
-  (issue: $ZodRawIssue<T>): { message: string } | string | undefined | null;
+  (issue: $ZodRawIssue<T>): { message: $ZodIssueMessage } | string | undefined | null;
 }
 
 ////////////////////////    ERROR CLASS   ////////////////////////
@@ -262,7 +265,7 @@ type _FlattenedError<T, U = string> = {
 
 export function flattenError<T>(error: $ZodError<T>): _FlattenedError<T>;
 export function flattenError<T, U>(error: $ZodError<T>, mapper?: (issue: $ZodIssue) => U): _FlattenedError<T, U>;
-export function flattenError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIssue) => issue.message as U) {
+export function flattenError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIssue) => toMessageString(issue.message) as U) {
   const fieldErrors: Record<PropertyKey, any> = {};
   const formErrors: U[] = [];
   for (const sub of error.issues) {
@@ -290,7 +293,7 @@ export type $ZodFormattedError<T, U = string> = {
 
 export function formatError<T>(error: $ZodError<T>): $ZodFormattedError<T>;
 export function formatError<T, U>(error: $ZodError<T>, mapper?: (issue: $ZodIssue) => U): $ZodFormattedError<T, U>;
-export function formatError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIssue) => issue.message as U) {
+export function formatError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIssue) => toMessageString(issue.message) as U) {
   const fieldErrors: $ZodFormattedError<T> = { _errors: [] } as any;
   const processError = (error: { issues: $ZodIssue[] }, path: PropertyKey[] = []) => {
     for (const issue of error.issues) {
@@ -344,7 +347,7 @@ export type $ZodErrorTree<T, U = string> = T extends util.Primitive
 
 export function treeifyError<T>(error: $ZodError<T>): $ZodErrorTree<T>;
 export function treeifyError<T, U>(error: $ZodError<T>, mapper?: (issue: $ZodIssue) => U): $ZodErrorTree<T, U>;
-export function treeifyError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIssue) => issue.message as U) {
+export function treeifyError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIssue) => toMessageString(issue.message) as U) {
   const result: $ZodErrorTree<T, U> = { errors: [] } as any;
   const processError = (error: { issues: $ZodIssue[] }, path: PropertyKey[] = []) => {
     for (const issue of error.issues) {
@@ -446,7 +449,8 @@ export function prettifyError(error: StandardSchemaV1.FailureResult): string {
 
   // Process each issue
   for (const issue of issues) {
-    lines.push(`✖ ${issue.message}`);
+    const m = toMessageString(issue.message);
+    lines.push(`✖ ${m}`);
     if (issue.path?.length) lines.push(`  → at ${toDotPath(issue.path)}`);
   }
 

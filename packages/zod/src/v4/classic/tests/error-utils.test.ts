@@ -79,7 +79,7 @@ test(".flatten()", () => {
 });
 
 test("custom .flatten()", () => {
-  type ErrorType = { message: string; code: number };
+  type ErrorType = { message: string | { key: string; values?: object }; code: number };
   const flattened = parsed.error!.flatten((iss) => ({
     message: iss.message,
     code: 1234,
@@ -162,7 +162,7 @@ test(".format()", () => {
 });
 
 test("custom .format()", () => {
-  type ErrorType = { message: string; code: number };
+  type ErrorType = { message: string | { key: string; values?: object }; code: number };
   const formatted = parsed.error!.format((iss) => ({
     message: iss.message,
     code: 1234,
@@ -258,7 +258,7 @@ test("all errors", () => {
     }
   `);
 
-  expect(z.core.flattenError(r2.error!, (iss) => iss.message.toUpperCase())).toMatchInlineSnapshot(`
+  expect(z.core.flattenError(r2.error!, (iss) => (iss.message as string).toUpperCase())).toMatchInlineSnapshot(`
     {
       "fieldErrors": {
         "a": [
@@ -302,7 +302,7 @@ test("all errors", () => {
   `);
 
   // Test mapping
-  const f1 = z.core.flattenError(r2.error!, (i: z.ZodIssue) => i.message.length);
+  const f1 = z.core.flattenError(r2.error!, (i: z.ZodIssue) => (i.message as string).length);
   expect(f1).toMatchInlineSnapshot(`
     {
       "fieldErrors": {

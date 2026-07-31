@@ -709,3 +709,30 @@ test("error serialization", () => {
     `);
   }
 });
+
+test("error with object type message", () => {
+  const schema = z.object({
+    name: z.string().min(5, { error: () => ({ message: { key: "test", values: { foo: "bar" } } }) }),
+  });
+
+  const obj = {
+    name: "tes",
+  };
+
+  const result = schema.safeParse(obj);
+  expect(result.success).toBe(false);
+  expect(result.error).toMatchInlineSnapshot(`
+  [ZodError: [
+    {
+      "origin": "string",
+      "code": "too_small",
+      "minimum": 5,
+      "inclusive": true,
+      "path": [
+        "name"
+      ],
+      "message": "{\\"key\\":\\"test\\",\\"values\\":{\\"foo\\":\\"bar\\"}}"
+    }
+  ]]
+  `);
+});
