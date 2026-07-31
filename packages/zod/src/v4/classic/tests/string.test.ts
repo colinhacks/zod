@@ -430,7 +430,7 @@ test("httpurl", () => {
   const httpUrl = z.url({
     protocol: /^https?$/,
     hostname: z.regexes.domain,
-    // /^([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/
+    // /^(?=.{1,253}\.?$)([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/
   });
 
   httpUrl.parse("https://example.com");
