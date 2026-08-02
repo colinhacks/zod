@@ -125,6 +125,12 @@ const formIntegrations: ZodResource[] = [
     description: "Type-safe, Zod-first form library for Vue 3 and Nuxt.",
     slug: "attaform/Attaform",
   },
+  {
+    name: "zod-form-action",
+    url: "https://github.com/Vish05/zod-form-action",
+    description: "A tiny helper for wiring Zod validation into React's useActionState — typed field errors, zero boilerplate.",
+    slug: "Vish05/zod-form-action",
+  },
 ];
 
 const zodToXConverters: ZodResource[] = [
