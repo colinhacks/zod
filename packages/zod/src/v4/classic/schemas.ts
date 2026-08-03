@@ -231,9 +231,19 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   // `const { parse } = schema`, etc.). Eager closures here mean callers pay
   // ~12 closure allocations per schema but get monomorphic call sites and
   // detached usage that "just works".
-  inst.parse = (data, params) => parse.parse(inst, data, params, { callee: inst.parse });
+  /* The `{ callee }` params object is constant per instance; allocate it
+   * lazily once instead of on every call. */
+  let parseParams: { callee: util.AnyFunc } | undefined;
+  let parseAsyncParams: { callee: util.AnyFunc } | undefined;
+  inst.parse = (data, params) => {
+    parseParams ??= { callee: inst.parse };
+    return parse.parse(inst, data, params, parseParams);
+  };
   inst.safeParse = (data, params) => parse.safeParse(inst, data, params);
-  inst.parseAsync = async (data, params) => parse.parseAsync(inst, data, params, { callee: inst.parseAsync });
+  inst.parseAsync = async (data, params) => {
+    parseAsyncParams ??= { callee: inst.parseAsync };
+    return parse.parseAsync(inst, data, params, parseAsyncParams);
+  };
   inst.safeParseAsync = async (data, params) => parse.safeParseAsync(inst, data, params);
   inst.spa = inst.safeParseAsync;
   inst.encode = (data, params) => parse.encode(inst, data, params);

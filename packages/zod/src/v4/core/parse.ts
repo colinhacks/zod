@@ -13,8 +13,14 @@ export type $Parse = <T extends schemas.$ZodType>(
   _params?: { callee?: util.AnyFunc; Err?: $ZodErrorClass }
 ) => core.output<T>;
 
+/* Shared default contexts for calls without an explicit `_ctx` (the
+ * overwhelmingly common case), frozen so accidental mutation throws
+ * instead of corrupting later parses. */
+const _syncCtx: schemas.ParseContextInternal = /* @__PURE__ */ Object.freeze({ async: false });
+const _asyncCtx: schemas.ParseContextInternal = /* @__PURE__ */ Object.freeze({ async: true });
+
 export const _parse: (_Err: $ZodErrorClass) => $Parse = (_Err) => (schema, value, _ctx, _params) => {
-  const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: false } : { async: false };
+  const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: false } : _syncCtx;
   const result = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) {
     throw new core.$ZodAsyncError();
@@ -37,7 +43,7 @@ export type $ParseAsync = <T extends schemas.$ZodType>(
 ) => Promise<core.output<T>>;
 
 export const _parseAsync: (_Err: $ZodErrorClass) => $ParseAsync = (_Err) => async (schema, value, _ctx, params) => {
-  const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: true } : { async: true };
+  const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: true } : _asyncCtx;
   let result = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) result = await result;
   if (result.issues.length) {
@@ -57,7 +63,7 @@ export type $SafeParse = <T extends schemas.$ZodType>(
 ) => util.SafeParseResult<core.output<T>>;
 
 export const _safeParse: (_Err: $ZodErrorClass) => $SafeParse = (_Err) => (schema, value, _ctx) => {
-  const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: false } : { async: false };
+  const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: false } : _syncCtx;
   const result = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) {
     throw new core.$ZodAsyncError();
@@ -79,7 +85,7 @@ export type $SafeParseAsync = <T extends schemas.$ZodType>(
 ) => Promise<util.SafeParseResult<core.output<T>>>;
 
 export const _safeParseAsync: (_Err: $ZodErrorClass) => $SafeParseAsync = (_Err) => async (schema, value, _ctx) => {
-  const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: true } : { async: true };
+  const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: true } : _asyncCtx;
   let result = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) result = await result;
 
