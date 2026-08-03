@@ -878,11 +878,16 @@ export function finalizeIssue(
       unwrapMessage(config.localeError?.(iss)) ??
       "Invalid input");
 
-  const { inst: _inst, schema: _schema, continue: _continue, input: _input, ...rest } = iss as any;
+  // Manual copy rather than a rest-spread destructure: same keys in the same order, without the generic object-rest machinery.
+  const rest: any = {};
+  for (const k in iss) {
+    if (k === "inst" || k === "schema" || k === "continue" || k === "input") continue;
+    rest[k] = (iss as any)[k];
+  }
   rest.path ??= [];
   rest.message = message;
   if (ctx?.reportInput) {
-    rest.input = _input;
+    rest.input = (iss as any).input;
   }
   return rest;
 }

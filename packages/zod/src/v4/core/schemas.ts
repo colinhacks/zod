@@ -290,6 +290,9 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
       return inst._zod.parse(checkResult, ctx);
     };
 
+    // A `when` check needs the explicitly-aborted test that only runChecks does, so it never takes the fast path.
+    const singleCheck = checks.length === 1 && !checks[0]._zod.def.when ? checks[0] : undefined;
+
     inst._zod.run = (payload, ctx) => {
       if (ctx.skipChecks) {
         return inst._zod.parse(payload, ctx);
@@ -312,6 +315,24 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
       if (result instanceof Promise) {
         if (ctx.async === false) throw new core.$ZodAsyncError();
         return result.then((result) => runChecks(result, checks, ctx));
+      }
+
+      // Fast path for the very common single unconditional check. It mirrors runChecks minus the per-iteration bookkeeping that only matters when a further check reads it: the abort state recomputed after the check, and the accumulator that chains a second async check onto the first.
+      if (singleCheck) {
+        if (result.memo) return result;
+        if (!util.aborted(result)) {
+          const currLen = result.issues.length;
+          const checkResult = singleCheck._zod.check(result as any) as unknown;
+          if (checkResult instanceof Promise) {
+            if (ctx.async === false) throw new core.$ZodAsyncError();
+            return checkResult.then(() => {
+              if (result.issues.length !== currLen) util.attachSchema(result.issues, currLen, inst);
+              return result;
+            });
+          }
+          if (result.issues.length !== currLen) util.attachSchema(result.issues, currLen, inst);
+        }
+        return result;
       }
 
       return runChecks(result, checks, ctx);
