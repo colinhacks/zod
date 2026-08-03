@@ -271,7 +271,10 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         } else if (format === "uuid" || format === "guid") {
           stringSchema = stringSchema.check(z.uuid());
         } else if (format === "date-time") {
-          stringSchema = stringSchema.check(z.iso.datetime());
+          // JSON Schema's "date-time" format is RFC 3339 date-time, which allows both "Z"
+          // and numeric UTC offsets (e.g. "+02:00"). z.iso.datetime() only accepts "Z" by
+          // default, so pass offset: true to accept the full RFC 3339 grammar.
+          stringSchema = stringSchema.check(z.iso.datetime({ offset: true }));
         } else if (format === "date") {
           stringSchema = stringSchema.check(z.iso.date());
         } else if (format === "time") {
