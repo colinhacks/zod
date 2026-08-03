@@ -30,6 +30,30 @@ type _LazyMethodsOf<T> = Partial<{
   [K in keyof T]: T[K] extends (...args: infer A) => infer R ? (this: T, ...args: A) => R : never;
 }>;
 
+/* `description` and `_def` derive purely from `this`, so they live as
+ * shared getters on the prototype instead of per-instance descriptors. */
+const _installedAccessorProtos = /* @__PURE__ */ new WeakSet<object>();
+function _installSharedAccessors(inst: object): void {
+  const proto = Object.getPrototypeOf(inst);
+  if (_installedAccessorProtos.has(proto)) return;
+  _installedAccessorProtos.add(proto);
+  Object.defineProperty(proto, "description", {
+    configurable: true,
+    get(this: ZodType) {
+      return core.globalRegistry.get(this)?.description;
+    },
+  });
+  Object.defineProperty(proto, "_def", {
+    configurable: true,
+    get(this: ZodType) {
+      return this._zod.def;
+    },
+    set(this: ZodType, value: unknown) {
+      Object.defineProperty(this, "_def", { value, configurable: true, writable: true });
+    },
+  });
+}
+
 function _installLazyMethods<T extends object>(inst: T, group: string, methods: _LazyMethodsOf<T>): void {
   const proto = Object.getPrototypeOf(inst);
   let installed = _installedGroups.get(proto);
@@ -212,19 +236,22 @@ export interface ZodType<
 export interface _ZodType<out Internals extends core.$ZodTypeInternals = core.$ZodTypeInternals>
   extends ZodType<any, any, Internals> {}
 
+/* Attaches the JSON Schema methods when the lazily created standard-schema
+ * object is first accessed, instead of forcing its creation per instance. */
+function _onStandard(inst: core.$ZodType, standard: object): void {
+  (standard as { jsonSchema: unknown }).jsonSchema = {
+    input: createStandardJSONSchemaMethod(inst, "input"),
+    output: createStandardJSONSchemaMethod(inst, "output"),
+  };
+}
+
 export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$constructor("ZodType", (inst, def) => {
   core.$ZodType.init(inst, def);
-  Object.assign(inst["~standard"], {
-    jsonSchema: {
-      input: createStandardJSONSchemaMethod(inst, "input"),
-      output: createStandardJSONSchemaMethod(inst, "output"),
-    },
-  });
+  inst._zod.onStandard = _onStandard;
   inst.toJSONSchema = createToJSONSchemaMethod(inst, {});
 
   inst.def = def;
   inst.type = def.type;
-  Object.defineProperty(inst, "_def", { value: def });
 
   // Parse-family is intentionally kept as per-instance closures: these are
   // the hot path AND the most-detached methods (`arr.map(schema.parse)`,
@@ -376,12 +403,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
       return fn(this);
     },
   });
-  Object.defineProperty(inst, "description", {
-    get() {
-      return core.globalRegistry.get(inst)?.description;
-    },
-    configurable: true,
-  });
+  _installSharedAccessors(inst);
   return inst;
 });
 

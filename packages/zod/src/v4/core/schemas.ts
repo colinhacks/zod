@@ -153,6 +153,9 @@ export interface _$ZodTypeInternals {
   /** @internal The set of issues this schema might throw during type checking. */
   isst: errors.$ZodIssueBase;
 
+  /** @internal Extends the lazily created standard-schema object right after construction. */
+  onStandard?: ((inst: $ZodType, standard: $ZodStandardSchema<unknown>) => void) | undefined;
+
   /** @internal Subject to change, not a public API. */
   processJSONSchema?:
     | ((ctx: ToJSONSchemaContext, json: JSONSchema.BaseSchema, params: ProcessParams) => void)
@@ -305,18 +308,22 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
   }
 
   // Lazy initialize ~standard to avoid creating objects for every schema
-  util.defineLazy(inst, "~standard", () => ({
-    validate: (value: unknown) => {
-      try {
-        const r = safeParse(inst, value);
-        return r.success ? { value: r.data } : { issues: r.error?.issues };
-      } catch (_) {
-        return safeParseAsync(inst, value).then((r) => (r.success ? { value: r.data } : { issues: r.error?.issues }));
-      }
-    },
-    vendor: "zod",
-    version: 1 as const,
-  }));
+  util.defineLazy(inst, "~standard", () => {
+    const standard = {
+      validate: (value: unknown) => {
+        try {
+          const r = safeParse(inst, value);
+          return r.success ? { value: r.data } : { issues: r.error?.issues };
+        } catch (_) {
+          return safeParseAsync(inst, value).then((r) => (r.success ? { value: r.data } : { issues: r.error?.issues }));
+        }
+      },
+      vendor: "zod",
+      version: 1 as const,
+    };
+    inst._zod.onStandard?.(inst, standard as $ZodStandardSchema<unknown>);
+    return standard;
+  });
 });
 
 export { clone } from "./util.js";
