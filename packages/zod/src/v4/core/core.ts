@@ -14,6 +14,10 @@ export const NEVER: never = /*@__PURE__*/ Object.freeze({
   status: "aborted",
 }) as never;
 
+/* Shared descriptor for installing `_zod`; defineProperty reads it
+ * synchronously, so reusing one object avoids a per-instance allocation. */
+const _zodDesc: PropertyDescriptor = { value: undefined, enumerable: false };
+
 export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T["_zod"]["def"]>(
   name: string,
   initializer: (inst: T, def: D) => void,
@@ -21,14 +25,13 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
 ): $constructor<T, D> {
   function init(inst: T, def: D) {
     if (!inst._zod) {
-      Object.defineProperty(inst, "_zod", {
-        value: {
-          def,
-          constr: _,
-          traits: new Set(),
-        },
-        enumerable: false,
-      });
+      _zodDesc.value = {
+        def,
+        constr: _,
+        traits: new Set(),
+      };
+      Object.defineProperty(inst, "_zod", _zodDesc);
+      _zodDesc.value = undefined;
     }
 
     if (inst._zod.traits.has(name)) {
@@ -58,9 +61,11 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
   function _(this: any, def: D) {
     const inst = params?.Parent ? new Definition() : this;
     init(inst, def);
-    inst._zod.deferred ??= [];
-    for (const fn of inst._zod.deferred) {
-      fn();
+    const deferred = inst._zod.deferred;
+    if (deferred) {
+      for (const fn of deferred) {
+        fn();
+      }
     }
     return inst;
   }

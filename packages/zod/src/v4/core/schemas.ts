@@ -190,6 +190,9 @@ export interface $ZodType<
 export interface _$ZodType<T extends $ZodTypeInternals = $ZodTypeInternals>
   extends $ZodType<T["output"], T["input"], T> {}
 
+// Prototypes that already carry the lazy "~standard" accessor.
+const _installedStandardProtos = /* @__PURE__ */ new WeakSet<object>();
+
 export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constructor("$ZodType", (inst, def) => {
   inst ??= {} as any;
 
@@ -197,12 +200,13 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
   inst._zod.bag = inst._zod.bag || {}; // initialize _bag object
   inst._zod.version = version;
 
-  const checks = [...(inst._zod.def.checks ?? [])];
-
+  const defChecks = inst._zod.def.checks;
   // if inst is itself a checks.$ZodCheck, run it as a check
-  if (inst._zod.traits.has("$ZodCheck")) {
-    checks.unshift(inst as any);
-  }
+  const checks: checks.$ZodCheck<never>[] = inst._zod.traits.has("$ZodCheck")
+    ? [inst as any, ...(defChecks ?? [])]
+    : defChecks?.length
+      ? [...defChecks]
+      : [];
 
   for (const ch of checks) {
     for (const fn of ch._zod.onattach) {
@@ -307,23 +311,39 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
     };
   }
 
-  // Lazy initialize ~standard to avoid creating objects for every schema
-  util.defineLazy(inst, "~standard", () => {
-    const standard = {
-      validate: (value: unknown) => {
-        try {
-          const r = safeParse(inst, value);
-          return r.success ? { value: r.data } : { issues: r.error?.issues };
-        } catch (_) {
-          return safeParseAsync(inst, value).then((r) => (r.success ? { value: r.data } : { issues: r.error?.issues }));
-        }
+  // Lazy initialize ~standard via a shared prototype accessor so schema
+  // construction pays neither the object nor a per-instance descriptor;
+  // the built object is cached as an own property on first access.
+  const proto = Object.getPrototypeOf(inst);
+  if (!_installedStandardProtos.has(proto)) {
+    _installedStandardProtos.add(proto);
+    Object.defineProperty(proto, "~standard", {
+      configurable: true,
+      enumerable: false,
+      get(this: $ZodType) {
+        const standard = {
+          validate: (value: unknown) => {
+            try {
+              const r = safeParse(this, value);
+              return r.success ? { value: r.data } : { issues: r.error?.issues };
+            } catch (_) {
+              return safeParseAsync(this, value).then((r) =>
+                r.success ? { value: r.data } : { issues: r.error?.issues }
+              );
+            }
+          },
+          vendor: "zod",
+          version: 1 as const,
+        };
+        this._zod.onStandard?.(this, standard as $ZodStandardSchema<unknown>);
+        Object.defineProperty(this, "~standard", { value: standard, configurable: true });
+        return standard;
       },
-      vendor: "zod",
-      version: 1 as const,
-    };
-    inst._zod.onStandard?.(inst, standard as $ZodStandardSchema<unknown>);
-    return standard;
-  });
+      set(this: $ZodType, value: unknown) {
+        Object.defineProperty(this, "~standard", { value, configurable: true });
+      },
+    });
+  }
 });
 
 export { clone } from "./util.js";
