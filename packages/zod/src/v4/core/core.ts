@@ -39,11 +39,11 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
 
     initializer(inst, def);
 
-    // support prototype modifications
+    // support prototype modifications; for-in avoids the array
+    // allocation of Object.keys on the (usually empty) prototype
     const proto = _.prototype;
-    const keys = Object.keys(proto);
-    for (let i = 0; i < keys.length; i++) {
-      const k = keys[i]!;
+    for (const k in proto) {
+      if (!Object.prototype.hasOwnProperty.call(proto, k)) continue;
       if (!(k in inst)) {
         (inst as any)[k] = proto[k].bind(inst);
       }

@@ -236,14 +236,35 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   inst.parseAsync = async (data, params) => parse.parseAsync(inst, data, params, { callee: inst.parseAsync });
   inst.safeParseAsync = async (data, params) => parse.safeParseAsync(inst, data, params);
   inst.spa = inst.safeParseAsync;
-  inst.encode = (data, params) => parse.encode(inst, data, params);
-  inst.decode = (data, params) => parse.decode(inst, data, params);
-  inst.encodeAsync = async (data, params) => parse.encodeAsync(inst, data, params);
-  inst.decodeAsync = async (data, params) => parse.decodeAsync(inst, data, params);
-  inst.safeEncode = (data, params) => parse.safeEncode(inst, data, params);
-  inst.safeDecode = (data, params) => parse.safeDecode(inst, data, params);
-  inst.safeEncodeAsync = async (data, params) => parse.safeEncodeAsync(inst, data, params);
-  inst.safeDecodeAsync = async (data, params) => parse.safeDecodeAsync(inst, data, params);
+
+  // The codec family is far off the hot path, so it uses the same
+  // lazy-bind treatment as the builder methods below.
+  _installLazyMethods(inst, "ZodTypeCodecs", {
+    encode(data, params) {
+      return parse.encode(this, data, params);
+    },
+    decode(data, params) {
+      return parse.decode(this, data, params);
+    },
+    async encodeAsync(data, params) {
+      return parse.encodeAsync(this, data, params);
+    },
+    async decodeAsync(data, params) {
+      return parse.decodeAsync(this, data, params);
+    },
+    safeEncode(data, params) {
+      return parse.safeEncode(this, data, params);
+    },
+    safeDecode(data, params) {
+      return parse.safeDecode(this, data, params);
+    },
+    async safeEncodeAsync(data, params) {
+      return parse.safeEncodeAsync(this, data, params);
+    },
+    async safeDecodeAsync(data, params) {
+      return parse.safeDecodeAsync(this, data, params);
+    },
+  });
 
   // All builder methods are placed on the internal prototype as lazy-bind
   // getters. On first access per-instance, a bound thunk is allocated and
