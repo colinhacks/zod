@@ -237,7 +237,22 @@ const initializer = (inst: $ZodError, def: $ZodIssue[]): void => {
     value: def,
     enumerable: false,
   });
-  inst.message = JSON.stringify(def, util.jsonStringifyReplacer, 2);
+
+  // Computing the message eagerly is expensive (pretty-printed JSON of all
+  // issues), so defer it until first read. The setter preserves plain
+  // assignment semantics for consumers that overwrite `message`.
+  let message: string | undefined;
+  Object.defineProperty(inst, "message", {
+    get() {
+      message ??= JSON.stringify(def, util.jsonStringifyReplacer, 2);
+      return message;
+    },
+    set(value: string) {
+      message = value;
+    },
+    enumerable: true,
+    configurable: true,
+  });
 
   Object.defineProperty(inst, "toString", {
     value: () => inst.message,
