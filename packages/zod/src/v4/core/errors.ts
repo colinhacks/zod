@@ -227,37 +227,59 @@ export interface $ZodError<T = unknown> extends Error {
   name: string;
 }
 
+/* Computing the message eagerly is expensive (pretty-printed JSON of all
+ * issues), so defer it until first read. The accessor functions and
+ * descriptors are shared across instances to keep error construction
+ * cheap; the computed message is cached on the internals object. The
+ * setter preserves plain assignment semantics for consumers that
+ * overwrite `message`. */
+function _getMessage(this: $ZodError): string {
+  const internals = this._zod as { def: $ZodIssue[]; message?: string };
+  internals.message ??= JSON.stringify(internals.def, util.jsonStringifyReplacer, 2);
+  return internals.message;
+}
+function _setMessage(this: $ZodError, value: string): void {
+  (this._zod as { message?: string }).message = value;
+}
+const _messageDesc: PropertyDescriptor = {
+  get: _getMessage,
+  set: _setMessage,
+  enumerable: true,
+  configurable: true,
+};
+const _zodDesc: PropertyDescriptor = { value: undefined, enumerable: false };
+const _issuesDesc: PropertyDescriptor = { value: undefined, enumerable: false };
+
+// Prototypes that already carry the lazy `toString`.
+const _installedToString = /* @__PURE__ */ new WeakSet<object>();
+
 const initializer = (inst: $ZodError, def: $ZodIssue[]): void => {
   inst.name = "$ZodError";
-  Object.defineProperty(inst, "_zod", {
-    value: inst._zod,
-    enumerable: false,
-  });
-  Object.defineProperty(inst, "issues", {
-    value: def,
-    enumerable: false,
-  });
+  _zodDesc.value = inst._zod;
+  Object.defineProperty(inst, "_zod", _zodDesc);
+  _issuesDesc.value = def;
+  Object.defineProperty(inst, "issues", _issuesDesc);
+  Object.defineProperty(inst, "message", _messageDesc);
 
-  // Computing the message eagerly is expensive (pretty-printed JSON of all
-  // issues), so defer it until first read. The setter preserves plain
-  // assignment semantics for consumers that overwrite `message`.
-  let message: string | undefined;
-  Object.defineProperty(inst, "message", {
-    get() {
-      message ??= JSON.stringify(def, util.jsonStringifyReplacer, 2);
-      return message;
-    },
-    set(value: string) {
-      message = value;
-    },
-    enumerable: true,
-    configurable: true,
-  });
-
-  Object.defineProperty(inst, "toString", {
-    value: () => inst.message,
-    enumerable: false,
-  });
+  /* `toString` lives as a non-enumerable lazy getter on the shared
+   * prototype; on first access it caches a per-instance closure so
+   * detached usage still works. */
+  const proto = Object.getPrototypeOf(inst);
+  if (!_installedToString.has(proto)) {
+    _installedToString.add(proto);
+    Object.defineProperty(proto, "toString", {
+      configurable: true,
+      enumerable: false,
+      get(this: $ZodError) {
+        const value = () => this.message;
+        Object.defineProperty(this, "toString", { value, configurable: true, writable: true });
+        return value;
+      },
+      set(this: $ZodError, value: unknown) {
+        Object.defineProperty(this, "toString", { value, configurable: true, writable: true });
+      },
+    });
+  }
 };
 
 export const $ZodError: $constructor<$ZodError> = $constructor("$ZodError", initializer);
