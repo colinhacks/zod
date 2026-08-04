@@ -312,6 +312,56 @@ test("partial should not clobber defaults", () => {
   `);
 });
 
+test("default().transform() in partial: absent key uses default, provided key uses value", () => {
+  const schema = z
+    .object({
+      tags: z
+        .string()
+        .default("")
+        .transform((v) => (v ? v.split(",") : [])),
+    })
+    .partial();
+
+  // absent key: default fires (""), transform produces []
+  expect(schema.parse({})).toEqual({ tags: [] });
+  // provided key: value flows through transform unchanged
+  expect(schema.parse({ tags: "a,b" })).toEqual({ tags: ["a", "b"] });
+  // explicit undefined: same as absent
+  expect(schema.parse({ tags: undefined })).toEqual({ tags: [] });
+});
+
+test("prefault().transform() in partial: absent key uses prefault, provided key uses value", () => {
+  const schema = z
+    .object({
+      tags: z
+        .string()
+        .prefault("")
+        .transform((v) => (v ? v.split(",") : [])),
+    })
+    .partial();
+
+  expect(schema.parse({})).toEqual({ tags: [] });
+  expect(schema.parse({ tags: "x,y" })).toEqual({ tags: ["x", "y"] });
+});
+
+test("transform() standalone: optional wrapper short-circuits when no default rescues the value", () => {
+  // preprocess(fn, T) = pipe(transform(fn), T): transform runs on undefined,
+  // no default clears fallback, so the outer optional short-circuits to undefined.
+  const preprocess = z.preprocess((v) => v ?? "fallback", z.string()).optional();
+  expect(preprocess.parse(undefined)).toBeUndefined();
+  expect(preprocess.parse("hello")).toBe("hello");
+
+  // default().transform(): default rescues undefined (clears fallback),
+  // so the outer optional does NOT short-circuit — it returns the transformed value.
+  const withDefault = z
+    .string()
+    .default("fallback")
+    .transform((v) => v.toUpperCase())
+    .optional();
+  expect(withDefault.parse(undefined)).toBe("FALLBACK");
+  expect(withDefault.parse("hello")).toBe("HELLO");
+});
+
 test("defaulted object schema returns shallow clone", () => {
   const schema = z
     .object({

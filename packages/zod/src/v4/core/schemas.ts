@@ -3433,7 +3433,6 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
         const output = _out instanceof Promise ? _out : Promise.resolve(_out);
         return output.then((output) => {
           payload.value = output;
-          payload.fallback = true;
           return payload;
         });
       }
@@ -3443,7 +3442,6 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
       }
 
       payload.value = _out;
-      payload.fallback = true;
       return payload;
     };
   }
@@ -3500,6 +3498,7 @@ export const $ZodOptional: core.$constructor<$ZodOptional> = /*@__PURE__*/ core.
     inst._zod.parse = (payload, ctx) => {
       if (def.innerType._zod.optin === "optional") {
         const input = payload.value;
+        if (input === undefined) payload.fallback = true;
         const result = def.innerType._zod.run(payload, ctx);
         if (result instanceof Promise) return result.then((r) => handleOptionalResult(r, input));
         return handleOptionalResult(result, input);
@@ -3646,6 +3645,7 @@ export const $ZodDefault: core.$constructor<$ZodDefault> = /*@__PURE__*/ core.$c
       // Forward direction (decode): apply defaults for undefined input
       if (payload.value === undefined) {
         payload.value = def.defaultValue;
+        payload.fallback = false;
         /**
          * $ZodDefault returns the default value immediately in forward direction.
          * It doesn't pass the default value into the validator ("prefault"). There's no reason to pass the default value through validation. The validity of the default is enforced by TypeScript statically. Otherwise, it's the responsibility of the user to ensure the default is valid. In the case of pipes with divergent in/out types, you can specify the default on the `in` schema of your ZodPipe to set a "prefault" for the pipe.   */
@@ -3712,6 +3712,7 @@ export const $ZodPrefault: core.$constructor<$ZodPrefault> = /*@__PURE__*/ core.
       // Forward direction (decode): apply prefault for undefined input
       if (payload.value === undefined) {
         payload.value = def.defaultValue;
+        payload.fallback = false;
       }
       return def.innerType._zod.run(payload, ctx);
     };
