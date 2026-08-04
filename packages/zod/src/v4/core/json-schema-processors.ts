@@ -14,6 +14,16 @@ import {
 } from "./to-json-schema.js";
 import { assignProp, getEnumValues } from "./util.js";
 
+function serializeDefault(value: unknown): unknown {
+  if (typeof value === "bigint") {
+    if (value > Number.MAX_SAFE_INTEGER || value < Number.MIN_SAFE_INTEGER) {
+      throw new TypeError(`BigInt default value ${value} cannot be safely serialized to JSON`);
+    }
+    return Number(value);
+  }
+  return JSON.parse(JSON.stringify(value));
+}
+
 const formatMap: Partial<Record<checks.$ZodStringFormats, string | undefined>> = {
   guid: "uuid",
   url: "uri",
@@ -504,7 +514,7 @@ export const defaultProcessor: Processor<schemas.$ZodDefault> = (schema, ctx, js
   process(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
-  json.default = JSON.parse(JSON.stringify(def.defaultValue));
+  json.default = serializeDefault(def.defaultValue);
 };
 
 export const prefaultProcessor: Processor<schemas.$ZodPrefault> = (schema, ctx, json, params) => {
@@ -512,7 +522,7 @@ export const prefaultProcessor: Processor<schemas.$ZodPrefault> = (schema, ctx, 
   process(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
-  if (ctx.io === "input") json._prefault = JSON.parse(JSON.stringify(def.defaultValue));
+  if (ctx.io === "input") json._prefault = serializeDefault(def.defaultValue);
 };
 
 export const catchProcessor: Processor<schemas.$ZodCatch> = (schema, ctx, json, params) => {
@@ -529,7 +539,7 @@ export const catchProcessor: Processor<schemas.$ZodCatch> = (schema, ctx, json, 
     }
     return;
   }
-  json.default = catchValue;
+  json.default = serializeDefault(catchValue);
 };
 
 export const pipeProcessor: Processor<schemas.$ZodPipe> = (schema, ctx, _json, params) => {
