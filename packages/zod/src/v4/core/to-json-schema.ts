@@ -446,8 +446,9 @@ export function finalize<T extends schemas.$ZodType>(
     });
   };
 
-  for (const entry of [...ctx.seen.entries()].reverse()) {
-    flattenRef(entry[0]);
+  const entries = Array.from(ctx.seen.entries());
+  for (let i = entries.length - 1; i >= 0; i--) {
+    flattenRef(entries[i]![0]);
   }
 
   const result: JSONSchema.BaseSchema = {};
