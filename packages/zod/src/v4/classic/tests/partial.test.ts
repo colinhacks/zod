@@ -448,3 +448,13 @@ test("required - refinement is executed on required schema", () => {
   const validResult = requiredSchema.safeParse({ password: "abc", confirmPassword: "abc" });
   expect(validResult.success).toBe(true);
 });
+
+test("default with transform in partial object keeps transformed value", () => {
+  const arrayFromString = z
+    .string()
+    .default("")
+    .transform((val) => (val ? val.split(",").map((s) => s.trim()) : []));
+  const partialObj = z.object({ array: arrayFromString }).partial();
+  expect(arrayFromString.safeParse(undefined).data).toEqual([]);
+  expect(partialObj.safeParse({}).data?.array).toEqual([]);
+});

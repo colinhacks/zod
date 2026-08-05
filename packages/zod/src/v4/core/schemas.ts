@@ -3428,12 +3428,13 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
         throw new core.$ZodEncodeError(inst.constructor.name);
       }
 
+      const input = payload.value;
       const _out = def.transform(payload.value, payload);
       if (ctx.async) {
         const output = _out instanceof Promise ? _out : Promise.resolve(_out);
         return output.then((output) => {
           payload.value = output;
-          payload.fallback = true;
+          if (input === undefined) payload.fallback = true;
           return payload;
         });
       }
@@ -3443,7 +3444,7 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
       }
 
       payload.value = _out;
-      payload.fallback = true;
+      if (input === undefined) payload.fallback = true;
       return payload;
     };
   }

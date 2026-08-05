@@ -2095,16 +2095,17 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
         }
       };
 
+      const input = payload.value;
       const output = def.transform(payload.value, payload);
       if (output instanceof Promise) {
         return output.then((output) => {
           payload.value = output;
-          payload.fallback = true;
+          if (input === undefined) payload.fallback = true;
           return payload;
         });
       }
       payload.value = output;
-      payload.fallback = true;
+      if (input === undefined) payload.fallback = true;
       return payload;
     };
   }
