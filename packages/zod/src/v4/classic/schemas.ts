@@ -1927,6 +1927,10 @@ export interface ZodEnum<
     values: U,
     params?: string | core.$ZodEnumParams
   ): ZodEnum<util.Flatten<Omit<T, U[number]>>>;
+  extend<const U extends readonly string[]>(
+    values: U,
+    params?: string | core.$ZodEnumParams
+  ): ZodEnum<util.Flatten<T & Record<U[number], U[number]>>>;
 }
 export const ZodEnum: core.$constructor<ZodEnum> = /*@__PURE__*/ core.$constructor("ZodEnum", (inst, def) => {
   core.$ZodEnum.init(inst, def);
@@ -1959,6 +1963,19 @@ export const ZodEnum: core.$constructor<ZodEnum> = /*@__PURE__*/ core.$construct
       if (keys.has(value)) {
         delete newEntries[value];
       } else throw new Error(`Key ${value} not found in enum`);
+    }
+    return new ZodEnum({
+      ...def,
+      checks: [],
+      ...util.normalizeParams(params),
+      entries: newEntries,
+    }) as any;
+  };
+
+  inst.extend = (values, params) => {
+    const newEntries: Record<string, any> = { ...def.entries };
+    for (const value of values) {
+      newEntries[value] = value;
     }
     return new ZodEnum({
       ...def,

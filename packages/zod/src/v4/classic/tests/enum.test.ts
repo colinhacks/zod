@@ -160,6 +160,19 @@ test("exclude", () => {
   expectTypeOf<z.infer<typeof EmptyFoodEnum>>().toEqualTypeOf<never>();
 });
 
+test("extend", () => {
+  const directions = ["north", "south", "east", "west"] as const;
+  const BaseDirections = z.enum(directions);
+  const EightDirections = BaseDirections.extend(["northwest", "northeast"]);
+
+  expect(EightDirections.safeParse("north").success).toEqual(true);
+  expect(EightDirections.safeParse("northeast").success).toEqual(true);
+  expect(EightDirections.safeParse("up").success).toEqual(false);
+  expectTypeOf<z.infer<typeof EightDirections>>().toEqualTypeOf<
+    "north" | "south" | "east" | "west" | "northwest" | "northeast"
+  >();
+});
+
 test("error map inheritance", () => {
   const foods = ["Pasta", "Pizza", "Tacos", "Burgers", "Salad"] as const;
   const FoodEnum = z.enum(foods, { error: () => "This is not food!" });
