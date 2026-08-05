@@ -409,7 +409,8 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         });
         zodSchema = z.intersection(objectSchema, recordSchema);
         break;
-        
+      }
+      
       // Handle patternProperties
       if (schema.patternProperties) {
         // patternProperties: keys matching pattern must satisfy corresponding schema
