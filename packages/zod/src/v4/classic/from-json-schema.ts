@@ -1,3 +1,4 @@
+import * as core from "../core/index.js";
 import type * as JSONSchema from "../core/json-schema.js";
 import { type $ZodRegistry, globalRegistry } from "../core/registries.js";
 import * as _checks from "./checks.js";
@@ -390,19 +391,25 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
             ? convertSchema(schema.additionalProperties as JSONSchema.JSONSchema, ctx)
             : z.any();
 
-        // Case A: No properties (pure record)
+       // Case A: No properties (pure record)
         if (Object.keys(shape).length === 0) {
-          zodSchema = z.record(keySchema, valueSchema);
+          zodSchema = z.partialRecord(keySchema, valueSchema);
           break;
         }
 
-        // Case B: With properties (intersection of object and looseRecord)
+        // Case B: With properties (intersection of object and a partial+loose record)
         const objectSchema = z.object(shape).passthrough();
-        const recordSchema = z.looseRecord(keySchema, valueSchema);
+        const partialKeySchema = core.clone(keySchema);
+        (partialKeySchema as any)._zod.values = undefined;
+        const recordSchema = new z.ZodRecord({
+          type: "record",
+          keyType: partialKeySchema,
+          valueType: valueSchema,
+          mode: "loose",
+        });
         zodSchema = z.intersection(objectSchema, recordSchema);
         break;
-      }
-
+        
       // Handle patternProperties
       if (schema.patternProperties) {
         // patternProperties: keys matching pattern must satisfy corresponding schema
