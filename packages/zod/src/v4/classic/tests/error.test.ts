@@ -1,5 +1,5 @@
 import { inspect } from "node:util";
-import { expect, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 import * as z from "zod/v4";
 
 test("error creation", () => {
@@ -498,6 +498,18 @@ test("inferFlattenedErrors", () => {
       "formErrors": [],
     }
   `);
+});
+
+test("ZodFlattenedError accepts a schema like inferFlattenedErrors", () => {
+  const schemaWithTransform = z.object({ foo: z.string() }).transform((o) => ({ bar: o.foo }));
+
+  type FromSchema = z.ZodFlattenedError<typeof schemaWithTransform>["fieldErrors"];
+  type FromOutput = z.ZodFlattenedError<z.output<typeof schemaWithTransform>>["fieldErrors"];
+  type Legacy = z.inferFlattenedErrors<typeof schemaWithTransform>["fieldErrors"];
+
+  // Passing a schema unwraps to the output type, matching `inferFlattenedErrors`.
+  expectTypeOf<FromSchema>().toEqualTypeOf<FromOutput>();
+  expectTypeOf<FromSchema>().toEqualTypeOf<Legacy>();
 });
 
 const stringWithCustomError = z.string({
