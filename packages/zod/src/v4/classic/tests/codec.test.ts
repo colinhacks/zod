@@ -701,3 +701,126 @@ describe("context immutability", () => {
     expect("direction" in ctx).toBe(false);
   });
 });
+
+describe("encode executes codec transforms exactly once", () => {
+  const makeCountingCodec = () => {
+    let encodeCalls = 0;
+    const codec = z.codec(z.iso.datetime(), z.date(), {
+      decode: (isoString) => new Date(isoString),
+      encode: (date) => {
+        encodeCalls++;
+        return date.toISOString();
+      },
+    });
+    return { codec, count: () => encodeCalls };
+  };
+
+  test("codec under a checked object runs encode once", () => {
+    const { codec, count } = makeCountingCodec();
+    const schema = z.object({ createdAt: codec }).refine(() => true);
+
+    const result = z.safeEncode(schema, { createdAt: new Date("2025-01-01T00:00:00.000Z") });
+
+    expect(result.success).toBe(true);
+    expect(count()).toBe(1);
+  });
+
+  test("codecs in a checked array run encode once per element", () => {
+    const { codec, count } = makeCountingCodec();
+    const schema = z.object({ items: z.array(z.object({ at: codec })).min(1) });
+
+    const result = z.safeEncode(schema, {
+      items: [{ at: new Date("2025-01-01T00:00:00.000Z") }, { at: new Date("2025-06-01T00:00:00.000Z") }],
+    });
+
+    expect(result.success).toBe(true);
+    expect(count()).toBe(2);
+  });
+
+  test("nested checked schemas do not multiply encode executions", () => {
+    const { codec, count } = makeCountingCodec();
+    const inner = z.object({ at: codec }).refine(() => true);
+    const schema = z.object({ nested: inner }).refine(() => true);
+
+    const result = z.safeEncode(schema, { nested: { at: new Date("2025-01-01T00:00:00.000Z") } });
+
+    expect(result.success).toBe(true);
+    expect(count()).toBe(1);
+  });
+
+  test("unidirectional transform under a checked parent still throws on encode", () => {
+    const schema = z.object({ id: z.string().transform((s) => s.length) }).refine(() => true);
+
+    expect(() => z.safeEncode(schema, { id: 42 as never })).toThrow(z.core.$ZodEncodeError);
+  });
+
+  test("checks still run against the domain value during encode", () => {
+    const schema = z.object({ items: z.array(z.iso.datetime()).min(3) });
+
+    const result = z.safeEncode(schema, { items: ["2025-01-01T00:00:00.000Z"] });
+
+    expect(result.success).toBe(false);
+    expect(result.error!.issues[0].code).toBe("too_small");
+  });
+});
+
+describe("encode reports descendant check failures under checked parents", () => {
+  test("failing descendant check under a checked object fails encode", () => {
+    const schema = z.object({ name: z.string().min(5) }).refine(() => true);
+
+    const result = z.safeEncode(schema, { name: "abc" });
+
+    expect(result.success).toBe(false);
+    expect(result.error!.issues.map((i) => ({ code: i.code, path: i.path }))).toEqual([
+      { code: "too_small", path: ["name"] },
+    ]);
+  });
+
+  test("own check issues precede descendant check issues", () => {
+    const schema = z.object({ name: z.string().min(5) }).refine(() => false, { message: "own" });
+
+    const result = z.safeEncode(schema, { name: "abc" });
+
+    expect(result.success).toBe(false);
+    expect(result.error!.issues.map((i) => ({ code: i.code, path: i.path }))).toEqual([
+      { code: "custom", path: [] },
+      { code: "too_small", path: ["name"] },
+    ]);
+  });
+
+  test("failing descendant check under an async-checked object fails encode", async () => {
+    const schema = z.object({ name: z.string().min(5) }).refine(async () => true);
+
+    const result = await z.safeEncodeAsync(schema, { name: "abc" });
+
+    expect(result.success).toBe(false);
+    expect(result.error!.issues.map((i) => ({ code: i.code, path: i.path }))).toEqual([
+      { code: "too_small", path: ["name"] },
+    ]);
+  });
+
+  test("failing descendant check under an overwrite-bearing parent fails encode", () => {
+    const schema = z.object({ name: z.string().min(5) }).overwrite((v) => v);
+
+    const result = z.safeEncode(schema, { name: "abc" });
+
+    expect(result.success).toBe(false);
+    expect(result.error!.issues.map((i) => ({ code: i.code, path: i.path }))).toEqual([
+      { code: "too_small", path: ["name"] },
+    ]);
+  });
+
+  test("continuable descendant check issues accompany aborting type issues", () => {
+    // matches forward-direction reporting; previously the canary skipped
+    // descendant checks, so only the type issue surfaced
+    const schema = z.object({ a: z.string().min(5), b: z.number() }).refine(() => true);
+
+    const result = z.safeEncode(schema, { a: "abc", b: "nan" as never });
+
+    expect(result.success).toBe(false);
+    expect(result.error!.issues.map((i) => ({ code: i.code, path: i.path }))).toEqual([
+      { code: "too_small", path: ["a"] },
+      { code: "invalid_type", path: ["b"] },
+    ]);
+  });
+});

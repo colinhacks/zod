@@ -270,9 +270,25 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
       const checkResult = runChecks(payload, checks, ctx);
       if (checkResult instanceof Promise) {
         if (ctx.async === false) throw new core.$ZodAsyncError();
-        return checkResult.then((checkResult) => inst._zod.parse(checkResult, ctx));
+        return checkResult.then((checkResult) => finishBackward(canary, checkResult, ctx));
       }
-      return inst._zod.parse(checkResult, ctx);
+      return finishBackward(canary, checkResult, ctx);
+    };
+
+    // Overwrite-family checks mutate the value, so the backward parse must
+    // re-run on the mutated value. All other checks only report issues, which
+    // lets the canary result double as the final parse result.
+    const hasMutatingChecks = checks.some((ch) => ch._zod.def.check === "overwrite");
+
+    const finishBackward = (canary: ParsePayload, checkResult: ParsePayload, ctx: ParseContextInternal) => {
+      // checks may have mutated the value — re-parse to encode the mutated value
+      if (hasMutatingChecks) return inst._zod.parse(checkResult, ctx);
+      // checks did not mutate the value — the canary already produced the
+      // final backward parse result (value and descendant issues), so the
+      // second parse can be elided
+      checkResult.value = canary.value;
+      if (canary.issues.length) checkResult.issues.push(...canary.issues);
+      return checkResult;
     };
 
     inst._zod.run = (payload, ctx) => {
@@ -280,9 +296,13 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
         return inst._zod.parse(payload, ctx);
       }
       if (ctx.direction === "backward") {
-        // run canary
-        // initial pass (no checks)
-        const canary = inst._zod.parse({ value: payload.value, issues: [] }, { ...ctx, skipChecks: true });
+        // initial pass; descendant checks run here unless the value needs to
+        // be re-parsed after mutating checks, in which case this pass only
+        // validates (checks are skipped) and the second parse does the work
+        const canary = inst._zod.parse(
+          { value: payload.value, issues: [] },
+          hasMutatingChecks ? { ...ctx, skipChecks: true } : ctx
+        );
 
         if (canary instanceof Promise) {
           return canary.then((canary) => {
