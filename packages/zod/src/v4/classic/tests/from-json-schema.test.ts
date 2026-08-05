@@ -387,6 +387,34 @@ test("multiple overlapping patternProperties", () => {
   expect(() => schema.parse({ S_N: "ab" })).toThrow(); // too short for ^S_N pattern
 });
 
+test("patternProperties with additionalProperties: false rejects non-matching keys", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    patternProperties: {
+      "^S_": { type: "string" },
+    },
+    additionalProperties: false,
+  });
+  expect(schema.safeParse({ S_name: "ok" }).success).toBe(true);
+  expect(schema.safeParse({ X_A: false }).success).toBe(false);
+  expect(schema.safeParse({ S_name: 1 }).success).toBe(false);
+});
+
+test("patternProperties with additionalProperties: false allows regular properties", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    properties: {
+      known: { type: "string" },
+    },
+    patternProperties: {
+      "^S_": { type: "string" },
+    },
+    additionalProperties: false,
+  });
+  expect(schema.safeParse({ known: "x", S_name: "ok" }).success).toBe(true);
+  expect(schema.safeParse({ unknown: "x" }).success).toBe(false);
+});
+
 test("default value", () => {
   const schema = fromJSONSchema({
     type: "string",

@@ -425,6 +425,23 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         }
         schemasToIntersect.push(...looseRecords);
 
+        // When additionalProperties is false, every key must match a known
+        // property or one of the patterns. Enforce this with a strict record
+        // keyed on the union of the patterns.
+        if (schema.additionalProperties === false) {
+          const allowedKeySchemas: ZodType[] = Object.keys(shape).map((key) =>
+            z.literal(key),
+          );
+          for (const pattern of patternKeys) {
+            allowedKeySchemas.push(z.string().regex(new RegExp(pattern)));
+          }
+          const keySchema =
+            allowedKeySchemas.length === 1
+              ? (allowedKeySchemas[0] as ZodString)
+              : z.union(allowedKeySchemas as [ZodString, ZodString, ...ZodString[]]);
+          schemasToIntersect.push(z.record(keySchema, z.any()));
+        }
+
         if (schemasToIntersect.length === 0) {
           zodSchema = z.object({}).passthrough();
         } else if (schemasToIntersect.length === 1) {
