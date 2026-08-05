@@ -391,7 +391,7 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
             ? convertSchema(schema.additionalProperties as JSONSchema.JSONSchema, ctx)
             : z.any();
 
-       // Case A: No properties (pure record)
+        // Case A: No properties (pure record)
         if (Object.keys(shape).length === 0) {
           zodSchema = z.partialRecord(keySchema, valueSchema);
           break;
