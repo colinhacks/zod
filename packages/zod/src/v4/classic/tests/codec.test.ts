@@ -5,10 +5,18 @@ const isoDateCodec = z.codec(
   z.iso.datetime(), // Input: ISO string (validates to string)
   z.date(), // Output: Date object
   {
-    decode: (isoString) => new Date(isoString), // Forward: ISO string → Date
-    encode: (date) => date.toISOString(), // Backward: Date → ISO string
+    decode: (isoString) => new Date(isoString), // Forward: ISO string �+' Date
+    encode: (date) => date.toISOString(), // Backward: Date �+' ISO string
   }
 );
+
+test("codec decode may return unknown", () => {
+  const jsonCodec = z.codec(z.string(), z.record(z.string(), z.unknown()), {
+    decode: (str) => JSON.parse(str),
+    encode: (obj) => JSON.stringify(obj),
+  });
+  expect(z.decode(jsonCodec, '{"a":1}')).toEqual({ a: 1 });
+});
 
 test("instanceof", () => {
   expect(isoDateCodec instanceof z.ZodCodec).toBe(true);
@@ -443,8 +451,7 @@ test("codec type enforcement - correct encode/decode signatures", () => {
   });
 
   z.codec(z.string(), z.number(), {
-    // @ts-expect-error - decode return type should be core.input<B>
-    decode: (value: string) => String(value), // Wrong: should return number, not string
+    decode: (value: string) => String(value), // decode may return anything; the out schema validates it
     encode: (value: number) => String(value),
   });
 
