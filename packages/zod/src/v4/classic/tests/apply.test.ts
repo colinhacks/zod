@@ -57,3 +57,16 @@ test("The callback's return value becomes the apply's return value.", () => {
   expect(result).toBe(symbol);
   expectTypeOf<typeof result>().toEqualTypeOf<symbol>();
 });
+
+test("apply forwards extra args to the callback", () => {
+  const withDefault = <TSchema extends z.ZodType>(schema: TSchema, defaultValue: z.output<TSchema>) => {
+    return schema.nullish().transform((x) => x ?? defaultValue);
+  };
+
+  const schema = z.string().apply(withDefault, "default-id");
+
+  expect(schema.parse(undefined)).toBe("default-id");
+  expect(schema.parse(null)).toBe("default-id");
+  expect(schema.parse("value")).toBe("value");
+  expectTypeOf<z.infer<typeof schema>>().toEqualTypeOf<string>();
+});
