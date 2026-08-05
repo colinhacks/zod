@@ -1,10 +1,6 @@
-import { z } from "zod";
-
-const formDate = z.iso
-  .datetime({ offset: true })
-  .or(z.literal(""))
-  .transform((v) => (v === "" ? null : v));
-
-console.log("empty:", formDate.safeParse(""));
-console.log("valid:", formDate.safeParse("2024-01-15T10:30:00.000Z"));
-console.log("invalid:", formDate.safeParse("not-a-date"));
+import { fromJSONSchema } from "./packages/zod/src/v4/classic/from-json-schema.ts";
+const json = { type: "object", propertyNames: { enum: ["a", "b"] }, additionalProperties: { type: "string" } };
+const from = fromJSONSchema(json as any);
+const r = from.safeParse({ a: "x" });
+console.log("success:", r.success);
+if (!r.success) console.log(JSON.stringify(r.error.issues));

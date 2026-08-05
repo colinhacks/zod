@@ -336,6 +336,18 @@ test("patternProperties", () => {
   expect(result.S_age).toBe("30");
 });
 
+test("propertyNames with enum does not require keys", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    propertyNames: { enum: ["a", "b"] },
+    additionalProperties: { type: "string" },
+  });
+  expect(schema.parse({ a: "x" })).toEqual({ a: "x" });
+  expect(schema.parse({ b: "y" })).toEqual({ b: "y" });
+  expect(schema.parse({})).toEqual({});
+  expect(() => schema.parse({ c: "z" })).toThrow();
+});
+
 test("patternProperties with regular properties", () => {
   // Note: When patternProperties is combined with properties, the intersection
   // validates all keys against the pattern. This test uses a pattern that
