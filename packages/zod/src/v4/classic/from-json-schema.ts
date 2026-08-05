@@ -264,7 +264,9 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
       if (schema.format) {
         const format = schema.format;
         // Map common formats to Zod check functions
-        if (format === "email") {
+        if (format === "hostname") {
+          stringSchema = stringSchema.check(z.hostname());
+        } else if (format === "email") {
           stringSchema = stringSchema.check(z.email());
         } else if (format === "uri" || format === "uri-reference") {
           stringSchema = stringSchema.check(z.url());
