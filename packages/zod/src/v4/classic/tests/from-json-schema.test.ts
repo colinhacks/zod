@@ -128,8 +128,21 @@ test("tuple with prefixItems (draft-2020-12)", () => {
     prefixItems: [{ type: "string" }, { type: "number" }],
   });
   expect(schema.parse(["hello", 42])).toEqual(["hello", 42]);
-  expect(() => schema.parse(["hello"])).toThrow();
+  expect(schema.parse([])).toEqual([]);
+  expect(schema.parse(["hello"])).toEqual(["hello"]);
   expect(() => schema.parse(["hello", "world"])).toThrow();
+});
+
+test("tuple with prefixItems and minItems (draft-2020-12)", () => {
+  const schema = fromJSONSchema({
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "array",
+    prefixItems: [{ type: "string" }, { type: "number" }],
+    minItems: 2,
+  });
+  expect(schema.parse(["hello", 42])).toEqual(["hello", 42]);
+  expect(() => schema.parse(["hello"])).toThrow();
+  expect(() => schema.parse([])).toThrow();
 });
 
 test("tuple with items array (draft-7)", () => {
@@ -140,7 +153,30 @@ test("tuple with items array (draft-7)", () => {
     additionalItems: false,
   });
   expect(schema.parse(["hello", 42])).toEqual(["hello", 42]);
+  expect(schema.parse([])).toEqual([]);
+  expect(schema.parse(["hello"])).toEqual(["hello"]);
   expect(() => schema.parse(["hello", 42, "extra"])).toThrow();
+});
+
+test("prefixItems without minItems accepts shorter arrays", () => {
+  const schema = fromJSONSchema({
+    type: "array",
+    prefixItems: [{ type: "string" }],
+  });
+  expect(schema.safeParse([]).success).toBe(true);
+  expect(schema.safeParse(["ok"]).success).toBe(true);
+});
+
+test("draft-7 array items with additionalItems:false accepts shorter arrays", () => {
+  const schema = fromJSONSchema({
+    $schema: "http://json-schema.org/draft-07/schema#",
+    type: "array",
+    items: [{ type: "string" }],
+    additionalItems: false,
+  });
+  expect(schema.safeParse([]).success).toBe(true);
+  expect(schema.safeParse(["ok"]).success).toBe(true);
+  expect(schema.safeParse(["ok", "extra"]).success).toBe(false);
 });
 
 test("enum schema", () => {

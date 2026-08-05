@@ -465,8 +465,14 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
       const items = schema.items;
 
       if (prefixItems && Array.isArray(prefixItems)) {
-        // Tuple with prefixItems (draft-2020-12)
-        const tupleItems = prefixItems.map((item) => convertSchema(item as JSONSchema.JSONSchema, ctx));
+        // Tuple with prefixItems (draft-2020-12).
+        // Positional schemas constrain present elements, but without an
+        // explicit minItems they do not require the array to have that length.
+        const requiredCount = typeof schema.minItems === "number" ? schema.minItems : 0;
+        const tupleItems = prefixItems.map((item, i) => {
+          const converted = convertSchema(item as JSONSchema.JSONSchema, ctx);
+          return i < requiredCount ? converted : converted.optional();
+        });
         const rest =
           items && typeof items === "object" && !Array.isArray(items)
             ? convertSchema(items as JSONSchema.JSONSchema, ctx)
@@ -485,7 +491,11 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         }
       } else if (Array.isArray(items)) {
         // Tuple with items array (draft-7)
-        const tupleItems = items.map((item) => convertSchema(item as JSONSchema.JSONSchema, ctx));
+        const requiredCount = typeof schema.minItems === "number" ? schema.minItems : 0;
+        const tupleItems = items.map((item, i) => {
+          const converted = convertSchema(item as JSONSchema.JSONSchema, ctx);
+          return i < requiredCount ? converted : converted.optional();
+        });
         const rest =
           schema.additionalItems && typeof schema.additionalItems === "object"
             ? convertSchema(schema.additionalItems as JSONSchema.JSONSchema, ctx)
