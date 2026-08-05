@@ -406,6 +406,8 @@ export const tupleProcessor: Processor<schemas.$ZodTuple> = (schema, ctx, _json,
     json.prefixItems = prefixItems;
     if (rest) {
       json.items = rest;
+    } else {
+      json.items = false;
     }
   } else if (ctx.target === "openapi-3.0") {
     json.items = {
@@ -423,6 +425,8 @@ export const tupleProcessor: Processor<schemas.$ZodTuple> = (schema, ctx, _json,
     json.items = prefixItems;
     if (rest) {
       json.additionalItems = rest;
+    } else {
+      json.additionalItems = false;
     }
   }
 
