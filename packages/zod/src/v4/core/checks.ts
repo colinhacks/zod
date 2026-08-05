@@ -65,7 +65,7 @@ export const $ZodCheckLessThan: core.$constructor<$ZodCheckLessThan> = /*@__PURE
   "$ZodCheckLessThan",
   (inst, def) => {
     $ZodCheck.init(inst, def);
-    const origin = numericOriginMap[typeof def.value as "number" | "bigint" | "object"];
+    let origin = numericOriginMap[typeof def.value as "number" | "bigint" | "object"];
 
     inst._zod.onattach.push((inst) => {
       const bag = inst._zod.bag;
@@ -74,6 +74,8 @@ export const $ZodCheckLessThan: core.$constructor<$ZodCheckLessThan> = /*@__PURE
         if (def.inclusive) bag.maximum = def.value;
         else bag.exclusiveMaximum = def.value;
       }
+      const type = inst._zod.def.type;
+      if (type === "date" || type === "bigint" || type === "number") origin = type;
     });
 
     inst._zod.check = (payload) => {
@@ -116,7 +118,7 @@ export const $ZodCheckGreaterThan: core.$constructor<$ZodCheckGreaterThan> = /*@
   "$ZodCheckGreaterThan",
   (inst, def) => {
     $ZodCheck.init(inst, def);
-    const origin = numericOriginMap[typeof def.value as "number" | "bigint" | "object"];
+    let origin = numericOriginMap[typeof def.value as "number" | "bigint" | "object"];
 
     inst._zod.onattach.push((inst) => {
       const bag = inst._zod.bag;
@@ -125,6 +127,8 @@ export const $ZodCheckGreaterThan: core.$constructor<$ZodCheckGreaterThan> = /*@
         if (def.inclusive) bag.minimum = def.value;
         else bag.exclusiveMinimum = def.value;
       }
+      const type = inst._zod.def.type;
+      if (type === "date" || type === "bigint" || type === "number") origin = type;
     });
 
     inst._zod.check = (payload) => {

@@ -60,3 +60,32 @@ test("min max getters", () => {
   expect(maxCheck.maxDate).toEqual(benchmarkDate);
   expect(maxCheck.max(beforeBenchmarkDate).maxDate).toEqual(beforeBenchmarkDate);
 });
+
+test("numeric min/max arguments still report date origin", () => {
+  const resultMin = z.date().min(benchmarkDate.getTime()).safeParse(beforeBenchmarkDate);
+  const resultMax = z.date().max(benchmarkDate.getTime()).safeParse(afterBenchmarkDate);
+
+  expect(resultMin.success).toEqual(false);
+  expect(resultMin.error!.issues[0]).toMatchInlineSnapshot(`
+    {
+      "code": "too_small",
+      "inclusive": true,
+      "message": "Too small: expected date to be >=1667606400000",
+      "minimum": 1667606400000,
+      "origin": "date",
+      "path": [],
+    }
+  `);
+
+  expect(resultMax.success).toEqual(false);
+  expect(resultMax.error!.issues[0]).toMatchInlineSnapshot(`
+    {
+      "code": "too_big",
+      "inclusive": true,
+      "maximum": 1667606400000,
+      "message": "Too big: expected date to be <=1667606400000",
+      "origin": "date",
+      "path": [],
+    }
+  `);
+});
