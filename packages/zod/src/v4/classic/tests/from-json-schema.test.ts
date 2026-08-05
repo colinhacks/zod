@@ -448,6 +448,16 @@ test("string format - email", () => {
   expect(schema.parse("test@example.com")).toBe("test@example.com");
 });
 
+test("string format - date-time accepts RFC 3339 offsets", () => {
+  const schema = fromJSONSchema({
+    type: "string",
+    format: "date-time",
+  });
+  expect(schema.parse("2026-07-29T14:30:00Z")).toBe("2026-07-29T14:30:00Z");
+  expect(schema.parse("2026-07-29T16:30:00+02:00")).toBe("2026-07-29T16:30:00+02:00");
+  expect(() => schema.parse("2026-07-29T16:30:00")).toThrow();
+});
+
 test("string format - uuid", () => {
   const schema = fromJSONSchema({
     type: "string",
