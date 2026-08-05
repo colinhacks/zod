@@ -796,12 +796,58 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": [
+          "string",
+          "number",
+        ],
+      }
+    `);
+  });
+
+  test("union with null compacts to type array", () => {
+    const schema = z.union([z.string(), z.null()]);
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": [
+          "string",
+          "null",
+        ],
+      }
+    `);
+  });
+
+  test("union with constrained branch is not compacted", () => {
+    const schema = z.union([z.string().min(1), z.number()]);
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "anyOf": [
           {
+            "minLength": 1,
             "type": "string",
           },
           {
             "type": "number",
+          },
+        ],
+      }
+    `);
+  });
+
+  test("union of literals is not compacted", () => {
+    const schema = z.union([z.literal("a"), z.literal("b")]);
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "anyOf": [
+          {
+            "const": "a",
+            "type": "string",
+          },
+          {
+            "const": "b",
+            "type": "string",
           },
         ],
       }
@@ -1910,13 +1956,9 @@ test("override execution order", () => {
 
   expect(unionSchema).toMatchInlineSnapshot(`
     {
-      "anyOf": [
-        {
-          "type": "string",
-        },
-        {
-          "type": "number",
-        },
+      "type": [
+        "string",
+        "number",
       ],
     }
   `);

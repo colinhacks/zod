@@ -346,6 +346,15 @@ export const unionProcessor: Processor<schemas.$ZodUnion> = (schema, ctx, json, 
   );
   if (isExclusive) {
     json.oneOf = options;
+  } else if (
+    ctx.target !== "openapi-3.0" &&
+    options.every((option) => {
+      if (typeof option !== "object" || option === null) return false;
+      const keys = Object.keys(option);
+      return keys.length === 1 && keys[0] === "type" && typeof option.type === "string";
+    })
+  ) {
+    json.type = options.map((option) => option.type as JSONSchema.SchemaType);
   } else {
     json.anyOf = options;
   }
