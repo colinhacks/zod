@@ -30,12 +30,14 @@ function _setProcessor(inst: core.$ZodType, processor: core.Processor<any>): voi
 function _initFrom(
   Sup: { init: (inst: any, def: any) => void },
   Base: { init: (inst: any, def: any) => void },
-  processor?: core.Processor<any>
+  processor?: core.Processor<any>,
+  unwrap?: boolean
 ): (inst: any, def: any) => void {
   return (inst, def) => {
     Sup.init(inst, def);
     Base.init(inst, def);
     if (processor) _setProcessor(inst, processor);
+    if (unwrap) inst.unwrap = () => inst._zod.def.innerType;
   };
 }
 
@@ -2123,13 +2125,7 @@ export interface ZodOptional<T extends core.SomeType = core.$ZodType>
 }
 export const ZodOptional: core.$constructor<ZodOptional> = /*@__PURE__*/ core.$constructor(
   "ZodOptional",
-  (inst, def) => {
-    core.$ZodOptional.init(inst, def);
-    ZodType.init(inst, def);
-    _setProcessor(inst, processors.optionalProcessor);
-
-    inst.unwrap = () => inst._zod.def.innerType;
-  }
+  /* @__PURE__ */ _initFrom(core.$ZodOptional, ZodType, processors.optionalProcessor, true)
 );
 
 export function optional<T extends core.SomeType>(innerType: T): ZodOptional<T> {
@@ -2148,13 +2144,7 @@ export interface ZodExactOptional<T extends core.SomeType = core.$ZodType>
 }
 export const ZodExactOptional: core.$constructor<ZodExactOptional> = /*@__PURE__*/ core.$constructor(
   "ZodExactOptional",
-  (inst, def) => {
-    core.$ZodExactOptional.init(inst, def);
-    ZodType.init(inst, def);
-    _setProcessor(inst, processors.optionalProcessor);
-
-    inst.unwrap = () => inst._zod.def.innerType;
-  }
+  /* @__PURE__ */ _initFrom(core.$ZodExactOptional, ZodType, processors.optionalProcessor, true)
 );
 
 export function exactOptional<T extends core.SomeType>(innerType: T): ZodExactOptional<T> {
@@ -2173,13 +2163,7 @@ export interface ZodNullable<T extends core.SomeType = core.$ZodType>
 }
 export const ZodNullable: core.$constructor<ZodNullable> = /*@__PURE__*/ core.$constructor(
   "ZodNullable",
-  (inst, def) => {
-    core.$ZodNullable.init(inst, def);
-    ZodType.init(inst, def);
-    _setProcessor(inst, processors.nullableProcessor);
-
-    inst.unwrap = () => inst._zod.def.innerType;
-  }
+  /* @__PURE__ */ _initFrom(core.$ZodNullable, ZodType, processors.nullableProcessor, true)
 );
 
 export function nullable<T extends core.SomeType>(innerType: T): ZodNullable<T> {
@@ -2234,12 +2218,7 @@ export interface ZodPrefault<T extends core.SomeType = core.$ZodType>
 }
 export const ZodPrefault: core.$constructor<ZodPrefault> = /*@__PURE__*/ core.$constructor(
   "ZodPrefault",
-  (inst, def) => {
-    core.$ZodPrefault.init(inst, def);
-    ZodType.init(inst, def);
-    _setProcessor(inst, processors.prefaultProcessor);
-    inst.unwrap = () => inst._zod.def.innerType;
-  }
+  /* @__PURE__ */ _initFrom(core.$ZodPrefault, ZodType, processors.prefaultProcessor, true)
 );
 
 export function prefault<T extends core.SomeType>(
@@ -2264,13 +2243,7 @@ export interface ZodNonOptional<T extends core.SomeType = core.$ZodType>
 }
 export const ZodNonOptional: core.$constructor<ZodNonOptional> = /*@__PURE__*/ core.$constructor(
   "ZodNonOptional",
-  (inst, def) => {
-    core.$ZodNonOptional.init(inst, def);
-    ZodType.init(inst, def);
-    _setProcessor(inst, processors.nonoptionalProcessor);
-
-    inst.unwrap = () => inst._zod.def.innerType;
-  }
+  /* @__PURE__ */ _initFrom(core.$ZodNonOptional, ZodType, processors.nonoptionalProcessor, true)
 );
 
 export function nonoptional<T extends core.SomeType>(
@@ -2291,13 +2264,10 @@ export interface ZodSuccess<T extends core.SomeType = core.$ZodType>
   "~standard": ZodStandardSchemaWithJSON<this>;
   unwrap(): T;
 }
-export const ZodSuccess: core.$constructor<ZodSuccess> = /*@__PURE__*/ core.$constructor("ZodSuccess", (inst, def) => {
-  core.$ZodSuccess.init(inst, def);
-  ZodType.init(inst, def);
-  _setProcessor(inst, processors.successProcessor);
-
-  inst.unwrap = () => inst._zod.def.innerType;
-});
+export const ZodSuccess: core.$constructor<ZodSuccess> = /*@__PURE__*/ core.$constructor(
+  "ZodSuccess",
+  /* @__PURE__ */ _initFrom(core.$ZodSuccess, ZodType, processors.successProcessor, true)
+);
 
 export function success<T extends core.SomeType>(innerType: T): ZodSuccess<T> {
   return new ZodSuccess({
@@ -2447,13 +2417,7 @@ export interface ZodReadonly<T extends core.SomeType = core.$ZodType>
 }
 export const ZodReadonly: core.$constructor<ZodReadonly> = /*@__PURE__*/ core.$constructor(
   "ZodReadonly",
-  (inst, def) => {
-    core.$ZodReadonly.init(inst, def);
-    ZodType.init(inst, def);
-    _setProcessor(inst, processors.readonlyProcessor);
-
-    inst.unwrap = () => inst._zod.def.innerType;
-  }
+  /* @__PURE__ */ _initFrom(core.$ZodReadonly, ZodType, processors.readonlyProcessor, true)
 );
 
 export function readonly<T extends core.SomeType>(innerType: T): ZodReadonly<T> {
@@ -2514,13 +2478,10 @@ export interface ZodPromise<T extends core.SomeType = core.$ZodType>
   "~standard": ZodStandardSchemaWithJSON<this>;
   unwrap(): T;
 }
-export const ZodPromise: core.$constructor<ZodPromise> = /*@__PURE__*/ core.$constructor("ZodPromise", (inst, def) => {
-  core.$ZodPromise.init(inst, def);
-  ZodType.init(inst, def);
-  _setProcessor(inst, processors.promiseProcessor);
-
-  inst.unwrap = () => inst._zod.def.innerType;
-});
+export const ZodPromise: core.$constructor<ZodPromise> = /*@__PURE__*/ core.$constructor(
+  "ZodPromise",
+  /* @__PURE__ */ _initFrom(core.$ZodPromise, ZodType, processors.promiseProcessor, true)
+);
 
 export function promise<T extends core.SomeType>(innerType: T): ZodPromise<T> {
   return new ZodPromise({
