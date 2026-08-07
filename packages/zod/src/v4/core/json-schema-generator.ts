@@ -81,14 +81,10 @@ export class JSONSchemaGenerator {
   }
 
   constructor(params?: JSONSchemaGeneratorConstructorParams) {
-    // Normalize target for internal context
-    let normalizedTarget: ToJSONSchemaContext["target"] = params?.target ?? "draft-2020-12";
-    if (normalizedTarget === "draft-4") normalizedTarget = "draft-04";
-    if (normalizedTarget === "draft-7") normalizedTarget = "draft-07";
-
+    // Target normalization (draft-4/draft-7 aliases) happens in initializeContext.
     this.ctx = initializeContext({
       processors: allProcessors,
-      target: normalizedTarget,
+      target: params?.target,
       ...(params?.metadata && { metadata: params.metadata }),
       ...(params?.unrepresentable && { unrepresentable: params.unrepresentable }),
       ...(params?.override && { override: params.override as any }),
