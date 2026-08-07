@@ -5,6 +5,23 @@ import * as util from "./util.js";
 
 export type $ZodErrorClass = { new (issues: errors.$ZodIssue[]): errors.$ZodError };
 
+/** Finalizes the raw issues of a failed parse result. */
+function _finalizeIssues(result: schemas.ParsePayload, ctx: schemas.ParseContextInternal): errors.$ZodIssue[] {
+  return result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()));
+}
+
+/** Builds and throws the parse error for a failed result. */
+function _throwParseError(
+  result: schemas.ParsePayload,
+  ctx: schemas.ParseContextInternal,
+  _Err: $ZodErrorClass,
+  _params?: { callee?: util.AnyFunc; Err?: $ZodErrorClass }
+): never {
+  const e = new (_params?.Err ?? _Err)(_finalizeIssues(result, ctx));
+  util.captureStackTrace(e, _params?.callee);
+  throw e;
+}
+
 ///////////        METHODS       ///////////
 export type $Parse = <T extends schemas.$ZodType>(
   schema: T,
@@ -20,9 +37,7 @@ export const _parse: (_Err: $ZodErrorClass) => $Parse = (_Err) => (schema, value
     throw new core.$ZodAsyncError();
   }
   if (result.issues.length) {
-    const e = new (_params?.Err ?? _Err)(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())));
-    util.captureStackTrace(e, _params?.callee);
-    throw e;
+    _throwParseError(result, ctx, _Err, _params);
   }
   return result.value as core.output<typeof schema>;
 };
@@ -41,9 +56,7 @@ export const _parseAsync: (_Err: $ZodErrorClass) => $ParseAsync = (_Err) => asyn
   let result = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) result = await result;
   if (result.issues.length) {
-    const e = new (params?.Err ?? _Err)(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())));
-    util.captureStackTrace(e, params?.callee);
-    throw e;
+    _throwParseError(result, ctx, _Err, params);
   }
   return result.value as core.output<typeof schema>;
 };
@@ -66,7 +79,7 @@ export const _safeParse: (_Err: $ZodErrorClass) => $SafeParse = (_Err) => (schem
   return result.issues.length
     ? {
         success: false,
-        error: new (_Err ?? errors.$ZodError)(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))),
+        error: new (_Err ?? errors.$ZodError)(_finalizeIssues(result, ctx)),
       }
     : ({ success: true, data: result.value } as any);
 };
@@ -86,7 +99,7 @@ export const _safeParseAsync: (_Err: $ZodErrorClass) => $SafeParseAsync = (_Err)
   return result.issues.length
     ? {
         success: false,
-        error: new _Err(result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config()))),
+        error: new _Err(_finalizeIssues(result, ctx)),
       }
     : ({ success: true, data: result.value } as any);
 };
