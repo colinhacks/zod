@@ -37,7 +37,7 @@ table(
     return {
       "own props": n,
       "via generic ctor": fmtBytes(a.bytesEach),
-      "bytes": a.bytesEach.toFixed(0),
+      bytes: a.bytesEach.toFixed(0),
       "via plain literal": fmtBytes(b.bytesEach),
       "per prop": n ? (a.bytesEach / n).toFixed(0) : "-",
     };

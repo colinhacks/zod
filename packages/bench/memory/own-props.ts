@@ -32,7 +32,9 @@ function describe(label: string, a: any, b: any): void {
     }
   }
 
-  const closures = report.filter((r) => (r.kind === "function" || r.kind.startsWith("accessor")) && r.perInstance === "YES");
+  const closures = report.filter(
+    (r) => (r.kind === "function" || r.kind.startsWith("accessor")) && r.perInstance === "YES"
+  );
   const objects = report.filter((r) => r.kind === "object" && r.perInstance === "YES");
 
   console.log(`\n=== ${label} ===`);

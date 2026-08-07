@@ -1,3 +1,5 @@
+import * as head from "zod";
+import * as miniHead from "zod/mini";
 /**
  * In-process A/B throughput. Both revisions of the zod source are loaded into
  * one process and their rounds interleaved, so machine noise (thermal, GC,
@@ -9,10 +11,11 @@
  *   git archive <rev> packages/zod/src | tar -x -C scratch/base-src --strip-components=3
  */
 import * as base from "../../../scratch/base-src/index.js";
-import * as head from "zod";
+import * as miniBase from "../../../scratch/base-src/mini/index.js";
 import { table } from "./harness.js";
 
 type Z = typeof head;
+type M = typeof miniHead;
 
 interface Case {
   label: string;
@@ -94,6 +97,38 @@ const CASES: Case[] = [
   { label: "first .email()", make: (z) => () => void z.string().email() },
 ];
 
+// zod/mini shares the same shape of change, so it gets the same treatment.
+const MINI_CASES: Array<{ label: string; make: (m: M) => () => void }> = [
+  { label: "mini construct string", make: (m) => () => void m.string() },
+  {
+    label: "mini construct object(3)",
+    make: (m) => () => void m.object({ a: m.string(), b: m.number(), c: m.boolean() }),
+  },
+  {
+    label: "mini parse string",
+    make: (m) => {
+      const s = m.string();
+      return () => void s.parse("hello");
+    },
+  },
+  {
+    label: "mini parse object(3)",
+    make: (m) => {
+      const s = m.object({ a: m.string(), b: m.number(), c: m.boolean() });
+      const d = { a: "x", b: 1, c: true };
+      return () => void s.parse(d);
+    },
+  },
+  {
+    label: "mini safeParse object(3)",
+    make: (m) => {
+      const s = m.object({ a: m.string(), b: m.number(), c: m.boolean() });
+      const d = { a: "x", b: 1, c: true };
+      return () => void s.safeParse(d);
+    },
+  },
+];
+
 function timeOnce(fn: () => void, ms: number): number {
   let ops = 0;
   const start = process.hrtime.bigint();
@@ -108,13 +143,10 @@ function timeOnce(fn: () => void, ms: number): number {
 const ROUNDS = 11;
 const MS = 150;
 
-const fns = CASES.map((c) => ({
-  label: c.label,
-  base: c.make(base as unknown as Z),
-  head: c.make(head),
-  baseSamples: [] as number[],
-  headSamples: [] as number[],
-}));
+const fns = [
+  ...CASES.map((c) => ({ label: c.label, base: c.make(base as unknown as Z), head: c.make(head) })),
+  ...MINI_CASES.map((c) => ({ label: c.label, base: c.make(miniBase as unknown as M), head: c.make(miniHead) })),
+].map((c) => ({ ...c, baseSamples: [] as number[], headSamples: [] as number[] }));
 
 for (const f of fns) {
   for (let i = 0; i < 3_000; i++) {

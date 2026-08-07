@@ -981,3 +981,96 @@ export function uint8ArrayToHex(bytes: Uint8Array): string {
 export abstract class Class {
   constructor(..._args: any[]) {}
 }
+
+//////////    PROTOTYPE INSTALLERS     //////////
+//
+// Own-property count is the dominant per-instance cost of a schema. V8 sizes
+// the property backing store in steps, and `$constructor` assigns nothing
+// itself, so instances get no in-object slots: 12 own properties cost 128
+// bytes, 13 cost 848, 21 cost 1616. Keeping methods on the prototype and
+// materializing them per instance only when touched keeps instances under the
+// first step.
+//
+// Each installer runs once per (prototype, group), memoized here.
+const installedGroups = /* @__PURE__ */ new WeakMap<object, Set<string>>();
+
+function claimGroup(inst: object, group: string): object | undefined {
+  const proto = Object.getPrototypeOf(inst);
+  let installed = installedGroups.get(proto);
+  if (!installed) {
+    installed = new Set();
+    installedGroups.set(proto, installed);
+  }
+  if (installed.has(group)) return undefined;
+  installed.add(group);
+  return proto;
+}
+
+function defineCached(proto: object, key: string, compute: (self: any) => unknown): void {
+  Object.defineProperty(proto, key, {
+    configurable: true,
+    enumerable: false,
+    get(this: any) {
+      const value = compute(this);
+      Object.defineProperty(this, key, { configurable: true, writable: true, enumerable: true, value });
+      return value;
+    },
+    set(this: any, v: unknown) {
+      Object.defineProperty(this, key, { configurable: true, writable: true, enumerable: true, value: v });
+    },
+  });
+}
+
+/**
+ * Methods of `T` reshaped so each body has `this: T` and matches the declared
+ * (args, return) of the corresponding interface method.
+ */
+export type LazyMethodsOf<T> = Partial<{
+  [K in keyof T]: T[K] extends (...args: infer A) => infer R ? (this: T, ...args: A) => R : never;
+}>;
+
+/** Factories for properties whose value is built per instance on first read. */
+export type LazyPropsOf<T> = Partial<{ [K in keyof T]: (this: T) => T[K] }>;
+
+/**
+ * Installs methods as lazy-bind getters: on first access an instance gets
+ * `fn.bind(this)` cached as an own property, so detached use (`const m =
+ * schema.optional; m()`) still works.
+ *
+ * Not for hot-path functions — a bound function pays a call-time trampoline.
+ * Use `installLazyProps` there and build the closure directly.
+ */
+export function installLazyMethods<T extends object>(inst: T, group: string, methods: () => LazyMethodsOf<T>): void {
+  const proto = claimGroup(inst, group);
+  if (!proto) return;
+  const built = methods();
+  for (const key in built) {
+    const fn = built[key]!;
+    defineCached(proto, key, (self) => (fn as AnyFunc).bind(self));
+  }
+}
+
+/** Like `installLazyMethods`, but the factory builds the value instead of binding a shared function. */
+export function installLazyProps<T extends object>(inst: T, group: string, props: () => LazyPropsOf<T>): void {
+  const proto = claimGroup(inst, group);
+  if (!proto) return;
+  const built = props();
+  for (const key in built) {
+    const make = built[key]!;
+    defineCached(proto, key, (self) => (make as AnyFunc).call(self));
+  }
+}
+
+/** Installs plain (non-caching) prototype accessors, for values that must be recomputed on every read. */
+export function installProtoAccessors<T extends object>(
+  inst: T,
+  group: string,
+  accessors: () => Record<string, (this: T) => unknown>
+): void {
+  const proto = claimGroup(inst, group);
+  if (!proto) return;
+  const built = accessors();
+  for (const key in built) {
+    Object.defineProperty(proto, key, { configurable: true, enumerable: false, get: built[key]! });
+  }
+}

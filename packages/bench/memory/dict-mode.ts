@@ -30,7 +30,9 @@ const plain: any = { a: 1, b: 2 };
 const forcedSlow: any = {};
 Object.defineProperty(forcedSlow, "x", { value: 1, enumerable: false });
 
-console.log(`reference: plain literal fast=${hasFast(plain)}, non-enumerable defineProperty fast=${hasFast(forcedSlow)}\n`);
+console.log(
+  `reference: plain literal fast=${hasFast(plain)}, non-enumerable defineProperty fast=${hasFast(forcedSlow)}\n`
+);
 
 table(
   cases.map(([label, f]) => {
@@ -49,8 +51,19 @@ table(
 // Bisect: which operation in the constructor tips the instance over?
 console.log("\nwhat forces dictionary mode:");
 const probes: Array<[string, (o: any) => void]> = [
-  ["plain assignment x25", (o) => { for (let i = 0; i < 25; i++) o[`p${i}`] = i; }],
-  ["defineProperty all-true x25", (o) => { for (let i = 0; i < 25; i++) Object.defineProperty(o, `p${i}`, { value: i, writable: true, enumerable: true, configurable: true }); }],
+  [
+    "plain assignment x25",
+    (o) => {
+      for (let i = 0; i < 25; i++) o[`p${i}`] = i;
+    },
+  ],
+  [
+    "defineProperty all-true x25",
+    (o) => {
+      for (let i = 0; i < 25; i++)
+        Object.defineProperty(o, `p${i}`, { value: i, writable: true, enumerable: true, configurable: true });
+    },
+  ],
   ["defineProperty enumerable:false x1", (o) => Object.defineProperty(o, "z", { value: 1, enumerable: false })],
   ["defineProperty value-only x1", (o) => Object.defineProperty(o, "z", { value: 1 })],
   ["defineProperty getter x1", (o) => Object.defineProperty(o, "z", { get: () => 1, configurable: true })],

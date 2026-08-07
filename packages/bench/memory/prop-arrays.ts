@@ -33,7 +33,10 @@ for (let i = 0; i < g.count; i++) {
     if (g.name(child) !== "(object properties)") continue;
     const key = `${g.type(i)}::${g.name(i)}`;
     let rec = byOwner.get(key);
-    if (!rec) byOwner.set(key, (rec = { count: 0, bytes: 0 }));
+    if (!rec) {
+      rec = { count: 0, bytes: 0 };
+      byOwner.set(key, rec);
+    }
     rec.count++;
     rec.bytes += g.selfSize(child);
   }

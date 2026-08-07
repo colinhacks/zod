@@ -82,9 +82,7 @@ for (const [node, p] of paths) {
 }
 rows.sort((a, b) => b.bytes - a.bytes || a.path.localeCompare(b.path));
 
-table(
-  rows.slice(0, 70).map((r) => ({ path: r.path, node: r.kind, bytes: r.bytes, human: fmtBytes(r.bytes) }))
-);
+table(rows.slice(0, 70).map((r) => ({ path: r.path, node: r.kind, bytes: r.bytes, human: fmtBytes(r.bytes) })));
 
 const closures = rows.filter((r) => r.kind.startsWith("closure::"));
 console.log(`\nreachable within depth 4: ${rows.length} nodes, ${fmtBytes(rows.reduce((s, r) => s + r.bytes, 0))}`);

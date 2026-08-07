@@ -39,14 +39,17 @@ const scenarios: Scenario[] = [
   { label: "z.object({...})", run: () => void z.object({ a: z.string(), b: z.number() }) },
   { label: "z.object().extend()", run: () => void z.object({ a: z.string() }).extend({ b: z.number() }) },
   { label: "z.object().partial()", run: () => void z.object({ a: z.string() }).partial() },
-  { label: "z.discriminatedUnion", run: () => void z.discriminatedUnion("t", [
-      z.object({ t: z.literal("a") }),
-      z.object({ t: z.literal("b") }),
-    ]) },
-  { label: "z.lazy recursive", run: () => {
+  {
+    label: "z.discriminatedUnion",
+    run: () => void z.discriminatedUnion("t", [z.object({ t: z.literal("a") }), z.object({ t: z.literal("b") })]),
+  },
+  {
+    label: "z.lazy recursive",
+    run: () => {
       const s: any = z.lazy(() => z.object({ v: z.string(), next: s.optional() }));
       void s.safeParse({ v: "x", next: { v: "y" } });
-    } },
+    },
+  },
 
   // --- registry / metadata ---
   { label: ".describe()", run: (i) => void z.string().describe(`d${i}`) },
@@ -57,12 +60,18 @@ const scenarios: Scenario[] = [
   // --- parsing: input data must not be retained ---
   { label: "parse (fresh schema each time)", run: (i) => void z.object({ a: z.string() }).parse({ a: `v${i}` }) },
   { label: "parse big payload (shared schema)", run: (i) => void bigSchema.parse(makeBig(i)) },
-  { label: "safeParse FAILURE (shared schema)", run: (i) => void bigSchema.safeParse({ ...makeBig(i), n: "not-a-number" }) },
-  { label: "parse throw+catch (shared schema)", run: (i) => {
+  {
+    label: "safeParse FAILURE (shared schema)",
+    run: (i) => void bigSchema.safeParse({ ...makeBig(i), n: "not-a-number" }),
+  },
+  {
+    label: "parse throw+catch (shared schema)",
+    run: (i) => {
       try {
         bigSchema.parse({ ...makeBig(i), n: "not-a-number" });
       } catch {}
-    } },
+    },
+  },
   { label: "refine failure (shared schema)", run: (i) => void refined.safeParse(`x${i}`) },
 
   // --- JSON schema generation ---
@@ -130,5 +139,7 @@ const rows = scenarios.map((s) => {
 table(rows);
 
 const mismatches = rows.filter((r) => r.agree !== "");
-console.log(`\n${mismatches.length === 0 ? "all scenarios matched expectations" : `${mismatches.length} MISMATCH(ES)`}`);
+console.log(
+  `\n${mismatches.length === 0 ? "all scenarios matched expectations" : `${mismatches.length} MISMATCH(ES)`}`
+);
 if (leakSink.length === 0) throw new Error("unreachable");

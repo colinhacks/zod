@@ -75,7 +75,10 @@ function tally(rows: NodeRow[]): Map<string, { count: number; bytes: number }> {
   for (const r of rows) {
     const k = key(r);
     let e = m.get(k);
-    if (!e) m.set(k, (e = { count: 0, bytes: 0 }));
+    if (!e) {
+      e = { count: 0, bytes: 0 };
+      m.set(k, e);
+    }
     e.count++;
     e.bytes += r.selfSize;
   }
