@@ -533,35 +533,88 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
   core.$ZodString.init(inst, def);
   _ZodString.init(inst, def);
 
-  inst.email = (params) => inst.check(core._email(ZodEmail, params));
-  inst.url = (params) => inst.check(core._url(ZodURL, params));
-  inst.jwt = (params) => inst.check(core._jwt(ZodJWT, params));
-  inst.emoji = (params) => inst.check(core._emoji(ZodEmoji, params));
-  inst.guid = (params) => inst.check(core._guid(ZodGUID, params));
-  inst.uuid = (params) => inst.check(core._uuid(ZodUUID, params));
-  inst.uuidv4 = (params) => inst.check(core._uuidv4(ZodUUID, params));
-  inst.uuidv6 = (params) => inst.check(core._uuidv6(ZodUUID, params));
-  inst.uuidv7 = (params) => inst.check(core._uuidv7(ZodUUID, params));
-  inst.nanoid = (params) => inst.check(core._nanoid(ZodNanoID, params));
-  inst.guid = (params) => inst.check(core._guid(ZodGUID, params));
-  inst.cuid = (params) => inst.check(core._cuid(ZodCUID, params));
-  inst.cuid2 = (params) => inst.check(core._cuid2(ZodCUID2, params));
-  inst.ulid = (params) => inst.check(core._ulid(ZodULID, params));
-  inst.base64 = (params) => inst.check(core._base64(ZodBase64, params));
-  inst.base64url = (params) => inst.check(core._base64url(ZodBase64URL, params));
-  inst.xid = (params) => inst.check(core._xid(ZodXID, params));
-  inst.ksuid = (params) => inst.check(core._ksuid(ZodKSUID, params));
-  inst.ipv4 = (params) => inst.check(core._ipv4(ZodIPv4, params));
-  inst.ipv6 = (params) => inst.check(core._ipv6(ZodIPv6, params));
-  inst.cidrv4 = (params) => inst.check(core._cidrv4(ZodCIDRv4, params));
-  inst.cidrv6 = (params) => inst.check(core._cidrv6(ZodCIDRv6, params));
-  inst.e164 = (params) => inst.check(core._e164(ZodE164, params));
+  _installLazyMethods(inst, "ZodString", {
+    email(params) {
+      return this.check(core._email(ZodEmail, params));
+    },
+    url(params) {
+      return this.check(core._url(ZodURL, params));
+    },
+    jwt(params) {
+      return this.check(core._jwt(ZodJWT, params));
+    },
+    emoji(params) {
+      return this.check(core._emoji(ZodEmoji, params));
+    },
+    guid(params) {
+      return this.check(core._guid(ZodGUID, params));
+    },
+    uuid(params) {
+      return this.check(core._uuid(ZodUUID, params));
+    },
+    uuidv4(params) {
+      return this.check(core._uuidv4(ZodUUID, params));
+    },
+    uuidv6(params) {
+      return this.check(core._uuidv6(ZodUUID, params));
+    },
+    uuidv7(params) {
+      return this.check(core._uuidv7(ZodUUID, params));
+    },
+    nanoid(params) {
+      return this.check(core._nanoid(ZodNanoID, params));
+    },
+    cuid(params) {
+      return this.check(core._cuid(ZodCUID, params));
+    },
+    cuid2(params) {
+      return this.check(core._cuid2(ZodCUID2, params));
+    },
+    ulid(params) {
+      return this.check(core._ulid(ZodULID, params));
+    },
+    base64(params) {
+      return this.check(core._base64(ZodBase64, params));
+    },
+    base64url(params) {
+      return this.check(core._base64url(ZodBase64URL, params));
+    },
+    xid(params) {
+      return this.check(core._xid(ZodXID, params));
+    },
+    ksuid(params) {
+      return this.check(core._ksuid(ZodKSUID, params));
+    },
+    ipv4(params) {
+      return this.check(core._ipv4(ZodIPv4, params));
+    },
+    ipv6(params) {
+      return this.check(core._ipv6(ZodIPv6, params));
+    },
+    cidrv4(params) {
+      return this.check(core._cidrv4(ZodCIDRv4, params));
+    },
+    cidrv6(params) {
+      return this.check(core._cidrv6(ZodCIDRv6, params));
+    },
+    e164(params) {
+      return this.check(core._e164(ZodE164, params));
+    },
 
-  // iso
-  inst.datetime = (params) => inst.check(core._isoDateTime(ZodISODateTime, params as any));
-  inst.date = (params) => inst.check(core._isoDate(ZodISODate, params as any));
-  inst.time = (params) => inst.check(core._isoTime(ZodISOTime, params as any));
-  inst.duration = (params) => inst.check(core._isoDuration(ZodISODuration, params as any));
+    // iso
+    datetime(params) {
+      return this.check(core._isoDateTime(ZodISODateTime, params as any));
+    },
+    date(params) {
+      return this.check(core._isoDate(ZodISODate, params as any));
+    },
+    time(params) {
+      return this.check(core._isoTime(ZodISOTime, params as any));
+    },
+    duration(params) {
+      return this.check(core._isoDuration(ZodISODuration, params as any));
+    },
+  });
 });
 
 export function string(params?: string | core.$ZodStringParams): ZodString;
@@ -1211,19 +1264,41 @@ export const ZodBigInt: core.$constructor<ZodBigInt> = /*@__PURE__*/ core.$const
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.bigintProcessor(inst, ctx, json, params);
 
-  inst.gte = (value, params) => inst.check(checks.gte(value, params));
-  inst.min = (value, params) => inst.check(checks.gte(value, params));
-  inst.gt = (value, params) => inst.check(checks.gt(value, params));
-  inst.gte = (value, params) => inst.check(checks.gte(value, params));
-  inst.min = (value, params) => inst.check(checks.gte(value, params));
-  inst.lt = (value, params) => inst.check(checks.lt(value, params));
-  inst.lte = (value, params) => inst.check(checks.lte(value, params));
-  inst.max = (value, params) => inst.check(checks.lte(value, params));
-  inst.positive = (params) => inst.check(checks.gt(BigInt(0), params));
-  inst.negative = (params) => inst.check(checks.lt(BigInt(0), params));
-  inst.nonpositive = (params) => inst.check(checks.lte(BigInt(0), params));
-  inst.nonnegative = (params) => inst.check(checks.gte(BigInt(0), params));
-  inst.multipleOf = (value, params) => inst.check(checks.multipleOf(value, params));
+  _installLazyMethods(inst, "ZodBigInt", {
+    gte(value, params) {
+      return this.check(checks.gte(value, params));
+    },
+    min(value, params) {
+      return this.check(checks.gte(value, params));
+    },
+    gt(value, params) {
+      return this.check(checks.gt(value, params));
+    },
+    lt(value, params) {
+      return this.check(checks.lt(value, params));
+    },
+    lte(value, params) {
+      return this.check(checks.lte(value, params));
+    },
+    max(value, params) {
+      return this.check(checks.lte(value, params));
+    },
+    positive(params) {
+      return this.check(checks.gt(BigInt(0), params));
+    },
+    negative(params) {
+      return this.check(checks.lt(BigInt(0), params));
+    },
+    nonpositive(params) {
+      return this.check(checks.lte(BigInt(0), params));
+    },
+    nonnegative(params) {
+      return this.check(checks.gte(BigInt(0), params));
+    },
+    multipleOf(value, params) {
+      return this.check(checks.multipleOf(value, params));
+    },
+  });
 
   const bag = inst._zod.bag;
   inst.minValue = bag.minimum ?? null;
