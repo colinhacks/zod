@@ -326,31 +326,17 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
           // });
         }
         if (!Number.isSafeInteger(input)) {
-          if (input > 0) {
-            // too_big
-            payload.issues.push({
-              input,
-              code: "too_big",
-              maximum: Number.MAX_SAFE_INTEGER,
-              note: "Integers must be within the safe integer range.",
-              inst,
-              origin,
-              inclusive: true,
-              continue: !def.abort,
-            });
-          } else {
-            // too_small
-            payload.issues.push({
-              input,
-              code: "too_small",
-              minimum: Number.MIN_SAFE_INTEGER,
-              note: "Integers must be within the safe integer range.",
-              inst,
-              origin,
-              inclusive: true,
-              continue: !def.abort,
-            });
-          }
+          payload.issues.push({
+            input,
+            ...(input > 0
+              ? { code: "too_big" as const, maximum: Number.MAX_SAFE_INTEGER }
+              : { code: "too_small" as const, minimum: Number.MIN_SAFE_INTEGER }),
+            note: "Integers must be within the safe integer range.",
+            inst,
+            origin,
+            inclusive: true,
+            continue: !def.abort,
+          } as never);
 
           return;
         }
