@@ -2394,51 +2394,27 @@ export function preprocess<A, U extends core.SomeType, B = unknown>(
  */
 function _zodTypeParseProps(): _LazyPropsOf<ZodType> {
   return {
-    parse() {
-      const fn: ZodType["parse"] = (data, params) => parse.parse(this, data, params, { callee: fn });
+    parse: (self) => {
+      const fn: ZodType["parse"] = (data, params) => parse.parse(self, data, params, { callee: fn });
       return fn;
     },
-    safeParse() {
-      return (data, params) => parse.safeParse(this, data, params);
-    },
-    parseAsync() {
-      const fn: ZodType["parseAsync"] = async (data, params) => parse.parseAsync(this, data, params, { callee: fn });
+    parseAsync: (self) => {
+      const fn: ZodType["parseAsync"] = async (data, params) => parse.parseAsync(self, data, params, { callee: fn });
       return fn;
     },
-    safeParseAsync() {
-      return async (data, params) => parse.safeParseAsync(this, data, params);
-    },
+    safeParse: (self) => (data, params) => parse.safeParse(self, data, params),
+    safeParseAsync: (self) => async (data, params) => parse.safeParseAsync(self, data, params),
     // `spa` is an alias: same function object as `safeParseAsync`, as before.
-    spa() {
-      return this.safeParseAsync;
-    },
-    encode() {
-      return (data, params) => parse.encode(this, data, params);
-    },
-    decode() {
-      return (data, params) => parse.decode(this, data, params);
-    },
-    encodeAsync() {
-      return async (data, params) => parse.encodeAsync(this, data, params);
-    },
-    decodeAsync() {
-      return async (data, params) => parse.decodeAsync(this, data, params);
-    },
-    safeEncode() {
-      return (data, params) => parse.safeEncode(this, data, params);
-    },
-    safeDecode() {
-      return (data, params) => parse.safeDecode(this, data, params);
-    },
-    safeEncodeAsync() {
-      return async (data, params) => parse.safeEncodeAsync(this, data, params);
-    },
-    safeDecodeAsync() {
-      return async (data, params) => parse.safeDecodeAsync(this, data, params);
-    },
-    toJSONSchema() {
-      return createToJSONSchemaMethod(this, {});
-    },
+    spa: (self) => self.safeParseAsync,
+    encode: (self) => (data, params) => parse.encode(self, data, params),
+    decode: (self) => (data, params) => parse.decode(self, data, params),
+    encodeAsync: (self) => async (data, params) => parse.encodeAsync(self, data, params),
+    decodeAsync: (self) => async (data, params) => parse.decodeAsync(self, data, params),
+    safeEncode: (self) => (data, params) => parse.safeEncode(self, data, params),
+    safeDecode: (self) => (data, params) => parse.safeDecode(self, data, params),
+    safeEncodeAsync: (self) => async (data, params) => parse.safeEncodeAsync(self, data, params),
+    safeDecodeAsync: (self) => async (data, params) => parse.safeDecodeAsync(self, data, params),
+    toJSONSchema: (self) => createToJSONSchemaMethod(self, {}),
   };
 }
 

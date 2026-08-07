@@ -55,66 +55,61 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
     // — allocates none of them. Keeps instances at 3 own properties instead
     // of 14, which is the difference between one and two steps of V8's
     // property backing store.
-    util.installLazyProps<ZodMiniType>(inst, "ZodMiniType", _zodMiniTypeProps);
+    util.installLazyProps<ZodMiniType>(inst, "ZodMiniTypeParse", _zodMiniTypeParseProps);
+    util.installLazyMethods<ZodMiniType>(inst, "ZodMiniType", _zodMiniTypeMethods);
   }
 );
 
-function _zodMiniTypeProps(): util.LazyPropsOf<ZodMiniType> {
+// The parse family gets purpose-built closures rather than bound methods — a
+// bound function pays a call-time trampoline that shows up on this path.
+function _zodMiniTypeParseProps(): util.LazyPropsOf<ZodMiniType> {
   return {
-    parse() {
-      const fn: ZodMiniType["parse"] = (data, params) => parse.parse(this, data, params, { callee: fn });
+    parse: (self) => {
+      const fn: ZodMiniType["parse"] = (data, params) => parse.parse(self, data, params, { callee: fn });
       return fn;
     },
-    safeParse() {
-      return (data, params) => parse.safeParse(this, data, params);
-    },
-    parseAsync() {
+    parseAsync: (self) => {
       const fn: ZodMiniType["parseAsync"] = async (data, params) =>
-        parse.parseAsync(this, data, params, { callee: fn });
+        parse.parseAsync(self, data, params, { callee: fn });
       return fn;
     },
-    safeParseAsync() {
-      return async (data, params) => parse.safeParseAsync(this, data, params);
+    safeParse: (self) => (data, params) => parse.safeParse(self, data, params),
+    safeParseAsync: (self) => async (data, params) => parse.safeParseAsync(self, data, params),
+  };
+}
+
+function _zodMiniTypeMethods(): util.LazyMethodsOf<ZodMiniType> {
+  return {
+    check(...checks) {
+      const def = this.def;
+      return this.clone(
+        {
+          ...def,
+          checks: [
+            ...(def.checks ?? []),
+            ...checks.map((ch) =>
+              typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
+            ),
+          ],
+        },
+        { parent: true }
+      );
     },
-    check() {
-      return (...checks) => {
-        const def = this.def;
-        return this.clone(
-          {
-            ...def,
-            checks: [
-              ...(def.checks ?? []),
-              ...checks.map((ch) =>
-                typeof ch === "function"
-                  ? {
-                      _zod: { check: ch, def: { check: "custom" }, onattach: [] },
-                    }
-                  : ch
-              ),
-            ],
-          },
-          { parent: true }
-        );
-      };
+    with(...checks) {
+      return this.check(...checks);
     },
-    // `with` is an alias: same function object as `check`, as before.
-    with() {
-      return this.check;
-    },
-    clone() {
-      return (_def, params) => core.clone(this, _def, params);
+    clone(_def, params) {
+      return core.clone(this, _def, params);
     },
     brand() {
-      return () => this as any;
+      return this as any;
     },
-    register() {
-      return ((reg: any, meta: any) => {
-        reg.add(this, meta);
-        return this;
-      }) as any;
+    register(reg: any, meta: any) {
+      reg.add(this, meta);
+      return this;
     },
-    apply() {
-      return (fn) => fn(this);
+    apply(fn) {
+      return fn(this);
     },
   };
 }

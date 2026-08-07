@@ -1030,7 +1030,7 @@ export type LazyMethodsOf<T> = Partial<{
 }>;
 
 /** Factories for properties whose value is built per instance on first read. */
-export type LazyPropsOf<T> = Partial<{ [K in keyof T]: (this: T) => T[K] }>;
+export type LazyPropsOf<T> = Partial<{ [K in keyof T]: (self: T) => T[K] }>;
 
 /**
  * Installs methods as lazy-bind getters: on first access an instance gets
@@ -1056,8 +1056,7 @@ export function installLazyProps<T extends object>(inst: T, group: string, props
   if (!proto) return;
   const built = props();
   for (const key in built) {
-    const make = built[key]!;
-    defineCached(proto, key, (self) => (make as AnyFunc).call(self));
+    defineCached(proto, key, built[key] as AnyFunc);
   }
 }
 
