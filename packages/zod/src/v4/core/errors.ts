@@ -301,40 +301,40 @@ export type $ZodFormattedError<T, U = string> = {
   _errors: U[];
 } & util.Flatten<_ZodFormattedError<T, U>>;
 
-export function formatError<T>(error: $ZodError<T>): $ZodFormattedError<T>;
-export function formatError<T, U>(error: $ZodError<T>, mapper?: (issue: $ZodIssue) => U): $ZodFormattedError<T, U>;
-export function formatError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIssue) => issue.message as U) {
-  const fieldErrors: $ZodFormattedError<T> = { _errors: [] } as any;
+/** Walks issues recursively, flattening nested union/key/element issues, and calls `onLeaf` with each terminal issue and its full path. */
+function _walkIssues(error: { issues: $ZodIssue[] }, onLeaf: (issue: $ZodIssue, fullpath: PropertyKey[]) => void) {
   const processError = (error: { issues: $ZodIssue[] }, path: PropertyKey[] = []) => {
     for (const issue of error.issues) {
       if (issue.code === "invalid_union" && issue.errors.length) {
         issue.errors.map((issues) => processError({ issues }, [...path, ...issue.path]));
-      } else if (issue.code === "invalid_key") {
-        processError({ issues: issue.issues }, [...path, ...issue.path]);
-      } else if (issue.code === "invalid_element") {
+      } else if (issue.code === "invalid_key" || issue.code === "invalid_element") {
         processError({ issues: issue.issues }, [...path, ...issue.path]);
       } else {
-        const fullpath = [...path, ...issue.path];
-        if (fullpath.length === 0) {
-          (fieldErrors as any)._errors.push(mapper(issue));
-        } else {
-          let curr: any = fieldErrors;
-          let i = 0;
-          while (i < fullpath.length) {
-            const el = fullpath[i]!;
-            const terminal = i === fullpath.length - 1;
-
-            curr = node(curr, el, () => ({ _errors: [] as U[] }));
-            if (terminal) {
-              curr._errors.push(mapper(issue));
-            }
-            i++;
-          }
-        }
+        onLeaf(issue, [...path, ...issue.path]);
       }
     }
   };
   processError(error);
+}
+
+export function formatError<T>(error: $ZodError<T>): $ZodFormattedError<T>;
+export function formatError<T, U>(error: $ZodError<T>, mapper?: (issue: $ZodIssue) => U): $ZodFormattedError<T, U>;
+export function formatError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIssue) => issue.message as U) {
+  const fieldErrors: $ZodFormattedError<T> = { _errors: [] } as any;
+  _walkIssues(error, (issue, fullpath) => {
+    if (fullpath.length === 0) {
+      (fieldErrors as any)._errors.push(mapper(issue));
+    } else {
+      let curr: any = fieldErrors;
+      for (let i = 0; i < fullpath.length; i++) {
+        const el = fullpath[i]!;
+        curr = node(curr, el, () => ({ _errors: [] as U[] }));
+        if (i === fullpath.length - 1) {
+          curr._errors.push(mapper(issue));
+        }
+      }
+    }
+  });
   return fieldErrors;
 }
 
@@ -355,47 +355,30 @@ export function treeifyError<T>(error: $ZodError<T>): $ZodErrorTree<T>;
 export function treeifyError<T, U>(error: $ZodError<T>, mapper?: (issue: $ZodIssue) => U): $ZodErrorTree<T, U>;
 export function treeifyError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIssue) => issue.message as U) {
   const result: $ZodErrorTree<T, U> = { errors: [] } as any;
-  const processError = (error: { issues: $ZodIssue[] }, path: PropertyKey[] = []) => {
-    for (const issue of error.issues) {
-      if (issue.code === "invalid_union" && issue.errors.length) {
-        // regular union error
-        issue.errors.map((issues) => processError({ issues }, [...path, ...issue.path]));
-      } else if (issue.code === "invalid_key") {
-        processError({ issues: issue.issues }, [...path, ...issue.path]);
-      } else if (issue.code === "invalid_element") {
-        processError({ issues: issue.issues }, [...path, ...issue.path]);
+  _walkIssues(error, (issue, fullpath) => {
+    if (fullpath.length === 0) {
+      result.errors.push(mapper(issue));
+      return;
+    }
+
+    let curr: any = result;
+    for (let i = 0; i < fullpath.length; i++) {
+      const el = fullpath[i]!;
+
+      if (typeof el === "string") {
+        curr.properties ??= {};
+        curr = node(curr.properties, el, () => ({ errors: [] as U[] }));
       } else {
-        const fullpath = [...path, ...issue.path];
-        if (fullpath.length === 0) {
-          result.errors.push(mapper(issue));
-          continue;
-        }
+        curr.items ??= [];
+        curr.items[el] ??= { errors: [] };
+        curr = curr.items[el];
+      }
 
-        let curr: any = result;
-        let i = 0;
-        while (i < fullpath.length) {
-          const el = fullpath[i]!;
-
-          const terminal = i === fullpath.length - 1;
-          if (typeof el === "string") {
-            curr.properties ??= {};
-            curr = node(curr.properties, el, () => ({ errors: [] as U[] }));
-          } else {
-            curr.items ??= [];
-            curr.items[el] ??= { errors: [] };
-            curr = curr.items[el];
-          }
-
-          if (terminal) {
-            curr.errors.push(mapper(issue));
-          }
-
-          i++;
-        }
+      if (i === fullpath.length - 1) {
+        curr.errors.push(mapper(issue));
       }
     }
-  };
-  processError(error);
+  });
   return result;
 }
 
