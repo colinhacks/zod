@@ -669,11 +669,10 @@ export const ZodISODuration: core.$constructor<ZodISODuration> = /*@__PURE__*/ c
 export interface ZodEmail extends ZodStringFormat<"email"> {
   _zod: core.$ZodEmailInternals;
 }
-export const ZodEmail: core.$constructor<ZodEmail> = /*@__PURE__*/ core.$constructor("ZodEmail", (inst, def) => {
-  // ZodStringFormat.init(inst, def);
-  core.$ZodEmail.init(inst, def);
-  ZodStringFormat.init(inst, def);
-});
+export const ZodEmail: core.$constructor<ZodEmail> = /*@__PURE__*/ core.$constructor(
+  "ZodEmail",
+  /* @__PURE__ */ _initFrom(core.$ZodEmail, ZodStringFormat)
+);
 
 export function email(params?: string | core.$ZodEmailParams): ZodEmail {
   return core._email(ZodEmail, params);
@@ -683,11 +682,10 @@ export function email(params?: string | core.$ZodEmailParams): ZodEmail {
 export interface ZodGUID extends ZodStringFormat<"guid"> {
   _zod: core.$ZodGUIDInternals;
 }
-export const ZodGUID: core.$constructor<ZodGUID> = /*@__PURE__*/ core.$constructor("ZodGUID", (inst, def) => {
-  // ZodStringFormat.init(inst, def);
-  core.$ZodGUID.init(inst, def);
-  ZodStringFormat.init(inst, def);
-});
+export const ZodGUID: core.$constructor<ZodGUID> = /*@__PURE__*/ core.$constructor(
+  "ZodGUID",
+  /* @__PURE__ */ _initFrom(core.$ZodGUID, ZodStringFormat)
+);
 
 export function guid(params?: string | core.$ZodGUIDParams): ZodGUID {
   return core._guid(ZodGUID, params);
@@ -697,11 +695,10 @@ export function guid(params?: string | core.$ZodGUIDParams): ZodGUID {
 export interface ZodUUID extends ZodStringFormat<"uuid"> {
   _zod: core.$ZodUUIDInternals;
 }
-export const ZodUUID: core.$constructor<ZodUUID> = /*@__PURE__*/ core.$constructor("ZodUUID", (inst, def) => {
-  // ZodStringFormat.init(inst, def);
-  core.$ZodUUID.init(inst, def);
-  ZodStringFormat.init(inst, def);
-});
+export const ZodUUID: core.$constructor<ZodUUID> = /*@__PURE__*/ core.$constructor(
+  "ZodUUID",
+  /* @__PURE__ */ _initFrom(core.$ZodUUID, ZodStringFormat)
+);
 
 export function uuid(params?: string | core.$ZodUUIDParams): ZodUUID {
   return core._uuid(ZodUUID, params);
@@ -727,11 +724,10 @@ export function uuidv7(params?: string | core.$ZodUUIDv7Params): ZodUUID {
 export interface ZodURL extends ZodStringFormat<"url"> {
   _zod: core.$ZodURLInternals;
 }
-export const ZodURL: core.$constructor<ZodURL> = /*@__PURE__*/ core.$constructor("ZodURL", (inst, def) => {
-  // ZodStringFormat.init(inst, def);
-  core.$ZodURL.init(inst, def);
-  ZodStringFormat.init(inst, def);
-});
+export const ZodURL: core.$constructor<ZodURL> = /*@__PURE__*/ core.$constructor(
+  "ZodURL",
+  /* @__PURE__ */ _initFrom(core.$ZodURL, ZodStringFormat)
+);
 
 export function url(params?: string | core.$ZodURLParams): ZodURL {
   return core._url(ZodURL, params);
@@ -749,11 +745,10 @@ export function httpUrl(params?: string | Omit<core.$ZodURLParams, "protocol" | 
 export interface ZodEmoji extends ZodStringFormat<"emoji"> {
   _zod: core.$ZodEmojiInternals;
 }
-export const ZodEmoji: core.$constructor<ZodEmoji> = /*@__PURE__*/ core.$constructor("ZodEmoji", (inst, def) => {
-  // ZodStringFormat.init(inst, def);
-  core.$ZodEmoji.init(inst, def);
-  ZodStringFormat.init(inst, def);
-});
+export const ZodEmoji: core.$constructor<ZodEmoji> = /*@__PURE__*/ core.$constructor(
+  "ZodEmoji",
+  /* @__PURE__ */ _initFrom(core.$ZodEmoji, ZodStringFormat)
+);
 
 export function emoji(params?: string | core.$ZodEmojiParams): ZodEmoji {
   return core._emoji(ZodEmoji, params);
@@ -763,11 +758,10 @@ export function emoji(params?: string | core.$ZodEmojiParams): ZodEmoji {
 export interface ZodNanoID extends ZodStringFormat<"nanoid"> {
   _zod: core.$ZodNanoIDInternals;
 }
-export const ZodNanoID: core.$constructor<ZodNanoID> = /*@__PURE__*/ core.$constructor("ZodNanoID", (inst, def) => {
-  // ZodStringFormat.init(inst, def);
-  core.$ZodNanoID.init(inst, def);
-  ZodStringFormat.init(inst, def);
-});
+export const ZodNanoID: core.$constructor<ZodNanoID> = /*@__PURE__*/ core.$constructor(
+  "ZodNanoID",
+  /* @__PURE__ */ _initFrom(core.$ZodNanoID, ZodStringFormat)
+);
 
 export function nanoid(params?: string | core.$ZodNanoIDParams): ZodNanoID {
   return core._nanoid(ZodNanoID, params);
@@ -787,11 +781,10 @@ export interface ZodCUID extends ZodStringFormat<"cuid"> {
  * (timestamps embedded in the id). Use {@link ZodCUID2} instead.
  * See https://github.com/paralleldrive/cuid.
  */
-export const ZodCUID: core.$constructor<ZodCUID> = /*@__PURE__*/ core.$constructor("ZodCUID", (inst, def) => {
-  // ZodStringFormat.init(inst, def);
-  core.$ZodCUID.init(inst, def);
-  ZodStringFormat.init(inst, def);
-});
+export const ZodCUID: core.$constructor<ZodCUID> = /*@__PURE__*/ core.$constructor(
+  "ZodCUID",
+  /* @__PURE__ */ _initFrom(core.$ZodCUID, ZodStringFormat)
+);
 
 /**
  * Validates a CUID v1 string.
@@ -808,11 +801,10 @@ export function cuid(params?: string | core.$ZodCUIDParams): ZodCUID {
 export interface ZodCUID2 extends ZodStringFormat<"cuid2"> {
   _zod: core.$ZodCUID2Internals;
 }
-export const ZodCUID2: core.$constructor<ZodCUID2> = /*@__PURE__*/ core.$constructor("ZodCUID2", (inst, def) => {
-  // ZodStringFormat.init(inst, def);
-  core.$ZodCUID2.init(inst, def);
-  ZodStringFormat.init(inst, def);
-});
+export const ZodCUID2: core.$constructor<ZodCUID2> = /*@__PURE__*/ core.$constructor(
+  "ZodCUID2",
+  /* @__PURE__ */ _initFrom(core.$ZodCUID2, ZodStringFormat)
+);
 
 export function cuid2(params?: string | core.$ZodCUID2Params): ZodCUID2 {
   return core._cuid2(ZodCUID2, params);
@@ -822,11 +814,10 @@ export function cuid2(params?: string | core.$ZodCUID2Params): ZodCUID2 {
 export interface ZodULID extends ZodStringFormat<"ulid"> {
   _zod: core.$ZodULIDInternals;
 }
-export const ZodULID: core.$constructor<ZodULID> = /*@__PURE__*/ core.$constructor("ZodULID", (inst, def) => {
-  // ZodStringFormat.init(inst, def);
-  core.$ZodULID.init(inst, def);
-  ZodStringFormat.init(inst, def);
-});
+export const ZodULID: core.$constructor<ZodULID> = /*@__PURE__*/ core.$constructor(
+  "ZodULID",
+  /* @__PURE__ */ _initFrom(core.$ZodULID, ZodStringFormat)
+);
 
 export function ulid(params?: string | core.$ZodULIDParams): ZodULID {
   return core._ulid(ZodULID, params);
@@ -836,11 +827,10 @@ export function ulid(params?: string | core.$ZodULIDParams): ZodULID {
 export interface ZodXID extends ZodStringFormat<"xid"> {
   _zod: core.$ZodXIDInternals;
 }
-export const ZodXID: core.$constructor<ZodXID> = /*@__PURE__*/ core.$constructor("ZodXID", (inst, def) => {
-  // ZodStringFormat.init(inst, def);
-  core.$ZodXID.init(inst, def);
-  ZodStringFormat.init(inst, def);
-});
+export const ZodXID: core.$constructor<ZodXID> = /*@__PURE__*/ core.$constructor(
+  "ZodXID",
+  /* @__PURE__ */ _initFrom(core.$ZodXID, ZodStringFormat)
+);
 
 export function xid(params?: string | core.$ZodXIDParams): ZodXID {
   return core._xid(ZodXID, params);
@@ -850,11 +840,10 @@ export function xid(params?: string | core.$ZodXIDParams): ZodXID {
 export interface ZodKSUID extends ZodStringFormat<"ksuid"> {
   _zod: core.$ZodKSUIDInternals;
 }
-export const ZodKSUID: core.$constructor<ZodKSUID> = /*@__PURE__*/ core.$constructor("ZodKSUID", (inst, def) => {
-  // ZodStringFormat.init(inst, def);
-  core.$ZodKSUID.init(inst, def);
-  ZodStringFormat.init(inst, def);
-});
+export const ZodKSUID: core.$constructor<ZodKSUID> = /*@__PURE__*/ core.$constructor(
+  "ZodKSUID",
+  /* @__PURE__ */ _initFrom(core.$ZodKSUID, ZodStringFormat)
+);
 
 export function ksuid(params?: string | core.$ZodKSUIDParams): ZodKSUID {
   return core._ksuid(ZodKSUID, params);
@@ -878,11 +867,10 @@ export function ksuid(params?: string | core.$ZodKSUIDParams): ZodKSUID {
 export interface ZodIPv4 extends ZodStringFormat<"ipv4"> {
   _zod: core.$ZodIPv4Internals;
 }
-export const ZodIPv4: core.$constructor<ZodIPv4> = /*@__PURE__*/ core.$constructor("ZodIPv4", (inst, def) => {
-  // ZodStringFormat.init(inst, def);
-  core.$ZodIPv4.init(inst, def);
-  ZodStringFormat.init(inst, def);
-});
+export const ZodIPv4: core.$constructor<ZodIPv4> = /*@__PURE__*/ core.$constructor(
+  "ZodIPv4",
+  /* @__PURE__ */ _initFrom(core.$ZodIPv4, ZodStringFormat)
+);
 
 export function ipv4(params?: string | core.$ZodIPv4Params): ZodIPv4 {
   return core._ipv4(ZodIPv4, params);
@@ -892,11 +880,10 @@ export function ipv4(params?: string | core.$ZodIPv4Params): ZodIPv4 {
 export interface ZodMAC extends ZodStringFormat<"mac"> {
   _zod: core.$ZodMACInternals;
 }
-export const ZodMAC: core.$constructor<ZodMAC> = /*@__PURE__*/ core.$constructor("ZodMAC", (inst, def) => {
-  // ZodStringFormat.init(inst, def);
-  core.$ZodMAC.init(inst, def);
-  ZodStringFormat.init(inst, def);
-});
+export const ZodMAC: core.$constructor<ZodMAC> = /*@__PURE__*/ core.$constructor(
+  "ZodMAC",
+  /* @__PURE__ */ _initFrom(core.$ZodMAC, ZodStringFormat)
+);
 export function mac(params?: string | core.$ZodMACParams): ZodMAC {
   return core._mac(ZodMAC, params);
 }
@@ -905,11 +892,10 @@ export function mac(params?: string | core.$ZodMACParams): ZodMAC {
 export interface ZodIPv6 extends ZodStringFormat<"ipv6"> {
   _zod: core.$ZodIPv6Internals;
 }
-export const ZodIPv6: core.$constructor<ZodIPv6> = /*@__PURE__*/ core.$constructor("ZodIPv6", (inst, def) => {
-  // ZodStringFormat.init(inst, def);
-  core.$ZodIPv6.init(inst, def);
-  ZodStringFormat.init(inst, def);
-});
+export const ZodIPv6: core.$constructor<ZodIPv6> = /*@__PURE__*/ core.$constructor(
+  "ZodIPv6",
+  /* @__PURE__ */ _initFrom(core.$ZodIPv6, ZodStringFormat)
+);
 export function ipv6(params?: string | core.$ZodIPv6Params): ZodIPv6 {
   return core._ipv6(ZodIPv6, params);
 }
@@ -944,11 +930,10 @@ export function cidrv6(params?: string | core.$ZodCIDRv6Params): ZodCIDRv6 {
 export interface ZodBase64 extends ZodStringFormat<"base64"> {
   _zod: core.$ZodBase64Internals;
 }
-export const ZodBase64: core.$constructor<ZodBase64> = /*@__PURE__*/ core.$constructor("ZodBase64", (inst, def) => {
-  // ZodStringFormat.init(inst, def);
-  core.$ZodBase64.init(inst, def);
-  ZodStringFormat.init(inst, def);
-});
+export const ZodBase64: core.$constructor<ZodBase64> = /*@__PURE__*/ core.$constructor(
+  "ZodBase64",
+  /* @__PURE__ */ _initFrom(core.$ZodBase64, ZodStringFormat)
+);
 export function base64(params?: string | core.$ZodBase64Params): ZodBase64 {
   return core._base64(ZodBase64, params);
 }
@@ -959,11 +944,7 @@ export interface ZodBase64URL extends ZodStringFormat<"base64url"> {
 }
 export const ZodBase64URL: core.$constructor<ZodBase64URL> = /*@__PURE__*/ core.$constructor(
   "ZodBase64URL",
-  (inst, def) => {
-    // ZodStringFormat.init(inst, def);
-    core.$ZodBase64URL.init(inst, def);
-    ZodStringFormat.init(inst, def);
-  }
+  /* @__PURE__ */ _initFrom(core.$ZodBase64URL, ZodStringFormat)
 );
 export function base64url(params?: string | core.$ZodBase64URLParams): ZodBase64URL {
   return core._base64url(ZodBase64URL, params);
@@ -973,11 +954,10 @@ export function base64url(params?: string | core.$ZodBase64URLParams): ZodBase64
 export interface ZodE164 extends ZodStringFormat<"e164"> {
   _zod: core.$ZodE164Internals;
 }
-export const ZodE164: core.$constructor<ZodE164> = /*@__PURE__*/ core.$constructor("ZodE164", (inst, def) => {
-  // ZodStringFormat.init(inst, def);
-  core.$ZodE164.init(inst, def);
-  ZodStringFormat.init(inst, def);
-});
+export const ZodE164: core.$constructor<ZodE164> = /*@__PURE__*/ core.$constructor(
+  "ZodE164",
+  /* @__PURE__ */ _initFrom(core.$ZodE164, ZodStringFormat)
+);
 
 export function e164(params?: string | core.$ZodE164Params): ZodE164 {
   return core._e164(ZodE164, params);
@@ -987,11 +967,10 @@ export function e164(params?: string | core.$ZodE164Params): ZodE164 {
 export interface ZodJWT extends ZodStringFormat<"jwt"> {
   _zod: core.$ZodJWTInternals;
 }
-export const ZodJWT: core.$constructor<ZodJWT> = /*@__PURE__*/ core.$constructor("ZodJWT", (inst, def) => {
-  // ZodStringFormat.init(inst, def);
-  core.$ZodJWT.init(inst, def);
-  ZodStringFormat.init(inst, def);
-});
+export const ZodJWT: core.$constructor<ZodJWT> = /*@__PURE__*/ core.$constructor(
+  "ZodJWT",
+  /* @__PURE__ */ _initFrom(core.$ZodJWT, ZodStringFormat)
+);
 
 export function jwt(params?: string | core.$ZodJWTParams): ZodJWT {
   return core._jwt(ZodJWT, params);
@@ -1006,11 +985,7 @@ export interface ZodCustomStringFormat<Format extends string = string>
 }
 export const ZodCustomStringFormat: core.$constructor<ZodCustomStringFormat> = /*@__PURE__*/ core.$constructor(
   "ZodCustomStringFormat",
-  (inst, def) => {
-    // ZodStringFormat.init(inst, def);
-    core.$ZodCustomStringFormat.init(inst, def);
-    ZodStringFormat.init(inst, def);
-  }
+  /* @__PURE__ */ _initFrom(core.$ZodCustomStringFormat, ZodStringFormat)
 );
 export function stringFormat<Format extends string>(
   format: Format,
