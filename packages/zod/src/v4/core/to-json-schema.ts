@@ -215,15 +215,20 @@ export function process<T extends schemas.$ZodType>(
   return _result.schema;
 }
 
+/** Returns the Seen entry for a processed schema, throwing if process() was never called. */
+function _getRoot(ctx: ToJSONSchemaContext, schema: schemas.$ZodType): Seen {
+  const root = ctx.seen.get(schema);
+  if (!root) throw new Error("Unprocessed schema. This is a bug in Zod.");
+  return root;
+}
+
 export function extractDefs<T extends schemas.$ZodType>(
   ctx: ToJSONSchemaContext,
   schema: T
   // params: EmitParams
 ): void {
   // iterate over seen map;
-  const root = ctx.seen.get(schema);
-
-  if (!root) throw new Error("Unprocessed schema. This is a bug in Zod.");
+  const root = _getRoot(ctx, schema);
 
   // Track ids to detect duplicates across different schemas
   const idToSchema = new Map<string, schemas.$ZodType>();
@@ -371,8 +376,7 @@ export function finalize<T extends schemas.$ZodType>(
   ctx: ToJSONSchemaContext,
   schema: T
 ): ZodStandardJSONSchemaPayload<T> {
-  const root = ctx.seen.get(schema);
-  if (!root) throw new Error("Unprocessed schema. This is a bug in Zod.");
+  const root = _getRoot(ctx, schema);
 
   // flatten refs - inherit properties from parent schemas
   const flattenRef = (zodSchema: schemas.$ZodType) => {
