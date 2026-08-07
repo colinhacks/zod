@@ -400,6 +400,15 @@ export const $ZodStringFormat: core.$constructor<$ZodStringFormat> = /*@__PURE__
   }
 );
 
+/** Init body for string-format classes whose only extra step is a default pattern. */
+// @__NO_SIDE_EFFECTS__
+function _formatInit(pattern: RegExp): (inst: any, def: any) => void {
+  return (inst, def) => {
+    def.pattern ??= pattern;
+    $ZodStringFormat.init(inst, def);
+  };
+}
+
 //////////////////////////////   ZodGUID   //////////////////////////////
 export interface $ZodGUIDDef extends $ZodStringFormatDef<"guid"> {}
 export interface $ZodGUIDInternals extends $ZodStringFormatInternals<"guid"> {}
@@ -408,10 +417,10 @@ export interface $ZodGUID extends $ZodType {
   _zod: $ZodGUIDInternals;
 }
 
-export const $ZodGUID: core.$constructor<$ZodGUID> = /*@__PURE__*/ core.$constructor("$ZodGUID", (inst, def): void => {
-  def.pattern ??= regexes.guid;
-  $ZodStringFormat.init(inst, def);
-});
+export const $ZodGUID: core.$constructor<$ZodGUID> = /*@__PURE__*/ core.$constructor(
+  "$ZodGUID",
+  /* @__PURE__ */ _formatInit(regexes.guid)
+);
 
 //////////////////////////////   ZodUUID   //////////////////////////////
 
@@ -456,10 +465,7 @@ export interface $ZodEmail extends $ZodType {
 
 export const $ZodEmail: core.$constructor<$ZodEmail> = /*@__PURE__*/ core.$constructor(
   "$ZodEmail",
-  (inst, def): void => {
-    def.pattern ??= regexes.email;
-    $ZodStringFormat.init(inst, def);
-  }
+  /* @__PURE__ */ _formatInit(regexes.email)
 );
 
 //////////////////////////////   ZodURL   //////////////////////////////
@@ -583,10 +589,7 @@ export interface $ZodNanoID extends $ZodType {
 
 export const $ZodNanoID: core.$constructor<$ZodNanoID> = /*@__PURE__*/ core.$constructor(
   "$ZodNanoID",
-  (inst, def): void => {
-    def.pattern ??= regexes.nanoid;
-    $ZodStringFormat.init(inst, def);
-  }
+  /* @__PURE__ */ _formatInit(regexes.nanoid)
 );
 
 //////////////////////////////   ZodCUID   //////////////////////////////
@@ -618,10 +621,10 @@ export interface $ZodCUID extends $ZodType {
  * (timestamps embedded in the id). Use {@link $ZodCUID2} instead.
  * See https://github.com/paralleldrive/cuid.
  */
-export const $ZodCUID: core.$constructor<$ZodCUID> = /*@__PURE__*/ core.$constructor("$ZodCUID", (inst, def): void => {
-  def.pattern ??= regexes.cuid;
-  $ZodStringFormat.init(inst, def);
-});
+export const $ZodCUID: core.$constructor<$ZodCUID> = /*@__PURE__*/ core.$constructor(
+  "$ZodCUID",
+  /* @__PURE__ */ _formatInit(regexes.cuid)
+);
 
 //////////////////////////////   ZodCUID2   //////////////////////////////
 
@@ -634,10 +637,7 @@ export interface $ZodCUID2 extends $ZodType {
 
 export const $ZodCUID2: core.$constructor<$ZodCUID2> = /*@__PURE__*/ core.$constructor(
   "$ZodCUID2",
-  (inst, def): void => {
-    def.pattern ??= regexes.cuid2;
-    $ZodStringFormat.init(inst, def);
-  }
+  /* @__PURE__ */ _formatInit(regexes.cuid2)
 );
 
 //////////////////////////////   ZodULID   //////////////////////////////
@@ -649,10 +649,10 @@ export interface $ZodULID extends $ZodType {
   _zod: $ZodULIDInternals;
 }
 
-export const $ZodULID: core.$constructor<$ZodULID> = /*@__PURE__*/ core.$constructor("$ZodULID", (inst, def): void => {
-  def.pattern ??= regexes.ulid;
-  $ZodStringFormat.init(inst, def);
-});
+export const $ZodULID: core.$constructor<$ZodULID> = /*@__PURE__*/ core.$constructor(
+  "$ZodULID",
+  /* @__PURE__ */ _formatInit(regexes.ulid)
+);
 
 //////////////////////////////   ZodXID   //////////////////////////////
 
@@ -663,10 +663,10 @@ export interface $ZodXID extends $ZodType {
   _zod: $ZodXIDInternals;
 }
 
-export const $ZodXID: core.$constructor<$ZodXID> = /*@__PURE__*/ core.$constructor("$ZodXID", (inst, def): void => {
-  def.pattern ??= regexes.xid;
-  $ZodStringFormat.init(inst, def);
-});
+export const $ZodXID: core.$constructor<$ZodXID> = /*@__PURE__*/ core.$constructor(
+  "$ZodXID",
+  /* @__PURE__ */ _formatInit(regexes.xid)
+);
 
 //////////////////////////////   ZodKSUID   //////////////////////////////
 
@@ -679,10 +679,7 @@ export interface $ZodKSUID extends $ZodType {
 
 export const $ZodKSUID: core.$constructor<$ZodKSUID> = /*@__PURE__*/ core.$constructor(
   "$ZodKSUID",
-  (inst, def): void => {
-    def.pattern ??= regexes.ksuid;
-    $ZodStringFormat.init(inst, def);
-  }
+  /* @__PURE__ */ _formatInit(regexes.ksuid)
 );
 
 //////////////////////////////   ZodISODateTime   //////////////////////////////
@@ -720,10 +717,7 @@ export interface $ZodISODate extends $ZodType {
 
 export const $ZodISODate: core.$constructor<$ZodISODate> = /*@__PURE__*/ core.$constructor(
   "$ZodISODate",
-  (inst, def): void => {
-    def.pattern ??= regexes.date;
-    $ZodStringFormat.init(inst, def);
-  }
+  /* @__PURE__ */ _formatInit(regexes.date)
 );
 
 //////////////////////////////   ZodISOTime   //////////////////////////////
@@ -759,10 +753,7 @@ export interface $ZodISODuration extends $ZodType {
 
 export const $ZodISODuration: core.$constructor<$ZodISODuration> = /*@__PURE__*/ core.$constructor(
   "$ZodISODuration",
-  (inst, def): void => {
-    def.pattern ??= regexes.duration;
-    $ZodStringFormat.init(inst, def);
-  }
+  /* @__PURE__ */ _formatInit(regexes.duration)
 );
 
 //////////////////////////////   ZodIPv4   //////////////////////////////
@@ -859,10 +850,7 @@ export interface $ZodCIDRv4 extends $ZodType {
 
 export const $ZodCIDRv4: core.$constructor<$ZodCIDRv4> = /*@__PURE__*/ core.$constructor(
   "$ZodCIDRv4",
-  (inst, def): void => {
-    def.pattern ??= regexes.cidrv4;
-    $ZodStringFormat.init(inst, def);
-  }
+  /* @__PURE__ */ _formatInit(regexes.cidrv4)
 );
 
 //////////////////////////////   ZodCIDRv6   //////////////////////////////
@@ -999,10 +987,10 @@ export interface $ZodE164 extends $ZodType {
   _zod: $ZodE164Internals;
 }
 
-export const $ZodE164: core.$constructor<$ZodE164> = /*@__PURE__*/ core.$constructor("$ZodE164", (inst, def): void => {
-  def.pattern ??= regexes.e164;
-  $ZodStringFormat.init(inst, def);
-});
+export const $ZodE164: core.$constructor<$ZodE164> = /*@__PURE__*/ core.$constructor(
+  "$ZodE164",
+  /* @__PURE__ */ _formatInit(regexes.e164)
+);
 
 //////////////////////////////   ZodJWT   //////////////////////////////
 
