@@ -1910,35 +1910,24 @@ export const ZodEnum: core.$constructor<ZodEnum> = /*@__PURE__*/ core.$construct
 
   const keys = new Set(Object.keys(def.entries));
 
-  inst.extract = (values, params) => {
-    const newEntries: Record<string, any> = {};
+  const subEnum = (values: readonly string[], params: unknown, remove: boolean) => {
+    const newEntries: Record<string, any> = remove ? { ...def.entries } : {};
     for (const value of values) {
       if (keys.has(value)) {
-        newEntries[value] = def.entries[value];
+        if (remove) delete newEntries[value];
+        else newEntries[value] = def.entries[value];
       } else throw new Error(`Key ${value} not found in enum`);
     }
     return new ZodEnum({
       ...def,
       checks: [],
-      ...util.normalizeParams(params),
+      ...util.normalizeParams(params as any),
       entries: newEntries,
     }) as any;
   };
 
-  inst.exclude = (values, params) => {
-    const newEntries: Record<string, any> = { ...def.entries };
-    for (const value of values) {
-      if (keys.has(value)) {
-        delete newEntries[value];
-      } else throw new Error(`Key ${value} not found in enum`);
-    }
-    return new ZodEnum({
-      ...def,
-      checks: [],
-      ...util.normalizeParams(params),
-      entries: newEntries,
-    }) as any;
-  };
+  inst.extract = (values, params) => subEnum(values, params, false);
+  inst.exclude = (values, params) => subEnum(values, params, true);
 });
 
 function _enum<const T extends readonly string[]>(
