@@ -38,6 +38,18 @@ export const $ZodCheck: core.$constructor<$ZodCheck<any>> = /*@__PURE__*/ core.$
   }
 );
 
+/** Default `when` for size-based checks: run only on non-nullish values with a `size`. */
+const _whenHasSize = (payload: schemas.ParsePayload): boolean => {
+  const val = payload.value;
+  return !util.nullish(val) && (val as any).size !== undefined;
+};
+
+/** Default `when` for length-based checks: run only on non-nullish values with a `length`. */
+const _whenHasLength = (payload: schemas.ParsePayload): boolean => {
+  const val = payload.value;
+  return !util.nullish(val) && (val as any).length !== undefined;
+};
+
 ///////////////////////////////////////
 /////      $ZodCheckLessThan      /////
 ///////////////////////////////////////
@@ -457,10 +469,7 @@ export const $ZodCheckMaxSize: core.$constructor<$ZodCheckMaxSize> = /*@__PURE__
   (inst, def) => {
     $ZodCheck.init(inst, def);
 
-    inst._zod.def.when ??= (payload) => {
-      const val = payload.value;
-      return !util.nullish(val) && (val as any).size !== undefined;
-    };
+    inst._zod.def.when ??= _whenHasSize;
 
     inst._zod.onattach.push((inst) => {
       const curr = (inst._zod.bag.maximum ?? Number.POSITIVE_INFINITY) as number;
@@ -507,10 +516,7 @@ export const $ZodCheckMinSize: core.$constructor<$ZodCheckMinSize> = /*@__PURE__
   (inst, def) => {
     $ZodCheck.init(inst, def);
 
-    inst._zod.def.when ??= (payload) => {
-      const val = payload.value;
-      return !util.nullish(val) && (val as any).size !== undefined;
-    };
+    inst._zod.def.when ??= _whenHasSize;
 
     inst._zod.onattach.push((inst) => {
       const curr = (inst._zod.bag.minimum ?? Number.NEGATIVE_INFINITY) as number;
@@ -557,10 +563,7 @@ export const $ZodCheckSizeEquals: core.$constructor<$ZodCheckSizeEquals> = /*@__
   (inst, def) => {
     $ZodCheck.init(inst, def);
 
-    inst._zod.def.when ??= (payload) => {
-      const val = payload.value;
-      return !util.nullish(val) && (val as any).size !== undefined;
-    };
+    inst._zod.def.when ??= _whenHasSize;
 
     inst._zod.onattach.push((inst) => {
       const bag = inst._zod.bag;
@@ -611,10 +614,7 @@ export const $ZodCheckMaxLength: core.$constructor<$ZodCheckMaxLength> = /*@__PU
   (inst, def) => {
     $ZodCheck.init(inst, def);
 
-    inst._zod.def.when ??= (payload) => {
-      const val = payload.value;
-      return !util.nullish(val) && (val as any).length !== undefined;
-    };
+    inst._zod.def.when ??= _whenHasLength;
 
     inst._zod.onattach.push((inst) => {
       const curr = (inst._zod.bag.maximum ?? Number.POSITIVE_INFINITY) as number;
@@ -662,10 +662,7 @@ export const $ZodCheckMinLength: core.$constructor<$ZodCheckMinLength> = /*@__PU
   (inst, def) => {
     $ZodCheck.init(inst, def);
 
-    inst._zod.def.when ??= (payload) => {
-      const val = payload.value;
-      return !util.nullish(val) && (val as any).length !== undefined;
-    };
+    inst._zod.def.when ??= _whenHasLength;
 
     inst._zod.onattach.push((inst) => {
       const curr = (inst._zod.bag.minimum ?? Number.NEGATIVE_INFINITY) as number;
@@ -714,10 +711,7 @@ export const $ZodCheckLengthEquals: core.$constructor<$ZodCheckLengthEquals> = /
   (inst, def) => {
     $ZodCheck.init(inst, def);
 
-    inst._zod.def.when ??= (payload) => {
-      const val = payload.value;
-      return !util.nullish(val) && (val as any).length !== undefined;
-    };
+    inst._zod.def.when ??= _whenHasLength;
 
     inst._zod.onattach.push((inst) => {
       const bag = inst._zod.bag;
