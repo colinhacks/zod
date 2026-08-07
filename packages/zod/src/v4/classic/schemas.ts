@@ -548,39 +548,45 @@ export interface ZodString extends _ZodString<core.$ZodStringInternals<string>> 
   duration(params?: string | core.$ZodCheckISODurationParams): this;
 }
 
+/** Built on first ZodString construction; the format classes are declared later in this module. */
+let _stringFormatMethodTable: Array<[string, (Class: any, params?: any) => any, unknown]> | undefined;
+
 export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$constructor("ZodString", (inst, def) => {
   core.$ZodString.init(inst, def);
   _ZodString.init(inst, def);
 
-  inst.email = (params) => inst.check(core._email(ZodEmail, params));
-  inst.url = (params) => inst.check(core._url(ZodURL, params));
-  inst.jwt = (params) => inst.check(core._jwt(ZodJWT, params));
-  inst.emoji = (params) => inst.check(core._emoji(ZodEmoji, params));
-  inst.guid = (params) => inst.check(core._guid(ZodGUID, params));
-  inst.uuid = (params) => inst.check(core._uuid(ZodUUID, params));
-  inst.uuidv4 = (params) => inst.check(core._uuidv4(ZodUUID, params));
-  inst.uuidv6 = (params) => inst.check(core._uuidv6(ZodUUID, params));
-  inst.uuidv7 = (params) => inst.check(core._uuidv7(ZodUUID, params));
-  inst.nanoid = (params) => inst.check(core._nanoid(ZodNanoID, params));
-  inst.guid = (params) => inst.check(core._guid(ZodGUID, params));
-  inst.cuid = (params) => inst.check(core._cuid(ZodCUID, params));
-  inst.cuid2 = (params) => inst.check(core._cuid2(ZodCUID2, params));
-  inst.ulid = (params) => inst.check(core._ulid(ZodULID, params));
-  inst.base64 = (params) => inst.check(core._base64(ZodBase64, params));
-  inst.base64url = (params) => inst.check(core._base64url(ZodBase64URL, params));
-  inst.xid = (params) => inst.check(core._xid(ZodXID, params));
-  inst.ksuid = (params) => inst.check(core._ksuid(ZodKSUID, params));
-  inst.ipv4 = (params) => inst.check(core._ipv4(ZodIPv4, params));
-  inst.ipv6 = (params) => inst.check(core._ipv6(ZodIPv6, params));
-  inst.cidrv4 = (params) => inst.check(core._cidrv4(ZodCIDRv4, params));
-  inst.cidrv6 = (params) => inst.check(core._cidrv6(ZodCIDRv6, params));
-  inst.e164 = (params) => inst.check(core._e164(ZodE164, params));
-
-  // iso
-  inst.datetime = (params) => inst.check(core._isoDateTime(ZodISODateTime, params as any));
-  inst.date = (params) => inst.check(core._isoDate(ZodISODate, params as any));
-  inst.time = (params) => inst.check(core._isoTime(ZodISOTime, params as any));
-  inst.duration = (params) => inst.check(core._isoDuration(ZodISODuration, params as any));
+  _stringFormatMethodTable ??= [
+    ["email", core._email, ZodEmail],
+    ["url", core._url, ZodURL],
+    ["jwt", core._jwt, ZodJWT],
+    ["emoji", core._emoji, ZodEmoji],
+    ["guid", core._guid, ZodGUID],
+    ["uuid", core._uuid, ZodUUID],
+    ["uuidv4", core._uuidv4, ZodUUID],
+    ["uuidv6", core._uuidv6, ZodUUID],
+    ["uuidv7", core._uuidv7, ZodUUID],
+    ["nanoid", core._nanoid, ZodNanoID],
+    ["cuid", core._cuid, ZodCUID],
+    ["cuid2", core._cuid2, ZodCUID2],
+    ["ulid", core._ulid, ZodULID],
+    ["base64", core._base64, ZodBase64],
+    ["base64url", core._base64url, ZodBase64URL],
+    ["xid", core._xid, ZodXID],
+    ["ksuid", core._ksuid, ZodKSUID],
+    ["ipv4", core._ipv4, ZodIPv4],
+    ["ipv6", core._ipv6, ZodIPv6],
+    ["cidrv4", core._cidrv4, ZodCIDRv4],
+    ["cidrv6", core._cidrv6, ZodCIDRv6],
+    ["e164", core._e164, ZodE164],
+    // iso
+    ["datetime", core._isoDateTime, ZodISODateTime],
+    ["date", core._isoDate, ZodISODate],
+    ["time", core._isoTime, ZodISOTime],
+    ["duration", core._isoDuration, ZodISODuration],
+  ];
+  for (const [name, factory, Class] of _stringFormatMethodTable) {
+    (inst as any)[name] = (params: any) => inst.check(factory(Class, params));
+  }
 });
 
 export function string(params?: string | core.$ZodStringParams): ZodString;
