@@ -55,31 +55,24 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
     // — allocates none of them. Keeps instances at 3 own properties instead
     // of 14, which is the difference between one and two steps of V8's
     // property backing store.
-    util.installLazyProps<ZodMiniType>(inst, "ZodMiniTypeParse", _zodMiniTypeParseProps);
     util.installLazyMethods<ZodMiniType>(inst, "ZodMiniType", _zodMiniTypeMethods);
   }
 );
 
-// The parse family gets purpose-built closures rather than bound methods — a
-// bound function pays a call-time trampoline that shows up on this path.
-function _zodMiniTypeParseProps(): util.LazyPropsOf<ZodMiniType> {
-  return {
-    parse: (self) => {
-      const fn: ZodMiniType["parse"] = (data, params) => parse.parse(self, data, params, { callee: fn });
-      return fn;
-    },
-    parseAsync: (self) => {
-      const fn: ZodMiniType["parseAsync"] = async (data, params) =>
-        parse.parseAsync(self, data, params, { callee: fn });
-      return fn;
-    },
-    safeParse: (self) => (data, params) => parse.safeParse(self, data, params),
-    safeParseAsync: (self) => async (data, params) => parse.safeParseAsync(self, data, params),
-  };
-}
-
 function _zodMiniTypeMethods(): util.LazyMethodsOf<ZodMiniType> {
   return {
+    parse(data, params) {
+      return parse.parse(this, data, params, { callee: this.parse });
+    },
+    parseAsync(data, params) {
+      return parse.parseAsync(this, data, params, { callee: this.parseAsync });
+    },
+    safeParse(data, params) {
+      return parse.safeParse(this, data, params);
+    },
+    safeParseAsync(data, params) {
+      return parse.safeParseAsync(this, data, params);
+    },
     check(...checks) {
       const def = this.def;
       return this.clone(
