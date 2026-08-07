@@ -2221,13 +2221,7 @@ export function _default<T extends core.SomeType>(
   innerType: T,
   defaultValue: util.NoUndefined<core.output<T>> | (() => util.NoUndefined<core.output<T>>)
 ): ZodDefault<T> {
-  return new ZodDefault({
-    type: "default",
-    innerType: innerType as any as core.$ZodType,
-    get defaultValue() {
-      return typeof defaultValue === "function" ? (defaultValue as Function)() : util.shallowClone(defaultValue);
-    },
-  }) as any;
+  return new ZodDefault(core._defaultDef("default", innerType as any, defaultValue)) as any;
 }
 
 // ZodPrefault
@@ -2251,13 +2245,7 @@ export function prefault<T extends core.SomeType>(
   innerType: T,
   defaultValue: core.input<T> | (() => core.input<T>)
 ): ZodPrefault<T> {
-  return new ZodPrefault({
-    type: "prefault",
-    innerType: innerType as any as core.$ZodType,
-    get defaultValue() {
-      return typeof defaultValue === "function" ? (defaultValue as Function)() : util.shallowClone(defaultValue);
-    },
-  }) as any;
+  return new ZodPrefault(core._defaultDef("prefault", innerType as any, defaultValue)) as any;
 }
 
 // ZodNonOptional

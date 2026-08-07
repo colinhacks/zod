@@ -1270,19 +1270,26 @@ export function _nullable<T extends schemas.$ZodObject>(
 
 // ZodDefault
 export type $ZodDefaultParams = TypeParams<schemas.$ZodDefault, "innerType" | "defaultValue">;
+
+/** Builds a default/prefault def whose `defaultValue` getter unwraps functions and clones static values. */
+// @__NO_SIDE_EFFECTS__
+export function _defaultDef(type: "default" | "prefault", innerType: schemas.$ZodType, defaultValue: unknown): any {
+  return {
+    type,
+    innerType,
+    get defaultValue() {
+      return typeof defaultValue === "function" ? (defaultValue as Function)() : util.shallowClone(defaultValue);
+    },
+  };
+}
+
 // @__NO_SIDE_EFFECTS__
 export function _default<T extends schemas.$ZodObject>(
   Class: util.SchemaClass<schemas.$ZodDefault>,
   innerType: T,
   defaultValue: util.NoUndefined<core.output<T>> | (() => util.NoUndefined<core.output<T>>)
 ): schemas.$ZodDefault<T> {
-  return new Class({
-    type: "default",
-    innerType,
-    get defaultValue() {
-      return typeof defaultValue === "function" ? (defaultValue as Function)() : util.shallowClone(defaultValue);
-    },
-  }) as any;
+  return new Class(_defaultDef("default", innerType as any, defaultValue)) as any;
 }
 
 // ZodNonOptional
