@@ -304,9 +304,14 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
     };
   }
 
-  // Lazy initialize ~standard to avoid creating objects for every schema
-  util.defineLazy(inst, "~standard", () => standardProps(inst));
+  // `~standard` lives on the prototype and materializes per instance on first
+  // read. Defining it on the instance would cost an own property on every
+  // schema, and a wrapper redefining it (as the classic build does, to add
+  // `jsonSchema`) would demote the instance to dictionary mode.
+  util.installLazyProps<any>(inst, "$ZodType~standard", standardPropsTable);
 });
+
+const standardPropsTable = () => ({ "~standard": standardProps });
 
 /** The Standard Schema surface for `inst`. Shared so wrappers can extend it without forcing it. */
 export function standardProps(inst: $ZodType): StandardSchemaV1.Props<any, any> {

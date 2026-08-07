@@ -189,18 +189,23 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   _installLazyProps(inst, "ZodTypeParse", _zodTypeParseProps);
   _installProtoAccessors(inst, "ZodTypeAccessors", _zodTypeAccessors);
 
-  // Redefines the lazy `~standard` that core installed, adding the classic
-  // `jsonSchema` pair. Redefining (rather than assigning into it) keeps the
-  // whole thing lazy — reading `~standard` eagerly to attach `jsonSchema` was
-  // what forced every schema to build it.
-  util.defineLazy(inst, "~standard", () => ({
-    ...core.standardProps(inst),
-    jsonSchema: {
-      input: createStandardJSONSchemaMethod(inst, "input"),
-      output: createStandardJSONSchemaMethod(inst, "output"),
-    },
-  }));
+  // Overrides core's prototype-level `~standard` with the classic one, which
+  // also carries `jsonSchema`. It must stay a prototype entry: reading
+  // `~standard` to attach `jsonSchema` forced every schema to build it, and
+  // redefining it per instance demoted instances to dictionary mode.
+  _installLazyProps(inst, "ZodType~standard", _zodTypeStandard);
   return inst;
+});
+
+const _zodTypeStandard = (): _LazyPropsOf<ZodType> => ({
+  "~standard": (self) =>
+    ({
+      ...core.standardProps(self),
+      jsonSchema: {
+        input: createStandardJSONSchemaMethod(self, "input"),
+        output: createStandardJSONSchemaMethod(self, "output"),
+      },
+    }) as ZodType["~standard"],
 });
 
 // ZodString
