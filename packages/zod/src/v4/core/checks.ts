@@ -938,6 +938,15 @@ export const $ZodCheckUpperCase: core.$constructor<$ZodCheckUpperCase> = /*@__PU
   }
 );
 
+/** Registers an onattach hook that records `pattern` in the schema's bag. */
+function _attachPattern(inst: $ZodCheck<never>, pattern: RegExp): void {
+  inst._zod.onattach.push((inst) => {
+    const bag = inst._zod.bag as schemas.$ZodStringInternals<unknown>["bag"];
+    bag.patterns ??= new Set();
+    bag.patterns.add(pattern);
+  });
+}
+
 ///////////////////////////////////
 /////    $ZodCheckIncludes    /////
 ///////////////////////////////////
@@ -963,11 +972,7 @@ export const $ZodCheckIncludes: core.$constructor<$ZodCheckIncludes> = /*@__PURE
     const escapedRegex = util.escapeRegex(def.includes);
     const pattern = new RegExp(typeof def.position === "number" ? `^.{${def.position}}${escapedRegex}` : escapedRegex);
     def.pattern = pattern;
-    inst._zod.onattach.push((inst) => {
-      const bag = inst._zod.bag as schemas.$ZodStringInternals<unknown>["bag"];
-      bag.patterns ??= new Set();
-      bag.patterns.add(pattern);
-    });
+    _attachPattern(inst, pattern);
 
     inst._zod.check = (payload) => {
       if (payload.value.includes(def.includes, def.position)) return;
@@ -1007,11 +1012,7 @@ export const $ZodCheckStartsWith: core.$constructor<$ZodCheckStartsWith> = /*@__
 
     const pattern = new RegExp(`^${util.escapeRegex(def.prefix)}.*`);
     def.pattern ??= pattern;
-    inst._zod.onattach.push((inst) => {
-      const bag = inst._zod.bag as schemas.$ZodStringInternals<unknown>["bag"];
-      bag.patterns ??= new Set();
-      bag.patterns.add(pattern);
-    });
+    _attachPattern(inst, pattern);
 
     inst._zod.check = (payload) => {
       if (payload.value.startsWith(def.prefix)) return;
@@ -1051,11 +1052,7 @@ export const $ZodCheckEndsWith: core.$constructor<$ZodCheckEndsWith> = /*@__PURE
 
     const pattern = new RegExp(`.*${util.escapeRegex(def.suffix)}$`);
     def.pattern ??= pattern;
-    inst._zod.onattach.push((inst) => {
-      const bag = inst._zod.bag as schemas.$ZodStringInternals<unknown>["bag"];
-      bag.patterns ??= new Set();
-      bag.patterns.add(pattern);
-    });
+    _attachPattern(inst, pattern);
 
     inst._zod.check = (payload) => {
       if (payload.value.endsWith(def.suffix)) return;
