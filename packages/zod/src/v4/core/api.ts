@@ -89,6 +89,34 @@ export type $ZodStringFormatParams = CheckTypeParams<
 export type $ZodCheckStringFormatParams = CheckParams<checks.$ZodCheckStringFormat, "format">;
 // custom format
 
+/** Shared factory for string-format schemas. */
+// @__NO_SIDE_EFFECTS__
+function _sf<T extends schemas.$ZodStringFormat>(
+  Class: util.SchemaClass<T>,
+  format: string,
+  params?: unknown,
+  defaults?: object
+): T {
+  return new Class({
+    type: "string",
+    format,
+    check: "string_format",
+    ...defaults,
+    ...util.normalizeParams(params as any),
+  } as any);
+}
+
+/** Shared factory for string-format schemas that default to `abort: false`. */
+// @__NO_SIDE_EFFECTS__
+function _sfa<T extends schemas.$ZodStringFormat>(
+  Class: util.SchemaClass<T>,
+  format: string,
+  params?: unknown,
+  defaults?: object
+): T {
+  return _sf(Class, format, params, { abort: false, ...defaults });
+}
+
 // Email
 export type $ZodEmailParams = StringFormatParams<schemas.$ZodEmail, "when">;
 export type $ZodCheckEmailParams = CheckStringFormatParams<schemas.$ZodEmail, "when">;
@@ -97,13 +125,7 @@ export function _email<T extends schemas.$ZodEmail>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodEmailParams | $ZodCheckEmailParams
 ): T {
-  return new Class({
-    type: "string",
-    format: "email",
-    check: "string_format",
-    abort: false,
-    ...util.normalizeParams(params),
-  });
+  return _sfa(Class, "email", params);
 }
 
 // GUID
@@ -114,13 +136,7 @@ export function _guid<T extends schemas.$ZodGUID>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodGUIDParams | $ZodCheckGUIDParams
 ): T {
-  return new Class({
-    type: "string",
-    format: "guid",
-    check: "string_format",
-    abort: false,
-    ...util.normalizeParams(params),
-  });
+  return _sfa(Class, "guid", params);
 }
 
 // UUID
@@ -131,13 +147,7 @@ export function _uuid<T extends schemas.$ZodUUID>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodUUIDParams | $ZodCheckUUIDParams
 ): T {
-  return new Class({
-    type: "string",
-    format: "uuid",
-    check: "string_format",
-    abort: false,
-    ...util.normalizeParams(params),
-  });
+  return _sfa(Class, "uuid", params);
 }
 
 // UUIDv4
@@ -148,14 +158,7 @@ export function _uuidv4<T extends schemas.$ZodUUID>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodUUIDv4Params | $ZodCheckUUIDv4Params
 ): T {
-  return new Class({
-    type: "string",
-    format: "uuid",
-    check: "string_format",
-    abort: false,
-    version: "v4",
-    ...util.normalizeParams(params),
-  });
+  return _sfa(Class, "uuid", params, { version: "v4" });
 }
 
 // UUIDv6
@@ -166,14 +169,7 @@ export function _uuidv6<T extends schemas.$ZodUUID>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodUUIDv6Params | $ZodCheckUUIDv6Params
 ): T {
-  return new Class({
-    type: "string",
-    format: "uuid",
-    check: "string_format",
-    abort: false,
-    version: "v6",
-    ...util.normalizeParams(params),
-  });
+  return _sfa(Class, "uuid", params, { version: "v6" });
 }
 
 // UUIDv7
@@ -184,14 +180,7 @@ export function _uuidv7<T extends schemas.$ZodUUID>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodUUIDv7Params | $ZodCheckUUIDv7Params
 ): T {
-  return new Class({
-    type: "string",
-    format: "uuid",
-    check: "string_format",
-    abort: false,
-    version: "v7",
-    ...util.normalizeParams(params),
-  });
+  return _sfa(Class, "uuid", params, { version: "v7" });
 }
 
 // URL
@@ -202,13 +191,7 @@ export function _url<T extends schemas.$ZodURL>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodURLParams | $ZodCheckURLParams
 ): T {
-  return new Class({
-    type: "string",
-    format: "url",
-    check: "string_format",
-    abort: false,
-    ...util.normalizeParams(params),
-  });
+  return _sfa(Class, "url", params);
 }
 
 // Emoji
@@ -219,13 +202,7 @@ export function _emoji<T extends schemas.$ZodEmoji>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodEmojiParams | $ZodCheckEmojiParams
 ): T {
-  return new Class({
-    type: "string",
-    format: "emoji",
-    check: "string_format",
-    abort: false,
-    ...util.normalizeParams(params),
-  });
+  return _sfa(Class, "emoji", params);
 }
 
 // NanoID
@@ -236,13 +213,7 @@ export function _nanoid<T extends schemas.$ZodNanoID>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodNanoIDParams | $ZodCheckNanoIDParams
 ): T {
-  return new Class({
-    type: "string",
-    format: "nanoid",
-    check: "string_format",
-    abort: false,
-    ...util.normalizeParams(params),
-  });
+  return _sfa(Class, "nanoid", params);
 }
 
 // CUID
@@ -268,13 +239,7 @@ export function _cuid<T extends schemas.$ZodCUID>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodCUIDParams | $ZodCheckCUIDParams
 ): T {
-  return new Class({
-    type: "string",
-    format: "cuid",
-    check: "string_format",
-    abort: false,
-    ...util.normalizeParams(params),
-  });
+  return _sfa(Class, "cuid", params);
 }
 
 // CUID2
@@ -285,13 +250,7 @@ export function _cuid2<T extends schemas.$ZodCUID2>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodCUID2Params | $ZodCheckCUID2Params
 ): T {
-  return new Class({
-    type: "string",
-    format: "cuid2",
-    check: "string_format",
-    abort: false,
-    ...util.normalizeParams(params),
-  });
+  return _sfa(Class, "cuid2", params);
 }
 
 // ULID
@@ -302,13 +261,7 @@ export function _ulid<T extends schemas.$ZodULID>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodULIDParams | $ZodCheckULIDParams
 ): T {
-  return new Class({
-    type: "string",
-    format: "ulid",
-    check: "string_format",
-    abort: false,
-    ...util.normalizeParams(params),
-  });
+  return _sfa(Class, "ulid", params);
 }
 
 // XID
@@ -319,13 +272,7 @@ export function _xid<T extends schemas.$ZodXID>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodXIDParams | $ZodCheckXIDParams
 ): T {
-  return new Class({
-    type: "string",
-    format: "xid",
-    check: "string_format",
-    abort: false,
-    ...util.normalizeParams(params),
-  });
+  return _sfa(Class, "xid", params);
 }
 
 // KSUID
@@ -336,13 +283,7 @@ export function _ksuid<T extends schemas.$ZodKSUID>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodKSUIDParams | $ZodCheckKSUIDParams
 ): T {
-  return new Class({
-    type: "string",
-    format: "ksuid",
-    check: "string_format",
-    abort: false,
-    ...util.normalizeParams(params),
-  });
+  return _sfa(Class, "ksuid", params);
 }
 
 // IPv4
@@ -353,13 +294,7 @@ export function _ipv4<T extends schemas.$ZodIPv4>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodIPv4Params | $ZodCheckIPv4Params
 ): T {
-  return new Class({
-    type: "string",
-    format: "ipv4",
-    check: "string_format",
-    abort: false,
-    ...util.normalizeParams(params),
-  });
+  return _sfa(Class, "ipv4", params);
 }
 
 // IPv6
@@ -370,13 +305,7 @@ export function _ipv6<T extends schemas.$ZodIPv6>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodIPv6Params | $ZodCheckIPv6Params
 ): T {
-  return new Class({
-    type: "string",
-    format: "ipv6",
-    check: "string_format",
-    abort: false,
-    ...util.normalizeParams(params),
-  });
+  return _sfa(Class, "ipv6", params);
 }
 
 // MAC
@@ -387,13 +316,7 @@ export function _mac<T extends schemas.$ZodMAC>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodMACParams | $ZodCheckMACParams
 ): T {
-  return new Class({
-    type: "string",
-    format: "mac",
-    check: "string_format",
-    abort: false,
-    ...util.normalizeParams(params),
-  });
+  return _sfa(Class, "mac", params);
 }
 
 // CIDRv4
@@ -404,13 +327,7 @@ export function _cidrv4<T extends schemas.$ZodCIDRv4>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodCIDRv4Params | $ZodCheckCIDRv4Params
 ): T {
-  return new Class({
-    type: "string",
-    format: "cidrv4",
-    check: "string_format",
-    abort: false,
-    ...util.normalizeParams(params),
-  });
+  return _sfa(Class, "cidrv4", params);
 }
 
 // CIDRv6
@@ -421,13 +338,7 @@ export function _cidrv6<T extends schemas.$ZodCIDRv6>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodCIDRv6Params | $ZodCheckCIDRv6Params
 ): T {
-  return new Class({
-    type: "string",
-    format: "cidrv6",
-    check: "string_format",
-    abort: false,
-    ...util.normalizeParams(params),
-  });
+  return _sfa(Class, "cidrv6", params);
 }
 
 // Base64
@@ -438,13 +349,7 @@ export function _base64<T extends schemas.$ZodBase64>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodBase64Params | $ZodCheckBase64Params
 ): T {
-  return new Class({
-    type: "string",
-    format: "base64",
-    check: "string_format",
-    abort: false,
-    ...util.normalizeParams(params),
-  });
+  return _sfa(Class, "base64", params);
 }
 
 // base64url
@@ -455,13 +360,7 @@ export function _base64url<T extends schemas.$ZodBase64URL>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodBase64URLParams | $ZodCheckBase64URLParams
 ): T {
-  return new Class({
-    type: "string",
-    format: "base64url",
-    check: "string_format",
-    abort: false,
-    ...util.normalizeParams(params),
-  });
+  return _sfa(Class, "base64url", params);
 }
 
 // E164
@@ -472,13 +371,7 @@ export function _e164<T extends schemas.$ZodE164>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodE164Params | $ZodCheckE164Params
 ): T {
-  return new Class({
-    type: "string",
-    format: "e164",
-    check: "string_format",
-    abort: false,
-    ...util.normalizeParams(params),
-  });
+  return _sfa(Class, "e164", params);
 }
 
 // JWT
@@ -489,13 +382,7 @@ export function _jwt<T extends schemas.$ZodJWT>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodJWTParams | $ZodCheckJWTParams
 ): T {
-  return new Class({
-    type: "string",
-    format: "jwt",
-    check: "string_format",
-    abort: false,
-    ...util.normalizeParams(params),
-  });
+  return _sfa(Class, "jwt", params);
 }
 
 export const TimePrecision = {
@@ -513,15 +400,7 @@ export function _isoDateTime<T extends schemas.$ZodISODateTime>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodISODateTimeParams | $ZodCheckISODateTimeParams
 ): T {
-  return new Class({
-    type: "string",
-    format: "datetime",
-    check: "string_format",
-    offset: false,
-    local: false,
-    precision: null,
-    ...util.normalizeParams(params),
-  });
+  return _sf(Class, "datetime", params, { offset: false, local: false, precision: null });
 }
 
 // ISODate
@@ -532,12 +411,7 @@ export function _isoDate<T extends schemas.$ZodISODate>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodISODateParams | $ZodCheckISODateParams
 ): T {
-  return new Class({
-    type: "string",
-    format: "date",
-    check: "string_format",
-    ...util.normalizeParams(params),
-  });
+  return _sf(Class, "date", params);
 }
 
 // ISOTime
@@ -548,13 +422,7 @@ export function _isoTime<T extends schemas.$ZodISOTime>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodISOTimeParams | $ZodCheckISOTimeParams
 ): T {
-  return new Class({
-    type: "string",
-    format: "time",
-    check: "string_format",
-    precision: null,
-    ...util.normalizeParams(params),
-  });
+  return _sf(Class, "time", params, { precision: null });
 }
 
 // ISODuration
@@ -565,12 +433,7 @@ export function _isoDuration<T extends schemas.$ZodISODuration>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodISODurationParams | $ZodCheckISODurationParams
 ): T {
-  return new Class({
-    type: "string",
-    format: "duration",
-    check: "string_format",
-    ...util.normalizeParams(params),
-  });
+  return _sf(Class, "duration", params);
 }
 
 // Number
