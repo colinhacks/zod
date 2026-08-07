@@ -357,6 +357,16 @@ export function extractDefs<T extends schemas.$ZodType>(
   }
 }
 
+/** Deletes keys (except `$ref`/`allOf`) whose value deep-equals the same key in `def`. */
+function _deleteMatchingDefKeys(schema: JSONSchema.BaseSchema, def: JSONSchema.BaseSchema): void {
+  for (const key in schema) {
+    if (key === "$ref" || key === "allOf") continue;
+    if (key in def && JSON.stringify(schema[key]) === JSON.stringify(def[key])) {
+      delete schema[key];
+    }
+  }
+}
+
 export function finalize<T extends schemas.$ZodType>(
   ctx: ToJSONSchemaContext,
   schema: T
@@ -408,12 +418,7 @@ export function finalize<T extends schemas.$ZodType>(
 
       // When ref was extracted to $defs, remove properties that match the definition
       if (refSchema.$ref && refSeen.def) {
-        for (const key in schema) {
-          if (key === "$ref" || key === "allOf") continue;
-          if (key in refSeen.def && JSON.stringify(schema[key]) === JSON.stringify(refSeen.def[key])) {
-            delete schema[key];
-          }
-        }
+        _deleteMatchingDefKeys(schema, refSeen.def);
       }
     }
 
@@ -429,12 +434,7 @@ export function finalize<T extends schemas.$ZodType>(
         schema.$ref = parentSeen.schema.$ref;
         // De-duplicate with parent's definition
         if (parentSeen.def) {
-          for (const key in schema) {
-            if (key === "$ref" || key === "allOf") continue;
-            if (key in parentSeen.def && JSON.stringify(schema[key]) === JSON.stringify(parentSeen.def[key])) {
-              delete schema[key];
-            }
-          }
+          _deleteMatchingDefKeys(schema, parentSeen.def);
         }
       }
     }
