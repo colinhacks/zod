@@ -305,7 +305,12 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
   }
 
   // Lazy initialize ~standard to avoid creating objects for every schema
-  util.defineLazy(inst, "~standard", () => ({
+  util.defineLazy(inst, "~standard", () => standardProps(inst));
+});
+
+/** The Standard Schema surface for `inst`. Shared so wrappers can extend it without forcing it. */
+export function standardProps(inst: $ZodType): StandardSchemaV1.Props<any, any> {
+  return {
     validate: (value: unknown) => {
       try {
         const r = safeParse(inst, value);
@@ -316,8 +321,8 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
     },
     vendor: "zod",
     version: 1 as const,
-  }));
-});
+  };
+}
 
 export { clone } from "./util.js";
 

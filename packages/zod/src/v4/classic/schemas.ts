@@ -30,6 +30,65 @@ type _LazyMethodsOf<T> = Partial<{
   [K in keyof T]: T[K] extends (...args: infer A) => infer R ? (this: T, ...args: A) => R : never;
 }>;
 
+/** Factories for properties whose value is built per instance on first read. */
+type _LazyPropsOf<T> = Partial<{ [K in keyof T]: (this: T) => T[K] }>;
+
+/**
+ * Like `_installLazyMethods`, but the factory *builds* the value instead of
+ * binding a shared function. Used where a purpose-built closure beats
+ * `fn.bind(this)`: a bound function pays a call-time trampoline, which is
+ * measurable on the parse hot path.
+ */
+function _installLazyProps<T extends object>(inst: T, group: string, props: () => _LazyPropsOf<T>): void {
+  const proto = Object.getPrototypeOf(inst);
+  let installed = _installedGroups.get(proto);
+  if (!installed) {
+    installed = new Set();
+    _installedGroups.set(proto, installed);
+  }
+  if (installed.has(group)) return;
+  installed.add(group);
+  const built = props();
+  for (const key in built) {
+    const make = built[key]!;
+    Object.defineProperty(proto, key, {
+      configurable: true,
+      enumerable: false,
+      get(this: any) {
+        const value = make.call(this);
+        Object.defineProperty(this, key, { configurable: true, writable: true, enumerable: true, value });
+        return value;
+      },
+      set(this: any, v: unknown) {
+        Object.defineProperty(this, key, { configurable: true, writable: true, enumerable: true, value: v });
+      },
+    });
+  }
+}
+
+/**
+ * Installs plain (non-caching) accessors on the prototype. For values that
+ * must be recomputed on every read, so they can't live on the instance.
+ */
+function _installProtoAccessors<T extends object>(
+  inst: T,
+  group: string,
+  accessors: () => Record<string, (this: T) => unknown>
+): void {
+  const proto = Object.getPrototypeOf(inst);
+  let installed = _installedGroups.get(proto);
+  if (!installed) {
+    installed = new Set();
+    _installedGroups.set(proto, installed);
+  }
+  if (installed.has(group)) return;
+  installed.add(group);
+  const built = accessors();
+  for (const key in built) {
+    Object.defineProperty(proto, key, { configurable: true, enumerable: false, get: built[key]! });
+  }
+}
+
 function _installLazyMethods<T extends object>(inst: T, group: string, methods: () => _LazyMethodsOf<T>): void {
   const proto = Object.getPrototypeOf(inst);
   let installed = _installedGroups.get(proto);
@@ -217,50 +276,41 @@ export interface _ZodType<out Internals extends core.$ZodTypeInternals = core.$Z
 
 export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$constructor("ZodType", (inst, def) => {
   core.$ZodType.init(inst, def);
-  Object.assign(inst["~standard"], {
-    jsonSchema: {
-      input: createStandardJSONSchemaMethod(inst, "input"),
-      output: createStandardJSONSchemaMethod(inst, "output"),
-    },
-  });
-  inst.toJSONSchema = createToJSONSchemaMethod(inst, {});
 
   inst.def = def;
   inst.type = def.type;
   Object.defineProperty(inst, "_def", { value: def });
 
-  // Parse-family is intentionally kept as per-instance closures: these are
-  // the hot path AND the most-detached methods (`arr.map(schema.parse)`,
-  // `const { parse } = schema`, etc.). Eager closures here mean callers pay
-  // ~12 closure allocations per schema but get monomorphic call sites and
-  // detached usage that "just works".
-  inst.parse = (data, params) => parse.parse(inst, data, params, { callee: inst.parse });
-  inst.safeParse = (data, params) => parse.safeParse(inst, data, params);
-  inst.parseAsync = async (data, params) => parse.parseAsync(inst, data, params, { callee: inst.parseAsync });
-  inst.safeParseAsync = async (data, params) => parse.safeParseAsync(inst, data, params);
-  inst.spa = inst.safeParseAsync;
-  inst.encode = (data, params) => parse.encode(inst, data, params);
-  inst.decode = (data, params) => parse.decode(inst, data, params);
-  inst.encodeAsync = async (data, params) => parse.encodeAsync(inst, data, params);
-  inst.decodeAsync = async (data, params) => parse.decodeAsync(inst, data, params);
-  inst.safeEncode = (data, params) => parse.safeEncode(inst, data, params);
-  inst.safeDecode = (data, params) => parse.safeDecode(inst, data, params);
-  inst.safeEncodeAsync = async (data, params) => parse.safeEncodeAsync(inst, data, params);
-  inst.safeDecodeAsync = async (data, params) => parse.safeDecodeAsync(inst, data, params);
-
-  // All builder methods are placed on the internal prototype as lazy-bind
-  // getters. On first access per-instance, a bound thunk is allocated and
-  // cached as an own property; subsequent accesses skip the getter. This
-  // means: no per-instance allocation for unused methods, full
-  // detachability preserved (`const m = schema.optional; m()` works), and
-  // shared underlying function references across all instances.
+  // Everything else — the parse family, the builder methods, `~standard` and
+  // `toJSONSchema` — is installed on the prototype rather than the instance.
+  //
+  // Own-property count is the dominant cost of a schema. V8 sizes an
+  // instance's property backing store in steps, and a constructor like this
+  // one (which assigns nothing itself, so there is nothing to slack-track)
+  // gets no in-object slots: 12 own properties cost 128 bytes, 13 cost 848,
+  // and 21 cost 1616. Keeping instances under the first cliff is worth more
+  // than the closures themselves.
+  //
+  // Detachability is preserved: the getters bind on first access and cache
+  // the bound function as an own property, so `const { parse } = schema` and
+  // `arr.map(schema.parse)` still work, and a schema that is never parsed
+  // directly — every interior node of a large schema graph — allocates none
+  // of them.
   _installLazyMethods(inst, "ZodType", _zodTypeMethods);
-  Object.defineProperty(inst, "description", {
-    get() {
-      return core.globalRegistry.get(inst)?.description;
+  _installLazyProps(inst, "ZodTypeParse", _zodTypeParseProps);
+  _installProtoAccessors(inst, "ZodTypeAccessors", _zodTypeAccessors);
+
+  // Redefines the lazy `~standard` that core installed, adding the classic
+  // `jsonSchema` pair. Redefining (rather than assigning into it) keeps the
+  // whole thing lazy — reading `~standard` eagerly to attach `jsonSchema` was
+  // what forced every schema to build it.
+  util.defineLazy(inst, "~standard", () => ({
+    ...core.standardProps(inst),
+    jsonSchema: {
+      input: createStandardJSONSchemaMethod(inst, "input"),
+      output: createStandardJSONSchemaMethod(inst, "output"),
     },
-    configurable: true,
-  });
+  }));
   return inst;
 });
 
@@ -2446,6 +2496,81 @@ export function preprocess<A, U extends core.SomeType, B = unknown>(
     in: transform(fn as any) as any as core.$ZodTransform,
     out: schema as any as core.$ZodType,
   }) as any;
+}
+
+/**
+ * The parse family, built lazily but as the exact closures the eager version
+ * used — same shape, same monomorphic call sites, allocated only for schemas
+ * something actually parses through directly.
+ */
+function _zodTypeParseProps(): _LazyPropsOf<ZodType> {
+  return {
+    parse() {
+      const inst = this;
+      const fn: ZodType["parse"] = (data, params) => parse.parse(inst, data, params, { callee: fn });
+      return fn;
+    },
+    safeParse() {
+      const inst = this;
+      return (data, params) => parse.safeParse(inst, data, params);
+    },
+    parseAsync() {
+      const inst = this;
+      const fn: ZodType["parseAsync"] = async (data, params) => parse.parseAsync(inst, data, params, { callee: fn });
+      return fn;
+    },
+    safeParseAsync() {
+      const inst = this;
+      return async (data, params) => parse.safeParseAsync(inst, data, params);
+    },
+    // `spa` is an alias: same function object as `safeParseAsync`, as before.
+    spa() {
+      return this.safeParseAsync;
+    },
+    encode() {
+      const inst = this;
+      return (data, params) => parse.encode(inst, data, params);
+    },
+    decode() {
+      const inst = this;
+      return (data, params) => parse.decode(inst, data, params);
+    },
+    encodeAsync() {
+      const inst = this;
+      return async (data, params) => parse.encodeAsync(inst, data, params);
+    },
+    decodeAsync() {
+      const inst = this;
+      return async (data, params) => parse.decodeAsync(inst, data, params);
+    },
+    safeEncode() {
+      const inst = this;
+      return (data, params) => parse.safeEncode(inst, data, params);
+    },
+    safeDecode() {
+      const inst = this;
+      return (data, params) => parse.safeDecode(inst, data, params);
+    },
+    safeEncodeAsync() {
+      const inst = this;
+      return async (data, params) => parse.safeEncodeAsync(inst, data, params);
+    },
+    safeDecodeAsync() {
+      const inst = this;
+      return async (data, params) => parse.safeDecodeAsync(inst, data, params);
+    },
+    toJSONSchema() {
+      return createToJSONSchemaMethod(this, {});
+    },
+  };
+}
+
+function _zodTypeAccessors(): Record<string, (this: ZodType) => unknown> {
+  return {
+    description(this: ZodType) {
+      return core.globalRegistry.get(this)?.description;
+    },
+  };
 }
 
 function _zodTypeMethods(): _LazyMethodsOf<ZodType> {
