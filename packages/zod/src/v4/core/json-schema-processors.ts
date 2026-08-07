@@ -134,9 +134,7 @@ export const anyProcessor: Processor<schemas.$ZodAny> = (_schema, _ctx, _json, _
   // empty schema accepts anything
 };
 
-export const unknownProcessor: Processor<schemas.$ZodUnknown> = (_schema, _ctx, _json, _params) => {
-  // empty schema accepts anything
-};
+export const unknownProcessor: Processor<schemas.$ZodUnknown> = anyProcessor as Processor<any>;
 
 export const dateProcessor: Processor<schemas.$ZodDate> = /* @__PURE__ */ _unrepresentable("Date");
 
@@ -222,9 +220,7 @@ export const fileProcessor: Processor<schemas.$ZodFile> = (schema, _ctx, json, _
   }
 };
 
-export const successProcessor: Processor<schemas.$ZodSuccess> = (_schema, _ctx, json, _params) => {
-  (json as JSONSchema.BooleanSchema).type = "boolean";
-};
+export const successProcessor: Processor<schemas.$ZodSuccess> = booleanProcessor as Processor<any>;
 
 export const customProcessor: Processor<schemas.$ZodCustom> = /* @__PURE__ */ _unrepresentable("Custom types");
 
@@ -445,6 +441,13 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
   }
 };
 
+/** Processes the wrapped inner type and points this schema's ref at it. */
+const _refInner: Processor<any> = (schema, ctx, _json, params) => {
+  const innerType = (schema._zod.def as { innerType: schemas.$ZodType }).innerType;
+  process(innerType, ctx, params);
+  ctx.seen.get(schema)!.ref = innerType;
+};
+
 export const nullableProcessor: Processor<schemas.$ZodNullable> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodNullableDef;
   const inner = process(def.innerType, ctx as any, params);
@@ -457,34 +460,21 @@ export const nullableProcessor: Processor<schemas.$ZodNullable> = (schema, ctx, 
   }
 };
 
-export const nonoptionalProcessor: Processor<schemas.$ZodNonOptional> = (schema, ctx, _json, params) => {
-  const def = schema._zod.def as schemas.$ZodNonOptionalDef;
-  process(def.innerType, ctx as any, params);
-  const seen = ctx.seen.get(schema)!;
-  seen.ref = def.innerType;
-};
+export const nonoptionalProcessor: Processor<schemas.$ZodNonOptional> = _refInner;
 
 export const defaultProcessor: Processor<schemas.$ZodDefault> = (schema, ctx, json, params) => {
-  const def = schema._zod.def as schemas.$ZodDefaultDef;
-  process(def.innerType, ctx as any, params);
-  const seen = ctx.seen.get(schema)!;
-  seen.ref = def.innerType;
-  json.default = JSON.parse(JSON.stringify(def.defaultValue));
+  _refInner(schema, ctx, json, params);
+  json.default = JSON.parse(JSON.stringify(schema._zod.def.defaultValue));
 };
 
 export const prefaultProcessor: Processor<schemas.$ZodPrefault> = (schema, ctx, json, params) => {
-  const def = schema._zod.def as schemas.$ZodPrefaultDef;
-  process(def.innerType, ctx as any, params);
-  const seen = ctx.seen.get(schema)!;
-  seen.ref = def.innerType;
-  if (ctx.io === "input") json._prefault = JSON.parse(JSON.stringify(def.defaultValue));
+  _refInner(schema, ctx, json, params);
+  if (ctx.io === "input") json._prefault = JSON.parse(JSON.stringify(schema._zod.def.defaultValue));
 };
 
 export const catchProcessor: Processor<schemas.$ZodCatch> = (schema, ctx, json, params) => {
-  const def = schema._zod.def as schemas.$ZodCatchDef;
-  process(def.innerType, ctx as any, params);
-  const seen = ctx.seen.get(schema)!;
-  seen.ref = def.innerType;
+  _refInner(schema, ctx, json, params);
+  const def = schema._zod.def;
   let catchValue: any;
   try {
     catchValue = def.catchValue(undefined as any);
@@ -507,26 +497,13 @@ export const pipeProcessor: Processor<schemas.$ZodPipe> = (schema, ctx, _json, p
 };
 
 export const readonlyProcessor: Processor<schemas.$ZodReadonly> = (schema, ctx, json, params) => {
-  const def = schema._zod.def as schemas.$ZodReadonlyDef;
-  process(def.innerType, ctx as any, params);
-  const seen = ctx.seen.get(schema)!;
-  seen.ref = def.innerType;
+  _refInner(schema, ctx, json, params);
   json.readOnly = true;
 };
 
-export const promiseProcessor: Processor<schemas.$ZodPromise> = (schema, ctx, _json, params) => {
-  const def = schema._zod.def as schemas.$ZodPromiseDef;
-  process(def.innerType, ctx as any, params);
-  const seen = ctx.seen.get(schema)!;
-  seen.ref = def.innerType;
-};
+export const promiseProcessor: Processor<schemas.$ZodPromise> = _refInner;
 
-export const optionalProcessor: Processor<schemas.$ZodOptional> = (schema, ctx, _json, params) => {
-  const def = schema._zod.def as schemas.$ZodOptionalDef;
-  process(def.innerType, ctx as any, params);
-  const seen = ctx.seen.get(schema)!;
-  seen.ref = def.innerType;
-};
+export const optionalProcessor: Processor<schemas.$ZodOptional> = _refInner;
 
 export const lazyProcessor: Processor<schemas.$ZodLazy> = (schema, ctx, _json, params) => {
   const innerType = (schema as schemas.$ZodLazy)._zod.innerType;
