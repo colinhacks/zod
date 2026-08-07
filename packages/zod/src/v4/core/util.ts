@@ -598,14 +598,16 @@ export const BIGINT_FORMAT_RANGES: Record<checks.$ZodBigIntFormats, [bigint, big
   uint64: [/* @__PURE__*/ BigInt(0), /* @__PURE__*/ BigInt("18446744073709551615")],
 };
 
+/** Throws if the def carries refinement checks; `method` names the caller in the message. */
+function _assertNoChecks(checks: unknown[] | undefined, method: string, suffix = ""): void {
+  if (checks && checks.length > 0) {
+    throw new Error(`.${method}() cannot be used on object schemas containing refinements${suffix}`);
+  }
+}
+
 export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>): any {
   const currDef = schema._zod.def;
-
-  const checks = currDef.checks;
-  const hasChecks = checks && checks.length > 0;
-  if (hasChecks) {
-    throw new Error(".pick() cannot be used on object schemas containing refinements");
-  }
+  _assertNoChecks(currDef.checks, "pick");
 
   const def = mergeDefs(schema._zod.def, {
     get shape() {
@@ -629,12 +631,7 @@ export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>):
 
 export function omit(schema: schemas.$ZodObject, mask: object): any {
   const currDef = schema._zod.def;
-
-  const checks = currDef.checks;
-  const hasChecks = checks && checks.length > 0;
-  if (hasChecks) {
-    throw new Error(".omit() cannot be used on object schemas containing refinements");
-  }
+  _assertNoChecks(currDef.checks, "omit");
 
   const def = mergeDefs(schema._zod.def, {
     get shape() {
@@ -699,9 +696,7 @@ export function safeExtend(schema: schemas.$ZodObject, shape: schemas.$ZodShape)
 }
 
 export function merge(a: schemas.$ZodObject, b: schemas.$ZodObject): any {
-  if (a._zod.def.checks?.length) {
-    throw new Error(".merge() cannot be used on object schemas containing refinements. Use .safeExtend() instead.");
-  }
+  _assertNoChecks(a._zod.def.checks, "merge", ". Use .safeExtend() instead.");
   const def = mergeDefs(a._zod.def, {
     get shape() {
       const _shape = { ...a._zod.def.shape, ...b._zod.def.shape };
@@ -723,11 +718,7 @@ export function partial(
   mask: object | undefined
 ): any {
   const currDef = schema._zod.def;
-  const checks = currDef.checks;
-  const hasChecks = checks && checks.length > 0;
-  if (hasChecks) {
-    throw new Error(".partial() cannot be used on object schemas containing refinements");
-  }
+  _assertNoChecks(currDef.checks, "partial");
 
   const def = mergeDefs(schema._zod.def, {
     get shape() {
