@@ -715,18 +715,34 @@ export function _nan<T extends schemas.$ZodNaN>(Class: util.SchemaClass<T>, para
 
 // export type $ZodCheckParams = CheckParams<checks.$ZodCheck, "abort" | "when">;
 
+/** Shared factory for check defs of the form `{ check, ...params, ...after }`; `after` fields cannot be overridden by params. */
+// @__NO_SIDE_EFFECTS__
+function _ck<T>(Class: new (def: any) => T, check: string, params?: unknown, after?: object): T {
+  return new Class({
+    check,
+    ...util.normalizeParams(params as any),
+    ...after,
+  });
+}
+
+/** Shared factory for string-format check defs. */
+// @__NO_SIDE_EFFECTS__
+function _ckf<T>(Class: new (def: any) => T, format: string, params?: unknown, after?: object): T {
+  return new Class({
+    check: "string_format",
+    format,
+    ...util.normalizeParams(params as any),
+    ...after,
+  });
+}
+
 export type $ZodCheckLessThanParams = CheckParams<checks.$ZodCheckLessThan, "inclusive" | "value" | "when">;
 // @__NO_SIDE_EFFECTS__
 export function _lt(
   value: util.Numeric,
   params?: string | $ZodCheckLessThanParams
 ): checks.$ZodCheckLessThan<util.Numeric> {
-  return new checks.$ZodCheckLessThan({
-    check: "less_than",
-    ...util.normalizeParams(params),
-    value,
-    inclusive: false,
-  });
+  return _ck(checks.$ZodCheckLessThan, "less_than", params, { value, inclusive: false });
 }
 
 // @__NO_SIDE_EFFECTS__
@@ -734,13 +750,7 @@ export function _lte(
   value: util.Numeric,
   params?: string | $ZodCheckLessThanParams
 ): checks.$ZodCheckLessThan<util.Numeric> {
-  return new checks.$ZodCheckLessThan({
-    check: "less_than",
-
-    ...util.normalizeParams(params),
-    value,
-    inclusive: true,
-  });
+  return _ck(checks.$ZodCheckLessThan, "less_than", params, { value, inclusive: true });
 }
 export {
   /** @deprecated Use `z.lte()` instead. */
@@ -751,23 +761,12 @@ export {
 export type $ZodCheckGreaterThanParams = CheckParams<checks.$ZodCheckGreaterThan, "inclusive" | "value" | "when">;
 // @__NO_SIDE_EFFECTS__
 export function _gt(value: util.Numeric, params?: string | $ZodCheckGreaterThanParams): checks.$ZodCheckGreaterThan {
-  return new checks.$ZodCheckGreaterThan({
-    check: "greater_than",
-
-    ...util.normalizeParams(params),
-    value,
-    inclusive: false,
-  });
+  return _ck(checks.$ZodCheckGreaterThan, "greater_than", params, { value, inclusive: false });
 }
 
 // @__NO_SIDE_EFFECTS__
 export function _gte(value: util.Numeric, params?: string | $ZodCheckGreaterThanParams): checks.$ZodCheckGreaterThan {
-  return new checks.$ZodCheckGreaterThan({
-    check: "greater_than",
-    ...util.normalizeParams(params),
-    value,
-    inclusive: true,
-  });
+  return _ck(checks.$ZodCheckGreaterThan, "greater_than", params, { value, inclusive: true });
 }
 
 export {
@@ -804,11 +803,7 @@ export function _multipleOf(
   value: number | bigint,
   params?: string | $ZodCheckMultipleOfParams
 ): checks.$ZodCheckMultipleOf {
-  return new checks.$ZodCheckMultipleOf({
-    check: "multiple_of",
-    ...util.normalizeParams(params),
-    value,
-  });
+  return _ck(checks.$ZodCheckMultipleOf, "multiple_of", params, { value });
 }
 
 export type $ZodCheckMaxSizeParams = CheckParams<checks.$ZodCheckMaxSize, "maximum" | "when">;
@@ -817,11 +812,7 @@ export function _maxSize(
   maximum: number,
   params?: string | $ZodCheckMaxSizeParams
 ): checks.$ZodCheckMaxSize<util.HasSize> {
-  return new checks.$ZodCheckMaxSize({
-    check: "max_size",
-    ...util.normalizeParams(params),
-    maximum,
-  });
+  return _ck(checks.$ZodCheckMaxSize, "max_size", params, { maximum });
 }
 
 export type $ZodCheckMinSizeParams = CheckParams<checks.$ZodCheckMinSize, "minimum" | "when">;
@@ -830,11 +821,7 @@ export function _minSize(
   minimum: number,
   params?: string | $ZodCheckMinSizeParams
 ): checks.$ZodCheckMinSize<util.HasSize> {
-  return new checks.$ZodCheckMinSize({
-    check: "min_size",
-    ...util.normalizeParams(params),
-    minimum,
-  });
+  return _ck(checks.$ZodCheckMinSize, "min_size", params, { minimum });
 }
 
 export type $ZodCheckSizeEqualsParams = CheckParams<checks.$ZodCheckSizeEquals, "size" | "when">;
@@ -843,11 +830,7 @@ export function _size(
   size: number,
   params?: string | $ZodCheckSizeEqualsParams
 ): checks.$ZodCheckSizeEquals<util.HasSize> {
-  return new checks.$ZodCheckSizeEquals({
-    check: "size_equals",
-    ...util.normalizeParams(params),
-    size,
-  });
+  return _ck(checks.$ZodCheckSizeEquals, "size_equals", params, { size });
 }
 
 export type $ZodCheckMaxLengthParams = CheckParams<checks.$ZodCheckMaxLength, "maximum" | "when">;
@@ -856,12 +839,7 @@ export function _maxLength(
   maximum: number,
   params?: string | $ZodCheckMaxLengthParams
 ): checks.$ZodCheckMaxLength<util.HasLength> {
-  const ch = new checks.$ZodCheckMaxLength({
-    check: "max_length",
-    ...util.normalizeParams(params),
-    maximum,
-  });
-  return ch;
+  return _ck(checks.$ZodCheckMaxLength, "max_length", params, { maximum });
 }
 
 export type $ZodCheckMinLengthParams = CheckParams<checks.$ZodCheckMinLength, "minimum" | "when">;
@@ -870,11 +848,7 @@ export function _minLength(
   minimum: number,
   params?: string | $ZodCheckMinLengthParams
 ): checks.$ZodCheckMinLength<util.HasLength> {
-  return new checks.$ZodCheckMinLength({
-    check: "min_length",
-    ...util.normalizeParams(params),
-    minimum,
-  });
+  return _ck(checks.$ZodCheckMinLength, "min_length", params, { minimum });
 }
 
 export type $ZodCheckLengthEqualsParams = CheckParams<checks.$ZodCheckLengthEquals, "length" | "when">;
@@ -883,54 +857,32 @@ export function _length(
   length: number,
   params?: string | $ZodCheckLengthEqualsParams
 ): checks.$ZodCheckLengthEquals<util.HasLength> {
-  return new checks.$ZodCheckLengthEquals({
-    check: "length_equals",
-    ...util.normalizeParams(params),
-    length,
-  });
+  return _ck(checks.$ZodCheckLengthEquals, "length_equals", params, { length });
 }
 
 export type $ZodCheckRegexParams = CheckParams<checks.$ZodCheckRegex, "format" | "pattern" | "when">;
 // @__NO_SIDE_EFFECTS__
 export function _regex(pattern: RegExp, params?: string | $ZodCheckRegexParams): checks.$ZodCheckRegex {
-  return new checks.$ZodCheckRegex({
-    check: "string_format",
-    format: "regex",
-    ...util.normalizeParams(params),
-    pattern,
-  });
+  return _ckf(checks.$ZodCheckRegex, "regex", params, { pattern });
 }
 
 export type $ZodCheckLowerCaseParams = CheckParams<checks.$ZodCheckLowerCase, "format" | "when">;
 // @__NO_SIDE_EFFECTS__
 export function _lowercase(params?: string | $ZodCheckLowerCaseParams): checks.$ZodCheckLowerCase {
-  return new checks.$ZodCheckLowerCase({
-    check: "string_format",
-    format: "lowercase",
-    ...util.normalizeParams(params),
-  });
+  return _ckf(checks.$ZodCheckLowerCase, "lowercase", params);
 }
 
 export type $ZodCheckUpperCaseParams = CheckParams<checks.$ZodCheckUpperCase, "format" | "when">;
 
 // @__NO_SIDE_EFFECTS__
 export function _uppercase(params?: string | $ZodCheckUpperCaseParams): checks.$ZodCheckUpperCase {
-  return new checks.$ZodCheckUpperCase({
-    check: "string_format",
-    format: "uppercase",
-    ...util.normalizeParams(params),
-  });
+  return _ckf(checks.$ZodCheckUpperCase, "uppercase", params);
 }
 
 export type $ZodCheckIncludesParams = CheckParams<checks.$ZodCheckIncludes, "includes" | "format" | "when" | "pattern">;
 // @__NO_SIDE_EFFECTS__
 export function _includes(includes: string, params?: string | $ZodCheckIncludesParams): checks.$ZodCheckIncludes {
-  return new checks.$ZodCheckIncludes({
-    check: "string_format",
-    format: "includes",
-    ...util.normalizeParams(params),
-    includes,
-  });
+  return _ckf(checks.$ZodCheckIncludes, "includes", params, { includes });
 }
 export type $ZodCheckStartsWithParams = CheckParams<
   checks.$ZodCheckStartsWith,
@@ -938,24 +890,14 @@ export type $ZodCheckStartsWithParams = CheckParams<
 >;
 // @__NO_SIDE_EFFECTS__
 export function _startsWith(prefix: string, params?: string | $ZodCheckStartsWithParams): checks.$ZodCheckStartsWith {
-  return new checks.$ZodCheckStartsWith({
-    check: "string_format",
-    format: "starts_with",
-    ...util.normalizeParams(params),
-    prefix,
-  });
+  return _ckf(checks.$ZodCheckStartsWith, "starts_with", params, { prefix });
 }
 
 export type $ZodCheckEndsWithParams = CheckParams<checks.$ZodCheckEndsWith, "suffix" | "format" | "pattern" | "when">;
 
 // @__NO_SIDE_EFFECTS__
 export function _endsWith(suffix: string, params?: string | $ZodCheckEndsWithParams): checks.$ZodCheckEndsWith {
-  return new checks.$ZodCheckEndsWith({
-    check: "string_format",
-    format: "ends_with",
-    ...util.normalizeParams(params),
-    suffix,
-  });
+  return _ckf(checks.$ZodCheckEndsWith, "ends_with", params, { suffix });
 }
 
 export type $ZodCheckPropertyParams = CheckParams<checks.$ZodCheckProperty, "property" | "schema" | "when">;
