@@ -3898,41 +3898,32 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
     // Forward direction (decode): apply catch logic
     const result = def.innerType._zod.run(payload, ctx);
     if (result instanceof Promise) {
-      return result.then((result) => {
-        payload.value = result.value;
-        if (result.issues.length) {
-          payload.value = def.catchValue({
-            ...payload,
-            error: {
-              issues: result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
-            },
-            input: payload.value,
-          });
-          payload.issues = [];
-          payload.fallback = true;
-        }
-
-        return payload;
-      });
+      return result.then((result) => handleCatchResult(result, payload, ctx, def));
     }
-
-    payload.value = result.value;
-    if (result.issues.length) {
-      payload.value = def.catchValue({
-        ...payload,
-        error: {
-          issues: result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
-        },
-        input: payload.value,
-      });
-
-      payload.issues = [];
-      payload.fallback = true;
-    }
-
-    return payload;
+    return handleCatchResult(result, payload, ctx, def);
   };
 });
+
+function handleCatchResult(
+  result: ParsePayload,
+  payload: ParsePayload,
+  ctx: ParseContextInternal,
+  def: $ZodCatchDef
+): ParsePayload {
+  payload.value = result.value;
+  if (result.issues.length) {
+    payload.value = def.catchValue({
+      ...payload,
+      error: {
+        issues: result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
+      },
+      input: payload.value,
+    });
+    payload.issues = [];
+    payload.fallback = true;
+  }
+  return payload;
+}
 
 ////////////////////////////////////////////
 ////////////////////////////////////////////
