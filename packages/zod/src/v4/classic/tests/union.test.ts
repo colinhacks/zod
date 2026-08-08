@@ -200,6 +200,7 @@ test("z.xor() - multiple matches fails", () => {
   if (!result.success) {
     expect(result.error.issues[0].code).toBe("invalid_union");
     expect((result.error.issues[0] as any).inclusive).toBe(false);
+    expect(result.error.issues[0].message).toBe("Invalid input: matches more than one exclusive option");
   }
 });
 
