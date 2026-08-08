@@ -623,7 +623,7 @@ export const $ZodCheckMaxLength: core.$constructor<$ZodCheckMaxLength> = /*@__PU
 
     inst._zod.check = (payload) => {
       const input = payload.value;
-      const length = input.length;
+      const length = typeof input === "string" ? util.stringLength(input) : input.length;
 
       if (length <= def.maximum) return;
       const origin = util.getLengthableOrigin(input);
@@ -674,7 +674,7 @@ export const $ZodCheckMinLength: core.$constructor<$ZodCheckMinLength> = /*@__PU
 
     inst._zod.check = (payload) => {
       const input = payload.value;
-      const length = input.length;
+      const length = typeof input === "string" ? util.stringLength(input) : input.length;
 
       if (length >= def.minimum) return;
       const origin = util.getLengthableOrigin(input);
@@ -728,7 +728,7 @@ export const $ZodCheckLengthEquals: core.$constructor<$ZodCheckLengthEquals> = /
 
     inst._zod.check = (payload) => {
       const input = payload.value;
-      const length = input.length;
+      const length = typeof input === "string" ? util.stringLength(input) : input.length;
       if (length === def.length) return;
       const origin = util.getLengthableOrigin(input);
       const tooBig = length > def.length;

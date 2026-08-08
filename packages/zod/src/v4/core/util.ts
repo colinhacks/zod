@@ -361,6 +361,14 @@ export function isObject(data: any): data is Record<PropertyKey, unknown> {
   return typeof data === "object" && data !== null && !Array.isArray(data);
 }
 
+export function stringLength(str: string): number {
+  // Count Unicode code points instead of UTF-16 code units so that
+  // surrogate pairs (emoji, etc.) are each counted as one character.
+  let count = 0;
+  for (const _ch of str) count++;
+  return count;
+}
+
 export const allowsEval: { value: boolean } = /* @__PURE__*/ cached(() => {
   // Skip the probe under `jitless`: strict CSPs report the caught `new Function` as a `securitypolicyviolation` even though the throw is swallowed.
   if (globalConfig.jitless) {
