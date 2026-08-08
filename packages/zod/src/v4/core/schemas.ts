@@ -1762,7 +1762,19 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
 type OptionalOutSchema = { _zod: { optout: "optional" } };
 type OptionalInSchema = { _zod: { optin: "optional" | "defaulted" } };
 
-export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = string extends keyof T
+type _Depth = readonly unknown[];
+
+type $ResolveOutputWithDepth<T, Depth extends _Depth> =
+  Depth["length"] extends 10
+    ? unknown
+    : T extends { _zod: { output: infer O } } ? O : unknown;
+
+type $ResolveInputWithDepth<T, Depth extends _Depth> =
+  Depth["length"] extends 10
+    ? unknown
+    : T extends { _zod: { input: infer I } } ? I : unknown;
+
+export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<string, unknown>, Depth extends _Depth = []> = string extends keyof T
   ? util.IsAny<T[keyof T]> extends true
     ? Record<string, unknown>
     : Record<string, core.output<T[keyof T]>>
@@ -1770,9 +1782,15 @@ export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<st
     ? Record<string, never>
     : util.Prettify<
         {
-          -readonly [k in keyof T as T[k] extends OptionalOutSchema ? never : k]: T[k]["_zod"]["output"];
+          -readonly [k in keyof T as T[k] extends OptionalOutSchema ? never : k]:
+            Depth["length"] extends 10
+              ? unknown
+              : T[k]["_zod"]["output"];
         } & {
-          -readonly [k in keyof T as T[k] extends OptionalOutSchema ? k : never]?: T[k]["_zod"]["output"];
+          -readonly [k in keyof T as T[k] extends OptionalOutSchema ? k : never]?:
+            Depth["length"] extends 10
+              ? unknown
+              : T[k]["_zod"]["output"];
         } & Extra
       >;
 
@@ -1806,7 +1824,7 @@ export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<st
 //       : never]?: T[k]["_zod"]["output"];
 // } & Extra;
 
-export type $InferObjectInput<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = string extends keyof T
+export type $InferObjectInput<T extends $ZodLooseShape, Extra extends Record<string, unknown>, Depth extends _Depth = []> = string extends keyof T
   ? util.IsAny<T[keyof T]> extends true
     ? Record<string, unknown>
     : Record<string, core.input<T[keyof T]>>
@@ -1814,9 +1832,15 @@ export type $InferObjectInput<T extends $ZodLooseShape, Extra extends Record<str
     ? Record<string, never>
     : util.Prettify<
         {
-          -readonly [k in keyof T as T[k] extends OptionalInSchema ? never : k]: T[k]["_zod"]["input"];
+          -readonly [k in keyof T as T[k] extends OptionalInSchema ? never : k]:
+            Depth["length"] extends 10
+              ? unknown
+              : T[k]["_zod"]["input"];
         } & {
-          -readonly [k in keyof T as T[k] extends OptionalInSchema ? k : never]?: T[k]["_zod"]["input"];
+          -readonly [k in keyof T as T[k] extends OptionalInSchema ? k : never]?:
+            Depth["length"] extends 10
+              ? unknown
+              : T[k]["_zod"]["input"];
         } & Extra
       >;
 
