@@ -98,6 +98,12 @@ git push origin main
 
 The release workflow only fires on changes under `packages/zod/package.json`, `packages/zod/src/**`, or the workflow file itself, so the bump must include `package.json`. Watch the Actions tab to confirm `build_and_publish` succeeds.
 
+## Triaging issues and PRs
+
+Follow the `triage` skill at [`.claude/skills/triage/SKILL.md`](.claude/skills/triage/SKILL.md) whenever you're asked to investigate, triage, or form an opinion on an issue or PR. It is the single source of truth for the procedure. Claude and Codex both auto-discover it (Codex via the `.codex/skills` symlink); read it directly if your agent doesn't.
+
+Write-ups live in the gitignored `.triage/` tree — one directory per ticket, `.triage/issues/NNNN/results.md` and `.triage/prs/NNNN/results.md`, with scratch files and repros alongside. When investigating a PR from its worktree, resolve the root repo first (`git worktree list | head -1`) and write results back there; a relative write lands in the worktree's own ignored `.triage/` where nobody will find it.
+
 ## Iterating on a contributor PR in a worktree
 
 When asked to make changes on top of an open PR (e.g. as a maintainer review suggestion), use a worktree so `main` stays clean:
