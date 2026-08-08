@@ -82,7 +82,7 @@ export interface $ZodIssueNotMultipleOf<Input extends number | bigint = number |
 
 export interface $ZodIssueUnrecognizedKeys extends $ZodIssueBase {
   readonly code: "unrecognized_keys";
-  readonly keys: string[];
+  readonly keys: PropertyKey[];
   readonly input?: Record<string, unknown>;
 }
 
