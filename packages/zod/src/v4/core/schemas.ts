@@ -1878,7 +1878,7 @@ export type $catchall<T extends SomeType> = {
   in: { [k: string]: core.input<T> };
 };
 
-export type $ZodShape = Readonly<{ [k: string]: $ZodType }>;
+export type $ZodShape = Readonly<{ [k: string]: $ZodType; [k: symbol]: $ZodType }>;
 
 export interface $ZodObjectDef<Shape extends $ZodShape = $ZodShape> extends $ZodTypeDef {
   type: "object";
@@ -1910,9 +1910,11 @@ export interface $ZodObject<
 
 function normalizeDef(def: $ZodObjectDef) {
   const keys = Object.keys(def.shape);
-  for (const k of keys) {
+  const symbolKeys = Object.getOwnPropertySymbols(def.shape);
+  const allKeys = [...keys, ...symbolKeys];
+  for (const k of allKeys) {
     if (!def.shape?.[k]?._zod?.traits?.has("$ZodType")) {
-      throw new Error(`Invalid element at key "${k}": expected a Zod schema`);
+      throw new Error(`Invalid element at key "${String(k)}": expected a Zod schema`);
     }
   }
   const okeys = util.optionalKeys(def.shape);
@@ -1920,8 +1922,10 @@ function normalizeDef(def: $ZodObjectDef) {
   return {
     ...def,
     keys,
-    keySet: new Set(keys),
-    numKeys: keys.length,
+    symbolKeys,
+    allKeys,
+    keySet: new Set(allKeys),
+    numKeys: allKeys.length,
     optionalKeys: new Set(okeys),
   };
 }
@@ -1934,7 +1938,7 @@ function handleCatchall(
   def: ReturnType<typeof normalizeDef>,
   inst: $ZodObject
 ) {
-  const unrecognized: string[] = [];
+  const unrecognized: (string | symbol)[] = [];
   const keySet = def.keySet;
   const _catchall = def.catchall!._zod;
   const t = _catchall.def.type;
@@ -1948,6 +1952,21 @@ function handleCatchall(
       if (t === "never") unrecognized.push(key);
       continue;
     }
+    if (t === "never") {
+      unrecognized.push(key);
+      continue;
+    }
+    const r = _catchall.run({ value: input[key], issues: [] }, ctx);
+
+    if (r instanceof Promise) {
+      proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, isOptionalIn, isOptionalOut)));
+    } else {
+      handlePropertyResult(r, payload, key, input, isOptionalIn, isOptionalOut);
+    }
+  }
+
+  for (const key of Object.getOwnPropertySymbols(input)) {
+    if (keySet.has(key)) continue;
     if (t === "never") {
       unrecognized.push(key);
       continue;
@@ -2038,7 +2057,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     const proms: Promise<any>[] = [];
     const shape = value.shape;
 
-    for (const key of value.keys) {
+for (const key of value.allKeys) {
       if (key === "__proto__") continue;
       const el = shape[key]!;
       const isOptionalIn = el._zod.optin !== undefined;
@@ -2194,7 +2213,13 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         return payload;
       }
 
-      if (jit && fastEnabled && ctx?.async === false && ctx.jitless !== true) {
+      if (
+        jit &&
+        fastEnabled &&
+        value.symbolKeys.length === 0 &&
+        ctx?.async === false &&
+        ctx.jitless !== true
+      ) {
         // always synchronous
         if (!fastpass) fastpass = generateFastpass(def.shape);
         payload = fastpass(payload, ctx);
@@ -2642,8 +2667,8 @@ function mergeValues(
 }
 
 function handleIntersectionResults(result: ParsePayload, left: ParsePayload, right: ParsePayload): ParsePayload {
-  // Track which side(s) reject each key. A key rejection is reported only when BOTH sides reject it, so a key owned by one branch survives the other's key schema. strictObject reports these as unrecognized_keys; a record with an open key schema reports one invalid_key per key.
-  const unrecKeys = new Map<string, { l?: true; r?: true }>();
+  // Track which side(s) report each key as unrecognized
+  const unrecKeys = new Map<PropertyKey, { l?: true; r?: true }>();
   let unrecIssue: errors.$ZodRawIssue | undefined;
   const keyIssues = new Map<string, errors.$ZodRawIssue>();
 
