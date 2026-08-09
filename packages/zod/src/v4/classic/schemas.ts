@@ -115,6 +115,13 @@ export interface ZodType<
   parse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;
   safeParse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): parse.ZodSafeParseResult<core.output<this>>;
   parseAsync(data: unknown, params?: core.ParseContext<core.$ZodIssue>): Promise<core.output<this>>;
+  /** Sync when possible; Promise on async refinement. Sync `transform` / `refine` / checks before the first async step run twice on the async fallback — prefer `parseAsync` for non-idempotent steps. Once a schema has been observed as async, subsequent calls skip the sync attempt and return a Promise even for inputs that would resolve synchronously (matters for unions or preprocess-gated async branches). */
+  parseMaybeAsync(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.util.MaybeAsync<core.output<this>>;
+  /** Safe variant of `parseMaybeAsync`. Same side-effect caveat. */
+  safeParseMaybeAsync(
+    data: unknown,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): core.util.MaybeAsync<parse.ZodSafeParseResult<core.output<this>>>;
   safeParseAsync(
     data: unknown,
     params?: core.ParseContext<core.$ZodIssue>
@@ -235,6 +242,8 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   inst.safeParse = (data, params) => parse.safeParse(inst, data, params);
   inst.parseAsync = async (data, params) => parse.parseAsync(inst, data, params, { callee: inst.parseAsync });
   inst.safeParseAsync = async (data, params) => parse.safeParseAsync(inst, data, params);
+  inst.parseMaybeAsync = (data, params) => parse.parseMaybeAsync(inst, data, params, { callee: inst.parseMaybeAsync });
+  inst.safeParseMaybeAsync = (data, params) => parse.safeParseMaybeAsync(inst, data, params);
   inst.spa = inst.safeParseAsync;
   inst.encode = (data, params) => parse.encode(inst, data, params);
   inst.decode = (data, params) => parse.decode(inst, data, params);

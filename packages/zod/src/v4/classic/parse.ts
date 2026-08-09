@@ -19,6 +19,13 @@ export const parseAsync: <T extends core.$ZodType>(
   _params?: { callee?: core.util.AnyFunc; Err?: core.$ZodErrorClass }
 ) => Promise<core.output<T>> = /* @__PURE__ */ core._parseAsync(ZodRealError);
 
+export const parseMaybeAsync: <T extends core.$ZodType>(
+  schema: T,
+  value: unknown,
+  _ctx?: core.ParseContext<core.$ZodIssue>,
+  _params?: { callee?: core.util.AnyFunc; Err?: core.$ZodErrorClass }
+) => core.util.MaybeAsync<core.output<T>> = /* @__PURE__ */ core._parseMaybeAsync(ZodRealError);
+
 export const safeParse: <T extends core.$ZodType>(
   schema: T,
   value: unknown,
@@ -31,6 +38,14 @@ export const safeParseAsync: <T extends core.$ZodType>(
   value: unknown,
   _ctx?: core.ParseContext<core.$ZodIssue>
 ) => Promise<ZodSafeParseResult<core.output<T>>> = /* @__PURE__ */ core._safeParseAsync(ZodRealError) as any;
+
+export const safeParseMaybeAsync: <T extends core.$ZodType>(
+  schema: T,
+  value: unknown,
+  _ctx?: core.ParseContext<core.$ZodIssue>
+) => core.util.MaybeAsync<ZodSafeParseResult<core.output<T>>> = /* @__PURE__ */ core._safeParseMaybeAsync(
+  ZodRealError
+) as any;
 
 // Codec functions
 export const encode: <T extends core.$ZodType>(
