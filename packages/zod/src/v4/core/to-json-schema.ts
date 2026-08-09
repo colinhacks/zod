@@ -3,6 +3,7 @@ import type * as JSONSchema from "./json-schema.js";
 import { type $ZodRegistry, globalRegistry } from "./registries.js";
 import type * as schemas from "./schemas.js";
 import type { StandardJSONSchemaV1, StandardSchemaWithJSONProps } from "./standard-schema.js";
+import { assignProp } from "./util.js";
 
 export type Processor<T extends schemas.$ZodType = schemas.$ZodType> = (
   schema: T,
@@ -484,7 +485,7 @@ export function finalize<T extends schemas.$ZodType>(
     const seen = entry[1];
     if (seen.def && seen.defId) {
       if (seen.def.id === seen.defId) delete seen.def.id;
-      defs[seen.defId] = seen.def;
+      assignProp(defs, seen.defId, seen.def);
     }
   }
 
