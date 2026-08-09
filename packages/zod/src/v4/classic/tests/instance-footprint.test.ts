@@ -28,6 +28,8 @@ test("schema instances stay under V8's property-count step", () => {
     ["optional", z.string().optional()],
     ["pipe", z.string().pipe(z.string())],
     ["email", z.email()],
+    ["mini string", zm.string()],
+    ["mini object", zm.object({ a: zm.string() })],
   ];
 
   const over = cases
@@ -35,29 +37,6 @@ test("schema instances stay under V8's property-count step", () => {
     .filter(([, count]) => count > MAX_OWN_PROPS);
 
   expect(over).toEqual([]);
-});
-
-// zod/mini deliberately keeps its methods as per-instance closures. Moving
-// them to the prototype would cost ~180 bytes gzipped of installer machinery,
-// which is ~6% of the smallest mini bundle — too much for a package sold on
-// size. Mini instances therefore sit above the step; this bound just stops
-// them drifting further.
-const MINI_MAX_OWN_PROPS = 14;
-
-test("zod/mini keeps its methods per-instance, and does not grow", () => {
-  const cases: Array<[string, object]> = [
-    ["mini string", zm.string()],
-    ["mini object", zm.object({ a: zm.string() })],
-    ["mini array", zm.array(zm.string())],
-  ];
-
-  const over = cases
-    .map(([name, schema]) => [name, Reflect.ownKeys(schema).length] as const)
-    .filter(([, count]) => count > MINI_MAX_OWN_PROPS);
-
-  expect(over).toEqual([]);
-  // The methods must remain own properties, not inherited accessors.
-  expect(Object.prototype.hasOwnProperty.call(zm.string(), "parse")).toEqual(true);
 });
 
 test("prototype-installed members survive detaching", () => {

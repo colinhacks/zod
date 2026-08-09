@@ -309,29 +309,10 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
   // read, so construction pays neither the object nor a per-instance
   // descriptor. Wrappers extend it by installing their own richer factory
   // over this one (see the classic build) rather than reading it eagerly.
-  //
-  // Written out here rather than routed through `util.installLazyProps` so
-  // that zod/mini — whose only use of this machinery is `~standard` — does not
-  // pull the generic installers into its bundle.
-  const proto = Object.getPrototypeOf(inst);
-  if (!installedStandardProtos.has(proto)) {
-    installedStandardProtos.add(proto);
-    Object.defineProperty(proto, "~standard", {
-      configurable: true,
-      enumerable: false,
-      get(this: $ZodType) {
-        const standard = standardProps(this);
-        Object.defineProperty(this, "~standard", { value: standard, writable: true, configurable: true });
-        return standard;
-      },
-      set(this: $ZodType, value: unknown) {
-        Object.defineProperty(this, "~standard", { value, writable: true, configurable: true });
-      },
-    });
-  }
+  util.installLazyProps<any>(inst, "$ZodType~standard", standardPropsTable);
 });
 
-const installedStandardProtos = /* @__PURE__ */ new WeakSet<object>();
+const standardPropsTable = () => ({ "~standard": standardProps });
 
 /** The Standard Schema surface for `inst`. Shared so wrappers can extend it without forcing it. */
 export function standardProps(inst: $ZodType): StandardSchemaV1.Props<any, any> {

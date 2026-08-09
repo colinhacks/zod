@@ -49,38 +49,63 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
 
     inst.def = def;
     inst.type = def.type;
-    inst.parse = (data, params) => parse.parse(inst, data, params, { callee: inst.parse });
-    inst.safeParse = (data, params) => parse.safeParse(inst, data, params);
-    inst.parseAsync = async (data, params) => parse.parseAsync(inst, data, params, { callee: inst.parseAsync });
-    inst.safeParseAsync = async (data, params) => parse.safeParseAsync(inst, data, params);
-    inst.check = (...checks) => {
-      return inst.clone(
+
+    // Installed on the prototype and built per instance on first read, so an
+    // interior node of a schema graph — one nothing parses through or clones
+    // — allocates none of them. Keeps instances at 3 own properties instead
+    // of 14, which is the difference between one and two steps of V8's
+    // property backing store.
+    util.installLazyMethods<ZodMiniType>(inst, "ZodMiniType", _zodMiniTypeMethods);
+  }
+);
+
+function _zodMiniTypeMethods(): util.LazyMethodsOf<ZodMiniType> {
+  return {
+    parse(data, params) {
+      return parse.parse(this, data, params, { callee: this.parse });
+    },
+    parseAsync(data, params) {
+      return parse.parseAsync(this, data, params, { callee: this.parseAsync });
+    },
+    safeParse(data, params) {
+      return parse.safeParse(this, data, params);
+    },
+    safeParseAsync(data, params) {
+      return parse.safeParseAsync(this, data, params);
+    },
+    check(...checks) {
+      const def = this.def;
+      return this.clone(
         {
           ...def,
           checks: [
             ...(def.checks ?? []),
             ...checks.map((ch) =>
-              typeof ch === "function"
-                ? {
-                    _zod: { check: ch, def: { check: "custom" }, onattach: [] },
-                  }
-                : ch
+              typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
             ),
           ],
         },
         { parent: true }
       );
-    };
-    inst.with = inst.check;
-    inst.clone = (_def, params) => core.clone(inst, _def, params);
-    inst.brand = () => inst as any;
-    inst.register = ((reg: any, meta: any) => {
-      reg.add(inst, meta);
-      return inst;
-    }) as any;
-    inst.apply = (fn) => fn(inst);
-  }
-);
+    },
+    with(...checks) {
+      return this.check(...checks);
+    },
+    clone(_def, params) {
+      return core.clone(this, _def, params);
+    },
+    brand() {
+      return this as any;
+    },
+    register(reg: any, meta: any) {
+      reg.add(this, meta);
+      return this;
+    },
+    apply(fn) {
+      return fn(this);
+    },
+  };
+}
 
 export interface _ZodMiniString<T extends core.$ZodStringInternals<unknown> = core.$ZodStringInternals<unknown>>
   extends _ZodMiniType<T>,
