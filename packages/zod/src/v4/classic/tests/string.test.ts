@@ -1054,6 +1054,14 @@ test("CIDR v6 validation", () => {
   expect(cidrV6.safeParse("fe80::/10").success).toBe(true);
   expect(cidrV6.safeParse("::1/128").success).toBe(true);
   expect(cidrV6.safeParse("2001:0db8:85a3::/64").success).toBe(true);
+  expect(cidrV6.safeParse("2001:db8:1::/48").success).toBe(true);
+  expect(cidrV6.safeParse("2001:db8:85a3::8a2e:370:7334/64").success).toBe(true);
+  expect(cidrV6.safeParse("2001:db8:85a3:0:0:8a2e:370:7334/64").success).toBe(true);
+
+  const pattern = new RegExp(z.toJSONSchema(cidrV6).pattern as string);
+  for (const input of ["2001:db8::/32", "2001:db8:1::/48", "2001:0db8:85a3::/64", "fe80::/10", "::/0"]) {
+    expect(pattern.test(input)).toBe(true);
+  }
 
   // Invalid CIDR v6 addresses
   expect(cidrV6.safeParse("2001:db8::").success).toBe(false); // Missing prefix

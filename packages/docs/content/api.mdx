@@ -1154,10 +1154,13 @@ To define a *catchall schema* that will be used to validate any unrecognized key
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts z.object
-const DogWithStrings = z.object({
-  name: z.string(),
-  age: z.number().optional(),
-}).catchall(z.string());
+const DogWithStrings = z
+  .object({
+    name: z.string(),
+    age: z.number().optional(),
+  })
+  .catchall(z.string());
+
 
 DogWithStrings.parse({ name: "Yeller", extraKey: "extraValue" }); // ✅
 DogWithStrings.parse({ name: "Yeller", extraKey: 42 }); // ❌
@@ -1992,12 +1995,10 @@ fileSchema.mime(["image/png", "image/jpeg"]); // multiple MIME types
 ```ts
 const fileSchema = z.file();
 
-fileSchema.check(
-  z.minSize(10_000), // minimum .size (bytes)
-  z.maxSize(1_000_000), // maximum .size (bytes)
-  z.mime("image/png"), // MIME type
-  z.mime(["image/png", "image/jpeg"]); // multiple MIME types
-)
+fileSchema.check(z.minSize(10_000)); // minimum .size (bytes)
+fileSchema.check(z.maxSize(1_000_000)); // maximum .size (bytes)
+fileSchema.check(z.mime("image/png")); // MIME type
+fileSchema.check(z.mime(["image/png", "image/jpeg"])); // multiple MIME types
 ```
 </Tab>
 </Tabs>
@@ -2381,6 +2382,7 @@ const schema = z
   .check(z.refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
+
     when(payload) { // [!code ++]
       // no issues with `password` or `confirmPassword` // [!code ++]
       return payload.issues.every((iss) => { // [!code ++]
@@ -2770,6 +2772,20 @@ const coercedInt = z.preprocess((val) => {
 }, z.int());
 ```
 
+By default, the input type of a `z.preprocess()` schema is `unknown`, since the preprocessor is expected to handle arbitrary input. To narrow the input type, annotate the preprocessor's parameter directly:
+
+```ts
+const trimmed = z.preprocess(
+  (val: string | null | undefined) => val?.trim() ?? "",
+  z.string()
+);
+
+type Input = z.input<typeof trimmed>;  // string | null | undefined
+type Output = z.output<typeof trimmed>; // string
+```
+
+This is useful when integrating with libraries like `react-hook-form` that derive their form value type from `z.input<>`.
+
 ## Defaults
 
 To set a default value for a schema:
@@ -2872,6 +2888,7 @@ Alternatively, you can pass a function which will be re-executed whenever a catc
 ```ts
 const numberWithRandomCatch = z.number().catch((ctx) => {
   ctx.error; // the caught ZodError
+
   return Math.random();
 });
 
@@ -3139,7 +3156,9 @@ schema.parse(null); // => null
 <Tab value="Zod Mini">
 ```ts
 function setCommonNumberChecks<T extends z.ZodMiniNumber>(schema: T) {
-  return schema.check(z.minimum(0), z.maximum(100));
+  return schema.check(
+    z.minimum(0), z.maximum(100)
+  );
 }
 
 const schema = z.nullable(
