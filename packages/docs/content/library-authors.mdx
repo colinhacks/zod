@@ -3,10 +3,16 @@ title: For library authors
 description: "Guidelines and best practices for library authors integrating with Zod"
 ---
 
+import { Callout } from "fumadocs-ui/components/callout";
+
 This page is primarily intended for consumption by *library authors* who are building tooling on top of Zod. 
 
 
 > If you are a library author and think this page should include some additional guidance, please open an issue!
+
+<Callout>
+Zod 3 is functionally end-of-life. It still receives security fixes and unambiguous bug fixes, but no new features will land on `zod@3.x`. For any new library — or any new major version of an existing library — target Zod 4 only. See [How to support Zod 3 alongside Zod 4?](#how-to-support-zod-3-alongside-zod-4) for the dual-support pattern, intended for maintainers extending existing libraries.
+</Callout>
 
 ## Do I need to depend on Zod?
 
@@ -27,29 +33,51 @@ Any library built on top of Zod should include `"zod"` in `"peerDependencies"`. 
 {
   // ...
   "peerDependencies": {
-    "zod": "^3.25.0 || ^4.0.0" // "zod/v4" is available in 3.25.0+
+    "zod": "^4.0.0"
   }
 }
 ```
 
-During development, you need to meet your own peer dependency requirement, to do so, add `"zod"` to your `"devDependencies"` as well.
+During development, you need to meet your own peer dependency requirement, so add `"zod"` to your `"devDependencies"` as well.
 
 ```ts
 // package.json
 {
   "peerDependencies": {
-    "zod": "^3.25.0 || ^4.0.0"
+    "zod": "^4.0.0"
   },
   "devDependencies": {
-    // generally, you should develop against the latest version of Zod
-    "zod": "^3.25.0 || ^4.0.0"
+    "zod": "^4.0.0"
   }
 }
 ```
 
-## How to support Zod 4?
+If you're extending an existing library and wish to keep supporting Zod 3 users, see [How to support Zod 3 alongside Zod 4?](#how-to-support-zod-3-alongside-zod-4) for the wider peer dependency range.
 
-To support Zod 4, update the minimum version for your `"zod"` peer dependency to `^3.25.0 || ^4.0.0`. 
+## Which subpaths should I import from?
+
+Import the Zod 4 core package from the `"zod/v4/core"` subpath:
+
+```ts
+import * as z4 from "zod/v4/core";
+```
+
+Think of this subpath as a "permalink" to Zod 4. It will remain available forever, even across future major versions of the `zod` package. The only other permalink subpath is `"zod/v3"`, which you only need if you're [also supporting Zod 3](#how-to-support-zod-3-alongside-zod-4).
+
+You generally shouldn't be importing from any other paths. The Zod Core library is a shared library that undergirds both Zod 4 Classic and Zod 4 Mini. It's generally a bad idea to implement any functionality that is specific to one or the other. Do not import from these subpaths:
+
+- `"zod"` — ❌ In 3.x releases, this exports Zod 3. In 4.x releases, this exports Zod 4. Use the permalinks instead. 
+- `"zod/v4"` and `"zod/v4/mini"` — ❌ These subpaths are the homes of Zod 4 Classic and Mini, respectively. If you want your library to work with both Zod and Zod Mini, you should build against the base classes defined in `"zod/v4/core"`. If you reference classes from the `"zod/v4"` module, your library will not work with Zod Mini, and vice versa. This is extremely discouraged. Use `"zod/v4/core"` instead, which exports the `$`-prefixed subclasses that are extended by Zod Classic and Zod Mini. The internals of the classic & mini subclasses are identical; they only differ in which helper methods they implement.
+
+For full context on this versioning approach, see the [Versioning in Zod 4](https://github.com/colinhacks/zod/issues/4371) writeup.
+
+## How to support Zod 3 alongside Zod 4?
+
+<Callout>
+This section is for maintainers of existing libraries with Zod 3 users. For new libraries (or new major versions of existing libraries), support `^4.0.0` only — Zod 3 is functionally end-of-life and won't receive new features.
+</Callout>
+
+If you maintain a library with existing Zod 3 users, you can extend it to cover Zod 4 without dropping them. Widen your peer dependency to span both ranges — the `"zod/v4"` subpath is available starting in `3.25.0`:
 
 ```json
 // package.json
@@ -61,32 +89,9 @@ To support Zod 4, update the minimum version for your `"zod"` peer dependency to
 }
 ```
 
-Starting with `v3.25.0`, the Zod 4 core package is available at the `"zod/v4/core"` subpath. Read the [Versioning in Zod 4](https://github.com/colinhacks/zod/issues/4371) writeup for full context on this versioning approach.
+This doesn't require a new major version of your library. Bumping the peer dependency requires your users to `npm upgrade zod`, but there were no breaking changes (in fact, no code changes at all) between `zod@3.24` and `zod@3.25`, so adding Zod 4 support can land in a minor. If your library is due for a major anyway, cutting one that drops Zod 3 and narrows the peer range to `^4.0.0` is the cleaner option.
 
-```ts
-import * as z4 from "zod/v4/core";
-```
-
-Import from these subpaths only. Think of them like "permalinks" to their respective Zod versions. These will remain available forever.
-
-- `"zod/v3"` for Zod 3 ✅ 
-- `"zod/v4/core"` for the Zod 4 Core package ✅
-
-You generally shouldn't be importing from any other paths. The Zod Core library is a shared library that undergirds both Zod 4 Classic and Zod 4 Mini. It's generally a bad idea to implement any functionality that is specific to one or the other. Do not import from these subpaths:
-
-- `"zod"` — ❌ In 3.x releases, this exports Zod 3. In 4.x releases, this will export Zod 4. Use the permalinks instead. 
-- `"zod/v4"` and `"zod/v4/mini"`— ❌ These subpaths are the homes of Zod 4 Classic and Mini, respectively. If you want your library to work with both Zod and Zod Mini, you should build against the base classes defined in `"zod/v4/core"`. If you reference classes from the `"zod/v4"` module, your library will not work with Zod Mini, and vice versa. This is extremely discouraged. Use `"zod/v4/core"` instead, which exports the `$`-prefixed subclasses that are extended by Zod Classic and Zod Mini. The internals of the classic & mini subclasses are identical; they only differ in which helper methods they implement.
-
-
-## Do I need to publish a new major version?
-
-No, you should not need to publish a new major version of your library to support Zod 4 (unless you are dropping support for Zod 3, which isn't recommended). 
-
-You will need to bump your peer dependency to `^3.25.0`, thus your users will need to `npm upgrade zod`. But there were no breaking changes made to Zod 3 between `zod@3.24` and `zod@3.25`; in fact, there were no code changes whatsoever. As code changes will be required on the part of your users, I do not believe this constitutes a breaking change. I recommend against publishing a new major version.
-
-## How to support Zod 3 and Zod 4 simultaneously?
-
-Starting in `v3.25.0`, the package contains copies of both Zod 3 and Zod 4 at their respective subpaths. This makes it easy to support both versions simultaneously.
+Since `v3.25.0` the `zod` package contains copies of both Zod 3 and Zod 4 at their respective subpaths, so you can import both side by side:
 
 ```ts
 import * as z3 from "zod/v3";
@@ -116,7 +121,7 @@ if ("_zod" in schema) {
 
 ## How to support Zod and Zod Mini simultaneously?
 
-Your library code should only import from `"zod/v4/core"`. This sub-package defines the interfaces, classes, and utilities that are shared between Zod and Zod Mini. 
+Your library code should only import from `"zod/v4/core"`. This sub-package defines the interfaces, classes, and utilities that are shared between Zod and Zod Mini. As long as you follow this rule, both Zod and Zod Mini will work automatically.
 
 ```ts
 // library code
