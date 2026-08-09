@@ -1795,6 +1795,10 @@ export function _stringbool(
     error: params.error,
   }) as any;
 
+  codec._zod.bag.truthy = truthyArray;
+  codec._zod.bag.falsy = falsyArray;
+  codec._zod.bag.case = params.case ?? "insensitive";
+
   return codec;
 }
 
