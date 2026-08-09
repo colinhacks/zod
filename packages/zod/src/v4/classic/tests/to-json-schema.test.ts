@@ -3129,3 +3129,33 @@ test("recursive lazy with describe does not stack overflow", () => {
   expect(result).toBeDefined();
   expect(result.$defs).toBeDefined();
 });
+
+test("__proto__ shape key is emitted as an own property", () => {
+  const schema = z.object({ ["__proto__"]: z.literal("admin"), role: z.string() });
+  const result = z.toJSONSchema(schema, { io: "input" });
+
+  expect(result.required).toEqual(["__proto__", "role"]);
+  // every required key needs a matching entry in properties
+  for (const key of result.required!) {
+    expect(Object.prototype.hasOwnProperty.call(result.properties, key)).toBe(true);
+  }
+  expect(JSON.parse(JSON.stringify(result)).properties.__proto__).toEqual({ type: "string", const: "admin" });
+});
+
+test("__proto__ registry id is emitted as an own entry", () => {
+  const myRegistry = z.registry<{ id: string }>();
+  myRegistry.add(z.object({ a: z.string() }), { id: "__proto__" });
+  myRegistry.add(z.object({ b: z.string() }), { id: "normal" });
+
+  expect(Object.keys(z.toJSONSchema(myRegistry).schemas)).toEqual(["__proto__", "normal"]);
+});
+
+test("__proto__ def id emits a resolvable $ref", () => {
+  const myRegistry = z.registry<{ id: string }>();
+  const Inner = z.object({ x: z.string() });
+  myRegistry.add(Inner, { id: "__proto__" });
+
+  const json = JSON.parse(JSON.stringify(z.toJSONSchema(z.object({ a: Inner, b: Inner }), { metadata: myRegistry })));
+  expect(json.properties.a.$ref).toBe("#/$defs/__proto__");
+  expect(json.$defs.__proto__).toBeDefined();
+});
