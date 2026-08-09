@@ -227,6 +227,23 @@ export function emoji(params?: string | core.$ZodEmojiParams): ZodMiniEmoji {
   return core._emoji(ZodMiniEmoji, params);
 }
 
+// ZodMiniScript
+export interface ZodMiniScript extends _ZodMiniString<core.$ZodScriptInternals> {
+  // _zod: core.$ZodScriptInternals;
+}
+export const ZodMiniScript: core.$constructor<ZodMiniScript> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniScript",
+  (inst, def) => {
+    core.$ZodScript.init(inst, def);
+    ZodMiniStringFormat.init(inst, def);
+  }
+);
+
+// @__NO_SIDE_EFFECTS__
+export function script(name: string, params?: string | core.$ZodScriptParams): ZodMiniScript {
+  return core._script(ZodMiniScript, name, params);
+}
+
 // ZodMiniNanoID
 export interface ZodMiniNanoID extends _ZodMiniString<core.$ZodNanoIDInternals> {
   // _zod: core.$ZodNanoIDInternals;

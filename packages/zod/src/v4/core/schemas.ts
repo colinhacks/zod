@@ -572,6 +572,25 @@ export const $ZodEmoji: core.$constructor<$ZodEmoji> = /*@__PURE__*/ core.$const
   }
 );
 
+//////////////////////////////   ZodScript   //////////////////////////////
+
+export interface $ZodScriptDef extends $ZodStringFormatDef<"script"> {
+  name: string;
+}
+export interface $ZodScriptInternals extends $ZodStringFormatInternals<"script"> {
+  def: $ZodScriptDef;
+}
+export interface $ZodScript extends $ZodType {
+  _zod: $ZodScriptInternals;
+}
+export const $ZodScript: core.$constructor<$ZodScript> = /*@__PURE__*/ core.$constructor(
+  "$ZodScript",
+  (inst, def): void => {
+    def.pattern ??= regexes.script(def.name);
+    $ZodStringFormat.init(inst, def);
+  }
+);
+
 //////////////////////////////   ZodNanoID   //////////////////////////////
 
 export interface $ZodNanoIDDef extends $ZodStringFormatDef<"nanoid"> {}
@@ -4727,4 +4746,5 @@ export type $ZodStringFormatTypes =
   | $ZodJWT
   | $ZodCustomStringFormat<"hex">
   | $ZodCustomStringFormat<util.HashFormat>
-  | $ZodCustomStringFormat<"hostname">;
+  | $ZodCustomStringFormat<"hostname">
+  | $ZodScript;

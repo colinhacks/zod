@@ -228,6 +228,25 @@ export function _emoji<T extends schemas.$ZodEmoji>(
   });
 }
 
+// Script
+export type $ZodScriptParams = StringFormatParams<schemas.$ZodScript, "name" | "when">;
+export type $ZodCheckScriptParams = CheckStringFormatParams<schemas.$ZodScript, "name" | "when">;
+// @__NO_SIDE_EFFECTS__
+export function _script<T extends schemas.$ZodScript>(
+  Class: util.SchemaClass<T>,
+  name: string,
+  params?: string | Omit<$ZodScriptParams, "name"> | Omit<$ZodCheckScriptParams, "name">
+): T {
+  return new Class({
+    type: "string",
+    format: "script",
+    check: "string_format",
+    abort: false,
+    name,
+    ...util.normalizeParams(params),
+  });
+}
+
 // NanoID
 export type $ZodNanoIDParams = StringFormatParams<schemas.$ZodNanoID, "when">;
 export type $ZodCheckNanoIDParams = CheckStringFormatParams<schemas.$ZodNanoID, "when">;
