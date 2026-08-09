@@ -153,9 +153,6 @@ export interface _$ZodTypeInternals {
   /** @internal The set of issues this schema might throw during type checking. */
   isst: errors.$ZodIssueBase;
 
-  /** @internal Extends the lazily created standard-schema object right after construction. */
-  onStandard?: ((inst: $ZodType, standard: $ZodStandardSchema<unknown>) => void) | undefined;
-
   /** @internal Subject to change, not a public API. */
   processJSONSchema?:
     | ((ctx: ToJSONSchemaContext, json: JSONSchema.BaseSchema, params: ProcessParams) => void)
@@ -189,9 +186,6 @@ export interface $ZodType<
 }
 export interface _$ZodType<T extends $ZodTypeInternals = $ZodTypeInternals>
   extends $ZodType<T["output"], T["input"], T> {}
-
-// Prototypes that already carry the lazy "~standard" accessor.
-const _installedStandardProtos = /* @__PURE__ */ new WeakSet<object>();
 
 export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constructor("$ZodType", (inst, def) => {
   inst ??= {} as any;
@@ -311,40 +305,30 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
     };
   }
 
-  // Lazy initialize ~standard via a shared prototype accessor so schema
-  // construction pays neither the object nor a per-instance descriptor;
-  // the built object is cached as an own property on first access.
-  const proto = Object.getPrototypeOf(inst);
-  if (!_installedStandardProtos.has(proto)) {
-    _installedStandardProtos.add(proto);
-    Object.defineProperty(proto, "~standard", {
-      configurable: true,
-      enumerable: false,
-      get(this: $ZodType) {
-        const standard = {
-          validate: (value: unknown) => {
-            try {
-              const r = safeParse(this, value);
-              return r.success ? { value: r.data } : { issues: r.error?.issues };
-            } catch (_) {
-              return safeParseAsync(this, value).then((r) =>
-                r.success ? { value: r.data } : { issues: r.error?.issues }
-              );
-            }
-          },
-          vendor: "zod",
-          version: 1 as const,
-        };
-        this._zod.onStandard?.(this, standard as $ZodStandardSchema<unknown>);
-        Object.defineProperty(this, "~standard", { value: standard, configurable: true });
-        return standard;
-      },
-      set(this: $ZodType, value: unknown) {
-        Object.defineProperty(this, "~standard", { value, configurable: true });
-      },
-    });
-  }
+  // `~standard` lives on the prototype and materializes per instance on first
+  // read, so construction pays neither the object nor a per-instance
+  // descriptor. Wrappers extend it by installing their own richer factory
+  // over this one (see the classic build) rather than reading it eagerly.
+  util.installLazyProps<any>(inst, "$ZodType~standard", standardPropsTable);
 });
+
+const standardPropsTable = () => ({ "~standard": standardProps });
+
+/** The Standard Schema surface for `inst`. Shared so wrappers can extend it without forcing it. */
+export function standardProps(inst: $ZodType): StandardSchemaV1.Props<any, any> {
+  return {
+    validate: (value: unknown) => {
+      try {
+        const r = safeParse(inst, value);
+        return r.success ? { value: r.data } : { issues: r.error?.issues };
+      } catch (_) {
+        return safeParseAsync(inst, value).then((r) => (r.success ? { value: r.data } : { issues: r.error?.issues }));
+      }
+    },
+    vendor: "zod",
+    version: 1 as const,
+  };
+}
 
 export { clone } from "./util.js";
 

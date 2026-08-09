@@ -7,88 +7,15 @@ import { createStandardJSONSchemaMethod, createToJSONSchemaMethod } from "../cor
 import * as checks from "./checks.js";
 import * as parse from "./parse.js";
 
-// Lazy-bind builder methods.
-//
-// Builder methods (`.optional`, `.array`, `.refine`, ...) live as
-// non-enumerable getters on each concrete schema constructor's
-// prototype. On first access from an instance the getter allocates
-// `fn.bind(this)` and caches it as an own property on that instance,
-// so detached usage (`const m = schema.optional; m()`) still works
-// and the per-instance allocation only happens for methods actually
-// touched.
-//
-// One install per (prototype, group), memoized by `_installedGroups`.
-const _installedGroups = /* @__PURE__ */ new WeakMap<object, Set<string>>();
-
-/**
- * Methods of `T` reshaped so each body has `this: T` and matches the
- * declared (args, return) of the corresponding interface method. Allows
- * us to type-check inline method-shorthand bodies against the
- * `ZodType` / `_ZodString` / etc. interface declarations.
- */
-type _LazyMethodsOf<T> = Partial<{
-  [K in keyof T]: T[K] extends (...args: infer A) => infer R ? (this: T, ...args: A) => R : never;
-}>;
-
-/* `description` and `_def` derive purely from `this`, so they live as
- * shared getters on the prototype instead of per-instance descriptors. */
-const _installedAccessorProtos = /* @__PURE__ */ new WeakSet<object>();
-function _installSharedAccessors(inst: object): void {
-  const proto = Object.getPrototypeOf(inst);
-  if (_installedAccessorProtos.has(proto)) return;
-  _installedAccessorProtos.add(proto);
-  Object.defineProperty(proto, "description", {
-    configurable: true,
-    get(this: ZodType) {
-      return core.globalRegistry.get(this)?.description;
-    },
-  });
-  Object.defineProperty(proto, "_def", {
-    configurable: true,
-    get(this: ZodType) {
-      return this._zod.def;
-    },
-    set(this: ZodType, value: unknown) {
-      Object.defineProperty(this, "_def", { value, configurable: true, writable: true });
-    },
-  });
-}
-
-function _installLazyMethods<T extends object>(inst: T, group: string, methods: _LazyMethodsOf<T>): void {
-  const proto = Object.getPrototypeOf(inst);
-  let installed = _installedGroups.get(proto);
-  if (!installed) {
-    installed = new Set();
-    _installedGroups.set(proto, installed);
-  }
-  if (installed.has(group)) return;
-  installed.add(group);
-  for (const key in methods) {
-    const fn = methods[key]!;
-    Object.defineProperty(proto, key, {
-      configurable: true,
-      enumerable: false,
-      get(this: any) {
-        const bound = fn.bind(this);
-        Object.defineProperty(this, key, {
-          configurable: true,
-          writable: true,
-          enumerable: true,
-          value: bound,
-        });
-        return bound;
-      },
-      set(this: any, v: unknown) {
-        Object.defineProperty(this, key, {
-          configurable: true,
-          writable: true,
-          enumerable: true,
-          value: v,
-        });
-      },
-    });
-  }
-}
+// Builder methods and the parse family live on each concrete schema
+// constructor's prototype and materialize per instance on first access, so a
+// schema only pays for what it is actually asked for. See
+// `util.installLazyMethods` / `installLazyProps` for why this matters.
+const _installLazyMethods = util.installLazyMethods;
+const _installLazyProps = util.installLazyProps;
+const _installProtoAccessors = util.installProtoAccessors;
+type _LazyMethodsOf<T> = util.LazyMethodsOf<T>;
+type _LazyPropsOf<T> = util.LazyPropsOf<T>;
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -236,175 +163,49 @@ export interface ZodType<
 export interface _ZodType<out Internals extends core.$ZodTypeInternals = core.$ZodTypeInternals>
   extends ZodType<any, any, Internals> {}
 
-/* Attaches the JSON Schema methods when the lazily created standard-schema
- * object is first accessed, instead of forcing its creation per instance. */
-function _onStandard(inst: core.$ZodType, standard: object): void {
-  (standard as { jsonSchema: unknown }).jsonSchema = {
-    input: createStandardJSONSchemaMethod(inst, "input"),
-    output: createStandardJSONSchemaMethod(inst, "output"),
-  };
-}
-
 export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$constructor("ZodType", (inst, def) => {
   core.$ZodType.init(inst, def);
-  inst._zod.onStandard = _onStandard;
-  inst.toJSONSchema = createToJSONSchemaMethod(inst, {});
 
   inst.def = def;
   inst.type = def.type;
 
-  // Parse-family is intentionally kept as per-instance closures: these are
-  // the hot path AND the most-detached methods (`arr.map(schema.parse)`,
-  // `const { parse } = schema`, etc.). Eager closures here mean callers pay
-  // ~12 closure allocations per schema but get monomorphic call sites and
-  // detached usage that "just works".
-  inst.parse = (data, params) => parse.parse(inst, data, params, { callee: inst.parse });
-  inst.safeParse = (data, params) => parse.safeParse(inst, data, params);
-  inst.parseAsync = async (data, params) => parse.parseAsync(inst, data, params, { callee: inst.parseAsync });
-  inst.safeParseAsync = async (data, params) => parse.safeParseAsync(inst, data, params);
-  inst.spa = inst.safeParseAsync;
+  // Everything else — the parse family, the builder methods, `_def`,
+  // `~standard` and `toJSONSchema` — is installed on the prototype rather
+  // than the instance.
+  //
+  // Own-property count is the dominant cost of a schema. V8 sizes an
+  // instance's property backing store in steps, and a constructor like this
+  // one (which assigns nothing itself, so there is nothing to slack-track)
+  // gets no in-object slots: 12 own properties cost 128 bytes, 13 cost 848,
+  // and 21 cost 1616. Keeping instances under the first cliff is worth more
+  // than the closures themselves.
+  //
+  // Detachability is preserved: the getters bind on first access and cache
+  // the bound function as an own property, so `const { parse } = schema` and
+  // `arr.map(schema.parse)` still work, and a schema that is never parsed
+  // directly — every interior node of a large schema graph — allocates none
+  // of them.
+  _installLazyMethods(inst, "ZodType", _zodTypeMethods);
+  _installLazyProps(inst, "ZodTypeParse", _zodTypeParseProps);
+  _installProtoAccessors(inst, "ZodTypeAccessors", _zodTypeAccessors);
 
-  // The codec family is far off the hot path, so it uses the same
-  // lazy-bind treatment as the builder methods below.
-  _installLazyMethods(inst, "ZodTypeCodecs", {
-    encode(data, params) {
-      return parse.encode(this, data, params);
-    },
-    decode(data, params) {
-      return parse.decode(this, data, params);
-    },
-    async encodeAsync(data, params) {
-      return parse.encodeAsync(this, data, params);
-    },
-    async decodeAsync(data, params) {
-      return parse.decodeAsync(this, data, params);
-    },
-    safeEncode(data, params) {
-      return parse.safeEncode(this, data, params);
-    },
-    safeDecode(data, params) {
-      return parse.safeDecode(this, data, params);
-    },
-    async safeEncodeAsync(data, params) {
-      return parse.safeEncodeAsync(this, data, params);
-    },
-    async safeDecodeAsync(data, params) {
-      return parse.safeDecodeAsync(this, data, params);
-    },
-  });
-
-  // All builder methods are placed on the internal prototype as lazy-bind
-  // getters. On first access per-instance, a bound thunk is allocated and
-  // cached as an own property; subsequent accesses skip the getter. This
-  // means: no per-instance allocation for unused methods, full
-  // detachability preserved (`const m = schema.optional; m()` works), and
-  // shared underlying function references across all instances.
-  _installLazyMethods(inst, "ZodType", {
-    check(...chks) {
-      const def = this.def;
-      return this.clone(
-        util.mergeDefs(def, {
-          checks: [
-            ...(def.checks ?? []),
-            ...chks.map((ch) =>
-              typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
-            ),
-          ],
-        }),
-        { parent: true }
-      );
-    },
-    with(...chks) {
-      return this.check(...chks);
-    },
-    clone(def, params) {
-      return core.clone(this, def, params);
-    },
-    brand() {
-      return this;
-    },
-    register(reg, meta) {
-      reg.add(this, meta);
-      return this;
-    },
-    refine(check, params) {
-      return this.check(refine(check, params));
-    },
-    superRefine(refinement, params) {
-      return this.check(superRefine(refinement, params));
-    },
-    overwrite(fn) {
-      return this.check(checks.overwrite(fn));
-    },
-    optional() {
-      return optional(this);
-    },
-    exactOptional() {
-      return exactOptional(this);
-    },
-    nullable() {
-      return nullable(this);
-    },
-    nullish() {
-      return optional(nullable(this));
-    },
-    nonoptional(params) {
-      return nonoptional(this, params);
-    },
-    array() {
-      return array(this);
-    },
-    or(arg) {
-      return union([this, arg]);
-    },
-    and(arg) {
-      return intersection(this, arg);
-    },
-    transform(tx) {
-      return pipe(this, transform(tx));
-    },
-    default(d) {
-      return _default(this, d);
-    },
-    prefault(d) {
-      return prefault(this, d);
-    },
-    catch(params) {
-      return _catch(this, params);
-    },
-    pipe(target) {
-      return pipe(this, target);
-    },
-    readonly() {
-      return readonly(this);
-    },
-    describe(description) {
-      const cl = this.clone();
-      core.globalRegistry.add(cl, { description });
-      return cl;
-    },
-    meta(...args: any[]): any {
-      // overloaded: meta() returns the registered metadata, meta(data)
-      // returns a clone with `data` registered. The mapped type picks
-      // up the second overload, so we accept variadic any-args and
-      // return `any` to satisfy both at runtime.
-      if (args.length === 0) return core.globalRegistry.get(this);
-      const cl = this.clone();
-      core.globalRegistry.add(cl, args[0]);
-      return cl;
-    },
-    isOptional() {
-      return this.safeParse(undefined).success;
-    },
-    isNullable() {
-      return this.safeParse(null).success;
-    },
-    apply(fn) {
-      return fn(this);
-    },
-  });
-  _installSharedAccessors(inst);
+  // Overrides core's prototype-level `~standard` with the classic one, which
+  // also carries `jsonSchema`. It must stay a prototype entry: reading
+  // `~standard` to attach `jsonSchema` forced every schema to build it, and
+  // redefining it per instance demoted instances to dictionary mode.
+  _installLazyProps(inst, "ZodType~standard", _zodTypeStandard);
   return inst;
+});
+
+const _zodTypeStandard = (): _LazyPropsOf<ZodType> => ({
+  "~standard": (self) =>
+    ({
+      ...core.standardProps(self),
+      jsonSchema: {
+        input: createStandardJSONSchemaMethod(self, "input"),
+        output: createStandardJSONSchemaMethod(self, "output"),
+      },
+    }) as ZodType["~standard"],
 });
 
 // ZodString
@@ -446,53 +247,7 @@ export const _ZodString: core.$constructor<_ZodString> = /*@__PURE__*/ core.$con
   inst.minLength = bag.minimum ?? null;
   inst.maxLength = bag.maximum ?? null;
 
-  _installLazyMethods(inst, "_ZodString", {
-    regex(...args) {
-      return this.check((checks.regex as any)(...args));
-    },
-    includes(...args) {
-      return this.check((checks.includes as any)(...args));
-    },
-    startsWith(...args) {
-      return this.check((checks.startsWith as any)(...args));
-    },
-    endsWith(...args) {
-      return this.check((checks.endsWith as any)(...args));
-    },
-    min(...args) {
-      return this.check((checks.minLength as any)(...args));
-    },
-    max(...args) {
-      return this.check((checks.maxLength as any)(...args));
-    },
-    length(...args) {
-      return this.check((checks.length as any)(...args));
-    },
-    nonempty(...args) {
-      return this.check((checks.minLength as any)(1, ...args));
-    },
-    lowercase(params) {
-      return this.check(checks.lowercase(params));
-    },
-    uppercase(params) {
-      return this.check(checks.uppercase(params));
-    },
-    trim() {
-      return this.check(checks.trim());
-    },
-    normalize(...args) {
-      return this.check(checks.normalize(...args));
-    },
-    toLowerCase() {
-      return this.check(checks.toLowerCase());
-    },
-    toUpperCase() {
-      return this.check(checks.toUpperCase());
-    },
-    slugify() {
-      return this.check(checks.slugify());
-    },
-  });
+  _installLazyMethods(inst, "_ZodString", _zodStringBaseMethods);
 });
 
 export interface ZodString extends _ZodString<core.$ZodStringInternals<string>> {
@@ -576,88 +331,7 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
   core.$ZodString.init(inst, def);
   _ZodString.init(inst, def);
 
-  _installLazyMethods(inst, "ZodStringFormats", {
-    email(params) {
-      return this.check(core._email(ZodEmail, params));
-    },
-    url(params) {
-      return this.check(core._url(ZodURL, params));
-    },
-    jwt(params) {
-      return this.check(core._jwt(ZodJWT, params));
-    },
-    emoji(params) {
-      return this.check(core._emoji(ZodEmoji, params));
-    },
-    guid(params) {
-      return this.check(core._guid(ZodGUID, params));
-    },
-    uuid(params) {
-      return this.check(core._uuid(ZodUUID, params));
-    },
-    uuidv4(params) {
-      return this.check(core._uuidv4(ZodUUID, params));
-    },
-    uuidv6(params) {
-      return this.check(core._uuidv6(ZodUUID, params));
-    },
-    uuidv7(params) {
-      return this.check(core._uuidv7(ZodUUID, params));
-    },
-    nanoid(params) {
-      return this.check(core._nanoid(ZodNanoID, params));
-    },
-    cuid(params) {
-      return this.check(core._cuid(ZodCUID, params));
-    },
-    cuid2(params) {
-      return this.check(core._cuid2(ZodCUID2, params));
-    },
-    ulid(params) {
-      return this.check(core._ulid(ZodULID, params));
-    },
-    base64(params) {
-      return this.check(core._base64(ZodBase64, params));
-    },
-    base64url(params) {
-      return this.check(core._base64url(ZodBase64URL, params));
-    },
-    xid(params) {
-      return this.check(core._xid(ZodXID, params));
-    },
-    ksuid(params) {
-      return this.check(core._ksuid(ZodKSUID, params));
-    },
-    ipv4(params) {
-      return this.check(core._ipv4(ZodIPv4, params));
-    },
-    ipv6(params) {
-      return this.check(core._ipv6(ZodIPv6, params));
-    },
-    cidrv4(params) {
-      return this.check(core._cidrv4(ZodCIDRv4, params));
-    },
-    cidrv6(params) {
-      return this.check(core._cidrv6(ZodCIDRv6, params));
-    },
-    e164(params) {
-      return this.check(core._e164(ZodE164, params));
-    },
-
-    // iso
-    datetime(params) {
-      return this.check(core._isoDateTime(ZodISODateTime, params as any));
-    },
-    date(params) {
-      return this.check(core._isoDate(ZodISODate, params as any));
-    },
-    time(params) {
-      return this.check(core._isoTime(ZodISOTime, params as any));
-    },
-    duration(params) {
-      return this.check(core._isoDuration(ZodISODuration, params as any));
-    },
-  });
+  _installLazyMethods(inst, "ZodString", _zodStringMethods);
 });
 
 export function string(params?: string | core.$ZodStringParams): ZodString;
@@ -1163,53 +837,7 @@ export const ZodNumber: core.$constructor<ZodNumber> = /*@__PURE__*/ core.$const
 
   inst._zod.processJSONSchema = (ctx, json, params) => processors.numberProcessor(inst, ctx, json, params);
 
-  _installLazyMethods(inst, "ZodNumber", {
-    gt(value, params) {
-      return this.check(checks.gt(value, params));
-    },
-    gte(value, params) {
-      return this.check(checks.gte(value, params));
-    },
-    min(value, params) {
-      return this.check(checks.gte(value, params));
-    },
-    lt(value, params) {
-      return this.check(checks.lt(value, params));
-    },
-    lte(value, params) {
-      return this.check(checks.lte(value, params));
-    },
-    max(value, params) {
-      return this.check(checks.lte(value, params));
-    },
-    int(params) {
-      return this.check(int(params));
-    },
-    safe(params) {
-      return this.check(int(params));
-    },
-    positive(params) {
-      return this.check(checks.gt(0, params));
-    },
-    nonnegative(params) {
-      return this.check(checks.gte(0, params));
-    },
-    negative(params) {
-      return this.check(checks.lt(0, params));
-    },
-    nonpositive(params) {
-      return this.check(checks.lte(0, params));
-    },
-    multipleOf(value, params) {
-      return this.check(checks.multipleOf(value, params));
-    },
-    step(value, params) {
-      return this.check(checks.multipleOf(value, params));
-    },
-    finite() {
-      return this;
-    },
-  });
+  _installLazyMethods(inst, "ZodNumber", _zodNumberMethods);
 
   const bag = inst._zod.bag;
   inst.minValue =
@@ -1307,19 +935,7 @@ export const ZodBigInt: core.$constructor<ZodBigInt> = /*@__PURE__*/ core.$const
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.bigintProcessor(inst, ctx, json, params);
 
-  inst.gte = (value, params) => inst.check(checks.gte(value, params));
-  inst.min = (value, params) => inst.check(checks.gte(value, params));
-  inst.gt = (value, params) => inst.check(checks.gt(value, params));
-  inst.gte = (value, params) => inst.check(checks.gte(value, params));
-  inst.min = (value, params) => inst.check(checks.gte(value, params));
-  inst.lt = (value, params) => inst.check(checks.lt(value, params));
-  inst.lte = (value, params) => inst.check(checks.lte(value, params));
-  inst.max = (value, params) => inst.check(checks.lte(value, params));
-  inst.positive = (params) => inst.check(checks.gt(BigInt(0), params));
-  inst.negative = (params) => inst.check(checks.lt(BigInt(0), params));
-  inst.nonpositive = (params) => inst.check(checks.lte(BigInt(0), params));
-  inst.nonnegative = (params) => inst.check(checks.gte(BigInt(0), params));
-  inst.multipleOf = (value, params) => inst.check(checks.multipleOf(value, params));
+  _installLazyMethods(inst, "ZodBigInt", _zodBigIntMethods);
 
   const bag = inst._zod.bag;
   inst.minValue = bag.minimum ?? null;
@@ -1492,23 +1108,7 @@ export const ZodArray: core.$constructor<ZodArray> = /*@__PURE__*/ core.$constru
   inst._zod.processJSONSchema = (ctx, json, params) => processors.arrayProcessor(inst, ctx, json, params);
 
   inst.element = def.element;
-  _installLazyMethods(inst, "ZodArray", {
-    min(n, params) {
-      return this.check(checks.minLength(n, params));
-    },
-    nonempty(params) {
-      return this.check(checks.minLength(1, params));
-    },
-    max(n, params) {
-      return this.check(checks.maxLength(n, params));
-    },
-    length(n, params) {
-      return this.check(checks.length(n, params));
-    },
-    unwrap() {
-      return this.element;
-    },
-  });
+  _installLazyMethods(inst, "ZodArray", _zodArrayMethods);
 });
 
 export function array<T extends core.SomeType>(element: T, params?: string | core.$ZodArrayParams): ZodArray<T> {
@@ -1622,47 +1222,7 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
     return def.shape;
   });
 
-  _installLazyMethods(inst, "ZodObject", {
-    keyof() {
-      return _enum(Object.keys(this._zod.def.shape));
-    },
-    catchall(catchall) {
-      return this.clone({ ...this._zod.def, catchall: catchall as any });
-    },
-    passthrough() {
-      return this.clone({ ...this._zod.def, catchall: unknown() });
-    },
-    loose() {
-      return this.clone({ ...this._zod.def, catchall: unknown() });
-    },
-    strict() {
-      return this.clone({ ...this._zod.def, catchall: never() });
-    },
-    strip() {
-      return this.clone({ ...this._zod.def, catchall: undefined });
-    },
-    extend(incoming) {
-      return util.extend(this, incoming);
-    },
-    safeExtend(incoming) {
-      return util.safeExtend(this, incoming);
-    },
-    merge(other) {
-      return util.merge(this, other);
-    },
-    pick(mask) {
-      return util.pick(this, mask);
-    },
-    omit(mask) {
-      return util.omit(this, mask);
-    },
-    partial(...args) {
-      return util.partial(ZodOptional, this, args[0]);
-    },
-    required(...args) {
-      return util.required(ZodNonOptional, this, args[0]);
-    },
-  });
+  _installLazyMethods(inst, "ZodObject", _zodObjectMethods);
 });
 
 export function object<T extends core.$ZodLooseShape = Partial<Record<never, core.SomeType>>>(
@@ -2830,4 +2390,440 @@ export function preprocess<A, U extends core.SomeType, B = unknown>(
     in: transform(fn as any) as any as core.$ZodTransform,
     out: schema as any as core.$ZodType,
   }) as any;
+}
+
+/**
+ * The parse family, built lazily but as the exact closures the eager version
+ * used — same shape, same monomorphic call sites, allocated only for schemas
+ * something actually parses through directly.
+ */
+function _zodTypeParseProps(): _LazyPropsOf<ZodType> {
+  return {
+    // `_def` derives purely from the instance, so it is materialized on read
+    // rather than assigned at construction.
+    _def: (self) => self._zod.def,
+    parse: (self) => {
+      const fn: ZodType["parse"] = (data, params) => parse.parse(self, data, params, { callee: fn });
+      return fn;
+    },
+    parseAsync: (self) => {
+      const fn: ZodType["parseAsync"] = async (data, params) => parse.parseAsync(self, data, params, { callee: fn });
+      return fn;
+    },
+    safeParse: (self) => (data, params) => parse.safeParse(self, data, params),
+    safeParseAsync: (self) => async (data, params) => parse.safeParseAsync(self, data, params),
+    // `spa` is an alias: same function object as `safeParseAsync`, as before.
+    spa: (self) => self.safeParseAsync,
+    encode: (self) => (data, params) => parse.encode(self, data, params),
+    decode: (self) => (data, params) => parse.decode(self, data, params),
+    encodeAsync: (self) => async (data, params) => parse.encodeAsync(self, data, params),
+    decodeAsync: (self) => async (data, params) => parse.decodeAsync(self, data, params),
+    safeEncode: (self) => (data, params) => parse.safeEncode(self, data, params),
+    safeDecode: (self) => (data, params) => parse.safeDecode(self, data, params),
+    safeEncodeAsync: (self) => async (data, params) => parse.safeEncodeAsync(self, data, params),
+    safeDecodeAsync: (self) => async (data, params) => parse.safeDecodeAsync(self, data, params),
+    toJSONSchema: (self) => createToJSONSchemaMethod(self, {}),
+  };
+}
+
+function _zodTypeAccessors(): Record<string, (this: ZodType) => unknown> {
+  return {
+    description(this: ZodType) {
+      return core.globalRegistry.get(this)?.description;
+    },
+  };
+}
+
+function _zodTypeMethods(): _LazyMethodsOf<ZodType> {
+  return {
+    check(...chks) {
+      const def = this.def;
+      return this.clone(
+        util.mergeDefs(def, {
+          checks: [
+            ...(def.checks ?? []),
+            ...chks.map((ch) =>
+              typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
+            ),
+          ],
+        }),
+        { parent: true }
+      );
+    },
+    with(...chks) {
+      return this.check(...chks);
+    },
+    clone(def, params) {
+      return core.clone(this, def, params);
+    },
+    brand() {
+      return this;
+    },
+    register(reg, meta) {
+      reg.add(this, meta);
+      return this;
+    },
+    refine(check, params) {
+      return this.check(refine(check, params));
+    },
+    superRefine(refinement, params) {
+      return this.check(superRefine(refinement, params));
+    },
+    overwrite(fn) {
+      return this.check(checks.overwrite(fn));
+    },
+    optional() {
+      return optional(this);
+    },
+    exactOptional() {
+      return exactOptional(this);
+    },
+    nullable() {
+      return nullable(this);
+    },
+    nullish() {
+      return optional(nullable(this));
+    },
+    nonoptional(params) {
+      return nonoptional(this, params);
+    },
+    array() {
+      return array(this);
+    },
+    or(arg) {
+      return union([this, arg]);
+    },
+    and(arg) {
+      return intersection(this, arg);
+    },
+    transform(tx) {
+      return pipe(this, transform(tx));
+    },
+    default(d) {
+      return _default(this, d);
+    },
+    prefault(d) {
+      return prefault(this, d);
+    },
+    catch(params) {
+      return _catch(this, params);
+    },
+    pipe(target) {
+      return pipe(this, target);
+    },
+    readonly() {
+      return readonly(this);
+    },
+    describe(description) {
+      const cl = this.clone();
+      core.globalRegistry.add(cl, { description });
+      return cl;
+    },
+    meta(...args: any[]): any {
+      // overloaded: meta() returns the registered metadata, meta(data)
+      // returns a clone with `data` registered. The mapped type picks
+      // up the second overload, so we accept variadic any-args and
+      // return `any` to satisfy both at runtime.
+      if (args.length === 0) return core.globalRegistry.get(this);
+      const cl = this.clone();
+      core.globalRegistry.add(cl, args[0]);
+      return cl;
+    },
+    isOptional() {
+      return this.safeParse(undefined).success;
+    },
+    isNullable() {
+      return this.safeParse(null).success;
+    },
+    apply(fn) {
+      return fn(this);
+    },
+  };
+}
+
+function _zodStringBaseMethods(): _LazyMethodsOf<_ZodString> {
+  return {
+    regex(...args) {
+      return this.check((checks.regex as any)(...args));
+    },
+    includes(...args) {
+      return this.check((checks.includes as any)(...args));
+    },
+    startsWith(...args) {
+      return this.check((checks.startsWith as any)(...args));
+    },
+    endsWith(...args) {
+      return this.check((checks.endsWith as any)(...args));
+    },
+    min(...args) {
+      return this.check((checks.minLength as any)(...args));
+    },
+    max(...args) {
+      return this.check((checks.maxLength as any)(...args));
+    },
+    length(...args) {
+      return this.check((checks.length as any)(...args));
+    },
+    nonempty(...args) {
+      return this.check((checks.minLength as any)(1, ...args));
+    },
+    lowercase(params) {
+      return this.check(checks.lowercase(params));
+    },
+    uppercase(params) {
+      return this.check(checks.uppercase(params));
+    },
+    trim() {
+      return this.check(checks.trim());
+    },
+    normalize(...args) {
+      return this.check(checks.normalize(...args));
+    },
+    toLowerCase() {
+      return this.check(checks.toLowerCase());
+    },
+    toUpperCase() {
+      return this.check(checks.toUpperCase());
+    },
+    slugify() {
+      return this.check(checks.slugify());
+    },
+  };
+}
+
+function _zodStringMethods(): _LazyMethodsOf<ZodString> {
+  return {
+    email(params) {
+      return this.check(core._email(ZodEmail, params));
+    },
+    url(params) {
+      return this.check(core._url(ZodURL, params));
+    },
+    jwt(params) {
+      return this.check(core._jwt(ZodJWT, params));
+    },
+    emoji(params) {
+      return this.check(core._emoji(ZodEmoji, params));
+    },
+    guid(params) {
+      return this.check(core._guid(ZodGUID, params));
+    },
+    uuid(params) {
+      return this.check(core._uuid(ZodUUID, params));
+    },
+    uuidv4(params) {
+      return this.check(core._uuidv4(ZodUUID, params));
+    },
+    uuidv6(params) {
+      return this.check(core._uuidv6(ZodUUID, params));
+    },
+    uuidv7(params) {
+      return this.check(core._uuidv7(ZodUUID, params));
+    },
+    nanoid(params) {
+      return this.check(core._nanoid(ZodNanoID, params));
+    },
+    cuid(params) {
+      return this.check(core._cuid(ZodCUID, params));
+    },
+    cuid2(params) {
+      return this.check(core._cuid2(ZodCUID2, params));
+    },
+    ulid(params) {
+      return this.check(core._ulid(ZodULID, params));
+    },
+    base64(params) {
+      return this.check(core._base64(ZodBase64, params));
+    },
+    base64url(params) {
+      return this.check(core._base64url(ZodBase64URL, params));
+    },
+    xid(params) {
+      return this.check(core._xid(ZodXID, params));
+    },
+    ksuid(params) {
+      return this.check(core._ksuid(ZodKSUID, params));
+    },
+    ipv4(params) {
+      return this.check(core._ipv4(ZodIPv4, params));
+    },
+    ipv6(params) {
+      return this.check(core._ipv6(ZodIPv6, params));
+    },
+    cidrv4(params) {
+      return this.check(core._cidrv4(ZodCIDRv4, params));
+    },
+    cidrv6(params) {
+      return this.check(core._cidrv6(ZodCIDRv6, params));
+    },
+    e164(params) {
+      return this.check(core._e164(ZodE164, params));
+    },
+
+    // iso
+    datetime(params) {
+      return this.check(core._isoDateTime(ZodISODateTime, params as any));
+    },
+    date(params) {
+      return this.check(core._isoDate(ZodISODate, params as any));
+    },
+    time(params) {
+      return this.check(core._isoTime(ZodISOTime, params as any));
+    },
+    duration(params) {
+      return this.check(core._isoDuration(ZodISODuration, params as any));
+    },
+  };
+}
+
+function _zodNumberMethods(): _LazyMethodsOf<ZodNumber> {
+  return {
+    gt(value, params) {
+      return this.check(checks.gt(value, params));
+    },
+    gte(value, params) {
+      return this.check(checks.gte(value, params));
+    },
+    min(value, params) {
+      return this.check(checks.gte(value, params));
+    },
+    lt(value, params) {
+      return this.check(checks.lt(value, params));
+    },
+    lte(value, params) {
+      return this.check(checks.lte(value, params));
+    },
+    max(value, params) {
+      return this.check(checks.lte(value, params));
+    },
+    int(params) {
+      return this.check(int(params));
+    },
+    safe(params) {
+      return this.check(int(params));
+    },
+    positive(params) {
+      return this.check(checks.gt(0, params));
+    },
+    nonnegative(params) {
+      return this.check(checks.gte(0, params));
+    },
+    negative(params) {
+      return this.check(checks.lt(0, params));
+    },
+    nonpositive(params) {
+      return this.check(checks.lte(0, params));
+    },
+    multipleOf(value, params) {
+      return this.check(checks.multipleOf(value, params));
+    },
+    step(value, params) {
+      return this.check(checks.multipleOf(value, params));
+    },
+    finite() {
+      return this;
+    },
+  };
+}
+
+function _zodBigIntMethods(): _LazyMethodsOf<ZodBigInt> {
+  return {
+    gte(value, params) {
+      return this.check(checks.gte(value, params));
+    },
+    min(value, params) {
+      return this.check(checks.gte(value, params));
+    },
+    gt(value, params) {
+      return this.check(checks.gt(value, params));
+    },
+    lt(value, params) {
+      return this.check(checks.lt(value, params));
+    },
+    lte(value, params) {
+      return this.check(checks.lte(value, params));
+    },
+    max(value, params) {
+      return this.check(checks.lte(value, params));
+    },
+    positive(params) {
+      return this.check(checks.gt(BigInt(0), params));
+    },
+    negative(params) {
+      return this.check(checks.lt(BigInt(0), params));
+    },
+    nonpositive(params) {
+      return this.check(checks.lte(BigInt(0), params));
+    },
+    nonnegative(params) {
+      return this.check(checks.gte(BigInt(0), params));
+    },
+    multipleOf(value, params) {
+      return this.check(checks.multipleOf(value, params));
+    },
+  };
+}
+
+function _zodArrayMethods(): _LazyMethodsOf<ZodArray> {
+  return {
+    min(n, params) {
+      return this.check(checks.minLength(n, params));
+    },
+    nonempty(params) {
+      return this.check(checks.minLength(1, params));
+    },
+    max(n, params) {
+      return this.check(checks.maxLength(n, params));
+    },
+    length(n, params) {
+      return this.check(checks.length(n, params));
+    },
+    unwrap() {
+      return this.element;
+    },
+  };
+}
+
+function _zodObjectMethods(): _LazyMethodsOf<ZodObject> {
+  return {
+    keyof() {
+      return _enum(Object.keys(this._zod.def.shape));
+    },
+    catchall(catchall) {
+      return this.clone({ ...this._zod.def, catchall: catchall as any });
+    },
+    passthrough() {
+      return this.clone({ ...this._zod.def, catchall: unknown() });
+    },
+    loose() {
+      return this.clone({ ...this._zod.def, catchall: unknown() });
+    },
+    strict() {
+      return this.clone({ ...this._zod.def, catchall: never() });
+    },
+    strip() {
+      return this.clone({ ...this._zod.def, catchall: undefined });
+    },
+    extend(incoming) {
+      return util.extend(this, incoming);
+    },
+    safeExtend(incoming) {
+      return util.safeExtend(this, incoming);
+    },
+    merge(other) {
+      return util.merge(this, other);
+    },
+    pick(mask) {
+      return util.pick(this, mask);
+    },
+    omit(mask) {
+      return util.omit(this, mask);
+    },
+    partial(...args) {
+      return util.partial(ZodOptional, this, args[0]);
+    },
+    required(...args) {
+      return util.required(ZodNonOptional, this, args[0]);
+    },
+  };
 }

@@ -66,6 +66,9 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
       for (const fn of deferred) {
         fn();
       }
+      // Initializers run exactly once; holding the list afterwards keeps an
+      // array and its closures alive for the schema's whole lifetime.
+      inst._zod.deferred = undefined;
     }
     return inst;
   }
