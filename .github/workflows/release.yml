@@ -14,6 +14,7 @@ jobs:
   test-node:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest]
         node: ["lts/*"]
@@ -26,10 +27,14 @@ jobs:
           node-version: ${{ matrix.node }}
       - uses: pnpm/action-setup@v4
       - run: pnpm install
-      - run: pnpm add typescript@${{ matrix.typescript }} -w
+      # Build with the repo-pinned TypeScript: zshy uses the classic compiler API,
+      # which TypeScript 7 no longer ships. The matrix version applies to the tests.
       - run: pnpm build
+      - run: pnpm add typescript@${{ matrix.typescript }} -w
       - run: pnpm test
+      # test-resolution.ts shells out to zshy, so it can't run under TypeScript 7.
       - run: pnpm run --filter @zod/resolution test:all
+        if: matrix.typescript != 'latest'
       - run: pnpm run --filter @zod/integration test:all
 
   lint:
