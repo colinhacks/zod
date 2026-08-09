@@ -6,7 +6,7 @@ description: "Bidirectional transformations with encode and decode"
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 import { ThemedImage } from "@/components/themed-image";
 
-> ✨ **New** — Introduced in `zod@4.1`
+> Introduced in `zod@4.1`.
 
 All Zod schemas can process inputs in both the forward and backward direction: 
 
@@ -92,6 +92,37 @@ This is particularly useful when parsing data at a network boundary. You can sha
   alt="Codecs encoding and decoding data across a network boundary" 
 />
 
+### Inverting codecs
+
+Use `z.invertCodec()` to derive the reverse codec from an existing one. The returned codec swaps the input and output schemas, then swaps the `decode` and `encode` transforms.
+
+<Tabs items={['Zod', 'Zod Mini']}>
+<Tab value="Zod">
+```ts
+const dateToString = z.invertCodec(stringToDate);
+
+dateToString.decode(new Date("2024-01-15T10:30:00.000Z"));
+// => string
+
+dateToString.encode("2024-01-15T10:30:00.000Z");
+// => Date
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+const dateToString = z.invertCodec(stringToDate);
+
+z.decode(dateToString, new Date("2024-01-15T10:30:00.000Z"));
+// => string
+
+z.encode(dateToString, "2024-01-15T10:30:00.000Z");
+// => Date
+```
+</Tab>
+</Tabs>
+
+`z.invertCodec()` only inverts the codec you pass to it. It does not recursively invert codecs nested inside another schema; invert those codecs where you define the reversed schema.
+
 ### Composability
 
 > **Note** — You can use `z.encode()` and `z.decode()` with any schema. It doesn't have to be a ZodCodec.
@@ -111,7 +142,7 @@ payloadSchema.decode({
 
 ### Type-safe inputs
 
-While `.parse()` and `.decode()` behave identically at *runtime*, they have different type signatures. The `.parse()` method accepts `unknown` as input, and returns a value that matches the schema's inferred *output type*. By constrast, the `z.decode()` and `z.encode()` functions have *strongly-typed inputs*. 
+While `.parse()` and `.decode()` behave identically at *runtime*, they have different type signatures. The `.parse()` method accepts `unknown` as input, and returns a value that matches the schema's inferred *output type*. By contrast, the `z.decode()` and `z.encode()` functions have *strongly-typed inputs*. 
 
 ```ts
 stringToDate.parse(12345); 
@@ -124,7 +155,7 @@ stringToDate.encode(12345);
 // ❌ TypeScript error: Argument of type 'number' is not assignable to parameter of type 'Date'.
 ```
 
-Why the difference? Encoding and decoding imply *transformation*. In many cases, the inputs to these methods
+Why the difference? Encoding and decoding imply *transformation*. In many cases, the inputs to these methods are already strongly typed in application code, so z.decode/z.encode accept strongly typed inputs to surface mistakes at compile time.
 Here's a diagram demonstrating the differences between the type signatures for `parse()`, `decode()`, and `encode()`.
 
 <ThemedImage 
@@ -153,10 +184,10 @@ stringToDate.decode("2024-01-15T10:30:00.000Z");
 stringToDate.decodeAsync("2024-01-15T10:30:00.000Z"); 
 // => Promise<Date>
 
-stringToDate.decodeSafe("2024-01-15T10:30:00.000Z"); 
+stringToDate.safeDecode("2024-01-15T10:30:00.000Z"); 
 // => { success: true, data: Date } | { success: false, error: ZodError }
 
-stringToDate.decodeSafeAsync("2024-01-15T10:30:00.000Z"); 
+stringToDate.safeDecodeAsync("2024-01-15T10:30:00.000Z"); 
 // => Promise<{ success: true, data: Date } | { success: false, error: ZodError }>
 ```
 
@@ -166,7 +197,7 @@ There are some subtleties to how certain Zod schemas "reverse" their parse behav
 
 ### Codecs
 
-This one is fairly self-explanatory. Codecs encapsulate a bi-directional transformation between two types. During `z.decode()`, the `decode` transform is executed. During `z.encode()`, the `encode` transform is executed.
+This one is fairly self-explanatory. Codecs encapsulate a bi-directional transformation between two types. `z.decode()` triggers the `decode` transform to convert input into a parsed value, while `z.encode()` triggers the `encode` transform to serialize it back.
 
 ```ts
 const stringToDate = z.codec(
@@ -188,7 +219,7 @@ stringToDate.encode(new Date("2024-01-15"));
 
 ### Pipes
 
-> **Fun fact** — Codecs are actually implemented internally as *subclass* of pipes that have been augmented with "interstitial" transform logic. 
+> **Fun fact** — Codecs are implemented internally as *subclasses* of pipes with "interstitial" transform logic. 
 
 During regular decoding, a `ZodPipe<A, B>` schema will first parse the data with `A`, then pass it into `B`. As you might expect, during encoding, the data is first encoded with `B`, then passed into `A`.
 
@@ -197,7 +228,7 @@ During regular decoding, a `ZodPipe<A, B>` schema will first parse the data with
 All checks (`.refine()`, `.min()`, `.max()`, etc.) are still executed in both directions. 
 
 ```ts
-const schema = stringToDate.refine((date) => date.getFullYear() >= 2000, "Must be this millenium");
+const schema = stringToDate.refine((date) => date.getFullYear() >= 2000, "Must be this millennium");
 
 schema.encode(new Date("2000-01-01"));
 // => Date
@@ -207,7 +238,7 @@ schema.encode(new Date("1999-01-01"));
 //   {
 //     "code": "custom",
 //     "path": [],
-//     "message": "Must be this millenium"
+//     "message": "Must be this millennium"
 //   }
 // ]
 ```
@@ -259,7 +290,7 @@ stringWithCatch.encode(1234);
 
 > **Note** — [Stringbool](/api#stringbool) pre-dates the introduction of codecs in Zod. It has since been internally re-implemented as a codec. 
 
-The `z.stringbool()` API converts string values (`"true"`, `"false"`, `"yes"`, `"no"`, etc.) into `boolean`. By default, it will convert `true` to `"true"` and `false` to `"false"` during `z.encode()`..
+The `z.stringbool()` API converts string values (`"true"`, `"false"`, `"yes"`, `"no"`, etc.) into `boolean`. By default, it will convert `true` to `"true"` and `false` to `"false"` during `z.encode()`.
 
 ```ts
 const stringbool = z.stringbool();
@@ -310,7 +341,7 @@ z.encode(successSchema, true);
 
 Below are implementations for a bunch of commonly-needed codecs. For the sake of customizability, these are not included as first-class APIs in Zod itself. Instead, you should copy/paste them into your project and modify them as needed.
 
-> **Note** — All of these codec implementations have been tested for correctness. 
+> **Note** — The codec implementations below are tested for correctness. 
 
 ### `stringToNumber`
 

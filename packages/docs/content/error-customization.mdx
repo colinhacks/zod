@@ -141,10 +141,6 @@ The `error` param optionally accepts a function. An error customization function
 z.string({ error: ()=>`[${Date.now()}]: Validation failure.` });
 ```
 
-<Callout>
-**Note** — In Zod v3, there were separate params for `message` (a string) and `errorMap` (a function). These have been unified in Zod 4 as `error`.
-</Callout>
-
 The error map receives a context object you can use to customize the error message based on the validation issue.
 
 ```ts
@@ -276,8 +272,8 @@ The `iss` object is a [discriminated union](https://www.typescriptlang.org/docs/
 > For a breakdown of all Zod issue codes, see the [`zod/v4/core`](/packages/core#issue-types) documentation.
 
 ```ts
-const result = schema.safeParse(12, {
-  error: (iss) => {
+z.config({
+  customError: (iss) => {
     if (iss.code === "invalid_type") {
       return `invalid type, expected ${iss.expected}`;
     }
@@ -285,15 +281,15 @@ const result = schema.safeParse(12, {
       return `minimum is ${iss.minimum}`;
     }
     // ...
-  }
-})
+  },
+});
 ```
 
 ## Internationalization
 
 To support internationalization of error message, Zod provides several built-in **locales**. These are exported from the `zod/v4/core` package.
 
-> **Note** — The regular `zod` library automatically loads the `en` locale automatically. Zod Mini does not load any locale by default; instead all error messages default to `Invalid input`.
+> **Note** — The regular `zod` library loads the `en` locale automatically. Zod Mini does not load any locale by default; instead all error messages default to `Invalid input`.
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -367,6 +363,7 @@ The following locales are available:
 - `frCA` — Canadian French
 - `he` — Hebrew
 - `hu` — Hungarian
+- `hy` — Armenian
 - `id` — Indonesian
 - `is` — Icelandic
 - `it` — Italian
@@ -383,6 +380,7 @@ The following locales are available:
 - `ps` — Pashto
 - `pl` — Polish
 - `pt` — Portuguese
+- `ro` — Romanian
 - `ru` — Russian
 - `sl` — Slovenian
 - `sv` — Swedish
@@ -391,6 +389,7 @@ The following locales are available:
 - `tr` — Türkçe
 - `uk` — Ukrainian
 - `ur` — Urdu
+- `uz` — Uzbek
 - `vi` — Tiếng Việt
 - `zhCN` — Simplified Chinese
 - `zhTW` — Traditional Chinese

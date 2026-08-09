@@ -10,7 +10,7 @@ export interface $constructor<T extends ZodTrait, D = T["_zod"]["def"]> {
 }
 
 /** A special constant with type `never` */
-export const NEVER: never = Object.freeze({
+export const NEVER: never = /*@__PURE__*/ Object.freeze({
   status: "aborted",
 }) as never;
 
@@ -20,21 +20,34 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
   params?: { Parent?: typeof Class }
 ): $constructor<T, D> {
   function init(inst: T, def: D) {
-    Object.defineProperty(inst, "_zod", {
-      value: inst._zod ?? {},
-      enumerable: false,
-    });
+    if (!inst._zod) {
+      Object.defineProperty(inst, "_zod", {
+        value: {
+          def,
+          constr: _,
+          traits: new Set(),
+        },
+        enumerable: false,
+      });
+    }
 
-    inst._zod.traits ??= new Set();
+    if (inst._zod.traits.has(name)) {
+      return;
+    }
 
     inst._zod.traits.add(name);
+
     initializer(inst, def);
+
     // support prototype modifications
-    for (const k in _.prototype) {
-      if (!(k in inst)) Object.defineProperty(inst, k, { value: _.prototype[k].bind(inst) });
+    const proto = _.prototype;
+    const keys = Object.keys(proto);
+    for (let i = 0; i < keys.length; i++) {
+      const k = keys[i]!;
+      if (!(k in inst)) {
+        (inst as any)[k] = proto[k].bind(inst);
+      }
     }
-    inst._zod.constr = _;
-    inst._zod.def = def;
   }
 
   // doesn't work if Parent has a constructor with arguments
@@ -69,8 +82,18 @@ export type $brand<T extends string | number | symbol = string | number | symbol
   [$brand]: { [k in T]: true };
 };
 
-export type $ZodBranded<T extends schemas.SomeType, Brand extends string | number | symbol> = T &
-  Record<"_zod", Record<"output", output<T> & $brand<Brand>>>;
+export type $ZodBranded<
+  T extends schemas.SomeType,
+  Brand extends string | number | symbol,
+  Dir extends "in" | "out" | "inout" = "out",
+> = T &
+  (Dir extends "inout"
+    ? { _zod: { input: input<T> & $brand<Brand>; output: output<T> & $brand<Brand> } }
+    : Dir extends "in"
+      ? { _zod: { input: input<T> & $brand<Brand> } }
+      : { _zod: { output: output<T> & $brand<Brand> } });
+
+export type $ZodNarrow<T extends schemas.SomeType, Out> = T & { _zod: { output: Out } };
 
 export class $ZodAsyncError extends Error {
   constructor() {
@@ -107,7 +130,22 @@ export interface $ZodConfig {
   jitless?: boolean | undefined;
 }
 
-export const globalConfig: $ZodConfig = {};
+interface GlobalThisWithConfig {
+  /**
+   * The globalConfig instance shared across both CommonJS and ESM builds.
+   * Attached to `globalThis` (mirroring `__zod_globalRegistry`) so that a
+   * single config object is used regardless of how Zod is loaded — CJS,
+   * ESM, multiple bundles in a monorepo, etc. This means `z.config(...)`
+   * applied against any one instance is observed by all of them, and
+   * pre-populating it before Zod loads (e.g. `globalThis.__zod_globalConfig
+   * = { jitless: true }` in an inline script) takes effect immediately on
+   * import.
+   */
+  __zod_globalConfig?: $ZodConfig;
+}
+
+(globalThis as GlobalThisWithConfig).__zod_globalConfig ??= {};
+export const globalConfig: $ZodConfig = (globalThis as GlobalThisWithConfig).__zod_globalConfig!;
 
 export function config(newConfig?: Partial<$ZodConfig>): $ZodConfig {
   if (newConfig) Object.assign(globalConfig, newConfig);

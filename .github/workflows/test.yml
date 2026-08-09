@@ -9,14 +9,19 @@ on:
       - main
       - v4
 
+permissions:
+  contents: read
+
 jobs:
   test-node:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        node: ["latest"]
-        typescript: ["5.5", "latest"]
-    name: Test with TypeScript ${{ matrix.typescript }} on Node ${{ matrix.node }}
+        os: [ubuntu-latest]
+        node: ["lts/*"]
+        typescript: ["5.5", "6", "latest"]
+    name: Test with TypeScript ${{ matrix.typescript }} on Node ${{ matrix.node }} (${{ matrix.os }})
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,10 +29,15 @@ jobs:
           node-version: ${{ matrix.node }}
       - uses: pnpm/action-setup@v4
       - run: pnpm install
-      - run: pnpm add typescript@${{ matrix.typescript }} -w
+      # Build with the repo-pinned TypeScript: zshy uses the classic compiler API,
+      # which TypeScript 7 no longer ships. The matrix version applies to the tests.
       - run: pnpm build
+      - run: pnpm add typescript@${{ matrix.typescript }} -w
       - run: pnpm test
+      # test-resolution.ts shells out to zshy, so it can't run under TypeScript 7.
       - run: pnpm run --filter @zod/resolution test:all
+        if: matrix.typescript != 'latest'
+      - run: pnpm run --filter @zod/integration test:all
 
   lint:
     runs-on: ubuntu-latest
@@ -44,3 +54,15 @@ jobs:
       - run: pnpm install
       - run: pnpm format:check
       - run: pnpm lint:check
+
+  check-circular:
+    runs-on: ubuntu-latest
+    name: Check for circular dependencies
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "latest"
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install
+      - run: pnpm check:circular

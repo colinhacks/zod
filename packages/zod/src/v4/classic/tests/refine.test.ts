@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, expectTypeOf, test } from "vitest";
 import * as z from "zod/v4";
 
 describe("basic refinement functionality", () => {
@@ -414,86 +414,114 @@ describe("chained refinements", () => {
     };
     expect(objectSchema.parse(validData)).toEqual(validData);
   });
-});
 
-// Commented tests can be uncommented once type-checking issues are resolved
-/*
-describe("type refinement", () => {
-  test("refinement type guard", () => {
-    const validationSchema = z.object({
-      a: z.string().refine((s): s is "a" => s === "a"),
+  test("should run superRefine validation even when base schema validation fails when 'when' is defined and returns true", () => {
+    const baseSchema = z.object({
+      foo: z.number(),
+      bar: z.number(),
     });
-    type Input = z.input<typeof validationSchema>;
-    type Schema = z.infer<typeof validationSchema>;
 
-    expectTypeOf<Input["a"]>().not.toEqualTypeOf<"a">();
-    expectTypeOf<Input["a"]>().toEqualTypeOf<string>();
+    const schema = baseSchema.superRefine(
+      (data, ctx) => {
+        if (data.foo > 10) {
+          ctx.addIssue({
+            code: "custom",
+            message: "foo must be less than 10",
+          });
+        }
+      },
+      {
+        when: ({ value }) => baseSchema.pick({ foo: true }).safeParse(value).success,
+      }
+    );
 
-    expectTypeOf<Schema["a"]>().toEqualTypeOf<"a">();
-    expectTypeOf<Schema["a"]>().not.toEqualTypeOf<string>();
+    const result = schema.safeParse({
+      foo: 11,
+    });
+    expect(result.success).toEqual(false);
+
+    if (!result.success) {
+      expect(result.error.issues.length).toEqual(2);
+      expect(result.error.issues[0].message).toEqual("Invalid input: expected number, received undefined");
+      expect(result.error.issues[1].message).toEqual("foo must be less than 10");
+    }
   });
 
-  test("superRefine - type narrowing", () => {
-    type NarrowType = { type: string; age: number };
-    const schema = z
-      .object({
-        type: z.string(),
-        age: z.number(),
-      })
-      .nullable()
-      .superRefine((arg, ctx): arg is NarrowType => {
-        if (!arg) {
-          // still need to make a call to ctx.addIssue
+  test("should not run superRefine validation when 'when' is defined and returns false", () => {
+    const baseSchema = z.object({
+      foo: z.number(),
+      bar: z.number(),
+    });
+
+    const schema = baseSchema.superRefine(
+      (data, ctx) => {
+        if (data.foo > 10) {
           ctx.addIssue({
-            input: arg,
             code: "custom",
-            message: "cannot be null",
-            fatal: true,
+            message: "foo must be less than 10",
           });
-          return false;
         }
-        return true;
-      });
+      },
+      {
+        when: ({ value }) => baseSchema.safeParse(value).success,
+      }
+    );
 
-    expectTypeOf<z.infer<typeof schema>>().toEqualTypeOf<NarrowType>();
+    const result = schema.safeParse({
+      foo: 11,
+    });
+    expect(result.success).toEqual(false);
 
-    expect(schema.safeParse({ type: "test", age: 0 }).success).toEqual(true);
-    expect(schema.safeParse(null).success).toEqual(false);
-  });
-
-  test("chained mixed refining types", () => {
-    type firstRefinement = { first: string; second: number; third: true };
-    type secondRefinement = { first: "bob"; second: number; third: true };
-    type thirdRefinement = { first: "bob"; second: 33; third: true };
-    const schema = z
-      .object({
-        first: z.string(),
-        second: z.number(),
-        third: z.boolean(),
-      })
-      .nullable()
-      .refine((arg): arg is firstRefinement => !!arg?.third)
-      .superRefine((arg, ctx): arg is secondRefinement => {
-        expectTypeOf<typeof arg>().toEqualTypeOf<firstRefinement>();
-        if (arg.first !== "bob") {
-          ctx.addIssue({
-            input: arg,
-            code: "custom",
-            message: "`first` property must be `bob`",
-          });
-          return false;
-        }
-        return true;
-      })
-      .refine((arg): arg is thirdRefinement => {
-        expectTypeOf<typeof arg>().toEqualTypeOf<secondRefinement>();
-        return arg.second === 33;
-      });
-
-    expectTypeOf<z.infer<typeof schema>>().toEqualTypeOf<thirdRefinement>();
+    if (!result.success) {
+      expect(result.error.issues.length).toEqual(1);
+      expect(result.error.issues[0].message).toEqual("Invalid input: expected number, received undefined");
+    }
   });
 });
-*/
+
+describe("type refinement with type guards", () => {
+  test("type guard narrows output type", () => {
+    const schema = z.string().refine((s): s is "a" => s === "a");
+
+    expectTypeOf<z.input<typeof schema>>().toEqualTypeOf<string>();
+    expectTypeOf<z.output<typeof schema>>().toEqualTypeOf<"a">();
+  });
+
+  test("non-type-guard refine does not narrow", () => {
+    const schema = z.string().refine((s) => s.length > 0);
+
+    expectTypeOf<z.input<typeof schema>>().toEqualTypeOf<string>();
+    expectTypeOf<z.output<typeof schema>>().toEqualTypeOf<string>();
+  });
+
+  // TODO: Implement type narrowing for superRefine
+  // test("superRefine - type narrowing", () => {
+  //   type NarrowType = { type: string; age: number };
+  //   const schema = z
+  //     .object({
+  //       type: z.string(),
+  //       age: z.number(),
+  //     })
+  //     .nullable()
+  //     .superRefine((arg, ctx): arg is NarrowType => {
+  //       if (!arg) {
+  //         ctx.addIssue({
+  //           input: arg,
+  //           code: "custom",
+  //           message: "cannot be null",
+  //           fatal: true,
+  //         });
+  //         return false;
+  //       }
+  //       return true;
+  //     });
+  //
+  //   expectTypeOf<z.infer<typeof schema>>().toEqualTypeOf<NarrowType>();
+  //
+  //   expect(schema.safeParse({ type: "test", age: 0 }).success).toEqual(true);
+  //   expect(schema.safeParse(null).success).toEqual(false);
+  // });
+});
 
 test("when", () => {
   const schema = z

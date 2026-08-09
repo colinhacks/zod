@@ -61,3 +61,46 @@ test("branded record", () => {
   type recordWithBrandedNumberKeys = z.infer<typeof recordWithBrandedNumberKeys>;
   expectTypeOf<recordWithBrandedNumberKeys>().toEqualTypeOf<Record<string & z.core.$brand<"SomeBrand">, number>>();
 });
+
+test("brand direction: out (default)", () => {
+  const schema = z.string().brand<"A">();
+  type Input = z.input<typeof schema>;
+  type Output = z.output<typeof schema>;
+
+  // output is branded
+  expectTypeOf<Output>().toEqualTypeOf<string & z.$brand<"A">>();
+  // input is NOT branded (default behavior)
+  expectTypeOf<Input>().toEqualTypeOf<string>();
+});
+
+test("brand direction: out (explicit)", () => {
+  const schema = z.string().brand<"A", "out">();
+  type Input = z.input<typeof schema>;
+  type Output = z.output<typeof schema>;
+
+  // output is branded
+  expectTypeOf<Output>().toEqualTypeOf<string & z.$brand<"A">>();
+  // input is NOT branded
+  expectTypeOf<Input>().toEqualTypeOf<string>();
+});
+
+test("brand direction: in", () => {
+  const schema = z.string().brand<"A", "in">();
+  type Input = z.input<typeof schema>;
+  type Output = z.output<typeof schema>;
+
+  // input is branded
+  expectTypeOf<Input>().toEqualTypeOf<string & z.$brand<"A">>();
+  // output is NOT branded
+  expectTypeOf<Output>().toEqualTypeOf<string>();
+});
+
+test("brand direction: inout", () => {
+  const schema = z.string().brand<"A", "inout">();
+  type Input = z.input<typeof schema>;
+  type Output = z.output<typeof schema>;
+
+  // both are branded
+  expectTypeOf<Input>().toEqualTypeOf<string & z.$brand<"A">>();
+  expectTypeOf<Output>().toEqualTypeOf<string & z.$brand<"A">>();
+});

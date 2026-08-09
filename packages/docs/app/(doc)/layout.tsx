@@ -6,13 +6,16 @@ import type { ReactNode } from "react";
 import { SidebarItem, SidebarSeparator } from "@/components/sidebar-item";
 import { SidebarLogo } from "@/components/sidebar-logo";
 
-const layoutProps: DocsLayoutProps = {
+export const dynamic = "force-static";
+
+export const layoutProps: DocsLayoutProps = {
   ...baseOptions,
   tree: source.pageTree,
 
   sidebar: {
     hideSearch: false,
     collapsible: false,
+    prefetch: false, // Disable prefetching to prevent all pages from being fetched on every page load
     components: {
       Item: SidebarItem,
       Separator: SidebarSeparator,

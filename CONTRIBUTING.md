@@ -1,7 +1,7 @@
 # Contributing
 
 When it comes to open source, there are different ways you can contribute, all
-of which are valuable. Here's few guidelines that should help you as you prepare
+of which are valuable. Here's a few guidelines that should help you as you prepare
 your contribution.
 
 ## Initial steps
@@ -21,7 +21,7 @@ Before you start working on a contribution, create an issue describing what you 
 
 ## Development
 
-The following steps will get you setup to contribute changes to this repo:
+The following steps will get you set up to contribute changes to this repo:
 
 1. Fork this repo.
 
@@ -31,6 +31,26 @@ The following steps will get you setup to contribute changes to this repo:
 
 4. Start playing with the code! You can do some simple experimentation in [`play.ts`](play.ts) (see `pnpm play` below) or start implementing a feature right away.
 
+### Building Docs Locally
+
+#### Dev Server
+
+To start a dev server, run:
+
+```sh
+pnpm run --filter=@zod/docs dev
+```
+
+#### Production Build
+
+To build `@zod/docs` for production, you will need to set the `GITHUB_TOKEN` environment variable to a personal access token. [Create a granular personal access token](https://github.com/settings/personal-access-tokens/new) and accept the defaults (no extra permissions are necessary). Then:
+
+```sh
+export GITHUB_TOKEN=your_token_here # persists in shell session
+pnpm run --filter=@zod/docs build
+```
+
+> The `GITHUB_TOKEN` environment variable is used to fetch stargazer counts of projects in Zod's ecosystem.
 
 ## Alternative: VSCode Dev Container setup
 
@@ -41,7 +61,7 @@ For an officially supported isolated dev environment that automatically installs
 3. Click `Create a new volume...` and name it `zod` and the folder name as `zod`.
 
 Note: if you can't see `Dev Containers` in the `F1` menu, follow [this guide](https://code.visualstudio.com/docs/devcontainers/tutorial) to install the needed extension.
-In the OSS version of VSCode the extension may be not available.
+In the OSS version of VSCode the extension may not be available.
 
 ### Commands
 
@@ -77,7 +97,7 @@ Zod uses Vitest for testing. After implementing your contribution, write tests f
 
 ### Documentation
 
-The Zod documentation lives in the README.md. Be sure to document any API changes you implement.
+The documentation site lives in `packages/docs` with content located at `packages/docs/content`. Be sure to document any API changes you implement.
 
 ## License
 

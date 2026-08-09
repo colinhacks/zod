@@ -27,17 +27,44 @@ test("object intersection: loose", () => {
   expect(() => C.parse({ a: "foo" })).toThrow();
 });
 
-test("object intersection: strict", () => {
+test("object intersection: strict + strip", () => {
   const A = z.strictObject({ a: z.string() });
   const B = z.object({ b: z.string() });
 
-  const C = z.intersection(A, B); // BaseC.merge(HasID);
+  const C = z.intersection(A, B);
   type C = z.infer<typeof C>;
   expectTypeOf<C>().toEqualTypeOf<{ a: string } & { b: string }>();
-  const data = { a: "foo", b: "foo", c: "extra" };
 
-  const result = C.safeParse(data);
-  expect(result.success).toEqual(false);
+  // Keys recognized by either side should work
+  expect(C.parse({ a: "foo", b: "bar" })).toEqual({ a: "foo", b: "bar" });
+
+  // Extra keys are stripped (follows strip behavior from B)
+  expect(C.parse({ a: "foo", b: "bar", c: "extra" })).toEqual({ a: "foo", b: "bar" });
+});
+
+test("object intersection: strict + strict", () => {
+  const A = z.strictObject({ a: z.string() });
+  const B = z.strictObject({ b: z.string() });
+
+  const C = z.intersection(A, B);
+
+  // Keys recognized by either side should work
+  expect(C.parse({ a: "foo", b: "bar" })).toEqual({ a: "foo", b: "bar" });
+
+  // Keys unrecognized by BOTH sides should error
+  const result = C.safeParse({ a: "foo", b: "bar", c: "extra" });
+  expect(result.error?.issues).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "unrecognized_keys",
+        "keys": [
+          "c",
+        ],
+        "message": "Unrecognized key: "c"",
+        "path": [],
+      },
+    ]
+  `);
 });
 
 test("deep intersection", () => {

@@ -1,7 +1,7 @@
 import { blog } from "@/loaders/source";
 import Link from "next/link";
 
-export const revalidate = 3600;
+export const revalidate = false;
 
 export default function BlogIndexPage() {
   const posts = blog.getPages() as any[];

@@ -13,7 +13,7 @@ export interface $ZodCheckDef {
   error?: errors.$ZodErrorMap<never> | undefined;
   /** If true, no later checks will be executed if this check fails. Default `false`. */
   abort?: boolean | undefined;
-  /** If provided, this check will only be executed if the function returns `true`. Defaults to `payload => z.util.isAborted(payload)`. */
+  /** If provided, the check runs only when this returns `true`. By default, it is skipped if prior parsing produced aborting issues. */
   when?: ((payload: schemas.ParsePayload) => boolean) | undefined;
 }
 
@@ -84,7 +84,7 @@ export const $ZodCheckLessThan: core.$constructor<$ZodCheckLessThan> = /*@__PURE
       payload.issues.push({
         origin,
         code: "too_big",
-        maximum: def.value as number,
+        maximum: typeof def.value === "object" ? def.value.getTime() : def.value,
         input: payload.value,
         inclusive: def.inclusive,
         inst,
@@ -135,7 +135,7 @@ export const $ZodCheckGreaterThan: core.$constructor<$ZodCheckGreaterThan> = /*@
       payload.issues.push({
         origin,
         code: "too_small",
-        minimum: def.value as number,
+        minimum: typeof def.value === "object" ? def.value.getTime() : def.value,
         input: payload.value,
         inclusive: def.inclusive,
         inst,
@@ -323,6 +323,7 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
               note: "Integers must be within the safe integer range.",
               inst,
               origin,
+              inclusive: true,
               continue: !def.abort,
             });
           } else {
@@ -334,6 +335,7 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
               note: "Integers must be within the safe integer range.",
               inst,
               origin,
+              inclusive: true,
               continue: !def.abort,
             });
           }
@@ -360,7 +362,9 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
           input,
           code: "too_big",
           maximum,
+          inclusive: true,
           inst,
+          continue: !def.abort,
         } as any);
       }
     };
@@ -422,7 +426,9 @@ export const $ZodCheckBigIntFormat: core.$constructor<$ZodCheckBigIntFormat> = /
           input,
           code: "too_big",
           maximum,
+          inclusive: true,
           inst,
+          continue: !def.abort,
         } as any);
       }
     };

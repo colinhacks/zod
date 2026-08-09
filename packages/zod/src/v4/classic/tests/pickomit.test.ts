@@ -114,8 +114,17 @@ test("pick/omit/required/partial - do not allow unknown keys", () => {
     age: z.number(),
   });
 
+  // Mixed valid + invalid keys
+  // @ts-expect-error
   expect(() => schema.pick({ name: true, asdf: true }).safeParse({})).toThrow();
+  // @ts-expect-error
+  expect(() => schema.omit({ name: true, asdf: true }).safeParse({})).toThrow();
+  // @ts-expect-error
+  expect(() => schema.partial({ name: true, asdf: true }).safeParse({})).toThrow();
+  // @ts-expect-error
+  expect(() => schema.required({ name: true, asdf: true }).safeParse({})).toThrow();
 
+  // Only invalid keys
   // @ts-expect-error
   expect(() => schema.pick({ $unknown: true }).safeParse({})).toThrow();
   // @ts-expect-error
@@ -124,4 +133,79 @@ test("pick/omit/required/partial - do not allow unknown keys", () => {
   expect(() => schema.required({ $unknown: true }).safeParse({})).toThrow();
   // @ts-expect-error
   expect(() => schema.partial({ $unknown: true }).safeParse({})).toThrow();
+});
+
+test("pick - throws error on schema with refinements", () => {
+  const baseSchema = z.object({
+    id: z.string(),
+    name: z.string(),
+    items: z.string().array(),
+  });
+
+  const refinedSchema = baseSchema.superRefine((val, ctx) => {
+    if (val.items.length === 0) {
+      ctx.addIssue({
+        message: "Must have at least one item",
+        code: "custom",
+        path: ["items"],
+      });
+    }
+  });
+
+  expect(() => refinedSchema.pick({ name: true })).toThrow(
+    ".pick() cannot be used on object schemas containing refinements"
+  );
+});
+
+test("omit - throws error on schema with refinements", () => {
+  const baseSchema = z.object({
+    id: z.string(),
+    name: z.string(),
+    items: z.string().array(),
+  });
+
+  const refinedSchema = baseSchema.superRefine((val, ctx) => {
+    if (val.items.length === 0) {
+      ctx.addIssue({
+        message: "Must have at least one item",
+        code: "custom",
+        path: ["items"],
+      });
+    }
+  });
+
+  expect(() => refinedSchema.omit({ id: true })).toThrow(
+    ".omit() cannot be used on object schemas containing refinements"
+  );
+});
+
+test("pick - throws error on schema with refine", () => {
+  const baseSchema = z.object({
+    password: z.string(),
+    confirmPassword: z.string(),
+  });
+
+  const refinedSchema = baseSchema.refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords must match",
+  });
+
+  expect(() => refinedSchema.pick({ password: true })).toThrow(
+    ".pick() cannot be used on object schemas containing refinements"
+  );
+});
+
+test("omit - throws error on schema with refine", () => {
+  const baseSchema = z.object({
+    password: z.string(),
+    confirmPassword: z.string(),
+    email: z.string(),
+  });
+
+  const refinedSchema = baseSchema.refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords must match",
+  });
+
+  expect(() => refinedSchema.omit({ email: true })).toThrow(
+    ".omit() cannot be used on object schemas containing refinements"
+  );
 });

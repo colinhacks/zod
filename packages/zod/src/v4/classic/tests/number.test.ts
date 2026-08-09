@@ -153,6 +153,36 @@ test(".multipleOf() with negative divisor", () => {
   expect(() => schema.parse(7.5)).toThrow();
 });
 
+test(".multipleOf() with scientific notation (multi-digit exponents)", () => {
+  // Regression test for https://github.com/colinhacks/zod/pull/5687
+  // The regex was using \d? which only matches single-digit exponents
+  const schema = z.number().multipleOf(1e-10);
+
+  // These should all pass - they are valid multiples of 1e-10
+  expect(schema.parse(1e-10)).toEqual(1e-10);
+  expect(schema.parse(5e-10)).toEqual(5e-10);
+  expect(schema.parse(1e-9)).toEqual(1e-9); // 10 * 1e-10
+
+  // Test with 1e-15 (exponent = 15, two digits)
+  const schema15 = z.number().multipleOf(1e-15);
+  expect(schema15.parse(1e-15)).toEqual(1e-15);
+  expect(schema15.parse(3e-15)).toEqual(3e-15);
+});
+
+test(".multipleOf() with small floats / scientific notation (#5792)", () => {
+  const schema = z.number().multipleOf(1e-7);
+
+  // Valid multiples (integer * 1e-7)
+  expect(schema.safeParse(0).success).toBe(true);
+  expect(schema.safeParse(1e-7).success).toBe(true);
+  expect(schema.safeParse(2e-7).success).toBe(true);
+  expect(schema.safeParse(3e-7).success).toBe(true);
+
+  // Invalid — 2.5 and 1.5 are not integers
+  expect(schema.safeParse(2.5e-7).success).toBe(false);
+  expect(schema.safeParse(1.5e-7).success).toBe(false);
+});
+
 test(".step() validation", () => {
   const schemaPointOne = z.number().step(0.1);
   const schemaPointZeroZeroZeroOne = z.number().step(0.0001);
@@ -262,6 +292,31 @@ test("string format methods", () => {
   const a = z.int32().min(5);
   expect(a.parse(6)).toEqual(6);
   expect(() => a.parse(1)).toThrow();
+});
+
+test("negative zero edge case", () => {
+  const schema = z.number();
+  const negativeZero = -0;
+  const positiveZero = 0;
+
+  // Both -0 and 0 should be valid (parse succeeds)
+  expect(schema.safeParse(negativeZero).success).toBe(true);
+  expect(schema.safeParse(positiveZero).success).toBe(true);
+  // Note: -0 is normalized to 0 after parsing
+  expect(schema.parse(negativeZero) === 0).toBe(true);
+  expect(schema.parse(positiveZero)).toEqual(0);
+
+  // With positive() constraint, both should be invalid (0 is not positive)
+  const positiveSchema = z.number().positive();
+  expect(() => positiveSchema.parse(negativeZero)).toThrow();
+  expect(() => positiveSchema.parse(positiveZero)).toThrow();
+
+  // With nonnegative(), both should be valid (0 is non-negative)
+  const nonnegativeSchema = z.number().nonnegative();
+  expect(nonnegativeSchema.safeParse(negativeZero).success).toBe(true);
+  expect(nonnegativeSchema.safeParse(positiveZero).success).toBe(true);
+  expect(nonnegativeSchema.parse(negativeZero) === 0).toBe(true);
+  expect(nonnegativeSchema.parse(positiveZero)).toEqual(0);
 });
 
 test("error customization", () => {

@@ -248,6 +248,7 @@ z.uuid();
 z.url();
 z.httpUrl();       // http or https URLs only
 z.hostname();
+z.e164();          // E.164 phone numbers
 z.emoji();         // validates a single emoji character
 z.base64();
 z.base64url();
@@ -259,6 +260,7 @@ z.cuid2();
 z.ulid();
 z.ipv4();
 z.ipv6();
+z.mac();
 z.cidrv4();        // ipv4 CIDR block
 z.cidrv6();        // ipv6 CIDR block
 z.hash("sha256");  // or "sha1", "sha384", "sha512", "md5"
@@ -388,6 +390,19 @@ new URL("HTTP://ExAmPle.com:80/./a/../b?X=1#f oo").href
 // => "http://example.com/b?X=1#f%20oo"
 ```
 
+### Phone numbers
+
+To validate phone numbers in E.164 format:
+
+```ts
+const phone = z.e164();
+
+phone.parse("+15555555555"); // ✅
+phone.parse("555-555-5555"); // ❌
+```
+
+This schema validates strings with a leading `+`, a non-zero country code, and 7 to 15 digits total.
+
 ### ISO datetimes
 
 As you may have noticed, Zod string includes a few date/time related validations. These validations are regular expression based, so they are not as strict as a full date/time library. However, they are very convenient for validating user input.
@@ -466,7 +481,7 @@ date.parse("2020-01-32"); // ❌
 
 ### ISO times
 
-The `z.iso.time()` method validates strings in the format `HH:MM[:SS[.s+]]`. By default seconds are optional, as are sub-second deciams.
+The `z.iso.time()` method validates strings in the format `HH:MM[:SS[.s+]]`. By default seconds are optional, as are sub-second decimals.
 
 ```ts
 const time = z.iso.time();
@@ -487,10 +502,10 @@ Use the `precision` parameter to constrain the allowable decimal precision.
 
 ```ts
 z.iso.time({ precision: -1 }); // HH:MM (minute precision)
-z.iso.time({ precision: 0 }); // HH:MM:SS (second precision)
-z.iso.time({ precision: 1 }); // HH:MM:SS.s (decisecond precision)
-z.iso.time({ precision: 2 }); // HH:MM:SS.ss (centisecond precision)
-z.iso.time({ precision: 3 }); // HH:MM:SS.sss (millisecond precision)
+z.iso.time({ precision: 0 });  // HH:MM:SS (second precision)
+z.iso.time({ precision: 1 });  // HH:MM:SS.s (decisecond precision)
+z.iso.time({ precision: 2 });  // HH:MM:SS.ss (centisecond precision)
+z.iso.time({ precision: 3 });  // HH:MM:SS.sss (millisecond precision)
 ```
 
 ### IP addresses
@@ -508,11 +523,27 @@ ipv6.parse("2001:db8:85a3::8a2e:370:7334"); // ✅
 Validate IP address ranges specified with [CIDR notation](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing).
 
 ```ts
-const cidrv4 = z.string().cidrv4();
+const cidrv4 = z.cidrv4();
 cidrv4.parse("192.168.0.0/24"); // ✅
 
-const cidrv6 = z.string().cidrv6();
+const cidrv6 = z.cidrv6();
 cidrv6.parse("2001:db8::/32"); // ✅
+```
+
+### MAC Addresses
+
+Validate standard 48-bit MAC address [IEEE 802](https://en.wikipedia.org/wiki/MAC_address).
+
+```ts
+const mac = z.mac(); 
+mac.parse("00:1A:2B:3C:4D:5E");  // ✅
+mac.parse("00-1a-2b-3c-4d-5e");  // ❌ colon-delimited by default
+mac.parse("001A:2B3C:4D5E");     // ❌ standard formats only
+mac.parse("00:1A:2b:3C:4d:5E");  // ❌ no mixed case
+
+// custom delimiter
+const dashMac = z.mac({ delimiter: "-" });
+dashMac.parse("00-1A-2B-3C-4D-5E"); // ✅
 ```
 
 ### JWTs
@@ -563,7 +594,7 @@ z.hash("sha256", { enc: "base64url" }); // base64url encoding (no padding)
 To define your own string formats:
 
 ```ts
-const coolId = z.stringFormat("cool-id", ()=>{
+const coolId = z.stringFormat("cool-id", (val)=>{
   // arbitrary validation here
   return val.length === 100 && val.startsWith("cool-");
 });
@@ -588,7 +619,7 @@ myFormat.parse("invalid input!");
 
 ## Template literals
 
-> **New** — Introduced in `zod@4.0`.
+> Introduced in `zod@4.0`.
 
 To define a template literal schema:
 
@@ -637,7 +668,7 @@ z.number().gt(5);
 z.number().gte(5);                     // alias .min(5)
 z.number().lt(5);
 z.number().lte(5);                     // alias .max(5)
-z.number().positive();       
+z.number().positive();                 // alias .gt(0)
 z.number().nonnegative();    
 z.number().negative(); 
 z.number().nonpositive(); 
@@ -650,7 +681,7 @@ z.number().check(z.gt(5));
 z.number().check(z.gte(5));            // alias .minimum(5)
 z.number().check(z.lt(5));
 z.number().check(z.lte(5));            // alias .maximum(5)
-z.number().check(z.positive()); 
+z.number().check(z.positive());        // alias .gt(0)
 z.number().check(z.nonnegative()); 
 z.number().check(z.negative()); 
 z.number().check(z.nonpositive()); 
@@ -692,7 +723,7 @@ z.bigint().gt(5n);
 z.bigint().gte(5n);                    // alias `.min(5n)`
 z.bigint().lt(5n);
 z.bigint().lte(5n);                    // alias `.max(5n)`
-z.bigint().positive(); 
+z.bigint().positive();                 // alias `.gt(0n)`
 z.bigint().nonnegative(); 
 z.bigint().negative(); 
 z.bigint().nonpositive(); 
@@ -705,10 +736,10 @@ z.bigint().check(z.gt(5n));
 z.bigint().check(z.gte(5n));           // alias `.minimum(5n)`
 z.bigint().check(z.lt(5n));
 z.bigint().check(z.lte(5n));           // alias `.maximum(5n)`
-z.bigint().check(z.positive()); 
-z.bigint().check(z.nonnegative()); 
-z.bigint().check(z.negative()); 
-z.bigint().check(z.nonpositive()); 
+z.bigint().check(z.positive());        // alias `.gt(0n)`
+z.bigint().check(z.nonnegative());
+z.bigint().check(z.negative());
+z.bigint().check(z.nonpositive());
 z.bigint().check(z.multipleOf(5n));    // alias `.step(5n)`
 ```
 
@@ -791,23 +822,36 @@ FishEnum.parse("Swordfish"); // => ❌
   ```
 </Callout>
 
-Enum-like object literals (`{ [key: string]: string | number }`) are supported.
+Enum-like object literals (`{ [key: string]: string | number }`) are supported. 
 
 ```ts
 const Fish = {
-  Salmon: "Salmon",
-  Tuna: "Tuna"
+  Salmon: 0,
+  Tuna: 1
 } as const
 
 const FishEnum = z.enum(Fish)
-FishEnum.parse("Salmon"); // => "Salmon"
-FishEnum.parse("Swordfish"); // => ❌
+FishEnum.parse(Fish.Salmon); // => ✅
+FishEnum.parse(0); // => ✅
+FishEnum.parse(2); // => ❌
 ```
 
-You can also pass in an externally-declared TypeScript enum. 
+You can also pass in an externally-declared TypeScript enum.
+
+```ts
+enum Fish {
+  Salmon = 0,
+  Tuna = 1
+}
+
+const FishEnum = z.enum(Fish);
+FishEnum.parse(Fish.Salmon); // => ✅
+FishEnum.parse(0); // => ✅
+FishEnum.parse(2); // => ❌
+```
 
 <Callout>
-**Zod 4** — This replaces the `z.nativeEnum()` API in Zod 3. 
+Use `z.enum()` for externally declared TypeScript enums. The `z.nativeEnum()` API is deprecated.
 
 Note that using TypeScript's `enum` keyword is [not recommended](https://www.totaltypescript.com/why-i-dont-like-typescript-enums). 
 </Callout>
@@ -885,9 +929,9 @@ const SalmonAndTroutOnly = FishEnum.extract(["Salmon", "Trout"]);
 
 ## Stringbools [#stringbool]
 
-> **💎 New in Zod 4**
+> Introduced in `zod@4.0`.
 
-In some cases (e.g. parsing environment variables) it's valuable to parse certain string "boolish" values to a plain `boolean` value. To support this, Zod 4 introduces `z.stringbool()`:
+In some cases (e.g. parsing environment variables) it's valuable to parse certain string "boolish" values to a plain `boolean` value. Use `z.stringbool()` for this:
 
 ```ts
 const strbool = z.stringbool();
@@ -1107,15 +1151,16 @@ LooseDog.parse({ name: "Yeller", extraKey: true });
 
 To define a *catchall schema* that will be used to validate any unrecognized keys:
 
-
-
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts z.object
-const DogWithStrings = z.object({
-  name: z.string(),
-  age: z.number().optional(),
-}).catchall(z.string());
+const DogWithStrings = z
+  .object({
+    name: z.string(),
+    age: z.number().optional(),
+  })
+  .catchall(z.string());
+
 
 DogWithStrings.parse({ name: "Yeller", extraKey: "extraValue" }); // ✅
 DogWithStrings.parse({ name: "Yeller", extraKey: 42 }); // ❌
@@ -1229,7 +1274,7 @@ This approach has a few advantages:
 
 ### `.safeExtend()`
 
-The `.safeExtend()` method works similarly to `.extend()`, but it won't let you overwrite an existing properly with a non-assignable schema. In other words, the result of `.safeExtend()` will have an inferred type that [`extends`](https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#conditional-type-constraints) the original (in the TypeScript sense).
+The `.safeExtend()` method works similarly to `.extend()`, but it won't let you overwrite an existing property with a non-assignable schema. In other words, the result of `.safeExtend()` will have an inferred type that [`extends`](https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#conditional-type-constraints) the original (in the TypeScript sense).
 
 ```ts
 z.object({ a: z.string() }).safeExtend({ a: z.string().min(5) }); // ✅
@@ -1670,6 +1715,38 @@ console.log(optionalUrl.safeParse("not a valid url").success); // false
 
 <br/> */}
 
+## Exclusive unions (XOR)
+
+An exclusive union (XOR) is a union where exactly one option must match. Unlike regular unions that succeed when any option matches, `z.xor()` fails if zero options match OR if multiple options match.
+
+```ts
+const schema = z.xor([z.string(), z.number()]);
+
+schema.parse("hello"); // ✅ passes
+schema.parse(42);      // ✅ passes
+schema.parse(true);    // ❌ fails (zero matches)
+```
+
+This is useful when you want to ensure mutual exclusivity between options:
+
+```ts
+// Validate that exactly ONE of these matches
+const payment = z.xor([
+  z.object({ type: z.literal("card"), cardNumber: z.string() }),
+  z.object({ type: z.literal("bank"), accountNumber: z.string() }),
+]);
+
+payment.parse({ type: "card", cardNumber: "1234" }); // ✅ passes
+```
+
+If the input could match multiple options, `z.xor()` will fail:
+
+```ts
+const overlapping = z.xor([z.string(), z.any()]);
+overlapping.parse("hello"); // ❌ fails (matches both string and any)
+```
+
+
 ## Discriminated unions
 
 A [discriminated union](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions) is a special kind of union in which a) all the options are object schemas that b) share a particular key (the "discriminator"). Based on the value of the discriminator key, TypeScript is able to "narrow" the type signature as you'd expect.
@@ -1702,20 +1779,6 @@ const MyResult = z.discriminatedUnion("status", [
 
 Each option should be an *object schema* whose discriminator prop (`status` in the example above) corresponds to some literal value or set of values, usually `z.enum()`, `z.literal()`, `z.null()`, or `z.undefined()`.
 
-{/* 
-<Callout>
-  In Zod 3, you were required to specify the discriminator key as the first argument. This is no longer necessary, as Zod can now automatically detect the discriminator key.
-
-  ```ts
-  const MyResult = z.discriminatedUnion("status", [
-    z.object({ status: z.literal("success"), data: z.string() }),
-    z.object({ status: z.literal("failed"), error: z.string() }),
-  ]);
-  ```
-
-  If Zod can't find a discriminator key, it will throw an error at schema creation time.
-</Callout> */}
-
 <Accordions type="single">
 <Accordion title="Nesting discriminated unions">
 
@@ -1737,6 +1800,7 @@ Each option should be an *object schema* whose discriminator prop (`status` in t
 
 </Accordion>
 </Accordions>
+
 
 ## Intersections
 
@@ -1772,6 +1836,8 @@ type EmployedPerson = z.infer<typeof EmployedPerson>;
 
 Record schemas are used to validate types such as `Record<string, string>`.
 
+### `z.record`
+
 ```ts
 const IdCache = z.record(z.string(), z.string());
 type IdCache = z.infer<typeof IdCache>; // Record<string, string>
@@ -1798,8 +1864,34 @@ const Person = z.record(Keys, z.string());
 // { id: string; name: string; email: string }
 ```
 
+Zod supports numeric keys inside records in a way that closely mirrors TypeScript itself. A `number` schema, when used as a record key, will validate that the key is a valid "numeric string". Additional numerical constraints (min, max, step, etc.) will also be validated.
+
+```ts
+const numberKeys = z.record(z.number(), z.string());
+numberKeys.parse({ 
+  1: "one", // ✅
+  2: "two", // ✅
+  "1.5": "one", // ✅
+  "-3": "two", // ✅
+  abc: "one" // ❌
+});
+
+// further validation is also supported
+const intKeys = z.record(z.int().step(1).min(0).max(10), z.string());
+intKeys.parse({ 
+  0: "zero", // ✅
+  1: "one", // ✅
+  2: "two", // ✅
+  12: "twelve", // ❌
+  abc: "one" // ❌
+});
+```
+
+### `z.partialRecord`
+
+
 <Callout>
-  **Zod 4** — In Zod 4, if you pass a `z.enum` as the first argument to `z.record()`, Zod will exhaustively check that all enum values exist in the input as keys. This behavior agrees with TypeScript:
+  If you pass a `z.enum` as the first argument to `z.record()`, Zod will exhaustively check that all enum values exist in the input as keys. This behavior agrees with TypeScript:
 
   ```ts
   type MyRecord = Record<"a" | "b", string>;
@@ -1807,7 +1899,7 @@ const Person = z.record(Keys, z.string());
   const myRecord: MyRecord = { a: "foo" }; // ❌ missing required key `b`
   ```
 
-  In Zod 3, exhaustiveness was not checked. To replicate the old behavior, use `z.partialRecord()`.
+  For partial key sets, use `z.partialRecord()`.
 
 </Callout>
 
@@ -1819,21 +1911,25 @@ const Person = z.partialRecord(Keys, z.string());
 // { id?: string; name?: string; email?: string }
 ```
 
-<Accordions>
-<Accordion title="A note on numeric keys">
+### `z.looseRecord`
 
-Though TypeScript lets you define `Record` types with `number` keys (e.g. `Record<number, unknown>`), numerical keys don't actually exist in JavaScript, which converts all keys to strings.
+By default, `z.record()` errors on keys that don't match the key schema. Use `z.looseRecord()` to pass through non-matching keys unchanged. This is particularly useful when combined with intersections to model multiple pattern properties:
 
 ```ts
-const myObject = { 1: "one" };
+const schema = z
+  .object({ name: z.string() })
+  .and(z.looseRecord(z.string().regex(/_phone$/), z.e164()));
 
-Object.keys(myObject); 
-// => ["1"]
+type schema = z.infer<typeof schema>;
+// => { name: string } & Record<string, string>
+
+schema.parse({ 
+  name: "John",
+  home_phone: "+12345678900",     // validated as phone number
+  work_phone: "+12345678900",     // validated as phone number
+});
 ```
 
-As you can see, JavaScript automatically casts all numeric keys to strings under the hood. As such, using `z.number()` as a key schema inside `z.record()` will always throw an error during parsing, but Zod allows it for the sake of parity with TypeScript's type system.
-
-</Accordion></Accordions>
 
 ## Maps
 
@@ -1899,12 +1995,10 @@ fileSchema.mime(["image/png", "image/jpeg"]); // multiple MIME types
 ```ts
 const fileSchema = z.file();
 
-fileSchema.check(
-  z.minSize(10_000), // minimum .size (bytes)
-  z.maxSize(1_000_000), // maximum .size (bytes)
-  z.mime("image/png"), // MIME type
-  z.mime(["image/png", "image/jpeg"]); // multiple MIME types
-)
+fileSchema.check(z.minSize(10_000)); // minimum .size (bytes)
+fileSchema.check(z.maxSize(1_000_000)); // maximum .size (bytes)
+fileSchema.check(z.mime("image/png")); // MIME type
+fileSchema.check(z.mime(["image/png", "image/jpeg"])); // multiple MIME types
 ```
 </Tab>
 </Tabs>
@@ -1912,7 +2006,7 @@ fileSchema.check(
 ## Promises
 
 <Callout type="warn">
-  **Deprecated** — `z.promise()` is deprecated in Zod 4. There are vanishingly few valid uses cases for a `Promise` schema. If you suspect a value might be a `Promise`, simply `await` it before parsing it with Zod.
+  **Deprecated** — `z.promise()` is deprecated. There are vanishingly few valid uses cases for a `Promise` schema. If you suspect a value might be a `Promise`, simply `await` it before parsing it with Zod.
 </Callout>
 
 <Accordions type="single"><Accordion title="See z.promise() documentation">
@@ -2113,7 +2207,7 @@ const passwordForm = z
     confirm: z.string(),
   })
   .refine((data) => data.password === data.confirm, {
-    message: "Passwords don't match",
+    error: "Passwords don't match",
     path: ["confirm"], // path of error
   });
 ```
@@ -2126,7 +2220,7 @@ const passwordForm = z
     confirm: z.string(),
   })
   .check(z.refine((data) => data.password === data.confirm, {
-    message: "Passwords don't match",
+    error: "Passwords don't match",
     path: ["confirm"], // path of error
   }));
 ```
@@ -2251,19 +2345,20 @@ An error on `anotherField` will prevent the password confirmation check from exe
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-const schema = z
-  .object({
-    password: z.string().min(8),
-    confirmPassword: z.string(),
-    anotherField: z.string(),
-  })
+const baseSchema = z.object({
+  password: z.string().min(8),
+  confirmPassword: z.string(),
+  anotherField: z.string(),
+});
+
+const schema = baseSchema
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
 
     // run if password & confirmPassword are valid
     when(payload) { // [!code ++]
-      return schema // [!code ++]
+      return baseSchema // [!code ++]
         .pick({ password: true, confirmPassword: true }) // [!code ++]
         .safeParse(payload.value).success; // [!code ++]
     },  // [!code ++]
@@ -2287,6 +2382,7 @@ const schema = z
   .check(z.refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
+
     when(payload) { // [!code ++]
       // no issues with `password` or `confirmPassword` // [!code ++]
       return payload.issues.every((iss) => { // [!code ++]
@@ -2437,7 +2533,7 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
 
 ## Codecs
 
-> **New** — Introduced in Zod 4.1. Refer to the dedicated [Codecs](/codecs) page for more information.
+> Introduced in `zod@4.1`. Refer to the dedicated [Codecs](/codecs) page for more information.
 
 Codecs are a special kind of schema that implement *bidirectional transformations* between two other schemas.
 
@@ -2468,6 +2564,15 @@ To perform the *reverse transform*, use the inverse: `z.encode()`.
 
 ```ts
 z.encode(stringToDate, new Date("2024-01-15")); // => "2024-01-15T00:00:00.000Z"
+```
+
+Use `z.invertCodec()` to derive a new codec with the input and output schemas swapped.
+
+```ts
+const dateToString = z.invertCodec(stringToDate);
+
+z.decode(dateToString, new Date("2024-01-15")); // => string
+z.encode(dateToString, "2024-01-15T00:00:00.000Z"); // => Date
 ```
 
 Refer to the dedicated [Codecs](/codecs) page for more information. That page contains implementations for commonly-needed codecs that you can copy/paste into your project:
@@ -2540,7 +2645,7 @@ z.parse(castToString, true); // => "true"
 </Tabs>
 
 <Callout type="warn">
-  Refinement functions should never throw. Thrown errors are not caught by Zod.
+  Transform functions should never throw. Thrown errors are not caught by Zod.
 </Callout>
 
 {/* The output type of the schema is inferred from the transform function:
@@ -2667,6 +2772,20 @@ const coercedInt = z.preprocess((val) => {
 }, z.int());
 ```
 
+By default, the input type of a `z.preprocess()` schema is `unknown`, since the preprocessor is expected to handle arbitrary input. To narrow the input type, annotate the preprocessor's parameter directly:
+
+```ts
+const trimmed = z.preprocess(
+  (val: string | null | undefined) => val?.trim() ?? "",
+  z.string()
+);
+
+type Input = z.input<typeof trimmed>;  // string | null | undefined
+type Output = z.output<typeof trimmed>; // string
+```
+
+This is useful when integrating with libraries like `react-hook-form` that derive their form value type from `z.input<>`.
+
 ## Defaults
 
 To set a default value for a schema:
@@ -2769,6 +2888,7 @@ Alternatively, you can pass a function which will be re-executed whenever a catc
 ```ts
 const numberWithRandomCatch = z.number().catch((ctx) => {
   ctx.error; // the caught ZodError
+
   return Math.random();
 });
 
@@ -2821,13 +2941,30 @@ Under the hood, this works by attaching a "brand" to the schema's inferred type.
 
 ```ts
 const Cat = z.object({ name: z.string() }).brand<"Cat">();
-type Cat = z.infer<typeof Cat>; // { name: string } & z.$brand<"Cat">
+type Cat = z.output<typeof Cat>; // { name: string } & z.$brand<"Cat">
 ```
 
-With this brand, any plain (unbranded) data structures are no longer assignable to the inferred type. You have to parse some data with the schema to get branded data.
-
+With this brand, plain (unbranded) data structures are not assignable to the inferred type. You have to parse some data with the schema to get branded data.
 
 > Note that branded types do not affect the runtime result of `.parse`. It is a static-only construct.
+
+By default, only the *output type* is branded. 
+
+```ts
+const USD = z.string().brand<"USD">();
+
+type USDOutput = z.output<typeof USD>; // string & z.$brand<"USD">
+type USDInput = z.input<typeof USD>; // string
+```
+
+To customize this, pass a second generic to `.brand()` to specify the direction of the brand.
+
+```ts
+// requires Zod 4.2+
+z.string().brand<"Cat", "out">(); // output is branded (default)
+z.string().brand<"Cat", "in">(); // input is branded
+z.string().brand<"Cat", "inout">(); // both are branded
+```
 
 ## Readonly
 
@@ -2850,7 +2987,7 @@ type ReadonlyUser = z.infer<typeof ReadonlyUser>;
 </Tab>
 </Tabs>
 
-The inferred type of the new schemas will be marked as `readonly`. Note that in TypeScript, this only affects objects, arrays, tuples, `Set`, and `Map`:
+The inferred type is marked as `readonly`. Note that in TypeScript, this only affects objects, arrays, tuples, `Set`, and `Map`:
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -2970,17 +3107,15 @@ computeTrimmedLengthAsync("sandwich"); // => Promise<8>
 
 ## Custom
 
-You can create a Zod schema for any TypeScript type by using `z.custom()`. This is useful for creating schemas for types that are not supported by Zod out of the box, such as template string literals.
+You can create a Zod schema for any TypeScript type by using `z.custom()`. This is useful for validating types from third-party libraries or any other type that isn't covered by a built-in schema. For class instances, prefer [`z.instanceof()`](#instanceof); for template literal types, prefer [`z.templateLiteral()`](#template-literals).
 
 ```ts
-const px = z.custom<`${number}px`>((val) => {
-  return typeof val === "string" ? /^\d+px$/.test(val) : false;
-});
+import { Decimal } from "decimal.js";
 
-type px = z.infer<typeof px>; // `${number}px`
+const decimalSchema = z.custom<Decimal>((val) => Decimal.isDecimal(val));
 
-px.parse("42px"); // "42px"
-px.parse("42vw"); // throws;
+decimalSchema.parse(new Decimal("1.5")); // passes
+decimalSchema.parse("1.5");              // throws
 ```
 
 If you don't provide a validation function, Zod will allow any value. This can be dangerous!
@@ -2994,3 +3129,46 @@ You can customize the error message and other options by passing a second argume
 ```ts
 z.custom<...>((val) => ..., "custom error message");
 ```
+
+## Apply
+
+Use `.apply()` to incorporate external functions into Zod's method chain:
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+function setCommonNumberChecks<T extends z.ZodNumber>(schema: T) {
+  return schema
+    .min(0)
+    .max(100);
+}
+
+const schema = z.number()
+  .apply(setCommonNumberChecks)
+  .nullable();
+
+schema.parse(0);  // => 0
+schema.parse(-1); // ❌ throws
+schema.parse(101); // ❌ throws
+schema.parse(null); // => null
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+function setCommonNumberChecks<T extends z.ZodMiniNumber>(schema: T) {
+  return schema.check(
+    z.minimum(0), z.maximum(100)
+  );
+}
+
+const schema = z.nullable(
+  z.number().apply(setCommonNumberChecks)
+);
+
+z.parse(schema, 0);   // => 0
+z.parse(schema, -1);  // ❌ throws
+z.parse(schema, 101); // ❌ throws
+z.parse(schema, null); // => null
+```
+</Tab>
+</Tabs>

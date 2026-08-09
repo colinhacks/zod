@@ -2,29 +2,6 @@ import type { $ZodStringFormats } from "../core/checks.js";
 import type * as errors from "../core/errors.js";
 import * as util from "../core/util.js";
 
-export const parsedType = (data: any): string => {
-  const t = typeof data;
-
-  switch (t) {
-    case "number": {
-      return Number.isNaN(data) ? "NaN" : "число";
-    }
-    case "object": {
-      if (Array.isArray(data)) {
-        return "масив";
-      }
-      if (data === null) {
-        return "null";
-      }
-
-      if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-        return data.constructor.name;
-      }
-    }
-  }
-  return t;
-};
-
 const error: () => errors.$ZodErrorMap = () => {
   const Sizable: Record<string, { unit: string; verb: string }> = {
     string: { unit: "символа", verb: "да съдържа" },
@@ -37,7 +14,7 @@ const error: () => errors.$ZodErrorMap = () => {
     return Sizable[origin] ?? null;
   }
 
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "вход",
@@ -70,10 +47,25 @@ const error: () => errors.$ZodErrorMap = () => {
     template_literal: "вход",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+    number: "число",
+    array: "масив",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `Невалиден вход: очакван ${issue.expected}, получен ${parsedType(issue.input)}`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `Невалиден вход: очакван instanceof ${issue.expected}, получен ${received}`;
+        }
+        return `Невалиден вход: очакван ${expected}, получен ${received}`;
+      }
 
       case "invalid_value":
         if (issue.values.length === 1) return `Невалиден вход: очакван ${util.stringifyPrimitive(issue.values[0])}`;
@@ -111,7 +103,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "time") invalid_adj = "Невалидно";
         if (_issue.format === "duration") invalid_adj = "Невалидна";
 
-        return `${invalid_adj} ${Nouns[_issue.format] ?? issue.format}`;
+        return `${invalid_adj} ${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":
         return `Невалидно число: трябва да бъде кратно на ${issue.divisor}`;

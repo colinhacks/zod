@@ -19,23 +19,23 @@ export function Heading<T extends Types = "h1">({ as, className, ...props }: Hea
       <Link
         data-card=""
         // href={`#${props.id}`}
-        href={`?id=${props.id}`}
+        href={`?id=${props.id}#${props.id}`}
         // onclick="event.preventDefault(); history.pushState(null, '', '?asdf=qwer');"
         className="peer"
-        // shallow={true}
-        // onClick={(e) => {
-        //   // function __handleScroll(){
-        //   // if id query parameter is present, scroll to the element with that id
-        //   const params = new URLSearchParams(window.location.search);
-        //   console.dir(params, { depth: null });
-        //   const id = params.get("id");
-        //   console.dir(params, { depth: null });
-        //   if (id) {
-        //     console.dir(document.getElementById(id), { depth: null });
-        //     document.getElementById(id)?.scrollIntoView();
-        //   }
-        //   // }
-        // }}
+      // shallow={true}
+      // onClick={(e) => {
+      //   // function __handleScroll(){
+      //   // if id query parameter is present, scroll to the element with that id
+      //   const params = new URLSearchParams(window.location.search);
+      //   console.dir(params, { depth: null });
+      //   const id = params.get("id");
+      //   console.dir(params, { depth: null });
+      //   if (id) {
+      //     console.dir(document.getElementById(id), { depth: null });
+      //     document.getElementById(id)?.scrollIntoView();
+      //   }
+      //   // }
+      // }}
       >
         {props.children}
       </Link>

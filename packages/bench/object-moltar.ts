@@ -1,6 +1,6 @@
 import * as z4 from "zod/v4";
-import * as z4lib from "zod4/v4";
 import * as z3 from "zod3";
+import * as z4lib from "zod4/v4";
 import { metabench } from "./metabench.js";
 
 const z3Schema = z3.strictObject({
@@ -14,8 +14,8 @@ const z3Schema = z3.strictObject({
     foo: z3.string(),
     num: z3.number(),
     bool: z3.boolean(),
-  })
-})
+  }),
+});
 
 const z4LibSchema = z4lib.strictObject({
   number: z4lib.number(),
@@ -45,34 +45,6 @@ const z4Schema = z4.strictObject({
   }),
 });
 
-// const z4SchemaStrict = z4.strictObject({
-//   number: z4.number(),
-//   negNumber: z4.number(),
-//   maxNumber: z4.number(),
-//   string: z4.string(),
-//   longString: z4.string(),
-//   boolean: z4.boolean(),
-//   deeplyNested: z4.strictObject({
-//     foo: z4.string(),
-//     num: z4.number(),
-//     bool: z4.boolean(),
-//   }),
-// });
-
-// const z4SchemaLoose = z4.object({
-//   number: z4.number(),
-//   negNumber: z4.number(),
-//   maxNumber: z4.number(),
-//   string: z4.string(),
-//   longString: z4.string(),
-//   boolean: z4.boolean(),
-//   deeplyNested: z4.object({
-//     foo: z4.string(),
-//     num: z4.number(),
-//     bool: z4.boolean(),
-//   }),
-// });
-
 const DATA = Array.from({ length: 1000 }, () =>
   Object.freeze({
     number: 1,
@@ -94,8 +66,6 @@ console.log(z3Schema.parse(DATA[0]));
 console.log(z4Schema.parse(DATA[0]));
 console.log(z4LibSchema.parse(DATA[0]));
 
-const inPlace = { inPlace: true }
-
 const bench = metabench("z.object() safeParse", {
   zod3() {
     for (const _ of DATA) z3Schema.parse(_);
@@ -103,16 +73,9 @@ const bench = metabench("z.object() safeParse", {
   zod4lib() {
     for (const _ of DATA) z4LibSchema.parse(_);
   },
-  zod4(){
+  zod4() {
     for (const _ of DATA) z4Schema.parse(_);
   },
-  
-  // zod4strict() {
-  //   for (const _ of DATA) z4SchemaStrict.parse(_);
-  // },
-  // zod4loose() {
-  //   for (const _ of DATA) z4SchemaLoose.parse(_);
-  // },
 });
 
 await bench.run();

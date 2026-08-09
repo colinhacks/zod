@@ -11,6 +11,7 @@ import en from "../locales/en.js";
 config(en());
 
 export type { infer, output, input } from "../core/index.js";
+export type { JSONType } from "../core/util.js";
 export {
   globalRegistry,
   type GlobalMeta,
@@ -25,11 +26,12 @@ export {
   prettifyError,
   formatError,
   flattenError,
-  toJSONSchema,
   TimePrecision,
   util,
   NEVER,
 } from "../core/index.js";
+export { toJSONSchema } from "../core/json-schema-processors.js";
+export { fromJSONSchema } from "./from-json-schema.js";
 
 export * as locales from "../locales/index.js";
 

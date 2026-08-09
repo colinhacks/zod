@@ -15,7 +15,7 @@ import * as z from "zod";
 const schema = z.object({
   name: z.string(),
   age: z.number().int().positive(),
-  email: z.string().email(),
+  email: z.email(),
 });
 ```
 

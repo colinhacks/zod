@@ -212,9 +212,9 @@ test("inferred merged object type with optional properties", async () => {
     .object({ a: z.string(), b: z.string().optional() })
     .merge(z.object({ a: z.string().optional(), b: z.string() }));
   type Merged = z.infer<typeof Merged>;
-  util.assertEqual<Merged, { a?: string; b: string }>(true);
+  util.assertEqual<Merged, { a?: string | undefined; b: string }>(true);
   // todo
-  // util.assertEqual<Merged, { a?: string; b: string }>(true);
+  // util.assertEqual<Merged, { a?: string | undefined; b: string }>(true);
 });
 
 test("inferred unioned object type with optional properties", async () => {
@@ -223,7 +223,7 @@ test("inferred unioned object type with optional properties", async () => {
     z.object({ a: z.string().optional(), b: z.string() }),
   ]);
   type Unioned = z.infer<typeof Unioned>;
-  util.assertEqual<Unioned, { a: string; b?: string } | { a?: string; b: string }>(true);
+  util.assertEqual<Unioned, { a: string; b?: string | undefined } | { a?: string | undefined; b: string }>(true);
 });
 
 test("inferred enum type", async () => {
@@ -245,13 +245,13 @@ test("inferred enum type", async () => {
 test("inferred partial object type with optional properties", async () => {
   const Partial = z.object({ a: z.string(), b: z.string().optional() }).partial();
   type Partial = z.infer<typeof Partial>;
-  util.assertEqual<Partial, { a?: string; b?: string }>(true);
+  util.assertEqual<Partial, { a?: string | undefined; b?: string | undefined }>(true);
 });
 
 test("inferred picked object type with optional properties", async () => {
   const Picked = z.object({ a: z.string(), b: z.string().optional() }).pick({ b: true });
   type Picked = z.infer<typeof Picked>;
-  util.assertEqual<Picked, { b?: string }>(true);
+  util.assertEqual<Picked, { b?: string | undefined }>(true);
 });
 
 test("inferred type for unknown/any keys", () => {

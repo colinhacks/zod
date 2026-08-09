@@ -128,7 +128,9 @@ test("native enum", () => {
     fruit: z.nativeEnum(Fruits).catch(Fruits.apple),
   });
 
+  // Absent keys flow through to the catch handler.
   expect(schema.parse({})).toEqual({ fruit: Fruits.apple });
+  expect(schema.parse({}, { jitless: true })).toEqual({ fruit: Fruits.apple });
   expect(schema.parse({ fruit: 15 })).toEqual({ fruit: Fruits.apple });
 });
 
@@ -138,6 +140,7 @@ test("enum", () => {
   });
 
   expect(schema.parse({})).toEqual({ fruit: "apple" });
+  expect(schema.parse({}, { jitless: true })).toEqual({ fruit: "apple" });
   expect(schema.parse({ fruit: true })).toEqual({ fruit: "apple" });
   expect(schema.parse({ fruit: 15 })).toEqual({ fruit: "apple" });
 });
@@ -273,4 +276,51 @@ test("direction-aware catch", () => {
 
   // But valid values should still work in reverse
   expect(z.encode(schema, "world")).toBe("world");
+});
+
+test("optional clobbers catch through pipe boundaries", () => {
+  expect(
+    z
+      .string()
+      .catch("X")
+      .transform((s) => s + "!")
+      .optional()
+      .parse(undefined)
+  ).toBeUndefined();
+  expect(z.string().catch("X").pipe(z.string()).optional().parse(undefined)).toBeUndefined();
+  expect(
+    z
+      .string()
+      .catch("X")
+      .transform((s) => s + "!")
+      .transform((s) => s.toLowerCase())
+      .optional()
+      .parse(undefined)
+  ).toBeUndefined();
+  expect(
+    z
+      .object({
+        a: z
+          .string()
+          .catch("X")
+          .transform((s) => s + "!")
+          .optional(),
+      })
+      .parse({})
+  ).toEqual({});
+
+  expect(
+    z
+      .string()
+      .catch("X")
+      .transform((s) => s + "!")
+      .parse("hi")
+  ).toBe("hi!");
+  expect(
+    z
+      .string()
+      .catch("X")
+      .transform((s) => s + "!")
+      .parse(123)
+  ).toBe("X!");
 });

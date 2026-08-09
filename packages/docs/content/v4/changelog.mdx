@@ -34,9 +34,9 @@ Many of Zod's behaviors and APIs have been made more intuitive and cohesive. The
 
 Zod 4 standardizes the APIs for error customization under a single, unified `error` param. Previously Zod's error customization APIs were fragmented and inconsistent. This is cleaned up in Zod 4. 
 
-### deprecates `message`
+### deprecates `message` parameter
 
-Replaces `message` with `error`. The `message` parameter is still supported but deprecated.
+Replaces `message` param with `error`. The old `message` parameter is still supported but deprecated.
 
 <Tabs groupId="error-message" items={["Zod 4", "Zod 3"]} persist>
 <Tab value="Zod 4">
@@ -255,6 +255,10 @@ The `.flatten()` method on `ZodError` has also been deprecated. Instead use the 
 ### drops `.formErrors` 
 
 This API was identical to `.flatten()`. It exists for historical reasons and isn't documented.
+
+### drops `.errors`
+
+This API was an alias for `.issues` in Zod v3 but has been removed. Use `.issues` instead.
 
 ### deprecates `.addIssue()` and `.addIssues()`
 

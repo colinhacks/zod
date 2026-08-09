@@ -228,6 +228,30 @@ test("z.union", () => {
   expect(() => z.parse(a, true)).toThrow();
 });
 
+test("z.union([]) / z.xor([]) / z.discriminatedUnion(_, []) construct and reject all input", () => {
+  for (const schema of [z.union([]), z.xor([])]) {
+    const r = schema.safeParse("anything");
+    expect(r.success).toEqual(false);
+    if (!r.success) {
+      expect(r.error.issues[0].code).toBe("invalid_union");
+      expect((r.error.issues[0] as any).errors).toEqual([]);
+    }
+  }
+  const disc = z.discriminatedUnion("type", [] as any);
+  const r = disc.safeParse({ type: "x" });
+  expect(r.success).toEqual(false);
+  if (!r.success) {
+    expect(r.error.issues[0].code).toBe("invalid_union");
+    expect((r.error.issues[0] as any).errors).toEqual([]);
+    expect((r.error.issues[0] as any).options).toEqual([]);
+  }
+});
+
+test("z.discriminatedUnion rejects object options missing the discriminator at type level", () => {
+  // @ts-expect-error missing discriminator property
+  z.discriminatedUnion("type", [z.object({ value: z.string() })]);
+});
+
 test("z.intersection", () => {
   const a = z.intersection(z.object({ a: z.string() }), z.object({ b: z.number() }));
   expect(z.parse(a, { a: "hello", b: 123 })).toEqual({ a: "hello", b: 123 });
@@ -247,7 +271,7 @@ test("z.tuple", () => {
   const b = z.tuple([z.string(), z.number(), z.optional(z.string())], z.boolean());
   type b = z.output<typeof b>;
 
-  expectTypeOf<b>().toEqualTypeOf<[string, number, string?, ...boolean[]]>();
+  expectTypeOf<b>().toEqualTypeOf<[string, number, (string | undefined)?, ...boolean[]]>();
   const datas = [
     ["hello", 123],
     ["hello", 123, "world"],
@@ -265,7 +289,7 @@ test("z.tuple", () => {
   const cArgs = [z.string(), z.number(), z.optional(z.string())] as const;
   const c = z.tuple(cArgs, z.boolean());
   type c = z.output<typeof c>;
-  expectTypeOf<c>().toEqualTypeOf<[string, number, string?, ...boolean[]]>();
+  expectTypeOf<c>().toEqualTypeOf<[string, number, (string | undefined)?, ...boolean[]]>();
 });
 
 test("z.record", () => {
@@ -296,6 +320,35 @@ test("z.record", () => {
   expect(() => z.parse(c, { a: "hello", b: "world" })).toThrow();
   // extra keys
   expect(() => z.parse(c, { a: "hello", b: "world", c: "world", d: "world" })).toThrow();
+
+  // literal union keys
+  const d = z.record(z.union([z.literal("a"), z.literal(0)]), z.string());
+  type d = z.output<typeof d>;
+  expectTypeOf<d>().toEqualTypeOf<Record<"a" | 0, string>>();
+  expect(z.parse(d, { a: "hello", 0: "world" })).toEqual({
+    a: "hello",
+    0: "world",
+  });
+
+  // TypeScript enum keys
+  enum Enum {
+    A = 0,
+    B = "hi",
+  }
+
+  const e = z.record(z.enum(Enum), z.string());
+  type e = z.output<typeof e>;
+  expectTypeOf<e>().toEqualTypeOf<Record<Enum, string>>();
+  expect(z.parse(e, { [Enum.A]: "hello", [Enum.B]: "world" })).toEqual({
+    [Enum.A]: "hello",
+    [Enum.B]: "world",
+  });
+
+  // v3-compat single-arg form: z.record(valueType) defaults keyType to z.string()
+  const f = (z.record as any)(z.number());
+  expect(f._zod.def.keyType._zod.def.type).toEqual("string");
+  expect(f._zod.def.valueType._zod.def.type).toEqual("number");
+  expect(z.parse(f, { a: 1, b: 2 })).toEqual({ a: 1, b: 2 });
 });
 
 test("z.map", () => {
@@ -649,6 +702,47 @@ test("z.check", () => {
   });
 });
 
+test("z.with (alias for z.check)", () => {
+  // .with() should work exactly the same as .check()
+  const a = z.any().with(
+    z.check<string>((ctx) => {
+      if (typeof ctx.value === "string") return;
+      ctx.issues.push({
+        code: "custom",
+        origin: "custom",
+        message: "Expected a string",
+        input: ctx.value,
+      });
+    })
+  );
+  expect(z.safeParse(a, "hello")).toMatchObject({
+    success: true,
+    data: "hello",
+  });
+  expect(z.safeParse(a, 123)).toMatchObject({
+    success: false,
+    error: { issues: [{ code: "custom", message: "Expected a string" }] },
+  });
+
+  // Test with refine
+  const b = z.string().with(z.refine((val) => val.length > 3, "Must be longer than 3"));
+  expect(z.safeParse(b, "hello").success).toBe(true);
+  expect(z.safeParse(b, "hi").success).toBe(false);
+
+  // Test with function
+  const c = z.string().with(({ value, issues }) => {
+    if (value.length <= 3) {
+      issues.push({
+        code: "custom",
+        input: value,
+        message: "Must be longer than 3",
+      });
+    }
+  });
+  expect(z.safeParse(c, "hello").success).toBe(true);
+  expect(z.safeParse(c, "hi").success).toBe(false);
+});
+
 test("z.instanceof", () => {
   class A {}
 
@@ -789,7 +883,7 @@ test("z.stringbool", () => {
 test("z.promise", async () => {
   const a = z.promise(z.string());
   type a = z.output<typeof a>;
-  expectTypeOf<a>().toEqualTypeOf<string>();
+  expectTypeOf<a>().toEqualTypeOf<Promise<string>>();
 
   expect(await z.safeParseAsync(a, Promise.resolve("hello"))).toMatchObject({
     success: true,

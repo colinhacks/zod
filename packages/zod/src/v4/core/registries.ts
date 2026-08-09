@@ -37,9 +37,6 @@ export class $ZodRegistry<Meta extends MetadataType = MetadataType, Schema exten
     const meta: any = _meta[0];
     this._map.set(schema, meta!);
     if (meta && typeof meta === "object" && "id" in meta) {
-      if (this._idmap.has(meta.id!)) {
-        throw new Error(`ID ${meta.id} already exists in the registry`);
-      }
       this._idmap.set(meta.id!, schema);
     }
     return this as any;
@@ -94,4 +91,15 @@ export function registry<T extends MetadataType = MetadataType, S extends $ZodTy
   return new $ZodRegistry<T, S>();
 }
 
-export const globalRegistry: $ZodRegistry<GlobalMeta> = /*@__PURE__*/ registry<GlobalMeta>();
+interface GlobalThisWithRegistry {
+  /**
+   * The globalRegistry instance shared across both CommonJS and ESM builds.
+   * By attaching the registry to `globalThis`, this property ensures a single, deduplicated instance
+   * is used regardless of whether the package is loaded via `require` (CJS) or `import` (ESM).
+   * This prevents dual package hazards and keeps registry state consistent.
+   */
+  __zod_globalRegistry?: $ZodRegistry<GlobalMeta>;
+}
+
+(globalThis as GlobalThisWithRegistry).__zod_globalRegistry ??= registry<GlobalMeta>();
+export const globalRegistry: $ZodRegistry<GlobalMeta> = (globalThis as GlobalThisWithRegistry).__zod_globalRegistry!;

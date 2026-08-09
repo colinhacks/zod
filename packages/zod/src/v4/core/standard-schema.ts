@@ -1,3 +1,35 @@
+/** The Standard interface. */
+export interface StandardTypedV1<Input = unknown, Output = Input> {
+  /** The Standard properties. */
+  readonly "~standard": StandardTypedV1.Props<Input, Output>;
+}
+
+export declare namespace StandardTypedV1 {
+  /** The Standard properties interface. */
+  export interface Props<Input = unknown, Output = Input> {
+    /** The version number of the standard. */
+    readonly version: 1;
+    /** The vendor name of the schema library. */
+    readonly vendor: string;
+    /** Inferred types associated with the schema. */
+    readonly types?: Types<Input, Output> | undefined;
+  }
+
+  /** The Standard types interface. */
+  export interface Types<Input = unknown, Output = Input> {
+    /** The input type of the schema. */
+    readonly input: Input;
+    /** The output type of the schema. */
+    readonly output: Output;
+  }
+
+  /** Infers the input type of a Standard. */
+  export type InferInput<Schema extends StandardTypedV1> = NonNullable<Schema["~standard"]["types"]>["input"];
+
+  /** Infers the output type of a Standard. */
+  export type InferOutput<Schema extends StandardTypedV1> = NonNullable<Schema["~standard"]["types"]>["output"];
+}
+
 /** The Standard Schema interface. */
 export interface StandardSchemaV1<Input = unknown, Output = Input> {
   /** The Standard Schema properties. */
@@ -6,15 +38,12 @@ export interface StandardSchemaV1<Input = unknown, Output = Input> {
 
 export declare namespace StandardSchemaV1 {
   /** The Standard Schema properties interface. */
-  export interface Props<Input = unknown, Output = Input> {
-    /** The version number of the standard. */
-    readonly version: 1;
-    /** The vendor name of the schema library. */
-    readonly vendor: string;
+  export interface Props<Input = unknown, Output = Input> extends StandardTypedV1.Props<Input, Output> {
     /** Validates unknown input values. */
-    readonly validate: (value: unknown) => Result<Output> | Promise<Result<Output>>;
-    /** Inferred types associated with the schema. */
-    readonly types?: Types<Input, Output> | undefined;
+    readonly validate: (
+      value: unknown,
+      options?: StandardSchemaV1.Options | undefined
+    ) => Result<Output> | Promise<Result<Output>>;
   }
 
   /** The result interface of the validate function. */
@@ -24,8 +53,13 @@ export declare namespace StandardSchemaV1 {
   export interface SuccessResult<Output> {
     /** The typed output value. */
     readonly value: Output;
-    /** The non-existent issues. */
+    /** The absence of issues indicates success. */
     readonly issues?: undefined;
+  }
+
+  export interface Options {
+    /** Implicit support for additional vendor-specific parameters, if needed. */
+    readonly libraryOptions?: Record<string, unknown> | undefined;
   }
 
   /** The result interface if validation fails. */
@@ -48,17 +82,78 @@ export declare namespace StandardSchemaV1 {
     readonly key: PropertyKey;
   }
 
-  /** The Standard Schema types interface. */
-  export interface Types<Input = unknown, Output = Input> {
-    /** The input type of the schema. */
-    readonly input: Input;
-    /** The output type of the schema. */
-    readonly output: Output;
+  /** The Standard types interface. */
+  export interface Types<Input = unknown, Output = Input> extends StandardTypedV1.Types<Input, Output> {}
+
+  /** Infers the input type of a Standard. */
+  export type InferInput<Schema extends StandardTypedV1> = StandardTypedV1.InferInput<Schema>;
+
+  /** Infers the output type of a Standard. */
+  export type InferOutput<Schema extends StandardTypedV1> = StandardTypedV1.InferOutput<Schema>;
+}
+
+/** The Standard JSON Schema interface. */
+export interface StandardJSONSchemaV1<Input = unknown, Output = Input> {
+  /** The Standard JSON Schema properties. */
+  readonly "~standard": StandardJSONSchemaV1.Props<Input, Output>;
+}
+
+export declare namespace StandardJSONSchemaV1 {
+  /** The Standard JSON Schema properties interface. */
+  export interface Props<Input = unknown, Output = Input> extends StandardTypedV1.Props<Input, Output> {
+    /** Methods for generating the input/output JSON Schema. */
+    readonly jsonSchema: Converter;
   }
 
-  /** Infers the input type of a Standard Schema. */
-  export type InferInput<Schema extends StandardSchemaV1> = NonNullable<Schema["~standard"]["types"]>["input"];
+  /** The Standard JSON Schema converter interface. */
+  export interface Converter {
+    /** Converts the input type to JSON Schema. May throw if conversion is not supported. */
+    readonly input: (options: StandardJSONSchemaV1.Options) => Record<string, unknown>;
+    /** Converts the output type to JSON Schema. May throw if conversion is not supported. */
+    readonly output: (options: StandardJSONSchemaV1.Options) => Record<string, unknown>;
+  }
 
-  /** Infers the output type of a Standard Schema. */
-  export type InferOutput<Schema extends StandardSchemaV1> = NonNullable<Schema["~standard"]["types"]>["output"];
+  /** The target version of the generated JSON Schema.
+   *
+   * It is *strongly recommended* that implementers support `"draft-2020-12"` and `"draft-07"`, as they are both in wide use.
+   *
+   * The `"openapi-3.0"` target is intended as a standardized specifier for OpenAPI 3.0 which is a superset of JSON Schema `"draft-04"`.
+   *
+   * All other targets can be implemented on a best-effort basis. Libraries should throw if they don't support a specified target.
+   */
+  export type Target =
+    | "draft-2020-12"
+    | "draft-07"
+    | "openapi-3.0"
+    // Accepts any string for future targets while preserving autocomplete
+    | ({} & string);
+
+  /** The options for the input/output methods. */
+  export interface Options {
+    /** Specifies the target version of the generated JSON Schema. Support for all versions is on a best-effort basis. If a given version is not supported, the library should throw. */
+    readonly target: Target;
+
+    /** Implicit support for additional vendor-specific parameters, if needed. */
+    readonly libraryOptions?: Record<string, unknown> | undefined;
+  }
+
+  /** The Standard types interface. */
+  export interface Types<Input = unknown, Output = Input> extends StandardTypedV1.Types<Input, Output> {}
+
+  /** Infers the input type of a Standard. */
+  export type InferInput<Schema extends StandardTypedV1> = StandardTypedV1.InferInput<Schema>;
+
+  /** Infers the output type of a Standard. */
+  export type InferOutput<Schema extends StandardTypedV1> = StandardTypedV1.InferOutput<Schema>;
+}
+
+export interface StandardSchemaWithJSONProps<Input = unknown, Output = Input>
+  extends StandardSchemaV1.Props<Input, Output>,
+    StandardJSONSchemaV1.Props<Input, Output> {}
+
+/**
+ * An interface that combines StandardJSONSchema and StandardSchema.
+ */
+export interface StandardSchemaWithJSON<Input = unknown, Output = Input> {
+  "~standard": StandardSchemaWithJSONProps<Input, Output>;
 }

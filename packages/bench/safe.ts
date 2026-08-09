@@ -29,7 +29,6 @@ const bench = benchWithData({
     discUnion(d) {
       if (typeof d !== "string") {
         return makeFail(d);
-        // biome-ignore lint: bug in biome
       } else {
         return makeSuccess(d);
       }
@@ -37,7 +36,6 @@ const bench = benchWithData({
     union(d) {
       if (typeof d !== "string") {
         return new ZodFail("too big");
-        // biome-ignore lint: bug in biome
       } else {
         return d;
       }
