@@ -715,3 +715,22 @@ test("v3-compat single-arg form: z.record(valueType)", () => {
     additionalProperties: { type: "number" },
   });
 });
+
+// A finite key set that declares __proto__ writes through the same assignment as z.object(); the
+// key was declared by the schema, so it round-trips as an own data property.
+test("__proto__ in a finite key set becomes an own property", () => {
+  const data = JSON.parse('{"__proto__":{"a":"declared"},"b":{"a":"good"}}');
+
+  for (const schema of [
+    z.record(z.enum(["__proto__", "b"]), z.object({ a: z.string() })),
+    z.record(z.literal(["__proto__", "b"]), z.object({ a: z.string() })),
+  ]) {
+    const parsed: any = schema.parse(data);
+    expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+    expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(true);
+    expect(parsed.__proto__).toEqual({ a: "declared" });
+    expect(parsed.a).toBeUndefined();
+  }
+
+  expect(({} as any).a).toBeUndefined();
+});
