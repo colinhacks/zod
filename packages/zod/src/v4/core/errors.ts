@@ -260,6 +260,20 @@ type _FlattenedError<T, U = string> = {
   };
 };
 
+/** Get-or-create `obj[key]` as an own data property. A path segment naming an inherited member
+ * ("toString", "constructor") would otherwise read through to the prototype, and assigning
+ * "__proto__" would hit the setter instead of creating a key. */
+function node<T>(obj: any, key: PropertyKey, make: () => T): T {
+  if (!Object.prototype.hasOwnProperty.call(obj, key)) {
+    if (key === "__proto__") {
+      Object.defineProperty(obj, key, { value: make(), writable: true, enumerable: true, configurable: true });
+    } else {
+      obj[key] = make();
+    }
+  }
+  return obj[key];
+}
+
 export function flattenError<T>(error: $ZodError<T>): _FlattenedError<T>;
 export function flattenError<T, U>(error: $ZodError<T>, mapper?: (issue: $ZodIssue) => U): _FlattenedError<T, U>;
 export function flattenError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIssue) => issue.message as U) {
@@ -267,8 +281,7 @@ export function flattenError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIss
   const formErrors: U[] = [];
   for (const sub of error.issues) {
     if (sub.path.length > 0) {
-      fieldErrors[sub.path[0]!] = fieldErrors[sub.path[0]!] || [];
-      fieldErrors[sub.path[0]!].push(mapper(sub));
+      node<U[]>(fieldErrors, sub.path[0]!, () => []).push(mapper(sub));
     } else {
       formErrors.push(mapper(sub));
     }
@@ -311,23 +324,10 @@ export function formatError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIssu
             const el = fullpath[i]!;
             const terminal = i === fullpath.length - 1;
 
-            if (!Object.prototype.hasOwnProperty.call(curr, el)) {
-              if (el === "__proto__") {
-                Object.defineProperty(curr, el, {
-                  value: { _errors: [] },
-                  writable: true,
-                  enumerable: true,
-                  configurable: true,
-                });
-              } else {
-                curr[el] = { _errors: [] };
-              }
-            }
+            curr = node(curr, el, () => ({ _errors: [] as U[] }));
             if (terminal) {
-              curr[el]._errors.push(mapper(issue));
+              curr._errors.push(mapper(issue));
             }
-
-            curr = curr[el];
             i++;
           }
         }
@@ -379,19 +379,7 @@ export function treeifyError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIss
           const terminal = i === fullpath.length - 1;
           if (typeof el === "string") {
             curr.properties ??= {};
-            if (!Object.prototype.hasOwnProperty.call(curr.properties, el)) {
-              if (el === "__proto__") {
-                Object.defineProperty(curr.properties, el, {
-                  value: { errors: [] },
-                  writable: true,
-                  enumerable: true,
-                  configurable: true,
-                });
-              } else {
-                curr.properties[el] = { errors: [] };
-              }
-            }
-            curr = curr.properties[el];
+            curr = node(curr.properties, el, () => ({ errors: [] as U[] }));
           } else {
             curr.items ??= [];
             curr.items[el] ??= { errors: [] };

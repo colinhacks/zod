@@ -831,3 +831,50 @@ test.each(prototypePropertyNames)("z.treeifyError handles Object.prototype prope
   expect(Object.getPrototypeOf(tree.properties)).toBe(Object.prototype);
   expect((tree as any).properties[name].errors).toEqual(["invalid value"]);
 });
+
+test.each(prototypePropertyNames)("z.flattenError handles Object.prototype property path: %s", (name) => {
+  const schema = z.object({ data: z.string() }).superRefine((_, ctx) => {
+    ctx.addIssue({ code: "custom", message: "invalid value", path: [name] });
+  });
+  const result = schema.safeParse({ data: "hello" });
+  expect(result.success).toBe(false);
+  const { fieldErrors } = z.flattenError(result.error!);
+  expect(Object.prototype.hasOwnProperty.call(fieldErrors, name)).toBe(true);
+  expect(Object.getPrototypeOf(fieldErrors)).toBe(Object.prototype);
+  expect((fieldErrors as any)[name]).toEqual(["invalid value"]);
+});
+
+/** The "__proto__" node must be a real own data property, not the inherited accessor. */
+const protoNode = (obj: any) => Object.getOwnPropertyDescriptor(obj, "__proto__")!.value;
+
+test("error formatters merge sibling issues under a __proto__ path", () => {
+  const schema = z.string().check((ctx) => {
+    ctx.issues.push({ code: "custom", message: "a", path: ["__proto__", "x"], input: ctx.value });
+    ctx.issues.push({ code: "custom", message: "b", path: ["__proto__", "y"], input: ctx.value });
+  });
+  const error = schema.safeParse("hello").error!;
+
+  const formatted = protoNode(z.formatError(error));
+  expect(formatted.x._errors).toEqual(["a"]);
+  expect(formatted.y._errors).toEqual(["b"]);
+
+  const tree = protoNode((z.treeifyError(error) as any).properties);
+  expect(tree.properties.x.errors).toEqual(["a"]);
+  expect(tree.properties.y.errors).toEqual(["b"]);
+
+  expect(({} as any).x).toBeUndefined();
+  expect(({} as any).y).toBeUndefined();
+});
+
+test("error formatting leaves Object.prototype untouched for input-derived keys", () => {
+  const record = z.record(z.string(), z.string()).safeParse(JSON.parse('{"toString": 1}'));
+  expect(record.success).toBe(false);
+  expect((z.formatError(record.error!) as any).toString._errors).toHaveLength(1);
+
+  const entries = new Map(Object.entries(JSON.parse('{"__proto__": {"pwn": 1}}')));
+  const result = z.map(z.string(), z.object({ pwn: z.string() })).safeParse(entries);
+  expect(result.success).toBe(false);
+  expect(protoNode(z.formatError(result.error!)).pwn._errors).toHaveLength(1);
+  expect(protoNode((z.treeifyError(result.error!) as any).properties).properties.pwn.errors).toHaveLength(1);
+  expect(({} as any).pwn).toBeUndefined();
+});

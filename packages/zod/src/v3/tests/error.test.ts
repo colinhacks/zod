@@ -549,3 +549,22 @@ test("when the message is falsy, it is used as is provided", () => {
 //     expect(result.error.issues.length).toEqual(2);
 //   }
 // });
+
+test("format() handles Object.prototype names in the issue path", () => {
+  const result = z
+    .record(z.string(), z.object({ pwn: z.number() }))
+    .safeParse(JSON.parse('{"__proto__": {"pwn": "x"}}'));
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    // the node must be a real own data property, not the inherited accessor
+    const node = Object.getOwnPropertyDescriptor(result.error.format(), "__proto__")!.value;
+    expect(node.pwn._errors).toHaveLength(1);
+  }
+  expect(({} as any).pwn).toBeUndefined();
+
+  const inherited = z.record(z.string(), z.string()).safeParse(JSON.parse('{"toString": 1}'));
+  expect(inherited.success).toEqual(false);
+  if (!inherited.success) {
+    expect((inherited.error.format() as any).toString._errors).toHaveLength(1);
+  }
+});
