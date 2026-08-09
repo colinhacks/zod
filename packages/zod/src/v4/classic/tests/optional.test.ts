@@ -40,15 +40,15 @@ test("optionality", () => {
 
   // z.undefined should NOT be optional
   const f = z.undefined();
-  expect(f._zod.optin).toEqual("optional");
-  expect(f._zod.optout).toEqual("optional");
+  expect(f._zod.optin).toEqual(undefined);
+  expect(f._zod.optout).toEqual(undefined);
   expectTypeOf<typeof f._zod.optin>().toEqualTypeOf<"optional" | undefined>();
   expectTypeOf<typeof f._zod.optout>().toEqualTypeOf<"optional" | undefined>();
 
   // z.union should be optional if any of the types are optional
   const g = z.union([z.string(), z.undefined()]);
-  expect(g._zod.optin).toEqual("optional");
-  expect(g._zod.optout).toEqual("optional");
+  expect(g._zod.optin).toEqual(undefined);
+  expect(g._zod.optout).toEqual(undefined);
   expectTypeOf<typeof g._zod.optin>().toEqualTypeOf<"optional" | undefined>();
   expectTypeOf<typeof g._zod.optout>().toEqualTypeOf<"optional" | undefined>();
 
@@ -133,6 +133,52 @@ test("optional prop with pipe", () => {
 
   schema.parse({});
   schema.parse({}, { jitless: true });
+});
+
+test("object absent keys require optin optional", () => {
+  const valueUndefined = z.object({
+    value: z.undefined(),
+    union: z.union([z.string(), z.undefined()]),
+  });
+
+  expect(valueUndefined.safeParse({}).error!.issues).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "invalid_type",
+        "expected": "nonoptional",
+        "message": "Invalid input: expected nonoptional, received undefined",
+        "path": [
+          "value",
+        ],
+      },
+      {
+        "code": "invalid_type",
+        "expected": "nonoptional",
+        "message": "Invalid input: expected nonoptional, received undefined",
+        "path": [
+          "union",
+        ],
+      },
+    ]
+  `);
+  expect(valueUndefined.safeParse({}, { jitless: true }).success).toEqual(false);
+  expect(valueUndefined.parse({ value: undefined, union: undefined })).toEqual({
+    value: undefined,
+    union: undefined,
+  });
+
+  const optionalOutOnly = z.object({
+    value: z
+      .string()
+      .transform((val) => (Math.random() ? val : undefined))
+      .pipe(z.string().optional()),
+  });
+  expect(optionalOutOnly.safeParse({}).success).toEqual(false);
+  expect(optionalOutOnly.safeParse({}, { jitless: true }).success).toEqual(false);
+
+  const defaulted = z.object({ value: z.string().default("fallback") });
+  expect(defaulted.parse({})).toEqual({ value: "fallback" });
+  expect(defaulted.parse({}, { jitless: true })).toEqual({ value: "fallback" });
 });
 
 // exactOptional tests
@@ -220,4 +266,68 @@ test("exactOptional vs optional comparison", () => {
 
   // exactOptional() rejects explicit undefined
   expect(exactOptionalSchema.safeParse({ a: undefined }).success).toEqual(false);
+});
+
+// Defensive inference coverage: every schema that propagates `optout` participates
+// in object-key optionality inference. If anyone ever changes the set of values that
+// `optout` can take (or how OptionalOutSchema matches them), these assertions must
+// continue to hold or downstream `z.infer<typeof obj>` types silently flip required keys.
+test("object key optionality through optout propagation", () => {
+  const direct = z.object({ k: z.string().optional() });
+  expectTypeOf<z.infer<typeof direct>>().toEqualTypeOf<{ k?: string | undefined }>();
+
+  const exact = z.object({ k: z.string().exactOptional() });
+  expectTypeOf<z.infer<typeof exact>>().toEqualTypeOf<{ k?: string }>();
+
+  // nullable() preserves the inner type's optout
+  const nullableOpt = z.object({ k: z.string().optional().nullable() });
+  expectTypeOf<z.infer<typeof nullableOpt>>().toEqualTypeOf<{ k?: string | null | undefined }>();
+
+  // optional() wrapping nullable() — still optional out
+  const optNullable = z.object({ k: z.string().nullable().optional() });
+  expectTypeOf<z.infer<typeof optNullable>>().toEqualTypeOf<{ k?: string | null | undefined }>();
+
+  // union containing an optional member must mark the key as optional
+  const unionWithOpt = z.object({ k: z.union([z.string(), z.string().optional()]) });
+  expectTypeOf<z.infer<typeof unionWithOpt>>().toEqualTypeOf<{ k?: string | undefined }>();
+
+  // pipe ending in optional()
+  const pipedToOpt = z.object({
+    k: z
+      .string()
+      .transform((v) => (Math.random() ? v : undefined))
+      .pipe(z.string().optional()),
+  });
+  expectTypeOf<z.output<typeof pipedToOpt>>().toEqualTypeOf<{ k?: string | undefined }>();
+
+  // mixed shape pinning required vs optional keys end-to-end
+  const mixed = z.object({
+    req: z.string(),
+    opt: z.string().optional(),
+    exact: z.string().exactOptional(),
+    def: z.string().default("x"),
+    nullableOpt: z.string().optional().nullable(),
+  });
+  expectTypeOf<z.output<typeof mixed>>().toEqualTypeOf<{
+    req: string;
+    opt?: string | undefined;
+    exact?: string;
+    def: string;
+    nullableOpt?: string | null | undefined;
+  }>();
+});
+
+// Defensive: tuple optional-tail inference also reads optout. The PR that introduced
+// `"includeUndefined"` had to update TupleOutputTypeWithOptionals; pin the result so
+// any future flag change has to keep this contract.
+test("tuple tail optionality through optout propagation", () => {
+  const trailingOptional = z.tuple([z.string(), z.number().optional()]);
+  expectTypeOf<z.output<typeof trailingOptional>>().toEqualTypeOf<[string, (number | undefined)?]>();
+
+  const trailingExact = z.tuple([z.string(), z.number().exactOptional()]);
+  expectTypeOf<z.output<typeof trailingExact>>().toEqualTypeOf<[string, number?]>();
+
+  // Interior optional must NOT make the tail optional
+  const interiorOptional = z.tuple([z.string(), z.number().optional(), z.string()]);
+  expectTypeOf<z.output<typeof interiorOptional>>().toEqualTypeOf<[string, number | undefined, string]>();
 });

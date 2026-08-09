@@ -50,9 +50,27 @@ const error: () => errors.$ZodErrorMap = () => {
   const TypeDictionary: {
     [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
   } = {
-    nan: "NaN",
+    string: "chaîne",
     number: "nombre",
+    int: "entier",
+    boolean: "booléen",
+    bigint: "grand entier",
+    symbol: "symbole",
+    undefined: "indéfini",
+    null: "null",
+    never: "jamais",
+    void: "vide",
+    date: "date",
     array: "tableau",
+    object: "objet",
+    tuple: "tuple",
+    record: "enregistrement",
+    map: "carte",
+    set: "ensemble",
+    file: "fichier",
+    nonoptional: "non-optionnel",
+    nan: "NaN",
+    function: "fonction",
   };
 
   return (issue) => {
@@ -73,17 +91,15 @@ const error: () => errors.$ZodErrorMap = () => {
         const adj = issue.inclusive ? "<=" : "<";
         const sizing = getSizing(issue.origin);
         if (sizing)
-          return `Trop grand : ${issue.origin ?? "valeur"} doit ${sizing.verb} ${adj}${issue.maximum.toString()} ${sizing.unit ?? "élément(s)"}`;
-        return `Trop grand : ${issue.origin ?? "valeur"} doit être ${adj}${issue.maximum.toString()}`;
+          return `Trop grand : ${TypeDictionary[issue.origin] ?? "valeur"} doit ${sizing.verb} ${adj}${issue.maximum.toString()} ${sizing.unit ?? "élément(s)"}`;
+        return `Trop grand : ${TypeDictionary[issue.origin] ?? "valeur"} doit être ${adj}${issue.maximum.toString()}`;
       }
       case "too_small": {
         const adj = issue.inclusive ? ">=" : ">";
         const sizing = getSizing(issue.origin);
-        if (sizing) {
-          return `Trop petit : ${issue.origin} doit ${sizing.verb} ${adj}${issue.minimum.toString()} ${sizing.unit}`;
-        }
-
-        return `Trop petit : ${issue.origin} doit être ${adj}${issue.minimum.toString()}`;
+        if (sizing)
+          return `Trop petit : ${TypeDictionary[issue.origin] ?? "valeur"} doit ${sizing.verb} ${adj}${issue.minimum.toString()} ${sizing.unit}`;
+        return `Trop petit : ${TypeDictionary[issue.origin] ?? "valeur"} doit être ${adj}${issue.minimum.toString()}`;
       }
       case "invalid_format": {
         const _issue = issue as errors.$ZodStringFormatIssues;

@@ -732,3 +732,190 @@ test("contentEncoding and contentMediaType are stored as metadata", () => {
   expect(meta?.contentEncoding).toBe("base64");
   expect(meta?.contentMediaType).toBe("image/png");
 });
+
+test("description on enum schema is applied", () => {
+  const schema = fromJSONSchema({
+    enum: ["red", "green", "blue"],
+    description: "A color value",
+  });
+  expect(schema.description).toBe("A color value");
+  expect(schema.parse("red")).toBe("red");
+});
+
+test("description on const schema is applied", () => {
+  const schema = fromJSONSchema({
+    const: "hello",
+    description: "A greeting",
+  });
+  expect(schema.description).toBe("A greeting");
+  expect(schema.parse("hello")).toBe("hello");
+});
+
+test("description on not: {} (never) schema is applied", () => {
+  const schema = fromJSONSchema({
+    not: {},
+    description: "A never schema",
+  });
+  expect(schema.description).toBe("A never schema");
+  expect(() => schema.parse("anything")).toThrow();
+});
+
+test("default on enum schema is applied", () => {
+  const schema = fromJSONSchema({
+    enum: ["red", "green", "blue"],
+    default: "red",
+  });
+  expect(schema.parse(undefined)).toBe("red");
+});
+
+test("default on const schema is applied", () => {
+  const schema = fromJSONSchema({
+    const: "hello",
+    default: "hello",
+  });
+  expect(schema.parse(undefined)).toBe("hello");
+});
+
+test("description and default on enum schema are both applied", () => {
+  const schema = fromJSONSchema({
+    enum: ["red", "green", "blue"],
+    description: "A color value",
+    default: "red",
+  });
+  expect(schema.description).toBe("A color value");
+  expect(schema.parse(undefined)).toBe("red");
+  expect(schema.parse("green")).toBe("green");
+});
+
+test("description on type-array schema is applied", () => {
+  const schema = fromJSONSchema({
+    type: ["string", "number"],
+    description: "A string or number",
+  } as any);
+  expect(schema.description).toBe("A string or number");
+  expect(schema.parse("hello")).toBe("hello");
+  expect(schema.parse(42)).toBe(42);
+});
+
+test("default on type-array schema is applied", () => {
+  const schema = fromJSONSchema({
+    type: ["string", "number"],
+    default: "fallback",
+  } as any);
+  expect(schema.parse(undefined)).toBe("fallback");
+  expect(schema.parse("hello")).toBe("hello");
+  expect(schema.parse(42)).toBe(42);
+});
+
+test("description on schema with anyOf is applied to the outer schema", () => {
+  const schema = fromJSONSchema({
+    description: "Either a string or a number",
+    anyOf: [{ type: "string" }, { type: "number" }],
+  });
+  expect(schema.description).toBe("Either a string or a number");
+  expect(schema.parse("hello")).toBe("hello");
+  expect(schema.parse(42)).toBe(42);
+});
+
+test("default on schema with anyOf is applied to the outer schema", () => {
+  const schema = fromJSONSchema({
+    default: "fallback",
+    anyOf: [{ type: "string" }, { type: "number" }],
+  });
+  expect(schema.parse(undefined)).toBe("fallback");
+  expect(schema.parse(42)).toBe(42);
+});
+
+test("description and unrecognized metadata coexist on the same schema", () => {
+  const customRegistry = z.registry<{ "x-custom"?: string; description?: string }>();
+  const schema = fromJSONSchema(
+    {
+      type: "string",
+      description: "A custom string",
+      "x-custom": "value",
+    },
+    { registry: customRegistry }
+  );
+  expect(schema.description).toBe("A custom string");
+  expect(customRegistry.get(schema)?.["x-custom"]).toBe("value");
+});
+
+test("circular input throws a clear error", () => {
+  const person: any = {
+    type: "object",
+    properties: { name: { type: "string" } },
+    required: ["name"],
+  };
+  person.properties.bestFriend = person;
+  expect(() => fromJSONSchema(person)).toThrow(/not valid JSON/);
+});
+
+test("getter-based input that synthesizes a cycle throws", () => {
+  const root: any = { type: "object", properties: { name: { type: "string" } } };
+  Object.defineProperty(root.properties, "self", {
+    enumerable: true,
+    get() {
+      return root;
+    },
+  });
+  expect(() => fromJSONSchema(root)).toThrow(/not valid JSON/);
+});
+
+test("BigInt in input throws", () => {
+  const input: any = { type: "integer", minimum: 1n };
+  expect(() => fromJSONSchema(input)).toThrow(/not valid JSON/);
+});
+
+test("class-instance input is normalized to a plain object", () => {
+  class StringSchema {
+    type = "string" as const;
+    minLength = 2;
+  }
+  const schema = fromJSONSchema(new StringSchema() as any);
+  expect(schema.parse("hi")).toBe("hi");
+  expect(() => schema.parse("h")).toThrow();
+});
+
+test("getter-based properties are materialized", () => {
+  const input: any = { type: "object", properties: {}, required: [] };
+  Object.defineProperty(input.properties, "name", {
+    enumerable: true,
+    get() {
+      return { type: "string" };
+    },
+  });
+  const schema = fromJSONSchema(input);
+  expect(schema.parse({ name: "Alice" })).toEqual({ name: "Alice" });
+});
+
+test("Date default is coerced to its JSON string form", () => {
+  const date = new Date("2026-01-02T03:04:05.000Z");
+  const schema = fromJSONSchema({ type: "string", default: date as any });
+  expect(schema.parse(undefined)).toBe(date.toISOString());
+});
+
+// An object literal can't express an own "__proto__" key — `{ __proto__: x }`
+// sets the literal's prototype instead. JSON.parse is both the realistic source
+// of a JSON Schema and the only way to write these cases.
+test("required __proto__ property is kept and enforced", () => {
+  const schema = fromJSONSchema(
+    JSON.parse(`{
+      "type": "object",
+      "properties": { "__proto__": { "type": "string", "const": "admin" }, "role": { "type": "string" } },
+      "required": ["__proto__", "role"]
+    }`)
+  );
+
+  expect(schema.safeParse({ role: "x" }).success).toBe(false);
+  expect(schema.safeParse(JSON.parse(`{ "role": "x", "__proto__": "wrong" }`)).success).toBe(false);
+  expect(schema.safeParse(JSON.parse(`{ "role": "x", "__proto__": "admin" }`)).success).toBe(true);
+});
+
+test("__proto__ annotation key reaches the registry", () => {
+  const registry = z.registry<Record<string, unknown>>();
+  const schema = fromJSONSchema(JSON.parse(`{ "type": "string", "__proto__": { "custom": 1 } }`), { registry });
+
+  const meta = registry.get(schema)!;
+  expect(Object.prototype.hasOwnProperty.call(meta, "__proto__")).toBe(true);
+  expect(meta.__proto__).toEqual({ custom: 1 });
+});

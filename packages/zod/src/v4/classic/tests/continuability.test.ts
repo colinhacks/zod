@@ -274,7 +274,7 @@ test("continuability", () => {
         "message": "Invalid cuid",
         "origin": "string",
         "path": [],
-        "pattern": "/^[cC][^\\s-]{8,}$/",
+        "pattern": "/^[cC][0-9a-z]{6,}$/",
       },
       {
         "code": "custom",

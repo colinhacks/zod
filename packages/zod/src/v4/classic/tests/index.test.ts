@@ -247,7 +247,7 @@ test("z.tuple", () => {
   const b = z.tuple([z.string(), z.number(), z.optional(z.string())], z.boolean());
   type b = z.output<typeof b>;
 
-  expectTypeOf<b>().toEqualTypeOf<[string, number, string?, ...boolean[]]>();
+  expectTypeOf<b>().toEqualTypeOf<[string, number, (string | undefined)?, ...boolean[]]>();
   const datas = [
     ["hello", 123],
     ["hello", 123, "world"],
@@ -265,7 +265,7 @@ test("z.tuple", () => {
   const cArgs = [z.string(), z.number(), z.optional(z.string())] as const;
   const c = z.tuple(cArgs, z.boolean());
   type c = z.output<typeof c>;
-  expectTypeOf<c>().toEqualTypeOf<[string, number, string?, ...boolean[]]>();
+  expectTypeOf<c>().toEqualTypeOf<[string, number, (string | undefined)?, ...boolean[]]>();
   // type c = z.output<typeof c>;
 });
 

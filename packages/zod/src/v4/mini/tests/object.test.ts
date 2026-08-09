@@ -17,7 +17,7 @@ test("z.object", () => {
   expectTypeOf<a>().toEqualTypeOf<{
     name: string;
     age: number;
-    points?: number;
+    points?: number | undefined;
     "test?": boolean;
   }>();
   expect(z.parse(a, { name: "john", age: 30, "test?": true })).toEqual({
@@ -109,7 +109,7 @@ test("z.extend", () => {
   expectTypeOf<ExtendedUser>().toEqualTypeOf<{
     name: string;
     age: number;
-    email?: string;
+    email?: string | undefined;
     isAdmin: boolean;
   }>();
   expect(extendedSchema).toBeDefined();
@@ -120,7 +120,7 @@ test("z.safeExtend", () => {
   const extended = z.safeExtend(userSchema, { name: z.string() });
   expect(z.safeParse(extended, { name: "John", age: 30 }).success).toBe(true);
   type Extended = z.infer<typeof extended>;
-  expectTypeOf<Extended>().toEqualTypeOf<{ name: string; age: number; email?: string }>();
+  expectTypeOf<Extended>().toEqualTypeOf<{ name: string; age: number; email?: string | undefined }>();
   // @ts-expect-error
   z.safeExtend(userSchema, { name: z.number() });
 });
@@ -128,7 +128,7 @@ test("z.safeExtend", () => {
 test("z.pick", () => {
   const pickedSchema = z.pick(userSchema, { name: true, email: true });
   type PickedUser = z.infer<typeof pickedSchema>;
-  expectTypeOf<PickedUser>().toEqualTypeOf<{ name: string; email?: string }>();
+  expectTypeOf<PickedUser>().toEqualTypeOf<{ name: string; email?: string | undefined }>();
   expect(pickedSchema).toBeDefined();
   expect(z.safeParse(pickedSchema, { name: "John", email: "john@example.com" }).success).toBe(true);
 });
@@ -149,9 +149,9 @@ test("z.partial", () => {
   const partialSchema = z.partial(userSchema);
   type PartialUser = z.infer<typeof partialSchema>;
   expectTypeOf<PartialUser>().toEqualTypeOf<{
-    name?: string;
-    age?: number;
-    email?: string;
+    name?: string | undefined;
+    age?: number | undefined;
+    email?: string | undefined;
   }>();
   expect(z.safeParse(partialSchema, { name: "John" }).success).toBe(true);
 });
@@ -160,9 +160,9 @@ test("z.partial with mask", () => {
   const partialSchemaWithMask = z.partial(userSchema, { name: true });
   type PartialUserWithMask = z.infer<typeof partialSchemaWithMask>;
   expectTypeOf<PartialUserWithMask>().toEqualTypeOf<{
-    name?: string;
+    name?: string | undefined;
     age: number;
-    email?: string;
+    email?: string | undefined;
   }>();
   expect(z.safeParse(partialSchemaWithMask, { age: 30 }).success).toBe(true);
   expect(z.safeParse(partialSchemaWithMask, { name: "John" }).success).toBe(false);

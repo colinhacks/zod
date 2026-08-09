@@ -91,7 +91,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `Stringa non valida: deve terminare con "${_issue.suffix}"`;
         if (_issue.format === "includes") return `Stringa non valida: deve includere "${_issue.includes}"`;
         if (_issue.format === "regex") return `Stringa non valida: deve corrispondere al pattern ${_issue.pattern}`;
-        return `Invalid ${FormatDictionary[_issue.format] ?? issue.format}`;
+        return `Input non valido: ${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":
         return `Numero non valido: deve essere un multiplo di ${issue.divisor}`;

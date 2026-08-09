@@ -217,6 +217,16 @@ test("base64 validations", () => {
     "?QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // Invalid character '?'
     ".MTIzND2Nzg5MC4=", // Invalid character '.'
     "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo", // Missing padding
+    // Whitespace is not part of canonical base64 (RFC 4648 §3.3) — atob() strips
+    // whitespace internally before validating, so the length check alone would
+    // accept "123 " etc.
+    "123 ", // bypasses length-mod-4 via trailing whitespace
+    "SGVsbG8gV29ybGQ= ", // trailing space
+    " SGVsbG8gV29ybGQ=", // leading space
+    "SGVsbG8gV29ybGQ=\n", // trailing newline
+    "SGVs bG8gV29ybGQ=", // internal space
+    "SGVs\nbG8gV29ybGQ=", // internal newline
+    "SGVs\tbG8gV29ybGQ=", // internal tab
   ];
 
   for (const str of invalidBase64Strings) {
@@ -617,12 +627,26 @@ test("cuid", () => {
         "origin": "string",
         "code": "invalid_format",
         "format": "cuid",
-        "pattern": "/^[cC][^\\\\s-]{8,}$/",
+        "pattern": "/^[cC][0-9a-z]{6,}$/",
         "path": [],
         "message": "Invalid cuid"
       }
     ]]
   `);
+
+  // Strings containing non-base36 characters that the old denylist regex
+  // (/^[cC][^\s-]{8,}$/) accepted. The new regex restricts the body to
+  // [0-9a-z], matching the actual CUID v1 base36 format. See #3621.
+  const previouslyAcceptedNonCuids = [
+    "cly63t164000245zw008pggon';select1;", // SQLi-shaped (no whitespace, no hyphen)
+    "c<script>alert(1)</script>aaaaaa", // XSS-shaped
+    "c{};alert(1)//", // bracket / curly chars
+    "C0123_45678", // underscore is not base36
+    "cAAAAAAAAA", // uppercase letters in body are not base36 (CUIDs are lowercase)
+  ];
+  for (const s of previouslyAcceptedNonCuids) {
+    expect(cuid.safeParse(s).success).toBe(false);
+  }
 });
 
 test("cuid2", () => {
@@ -1030,6 +1054,14 @@ test("CIDR v6 validation", () => {
   expect(cidrV6.safeParse("fe80::/10").success).toBe(true);
   expect(cidrV6.safeParse("::1/128").success).toBe(true);
   expect(cidrV6.safeParse("2001:0db8:85a3::/64").success).toBe(true);
+  expect(cidrV6.safeParse("2001:db8:1::/48").success).toBe(true);
+  expect(cidrV6.safeParse("2001:db8:85a3::8a2e:370:7334/64").success).toBe(true);
+  expect(cidrV6.safeParse("2001:db8:85a3:0:0:8a2e:370:7334/64").success).toBe(true);
+
+  const pattern = new RegExp(z.toJSONSchema(cidrV6).pattern as string);
+  for (const input of ["2001:db8::/32", "2001:db8:1::/48", "2001:0db8:85a3::/64", "fe80::/10", "::/0"]) {
+    expect(pattern.test(input)).toBe(true);
+  }
 
   // Invalid CIDR v6 addresses
   expect(cidrV6.safeParse("2001:db8::").success).toBe(false); // Missing prefix

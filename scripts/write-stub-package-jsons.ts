@@ -8,7 +8,7 @@ const STUB_PACKAGE_JSON_CONTENT = `{
   "main": "./index.cjs",
   "module": "./index.js",
   "types": "./index.d.cts",
-  "sideEffects": false 
+  "sideEffects": false
 }
 `;
 

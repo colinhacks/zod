@@ -36,6 +36,11 @@ export interface ParsePayload<T = unknown> {
   issues: errors.$ZodRawIssue[];
   /** A way to mark a whole payload as aborted. Used in codecs/pipes. */
   aborted?: boolean;
+  /** @internal Marks a value as a fallback that an outer wrapper (e.g.
+   * $ZodOptional) may override with its own interpretation when input was
+   * undefined. Set by $ZodCatch when catchValue substitutes and by every
+   * $ZodTransform invocation. */
+  fallback?: boolean | undefined;
 }
 
 export type CheckFn<T> = (input: ParsePayload<T>) => util.MaybeAsync<void>;
@@ -586,13 +591,33 @@ export const $ZodNanoID: core.$constructor<$ZodNanoID> = /*@__PURE__*/ core.$con
 
 //////////////////////////////   ZodCUID   //////////////////////////////
 
+/**
+ * @deprecated CUID v1 is deprecated by its authors due to information leakage
+ * (timestamps embedded in the id). Use {@link $ZodCUID2} instead.
+ * See https://github.com/paralleldrive/cuid.
+ */
 export interface $ZodCUIDDef extends $ZodStringFormatDef<"cuid"> {}
+/**
+ * @deprecated CUID v1 is deprecated by its authors due to information leakage
+ * (timestamps embedded in the id). Use {@link $ZodCUID2} instead.
+ * See https://github.com/paralleldrive/cuid.
+ */
 export interface $ZodCUIDInternals extends $ZodStringFormatInternals<"cuid"> {}
 
+/**
+ * @deprecated CUID v1 is deprecated by its authors due to information leakage
+ * (timestamps embedded in the id). Use {@link $ZodCUID2} instead.
+ * See https://github.com/paralleldrive/cuid.
+ */
 export interface $ZodCUID extends $ZodType {
   _zod: $ZodCUIDInternals;
 }
 
+/**
+ * @deprecated CUID v1 is deprecated by its authors due to information leakage
+ * (timestamps embedded in the id). Use {@link $ZodCUID2} instead.
+ * See https://github.com/paralleldrive/cuid.
+ */
 export const $ZodCUID: core.$constructor<$ZodCUID> = /*@__PURE__*/ core.$constructor("$ZodCUID", (inst, def): void => {
   def.pattern ??= regexes.cuid;
   $ZodStringFormat.init(inst, def);
@@ -887,6 +912,8 @@ export const $ZodCIDRv6: core.$constructor<$ZodCIDRv6> = /*@__PURE__*/ core.$con
 //////////////////////////////   ZodBase64   //////////////////////////////
 export function isValidBase64(data: string): boolean {
   if (data === "") return true;
+  // atob ignores whitespace, so reject it up front.
+  if (/\s/.test(data)) return false;
   if (data.length % 4 !== 0) return false;
   try {
     // @ts-ignore
@@ -1336,8 +1363,6 @@ export const $ZodUndefined: core.$constructor<$ZodUndefined> = /*@__PURE__*/ cor
     $ZodType.init(inst, def);
     inst._zod.pattern = regexes.undefined;
     inst._zod.values = new Set([undefined]);
-    inst._zod.optin = "optional";
-    inst._zod.optout = "optional";
 
     inst._zod.parse = (payload, _ctx) => {
       const input = payload.value;
@@ -1727,18 +1752,32 @@ function handlePropertyResult(
   final: ParsePayload,
   key: PropertyKey,
   input: any,
+  isOptionalIn: boolean,
   isOptionalOut: boolean
 ) {
+  const isPresent = key in input;
   if (result.issues.length) {
-    // For optional-out schemas, ignore errors on absent keys
-    if (isOptionalOut && !(key in input)) {
+    // For optional-in/out schemas, ignore errors on absent keys.
+    if (isOptionalIn && isOptionalOut && !isPresent) {
       return;
     }
     final.issues.push(...util.prefixIssues(key, result.issues));
   }
 
+  if (!isPresent && !isOptionalIn) {
+    if (!result.issues.length) {
+      final.issues.push({
+        code: "invalid_type",
+        expected: "nonoptional",
+        input: undefined,
+        path: [key],
+      });
+    }
+    return;
+  }
+
   if (result.value === undefined) {
-    if (key in input) {
+    if (isPresent) {
       (final.value as any)[key] = undefined;
     }
   } else {
@@ -1823,12 +1862,15 @@ function handleCatchall(
   inst: $ZodObject
 ) {
   const unrecognized: string[] = [];
-  // iterate over input keys
   const keySet = def.keySet;
   const _catchall = def.catchall!._zod;
   const t = _catchall.def.type;
+  const isOptionalIn = _catchall.optin === "optional";
   const isOptionalOut = _catchall.optout === "optional";
   for (const key in input) {
+    // skip __proto__ so it can't replace the result prototype via the
+    // assignment setter on the plain {} we build into
+    if (key === "__proto__") continue;
     if (keySet.has(key)) continue;
     if (t === "never") {
       unrecognized.push(key);
@@ -1837,9 +1879,9 @@ function handleCatchall(
     const r = _catchall.run({ value: input[key], issues: [] }, ctx);
 
     if (r instanceof Promise) {
-      proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, isOptionalOut)));
+      proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, isOptionalIn, isOptionalOut)));
     } else {
-      handlePropertyResult(r, payload, key, input, isOptionalOut);
+      handlePropertyResult(r, payload, key, input, isOptionalIn, isOptionalOut);
     }
   }
 
@@ -1917,13 +1959,14 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
 
     for (const key of value.keys) {
       const el = shape[key]!;
+      const isOptionalIn = el._zod.optin === "optional";
       const isOptionalOut = el._zod.optout === "optional";
 
       const r = el._zod.run({ value: input[key], issues: [] }, ctx);
       if (r instanceof Promise) {
-        proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, isOptionalOut)));
+        proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, isOptionalIn, isOptionalOut)));
       } else {
-        handlePropertyResult(r, payload, key, input, isOptionalOut);
+        handlePropertyResult(r, payload, key, input, isOptionalIn, isOptionalOut);
       }
     }
 
@@ -1967,12 +2010,13 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         const id = ids[key];
         const k = util.esc(key);
         const schema = shape[key];
+        const isOptionalIn = schema?._zod?.optin === "optional";
         const isOptionalOut = schema?._zod?.optout === "optional";
 
         doc.write(`const ${id} = ${parseStr(key)};`);
 
-        if (isOptionalOut) {
-          // For optional-out schemas, ignore errors on absent keys
+        if (isOptionalIn && isOptionalOut) {
+          // For optional-in/out schemas, ignore errors on absent keys
           doc.write(`
         if (${id}.issues.length) {
           if (${k} in input) {
@@ -1991,6 +2035,33 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
           newResult[${k}] = ${id}.value;
         }
         
+      `);
+        } else if (!isOptionalIn) {
+          doc.write(`
+        const ${id}_present = ${k} in input;
+        if (${id}.issues.length) {
+          payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
+            ...iss,
+            path: iss.path ? [${k}, ...iss.path] : [${k}]
+          })));
+        }
+        if (!${id}_present && !${id}.issues.length) {
+          payload.issues.push({
+            code: "invalid_type",
+            expected: "nonoptional",
+            input: undefined,
+            path: [${k}]
+          });
+        }
+
+        if (${id}_present) {
+          if (${id}.value === undefined) {
+            newResult[${k}] = undefined;
+          } else {
+            newResult[${k}] = ${id}.value;
+          }
+        }
+
       `);
         } else {
           doc.write(`
@@ -2144,11 +2215,10 @@ export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$const
     return undefined;
   });
 
-  const single = def.options.length === 1;
-  const first = def.options[0]._zod.run;
+  const first = def.options.length === 1 ? def.options[0]._zod.run : null;
 
   inst._zod.parse = (payload, ctx) => {
-    if (single) {
+    if (first) {
       return first(payload, ctx);
     }
     let async = false;
@@ -2224,11 +2294,10 @@ export const $ZodXor: core.$constructor<$ZodXor> = /*@__PURE__*/ core.$construct
   $ZodUnion.init(inst, def);
   def.inclusive = false;
 
-  const single = def.options.length === 1;
-  const first = def.options[0]._zod.run;
+  const first = def.options.length === 1 ? def.options[0]._zod.run : null;
 
   inst._zod.parse = (payload, ctx) => {
-    if (single) {
+    if (first) {
       return first(payload, ctx);
     }
     let async = false;
@@ -2347,17 +2416,21 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
         return opt._zod.run(payload, ctx) as any;
       }
 
-      if (def.unionFallback) {
+      // Fall back to union matching when the fast discriminator path fails:
+      // - explicitly enabled via unionFallback, or
+      // - during backward direction (encode), since codec-based discriminators
+      //   have different values in forward vs backward directions
+      if (def.unionFallback || ctx.direction === "backward") {
         return _super(payload, ctx);
       }
 
       // no matching discriminator
       payload.issues.push({
         code: "invalid_union",
-
         errors: [],
         note: "No matching discriminator",
         discriminator: def.discriminator,
+        options: Array.from(disc.value.keys()),
         input,
         path: [def.discriminator],
         inst,
@@ -2609,75 +2682,123 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
     payload.value = [];
     const proms: Promise<any>[] = [];
 
-    const reversedIndex = [...items].reverse().findIndex((item) => item._zod.optin !== "optional");
-    const optStart = reversedIndex === -1 ? 0 : items.length - reversedIndex;
+    const optinStart = getTupleOptStart(items, "optin");
+    const optoutStart = getTupleOptStart(items, "optout");
 
     if (!def.rest) {
-      const tooBig = input.length > items.length;
-      const tooSmall = input.length < optStart - 1;
-      if (tooBig || tooSmall) {
+      if (input.length < optinStart) {
         payload.issues.push({
-          ...(tooBig
-            ? { code: "too_big", maximum: items.length, inclusive: true }
-            : { code: "too_small", minimum: items.length }),
-
+          code: "too_small",
+          minimum: optinStart,
+          inclusive: true,
           input,
           inst,
           origin: "array" as const,
         });
         return payload;
       }
+      if (input.length > items.length) {
+        payload.issues.push({
+          code: "too_big",
+          maximum: items.length,
+          inclusive: true,
+          input,
+          inst,
+          origin: "array" as const,
+        });
+      }
     }
 
-    let i = -1;
-    for (const item of items) {
-      i++;
-      if (i >= input.length) if (i >= optStart) continue;
-      const result = item._zod.run(
-        {
-          value: input[i],
-          issues: [],
-        },
-        ctx
-      );
-
-      if (result instanceof Promise) {
-        proms.push(result.then((result) => handleTupleResult(result, payload, i)));
+    // Run every item in parallel, collecting results into an indexed
+    // array. The post-processing in `handleTupleResults` walks them in
+    // order so it can decide whether an absent optional-output error can
+    // truncate the tail or must be reported to preserve required output.
+    const itemResults: ParsePayload[] = new Array(items.length);
+    for (let i = 0; i < items.length; i++) {
+      const r = items[i]._zod.run({ value: input[i], issues: [] }, ctx);
+      if (r instanceof Promise) {
+        proms.push(
+          r.then((rr) => {
+            itemResults[i] = rr;
+          })
+        );
       } else {
-        handleTupleResult(result, payload, i);
+        itemResults[i] = r;
       }
     }
 
     if (def.rest) {
+      let i = items.length - 1;
       const rest = input.slice(items.length);
       for (const el of rest) {
         i++;
-        const result = def.rest._zod.run(
-          {
-            value: el,
-            issues: [],
-          },
-          ctx
-        );
-
+        const result = def.rest._zod.run({ value: el, issues: [] }, ctx);
         if (result instanceof Promise) {
-          proms.push(result.then((result) => handleTupleResult(result, payload, i)));
+          proms.push(result.then((r) => handleTupleResult(r, payload, i)));
         } else {
           handleTupleResult(result, payload, i);
         }
       }
     }
 
-    if (proms.length) return Promise.all(proms).then(() => payload);
-    return payload;
+    if (proms.length) {
+      return Promise.all(proms).then(() => handleTupleResults(itemResults, payload, items, input, optoutStart));
+    }
+    return handleTupleResults(itemResults, payload, items, input, optoutStart);
   };
 });
+
+function getTupleOptStart(items: readonly $ZodType[], key: "optin" | "optout") {
+  for (let i = items.length - 1; i >= 0; i--) {
+    if (items[i]._zod[key] !== "optional") return i + 1;
+  }
+  return 0;
+}
 
 function handleTupleResult(result: ParsePayload, final: ParsePayload<any[]>, index: number) {
   if (result.issues.length) {
     final.issues.push(...util.prefixIssues(index, result.issues));
   }
   final.value[index] = result.value;
+}
+
+function handleTupleResults(
+  itemResults: ParsePayload[],
+  final: ParsePayload<any[]>,
+  items: readonly $ZodType[],
+  input: unknown[],
+  optoutStart: number
+) {
+  // Walk results in order. Mirror $ZodObject's swallow-on-absent-optional
+  // rule, but only after `optoutStart`: the first index where the output
+  // tuple tail can be absent.
+  for (let i = 0; i < items.length; i++) {
+    const r = itemResults[i];
+    const isPresent = i < input.length;
+    if (r.issues.length) {
+      if (!isPresent && i >= optoutStart) {
+        final.value.length = i;
+        break;
+      }
+      final.issues.push(...util.prefixIssues(i, r.issues));
+    }
+    final.value[i] = r.value;
+  }
+
+  // Drop trailing slots that produced `undefined` for absent input
+  // (the array analog of an absent optional key on an object). The
+  // `i >= input.length` floor is critical: an explicit `undefined`
+  // *inside* the input must be preserved even when the schema is
+  // optional-out (e.g. `z.string().or(z.undefined())` accepting an
+  // explicit undefined value).
+  for (let i = final.value.length - 1; i >= input.length; i--) {
+    if (items[i]._zod.optout === "optional" && final.value[i] === undefined) {
+      final.value.length = i;
+    } else {
+      break;
+    }
+  }
+  return final;
 }
 
 //////////////////////////////////////////
@@ -2777,6 +2898,22 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       for (const key of values) {
         if (typeof key === "string" || typeof key === "number" || typeof key === "symbol") {
           recordKeys.add(typeof key === "number" ? key.toString() : key);
+          const keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
+          if (keyResult instanceof Promise) {
+            throw new Error("Async schemas not supported in object keys currently");
+          }
+          if (keyResult.issues.length) {
+            payload.issues.push({
+              code: "invalid_key",
+              origin: "record",
+              issues: keyResult.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
+              input: key,
+              path: [key],
+              inst,
+            });
+            continue;
+          }
+          const outKey = keyResult.value as PropertyKey;
           const result = def.valueType._zod.run({ value: input[key], issues: [] }, ctx);
 
           if (result instanceof Promise) {
@@ -2785,14 +2922,14 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
                 if (result.issues.length) {
                   payload.issues.push(...util.prefixIssues(key, result.issues));
                 }
-                payload.value[key] = result.value;
+                payload.value[outKey] = result.value;
               })
             );
           } else {
             if (result.issues.length) {
               payload.issues.push(...util.prefixIssues(key, result.issues));
             }
-            payload.value[key] = result.value;
+            payload.value[outKey] = result.value;
           }
         }
       }
@@ -2815,8 +2952,10 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       }
     } else {
       payload.value = {};
+      // Reflect.ownKeys for Symbol-key support; filter non-enumerable to match z.object()
       for (const key of Reflect.ownKeys(input)) {
         if (key === "__proto__") continue;
+        if (!Object.prototype.propertyIsEnumerable.call(input, key)) continue;
         let keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
         if (keyResult instanceof Promise) {
           throw new Error("Async schemas not supported in object keys currently");
@@ -3283,6 +3422,7 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
   "$ZodTransform",
   (inst, def) => {
     $ZodType.init(inst, def);
+    inst._zod.optin = "optional";
     inst._zod.parse = (payload, ctx) => {
       if (ctx.direction === "backward") {
         throw new core.$ZodEncodeError(inst.constructor.name);
@@ -3293,6 +3433,7 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
         const output = _out instanceof Promise ? _out : Promise.resolve(_out);
         return output.then((output) => {
           payload.value = output;
+          payload.fallback = true;
           return payload;
         });
       }
@@ -3302,6 +3443,7 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
       }
 
       payload.value = _out;
+      payload.fallback = true;
       return payload;
     };
   }
@@ -3334,7 +3476,7 @@ export interface $ZodOptional<T extends SomeType = $ZodType> extends $ZodType {
 }
 
 function handleOptionalResult(result: ParsePayload, input: unknown) {
-  if (result.issues.length && input === undefined) {
+  if (input === undefined && (result.issues.length || result.fallback)) {
     return { issues: [], value: undefined };
   }
   return result;
@@ -3357,9 +3499,10 @@ export const $ZodOptional: core.$constructor<$ZodOptional> = /*@__PURE__*/ core.
 
     inst._zod.parse = (payload, ctx) => {
       if (def.innerType._zod.optin === "optional") {
+        const input = payload.value;
         const result = def.innerType._zod.run(payload, ctx);
-        if (result instanceof Promise) return result.then((r) => handleOptionalResult(r, payload.value));
-        return handleOptionalResult(result, payload.value);
+        if (result instanceof Promise) return result.then((r) => handleOptionalResult(r, input));
+        return handleOptionalResult(result, input);
       }
       if (payload.value === undefined) {
         return payload;
@@ -3752,7 +3895,7 @@ export interface $ZodCatch<T extends SomeType = $ZodType> extends $ZodType {
 
 export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$constructor("$ZodCatch", (inst, def) => {
   $ZodType.init(inst, def);
-  util.defineLazy(inst._zod, "optin", () => def.innerType._zod.optin);
+  inst._zod.optin = "optional";
   util.defineLazy(inst._zod, "optout", () => def.innerType._zod.optout);
   util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
 
@@ -3775,6 +3918,7 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
             input: payload.value,
           });
           payload.issues = [];
+          payload.fallback = true;
         }
 
         return payload;
@@ -3792,6 +3936,7 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
       });
 
       payload.issues = [];
+      payload.fallback = true;
     }
 
     return payload;
@@ -3896,7 +4041,7 @@ function handlePipeResult(left: ParsePayload, next: $ZodType, ctx: ParseContextI
     left.aborted = true;
     return left;
   }
-  return next._zod.run({ value: left.value, issues: left.issues }, ctx);
+  return next._zod.run({ value: left.value, issues: left.issues, fallback: left.fallback }, ctx);
 }
 
 ////////////////////////////////////////////
@@ -3983,6 +4128,35 @@ function handleCodecTxResult(left: ParsePayload, value: any, nextSchema: SomeTyp
 
   return nextSchema._zod.run({ value, issues: left.issues }, ctx);
 }
+
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+//////////                             //////////
+//////////      $ZodPreprocess         //////////
+//////////                             //////////
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+export interface $ZodPreprocessDef<B extends SomeType = $ZodType> extends $ZodPipeDef<$ZodTransform, B> {
+  in: $ZodTransform;
+  out: B;
+}
+
+export interface $ZodPreprocessInternals<B extends SomeType = $ZodType> extends $ZodPipeInternals<$ZodTransform, B> {
+  def: $ZodPreprocessDef<B>;
+  optin: B["_zod"]["optin"];
+  optout: B["_zod"]["optout"];
+}
+
+export interface $ZodPreprocess<B extends SomeType = $ZodType> extends $ZodPipe<$ZodTransform, B> {
+  _zod: $ZodPreprocessInternals<B>;
+}
+
+export const $ZodPreprocess: core.$constructor<$ZodPreprocess> = /*@__PURE__*/ core.$constructor(
+  "$ZodPreprocess",
+  (inst, def) => {
+    $ZodPipe.init(inst, def);
+  }
+);
 
 ////////////////////////////////////////////
 ////////////////////////////////////////////
@@ -4402,14 +4576,14 @@ export interface $ZodLazy<T extends SomeType = $ZodType> extends $ZodType {
 export const $ZodLazy: core.$constructor<$ZodLazy> = /*@__PURE__*/ core.$constructor("$ZodLazy", (inst, def) => {
   $ZodType.init(inst, def);
 
-  // let _innerType!: any;
-  // util.defineLazy(def, "getter", () => {
-  //   if (!_innerType) {
-  //     _innerType = def.getter();
-  //   }
-  //   return () => _innerType;
-  // });
-  util.defineLazy(inst._zod, "innerType", () => def.getter() as $ZodType);
+  // Cache the resolved inner type on the shared `def` so all clones of this
+  // lazy (e.g. via `.describe()`/`.meta()`) share the same inner instance,
+  // preserving identity for cycle detection on recursive schemas.
+  util.defineLazy(inst._zod, "innerType", () => {
+    const d = def as $ZodLazyDef & { _cachedInner?: $ZodType };
+    if (!d._cachedInner) d._cachedInner = def.getter() as $ZodType;
+    return d._cachedInner;
+  });
   util.defineLazy(inst._zod, "pattern", () => inst._zod.innerType?._zod?.pattern);
   util.defineLazy(inst._zod, "propValues", () => inst._zod.innerType?._zod?.propValues);
   util.defineLazy(inst._zod, "optin", () => inst._zod.innerType?._zod?.optin ?? undefined);

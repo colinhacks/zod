@@ -60,7 +60,11 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
           checks: [
             ...(def.checks ?? []),
             ...checks.map((ch) =>
-              typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
+              typeof ch === "function"
+                ? {
+                    _zod: { check: ch, def: { check: "custom" }, onattach: [] },
+                  }
+                : ch
             ),
           ],
         },
@@ -241,9 +245,19 @@ export function nanoid(params?: string | core.$ZodNanoIDParams): ZodMiniNanoID {
 }
 
 // ZodMiniCUID
+/**
+ * @deprecated CUID v1 is deprecated by its authors due to information leakage
+ * (timestamps embedded in the id). Use {@link ZodMiniCUID2} instead.
+ * See https://github.com/paralleldrive/cuid.
+ */
 export interface ZodMiniCUID extends _ZodMiniString<core.$ZodCUIDInternals> {
   // _zod: core.$ZodCUIDInternals;
 }
+/**
+ * @deprecated CUID v1 is deprecated by its authors due to information leakage
+ * (timestamps embedded in the id). Use {@link ZodMiniCUID2} instead.
+ * See https://github.com/paralleldrive/cuid.
+ */
 export const ZodMiniCUID: core.$constructor<ZodMiniCUID> = /*@__PURE__*/ core.$constructor(
   "ZodMiniCUID",
   (inst, def) => {
@@ -252,6 +266,13 @@ export const ZodMiniCUID: core.$constructor<ZodMiniCUID> = /*@__PURE__*/ core.$c
   }
 );
 
+/**
+ * Validates a CUID v1 string.
+ *
+ * @deprecated CUID v1 is deprecated by its authors due to information leakage
+ * (timestamps embedded in the id). Use {@link cuid2 | `z.cuid2()`} instead.
+ * See https://github.com/paralleldrive/cuid.
+ */
 // @__NO_SIDE_EFFECTS__
 export function cuid(params?: string | core.$ZodCUIDParams): ZodMiniCUID {
   return core._cuid(ZodMiniCUID, params);
@@ -833,7 +854,7 @@ export const ZodMiniObject: core.$constructor<ZodMiniObject> = /*@__PURE__*/ cor
 export function object<T extends core.$ZodLooseShape = Record<never, SomeType>>(
   shape?: T,
   params?: string | core.$ZodObjectParams
-): ZodMiniObject<T, core.$strip> {
+): ZodMiniObject<util.Writeable<T>, core.$strip> {
   const def: core.$ZodObjectDef = {
     type: "object",
     shape: shape ?? {},
@@ -847,7 +868,7 @@ export function object<T extends core.$ZodLooseShape = Record<never, SomeType>>(
 export function strictObject<T extends core.$ZodLooseShape>(
   shape: T,
   params?: string | core.$ZodObjectParams
-): ZodMiniObject<T, core.$strict> {
+): ZodMiniObject<util.Writeable<T>, core.$strict> {
   return new ZodMiniObject({
     type: "object",
     shape,
@@ -861,7 +882,7 @@ export function strictObject<T extends core.$ZodLooseShape>(
 export function looseObject<T extends core.$ZodLooseShape>(
   shape: T,
   params?: string | core.$ZodObjectParams
-): ZodMiniObject<T, core.$loose> {
+): ZodMiniObject<util.Writeable<T>, core.$loose> {
   return new ZodMiniObject({
     type: "object",
     shape,
@@ -875,7 +896,7 @@ export function looseObject<T extends core.$ZodLooseShape>(
 export function extend<T extends ZodMiniObject, U extends core.$ZodLooseShape>(
   schema: T,
   shape: U
-): ZodMiniObject<util.Extend<T["shape"], U>, T["_zod"]["config"]> {
+): ZodMiniObject<util.Extend<T["shape"], util.Writeable<U>>, T["_zod"]["config"]> {
   return util.extend(schema, shape);
 }
 
@@ -893,7 +914,7 @@ export type SafeExtendShape<Base extends core.$ZodShape, Ext extends core.$ZodLo
 export function safeExtend<T extends ZodMiniObject, U extends core.$ZodLooseShape>(
   schema: T,
   shape: SafeExtendShape<T["shape"], U>
-): ZodMiniObject<util.Extend<T["shape"], U>, T["_zod"]["config"]> {
+): ZodMiniObject<util.Extend<T["shape"], util.Writeable<U>>, T["_zod"]["config"]> {
   return util.safeExtend(schema, shape as any);
 }
 
@@ -930,7 +951,7 @@ export function partial<T extends ZodMiniObject>(
   schema: T
 ): ZodMiniObject<
   {
-    [k in keyof T["shape"]]: ZodMiniOptional<T["shape"][k]>;
+    -readonly [k in keyof T["shape"]]: ZodMiniOptional<T["shape"][k]>;
   },
   T["_zod"]["config"]
 >;
@@ -940,7 +961,7 @@ export function partial<T extends ZodMiniObject, M extends util.Mask<keyof T["sh
   mask: M & Record<Exclude<keyof M, keyof T["shape"]>, never>
 ): ZodMiniObject<
   {
-    [k in keyof T["shape"]]: k extends keyof M ? ZodMiniOptional<T["shape"][k]> : T["shape"][k];
+    -readonly [k in keyof T["shape"]]: k extends keyof M ? ZodMiniOptional<T["shape"][k]> : T["shape"][k];
   },
   T["_zod"]["config"]
 >;
@@ -965,7 +986,7 @@ export function required<T extends ZodMiniObject>(
   schema: T
 ): ZodMiniObject<
   {
-    [k in keyof T["shape"]]: ZodMiniNonOptional<T["shape"][k]>;
+    -readonly [k in keyof T["shape"]]: ZodMiniNonOptional<T["shape"][k]>;
   },
   T["_zod"]["config"]
 >;
@@ -1062,7 +1083,7 @@ export const ZodMiniDiscriminatedUnion: core.$constructor<ZodMiniDiscriminatedUn
 
 // @__NO_SIDE_EFFECTS__
 export function discriminatedUnion<
-  Types extends readonly [core.$ZodTypeDiscriminable, ...core.$ZodTypeDiscriminable[]],
+  Types extends readonly [core.$ZodTypeDiscriminable<Disc>, ...core.$ZodTypeDiscriminable<Disc>[]],
   Disc extends string,
 >(
   discriminator: Disc,
@@ -1162,6 +1183,15 @@ export function record<Key extends core.$ZodRecordKey, Value extends SomeType>(
   valueType: Value,
   params?: string | core.$ZodRecordParams
 ): ZodMiniRecord<Key, Value> {
+  // v3-compat: z.record(valueType, params?) — defaults keyType to z.string()
+  if (!valueType || !(valueType as any)._zod) {
+    return new ZodMiniRecord({
+      type: "record",
+      keyType: string() as any,
+      valueType: keyType as any as core.$ZodType,
+      ...util.normalizeParams(valueType as string | core.$ZodRecordParams | undefined),
+    }) as any;
+  }
   return new ZodMiniRecord({
     type: "record",
     keyType,
@@ -1625,14 +1655,17 @@ export function codec<const A extends SomeType, B extends core.SomeType = core.$
   }) as any;
 }
 
-// /** @deprecated Use `z.pipe()` and `z.transform()` instead. */
-// export function preprocess<A, U extends core.$ZodType>(
-//   fn: (arg: unknown, ctx: core.ParsePayload) => A,
-//   schema: U,
-//   params?: ZodPreprocessParams
-// ): ZodPipe<ZodTransform<A, unknown>, U> {
-//   return pipe(transform(fn as any, params), schema as any, params);
-// }
+// @__NO_SIDE_EFFECTS__
+export function invertCodec<A extends SomeType, B extends SomeType>(codec: ZodMiniCodec<A, B>): ZodMiniCodec<B, A> {
+  const def = codec._zod.def;
+  return new ZodMiniCodec({
+    type: "pipe",
+    in: def.out as any,
+    out: def.in as any,
+    transform: def.reverseTransform as any,
+    reverseTransform: def.transform as any,
+  }) as any;
+}
 
 // ZodMiniReadonly
 export interface ZodMiniReadonly<T extends SomeType = core.$ZodType>
@@ -1770,9 +1803,10 @@ export function refine<T>(
 // superRefine
 // @__NO_SIDE_EFFECTS__
 export function superRefine<T>(
-  fn: (arg: T, payload: core.$RefinementCtx<T>) => void | Promise<void>
+  fn: (arg: T, payload: core.$RefinementCtx<T>) => void | Promise<void>,
+  params?: core.$ZodSuperRefineParams
 ): core.$ZodCheck<T> {
-  return core._superRefine(fn);
+  return core._superRefine(fn, params);
 }
 
 // Re-export describe and meta from core
@@ -1897,10 +1931,7 @@ export function _function<const Out extends core.$ZodFunctionOut = core.$ZodFunc
 export function _function<
   In extends core.$ZodFunctionIn = core.$ZodFunctionIn,
   Out extends core.$ZodFunctionOut = core.$ZodFunctionOut,
->(params?: {
-  input: In;
-  output: Out;
-}): ZodMiniFunction<In, Out>;
+>(params?: { input: In; output: Out }): ZodMiniFunction<In, Out>;
 // @__NO_SIDE_EFFECTS__
 export function _function(params?: {
   output?: core.$ZodFunctionOut;

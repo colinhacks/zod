@@ -248,6 +248,7 @@ z.uuid();
 z.url();
 z.httpUrl();       // http or https URLs only
 z.hostname();
+z.e164();          // E.164 phone numbers
 z.emoji();         // validates a single emoji character
 z.base64();
 z.base64url();
@@ -388,6 +389,19 @@ To normalize URLs, use the `normalize` flag. This will overwrite the input value
 new URL("HTTP://ExAmPle.com:80/./a/../b?X=1#f oo").href
 // => "http://example.com/b?X=1#f%20oo"
 ```
+
+### Phone numbers
+
+To validate phone numbers in E.164 format:
+
+```ts
+const phone = z.e164();
+
+phone.parse("+15555555555"); // ✅
+phone.parse("555-555-5555"); // ❌
+```
+
+This schema validates strings with a leading `+`, a non-zero country code, and 7 to 15 digits total.
 
 ### ISO datetimes
 
@@ -580,7 +594,7 @@ z.hash("sha256", { enc: "base64url" }); // base64url encoding (no padding)
 To define your own string formats:
 
 ```ts
-const coolId = z.stringFormat("cool-id", ()=>{
+const coolId = z.stringFormat("cool-id", (val)=>{
   // arbitrary validation here
   return val.length === 100 && val.startsWith("cool-");
 });
@@ -605,7 +619,7 @@ myFormat.parse("invalid input!");
 
 ## Template literals
 
-> **New** — Introduced in `zod@4.0`.
+> Introduced in `zod@4.0`.
 
 To define a template literal schema:
 
@@ -722,10 +736,10 @@ z.bigint().check(z.gt(5n));
 z.bigint().check(z.gte(5n));           // alias `.minimum(5n)`
 z.bigint().check(z.lt(5n));
 z.bigint().check(z.lte(5n));           // alias `.maximum(5n)`
-z.bigint().check(z.positive());        // alias `.gt(0n)` 
-z.bigint().check(z.nonnegative()); 
-z.bigint().check(z.negative()); 
-z.bigint().check(z.nonpositive()); 
+z.bigint().check(z.positive());        // alias `.gt(0n)`
+z.bigint().check(z.nonnegative());
+z.bigint().check(z.negative());
+z.bigint().check(z.nonpositive());
 z.bigint().check(z.multipleOf(5n));    // alias `.step(5n)`
 ```
 
@@ -837,7 +851,7 @@ FishEnum.parse(2); // => ❌
 ```
 
 <Callout>
-**Zod 4** — This replaces the `z.nativeEnum()` API in Zod 3. 
+Use `z.enum()` for externally declared TypeScript enums. The `z.nativeEnum()` API is deprecated.
 
 Note that using TypeScript's `enum` keyword is [not recommended](https://www.totaltypescript.com/why-i-dont-like-typescript-enums). 
 </Callout>
@@ -915,9 +929,9 @@ const SalmonAndTroutOnly = FishEnum.extract(["Salmon", "Trout"]);
 
 ## Stringbools [#stringbool]
 
-> **💎 New in Zod 4**
+> Introduced in `zod@4.0`.
 
-In some cases (e.g. parsing environment variables) it's valuable to parse certain string "boolish" values to a plain `boolean` value. To support this, Zod 4 introduces `z.stringbool()`:
+In some cases (e.g. parsing environment variables) it's valuable to parse certain string "boolish" values to a plain `boolean` value. Use `z.stringbool()` for this:
 
 ```ts
 const strbool = z.stringbool();
@@ -1140,10 +1154,13 @@ To define a *catchall schema* that will be used to validate any unrecognized key
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts z.object
-const DogWithStrings = z.object({
-  name: z.string(),
-  age: z.number().optional(),
-}).catchall(z.string());
+const DogWithStrings = z
+  .object({
+    name: z.string(),
+    age: z.number().optional(),
+  })
+  .catchall(z.string());
+
 
 DogWithStrings.parse({ name: "Yeller", extraKey: "extraValue" }); // ✅
 DogWithStrings.parse({ name: "Yeller", extraKey: 42 }); // ❌
@@ -1762,20 +1779,6 @@ const MyResult = z.discriminatedUnion("status", [
 
 Each option should be an *object schema* whose discriminator prop (`status` in the example above) corresponds to some literal value or set of values, usually `z.enum()`, `z.literal()`, `z.null()`, or `z.undefined()`.
 
-{/* 
-<Callout>
-  In Zod 3, you were required to specify the discriminator key as the first argument. This is no longer necessary, as Zod can now automatically detect the discriminator key.
-
-  ```ts
-  const MyResult = z.discriminatedUnion("status", [
-    z.object({ status: z.literal("success"), data: z.string() }),
-    z.object({ status: z.literal("failed"), error: z.string() }),
-  ]);
-  ```
-
-  If Zod can't find a discriminator key, it will throw an error at schema creation time.
-</Callout> */}
-
 <Accordions type="single">
 <Accordion title="Nesting discriminated unions">
 
@@ -1861,7 +1864,7 @@ const Person = z.record(Keys, z.string());
 // { id: string; name: string; email: string }
 ```
 
-**New** — As of v4.2, Zod properly supports numeric keys inside records in a way that more closely mirrors TypeScript itself. A `number` schema, when used as a record key, will validate that the key is a valid "numeric string". Additional numerical constraints (min, max, step, etc.) will also be validated.
+Zod supports numeric keys inside records in a way that closely mirrors TypeScript itself. A `number` schema, when used as a record key, will validate that the key is a valid "numeric string". Additional numerical constraints (min, max, step, etc.) will also be validated.
 
 ```ts
 const numberKeys = z.record(z.number(), z.string());
@@ -1888,7 +1891,7 @@ intKeys.parse({
 
 
 <Callout>
-  **Zod 4** — In Zod 4, if you pass a `z.enum` as the first argument to `z.record()`, Zod will exhaustively check that all enum values exist in the input as keys. This behavior agrees with TypeScript:
+  If you pass a `z.enum` as the first argument to `z.record()`, Zod will exhaustively check that all enum values exist in the input as keys. This behavior agrees with TypeScript:
 
   ```ts
   type MyRecord = Record<"a" | "b", string>;
@@ -1896,7 +1899,7 @@ intKeys.parse({
   const myRecord: MyRecord = { a: "foo" }; // ❌ missing required key `b`
   ```
 
-  In Zod 3, exhaustiveness was not checked. To replicate the old behavior, use `z.partialRecord()`.
+  For partial key sets, use `z.partialRecord()`.
 
 </Callout>
 
@@ -1992,12 +1995,10 @@ fileSchema.mime(["image/png", "image/jpeg"]); // multiple MIME types
 ```ts
 const fileSchema = z.file();
 
-fileSchema.check(
-  z.minSize(10_000), // minimum .size (bytes)
-  z.maxSize(1_000_000), // maximum .size (bytes)
-  z.mime("image/png"), // MIME type
-  z.mime(["image/png", "image/jpeg"]); // multiple MIME types
-)
+fileSchema.check(z.minSize(10_000)); // minimum .size (bytes)
+fileSchema.check(z.maxSize(1_000_000)); // maximum .size (bytes)
+fileSchema.check(z.mime("image/png")); // MIME type
+fileSchema.check(z.mime(["image/png", "image/jpeg"])); // multiple MIME types
 ```
 </Tab>
 </Tabs>
@@ -2005,7 +2006,7 @@ fileSchema.check(
 ## Promises
 
 <Callout type="warn">
-  **Deprecated** — `z.promise()` is deprecated in Zod 4. There are vanishingly few valid uses cases for a `Promise` schema. If you suspect a value might be a `Promise`, simply `await` it before parsing it with Zod.
+  **Deprecated** — `z.promise()` is deprecated. There are vanishingly few valid uses cases for a `Promise` schema. If you suspect a value might be a `Promise`, simply `await` it before parsing it with Zod.
 </Callout>
 
 <Accordions type="single"><Accordion title="See z.promise() documentation">
@@ -2206,7 +2207,7 @@ const passwordForm = z
     confirm: z.string(),
   })
   .refine((data) => data.password === data.confirm, {
-    message: "Passwords don't match",
+    error: "Passwords don't match",
     path: ["confirm"], // path of error
   });
 ```
@@ -2219,7 +2220,7 @@ const passwordForm = z
     confirm: z.string(),
   })
   .check(z.refine((data) => data.password === data.confirm, {
-    message: "Passwords don't match",
+    error: "Passwords don't match",
     path: ["confirm"], // path of error
   }));
 ```
@@ -2344,19 +2345,20 @@ An error on `anotherField` will prevent the password confirmation check from exe
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-const schema = z
-  .object({
-    password: z.string().min(8),
-    confirmPassword: z.string(),
-    anotherField: z.string(),
-  })
+const baseSchema = z.object({
+  password: z.string().min(8),
+  confirmPassword: z.string(),
+  anotherField: z.string(),
+});
+
+const schema = baseSchema
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
 
     // run if password & confirmPassword are valid
     when(payload) { // [!code ++]
-      return schema // [!code ++]
+      return baseSchema // [!code ++]
         .pick({ password: true, confirmPassword: true }) // [!code ++]
         .safeParse(payload.value).success; // [!code ++]
     },  // [!code ++]
@@ -2380,6 +2382,7 @@ const schema = z
   .check(z.refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
+
     when(payload) { // [!code ++]
       // no issues with `password` or `confirmPassword` // [!code ++]
       return payload.issues.every((iss) => { // [!code ++]
@@ -2530,7 +2533,7 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
 
 ## Codecs
 
-> **New** — Introduced in Zod 4.1. Refer to the dedicated [Codecs](/codecs) page for more information.
+> Introduced in `zod@4.1`. Refer to the dedicated [Codecs](/codecs) page for more information.
 
 Codecs are a special kind of schema that implement *bidirectional transformations* between two other schemas.
 
@@ -2561,6 +2564,15 @@ To perform the *reverse transform*, use the inverse: `z.encode()`.
 
 ```ts
 z.encode(stringToDate, new Date("2024-01-15")); // => "2024-01-15T00:00:00.000Z"
+```
+
+Use `z.invertCodec()` to derive a new codec with the input and output schemas swapped.
+
+```ts
+const dateToString = z.invertCodec(stringToDate);
+
+z.decode(dateToString, new Date("2024-01-15")); // => string
+z.encode(dateToString, "2024-01-15T00:00:00.000Z"); // => Date
 ```
 
 Refer to the dedicated [Codecs](/codecs) page for more information. That page contains implementations for commonly-needed codecs that you can copy/paste into your project:
@@ -2760,6 +2772,20 @@ const coercedInt = z.preprocess((val) => {
 }, z.int());
 ```
 
+By default, the input type of a `z.preprocess()` schema is `unknown`, since the preprocessor is expected to handle arbitrary input. To narrow the input type, annotate the preprocessor's parameter directly:
+
+```ts
+const trimmed = z.preprocess(
+  (val: string | null | undefined) => val?.trim() ?? "",
+  z.string()
+);
+
+type Input = z.input<typeof trimmed>;  // string | null | undefined
+type Output = z.output<typeof trimmed>; // string
+```
+
+This is useful when integrating with libraries like `react-hook-form` that derive their form value type from `z.input<>`.
+
 ## Defaults
 
 To set a default value for a schema:
@@ -2862,6 +2888,7 @@ Alternatively, you can pass a function which will be re-executed whenever a catc
 ```ts
 const numberWithRandomCatch = z.number().catch((ctx) => {
   ctx.error; // the caught ZodError
+
   return Math.random();
 });
 
@@ -2917,7 +2944,7 @@ const Cat = z.object({ name: z.string() }).brand<"Cat">();
 type Cat = z.output<typeof Cat>; // { name: string } & z.$brand<"Cat">
 ```
 
-With this brand, any plain (unbranded) data structures are no longer assignable to the inferred type. You have to parse some data with the schema to get branded data.
+With this brand, plain (unbranded) data structures are not assignable to the inferred type. You have to parse some data with the schema to get branded data.
 
 > Note that branded types do not affect the runtime result of `.parse`. It is a static-only construct.
 
@@ -2960,7 +2987,7 @@ type ReadonlyUser = z.infer<typeof ReadonlyUser>;
 </Tab>
 </Tabs>
 
-The inferred type of the new schemas will be marked as `readonly`. Note that in TypeScript, this only affects objects, arrays, tuples, `Set`, and `Map`:
+The inferred type is marked as `readonly`. Note that in TypeScript, this only affects objects, arrays, tuples, `Set`, and `Map`:
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -3080,17 +3107,15 @@ computeTrimmedLengthAsync("sandwich"); // => Promise<8>
 
 ## Custom
 
-You can create a Zod schema for any TypeScript type by using `z.custom()`. This is useful for creating schemas for types that are not supported by Zod out of the box, such as template string literals.
+You can create a Zod schema for any TypeScript type by using `z.custom()`. This is useful for validating types from third-party libraries or any other type that isn't covered by a built-in schema. For class instances, prefer [`z.instanceof()`](#instanceof); for template literal types, prefer [`z.templateLiteral()`](#template-literals).
 
 ```ts
-const px = z.custom<`${number}px`>((val) => {
-  return typeof val === "string" ? /^\d+px$/.test(val) : false;
-});
+import { Decimal } from "decimal.js";
 
-type px = z.infer<typeof px>; // `${number}px`
+const decimalSchema = z.custom<Decimal>((val) => Decimal.isDecimal(val));
 
-px.parse("42px"); // "42px"
-px.parse("42vw"); // throws;
+decimalSchema.parse(new Decimal("1.5")); // passes
+decimalSchema.parse("1.5");              // throws
 ```
 
 If you don't provide a validation function, Zod will allow any value. This can be dangerous!
@@ -3131,7 +3156,9 @@ schema.parse(null); // => null
 <Tab value="Zod Mini">
 ```ts
 function setCommonNumberChecks<T extends z.ZodMiniNumber>(schema: T) {
-  return schema.check(z.minimum(0), z.maximum(100));
+  return schema.check(
+    z.minimum(0), z.maximum(100)
+  );
 }
 
 const schema = z.nullable(

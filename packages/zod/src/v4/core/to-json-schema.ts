@@ -3,6 +3,7 @@ import type * as JSONSchema from "./json-schema.js";
 import { type $ZodRegistry, globalRegistry } from "./registries.js";
 import type * as schemas from "./schemas.js";
 import type { StandardJSONSchemaV1, StandardSchemaWithJSONProps } from "./standard-schema.js";
+import { assignProp } from "./util.js";
 
 export type Processor<T extends schemas.$ZodType = schemas.$ZodType> = (
   schema: T,
@@ -205,7 +206,7 @@ export function process<T extends schemas.$ZodType>(
   }
 
   // set prefault as default
-  if (ctx.io === "input" && result.schema._prefault) result.schema.default ??= result.schema._prefault;
+  if (ctx.io === "input" && "_prefault" in result.schema) result.schema.default ??= result.schema._prefault;
   delete result.schema._prefault;
 
   // pulling fresh from ctx.seen in case it was overwritten
@@ -471,12 +472,20 @@ export function finalize<T extends schemas.$ZodType>(
 
   Object.assign(result, root.def ?? root.schema);
 
+  // The `id` in `.meta()` is a Zod-specific registration tag used to extract
+  // schemas into $defs — it is not user-facing JSON Schema metadata. Strip it
+  // from the output body where it would otherwise leak. The id is preserved
+  // implicitly via the $defs key (and via $ref paths).
+  const rootMetaId = ctx.metadataRegistry.get(schema)?.id;
+  if (rootMetaId !== undefined && result.id === rootMetaId) delete result.id;
+
   // build defs object
   const defs: JSONSchema.BaseSchema["$defs"] = ctx.external?.defs ?? {};
   for (const entry of ctx.seen.entries()) {
     const seen = entry[1];
     if (seen.def && seen.defId) {
-      defs[seen.defId] = seen.def;
+      if (seen.def.id === seen.defId) delete seen.def.id;
+      assignProp(defs, seen.defId, seen.def);
     }
   }
 
@@ -553,6 +562,7 @@ function isTransforming(
     return isTransforming(def.keyType, ctx) || isTransforming(def.valueType, ctx);
   }
   if (def.type === "pipe") {
+    if (_schema._zod.traits.has("$ZodCodec")) return true;
     return isTransforming(def.in, ctx) || isTransforming(def.out, ctx);
   }
 

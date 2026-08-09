@@ -10,7 +10,7 @@ export interface $constructor<T extends ZodTrait, D = T["_zod"]["def"]> {
 }
 
 /** A special constant with type `never` */
-export const NEVER: never = Object.freeze({
+export const NEVER: never = /*@__PURE__*/ Object.freeze({
   status: "aborted",
 }) as never;
 
@@ -130,7 +130,22 @@ export interface $ZodConfig {
   jitless?: boolean | undefined;
 }
 
-export const globalConfig: $ZodConfig = {};
+interface GlobalThisWithConfig {
+  /**
+   * The globalConfig instance shared across both CommonJS and ESM builds.
+   * Attached to `globalThis` (mirroring `__zod_globalRegistry`) so that a
+   * single config object is used regardless of how Zod is loaded — CJS,
+   * ESM, multiple bundles in a monorepo, etc. This means `z.config(...)`
+   * applied against any one instance is observed by all of them, and
+   * pre-populating it before Zod loads (e.g. `globalThis.__zod_globalConfig
+   * = { jitless: true }` in an inline script) takes effect immediately on
+   * import.
+   */
+  __zod_globalConfig?: $ZodConfig;
+}
+
+(globalThis as GlobalThisWithConfig).__zod_globalConfig ??= {};
+export const globalConfig: $ZodConfig = (globalThis as GlobalThisWithConfig).__zod_globalConfig!;
 
 export function config(newConfig?: Partial<$ZodConfig>): $ZodConfig {
   if (newConfig) Object.assign(globalConfig, newConfig);

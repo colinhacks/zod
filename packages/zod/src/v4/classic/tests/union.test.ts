@@ -217,3 +217,57 @@ test("z.xor() type inference", () => {
   type Result = z.infer<typeof schema>;
   expectTypeOf<Result>().toEqualTypeOf<string | number | boolean>();
 });
+
+test("z.union([]) constructs and rejects all input", () => {
+  const schema = z.union([]);
+  expectTypeOf<z.infer<typeof schema>>().toEqualTypeOf<never>();
+  const result = schema.safeParse("anything");
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues).toMatchInlineSnapshot(`
+      [
+        {
+          "code": "invalid_union",
+          "errors": [],
+          "message": "Invalid input",
+          "path": [],
+        },
+      ]
+    `);
+  }
+});
+
+test("z.xor([]) constructs and rejects all input", () => {
+  const schema = z.xor([]);
+  expectTypeOf<z.infer<typeof schema>>().toEqualTypeOf<never>();
+  const result = schema.safeParse("anything");
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues).toMatchInlineSnapshot(`
+      [
+        {
+          "code": "invalid_union",
+          "errors": [],
+          "message": "Invalid input",
+          "path": [],
+        },
+      ]
+    `);
+  }
+});
+
+test("z.discriminatedUnion with empty options constructs and rejects", () => {
+  const schema = z.discriminatedUnion("type", [] as any);
+  const nonObject = schema.safeParse("nope");
+  expect(nonObject.success).toEqual(false);
+  if (!nonObject.success) {
+    expect(nonObject.error.issues[0].code).toBe("invalid_type");
+  }
+  const obj = schema.safeParse({ type: "x" });
+  expect(obj.success).toEqual(false);
+  if (!obj.success) {
+    expect(obj.error.issues[0].code).toBe("invalid_union");
+    expect((obj.error.issues[0] as any).errors).toEqual([]);
+    expect((obj.error.issues[0] as any).options).toEqual([]);
+  }
+});

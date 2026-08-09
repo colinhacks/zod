@@ -13,7 +13,7 @@ export interface $ZodCheckDef {
   error?: errors.$ZodErrorMap<never> | undefined;
   /** If true, no later checks will be executed if this check fails. Default `false`. */
   abort?: boolean | undefined;
-  /** If provided, this check will only be executed if the function returns `true`. Defaults to `payload => z.util.isAborted(payload)`. */
+  /** If provided, the check runs only when this returns `true`. By default, it is skipped if prior parsing produced aborting issues. */
   when?: ((payload: schemas.ParsePayload) => boolean) | undefined;
 }
 

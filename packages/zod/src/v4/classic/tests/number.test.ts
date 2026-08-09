@@ -169,6 +169,20 @@ test(".multipleOf() with scientific notation (multi-digit exponents)", () => {
   expect(schema15.parse(3e-15)).toEqual(3e-15);
 });
 
+test(".multipleOf() with small floats / scientific notation (#5792)", () => {
+  const schema = z.number().multipleOf(1e-7);
+
+  // Valid multiples (integer * 1e-7)
+  expect(schema.safeParse(0).success).toBe(true);
+  expect(schema.safeParse(1e-7).success).toBe(true);
+  expect(schema.safeParse(2e-7).success).toBe(true);
+  expect(schema.safeParse(3e-7).success).toBe(true);
+
+  // Invalid — 2.5 and 1.5 are not integers
+  expect(schema.safeParse(2.5e-7).success).toBe(false);
+  expect(schema.safeParse(1.5e-7).success).toBe(false);
+});
+
 test(".step() validation", () => {
   const schemaPointOne = z.number().step(0.1);
   const schemaPointZeroZeroZeroOne = z.number().step(0.0001);

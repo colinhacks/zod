@@ -156,6 +156,10 @@ test("catch/prefault/default", () => {
     f: z.string().prefault("prefault value"),
   });
 
+  // Catch (d) and default/prefault (b, c, e, f) handle absent keys gracefully.
+  // `a: catch().optional()` short-circuits to undefined when the original
+  // input was undefined, so the property is omitted from the output. All
+  // other catch/default/prefault keys produce their fallback values.
   expect(mySchema.parse({})).toMatchInlineSnapshot(`
     {
       "b": "default value",
@@ -165,8 +169,27 @@ test("catch/prefault/default", () => {
       "f": "prefault value",
     }
   `);
-
   expect(mySchema.parse({}, { jitless: true })).toMatchInlineSnapshot(`
+    {
+      "b": "default value",
+      "c": "prefault value",
+      "d": "catch value",
+      "e": "default value",
+      "f": "prefault value",
+    }
+  `);
+
+  expect(mySchema.parse({ d: undefined })).toMatchInlineSnapshot(`
+    {
+      "b": "default value",
+      "c": "prefault value",
+      "d": "catch value",
+      "e": "default value",
+      "f": "prefault value",
+    }
+  `);
+
+  expect(mySchema.parse({ d: undefined }, { jitless: true })).toMatchInlineSnapshot(`
     {
       "b": "default value",
       "c": "prefault value",

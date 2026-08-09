@@ -414,6 +414,69 @@ describe("chained refinements", () => {
     };
     expect(objectSchema.parse(validData)).toEqual(validData);
   });
+
+  test("should run superRefine validation even when base schema validation fails when 'when' is defined and returns true", () => {
+    const baseSchema = z.object({
+      foo: z.number(),
+      bar: z.number(),
+    });
+
+    const schema = baseSchema.superRefine(
+      (data, ctx) => {
+        if (data.foo > 10) {
+          ctx.addIssue({
+            code: "custom",
+            message: "foo must be less than 10",
+          });
+        }
+      },
+      {
+        when: ({ value }) => baseSchema.pick({ foo: true }).safeParse(value).success,
+      }
+    );
+
+    const result = schema.safeParse({
+      foo: 11,
+    });
+    expect(result.success).toEqual(false);
+
+    if (!result.success) {
+      expect(result.error.issues.length).toEqual(2);
+      expect(result.error.issues[0].message).toEqual("Invalid input: expected number, received undefined");
+      expect(result.error.issues[1].message).toEqual("foo must be less than 10");
+    }
+  });
+
+  test("should not run superRefine validation when 'when' is defined and returns false", () => {
+    const baseSchema = z.object({
+      foo: z.number(),
+      bar: z.number(),
+    });
+
+    const schema = baseSchema.superRefine(
+      (data, ctx) => {
+        if (data.foo > 10) {
+          ctx.addIssue({
+            code: "custom",
+            message: "foo must be less than 10",
+          });
+        }
+      },
+      {
+        when: ({ value }) => baseSchema.safeParse(value).success,
+      }
+    );
+
+    const result = schema.safeParse({
+      foo: 11,
+    });
+    expect(result.success).toEqual(false);
+
+    if (!result.success) {
+      expect(result.error.issues.length).toEqual(1);
+      expect(result.error.issues[0].message).toEqual("Invalid input: expected number, received undefined");
+    }
+  });
 });
 
 describe("type refinement with type guards", () => {

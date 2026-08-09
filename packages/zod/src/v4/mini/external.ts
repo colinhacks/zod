@@ -4,6 +4,7 @@ export * from "./schemas.js";
 export * from "./checks.js";
 
 export type { infer, output, input } from "../core/index.js";
+export type { JSONType } from "../core/util.js";
 export {
   globalRegistry,
   registry,

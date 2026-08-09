@@ -1,7 +1,7 @@
 # Contributing
 
 When it comes to open source, there are different ways you can contribute, all
-of which are valuable. Here's few guidelines that should help you as you prepare
+of which are valuable. Here's a few guidelines that should help you as you prepare
 your contribution.
 
 ## Initial steps
@@ -21,7 +21,7 @@ Before you start working on a contribution, create an issue describing what you 
 
 ## Development
 
-The following steps will get you setup to contribute changes to this repo:
+The following steps will get you set up to contribute changes to this repo:
 
 1. Fork this repo.
 
@@ -61,7 +61,7 @@ For an officially supported isolated dev environment that automatically installs
 3. Click `Create a new volume...` and name it `zod` and the folder name as `zod`.
 
 Note: if you can't see `Dev Containers` in the `F1` menu, follow [this guide](https://code.visualstudio.com/docs/devcontainers/tutorial) to install the needed extension.
-In the OSS version of VSCode the extension may be not available.
+In the OSS version of VSCode the extension may not be available.
 
 ### Commands
 
@@ -97,8 +97,7 @@ Zod uses Vitest for testing. After implementing your contribution, write tests f
 
 ### Documentation
 
-The documentation site lives in `packages/docs` with content located at `packages/docs/content`
-. Be sure to document any API changes you implement.
+The documentation site lives in `packages/docs` with content located at `packages/docs/content`. Be sure to document any API changes you implement.
 
 ## License
 

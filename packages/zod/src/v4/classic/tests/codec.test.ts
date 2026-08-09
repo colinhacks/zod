@@ -1,4 +1,4 @@
-import { expect, expectTypeOf, test } from "vitest";
+import { describe, expect, expectTypeOf, test } from "vitest";
 import * as z from "zod/v4";
 
 const isoDateCodec = z.codec(
@@ -559,4 +559,145 @@ test("async codec functionality", async () => {
 
   const mixedResult = await z.decodeAsync(mixedCodec, "123");
   expect(mixedResult).toBe(123);
+});
+
+test("invertCodec basic", () => {
+  const inverted = z.invertCodec(isoDateCodec);
+
+  const testDate = new Date("2024-01-15T10:30:00.000Z");
+  const decoded = z.decode(inverted, testDate);
+  expect(typeof decoded).toBe("string");
+  expect(decoded).toBe("2024-01-15T10:30:00.000Z");
+
+  const encoded = z.encode(inverted, "2024-01-15T10:30:00.000Z");
+  expect(encoded).toBeInstanceOf(Date);
+  expect(encoded.toISOString()).toBe("2024-01-15T10:30:00.000Z");
+});
+
+test("invertCodec round trip", () => {
+  const inverted = z.invertCodec(isoDateCodec);
+  const testDate = new Date("2024-06-01T12:00:00.000Z");
+
+  const toStr = z.decode(inverted, testDate);
+  const backToDate = z.encode(inverted, toStr);
+  expect(backToDate.toISOString()).toBe(testDate.toISOString());
+});
+
+test("invertCodec types", () => {
+  const inverted = z.invertCodec(isoDateCodec);
+
+  type InvIn = z.input<typeof inverted>;
+  type InvOut = z.output<typeof inverted>;
+  expectTypeOf<InvIn>().toEqualTypeOf<Date>();
+  expectTypeOf<InvOut>().toEqualTypeOf<string>();
+});
+
+test("invertCodec is its own inverse", () => {
+  const doubleInverted = z.invertCodec(z.invertCodec(isoDateCodec));
+  const testIsoString = "2024-03-10T08:00:00.000Z";
+
+  const decoded = z.decode(doubleInverted, testIsoString);
+  expect(decoded).toBeInstanceOf(Date);
+  expect(decoded.toISOString()).toBe(testIsoString);
+
+  const encoded = z.encode(doubleInverted, decoded);
+  expect(encoded).toBe(testIsoString);
+});
+
+test("invertCodec with custom codec", () => {
+  const intToString = z.codec(z.int(), z.string().regex(/^\d+$/), {
+    decode: (num) => num.toString(),
+    encode: (str) => Number.parseInt(str, 10),
+  });
+
+  const stringToInt = z.invertCodec(intToString);
+  const result = z.decode(stringToInt, "42");
+  expect(result).toBe(42);
+
+  const back = z.encode(stringToInt, 42);
+  expect(back).toBe("42");
+});
+
+describe("context immutability", () => {
+  test("decode/encode", () => {
+    const stringToDateCodec = z.codec(z.iso.datetime(), z.date(), {
+      decode: (isoString) => new Date(isoString),
+      encode: (date) => date.toISOString(),
+    });
+
+    const ctx = { reportInput: true } as const;
+
+    const result1 = z.decode(stringToDateCodec, "2024-01-15T10:30:00.000Z", ctx);
+    expect(result1).toBeInstanceOf(Date);
+
+    expect(ctx).toEqual({ reportInput: true });
+    expect("async" in ctx).toBe(false);
+    expect("direction" in ctx).toBe(false);
+
+    const result2 = z.decode(stringToDateCodec, "2024-12-25T15:45:30.123Z", ctx);
+    expect(result2).toBeInstanceOf(Date);
+
+    expect(ctx).toEqual({ reportInput: true });
+    expect("async" in ctx).toBe(false);
+    expect("direction" in ctx).toBe(false);
+
+    z.encode(stringToDateCodec, new Date("2024-01-01T00:00:00.000Z"), ctx);
+    expect(ctx).toEqual({ reportInput: true });
+    expect("direction" in ctx).toBe(false);
+
+    z.safeEncode(stringToDateCodec, new Date("2024-01-01T00:00:00.000Z"), ctx);
+    expect(ctx).toEqual({ reportInput: true });
+    expect("direction" in ctx).toBe(false);
+  });
+
+  test("parse functions", () => {
+    const schema = z.string().min(1);
+    const ctx = { reportInput: true } as const;
+
+    z.parse(schema, "asdf", ctx);
+    expect(ctx).toEqual({ reportInput: true });
+    expect("async" in ctx).toBe(false);
+
+    z.safeParse(schema, "asdf", ctx);
+    expect(ctx).toEqual({ reportInput: true });
+    expect("async" in ctx).toBe(false);
+  });
+
+  test("async functions", async () => {
+    const stringToDateCodec = z.codec(z.iso.datetime(), z.date(), {
+      decode: (isoString) => new Date(isoString),
+      encode: (date) => date.toISOString(),
+    });
+
+    const ctx = { reportInput: true } as const;
+
+    const schema = z.string();
+    await z.parseAsync(schema, "asdf", ctx);
+    expect(ctx).toEqual({ reportInput: true });
+    expect("async" in ctx).toBe(false);
+
+    await z.safeParseAsync(schema, "asdf", ctx);
+    expect(ctx).toEqual({ reportInput: true });
+    expect("async" in ctx).toBe(false);
+
+    await z.decodeAsync(stringToDateCodec, "2024-01-15T10:30:00.000Z", ctx);
+    expect(ctx).toEqual({ reportInput: true });
+    expect("async" in ctx).toBe(false);
+    expect("direction" in ctx).toBe(false);
+
+    await z.encodeAsync(stringToDateCodec, new Date("2024-01-01T00:00:00.000Z"), ctx);
+    expect(ctx).toEqual({ reportInput: true });
+    expect("async" in ctx).toBe(false);
+    expect("direction" in ctx).toBe(false);
+
+    await z.safeDecodeAsync(stringToDateCodec, "2024-01-15T10:30:00.000Z", ctx);
+    expect(ctx).toEqual({ reportInput: true });
+    expect("async" in ctx).toBe(false);
+    expect("direction" in ctx).toBe(false);
+
+    await z.safeEncodeAsync(stringToDateCodec, new Date("2024-01-01T00:00:00.000Z"), ctx);
+    expect(ctx).toEqual({ reportInput: true });
+    expect("async" in ctx).toBe(false);
+    expect("direction" in ctx).toBe(false);
+  });
 });
