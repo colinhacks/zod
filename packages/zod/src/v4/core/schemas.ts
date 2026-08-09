@@ -3017,14 +3017,16 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
               if (result.issues.length) {
                 payload.issues.push(...util.prefixIssues(key, result.issues));
               }
-              payload.value[keyResult.value as PropertyKey] = result.value;
+              // keyResult.value is the key the key schema emitted, which the
+              // raw-key __proto__ guard above never saw.
+              setProp(payload.value, keyResult.value as PropertyKey, result.value);
             })
           );
         } else {
           if (result.issues.length) {
             payload.issues.push(...util.prefixIssues(key, result.issues));
           }
-          payload.value[keyResult.value as PropertyKey] = result.value;
+          setProp(payload.value, keyResult.value as PropertyKey, result.value);
         }
       }
     }

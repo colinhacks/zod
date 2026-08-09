@@ -734,3 +734,35 @@ test("__proto__ in a finite key set becomes an own property", () => {
 
   expect(({} as any).a).toBeUndefined();
 });
+
+// The raw input key is what the __proto__ check sees, but the value is written under the key the
+// key schema emits. A normalizing key schema makes those two differ.
+test("__proto__ produced by a key transform becomes an own property", () => {
+  const schema = z.record(z.string().toLowerCase(), z.object({ a: z.string() }));
+  const parsed: any = schema.parse(JSON.parse('{"__PROTO__":{"a":"transformed"}}'));
+
+  expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+  expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(true);
+  expect(parsed.__proto__).toEqual({ a: "transformed" });
+  expect(({} as any).a).toBeUndefined();
+});
+
+test("__proto__ from a key transform is an own property on the async path", async () => {
+  const schema = z.record(
+    z.string().toLowerCase(),
+    z.object({ a: z.string() }).refine(async () => true)
+  );
+  const parsed: any = await schema.parseAsync(JSON.parse('{"__PROTO__":{"a":"async"}}'));
+
+  expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+  expect(parsed.__proto__).toEqual({ a: "async" });
+});
+
+// A raw __proto__ input key is skipped outright before the write; only a key the key schema
+// *produces* reaches it. Pinning that so the skip isn't mistaken for the same defect.
+test("a raw __proto__ input key stays skipped in loose mode", () => {
+  const parsed: any = z.looseRecord(z.iso.datetime(), z.unknown()).parse(JSON.parse('{"__proto__":{"a":1}}'));
+
+  expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+  expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(false);
+});
