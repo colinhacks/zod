@@ -2271,14 +2271,17 @@ function handleExclusiveUnionResults(
   inst: $ZodUnion,
   ctx?: ParseContext
 ) {
-  const successes = results.filter((r) => r.issues.length === 0);
+  const matches: number[] = [];
+  for (let i = 0; i < results.length; i++) {
+    if (results[i].issues.length === 0) matches.push(i);
+  }
 
-  if (successes.length === 1) {
-    final.value = successes[0].value;
+  if (matches.length === 1) {
+    final.value = results[matches[0]].value;
     return final;
   }
 
-  if (successes.length === 0) {
+  if (matches.length === 0) {
     // No matches - same as regular union
     final.issues.push({
       code: "invalid_union",
@@ -2294,6 +2297,7 @@ function handleExclusiveUnionResults(
       inst,
       errors: [],
       inclusive: false,
+      matches,
     });
   }
 

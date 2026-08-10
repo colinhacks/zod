@@ -101,6 +101,8 @@ interface $ZodIssueInvalidUnionMultipleMatch extends $ZodIssueBase {
   readonly input?: unknown;
   readonly discriminator?: string | undefined;
   readonly inclusive: false;
+  /** Indices of the options that matched */
+  readonly matches: number[];
 }
 
 export type $ZodIssueInvalidUnion = $ZodIssueInvalidUnionNoMatch | $ZodIssueInvalidUnionMultipleMatch;
