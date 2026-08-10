@@ -715,3 +715,56 @@ describe("__proto__ in object catchall paths", () => {
     expect(result.success).toBe(true);
   });
 });
+
+// A __proto__ key declared in the shape is a field the caller asked for, so it must round-trip as
+// an own data property instead of hitting the inherited setter (which replaced the result
+// prototype and dropped the value).
+describe("__proto__ as a declared shape key", () => {
+  const protoInput = () => JSON.parse('{"__proto__":{"isAdmin":true},"name":"alice"}');
+  const makeShape = () =>
+    Object.fromEntries([
+      ["__proto__", z.object({ isAdmin: z.boolean() })],
+      ["name", z.string()],
+    ]) as Record<string, any>;
+
+  const expectOwnProp = (parsed: any) => {
+    expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+    expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(true);
+    expect(parsed.__proto__).toEqual({ isAdmin: true });
+    expect((parsed as any).isAdmin).toBeUndefined();
+    expect(Object.keys(parsed).sort()).toEqual(["__proto__", "name"]);
+  };
+
+  test("jit fastpass", () => {
+    expectOwnProp(z.object(makeShape()).parse(protoInput()));
+  });
+
+  test("jitless", () => {
+    expectOwnProp(z.object(makeShape()).parse(protoInput(), { jitless: true } as any));
+  });
+
+  test("async", async () => {
+    const shape = Object.fromEntries([
+      ["__proto__", z.object({ isAdmin: z.boolean() }).refine(async () => true)],
+      ["name", z.string()],
+    ]) as Record<string, any>;
+    expectOwnProp(await z.object(shape).parseAsync(protoInput()));
+  });
+
+  test("primitive value is not silently dropped", () => {
+    const schema = z.object(Object.fromEntries([["__proto__", z.string()]]) as Record<string, any>);
+    const parsed: any = schema.parse(JSON.parse('{"__proto__":"hello"}'));
+    expect(parsed.__proto__).toBe("hello");
+    expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+  });
+
+  test("validation still applies", () => {
+    const schema = z.object(Object.fromEntries([["__proto__", z.string()]]) as Record<string, any>);
+    expect(schema.safeParse(JSON.parse('{"__proto__":123}')).success).toBe(false);
+  });
+
+  test("Object.prototype is untouched", () => {
+    z.object(makeShape()).parse(protoInput());
+    expect(({} as any).isAdmin).toBeUndefined();
+  });
+});

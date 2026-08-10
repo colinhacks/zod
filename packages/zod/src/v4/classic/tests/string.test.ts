@@ -493,6 +493,7 @@ test("url error overrides", () => {
 test("emoji validations", () => {
   const emoji = z.string().emoji();
 
+  emoji.parse("🦰🦱🦲🦳"); // both Extended_Pictographic and Emoji_Component
   emoji.parse("👋👋👋👋");
   emoji.parse("🍺👩‍🚀🫡");
   emoji.parse("💚💙💜💛❤️");
