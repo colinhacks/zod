@@ -878,3 +878,12 @@ test("error formatting leaves Object.prototype untouched for input-derived keys"
   expect(protoNode((z.treeifyError(result.error!) as any).properties).properties.pwn.errors).toHaveLength(1);
   expect(({} as any).pwn).toBeUndefined();
 });
+
+test("formatError handles an input-derived _errors path", () => {
+  const schema = z.object({ parent: z.record(z.string(), z.string()) });
+  const result = schema.safeParse({ parent: { _errors: 1 } });
+  expect(result.success).toBe(false);
+
+  const formatted = z.formatError(result.error!);
+  expect(formatted.parent?._errors).toEqual(["Invalid input: expected string, received number"]);
+});
