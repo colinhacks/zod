@@ -14,7 +14,7 @@ describe("#6039 nested type inference with wrappers", () => {
         someKey: z.object({
           anotherKey: z.string(),
         }),
-      }),
+      })
     );
 
     // expect: myObject.someKey is { anotherKey: string }
@@ -31,7 +31,7 @@ describe("#6039 nested type inference with wrappers", () => {
         someKey: z.object({
           anotherKey: z.string(),
         }),
-      }),
+      })
     );
 
     type T = z.infer<typeof wrapped>;
@@ -47,7 +47,7 @@ describe("#6039 nested type inference with wrappers", () => {
         someKey: z.object({
           anotherKey: z.string(),
         }),
-      }),
+      })
     );
 
     type T = z.infer<typeof wrapped>;
@@ -63,7 +63,7 @@ describe("#6039 nested type inference with wrappers", () => {
         someKey: z.object({
           anotherKey: z.string(),
         }),
-      }),
+      })
     );
 
     type T = z.infer<typeof wrapped>;
@@ -83,9 +83,9 @@ describe("#6039 nested type inference with wrappers", () => {
           someKey: strictIfTesting(
             z.object({
               anotherKey: z.string().nonempty().nonoptional(),
-            }),
+            })
           ).nonoptional(),
-        }),
+        })
       );
 
     const myObject = mySchema().parse({ someKey: { anotherKey: "hello" } });
