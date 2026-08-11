@@ -873,13 +873,23 @@ test("length checks count Unicode code points", () => {
   const fiveEmoji = "😀😀😀😀😀";
 
   expect(z.string().max(5).safeParse(fiveEmoji).success).toBe(true);
-  expect(z.string().max(5).safeParse(fiveEmoji + "😀").success).toBe(false);
+  expect(
+    z
+      .string()
+      .max(5)
+      .safeParse(fiveEmoji + "😀").success
+  ).toBe(false);
 
   expect(z.string().min(1).safeParse("😀").success).toBe(true);
   expect(z.string().min(1).safeParse("").success).toBe(false);
 
   expect(z.string().length(5).safeParse(fiveEmoji).success).toBe(true);
-  expect(z.string().length(5).safeParse(fiveEmoji + "😀").success).toBe(false);
+  expect(
+    z
+      .string()
+      .length(5)
+      .safeParse(fiveEmoji + "😀").success
+  ).toBe(false);
 
   // arrays still count elements
   expect(z.array(z.string()).max(2).safeParse(["a", "b", "c"]).success).toBe(false);
