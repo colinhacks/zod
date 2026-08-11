@@ -503,6 +503,25 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
       // @ts-ignore
       const url = new URL(trimmed);
 
+      // Reject strings that the URL constructor accepts as protocol-only (e.g. "fe80::1")
+      // but aren't actually valid hierarchical URLs. Allow bare scheme-only URLs (e.g. "c:").
+      if (
+        !def.protocol &&
+        !url.hostname &&
+        !/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//i.test(trimmed) &&
+        !/^[a-zA-Z][a-zA-Z0-9+.-]*:$/i.test(trimmed)
+      ) {
+        payload.issues.push({
+          code: "invalid_format",
+          format: "url",
+          note: "Invalid URL format",
+          input: payload.value,
+          inst,
+          continue: !def.abort,
+        });
+        return;
+      }
+
       if (def.hostname) {
         def.hostname.lastIndex = 0;
         if (!def.hostname.test(url.hostname)) {
