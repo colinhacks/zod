@@ -1752,10 +1752,18 @@ export type $InferObjectInput<T extends $ZodLooseShape, Extra extends Record<str
 // value; defineProperty creates the own data property the key was declared for.
 function setProp(target: any, key: PropertyKey, value: unknown): void {
   if (key === "__proto__") {
-    Object.defineProperty(target, key, { value, writable: true, enumerable: true, configurable: true });
+    util.assignProp(target, key, value);
   } else {
     target[key] = value;
   }
+}
+
+function getProperty(input: any, key: PropertyKey): unknown {
+  return key === "__proto__" && !Object.prototype.hasOwnProperty.call(input, key) ? undefined : input[key];
+}
+
+function isPropertyPresent(input: any, key: PropertyKey): boolean {
+  return key === "__proto__" ? Object.prototype.hasOwnProperty.call(input, key) : key in input;
 }
 
 function handlePropertyResult(
@@ -1766,7 +1774,7 @@ function handlePropertyResult(
   isOptionalIn: boolean,
   isOptionalOut: boolean
 ) {
-  const isPresent = key in input;
+  const isPresent = isPropertyPresent(input, key);
   if (result.issues.length) {
     // For optional-in/out schemas, ignore errors on absent keys.
     if (isOptionalIn && isOptionalOut && !isPresent) {
@@ -1938,7 +1946,9 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     for (const key in shape) {
       const field = shape[key]!._zod;
       if (field.values) {
-        propValues[key] ??= new Set();
+        if (!Object.prototype.hasOwnProperty.call(propValues, key)) {
+          util.assignProp(propValues, key, new Set());
+        }
         for (const v of field.values) propValues[key].add(v);
       }
     }
@@ -1973,7 +1983,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       const isOptionalIn = el._zod.optin === "optional";
       const isOptionalOut = el._zod.optout === "optional";
 
-      const r = el._zod.run({ value: input[key], issues: [] }, ctx);
+      const r = el._zod.run({ value: getProperty(input, key), issues: [] }, ctx);
       if (r instanceof Promise) {
         proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, isOptionalIn, isOptionalOut)));
       } else {
@@ -1999,12 +2009,23 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
     const _normalized = util.cached(() => normalizeDef(def));
 
     const generateFastpass = (shape: any) => {
-      const doc = new Doc(["shape", "payload", "ctx", "setProp"]);
       const normalized = _normalized.value;
+      const handlesProto = normalized.keySet.has("__proto__");
+      const doc = new Doc(
+        handlesProto
+          ? ["shape", "payload", "ctx", "setProp", "getProperty", "isPropertyPresent"]
+          : ["shape", "payload", "ctx"]
+      );
 
       const parseStr = (key: string) => {
         const k = util.esc(key);
-        return `shape[${k}]._zod.run({ value: input[${k}], issues: [] }, ctx)`;
+        const value = key === "__proto__" ? `getProperty(input, ${k})` : `input[${k}]`;
+        return `shape[${k}]._zod.run({ value: ${value}, issues: [] }, ctx)`;
+      };
+
+      const presentStr = (key: string) => {
+        const k = util.esc(key);
+        return key === "__proto__" ? `isPropertyPresent(input, ${k})` : `${k} in input`;
       };
 
       // Keys are known here, so only a literal "__proto__" defers to setProp.
@@ -2026,6 +2047,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
       for (const key of normalized.keys) {
         const id = ids[key];
         const k = util.esc(key);
+        const isPresent = presentStr(key);
         const schema = shape[key];
         const isOptionalIn = schema?._zod?.optin === "optional";
         const isOptionalOut = schema?._zod?.optout === "optional";
@@ -2036,7 +2058,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
           // For optional-in/out schemas, ignore errors on absent keys
           doc.write(`
         if (${id}.issues.length) {
-          if (${k} in input) {
+          if (${isPresent}) {
             payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
               ...iss,
               path: iss.path ? [${k}, ...iss.path] : [${k}]
@@ -2045,7 +2067,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         }
         
         if (${id}.value === undefined) {
-          if (${k} in input) {
+          if (${isPresent}) {
             ${setStr(key, "undefined")}
           }
         } else {
@@ -2055,7 +2077,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
       `);
         } else if (!isOptionalIn) {
           doc.write(`
-        const ${id}_present = ${k} in input;
+        const ${id}_present = ${isPresent};
         if (${id}.issues.length) {
           payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
             ...iss,
@@ -2090,7 +2112,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         }
         
         if (${id}.value === undefined) {
-          if (${k} in input) {
+          if (${isPresent}) {
             ${setStr(key, "undefined")}
           }
         } else {
@@ -2104,7 +2126,9 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
       doc.write(`payload.value = newResult;`);
       doc.write(`return payload;`);
       const fn = doc.compile();
-      return (payload: any, ctx: any) => fn(shape, payload, ctx, setProp);
+      return handlesProto
+        ? (payload: any, ctx: any) => fn(shape, payload, ctx, setProp, getProperty, isPropertyPresent)
+        : (payload: any, ctx: any) => fn(shape, payload, ctx);
     };
 
     let fastpass!: ReturnType<typeof generateFastpass>;
@@ -2389,7 +2413,9 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
         if (!pv || Object.keys(pv).length === 0)
           throw new Error(`Invalid discriminated union option at index "${def.options.indexOf(option)}"`);
         for (const [k, v] of Object.entries(pv!)) {
-          if (!propValues[k]) propValues[k] = new Set();
+          if (!Object.prototype.hasOwnProperty.call(propValues, k)) {
+            util.assignProp(propValues, k, new Set());
+          }
           for (const val of v) {
             propValues[k].add(val);
           }
@@ -2834,6 +2860,7 @@ export interface $ZodRecordDef<Key extends $ZodRecordKey = $ZodRecordKey, Value 
   valueType: Value;
   /** @default "strict" - errors on keys not matching keyType. "loose" passes through non-matching keys unchanged. */
   mode?: "strict" | "loose";
+  partial?: boolean;
 }
 
 // export type $InferZodRecordOutput<
@@ -2909,7 +2936,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
     const proms: Promise<any>[] = [];
 
     const values = def.keyType._zod.values;
-    if (values) {
+    if (values && !def.partial) {
       payload.value = {};
       const recordKeys = new Set<string | symbol>();
       for (const key of values) {
@@ -2931,7 +2958,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
             continue;
           }
           const outKey = keyResult.value as PropertyKey;
-          const result = def.valueType._zod.run({ value: input[key], issues: [] }, ctx);
+          const result = def.valueType._zod.run({ value: getProperty(input, key), issues: [] }, ctx);
 
           if (result instanceof Promise) {
             proms.push(
@@ -2971,7 +2998,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       payload.value = {};
       // Reflect.ownKeys for Symbol-key support; filter non-enumerable to match z.object()
       for (const key of Reflect.ownKeys(input)) {
-        if (key === "__proto__") continue;
+        if (key === "__proto__" && !(def.partial && values?.has(key))) continue;
         if (!Object.prototype.propertyIsEnumerable.call(input, key)) continue;
         let keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
         if (keyResult instanceof Promise) {

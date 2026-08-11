@@ -611,11 +611,11 @@ export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>):
     get shape() {
       const newShape: Writeable<schemas.$ZodShape> = {};
       for (const key in mask) {
-        if (!(key in currDef.shape)) {
+        if (!Object.prototype.hasOwnProperty.call(currDef.shape, key)) {
           throw new Error(`Unrecognized key: "${key}"`);
         }
         if (!mask[key]) continue;
-        newShape[key] = currDef.shape[key]!;
+        assignProp(newShape, key, currDef.shape[key]!);
       }
 
       assignProp(this, "shape", newShape); // self-caching
@@ -640,7 +640,7 @@ export function omit(schema: schemas.$ZodObject, mask: object): any {
     get shape() {
       const newShape: Writeable<schemas.$ZodShape> = { ...schema._zod.def.shape };
       for (const key in mask) {
-        if (!(key in currDef.shape)) {
+        if (!Object.prototype.hasOwnProperty.call(currDef.shape, key)) {
           throw new Error(`Unrecognized key: "${key}"`);
         }
         if (!(mask as any)[key]) continue;
@@ -736,7 +736,7 @@ export function partial(
 
       if (mask) {
         for (const key in mask) {
-          if (!(key in oldShape)) {
+          if (!Object.prototype.hasOwnProperty.call(oldShape, key)) {
             throw new Error(`Unrecognized key: "${key}"`);
           }
           if (!(mask as any)[key]) continue;
@@ -781,7 +781,7 @@ export function required(
 
       if (mask) {
         for (const key in mask) {
-          if (!(key in shape)) {
+          if (!Object.prototype.hasOwnProperty.call(shape, key)) {
             throw new Error(`Unrecognized key: "${key}"`);
           }
           if (!(mask as any)[key]) continue;
