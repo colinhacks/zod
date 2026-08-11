@@ -806,7 +806,6 @@ test("z.treeifyError nested union with real schema", () => {
   }
 });
 
-<<<<<<< HEAD
 const prototypePropertyNames = ["__proto__", "constructor", "toString", "hasOwnProperty", "valueOf"] as const;
 
 test.each(prototypePropertyNames)("z.formatError handles Object.prototype property path: %s", (name) => {
