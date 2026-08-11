@@ -1764,16 +1764,6 @@ type OptionalInSchema = { _zod: { optin: "optional" | "defaulted" } };
 
 type _Depth = readonly unknown[];
 
-type $ResolveOutputWithDepth<T, Depth extends _Depth> =
-  Depth["length"] extends 10
-    ? unknown
-    : T extends { _zod: { output: infer O } } ? O : unknown;
-
-type $ResolveInputWithDepth<T, Depth extends _Depth> =
-  Depth["length"] extends 10
-    ? unknown
-    : T extends { _zod: { input: infer I } } ? I : unknown;
-
 export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<string, unknown>, Depth extends _Depth = []> = string extends keyof T
   ? util.IsAny<T[keyof T]> extends true
     ? Record<string, unknown>
