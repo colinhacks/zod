@@ -1,4 +1,4 @@
-import type * as JSONSchema from "../core/json-schema.js";
+﻿import type * as JSONSchema from "../core/json-schema.js";
 import { type $ZodRegistry, globalRegistry } from "../core/registries.js";
 import { assignProp } from "../core/util.js";
 import * as _checks from "./checks.js";
@@ -470,7 +470,7 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         // Tuple with prefixItems (draft-2020-12)
         // Without minItems, prefix items beyond the minimum are optional-out so shorter arrays are valid
         const minRequired = typeof schema.minItems === "number" ? schema.minItems : 0;
-        let tupleItems: ZodType[] = prefixItems.map((item, i) => {
+        const tupleItems: ZodType[] = prefixItems.map((item, i) => {
           const schema = convertSchema(item as JSONSchema.JSONSchema, ctx);
           return i >= minRequired ? schema.optional() : schema;
         });
@@ -494,7 +494,7 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         // Tuple with items array (draft-7)
         // Without minItems, array-form items beyond the minimum are optional-out so shorter arrays are valid
         const minRequired = typeof schema.minItems === "number" ? schema.minItems : 0;
-        let tupleItems: ZodType[] = items.map((item, i) => {
+        const tupleItems: ZodType[] = items.map((item, i) => {
           const schema = convertSchema(item as JSONSchema.JSONSchema, ctx);
           return i >= minRequired ? schema.optional() : schema;
         });
