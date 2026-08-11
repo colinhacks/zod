@@ -429,9 +429,7 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         // property or one of the patterns. Enforce this with a strict record
         // keyed on the union of the patterns.
         if (schema.additionalProperties === false) {
-          const allowedKeySchemas: ZodType[] = Object.keys(shape).map((key) =>
-            z.literal(key),
-          );
+          const allowedKeySchemas: ZodType[] = Object.keys(shape).map((key) => z.literal(key));
           for (const pattern of patternKeys) {
             allowedKeySchemas.push(z.string().regex(new RegExp(pattern)));
           }
