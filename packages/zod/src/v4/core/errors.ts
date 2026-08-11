@@ -338,9 +338,11 @@ export function formatError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIssu
                 configurable: true,
               });
             }
+            const node = curr[el];
             if (terminal) {
-              curr[el]._errors.push(mapper(issue));
+              node._errors.push(mapper(issue));
             }
+            curr = node;
             i++;
           }
         }
