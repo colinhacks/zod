@@ -2213,13 +2213,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         return payload;
       }
 
-      if (
-        jit &&
-        fastEnabled &&
-        value.symbolKeys.length === 0 &&
-        ctx?.async === false &&
-        ctx.jitless !== true
-      ) {
+      if (jit && fastEnabled && value.symbolKeys.length === 0 && ctx?.async === false && ctx.jitless !== true) {
         // always synchronous
         if (!fastpass) fastpass = generateFastpass(def.shape);
         payload = fastpass(payload, ctx);
@@ -2668,7 +2662,7 @@ function mergeValues(
 
 function handleIntersectionResults(result: ParsePayload, left: ParsePayload, right: ParsePayload): ParsePayload {
   // Track which side(s) report each key as unrecognized
-  const unrecKeys = new Map<PropertyKey, { l?: true; r?: true }>();
+  const unrecKeys = new Map<string, { l?: true; r?: true }>();
   let unrecIssue: errors.$ZodRawIssue | undefined;
   const keyIssues = new Map<string, errors.$ZodRawIssue>();
 
