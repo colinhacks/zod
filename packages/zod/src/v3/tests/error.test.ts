@@ -575,4 +575,12 @@ test("format() handles an input-derived _errors path", () => {
   if (!result.success) {
     expect(result.error.format().parent?._errors).toEqual(["Expected string, received number"]);
   }
+
+  const nested = z
+    .object({ parent: z.record(z.object({ child: z.string() })) })
+    .safeParse({ parent: { _errors: { child: 1 } } });
+  expect(nested.success).toEqual(false);
+  if (!nested.success) {
+    expect((nested.error.format() as any).parent.child._errors).toEqual(["Expected string, received number"]);
+  }
 });

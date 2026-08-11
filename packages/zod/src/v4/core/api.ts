@@ -1289,7 +1289,7 @@ export function _tuple(
 }
 
 // ZodRecord
-export type $ZodRecordParams = TypeParams<schemas.$ZodRecord, "keyType" | "valueType">;
+export type $ZodRecordParams = TypeParams<schemas.$ZodRecord, "keyType" | "valueType" | "partial">;
 // @__NO_SIDE_EFFECTS__
 export function _record<Key extends schemas.$ZodRecordKey, Value extends schemas.$ZodObject>(
   Class: util.SchemaClass<schemas.$ZodRecord>,

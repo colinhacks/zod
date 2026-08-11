@@ -730,7 +730,7 @@ describe("__proto__ as a declared shape key", () => {
     expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(true);
     expect(parsed.__proto__).toEqual({ isAdmin: true });
     expect((parsed as any).isAdmin).toBeUndefined();
-    expect(Object.keys(parsed).sort()).toEqual(["__proto__", "name"].sort());
+    expect(Object.keys(parsed).sort()).toEqual(["__proto__", "name"]);
   };
 
   test("jit fastpass", () => {
@@ -805,6 +805,26 @@ describe("__proto__ as a declared shape key", () => {
     const schema = z.object({ value: z.string() });
 
     expect(() => (schema[method] as any)(mask).shape).toThrow('Unrecognized key: "__proto__"');
+  });
+
+  test("shape helpers preserve a declared key", () => {
+    const shape = () =>
+      Object.fromEntries([
+        ["__proto__", z.string()],
+        ["value", z.string()],
+      ]) as Record<string, any>;
+    const protoMask = Object.fromEntries([["__proto__", true]]);
+    const valueMask = { value: true } as const;
+    const shapes = [
+      z.object(shape()).omit(valueMask).shape,
+      z.object(shape()).partial(protoMask as any).shape,
+      z.object(shape()).required(protoMask as any).shape,
+    ];
+
+    for (const next of shapes) {
+      expect(Object.getPrototypeOf(next)).toBe(Object.prototype);
+      expect(Object.prototype.hasOwnProperty.call(next, "__proto__")).toBe(true);
+    }
   });
 
   test("Object.prototype is untouched", () => {

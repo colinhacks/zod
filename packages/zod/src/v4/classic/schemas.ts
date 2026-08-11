@@ -1816,13 +1816,12 @@ export function partialRecord<Key extends core.$ZodRecordKey, Value extends core
   valueType: Value,
   params?: string | core.$ZodRecordParams
 ): ZodRecord<Key & core.$partial, Value> {
-  const k = core.clone(keyType);
   return new ZodRecord({
     type: "record",
-    keyType: k,
+    keyType,
     valueType: valueType as any,
-    partial: true,
     ...util.normalizeParams(params),
+    partial: true,
   }) as any;
 }
 

@@ -3021,7 +3021,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
         if (keyResult.issues.length) {
           if (def.mode === "loose") {
             // Pass through unchanged
-            payload.value[key] = input[key];
+            setProp(payload.value, key, input[key]);
           } else {
             // Default "strict" behavior: error on invalid key
             payload.issues.push({

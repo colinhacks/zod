@@ -886,4 +886,12 @@ test("formatError handles an input-derived _errors path", () => {
 
   const formatted = z.formatError(result.error!);
   expect(formatted.parent?._errors).toEqual(["Invalid input: expected string, received number"]);
+
+  const nested = z
+    .object({ parent: z.record(z.string(), z.object({ child: z.string() })) })
+    .safeParse({ parent: { _errors: { child: 1 } } });
+  expect(nested.success).toBe(false);
+  expect((z.formatError(nested.error!) as any).parent.child._errors).toEqual([
+    "Invalid input: expected string, received number",
+  ]);
 });
