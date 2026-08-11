@@ -62,7 +62,7 @@ const error: () => errors.$ZodErrorMap = () => {
     switch (issue.code) {
       case "invalid_type": {
         const expected = TypeDictionary[issue.expected] ?? issue.expected;
-        const receivedType = util.parsedType(issue.input);
+        const receivedType = issue.received ?? util.parsedType(issue.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue.expected)) {
           return `არასწორი შეყვანა: მოსალოდნელი instanceof ${issue.expected}, მიღებული ${received}`;

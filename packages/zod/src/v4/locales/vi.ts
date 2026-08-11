@@ -59,7 +59,7 @@ const error: () => errors.$ZodErrorMap = () => {
     switch (issue.code) {
       case "invalid_type": {
         const expected = TypeDictionary[issue.expected] ?? issue.expected;
-        const receivedType = util.parsedType(issue.input);
+        const receivedType = issue.received ?? util.parsedType(issue.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue.expected)) {
           return `Đầu vào không hợp lệ: mong đợi instanceof ${issue.expected}, nhận được ${received}`;

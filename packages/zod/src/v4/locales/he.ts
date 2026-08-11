@@ -105,7 +105,7 @@ const error: () => errors.$ZodErrorMap = () => {
         const expectedKey = issue.expected as string | undefined;
         const expected = TypeDictionary[expectedKey ?? ""] ?? typeLabel(expectedKey);
         // Received: show localized label if known, otherwise constructor/raw
-        const receivedType = util.parsedType(issue.input);
+        const receivedType = issue.received ?? util.parsedType(issue.input);
         const received = TypeDictionary[receivedType] ?? TypeNames[receivedType]?.label ?? receivedType;
         if (/^[A-Z]/.test(issue.expected)) {
           return `קלט לא תקין: צריך להיות instanceof ${issue.expected}, התקבל ${received}`;
