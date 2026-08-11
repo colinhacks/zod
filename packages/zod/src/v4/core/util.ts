@@ -991,32 +991,27 @@ export abstract class Class {
 // materializing them per instance only when touched keeps instances under the
 // first step.
 //
-// Each installer runs once per (prototype, group), memoized here.
-const installedGroups = /* @__PURE__ */ new WeakMap<object, Set<string>>();
-
-function claimGroup(inst: object, group: string): object | undefined {
+// Each install runs once per prototype. The guard is a sentinel key that the
+// table itself owns: if the prototype already has it, this table is installed.
+// That is cheaper than a WeakMap of key-sets, and it has to be checked BEFORE
+// building the table, since building it allocates every method in the group.
+function claim(inst: object, sentinel: string): object | undefined {
   const proto = Object.getPrototypeOf(inst);
-  let installed = installedGroups.get(proto);
-  if (!installed) {
-    installed = new Set();
-    installedGroups.set(proto, installed);
-  }
-  if (installed.has(group)) return undefined;
-  installed.add(group);
-  return proto;
+  return Object.prototype.hasOwnProperty.call(proto, sentinel) ? undefined : proto;
 }
 
 function defineCached(proto: object, key: string, compute: (self: any) => unknown): void {
   Object.defineProperty(proto, key, {
     configurable: true,
-    enumerable: false,
     get(this: any) {
       const value = compute(this);
-      Object.defineProperty(this, key, { configurable: true, writable: true, enumerable: true, value });
+      // Routes through the setter below, so the own-property descriptor is
+      // written in one place rather than duplicated here.
+      this[key] = value;
       return value;
     },
-    set(this: any, v: unknown) {
-      Object.defineProperty(this, key, { configurable: true, writable: true, enumerable: true, value: v });
+    set(this: any, value: unknown) {
+      Object.defineProperty(this, key, { configurable: true, writable: true, enumerable: true, value });
     },
   });
 }
@@ -1040,8 +1035,8 @@ export type LazyPropsOf<T> = Partial<{ [K in keyof T]: (self: T) => T[K] }>;
  * Not for hot-path functions — a bound function pays a call-time trampoline.
  * Use `installLazyProps` there and build the closure directly.
  */
-export function installLazyMethods<T extends object>(inst: T, group: string, methods: () => LazyMethodsOf<T>): void {
-  const proto = claimGroup(inst, group);
+export function installLazyMethods<T extends object>(inst: T, sentinel: string, methods: () => LazyMethodsOf<T>): void {
+  const proto = claim(inst, sentinel);
   if (!proto) return;
   const built = methods();
   for (const key in built) {
@@ -1051,8 +1046,8 @@ export function installLazyMethods<T extends object>(inst: T, group: string, met
 }
 
 /** Like `installLazyMethods`, but the factory builds the value instead of binding a shared function. */
-export function installLazyProps<T extends object>(inst: T, group: string, props: () => LazyPropsOf<T>): void {
-  const proto = claimGroup(inst, group);
+export function installLazyProps<T extends object>(inst: T, sentinel: string, props: () => LazyPropsOf<T>): void {
+  const proto = claim(inst, sentinel);
   if (!proto) return;
   const built = props();
   for (const key in built) {
@@ -1060,16 +1055,11 @@ export function installLazyProps<T extends object>(inst: T, group: string, props
   }
 }
 
-/** Installs plain (non-caching) prototype accessors, for values that must be recomputed on every read. */
-export function installProtoAccessors<T extends object>(
-  inst: T,
-  group: string,
-  accessors: () => Record<string, (this: T) => unknown>
-): void {
-  const proto = claimGroup(inst, group);
-  if (!proto) return;
-  const built = accessors();
-  for (const key in built) {
-    Object.defineProperty(proto, key, { configurable: true, enumerable: false, get: built[key]! });
-  }
+/**
+ * Single-property variant. The key doubles as the sentinel, so installing one
+ * lazy member costs no table and no loop.
+ */
+export function installLazyProp(inst: object, key: string, make: (self: any) => unknown): void {
+  const proto = claim(inst, key);
+  if (proto) defineCached(proto, key, make);
 }

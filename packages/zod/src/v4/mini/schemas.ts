@@ -55,7 +55,7 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
     // — allocates none of them. Keeps instances at 3 own properties instead
     // of 14, which is the difference between one and two steps of V8's
     // property backing store.
-    util.installLazyMethods<ZodMiniType>(inst, "ZodMiniType", _zodMiniTypeMethods);
+    util.installLazyMethods<ZodMiniType>(inst, "parse", _zodMiniTypeMethods);
   }
 );
 

@@ -309,20 +309,20 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
   // read, so construction pays neither the object nor a per-instance
   // descriptor. Wrappers extend it by installing their own richer factory
   // over this one (see the classic build) rather than reading it eagerly.
-  util.installLazyProps<any>(inst, "$ZodType~standard", standardPropsTable);
+  util.installLazyProp(inst, "~standard", standardProps);
 });
 
-const standardPropsTable = () => ({ "~standard": standardProps });
-
 /** The Standard Schema surface for `inst`. Shared so wrappers can extend it without forcing it. */
+const toStandardResult = (r: util.SafeParseResult<unknown>) =>
+  r.success ? { value: r.data } : { issues: r.error?.issues };
+
 export function standardProps(inst: $ZodType): StandardSchemaV1.Props<any, any> {
   return {
     validate: (value: unknown) => {
       try {
-        const r = safeParse(inst, value);
-        return r.success ? { value: r.data } : { issues: r.error?.issues };
+        return toStandardResult(safeParse(inst, value));
       } catch (_) {
-        return safeParseAsync(inst, value).then((r) => (r.success ? { value: r.data } : { issues: r.error?.issues }));
+        return safeParseAsync(inst, value).then(toStandardResult);
       }
     },
     vendor: "zod",

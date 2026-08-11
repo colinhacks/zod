@@ -13,7 +13,6 @@ import * as parse from "./parse.js";
 // `util.installLazyMethods` / `installLazyProps` for why this matters.
 const _installLazyMethods = util.installLazyMethods;
 const _installLazyProps = util.installLazyProps;
-const _installProtoAccessors = util.installProtoAccessors;
 type _LazyMethodsOf<T> = util.LazyMethodsOf<T>;
 type _LazyPropsOf<T> = util.LazyPropsOf<T>;
 
@@ -185,27 +184,20 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   // `arr.map(schema.parse)` still work, and a schema that is never parsed
   // directly — every interior node of a large schema graph — allocates none
   // of them.
-  _installLazyMethods(inst, "ZodType", _zodTypeMethods);
-  _installLazyProps(inst, "ZodTypeParse", _zodTypeParseProps);
-  _installProtoAccessors(inst, "ZodTypeAccessors", _zodTypeAccessors);
-
-  // Overrides core's prototype-level `~standard` with the classic one, which
-  // also carries `jsonSchema`. It must stay a prototype entry: reading
-  // `~standard` to attach `jsonSchema` forced every schema to build it, and
-  // redefining it per instance demoted instances to dictionary mode.
-  _installLazyProps(inst, "ZodType~standard", _zodTypeStandard);
-  return inst;
-});
-
-const _zodTypeStandard = (): _LazyPropsOf<ZodType> => ({
-  "~standard": (self) =>
-    ({
-      ...core.standardProps(self),
-      jsonSchema: {
-        input: createStandardJSONSchemaMethod(self, "input"),
-        output: createStandardJSONSchemaMethod(self, "output"),
+  _installLazyMethods(inst, "check", _zodTypeMethods);
+  _installLazyProps(inst, "_def", _zodTypeParseProps);
+  // `description` reads through to the registry on every access, so unlike the
+  // rest it must not cache onto the instance.
+  const proto = Object.getPrototypeOf(inst);
+  if (!Object.prototype.hasOwnProperty.call(proto, "description")) {
+    Object.defineProperty(proto, "description", {
+      configurable: true,
+      get(this: ZodType) {
+        return core.globalRegistry.get(this)?.description;
       },
-    }) as ZodType["~standard"],
+    });
+  }
+  return inst;
 });
 
 // ZodString
@@ -247,7 +239,7 @@ export const _ZodString: core.$constructor<_ZodString> = /*@__PURE__*/ core.$con
   inst.minLength = bag.minimum ?? null;
   inst.maxLength = bag.maximum ?? null;
 
-  _installLazyMethods(inst, "_ZodString", _zodStringBaseMethods);
+  _installLazyMethods(inst, "regex", _zodStringBaseMethods);
 });
 
 export interface ZodString extends _ZodString<core.$ZodStringInternals<string>> {
@@ -331,7 +323,7 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
   core.$ZodString.init(inst, def);
   _ZodString.init(inst, def);
 
-  _installLazyMethods(inst, "ZodString", _zodStringMethods);
+  _installLazyMethods(inst, "email", _zodStringMethods);
 });
 
 export function string(params?: string | core.$ZodStringParams): ZodString;
@@ -837,7 +829,7 @@ export const ZodNumber: core.$constructor<ZodNumber> = /*@__PURE__*/ core.$const
 
   inst._zod.processJSONSchema = (ctx, json, params) => processors.numberProcessor(inst, ctx, json, params);
 
-  _installLazyMethods(inst, "ZodNumber", _zodNumberMethods);
+  _installLazyMethods(inst, "gt", _zodNumberMethods);
 
   const bag = inst._zod.bag;
   inst.minValue =
@@ -935,7 +927,7 @@ export const ZodBigInt: core.$constructor<ZodBigInt> = /*@__PURE__*/ core.$const
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.bigintProcessor(inst, ctx, json, params);
 
-  _installLazyMethods(inst, "ZodBigInt", _zodBigIntMethods);
+  _installLazyMethods(inst, "gte", _zodBigIntMethods);
 
   const bag = inst._zod.bag;
   inst.minValue = bag.minimum ?? null;
@@ -1108,7 +1100,7 @@ export const ZodArray: core.$constructor<ZodArray> = /*@__PURE__*/ core.$constru
   inst._zod.processJSONSchema = (ctx, json, params) => processors.arrayProcessor(inst, ctx, json, params);
 
   inst.element = def.element;
-  _installLazyMethods(inst, "ZodArray", _zodArrayMethods);
+  _installLazyMethods(inst, "min", _zodArrayMethods);
 });
 
 export function array<T extends core.SomeType>(element: T, params?: string | core.$ZodArrayParams): ZodArray<T> {
@@ -1222,7 +1214,7 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
     return def.shape;
   });
 
-  _installLazyMethods(inst, "ZodObject", _zodObjectMethods);
+  _installLazyMethods(inst, "keyof", _zodObjectMethods);
 });
 
 export function object<T extends core.$ZodLooseShape = Partial<Record<never, core.SomeType>>>(
@@ -2400,8 +2392,20 @@ export function preprocess<A, U extends core.SomeType, B = unknown>(
 function _zodTypeParseProps(): _LazyPropsOf<ZodType> {
   return {
     // `_def` derives purely from the instance, so it is materialized on read
-    // rather than assigned at construction.
+    // rather than assigned at construction. It is also this group's sentinel.
     _def: (self) => self._zod.def,
+    // Overrides core's prototype-level `~standard` with the classic one, which
+    // also carries `jsonSchema`. It must stay a prototype entry: reading
+    // `~standard` to attach `jsonSchema` forced every schema to build it, and
+    // redefining it per instance demoted instances to dictionary mode.
+    "~standard": (self) =>
+      ({
+        ...core.standardProps(self),
+        jsonSchema: {
+          input: createStandardJSONSchemaMethod(self, "input"),
+          output: createStandardJSONSchemaMethod(self, "output"),
+        },
+      }) as ZodType["~standard"],
     parse: (self) => {
       const fn: ZodType["parse"] = (data, params) => parse.parse(self, data, params, { callee: fn });
       return fn;
@@ -2423,14 +2427,6 @@ function _zodTypeParseProps(): _LazyPropsOf<ZodType> {
     safeEncodeAsync: (self) => async (data, params) => parse.safeEncodeAsync(self, data, params),
     safeDecodeAsync: (self) => async (data, params) => parse.safeDecodeAsync(self, data, params),
     toJSONSchema: (self) => createToJSONSchemaMethod(self, {}),
-  };
-}
-
-function _zodTypeAccessors(): Record<string, (this: ZodType) => unknown> {
-  return {
-    description(this: ZodType) {
-      return core.globalRegistry.get(this)?.description;
-    },
   };
 }
 
