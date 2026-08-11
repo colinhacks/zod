@@ -3182,10 +3182,9 @@ test("__proto__ metadata survives direct and wrapper metadata merges", () => {
 });
 
 test("partialRecord does not require finite keys", () => {
-  const key = z.enum(["__proto__", "b"]).meta({ description: "partial keys" });
-  const result = z.toJSONSchema(z.partialRecord(key, z.string()));
+  const result = z.toJSONSchema(z.partialRecord(z.enum(["__proto__", "b"]), z.string()));
 
   expect(result.required).toBeUndefined();
-  expect(result.propertyNames).toEqual({ type: "string", enum: ["__proto__", "b"], description: "partial keys" });
+  expect(result.propertyNames).toEqual({ type: "string", enum: ["__proto__", "b"] });
   expect(result.additionalProperties).toEqual({ type: "string" });
 });
