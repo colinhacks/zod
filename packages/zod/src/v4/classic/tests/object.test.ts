@@ -896,4 +896,3 @@ describe("symbol keys in object shape", () => {
     expect(result.success).toBe(false);
   });
 });
-});
