@@ -3276,6 +3276,10 @@ z.custom<...>((val) => ..., "custom error message");
 
 ## Visit
 
+<Callout type="warn">
+  **Experimental** — The `z.visit()` function is experimental and is not considered part of Zod's stable API. Its traversal contract is likely to change in future releases.
+</Callout>
+
 `z.visit()` rewrites a schema tree from the bottom up. Each node is visited after its children, and whatever the visitor returns takes its place. It's the primitive behind [`z.deepPartial()`](#deep-partial) and [`z.input()` / `z.output()`](#input-output).
 
 Pass a handler map keyed by `def.type` to target one kind of node:
@@ -3314,6 +3318,8 @@ z.visit(Recipe, (node) => node) === Recipe; // => true
 ```
 
 Shared sub-schemas are visited once. Cycles terminate: `z.lazy()` nodes defer traversal to parse time, and [getter-based recursion](#recursive-objects) is broken with a lazy placeholder. Both of those cases always re-clone, so they don't preserve identity.
+
+`z.visit()` returns the same type it was given — it does not infer the rewrite. When a rewrite changes the inferred type, declare that yourself, the way `z.deepPartial()` declares its own `DeepPartial<T>`.
 
 ## Apply
 

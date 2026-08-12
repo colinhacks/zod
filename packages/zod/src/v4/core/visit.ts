@@ -16,6 +16,7 @@ export type VisitHandlers = { [K in Kind]?: (node: AnyZod) => AnyZod };
 /**
  * Bottom-up rewrite of a schema tree: each node is replaced by whatever the visitor returns,
  * with unhandled kinds and unchanged branches passing through with their identity preserved.
+ * This function should be considered experimental. Its traversal contract is liable to change.
  */
 export function visit<T extends schemas.SomeType>(schema: T, fn: VisitFn): T;
 export function visit<T extends schemas.SomeType>(schema: T, handlers: VisitHandlers): T;
