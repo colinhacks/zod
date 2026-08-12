@@ -1427,6 +1427,17 @@ export function keyof<T extends ZodObject>(schema: T): ZodEnum<util.KeysEnum<T["
 
 // ZodObject
 
+// Like ZodOptional<Field>, but don't double-wrap already-optional fields and
+// don't widen `.default()` fields to `T | undefined` on the output. Already-
+// optional fields are idempotent, and fields with a `.default()` already
+// accept absent input while keeping a non-nullable output type.
+// See: https://github.com/colinhacks/zod/issues/6171
+export type PartialField<T> = T extends ZodOptional<core.SomeType>
+  ? T
+  : T extends ZodDefault<core.SomeType>
+    ? T
+    : ZodOptional<T>;
+
 export type SafeExtendShape<Base extends core.$ZodShape, Ext extends core.$ZodLooseShape> = {
   [K in keyof Ext]: K extends keyof Base
     ? core.output<Ext[K]> extends core.output<Base[K]>
@@ -1482,7 +1493,7 @@ export interface ZodObject<
 
   partial(): ZodObject<
     {
-      -readonly [k in keyof Shape]: ZodOptional<Shape[k]>;
+      -readonly [k in keyof Shape]: PartialField<Shape[k]>;
     },
     Config
   >;
@@ -1494,7 +1505,7 @@ export interface ZodObject<
         ? // Shape[k] extends OptionalInSchema
           //   ? Shape[k]
           //   :
-          ZodOptional<Shape[k]>
+          PartialField<Shape[k]>
         : Shape[k];
     },
     Config

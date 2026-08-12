@@ -448,3 +448,21 @@ test("required - refinement is executed on required schema", () => {
   const validResult = requiredSchema.safeParse({ password: "abc", confirmPassword: "abc" });
   expect(validResult.success).toBe(true);
 });
+
+test("partial does not double-wrap optional or broaden defaults", () => {
+  const schema = z.object({
+    optional: z.string().optional(),
+    defaulted: z.string().default("hello"),
+    required: z.string(),
+  });
+
+  const partialSchema = schema.partial();
+  type Got = z.infer<typeof partialSchema>;
+
+  expectTypeOf<Got["optional"]>().toEqualTypeOf<string | undefined>();
+  expectTypeOf<Got["defaulted"]>().toEqualTypeOf<string>();
+  expectTypeOf<Got["required"]>().toEqualTypeOf<string | undefined>();
+
+  // Defaults are still applied at runtime; output is never undefined.
+  expect(partialSchema.parse({})).toEqual({ defaulted: "hello" });
+});
