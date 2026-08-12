@@ -194,6 +194,7 @@ Zod provides a handful of built-in string validation and transform APIs. To perf
 z.string().max(5);
 z.string().min(5);
 z.string().length(5);
+z.string().nonempty(); // alias for .min(1)
 z.string().regex(/^[a-z]+$/);
 z.string().startsWith("aaa");
 z.string().endsWith("zzz");
@@ -207,6 +208,7 @@ z.string().lowercase();
 z.string().check(z.maxLength(5));
 z.string().check(z.minLength(5));
 z.string().check(z.length(5));
+z.string().check(z.minLength(1)); // alias for .nonempty()
 z.string().check(z.regex(/^[a-z]+$/));
 z.string().check(z.startsWith("aaa"));
 z.string().check(z.endsWith("zzz"));
@@ -1626,6 +1628,7 @@ Zod implements a number of array-specific validations:
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
+z.array(z.string()).nonempty(); // must contain at least 1 item
 z.array(z.string()).min(5); // must contain 5 or more items
 z.array(z.string()).max(5); // must contain 5 or fewer items
 z.array(z.string()).length(5); // must contain 5 items exactly
@@ -1633,6 +1636,7 @@ z.array(z.string()).length(5); // must contain 5 items exactly
 </Tab>
 <Tab value="Zod Mini">
 ```ts
+z.array(z.string()).check(z.minLength(1)); // alias for .nonempty()
 z.array(z.string()).check(z.minLength(5)); // must contain 5 or more items
 z.array(z.string()).check(z.maxLength(5)); // must contain 5 or fewer items
 z.array(z.string()).check(z.length(5)); // must contain 5 items exactly
@@ -1944,6 +1948,27 @@ myMap.set("two", 2);
 StringNumberMap.parse(myMap);
 ```
 
+Map schemas can be further constrained with the following utility methods.
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+z.map(z.string(), z.number()).nonempty(); // must contain at least 1 item
+z.map(z.string(), z.number()).min(5); // must contain 5 or more items
+z.map(z.string(), z.number()).max(5); // must contain 5 or fewer items
+z.map(z.string(), z.number()).size(5); // must contain 5 items exactly
+```
+</Tab>
+<Tab value='Zod Mini'>
+```ts
+z.map(z.string(), z.number()).check(z.minSize(1)); // alias for .nonempty()
+z.map(z.string(), z.number()).check(z.minSize(5)); // must contain 5 or more items
+z.map(z.string(), z.number()).check(z.maxSize(5)); // must contain 5 or fewer items
+z.map(z.string(), z.number()).check(z.size(5)); // must contain 5 items exactly
+```
+</Tab>
+</Tabs>
+
 ## Sets
 
 ```ts
@@ -1961,6 +1986,7 @@ Set schemas can be further constrained with the following utility methods.
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
+z.set(z.string()).nonempty(); // must contain at least 1 item
 z.set(z.string()).min(5); // must contain 5 or more items
 z.set(z.string()).max(5); // must contain 5 or fewer items
 z.set(z.string()).size(5); // must contain 5 items exactly
@@ -1968,6 +1994,7 @@ z.set(z.string()).size(5); // must contain 5 items exactly
 </Tab>
 <Tab value='Zod Mini'>
 ```ts
+z.set(z.string()).check(z.minSize(1)); // alias for .nonempty()
 z.set(z.string()).check(z.minSize(5)); // must contain 5 or more items
 z.set(z.string()).check(z.maxSize(5)); // must contain 5 or fewer items
 z.set(z.string()).check(z.size(5)); // must contain 5 items exactly
