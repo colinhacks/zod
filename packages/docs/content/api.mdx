@@ -2053,6 +2053,14 @@ TestSchema.parse(new Test()); // ✅
 TestSchema.parse("whatever"); // ❌
 ```
 
+This works with built-in classes too.
+
+```ts
+z.instanceof(RegExp);
+z.instanceof(URL);
+z.instanceof(Error);
+```
+
 ### Property
 
 To validate a particular property of a class instance against a Zod schema:
