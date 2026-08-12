@@ -22,8 +22,10 @@ export interface ZodError<T = unknown> extends $ZodError<T> {
   isEmpty: boolean;
 }
 
-// Prototypes that already carry the lazy helper methods.
-const _installedErrorProtos = /* @__PURE__ */ new WeakSet<object>();
+/* Prototypes that already carry the lazy helper methods. Seeded with the
+ * intrinsics so that `init` on a foreign object — it accepts any object —
+ * can never install an accessor onto a prototype we do not own. */
+const _installedErrorProtos = /* @__PURE__ */ new WeakSet<object>([Object.prototype, Error.prototype]);
 
 /* Helper methods live as non-enumerable lazy getters on the shared
  * prototype instead of own properties on every instance. On first

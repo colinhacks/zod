@@ -250,8 +250,10 @@ const _messageDesc: PropertyDescriptor = {
 const _zodDesc: PropertyDescriptor = { value: undefined, enumerable: false };
 const _issuesDesc: PropertyDescriptor = { value: undefined, enumerable: false };
 
-// Prototypes that already carry the lazy `toString`.
-const _installedToString = /* @__PURE__ */ new WeakSet<object>();
+/* Prototypes that already carry the lazy `toString`. Seeded with the
+ * intrinsics so that `init` on a foreign object — it accepts any object —
+ * can never install an accessor onto a prototype we do not own. */
+const _installedToString = /* @__PURE__ */ new WeakSet<object>([Object.prototype, Error.prototype]);
 
 const initializer = (inst: $ZodError, def: $ZodIssue[]): void => {
   inst.name = "$ZodError";
@@ -259,6 +261,9 @@ const initializer = (inst: $ZodError, def: $ZodIssue[]): void => {
   Object.defineProperty(inst, "_zod", _zodDesc);
   _issuesDesc.value = def;
   Object.defineProperty(inst, "issues", _issuesDesc);
+  // Clear the shared slots; a retained `value` pins the last error's issues.
+  _zodDesc.value = undefined;
+  _issuesDesc.value = undefined;
   Object.defineProperty(inst, "message", _messageDesc);
 
   /* `toString` lives as a non-enumerable lazy getter on the shared
