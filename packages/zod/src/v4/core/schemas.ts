@@ -1879,10 +1879,16 @@ function handleCatchall(
   const isOptionalIn = _catchall.optin === "optional";
   const isOptionalOut = _catchall.optout === "optional";
   for (const key in input) {
-    // skip __proto__ so it can't replace the result prototype via the
-    // assignment setter on the plain {} we build into
-    if (key === "__proto__") continue;
+    // must precede the __proto__ branch: a declared __proto__ field is handled by the
+    // shape loop, so reporting it here would reject input the schema explicitly allows
     if (keySet.has(key)) continue;
+    // Don't copy an undeclared __proto__ into the result; assignment to a plain {} would
+    // replace the result prototype. But in strict mode it is still an unknown key, so
+    // report it before skipping.
+    if (key === "__proto__") {
+      if (t === "never") unrecognized.push(key);
+      continue;
+    }
     if (t === "never") {
       unrecognized.push(key);
       continue;
@@ -3009,6 +3015,11 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
           continue;
         }
 
+        // the guard above tests the raw input key, but the key schema can normalize an
+        // ordinary key into __proto__; re-check the key we actually write under
+        const outKey = keyResult.value as PropertyKey;
+        if (outKey === "__proto__") continue;
+
         const result = def.valueType._zod.run({ value: input[key], issues: [] }, ctx);
 
         if (result instanceof Promise) {
@@ -3017,14 +3028,14 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
               if (result.issues.length) {
                 payload.issues.push(...util.prefixIssues(key, result.issues));
               }
-              payload.value[keyResult.value as PropertyKey] = result.value;
+              payload.value[outKey] = result.value;
             })
           );
         } else {
           if (result.issues.length) {
             payload.issues.push(...util.prefixIssues(key, result.issues));
           }
-          payload.value[keyResult.value as PropertyKey] = result.value;
+          payload.value[outKey] = result.value;
         }
       }
     }
