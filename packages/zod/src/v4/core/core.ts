@@ -77,7 +77,7 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
 }
 
 //////////////////////////////   UTILITIES   ///////////////////////////////////////
-export const $brand: unique symbol = Symbol("zod_brand");
+export const $brand: unique symbol = /*@__PURE__*/ Symbol("zod_brand");
 export type $brand<T extends string | number | symbol = string | number | symbol> = {
   [$brand]: { [k in T]: true };
 };
