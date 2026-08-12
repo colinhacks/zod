@@ -402,6 +402,44 @@ test("is not vulnerable to prototype pollution", async () => {
   }
 });
 
+test("key schema cannot normalize an input key into __proto__", async () => {
+  const value = z.object({ a: z.string() });
+  const payload = { a: "evil" };
+  const wire = (key: string) => JSON.parse(JSON.stringify({ [key]: payload }));
+
+  const cases = [
+    [z.record(z.string().toLowerCase(), value), wire("__PROTO__")],
+    [z.record(z.string().trim(), value), wire(" __proto__ ")],
+    [z.record(z.string().normalize("NFKC"), value), wire("＿＿ｐｒｏｔｏ＿＿")],
+    [
+      z.record(
+        z.string().transform((s) => s.slice(2)),
+        value
+      ),
+      wire("x:__proto__"),
+    ],
+  ] as const;
+
+  for (const [schema, data] of cases) {
+    const result = schema.parse(data);
+    expect(Object.getPrototypeOf(result)).toBe(Object.prototype);
+    expect(Object.keys(result)).toEqual([]);
+    expect((result as any).a).toBeUndefined();
+
+    expect(Object.getPrototypeOf(await schema.parseAsync(data))).toBe(Object.prototype);
+  }
+
+  // an async value schema takes the promise write path
+  const asyncValue = z.record(
+    z.string().toLowerCase(),
+    value.refine(async () => true)
+  );
+  expect(Object.getPrototypeOf(await asyncValue.parseAsync(wire("__PROTO__")))).toBe(Object.prototype);
+
+  // ordinary normalization still lands as an own key
+  expect(z.record(z.string().toLowerCase(), value).parse({ KEY: payload })).toEqual({ key: payload });
+});
+
 test("dont remove undefined values", () => {
   const result1 = z.record(z.string(), z.any()).parse({ foo: undefined });
 
@@ -714,4 +752,23 @@ test("v3-compat single-arg form: z.record(valueType)", () => {
     propertyNames: { type: "string" },
     additionalProperties: { type: "number" },
   });
+});
+
+// A finite key set that declares __proto__ writes through the same assignment as z.object(); the
+// key was declared by the schema, so it round-trips as an own data property.
+test("__proto__ in a finite key set becomes an own property", () => {
+  const data = JSON.parse('{"__proto__":{"a":"declared"},"b":{"a":"good"}}');
+
+  for (const schema of [
+    z.record(z.enum(["__proto__", "b"]), z.object({ a: z.string() })),
+    z.record(z.literal(["__proto__", "b"]), z.object({ a: z.string() })),
+  ]) {
+    const parsed: any = schema.parse(data);
+    expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+    expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(true);
+    expect(parsed.__proto__).toEqual({ a: "declared" });
+    expect(parsed.a).toBeUndefined();
+  }
+
+  expect(({} as any).a).toBeUndefined();
 });

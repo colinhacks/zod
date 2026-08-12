@@ -1747,6 +1747,17 @@ export type $InferObjectInput<T extends $ZodLooseShape, Extra extends Record<str
         } & Extra
       >;
 
+// Writes a validated property onto the fresh {} we build results into. Plain assignment of
+// "__proto__" hits the inherited setter, which replaces the result prototype and drops the
+// value; defineProperty creates the own data property the key was declared for.
+function setProp(target: any, key: PropertyKey, value: unknown): void {
+  if (key === "__proto__") {
+    Object.defineProperty(target, key, { value, writable: true, enumerable: true, configurable: true });
+  } else {
+    target[key] = value;
+  }
+}
+
 function handlePropertyResult(
   result: ParsePayload,
   final: ParsePayload,
@@ -1778,10 +1789,10 @@ function handlePropertyResult(
 
   if (result.value === undefined) {
     if (isPresent) {
-      (final.value as any)[key] = undefined;
+      setProp(final.value, key, undefined);
     }
   } else {
-    (final.value as any)[key] = result.value;
+    setProp(final.value, key, result.value);
   }
 }
 
@@ -1992,12 +2003,18 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
     const _normalized = util.cached(() => normalizeDef(def));
 
     const generateFastpass = (shape: any) => {
-      const doc = new Doc(["shape", "payload", "ctx"]);
+      const doc = new Doc(["shape", "payload", "ctx", "setProp"]);
       const normalized = _normalized.value;
 
       const parseStr = (key: string) => {
         const k = util.esc(key);
         return `shape[${k}]._zod.run({ value: input[${k}], issues: [] }, ctx)`;
+      };
+
+      // Keys are known here, so only a literal "__proto__" defers to setProp.
+      const setStr = (key: string, value: string) => {
+        const k = util.esc(key);
+        return key === "__proto__" ? `setProp(newResult, ${k}, ${value});` : `newResult[${k}] = ${value};`;
       };
 
       doc.write(`const input = payload.value;`);
@@ -2033,12 +2050,12 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         
         if (${id}.value === undefined) {
           if (${k} in input) {
-            newResult[${k}] = undefined;
+            ${setStr(key, "undefined")}
           }
         } else {
-          newResult[${k}] = ${id}.value;
+          ${setStr(key, `${id}.value`)}
         }
-        
+
       `);
         } else if (!isOptionalIn) {
           doc.write(`
@@ -2060,9 +2077,9 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
 
         if (${id}_present) {
           if (${id}.value === undefined) {
-            newResult[${k}] = undefined;
+            ${setStr(key, "undefined")}
           } else {
-            newResult[${k}] = ${id}.value;
+            ${setStr(key, `${id}.value`)}
           }
         }
 
@@ -2078,12 +2095,12 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         
         if (${id}.value === undefined) {
           if (${k} in input) {
-            newResult[${k}] = undefined;
+            ${setStr(key, "undefined")}
           }
         } else {
-          newResult[${k}] = ${id}.value;
+          ${setStr(key, `${id}.value`)}
         }
-        
+
       `);
         }
       }
@@ -2091,7 +2108,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
       doc.write(`payload.value = newResult;`);
       doc.write(`return payload;`);
       const fn = doc.compile();
-      return (payload: any, ctx: any) => fn(shape, payload, ctx);
+      return (payload: any, ctx: any) => fn(shape, payload, ctx, setProp);
     };
 
     let fastpass!: ReturnType<typeof generateFastpass>;
@@ -2926,14 +2943,14 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
                 if (result.issues.length) {
                   payload.issues.push(...util.prefixIssues(key, result.issues));
                 }
-                payload.value[outKey] = result.value;
+                setProp(payload.value, outKey, result.value);
               })
             );
           } else {
             if (result.issues.length) {
               payload.issues.push(...util.prefixIssues(key, result.issues));
             }
-            payload.value[outKey] = result.value;
+            setProp(payload.value, outKey, result.value);
           }
         }
       }
@@ -2996,6 +3013,11 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
           continue;
         }
 
+        // the guard above tests the raw input key, but the key schema can normalize an
+        // ordinary key into __proto__; re-check the key we actually write under
+        const outKey = keyResult.value as PropertyKey;
+        if (outKey === "__proto__") continue;
+
         const result = def.valueType._zod.run({ value: input[key], issues: [] }, ctx);
 
         if (result instanceof Promise) {
@@ -3004,14 +3026,14 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
               if (result.issues.length) {
                 payload.issues.push(...util.prefixIssues(key, result.issues));
               }
-              payload.value[keyResult.value as PropertyKey] = result.value;
+              payload.value[outKey] = result.value;
             })
           );
         } else {
           if (result.issues.length) {
             payload.issues.push(...util.prefixIssues(key, result.issues));
           }
-          payload.value[keyResult.value as PropertyKey] = result.value;
+          payload.value[outKey] = result.value;
         }
       }
     }
