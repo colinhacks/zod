@@ -349,8 +349,8 @@ test("z.record", () => {
   expectTypeOf<partial>().toEqualTypeOf<Partial<Record<"__proto__" | "b", string>>>();
   const parsed: any = z.parse(partial, Object.fromEntries([["__proto__", "declared"]]));
   expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
-  expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(true);
-  expect(parsed.__proto__).toBe("declared");
+  expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(false);
+  expect(parsed).toEqual({});
   expect(z.parse(partial, {})).toEqual({});
 
   // v3-compat single-arg form: z.record(valueType) defaults keyType to z.string()
