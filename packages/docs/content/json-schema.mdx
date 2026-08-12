@@ -107,8 +107,15 @@ interface ToJSONSchemaParams {
 
   /** How to handle unrepresentable types.
    * - `"throw"` — Default. Unrepresentable types throw an error
-   * - `"any"` — Unrepresentable types become `{}` */
-  unrepresentable?: "throw" | "any";
+   * - `"any"` — Unrepresentable types become `{}`
+   * - A function — returns the JSON Schema to use, or `"any"`/`"throw"` */
+  unrepresentable?:
+    | "throw"
+    | "any"
+    | ((ctx: {
+        zodSchema: $ZodTypes;
+        path: (string | number)[];
+      }) => JSONSchema | "throw" | "any" | undefined);
 
   /** How to handle cycles.
    * - `"ref"` — Default. Cycles will be broken using $defs
@@ -233,6 +240,27 @@ You can change this behavior by setting the `unrepresentable` option to `"any"`.
 z.toJSONSchema(z.bigint(), { unrepresentable: "any" });
 // => {}
 ```
+
+To decide case by case, pass a function instead. It's called once per unrepresentable schema. Return a JSON Schema to use in its place, `"any"`, or `"throw"` (the default when you return nothing).
+
+```ts
+z.toJSONSchema(z.object({ createdAt: z.date(), id: z.bigint() }), {
+  unrepresentable: ({ zodSchema }) =>
+    zodSchema._zod.def.type === "date" ? { type: "string", format: "date-time" } : "throw",
+});
+// => throws Error (BigInt cannot be represented in JSON Schema)
+```
+
+The handler also receives the `path` of the schema, and any error it throws propagates, so you can report unrepresentable types in your own words.
+
+```ts
+z.toJSONSchema(schema, {
+  unrepresentable: ({ zodSchema, path }) => {
+    throw new Error(`${zodSchema._zod.def.type} at /${path.join("/")} is not supported`);
+  },
+});
+```
+
 ### `cycles`
 
 How to handle cycles. If a cycle is encountered as `z.toJSONSchema()` traverses the schema, it will be represented using `$ref`. 

@@ -23,6 +23,16 @@ export type Processor<T extends schemas.$ZodType = schemas.$ZodType> = (
   params: ProcessParams
 ) => void;
 
+/**
+ * Called for each schema that has no JSON Schema equivalent. Return a JSON Schema to use in its
+ * place, `"any"` to fall back to the `unrepresentable: "any"` behavior, or `"throw"`/`undefined` to
+ * throw the default error. Throwing from the handler propagates, so custom errors work too.
+ */
+export type UnrepresentableHandler<T extends schemas.$ZodType = schemas.$ZodType> = (ctx: {
+  zodSchema: T;
+  path: (string | number)[];
+}) => JSONSchema.BaseSchema | "throw" | "any" | undefined;
+
 export interface JSONSchemaGeneratorParams {
   processors: Record<string, Processor>;
   /** A registry used to look up metadata for each schema. Any schema with an `id` property will be extracted as a $def.
@@ -36,8 +46,9 @@ export interface JSONSchemaGeneratorParams {
   target?: "draft-04" | "draft-07" | "draft-2020-12" | "openapi-3.0" | ({} & string) | undefined;
   /** How to handle unrepresentable types.
    * - `"throw"` — Default. Unrepresentable types throw an error
-   * - `"any"` — Unrepresentable types become `{}` */
-  unrepresentable?: "throw" | "any";
+   * - `"any"` — Unrepresentable types become `{}`
+   * - A function — called once per unrepresentable schema; see {@link UnrepresentableHandler}. */
+  unrepresentable?: "throw" | "any" | UnrepresentableHandler<schemas.$ZodTypes>;
   /** Arbitrary custom logic that can be used to modify the generated JSON Schema. */
   override?: (ctx: {
     zodSchema: schemas.$ZodTypes;
@@ -97,7 +108,8 @@ export interface ToJSONSchemaContext {
   processors: Record<string, Processor>;
   metadataRegistry: $ZodRegistry<Record<string, any>>;
   target: "draft-04" | "draft-07" | "draft-2020-12" | "openapi-3.0" | ({} & string);
-  unrepresentable: "throw" | "any";
+  // must be schemas.$ZodType to prevent recursive type resolution error
+  unrepresentable: "throw" | "any" | UnrepresentableHandler;
   override: (ctx: {
     // must be schemas.$ZodType to prevent recursive type resolution error
     zodSchema: schemas.$ZodType;
@@ -137,7 +149,7 @@ export function initializeContext(params: JSONSchemaGeneratorParams): ToJSONSche
     processors: params.processors ?? {},
     metadataRegistry: params?.metadata ?? globalRegistry,
     target,
-    unrepresentable: params?.unrepresentable ?? "throw",
+    unrepresentable: (params?.unrepresentable as ToJSONSchemaContext["unrepresentable"]) ?? "throw",
     override: (params?.override as any) ?? (() => {}),
     io: params?.io ?? "output",
     counter: 0,
@@ -146,6 +158,28 @@ export function initializeContext(params: JSONSchemaGeneratorParams): ToJSONSche
     reused: params?.reused ?? "inline",
     external: params?.external ?? undefined,
   };
+}
+
+/**
+ * Applies the `unrepresentable` setting at a site that has no JSON Schema equivalent. Throws
+ * `message` unless the setting (or the handler's return value) says otherwise. Returns `true` if a
+ * custom JSON Schema was written into `json`, in which case the caller must not write its own.
+ */
+export function handleUnrepresentable(
+  schema: schemas.$ZodType,
+  ctx: ToJSONSchemaContext,
+  json: JSONSchema.BaseSchema,
+  params: ProcessParams,
+  message: string
+): boolean {
+  const result =
+    typeof ctx.unrepresentable === "function"
+      ? ctx.unrepresentable({ zodSchema: schema, path: params.path })
+      : ctx.unrepresentable;
+  if (result === "any") return false;
+  if (result === undefined || result === "throw") throw new Error(message);
+  Object.assign(json, result);
+  return true;
 }
 
 export function process<T extends schemas.$ZodType>(
