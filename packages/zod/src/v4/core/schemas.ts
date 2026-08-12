@@ -29,6 +29,10 @@ export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> ex
   readonly async?: boolean | undefined;
   readonly direction?: "forward" | "backward";
   readonly skipChecks?: boolean;
+  /** @internal Output node per `(schema, input)` for this parse, so the output
+   * graph mirrors the input graph. Only allocated once a recursive schema is
+   * actually entered. */
+  memo?: Map<$ZodType, Map<object, MemoEntry>> | undefined;
 }
 
 export interface ParsePayload<T = unknown> {
@@ -41,6 +45,94 @@ export interface ParsePayload<T = unknown> {
    * undefined. Set by $ZodCatch when catchValue substitutes and by every
    * $ZodTransform invocation. */
   fallback?: boolean | undefined;
+  /** @internal Set when the value came from a back-edge into a node that is
+   * still on the parse stack. Checks are skipped: the node is already being
+   * validated further up, and its output is not populated yet. */
+  memo?: boolean | undefined;
+}
+
+/** @internal `issues` stays `null` while the node is still on the parse stack,
+ * which is what separates a true back-edge from a node reached a second time
+ * through a shared reference. */
+interface MemoEntry {
+  value: unknown;
+  issues: errors.$ZodRawIssue[] | null;
+}
+
+const recursionCache: WeakMap<object, boolean> = /*@__PURE__*/ new WeakMap();
+
+/** @internal True when this schema's subtree contains a reference cycle, so one
+ * parse can re-enter the same schema node. Resolved once per schema, on first
+ * parse. Everything else skips cycle tracking entirely. */
+function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
+  const cached = recursionCache.get(inst);
+  if (cached !== undefined) return cached;
+  // Reached from within its own subtree: the graph is cyclic. Not cached — this
+  // answer is relative to the walk in progress.
+  if (stack.has(inst)) return true;
+  stack.add(inst);
+
+  let result = false;
+  const check = (child: any) => {
+    if (!result && child?._zod && isRecursive(child, stack)) result = true;
+  };
+
+  const def = inst._zod.def as any;
+  if (def.type === "lazy") {
+    check((inst as any)._zod.innerType);
+  } else {
+    // `def.shape` is redefined as a non-enumerable accessor, so `for...in` misses it.
+    const shape = def.shape;
+    if (shape) for (const key in shape) check(shape[key]);
+    for (const key in def) {
+      const value = def[key];
+      if (!value || typeof value !== "object") continue;
+      if (value._zod) check(value);
+      else if (Array.isArray(value)) for (const el of value) check(el);
+    }
+  }
+
+  stack.delete(inst);
+  recursionCache.set(inst, result);
+  return result;
+}
+
+/** @internal Registers `payload.value` as the node this schema is building for
+ * `input`, so anything reaching `input` again resolves to it. Returns `true` on
+ * a hit, with `payload` already populated. */
+function memoEnter(ctx: ParseContextInternal, inst: $ZodType, input: object, payload: ParsePayload): boolean {
+  let memo = ctx.memo;
+  if (!memo) {
+    memo = new Map();
+    ctx.memo = memo;
+  }
+  let byInput = memo.get(inst);
+  if (!byInput) {
+    byInput = new Map();
+    memo.set(inst, byInput);
+  }
+
+  const hit = byInput.get(input);
+  if (hit) {
+    payload.value = hit.value;
+    // A finished node reached again reports the same issues at this position.
+    // A back-edge into a node still on the stack reports nothing here — the node
+    // in progress reports them at its own path — and skips checks, because its
+    // output is not populated yet.
+    if (hit.issues) payload.issues.push(...hit.issues);
+    else payload.memo = true;
+    return true;
+  }
+
+  byInput.set(input, { value: payload.value, issues: null });
+  return false;
+}
+
+/** @internal Marks the node finished once its children are parsed. Entries live
+ * for the whole parse, so the output graph mirrors the input graph. */
+function memoExit(ctx: ParseContextInternal, inst: $ZodType, input: object, payload: ParsePayload): ParsePayload {
+  ctx.memo!.get(inst)!.get(input)!.issues = payload.issues.slice();
+  return payload;
 }
 
 export type CheckFn<T> = (input: ParsePayload<T>) => util.MaybeAsync<void>;
@@ -220,6 +312,10 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
       checks: checks.$ZodCheck<never>[],
       ctx?: ParseContextInternal | undefined
     ): util.MaybeAsync<ParsePayload> => {
+      // Back-edge: this node is already being validated further up the stack and
+      // its output is still being populated, so checks would see a half-built object.
+      if (payload.memo) return payload;
+
       let isAborted = util.aborted(payload);
 
       let asyncResult!: Promise<unknown> | undefined;
@@ -282,7 +378,12 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
       if (ctx.direction === "backward") {
         // run canary
         // initial pass (no checks)
-        const canary = inst._zod.parse({ value: payload.value, issues: [] }, { ...ctx, skipChecks: true });
+        // The canary walks the same (schema, input) pairs as the real pass, so it
+        // needs its own memo or it would hand the real pass its throwaway output.
+        const canary = inst._zod.parse(
+          { value: payload.value, issues: [] },
+          { ...ctx, skipChecks: true, memo: undefined }
+        );
 
         if (canary instanceof Promise) {
           return canary.then((canary) => {
@@ -1637,6 +1738,8 @@ function handleArrayResult(result: ParsePayload<any>, final: ParsePayload<any[]>
 export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$constructor("$ZodArray", (inst, def) => {
   $ZodType.init(inst, def);
 
+  let recursive: boolean | undefined;
+
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
 
@@ -1652,6 +1755,10 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
     }
 
     payload.value = Array(input.length);
+
+    recursive ??= isRecursive(inst, new Set());
+    if (recursive && memoEnter(ctx, inst, input, payload)) return payload;
+
     const proms: Promise<any>[] = [];
     for (let i = 0; i < input.length; i++) {
       const item = input[i];
@@ -1671,10 +1778,10 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
     }
 
     if (proms.length) {
-      return Promise.all(proms).then(() => payload);
+      return Promise.all(proms).then(() => (recursive ? memoExit(ctx, inst, input, payload) : payload));
     }
 
-    return payload; //handleArrayResultsAsync(parseResults, final);
+    return recursive ? memoExit(ctx, inst, input, payload) : payload;
   };
 });
 
@@ -1955,6 +2062,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
   const catchall = def.catchall;
 
   let value!: typeof _normalized.value;
+  let recursive: boolean | undefined;
 
   inst._zod.parse = (payload, ctx) => {
     value ??= _normalized.value;
@@ -1970,6 +2078,9 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     }
 
     payload.value = {};
+
+    recursive ??= isRecursive(inst, new Set());
+    if (recursive && memoEnter(ctx, inst, input, payload)) return payload;
 
     const proms: Promise<any>[] = [];
     const shape = value.shape;
@@ -1988,10 +2099,17 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     }
 
     if (!catchall) {
-      return proms.length ? Promise.all(proms).then(() => payload) : payload;
+      if (proms.length) {
+        return Promise.all(proms).then(() => (recursive ? memoExit(ctx, inst, input, payload) : payload));
+      }
+      return recursive ? memoExit(ctx, inst, input, payload) : payload;
     }
 
-    return handleCatchall(proms, input, payload, ctx, _normalized.value, inst);
+    const result = handleCatchall(proms, input, payload, ctx, _normalized.value, inst);
+    if (!recursive) return result;
+    return result instanceof Promise
+      ? result.then((r) => memoExit(ctx, inst, input, r))
+      : memoExit(ctx, inst, input, result);
   };
 });
 
@@ -2004,8 +2122,10 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
     const superParse = inst._zod.parse;
     const _normalized = util.cached(() => normalizeDef(def));
 
-    const generateFastpass = (shape: any) => {
-      const doc = new Doc(["shape", "payload", "ctx", "setProp"]);
+    const generateFastpass = (shape: any, recursive?: boolean) => {
+      const doc = new Doc(
+        recursive ? ["shape", "payload", "ctx", "setProp", "inst", "memoEnter"] : ["shape", "payload", "ctx", "setProp"]
+      );
       const normalized = _normalized.value;
 
       const parseStr = (key: string) => {
@@ -2029,6 +2149,11 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
 
       // A: preserve key order {
       doc.write(`const newResult = {};`);
+      if (recursive) {
+        // Register the output before descending so a back-edge binds to it.
+        doc.write(`payload.value = newResult;`);
+        doc.write(`if (memoEnter(ctx, inst, input, payload)) return payload;`);
+      }
       for (const key of normalized.keys) {
         const id = ids[key];
         const k = util.esc(key);
@@ -2110,6 +2235,9 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
       doc.write(`payload.value = newResult;`);
       doc.write(`return payload;`);
       const fn = doc.compile();
+      if (recursive) {
+        return (payload: any, ctx: any) => fn(shape, payload, ctx, setProp, inst, memoEnter);
+      }
       return (payload: any, ctx: any) => fn(shape, payload, ctx, setProp);
     };
 
@@ -2123,6 +2251,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
     const catchall = def.catchall;
 
     let value!: typeof _normalized.value;
+    let recursive: boolean | undefined;
 
     inst._zod.parse = (payload, ctx) => {
       value ??= _normalized.value;
@@ -2139,11 +2268,26 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
 
       if (jit && fastEnabled && ctx?.async === false && ctx.jitless !== true) {
         // always synchronous
-        if (!fastpass) fastpass = generateFastpass(def.shape);
+        if (!fastpass) {
+          recursive = isRecursive(inst, new Set());
+          fastpass = generateFastpass(def.shape, recursive);
+        }
         payload = fastpass(payload, ctx);
 
-        if (!catchall) return payload;
-        return handleCatchall([], input, payload, ctx, value, inst);
+        if (!recursive) {
+          if (!catchall) return payload;
+          return handleCatchall([], input, payload, ctx, value, inst);
+        }
+
+        // A back-edge short-circuits before the shape is walked; the node that owns
+        // the placeholder is the one that pops it and runs the catchall.
+        if (payload.memo) return payload;
+        if (!catchall) return memoExit(ctx, inst, input, payload);
+
+        const result = handleCatchall([], input, payload, ctx, value, inst);
+        return result instanceof Promise
+          ? result.then((r) => memoExit(ctx, inst, input, r))
+          : memoExit(ctx, inst, input, result);
       }
 
       return superParse(payload, ctx);
@@ -2689,6 +2833,7 @@ export interface $ZodTuple<
 export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$constructor("$ZodTuple", (inst, def) => {
   $ZodType.init(inst, def);
   const items = def.items;
+  let recursive: boolean | undefined;
 
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
@@ -2703,6 +2848,10 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
     }
 
     payload.value = [];
+
+    recursive ??= isRecursive(inst, new Set());
+    if (recursive && memoEnter(ctx, inst, input, payload)) return payload;
+
     const proms: Promise<any>[] = [];
 
     const optinStart = getTupleOptStart(items, "optin");
@@ -2765,9 +2914,13 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
     }
 
     if (proms.length) {
-      return Promise.all(proms).then(() => handleTupleResults(itemResults, payload, items, input, optoutStart));
+      return Promise.all(proms).then(() => {
+        const r = handleTupleResults(itemResults, payload, items, input, optoutStart);
+        return recursive ? memoExit(ctx, inst, input, r) : r;
+      });
     }
-    return handleTupleResults(itemResults, payload, items, input, optoutStart);
+    const result = handleTupleResults(itemResults, payload, items, input, optoutStart);
+    return recursive ? memoExit(ctx, inst, input, result) : result;
   };
 });
 
@@ -2897,6 +3050,7 @@ export interface $ZodRecord<Key extends $ZodRecordKey = $ZodRecordKey, Value ext
 
 export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$constructor("$ZodRecord", (inst, def) => {
   $ZodType.init(inst, def);
+  let recursive: boolean | undefined;
 
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
@@ -2913,10 +3067,12 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
     }
 
     const proms: Promise<any>[] = [];
+    recursive ??= isRecursive(inst, new Set());
 
     const values = def.keyType._zod.values;
     if (values) {
       payload.value = {};
+      if (recursive && memoEnter(ctx, inst, input, payload)) return payload;
       const recordKeys = new Set<string | symbol>();
       for (const key of values) {
         if (typeof key === "string" || typeof key === "number" || typeof key === "symbol") {
@@ -2975,6 +3131,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       }
     } else {
       payload.value = {};
+      if (recursive && memoEnter(ctx, inst, input, payload)) return payload;
       // Reflect.ownKeys for Symbol-key support; filter non-enumerable to match z.object()
       for (const key of Reflect.ownKeys(input)) {
         if (key === "__proto__") continue;
@@ -3041,9 +3198,9 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
     }
 
     if (proms.length) {
-      return Promise.all(proms).then(() => payload);
+      return Promise.all(proms).then(() => (recursive ? memoExit(ctx, inst, input, payload) : payload));
     }
-    return payload;
+    return recursive ? memoExit(ctx, inst, input, payload) : payload;
   };
 });
 
@@ -3074,6 +3231,7 @@ export interface $ZodMap<Key extends SomeType = $ZodType, Value extends SomeType
 
 export const $ZodMap: core.$constructor<$ZodMap> = /*@__PURE__*/ core.$constructor("$ZodMap", (inst, def) => {
   $ZodType.init(inst, def);
+  let recursive: boolean | undefined;
 
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
@@ -3091,6 +3249,9 @@ export const $ZodMap: core.$constructor<$ZodMap> = /*@__PURE__*/ core.$construct
     const proms: Promise<any>[] = [];
     payload.value = new Map();
 
+    recursive ??= isRecursive(inst, new Set());
+    if (recursive && memoEnter(ctx, inst, input, payload)) return payload;
+
     for (const [key, value] of input) {
       const keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
       const valueResult = def.valueType._zod.run({ value: value, issues: [] }, ctx);
@@ -3106,8 +3267,10 @@ export const $ZodMap: core.$constructor<$ZodMap> = /*@__PURE__*/ core.$construct
       }
     }
 
-    if (proms.length) return Promise.all(proms).then(() => payload);
-    return payload;
+    if (proms.length) {
+      return Promise.all(proms).then(() => (recursive ? memoExit(ctx, inst, input, payload) : payload));
+    }
+    return recursive ? memoExit(ctx, inst, input, payload) : payload;
   };
 });
 
@@ -3178,6 +3341,7 @@ export interface $ZodSet<T extends SomeType = $ZodType> extends $ZodType {
 
 export const $ZodSet: core.$constructor<$ZodSet> = /*@__PURE__*/ core.$constructor("$ZodSet", (inst, def) => {
   $ZodType.init(inst, def);
+  let recursive: boolean | undefined;
 
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
@@ -3193,6 +3357,10 @@ export const $ZodSet: core.$constructor<$ZodSet> = /*@__PURE__*/ core.$construct
 
     const proms: Promise<any>[] = [];
     payload.value = new Set();
+
+    recursive ??= isRecursive(inst, new Set());
+    if (recursive && memoEnter(ctx, inst, input, payload)) return payload;
+
     for (const item of input) {
       const result = def.valueType._zod.run({ value: item, issues: [] }, ctx);
       if (result instanceof Promise) {
@@ -3200,8 +3368,10 @@ export const $ZodSet: core.$constructor<$ZodSet> = /*@__PURE__*/ core.$construct
       } else handleSetResult(result, payload);
     }
 
-    if (proms.length) return Promise.all(proms).then(() => payload);
-    return payload;
+    if (proms.length) {
+      return Promise.all(proms).then(() => (recursive ? memoExit(ctx, inst, input, payload) : payload));
+    }
+    return recursive ? memoExit(ctx, inst, input, payload) : payload;
   };
 });
 
@@ -3455,6 +3625,10 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
       if (ctx.direction === "backward") {
         throw new core.$ZodEncodeError(inst.constructor.name);
       }
+
+      // The value is a back-edge placeholder, so the cycle closes through this
+      // transform. Its output can't exist in time to bind the back-edge.
+      if (payload.memo) throw new core.$ZodCyclicError();
 
       const _out = def.transform(payload.value, payload);
       if (ctx.async) {
@@ -4069,7 +4243,7 @@ function handlePipeResult(left: ParsePayload, next: $ZodType, ctx: ParseContextI
     left.aborted = true;
     return left;
   }
-  return next._zod.run({ value: left.value, issues: left.issues, fallback: left.fallback }, ctx);
+  return next._zod.run({ value: left.value, issues: left.issues, fallback: left.fallback, memo: left.memo }, ctx);
 }
 
 ////////////////////////////////////////////
