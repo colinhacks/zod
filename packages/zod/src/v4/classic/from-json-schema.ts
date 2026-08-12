@@ -89,12 +89,13 @@ const RECOGNIZED_KEYS = /*@__PURE__*/ new Set([
   "contentEncoding",
   "contentMediaType",
   "contentSchema",
-  // Unsupported (error-throwing)
-  "unevaluatedItems",
-  "unevaluatedProperties",
+  // Conditionals
   "if",
   "then",
   "else",
+  // Unsupported (error-throwing)
+  "unevaluatedItems",
+  "unevaluatedProperties",
   "dependentSchemas",
   "dependentRequired",
   // OpenAPI
@@ -158,9 +159,6 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
   }
   if (schema.unevaluatedProperties !== undefined) {
     throw new Error("unevaluatedProperties is not supported");
-  }
-  if (schema.if !== undefined || schema.then !== undefined || schema.else !== undefined) {
-    throw new Error("Conditional schemas (if/then/else) are not supported");
   }
   if (schema.dependentSchemas !== undefined || schema.dependentRequired !== undefined) {
     throw new Error("dependentSchemas and dependentRequired are not supported");
@@ -568,6 +566,34 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
       }
       baseSchema = result;
     }
+  }
+
+  // Handle if/then/else conditionals
+  if (schema.if !== undefined) {
+    const ifZod = convertSchema(schema.if, ctx);
+    const thenZod = schema.then !== undefined ? convertSchema(schema.then, ctx) : null;
+    const elseZod = schema.else !== undefined ? convertSchema(schema.else, ctx) : null;
+
+    baseSchema = baseSchema.superRefine((val, refinementCtx) => {
+      const ifResult = ifZod.safeParse(val);
+      if (ifResult.success) {
+        if (thenZod !== null) {
+          const thenResult = thenZod.safeParse(val);
+          if (!thenResult.success) {
+            for (const issue of thenResult.error.issues) {
+              refinementCtx.addIssue(issue as any);
+            }
+          }
+        }
+      } else if (elseZod !== null) {
+        const elseResult = elseZod.safeParse(val);
+        if (!elseResult.success) {
+          for (const issue of elseResult.error.issues) {
+            refinementCtx.addIssue(issue as any);
+          }
+        }
+      }
+    });
   }
 
   // Handle nullable (OpenAPI 3.0)

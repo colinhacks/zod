@@ -265,13 +265,17 @@ test("unevaluatedProperties throws error", () => {
   }).toThrow("unevaluatedProperties is not supported");
 });
 
-test("if/then/else throws error", () => {
-  expect(() => {
-    fromJSONSchema({
-      if: { type: "string" },
-      then: { type: "number" },
-    });
-  }).toThrow("Conditional schemas");
+test("if/then/else: if-matches-then branch", () => {
+  // If the value is a string, it must have minLength 3; otherwise it must be a positive number.
+  const schema = fromJSONSchema({
+    if: { type: "string" },
+    then: { type: "string", minLength: 3 },
+    else: { type: "number", minimum: 1 },
+  });
+  expect(schema.safeParse("hello").success).toBe(true);
+  expect(schema.safeParse("hi").success).toBe(false); // string but too short
+  expect(schema.safeParse(5).success).toBe(true);
+  expect(schema.safeParse(-1).success).toBe(false); // number but < 1
 });
 
 test("external $ref throws error", () => {
@@ -918,4 +922,50 @@ test("__proto__ annotation key reaches the registry", () => {
   const meta = registry.get(schema)!;
   expect(Object.prototype.hasOwnProperty.call(meta, "__proto__")).toBe(true);
   expect(meta.__proto__).toEqual({ custom: 1 });
+});
+
+test("if/then/else: basic conditional validation", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    properties: { kind: { type: "string" }, value: { type: "number" } },
+    if: { type: "object", properties: { kind: { const: "big" } }, required: ["kind"] },
+    then: { type: "object", properties: { value: { type: "number", minimum: 100 } } },
+    else: { type: "object", properties: { value: { type: "number", maximum: 10 } } },
+  });
+
+  // "big" kind: value must be >= 100
+  expect(schema.safeParse({ kind: "big", value: 200 }).success).toBe(true);
+  expect(schema.safeParse({ kind: "big", value: 5 }).success).toBe(false);
+
+  // other kind: value must be <= 10
+  expect(schema.safeParse({ kind: "small", value: 5 }).success).toBe(true);
+  expect(schema.safeParse({ kind: "small", value: 200 }).success).toBe(false);
+});
+
+test("if/then without else: passes when if does not match", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    properties: { flag: { type: "boolean" }, value: { type: "string" } },
+    if: { type: "object", properties: { flag: { const: true } }, required: ["flag"] },
+    // value must be present and non-empty when flag is true
+    then: { type: "object", properties: { value: { type: "string", minLength: 1 } }, required: ["value"] },
+  });
+
+  expect(schema.safeParse({ flag: true, value: "hello" }).success).toBe(true);
+  expect(schema.safeParse({ flag: true }).success).toBe(false); // flag true but value missing
+  // flag is false: then is not applied, so missing value is fine
+  expect(schema.safeParse({ flag: false }).success).toBe(true);
+});
+
+test("if/else without then: passes when if matches", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    properties: { n: { type: "number" } },
+    if: { type: "object", properties: { n: { type: "number", minimum: 0 } }, required: ["n"] },
+    else: { type: "object", properties: { n: { type: "number", maximum: -1 } } },
+  });
+
+  expect(schema.safeParse({ n: 5 }).success).toBe(true);
+  // n is negative: else applied, maximum: -1 must hold — -5 <= -1
+  expect(schema.safeParse({ n: -5 }).success).toBe(true);
 });
