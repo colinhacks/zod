@@ -1001,19 +1001,20 @@ function claim(inst: object, sentinel: string): object | undefined {
 }
 
 function defineCached(proto: object, key: string, compute: (self: any) => unknown): void {
+  // Every relocated member except `~standard` used to be an enumerable own
+  // property, so its cache stays enumerable and `Object.keys` still reports it
+  // once touched. `~standard` was never an own data property — the old
+  // `defineLazy` cached into a closure — so caching it enumerably would newly
+  // add it to `Object.keys` and `JSON.stringify` of a schema.
+  const enumerable = key !== "~standard";
   Object.defineProperty(proto, key, {
     configurable: true,
     get(this: any) {
       const value = compute(this);
-      // The cache is an implementation detail, so it is written NON-enumerable:
-      // reading a member must not change `Object.keys`/`JSON.stringify` of the
-      // schema. Otherwise a schema's serialized shape would depend on which
-      // members happened to have been touched.
-      Object.defineProperty(this, key, { configurable: true, writable: true, value });
+      Object.defineProperty(this, key, { configurable: true, writable: true, enumerable, value });
       return value;
     },
     set(this: any, value: unknown) {
-      // An explicit assignment behaves like one, i.e. enumerable, as before.
       Object.defineProperty(this, key, { configurable: true, writable: true, enumerable: true, value });
     },
   });

@@ -56,6 +56,9 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
     // of 14, which is the difference between one and two steps of V8's
     // property backing store.
     util.installLazyMethods<ZodMiniType>(inst, "parse", _zodMiniTypeMethods);
+    // `with` was an alias for `check` — the same function object, not a
+    // delegating wrapper — so it is installed as a prop that resolves to it.
+    util.installLazyProp(inst, "with", (self: ZodMiniType) => self.check);
   }
 );
 
@@ -87,9 +90,6 @@ function _zodMiniTypeMethods(): util.LazyMethodsOf<ZodMiniType> {
         },
         { parent: true }
       );
-    },
-    with(...checks) {
-      return this.check(...checks);
     },
     clone(_def, params) {
       return core.clone(this, _def, params);
