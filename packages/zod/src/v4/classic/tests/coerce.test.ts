@@ -158,3 +158,31 @@ test("override input type", () => {
   type output = z.infer<typeof a>;
   expectTypeOf<output>().toEqualTypeOf<string>();
 });
+
+test("absent object key is not coerced", () => {
+  // z.coerce.* is not optional on the input side, so an absent key is rejected
+  // rather than coerced from undefined.
+  for (const schema of [z.coerce.string(), z.coerce.number(), z.coerce.boolean(), z.coerce.bigint(), z.coerce.date()]) {
+    const obj = z.object({ foo: schema });
+    expect(obj.safeParse({}).success).toEqual(false);
+    expect(obj.safeParse({}, { jitless: true }).success).toEqual(false);
+  }
+
+  const bool = z.object({ foo: z.coerce.boolean() });
+  expect(bool.safeParse({}).error!.issues).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "invalid_type",
+        "expected": "nonoptional",
+        "message": "Invalid input: expected nonoptional, received undefined",
+        "path": [
+          "foo",
+        ],
+      },
+    ]
+  `);
+
+  // an explicitly present undefined still coerces
+  expect(bool.parse({ foo: undefined })).toEqual({ foo: false });
+  expect(z.object({ foo: z.coerce.boolean().default(false) }).parse({})).toEqual({ foo: false });
+});
