@@ -2633,6 +2633,59 @@ test("defaults/prefaults", () => {
   `);
 });
 
+test("input defaults preserved when transform preserves the input type", () => {
+  // identity transform: default is a valid input, so it should survive
+  const a = z
+    .string()
+    .transform((s) => s)
+    .default("hello");
+  expect(z.toJSONSchema(a, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "default": "hello",
+      "type": "string",
+    }
+  `);
+
+  // default inside a union with a transforming option
+  const b = z.union([z.boolean(), z.object({ a: z.string().transform((x) => x) })]).default(false);
+  expect(z.toJSONSchema(b, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "anyOf": [
+        {
+          "type": "boolean",
+        },
+        {
+          "properties": {
+            "a": {
+              "type": "string",
+            },
+          },
+          "required": [
+            "a",
+          ],
+          "type": "object",
+        },
+      ],
+      "default": false,
+    }
+  `);
+
+  // divergent transform: default is not a valid input, so it stays dropped
+  const c = z
+    .string()
+    .transform((val) => val.length)
+    .pipe(z.number())
+    .default(5);
+  expect(z.toJSONSchema(c, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+    }
+  `);
+});
+
 test("falsy prefaults (false, 0, empty string)", () => {
   // boolean prefault false
   const a = z.boolean().prefault(false);

@@ -201,8 +201,17 @@ export function process<T extends schemas.$ZodType>(
 
   if (ctx.io === "input" && isTransforming(schema)) {
     // examples/defaults only apply to output type of pipe
-    delete result.schema.examples;
-    delete result.schema.default;
+    if (result.schema.examples !== undefined) {
+      if (
+        !Array.isArray(result.schema.examples) ||
+        !result.schema.examples.every((example) => isValidInput(schema, example))
+      ) {
+        delete result.schema.examples;
+      }
+    }
+    if (result.schema.default !== undefined && !isValidInput(schema, result.schema.default)) {
+      delete result.schema.default;
+    }
   }
 
   // set prefault as default
@@ -587,6 +596,16 @@ function isTransforming(
   }
 
   return false;
+}
+
+function isValidInput(schema: schemas.$ZodType, value: unknown): boolean {
+  try {
+    const result = schema._zod.run({ value, issues: [] }, { async: false });
+    if (result instanceof Promise) return false;
+    return result.issues.length === 0;
+  } catch {
+    return false;
+  }
 }
 
 export type ZodStandardSchemaWithJSON<T> = StandardSchemaWithJSONProps<core.input<T>, core.output<T>>;
