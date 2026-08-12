@@ -1777,7 +1777,19 @@ function hasApplicableFallback(schema: any): boolean {
   while (cur?._zod?.def) {
     const type = cur._zod.def.type;
     if (type === "default" || type === "prefault") return true;
-    if (type === "optional" || type === "catch" || type === "exactOptional") {
+    // Transparent 1:1 wrappers that propagate optin and delegate to an inner
+    // default/prefault: recurse through them so an absent key still applies
+    // e.g. z.string().default("x").nullable().optional().
+    if (
+      type === "optional" ||
+      type === "catch" ||
+      type === "exactOptional" ||
+      type === "nullable" ||
+      type === "readonly" ||
+      type === "nonoptional" ||
+      type === "pipe" ||
+      type === "promise"
+    ) {
       cur = cur._zod.def.innerType;
       continue;
     }
@@ -2091,11 +2103,31 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         // are excluded so they can still inject their fallback value.
         const isOptionalType = schema?._zod?.def?.type === "optional" && !hasApplicableFallback(schema);
 
-        doc.write(`const ${id} = ${parseStr(key)};`);
-
         if (isOptionalIn && isOptionalOut) {
-          // For optional-in/out schemas, ignore errors on absent keys
-          doc.write(`
+          if (isOptionalType) {
+            // For optional/exactOptional fields without an applicable fallback,
+            // skip the whole field (including running its coercion/transform)
+            // when the key is absent, so JIT matches the jitless path.
+            doc.write(`
+        if (${isPresent}) {
+          const ${id} = ${parseStr(key)};
+          if (${id}.issues.length) {
+            payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
+              ...iss,
+              path: iss.path ? [${k}, ...iss.path] : [${k}]
+            })));
+          }
+          if (${id}.value === undefined) {
+            ${setStr(key, "undefined")}
+          } else {
+            ${setStr(key, `${id}.value`)}
+          }
+        }
+      `);
+          } else {
+            // For optional-in/out schemas, ignore errors on absent keys
+            doc.write(`
+        const ${id} = ${parseStr(key)};
         if (${id}.issues.length) {
           if (${isPresent}) {
             payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
@@ -2105,7 +2137,6 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
           }
         }
         
-        ${isOptionalType ? `if (${isPresent}) {` : ""}
         if (${id}.value === undefined) {
           if (${isPresent}) {
             ${setStr(key, "undefined")}
@@ -2113,10 +2144,11 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         } else {
           ${setStr(key, `${id}.value`)}
         }
-        ${isOptionalType ? "}" : ""}
       `);
+          }
         } else if (!isOptionalIn) {
           doc.write(`
+        const ${id} = ${parseStr(key)};
         const ${id}_present = ${isPresent};
         if (${id}.issues.length) {
           payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
@@ -2144,6 +2176,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
       `);
         } else {
           doc.write(`
+        const ${id} = ${parseStr(key)};
         if (${id}.issues.length) {
           payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
             ...iss,

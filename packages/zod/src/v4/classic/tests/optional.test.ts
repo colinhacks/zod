@@ -249,6 +249,33 @@ test("exactOptional in objects - coercion does not manufacture absent keys", () 
   expect(schema.safeParse({ a: undefined }, { jitless: true }).success).toEqual(false);
 });
 
+test("exactOptional in objects - default through transparent wrappers applies for absent keys", () => {
+  // The default sits behind a transparent wrapper (nullable) and must still
+  // apply for an absent key, in both the JIT and jitless paths.
+  const schema = z.object({
+    a: z.string().default("x").nullable().optional(),
+  });
+
+  expect(schema.parse({})).toEqual({ a: "x" });
+  expect(schema.parse({}, { jitless: true })).toEqual({ a: "x" });
+});
+
+test("exactOptional in objects - JIT skips running coercion/transform for absent keys", () => {
+  // Absent key must not run the inner transform in either path, so JIT and
+  // jitless stay consistent (this would throw without the skip).
+  const schema = z.object({
+    a: z
+      .any()
+      .transform(() => {
+        throw new Error("boom");
+      })
+      .exactOptional(),
+  });
+
+  expect(schema.parse({})).toEqual({});
+  expect(schema.parse({}, { jitless: true })).toEqual({});
+});
+
 test("exactOptional type inference in objects", () => {
   const schema = z.object({
     a: z.string().exactOptional(),
