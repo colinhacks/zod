@@ -221,7 +221,7 @@ describe("toJSONSchema", () => {
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "format": "emoji",
-        "pattern": "^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$",
+        "pattern": "^[\\p{Extended_Pictographic}\\p{Emoji_Component}]+$",
         "type": "string",
       }
     `);
@@ -3128,4 +3128,63 @@ test("recursive lazy with describe does not stack overflow", () => {
   const result = z.toJSONSchema(NodeSchema, { cycles: "ref", reused: "ref" });
   expect(result).toBeDefined();
   expect(result.$defs).toBeDefined();
+});
+
+test("__proto__ shape key is emitted as an own property", () => {
+  const schema = z.object({ ["__proto__"]: z.literal("admin"), role: z.string() });
+  const result = z.toJSONSchema(schema, { io: "input" });
+
+  expect(result.required).toEqual(["__proto__", "role"]);
+  // every required key needs a matching entry in properties
+  for (const key of result.required!) {
+    expect(Object.prototype.hasOwnProperty.call(result.properties, key)).toBe(true);
+  }
+  expect(JSON.parse(JSON.stringify(result)).properties.__proto__).toEqual({ type: "string", const: "admin" });
+});
+
+test("__proto__ registry id is emitted as an own entry", () => {
+  const myRegistry = z.registry<{ id: string }>();
+  myRegistry.add(z.object({ a: z.string() }), { id: "__proto__" });
+  myRegistry.add(z.object({ b: z.string() }), { id: "normal" });
+
+  expect(Object.keys(z.toJSONSchema(myRegistry).schemas)).toEqual(["__proto__", "normal"]);
+});
+
+test("__proto__ def id emits a resolvable $ref", () => {
+  const myRegistry = z.registry<{ id: string }>();
+  const Inner = z.object({ x: z.string() });
+  myRegistry.add(Inner, { id: "__proto__" });
+
+  const json = JSON.parse(JSON.stringify(z.toJSONSchema(z.object({ a: Inner, b: Inner }), { metadata: myRegistry })));
+  expect(json.properties.a.$ref).toBe("#/$defs/__proto__");
+  expect(json.$defs.__proto__).toBeDefined();
+});
+
+test("__proto__ patternProperties key is emitted as an own property", () => {
+  const result = z.toJSONSchema(z.looseRecord(z.string().regex(/__proto__/), z.string()));
+
+  expect(Object.getPrototypeOf(result.patternProperties)).toBe(Object.prototype);
+  expect(Object.prototype.hasOwnProperty.call(result.patternProperties, "__proto__")).toBe(true);
+  expect(result.patternProperties?.__proto__).toEqual({ type: "string" });
+});
+
+test("__proto__ metadata survives direct and wrapper metadata merges", () => {
+  for (const schema of [z.string(), z.readonly(z.string())]) {
+    const registry = z.registry<Record<string, unknown>>();
+    registry.add(schema, Object.fromEntries([["__proto__", { marker: true }]]));
+
+    const result: any = z.toJSONSchema(schema, { metadata: registry });
+    expect(Object.getPrototypeOf(result)).toBe(Object.prototype);
+    expect(Object.prototype.hasOwnProperty.call(result, "__proto__")).toBe(true);
+    expect(result.__proto__).toEqual({ marker: true });
+    expect(JSON.parse(JSON.stringify(result)).__proto__).toEqual({ marker: true });
+  }
+});
+
+test("partialRecord does not require finite keys", () => {
+  const result = z.toJSONSchema(z.partialRecord(z.enum(["__proto__", "b"]), z.string()));
+
+  expect(result.required).toBeUndefined();
+  expect(result.propertyNames).toEqual({ type: "string", enum: ["__proto__", "b"] });
+  expect(result.additionalProperties).toEqual({ type: "string" });
 });

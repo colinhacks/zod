@@ -3,6 +3,18 @@ import type * as JSONSchema from "./json-schema.js";
 import { type $ZodRegistry, globalRegistry } from "./registries.js";
 import type * as schemas from "./schemas.js";
 import type { StandardJSONSchemaV1, StandardSchemaWithJSONProps } from "./standard-schema.js";
+import { assignProp } from "./util.js";
+
+function assignProps<T extends object>(target: T, ...sources: object[]): T {
+  for (const source of sources) {
+    for (const key of Reflect.ownKeys(source)) {
+      if (Object.prototype.propertyIsEnumerable.call(source, key)) {
+        assignProp(target, key, (source as any)[key]);
+      }
+    }
+  }
+  return target;
+}
 
 export type Processor<T extends schemas.$ZodType = schemas.$ZodType> = (
   schema: T,
@@ -196,7 +208,7 @@ export function process<T extends schemas.$ZodType>(
 
   // metadata
   const meta = ctx.metadataRegistry.get(schema);
-  if (meta) Object.assign(result.schema, meta);
+  if (meta) assignProps(result.schema, meta);
 
   if (ctx.io === "input" && isTransforming(schema)) {
     // examples/defaults only apply to output type of pipe
@@ -388,10 +400,10 @@ export function finalize<T extends schemas.$ZodType>(
         schema.allOf = schema.allOf ?? [];
         schema.allOf.push(refSchema);
       } else {
-        Object.assign(schema, refSchema);
+        assignProps(schema, refSchema);
       }
       // restore child's own properties (child wins)
-      Object.assign(schema, _cached);
+      assignProps(schema, _cached);
 
       const isParentRef = zodSchema._zod.parent === ref;
 
@@ -469,7 +481,7 @@ export function finalize<T extends schemas.$ZodType>(
     result.$id = ctx.external.uri(id);
   }
 
-  Object.assign(result, root.def ?? root.schema);
+  assignProps(result, root.def ?? root.schema);
 
   // The `id` in `.meta()` is a Zod-specific registration tag used to extract
   // schemas into $defs — it is not user-facing JSON Schema metadata. Strip it
@@ -484,7 +496,7 @@ export function finalize<T extends schemas.$ZodType>(
     const seen = entry[1];
     if (seen.def && seen.defId) {
       if (seen.def.id === seen.defId) delete seen.def.id;
-      defs[seen.defId] = seen.def;
+      assignProp(defs, seen.defId, seen.def);
     }
   }
 

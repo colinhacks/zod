@@ -1205,13 +1205,12 @@ export function partialRecord<Key extends core.$ZodRecordKey, Value extends Some
   valueType: Value,
   params?: string | core.$ZodRecordParams
 ): ZodMiniRecord<Key & core.$partial, Value> {
-  const k = core.clone(keyType);
-  k._zod.values = undefined;
   return new ZodMiniRecord({
     type: "record",
-    keyType: k,
+    keyType,
     valueType: valueType as any,
     ...util.normalizeParams(params),
+    partial: true,
   }) as any;
 }
 

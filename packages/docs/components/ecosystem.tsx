@@ -112,6 +112,12 @@ const formIntegrations: ZodResource[] = [
     description: "Components, hooks & utilities for creating and managing delightfully simple form experiences in React.",
     slug: "maanlamp/react-f3",
   },
+  {
+    name: "Attaform",
+    url: "https://attaform.dev",
+    description: "Type-safe, Zod-first form library for Vue 3 and Nuxt.",
+    slug: "attaform/Attaform",
+  },
 ];
 
 const zodToXConverters: ZodResource[] = [
@@ -146,16 +152,22 @@ const zodToXConverters: ZodResource[] = [
     slug: "traversable/schema",
   },
   {
-    name: "zod-to-mongo-schema",
-    url: "https://github.com/udohjeremiah/zod-to-mongo-schema",
+    name: "zod-mongo-schema",
+    url: "https://github.com/udohjeremiah/zod-mongo-schema",
     description: "Convert Zod schemas to MongoDB-compatible JSON Schemas effortlessly",
-    slug: "udohjeremiah/zod-to-mongo-schema",
+    slug: "udohjeremiah/zod-mongo-schema",
   },
   {
     name: "convex-helpers",
     url: "https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/README.md#zod-validation",
     description: "Use Zod to validate arguments and return values of Convex functions, and to create Convex database schemas",
     slug: "get-convex/convex-helpers",
+  },
+  {
+    name: "@nullix/zod-mongoose",
+    url: "https://zodmongoose.com/",
+    description: "Convert zod schemas into typesafe mongoose schemas with full transparent mongoose options and helpers",
+    slug: "Harm-Nullix/zod-mongoose",
   },
 ];
 
@@ -209,6 +221,13 @@ const xToZodConverters: ZodResource[] = [
     url: "https://github.com/nakita628/hono-takibi",
     description: "Hono Takibi is a code generator from OpenAPI to @hono/zod-openapi",
     slug: "nakita628/hono-takibi",
+  },
+  {
+    name: "tauri-typegen",
+    url: "https://github.com/thwbh/tauri-typegen",
+    description:
+      "tauri-typegen allows you to generate Zod schemas and validation hooks for the Rust @tauri-apps/tauri cross-platform application framework.",
+    slug: "thwbh/tauri-typegen",
   }
 ];
 
@@ -283,9 +302,21 @@ const poweredByZodProjects: ZodResource[] = [
     description: "A fast, type-safe JSON migration tool with Zod schema validation.",
     slug: "Nano-Collective/json-up",
   },
+  {
+    name: "@chrock-studio/overload",
+    url: "https://jsr.io/@chrock-studio/overload",
+    description: "A lightweight, type-safe runtime function overloading library that allows runtime dispatch based on argument types.",
+    slug: "chrock-studio/toolbox/tree/main/packages/overload",
+  }
 ];
 
 const zodUtilities: ZodResource[] = [
+  {
+    name: "zod-compiler",
+    url: "https://github.com/gajus/zod-compiler",
+    description: "Compile Zod schemas into zero-overhead validation functions at build time. Works with Vite, webpack, esbuild, Rollup, etc.",
+    slug: "gajus/zod-compiler",
+  },
   {
     name: "babel-plugin-zod-hoist",
     url: "https://github.com/gajus/babel-plugin-zod-hoist",
@@ -305,10 +336,10 @@ const zodUtilities: ZodResource[] = [
     slug: "marilari88/zod-playground",
   },
   {
-    name: "eslint-plugin-zod",
-    url: "https://github.com/marcalexiei/eslint-plugin-zod",
-    description: "ESLint plugin that adds custom linting rules to enforce best practices when using Zod",
-    slug: "marcalexiei/eslint-plugin-zod",
+    name: "eslint-zod",
+    url: "https://github.com/marcalexiei/eslint-zod",
+    description: "ESLint plugins that add custom linting rules to enforce best practices when using Zod and/or Zod Mini.",
+    slug: "marcalexiei/eslint-zod",
   },
   {
     name: "Zod Compare",
@@ -328,7 +359,13 @@ const zodUtilities: ZodResource[] = [
     description: "Compile Zod schemas into zero-overhead validation functions at build time. 2-64x faster validation with no code changes.",
     slug: "wakita181009/zod-aot",
   },
-    {
+  {
+    name: "@chrock-studio/zod-utils",
+    url: "https://jsr.io/@chrock-studio/zod-utils",
+    description: "A collection of Zod utilities focusing on enhanced functionality (e.g. classless Rich Domain Models while maintaining pure data structures).",
+    slug: "chrock-studio/toolbox/tree/main/packages/zod-utils",
+  },
+  {
     name: "oxlint-plugin-import-zod",
     url: "https://github.com/samchungy/oxlint-plugin-import-zod",
     description: "Oxlint plugin to enforce namespace imports for Zod.",
