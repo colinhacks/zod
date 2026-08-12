@@ -1447,6 +1447,13 @@ z.deepPartial(Category).parse({ subcategories: [{ subcategories: [{}] }] }); // 
 
 The input schema is never modified. A [discriminated union](#discriminated-unions) degrades to a plain `z.union()`, since an optional discriminator defeats the discriminated lookup.
 
+`z.deepPartial()` inherits `.partial()`'s restriction on refinements, and reaches deeper for it — an object anywhere in the tree carrying its own [refinement](#refinements) throws:
+
+```ts
+z.deepPartial(z.object({ a: z.object({ b: z.string() }).refine((v) => !!v.b) }));
+// ❌ .partial() cannot be used on object schemas containing refinements
+```
+
 `z.deepPartial()` is a single call to [`z.visit()`](#visit); reach for that directly to write other deep rewrites.
 
 ### `.required()`
@@ -2724,6 +2731,12 @@ const EventIn = z.input(Event);       // ZodType<{ name: string; at: string }>
 ```
 
 A schema with no pipes is returned as-is, not cloned.
+
+These project the two *sides* of a pipe, so they are meant for [codecs](/codecs), where both sides are real schemas. A one-way [transform](#transforms) has no output schema to project to — `z.output()` hands back the transform itself, which validates nothing:
+
+```ts
+z.output(z.string().transform((v) => v.length)).parse(123); // => undefined, no error
+```
 
 ## Transforms
 

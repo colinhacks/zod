@@ -368,4 +368,14 @@ describe("z.visit", () => {
     const result = z.visit(schema, { string: () => z.string().toUpperCase() });
     expect(result.parse({ k: { n: "a" } })).toEqual({ k: { n: "A" } });
   });
+
+  test("an already-resolved lazy is still rewritten", () => {
+    const make = () => z.object({ x: z.lazy(() => z.object({ y: z.string() })) });
+    const cold = make();
+    const warm = make();
+    warm.safeParse({ x: { y: "a" } }); // memoizes $ZodLazy's inner type onto the def
+    // The memo must not ride along into the clone, or the new getter is never read.
+    expect(deepPartial(warm).safeParse({ x: {} }).success).toEqual(true);
+    expect(deepPartial(cold).safeParse({ x: {} }).success).toEqual(true);
+  });
 });

@@ -150,7 +150,11 @@ export function visit<T extends schemas.SomeType>(schema: T, fnOrHandlers: Visit
         // traversal happens at parse-time; this means lazy nodes are
         // unconditionally re-cloned and identity propagates up.
         const original = def.getter as () => AnyZod;
-        return clone(s, { ...def, getter: () => run(original()) });
+        // `$ZodLazy` memoizes its resolved inner type onto the def. Spreading that memo into the
+        // clone would leave the new getter permanently unread, so any schema whose lazy had already
+        // been resolved once would come back un-rewritten below that node.
+        const { _cachedInner, ...rest } = def;
+        return clone(s, { ...rest, getter: () => run(original()) });
       }
       // `template_literal` is a leaf by choice: its `parts` are pattern fragments compiled into a
       // regex at construction, not data positions, so rewriting them would not mean anything.
