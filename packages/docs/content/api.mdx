@@ -1004,6 +1004,28 @@ optionalYoda.def.innerType; // ZodMiniLiteral<"yoda">
 </Tab>
 </Tabs>
 
+## Exact optionals
+
+`exactOptional()` works like `optional()`, but with strict `exactOptionalPropertyTypes` semantics: in an object, an absent key is allowed, yet an explicitly present `undefined` is rejected. Like `optional()`, the resulting schema only accepts a value of its inner type plus implicit absence — it does not accept `undefined` as a value.
+
+<Callout type="info">
+`exactOptional()` is a Zod-only method. Zod Mini does not have an equivalent; use the emitted type's `?` with `exactOptionalPropertyTypes` instead.
+</Callout>
+
+```ts
+const user = z.object({ name: z.string(), email: z.string().exactOptional() });
+
+user.parse({ name: "yoda" }); // ok
+user.parse({ name: "yoda", email: "yoda@example.com" }); // ok
+user.parse({ name: "yoda", email: undefined }); // error
+```
+
+To extract the inner schema:
+
+```ts
+user.shape.email.unwrap(); // ZodString
+```
+
 ## Nullables
 
 To make a schema *nullable* (that is, to allow `null` inputs).
