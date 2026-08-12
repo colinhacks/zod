@@ -3329,6 +3329,63 @@ describe("unrepresentable callback", () => {
     );
   });
 
+  const dateToString: z.core.ToJSONSchemaParams["unrepresentable"] = ({ zodSchema }) =>
+    zodSchema._zod.def.type === "date" ? { type: "string", format: "date-time" } : "throw";
+
+  test("emits a valid OpenAPI 3.0 schema", async () => {
+    const jsonSchema = z.toJSONSchema(z.object({ start: z.date() }), {
+      target: "openapi-3.0",
+      unrepresentable: dateToString,
+    });
+    expect(jsonSchema).toMatchInlineSnapshot(`
+      {
+        "additionalProperties": false,
+        "properties": {
+          "start": {
+            "format": "date-time",
+            "type": "string",
+          },
+        },
+        "required": [
+          "start",
+        ],
+        "type": "object",
+      }
+    `);
+    await expect(validateOpenAPI30Schema(jsonSchema)).resolves.toBe(true);
+  });
+
+  test("the returned schema survives extraction into $defs", () => {
+    const When = z.date().meta({ id: "When" });
+    expect(
+      z.toJSONSchema(z.object({ start: When, end: When }), { unrepresentable: dateToString })
+    ).toMatchInlineSnapshot(`
+      {
+        "$defs": {
+          "When": {
+            "format": "date-time",
+            "type": "string",
+          },
+        },
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "end": {
+            "$ref": "#/$defs/When",
+          },
+          "start": {
+            "$ref": "#/$defs/When",
+          },
+        },
+        "required": [
+          "start",
+          "end",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
   test("applies to dynamic catch values", () => {
     const schema = z.string().catch(() => {
       throw new Error("dynamic");
