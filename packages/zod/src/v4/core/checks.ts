@@ -768,6 +768,8 @@ export type $ZodStringFormats =
   | "ipv6"
   | "cidrv4"
   | "cidrv6"
+  | "ipv4_range"
+  | "ipv6_range"
   | "base64"
   | "base64url"
   | "json_string"
