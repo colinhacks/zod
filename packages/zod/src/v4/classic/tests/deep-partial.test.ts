@@ -242,6 +242,45 @@ describe("deepPartial", () => {
     expectTypeOf(partial).toExtend<z.ZodPreprocess>();
     expect(partial.parse({})).toEqual({});
   });
+
+  test("catchall value schema is recursed; strict/loose catchalls are preserved", () => {
+    const partial = deepPartial(z.object({ a: z.string() }).catchall(z.object({ n: z.number() })));
+    expect(partial.parse({ extra: {} })).toEqual({ extra: {} });
+    expect(() => partial.parse({ extra: { n: "no" } })).toThrow();
+    // z.strictObject / z.looseObject encode their behavior as a catchall too.
+    expect(() => deepPartial(z.strictObject({ a: z.object({ b: z.string() }) })).parse({ zzz: 1 })).toThrow();
+    expect(deepPartial(z.looseObject({ a: z.object({ b: z.string() }) })).parse({ a: {}, zzz: 1 })).toEqual({
+      a: {},
+      zzz: 1,
+    });
+  });
+
+  test("discriminated union nested inside an array degrades and still matches", () => {
+    const schema = z.object({
+      shapes: z.array(
+        z.discriminatedUnion("kind", [
+          z.object({ kind: z.literal("circle"), meta: z.object({ id: z.string() }) }),
+          z.object({ kind: z.literal("square"), side: z.number() }),
+        ])
+      ),
+    });
+    const partial = deepPartial(schema);
+    const element = (partial.shape.shapes._zod.def.innerType as z.ZodArray)._zod.def.element;
+    expect(element._zod.def.type).toEqual("union");
+    expect((element._zod.def as { discriminator?: string }).discriminator).toBeUndefined();
+    expect(partial.parse({ shapes: [{ kind: "circle", meta: {} }, {}] })).toEqual({
+      shapes: [{ kind: "circle", meta: {} }, {}],
+    });
+  });
+
+  test("does not mutate the source schema", () => {
+    const inner = z.object({ b: z.string() });
+    const schema = z.object({ a: inner });
+    deepPartial(schema);
+    expect(schema.shape.a).toBe(inner);
+    expect(schema.safeParse({}).success).toEqual(false);
+    expect(inner.safeParse({}).success).toEqual(false);
+  });
 });
 
 describe("z.visit", () => {
@@ -307,5 +346,26 @@ describe("z.visit", () => {
     customSchema._zod.def = { ...customSchema._zod.def, type: "myCustomType" };
     const result = z.visit(customSchema, { object: (o) => o });
     expect(result).toBe(customSchema);
+  });
+
+  test("non-lazy (getter) cycle resolves through the cache instead of throwing", () => {
+    const Node = z.object({
+      name: z.string(),
+      get children() {
+        return z.array(Node);
+      },
+    });
+    // The rewrite has to reach the recursive reference, not just the top level.
+    const upper = z.visit(Node, { string: () => z.string().toUpperCase() });
+    expect(upper.parse({ name: "a", children: [{ name: "b", children: [] }] })).toEqual({
+      name: "A",
+      children: [{ name: "B", children: [] }],
+    });
+  });
+
+  test("catchall is traversed like tuple rest", () => {
+    const schema = z.object({}).catchall(z.object({ n: z.string() }));
+    const result = z.visit(schema, { string: () => z.string().toUpperCase() });
+    expect(result.parse({ k: { n: "a" } })).toEqual({ k: { n: "A" } });
   });
 });

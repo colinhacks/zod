@@ -14,27 +14,8 @@ export type VisitFn = (node: AnyZod) => AnyZod;
 export type VisitHandlers = { [K in Kind]?: (node: AnyZod) => AnyZod };
 
 /**
- * Bottom-up rewrite of a schema tree. Every node is visited after its
- * children have been mapped; the returned schema replaces the node.
- * Shared sub-schemas are visited once.
- *
- * Cycles are handled transparently. `z.lazy` nodes defer traversal until
- * parse-time. Non-lazy cycles (typical in v4's getter-based recursive
- * object pattern) are broken by inserting a `z.lazy` placeholder that
- * resolves through the cache at parse-time — by which point the cycle's
- * final mapped schema has been computed.
- *
- * Branches are only re-cloned when a child reference actually changes,
- * so an identity transform returns the input schema unchanged.
- *
- * Two call shapes:
- *
- *   z.visit(schema, (node) => ...)           // raw callback
- *   z.visit(schema, { object: (o) => ... })  // handler keyed by def.type
- *
- * In handler-map form, kinds with no handler pass through unchanged —
- * including user-defined types whose `def.type` is not one of the
- * built-in variants.
+ * Bottom-up rewrite of a schema tree: each node is replaced by whatever the visitor returns,
+ * with unhandled kinds and unchanged branches passing through with their identity preserved.
  */
 export function visit<T extends schemas.SomeType>(schema: T, fn: VisitFn): T;
 export function visit<T extends schemas.SomeType>(schema: T, handlers: VisitHandlers): T;
@@ -82,7 +63,12 @@ export function visit<T extends schemas.SomeType>(schema: T, fnOrHandlers: Visit
           if (mapped !== oldShape[k]) changed = true;
           newShape[k] = mapped;
         }
-        return changed ? clone(s, { ...def, shape: newShape }) : s;
+        let newCatchall = def.catchall;
+        if (def.catchall) {
+          newCatchall = run(def.catchall);
+          if (newCatchall !== def.catchall) changed = true;
+        }
+        return changed ? clone(s, { ...def, shape: newShape, catchall: newCatchall }) : s;
       }
       case "array": {
         const mapped = run(def.element);
@@ -166,6 +152,9 @@ export function visit<T extends schemas.SomeType>(schema: T, fnOrHandlers: Visit
         const original = def.getter as () => AnyZod;
         return clone(s, { ...def, getter: () => run(original()) });
       }
+      // `template_literal` is a leaf by choice: its `parts` are pattern fragments compiled into a
+      // regex at construction, not data positions, so rewriting them would not mean anything.
+      case "template_literal":
       // Leaves — no child schemas to recurse into.
       case "string":
       case "number":
@@ -184,7 +173,6 @@ export function visit<T extends schemas.SomeType>(schema: T, fnOrHandlers: Visit
       case "enum":
       case "literal":
       case "file":
-      case "template_literal":
       case "transform":
       case "custom":
         return s;
