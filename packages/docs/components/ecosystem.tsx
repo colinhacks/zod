@@ -112,6 +112,12 @@ const formIntegrations: ZodResource[] = [
     description: "Components, hooks & utilities for creating and managing delightfully simple form experiences in React.",
     slug: "maanlamp/react-f3",
   },
+  {
+    name: "Attaform",
+    url: "https://attaform.dev",
+    description: "Type-safe, Zod-first form library for Vue 3 and Nuxt.",
+    slug: "attaform/Attaform",
+  },
 ];
 
 const zodToXConverters: ZodResource[] = [
