@@ -25,3 +25,6 @@ tsconfig.vitest-temp.json
 
 open-issues-triage.md
 triage/
+tmp/
+.worktrees/
+research/

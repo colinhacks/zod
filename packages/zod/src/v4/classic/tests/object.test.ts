@@ -709,9 +709,102 @@ describe("__proto__ in object catchall paths", () => {
     }
   });
 
-  test("strict does not surface __proto__ as unrecognized", () => {
+  test("strict surfaces __proto__ as unrecognized without copying it", () => {
     const schema = z.object({ name: z.string() }).strict();
     const result = schema.safeParse(protoInput());
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].code).toBe("unrecognized_keys");
+      expect((result.error.issues[0] as any).keys).toEqual(["__proto__"]);
+    }
+  });
+
+  test("strict still accepts a __proto__ key the shape declares", () => {
+    const shape: any = { name: z.string() };
+    Object.defineProperty(shape, "__proto__", {
+      value: z.string(),
+      enumerable: true,
+      configurable: true,
+      writable: true,
+    });
+    const input = JSON.parse('{"name":"alice","__proto__":"hello"}');
+
+    for (const schema of [z.object(shape).strict(), z.object(shape).catchall(z.any()), z.object(shape)]) {
+      const result = schema.safeParse(input);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(Object.keys(result.data)).toEqual(["name", "__proto__"]);
+        expect(Object.getPrototypeOf(result.data)).toBe(Object.prototype);
+      }
+    }
+  });
+
+  test("strictObject and jitless agree with .strict()", async () => {
+    for (const schema of [z.strictObject({ name: z.string() }), z.object({ name: z.string() }).strict()]) {
+      for (const result of [
+        schema.safeParse(protoInput()),
+        await schema.safeParseAsync(protoInput(), {
+          jitless: true,
+        } as any),
+      ]) {
+        expect(result.success).toBe(false);
+        if (!result.success) {
+          expect((result.error.issues[0] as any).keys).toEqual(["__proto__"]);
+        }
+      }
+    }
+  });
+});
+
+// A __proto__ key declared in the shape is a field the caller asked for, so it must round-trip as
+// an own data property instead of hitting the inherited setter (which replaced the result
+// prototype and dropped the value).
+describe("__proto__ as a declared shape key", () => {
+  const protoInput = () => JSON.parse('{"__proto__":{"isAdmin":true},"name":"alice"}');
+  const makeShape = () =>
+    Object.fromEntries([
+      ["__proto__", z.object({ isAdmin: z.boolean() })],
+      ["name", z.string()],
+    ]) as Record<string, any>;
+
+  const expectOwnProp = (parsed: any) => {
+    expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+    expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(true);
+    expect(parsed.__proto__).toEqual({ isAdmin: true });
+    expect((parsed as any).isAdmin).toBeUndefined();
+    expect(Object.keys(parsed).sort()).toEqual(["__proto__", "name"]);
+  };
+
+  test("jit fastpass", () => {
+    expectOwnProp(z.object(makeShape()).parse(protoInput()));
+  });
+
+  test("jitless", () => {
+    expectOwnProp(z.object(makeShape()).parse(protoInput(), { jitless: true } as any));
+  });
+
+  test("async", async () => {
+    const shape = Object.fromEntries([
+      ["__proto__", z.object({ isAdmin: z.boolean() }).refine(async () => true)],
+      ["name", z.string()],
+    ]) as Record<string, any>;
+    expectOwnProp(await z.object(shape).parseAsync(protoInput()));
+  });
+
+  test("primitive value is not silently dropped", () => {
+    const schema = z.object(Object.fromEntries([["__proto__", z.string()]]) as Record<string, any>);
+    const parsed: any = schema.parse(JSON.parse('{"__proto__":"hello"}'));
+    expect(parsed.__proto__).toBe("hello");
+    expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+  });
+
+  test("validation still applies", () => {
+    const schema = z.object(Object.fromEntries([["__proto__", z.string()]]) as Record<string, any>);
+    expect(schema.safeParse(JSON.parse('{"__proto__":123}')).success).toBe(false);
+  });
+
+  test("Object.prototype is untouched", () => {
+    z.object(makeShape()).parse(protoInput());
+    expect(({} as any).isAdmin).toBeUndefined();
   });
 });
