@@ -402,6 +402,44 @@ test("is not vulnerable to prototype pollution", async () => {
   }
 });
 
+test("key schema cannot normalize an input key into __proto__", async () => {
+  const value = z.object({ a: z.string() });
+  const payload = { a: "evil" };
+  const wire = (key: string) => JSON.parse(JSON.stringify({ [key]: payload }));
+
+  const cases = [
+    [z.record(z.string().toLowerCase(), value), wire("__PROTO__")],
+    [z.record(z.string().trim(), value), wire(" __proto__ ")],
+    [z.record(z.string().normalize("NFKC"), value), wire("＿＿ｐｒｏｔｏ＿＿")],
+    [
+      z.record(
+        z.string().transform((s) => s.slice(2)),
+        value
+      ),
+      wire("x:__proto__"),
+    ],
+  ] as const;
+
+  for (const [schema, data] of cases) {
+    const result = schema.parse(data);
+    expect(Object.getPrototypeOf(result)).toBe(Object.prototype);
+    expect(Object.keys(result)).toEqual([]);
+    expect((result as any).a).toBeUndefined();
+
+    expect(Object.getPrototypeOf(await schema.parseAsync(data))).toBe(Object.prototype);
+  }
+
+  // an async value schema takes the promise write path
+  const asyncValue = z.record(
+    z.string().toLowerCase(),
+    value.refine(async () => true)
+  );
+  expect(Object.getPrototypeOf(await asyncValue.parseAsync(wire("__PROTO__")))).toBe(Object.prototype);
+
+  // ordinary normalization still lands as an own key
+  expect(z.record(z.string().toLowerCase(), value).parse({ KEY: payload })).toEqual({ key: payload });
+});
+
 test("dont remove undefined values", () => {
   const result1 = z.record(z.string(), z.any()).parse({ foo: undefined });
 
@@ -735,31 +773,6 @@ test("__proto__ in a finite key set becomes an own property", () => {
   expect(({} as any).a).toBeUndefined();
 });
 
-// The raw input key is what the __proto__ check sees, but the value is written under the key the
-// key schema emits. A normalizing key schema makes those two differ.
-test("__proto__ produced by a key transform becomes an own property", () => {
-  const schema = z.record(z.string().toLowerCase(), z.object({ a: z.string() }));
-  const parsed: any = schema.parse(JSON.parse('{"__PROTO__":{"a":"transformed"}}'));
-
-  expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
-  expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(true);
-  expect(parsed.__proto__).toEqual({ a: "transformed" });
-  expect(({} as any).a).toBeUndefined();
-});
-
-test("__proto__ from a key transform is an own property on the async path", async () => {
-  const schema = z.record(
-    z.string().toLowerCase(),
-    z.object({ a: z.string() }).refine(async () => true)
-  );
-  const parsed: any = await schema.parseAsync(JSON.parse('{"__PROTO__":{"a":"async"}}'));
-
-  expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
-  expect(parsed.__proto__).toEqual({ a: "async" });
-});
-
-// A raw __proto__ input key is skipped outright before the write; only a key the key schema
-// *produces* reaches it. Pinning that so the skip isn't mistaken for the same defect.
 test("a raw __proto__ input key stays skipped in loose mode", () => {
   const parsed: any = z.looseRecord(z.iso.datetime(), z.unknown()).parse(JSON.parse('{"__proto__":{"a":1}}'));
 
