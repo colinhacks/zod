@@ -1005,12 +1005,15 @@ function defineCached(proto: object, key: string, compute: (self: any) => unknow
     configurable: true,
     get(this: any) {
       const value = compute(this);
-      // Routes through the setter below, so the own-property descriptor is
-      // written in one place rather than duplicated here.
-      this[key] = value;
+      // The cache is an implementation detail, so it is written NON-enumerable:
+      // reading a member must not change `Object.keys`/`JSON.stringify` of the
+      // schema. Otherwise a schema's serialized shape would depend on which
+      // members happened to have been touched.
+      Object.defineProperty(this, key, { configurable: true, writable: true, value });
       return value;
     },
     set(this: any, value: unknown) {
+      // An explicit assignment behaves like one, i.e. enumerable, as before.
       Object.defineProperty(this, key, { configurable: true, writable: true, enumerable: true, value });
     },
   });

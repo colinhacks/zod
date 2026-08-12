@@ -185,7 +185,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   // directly — every interior node of a large schema graph — allocates none
   // of them.
   _installLazyMethods(inst, "check", _zodTypeMethods);
-  _installLazyProps(inst, "_def", _zodTypeParseProps);
+  _installLazyProps(inst, "parse", _zodTypeParseProps);
   // `description` reads through to the registry on every access, so unlike the
   // rest it must not cache onto the instance.
   const proto = Object.getPrototypeOf(inst);
@@ -194,6 +194,14 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
       configurable: true,
       get(this: ZodType) {
         return core.globalRegistry.get(this)?.description;
+      },
+    });
+    // Getter with no setter, so `schema._def = x` still throws in strict mode
+    // as it did when `_def` was a non-writable own property.
+    Object.defineProperty(proto, "_def", {
+      configurable: true,
+      get(this: ZodType) {
+        return this._zod.def;
       },
     });
   }
@@ -2391,9 +2399,6 @@ export function preprocess<A, U extends core.SomeType, B = unknown>(
  */
 function _zodTypeParseProps(): _LazyPropsOf<ZodType> {
   return {
-    // `_def` derives purely from the instance, so it is materialized on read
-    // rather than assigned at construction. It is also this group's sentinel.
-    _def: (self) => self._zod.def,
     // Overrides core's prototype-level `~standard` with the classic one, which
     // also carries `jsonSchema`. It must stay a prototype entry: reading
     // `~standard` to attach `jsonSchema` forced every schema to build it, and

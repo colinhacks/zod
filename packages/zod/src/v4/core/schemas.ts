@@ -4435,7 +4435,10 @@ export const $ZodFunction: core.$constructor<$ZodFunction> = /*@__PURE__*/ core.
   "$ZodFunction",
   (inst, def) => {
     $ZodType.init(inst, def);
-    inst._def = def;
+    // Own, non-writable — matching what the classic build used to install on
+    // every instance. Defined rather than assigned because the classic
+    // prototype now exposes `_def` as a getter with no setter.
+    Object.defineProperty(inst, "_def", { value: def });
     inst._zod.def = def;
 
     inst.implement = (func) => {

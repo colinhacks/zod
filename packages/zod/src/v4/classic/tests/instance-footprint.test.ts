@@ -72,6 +72,37 @@ test("~standard is lazy but complete", () => {
   expect(Object.prototype.hasOwnProperty.call(schema, "~standard")).toEqual(true);
 });
 
+test("reading a lazy member does not change the instance's enumerable surface", () => {
+  const schema = z.string();
+  const before = Object.keys(schema);
+
+  void schema["~standard"];
+  void schema.parse;
+  void schema.optional;
+
+  // The cache is an implementation detail: `Object.keys` and `JSON.stringify`
+  // must not depend on which members happen to have been touched.
+  expect(Object.keys(schema)).toEqual(before);
+  expect(Object.keys(schema)).not.toContain("~standard");
+
+  // An explicit assignment still behaves like one.
+  const other: any = z.string();
+  other.parse = () => "x";
+  expect(Object.keys(other)).toContain("parse");
+});
+
+test("_def stays read-only", () => {
+  expect(() => {
+    (z.string() as any)._def = {};
+  }).toThrow(TypeError);
+  expect(() => {
+    (z.function({ input: [z.string()], output: z.number() }) as any)._def = {};
+  }).toThrow(TypeError);
+  const schema = z.string();
+  expect(schema._def).toBe(schema._zod.def);
+  expect(z.object({ a: z.string() })._def.type).toEqual("object");
+});
+
 test("deferred initializers are released after construction", () => {
   expect(z.string()._zod.deferred).toEqual(undefined);
   expect(z.object({ a: z.string() })._zod.deferred).toEqual(undefined);

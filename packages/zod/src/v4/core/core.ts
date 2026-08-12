@@ -30,8 +30,13 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
         constr: _,
         traits: new Set(),
       };
-      Object.defineProperty(inst, "_zod", _zodDesc);
-      _zodDesc.value = undefined;
+      try {
+        Object.defineProperty(inst, "_zod", _zodDesc);
+      } finally {
+        // Must clear even if the define throws, or the shared descriptor would
+        // carry this instance's internals into the next construction.
+        _zodDesc.value = undefined;
+      }
     }
 
     if (inst._zod.traits.has(name)) {
