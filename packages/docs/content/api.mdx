@@ -1408,6 +1408,47 @@ const RecipeOptionalIngredients = z.partial(Recipe, {
 </Tab>
 </Tabs>
 
+### `z.deepPartial()` [#deep-partial]
+
+While `.partial()` only touches the top-level shape, `z.deepPartial()` recurses through arrays, tuples, unions, records, and wrapper types to reach every object in the tree.
+
+```ts
+const Recipe = z.object({
+  title: z.string(),
+  author: z.object({ name: z.string(), email: z.string() }),
+  ingredients: z.array(z.object({ name: z.string(), grams: z.number() })),
+});
+
+const PartialRecipe = z.deepPartial(Recipe);
+
+PartialRecipe.parse({ author: {}, ingredients: [{}] }); // ✅
+PartialRecipe.parse({}); // ✅
+```
+
+The result is still a `ZodObject`, so the object APIs keep working:
+
+```ts
+PartialRecipe.shape.title; // ZodOptional<ZodString>
+PartialRecipe.extend({ servings: z.number() });
+```
+
+[Recursive objects](#recursive-objects) work too:
+
+```ts
+const Category = z.object({
+  name: z.string(),
+  get subcategories() {
+    return z.array(Category);
+  },
+});
+
+z.deepPartial(Category).parse({ subcategories: [{ subcategories: [{}] }] }); // ✅
+```
+
+The input schema is never modified. A [discriminated union](#discriminated-unions) degrades to a plain `z.union()`, since an optional discriminator defeats the discriminated lookup.
+
+`z.deepPartial()` is a single call to [`z.visit()`](#visit); reach for that directly to write other deep rewrites.
+
 ### `.required()`
 
 Zod provides an API for making some or all properties *required*, inspired by TypeScript's [`Required`](https://www.typescriptlang.org/docs/handbook/utility-types.html#requiredtype) utility type.
@@ -2651,6 +2692,38 @@ z.parse(stringToLength, "hello"); // => 5
 </Tab>
 </Tabs>
 
+### `z.input()` and `z.output()` [#input-output]
+
+These are the runtime counterparts to the type-level `z.input<T>` and `z.output<T>`. They walk a schema and replace every pipe or [codec](/codecs) node with its input or output side.
+
+```ts
+const isoDate = z.codec(z.iso.datetime(), z.date(), {
+  decode: (str) => new Date(str),
+  encode: (date) => date.toISOString(),
+});
+
+const Event = z.object({ name: z.string(), at: isoDate });
+
+z.input(Event).parse({ name: "launch", at: "2024-01-01T00:00:00Z" }); // ✅
+z.output(Event).parse({ name: "launch", at: new Date() });            // ✅
+```
+
+A codec's `.in` and `.out` only reach a codec you hold directly. These reach codecs nested anywhere in the tree — inside objects, arrays, records, and maps:
+
+```ts
+const Prices = z.record(z.string(), isoDate);
+
+z.input(Prices).parse({ launch: "2024-01-01T00:00:00Z" }); // ✅
+```
+
+Sharing a name with the type-level helpers is deliberate — TypeScript resolves types and values in separate namespaces:
+
+```ts
+type EventIn = z.input<typeof Event>; // { name: string; at: string }
+const EventIn = z.input(Event);       // ZodType<{ name: string; at: string }>
+```
+
+A schema with no pipes is returned as-is, not cloned.
 
 ## Transforms
 
@@ -3164,6 +3237,47 @@ You can customize the error message and other options by passing a second argume
 ```ts
 z.custom<...>((val) => ..., "custom error message");
 ```
+
+## Visit
+
+`z.visit()` rewrites a schema tree from the bottom up. Each node is visited after its children, and whatever the visitor returns takes its place. It's the primitive behind [`z.deepPartial()`](#deep-partial) and [`z.input()` / `z.output()`](#input-output).
+
+Pass a handler map keyed by `def.type` to target one kind of node:
+
+```ts
+function deepStrict<T extends z.core.SomeType>(schema: T): T {
+  return z.visit(schema, { object: (o) => (o as z.ZodObject).strict() });
+}
+
+const Strict = deepStrict(z.object({ a: z.object({ b: z.string() }) }));
+Strict.parse({ a: { b: "hi", extra: 1 } }); // ❌ throws
+```
+
+`deepReadonly` is the same shape:
+
+```ts
+function deepReadonly<T extends z.core.SomeType>(schema: T): T {
+  return z.visit(schema, { object: (o) => (o as z.ZodObject).readonly() });
+}
+```
+
+Kinds with no handler pass through untouched. That includes user-defined `def.type`s outside Zod's built-in vocabulary — to intercept those, pass a callback instead of a map and dispatch yourself:
+
+```ts
+const rewritten = z.visit(schema, (node) =>
+  node._zod.def.type === "money" ? myMoneyRewrite(node) : node
+);
+```
+
+Nodes are re-cloned only when one of their children actually changed, so an identity visit gives back the schema you passed in:
+
+```ts
+const Recipe = z.object({ title: z.string() });
+
+z.visit(Recipe, (node) => node) === Recipe; // => true
+```
+
+Shared sub-schemas are visited once. Cycles terminate: `z.lazy()` nodes defer traversal to parse time, and [getter-based recursion](#recursive-objects) is broken with a lazy placeholder. Both of those cases always re-clone, so they don't preserve identity.
 
 ## Apply
 
