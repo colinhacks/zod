@@ -672,8 +672,6 @@ test("safeExtend() on object with refinements should not throw", () => {
 
 // __proto__ in input must not replace the prototype of the parsed object via
 // the assignment setter on the result {}.
-// https://github.com/colinhacks/zod/security/advisories/GHSA-r34p-xfmx-58wv
-// https://github.com/colinhacks/zod/security/advisories/GHSA-84jv-fqfx-wxhr
 describe("__proto__ in object catchall paths", () => {
   const protoInput = () => JSON.parse('{"__proto__":{"isAdmin":true},"name":"alice"}');
 
@@ -803,8 +801,82 @@ describe("__proto__ as a declared shape key", () => {
     expect(schema.safeParse(JSON.parse('{"__proto__":123}')).success).toBe(false);
   });
 
+  test("an absent key uses own-property semantics", () => {
+    const shape = (schema: z.ZodType) => Object.fromEntries([["__proto__", schema]]) as Record<string, any>;
+
+    for (const jitless of [false, true]) {
+      const ctx = { jitless } as any;
+      expect(z.object(shape(z.unknown())).safeParse({}, ctx).success).toBe(false);
+      expect(z.object(shape(z.string().optional())).parse({}, ctx)).toEqual({});
+
+      const withDefault: any = z.object(shape(z.string().default("fallback"))).parse({}, ctx);
+      expect(Object.getOwnPropertyDescriptor(withDefault, "__proto__")!.value).toBe("fallback");
+    }
+  });
+
+  test("an own getter is still evaluated", () => {
+    let reads = 0;
+    const input = Object.defineProperty({}, "__proto__", {
+      get() {
+        reads++;
+        return "value";
+      },
+      enumerable: true,
+    });
+    const schema = z.object(Object.fromEntries([["__proto__", z.string()]]) as Record<string, any>);
+
+    expect(Object.getOwnPropertyDescriptor(schema.parse(input), "__proto__")!.value).toBe("value");
+    expect(reads).toBe(1);
+  });
+
+  test("pick keeps a declared key", () => {
+    const shape = Object.fromEntries([["__proto__", z.string()]]) as Record<string, any>;
+    const mask = Object.fromEntries([["__proto__", true]]) as Record<string, true>;
+    const picked = z.object(shape).pick(mask);
+
+    expect(Object.keys(picked.shape)).toEqual(["__proto__"]);
+    const parsed: any = picked.parse(Object.fromEntries([["__proto__", "value"]]));
+    expect(Object.getOwnPropertyDescriptor(parsed, "__proto__")!.value).toBe("value");
+    expect(() => z.object({ value: z.string() }).pick(mask as any).shape).toThrow('Unrecognized key: "__proto__"');
+  });
+
+  test.each(["omit", "partial", "required"] as const)("%s rejects an undeclared key", (method) => {
+    const mask = Object.fromEntries([["__proto__", true]]);
+    const schema = z.object({ value: z.string() });
+
+    expect(() => (schema[method] as any)(mask).shape).toThrow('Unrecognized key: "__proto__"');
+  });
+
+  test("shape helpers preserve a declared key", () => {
+    const shape = () =>
+      Object.fromEntries([
+        ["__proto__", z.string()],
+        ["value", z.string()],
+      ]) as Record<string, any>;
+    const protoMask = Object.fromEntries([["__proto__", true]]);
+    const valueMask = { value: true } as const;
+    const shapes = [
+      z.object(shape()).omit(valueMask).shape,
+      z.object(shape()).partial(protoMask as any).shape,
+      z.object(shape()).required(protoMask as any).shape,
+    ];
+
+    for (const next of shapes) {
+      expect(Object.getPrototypeOf(next)).toBe(Object.prototype);
+      expect(Object.prototype.hasOwnProperty.call(next, "__proto__")).toBe(true);
+    }
+  });
+
   test("Object.prototype is untouched", () => {
     z.object(makeShape()).parse(protoInput());
     expect(({} as any).isAdmin).toBeUndefined();
   });
+});
+
+test("object parsing still reads ordinary inherited properties", () => {
+  const input = Object.create({ value: "inherited" });
+  const schema = z.object({ value: z.string() });
+
+  expect(schema.parse(input)).toEqual({ value: "inherited" });
+  expect(schema.parse(input, { jitless: true } as any)).toEqual({ value: "inherited" });
 });

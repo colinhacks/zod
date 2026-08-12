@@ -772,3 +772,58 @@ test("__proto__ in a finite key set becomes an own property", () => {
 
   expect(({} as any).a).toBeUndefined();
 });
+
+test("a raw __proto__ input key stays skipped in loose mode", () => {
+  const parsed: any = z.looseRecord(z.iso.datetime(), z.unknown()).parse(JSON.parse('{"__proto__":{"a":1}}'));
+
+  expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+  expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(false);
+});
+
+test("partialRecord preserves a declared __proto__ key", () => {
+  const schema = z.partialRecord(z.enum(["__proto__", "b"]), z.string());
+  const parsed: any = schema.parse(Object.fromEntries([["__proto__", "declared"]]));
+
+  expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+  expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(true);
+  expect(parsed.__proto__).toBe("declared");
+  expect(schema.parse({})).toEqual({});
+  expect(schema.safeParse({ other: "x" }).success).toBe(false);
+});
+
+test("partialRecord safely passes through a declared __proto__ key in loose mode", () => {
+  const key = z.enum(["__proto__"]).refine(() => false);
+  const schema = z.partialRecord(key, z.unknown(), { mode: "loose" });
+  const value = { marker: true };
+  const parsed: any = schema.parse(Object.fromEntries([["__proto__", value]]));
+
+  expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+  expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(true);
+  expect(parsed.__proto__).toBe(value);
+  expect(parsed.marker).toBeUndefined();
+});
+
+test("partial is internal to partialRecord", () => {
+  // @ts-expect-error partial is not a public record parameter
+  z.record(z.enum(["a"]), z.string(), { partial: true });
+
+  const schema = z.partialRecord(z.enum(["a"]), z.string(), { partial: false } as any);
+  expect(schema.parse({})).toEqual({});
+});
+
+test("partialRecord still applies transforms to a declared __proto__ key", () => {
+  const schema = z.partialRecord(
+    z.literal("__proto__").transform(() => "safe" as const),
+    z.string()
+  );
+
+  expect(schema.parse(Object.fromEntries([["__proto__", "value"]]))).toEqual({ safe: "value" });
+});
+
+test("a missing finite __proto__ key is parsed like any other finite key", () => {
+  const parsed: any = z.record(z.enum(["__proto__"]), z.unknown()).parse({});
+
+  expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+  expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(true);
+  expect(parsed.__proto__).toBeUndefined();
+});

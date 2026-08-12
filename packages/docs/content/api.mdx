@@ -1212,13 +1212,13 @@ To create a `ZodEnum` schema from the keys of an object schema:
 <Tab value="Zod">
 ```ts
 const keySchema = Dog.keyof();
-// => ZodEnum<["name", "age"]>
+// => ZodEnum<{ name: "name"; age: "age" }>
 ```
 </Tab>
 <Tab value="Zod Mini">
 ```ts
 const keySchema = z.keyof(Dog);
-// => ZodEnum<["name", "age"]>
+// => ZodEnum<{ name: "name"; age: "age" }>
 ```
 </Tab>
 </Tabs>
@@ -2206,6 +2206,29 @@ const myString = z.string().refine((val) => val.length > 8, {
 const myString = z.string().check(
   z.refine((val) => val.length > 8, { error: "Too short!" })
 );
+```
+</Tab>
+</Tabs>
+
+The `error` option also accepts a function that receives the issue:
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+const myString = z.string().refine((val) => val.length > 8, {
+  error: (iss) => `Too short: "${iss.input}"`
+});
+
+myString.parse("OH NO"); // ❌ Too short: "OH NO"
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+const myString = z.string().check(
+  z.refine((val) => val.length > 8, { error: (iss) => `Too short: "${iss.input}"` })
+);
+
+z.parse(myString, "OH NO"); // ❌ Too short: "OH NO"
 ```
 </Tab>
 </Tabs>

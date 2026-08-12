@@ -878,3 +878,41 @@ test("error formatting leaves Object.prototype untouched for input-derived keys"
   expect(protoNode((z.treeifyError(result.error!) as any).properties).properties.pwn.errors).toHaveLength(1);
   expect(({} as any).pwn).toBeUndefined();
 });
+
+test("formatError handles an input-derived _errors path", () => {
+  const schema = z.object({ parent: z.record(z.string(), z.string()) });
+  const result = schema.safeParse({ parent: { _errors: 1 } });
+  expect(result.success).toBe(false);
+
+  const formatted = z.formatError(result.error!);
+  expect(formatted.parent?._errors).toEqual(["Invalid input: expected string, received number"]);
+
+  const nested = z
+    .object({ parent: z.record(z.string(), z.object({ child: z.string() })) })
+    .safeParse({ parent: { _errors: { child: 1 } } });
+  expect(nested.success).toBe(false);
+  expect((z.formatError(nested.error!) as any).parent.child._errors).toEqual([
+    "Invalid input: expected string, received number",
+  ]);
+});
+
+test("error walkers handle path elements named after inherited methods", () => {
+  // "toString" and "constructor" are truthy on the prototype, so a plain lookup finds
+  // the inherited function instead of creating a node, and the push then throws.
+  for (const [schema, input] of [
+    [z.object({ toString: z.string() }), { toString: 1 }],
+    [z.object({ constructor: z.string() }), { constructor: 1 }],
+    [z.object({ toString: z.string(), constructor: z.string() }), { toString: 1, constructor: 2 }],
+  ] as const) {
+    const result = (schema as any).safeParse(input);
+    expect(result.success).toBe(false);
+
+    const formatted = z.formatError(result.error) as any;
+    const tree = z.treeifyError(result.error) as any;
+    for (const key of Object.keys(input)) {
+      expect(formatted[key]._errors).toHaveLength(1);
+      expect(tree.properties[key].errors).toHaveLength(1);
+      expect(Object.prototype.hasOwnProperty.call(formatted, key)).toBe(true);
+    }
+  }
+});
