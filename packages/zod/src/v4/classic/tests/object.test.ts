@@ -718,6 +718,42 @@ describe("__proto__ in object catchall paths", () => {
       expect((result.error.issues[0] as any).keys).toEqual(["__proto__"]);
     }
   });
+
+  test("strict still accepts a __proto__ key the shape declares", () => {
+    const shape: any = { name: z.string() };
+    Object.defineProperty(shape, "__proto__", {
+      value: z.string(),
+      enumerable: true,
+      configurable: true,
+      writable: true,
+    });
+    const input = JSON.parse('{"name":"alice","__proto__":"hello"}');
+
+    for (const schema of [z.object(shape).strict(), z.object(shape).catchall(z.any()), z.object(shape)]) {
+      const result = schema.safeParse(input);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(Object.keys(result.data)).toEqual(["name", "__proto__"]);
+        expect(Object.getPrototypeOf(result.data)).toBe(Object.prototype);
+      }
+    }
+  });
+
+  test("strictObject and jitless agree with .strict()", async () => {
+    for (const schema of [z.strictObject({ name: z.string() }), z.object({ name: z.string() }).strict()]) {
+      for (const result of [
+        schema.safeParse(protoInput()),
+        await schema.safeParseAsync(protoInput(), {
+          jitless: true,
+        } as any),
+      ]) {
+        expect(result.success).toBe(false);
+        if (!result.success) {
+          expect((result.error.issues[0] as any).keys).toEqual(["__proto__"]);
+        }
+      }
+    }
+  });
 });
 
 // A __proto__ key declared in the shape is a field the caller asked for, so it must round-trip as
