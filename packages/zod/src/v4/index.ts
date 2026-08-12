@@ -1,4 +1,3 @@
-import z4 from "./classic/index.js";
 export * from "./classic/index.js";
-
-export default z4;
+// See the note in `src/index.ts` — re-exporting the binding keeps it shakable.
+export { default } from "./classic/index.js";
