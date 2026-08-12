@@ -50,6 +50,7 @@ export type DeepPartial<T extends core.SomeType> =
     ? schemas.ZodMiniSuccess<DeepPartial<Inner>>
   : T extends schemas.ZodMiniPromise<infer Inner>
     ? schemas.ZodMiniPromise<DeepPartial<Inner>>
+  // Must precede ZodMiniPipe, which it extends structurally.
   : T extends schemas.ZodMiniCodec<infer A, infer B>
     ? schemas.ZodMiniCodec<DeepPartial<A>, DeepPartial<B>>
   : T extends schemas.ZodMiniPipe<infer A, infer B>

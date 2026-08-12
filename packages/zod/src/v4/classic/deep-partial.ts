@@ -1,20 +1,7 @@
 import * as core from "../core/index.js";
 import * as schemas from "./schemas.js";
 
-/**
- * Recursively re-types a Zod schema so every `ZodObject` shape has all
- * of its fields made optional. Generic wrappers (`ZodArray`, `ZodTuple`,
- * `ZodUnion`, `ZodPipe`, etc.) distribute the transform into their
- * inner schemas so inference stays structural end-to-end.
- *
- * Ordering note: `ZodCodec` and `ZodPreprocess` are matched *before*
- * `ZodPipe` because they extend it; catching them first preserves the
- * subtype in the inferred output. `ZodDiscriminatedUnion` degrades to
- * `ZodUnion` because a partialed discriminator defeats the fast-path
- * lookup (see `deepPartial` runtime).
- *
- * Leaves and any unrecognized subtypes fall through to `T` unchanged.
- */
+/** Distributes `.partial()` through every object in a schema type, preserving the wrappers around them. */
 // biome-ignore format: preserve vertical layout for readability.
 export type DeepPartial<T extends core.SomeType> =
   T extends schemas.ZodObject<infer Shape, infer Config>
@@ -22,6 +9,8 @@ export type DeepPartial<T extends core.SomeType> =
         { -readonly [K in keyof Shape]: schemas.ZodOptional<DeepPartial<Shape[K]>> },
         Config
       >
+  // Must precede ZodUnion. Degrades to ZodUnion to match the runtime, which drops the
+  // discriminated fast path once the discriminator becomes optional.
   : T extends schemas.ZodDiscriminatedUnion<infer Options, any>
     ? schemas.ZodUnion<
         { -readonly [I in keyof Options]: Options[I] extends core.SomeType ? DeepPartial<Options[I]> : Options[I] }
@@ -63,6 +52,8 @@ export type DeepPartial<T extends core.SomeType> =
     ? schemas.ZodSuccess<DeepPartial<Inner>>
   : T extends schemas.ZodPromise<infer Inner>
     ? schemas.ZodPromise<DeepPartial<Inner>>
+  // ZodCodec and ZodPreprocess must precede ZodPipe — both extend it structurally, so matching
+  // them first is what keeps the subtype in the inferred output.
   : T extends schemas.ZodCodec<infer A, infer B>
     ? schemas.ZodCodec<DeepPartial<A>, DeepPartial<B>>
   : T extends schemas.ZodPreprocess<infer B>
@@ -73,12 +64,7 @@ export type DeepPartial<T extends core.SomeType> =
     ? schemas.ZodLazy<DeepPartial<Inner>>
   : T;
 
-/**
- * Returns a schema where every nested object's properties are optional,
- * recursively. Built on {@link core.deepPartialImpl}; terminates on lazy
- * cycles and visits shared sub-schemas once. Non-object nodes are
- * preserved as-is.
- */
+/** Returns a copy of the schema with every nested object's properties made optional. */
 export function deepPartial<T extends core.SomeType>(schema: T): DeepPartial<T> {
   return core.deepPartialImpl(
     schema,
