@@ -283,6 +283,12 @@ const poweredByZodProjects: ZodResource[] = [
     description: "A fast, type-safe JSON migration tool with Zod schema validation.",
     slug: "Nano-Collective/json-up",
   },
+  {
+    name: "fullproduct.dev",
+    url: "https://fullproduct.dev?via=zod-v4-docs",
+    description: "Zod & TS-first approach to building Universal Expo + Next.js apps using schemas as single source of truth",
+    slug: "FullProduct-dev/green-stack-starter-demo",
+  },
 ];
 
 const zodUtilities: ZodResource[] = [
