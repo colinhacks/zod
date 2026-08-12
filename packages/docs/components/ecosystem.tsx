@@ -306,6 +306,12 @@ const poweredByZodProjects: ZodResource[] = [
 
 const zodUtilities: ZodResource[] = [
   {
+    name: "zod-compiler",
+    url: "https://github.com/gajus/zod-compiler",
+    description: "Compile Zod schemas into zero-overhead validation functions at build time. Works with Vite, webpack, esbuild, Rollup, etc.",
+    slug: "gajus/zod-compiler",
+  },
+  {
     name: "babel-plugin-zod-hoist",
     url: "https://github.com/gajus/babel-plugin-zod-hoist",
     description: "Babel plugin that optimizes Zod performance by hoisting schema definitions to the top of the file, avoiding repeated initialization overhead.",
