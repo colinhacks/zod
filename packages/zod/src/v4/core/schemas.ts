@@ -1766,6 +1766,26 @@ function isPropertyPresent(input: any, key: PropertyKey): boolean {
   return key === "__proto__" ? Object.prototype.hasOwnProperty.call(input, key) : key in input;
 }
 
+function hasApplicableFallback(schema: any): boolean {
+  // Walks the wrapper chain of a (possibly nested) optional/exactOptional/
+  // catch field looking for a default/prefault that should still apply its
+  // fallback value for an absent key. Optional/exactOptional/catch wrappers
+  // themselves never emit a value for an absent key (they short-circuit to
+  // undefined), so they are recursed into rather than counted. Only when a
+  // default/prefault is found do we keep the field running for absent keys.
+  let cur = schema;
+  while (cur?._zod?.def) {
+    const type = cur._zod.def.type;
+    if (type === "default" || type === "prefault") return true;
+    if (type === "optional" || type === "catch" || type === "exactOptional") {
+      cur = cur._zod.def.innerType;
+      continue;
+    }
+    break;
+  }
+  return false;
+}
+
 function handlePropertyResult(
   result: ParsePayload,
   final: ParsePayload,
@@ -1989,6 +2009,14 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       const isOptionalIn = el._zod.optin === "optional";
       const isOptionalOut = el._zod.optout === "optional";
 
+      // Skip absent keys for optional/exactOptional fields so that coercions
+      // (e.g. z.coerce.number().exactOptional()) don't manufacture a value for
+      // a key that wasn't in the input. Fields wrapping a default/prefault are
+      // kept running so they can inject their fallback value.
+      if (!isPropertyPresent(input, key) && el._zod.def.type === "optional" && !hasApplicableFallback(el)) {
+        continue;
+      }
+
       const r = el._zod.run({ value: getProperty(input, key), issues: [] }, ctx);
       if (r instanceof Promise) {
         proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, isOptionalIn, isOptionalOut)));
@@ -2057,6 +2085,11 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         const schema = shape[key];
         const isOptionalIn = schema?._zod?.optin === "optional";
         const isOptionalOut = schema?._zod?.optout === "optional";
+        // optional/exactOptional fields never emit an absent key, even when
+        // the inner coercion would manufacture a value (z.coerce.number()
+        // turns undefined into NaN/null). Fields wrapping a default/prefault
+        // are excluded so they can still inject their fallback value.
+        const isOptionalType = schema?._zod?.def?.type === "optional" && !hasApplicableFallback(schema);
 
         doc.write(`const ${id} = ${parseStr(key)};`);
 
@@ -2072,6 +2105,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
           }
         }
         
+        ${isOptionalType ? `if (${isPresent}) {` : ""}
         if (${id}.value === undefined) {
           if (${isPresent}) {
             ${setStr(key, "undefined")}
@@ -2079,7 +2113,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         } else {
           ${setStr(key, `${id}.value`)}
         }
-
+        ${isOptionalType ? "}" : ""}
       `);
         } else if (!isOptionalIn) {
           doc.write(`

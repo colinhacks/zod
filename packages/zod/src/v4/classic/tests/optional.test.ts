@@ -230,6 +230,25 @@ test("exactOptional in objects - explicit undefined rejected", () => {
   expect(schema.safeParse({ a: undefined }, { jitless: true }).success).toEqual(false);
 });
 
+test("exactOptional in objects - coercion does not manufacture absent keys", () => {
+  const schema = z.object({
+    a: z.coerce.number().exactOptional(),
+  });
+
+  // Absent key should stay absent, even though the coercion would turn
+  // undefined into a non-undefined value (NaN/null).
+  expect(schema.parse({})).toEqual({});
+  expect(schema.parse({}, { jitless: true })).toEqual({});
+
+  // Present key with a valid value should pass through the coercion.
+  expect(schema.parse({ a: "42" })).toEqual({ a: 42 });
+  expect(schema.parse({ a: "42" }, { jitless: true })).toEqual({ a: 42 });
+
+  // Explicit undefined should still be rejected.
+  expect(schema.safeParse({ a: undefined }).success).toEqual(false);
+  expect(schema.safeParse({ a: undefined }, { jitless: true }).success).toEqual(false);
+});
+
 test("exactOptional type inference in objects", () => {
   const schema = z.object({
     a: z.string().exactOptional(),
