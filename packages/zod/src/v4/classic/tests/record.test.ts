@@ -820,7 +820,7 @@ test("partialRecord strips a declared __proto__ key before transforms", () => {
 
 test("a finite __proto__ key is ignored whether present or missing", () => {
   const schema = z.record(z.enum(["__proto__"]), z.string());
-  const parsed: any = z.record(z.enum(["__proto__"]), z.unknown()).parse({});
+  const parsed: any = schema.parse({});
 
   expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
   expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(false);
