@@ -717,7 +717,7 @@ describe("__proto__ in object catchall paths", () => {
     }
   });
 
-  test("strict still accepts a __proto__ key the shape declares", () => {
+  test("strict accepts but strips a __proto__ key the shape declares", () => {
     const shape: any = { name: z.string() };
     Object.defineProperty(shape, "__proto__", {
       value: z.string(),
@@ -731,7 +731,7 @@ describe("__proto__ in object catchall paths", () => {
       const result = schema.safeParse(input);
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(Object.keys(result.data)).toEqual(["name", "__proto__"]);
+        expect(Object.keys(result.data)).toEqual(["name"]);
         expect(Object.getPrototypeOf(result.data)).toBe(Object.prototype);
       }
     }
@@ -754,9 +754,7 @@ describe("__proto__ in object catchall paths", () => {
   });
 });
 
-// A __proto__ key declared in the shape is a field the caller asked for, so it must round-trip as
-// an own data property instead of hitting the inherited setter (which replaced the result
-// prototype and dropped the value).
+// Parsed objects always strip __proto__, including keys explicitly declared by the schema.
 describe("__proto__ as a declared shape key", () => {
   const protoInput = () => JSON.parse('{"__proto__":{"isAdmin":true},"name":"alice"}');
   const makeShape = () =>
@@ -765,20 +763,19 @@ describe("__proto__ as a declared shape key", () => {
       ["name", z.string()],
     ]) as Record<string, any>;
 
-  const expectOwnProp = (parsed: any) => {
+  const expectStripped = (parsed: any) => {
     expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
-    expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(true);
-    expect(parsed.__proto__).toEqual({ isAdmin: true });
+    expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(false);
     expect((parsed as any).isAdmin).toBeUndefined();
-    expect(Object.keys(parsed).sort()).toEqual(["__proto__", "name"]);
+    expect(Object.keys(parsed)).toEqual(["name"]);
   };
 
   test("jit fastpass", () => {
-    expectOwnProp(z.object(makeShape()).parse(protoInput()));
+    expectStripped(z.object(makeShape()).parse(protoInput()));
   });
 
   test("jitless", () => {
-    expectOwnProp(z.object(makeShape()).parse(protoInput(), { jitless: true } as any));
+    expectStripped(z.object(makeShape()).parse(protoInput(), { jitless: true } as any));
   });
 
   test("async", async () => {
@@ -786,35 +783,33 @@ describe("__proto__ as a declared shape key", () => {
       ["__proto__", z.object({ isAdmin: z.boolean() }).refine(async () => true)],
       ["name", z.string()],
     ]) as Record<string, any>;
-    expectOwnProp(await z.object(shape).parseAsync(protoInput()));
+    expectStripped(await z.object(shape).parseAsync(protoInput()));
   });
 
-  test("primitive value is not silently dropped", () => {
+  test("primitive value is stripped", () => {
     const schema = z.object(Object.fromEntries([["__proto__", z.string()]]) as Record<string, any>);
     const parsed: any = schema.parse(JSON.parse('{"__proto__":"hello"}'));
-    expect(parsed.__proto__).toBe("hello");
+    expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(false);
     expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
   });
 
-  test("validation still applies", () => {
+  test("declared key is not validated", () => {
     const schema = z.object(Object.fromEntries([["__proto__", z.string()]]) as Record<string, any>);
-    expect(schema.safeParse(JSON.parse('{"__proto__":123}')).success).toBe(false);
+    expect(schema.parse(JSON.parse('{"__proto__":123}'))).toEqual({});
   });
 
-  test("an absent key uses own-property semantics", () => {
+  test("required, optional, and defaulted declarations are all stripped", () => {
     const shape = (schema: z.ZodType) => Object.fromEntries([["__proto__", schema]]) as Record<string, any>;
 
     for (const jitless of [false, true]) {
       const ctx = { jitless } as any;
-      expect(z.object(shape(z.unknown())).safeParse({}, ctx).success).toBe(false);
+      expect(z.object(shape(z.unknown())).parse({}, ctx)).toEqual({});
       expect(z.object(shape(z.string().optional())).parse({}, ctx)).toEqual({});
-
-      const withDefault: any = z.object(shape(z.string().default("fallback"))).parse({}, ctx);
-      expect(Object.getOwnPropertyDescriptor(withDefault, "__proto__")!.value).toBe("fallback");
+      expect(z.object(shape(z.string().default("fallback"))).parse({}, ctx)).toEqual({});
     }
   });
 
-  test("an own getter is still evaluated", () => {
+  test("an own getter is not evaluated", () => {
     let reads = 0;
     const input = Object.defineProperty({}, "__proto__", {
       get() {
@@ -825,8 +820,8 @@ describe("__proto__ as a declared shape key", () => {
     });
     const schema = z.object(Object.fromEntries([["__proto__", z.string()]]) as Record<string, any>);
 
-    expect(Object.getOwnPropertyDescriptor(schema.parse(input), "__proto__")!.value).toBe("value");
-    expect(reads).toBe(1);
+    expect(schema.parse(input)).toEqual({});
+    expect(reads).toBe(0);
   });
 
   test("pick keeps a declared key", () => {
@@ -836,7 +831,7 @@ describe("__proto__ as a declared shape key", () => {
 
     expect(Object.keys(picked.shape)).toEqual(["__proto__"]);
     const parsed: any = picked.parse(Object.fromEntries([["__proto__", "value"]]));
-    expect(Object.getOwnPropertyDescriptor(parsed, "__proto__")!.value).toBe("value");
+    expect(parsed).toEqual({});
     expect(() => z.object({ value: z.string() }).pick(mask as any).shape).toThrow('Unrecognized key: "__proto__"');
   });
 
