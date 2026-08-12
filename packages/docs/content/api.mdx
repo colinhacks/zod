@@ -2127,27 +2127,25 @@ const myString = z.string().check(
 </Tab>
 </Tabs>
 
-The `error` option also accepts a **function** for dynamic error messages. The function receives the raw issue object, including `iss.input` (the value that failed validation):
+The `error` option also accepts a function that receives the issue:
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
 ```ts
-const myString = z.string().refine(
-  (val) => val.startsWith("hello"),
-  {
-    error: (iss) => `Expected greeting, got "${iss.input}"`,
-  }
-);
+const myString = z.string().refine((val) => val.length > 8, {
+  error: (iss) => `Too short: "${iss.input}"`
+});
+
+myString.parse("OH NO"); // ❌ Too short: "OH NO"
 ```
 </Tab>
 <Tab value="Zod Mini">
 ```ts
 const myString = z.string().check(
-  z.refine(
-    (val) => val.startsWith("hello"),
-    { error: (iss) => `Expected greeting, got "${iss.input}"` }
-  )
+  z.refine((val) => val.length > 8, { error: (iss) => `Too short: "${iss.input}"` })
 );
+
+z.parse(myString, "OH NO"); // ❌ Too short: "OH NO"
 ```
 </Tab>
 </Tabs>
