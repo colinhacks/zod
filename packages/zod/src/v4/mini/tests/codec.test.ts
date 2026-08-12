@@ -546,3 +546,298 @@ test("invertCodec", () => {
   const doubleInverted = z.invertCodec(z.invertCodec(isoDateCodec));
   expect(z.decode(doubleInverted, "2024-01-15T10:30:00.000Z")).toBeInstanceOf(Date);
 });
+
+test("validateOutput - valid output passes", () => {
+  // Create a codec: string -> number
+  const ageCodec = z.codec(z.string(), z.number(), {
+    decode: (str) => Number.parseInt(str, 10),
+    encode: (num) => num.toString(),
+  });
+
+  // Client submits data, form validates and transforms
+  const transformed = ageCodec.parse("30");
+  expect(transformed).toBe(30);
+
+  // Server re-validates the already-transformed data
+  const validated = ageCodec.validateOutput(transformed);
+  expect(validated).toBe(30);
+  expect(typeof validated).toBe("number");
+});
+
+test("validateOutput - invalid output throws", () => {
+  const ageCodec = z.codec(z.string(), z.number(), {
+    decode: (str) => Number.parseInt(str, 10),
+    encode: (num) => num.toString(),
+  });
+
+  // Check with refinement
+  const ageCodecWithCheck = ageCodec.check((v) => {
+    if (v.value < 0) v.issues.push({ code: "custom", message: "Must be non-negative", input: v.value });
+  });
+
+  // Invalid data: age is negative
+  expect(() => {
+    ageCodecWithCheck.validateOutput(-5);
+  }).toThrow();
+});
+
+test("validateOutput - validates against output schema not input", () => {
+  const codec = z.codec(
+    z.string(), // Input must be string
+    z.number(), // Output must be number
+    {
+      decode: (str) => Number.parseInt(str, 10),
+      encode: (num) => num.toString(),
+    }
+  );
+
+  const codecWithCheck = codec.check((v) => {
+    if (v.value < 0 || v.value > 100) {
+      v.issues.push({ code: "custom", message: "Must be between 0 and 100", input: v.value });
+    }
+  });
+
+  // Valid number should pass (validating output, not input)
+  const result = codecWithCheck.validateOutput(50);
+  expect(result).toBe(50);
+
+  // Invalid number should fail (outside range)
+  expect(() => codecWithCheck.validateOutput(150)).toThrow();
+
+  // String should fail (validateOutput expects output type = number)
+  expect(() => codec.validateOutput("50" as any)).toThrow();
+});
+
+test("safeValidateOutput - success case", () => {
+  const codec = z.codec(z.string(), z.number(), {
+    decode: (str) => Number.parseFloat(str),
+    encode: (num) => num.toString(),
+  });
+
+  const codecWithCheck = codec.check((v) => {
+    if (v.value < 0) v.issues.push({ code: "custom", message: "Must be at least 0", input: v.value });
+  });
+
+  const result = codecWithCheck.safeValidateOutput(42.5);
+  expect(result.success).toBe(true);
+  if (result.success) {
+    expect(result.data).toBe(42.5);
+  }
+});
+
+test("safeValidateOutput - failure case", () => {
+  const codec = z.codec(z.string(), z.number(), {
+    decode: (str) => Number.parseFloat(str),
+    encode: (num) => num.toString(),
+  });
+
+  const codecWithCheck = codec.check((v) => {
+    if (v.value < 0) v.issues.push({ code: "custom", message: "Must be at least 0", input: v.value });
+  });
+
+  const result = codecWithCheck.safeValidateOutput(-10);
+  expect(result.success).toBe(false);
+  if (!result.success) {
+    expect(result.error.issues).toMatchInlineSnapshot(`
+      [
+        {
+          "code": "custom",
+          "message": "Must be at least 0",
+          "path": [],
+        },
+      ]
+    `);
+  }
+});
+
+test("validateOutputAsync - valid output", async () => {
+  const codec = z.codec(z.string(), z.number(), {
+    decode: (str) => Number.parseInt(str, 10),
+    encode: (num) => num.toString(),
+  });
+
+  const codecWithCheck = codec.check((v) => {
+    if (v.value < 0) v.issues.push({ code: "custom", message: "Must be non-negative", input: v.value });
+  });
+
+  const result = await codecWithCheck.validateOutputAsync(42);
+  expect(result).toBe(42);
+});
+
+test("validateOutputAsync - invalid output", async () => {
+  const codec = z.codec(z.string(), z.number(), {
+    decode: (str) => Number.parseInt(str, 10),
+    encode: (num) => num.toString(),
+  });
+
+  const codecWithCheck = codec.check((v) => {
+    if (v.value < 0) v.issues.push({ code: "custom", message: "Must be non-negative", input: v.value });
+  });
+
+  await expect(codecWithCheck.validateOutputAsync(-5)).rejects.toThrow();
+});
+
+test("safeValidateOutputAsync - success", async () => {
+  const codec = z.codec(z.string(), z.number(), {
+    decode: (str) => Number.parseFloat(str),
+    encode: (num) => num.toString(),
+  });
+
+  const codecWithCheck = codec.check((v) => {
+    if (v.value < 0) v.issues.push({ code: "custom", message: "Must be at least 0", input: v.value });
+  });
+
+  const result = await codecWithCheck.safeValidateOutputAsync(42.5);
+  expect(result.success).toBe(true);
+  if (result.success) {
+    expect(result.data).toBe(42.5);
+  }
+});
+
+test("safeValidateOutputAsync - failure", async () => {
+  const codec = z.codec(z.string(), z.number(), {
+    decode: (str) => Number.parseFloat(str),
+    encode: (num) => num.toString(),
+  });
+
+  const codecWithCheck = codec.check((v) => {
+    if (v.value < 0) v.issues.push({ code: "custom", message: "Must be at least 0", input: v.value });
+  });
+
+  const result = await codecWithCheck.safeValidateOutputAsync(-10);
+  expect(result.success).toBe(false);
+  if (!result.success) {
+    expect(result.error.issues).toMatchInlineSnapshot(`
+      [
+        {
+          "code": "custom",
+          "message": "Must be at least 0",
+          "path": [],
+        },
+      ]
+    `);
+  }
+});
+
+test("validateOutput - complex form example", () => {
+  // Real-world example: form handling
+  const ageCodec = z.codec(z.string(), z.number(), {
+    decode: (str) => Number.parseInt(str, 10),
+    encode: (num) => num.toString(),
+  });
+
+  const ageCodecWithCheck = ageCodec.check((v) => {
+    if (v.value < 18 || v.value > 120) {
+      v.issues.push({ code: "custom", message: "Age must be between 18 and 120", input: v.value });
+    }
+  });
+
+  const salaryCodec = z.codec(z.string(), z.number(), {
+    decode: (str) => Number.parseFloat(str),
+    encode: (num) => num.toFixed(2),
+  });
+
+  const salaryCodecWithCheck = salaryCodec.check((v) => {
+    if (v.value < 0) v.issues.push({ code: "custom", message: "Salary must be non-negative", input: v.value });
+  });
+
+  const activeCodec = z.codec(z.enum(["true", "false"]), z.boolean(), {
+    decode: (str) => str === "true",
+    encode: (bool) => (bool ? "true" : "false"),
+  });
+
+  // Client-side: User submits form
+  const age = ageCodecWithCheck.parse("25");
+  const salary = salaryCodecWithCheck.parse("50000.00");
+  const active = activeCodec.parse("true");
+
+  expect(age).toBe(25);
+  expect(salary).toBe(50000);
+  expect(active).toBe(true);
+
+  // Server-side: Re-validate transformed data
+  const validatedAge = ageCodecWithCheck.validateOutput(age);
+  const validatedSalary = salaryCodecWithCheck.validateOutput(salary);
+  const validatedActive = activeCodec.validateOutput(active);
+
+  expect(validatedAge).toBe(25);
+  expect(validatedSalary).toBe(50000);
+  expect(validatedActive).toBe(true);
+
+  // Server-side: Invalid transformed data fails
+  expect(() => {
+    ageCodecWithCheck.validateOutput(15); // age < 18
+  }).toThrow();
+});
+
+test("schema.validateOutput() - method API works", () => {
+  const schema = z.codec(z.string().check(z.regex(/^\d+$/)), z.number().check(z.minimum(0)), {
+    decode: (str) => Number.parseInt(str, 10),
+    encode: (num) => num.toString(),
+  });
+  const formSchema = z.object({
+    num: schema,
+    name: z.string(),
+  });
+
+  // Valid output passes
+  const validated = formSchema.validateOutput({ num: 42, name: "Alice" });
+  expect(validated).toEqual({ num: 42, name: "Alice" });
+
+  // Invalid output throws
+  expect(() => formSchema.validateOutput({ num: -5, name: "Bob" })).toThrow();
+  expect(() => formSchema.validateOutput({ num: "42" as any, name: "Bob" })).toThrow();
+});
+
+test("schema.validateOutputAsync() - method API works", async () => {
+  const schema = z
+    .codec(z.string(), z.number(), {
+      decode: (str) => Number.parseInt(str, 10),
+      encode: (num) => num.toString(),
+    })
+    .check(
+      z.refine(async (val) => val >= 0, {
+        error: "Must be non-negative",
+      })
+    );
+  const formSchema = z.object({ value: schema });
+
+  const result = await formSchema.validateOutputAsync({ value: 42 });
+  expect(result).toEqual({ value: 42 });
+
+  await expect(formSchema.validateOutputAsync({ value: -5 })).rejects.toThrow();
+});
+
+test("schema.safeValidateOutput() - method API works", () => {
+  const schema = z.codec(z.string(), z.number().check(z.minimum(0)), {
+    decode: (str) => Number.parseFloat(str),
+    encode: (num) => num.toString(),
+  });
+  const formSchema = z.object({ value: schema });
+
+  const successResult = formSchema.safeValidateOutput({ value: 42.5 });
+  expect(successResult.success).toBe(true);
+  if (successResult.success) {
+    expect(successResult.data).toEqual({ value: 42.5 });
+  }
+
+  const failResult = formSchema.safeValidateOutput({ value: -10 });
+  expect(failResult.success).toBe(false);
+});
+
+test("schema.safeValidateOutputAsync() - method API works", async () => {
+  const schema = z.codec(z.string(), z.number().check(z.minimum(0)), {
+    decode: (str) => Number.parseFloat(str),
+    encode: (num) => num.toString(),
+  });
+  const formSchema = z.object({ value: schema });
+
+  const successResult = await formSchema.safeValidateOutputAsync({ value: 42.5 });
+  expect(successResult.success).toBe(true);
+  if (successResult.success) {
+    expect(successResult.data).toEqual({ value: 42.5 });
+  }
+
+  const failResult = await formSchema.safeValidateOutputAsync({ value: -10 });
+  expect(failResult.success).toBe(false);
+});

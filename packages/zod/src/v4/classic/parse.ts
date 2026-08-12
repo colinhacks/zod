@@ -80,3 +80,30 @@ export const safeDecodeAsync: <T extends core.$ZodType>(
   value: core.input<T>,
   _ctx?: core.ParseContext<core.$ZodIssue>
 ) => Promise<ZodSafeParseResult<core.output<T>>> = /* @__PURE__ */ core._safeDecodeAsync(ZodRealError) as any;
+
+// Validate output functions
+export const validateOutput: <T extends core.$ZodType>(
+  schema: T,
+  value: core.output<T>,
+  _ctx?: core.ParseContext<core.$ZodIssue>,
+  _params?: { callee?: core.util.AnyFunc; Err?: core.$ZodErrorClass }
+) => core.output<T> = /* @__PURE__ */ core._validateOutput(ZodRealError) as any;
+
+export const validateOutputAsync: <T extends core.$ZodType>(
+  schema: T,
+  value: core.output<T>,
+  _ctx?: core.ParseContext<core.$ZodIssue>,
+  _params?: { callee?: core.util.AnyFunc; Err?: core.$ZodErrorClass }
+) => Promise<core.output<T>> = /* @__PURE__ */ core._validateOutputAsync(ZodRealError) as any;
+
+export const safeValidateOutput: <T extends core.$ZodType>(
+  schema: T,
+  value: core.output<T>,
+  _ctx?: core.ParseContext<core.$ZodIssue>
+) => ZodSafeParseResult<core.output<T>> = /* @__PURE__ */ core._safeValidateOutput(ZodRealError) as any;
+
+export const safeValidateOutputAsync: <T extends core.$ZodType>(
+  schema: T,
+  value: core.output<T>,
+  _ctx?: core.ParseContext<core.$ZodIssue>
+) => Promise<ZodSafeParseResult<core.output<T>>> = /* @__PURE__ */ core._safeValidateOutputAsync(ZodRealError) as any;

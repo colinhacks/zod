@@ -11,4 +11,8 @@ export {
   safeDecode,
   safeEncodeAsync,
   safeDecodeAsync,
+  validateOutput,
+  validateOutputAsync,
+  safeValidateOutput,
+  safeValidateOutputAsync,
 } from "../core/index.js";
