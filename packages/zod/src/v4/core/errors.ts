@@ -324,6 +324,14 @@ export function formatError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIssu
             const el = fullpath[i]!;
             const terminal = i === fullpath.length - 1;
 
+            // `_errors` is reserved by this legacy format, so merge a matching
+            // path segment into the current node instead of treating its array as a child.
+            if (el === "_errors") {
+              if (terminal) curr._errors.push(mapper(issue));
+              i++;
+              continue;
+            }
+
             // A path element may collide with an inherited property name such as
             // "__proto__" or "constructor". Truthiness checks read the prototype
             // (so no node is created, then ._errors.push throws), and bracket

@@ -238,6 +238,14 @@ export class ZodError<T = any> extends Error {
             const el = issue.path[i]!;
             const terminal = i === issue.path.length - 1;
 
+            // `_errors` is reserved by this legacy format, so merge a matching
+            // path segment into the current node instead of treating its array as a child.
+            if (el === "_errors") {
+              if (terminal) curr._errors.push(mapper(issue));
+              i++;
+              continue;
+            }
+
             // Create `el` as an own data property. A segment naming an inherited member
             // ("toString", "constructor") would otherwise read through to the prototype, and
             // assigning "__proto__" would hit the setter and walk into Object.prototype.
