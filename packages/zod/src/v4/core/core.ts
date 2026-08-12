@@ -119,6 +119,12 @@ export type output<T> = T extends { _zod: { output: any } } ? T["_zod"]["output"
 
 export type { output as infer };
 
+// Backing types for the public `z.input`/`z.output`/`z.infer`. The conditional forms above stay
+// deferred when the argument is a generic indexed access, so they index directly instead. The
+// constraint is structural rather than `$ZodType` to avoid instantiating `~standard`.
+export type $InferInput<T extends { _zod: { input: any } }> = T["_zod"]["input"];
+export type $InferOutput<T extends { _zod: { output: any } }> = T["_zod"]["output"];
+
 //////////////////////////////   CONFIG   ///////////////////////////////////////
 
 export interface $ZodConfig {

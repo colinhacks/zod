@@ -57,6 +57,27 @@ test("nested no undefined", () => {
   expect(outer.safeParse({ inner: undefined }).success).toEqual(false);
 });
 
+test("infer through a generic index into a schema map", () => {
+  const SCHEMA_MAP = {
+    a: z.string(),
+    b: z.string().transform((val) => val.length),
+  };
+  type Schemas = typeof SCHEMA_MAP;
+
+  function parse<K extends keyof Schemas>(key: K, data: unknown): z.infer<Schemas[K]> {
+    return SCHEMA_MAP[key].parse(data);
+  }
+
+  function reparse<K extends keyof Schemas>(key: K, data: z.input<Schemas[K]>): z.output<Schemas[K]> {
+    return SCHEMA_MAP[key].parse(data);
+  }
+
+  expectTypeOf(parse("a", "foo")).toEqualTypeOf<string>();
+  expectTypeOf(parse("b", "foo")).toEqualTypeOf<number>();
+  expectTypeOf(reparse("b", "foo")).toEqualTypeOf<number>();
+  expect(reparse("b", "foo")).toEqual(3);
+});
+
 test("generic on output type", () => {
   const createV4Schema = <Output>(opts: {
     schema: z.ZodType<Output>;

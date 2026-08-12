@@ -3,7 +3,7 @@ export * from "./parse.js";
 export * from "./schemas.js";
 export * from "./checks.js";
 
-export type { infer, output, input } from "../core/index.js";
+export type { $InferOutput as infer, $InferOutput as output, $InferInput as input } from "../core/index.js";
 export type { JSONType } from "../core/util.js";
 export {
   globalRegistry,

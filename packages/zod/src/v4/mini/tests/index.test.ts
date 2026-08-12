@@ -991,3 +991,15 @@ test("type narrowing works with type property", () => {
     expect(arraySchema.def.element).toBeDefined();
   }
 });
+
+test("infer through a generic index into a schema map", () => {
+  const SCHEMA_MAP = { a: z.string(), b: z.number() };
+  type Schemas = typeof SCHEMA_MAP;
+
+  function pass<K extends keyof Schemas>(value: Schemas[K]["_zod"]["output"]): z.infer<Schemas[K]> {
+    return value;
+  }
+
+  expectTypeOf<z.infer<Schemas["a"]>>().toEqualTypeOf<string>();
+  expect(pass<"a">("foo")).toEqual("foo");
+});
