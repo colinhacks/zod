@@ -120,10 +120,12 @@ export type output<T> = T extends { _zod: { output: any } } ? T["_zod"]["output"
 export type { output as infer };
 
 // Backing types for the public `z.input`/`z.output`/`z.infer`. The conditional forms above stay
-// deferred when the argument is a generic indexed access, so they index directly instead. The
-// constraint is structural rather than `$ZodType` to avoid instantiating `~standard`.
-export type $InferInput<T extends { _zod: { input: any } }> = T["_zod"]["input"];
-export type $InferOutput<T extends { _zod: { output: any } }> = T["_zod"]["output"];
+// deferred while the check type is an unresolved generic, so `z.infer<SCHEMA_MAP[K]>` never
+// simplifies. Indexing an intersection resolves in that case and still yields `unknown` for a
+// non-schema `T`, so the parameter needs no constraint. `input`/`output` themselves must stay
+// conditional: the intersection form breaks recursive schema assignability.
+export type $InferInput<T> = (T & { _zod: { input: unknown } })["_zod"]["input"];
+export type $InferOutput<T> = (T & { _zod: { output: unknown } })["_zod"]["output"];
 
 //////////////////////////////   CONFIG   ///////////////////////////////////////
 
