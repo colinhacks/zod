@@ -878,3 +878,24 @@ test("error formatting leaves Object.prototype untouched for input-derived keys"
   expect(protoNode((z.treeifyError(result.error!) as any).properties).properties.pwn.errors).toHaveLength(1);
   expect(({} as any).pwn).toBeUndefined();
 });
+
+test("error walkers handle path elements named after inherited methods", () => {
+  // "toString" and "constructor" are truthy on the prototype, so a plain lookup finds
+  // the inherited function instead of creating a node, and the push then throws.
+  for (const [schema, input] of [
+    [z.object({ toString: z.string() }), { toString: 1 }],
+    [z.object({ constructor: z.string() }), { constructor: 1 }],
+    [z.object({ toString: z.string(), constructor: z.string() }), { toString: 1, constructor: 2 }],
+  ] as const) {
+    const result = (schema as any).safeParse(input);
+    expect(result.success).toBe(false);
+
+    const formatted = z.formatError(result.error) as any;
+    const tree = z.treeifyError(result.error) as any;
+    for (const key of Object.keys(input)) {
+      expect(formatted[key]._errors).toHaveLength(1);
+      expect(tree.properties[key].errors).toHaveLength(1);
+      expect(Object.prototype.hasOwnProperty.call(formatted, key)).toBe(true);
+    }
+  }
+});
