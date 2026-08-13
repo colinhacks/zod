@@ -983,3 +983,74 @@ export function uint8ArrayToHex(bytes: Uint8Array): string {
 export abstract class Class {
   constructor(..._args: any[]) {}
 }
+
+//////////    PROTOTYPE INSTALLERS     //////////
+//
+// Members live on the prototype and materialize per instance on first read,
+// which keeps own-property count under the step where V8 stops using inline
+// slots. Changing anything here means re-measuring runtime, memory and bundle
+// size together — see "The three axes" in AGENTS.md.
+
+/** Returns the prototype to install on, or `undefined` if this group is already installed on it. */
+function claim(inst: object, sentinel: string): object | undefined {
+  const proto = Object.getPrototypeOf(inst);
+  // Runs on every construction, so `in` rather than the costlier
+  // `hasOwnProperty.call`. Sentinels are keys the group itself defines.
+  return sentinel in proto ? undefined : proto;
+}
+
+function defineCached(proto: object, key: string, compute: (self: any) => unknown): void {
+  // `~standard` was never an own data property, so caching it must not add it
+  // to `Object.keys`. Everything else here was enumerable and stays so.
+  const enumerable = key !== "~standard";
+  Object.defineProperty(proto, key, {
+    configurable: true,
+    get(this: any) {
+      const value = compute(this);
+      Object.defineProperty(this, key, { configurable: true, writable: true, enumerable, value });
+      return value;
+    },
+    set(this: any, value: unknown) {
+      Object.defineProperty(this, key, { configurable: true, writable: true, enumerable: true, value });
+    },
+  });
+}
+
+/** Methods of `T` reshaped so each body has `this: T`. */
+export type LazyMethodsOf<T> = Partial<{
+  [K in keyof T]: T[K] extends (...args: infer A) => infer R ? (this: T, ...args: A) => R : never;
+}>;
+
+/** Factories for properties whose value is built per instance on first read. */
+export type LazyPropsOf<T> = Partial<{ [K in keyof T]: (self: T) => T[K] }>;
+
+/**
+ * Installs methods that bind to the instance on first access. Not for hot-path
+ * functions — a bound function pays a call-time trampoline; use
+ * `installLazyProps` there.
+ */
+export function installLazyMethods<T extends object>(inst: T, sentinel: string, methods: () => LazyMethodsOf<T>): void {
+  const proto = claim(inst, sentinel);
+  if (!proto) return;
+  const built = methods();
+  for (const key in built) {
+    const fn = built[key]!;
+    defineCached(proto, key, (self) => (fn as AnyFunc).bind(self));
+  }
+}
+
+/** Like `installLazyMethods`, but the factory builds the value instead of binding a shared function. */
+export function installLazyProps<T extends object>(inst: T, sentinel: string, props: () => LazyPropsOf<T>): void {
+  const proto = claim(inst, sentinel);
+  if (!proto) return;
+  const built = props();
+  for (const key in built) {
+    defineCached(proto, key, built[key] as AnyFunc);
+  }
+}
+
+/** Single-property variant; the key doubles as the sentinel. */
+export function installLazyProp(inst: object, key: string, make: (self: any) => unknown): void {
+  const proto = claim(inst, key);
+  if (proto) defineCached(proto, key, make);
+}

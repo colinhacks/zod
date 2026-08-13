@@ -194,12 +194,13 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
   inst._zod.bag = inst._zod.bag || {}; // initialize _bag object
   inst._zod.version = version;
 
-  const checks = [...(inst._zod.def.checks ?? [])];
-
+  const defChecks = inst._zod.def.checks;
   // if inst is itself a checks.$ZodCheck, run it as a check
-  if (inst._zod.traits.has("$ZodCheck")) {
-    checks.unshift(inst as any);
-  }
+  const checks: checks.$ZodCheck<never>[] = inst._zod.traits.has("$ZodCheck")
+    ? [inst as any, ...(defChecks ?? [])]
+    : defChecks?.length
+      ? [...defChecks]
+      : [];
 
   for (const ch of checks) {
     for (const fn of ch._zod.onattach) {
@@ -304,20 +305,28 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
     };
   }
 
-  // Lazy initialize ~standard to avoid creating objects for every schema
-  util.defineLazy(inst, "~standard", () => ({
+  // Wrappers extend this by installing a richer factory over it; reading it
+  // eagerly would defeat the laziness.
+  util.installLazyProp(inst, "~standard", standardProps);
+});
+
+/** The Standard Schema surface for `inst`. Shared so wrappers can extend it without forcing it. */
+const toStandardResult = (r: util.SafeParseResult<unknown>) =>
+  r.success ? { value: r.data } : { issues: r.error?.issues };
+
+export function standardProps(inst: $ZodType): StandardSchemaV1.Props<any, any> {
+  return {
     validate: (value: unknown) => {
       try {
-        const r = safeParse(inst, value);
-        return r.success ? { value: r.data } : { issues: r.error?.issues };
+        return toStandardResult(safeParse(inst, value));
       } catch (_) {
-        return safeParseAsync(inst, value).then((r) => (r.success ? { value: r.data } : { issues: r.error?.issues }));
+        return safeParseAsync(inst, value).then(toStandardResult);
       }
     },
     vendor: "zod",
     version: 1 as const,
-  }));
-});
+  };
+}
 
 export { clone } from "./util.js";
 
@@ -1747,25 +1756,6 @@ export type $InferObjectInput<T extends $ZodLooseShape, Extra extends Record<str
         } & Extra
       >;
 
-// Writes a validated property onto the fresh {} we build results into. Plain assignment of
-// "__proto__" hits the inherited setter, which replaces the result prototype and drops the
-// value; defineProperty creates the own data property the key was declared for.
-function setProp(target: any, key: PropertyKey, value: unknown): void {
-  if (key === "__proto__") {
-    util.assignProp(target, key, value);
-  } else {
-    target[key] = value;
-  }
-}
-
-function getProperty(input: any, key: PropertyKey): unknown {
-  return key === "__proto__" && !Object.prototype.hasOwnProperty.call(input, key) ? undefined : input[key];
-}
-
-function isPropertyPresent(input: any, key: PropertyKey): boolean {
-  return key === "__proto__" ? Object.prototype.hasOwnProperty.call(input, key) : key in input;
-}
-
 function handlePropertyResult(
   result: ParsePayload,
   final: ParsePayload,
@@ -1774,7 +1764,7 @@ function handlePropertyResult(
   isOptionalIn: boolean,
   isOptionalOut: boolean
 ) {
-  const isPresent = isPropertyPresent(input, key);
+  const isPresent = key in input;
   if (result.issues.length) {
     // For optional-in/out schemas, ignore errors on absent keys.
     if (isOptionalIn && isOptionalOut && !isPresent) {
@@ -1797,10 +1787,10 @@ function handlePropertyResult(
 
   if (result.value === undefined) {
     if (isPresent) {
-      setProp(final.value, key, undefined);
+      (final.value as any)[key] = undefined;
     }
   } else {
-    setProp(final.value, key, result.value);
+    (final.value as any)[key] = result.value;
   }
 }
 
@@ -1887,8 +1877,8 @@ function handleCatchall(
   const isOptionalIn = _catchall.optin === "optional";
   const isOptionalOut = _catchall.optout === "optional";
   for (const key in input) {
-    // must precede the __proto__ branch: a declared __proto__ field is handled by the
-    // shape loop, so reporting it here would reject input the schema explicitly allows
+    // Must precede the __proto__ branch: a declared key is not unrecognized, even though
+    // the shape loop deliberately strips __proto__ from the parsed output.
     if (keySet.has(key)) continue;
     // Don't copy an undeclared __proto__ into the result; assignment to a plain {} would
     // replace the result prototype. But in strict mode it is still an unknown key, so
@@ -1985,11 +1975,12 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     const shape = value.shape;
 
     for (const key of value.keys) {
+      if (key === "__proto__") continue;
       const el = shape[key]!;
       const isOptionalIn = el._zod.optin === "optional";
       const isOptionalOut = el._zod.optout === "optional";
 
-      const r = el._zod.run({ value: getProperty(input, key), issues: [] }, ctx);
+      const r = el._zod.run({ value: input[key], issues: [] }, ctx);
       if (r instanceof Promise) {
         proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, isOptionalIn, isOptionalOut)));
       } else {
@@ -2016,28 +2007,11 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
 
     const generateFastpass = (shape: any) => {
       const normalized = _normalized.value;
-      const handlesProto = normalized.keySet.has("__proto__");
-      const doc = new Doc(
-        handlesProto
-          ? ["shape", "payload", "ctx", "setProp", "getProperty", "isPropertyPresent"]
-          : ["shape", "payload", "ctx"]
-      );
+      const doc = new Doc(["shape", "payload", "ctx"]);
 
       const parseStr = (key: string) => {
         const k = util.esc(key);
-        const value = key === "__proto__" ? `getProperty(input, ${k})` : `input[${k}]`;
-        return `shape[${k}]._zod.run({ value: ${value}, issues: [] }, ctx)`;
-      };
-
-      const presentStr = (key: string) => {
-        const k = util.esc(key);
-        return key === "__proto__" ? `isPropertyPresent(input, ${k})` : `${k} in input`;
-      };
-
-      // Keys are known here, so only a literal "__proto__" defers to setProp.
-      const setStr = (key: string, value: string) => {
-        const k = util.esc(key);
-        return key === "__proto__" ? `setProp(newResult, ${k}, ${value});` : `newResult[${k}] = ${value};`;
+        return `shape[${k}]._zod.run({ value: input[${k}], issues: [] }, ctx)`;
       };
 
       doc.write(`const input = payload.value;`);
@@ -2051,9 +2025,10 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
       // A: preserve key order {
       doc.write(`const newResult = {};`);
       for (const key of normalized.keys) {
+        if (key === "__proto__") continue;
         const id = ids[key];
         const k = util.esc(key);
-        const isPresent = presentStr(key);
+        const isPresent = `${k} in input`;
         const schema = shape[key];
         const isOptionalIn = schema?._zod?.optin === "optional";
         const isOptionalOut = schema?._zod?.optout === "optional";
@@ -2074,10 +2049,10 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         
         if (${id}.value === undefined) {
           if (${isPresent}) {
-            ${setStr(key, "undefined")}
+            newResult[${k}] = undefined;
           }
         } else {
-          ${setStr(key, `${id}.value`)}
+          newResult[${k}] = ${id}.value;
         }
 
       `);
@@ -2101,9 +2076,9 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
 
         if (${id}_present) {
           if (${id}.value === undefined) {
-            ${setStr(key, "undefined")}
+            newResult[${k}] = undefined;
           } else {
-            ${setStr(key, `${id}.value`)}
+            newResult[${k}] = ${id}.value;
           }
         }
 
@@ -2119,10 +2094,10 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         
         if (${id}.value === undefined) {
           if (${isPresent}) {
-            ${setStr(key, "undefined")}
+            newResult[${k}] = undefined;
           }
         } else {
-          ${setStr(key, `${id}.value`)}
+          newResult[${k}] = ${id}.value;
         }
 
       `);
@@ -2132,9 +2107,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
       doc.write(`payload.value = newResult;`);
       doc.write(`return payload;`);
       const fn = doc.compile();
-      return handlesProto
-        ? (payload: any, ctx: any) => fn(shape, payload, ctx, setProp, getProperty, isPropertyPresent)
-        : (payload: any, ctx: any) => fn(shape, payload, ctx);
+      return (payload: any, ctx: any) => fn(shape, payload, ctx);
     };
 
     let fastpass!: ReturnType<typeof generateFastpass>;
@@ -2559,7 +2532,9 @@ function mergeValues(
     const sharedKeys = Object.keys(a).filter((key) => bKeys.indexOf(key) !== -1);
 
     const newObj: any = { ...a, ...b };
+    if (Object.prototype.hasOwnProperty.call(newObj, "__proto__")) delete newObj.__proto__;
     for (const key of sharedKeys) {
+      if (key === "__proto__") continue;
       const sharedValue = mergeValues(a[key], b[key]);
       if (!sharedValue.valid) {
         return {
@@ -2948,6 +2923,8 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       for (const key of values) {
         if (typeof key === "string" || typeof key === "number" || typeof key === "symbol") {
           recordKeys.add(typeof key === "number" ? key.toString() : key);
+          // A declared __proto__ is stripped but is not an unrecognized key.
+          if (key === "__proto__") continue;
           const keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
           if (keyResult instanceof Promise) {
             throw new Error("Async schemas not supported in object keys currently");
@@ -2964,7 +2941,8 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
             continue;
           }
           const outKey = keyResult.value as PropertyKey;
-          const result = def.valueType._zod.run({ value: getProperty(input, key), issues: [] }, ctx);
+          if (outKey === "__proto__") continue;
+          const result = def.valueType._zod.run({ value: input[key], issues: [] }, ctx);
 
           if (result instanceof Promise) {
             proms.push(
@@ -2972,14 +2950,14 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
                 if (result.issues.length) {
                   payload.issues.push(...util.prefixIssues(key, result.issues));
                 }
-                setProp(payload.value, outKey, result.value);
+                payload.value[outKey] = result.value;
               })
             );
           } else {
             if (result.issues.length) {
               payload.issues.push(...util.prefixIssues(key, result.issues));
             }
-            setProp(payload.value, outKey, result.value);
+            payload.value[outKey] = result.value;
           }
         }
       }
@@ -3004,7 +2982,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       payload.value = {};
       // Reflect.ownKeys for Symbol-key support; filter non-enumerable to match z.object()
       for (const key of Reflect.ownKeys(input)) {
-        if (key === "__proto__" && !(def.partial && values?.has(key))) continue;
+        if (key === "__proto__") continue;
         if (!Object.prototype.propertyIsEnumerable.call(input, key)) continue;
         let keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
         if (keyResult instanceof Promise) {
@@ -3027,7 +3005,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
         if (keyResult.issues.length) {
           if (def.mode === "loose") {
             // Pass through unchanged
-            setProp(payload.value, key, input[key]);
+            payload.value[key] = input[key];
           } else {
             // Default "strict" behavior: error on invalid key
             payload.issues.push({
@@ -3045,7 +3023,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
         // the guard above tests the raw input key, but the key schema can normalize an
         // ordinary key into __proto__; re-check the key we actually write under
         const outKey = keyResult.value as PropertyKey;
-        if (outKey === "__proto__" && !(def.partial && key === "__proto__" && values?.has(key))) continue;
+        if (outKey === "__proto__") continue;
 
         const result = def.valueType._zod.run({ value: input[key], issues: [] }, ctx);
 
@@ -3055,14 +3033,14 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
               if (result.issues.length) {
                 payload.issues.push(...util.prefixIssues(key, result.issues));
               }
-              setProp(payload.value, outKey, result.value);
+              payload.value[outKey] = result.value;
             })
           );
         } else {
           if (result.issues.length) {
             payload.issues.push(...util.prefixIssues(key, result.issues));
           }
-          setProp(payload.value, outKey, result.value);
+          payload.value[outKey] = result.value;
         }
       }
     }
@@ -4191,19 +4169,22 @@ function handleCodecTxResult(left: ParsePayload, value: any, nextSchema: SomeTyp
 //////////                             //////////
 /////////////////////////////////////////////////
 /////////////////////////////////////////////////
-export interface $ZodPreprocessDef<B extends SomeType = $ZodType> extends $ZodPipeDef<$ZodTransform, B> {
-  in: $ZodTransform;
+export interface $ZodPreprocessDef<B extends SomeType = $ZodType, I = unknown>
+  extends $ZodPipeDef<$ZodTransform<unknown, I>, B> {
+  in: $ZodTransform<unknown, I>;
   out: B;
 }
 
-export interface $ZodPreprocessInternals<B extends SomeType = $ZodType> extends $ZodPipeInternals<$ZodTransform, B> {
-  def: $ZodPreprocessDef<B>;
+export interface $ZodPreprocessInternals<B extends SomeType = $ZodType, I = unknown>
+  extends $ZodPipeInternals<$ZodTransform<unknown, I>, B> {
+  def: $ZodPreprocessDef<B, I>;
   optin: B["_zod"]["optin"];
   optout: B["_zod"]["optout"];
 }
 
-export interface $ZodPreprocess<B extends SomeType = $ZodType> extends $ZodPipe<$ZodTransform, B> {
-  _zod: $ZodPreprocessInternals<B>;
+export interface $ZodPreprocess<B extends SomeType = $ZodType, I = unknown>
+  extends $ZodPipe<$ZodTransform<unknown, I>, B> {
+  _zod: $ZodPreprocessInternals<B, I>;
 }
 
 export const $ZodPreprocess: core.$constructor<$ZodPreprocess> = /*@__PURE__*/ core.$constructor(
@@ -4479,7 +4460,9 @@ export const $ZodFunction: core.$constructor<$ZodFunction> = /*@__PURE__*/ core.
   "$ZodFunction",
   (inst, def) => {
     $ZodType.init(inst, def);
-    inst._def = def;
+    // Defined, not assigned: the classic prototype exposes `_def` as a
+    // getter with no setter.
+    Object.defineProperty(inst, "_def", { value: def });
     inst._zod.def = def;
 
     inst.implement = (func) => {

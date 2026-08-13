@@ -59,6 +59,13 @@ const apiLibraries: ZodResource[] = [
     description: "Advanced fetch client builder",
     slug: "L-Blondy/up-fetch",
   },
+  {
+    name: "zodql",
+    url: "https://github.com/mattiasahlsen/zodql",
+    description:
+      "Use a single Zod schema as the source of truth for a GraphQL query, its inferred response type, and runtime validation.",
+    slug: "mattiasahlsen/zodql",
+  },
   // https://github.com/honojs/middleware/tree/main/packages/zod-validator
   // {
   //   name: "@hono/zod-validator",
@@ -117,6 +124,12 @@ const formIntegrations: ZodResource[] = [
     url: "https://attaform.dev",
     description: "Type-safe, Zod-first form library for Vue 3 and Nuxt.",
     slug: "attaform/Attaform",
+  },
+  {
+    name: "zod-form-action",
+    url: "https://github.com/Vish05/zod-form-action",
+    description: "A tiny helper for wiring Zod validation into React's useActionState — typed field errors, zero boilerplate.",
+    slug: "Vish05/zod-form-action",
   },
 ];
 
@@ -307,7 +320,13 @@ const poweredByZodProjects: ZodResource[] = [
     url: "https://jsr.io/@chrock-studio/overload",
     description: "A lightweight, type-safe runtime function overloading library that allows runtime dispatch based on argument types.",
     slug: "chrock-studio/toolbox/tree/main/packages/overload",
-  }
+  },
+  {
+    name: "ArkEnv",
+    url: "https://github.com/yamcodes/arkenv",
+    description: "Environment variable validation from editor to runtime, for Next.js, Nuxt, Node.js, Vite, Bun, and more.",
+    slug: "yamcodes/arkenv",
+  },
 ];
 
 const zodUtilities: ZodResource[] = [
@@ -364,7 +383,13 @@ const zodUtilities: ZodResource[] = [
     url: "https://jsr.io/@chrock-studio/zod-utils",
     description: "A collection of Zod utilities focusing on enhanced functionality (e.g. classless Rich Domain Models while maintaining pure data structures).",
     slug: "chrock-studio/toolbox/tree/main/packages/zod-utils",
-  }
+  },
+  {
+    name: "oxlint-plugin-import-zod",
+    url: "https://github.com/samchungy/oxlint-plugin-import-zod",
+    description: "Oxlint plugin to enforce namespace imports for Zod.",
+    slug: "samchungy/oxlint-plugin-import-zod",
+  },
 ];
 
 export {

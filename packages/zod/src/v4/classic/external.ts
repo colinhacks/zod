@@ -5,11 +5,9 @@ export * from "./errors.js";
 export * from "./parse.js";
 export * from "./compat.js";
 
-// zod-specified
-import { config } from "../core/index.js";
-import en from "../locales/en.js";
-config(en());
-
+// `output` / `input` are NOT re-exported here: the runtime `z.input` / `z.output` live in
+// `./in-out.js`, and a type re-export from core plus a value export from there collide as a
+// duplicate identifier. The type aliases are co-located with the functions instead.
 export type { infer } from "../core/index.js";
 export type { JSONType } from "../core/util.js";
 export {

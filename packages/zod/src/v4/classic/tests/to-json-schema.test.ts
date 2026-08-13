@@ -3188,3 +3188,244 @@ test("partialRecord does not require finite keys", () => {
   expect(result.propertyNames).toEqual({ type: "string", enum: ["__proto__", "b"] });
   expect(result.additionalProperties).toEqual({ type: "string" });
 });
+
+describe("unrepresentable callback", () => {
+  test("is consulted for every unrepresentable type", () => {
+    const seen: string[] = [];
+    const collect: z.core.UnrepresentableHandler<z.core.$ZodTypes> = ({ zodSchema }) => {
+      seen.push(zodSchema._zod.def.type);
+      return "any";
+    };
+
+    const schemas = [
+      z.bigint(),
+      z.symbol(),
+      z.undefined(),
+      z.void(),
+      z.date(),
+      z.nan(),
+      z.custom<string>(),
+      z.map(z.string(), z.string()),
+      z.set(z.string()),
+      z.transform((x: unknown) => x),
+      z.literal([undefined]),
+      z.literal([1n]),
+      z.string().catch(() => {
+        throw new Error("dynamic");
+      }),
+      // z.function() is not a ZodType, but its processor is reachable through the same path
+      z.function() as unknown as z.ZodType,
+    ];
+    for (const schema of schemas) z.toJSONSchema(schema, { unrepresentable: collect });
+
+    expect(seen).toEqual([
+      "bigint",
+      "symbol",
+      "undefined",
+      "void",
+      "date",
+      "nan",
+      "custom",
+      "map",
+      "set",
+      "transform",
+      "literal",
+      "literal",
+      "catch",
+      "function",
+    ]);
+  });
+
+  test("returned JSON Schema replaces the unrepresentable node", () => {
+    // the motivating case: represent dates, keep throwing for everything else
+    const params: z.core.ToJSONSchemaParams = {
+      unrepresentable: ({ zodSchema }) =>
+        zodSchema._zod.def.type === "date" ? { type: "string", format: "date-time" } : "throw",
+    };
+    expect(z.toJSONSchema(z.object({ when: z.date() }), params)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "when": {
+            "format": "date-time",
+            "type": "string",
+          },
+        },
+        "required": [
+          "when",
+        ],
+        "type": "object",
+      }
+    `);
+    expect(() => z.toJSONSchema(z.object({ id: z.bigint() }), params)).toThrow(
+      "BigInt cannot be represented in JSON Schema"
+    );
+  });
+
+  test("`throw` and `undefined` returns produce the default error", () => {
+    expect(() => z.toJSONSchema(z.date(), { unrepresentable: () => "throw" })).toThrow(
+      "Date cannot be represented in JSON Schema"
+    );
+    expect(() => z.toJSONSchema(z.date(), { unrepresentable: () => undefined })).toThrow(
+      "Date cannot be represented in JSON Schema"
+    );
+  });
+
+  test("`any` return matches the string option", () => {
+    expect(z.toJSONSchema(z.date(), { unrepresentable: () => "any" })).toEqual(
+      z.toJSONSchema(z.date(), { unrepresentable: "any" })
+    );
+  });
+
+  test("`message` distinguishes sites that share a schema", () => {
+    const seen: string[] = [];
+    expect(
+      z.toJSONSchema(z.literal([undefined, 1n, "a"]), {
+        unrepresentable: ({ zodSchema, message }) => {
+          seen.push(`${zodSchema._zod.def.type}: ${message}`);
+          return "any";
+        },
+      })
+    ).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "enum": [
+          1,
+          "a",
+        ],
+      }
+    `);
+    // same `zodSchema`, different message -- the only way to tell the two literal sites apart
+    expect(seen).toEqual([
+      "literal: Literal `undefined` cannot be represented in JSON Schema",
+      "literal: BigInt literals cannot be represented in JSON Schema",
+    ]);
+  });
+
+  test("errors thrown by the callback propagate", () => {
+    expect(() =>
+      z.toJSONSchema(z.object({ when: z.date() }), {
+        unrepresentable: ({ zodSchema, path }) => {
+          throw new Error(`${zodSchema._zod.def.type} at /${path.join("/")}`);
+        },
+      })
+    ).toThrow("date at /properties/when");
+  });
+
+  test("runs before `override`", () => {
+    const order: string[] = [];
+    expect(
+      z.toJSONSchema(z.date(), {
+        unrepresentable: () => {
+          order.push("unrepresentable");
+          return { type: "string" };
+        },
+        override: (ctx) => {
+          order.push("override");
+          if (ctx.jsonSchema.type === "string") ctx.jsonSchema.format = "date-time";
+        },
+      })
+    ).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "date-time",
+        "type": "string",
+      }
+    `);
+    expect(order).toEqual(["unrepresentable", "override"]);
+  });
+
+  test("a returned schema replaces the whole literal", () => {
+    expect(
+      z.toJSONSchema(z.literal(["a", 1n]), {
+        unrepresentable: () => ({ type: "string", pattern: "^\\d+$" }),
+      })
+    ).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "pattern": "^\\d+$",
+        "type": "string",
+      }
+    `);
+
+    // "any" keeps the existing per-value behavior: undefined dropped, bigint coerced
+    expect(z.toJSONSchema(z.literal(["a", 1n, undefined]), { unrepresentable: () => "any" })).toEqual(
+      z.toJSONSchema(z.literal(["a", 1n, undefined]), { unrepresentable: "any" })
+    );
+  });
+
+  const dateToString: z.core.ToJSONSchemaParams["unrepresentable"] = ({ zodSchema }) =>
+    zodSchema._zod.def.type === "date" ? { type: "string", format: "date-time" } : "throw";
+
+  test("emits a valid OpenAPI 3.0 schema", async () => {
+    const jsonSchema = z.toJSONSchema(z.object({ start: z.date() }), {
+      target: "openapi-3.0",
+      unrepresentable: dateToString,
+    });
+    expect(jsonSchema).toMatchInlineSnapshot(`
+      {
+        "additionalProperties": false,
+        "properties": {
+          "start": {
+            "format": "date-time",
+            "type": "string",
+          },
+        },
+        "required": [
+          "start",
+        ],
+        "type": "object",
+      }
+    `);
+    await expect(validateOpenAPI30Schema(jsonSchema)).resolves.toBe(true);
+  });
+
+  test("the returned schema survives extraction into $defs", () => {
+    const When = z.date().meta({ id: "When" });
+    expect(
+      z.toJSONSchema(z.object({ start: When, end: When }), { unrepresentable: dateToString })
+    ).toMatchInlineSnapshot(`
+      {
+        "$defs": {
+          "When": {
+            "format": "date-time",
+            "type": "string",
+          },
+        },
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "end": {
+            "$ref": "#/$defs/When",
+          },
+          "start": {
+            "$ref": "#/$defs/When",
+          },
+        },
+        "required": [
+          "start",
+          "end",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  test("applies to dynamic catch values", () => {
+    const schema = z.string().catch(() => {
+      throw new Error("dynamic");
+    });
+    expect(
+      z.toJSONSchema(schema, {
+        unrepresentable: () => ({ default: "fallback" }),
+      })
+    ).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "default": "fallback",
+        "type": "string",
+      }
+    `);
+  });
+});

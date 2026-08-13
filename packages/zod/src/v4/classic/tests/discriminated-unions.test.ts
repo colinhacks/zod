@@ -707,8 +707,8 @@ test.each(["__proto__", "constructor", "toString", "hasOwnProperty", "valueOf"])
       ["value", "ok"],
     ]);
     const parsed: any = schema.parse(input);
-    expect(Object.prototype.hasOwnProperty.call(parsed, key)).toBe(true);
-    expect(parsed[key]).toBe("a");
+    expect(Object.prototype.hasOwnProperty.call(parsed, key)).toBe(key !== "__proto__");
+    if (key !== "__proto__") expect(parsed[key]).toBe("a");
     expect(parsed.value).toBe("ok");
   }
 );

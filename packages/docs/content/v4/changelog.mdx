@@ -489,6 +489,16 @@ const mySchema = z.object({
 // Zod 4: { a: any; b: unknown };
 ```
 
+As of `v4.4.0`, the key is required at parse time too. Zod 4.0–4.3 accepted a missing key despite the inferred type above; requiring it is a soundness fix.
+
+```ts
+mySchema.parse({}); // ❌ (✅ in v4.3 and earlier)
+mySchema.parse({ a: undefined, b: undefined }); // ✅
+
+// use .optional() for a key that may be absent
+z.object({ a: z.any().optional() }).parse({}); // ✅
+```
+
 ### deprecates `.merge()`
 
 The `.merge()` method on `ZodObject` has been deprecated in favor of `.extend()`. The `.extend()` method provides the same functionality, avoids ambiguity around strictness inheritance, and has better TypeScript performance.
