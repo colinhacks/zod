@@ -879,8 +879,10 @@ export function _lte(
     inclusive: true,
   });
 }
-/** @deprecated Use `z.lte()` instead. */
-export const _max = _lte;
+export {
+  /** @deprecated Use `z.lte()` instead. */
+  _lte as _max,
+};
 
 // ZodCheckGreaterThan
 export type $ZodCheckGreaterThanParams = CheckParams<checks.$ZodCheckGreaterThan, "inclusive" | "value" | "when">;
@@ -905,8 +907,10 @@ export function _gte(value: util.Numeric, params?: string | $ZodCheckGreaterThan
   });
 }
 
-/** @deprecated Use `z.gte()` instead. */
-export const _min = _gte;
+export {
+  /** @deprecated Use `z.gte()` instead. */
+  _gte as _min,
+};
 
 // @__NO_SIDE_EFFECTS__
 export function _positive(params?: string | $ZodCheckGreaterThanParams): checks.$ZodCheckGreaterThan {
