@@ -263,6 +263,12 @@ export function process<T extends schemas.$ZodType>(
   return _result.schema;
 }
 
+// Escape a reference token for use in a JSON Pointer fragment (RFC 6901):
+// `~` becomes `~0` and `/` becomes `~1`. The `~` replacement must run first.
+function encodeJSONPointerSegment(segment: string): string {
+  return segment.replace(/~/g, "~0").replace(/\//g, "~1");
+}
+
 export function extractDefs<T extends schemas.$ZodType>(
   ctx: ToJSONSchemaContext,
   schema: T
@@ -309,7 +315,7 @@ export function extractDefs<T extends schemas.$ZodType>(
       // otherwise, add to __shared
       const id: string = entry[1].defId ?? (entry[1].schema.id as string) ?? `schema${ctx.counter++}`;
       entry[1].defId = id; // set defId so it will be reused if needed
-      return { defId: id, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id}` };
+      return { defId: id, ref: `${uriGenerator("__shared")}#/${defsSegment}/${encodeJSONPointerSegment(id)}` };
     }
 
     if (entry[1] === root) {
@@ -320,7 +326,7 @@ export function extractDefs<T extends schemas.$ZodType>(
     const uriPrefix = `#`;
     const defUriPrefix = `${uriPrefix}/${defsSegment}/`;
     const defId = entry[1].schema.id ?? `__schema${ctx.counter++}`;
-    return { defId, ref: defUriPrefix + defId };
+    return { defId, ref: defUriPrefix + encodeJSONPointerSegment(defId) };
   };
 
   // stored cached version in `def` property
