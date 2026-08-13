@@ -1,5 +1,5 @@
-import { deepPartialImpl } from "../core/deep-partial.js";
 import type * as core from "../core/index.js";
+import { visit } from "../core/visit.js";
 import * as schemas from "./schemas.js";
 
 /** Distributes `.partial()` through every object in a schema type, preserving the wrappers around them. */
@@ -67,9 +67,13 @@ export type DeepPartial<T extends core.SomeType> =
 
 /** Returns a copy of the schema with every nested object's properties made optional. */
 export function deepPartial<T extends core.SomeType>(schema: T): DeepPartial<T> {
-  return deepPartialImpl(
-    schema,
-    (s) => (s as schemas.ZodObject).partial() as core.$ZodType,
-    (opts) => schemas.union(opts) as core.$ZodType
-  ) as unknown as DeepPartial<T>;
+  return visit(schema, {
+    object: (s) => (s as schemas.ZodObject).partial(),
+    // Partialing the options makes `undefined` a possible discriminator for every one of them,
+    // which the discriminated-union constructor rejects outright. Degrade to a plain union.
+    union: (s) => {
+      const def = s._zod.def as core.$ZodDiscriminatedUnionDef;
+      return def.discriminator === undefined ? s : schemas.union(def.options as schemas.ZodType[]);
+    },
+  }) as unknown as DeepPartial<T>;
 }
