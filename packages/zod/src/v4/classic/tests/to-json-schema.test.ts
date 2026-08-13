@@ -3188,3 +3188,143 @@ test("partialRecord does not require finite keys", () => {
   expect(result.propertyNames).toEqual({ type: "string", enum: ["__proto__", "b"] });
   expect(result.additionalProperties).toEqual({ type: "string" });
 });
+
+describe("override runs before the unrepresentable error", () => {
+  const dateOverride: z.core.ToJSONSchemaParams["override"] = (ctx) => {
+    const def = ctx.zodSchema._zod.def;
+    if (def.type === "date") {
+      ctx.jsonSchema.type = "string";
+      ctx.jsonSchema.format = "date-time";
+    }
+  };
+
+  test("an override can represent one type while the rest still throw", () => {
+    expect(z.toJSONSchema(z.object({ when: z.date() }), { override: dateOverride })).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "when": {
+            "format": "date-time",
+            "type": "string",
+          },
+        },
+        "required": [
+          "when",
+        ],
+        "type": "object",
+      }
+    `);
+    expect(() => z.toJSONSchema(z.object({ id: z.bigint() }), { override: dateOverride })).toThrow(
+      "BigInt cannot be represented in JSON Schema"
+    );
+  });
+
+  test("applies through nesting, reuse and $defs extraction", () => {
+    const When = z.date().meta({ id: "When" });
+    expect(
+      z.toJSONSchema(z.object({ a: When, b: When, list: z.array(z.date()) }), { override: dateOverride })
+    ).toMatchInlineSnapshot(`
+      {
+        "$defs": {
+          "When": {
+            "format": "date-time",
+            "type": "string",
+          },
+        },
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "a": {
+            "$ref": "#/$defs/When",
+          },
+          "b": {
+            "$ref": "#/$defs/When",
+          },
+          "list": {
+            "items": {
+              "format": "date-time",
+              "type": "string",
+            },
+            "type": "array",
+          },
+        },
+        "required": [
+          "a",
+          "b",
+          "list",
+        ],
+        "type": "object",
+      }
+    `);
+    // an unrepresentable type extracted into $defs still throws
+    const Big = z.bigint().meta({ id: "Big" });
+    expect(() => z.toJSONSchema(z.object({ a: Big, b: Big }), { override: dateOverride })).toThrow(
+      "BigInt cannot be represented in JSON Schema"
+    );
+  });
+
+  test("annotations alone do not count as handling the type", () => {
+    // a blanket override must not silently disable every unrepresentable error
+    expect(() =>
+      z.toJSONSchema(z.bigint(), {
+        override: (ctx) => {
+          ctx.jsonSchema.description ??= "docs";
+        },
+      })
+    ).toThrow("BigInt cannot be represented in JSON Schema");
+    // nor does metadata already on the schema
+    expect(() => z.toJSONSchema(z.date().meta({ description: "when" }))).toThrow(
+      "Date cannot be represented in JSON Schema"
+    );
+  });
+
+  test("value-level cases still throw even though their node has a form", () => {
+    // the node is a `string`; only the dynamic catch value is unrepresentable
+    expect(() =>
+      z.toJSONSchema(
+        z.string().catch(() => {
+          throw new Error("dynamic");
+        }),
+        { override: dateOverride }
+      )
+    ).toThrow("Dynamic catch values are not supported in JSON Schema");
+    // the node still carries "a"; only the `undefined` member is unrepresentable
+    expect(() => z.toJSONSchema(z.literal([undefined, "a"]), { override: dateOverride })).toThrow(
+      "Literal `undefined` cannot be represented in JSON Schema"
+    );
+  });
+
+  test('`unrepresentable: "any"` is unaffected', () => {
+    expect(z.toJSONSchema(z.bigint(), { unrepresentable: "any", override: dateOverride })).toMatchInlineSnapshot(
+      `
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+      }
+    `
+    );
+  });
+
+  test("emits a valid OpenAPI 3.0 schema", async () => {
+    const jsonSchema = z.toJSONSchema(z.object({ when: z.date() }), {
+      target: "openapi-3.0",
+      override: dateOverride,
+    });
+    expect(jsonSchema).toMatchInlineSnapshot(`
+      {
+        "additionalProperties": false,
+        "properties": {
+          "when": {
+            "format": "date-time",
+            "type": "string",
+          },
+        },
+        "required": [
+          "when",
+        ],
+        "type": "object",
+      }
+    `);
+    await expect(validateOpenAPI30Schema(jsonSchema)).resolves.toBe(true);
+  });
+});
