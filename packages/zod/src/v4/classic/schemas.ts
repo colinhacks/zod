@@ -1393,7 +1393,7 @@ export interface ZodArray<T extends core.SomeType = core.$ZodType>
 }
 export const ZodArray: core.$constructor<ZodArray> = /*@__PURE__*/ core.$constructor("ZodArray", (inst, def) => {
   core.$ZodArray.init(inst, def);
-  cycles.installCycleGuard(inst, () => [], cycles.fillArray);
+  inst._zod.cycles = cycles.cycleOps;
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.arrayProcessor(inst, ctx, json, params);
 
@@ -1521,7 +1521,7 @@ export interface ZodObject<
 
 export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$constructor("ZodObject", (inst, def) => {
   core.$ZodObjectJIT.init(inst, def);
-  cycles.installCycleGuard(inst, () => ({}), cycles.fillObject);
+  inst._zod.cycles = cycles.cycleOps;
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.objectProcessor(inst, ctx, json, params);
 
@@ -1738,7 +1738,7 @@ export interface ZodTuple<
 }
 export const ZodTuple: core.$constructor<ZodTuple> = /*@__PURE__*/ core.$constructor("ZodTuple", (inst, def) => {
   core.$ZodTuple.init(inst, def);
-  cycles.installCycleGuard(inst, () => [], cycles.fillArray);
+  inst._zod.cycles = cycles.cycleOps;
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.tupleProcessor(inst, ctx, json, params);
   inst.rest = (rest) =>
@@ -1786,7 +1786,7 @@ export interface ZodRecord<
 }
 export const ZodRecord: core.$constructor<ZodRecord> = /*@__PURE__*/ core.$constructor("ZodRecord", (inst, def) => {
   core.$ZodRecord.init(inst, def);
-  cycles.installCycleGuard(inst, () => ({}), cycles.fillObject);
+  inst._zod.cycles = cycles.cycleOps;
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.recordProcessor(inst, ctx, json, params);
 
@@ -1859,7 +1859,7 @@ export interface ZodMap<Key extends core.SomeType = core.$ZodType, Value extends
 }
 export const ZodMap: core.$constructor<ZodMap> = /*@__PURE__*/ core.$constructor("ZodMap", (inst, def) => {
   core.$ZodMap.init(inst, def);
-  cycles.installCycleGuard(inst, () => new Map(), cycles.fillMap);
+  inst._zod.cycles = cycles.cycleOps;
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.mapProcessor(inst, ctx, json, params);
   inst.keyType = def.keyType;
@@ -1895,7 +1895,7 @@ export interface ZodSet<T extends core.SomeType = core.$ZodType>
 }
 export const ZodSet: core.$constructor<ZodSet> = /*@__PURE__*/ core.$constructor("ZodSet", (inst, def) => {
   core.$ZodSet.init(inst, def);
-  cycles.installCycleGuard(inst, () => new Set(), cycles.fillSet);
+  inst._zod.cycles = cycles.cycleOps;
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.setProcessor(inst, ctx, json, params);
 

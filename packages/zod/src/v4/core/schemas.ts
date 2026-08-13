@@ -31,6 +31,26 @@ export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> ex
   readonly skipChecks?: boolean;
 }
 
+/** @internal Capability a container needs to parse input containing reference
+ * cycles. Core defines the seam and calls it; the implementation is supplied per
+ * schema instance by whichever layer wants the behavior. `zod/mini` supplies
+ * nothing, so none of it is linked there. */
+export interface $ZodCycleOps {
+  /** Called once the container has allocated its output and before it descends.
+   * `0` continue, `1` this node was already seen and `payload` is filled, `2`
+   * this schema can't recurse so stop asking. */
+  enter(inst: $ZodType, input: object, payload: ParsePayload, ctx: ParseContextInternal): 0 | 1 | 2;
+  /** Called once the container's children are parsed. */
+  exit(inst: $ZodType, input: object, payload: ParsePayload, ctx: ParseContextInternal): void;
+}
+
+/** @internal False until a layer supplies cycle support, so the per-instance
+ * lookup (a miss on most `_zod` shapes) never happens in bundles that don't. */
+export let cyclesSupported = false;
+export function supportCycles(): void {
+  cyclesSupported = true;
+}
+
 export interface ParsePayload<T = unknown> {
   value: T;
   issues: errors.$ZodRawIssue[];
@@ -41,6 +61,9 @@ export interface ParsePayload<T = unknown> {
    * undefined. Set by $ZodCatch when catchValue substitutes and by every
    * $ZodTransform invocation. */
   fallback?: boolean | undefined;
+  /** @internal Set when the value came from a repeat visit to a node still being
+   * parsed. Its checks already run further up, against the finished value. */
+  memo?: boolean | undefined;
 }
 
 export type CheckFn<T> = (input: ParsePayload<T>) => util.MaybeAsync<void>;
@@ -124,6 +147,9 @@ export interface _$ZodTypeInternals {
   optin?: "optional" | undefined;
   /** @internal */
   optout?: "optional" | undefined;
+
+  /** @internal Supplied per instance by a layer that supports cyclic input. */
+  cycles?: $ZodCycleOps | undefined;
 
   /** @internal The set of literal values that will pass validation. Must be an exhaustive set. Used to determine optionality in z.record().
    *
@@ -220,6 +246,8 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
       checks: checks.$ZodCheck<never>[],
       ctx?: ParseContextInternal | undefined
     ): util.MaybeAsync<ParsePayload> => {
+      if (payload.memo) return payload;
+
       let isAborted = util.aborted(payload);
 
       let asyncResult!: Promise<unknown> | undefined;
@@ -1652,6 +1680,13 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
     }
 
     payload.value = Array(input.length);
+    const cyc = cyclesSupported ? inst._zod.cycles : undefined;
+    if (cyc) {
+      const outcome = cyc.enter(inst, input, payload, ctx);
+      if (outcome === 1) return payload;
+      if (outcome === 2) inst._zod.cycles = undefined;
+    }
+
     const proms: Promise<any>[] = [];
     for (let i = 0; i < input.length; i++) {
       const item = input[i];
@@ -1671,9 +1706,13 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
     }
 
     if (proms.length) {
-      return Promise.all(proms).then(() => payload);
+      return Promise.all(proms).then(() => {
+        if (cyc) cyc.exit(inst, input, payload, ctx);
+        return payload;
+      });
     }
 
+    if (cyc) cyc.exit(inst, input, payload, ctx);
     return payload; //handleArrayResultsAsync(parseResults, final);
   };
 });
@@ -1970,6 +2009,12 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     }
 
     payload.value = {};
+    const cyc = cyclesSupported ? inst._zod.cycles : undefined;
+    if (cyc) {
+      const outcome = cyc.enter(inst, input, payload, ctx);
+      if (outcome === 1) return payload;
+      if (outcome === 2) inst._zod.cycles = undefined;
+    }
 
     const proms: Promise<any>[] = [];
     const shape = value.shape;
@@ -1988,10 +2033,27 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     }
 
     if (!catchall) {
-      return proms.length ? Promise.all(proms).then(() => payload) : payload;
+      if (proms.length) {
+        return Promise.all(proms).then(() => {
+          if (cyc) cyc.exit(inst, input, payload, ctx);
+          return payload;
+        });
+      }
+      if (cyc) cyc.exit(inst, input, payload, ctx);
+      return payload;
     }
 
-    return handleCatchall(proms, input, payload, ctx, _normalized.value, inst);
+    const result = handleCatchall(proms, input, payload, ctx, _normalized.value, inst);
+    const ops = cyc;
+    if (!ops) return result;
+    if (result instanceof Promise) {
+      return result.then((r) => {
+        ops.exit(inst, input, r, ctx);
+        return r;
+      });
+    }
+    ops.exit(inst, input, result, ctx);
+    return result;
   };
 });
 
@@ -2004,8 +2066,10 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
     const superParse = inst._zod.parse;
     const _normalized = util.cached(() => normalizeDef(def));
 
-    const generateFastpass = (shape: any) => {
-      const doc = new Doc(["shape", "payload", "ctx", "setProp"]);
+    const generateFastpass = (shape: any, cyclic?: boolean) => {
+      const doc = new Doc(
+        cyclic ? ["shape", "payload", "ctx", "setProp", "inst", "cyc"] : ["shape", "payload", "ctx", "setProp"]
+      );
       const normalized = _normalized.value;
 
       const parseStr = (key: string) => {
@@ -2029,6 +2093,11 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
 
       // A: preserve key order {
       doc.write(`const newResult = {};`);
+      if (cyclic) {
+        // Register the output before descending so a back-edge binds to it.
+        doc.write(`payload.value = newResult;`);
+        doc.write(`if (cyc.enter(inst, input, payload, ctx) === 1) return payload;`);
+      }
       for (const key of normalized.keys) {
         const id = ids[key];
         const k = util.esc(key);
@@ -2108,12 +2177,16 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
       }
 
       doc.write(`payload.value = newResult;`);
+      if (cyclic) doc.write(`cyc.exit(inst, input, payload, ctx);`);
       doc.write(`return payload;`);
       const fn = doc.compile();
+      if (cyclic) return (payload: any, ctx: any, cyc?: any) => fn(shape, payload, ctx, setProp, inst, cyc);
       return (payload: any, ctx: any) => fn(shape, payload, ctx, setProp);
     };
 
     let fastpass!: ReturnType<typeof generateFastpass>;
+    let fastpassCyclic!: ReturnType<typeof generateFastpass>;
+    let resolved = false;
 
     const isObject = util.isObject;
     const jit = !core.globalConfig.jitless;
@@ -2138,6 +2211,20 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
       }
 
       if (jit && fastEnabled && ctx?.async === false && ctx.jitless !== true) {
+        const cyc = cyclesSupported ? inst._zod.cycles : undefined;
+        if (cyc) {
+          // The first parse settles whether this schema can recurse: `enter`
+          // drops the capability when it can't. Until then, take the
+          // interpreted path, which calls it.
+          if (!resolved) {
+            resolved = true;
+            return superParse(payload, ctx);
+          }
+          if (!fastpassCyclic) fastpassCyclic = generateFastpass(def.shape, true);
+          payload = fastpassCyclic(payload, ctx, cyc);
+          if (!catchall || payload.memo) return payload;
+          return handleCatchall([], input, payload, ctx, value, inst);
+        }
         // always synchronous
         if (!fastpass) fastpass = generateFastpass(def.shape);
         payload = fastpass(payload, ctx);
@@ -2703,6 +2790,13 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
     }
 
     payload.value = [];
+    const cyc = cyclesSupported ? inst._zod.cycles : undefined;
+    if (cyc) {
+      const outcome = cyc.enter(inst, input, payload, ctx);
+      if (outcome === 1) return payload;
+      if (outcome === 2) inst._zod.cycles = undefined;
+    }
+
     const proms: Promise<any>[] = [];
 
     const optinStart = getTupleOptStart(items, "optin");
@@ -2765,9 +2859,15 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
     }
 
     if (proms.length) {
-      return Promise.all(proms).then(() => handleTupleResults(itemResults, payload, items, input, optoutStart));
+      return Promise.all(proms).then(() => {
+        const r = handleTupleResults(itemResults, payload, items, input, optoutStart);
+        if (cyc) cyc.exit(inst, input, r, ctx);
+        return r;
+      });
     }
-    return handleTupleResults(itemResults, payload, items, input, optoutStart);
+    const result = handleTupleResults(itemResults, payload, items, input, optoutStart);
+    if (cyc) cyc.exit(inst, input, result, ctx);
+    return result;
   };
 });
 
@@ -2913,10 +3013,16 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
     }
 
     const proms: Promise<any>[] = [];
+    const cyc = cyclesSupported ? inst._zod.cycles : undefined;
 
     const values = def.keyType._zod.values;
     if (values) {
       payload.value = {};
+      if (cyc) {
+        const outcome = cyc.enter(inst, input, payload, ctx);
+        if (outcome === 1) return payload;
+        if (outcome === 2) inst._zod.cycles = undefined;
+      }
       const recordKeys = new Set<string | symbol>();
       for (const key of values) {
         if (typeof key === "string" || typeof key === "number" || typeof key === "symbol") {
@@ -2975,6 +3081,11 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       }
     } else {
       payload.value = {};
+      if (cyc) {
+        const outcome = cyc.enter(inst, input, payload, ctx);
+        if (outcome === 1) return payload;
+        if (outcome === 2) inst._zod.cycles = undefined;
+      }
       // Reflect.ownKeys for Symbol-key support; filter non-enumerable to match z.object()
       for (const key of Reflect.ownKeys(input)) {
         if (key === "__proto__") continue;
@@ -3041,8 +3152,12 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
     }
 
     if (proms.length) {
-      return Promise.all(proms).then(() => payload);
+      return Promise.all(proms).then(() => {
+        if (cyc) cyc.exit(inst, input, payload, ctx);
+        return payload;
+      });
     }
+    if (cyc) cyc.exit(inst, input, payload, ctx);
     return payload;
   };
 });
@@ -3090,6 +3205,12 @@ export const $ZodMap: core.$constructor<$ZodMap> = /*@__PURE__*/ core.$construct
 
     const proms: Promise<any>[] = [];
     payload.value = new Map();
+    const cyc = cyclesSupported ? inst._zod.cycles : undefined;
+    if (cyc) {
+      const outcome = cyc.enter(inst, input, payload, ctx);
+      if (outcome === 1) return payload;
+      if (outcome === 2) inst._zod.cycles = undefined;
+    }
 
     for (const [key, value] of input) {
       const keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
@@ -3106,7 +3227,13 @@ export const $ZodMap: core.$constructor<$ZodMap> = /*@__PURE__*/ core.$construct
       }
     }
 
-    if (proms.length) return Promise.all(proms).then(() => payload);
+    if (proms.length) {
+      return Promise.all(proms).then(() => {
+        if (cyc) cyc.exit(inst, input, payload, ctx);
+        return payload;
+      });
+    }
+    if (cyc) cyc.exit(inst, input, payload, ctx);
     return payload;
   };
 });
@@ -3193,6 +3320,13 @@ export const $ZodSet: core.$constructor<$ZodSet> = /*@__PURE__*/ core.$construct
 
     const proms: Promise<any>[] = [];
     payload.value = new Set();
+    const cyc = cyclesSupported ? inst._zod.cycles : undefined;
+    if (cyc) {
+      const outcome = cyc.enter(inst, input, payload, ctx);
+      if (outcome === 1) return payload;
+      if (outcome === 2) inst._zod.cycles = undefined;
+    }
+
     for (const item of input) {
       const result = def.valueType._zod.run({ value: item, issues: [] }, ctx);
       if (result instanceof Promise) {
@@ -3200,7 +3334,13 @@ export const $ZodSet: core.$constructor<$ZodSet> = /*@__PURE__*/ core.$construct
       } else handleSetResult(result, payload);
     }
 
-    if (proms.length) return Promise.all(proms).then(() => payload);
+    if (proms.length) {
+      return Promise.all(proms).then(() => {
+        if (cyc) cyc.exit(inst, input, payload, ctx);
+        return payload;
+      });
+    }
+    if (cyc) cyc.exit(inst, input, payload, ctx);
     return payload;
   };
 });
@@ -4069,7 +4209,7 @@ function handlePipeResult(left: ParsePayload, next: $ZodType, ctx: ParseContextI
     left.aborted = true;
     return left;
   }
-  return next._zod.run({ value: left.value, issues: left.issues, fallback: left.fallback }, ctx);
+  return next._zod.run({ value: left.value, issues: left.issues, fallback: left.fallback, memo: left.memo }, ctx);
 }
 
 ////////////////////////////////////////////
