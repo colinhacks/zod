@@ -2038,23 +2038,25 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         doc.write(`const ${id} = ${parseStr(key)};`);
 
         if (isOptionalIn && isOptionalOut) {
-          // For optional-in/out schemas, ignore errors on absent keys
+          // For optional-in/out schemas, ignore errors on absent keys — and skip the
+          // assignment too, matching handlePropertyResult's early return. Otherwise the value
+          // produced alongside a swallowed issue lands in a successful result.
           doc.write(`
-        if (${id}.issues.length) {
-          if (${isPresent}) {
+        if (!${id}.issues.length || ${isPresent}) {
+          if (${id}.issues.length) {
             payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
               ...iss,
               path: iss.path ? [${k}, ...iss.path] : [${k}]
             })));
           }
-        }
-        
-        if (${id}.value === undefined) {
-          if (${isPresent}) {
-            newResult[${k}] = undefined;
+
+          if (${id}.value === undefined) {
+            if (${isPresent}) {
+              newResult[${k}] = undefined;
+            }
+          } else {
+            newResult[${k}] = ${id}.value;
           }
-        } else {
-          newResult[${k}] = ${id}.value;
         }
 
       `);

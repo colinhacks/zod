@@ -68,7 +68,7 @@ The user-visible consequence: `z.input<typeof z.object({ a: z.preprocess(fn, T) 
 
 ### How the consumer reads it
 
-`$ZodObject.handlePropertyResult` (and the JIT codegen mirroring it):
+`$ZodObject.handlePropertyResult` (and the JIT codegen mirroring it — genuinely mirroring it only since the fix logged below; the fastpass used to swallow a property's issues without also skipping its assignment):
 
 ```ts
 const isPresent = key in input;
@@ -381,6 +381,7 @@ z.object({ a: z.preprocess(fn, z.string().optional()) }).parse({})
 | [#5917](https://github.com/colinhacks/zod/pull/5917) / [#5929](https://github.com/colinhacks/zod/pull/5929) | Made preprocess defer optionality to inner schema (so `preprocess(fn, X.optional())` worked again). Pure metadata-override subtype design. |
 | [#5937](https://github.com/colinhacks/zod/issues/5937) / [#5939](https://github.com/colinhacks/zod/pull/5939) | Restored `$ZodCatch.optin = "optional"` runtime + introduced the `caught` flag so an outer `$ZodOptional` could clobber catch's recovery. |
 | [#5178](https://github.com/colinhacks/zod/issues/5178) | Gave `$ZodTransform` its own `optout = "optional"` and made object output inference require `optin` *and* `optout`, matching `util.optionalKeys`. Restores the v3 key optionality that `.transform()` had been erasing. Also corrects `A.transform(fn).pipe(B.optional())`, which inferred a key-optional output for a key the parser rejects when absent. |
+| [#6382](https://github.com/colinhacks/zod/pull/6382) | Separate correctness fix. `$ZodObjectJIT`'s `isOptionalIn && isOptionalOut` branch swallowed a property's issues on an absent key but still ran the assignment, so a value produced alongside a swallowed issue leaked into a `success: true` result — on the default parse path only, with `jitless` and async both correct. Reachable without any transform, via a `.check()` / `.superRefine()` that writes `ctx.value`. |
 | [#5941](https://github.com/colinhacks/zod/pull/5941) | Renamed `caught → fallback`; propagated through `$ZodPipe` boundaries; also makes `$ZodPreprocess.optin = "optional"` and `$ZodTransform` set `fallback` on every invocation. Restores the bare-`preprocess` regression. **Plus** prototype commit promoting `optin = "optional"` from preprocess to transform (under consideration). |
 
 ## Design principle: flexible inputs, strict outputs (at runtime)

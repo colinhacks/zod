@@ -398,6 +398,60 @@ test("transform preserves optout from the in side", () => {
   expect(json.required).toEqual(undefined);
 });
 
+// When a property is optional on both axes and the key is absent, the issues it raised are
+// dropped — and so is its value. $ZodObjectJIT generates its own copy of that rule, so pin the
+// fastpass, the interpreted path, and async (which routes back through handlePropertyResult)
+// together: a fastpass that swallowed the issue but still assigned leaked the transform's
+// return value, `z.NEVER` included, into a successful result.
+test("absent optional key drops the issue and the value together", async () => {
+  const schema = z.object({
+    a: z
+      .string()
+      .optional()
+      .transform((_v, ctx) => {
+        ctx.addIssue({ code: "custom", message: "bad" });
+        return "leaked";
+      }),
+  });
+
+  // toStrictEqual, so a fastpass that regressed to assigning `a: undefined` is caught too.
+  expect(schema.parse({})).toStrictEqual({});
+  expect(schema.parse({}, { jitless: true })).toStrictEqual({});
+  await expect(schema.parseAsync({})).resolves.toStrictEqual({});
+
+  // A key that is actually present still reports the issue.
+  expect(schema.safeParse({ a: "x" }).success).toEqual(false);
+  expect(schema.safeParse({ a: "x" }, { jitless: true }).success).toEqual(false);
+
+  // The branch is reachable without a transform — a check that writes `ctx.value` alongside an
+  // issue hits it too, so this case pins the fastpass even if the pipe carve-out above ever goes.
+  const refined = z.object({
+    a: z
+      .string()
+      .optional()
+      .superRefine((_v, ctx) => {
+        ctx.addIssue({ code: "custom", message: "bad" });
+        ctx.value = "leaked";
+      }),
+  });
+  expect(refined.parse({})).toStrictEqual({});
+  expect(refined.parse({}, { jitless: true })).toStrictEqual({});
+
+  // handleTupleResults truncates for the tuple analog.
+  const tuple = z.tuple([
+    z.string(),
+    z
+      .number()
+      .optional()
+      .transform((_v, ctx) => {
+        ctx.addIssue({ code: "custom", message: "bad" });
+        return 1;
+      }),
+  ]);
+  expect(tuple.parse(["a"])).toEqual(["a"]);
+  expect(tuple.safeParse(["a", 2]).success).toEqual(false);
+});
+
 // Defensive: tuple optional-tail inference also reads optout. The PR that introduced
 // `"includeUndefined"` had to update TupleOutputTypeWithOptionals; pin the result so
 // any future flag change has to keep this contract.
