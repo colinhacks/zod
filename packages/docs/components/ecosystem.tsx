@@ -59,6 +59,13 @@ const apiLibraries: ZodResource[] = [
     description: "Advanced fetch client builder",
     slug: "L-Blondy/up-fetch",
   },
+  {
+    name: "zodql",
+    url: "https://github.com/mattiasahlsen/zodql",
+    description:
+      "Use a single Zod schema as the source of truth for a GraphQL query, its inferred response type, and runtime validation.",
+    slug: "mattiasahlsen/zodql",
+  },
   // https://github.com/honojs/middleware/tree/main/packages/zod-validator
   // {
   //   name: "@hono/zod-validator",
