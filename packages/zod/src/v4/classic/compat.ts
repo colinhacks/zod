@@ -8,7 +8,7 @@ export type {
   output as TypeOf,
   /** @deprecated Use `z.output<T>` instead. */
   output as Infer,
-  /** @deprecated Use `z.core.$$ZodFirstPartyTypes` instead */
+  /** @deprecated Use `z.core.$ZodTypes` instead */
   $ZodTypes as ZodFirstPartySchemaTypes,
 } from "../core/index.js";
 
