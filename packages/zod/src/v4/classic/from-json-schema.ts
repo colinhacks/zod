@@ -1,6 +1,6 @@
 import type * as JSONSchema from "../core/json-schema.js";
 import { type $ZodRegistry, globalRegistry } from "../core/registries.js";
-import { assignProp } from "../core/util.js";
+import { assignProp, isPlainObject } from "../core/util.js";
 import * as _checks from "./checks.js";
 import * as _iso from "./iso.js";
 import * as _schemas from "./schemas.js";
@@ -440,6 +440,31 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
             result = z.intersection(result, schemasToIntersect[i]!);
           }
           zodSchema = result;
+        }
+
+        // When additionalProperties is false, reject keys that are neither
+        // defined in properties nor matched by any patternProperty.
+        if (schema.additionalProperties === false) {
+          const propertyKeys = Object.keys(shape);
+          const patterns = patternKeys.map((p) => new RegExp(p));
+          const basePatternSchema = zodSchema;
+          zodSchema = zodSchema.check((payload) => {
+            if (!isPlainObject(payload.value)) return;
+            const unrecognized: string[] = [];
+            for (const key of Object.keys(payload.value)) {
+              if (propertyKeys.includes(key)) continue;
+              if (patterns.some((regex) => regex.test(key))) continue;
+              unrecognized.push(key);
+            }
+            if (unrecognized.length) {
+              payload.issues.push({
+                code: "unrecognized_keys",
+                keys: unrecognized,
+                input: payload.value,
+                inst: basePatternSchema,
+              });
+            }
+          });
         }
         break;
       }
