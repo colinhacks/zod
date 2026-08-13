@@ -952,14 +952,15 @@ export function safeExtend<T extends ZodMiniObject, U extends core.$ZodLooseShap
   return util.safeExtend(schema, shape as any);
 }
 
-/** @deprecated Identical to `z.extend(A, B)` */
+/**
+ * @deprecated Use [`z.extend(A, B.shape)`](https://zod.dev/api?id=extend) instead.
+ */
+// @__NO_SIDE_EFFECTS__
 export function merge<T extends ZodMiniObject, U extends ZodMiniObject>(
   a: T,
   b: U
-): ZodMiniObject<util.Extend<T["shape"], U["shape"]>, T["_zod"]["config"]>;
-// @__NO_SIDE_EFFECTS__
-export function merge(schema: ZodMiniObject, shape: any): ZodMiniObject {
-  return util.extend(schema, shape);
+): ZodMiniObject<util.Extend<T["shape"], U["shape"]>, U["_zod"]["config"]> {
+  return util.merge(a, b) as any;
 }
 
 // @__NO_SIDE_EFFECTS__
