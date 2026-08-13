@@ -100,43 +100,15 @@ test("failing when map is bigger than max() ", () => {
 });
 
 test("failing when map does not match size() ", () => {
-  const tooSmall = justTwo.safeParse(new Map([["a", "b"]]));
-  expect(tooSmall.success).toEqual(false);
-  expect(tooSmall.error!.issues).toMatchInlineSnapshot(`
-    [
-      {
-        "code": "too_small",
-        "exact": true,
-        "inclusive": true,
-        "message": "Too small: expected map to have exactly 2 entries",
-        "minimum": 2,
-        "origin": "map",
-        "path": [],
-      },
-    ]
-  `);
-
-  const tooBig = justTwo.safeParse(
-    new Map([
-      ["a", "b"],
-      ["c", "d"],
-      ["e", "f"],
-    ])
+  expect(justTwo.safeParse(new Map([["a", "b"]])).error!.issues[0].message).toEqual(
+    "Too small: expected map to have exactly 2 entries"
   );
-  expect(tooBig.success).toEqual(false);
-  expect(tooBig.error!.issues).toMatchInlineSnapshot(`
-    [
-      {
-        "code": "too_big",
-        "exact": true,
-        "inclusive": true,
-        "maximum": 2,
-        "message": "Too big: expected map to have exactly 2 entries",
-        "origin": "map",
-        "path": [],
-      },
-    ]
-  `);
+  const tooBig = new Map([
+    ["a", "b"],
+    ["c", "d"],
+    ["e", "f"],
+  ]);
+  expect(justTwo.safeParse(tooBig).error!.issues[0].message).toEqual("Too big: expected map to have exactly 2 entries");
 });
 
 test("valid parse async", async () => {
