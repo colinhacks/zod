@@ -9,7 +9,6 @@ import {
   type ZodStandardJSONSchemaPayload,
   extractDefs,
   finalize,
-  handleUnrepresentable,
   initializeContext,
   process,
 } from "./to-json-schema.js";
@@ -100,12 +99,16 @@ export const booleanProcessor: Processor<schemas.$ZodBoolean> = (_schema, _ctx, 
   (json as JSONSchema.BooleanSchema).type = "boolean";
 };
 
-export const bigintProcessor: Processor<schemas.$ZodBigInt> = (schema, ctx, _json, _params) => {
-  handleUnrepresentable(schema, ctx, "BigInt cannot be represented in JSON Schema");
+export const bigintProcessor: Processor<schemas.$ZodBigInt> = (_schema, ctx, _json, _params) => {
+  if (ctx.unrepresentable === "throw") {
+    throw new Error("BigInt cannot be represented in JSON Schema");
+  }
 };
 
-export const symbolProcessor: Processor<schemas.$ZodSymbol> = (schema, ctx, _json, _params) => {
-  handleUnrepresentable(schema, ctx, "Symbols cannot be represented in JSON Schema");
+export const symbolProcessor: Processor<schemas.$ZodSymbol> = (_schema, ctx, _json, _params) => {
+  if (ctx.unrepresentable === "throw") {
+    throw new Error("Symbols cannot be represented in JSON Schema");
+  }
 };
 
 export const nullProcessor: Processor<schemas.$ZodNull> = (_schema, ctx, json, _params) => {
@@ -118,12 +121,16 @@ export const nullProcessor: Processor<schemas.$ZodNull> = (_schema, ctx, json, _
   }
 };
 
-export const undefinedProcessor: Processor<schemas.$ZodUndefined> = (schema, ctx, _json, _params) => {
-  handleUnrepresentable(schema, ctx, "Undefined cannot be represented in JSON Schema");
+export const undefinedProcessor: Processor<schemas.$ZodUndefined> = (_schema, ctx, _json, _params) => {
+  if (ctx.unrepresentable === "throw") {
+    throw new Error("Undefined cannot be represented in JSON Schema");
+  }
 };
 
-export const voidProcessor: Processor<schemas.$ZodVoid> = (schema, ctx, _json, _params) => {
-  handleUnrepresentable(schema, ctx, "Void cannot be represented in JSON Schema");
+export const voidProcessor: Processor<schemas.$ZodVoid> = (_schema, ctx, _json, _params) => {
+  if (ctx.unrepresentable === "throw") {
+    throw new Error("Void cannot be represented in JSON Schema");
+  }
 };
 
 export const neverProcessor: Processor<schemas.$ZodNever> = (_schema, _ctx, json, _params) => {
@@ -138,8 +145,10 @@ export const unknownProcessor: Processor<schemas.$ZodUnknown> = (_schema, _ctx, 
   // empty schema accepts anything
 };
 
-export const dateProcessor: Processor<schemas.$ZodDate> = (schema, ctx, _json, _params) => {
-  handleUnrepresentable(schema, ctx, "Date cannot be represented in JSON Schema");
+export const dateProcessor: Processor<schemas.$ZodDate> = (_schema, ctx, _json, _params) => {
+  if (ctx.unrepresentable === "throw") {
+    throw new Error("Date cannot be represented in JSON Schema");
+  }
 };
 
 export const enumProcessor: Processor<schemas.$ZodEnum> = (schema, _ctx, json, _params) => {
@@ -156,10 +165,17 @@ export const literalProcessor: Processor<schemas.$ZodLiteral> = (schema, ctx, js
   const vals: (string | number | boolean | null)[] = [];
   for (const val of def.values) {
     if (val === undefined) {
-      handleUnrepresentable(schema, ctx, "Literal `undefined` cannot be represented in JSON Schema");
+      if (ctx.unrepresentable === "throw") {
+        throw new Error("Literal `undefined` cannot be represented in JSON Schema");
+      } else {
+        // do not add to vals
+      }
     } else if (typeof val === "bigint") {
-      handleUnrepresentable(schema, ctx, "BigInt literals cannot be represented in JSON Schema");
-      vals.push(Number(val));
+      if (ctx.unrepresentable === "throw") {
+        throw new Error("BigInt literals cannot be represented in JSON Schema");
+      } else {
+        vals.push(Number(val));
+      }
     } else {
       vals.push(val);
     }
@@ -183,8 +199,10 @@ export const literalProcessor: Processor<schemas.$ZodLiteral> = (schema, ctx, js
   }
 };
 
-export const nanProcessor: Processor<schemas.$ZodNaN> = (schema, ctx, _json, _params) => {
-  handleUnrepresentable(schema, ctx, "NaN cannot be represented in JSON Schema");
+export const nanProcessor: Processor<schemas.$ZodNaN> = (_schema, ctx, _json, _params) => {
+  if (ctx.unrepresentable === "throw") {
+    throw new Error("NaN cannot be represented in JSON Schema");
+  }
 };
 
 export const templateLiteralProcessor: Processor<schemas.$ZodTemplateLiteral> = (schema, _ctx, json, _params) => {
@@ -223,24 +241,34 @@ export const successProcessor: Processor<schemas.$ZodSuccess> = (_schema, _ctx, 
   (json as JSONSchema.BooleanSchema).type = "boolean";
 };
 
-export const customProcessor: Processor<schemas.$ZodCustom> = (schema, ctx, _json, _params) => {
-  handleUnrepresentable(schema, ctx, "Custom types cannot be represented in JSON Schema");
+export const customProcessor: Processor<schemas.$ZodCustom> = (_schema, ctx, _json, _params) => {
+  if (ctx.unrepresentable === "throw") {
+    throw new Error("Custom types cannot be represented in JSON Schema");
+  }
 };
 
-export const functionProcessor: Processor<schemas.$ZodFunction> = (schema, ctx, _json, _params) => {
-  handleUnrepresentable(schema, ctx, "Function types cannot be represented in JSON Schema");
+export const functionProcessor: Processor<schemas.$ZodFunction> = (_schema, ctx, _json, _params) => {
+  if (ctx.unrepresentable === "throw") {
+    throw new Error("Function types cannot be represented in JSON Schema");
+  }
 };
 
-export const transformProcessor: Processor<schemas.$ZodTransform> = (schema, ctx, _json, _params) => {
-  handleUnrepresentable(schema, ctx, "Transforms cannot be represented in JSON Schema");
+export const transformProcessor: Processor<schemas.$ZodTransform> = (_schema, ctx, _json, _params) => {
+  if (ctx.unrepresentable === "throw") {
+    throw new Error("Transforms cannot be represented in JSON Schema");
+  }
 };
 
-export const mapProcessor: Processor<schemas.$ZodMap> = (schema, ctx, _json, _params) => {
-  handleUnrepresentable(schema, ctx, "Map cannot be represented in JSON Schema");
+export const mapProcessor: Processor<schemas.$ZodMap> = (_schema, ctx, _json, _params) => {
+  if (ctx.unrepresentable === "throw") {
+    throw new Error("Map cannot be represented in JSON Schema");
+  }
 };
 
-export const setProcessor: Processor<schemas.$ZodSet> = (schema, ctx, _json, _params) => {
-  handleUnrepresentable(schema, ctx, "Set cannot be represented in JSON Schema");
+export const setProcessor: Processor<schemas.$ZodSet> = (_schema, ctx, _json, _params) => {
+  if (ctx.unrepresentable === "throw") {
+    throw new Error("Set cannot be represented in JSON Schema");
+  }
 };
 
 // ==================== COMPOSITE TYPE PROCESSORS ====================
@@ -496,7 +524,9 @@ export const catchProcessor: Processor<schemas.$ZodCatch> = (schema, ctx, json, 
   try {
     catchValue = def.catchValue(undefined as any);
   } catch {
-    handleUnrepresentable(schema, ctx, "Dynamic catch values are not supported in JSON Schema");
+    if (ctx.unrepresentable === "throw") {
+      throw new Error("Dynamic catch values are not supported in JSON Schema");
+    }
     return;
   }
   json.default = catchValue;
