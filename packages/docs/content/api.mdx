@@ -1067,6 +1067,14 @@ z.any(); // inferred type: `any`
 z.unknown(); // inferred type: `unknown`
 ```
 
+As object properties, their keys are required, matching `{ a: any }` in TypeScript.
+
+```ts
+z.object({ a: z.any() }).parse({}); // ❌
+z.object({ a: z.any() }).parse({ a: undefined }); // ✅
+z.object({ a: z.any().optional() }).parse({}); // ✅
+```
+
 ## Never
 
 No value will pass validation.
