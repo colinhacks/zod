@@ -808,3 +808,27 @@ test("exclude/extract match the discriminator input side", () => {
   expect(() => Wrapped.exclude(["a"])).toThrow(/must also be listed/);
   expect(Wrapped.exclude(["a", undefined]).options.length).toEqual(1);
 });
+
+test("exclude/extract with an optional-input discriminator", () => {
+  // `.default()` makes the key optional on the input side without accepting
+  // `undefined`, so it must not overlap with another option's `undefined`.
+  const U = z.discriminatedUnion("type", [
+    z.object({ type: z.literal("a").optional(), x: z.string() }),
+    z.object({ type: z.literal("b").default("b"), y: z.number() }),
+    z.object({ type: z.literal("c"), w: z.boolean() }),
+  ]);
+
+  const R = U.exclude(["a", undefined]);
+  expect(R.options.length).toEqual(2);
+  expectTypeOf<z.infer<typeof R>>().toEqualTypeOf<{ type: "b"; y: number } | { type: "c"; w: boolean }>();
+
+  const Defaulted = z.discriminatedUnion("type", [
+    z.object({ type: z.literal("a").default("a"), x: z.string() }),
+    z.object({ type: z.literal("b"), y: z.number() }),
+  ]);
+  // @ts-expect-error a defaulted discriminator does not accept undefined
+  expect(() => Defaulted.exclude([undefined])).toThrow(/not found in union/);
+
+  const OnlyB = Defaulted.exclude(["a"]);
+  expectTypeOf<z.infer<typeof OnlyB>>().toEqualTypeOf<{ type: "b"; y: number }>();
+});

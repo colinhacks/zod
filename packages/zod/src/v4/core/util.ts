@@ -190,10 +190,12 @@ export type PrimitiveSet = Set<Primitive>;
 
 type PropAt<T, Disc extends string> = T extends unknown ? (Disc extends keyof T ? T[Disc] : never) : never;
 
-/** The discriminator values accepted by a single union option. Read off the input side, since that is
- * where `propValues` comes from — a codec discriminator matches on its encoded values. */
-export type DiscriminatorValues<T, Disc extends string> = T extends { _zod: { input: infer I } }
-  ? PropAt<I, Disc>
+/** The discriminator values accepted by a single union option, matching its runtime `propValues`. They come
+ * from the input side, since that is the side `propValues` is built from — so a codec discriminator matches
+ * on its encoded values. An optional-input wrapper like `.default()` marks the key optional there without
+ * accepting `undefined`, so `undefined` survives only when the output side has it too. */
+export type DiscriminatorValues<T, Disc extends string> = T extends { _zod: { input: infer I; output: infer O } }
+  ? Exclude<PropAt<I, Disc>, undefined> | (undefined extends PropAt<O, Disc> ? undefined : never)
   : never;
 
 type Overlaps<T, Values> = [T & Values] extends [never] ? false : true;
