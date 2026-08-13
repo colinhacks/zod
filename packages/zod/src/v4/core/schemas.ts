@@ -1196,7 +1196,7 @@ export const $ZodNumber: core.$constructor<$ZodNumber> = /*@__PURE__*/ core.$con
         ? Number.isNaN(input)
           ? "NaN"
           : !Number.isFinite(input)
-            ? "Infinity"
+            ? String(input)
             : undefined
         : undefined;
 

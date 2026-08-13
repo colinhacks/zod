@@ -22,7 +22,7 @@ test("Infinity validation", () => {
         "code": "invalid_type",
         "received": "Infinity",
         "path": [],
-        "message": "Invalid input: expected number, received number"
+        "message": "Invalid input: expected number, received Infinity"
       }
     ]],
       "success": false,
@@ -34,9 +34,9 @@ test("Infinity validation", () => {
       {
         "expected": "number",
         "code": "invalid_type",
-        "received": "Infinity",
+        "received": "-Infinity",
         "path": [],
-        "message": "Invalid input: expected number, received number"
+        "message": "Invalid input: expected number, received -Infinity"
       }
     ]],
       "success": false,
@@ -208,7 +208,7 @@ test(".finite() validation", () => {
         "code": "invalid_type",
         "received": "Infinity",
         "path": [],
-        "message": "Invalid input: expected number, received number"
+        "message": "Invalid input: expected number, received Infinity"
       }
     ]],
       "success": false,
@@ -220,9 +220,9 @@ test(".finite() validation", () => {
       {
         "expected": "number",
         "code": "invalid_type",
-        "received": "Infinity",
+        "received": "-Infinity",
         "path": [],
-        "message": "Invalid input: expected number, received number"
+        "message": "Invalid input: expected number, received -Infinity"
       }
     ]],
       "success": false,
