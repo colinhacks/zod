@@ -430,7 +430,7 @@ test("httpurl", () => {
   const httpUrl = z.url({
     protocol: /^https?$/,
     hostname: z.regexes.domain,
-    // /^([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/
+    // /^(?=.{1,253}$)([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/
   });
 
   httpUrl.parse("https://example.com");
@@ -470,10 +470,10 @@ test("httpurl", () => {
   expect(() => httpUrl.parse(`http://${longHost}`)).toThrow();
   // TLD over the 63-char label limit
   expect(() => httpUrl.parse(`http://example.${"a".repeat(64)}`)).toThrow();
-  // a host at the 253-char boundary is still accepted
-  const maxHost = `${`${"a".repeat(61)}.`.repeat(4)}aaa`; // 4 * 62 + 3 = 251 chars
-  expect(maxHost.length).toBeLessThanOrEqual(253);
+  // a host at exactly the 253-char limit is still accepted, one char more is not
+  const maxHost = `${`${"a".repeat(61)}.`.repeat(4)}aaaaa`; // 4 * 62 + 5 = 253 chars
   httpUrl.parse(`http://${maxHost}`);
+  expect(() => httpUrl.parse(`http://${maxHost}a`)).toThrow();
   // missing // after protocol
   expect(() => httpUrl.parse("http:example.com")).toThrow();
   expect(() => httpUrl.parse("https:example.com")).toThrow();
