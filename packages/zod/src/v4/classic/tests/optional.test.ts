@@ -359,3 +359,29 @@ test("absent key is written back when the output key is required", async () => {
     expect("optional" in result).toEqual(false);
   }
 });
+
+// An absent optional key whose check fails has its issue swallowed; the value the
+// check wrote must go with it, on the JIT fastpass as well as the interpreted path.
+test("swallowed issue on an absent optional key drops its value", async () => {
+  const schema = z.object({
+    a: z
+      .string()
+      .optional()
+      .superRefine((_v, ctx) => {
+        ctx.addIssue({ code: "custom", message: "bad" });
+        ctx.value = "leaked";
+      }),
+  });
+
+  expect(schema.safeParse({})).toMatchObject({ success: true, data: {} });
+  expect(schema.safeParse({}, { jitless: true })).toMatchObject({ success: true, data: {} });
+  expect(await schema.safeParseAsync({})).toMatchObject({ success: true, data: {} });
+
+  for (const result of [schema.safeParse({}), schema.safeParse({}, { jitless: true })]) {
+    expect("a" in result.data!).toEqual(false);
+  }
+
+  // A present key keeps both the issue and its value.
+  expect(schema.safeParse({ a: "x" }).success).toEqual(false);
+  expect(schema.safeParse({ a: "x" }, { jitless: true }).success).toEqual(false);
+});

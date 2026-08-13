@@ -95,6 +95,8 @@ if (result.value === undefined && !isPresent && isOptionalOut) return;
 
 The `isOptionalOut` conjunction on that last line is what keeps parse output in step with `z.output`. A property whose `optout` is `undefined` infers as a required key, so it has to be present on the parsed object even when the input omitted it and the property produced `undefined` — the `optin`-optional/`optout`-required cell, which is exactly what `.transform()` lands in (#5178). `.default()` and `.catch()` sit in the same cell but never produce `undefined`, so they were already writing the key.
 
+Do not read a symmetry into that for the backward direction. `$ZodObject` has no direction check: encoding runs the same code, but there the object it produces is `z.input`-shaped, so the axis that governs key optionality is `optin`, not `optout`. The gate is unreachable from type-checked encode calls — `optout !== "optional"` is what makes the key required in `z.output`, which is `encode`'s own parameter type, so the key is always present — but the rule as written is a statement about decoding only.
+
 `$ZodTuple` does the analogous thing for trailing tuple slots.
 
 `$ZodOptional` (the standalone wrapper) reads the *inner's* `optin` to decide whether to short-circuit on `undefined` input:
