@@ -1013,6 +1013,57 @@ export const $ZodE164: core.$constructor<$ZodE164> = /*@__PURE__*/ core.$constru
   $ZodStringFormat.init(inst, def);
 });
 
+//////////////////////////////   ZodCreditCard   //////////////////////////////
+
+const CC_SANITIZE = /[- ]/g;
+
+/** Luhn checksum on a digit-only string. Adapted from valibot (MIT). */
+function isLuhnAlgo(digits: string): boolean {
+  let length = digits.length;
+  let bit = 1;
+  let sum = 0;
+  while (length) {
+    const value = +digits[--length]!;
+    bit ^= 1;
+    sum += bit ? [0, 2, 4, 6, 8, 1, 3, 5, 7, 9][value]! : value;
+  }
+  return sum % 10 === 0;
+}
+
+export function isValidCreditCard(input: string): boolean {
+  if (!regexes.creditCard.test(input)) return false;
+  return isLuhnAlgo(input.replace(CC_SANITIZE, ""));
+}
+
+export interface $ZodCreditCardDef extends $ZodStringFormatDef<"credit_card"> {}
+export interface $ZodCreditCardInternals extends $ZodStringFormatInternals<"credit_card"> {
+  def: $ZodCreditCardDef;
+}
+
+export interface $ZodCreditCard extends $ZodType {
+  _zod: $ZodCreditCardInternals;
+}
+
+export const $ZodCreditCard: core.$constructor<$ZodCreditCard> = /*@__PURE__*/ core.$constructor(
+  "$ZodCreditCard",
+  (inst, def): void => {
+    // Shape only — the Luhn check below is not expressible as a pattern, so consumers of
+    // `pattern` (JSON Schema, template literals) get the length and separator rules alone.
+    def.pattern ??= regexes.creditCard;
+    $ZodStringFormat.init(inst, def);
+    inst._zod.check = (payload) => {
+      if (isValidCreditCard(payload.value)) return;
+      payload.issues.push({
+        code: "invalid_format",
+        format: "credit_card",
+        input: payload.value,
+        inst,
+        continue: !def.abort,
+      });
+    };
+  }
+);
+
 //////////////////////////////   ZodJWT   //////////////////////////////
 
 export function isValidJWT(token: string, algorithm: util.JWTAlgorithm | null = null): boolean {
@@ -4762,6 +4813,7 @@ export type $ZodStringFormatTypes =
   | $ZodBase64
   | $ZodBase64URL
   | $ZodE164
+  | $ZodCreditCard
   | $ZodJWT
   | $ZodCustomStringFormat<"hex">
   | $ZodCustomStringFormat<util.HashFormat>

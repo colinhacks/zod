@@ -265,6 +265,7 @@ z.ipv6();
 z.mac();
 z.cidrv4();        // ipv4 CIDR block
 z.cidrv6();        // ipv6 CIDR block
+z.creditCard();    // credit card number (Luhn checksum)
 z.hash("sha256");  // or "sha1", "sha384", "sha512", "md5"
 z.iso.date();
 z.iso.time();
@@ -546,6 +547,21 @@ mac.parse("00:1A:2b:3C:4d:5E");  // ❌ no mixed case
 // custom delimiter
 const dashMac = z.mac({ delimiter: "-" });
 dashMac.parse("00-1A-2B-3C-4D-5E"); // ✅
+```
+
+### Credit card numbers
+
+Validate a card number: 12 to 19 digits with a valid [Luhn](https://en.wikipedia.org/wiki/Luhn_algorithm) checksum. The issuer is not identified, so cards from any scheme are accepted.
+
+```ts
+const card = z.creditCard();
+card.parse("4111111111111111");     // ✅
+card.parse("4111 1111 1111 1111");  // ✅ single spaces
+card.parse("4111-1111-1111-1111");  // ✅ single hyphens
+card.parse("4111  1111 1111 1111"); // ❌ no repeated separators
+card.parse(" 4111111111111111");    // ❌ no surrounding whitespace
+card.parse("4111.1111.1111.1111");  // ❌ spaces and hyphens only
+card.parse("4111111111111112");     // ❌ failed checksum
 ```
 
 ### JWTs
