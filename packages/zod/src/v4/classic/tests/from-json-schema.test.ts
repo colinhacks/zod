@@ -893,3 +893,30 @@ test("Date default is coerced to its JSON string form", () => {
   const schema = fromJSONSchema({ type: "string", default: date as any });
   expect(schema.parse(undefined)).toBe(date.toISOString());
 });
+
+// An object literal can't express an own "__proto__" key — `{ __proto__: x }`
+// sets the literal's prototype instead. JSON.parse is both the realistic source
+// of a JSON Schema and the only way to write these cases.
+test("required __proto__ property is represented in the shape but stripped during parsing", () => {
+  const schema = fromJSONSchema(
+    JSON.parse(`{
+      "type": "object",
+      "properties": { "__proto__": { "type": "string", "const": "admin" }, "role": { "type": "string" } },
+      "required": ["__proto__", "role"]
+    }`)
+  );
+
+  expect(Object.prototype.hasOwnProperty.call((schema as z.ZodObject).shape, "__proto__")).toBe(true);
+  expect(schema.parse({ role: "x" })).toEqual({ role: "x" });
+  expect(schema.parse(JSON.parse(`{ "role": "x", "__proto__": "wrong" }`))).toEqual({ role: "x" });
+  expect(schema.parse(JSON.parse(`{ "role": "x", "__proto__": "admin" }`))).toEqual({ role: "x" });
+});
+
+test("__proto__ annotation key reaches the registry", () => {
+  const registry = z.registry<Record<string, unknown>>();
+  const schema = fromJSONSchema(JSON.parse(`{ "type": "string", "__proto__": { "custom": 1 } }`), { registry });
+
+  const meta = registry.get(schema)!;
+  expect(Object.prototype.hasOwnProperty.call(meta, "__proto__")).toBe(true);
+  expect(meta.__proto__).toEqual({ custom: 1 });
+});

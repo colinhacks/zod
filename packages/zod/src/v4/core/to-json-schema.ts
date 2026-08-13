@@ -3,6 +3,18 @@ import type * as JSONSchema from "./json-schema.js";
 import { type $ZodRegistry, globalRegistry } from "./registries.js";
 import type * as schemas from "./schemas.js";
 import type { StandardJSONSchemaV1, StandardSchemaWithJSONProps } from "./standard-schema.js";
+import { assignProp } from "./util.js";
+
+function assignProps<T extends object>(target: T, ...sources: object[]): T {
+  for (const source of sources) {
+    for (const key of Reflect.ownKeys(source)) {
+      if (Object.prototype.propertyIsEnumerable.call(source, key)) {
+        assignProp(target, key, (source as any)[key]);
+      }
+    }
+  }
+  return target;
+}
 
 export type Processor<T extends schemas.$ZodType = schemas.$ZodType> = (
   schema: T,
@@ -75,6 +87,8 @@ export interface Seen {
   /** Cycle path */
   cycle?: (string | number)[] | undefined;
   isParent?: boolean | undefined;
+  /** Deferred `unrepresentable: "throw"` error, thrown after `override` gets a chance to handle it */
+  unrepresentable?: string | undefined;
   /** Schema to inherit JSON Schema properties from (set by processor for wrappers) */
   ref?: schemas.$ZodType | null;
   /** JSON Schema property path for this schema */
@@ -134,6 +148,17 @@ export function initializeContext(params: JSONSchemaGeneratorParams): ToJSONSche
     reused: params?.reused ?? "inline",
     external: params?.external ?? undefined,
   };
+}
+
+/** Applies the `unrepresentable` setting at a site with no JSON Schema equivalent. Under `"throw"`
+ * the error is deferred: it is recorded on the seen entry and thrown in `finalize`, but only if
+ * `override` did not give the node a JSON Schema form of its own. */
+export function handleUnrepresentable(schema: schemas.$ZodType, ctx: ToJSONSchemaContext, message: string): void {
+  if (ctx.unrepresentable === "throw") {
+    const seen = ctx.seen.get(schema);
+    if (seen) seen.unrepresentable = message;
+    else throw new Error(message);
+  }
 }
 
 export function process<T extends schemas.$ZodType>(
@@ -196,7 +221,7 @@ export function process<T extends schemas.$ZodType>(
 
   // metadata
   const meta = ctx.metadataRegistry.get(schema);
-  if (meta) Object.assign(result.schema, meta);
+  if (meta) assignProps(result.schema, meta);
 
   if (ctx.io === "input" && isTransforming(schema)) {
     // examples/defaults only apply to output type of pipe
@@ -356,6 +381,28 @@ export function extractDefs<T extends schemas.$ZodType>(
   }
 }
 
+const ANNOTATION_KEYS = /*@__PURE__*/ new Set([
+  "title",
+  "description",
+  "default",
+  "examples",
+  "deprecated",
+  "readOnly",
+  "writeOnly",
+  "$comment",
+  "id",
+  "$id",
+  "_prefault",
+]);
+
+function structuralSnapshot(schema: JSONSchema.BaseSchema): string {
+  const structural: Record<string, unknown> = {};
+  for (const key in schema) {
+    if (!ANNOTATION_KEYS.has(key)) structural[key] = schema[key];
+  }
+  return JSON.stringify(structural);
+}
+
 export function finalize<T extends schemas.$ZodType>(
   ctx: ToJSONSchemaContext,
   schema: T
@@ -388,10 +435,10 @@ export function finalize<T extends schemas.$ZodType>(
         schema.allOf = schema.allOf ?? [];
         schema.allOf.push(refSchema);
       } else {
-        Object.assign(schema, refSchema);
+        assignProps(schema, refSchema);
       }
       // restore child's own properties (child wins)
-      Object.assign(schema, _cached);
+      assignProps(schema, _cached);
 
       const isParentRef = zodSchema._zod.parent === ref;
 
@@ -439,11 +486,23 @@ export function finalize<T extends schemas.$ZodType>(
     }
 
     // execute overrides
+    // Snapshot the structural (non-annotation) half so we can tell whether `override` actually
+    // gave this node a JSON Schema form.
+    const before = seen.unrepresentable !== undefined ? structuralSnapshot(schema) : "";
+
     ctx.override({
       zodSchema: zodSchema as schemas.$ZodTypes,
       jsonSchema: schema,
       path: seen.path ?? [],
     });
+
+    // An unrepresentable node survives only if `override` changed something structural about it.
+    // Annotations don't count, so a blanket `description` override can't silently disable every
+    // unrepresentable error; and requiring a *change* keeps value-level cases (an `undefined`
+    // literal member, a dynamic `.catch()`) throwing even though their node already has a form.
+    if (seen.unrepresentable !== undefined && structuralSnapshot(schema) === before) {
+      throw new Error(seen.unrepresentable);
+    }
   };
 
   for (const entry of [...ctx.seen.entries()].reverse()) {
@@ -469,7 +528,7 @@ export function finalize<T extends schemas.$ZodType>(
     result.$id = ctx.external.uri(id);
   }
 
-  Object.assign(result, root.def ?? root.schema);
+  assignProps(result, root.def ?? root.schema);
 
   // The `id` in `.meta()` is a Zod-specific registration tag used to extract
   // schemas into $defs — it is not user-facing JSON Schema metadata. Strip it
@@ -484,7 +543,7 @@ export function finalize<T extends schemas.$ZodType>(
     const seen = entry[1];
     if (seen.def && seen.defId) {
       if (seen.def.id === seen.defId) delete seen.def.id;
-      defs[seen.defId] = seen.def;
+      assignProp(defs, seen.defId, seen.def);
     }
   }
 

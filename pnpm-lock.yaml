@@ -66,8 +66,8 @@ importers:
         specifier: ^3.5.3
         version: 3.5.3
       recheck:
-        specifier: ^4.5.0
-        version: 4.5.0
+        specifier: 4.6.0-beta.3
+        version: 4.6.0-beta.3
       rolldown:
         specifier: 1.0.0-beta.18
         version: 1.0.0-beta.18
@@ -88,7 +88,7 @@ importers:
         version: 28.0.0
       tsdown:
         specifier: ^0.21.10
-        version: 0.21.10(typescript@5.5.4)
+        version: 0.21.10(synckit@0.11.12)(typescript@5.5.4)
       tslib:
         specifier: ^2.8.1
         version: 2.8.1
@@ -1315,8 +1315,8 @@ packages:
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
 
-  '@pkgr/core@0.1.2':
-    resolution: {integrity: sha512-fdDH1LSGfZdTH2sxdpVMw31BanV28K/Gry0cVFxaNP77neJSkd82mM8ErPNYs9e+0O7SdHBLTDzDgwUuy18RnQ==}
+  '@pkgr/core@0.2.9':
+    resolution: {integrity: sha512-QNqXyfVS2wm9hweSYD2O7F0G06uurj9kZ96TRQE5Y9hU7+tgdZwIkbAKc5Ocy1HxEY2kuDQa6cQ1WRs/O5LFKA==}
     engines: {node: ^12.20.0 || ^14.18.0 || >=16.0.0}
 
   '@quansync/fs@1.0.0':
@@ -5262,31 +5262,36 @@ packages:
     resolution: {integrity: sha512-GDhwkLfywWL2s6vEjyhri+eXmfH6j1L7JE27WhqLeYzoh/A3DBaYGEj2H/HFZCn/kMfim73FXxEJTw06WtxQwg==}
     engines: {node: '>= 14.18.0'}
 
-  recheck-jar@4.5.0:
-    resolution: {integrity: sha512-Ad7oCQmY8cQLzd3QVNXjzZ+S6MbImGhR4AaW2yiGzteOfMV45522rt6nSzFyt8p3mCEaMcm/4MoZrMSxUcCbrA==}
+  recheck-jar@4.6.0-beta.3:
+    resolution: {integrity: sha512-CwADkL99b8QlGcg7vRzuhkzfQebIPO8+IfIOi1HIlzBRUC8k6/zAylmzcavI9rjZD4jVStRR+Px+TnkCOCoXbQ==}
 
-  recheck-linux-x64@4.5.0:
-    resolution: {integrity: sha512-52kXsR/v+IbGIKYYFZfSZcgse/Ci9IA2HnuzrtvRRcfODkcUGe4n72ESQ8nOPwrdHFg9i4j9/YyPh1HWWgpJ6A==}
+  recheck-linux-arm64@4.6.0-beta.3:
+    resolution: {integrity: sha512-ym3//7ygvClNCPezhvGhvD/phqQPlEcQpUWbkZVczoOwMjFaJn+7/Gtnt2RXzOMGW1fy2pVGtWAK7B871JTlJA==}
+    cpu: [arm64]
+    os: [linux]
+
+  recheck-linux-x64@4.6.0-beta.3:
+    resolution: {integrity: sha512-QBzszyfVO7jZqOh6yjNlulD45BYS0QVReHrPzN2rDWSTs8NnDbWcrXMGo5zSlCsS/hMmuuExbs/jYIZQfqyIsQ==}
     cpu: [x64]
     os: [linux]
 
-  recheck-macos-arm64@4.5.0:
-    resolution: {integrity: sha512-qIyK3dRuLkORQvv0b59fZZRXweSmjjWaoA4K8Kgifz0anMBH4pqsDV6plBlgjcRmW9yC12wErIRzifREaKnk2w==}
+  recheck-macos-arm64@4.6.0-beta.3:
+    resolution: {integrity: sha512-28hiCHhgXyA2ZsYxK2L9uzFfcgo1yQ4x9cVqH2HbDRSD9c+B3P5GpxsYWSKk0VFCvMuPjWrqWtGgRQJgIv9dew==}
     cpu: [arm64]
     os: [darwin]
 
-  recheck-macos-x64@4.5.0:
-    resolution: {integrity: sha512-1wp/eiLxcjC/Ex4wurlrS/LGzt8IiF4TiK5sEjldu4HVAKdNCnnmsS9a5vFpfcikDz4ZuZlLlTi1VbQTxHlwZg==}
+  recheck-macos-x64@4.6.0-beta.3:
+    resolution: {integrity: sha512-sGb55OMrMC2cygjGktQctgXyWm8p7M+LiyppTvB044yIGbAusShFE6AJaroaeB2rSAivLDRhAfnclZZiRBnyfA==}
     cpu: [x64]
     os: [darwin]
 
-  recheck-windows-x64@4.5.0:
-    resolution: {integrity: sha512-ekBKwAp0oKkMULn5zgmHEYLwSJfkfb95AbTtbDkQazNkqYw9PRD/mVyFUR6Ff2IeRyZI0gxy+N2AKBISWydhug==}
+  recheck-windows-x64@4.6.0-beta.3:
+    resolution: {integrity: sha512-kLASRM4KvltHHY2APe3eDrOdPrZs9bbUEFCiVpCJxxnWMpxqmO465DmU71jIZUIRCf+1y4iyyvMxCYbw8Kw3tQ==}
     cpu: [x64]
     os: [win32]
 
-  recheck@4.5.0:
-    resolution: {integrity: sha512-kPnbOV6Zfx9a25AZ++28fI1q78L/UVRQmmuazwVRPfiiqpMs+WbOU69Shx820XgfKWfak0JH75PUvZMFtRGSsw==}
+  recheck@4.6.0-beta.3:
+    resolution: {integrity: sha512-vFGnR2AF6o8O5/gyLoIx5Kcnqdf/e3RLeMbZYgTJAiTIkKFPEFAWKxHiGWOhZDg5ibt46oqN7h+yJE6Gx2HqYw==}
     engines: {node: '>=20'}
 
   recma-build-jsx@1.0.0:
@@ -5738,8 +5743,12 @@ packages:
     engines: {node: 20 || >=22}
     hasBin: true
 
-  synckit@0.9.2:
-    resolution: {integrity: sha512-vrozgXDQwYO72vHjUb/HnFbQx1exDjoKzqx23aXEg2a9VIg2TSFZ8FmeZpTjUCFMYw7mpX4BE2SFu8wI7asYsw==}
+  synckit@0.11.11:
+    resolution: {integrity: sha512-MeQTA1r0litLUf0Rp/iisCaL8761lKAZHaimlbGK4j0HysC4PLfqygQj9srcs0m2RdtDYnF8UuYyKpbjHYp7Jw==}
+    engines: {node: ^14.18.0 || >=16.0.0}
+
+  synckit@0.11.12:
+    resolution: {integrity: sha512-Bh7QjT8/SuKUIfObSXNHNSK6WHo6J1tHCqJsuaFDP7gP0fkzSfTxI8y85JrppZ0h8l0maIgc2tfuZQ6/t3GtnQ==}
     engines: {node: ^14.18.0 || >=16.0.0}
 
   table@6.9.0:
@@ -7113,7 +7122,7 @@ snapshots:
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
-  '@pkgr/core@0.1.2': {}
+  '@pkgr/core@0.2.9': {}
 
   '@quansync/fs@1.0.0':
     dependencies:
@@ -11348,30 +11357,34 @@ snapshots:
 
   readdirp@4.1.2: {}
 
-  recheck-jar@4.5.0:
+  recheck-jar@4.6.0-beta.3:
     optional: true
 
-  recheck-linux-x64@4.5.0:
+  recheck-linux-arm64@4.6.0-beta.3:
     optional: true
 
-  recheck-macos-arm64@4.5.0:
+  recheck-linux-x64@4.6.0-beta.3:
     optional: true
 
-  recheck-macos-x64@4.5.0:
+  recheck-macos-arm64@4.6.0-beta.3:
     optional: true
 
-  recheck-windows-x64@4.5.0:
+  recheck-macos-x64@4.6.0-beta.3:
     optional: true
 
-  recheck@4.5.0:
+  recheck-windows-x64@4.6.0-beta.3:
+    optional: true
+
+  recheck@4.6.0-beta.3:
     dependencies:
-      synckit: 0.9.2
+      synckit: 0.11.11
     optionalDependencies:
-      recheck-jar: 4.5.0
-      recheck-linux-x64: 4.5.0
-      recheck-macos-arm64: 4.5.0
-      recheck-macos-x64: 4.5.0
-      recheck-windows-x64: 4.5.0
+      recheck-jar: 4.6.0-beta.3
+      recheck-linux-arm64: 4.6.0-beta.3
+      recheck-linux-x64: 4.6.0-beta.3
+      recheck-macos-arm64: 4.6.0-beta.3
+      recheck-macos-x64: 4.6.0-beta.3
+      recheck-windows-x64: 4.6.0-beta.3
 
   recma-build-jsx@1.0.0:
     dependencies:
@@ -11975,10 +11988,14 @@ snapshots:
       rimraf: 6.0.1
       tshy: 3.0.2
 
-  synckit@0.9.2:
+  synckit@0.11.11:
     dependencies:
-      '@pkgr/core': 0.1.2
-      tslib: 2.8.1
+      '@pkgr/core': 0.2.9
+
+  synckit@0.11.12:
+    dependencies:
+      '@pkgr/core': 0.2.9
+    optional: true
 
   table@6.9.0:
     dependencies:
@@ -12080,7 +12097,7 @@ snapshots:
       minimist: 1.2.8
       strip-bom: 3.0.0
 
-  tsdown@0.21.10(typescript@5.5.4):
+  tsdown@0.21.10(synckit@0.11.12)(typescript@5.5.4):
     dependencies:
       ansis: 4.2.0
       cac: 7.0.0
@@ -12097,7 +12114,7 @@ snapshots:
       tinyglobby: 0.2.16
       tree-kill: 1.2.2
       unconfig-core: 7.5.0
-      unrun: 0.2.37
+      unrun: 0.2.37(synckit@0.11.12)
     optionalDependencies:
       typescript: 5.5.4
     transitivePeerDependencies:
@@ -12223,9 +12240,11 @@ snapshots:
       unist-util-is: 6.0.0
       unist-util-visit-parents: 6.0.1
 
-  unrun@0.2.37:
+  unrun@0.2.37(synckit@0.11.12):
     dependencies:
       rolldown: 1.0.0-rc.17
+    optionalDependencies:
+      synckit: 0.11.12
 
   use-callback-ref@1.3.3(@types/react@19.0.11)(react@19.0.0):
     dependencies:

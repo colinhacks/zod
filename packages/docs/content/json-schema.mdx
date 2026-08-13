@@ -233,6 +233,8 @@ You can change this behavior by setting the `unrepresentable` option to `"any"`.
 z.toJSONSchema(z.bigint(), { unrepresentable: "any" });
 // => {}
 ```
+
+To represent some of these types but keep the error for the rest, use [`override`](#override) instead. It runs first, and only the types it doesn't handle throw.
 ### `cycles`
 
 How to handle cycles. If a cycle is encountered as `z.toJSONSchema()` traverses the schema, it will be represented using `$ref`. 
@@ -319,12 +321,11 @@ z.toJSONSchema(mySchema, {
 });
 ```
 
-Note that unrepresentable types will throw an `Error` before this function is called. If you are trying to define custom behavior for an unrepresentable type, you'll need to set the `unrepresentable: "any"` alongside `override`.
+`override` runs before the [`unrepresentable`](#unrepresentable) error is thrown, so you can represent an unrepresentable type here without disabling the error for the others.
 
 ```ts
 // support z.date() as ISO datetime strings
 const result = z.toJSONSchema(z.date(), {
-  unrepresentable: "any",
   override: (ctx) => {
     const def = ctx.zodSchema._zod.def;
     if(def.type ==="date"){
@@ -333,6 +334,21 @@ const result = z.toJSONSchema(z.date(), {
     }
   },
 });
+```
+
+Any unrepresentable type your `override` doesn't give a JSON Schema still throws. Annotations don't count as handling one — adding a `description` to every schema won't suppress the error.
+
+```ts
+z.toJSONSchema(z.object({ createdAt: z.date(), id: z.bigint() }), {
+  override: (ctx) => {
+    const def = ctx.zodSchema._zod.def;
+    if(def.type ==="date"){
+      ctx.jsonSchema.type = "string";
+      ctx.jsonSchema.format = "date-time";
+    }
+  },
+});
+// => throws Error (BigInt cannot be represented in JSON Schema)
 ```
 
 

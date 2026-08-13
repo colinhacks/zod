@@ -221,7 +221,7 @@ describe("toJSONSchema", () => {
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "format": "emoji",
-        "pattern": "^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$",
+        "pattern": "^[\\p{Extended_Pictographic}\\p{Emoji_Component}]+$",
         "type": "string",
       }
     `);
@@ -325,6 +325,12 @@ describe("toJSONSchema", () => {
     // Dynamic catch values
     const dynamicCatchSchema = z.string().catch((ctx) => `${ctx.issues.length}`);
     expect(() => z.toJSONSchema(dynamicCatchSchema)).toThrow("Dynamic catch values are not supported in JSON Schema");
+    expect(z.toJSONSchema(dynamicCatchSchema, { unrepresentable: "any" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "string",
+      }
+    `);
   });
 
   test("string formats", () => {
@@ -2731,7 +2737,6 @@ test("input type", () => {
       "required": [
         "a",
         "d",
-        "f",
         "g",
       ],
       "type": "object",
@@ -3123,4 +3128,226 @@ test("recursive lazy with describe does not stack overflow", () => {
   const result = z.toJSONSchema(NodeSchema, { cycles: "ref", reused: "ref" });
   expect(result).toBeDefined();
   expect(result.$defs).toBeDefined();
+});
+
+test("__proto__ shape key is emitted as an own property", () => {
+  const schema = z.object({ ["__proto__"]: z.literal("admin"), role: z.string() });
+  const result = z.toJSONSchema(schema, { io: "input" });
+
+  expect(result.required).toEqual(["__proto__", "role"]);
+  // every required key needs a matching entry in properties
+  for (const key of result.required!) {
+    expect(Object.prototype.hasOwnProperty.call(result.properties, key)).toBe(true);
+  }
+  expect(JSON.parse(JSON.stringify(result)).properties.__proto__).toEqual({ type: "string", const: "admin" });
+});
+
+test("__proto__ registry id is emitted as an own entry", () => {
+  const myRegistry = z.registry<{ id: string }>();
+  myRegistry.add(z.object({ a: z.string() }), { id: "__proto__" });
+  myRegistry.add(z.object({ b: z.string() }), { id: "normal" });
+
+  expect(Object.keys(z.toJSONSchema(myRegistry).schemas)).toEqual(["__proto__", "normal"]);
+});
+
+test("__proto__ def id emits a resolvable $ref", () => {
+  const myRegistry = z.registry<{ id: string }>();
+  const Inner = z.object({ x: z.string() });
+  myRegistry.add(Inner, { id: "__proto__" });
+
+  const json = JSON.parse(JSON.stringify(z.toJSONSchema(z.object({ a: Inner, b: Inner }), { metadata: myRegistry })));
+  expect(json.properties.a.$ref).toBe("#/$defs/__proto__");
+  expect(json.$defs.__proto__).toBeDefined();
+});
+
+test("__proto__ patternProperties key is emitted as an own property", () => {
+  const result = z.toJSONSchema(z.looseRecord(z.string().regex(/__proto__/), z.string()));
+
+  expect(Object.getPrototypeOf(result.patternProperties)).toBe(Object.prototype);
+  expect(Object.prototype.hasOwnProperty.call(result.patternProperties, "__proto__")).toBe(true);
+  expect(result.patternProperties?.__proto__).toEqual({ type: "string" });
+});
+
+test("__proto__ metadata survives direct and wrapper metadata merges", () => {
+  for (const schema of [z.string(), z.readonly(z.string())]) {
+    const registry = z.registry<Record<string, unknown>>();
+    registry.add(schema, Object.fromEntries([["__proto__", { marker: true }]]));
+
+    const result: any = z.toJSONSchema(schema, { metadata: registry });
+    expect(Object.getPrototypeOf(result)).toBe(Object.prototype);
+    expect(Object.prototype.hasOwnProperty.call(result, "__proto__")).toBe(true);
+    expect(result.__proto__).toEqual({ marker: true });
+    expect(JSON.parse(JSON.stringify(result)).__proto__).toEqual({ marker: true });
+  }
+});
+
+test("partialRecord does not require finite keys", () => {
+  const result = z.toJSONSchema(z.partialRecord(z.enum(["__proto__", "b"]), z.string()));
+
+  expect(result.required).toBeUndefined();
+  expect(result.propertyNames).toEqual({ type: "string", enum: ["__proto__", "b"] });
+  expect(result.additionalProperties).toEqual({ type: "string" });
+});
+
+describe("override runs before the unrepresentable error", () => {
+  const dateOverride: z.core.ToJSONSchemaParams["override"] = (ctx) => {
+    const def = ctx.zodSchema._zod.def;
+    if (def.type === "date") {
+      ctx.jsonSchema.type = "string";
+      ctx.jsonSchema.format = "date-time";
+    }
+  };
+
+  test("an override can represent one type while the rest still throw", () => {
+    expect(z.toJSONSchema(z.object({ when: z.date() }), { override: dateOverride })).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "when": {
+            "format": "date-time",
+            "type": "string",
+          },
+        },
+        "required": [
+          "when",
+        ],
+        "type": "object",
+      }
+    `);
+    expect(() => z.toJSONSchema(z.object({ id: z.bigint() }), { override: dateOverride })).toThrow(
+      "BigInt cannot be represented in JSON Schema"
+    );
+  });
+
+  test("applies through nesting, reuse and $defs extraction", () => {
+    const When = z.date().meta({ id: "When" });
+    expect(
+      z.toJSONSchema(z.object({ a: When, b: When, list: z.array(z.date()) }), { override: dateOverride })
+    ).toMatchInlineSnapshot(`
+      {
+        "$defs": {
+          "When": {
+            "format": "date-time",
+            "type": "string",
+          },
+        },
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "a": {
+            "$ref": "#/$defs/When",
+          },
+          "b": {
+            "$ref": "#/$defs/When",
+          },
+          "list": {
+            "items": {
+              "format": "date-time",
+              "type": "string",
+            },
+            "type": "array",
+          },
+        },
+        "required": [
+          "a",
+          "b",
+          "list",
+        ],
+        "type": "object",
+      }
+    `);
+    // an unrepresentable type extracted into $defs still throws
+    const Big = z.bigint().meta({ id: "Big" });
+    expect(() => z.toJSONSchema(z.object({ a: Big, b: Big }), { override: dateOverride })).toThrow(
+      "BigInt cannot be represented in JSON Schema"
+    );
+  });
+
+  test("annotations alone do not count as handling the type", () => {
+    // a blanket override must not silently disable every unrepresentable error
+    expect(() =>
+      z.toJSONSchema(z.bigint(), {
+        override: (ctx) => {
+          ctx.jsonSchema.description ??= "docs";
+        },
+      })
+    ).toThrow("BigInt cannot be represented in JSON Schema");
+    // nor does metadata already on the schema
+    expect(() => z.toJSONSchema(z.date().meta({ description: "when" }))).toThrow(
+      "Date cannot be represented in JSON Schema"
+    );
+  });
+
+  test("value-level cases still throw even though their node has a form", () => {
+    // the node is a `string`; only the dynamic catch value is unrepresentable
+    expect(() =>
+      z.toJSONSchema(
+        z.string().catch(() => {
+          throw new Error("dynamic");
+        }),
+        { override: dateOverride }
+      )
+    ).toThrow("Dynamic catch values are not supported in JSON Schema");
+    // the node still carries "a"; only the `undefined` member is unrepresentable
+    expect(() => z.toJSONSchema(z.literal([undefined, "a"]), { override: dateOverride })).toThrow(
+      "Literal `undefined` cannot be represented in JSON Schema"
+    );
+  });
+
+  test('`unrepresentable: "any"` is unaffected', () => {
+    expect(z.toJSONSchema(z.bigint(), { unrepresentable: "any", override: dateOverride })).toMatchInlineSnapshot(
+      `
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+      }
+    `
+    );
+  });
+
+  test("applies through wrappers that clone the schema", () => {
+    // .describe()/.meta() clone the schema and set `_zod.parent`, so the node is visited twice
+    expect(z.toJSONSchema(z.date().describe("x"), { override: dateOverride })).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "description": "x",
+        "format": "date-time",
+        "type": "string",
+      }
+    `);
+    expect(z.toJSONSchema(z.optional(z.date()), { override: dateOverride })).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "date-time",
+        "type": "string",
+      }
+    `);
+    expect(() => z.toJSONSchema(z.bigint().describe("x"), { override: dateOverride })).toThrow(
+      "BigInt cannot be represented in JSON Schema"
+    );
+    expect(() => z.toJSONSchema(z.date().describe("x"))).toThrow("Date cannot be represented in JSON Schema");
+  });
+
+  test("emits a valid OpenAPI 3.0 schema", async () => {
+    const jsonSchema = z.toJSONSchema(z.object({ when: z.date() }), {
+      target: "openapi-3.0",
+      override: dateOverride,
+    });
+    expect(jsonSchema).toMatchInlineSnapshot(`
+      {
+        "additionalProperties": false,
+        "properties": {
+          "when": {
+            "format": "date-time",
+            "type": "string",
+          },
+        },
+        "required": [
+          "when",
+        ],
+        "type": "object",
+      }
+    `);
+    await expect(validateOpenAPI30Schema(jsonSchema)).resolves.toBe(true);
+  });
 });
