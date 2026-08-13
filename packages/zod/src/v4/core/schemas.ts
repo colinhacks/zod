@@ -194,12 +194,13 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
   inst._zod.bag = inst._zod.bag || {}; // initialize _bag object
   inst._zod.version = version;
 
-  const checks = [...(inst._zod.def.checks ?? [])];
-
+  const defChecks = inst._zod.def.checks;
   // if inst is itself a checks.$ZodCheck, run it as a check
-  if (inst._zod.traits.has("$ZodCheck")) {
-    checks.unshift(inst as any);
-  }
+  const checks: checks.$ZodCheck<never>[] = inst._zod.traits.has("$ZodCheck")
+    ? [inst as any, ...(defChecks ?? [])]
+    : defChecks?.length
+      ? [...defChecks]
+      : [];
 
   for (const ch of checks) {
     for (const fn of ch._zod.onattach) {
@@ -304,20 +305,28 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
     };
   }
 
-  // Lazy initialize ~standard to avoid creating objects for every schema
-  util.defineLazy(inst, "~standard", () => ({
+  // Wrappers extend this by installing a richer factory over it; reading it
+  // eagerly would defeat the laziness.
+  util.installLazyProp(inst, "~standard", standardProps);
+});
+
+/** The Standard Schema surface for `inst`. Shared so wrappers can extend it without forcing it. */
+const toStandardResult = (r: util.SafeParseResult<unknown>) =>
+  r.success ? { value: r.data } : { issues: r.error?.issues };
+
+export function standardProps(inst: $ZodType): StandardSchemaV1.Props<any, any> {
+  return {
     validate: (value: unknown) => {
       try {
-        const r = safeParse(inst, value);
-        return r.success ? { value: r.data } : { issues: r.error?.issues };
+        return toStandardResult(safeParse(inst, value));
       } catch (_) {
-        return safeParseAsync(inst, value).then((r) => (r.success ? { value: r.data } : { issues: r.error?.issues }));
+        return safeParseAsync(inst, value).then(toStandardResult);
       }
     },
     vendor: "zod",
     version: 1 as const,
-  }));
-});
+  };
+}
 
 export { clone } from "./util.js";
 
@@ -4448,7 +4457,9 @@ export const $ZodFunction: core.$constructor<$ZodFunction> = /*@__PURE__*/ core.
   "$ZodFunction",
   (inst, def) => {
     $ZodType.init(inst, def);
-    inst._def = def;
+    // Defined, not assigned: the classic prototype exposes `_def` as a
+    // getter with no setter.
+    Object.defineProperty(inst, "_def", { value: def });
     inst._zod.def = def;
 
     inst.implement = (func) => {
