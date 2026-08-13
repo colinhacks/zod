@@ -210,6 +210,18 @@ z.toJSONSchema(schema);
 // => { type: "string", whatever: 1234 }
 ```
 
+Metadata takes precedence over the keywords Zod generates.
+
+```ts
+z.toJSONSchema(z.string().meta({ type: "number" }));
+// => { type: "number" }
+
+z.toJSONSchema(z.date().meta({ type: "string", format: "date-time" }), { unrepresentable: "any" });
+// => { type: "string", format: "date-time" }
+```
+
+To drop metadata entirely, pass an empty registry: `z.toJSONSchema(schema, { metadata: z.registry() })`. To modify a generated schema, use [`override`](#override).
+
 ### `unrepresentable`
 
 The following APIs are not representable in JSON Schema. By default, Zod will throw an error if they are encountered. It is unsound to attempt a conversion to JSON Schema; you should modify your schemas  as they have no equivalent in JSON. An error will be thrown if any of these are encountered.
