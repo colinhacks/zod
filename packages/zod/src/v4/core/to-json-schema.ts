@@ -23,6 +23,19 @@ export type Processor<T extends schemas.$ZodType = schemas.$ZodType> = (
   params: ProcessParams
 ) => void;
 
+/**
+ * Called for each schema that has no JSON Schema equivalent. Return a JSON Schema to use in its
+ * place, `"any"` to fall back to the `unrepresentable: "any"` behavior, or `"throw"`/`undefined` to
+ * throw the default error. Throwing from the handler propagates, so custom errors work too.
+ */
+export type UnrepresentableHandler<T extends schemas.$ZodType = schemas.$ZodType> = (ctx: {
+  zodSchema: T;
+  path: (string | number)[];
+  /** The error Zod would throw. Distinguishes sites that share a `zodSchema`, e.g. an `undefined`
+   *  vs a `bigint` member of the same literal. */
+  message: string;
+}) => JSONSchema.BaseSchema | "throw" | "any" | undefined;
+
 export interface JSONSchemaGeneratorParams {
   processors: Record<string, Processor>;
   /** A registry used to look up metadata for each schema. Any schema with an `id` property will be extracted as a $def.
@@ -36,8 +49,9 @@ export interface JSONSchemaGeneratorParams {
   target?: "draft-04" | "draft-07" | "draft-2020-12" | "openapi-3.0" | ({} & string) | undefined;
   /** How to handle unrepresentable types.
    * - `"throw"` — Default. Unrepresentable types throw an error
-   * - `"any"` — Unrepresentable types become `{}` */
-  unrepresentable?: "throw" | "any";
+   * - `"any"` — Unrepresentable types become `{}`
+   * - A function — called once per unrepresentable schema; see {@link UnrepresentableHandler}. */
+  unrepresentable?: "throw" | "any" | UnrepresentableHandler<schemas.$ZodTypes>;
   /** Arbitrary custom logic that can be used to modify the generated JSON Schema. */
   override?: (ctx: {
     zodSchema: schemas.$ZodTypes;
@@ -87,8 +101,6 @@ export interface Seen {
   /** Cycle path */
   cycle?: (string | number)[] | undefined;
   isParent?: boolean | undefined;
-  /** Deferred `unrepresentable: "throw"` error, thrown after `override` gets a chance to handle it */
-  unrepresentable?: string | undefined;
   /** Schema to inherit JSON Schema properties from (set by processor for wrappers) */
   ref?: schemas.$ZodType | null;
   /** JSON Schema property path for this schema */
@@ -99,7 +111,8 @@ export interface ToJSONSchemaContext {
   processors: Record<string, Processor>;
   metadataRegistry: $ZodRegistry<Record<string, any>>;
   target: "draft-04" | "draft-07" | "draft-2020-12" | "openapi-3.0" | ({} & string);
-  unrepresentable: "throw" | "any";
+  // must be schemas.$ZodType to prevent recursive type resolution error
+  unrepresentable: "throw" | "any" | UnrepresentableHandler;
   override: (ctx: {
     // must be schemas.$ZodType to prevent recursive type resolution error
     zodSchema: schemas.$ZodType;
@@ -139,7 +152,7 @@ export function initializeContext(params: JSONSchemaGeneratorParams): ToJSONSche
     processors: params.processors ?? {},
     metadataRegistry: params?.metadata ?? globalRegistry,
     target,
-    unrepresentable: params?.unrepresentable ?? "throw",
+    unrepresentable: (params?.unrepresentable as ToJSONSchemaContext["unrepresentable"]) ?? "throw",
     override: (params?.override as any) ?? (() => {}),
     io: params?.io ?? "output",
     counter: 0,
@@ -150,15 +163,26 @@ export function initializeContext(params: JSONSchemaGeneratorParams): ToJSONSche
   };
 }
 
-/** Applies the `unrepresentable` setting at a site with no JSON Schema equivalent. Under `"throw"`
- * the error is deferred: it is recorded on the seen entry and thrown in `finalize`, but only if
- * `override` did not give the node a JSON Schema form of its own. */
-export function handleUnrepresentable(schema: schemas.$ZodType, ctx: ToJSONSchemaContext, message: string): void {
-  if (ctx.unrepresentable === "throw") {
-    const seen = ctx.seen.get(schema);
-    if (seen) seen.unrepresentable = message;
-    else throw new Error(message);
-  }
+/**
+ * Applies the `unrepresentable` setting at a site that has no JSON Schema equivalent. Throws
+ * `message` unless the setting (or the handler's return value) says otherwise. Returns `true` if a
+ * custom JSON Schema was written into `json`, in which case the caller must not write its own.
+ */
+export function handleUnrepresentable(
+  schema: schemas.$ZodType,
+  ctx: ToJSONSchemaContext,
+  json: JSONSchema.BaseSchema,
+  params: ProcessParams,
+  message: string
+): boolean {
+  const result =
+    typeof ctx.unrepresentable === "function"
+      ? ctx.unrepresentable({ zodSchema: schema, path: params.path, message })
+      : ctx.unrepresentable;
+  if (result === "any") return false;
+  if (result === undefined || result === "throw") throw new Error(message);
+  Object.assign(json, result);
+  return true;
 }
 
 export function process<T extends schemas.$ZodType>(
@@ -381,28 +405,6 @@ export function extractDefs<T extends schemas.$ZodType>(
   }
 }
 
-const ANNOTATION_KEYS = /*@__PURE__*/ new Set([
-  "title",
-  "description",
-  "default",
-  "examples",
-  "deprecated",
-  "readOnly",
-  "writeOnly",
-  "$comment",
-  "id",
-  "$id",
-  "_prefault",
-]);
-
-function structuralSnapshot(schema: JSONSchema.BaseSchema): string {
-  const structural: Record<string, unknown> = {};
-  for (const key in schema) {
-    if (!ANNOTATION_KEYS.has(key)) structural[key] = schema[key];
-  }
-  return JSON.stringify(structural);
-}
-
 export function finalize<T extends schemas.$ZodType>(
   ctx: ToJSONSchemaContext,
   schema: T
@@ -486,23 +488,11 @@ export function finalize<T extends schemas.$ZodType>(
     }
 
     // execute overrides
-    // Snapshot the structural (non-annotation) half so we can tell whether `override` actually
-    // gave this node a JSON Schema form.
-    const before = seen.unrepresentable !== undefined ? structuralSnapshot(schema) : "";
-
     ctx.override({
       zodSchema: zodSchema as schemas.$ZodTypes,
       jsonSchema: schema,
       path: seen.path ?? [],
     });
-
-    // An unrepresentable node survives only if `override` changed something structural about it.
-    // Annotations don't count, so a blanket `description` override can't silently disable every
-    // unrepresentable error; and requiring a *change* keeps value-level cases (an `undefined`
-    // literal member, a dynamic `.catch()`) throwing even though their node already has a form.
-    if (seen.unrepresentable !== undefined && structuralSnapshot(schema) === before) {
-      throw new Error(seen.unrepresentable);
-    }
   };
 
   for (const entry of [...ctx.seen.entries()].reverse()) {

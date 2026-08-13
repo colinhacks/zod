@@ -56,8 +56,9 @@ export class JSONSchemaGenerator {
   get target() {
     return this.ctx.target;
   }
+  // annotated so the .d.cts emits an indexed access rather than an inline `import()` of an ESM path
   /** @deprecated Access via ctx instead */
-  get unrepresentable() {
+  get unrepresentable(): ToJSONSchemaContext["unrepresentable"] {
     return this.ctx.unrepresentable;
   }
   /** @deprecated Access via ctx instead */
