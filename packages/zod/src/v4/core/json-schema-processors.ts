@@ -25,6 +25,12 @@ const formatMap: Partial<Record<checks.$ZodStringFormats, string | undefined>> =
 
 // ==================== SIMPLE TYPE PROCESSORS ====================
 
+/** Processor factory for types that have no JSON Schema equivalent. */
+const _unrepresentable =
+  (name: string): Processor<any> =>
+  (schema, ctx) =>
+    handleUnrepresentable(schema, ctx, `${name} cannot be represented in JSON Schema`);
+
 export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _json, _params) => {
   const json = _json as JSONSchema.StringSchema;
   json.type = "string";
@@ -100,13 +106,9 @@ export const booleanProcessor: Processor<schemas.$ZodBoolean> = (_schema, _ctx, 
   (json as JSONSchema.BooleanSchema).type = "boolean";
 };
 
-export const bigintProcessor: Processor<schemas.$ZodBigInt> = (schema, ctx, _json, _params) => {
-  handleUnrepresentable(schema, ctx, "BigInt cannot be represented in JSON Schema");
-};
+export const bigintProcessor: Processor<schemas.$ZodBigInt> = /* @__PURE__ */ _unrepresentable("BigInt");
 
-export const symbolProcessor: Processor<schemas.$ZodSymbol> = (schema, ctx, _json, _params) => {
-  handleUnrepresentable(schema, ctx, "Symbols cannot be represented in JSON Schema");
-};
+export const symbolProcessor: Processor<schemas.$ZodSymbol> = /* @__PURE__ */ _unrepresentable("Symbols");
 
 export const nullProcessor: Processor<schemas.$ZodNull> = (_schema, ctx, json, _params) => {
   if (ctx.target === "openapi-3.0") {
@@ -118,13 +120,9 @@ export const nullProcessor: Processor<schemas.$ZodNull> = (_schema, ctx, json, _
   }
 };
 
-export const undefinedProcessor: Processor<schemas.$ZodUndefined> = (schema, ctx, _json, _params) => {
-  handleUnrepresentable(schema, ctx, "Undefined cannot be represented in JSON Schema");
-};
+export const undefinedProcessor: Processor<schemas.$ZodUndefined> = /* @__PURE__ */ _unrepresentable("Undefined");
 
-export const voidProcessor: Processor<schemas.$ZodVoid> = (schema, ctx, _json, _params) => {
-  handleUnrepresentable(schema, ctx, "Void cannot be represented in JSON Schema");
-};
+export const voidProcessor: Processor<schemas.$ZodVoid> = /* @__PURE__ */ _unrepresentable("Void");
 
 export const neverProcessor: Processor<schemas.$ZodNever> = (_schema, _ctx, json, _params) => {
   json.not = {};
@@ -138,9 +136,7 @@ export const unknownProcessor: Processor<schemas.$ZodUnknown> = (_schema, _ctx, 
   // empty schema accepts anything
 };
 
-export const dateProcessor: Processor<schemas.$ZodDate> = (schema, ctx, _json, _params) => {
-  handleUnrepresentable(schema, ctx, "Date cannot be represented in JSON Schema");
-};
+export const dateProcessor: Processor<schemas.$ZodDate> = /* @__PURE__ */ _unrepresentable("Date");
 
 export const enumProcessor: Processor<schemas.$ZodEnum> = (schema, _ctx, json, _params) => {
   const def = schema._zod.def as schemas.$ZodEnumDef;
@@ -183,9 +179,7 @@ export const literalProcessor: Processor<schemas.$ZodLiteral> = (schema, ctx, js
   }
 };
 
-export const nanProcessor: Processor<schemas.$ZodNaN> = (schema, ctx, _json, _params) => {
-  handleUnrepresentable(schema, ctx, "NaN cannot be represented in JSON Schema");
-};
+export const nanProcessor: Processor<schemas.$ZodNaN> = /* @__PURE__ */ _unrepresentable("NaN");
 
 export const templateLiteralProcessor: Processor<schemas.$ZodTemplateLiteral> = (schema, _ctx, json, _params) => {
   const _json = json as JSONSchema.StringSchema;
@@ -223,25 +217,15 @@ export const successProcessor: Processor<schemas.$ZodSuccess> = (_schema, _ctx, 
   (json as JSONSchema.BooleanSchema).type = "boolean";
 };
 
-export const customProcessor: Processor<schemas.$ZodCustom> = (schema, ctx, _json, _params) => {
-  handleUnrepresentable(schema, ctx, "Custom types cannot be represented in JSON Schema");
-};
+export const customProcessor: Processor<schemas.$ZodCustom> = /* @__PURE__ */ _unrepresentable("Custom types");
 
-export const functionProcessor: Processor<schemas.$ZodFunction> = (schema, ctx, _json, _params) => {
-  handleUnrepresentable(schema, ctx, "Function types cannot be represented in JSON Schema");
-};
+export const functionProcessor: Processor<schemas.$ZodFunction> = /* @__PURE__ */ _unrepresentable("Function types");
 
-export const transformProcessor: Processor<schemas.$ZodTransform> = (schema, ctx, _json, _params) => {
-  handleUnrepresentable(schema, ctx, "Transforms cannot be represented in JSON Schema");
-};
+export const transformProcessor: Processor<schemas.$ZodTransform> = /* @__PURE__ */ _unrepresentable("Transforms");
 
-export const mapProcessor: Processor<schemas.$ZodMap> = (schema, ctx, _json, _params) => {
-  handleUnrepresentable(schema, ctx, "Map cannot be represented in JSON Schema");
-};
+export const mapProcessor: Processor<schemas.$ZodMap> = /* @__PURE__ */ _unrepresentable("Map");
 
-export const setProcessor: Processor<schemas.$ZodSet> = (schema, ctx, _json, _params) => {
-  handleUnrepresentable(schema, ctx, "Set cannot be represented in JSON Schema");
-};
+export const setProcessor: Processor<schemas.$ZodSet> = /* @__PURE__ */ _unrepresentable("Set");
 
 // ==================== COMPOSITE TYPE PROCESSORS ====================
 
