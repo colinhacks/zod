@@ -19,13 +19,10 @@ export type VisitFn = (node: AnyZod) => AnyZod;
 export type VisitHandlers = { [K in Kind]?: (node: SchemaOfKind<K>) => AnyZod };
 
 /**
- * Bottom-up rewrite of a schema tree: each node is replaced by whatever the visitor returns,
- * with unhandled kinds and unchanged branches passing through with their identity preserved.
- * This function should be considered experimental. Its traversal contract is liable to change.
+ * @internal Bottom-up rewrite of a schema tree. Unhandled kinds and unchanged branches keep their
+ * identity. Returns `$ZodType`: a visitor can swap in a schema of any type, so callers declare
+ * their own return type.
  */
-// Returns `$ZodType`, not the input type. A visitor can replace any node with a schema of a
-// different type, so echoing the argument's type back would be a claim the traversal cannot keep.
-// Callers that know what their own rewrite produces declare it themselves — see `DeepPartial<T>`.
 export function visit(schema: schemas.SomeType, fn: VisitFn): AnyZod;
 export function visit(schema: schemas.SomeType, handlers: VisitHandlers): AnyZod;
 export function visit(schema: schemas.SomeType, fnOrHandlers: VisitFn | VisitHandlers): AnyZod {
@@ -33,10 +30,7 @@ export function visit(schema: schemas.SomeType, fnOrHandlers: VisitFn | VisitHan
     typeof fnOrHandlers === "function"
       ? fnOrHandlers
       : (node) => {
-          // Indexing by a union of kinds gives a union of handlers, which TS won't let us call with
-          // a single argument. The runtime invariant — handler `K` only ever sees a node of kind
-          // `K` — is the thing the index signature can't express, so it costs one cast here rather
-          // than one at every call site.
+          // A union of handlers isn't callable with one argument; handler `K` only ever sees kind `K`.
           const h = (fnOrHandlers as VisitHandlers)[node._zod.def.type] as ((n: AnyZod) => AnyZod) | undefined;
           return h ? h(node) : node;
         };
@@ -46,10 +40,7 @@ export function visit(schema: schemas.SomeType, fnOrHandlers: VisitFn | VisitHan
   function run(s: AnyZod): AnyZod {
     const cached = cache.get(s);
     if (cached === RESOLVING) {
-      // Non-lazy cycle (e.g. getter-based recursive objects). Insert a
-      // `$ZodLazy` that dereferences the cache at parse-time; by then
-      // the outer visit call will have populated `cache.get(s)` with
-      // the final mapped schema, so parsing sees the rewritten node.
+      // Non-lazy cycle. Defer to parse time, when the cache holds the finished node.
       return new schemas.$ZodLazy({
         type: "lazy",
         getter: () => cache.get(s) as AnyZod,
@@ -158,21 +149,15 @@ export function visit(schema: schemas.SomeType, fnOrHandlers: VisitFn | VisitHan
           : clone(s, { ...def, input: newInput, output: newOutput });
       }
       case "lazy": {
-        // Can't eagerly invoke the getter — that would trip the cycle
-        // check for self-referential schemas. Always wrap the getter so
-        // traversal happens at parse-time; this means lazy nodes are
-        // unconditionally re-cloned and identity propagates up.
+        // Invoking the getter here would trip the cycle check, so lazy nodes always re-clone.
         const original = def.getter as () => AnyZod;
-        // `$ZodLazy` memoizes its resolved inner type onto the def. Spreading that memo into the
-        // clone would leave the new getter permanently unread, so any schema whose lazy had already
-        // been resolved once would come back un-rewritten below that node.
+        // Drop the memo, or it shadows the new getter forever.
         const { _cachedInner, ...rest } = def;
         return clone(s, { ...rest, getter: () => run(original()) });
       }
-      // `template_literal` is a leaf by choice: its `parts` are pattern fragments compiled into a
-      // regex at construction, not data positions, so rewriting them would not mean anything.
+      // A leaf by choice: `parts` are regex fragments, not data positions.
       case "template_literal":
-      // Leaves — no child schemas to recurse into.
+      // Leaves.
       case "string":
       case "number":
       case "int":
@@ -194,10 +179,7 @@ export function visit(schema: schemas.SomeType, fnOrHandlers: VisitFn | VisitHan
       case "custom":
         return s;
       default: {
-        // Compile-time: adding a new built-in `def.type` without handling
-        // it here is a type error. Runtime: user-defined types whose
-        // `def.type` is outside the built-in union fall through. Users
-        // intercept those from inside `fn`.
+        // A new built-in kind becomes a compile error here; unknown user kinds fall through.
         kind satisfies never;
         return s;
       }

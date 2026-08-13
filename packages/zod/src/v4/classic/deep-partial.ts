@@ -10,8 +10,7 @@ export type DeepPartial<T extends core.SomeType> =
         { -readonly [K in keyof Shape]: schemas.ZodOptional<DeepPartial<Shape[K]>> },
         Config
       >
-  // Must precede ZodUnion. Degrades to ZodUnion to match the runtime, which drops the
-  // discriminated fast path once the discriminator becomes optional.
+  // Must precede ZodUnion; degrades to it, matching the runtime.
   : T extends schemas.ZodDiscriminatedUnion<infer Options, any>
     ? schemas.ZodUnion<
         { -readonly [I in keyof Options]: Options[I] extends core.SomeType ? DeepPartial<Options[I]> : Options[I] }
@@ -53,8 +52,7 @@ export type DeepPartial<T extends core.SomeType> =
     ? schemas.ZodSuccess<DeepPartial<Inner>>
   : T extends schemas.ZodPromise<infer Inner>
     ? schemas.ZodPromise<DeepPartial<Inner>>
-  // ZodCodec and ZodPreprocess must precede ZodPipe — both extend it structurally, so matching
-  // them first is what keeps the subtype in the inferred output.
+  // Must precede ZodPipe, which both extend structurally, or the subtype is lost.
   : T extends schemas.ZodCodec<infer A, infer B>
     ? schemas.ZodCodec<DeepPartial<A>, DeepPartial<B>>
   : T extends schemas.ZodPreprocess<infer B>
@@ -69,8 +67,7 @@ export type DeepPartial<T extends core.SomeType> =
 export function deepPartial<T extends core.SomeType>(schema: T): DeepPartial<T> {
   return visit(schema, {
     object: (s) => (s as schemas.ZodObject).partial(),
-    // Partialing the options makes `undefined` a possible discriminator for every one of them,
-    // which the discriminated-union constructor rejects outright. Degrade to a plain union.
+    // Every partialed option now admits `undefined`, which the constructor rejects as a duplicate.
     union: (s) => {
       const def = s._zod.def as core.$ZodDiscriminatedUnionDef;
       return def.discriminator === undefined ? s : schemas.union(def.options as schemas.ZodType[]);

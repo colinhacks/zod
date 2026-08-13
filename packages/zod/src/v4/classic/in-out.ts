@@ -2,9 +2,7 @@ import type * as core from "../core/index.js";
 import { visit } from "../core/visit.js";
 import type * as schemas from "./schemas.js";
 
-// Aliased here rather than re-exported from the barrel: `export type { X } from A` plus
-// `export { X } from B` collides as a duplicate identifier, so co-locating the type and the
-// value is the only way they can share a name.
+// Co-located with the functions: a type and a value can only share a name from one module.
 export type input<T> = core.input<T>;
 export type output<T> = core.output<T>;
 

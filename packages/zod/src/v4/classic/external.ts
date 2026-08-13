@@ -5,9 +5,6 @@ export * from "./errors.js";
 export * from "./parse.js";
 export * from "./compat.js";
 
-// `output` / `input` are NOT re-exported here: the runtime `z.input` / `z.output` live in
-// `./in-out.js`, and a type re-export from core plus a value export from there collide as a
-// duplicate identifier. The type aliases are co-located with the functions instead.
 export type { infer } from "../core/index.js";
 export type { JSONType } from "../core/util.js";
 export {
@@ -31,9 +28,7 @@ export {
 export { toJSONSchema } from "../core/json-schema-processors.js";
 export { fromJSONSchema } from "./from-json-schema.js";
 export { deepPartial } from "./deep-partial.js";
-// `z.input` and `z.output` are the runtime counterparts to the
-// type-level `z.input<T>` / `z.output<T>`. Types and values share the
-// same name cleanly since they live in separate TS namespaces.
+// Types and values both, from one module — re-exporting the types from core would collide.
 export { input, output } from "./in-out.js";
 
 export * as locales from "../locales/index.js";
