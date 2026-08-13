@@ -312,6 +312,69 @@ test("partial should not clobber defaults", () => {
   `);
 });
 
+// A transform downstream of a default/prefault ran on a deliberate value, so an outer
+// optional must not clobber its output. Regression: #6321 (broke in 4.4.3 via #5941).
+test("optional respects a transform fed by default/prefault", () => {
+  const fromDefault = z
+    .string()
+    .default("")
+    .transform((v) => (v ? v.split(",") : []));
+  const fromPrefault = z
+    .string()
+    .prefault("hi")
+    .transform((v) => v.length);
+
+  expect(fromDefault.optional().parse(undefined)).toEqual([]);
+  expect(fromPrefault.optional().parse(undefined)).toBe(2);
+
+  const obj = z.object({ a: fromDefault }).partial();
+  expect(obj.parse({})).toEqual({ a: [] });
+  expect(obj.parse({ a: undefined })).toEqual({ a: [] });
+  expect(obj.parse({ a: "x,y" })).toEqual({ a: ["x", "y"] });
+});
+
+test("optional respects a transform fed by default/prefault (async)", async () => {
+  const schema = z
+    .string()
+    .default("")
+    .transform(async (v) => (v ? v.split(",") : []))
+    .optional();
+  await expect(schema.parseAsync(undefined)).resolves.toEqual([]);
+});
+
+// The other side of the same flag: with nothing upstream supplying a value, the
+// transform ran on undefined and the outer optional still wins. Pinned by #5941.
+test("optional still clobbers a transform that ran on undefined", () => {
+  expect(
+    z
+      .preprocess((v) => v ?? "X", z.string())
+      .optional()
+      .parse(undefined)
+  ).toBeUndefined();
+  expect(
+    z
+      .string()
+      .catch("X")
+      .transform((s) => `${s}!`)
+      .optional()
+      .parse(undefined)
+  ).toBeUndefined();
+  expect(
+    z
+      .transform(() => "T")
+      .optional()
+      .parse(undefined)
+  ).toBeUndefined();
+  // $ZodUnion runs its options against fresh payloads, so the flag has to be set by
+  // the transform itself to survive the trip out to the optional.
+  expect(
+    z
+      .union([z.preprocess((v) => v ?? "X", z.string()), z.number()])
+      .optional()
+      .parse(undefined)
+  ).toBeUndefined();
+});
+
 test("defaulted object schema returns shallow clone", () => {
   const schema = z
     .object({

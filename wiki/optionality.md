@@ -12,7 +12,7 @@ Three runtime signals, each with a single consumer:
 |---|---|---|---|
 | `_zod.optin === "optional"` | catch, default, prefault, optional, transform | `$ZodObject`, `$ZodTuple`, `$ZodOptional` | "I accept absent input" |
 | `_zod.optout === "optional"` | optional, exact-optional, default-on-output cases | `$ZodObject`, `$ZodTuple` | "My output may legitimately be `undefined`; treat that as absent for length-shortening / key-omission" |
-| `payload.fallback === true` | catch (when `catchValue` substitutes), transform | `$ZodOptional` (in `handleOptionalResult`) | "This value is provisional; an outer wrapper may override it on undefined input" |
+| `payload.fallback === true` | catch (when `catchValue` substitutes), transform (when its own input was `undefined`) | `$ZodOptional` (in `handleOptionalResult`) | "This value is provisional; an outer wrapper may override it on undefined input" |
 
 Plus one bookkeeping flag:
 
@@ -149,7 +149,7 @@ interface ParsePayload<T> {
 | Schema | When | Why |
 |---|---|---|
 | `$ZodCatch` | When `catchValue` substitutes (i.e., the inner schema produced issues) | The substituted value is a recovery, not a deliberate output; an outer optional should be allowed to clobber it |
-| `$ZodTransform` | On every fn invocation (sync and async paths, both core and classic constructors) | The transform's output is provisional — for `undefined` input specifically, an outer optional should treat the transform's output as "what we got when input was missing" and replace with `undefined` |
+| `$ZodTransform` | When the value handed to the fn was `undefined` (sync and async paths, both core and classic constructors) | The transform's output is provisional *only* when the fn had nothing to work with — an outer optional should treat "what we got when input was missing" as overridable. When something upstream supplied a real value, the output is a real output |
 
 ### Who reads it
 
@@ -166,7 +166,9 @@ function handleOptionalResult(result: ParsePayload, input: unknown) {
 
 Translation: "If the *original* input to optional was `undefined`, and the inner either failed or produced a fallback value, override with `undefined`."
 
-The `input === undefined` gate is critical: when input was a defined value, the inner's output is the *real* output (e.g., a successful transform run), not a fallback, even if the flag happens to be set. This is what makes "always set on transform" safe — defined-input transforms have the flag set but it's never read.
+The `input === undefined` gate is critical: when input was a defined value, the inner's output is the *real* output (e.g., a successful transform run), not a fallback.
+
+Note that `input` here is the input to the **optional**, not to the transform that set the flag. Those are the same value only when nothing in between substitutes one. #5941 originally had `$ZodTransform` set the flag on *every* invocation, on the reasoning that a defined-input transform would have the flag set but never read. That holds right up until a `.default()` or `.prefault()` sits between the transform and the optional: optional's input is `undefined` (so the gate opens) while the transform's input was the substituted value (so its output is a real output). `z.string().default("").transform(fn).optional().parse(undefined)` returned `undefined` in 4.4.3 for exactly this reason — see #6321. `$ZodTransform` now sets the flag only when its own input was `undefined`, which is what the gate always assumed.
 
 ### Pipe propagation
 
@@ -195,7 +197,8 @@ So:
 |---|---|---|---|
 | valid value via normal path (default fired, prefault filled) | no | no | **respect** — return inner value |
 | recovery substitution (catch fired) | no (cleared) | yes | **clobber** — return undefined |
-| transform's output (preprocess, standalone transform, anything with a transform fn at the input side) | no | yes | **clobber** — return undefined |
+| transform's output, fn ran on `undefined` (preprocess, standalone transform, anything with a transform fn at the input side) | no | yes | **clobber** — return undefined |
+| transform's output, fn ran on a value a default/prefault supplied | no | no | **respect** — return inner value |
 | failed validation but no recovery | yes | no | **clobber** (issues swallowed) — return undefined |
 
 ### Why default and prefault aren't clobbered
@@ -211,6 +214,8 @@ Catch runs inner, and only fires when inner produces *issues*. The substitution 
 For preprocess, the user's fn runs on `undefined` because the *outer* schema invoked it (object accepting an absent key, or optional with `optin === "optional"` invoking the inner). The user's intent was "transform whatever input shows up," but they also wrapped in `.optional()` to say "absent input → absent output." `fallback` lets `.optional()` honor that.
 
 Standalone transform (rare) gets the same treatment by virtue of also being marked.
+
+The marking is conditional on the transform's own input being `undefined`. A `.default()` or `.prefault()` upstream of the transform means the fn ran on a deliberate value, so its output is deliberate too and `optional` respects it — `z.string().default("").transform(fn).optional().parse(undefined)` returns `fn("")`, not `undefined`.
 
 ## Walking through cases
 
@@ -389,12 +394,12 @@ This is technically unsound — the runtime accepts inputs the type rejects — 
 
 The schemas where the input stays strict at runtime — `coerce`, `unknown`, `any`, plain `string`/`number`/etc. — don't have a user-written escape hatch. There's no reason for them to claim to handle absence; they should reject and let the user opt in explicitly. So the rule is: **schemas with a user-written escape hatch (catch's recovery, transform's fn) accept `undefined` at runtime; schemas without one don't.**
 
-`fallback` is the runtime mechanism that makes this safe to combine with `optional`: when an outer wrapper *also* expresses an opinion about absent input ("missing → undefined"), the inner schema's escape-hatch output gets overridden. The user's explicit `.optional()` wins over the inner's "I happened to produce this value when called with undefined." Catch and transform both flag their output as fallback for this reason; default and prefault don't because their values are the deliberate output, not an escape-hatch output.
+`fallback` is the runtime mechanism that makes this safe to combine with `optional`: when an outer wrapper *also* expresses an opinion about absent input ("missing → undefined"), the inner schema's escape-hatch output gets overridden. The user's explicit `.optional()` wins over the inner's "I happened to produce this value when called with undefined." Catch and transform both flag their output as fallback for this reason; default and prefault don't because their values are the deliberate output, not an escape-hatch output. Transform flags only when the fn ran on `undefined` — once a default has supplied a value, there is no escape hatch left to mark.
 
 ## Mental model (one paragraph)
 
 A schema's `optin` declares whether it accepts absent input. Object and tuple parsers consult it before running. Optional consults it to decide whether to short-circuit or invoke the inner. Default, prefault, optional, and exact-optional all hardcode `optin = "optional"`. Catch and transform set it at runtime only — their static type doesn't claim to accept absence even though they do (flexible inputs, strict outputs). Preprocess inherits transform's runtime optin via pipe.
 
-When `optional` wraps something with `optin === "optional"` and the input is `undefined`, it has to decide: *trust the inner's output*, or *override with `undefined`*. The `fallback` payload flag is how the inner tells the outer "this value is a recovery / a transform's interpretation, not a deliberate handling of absence — feel free to override." Catch sets it on substitution; transform sets it on every invocation. Default and prefault don't, because their values *are* the deliberate handling.
+When `optional` wraps something with `optin === "optional"` and the input is `undefined`, it has to decide: *trust the inner's output*, or *override with `undefined`*. The `fallback` payload flag is how the inner tells the outer "this value is a recovery / a transform's interpretation, not a deliberate handling of absence — feel free to override." Catch sets it on substitution; transform sets it when its own input was `undefined`. Default and prefault don't, because their values *are* the deliberate handling — and because they hand the transform downstream of them a real value, they keep it from flagging too.
 
 For everything else — `coerce`, `string`, `unknown`, `any`, `transform.pipe` shapes where transform is on the OUT side — `optin` stays `undefined`. Object and tuple parsers reject absent input. Users opt in explicitly via `.optional()` or `.default(...)` when they want absence accepted.

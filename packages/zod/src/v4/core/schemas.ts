@@ -44,8 +44,8 @@ export interface ParsePayload<T = unknown> {
   aborted?: boolean;
   /** @internal Marks a value as a fallback that an outer wrapper (e.g.
    * $ZodOptional) may override with its own interpretation when input was
-   * undefined. Set by $ZodCatch when catchValue substitutes and by every
-   * $ZodTransform invocation. */
+   * undefined. Set by $ZodCatch when catchValue substitutes and by
+   * $ZodTransform when its own input was undefined. */
   fallback?: boolean | undefined;
   /** @internal Set when the value came from a repeat visit to a node still being
    * parsed. Its checks run on the node itself, against the finished value. */
