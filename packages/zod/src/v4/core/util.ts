@@ -997,7 +997,11 @@ export abstract class Class {
 // building the table, since building it allocates every method in the group.
 function claim(inst: object, sentinel: string): object | undefined {
   const proto = Object.getPrototypeOf(inst);
-  return Object.prototype.hasOwnProperty.call(proto, sentinel) ? undefined : proto;
+  // `in` rather than `hasOwnProperty.call`: this runs once per install group on
+  // EVERY construction, and the builtin call is measurably more expensive than
+  // the operator. Safe because every sentinel is a key the group itself defines
+  // and none collide with anything on `Object.prototype`.
+  return sentinel in proto ? undefined : proto;
 }
 
 function defineCached(proto: object, key: string, compute: (self: any) => unknown): void {

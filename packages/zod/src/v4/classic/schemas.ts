@@ -189,7 +189,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   // `description` reads through to the registry on every access, so unlike the
   // rest it must not cache onto the instance.
   const proto = Object.getPrototypeOf(inst);
-  if (!Object.prototype.hasOwnProperty.call(proto, "description")) {
+  if (!("description" in proto)) {
     Object.defineProperty(proto, "description", {
       configurable: true,
       get(this: ZodType) {
