@@ -33,8 +33,8 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
       try {
         Object.defineProperty(inst, "_zod", _zodDesc);
       } finally {
-        // Must clear even if the define throws, or the shared descriptor would
-        // carry this instance's internals into the next construction.
+        // Cleared even on throw, so the shared descriptor never leaks one
+        // instance's internals into the next.
         _zodDesc.value = undefined;
       }
     }
@@ -71,8 +71,8 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
       for (const fn of deferred) {
         fn();
       }
-      // Initializers run exactly once; holding the list afterwards keeps an
-      // array and its closures alive for the schema's whole lifetime.
+      // Released: initializers run once, and the list would otherwise be
+      // retained for the schema's lifetime.
       inst._zod.deferred = undefined;
     }
     return inst;

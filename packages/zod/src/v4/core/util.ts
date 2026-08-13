@@ -984,42 +984,22 @@ export abstract class Class {
 
 //////////    PROTOTYPE INSTALLERS     //////////
 //
-// Own-property count is the dominant per-instance cost of a schema. V8 sizes
-// the property backing store in steps, and `$constructor` assigns nothing
-// itself, so instances get no in-object slots: 12 own properties cost 128
-// bytes, 13 cost 848, 21 cost 1616. Keeping methods on the prototype and
-// materializing them per instance only when touched keeps instances under the
-// first step.
-//
-// Each install runs once per prototype, so a prototype must not be modified
-// after the first instance of its type is built — later changes are never
-// picked up.
-//
-// The guard is a sentinel key the table itself owns: if the prototype already
-// has it, this table is installed. It must be checked BEFORE building the
-// table, since building it allocates every method in the group. A
-// WeakMap-of-key-sets is ~3% faster for classic construction but costs bundle
-// size everywhere and is slower for mini, so the sentinel wins on balance.
-//
-// Changing anything here means re-measuring runtime, memory AND bundle size —
-// they trade against each other and several plausible simplifications here
-// have measured worse. See "The three axes" in AGENTS.md, and run
-// `packages/bench/memory/{prop-slack,dict-mode}.ts`.
+// Members live on the prototype and materialize per instance on first read,
+// which keeps own-property count under the step where V8 stops using inline
+// slots. Changing anything here means re-measuring runtime, memory and bundle
+// size together — see "The three axes" in AGENTS.md.
+
+/** Returns the prototype to install on, or `undefined` if this group is already installed on it. */
 function claim(inst: object, sentinel: string): object | undefined {
   const proto = Object.getPrototypeOf(inst);
-  // `in` rather than `hasOwnProperty.call`: this runs once per install group on
-  // EVERY construction, and the builtin call is measurably more expensive than
-  // the operator. Safe because every sentinel is a key the group itself defines
-  // and none collide with anything on `Object.prototype`.
+  // Runs on every construction, so `in` rather than the costlier
+  // `hasOwnProperty.call`. Sentinels are keys the group itself defines.
   return sentinel in proto ? undefined : proto;
 }
 
 function defineCached(proto: object, key: string, compute: (self: any) => unknown): void {
-  // Every relocated member except `~standard` used to be an enumerable own
-  // property, so its cache stays enumerable and `Object.keys` still reports it
-  // once touched. `~standard` was never an own data property — the old
-  // `defineLazy` cached into a closure — so caching it enumerably would newly
-  // add it to `Object.keys` and `JSON.stringify` of a schema.
+  // `~standard` was never an own data property, so caching it must not add it
+  // to `Object.keys`. Everything else here was enumerable and stays so.
   const enumerable = key !== "~standard";
   Object.defineProperty(proto, key, {
     configurable: true,
@@ -1034,10 +1014,7 @@ function defineCached(proto: object, key: string, compute: (self: any) => unknow
   });
 }
 
-/**
- * Methods of `T` reshaped so each body has `this: T` and matches the declared
- * (args, return) of the corresponding interface method.
- */
+/** Methods of `T` reshaped so each body has `this: T`. */
 export type LazyMethodsOf<T> = Partial<{
   [K in keyof T]: T[K] extends (...args: infer A) => infer R ? (this: T, ...args: A) => R : never;
 }>;
@@ -1046,12 +1023,9 @@ export type LazyMethodsOf<T> = Partial<{
 export type LazyPropsOf<T> = Partial<{ [K in keyof T]: (self: T) => T[K] }>;
 
 /**
- * Installs methods as lazy-bind getters: on first access an instance gets
- * `fn.bind(this)` cached as an own property, so detached use (`const m =
- * schema.optional; m()`) still works.
- *
- * Not for hot-path functions — a bound function pays a call-time trampoline.
- * Use `installLazyProps` there and build the closure directly.
+ * Installs methods that bind to the instance on first access. Not for hot-path
+ * functions — a bound function pays a call-time trampoline; use
+ * `installLazyProps` there.
  */
 export function installLazyMethods<T extends object>(inst: T, sentinel: string, methods: () => LazyMethodsOf<T>): void {
   const proto = claim(inst, sentinel);
@@ -1073,10 +1047,7 @@ export function installLazyProps<T extends object>(inst: T, sentinel: string, pr
   }
 }
 
-/**
- * Single-property variant. The key doubles as the sentinel, so installing one
- * lazy member costs no table and no loop.
- */
+/** Single-property variant; the key doubles as the sentinel. */
 export function installLazyProp(inst: object, key: string, make: (self: any) => unknown): void {
   const proto = claim(inst, key);
   if (proto) defineCached(proto, key, make);

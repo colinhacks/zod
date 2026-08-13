@@ -305,10 +305,8 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
     };
   }
 
-  // `~standard` lives on the prototype and materializes per instance on first
-  // read, so construction pays neither the object nor a per-instance
-  // descriptor. Wrappers extend it by installing their own richer factory
-  // over this one (see the classic build) rather than reading it eagerly.
+  // Wrappers extend this by installing a richer factory over it; reading it
+  // eagerly would defeat the laziness.
   util.installLazyProp(inst, "~standard", standardProps);
 });
 
@@ -4435,9 +4433,8 @@ export const $ZodFunction: core.$constructor<$ZodFunction> = /*@__PURE__*/ core.
   "$ZodFunction",
   (inst, def) => {
     $ZodType.init(inst, def);
-    // Own, non-writable — matching what the classic build used to install on
-    // every instance. Defined rather than assigned because the classic
-    // prototype now exposes `_def` as a getter with no setter.
+    // Defined, not assigned: the classic prototype exposes `_def` as a
+    // getter with no setter.
     Object.defineProperty(inst, "_def", { value: def });
     inst._zod.def = def;
 
