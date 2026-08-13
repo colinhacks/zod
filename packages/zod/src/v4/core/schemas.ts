@@ -487,7 +487,7 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
       // When normalize is off, require :// for http/https URLs
       // This prevents strings like "http:example.com" or "https:/path" from being silently accepted
       if (!def.normalize && def.protocol?.source === regexes.httpProtocol.source) {
-        if (!/^https?:\/\//i.test(trimmed)) {
+        if (!core.testRegex(/^https?:\/\//i, trimmed)) {
           payload.issues.push({
             code: "invalid_format",
             format: "url",
@@ -505,7 +505,7 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
 
       if (def.hostname) {
         def.hostname.lastIndex = 0;
-        if (!def.hostname.test(url.hostname)) {
+        if (!core.testRegex(def.hostname, url.hostname)) {
           payload.issues.push({
             code: "invalid_format",
             format: "url",
@@ -520,7 +520,7 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
 
       if (def.protocol) {
         def.protocol.lastIndex = 0;
-        if (!def.protocol.test(url.protocol.endsWith(":") ? url.protocol.slice(0, -1) : url.protocol)) {
+        if (!core.testRegex(def.protocol, url.protocol.endsWith(":") ? url.protocol.slice(0, -1) : url.protocol)) {
           payload.issues.push({
             code: "invalid_format",
             format: "url",
@@ -913,7 +913,7 @@ export const $ZodCIDRv6: core.$constructor<$ZodCIDRv6> = /*@__PURE__*/ core.$con
 export function isValidBase64(data: string): boolean {
   if (data === "") return true;
   // atob ignores whitespace, so reject it up front.
-  if (/\s/.test(data)) return false;
+  if (core.testRegex(/\s/, data)) return false;
   if (data.length % 4 !== 0) return false;
   try {
     // @ts-ignore
@@ -955,7 +955,7 @@ export const $ZodBase64: core.$constructor<$ZodBase64> = /*@__PURE__*/ core.$con
 
 //////////////////////////////   ZodBase64   //////////////////////////////
 export function isValidBase64URL(data: string): boolean {
-  if (!regexes.base64url.test(data)) return false;
+  if (!core.testRegex(regexes.base64url, data)) return false;
   const base64 = data.replace(/[-_]/g, (c) => (c === "-" ? "+" : "/"));
   const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
   return isValidBase64(padded);
@@ -2037,7 +2037,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
             })));
           }
         }
-        
+
         if (${id}.value === undefined) {
           if (${isPresent}) {
             newResult[${k}] = undefined;
@@ -2082,7 +2082,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
             path: iss.path ? [${k}, ...iss.path] : [${k}]
           })));
         }
-        
+
         if (${id}.value === undefined) {
           if (${isPresent}) {
             newResult[${k}] = undefined;
@@ -2982,7 +2982,8 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
 
         // Numeric string fallback: if key is a numeric string and failed, retry with Number(key)
         // This handles z.number(), z.literal([1, 2, 3]), and unions containing numeric literals
-        const checkNumericKey = typeof key === "string" && regexes.number.test(key) && keyResult.issues.length;
+        const checkNumericKey =
+          typeof key === "string" && core.testRegex(regexes.number, key) && keyResult.issues.length;
         if (checkNumericKey) {
           const retryResult = def.keyType._zod.run({ value: Number(key), issues: [] }, ctx);
           if (retryResult instanceof Promise) {
@@ -4350,7 +4351,7 @@ export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> = /*@__
 
       inst._zod.pattern.lastIndex = 0;
 
-      if (!inst._zod.pattern.test(payload.value)) {
+      if (!core.testRegex(inst._zod.pattern, payload.value)) {
         payload.issues.push({
           input: payload.value,
           inst,

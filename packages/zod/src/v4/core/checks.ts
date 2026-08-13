@@ -811,7 +811,7 @@ export const $ZodCheckStringFormat: core.$constructor<$ZodCheckStringFormat> = /
     if (def.pattern)
       inst._zod.check ??= (payload) => {
         def.pattern!.lastIndex = 0;
-        if (def.pattern!.test(payload.value)) return;
+        if (core.testRegex(def.pattern!, payload.value)) return;
         payload.issues.push({
           origin: "string",
           code: "invalid_format",
@@ -849,8 +849,8 @@ export const $ZodCheckRegex: core.$constructor<$ZodCheckRegex> = /*@__PURE__*/ c
     $ZodCheckStringFormat.init(inst, def);
 
     inst._zod.check = (payload) => {
-      def.pattern.lastIndex = 0;
-      if (def.pattern.test(payload.value)) return;
+      if (core.testRegex(def.pattern!, payload.value)) return;
+
       payload.issues.push({
         origin: "string",
         code: "invalid_format",
