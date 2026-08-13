@@ -2098,6 +2098,15 @@ test("extract schemas with id", () => {
   `);
 });
 
+test("escapes JSON Pointer reserved characters in $ref but not in $defs key", () => {
+  const User = z.object({ name: z.string() }).meta({ id: "Shared/User~" });
+  const result = z.toJSONSchema(z.object({ User }));
+  // the $ref pointer escapes `/` -> `~1` and `~` -> `~0` (RFC 6901),
+  // while the $defs key keeps the original id
+  expect((result.properties!.User as any).$ref).toBe("#/$defs/Shared~1User~0");
+  expect(Object.keys(result.$defs!)).toEqual(["Shared/User~"]);
+});
+
 test("unrepresentable literal values are ignored", () => {
   const a = z.toJSONSchema(z.literal(["hello", null, 5, BigInt(1324), undefined]), { unrepresentable: "any" });
   expect(a).toMatchInlineSnapshot(`
