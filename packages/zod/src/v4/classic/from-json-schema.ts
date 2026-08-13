@@ -119,10 +119,8 @@ function detectVersion(schema: JSONSchema.JSONSchema, defaultTarget?: JSONSchema
   return defaultTarget ?? "draft-2020-12";
 }
 
+// Positional schemas constrain the elements that are present; only minItems makes them required.
 function applyMinItems(items: ZodType[], minItems: number): ZodType[] {
-  if (minItems <= 0) {
-    return items.map((item) => item.optional());
-  }
   return items.map((item, index) => (index < minItems ? item : item.optional()));
 }
 
