@@ -53,6 +53,20 @@ describe("z.creditCard", () => {
     expect(() => z.creditCard().parse("")).toThrow();
   });
 
+  test("carries the shape regex as its JSON Schema pattern", () => {
+    // Luhn is not expressible as a pattern, so `pattern` covers length and separators only.
+    expect(z.toJSONSchema(z.creditCard())).toMatchObject({
+      format: "credit_card",
+      pattern: z.regexes.creditCard.source,
+    });
+  });
+
+  test("round-trips through JSON Schema with the checksum intact", () => {
+    const schema = z.fromJSONSchema(z.toJSONSchema(z.creditCard()));
+    expect(schema.safeParse("4111111111111111").success).toBe(true);
+    expect(schema.safeParse("4111111111111112").success).toBe(false);
+  });
+
   test("error message references credit card", () => {
     const result = z.creditCard().safeParse("not-a-card");
     expect(result.success).toBe(false);

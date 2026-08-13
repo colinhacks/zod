@@ -1047,6 +1047,9 @@ export interface $ZodCreditCard extends $ZodType {
 export const $ZodCreditCard: core.$constructor<$ZodCreditCard> = /*@__PURE__*/ core.$constructor(
   "$ZodCreditCard",
   (inst, def): void => {
+    // Shape only — the Luhn check below is not expressible as a pattern, so consumers of
+    // `pattern` (JSON Schema, template literals) get the length and separator rules alone.
+    def.pattern ??= regexes.creditCard;
     $ZodStringFormat.init(inst, def);
     inst._zod.check = (payload) => {
       if (isValidCreditCard(payload.value)) return;
@@ -4807,6 +4810,7 @@ export type $ZodStringFormatTypes =
   | $ZodBase64
   | $ZodBase64URL
   | $ZodE164
+  | $ZodCreditCard
   | $ZodJWT
   | $ZodCustomStringFormat<"hex">
   | $ZodCustomStringFormat<util.HashFormat>
