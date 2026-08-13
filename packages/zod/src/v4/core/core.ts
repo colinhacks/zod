@@ -108,15 +108,6 @@ export class $ZodEncodeError extends Error {
   }
 }
 
-export class $ZodCyclicError extends Error {
-  constructor() {
-    super(
-      `Encountered a reference cycle that closes through a transform. The transformed value doesn't exist yet when the cycle closes, so the output can't mirror the input graph.`
-    );
-    this.name = "ZodCyclicError";
-  }
-}
-
 ////////////////////////////  TYPE HELPERS  ///////////////////////////////////
 
 // export type input<T extends schemas.$ZodType> = T["_zod"]["input"];

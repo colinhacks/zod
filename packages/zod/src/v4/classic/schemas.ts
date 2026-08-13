@@ -3,6 +3,7 @@ import { util } from "../core/index.js";
 import * as processors from "../core/json-schema-processors.js";
 import type { StandardSchemaWithJSONProps } from "../core/standard-schema.js";
 import { createStandardJSONSchemaMethod, createToJSONSchemaMethod } from "../core/to-json-schema.js";
+import * as cycles from "./cycles.js";
 
 import * as checks from "./checks.js";
 import * as parse from "./parse.js";
@@ -1392,6 +1393,7 @@ export interface ZodArray<T extends core.SomeType = core.$ZodType>
 }
 export const ZodArray: core.$constructor<ZodArray> = /*@__PURE__*/ core.$constructor("ZodArray", (inst, def) => {
   core.$ZodArray.init(inst, def);
+  cycles.installCycleGuard(inst, () => [], cycles.fillArray);
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.arrayProcessor(inst, ctx, json, params);
 
@@ -1519,6 +1521,7 @@ export interface ZodObject<
 
 export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$constructor("ZodObject", (inst, def) => {
   core.$ZodObjectJIT.init(inst, def);
+  cycles.installCycleGuard(inst, () => ({}), cycles.fillObject);
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.objectProcessor(inst, ctx, json, params);
 
@@ -1735,6 +1738,7 @@ export interface ZodTuple<
 }
 export const ZodTuple: core.$constructor<ZodTuple> = /*@__PURE__*/ core.$constructor("ZodTuple", (inst, def) => {
   core.$ZodTuple.init(inst, def);
+  cycles.installCycleGuard(inst, () => [], cycles.fillArray);
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.tupleProcessor(inst, ctx, json, params);
   inst.rest = (rest) =>
@@ -1782,6 +1786,7 @@ export interface ZodRecord<
 }
 export const ZodRecord: core.$constructor<ZodRecord> = /*@__PURE__*/ core.$constructor("ZodRecord", (inst, def) => {
   core.$ZodRecord.init(inst, def);
+  cycles.installCycleGuard(inst, () => ({}), cycles.fillObject);
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.recordProcessor(inst, ctx, json, params);
 
@@ -1854,6 +1859,7 @@ export interface ZodMap<Key extends core.SomeType = core.$ZodType, Value extends
 }
 export const ZodMap: core.$constructor<ZodMap> = /*@__PURE__*/ core.$constructor("ZodMap", (inst, def) => {
   core.$ZodMap.init(inst, def);
+  cycles.installCycleGuard(inst, () => new Map(), cycles.fillMap);
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.mapProcessor(inst, ctx, json, params);
   inst.keyType = def.keyType;
@@ -1889,6 +1895,7 @@ export interface ZodSet<T extends core.SomeType = core.$ZodType>
 }
 export const ZodSet: core.$constructor<ZodSet> = /*@__PURE__*/ core.$constructor("ZodSet", (inst, def) => {
   core.$ZodSet.init(inst, def);
+  cycles.installCycleGuard(inst, () => new Set(), cycles.fillSet);
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.setProcessor(inst, ctx, json, params);
 
@@ -2079,9 +2086,9 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
         throw new core.$ZodEncodeError(inst.constructor.name);
       }
 
-      // The value is a back-edge placeholder, so the cycle closes through this
-      // transform. Its output can't exist in time to bind the back-edge.
-      if (payload.memo) throw new core.$ZodCyclicError();
+      // The value is a placeholder a back-edge is still waiting on, so the cycle
+      // closes through this transform. Its output can't exist in time to bind.
+      if (cycles.isPendingPlaceholder(_ctx, payload.value)) throw new cycles.ZodCyclicError();
 
       (payload as core.$RefinementCtx).addIssue = (issue) => {
         if (typeof issue === "string") {
