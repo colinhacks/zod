@@ -2938,6 +2938,9 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       for (const key in input) {
         if (!recordKeys.has(key)) {
           if (def.mode === "loose") {
+            // skip __proto__ so it can't replace the result prototype via the
+            // assignment setter on the plain {} we build into
+            if (key === "__proto__") continue;
             payload.value[key] = input[key];
           } else {
             unrecognized = unrecognized ?? [];

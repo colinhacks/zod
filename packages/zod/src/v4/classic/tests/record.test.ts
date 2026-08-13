@@ -623,6 +623,17 @@ test("record with closed key schema still rejects unrecognized keys", () => {
   expect(schema.safeParse({ foo: 123, bar: {}, baz: null }).success).toBe(false);
 });
 
+// __proto__ in input must not replace the prototype of the parsed object via
+// the assignment setter on the result {}.
+// https://github.com/colinhacks/zod/security/advisories/GHSA-r34p-xfmx-58wv
+test("looseRecord with closed key schema drops __proto__", () => {
+  const schema = z.looseRecord(z.enum(["foo", "bar"]), z.any());
+  const parsed = schema.parse(JSON.parse('{"foo":1,"bar":2,"__proto__":{"isAdmin":true}}'));
+  expect(Object.keys(parsed)).toEqual(["foo", "bar"]);
+  expect((parsed as any).isAdmin).toBeUndefined();
+  expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+});
+
 test("intersection of loose records", () => {
   const schema = z.intersection(
     z.object({ name: z.string() }).passthrough(),
