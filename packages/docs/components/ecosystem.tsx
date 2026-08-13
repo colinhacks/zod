@@ -364,7 +364,13 @@ const zodUtilities: ZodResource[] = [
     url: "https://jsr.io/@chrock-studio/zod-utils",
     description: "A collection of Zod utilities focusing on enhanced functionality (e.g. classless Rich Domain Models while maintaining pure data structures).",
     slug: "chrock-studio/toolbox/tree/main/packages/zod-utils",
-  }
+  },
+  {
+    name: "oxlint-plugin-import-zod",
+    url: "https://github.com/samchungy/oxlint-plugin-import-zod",
+    description: "Oxlint plugin to enforce namespace imports for Zod.",
+    slug: "samchungy/oxlint-plugin-import-zod",
+  },
 ];
 
 export {
