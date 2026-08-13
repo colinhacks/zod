@@ -123,9 +123,14 @@ A separate axis from `optin`. Set by:
 |---|---|
 | `$ZodOptional` | `"optional"` |
 | `$ZodExactOptional` | `"optional"` |
+| `$ZodTransform` | `"optional"` |
 | Everything else | inherited or `undefined` |
 
 `$ZodObject` uses it (combined with `optin` and `isPresent`) to decide whether to assign or skip. `$ZodTuple` uses it to decide whether to trim a trailing slot whose value came back as `undefined`.
+
+`$ZodTransform` sets it because a transform's output is whatever the user's fn returns, which may be `undefined`. It used to leave `optout` unset, and `$ZodPipe` — which reads `def.out`'s — read that silence as "required". That is what made `.transform()` erase key optionality: `X.transform(fn)` lowers to `pipe(X, transform(fn))`, so the pipe took its answer from a schema that had not given one.
+
+`optout` alone does not decide a key, though, and that is the other half. A key can only be omitted if absence is legal going in *and* the output can be `undefined` — so every consumer that decides omissibility reads `optin` and `optout` together: object and tuple output inference, `util.optionalKeys`, the tuple trim, and the JSON Schema `required` filter. `optin` alone still gates the questions that are genuinely one-axis — whether an absent key is legal, and the tuple `too_small` precheck. That keeps `z.string().transform(fn)` required (its `optin` comes from the leading `z.string()`) while `z.string().optional().transform(fn)` is key-optional, with no special-casing of the transform anywhere in `$ZodPipe`.
 
 The relevant observation for users: a schema can be **input-required, output-optional** (`z.string().nullable()` with some shapes), or **input-optional, output-required** (`z.string().default("d")` — accepts absence, never produces undefined). The `optin` × `optout` matrix has all four combinations and they all matter for object/tuple parsing.
 
@@ -375,6 +380,7 @@ z.object({ a: z.preprocess(fn, z.string().optional()) }).parse({})
 | [#5661](https://github.com/colinhacks/zod/pull/5661) | Made `$ZodObject` / `$ZodTuple` strict about absent slots — consult `optin`. Source of the 4.4 regressions. |
 | [#5917](https://github.com/colinhacks/zod/pull/5917) / [#5929](https://github.com/colinhacks/zod/pull/5929) | Made preprocess defer optionality to inner schema (so `preprocess(fn, X.optional())` worked again). Pure metadata-override subtype design. |
 | [#5937](https://github.com/colinhacks/zod/issues/5937) / [#5939](https://github.com/colinhacks/zod/pull/5939) | Restored `$ZodCatch.optin = "optional"` runtime + introduced the `caught` flag so an outer `$ZodOptional` could clobber catch's recovery. |
+| [#5178](https://github.com/colinhacks/zod/issues/5178) | Gave `$ZodTransform` its own `optout = "optional"` and made object output inference require `optin` *and* `optout`, matching `util.optionalKeys`. Restores the v3 key optionality that `.transform()` had been erasing. Also corrects `A.transform(fn).pipe(B.optional())`, which inferred a key-optional output for a key the parser rejects when absent. |
 | [#5941](https://github.com/colinhacks/zod/pull/5941) | Renamed `caught → fallback`; propagated through `$ZodPipe` boundaries; also makes `$ZodPreprocess.optin = "optional"` and `$ZodTransform` set `fallback` on every invocation. Restores the bare-`preprocess` regression. **Plus** prototype commit promoting `optin = "optional"` from preprocess to transform (under consideration). |
 
 ## Design principle: flexible inputs, strict outputs (at runtime)

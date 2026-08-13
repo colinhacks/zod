@@ -113,11 +113,14 @@ test("pipe optionality inside objects", () => {
   }>();
 
   type SchemaOut = z.output<typeof schema>;
+  // `d` is optional-out but required-in, so an absent key is rejected outright (asserted in
+  // "object absent keys require optin optional" below). A key that can never be missing is not
+  // key-optional, whatever its value type.
   expectTypeOf<SchemaOut>().toEqualTypeOf<{
     a?: string | undefined;
     b: string;
     c: string;
-    d?: string | undefined;
+    d: string | undefined;
     e: string;
   }>();
 });
@@ -291,14 +294,14 @@ test("object key optionality through optout propagation", () => {
   const unionWithOpt = z.object({ k: z.union([z.string(), z.string().optional()]) });
   expectTypeOf<z.infer<typeof unionWithOpt>>().toEqualTypeOf<{ k?: string | undefined }>();
 
-  // pipe ending in optional()
+  // pipe ending in optional(), but required-in: the key is never absent, so it stays required
   const pipedToOpt = z.object({
     k: z
       .string()
       .transform((v) => (Math.random() ? v : undefined))
       .pipe(z.string().optional()),
   });
-  expectTypeOf<z.output<typeof pipedToOpt>>().toEqualTypeOf<{ k?: string | undefined }>();
+  expectTypeOf<z.output<typeof pipedToOpt>>().toEqualTypeOf<{ k: string | undefined }>();
 
   // mixed shape pinning required vs optional keys end-to-end
   const mixed = z.object({
@@ -315,6 +318,84 @@ test("object key optionality through optout propagation", () => {
     def: string;
     nullableOpt?: string | null | undefined;
   }>();
+});
+
+// `$ZodTransform` declares optout, and a key is only omissible when optin and optout agree.
+// Before that, the pipe read the transform's silence as "required" and `.transform()` dropped
+// key optionality the parser still honors at runtime.
+test("transform preserves optout from the in side", () => {
+  const transformed = z.object({
+    a: z
+      .string()
+      .nullish()
+      .transform((v) => v),
+  });
+  expectTypeOf<z.input<typeof transformed>>().toEqualTypeOf<{ a?: string | null | undefined }>();
+  expectTypeOf<z.output<typeof transformed>>().toEqualTypeOf<{ a?: string | null | undefined }>();
+  expect(transformed._zod.def.shape.a._zod.optout).toEqual("optional");
+
+  // The runtime the type now matches: absent in, absent out.
+  expect("a" in transformed.parse({})).toEqual(false);
+  expect("a" in transformed.parse({}, { jitless: true })).toEqual(false);
+  expect("a" in transformed.parse({ a: undefined })).toEqual(true);
+
+  // A required in side stays required — the transform doesn't invent optionality. It declares
+  // optout, but optin still comes from the leading schema, and a key needs both to be omissible.
+  const required = z.object({ a: z.string().transform((v) => v.length) });
+  expectTypeOf<z.output<typeof required>>().toEqualTypeOf<{ a: number }>();
+  expect(required._zod.def.shape.a._zod.optin).toEqual(undefined);
+  expect(required.safeParse({}).success).toEqual(false);
+
+  // A transform that fills the absent case still produces the key.
+  const filled = z.object({
+    a: z
+      .string()
+      .optional()
+      .transform((v) => v ?? "x"),
+  });
+  expect(filled.parse({})).toEqual({ a: "x" });
+
+  // Tuple tails apply the same conjunction, so the trailing slot trims like the untransformed one.
+  const tuple = z.tuple([
+    z.string(),
+    z
+      .number()
+      .optional()
+      .transform((v) => v),
+  ]);
+  expectTypeOf<z.output<typeof tuple>>().toEqualTypeOf<[string, (number | undefined)?]>();
+  expect(tuple.parse(["a"])).toEqual(["a"]);
+
+  // ...and a required-in transform tail stays required. The `.rest()` variant is the one that
+  // discriminates: without a rest the length precheck rejects a short array before `optout` is
+  // ever consulted, so only this shape reaches the trim branch.
+  const requiredTail = z.tuple([z.string(), z.string().transform((v) => v.length)]);
+  expectTypeOf<z.output<typeof requiredTail>>().toEqualTypeOf<[string, number]>();
+  expect(requiredTail.safeParse(["a"]).success).toEqual(false);
+
+  const withRest = z.tuple([z.string(), z.string().transform((v) => v)], z.string());
+  expect(withRest.safeParse(["a"]).success).toEqual(false);
+  expect(withRest.safeParse(["a"], { jitless: true }).success).toEqual(false);
+  expect(withRest.parse(["a", "b", "c"])).toEqual(["a", "b", "c"]);
+
+  // The trailing-undefined trim is the other runtime reader. `z.any()` yields undefined without
+  // issues, so with a rest the absent tail reaches it; a required in side must keep the slot.
+  const anyTail = z.tuple([z.string(), z.any().transform((v) => v)], z.string());
+  expectTypeOf<z.output<typeof anyTail>>().toEqualTypeOf<[string, any, ...string[]]>();
+  expect(anyTail.parse(["a"])).toEqual(["a", undefined]);
+  expect(anyTail.parse(["a"], { jitless: true })).toEqual(["a", undefined]);
+
+  // JSON Schema `required` reads the same conjunction, so a required-in transform keeps its key.
+  const requiredInJson = z.toJSONSchema(z.object({ a: z.string().transform((v) => v.length) }), {
+    io: "output",
+    unrepresentable: "any",
+  });
+  expect(requiredInJson.required).toEqual(["a"]);
+
+  // JSON Schema `required` reads the same flag, so it moves in lockstep with the inferred type.
+  // Only reachable with `unrepresentable: "any"` — the default throws on a transform.
+  const json = z.toJSONSchema(transformed, { io: "output", unrepresentable: "any" });
+  expect(json.required).toEqual(undefined);
 });
 
 // Defensive: tuple optional-tail inference also reads optout. The PR that introduced

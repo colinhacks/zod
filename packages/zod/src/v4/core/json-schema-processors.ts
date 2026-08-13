@@ -13,7 +13,7 @@ import {
   initializeContext,
   process,
 } from "./to-json-schema.js";
-import { assignProp, getEnumValues } from "./util.js";
+import { assignProp, getEnumValues, isOmissible } from "./util.js";
 
 const formatMap: Partial<Record<checks.$ZodStringFormats, string | undefined>> = {
   guid: "uuid",
@@ -283,12 +283,10 @@ export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _jso
   const allKeys = new Set(Object.keys(shape));
   const requiredKeys = new Set(
     [...allKeys].filter((key) => {
-      const v = def.shape[key]!._zod;
       if (ctx.io === "input") {
-        return v.optin === undefined;
-      } else {
-        return v.optout === undefined;
+        return def.shape[key]!._zod.optin === undefined;
       }
+      return !isOmissible(def.shape[key]!);
     })
   );
 

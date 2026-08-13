@@ -571,10 +571,14 @@ export function stringifyPrimitive(value: any): string {
   return `${value}`;
 }
 
+/** Whether a slot can be left out entirely: absence must be legal going in, and the output
+ * must be able to be `undefined`. Neither flag answers this on its own. */
+export function isOmissible(schema: schemas.$ZodType): boolean {
+  return schema._zod.optin === "optional" && schema._zod.optout === "optional";
+}
+
 export function optionalKeys(shape: schemas.$ZodShape): string[] {
-  return Object.keys(shape).filter((k) => {
-    return shape[k]!._zod.optin === "optional" && shape[k]!._zod.optout === "optional";
-  });
+  return Object.keys(shape).filter((k) => isOmissible(shape[k]!));
 }
 
 export type CleanKey<T extends PropertyKey> = T extends `?${infer K}` ? K : T extends `${infer K}?` ? K : T;

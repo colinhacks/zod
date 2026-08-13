@@ -1697,6 +1697,8 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
 
 type OptionalOutSchema = { _zod: { optout: "optional" } };
 type OptionalInSchema = { _zod: { optin: "optional" } };
+/** A slot can be left out only if absence is legal going in and the output can be `undefined`. */
+type OmissibleSchema = { _zod: { optin: "optional"; optout: "optional" } };
 
 export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = string extends keyof T
   ? util.IsAny<T[keyof T]> extends true
@@ -1706,9 +1708,9 @@ export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<st
     ? Record<string, never>
     : util.Prettify<
         {
-          -readonly [k in keyof T as T[k] extends OptionalOutSchema ? never : k]: T[k]["_zod"]["output"];
+          -readonly [k in keyof T as T[k] extends OmissibleSchema ? never : k]: T[k]["_zod"]["output"];
         } & {
-          -readonly [k in keyof T as T[k] extends OptionalOutSchema ? k : never]?: T[k]["_zod"]["output"];
+          -readonly [k in keyof T as T[k] extends OmissibleSchema ? k : never]?: T[k]["_zod"]["output"];
         } & Extra
       >;
 
@@ -2664,7 +2666,7 @@ type TupleOutputTypeWithOptionals<T extends util.TupleItems> = T extends readonl
   ...infer Prefix extends SomeType[],
   infer Tail extends SomeType,
 ]
-  ? Tail["_zod"]["optout"] extends "optional"
+  ? Tail extends OmissibleSchema
     ? [...TupleOutputTypeWithOptionals<Prefix>, core.output<Tail>?]
     : TupleOutputTypeNoOptionals<T>
   : [];
@@ -2707,7 +2709,7 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
     const proms: Promise<any>[] = [];
 
     const optinStart = getTupleOptStart(items, "optin");
-    const optoutStart = getTupleOptStart(items, "optout");
+    const optoutStart = getTupleOptStart(items, "omissible");
 
     if (!def.rest) {
       if (input.length < optinStart) {
@@ -2772,9 +2774,11 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
   };
 });
 
-function getTupleOptStart(items: readonly $ZodType[], key: "optin" | "optout") {
+function getTupleOptStart(items: readonly $ZodType[], key: "optin" | "omissible") {
   for (let i = items.length - 1; i >= 0; i--) {
-    if (items[i]._zod[key] !== "optional") return i + 1;
+    const el = items[i]._zod;
+    const optional = key === "optin" ? el.optin === "optional" : util.isOmissible(items[i]);
+    if (!optional) return i + 1;
   }
   return 0;
 }
@@ -2816,7 +2820,7 @@ function handleTupleResults(
   // optional-out (e.g. `z.string().or(z.undefined())` accepting an
   // explicit undefined value).
   for (let i = final.value.length - 1; i >= input.length; i--) {
-    if (items[i]._zod.optout === "optional" && final.value[i] === undefined) {
+    if (util.isOmissible(items[i]!) && final.value[i] === undefined) {
       final.value.length = i;
     } else {
       break;
@@ -3445,6 +3449,7 @@ export interface $ZodTransformDef extends $ZodTypeDef {
 export interface $ZodTransformInternals<O = unknown, I = unknown> extends $ZodTypeInternals<O, I> {
   def: $ZodTransformDef;
   isst: never;
+  optout: "optional";
 }
 
 export interface $ZodTransform<O = unknown, I = unknown> extends $ZodType {
@@ -3456,6 +3461,7 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
   (inst, def) => {
     $ZodType.init(inst, def);
     inst._zod.optin = "optional";
+    inst._zod.optout = "optional";
     inst._zod.parse = (payload, ctx) => {
       if (ctx.direction === "backward") {
         throw new core.$ZodEncodeError(inst.constructor.name);
