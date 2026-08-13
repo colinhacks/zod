@@ -711,3 +711,60 @@ test.each(["__proto__", "constructor", "toString", "hasOwnProperty", "valueOf"])
     expect(parsed.value).toBe("ok");
   }
 );
+
+const Action = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("added"), value: z.string() }),
+  z.object({ type: z.literal("removed"), id: z.number() }),
+  z.object({ type: z.literal("changed"), value: z.string(), id: z.number() }),
+]);
+
+test("exclude", () => {
+  const NoAdded = Action.exclude(["added"]);
+
+  expect(NoAdded.safeParse({ type: "removed", id: 1 }).success).toEqual(true);
+  expect(NoAdded.safeParse({ type: "added", value: "a" }).success).toEqual(false);
+  expect(NoAdded.options.length).toEqual(2);
+  expectTypeOf<z.infer<typeof NoAdded>>().toEqualTypeOf<
+    { type: "removed"; id: number } | { type: "changed"; value: string; id: number }
+  >();
+
+  const Empty = Action.exclude(["added", "removed", "changed"]);
+  expect(Empty.options.length).toEqual(0);
+  expectTypeOf<z.infer<typeof Empty>>().toEqualTypeOf<never>();
+});
+
+test("extract", () => {
+  const Mutations = Action.extract(["added", "removed"]);
+
+  expect(Mutations.safeParse({ type: "added", value: "a" }).success).toEqual(true);
+  expect(Mutations.safeParse({ type: "changed", value: "a", id: 1 }).success).toEqual(false);
+  expectTypeOf<z.infer<typeof Mutations>>().toEqualTypeOf<
+    { type: "added"; value: string } | { type: "removed"; id: number }
+  >();
+});
+
+test("exclude/extract error params", () => {
+  const NoAdded = Action.exclude(["added"], { error: () => "unsupported action" });
+  const result = NoAdded.safeParse({ type: "added", value: "a" });
+  expect(result.error!.issues[0].message).toEqual("unsupported action");
+});
+
+test("exclude/extract unknown discriminator value", () => {
+  expect(() => (Action as any).exclude(["renamed"])).toThrow(/not found in union/);
+  expect(() => (Action as any).extract(["renamed"])).toThrow(/not found in union/);
+});
+
+test("exclude/extract options with multiple discriminator values", () => {
+  const Multi = z.discriminatedUnion("type", [
+    z.object({ type: z.enum(["a", "b"]), value: z.string() }),
+    z.object({ type: z.literal("c"), id: z.number() }),
+  ]);
+
+  const NoAB = Multi.exclude(["a", "b"]);
+  expect(NoAB.options.length).toEqual(1);
+  expectTypeOf<z.infer<typeof NoAB>>().toEqualTypeOf<{ type: "c"; id: number }>();
+
+  // a partial selection would drop "b" without saying so
+  expect(() => Multi.exclude(["a"])).toThrow(/must also be listed/);
+  expect(() => Multi.extract(["a"])).toThrow(/must also be listed/);
+});

@@ -1881,6 +1881,27 @@ const MyResult = z.discriminatedUnion("status", [
 
 Each option should be an *object schema* whose discriminator prop (`status` in the example above) corresponds to some literal value or set of values, usually `z.enum()`, `z.literal()`, `z.null()`, or `z.undefined()`.
 
+### `.exclude()` and `.extract()`
+
+To derive a narrower union from an existing one, pass a set of discriminator values.
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+const Success = MyResult.extract(["success"]); // { status: "success", data: string }
+const NotSuccess = MyResult.exclude(["success"]); // { status: "failed", error: string }
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+// no equivalent
+
+```
+</Tab>
+</Tabs>
+
+Options are kept or dropped whole, so an option with several discriminator values must have all of them listed.
+
 <Accordions type="single">
 <Accordion title="Nesting discriminated unions">
 

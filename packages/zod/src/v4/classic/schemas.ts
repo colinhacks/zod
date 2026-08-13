@@ -1777,12 +1777,60 @@ export interface ZodDiscriminatedUnion<
   "~standard": ZodStandardSchemaWithJSON<this>;
   _zod: core.$ZodDiscriminatedUnionInternals<Options, Disc>;
   def: core.$ZodDiscriminatedUnionDef<Options, Disc>;
+
+  extract<const U extends readonly util.DiscriminatorValues<Options[number], Disc>[]>(
+    values: U,
+    params?: string | core.$ZodDiscriminatedUnionParams
+  ): ZodDiscriminatedUnion<util.ExtractDiscriminated<Options, Disc, U[number]> & readonly core.SomeType[], Disc>;
+  exclude<const U extends readonly util.DiscriminatorValues<Options[number], Disc>[]>(
+    values: U,
+    params?: string | core.$ZodDiscriminatedUnionParams
+  ): ZodDiscriminatedUnion<util.ExcludeDiscriminated<Options, Disc, U[number]> & readonly core.SomeType[], Disc>;
 }
 export const ZodDiscriminatedUnion: core.$constructor<ZodDiscriminatedUnion> = /*@__PURE__*/ core.$constructor(
   "ZodDiscriminatedUnion",
   (inst, def) => {
     ZodUnion.init(inst, def);
     core.$ZodDiscriminatedUnion.init(inst, def);
+
+    const partition = (values: readonly util.Primitive[], keep: boolean, params: any) => {
+      const options = def.options as core.$ZodType[];
+      const valuesOf = (option: core.$ZodType, index: number) => {
+        const propValues = option._zod.propValues?.[def.discriminator];
+        if (!propValues || propValues.size === 0)
+          throw new Error(`Invalid discriminated union option at index "${index}"`);
+        return propValues;
+      };
+
+      const matched = new Set<core.$ZodType>();
+      for (const value of values) {
+        const index = options.findIndex((option, i) => valuesOf(option, i).has(value));
+        if (index === -1) throw new Error(`Discriminator value ${util.stringifyPrimitive(value)} not found in union`);
+        matched.add(options[index]);
+      }
+
+      // An option is kept or dropped whole, so a partial selection of its
+      // discriminator values would silently disagree with the inferred type.
+      const selected = new Set(values);
+      for (const option of matched) {
+        for (const value of valuesOf(option, options.indexOf(option))) {
+          if (!selected.has(value))
+            throw new Error(
+              `Discriminator value ${util.stringifyPrimitive(value)} belongs to the same option and must also be listed`
+            );
+        }
+      }
+
+      return new ZodDiscriminatedUnion({
+        ...def,
+        checks: [],
+        ...util.normalizeParams(params),
+        options: options.filter((option) => matched.has(option) === keep),
+      }) as any;
+    };
+
+    inst.extract = (values, params) => partition(values, true, params);
+    inst.exclude = (values, params) => partition(values, false, params);
   }
 );
 

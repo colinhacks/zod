@@ -188,6 +188,41 @@ export type SafeParseError<T> = {
 export type PropValues = Record<string, Set<Primitive>>;
 export type PrimitiveSet = Set<Primitive>;
 
+/** The discriminator values accepted by a single union option. */
+export type DiscriminatorValues<T, Disc extends string> = T extends { _zod: { output: infer O } }
+  ? O extends Record<Disc, infer V>
+    ? V
+    : never
+  : never;
+
+type Overlaps<T, Values> = [T & Values] extends [never] ? false : true;
+
+/** Drops every option whose discriminator values overlap `Values`. */
+export type ExcludeDiscriminated<
+  Options extends readonly unknown[],
+  Disc extends string,
+  Values,
+> = Options extends readonly [infer Head, ...infer Rest extends readonly unknown[]]
+  ? Overlaps<DiscriminatorValues<Head, Disc>, Values> extends true
+    ? ExcludeDiscriminated<Rest, Disc, Values>
+    : [Head, ...ExcludeDiscriminated<Rest, Disc, Values>]
+  : Options extends readonly []
+    ? []
+    : Options;
+
+/** Keeps only the options whose discriminator values overlap `Values`. */
+export type ExtractDiscriminated<
+  Options extends readonly unknown[],
+  Disc extends string,
+  Values,
+> = Options extends readonly [infer Head, ...infer Rest extends readonly unknown[]]
+  ? Overlaps<DiscriminatorValues<Head, Disc>, Values> extends true
+    ? [Head, ...ExtractDiscriminated<Rest, Disc, Values>]
+    : ExtractDiscriminated<Rest, Disc, Values>
+  : Options extends readonly []
+    ? []
+    : Options;
+
 // functions
 export function assertEqual<A, B>(val: AssertEqual<A, B>): AssertEqual<A, B> {
   return val;
