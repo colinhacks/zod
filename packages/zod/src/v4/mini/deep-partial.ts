@@ -65,6 +65,6 @@ export function deepPartial<T extends core.SomeType>(schema: T): DeepPartial<T> 
   return deepPartialImpl(
     schema,
     (s) => schemas.partial(s as schemas.ZodMiniObject) as core.$ZodType,
-    (opts) => schemas.union(opts as schemas.ZodMiniType[]) as core.$ZodType
+    (opts) => schemas.union(opts) as core.$ZodType
   ) as unknown as DeepPartial<T>;
 }

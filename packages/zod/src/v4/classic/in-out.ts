@@ -11,13 +11,13 @@ export type output<T> = core.output<T>;
 /** Returns a copy of the schema with every pipe replaced by its input side. */
 export function input<T extends core.$ZodType>(schema: T): schemas.ZodType<core.input<T>, core.input<T>> {
   return visit(schema, {
-    pipe: (s) => (s._zod.def as any).in as core.$ZodType,
+    pipe: (s) => s._zod.def.in,
   }) as any;
 }
 
 /** Returns a copy of the schema with every pipe replaced by its output side. */
 export function output<T extends core.$ZodType>(schema: T): schemas.ZodType<core.output<T>, core.output<T>> {
   return visit(schema, {
-    pipe: (s) => (s._zod.def as any).out as core.$ZodType,
+    pipe: (s) => s._zod.def.out,
   }) as any;
 }

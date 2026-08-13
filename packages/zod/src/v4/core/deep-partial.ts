@@ -6,13 +6,14 @@ import { visit } from "./visit.js";
 // concrete constructors over the shared traversal.
 export function deepPartialImpl<T extends schemas.SomeType>(
   schema: T,
-  partialObject: (s: schemas.$ZodType) => schemas.$ZodType,
-  makeUnion: (options: schemas.$ZodType[]) => schemas.$ZodType
+  partialObject: (s: schemas.$ZodObject) => schemas.$ZodType,
+  makeUnion: (options: readonly schemas.$ZodType[]) => schemas.$ZodType
 ): T {
   return visit(schema, {
     object: (s) => partialObject(s),
     union: (s) => {
-      const def = s._zod.def as unknown as { discriminator?: string; options: schemas.$ZodType[] };
+      // `discriminator` lives on the discriminated subtype, which shares `def.type === "union"`.
+      const def = s._zod.def as schemas.$ZodDiscriminatedUnionDef;
       // An optional discriminator makes `undefined` a possible value for every option, which
       // collapses the discriminated fast-path lookup. Degrade to try-each union semantics.
       return def.discriminator !== undefined ? makeUnion(def.options) : s;

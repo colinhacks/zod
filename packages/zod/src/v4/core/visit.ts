@@ -10,8 +10,13 @@ type Resolving = typeof RESOLVING;
 type AnyZod = schemas.$ZodType;
 type Kind = schemas.$ZodTypeDef["type"];
 
+/** The concrete schema class for a `def.type`, or `$ZodType` for kinds with no dedicated class. */
+type SchemaOfKind<K extends Kind> = [Extract<schemas.$ZodTypes, { _zod: { def: { type: K } } }>] extends [never]
+  ? AnyZod
+  : Extract<schemas.$ZodTypes, { _zod: { def: { type: K } } }>;
+
 export type VisitFn = (node: AnyZod) => AnyZod;
-export type VisitHandlers = { [K in Kind]?: (node: AnyZod) => AnyZod };
+export type VisitHandlers = { [K in Kind]?: (node: SchemaOfKind<K>) => AnyZod };
 
 /**
  * Bottom-up rewrite of a schema tree: each node is replaced by whatever the visitor returns,
@@ -25,7 +30,11 @@ export function visit<T extends schemas.SomeType>(schema: T, fnOrHandlers: Visit
     typeof fnOrHandlers === "function"
       ? fnOrHandlers
       : (node) => {
-          const h = (fnOrHandlers as VisitHandlers)[node._zod.def.type];
+          // Indexing by a union of kinds gives a union of handlers, which TS won't let us call with
+          // a single argument. The runtime invariant — handler `K` only ever sees a node of kind
+          // `K` — is the thing the index signature can't express, so it costs one cast here rather
+          // than one at every call site.
+          const h = (fnOrHandlers as VisitHandlers)[node._zod.def.type] as ((n: AnyZod) => AnyZod) | undefined;
           return h ? h(node) : node;
         };
 
