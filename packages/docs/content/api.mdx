@@ -1004,6 +1004,35 @@ optionalYoda.def.innerType; // ZodMiniLiteral<"yoda">
 </Tab>
 </Tabs>
 
+## Exact Optionals
+
+`.exactOptional()` allows a key to be *absent* from an object, but unlike `.optional()` it **rejects** an explicitly present `undefined` value:
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+z.exactOptional(z.string()); // or z.string().exactOptional()
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+z.exactOptional(z.string());
+```
+</Tab>
+</Tabs>
+
+This pairs with the TypeScript compiler option [`exactOptionalPropertyTypes`](https://www.typescriptlang.org/tsconfig/#exactOptionalPropertyTypes). Its inferred output type omits `undefined`, so `string | undefined` fields stay typed as optional `string?` rather than `string | undefined`:
+
+```ts
+const schema = z.object({
+  name: z.string().exactOptional(), // name?: string
+});
+
+schema.parse({}); // {} — absent key ok
+schema.parse({ name: "yoda" }); // { name: "yoda" }
+schema.parse({ name: undefined }); // ERROR — explicit undefined rejected
+```
+
 ## Nullables
 
 To make a schema *nullable* (that is, to allow `null` inputs).
