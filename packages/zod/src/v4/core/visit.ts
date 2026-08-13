@@ -23,9 +23,12 @@ export type VisitHandlers = { [K in Kind]?: (node: SchemaOfKind<K>) => AnyZod };
  * with unhandled kinds and unchanged branches passing through with their identity preserved.
  * This function should be considered experimental. Its traversal contract is liable to change.
  */
-export function visit<T extends schemas.SomeType>(schema: T, fn: VisitFn): T;
-export function visit<T extends schemas.SomeType>(schema: T, handlers: VisitHandlers): T;
-export function visit<T extends schemas.SomeType>(schema: T, fnOrHandlers: VisitFn | VisitHandlers): T {
+// Returns `$ZodType`, not the input type. A visitor can replace any node with a schema of a
+// different type, so echoing the argument's type back would be a claim the traversal cannot keep.
+// Callers that know what their own rewrite produces declare it themselves — see `DeepPartial<T>`.
+export function visit(schema: schemas.SomeType, fn: VisitFn): AnyZod;
+export function visit(schema: schemas.SomeType, handlers: VisitHandlers): AnyZod;
+export function visit(schema: schemas.SomeType, fnOrHandlers: VisitFn | VisitHandlers): AnyZod {
   const fn: VisitFn =
     typeof fnOrHandlers === "function"
       ? fnOrHandlers
@@ -201,5 +204,5 @@ export function visit<T extends schemas.SomeType>(schema: T, fnOrHandlers: Visit
     }
   }
 
-  return run(schema as unknown as AnyZod) as unknown as T;
+  return run(schema as AnyZod);
 }

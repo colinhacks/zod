@@ -299,7 +299,7 @@ describe("visit (internal)", () => {
     const a = z.string();
     const b = z.number();
     const schema = z.object({ a, b });
-    const result = visit(schema, { number: () => z.string() });
+    const result = visit(schema, { number: () => z.string() }) as z.ZodType;
     // `a` was not rewritten; its reference flows through.
     expect((result._zod.def as any).shape.a).toBe(a);
     // `b` was rewritten; parent is a new clone.
@@ -308,13 +308,13 @@ describe("visit (internal)", () => {
 
   test("callback: can target a specific def.type", () => {
     const schema = z.object({ a: z.string(), b: z.number() });
-    const allStrings = visit(schema, (s) => (s._zod.def.type === "number" ? z.string() : s));
+    const allStrings = visit(schema, (s) => (s._zod.def.type === "number" ? z.string() : s)) as z.ZodType;
     expect(allStrings.parse({ a: "x", b: "y" } as any)).toEqual({ a: "x", b: "y" });
   });
 
   test("handler map: dispatches by kind; unhandled kinds pass through", () => {
     const schema = z.object({ a: z.string(), b: z.number() });
-    const result = visit(schema, { number: () => z.string() });
+    const result = visit(schema, { number: () => z.string() }) as z.ZodType;
     expect(result.parse({ a: "x", b: "y" } as any)).toEqual({ a: "x", b: "y" });
   });
 
@@ -336,7 +336,7 @@ describe("visit (internal)", () => {
     const result = visit(Self, (s) => {
       calls++;
       return s;
-    });
+    }) as z.ZodType;
     const baseline = calls;
     result.parse({ self: { self: { self: {} } } });
     expect(calls).toBe(baseline);
@@ -357,7 +357,7 @@ describe("visit (internal)", () => {
       },
     });
     // The rewrite has to reach the recursive reference, not just the top level.
-    const upper = visit(Node, { string: () => z.string().toUpperCase() });
+    const upper = visit(Node, { string: () => z.string().toUpperCase() }) as z.ZodType;
     expect(upper.parse({ name: "a", children: [{ name: "b", children: [] }] })).toEqual({
       name: "A",
       children: [{ name: "B", children: [] }],
@@ -366,7 +366,7 @@ describe("visit (internal)", () => {
 
   test("catchall is traversed like tuple rest", () => {
     const schema = z.object({}).catchall(z.object({ n: z.string() }));
-    const result = visit(schema, { string: () => z.string().toUpperCase() });
+    const result = visit(schema, { string: () => z.string().toUpperCase() }) as z.ZodType;
     expect(result.parse({ k: { n: "a" } })).toEqual({ k: { n: "A" } });
   });
 
