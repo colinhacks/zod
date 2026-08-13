@@ -1785,13 +1785,11 @@ function handlePropertyResult(
     return;
   }
 
-  if (result.value === undefined) {
-    if (isPresent) {
-      (final.value as any)[key] = undefined;
-    }
-  } else {
-    (final.value as any)[key] = result.value;
-  }
+  // An absent key stays absent only if the output type says it can be: `optout`
+  // is what makes the key optional in the inferred output. A transform that
+  // returns `undefined` is typed as a required key, so write it explicitly.
+  if (result.value === undefined && !isPresent && isOptionalOut) return;
+  (final.value as any)[key] = result.value;
 }
 
 export type $ZodObjectConfig = { out: Record<string, unknown>; in: Record<string, unknown> };
@@ -2084,6 +2082,8 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
 
       `);
         } else {
+          // Optional in, required out: the key is required in the inferred
+          // output, so write it even when the input key was absent.
           doc.write(`
         if (${id}.issues.length) {
           payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
@@ -2091,14 +2091,8 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
             path: iss.path ? [${k}, ...iss.path] : [${k}]
           })));
         }
-        
-        if (${id}.value === undefined) {
-          if (${isPresent}) {
-            newResult[${k}] = undefined;
-          }
-        } else {
-          newResult[${k}] = ${id}.value;
-        }
+
+        newResult[${k}] = ${id}.value;
 
       `);
         }

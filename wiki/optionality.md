@@ -88,12 +88,12 @@ if (!isPresent && !isOptionalIn) {
   return; // never assign on absent + required
 }
 
-if (result.value === undefined) {
-  if (isPresent) (final.value as any)[key] = undefined; // preserve explicit undefined
-} else {
-  (final.value as any)[key] = result.value;
-}
+// Only a key the output type says can be missing is allowed to stay missing.
+if (result.value === undefined && !isPresent && isOptionalOut) return;
+(final.value as any)[key] = result.value;
 ```
+
+The `isOptionalOut` conjunction on that last line is what keeps parse output in step with `z.output`. A property whose `optout` is `undefined` infers as a required key, so it has to be present on the parsed object even when the input omitted it and the property produced `undefined` — the `optin`-optional/`optout`-required cell, which is exactly what `.transform()` lands in (#5178). `.default()` and `.catch()` sit in the same cell but never produce `undefined`, so they were already writing the key.
 
 `$ZodTuple` does the analogous thing for trailing tuple slots.
 

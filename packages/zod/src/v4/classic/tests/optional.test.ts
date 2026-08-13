@@ -331,3 +331,31 @@ test("tuple tail optionality through optout propagation", () => {
   const interiorOptional = z.tuple([z.string(), z.number().optional(), z.string()]);
   expectTypeOf<z.output<typeof interiorOptional>>().toEqualTypeOf<[string, number | undefined, string]>();
 });
+
+// Key presence at runtime must match `optout`: a transform erases optout, so the
+// inferred key is required and the parsed object has to actually contain it.
+test("absent key is written back when the output key is required", async () => {
+  const schema = z.object({
+    transformed: z
+      .string()
+      .nullish()
+      .transform((v) => v ?? undefined),
+    optional: z.string().optional(),
+  });
+
+  expectTypeOf<z.output<typeof schema>>().toEqualTypeOf<{
+    transformed: string | undefined;
+    optional?: string | undefined;
+  }>();
+
+  for (const result of [
+    schema.parse({}),
+    schema.parse({}, { jitless: true }),
+    await schema.parseAsync({}),
+    schema.parse({ transformed: null }),
+  ]) {
+    expect("transformed" in result).toEqual(true);
+    expect(result.transformed).toEqual(undefined);
+    expect("optional" in result).toEqual(false);
+  }
+});
