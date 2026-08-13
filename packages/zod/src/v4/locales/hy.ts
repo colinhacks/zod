@@ -151,6 +151,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Սխալ մուտքագրում";
       case "invalid_element":
         return `Սխալ արժեք ${withDefiniteArticle(issue.origin)}-ում`;
+      case "invalid_temporal":
+        return `Անվավեր ${issue.origin}. սպասվող արժեքը պետք է լիներ ${issue.expected}, բայց դա ${issue.received} էր`;
       default:
         return `Սխալ մուտքագրում`;
     }

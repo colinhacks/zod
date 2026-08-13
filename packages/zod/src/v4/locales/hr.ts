@@ -118,6 +118,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Neispravan unos";
       case "invalid_element":
         return `Neispravna vrijednost u ${TypeDictionary[issue.origin] ?? issue.origin}`;
+      case "invalid_temporal":
+        return `Neispravan ${issue.origin}: očekivana vrijednost je bila ${issue.expected} ali je bila ${issue.received}`;
       default:
         return `Neispravan unos`;
     }

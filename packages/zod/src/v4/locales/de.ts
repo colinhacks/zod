@@ -103,6 +103,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Ungültige Eingabe";
       case "invalid_element":
         return `Ungültiger Wert in ${issue.origin}`;
+      case "invalid_temporal":
+        return `Ungültiger ${issue.origin}: erwarteter Wert war ${issue.expected}, aber er war ${issue.received}`;
       default:
         return `Ungültige Eingabe`;
     }

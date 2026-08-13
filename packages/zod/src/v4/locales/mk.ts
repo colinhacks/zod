@@ -105,6 +105,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Грешен внес";
       case "invalid_element":
         return `Грешна вредност во ${issue.origin}`;
+      case "invalid_temporal":
+        return `Невалиден ${issue.origin}: очекуваната вредност беше ${issue.expected} но беше ${issue.received}`;
       default:
         return `Грешен внес`;
     }

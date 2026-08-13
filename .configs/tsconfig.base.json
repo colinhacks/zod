@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "es2020",
-    "lib": ["es2020", "dom"],
+    "lib": ["es2020", "dom", "esnext.temporal", "esnext.date"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "jsx": "react",

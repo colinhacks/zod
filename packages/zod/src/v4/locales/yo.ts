@@ -111,6 +111,8 @@ const error: () => errors.$ZodErrorMap = () => {
       case "invalid_element":
         return `Iye aṣìṣe nínú ${issue.origin}`;
 
+      case "invalid_temporal":
+        return `Aisan ${issue.origin}: iye ti a nireti jẹ ${issue.expected} ṣugbọn o jẹ ${issue.received}`;
       default:
         return "Ìbáwọlé aṣìṣe";
     }

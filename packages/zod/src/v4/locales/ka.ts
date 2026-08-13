@@ -110,6 +110,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "არასწორი შეყვანა";
       case "invalid_element":
         return `არასწორი მნიშვნელობა ${issue.origin}-ში`;
+      case "invalid_temporal":
+        return `არასწორი ${issue.origin}: მოსალოდნელი მნიშვნელობა იყო ${issue.expected}, მაგრამ იყო ${issue.received}`;
       default:
         return `არასწორი შეყვანა`;
     }

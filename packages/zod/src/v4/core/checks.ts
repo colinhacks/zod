@@ -1266,6 +1266,59 @@ export const $ZodCheckOverwrite: core.$constructor<$ZodCheckOverwrite> = /*@__PU
 //     };
 //   });
 
+const meaningMap = {
+  [-1]: "before",
+  0: "equal",
+  1: "after",
+} as const;
+
+export interface $ZodCheckTemporalDef<Like, Instance> extends $ZodCheckDef {
+  check: "temporal_compare";
+  class: util.TemporalClass<Like, Instance>;
+  value: Like;
+  results: (-1 | 0 | 1)[];
+}
+
+export interface $ZodCheckTemporalInternals<Like, Instance, T = unknown> extends $ZodCheckInternals<T> {
+  def: $ZodCheckTemporalDef<Like, Instance>;
+  issc: errors.$ZodIssueInvalidTemporal;
+}
+
+export interface $ZodCheckTemporal<Like = unknown, Instance = unknown, T = unknown> extends $ZodCheck<T> {
+  _zod: $ZodCheckTemporalInternals<Like, Instance, T>;
+}
+
+export const $ZodCheckTemporal: core.$constructor<$ZodCheckTemporal> = /*@__PURE__*/ core.$constructor(
+  "$ZodCheckTemporal",
+  (inst, def) => {
+    $ZodCheck.init(inst, def);
+
+    inst._zod.onattach.push((inst) => {
+      const { bag } = inst._zod;
+      if (def.results.includes(1) && def.results.includes(0)) bag.minimum = def.class.from(def.value);
+      if (def.results.includes(-1) && def.results.includes(0)) bag.maximum = def.class.from(def.value);
+    });
+
+    inst._zod.check = (payload) => {
+      const result = def.class.compare(payload.value, def.value);
+
+      if (result !== 0 && result !== 1 && result !== -1)
+        throw new Error("Invalid temporal comparison result: " + result);
+
+      if (def.results.includes(result)) return;
+
+      payload.issues.push({
+        expected: def.results.map((r) => meaningMap[r]).join(" or "),
+        received: meaningMap[result],
+        origin: def.class.name,
+        code: "invalid_temporal",
+        input: payload.value,
+        inst,
+      });
+    };
+  }
+);
+
 export type $ZodChecks =
   | $ZodCheckLessThan
   | $ZodCheckGreaterThan
@@ -1281,7 +1334,8 @@ export type $ZodChecks =
   | $ZodCheckStringFormat
   | $ZodCheckProperty
   | $ZodCheckMimeType
-  | $ZodCheckOverwrite;
+  | $ZodCheckOverwrite
+  | $ZodCheckTemporal;
 
 export type $ZodStringFormatChecks =
   | $ZodCheckRegex

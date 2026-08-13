@@ -106,6 +106,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "غلط ان پٹ";
       case "invalid_element":
         return `${issue.origin} میں غلط ویلیو`;
+      case "invalid_temporal":
+        return `غلط ${issue.origin}: متوقع قدر ${issue.expected} تھی لیکن یہ ${issue.received} تھی`;
       default:
         return `غلط ان پٹ`;
     }

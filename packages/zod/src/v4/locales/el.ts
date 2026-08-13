@@ -108,6 +108,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Μη έγκυρη είσοδος";
       case "invalid_element":
         return `Μη έγκυρη τιμή στο ${issue.origin}`;
+      case "invalid_temporal":
+        return `Μη έγκυρο ${issue.origin}: αναμενόμενη τιμή ήταν ${issue.expected} αλλά ήταν ${issue.received}`;
       default:
         return `Μη έγκυρη είσοδος`;
     }

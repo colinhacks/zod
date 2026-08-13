@@ -103,6 +103,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Input non valido";
       case "invalid_element":
         return `Valore non valido in ${issue.origin}`;
+      case "invalid_temporal":
+        return `${issue.origin} non valido: valore atteso ${issue.expected} ma è stato ${issue.received}`;
       default:
         return `Input non valido`;
     }

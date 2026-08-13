@@ -106,6 +106,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return `ទិន្នន័យមិនត្រឹមត្រូវ`;
       case "invalid_element":
         return `ទិន្នន័យមិនត្រឹមត្រូវនៅក្នុង ${issue.origin}`;
+      case "invalid_temporal":
+        return `មិនត្រឹមត្រូវ ${issue.origin}: តម្លៃដែលរំពឹងទុកគឺ ${issue.expected} ប៉ុន្តែវាគឺ ${issue.received}`;
       default:
         return `ទិន្នន័យមិនត្រឹមត្រូវ`;
     }

@@ -106,6 +106,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Ogiltig input";
       case "invalid_element":
         return `Ogiltigt värde i ${issue.origin ?? "värdet"}`;
+      case "invalid_temporal":
+        return `Ogiltig ${issue.origin}: förväntade värdet var ${issue.expected} men det var ${issue.received}`;
       default:
         return `Ogiltig input`;
     }

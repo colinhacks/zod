@@ -104,6 +104,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Giren tanınamadı.";
       case "invalid_element":
         return `${issue.origin} için tanınmayan kıymet var.`;
+      case "invalid_temporal":
+        return `Geçersiz ${issue.origin}: beklenen deyer ${issue.expected} idi fəqət ${issue.received} idi`;
       default:
         return `Kıymet tanınamadı.`;
     }

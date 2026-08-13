@@ -102,6 +102,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "無效的輸入值";
       case "invalid_element":
         return `${issue.origin} 中有無效的值`;
+      case "invalid_temporal":
+        return `無效的 ${issue.origin}：預期值為 ${issue.expected}，但實際為 ${issue.received}`;
       default:
         return `無效的輸入值`;
     }

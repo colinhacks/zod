@@ -113,6 +113,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return `ناسمه ورودي`;
       case "invalid_element":
         return `ناسم عنصر په ${issue.origin} کې`;
+      case "invalid_temporal":
+        return `نامعتبر ${issue.origin}: د تمې وړ ارزښت ${issue.expected} و مګر دا ${issue.received} و`;
       default:
         return `ناسمه ورودي`;
     }

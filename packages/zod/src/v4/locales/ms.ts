@@ -102,6 +102,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Input tidak sah";
       case "invalid_element":
         return `Nilai tidak sah dalam ${issue.origin}`;
+      case "invalid_temporal":
+        return `${issue.origin} tidak sah: nilai yang dijangkakan ialah ${issue.expected} tetapi ia adalah ${issue.received}`;
       default:
         return `Input tidak sah`;
     }

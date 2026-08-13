@@ -163,6 +163,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Неверные входные данные";
       case "invalid_element":
         return `Неверное значение в ${issue.origin}`;
+      case "invalid_temporal":
+        return `Недопустимый ${issue.origin}: ожидалось значение ${issue.expected}, но получено ${issue.received}`;
       default:
         return `Неверные входные данные`;
     }

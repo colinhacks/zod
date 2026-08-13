@@ -102,6 +102,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "مدخل غير مقبول";
       case "invalid_element":
         return `مدخل غير مقبول في ${issue.origin}`;
+      case "invalid_temporal":
+        return `صالح غير ${issue.origin}: القيمة المتوقعة أن تكون ${issue.expected} ولكن كانت ${issue.received}`;
       default:
         return "مدخل غير مقبول";
     }

@@ -115,6 +115,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Невалиден вход";
       case "invalid_element":
         return `Невалидна стойност в ${issue.origin}`;
+      case "invalid_temporal":
+        return `Невалиден ${issue.origin}: очаквана стойност ${issue.expected}, но беше ${issue.received}`;
       default:
         return `Невалиден вход`;
     }

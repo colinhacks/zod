@@ -101,6 +101,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "無効な入力";
       case "invalid_element":
         return `${issue.origin}内の無効な値`;
+      case "invalid_temporal":
+        return `無効な ${issue.origin}: 期待される値は ${issue.expected} ですが、${issue.received} でした`;
       default:
         return `無効な入力`;
     }

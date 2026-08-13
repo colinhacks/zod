@@ -105,6 +105,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Neplatný vstup";
       case "invalid_element":
         return `Neplatná hodnota v ${issue.origin}`;
+      case "invalid_temporal":
+        return `Neplatný ${issue.origin}: očekávaná hodnota měla být ${issue.expected}, ale byla ${issue.received}`;
       default:
         return `Neplatný vstup`;
     }

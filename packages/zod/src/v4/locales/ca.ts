@@ -103,6 +103,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Entrada invàlida"; // Could also be "Tipus d'unió invàlid" but "Entrada invàlida" is more general
       case "invalid_element":
         return `Element invàlid a ${issue.origin}`;
+      case "invalid_temporal":
+        return `Invàlid ${issue.origin}: s'esperava que el valor fos ${issue.expected} però va ser ${issue.received}`;
       default:
         return `Entrada invàlida`;
     }

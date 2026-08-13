@@ -108,6 +108,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return `잘못된 입력`;
       case "invalid_element":
         return `잘못된 값: ${issue.origin}`;
+      case "invalid_temporal":
+        return `유효하지 않은 ${issue.origin}: 예상 값은 ${issue.expected} 이었지만 ${issue.received} 이었습니다`;
       default:
         return `잘못된 입력`;
     }

@@ -104,6 +104,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "Đầu vào không hợp lệ";
       case "invalid_element":
         return `Giá trị không hợp lệ trong ${issue.origin}`;
+      case "invalid_temporal":
+        return `${issue.origin} không hợp lệ: giá trị mong đợi là ${issue.expected} nhưng nhận được ${issue.received}`;
       default:
         return `Đầu vào không hợp lệ`;
     }

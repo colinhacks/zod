@@ -105,6 +105,8 @@ const error: () => errors.$ZodErrorMap = () => {
         return "தவறான உள்ளீடு";
       case "invalid_element":
         return `${issue.origin} இல் தவறான மதிப்பு`;
+      case "invalid_temporal":
+        return `தவறான ${issue.origin}: எதிர்பார்க்கப்பட்ட மதிப்பு ${issue.expected} ஆனால் அது ${issue.received}`;
       default:
         return `தவறான உள்ளீடு`;
     }
