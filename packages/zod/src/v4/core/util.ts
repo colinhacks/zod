@@ -991,10 +991,20 @@ export abstract class Class {
 // materializing them per instance only when touched keeps instances under the
 // first step.
 //
-// Each install runs once per prototype. The guard is a sentinel key that the
-// table itself owns: if the prototype already has it, this table is installed.
-// That is cheaper than a WeakMap of key-sets, and it has to be checked BEFORE
-// building the table, since building it allocates every method in the group.
+// Each install runs once per prototype, so a prototype must not be modified
+// after the first instance of its type is built — later changes are never
+// picked up.
+//
+// The guard is a sentinel key the table itself owns: if the prototype already
+// has it, this table is installed. It must be checked BEFORE building the
+// table, since building it allocates every method in the group. A
+// WeakMap-of-key-sets is ~3% faster for classic construction but costs bundle
+// size everywhere and is slower for mini, so the sentinel wins on balance.
+//
+// Changing anything here means re-measuring runtime, memory AND bundle size —
+// they trade against each other and several plausible simplifications here
+// have measured worse. See "The three axes" in AGENTS.md, and run
+// `packages/bench/memory/{prop-slack,dict-mode}.ts`.
 function claim(inst: object, sentinel: string): object | undefined {
   const proto = Object.getPrototypeOf(inst);
   // `in` rather than `hasOwnProperty.call`: this runs once per install group on
