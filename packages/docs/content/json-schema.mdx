@@ -115,6 +115,7 @@ interface ToJSONSchemaParams {
     | ((ctx: {
         zodSchema: $ZodTypes;
         path: (string | number)[];
+        message: string;
       }) => JSONSchema | "throw" | "any" | undefined);
 
   /** How to handle cycles.
@@ -241,7 +242,7 @@ z.toJSONSchema(z.bigint(), { unrepresentable: "any" });
 // => {}
 ```
 
-To decide case by case, pass a function instead. It's called once per unrepresentable schema. Return a JSON Schema to use in its place, `"any"`, or `"throw"` (the default when you return nothing).
+To decide case by case, pass a function instead. It's called for each unrepresentable schema encountered. Return a JSON Schema to use in its place, `"any"`, or `"throw"` (the default when you return nothing).
 
 ```ts
 z.toJSONSchema(z.object({ createdAt: z.date(), id: z.bigint() }), {
@@ -251,15 +252,19 @@ z.toJSONSchema(z.object({ createdAt: z.date(), id: z.bigint() }), {
 // => throws Error (BigInt cannot be represented in JSON Schema)
 ```
 
-The handler also receives the `path` of the schema, and any error it throws propagates, so you can report unrepresentable types in your own words.
+The handler also receives the `path` of the schema and the `message` Zod would have thrown, and any error it throws propagates, so you can report unrepresentable types in your own words.
 
 ```ts
 z.toJSONSchema(schema, {
-  unrepresentable: ({ zodSchema, path }) => {
-    throw new Error(`${zodSchema._zod.def.type} at /${path.join("/")} is not supported`);
+  unrepresentable: ({ path, message }) => {
+    throw new Error(`${message} (at /${path.join("/")})`);
   },
 });
 ```
+
+Two schemas can share a `zodSchema` but not a `message` — an `undefined` member and a `bigint` member of the same literal both arrive as the literal — so branch on `message` to tell those apart.
+
+Returning a JSON Schema for a literal replaces the whole literal, dropping its representable members: `z.literal(["a", 1n])` becomes just what you returned, and `"a"` is gone. Return `"any"` instead to keep the existing per-value behavior.
 
 ### `cycles`
 
@@ -347,7 +352,7 @@ z.toJSONSchema(mySchema, {
 });
 ```
 
-Note that unrepresentable types will throw an `Error` before this function is called. If you are trying to define custom behavior for an unrepresentable type, you'll need to set the `unrepresentable: "any"` alongside `override`.
+Note that unrepresentable types will throw an `Error` before this function is called. To represent one of them, use [`unrepresentable`](#unrepresentable) — a handler there substitutes a type without disabling the error for the others. Setting `unrepresentable: "any"` alongside `override` also works, but erases every unrepresentable type.
 
 ```ts
 // support z.date() as ISO datetime strings

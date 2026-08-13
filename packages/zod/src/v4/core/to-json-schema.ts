@@ -31,6 +31,9 @@ export type Processor<T extends schemas.$ZodType = schemas.$ZodType> = (
 export type UnrepresentableHandler<T extends schemas.$ZodType = schemas.$ZodType> = (ctx: {
   zodSchema: T;
   path: (string | number)[];
+  /** The error Zod would throw. Distinguishes sites that share a `zodSchema`, e.g. an `undefined`
+   *  vs a `bigint` member of the same literal. */
+  message: string;
 }) => JSONSchema.BaseSchema | "throw" | "any" | undefined;
 
 export interface JSONSchemaGeneratorParams {
@@ -174,7 +177,7 @@ export function handleUnrepresentable(
 ): boolean {
   const result =
     typeof ctx.unrepresentable === "function"
-      ? ctx.unrepresentable({ zodSchema: schema, path: params.path })
+      ? ctx.unrepresentable({ zodSchema: schema, path: params.path, message })
       : ctx.unrepresentable;
   if (result === "any") return false;
   if (result === undefined || result === "throw") throw new Error(message);

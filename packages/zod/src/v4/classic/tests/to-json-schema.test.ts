@@ -3187,6 +3187,7 @@ test("partialRecord does not require finite keys", () => {
   expect(result.required).toBeUndefined();
   expect(result.propertyNames).toEqual({ type: "string", enum: ["__proto__", "b"] });
   expect(result.additionalProperties).toEqual({ type: "string" });
+});
 
 describe("unrepresentable callback", () => {
   test("is consulted for every unrepresentable type", () => {
@@ -3275,6 +3276,31 @@ describe("unrepresentable callback", () => {
     expect(z.toJSONSchema(z.date(), { unrepresentable: () => "any" })).toEqual(
       z.toJSONSchema(z.date(), { unrepresentable: "any" })
     );
+  });
+
+  test("`message` distinguishes sites that share a schema", () => {
+    const seen: string[] = [];
+    expect(
+      z.toJSONSchema(z.literal([undefined, 1n, "a"]), {
+        unrepresentable: ({ zodSchema, message }) => {
+          seen.push(`${zodSchema._zod.def.type}: ${message}`);
+          return "any";
+        },
+      })
+    ).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "enum": [
+          1,
+          "a",
+        ],
+      }
+    `);
+    // same `zodSchema`, different message -- the only way to tell the two literal sites apart
+    expect(seen).toEqual([
+      "literal: Literal `undefined` cannot be represented in JSON Schema",
+      "literal: BigInt literals cannot be represented in JSON Schema",
+    ]);
   });
 
   test("errors thrown by the callback propagate", () => {
