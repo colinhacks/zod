@@ -82,10 +82,6 @@ export const $ZodCheckLessThan: core.$constructor<$ZodCheckLessThan> = /*@__PURE
       }
 
       payload.issues.push({
-        // Derive origin from the value being validated, not from the bound:
-        // e.g. `z.date().max(<timestamp:number>)` must report origin "date",
-        // not "number". Fall back to the bound-derived origin for inputs whose
-        // type isn't numeric/bigint/object (e.g. a failed base-type parse). (#5980)
         origin: numericOriginMap[typeof payload.value as "number" | "bigint" | "object"] ?? origin,
         code: "too_big",
         maximum: typeof def.value === "object" ? def.value.getTime() : def.value,
@@ -137,10 +133,6 @@ export const $ZodCheckGreaterThan: core.$constructor<$ZodCheckGreaterThan> = /*@
       }
 
       payload.issues.push({
-        // Derive origin from the value being validated, not from the bound:
-        // e.g. `z.date().min(<timestamp:number>)` must report origin "date",
-        // not "number". Fall back to the bound-derived origin for inputs whose
-        // type isn't numeric/bigint/object (e.g. a failed base-type parse). (#5980)
         origin: numericOriginMap[typeof payload.value as "number" | "bigint" | "object"] ?? origin,
         code: "too_small",
         minimum: typeof def.value === "object" ? def.value.getTime() : def.value,
