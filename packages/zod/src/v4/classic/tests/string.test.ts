@@ -386,6 +386,26 @@ test("url trims whitespace", () => {
   expect(url.parse("https://example.com/path")).toBe("https://example.com/path");
 });
 
+// The WHATWG URL parser deletes ASCII tab/newline instead of failing, so `new URL()` reports a
+// different URL than the one that was passed in and the formats backed by it accepted the input.
+test("url, ipv6 and cidrv6 reject ASCII tab and newline", () => {
+  for (const c of ["\t", "\n", "\r"]) {
+    expect(z.url().safeParse(`https://exa${c}mple.com`).success).toBe(false);
+    expect(z.url({ normalize: true }).safeParse(`https://example.com/a${c}b`).success).toBe(false);
+    expect(z.httpUrl().safeParse(`https://exa${c}mple.com`).success).toBe(false);
+    expect(z.ipv6().safeParse(`2001:db8::${c}1`).success).toBe(false);
+    expect(z.ipv6().safeParse(`::1${c}`).success).toBe(false);
+    expect(z.cidrv6().safeParse(`2001:db8::${c}1/128`).success).toBe(false);
+    expect(z.cidrv6().safeParse(`::1${c}/128`).success).toBe(false);
+  }
+
+  // still valid without them
+  expect(z.url().parse("https://example.com")).toBe("https://example.com");
+  expect(z.httpUrl().parse("https://example.com")).toBe("https://example.com");
+  expect(z.ipv6().parse("2001:db8::1")).toBe("2001:db8::1");
+  expect(z.cidrv6().parse("2001:db8::1/128")).toBe("2001:db8::1/128");
+});
+
 test("url normalize flag", () => {
   const normalizeUrl = z.url({ normalize: true });
   const preserveUrl = z.url(); // normalize: false/undefined by default

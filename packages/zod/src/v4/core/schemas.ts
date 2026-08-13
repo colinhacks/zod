@@ -473,6 +473,10 @@ export const $ZodEmail: core.$constructor<$ZodEmail> = /*@__PURE__*/ core.$const
 
 //////////////////////////////   ZodURL   //////////////////////////////
 
+// The WHATWG URL parser deletes ASCII tab and newline instead of failing, so `new URL()` reports
+// on a different string than the one it was given. Formats validated through it reject them.
+const asciiTabOrNewline = /[\t\n\r]/;
+
 export interface $ZodURLDef extends $ZodStringFormatDef<"url"> {
   hostname?: RegExp | undefined;
   protocol?: RegExp | undefined;
@@ -492,6 +496,8 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
     try {
       // Trim whitespace from input
       const trimmed = payload.value.trim();
+
+      if (asciiTabOrNewline.test(trimmed)) throw new Error();
 
       // When normalize is off, require :// for http/https URLs
       // This prevents strings like "http:example.com" or "https:/path" from being silently accepted
@@ -817,6 +823,7 @@ export const $ZodIPv6: core.$constructor<$ZodIPv6> = /*@__PURE__*/ core.$constru
 
   inst._zod.check = (payload) => {
     try {
+      if (asciiTabOrNewline.test(payload.value)) throw new Error();
       // @ts-ignore
       new URL(`http://[${payload.value}]`);
       // return;
@@ -895,8 +902,9 @@ export const $ZodCIDRv6: core.$constructor<$ZodCIDRv6> = /*@__PURE__*/ core.$con
     $ZodStringFormat.init(inst, def);
 
     inst._zod.check = (payload) => {
-      const parts = payload.value.split("/");
       try {
+        if (asciiTabOrNewline.test(payload.value)) throw new Error();
+        const parts = payload.value.split("/");
         if (parts.length !== 2) throw new Error();
         const [address, prefix] = parts;
         if (!prefix) throw new Error();
