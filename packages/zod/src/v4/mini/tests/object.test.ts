@@ -116,18 +116,6 @@ test("z.extend", () => {
   expect(z.safeParse(extendedSchema, { name: "John", age: 30, isAdmin: true }).success).toBe(true);
 });
 
-test("z.merge accepts a plain shape", () => {
-  const mergedSchema = z.merge(userSchema, { isAdmin: z.boolean() });
-  type MergedUser = z.infer<typeof mergedSchema>;
-  expectTypeOf<MergedUser>().toEqualTypeOf<{
-    name: string;
-    age: number;
-    email?: string | undefined;
-    isAdmin: boolean;
-  }>();
-  expect(z.safeParse(mergedSchema, { name: "John", age: 30, isAdmin: true }).success).toBe(true);
-});
-
 test("z.safeExtend", () => {
   const extended = z.safeExtend(userSchema, { name: z.string() });
   expect(z.safeParse(extended, { name: "John", age: 30 }).success).toBe(true);

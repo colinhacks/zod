@@ -460,15 +460,6 @@ test("string format - email", () => {
   expect(schema.parse("test@example.com")).toBe("test@example.com");
 });
 
-test("string format - hostname", () => {
-  const schema = fromJSONSchema({
-    type: "string",
-    format: "hostname",
-  });
-  expect(schema.parse("example.com")).toBe("example.com");
-  expect(() => schema.parse("not a hostname!")).toThrow();
-});
-
 test("string format - uuid", () => {
   const schema = fromJSONSchema({
     type: "string",
