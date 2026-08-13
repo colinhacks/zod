@@ -390,15 +390,19 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
             ? convertSchema(schema.additionalProperties as JSONSchema.JSONSchema, ctx)
             : z.any();
 
+        // `propertyNames` restricts which keys may appear; it never makes one required.
+        // Both branches use partialRecord because record/looseRecord are exhaustive over
+        // an enum key schema, which would require every enum member.
+
         // Case A: No properties (pure record)
         if (Object.keys(shape).length === 0) {
           zodSchema = z.partialRecord(keySchema, valueSchema);
           break;
         }
 
-        // Case B: With properties (intersection of object and looseRecord)
+        // Case B: With properties (intersection of object and partialRecord)
         const objectSchema = z.object(shape).passthrough();
-        const recordSchema = z.looseRecord(keySchema, valueSchema);
+        const recordSchema = z.partialRecord(keySchema, valueSchema);
         zodSchema = z.intersection(objectSchema, recordSchema);
         break;
       }

@@ -348,6 +348,33 @@ test("propertyNames with enum does not require keys", () => {
   expect(() => schema.parse({ c: "z" })).toThrow();
 });
 
+test("propertyNames with enum alongside properties", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    properties: { a: { type: "string" } },
+    propertyNames: { enum: ["a", "b"] },
+    additionalProperties: { type: "string" },
+  });
+  expect(schema.parse({ a: "x" })).toEqual({ a: "x" });
+  expect(schema.parse({})).toEqual({});
+  expect(() => schema.parse({ c: "z" })).toThrow();
+  expect(() => schema.parse({ a: "x", c: "z" })).toThrow();
+});
+
+test("propertyNames with enum still honors required", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    properties: { a: { type: "string" }, b: { type: "string" } },
+    required: ["a"],
+    propertyNames: { enum: ["a", "b"] },
+    additionalProperties: { type: "string" },
+  });
+  expect(schema.parse({ a: "x" })).toEqual({ a: "x" });
+  expect(schema.parse({ a: "x", b: "y" })).toEqual({ a: "x", b: "y" });
+  expect(() => schema.parse({})).toThrow();
+  expect(() => schema.parse({ b: "y" })).toThrow();
+});
+
 test("patternProperties with regular properties", () => {
   // Note: When patternProperties is combined with properties, the intersection
   // validates all keys against the pattern. This test uses a pattern that
