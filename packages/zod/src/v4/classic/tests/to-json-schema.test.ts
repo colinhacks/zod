@@ -3305,6 +3305,29 @@ describe("override runs before the unrepresentable error", () => {
     );
   });
 
+  test("applies through wrappers that clone the schema", () => {
+    // .describe()/.meta() clone the schema and set `_zod.parent`, so the node is visited twice
+    expect(z.toJSONSchema(z.date().describe("x"), { override: dateOverride })).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "description": "x",
+        "format": "date-time",
+        "type": "string",
+      }
+    `);
+    expect(z.toJSONSchema(z.optional(z.date()), { override: dateOverride })).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "date-time",
+        "type": "string",
+      }
+    `);
+    expect(() => z.toJSONSchema(z.bigint().describe("x"), { override: dateOverride })).toThrow(
+      "BigInt cannot be represented in JSON Schema"
+    );
+    expect(() => z.toJSONSchema(z.date().describe("x"))).toThrow("Date cannot be represented in JSON Schema");
+  });
+
   test("emits a valid OpenAPI 3.0 schema", async () => {
     const jsonSchema = z.toJSONSchema(z.object({ when: z.date() }), {
       target: "openapi-3.0",
