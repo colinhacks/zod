@@ -466,7 +466,7 @@ This long-deprecated alias for `.strip()` has been removed.
 
 This was long deprecated in Zod 3 and the *method* is not coming back. Its recursive `instanceof` traversal couldn't see user-defined schema subclasses and accumulated edge cases for every new schema type.
 
-The functionality is available as a standalone [`z.deepPartial()`](/api#deep-partial), rebuilt on the [`z.visit()`](/api#visit) traversal primitive.
+The functionality is available as a standalone [`z.deepPartial()`](/api#deep-partial), rebuilt on a `def.type`-dispatched traversal instead.
 
 ```ts
 // Zod 3

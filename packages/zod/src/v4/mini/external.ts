@@ -3,8 +3,6 @@ export * from "./parse.js";
 export * from "./schemas.js";
 export * from "./checks.js";
 export { deepPartial } from "./deep-partial.js";
-export { visit } from "../core/visit.js";
-export type { VisitFn, VisitHandlers } from "../core/visit.js";
 export { input, output } from "./in-out.js";
 
 export type { infer } from "../core/index.js";

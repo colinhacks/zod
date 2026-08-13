@@ -1,4 +1,5 @@
-import * as core from "../core/index.js";
+import { deepPartialImpl } from "../core/deep-partial.js";
+import type * as core from "../core/index.js";
 import * as schemas from "./schemas.js";
 
 /** Mini counterpart of `classic/deep-partial.ts`'s `DeepPartial`. */
@@ -61,7 +62,7 @@ export type DeepPartial<T extends core.SomeType> =
 
 /** See `classic/deep-partial.ts`. Mini variant uses `mini.partial(...)`. */
 export function deepPartial<T extends core.SomeType>(schema: T): DeepPartial<T> {
-  return core.deepPartialImpl(
+  return deepPartialImpl(
     schema,
     (s) => schemas.partial(s as schemas.ZodMiniObject) as core.$ZodType,
     (opts) => schemas.union(opts as schemas.ZodMiniType[]) as core.$ZodType

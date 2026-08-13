@@ -1,5 +1,6 @@
 import { describe, expect, expectTypeOf, test } from "vitest";
 import * as z from "zod";
+import { visit } from "../../core/visit.js";
 import { deepPartial } from "../deep-partial.js";
 
 describe("deepPartial", () => {
@@ -283,22 +284,22 @@ describe("deepPartial", () => {
   });
 });
 
-describe("z.visit", () => {
+describe("visit (internal)", () => {
   test("identity callback returns the input schema unchanged", () => {
     const schema = z.object({ a: z.string(), nested: z.object({ b: z.number() }) });
-    expect(z.visit(schema, (s) => s)).toBe(schema);
+    expect(visit(schema, (s) => s)).toBe(schema);
   });
 
   test("empty handler map returns the input schema unchanged", () => {
     const schema = z.object({ a: z.string(), nested: z.object({ b: z.number() }) });
-    expect(z.visit(schema, {})).toBe(schema);
+    expect(visit(schema, {})).toBe(schema);
   });
 
   test("only nodes touched by a handler are re-cloned; siblings keep identity", () => {
     const a = z.string();
     const b = z.number();
     const schema = z.object({ a, b });
-    const result = z.visit(schema, { number: () => z.string() });
+    const result = visit(schema, { number: () => z.string() });
     // `a` was not rewritten; its reference flows through.
     expect((result._zod.def as any).shape.a).toBe(a);
     // `b` was rewritten; parent is a new clone.
@@ -307,13 +308,13 @@ describe("z.visit", () => {
 
   test("callback: can target a specific def.type", () => {
     const schema = z.object({ a: z.string(), b: z.number() });
-    const allStrings = z.visit(schema, (s) => (s._zod.def.type === "number" ? z.string() : s));
+    const allStrings = visit(schema, (s) => (s._zod.def.type === "number" ? z.string() : s));
     expect(allStrings.parse({ a: "x", b: "y" } as any)).toEqual({ a: "x", b: "y" });
   });
 
   test("handler map: dispatches by kind; unhandled kinds pass through", () => {
     const schema = z.object({ a: z.string(), b: z.number() });
-    const result = z.visit(schema, { number: () => z.string() });
+    const result = visit(schema, { number: () => z.string() });
     expect(result.parse({ a: "x", b: "y" } as any)).toEqual({ a: "x", b: "y" });
   });
 
@@ -321,7 +322,7 @@ describe("z.visit", () => {
     const inner = z.object({ a: z.string() });
     const schema = z.object({ x: inner, y: inner });
     let calls = 0;
-    z.visit(schema, (s) => {
+    visit(schema, (s) => {
       calls++;
       return s;
     });
@@ -332,7 +333,7 @@ describe("z.visit", () => {
   test("root is cached: lazy self-reference does not re-invoke fn at parse-time", () => {
     let calls = 0;
     const Self: z.ZodType = z.object({ self: z.lazy(() => Self).optional() });
-    const result = z.visit(Self, (s) => {
+    const result = visit(Self, (s) => {
       calls++;
       return s;
     });
@@ -344,7 +345,7 @@ describe("z.visit", () => {
   test("unknown def.type falls through unchanged (handler map form)", () => {
     const customSchema: any = z.string();
     customSchema._zod.def = { ...customSchema._zod.def, type: "myCustomType" };
-    const result = z.visit(customSchema, { object: (o) => o });
+    const result = visit(customSchema, { object: (o) => o });
     expect(result).toBe(customSchema);
   });
 
@@ -356,7 +357,7 @@ describe("z.visit", () => {
       },
     });
     // The rewrite has to reach the recursive reference, not just the top level.
-    const upper = z.visit(Node, { string: () => z.string().toUpperCase() });
+    const upper = visit(Node, { string: () => z.string().toUpperCase() });
     expect(upper.parse({ name: "a", children: [{ name: "b", children: [] }] })).toEqual({
       name: "A",
       children: [{ name: "B", children: [] }],
@@ -365,7 +366,7 @@ describe("z.visit", () => {
 
   test("catchall is traversed like tuple rest", () => {
     const schema = z.object({}).catchall(z.object({ n: z.string() }));
-    const result = z.visit(schema, { string: () => z.string().toUpperCase() });
+    const result = visit(schema, { string: () => z.string().toUpperCase() });
     expect(result.parse({ k: { n: "a" } })).toEqual({ k: { n: "A" } });
   });
 
