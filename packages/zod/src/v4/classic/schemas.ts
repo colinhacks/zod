@@ -492,8 +492,6 @@ export interface ZodString extends _ZodString<core.$ZodStringInternals<string>> 
   cidrv6(params?: string | core.$ZodCheckCIDRv6Params): this;
   /** @deprecated Use `z.e164()` instead. */
   e164(params?: string | core.$ZodCheckE164Params): this;
-  /** @deprecated Use `z.creditCard()` instead. */
-  creditCard(params?: string | core.$ZodCheckCreditCardParams): this;
 
   // ISO 8601 checks
   /** @deprecated Use `z.iso.datetime()` instead. */
@@ -588,9 +586,6 @@ function _zodStringMethods(): _LazyMethodsOf<ZodString> {
     },
     e164(params) {
       return this.check(core._e164(ZodE164, params));
-    },
-    creditCard(params) {
-      return this.check(core._creditCard(ZodCreditCard, params));
     },
 
     // iso

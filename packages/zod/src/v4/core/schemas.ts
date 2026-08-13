@@ -1032,9 +1032,7 @@ function isLuhnAlgo(digits: string): boolean {
 
 export function isValidCreditCard(input: string): boolean {
   if (!regexes.creditCard.test(input)) return false;
-  const sanitized = input.replace(CC_SANITIZE, "");
-  if (!regexes.creditCardProviders.some((re) => re.test(sanitized))) return false;
-  return isLuhnAlgo(sanitized);
+  return isLuhnAlgo(input.replace(CC_SANITIZE, ""));
 }
 
 export interface $ZodCreditCardDef extends $ZodStringFormatDef<"credit_card"> {}
