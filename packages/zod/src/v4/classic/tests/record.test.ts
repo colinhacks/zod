@@ -716,9 +716,9 @@ test("v3-compat single-arg form: z.record(valueType)", () => {
   });
 });
 
-// A finite key set that declares __proto__ writes through the same assignment as z.object(); the
-// key was declared by the schema, so it round-trips as an own data property.
-test("__proto__ in a finite key set becomes an own property", () => {
+// Policy: "__proto__" never lands in parse output, so a finite key set that names it validates
+// the entry and then drops it, exactly as an input-derived key would be dropped.
+test("__proto__ in a finite key set is skipped", () => {
   const data = JSON.parse('{"__proto__":{"a":"declared"},"b":{"a":"good"}}');
 
   for (const schema of [
@@ -727,27 +727,25 @@ test("__proto__ in a finite key set becomes an own property", () => {
   ]) {
     const parsed: any = schema.parse(data);
     expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
-    expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(true);
-    expect(parsed.__proto__).toEqual({ a: "declared" });
-    expect(parsed.a).toBeUndefined();
+    expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(false);
+    expect(Object.keys(parsed)).toEqual(["b"]);
   }
 
   expect(({} as any).a).toBeUndefined();
 });
 
-// The raw input key is what the __proto__ check sees, but the value is written under the key the
-// key schema emits. A normalizing key schema makes those two differ.
-test("__proto__ produced by a key transform becomes an own property", () => {
+// The raw-key check sees the input key, but the write uses the key the key schema emits. A
+// normalizing key schema makes those differ, so the skip has to happen at the write.
+test("__proto__ produced by a key transform is skipped", () => {
   const schema = z.record(z.string().toLowerCase(), z.object({ a: z.string() }));
   const parsed: any = schema.parse(JSON.parse('{"__PROTO__":{"a":"transformed"}}'));
 
   expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
-  expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(true);
-  expect(parsed.__proto__).toEqual({ a: "transformed" });
+  expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(false);
   expect(({} as any).a).toBeUndefined();
 });
 
-test("__proto__ from a key transform is an own property on the async path", async () => {
+test("__proto__ from a key transform is skipped on the async path", async () => {
   const schema = z.record(
     z.string().toLowerCase(),
     z.object({ a: z.string() }).refine(async () => true)
@@ -755,7 +753,7 @@ test("__proto__ from a key transform is an own property on the async path", asyn
   const parsed: any = await schema.parseAsync(JSON.parse('{"__PROTO__":{"a":"async"}}'));
 
   expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
-  expect(parsed.__proto__).toEqual({ a: "async" });
+  expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(false);
 });
 
 // A raw __proto__ input key is skipped outright before the write; only a key the key schema

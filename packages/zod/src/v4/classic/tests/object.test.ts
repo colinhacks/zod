@@ -727,20 +727,21 @@ describe("__proto__ as a declared shape key", () => {
       ["name", z.string()],
     ]) as Record<string, any>;
 
-  const expectOwnProp = (parsed: any) => {
+  // Policy: "__proto__" never lands in parse output. The field still validates; only the write
+  // is skipped, so the result carries no such key and its prototype is never replaced.
+  const expectSkipped = (parsed: any) => {
     expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
-    expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(true);
-    expect(parsed.__proto__).toEqual({ isAdmin: true });
+    expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(false);
     expect((parsed as any).isAdmin).toBeUndefined();
-    expect(Object.keys(parsed).sort()).toEqual(["__proto__", "name"]);
+    expect(Object.keys(parsed)).toEqual(["name"]);
   };
 
   test("jit fastpass", () => {
-    expectOwnProp(z.object(makeShape()).parse(protoInput()));
+    expectSkipped(z.object(makeShape()).parse(protoInput()));
   });
 
   test("jitless", () => {
-    expectOwnProp(z.object(makeShape()).parse(protoInput(), { jitless: true } as any));
+    expectSkipped(z.object(makeShape()).parse(protoInput(), { jitless: true } as any));
   });
 
   test("async", async () => {
@@ -748,13 +749,13 @@ describe("__proto__ as a declared shape key", () => {
       ["__proto__", z.object({ isAdmin: z.boolean() }).refine(async () => true)],
       ["name", z.string()],
     ]) as Record<string, any>;
-    expectOwnProp(await z.object(shape).parseAsync(protoInput()));
+    expectSkipped(await z.object(shape).parseAsync(protoInput()));
   });
 
-  test("primitive value is not silently dropped", () => {
+  test("a primitive value is skipped too, and leaves the prototype alone", () => {
     const schema = z.object(Object.fromEntries([["__proto__", z.string()]]) as Record<string, any>);
     const parsed: any = schema.parse(JSON.parse('{"__proto__":"hello"}'));
-    expect(parsed.__proto__).toBe("hello");
+    expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(false);
     expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
   });
 
@@ -766,5 +767,49 @@ describe("__proto__ as a declared shape key", () => {
   test("Object.prototype is untouched", () => {
     z.object(makeShape()).parse(protoInput());
     expect(({} as any).isAdmin).toBeUndefined();
+  });
+});
+
+// Shapes are the other half of the policy: parse output drops "__proto__", but a shape carries
+// it as a real validator, so the key-selecting methods must not lose it.
+describe("shape methods and Object.prototype key names", () => {
+  const src = () =>
+    z.object(
+      Object.fromEntries([
+        ["__proto__", z.string().min(5)],
+        ["safe", z.string()],
+      ]) as Record<string, any>
+    );
+  const ownMask = (key: string) => JSON.parse(`{"${key}":true}`);
+
+  test("pick keeps a selected __proto__ validator", () => {
+    const picked = src().pick(ownMask("__proto__"));
+    expect(Object.keys(picked.shape)).toEqual(["__proto__"]);
+    expect(picked.safeParse({}).success).toBe(false);
+    expect(picked.safeParse(JSON.parse('{"__proto__":"ab"}')).success).toBe(false);
+    expect(picked.safeParse(JSON.parse('{"__proto__":"abcdef"}')).success).toBe(true);
+  });
+
+  // `key in shape` answered true for every Object.prototype member, so these masks skipped the
+  // Unrecognized check and installed a function as a validator.
+  test.each(["__proto__", "toString", "constructor", "hasOwnProperty"])("pick rejects the undeclared key %s", (key) => {
+    expect(() => z.object({ name: z.string() }).pick(ownMask(key)).shape).toThrow(/Unrecognized key/);
+  });
+
+  test.each(["toString", "constructor"])("omit, partial and required reject the undeclared key %s", (key) => {
+    const plain = z.object({ name: z.string() });
+    expect(() => plain.omit(ownMask(key)).shape).toThrow(/Unrecognized key/);
+    expect(() => plain.partial(ownMask(key)).shape).toThrow(/Unrecognized key/);
+    expect(() => plain.required(ownMask(key)).shape).toThrow(/Unrecognized key/);
+  });
+
+  test("omit, extend and merge keep a __proto__ validator", () => {
+    expect(Object.keys(src().omit({ safe: true }).shape)).toEqual(["__proto__"]);
+    expect(Object.keys(src().extend({ extra: z.string() }).shape).sort()).toEqual(["__proto__", "extra", "safe"]);
+    expect(Object.keys(src().merge(z.object({ extra: z.string() })).shape).sort()).toEqual([
+      "__proto__",
+      "extra",
+      "safe",
+    ]);
   });
 });

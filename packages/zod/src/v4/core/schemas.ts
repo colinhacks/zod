@@ -1747,15 +1747,19 @@ export type $InferObjectInput<T extends $ZodLooseShape, Extra extends Record<str
         } & Extra
       >;
 
-// Writes a validated property onto the fresh {} we build results into. Plain assignment of
-// "__proto__" hits the inherited setter, which replaces the result prototype and drops the
-// value; defineProperty creates the own data property the key was declared for.
+// POLICY: "__proto__" never lands in parse output, however the key got there — declared in a
+// shape, named by a finite record key, produced by a key transform, or read off the input. A
+// plain assignment would invoke the inherited setter, which replaces the result's prototype
+// instead of creating an own property, so the key is skipped at every assembly point. The field
+// still validates; only the write is suppressed. This mirrors what every released version does
+// and keeps one rule across z.object(), z.record() and the JIT fastpass.
+//
+// Schema *internals* are the other side of this rule and keep "__proto__" faithfully: object
+// shapes carry it as a real validator (see util.pick) and JSON Schema documents emit it as a
+// real property. Only parse results drop it.
 function setProp(target: any, key: PropertyKey, value: unknown): void {
-  if (key === "__proto__") {
-    Object.defineProperty(target, key, { value, writable: true, enumerable: true, configurable: true });
-  } else {
-    target[key] = value;
-  }
+  if (key === "__proto__") return;
+  target[key] = value;
 }
 
 function handlePropertyResult(
@@ -1999,7 +2003,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
     const _normalized = util.cached(() => normalizeDef(def));
 
     const generateFastpass = (shape: any) => {
-      const doc = new Doc(["shape", "payload", "ctx", "setProp"]);
+      const doc = new Doc(["shape", "payload", "ctx"]);
       const normalized = _normalized.value;
 
       const parseStr = (key: string) => {
@@ -2007,10 +2011,11 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         return `shape[${k}]._zod.run({ value: input[${k}], issues: [] }, ctx)`;
       };
 
-      // Keys are known here, so only a literal "__proto__" defers to setProp.
+      // Keys are known at generation time, so the "__proto__" policy costs nothing at runtime:
+      // no write is emitted for it at all. The property is still parsed above.
       const setStr = (key: string, value: string) => {
         const k = util.esc(key);
-        return key === "__proto__" ? `setProp(newResult, ${k}, ${value});` : `newResult[${k}] = ${value};`;
+        return key === "__proto__" ? "" : `newResult[${k}] = ${value};`;
       };
 
       doc.write(`const input = payload.value;`);
@@ -2104,7 +2109,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
       doc.write(`payload.value = newResult;`);
       doc.write(`return payload;`);
       const fn = doc.compile();
-      return (payload: any, ctx: any) => fn(shape, payload, ctx, setProp);
+      return (payload: any, ctx: any) => fn(shape, payload, ctx);
     };
 
     let fastpass!: ReturnType<typeof generateFastpass>;
