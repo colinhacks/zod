@@ -374,11 +374,23 @@ export const tupleProcessor: Processor<schemas.$ZodTuple> = (schema, ctx, _json,
       })
     : null;
 
+  const optKey = ctx.io === "input" ? "optin" : "optout";
+  let minItems = def.items.length;
+  while (minItems > 0 && (def.items[minItems - 1] as schemas.SomeType)._zod[optKey] === "optional") {
+    minItems--;
+  }
+  const maxItems = def.items.length;
+  const isClosed = !def.rest;
+
   if (ctx.target === "draft-2020-12") {
     json.prefixItems = prefixItems;
-    if (rest) {
+    if (isClosed) {
+      json.items = false;
+    } else if (rest) {
       json.items = rest;
     }
+    if (minItems > 0) json.minItems = minItems;
+    if (isClosed) json.maxItems = maxItems;
   } else if (ctx.target === "openapi-3.0") {
     json.items = {
       anyOf: prefixItems,
@@ -387,18 +399,20 @@ export const tupleProcessor: Processor<schemas.$ZodTuple> = (schema, ctx, _json,
     if (rest) {
       json.items.anyOf!.push(rest);
     }
-    json.minItems = prefixItems.length;
-    if (!rest) {
-      json.maxItems = prefixItems.length;
-    }
+    if (minItems > 0) json.minItems = minItems;
+    if (isClosed) json.maxItems = maxItems;
   } else {
     json.items = prefixItems;
-    if (rest) {
+    if (isClosed) {
+      json.additionalItems = false;
+    } else if (rest) {
       json.additionalItems = rest;
     }
+    if (minItems > 0) json.minItems = minItems;
+    if (isClosed) json.maxItems = maxItems;
   }
 
-  // length
+  // explicit user-defined length checks take precedence
   const { minimum, maximum } = schema._zod.bag as {
     minimum?: number;
     maximum?: number;

@@ -1092,6 +1092,9 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "items": false,
+        "maxItems": 2,
+        "minItems": 2,
         "prefixItems": [
           {
             "type": "string",
@@ -1113,6 +1116,7 @@ describe("toJSONSchema", () => {
         "items": {
           "type": "boolean",
         },
+        "minItems": 2,
         "prefixItems": [
           {
             "type": "string",
@@ -1168,7 +1172,7 @@ describe("toJSONSchema", () => {
             },
           ],
         },
-        "minItems": 3,
+        "minItems": 2,
         "type": "array",
       }
     `);
@@ -1209,6 +1213,7 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(schema, { target: "draft-7", io: "input" })).toMatchInlineSnapshot(`
       {
         "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalItems": false,
         "items": [
           {
             "type": "string",
@@ -1217,6 +1222,8 @@ describe("toJSONSchema", () => {
             "type": "number",
           },
         ],
+        "maxItems": 2,
+        "minItems": 2,
         "type": "array",
       }
     `);
@@ -1238,6 +1245,7 @@ describe("toJSONSchema", () => {
             "type": "number",
           },
         ],
+        "minItems": 2,
         "type": "array",
       }
     `);
@@ -1277,6 +1285,7 @@ describe("toJSONSchema", () => {
             "$ref": "#/definitions/primary",
           },
         ],
+        "minItems": 1,
         "type": "array",
       }
     `);
@@ -1289,6 +1298,71 @@ describe("toJSONSchema", () => {
     // Structural validations
     expect(Array.isArray(result.items)).toBe(true);
     expect(result.additionalItems).toBeDefined();
+  });
+
+  test("closed tuple length constraints - issue #6193", () => {
+    const schema = z.tuple([z.string(), z.string(), z.object({ lang: z.string() })]);
+
+    expect(schema.safeParse(["a", "b", { lang: "en" }, "extra"]).success).toBe(false);
+
+    const draft2020 = z.toJSONSchema(schema, { target: "draft-2020-12" });
+    expect(draft2020.items).toBe(false);
+    expect(draft2020.minItems).toBe(3);
+    expect(draft2020.maxItems).toBe(3);
+
+    const draft7 = z.toJSONSchema(schema, { target: "draft-7", io: "input" });
+    expect(draft7.additionalItems).toBe(false);
+    expect(draft7.minItems).toBe(3);
+    expect(draft7.maxItems).toBe(3);
+
+    const openapi = z.toJSONSchema(schema, { target: "openapi-3.0" });
+    validateOpenAPI30Schema(openapi);
+    expect(openapi.minItems).toBe(3);
+    expect(openapi.maxItems).toBe(3);
+  });
+
+  test("closed tuple with optional trailing items", () => {
+    const schema = z.tuple([z.string(), z.number().optional()]);
+
+    const draft2020 = z.toJSONSchema(schema, { target: "draft-2020-12" });
+    expect(draft2020.items).toBe(false);
+    expect(draft2020.minItems).toBe(1);
+    expect(draft2020.maxItems).toBe(2);
+
+    const draft7 = z.toJSONSchema(schema, { target: "draft-7", io: "input" });
+    expect(draft7.additionalItems).toBe(false);
+    expect(draft7.minItems).toBe(1);
+    expect(draft7.maxItems).toBe(2);
+  });
+
+  test("empty closed tuple rejects extra elements", () => {
+    const schema = z.tuple([]);
+
+    const draft2020 = z.toJSONSchema(schema, { target: "draft-2020-12" });
+    expect(draft2020.items).toBe(false);
+    expect(draft2020.maxItems).toBe(0);
+
+    const draft7 = z.toJSONSchema(schema, { target: "draft-7", io: "input" });
+    expect(draft7.additionalItems).toBe(false);
+    expect(draft7.maxItems).toBe(0);
+
+    const openapi = z.toJSONSchema(schema, { target: "openapi-3.0" });
+    validateOpenAPI30Schema(openapi);
+    expect(openapi.maxItems).toBe(0);
+  });
+
+  test("closed tuple length respects io direction with defaults", () => {
+    const schema = z.tuple([z.string(), z.string().default("x")]);
+
+    const input = z.toJSONSchema(schema, { target: "draft-2020-12", io: "input" });
+    expect(input.items).toBe(false);
+    expect(input.minItems).toBe(1);
+    expect(input.maxItems).toBe(2);
+
+    const output = z.toJSONSchema(schema, { target: "draft-2020-12", io: "output" });
+    expect(output.items).toBe(false);
+    expect(output.minItems).toBe(2);
+    expect(output.maxItems).toBe(2);
   });
 
   test("promise", () => {
