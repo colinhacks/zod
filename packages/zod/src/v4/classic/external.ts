@@ -5,11 +5,6 @@ export * from "./errors.js";
 export * from "./parse.js";
 export * from "./compat.js";
 
-// zod-specified
-import { config } from "../core/index.js";
-import en from "../locales/en.js";
-config(en());
-
 export type { infer, output, input } from "../core/index.js";
 export type { JSONType } from "../core/util.js";
 export {

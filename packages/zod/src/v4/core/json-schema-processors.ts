@@ -12,7 +12,7 @@ import {
   initializeContext,
   process,
 } from "./to-json-schema.js";
-import { getEnumValues } from "./util.js";
+import { assignProp, getEnumValues } from "./util.js";
 
 const formatMap: Partial<Record<checks.$ZodStringFormats, string | undefined>> = {
   guid: "uuid",
@@ -295,10 +295,16 @@ export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _jso
   const shape = def.shape;
 
   for (const key in shape) {
-    json.properties[key] = process(shape[key]!, ctx as any, {
-      ...params,
-      path: [...params.path, "properties", key],
-    });
+    // assignProp so a __proto__ key becomes an own property instead of hitting
+    // the inherited setter on the plain {} we build into
+    assignProp(
+      json.properties,
+      key,
+      process(shape[key]!, ctx as any, {
+        ...params,
+        path: [...params.path, "properties", key],
+      })
+    );
   }
 
   // required keys
@@ -445,7 +451,7 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
     });
     json.patternProperties = {};
     for (const pattern of patterns) {
-      json.patternProperties[pattern.source] = valueSchema;
+      assignProp(json.patternProperties, pattern.source, valueSchema);
     }
   } else {
     // Default behavior: use propertyNames + additionalProperties
@@ -463,7 +469,7 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
 
   // Add required for keys with discrete values (enum, literal, etc.)
   const keyValues = keyType._zod.values;
-  if (keyValues) {
+  if (keyValues && !def.partial) {
     const validKeyValues = [...keyValues].filter(
       (v): v is string | number => typeof v === "string" || typeof v === "number"
     );
@@ -648,7 +654,7 @@ export function toJSONSchema(
     for (const entry of registry._idmap.entries()) {
       const [key, schema] = entry;
       extractDefs(ctx as any, schema);
-      schemas[key] = finalize(ctx as any, schema);
+      assignProp(schemas, key, finalize(ctx as any, schema));
     }
 
     if (Object.keys(defs).length > 0) {

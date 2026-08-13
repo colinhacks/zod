@@ -3,9 +3,19 @@ import { util } from "../core/index.js";
 import * as processors from "../core/json-schema-processors.js";
 import type { StandardSchemaWithJSONProps } from "../core/standard-schema.js";
 import { createStandardJSONSchemaMethod, createToJSONSchemaMethod } from "../core/to-json-schema.js";
+import en from "../locales/en.js";
 
 import * as checks from "./checks.js";
 import * as parse from "./parse.js";
+
+// Register English as the default locale on first ZodType construction. Hooked
+// into the `ZodType` `$constructor` (rather than a top-level `config(en())` in
+// `external.ts`) so bundlers honoring `sideEffects: false` can't tree-shake it
+// out — see #5953, #5725. An explicit `z.config(z.locales.xx())` call wins
+// regardless of order, since this only sets the default when none is present.
+function _ensureDefaultLocale(): void {
+  if (!core.globalConfig.localeError) core.config(en());
+}
 
 // Methods live on each concrete constructor's prototype and materialize per
 // instance on first access, so a schema only pays for what it is asked for.
@@ -161,6 +171,7 @@ export interface _ZodType<out Internals extends core.$ZodTypeInternals = core.$Z
   extends ZodType<any, any, Internals> {}
 
 export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$constructor("ZodType", (inst, def) => {
+  _ensureDefaultLocale();
   core.$ZodType.init(inst, def);
 
   inst.def = def;
@@ -1883,13 +1894,12 @@ export function partialRecord<Key extends core.$ZodRecordKey, Value extends core
   valueType: Value,
   params?: string | core.$ZodRecordParams
 ): ZodRecord<Key & core.$partial, Value> {
-  const k = core.clone(keyType);
-  k._zod.values = undefined;
   return new ZodRecord({
     type: "record",
-    keyType: k,
+    keyType,
     valueType: valueType as any,
     ...util.normalizeParams(params),
+    partial: true,
   }) as any;
 }
 

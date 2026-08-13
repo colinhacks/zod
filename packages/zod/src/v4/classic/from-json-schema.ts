@@ -1,5 +1,6 @@
 import type * as JSONSchema from "../core/json-schema.js";
 import { type $ZodRegistry, globalRegistry } from "../core/registries.js";
+import { assignProp } from "../core/util.js";
 import * as _checks from "./checks.js";
 import * as _iso from "./iso.js";
 import * as _schemas from "./schemas.js";
@@ -378,8 +379,9 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
       // Convert properties - mark optional ones
       for (const [key, propSchema] of Object.entries(properties)) {
         const propZodSchema = convertSchema(propSchema as JSONSchema.JSONSchema, ctx);
-        // If not in required array, make it optional
-        shape[key] = requiredSet.has(key) ? propZodSchema : propZodSchema.optional();
+        // If not in required array, make it optional. assignProp so a __proto__
+        // key becomes an own property instead of hitting the inherited setter
+        assignProp(shape, key, requiredSet.has(key) ? propZodSchema : propZodSchema.optional());
       }
 
       // Handle propertyNames
@@ -606,7 +608,7 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
 
   for (const key of Object.keys(schema)) {
     if (!RECOGNIZED_KEYS.has(key)) {
-      extraMeta[key] = schema[key];
+      assignProp(extraMeta, key, schema[key]);
     }
   }
 
