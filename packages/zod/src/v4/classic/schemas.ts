@@ -1794,6 +1794,10 @@ export const ZodDiscriminatedUnion: core.$constructor<ZodDiscriminatedUnion> = /
     core.$ZodDiscriminatedUnion.init(inst, def);
 
     const partition = (values: readonly util.Primitive[], keep: boolean, params: any) => {
+      const method = keep ? "extract" : "exclude";
+      if (def.checks?.length)
+        throw new Error(`.${method}() cannot be used on discriminated unions containing refinements`);
+
       const options = def.options as core.$ZodType[];
       const valuesOf = (option: core.$ZodType, index: number) => {
         const propValues = option._zod.propValues?.[def.discriminator];
@@ -1823,7 +1827,6 @@ export const ZodDiscriminatedUnion: core.$constructor<ZodDiscriminatedUnion> = /
 
       return new ZodDiscriminatedUnion({
         ...def,
-        checks: [],
         ...util.normalizeParams(params),
         options: options.filter((option) => matched.has(option) === keep),
       }) as any;

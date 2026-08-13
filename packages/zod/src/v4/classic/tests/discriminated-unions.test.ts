@@ -745,8 +745,10 @@ test("extract", () => {
 
 test("exclude/extract error params", () => {
   const NoAdded = Action.exclude(["added"], { error: () => "unsupported action" });
-  const result = NoAdded.safeParse({ type: "added", value: "a" });
-  expect(result.error!.issues[0].message).toEqual("unsupported action");
+  expect(NoAdded.safeParse({ type: "added", value: "a" }).error!.issues[0].message).toEqual("unsupported action");
+
+  const OnlyAdded = Action.extract(["added"], { error: () => "only additions" });
+  expect(OnlyAdded.safeParse({ type: "removed", id: 1 }).error!.issues[0].message).toEqual("only additions");
 });
 
 test("exclude/extract unknown discriminator value", () => {
@@ -767,4 +769,42 @@ test("exclude/extract options with multiple discriminator values", () => {
   // a partial selection would drop "b" without saying so
   expect(() => Multi.exclude(["a"])).toThrow(/must also be listed/);
   expect(() => Multi.extract(["a"])).toThrow(/must also be listed/);
+});
+
+test("exclude/extract on a union with refinements", () => {
+  const Refined = Action.check(z.refine((v) => v.type !== "added", "no additions"));
+  expect(() => Refined.exclude(["removed"])).toThrow(
+    /\.exclude\(\) cannot be used on discriminated unions containing refinements/
+  );
+  expect(() => Refined.extract(["removed"])).toThrow(
+    /\.extract\(\) cannot be used on discriminated unions containing refinements/
+  );
+});
+
+test("exclude/extract match the discriminator input side", () => {
+  // propValues — and therefore the values these methods match on — come from the
+  // input side, so a codec discriminator is selected by its encoded value.
+  const Coded = z.discriminatedUnion("type", [
+    z.object({
+      type: z.codec(z.literal("a"), z.literal(1), { decode: () => 1 as const, encode: () => "a" as const }),
+      x: z.string(),
+    }),
+    z.object({ type: z.literal("b"), y: z.number() }),
+  ]);
+
+  const OnlyB = Coded.exclude(["a"]);
+  expect(OnlyB.options.length).toEqual(1);
+  expect(OnlyB.safeParse({ type: "b", y: 1 }).success).toEqual(true);
+  expectTypeOf<z.infer<typeof OnlyB>>().toEqualTypeOf<{ type: "b"; y: number }>();
+
+  // @ts-expect-error the decoded value is not what the union matches on
+  expect(() => Coded.exclude([1])).toThrow(/not found in union/);
+
+  // wrapped discriminators contribute every value they accept
+  const Wrapped = z.discriminatedUnion("type", [
+    z.object({ type: z.literal("a").optional(), x: z.string() }),
+    z.object({ type: z.literal("b"), y: z.number() }),
+  ]);
+  expect(() => Wrapped.exclude(["a"])).toThrow(/must also be listed/);
+  expect(Wrapped.exclude(["a", undefined]).options.length).toEqual(1);
 });

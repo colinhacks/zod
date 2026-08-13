@@ -1900,7 +1900,7 @@ const NotSuccess = MyResult.exclude(["success"]); // { status: "failed", error: 
 </Tab>
 </Tabs>
 
-Options are kept or dropped whole, so an option with several discriminator values must have all of them listed.
+Options are kept or dropped whole, so an option with several discriminator values must have all of them listed. Like `.pick()` and `.omit()`, both methods throw if the union carries refinements.
 
 <Accordions type="single">
 <Accordion title="Nesting discriminated unions">

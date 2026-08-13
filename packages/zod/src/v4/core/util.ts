@@ -188,11 +188,12 @@ export type SafeParseError<T> = {
 export type PropValues = Record<string, Set<Primitive>>;
 export type PrimitiveSet = Set<Primitive>;
 
-/** The discriminator values accepted by a single union option. */
-export type DiscriminatorValues<T, Disc extends string> = T extends { _zod: { output: infer O } }
-  ? O extends Record<Disc, infer V>
-    ? V
-    : never
+type PropAt<T, Disc extends string> = T extends unknown ? (Disc extends keyof T ? T[Disc] : never) : never;
+
+/** The discriminator values accepted by a single union option. Read off the input side, since that is
+ * where `propValues` comes from — a codec discriminator matches on its encoded values. */
+export type DiscriminatorValues<T, Disc extends string> = T extends { _zod: { input: infer I } }
+  ? PropAt<I, Disc>
   : never;
 
 type Overlaps<T, Values> = [T & Values] extends [never] ? false : true;
