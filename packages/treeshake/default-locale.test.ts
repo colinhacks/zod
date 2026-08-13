@@ -1,10 +1,10 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import resolve from "@rollup/plugin-node-resolve";
 import { type Plugin, rollup } from "rollup";
-import { afterAll, expect, test } from "vitest";
+import { afterAll, beforeAll, expect, test } from "vitest";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -13,6 +13,29 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // `config(en())` at module scope in `classic/external.ts` is dropped by every
 // bundler that honors the flag, which silently degraded every message to
 // "Invalid input" from 4.4.1 onward — see #5953, #5725, #4891.
+//
+// Bundling build output is the only way to cover the shipped layout, but it means
+// a missing or stale build would otherwise answer with an opaque ENOENT or — worse
+// for a regression guard — a confident false green. Hence the freshness check.
+
+const zodRoot = path.resolve(__dirname, "../zod");
+const builtEntry = path.join(zodRoot, "v4/index.js");
+
+function newestMtime(dir: string): number {
+  let newest = 0;
+  for (const item of readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, item.name);
+    newest = Math.max(newest, item.isDirectory() ? newestMtime(full) : statSync(full).mtimeMs);
+  }
+  return newest;
+}
+
+beforeAll(() => {
+  if (!existsSync(builtEntry)) throw new Error(`${builtEntry} is missing. Run \`pnpm build\` first.`);
+  if (newestMtime(path.join(zodRoot, "src")) > statSync(builtEntry).mtimeMs) {
+    throw new Error(`${builtEntry} is older than packages/zod/src. Run \`pnpm build\` first.`);
+  }
+});
 
 const tmp = mkdtempSync(path.join(tmpdir(), "zod-treeshake-"));
 afterAll(() => rmSync(tmp, { recursive: true, force: true }));
