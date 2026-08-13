@@ -457,6 +457,29 @@ test("string format - uuid", () => {
   expect(schema.parse(uuid)).toBe(uuid);
 });
 
+test("string format - date-time", () => {
+  const schema = fromJSONSchema({
+    type: "string",
+    format: "date-time",
+  });
+  expect(schema.safeParse("2026-07-29T14:30:00Z").success).toBe(true);
+  expect(schema.safeParse("2026-07-29T16:30:00+02:00").success).toBe(true);
+  expect(schema.safeParse("2026-07-29T14:30:00").success).toBe(false);
+  expect(schema.safeParse("2026-07-29T16:30:00+0200").success).toBe(false);
+
+  const zuluOnly = fromJSONSchema({
+    type: "string",
+    format: "date-time",
+    pattern: "Z$",
+  });
+  expect(zuluOnly.safeParse("2026-07-29T14:30:00Z").success).toBe(true);
+  expect(zuluOnly.safeParse("2026-07-29T16:30:00+02:00").success).toBe(false);
+  expect(zuluOnly.safeParse("garbageZ").success).toBe(false);
+
+  const roundTripped = fromJSONSchema(z.toJSONSchema(z.iso.datetime({ offset: true })));
+  expect(roundTripped.safeParse("2026-07-29T16:30:00+02:00").success).toBe(true);
+});
+
 test("exclusiveMinimum and exclusiveMaximum", () => {
   const schema = fromJSONSchema({
     type: "number",
