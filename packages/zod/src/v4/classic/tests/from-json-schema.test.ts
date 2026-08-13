@@ -348,6 +348,15 @@ test("local $ref resolution", () => {
   expect(() => schema.parse({})).toThrow();
 });
 
+test("local $ref resolution unescapes JSON Pointer tokens", () => {
+  // `~1` must be decoded before `~0`, so the id "a~1b" survives as itself and not as "a/b".
+  for (const id of ["Shared/User", "My~Model", "a~b/c", "a~1b"]) {
+    const inner = z.object({ name: z.string() }).meta({ id });
+    const schema = fromJSONSchema(z.toJSONSchema(z.object({ inner })));
+    expect(schema.parse({ inner: { name: "John" } })).toEqual({ inner: { name: "John" } });
+  }
+});
+
 test("circular $ref with lazy", () => {
   const schema = fromJSONSchema({
     $defs: {

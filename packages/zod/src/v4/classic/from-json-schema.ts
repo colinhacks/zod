@@ -124,6 +124,12 @@ function applyMinItems(items: ZodType[], minItems: number): ZodType[] {
   return items.map((item, index) => (index < minItems ? item : item.optional()));
 }
 
+// Inverse of the encoding applied to $ref pointer segments in to-json-schema.ts.
+// Per RFC 6901 the `~1` replacement must run before `~0`.
+function decodeJSONPointerSegment(segment: string): string {
+  return segment.replace(/~1/g, "/").replace(/~0/g, "~");
+}
+
 function resolveRef(ref: string, ctx: ConversionContext): JSONSchema.JSONSchema {
   if (!ref.startsWith("#")) {
     throw new Error("External $ref is not supported, only local refs (#/...) are allowed");
@@ -139,7 +145,7 @@ function resolveRef(ref: string, ctx: ConversionContext): JSONSchema.JSONSchema 
   const defsKey = ctx.version === "draft-2020-12" ? "$defs" : "definitions";
 
   if (path[0] === defsKey) {
-    const key = path[1];
+    const key = path[1] === undefined ? undefined : decodeJSONPointerSegment(path[1]);
     if (!key || !ctx.defs[key]) {
       throw new Error(`Reference not found: ${ref}`);
     }
