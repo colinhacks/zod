@@ -107,8 +107,8 @@ const error: () => errors.$ZodErrorMap = () => {
           const opts = issue.options.map((o) => `'${o}'`).join(" | ");
           return `Invalid discriminator value. Expected ${opts}`;
         }
-        if (issue.inclusive === false && Array.isArray(issue.matches)) {
-          return `Invalid input: expected exactly one matching option, received ${issue.matches.length} (options ${issue.matches.join(", ")})`;
+        if (issue.inclusive === false) {
+          return "Invalid input: more than one option matched";
         }
         return "Invalid input";
       case "invalid_element":

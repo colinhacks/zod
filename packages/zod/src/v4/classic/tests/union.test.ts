@@ -208,7 +208,7 @@ test("z.xor() - multiple matches fails", () => {
             0,
             1,
           ],
-          "message": "Invalid input: expected exactly one matching option, received 2 (options 0, 1)",
+          "message": "Invalid input: more than one option matched",
           "path": [],
         },
       ]
@@ -226,9 +226,7 @@ test("z.xor() - multiple matches reports every matching option", () => {
     const issue = result.error.issues[0] as z.core.$ZodIssueInvalidUnion;
     expect(issue.inclusive).toBe(false);
     expect((issue as Extract<typeof issue, { inclusive: false }>).matches).toEqual([0, 1, 2]);
-    expect(issue.message).toMatchInlineSnapshot(
-      `"Invalid input: expected exactly one matching option, received 3 (options 0, 1, 2)"`
-    );
+    expect(issue.message).toBe("Invalid input: more than one option matched");
   }
 });
 

@@ -1744,7 +1744,7 @@ If the input could match multiple options, `z.xor()` will fail. The resulting is
 ```ts
 const overlapping = z.xor([z.string(), z.any()]);
 overlapping.parse("hello"); // ❌ fails (matches both string and any)
-// ZodError: Invalid input: expected exactly one matching option, received 2 (options 0, 1)
+// ZodError: Invalid input: more than one option matched
 ```
 
 Object options overlap more often than you'd expect, since `z.object()` strips unknown keys instead of rejecting them. Below, an input with both keys matches *both* options — the first strips `version`, the second keeps it. Use `z.strictObject()` (or `.strict()`) on the narrower option to make the branches mutually exclusive:
