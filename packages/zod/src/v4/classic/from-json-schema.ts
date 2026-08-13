@@ -1,5 +1,6 @@
 import type * as JSONSchema from "../core/json-schema.js";
 import { type $ZodRegistry, globalRegistry } from "../core/registries.js";
+import { assignProp, isPlainObject } from "../core/util.js";
 import * as _checks from "./checks.js";
 import * as _iso from "./iso.js";
 import * as _schemas from "./schemas.js";
@@ -271,7 +272,7 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         } else if (format === "uuid" || format === "guid") {
           stringSchema = stringSchema.check(z.uuid());
         } else if (format === "date-time") {
-          stringSchema = stringSchema.check(z.iso.datetime());
+          stringSchema = stringSchema.check(z.iso.datetime({ offset: true }));
         } else if (format === "date") {
           stringSchema = stringSchema.check(z.iso.date());
         } else if (format === "time") {
@@ -294,6 +295,8 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
           stringSchema = stringSchema.check(z.base64url());
         } else if (format === "e164") {
           stringSchema = stringSchema.check(z.e164());
+        } else if (format === "credit_card") {
+          stringSchema = stringSchema.check(z.creditCard());
         } else if (format === "jwt") {
           stringSchema = stringSchema.check(z.jwt());
         } else if (format === "emoji") {
@@ -378,8 +381,9 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
       // Convert properties - mark optional ones
       for (const [key, propSchema] of Object.entries(properties)) {
         const propZodSchema = convertSchema(propSchema as JSONSchema.JSONSchema, ctx);
-        // If not in required array, make it optional
-        shape[key] = requiredSet.has(key) ? propZodSchema : propZodSchema.optional();
+        // If not in required array, make it optional. assignProp so a __proto__
+        // key becomes an own property instead of hitting the inherited setter
+        assignProp(shape, key, requiredSet.has(key) ? propZodSchema : propZodSchema.optional());
       }
 
       // Handle propertyNames
@@ -436,6 +440,31 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
             result = z.intersection(result, schemasToIntersect[i]!);
           }
           zodSchema = result;
+        }
+
+        // When additionalProperties is false, reject keys that are neither
+        // defined in properties nor matched by any patternProperty.
+        if (schema.additionalProperties === false) {
+          const propertyKeys = Object.keys(shape);
+          const patterns = patternKeys.map((p) => new RegExp(p));
+          const basePatternSchema = zodSchema;
+          zodSchema = zodSchema.check((payload) => {
+            if (!isPlainObject(payload.value)) return;
+            const unrecognized: string[] = [];
+            for (const key of Object.keys(payload.value)) {
+              if (propertyKeys.includes(key)) continue;
+              if (patterns.some((regex) => regex.test(key))) continue;
+              unrecognized.push(key);
+            }
+            if (unrecognized.length) {
+              payload.issues.push({
+                code: "unrecognized_keys",
+                keys: unrecognized,
+                input: payload.value,
+                inst: basePatternSchema,
+              });
+            }
+          });
         }
         break;
       }
@@ -606,7 +635,7 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
 
   for (const key of Object.keys(schema)) {
     if (!RECOGNIZED_KEYS.has(key)) {
-      extraMeta[key] = schema[key];
+      assignProp(extraMeta, key, schema[key]);
     }
   }
 

@@ -35,11 +35,68 @@ The project uses pnpm workspaces. Key commands:
 - Ask before generating new files
 - Use `util.defineLazy()` for computed properties to avoid circular dependencies
 - Performance is critical - parameter reassignment is allowed for optimization
+- Any change to `packages/zod/src` must be weighed on **all three axes: runtime performance, memory consumption, and bundle size** — see "The three axes" below. A change that improves one and is only checked on that one is not finished.
 - ALWAYS use the `gh` CLI to fetch GitHub information (issues, PRs, etc.) instead of relying on web search or assumptions
 - Keep JSDoc as minimal as possible. A self-explanatory type or symbol name needs no doc comment. When a comment is genuinely required, write one short sentence describing behavior — not history, rationale, or examples. Don't add interface-level JSDoc that just restates the interface name.
 - When you've modified a PR (or opened/closed/commented on one), include the PR URL liberally in summary messages — at minimum once at the end of any reply that touched it
 - When creating a PR, do not include a separate test plan section in the body. Link to any relevant issues under discussion, and use the same copywriting guidelines from "Commenting on issues and PRs": concise maintainer voice, prose over templates, and validation details only when they are material to the reader.
 - NEVER bump the version in `packages/zod/package.json` (or any package's `package.json`). A version bump is the only thing that triggers a release; everything else (including direct pushes to `main`) is recoverable until that happens. If a version bump is genuinely needed, ask first.
+
+## The three axes
+
+Zod is judged on **runtime performance**, **memory consumption**, and **bundle size** at once, and they trade against each other constantly. Optimizing one in isolation is how regressions land: a change that buys bundle bytes can cost construction speed, and one that saves memory can cost both. Any non-trivial change to `packages/zod/src` — and any change to `core/` at all, since every build ships it — needs a number on all three before it is done. Report them together, including the ones that got worse.
+
+`zod/mini` deserves its own line on the bundle axis: it is sold on size, so a fixed cost lands very differently there (~200 B is 6% of the smallest mini bundle and 1% of classic's).
+
+| axis    | how to measure                                                                                                                                    |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| runtime | `packages/bench/*.ts` via `pnpm bench <name>`, plus construction cost — parse and construction move independently                                 |
+| memory  | `packages/bench/memory/schema-footprint.ts` and `realworld.ts` (retained bytes per schema; run under `--expose-gc`)                               |
+| bundle  | bundle a `packages/treeshake` fixture with esbuild `--minify` under `--conditions=@zod/source` and gzip it, for both a classic and a mini fixture |
+
+### Benchmarking traps
+
+These produced hours of wrong conclusions; check them before believing a number.
+
+- **Check `uptime` first.** A loaded machine invents effects of ±16%. Numbers taken above a load average of ~8 are worthless.
+- **Interleave the two revisions.** Running all of A then all of B puts any drift entirely on whichever ran second. Alternating round-by-round took per-side spread from 2.5x to 4%.
+- **Loading two zod revisions into one process makes call sites polymorphic.** It is fine for comparing construction, unreliable for tight leaf parses.
+- **Allocating benchmarks can't be timed by a fixed-duration loop.** `z.array().parse()` allocates per call, so a time-boxed harness samples whatever the collector is doing — it gave +8.2% and −17.3% on consecutive identical runs. Use a fixed iteration count with `gc()` between samples and take the minimum.
+- **Make sure the work isn't optimized away.** If a micro-benchmark reports ~1e9 ops/sec, V8 eliminated the loop; consume the result.
+
+### Property placement, specifically
+
+Most of the memory in a schema is its own-property count, not its closures. V8 sizes an instance's backing store in steps and `$constructor` assigns nothing itself, so instances get no in-object slots: **≤12 own properties cost 128 bytes, 13–20 cost 848, ≥21 cost 1616** (`packages/bench/memory/prop-slack.ts` measures this). Members therefore live on the prototype and materialize per instance on first read.
+
+If you touch that machinery, three things bite:
+
+- **Moving a property between definition sites changes its descriptor**, and writability/enumerability/configurability are part of the public contract. `packages/bench/memory/` has a surface-diff approach for this: dump every descriptor, alias and assign/delete semantic on both revisions and diff them. It caught four real regressions that tests did not.
+- **Redefining an accessor demotes the object to dictionary mode**, which cost 2x on `z.object().parse` once. Run `packages/bench/memory/dict-mode.ts` after any change here — every instance must report `fast`.
+- **A bound function pays a call-time trampoline.** Fine for cold builder methods, measurably not fine on the parse path.
+
+## Cutting a release
+
+Only do this when the user explicitly asks. Pushing a version bump to `main` triggers `.github/workflows/release.yml`, which publishes to npm + JSR and creates a `v<version>` GitHub release. There is no undo.
+
+Three files must be bumped together — `pnpm check:semver` runs in pre-commit and `prepublishOnly`, and will fail the commit if they disagree:
+
+- `packages/zod/package.json` — `version`
+- `packages/zod/jsr.json` — `version`
+- `packages/zod/src/v4/core/versions.ts` — `major` / `minor` / `patch`
+
+Procedure:
+
+```bash
+# Make sure main is clean and up to date first.
+git checkout main && git pull
+
+# Bump all three files to the new x.y.z, then:
+git add packages/zod/package.json packages/zod/jsr.json packages/zod/src/v4/core/versions.ts
+git commit -m "<x.y.z>"   # commit message is just the version, e.g. "4.4.3"
+git push origin main
+```
+
+The release workflow only fires on changes under `packages/zod/package.json`, `packages/zod/src/**`, or the workflow file itself, so the bump must include `package.json`. Watch the Actions tab to confirm `build_and_publish` succeeds.
 
 ## Iterating on a contributor PR in a worktree
 
@@ -65,7 +122,8 @@ git push <contributor> pr-<N>:<headRefName> --force-with-lease   # for amends
 ```
 
 Notes:
-- Do NOT use `gh pr checkout --detach` for this — it moves your *current* working tree into detached HEAD instead of creating a worktree.
+
+- Do NOT use `gh pr checkout --detach` for this — it moves your _current_ working tree into detached HEAD instead of creating a worktree.
 - Husky pre-commit runs biome format/lint via lint-staged; pre-push runs the full vitest suite. Both are fast and act as a safety net — don't bypass with `--no-verify` unless you have a specific reason.
 - **Preserve contributor commits.** Never `git reset --hard` or otherwise rewrite history that erases the contributor's work, even if you're rewriting the actual change. They need to stay in the PR's commit list to get credit on the merged PR. If their approach was wrong, add a `Revert "..."` commit (or just a plain commit that undoes those lines) and then add your replacement commit on top. Force-pushing a single clobbering commit strips them from the GitHub contributors graph.
 - When done, clean up: `git worktree remove ~/.cursor/worktrees/zod/pr-<N>` and `git branch -D pr-<N>` (and optionally `git remote remove <contributor>`).

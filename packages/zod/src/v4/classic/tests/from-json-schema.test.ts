@@ -387,6 +387,49 @@ test("multiple overlapping patternProperties", () => {
   expect(() => schema.parse({ S_N: "ab" })).toThrow(); // too short for ^S_N pattern
 });
 
+test("patternProperties with additionalProperties false", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    patternProperties: {
+      "^S_": { type: "string" },
+    },
+    additionalProperties: false,
+  });
+  expect(schema.parse({ S_name: "ok" })).toEqual({ S_name: "ok" });
+  expect(() => schema.parse({ X_A: false })).toThrow();
+  expect(() => schema.parse({ S_name: 1 })).toThrow();
+});
+
+test("patternProperties and properties with additionalProperties false", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    properties: {
+      name: { type: "string" },
+    },
+    patternProperties: {
+      "^S_": { type: "string" },
+    },
+    additionalProperties: false,
+    required: ["name"],
+  });
+  expect(schema.parse({ name: "ok", S_count: "1" })).toEqual({ name: "ok", S_count: "1" });
+  expect(() => schema.parse({ name: "ok", S_count: 1 })).toThrow();
+  expect(() => schema.parse({ name: "ok", other: "value" })).toThrow();
+});
+
+test("multiple patternProperties with additionalProperties false", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    patternProperties: {
+      "^S_": { type: "string" },
+      "^N_": { type: "number" },
+    },
+    additionalProperties: false,
+  });
+  expect(schema.parse({ S_a: "a", N_b: 1 })).toEqual({ S_a: "a", N_b: 1 });
+  expect(() => schema.parse({ S_a: "a", N_b: 1, other: "value" })).toThrow();
+});
+
 test("default value", () => {
   const schema = fromJSONSchema({
     type: "string",
@@ -455,6 +498,29 @@ test("string format - uuid", () => {
   });
   const uuid = "550e8400-e29b-41d4-a716-446655440000";
   expect(schema.parse(uuid)).toBe(uuid);
+});
+
+test("string format - date-time", () => {
+  const schema = fromJSONSchema({
+    type: "string",
+    format: "date-time",
+  });
+  expect(schema.safeParse("2026-07-29T14:30:00Z").success).toBe(true);
+  expect(schema.safeParse("2026-07-29T16:30:00+02:00").success).toBe(true);
+  expect(schema.safeParse("2026-07-29T14:30:00").success).toBe(false);
+  expect(schema.safeParse("2026-07-29T16:30:00+0200").success).toBe(false);
+
+  const zuluOnly = fromJSONSchema({
+    type: "string",
+    format: "date-time",
+    pattern: "Z$",
+  });
+  expect(zuluOnly.safeParse("2026-07-29T14:30:00Z").success).toBe(true);
+  expect(zuluOnly.safeParse("2026-07-29T16:30:00+02:00").success).toBe(false);
+  expect(zuluOnly.safeParse("garbageZ").success).toBe(false);
+
+  const roundTripped = fromJSONSchema(z.toJSONSchema(z.iso.datetime({ offset: true })));
+  expect(roundTripped.safeParse("2026-07-29T16:30:00+02:00").success).toBe(true);
 });
 
 test("exclusiveMinimum and exclusiveMaximum", () => {
@@ -892,4 +958,31 @@ test("Date default is coerced to its JSON string form", () => {
   const date = new Date("2026-01-02T03:04:05.000Z");
   const schema = fromJSONSchema({ type: "string", default: date as any });
   expect(schema.parse(undefined)).toBe(date.toISOString());
+});
+
+// An object literal can't express an own "__proto__" key — `{ __proto__: x }`
+// sets the literal's prototype instead. JSON.parse is both the realistic source
+// of a JSON Schema and the only way to write these cases.
+test("required __proto__ property is represented in the shape but stripped during parsing", () => {
+  const schema = fromJSONSchema(
+    JSON.parse(`{
+      "type": "object",
+      "properties": { "__proto__": { "type": "string", "const": "admin" }, "role": { "type": "string" } },
+      "required": ["__proto__", "role"]
+    }`)
+  );
+
+  expect(Object.prototype.hasOwnProperty.call((schema as z.ZodObject).shape, "__proto__")).toBe(true);
+  expect(schema.parse({ role: "x" })).toEqual({ role: "x" });
+  expect(schema.parse(JSON.parse(`{ "role": "x", "__proto__": "wrong" }`))).toEqual({ role: "x" });
+  expect(schema.parse(JSON.parse(`{ "role": "x", "__proto__": "admin" }`))).toEqual({ role: "x" });
+});
+
+test("__proto__ annotation key reaches the registry", () => {
+  const registry = z.registry<Record<string, unknown>>();
+  const schema = fromJSONSchema(JSON.parse(`{ "type": "string", "__proto__": { "custom": 1 } }`), { registry });
+
+  const meta = registry.get(schema)!;
+  expect(Object.prototype.hasOwnProperty.call(meta, "__proto__")).toBe(true);
+  expect(meta.__proto__).toEqual({ custom: 1 });
 });
