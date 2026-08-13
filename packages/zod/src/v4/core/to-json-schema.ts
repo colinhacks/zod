@@ -381,26 +381,16 @@ export function extractDefs<T extends schemas.$ZodType>(
   }
 }
 
-const ANNOTATION_KEYS = /*@__PURE__*/ new Set([
-  "title",
-  "description",
-  "default",
-  "examples",
-  "deprecated",
-  "readOnly",
-  "writeOnly",
-  "$comment",
-  "id",
-  "$id",
-  "_prefault",
-]);
+/** Keywords that actually assert what a value looks like. A schema carrying none of these describes
+ *  nothing, however many annotations or modifiers it has. */
+const FORM_KEYS = /*@__PURE__*/ new Set(["type", "$ref", "enum", "const", "allOf", "anyOf", "oneOf", "not"]);
 
-function structuralSnapshot(schema: JSONSchema.BaseSchema): string {
-  const structural: Record<string, unknown> = {};
+function formSnapshot(schema: JSONSchema.BaseSchema): string {
+  const form: Record<string, unknown> = {};
   for (const key in schema) {
-    if (!ANNOTATION_KEYS.has(key)) structural[key] = schema[key];
+    if (FORM_KEYS.has(key)) form[key] = schema[key];
   }
-  return JSON.stringify(structural);
+  return JSON.stringify(form);
 }
 
 export function finalize<T extends schemas.$ZodType>(
@@ -486,9 +476,9 @@ export function finalize<T extends schemas.$ZodType>(
     }
 
     // execute overrides
-    // Snapshot the structural (non-annotation) half so we can tell whether `override` actually
-    // gave this node a JSON Schema form.
-    const before = seen.unrepresentable !== undefined ? structuralSnapshot(schema) : "";
+    // Snapshot the form-defining keywords so we can tell whether `override` actually gave this node
+    // a JSON Schema shape.
+    const before = seen.unrepresentable !== undefined ? formSnapshot(schema) : "";
 
     ctx.override({
       zodSchema: zodSchema as schemas.$ZodTypes,
@@ -496,11 +486,12 @@ export function finalize<T extends schemas.$ZodType>(
       path: seen.path ?? [],
     });
 
-    // An unrepresentable node survives only if `override` changed something structural about it.
-    // Annotations don't count, so a blanket `description` override can't silently disable every
-    // unrepresentable error; and requiring a *change* keeps value-level cases (an `undefined`
-    // literal member, a dynamic `.catch()`) throwing even though their node already has a form.
-    if (seen.unrepresentable !== undefined && structuralSnapshot(schema) === before) {
+    // An unrepresentable node survives only if `override` changed a form-defining keyword. Testing
+    // the *form* keeps a broad override that only sets a modifier or an annotation (`nullable`,
+    // `description`) from silently disabling every unrepresentable error, and testing for a *change*
+    // keeps value-level cases throwing (a dynamic `.catch()` node is already a `string`, and
+    // `z.literal([undefined, "a"])` already carries `"a"`), which shape alone cannot detect.
+    if (seen.unrepresentable !== undefined && formSnapshot(schema) === before) {
       throw new Error(seen.unrepresentable);
     }
   };

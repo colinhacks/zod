@@ -3279,6 +3279,39 @@ describe("override runs before the unrepresentable error", () => {
     );
   });
 
+  test("only a form-defining keyword counts as handling the type", () => {
+    // a broad override that sets a modifier must not silently disable the error
+    expect(() =>
+      z.toJSONSchema(z.object({ when: z.date() }), {
+        target: "openapi-3.0",
+        override: (ctx) => {
+          ctx.jsonSchema.nullable = true;
+        },
+      })
+    ).toThrow("Date cannot be represented in JSON Schema");
+    // nor does a constraint that presupposes a type it never sets
+    expect(() =>
+      z.toJSONSchema(z.date(), {
+        override: (ctx) => {
+          ctx.jsonSchema.format = "date-time";
+        },
+      })
+    ).toThrow("Date cannot be represented in JSON Schema");
+    // a `$ref` is a form, so it does count
+    expect(
+      z.toJSONSchema(z.date(), {
+        override: (ctx) => {
+          ctx.jsonSchema.$ref = "#/components/schemas/DateTime";
+        },
+      })
+    ).toMatchInlineSnapshot(`
+      {
+        "$ref": "#/components/schemas/DateTime",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+      }
+    `);
+  });
+
   test("value-level cases still throw even though their node has a form", () => {
     // the node is a `string`; only the dynamic catch value is unrepresentable
     expect(() =>
