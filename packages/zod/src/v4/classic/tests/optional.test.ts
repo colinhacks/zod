@@ -373,11 +373,12 @@ test("swallowed issue on an absent optional key drops its value", async () => {
       }),
   });
 
-  expect(schema.safeParse({})).toMatchObject({ success: true, data: {} });
-  expect(schema.safeParse({}, { jitless: true })).toMatchObject({ success: true, data: {} });
-  expect(await schema.safeParseAsync({})).toMatchObject({ success: true, data: {} });
-
-  for (const result of [schema.safeParse({}), schema.safeParse({}, { jitless: true })]) {
+  for (const result of [
+    schema.safeParse({}),
+    schema.safeParse({}, { jitless: true }),
+    await schema.safeParseAsync({}),
+  ]) {
+    expect(result.success).toEqual(true);
     expect("a" in result.data!).toEqual(false);
   }
 
