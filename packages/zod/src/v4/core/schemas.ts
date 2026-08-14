@@ -2630,37 +2630,49 @@ function mergeValues(
 }
 
 function handleIntersectionResults(result: ParsePayload, left: ParsePayload, right: ParsePayload): ParsePayload {
-  // Track which side(s) report each key as unrecognized
+  // Track which side(s) reject each key. A key rejection is reported only when
+  // BOTH sides reject it, so a key owned by one branch survives the other's
+  // key schema. strictObject reports these as unrecognized_keys; a record with
+  // an open key schema reports one invalid_key per key.
   const unrecKeys = new Map<string, { l?: true; r?: true }>();
   let unrecIssue: errors.$ZodRawIssue | undefined;
+  const keyIssues = new Map<string, errors.$ZodRawIssue>();
 
-  for (const iss of left.issues) {
+  const collect = (iss: errors.$ZodRawIssue, side: "l" | "r"): boolean => {
+    let keys: string[];
     if (iss.code === "unrecognized_keys") {
       unrecIssue ??= iss;
-      for (const k of iss.keys) {
-        if (!unrecKeys.has(k)) unrecKeys.set(k, {});
-        unrecKeys.get(k)!.l = true;
-      }
+      keys = iss.keys as string[];
+    } else if (iss.code === "invalid_key" && iss.origin === "record" && iss.path?.length === 1) {
+      const k = String(iss.path[0]);
+      if (!keyIssues.has(k)) keyIssues.set(k, iss);
+      keys = [k];
     } else {
-      result.issues.push(iss);
+      return false;
     }
+    for (const k of keys) {
+      if (!unrecKeys.has(k)) unrecKeys.set(k, {});
+      unrecKeys.get(k)![side] = true;
+    }
+    return true;
+  };
+
+  for (const iss of left.issues) {
+    if (!collect(iss, "l")) result.issues.push(iss);
   }
 
   for (const iss of right.issues) {
-    if (iss.code === "unrecognized_keys") {
-      for (const k of iss.keys) {
-        if (!unrecKeys.has(k)) unrecKeys.set(k, {});
-        unrecKeys.get(k)!.r = true;
-      }
-    } else {
-      result.issues.push(iss);
-    }
+    if (!collect(iss, "r")) result.issues.push(iss);
   }
 
-  // Report only keys unrecognized by BOTH sides
+  // Report only keys rejected by BOTH sides
   const bothKeys = [...unrecKeys].filter(([, f]) => f.l && f.r).map(([k]) => k);
-  if (bothKeys.length && unrecIssue) {
-    result.issues.push({ ...unrecIssue, keys: bothKeys });
+  if (bothKeys.length) {
+    const aggregated = unrecIssue ? bothKeys.filter((k) => (unrecIssue!.keys as string[]).includes(k)) : [];
+    if (aggregated.length) result.issues.push({ ...unrecIssue!, keys: aggregated });
+    for (const k of bothKeys) {
+      if (!aggregated.includes(k) && keyIssues.has(k)) result.issues.push(keyIssues.get(k)!);
+    }
   }
 
   if (util.aborted(result)) return result;

@@ -215,29 +215,38 @@ test("invalid deep merge of object and array combination", async () => {
   );
 });
 
-// An enumerable key schema declares which keys the record owns, so a key outside the
-// set is unrecognized and the other side of the intersection may claim it. A
-// non-enumerable key schema is a constraint every key must satisfy, so it still
-// applies to keys owned by the other side.
-test("record key schema in intersection: enumerable vs constraint", () => {
+// A record's key schema says which keys that record GOVERNS; it is not a predicate
+// every key in the result must satisfy. TypeScript works the same way: in
+// `{name: string} & Record<`S_${string}`, string>` the index signature constrains
+// only the keys matching it, so `name` is fine. So a key one side does not govern
+// is reconciled against the other side, exactly as unrecognized_keys already is.
+test("a record's key schema governs only its own keys inside an intersection", () => {
   const Obj = z.object({ name: z.string() });
+  const value = { name: "a", S_a: "s" };
 
-  // Enumerable: the object's own key survives the record's key set.
-  const withEnum = z.intersection(Obj, z.partialRecord(z.enum(["p1", "p2"]), z.string()));
-  expect(withEnum.parse({ name: "a", p1: "x" })).toEqual({ name: "a", p1: "x" });
+  // Every key-schema flavor behaves the same: `name` belongs to the object side.
+  expect(z.intersection(Obj, z.record(z.string().regex(/^S_/), z.string())).parse(value)).toEqual(value);
+  expect(z.intersection(Obj, z.record(z.templateLiteral(["S_", z.string()]), z.string())).parse(value)).toEqual(value);
+  expect(z.intersection(Obj, z.partialRecord(z.enum(["p1", "p2"]), z.string())).parse({ name: "a", p1: "x" })).toEqual({
+    name: "a",
+    p1: "x",
+  });
   expect(z.intersection(Obj, z.record(z.enum(["p1"]), z.string())).parse({ name: "a", p1: "x" })).toEqual({
     name: "a",
     p1: "x",
   });
 
-  // Non-enumerable: the regex applies to every key, including the object's own.
-  const withRegex = z.intersection(Obj, z.record(z.string().regex(/^S_/), z.string()));
-  expect(withRegex.safeParse({ name: "a", S_a: "s" }).success).toBe(false);
+  // A key the record DOES govern still has its value validated across the intersection.
+  const governed = z.intersection(z.object({ S_x: z.number() }), z.record(z.string().regex(/^S_/), z.string()));
+  expect(governed.safeParse({ S_x: 1 }).success).toBe(false);
 
-  // A key neither side owns is still rejected, when a side actually flags it.
-  const strict = z.intersection(z.strictObject({ name: z.string() }), z.partialRecord(z.enum(["p1"]), z.string()));
-  expect(strict.parse({ name: "a", p1: "x" })).toEqual({ name: "a", p1: "x" });
-  expect(strict.safeParse({ name: "a", p1: "x", evil: "q" }).success).toBe(false);
+  // A key NEITHER side governs is still rejected.
+  const strict = z.intersection(z.strictObject({ name: z.string() }), z.record(z.string().regex(/^S_/), z.string()));
+  expect(strict.parse(value)).toEqual(value);
+  expect(strict.safeParse({ ...value, evil: "q" }).success).toBe(false);
+
+  // Standalone, a record still rejects a key it does not govern.
+  expect(z.record(z.string().regex(/^S_/), z.string()).safeParse({ S_a: "s", bad: "x" }).success).toBe(false);
 });
 
 test("partialRecord reports an out-of-set key as unrecognized, not invalid", () => {
