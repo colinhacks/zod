@@ -858,3 +858,15 @@ test("exclude/extract with an optional-input discriminator", () => {
   expect(Nested.options.length).toEqual(2);
   expectTypeOf<z.infer<typeof Nested>>().toEqualTypeOf<{ type: "a" | null; x: string } | { type: "t"; w: boolean }>();
 });
+
+test("exclude/extract through z.lazy() and undefined literals", () => {
+  const Exact = z.object({ type: z.literal("a").exactOptional(), x: z.string() });
+  const Undef = z.object({ type: z.literal(undefined), w: z.boolean() });
+  const Plain = z.object({ type: z.literal("b"), y: z.number() });
+
+  const NoUndef = z.discriminatedUnion("type", [z.lazy(() => Exact), Undef, Plain]).exclude([undefined]);
+  expect(NoUndef.options.length).toEqual(2);
+  expectTypeOf<z.infer<typeof NoUndef>>().toEqualTypeOf<
+    { type?: "a" | undefined; x: string } | { type: "b"; y: number }
+  >();
+});

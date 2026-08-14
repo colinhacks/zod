@@ -190,24 +190,28 @@ export type PrimitiveSet = Set<Primitive>;
 
 type PropAt<T, Disc extends string> = T extends unknown ? (Disc extends keyof T ? T[Disc] : never) : never;
 
-/** Whether a schema's runtime `values` contain `undefined`. Only `$ZodOptional` and `z.undefined()` add it,
- * and only `.nonoptional()` takes it away; every other wrapper reports its inner type's values unchanged
- * while still widening the input type, so they are followed rather than read. `z.exactOptional()` shares
- * the `optional` def type but adds nothing, and is told apart by its narrowed output. */
+/** Whether a schema's runtime `values` contain `undefined`. Wrappers widen their input type with the
+ * `undefined` they accept without adding it to `values`, so they are followed rather than read: only
+ * `.nonoptional()` removes it and only `$ZodOptional` adds it. `z.exactOptional()` shares the `optional`
+ * def type without adding it, and is told apart by its narrowed output. Leaves — `z.undefined()`,
+ * `z.literal(undefined)`, an enum with an `undefined` member — have no such widening, so their input side
+ * is read directly. */
 type AcceptsUndefined<S> = S extends { _zod: { def: { type: "nonoptional" } } }
   ? false
-  : S extends { _zod: { def: { type: "undefined" } } }
-    ? true
-    : S extends { _zod: { output: infer O; def: { type: "optional"; innerType: infer Inner } } }
-      ? undefined extends O
-        ? true
-        : AcceptsUndefined<Inner>
-      : S extends { _zod: { def: { innerType: infer Inner } } }
-        ? AcceptsUndefined<Inner>
-        : S extends { _zod: { def: { in: infer In } } }
-          ? AcceptsUndefined<In>
-          : S extends { _zod: { def: { options: infer O extends readonly unknown[] } } }
-            ? true extends AcceptsUndefined<O[number]>
+  : S extends { _zod: { output: infer O; def: { type: "optional"; innerType: infer Inner } } }
+    ? undefined extends O
+      ? true
+      : AcceptsUndefined<Inner>
+    : S extends { _zod: { def: { innerType: infer Inner } } }
+      ? AcceptsUndefined<Inner>
+      : S extends { _zod: { def: { in: infer In } } }
+        ? AcceptsUndefined<In>
+        : S extends { _zod: { def: { options: infer O extends readonly unknown[] } } }
+          ? true extends AcceptsUndefined<O[number]>
+            ? true
+            : false
+          : S extends { _zod: { input: infer I } }
+            ? undefined extends I
               ? true
               : false
             : false;
@@ -229,9 +233,11 @@ export type DiscriminatorValues<T, Disc extends string> = T extends { _zod: { de
       ? DiscriminatorValues<Inner, Disc>
       : T extends { _zod: { def: { in: infer In } } }
         ? DiscriminatorValues<In, Disc>
-        : T extends { _zod: { input: infer I; output: infer O } }
-          ? Exclude<PropAt<I, Disc>, undefined> | (undefined extends PropAt<O, Disc> ? undefined : never)
-          : never;
+        : T extends { _zod: { def: { getter: () => infer Inner } } }
+          ? DiscriminatorValues<Inner, Disc>
+          : T extends { _zod: { input: infer I; output: infer O } }
+            ? Exclude<PropAt<I, Disc>, undefined> | (undefined extends PropAt<O, Disc> ? undefined : never)
+            : never;
 
 type Overlaps<T, Values> = [T & Values] extends [never] ? false : true;
 
