@@ -370,10 +370,13 @@ schema.parse("http://example.com"); // ❌
 ```
 
 <Callout>
-  **Web URLs** — In many cases, you'll want to validate Web URLs specifically. Here's the recommended schema for doing so:
+  **Web URLs** — In many cases, you'll want to validate Web URLs specifically. Use `z.httpUrl()`:
 
   ```ts
-  const httpUrl = z.url({
+  z.httpUrl();
+
+  // equivalent to
+  z.url({
     protocol: /^https?$/,
     hostname: z.regexes.domain
   });
