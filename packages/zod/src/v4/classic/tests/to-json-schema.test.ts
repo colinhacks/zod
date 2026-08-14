@@ -2620,6 +2620,158 @@ test("basic registry", () => {
   `);
 });
 
+test("large registry converts in linear time", () => {
+  const registry = z.registry<{ id: string }>();
+  const count = 2000;
+  for (let i = 0; i < count; i++) {
+    registry.add(
+      z.object({ id: z.string(), name: z.string(), count: z.number(), nested: z.object({ a: z.boolean() }) }),
+      { id: `Type${i}` }
+    );
+  }
+
+  const start = performance.now();
+  const { schemas } = z.toJSONSchema(registry, { uri: (id) => `https://example.com/${id}.json` });
+  const elapsed = performance.now() - start;
+
+  expect(Object.keys(schemas)).toHaveLength(count);
+  expect(schemas.Type0).toMatchObject({
+    $id: "https://example.com/Type0.json",
+    type: "object",
+    properties: { nested: { type: "object" } },
+  });
+  expect(schemas[`Type${count - 1}`]!.$id).toBe(`https://example.com/Type${count - 1}.json`);
+
+  // The whole-map passes in extractDefs/finalize used to re-run once per registered schema, which
+  // made this quadratic: ~9s of CPU at this size before the passes were hoisted, ~50ms after.
+  expect(elapsed).toBeLessThan(5000);
+});
+
+test("registry extracts unregistered subschemas into __shared", () => {
+  const registry = z.registry<{ id: string }>();
+  const address = z.object({ street: z.string() }).meta({ id: "Address" });
+  registry.add(z.object({ home: address, work: address }), { id: "Person" });
+  registry.add(z.object({ hq: address }), { id: "Company" });
+
+  const { schemas } = z.toJSONSchema(registry, { uri: (id) => `https://example.com/${id}.json` });
+
+  expect(schemas.__shared).toMatchInlineSnapshot(`
+    {
+      "$defs": {
+        "Address": {
+          "additionalProperties": false,
+          "properties": {
+            "street": {
+              "type": "string",
+            },
+          },
+          "required": [
+            "street",
+          ],
+          "type": "object",
+        },
+      },
+    }
+  `);
+  expect(schemas.Person).toMatchInlineSnapshot(`
+    {
+      "$id": "https://example.com/Person.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "home": {
+          "$ref": "https://example.com/__shared.json#/$defs/Address",
+        },
+        "work": {
+          "$ref": "https://example.com/__shared.json#/$defs/Address",
+        },
+      },
+      "required": [
+        "home",
+        "work",
+      ],
+      "type": "object",
+    }
+  `);
+  // Company is emitted after Person, so it only resolves if the shared $defs built on the first
+  // finalize are still reachable — the pass that writes them no longer runs per schema.
+  expect(schemas.Company!.properties!.hq).toEqual({
+    $ref: "https://example.com/__shared.json#/$defs/Address",
+  });
+});
+
+test("registry extracts reused subschemas into __shared without an id", () => {
+  const registry = z.registry<{ id: string }>();
+  const shared = z.object({ q: z.string() });
+  registry.add(z.object({ a: shared, b: shared }), { id: "First" });
+  registry.add(z.object({ c: shared }), { id: "Second" });
+
+  const { schemas } = z.toJSONSchema(registry, { uri: (id) => `${id}.json`, reused: "ref" });
+
+  // The id is counter-generated, so this pins that ctx.counter is consumed exactly once.
+  expect(Object.keys(schemas.__shared!.$defs!)).toEqual(["schema0"]);
+  expect(schemas.First!.properties!.a).toEqual({ $ref: "__shared.json#/$defs/schema0" });
+  expect(schemas.Second!.properties!.c).toEqual({ $ref: "__shared.json#/$defs/schema0" });
+});
+
+test("JSONSchemaGenerator re-runs shared passes when emit params change", () => {
+  const shared = z.object({ s: z.string() });
+  const a = z.object({ x: shared, y: shared });
+  const registry = z.registry<{ id: string }>();
+  registry.add(a, { id: "A" });
+
+  const gen = new z.core.JSONSchemaGenerator({ target: "draft-2020-12" });
+  gen.process(a);
+  const defs: Record<string, any> = {};
+  const external = { registry, uri: (id: string) => `${id}.json`, defs };
+
+  gen.emit(a, { external, reused: "inline" });
+  // Same `external`, different `reused` — the second emit must still extract `shared`.
+  const second: any = gen.emit(a, { external, reused: "ref" });
+
+  expect(Object.keys(defs)).toEqual(["schema0"]);
+  expect(second.properties.x).toEqual({ $ref: "__shared.json#/$defs/schema0" });
+  expect(second.properties.y).toEqual({ $ref: "__shared.json#/$defs/schema0" });
+});
+
+test("JSONSchemaGenerator still throws on cycles when a later emit asks for it", () => {
+  const Node: any = z.object({
+    v: z.string(),
+    get next() {
+      return Node;
+    },
+  });
+  const registry = z.registry<{ id: string }>();
+  registry.add(Node, { id: "Node" });
+
+  const gen = new z.core.JSONSchemaGenerator({ target: "draft-2020-12" });
+  gen.process(Node);
+  const external = { registry, uri: (id: string) => `${id}.json`, defs: {} };
+
+  gen.emit(Node, { external, cycles: "ref" });
+  expect(() => gen.emit(Node, { external, cycles: "throw" })).toThrow(/Cycle detected/);
+});
+
+test("JSONSchemaGenerator re-runs shared passes on a no-params emit", () => {
+  const shared = z.object({ s: z.string() });
+  const a = z.object({ x: shared });
+  const registry = z.registry<{ id: string }>();
+  registry.add(a, { id: "A" });
+
+  const gen = new z.core.JSONSchemaGenerator({ target: "draft-2020-12" });
+  gen.process(a);
+  const defs: Record<string, any> = {};
+  gen.emit(a, { external: { registry, uri: (id: string) => `${id}.json`, defs }, reused: "ref" });
+
+  // Re-processing an already-seen schema bumps `seen.count`, which `extractDefs` branches on
+  // under `reused: "ref"` — and it returns early, so it cannot clear the guards itself.
+  gen.process(shared);
+  const second: any = gen.emit(a);
+
+  expect(Object.keys(defs)).toEqual(["schema0"]);
+  expect(second.properties.x).toEqual({ $ref: "__shared.json#/$defs/schema0" });
+});
+
 test("_ref", () => {
   // const a = z.promise(z.string().describe("a"));
   const a = z.toJSONSchema(z.promise(z.string().describe("a")));

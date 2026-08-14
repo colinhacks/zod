@@ -122,6 +122,22 @@ export interface ToJSONSchemaContext {
   io: "input" | "output";
   counter: number;
   seen: Map<schemas.$ZodType, Seen>;
+  /** Registry conversions share one `seen` map across every emitted schema. These hold the
+   * `external` the whole-map passes below last ran for, so the passes are not repeated once per
+   * schema — and still re-run if the map grows or `external` is swapped. `sharedEmitDoneFor`
+   * covers both passes in `finalize`: the ref flattening and the `$defs` build.
+   *
+   * The passes are valid only while nothing they read has changed, so both are cleared in
+   * `process()` when the map grows, and in `JSONSchemaGenerator.emit()`, which can also change
+   * the `cycles` and `reused` they branch on.
+   *
+   * One case is deliberately not covered: an `override` callback that writes to
+   * `metadataRegistry` mid-conversion. It runs inside `finalize`, so a registry conversion has
+   * nowhere left to clear the guards, and later schemas keep the ids the first pass saw. That
+   * output was never coherent — before this, whether a shared subschema was inlined or extracted
+   * depended on which registry entry happened to be emitted when the callback fired. */
+  sharedDefsExtractedFor?: ToJSONSchemaContext["external"];
+  sharedEmitDoneFor?: ToJSONSchemaContext["external"];
   cycles: "ref" | "throw";
   reused: "ref" | "inline";
   external?:
@@ -157,6 +173,8 @@ export function initializeContext(params: JSONSchemaGeneratorParams): ToJSONSche
     io: params?.io ?? "output",
     counter: 0,
     seen: new Map(),
+    sharedDefsExtractedFor: undefined,
+    sharedEmitDoneFor: undefined,
     cycles: params?.cycles ?? "ref",
     reused: params?.reused ?? "inline",
     external: params?.external ?? undefined,
@@ -210,6 +228,8 @@ export function process<T extends schemas.$ZodType>(
   // initialize
   const result: Seen = { schema: {}, count: 1, cycle: undefined, path: _params.path };
   ctx.seen.set(schema, result);
+  ctx.sharedDefsExtractedFor = undefined;
+  ctx.sharedEmitDoneFor = undefined;
 
   // custom method overrides default behavior
   const overrideSchema = schema._zod.toJSONSchema?.();
@@ -278,6 +298,11 @@ export function extractDefs<T extends schemas.$ZodType>(
   const root = ctx.seen.get(schema);
 
   if (!root) throw new Error("Unprocessed schema. This is a bug in Zod.");
+
+  // With `external` set, every registered schema resolves through the external branch of
+  // `makeURI`, so the root branch below produces the same ref the external branch would —
+  // this pass is identical whichever schema it is called with, and only needs to run once.
+  if (ctx.external && ctx.sharedDefsExtractedFor === ctx.external) return;
 
   // Track ids to detect duplicates across different schemas
   const idToSchema = new Map<string, schemas.$ZodType>();
@@ -409,6 +434,8 @@ export function extractDefs<T extends schemas.$ZodType>(
       }
     }
   }
+
+  if (ctx.external) ctx.sharedDefsExtractedFor = ctx.external;
 }
 
 export function finalize<T extends schemas.$ZodType>(
@@ -501,8 +528,12 @@ export function finalize<T extends schemas.$ZodType>(
     });
   };
 
-  for (const entry of [...ctx.seen.entries()].reverse()) {
-    flattenRef(entry[0]);
+  // Flattening walks the whole map and clears each `ref` as it goes, so a second call over the
+  // same map is a no-op scan. Skip it outright once it has run for a registry conversion.
+  if (!ctx.external || ctx.sharedEmitDoneFor !== ctx.external) {
+    for (const entry of [...ctx.seen.entries()].reverse()) {
+      flattenRef(entry[0]);
+    }
   }
 
   const result: JSONSchema.BaseSchema = {};
@@ -534,14 +565,19 @@ export function finalize<T extends schemas.$ZodType>(
   if (rootMetaId !== undefined && result.id === rootMetaId) delete result.id;
 
   // build defs object
+  // With `external`, `defs` is the shared object every schema writes into, so the same entries
+  // are reassigned on every call. Without it, `defs` is fresh per call and must be rebuilt.
   const defs: JSONSchema.BaseSchema["$defs"] = ctx.external?.defs ?? {};
-  for (const entry of ctx.seen.entries()) {
-    const seen = entry[1];
-    if (seen.def && seen.defId) {
-      if (seen.def.id === seen.defId) delete seen.def.id;
-      assignProp(defs, seen.defId, seen.def);
+  if (!ctx.external || ctx.sharedEmitDoneFor !== ctx.external) {
+    for (const entry of ctx.seen.entries()) {
+      const seen = entry[1];
+      if (seen.def && seen.defId) {
+        if (seen.def.id === seen.defId) delete seen.def.id;
+        assignProp(defs, seen.defId, seen.def);
+      }
     }
   }
+  if (ctx.external) ctx.sharedEmitDoneFor = ctx.external;
 
   // set definitions in result
   if (ctx.external) {
