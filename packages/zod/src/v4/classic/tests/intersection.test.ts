@@ -214,3 +214,39 @@ test("invalid deep merge of object and array combination", async () => {
     `[Error: Unmergable intersection. Error path: ["students",0,"name"]]`
   );
 });
+
+// An enumerable key schema declares which keys the record owns, so a key outside the
+// set is unrecognized and the other side of the intersection may claim it. A
+// non-enumerable key schema is a constraint every key must satisfy, so it still
+// applies to keys owned by the other side.
+test("record key schema in intersection: enumerable vs constraint", () => {
+  const Obj = z.object({ name: z.string() });
+
+  // Enumerable: the object's own key survives the record's key set.
+  const withEnum = z.intersection(Obj, z.partialRecord(z.enum(["p1", "p2"]), z.string()));
+  expect(withEnum.parse({ name: "a", p1: "x" })).toEqual({ name: "a", p1: "x" });
+  expect(z.intersection(Obj, z.record(z.enum(["p1"]), z.string())).parse({ name: "a", p1: "x" })).toEqual({
+    name: "a",
+    p1: "x",
+  });
+
+  // Non-enumerable: the regex applies to every key, including the object's own.
+  const withRegex = z.intersection(Obj, z.record(z.string().regex(/^S_/), z.string()));
+  expect(withRegex.safeParse({ name: "a", S_a: "s" }).success).toBe(false);
+
+  // A key neither side owns is still rejected, when a side actually flags it.
+  const strict = z.intersection(z.strictObject({ name: z.string() }), z.partialRecord(z.enum(["p1"]), z.string()));
+  expect(strict.parse({ name: "a", p1: "x" })).toEqual({ name: "a", p1: "x" });
+  expect(strict.safeParse({ name: "a", p1: "x", evil: "q" }).success).toBe(false);
+});
+
+test("partialRecord reports an out-of-set key as unrecognized, not invalid", () => {
+  const enumKeys = z.partialRecord(z.enum(["a", "b"]), z.string()).safeParse({ a: "x", zzz: "q" });
+  expect(enumKeys.success).toBe(false);
+  expect(enumKeys.error!.issues[0].code).toBe("unrecognized_keys");
+
+  // A regex key schema still reports the failure as an invalid key.
+  const regexKeys = z.record(z.string().regex(/^S_/), z.string()).safeParse({ S_a: "x", zzz: "q" });
+  expect(regexKeys.success).toBe(false);
+  expect(regexKeys.error!.issues[0].code).toBe("invalid_key");
+});

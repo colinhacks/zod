@@ -3035,6 +3035,11 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       }
     } else {
       payload.value = {};
+      // An enumerable key schema declares which keys the record owns, so a key outside
+      // the set is unrecognized. A non-enumerable one (regex, refine) is a constraint
+      // every key must satisfy, so a failing key is invalid. Only the former is
+      // reconcilable against the other side of an intersection.
+      let unrecognized!: string[];
       // Reflect.ownKeys for Symbol-key support; filter non-enumerable to match z.object()
       for (const key of Reflect.ownKeys(input)) {
         if (key === "__proto__") continue;
@@ -3061,6 +3066,9 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
           if (def.mode === "loose") {
             // Pass through unchanged
             payload.value[key] = input[key];
+          } else if (values) {
+            unrecognized = unrecognized ?? [];
+            unrecognized.push(key as string);
           } else {
             // Default "strict" behavior: error on invalid key
             payload.issues.push({
@@ -3097,6 +3105,16 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
           }
           payload.value[outKey] = result.value;
         }
+      }
+
+      if (unrecognized && unrecognized.length > 0) {
+        payload.issues.push({
+          code: "unrecognized_keys",
+
+          input,
+          inst,
+          keys: unrecognized,
+        });
       }
     }
 

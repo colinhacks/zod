@@ -561,24 +561,12 @@ test("partialRecord with z.literal([key, ...])", () => {
     {
       "error": [ZodError: [
       {
-        "code": "invalid_key",
-        "origin": "record",
-        "issues": [
-          {
-            "code": "invalid_value",
-            "values": [
-              "id",
-              "name",
-              "email"
-            ],
-            "path": [],
-            "message": "Invalid option: expected one of \\"id\\"|\\"name\\"|\\"email\\""
-          }
-        ],
-        "path": [
+        "code": "unrecognized_keys",
+        "keys": [
           "foo"
         ],
-        "message": "Invalid key in record"
+        "path": [],
+        "message": "Unrecognized key: \\"foo\\""
       }
     ]],
       "success": false,
