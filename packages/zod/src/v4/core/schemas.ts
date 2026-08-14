@@ -2087,23 +2087,21 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         doc.write(`const ${id} = ${parseStr(key)};`);
 
         if (isOptionalIn && isOptionalOut) {
-          // For optional-in/out schemas, ignore errors on absent keys
+          // For optional-in/out schemas, ignore errors on absent keys — and,
+          // like the interpreted path, drop the value produced alongside them.
           doc.write(`
-        if (${id}.issues.length) {
-          if (${isPresent}) {
+        const ${id}_present = ${isPresent};
+        if (!${id}.issues.length || ${id}_present) {
+          if (${id}.issues.length) {
             payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
               ...iss,
               path: iss.path ? [${k}, ...iss.path] : [${k}]
             })));
           }
-        }
-        
-        if (${id}.value === undefined) {
-          if (${isPresent}) {
-            newResult[${k}] = undefined;
+
+          if (${id}.value !== undefined || ${id}_present) {
+            newResult[${k}] = ${id}.value;
           }
-        } else {
-          newResult[${k}] = ${id}.value;
         }
 
       `);
@@ -2126,11 +2124,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         }
 
         if (${id}_present) {
-          if (${id}.value === undefined) {
-            newResult[${k}] = undefined;
-          } else {
-            newResult[${k}] = ${id}.value;
-          }
+          newResult[${k}] = ${id}.value;
         }
 
       `);
