@@ -5,7 +5,7 @@ export * from "./errors.js";
 export * from "./parse.js";
 export * from "./compat.js";
 
-export type { infer, output, input } from "../core/index.js";
+export type { infer } from "../core/index.js";
 export type { JSONType } from "../core/util.js";
 export {
   globalRegistry,
@@ -27,6 +27,9 @@ export {
 } from "../core/index.js";
 export { toJSONSchema } from "../core/json-schema-processors.js";
 export { fromJSONSchema } from "./from-json-schema.js";
+export { deepPartial } from "./deep-partial.js";
+// Types and values both, from one module — re-exporting the types from core would collide.
+export { input, output } from "./in-out.js";
 
 export * as locales from "../locales/index.js";
 

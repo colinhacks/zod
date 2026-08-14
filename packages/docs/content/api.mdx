@@ -1435,6 +1435,21 @@ const RecipeOptionalIngredients = z.partial(Recipe, {
 </Tab>
 </Tabs>
 
+### `z.deepPartial()` [#deep-partial]
+
+Where `.partial()` only touches the top-level shape, `z.deepPartial()` recurses to every object in the tree — through arrays, tuples, unions, records, and wrappers.
+
+```ts
+const Post = z.object({
+  title: z.string(),
+  author: z.object({ name: z.string(), email: z.string() }),
+});
+
+z.deepPartial(Post).parse({ author: {} }); // ✅
+```
+
+The source schema is never modified, and the result is still a `ZodObject`, so `.shape` and `.extend()` keep working. A [discriminated union](#discriminated-unions) degrades to a plain `z.union()`, since an optional discriminator defeats the discriminated lookup. Like `.partial()`, it throws on an object carrying its own [refinement](#refinements).
+
 ### `.required()`
 
 Zod provides an API for making some or all properties *required*, inspired by TypeScript's [`Required`](https://www.typescriptlang.org/docs/handbook/utility-types.html#requiredtype) utility type.
@@ -2712,6 +2727,18 @@ z.parse(stringToLength, "hello"); // => 5
 </Tab>
 </Tabs>
 
+### `z.input()` and `z.output()` [#input-output]
+
+Runtime counterparts to the type-level `z.input<T>` / `z.output<T>`: they replace every pipe in a schema with its input or output side. Useful for reaching [codecs](/codecs) nested inside objects, records, or maps, where `.in` / `.out` can't.
+
+```ts
+const Event = z.object({ name: z.string(), at: stringToDate });
+
+z.input(Event).parse({ name: "launch", at: "2024-01-01T00:00:00Z" }); // ✅
+z.output(Event).parse({ name: "launch", at: new Date() });            // ✅
+```
+
+Only codecs have two real sides; `z.output()` on a one-way [transform](#transforms) returns the transform, which validates nothing.
 
 ## Transforms
 
