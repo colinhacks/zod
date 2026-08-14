@@ -155,6 +155,36 @@ function resolveRef(ref: string, ctx: ConversionContext): JSONSchema.JSONSchema 
   throw new Error(`Reference not found: ${ref}`);
 }
 
+/**
+ * Rejects every own key that fails `keySchema`, before `objectSchema` runs. The
+ * guard has to see the raw input: an object parse drops `__proto__` and can add
+ * keys from a property `default`, so its output is not the set of names the
+ * instance actually carried.
+ */
+function checkPropertyNames(objectSchema: ZodType, keySchema: ZodType): ZodType {
+  // An identity transform, not z.any(), so `toJSONSchema` reports the object on
+  // both the input and the output side of the pipe.
+  const guard = z
+    .transform((value: unknown) => value)
+    .check((payload) => {
+      const value = payload.value;
+      if (typeof value !== "object" || value === null || Array.isArray(value)) return;
+      for (const key of Object.getOwnPropertyNames(value)) {
+        const result = keySchema.safeParse(key);
+        if (result.success) continue;
+        payload.issues.push({
+          code: "invalid_key",
+          origin: "record",
+          issues: result.error.issues,
+          input: key,
+          path: [key],
+          continue: true,
+        });
+      }
+    });
+  return guard.pipe(objectSchema);
+}
+
 function getTupleRest(restSchema: JSONSchema._JSONSchema | undefined, ctx: ConversionContext): ZodType | undefined {
   if (restSchema === false) {
     return undefined;
@@ -399,33 +429,17 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
       const properties = schema.properties || {};
       const requiredSet = new Set(schema.required || []);
 
+      const additionalSchema =
+        typeof schema.additionalProperties === "object"
+          ? convertSchema(schema.additionalProperties as JSONSchema.JSONSchema, ctx)
+          : undefined;
+
       // Convert properties - mark optional ones
       for (const [key, propSchema] of Object.entries(properties)) {
         const propZodSchema = convertSchema(propSchema as JSONSchema.JSONSchema, ctx);
         // If not in required array, make it optional. assignProp so a __proto__
         // key becomes an own property instead of hitting the inherited setter
         assignProp(shape, key, requiredSet.has(key) ? propZodSchema : propZodSchema.optional());
-      }
-
-      // Handle propertyNames
-      if (schema.propertyNames) {
-        const keySchema = convertSchema(schema.propertyNames, ctx) as ZodString;
-        const valueSchema =
-          schema.additionalProperties && typeof schema.additionalProperties === "object"
-            ? convertSchema(schema.additionalProperties as JSONSchema.JSONSchema, ctx)
-            : z.any();
-
-        // Case A: No properties (pure record)
-        if (Object.keys(shape).length === 0) {
-          zodSchema = z.record(keySchema, valueSchema);
-          break;
-        }
-
-        // Case B: With properties (intersection of object and looseRecord)
-        const objectSchema = z.object(shape).passthrough();
-        const recordSchema = z.looseRecord(keySchema, valueSchema);
-        zodSchema = z.intersection(objectSchema, recordSchema);
-        break;
       }
 
       // Handle patternProperties
@@ -487,22 +501,35 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
             }
           });
         }
-        break;
+      } else {
+        // Handle additionalProperties
+        // In JSON Schema, additionalProperties defaults to true (allow any extra properties)
+        // In Zod, objects strip unknown keys by default, so we need to handle this explicitly
+        const objectSchema = z.object(shape);
+        if (schema.additionalProperties === false) {
+          // Strict mode - no extra properties allowed
+          zodSchema = objectSchema.strict();
+        } else if (additionalSchema) {
+          // Extra properties must match the specified schema
+          zodSchema = objectSchema.catchall(additionalSchema);
+        } else {
+          // additionalProperties is true or undefined - allow any extra properties (passthrough)
+          zodSchema = objectSchema.passthrough();
+        }
       }
 
-      // Handle additionalProperties
-      // In JSON Schema, additionalProperties defaults to true (allow any extra properties)
-      // In Zod, objects strip unknown keys by default, so we need to handle this explicitly
-      const objectSchema = z.object(shape);
-      if (schema.additionalProperties === false) {
-        // Strict mode - no extra properties allowed
-        zodSchema = objectSchema.strict();
-      } else if (typeof schema.additionalProperties === "object") {
-        // Extra properties must match the specified schema
-        zodSchema = objectSchema.catchall(convertSchema(schema.additionalProperties as JSONSchema.JSONSchema, ctx));
-      } else {
-        // additionalProperties is true or undefined - allow any extra properties (passthrough)
-        zodSchema = objectSchema.passthrough();
+      // propertyNames constrains key *names* only, and says nothing about which keys
+      // are required or how their values validate. Layering it on top of the result
+      // keeps properties/patternProperties/additionalProperties composing underneath.
+      // `true` allows every name, so it needs no guard.
+      if (schema.propertyNames !== undefined && schema.propertyNames !== true) {
+        // Keys are always strings, so a propertyNames subschema that omits `type`
+        // still constrains them — without this it would convert to z.any().
+        const keyJSONSchema =
+          typeof schema.propertyNames === "object" && schema.propertyNames.type === undefined
+            ? { type: "string", ...schema.propertyNames }
+            : schema.propertyNames;
+        zodSchema = checkPropertyNames(zodSchema, convertSchema(keyJSONSchema as JSONSchema.JSONSchema, ctx));
       }
       break;
     }
@@ -644,6 +671,14 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
     if (key in schema) {
       extraMeta[key] = schema[key];
     }
+  }
+
+  // `propertyNames` is enforced by a key guard, which `toJSONSchema` cannot infer,
+  // so the original keyword is carried as metadata to keep the round-trip lossless.
+  // Only where it was actually applied: on any other type it is inert, and on a
+  // `$ref` the metadata would land on the target every reference shares.
+  if (schema.propertyNames !== undefined && schema.type === "object" && schema.$ref === undefined) {
+    extraMeta.propertyNames = schema.propertyNames;
   }
 
   for (const key of Object.keys(schema)) {

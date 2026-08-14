@@ -466,6 +466,154 @@ test("patternProperties", () => {
   expect(result.S_age).toBe("30");
 });
 
+test("propertyNames with enum does not require keys", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    propertyNames: { enum: ["a", "b"] },
+    additionalProperties: { type: "string" },
+  });
+  expect(schema.parse({ a: "x" })).toEqual({ a: "x" });
+  expect(schema.parse({ b: "y" })).toEqual({ b: "y" });
+  expect(schema.parse({})).toEqual({});
+  expect(() => schema.parse({ c: "z" })).toThrow();
+});
+
+test("propertyNames with enum alongside properties", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    properties: { a: { type: "string" } },
+    propertyNames: { enum: ["a", "b"] },
+    additionalProperties: { type: "string" },
+  });
+  expect(schema.parse({ a: "x" })).toEqual({ a: "x" });
+  expect(schema.parse({})).toEqual({});
+  expect(() => schema.parse({ c: "z" })).toThrow();
+  expect(() => schema.parse({ a: "x", c: "z" })).toThrow();
+});
+
+test("propertyNames with enum still honors required", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    properties: { a: { type: "string" }, b: { type: "string" } },
+    required: ["a"],
+    propertyNames: { enum: ["a", "b"] },
+    additionalProperties: { type: "string" },
+  });
+  expect(schema.parse({ a: "x" })).toEqual({ a: "x" });
+  expect(schema.parse({ a: "x", b: "y" })).toEqual({ a: "x", b: "y" });
+  expect(() => schema.parse({})).toThrow();
+  expect(() => schema.parse({ b: "y" })).toThrow();
+});
+
+test("propertyNames does not apply additionalProperties to declared properties", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    properties: { a: { type: "number" } },
+    propertyNames: { enum: ["a", "b"] },
+    additionalProperties: { type: "string" },
+  });
+  expect(schema.parse({ a: 1 })).toEqual({ a: 1 });
+  expect(schema.parse({ a: 1, b: "x" })).toEqual({ a: 1, b: "x" });
+  expect(() => schema.parse({ b: 1 })).toThrow();
+});
+
+test("propertyNames alongside additionalProperties: false", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    properties: { a: { type: "string" } },
+    propertyNames: { enum: ["a", "b"] },
+    additionalProperties: false,
+  });
+  expect(schema.parse({ a: "x" })).toEqual({ a: "x" });
+  expect(() => schema.parse({ a: "x", b: "y" })).toThrow();
+  expect(() => schema.parse({ c: "z" })).toThrow();
+});
+
+test("propertyNames alongside patternProperties", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    patternProperties: { "^S_": { type: "string" } },
+    propertyNames: { type: "string", pattern: "^S_" },
+  });
+  expect(schema.parse({ S_a: "x" })).toEqual({ S_a: "x" });
+  expect(() => schema.parse({ S_a: 1 })).toThrow();
+  expect(() => schema.parse({ other: "x" })).toThrow();
+});
+
+test("propertyNames rejects keys the object parse would drop or synthesize", () => {
+  const schema = fromJSONSchema({ type: "object", propertyNames: { enum: ["a"] } });
+  // An object parse strips `__proto__`, so the guard has to see the raw input.
+  expect(() => schema.parse(JSON.parse('{"__proto__":1}'))).toThrow();
+
+  // A property `default` adds a key that was never in the instance.
+  const withDefault = fromJSONSchema({
+    type: "object",
+    properties: { AB: { type: "string", default: "x" } },
+    propertyNames: { type: "string", pattern: "^[a-z]+$" },
+  });
+  expect(withDefault.parse({})).toEqual({ AB: "x" });
+});
+
+test("propertyNames subschema without a type still constrains keys", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    propertyNames: { pattern: "^[A-Za-z_][A-Za-z0-9_]*$" },
+  });
+  expect(schema.parse({ valid_key: "x" })).toEqual({ valid_key: "x" });
+  expect(() => schema.parse({ "001 invalid": "x" })).toThrow();
+});
+
+test("boolean propertyNames", () => {
+  expect(() => fromJSONSchema({ type: "object", propertyNames: false }).parse({ a: 1 })).toThrow();
+  expect(fromJSONSchema({ type: "object", propertyNames: false }).parse({})).toEqual({});
+  expect(fromJSONSchema({ type: "object", propertyNames: true }).parse({ anything: 1 })).toEqual({ anything: 1 });
+});
+
+test("propertyNames metadata is not attached where it is inert", () => {
+  // Not an object: nothing enforces it, so it must not be advertised either.
+  expect(z.toJSONSchema(fromJSONSchema({ type: "string", propertyNames: { enum: ["a"] } }))).not.toHaveProperty(
+    "propertyNames"
+  );
+
+  // A $ref target is shared by every reference to it; metadata must not leak onto it.
+  const shared = z.toJSONSchema(
+    fromJSONSchema({
+      $defs: { N: { type: "object", properties: { v: { type: "string" } } } },
+      type: "object",
+      properties: { a: { $ref: "#/$defs/N", propertyNames: { enum: ["v"] } }, b: { $ref: "#/$defs/N" } },
+    })
+  ) as any;
+  expect(shared.properties.b).not.toHaveProperty("propertyNames");
+});
+
+test("propertyNames survives a toJSONSchema round trip", () => {
+  const roundTripped = z.toJSONSchema(
+    fromJSONSchema({
+      type: "object",
+      propertyNames: { enum: ["a", "b"] },
+      additionalProperties: { type: "string" },
+    })
+  ) as Record<string, unknown>;
+  expect(roundTripped.propertyNames).toEqual({ enum: ["a", "b"] });
+  expect(roundTripped.required).toBeUndefined();
+
+  // The key guard is a pipe; neither side may swallow the object it wraps.
+  for (const io of ["input", "output"] as const) {
+    const out = z.toJSONSchema(
+      fromJSONSchema({
+        type: "object",
+        properties: { a: { type: "string" } },
+        propertyNames: { enum: ["a", "b"] },
+        additionalProperties: { type: "string" },
+      }),
+      { io }
+    ) as Record<string, unknown>;
+    expect(out.type).toBe("object");
+    expect(out.properties).toEqual({ a: { type: "string" } });
+    expect(out.propertyNames).toEqual({ enum: ["a", "b"] });
+  }
+});
+
 test("patternProperties with regular properties", () => {
   // Note: When patternProperties is combined with properties, the intersection
   // validates all keys against the pattern. This test uses a pattern that
