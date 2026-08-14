@@ -831,4 +831,15 @@ test("exclude/extract with an optional-input discriminator", () => {
 
   const OnlyB = Defaulted.exclude(["a"]);
   expectTypeOf<z.infer<typeof OnlyB>>().toEqualTypeOf<{ type: "b"; y: number }>();
+
+  // layered wrappers: a default over an optional still accepts undefined
+  const Layered = z.discriminatedUnion("type", [
+    z.object({ type: z.literal("a").optional().default("a"), x: z.string() }),
+    z.object({ type: z.literal("b"), y: z.number() }),
+  ]);
+  expect(() => Layered.exclude(["a"])).toThrow(/must also be listed/);
+
+  const LayeredOnlyB = Layered.exclude(["a", undefined]);
+  expect(LayeredOnlyB.options.length).toEqual(1);
+  expectTypeOf<z.infer<typeof LayeredOnlyB>>().toEqualTypeOf<{ type: "b"; y: number }>();
 });

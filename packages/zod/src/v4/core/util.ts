@@ -190,13 +190,26 @@ export type PrimitiveSet = Set<Primitive>;
 
 type PropAt<T, Disc extends string> = T extends unknown ? (Disc extends keyof T ? T[Disc] : never) : never;
 
+/** These wrappers report their inner type's `values` at runtime, but widen the input type with the
+ * `undefined` they accept — so unwrap them before reading the input side. */
+type SchemaValues<S> = S extends {
+  _zod: { def: { type: "default" | "prefault" | "readonly" | "catch"; innerType: infer Inner } };
+}
+  ? SchemaValues<Inner>
+  : S extends { _zod: { input: infer I } }
+    ? I
+    : never;
+
 /** The discriminator values accepted by a single union option, matching its runtime `propValues`. They come
  * from the input side, since that is the side `propValues` is built from — so a codec discriminator matches
- * on its encoded values. An optional-input wrapper like `.default()` marks the key optional there without
- * accepting `undefined`, so `undefined` survives only when the output side has it too. */
-export type DiscriminatorValues<T, Disc extends string> = T extends { _zod: { input: infer I; output: infer O } }
-  ? Exclude<PropAt<I, Disc>, undefined> | (undefined extends PropAt<O, Disc> ? undefined : never)
-  : never;
+ * on its encoded values. Non-object options fall back to the option's own input and output types. */
+export type DiscriminatorValues<T, Disc extends string> = T extends { _zod: { def: { shape: infer Shape } } }
+  ? Disc extends keyof Shape
+    ? SchemaValues<Shape[Disc]>
+    : never
+  : T extends { _zod: { input: infer I; output: infer O } }
+    ? Exclude<PropAt<I, Disc>, undefined> | (undefined extends PropAt<O, Disc> ? undefined : never)
+    : never;
 
 type Overlaps<T, Values> = [T & Values] extends [never] ? false : true;
 
