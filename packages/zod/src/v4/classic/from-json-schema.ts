@@ -676,7 +676,7 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
   // `propertyNames` is enforced by a key guard, which `toJSONSchema` cannot infer,
   // so the original keyword is carried as metadata to keep the round-trip lossless.
   // Only where it was actually applied: on any other type it is inert, and on a
-  // `$ref` the metadata would land on the shared target shared by every reference.
+  // `$ref` the metadata would land on the target every reference shares.
   if (schema.propertyNames !== undefined && schema.type === "object" && schema.$ref === undefined) {
     extraMeta.propertyNames = schema.propertyNames;
   }
