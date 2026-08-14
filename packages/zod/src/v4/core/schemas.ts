@@ -1957,6 +1957,10 @@ function handleCatchall(
       keys: unrecognized,
       input,
       inst,
+      // Describes the shape of the input, not the validity of the parsed value, so it never
+      // aborts. The parse still fails; the schema's own checks just get to run first, and an
+      // enclosing intersection can reconcile the key against a sibling operand.
+      continue: true,
     });
   }
 
@@ -2624,44 +2628,55 @@ function mergeValues(
 }
 
 function handleIntersectionResults(result: ParsePayload, left: ParsePayload, right: ParsePayload): ParsePayload {
-  // Track which side(s) report each key as unrecognized
+  // Track which side(s) reject each key. A key rejection is reported only when
+  // BOTH sides reject it, so a key owned by one branch survives the other's
+  // key schema. strictObject reports these as unrecognized_keys; a record with
+  // an open key schema reports one invalid_key per key.
   const unrecKeys = new Map<string, { l?: true; r?: true }>();
   let unrecIssue: errors.$ZodRawIssue | undefined;
+  const keyIssues = new Map<string, errors.$ZodRawIssue>();
+
+  const collect = (iss: errors.$ZodRawIssue, side: "l" | "r"): boolean => {
+    let keys: string[];
+    if (iss.code === "unrecognized_keys" && !iss.path?.length) {
+      unrecIssue ??= iss;
+      keys = iss.keys as string[];
+    } else if (iss.code === "invalid_key" && iss.origin === "record" && iss.path?.length === 1) {
+      const k = String(iss.path[0]);
+      if (!keyIssues.has(k)) keyIssues.set(k, iss);
+      keys = [k];
+    } else {
+      return false;
+    }
+    for (const k of keys) {
+      if (!unrecKeys.has(k)) unrecKeys.set(k, {});
+      unrecKeys.get(k)![side] = true;
+    }
+    return true;
+  };
 
   for (const iss of left.issues) {
-    if (iss.code === "unrecognized_keys") {
-      unrecIssue ??= iss;
-      for (const k of iss.keys) {
-        if (!unrecKeys.has(k)) unrecKeys.set(k, {});
-        unrecKeys.get(k)!.l = true;
-      }
-    } else {
-      result.issues.push(iss);
-    }
+    if (!collect(iss, "l")) result.issues.push(iss);
   }
 
   for (const iss of right.issues) {
-    if (iss.code === "unrecognized_keys") {
-      for (const k of iss.keys) {
-        if (!unrecKeys.has(k)) unrecKeys.set(k, {});
-        unrecKeys.get(k)!.r = true;
-      }
-    } else {
-      result.issues.push(iss);
+    if (!collect(iss, "r")) result.issues.push(iss);
+  }
+
+  // Report only keys rejected by BOTH sides
+  const bothKeys = [...unrecKeys].filter(([, f]) => f.l && f.r).map(([k]) => k);
+  if (bothKeys.length) {
+    const aggregated = unrecIssue ? bothKeys.filter((k) => (unrecIssue!.keys as string[]).includes(k)) : [];
+    if (aggregated.length) result.issues.push({ ...unrecIssue!, keys: aggregated });
+    for (const k of bothKeys) {
+      if (!aggregated.includes(k) && keyIssues.has(k)) result.issues.push(keyIssues.get(k)!);
     }
   }
-
-  // Report only keys unrecognized by BOTH sides
-  const bothKeys = [...unrecKeys].filter(([, f]) => f.l && f.r).map(([k]) => k);
-  if (bothKeys.length && unrecIssue) {
-    result.issues.push({ ...unrecIssue, keys: bothKeys });
-  }
-
-  if (util.aborted(result)) return result;
 
   const merged = mergeValues(left.value, right.value);
 
   if (!merged.valid) {
+    if (util.aborted(result)) return result;
     throw new Error(`Unmergable intersection. Error path: ` + `${JSON.stringify(merged.mergeErrorPath)}`);
   }
 
@@ -3032,10 +3047,16 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
           input,
           inst,
           keys: unrecognized,
+          continue: true,
         });
       }
     } else {
       payload.value = {};
+      // An enumerable key schema declares which keys the record owns, so a key outside
+      // the set is unrecognized. A non-enumerable one (regex, refine) is a constraint
+      // every key must satisfy, so a failing key is invalid. Only the former is
+      // reconcilable against the other side of an intersection.
+      let unrecognized!: string[];
       // Reflect.ownKeys for Symbol-key support; filter non-enumerable to match z.object()
       for (const key of Reflect.ownKeys(input)) {
         if (key === "__proto__") continue;
@@ -3062,6 +3083,9 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
           if (def.mode === "loose") {
             // Pass through unchanged
             payload.value[key] = input[key];
+          } else if (values) {
+            unrecognized = unrecognized ?? [];
+            unrecognized.push(key as string);
           } else {
             // Default "strict" behavior: error on invalid key
             payload.issues.push({
@@ -3098,6 +3122,17 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
           }
           payload.value[outKey] = result.value;
         }
+      }
+
+      if (unrecognized && unrecognized.length > 0) {
+        payload.issues.push({
+          code: "unrecognized_keys",
+
+          input,
+          inst,
+          keys: unrecognized,
+          continue: true,
+        });
       }
     }
 
@@ -4125,7 +4160,10 @@ export const $ZodPipe: core.$constructor<$ZodPipe> = /*@__PURE__*/ core.$constru
 });
 
 function handlePipeResult(left: ParsePayload, next: $ZodType, ctx: ParseContextInternal) {
-  if (left.issues.length) {
+  // Any issue stops the pipe, so a failing refinement never feeds its transform. An
+  // unrecognized key is the exception: it describes the input's extra properties, not the
+  // value being piped, and an enclosing intersection may yet reconcile it.
+  if (left.issues.some((iss) => iss.code !== "unrecognized_keys")) {
     // prevent further checks
     left.aborted = true;
     return left;
