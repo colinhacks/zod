@@ -176,6 +176,16 @@ test("tuple with prefixItems respects items schema (draft-2020-12)", () => {
   expect(() => schema.parse(["hello", 1, "extra"])).toThrow();
 });
 
+test("tuple with prefixItems and items true allows extra items (draft-2020-12)", () => {
+  const schema = fromJSONSchema({
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "array",
+    prefixItems: [{ type: "string" }, { type: "number" }],
+    items: true,
+  });
+  expect(schema.parse(["hello", 42, "extra", true])).toEqual(["hello", 42, "extra", true]);
+});
+
 test("tuple with prefixItems and items false rejects extra items (draft-2020-12)", () => {
   const schema = fromJSONSchema({
     $schema: "https://json-schema.org/draft/2020-12/schema",
@@ -231,6 +241,16 @@ test("tuple with items array allows extra items by default (draft-7)", () => {
     items: [{ type: "string" }],
   });
   expect(schema.parse(["hello", 42, true])).toEqual(["hello", 42, true]);
+});
+
+test("tuple with items array and additionalItems true allows extra items (draft-7)", () => {
+  const schema = fromJSONSchema({
+    $schema: "http://json-schema.org/draft-07/schema#",
+    type: "array",
+    items: [{ type: "string" }, { type: "number" }],
+    additionalItems: true,
+  });
+  expect(schema.parse(["hello", 42, "extra", true])).toEqual(["hello", 42, "extra", true]);
 });
 
 test("tuple with items array respects additionalItems schema (draft-7)", () => {
