@@ -259,3 +259,76 @@ test("partialRecord reports an out-of-set key as unrecognized, not invalid", () 
   expect(regexKeys.success).toBe(false);
   expect(regexKeys.error!.issues[0].code).toBe("invalid_key");
 });
+
+test("intersection operands run their own checks, refinements and transforms", () => {
+  let checks = 0;
+  const failing = z.intersection(
+    z.strictObject({ x: z.string() }).check(() => {
+      checks++;
+    }),
+    z.strictObject({ a: z.string() }).superRefine((_data, ctx) => {
+      checks++;
+      ctx.addIssue({ code: "custom", message: "boom" });
+    })
+  );
+  expect(failing.safeParse({ x: "test", a: "hello" })).toMatchObject({
+    success: false,
+    error: { issues: [{ code: "custom", message: "boom" }] },
+  });
+  expect(checks).toBe(2);
+
+  const transformed = z.intersection(
+    z.strictObject({ x: z.string() }).transform((v) => ({ ...v, x: v.x.toUpperCase() })),
+    z.strictObject({ a: z.string() }).transform((v) => ({ ...v, seen: true }))
+  );
+  expect(transformed.parse({ x: "test", a: "hello" })).toEqual({ x: "TEST", a: "hello", seen: true });
+});
+
+test("intersection operands apply defaults, including through a nested intersection", () => {
+  const inner = z.intersection(
+    z.strictObject({ x: z.string().default("X default"), y: z.number() }),
+    z.strictObject({ z: z.boolean() })
+  );
+  const schema = z.intersection(inner, z.strictObject({ a: z.string() }));
+  expectTypeOf<z.output<typeof schema>>().toEqualTypeOf<{ x: string; y: number } & { z: boolean } & { a: string }>();
+
+  expect(schema.parse({ y: 34, z: true, a: "hello" })).toEqual({ x: "X default", y: 34, z: true, a: "hello" });
+});
+
+test("a record operand runs its own refinements inside an intersection", () => {
+  let calls = 0;
+  const schema = z
+    .record(z.enum(["p1", "p2"]), z.string())
+    .superRefine((_data, ctx) => {
+      calls++;
+      ctx.addIssue({ code: "custom", message: "record refined" });
+    })
+    .and(z.strictObject({ name: z.string() }));
+
+  expect(schema.safeParse({ p1: "a", p2: "b", name: "n" })).toMatchObject({
+    success: false,
+    error: { issues: [{ code: "custom", message: "record refined" }] },
+  });
+  expect(calls).toBe(1);
+});
+
+test("a strict object nested under an operand keeps its strictness", () => {
+  const schema = z.intersection(
+    z.object({ inner: z.strictObject({ a: z.string() }) }),
+    z.object({ other: z.string() })
+  );
+
+  expect(schema.parse({ inner: { a: "x" }, other: "y" })).toEqual({ inner: { a: "x" }, other: "y" });
+  expect(schema.safeParse({ inner: { a: "x", extra: 1 }, other: "y" })).toMatchObject({
+    success: false,
+    error: { issues: [{ code: "unrecognized_keys", keys: ["extra"], path: ["inner"] }] },
+  });
+});
+
+test("a strict object composes with a refined object", () => {
+  const A = z.object({ key1: z.boolean() }).strict();
+  const B = z.object({ key2: z.boolean() }).refine(({ key2 }) => key2, "key2 must be true");
+
+  expect(A.and(B).parse({ key1: true, key2: true })).toEqual({ key1: true, key2: true });
+  expect(A.and(B).safeParse({ key1: true, key2: false }).success).toBe(false);
+});

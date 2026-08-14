@@ -1957,6 +1957,10 @@ function handleCatchall(
       keys: unrecognized,
       input,
       inst,
+      // Describes the shape of the input, not the validity of the parsed value, so it never
+      // aborts. The parse still fails; the schema's own checks just get to run first, and an
+      // enclosing intersection can reconcile the key against a sibling operand.
+      continue: true,
     });
   }
 
@@ -2640,7 +2644,7 @@ function handleIntersectionResults(result: ParsePayload, left: ParsePayload, rig
 
   const collect = (iss: errors.$ZodRawIssue, side: "l" | "r"): boolean => {
     let keys: string[];
-    if (iss.code === "unrecognized_keys") {
+    if (iss.code === "unrecognized_keys" && !iss.path?.length) {
       unrecIssue ??= iss;
       keys = iss.keys as string[];
     } else if (iss.code === "invalid_key" && iss.origin === "record" && iss.path?.length === 1) {
@@ -2675,11 +2679,10 @@ function handleIntersectionResults(result: ParsePayload, left: ParsePayload, rig
     }
   }
 
-  if (util.aborted(result)) return result;
-
   const merged = mergeValues(left.value, right.value);
 
   if (!merged.valid) {
+    if (util.aborted(result)) return result;
     throw new Error(`Unmergable intersection. Error path: ` + `${JSON.stringify(merged.mergeErrorPath)}`);
   }
 
@@ -3043,6 +3046,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
           input,
           inst,
           keys: unrecognized,
+          continue: true,
         });
       }
     } else {
@@ -3126,6 +3130,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
           input,
           inst,
           keys: unrecognized,
+          continue: true,
         });
       }
     }
@@ -4154,7 +4159,10 @@ export const $ZodPipe: core.$constructor<$ZodPipe> = /*@__PURE__*/ core.$constru
 });
 
 function handlePipeResult(left: ParsePayload, next: $ZodType, ctx: ParseContextInternal) {
-  if (left.issues.length) {
+  // Any issue stops the pipe, so a failing refinement never feeds its transform. An
+  // unrecognized key is the exception: it describes the input's extra properties, not the
+  // value being piped, and an enclosing intersection may yet reconcile it.
+  if (left.issues.some((iss) => iss.code !== "unrecognized_keys")) {
     // prevent further checks
     left.aborted = true;
     return left;
