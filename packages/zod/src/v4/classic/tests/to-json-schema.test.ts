@@ -2752,6 +2752,26 @@ test("JSONSchemaGenerator still throws on cycles when a later emit asks for it",
   expect(() => gen.emit(Node, { external, cycles: "throw" })).toThrow(/Cycle detected/);
 });
 
+test("JSONSchemaGenerator re-runs shared passes on a no-params emit", () => {
+  const shared = z.object({ s: z.string() });
+  const a = z.object({ x: shared });
+  const registry = z.registry<{ id: string }>();
+  registry.add(a, { id: "A" });
+
+  const gen = new z.core.JSONSchemaGenerator({ target: "draft-2020-12" });
+  gen.process(a);
+  const defs: Record<string, any> = {};
+  gen.emit(a, { external: { registry, uri: (id: string) => `${id}.json`, defs }, reused: "ref" });
+
+  // Re-processing an already-seen schema bumps `seen.count`, which `extractDefs` branches on
+  // under `reused: "ref"` — and it returns early, so it cannot clear the guards itself.
+  gen.process(shared);
+  const second: any = gen.emit(a);
+
+  expect(Object.keys(defs)).toEqual(["schema0"]);
+  expect(second.properties.x).toEqual({ $ref: "__shared.json#/$defs/schema0" });
+});
+
 test("_ref", () => {
   // const a = z.promise(z.string().describe("a"));
   const a = z.toJSONSchema(z.promise(z.string().describe("a")));
