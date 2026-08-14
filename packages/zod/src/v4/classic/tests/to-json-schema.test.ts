@@ -2620,6 +2620,33 @@ test("basic registry", () => {
   `);
 });
 
+test("large registry converts in linear time", () => {
+  const registry = z.registry<{ id: string }>();
+  const count = 2000;
+  for (let i = 0; i < count; i++) {
+    registry.add(
+      z.object({ id: z.string(), name: z.string(), count: z.number(), nested: z.object({ a: z.boolean() }) }),
+      { id: `Type${i}` }
+    );
+  }
+
+  const start = performance.now();
+  const { schemas } = z.toJSONSchema(registry, { uri: (id) => `https://example.com/${id}.json` });
+  const elapsed = performance.now() - start;
+
+  expect(Object.keys(schemas)).toHaveLength(count);
+  expect(schemas.Type0).toMatchObject({
+    $id: "https://example.com/Type0.json",
+    type: "object",
+    properties: { nested: { type: "object" } },
+  });
+  expect(schemas[`Type${count - 1}`]!.$id).toBe(`https://example.com/Type${count - 1}.json`);
+
+  // The whole-map passes in extractDefs/finalize used to re-run once per registered schema, which
+  // made this quadratic: ~9s of CPU at this size before the passes were hoisted, ~50ms after.
+  expect(elapsed).toBeLessThan(5000);
+});
+
 test("_ref", () => {
   // const a = z.promise(z.string().describe("a"));
   const a = z.toJSONSchema(z.promise(z.string().describe("a")));
