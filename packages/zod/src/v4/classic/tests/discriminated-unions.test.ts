@@ -842,4 +842,19 @@ test("exclude/extract with an optional-input discriminator", () => {
   const LayeredOnlyB = Layered.exclude(["a", undefined]);
   expect(LayeredOnlyB.options.length).toEqual(1);
   expectTypeOf<z.infer<typeof LayeredOnlyB>>().toEqualTypeOf<{ type: "b"; y: number }>();
+
+  // a default nested under another wrapper must not re-inherit that undefined
+  const A = z.object({ type: z.literal("a").default("a").nullable(), x: z.string() });
+  const T = z.object({
+    type: z
+      .literal("t")
+      .default("t")
+      .transform((v) => v),
+    w: z.boolean(),
+  });
+  const B = z.object({ type: z.literal("b").optional(), y: z.number() });
+
+  const Nested = z.discriminatedUnion("type", [A, T, B]).exclude(["b", undefined]);
+  expect(Nested.options.length).toEqual(2);
+  expectTypeOf<z.infer<typeof Nested>>().toEqualTypeOf<{ type: "a" | null; x: string } | { type: "t"; w: boolean }>();
 });
