@@ -125,7 +125,12 @@ export interface ToJSONSchemaContext {
   /** Registry conversions share one `seen` map across every emitted schema. These hold the
    * `external` the whole-map passes below last ran for, so the passes are not repeated once per
    * schema — and still re-run if the map grows or `external` is swapped. `sharedEmitDoneFor`
-   * covers both passes in `finalize`: the ref flattening and the `$defs` build. */
+   * covers both passes in `finalize`: the ref flattening and the `$defs` build.
+   *
+   * The passes are valid only while nothing they read has changed, so both are cleared in
+   * `process()` when the map grows, and in `JSONSchemaGenerator.emit()`, which can also change
+   * the `cycles` and `reused` they branch on. Anything else that mutates the context between
+   * emits must clear them too. */
   sharedDefsExtractedFor?: ToJSONSchemaContext["external"];
   sharedEmitDoneFor?: ToJSONSchemaContext["external"];
   cycles: "ref" | "throw";

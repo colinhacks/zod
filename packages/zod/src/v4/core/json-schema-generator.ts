@@ -115,6 +115,11 @@ export class JSONSchemaGenerator {
       if (_params.cycles) this.ctx.cycles = _params.cycles;
       if (_params.reused) this.ctx.reused = _params.reused;
       if (_params.external) this.ctx.external = _params.external;
+      // extractDefs/finalize skip their whole-map passes when they have already run for this
+      // `external`, but they also branch on `cycles` and `reused` — which this is free to change
+      // between emits. Drop the guards so the passes re-run against the new configuration.
+      this.ctx.sharedDefsExtractedFor = undefined;
+      this.ctx.sharedEmitDoneFor = undefined;
     }
 
     extractDefs(this.ctx, schema);
