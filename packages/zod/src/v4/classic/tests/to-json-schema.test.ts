@@ -2647,6 +2647,73 @@ test("large registry converts in linear time", () => {
   expect(elapsed).toBeLessThan(5000);
 });
 
+test("registry extracts unregistered subschemas into __shared", () => {
+  const registry = z.registry<{ id: string }>();
+  const address = z.object({ street: z.string() }).meta({ id: "Address" });
+  registry.add(z.object({ home: address, work: address }), { id: "Person" });
+  registry.add(z.object({ hq: address }), { id: "Company" });
+
+  const { schemas } = z.toJSONSchema(registry, { uri: (id) => `https://example.com/${id}.json` });
+
+  expect(schemas.__shared).toMatchInlineSnapshot(`
+    {
+      "$defs": {
+        "Address": {
+          "additionalProperties": false,
+          "properties": {
+            "street": {
+              "type": "string",
+            },
+          },
+          "required": [
+            "street",
+          ],
+          "type": "object",
+        },
+      },
+    }
+  `);
+  expect(schemas.Person).toMatchInlineSnapshot(`
+    {
+      "$id": "https://example.com/Person.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "home": {
+          "$ref": "https://example.com/__shared.json#/$defs/Address",
+        },
+        "work": {
+          "$ref": "https://example.com/__shared.json#/$defs/Address",
+        },
+      },
+      "required": [
+        "home",
+        "work",
+      ],
+      "type": "object",
+    }
+  `);
+  // Company is emitted after Person, so it only resolves if the shared $defs built on the first
+  // finalize are still reachable — the pass that writes them no longer runs per schema.
+  expect(schemas.Company!.properties!.hq).toEqual({
+    $ref: "https://example.com/__shared.json#/$defs/Address",
+  });
+});
+
+test("registry extracts reused subschemas into __shared without an id", () => {
+  const registry = z.registry<{ id: string }>();
+  const shared = z.object({ q: z.string() });
+  registry.add(z.object({ a: shared, b: shared }), { id: "First" });
+  registry.add(z.object({ c: shared }), { id: "Second" });
+
+  const { schemas } = z.toJSONSchema(registry, { uri: (id) => `${id}.json`, reused: "ref" });
+
+  // The id is counter-generated, so this pins that ctx.counter is consumed exactly once.
+  expect(Object.keys(schemas.__shared!.$defs!)).toEqual(["schema0"]);
+  expect(schemas.First!.properties!.a).toEqual({ $ref: "__shared.json#/$defs/schema0" });
+  expect(schemas.Second!.properties!.c).toEqual({ $ref: "__shared.json#/$defs/schema0" });
+});
+
 test("_ref", () => {
   // const a = z.promise(z.string().describe("a"));
   const a = z.toJSONSchema(z.promise(z.string().describe("a")));

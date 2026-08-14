@@ -124,9 +124,10 @@ export interface ToJSONSchemaContext {
   seen: Map<schemas.$ZodType, Seen>;
   /** Registry conversions share one `seen` map across every emitted schema. These hold the
    * `external` the whole-map passes below last ran for, so the passes are not repeated once per
-   * schema — and still re-run if the map grows or `external` is swapped. */
-  sharedDefsExtractedFor?: unknown;
-  sharedRefsFlattenedFor?: unknown;
+   * schema — and still re-run if the map grows or `external` is swapped. `sharedEmitDoneFor`
+   * covers both passes in `finalize`: the ref flattening and the `$defs` build. */
+  sharedDefsExtractedFor?: ToJSONSchemaContext["external"];
+  sharedEmitDoneFor?: ToJSONSchemaContext["external"];
   cycles: "ref" | "throw";
   reused: "ref" | "inline";
   external?:
@@ -163,7 +164,7 @@ export function initializeContext(params: JSONSchemaGeneratorParams): ToJSONSche
     counter: 0,
     seen: new Map(),
     sharedDefsExtractedFor: undefined,
-    sharedRefsFlattenedFor: undefined,
+    sharedEmitDoneFor: undefined,
     cycles: params?.cycles ?? "ref",
     reused: params?.reused ?? "inline",
     external: params?.external ?? undefined,
@@ -218,7 +219,7 @@ export function process<T extends schemas.$ZodType>(
   const result: Seen = { schema: {}, count: 1, cycle: undefined, path: _params.path };
   ctx.seen.set(schema, result);
   ctx.sharedDefsExtractedFor = undefined;
-  ctx.sharedRefsFlattenedFor = undefined;
+  ctx.sharedEmitDoneFor = undefined;
 
   // custom method overrides default behavior
   const overrideSchema = schema._zod.toJSONSchema?.();
@@ -519,7 +520,7 @@ export function finalize<T extends schemas.$ZodType>(
 
   // Flattening walks the whole map and clears each `ref` as it goes, so a second call over the
   // same map is a no-op scan. Skip it outright once it has run for a registry conversion.
-  if (!ctx.external || ctx.sharedRefsFlattenedFor !== ctx.external) {
+  if (!ctx.external || ctx.sharedEmitDoneFor !== ctx.external) {
     for (const entry of [...ctx.seen.entries()].reverse()) {
       flattenRef(entry[0]);
     }
@@ -557,7 +558,7 @@ export function finalize<T extends schemas.$ZodType>(
   // With `external`, `defs` is the shared object every schema writes into, so the same entries
   // are reassigned on every call. Without it, `defs` is fresh per call and must be rebuilt.
   const defs: JSONSchema.BaseSchema["$defs"] = ctx.external?.defs ?? {};
-  if (!ctx.external || ctx.sharedRefsFlattenedFor !== ctx.external) {
+  if (!ctx.external || ctx.sharedEmitDoneFor !== ctx.external) {
     for (const entry of ctx.seen.entries()) {
       const seen = entry[1];
       if (seen.def && seen.defId) {
@@ -566,7 +567,7 @@ export function finalize<T extends schemas.$ZodType>(
       }
     }
   }
-  if (ctx.external) ctx.sharedRefsFlattenedFor = ctx.external;
+  if (ctx.external) ctx.sharedEmitDoneFor = ctx.external;
 
   // set definitions in result
   if (ctx.external) {
