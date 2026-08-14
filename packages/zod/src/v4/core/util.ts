@@ -194,8 +194,8 @@ type PropAt<T, Disc extends string> = T extends unknown ? (Disc extends keyof T 
  * `undefined` they accept without adding it to `values`, so they are followed rather than read: only
  * `.nonoptional()` removes it and only `$ZodOptional` adds it. `z.exactOptional()` shares the `optional`
  * def type without adding it, and is told apart by its narrowed output. Leaves — `z.undefined()`,
- * `z.literal(undefined)`, an enum with an `undefined` member — have no such widening, so their input side
- * is read directly. */
+ * `z.literal(undefined)`, `z.literal(["a", undefined])` — have no such widening, so their input side is
+ * read directly. */
 type AcceptsUndefined<S> = S extends { _zod: { def: { type: "nonoptional" } } }
   ? false
   : S extends { _zod: { output: infer O; def: { type: "optional"; innerType: infer Inner } } }
