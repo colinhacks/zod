@@ -127,9 +127,32 @@ test("tuple with prefixItems (draft-2020-12)", () => {
     type: "array",
     prefixItems: [{ type: "string" }, { type: "number" }],
   });
+  expect(schema.parse([])).toEqual([]);
+  expect(schema.parse(["hello"])).toEqual(["hello"]);
   expect(schema.parse(["hello", 42])).toEqual(["hello", 42]);
-  expect(() => schema.parse(["hello"])).toThrow();
+  expect(() => schema.parse([1])).toThrow();
   expect(() => schema.parse(["hello", "world"])).toThrow();
+  expect(() => schema.parse(["hello", 42, "extra"])).toThrow();
+});
+
+test("tuple with prefixItems and minItems (draft-2020-12)", () => {
+  const partialItems = fromJSONSchema({
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "array",
+    prefixItems: [{ type: "string" }, { type: "number" }],
+    minItems: 1,
+  });
+  expect(() => partialItems.parse([])).toThrow();
+  expect(partialItems.parse(["hello"])).toEqual(["hello"]);
+
+  const allRequired = fromJSONSchema({
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "array",
+    prefixItems: [{ type: "string" }, { type: "number" }],
+    minItems: 2,
+  });
+  expect(() => allRequired.parse(["hello"])).toThrow();
+  expect(allRequired.parse(["hello", 42])).toEqual(["hello", 42]);
 });
 
 test("tuple with items array (draft-7)", () => {
@@ -139,8 +162,34 @@ test("tuple with items array (draft-7)", () => {
     items: [{ type: "string" }, { type: "number" }],
     additionalItems: false,
   });
+  expect(schema.parse([])).toEqual([]);
+  expect(schema.parse(["hello"])).toEqual(["hello"]);
   expect(schema.parse(["hello", 42])).toEqual(["hello", 42]);
+  expect(() => schema.parse([1])).toThrow();
+  expect(() => schema.parse(["hello", "world"])).toThrow();
   expect(() => schema.parse(["hello", 42, "extra"])).toThrow();
+});
+
+test("tuple with items array and minItems (draft-7)", () => {
+  const partialItems = fromJSONSchema({
+    $schema: "http://json-schema.org/draft-07/schema#",
+    type: "array",
+    items: [{ type: "string" }, { type: "number" }],
+    additionalItems: false,
+    minItems: 1,
+  });
+  expect(() => partialItems.parse([])).toThrow();
+  expect(partialItems.parse(["hello"])).toEqual(["hello"]);
+
+  const allRequired = fromJSONSchema({
+    $schema: "http://json-schema.org/draft-07/schema#",
+    type: "array",
+    items: [{ type: "string" }, { type: "number" }],
+    additionalItems: false,
+    minItems: 2,
+  });
+  expect(() => allRequired.parse(["hello"])).toThrow();
+  expect(allRequired.parse(["hello", 42])).toEqual(["hello", 42]);
 });
 
 test("enum schema", () => {
