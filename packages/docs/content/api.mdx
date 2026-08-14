@@ -1767,11 +1767,22 @@ const payment = z.xor([
 payment.parse({ type: "card", cardNumber: "1234" }); // ✅ passes
 ```
 
-If the input could match multiple options, `z.xor()` will fail:
+If the input could match multiple options, `z.xor()` will fail. The resulting issue has `inclusive: false` and a `matches` array listing the indices of the options that matched:
 
 ```ts
 const overlapping = z.xor([z.string(), z.any()]);
 overlapping.parse("hello"); // ❌ fails (matches both string and any)
+// ZodError: Invalid input: more than one option matched
+```
+
+Object options overlap more often than you'd expect, since `z.object()` strips unknown keys instead of rejecting them. Below, an input with both keys matches *both* options — the first strips `version`, the second keeps it. Use `z.strictObject()` (or `.strict()`) on the narrower option to make the branches mutually exclusive:
+
+```ts
+const name = z.object({ name: z.string() });
+const version = name.extend({ version: z.string() });
+
+z.xor([name, version]).parse({ name: "zod", version: "4" });           // ❌ fails (matches both)
+z.xor([name.strict(), version]).parse({ name: "zod", version: "4" });  // ✅ passes
 ```
 
 
