@@ -866,7 +866,5 @@ test("exclude/extract through z.lazy() and undefined literals", () => {
 
   const NoUndef = z.discriminatedUnion("type", [z.lazy(() => Exact), Undef, Plain]).exclude([undefined]);
   expect(NoUndef.options.length).toEqual(2);
-  // the lazy option survives in the type; TypeScript 6 flattens the union itself,
-  // so pin the discriminator rather than the whole shape
-  expectTypeOf<z.infer<typeof NoUndef>["type"]>().toEqualTypeOf<"a" | "b" | undefined>();
+  expectTypeOf<z.infer<typeof NoUndef>>().toEqualTypeOf<{ type?: "a"; x: string } | { type: "b"; y: number }>();
 });
