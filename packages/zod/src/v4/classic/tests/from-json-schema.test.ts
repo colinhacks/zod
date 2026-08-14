@@ -375,6 +375,64 @@ test("propertyNames with enum still honors required", () => {
   expect(() => schema.parse({ b: "y" })).toThrow();
 });
 
+test("propertyNames does not apply additionalProperties to declared properties", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    properties: { a: { type: "number" } },
+    propertyNames: { enum: ["a", "b"] },
+    additionalProperties: { type: "string" },
+  });
+  expect(schema.parse({ a: 1 })).toEqual({ a: 1 });
+  expect(schema.parse({ a: 1, b: "x" })).toEqual({ a: 1, b: "x" });
+  expect(() => schema.parse({ b: 1 })).toThrow();
+});
+
+test("propertyNames alongside additionalProperties: false", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    properties: { a: { type: "string" } },
+    propertyNames: { enum: ["a", "b"] },
+    additionalProperties: false,
+  });
+  expect(schema.parse({ a: "x" })).toEqual({ a: "x" });
+  expect(() => schema.parse({ a: "x", b: "y" })).toThrow();
+  expect(() => schema.parse({ c: "z" })).toThrow();
+});
+
+test("propertyNames alongside patternProperties", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    patternProperties: { "^S_": { type: "string" } },
+    propertyNames: { type: "string", pattern: "^S_" },
+  });
+  expect(schema.parse({ S_a: "x" })).toEqual({ S_a: "x" });
+  expect(() => schema.parse({ S_a: 1 })).toThrow();
+  expect(() => schema.parse({ other: "x" })).toThrow();
+});
+
+test("required names a key that properties does not declare", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    required: ["a"],
+    additionalProperties: { type: "string" },
+  });
+  expect(schema.parse({ a: "x" })).toEqual({ a: "x" });
+  expect(() => schema.parse({})).toThrow();
+  expect(() => schema.parse({ b: "y" })).toThrow();
+});
+
+test("propertyNames survives a toJSONSchema round trip", () => {
+  const roundTripped = z.toJSONSchema(
+    fromJSONSchema({
+      type: "object",
+      propertyNames: { enum: ["a", "b"] },
+      additionalProperties: { type: "string" },
+    })
+  ) as Record<string, unknown>;
+  expect(roundTripped.propertyNames).toEqual({ enum: ["a", "b"] });
+  expect(roundTripped.required).toBeUndefined();
+});
+
 test("patternProperties with regular properties", () => {
   // Note: When patternProperties is combined with properties, the intersection
   // validates all keys against the pattern. This test uses a pattern that
