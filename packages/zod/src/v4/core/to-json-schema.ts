@@ -129,8 +129,13 @@ export interface ToJSONSchemaContext {
    *
    * The passes are valid only while nothing they read has changed, so both are cleared in
    * `process()` when the map grows, and in `JSONSchemaGenerator.emit()`, which can also change
-   * the `cycles` and `reused` they branch on. Anything else that mutates the context between
-   * emits must clear them too. */
+   * the `cycles` and `reused` they branch on.
+   *
+   * One case is deliberately not covered: an `override` callback that writes to
+   * `metadataRegistry` mid-conversion. It runs inside `finalize`, so a registry conversion has
+   * nowhere left to clear the guards, and later schemas keep the ids the first pass saw. That
+   * output was never coherent — before this, whether a shared subschema was inlined or extracted
+   * depended on which registry entry happened to be emitted when the callback fired. */
   sharedDefsExtractedFor?: ToJSONSchemaContext["external"];
   sharedEmitDoneFor?: ToJSONSchemaContext["external"];
   cycles: "ref" | "throw";
