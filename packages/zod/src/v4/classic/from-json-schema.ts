@@ -143,24 +143,34 @@ function resolveRef(ref: string, ctx: ConversionContext): JSONSchema.JSONSchema 
   throw new Error(`Reference not found: ${ref}`);
 }
 
-/** Rejects every own key of the parsed object that fails `keySchema`. */
+/**
+ * Rejects every own key that fails `keySchema`, before `objectSchema` runs. The
+ * guard has to see the raw input: an object parse drops `__proto__` and can add
+ * keys from a property `default`, so its output is not the set of names the
+ * instance actually carried.
+ */
 function checkPropertyNames(objectSchema: ZodType, keySchema: ZodType): ZodType {
-  return objectSchema.check((payload) => {
-    const value = payload.value;
-    if (typeof value !== "object" || value === null) return;
-    for (const key of Object.keys(value)) {
-      const result = keySchema.safeParse(key);
-      if (result.success) continue;
-      payload.issues.push({
-        code: "invalid_key",
-        origin: "record",
-        issues: result.error.issues,
-        input: key,
-        path: [key],
-        continue: true,
-      });
-    }
-  });
+  // An identity transform, not z.any(), so `toJSONSchema` reports the object on
+  // both the input and the output side of the pipe.
+  const guard = z
+    .transform((value: unknown) => value)
+    .check((payload) => {
+      const value = payload.value;
+      if (typeof value !== "object" || value === null || Array.isArray(value)) return;
+      for (const key of Object.getOwnPropertyNames(value)) {
+        const result = keySchema.safeParse(key);
+        if (result.success) continue;
+        payload.issues.push({
+          code: "invalid_key",
+          origin: "record",
+          issues: result.error.issues,
+          input: key,
+          path: [key],
+          continue: true,
+        });
+      }
+    });
+  return guard.pipe(objectSchema);
 }
 
 function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext): ZodType {
@@ -407,12 +417,6 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         shape[key] = requiredSet.has(key) ? propZodSchema : propZodSchema.optional();
       }
 
-      // `required` may name keys `properties` never declares. Their values fall to
-      // `additionalProperties`, but they still have to be present.
-      for (const key of requiredSet) {
-        if (!(key in shape)) shape[key] = additionalSchema ?? z.any();
-      }
-
       // Handle patternProperties
       if (schema.patternProperties) {
         // patternProperties: keys matching pattern must satisfy corresponding schema
@@ -467,8 +471,15 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
       // propertyNames constrains key *names* only, and says nothing about which keys
       // are required or how their values validate. Layering it on top of the result
       // keeps properties/patternProperties/additionalProperties composing underneath.
-      if (schema.propertyNames) {
-        zodSchema = checkPropertyNames(zodSchema, convertSchema(schema.propertyNames, ctx));
+      // `true` allows every name, so it needs no guard.
+      if (schema.propertyNames !== undefined && schema.propertyNames !== true) {
+        // Keys are always strings, so a propertyNames subschema that omits `type`
+        // still constrains them — without this it would convert to z.any().
+        const keyJSONSchema =
+          typeof schema.propertyNames === "object" && schema.propertyNames.type === undefined
+            ? { type: "string", ...schema.propertyNames }
+            : schema.propertyNames;
+        zodSchema = checkPropertyNames(zodSchema, convertSchema(keyJSONSchema as JSONSchema.JSONSchema, ctx));
       }
       break;
     }
@@ -620,9 +631,11 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
     }
   }
 
-  // `propertyNames` is enforced by a key check, which `toJSONSchema` cannot infer.
-  // Carrying the original keyword as metadata keeps the round-trip lossless.
-  if (schema.propertyNames !== undefined) {
+  // `propertyNames` is enforced by a key guard, which `toJSONSchema` cannot infer,
+  // so the original keyword is carried as metadata to keep the round-trip lossless.
+  // Only where it was actually applied: on any other type it is inert, and on a
+  // `$ref` the metadata would land on the shared target shared by every reference.
+  if (schema.propertyNames !== undefined && schema.type === "object" && schema.$ref === undefined) {
     extraMeta.propertyNames = schema.propertyNames;
   }
 
