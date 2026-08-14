@@ -3,6 +3,18 @@ import type * as JSONSchema from "./json-schema.js";
 import { type $ZodRegistry, globalRegistry } from "./registries.js";
 import type * as schemas from "./schemas.js";
 import type { StandardJSONSchemaV1, StandardSchemaWithJSONProps } from "./standard-schema.js";
+import { assignProp } from "./util.js";
+
+function assignProps<T extends object>(target: T, ...sources: object[]): T {
+  for (const source of sources) {
+    for (const key of Reflect.ownKeys(source)) {
+      if (Object.prototype.propertyIsEnumerable.call(source, key)) {
+        assignProp(target, key, (source as any)[key]);
+      }
+    }
+  }
+  return target;
+}
 
 export type Processor<T extends schemas.$ZodType = schemas.$ZodType> = (
   schema: T,
@@ -10,6 +22,19 @@ export type Processor<T extends schemas.$ZodType = schemas.$ZodType> = (
   json: JSONSchema.BaseSchema,
   params: ProcessParams
 ) => void;
+
+/**
+ * Called for each schema that has no JSON Schema equivalent. Return a JSON Schema to use in its
+ * place, `"any"` to fall back to the `unrepresentable: "any"` behavior, or `"throw"`/`undefined` to
+ * throw the default error. Throwing from the handler propagates, so custom errors work too.
+ */
+export type UnrepresentableHandler<T extends schemas.$ZodType = schemas.$ZodType> = (ctx: {
+  zodSchema: T;
+  path: (string | number)[];
+  /** The error Zod would throw. Distinguishes sites that share a `zodSchema`, e.g. an `undefined`
+   *  vs a `bigint` member of the same literal. */
+  message: string;
+}) => JSONSchema.BaseSchema | "throw" | "any" | undefined;
 
 export interface JSONSchemaGeneratorParams {
   processors: Record<string, Processor>;
@@ -24,8 +49,9 @@ export interface JSONSchemaGeneratorParams {
   target?: "draft-04" | "draft-07" | "draft-2020-12" | "openapi-3.0" | ({} & string) | undefined;
   /** How to handle unrepresentable types.
    * - `"throw"` — Default. Unrepresentable types throw an error
-   * - `"any"` — Unrepresentable types become `{}` */
-  unrepresentable?: "throw" | "any";
+   * - `"any"` — Unrepresentable types become `{}`
+   * - A function — called once per unrepresentable schema; see {@link UnrepresentableHandler}. */
+  unrepresentable?: "throw" | "any" | UnrepresentableHandler<schemas.$ZodTypes>;
   /** Arbitrary custom logic that can be used to modify the generated JSON Schema. */
   override?: (ctx: {
     zodSchema: schemas.$ZodTypes;
@@ -85,7 +111,8 @@ export interface ToJSONSchemaContext {
   processors: Record<string, Processor>;
   metadataRegistry: $ZodRegistry<Record<string, any>>;
   target: "draft-04" | "draft-07" | "draft-2020-12" | "openapi-3.0" | ({} & string);
-  unrepresentable: "throw" | "any";
+  // must be schemas.$ZodType to prevent recursive type resolution error
+  unrepresentable: "throw" | "any" | UnrepresentableHandler;
   override: (ctx: {
     // must be schemas.$ZodType to prevent recursive type resolution error
     zodSchema: schemas.$ZodType;
@@ -125,7 +152,7 @@ export function initializeContext(params: JSONSchemaGeneratorParams): ToJSONSche
     processors: params.processors ?? {},
     metadataRegistry: params?.metadata ?? globalRegistry,
     target,
-    unrepresentable: params?.unrepresentable ?? "throw",
+    unrepresentable: (params?.unrepresentable as ToJSONSchemaContext["unrepresentable"]) ?? "throw",
     override: (params?.override as any) ?? (() => {}),
     io: params?.io ?? "output",
     counter: 0,
@@ -134,6 +161,28 @@ export function initializeContext(params: JSONSchemaGeneratorParams): ToJSONSche
     reused: params?.reused ?? "inline",
     external: params?.external ?? undefined,
   };
+}
+
+/**
+ * Applies the `unrepresentable` setting at a site that has no JSON Schema equivalent. Throws
+ * `message` unless the setting (or the handler's return value) says otherwise. Returns `true` if a
+ * custom JSON Schema was written into `json`, in which case the caller must not write its own.
+ */
+export function handleUnrepresentable(
+  schema: schemas.$ZodType,
+  ctx: ToJSONSchemaContext,
+  json: JSONSchema.BaseSchema,
+  params: ProcessParams,
+  message: string
+): boolean {
+  const result =
+    typeof ctx.unrepresentable === "function"
+      ? ctx.unrepresentable({ zodSchema: schema, path: params.path, message })
+      : ctx.unrepresentable;
+  if (result === "any") return false;
+  if (result === undefined || result === "throw") throw new Error(message);
+  Object.assign(json, result);
+  return true;
 }
 
 export function process<T extends schemas.$ZodType>(
@@ -196,7 +245,7 @@ export function process<T extends schemas.$ZodType>(
 
   // metadata
   const meta = ctx.metadataRegistry.get(schema);
-  if (meta) Object.assign(result.schema, meta);
+  if (meta) assignProps(result.schema, meta);
 
   if (ctx.io === "input" && isTransforming(schema)) {
     // examples/defaults only apply to output type of pipe
@@ -212,6 +261,12 @@ export function process<T extends schemas.$ZodType>(
   const _result = ctx.seen.get(schema)!;
 
   return _result.schema;
+}
+
+// Escape a reference token for use in a JSON Pointer fragment (RFC 6901):
+// `~` becomes `~0` and `/` becomes `~1`. The `~` replacement must run first.
+function encodeJSONPointerSegment(segment: string): string {
+  return segment.replace(/~/g, "~0").replace(/\//g, "~1");
 }
 
 export function extractDefs<T extends schemas.$ZodType>(
@@ -260,7 +315,7 @@ export function extractDefs<T extends schemas.$ZodType>(
       // otherwise, add to __shared
       const id: string = entry[1].defId ?? (entry[1].schema.id as string) ?? `schema${ctx.counter++}`;
       entry[1].defId = id; // set defId so it will be reused if needed
-      return { defId: id, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id}` };
+      return { defId: id, ref: `${uriGenerator("__shared")}#/${defsSegment}/${encodeJSONPointerSegment(id)}` };
     }
 
     if (entry[1] === root) {
@@ -271,7 +326,7 @@ export function extractDefs<T extends schemas.$ZodType>(
     const uriPrefix = `#`;
     const defUriPrefix = `${uriPrefix}/${defsSegment}/`;
     const defId = entry[1].schema.id ?? `__schema${ctx.counter++}`;
-    return { defId, ref: defUriPrefix + defId };
+    return { defId, ref: defUriPrefix + encodeJSONPointerSegment(defId) };
   };
 
   // stored cached version in `def` property
@@ -388,10 +443,10 @@ export function finalize<T extends schemas.$ZodType>(
         schema.allOf = schema.allOf ?? [];
         schema.allOf.push(refSchema);
       } else {
-        Object.assign(schema, refSchema);
+        assignProps(schema, refSchema);
       }
       // restore child's own properties (child wins)
-      Object.assign(schema, _cached);
+      assignProps(schema, _cached);
 
       const isParentRef = zodSchema._zod.parent === ref;
 
@@ -469,7 +524,7 @@ export function finalize<T extends schemas.$ZodType>(
     result.$id = ctx.external.uri(id);
   }
 
-  Object.assign(result, root.def ?? root.schema);
+  assignProps(result, root.def ?? root.schema);
 
   // The `id` in `.meta()` is a Zod-specific registration tag used to extract
   // schemas into $defs — it is not user-facing JSON Schema metadata. Strip it
@@ -484,7 +539,7 @@ export function finalize<T extends schemas.$ZodType>(
     const seen = entry[1];
     if (seen.def && seen.defId) {
       if (seen.def.id === seen.defId) delete seen.def.id;
-      defs[seen.defId] = seen.def;
+      assignProp(defs, seen.defId, seen.def);
     }
   }
 

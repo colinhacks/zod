@@ -45,6 +45,7 @@ const error: () => errors.$ZodErrorMap = () => {
     base64url: "base64url-encoded string",
     json_string: "JSON string",
     e164: "E.164 number",
+    credit_card: "credit card number",
     jwt: "JWT",
     template_literal: "input",
   };
@@ -58,12 +59,19 @@ const error: () => errors.$ZodErrorMap = () => {
     // All other type names omitted - they fall back to raw values via ?? operator
   };
 
+  function getTypeName(type: errors.$ZodInvalidTypeExpected, input?: unknown): string {
+    if (type === "number" && typeof input === "number" && !Number.isFinite(input)) {
+      return String(input);
+    }
+    return TypeDictionary[type] ?? type;
+  }
+
   return (issue) => {
     switch (issue.code) {
       case "invalid_type": {
-        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const expected = getTypeName(issue.expected);
         const receivedType = util.parsedType(issue.input);
-        const received = TypeDictionary[receivedType] ?? receivedType;
+        const received = getTypeName(receivedType, issue.input);
         return `Invalid input: expected ${expected}, received ${received}`;
       }
 
@@ -71,14 +79,14 @@ const error: () => errors.$ZodErrorMap = () => {
         if (issue.values.length === 1) return `Invalid input: expected ${util.stringifyPrimitive(issue.values[0])}`;
         return `Invalid option: expected one of ${util.joinValues(issue.values, "|")}`;
       case "too_big": {
-        const adj = issue.inclusive ? "<=" : "<";
+        const adj = issue.exact ? "exactly " : issue.inclusive ? "<=" : "<";
         const sizing = getSizing(issue.origin);
         if (sizing)
           return `Too big: expected ${issue.origin ?? "value"} to have ${adj}${issue.maximum.toString()} ${sizing.unit ?? "elements"}`;
         return `Too big: expected ${issue.origin ?? "value"} to be ${adj}${issue.maximum.toString()}`;
       }
       case "too_small": {
-        const adj = issue.inclusive ? ">=" : ">";
+        const adj = issue.exact ? "exactly " : issue.inclusive ? ">=" : ">";
         const sizing = getSizing(issue.origin);
         if (sizing) {
           return `Too small: expected ${issue.origin} to have ${adj}${issue.minimum.toString()} ${sizing.unit}`;
@@ -106,6 +114,9 @@ const error: () => errors.$ZodErrorMap = () => {
         if (issue.options && Array.isArray(issue.options) && issue.options.length > 0) {
           const opts = issue.options.map((o) => `'${o}'`).join(" | ");
           return `Invalid discriminator value. Expected ${opts}`;
+        }
+        if (issue.inclusive === false) {
+          return "Invalid input: more than one option matched";
         }
         return "Invalid input";
       case "invalid_element":

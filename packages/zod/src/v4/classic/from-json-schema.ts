@@ -1,5 +1,6 @@
 import type * as JSONSchema from "../core/json-schema.js";
 import { type $ZodRegistry, globalRegistry } from "../core/registries.js";
+import { assignProp, isPlainObject } from "../core/util.js";
 import * as _checks from "./checks.js";
 import * as _iso from "./iso.js";
 import * as _schemas from "./schemas.js";
@@ -118,6 +119,17 @@ function detectVersion(schema: JSONSchema.JSONSchema, defaultTarget?: JSONSchema
   return defaultTarget ?? "draft-2020-12";
 }
 
+// Positional schemas constrain the elements that are present; only minItems makes them required.
+function applyMinItems(items: ZodType[], minItems: number): ZodType[] {
+  return items.map((item, index) => (index < minItems ? item : item.optional()));
+}
+
+// Inverse of the encoding applied to $ref pointer segments in to-json-schema.ts.
+// Per RFC 6901 the `~1` replacement must run before `~0`.
+function decodeJSONPointerSegment(segment: string): string {
+  return segment.replace(/~1/g, "/").replace(/~0/g, "~");
+}
+
 function resolveRef(ref: string, ctx: ConversionContext): JSONSchema.JSONSchema {
   if (!ref.startsWith("#")) {
     throw new Error("External $ref is not supported, only local refs (#/...) are allowed");
@@ -133,7 +145,7 @@ function resolveRef(ref: string, ctx: ConversionContext): JSONSchema.JSONSchema 
   const defsKey = ctx.version === "draft-2020-12" ? "$defs" : "definitions";
 
   if (path[0] === defsKey) {
-    const key = path[1];
+    const key = path[1] === undefined ? undefined : decodeJSONPointerSegment(path[1]);
     if (!key || !ctx.defs[key]) {
       throw new Error(`Reference not found: ${ref}`);
     }
@@ -171,6 +183,16 @@ function checkPropertyNames(objectSchema: ZodType, keySchema: ZodType): ZodType 
       }
     });
   return guard.pipe(objectSchema);
+}
+
+function getTupleRest(restSchema: JSONSchema._JSONSchema | undefined, ctx: ConversionContext): ZodType | undefined {
+  if (restSchema === false) {
+    return undefined;
+  }
+  if (restSchema === undefined || restSchema === true) {
+    return z.any();
+  }
+  return convertSchema(restSchema, ctx);
 }
 
 function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext): ZodType {
@@ -301,7 +323,7 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         } else if (format === "uuid" || format === "guid") {
           stringSchema = stringSchema.check(z.uuid());
         } else if (format === "date-time") {
-          stringSchema = stringSchema.check(z.iso.datetime());
+          stringSchema = stringSchema.check(z.iso.datetime({ offset: true }));
         } else if (format === "date") {
           stringSchema = stringSchema.check(z.iso.date());
         } else if (format === "time") {
@@ -324,6 +346,8 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
           stringSchema = stringSchema.check(z.base64url());
         } else if (format === "e164") {
           stringSchema = stringSchema.check(z.e164());
+        } else if (format === "credit_card") {
+          stringSchema = stringSchema.check(z.creditCard());
         } else if (format === "jwt") {
           stringSchema = stringSchema.check(z.jwt());
         } else if (format === "emoji") {
@@ -413,8 +437,9 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
       // Convert properties - mark optional ones
       for (const [key, propSchema] of Object.entries(properties)) {
         const propZodSchema = convertSchema(propSchema as JSONSchema.JSONSchema, ctx);
-        // If not in required array, make it optional
-        shape[key] = requiredSet.has(key) ? propZodSchema : propZodSchema.optional();
+        // If not in required array, make it optional. assignProp so a __proto__
+        // key becomes an own property instead of hitting the inherited setter
+        assignProp(shape, key, requiredSet.has(key) ? propZodSchema : propZodSchema.optional());
       }
 
       // Handle patternProperties
@@ -450,6 +475,31 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
             result = z.intersection(result, schemasToIntersect[i]!);
           }
           zodSchema = result;
+        }
+
+        // When additionalProperties is false, reject keys that are neither
+        // defined in properties nor matched by any patternProperty.
+        if (schema.additionalProperties === false) {
+          const propertyKeys = Object.keys(shape);
+          const patterns = patternKeys.map((p) => new RegExp(p));
+          const basePatternSchema = zodSchema;
+          zodSchema = zodSchema.check((payload) => {
+            if (!isPlainObject(payload.value)) return;
+            const unrecognized: string[] = [];
+            for (const key of Object.keys(payload.value)) {
+              if (propertyKeys.includes(key)) continue;
+              if (patterns.some((regex) => regex.test(key))) continue;
+              unrecognized.push(key);
+            }
+            if (unrecognized.length) {
+              payload.issues.push({
+                code: "unrecognized_keys",
+                keys: unrecognized,
+                input: payload.value,
+                inst: basePatternSchema,
+              });
+            }
+          });
         }
       } else {
         // Handle additionalProperties
@@ -493,16 +543,12 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
 
       if (prefixItems && Array.isArray(prefixItems)) {
         // Tuple with prefixItems (draft-2020-12)
+        const minItems = typeof schema.minItems === "number" ? schema.minItems : 0;
         const tupleItems = prefixItems.map((item) => convertSchema(item as JSONSchema.JSONSchema, ctx));
-        const rest =
-          items && typeof items === "object" && !Array.isArray(items)
-            ? convertSchema(items as JSONSchema.JSONSchema, ctx)
-            : undefined;
-        if (rest) {
-          zodSchema = z.tuple(tupleItems as [ZodType, ...ZodType[]]).rest(rest);
-        } else {
-          zodSchema = z.tuple(tupleItems as [ZodType, ...ZodType[]]);
-        }
+        const positionalItems = applyMinItems(tupleItems, minItems);
+        const rest = !Array.isArray(items) ? getTupleRest(items, ctx) : undefined;
+        const tupleSchema = z.tuple(positionalItems as [ZodType, ...ZodType[]]);
+        zodSchema = rest ? tupleSchema.rest(rest) : tupleSchema;
         // Apply minItems/maxItems constraints to tuples
         if (typeof schema.minItems === "number") {
           zodSchema = zodSchema.check(z.minLength(schema.minItems));
@@ -512,16 +558,12 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         }
       } else if (Array.isArray(items)) {
         // Tuple with items array (draft-7)
+        const minItems = typeof schema.minItems === "number" ? schema.minItems : 0;
         const tupleItems = items.map((item) => convertSchema(item as JSONSchema.JSONSchema, ctx));
-        const rest =
-          schema.additionalItems && typeof schema.additionalItems === "object"
-            ? convertSchema(schema.additionalItems as JSONSchema.JSONSchema, ctx)
-            : undefined; // additionalItems: false means no rest, handled by default tuple behavior
-        if (rest) {
-          zodSchema = z.tuple(tupleItems as [ZodType, ...ZodType[]]).rest(rest);
-        } else {
-          zodSchema = z.tuple(tupleItems as [ZodType, ...ZodType[]]);
-        }
+        const positionalItems = applyMinItems(tupleItems, minItems);
+        const rest = getTupleRest(schema.additionalItems, ctx);
+        const tupleSchema = z.tuple(positionalItems as [ZodType, ...ZodType[]]);
+        zodSchema = rest ? tupleSchema.rest(rest) : tupleSchema;
         // Apply minItems/maxItems constraints to tuples
         if (typeof schema.minItems === "number") {
           zodSchema = zodSchema.check(z.minLength(schema.minItems));
@@ -641,7 +683,7 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
 
   for (const key of Object.keys(schema)) {
     if (!RECOGNIZED_KEYS.has(key)) {
-      extraMeta[key] = schema[key];
+      assignProp(extraMeta, key, schema[key]);
     }
   }
 

@@ -127,9 +127,74 @@ test("tuple with prefixItems (draft-2020-12)", () => {
     type: "array",
     prefixItems: [{ type: "string" }, { type: "number" }],
   });
+  expect(schema.parse([])).toEqual([]);
+  expect(schema.parse(["hello"])).toEqual(["hello"]);
   expect(schema.parse(["hello", 42])).toEqual(["hello", 42]);
-  expect(() => schema.parse(["hello"])).toThrow();
+  // no `items`, so the tail is unconstrained
+  expect(schema.parse(["hello", 42, "extra"])).toEqual(["hello", 42, "extra"]);
+  expect(() => schema.parse([1])).toThrow();
   expect(() => schema.parse(["hello", "world"])).toThrow();
+});
+
+test("tuple with prefixItems and minItems (draft-2020-12)", () => {
+  const partialItems = fromJSONSchema({
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "array",
+    prefixItems: [{ type: "string" }, { type: "number" }],
+    minItems: 1,
+  });
+  expect(() => partialItems.parse([])).toThrow();
+  expect(partialItems.parse(["hello"])).toEqual(["hello"]);
+
+  const allRequired = fromJSONSchema({
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "array",
+    prefixItems: [{ type: "string" }, { type: "number" }],
+    minItems: 2,
+  });
+  expect(() => allRequired.parse(["hello"])).toThrow();
+  expect(allRequired.parse(["hello", 42])).toEqual(["hello", 42]);
+});
+
+test("tuple with prefixItems allows extra items by default (draft-2020-12)", () => {
+  const schema = fromJSONSchema({
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "array",
+    prefixItems: [{ type: "string" }],
+  });
+  expect(schema.parse(["hello", 42, true])).toEqual(["hello", 42, true]);
+});
+
+test("tuple with prefixItems respects items schema (draft-2020-12)", () => {
+  const schema = fromJSONSchema({
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "array",
+    prefixItems: [{ type: "string" }],
+    items: { type: "number" },
+  });
+  expect(schema.parse(["hello", 1, 2])).toEqual(["hello", 1, 2]);
+  expect(() => schema.parse(["hello", 1, "extra"])).toThrow();
+});
+
+test("tuple with prefixItems and items true allows extra items (draft-2020-12)", () => {
+  const schema = fromJSONSchema({
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "array",
+    prefixItems: [{ type: "string" }, { type: "number" }],
+    items: true,
+  });
+  expect(schema.parse(["hello", 42, "extra", true])).toEqual(["hello", 42, "extra", true]);
+});
+
+test("tuple with prefixItems and items false rejects extra items (draft-2020-12)", () => {
+  const schema = fromJSONSchema({
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "array",
+    prefixItems: [{ type: "string" }],
+    items: false,
+  });
+  expect(schema.parse(["hello"])).toEqual(["hello"]);
+  expect(() => schema.parse(["hello", 42])).toThrow();
 });
 
 test("tuple with items array (draft-7)", () => {
@@ -139,8 +204,64 @@ test("tuple with items array (draft-7)", () => {
     items: [{ type: "string" }, { type: "number" }],
     additionalItems: false,
   });
+  expect(schema.parse([])).toEqual([]);
+  expect(schema.parse(["hello"])).toEqual(["hello"]);
   expect(schema.parse(["hello", 42])).toEqual(["hello", 42]);
+  expect(() => schema.parse([1])).toThrow();
+  expect(() => schema.parse(["hello", "world"])).toThrow();
   expect(() => schema.parse(["hello", 42, "extra"])).toThrow();
+});
+
+test("tuple with items array and minItems (draft-7)", () => {
+  const partialItems = fromJSONSchema({
+    $schema: "http://json-schema.org/draft-07/schema#",
+    type: "array",
+    items: [{ type: "string" }, { type: "number" }],
+    additionalItems: false,
+    minItems: 1,
+  });
+  expect(() => partialItems.parse([])).toThrow();
+  expect(partialItems.parse(["hello"])).toEqual(["hello"]);
+
+  const allRequired = fromJSONSchema({
+    $schema: "http://json-schema.org/draft-07/schema#",
+    type: "array",
+    items: [{ type: "string" }, { type: "number" }],
+    additionalItems: false,
+    minItems: 2,
+  });
+  expect(() => allRequired.parse(["hello"])).toThrow();
+  expect(allRequired.parse(["hello", 42])).toEqual(["hello", 42]);
+});
+
+test("tuple with items array allows extra items by default (draft-7)", () => {
+  const schema = fromJSONSchema({
+    $schema: "http://json-schema.org/draft-07/schema#",
+    type: "array",
+    items: [{ type: "string" }],
+  });
+  expect(schema.parse(["hello", 42, true])).toEqual(["hello", 42, true]);
+});
+
+test("tuple with items array and additionalItems true allows extra items (draft-7)", () => {
+  const schema = fromJSONSchema({
+    $schema: "http://json-schema.org/draft-07/schema#",
+    type: "array",
+    items: [{ type: "string" }, { type: "number" }],
+    additionalItems: true,
+  });
+  expect(schema.parse(["hello", 42, "extra", true])).toEqual(["hello", 42, "extra", true]);
+});
+
+test("tuple with items array respects additionalItems schema (draft-7)", () => {
+  const schema = fromJSONSchema({
+    $schema: "http://json-schema.org/draft-07/schema#",
+    type: "array",
+    items: [{ type: "string" }],
+    additionalItems: { type: "number" },
+  });
+  expect(schema.parse(["hello", 1, 2])).toEqual(["hello", 1, 2]);
+  expect(() => schema.parse(["hello", 1, "extra"])).toThrow();
 });
 
 test("enum schema", () => {
@@ -297,6 +418,15 @@ test("local $ref resolution", () => {
   });
   expect(schema.parse({ name: "John" })).toEqual({ name: "John" });
   expect(() => schema.parse({})).toThrow();
+});
+
+test("local $ref resolution unescapes JSON Pointer tokens", () => {
+  // `~1` must be decoded before `~0`, so the id "a~1b" survives as itself and not as "a/b".
+  for (const id of ["Shared/User", "My~Model", "a~b/c", "a~1b"]) {
+    const inner = z.object({ name: z.string() }).meta({ id });
+    const schema = fromJSONSchema(z.toJSONSchema(z.object({ inner })));
+    expect(schema.parse({ inner: { name: "John" } })).toEqual({ inner: { name: "John" } });
+  }
 });
 
 test("circular $ref with lazy", () => {
@@ -535,6 +665,49 @@ test("multiple overlapping patternProperties", () => {
   expect(() => schema.parse({ S_N: "ab" })).toThrow(); // too short for ^S_N pattern
 });
 
+test("patternProperties with additionalProperties false", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    patternProperties: {
+      "^S_": { type: "string" },
+    },
+    additionalProperties: false,
+  });
+  expect(schema.parse({ S_name: "ok" })).toEqual({ S_name: "ok" });
+  expect(() => schema.parse({ X_A: false })).toThrow();
+  expect(() => schema.parse({ S_name: 1 })).toThrow();
+});
+
+test("patternProperties and properties with additionalProperties false", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    properties: {
+      name: { type: "string" },
+    },
+    patternProperties: {
+      "^S_": { type: "string" },
+    },
+    additionalProperties: false,
+    required: ["name"],
+  });
+  expect(schema.parse({ name: "ok", S_count: "1" })).toEqual({ name: "ok", S_count: "1" });
+  expect(() => schema.parse({ name: "ok", S_count: 1 })).toThrow();
+  expect(() => schema.parse({ name: "ok", other: "value" })).toThrow();
+});
+
+test("multiple patternProperties with additionalProperties false", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    patternProperties: {
+      "^S_": { type: "string" },
+      "^N_": { type: "number" },
+    },
+    additionalProperties: false,
+  });
+  expect(schema.parse({ S_a: "a", N_b: 1 })).toEqual({ S_a: "a", N_b: 1 });
+  expect(() => schema.parse({ S_a: "a", N_b: 1, other: "value" })).toThrow();
+});
+
 test("default value", () => {
   const schema = fromJSONSchema({
     type: "string",
@@ -603,6 +776,29 @@ test("string format - uuid", () => {
   });
   const uuid = "550e8400-e29b-41d4-a716-446655440000";
   expect(schema.parse(uuid)).toBe(uuid);
+});
+
+test("string format - date-time", () => {
+  const schema = fromJSONSchema({
+    type: "string",
+    format: "date-time",
+  });
+  expect(schema.safeParse("2026-07-29T14:30:00Z").success).toBe(true);
+  expect(schema.safeParse("2026-07-29T16:30:00+02:00").success).toBe(true);
+  expect(schema.safeParse("2026-07-29T14:30:00").success).toBe(false);
+  expect(schema.safeParse("2026-07-29T16:30:00+0200").success).toBe(false);
+
+  const zuluOnly = fromJSONSchema({
+    type: "string",
+    format: "date-time",
+    pattern: "Z$",
+  });
+  expect(zuluOnly.safeParse("2026-07-29T14:30:00Z").success).toBe(true);
+  expect(zuluOnly.safeParse("2026-07-29T16:30:00+02:00").success).toBe(false);
+  expect(zuluOnly.safeParse("garbageZ").success).toBe(false);
+
+  const roundTripped = fromJSONSchema(z.toJSONSchema(z.iso.datetime({ offset: true })));
+  expect(roundTripped.safeParse("2026-07-29T16:30:00+02:00").success).toBe(true);
 });
 
 test("exclusiveMinimum and exclusiveMaximum", () => {
@@ -1040,4 +1236,31 @@ test("Date default is coerced to its JSON string form", () => {
   const date = new Date("2026-01-02T03:04:05.000Z");
   const schema = fromJSONSchema({ type: "string", default: date as any });
   expect(schema.parse(undefined)).toBe(date.toISOString());
+});
+
+// An object literal can't express an own "__proto__" key — `{ __proto__: x }`
+// sets the literal's prototype instead. JSON.parse is both the realistic source
+// of a JSON Schema and the only way to write these cases.
+test("required __proto__ property is represented in the shape but stripped during parsing", () => {
+  const schema = fromJSONSchema(
+    JSON.parse(`{
+      "type": "object",
+      "properties": { "__proto__": { "type": "string", "const": "admin" }, "role": { "type": "string" } },
+      "required": ["__proto__", "role"]
+    }`)
+  );
+
+  expect(Object.prototype.hasOwnProperty.call((schema as z.ZodObject).shape, "__proto__")).toBe(true);
+  expect(schema.parse({ role: "x" })).toEqual({ role: "x" });
+  expect(schema.parse(JSON.parse(`{ "role": "x", "__proto__": "wrong" }`))).toEqual({ role: "x" });
+  expect(schema.parse(JSON.parse(`{ "role": "x", "__proto__": "admin" }`))).toEqual({ role: "x" });
+});
+
+test("__proto__ annotation key reaches the registry", () => {
+  const registry = z.registry<Record<string, unknown>>();
+  const schema = fromJSONSchema(JSON.parse(`{ "type": "string", "__proto__": { "custom": 1 } }`), { registry });
+
+  const meta = registry.get(schema)!;
+  expect(Object.prototype.hasOwnProperty.call(meta, "__proto__")).toBe(true);
+  expect(meta.__proto__).toEqual({ custom: 1 });
 });
