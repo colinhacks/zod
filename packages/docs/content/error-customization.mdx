@@ -323,7 +323,7 @@ async function loadLocale(locale: string) {
 await loadLocale("fr");
 ```
 
-For convenience, all locales are exported as `z.locales` from `"zod"`. In some bundlers, this may not be tree-shakable.
+For convenience, all locales are exported as `z.locales` from `"zod"`. Rollup and Webpack tree-shake this down to the locales you actually use. esbuild can't ([evanw/esbuild#1420](https://github.com/evanw/esbuild/issues/1420)) — with `import { z } from "zod"` or `import z from "zod"` it bundles every locale, so prefer `import * as z from "zod"` there.
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
