@@ -692,3 +692,23 @@ test("encode with codec discriminator", () => {
   const encoded = z.encode(schema, { type: "one", value: "hello" });
   expect(encoded).toEqual({ type: 1, value: "hello" });
 });
+
+test.each(["__proto__", "constructor", "toString", "hasOwnProperty", "valueOf"])(
+  "Object.prototype discriminator name: %s",
+  (key) => {
+    const first = z.object({ [key]: z.literal("a"), value: z.string() });
+    const second = z.object({ [key]: z.literal("b"), value: z.number() });
+    const schema = z.discriminatedUnion(key, [first, second]);
+
+    expect(schema._zod.propValues?.[key]).toEqual(new Set(["a", "b"]));
+
+    const input = Object.fromEntries([
+      [key, "a"],
+      ["value", "ok"],
+    ]);
+    const parsed: any = schema.parse(input);
+    expect(Object.prototype.hasOwnProperty.call(parsed, key)).toBe(key !== "__proto__");
+    if (key !== "__proto__") expect(parsed[key]).toBe("a");
+    expect(parsed.value).toBe("ok");
+  }
+);
