@@ -2155,11 +2155,11 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
 
       doc.write(`payload.value = newResult;`);
       doc.write(`return payload;`);
-      const fn = doc.compile();
-      return (payload: any, ctx: any) => fn(shape, payload, ctx);
+      return doc.compile() as (shape: any, payload: any, ctx: any) => any;
     };
 
     let fastpass!: ReturnType<typeof generateFastpass>;
+    let fastpassShape!: any;
 
     const isObject = util.isObject;
     const jit = !core.globalConfig.jitless;
@@ -2185,8 +2185,11 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
 
       if (jit && fastEnabled && ctx?.async === false && ctx.jitless !== true) {
         // always synchronous
-        if (!fastpass) fastpass = generateFastpass(def.shape);
-        payload = fastpass(payload, ctx);
+        if (!fastpass) {
+          fastpassShape = def.shape;
+          fastpass = generateFastpass(fastpassShape);
+        }
+        payload = fastpass(fastpassShape, payload, ctx);
 
         if (!catchall) return payload;
         return handleCatchall([], input, payload, ctx, value, inst);
