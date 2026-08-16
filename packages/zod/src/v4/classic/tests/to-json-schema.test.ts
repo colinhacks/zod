@@ -2900,6 +2900,9 @@ test("catch on a transforming schema", () => {
           "type": "string",
         },
       },
+      "required": [
+        "a",
+      ],
       "type": "object",
     }
   `);
@@ -3009,6 +3012,7 @@ test("input type", () => {
       "required": [
         "a",
         "d",
+        "f",
         "g",
       ],
       "type": "object",
@@ -3171,6 +3175,52 @@ test("use output type for preprocess", () => {
       "type": "string",
     }
   `);
+});
+
+test("object property with preprocess stays required in input JSON schema", () => {
+  const schema = z.object({
+    noPreprocess: z.string(),
+    withPreprocess: z.preprocess((v) => v, z.string()),
+    optionalPreprocess: z.preprocess((v) => v, z.string().optional()),
+  });
+
+  // A preprocessed property is only optional when its inner schema is — the
+  // transform wrapper must not make a required property optional in the input
+  // JSON schema (matches runtime: `schema.parse({})` rejects `withPreprocess`).
+  expect(z.toJSONSchema(schema, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "noPreprocess": {
+          "type": "string",
+        },
+        "optionalPreprocess": {
+          "type": "string",
+        },
+        "withPreprocess": {
+          "type": "string",
+        },
+      },
+      "required": [
+        "noPreprocess",
+        "withPreprocess",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
+test("input JSON schema resolves requiredness past transform and catch wrappers", () => {
+  const required = (schema: z.ZodObject) =>
+    (z.toJSONSchema(schema, { io: "input" }) as z.core.JSONSchema.ObjectSchema).required;
+  const id = (v: unknown) => v;
+
+  // catch observes an absent key at runtime, but its declared input type stays required (#5003)
+  expect(required(z.object({ a: z.string().catch("x") }))).toEqual(["a"]);
+  expect(required(z.object({ a: z.string().optional().catch("x") }))).toBeUndefined();
+  // nested preprocess and the legacy transform-pipe form both resolve through to the inner schema
+  expect(required(z.object({ a: z.preprocess(id, z.preprocess(id, z.string())) }))).toEqual(["a"]);
+  expect(required(z.object({ a: z.transform((v: unknown) => String(v)).pipe(z.string()) }))).toEqual(["a"]);
 });
 
 test("strip output-side examples from input JSON schema for codec", () => {

@@ -263,6 +263,20 @@ export const arrayProcessor: Processor<schemas.$ZodArray> = (schema, ctx, _json,
   });
 };
 
+// Transform and catch set `optin = "optional"` at runtime so the parser lets them observe an
+// absent key, but their declared input type stays required. An input JSON Schema describes the
+// declared type, so resolve past them to the schema that actually carries the optionality.
+function inputOptin(schema: schemas.$ZodType): "optional" | undefined {
+  const def = schema._zod.def;
+  if (def.type === "pipe" && (def as schemas.$ZodPipeDef).in._zod.traits.has("$ZodTransform")) {
+    return inputOptin((def as schemas.$ZodPipeDef).out);
+  }
+  if (def.type === "catch") {
+    return inputOptin((def as schemas.$ZodCatchDef).innerType);
+  }
+  return schema._zod.optin;
+}
+
 export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _json, params) => {
   const json = _json as JSONSchema.ObjectSchema;
   const def = schema._zod.def as schemas.$ZodObjectDef;
@@ -287,11 +301,11 @@ export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _jso
   const allKeys = new Set(Object.keys(shape));
   const requiredKeys = new Set(
     [...allKeys].filter((key) => {
-      const v = def.shape[key]!._zod;
+      const field = def.shape[key]!;
       if (ctx.io === "input") {
-        return v.optin === undefined;
+        return inputOptin(field) === undefined;
       } else {
-        return v.optout === undefined;
+        return field._zod.optout === undefined;
       }
     })
   );
