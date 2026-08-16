@@ -2889,6 +2889,20 @@ test("catch on a transforming schema", () => {
       "type": "string",
     }
   `);
+
+  // the catch no longer hides the inner transform from ancestors, so their
+  // output-typed metadata is stripped too — matching a bare nested transform
+  expect(z.toJSONSchema(z.object({ a }).meta({ examples: [{ a: 1 }] }), { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "a": {
+          "type": "string",
+        },
+      },
+      "type": "object",
+    }
+  `);
 });
 
 test("falsy prefaults (false, 0, empty string)", () => {
