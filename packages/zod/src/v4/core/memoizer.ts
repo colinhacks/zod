@@ -76,6 +76,16 @@ function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
   return result;
 }
 
+/**
+ * Whether one parse can re-enter this schema, i.e. its subtree contains a cycle.
+ * Exported for `z.compile`, which refuses to compile such a schema: cycle
+ * breaking is driven from here off state keyed on the parse context, and a
+ * generated fast path has no context to key on.
+ */
+export function isRecursiveSchema(inst: $ZodType): boolean {
+  return isRecursive(inst, new Set());
+}
+
 function bucketFor(state: State, inst: $ZodType): Map<object, Entry> {
   let bucket = state.buckets.get(inst);
   if (!bucket) {

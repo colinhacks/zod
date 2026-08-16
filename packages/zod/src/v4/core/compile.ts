@@ -1,10 +1,12 @@
 import type * as checks from "./checks.js";
 import * as core from "./core.js";
 import { Doc } from "./doc.js";
+import { isBackEdge, isRecursiveSchema } from "./memoizer.js";
 import {
   isValidBase64,
   isValidBase64URL,
   isValidCIDRv6,
+  isValidCreditCard,
   isValidIPv6,
   isValidJWT,
   mergeValues,
@@ -114,6 +116,15 @@ export function compile<T extends SomeType>(schema: T): T {
       return originalRun(payload, ctx);
     }
 
+    // The value is a placeholder the runtime memoizer is still filling in, so a
+    // reference cycle closes here. Only the runtime can finish it — and a
+    // transform on the cycle has to raise $ZodCyclicError from its own parse,
+    // which a compiled node would skip. Cheap to ask: no memo state on the ctx
+    // means no cycle in flight, which is every ordinary parse.
+    if (ctx && isBackEdge(ctx, payload.value)) {
+      return originalRun(payload, ctx);
+    }
+
     const out = fast(payload.value);
     if (out !== INVALID) {
       payload.value = out;
@@ -180,6 +191,16 @@ export function compileFastpass<T extends SomeType>(
   schema: T,
   options?: CompileFastpassOptions
 ): CompiledFastpass<core.output<T>> {
+  // A recursive schema can be re-entered by a single parse, which is how input
+  // containing a reference cycle terminates: the runtime memoizer registers each
+  // in-progress output before its children run, keyed on the parse context every
+  // schema in that call shares. The generated fast path takes an input and
+  // returns a value — it has no context to key on, so it would follow the cycle
+  // in the input until the stack ran out. Hand the whole schema to the runtime.
+  if (isRecursiveSchema(schema as any)) {
+    throw new ZodCompileUnsupportedError("a schema whose subtree contains a reference cycle");
+  }
+
   const ctx: CompileContext = {
     constants: new Map(),
     constantCounter: 0,
@@ -583,6 +604,41 @@ type StringFormatDef =
 
 type SupportedStringFormat = "regex" | "lowercase" | "uppercase" | "includes" | "starts_with" | "ends_with";
 
+/**
+ * Built-in formats that validate with nothing but `def.pattern`, so compiling
+ * the regex reproduces the runtime exactly. Deliberately an allowlist: a format
+ * missing from it loses its fast path, while a format wrongly added to it
+ * silently accepts input the runtime rejects. Formats that layer extra
+ * validation over a shape-only pattern (`credit_card`, `base64`, `ipv6`, …) are
+ * handled above by hoisting the runtime validator itself.
+ */
+const PATTERN_IS_COMPLETE: Set<string> = new Set([
+  "cidrv4",
+  "cuid",
+  "cuid2",
+  "date",
+  "datetime",
+  "duration",
+  "e164",
+  "email",
+  "emoji",
+  "ends_with",
+  "guid",
+  "includes",
+  "ipv4",
+  "ksuid",
+  "lowercase",
+  "mac",
+  "nanoid",
+  "regex",
+  "starts_with",
+  "time",
+  "ulid",
+  "uppercase",
+  "uuid",
+  "xid",
+]);
+
 // Returns the accessor holding the (possibly normalized) value after the
 // check — url/normalize formats produce a new value like overwrite does.
 // Never assigns to the incoming accessor: it may be a `const` or a property
@@ -618,6 +674,11 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
     doc.write(`if (!${validator}(${accessor})) return INVALID;`);
     return accessor;
   }
+  if (fmt === "credit_card") {
+    const validator = addConstant(ctx, isValidCreditCard);
+    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    return accessor;
+  }
   const formatDef = def as unknown as { normalize?: boolean; hostname?: unknown; protocol?: unknown };
   if (
     fmt === "url" ||
@@ -634,8 +695,26 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
     return outputVar;
   }
 
-  // If a pattern is provided, use regex check for all other format types
-  if (def.pattern) {
+  // A custom string format carries the predicate the runtime actually calls.
+  // Hoist and call it instead of testing `def.pattern`: the two only coincide
+  // when the format was built from a RegExp, and relying on that coupling is
+  // how supplemental validation gets dropped.
+  const customFn = (def as unknown as { fn?: (input: string) => unknown }).fn;
+  if (customFn) {
+    if (isAsyncFunction(customFn)) throw new ZodCompileUnsupportedError(`async string format ${fmt}`);
+    const fnConst = addConstant(ctx, customFn);
+    doc.write(`if (!${fnConst}(${accessor})) return INVALID;`);
+    return accessor;
+  }
+
+  // Formats whose `pattern` IS the entire check, so testing the regex is exact.
+  // A pattern is not on its own evidence of that: `credit_card` advertises a
+  // shape-only pattern and validates the Luhn digit separately, and `base64`,
+  // `ipv6` and friends do the same. Emitting the regex for one of those
+  // silently accepts invalid input, which is why this is an allowlist rather
+  // than an `if (def.pattern)` catch-all — an unrecognized format falls through
+  // to the throw below and takes the runtime path instead of a wrong fast one.
+  if (PATTERN_IS_COMPLETE.has(fmt) && def.pattern) {
     const patternConst = addConstant(ctx, def.pattern);
     doc.write(`${patternConst}.lastIndex = 0;`);
     doc.write(`if (!${patternConst}.test(${accessor})) return INVALID;`);
@@ -645,8 +724,10 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
   const format = def.format as SupportedStringFormat;
   switch (format) {
     case "regex":
-      // Pattern already handled above
-      break;
+      // A regex check with a pattern returned above. Reaching here means there
+      // is no pattern to test, and accepting unconditionally would pass every
+      // input, so hand the schema back to the runtime.
+      throw new ZodCompileUnsupportedError("regex format without a pattern");
     case "lowercase":
       doc.write(`if (${accessor} !== ${accessor}.toLowerCase()) return INVALID;`);
       break;
@@ -855,69 +936,14 @@ function generateCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor
 function generateStringCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
   doc.write(`if (typeof ${accessor} !== "string") return INVALID;`);
 
-  // Handle string format patterns (email, uuid, etc.)
-  const def = schema._zod.def as unknown as {
-    pattern?: RegExp;
-    format?: string;
-    normalize?: boolean;
-    hostname?: unknown;
-    protocol?: unknown;
-  };
-
-  // URL/httpurl have runtime normalization/options behavior (mini z.url() even
-  // trims whitespace by default). Hoist the shared helper so output
-  // normalization and option checks stay in sync with runtime semantics.
-  if (
-    def.format === "url" ||
-    def.format === "httpurl" ||
-    def.normalize ||
-    def.hostname !== undefined ||
-    def.protocol !== undefined
-  ) {
-    const validator = addConstant(ctx, parseValidURL);
-    const defConst = addConstant(ctx, def);
-    const outputVar = newVar(ctx);
-    doc.write(`const ${outputVar} = ${validator}(${accessor}, ${defConst});`);
-    doc.write(`if (${outputVar} === undefined) return INVALID;`);
-    return outputVar;
-  }
-
-  if (def.format === "base64") {
-    const validator = addConstant(ctx, isValidBase64);
-    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
-    return accessor;
-  }
-  if (def.format === "base64url") {
-    const validator = addConstant(ctx, isValidBase64URL);
-    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
-    return accessor;
-  }
-  if (def.format === "jwt") {
-    const validator = addConstant(ctx, isValidJWT);
-    const alg = addConstant(ctx, (def as unknown as { alg?: util.JWTAlgorithm }).alg ?? null);
-    doc.write(`if (!${validator}(${accessor}, ${alg})) return INVALID;`);
-    return accessor;
-  }
-  if (def.format === "ipv6") {
-    // Runtime $ZodIPv6 validates via new URL("http://[value]"), not the regex.
-    // The pattern in def.pattern is advisory only — match runtime semantics by
-    // using the hoisted helper instead of regex.test.
-    const validator = addConstant(ctx, isValidIPv6);
-    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
-    return accessor;
-  }
-  if (def.format === "cidrv6") {
-    const validator = addConstant(ctx, isValidCIDRv6);
-    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
-    return accessor;
-  }
-
-  if (def.pattern) {
-    const patternConst = addConstant(ctx, def.pattern);
-    doc.write(`${patternConst}.lastIndex = 0;`);
-    doc.write(`if (!${patternConst}.test(${accessor})) return INVALID;`);
-  }
-  return accessor;
+  // A string-format schema (z.email(), z.creditCard(), z.hostname(), …) carries
+  // its format on its own def rather than in def.checks, while z.string().email()
+  // puts it in def.checks. Both route through generateStringFormatCheck so the
+  // two can never drift: keeping a second copy of the format table here is what
+  // let z.creditCard() compile to its shape-only regex without the Luhn digit.
+  const def = schema._zod.def as unknown as StringFormatDef & { format?: string };
+  if (def.format === undefined) return accessor;
+  return generateStringFormatCheck(doc, ctx, def, accessor);
 }
 
 function generateNumberCheck(doc: Doc, schema: SomeType, accessor: string): string {
@@ -1059,9 +1085,12 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
     const catchallType = catchall._zod.def.type;
 
     if (catchallType === "never") {
-      // Strict object: reject unknown keys. Runtime iterates with for...in
-      // (inherited enumerable keys count as unrecognized; own __proto__ is
-      // skipped, see #5898).
+      // Strict object: reject unknown keys. Runtime iterates with for...in, so
+      // inherited enumerable keys count as unrecognized. An undeclared
+      // `__proto__` counts too (handleCatchall reports it before skipping the
+      // copy, see #6221) — it is only excluded from the *output*, never from
+      // this scan. A declared `__proto__` can't reach here; the shape key is
+      // rejected at compile time above.
       const hasOptional = keys.some((k) => shape[k]!._zod.optin === "optional");
 
       if (hasOptional) {
@@ -1069,7 +1098,6 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
         const condition = keys.map((k) => `k !== ${util.esc(k)}`).join(" && ");
         doc.write(`for (const k in ${accessor}) {`);
         doc.indented((d) => {
-          d.write(`if (k === "__proto__") continue;`);
           d.write(`if (${condition}) return INVALID;`);
         });
         doc.write(`}`);
@@ -1150,11 +1178,26 @@ function generateOptionalCheck(doc: Doc, ctx: CompileContext, schema: SomeType, 
     return generateCheck(doc, ctx, def.innerType, accessor);
   }
 
-  const innerType = def.innerType._zod.def.type;
+  // `readonly` forwards optin/optout and defers the whole parse to its inner,
+  // so it is transparent to the question of what an absent input produces. The
+  // node underneath is the one that answers it — testing the wrapper instead is
+  // why `.default(v).readonly().optional()` read as `readonly`, missed the
+  // branch below and silently dropped the default.
+  let absenceOwner = def.innerType;
+  while (absenceOwner._zod.def.type === "readonly") {
+    const inner = (absenceOwner._zod.def as unknown as { innerType?: SomeType }).innerType;
+    if (!inner) break;
+    absenceOwner = inner;
+  }
+  const ownerType = absenceOwner._zod.def.type;
 
-  if (innerType === "default" || innerType === "prefault") {
-    if (innerType === "prefault") {
-      const prefaultInner = (def.innerType._zod.def as unknown as { innerType?: SomeType }).innerType;
+  // `default` answers an absent input with its own value without consulting its
+  // inner, so it always produces one. `prefault` feeds that value *through* the
+  // inner, so a fallback-producing inner can still make handleOptionalResult
+  // collapse the result to `undefined` — which the fast path can't represent.
+  if (ownerType === "default" || ownerType === "prefault") {
+    if (ownerType === "prefault") {
+      const prefaultInner = (absenceOwner._zod.def as unknown as { innerType?: SomeType }).innerType;
       if (prefaultInner && schemaMaySetFallback(prefaultInner)) {
         throw new ZodCompileUnsupportedError("optional wrapping prefault with fallback-producing inner");
       }
@@ -1436,9 +1479,15 @@ function generateWrapperCheck(doc: Doc, ctx: CompileContext, schema: SomeType, a
 function generateDefaultCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
   const def = schema._zod.def as unknown as { innerType: SomeType };
 
-  // Get the default value getter from the property descriptor
+  // `defaultValue` is an accessor on schemas built through the classic/mini
+  // factories and a plain data property on ones rebuilt programmatically
+  // (deepPartial and friends). Read it off the def either way — taking only
+  // `descriptor.get` silently dropped the default for the second kind, so
+  // `.default(v)` compiled to `undefined` instead of `v`.
   const descriptor = Object.getOwnPropertyDescriptor(schema._zod.def, "defaultValue");
-  const defaultGetter = descriptor?.get;
+  const defaultGetter = descriptor
+    ? () => (schema._zod.def as unknown as { defaultValue: unknown }).defaultValue
+    : undefined;
 
   // prefault differs from default: undefined-input is first replaced with the
   // prefault value, then run through the inner schema.

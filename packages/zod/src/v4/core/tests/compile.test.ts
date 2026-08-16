@@ -765,7 +765,7 @@ test("lazy basic", () => {
   invalid(aot, 123);
 });
 
-test("lazy recursive (simple)", () => {
+test("lazy recursive schemas are refused, and still parse through the runtime", () => {
   interface Node {
     value: string;
     next?: Node | undefined;
@@ -775,11 +775,21 @@ test("lazy recursive (simple)", () => {
     next: z.lazy(() => nodeSchema).optional(),
   });
 
-  const aot = compile(nodeSchema);
-  expect(valid(aot, { value: "a" })).toEqual({ value: "a" });
-  expect(valid(aot, { value: "a", next: { value: "b" } })).toEqual({ value: "a", next: { value: "b" } });
-  invalid(aot, { value: "a", next: { value: 123 } });
-  invalid(aot, { value: 123 });
+  // A recursive schema is re-entered by a single parse, which is how the runtime
+  // memoizer terminates input containing a reference cycle. That state is keyed
+  // on the parse context, and the fast path has none, so it declines the schema
+  // rather than following the cycle until the stack runs out.
+  expect(() => compile(nodeSchema)).toThrow(ZodCompileUnsupportedError);
+
+  expect(valid(nodeSchema, { value: "a" })).toEqual({ value: "a" });
+  expect(valid(nodeSchema, { value: "a", next: { value: "b" } })).toEqual({ value: "a", next: { value: "b" } });
+  invalid(nodeSchema, { value: "a", next: { value: 123 } });
+  invalid(nodeSchema, { value: 123 });
+
+  // The case the refusal exists for: cyclic input parses instead of crashing.
+  const cyclic: any = { value: "a" };
+  cyclic.next = cyclic;
+  expect(() => nodeSchema.parse(cyclic)).not.toThrow();
 });
 
 test("matches Zod: lazy", () => {
@@ -1331,10 +1341,11 @@ test("lazy schemas with checked or defaulted descendants parse without crashing"
   expect(valid(aot, "abc")).toEqual("abc");
   invalid(aot, "a");
 
+  // Recursive, so the fast path declines it; the runtime still parses it.
   const tree: z.ZodType = z.lazy(() => z.object({ v: z.number().int(), kids: z.array(tree).default([]) }));
-  const aotTree = compile(tree);
-  expect(valid(aotTree, { v: 1, kids: [{ v: 2 }] })).toEqual({ v: 1, kids: [{ v: 2, kids: [] }] });
-  invalid(aotTree, { v: 1.5 });
+  expect(() => compile(tree)).toThrow(ZodCompileUnsupportedError);
+  expect(valid(tree, { v: 1, kids: [{ v: 2 }] })).toEqual({ v: 1, kids: [{ v: 2, kids: [] }] });
+  invalid(tree, { v: 1.5 });
 });
 
 test("sync refine returning a Promise rejects like the runtime", () => {
