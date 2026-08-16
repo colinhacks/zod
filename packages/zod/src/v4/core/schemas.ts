@@ -3692,9 +3692,21 @@ export const $ZodExactOptional: core.$constructor<$ZodExactOptional> = /*@__PURE
     util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
     util.defineLazy(inst._zod, "pattern", () => def.innerType._zod.pattern);
 
-    // Override parse to just delegate (no undefined handling)
+    // Never keep a value the inner type produced out of `undefined` it doesn't accept.
+    const reject = (result: ParsePayload) => {
+      result.value = undefined;
+      if (!result.issues.length) {
+        result.issues.push({ code: "invalid_type", expected: "nonoptional", input: undefined, inst });
+      }
+      return result;
+    };
+
     inst._zod.parse = (payload, ctx) => {
-      return def.innerType._zod.run(payload, ctx);
+      if (payload.value !== undefined || def.innerType._zod.optin === "optional") {
+        return def.innerType._zod.run(payload, ctx);
+      }
+      const result = def.innerType._zod.run(payload, ctx);
+      return result instanceof Promise ? result.then(reject) : reject(result);
     };
   }
 );

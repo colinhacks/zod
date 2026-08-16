@@ -230,6 +230,89 @@ test("exactOptional in objects - explicit undefined rejected", () => {
   expect(schema.safeParse({ a: undefined }, { jitless: true }).success).toEqual(false);
 });
 
+test("exactOptional in objects - coercion doesn't materialize an absent key", () => {
+  for (const inner of [z.coerce.number(), z.coerce.string(), z.coerce.boolean(), z.coerce.bigint()]) {
+    const schema = z.object({ a: inner.exactOptional() });
+    expect(Object.keys(schema.parse({}))).toEqual([]);
+    expect(Object.keys(schema.parse({}, { jitless: true }))).toEqual([]);
+  }
+
+  // A present key still runs the coercion.
+  const num = z.object({ a: z.coerce.number().exactOptional() });
+  expect(num.parse({ a: "42" })).toEqual({ a: 42 });
+  expect(num.parse({ a: "42" }, { jitless: true })).toEqual({ a: 42 });
+});
+
+test("exactOptional in objects - explicit undefined is rejected even when the inner type coerces", () => {
+  // Without this the coercion swallows the undefined — String(undefined) is a valid
+  // string — and a field typed `string` ends up holding "undefined".
+  for (const inner of [z.coerce.string(), z.coerce.boolean(), z.coerce.number()]) {
+    const schema = z.object({ a: inner.exactOptional() });
+    expect(schema.safeParse({ a: undefined }).success).toEqual(false);
+    expect(schema.safeParse({ a: undefined }, { jitless: true }).success).toEqual(false);
+  }
+
+  // A non-coercive inner type still reports its own expected type.
+  expect(z.object({ a: z.string().exactOptional() }).safeParse({ a: undefined }).error!.issues[0]).toMatchObject({
+    expected: "string",
+  });
+});
+
+test("exactOptional in objects - an inner default still applies to an absent key", () => {
+  // `optin: "optional"` means the inner type consumes undefined on purpose, so it
+  // runs even when the key is missing — unlike a coercion.
+  for (const inner of [
+    z.string().default("x"),
+    z.string().default("x").nullable(),
+    z.string().default("x").pipe(z.string()),
+  ]) {
+    const schema = z.object({ a: inner.exactOptional() });
+    expect(schema.parse({})).toEqual({ a: "x" });
+    expect(schema.parse({}, { jitless: true })).toEqual({ a: "x" });
+  }
+});
+
+test("exactOptional in objects - a wrapper outside it sees the same result in both engines", () => {
+  const outer: [string, z.ZodType][] = [
+    ["prefault", z.coerce.number().exactOptional().prefault("42")],
+    ["nonoptional", z.coerce.number().exactOptional().nonoptional()],
+    [
+      "transform",
+      z
+        .string()
+        .exactOptional()
+        .transform((v) => v),
+    ],
+    ["catch", z.string().exactOptional().catch("x")],
+    ["default", z.coerce.number().exactOptional().default(7)],
+  ];
+
+  for (const [label, inner] of outer) {
+    const schema = z.object({ a: inner as any });
+    const jit = schema.safeParse({});
+    const jitless = schema.safeParse({}, { jitless: true });
+    expect({ [label]: jit.success ? jit.data : jit.error.issues }).toEqual({
+      [label]: jitless.success ? jitless.data : jitless.error.issues,
+    });
+  }
+});
+
+test("optional in objects - stays both key-optional and value-optional", () => {
+  // `toEqual` treats an undefined property as absent, so the surrounding tests
+  // can't tell {} from { a: undefined }. Check the key set directly.
+  const schema = z.object({ a: z.string().optional() });
+
+  for (const jitless of [false, true]) {
+    // Key optional: an absent key is omitted, not written as undefined.
+    expect(Object.keys(schema.parse({}, { jitless }))).toEqual([]);
+
+    // Value optional: an explicit undefined is accepted and keeps the key.
+    const undef = schema.parse({ a: undefined }, { jitless });
+    expect(Object.keys(undef)).toEqual(["a"]);
+    expect(undef.a).toEqual(undefined);
+  }
+});
+
 test("exactOptional type inference in objects", () => {
   const schema = z.object({
     a: z.string().exactOptional(),
