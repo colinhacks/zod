@@ -723,7 +723,7 @@ export function partial(
   Class: SchemaClass<schemas.$ZodOptional> | null,
   schema: schemas.$ZodObject,
   mask: object | undefined,
-  { name = "partial" } = {}
+  name = "partial"
 ): any {
   const currDef = schema._zod.def;
   const checks = currDef.checks;

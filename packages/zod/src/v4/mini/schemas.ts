@@ -1026,7 +1026,7 @@ export function exactPartial<T extends ZodMiniObject, M extends util.Mask<keyof 
 >;
 // @__NO_SIDE_EFFECTS__
 export function exactPartial(schema: ZodMiniObject, mask?: object) {
-  return util.partial(ZodMiniExactOptional, schema, mask, { name: "exactPartial" });
+  return util.partial(ZodMiniExactOptional, schema, mask, "exactPartial");
 }
 
 export type RequiredInterfaceShape<

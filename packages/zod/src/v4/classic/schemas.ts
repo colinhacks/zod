@@ -1666,7 +1666,7 @@ function _zodObjectMethods(): _LazyMethodsOf<ZodObject> {
       return util.partial(ZodOptional, this, args[0]);
     },
     exactPartial(...args) {
-      return util.partial(ZodExactOptional, this, args[0], { name: "exactPartial" });
+      return util.partial(ZodExactOptional, this, args[0], "exactPartial");
     },
     required(...args) {
       return util.required(ZodNonOptional, this, args[0]);
