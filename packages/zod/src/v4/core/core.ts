@@ -28,13 +28,19 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
   // accessor on every instance.
   const zodProto: any = {};
 
+  // Assigning the fields in the constructor body is what gives instances in-object
+  // slots; building the object literally and reparenting it costs a second
+  // allocation and a generic property copy.
+  function Internals(this: any, def: D) {
+    this.def = def;
+    this.constr = _;
+    this.traits = new Set();
+  }
+  Internals.prototype = zodProto;
+
   function init(inst: T, def: D) {
     if (!inst._zod) {
-      _zodDesc.value = Object.assign(Object.create(zodProto), {
-        def,
-        constr: _,
-        traits: new Set(),
-      });
+      _zodDesc.value = new (Internals as any)(def);
       try {
         Object.defineProperty(inst, "_zod", _zodDesc);
       } finally {
