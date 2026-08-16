@@ -46,6 +46,7 @@
     "./v4/locales/mk": "./src/v4/locales/mk.ts",
     "./v4/locales/ms": "./src/v4/locales/ms.ts",
     "./v4/locales/nl": "./src/v4/locales/nl.ts",
+    "./v4/locales/nn": "./src/v4/locales/nn.ts",
     "./v4/locales/no": "./src/v4/locales/no.ts",
     "./v4/locales/ota": "./src/v4/locales/ota.ts",
     "./v4/locales/pl": "./src/v4/locales/pl.ts",
