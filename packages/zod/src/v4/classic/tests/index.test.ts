@@ -653,8 +653,7 @@ test("z.custom check", () => {
 });
 
 test("z.check", () => {
-  // this is a more flexible version of z.custom that accepts an arbitrary _parse logic
-  // the function should return base.$ZodResult
+  // this is a more flexible version of z.custom that accepts an arbitrary _parse logic the function should return base.$ZodResult
   const a = z.any().check(
     z.check<string>((ctx) => {
       if (typeof ctx.value === "string") return;

@@ -362,8 +362,7 @@ export function isObject(data: any): data is Record<PropertyKey, unknown> {
 }
 
 export const allowsEval: { value: boolean } = /* @__PURE__*/ cached(() => {
-  // Skip the probe under `jitless`: strict CSPs report the caught `new Function`
-  // as a `securitypolicyviolation` even though the throw is swallowed.
+  // Skip the probe under `jitless`: strict CSPs report the caught `new Function` as a `securitypolicyviolation` even though the throw is swallowed.
   if (globalConfig.jitless) {
     return false;
   }
@@ -585,8 +584,7 @@ export type FromCleanMap<T extends schemas.$ZodLooseShape> = {
   [k in keyof T as k extends `?${infer K}` ? K : k extends `${infer K}?` ? K : k]: k;
 };
 
-// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that
-// contains a member access on `Number`, so the bare object literal survived into every bundle.
+// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle.
 export const NUMBER_FORMAT_RANGES: Record<checks.$ZodNumberFormats, [number, number]> = /*@__PURE__*/ (() => ({
   safeint: [Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER],
   int32: [-2147483648, 2147483647],
@@ -666,8 +664,7 @@ export function extend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): an
   const checks = schema._zod.def.checks;
   const hasChecks = checks && checks.length > 0;
   if (hasChecks) {
-    // Only throw if new shape overlaps with existing shape
-    // Use getOwnPropertyDescriptor to check key existence without accessing values
+    // Only throw if new shape overlaps with existing shape. Use getOwnPropertyDescriptor to check key existence without accessing values
     const existingShape = schema._zod.def.shape;
     for (const key in shape) {
       if (Object.getOwnPropertyDescriptor(existingShape, key) !== undefined) {
@@ -827,8 +824,7 @@ export function aborted(x: schemas.ParsePayload, startIndex = 0): boolean {
   return false;
 }
 
-// Checks for explicit abort (continue === false), as opposed to implicit abort (continue === undefined).
-// Used to respect `abort: true` in .refine() even for checks that have a `when` function.
+// Checks for explicit abort (continue === false), as opposed to implicit abort (continue === undefined). Used to respect `abort: true` in .refine() even for checks that have a `when` function.
 export function explicitlyAborted(x: schemas.ParsePayload, startIndex = 0): boolean {
   if (x.aborted === true) return true;
   for (let i = startIndex; i < x.issues.length; i++) {
@@ -989,22 +985,17 @@ export abstract class Class {
 
 //////////    PROTOTYPE INSTALLERS     //////////
 //
-// Members live on the prototype and materialize per instance on first read,
-// which keeps own-property count under the step where V8 stops using inline
-// slots. Changing anything here means re-measuring runtime, memory and bundle
-// size together — see "The three axes" in AGENTS.md.
+// Members live on the prototype and materialize per instance on first read, which keeps own-property count under the step where V8 stops using inline slots. Changing anything here means re-measuring runtime, memory and bundle size together — see "The three axes" in AGENTS.md.
 
 /** Returns the prototype to install on, or `undefined` if this group is already installed on it. */
 function claim(inst: object, sentinel: string): object | undefined {
   const proto = Object.getPrototypeOf(inst);
-  // Runs on every construction, so `in` rather than the costlier
-  // `hasOwnProperty.call`. Sentinels are keys the group itself defines.
+  // Runs on every construction, so `in` rather than the costlier `hasOwnProperty.call`. Sentinels are keys the group itself defines.
   return sentinel in proto ? undefined : proto;
 }
 
 function defineCached(proto: object, key: string, compute: (self: any) => unknown): void {
-  // `~standard` was never an own data property, so caching it must not add it
-  // to `Object.keys`. Everything else here was enumerable and stays so.
+  // `~standard` was never an own data property, so caching it must not add it to `Object.keys`. Everything else here was enumerable and stays so.
   const enumerable = key !== "~standard";
   Object.defineProperty(proto, key, {
     configurable: true,

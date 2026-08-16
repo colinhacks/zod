@@ -763,8 +763,7 @@ test("stack trace carries the message and the parse call site", () => {
 });
 
 test("error initializer never installs onto an intrinsic prototype", () => {
-  // `init` accepts any object; a foreign one must not leak accessors onto
-  // the prototype it happens to inherit from.
+  // `init` accepts any object; a foreign one must not leak accessors onto the prototype it happens to inherit from.
   z.core.$ZodError.init({} as any, []);
   z.ZodError.init({} as any, []);
   z.core.$ZodError.init(new Error() as any, []);

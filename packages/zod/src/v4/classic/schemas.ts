@@ -8,17 +8,12 @@ import en from "../locales/en.js";
 import * as checks from "./checks.js";
 import * as parse from "./parse.js";
 
-// Register English as the default locale on first ZodType construction. Hooked
-// into the `ZodType` `$constructor` (rather than a top-level `config(en())` in
-// `external.ts`) so bundlers honoring `sideEffects: false` can't tree-shake it
-// out — see #5953, #5725. An explicit `z.config(z.locales.xx())` call wins
-// regardless of order, since this only sets the default when none is present.
+// Register English as the default locale on first ZodType construction. Hooked into the `ZodType` `$constructor` (rather than a top-level `config(en())` in `external.ts`) so bundlers honoring `sideEffects: false` can't tree-shake it out — see #5953, #5725. An explicit `z.config(z.locales.xx())` call wins regardless of order, since this only sets the default when none is present.
 function _ensureDefaultLocale(): void {
   if (!core.globalConfig.localeError) core.config(en());
 }
 
-// Methods live on each concrete constructor's prototype and materialize per
-// instance on first access, so a schema only pays for what it is asked for.
+// Methods live on each concrete constructor's prototype and materialize per instance on first access, so a schema only pays for what it is asked for.
 const _installLazyMethods = util.installLazyMethods;
 const _installLazyProps = util.installLazyProps;
 type _LazyMethodsOf<T> = util.LazyMethodsOf<T>;
@@ -188,8 +183,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
         return core.globalRegistry.get(this)?.description;
       },
     });
-    // No setter: `schema._def = x` throws, as it did when `_def` was a
-    // non-writable own property.
+    // No setter: `schema._def = x` throws, as it did when `_def` was a non-writable own property.
     Object.defineProperty(proto, "_def", {
       configurable: true,
       get(this: ZodType) {
@@ -286,10 +280,7 @@ function _zodTypeMethods(): _LazyMethodsOf<ZodType> {
       return cl;
     },
     meta(...args: any[]): any {
-      // overloaded: meta() returns the registered metadata, meta(data)
-      // returns a clone with `data` registered. The mapped type picks
-      // up the second overload, so we accept variadic any-args and
-      // return `any` to satisfy both at runtime.
+      // overloaded: meta() returns the registered metadata, meta(data) returns a clone with `data` registered. The mapped type picks up the second overload, so we accept variadic any-args and return `any` to satisfy both at runtime.
       if (args.length === 0) return core.globalRegistry.get(this);
       const cl = this.clone();
       core.globalRegistry.add(cl, args[0]);
@@ -309,8 +300,7 @@ function _zodTypeMethods(): _LazyMethodsOf<ZodType> {
 
 function _zodTypeParseProps(): _LazyPropsOf<ZodType> {
   return {
-    // Overrides core's `~standard` to add `jsonSchema`. Must stay a prototype
-    // entry: redefining it per instance demotes instances to dictionary mode.
+    // Overrides core's `~standard` to add `jsonSchema`. Must stay a prototype entry: redefining it per instance demotes instances to dictionary mode.
     "~standard": (self) =>
       ({
         ...core.standardProps(self),
@@ -2178,8 +2168,7 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
         throw new core.$ZodEncodeError(inst.constructor.name);
       }
 
-      // The value is a placeholder a back-edge is still waiting on, so the cycle
-      // closes through this transform. Its output can't exist in time to bind.
+      // The value is a placeholder a back-edge is still waiting on, so the cycle closes through this transform. Its output can't exist in time to bind.
       if (core.isBackEdge(_ctx, payload.value)) throw new core.$ZodCyclicError();
 
       (payload as core.$RefinementCtx).addIssue = (issue) => {

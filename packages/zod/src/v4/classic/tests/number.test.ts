@@ -154,8 +154,7 @@ test(".multipleOf() with negative divisor", () => {
 });
 
 test(".multipleOf() with scientific notation (multi-digit exponents)", () => {
-  // Regression test for https://github.com/colinhacks/zod/pull/5687
-  // The regex was using \d? which only matches single-digit exponents
+  // Regression test for https://github.com/colinhacks/zod/pull/5687 — the regex was using \d? which only matches single-digit exponents
   const schema = z.number().multipleOf(1e-10);
 
   // These should all pass - they are valid multiples of 1e-10

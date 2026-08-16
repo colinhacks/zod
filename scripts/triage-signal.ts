@@ -129,8 +129,7 @@ function detectVuln(item: Item): VulnVerdict {
   for (const l of item.labels) {
     if (VULN_LABEL.test(l)) confirmed.push(`label:${l}`);
   }
-  // Only the leading slice of the body is scanned. Full bodies drag in stack traces
-  // and quoted source that trip every keyword.
+  // Only the leading slice of the body is scanned. Full bodies drag in stack traces and quoted source that trip every keyword.
   const title = item.title;
   const body = item.body.slice(0, 3000);
   const hay = `${title}\n${body}`;
@@ -333,8 +332,7 @@ async function fetchAll(repo: string, kind: "issue" | "pr", page: number): Promi
 const MS_PER_MONTH = 1000 * 60 * 60 * 24 * 30.44;
 
 function score(item: Item, now: number): Scored {
-  // Each channel is log-compressed independently so a single 200-comment thread
-  // can't outrank broad, quiet demand — and reactions stay the dominant term.
+  // Each channel is log-compressed independently so a single 200-comment thread can't outrank broad, quiet demand — and reactions stay the dominant term.
   const voices = Math.max(0, item.participants - 1);
   const discussion = item.comments + (item.reviews ?? 0);
   const engagement =
@@ -479,8 +477,7 @@ function buildReport(all: Scored[], args: Args, now: number, advisories: Advisor
   const prs = all.filter((i) => i.kind === "pr");
   const security = all.filter((i) => i.vuln.level === "confirmed").sort((a, b) => b.score - a.score);
   const maybeSecurity = all.filter((i) => i.vuln.level === "possible").sort((a, b) => b.score - a.score);
-  // Security has its own section up top, so the engagement rankings below sort on
-  // engagement alone — otherwise the bonus buries every genuinely busy thread.
+  // Security has its own section up top, so the engagement rankings below sort on engagement alone — otherwise the bonus buries every genuinely busy thread.
   const byScore = (a: Scored, b: Scored) => b.baseScore - a.baseScore;
 
   const L: string[] = [];

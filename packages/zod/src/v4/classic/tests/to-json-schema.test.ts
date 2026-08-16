@@ -18,8 +18,7 @@ const validateOpenAPI30Schema = async (zodJSONSchema: Record<string, unknown>): 
   });
 
   if (!res.valid) {
-    // `console.error` should make `vitest` trow an unhandled error
-    // printing the validation messages in consoles
+    // `console.error` should make `vitest` trow an unhandled error printing the validation messages in consoles
     console.error(
       `OpenAPI schema is not valid against ${openAPI30Validator.version}`,
       JSON.stringify(res.errors, null, 2)
@@ -654,8 +653,7 @@ describe("toJSONSchema", () => {
   });
 
   test("number constraints intersection draft-04", () => {
-    // When both minimum (from .int()) and exclusiveMinimum (from .positive()) exist,
-    // the more restrictive constraint should be used
+    // When both minimum (from .int()) and exclusiveMinimum (from .positive()) exist, the more restrictive constraint should be used
     expect(z.toJSONSchema(z.number().int().positive().lte(65535), { target: "draft-04" })).toMatchInlineSnapshot(`
       {
         "$schema": "http://json-schema.org/draft-04/schema#",
@@ -696,6 +694,7 @@ describe("toJSONSchema", () => {
 
   test("target normalization draft-04 and draft-07", () => {
     // Test that both old (draft-4, draft-7) and new (draft-04, draft-07) target formats work
+
     // Test draft-04 / draft-4
     expect(z.toJSONSchema(z.number().gt(5), { target: "draft-04" })).toMatchInlineSnapshot(`
       {
@@ -1252,8 +1251,7 @@ describe("toJSONSchema", () => {
   });
 
   test("tuple with rest draft-7 - issue #5151 regression test", () => {
-    // This test addresses issue #5151: tuple with rest elements and ids
-    // in draft-7 had incorrect internal path handling affecting complex scenarios
+    // This test addresses issue #5151: tuple with rest elements and ids in draft-7 had incorrect internal path handling affecting complex scenarios
     const primarySchema = z.string().meta({ id: "primary" });
     const restSchema = z.number().meta({ id: "rest" });
     const testSchema = z.tuple([primarySchema], restSchema);
@@ -2227,8 +2225,7 @@ test("unrepresentable default values go through `unrepresentable`", () => {
     }
   `);
 
-  // under the default strict mode the inner type throws first; a representable inner type surfaces
-  // the default's own error rather than a raw `JSON.stringify` TypeError
+  // under the default strict mode the inner type throws first; a representable inner type surfaces the default's own error rather than a raw `JSON.stringify` TypeError
   expect(() => z.toJSONSchema(z.bigint().default(0n))).toThrow("BigInt cannot be represented in JSON Schema");
   expect(() => z.toJSONSchema(z.unknown().default(1n))).toThrow("BigInt defaults cannot be represented in JSON Schema");
 
@@ -2254,8 +2251,7 @@ test("unrepresentable default values go through `unrepresentable`", () => {
 });
 
 test("an `unrepresentable` handler can represent a bigint default", () => {
-  // one handler covers both the type and its default, so no `unrepresentable: "any"` is needed and
-  // every other unrepresentable type still throws
+  // one handler covers both the type and its default, so no `unrepresentable: "any"` is needed and every other unrepresentable type still throws
   expect(
     z.toJSONSchema(z.object({ startAt: z.coerce.bigint().optional().default(0n) }), {
       io: "input",
@@ -2371,8 +2367,7 @@ test("describe with id", () => {
 });
 
 test("id is stripped from $defs entries (draft-2020-12)", () => {
-  // The `id` in `.meta()` is a registration tag — it determines the $defs key
-  // but should not leak into the definition body, where it is redundant.
+  // The `id` in `.meta()` is a registration tag — it determines the $defs key but should not leak into the definition body, where it is redundant.
   const inner = z.string().meta({ id: "Inner" });
   const result = z.toJSONSchema(z.object({ a: inner, b: inner }));
   expect(result.$defs?.Inner).toEqual({ type: "string" });
@@ -2380,9 +2375,7 @@ test("id is stripped from $defs entries (draft-2020-12)", () => {
 });
 
 test("id is stripped from definitions entries (draft-04)", () => {
-  // In draft-04, `id` is a reserved keyword that sets a base URI for the
-  // subschema. Leaking Zod's registration tag here is semantically wrong, so
-  // ensure it is stripped.
+  // In draft-04, `id` is a reserved keyword that sets a base URI for the subschema. Leaking Zod's registration tag here is semantically wrong, so ensure it is stripped.
   const inner = z.string().meta({ id: "Inner" });
   const result = z.toJSONSchema(z.object({ a: inner, b: inner }), { target: "draft-04" }) as any;
   expect(result.definitions?.Inner).toEqual({ type: "string" });
@@ -2397,8 +2390,7 @@ test("id is stripped from root schema", () => {
 });
 
 test("id is observable in override callback", () => {
-  // The strip happens after override callbacks run, so userland override code
-  // can still read `jsonSchema.id` if it wants to.
+  // The strip happens after override callbacks run, so userland override code can still read `jsonSchema.id` if it wants to.
   const inner = z.string().meta({ id: "Inner" });
   const seenIds: Array<string | undefined> = [];
   z.toJSONSchema(z.object({ a: inner }), {
@@ -2410,8 +2402,7 @@ test("id is observable in override callback", () => {
 });
 
 test("describe with id on wrapper", () => {
-  // Test that $ref propagation works when processor sets a different ref (readonly -> innerType)
-  // but parent was extracted due to having an id
+  // Test that $ref propagation works when processor sets a different ref (readonly -> innerType) but parent was extracted due to having an id
   const roJobId = z.string().readonly().meta({ id: "roJobId" });
 
   const a = z.toJSONSchema(
@@ -2756,8 +2747,7 @@ test("large registry converts in linear time", () => {
   });
   expect(schemas[`Type${count - 1}`]!.$id).toBe(`https://example.com/Type${count - 1}.json`);
 
-  // The whole-map passes in extractDefs/finalize used to re-run once per registered schema, which
-  // made this quadratic: ~9s of CPU at this size before the passes were hoisted, ~50ms after.
+  // The whole-map passes in extractDefs/finalize used to re-run once per registered schema, which made this quadratic: ~9s of CPU at this size before the passes were hoisted, ~50ms after.
   expect(elapsed).toBeLessThan(5000);
 });
 
@@ -2807,8 +2797,7 @@ test("registry extracts unregistered subschemas into __shared", () => {
       "type": "object",
     }
   `);
-  // Company is emitted after Person, so it only resolves if the shared $defs built on the first
-  // finalize are still reachable — the pass that writes them no longer runs per schema.
+  // Company is emitted after Person, so it only resolves if the shared $defs built on the first finalize are still reachable — the pass that writes them no longer runs per schema.
   expect(schemas.Company!.properties!.hq).toEqual({
     $ref: "https://example.com/__shared.json#/$defs/Address",
   });
@@ -2877,8 +2866,7 @@ test("JSONSchemaGenerator re-runs shared passes on a no-params emit", () => {
   const defs: Record<string, any> = {};
   gen.emit(a, { external: { registry, uri: (id: string) => `${id}.json`, defs }, reused: "ref" });
 
-  // Re-processing an already-seen schema bumps `seen.count`, which `extractDefs` branches on
-  // under `reused: "ref"` — and it returns early, so it cannot clear the guards itself.
+  // Re-processing an already-seen schema bumps `seen.count`, which `extractDefs` branches on under `reused: "ref"` — and it returns early, so it cannot clear the guards itself.
   gen.process(shared);
   const second: any = gen.emit(a);
 
@@ -3004,8 +2992,7 @@ test("catch on a transforming schema", () => {
     }
   `);
 
-  // the catch no longer hides the inner transform from ancestors, so their
-  // output-typed metadata is stripped too — matching a bare nested transform
+  // the catch no longer hides the inner transform from ancestors, so their output-typed metadata is stripped too — matching a bare nested transform
   expect(z.toJSONSchema(z.object({ a }).meta({ examples: [{ a: 1 }] }), { io: "input" })).toMatchInlineSnapshot(`
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",

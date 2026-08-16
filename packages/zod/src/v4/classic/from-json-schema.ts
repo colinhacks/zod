@@ -124,8 +124,7 @@ function applyMinItems(items: ZodType[], minItems: number): ZodType[] {
   return items.map((item, index) => (index < minItems ? item : item.optional()));
 }
 
-// Inverse of the encoding applied to $ref pointer segments in to-json-schema.ts.
-// Per RFC 6901 the `~1` replacement must run before `~0`.
+// Inverse of the encoding applied to $ref pointer segments in to-json-schema.ts. Per RFC 6901 the `~1` replacement must run before `~0`.
 function decodeJSONPointerSegment(segment: string): string {
   return segment.replace(/~1/g, "/").replace(/~0/g, "~");
 }
@@ -162,8 +161,7 @@ function resolveRef(ref: string, ctx: ConversionContext): JSONSchema.JSONSchema 
  * instance actually carried.
  */
 function checkPropertyNames(objectSchema: ZodType, keySchema: ZodType): ZodType {
-  // An identity transform, not z.any(), so `toJSONSchema` reports the object on
-  // both the input and the output side of the pipe.
+  // An identity transform, not z.any(), so `toJSONSchema` reports the object on both the input and the output side of the pipe.
   const guard = z
     .transform((value: unknown) => value)
     .check((payload) => {
@@ -439,15 +437,13 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
       // Convert properties - mark optional ones
       for (const [key, propSchema] of Object.entries(properties)) {
         const propZodSchema = convertSchema(propSchema as JSONSchema.JSONSchema, ctx);
-        // If not in required array, make it optional. assignProp so a __proto__
-        // key becomes an own property instead of hitting the inherited setter
+        // If not in required array, make it optional. assignProp so a __proto__ key becomes an own property instead of hitting the inherited setter
         assignProp(shape, key, requiredSet.has(key) ? propZodSchema : propZodSchema.optional());
       }
 
       // Handle patternProperties
       if (schema.patternProperties) {
-        // patternProperties: keys matching pattern must satisfy corresponding schema
-        // Use loose records so non-matching keys pass through
+        // patternProperties: keys matching pattern must satisfy corresponding schema. Use loose records so non-matching keys pass through
         const patternProps = schema.patternProperties;
         const patternKeys = Object.keys(patternProps);
         const looseRecords: ZodType[] = [];
@@ -479,8 +475,7 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
           zodSchema = result;
         }
 
-        // When additionalProperties is false, reject keys that are neither
-        // defined in properties nor matched by any patternProperty.
+        // When additionalProperties is false, reject keys that are neither defined in properties nor matched by any patternProperty.
         if (schema.additionalProperties === false) {
           const propertyKeys = Object.keys(shape);
           const patterns = patternKeys.map((p) => new RegExp(p));
@@ -504,9 +499,7 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
           });
         }
       } else {
-        // Handle additionalProperties
-        // In JSON Schema, additionalProperties defaults to true (allow any extra properties)
-        // In Zod, objects strip unknown keys by default, so we need to handle this explicitly
+        // Handle additionalProperties. In JSON Schema, additionalProperties defaults to true (allow any extra properties). In Zod, objects strip unknown keys by default, so we need to handle this explicitly
         const objectSchema = z.object(shape);
         if (schema.additionalProperties === false) {
           // Strict mode - no extra properties allowed
@@ -520,13 +513,9 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         }
       }
 
-      // propertyNames constrains key *names* only, and says nothing about which keys
-      // are required or how their values validate. Layering it on top of the result
-      // keeps properties/patternProperties/additionalProperties composing underneath.
-      // `true` allows every name, so it needs no guard.
+      // propertyNames constrains key *names* only, and says nothing about which keys are required or how their values validate. Layering it on top of the result keeps properties/patternProperties/additionalProperties composing underneath. `true` allows every name, so it needs no guard.
       if (schema.propertyNames !== undefined && schema.propertyNames !== true) {
-        // Keys are always strings, so a propertyNames subschema that omits `type`
-        // still constrains them — without this it would convert to z.any().
+        // Keys are always strings, so a propertyNames subschema that omits `type` still constrains them — without this it would convert to z.any().
         const keyJSONSchema =
           typeof schema.propertyNames === "object" && schema.propertyNames.type === undefined
             ? { type: "string", ...schema.propertyNames }
@@ -537,8 +526,8 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
     }
 
     case "array": {
-      // TODO: uniqueItems is not supported
-      // TODO: contains/minContains/maxContains are not supported
+      // TODO: uniqueItems and contains/minContains/maxContains are not supported
+
       // Check if this is a tuple (prefixItems or items as array)
       const prefixItems = schema.prefixItems;
       const items = schema.items;
@@ -611,6 +600,7 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
   const hasExplicitType = schema.type || schema.enum !== undefined || schema.const !== undefined;
 
   // Process composition keywords LAST (they can appear together)
+
   // Handle anyOf - wrap base schema with union
   if (schema.anyOf && Array.isArray(schema.anyOf)) {
     const options = schema.anyOf.map((s) => convertSchema(s, ctx));
@@ -649,16 +639,12 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
     baseSchema = z.readonly(baseSchema);
   }
 
-  // Apply `default` so it wraps the fully-composed schema. This ensures
-  // `parse(undefined) -> default` works regardless of which branch of
-  // `convertBaseSchema` produced the inner schema (enum/const/not/typed/etc.).
+  // Apply `default` so it wraps the fully-composed schema. This ensures `parse(undefined) -> default` works regardless of which branch of `convertBaseSchema` produced the inner schema (enum/const/not/typed/etc.).
   if (schema.default !== undefined) {
     baseSchema = baseSchema.default(schema.default);
   }
 
-  // Collect non-description annotation metadata into the user-supplied
-  // registry. Description is handled separately below via `.describe()` to
-  // preserve the contract that `schema.description` reads from globalRegistry.
+  // Collect non-description annotation metadata into the user-supplied registry. Description is handled separately below via `.describe()` to preserve the contract that `schema.description` reads from globalRegistry.
   const extraMeta: Record<string, unknown> = {};
 
   const coreMetadataKeys = ["$id", "id", "$comment", "$anchor", "$vocabulary", "$dynamicRef", "$dynamicAnchor"];
@@ -675,10 +661,7 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
     }
   }
 
-  // `propertyNames` is enforced by a key guard, which `toJSONSchema` cannot infer,
-  // so the original keyword is carried as metadata to keep the round-trip lossless.
-  // Only where it was actually applied: on any other type it is inert, and on a
-  // `$ref` the metadata would land on the target every reference shares.
+  // `propertyNames` is enforced by a key guard, which `toJSONSchema` cannot infer, so the original keyword is carried as metadata to keep the round-trip lossless. Only where it was actually applied: on any other type it is inert, and on a `$ref` the metadata would land on the target every reference shares.
   if (schema.propertyNames !== undefined && schema.type === "object" && schema.$ref === undefined) {
     extraMeta.propertyNames = schema.propertyNames;
   }
@@ -693,9 +676,7 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
     ctx.registry.add(baseSchema, extraMeta);
   }
 
-  // Apply description last. `.describe()` clones the schema and sets
-  // `_zod.parent` on the clone, so registry lookups on the returned reference
-  // still resolve `extraMeta` via parent inheritance.
+  // Apply description last. `.describe()` clones the schema and sets `_zod.parent` on the clone, so registry lookups on the returned reference still resolve `extraMeta` via parent inheritance.
   if (schema.description) {
     baseSchema = baseSchema.describe(schema.description);
   }
@@ -711,10 +692,7 @@ export function fromJSONSchema(schema: JSONSchema.JSONSchema | boolean, params?:
     return schema ? z.any() : z.never();
   }
 
-  // Normalize input via a JSON round-trip. This guarantees the converter
-  // walks a plain, finite, JSON-valid object graph: cyclic inputs fail here,
-  // getter/Proxy-based properties are materialized into static values, and
-  // class instances collapse to plain objects.
+  // Normalize input via a JSON round-trip. This guarantees the converter walks a plain, finite, JSON-valid object graph: cyclic inputs fail here, getter/Proxy-based properties are materialized into static values, and class instances collapse to plain objects.
   let normalized: JSONSchema.JSONSchema;
   try {
     normalized = JSON.parse(JSON.stringify(schema));

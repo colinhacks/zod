@@ -17,6 +17,7 @@ The project uses pnpm workspaces. Key commands:
 - `pnpm dev` - Execute code with tsx under source conditions
 - `pnpm dev <file>` - Execute `<file>` with tsx & proper resolution conditions. Usually use for `play.ts`.
 - `pnpm dev:play` - Quick alias to run play.ts for experimentation
+- `pnpm check:comments` - Fail on stacked `//` comment lines (`--fix` joins them)
 - `pnpm lint` - Run biome linter with auto-fix
 - `pnpm format` - Format code with biome
 - `pnpm fix` - Run both format and lint
@@ -32,8 +33,10 @@ The project uses pnpm workspaces. Key commands:
 - Test both success and failure cases with edge cases
 - Keep added tests as minimal and dense as possible without sacrificing comprehensiveness; avoid redundant assertions or broad fixtures when a focused case proves the behavior.
 - No log statements (`console.log`, `debugger`) in tests or production code
+- Never stack prose across consecutive `//` lines. Lines have no maximum width here — the editor wraps for display — so a paragraph split across several `//` lines is just a hard-wrapped line, and hard wrapping breaks search, diffs and editing. Write one long `//` instead. `pnpm check:comments` enforces this in pre-commit and CI; `--fix` joins the offenders. Commented-out code, `@ts-`/`@__NO_SIDE_EFFECTS__`-style pragmas, bullet lists, and blocks separated by a bare `//` are exempt. When two adjacent comments describe two different statements, separate them with a blank line rather than joining them.
 - Ask before generating new files
 - Use `util.defineLazy()` for computed properties to avoid circular dependencies
+- Never branch on specific schema types in shared code. No `def.type === "optional"` conditionals, no hardcoded lists of wrapper type names, no walks up the wrapper chain hunting for a particular type. Every schema type added later silently falls through such a check, and the list is wrong the moment someone writes a new wrapper. When a shared path needs to know something about a schema, express it as a structural property on the internals — `optin`/`optout`, `values`, `pattern`, `propValues` — and let each type declare its own answer. This is not negotiable in the parse paths; a PR that adds edge-case conditional logic keyed on schema types will be rejected regardless of how well it is tested.
 - Performance is critical - parameter reassignment is allowed for optimization
 - Any change to `packages/zod/src` must be weighed on **all three axes: runtime performance, memory consumption, and bundle size** — see "The three axes" below. A change that improves one and is only checked on that one is not finished.
 - ALWAYS use the `gh` CLI to fetch GitHub information (issues, PRs, etc.) instead of relying on web search or assumptions
@@ -101,6 +104,8 @@ The release workflow only fires on changes under `packages/zod/package.json`, `p
 ## Triaging issues and PRs
 
 Follow the `triage` skill at [`.claude/skills/triage/SKILL.md`](.claude/skills/triage/SKILL.md) whenever you're asked to investigate, triage, or form an opinion on an issue or PR. It is the single source of truth for the procedure. Claude and Codex both auto-discover it (Codex via the `.codex/skills` symlink); read it directly if your agent doesn't.
+
+For a draft **security advisory** — a GHSA id, the Security tab, a private vulnerability report — use the `security-advisory` skill at [`.claude/skills/security-advisory/SKILL.md`](.claude/skills/security-advisory/SKILL.md) instead. It shares the conventions above but reorders the work: the fix lands on `main` before any reporter comment is drafted, since the comment's whole value is the PR it links to.
 
 Write-ups live in the gitignored `.triage/` tree — one directory per ticket, `.triage/issues/NNNN/results.md` and `.triage/prs/NNNN/results.md`, with scratch files and repros alongside. When investigating a PR from its worktree, resolve the root repo first (`git worktree list | head -1`) and write results back there; a relative write lands in the worktree's own ignored `.triage/` where nobody will find it.
 

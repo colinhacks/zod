@@ -39,8 +39,7 @@ export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _jso
     json.format = formatMap[format as checks.$ZodStringFormats] ?? format;
     if (json.format === "") delete json.format; // empty format is not valid
 
-    // JSON Schema format: "time" requires a full time with offset or Z
-    // z.iso.time() does not include timezone information, so format: "time" should never be used
+    // JSON Schema format: "time" requires a full time with offset or Z. z.iso.time() does not include timezone information, so format: "time" should never be used
     if (format === "time") {
       delete json.format;
     }
@@ -289,8 +288,7 @@ export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _jso
   const shape = def.shape;
 
   for (const key in shape) {
-    // assignProp so a __proto__ key becomes an own property instead of hitting
-    // the inherited setter on the plain {} we build into
+    // assignProp so a __proto__ key becomes an own property instead of hitting the inherited setter on the plain {} we build into
     assignProp(
       json.properties,
       key,
@@ -335,8 +333,7 @@ export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _jso
 
 export const unionProcessor: Processor<schemas.$ZodUnion> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodUnionDef;
-  // Exclusive unions (inclusive === false) use oneOf (exactly one match) instead of anyOf (one or more matches)
-  // This includes both z.xor() and discriminated unions
+  // Exclusive unions (inclusive === false) use oneOf (exactly one match) instead of anyOf (one or more matches). This includes both z.xor() and discriminated unions
   const isExclusive = def.inclusive === false;
   const options = def.options.map((x, i) =>
     process(x, ctx as any, {
@@ -446,9 +443,7 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
   const def = schema._zod.def as schemas.$ZodRecordDef;
   json.type = "object";
 
-  // For looseRecord with regex patterns, use patternProperties
-  // This correctly represents "only validate keys matching the pattern" semantics
-  // and composes well with allOf (intersections)
+  // For looseRecord with regex patterns, use patternProperties. This correctly represents "only validate keys matching the pattern" semantics and composes well with allOf (intersections)
   const keyType = def.keyType as schemas.$ZodTypes;
   const keyBag = keyType._zod.bag as schemas.$ZodStringInternals<unknown>["bag"] | undefined;
   const patterns = keyBag?.patterns;

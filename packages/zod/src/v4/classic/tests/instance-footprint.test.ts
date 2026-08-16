@@ -3,12 +3,7 @@ import { expect, test } from "vitest";
 import * as zm from "zod/mini";
 import * as z from "zod/v4";
 
-// V8 sizes an instance's property backing store in steps, and schema
-// instances get no in-object slots (their constructor assigns nothing itself):
-// 12 own properties cost 128 bytes, 13 cost 848, 21 cost 1616. Methods
-// therefore live on the prototype and materialize per instance on first read.
-// These bounds are what keeps a schema graph small; crossing one silently
-// multiplies its memory by 6x.
+// V8 sizes an instance's property backing store in steps, and schema instances get no in-object slots (their constructor assigns nothing itself): 12 own properties cost 128 bytes, 13 cost 848, 21 cost 1616. Methods therefore live on the prototype and materialize per instance on first read. These bounds are what keeps a schema graph small; crossing one silently multiplies its memory by 6x.
 const MAX_OWN_PROPS = 12;
 
 test("schema instances stay under V8's property-count step", () => {
@@ -75,15 +70,13 @@ test("~standard is lazy but complete", () => {
 test("caching a lazy member preserves its original enumerability", () => {
   const schema = z.string();
 
-  // Methods were enumerable own properties before they moved to the prototype,
-  // so touching one still surfaces it to `Object.keys`.
+  // Methods were enumerable own properties before they moved to the prototype, so touching one still surfaces it to `Object.keys`.
   void schema.parse;
   void schema.optional;
   expect(Object.keys(schema)).toContain("parse");
   expect(Object.keys(schema)).toContain("optional");
 
-  // `~standard` never was an own data property, so caching it must not add it
-  // to `Object.keys` or to `JSON.stringify` of a schema.
+  // `~standard` never was an own data property, so caching it must not add it to `Object.keys` or to `JSON.stringify` of a schema.
   void schema["~standard"];
   expect(Object.keys(schema)).not.toContain("~standard");
   expect(JSON.stringify(schema)).not.toContain("~standard");
