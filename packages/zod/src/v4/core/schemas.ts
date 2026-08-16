@@ -257,11 +257,13 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
             await _;
             const nextLen = payload.issues.length;
             if (nextLen === currLen) return;
+            util.attachSchema(payload.issues, currLen, inst);
             if (!isAborted) isAborted = util.aborted(payload, currLen);
           });
         } else {
           const nextLen = payload.issues.length;
           if (nextLen === currLen) continue;
+          util.attachSchema(payload.issues, currLen, inst);
           if (!isAborted) isAborted = util.aborted(payload, currLen);
         }
       }

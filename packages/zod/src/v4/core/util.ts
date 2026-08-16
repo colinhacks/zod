@@ -851,11 +851,25 @@ export function unwrapMessage(message: string | { message: string } | undefined 
   return typeof message === "string" ? message : message?.message;
 }
 
+/* A check holds no link back to the schema it is attached to — the same check instance is shared by every clone of that schema — so the owner is stamped onto the issues a check just raised, at the only point where both are in scope. Runs on the failure path only; `start` is the issue count from before the check ran. */
+export function attachSchema(issues: errors.$ZodRawIssue[], start: number, inst: schemas.$ZodType): void {
+  for (let i = start; i < issues.length; i++) {
+    (issues[i] as any).schema ??= inst;
+  }
+}
+
 export function finalizeIssue(
   iss: errors.$ZodRawIssue,
   ctx: schemas.ParseContextInternal | undefined,
   config: $ZodConfig
 ): errors.$ZodIssue {
+  // A schema that raised an issue itself owns it outright, and outranks any stamp an enclosing check left in `attachSchema`. String formats and z.custom() are schema and check at once, so when they act as a check they defer to that stamp instead.
+  const traits: Set<string> | undefined = (iss.inst as any)?._zod?.traits;
+  if (traits?.has("$ZodType")) {
+    if (traits.has("$ZodCheck")) (iss as any).schema ??= iss.inst;
+    else (iss as any).schema = iss.inst;
+  }
+
   const message = iss.message
     ? iss.message
     : (unwrapMessage(iss.inst?._zod.def?.error?.(iss as never)) ??
@@ -864,7 +878,7 @@ export function finalizeIssue(
       unwrapMessage(config.localeError?.(iss)) ??
       "Invalid input");
 
-  const { inst: _inst, continue: _continue, input: _input, ...rest } = iss as any;
+  const { inst: _inst, schema: _schema, continue: _continue, input: _input, ...rest } = iss as any;
   rest.path ??= [];
   rest.message = message;
   if (ctx?.reportInput) {
