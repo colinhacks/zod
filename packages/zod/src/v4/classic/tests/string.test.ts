@@ -404,6 +404,14 @@ test("url, ipv6 and cidrv6 reject ASCII tab and newline", () => {
   expect(z.httpUrl().parse("https://example.com")).toBe("https://example.com");
   expect(z.ipv6().parse("2001:db8::1")).toBe("2001:db8::1");
   expect(z.cidrv6().parse("2001:db8::1/128")).toBe("2001:db8::1/128");
+
+  // The rejection must surface as a real validation issue, so a future refactor
+  // that stops throwing can't silently re-pass these (success:false alone would).
+  const withTab = z.ipv6().safeParse("::1\t");
+  expect(withTab.success).toBe(false);
+  if (!withTab.success) {
+    expect(withTab.error.issues.length).toBeGreaterThan(0);
+  }
 });
 
 test("url normalize flag", () => {
