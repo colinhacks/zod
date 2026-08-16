@@ -1448,14 +1448,52 @@ test("object output parity: key order, undefined keys, inherited keys, getters",
 test("unsupported features throw ZodCompileUnsupportedError, not raw errors", () => {
   // __proto__ shape key: output object literal would set the prototype.
   expect(() => compile(z.object({ ["__proto__"]: z.string() }))).toThrow(ZodCompileUnsupportedError);
-  // Record key schemas with checks need runtime key transforms.
-  expect(() => compile(z.record(z.string().min(2), z.number()))).toThrow(ZodCompileUnsupportedError);
+  // Exclusive unions need every branch's failure to be a real runtime failure.
+  expect(() => compile(z.xor([z.object({ a: z.string() }), z.object({ b: z.string() })]))).toThrow(
+    ZodCompileUnsupportedError
+  );
   // NaN comparison bounds can't compile to a faithful comparison.
   expect(() => compile(z.number().gt(Number.NaN))).toThrow(ZodCompileUnsupportedError);
   // Unsupported children still island inside containers.
-  const aot = compile(z.object({ a: z.string(), rec: z.record(z.string().min(2), z.number()) }));
-  expect(valid(aot, { a: "x", rec: { ab: 1 } })).toEqual({ a: "x", rec: { ab: 1 } });
-  invalid(aot, { a: "x", rec: { b: 1 } });
+  const aot = compile(z.object({ a: z.string(), x: z.xor([z.literal("p"), z.literal("q")]) }));
+  expect(valid(aot, { a: "x", x: "p" })).toEqual({ a: "x", x: "p" });
+  invalid(aot, { a: "x", x: "z" });
+});
+
+test("record key schemas compile: formats, checks, numbers, transforms", () => {
+  // A string format lives on the def rather than in `checks`, so an email key
+  // schema reads as a bare `z.string()` unless the key path looks for it.
+  for (const [schema, inputs] of [
+    [z.record(z.email(), z.number()), [{ "a@b.com": 1 }, { nope: 1 }, {}]],
+    [z.record(z.string().min(2), z.number()), [{ ab: 1 }, { a: 1 }]],
+    [z.record(z.string().regex(/^k_/), z.number()), [{ k_a: 1 }, { x: 1 }]],
+    // Numeric keys arrive stringified; the runtime retries them as numbers.
+    [z.record(z.number(), z.string()), [{ 1: "a" }, { "1.5": "a" }, { x: "a" }]],
+    [z.record(z.templateLiteral(["id_", z.string()]), z.number()), [{ id_a: 1 }, { b: 1 }]],
+    // The key schema picks the output key, not the input key.
+    [
+      z.record(
+        z
+          .string()
+          .min(1)
+          .overwrite((s: string) => s.toUpperCase()),
+        z.number()
+      ),
+      [{ ab: 1 }, { "": 1 }],
+    ],
+    [z.record(z.coerce.string(), z.number()), [{ 5: 1 }]],
+  ] as [z.ZodType, unknown[]][]) {
+    for (const input of inputs) expectMatch(schema, input);
+  }
+
+  // Own __proto__ is skipped rather than validated, matching the runtime.
+  expectMatch(z.record(z.email(), z.number()), JSON.parse('{"__proto__":{"p":1},"a@b.com":1}'));
+
+  // A loose record keeps a rejected key verbatim, copying its value across
+  // unvalidated instead of failing.
+  for (const input of [{ "a@b.com": 1 }, { nope: 1 }, { "a@b.com": 1, nope: "raw" }, { "a@b.com": "bad" }]) {
+    expectMatch(z.looseRecord(z.email(), z.number()), input);
+  }
 });
 
 test("date min/max bounds compile with runtime parity", () => {

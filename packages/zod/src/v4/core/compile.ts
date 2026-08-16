@@ -2,6 +2,7 @@ import type * as checks from "./checks.js";
 import * as core from "./core.js";
 import { Doc } from "./doc.js";
 import { isBackEdge, isRecursiveSchema } from "./memoizer.js";
+import * as regexes from "./regexes.js";
 import {
   isValidBase64,
   isValidBase64URL,
@@ -197,7 +198,15 @@ export function compileFastpass<T extends SomeType>(
   // schema in that call shares. The generated fast path takes an input and
   // returns a value — it has no context to key on, so it would follow the cycle
   // in the input until the stack ran out. Hand the whole schema to the runtime.
-  if (isRecursiveSchema(schema as any)) {
+  // Walking the graph reads `shape`, which some schemas define as a getter that
+  // throws (`z.pick()` with an unrecognized mask key). Treat "can't tell" as
+  // recursive: the runtime raises that error from the parse where it belongs,
+  // and every escape from here stays a ZodCompileUnsupportedError.
+  let recursive = true;
+  try {
+    recursive = isRecursiveSchema(schema as any);
+  } catch {}
+  if (recursive) {
     throw new ZodCompileUnsupportedError("a schema whose subtree contains a reference cycle");
   }
 
@@ -1826,16 +1835,51 @@ function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
     return outputVar;
   }
 
-  // Any other non-plain-string key schema is unsupported. Runtime applies the
-  // keyType to each input key (validating + transforming); the fast path
-  // doesn't model that yet. Even a plain `z.string()` with checks (regex,
-  // length, refine, etc.) needs the runtime. Throw (rather than emit
-  // `return INVALID`) so containers island this record and direct callers get
-  // a signal instead of a silently dead fast path.
-  const keyType = def.keyType._zod.def.type;
-  const keyHasChecks = (def.keyType._zod.def.checks?.length ?? 0) > 0;
-  if (keyType !== "string" || keyHasChecks) {
-    throw new ZodCompileUnsupportedError("record key schemas other than bare z.string()");
+  // The bare-string shortcut below only tests `typeof key === "string"`, so it
+  // is correct exclusively for a `z.string()` carrying nothing else. A string
+  // *format* lives on the def rather than in `checks` — `z.record(z.email(), …)`
+  // reads as a plain string here — and coercion rewrites the key, so both have
+  // to take the general path or the shortcut accepts keys the runtime rejects.
+  const keyDef = def.keyType._zod.def as { type: string; format?: string; coerce?: boolean; checks?: unknown[] };
+  const keyIsBareString =
+    keyDef.type === "string" && keyDef.format === undefined && !keyDef.coerce && (keyDef.checks?.length ?? 0) === 0;
+  if (!keyIsBareString) {
+    // A key schema with no value set is a constraint every key must satisfy
+    // (`z.email()`, `z.string().min(3)`, `z.number()`, a template literal).
+    // The runtime runs it against each own enumerable key and writes the value
+    // under the key it produced, so compile it once and call it per key.
+    const isLoose = (def as { mode?: string }).mode === "loose";
+    const keyFast = addConstant(ctx, compileFastpass(def.keyType));
+    const numericConst = addConstant(ctx, regexes.number);
+    const propIsEnumerableConst = addConstant(ctx, Object.prototype.propertyIsEnumerable);
+    const outKeyVar = newVar(ctx);
+
+    doc.write(`for (const ${kVar} of Reflect.ownKeys(${accessor})) {`);
+    doc.indented((d) => {
+      d.write(`if (${kVar} === "__proto__") continue;`);
+      d.write(`if (!${propIsEnumerableConst}.call(${accessor}, ${kVar})) continue;`);
+      d.write(`let ${outKeyVar} = ${keyFast}(${kVar});`);
+      // Numeric-string retry, mirroring the runtime: a key the schema rejects as
+      // a string is tried again as a number, so z.record(z.number(), …) matches
+      // the numeric keys JavaScript stringified on the way in.
+      d.write(
+        `if (${outKeyVar} === INVALID && typeof ${kVar} === "string" && ${numericConst}.test(${kVar})) ${outKeyVar} = ${keyFast}(Number(${kVar}));`
+      );
+      if (isLoose) {
+        // A loose record keeps a key its schema rejects, copying the value
+        // across unvalidated rather than failing the parse.
+        d.write(`if (${outKeyVar} === INVALID) { ${outputVar}[${kVar}] = ${accessor}[${kVar}]; continue; }`);
+      } else {
+        d.write(`if (${outKeyVar} === INVALID) return INVALID;`);
+      }
+      // The guard above tested the input key, but the schema can normalize an
+      // ordinary key into __proto__; re-check the one actually written under.
+      d.write(`if (${outKeyVar} === "__proto__") continue;`);
+      const valOutput = compileChild(d, ctx, def.valueType, `${accessor}[${kVar}]`);
+      d.write(`${outputVar}[${outKeyVar}] = ${valOutput};`);
+    });
+    doc.write(`}`);
+    return outputVar;
   }
 
   // Plain z.string() keys: iterate enumerable own keys and validate each
