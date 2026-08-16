@@ -263,17 +263,16 @@ export const arrayProcessor: Processor<schemas.$ZodArray> = (schema, ctx, _json,
   });
 };
 
-// `z.preprocess(fn, inner)` builds a pipe whose `in` is a transform. A bare
-// transform reports `optin: "optional"` so the preprocessor can still run on
-// absent object keys at parse time, but that input-optionality belongs to the
-// transform, not the property: for JSON Schema the input shape is the inner
-// `out` schema, so a preprocessed property is only optional when that inner
-// schema is. Defer to the inner schema's optionality, mirroring runtime parsing
-// (`z.object({ a: z.preprocess(v => v, z.string()) }).parse({})` rejects `a`).
+// Transform and catch set `optin = "optional"` at runtime so the parser lets them observe an
+// absent key, but their declared input type stays required. An input JSON Schema describes the
+// declared type, so resolve past them to the schema that actually carries the optionality.
 function inputOptin(schema: schemas.$ZodType): "optional" | undefined {
-  const def = schema._zod.def as schemas.$ZodPipeDef;
-  if (def.type === "pipe" && def.in._zod.traits.has("$ZodTransform")) {
-    return inputOptin(def.out);
+  const def = schema._zod.def;
+  if (def.type === "pipe" && (def as schemas.$ZodPipeDef).in._zod.traits.has("$ZodTransform")) {
+    return inputOptin((def as schemas.$ZodPipeDef).out);
+  }
+  if (def.type === "catch") {
+    return inputOptin((def as schemas.$ZodCatchDef).innerType);
   }
   return schema._zod.optin;
 }
