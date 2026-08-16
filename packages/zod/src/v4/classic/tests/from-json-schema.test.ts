@@ -801,6 +801,15 @@ test("string format - date-time", () => {
   expect(roundTripped.safeParse("2026-07-29T16:30:00+02:00").success).toBe(true);
 });
 
+test("string format - hostname", () => {
+  const schema = fromJSONSchema({
+    type: "string",
+    format: "hostname",
+  });
+  expect(schema.parse("example.com")).toBe("example.com");
+  expect(() => schema.parse("not a hostname!")).toThrow();
+});
+
 test("exclusiveMinimum and exclusiveMaximum", () => {
   const schema = fromJSONSchema({
     type: "number",
