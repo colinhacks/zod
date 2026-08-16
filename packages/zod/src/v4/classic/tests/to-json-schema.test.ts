@@ -2868,6 +2868,43 @@ test("defaults/prefaults", () => {
   `);
 });
 
+test("catch on a transforming schema", () => {
+  const a = z
+    .string()
+    .transform((val) => val.length)
+    .pipe(z.number())
+    .catch(0);
+
+  expect(z.toJSONSchema(a)).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "default": 0,
+      "type": "number",
+    }
+  `);
+  // catch values are output-typed, so they are not valid input
+  expect(z.toJSONSchema(a, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+    }
+  `);
+
+  // the catch no longer hides the inner transform from ancestors, so their
+  // output-typed metadata is stripped too — matching a bare nested transform
+  expect(z.toJSONSchema(z.object({ a }).meta({ examples: [{ a: 1 }] }), { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "a": {
+          "type": "string",
+        },
+      },
+      "type": "object",
+    }
+  `);
+});
+
 test("falsy prefaults (false, 0, empty string)", () => {
   // boolean prefault false
   const a = z.boolean().prefault(false);
