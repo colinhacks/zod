@@ -64,3 +64,67 @@ export const ZodMiniISODuration: core.$constructor<ZodMiniISODuration> = /*@__PU
 export function duration(params?: string | core.$ZodISODurationParams): ZodMiniISODuration {
   return core._isoDuration(ZodMiniISODuration, params);
 }
+
+// iso year-month
+export interface ZodMiniISOYearMonth extends schemas.ZodMiniStringFormat<"yearMonth"> {
+  _zod: core.$ZodISOYearMonthInternals;
+}
+export const ZodMiniISOYearMonth: core.$constructor<ZodMiniISOYearMonth> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniISOYearMonth",
+  (inst, def) => {
+    core.$ZodISOYearMonth.init(inst, def);
+    schemas.ZodMiniStringFormat.init(inst, def);
+  }
+);
+// @__NO_SIDE_EFFECTS__
+export function yearMonth(params?: string | core.$ZodISOYearMonthParams): ZodMiniISOYearMonth {
+  return core._isoYearMonth(ZodMiniISOYearMonth, params);
+}
+
+// iso month-day
+export interface ZodMiniISOMonthDay extends schemas.ZodMiniStringFormat<"monthDay"> {
+  _zod: core.$ZodISOMonthDayInternals;
+}
+export const ZodMiniISOMonthDay: core.$constructor<ZodMiniISOMonthDay> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniISOMonthDay",
+  (inst, def) => {
+    core.$ZodISOMonthDay.init(inst, def);
+    schemas.ZodMiniStringFormat.init(inst, def);
+  }
+);
+// @__NO_SIDE_EFFECTS__
+export function monthDay(params?: string | core.$ZodISOMonthDayParams): ZodMiniISOMonthDay {
+  return core._isoMonthDay(ZodMiniISOMonthDay, params);
+}
+
+// iso instant
+export interface ZodMiniISOInstant extends schemas.ZodMiniStringFormat<"instant"> {
+  _zod: core.$ZodISOInstantInternals;
+}
+export const ZodMiniISOInstant: core.$constructor<ZodMiniISOInstant> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniISOInstant",
+  (inst, def) => {
+    core.$ZodISOInstant.init(inst, def);
+    schemas.ZodMiniStringFormat.init(inst, def);
+  }
+);
+// @__NO_SIDE_EFFECTS__
+export function instant(params?: string | core.$ZodISOInstantParams): ZodMiniISOInstant {
+  return core._isoInstant(ZodMiniISOInstant, params);
+}
+
+// iso zoned date-time
+export interface ZodMiniISOZonedDateTime extends schemas.ZodMiniStringFormat<"zonedDateTime"> {
+  _zod: core.$ZodISOZonedDateTimeInternals;
+}
+export const ZodMiniISOZonedDateTime: core.$constructor<ZodMiniISOZonedDateTime> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniISOZonedDateTime",
+  (inst, def) => {
+    core.$ZodISOZonedDateTime.init(inst, def);
+    schemas.ZodMiniStringFormat.init(inst, def);
+  }
+);
+// @__NO_SIDE_EFFECTS__
+export function zonedDateTime(params?: string | core.$ZodISOZonedDateTimeParams): ZodMiniISOZonedDateTime {
+  return core._isoZonedDateTime(ZodMiniISOZonedDateTime, params);
+}
