@@ -1365,6 +1365,23 @@ describe("toJSONSchema", () => {
     expect(output.maxItems).toBe(2);
   });
 
+  test("closed tuple length resolves input optionality past transform and catch", () => {
+    const minItems = (schema: z.core.$ZodType, io: "input" | "output") =>
+      z.toJSONSchema(schema, { target: "draft-2020-12", io }).minItems;
+
+    // Both let the parser observe an absent slot, but declare a required input.
+    const pre = z.tuple([z.string(), z.preprocess((v) => v, z.string())]);
+    expect(minItems(pre, "input")).toBe(2);
+    expect(minItems(pre, "output")).toBe(2);
+
+    const caught = z.tuple([z.string(), z.string().catch("x")]);
+    expect(minItems(caught, "input")).toBe(2);
+    expect(minItems(caught, "output")).toBe(2);
+
+    // Resolution passes through the wrapper rather than stopping at it.
+    expect(minItems(z.tuple([z.string(), z.string().optional().catch("x")]), "input")).toBe(1);
+  });
+
   test("promise", () => {
     const schema = z.promise(z.string());
     expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
