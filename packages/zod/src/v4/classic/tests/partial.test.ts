@@ -455,6 +455,9 @@ test("exactPartial - shallow inference", () => {
     outer?: { inner: string };
     array?: { asdf: string }[];
   }>();
+
+  // The point of exactPartial: unlike partial(), this matches TypeScript's Partial<> under exactOptionalPropertyTypes.
+  expectTypeOf<shallow>().toEqualTypeOf<Partial<z.infer<typeof nested>>>();
 });
 
 test("exactPartial - wraps fields in ZodExactOptional", () => {
