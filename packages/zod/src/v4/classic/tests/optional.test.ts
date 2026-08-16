@@ -331,3 +331,30 @@ test("tuple tail optionality through optout propagation", () => {
   const interiorOptional = z.tuple([z.string(), z.number().optional(), z.string()]);
   expectTypeOf<z.output<typeof interiorOptional>>().toEqualTypeOf<[string, number | undefined, string]>();
 });
+
+// An absent optional key whose check fails has its issue swallowed; the value the
+// check wrote must go with it, on the JIT fastpass as well as the interpreted path.
+test("swallowed issue on an absent optional key drops its value", async () => {
+  const schema = z.object({
+    a: z
+      .string()
+      .optional()
+      .superRefine((_v, ctx) => {
+        ctx.addIssue({ code: "custom", message: "bad" });
+        ctx.value = "leaked";
+      }),
+  });
+
+  for (const result of [
+    schema.safeParse({}),
+    schema.safeParse({}, { jitless: true }),
+    await schema.safeParseAsync({}),
+  ]) {
+    expect(result.success).toEqual(true);
+    expect("a" in result.data!).toEqual(false);
+  }
+
+  // A present key keeps both the issue and its value.
+  expect(schema.safeParse({ a: "x" }).success).toEqual(false);
+  expect(schema.safeParse({ a: "x" }, { jitless: true }).success).toEqual(false);
+});

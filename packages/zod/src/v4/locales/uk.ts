@@ -43,6 +43,7 @@ const error: () => errors.$ZodErrorMap = () => {
     base64url: "рядок у кодуванні base64url",
     json_string: "рядок JSON",
     e164: "номер E.164",
+    credit_card: "номер кредитної картки",
     jwt: "JWT",
     template_literal: "вхідні дані",
   };

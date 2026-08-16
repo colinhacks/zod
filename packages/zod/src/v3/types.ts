@@ -3249,7 +3249,9 @@ function mergeValues(a: any, b: any): { valid: true; data: any } | { valid: fals
     const sharedKeys = util.objectKeys(a).filter((key) => bKeys.indexOf(key) !== -1);
 
     const newObj: any = { ...a, ...b };
+    if (Object.prototype.hasOwnProperty.call(newObj, "__proto__")) delete newObj.__proto__;
     for (const key of sharedKeys) {
+      if (key === "__proto__") continue;
       const sharedValue = mergeValues(a[key], b[key]);
       if (!sharedValue.valid) {
         return { valid: false };

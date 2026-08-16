@@ -344,6 +344,15 @@ test("z.record", () => {
     [Enum.B]: "world",
   });
 
+  const partial = z.partialRecord(z.enum(["__proto__", "b"]), z.string());
+  type partial = z.output<typeof partial>;
+  expectTypeOf<partial>().toEqualTypeOf<Partial<Record<"__proto__" | "b", string>>>();
+  const parsed: any = z.parse(partial, Object.fromEntries([["__proto__", "declared"]]));
+  expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+  expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(false);
+  expect(parsed).toEqual({});
+  expect(z.parse(partial, {})).toEqual({});
+
   // v3-compat single-arg form: z.record(valueType) defaults keyType to z.string()
   const f = (z.record as any)(z.number());
   expect(f._zod.def.keyType._zod.def.type).toEqual("string");
