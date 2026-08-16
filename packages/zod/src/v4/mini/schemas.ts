@@ -1815,8 +1815,7 @@ export function check<O = unknown>(fn: core.CheckFn<O>, params?: string | core.$
   return ch;
 }
 
-// ZodCustom
-// custom schema
+// ZodCustom custom schema
 // @__NO_SIDE_EFFECTS__
 export function custom<O = unknown, I = O>(
   fn?: (data: O) => unknown,

@@ -36,9 +36,7 @@ export { input, output } from "./in-out.js";
 
 export * as locales from "../locales/index.js";
 
-// iso
-// must be exported from top-level
-// https://github.com/colinhacks/zod/issues/4491
+// iso must be exported from top-level https://github.com/colinhacks/zod/issues/4491
 export { ZodISODateTime, ZodISODate, ZodISOTime, ZodISODuration } from "./iso.js";
 export * as iso from "./iso.js";
 

@@ -221,8 +221,7 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
   }
 
   if (checks.length === 0) {
-    // deferred initializer
-    // inst._zod.parse is not yet defined
+    // deferred initializer inst._zod.parse is not yet defined
     inst._zod.deferred ??= [];
     inst._zod.deferred?.push(() => {
       inst._zod.run = inst._zod.parse;
@@ -257,11 +256,13 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
             await _;
             const nextLen = payload.issues.length;
             if (nextLen === currLen) return;
+            util.attachSchema(payload.issues, currLen, inst);
             if (!isAborted) isAborted = util.aborted(payload, currLen);
           });
         } else {
           const nextLen = payload.issues.length;
           if (nextLen === currLen) continue;
+          util.attachSchema(payload.issues, currLen, inst);
           if (!isAborted) isAborted = util.aborted(payload, currLen);
         }
       }
@@ -295,8 +296,7 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
         return inst._zod.parse(payload, ctx);
       }
       if (ctx.direction === "backward") {
-        // run canary
-        // initial pass (no checks)
+        // run canary initial pass (no checks)
         const canary = inst._zod.parse({ value: payload.value, issues: [] }, { ...ctx, skipChecks: true });
 
         if (canary instanceof Promise) {
@@ -319,8 +319,7 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
     };
   }
 
-  // Wrappers extend this by installing a richer factory over it; reading it
-  // eagerly would defeat the laziness.
+  // Wrappers extend this by installing a richer factory over it; reading it eagerly would defeat the laziness.
   util.installLazyProp(inst, "~standard", standardProps);
 });
 
@@ -561,8 +560,7 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
       // Trim whitespace from input
       const trimmed = payload.value.trim();
 
-      // When normalize is off, require :// for http/https URLs
-      // This prevents strings like "http:example.com" or "https:/path" from being silently accepted
+      // When normalize is off, require :// for http/https URLs. This prevents strings like "http:example.com" or "https:/path" from being silently accepted
       if (!def.normalize && def.protocol?.source === regexes.httpProtocol.source) {
         if (!/^https?:\/\//i.test(trimmed)) {
           payload.issues.push({
@@ -1128,8 +1126,7 @@ export interface $ZodCreditCard extends $ZodType {
 export const $ZodCreditCard: core.$constructor<$ZodCreditCard> = /*@__PURE__*/ core.$constructor(
   "$ZodCreditCard",
   (inst, def): void => {
-    // Shape only — the Luhn check below is not expressible as a pattern, so consumers of
-    // `pattern` (JSON Schema, template literals) get the length and separator rules alone.
+    // Shape only — the Luhn check below is not expressible as a pattern, so consumers of `pattern` (JSON Schema, template literals) get the length and separator rules alone.
     def.pattern ??= regexes.creditCard;
     $ZodStringFormat.init(inst, def);
     inst._zod.check = (payload) => {
@@ -2011,12 +2008,9 @@ function handleCatchall(
   const isOptionalIn = _catchall.optin === "optional";
   const isOptionalOut = _catchall.optout === "optional";
   for (const key in input) {
-    // Must precede the __proto__ branch: a declared key is not unrecognized, even though
-    // the shape loop deliberately strips __proto__ from the parsed output.
+    // Must precede the __proto__ branch: a declared key is not unrecognized, even though the shape loop deliberately strips __proto__ from the parsed output.
     if (keySet.has(key)) continue;
-    // Don't copy an undeclared __proto__ into the result; assignment to a plain {} would
-    // replace the result prototype. But in strict mode it is still an unknown key, so
-    // report it before skipping.
+    // Don't copy an undeclared __proto__ into the result; assignment to a plain {} would replace the result prototype. But in strict mode it is still an unknown key, so report it before skipping.
     if (key === "__proto__") {
       if (t === "never") unrecognized.push(key);
       continue;
@@ -2040,9 +2034,7 @@ function handleCatchall(
       keys: unrecognized,
       input,
       inst,
-      // Describes the shape of the input, not the validity of the parsed value, so it never
-      // aborts. The parse still fails; the schema's own checks just get to run first, and an
-      // enclosing intersection can reconcile the key against a sibling operand.
+      // Describes the shape of the input, not the validity of the parsed value, so it never aborts. The parse still fails; the schema's own checks just get to run first, and an enclosing intersection can reconcile the key against a sibling operand.
       continue: true,
     });
   }
@@ -2177,8 +2169,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         doc.write(`const ${id} = ${parseStr(key)};`);
 
         if (isOptionalIn && isOptionalOut) {
-          // For optional-in/out schemas, ignore errors on absent keys — and,
-          // like the interpreted path, drop the value produced alongside them.
+          // For optional-in/out schemas, ignore errors on absent keys — and, like the interpreted path, drop the value produced alongside them.
           doc.write(`
         const ${id}_present = ${isPresent};
         if (!${id}.issues.length || ${id}_present) {
@@ -2580,8 +2571,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
 
       // Fall back to union matching when the fast discriminator path fails:
       // - explicitly enabled via unionFallback, or
-      // - during backward direction (encode), since codec-based discriminators
-      //   have different values in forward vs backward directions
+      // - during backward direction (encode), since codec-based discriminators have different values in forward vs backward directions
       if (def.unionFallback || ctx.direction === "backward") {
         return _super(payload, ctx);
       }
@@ -2715,10 +2705,7 @@ export function mergeValues(
 }
 
 function handleIntersectionResults(result: ParsePayload, left: ParsePayload, right: ParsePayload): ParsePayload {
-  // Track which side(s) reject each key. A key rejection is reported only when
-  // BOTH sides reject it, so a key owned by one branch survives the other's
-  // key schema. strictObject reports these as unrecognized_keys; a record with
-  // an open key schema reports one invalid_key per key.
+  // Track which side(s) reject each key. A key rejection is reported only when BOTH sides reject it, so a key owned by one branch survives the other's key schema. strictObject reports these as unrecognized_keys; a record with an open key schema reports one invalid_key per key.
   const unrecKeys = new Map<string, { l?: true; r?: true }>();
   let unrecIssue: errors.$ZodRawIssue | undefined;
   const keyIssues = new Map<string, errors.$ZodRawIssue>();
@@ -2885,10 +2872,7 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
       }
     }
 
-    // Run every item in parallel, collecting results into an indexed
-    // array. The post-processing in `handleTupleResults` walks them in
-    // order so it can decide whether an absent optional-output error can
-    // truncate the tail or must be reported to preserve required output.
+    // Run every item in parallel, collecting results into an indexed array. The post-processing in `handleTupleResults` walks them in order so it can decide whether an absent optional-output error can truncate the tail or must be reported to preserve required output.
     const itemResults: ParsePayload[] = new Array(items.length);
     for (let i = 0; i < items.length; i++) {
       const r = items[i]._zod.run({ value: input[i], issues: [] }, ctx);
@@ -2945,9 +2929,7 @@ function handleTupleResults(
   input: unknown[],
   optoutStart: number
 ) {
-  // Walk results in order. Mirror $ZodObject's swallow-on-absent-optional
-  // rule, but only after `optoutStart`: the first index where the output
-  // tuple tail can be absent.
+  // Walk results in order. Mirror $ZodObject's swallow-on-absent-optional rule, but only after `optoutStart`: the first index where the output tuple tail can be absent.
   for (let i = 0; i < items.length; i++) {
     const r = itemResults[i];
     const isPresent = i < input.length;
@@ -3119,8 +3101,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       for (const key in input) {
         if (!recordKeys.has(key)) {
           if (def.mode === "loose") {
-            // skip __proto__ so it can't replace the result prototype via the
-            // assignment setter on the plain {} we build into
+            // skip __proto__ so it can't replace the result prototype via the assignment setter on the plain {} we build into
             if (key === "__proto__") continue;
             payload.value[key] = input[key];
           } else {
@@ -3141,10 +3122,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       }
     } else {
       payload.value = memo ? memo.alloc(inst, payload, {}, ctx) : {};
-      // An enumerable key schema declares which keys the record owns, so a key outside
-      // the set is unrecognized. A non-enumerable one (regex, refine) is a constraint
-      // every key must satisfy, so a failing key is invalid. Only the former is
-      // reconcilable against the other side of an intersection.
+      // An enumerable key schema declares which keys the record owns, so a key outside the set is unrecognized. A non-enumerable one (regex, refine) is a constraint every key must satisfy, so a failing key is invalid. Only the former is reconcilable against the other side of an intersection.
       let unrecognized!: string[];
       // Reflect.ownKeys for Symbol-key support; filter non-enumerable to match z.object()
       for (const key of Reflect.ownKeys(input)) {
@@ -3155,8 +3133,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
           throw new Error("Async schemas not supported in object keys currently");
         }
 
-        // Numeric string fallback: if key is a numeric string and failed, retry with Number(key)
-        // This handles z.number(), z.literal([1, 2, 3]), and unions containing numeric literals
+        // Numeric string fallback: if key is a numeric string and failed, retry with Number(key). This handles z.number(), z.literal([1, 2, 3]), and unions containing numeric literals
         const checkNumericKey = typeof key === "string" && regexes.number.test(key) && keyResult.issues.length;
         if (checkNumericKey) {
           const retryResult = def.keyType._zod.run({ value: Number(key), issues: [] }, ctx);
@@ -3189,8 +3166,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
           continue;
         }
 
-        // the guard above tests the raw input key, but the key schema can normalize an
-        // ordinary key into __proto__; re-check the key we actually write under
+        // the guard above tests the raw input key, but the key schema can normalize an ordinary key into __proto__; re-check the key we actually write under
         const outKey = keyResult.value as PropertyKey;
         if (outKey === "__proto__") continue;
 
@@ -4251,9 +4227,7 @@ export const $ZodPipe: core.$constructor<$ZodPipe> = /*@__PURE__*/ core.$constru
 });
 
 function handlePipeResult(left: ParsePayload, next: $ZodType, ctx: ParseContextInternal) {
-  // Any issue stops the pipe, so a failing refinement never feeds its transform. An
-  // unrecognized key is the exception: it describes the input's extra properties, not the
-  // value being piped, and an enclosing intersection may yet reconcile it.
+  // Any issue stops the pipe, so a failing refinement never feeds its transform. An unrecognized key is the exception: it describes the input's extra properties, not the value being piped, and an enclosing intersection may yet reconcile it.
   if (left.issues.some((iss) => iss.code !== "unrecognized_keys")) {
     // prevent further checks
     left.aborted = true;
@@ -4429,8 +4403,7 @@ export const $ZodReadonly: core.$constructor<$ZodReadonly> = /*@__PURE__*/ core.
 );
 
 function handleReadonlyResult(payload: ParsePayload): ParsePayload {
-  // A repeat visit hands back a node that is still being built; freezing it here
-  // would make the rest of its keys fail to assign.
+  // A repeat visit hands back a node that is still being built; freezing it here would make the rest of its keys fail to assign.
   if (!payload.memo) payload.value = Object.freeze(payload.value);
   return payload;
 }
@@ -4647,8 +4620,7 @@ export const $ZodFunction: core.$constructor<$ZodFunction> = /*@__PURE__*/ core.
   "$ZodFunction",
   (inst, def) => {
     $ZodType.init(inst, def);
-    // Defined, not assigned: the classic prototype exposes `_def` as a
-    // getter with no setter.
+    // Defined, not assigned: the classic prototype exposes `_def` as a getter with no setter.
     Object.defineProperty(inst, "_def", { value: def });
     inst._zod.def = def;
 
@@ -4801,9 +4773,7 @@ export interface $ZodLazy<T extends SomeType = $ZodType> extends $ZodType {
 export const $ZodLazy: core.$constructor<$ZodLazy> = /*@__PURE__*/ core.$constructor("$ZodLazy", (inst, def) => {
   $ZodType.init(inst, def);
 
-  // Cache the resolved inner type on the shared `def` so all clones of this
-  // lazy (e.g. via `.describe()`/`.meta()`) share the same inner instance,
-  // preserving identity for cycle detection on recursive schemas.
+  // Cache the resolved inner type on the shared `def` so all clones of this lazy (e.g. via `.describe()`/`.meta()`) share the same inner instance, preserving identity for cycle detection on recursive schemas.
   util.defineLazy(inst._zod, "innerType", () => {
     const d = def as $ZodLazyDef & { _cachedInner?: $ZodType };
     if (!d._cachedInner) d._cachedInner = def.getter() as $ZodType;

@@ -39,8 +39,7 @@ export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _jso
     json.format = formatMap[format as checks.$ZodStringFormats] ?? format;
     if (json.format === "") delete json.format; // empty format is not valid
 
-    // JSON Schema format: "time" requires a full time with offset or Z
-    // z.iso.time() does not include timezone information, so format: "time" should never be used
+    // JSON Schema format: "time" requires a full time with offset or Z. z.iso.time() does not include timezone information, so format: "time" should never be used
     if (format === "time") {
       delete json.format;
     }
@@ -268,9 +267,8 @@ export const arrayProcessor: Processor<schemas.$ZodArray> = (schema, ctx, _json,
 // Transform and catch set `optin = "optional"` at runtime so the parser lets them observe an
 // absent key, but their declared input type stays required. An input JSON Schema describes the
 // declared type, so resolve past them to the schema that actually carries the optionality.
-// `tupleProcessor` reads `optin` in the same input branch but has not been given this treatment,
-// so its `minItems` still tracks the runtime flag; see wiki/optionality.md, "The JSON Schema
-// emitter reads the *static* value".
+// Used by both `objectProcessor` (for `required`) and `tupleProcessor` (for `minItems`); see
+// wiki/optionality.md, "The JSON Schema emitter reads the *static* value".
 function inputOptin(schema: schemas.$ZodType): "optional" | undefined {
   const def = schema._zod.def;
   if (def.type === "pipe" && (def as schemas.$ZodPipeDef).in._zod.traits.has("$ZodTransform")) {
@@ -290,8 +288,7 @@ export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _jso
   const shape = def.shape;
 
   for (const key in shape) {
-    // assignProp so a __proto__ key becomes an own property instead of hitting
-    // the inherited setter on the plain {} we build into
+    // assignProp so a __proto__ key becomes an own property instead of hitting the inherited setter on the plain {} we build into
     assignProp(
       json.properties,
       key,
@@ -336,8 +333,7 @@ export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _jso
 
 export const unionProcessor: Processor<schemas.$ZodUnion> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodUnionDef;
-  // Exclusive unions (inclusive === false) use oneOf (exactly one match) instead of anyOf (one or more matches)
-  // This includes both z.xor() and discriminated unions
+  // Exclusive unions (inclusive === false) use oneOf (exactly one match) instead of anyOf (one or more matches). This includes both z.xor() and discriminated unions
   const isExclusive = def.inclusive === false;
   const options = def.options.map((x, i) =>
     process(x, ctx as any, {
@@ -393,9 +389,11 @@ export const tupleProcessor: Processor<schemas.$ZodTuple> = (schema, ctx, _json,
       })
     : null;
 
-  const optKey = ctx.io === "input" ? "optin" : "optout";
   let minItems = def.items.length;
-  while (minItems > 0 && (def.items[minItems - 1] as schemas.SomeType)._zod[optKey] === "optional") {
+  while (minItems > 0) {
+    const item = def.items[minItems - 1] as schemas.$ZodType;
+    const optional = ctx.io === "input" ? inputOptin(item) === "optional" : item._zod.optout === "optional";
+    if (!optional) break;
     minItems--;
   }
   const maxItems = def.items.length;
@@ -445,9 +443,7 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
   const def = schema._zod.def as schemas.$ZodRecordDef;
   json.type = "object";
 
-  // For looseRecord with regex patterns, use patternProperties
-  // This correctly represents "only validate keys matching the pattern" semantics
-  // and composes well with allOf (intersections)
+  // For looseRecord with regex patterns, use patternProperties. This correctly represents "only validate keys matching the pattern" semantics and composes well with allOf (intersections)
   const keyType = def.keyType as schemas.$ZodTypes;
   const keyBag = keyType._zod.bag as schemas.$ZodStringInternals<unknown>["bag"] | undefined;
   const patterns = keyBag?.patterns;

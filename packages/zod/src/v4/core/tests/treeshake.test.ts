@@ -3,14 +3,9 @@ import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
 import { expect, test } from "vitest";
 
-// These declarations are unreachable from a minimal schema, but esbuild only drops them
-// because of details that read as noise: `@__PURE__` annotations, and the `anchor()` helper
-// in regexes.ts that exists solely because esbuild will not drop an annotated call whose
-// argument interpolates a variable. Inlining the helper or deleting an annotation silently
-// puts them back with no other test going red.
+// These declarations are unreachable from a minimal schema, but esbuild only drops them because of details that read as noise: `@__PURE__` annotations, and the `anchor()` helper in regexes.ts that exists solely because esbuild will not drop an annotated call whose argument interpolates a variable. Inlining the helper or deleting an annotation silently puts them back with no other test going red.
 //
-// Rollup drops all of these regardless, so a rollup fixture would report no difference and
-// prove nothing. This has to run under esbuild.
+// Rollup drops all of these regardless, so a rollup fixture would report no difference and prove nothing. This has to run under esbuild.
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const MINI = path.resolve(here, "../../../mini/index.ts");
@@ -45,8 +40,7 @@ test("a minimal zod/mini schema drops the declarations it cannot reach", async (
   expect(out, "regexes.ts `date` is pinned again — was `anchor()` inlined?").not.toContain("02-29");
 }, 30000);
 
-// `registries.ts` is dropped from the mini module graph entirely, so its two symbols are
-// absent there before and after. Classic is the entrypoint that exercises them.
+// `registries.ts` is dropped from the mini module graph entirely, so its two symbols are absent there before and after. Classic is the entrypoint that exercises them.
 test("a minimal classic schema drops the registry symbols", async () => {
   const out = await bundle(CLASSIC, `import * as z from "%ENTRY%";\nconsole.log(z.boolean().parse(true));`);
 

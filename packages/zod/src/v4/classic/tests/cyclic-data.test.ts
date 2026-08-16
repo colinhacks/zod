@@ -407,8 +407,7 @@ test("a cycle through .readonly() keeps the node intact", () => {
   const input: any = { id: 1 };
   input.self = input;
 
-  // Freezing a node that is still being built would make its remaining keys
-  // fail to assign, silently, because generated code is not strict mode.
+  // Freezing a node that is still being built would make its remaining keys fail to assign, silently, because generated code is not strict mode.
   const result = Node.parse(input);
   expect(Object.keys(result).sort()).toEqual(["id", "self"]);
   expect(result.self).toBe(result);
@@ -425,8 +424,7 @@ test("a cycle through z.intersection validates but does not mirror the graph", (
   const input: any = { id: 7 };
   input.self = input;
 
-  // The merged value is built after both sides are parsed, so it cannot be the
-  // object a back-edge already resolved to. Values are right, the graph is not.
+  // The merged value is built after both sides are parsed, so it cannot be the object a back-edge already resolved to. Values are right, the graph is not.
   const result = Node.parse(input);
   expect(result.id).toBe(7);
   expect(result.self.id).toBe(7);
@@ -509,9 +507,7 @@ test("keys identity on the schema, not just the input", () => {
   const input: any = { id: 1 };
   input.self = input;
 
-  // `Partial` and `Node` are different schemas, so the root and the node its
-  // cycle points back to are different output objects. Same rule that lets one
-  // input node be validated against two schemas in mutual recursion.
+  // `Partial` and `Node` are different schemas, so the root and the node its cycle points back to are different output objects. Same rule that lets one input node be validated against two schemas in mutual recursion.
   const result = Partial.parse(input);
   expect(result.self).not.toBe(result);
   expect(result.self.self).toBe(result.self);
@@ -576,9 +572,7 @@ test("a schema wrapped at the root adds one node and no more", () => {
   const input: any = { id: 1 };
   input.self = input;
 
-  // The root is keyed on the wrapper, everything under it on `Node`, so the
-  // graph closes one level down rather than at the root. It does not compound:
-  // stacking wrappers still yields exactly two nodes.
+  // The root is keyed on the wrapper, everything under it on `Node`, so the graph closes one level down rather than at the root. It does not compound: stacking wrappers still yields exactly two nodes.
   const count = (root: any) => {
     const seen: any[] = [];
     let n = root;
@@ -596,9 +590,7 @@ test("a schema wrapped at the root adds one node and no more", () => {
 });
 
 test("resolves a recursive reference once, however it is written", () => {
-  // This is what bounds the above: core caches a shape getter and a lazy
-  // getter, so a getter returning a fresh clone still yields a finite schema
-  // graph rather than a new schema per node.
+  // This is what bounds the above: core caches a shape getter and a lazy getter, so a getter returning a fresh clone still yields a finite schema graph rather than a new schema per node.
   let getterCalls = 0;
   const ViaGetter: any = z.object({
     id: z.number(),

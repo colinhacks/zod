@@ -132,14 +132,12 @@ test("catchall inference", () => {
 test("catchall overrides strict", () => {
   const o1 = z.object({ first: z.string().optional() }).strict().catchall(z.number());
 
-  // should run fine
-  // setting a catchall overrides the unknownKeys behavior
+  // should run fine setting a catchall overrides the unknownKeys behavior
   o1.parse({
     asdf: 1234,
   });
 
-  // should only run catchall validation
-  // against unknown keys
+  // should only run catchall validation against unknown keys
   o1.parse({
     first: "asdf",
     asdf: 1234,
@@ -154,8 +152,7 @@ test("catchall overrides strict", () => {
     .strict()
     .catchall(z.number());
 
-  // should run fine
-  // setting a catchall overrides the unknownKeys behavior
+  // should run fine setting a catchall overrides the unknownKeys behavior
   o1.parse({
     first: "asdf",
     asdf: 1234,
@@ -670,8 +667,7 @@ test("safeExtend() on object with refinements should not throw", () => {
   expect(() => schema.safeExtend({ b: z.string() })).not.toThrow();
 });
 
-// __proto__ in input must not replace the prototype of the parsed object via
-// the assignment setter on the result {}.
+// __proto__ in input must not replace the prototype of the parsed object via the assignment setter on the result {}.
 describe("__proto__ in object catchall paths", () => {
   const protoInput = () => JSON.parse('{"__proto__":{"isAdmin":true},"name":"alice"}');
 

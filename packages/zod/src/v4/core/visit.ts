@@ -1,5 +1,4 @@
-// Traversal pattern adapted from Jaen's v3 `mapOnSchema` (Apache-2.0):
-// https://gist.github.com/jaens/7e15ae1984bb338c86eb5e452dee3010
+// Traversal pattern adapted from Jaen's v3 `mapOnSchema` (Apache-2.0): https://gist.github.com/jaens/7e15ae1984bb338c86eb5e452dee3010
 
 import * as schemas from "./schemas.js";
 import { clone } from "./util.js";

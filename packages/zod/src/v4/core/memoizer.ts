@@ -118,10 +118,7 @@ export function attachMemoizer(inst: $ZodType): void {
   };
   inst._zod.memoizer = m;
 
-  // Wraps `parse`, not `run`. `run` is assigned by a deferred of core's own that
-  // would replace anything installed here first; wrapping `parse` reaches both
-  // ways core builds `run` — it copies `parse` when there are no checks, and
-  // reads it dynamically when there are.
+  // Wraps `parse`, not `run`. `run` is assigned by a deferred of core's own that would replace anything installed here first; wrapping `parse` reaches both ways core builds `run` — it copies `parse` when there are no checks, and reads it dynamically when there are.
   inst._zod.deferred ??= [];
   inst._zod.deferred.push(() => {
     const base = inst._zod.parse;
@@ -130,9 +127,7 @@ export function attachMemoizer(inst: $ZodType): void {
       if (m.recursive === undefined) {
         m.recursive = isRecursive(inst, new Set());
         if (!m.recursive) {
-          // Nothing here can ever fire, so take it back out. `run` has to be
-          // checked too: with no checks on the schema, core copies `parse` into
-          // it rather than reading it each time.
+          // Nothing here can ever fire, so take it back out. `run` has to be checked too: with no checks on the schema, core copies `parse` into it rather than reading it each time.
           inst._zod.parse = base;
           if (inst._zod.run === wrapped) inst._zod.run = base;
           return base(payload, ctx);
@@ -178,8 +173,7 @@ export function attachMemoizer(inst: $ZodType): void {
       // A container that rejected its input outright allocated nothing.
       const entry = m.open.length > depth ? m.open.pop()! : undefined;
 
-      // Both paths written out so the sync one allocates no closure. It runs once
-      // per node, and capturing here cost more than everything else combined.
+      // Both paths written out so the sync one allocates no closure. It runs once per node, and capturing here cost more than everything else combined.
       if (result instanceof Promise) {
         return result.then((r) => {
           if (entry) entry.issues = r.issues.length ? r.issues.slice() : NO_ISSUES;

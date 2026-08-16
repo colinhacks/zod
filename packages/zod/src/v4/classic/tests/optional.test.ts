@@ -268,10 +268,7 @@ test("exactOptional vs optional comparison", () => {
   expect(exactOptionalSchema.safeParse({ a: undefined }).success).toEqual(false);
 });
 
-// Defensive inference coverage: every schema that propagates `optout` participates
-// in object-key optionality inference. If anyone ever changes the set of values that
-// `optout` can take (or how OptionalOutSchema matches them), these assertions must
-// continue to hold or downstream `z.infer<typeof obj>` types silently flip required keys.
+// Defensive inference coverage: every schema that propagates `optout` participates in object-key optionality inference. If anyone ever changes the set of values that `optout` can take (or how OptionalOutSchema matches them), these assertions must continue to hold or downstream `z.infer<typeof obj>` types silently flip required keys.
 test("object key optionality through optout propagation", () => {
   const direct = z.object({ k: z.string().optional() });
   expectTypeOf<z.infer<typeof direct>>().toEqualTypeOf<{ k?: string | undefined }>();
@@ -317,9 +314,7 @@ test("object key optionality through optout propagation", () => {
   }>();
 });
 
-// Defensive: tuple optional-tail inference also reads optout. The PR that introduced
-// `"includeUndefined"` had to update TupleOutputTypeWithOptionals; pin the result so
-// any future flag change has to keep this contract.
+// Defensive: tuple optional-tail inference also reads optout. The PR that introduced `"includeUndefined"` had to update TupleOutputTypeWithOptionals; pin the result so any future flag change has to keep this contract.
 test("tuple tail optionality through optout propagation", () => {
   const trailingOptional = z.tuple([z.string(), z.number().optional()]);
   expectTypeOf<z.output<typeof trailingOptional>>().toEqualTypeOf<[string, (number | undefined)?]>();
@@ -332,8 +327,7 @@ test("tuple tail optionality through optout propagation", () => {
   expectTypeOf<z.output<typeof interiorOptional>>().toEqualTypeOf<[string, number | undefined, string]>();
 });
 
-// An absent optional key whose check fails has its issue swallowed; the value the
-// check wrote must go with it, on the JIT fastpass as well as the interpreted path.
+// An absent optional key whose check fails has its issue swallowed; the value the check wrote must go with it, on the JIT fastpass as well as the interpreted path.
 test("swallowed issue on an absent optional key drops its value", async () => {
   const schema = z.object({
     a: z
