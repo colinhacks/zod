@@ -1581,6 +1581,22 @@ export interface ZodObject<
     Config
   >;
 
+  // exactPartial
+  exactPartial(): ZodObject<
+    {
+      -readonly [k in keyof Shape]: ZodExactOptional<Shape[k]>;
+    },
+    Config
+  >;
+  exactPartial<M extends util.Mask<keyof Shape>>(
+    mask: M & Record<Exclude<keyof M, keyof Shape>, never>
+  ): ZodObject<
+    {
+      -readonly [k in keyof Shape]: k extends keyof M ? ZodExactOptional<Shape[k]> : Shape[k];
+    },
+    Config
+  >;
+
   // required
   required(): ZodObject<
     {
@@ -1648,6 +1664,9 @@ function _zodObjectMethods(): _LazyMethodsOf<ZodObject> {
     },
     partial(...args) {
       return util.partial(ZodOptional, this, args[0]);
+    },
+    exactPartial(...args) {
+      return util.partial(ZodExactOptional, this, args[0], "exactPartial");
     },
     required(...args) {
       return util.required(ZodNonOptional, this, args[0]);
