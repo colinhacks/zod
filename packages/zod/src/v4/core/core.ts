@@ -23,13 +23,18 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
   initializer: (inst: T, def: D) => void,
   params?: { Parent?: typeof Class }
 ): $constructor<T, D> {
+  // Prototype for this constructor's `_zod` internals. Lazily-derived fields
+  // (`values`, `pattern`, `optin`, …) install here once rather than as an
+  // accessor on every instance.
+  const zodProto: any = {};
+
   function init(inst: T, def: D) {
     if (!inst._zod) {
-      _zodDesc.value = {
+      _zodDesc.value = Object.assign(Object.create(zodProto), {
         def,
         constr: _,
         traits: new Set(),
-      };
+      });
       try {
         Object.defineProperty(inst, "_zod", _zodDesc);
       } finally {
@@ -79,6 +84,7 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
   }
 
   Object.defineProperty(_, "init", { value: init });
+  Object.defineProperty(_, "zodProto", { value: zodProto });
   Object.defineProperty(_, Symbol.hasInstance, {
     value: (inst: any) => {
       if (params?.Parent && inst instanceof params.Parent) return true;
