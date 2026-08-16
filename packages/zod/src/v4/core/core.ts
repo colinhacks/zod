@@ -141,6 +141,9 @@ export interface $ZodConfig {
   localeError?: errors.$ZodErrorMap | undefined;
   /** Disable JIT schema compilation. Useful in environments that disallow `eval`. */
   jitless?: boolean | undefined;
+
+  /** Active locale tag, surfaced on every issue's `locale` field. */
+  locale?: string | undefined;
 }
 
 interface GlobalThisWithConfig {
