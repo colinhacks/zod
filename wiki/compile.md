@@ -34,6 +34,28 @@ Consequences:
 - **jitless.** Global mode respects `config().jitless`: the shim restores the runtime parser instead of compiling, so `import "zod/compile"` is inert in CSP/no-eval environments. Calling `z.compile(schema)` explicitly remains an explicit opt-in to `new Function`; under CSP it throws `ZodCompileUnsupportedError` rather than a raw `EvalError`.
 - **No recursive schemas.** A schema whose subtree contains a cycle throws `ZodCompileUnsupportedError` and parses through the runtime. Input containing a reference cycle terminates because the memoizer registers each in-progress output before its children run, keyed on the parse context every schema in that call shares; a generated fast path takes an input and returns a value, so it has no context to key on and would follow the cycle until the stack ran out. A compiled node also hands back to the runtime when the value it receives is a memoizer back edge, so a transform sitting on a cycle still raises `$ZodCyclicError` from its own parse. Supporting this properly means threading the parse context and `memo.alloc` into generated containers.
 
+## Benchmarks
+
+`pnpm dev packages/bench/compile-matrix.ts` sweeps 55 schemas across every category and prints runtime, compiled and raw-fast-path throughput with the speedup. Three things about the method matter for reading the numbers:
+
+- **One process per schema.** Run all 55 in one process and the shared `safeParse` site — and zod's own internal dispatch sites — go megamorphic, which taxes the interpreter far more than it taxes a single generated function. The same schemas report a median 2.4x that way and 1.8x measured alone. The isolated figure is the honest answer to "how fast is this schema"; `--shared` reproduces the other regime, which models an app interleaving many different schemas.
+- **Interleaved, best of 15 rounds.** Absolute ops/sec on a laptop drifts by tens of percent between runs, so every speedup is a ratio of two measurements taken microseconds apart. Re-running moves an individual speedup ~2% (median, 12% worst).
+- **Correctness first.** Compiled output is checked against the runtime before anything is timed, and each row reports whether the schema compiled, fell back, or fell through — a number can't come from a fast path that silently didn't run.
+
+53 of 55 schemas compile. Median **1.8x**, range 0.65x–11.4x.
+
+| | |
+| --- | --- |
+| Biggest wins | object union **11.4x**, 20-key object **10.8x**, `z.array(z.object())` x50 **7.0x**, nested object **5.8x**, tuple **5.8x**, discriminated union **5.7x**, `z.number().int().min().max()` **5.4x** |
+| Typical | flat object 2.0x, strict object 2.9x, `z.array(z.number())` x100 4.2x, intersection 4.9x, `.pipe()` 4.2x, `.refine()` 2.5x, string with checks 2.8x |
+| Marginal | string formats 1.15–1.4x, `z.record` dynamic keys 1.14–1.47x, `z.set()` 1.14x, `.catch()` 1.14x |
+| **Slower compiled** | bare `z.string()` **0.70x**, `z.number()` 0.68x, `z.boolean()` 0.75x, `z.bigint()` 0.65x, `z.literal()` 0.68x, `z.enum()` 0.70x, `.default()` on absent input 0.89x |
+| Forced fallbacks | recursive schema 0.99x, `z.xor` 1.00x — the wrapper's bypass checks cost nothing measurable |
+
+The win tracks how much work a schema does per parse, because what compilation removes is per-node dispatch and payload allocation, not the checks themselves. A 20-key object or an array of objects amortises the wrapper across a lot of work; a bare primitive has none to amortise.
+
+That last row is the one to design around: for a schema whose entire body is one `typeof`, the compiled path is **slower**, by around 30%. It is not the generated code — the raw fast path beats the runtime even there (`z.string()`: 177M vs 142M ops/sec). It is that a `safeParse` has to allocate a result object either way, and the extra hop through a `new Function` closure costs more than the check it replaces. One check is enough to flip it (`z.string().min(1)` is 2.1x), which means global mode makes trivial leaf schemas modestly slower while making everything above them faster. Worth measuring on a real schema set before assuming global mode is a free win.
+
 ## Output construction
 
 Generated code always builds new objects and arrays; it never mutates input or `payload.value`. Justified by `packages/bench/compile-passthrough.ts` and `packages/bench/compile-output.ts`: build-new wins or ties mutate-in-place across every benchmarked shape, and produces predictable semantics (callers can mutate the returned value freely).
