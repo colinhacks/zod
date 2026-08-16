@@ -10,7 +10,7 @@ Three runtime signals:
 
 | Signal | Set by | Consumed by | Means |
 |---|---|---|---|
-| `_zod.optin === "optional"` | catch, default, prefault, optional, transform | `$ZodObject`, `$ZodTuple`, `$ZodOptional`; also the JSON Schema emitter, where `objectProcessor` reads the **static** value but `tupleProcessor` still reads the runtime one — see below | "I accept absent input" |
+| `_zod.optin === "optional"` | catch, default, prefault, optional, transform | `$ZodObject`, `$ZodTuple`, `$ZodOptional`; also the JSON Schema emitter, where `objectProcessor` and `tupleProcessor` both read the **static** value — see below | "I accept absent input" |
 | `_zod.optout === "optional"` | optional, exact-optional, default-on-output cases | `$ZodObject`, `$ZodTuple` | "My output may legitimately be `undefined`; treat that as absent for length-shortening / key-omission" |
 | `payload.fallback === true` | catch (when `catchValue` substitutes), transform | `$ZodOptional` (in `handleOptionalResult`) | "This value is provisional; an outer wrapper may override it on undefined input" |
 
