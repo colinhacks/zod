@@ -266,8 +266,9 @@ export const arrayProcessor: Processor<schemas.$ZodArray> = (schema, ctx, _json,
 // Transform and catch set `optin = "optional"` at runtime so the parser lets them observe an
 // absent key, but their declared input type stays required. An input JSON Schema describes the
 // declared type, so resolve past them to the schema that actually carries the optionality.
-// This is the one consumer of `optin` that must read the static value rather than the runtime
-// one; see wiki/optionality.md, "Static/runtime divergence".
+// `tupleProcessor` reads `optin` in the same input branch but has not been given this treatment,
+// so its `minItems` still tracks the runtime flag; see wiki/optionality.md, "Static/runtime
+// divergence".
 function inputOptin(schema: schemas.$ZodType): "optional" | undefined {
   const def = schema._zod.def;
   if (def.type === "pipe" && (def as schemas.$ZodPipeDef).in._zod.traits.has("$ZodTransform")) {
