@@ -1477,6 +1477,7 @@ export interface ZodArray<T extends core.SomeType = core.$ZodType>
   "~standard": ZodStandardSchemaWithJSON<this>;
 }
 export const ZodArray: core.$constructor<ZodArray> = /*@__PURE__*/ core.$constructor("ZodArray", (inst, def) => {
+  core.attachMemoizer(inst);
   core.$ZodArray.init(inst, def);
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.arrayProcessor(inst, ctx, json, params);
@@ -1608,6 +1609,7 @@ export interface ZodObject<
 }
 
 export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$constructor("ZodObject", (inst, def) => {
+  core.attachMemoizer(inst);
   core.$ZodObjectJIT.init(inst, def);
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.objectProcessor(inst, ctx, json, params);
@@ -1828,6 +1830,7 @@ export interface ZodTuple<
   rest<Rest extends core.SomeType = core.$ZodType>(rest: Rest): ZodTuple<T, Rest>;
 }
 export const ZodTuple: core.$constructor<ZodTuple> = /*@__PURE__*/ core.$constructor("ZodTuple", (inst, def) => {
+  core.attachMemoizer(inst);
   core.$ZodTuple.init(inst, def);
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.tupleProcessor(inst, ctx, json, params);
@@ -1875,6 +1878,7 @@ export interface ZodRecord<
   valueType: Value;
 }
 export const ZodRecord: core.$constructor<ZodRecord> = /*@__PURE__*/ core.$constructor("ZodRecord", (inst, def) => {
+  core.attachMemoizer(inst);
   core.$ZodRecord.init(inst, def);
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.recordProcessor(inst, ctx, json, params);
@@ -1946,6 +1950,7 @@ export interface ZodMap<Key extends core.SomeType = core.$ZodType, Value extends
   size(size: number, params?: string | core.$ZodCheckSizeEqualsParams): this;
 }
 export const ZodMap: core.$constructor<ZodMap> = /*@__PURE__*/ core.$constructor("ZodMap", (inst, def) => {
+  core.attachMemoizer(inst);
   core.$ZodMap.init(inst, def);
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.mapProcessor(inst, ctx, json, params);
@@ -1981,6 +1986,7 @@ export interface ZodSet<T extends core.SomeType = core.$ZodType>
   size(size: number, params?: string | core.$ZodCheckSizeEqualsParams): this;
 }
 export const ZodSet: core.$constructor<ZodSet> = /*@__PURE__*/ core.$constructor("ZodSet", (inst, def) => {
+  core.attachMemoizer(inst);
   core.$ZodSet.init(inst, def);
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.setProcessor(inst, ctx, json, params);
@@ -2171,6 +2177,10 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
       if (_ctx.direction === "backward") {
         throw new core.$ZodEncodeError(inst.constructor.name);
       }
+
+      // The value is a placeholder a back-edge is still waiting on, so the cycle
+      // closes through this transform. Its output can't exist in time to bind.
+      if (core.isBackEdge(_ctx, payload.value)) throw new core.$ZodCyclicError();
 
       (payload as core.$RefinementCtx).addIssue = (issue) => {
         if (typeof issue === "string") {

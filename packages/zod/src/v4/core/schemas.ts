@@ -31,6 +31,12 @@ export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> ex
   readonly skipChecks?: boolean;
 }
 
+/** @internal Supplies the object a container builds into, registered before any
+ * child is parsed so a reference back to the same input resolves to it. */
+export interface $ZodMemoizer {
+  alloc<T extends object>(inst: $ZodType, payload: ParsePayload, empty: T, ctx: ParseContextInternal): T;
+}
+
 export interface ParsePayload<T = unknown> {
   value: T;
   issues: errors.$ZodRawIssue[];
@@ -41,6 +47,9 @@ export interface ParsePayload<T = unknown> {
    * undefined. Set by $ZodCatch when catchValue substitutes and by every
    * $ZodTransform invocation. */
   fallback?: boolean | undefined;
+  /** @internal Set when the value came from a repeat visit to a node still being
+   * parsed. Its checks run on the node itself, against the finished value. */
+  memo?: boolean | undefined;
 }
 
 export type CheckFn<T> = (input: ParsePayload<T>) => util.MaybeAsync<void>;
@@ -124,6 +133,9 @@ export interface _$ZodTypeInternals {
   optin?: "optional" | undefined;
   /** @internal */
   optout?: "optional" | undefined;
+
+  /** @internal */
+  memoizer?: $ZodMemoizer | undefined;
 
   /** @internal The set of literal values that will pass validation. Must be an exhaustive set. Used to determine optionality in z.record().
    *
@@ -221,6 +233,8 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
       checks: checks.$ZodCheck<never>[],
       ctx?: ParseContextInternal | undefined
     ): util.MaybeAsync<ParsePayload> => {
+      if (payload.memo) return payload;
+
       let isAborted = util.aborted(payload);
 
       let asyncResult!: Promise<unknown> | undefined;
@@ -1697,6 +1711,8 @@ function handleArrayResult(result: ParsePayload<any>, final: ParsePayload<any[]>
 export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$constructor("$ZodArray", (inst, def) => {
   $ZodType.init(inst, def);
 
+  const memo = inst._zod.memoizer;
+
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
 
@@ -1711,7 +1727,7 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
       return payload;
     }
 
-    payload.value = Array(input.length);
+    payload.value = memo ? memo.alloc(inst, payload, Array(input.length), ctx) : Array(input.length);
     const proms: Promise<any>[] = [];
     for (let i = 0; i < input.length; i++) {
       const item = input[i];
@@ -2010,6 +2026,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
   const catchall = def.catchall;
 
   let value!: typeof _normalized.value;
+  const memo = inst._zod.memoizer;
 
   inst._zod.parse = (payload, ctx) => {
     value ??= _normalized.value;
@@ -2024,7 +2041,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       return payload;
     }
 
-    payload.value = {};
+    payload.value = memo ? memo.alloc(inst, payload, {}, ctx) : {};
 
     const proms: Promise<any>[] = [];
     const shape = value.shape;
@@ -2060,9 +2077,11 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
     const superParse = inst._zod.parse;
     const _normalized = util.cached(() => normalizeDef(def));
 
+    const memo = inst._zod.memoizer;
+
     const generateFastpass = (shape: any) => {
       const normalized = _normalized.value;
-      const doc = new Doc(["shape", "payload", "ctx"]);
+      const doc = new Doc(memo ? ["shape", "payload", "ctx", "inst", "memo"] : ["shape", "payload", "ctx"]);
 
       const parseStr = (key: string) => {
         const k = util.esc(key);
@@ -2078,7 +2097,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
       }
 
       // A: preserve key order {
-      doc.write(`const newResult = {};`);
+      doc.write(memo ? `const newResult = memo.alloc(inst, payload, {}, ctx);` : `const newResult = {};`);
       for (const key of normalized.keys) {
         if (key === "__proto__") continue;
         const id = ids[key];
@@ -2156,6 +2175,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
       doc.write(`payload.value = newResult;`);
       doc.write(`return payload;`);
       const fn = doc.compile();
+      if (memo) return (payload: any, ctx: any) => fn(shape, payload, ctx, inst, memo);
       return (payload: any, ctx: any) => fn(shape, payload, ctx);
     };
 
@@ -2754,6 +2774,7 @@ export interface $ZodTuple<
 export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$constructor("$ZodTuple", (inst, def) => {
   $ZodType.init(inst, def);
   const items = def.items;
+  const memo = inst._zod.memoizer;
 
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
@@ -2767,7 +2788,7 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
       return payload;
     }
 
-    payload.value = [];
+    payload.value = memo ? memo.alloc(inst, payload, [] as unknown[], ctx) : [];
     const proms: Promise<any>[] = [];
 
     const optinStart = getTupleOptStart(items, "optin");
@@ -2963,6 +2984,7 @@ export interface $ZodRecord<Key extends $ZodRecordKey = $ZodRecordKey, Value ext
 
 export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$constructor("$ZodRecord", (inst, def) => {
   $ZodType.init(inst, def);
+  const memo = inst._zod.memoizer;
 
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
@@ -2982,7 +3004,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
 
     const values = def.keyType._zod.values;
     if (values && !def.partial) {
-      payload.value = {};
+      payload.value = memo ? memo.alloc(inst, payload, {}, ctx) : {};
       const recordKeys = new Set<string | symbol>();
       for (const key of values) {
         if (typeof key === "string" || typeof key === "number" || typeof key === "symbol") {
@@ -3051,7 +3073,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
         });
       }
     } else {
-      payload.value = {};
+      payload.value = memo ? memo.alloc(inst, payload, {}, ctx) : {};
       // An enumerable key schema declares which keys the record owns, so a key outside
       // the set is unrecognized. A non-enumerable one (regex, refine) is a constraint
       // every key must satisfy, so a failing key is invalid. Only the former is
@@ -3170,6 +3192,7 @@ export interface $ZodMap<Key extends SomeType = $ZodType, Value extends SomeType
 
 export const $ZodMap: core.$constructor<$ZodMap> = /*@__PURE__*/ core.$constructor("$ZodMap", (inst, def) => {
   $ZodType.init(inst, def);
+  const memo = inst._zod.memoizer;
 
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
@@ -3185,7 +3208,7 @@ export const $ZodMap: core.$constructor<$ZodMap> = /*@__PURE__*/ core.$construct
     }
 
     const proms: Promise<any>[] = [];
-    payload.value = new Map();
+    payload.value = memo ? memo.alloc(inst, payload, new Map(), ctx) : new Map();
 
     for (const [key, value] of input) {
       const keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
@@ -3274,6 +3297,7 @@ export interface $ZodSet<T extends SomeType = $ZodType> extends $ZodType {
 
 export const $ZodSet: core.$constructor<$ZodSet> = /*@__PURE__*/ core.$constructor("$ZodSet", (inst, def) => {
   $ZodType.init(inst, def);
+  const memo = inst._zod.memoizer;
 
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
@@ -3288,7 +3312,7 @@ export const $ZodSet: core.$constructor<$ZodSet> = /*@__PURE__*/ core.$construct
     }
 
     const proms: Promise<any>[] = [];
-    payload.value = new Set();
+    payload.value = memo ? memo.alloc(inst, payload, new Set(), ctx) : new Set();
     for (const item of input) {
       const result = def.valueType._zod.run({ value: item, issues: [] }, ctx);
       if (result instanceof Promise) {
@@ -4338,7 +4362,9 @@ export const $ZodReadonly: core.$constructor<$ZodReadonly> = /*@__PURE__*/ core.
 );
 
 function handleReadonlyResult(payload: ParsePayload): ParsePayload {
-  payload.value = Object.freeze(payload.value);
+  // A repeat visit hands back a node that is still being built; freezing it here
+  // would make the rest of its keys fail to assign.
+  if (!payload.memo) payload.value = Object.freeze(payload.value);
   return payload;
 }
 
