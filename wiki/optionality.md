@@ -10,7 +10,7 @@ Three runtime signals:
 
 | Signal | Set by | Consumed by | Means |
 |---|---|---|---|
-| `_zod.optin === "optional"` | catch, default, prefault, optional, transform | `$ZodObject`, `$ZodTuple`, `$ZodOptional`; also the JSON Schema emitter, where `objectProcessor` reads the **static** value but `tupleProcessor` still reads the runtime one — see below | "I accept absent input" |
+| `_zod.optin === "optional"` | catch, default, prefault, optional, transform | `$ZodObject`, `$ZodTuple`, `$ZodOptional`; also the JSON Schema emitter, where `objectProcessor` and `tupleProcessor` both read the **static** value — see below | "I accept absent input" |
 | `_zod.optout === "optional"` | optional, exact-optional, default-on-output cases | `$ZodObject`, `$ZodTuple` | "My output may legitimately be `undefined`; treat that as absent for length-shortening / key-omission" |
 | `payload.fallback === true` | catch (when `catchValue` substitutes), transform | `$ZodOptional` (in `handleOptionalResult`) | "This value is provisional; an outer wrapper may override it on undefined input" |
 
@@ -115,7 +115,7 @@ So `optional` *invokes* its inner whenever inner says "I handle absence." It onl
 
 ### The JSON Schema emitter reads the *static* value
 
-The JSON Schema emitter consumes `optin` too, in two places. `io: "input"` describes the declared input type, so the three schemas above that diverge have to be resolved past to whatever actually carries the optionality. `objectProcessor` in `json-schema-processors.ts` does this:
+The JSON Schema emitter consumes `optin` too, in two places: `objectProcessor` for `required` and `tupleProcessor` for `minItems`. `io: "input"` describes the declared input type, so the three schemas above that diverge have to be resolved past to whatever actually carries the optionality. Both go through one helper in `json-schema-processors.ts`:
 
 ```ts
 function inputOptin(schema: $ZodType): "optional" | undefined {
@@ -126,17 +126,17 @@ function inputOptin(schema: $ZodType): "optional" | undefined {
 }
 ```
 
-Reading `_zod.optin` directly here builds a `required` list that matches runtime parse behavior instead of the declared type, dropping a preprocessed or caught key even though `z.input<>` shows it as required. #5003 settled the policy — the input JSON Schema describes what you *should* pass, not everything you *can* pass — and #6133 restored it after #5939 and #5941 set the runtime flags.
+Reading `_zod.optin` directly builds a `required` list — or a `minItems` — that matches runtime parse behavior instead of the declared type, dropping a preprocessed or caught slot even though `z.input<>` shows it as required. #5003 settled the policy — the input JSON Schema describes what you *should* pass, not everything you *can* pass — and #6133 restored it after #5939 and #5941 set the runtime flags.
 
-**`tupleProcessor` has not been brought in line.** Its `minItems` tail scan reads `_zod[optKey]` directly, so the same divergence is still live for tuples:
+The tuple side went the same way in #6418. Its `minItems` tail scan used to read the runtime flag, so a trailing preprocessed slot shortened `minItems` and the emitted schema matched neither the declared type nor the parser:
 
 ```ts
 z.toJSONSchema(z.tuple([z.string(), z.preprocess((v) => v, z.string())]), { io: "input" });
-// minItems: 1 — but z.input<> is [string, string], and .safeParse(["a"]) rejects
-// the object equivalent emits required: ["a", "b"]
+// before: minItems 1 — but z.input<> is [string, string], and .safeParse(["a"]) rejects
+// now:    minItems 2, matching the object equivalent's required: ["a", "b"]
 ```
 
-For `catch` that output at least tracks the parser (`.safeParse(["a"])` succeeds); for `preprocess` it matches neither the declared type nor the parser. Nothing pins either direction in the tuple `minItems` tests, so this is unsettled rather than deliberate.
+Output mode still reads `optout` directly in both processors — the divergence is input-side only.
 
 The same split applies to emitted *values*, not just requiredness: `isTransforming` now recurses through `catch` (#6409), so a catch no longer hides an inner transform from its ancestors and the output-typed `default` is stripped under `io: "input"`. A catch over a non-transforming inner keeps its `default`. Both halves answer the same question, and they have to answer it the same way.
 
