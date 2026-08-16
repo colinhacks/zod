@@ -31,6 +31,12 @@ export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> ex
   readonly skipChecks?: boolean;
 }
 
+/** @internal Supplies the object a container builds into, registered before any
+ * child is parsed so a reference back to the same input resolves to it. */
+export interface $ZodMemoizer {
+  alloc<T extends object>(inst: $ZodType, payload: ParsePayload, empty: T, ctx: ParseContextInternal): T;
+}
+
 export interface ParsePayload<T = unknown> {
   value: T;
   issues: errors.$ZodRawIssue[];
@@ -41,6 +47,9 @@ export interface ParsePayload<T = unknown> {
    * undefined. Set by $ZodCatch when catchValue substitutes and by every
    * $ZodTransform invocation. */
   fallback?: boolean | undefined;
+  /** @internal Set when the value came from a repeat visit to a node still being
+   * parsed. Its checks run on the node itself, against the finished value. */
+  memo?: boolean | undefined;
 }
 
 export type CheckFn<T> = (input: ParsePayload<T>) => util.MaybeAsync<void>;
@@ -125,6 +134,9 @@ export interface _$ZodTypeInternals {
   /** @internal */
   optout?: "optional" | undefined;
 
+  /** @internal */
+  memoizer?: $ZodMemoizer | undefined;
+
   /** @internal The set of literal values that will pass validation. Must be an exhaustive set. Used to determine optionality in z.record().
    *
    * Defined on: enum, const, literal, null, undefined
@@ -194,12 +206,13 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
   inst._zod.bag = inst._zod.bag || {}; // initialize _bag object
   inst._zod.version = version;
 
-  const checks = [...(inst._zod.def.checks ?? [])];
-
+  const defChecks = inst._zod.def.checks;
   // if inst is itself a checks.$ZodCheck, run it as a check
-  if (inst._zod.traits.has("$ZodCheck")) {
-    checks.unshift(inst as any);
-  }
+  const checks: checks.$ZodCheck<never>[] = inst._zod.traits.has("$ZodCheck")
+    ? [inst as any, ...(defChecks ?? [])]
+    : defChecks?.length
+      ? [...defChecks]
+      : [];
 
   for (const ch of checks) {
     for (const fn of ch._zod.onattach) {
@@ -220,6 +233,8 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
       checks: checks.$ZodCheck<never>[],
       ctx?: ParseContextInternal | undefined
     ): util.MaybeAsync<ParsePayload> => {
+      if (payload.memo) return payload;
+
       let isAborted = util.aborted(payload);
 
       let asyncResult!: Promise<unknown> | undefined;
@@ -304,20 +319,28 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
     };
   }
 
-  // Lazy initialize ~standard to avoid creating objects for every schema
-  util.defineLazy(inst, "~standard", () => ({
+  // Wrappers extend this by installing a richer factory over it; reading it
+  // eagerly would defeat the laziness.
+  util.installLazyProp(inst, "~standard", standardProps);
+});
+
+/** The Standard Schema surface for `inst`. Shared so wrappers can extend it without forcing it. */
+const toStandardResult = (r: util.SafeParseResult<unknown>) =>
+  r.success ? { value: r.data } : { issues: r.error?.issues };
+
+export function standardProps(inst: $ZodType): StandardSchemaV1.Props<any, any> {
+  return {
     validate: (value: unknown) => {
       try {
-        const r = safeParse(inst, value);
-        return r.success ? { value: r.data } : { issues: r.error?.issues };
+        return toStandardResult(safeParse(inst, value));
       } catch (_) {
-        return safeParseAsync(inst, value).then((r) => (r.success ? { value: r.data } : { issues: r.error?.issues }));
+        return safeParseAsync(inst, value).then(toStandardResult);
       }
     },
     vendor: "zod",
     version: 1 as const,
-  }));
-});
+  };
+}
 
 export { clone } from "./util.js";
 
@@ -1071,6 +1094,57 @@ export const $ZodE164: core.$constructor<$ZodE164> = /*@__PURE__*/ core.$constru
   $ZodStringFormat.init(inst, def);
 });
 
+//////////////////////////////   ZodCreditCard   //////////////////////////////
+
+const CC_SANITIZE = /[- ]/g;
+
+/** Luhn checksum on a digit-only string. Adapted from valibot (MIT). */
+function isLuhnAlgo(digits: string): boolean {
+  let length = digits.length;
+  let bit = 1;
+  let sum = 0;
+  while (length) {
+    const value = +digits[--length]!;
+    bit ^= 1;
+    sum += bit ? [0, 2, 4, 6, 8, 1, 3, 5, 7, 9][value]! : value;
+  }
+  return sum % 10 === 0;
+}
+
+export function isValidCreditCard(input: string): boolean {
+  if (!regexes.creditCard.test(input)) return false;
+  return isLuhnAlgo(input.replace(CC_SANITIZE, ""));
+}
+
+export interface $ZodCreditCardDef extends $ZodStringFormatDef<"credit_card"> {}
+export interface $ZodCreditCardInternals extends $ZodStringFormatInternals<"credit_card"> {
+  def: $ZodCreditCardDef;
+}
+
+export interface $ZodCreditCard extends $ZodType {
+  _zod: $ZodCreditCardInternals;
+}
+
+export const $ZodCreditCard: core.$constructor<$ZodCreditCard> = /*@__PURE__*/ core.$constructor(
+  "$ZodCreditCard",
+  (inst, def): void => {
+    // Shape only — the Luhn check below is not expressible as a pattern, so consumers of
+    // `pattern` (JSON Schema, template literals) get the length and separator rules alone.
+    def.pattern ??= regexes.creditCard;
+    $ZodStringFormat.init(inst, def);
+    inst._zod.check = (payload) => {
+      if (isValidCreditCard(payload.value)) return;
+      payload.issues.push({
+        code: "invalid_format",
+        format: "credit_card",
+        input: payload.value,
+        inst,
+        continue: !def.abort,
+      });
+    };
+  }
+);
+
 //////////////////////////////   ZodJWT   //////////////////////////////
 
 export function isValidJWT(token: string, algorithm: util.JWTAlgorithm | null = null): boolean {
@@ -1203,7 +1277,7 @@ export const $ZodNumber: core.$constructor<$ZodNumber> = /*@__PURE__*/ core.$con
         ? Number.isNaN(input)
           ? "NaN"
           : !Number.isFinite(input)
-            ? "Infinity"
+            ? String(input)
             : undefined
         : undefined;
 
@@ -1704,6 +1778,8 @@ function handleArrayResult(result: ParsePayload<any>, final: ParsePayload<any[]>
 export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$constructor("$ZodArray", (inst, def) => {
   $ZodType.init(inst, def);
 
+  const memo = inst._zod.memoizer;
+
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
 
@@ -1718,7 +1794,7 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
       return payload;
     }
 
-    payload.value = Array(input.length);
+    payload.value = memo ? memo.alloc(inst, payload, Array(input.length), ctx) : Array(input.length);
     const proms: Promise<any>[] = [];
     for (let i = 0; i < input.length; i++) {
       const item = input[i];
@@ -1935,10 +2011,16 @@ function handleCatchall(
   const isOptionalIn = _catchall.optin === "optional";
   const isOptionalOut = _catchall.optout === "optional";
   for (const key in input) {
-    // skip __proto__ so it can't replace the result prototype via the
-    // assignment setter on the plain {} we build into
-    if (key === "__proto__") continue;
+    // Must precede the __proto__ branch: a declared key is not unrecognized, even though
+    // the shape loop deliberately strips __proto__ from the parsed output.
     if (keySet.has(key)) continue;
+    // Don't copy an undeclared __proto__ into the result; assignment to a plain {} would
+    // replace the result prototype. But in strict mode it is still an unknown key, so
+    // report it before skipping.
+    if (key === "__proto__") {
+      if (t === "never") unrecognized.push(key);
+      continue;
+    }
     if (t === "never") {
       unrecognized.push(key);
       continue;
@@ -1958,6 +2040,10 @@ function handleCatchall(
       keys: unrecognized,
       input,
       inst,
+      // Describes the shape of the input, not the validity of the parsed value, so it never
+      // aborts. The parse still fails; the schema's own checks just get to run first, and an
+      // enclosing intersection can reconcile the key against a sibling operand.
+      continue: true,
     });
   }
 
@@ -1994,7 +2080,9 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     for (const key in shape) {
       const field = shape[key]!._zod;
       if (field.values) {
-        propValues[key] ??= new Set();
+        if (!Object.prototype.hasOwnProperty.call(propValues, key)) {
+          util.assignProp(propValues, key, new Set());
+        }
         for (const v of field.values) propValues[key].add(v);
       }
     }
@@ -2005,6 +2093,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
   const catchall = def.catchall;
 
   let value!: typeof _normalized.value;
+  const memo = inst._zod.memoizer;
 
   inst._zod.parse = (payload, ctx) => {
     value ??= _normalized.value;
@@ -2019,12 +2108,13 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       return payload;
     }
 
-    payload.value = {};
+    payload.value = memo ? memo.alloc(inst, payload, {}, ctx) : {};
 
     const proms: Promise<any>[] = [];
     const shape = value.shape;
 
     for (const key of value.keys) {
+      if (key === "__proto__") continue;
       const el = shape[key]!;
       const isOptionalIn = el._zod.optin === "optional";
       const isOptionalOut = el._zod.optout === "optional";
@@ -2054,9 +2144,11 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
     const superParse = inst._zod.parse;
     const _normalized = util.cached(() => normalizeDef(def));
 
+    const memo = inst._zod.memoizer;
+
     const generateFastpass = (shape: any) => {
-      const doc = new Doc(["shape", "payload", "ctx"]);
       const normalized = _normalized.value;
+      const doc = new Doc(memo ? ["shape", "payload", "ctx", "inst", "memo"] : ["shape", "payload", "ctx"]);
 
       const parseStr = (key: string) => {
         const k = util.esc(key);
@@ -2072,10 +2164,12 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
       }
 
       // A: preserve key order {
-      doc.write(`const newResult = {};`);
+      doc.write(memo ? `const newResult = memo.alloc(inst, payload, {}, ctx);` : `const newResult = {};`);
       for (const key of normalized.keys) {
+        if (key === "__proto__") continue;
         const id = ids[key];
         const k = util.esc(key);
+        const isPresent = `${k} in input`;
         const schema = shape[key];
         const isOptionalIn = schema?._zod?.optin === "optional";
         const isOptionalOut = schema?._zod?.optout === "optional";
@@ -2083,29 +2177,27 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         doc.write(`const ${id} = ${parseStr(key)};`);
 
         if (isOptionalIn && isOptionalOut) {
-          // For optional-in/out schemas, ignore errors on absent keys
+          // For optional-in/out schemas, ignore errors on absent keys — and,
+          // like the interpreted path, drop the value produced alongside them.
           doc.write(`
-        if (${id}.issues.length) {
-          if (${k} in input) {
+        const ${id}_present = ${isPresent};
+        if (!${id}.issues.length || ${id}_present) {
+          if (${id}.issues.length) {
             payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
               ...iss,
               path: iss.path ? [${k}, ...iss.path] : [${k}]
             })));
           }
-        }
-        
-        if (${id}.value === undefined) {
-          if (${k} in input) {
-            newResult[${k}] = undefined;
+
+          if (${id}.value !== undefined || ${id}_present) {
+            newResult[${k}] = ${id}.value;
           }
-        } else {
-          newResult[${k}] = ${id}.value;
         }
-        
+
       `);
         } else if (!isOptionalIn) {
           doc.write(`
-        const ${id}_present = ${k} in input;
+        const ${id}_present = ${isPresent};
         if (${id}.issues.length) {
           payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
             ...iss,
@@ -2122,11 +2214,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         }
 
         if (${id}_present) {
-          if (${id}.value === undefined) {
-            newResult[${k}] = undefined;
-          } else {
-            newResult[${k}] = ${id}.value;
-          }
+          newResult[${k}] = ${id}.value;
         }
 
       `);
@@ -2140,13 +2228,13 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         }
         
         if (${id}.value === undefined) {
-          if (${k} in input) {
+          if (${isPresent}) {
             newResult[${k}] = undefined;
           }
         } else {
           newResult[${k}] = ${id}.value;
         }
-        
+
       `);
         }
       }
@@ -2154,6 +2242,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
       doc.write(`payload.value = newResult;`);
       doc.write(`return payload;`);
       const fn = doc.compile();
+      if (memo) return (payload: any, ctx: any) => fn(shape, payload, ctx, inst, memo);
       return (payload: any, ctx: any) => fn(shape, payload, ctx);
     };
 
@@ -2321,14 +2410,17 @@ function handleExclusiveUnionResults(
   inst: $ZodUnion,
   ctx?: ParseContext
 ) {
-  const successes = results.filter((r) => r.issues.length === 0);
+  const matches: number[] = [];
+  for (let i = 0; i < results.length; i++) {
+    if (results[i].issues.length === 0) matches.push(i);
+  }
 
-  if (successes.length === 1) {
-    final.value = successes[0].value;
+  if (matches.length === 1) {
+    final.value = results[matches[0]].value;
     return final;
   }
 
-  if (successes.length === 0) {
+  if (matches.length === 0) {
     // No matches - same as regular union
     final.issues.push({
       code: "invalid_union",
@@ -2344,6 +2436,7 @@ function handleExclusiveUnionResults(
       inst,
       errors: [],
       inclusive: false,
+      matches,
     });
   }
 
@@ -2439,7 +2532,9 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
         if (!pv || Object.keys(pv).length === 0)
           throw new Error(`Invalid discriminated union option at index "${def.options.indexOf(option)}"`);
         for (const [k, v] of Object.entries(pv!)) {
-          if (!propValues[k]) propValues[k] = new Set();
+          if (!Object.prototype.hasOwnProperty.call(propValues, k)) {
+            util.assignProp(propValues, k, new Set());
+          }
           for (const val of v) {
             propValues[k].add(val);
           }
@@ -2577,7 +2672,9 @@ export function mergeValues(
     const sharedKeys = Object.keys(a).filter((key) => bKeys.indexOf(key) !== -1);
 
     const newObj: any = { ...a, ...b };
+    if (Object.prototype.hasOwnProperty.call(newObj, "__proto__")) delete newObj.__proto__;
     for (const key of sharedKeys) {
+      if (key === "__proto__") continue;
       const sharedValue = mergeValues(a[key], b[key]);
       if (!sharedValue.valid) {
         return {
@@ -2618,44 +2715,55 @@ export function mergeValues(
 }
 
 function handleIntersectionResults(result: ParsePayload, left: ParsePayload, right: ParsePayload): ParsePayload {
-  // Track which side(s) report each key as unrecognized
+  // Track which side(s) reject each key. A key rejection is reported only when
+  // BOTH sides reject it, so a key owned by one branch survives the other's
+  // key schema. strictObject reports these as unrecognized_keys; a record with
+  // an open key schema reports one invalid_key per key.
   const unrecKeys = new Map<string, { l?: true; r?: true }>();
   let unrecIssue: errors.$ZodRawIssue | undefined;
+  const keyIssues = new Map<string, errors.$ZodRawIssue>();
+
+  const collect = (iss: errors.$ZodRawIssue, side: "l" | "r"): boolean => {
+    let keys: string[];
+    if (iss.code === "unrecognized_keys" && !iss.path?.length) {
+      unrecIssue ??= iss;
+      keys = iss.keys as string[];
+    } else if (iss.code === "invalid_key" && iss.origin === "record" && iss.path?.length === 1) {
+      const k = String(iss.path[0]);
+      if (!keyIssues.has(k)) keyIssues.set(k, iss);
+      keys = [k];
+    } else {
+      return false;
+    }
+    for (const k of keys) {
+      if (!unrecKeys.has(k)) unrecKeys.set(k, {});
+      unrecKeys.get(k)![side] = true;
+    }
+    return true;
+  };
 
   for (const iss of left.issues) {
-    if (iss.code === "unrecognized_keys") {
-      unrecIssue ??= iss;
-      for (const k of iss.keys) {
-        if (!unrecKeys.has(k)) unrecKeys.set(k, {});
-        unrecKeys.get(k)!.l = true;
-      }
-    } else {
-      result.issues.push(iss);
-    }
+    if (!collect(iss, "l")) result.issues.push(iss);
   }
 
   for (const iss of right.issues) {
-    if (iss.code === "unrecognized_keys") {
-      for (const k of iss.keys) {
-        if (!unrecKeys.has(k)) unrecKeys.set(k, {});
-        unrecKeys.get(k)!.r = true;
-      }
-    } else {
-      result.issues.push(iss);
+    if (!collect(iss, "r")) result.issues.push(iss);
+  }
+
+  // Report only keys rejected by BOTH sides
+  const bothKeys = [...unrecKeys].filter(([, f]) => f.l && f.r).map(([k]) => k);
+  if (bothKeys.length) {
+    const aggregated = unrecIssue ? bothKeys.filter((k) => (unrecIssue!.keys as string[]).includes(k)) : [];
+    if (aggregated.length) result.issues.push({ ...unrecIssue!, keys: aggregated });
+    for (const k of bothKeys) {
+      if (!aggregated.includes(k) && keyIssues.has(k)) result.issues.push(keyIssues.get(k)!);
     }
   }
-
-  // Report only keys unrecognized by BOTH sides
-  const bothKeys = [...unrecKeys].filter(([, f]) => f.l && f.r).map(([k]) => k);
-  if (bothKeys.length && unrecIssue) {
-    result.issues.push({ ...unrecIssue, keys: bothKeys });
-  }
-
-  if (util.aborted(result)) return result;
 
   const merged = mergeValues(left.value, right.value);
 
   if (!merged.valid) {
+    if (util.aborted(result)) return result;
     throw new Error(`Unmergable intersection. Error path: ` + `${JSON.stringify(merged.mergeErrorPath)}`);
   }
 
@@ -2733,6 +2841,7 @@ export interface $ZodTuple<
 export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$constructor("$ZodTuple", (inst, def) => {
   $ZodType.init(inst, def);
   const items = def.items;
+  const memo = inst._zod.memoizer;
 
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
@@ -2746,7 +2855,7 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
       return payload;
     }
 
-    payload.value = [];
+    payload.value = memo ? memo.alloc(inst, payload, [] as unknown[], ctx) : [];
     const proms: Promise<any>[] = [];
 
     const optinStart = getTupleOptStart(items, "optin");
@@ -2884,6 +2993,7 @@ export interface $ZodRecordDef<Key extends $ZodRecordKey = $ZodRecordKey, Value 
   valueType: Value;
   /** @default "strict" - errors on keys not matching keyType. "loose" passes through non-matching keys unchanged. */
   mode?: "strict" | "loose";
+  partial?: boolean;
 }
 
 // export type $InferZodRecordOutput<
@@ -2941,6 +3051,7 @@ export interface $ZodRecord<Key extends $ZodRecordKey = $ZodRecordKey, Value ext
 
 export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$constructor("$ZodRecord", (inst, def) => {
   $ZodType.init(inst, def);
+  const memo = inst._zod.memoizer;
 
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
@@ -2959,12 +3070,14 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
     const proms: Promise<any>[] = [];
 
     const values = def.keyType._zod.values;
-    if (values) {
-      payload.value = {};
+    if (values && !def.partial) {
+      payload.value = memo ? memo.alloc(inst, payload, {}, ctx) : {};
       const recordKeys = new Set<string | symbol>();
       for (const key of values) {
         if (typeof key === "string" || typeof key === "number" || typeof key === "symbol") {
           recordKeys.add(typeof key === "number" ? key.toString() : key);
+          // A declared __proto__ is stripped but is not an unrecognized key.
+          if (key === "__proto__") continue;
           const keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
           if (keyResult instanceof Promise) {
             throw new Error("Async schemas not supported in object keys currently");
@@ -2981,6 +3094,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
             continue;
           }
           const outKey = keyResult.value as PropertyKey;
+          if (outKey === "__proto__") continue;
           const result = def.valueType._zod.run({ value: input[key], issues: [] }, ctx);
 
           if (result instanceof Promise) {
@@ -3004,8 +3118,15 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       let unrecognized!: string[];
       for (const key in input) {
         if (!recordKeys.has(key)) {
-          unrecognized = unrecognized ?? [];
-          unrecognized.push(key);
+          if (def.mode === "loose") {
+            // skip __proto__ so it can't replace the result prototype via the
+            // assignment setter on the plain {} we build into
+            if (key === "__proto__") continue;
+            payload.value[key] = input[key];
+          } else {
+            unrecognized = unrecognized ?? [];
+            unrecognized.push(key);
+          }
         }
       }
       if (unrecognized && unrecognized.length > 0) {
@@ -3015,10 +3136,16 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
           input,
           inst,
           keys: unrecognized,
+          continue: true,
         });
       }
     } else {
-      payload.value = {};
+      payload.value = memo ? memo.alloc(inst, payload, {}, ctx) : {};
+      // An enumerable key schema declares which keys the record owns, so a key outside
+      // the set is unrecognized. A non-enumerable one (regex, refine) is a constraint
+      // every key must satisfy, so a failing key is invalid. Only the former is
+      // reconcilable against the other side of an intersection.
+      let unrecognized!: string[];
       // Reflect.ownKeys for Symbol-key support; filter non-enumerable to match z.object()
       for (const key of Reflect.ownKeys(input)) {
         if (key === "__proto__") continue;
@@ -3045,6 +3172,9 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
           if (def.mode === "loose") {
             // Pass through unchanged
             payload.value[key] = input[key];
+          } else if (values) {
+            unrecognized = unrecognized ?? [];
+            unrecognized.push(key as string);
           } else {
             // Default "strict" behavior: error on invalid key
             payload.issues.push({
@@ -3059,6 +3189,11 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
           continue;
         }
 
+        // the guard above tests the raw input key, but the key schema can normalize an
+        // ordinary key into __proto__; re-check the key we actually write under
+        const outKey = keyResult.value as PropertyKey;
+        if (outKey === "__proto__") continue;
+
         const result = def.valueType._zod.run({ value: input[key], issues: [] }, ctx);
 
         if (result instanceof Promise) {
@@ -3067,15 +3202,26 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
               if (result.issues.length) {
                 payload.issues.push(...util.prefixIssues(key, result.issues));
               }
-              payload.value[keyResult.value as PropertyKey] = result.value;
+              payload.value[outKey] = result.value;
             })
           );
         } else {
           if (result.issues.length) {
             payload.issues.push(...util.prefixIssues(key, result.issues));
           }
-          payload.value[keyResult.value as PropertyKey] = result.value;
+          payload.value[outKey] = result.value;
         }
+      }
+
+      if (unrecognized && unrecognized.length > 0) {
+        payload.issues.push({
+          code: "unrecognized_keys",
+
+          input,
+          inst,
+          keys: unrecognized,
+          continue: true,
+        });
       }
     }
 
@@ -3113,6 +3259,7 @@ export interface $ZodMap<Key extends SomeType = $ZodType, Value extends SomeType
 
 export const $ZodMap: core.$constructor<$ZodMap> = /*@__PURE__*/ core.$constructor("$ZodMap", (inst, def) => {
   $ZodType.init(inst, def);
+  const memo = inst._zod.memoizer;
 
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
@@ -3128,7 +3275,7 @@ export const $ZodMap: core.$constructor<$ZodMap> = /*@__PURE__*/ core.$construct
     }
 
     const proms: Promise<any>[] = [];
-    payload.value = new Map();
+    payload.value = memo ? memo.alloc(inst, payload, new Map(), ctx) : new Map();
 
     for (const [key, value] of input) {
       const keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
@@ -3217,6 +3364,7 @@ export interface $ZodSet<T extends SomeType = $ZodType> extends $ZodType {
 
 export const $ZodSet: core.$constructor<$ZodSet> = /*@__PURE__*/ core.$constructor("$ZodSet", (inst, def) => {
   $ZodType.init(inst, def);
+  const memo = inst._zod.memoizer;
 
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
@@ -3231,7 +3379,7 @@ export const $ZodSet: core.$constructor<$ZodSet> = /*@__PURE__*/ core.$construct
     }
 
     const proms: Promise<any>[] = [];
-    payload.value = new Set();
+    payload.value = memo ? memo.alloc(inst, payload, new Set(), ctx) : new Set();
     for (const item of input) {
       const result = def.valueType._zod.run({ value: item, issues: [] }, ctx);
       if (result instanceof Promise) {
@@ -3294,7 +3442,7 @@ export const $ZodEnum: core.$constructor<$ZodEnum> = /*@__PURE__*/ core.$constru
   inst._zod.pattern = new RegExp(
     `^(${values
       .filter((k) => util.propertyKeyTypes.has(typeof k))
-      .map((o) => (typeof o === "string" ? util.escapeRegex(o) : o.toString()))
+      .map((o) => util.escapeRegex(o.toString()))
       .join("|")})$`
   );
 
@@ -4103,7 +4251,10 @@ export const $ZodPipe: core.$constructor<$ZodPipe> = /*@__PURE__*/ core.$constru
 });
 
 function handlePipeResult(left: ParsePayload, next: $ZodType, ctx: ParseContextInternal) {
-  if (left.issues.length) {
+  // Any issue stops the pipe, so a failing refinement never feeds its transform. An
+  // unrecognized key is the exception: it describes the input's extra properties, not the
+  // value being piped, and an enclosing intersection may yet reconcile it.
+  if (left.issues.some((iss) => iss.code !== "unrecognized_keys")) {
     // prevent further checks
     left.aborted = true;
     return left;
@@ -4203,19 +4354,22 @@ function handleCodecTxResult(left: ParsePayload, value: any, nextSchema: SomeTyp
 //////////                             //////////
 /////////////////////////////////////////////////
 /////////////////////////////////////////////////
-export interface $ZodPreprocessDef<B extends SomeType = $ZodType> extends $ZodPipeDef<$ZodTransform, B> {
-  in: $ZodTransform;
+export interface $ZodPreprocessDef<B extends SomeType = $ZodType, I = unknown>
+  extends $ZodPipeDef<$ZodTransform<unknown, I>, B> {
+  in: $ZodTransform<unknown, I>;
   out: B;
 }
 
-export interface $ZodPreprocessInternals<B extends SomeType = $ZodType> extends $ZodPipeInternals<$ZodTransform, B> {
-  def: $ZodPreprocessDef<B>;
+export interface $ZodPreprocessInternals<B extends SomeType = $ZodType, I = unknown>
+  extends $ZodPipeInternals<$ZodTransform<unknown, I>, B> {
+  def: $ZodPreprocessDef<B, I>;
   optin: B["_zod"]["optin"];
   optout: B["_zod"]["optout"];
 }
 
-export interface $ZodPreprocess<B extends SomeType = $ZodType> extends $ZodPipe<$ZodTransform, B> {
-  _zod: $ZodPreprocessInternals<B>;
+export interface $ZodPreprocess<B extends SomeType = $ZodType, I = unknown>
+  extends $ZodPipe<$ZodTransform<unknown, I>, B> {
+  _zod: $ZodPreprocessInternals<B, I>;
 }
 
 export const $ZodPreprocess: core.$constructor<$ZodPreprocess> = /*@__PURE__*/ core.$constructor(
@@ -4275,7 +4429,9 @@ export const $ZodReadonly: core.$constructor<$ZodReadonly> = /*@__PURE__*/ core.
 );
 
 function handleReadonlyResult(payload: ParsePayload): ParsePayload {
-  payload.value = Object.freeze(payload.value);
+  // A repeat visit hands back a node that is still being built; freezing it here
+  // would make the rest of its keys fail to assign.
+  if (!payload.memo) payload.value = Object.freeze(payload.value);
   return payload;
 }
 
@@ -4491,7 +4647,9 @@ export const $ZodFunction: core.$constructor<$ZodFunction> = /*@__PURE__*/ core.
   "$ZodFunction",
   (inst, def) => {
     $ZodType.init(inst, def);
-    inst._def = def;
+    // Defined, not assigned: the classic prototype exposes `_def` as a
+    // getter with no setter.
+    Object.defineProperty(inst, "_def", { value: def });
     inst._zod.def = def;
 
     inst.implement = (func) => {
@@ -4791,6 +4949,7 @@ export type $ZodStringFormatTypes =
   | $ZodBase64
   | $ZodBase64URL
   | $ZodE164
+  | $ZodCreditCard
   | $ZodJWT
   | $ZodCustomStringFormat<"hex">
   | $ZodCustomStringFormat<util.HashFormat>

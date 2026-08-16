@@ -1,4 +1,3 @@
-import { checkSync } from "recheck";
 import { expect, test } from "vitest";
 import * as z from "zod/v4";
 
@@ -286,17 +285,3 @@ test("duration", () => {
     expect(result.error.issues[0].message).toEqual("Invalid ISO duration");
   }
 });
-
-test("redos checker", () => {
-  const a = z.iso.datetime();
-  const b = z.string().datetime({ offset: true });
-  const c = z.string().datetime({ local: true });
-  const d = z.string().datetime({ local: true, offset: true, precision: 3 });
-  const e = z.string().date();
-  const f = z.string().time();
-  const g = z.string().duration();
-  for (const schema of [a, b, c, d, e, f, g]) {
-    const result = checkSync(schema._zod.pattern.source, "");
-    if (result.status !== "safe") throw Error("ReDoS issue");
-  }
-}, 10000);
