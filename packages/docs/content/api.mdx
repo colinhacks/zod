@@ -1025,6 +1025,32 @@ optionalYoda.def.innerType; // ZodMiniLiteral<"yoda">
 </Tab>
 </Tabs>
 
+## Exact optionals
+
+To allow an absent key without allowing an explicit `undefined`, per TypeScript's [`exactOptionalPropertyTypes`](https://www.typescriptlang.org/tsconfig/#exactOptionalPropertyTypes):
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+z.exactOptional(z.string()); // or z.string().exactOptional()
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+z.exactOptional(z.string());
+```
+</Tab>
+</Tabs>
+
+```ts
+const User = z.object({ name: z.string().exactOptional() });
+// { name?: string }
+
+User.parse({}); // ✅
+User.parse({ name: "yoda" }); // ✅
+User.parse({ name: undefined }); // ❌
+```
+
 ## Nullables
 
 To make a schema *nullable* (that is, to allow `null` inputs).
@@ -1431,6 +1457,25 @@ const RecipeOptionalIngredients = z.partial(Recipe, {
   ingredients: true,
 });
 // { title: string; description?: string | undefined; ingredients?: string[] | undefined }
+```
+</Tab>
+</Tabs>
+
+### `.exactPartial()`
+
+Identical to `.partial()`, but wraps each field in [`exactOptional()`](#exact-optionals) instead of `optional()`:
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts zod
+const PartialRecipe = Recipe.exactPartial();
+// { title?: string; description?: string | undefined; ingredients?: string[] }
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+const PartialRecipe = z.exactPartial(Recipe);
+// { title?: string; description?: string | undefined; ingredients?: string[] }
 ```
 </Tab>
 </Tabs>
