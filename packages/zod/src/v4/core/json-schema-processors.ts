@@ -3,8 +3,10 @@ import type * as JSONSchema from "./json-schema.js";
 import type { $ZodRegistry } from "./registries.js";
 import type * as schemas from "./schemas.js";
 import {
+  type ProcessParams,
   type Processor,
   type RegistryToJSONSchemaParams,
+  type ToJSONSchemaContext,
   type ToJSONSchemaParams,
   type ZodStandardJSONSchemaPayload,
   extractDefs,
@@ -506,12 +508,35 @@ export const nonoptionalProcessor: Processor<schemas.$ZodNonOptional> = (schema,
   seen.ref = def.innerType;
 };
 
+/** Round-trips a default value through JSON so the emitted schema is guaranteed to be valid JSON.
+ * A BigInt has no reliable encoding, so it goes through `unrepresentable` like any other
+ * unrepresentable value. Returns a sentinel when the caller must not write a default of its own. */
+const UNREPRESENTABLE_DEFAULT = Symbol();
+function serializeDefaultValue(
+  value: unknown,
+  schema: schemas.$ZodType,
+  ctx: ToJSONSchemaContext,
+  json: JSONSchema.BaseSchema,
+  params: ProcessParams
+): any {
+  let unrepresentable = false;
+  const serialized = JSON.stringify(value, (_, val) => {
+    if (typeof val !== "bigint") return val;
+    unrepresentable = true;
+    return null;
+  });
+  if (!unrepresentable) return JSON.parse(serialized);
+  handleUnrepresentable(schema, ctx, json, params, "BigInt defaults cannot be represented in JSON Schema");
+  return UNREPRESENTABLE_DEFAULT;
+}
+
 export const defaultProcessor: Processor<schemas.$ZodDefault> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodDefaultDef;
   process(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
-  json.default = JSON.parse(JSON.stringify(def.defaultValue));
+  const value = serializeDefaultValue(def.defaultValue, schema, ctx as ToJSONSchemaContext, json, params);
+  if (value !== UNREPRESENTABLE_DEFAULT) json.default = value;
 };
 
 export const prefaultProcessor: Processor<schemas.$ZodPrefault> = (schema, ctx, json, params) => {
@@ -519,7 +544,9 @@ export const prefaultProcessor: Processor<schemas.$ZodPrefault> = (schema, ctx, 
   process(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
-  if (ctx.io === "input") json._prefault = JSON.parse(JSON.stringify(def.defaultValue));
+  if (ctx.io !== "input") return;
+  const value = serializeDefaultValue(def.defaultValue, schema, ctx as ToJSONSchemaContext, json, params);
+  if (value !== UNREPRESENTABLE_DEFAULT) json._prefault = value;
 };
 
 export const catchProcessor: Processor<schemas.$ZodCatch> = (schema, ctx, json, params) => {

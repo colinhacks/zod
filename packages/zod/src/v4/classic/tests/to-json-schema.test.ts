@@ -2181,6 +2181,103 @@ test("escapes JSON Pointer reserved characters in $ref but not in $defs key", ()
   expect(Object.keys(result.$defs!)).toEqual(["Shared/User~"]);
 });
 
+test("unrepresentable default values go through `unrepresentable`", () => {
+  // a bigint default has no reliable JSON encoding, so it is dropped rather than approximated
+  expect(z.toJSONSchema(z.bigint().default(0n), { unrepresentable: "any" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+    }
+  `);
+  expect(z.toJSONSchema(z.bigint().prefault(2n), { io: "input", unrepresentable: "any" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+    }
+  `);
+  // including when nested inside an otherwise representable default
+  expect(
+    z.toJSONSchema(z.object({ a: z.bigint() }).default({ a: 1n }), { unrepresentable: "any" })
+  ).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "a": {},
+      },
+      "required": [
+        "a",
+      ],
+      "type": "object",
+    }
+  `);
+
+  // under the default strict mode the inner type throws first; a representable inner type surfaces
+  // the default's own error rather than a raw `JSON.stringify` TypeError
+  expect(() => z.toJSONSchema(z.bigint().default(0n))).toThrow("BigInt cannot be represented in JSON Schema");
+  expect(() => z.toJSONSchema(z.unknown().default(1n))).toThrow("BigInt defaults cannot be represented in JSON Schema");
+
+  // representable defaults are untouched
+  expect(z.toJSONSchema(z.object({ a: z.number() }).default({ a: 2 }))).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "default": {
+        "a": 2,
+      },
+      "properties": {
+        "a": {
+          "type": "number",
+        },
+      },
+      "required": [
+        "a",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
+test("an `unrepresentable` handler can represent a bigint default", () => {
+  // one handler covers both the type and its default, so no `unrepresentable: "any"` is needed and
+  // every other unrepresentable type still throws
+  expect(
+    z.toJSONSchema(z.object({ startAt: z.coerce.bigint().optional().default(0n) }), {
+      io: "input",
+      unrepresentable: ({ zodSchema }) => {
+        const def = zodSchema._zod.def;
+        if (def.type === "bigint") return { type: "integer", format: "int64" };
+        if (def.type === "default") return { default: String(def.defaultValue) };
+        return "throw";
+      },
+    })
+  ).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "startAt": {
+          "default": "0",
+          "format": "int64",
+          "type": "integer",
+        },
+      },
+      "type": "object",
+    }
+  `);
+
+  // a handler may also drop just the default while still representing the type
+  expect(
+    z.toJSONSchema(z.bigint().default(0n), {
+      unrepresentable: ({ zodSchema }) =>
+        zodSchema._zod.def.type === "bigint" ? { type: "integer", format: "int64" } : "any",
+    })
+  ).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "format": "int64",
+      "type": "integer",
+    }
+  `);
+});
+
 test("unrepresentable literal values are ignored", () => {
   const a = z.toJSONSchema(z.literal(["hello", null, 5, BigInt(1324), undefined]), { unrepresentable: "any" });
   expect(a).toMatchInlineSnapshot(`
