@@ -44,6 +44,7 @@ const error: () => errors.$ZodErrorMap = () => {
     base64url: "base64url bilen şifrlenen setir",
     json_string: "JSON setiri",
     e164: "E.164 nomeri",
+    credit_card: "kredit kartynyň nomeri",
     jwt: "JWT",
     template_literal: "şablon",
   };
