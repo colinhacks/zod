@@ -986,8 +986,8 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
     const inputVar = newVar(ctx);
     doc.write(`const ${inputVar} = ${accessor}[${util.esc(key)}];`);
 
-    if (propSchema._zod.optin === "optional") {
-      // Runtime runs optional-in properties even when absent, then ignores issues on absent keys only when the output is optional too. This is what makes exactOptional compositional: the child rejects explicit undefined, while the object layer suppresses that failure only for an actually absent key.
+    if (propSchema._zod.optin !== undefined) {
+      // Any rung of the optin ladder means the container may omit this key. The runtime runs such properties even when absent, then ignores issues on absent keys only when the output is optional too. This is what makes exactOptional compositional: the child rejects explicit undefined, while the object layer suppresses that failure only for an actually absent key.
       const outputVar = newVar(ctx);
       doc.write(`let ${outputVar} = (() => {`);
       doc.indented((d) => {
@@ -1027,7 +1027,7 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
 
     if (catchallType === "never") {
       // Strict object: reject unknown keys. Runtime iterates with for...in, so inherited enumerable keys count as unrecognized. An undeclared `__proto__` counts too (handleCatchall reports it before skipping the copy, see #6221) — it is only excluded from the *output*, never from this scan. A declared `__proto__` can't reach here; the shape key is rejected at compile time above.
-      const hasOptional = keys.some((k) => shape[k]!._zod.optin === "optional");
+      const hasOptional = keys.some((k) => shape[k]!._zod.optin !== undefined);
 
       if (hasOptional) {
         // With optionals: must iterate and check each key
@@ -1103,24 +1103,8 @@ function generateOptionalCheck(doc: Doc, ctx: CompileContext, schema: SomeType, 
     return generateCheck(doc, ctx, def.innerType, accessor);
   }
 
-  // `readonly` forwards optin/optout and defers the whole parse to its inner, so it is transparent to the question of what an absent input produces. The node underneath is the one that answers it — testing the wrapper instead is why `.default(v).readonly().optional()` read as `readonly`, missed the branch below and silently dropped the default.
-  let absenceOwner = def.innerType;
-  while (absenceOwner._zod.def.type === "readonly") {
-    const inner = (absenceOwner._zod.def as unknown as { innerType?: SomeType }).innerType;
-    if (!inner) break;
-    absenceOwner = inner;
-  }
-  const ownerType = absenceOwner._zod.def.type;
-
-  // `default` answers an absent input with its own value without consulting its inner, so it always produces one. `prefault` feeds that value *through* the inner, so a fallback-producing inner can still make handleOptionalResult collapse the result to `undefined` — which the fast path can't represent.
-  if (ownerType === "default" || ownerType === "prefault") {
-    if (ownerType === "prefault") {
-      const prefaultInner = (absenceOwner._zod.def as unknown as { innerType?: SomeType }).innerType;
-      if (prefaultInner && schemaMaySetFallback(prefaultInner)) {
-        throw new ZodCompileUnsupportedError("optional wrapping prefault with fallback-producing inner");
-      }
-    }
-
+  // Same question $ZodOptional asks: only the top rung of the optin ladder substitutes a value for an absent input, so only it is worth running on `undefined`. Every other rung leaves the value intact, which is the skip branch below.
+  if (def.innerType._zod.optin === "defaulted") {
     const outputVar = newVar(ctx);
     const branchVar = newVar(ctx);
     doc.write(`let ${outputVar};`);
@@ -1160,7 +1144,7 @@ function isExactOptional(schema: SomeType): boolean {
 
 // A required object key whose value-level fast path would silently accept an absent key (which reads as `undefined`) needs an explicit `key in input` guard. Without it, schemas like `z.undefined()` / `z.any()` / unions containing undefined would pass for missing properties even though the runtime rejects them.
 function requiresPresenceCheck(schema: SomeType): boolean {
-  return schema._zod.optin !== "optional" && fastPathAcceptsAbsence(schema);
+  return schema._zod.optin === undefined && fastPathAcceptsAbsence(schema);
 }
 
 function fastPathAcceptsAbsence(schema: SomeType): boolean {
@@ -1281,27 +1265,6 @@ function mayOutputUndefined(schema: SomeType): boolean {
     default:
       // any/unknown/undefined/void/default/prefault/transform/custom/lazy/catch
       return true;
-  }
-}
-
-function schemaMaySetFallback(schema: SomeType): boolean {
-  const def = schema._zod.def as { type: string; innerType?: SomeType; in?: SomeType; out?: SomeType };
-  switch (def.type) {
-    case "transform":
-    case "catch":
-      return true;
-    case "pipe":
-      return !!((def.in && schemaMaySetFallback(def.in)) || (def.out && schemaMaySetFallback(def.out)));
-    case "optional":
-    case "nullable":
-    case "readonly":
-    case "success":
-    case "default":
-    case "prefault":
-    case "nonoptional":
-      return !!(def.innerType && schemaMaySetFallback(def.innerType));
-    default:
-      return false;
   }
 }
 
@@ -1526,7 +1489,9 @@ function generateTupleCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
 
 function getTupleOptStart(items: SomeType[], key: "optin" | "optout"): number {
   for (let i = items.length - 1; i >= 0; i--) {
-    if (items[i]!._zod[key] !== "optional") return i + 1;
+    // Mirrors the runtime: optin is a three-rung ladder so any rung above `undefined` permits an absent slot; optout stays two-valued.
+    const omittable = key === "optin" ? items[i]!._zod.optin !== undefined : items[i]!._zod.optout === "optional";
+    if (!omittable) return i + 1;
   }
   return 0;
 }
