@@ -54,6 +54,7 @@
     "./v4/locales/ota": "./src/v4/locales/ota.ts",
     "./v4/locales/pl": "./src/v4/locales/pl.ts",
     "./v4/locales/ps": "./src/v4/locales/ps.ts",
+    "./v4/locales/pt-BR": "./src/v4/locales/pt-BR.ts",
     "./v4/locales/pt": "./src/v4/locales/pt.ts",
     "./v4/locales/ro": "./src/v4/locales/ro.ts",
     "./v4/locales/ru": "./src/v4/locales/ru.ts",
