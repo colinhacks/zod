@@ -45,6 +45,7 @@ const error: () => errors.$ZodErrorMap = () => {
     base64url: "șir codat base64url",
     json_string: "șir JSON",
     e164: "număr E.164",
+    credit_card: "număr de card de credit",
     jwt: "JWT",
     template_literal: "intrare",
   };

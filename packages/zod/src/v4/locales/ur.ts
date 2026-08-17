@@ -43,6 +43,7 @@ const error: () => errors.$ZodErrorMap = () => {
     base64url: "بیس 64 یو آر ایل ان کوڈڈ سٹرنگ",
     json_string: "جے ایس او این سٹرنگ",
     e164: "ای 164 نمبر",
+    credit_card: "کریڈٹ کارڈ نمبر",
     jwt: "جے ڈبلیو ٹی",
     template_literal: "ان پٹ",
   };
