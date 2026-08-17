@@ -1922,7 +1922,7 @@ function generateCustomCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
 }
 
 // Runtime helper for a compiled `catch`: runs the inner schema once and returns its value when it succeeded. Anything else — a failure the catch would handle, or an async inner — returns INVALID so the interpreter takes over.
-function runtimeCatch(innerSchema: SomeType, value: unknown): unknown {
+function runtimeCatch(innerSchema: SomeType, catchValue: () => unknown, value: unknown): unknown {
   const result = (innerSchema._zod.run as (p: ParsePayload, c: ParseContextInternal) => any)(
     { value, issues: [] },
     {} as ParseContextInternal
@@ -1930,8 +1930,8 @@ function runtimeCatch(innerSchema: SomeType, value: unknown): unknown {
   if (result && typeof (result as Promise<unknown>).then === "function") return INVALID;
   const r = result as { value: unknown; issues: any[] };
   if (r.issues.length === 0) return r.value;
-  // The inner failed, so the catch callback is about to receive finalized issues — and finalizing them correctly needs the caller's per-parse error map, which a compiled fast path never sees. Building them here produced a different message than `.parse(input, { error })` does, and because catch *succeeds* nothing downstream could notice. Hand the parse back instead: the runtime reproduces the caught value with the caller's map applied, and this is the failure path the design already routes to the interpreter.
-  return INVALID;
+  // Only reached for a catch value that ignores the parse context — codegen refuses the rest — so there are no issues to finalize and nothing here needs the caller's error map.
+  return catchValue();
 }
 
 function generateCatchCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
@@ -1939,6 +1939,11 @@ function generateCatchCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
     innerType: SomeType;
     catchValue: (ctx: any) => unknown;
   };
+
+  // `.catch(value)` normalises to a thunk, so an argument means a real callback, and a callback reads `ctx.error` — issues finalized against the caller's per-parse error map, which generated code never sees. Producing them here gave a different message than `.parse(input, { error })` and, because catch *succeeds*, nothing downstream could notice. Refuse at codegen instead: returning INVALID would be a bail-out, and a union reads that as a rejected branch rather than a reason to hand the whole parse back.
+  if (def.catchValue.length > 0) {
+    throw new ZodCompileUnsupportedError("catch with a callback that reads the parse context");
+  }
 
   const outputVar = newVar(ctx);
   doc.write(`let ${outputVar} = (() => {`);
@@ -1949,10 +1954,11 @@ function generateCatchCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
   doc.write(`})();`);
 
   const innerConst = addConstant(ctx, def.innerType);
+  const catchConst = addConstant(ctx, def.catchValue);
   const catchHelperConst = addConstant(ctx, runtimeCatch);
   doc.write(`if (${outputVar} === INVALID) {`);
   doc.indented((d) => {
-    d.write(`${outputVar} = ${catchHelperConst}(${innerConst}, ${accessor});`);
+    d.write(`${outputVar} = ${catchHelperConst}(${innerConst}, ${catchConst}, ${accessor});`);
     d.write(`if (${outputVar} === INVALID) return INVALID;`);
   });
   doc.write(`}`);

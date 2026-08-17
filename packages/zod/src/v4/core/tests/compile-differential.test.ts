@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 
 import * as z from "../../index.js";
-import { INVALID, compile, compileFastpass } from "../compile.js";
+import { INVALID, ZodCompileUnsupportedError, compile, compileFastpass } from "../compile.js";
 
 // Differential harness: assert compiled schema agrees with the original on every fixture. Success path: data identical (incl. key order and undefined-vs-absent, which toEqual cannot see) AND the fast path actually produced the value (a fixture set that silently falls back on valid inputs tests nothing). Failure path: issues deep-equal (errors always come from the runtime fallback).
 function describe(value: unknown): string {
@@ -71,6 +71,38 @@ function differential(schema: z.ZodType, inputs: unknown[], opts?: { fallbackOk?
     } else if (!a.success && !b.success) {
       expect(b.error.issues, `issues mismatch for input ${describe(input)}`).toEqual(a.error.issues);
     }
+  }
+  assertUnionSound(schema, inputs);
+}
+
+/**
+ * Every other assertion here is rescued by the fallback: a fast path that bails
+ * out returns INVALID, the wrapper re-runs the interpreter, and the answer comes
+ * out right. A union is the one place that cannot happen — it reads INVALID from
+ * a branch as "the interpreter would reject this" and moves to the next branch,
+ * so a bail-out silently becomes a different parse result with no error at all.
+ *
+ * Wrap the schema next to a branch that accepts anything and assert the sentinel
+ * never wins on input the schema itself accepts.
+ */
+function assertUnionSound(schema: z.ZodType, inputs: unknown[]) {
+  const marker = Symbol("sentinel");
+  const sentinel = z.any().transform(() => marker);
+  let union: z.ZodType;
+  let compiledUnion: z.ZodType;
+  try {
+    union = z.union([schema, sentinel]) as unknown as z.ZodType;
+    compiledUnion = compile(union);
+  } catch {
+    return; // Refused at codegen, which is the outcome a union honours.
+  }
+  for (const input of inputs) {
+    if (!schema.safeParse(input).success) continue;
+    const got = compiledUnion.safeParse(input);
+    expect(
+      got.success && got.data === marker,
+      `union selected the sentinel for input ${describe(input)} the schema accepts — a bail-out read as a rejection`
+    ).toBe(false);
   }
 }
 
@@ -453,12 +485,16 @@ test("catch inside object property", () => {
   );
 });
 
-test("catch with function reading issues", () => {
-  differential(
-    z.catch(z.string().min(5), (ctx) => `e:${ctx.error.issues.length}`),
-    ["abcdef", "ab", 42, undefined],
-    { fallbackOk: true }
-  );
+test("catch with function reading issues is refused", () => {
+  // The callback reads issues finalized against the caller's per-parse error map, which generated code has no access to. Refusing at codegen is what makes it safe inside a union; returning INVALID at parse time would read as a rejected branch.
+  const schema = z.catch(z.string().min(5), (ctx) => `e:${ctx.error.issues.length}`);
+  expect(() => compile(schema)).toThrow(ZodCompileUnsupportedError);
+  expect(schema.parse("ab")).toBe("e:1");
+  expect(schema.parse(123 as never, { error: () => "MAPPED" })).toBe("e:1");
+});
+
+test("catch with a constant value keeps the fast path", () => {
+  differential(z.catch(z.string().min(5), "fb"), ["abcdef", "ab", 42, undefined]);
 });
 
 // --- runtime islands ---

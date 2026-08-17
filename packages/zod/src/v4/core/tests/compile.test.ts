@@ -1285,13 +1285,18 @@ test("catch as object property", () => {
   expect(valid(aot, {})).toEqual({ name: "anon" });
 });
 
-test("catch receives finalized issues in ctx", () => {
-  const schema = z.catch(z.string().min(5), (ctx) => `bad:${ctx.error.issues.length}`);
-  const aot = compile(schema);
-  expect(valid(aot, "hello world")).toBe("hello world");
-  // input fails both type and length checks; we just confirm catchValue ran and saw at least one finalized issue.
-  expect(valid(aot, "hi")).toBe("bad:1");
-  expect(valid(aot, 42)).toMatch(/^bad:\d+$/);
+test("a catch callback reading ctx is refused; a constant catch compiles", () => {
+  // Finalizing the issues the callback sees depends on the caller's per-parse error map, which generated code never receives — the compiled path produced the default message where `.parse(input, { error })` produces the mapped one. Refuse it, so a union treats it as uncompilable rather than as a rejected branch.
+  const reads = z.catch(z.string().min(5), (ctx) => `bad:${ctx.error.issues.length}`);
+  expect(() => compile(reads)).toThrow(ZodCompileUnsupportedError);
+  expect(reads.parse("hi")).toBe("bad:1");
+  expect(reads.parse(42 as never)).toMatch(/^bad:\d+$/);
+
+  // A constant catch value needs no issues at all, so it keeps the fast path.
+  const constant = compile(z.catch(z.string().min(5), "fb"));
+  expect(valid(constant, "hello world")).toBe("hello world");
+  expect(valid(constant, "hi")).toBe("fb");
+  expect(valid(constant, 42)).toBe("fb");
 });
 
 test("catch falls through unsupported inner via runtime island", () => {
