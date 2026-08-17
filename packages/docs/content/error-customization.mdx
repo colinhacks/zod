@@ -434,8 +434,8 @@ Below is a quick reference for determining error precedence: if multiple error c
 2. **Schema-level error** — Any error message "hard coded" into a schema definition. It covers issues raised by the schema's own checks, so it is the fallback when the check defines no error of its own.
 
   ```ts
-  z.string("Invalid name").parse(12);        // => "Invalid name"
-  z.string("Invalid name").min(5).parse("ab"); // => "Invalid name"
+  z.string("Invalid name").safeParse(12);          // => "Invalid name"
+  z.string("Invalid name").min(5).safeParse("ab"); // => "Invalid name"
   ```
 
 3. **Per-parse error** — A custom error map passed into the `.parse()` method.
