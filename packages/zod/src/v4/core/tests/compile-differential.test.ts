@@ -93,12 +93,12 @@ function differential(schema: z.ZodType, inputs: unknown[], opts?: { fallbackOk?
  * Wrap the schema next to a branch that accepts anything and assert the sentinel
  * never wins on input the schema itself accepts.
  */
-/** Runs `fn`, reporting the error's name rather than letting it escape. */
+/** Runs `fn`, reporting the error's class rather than letting it escape. `constructor.name`, not `.name`: `$ZodAsyncError` never sets `.name`, so it reads as plain `"Error"` and a swapped error class would compare equal to a user throw. */
 function attempt<T>(fn: () => T): { value?: T; threw?: string } {
   try {
     return { value: fn() };
   } catch (err) {
-    return { threw: (err as Error).name || "Error" };
+    return { threw: (err as Error)?.constructor?.name || "Error" };
   }
 }
 
