@@ -10,7 +10,11 @@
   "llmsFull": "https://zod.dev/llms-full.txt",
   "mcpServer": "https://mcp.inkeep.com/zod/mcp",
   "funding": "https://github.com/sponsors/colinhacks",
-  "sideEffects": false,
+  "sideEffects": [
+    "./compile.js",
+    "./compile.cjs",
+    "./src/compile.ts"
+  ],
   "files": [
     "src",
     "**/*.js",
@@ -36,6 +40,7 @@
       "./package.json": "./package.json",
       ".": "./src/index.ts",
       "./mini": "./src/mini/index.ts",
+      "./compile": "./src/compile.ts",
       "./locales": "./src/locales/index.ts",
       "./v3": "./src/v3/index.ts",
       "./v4": "./src/v4/index.ts",
@@ -62,6 +67,12 @@
       "types": "./mini/index.d.cts",
       "import": "./mini/index.js",
       "require": "./mini/index.cjs"
+    },
+    "./compile": {
+      "@zod/source": "./src/compile.ts",
+      "types": "./compile.d.cts",
+      "import": "./compile.js",
+      "require": "./compile.cjs"
     },
     "./locales": {
       "@zod/source": "./src/locales/index.ts",
