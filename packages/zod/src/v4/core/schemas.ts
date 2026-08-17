@@ -56,6 +56,9 @@ export type CheckFn<T> = (input: ParsePayload<T>) => util.MaybeAsync<void>;
 /////////////////////////////   SCHEMAS   //////////////////////////////
 
 export interface $ZodTypeDef {
+  /** @internal The schema's own property names, if it has a fixed set. Defined non-enumerably so it is not carried into a cloned def. Lets a discriminated union check its discriminator without resolving the properties themselves. */
+  readonly propKeys?: readonly string[] | undefined;
+
   type:
     | "string"
     | "number"
@@ -1984,6 +1987,8 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
   const desc = Object.getOwnPropertyDescriptor(def, "shape");
   if (!desc?.get) {
     const sh = def.shape;
+    // Lives on `def`, already a dictionary-mode object, so the extra entry costs ~11x less than a property on `_zod`. `Object.keys` does not invoke the shape's getters, which is what keeps this safe for recursive schemas.
+    Object.defineProperty(def, "propKeys", { value: Object.keys(sh), configurable: true });
     Object.defineProperty(def, "shape", {
       get: () => {
         const newSh = { ...sh };
@@ -1994,6 +1999,9 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
         return newSh;
       },
     });
+  } else {
+    // A getter-backed shape (`.extend()`, `.merge()`, …) cannot be enumerated without resolving it, and `mergeDefs` copies non-enumerable descriptors, so any list here describes the source def, not this one. Drop it rather than let it go stale; these options fall back to the lookup-map check.
+    Object.defineProperty(def, "propKeys", { value: undefined, configurable: true });
   }
 
   const _normalized = util.cached(() => normalizeDef(def));
@@ -2464,6 +2472,14 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
         }
       }
       return propValues;
+    });
+
+    // An option that declares its property names is checked now, so the common mistake fails at the `discriminatedUnion` call rather than on the first object parsed. Options that don't declare them (wrappers, pipes, lazies) are left to the lookup map below.
+    def.options.forEach((option, i) => {
+      const keys = option._zod.def.propKeys;
+      if (keys && !keys.includes(def.discriminator)) {
+        throw new Error(`Invalid discriminated union option at index "${i}"`);
+      }
     });
 
     const disc = util.cached(() => {

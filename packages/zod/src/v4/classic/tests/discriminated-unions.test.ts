@@ -264,25 +264,53 @@ test("valid discriminator value, invalid data", () => {
 });
 
 test("wrong schema - missing discriminator", () => {
-  // A bad option is rejected at runtime rather than by the option bound, which has to stay lazy so recursive options can infer. Two different predicates do it, so both are pinned here.
-
-  // No literal-valued property at all: caught when `propValues` is built.
-  expect(() => z.discriminatedUnion("type", [z.object({ value: z.string() })])._zod.propValues).toThrow(
-    /Invalid discriminated union option/
+  // An option that declares `propKeys` is checked at construction. Both of these have a fixed property set, so neither reaches a parse.
+  expect(() => z.discriminatedUnion("type", [z.object({ value: z.string() })])).toThrow(
+    /Invalid discriminated union option at index "0"/
   );
+  expect(() => z.discriminatedUnion("type", [z.object({ value: z.literal("x") })])).toThrow(
+    /Invalid discriminated union option at index "0"/
+  );
+  expect(() =>
+    z.discriminatedUnion("type", [z.object({ type: z.literal("a"), a: z.string() }), z.object({ b: z.string() })])
+  ).toThrow(/Invalid discriminated union option at index "1"/);
 
-  // Has a literal-valued property, but not the discriminator: passes `propValues` and is caught when the lookup map is built, on the first object input.
-  const missingDisc = z.discriminatedUnion("type", [z.object({ value: z.literal("x") })]);
-  expect(missingDisc._zod.propValues).toEqual({ value: new Set(["x"]) });
-  expect(() => missingDisc.safeParse({ value: "x" })).toThrow(/Invalid discriminated union option/);
+  // An option that declares no `propKeys` — a pipe here — is skipped by that check and still caught when the lookup map is built, on the first object parsed.
+  const viaPipe = z.discriminatedUnion("type", [
+    z.object({ value: z.literal("x") }).pipe(z.object({ value: z.literal("x") })),
+  ]);
+  expect(viaPipe._zod.def.options[0]!._zod.def.propKeys).toBeUndefined();
+  expect(() => viaPipe.safeParse({ value: "x" })).toThrow(/Invalid discriminated union option at index "0"/);
+});
 
-  try {
-    z.discriminatedUnion("type", [z.object({ type: z.literal("a"), a: z.string() }), z.object({ b: z.string() })])._zod
-      .propValues;
-    throw new Error();
-  } catch (e: any) {
-    expect(e.message.includes("Invalid discriminated union option")).toBe(true);
-  }
+test("mutually-recursive getter options are not checked at construction", () => {
+  // Reading an option's shape runs its getters, which for a recursive option references the union whose initializer is still running. `propKeys` is built from `Object.keys`, which does not invoke getters, so the construction check is safe here.
+  const variantA = z.object({
+    kind: z.literal("a"),
+    get child() {
+      return tree.optional();
+    },
+  });
+  const variantB = z.object({
+    kind: z.literal("b"),
+    get sibling() {
+      return tree.optional();
+    },
+  });
+  const tree = z.discriminatedUnion("kind", [variantA, variantB]);
+
+  expect(variantA._zod.def.propKeys).toEqual(["kind", "child"]);
+  expect(tree.parse({ kind: "a", child: { kind: "b" } })).toEqual({ kind: "a", child: { kind: "b" } });
+});
+
+test("a derived object does not inherit the source's propKeys", () => {
+  // `mergeDefs` copies non-enumerable descriptors, so a derived def would otherwise carry the source's key list and reject a discriminator the derived schema does have.
+  const Base = z.object({ status: z.literal("failed"), message: z.string() });
+  const Extended = Base.extend({ code: z.literal(400) });
+
+  expect(Base._zod.def.propKeys).toEqual(["status", "message"]);
+  expect(Extended._zod.def.propKeys).toBeUndefined();
+  expect(() => z.discriminatedUnion("code", [Extended])).not.toThrow();
 });
 
 // removed to account for unions of unions
