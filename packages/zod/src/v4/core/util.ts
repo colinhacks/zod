@@ -306,6 +306,9 @@ export function mergeDefs(...defs: Record<string, any>[]): any {
     Object.assign(mergedDescriptors, descriptors);
   }
 
+  // `propKeys` answers for the shape it was derived from. A merged def has its own shape, so carrying the accessor over would describe the source; the object constructor installs a fresh one when it can enumerate the new shape.
+  delete mergedDescriptors.propKeys;
+
   return Object.defineProperties({}, mergedDescriptors);
 }
 

@@ -303,6 +303,28 @@ test("mutually-recursive getter options are not checked at construction", () => 
   expect(tree.parse({ kind: "a", child: { kind: "b" } })).toEqual({ kind: "a", child: { kind: "b" } });
 });
 
+test("deriving a schema does not clobber the source's propKeys", () => {
+  // `.describe()` / `.meta()` / `.clone()` reuse the def by identity, so a defensive write in the object constructor would wipe a list that was correct and silently disable the construction check for the schema it was called on.
+  const A = z.object({ value: z.literal("x") });
+  A.describe("just documenting this");
+  A.meta({ note: "and this" });
+
+  expect(A._zod.def.propKeys).toEqual(["value"]);
+  expect(() => z.discriminatedUnion("type", [A])).toThrow(/Invalid discriminated union option/);
+  expect(A.describe("d")._zod.def.propKeys).toEqual(["value"]);
+});
+
+test("propKeys tracks the shape rather than snapshotting it", () => {
+  // `shape` resolves lazily from the object the caller passed, so a key list frozen at construction would disagree with it and reject an option that does carry the discriminator.
+  const shape: Record<string, z.ZodType> = { value: z.string() };
+  const A = z.object(shape);
+  shape.type = z.literal("a");
+
+  expect(A._zod.def.propKeys).toEqual(["value", "type"]);
+  const u = z.discriminatedUnion("type", [A, z.object({ type: z.literal("b") })]);
+  expect(u.parse({ type: "a", value: "x" })).toEqual({ type: "a", value: "x" });
+});
+
 test("a derived object does not inherit the source's propKeys", () => {
   // `mergeDefs` copies non-enumerable descriptors, so a derived def would otherwise carry the source's key list and reject a discriminator the derived schema does have.
   const Base = z.object({ status: z.literal("failed"), message: z.string() });
