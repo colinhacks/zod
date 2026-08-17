@@ -782,8 +782,7 @@ test("exclude/extract on a union with refinements", () => {
 });
 
 test("exclude/extract match the discriminator input side", () => {
-  // propValues — and therefore the values these methods match on — come from the
-  // input side, so a codec discriminator is selected by its encoded value.
+  // propValues — and therefore the values these methods match on — come from the input side, so a codec discriminator is selected by its encoded value.
   const Coded = z.discriminatedUnion("type", [
     z.object({
       type: z.codec(z.literal("a"), z.literal(1), { decode: () => 1 as const, encode: () => "a" as const }),
@@ -810,8 +809,7 @@ test("exclude/extract match the discriminator input side", () => {
 });
 
 test("exclude/extract with an optional-input discriminator", () => {
-  // `.default()` makes the key optional on the input side without accepting
-  // `undefined`, so it must not overlap with another option's `undefined`.
+  // `.default()` makes the key optional on the input side without accepting `undefined`, so it must not overlap with another option's `undefined`.
   const U = z.discriminatedUnion("type", [
     z.object({ type: z.literal("a").optional(), x: z.string() }),
     z.object({ type: z.literal("b").default("b"), y: z.number() }),

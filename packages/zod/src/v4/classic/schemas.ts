@@ -1814,8 +1814,7 @@ export const ZodDiscriminatedUnion: core.$constructor<ZodDiscriminatedUnion> = /
         matched.add(option);
       }
 
-      // An option is kept or dropped whole, so a partial selection of its
-      // discriminator values would silently disagree with the inferred type.
+      // An option is kept or dropped whole, so a partial selection of its discriminator values would silently disagree with the inferred type.
       const selected = new Set(values);
       for (const [value, option] of byValue) {
         if (matched.has(option) && !selected.has(value))
