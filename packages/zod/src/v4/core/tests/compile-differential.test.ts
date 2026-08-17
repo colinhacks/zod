@@ -118,7 +118,7 @@ function assertUnionSound(schema: z.ZodType, inputs: unknown[]) {
     const viaUnion = attempt(() => compiledUnion.safeParse(input));
 
     if (direct.threw) {
-      // The schema throws out of the whole parse, so the interpreted union does too. If the compiled one *answers* instead, a bail-out was read as a rejected branch. Nothing else in this file can see that: the bare differential compares a fast path that returned INVALID against a fallback that re-runs the interpreter, so both sides reproduce the throw either way.
+      // A bare throw does not decide what the union does, so the interpreted union is the only reference: `refine`, `superRefine` and `custom` propagate out of it, while `transform` and `pipe` let it answer with a later branch. Measure it rather than assume. Nothing else in this file can see this class — the bare differential compares a fast path that returned INVALID against a fallback that re-runs the interpreter, so both sides reproduce the throw whichever way the guard is written.
       const interpreted = attempt(() => union.safeParse(input));
       expect(
         viaUnion.threw ?? "did not throw",
