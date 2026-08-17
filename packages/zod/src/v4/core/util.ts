@@ -867,9 +867,12 @@ export function finalizeIssue(
     else (iss as any).schema = iss.inst;
   }
 
+  // Decreasing specificity, short-circuiting on the first map that returns a message. `inst` is whatever raised the issue, so for a check-originated issue that rung is the check's own map; the owning schema's map sits one rung below it and above the parse call. Skipped when the schema raised the issue itself, since `inst` was already the schema.
+  const schemaError = iss.schema !== iss.inst ? iss.schema?._zod.def?.error : undefined;
   const message = iss.message
     ? iss.message
     : (unwrapMessage(iss.inst?._zod.def?.error?.(iss as never)) ??
+      unwrapMessage(schemaError?.(iss as never)) ??
       unwrapMessage(ctx?.error?.(iss as never)) ??
       unwrapMessage(config.customError?.(iss)) ??
       unwrapMessage(config.localeError?.(iss)) ??
