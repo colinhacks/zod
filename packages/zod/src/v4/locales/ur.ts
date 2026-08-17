@@ -8,6 +8,7 @@ const error: () => errors.$ZodErrorMap = () => {
     file: { unit: "بائٹس", verb: "ہونا" },
     array: { unit: "آئٹمز", verb: "ہونا" },
     set: { unit: "آئٹمز", verb: "ہونا" },
+    map: { unit: "آئٹمز", verb: "ہونا" },
   };
 
   function getSizing(origin: string): { unit: string; verb: string } | null {
@@ -37,6 +38,7 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "آئی ایس او مدت",
     ipv4: "آئی پی وی 4 ایڈریس",
     ipv6: "آئی پی وی 6 ایڈریس",
+    mac: "ایم اے سی ایڈریس",
     cidrv4: "آئی پی وی 4 رینج",
     cidrv6: "آئی پی وی 6 رینج",
     base64: "بیس 64 ان کوڈڈ سٹرنگ",
