@@ -1,6 +1,11 @@
 import { inspect } from "node:util";
-import { expect, test } from "vitest";
+import { afterEach, expect, test } from "vitest";
 import * as z from "zod/v4";
+
+// Several tests install a global error map. Resetting on the last line of each leaks it into every later test in the file whenever an assertion above that line fails, which turns one real failure into a cascade.
+afterEach(() => {
+  z.config({ customError: undefined });
+});
 
 test("error creation", () => {
   const err1 = new z.ZodError([]);
@@ -538,7 +543,6 @@ test("z.config customError ", () => {
     ]]
   `);
   expect(result.error!.issues[0].message).toEqual("override");
-  z.config({ customError: undefined });
 });
 
 test("bound error map covers issues raised by its own checks", () => {
@@ -558,7 +562,6 @@ test("the schema's error map beats contextual and global for a check issue", () 
   const result = stringWithCustomError.min(10).safeParse("tooshort", { error: () => "contextual" });
   expect(result.success).toBe(false);
   expect(result.error!.issues[0].message).toEqual("bound");
-  z.config({ customError: undefined });
 });
 
 test("a schema map returning undefined defers to the next rung, and runs once", () => {
@@ -574,7 +577,6 @@ test("a schema map returning undefined defers to the next rung, and runs once", 
   expect(result.success).toBe(false);
   expect(result.error!.issues[0].message).toEqual("global");
   expect(calls).toEqual(1);
-  z.config({ customError: undefined });
 });
 
 // test("invalid and required", () => {
