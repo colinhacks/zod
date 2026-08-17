@@ -115,11 +115,24 @@ function assertUnionSound(schema: z.ZodType, inputs: unknown[]) {
   }
   for (const input of inputs) {
     const direct = attempt(() => schema.safeParse(input));
-    // A throwing schema is covered by the throw-parity assertion above; a union cannot answer for it either way.
-    if (direct.threw || !direct.value!.success) continue;
-    const attempted = attempt(() => compiledUnion.safeParse(input));
-    if (attempted.threw) continue;
-    const got = attempted.value!;
+    const viaUnion = attempt(() => compiledUnion.safeParse(input));
+
+    if (direct.threw) {
+      // The schema throws out of the whole parse, so the interpreted union does too. If the compiled one *answers* instead, a bail-out was read as a rejected branch. Nothing else in this file can see that: the bare differential compares a fast path that returned INVALID against a fallback that re-runs the interpreter, so both sides reproduce the throw either way.
+      const interpreted = attempt(() => union.safeParse(input));
+      expect(
+        viaUnion.threw ?? "did not throw",
+        `union disagreed on throwing for input ${describe(input)}: interpreted ${interpreted.threw ?? "did not throw"}, compiled ${viaUnion.threw ?? "did not throw"}`
+      ).toBe(interpreted.threw ?? "did not throw");
+      continue;
+    }
+    if (!direct.value!.success) continue;
+
+    expect(
+      viaUnion.threw,
+      `compiled union threw ${viaUnion.threw} for input ${describe(input)} the schema accepts`
+    ).toBe(undefined);
+    const got = viaUnion.value!;
     expect(
       got.success && got.data === marker,
       `union selected the sentinel for input ${describe(input)} the schema accepts — a bail-out read as a rejection`
