@@ -225,3 +225,13 @@ test("lazy initialization", () => {
     subcategories: z.lazy(() => categorySchema.array()),
   });
 });
+
+test("derived internals resolve on self-referential lazy", () => {
+  const optional: any = z.lazy(() => optional.optional());
+  const pipe: any = z.lazy(() => z.pipe(z.string(), pipe));
+
+  expect(optional._zod.optin).toEqual("optional");
+  expect(optional._zod.optout).toEqual("optional");
+  expect(pipe._zod.optin).toEqual(undefined);
+  expect(pipe._zod.optout).toEqual(undefined);
+});

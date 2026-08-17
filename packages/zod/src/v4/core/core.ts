@@ -23,14 +23,10 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
   initializer: (inst: T, def: D) => void,
   params?: { Parent?: typeof Class }
 ): $constructor<T, D> {
-  // Prototype for this constructor's `_zod` internals. Lazily-derived fields
-  // (`values`, `pattern`, `optin`, …) install here once rather than as an
-  // accessor on every instance.
+  // Prototype for this constructor's `_zod` internals. Lazily-derived fields (`values`, `pattern`, `optin`, …) install here once rather than as an accessor on every instance.
   const zodProto: any = {};
 
-  // Assigning the fields in the constructor body is what gives instances in-object
-  // slots; building the object literally and reparenting it costs a second
-  // allocation and a generic property copy.
+  // Assigning the fields in the constructor body is what gives instances in-object slots; building the object literally and reparenting it costs a second allocation and a generic property copy.
   function Internals(this: any, def: D) {
     this.def = def;
     this.constr = _;
@@ -90,7 +86,6 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
   }
 
   Object.defineProperty(_, "init", { value: init });
-  Object.defineProperty(_, "zodProto", { value: zodProto });
   Object.defineProperty(_, Symbol.hasInstance, {
     value: (inst: any) => {
       if (params?.Parent && inst instanceof params.Parent) return true;

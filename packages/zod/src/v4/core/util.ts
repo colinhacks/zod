@@ -1067,8 +1067,10 @@ export function defineLazyInternal<T extends { _zod: any }>(
   Object.defineProperty(proto, key, {
     configurable: true,
     get(this: any) {
+      // Installed before computing so a re-entrant read resolves against this own property instead of running the getter again; a recursive schema reaches its own derived internals while they are still being built.
+      Object.defineProperty(this, key, { configurable: true, writable: true, value: undefined });
       const value = compute(this);
-      Object.defineProperty(this, key, { configurable: true, writable: true, value });
+      this[key] = value;
       return value;
     },
     set(this: any, value: unknown) {
