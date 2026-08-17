@@ -548,3 +548,35 @@ test("deep optional defaults", () => {
   });
   differential(schema, [{}, { a: {} }, { a: { b: 1 } }, { a: { b: "x" } }]);
 });
+
+// --- url: guards the one place the compiler reimplements runtime semantics ---
+
+test("url options match the runtime across the whole option matrix", () => {
+  // `parseValidURL` is a second implementation of what `$ZodURL`'s own check does inline — the trim, the `://` guard, the hostname and protocol tests, the normalize step. Deduplicating them faithfully is awkward, because hostname and protocol can both fail and each pushes its own issue, so the shared helper would have to return a list of reasons rather than a value. Until that happens this matrix is what keeps the two copies honest: a fix to either that the other misses fails here rather than drifting silently, which is exactly how z.creditCard() went wrong.
+  const inputs = [
+    "https://example.com",
+    "https://example.com/a/b?c=1#d",
+    "  https://example.com  ",
+    "http://example.com",
+    "http:example.com",
+    "https:/path",
+    "ftp://example.com",
+    "https://sub.example.co.uk",
+    "https://example.com:8443/x",
+    "not a url",
+    "",
+    "//example.com",
+    "mailto:a@b.com",
+  ];
+  const schemas: z.ZodType[] = [
+    z.url(),
+    z.url({ normalize: true }),
+    z.url({ hostname: /^example\.com$/ }),
+    z.url({ protocol: /^https$/ }),
+    z.url({ protocol: /^https?$/ }),
+    z.url({ hostname: /^example\.com$/, protocol: /^https$/ }),
+    z.url({ hostname: /^example\.com$/, normalize: true }),
+    z.httpUrl(),
+  ];
+  for (const schema of schemas) differential(schema, inputs);
+});

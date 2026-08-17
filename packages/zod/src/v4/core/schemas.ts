@@ -499,18 +499,22 @@ export interface $ZodURL extends $ZodType {
   _zod: $ZodURLInternals;
 }
 
-// URL.canParse: Node 18.17+, Safari 17+; fall back for older runtimes.
-const urlCanParse: (s: string) => boolean =
-  typeof URL.canParse === "function"
-    ? URL.canParse.bind(URL)
-    : (s) => {
-        try {
-          new URL(s);
-          return true;
-        } catch {
-          return false;
-        }
-      };
+// URL.canParse: Node 18.17+, Safari 17+; fall back for older runtimes. Resolved on first use rather than at module scope — a top-level `.bind()` is a call, so bundlers cannot prove it side-effect free and keep it in every build, including ones that never touch z.url().
+let urlCanParseImpl: ((s: string) => boolean) | undefined;
+function urlCanParse(s: string): boolean {
+  urlCanParseImpl ??=
+    typeof URL.canParse === "function"
+      ? URL.canParse.bind(URL)
+      : (v: string) => {
+          try {
+            new URL(v);
+            return true;
+          } catch {
+            return false;
+          }
+        };
+  return urlCanParseImpl(s);
+}
 
 export function parseValidURL(
   data: string,
