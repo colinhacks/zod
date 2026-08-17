@@ -252,3 +252,10 @@ test("an internal computed without a cycle break is memoized", () => {
   expect(union._zod.optin).toEqual(undefined);
   expect(Object.getOwnPropertyNames(union._zod)).toContain("optin");
 });
+
+test("a non-undefined internal is memoized even when a cycle was broken", () => {
+  // The cycle here closes through types that all forward `optin` lazily, so every read breaks it. The answer is stable, so it still has to cache or the getter re-runs per parse.
+  const union: any = z.union([z.string(), z.lazy(() => union).optional()]);
+  expect(union._zod.optin).toEqual("optional");
+  expect(Object.getOwnPropertyNames(union._zod)).toContain("optin");
+});

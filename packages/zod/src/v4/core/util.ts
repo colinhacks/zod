@@ -1092,8 +1092,8 @@ export function defineLazyInternal<T extends { _zod: any }>(
       } finally {
         active.delete(this);
       }
-      // Only a result that resolved through a recursion break goes uncached, since it has to be recomputed once the schema graph is complete. Everything else memoizes, `undefined` included — it is the ordinary answer for most schemas, and these getters are read per parse on the tuple and interpreted-object paths.
-      if (cycleBreaks === before) {
+      // `defineLazy`'s rule: a result is provisional only when a recursion break produced `undefined`, and that alone is left uncached so it can be recomputed once the schema graph is complete. Everything else memoizes, since these getters are read per parse on the tuple and interpreted-object paths.
+      if (cycleBreaks === before || value !== undefined) {
         Object.defineProperty(this, key, { configurable: true, writable: true, value });
       }
       return value;
