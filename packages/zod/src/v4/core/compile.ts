@@ -1151,6 +1151,9 @@ function requiresPresenceCheck(schema: SomeType): boolean {
 }
 
 function fastPathAcceptsAbsence(schema: SomeType): boolean {
+  // A coercing schema materialises a value out of an absent key — `z.coerce.string()` turns one into "undefined" — but the runtime object refuses to let a coercion fill a key that was not there (#6405). Compilation refuses coercion, so the child becomes a runtime island, and an island is handed `input[key]` with no way to tell absent from explicitly undefined. Report it as absence-accepting so the object emits the presence guard that keeps the two apart.
+  if ((schema._zod.def as { coerce?: boolean }).coerce) return true;
+
   const def = schema._zod.def as {
     type: string;
     values?: unknown[];

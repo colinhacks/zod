@@ -611,3 +611,11 @@ test("a catch callback is refused however it declares its arity", () => {
   }
   differential(z.catch(z.string().min(5), "fb"), ["abcdef", "ab", 42]);
 });
+
+test("a coercing object key cannot materialize an absent key", () => {
+  // Compilation refuses coercion, so the child becomes a runtime island — and an island receives `input[key]` with no way to tell an absent key from an explicit undefined. The runtime object keeps them apart (#6405): absent rejects, explicit undefined coerces. Without a presence guard the fast path answered `{ k: "undefined" }` for `{}`.
+  differential(z.object({ k: z.coerce.string() }), [{}, { k: 5 }, { k: undefined }, { k: "s" }]);
+  differential(z.object({ k: z.coerce.number() }), [{}, { k: "42" }, { k: undefined }]);
+  differential(z.object({ k: z.coerce.boolean() }), [{}, { k: 1 }, { k: undefined }]);
+  differential(z.object({ a: z.string(), k: z.coerce.string() }), [{ a: "x" }, { a: "x", k: 5 }]);
+});
