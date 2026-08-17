@@ -11,6 +11,7 @@ scratch
 workspace.code-workspace
 .netlify
 bun.lockb
+bun.lock
 out.png
 logos
 .zed
@@ -24,7 +25,7 @@ tsconfig.vitest-temp.json
 *.tgz
 
 open-issues-triage.md
-triage/
+.triage/
 tmp/
 .worktrees/
 research/
