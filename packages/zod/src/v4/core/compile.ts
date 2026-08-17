@@ -558,13 +558,7 @@ function generateCustomRefineCheck(doc: Doc, ctx: CompileContext, check: CustomC
     // v.trim() })` is a value transform. Returning only a boolean discarded that
     // write and emitted the untrimmed input. Hand the value back and thread it on.
     const helperFn = (value: unknown): unknown => {
-      const fakePayload = {
-        value,
-        issues: [] as unknown[],
-        addIssue: function (issue: unknown) {
-          this.issues.push(issue);
-        },
-      };
+      const fakePayload = { value, issues: [] as unknown[], addIssue: pushIssue };
       const result = checkFn(fakePayload);
       // Async is not modelled; let the runtime reproduce the canonical error.
       if (result instanceof Promise) return INVALID;
@@ -1048,8 +1042,8 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
     const catchallType = catchall._zod.def.type;
 
     if (catchallType === "never") {
-      // Strict object: reject unknown keys. Runtime iterates with for...in, so inherited enumerable keys count as unrecognized. An undeclared `__proto__` counts too (handleCatchall reports it before skipping the copy, see #6221) — it is only excluded from the *output*, never from this scan. A declared `__proto__` can't reach here; the shape key is rejected at compile time above. One `for...in` for every shape, which is what the runtime does. An own-key count is faster but only equivalent for a plain prototype, and guarding on the prototype meant rejecting a class instance whose own enumerable keys match — input the runtime accepts. Standalone the wrapper hid that; inside a union the branch merely looked rejected and a later one won, so the parse returned a different value with no error at all.
-      const condition = keys.map((k) => `k !== ${util.esc(k)}`).join(" && ");
+      // Strict object: reject unknown keys. Runtime iterates with for...in, so inherited enumerable keys count as unrecognized. An undeclared `__proto__` counts too (handleCatchall reports it before skipping the copy, see #6221) — it is only excluded from the *output*, never from this scan. A declared `__proto__` can't reach here; the shape key is rejected at compile time above. One `for...in` for every shape, which is what the runtime does. An own-key count is faster but only equivalent for a plain prototype, and guarding on the prototype meant rejecting a class instance whose own enumerable keys match — input the runtime accepts. Standalone the wrapper hid that; inside a union the branch merely looked rejected and a later one won, so the parse returned a different value with no error at all. `|| "true"` for an empty shape: with no keys the join is "" and the emitted `if () return INVALID;` is a syntax error, which the single top-level `new Function` rejects long after compileChild's per-branch catch could island it — so the whole tree lost its fast path. An empty strict object rejects any own enumerable key, which is what `true` says.
+      const condition = keys.map((k) => `k !== ${util.esc(k)}`).join(" && ") || "true";
       doc.write(`for (const k in ${accessor}) {`);
       doc.indented((d) => {
         d.write(`if (${condition}) return INVALID;`);
@@ -1672,7 +1666,7 @@ function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
   // Exhaustive records: keyType has a known value set (enum/literal/etc.). Runtime validates every known key, applies key transforms to choose the output key, and rejects unrecognized string keys. Generate the same shape. The runtime gates this on `values && !def.partial`: z.partialRecord keeps its value set but every key is optional, so required-key codegen would reject a record missing one. A loose record passes an unrecognized key through rather than rejecting it, which the scan below cannot express either.
   const recordDef = def as unknown as { mode?: string; partial?: boolean };
   const keyValues = recordDef.partial ? undefined : (def.keyType._zod as unknown as { values?: Set<unknown> }).values;
-  if (keyValues && recordDef.mode !== "loose") {
+  if (keyValues) {
     const inputKeys: Array<string | symbol> = [];
     for (const key of keyValues) {
       if (!(typeof key === "string" || typeof key === "number" || typeof key === "symbol")) {
@@ -1695,10 +1689,16 @@ function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
       doc.write(`${outputVar}[${outKey}] = ${valOutput};`);
     }
 
+    // `mode: "loose"` only changes what happens to *unrecognized* keys — it still requires every enumerated key, so it belongs on this path rather than the per-present-key scan, which has no notion of a declared-but-absent key. Passing it through here matches the runtime, which copies the extra key across and skips `__proto__` so the assignment cannot reseat the output's prototype.
     const knownKeysConst = addConstant(ctx, new Set(inputKeys));
     doc.write(`for (const ${kVar} in ${accessor}) {`);
     doc.indented((d) => {
-      d.write(`if (!${knownKeysConst}.has(${kVar})) return INVALID;`);
+      d.write(`if (${knownKeysConst}.has(${kVar})) continue;`);
+      if (recordDef.mode === "loose") {
+        d.write(`if (${kVar} !== "__proto__") ${outputVar}[${kVar}] = ${accessor}[${kVar}];`);
+      } else {
+        d.write(`return INVALID;`);
+      }
     });
     doc.write(`}`);
     return outputVar;
@@ -1873,13 +1873,7 @@ function generatePipeCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acce
     const transformFn = def.transform;
     const helperFn = (value: unknown): unknown => {
       // `addIssue` has to be here: a transform reporting through it is reporting, not failing. Without it the call threw a TypeError that the old catch swallowed into a fallback, so every ctx.addIssue transform quietly lost its fast path and the real error was never visible.
-      const fakePayload = {
-        value,
-        issues: [] as unknown[],
-        addIssue: function (issue: unknown) {
-          this.issues.push(issue);
-        },
-      };
+      const fakePayload = { value, issues: [] as unknown[], addIssue: pushIssue };
       // A throw is deliberately not caught. The interpreter lets one propagate out of the whole parse; swallowing it into INVALID turned a thrown error into a merely-rejected union branch, so a later branch answered instead.
       const result = transformFn(value, fakePayload as any);
       if (result instanceof Promise) return INVALID;
@@ -1922,6 +1916,11 @@ function generateCustomCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
 }
 
 // Runtime helper for a compiled `catch`: runs the inner schema once and returns its value when it succeeded. Anything else — a failure the catch would handle, or an async inner — returns INVALID so the interpreter takes over.
+/** Shared by the spoofed payloads below. Allocating a fresh closure per call pinned every payload-allocating schema at ~2.7M ops/sec against 135M for a plain literal; the method captures nothing per call, it only reaches `this.issues`. */
+function pushIssue(this: { issues: unknown[] }, issue: unknown): void {
+  this.issues.push(issue);
+}
+
 function runtimeCatch(innerSchema: SomeType, catchValue: () => unknown, value: unknown): unknown {
   const result = (innerSchema._zod.run as (p: ParsePayload, c: ParseContextInternal) => any)(
     { value, issues: [] },
@@ -1940,8 +1939,8 @@ function generateCatchCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
     catchValue: (ctx: any) => unknown;
   };
 
-  // `.catch(value)` normalises to a thunk, so an argument means a real callback, and a callback reads `ctx.error` — issues finalized against the caller's per-parse error map, which generated code never sees. Producing them here gave a different message than `.parse(input, { error })` and, because catch *succeeds*, nothing downstream could notice. Refuse at codegen instead: returning INVALID would be a bail-out, and a union reads that as a rejected branch rather than a reason to hand the whole parse back.
-  if (def.catchValue.length > 0) {
+  // `.catch(value)` synthesises a tagged thunk for a constant, so anything untagged is a user callback, and a callback reads `ctx.error` — issues finalized against the caller's per-parse error map, which generated code never sees. Producing them here gave a different message than `.parse(input, { error })` and, because catch *succeeds*, nothing downstream could notice. Refuse at codegen instead: returning INVALID would be a bail-out, and a union reads that as a rejected branch rather than a reason to hand the whole parse back.
+  if (!(def.catchValue as { [util.CONSTANT_CATCH]?: boolean })[util.CONSTANT_CATCH]) {
     throw new ZodCompileUnsupportedError("catch with a callback that reads the parse context");
   }
 
@@ -1979,13 +1978,7 @@ function generateTransformCheck(doc: Doc, ctx: CompileContext, schema: SomeType,
     // Create a helper that runs the transform and returns the result or INVALID on error
     const transformFn = def.transform;
     const helperFn = (value: unknown): unknown => {
-      const fakePayload = {
-        value,
-        issues: [] as unknown[],
-        addIssue: function (issue: unknown) {
-          this.issues.push(issue);
-        },
-      };
+      const fakePayload = { value, issues: [] as unknown[], addIssue: pushIssue };
       // As in the pipe helper: a throw propagates, because the interpreter lets it out of the whole parse rather than treating it as a failed branch.
       const result = transformFn(value, fakePayload);
       if (result instanceof Promise) return INVALID;

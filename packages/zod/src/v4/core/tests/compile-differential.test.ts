@@ -580,3 +580,34 @@ test("url options match the runtime across the whole option matrix", () => {
   ];
   for (const schema of schemas) differential(schema, inputs);
 });
+
+test("empty strict object compiles", () => {
+  // With no keys the unknown-key condition is empty, and `if () return INVALID;` is a syntax error the single top-level `new Function` rejects — too late for compileChild to island, so the whole tree lost its fast path.
+  differential(z.strictObject({}), [{}, { a: 1 }, Object.create({ inherited: 1 })]);
+  differential(z.object({ inner: z.strictObject({}) }), [{ inner: {} }, { inner: { a: 1 } }]);
+});
+
+test("loose record with an enumerated key set", () => {
+  // `mode: "loose"` only changes what happens to unrecognized keys; every enumerated key is still required, so this belongs on the exhaustive path.
+  differential(z.looseRecord(z.enum(["a", "b"]), z.number()), [
+    { a: 1, b: 2 },
+    { a: 1 },
+    { a: 1, b: 2, extra: "kept" },
+    { a: 1, b: "no" },
+    JSON.parse('{"a":1,"b":2,"__proto__":{"p":1}}'),
+  ]);
+});
+
+test("a catch callback is refused however it declares its arity", () => {
+  // Function.length reports 0 for rest and defaulted parameters alike, so arity cannot separate a user callback from the thunk `.catch(value)` synthesises. Provenance can.
+  const rest = z.catch(z.string().min(5), ((...a: any[]) => `e:${a[0].error.issues.length}`) as never);
+  const dflt = z.catch(
+    z.string().min(5),
+    ((ctx: any = { error: { issues: [] } }) => `e:${ctx.error.issues.length}`) as never
+  );
+  for (const schema of [rest, dflt]) {
+    expect(() => compile(schema)).toThrow(ZodCompileUnsupportedError);
+    expect(schema.parse("ab")).toBe("e:1");
+  }
+  differential(z.catch(z.string().min(5), "fb"), ["abcdef", "ab", 42]);
+});

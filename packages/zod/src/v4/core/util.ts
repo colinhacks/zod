@@ -1090,3 +1090,13 @@ export function installLazyProp(inst: object, key: string, make: (self: any) => 
   const proto = claim(inst, key);
   if (proto) defineCached(proto, key, make);
 }
+
+/** Marks the thunk `_catch` synthesises for a constant catch value. `Function.length` cannot tell that thunk from a user callback — rest and defaulted parameters both report arity 0 — and a user callback reads `ctx.error`, whose issues only finalize correctly against the caller's per-parse error map. Provenance can say what arity cannot. */
+export const CONSTANT_CATCH: unique symbol = Symbol.for("zod.catch.constant");
+
+/** Wraps a constant catch value in a thunk tagged with {@link CONSTANT_CATCH}. */
+export function constantCatch<T>(value: T): () => T {
+  const fn = () => value;
+  (fn as { [CONSTANT_CATCH]?: boolean })[CONSTANT_CATCH] = true;
+  return fn;
+}
