@@ -340,11 +340,8 @@ export function extractDefs<T extends schemas.$ZodType>(
     const uriPrefix = `#`;
     const defUriPrefix = `${uriPrefix}/${defsSegment}/`;
 
-    if (entry[1] === root) {
-      const rootDefId = entry[1].schema.id;
-      if (rootDefId) {
-        return { defId: rootDefId, ref: defUriPrefix + rootDefId };
-      }
+    // an id-less root has nowhere to be extracted to, so it stays inline and self-references as `#`
+    if (entry[1] === root && !entry[1].schema.id) {
       return { ref: uriPrefix };
     }
 

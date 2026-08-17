@@ -2196,6 +2196,13 @@ test("escapes JSON Pointer reserved characters in $ref but not in $defs key", ()
   expect(Object.keys(result.$defs!)).toEqual(["Shared/User~"]);
 });
 
+test("escapes JSON Pointer reserved characters in the root $ref", () => {
+  const User = z.object({ name: z.string() }).meta({ id: "Shared/User~" });
+  const result = z.toJSONSchema(User);
+  expect(result.$ref).toBe("#/$defs/Shared~1User~0");
+  expect(Object.keys(result.$defs!)).toEqual(["Shared/User~"]);
+});
+
 test("unrepresentable default values go through `unrepresentable`", () => {
   // a bigint default has no reliable JSON encoding, so it is dropped rather than approximated
   expect(z.toJSONSchema(z.bigint().default(0n), { unrepresentable: "any" })).toMatchInlineSnapshot(`
