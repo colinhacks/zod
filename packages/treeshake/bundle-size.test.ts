@@ -21,19 +21,26 @@ const BUILT_ENTRY = path.join(__dirname, "node_modules", "zod", "index.js");
  * both shipped into builds that could never reach the feature. Both passed the
  * whole suite, because nothing asserted a size.
  *
- * Headroom is deliberately tight — those leaks cost 43 and ~40 gzipped bytes, so
- * a generous ceiling would have caught neither. A legitimate increase means
- * re-measuring and raising the number in the same commit that causes it, which
- * is the point: the number moves when someone decides it should.
+ * Headroom is ~28 bytes: under the 43 and ~40 those two leaks cost, so the class
+ * this exists for still trips it, but not so tight that ordinary churn does. The
+ * first cut used 16–21 and broke within a day — #6085 and #6426 each added ~20 to
+ * every fixture, and together they crossed a ceiling neither would have alone.
+ * That is a false positive, not a catch: it reports a number moving rather than
+ * something reaching a bundle that cannot use it, which is what `MUST_NOT_APPEAR`
+ * below names exactly and what this can only approximate.
+ *
+ * A legitimate increase means re-measuring and raising the number in the same
+ * commit that causes it, which is the point: the number moves when someone
+ * decides it should.
  *
  *   pnpm build && pnpm vitest run packages/treeshake/bundle-size.test.ts
  *
  * The failure message prints the measured size, so updating is mechanical.
  */
 const CEILINGS: Record<string, number> = {
-  "zod-mini-boolean": 2830,
-  "zod-mini-string": 3155,
-  "zod-mini-object": 4260,
+  "zod-mini-boolean": 2858,
+  "zod-mini-string": 3186,
+  "zod-mini-object": 4286,
 };
 
 /**
