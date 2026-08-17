@@ -1063,6 +1063,9 @@ export function installLazyProps<T extends object>(inst: T, sentinel: string, pr
  * constructor, computed from the internals object itself and cached there on
  * first read. One accessor per constructor rather than one per instance.
  */
+// Bumped whenever a recursive read resolves to `undefined` instead of recursing. Shared across every accessor, so a break anywhere inside a `compute` keeps that result from being memoized.
+let cycleBreaks = 0;
+
 export function defineLazyInternal<T extends { _zod: any }>(
   inst: T,
   key: string,
@@ -1077,16 +1080,20 @@ export function defineLazyInternal<T extends { _zod: any }>(
   Object.defineProperty(proto, key, {
     configurable: true,
     get(this: any) {
-      if (active.has(this)) return undefined;
+      if (active.has(this)) {
+        cycleBreaks++;
+        return undefined;
+      }
       active.add(this);
+      const before = cycleBreaks;
       let value: unknown;
       try {
         value = compute(this);
       } finally {
         active.delete(this);
       }
-      // `undefined` is never memoized, matching `defineLazy`: a cycle-broken read produces it, and that has to be recomputed once the schema graph is complete.
-      if (value !== undefined) {
+      // Only a result that resolved through a recursion break goes uncached, since it has to be recomputed once the schema graph is complete. Everything else memoizes, `undefined` included — it is the ordinary answer for most schemas, and these getters are read per parse on the tuple and interpreted-object paths.
+      if (cycleBreaks === before) {
         Object.defineProperty(this, key, { configurable: true, writable: true, value });
       }
       return value;
