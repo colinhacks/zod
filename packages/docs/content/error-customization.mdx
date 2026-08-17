@@ -425,13 +425,20 @@ The following locales are available:
 
 Below is a quick reference for determining error precedence: if multiple error customizations have been defined, which one takes priority? From *highest to lowest* priority:
 
-1. **Schema-level error** — Any error message "hard coded" into a schema definition.
+1. **Check-level error** — An error defined on the individual check that failed.
 
   ```ts
-  z.string("Not a string!");
+  z.string().min(5, "Too short!");
   ```
 
-2. **Per-parse error** — A custom error map passed into the `.parse()` method.
+2. **Schema-level error** — Any error message "hard coded" into a schema definition. It covers issues raised by the schema's own checks, so it is the fallback when the check defines no error of its own.
+
+  ```ts
+  z.string("Invalid name").safeParse(12);          // => "Invalid name"
+  z.string("Invalid name").min(5).safeParse("ab"); // => "Invalid name"
+  ```
+
+3. **Per-parse error** — A custom error map passed into the `.parse()` method.
 
   ```ts
   z.string().parse(12, {
@@ -439,7 +446,7 @@ Below is a quick reference for determining error precedence: if multiple error c
   });
   ```
 
-3. **Global error map** — A custom error map passed into `z.config()`.
+4. **Global error map** — A custom error map passed into `z.config()`.
 
   ```ts
   z.config({
@@ -447,7 +454,7 @@ Below is a quick reference for determining error precedence: if multiple error c
   });
   ```
 
-4. **Locale error map** — A custom error map passed into `z.config()`.
+5. **Locale error map** — A custom error map passed into `z.config()`.
 
   ```ts
   z.config(z.locales.en());
