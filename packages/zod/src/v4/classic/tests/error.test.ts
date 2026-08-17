@@ -1,6 +1,11 @@
 import { inspect } from "node:util";
-import { expect, test } from "vitest";
+import { afterEach, expect, test } from "vitest";
 import * as z from "zod/v4";
+
+// Several tests install a global error map. Resetting on the last line of each leaks it into every later test in the file whenever an assertion above that line fails, which turns one real failure into a cascade.
+afterEach(() => {
+  z.config({ customError: undefined });
+});
 
 test("error creation", () => {
   const err1 = new z.ZodError([]);
@@ -523,7 +528,7 @@ test("z.config customError ", () => {
   // support overrideErrorMap
 
   z.config({ customError: () => ({ message: "override" }) });
-  const result = stringWithCustomError.min(10).safeParse("tooshort");
+  const result = z.string().min(10).safeParse("tooshort");
   expect(result.success).toBe(false);
   expect(result.error).toMatchInlineSnapshot(`
     [ZodError: [
@@ -538,7 +543,40 @@ test("z.config customError ", () => {
     ]]
   `);
   expect(result.error!.issues[0].message).toEqual("override");
-  z.config({ customError: undefined });
+});
+
+test("bound error map covers issues raised by its own checks", () => {
+  const result = stringWithCustomError.min(10).safeParse("tooshort");
+  expect(result.success).toBe(false);
+  expect(result.error!.issues[0].message).toEqual("bound");
+});
+
+test("a check's own error map beats the schema's", () => {
+  const result = stringWithCustomError.min(10, { error: () => "check" }).safeParse("tooshort");
+  expect(result.success).toBe(false);
+  expect(result.error!.issues[0].message).toEqual("check");
+});
+
+test("the schema's error map beats contextual and global for a check issue", () => {
+  z.config({ customError: () => "global" });
+  const result = stringWithCustomError.min(10).safeParse("tooshort", { error: () => "contextual" });
+  expect(result.success).toBe(false);
+  expect(result.error!.issues[0].message).toEqual("bound");
+});
+
+test("a schema map returning undefined defers to the next rung, and runs once", () => {
+  let calls = 0;
+  const deferring = z.string({
+    error: () => {
+      calls++;
+      return undefined;
+    },
+  });
+  z.config({ customError: () => "global" });
+  const result = deferring.min(10).safeParse("tooshort");
+  expect(result.success).toBe(false);
+  expect(result.error!.issues[0].message).toEqual("global");
+  expect(calls).toEqual(1);
 });
 
 // test("invalid and required", () => {

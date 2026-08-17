@@ -235,3 +235,20 @@ test("derived internals resolve on self-referential lazy", () => {
   expect(pipe._zod.optin).toEqual(undefined);
   expect(pipe._zod.optout).toEqual(undefined);
 });
+
+test("a cycle-broken internal is not memoized", () => {
+  const lazyRef: any = z.lazy(() => Rec);
+  const Rec: any = z.union([z.string().optional(), lazyRef]);
+
+  // Reading the outer node first resolves `lazyRef`'s own `optin` through the cycle.
+  expect(Rec._zod.optin).toEqual("optional");
+  expect(lazyRef._zod.optin).toEqual("optional");
+  expect(z.object({ x: Rec, y: lazyRef }).safeParse({ x: "a" }).success).toEqual(true);
+});
+
+test("an internal computed without a cycle break is memoized", () => {
+  // `undefined` is the legitimate answer here and still has to cache: these getters are read per parse, so recomputing them is a parse-path cost.
+  const union = z.union([z.string(), z.number()]);
+  expect(union._zod.optin).toEqual(undefined);
+  expect(Object.getOwnPropertyNames(union._zod)).toContain("optin");
+});
