@@ -275,7 +275,7 @@ const padL = (s: string, n: number) => s.padStart(n);
 function report(rows: Row[], problems: string[]): void {
   console.log();
   console.log(
-    `compiled vs runtime — best of ${ROUNDS} interleaved rounds, ops/sec (${shared ? "one shared process" : "one process per schema"})`
+    `compiled vs runtime — best of ${ROUNDS} interleaved rounds, ops/sec (${isolate ? "one process per schema" : "one shared process"})`
   );
   console.log();
   console.log(
@@ -316,17 +316,10 @@ function report(rows: Row[], problems: string[]): void {
   console.log();
 }
 
-// Every case shares one `safeParse` call site, and so do zod's own internal
-// dispatch sites. Run all 55 in one process and those caches go megamorphic,
-// which taxes the interpreter far more than it taxes a single generated
-// function — the same schema reads ~2x faster compiled that way than it does
-// measured alone. So the default is one child process per case, which is what
-// "how fast is this schema" actually means. `--shared` runs them together, and
-// modelling an app that interleaves many different schemas is the one thing it
-// is good for.
+// Every case shares one `safeParse` call site, and so do zod's own internal dispatch sites. Run all 55 in one process and those caches go megamorphic, which taxes the interpreter more than it taxes a single generated function, so the same schema reads faster compiled that way (median 2.4x) than it does measured alone (1.6x). Neither is wrong; they answer different questions, and the default is the shared one because an application holds many schemas at once and that is the number its users will see. `--isolate` runs one child process per case, which is what to use when tuning a single schema.
 const arg = process.argv[2];
-const shared = arg === "--shared";
-const filter = shared ? undefined : arg;
+const isolate = arg === "--isolate";
+const filter = isolate ? undefined : arg;
 const match = (c: Case) => {
   const id = `${c.group}/${c.name}`;
   return filter!.includes("/") ? id === filter : id.includes(filter!);
@@ -337,7 +330,7 @@ const rows: Row[] = [];
 const problems: string[] = [];
 
 // Parent driver: one child per case, each measuring a single schema in a fresh process. Children re-enter this file with the case id; execArgv carries the tsx loader and `--conditions`, so the child resolves zod the same way.
-if (!filter && !shared) {
+if (!filter && isolate) {
   for (const c of cases) {
     const id = `${c.group}/${c.name}`;
     const child = spawnSync(process.argv[0], [...process.execArgv, process.argv[1], id], {

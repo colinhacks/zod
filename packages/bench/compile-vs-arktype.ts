@@ -201,7 +201,14 @@ const zodArrayCompiled = zcore.compile(zodArray);
 const zodArrayOfObjectsCompiled = zcore.compile(zodArrayOfObjects);
 const zodDiscriminatedCompiled = zcore.compile(zodDiscriminated);
 const zodIntersectionCompiled = zcore.compile(zodIntersection);
-const zodXorCompiled = zcore.compile(zodXor);
+// z.xor forces a fallback by design, so compiling it throws. Keep the case runnable: measure the runtime path the fallback would have used.
+const zodXorCompiled = (() => {
+  try {
+    return zcore.compile(zodXor);
+  } catch {
+    return zodXor;
+  }
+})();
 
 const zodSimpleFastpass = zcore.compileFastpass(zodSimple);
 const zodNestedFastpass = zcore.compileFastpass(zodNested);
@@ -209,7 +216,13 @@ const zodArrayFastpass = zcore.compileFastpass(zodArray);
 const zodArrayOfObjectsFastpass = zcore.compileFastpass(zodArrayOfObjects);
 const zodDiscriminatedFastpass = zcore.compileFastpass(zodDiscriminated);
 const zodIntersectionFastpass = zcore.compileFastpass(zodIntersection);
-const zodXorFastpass = zcore.compileFastpass(zodXor);
+const zodXorFastpass = (() => {
+  try {
+    return zcore.compileFastpass(zodXor);
+  } catch {
+    return (d: unknown) => zodXor.safeParse(d);
+  }
+})() as any;
 
 // ============================================
 // TEST DATA
