@@ -1224,19 +1224,20 @@ export function _xor<const T extends readonly schemas.$ZodObject[]>(
 }
 
 // ZodDiscriminatedUnion
-export interface $ZodTypeDiscriminableInternals<Disc extends string = string>
-  extends schemas.$ZodTypeInternals<unknown, { [K in Disc]?: unknown }> {
+
+// The bound stops at `propValues`; it deliberately does not check that the option carries the discriminator. Any such check has to name the option's `input`, and constraining `input` in argument position forces TypeScript to resolve it while checking the call — circular for an option whose input references the union, which collapses the whole union to `any`. `$ZodDiscriminatedUnion` validates the discriminator when it builds its lookup map instead.
+export interface $ZodTypeDiscriminableInternals extends schemas._$ZodTypeInternals {
   propValues: util.PropValues;
 }
 
-export interface $ZodTypeDiscriminable<Disc extends string = string> extends schemas.$ZodType {
-  _zod: $ZodTypeDiscriminableInternals<Disc>;
+export interface $ZodTypeDiscriminable extends schemas.SomeType {
+  _zod: $ZodTypeDiscriminableInternals;
 }
 
 export type $ZodDiscriminatedUnionParams = TypeParams<schemas.$ZodDiscriminatedUnion, "options" | "discriminator">;
 // @__NO_SIDE_EFFECTS__
 export function _discriminatedUnion<
-  Types extends [$ZodTypeDiscriminable<Disc>, ...$ZodTypeDiscriminable<Disc>[]],
+  Types extends [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]],
   Disc extends string,
 >(
   Class: util.SchemaClass<schemas.$ZodDiscriminatedUnion>,
@@ -1246,7 +1247,7 @@ export function _discriminatedUnion<
 ): schemas.$ZodDiscriminatedUnion<Types, Disc> {
   return new Class({
     type: "union",
-    options,
+    options: options as any as schemas.$ZodType[],
     discriminator,
     ...util.normalizeParams(params),
   }) as any;

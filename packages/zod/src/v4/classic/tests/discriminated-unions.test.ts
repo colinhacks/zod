@@ -264,8 +264,10 @@ test("valid discriminator value, invalid data", () => {
 });
 
 test("wrong schema - missing discriminator", () => {
-  // @ts-expect-error missing discriminator property
-  z.discriminatedUnion("type", [z.object({ value: z.string() })]);
+  // An option missing the discriminator is rejected when the lookup map is built, not at the type level — the option bound has to stay lazy so recursive options can infer.
+  expect(() => z.discriminatedUnion("type", [z.object({ value: z.string() })])._zod.propValues).toThrow(
+    /Invalid discriminated union option/
+  );
 
   try {
     z.discriminatedUnion("type", [

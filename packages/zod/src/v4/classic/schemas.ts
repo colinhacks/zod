@@ -1787,7 +1787,7 @@ export const ZodDiscriminatedUnion: core.$constructor<ZodDiscriminatedUnion> = /
 );
 
 export function discriminatedUnion<
-  Types extends readonly [core.$ZodTypeDiscriminable<Disc>, ...core.$ZodTypeDiscriminable<Disc>[]],
+  Types extends readonly [core.$ZodTypeDiscriminable, ...core.$ZodTypeDiscriminable[]],
   Disc extends string,
 >(
   discriminator: Disc,
@@ -1797,7 +1797,7 @@ export function discriminatedUnion<
   // const [options, params] = args;
   return new ZodDiscriminatedUnion({
     type: "union",
-    options,
+    options: options as any as core.$ZodType[],
     discriminator,
     ...util.normalizeParams(params),
   }) as any;

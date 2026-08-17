@@ -1142,7 +1142,7 @@ export const ZodMiniDiscriminatedUnion: core.$constructor<ZodMiniDiscriminatedUn
 
 // @__NO_SIDE_EFFECTS__
 export function discriminatedUnion<
-  Types extends readonly [core.$ZodTypeDiscriminable<Disc>, ...core.$ZodTypeDiscriminable<Disc>[]],
+  Types extends readonly [core.$ZodTypeDiscriminable, ...core.$ZodTypeDiscriminable[]],
   Disc extends string,
 >(
   discriminator: Disc,
@@ -1151,10 +1151,10 @@ export function discriminatedUnion<
 ): ZodMiniDiscriminatedUnion<Types, Disc> {
   return new ZodMiniDiscriminatedUnion({
     type: "union",
-    options,
+    options: options as any as core.$ZodType[],
     discriminator,
     ...util.normalizeParams(params),
-  }) as ZodMiniDiscriminatedUnion<Types, Disc>;
+  }) as any as ZodMiniDiscriminatedUnion<Types, Disc>;
 }
 
 // ZodMiniIntersection
