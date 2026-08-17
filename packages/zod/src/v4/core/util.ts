@@ -1058,6 +1058,33 @@ export function installLazyProps<T extends object>(inst: T, sentinel: string, pr
   }
 }
 
+/**
+ * Installs a lazily-derived internal on the `_zod` prototype of `inst`'s
+ * constructor, computed from the internals object itself and cached there on
+ * first read. One accessor per constructor rather than one per instance.
+ */
+export function defineLazyInternal<T extends { _zod: any }>(
+  inst: T,
+  key: string,
+  compute: (zod: T["_zod"]) => unknown
+): void {
+  const proto = Object.getPrototypeOf(inst._zod);
+  if (key in proto) return;
+  Object.defineProperty(proto, key, {
+    configurable: true,
+    get(this: any) {
+      // Installed before computing so a re-entrant read resolves against this own property instead of running the getter again; a recursive schema reaches its own derived internals while they are still being built.
+      Object.defineProperty(this, key, { configurable: true, writable: true, value: undefined });
+      const value = compute(this);
+      this[key] = value;
+      return value;
+    },
+    set(this: any, value: unknown) {
+      Object.defineProperty(this, key, { configurable: true, writable: true, value });
+    },
+  });
+}
+
 /** Single-property variant; the key doubles as the sentinel. */
 export function installLazyProp(inst: object, key: string, make: (self: any) => unknown): void {
   const proto = claim(inst, key);

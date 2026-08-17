@@ -2063,8 +2063,8 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
 
   const _normalized = util.cached(() => normalizeDef(def));
 
-  util.defineLazy(inst._zod, "propValues", () => {
-    const shape = def.shape;
+  util.defineLazyInternal(inst, "propValues", (zod) => {
+    const shape = zod.def.shape;
     const propValues: util.PropValues = {};
     for (const key in shape) {
       const field = shape[key]!._zod;
@@ -2336,28 +2336,28 @@ function handleUnionResults(results: ParsePayload[], final: ParsePayload, inst: 
 export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$constructor("$ZodUnion", (inst, def) => {
   $ZodType.init(inst, def);
 
-  util.defineLazy(inst._zod, "optin", () =>
-    def.options.some((o) => o._zod.optin === "defaulted")
+  util.defineLazyInternal(inst, "optin", (zod) =>
+    zod.def.options.some((o) => o._zod.optin === "defaulted")
       ? "defaulted"
-      : def.options.some((o) => o._zod.optin !== undefined)
+      : zod.def.options.some((o) => o._zod.optin !== undefined)
         ? "optional"
         : undefined
   );
 
-  util.defineLazy(inst._zod, "optout", () =>
-    def.options.some((o) => o._zod.optout === "optional") ? "optional" : undefined
+  util.defineLazyInternal(inst, "optout", (zod) =>
+    zod.def.options.some((o) => o._zod.optout === "optional") ? "optional" : undefined
   );
 
-  util.defineLazy(inst._zod, "values", () => {
-    if (def.options.every((o) => o._zod.values)) {
-      return new Set<util.Primitive>(def.options.flatMap((option) => Array.from(option._zod.values!)));
+  util.defineLazyInternal(inst, "values", (zod) => {
+    if (zod.def.options.every((o) => o._zod.values)) {
+      return new Set<util.Primitive>(zod.def.options.flatMap((option) => Array.from(option._zod.values!)));
     }
     return undefined;
   });
 
-  util.defineLazy(inst._zod, "pattern", () => {
-    if (def.options.every((o) => o._zod.pattern)) {
-      const patterns = def.options.map((o) => o._zod.pattern);
+  util.defineLazyInternal(inst, "pattern", (zod) => {
+    if (zod.def.options.every((o) => o._zod.pattern)) {
+      const patterns = zod.def.options.map((o) => o._zod.pattern);
       return new RegExp(`^(${patterns.map((p) => util.cleanRegex(p!.source)).join("|")})$`);
     }
     return undefined;
@@ -2517,12 +2517,12 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
     $ZodUnion.init(inst, def);
 
     const _super = inst._zod.parse;
-    util.defineLazy(inst._zod, "propValues", () => {
+    util.defineLazyInternal(inst, "propValues", (zod) => {
       const propValues: util.PropValues = {};
-      for (const option of def.options) {
+      for (const option of zod.def.options) {
         const pv = option._zod.propValues;
         if (!pv || Object.keys(pv).length === 0)
-          throw new Error(`Invalid discriminated union option at index "${def.options.indexOf(option)}"`);
+          throw new Error(`Invalid discriminated union option at index "${zod.def.options.indexOf(option)}"`);
         for (const [k, v] of Object.entries(pv!)) {
           if (!Object.prototype.hasOwnProperty.call(propValues, k)) {
             util.assignProp(propValues, k, new Set());
@@ -3678,14 +3678,17 @@ export const $ZodOptional: core.$constructor<$ZodOptional> = /*@__PURE__*/ core.
   (inst, def) => {
     $ZodType.init(inst, def);
     // .optional() propagates absence rather than substituting for it, so a defaulted inner keeps its rung.
-    util.defineLazy(inst._zod, "optin", () => (def.innerType._zod.optin === "defaulted" ? "defaulted" : "optional"));
+    util.defineLazyInternal(inst, "optin", (zod) =>
+      zod.def.innerType._zod.optin === "defaulted" ? "defaulted" : "optional"
+    );
     inst._zod.optout = "optional";
 
-    util.defineLazy(inst._zod, "values", () => {
-      return def.innerType._zod.values ? new Set([...def.innerType._zod.values, undefined]) : undefined;
+    util.defineLazyInternal(inst, "values", (zod) => {
+      const values = (zod.def as $ZodOptionalDef).innerType._zod.values;
+      return values ? new Set([...values, undefined]) : undefined;
     });
-    util.defineLazy(inst._zod, "pattern", () => {
-      const pattern = def.innerType._zod.pattern;
+    util.defineLazyInternal(inst, "pattern", (zod) => {
+      const pattern = (zod.def as $ZodOptionalDef).innerType._zod.pattern;
       return pattern ? new RegExp(`^(${util.cleanRegex(pattern.source)})?$`) : undefined;
     });
 
@@ -3731,8 +3734,8 @@ export const $ZodExactOptional: core.$constructor<$ZodExactOptional> = /*@__PURE
     $ZodOptional.init(inst, def);
 
     // Override values/pattern to NOT add undefined
-    util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
-    util.defineLazy(inst._zod, "pattern", () => def.innerType._zod.pattern);
+    util.defineLazyInternal(inst, "values", (zod) => zod.def.innerType._zod.values);
+    util.defineLazyInternal(inst, "pattern", (zod) => zod.def.innerType._zod.pattern);
 
     // Override parse to just delegate (no undefined handling)
     inst._zod.parse = (payload, ctx) => {
@@ -3771,16 +3774,16 @@ export const $ZodNullable: core.$constructor<$ZodNullable> = /*@__PURE__*/ core.
   "$ZodNullable",
   (inst, def) => {
     $ZodType.init(inst, def);
-    util.defineLazy(inst._zod, "optin", () => def.innerType._zod.optin);
-    util.defineLazy(inst._zod, "optout", () => def.innerType._zod.optout);
+    util.defineLazyInternal(inst, "optin", (zod) => zod.def.innerType._zod.optin);
+    util.defineLazyInternal(inst, "optout", (zod) => zod.def.innerType._zod.optout);
 
-    util.defineLazy(inst._zod, "pattern", () => {
-      const pattern = def.innerType._zod.pattern;
+    util.defineLazyInternal(inst, "pattern", (zod) => {
+      const pattern = zod.def.innerType._zod.pattern;
       return pattern ? new RegExp(`^(${util.cleanRegex(pattern.source)}|null)$`) : undefined;
     });
 
-    util.defineLazy(inst._zod, "values", () => {
-      return def.innerType._zod.values ? new Set([...def.innerType._zod.values, null]) : undefined;
+    util.defineLazyInternal(inst, "values", (zod) => {
+      return zod.def.innerType._zod.values ? new Set([...zod.def.innerType._zod.values, null]) : undefined;
     });
 
     inst._zod.parse = (payload, ctx) => {
@@ -3826,7 +3829,7 @@ export const $ZodDefault: core.$constructor<$ZodDefault> = /*@__PURE__*/ core.$c
 
     // inst._zod.qin = "true";
     inst._zod.optin = "defaulted";
-    util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
+    util.defineLazyInternal(inst, "values", (zod) => zod.def.innerType._zod.values);
 
     inst._zod.parse = (payload, ctx) => {
       if (ctx.direction === "backward") {
@@ -3892,7 +3895,7 @@ export const $ZodPrefault: core.$constructor<$ZodPrefault> = /*@__PURE__*/ core.
     $ZodType.init(inst, def);
 
     inst._zod.optin = "defaulted";
-    util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
+    util.defineLazyInternal(inst, "values", (zod) => zod.def.innerType._zod.values);
 
     inst._zod.parse = (payload, ctx) => {
       if (ctx.direction === "backward") {
@@ -3938,8 +3941,8 @@ export const $ZodNonOptional: core.$constructor<$ZodNonOptional> = /*@__PURE__*/
   (inst, def) => {
     $ZodType.init(inst, def);
 
-    util.defineLazy(inst._zod, "values", () => {
-      const v = def.innerType._zod.values;
+    util.defineLazyInternal(inst, "values", (zod) => {
+      const v = zod.def.innerType._zod.values;
       return v ? new Set([...v].filter((x) => x !== undefined)) : undefined;
     });
 
@@ -4085,9 +4088,11 @@ export interface $ZodCatch<T extends SomeType = $ZodType> extends $ZodType {
 
 export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$constructor("$ZodCatch", (inst, def) => {
   $ZodType.init(inst, def);
-  util.defineLazy(inst._zod, "optin", () => (def.innerType._zod.optin === "defaulted" ? "defaulted" : "optional"));
-  util.defineLazy(inst._zod, "optout", () => def.innerType._zod.optout);
-  util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
+  util.defineLazyInternal(inst, "optin", (zod) =>
+    zod.def.innerType._zod.optin === "defaulted" ? "defaulted" : "optional"
+  );
+  util.defineLazyInternal(inst, "optout", (zod) => zod.def.innerType._zod.optout);
+  util.defineLazyInternal(inst, "values", (zod) => zod.def.innerType._zod.values);
 
   inst._zod.parse = (payload, ctx) => {
     if (ctx.direction === "backward") {
@@ -4201,10 +4206,10 @@ export interface $ZodPipe<A extends SomeType = $ZodType, B extends SomeType = $Z
 
 export const $ZodPipe: core.$constructor<$ZodPipe> = /*@__PURE__*/ core.$constructor("$ZodPipe", (inst, def) => {
   $ZodType.init(inst, def);
-  util.defineLazy(inst._zod, "values", () => def.in._zod.values);
-  util.defineLazy(inst._zod, "optin", () => def.in._zod.optin);
-  util.defineLazy(inst._zod, "optout", () => def.out._zod.optout);
-  util.defineLazy(inst._zod, "propValues", () => def.in._zod.propValues);
+  util.defineLazyInternal(inst, "values", (zod) => zod.def.in._zod.values);
+  util.defineLazyInternal(inst, "optin", (zod) => zod.def.in._zod.optin);
+  util.defineLazyInternal(inst, "optout", (zod) => zod.def.out._zod.optout);
+  util.defineLazyInternal(inst, "propValues", (zod) => zod.def.in._zod.propValues);
 
   inst._zod.parse = (payload, ctx) => {
     if (ctx.direction === "backward") {
@@ -4261,10 +4266,10 @@ export interface $ZodCodec<A extends SomeType = $ZodType, B extends SomeType = $
 
 export const $ZodCodec: core.$constructor<$ZodCodec> = /*@__PURE__*/ core.$constructor("$ZodCodec", (inst, def) => {
   $ZodType.init(inst, def);
-  util.defineLazy(inst._zod, "values", () => def.in._zod.values);
-  util.defineLazy(inst._zod, "optin", () => def.in._zod.optin);
-  util.defineLazy(inst._zod, "optout", () => def.out._zod.optout);
-  util.defineLazy(inst._zod, "propValues", () => def.in._zod.propValues);
+  util.defineLazyInternal(inst, "values", (zod) => zod.def.in._zod.values);
+  util.defineLazyInternal(inst, "optin", (zod) => zod.def.in._zod.optin);
+  util.defineLazyInternal(inst, "optout", (zod) => zod.def.out._zod.optout);
+  util.defineLazyInternal(inst, "propValues", (zod) => zod.def.in._zod.propValues);
 
   inst._zod.parse = (payload, ctx) => {
     const direction = ctx.direction || "forward";
@@ -4381,10 +4386,10 @@ export const $ZodReadonly: core.$constructor<$ZodReadonly> = /*@__PURE__*/ core.
   "$ZodReadonly",
   (inst, def) => {
     $ZodType.init(inst, def);
-    util.defineLazy(inst._zod, "propValues", () => def.innerType._zod.propValues);
-    util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
-    util.defineLazy(inst._zod, "optin", () => def.innerType?._zod?.optin);
-    util.defineLazy(inst._zod, "optout", () => def.innerType?._zod?.optout);
+    util.defineLazyInternal(inst, "propValues", (zod) => zod.def.innerType._zod.propValues);
+    util.defineLazyInternal(inst, "values", (zod) => zod.def.innerType._zod.values);
+    util.defineLazyInternal(inst, "optin", (zod) => zod.def.innerType?._zod?.optin);
+    util.defineLazyInternal(inst, "optout", (zod) => zod.def.innerType?._zod?.optout);
 
     inst._zod.parse = (payload, ctx) => {
       if (ctx.direction === "backward") {
@@ -4776,10 +4781,10 @@ export const $ZodLazy: core.$constructor<$ZodLazy> = /*@__PURE__*/ core.$constru
     if (!d._cachedInner) d._cachedInner = def.getter() as $ZodType;
     return d._cachedInner;
   });
-  util.defineLazy(inst._zod, "pattern", () => inst._zod.innerType?._zod?.pattern);
-  util.defineLazy(inst._zod, "propValues", () => inst._zod.innerType?._zod?.propValues);
-  util.defineLazy(inst._zod, "optin", () => inst._zod.innerType?._zod?.optin ?? undefined);
-  util.defineLazy(inst._zod, "optout", () => inst._zod.innerType?._zod?.optout ?? undefined);
+  util.defineLazyInternal(inst, "pattern", (zod) => zod.innerType?._zod?.pattern);
+  util.defineLazyInternal(inst, "propValues", (zod) => zod.innerType?._zod?.propValues);
+  util.defineLazyInternal(inst, "optin", (zod) => zod.innerType?._zod?.optin ?? undefined);
+  util.defineLazyInternal(inst, "optout", (zod) => zod.innerType?._zod?.optout ?? undefined);
   inst._zod.parse = (payload, ctx) => {
     const inner = inst._zod.innerType;
     return inner._zod.run(payload, ctx);
