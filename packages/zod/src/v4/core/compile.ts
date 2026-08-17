@@ -1070,9 +1070,9 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
   }
   // else: strip mode (no catchall) - unknown keys ignored, only include known keys
 
-  // Build the output: shape keys first in declared order (the runtime assigns them before its catchall loop), then unknown keys in for...in order. Runtime inclusion rule (handlePropertyResult): a key is included iff its output value !== undefined OR the key is present on the input. Props that can never output undefined keep the fast object-literal form.
+  // Build the output: shape keys first in declared order (the runtime assigns them before its catchall loop), then unknown keys in for...in order. Runtime inclusion rule (handlePropertyResult): a key on the middle rung is included iff the key is present on the input; otherwise iff its output value !== undefined OR the key is present. Props that can never output undefined keep the fast object-literal form.
   const outputVar = newVar(ctx);
-  const hasConditionalKeys = keys.some((k) => mayOutputUndefined(shape[k]!));
+  const hasConditionalKeys = keys.some((k) => mayOutputUndefined(shape[k]!) || dropsWhenAbsent(shape[k]!));
 
   if (!hasConditionalKeys) {
     const propLiterals = keys.map((k) => `${util.esc(k)}: ${propOutputs[k]}`).join(", ");
@@ -1080,7 +1080,9 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
   } else {
     doc.write(`const ${outputVar} = {};`);
     for (const k of keys) {
-      if (mayOutputUndefined(shape[k]!)) {
+      if (dropsWhenAbsent(shape[k]!)) {
+        doc.write(`if (${util.esc(k)} in ${accessor}) ${outputVar}[${util.esc(k)}] = ${propOutputs[k]};`);
+      } else if (mayOutputUndefined(shape[k]!)) {
         doc.write(
           `if (${propOutputs[k]} !== undefined || ${util.esc(k)} in ${accessor}) ${outputVar}[${util.esc(k)}] = ${propOutputs[k]};`
         );
@@ -1237,6 +1239,11 @@ function fastPathAcceptsAbsence(schema: SomeType): boolean {
 // Whether a schema's success-path output can be `undefined`. Object output
 // assembly gives such props the runtime's value-or-presence inclusion rule;
 // everything else keeps the unconditional object-literal slot.
+/** The middle rung permits absence without supplying anything in its place, so an absent key contributes nothing — mirrors the leading gate in `handlePropertyResult`. */
+function dropsWhenAbsent(schema: SomeType): boolean {
+  return schema._zod.optin === "optional" && schema._zod.optout === "optional";
+}
+
 function mayOutputUndefined(schema: SomeType): boolean {
   const def = schema._zod.def as {
     type: string;
@@ -1478,6 +1485,11 @@ function generateTupleCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
         });
         d.write(`} else {`);
         d.indented((d2) => {
+          // Middle rung: absence supplies nothing in its place, so truncate rather than running the item on `undefined` and keeping what it invents. Mirrors the leading gate in `handleTupleResults`.
+          if (dropsWhenAbsent(itemSchema)) {
+            d2.write(`${outputVar}.length = ${i};`);
+            return;
+          }
           const elemVar = newVar(ctx);
           const branchVar = newVar(ctx);
           d2.write(`const ${elemVar} = undefined;`);

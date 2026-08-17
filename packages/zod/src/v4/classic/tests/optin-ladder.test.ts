@@ -74,6 +74,50 @@ test("ladder: exactOptional keeps its distinct meaning", () => {
   expect(z.object({ a: z.string().exactOptional() }).safeParse({ a: undefined }).success).toBe(false);
 });
 
+// An absent key never materializes a value from a schema that only claims the middle rung, however that schema answers `undefined`. The top rung still substitutes, and an explicitly present `undefined` still runs the inner.
+test.each([true, false])("ladder: an absent key stays absent on the middle rung (jitless=%s)", (jitless) => {
+  const opts = { jitless };
+  expect(z.object({ a: z.coerce.string().exactOptional() }).parse({}, opts)).toEqual({});
+  expect(z.object({ a: z.string().catch("C").exactOptional() }).parse({}, opts)).toEqual({});
+  expect(z.object({ a: z.preprocess((v) => v ?? "X", z.string()).exactOptional() }).parse({}, opts)).toEqual({});
+  expect(z.object({ a: z.union([z.coerce.string(), z.string().optional()]) }).parse({}, opts)).toEqual({});
+
+  expect(z.object({ a: z.string().default("D").exactOptional() }).parse({}, opts)).toEqual({ a: "D" });
+  expect(z.object({ a: z.string().prefault("P").exactOptional() }).parse({}, opts)).toEqual({ a: "P" });
+  expect(z.object({ a: z.coerce.string().exactOptional() }).parse({ a: undefined }, opts)).toEqual({ a: "undefined" });
+  expect(z.object({ a: z.coerce.string() }).parse({ a: undefined }, opts)).toEqual({ a: "undefined" });
+});
+
+test("ladder: an absent tuple slot on the middle rung truncates the tail", () => {
+  expect(z.tuple([z.string(), z.coerce.string().exactOptional()]).parse(["x"])).toEqual(["x"]);
+  expect(z.tuple([z.string(), z.string().catch("C").exactOptional()]).parse(["x"])).toEqual(["x"]);
+  expect(z.tuple([z.string(), z.string().default("D").exactOptional()]).parse(["x"])).toEqual(["x", "D"]);
+});
+
+// z.compile() assembles its own output, so the gate has to be mirrored there or compile mode silently keeps the invented value.
+test("ladder: compile mode agrees with the interpreted and JIT paths on absent middle-rung slots", () => {
+  const objects = [
+    [z.object({ a: z.coerce.string().exactOptional() }), {}],
+    [z.object({ a: z.string().catch("C").exactOptional() }), {}],
+    [z.object({ a: z.string().default("D").exactOptional() }), { a: "D" }],
+    [z.object({ a: z.string().catch("C") }), { a: "C" }],
+  ] as const;
+  for (const [schema, expected] of objects) {
+    expect(z.compile(schema).parse({})).toEqual(expected);
+    expect(schema.parse({}, { jitless: true })).toEqual(expected);
+    expect(schema.parse({})).toEqual(expected);
+  }
+
+  const tuples = [
+    [z.tuple([z.string(), z.coerce.string().exactOptional()]), ["x"]],
+    [z.tuple([z.string(), z.string().default("D").exactOptional()]), ["x", "D"]],
+  ] as const;
+  for (const [schema, expected] of tuples) {
+    expect(z.compile(schema).parse(["x"])).toEqual(expected);
+    expect(schema.parse(["x"], { jitless: true })).toEqual(expected);
+  }
+});
+
 test("ladder: tuple minimum length respects every rung", () => {
   expect(z.tuple([z.string().default("D")]).parse([])).toEqual(["D"]);
   expect(z.tuple([z.string().prefault("P")]).parse([])).toEqual(["P"]);

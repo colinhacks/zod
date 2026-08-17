@@ -33,7 +33,7 @@ const BUILT_ENTRY = path.join(__dirname, "node_modules", "zod", "index.js");
 const CEILINGS: Record<string, number> = {
   "zod-mini-boolean": 2830,
   "zod-mini-string": 3155,
-  "zod-mini-object": 4260,
+  "zod-mini-object": 4269,
 };
 
 /**
