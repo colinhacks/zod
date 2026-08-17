@@ -3666,12 +3666,12 @@ export interface $ZodExactOptional<T extends SomeType = $ZodType> extends $ZodTy
 export const $ZodExactOptional: core.$constructor<$ZodExactOptional> = /*@__PURE__*/ core.$constructor(
   "$ZodExactOptional",
   (inst, def) => {
-    // Call parent init - inherits optin/optout = "optional"
-    $ZodOptional.init(inst, def);
-
-    // Override values/pattern to NOT add undefined
+    // values/pattern do NOT gain undefined here: an absent key is not a value. They are claimed before the parent init because defineLazyInternal is first-wins on the shared prototype, so $ZodOptional's widening versions would otherwise take the slots and these would silently no-op.
     util.defineLazyInternal(inst, "values", (zod) => zod.def.innerType._zod.values);
     util.defineLazyInternal(inst, "pattern", (zod) => zod.def.innerType._zod.pattern);
+
+    // Call parent init - inherits optin/optout = "optional"
+    $ZodOptional.init(inst, def);
 
     // Override parse to just delegate (no undefined handling)
     inst._zod.parse = (payload, ctx) => {

@@ -206,6 +206,39 @@ test("exactOptional optionality", () => {
   expectTypeOf<typeof a._zod.optout>().toEqualTypeOf<"optional">();
 });
 
+// exactOptional narrows the value set rather than widening it: an absent key is not a value, and explicit undefined is rejected outright.
+test("exactOptional does not add undefined to values/pattern", () => {
+  expect(z.exactOptional(z.literal("a"))._zod.values).toEqual(new Set(["a"]));
+  expect(z.exactOptional(z.enum(["a", "b"]))._zod.pattern).toEqual(/^(a|b)$/);
+
+  // optional widens both, since undefined really is one of its accepted values
+  expect(z.optional(z.literal("a"))._zod.values).toEqual(new Set(["a", undefined]));
+  expect(z.optional(z.enum(["a", "b"]))._zod.pattern).toEqual(/^((a|b))?$/);
+});
+
+test("exactOptional keeps a template literal segment required", () => {
+  const schema = z.templateLiteral(["x", z.exactOptional(z.enum(["a", "b"]))]);
+  expect(schema.safeParse("xa").success).toEqual(true);
+  expect(schema.safeParse("x").success).toEqual(false);
+});
+
+test("exactOptional discriminator does not match an absent key", () => {
+  const schema = z.discriminatedUnion("k", [
+    z.object({ k: z.exactOptional(z.literal("a")), x: z.string() }),
+    z.object({ k: z.literal("b"), y: z.number() }),
+  ]);
+  expect(schema.safeParse({ k: "a", x: "s" }).success).toEqual(true);
+  expect(schema.safeParse({ x: "s" }).success).toEqual(false);
+
+  // disjoint exactOptional discriminators no longer collide on a shared undefined
+  expect(() =>
+    z.discriminatedUnion("k", [
+      z.object({ k: z.exactOptional(z.literal("a")) }),
+      z.object({ k: z.exactOptional(z.literal("c")) }),
+    ])
+  ).not.toThrow();
+});
+
 test("exactOptional in objects - absent keys", () => {
   const schema = z.object({
     a: z.string().exactOptional(),
