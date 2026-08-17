@@ -1,12 +1,8 @@
-// Vitest setup hook for the compile-mode project. Just enables global
-// compilation via the side-effect subpath module — same code path production
-// users get from `import "zod/compile"`.
+// Vitest setup hook for the compile-mode project. Just enables global compilation via the side-effect subpath module — same code path production users get from `import "zod/compile"`.
 
 import "zod/compile";
 
-// Counters exposed on globalThis so compile-stats.test.ts can verify the
-// post-processor was actually wired up by the import above. The counters wrap
-// the existing post-processor that `zod/compile` installed.
+// Counters exposed on globalThis so compile-stats.test.ts can verify the post-processor was actually wired up by the import above. The counters wrap the existing post-processor that `zod/compile` installed.
 import * as core from "../packages/zod/src/v4/core/index.js";
 
 interface CompileStats {
@@ -29,8 +25,7 @@ if (installed) {
       const shim = after;
       inst._zod.run = function countingShim(payload: any, ctx: any) {
         if (ctx?.async || ctx?.direction === "backward" || ctx?.skipChecks) {
-          // Bypass — runs through `__originalRun` inside the shim, doesn't
-          // trigger a compile attempt.
+          // Bypass — runs through `__originalRun` inside the shim, doesn't trigger a compile attempt.
           return shim(payload, ctx);
         }
         if (inst._zod.run === countingShim) {

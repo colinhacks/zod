@@ -1,9 +1,4 @@
-// Tests the `zod/compile` subpath module — the user-facing API for enabling
-// global AOT compilation. Importing this file (or running it under
-// compile-mode where the setup file already imported `zod/compile`) installs
-// the post-processor for the duration of this vitest worker. Vitest's
-// `isolate: true` puts each test file in its own worker, so the install
-// doesn't leak to other files.
+// Tests the `zod/compile` subpath module — the user-facing API for enabling global AOT compilation. Importing this file (or running it under compile-mode where the setup file already imported `zod/compile`) installs the post-processor for the duration of this vitest worker. Vitest's `isolate: true` puts each test file in its own worker, so the install doesn't leak to other files.
 
 import { expect, test } from "vitest";
 import "zod/compile";
@@ -65,8 +60,7 @@ test("global mode respects the jitless config", () => {
   try {
     const schema = z.object({ a: z.string() });
     expect(schema.safeParse({ a: "x" }).success).toBe(true);
-    // The shim restored the runtime parser instead of compiling: a compiled
-    // wrapper carries __originalRun, the bare runtime does not.
+    // The shim restored the runtime parser instead of compiling: a compiled wrapper carries __originalRun, the bare runtime does not.
     expect((schema._zod.run as { __originalRun?: unknown }).__originalRun).toBeUndefined();
   } finally {
     core.config({ jitless: undefined });
@@ -75,8 +69,6 @@ test("global mode respects the jitless config", () => {
 
 test("schemas with unsupported features fall back without crashing", () => {
   const schema = z.string().refine(async () => true);
-  // First call attempts compile, falls back. Subsequent calls use runtime.
-  // Sync parse of an async-refined schema is its own runtime concern; we
-  // only care that the post-processor doesn't crash with a compile error.
+  // First call attempts compile, falls back. Subsequent calls use runtime. Sync parse of an async-refined schema is its own runtime concern; we only care that the post-processor doesn't crash with a compile error.
   expect(() => schema.safeParse("ok")).not.toThrow(/ZodCompile/);
 });

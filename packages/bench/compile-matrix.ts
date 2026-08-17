@@ -4,13 +4,7 @@ import { INVALID, ZodCompileUnsupportedError, compile, compileFastpass } from "z
 
 // Broad compiled-vs-runtime sweep across schema categories.
 //
-// Methodology: absolute ops/sec on a laptop drifts by tens of percent between
-// runs (thermal state, other processes), so a table of absolute numbers taken
-// minutes apart is not comparable. Each case therefore measures runtime and
-// compiled *interleaved* inside one round and keeps the best of N rounds — the
-// minimum time is the closest estimate of the noise floor, and the speedup is a
-// ratio of two measurements taken microseconds apart. Correctness is checked
-// before timing: a fast path that returns the wrong value is not faster.
+// Methodology: absolute ops/sec on a laptop drifts by tens of percent between runs (thermal state, other processes), so a table of absolute numbers taken minutes apart is not comparable. Each case therefore measures runtime and compiled *interleaved* inside one round and keeps the best of N rounds — the minimum time is the closest estimate of the noise floor, and the speedup is a ratio of two measurements taken microseconds apart. Correctness is checked before timing: a fast path that returns the wrong value is not faster.
 
 interface Case {
   group: string;
@@ -342,9 +336,7 @@ const selected = filter ? cases.filter(match) : cases;
 const rows: Row[] = [];
 const problems: string[] = [];
 
-// Parent driver: one child per case, each measuring a single schema in a fresh
-// process. Children re-enter this file with the case id; execArgv carries the
-// tsx loader and `--conditions`, so the child resolves zod the same way.
+// Parent driver: one child per case, each measuring a single schema in a fresh process. Children re-enter this file with the case id; execArgv carries the tsx loader and `--conditions`, so the child resolves zod the same way.
 if (!filter && !shared) {
   for (const c of cases) {
     const id = `${c.group}/${c.name}`;
@@ -363,17 +355,20 @@ if (!filter && !shared) {
   process.exit(0);
 }
 
-// Consumed by every timed call and printed at the end. Without this V8 sees the
-// parse result is dead and eliminates the call outright, reporting a trivial
-// schema at an impossible ~1.6ns/op. `escaped` additionally defeats escape
-// analysis: left un-escaped, the result object is stack-allocated and the
-// measurement stops resembling a caller that actually keeps its data.
+// Consumed by every timed call and printed at the end. Without this V8 sees the parse result is dead and eliminates the call outright, reporting a trivial schema at an impossible ~1.6ns/op. `escaped` additionally defeats escape analysis: left un-escaped, the result object is stack-allocated and the measurement stops resembling a caller that actually keeps its data.
 let sink = 0;
 let escaped: unknown;
 
 for (const c of selected) {
+  // Feed the input through an array load. Passed as a constant the whole call is
+  // loop-invariant and V8 hoists it out of the timing loop — plain interpreter
+  // code far more readily than an opaque `new Function` closure, which flatters
+  // the runtime by ~1.9x on cheap schemas. An array read is enough to stop it;
+  // the values do not need to differ (measured: identical either way).
+  const pool = Array.from({ length: 64 }, () => c.input);
+  let idx = 0;
   const runtimeParse = () => {
-    const r = c.schema.safeParse(c.input);
+    const r = c.schema.safeParse(pool[idx++ & 63]);
     sink += r.success ? 1 : 0;
     escaped = r;
   };
@@ -386,8 +381,7 @@ for (const c of selected) {
     status = err instanceof ZodCompileUnsupportedError ? "fallback" : `refused: ${(err as Error).name}`;
   }
 
-  // Correctness gate. Benchmarking a fast path that disagrees with the runtime
-  // measures the wrong thing, so a mismatch is reported instead of timed.
+  // Correctness gate. Benchmarking a fast path that disagrees with the runtime measures the wrong thing, so a mismatch is reported instead of timed.
   const expected = c.schema.safeParse(c.input);
   if (!expected.success) {
     problems.push(`${c.group}/${c.name}: input does not parse under the runtime`);
@@ -409,7 +403,7 @@ for (const c of selected) {
       if (fp(c.input) === INVALID) status = "fallthrough";
       else
         rawFn = () => {
-          const v = fp(c.input);
+          const v = fp(pool[idx++ & 63]);
           sink += v === INVALID ? 0 : 1;
           escaped = v;
         };
@@ -420,7 +414,7 @@ for (const c of selected) {
 
   const compiledParse = compiledSchema
     ? () => {
-        const r = compiledSchema.safeParse(c.input);
+        const r = compiledSchema.safeParse(pool[idx++ & 63]);
         sink += r.success ? 1 : 0;
         escaped = r;
       }

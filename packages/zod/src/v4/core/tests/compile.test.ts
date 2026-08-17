@@ -657,10 +657,7 @@ test("record basic", () => {
 });
 
 test("record with enum keys", () => {
-  // Records with enum/literal keys have exhaustive semantics: every enum
-  // value must be present in the input. Compile currently forces fallback
-  // for this case (see compile.ts generateRecordCheck), so behavior matches
-  // the runtime by delegation.
+  // Records with enum/literal keys have exhaustive semantics: every enum value must be present in the input. Compile currently forces fallback for this case (see compile.ts generateRecordCheck), so behavior matches the runtime by delegation.
   const aot = compile(z.record(z.enum(["a", "b"]), z.number()));
   expect(valid(aot, { a: 1, b: 2 })).toEqual({ a: 1, b: 2 });
   invalid(aot, { a: 1 }); // missing required key b
@@ -775,10 +772,7 @@ test("lazy recursive schemas are refused, and still parse through the runtime", 
     next: z.lazy(() => nodeSchema).optional(),
   });
 
-  // A recursive schema is re-entered by a single parse, which is how the runtime
-  // memoizer terminates input containing a reference cycle. That state is keyed
-  // on the parse context, and the fast path has none, so it declines the schema
-  // rather than following the cycle until the stack runs out.
+  // A recursive schema is re-entered by a single parse, which is how the runtime memoizer terminates input containing a reference cycle. That state is keyed on the parse context, and the fast path has none, so it declines the schema rather than following the cycle until the stack runs out.
   expect(() => compile(nodeSchema)).toThrow(ZodCompileUnsupportedError);
 
   expect(valid(nodeSchema, { value: "a" })).toEqual({ value: "a" });
@@ -1195,8 +1189,7 @@ test("fallback preserves instanceof class name in error message", () => {
   const bad = compiled.safeParse({});
   expect(bad.success).toBe(false);
   if (!bad.success) {
-    // The error must come from the original schema's runtime, which captured
-    // `inst` referring to the original. Class name surfaces in the message.
+    // The error must come from the original schema's runtime, which captured `inst` referring to the original. Class name surfaces in the message.
     expect(bad.error.issues[0]?.message).toMatch(/User/);
   }
 });
@@ -1260,15 +1253,13 @@ test("catch receives finalized issues in ctx", () => {
   const schema = z.catch(z.string().min(5), (ctx) => `bad:${ctx.error.issues.length}`);
   const aot = compile(schema);
   expect(valid(aot, "hello world")).toBe("hello world");
-  // input fails both type and length checks; we just confirm catchValue ran
-  // and saw at least one finalized issue.
+  // input fails both type and length checks; we just confirm catchValue ran and saw at least one finalized issue.
   expect(valid(aot, "hi")).toBe("bad:1");
   expect(valid(aot, 42)).toMatch(/^bad:\d+$/);
 });
 
 test("catch falls through unsupported inner via runtime island", () => {
-  // Async refine in the inner makes the inner uncompilable, but catch should
-  // still compile by treating the whole catch as a runtime island.
+  // Async refine in the inner makes the inner uncompilable, but catch should still compile by treating the whole catch as a runtime island.
   const aot = compile(z.catch(z.union([z.string(), z.number()]), "fb"));
   expect(valid(aot, "x")).toBe("x");
   expect(valid(aot, 1)).toBe(1);
@@ -1300,8 +1291,7 @@ test("cidrv6 compiled validates prefix range and address", () => {
 // === Runtime islands ===
 
 test("runtime island falls through unsupported child inside object", () => {
-  // z.xor (exclusive union) currently throws ZodCompileUnsupportedError. As an
-  // object property, the island should let the rest of the object compile.
+  // z.xor (exclusive union) currently throws ZodCompileUnsupportedError. As an object property, the island should let the rest of the object compile.
   const aot = compile(
     z.object({
       label: z.string(),
@@ -1326,8 +1316,7 @@ test("url string-format check never assigns to its accessor", () => {
   expect(valid(arr, ["https://example.com"])).toEqual(["https://example.com"]);
   invalid(arr, ["not a url"]);
 
-  // property accessor: previously wrote the normalized value back into the
-  // caller's input object.
+  // property accessor: previously wrote the normalized value back into the caller's input object.
   const padded = " https://example.com ";
   const input = { u: padded };
   expectMatch(z.object({ u: z.string().url() }), input);
@@ -1335,8 +1324,7 @@ test("url string-format check never assigns to its accessor", () => {
 });
 
 test("lazy schemas with checked or defaulted descendants parse without crashing", () => {
-  // Inner runtime run must receive a ctx — checks read ctx.skipChecks,
-  // default/transform read ctx.direction.
+  // Inner runtime run must receive a ctx — checks read ctx.skipChecks, default/transform read ctx.direction.
   const aot = compile(z.lazy(() => z.string().min(2)));
   expect(valid(aot, "abc")).toEqual("abc");
   invalid(aot, "a");
@@ -1410,8 +1398,7 @@ test("object output parity: key order, undefined keys, inherited keys, getters",
   const catIn = { x: 1, a: "q" };
   expect(Object.keys(compile(cat).parse(catIn) as object)).toEqual(Object.keys(cat.parse(catIn)));
 
-  // optin-optional/optout-required prop: absent key omitted, explicit
-  // undefined preserved (runtime handlePropertyResult rule).
+  // optin-optional/optout-required prop: absent key omitted, explicit undefined preserved (runtime handlePropertyResult rule).
   const tf = z.object({
     a: z
       .string()
@@ -1461,8 +1448,7 @@ test("unsupported features throw ZodCompileUnsupportedError, not raw errors", ()
 });
 
 test("record key schemas compile: formats, checks, numbers, transforms", () => {
-  // A string format lives on the def rather than in `checks`, so an email key
-  // schema reads as a bare `z.string()` unless the key path looks for it.
+  // A string format lives on the def rather than in `checks`, so an email key schema reads as a bare `z.string()` unless the key path looks for it.
   for (const [schema, inputs] of [
     [z.record(z.email(), z.number()), [{ "a@b.com": 1 }, { nope: 1 }, {}]],
     [z.record(z.string().min(2), z.number()), [{ ab: 1 }, { a: 1 }]],
@@ -1489,8 +1475,7 @@ test("record key schemas compile: formats, checks, numbers, transforms", () => {
   // Own __proto__ is skipped rather than validated, matching the runtime.
   expectMatch(z.record(z.email(), z.number()), JSON.parse('{"__proto__":{"p":1},"a@b.com":1}'));
 
-  // A loose record keeps a rejected key verbatim, copying its value across
-  // unvalidated instead of failing.
+  // A loose record keeps a rejected key verbatim, copying its value across unvalidated instead of failing.
   for (const input of [{ "a@b.com": 1 }, { nope: 1 }, { "a@b.com": 1, nope: "raw" }, { "a@b.com": "bad" }]) {
     expectMatch(z.looseRecord(z.email(), z.number()), input);
   }

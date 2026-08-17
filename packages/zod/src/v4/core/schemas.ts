@@ -518,15 +518,12 @@ export function parseValidURL(
 ): string | undefined {
   const trimmed = data.trim();
 
-  // Bare z.url() (no hostname/protocol/normalize options) skips the parsed-URL
-  // path entirely. URL.canParse avoids the try/catch on invalid input.
+  // Bare z.url() (no hostname/protocol/normalize options) skips the parsed-URL path entirely. URL.canParse avoids the try/catch on invalid input.
   if (!def.hostname && !def.protocol && !def.normalize) {
     return urlCanParse(trimmed) ? trimmed : undefined;
   }
 
-  // When normalize is off, require :// for http/https URLs. This prevents
-  // strings like "http:example.com" or "https:/path" from being silently
-  // accepted by URL.
+  // When normalize is off, require :// for http/https URLs. This prevents strings like "http:example.com" or "https:/path" from being silently accepted by URL.
   if (!def.normalize && def.protocol?.source === regexes.httpProtocol.source && !/^https?:\/\//i.test(trimmed)) {
     return undefined;
   }

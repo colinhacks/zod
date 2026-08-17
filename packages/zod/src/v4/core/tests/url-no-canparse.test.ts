@@ -1,8 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-// schemas.ts captures URL.canParse at module-load time. Reset the module
-// registry and delete URL.canParse so the dynamic re-import takes the inline
-// fallback branch (URL.canParse may be undefined on older runtimes).
+// schemas.ts captures URL.canParse at module-load time. Reset the module registry and delete URL.canParse so the dynamic re-import takes the inline fallback branch (URL.canParse may be undefined on older runtimes).
 describe("z.url() with URL.canParse absent", () => {
   const original = URL.canParse;
 

@@ -38,23 +38,27 @@ Consequences:
 
 `pnpm dev packages/bench/compile-matrix.ts` sweeps 55 schemas across every category and prints runtime, compiled and raw-fast-path throughput with the speedup. Three things about the method matter for reading the numbers:
 
-- **One process per schema.** Run all 55 in one process and the shared `safeParse` site — and zod's own internal dispatch sites — go megamorphic, which taxes the interpreter far more than it taxes a single generated function. The same schemas report a median 2.4x that way and 1.8x measured alone. The isolated figure is the honest answer to "how fast is this schema"; `--shared` reproduces the other regime, which models an app interleaving many different schemas.
-- **Interleaved, best of 15 rounds.** Absolute ops/sec on a laptop drifts by tens of percent between runs, so every speedup is a ratio of two measurements taken microseconds apart. Re-running moves an individual speedup ~2% (median, 12% worst).
+- **One process per schema.** Run all 55 in one process and the shared `safeParse` site — and zod's own internal dispatch sites — go megamorphic, which taxes the interpreter far more than it taxes a single generated function, reporting a median 2.4x against 1.6x measured alone. The isolated figure answers "how fast is this schema"; `--shared` reproduces the other regime, which models an app interleaving many different schemas.
+- **Inputs arrive through an array load.** Passed as a constant, the whole call is loop-invariant and V8 hoists it out of the timing loop — and it hoists plain interpreter code far more readily than an opaque `new Function` closure, which flattered the runtime by up to 1.9x. The values do not need to differ; an array read is enough.
+- **Results have to escape.** A discarded result lets V8 delete the parse outright (`z.string()` measured 625M ops/sec, ~1.6ns); an un-escaped one gets stack-allocated. Both are defeated before timing.
+- **Interleaved, best of 15 rounds.** Absolute ops/sec on a laptop drifts by tens of percent between runs, so every speedup is a ratio of two measurements taken microseconds apart.
 - **Correctness first.** Compiled output is checked against the runtime before anything is timed, and each row reports whether the schema compiled, fell back, or fell through — a number can't come from a fast path that silently didn't run.
 
-53 of 55 schemas compile. Median **1.8x**, range 0.65x–11.4x.
+53 of 55 schemas compile. Median **1.6x**, range 0.63x–9.9x.
 
 | | |
 | --- | --- |
-| Biggest wins | object union **11.4x**, 20-key object **10.8x**, `z.array(z.object())` x50 **7.0x**, nested object **5.8x**, tuple **5.8x**, discriminated union **5.7x**, `z.number().int().min().max()` **5.4x** |
-| Typical | flat object 2.0x, strict object 2.9x, `z.array(z.number())` x100 4.2x, intersection 4.9x, `.pipe()` 4.2x, `.refine()` 2.5x, string with checks 2.8x |
-| Marginal | string formats 1.15–1.4x, `z.record` dynamic keys 1.14–1.47x, `z.set()` 1.14x, `.catch()` 1.14x |
-| **Slower compiled** | bare `z.string()` **0.70x**, `z.number()` 0.68x, `z.boolean()` 0.75x, `z.bigint()` 0.65x, `z.literal()` 0.68x, `z.enum()` 0.70x, `.default()` on absent input 0.89x |
-| Forced fallbacks | recursive schema 0.99x, `z.xor` 1.00x — the wrapper's bypass checks cost nothing measurable |
+| Biggest wins | object union **9.9x**, `z.array(z.object())` x50 **6.6x**, 20-key object **5.9x**, tuple **5.1x**, `z.number().int().min().max()` **4.8x**, intersection **4.8x**, discriminated union **4.6x** |
+| Typical | nested object 4.0x, `z.array(z.number())` x100 4.2x, `.pipe()` 3.8x, optional-heavy object 3.6x, string with checks 3.0x, strict object 2.8x, `.refine()` 2.5x |
+| Marginal | flat 5-key object 1.6x, string formats 1.1–1.4x, `z.record` dynamic keys 1.14–1.68x, `z.set()` 1.15x, `.catch()` 1.10x |
+| **Slower compiled** | `z.number()` **0.63x**, `z.literal()` 0.65x, `z.string()` 0.68x, `z.boolean()` 0.74x, `z.enum()` 0.74x, `z.bigint()` 0.77x, `.default()` on absent input 0.91x |
+| Forced fallbacks | recursive schema 1.00x, `z.xor` 1.01x — the wrapper's bypass checks cost nothing measurable |
 
-The win tracks how much work a schema does per parse, because what compilation removes is per-node dispatch and payload allocation, not the checks themselves. A 20-key object or an array of objects amortises the wrapper across a lot of work; a bare primitive has none to amortise.
+The win tracks how much work a schema does per parse, because what compilation removes is per-node dispatch and payload allocation, not the checks themselves. A 20-key object or an array of objects amortises that across a lot of work; a bare primitive has none to amortise.
 
-That last row is the one to design around: for a schema whose entire body is one `typeof`, the compiled path is **slower**, by around 30%. It is not the generated code — the raw fast path beats the runtime even there (`z.string()`: 177M vs 142M ops/sec). It is that a `safeParse` has to allocate a result object either way, and the extra hop through a `new Function` closure costs more than the check it replaces. One check is enough to flip it (`z.string().min(1)` is 2.1x), which means global mode makes trivial leaf schemas modestly slower while making everything above them faster. Worth measuring on a real schema set before assuming global mode is a free win.
+The last row is the one to design around. **A bare primitive is slower compiled**, and the cause is not `safeParse`: `.parse()`, which allocates no result object, is *worse* (`z.string()` 0.42x, `z.literal()` 0.45x), while both APIs agree on composites (5-key object 1.73x vs 1.72x, nested 3.59x vs 3.76x). What costs is the call itself. Generated code lives in a `new Function` closure that V8 will not inline into the caller, so every parse pays a real call, and below roughly ten nanoseconds of actual work that call exceeds the `typeof` it replaced. One check is enough to flip it — `z.string().min(1)` is 2.8–3.2x.
+
+Two consequences. Global mode makes trivial leaf schemas measurably slower while making everything composed of them faster, so it is not a free win and is worth measuring against a real schema set. And the exact primitive figures are the least trustworthy in the table: at ~8ns/op the answer moves between 0.6x and 1.0x depending on harness details, so read them as "no benefit here", not as a precise ratio. Everything at or above 2x reproduces across every measurement regime tried.
 
 ## Output construction
 

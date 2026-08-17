@@ -3,11 +3,7 @@ import { expect, test } from "vitest";
 import * as z from "../../index.js";
 import { INVALID, compile, compileFastpass } from "../compile.js";
 
-// Differential harness: assert compiled schema agrees with the original on every
-// fixture. Success path: data identical (incl. key order and undefined-vs-absent,
-// which toEqual cannot see) AND the fast path actually produced the value (a
-// fixture set that silently falls back on valid inputs tests nothing). Failure
-// path: issues deep-equal (errors always come from the runtime fallback).
+// Differential harness: assert compiled schema agrees with the original on every fixture. Success path: data identical (incl. key order and undefined-vs-absent, which toEqual cannot see) AND the fast path actually produced the value (a fixture set that silently falls back on valid inputs tests nothing). Failure path: issues deep-equal (errors always come from the runtime fallback).
 function describe(value: unknown): string {
   try {
     return JSON.stringify(value, (_k, v) => (typeof v === "bigint" ? `${v}n` : v));
@@ -16,8 +12,7 @@ function describe(value: unknown): string {
   }
 }
 
-// Stricter-than-toEqual structural identity: own-key order, symbol keys,
-// undefined-valued vs absent keys, array holes, frozenness, NaN/-0.
+// Stricter-than-toEqual structural identity: own-key order, symbol keys, undefined-valued vs absent keys, array holes, frozenness, NaN/-0.
 function assertIdentical(actual: unknown, expected: unknown, path: string): void {
   if (Object.is(actual, expected)) return;
   if (actual === null || expected === null || typeof expected !== "object" || typeof actual !== "object") {
@@ -346,8 +341,7 @@ test("union all-literals (Set optimization)", () => {
 });
 
 test("xor is unsupported directly; parity holds through a container island", () => {
-  // Exactly-one-match counting is unsound against any falsely-rejecting
-  // branch, so xor always uses the runtime.
+  // Exactly-one-match counting is unsound against any falsely-rejecting branch, so xor always uses the runtime.
   expect(() => compile(z.xor([z.string(), z.number()]))).toThrow();
   differential(z.object({ v: z.xor([z.string(), z.number()]) }), [{ v: "a" }, { v: 1 }, { v: true }, { v: null }]);
   differential(z.object({ v: z.xor([z.string(), z.any()]) }), [{ v: "a" }, { v: 1 }, { v: null }]);

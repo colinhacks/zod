@@ -1,13 +1,9 @@
 import { expect, test } from "vitest";
 import * as z from "../../index.js";
 
-// Verifies that the compile-mode setup file is wired up correctly. Vitest's
-// `isolate: true` resets module state per test file, so the counter only sees
-// this file's compile attempts. We construct + parse a few schemas here to
-// produce signal, then assert the post-processor saw them.
+// Verifies that the compile-mode setup file is wired up correctly. Vitest's `isolate: true` resets module state per test file, so the counter only sees this file's compile attempts. We construct + parse a few schemas here to produce signal, then assert the post-processor saw them.
 //
-// When run under the default project (without the setup file), the counter is
-// absent and the test self-skips.
+// When run under the default project (without the setup file), the counter is absent and the test self-skips.
 
 interface CompileStats {
   attempts: number;

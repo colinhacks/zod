@@ -72,9 +72,7 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
       // Released: initializers run once, and the list would otherwise be retained for the schema's lifetime.
       inst._zod.deferred = undefined;
     }
-    // Global post-processor hook. Internal: installed by `import "zod/compile"`
-    // to enable AOT compilation for every constructed schema. The post-processor
-    // is expected to be reentrancy-guarded by its own implementation.
+    // Global post-processor hook. Internal: installed by `import "zod/compile"` to enable AOT compilation for every constructed schema. The post-processor is expected to be reentrancy-guarded by its own implementation.
     const pp = (globalThis as GlobalThisWithConfig).__zod_globalConfig?.postProcessor;
     if (pp) pp(inst);
     return inst;
