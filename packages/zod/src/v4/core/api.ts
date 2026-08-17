@@ -481,6 +481,23 @@ export function _e164<T extends schemas.$ZodE164>(
   });
 }
 
+// CreditCard
+export type $ZodCreditCardParams = StringFormatParams<schemas.$ZodCreditCard, "pattern" | "when">;
+export type $ZodCheckCreditCardParams = CheckStringFormatParams<schemas.$ZodCreditCard, "pattern" | "when">;
+// @__NO_SIDE_EFFECTS__
+export function _creditCard<T extends schemas.$ZodCreditCard>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodCreditCardParams | $ZodCheckCreditCardParams
+): T {
+  return new Class({
+    type: "string",
+    format: "credit_card",
+    check: "string_format",
+    abort: false,
+    ...util.normalizeParams(params),
+  });
+}
+
 // JWT
 export type $ZodJWTParams = StringFormatParams<schemas.$ZodJWT, "pattern" | "when">;
 export type $ZodCheckJWTParams = CheckStringFormatParams<schemas.$ZodJWT, "pattern" | "when">;
@@ -1289,7 +1306,7 @@ export function _tuple(
 }
 
 // ZodRecord
-export type $ZodRecordParams = TypeParams<schemas.$ZodRecord, "keyType" | "valueType">;
+export type $ZodRecordParams = TypeParams<schemas.$ZodRecord, "keyType" | "valueType" | "partial">;
 // @__NO_SIDE_EFFECTS__
 export function _record<Key extends schemas.$ZodRecordKey, Value extends schemas.$ZodObject>(
   Class: util.SchemaClass<schemas.$ZodRecord>,
@@ -1669,7 +1686,7 @@ export function _superRefine<T>(
         const _issue: any = issue;
         if (_issue.fatal) _issue.continue = false;
         _issue.code ??= "custom";
-        _issue.input ??= payload.value;
+        if (!("input" in _issue)) _issue.input = payload.value;
         _issue.inst ??= ch;
         _issue.continue ??= !ch._zod.def.abort; // abort is always undefined, so this is always true...
         payload.issues.push(util.issue(_issue));
