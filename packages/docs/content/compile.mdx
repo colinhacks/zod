@@ -3,7 +3,22 @@ title: AOT compilation
 description: "Ahead-of-time schema compilation for hot validation paths"
 ---
 
-For hot validation paths, Zod can compile a schema into a specialized validator ahead of time. The compiled fast path typically parses several times faster than the standard parser, with identical results and identical errors.
+For hot validation paths, Zod can compile a schema into a specialized validator ahead of time, with identical results and identical errors.
+
+Across a 55-schema benchmark the median speedup is **2.4x**. It scales with how much work the schema does per parse, because what compilation removes is per-node dispatch and allocation rather than the checks themselves:
+
+| schema | speedup |
+| ------ | ------- |
+| `z.array(z.string())`, 100 items | ~14x |
+| `z.array(z.object({…}))`, 50 items | ~9x |
+| 20-key object | ~9x |
+| nested object | ~4.5x |
+| discriminated union | ~4x |
+| 5-key object | ~2.5x |
+| `z.string().min(3).max(64).regex(…)` | ~2.8x |
+| bare `z.string()` | none |
+
+A schema whose entire body is one `typeof` has no dispatch to remove, so compiling it buys nothing. Everything built out of such schemas still benefits — leaves are inlined into their parent's compiled code.
 
 There are two ways to opt in.
 
