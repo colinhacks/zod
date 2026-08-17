@@ -1,5 +1,5 @@
 import type * as checks from "./checks.js";
-import { globalConfig } from "./core.js";
+import { built, globalConfig } from "./core.js";
 import type { $ZodConfig } from "./core.js";
 import type * as errors from "./errors.js";
 import type * as schemas from "./schemas.js";
@@ -1058,6 +1058,9 @@ export function installLazyProps<T extends object>(inst: T, sentinel: string, pr
   }
 }
 
+// Bumped whenever a recursive read resolves to `undefined` instead of recursing. Shared across every accessor, so a break anywhere inside a `compute` keeps that result from being memoized.
+let cycleBreaks = 0;
+
 /**
  * Installs a lazily-derived internal on the `_zod` prototype of `inst`'s
  * constructor, computed from the internals object itself and cached there on
@@ -1069,14 +1072,30 @@ export function defineLazyInternal<T extends { _zod: any }>(
   compute: (zod: T["_zod"]) => unknown
 ): void {
   const proto = Object.getPrototypeOf(inst._zod);
-  if (key in proto) return;
+  // Installs share one prototype across a whole init chain, so a derived constructor has to be able to replace what its base installed. Only a prototype a construction has already finished with is closed to further installs.
+  if (proto[built] && key in proto) return;
+
+  // Holds the internals whose getter is currently running, so a re-entrant read from a recursive schema resolves to `undefined` rather than recursing.
+  const active = new WeakSet<object>();
   Object.defineProperty(proto, key, {
     configurable: true,
     get(this: any) {
-      // Installed before computing so a re-entrant read resolves against this own property instead of running the getter again; a recursive schema reaches its own derived internals while they are still being built.
-      Object.defineProperty(this, key, { configurable: true, writable: true, value: undefined });
-      const value = compute(this);
-      this[key] = value;
+      if (active.has(this)) {
+        cycleBreaks++;
+        return undefined;
+      }
+      active.add(this);
+      const before = cycleBreaks;
+      let value: unknown;
+      try {
+        value = compute(this);
+      } finally {
+        active.delete(this);
+      }
+      // Only a result that resolved through a recursion break goes uncached, since it has to be recomputed once the schema graph is complete. Everything else memoizes, `undefined` included — it is the ordinary answer for most schemas, and these getters are read per parse on the tuple and interpreted-object paths.
+      if (cycleBreaks === before) {
+        Object.defineProperty(this, key, { configurable: true, writable: true, value });
+      }
       return value;
     },
     set(this: any, value: unknown) {
