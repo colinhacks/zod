@@ -43,6 +43,7 @@ const error: () => errors.$ZodErrorMap = () => {
     base64url: "base64url-кодиран низ",
     json_string: "JSON низ",
     e164: "E.164 номер",
+    credit_card: "номер на кредитна карта",
     jwt: "JWT",
     template_literal: "вход",
   };

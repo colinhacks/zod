@@ -3,16 +3,19 @@ import type * as JSONSchema from "./json-schema.js";
 import type { $ZodRegistry } from "./registries.js";
 import type * as schemas from "./schemas.js";
 import {
+  type ProcessParams,
   type Processor,
   type RegistryToJSONSchemaParams,
+  type ToJSONSchemaContext,
   type ToJSONSchemaParams,
   type ZodStandardJSONSchemaPayload,
   extractDefs,
   finalize,
+  handleUnrepresentable,
   initializeContext,
   process,
 } from "./to-json-schema.js";
-import { getEnumValues } from "./util.js";
+import { assignProp, getEnumValues } from "./util.js";
 
 const formatMap: Partial<Record<checks.$ZodStringFormats, string | undefined>> = {
   guid: "uuid",
@@ -36,8 +39,7 @@ export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _jso
     json.format = formatMap[format as checks.$ZodStringFormats] ?? format;
     if (json.format === "") delete json.format; // empty format is not valid
 
-    // JSON Schema format: "time" requires a full time with offset or Z
-    // z.iso.time() does not include timezone information, so format: "time" should never be used
+    // JSON Schema format: "time" requires a full time with offset or Z. z.iso.time() does not include timezone information, so format: "time" should never be used
     if (format === "time") {
       delete json.format;
     }
@@ -99,16 +101,12 @@ export const booleanProcessor: Processor<schemas.$ZodBoolean> = (_schema, _ctx, 
   (json as JSONSchema.BooleanSchema).type = "boolean";
 };
 
-export const bigintProcessor: Processor<schemas.$ZodBigInt> = (_schema, ctx, _json, _params) => {
-  if (ctx.unrepresentable === "throw") {
-    throw new Error("BigInt cannot be represented in JSON Schema");
-  }
+export const bigintProcessor: Processor<schemas.$ZodBigInt> = (schema, ctx, json, params) => {
+  handleUnrepresentable(schema, ctx, json, params, "BigInt cannot be represented in JSON Schema");
 };
 
-export const symbolProcessor: Processor<schemas.$ZodSymbol> = (_schema, ctx, _json, _params) => {
-  if (ctx.unrepresentable === "throw") {
-    throw new Error("Symbols cannot be represented in JSON Schema");
-  }
+export const symbolProcessor: Processor<schemas.$ZodSymbol> = (schema, ctx, json, params) => {
+  handleUnrepresentable(schema, ctx, json, params, "Symbols cannot be represented in JSON Schema");
 };
 
 export const nullProcessor: Processor<schemas.$ZodNull> = (_schema, ctx, json, _params) => {
@@ -121,16 +119,12 @@ export const nullProcessor: Processor<schemas.$ZodNull> = (_schema, ctx, json, _
   }
 };
 
-export const undefinedProcessor: Processor<schemas.$ZodUndefined> = (_schema, ctx, _json, _params) => {
-  if (ctx.unrepresentable === "throw") {
-    throw new Error("Undefined cannot be represented in JSON Schema");
-  }
+export const undefinedProcessor: Processor<schemas.$ZodUndefined> = (schema, ctx, json, params) => {
+  handleUnrepresentable(schema, ctx, json, params, "Undefined cannot be represented in JSON Schema");
 };
 
-export const voidProcessor: Processor<schemas.$ZodVoid> = (_schema, ctx, _json, _params) => {
-  if (ctx.unrepresentable === "throw") {
-    throw new Error("Void cannot be represented in JSON Schema");
-  }
+export const voidProcessor: Processor<schemas.$ZodVoid> = (schema, ctx, json, params) => {
+  handleUnrepresentable(schema, ctx, json, params, "Void cannot be represented in JSON Schema");
 };
 
 export const neverProcessor: Processor<schemas.$ZodNever> = (_schema, _ctx, json, _params) => {
@@ -145,10 +139,8 @@ export const unknownProcessor: Processor<schemas.$ZodUnknown> = (_schema, _ctx, 
   // empty schema accepts anything
 };
 
-export const dateProcessor: Processor<schemas.$ZodDate> = (_schema, ctx, _json, _params) => {
-  if (ctx.unrepresentable === "throw") {
-    throw new Error("Date cannot be represented in JSON Schema");
-  }
+export const dateProcessor: Processor<schemas.$ZodDate> = (schema, ctx, json, params) => {
+  handleUnrepresentable(schema, ctx, json, params, "Date cannot be represented in JSON Schema");
 };
 
 export const enumProcessor: Processor<schemas.$ZodEnum> = (schema, _ctx, json, _params) => {
@@ -160,22 +152,19 @@ export const enumProcessor: Processor<schemas.$ZodEnum> = (schema, _ctx, json, _
   json.enum = values;
 };
 
-export const literalProcessor: Processor<schemas.$ZodLiteral> = (schema, ctx, json, _params) => {
+export const literalProcessor: Processor<schemas.$ZodLiteral> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodLiteralDef<any>;
   const vals: (string | number | boolean | null)[] = [];
   for (const val of def.values) {
     if (val === undefined) {
-      if (ctx.unrepresentable === "throw") {
-        throw new Error("Literal `undefined` cannot be represented in JSON Schema");
-      } else {
-        // do not add to vals
-      }
+      // a custom schema replaces the whole literal, so there is nothing left to accumulate
+      if (handleUnrepresentable(schema, ctx, json, params, "Literal `undefined` cannot be represented in JSON Schema"))
+        return;
+      // otherwise do not add to vals
     } else if (typeof val === "bigint") {
-      if (ctx.unrepresentable === "throw") {
-        throw new Error("BigInt literals cannot be represented in JSON Schema");
-      } else {
-        vals.push(Number(val));
-      }
+      if (handleUnrepresentable(schema, ctx, json, params, "BigInt literals cannot be represented in JSON Schema"))
+        return;
+      vals.push(Number(val));
     } else {
       vals.push(val);
     }
@@ -199,10 +188,8 @@ export const literalProcessor: Processor<schemas.$ZodLiteral> = (schema, ctx, js
   }
 };
 
-export const nanProcessor: Processor<schemas.$ZodNaN> = (_schema, ctx, _json, _params) => {
-  if (ctx.unrepresentable === "throw") {
-    throw new Error("NaN cannot be represented in JSON Schema");
-  }
+export const nanProcessor: Processor<schemas.$ZodNaN> = (schema, ctx, json, params) => {
+  handleUnrepresentable(schema, ctx, json, params, "NaN cannot be represented in JSON Schema");
 };
 
 export const templateLiteralProcessor: Processor<schemas.$ZodTemplateLiteral> = (schema, _ctx, json, _params) => {
@@ -241,34 +228,24 @@ export const successProcessor: Processor<schemas.$ZodSuccess> = (_schema, _ctx, 
   (json as JSONSchema.BooleanSchema).type = "boolean";
 };
 
-export const customProcessor: Processor<schemas.$ZodCustom> = (_schema, ctx, _json, _params) => {
-  if (ctx.unrepresentable === "throw") {
-    throw new Error("Custom types cannot be represented in JSON Schema");
-  }
+export const customProcessor: Processor<schemas.$ZodCustom> = (schema, ctx, json, params) => {
+  handleUnrepresentable(schema, ctx, json, params, "Custom types cannot be represented in JSON Schema");
 };
 
-export const functionProcessor: Processor<schemas.$ZodFunction> = (_schema, ctx, _json, _params) => {
-  if (ctx.unrepresentable === "throw") {
-    throw new Error("Function types cannot be represented in JSON Schema");
-  }
+export const functionProcessor: Processor<schemas.$ZodFunction> = (schema, ctx, json, params) => {
+  handleUnrepresentable(schema, ctx, json, params, "Function types cannot be represented in JSON Schema");
 };
 
-export const transformProcessor: Processor<schemas.$ZodTransform> = (_schema, ctx, _json, _params) => {
-  if (ctx.unrepresentable === "throw") {
-    throw new Error("Transforms cannot be represented in JSON Schema");
-  }
+export const transformProcessor: Processor<schemas.$ZodTransform> = (schema, ctx, json, params) => {
+  handleUnrepresentable(schema, ctx, json, params, "Transforms cannot be represented in JSON Schema");
 };
 
-export const mapProcessor: Processor<schemas.$ZodMap> = (_schema, ctx, _json, _params) => {
-  if (ctx.unrepresentable === "throw") {
-    throw new Error("Map cannot be represented in JSON Schema");
-  }
+export const mapProcessor: Processor<schemas.$ZodMap> = (schema, ctx, json, params) => {
+  handleUnrepresentable(schema, ctx, json, params, "Map cannot be represented in JSON Schema");
 };
 
-export const setProcessor: Processor<schemas.$ZodSet> = (_schema, ctx, _json, _params) => {
-  if (ctx.unrepresentable === "throw") {
-    throw new Error("Set cannot be represented in JSON Schema");
-  }
+export const setProcessor: Processor<schemas.$ZodSet> = (schema, ctx, json, params) => {
+  handleUnrepresentable(schema, ctx, json, params, "Set cannot be represented in JSON Schema");
 };
 
 // ==================== COMPOSITE TYPE PROCESSORS ====================
@@ -287,6 +264,22 @@ export const arrayProcessor: Processor<schemas.$ZodArray> = (schema, ctx, _json,
   });
 };
 
+// Transform and catch set `optin = "optional"` at runtime so the parser lets them observe an
+// absent key, but their declared input type stays required. An input JSON Schema describes the
+// declared type, so resolve past them to the schema that actually carries the optionality.
+// Used by both `objectProcessor` (for `required`) and `tupleProcessor` (for `minItems`); see
+// wiki/optionality.md, "The JSON Schema emitter reads the *static* value".
+function inputOptin(schema: schemas.$ZodType): "optional" | "defaulted" | undefined {
+  const def = schema._zod.def;
+  if (def.type === "pipe" && (def as schemas.$ZodPipeDef).in._zod.traits.has("$ZodTransform")) {
+    return inputOptin((def as schemas.$ZodPipeDef).out);
+  }
+  if (def.type === "catch") {
+    return inputOptin((def as schemas.$ZodCatchDef).innerType);
+  }
+  return schema._zod.optin;
+}
+
 export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _json, params) => {
   const json = _json as JSONSchema.ObjectSchema;
   const def = schema._zod.def as schemas.$ZodObjectDef;
@@ -295,21 +288,26 @@ export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _jso
   const shape = def.shape;
 
   for (const key in shape) {
-    json.properties[key] = process(shape[key]!, ctx as any, {
-      ...params,
-      path: [...params.path, "properties", key],
-    });
+    // assignProp so a __proto__ key becomes an own property instead of hitting the inherited setter on the plain {} we build into
+    assignProp(
+      json.properties,
+      key,
+      process(shape[key]!, ctx as any, {
+        ...params,
+        path: [...params.path, "properties", key],
+      })
+    );
   }
 
   // required keys
   const allKeys = new Set(Object.keys(shape));
   const requiredKeys = new Set(
     [...allKeys].filter((key) => {
-      const v = def.shape[key]!._zod;
+      const field = def.shape[key]!;
       if (ctx.io === "input") {
-        return v.optin === undefined;
+        return inputOptin(field) === undefined;
       } else {
-        return v.optout === undefined;
+        return field._zod.optout === undefined;
       }
     })
   );
@@ -335,8 +333,7 @@ export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _jso
 
 export const unionProcessor: Processor<schemas.$ZodUnion> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodUnionDef;
-  // Exclusive unions (inclusive === false) use oneOf (exactly one match) instead of anyOf (one or more matches)
-  // This includes both z.xor() and discriminated unions
+  // Exclusive unions (inclusive === false) use oneOf (exactly one match) instead of anyOf (one or more matches). This includes both z.xor() and discriminated unions
   const isExclusive = def.inclusive === false;
   const options = def.options.map((x, i) =>
     process(x, ctx as any, {
@@ -392,11 +389,25 @@ export const tupleProcessor: Processor<schemas.$ZodTuple> = (schema, ctx, _json,
       })
     : null;
 
+  let minItems = def.items.length;
+  while (minItems > 0) {
+    const item = def.items[minItems - 1] as schemas.$ZodType;
+    const optional = ctx.io === "input" ? inputOptin(item) !== undefined : item._zod.optout === "optional";
+    if (!optional) break;
+    minItems--;
+  }
+  const maxItems = def.items.length;
+  const isClosed = !def.rest;
+
   if (ctx.target === "draft-2020-12") {
     json.prefixItems = prefixItems;
-    if (rest) {
+    if (isClosed) {
+      json.items = false;
+    } else if (rest) {
       json.items = rest;
     }
+    if (minItems > 0) json.minItems = minItems;
+    if (isClosed) json.maxItems = maxItems;
   } else if (ctx.target === "openapi-3.0") {
     json.items = {
       anyOf: prefixItems,
@@ -405,18 +416,20 @@ export const tupleProcessor: Processor<schemas.$ZodTuple> = (schema, ctx, _json,
     if (rest) {
       json.items.anyOf!.push(rest);
     }
-    json.minItems = prefixItems.length;
-    if (!rest) {
-      json.maxItems = prefixItems.length;
-    }
+    if (minItems > 0) json.minItems = minItems;
+    if (isClosed) json.maxItems = maxItems;
   } else {
     json.items = prefixItems;
-    if (rest) {
+    if (isClosed) {
+      json.additionalItems = false;
+    } else if (rest) {
       json.additionalItems = rest;
     }
+    if (minItems > 0) json.minItems = minItems;
+    if (isClosed) json.maxItems = maxItems;
   }
 
-  // length
+  // explicit user-defined length checks take precedence
   const { minimum, maximum } = schema._zod.bag as {
     minimum?: number;
     maximum?: number;
@@ -430,9 +443,7 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
   const def = schema._zod.def as schemas.$ZodRecordDef;
   json.type = "object";
 
-  // For looseRecord with regex patterns, use patternProperties
-  // This correctly represents "only validate keys matching the pattern" semantics
-  // and composes well with allOf (intersections)
+  // For looseRecord with regex patterns, use patternProperties. This correctly represents "only validate keys matching the pattern" semantics and composes well with allOf (intersections)
   const keyType = def.keyType as schemas.$ZodTypes;
   const keyBag = keyType._zod.bag as schemas.$ZodStringInternals<unknown>["bag"] | undefined;
   const patterns = keyBag?.patterns;
@@ -445,7 +456,7 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
     });
     json.patternProperties = {};
     for (const pattern of patterns) {
-      json.patternProperties[pattern.source] = valueSchema;
+      assignProp(json.patternProperties, pattern.source, valueSchema);
     }
   } else {
     // Default behavior: use propertyNames + additionalProperties
@@ -463,7 +474,7 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
 
   // Add required for keys with discrete values (enum, literal, etc.)
   const keyValues = keyType._zod.values;
-  if (keyValues) {
+  if (keyValues && !def.partial) {
     const validKeyValues = [...keyValues].filter(
       (v): v is string | number => typeof v === "string" || typeof v === "number"
     );
@@ -493,12 +504,35 @@ export const nonoptionalProcessor: Processor<schemas.$ZodNonOptional> = (schema,
   seen.ref = def.innerType;
 };
 
+/** Round-trips a default value through JSON so the emitted schema is guaranteed to be valid JSON.
+ * A BigInt has no reliable encoding, so it goes through `unrepresentable` like any other
+ * unrepresentable value. Returns a sentinel when the caller must not write a default of its own. */
+const UNREPRESENTABLE_DEFAULT = Symbol();
+function serializeDefaultValue(
+  value: unknown,
+  schema: schemas.$ZodType,
+  ctx: ToJSONSchemaContext,
+  json: JSONSchema.BaseSchema,
+  params: ProcessParams
+): any {
+  let unrepresentable = false;
+  const serialized = JSON.stringify(value, (_, val) => {
+    if (typeof val !== "bigint") return val;
+    unrepresentable = true;
+    return null;
+  });
+  if (!unrepresentable) return JSON.parse(serialized);
+  handleUnrepresentable(schema, ctx, json, params, "BigInt defaults cannot be represented in JSON Schema");
+  return UNREPRESENTABLE_DEFAULT;
+}
+
 export const defaultProcessor: Processor<schemas.$ZodDefault> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodDefaultDef;
   process(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
-  json.default = JSON.parse(JSON.stringify(def.defaultValue));
+  const value = serializeDefaultValue(def.defaultValue, schema, ctx as ToJSONSchemaContext, json, params);
+  if (value !== UNREPRESENTABLE_DEFAULT) json.default = value;
 };
 
 export const prefaultProcessor: Processor<schemas.$ZodPrefault> = (schema, ctx, json, params) => {
@@ -506,7 +540,9 @@ export const prefaultProcessor: Processor<schemas.$ZodPrefault> = (schema, ctx, 
   process(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
-  if (ctx.io === "input") json._prefault = JSON.parse(JSON.stringify(def.defaultValue));
+  if (ctx.io !== "input") return;
+  const value = serializeDefaultValue(def.defaultValue, schema, ctx as ToJSONSchemaContext, json, params);
+  if (value !== UNREPRESENTABLE_DEFAULT) json._prefault = value;
 };
 
 export const catchProcessor: Processor<schemas.$ZodCatch> = (schema, ctx, json, params) => {
@@ -518,7 +554,8 @@ export const catchProcessor: Processor<schemas.$ZodCatch> = (schema, ctx, json, 
   try {
     catchValue = def.catchValue(undefined as any);
   } catch {
-    throw new Error("Dynamic catch values are not supported in JSON Schema");
+    handleUnrepresentable(schema, ctx, json, params, "Dynamic catch values are not supported in JSON Schema");
+    return;
   }
   json.default = catchValue;
 };
@@ -645,7 +682,7 @@ export function toJSONSchema(
     for (const entry of registry._idmap.entries()) {
       const [key, schema] = entry;
       extractDefs(ctx as any, schema);
-      schemas[key] = finalize(ctx as any, schema);
+      assignProp(schemas, key, finalize(ctx as any, schema));
     }
 
     if (Object.keys(defs).length > 0) {

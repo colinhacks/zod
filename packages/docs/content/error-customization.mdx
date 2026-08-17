@@ -157,9 +157,24 @@ z.string({
     iss.code; // the issue code
     iss.input; // the input data
     iss.inst; // the schema/check that originated this issue
+    iss.schema; // the schema that owns this issue
     iss.path; // the path of the error
   },
 });
+```
+
+Unlike `iss.inst`, `iss.schema` is always the schema, even when a check originated the issue. Use it to read the owning schema's [metadata](/metadata).
+
+```ts
+z.config({
+  customError: (iss) => {
+    const meta = iss.schema && z.globalRegistry.get(iss.schema);
+    return `${meta?.title ?? "Field"} is invalid.`;
+  },
+});
+
+z.string().min(5).meta({ title: "Password" }).safeParse("abc");
+// => "Password is invalid."
 ```
 
 Depending on the API you are using, there may be additional properties available. Use TypeScript's autocomplete to explore the available properties.
@@ -323,7 +338,7 @@ async function loadLocale(locale: string) {
 await loadLocale("fr");
 ```
 
-For convenience, all locales are exported as `z.locales` from `"zod"`. In some bundlers, this may not be tree-shakable.
+For convenience, all locales are exported as `z.locales` from `"zod"`. Rollup and Webpack tree-shake this down to the locales you actually use. esbuild can't ([evanw/esbuild#1420](https://github.com/evanw/esbuild/issues/1420)) — with `import { z } from "zod"` or `import z from "zod"` it bundles every locale, so prefer `import * as z from "zod"` there.
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
 <Tab value="Zod">
@@ -350,10 +365,13 @@ The following locales are available:
 - `az` — Azerbaijani
 - `be` — Belarusian
 - `bg` — Bulgarian
+- `bn` — Bengali
 - `ca` — Catalan
+- `ckb` — Kurdish (Central)
 - `cs` — Czech
 - `da` — Danish
 - `de` — German
+- `el` — Greek
 - `en` — English
 - `eo` — Esperanto
 - `es` — Spanish
@@ -362,6 +380,8 @@ The following locales are available:
 - `fr` — French
 - `frCA` — Canadian French
 - `he` — Hebrew
+- `hi` — Hindi
+- `hr` — Croatian
 - `hu` — Hungarian
 - `hy` — Armenian
 - `id` — Indonesian
@@ -370,22 +390,27 @@ The following locales are available:
 - `ja` — Japanese
 - `ka` — Georgian
 - `km` — Khmer
+- `kn` — Kannada
 - `ko` — Korean
 - `lt` — Lithuanian
 - `mk` — Macedonian
 - `ms` — Malay
 - `nl` — Dutch
+- `nn` — Norwegian Nynorsk
 - `no` — Norwegian
 - `ota` — Türkî
 - `ps` — Pashto
 - `pl` — Polish
 - `pt` — Portuguese
+- `ptBR` — Brazilian Portuguese
 - `ro` — Romanian
 - `ru` — Russian
+- `sk` — Slovak
 - `sl` — Slovenian
 - `sv` — Swedish
 - `ta` — Tamil
 - `th` — Thai
+- `tk` — Türkmen
 - `tr` — Türkçe
 - `uk` — Ukrainian
 - `ur` — Urdu

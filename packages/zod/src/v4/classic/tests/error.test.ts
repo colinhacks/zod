@@ -709,3 +709,68 @@ test("error serialization", () => {
     `);
   }
 });
+
+test("message is lazy but stays own and enumerable", () => {
+  const err = z.object({ a: z.string() }).safeParse({ a: 1 }).error!;
+
+  expect(Object.keys(err)).toEqual(["name", "message"]);
+  expect(Object.keys({ ...err })).toEqual(["name", "message"]);
+  expect(JSON.parse(JSON.stringify(err)).message).toEqual(err.message);
+  expect(Object.getOwnPropertyDescriptor(err, "message")!.enumerable).toBe(true);
+  expect(Object.getOwnPropertyDescriptor(err, "issues")!.enumerable).toBe(false);
+
+  // computed once, then stable against later mutation of `.issues`
+  const computed = err.message;
+  err.issues.push({ code: "custom", message: "later", path: [], input: undefined });
+  expect(err.message).toEqual(computed);
+
+  // assignment wins over the computed value, and `toString` follows it
+  err.message = "overwritten";
+  expect(err.message).toEqual("overwritten");
+  expect(err.toString()).toEqual("overwritten");
+
+  // a second error computes its own message
+  expect(z.string().safeParse(1).error!.message).not.toEqual(computed);
+});
+
+test("error helpers survive detaching", () => {
+  const err = z.object({ a: z.string() }).safeParse({ a: 1 }).error!;
+  const { format, flatten } = err;
+  const stringify = err.toString;
+
+  expect(format().a?._errors).toEqual(["Invalid input: expected string, received number"]);
+  expect(flatten().fieldErrors.a).toEqual(["Invalid input: expected string, received number"]);
+  expect(stringify()).toEqual(err.message);
+  expect(err.isEmpty).toBe(false);
+  expect(new z.ZodError([]).isEmpty).toBe(true);
+
+  // addIssue refreshes a message that was already materialized
+  const empty = new z.ZodError([]);
+  expect(empty.message).toEqual("[]");
+  empty.addIssue({ code: "custom", message: "added", path: [], input: undefined });
+  expect(empty.message).toContain("added");
+});
+
+test("stack trace carries the message and the parse call site", () => {
+  function callSite() {
+    return z.string().safeParse(123).error!;
+  }
+  const stack = callSite().stack!;
+
+  expect(stack.startsWith("ZodError: [")).toBe(true);
+  expect(stack).toContain("invalid_type");
+  expect(stack).toContain("callSite");
+});
+
+test("error initializer never installs onto an intrinsic prototype", () => {
+  // `init` accepts any object; a foreign one must not leak accessors onto the prototype it happens to inherit from.
+  z.core.$ZodError.init({} as any, []);
+  z.ZodError.init({} as any, []);
+  z.core.$ZodError.init(new Error() as any, []);
+
+  expect(Object.getOwnPropertyDescriptor(Object.prototype, "toString")!.get).toBeUndefined();
+  expect(Object.getOwnPropertyDescriptor(Error.prototype, "toString")!.get).toBeUndefined();
+  expect(Object.getOwnPropertyNames(Object.prototype)).not.toContain("format");
+  expect({}.toString()).toEqual("[object Object]");
+  expect(String(new Error("boom"))).toEqual("Error: boom");
+});

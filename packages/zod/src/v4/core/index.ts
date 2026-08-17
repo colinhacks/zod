@@ -2,6 +2,7 @@ export * from "./core.js";
 export * from "./parse.js";
 export * from "./errors.js";
 export * from "./schemas.js";
+export * from "./memoizer.js";
 export * from "./checks.js";
 export * from "./versions.js";
 export * as util from "./util.js";
