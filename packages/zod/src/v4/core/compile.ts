@@ -319,22 +319,22 @@ function generateChecks(doc: Doc, ctx: CompileContext, schema: SomeType, accesso
         generateNumberFormatCheck(doc, def, currentAccessor);
         break;
       case "min_length":
-        doc.write(`if (${currentAccessor}.length < ${countOperand(def.minimum, "min_length")}) return INVALID;`);
+        doc.write(`if (${currentAccessor}.length < ${numericOperand(def.minimum, "min_length")}) return INVALID;`);
         break;
       case "max_length":
-        doc.write(`if (${currentAccessor}.length > ${countOperand(def.maximum, "max_length")}) return INVALID;`);
+        doc.write(`if (${currentAccessor}.length > ${numericOperand(def.maximum, "max_length")}) return INVALID;`);
         break;
       case "length_equals":
-        doc.write(`if (${currentAccessor}.length !== ${countOperand(def.length, "length_equals")}) return INVALID;`);
+        doc.write(`if (${currentAccessor}.length !== ${numericOperand(def.length, "length_equals")}) return INVALID;`);
         break;
       case "min_size":
-        doc.write(`if (${currentAccessor}.size < ${countOperand(def.minimum, "min_size")}) return INVALID;`);
+        doc.write(`if (${currentAccessor}.size < ${numericOperand(def.minimum, "min_size")}) return INVALID;`);
         break;
       case "max_size":
-        doc.write(`if (${currentAccessor}.size > ${countOperand(def.maximum, "max_size")}) return INVALID;`);
+        doc.write(`if (${currentAccessor}.size > ${numericOperand(def.maximum, "max_size")}) return INVALID;`);
         break;
       case "size_equals":
-        doc.write(`if (${currentAccessor}.size !== ${countOperand(def.size, "size_equals")}) return INVALID;`);
+        doc.write(`if (${currentAccessor}.size !== ${numericOperand(def.size, "size_equals")}) return INVALID;`);
         break;
       case "string_format":
         currentAccessor = generateStringFormatCheck(doc, ctx, def, currentAccessor);
@@ -376,7 +376,7 @@ function generateChecks(doc: Doc, ctx: CompileContext, schema: SomeType, accesso
  * and fromJSONSchema guards them, so this is a backstop rather than a live hole,
  * but generated source is the one place a wrong type stops being a type error.
  */
-function countOperand(value: unknown, label: string): string {
+function numericOperand(value: unknown, label: string): string {
   if (typeof value !== "number" || !Number.isFinite(value)) {
     throw new ZodCompileUnsupportedError(`${label} bound of type ${typeof value}`);
   }
@@ -432,7 +432,7 @@ function generateMultipleOfCheck(
     // exact tolerance logic stays in one place — single function call is fine
     // since `multipleOf` runs at most once per number.
     const remainder = addConstant(ctx, util.floatSafeRemainder);
-    doc.write(`if (${remainder}(${accessor}, ${def.value}) !== 0) return INVALID;`);
+    doc.write(`if (${remainder}(${accessor}, ${numericOperand(def.value, "multiple_of")}) !== 0) return INVALID;`);
   }
 }
 
@@ -531,6 +531,11 @@ function generateOverwriteCheck(
 type CustomCheck = {
   _zod: { def: { check: "custom"; fn?: (value: unknown) => boolean }; check?: (payload: unknown) => unknown };
 };
+/** Shared `addIssue` for the spoofed payloads a refine, check or transform receives. Allocating one per call — a fresh closure plus a `this`-bound method on a fresh literal — pinned every payload-allocating schema at ~2.7M ops/sec against 135M for a plain object literal. It captures nothing per call; it only reaches `this.issues`. */
+function pushIssue(this: { issues: unknown[] }, issue: unknown): void {
+  this.issues.push(issue);
+}
+
 function generateCustomRefineCheck(doc: Doc, ctx: CompileContext, check: CustomCheck, accessor: string): string {
   const def = check._zod.def;
 
@@ -1919,11 +1924,6 @@ function generateCustomCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
 }
 
 // Runtime helper for a compiled `catch`: runs the inner schema once and returns its value when it succeeded. Anything else — a failure the catch would handle, or an async inner — returns INVALID so the interpreter takes over.
-/** Shared by the spoofed payloads below. Allocating a fresh closure per call pinned every payload-allocating schema at ~2.7M ops/sec against 135M for a plain literal; the method captures nothing per call, it only reaches `this.issues`. */
-function pushIssue(this: { issues: unknown[] }, issue: unknown): void {
-  this.issues.push(issue);
-}
-
 function runtimeCatch(innerSchema: SomeType, catchValue: () => unknown, value: unknown): unknown {
   const result = (innerSchema._zod.run as (p: ParsePayload, c: ParseContextInternal) => any)(
     { value, issues: [] },
@@ -1942,9 +1942,9 @@ function generateCatchCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
     catchValue: (ctx: any) => unknown;
   };
 
-  // `.catch(value)` synthesises a tagged thunk for a constant, so anything untagged is a user callback, and a callback reads `ctx.error` — issues finalized against the caller's per-parse error map, which generated code never sees. Producing them here gave a different message than `.parse(input, { error })` and, because catch *succeeds*, nothing downstream could notice. Refuse at codegen instead: returning INVALID would be a bail-out, and a union reads that as a rejected branch rather than a reason to hand the whole parse back.
+  // `.catch(value)` synthesises a tagged thunk for a constant, so anything untagged is a user callback. Every callback is refused, not just one that reads `ctx.error`: whether it does is undecidable here, and a callback that reads it needs — issues finalized against the caller's per-parse error map, which generated code never sees. Producing them here gave a different message than `.parse(input, { error })` and, because catch *succeeds*, nothing downstream could notice. Refuse at codegen instead: returning INVALID would be a bail-out, and a union reads that as a rejected branch rather than a reason to hand the whole parse back.
   if (!(def.catchValue as { [util.CONSTANT_CATCH]?: boolean })[util.CONSTANT_CATCH]) {
-    throw new ZodCompileUnsupportedError("catch with a callback that reads the parse context");
+    throw new ZodCompileUnsupportedError("catch with a callback (only a constant catch value compiles)");
   }
 
   const outputVar = newVar(ctx);
