@@ -441,22 +441,23 @@ test("superRefine adds issues", () => {
 // --- catch ---
 
 test("catch primitive", () => {
-  differential(z.catch(z.string(), "fb"), ["x", "", 1, null, undefined]);
+  // A caught failure hands the parse back: finalizing the issues the callback sees needs the caller's error map, which the fast path has no access to.
+  differential(z.catch(z.string(), "fb"), ["x", "", 1, null, undefined], { fallbackOk: true });
 });
 
 test("catch inside object property", () => {
-  differential(z.object({ name: z.catch(z.string().min(2), "anon") }), [
-    { name: "Alice" },
-    { name: "x" },
-    { name: 42 },
-    {},
-  ]);
+  differential(
+    z.object({ name: z.catch(z.string().min(2), "anon") }),
+    [{ name: "Alice" }, { name: "x" }, { name: 42 }, {}],
+    { fallbackOk: true }
+  );
 });
 
 test("catch with function reading issues", () => {
   differential(
     z.catch(z.string().min(5), (ctx) => `e:${ctx.error.issues.length}`),
-    ["abcdef", "ab", 42, undefined]
+    ["abcdef", "ab", 42, undefined],
+    { fallbackOk: true }
   );
 });
 

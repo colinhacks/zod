@@ -1503,13 +1503,15 @@ test("record key schemas compile: formats, checks, numbers, transforms", () => {
       ),
       [{ ab: 1 }, { "": 1 }],
     ],
-    [z.record(z.coerce.string(), z.number()), [{ 5: 1 }]],
   ] as [z.ZodType, unknown[]][]) {
     for (const input of inputs) expectMatch(schema, input);
   }
 
   // Own __proto__ is skipped rather than validated, matching the runtime.
   expectMatch(z.record(z.email(), z.number()), JSON.parse('{"__proto__":{"p":1},"a@b.com":1}'));
+
+  // Coercion is modelled nowhere, so a coercing key schema is refused outright rather than compiled to the bare type test it would otherwise become.
+  expect(() => compile(z.record(z.coerce.string(), z.number()))).toThrow(ZodCompileUnsupportedError);
 
   // A loose record keeps a rejected key verbatim, copying its value across unvalidated instead of failing.
   for (const input of [{ "a@b.com": 1 }, { nope: 1 }, { "a@b.com": 1, nope: "raw" }, { "a@b.com": "bad" }]) {

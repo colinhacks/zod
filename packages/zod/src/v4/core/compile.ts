@@ -1,5 +1,5 @@
 import type * as checks from "./checks.js";
-import * as core from "./core.js";
+import type * as core from "./core.js";
 import { Doc } from "./doc.js";
 import { isBackEdge, isRecursiveSchema } from "./memoizer.js";
 import * as regexes from "./regexes.js";
@@ -319,28 +319,28 @@ function generateChecks(doc: Doc, ctx: CompileContext, schema: SomeType, accesso
         generateNumberFormatCheck(doc, def, currentAccessor);
         break;
       case "min_length":
-        doc.write(`if (${currentAccessor}.length < ${def.minimum}) return INVALID;`);
+        doc.write(`if (${currentAccessor}.length < ${countOperand(def.minimum, "min_length")}) return INVALID;`);
         break;
       case "max_length":
-        doc.write(`if (${currentAccessor}.length > ${def.maximum}) return INVALID;`);
+        doc.write(`if (${currentAccessor}.length > ${countOperand(def.maximum, "max_length")}) return INVALID;`);
         break;
       case "length_equals":
-        doc.write(`if (${currentAccessor}.length !== ${def.length}) return INVALID;`);
+        doc.write(`if (${currentAccessor}.length !== ${countOperand(def.length, "length_equals")}) return INVALID;`);
         break;
       case "min_size":
-        doc.write(`if (${currentAccessor}.size < ${def.minimum}) return INVALID;`);
+        doc.write(`if (${currentAccessor}.size < ${countOperand(def.minimum, "min_size")}) return INVALID;`);
         break;
       case "max_size":
-        doc.write(`if (${currentAccessor}.size > ${def.maximum}) return INVALID;`);
+        doc.write(`if (${currentAccessor}.size > ${countOperand(def.maximum, "max_size")}) return INVALID;`);
         break;
       case "size_equals":
-        doc.write(`if (${currentAccessor}.size !== ${def.size}) return INVALID;`);
+        doc.write(`if (${currentAccessor}.size !== ${countOperand(def.size, "size_equals")}) return INVALID;`);
         break;
       case "string_format":
         currentAccessor = generateStringFormatCheck(doc, ctx, def, currentAccessor);
         break;
       case "custom":
-        generateCustomRefineCheck(doc, ctx, check as CustomCheck, currentAccessor);
+        currentAccessor = generateCustomRefineCheck(doc, ctx, check as CustomCheck, currentAccessor);
         break;
       case "bigint_format":
         generateBigIntFormatCheck(doc, def, currentAccessor);
@@ -369,6 +369,20 @@ function generateChecks(doc: Doc, ctx: CompileContext, schema: SomeType, accesso
 }
 
 // Emit a source operand for a gt/lt bound. Numbers inline; Dates hoist as a constant (relational operators compare via valueOf). NaN and Invalid Date bounds can't compile to a comparison that matches runtime semantics.
+/**
+ * A count bound reaches generated source verbatim, so a non-number would be
+ * emitted as code rather than as a value — `min('0) {} evil(); if (0')` writes an
+ * arbitrary statement into the function body. TypeScript types these as `number`
+ * and fromJSONSchema guards them, so this is a backstop rather than a live hole,
+ * but generated source is the one place a wrong type stops being a type error.
+ */
+function countOperand(value: unknown, label: string): string {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new ZodCompileUnsupportedError(`${label} bound of type ${typeof value}`);
+  }
+  return `${value}`;
+}
+
 function comparisonOperand(ctx: CompileContext, value: number | bigint | Date): string {
   if (typeof value === "bigint") return `${value}n`;
   if (typeof value === "number") {
@@ -517,7 +531,7 @@ function generateOverwriteCheck(
 type CustomCheck = {
   _zod: { def: { check: "custom"; fn?: (value: unknown) => boolean }; check?: (payload: unknown) => unknown };
 };
-function generateCustomRefineCheck(doc: Doc, ctx: CompileContext, check: CustomCheck, accessor: string): void {
+function generateCustomRefineCheck(doc: Doc, ctx: CompileContext, check: CustomCheck, accessor: string): string {
   const def = check._zod.def;
 
   if (def.fn) {
@@ -530,13 +544,20 @@ function generateCustomRefineCheck(doc: Doc, ctx: CompileContext, check: CustomC
     const resVar = newVar(ctx);
     doc.write(`const ${resVar} = ${fnConst}(${accessor});`);
     doc.write(`if (${resVar} instanceof Promise || !${resVar}) return INVALID;`);
-  } else if (check._zod.check) {
+    // A `.refine()` predicate only answers yes or no; it cannot rewrite the value.
+    return accessor;
+  }
+  if (check._zod.check) {
     if (isAsyncFunction(check._zod.check)) {
       throw new ZodCompileAsyncError("z.compile: async .superRefine() / check functions are not supported");
     }
     // SuperRefine or other check function - need to spoof context Create a helper that runs the check and returns true if no issues
     const checkFn = check._zod.check;
-    const helperFn = (value: unknown): boolean => {
+    // `$RefinementCtx` extends the parse payload, so a check may rewrite
+    // `ctx.value` as well as push issues — `.superRefine((v, ctx) => { ctx.value =
+    // v.trim() })` is a value transform. Returning only a boolean discarded that
+    // write and emitted the untrimmed input. Hand the value back and thread it on.
+    const helperFn = (value: unknown): unknown => {
       const fakePayload = {
         value,
         issues: [] as unknown[],
@@ -544,22 +565,18 @@ function generateCustomRefineCheck(doc: Doc, ctx: CompileContext, check: CustomC
           this.issues.push(issue);
         },
       };
-      try {
-        const result = checkFn(fakePayload);
-        // Handle async (not supported in sync AOT)
-        if (result instanceof Promise) {
-          throw new Error("AOT compilation does not support async refinements");
-        }
-        return fakePayload.issues.length === 0;
-      } catch {
-        return false;
-      }
+      const result = checkFn(fakePayload);
+      // Async is not modelled; let the runtime reproduce the canonical error.
+      if (result instanceof Promise) return INVALID;
+      return fakePayload.issues.length === 0 ? fakePayload.value : INVALID;
     };
     const helperConst = addConstant(ctx, helperFn);
-    doc.write(`if (!${helperConst}(${accessor})) return INVALID;`);
-  } else {
-    throw new ZodCompileUnsupportedError("custom check without a predicate or check function");
+    const outVar = newVar(ctx);
+    doc.write(`const ${outVar} = ${helperConst}(${accessor});`);
+    doc.write(`if (${outVar} === INVALID) return INVALID;`);
+    return outVar;
   }
+  throw new ZodCompileUnsupportedError("custom check without a predicate or check function");
 }
 
 type StringFormatDef =
@@ -753,6 +770,11 @@ type SupportedSchemaType =
 function generateCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
   const def = schema._zod.def;
   const type = def.type as SupportedSchemaType;
+
+  // Coercion is modelled nowhere: a coercing schema would compile to the bare type test and reject everything it was supposed to convert. Standalone the wrapper hides that, but inside a union a rejected branch is indistinguishable from one the runtime rejected, so a later branch wins and the parse silently returns a different value. Refuse at codegen time, which the union honours.
+  if ((def as { coerce?: boolean }).coerce) {
+    throw new ZodCompileUnsupportedError(`coercion (z.coerce.${type}())`);
+  }
 
   let typeAccessor: string;
 
@@ -1026,26 +1048,13 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
     const catchallType = catchall._zod.def.type;
 
     if (catchallType === "never") {
-      // Strict object: reject unknown keys. Runtime iterates with for...in, so inherited enumerable keys count as unrecognized. An undeclared `__proto__` counts too (handleCatchall reports it before skipping the copy, see #6221) — it is only excluded from the *output*, never from this scan. A declared `__proto__` can't reach here; the shape key is rejected at compile time above.
-      const hasOptional = keys.some((k) => shape[k]!._zod.optin !== undefined);
-
-      if (hasOptional) {
-        // With optionals: must iterate and check each key
-        const condition = keys.map((k) => `k !== ${util.esc(k)}`).join(" && ");
-        doc.write(`for (const k in ${accessor}) {`);
-        doc.indented((d) => {
-          d.write(`if (${condition}) return INVALID;`);
-        });
-        doc.write(`}`);
-      } else {
-        // All required: own-key count suffices (wrong keys fail property checks) — but only for plain prototypes, where for...in can't see inherited enumerables the count misses. Anything else falls back. getPrototypeOf and Object.prototype are hoisted: closure-slot reads beat global lookups inside Function-constructed code.
-        const getProtoConst = addConstant(ctx, Object.getPrototypeOf);
-        const objProtoConst = addConstant(ctx, Object.prototype);
-        const protoVar = newVar(ctx);
-        doc.write(`const ${protoVar} = ${getProtoConst}(${accessor});`);
-        doc.write(`if (${protoVar} !== ${objProtoConst} && ${protoVar} !== null) return INVALID;`);
-        doc.write(`if (Object.keys(${accessor}).length > ${keys.length}) return INVALID;`);
-      }
+      // Strict object: reject unknown keys. Runtime iterates with for...in, so inherited enumerable keys count as unrecognized. An undeclared `__proto__` counts too (handleCatchall reports it before skipping the copy, see #6221) — it is only excluded from the *output*, never from this scan. A declared `__proto__` can't reach here; the shape key is rejected at compile time above. One `for...in` for every shape, which is what the runtime does. An own-key count is faster but only equivalent for a plain prototype, and guarding on the prototype meant rejecting a class instance whose own enumerable keys match — input the runtime accepts. Standalone the wrapper hid that; inside a union the branch merely looked rejected and a later one won, so the parse returned a different value with no error at all.
+      const condition = keys.map((k) => `k !== ${util.esc(k)}`).join(" && ");
+      doc.write(`for (const k in ${accessor}) {`);
+      doc.indented((d) => {
+        d.write(`if (${condition}) return INVALID;`);
+      });
+      doc.write(`}`);
     } else if ((catchallType === "unknown" || catchallType === "any") && !catchall._zod.def.checks?.length) {
       unknownKeysMode = "passthrough";
     } else {
@@ -1316,6 +1325,12 @@ function generateLiteralCheck(doc: Doc, ctx: CompileContext, schema: SomeType, a
   }
 
   const value = values[0];
+  // `$ZodLiteral` matches with `values.has`, i.e. SameValueZero, so NaN matches itself. `x !== NaN` is true for every input, which would reject everything — hand it to the same Set form the multi-value path uses.
+  if (typeof value === "number" && Number.isNaN(value)) {
+    const literalSet = addConstant(ctx, new Set(values));
+    doc.write(`if (!${literalSet}.has(${accessor})) return INVALID;`);
+    return accessor;
+  }
   if (typeof value === "string") {
     doc.write(`if (${accessor} !== ${util.esc(value)}) return INVALID;`);
   } else if (typeof value === "number" || typeof value === "boolean") {
@@ -1654,9 +1669,10 @@ function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
 
   doc.write(`const ${outputVar} = {};`);
 
-  // Exhaustive records: keyType has a known value set (enum/literal/etc.). Runtime validates every known key, applies key transforms to choose the output key, and rejects unrecognized string keys. Generate the same shape.
-  const keyValues = (def.keyType._zod as unknown as { values?: Set<unknown> }).values;
-  if (keyValues) {
+  // Exhaustive records: keyType has a known value set (enum/literal/etc.). Runtime validates every known key, applies key transforms to choose the output key, and rejects unrecognized string keys. Generate the same shape. The runtime gates this on `values && !def.partial`: z.partialRecord keeps its value set but every key is optional, so required-key codegen would reject a record missing one. A loose record passes an unrecognized key through rather than rejecting it, which the scan below cannot express either.
+  const recordDef = def as unknown as { mode?: string; partial?: boolean };
+  const keyValues = recordDef.partial ? undefined : (def.keyType._zod as unknown as { values?: Set<unknown> }).values;
+  if (keyValues && recordDef.mode !== "loose") {
     const inputKeys: Array<string | symbol> = [];
     for (const key of keyValues) {
       if (!(typeof key === "string" || typeof key === "number" || typeof key === "symbol")) {
@@ -1672,8 +1688,10 @@ function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
 
       const keyConst = addConstant(ctx, key);
       const outKey = generateCheck(doc, ctx, def.keyType, keyConst);
-      const inputAccessor = `${accessor}[${literalPropertyKey(ctx, inputKey)}]`;
-      const valOutput = compileChild(doc, ctx, def.valueType, inputAccessor);
+      // Read the property once. Passing the raw expression let compileChild validate one read while the output write performed a second, so a getter could hand back a value nothing had checked.
+      const valueVar = newVar(ctx);
+      doc.write(`const ${valueVar} = ${accessor}[${literalPropertyKey(ctx, inputKey)}];`);
+      const valOutput = compileChild(doc, ctx, def.valueType, valueVar);
       doc.write(`${outputVar}[${outKey}] = ${valOutput};`);
     }
 
@@ -1722,7 +1740,10 @@ function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
       }
       // The guard above tested the input key, but the schema can normalize an ordinary key into __proto__; re-check the one actually written under.
       d.write(`if (${outKeyVar} === "__proto__") continue;`);
-      const valOutput = compileChild(d, ctx, def.valueType, `${accessor}[${kVar}]`);
+      // Read once: the raw expression would be evaluated again by the output write below, so an accessor could return an unvalidated second value.
+      const valueVar = newVar(ctx);
+      d.write(`const ${valueVar} = ${accessor}[${kVar}];`);
+      const valOutput = compileChild(d, ctx, def.valueType, valueVar);
       d.write(`${outputVar}[${outKeyVar}] = ${valOutput};`);
     });
     doc.write(`}`);
@@ -1845,20 +1866,24 @@ function generatePipeCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acce
   const inputOutput = generateCheck(doc, ctx, def.in, accessor);
 
   if (def.transform) {
-    // Apply transform and validate output. The transform may read its second `payload` argument (codec transforms like z.stringbool() push issues there) so wrap the call in a helper that spoofs a payload. If the transform pushes issues or throws, signal INVALID and let the wrapper fall back to the runtime.
+    // Apply transform and validate output. The transform may read its second `payload` argument (codec transforms like z.stringbool() push issues there) so wrap the call in a helper that spoofs a payload. Pushed issues signal INVALID and the wrapper falls back to the runtime.
     if (isAsyncFunction(def.transform)) {
       throw new ZodCompileAsyncError("z.compile: async transforms in pipes are not supported");
     }
     const transformFn = def.transform;
     const helperFn = (value: unknown): unknown => {
-      const fakePayload = { value, issues: [] as unknown[] };
-      try {
-        const result = transformFn(value, fakePayload as any);
-        if (result instanceof Promise) return INVALID;
-        return fakePayload.issues.length === 0 ? result : INVALID;
-      } catch {
-        return INVALID;
-      }
+      // `addIssue` has to be here: a transform reporting through it is reporting, not failing. Without it the call threw a TypeError that the old catch swallowed into a fallback, so every ctx.addIssue transform quietly lost its fast path and the real error was never visible.
+      const fakePayload = {
+        value,
+        issues: [] as unknown[],
+        addIssue: function (issue: unknown) {
+          this.issues.push(issue);
+        },
+      };
+      // A throw is deliberately not caught. The interpreter lets one propagate out of the whole parse; swallowing it into INVALID turned a thrown error into a merely-rejected union branch, so a later branch answered instead.
+      const result = transformFn(value, fakePayload as any);
+      if (result instanceof Promise) return INVALID;
+      return fakePayload.issues.length === 0 ? result : INVALID;
     };
     const helperConst = addConstant(ctx, helperFn);
     const transformedVar = newVar(ctx);
@@ -1896,8 +1921,8 @@ function generateCustomCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
   return accessor;
 }
 
-// Runtime helper: handle inner-schema failure inside a compiled `catch`. Runs the inner runtime once to get canonical issues, finalizes them, and calls the catchValue with a $ZodCatchCtx-shaped payload. Returns INVALID if the inner schema resolves asynchronously (forces outer fallback).
-function runtimeCatch(innerSchema: SomeType, catchValue: (ctx: any) => unknown, value: unknown): unknown {
+// Runtime helper for a compiled `catch`: runs the inner schema once and returns its value when it succeeded. Anything else — a failure the catch would handle, or an async inner — returns INVALID so the interpreter takes over.
+function runtimeCatch(innerSchema: SomeType, value: unknown): unknown {
   const result = (innerSchema._zod.run as (p: ParsePayload, c: ParseContextInternal) => any)(
     { value, issues: [] },
     {} as ParseContextInternal
@@ -1905,14 +1930,8 @@ function runtimeCatch(innerSchema: SomeType, catchValue: (ctx: any) => unknown, 
   if (result && typeof (result as Promise<unknown>).then === "function") return INVALID;
   const r = result as { value: unknown; issues: any[] };
   if (r.issues.length === 0) return r.value;
-  const config = core.config();
-  const finalized = r.issues.map((iss) => util.finalizeIssue(iss, undefined, config));
-  return catchValue({
-    value: r.value,
-    issues: [],
-    error: { issues: finalized },
-    input: r.value,
-  });
+  // The inner failed, so the catch callback is about to receive finalized issues — and finalizing them correctly needs the caller's per-parse error map, which a compiled fast path never sees. Building them here produced a different message than `.parse(input, { error })` does, and because catch *succeeds* nothing downstream could notice. Hand the parse back instead: the runtime reproduces the caught value with the caller's map applied, and this is the failure path the design already routes to the interpreter.
+  return INVALID;
 }
 
 function generateCatchCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
@@ -1929,12 +1948,11 @@ function generateCatchCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
   });
   doc.write(`})();`);
 
-  const catchConst = addConstant(ctx, def.catchValue);
   const innerConst = addConstant(ctx, def.innerType);
   const catchHelperConst = addConstant(ctx, runtimeCatch);
   doc.write(`if (${outputVar} === INVALID) {`);
   doc.indented((d) => {
-    d.write(`${outputVar} = ${catchHelperConst}(${innerConst}, ${catchConst}, ${accessor});`);
+    d.write(`${outputVar} = ${catchHelperConst}(${innerConst}, ${accessor});`);
     d.write(`if (${outputVar} === INVALID) return INVALID;`);
   });
   doc.write(`}`);
@@ -1958,17 +1976,14 @@ function generateTransformCheck(doc: Doc, ctx: CompileContext, schema: SomeType,
       const fakePayload = {
         value,
         issues: [] as unknown[],
+        addIssue: function (issue: unknown) {
+          this.issues.push(issue);
+        },
       };
-      try {
-        const result = transformFn(value, fakePayload);
-        // Check for async result
-        if (result instanceof Promise) {
-          throw new Error("Transform returned a Promise - async not supported in AOT");
-        }
-        return fakePayload.issues.length === 0 ? result : INVALID;
-      } catch {
-        return INVALID;
-      }
+      // As in the pipe helper: a throw propagates, because the interpreter lets it out of the whole parse rather than treating it as a failed branch.
+      const result = transformFn(value, fakePayload);
+      if (result instanceof Promise) return INVALID;
+      return fakePayload.issues.length === 0 ? result : INVALID;
     };
     const helperConst = addConstant(ctx, helperFn);
     const outputVar = newVar(ctx);
