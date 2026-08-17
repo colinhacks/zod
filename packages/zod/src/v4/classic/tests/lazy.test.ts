@@ -245,3 +245,10 @@ test("a cycle-broken internal is not memoized", () => {
   expect(lazyRef._zod.optin).toEqual("optional");
   expect(z.object({ x: Rec, y: lazyRef }).safeParse({ x: "a" }).success).toEqual(true);
 });
+
+test("an internal computed without a cycle break is memoized", () => {
+  // `undefined` is the legitimate answer here and still has to cache: these getters are read per parse, so recomputing them is a parse-path cost.
+  const union = z.union([z.string(), z.number()]);
+  expect(union._zod.optin).toEqual(undefined);
+  expect(Object.getOwnPropertyNames(union._zod)).toContain("optin");
+});
