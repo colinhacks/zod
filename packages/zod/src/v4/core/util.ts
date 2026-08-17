@@ -572,7 +572,7 @@ export function stringifyPrimitive(value: any): string {
 
 export function optionalKeys(shape: schemas.$ZodShape): string[] {
   return Object.keys(shape).filter((k) => {
-    return shape[k]!._zod.optin === "optional" && shape[k]!._zod.optout === "optional";
+    return shape[k]!._zod.optin !== undefined && shape[k]!._zod.optout === "optional";
   });
 }
 
