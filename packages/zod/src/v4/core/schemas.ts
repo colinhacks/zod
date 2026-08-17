@@ -2077,6 +2077,8 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
           util.assignProp(propValues, key, new Set());
         }
         for (const v of field.values) propValues[key].add(v);
+        // An omittable slot reads back as undefined at a discriminator lookup, so it has to claim undefined: two options that can both omit the key are not discriminable on it.
+        if (field.optin !== undefined) propValues[key].add(undefined);
       }
     }
     return propValues;
