@@ -46,6 +46,7 @@ const error: () => errors.$ZodErrorMap = () => {
     base64url: "o texto codificado em base64url",
     json_string: "o texto JSON",
     e164: "o número E.164",
+    credit_card: "o número de cartão de crédito",
     jwt: "o JWT",
     template_literal: "a entrada",
   };
@@ -73,7 +74,7 @@ const error: () => errors.$ZodErrorMap = () => {
     date: { name: "data", articles: Gender.feminine },
     array: { name: "vetor", articles: Gender.masculine },
     object: { name: "objeto", articles: Gender.masculine },
-    tuple: { name: "tuple", articles: Gender.feminine },
+    tuple: { name: "tupla", articles: Gender.feminine },
     record: { name: "registro", articles: Gender.masculine },
     map: { name: "mapa", articles: Gender.masculine },
     set: { name: "conjunto", articles: Gender.masculine },
