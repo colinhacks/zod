@@ -269,7 +269,7 @@ export const arrayProcessor: Processor<schemas.$ZodArray> = (schema, ctx, _json,
 // declared type, so resolve past them to the schema that actually carries the optionality.
 // Used by both `objectProcessor` (for `required`) and `tupleProcessor` (for `minItems`); see
 // wiki/optionality.md, "The JSON Schema emitter reads the *static* value".
-function inputOptin(schema: schemas.$ZodType): "optional" | undefined {
+function inputOptin(schema: schemas.$ZodType): "optional" | "defaulted" | undefined {
   const def = schema._zod.def;
   if (def.type === "pipe" && (def as schemas.$ZodPipeDef).in._zod.traits.has("$ZodTransform")) {
     return inputOptin((def as schemas.$ZodPipeDef).out);
@@ -392,7 +392,7 @@ export const tupleProcessor: Processor<schemas.$ZodTuple> = (schema, ctx, _json,
   let minItems = def.items.length;
   while (minItems > 0) {
     const item = def.items[minItems - 1] as schemas.$ZodType;
-    const optional = ctx.io === "input" ? inputOptin(item) === "optional" : item._zod.optout === "optional";
+    const optional = ctx.io === "input" ? inputOptin(item) !== undefined : item._zod.optout === "optional";
     if (!optional) break;
     minItems--;
   }

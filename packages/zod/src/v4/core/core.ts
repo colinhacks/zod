@@ -18,18 +18,31 @@ export const NEVER: never = /*@__PURE__*/ Object.freeze({
  * synchronously, so reusing one object avoids a per-instance allocation. */
 const _zodDesc: PropertyDescriptor = { value: undefined, enumerable: false };
 
+// Marks a `_zod` prototype whose constructor has completed an instance: its lazily-derived internals are installed, so later constructions skip them.
+export const built: unique symbol = Symbol("zod_built");
+
 export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T["_zod"]["def"]>(
   name: string,
   initializer: (inst: T, def: D) => void,
   params?: { Parent?: typeof Class }
 ): $constructor<T, D> {
+  // Prototype for this constructor's `_zod` internals. Lazily-derived fields (`values`, `pattern`, `optin`, …) install here once rather than as an accessor on every instance.
+  const zodProto: any = {};
+
+  // Flipped once this constructor has produced an instance; after that the prototype's lazily-derived internals are installed and there is nothing left to seal.
+  let sealed = false;
+
+  // Assigning the fields in the constructor body is what gives instances in-object slots; building the object literally and reparenting it costs a second allocation and a generic property copy.
+  function Internals(this: any, def: D) {
+    this.def = def;
+    this.constr = _;
+    this.traits = new Set();
+  }
+  Internals.prototype = zodProto;
+
   function init(inst: T, def: D) {
     if (!inst._zod) {
-      _zodDesc.value = {
-        def,
-        constr: _,
-        traits: new Set(),
-      };
+      _zodDesc.value = new (Internals as any)(def);
       try {
         Object.defineProperty(inst, "_zod", _zodDesc);
       } finally {
@@ -72,6 +85,13 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
       // Released: initializers run once, and the list would otherwise be retained for the schema's lifetime.
       inst._zod.deferred = undefined;
     }
+
+    if (!sealed) {
+      sealed = true;
+      const zodProtoUsed = Object.getPrototypeOf(inst._zod);
+      if (!zodProtoUsed[built]) Object.defineProperty(zodProtoUsed, built, { value: true });
+    }
+
     return inst;
   }
 

@@ -37,6 +37,7 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "duración ISO",
     ipv4: "dirección IPv4",
     ipv6: "dirección IPv6",
+    mac: "dirección MAC",
     cidrv4: "rango IPv4",
     cidrv6: "rango IPv6",
     base64: "cadena codificada en base64",

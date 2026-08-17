@@ -96,7 +96,7 @@ After the frontmatter, write prose under these headings. Match the density of th
 
 Any verdict whose action is "close this" gets a drafted reply: `decline` and `superseded` on a PR, `not-recommended`, `already-fixed`, and `duplicate` on an issue, and `not-a-vulnerability`, `already-fixed`, and `duplicate` on an advisory. Closing is the one outcome where a human is going to have to say something to a real person who spent time on this, so writing that sentence is part of the triage, not a follow-up task.
 
-Invoke the `prose-writing` skill before you write it, and follow the "Commenting on issues and PRs" section of AGENTS.md for the maintainer voice. Succinct, conversational, friendly. Lead with the decision, give the one or two strongest reasons, name the escape hatch the user actually has, and close warmly. Two or three sentences is usually the whole thing.
+Follow the "Commenting on issues and PRs" section of AGENTS.md for the maintainer voice. Succinct, conversational, friendly. Lead with the decision, give the one or two strongest reasons, name the escape hatch the user actually has, and close warmly. Two or three sentences is usually the whole thing.
 
 For an issue reporting that `z.coerce.number()` accepts `null`, the whole draft is:
 

@@ -8,6 +8,7 @@ const error: () => errors.$ZodErrorMap = () => {
     file: { unit: "bytes", verb: "å ha" },
     array: { unit: "element", verb: "å innehalde" },
     set: { unit: "element", verb: "å innehalde" },
+    map: { unit: "element", verb: "å innehalde" },
   };
 
   function getSizing(origin: string): { unit: string; verb: string } | null {
@@ -35,14 +36,16 @@ const error: () => errors.$ZodErrorMap = () => {
     date: "ISO-dato",
     time: "ISO-klokkeslett",
     duration: "ISO-varigheit",
-    ipv4: "IPv4-område",
-    ipv6: "IPv6-område",
+    ipv4: "IPv4-adresse",
+    ipv6: "IPv6-adresse",
+    mac: "MAC-adresse",
     cidrv4: "IPv4-spekter",
     cidrv6: "IPv6-spekter",
     base64: "base64-enkoda streng",
     base64url: "base64url-enkoda streng",
     json_string: "JSON-streng",
     e164: "E.164-nummer",
+    credit_card: "kredittkortnummer",
     jwt: "JWT",
     template_literal: "input",
   };
