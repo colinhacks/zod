@@ -1068,10 +1068,6 @@ let cycleBreaks = 0;
  * Installs a lazily-derived internal on the `_zod` prototype of `inst`'s
  * constructor, computed from the internals object itself and cached there on
  * first read. One accessor per constructor rather than one per instance.
- *
- * First-wins: the first call for a key owns it, and later calls are no-ops. A
- * subclass that derives a key differently from the parent it delegates to must
- * therefore claim that key *before* calling the parent's `init`.
  */
 export function defineLazyInternal<T extends { _zod: any }>(
   inst: T,
