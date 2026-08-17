@@ -1058,14 +1058,14 @@ export function installLazyProps<T extends object>(inst: T, sentinel: string, pr
   }
 }
 
+// Bumped whenever a recursive read resolves to `undefined` instead of recursing. Shared across every accessor, so a break anywhere inside a `compute` keeps that result from being memoized.
+let cycleBreaks = 0;
+
 /**
  * Installs a lazily-derived internal on the `_zod` prototype of `inst`'s
  * constructor, computed from the internals object itself and cached there on
  * first read. One accessor per constructor rather than one per instance.
  */
-// Bumped whenever a recursive read resolves to `undefined` instead of recursing. Shared across every accessor, so a break anywhere inside a `compute` keeps that result from being memoized.
-let cycleBreaks = 0;
-
 export function defineLazyInternal<T extends { _zod: any }>(
   inst: T,
   key: string,
