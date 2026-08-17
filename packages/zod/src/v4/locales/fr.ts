@@ -43,6 +43,7 @@ const error: () => errors.$ZodErrorMap = () => {
     base64url: "chaîne de caractères encodée en base64url",
     json_string: "chaîne de caractères JSON",
     e164: "numéro au format E.164",
+    credit_card: "numéro de carte de crédit",
     jwt: "JWT",
     template_literal: "entrée",
   };
@@ -68,7 +69,7 @@ const error: () => errors.$ZodErrorMap = () => {
     map: "map",
     set: "ensemble",
     file: "fichier",
-    nonoptional: "non-optionnel",
+    nonoptional: "non optionnel",
     nan: "NaN",
     function: "fonction",
   };

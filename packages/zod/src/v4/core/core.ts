@@ -14,6 +14,10 @@ export const NEVER: never = /*@__PURE__*/ Object.freeze({
   status: "aborted",
 }) as never;
 
+/* Shared descriptor for installing `_zod`; defineProperty reads it
+ * synchronously, so reusing one object avoids a per-instance allocation. */
+const _zodDesc: PropertyDescriptor = { value: undefined, enumerable: false };
+
 export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T["_zod"]["def"]>(
   name: string,
   initializer: (inst: T, def: D) => void,
@@ -21,14 +25,17 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
 ): $constructor<T, D> {
   function init(inst: T, def: D) {
     if (!inst._zod) {
-      Object.defineProperty(inst, "_zod", {
-        value: {
-          def,
-          constr: _,
-          traits: new Set(),
-        },
-        enumerable: false,
-      });
+      _zodDesc.value = {
+        def,
+        constr: _,
+        traits: new Set(),
+      };
+      try {
+        Object.defineProperty(inst, "_zod", _zodDesc);
+      } finally {
+        // Cleared even on throw, so the shared descriptor never leaks one instance's internals into the next.
+        _zodDesc.value = undefined;
+      }
     }
 
     if (inst._zod.traits.has(name)) {
@@ -39,11 +46,10 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
 
     initializer(inst, def);
 
-    // support prototype modifications
+    // support prototype modifications; for-in avoids the array allocation of Object.keys on the (usually empty) prototype
     const proto = _.prototype;
-    const keys = Object.keys(proto);
-    for (let i = 0; i < keys.length; i++) {
-      const k = keys[i]!;
+    for (const k in proto) {
+      if (!Object.prototype.hasOwnProperty.call(proto, k)) continue;
       if (!(k in inst)) {
         (inst as any)[k] = proto[k].bind(inst);
       }
@@ -58,9 +64,13 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
   function _(this: any, def: D) {
     const inst = params?.Parent ? new Definition() : this;
     init(inst, def);
-    inst._zod.deferred ??= [];
-    for (const fn of inst._zod.deferred) {
-      fn();
+    const deferred = inst._zod.deferred;
+    if (deferred) {
+      for (const fn of deferred) {
+        fn();
+      }
+      // Released: initializers run once, and the list would otherwise be retained for the schema's lifetime.
+      inst._zod.deferred = undefined;
     }
     return inst;
   }
@@ -77,7 +87,7 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
 }
 
 //////////////////////////////   UTILITIES   ///////////////////////////////////////
-export const $brand: unique symbol = Symbol("zod_brand");
+export const $brand: unique symbol = /*@__PURE__*/ Symbol("zod_brand");
 export type $brand<T extends string | number | symbol = string | number | symbol> = {
   [$brand]: { [k in T]: true };
 };
