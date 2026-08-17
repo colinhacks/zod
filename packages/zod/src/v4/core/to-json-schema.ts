@@ -337,13 +337,15 @@ export function extractDefs<T extends schemas.$ZodType>(
       return { defId: id, ref: `${uriGenerator("__shared")}#/${defsSegment}/${encodeJSONPointerSegment(id)}` };
     }
 
-    if (entry[1] === root) {
-      return { ref: "#" };
+    const uriPrefix = `#`;
+    const defUriPrefix = `${uriPrefix}/${defsSegment}/`;
+
+    // an id-less root has nowhere to be extracted to, so it stays inline and self-references as `#`
+    if (entry[1] === root && !entry[1].schema.id) {
+      return { ref: uriPrefix };
     }
 
     // self-contained schema
-    const uriPrefix = `#`;
-    const defUriPrefix = `${uriPrefix}/${defsSegment}/`;
     const defId = entry[1].schema.id ?? `__schema${ctx.counter++}`;
     return { defId, ref: defUriPrefix + encodeJSONPointerSegment(defId) };
   };
@@ -544,7 +546,8 @@ export function finalize<T extends schemas.$ZodType>(
     result.$id = ctx.external.uri(id);
   }
 
-  assignProps(result, root.def ?? root.schema);
+  // when the root was extracted into $defs, `root.schema` is the `$ref` wrapper and `root.def` is the body that now lives under $defs
+  assignProps(result, root.defId ? root.schema : (root.def ?? root.schema));
 
   // The `id` in `.meta()` is a Zod-specific registration tag used to extract schemas into $defs — it is not user-facing JSON Schema metadata. Strip it from the output body where it would otherwise leak. The id is preserved implicitly via the $defs key (and via $ref paths).
   const rootMetaId = ctx.metadataRegistry.get(schema)?.id;
