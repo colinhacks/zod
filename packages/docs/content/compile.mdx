@@ -82,7 +82,12 @@ Two consequences worth knowing:
 Compilation is sync and forward-only. `z.compile()` throws if the schema can't be fully modeled:
 
 - **`ZodCompileAsyncError`** — the schema contains an async refinement, transform, or check.
-- **`ZodCompileUnsupportedError`** — the schema uses a construct the fast path can't reproduce exactly (e.g. `z.xor()`, checks with custom `when` conditions, or a recursive schema, which needs the standard parser to resolve reference cycles in the input).
+- **`ZodCompileUnsupportedError`** — the schema uses a construct the fast path can't reproduce exactly:
+  - `z.xor()`, whose exactly-one-match rule needs every branch to reject for the same reason the standard parser would.
+  - Checks with custom `when` conditions.
+  - A recursive schema, which needs the standard parser to resolve reference cycles in the input.
+  - Coercion (`z.coerce.*`), which the fast path does not model.
+  - `.catch()` given a *callback*. A callback receives issues finalized against the caller's error map, which compiled code never sees. `.catch(value)` with a constant compiles normally.
 
 Inside containers (objects, arrays, tuples, records, intersections), an unsupported *child* doesn't prevent compilation — the child runs on the standard parser while the surrounding structure stays compiled.
 

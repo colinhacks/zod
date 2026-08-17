@@ -619,3 +619,32 @@ test("a coercing object key cannot materialize an absent key", () => {
   differential(z.object({ k: z.coerce.boolean() }), [{}, { k: 1 }, { k: undefined }]);
   differential(z.object({ a: z.string(), k: z.coerce.string() }), [{ a: "x" }, { a: "x", k: 5 }]);
 });
+
+test("a custom predicate returning a thenable is not read as a pass", () => {
+  // `isAsyncFunction` is syntactic, so a plain function returning a promise reaches the codegen — and a promise is truthy, which read as a pass where the interpreter throws. The `.refine()` path already tested the returned value; `z.custom` did not.
+  const thenable = z.custom(() => Promise.resolve(true) as never);
+  for (const input of ["x", 1, null]) expectBothThrow(thenable, input);
+
+  // A real async predicate is still refused at codegen, and an ordinary one still compiles.
+  expect(() => compile(z.custom(async () => true))).toThrow();
+  differential(
+    z.custom((v) => typeof v === "string"),
+    ["x", 1, null, undefined]
+  );
+});
+
+function expectBothThrow(schema: z.ZodType, input: unknown) {
+  let runtimeThrew = false;
+  let compiledThrew = false;
+  try {
+    schema.parse(input);
+  } catch {
+    runtimeThrew = true;
+  }
+  try {
+    compile(schema).parse(input);
+  } catch {
+    compiledThrew = true;
+  }
+  expect(compiledThrew, `compiled accepted ${describe(input)} where the runtime threw`).toBe(runtimeThrew);
+}

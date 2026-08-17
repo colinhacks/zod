@@ -1914,9 +1914,11 @@ function generateCustomCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
     if (isAsyncFunction(def.fn)) {
       throw new ZodCompileAsyncError("z.compile: async custom predicates are not supported");
     }
-    // Custom schema with a predicate function (e.g., z.instanceof)
+    // Custom schema with a predicate function (e.g., z.instanceof). `isAsyncFunction` above is syntactic, so a plain function that returns a promise reaches here — and a promise is truthy, which would read as a pass where the interpreter throws. Test the returned value as well, exactly as the `.refine()` path does.
     const fnConst = addConstant(ctx, def.fn);
-    doc.write(`if (!${fnConst}(${accessor})) return INVALID;`);
+    const resVar = newVar(ctx);
+    doc.write(`const ${resVar} = ${fnConst}(${accessor});`);
+    doc.write(`if (${resVar} instanceof Promise || !${resVar}) return INVALID;`);
   } else {
     throw new ZodCompileUnsupportedError("custom schema without a predicate function");
   }
@@ -1942,7 +1944,7 @@ function generateCatchCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
     catchValue: (ctx: any) => unknown;
   };
 
-  // `.catch(value)` synthesises a tagged thunk for a constant, so anything untagged is a user callback. Every callback is refused, not just one that reads `ctx.error`: whether it does is undecidable here, and a callback that reads it needs — issues finalized against the caller's per-parse error map, which generated code never sees. Producing them here gave a different message than `.parse(input, { error })` and, because catch *succeeds*, nothing downstream could notice. Refuse at codegen instead: returning INVALID would be a bail-out, and a union reads that as a rejected branch rather than a reason to hand the whole parse back.
+  // `.catch(value)` synthesises a tagged thunk for a constant, so anything untagged is a user callback. Every callback is refused, not just one that reads `ctx.error`: whether it does is undecidable here, and a callback that reads it needs issues finalized against the caller's per-parse error map, which generated code never sees. — issues finalized against the caller's per-parse error map, which generated code never sees. Producing them here gave a different message than `.parse(input, { error })` and, because catch *succeeds*, nothing downstream could notice. Refuse at codegen instead: returning INVALID would be a bail-out, and a union reads that as a rejected branch rather than a reason to hand the whole parse back.
   if (!(def.catchValue as { [util.CONSTANT_CATCH]?: boolean })[util.CONSTANT_CATCH]) {
     throw new ZodCompileUnsupportedError("catch with a callback (only a constant catch value compiles)");
   }

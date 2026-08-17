@@ -219,6 +219,31 @@ function same(a: unknown, b: unknown, path = "$"): string | null {
   if (a === null || b === null || typeof a !== "object") return `${path}: ${String(a)} vs ${String(b)}`;
   if (Array.isArray(a) !== Array.isArray(b)) return `${path}: array-ness differs`;
   if (a instanceof Date && b instanceof Date) return Object.is(a.getTime(), b.getTime()) ? null : `${path}: date`;
+  // Set and Map hold their entries in internal slots, so the ownKeys walk below sees `[]` for both and reports every pair equal. The grammar generates both, so without these arms that coverage is imaginary.
+  if (a instanceof Set || b instanceof Set) {
+    if (!(a instanceof Set) || !(b instanceof Set)) return `${path}: only one is a Set`;
+    if (a.size !== b.size) return `${path}: Set size ${a.size} vs ${b.size}`;
+    const bv = [...b];
+    const av = [...a];
+    for (let i = 0; i < av.length; i++) {
+      const r = same(av[i], bv[i], `${path}.«set»[${i}]`);
+      if (r) return r;
+    }
+    return null;
+  }
+  if (a instanceof Map || b instanceof Map) {
+    if (!(a instanceof Map) || !(b instanceof Map)) return `${path}: only one is a Map`;
+    if (a.size !== b.size) return `${path}: Map size ${a.size} vs ${b.size}`;
+    const ae = [...a.entries()];
+    const be = [...b.entries()];
+    for (let i = 0; i < ae.length; i++) {
+      const k = same(ae[i]![0], be[i]![0], `${path}.«mapkey»[${i}]`);
+      if (k) return k;
+      const v = same(ae[i]![1], be[i]![1], `${path}.«map»[${i}]`);
+      if (v) return v;
+    }
+    return null;
+  }
   if (Object.isFrozen(a) !== Object.isFrozen(b)) return `${path}: frozenness differs`;
   const ka = Reflect.ownKeys(a as object);
   const kb = Reflect.ownKeys(b as object);
