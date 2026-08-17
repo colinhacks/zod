@@ -8,6 +8,7 @@ const error: () => errors.$ZodErrorMap = () => {
     file: { unit: "பைட்டுகள்", verb: "கொண்டிருக்க வேண்டும்" },
     array: { unit: "உறுப்புகள்", verb: "கொண்டிருக்க வேண்டும்" },
     set: { unit: "உறுப்புகள்", verb: "கொண்டிருக்க வேண்டும்" },
+    map: { unit: "உறுப்புகள்", verb: "கொண்டிருக்க வேண்டும்" },
   };
 
   function getSizing(origin: string): { unit: string; verb: string } | null {
@@ -37,6 +38,7 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "ISO கால அளவு",
     ipv4: "IPv4 முகவரி",
     ipv6: "IPv6 முகவரி",
+    mac: "MAC முகவரி",
     cidrv4: "IPv4 வரம்பு",
     cidrv6: "IPv6 வரம்பு",
     base64: "base64-encoded சரம்",
