@@ -336,8 +336,8 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
       let numberSchema: ZodNumber = type === "integer" ? z.number().int() : z.number();
 
       // Apply constraints
-      // In draft-04, `exclusiveMinimum: true` makes the sibling `minimum` exclusive, so the
-      // inclusive `.min()` must be skipped to avoid emitting a contradictory second bound.
+
+      // In draft-04, `exclusiveMinimum: true` makes the sibling `minimum` exclusive rather than an independent bound, so the inclusive `.min()` is skipped; emitting it too would be dominated by the exclusive check and report a second, weaker issue.
       if (typeof schema.minimum === "number" && schema.exclusiveMinimum !== true) {
         numberSchema = numberSchema.min(schema.minimum);
       }
