@@ -248,9 +248,15 @@ test("z.union([]) / z.xor([]) / z.discriminatedUnion(_, []) construct and reject
 });
 
 test("z.discriminatedUnion rejects object options missing the discriminator", () => {
+  // No literal-valued property at all: caught when `propValues` is built.
   expect(() => z.discriminatedUnion("type", [z.object({ value: z.string() })])._zod.propValues).toThrow(
     /Invalid discriminated union option/
   );
+
+  // Has a literal-valued property, but not the discriminator: passes `propValues` and is caught when the lookup map is built, on the first object input.
+  const missingDisc = z.discriminatedUnion("type", [z.object({ value: z.literal("x") })]);
+  expect(missingDisc._zod.propValues).toEqual({ value: new Set(["x"]) });
+  expect(() => z.safeParse(missingDisc, { value: "x" })).toThrow(/Invalid discriminated union option/);
 });
 
 test("z.discriminatedUnion infers mutually-recursive getter options", () => {

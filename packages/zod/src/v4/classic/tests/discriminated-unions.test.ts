@@ -264,16 +264,21 @@ test("valid discriminator value, invalid data", () => {
 });
 
 test("wrong schema - missing discriminator", () => {
-  // An option missing the discriminator is rejected when the lookup map is built, not at the type level — the option bound has to stay lazy so recursive options can infer.
+  // A bad option is rejected at runtime rather than by the option bound, which has to stay lazy so recursive options can infer. Two different predicates do it, so both are pinned here.
+
+  // No literal-valued property at all: caught when `propValues` is built.
   expect(() => z.discriminatedUnion("type", [z.object({ value: z.string() })])._zod.propValues).toThrow(
     /Invalid discriminated union option/
   );
 
+  // Has a literal-valued property, but not the discriminator: passes `propValues` and is caught when the lookup map is built, on the first object input.
+  const missingDisc = z.discriminatedUnion("type", [z.object({ value: z.literal("x") })]);
+  expect(missingDisc._zod.propValues).toEqual({ value: new Set(["x"]) });
+  expect(() => missingDisc.safeParse({ value: "x" })).toThrow(/Invalid discriminated union option/);
+
   try {
-    z.discriminatedUnion("type", [
-      z.object({ type: z.literal("a"), a: z.string() }),
-      z.object({ b: z.string() }) as any,
-    ])._zod.propValues;
+    z.discriminatedUnion("type", [z.object({ type: z.literal("a"), a: z.string() }), z.object({ b: z.string() })])._zod
+      .propValues;
     throw new Error();
   } catch (e: any) {
     expect(e.message.includes("Invalid discriminated union option")).toBe(true);

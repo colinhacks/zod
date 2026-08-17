@@ -1225,12 +1225,16 @@ export function _xor<const T extends readonly schemas.$ZodObject[]>(
 
 // ZodDiscriminatedUnion
 
-// The bound stops at `propValues`; it deliberately does not check that the option carries the discriminator. Any such check has to name the option's `input`, and constraining `input` in argument position forces TypeScript to resolve it while checking the call — circular for an option whose input references the union, which collapses the whole union to `any`. `$ZodDiscriminatedUnion` validates the discriminator when it builds its lookup map instead.
-export interface $ZodTypeDiscriminableInternals extends schemas._$ZodTypeInternals {
+// The bound stops at `propValues`; it deliberately does not check that the option carries the discriminator. Any such check has to name the option's `input`, and constraining `input` in argument position forces TypeScript to resolve it while checking the call — circular for an option whose input references the union, which collapses the whole union to `any`. `$ZodDiscriminatedUnion` validates the discriminator lazily instead, when it builds its lookup map.
+//
+// Validating eagerly at construction is not an available alternative: reading an option's `propValues` runs its shape getters, and for a recursive option that getter references the union whose initializer is still running, so it throws `ReferenceError: Cannot access '...' before initialization`. The laziness is required by the recursion this bound exists to support.
+//
+// `_Disc` is unused and retained only so `$ZodTypeDiscriminable<"kind">` keeps compiling for external callers.
+export interface $ZodTypeDiscriminableInternals<_Disc extends string = string> extends schemas._$ZodTypeInternals {
   propValues: util.PropValues;
 }
 
-export interface $ZodTypeDiscriminable extends schemas.SomeType {
+export interface $ZodTypeDiscriminable<_Disc extends string = string> extends schemas.SomeType {
   _zod: $ZodTypeDiscriminableInternals;
 }
 
