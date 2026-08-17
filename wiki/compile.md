@@ -64,23 +64,21 @@ Two consequences. Global mode makes trivial leaf schemas measurably slower while
 
 ### Against arktype
 
-Same method, arktype 2.1.19, all cases sharing one process:
+Same method, arktype 2.1.19, all cases sharing one process. Arktype's contract is configurable, so the comparison depends entirely on which one you pick:
 
-| case | arktype | zod runtime | `z.compile()` | vs arktype |
-| --- | --- | --- | --- | --- |
-| discriminated union | 25.3M | 12.5M | **37.2M** | **1.47x** |
-| `z.array(z.number())` x100 | 5.1M | 1.1M | **5.5M** | **1.07x** |
-| nested object (moltar) | 20.1M | 6.1M | **20.3M** | **1.01x** |
-| `z.array(z.object())` x50 | 3.8M | 411k | 3.5M | 0.93x |
-| simple 2-key object | 131.6M | 26.4M | 45.2M | 0.34x |
+| case | ark, returns input | ark, rejects unknown | ark, allocates | `z.object()` | `z.strictObject()` |
+| --- | --- | --- | --- | --- | --- |
+| simple 2-key object | 130.0M | 13.0M | 1.2M | **64.3M** | **44.6M** |
+| nested object (moltar) | 19.9M | 6.0M | 174k | **30.5M** | **17.6M** |
+| `z.array(z.object())` x50 | 3.9M | — | 14k | 3.5M | — |
 
-Two things are worth knowing before quoting any of this.
+Match the contracts and compiled zod is ahead everywhere except one case:
 
-**Arktype returns its input; zod allocates fresh output.** Verified on every case. Two handwritten validators over the moltar object, identical checks, differing only in what they return, measure 112.2M returning the input against 61.1M building a new one — so **the output allocation alone costs 1.84x**, and zod cannot give it up while `parse` means transforms, defaults and key stripping. Compare like with like accordingly.
+- **Both reject undeclared keys** (`z.strictObject()` against `.onUndeclaredKey("reject")`): zod is **2.9x** faster on moltar and **3.4x** on the simple object.
+- **Both build new output** (`z.object()` against `.onDeepUndeclaredKey("delete")`): zod is faster by two orders of magnitude. Arktype can produce a fresh object, but that path costs it ~20x its own fast path — steady per call, not a warm-up — so this says arktype's stripping mode is unoptimized rather than that zod is 175x faster at validating.
+- **Arktype validating in place** — its fast path, and a weaker contract than anything zod offers, since it neither allocates nor strips. Even so, `z.object()` beats it on moltar (30.5M vs 19.9M). It wins only on the flat two-key object, where there is almost nothing to amortise.
 
-**Arktype degrades much harder than compiled zod when many schemas are live.** On the moltar case arktype measures 85.3M alone and 20.1M sharing a process with four other schemas; compiled zod measures 24.5M and 20.3M. Whatever arktype shares internally between validators goes megamorphic in a way a standalone generated function does not. That is why the isolated numbers show a 3.5x gap and the shared numbers show parity, and it is why the shared regime is the one to quote for application performance.
-
-Any earlier claim in this wiki that a case was "8x faster" or near parity with arktype was measured before these effects were understood and should not be trusted; `packages/bench/compile-vs-arktype.ts` additionally adds ~18ns of fixed per-call overhead, which compresses every ratio toward 1.
+The older figures in this wiki compared `z.strictObject()` — which pays an undeclared-key scan — against arktype's *default*, which does no such scan and returns its input. That is two handicaps at once, and it is why compiled zod looked level with arktype rather than ahead of it. Prefer the contract-matched rows above.
 
 ## Output construction
 
