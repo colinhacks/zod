@@ -1187,8 +1187,10 @@ function fastPathAcceptsAbsence(schema: SomeType): boolean {
     case "set":
     case "file":
     case "template_literal":
-    case "nonoptional":
       return false;
+    case "nonoptional":
+      // Normally rejects an absent key, but not when something inside supplies a value for it: `.default(v).optional().nonoptional()` accepts absence and yields v. Defer to the inner — over-reporting here only costs a presence check, and a fast path that wrongly rejects still falls back to the runtime.
+      return def.innerType ? fastPathAcceptsAbsence(def.innerType) : false;
     case "literal":
       return !!def.values?.includes(undefined);
     case "enum":
@@ -1404,9 +1406,12 @@ function generateDefaultCheck(doc: Doc, ctx: CompileContext, schema: SomeType, a
 
 function generateNonOptionalCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
   const def = schema._zod.def as unknown as { innerType: SomeType };
-  // NonOptional rejects undefined, then validates inner type
-  doc.write(`if (${accessor} === undefined) return INVALID;`);
-  return generateCheck(doc, ctx, def.innerType, accessor);
+  // The runtime inspects what the inner *produced*, not what it was given. Both directions matter: an inner catch or transform can turn a defined input into `undefined`, which has to be rejected, and an inner default turns an absent input into a value, which has to be accepted. Testing the input did neither.
+  const innerOutput = generateCheck(doc, ctx, def.innerType, accessor);
+  const outputVar = newVar(ctx);
+  doc.write(`const ${outputVar} = ${innerOutput};`);
+  doc.write(`if (${outputVar} === undefined) return INVALID;`);
+  return outputVar;
 }
 
 function generateTupleCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {

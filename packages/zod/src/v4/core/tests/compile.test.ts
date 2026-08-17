@@ -221,6 +221,42 @@ test("nonoptional", () => {
   invalid(aot, 123);
 });
 
+test("nonoptional judges the inner's output, not its input", () => {
+  // An inner catch turns a *defined* input into undefined, which must still be rejected; an inner default turns an absent input into a value, which must be accepted. Testing the input alone got both backwards.
+  const caught = z
+    .string()
+    .min(2)
+    .max(8)
+    .prefault("abc")
+    .catch(undefined as any)
+    .optional()
+    .nonoptional();
+  for (const input of ["abc", "abcdefghij", "a", undefined]) expectMatch(caught, input);
+
+  expectMatch(
+    z
+      .string()
+      .transform(() => undefined)
+      .nonoptional(),
+    "s"
+  );
+  for (const input of [undefined, "y", 1]) expectMatch(z.string().default("x").nonoptional(), input);
+});
+
+test("a nonoptional object key whose inner supplies a value still needs the key", () => {
+  // The runtime separates an absent key from an explicit undefined here: absent fails, explicit undefined takes the default. The fast path has to as well.
+  const prop = z
+    .literal("lit")
+    .default("other" as any)
+    .optional()
+    .nonoptional();
+  const schema = z.object({ k1: prop });
+  expectMatch(schema, {});
+  expectMatch(schema, { k1: undefined });
+  expectMatch(schema, { k1: "lit" });
+  expectMatch(prop, undefined);
+});
+
 test("success", () => {
   const aot = compile(z.success(z.string()));
   expect(valid(aot, "hello")).toBe(true);
