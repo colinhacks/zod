@@ -1061,7 +1061,7 @@ export function installLazyProps<T extends object>(inst: T, sentinel: string, pr
   }
 }
 
-// The internals whose init chain is currently installing. A second call for the same one is a derived constructor replacing what its base installed; anything else is a repeat construction with nothing left to install.
+// The internals whose init chain is currently installing. A second call for the same one is a derived constructor replacing what its base installed; anything else is a repeat construction with nothing left to install. This makes the override order-dependent where a per-prototype seal would not be: a derived constructor must not construct another schema between its base's install and its own override, or the override is silently dropped.
 let installing: object | undefined;
 
 // Set while a getter is running, so a value that resolved through a recursion break is not memoized. One shared descriptor shadows the key for the duration, which costs no per-key allocation.
@@ -1086,7 +1086,7 @@ export function defineLazyInternal<T extends { _zod: any }>(
 ): void {
   const proto = Object.getPrototypeOf(inst._zod);
   if (key in proto && installing !== inst._zod) {
-    // A repeat construction: everything is installed already. Dropped rather than kept so the reference does not outlive the construction.
+    // A repeat construction: everything is installed already. Cleared here so the reference is not held past the first construction of every type.
     installing = undefined;
     return;
   }
@@ -1099,16 +1099,19 @@ export function defineLazyInternal<T extends { _zod: any }>(
       Object.defineProperty(this, key, breaker);
       const outer = broke;
       broke = false;
-      let value: unknown;
       try {
-        value = compute(this);
-      } finally {
+        const value = compute(this);
         // Only a result that resolved through a recursion break goes uncached, since it has to be recomputed once the schema graph is complete. Everything else memoizes, undefined included — it is the ordinary answer for most schemas, and these getters are read per parse on the tuple and interpreted-object paths.
         if (broke) delete this[key];
         else Object.defineProperty(this, key, { configurable: true, writable: true, value });
         broke = broke || outer;
+        return value;
+      } catch (err) {
+        // A compute that threw memoizes nothing, so a later read runs it again and fails the same way. The shadow goes with it, since leaving it installed would answer undefined for every later read.
+        delete this[key];
+        broke = broke || outer;
+        throw err;
       }
-      return value;
     },
     set(this: any, value: unknown) {
       Object.defineProperty(this, key, { configurable: true, writable: true, value });
