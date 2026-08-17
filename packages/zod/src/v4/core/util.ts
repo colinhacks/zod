@@ -362,8 +362,7 @@ export function isObject(data: any): data is Record<PropertyKey, unknown> {
 }
 
 export const allowsEval: { value: boolean } = /* @__PURE__*/ cached(() => {
-  // Skip the probe under `jitless`: strict CSPs report the caught `new Function`
-  // as a `securitypolicyviolation` even though the throw is swallowed.
+  // Skip the probe under `jitless`: strict CSPs report the caught `new Function` as a `securitypolicyviolation` even though the throw is swallowed.
   if (globalConfig.jitless) {
     return false;
   }
@@ -585,8 +584,7 @@ export type FromCleanMap<T extends schemas.$ZodLooseShape> = {
   [k in keyof T as k extends `?${infer K}` ? K : k extends `${infer K}?` ? K : k]: k;
 };
 
-// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that
-// contains a member access on `Number`, so the bare object literal survived into every bundle.
+// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle.
 export const NUMBER_FORMAT_RANGES: Record<checks.$ZodNumberFormats, [number, number]> = /*@__PURE__*/ (() => ({
   safeint: [Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER],
   int32: [-2147483648, 2147483647],
@@ -666,8 +664,7 @@ export function extend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): an
   const checks = schema._zod.def.checks;
   const hasChecks = checks && checks.length > 0;
   if (hasChecks) {
-    // Only throw if new shape overlaps with existing shape
-    // Use getOwnPropertyDescriptor to check key existence without accessing values
+    // Only throw if new shape overlaps with existing shape. Use getOwnPropertyDescriptor to check key existence without accessing values
     const existingShape = schema._zod.def.shape;
     for (const key in shape) {
       if (Object.getOwnPropertyDescriptor(existingShape, key) !== undefined) {
@@ -725,13 +722,14 @@ export function merge(a: schemas.$ZodObject, b: schemas.$ZodObject): any {
 export function partial(
   Class: SchemaClass<schemas.$ZodOptional> | null,
   schema: schemas.$ZodObject,
-  mask: object | undefined
+  mask: object | undefined,
+  name = "partial"
 ): any {
   const currDef = schema._zod.def;
   const checks = currDef.checks;
   const hasChecks = checks && checks.length > 0;
   if (hasChecks) {
-    throw new Error(".partial() cannot be used on object schemas containing refinements");
+    throw new Error(`.${name}() cannot be used on object schemas containing refinements`);
   }
 
   const def = mergeDefs(schema._zod.def, {
@@ -827,8 +825,7 @@ export function aborted(x: schemas.ParsePayload, startIndex = 0): boolean {
   return false;
 }
 
-// Checks for explicit abort (continue === false), as opposed to implicit abort (continue === undefined).
-// Used to respect `abort: true` in .refine() even for checks that have a `when` function.
+// Checks for explicit abort (continue === false), as opposed to implicit abort (continue === undefined). Used to respect `abort: true` in .refine() even for checks that have a `when` function.
 export function explicitlyAborted(x: schemas.ParsePayload, startIndex = 0): boolean {
   if (x.aborted === true) return true;
   for (let i = startIndex; i < x.issues.length; i++) {
@@ -851,11 +848,25 @@ export function unwrapMessage(message: string | { message: string } | undefined 
   return typeof message === "string" ? message : message?.message;
 }
 
+/* A check holds no link back to the schema it is attached to — the same check instance is shared by every clone of that schema — so the owner is stamped onto the issues a check just raised, at the only point where both are in scope. Runs on the failure path only; `start` is the issue count from before the check ran. */
+export function attachSchema(issues: errors.$ZodRawIssue[], start: number, inst: schemas.$ZodType): void {
+  for (let i = start; i < issues.length; i++) {
+    (issues[i] as any).schema ??= inst;
+  }
+}
+
 export function finalizeIssue(
   iss: errors.$ZodRawIssue,
   ctx: schemas.ParseContextInternal | undefined,
   config: $ZodConfig
 ): errors.$ZodIssue {
+  // A schema that raised an issue itself owns it outright, and outranks any stamp an enclosing check left in `attachSchema`. String formats and z.custom() are schema and check at once, so when they act as a check they defer to that stamp instead.
+  const traits: Set<string> | undefined = (iss.inst as any)?._zod?.traits;
+  if (traits?.has("$ZodType")) {
+    if (traits.has("$ZodCheck")) (iss as any).schema ??= iss.inst;
+    else (iss as any).schema = iss.inst;
+  }
+
   const message = iss.message
     ? iss.message
     : (unwrapMessage(iss.inst?._zod.def?.error?.(iss as never)) ??
@@ -864,7 +875,7 @@ export function finalizeIssue(
       unwrapMessage(config.localeError?.(iss)) ??
       "Invalid input");
 
-  const { inst: _inst, continue: _continue, input: _input, ...rest } = iss as any;
+  const { inst: _inst, schema: _schema, continue: _continue, input: _input, ...rest } = iss as any;
   rest.path ??= [];
   rest.message = message;
   if (ctx?.reportInput) {
@@ -989,22 +1000,17 @@ export abstract class Class {
 
 //////////    PROTOTYPE INSTALLERS     //////////
 //
-// Members live on the prototype and materialize per instance on first read,
-// which keeps own-property count under the step where V8 stops using inline
-// slots. Changing anything here means re-measuring runtime, memory and bundle
-// size together — see "The three axes" in AGENTS.md.
+// Members live on the prototype and materialize per instance on first read, which keeps own-property count under the step where V8 stops using inline slots. Changing anything here means re-measuring runtime, memory and bundle size together — see "The three axes" in AGENTS.md.
 
 /** Returns the prototype to install on, or `undefined` if this group is already installed on it. */
 function claim(inst: object, sentinel: string): object | undefined {
   const proto = Object.getPrototypeOf(inst);
-  // Runs on every construction, so `in` rather than the costlier
-  // `hasOwnProperty.call`. Sentinels are keys the group itself defines.
+  // Runs on every construction, so `in` rather than the costlier `hasOwnProperty.call`. Sentinels are keys the group itself defines.
   return sentinel in proto ? undefined : proto;
 }
 
 function defineCached(proto: object, key: string, compute: (self: any) => unknown): void {
-  // `~standard` was never an own data property, so caching it must not add it
-  // to `Object.keys`. Everything else here was enumerable and stays so.
+  // `~standard` was never an own data property, so caching it must not add it to `Object.keys`. Everything else here was enumerable and stays so.
   const enumerable = key !== "~standard";
   Object.defineProperty(proto, key, {
     configurable: true,

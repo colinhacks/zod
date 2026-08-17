@@ -276,6 +276,20 @@ z.toJSONSchema(schema, {
 
 Two schemas can share a `zodSchema` but not a `message` — an `undefined` member and a `bigint` member of the same literal both arrive as the literal — so branch on `message` to tell those apart.
 
+A default *value* that can't be serialized to JSON goes through the same handler, as the `.default()` schema. Under `"any"` the default is dropped and the rest of the schema is emitted as usual; return a JSON Schema to supply your own.
+
+```ts
+z.toJSONSchema(z.bigint().default(0n), {
+  unrepresentable: ({ zodSchema }) => {
+    const def = zodSchema._zod.def;
+    if (def.type === "bigint") return { type: "integer", format: "int64" };
+    if (def.type === "default") return { default: String(def.defaultValue) };
+    return "throw";
+  },
+});
+// => { type: "integer", format: "int64", default: "0" }
+```
+
 Returning a JSON Schema for a literal replaces the whole literal, dropping its representable members: `z.literal(["a", 1n])` becomes just what you returned, and `"a"` is gone. Return `"any"` instead to keep the existing per-value behavior.
 
 ### `cycles`

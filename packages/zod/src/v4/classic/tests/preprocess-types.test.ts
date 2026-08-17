@@ -35,9 +35,7 @@ test("ZodPreprocess narrows input from an annotated preprocessor arg", () => {
   expectTypeOf<z.output<typeof obj>>().toEqualTypeOf<{ a: string }>();
 });
 
-// The narrowing must ride on the transform's input only. Binding its output too makes
-// $ZodPipeDef's codec-only `transform?` field contravariant in the preprocessor's return
-// type, which drops the bare-type assignability below.
+// The narrowing must ride on the transform's input only. Binding its output too makes $ZodPipeDef's codec-only `transform?` field contravariant in the preprocessor's return type, which drops the bare-type assignability below.
 test("narrowed ZodPreprocess still assignable to the bare type", () => {
   const pre = z.preprocess((v: string) => v.length, z.number());
   const _bare: z.ZodPreprocess<z.ZodNumber> = pre;

@@ -615,9 +615,7 @@ test("propertyNames survives a toJSONSchema round trip", () => {
 });
 
 test("patternProperties with regular properties", () => {
-  // Note: When patternProperties is combined with properties, the intersection
-  // validates all keys against the pattern. This test uses a pattern that
-  // matches the regular property name as well.
+  // Note: When patternProperties is combined with properties, the intersection validates all keys against the pattern. This test uses a pattern that matches the regular property name as well.
   const schema = fromJSONSchema({
     type: "object",
     properties: {
@@ -713,8 +711,7 @@ test("default value", () => {
     type: "string",
     default: "hello",
   });
-  // Default is applied during parsing if value is missing/undefined
-  // This depends on Zod's default behavior
+  // Default is applied during parsing if value is missing/undefined. This depends on Zod's default behavior
   expect(schema.parse("world")).toBe("world");
 });
 
@@ -799,6 +796,15 @@ test("string format - date-time", () => {
 
   const roundTripped = fromJSONSchema(z.toJSONSchema(z.iso.datetime({ offset: true })));
   expect(roundTripped.safeParse("2026-07-29T16:30:00+02:00").success).toBe(true);
+});
+
+test("string format - hostname", () => {
+  const schema = fromJSONSchema({
+    type: "string",
+    format: "hostname",
+  });
+  expect(schema.parse("example.com")).toBe("example.com");
+  expect(() => schema.parse("not a hostname!")).toThrow();
 });
 
 test("exclusiveMinimum and exclusiveMaximum", () => {
@@ -992,8 +998,7 @@ test("metadata on nested schemas", () => {
   // Verify parent schema has its metadata
   expect(customRegistry.get(parentSchema)?.title).toBe("User");
 
-  // We can't easily access nested schemas directly, but we can verify
-  // the registry is being used correctly by checking a separate schema
+  // We can't easily access nested schemas directly, but we can verify the registry is being used correctly by checking a separate schema
   const simpleSchema = fromJSONSchema(
     {
       type: "string",
@@ -1017,8 +1022,7 @@ test("no metadata added when no unrecognized keys", () => {
     { registry: customRegistry }
   );
 
-  // description is handled via .describe(), so it shouldn't be in metadata
-  // All other keys are recognized, so no metadata should be added
+  // description is handled via .describe(), so it shouldn't be in metadata. All other keys are recognized, so no metadata should be added
   expect(customRegistry.get(schema)).toBeUndefined();
 });
 
@@ -1238,9 +1242,7 @@ test("Date default is coerced to its JSON string form", () => {
   expect(schema.parse(undefined)).toBe(date.toISOString());
 });
 
-// An object literal can't express an own "__proto__" key — `{ __proto__: x }`
-// sets the literal's prototype instead. JSON.parse is both the realistic source
-// of a JSON Schema and the only way to write these cases.
+// An object literal can't express an own "__proto__" key — `{ __proto__: x }` sets the literal's prototype instead. JSON.parse is both the realistic source of a JSON Schema and the only way to write these cases.
 test("required __proto__ property is represented in the shape but stripped during parsing", () => {
   const schema = fromJSONSchema(
     JSON.parse(`{

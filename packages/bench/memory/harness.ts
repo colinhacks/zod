@@ -9,8 +9,7 @@ export function collect(): void {
   if (typeof gc !== "function") {
     throw new Error("run with --expose-gc");
   }
-  // Repeated collections: the first pass frees the bulk, later passes catch
-  // objects that only became unreachable once the first pass ran.
+  // Repeated collections: the first pass frees the bulk, later passes catch objects that only became unreachable once the first pass ran.
   for (let i = 0; i < 6; i++) gc();
 }
 

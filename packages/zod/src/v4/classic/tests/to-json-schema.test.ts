@@ -18,8 +18,7 @@ const validateOpenAPI30Schema = async (zodJSONSchema: Record<string, unknown>): 
   });
 
   if (!res.valid) {
-    // `console.error` should make `vitest` trow an unhandled error
-    // printing the validation messages in consoles
+    // `console.error` should make `vitest` trow an unhandled error printing the validation messages in consoles
     console.error(
       `OpenAPI schema is not valid against ${openAPI30Validator.version}`,
       JSON.stringify(res.errors, null, 2)
@@ -654,8 +653,7 @@ describe("toJSONSchema", () => {
   });
 
   test("number constraints intersection draft-04", () => {
-    // When both minimum (from .int()) and exclusiveMinimum (from .positive()) exist,
-    // the more restrictive constraint should be used
+    // When both minimum (from .int()) and exclusiveMinimum (from .positive()) exist, the more restrictive constraint should be used
     expect(z.toJSONSchema(z.number().int().positive().lte(65535), { target: "draft-04" })).toMatchInlineSnapshot(`
       {
         "$schema": "http://json-schema.org/draft-04/schema#",
@@ -696,6 +694,7 @@ describe("toJSONSchema", () => {
 
   test("target normalization draft-04 and draft-07", () => {
     // Test that both old (draft-4, draft-7) and new (draft-04, draft-07) target formats work
+
     // Test draft-04 / draft-4
     expect(z.toJSONSchema(z.number().gt(5), { target: "draft-04" })).toMatchInlineSnapshot(`
       {
@@ -1252,8 +1251,7 @@ describe("toJSONSchema", () => {
   });
 
   test("tuple with rest draft-7 - issue #5151 regression test", () => {
-    // This test addresses issue #5151: tuple with rest elements and ids
-    // in draft-7 had incorrect internal path handling affecting complex scenarios
+    // This test addresses issue #5151: tuple with rest elements and ids in draft-7 had incorrect internal path handling affecting complex scenarios
     const primarySchema = z.string().meta({ id: "primary" });
     const restSchema = z.number().meta({ id: "rest" });
     const testSchema = z.tuple([primarySchema], restSchema);
@@ -1363,6 +1361,23 @@ describe("toJSONSchema", () => {
     expect(output.items).toBe(false);
     expect(output.minItems).toBe(2);
     expect(output.maxItems).toBe(2);
+  });
+
+  test("closed tuple length resolves input optionality past transform and catch", () => {
+    const minItems = (schema: z.core.$ZodType, io: "input" | "output") =>
+      z.toJSONSchema(schema, { target: "draft-2020-12", io }).minItems;
+
+    // Both let the parser observe an absent slot, but declare a required input.
+    const pre = z.tuple([z.string(), z.preprocess((v) => v, z.string())]);
+    expect(minItems(pre, "input")).toBe(2);
+    expect(minItems(pre, "output")).toBe(2);
+
+    const caught = z.tuple([z.string(), z.string().catch("x")]);
+    expect(minItems(caught, "input")).toBe(2);
+    expect(minItems(caught, "output")).toBe(2);
+
+    // Resolution passes through the wrapper rather than stopping at it.
+    expect(minItems(z.tuple([z.string(), z.string().optional().catch("x")]), "input")).toBe(1);
   });
 
   test("promise", () => {
@@ -2181,6 +2196,101 @@ test("escapes JSON Pointer reserved characters in $ref but not in $defs key", ()
   expect(Object.keys(result.$defs!)).toEqual(["Shared/User~"]);
 });
 
+test("unrepresentable default values go through `unrepresentable`", () => {
+  // a bigint default has no reliable JSON encoding, so it is dropped rather than approximated
+  expect(z.toJSONSchema(z.bigint().default(0n), { unrepresentable: "any" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+    }
+  `);
+  expect(z.toJSONSchema(z.bigint().prefault(2n), { io: "input", unrepresentable: "any" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+    }
+  `);
+  // including when nested inside an otherwise representable default
+  expect(
+    z.toJSONSchema(z.object({ a: z.bigint() }).default({ a: 1n }), { unrepresentable: "any" })
+  ).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "a": {},
+      },
+      "required": [
+        "a",
+      ],
+      "type": "object",
+    }
+  `);
+
+  // under the default strict mode the inner type throws first; a representable inner type surfaces the default's own error rather than a raw `JSON.stringify` TypeError
+  expect(() => z.toJSONSchema(z.bigint().default(0n))).toThrow("BigInt cannot be represented in JSON Schema");
+  expect(() => z.toJSONSchema(z.unknown().default(1n))).toThrow("BigInt defaults cannot be represented in JSON Schema");
+
+  // representable defaults are untouched
+  expect(z.toJSONSchema(z.object({ a: z.number() }).default({ a: 2 }))).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "default": {
+        "a": 2,
+      },
+      "properties": {
+        "a": {
+          "type": "number",
+        },
+      },
+      "required": [
+        "a",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
+test("an `unrepresentable` handler can represent a bigint default", () => {
+  // one handler covers both the type and its default, so no `unrepresentable: "any"` is needed and every other unrepresentable type still throws
+  expect(
+    z.toJSONSchema(z.object({ startAt: z.coerce.bigint().optional().default(0n) }), {
+      io: "input",
+      unrepresentable: ({ zodSchema }) => {
+        const def = zodSchema._zod.def;
+        if (def.type === "bigint") return { type: "integer", format: "int64" };
+        if (def.type === "default") return { default: String(def.defaultValue) };
+        return "throw";
+      },
+    })
+  ).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "startAt": {
+          "default": "0",
+          "format": "int64",
+          "type": "integer",
+        },
+      },
+      "type": "object",
+    }
+  `);
+
+  // a handler may also drop just the default while still representing the type
+  expect(
+    z.toJSONSchema(z.bigint().default(0n), {
+      unrepresentable: ({ zodSchema }) =>
+        zodSchema._zod.def.type === "bigint" ? { type: "integer", format: "int64" } : "any",
+    })
+  ).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "format": "int64",
+      "type": "integer",
+    }
+  `);
+});
+
 test("unrepresentable literal values are ignored", () => {
   const a = z.toJSONSchema(z.literal(["hello", null, 5, BigInt(1324), undefined]), { unrepresentable: "any" });
   expect(a).toMatchInlineSnapshot(`
@@ -2257,8 +2367,7 @@ test("describe with id", () => {
 });
 
 test("id is stripped from $defs entries (draft-2020-12)", () => {
-  // The `id` in `.meta()` is a registration tag — it determines the $defs key
-  // but should not leak into the definition body, where it is redundant.
+  // The `id` in `.meta()` is a registration tag — it determines the $defs key but should not leak into the definition body, where it is redundant.
   const inner = z.string().meta({ id: "Inner" });
   const result = z.toJSONSchema(z.object({ a: inner, b: inner }));
   expect(result.$defs?.Inner).toEqual({ type: "string" });
@@ -2266,9 +2375,7 @@ test("id is stripped from $defs entries (draft-2020-12)", () => {
 });
 
 test("id is stripped from definitions entries (draft-04)", () => {
-  // In draft-04, `id` is a reserved keyword that sets a base URI for the
-  // subschema. Leaking Zod's registration tag here is semantically wrong, so
-  // ensure it is stripped.
+  // In draft-04, `id` is a reserved keyword that sets a base URI for the subschema. Leaking Zod's registration tag here is semantically wrong, so ensure it is stripped.
   const inner = z.string().meta({ id: "Inner" });
   const result = z.toJSONSchema(z.object({ a: inner, b: inner }), { target: "draft-04" }) as any;
   expect(result.definitions?.Inner).toEqual({ type: "string" });
@@ -2283,8 +2390,7 @@ test("id is stripped from root schema", () => {
 });
 
 test("id is observable in override callback", () => {
-  // The strip happens after override callbacks run, so userland override code
-  // can still read `jsonSchema.id` if it wants to.
+  // The strip happens after override callbacks run, so userland override code can still read `jsonSchema.id` if it wants to.
   const inner = z.string().meta({ id: "Inner" });
   const seenIds: Array<string | undefined> = [];
   z.toJSONSchema(z.object({ a: inner }), {
@@ -2296,8 +2402,7 @@ test("id is observable in override callback", () => {
 });
 
 test("describe with id on wrapper", () => {
-  // Test that $ref propagation works when processor sets a different ref (readonly -> innerType)
-  // but parent was extracted due to having an id
+  // Test that $ref propagation works when processor sets a different ref (readonly -> innerType) but parent was extracted due to having an id
   const roJobId = z.string().readonly().meta({ id: "roJobId" });
 
   const a = z.toJSONSchema(
@@ -2642,8 +2747,7 @@ test("large registry converts in linear time", () => {
   });
   expect(schemas[`Type${count - 1}`]!.$id).toBe(`https://example.com/Type${count - 1}.json`);
 
-  // The whole-map passes in extractDefs/finalize used to re-run once per registered schema, which
-  // made this quadratic: ~9s of CPU at this size before the passes were hoisted, ~50ms after.
+  // The whole-map passes in extractDefs/finalize used to re-run once per registered schema, which made this quadratic: ~9s of CPU at this size before the passes were hoisted, ~50ms after.
   expect(elapsed).toBeLessThan(5000);
 });
 
@@ -2693,8 +2797,7 @@ test("registry extracts unregistered subschemas into __shared", () => {
       "type": "object",
     }
   `);
-  // Company is emitted after Person, so it only resolves if the shared $defs built on the first
-  // finalize are still reachable — the pass that writes them no longer runs per schema.
+  // Company is emitted after Person, so it only resolves if the shared $defs built on the first finalize are still reachable — the pass that writes them no longer runs per schema.
   expect(schemas.Company!.properties!.hq).toEqual({
     $ref: "https://example.com/__shared.json#/$defs/Address",
   });
@@ -2763,8 +2866,7 @@ test("JSONSchemaGenerator re-runs shared passes on a no-params emit", () => {
   const defs: Record<string, any> = {};
   gen.emit(a, { external: { registry, uri: (id: string) => `${id}.json`, defs }, reused: "ref" });
 
-  // Re-processing an already-seen schema bumps `seen.count`, which `extractDefs` branches on
-  // under `reused: "ref"` — and it returns early, so it cannot clear the guards itself.
+  // Re-processing an already-seen schema bumps `seen.count`, which `extractDefs` branches on under `reused: "ref"` — and it returns early, so it cannot clear the guards itself.
   gen.process(shared);
   const second: any = gen.emit(a);
 
@@ -2864,6 +2966,45 @@ test("defaults/prefaults", () => {
     {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "string",
+    }
+  `);
+});
+
+test("catch on a transforming schema", () => {
+  const a = z
+    .string()
+    .transform((val) => val.length)
+    .pipe(z.number())
+    .catch(0);
+
+  expect(z.toJSONSchema(a)).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "default": 0,
+      "type": "number",
+    }
+  `);
+  // catch values are output-typed, so they are not valid input
+  expect(z.toJSONSchema(a, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+    }
+  `);
+
+  // the catch no longer hides the inner transform from ancestors, so their output-typed metadata is stripped too — matching a bare nested transform
+  expect(z.toJSONSchema(z.object({ a }).meta({ examples: [{ a: 1 }] }), { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "a": {
+          "type": "string",
+        },
+      },
+      "required": [
+        "a",
+      ],
+      "type": "object",
     }
   `);
 });
@@ -2972,6 +3113,7 @@ test("input type", () => {
       "required": [
         "a",
         "d",
+        "f",
         "g",
       ],
       "type": "object",
@@ -3134,6 +3276,52 @@ test("use output type for preprocess", () => {
       "type": "string",
     }
   `);
+});
+
+test("object property with preprocess stays required in input JSON schema", () => {
+  const schema = z.object({
+    noPreprocess: z.string(),
+    withPreprocess: z.preprocess((v) => v, z.string()),
+    optionalPreprocess: z.preprocess((v) => v, z.string().optional()),
+  });
+
+  // A preprocessed property is only optional when its inner schema is — the
+  // transform wrapper must not make a required property optional in the input
+  // JSON schema (matches runtime: `schema.parse({})` rejects `withPreprocess`).
+  expect(z.toJSONSchema(schema, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "noPreprocess": {
+          "type": "string",
+        },
+        "optionalPreprocess": {
+          "type": "string",
+        },
+        "withPreprocess": {
+          "type": "string",
+        },
+      },
+      "required": [
+        "noPreprocess",
+        "withPreprocess",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
+test("input JSON schema resolves requiredness past transform and catch wrappers", () => {
+  const required = (schema: z.ZodObject) =>
+    (z.toJSONSchema(schema, { io: "input" }) as z.core.JSONSchema.ObjectSchema).required;
+  const id = (v: unknown) => v;
+
+  // catch observes an absent key at runtime, but its declared input type stays required (#5003)
+  expect(required(z.object({ a: z.string().catch("x") }))).toEqual(["a"]);
+  expect(required(z.object({ a: z.string().optional().catch("x") }))).toBeUndefined();
+  // nested preprocess and the legacy transform-pipe form both resolve through to the inner schema
+  expect(required(z.object({ a: z.preprocess(id, z.preprocess(id, z.string())) }))).toEqual(["a"]);
+  expect(required(z.object({ a: z.transform((v: unknown) => String(v)).pipe(z.string()) }))).toEqual(["a"]);
 });
 
 test("strip output-side examples from input JSON schema for codec", () => {

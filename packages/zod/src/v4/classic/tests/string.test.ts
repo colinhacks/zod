@@ -217,9 +217,7 @@ test("base64 validations", () => {
     "?QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // Invalid character '?'
     ".MTIzND2Nzg5MC4=", // Invalid character '.'
     "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo", // Missing padding
-    // Whitespace is not part of canonical base64 (RFC 4648 §3.3) — atob() strips
-    // whitespace internally before validating, so the length check alone would
-    // accept "123 " etc.
+    // Whitespace is not part of canonical base64 (RFC 4648 §3.3) — atob() strips whitespace internally before validating, so the length check alone would accept "123 " etc.
     "123 ", // bypasses length-mod-4 via trailing whitespace
     "SGVsbG8gV29ybGQ= ", // trailing space
     " SGVsbG8gV29ybGQ=", // leading space

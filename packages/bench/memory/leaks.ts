@@ -111,8 +111,7 @@ const SMALL = 2_000;
 const LARGE = 10_000;
 
 const rows = scenarios.map((s) => {
-  // Warm everything (lazy prototype installs, JIT compilation) so one-time
-  // costs land before the first measurement.
+  // Warm everything (lazy prototype installs, JIT compilation) so one-time costs land before the first measurement.
   for (let i = 0; i < 500; i++) s.run(i);
   collect();
 
@@ -120,8 +119,7 @@ const rows = scenarios.map((s) => {
   const afterSmall = heapAfter(s.run, SMALL, 1_000_000);
   const afterLarge = heapAfter(s.run, LARGE, 2_000_000);
 
-  // Bytes retained per iteration, from the slope between the two batches.
-  // Using the slope cancels any fixed cost captured in `base`.
+  // Bytes retained per iteration, from the slope between the two batches. Using the slope cancels any fixed cost captured in `base`.
   const slope = (afterLarge - afterSmall) / LARGE;
   const totalGrowth = afterLarge - base;
   const leaking = slope > 24; // below ~1 pointer/iteration is noise

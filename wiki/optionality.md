@@ -1,16 +1,16 @@
 # Optionality in Zod v4
 
-Internal reference for how Zod's parsing handles "missing" / "undefined" input. Reflects the current state of `main` plus the in-flight branch `fix-fallback-flag-and-preprocess`.
+Internal reference for how Zod's parsing handles "missing" / "undefined" input. Reflects the current state of `main`.
 
 The system has accumulated a few orthogonal mechanisms. This doc names them, says which schema sets what, and walks through the gnarly interactions.
 
 ## TL;DR
 
-Three runtime signals, each with a single consumer:
+Three runtime signals:
 
 | Signal | Set by | Consumed by | Means |
 |---|---|---|---|
-| `_zod.optin === "optional"` | catch, default, prefault, optional, transform | `$ZodObject`, `$ZodTuple`, `$ZodOptional` | "I accept absent input" |
+| `_zod.optin === "optional"` | catch, default, prefault, optional, transform | `$ZodObject`, `$ZodTuple`, `$ZodOptional`; also the JSON Schema emitter, where `objectProcessor` and `tupleProcessor` both read the **static** value — see below | "I accept absent input" |
 | `_zod.optout === "optional"` | optional, exact-optional, default-on-output cases | `$ZodObject`, `$ZodTuple` | "My output may legitimately be `undefined`; treat that as absent for length-shortening / key-omission" |
 | `payload.fallback === true` | catch (when `catchValue` substitutes), transform | `$ZodOptional` (in `handleOptionalResult`) | "This value is provisional; an outer wrapper may override it on undefined input" |
 
@@ -112,6 +112,33 @@ inst._zod.parse = (payload, ctx) => {
 ```
 
 So `optional` *invokes* its inner whenever inner says "I handle absence." It only short-circuits when inner is silent on the question.
+
+### The JSON Schema emitter reads the *static* value
+
+The JSON Schema emitter consumes `optin` too, in two places: `objectProcessor` for `required` and `tupleProcessor` for `minItems`. `io: "input"` describes the declared input type, so the three schemas above that diverge have to be resolved past to whatever actually carries the optionality. Both go through one helper in `json-schema-processors.ts`:
+
+```ts
+function inputOptin(schema: $ZodType): "optional" | undefined {
+  const def = schema._zod.def;
+  if (def.type === "pipe" && def.in._zod.traits.has("$ZodTransform")) return inputOptin(def.out);
+  if (def.type === "catch") return inputOptin(def.innerType);
+  return schema._zod.optin;
+}
+```
+
+Reading `_zod.optin` directly builds a `required` list — or a `minItems` — that matches runtime parse behavior instead of the declared type, dropping a preprocessed or caught slot even though `z.input<>` shows it as required. #5003 settled the policy — the input JSON Schema describes what you *should* pass, not everything you *can* pass — and #6133 restored it after #5939 and #5941 set the runtime flags.
+
+The tuple side went the same way in #6418. Its `minItems` tail scan used to read the runtime flag, so a trailing preprocessed slot shortened `minItems` and the emitted schema matched neither the declared type nor the parser:
+
+```ts
+z.toJSONSchema(z.tuple([z.string(), z.preprocess((v) => v, z.string())]), { io: "input" });
+// before: minItems 1 — but z.input<> is [string, string], and .safeParse(["a"]) rejects
+// now:    minItems 2, matching the object equivalent's required: ["a", "b"]
+```
+
+Output mode still reads `optout` directly in both processors — the divergence is input-side only.
+
+The same split applies to emitted *values*, not just requiredness: `isTransforming` now recurses through `catch` (#6409), so a catch no longer hides an inner transform from its ancestors and the output-typed `default` is stripped under `io: "input"`. A catch over a non-transforming inner keeps its `default`. Both halves answer the same question, and they have to answer it the same way.
 
 ## `optout`
 

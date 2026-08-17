@@ -687,8 +687,7 @@ test("encode with codec discriminator", () => {
   const decoded = schema.decode({ type: 1, value: "hello" });
   expect(decoded).toEqual({ type: "one", value: "hello" });
 
-  // encode (backward) should also work — the discriminator values differ
-  // between forward (1, 2) and backward ("one", "two") directions
+  // encode (backward) should also work — the discriminator values differ between forward (1, 2) and backward ("one", "two") directions
   const encoded = z.encode(schema, { type: "one", value: "hello" });
   expect(encoded).toEqual({ type: 1, value: "hello" });
 });
