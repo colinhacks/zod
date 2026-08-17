@@ -56,8 +56,9 @@ export class JSONSchemaGenerator {
   get target() {
     return this.ctx.target;
   }
+  // annotated so the .d.cts emits an indexed access rather than an inline `import()` of an ESM path
   /** @deprecated Access via ctx instead */
-  get unrepresentable() {
+  get unrepresentable(): ToJSONSchemaContext["unrepresentable"] {
     return this.ctx.unrepresentable;
   }
   /** @deprecated Access via ctx instead */
@@ -115,6 +116,10 @@ export class JSONSchemaGenerator {
       if (_params.reused) this.ctx.reused = _params.reused;
       if (_params.external) this.ctx.external = _params.external;
     }
+
+    // extractDefs/finalize skip their whole-map passes when they have already run for this `external`, but they also branch on `cycles`, `reused`, `seen.count` and the metadata registry — any of which can change between emits, including with no params at all. Drop the guards so the passes re-run. The registry conversion calls extractDefs/finalize directly and never routes through here, so it keeps skipping them.
+    this.ctx.sharedDefsExtractedFor = undefined;
+    this.ctx.sharedEmitDoneFor = undefined;
 
     extractDefs(this.ctx, schema);
     const result = finalize(this.ctx, schema);

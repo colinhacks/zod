@@ -204,8 +204,7 @@ test("Greek locale - other error cases", () => {
 test("Greek locale - invalid_type with instanceof (class-name expected)", () => {
   z.config(el());
 
-  // When `expected` starts with a capital letter, render an `instanceof` message,
-  // matching the convention used by most other locales (de, es, fr, it, etc.).
+  // When `expected` starts with a capital letter, render an `instanceof` message, matching the convention used by most other locales (de, es, fr, it, etc.).
   const dateSchema = z.instanceof(Date);
   const dateResult = dateSchema.safeParse("not a date");
   expect(dateResult.success).toBe(false);
