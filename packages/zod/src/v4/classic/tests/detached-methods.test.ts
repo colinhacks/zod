@@ -151,11 +151,14 @@ test("detached object methods work", () => {
   const pick = schema.pick;
   const omit = schema.omit;
   const partial = schema.partial;
+  const exactPartial = schema.exactPartial;
   const extend = schema.extend;
 
   expect(Object.keys(pick({ a: true })._zod.def.shape)).toEqual(["a"]);
   expect(Object.keys(omit({ a: true })._zod.def.shape)).toEqual(["b"]);
   expect(partial().safeParse({}).success).toBe(true);
+  expect(exactPartial().safeParse({}).success).toBe(true);
+  expect(exactPartial().safeParse({ a: undefined }).success).toBe(false);
   const extended = extend({ c: z.boolean() });
   expect(Object.keys(extended._zod.def.shape).sort()).toEqual(["a", "b", "c"]);
 });

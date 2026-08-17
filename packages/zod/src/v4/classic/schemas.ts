@@ -1581,6 +1581,22 @@ export interface ZodObject<
     Config
   >;
 
+  // exactPartial
+  exactPartial(): ZodObject<
+    {
+      -readonly [k in keyof Shape]: ZodExactOptional<Shape[k]>;
+    },
+    Config
+  >;
+  exactPartial<M extends util.Mask<keyof Shape>>(
+    mask: M & Record<Exclude<keyof M, keyof Shape>, never>
+  ): ZodObject<
+    {
+      -readonly [k in keyof Shape]: k extends keyof M ? ZodExactOptional<Shape[k]> : Shape[k];
+    },
+    Config
+  >;
+
   // required
   required(): ZodObject<
     {
@@ -1648,6 +1664,9 @@ function _zodObjectMethods(): _LazyMethodsOf<ZodObject> {
     },
     partial(...args) {
       return util.partial(ZodOptional, this, args[0]);
+    },
+    exactPartial(...args) {
+      return util.partial(ZodExactOptional, this, args[0], "exactPartial");
     },
     required(...args) {
       return util.required(ZodNonOptional, this, args[0]);
@@ -2180,7 +2199,7 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
 
           if (_issue.fatal) _issue.continue = false;
           _issue.code ??= "custom";
-          _issue.input ??= payload.value;
+          if (!("input" in _issue)) _issue.input = payload.value;
           _issue.inst ??= inst;
           // _issue.continue ??= true;
           payload.issues.push(util.issue(_issue));
