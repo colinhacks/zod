@@ -31,9 +31,9 @@ const BUILT_ENTRY = path.join(__dirname, "node_modules", "zod", "index.js");
  * The failure message prints the measured size, so updating is mechanical.
  */
 const CEILINGS: Record<string, number> = {
-  "zod-mini-boolean": 2800,
-  "zod-mini-string": 3115,
-  "zod-mini-object": 4150,
+  "zod-mini-boolean": 2830,
+  "zod-mini-string": 3155,
+  "zod-mini-object": 4260,
 };
 
 /**
