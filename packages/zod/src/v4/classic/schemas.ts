@@ -1797,7 +1797,7 @@ export interface ZodDiscriminatedUnion<
   def: core.$ZodDiscriminatedUnionDef<Options, Disc>;
   /** Returns the option schema matching the given discriminator value. */
   get<V extends DiscriminatorValue<Options, Disc>>(value: V): DiscriminatedOption<Options, Disc, V>;
-  /** A read-only map from each valid discriminator value to its corresponding option schema. */
+  /** Maps each valid discriminator value to its option schema. Shared with the parse path, so `ReadonlyMap` holds at compile time only — mutating it corrupts parsing. */
   readonly optionsMap: ReadonlyMap<DiscriminatorValue<Options, Disc>, Options[number]>;
 }
 export const ZodDiscriminatedUnion: core.$constructor<ZodDiscriminatedUnion> = /*@__PURE__*/ core.$constructor(
@@ -1805,14 +1805,19 @@ export const ZodDiscriminatedUnion: core.$constructor<ZodDiscriminatedUnion> = /
   (inst, def) => {
     ZodUnion.init(inst, def);
     core.$ZodDiscriminatedUnion.init(inst, def);
-    _installLazyMethods(inst, "ZodDiscriminatedUnion", {
-      get(value: any) {
-        return this._zod.optionsMap.get(value) as any;
-      },
-    } as any);
+    _installLazyMethods(inst, "get", _zodDiscriminatedUnionMethods);
     util.defineLazy(inst, "optionsMap", () => inst._zod.optionsMap as any);
   }
 );
+
+// `DiscriminatorValue`/`DiscriminatedOption` collapse to `never` under the interface's default type arguments, so the body is typed against the erased signature and asserted back.
+function _zodDiscriminatedUnionMethods(): _LazyMethodsOf<ZodDiscriminatedUnion> {
+  return {
+    get(this: ZodDiscriminatedUnion, value: util.Primitive) {
+      return this._zod.optionsMap.get(value);
+    },
+  } as _LazyMethodsOf<ZodDiscriminatedUnion>;
+}
 
 export function discriminatedUnion<
   Types extends readonly [core.$ZodTypeDiscriminable<Disc>, ...core.$ZodTypeDiscriminable<Disc>[]],

@@ -2472,7 +2472,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
       return propValues;
     });
 
-    util.defineLazy(inst._zod, "optionsMap", () => {
+    const disc = util.cached(() => {
       const opts = def.options as $ZodTypeDiscriminable[];
       const map: Map<util.Primitive, $ZodType> = new Map();
       for (const o of opts) {
@@ -2486,8 +2486,11 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
           map.set(v, o);
         }
       }
-      return map as ReadonlyMap<util.Primitive, $ZodType>;
+      return map;
     });
+
+    // The parse path keeps reading `disc.value`: `defineLazy` latches on a throwing getter and returns `undefined` on every later read, which would turn a duplicate-discriminator error into a TypeError on the second parse.
+    util.defineLazy(inst._zod, "optionsMap", () => disc.value);
 
     inst._zod.parse = (payload, ctx) => {
       const input = payload.value;
@@ -2502,7 +2505,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
         return payload;
       }
 
-      const opt = inst._zod.optionsMap.get(input?.[def.discriminator] as any);
+      const opt = disc.value.get(input?.[def.discriminator] as any);
       if (opt) {
         return opt._zod.run(payload, ctx) as any;
       }
@@ -2520,7 +2523,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
         errors: [],
         note: "No matching discriminator",
         discriminator: def.discriminator,
-        options: Array.from(inst._zod.optionsMap.keys()),
+        options: Array.from(disc.value.keys()),
         input,
         path: [def.discriminator],
         inst,

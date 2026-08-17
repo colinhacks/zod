@@ -723,6 +723,49 @@ test("get(value) — single member with multiple discriminator values", () => {
   expectTypeOf(schema.get("x")).toEqualTypeOf<typeof a>();
   expectTypeOf(schema.get("z")).toEqualTypeOf<typeof b>();
 });
+
+test("a duplicate discriminator reports the same error on every parse", () => {
+  const schema = z.discriminatedUnion("type", [
+    z.object({ type: z.literal("dup"), a: z.string() }),
+    z.object({ type: z.literal("dup"), b: z.string() }),
+  ]);
+
+  // Detection is lazy, so the first parse builds the map and throws. Reading `optionsMap` must not latch that failure into a `TypeError` on later parses.
+  for (let i = 0; i < 3; i++) {
+    expect(() => schema.safeParse({ type: "dup", a: "x" })).toThrow(/Duplicate discriminator value "dup"/);
+  }
+  expect(() => schema.optionsMap).toThrow(/Duplicate discriminator value "dup"/);
+});
+
+test("get is installed on the prototype exactly once", () => {
+  const mk = () =>
+    z.discriminatedUnion("type", [z.object({ type: z.literal("a") }), z.object({ type: z.literal("b") })]);
+  const proto = Object.getPrototypeOf(mk());
+  expect(Object.getOwnPropertyDescriptor(proto, "get")?.get).toBeInstanceOf(Function);
+
+  // The sentinel must be a key this group defines, or every later construction redefines the accessor and drops the prototype into dictionary mode.
+  const define = Object.defineProperty;
+  let redefines = 0;
+  Object.defineProperty = (obj: any, key: any, desc: any) => {
+    if (obj === proto && key === "get") redefines++;
+    return define(obj, key, desc);
+  };
+  try {
+    mk();
+    mk();
+  } finally {
+    Object.defineProperty = define;
+  }
+  expect(redefines).toEqual(0);
+
+  // Reading it caches on the instance, and it stays usable when detached.
+  const schema = mk();
+  expect(Object.prototype.hasOwnProperty.call(schema, "get")).toEqual(false);
+  const get = schema.get;
+  expect(get("a")).toBe(schema.options[0]);
+  expect(Object.prototype.hasOwnProperty.call(schema, "get")).toEqual(true);
+});
+
 test.each(["__proto__", "constructor", "toString", "hasOwnProperty", "valueOf"])(
   "Object.prototype discriminator name: %s",
   (key) => {
