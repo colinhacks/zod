@@ -42,11 +42,6 @@ export interface ParsePayload<T = unknown> {
   issues: errors.$ZodRawIssue[];
   /** A way to mark a whole payload as aborted. Used in codecs/pipes. */
   aborted?: boolean;
-  /** @internal Marks a value as a fallback that an outer wrapper (e.g.
-   * $ZodOptional) may override with its own interpretation when input was
-   * undefined. Set by $ZodCatch when catchValue substitutes and by every
-   * $ZodTransform invocation. */
-  fallback?: boolean | undefined;
   /** @internal Set when the value came from a repeat visit to a node still being
    * parsed. Its checks run on the node itself, against the finished value. */
   memo?: boolean | undefined;
@@ -129,8 +124,13 @@ export interface _$ZodTypeInternals {
    * @default Required
    */
 
-  /** @internal */
-  optin?: "optional" | undefined;
+  /** @internal Three rungs, each strictly stronger than the last:
+   *   undefined    — required; the container may not omit this slot
+   *   "optional"   — the container may omit it; nothing is supplied in its place
+   *   "defaulted"  — the container may omit it AND this schema substitutes a value
+   * Consumers asking "may the slot be absent?" test `!== undefined`.
+   * $ZodOptional asks the stronger question and tests `=== "defaulted"`. */
+  optin?: "optional" | "defaulted" | undefined;
   /** @internal */
   optout?: "optional" | undefined;
 
@@ -1760,7 +1760,7 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
 //////////////////////////////////////////
 
 type OptionalOutSchema = { _zod: { optout: "optional" } };
-type OptionalInSchema = { _zod: { optin: "optional" } };
+type OptionalInSchema = { _zod: { optin: "optional" | "defaulted" } };
 
 export type $InferObjectOutput<T extends $ZodLooseShape, Extra extends Record<string, unknown>> = string extends keyof T
   ? util.IsAny<T[keyof T]> extends true
@@ -1938,7 +1938,7 @@ function handleCatchall(
   const keySet = def.keySet;
   const _catchall = def.catchall!._zod;
   const t = _catchall.def.type;
-  const isOptionalIn = _catchall.optin === "optional";
+  const isOptionalIn = _catchall.optin !== undefined;
   const isOptionalOut = _catchall.optout === "optional";
   for (const key in input) {
     // Must precede the __proto__ branch: a declared key is not unrecognized, even though the shape loop deliberately strips __proto__ from the parsed output.
@@ -2041,7 +2041,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     for (const key of value.keys) {
       if (key === "__proto__") continue;
       const el = shape[key]!;
-      const isOptionalIn = el._zod.optin === "optional";
+      const isOptionalIn = el._zod.optin !== undefined;
       const isOptionalOut = el._zod.optout === "optional";
 
       const r = el._zod.run({ value: input[key], issues: [] }, ctx);
@@ -2096,7 +2096,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         const k = util.esc(key);
         const isPresent = `${k} in input`;
         const schema = shape[key];
-        const isOptionalIn = schema?._zod?.optin === "optional";
+        const isOptionalIn = schema?._zod?.optin !== undefined;
         const isOptionalOut = schema?._zod?.optout === "optional";
 
         doc.write(`const ${id} = ${parseStr(key)};`);
@@ -2235,7 +2235,7 @@ export interface $ZodUnionInternals<T extends readonly SomeType[] = readonly $Zo
   output: $InferUnionOutput<T[number]>;
   input: $InferUnionInput<T[number]>;
   // if any element in the union is optional, then the union is optional
-  optin: IsOptionalIn<T[number]> extends false ? "optional" | undefined : "optional";
+  optin: IsOptionalIn<T[number]> extends false ? "optional" | "defaulted" | undefined : "optional" | "defaulted";
   optout: IsOptionalOut<T[number]> extends false ? "optional" | undefined : "optional";
 }
 
@@ -2273,7 +2273,11 @@ export const $ZodUnion: core.$constructor<$ZodUnion> = /*@__PURE__*/ core.$const
   $ZodType.init(inst, def);
 
   util.defineLazy(inst._zod, "optin", () =>
-    def.options.some((o) => o._zod.optin === "optional") ? "optional" : undefined
+    def.options.some((o) => o._zod.optin === "defaulted")
+      ? "defaulted"
+      : def.options.some((o) => o._zod.optin !== undefined)
+        ? "optional"
+        : undefined
   );
 
   util.defineLazy(inst._zod, "optout", () =>
@@ -2719,7 +2723,7 @@ type TupleInputTypeWithOptionals<T extends util.TupleItems> = T extends readonly
   ...infer Prefix extends SomeType[],
   infer Tail extends SomeType,
 ]
-  ? Tail["_zod"]["optin"] extends "optional"
+  ? Tail["_zod"]["optin"] extends "optional" | "defaulted"
     ? [...TupleInputTypeWithOptionals<Prefix>, core.input<Tail>?]
     : TupleInputTypeNoOptionals<T>
   : [];
@@ -2843,7 +2847,9 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
 
 function getTupleOptStart(items: readonly $ZodType[], key: "optin" | "optout") {
   for (let i = items.length - 1; i >= 0; i--) {
-    if (items[i]._zod[key] !== "optional") return i + 1;
+    // optin is a three-rung ladder so any rung above `undefined` permits an absent slot; optout stays two-valued.
+    const omittable = key === "optin" ? items[i]._zod.optin !== undefined : items[i]._zod.optout === "optional";
+    if (!omittable) return i + 1;
   }
   return 0;
 }
@@ -3557,7 +3563,6 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
         const output = _out instanceof Promise ? _out : Promise.resolve(_out);
         return output.then((output) => {
           payload.value = output;
-          payload.fallback = true;
           return payload;
         });
       }
@@ -3567,7 +3572,6 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
       }
 
       payload.value = _out;
-      payload.fallback = true;
       return payload;
     };
   }
@@ -3588,7 +3592,7 @@ export interface $ZodOptionalDef<T extends SomeType = $ZodType> extends $ZodType
 export interface $ZodOptionalInternals<T extends SomeType = $ZodType>
   extends $ZodTypeInternals<core.output<T> | undefined, core.input<T> | undefined> {
   def: $ZodOptionalDef<T>;
-  optin: "optional";
+  optin: "optional" | "defaulted";
   optout: "optional";
   isst: never;
   values: T["_zod"]["values"];
@@ -3599,10 +3603,9 @@ export interface $ZodOptional<T extends SomeType = $ZodType> extends $ZodType {
   _zod: $ZodOptionalInternals<T>;
 }
 
-function handleOptionalResult(result: ParsePayload, input: unknown) {
-  if (input === undefined && (result.issues.length || result.fallback)) {
-    return { issues: [], value: undefined };
-  }
+function handleOptionalResult(result: ParsePayload) {
+  // A substituting schema that still failed has no usable answer; yield undefined.
+  if (result.issues.length) return { issues: [], value: undefined };
   return result;
 }
 
@@ -3610,7 +3613,8 @@ export const $ZodOptional: core.$constructor<$ZodOptional> = /*@__PURE__*/ core.
   "$ZodOptional",
   (inst, def) => {
     $ZodType.init(inst, def);
-    inst._zod.optin = "optional";
+    // .optional() propagates absence rather than substituting for it, so a defaulted inner keeps its rung.
+    util.defineLazy(inst._zod, "optin", () => (def.innerType._zod.optin === "defaulted" ? "defaulted" : "optional"));
     inst._zod.optout = "optional";
 
     util.defineLazy(inst._zod, "values", () => {
@@ -3622,14 +3626,12 @@ export const $ZodOptional: core.$constructor<$ZodOptional> = /*@__PURE__*/ core.
     });
 
     inst._zod.parse = (payload, ctx) => {
-      if (def.innerType._zod.optin === "optional") {
-        const input = payload.value;
-        const result = def.innerType._zod.run(payload, ctx);
-        if (result instanceof Promise) return result.then((r) => handleOptionalResult(r, input));
-        return handleOptionalResult(result, input);
-      }
       if (payload.value === undefined) {
-        return payload;
+        // Only the top rung substitutes a value for absence; everything else leaves it intact, which is what .optional() means.
+        if (def.innerType._zod.optin !== "defaulted") return payload;
+        const result = def.innerType._zod.run(payload, ctx);
+        if (result instanceof Promise) return result.then(handleOptionalResult);
+        return handleOptionalResult(result);
       }
       return def.innerType._zod.run(payload, ctx);
     };
@@ -3743,7 +3745,7 @@ export interface $ZodDefaultDef<T extends SomeType = $ZodType> extends $ZodTypeD
 export interface $ZodDefaultInternals<T extends SomeType = $ZodType>
   extends $ZodTypeInternals<util.NoUndefined<core.output<T>>, core.input<T> | undefined> {
   def: $ZodDefaultDef<T>;
-  optin: "optional";
+  optin: "defaulted";
   optout?: "optional" | undefined; // required
   isst: never;
   values: T["_zod"]["values"];
@@ -3759,7 +3761,7 @@ export const $ZodDefault: core.$constructor<$ZodDefault> = /*@__PURE__*/ core.$c
     $ZodType.init(inst, def);
 
     // inst._zod.qin = "true";
-    inst._zod.optin = "optional";
+    inst._zod.optin = "defaulted";
     util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
 
     inst._zod.parse = (payload, ctx) => {
@@ -3810,7 +3812,7 @@ export interface $ZodPrefaultDef<T extends SomeType = $ZodType> extends $ZodType
 export interface $ZodPrefaultInternals<T extends SomeType = $ZodType>
   extends $ZodTypeInternals<util.NoUndefined<core.output<T>>, core.input<T> | undefined> {
   def: $ZodPrefaultDef<T>;
-  optin: "optional";
+  optin: "defaulted";
   optout?: "optional" | undefined;
   isst: never;
   values: T["_zod"]["values"];
@@ -3825,7 +3827,7 @@ export const $ZodPrefault: core.$constructor<$ZodPrefault> = /*@__PURE__*/ core.
   (inst, def) => {
     $ZodType.init(inst, def);
 
-    inst._zod.optin = "optional";
+    inst._zod.optin = "defaulted";
     util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
 
     inst._zod.parse = (payload, ctx) => {
@@ -4019,7 +4021,7 @@ export interface $ZodCatch<T extends SomeType = $ZodType> extends $ZodType {
 
 export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$constructor("$ZodCatch", (inst, def) => {
   $ZodType.init(inst, def);
-  inst._zod.optin = "optional";
+  util.defineLazy(inst._zod, "optin", () => (def.innerType._zod.optin === "defaulted" ? "defaulted" : "optional"));
   util.defineLazy(inst._zod, "optout", () => def.innerType._zod.optout);
   util.defineLazy(inst._zod, "values", () => def.innerType._zod.values);
 
@@ -4042,7 +4044,6 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
             input: payload.value,
           });
           payload.issues = [];
-          payload.fallback = true;
         }
 
         return payload;
@@ -4060,7 +4061,6 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
       });
 
       payload.issues = [];
-      payload.fallback = true;
     }
 
     return payload;
@@ -4166,7 +4166,7 @@ function handlePipeResult(left: ParsePayload, next: $ZodType, ctx: ParseContextI
     left.aborted = true;
     return left;
   }
-  return next._zod.run({ value: left.value, issues: left.issues, fallback: left.fallback }, ctx);
+  return next._zod.run({ value: left.value, issues: left.issues }, ctx);
 }
 
 ////////////////////////////////////////////
