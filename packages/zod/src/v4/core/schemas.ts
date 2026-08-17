@@ -2009,6 +2009,16 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
           util.assignProp(propValues, key, new Set());
         }
         for (const v of field.values) propValues[key].add(v);
+        // If this field accepts `undefined` as a valid input (e.g. wrapped in
+        // ZodDefault or ZodOptional), include `undefined` in the propValues set
+        // so that discriminated unions can correctly route inputs where the
+        // discriminator key is absent or explicitly `undefined`.
+        // ZodOptional already adds `undefined` to its own `.values`, so this
+        // branch only widens the set for schemas like ZodDefault that accept
+        // `undefined` as input but do not expose it in their output `values`.
+        if (field.optin === "optional" && !field.values.has(undefined)) {
+          propValues[key].add(undefined);
+        }
       }
     }
     return propValues;
