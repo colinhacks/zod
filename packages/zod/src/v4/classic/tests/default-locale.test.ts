@@ -1,9 +1,7 @@
 import { beforeEach, expect, test } from "vitest";
 import * as z from "zod/v4";
 
-// English is the default locale and must register on first ZodType
-// construction even when bundlers tree-shake `sideEffects: false` modules
-// (#5953, #5725). Reset between tests so each one observes the lazy init.
+// English is the default locale and must register on first ZodType construction even when bundlers tree-shake `sideEffects: false` modules (#5953, #5725). Reset between tests so each one observes the lazy init.
 beforeEach(() => {
   z.config({ localeError: undefined });
 });

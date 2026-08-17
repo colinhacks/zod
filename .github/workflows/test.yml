@@ -54,6 +54,7 @@ jobs:
       - run: pnpm install
       - run: pnpm format:check
       - run: pnpm lint:check
+      - run: pnpm check:comments
 
   check-circular:
     runs-on: ubuntu-latest

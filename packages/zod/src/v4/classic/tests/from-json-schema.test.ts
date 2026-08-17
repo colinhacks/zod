@@ -54,6 +54,33 @@ test("number with constraints", () => {
   expect(() => schema.parse(47)).toThrow(); // not multiple of 5
 });
 
+test("draft-04 boolean exclusive bounds do not emit a redundant inclusive bound", () => {
+  const schema = fromJSONSchema({
+    type: "number",
+    minimum: 5,
+    maximum: 10,
+    exclusiveMinimum: true,
+    exclusiveMaximum: true,
+  });
+  // exclusive on both ends: boundaries rejected, interior accepted
+  expect(() => schema.parse(5)).toThrow();
+  expect(() => schema.parse(10)).toThrow();
+  expect(schema.parse(7)).toBe(7);
+  // the dominated inclusive bound would otherwise report a second, weaker issue alongside the exclusive one
+  expect(schema.safeParse(4).error!.issues).toHaveLength(1);
+  expect(schema.safeParse(11).error!.issues).toHaveLength(1);
+  // the inclusive .min()/.max() must be skipped so only the exclusive checks remain
+  const checks = (schema as any)._zod.def.checks.map((c: any) => [
+    c._zod.def.check,
+    c._zod.def.value,
+    c._zod.def.inclusive,
+  ]);
+  expect(checks).toEqual([
+    ["greater_than", 5, false],
+    ["less_than", 10, false],
+  ]);
+});
+
 test("integer schema", () => {
   const schema = fromJSONSchema({ type: "integer" });
   expect(schema.parse(42)).toBe(42);
@@ -615,9 +642,7 @@ test("propertyNames survives a toJSONSchema round trip", () => {
 });
 
 test("patternProperties with regular properties", () => {
-  // Note: When patternProperties is combined with properties, the intersection
-  // validates all keys against the pattern. This test uses a pattern that
-  // matches the regular property name as well.
+  // Note: When patternProperties is combined with properties, the intersection validates all keys against the pattern. This test uses a pattern that matches the regular property name as well.
   const schema = fromJSONSchema({
     type: "object",
     properties: {
@@ -713,8 +738,7 @@ test("default value", () => {
     type: "string",
     default: "hello",
   });
-  // Default is applied during parsing if value is missing/undefined
-  // This depends on Zod's default behavior
+  // Default is applied during parsing if value is missing/undefined. This depends on Zod's default behavior
   expect(schema.parse("world")).toBe("world");
 });
 
@@ -799,6 +823,15 @@ test("string format - date-time", () => {
 
   const roundTripped = fromJSONSchema(z.toJSONSchema(z.iso.datetime({ offset: true })));
   expect(roundTripped.safeParse("2026-07-29T16:30:00+02:00").success).toBe(true);
+});
+
+test("string format - hostname", () => {
+  const schema = fromJSONSchema({
+    type: "string",
+    format: "hostname",
+  });
+  expect(schema.parse("example.com")).toBe("example.com");
+  expect(() => schema.parse("not a hostname!")).toThrow();
 });
 
 test("exclusiveMinimum and exclusiveMaximum", () => {
@@ -992,8 +1025,7 @@ test("metadata on nested schemas", () => {
   // Verify parent schema has its metadata
   expect(customRegistry.get(parentSchema)?.title).toBe("User");
 
-  // We can't easily access nested schemas directly, but we can verify
-  // the registry is being used correctly by checking a separate schema
+  // We can't easily access nested schemas directly, but we can verify the registry is being used correctly by checking a separate schema
   const simpleSchema = fromJSONSchema(
     {
       type: "string",
@@ -1017,8 +1049,7 @@ test("no metadata added when no unrecognized keys", () => {
     { registry: customRegistry }
   );
 
-  // description is handled via .describe(), so it shouldn't be in metadata
-  // All other keys are recognized, so no metadata should be added
+  // description is handled via .describe(), so it shouldn't be in metadata. All other keys are recognized, so no metadata should be added
   expect(customRegistry.get(schema)).toBeUndefined();
 });
 
@@ -1238,9 +1269,7 @@ test("Date default is coerced to its JSON string form", () => {
   expect(schema.parse(undefined)).toBe(date.toISOString());
 });
 
-// An object literal can't express an own "__proto__" key — `{ __proto__: x }`
-// sets the literal's prototype instead. JSON.parse is both the realistic source
-// of a JSON Schema and the only way to write these cases.
+// An object literal can't express an own "__proto__" key — `{ __proto__: x }` sets the literal's prototype instead. JSON.parse is both the realistic source of a JSON Schema and the only way to write these cases.
 test("required __proto__ property is represented in the shape but stripped during parsing", () => {
   const schema = fromJSONSchema(
     JSON.parse(`{

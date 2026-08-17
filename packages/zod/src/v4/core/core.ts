@@ -40,8 +40,7 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
       try {
         Object.defineProperty(inst, "_zod", _zodDesc);
       } finally {
-        // Cleared even on throw, so the shared descriptor never leaks one
-        // instance's internals into the next.
+        // Cleared even on throw, so the shared descriptor never leaks one instance's internals into the next.
         _zodDesc.value = undefined;
       }
     }
@@ -54,8 +53,7 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
 
     initializer(inst, def);
 
-    // support prototype modifications; for-in avoids the array
-    // allocation of Object.keys on the (usually empty) prototype
+    // support prototype modifications; for-in avoids the array allocation of Object.keys on the (usually empty) prototype
     const proto = _.prototype;
     for (const k in proto) {
       if (!Object.prototype.hasOwnProperty.call(proto, k)) continue;
@@ -78,8 +76,7 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
       for (const fn of deferred) {
         fn();
       }
-      // Released: initializers run once, and the list would otherwise be
-      // retained for the schema's lifetime.
+      // Released: initializers run once, and the list would otherwise be retained for the schema's lifetime.
       inst._zod.deferred = undefined;
     }
     return inst;

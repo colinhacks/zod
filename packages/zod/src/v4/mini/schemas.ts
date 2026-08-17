@@ -1005,6 +1005,30 @@ export function partial(schema: ZodMiniObject, mask?: object) {
   return util.partial(ZodMiniOptional, schema, mask);
 }
 
+// @__NO_SIDE_EFFECTS__
+export function exactPartial<T extends ZodMiniObject>(
+  schema: T
+): ZodMiniObject<
+  {
+    -readonly [k in keyof T["shape"]]: ZodMiniExactOptional<T["shape"][k]>;
+  },
+  T["_zod"]["config"]
+>;
+// @__NO_SIDE_EFFECTS__
+export function exactPartial<T extends ZodMiniObject, M extends util.Mask<keyof T["shape"]>>(
+  schema: T,
+  mask: M & Record<Exclude<keyof M, keyof T["shape"]>, never>
+): ZodMiniObject<
+  {
+    -readonly [k in keyof T["shape"]]: k extends keyof M ? ZodMiniExactOptional<T["shape"][k]> : T["shape"][k];
+  },
+  T["_zod"]["config"]
+>;
+// @__NO_SIDE_EFFECTS__
+export function exactPartial(schema: ZodMiniObject, mask?: object) {
+  return util.partial(ZodMiniExactOptional, schema, mask, "exactPartial");
+}
+
 export type RequiredInterfaceShape<
   Shape extends core.$ZodLooseShape,
   Keys extends PropertyKey = keyof Shape,
@@ -1815,8 +1839,7 @@ export function check<O = unknown>(fn: core.CheckFn<O>, params?: string | core.$
   return ch;
 }
 
-// ZodCustom
-// custom schema
+// ZodCustom custom schema
 // @__NO_SIDE_EFFECTS__
 export function custom<O = unknown, I = O>(
   fn?: (data: O) => unknown,

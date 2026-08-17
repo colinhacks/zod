@@ -3864,8 +3864,7 @@ export class ZodFunction<Args extends ZodTuple<any, any>, Returns extends ZodTyp
     const fn = ctx.data;
 
     if (this._def.returns instanceof ZodPromise) {
-      // Would love a way to avoid disabling this rule, but we need
-      // an alias (using an arrow function was what caused 2651).
+      // Would love a way to avoid disabling this rule, but we need an alias (using an arrow function was what caused 2651).
       // eslint-disable-next-line @typescript-eslint/no-this-alias
       const me = this;
       return OK(async function (this: any, ...args: any[]) {
@@ -3884,8 +3883,7 @@ export class ZodFunction<Args extends ZodTuple<any, any>, Returns extends ZodTyp
         return parsedReturns;
       });
     } else {
-      // Would love a way to avoid disabling this rule, but we need
-      // an alias (using an arrow function was what caused 2651).
+      // Would love a way to avoid disabling this rule, but we need an alias (using an arrow function was what caused 2651).
       // eslint-disable-next-line @typescript-eslint/no-this-alias
       const me = this;
       return OK(function (this: any, ...args: any[]) {

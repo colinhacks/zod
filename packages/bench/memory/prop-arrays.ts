@@ -23,8 +23,7 @@ for (let i = 0; i < N; i++) sink.push(factories[which]!());
 const file = snapshotNow("props");
 const g = loadGraph(file);
 
-// For every node that owns an "(object properties)" child, record the owner's
-// kind and the child's size.
+// For every node that owns an "(object properties)" child, record the owner's kind and the child's size.
 const byOwner = new Map<string, { count: number; bytes: number }>();
 for (let i = 0; i < g.count; i++) {
   for (const e of g.edgesOf(i)) {

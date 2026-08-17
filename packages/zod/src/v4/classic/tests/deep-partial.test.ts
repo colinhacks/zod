@@ -109,9 +109,7 @@ describe("deepPartial", () => {
     });
     const partial = deepPartial(Category);
     expectTypeOf(partial).toExtend<z.ZodObject>();
-    // Should not blow up TS recursion depth. We don't assert on the
-    // inner recursive reference — depth-limited DeepPartial shells out
-    // after one unfold.
+    // Should not blow up TS recursion depth. We don't assert on the inner recursive reference — depth-limited DeepPartial shells out after one unfold.
     expect(partial.parse({ subcategories: [{}] })).toEqual({ subcategories: [{}] });
   });
 

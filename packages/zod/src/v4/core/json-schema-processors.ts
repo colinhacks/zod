@@ -3,8 +3,10 @@ import type * as JSONSchema from "./json-schema.js";
 import type { $ZodRegistry } from "./registries.js";
 import type * as schemas from "./schemas.js";
 import {
+  type ProcessParams,
   type Processor,
   type RegistryToJSONSchemaParams,
+  type ToJSONSchemaContext,
   type ToJSONSchemaParams,
   type ZodStandardJSONSchemaPayload,
   extractDefs,
@@ -37,8 +39,7 @@ export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _jso
     json.format = formatMap[format as checks.$ZodStringFormats] ?? format;
     if (json.format === "") delete json.format; // empty format is not valid
 
-    // JSON Schema format: "time" requires a full time with offset or Z
-    // z.iso.time() does not include timezone information, so format: "time" should never be used
+    // JSON Schema format: "time" requires a full time with offset or Z. z.iso.time() does not include timezone information, so format: "time" should never be used
     if (format === "time") {
       delete json.format;
     }
@@ -263,6 +264,22 @@ export const arrayProcessor: Processor<schemas.$ZodArray> = (schema, ctx, _json,
   });
 };
 
+// Transform and catch set `optin = "optional"` at runtime so the parser lets them observe an
+// absent key, but their declared input type stays required. An input JSON Schema describes the
+// declared type, so resolve past them to the schema that actually carries the optionality.
+// Used by both `objectProcessor` (for `required`) and `tupleProcessor` (for `minItems`); see
+// wiki/optionality.md, "The JSON Schema emitter reads the *static* value".
+function inputOptin(schema: schemas.$ZodType): "optional" | "defaulted" | undefined {
+  const def = schema._zod.def;
+  if (def.type === "pipe" && (def as schemas.$ZodPipeDef).in._zod.traits.has("$ZodTransform")) {
+    return inputOptin((def as schemas.$ZodPipeDef).out);
+  }
+  if (def.type === "catch") {
+    return inputOptin((def as schemas.$ZodCatchDef).innerType);
+  }
+  return schema._zod.optin;
+}
+
 export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _json, params) => {
   const json = _json as JSONSchema.ObjectSchema;
   const def = schema._zod.def as schemas.$ZodObjectDef;
@@ -271,8 +288,7 @@ export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _jso
   const shape = def.shape;
 
   for (const key in shape) {
-    // assignProp so a __proto__ key becomes an own property instead of hitting
-    // the inherited setter on the plain {} we build into
+    // assignProp so a __proto__ key becomes an own property instead of hitting the inherited setter on the plain {} we build into
     assignProp(
       json.properties,
       key,
@@ -287,11 +303,11 @@ export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _jso
   const allKeys = new Set(Object.keys(shape));
   const requiredKeys = new Set(
     [...allKeys].filter((key) => {
-      const v = def.shape[key]!._zod;
+      const field = def.shape[key]!;
       if (ctx.io === "input") {
-        return v.optin === undefined;
+        return inputOptin(field) === undefined;
       } else {
-        return v.optout === undefined;
+        return field._zod.optout === undefined;
       }
     })
   );
@@ -317,8 +333,7 @@ export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _jso
 
 export const unionProcessor: Processor<schemas.$ZodUnion> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodUnionDef;
-  // Exclusive unions (inclusive === false) use oneOf (exactly one match) instead of anyOf (one or more matches)
-  // This includes both z.xor() and discriminated unions
+  // Exclusive unions (inclusive === false) use oneOf (exactly one match) instead of anyOf (one or more matches). This includes both z.xor() and discriminated unions
   const isExclusive = def.inclusive === false;
   const options = def.options.map((x, i) =>
     process(x, ctx as any, {
@@ -374,9 +389,11 @@ export const tupleProcessor: Processor<schemas.$ZodTuple> = (schema, ctx, _json,
       })
     : null;
 
-  const optKey = ctx.io === "input" ? "optin" : "optout";
   let minItems = def.items.length;
-  while (minItems > 0 && (def.items[minItems - 1] as schemas.SomeType)._zod[optKey] === "optional") {
+  while (minItems > 0) {
+    const item = def.items[minItems - 1] as schemas.$ZodType;
+    const optional = ctx.io === "input" ? inputOptin(item) !== undefined : item._zod.optout === "optional";
+    if (!optional) break;
     minItems--;
   }
   const maxItems = def.items.length;
@@ -426,9 +443,7 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
   const def = schema._zod.def as schemas.$ZodRecordDef;
   json.type = "object";
 
-  // For looseRecord with regex patterns, use patternProperties
-  // This correctly represents "only validate keys matching the pattern" semantics
-  // and composes well with allOf (intersections)
+  // For looseRecord with regex patterns, use patternProperties. This correctly represents "only validate keys matching the pattern" semantics and composes well with allOf (intersections)
   const keyType = def.keyType as schemas.$ZodTypes;
   const keyBag = keyType._zod.bag as schemas.$ZodStringInternals<unknown>["bag"] | undefined;
   const patterns = keyBag?.patterns;
@@ -489,12 +504,35 @@ export const nonoptionalProcessor: Processor<schemas.$ZodNonOptional> = (schema,
   seen.ref = def.innerType;
 };
 
+/** Round-trips a default value through JSON so the emitted schema is guaranteed to be valid JSON.
+ * A BigInt has no reliable encoding, so it goes through `unrepresentable` like any other
+ * unrepresentable value. Returns a sentinel when the caller must not write a default of its own. */
+const UNREPRESENTABLE_DEFAULT = Symbol();
+function serializeDefaultValue(
+  value: unknown,
+  schema: schemas.$ZodType,
+  ctx: ToJSONSchemaContext,
+  json: JSONSchema.BaseSchema,
+  params: ProcessParams
+): any {
+  let unrepresentable = false;
+  const serialized = JSON.stringify(value, (_, val) => {
+    if (typeof val !== "bigint") return val;
+    unrepresentable = true;
+    return null;
+  });
+  if (!unrepresentable) return JSON.parse(serialized);
+  handleUnrepresentable(schema, ctx, json, params, "BigInt defaults cannot be represented in JSON Schema");
+  return UNREPRESENTABLE_DEFAULT;
+}
+
 export const defaultProcessor: Processor<schemas.$ZodDefault> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodDefaultDef;
   process(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
-  json.default = JSON.parse(JSON.stringify(def.defaultValue));
+  const value = serializeDefaultValue(def.defaultValue, schema, ctx as ToJSONSchemaContext, json, params);
+  if (value !== UNREPRESENTABLE_DEFAULT) json.default = value;
 };
 
 export const prefaultProcessor: Processor<schemas.$ZodPrefault> = (schema, ctx, json, params) => {
@@ -502,7 +540,9 @@ export const prefaultProcessor: Processor<schemas.$ZodPrefault> = (schema, ctx, 
   process(def.innerType, ctx as any, params);
   const seen = ctx.seen.get(schema)!;
   seen.ref = def.innerType;
-  if (ctx.io === "input") json._prefault = JSON.parse(JSON.stringify(def.defaultValue));
+  if (ctx.io !== "input") return;
+  const value = serializeDefaultValue(def.defaultValue, schema, ctx as ToJSONSchemaContext, json, params);
+  if (value !== UNREPRESENTABLE_DEFAULT) json._prefault = value;
 };
 
 export const catchProcessor: Processor<schemas.$ZodCatch> = (schema, ctx, json, params) => {

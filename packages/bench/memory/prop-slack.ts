@@ -6,8 +6,7 @@
  */
 import { fmtBytes, measureStable, table } from "./harness.js";
 
-// A constructor that assigns nothing, so V8 infers zero in-object slots and
-// every property lands in a growable backing store — same as $constructor.
+// A constructor that assigns nothing, so V8 infers zero in-object slots and every property lands in a growable backing store — same as $constructor.
 function Empty(this: any) {}
 
 function withProps(n: number): () => unknown {

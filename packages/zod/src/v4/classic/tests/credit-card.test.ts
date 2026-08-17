@@ -2,8 +2,7 @@ import { describe, expect, test } from "vitest";
 import * as z from "zod";
 
 describe("z.creditCard", () => {
-  // Luhn-valid PANs. The last four are the schemes an issuer allowlist would turn away —
-  // validation is shape plus Luhn only, so the BIN is never consulted.
+  // Luhn-valid PANs. The last four are the schemes an issuer allowlist would turn away — validation is shape plus Luhn only, so the BIN is never consulted.
   const valid: [string, string][] = [
     ["Visa", "4111111111111111"],
     ["Visa (13)", "4007000000027"],
