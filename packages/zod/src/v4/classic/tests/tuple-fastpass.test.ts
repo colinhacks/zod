@@ -1,18 +1,36 @@
-// Regression tests pinning the JIT fastpass for $ZodTuple. Each scenario
-// constructs the SAME schema once with the JIT enabled (default) and once
-// with `jitless: true`, parses identical input through both, and asserts
-// the outputs and issue paths match. Any divergence between the codegen
-// path and the interpreter path is a bug.
-//
-// The schemas are constructed *after* toggling `globalConfig.jitless`
-// because the fastpass enable flag is captured at construction time.
+// The codegen in `$ZodTupleJIT` is a second implementation of tuple parsing, so every shape here is built twice — once compiled, once forced onto the interpreter — and run over the whole input matrix. A divergence means classic Zod disagrees with `zod/mini`, with `jitless: true`, and with any runtime where `new Function` is unavailable.
 
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import * as z from "zod/v4";
 import { globalConfig } from "zod/v4/core";
 
-function buildJitless<T>(fn: () => T): T {
-  globalConfig.jitless = true;
+// Records object identity as `<ref N>`, so a dropped cycle is a diff rather than something a deep-equal check would wave through.
+function ser(v: unknown): string {
+  const seen = new Map<object, number>();
+  let counter = 0;
+  const walk = (x: unknown): string => {
+    if (x === null) return "null";
+    if (typeof x === "undefined") return "undef";
+    if (typeof x !== "object") return typeof x === "string" ? JSON.stringify(x) : String(x);
+    const prev = seen.get(x as object);
+    if (prev !== undefined) return `<ref ${prev}>`;
+    const id = counter++;
+    seen.set(x as object, id);
+    if (Array.isArray(x)) return `[${x.length}|${x.map(walk).join(",")}]`;
+    return `{${Object.keys(x as object)
+      .map((k) => `${k}:${walk((x as any)[k])}`)
+      .join(",")}}`;
+  };
+  return walk(v);
+}
+
+function norm(r: any): string {
+  if (r.success) return `OK ${ser(r.data)}`;
+  return `ERR ${r.error.issues.map((i: any) => `${i.code}@[${i.path.join(".")}]${i.expected ?? ""}${i.origin ?? ""}`).join(" | ")}`;
+}
+
+function under<T>(jitless: boolean, fn: () => T): T {
+  globalConfig.jitless = jitless;
   try {
     return fn();
   } finally {
@@ -20,110 +38,139 @@ function buildJitless<T>(fn: () => T): T {
   }
 }
 
-describe("tuple fastpass — JIT vs jitless parity", () => {
-  beforeEach(() => {
-    globalConfig.jitless = false;
-  });
-  afterEach(() => {
-    globalConfig.jitless = false;
-  });
+const shapes: Record<string, () => any> = {
+  plain3: () => z.tuple([z.string(), z.number(), z.boolean()]),
+  wide8: () =>
+    z.tuple([z.string(), z.number(), z.boolean(), z.string(), z.number(), z.boolean(), z.string(), z.number()]),
+  empty: () => z.tuple([]),
+  optTail: () => z.tuple([z.string(), z.string().optional(), z.string().optional()]),
+  optTailFailing: () =>
+    z.tuple([
+      z.string(),
+      z.string().optional(),
+      z
+        .string()
+        .optional()
+        .refine(() => false),
+    ]),
+  optTailFailingMid: () =>
+    z.tuple([
+      z.string(),
+      z
+        .string()
+        .optional()
+        .refine(() => false),
+      z.string().optional(),
+    ]),
+  withRest: () => z.tuple([z.string(), z.number()], z.string()),
+  restOptTail: () => z.tuple([z.string(), z.number().optional()], z.string()),
+  restFailing: () =>
+    z.tuple(
+      [z.string(), z.number()],
+      z.string().refine(() => false, "restfail")
+    ),
+  nestedObj: () => z.tuple([z.object({ a: z.string() }), z.number()]),
+  nestedTuple: () => z.tuple([z.string(), z.tuple([z.number(), z.number()])]),
+  defaults: () => z.tuple([z.string().default("d"), z.number()]),
+  transform: () => z.tuple([z.string().transform((s) => s.length), z.number()]),
+  explicitUndef: () => z.tuple([z.string(), z.string().or(z.undefined())]),
+  allOptional: () => z.tuple([z.string().optional(), z.string().optional()]),
+  catchItem: () => z.tuple([z.string().catch("c"), z.number()]),
+  checked: () => z.tuple([z.string(), z.number()]).refine((t: any) => t[1] > 0, "positive"),
+};
 
-  test("3 required items — happy path", () => {
-    const make = () => z.tuple([z.string(), z.number(), z.boolean()]);
-    const jit = make();
-    const jitless = buildJitless(make);
-    const input = ["x", 1, true];
-    expect(jit.parse(input)).toEqual(jitless.parse(input));
-  });
+const inputs: unknown[] = [
+  ["a", 1, true],
+  ["a", 1],
+  ["a"],
+  [],
+  ["a", 1, true, "extra"],
+  ["a", undefined, undefined],
+  ["a", 1, undefined],
+  [undefined, 1, true],
+  ["a", "notnum", true],
+  ["a", "notnum", 99],
+  [1, "notnum", true],
+  null,
+  undefined,
+  "notarray",
+  {},
+  { 0: "a", 1: 1, length: 2 },
+  ["a", 1, "x", "y"],
+  ["a", 1, 2, 3],
+  ["a", 1, "x", 9, "z"],
+  [{ a: "s" }, 1],
+  [{ a: 1 }, 1],
+  ["ok", [1, "bad"]],
+  new Array(3),
+  Object.assign(["a", 1, true], { extra: 1 }),
+  ["a", "b", "c", "d", "e", "f", "g", "h"],
+  ["a", 1, true, "b", 2, false, "c", 3],
+];
 
-  test("3 required items — invalid second element", () => {
-    const make = () => z.tuple([z.string(), z.number(), z.boolean()]);
-    const jit = make();
-    const jitless = buildJitless(make);
-    const input = ["x", "not-a-number", true];
-    const j = jit.safeParse(input);
-    const i = jitless.safeParse(input);
-    expect(j.success).toBe(false);
-    expect(i.success).toBe(false);
-    expect(j.error?.issues).toEqual(i.error?.issues);
-    expect(j.error?.issues[0]?.path).toEqual([1]);
-  });
+describe("tuple fastpass — compiled and interpreted paths agree", () => {
+  for (const [name, make] of Object.entries(shapes)) {
+    test(name, () => {
+      const jit = under(false, make);
+      const interpreted = under(true, make);
+      for (const input of inputs) {
+        expect(norm(jit.safeParse(input)), `input: ${ser(input)}`).toBe(norm(interpreted.safeParse(input)));
+      }
+    });
+  }
+});
 
-  test("nested tuple — issue path stays correct through both paths", () => {
-    const make = () => z.tuple([z.string(), z.tuple([z.number(), z.number()])]);
-    const jit = make();
-    const jitless = buildJitless(make);
-    const input = ["ok", [1, "bad"]];
-    const j = jit.safeParse(input);
-    const i = jitless.safeParse(input);
-    expect(j.error?.issues).toEqual(i.error?.issues);
-    expect(j.error?.issues[0]?.path).toEqual([1, 1]);
-  });
+describe("tuple fastpass — cycles", () => {
+  // `z.lazy` defers construction to the first parse, so the flag has to stay set across the parse, not just the build.
+  const cyclic: Record<string, { schema: () => any; input: () => unknown }> = {
+    "self-reference through an array": {
+      schema: () => {
+        const N: any = z.lazy(() => z.tuple([z.string(), z.array(N)]));
+        return N;
+      },
+      input: () => {
+        const a: any = ["a", []];
+        a[1].push(a);
+        return a;
+      },
+    },
+    "direct self-reference": {
+      schema: () => {
+        const N: any = z.lazy(() => z.tuple([z.string(), z.union([N, z.null()])]));
+        return N;
+      },
+      input: () => {
+        const a: any = ["a", null];
+        a[1] = a;
+        return a;
+      },
+    },
+    "shared node parsed twice": {
+      schema: () => z.tuple([z.object({ v: z.string() }), z.object({ v: z.string() })]),
+      input: () => {
+        const shared = { v: "s" };
+        return [shared, shared];
+      },
+    },
+  };
 
-  test("too_small / too_big invariants", () => {
-    const make = () => z.tuple([z.string(), z.string(), z.string()]);
-    const jit = make();
-    const jitless = buildJitless(make);
-    expect(jit.safeParse(["a"]).error?.issues).toEqual(jitless.safeParse(["a"]).error?.issues);
-    expect(jit.safeParse(["a", "b", "c", "d"]).error?.issues).toEqual(
-      jitless.safeParse(["a", "b", "c", "d"]).error?.issues
-    );
-  });
+  for (const [name, { schema, input }] of Object.entries(cyclic)) {
+    test(name, () => {
+      const run = (jitless: boolean) => under(jitless, () => norm(schema().safeParse(input())));
+      expect(run(false)).toBe(run(true));
+    });
+  }
 
-  test("rest element — extras validated", () => {
-    const make = () => z.tuple([z.string()], z.number());
-    const jit = make();
-    const jitless = buildJitless(make);
-    expect(jit.parse(["x", 1, 2, 3])).toEqual(jitless.parse(["x", 1, 2, 3]));
-    const j = jit.safeParse(["x", 1, "bad", 3]);
-    const i = jitless.safeParse(["x", 1, "bad", 3]);
-    expect(j.error?.issues).toEqual(i.error?.issues);
-    expect(j.error?.issues[0]?.path).toEqual([2]);
+  test("a self-referential tuple keeps its identity in the output", () => {
+    const N: any = z.lazy(() => z.tuple([z.string(), z.union([N, z.null()])]));
+    const a: any = ["a", null];
+    a[1] = a;
+    const out: any = N.parse(a);
+    expect(out[1]).toBe(out);
   });
+});
 
-  test("rest with no extras", () => {
-    const make = () => z.tuple([z.string()], z.number());
-    const jit = make();
-    const jitless = buildJitless(make);
-    expect(jit.parse(["x"])).toEqual(jitless.parse(["x"]));
-  });
-
-  test("optout tail — absent optional input truncates the result", () => {
-    const make = () => z.tuple([z.string(), z.string().optional(), z.string().optional()]);
-    const jit = make();
-    const jitless = buildJitless(make);
-    expect(jit.parse(["a"])).toEqual(jitless.parse(["a"]));
-    expect(jit.parse(["a", "b"])).toEqual(jitless.parse(["a", "b"]));
-    expect(jit.parse(["a", "b", "c"])).toEqual(jitless.parse(["a", "b", "c"]));
-  });
-
-  test("explicit undefined inside input is preserved (not truncated)", () => {
-    const make = () => z.tuple([z.string(), z.string().or(z.undefined())]);
-    const jit = make();
-    const jitless = buildJitless(make);
-    expect(jit.parse(["a", undefined])).toEqual(jitless.parse(["a", undefined]));
-  });
-
-  test("non-array input — invalid_type", () => {
-    const make = () => z.tuple([z.string()]);
-    const jit = make();
-    const jitless = buildJitless(make);
-    expect(jit.safeParse({ 0: "x", length: 1 }).error?.issues).toEqual(
-      jitless.safeParse({ 0: "x", length: 1 }).error?.issues
-    );
-  });
-
-  test("empty tuple", () => {
-    const make = () => z.tuple([]);
-    const jit = make();
-    const jitless = buildJitless(make);
-    expect(jit.parse([])).toEqual(jitless.parse([]));
-    expect(jit.safeParse(["unexpected"]).error?.issues).toEqual(jitless.safeParse(["unexpected"]).error?.issues);
-  });
-
-  test("async item falls through to non-fastpass path", async () => {
-    const make = () => z.tuple([z.string().refine(async (s) => s.length > 0)]);
-    const jit = make();
-    await expect(jit.parseAsync(["hi"])).resolves.toEqual(["hi"]);
-  });
+test("async items fall through to the interpreter", async () => {
+  const schema = z.tuple([z.string().refine(async (s) => s.length > 0)]);
+  await expect(schema.parseAsync(["hi"])).resolves.toEqual(["hi"]);
 });

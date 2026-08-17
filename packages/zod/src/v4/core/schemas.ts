@@ -2845,21 +2845,25 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
   };
 });
 
-// JIT-enabled tuple constructor — opt-in via `$ZodTupleJIT.init`. Mirrors
-// the $ZodObject / $ZodObjectJIT split: classic tuples extend this one,
-// mini stays on plain $ZodTuple to keep its eval-free runtime guarantee.
+// JIT-enabled tuple constructor — opt-in via `$ZodTupleJIT.init`. Mirrors the $ZodObject / $ZodObjectJIT split: classic tuples extend this one, mini stays on plain $ZodTuple to keep its eval-free runtime guarantee.
 export const $ZodTupleJIT: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$constructor(
   "$ZodTupleJIT",
   (inst, def) => {
     $ZodTuple.init(inst, def);
 
     const items = def.items;
+    const memo = inst._zod.memoizer;
     const superParse = inst._zod.parse;
     const generateFastpass = () => {
       const optoutStart = getTupleOptStart(items, "optout");
       const hasRest = !!def.rest;
-      const doc = new Doc(["items", "rest", "inst", "payload", "ctx"]);
+      const args = ["items", "rest", "inst", "payload", "ctx"];
+      if (memo) args.push("memo");
+      const doc = new Doc(args);
       doc.write(`const input = payload.value;`);
+
+      // The phases below run in the interpreter's order — allocate, length-check, run every item, run rest, then walk the item results. Reordering any of them is observable: rest issues have to land ahead of fixed-item issues, and the allocation has to happen before the `too_small` bail so a cycle still registers.
+      doc.write(memo ? `payload.value = memo.alloc(inst, payload, [], ctx);` : `payload.value = [];`);
       if (!hasRest) {
         const optinStart = getTupleOptStart(items, "optin");
         if (optinStart > 0) {
@@ -2872,23 +2876,11 @@ export const $ZodTupleJIT: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$co
         payload.issues.push({ code: "too_big", maximum: ${items.length}, inclusive: true, input, inst, origin: "array" });
       }`);
       }
-      doc.write(`payload.value = [];`);
+
       for (let i = 0; i < items.length; i++) {
-        // Inline per-item logic from `handleTupleResults`. The optout
-        // tail-truncation rule only fires when an absent input
-        // (i >= input.length) produces issues at index i >= optoutStart.
-        doc.write(`{
-        const r_${i} = items[${i}]._zod.run({ value: input[${i}], issues: [] }, ctx);
-        if (r_${i}.issues.length) {
-          ${i >= optoutStart ? `if (${i} >= input.length) { return payload; }` : ``}
-          payload.issues = payload.issues.concat(r_${i}.issues.map(iss => ({
-            ...iss,
-            path: iss.path ? [${i}, ...iss.path] : [${i}]
-          })));
-        }
-        payload.value[${i}] = r_${i}.value;
-      }`);
+        doc.write(`const r_${i} = items[${i}]._zod.run({ value: input[${i}], issues: [] }, ctx);`);
       }
+
       if (hasRest) {
         doc.write(`for (let i = ${items.length}; i < input.length; i++) {
         const r = rest._zod.run({ value: input[i], issues: [] }, ctx);
@@ -2901,8 +2893,22 @@ export const $ZodTupleJIT: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$co
         payload.value[i] = r.value;
       }`);
       }
+
+      // `handleTupleResults`, unrolled. The label stands in for its `break`: an absent optout item stops the walk but still falls through to the trailing truncation.
+      doc.write(`walk: {`);
+      for (let i = 0; i < items.length; i++) {
+        doc.write(`if (r_${i}.issues.length) {
+        ${i >= optoutStart ? `if (${i} >= input.length) { payload.value.length = ${i}; break walk; }` : ``}
+        payload.issues = payload.issues.concat(r_${i}.issues.map(iss => ({
+          ...iss,
+          path: iss.path ? [${i}, ...iss.path] : [${i}]
+        })));
+      }
+      payload.value[${i}] = r_${i}.value;`);
+      }
+      doc.write(`}`);
+
       if (optoutStart < items.length) {
-        // Mirror handleTupleResults's trailing-undefined truncation.
         doc.write(`for (let i = payload.value.length - 1; i >= input.length; i--) {
         if (items[i] && items[i]._zod.optout === "optional" && payload.value[i] === undefined) {
           payload.value.length = i;
@@ -2911,6 +2917,7 @@ export const $ZodTupleJIT: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$co
       }
       doc.write(`return payload;`);
       const fn = doc.compile();
+      if (memo) return (payload: any, ctx: any) => fn(items, def.rest, inst, payload, ctx, memo);
       return (payload: any, ctx: any) => fn(items, def.rest, inst, payload, ctx);
     };
 
