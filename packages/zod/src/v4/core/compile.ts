@@ -1615,10 +1615,19 @@ function generateDiscriminatedUnionCheck(
   doc.write(`let ${outputVar};`);
 
   let firstBranch = true;
+  const claimed = new Set<util.Primitive>();
   for (const option of def.options) {
     const values = option._zod.propValues?.[def.discriminator];
     if (!values || values.size === 0) {
       throw new ZodCompileUnsupportedError("discriminated union option without static discriminator values");
+    }
+
+    // Two options claiming one value are not discriminable, and the branch chain below would silently give it to the first. Declining to compile hands that back to the interpreter, whose own map build reports it.
+    for (const value of values) {
+      if (claimed.has(value)) {
+        throw new ZodCompileUnsupportedError(`duplicate discriminator value ${String(value)}`);
+      }
+      claimed.add(value);
     }
 
     const conditions = Array.from(values, (value) => literalEquality(ctx, discVar, value));
