@@ -27,7 +27,7 @@ test("optionality", () => {
   expect(b._zod.optout).toEqual("optional");
 
   const c = z.string().default("asdf");
-  expect(c._zod.optin).toEqual("optional");
+  expect(c._zod.optin).toEqual("defaulted");
   expect(c._zod.optout).toEqual(undefined);
 
   const d = z.string().optional().nullable();
@@ -35,27 +35,27 @@ test("optionality", () => {
   expect(d._zod.optout).toEqual("optional");
 
   const e = z.string().default("asdf").nullable();
-  expect(e._zod.optin).toEqual("optional");
+  expect(e._zod.optin).toEqual("defaulted");
   expect(e._zod.optout).toEqual(undefined);
 
   // z.undefined should NOT be optional
   const f = z.undefined();
   expect(f._zod.optin).toEqual(undefined);
   expect(f._zod.optout).toEqual(undefined);
-  expectTypeOf<typeof f._zod.optin>().toEqualTypeOf<"optional" | undefined>();
+  expectTypeOf<typeof f._zod.optin>().toEqualTypeOf<"optional" | "defaulted" | undefined>();
   expectTypeOf<typeof f._zod.optout>().toEqualTypeOf<"optional" | undefined>();
 
   // z.union should be optional if any of the types are optional
   const g = z.union([z.string(), z.undefined()]);
   expect(g._zod.optin).toEqual(undefined);
   expect(g._zod.optout).toEqual(undefined);
-  expectTypeOf<typeof g._zod.optin>().toEqualTypeOf<"optional" | undefined>();
+  expectTypeOf<typeof g._zod.optin>().toEqualTypeOf<"optional" | "defaulted" | undefined>();
   expectTypeOf<typeof g._zod.optout>().toEqualTypeOf<"optional" | undefined>();
 
   const h = z.union([z.string(), z.optional(z.string())]);
   expect(h._zod.optin).toEqual("optional");
   expect(h._zod.optout).toEqual("optional");
-  expectTypeOf<typeof h._zod.optin>().toEqualTypeOf<"optional">();
+  expectTypeOf<typeof h._zod.optin>().toEqualTypeOf<"optional" | "defaulted">();
   expectTypeOf<typeof h._zod.optout>().toEqualTypeOf<"optional">();
 });
 
@@ -64,7 +64,7 @@ test("pipe optionality", () => {
   const a = z.string().optional().pipe(z.string());
   expect(a._zod.optin).toEqual("optional");
   expect(a._zod.optout).toEqual(undefined);
-  expectTypeOf<typeof a._zod.optin>().toEqualTypeOf<"optional">();
+  expectTypeOf<typeof a._zod.optin>().toEqualTypeOf<"optional" | "defaulted">();
   expectTypeOf<typeof a._zod.optout>().toEqualTypeOf<"optional" | undefined>();
 
   const b = z
@@ -73,11 +73,11 @@ test("pipe optionality", () => {
     .pipe(z.string().optional());
   expect(b._zod.optin).toEqual(undefined);
   expect(b._zod.optout).toEqual("optional");
-  expectTypeOf<typeof b._zod.optin>().toEqualTypeOf<"optional" | undefined>();
+  expectTypeOf<typeof b._zod.optin>().toEqualTypeOf<"optional" | "defaulted" | undefined>();
   expectTypeOf<typeof b._zod.optout>().toEqualTypeOf<"optional">();
 
   const c = z.string().default("asdf").pipe(z.string());
-  expect(c._zod.optin).toEqual("optional");
+  expect(c._zod.optin).toEqual("defaulted");
   expect(c._zod.optout).toEqual(undefined);
 
   const d = z
@@ -202,7 +202,7 @@ test("exactOptional optionality", () => {
   const a = z.string().exactOptional();
   expect(a._zod.optin).toEqual("optional");
   expect(a._zod.optout).toEqual("optional");
-  expectTypeOf<typeof a._zod.optin>().toEqualTypeOf<"optional">();
+  expectTypeOf<typeof a._zod.optin>().toEqualTypeOf<"optional" | "defaulted">();
   expectTypeOf<typeof a._zod.optout>().toEqualTypeOf<"optional">();
 });
 

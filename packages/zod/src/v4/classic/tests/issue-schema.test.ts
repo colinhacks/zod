@@ -141,3 +141,43 @@ test("`inst` keeps its meaning and `schema` stays off the finalized issue", () =
   expect(Object.keys(tooSmall.error!.issues[0])).not.toContain("schema");
   expect(Object.keys(wrongType.error!.issues[0])).not.toContain("schema");
 });
+
+test("every error map kind receives the owning schema", () => {
+  const seen: Record<string, z.core.GlobalMeta | undefined> = {};
+  const capture = (key: string) => (issue: { schema?: z.core.$ZodType | undefined }) => {
+    seen[key] = issue.schema && z.globalRegistry.get(issue.schema);
+    return undefined;
+  };
+
+  z.string()
+    .min(5, { error: capture("check") })
+    .meta({ title: "Check" })
+    .safeParse("ab");
+
+  // A schema-bound map is only consulted for issues the schema itself raised, so this one needs a type error.
+  z.string({ error: capture("schema") })
+    .meta({ title: "Schema" })
+    .safeParse(123);
+
+  z.string()
+    .min(5)
+    .meta({ title: "Parse" })
+    .safeParse("ab", { error: capture("parse") });
+
+  z.config({ customError: capture("customError") });
+  z.string().min(5).meta({ title: "Custom" }).safeParse("ab");
+
+  // localeError carries the default English locale, so it is restored rather than cleared.
+  const localeError = z.config().localeError;
+  z.config({ customError: undefined, localeError: capture("localeError") });
+  z.string().min(5).meta({ title: "Locale" }).safeParse("ab");
+  z.config({ localeError });
+
+  expect(seen).toEqual({
+    check: { title: "Check" },
+    schema: { title: "Schema" },
+    parse: { title: "Parse" },
+    customError: { title: "Custom" },
+    localeError: { title: "Locale" },
+  });
+});
