@@ -1,5 +1,6 @@
 import type * as checks from "./checks.js";
 import type * as core from "./core.js";
+import { $ZodAsyncError } from "./core.js";
 import { Doc } from "./doc.js";
 import { isBackEdge, isRecursiveSchema } from "./memoizer.js";
 import * as regexes from "./regexes.js";
@@ -531,6 +532,11 @@ function generateOverwriteCheck(
 type CustomCheck = {
   _zod: { def: { check: "custom"; fn?: (value: unknown) => boolean }; check?: (payload: unknown) => unknown };
 };
+/** A predicate that hands back a thenable is an async check reached synchronously, and the interpreter throws `$ZodAsyncError` for it. Returning INVALID instead would be a bail-out, and a union reads a bail-out as a rejected branch and answers with a later one — so the throw has to survive into generated code. */
+function throwAsync(): never {
+  throw new $ZodAsyncError();
+}
+
 /** Shared `addIssue` for the spoofed payloads a refine, check or transform receives. Allocating one per call — a fresh closure plus a `this`-bound method on a fresh literal — pinned every payload-allocating schema at ~2.7M ops/sec against 135M for a plain object literal. It captures nothing per call; it only reaches `this.issues`. */
 function pushIssue(this: { issues: unknown[] }, issue: unknown): void {
   this.issues.push(issue);
@@ -545,10 +551,12 @@ function generateCustomRefineCheck(doc: Doc, ctx: CompileContext, check: CustomC
       throw new ZodCompileAsyncError("z.compile: async .refine() predicates are not supported");
     }
     const fnConst = addConstant(ctx, def.fn);
-    // A Promise result is truthy; treat it as INVALID so the runtime fallback reproduces the canonical $ZodAsyncError instead of silently passing.
+    const throwAsyncConst = addConstant(ctx, throwAsync);
     const resVar = newVar(ctx);
     doc.write(`const ${resVar} = ${fnConst}(${accessor});`);
-    doc.write(`if (${resVar} instanceof Promise || !${resVar}) return INVALID;`);
+    // A thenable is truthy, so it would otherwise read as a pass. It is not a rejection either: the interpreter throws, and INVALID inside a union would just hand the parse to the next branch.
+    doc.write(`if (${resVar} instanceof Promise) ${throwAsyncConst}();`);
+    doc.write(`if (!${resVar}) return INVALID;`);
     // A `.refine()` predicate only answers yes or no; it cannot rewrite the value.
     return accessor;
   }
@@ -565,8 +573,8 @@ function generateCustomRefineCheck(doc: Doc, ctx: CompileContext, check: CustomC
     const helperFn = (value: unknown): unknown => {
       const fakePayload = { value, issues: [] as unknown[], addIssue: pushIssue };
       const result = checkFn(fakePayload);
-      // Async is not modelled; let the runtime reproduce the canonical error.
-      if (result instanceof Promise) return INVALID;
+      // Throw rather than return INVALID: the interpreter throws here, and a union would read INVALID as a rejected branch.
+      if (result instanceof Promise) throwAsync();
       return fakePayload.issues.length === 0 ? fakePayload.value : INVALID;
     };
     const helperConst = addConstant(ctx, helperFn);
@@ -1914,11 +1922,13 @@ function generateCustomCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
     if (isAsyncFunction(def.fn)) {
       throw new ZodCompileAsyncError("z.compile: async custom predicates are not supported");
     }
-    // Custom schema with a predicate function (e.g., z.instanceof). `isAsyncFunction` above is syntactic, so a plain function that returns a promise reaches here — and a promise is truthy, which would read as a pass where the interpreter throws. Test the returned value as well, exactly as the `.refine()` path does.
+    // Custom schema with a predicate function (e.g. z.instanceof). `isAsyncFunction` above is syntactic, so a plain function returning a promise reaches here, and a promise is truthy — it would read as a pass where the interpreter throws.
     const fnConst = addConstant(ctx, def.fn);
+    const throwAsyncConst = addConstant(ctx, throwAsync);
     const resVar = newVar(ctx);
     doc.write(`const ${resVar} = ${fnConst}(${accessor});`);
-    doc.write(`if (${resVar} instanceof Promise || !${resVar}) return INVALID;`);
+    doc.write(`if (${resVar} instanceof Promise) ${throwAsyncConst}();`);
+    doc.write(`if (!${resVar}) return INVALID;`);
   } else {
     throw new ZodCompileUnsupportedError("custom schema without a predicate function");
   }

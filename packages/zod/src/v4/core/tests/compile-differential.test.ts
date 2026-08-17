@@ -60,8 +60,16 @@ function differential(schema: z.ZodType, inputs: unknown[], opts?: { fallbackOk?
   const compiled = compile(schema);
   const fast = compileFastpass(schema);
   for (const input of inputs) {
-    const a = schema.safeParse(input);
-    const b = compiled.safeParse(input);
+    // A schema may throw rather than return — an async check reached synchronously does. Both sides have to agree on that too, and comparing results would just rethrow.
+    const at = attempt(() => schema.safeParse(input));
+    const bt = attempt(() => compiled.safeParse(input));
+    expect(
+      bt.threw,
+      `throw mismatch for input ${describe(input)}: runtime ${at.threw ?? "did not throw"}, compiled ${bt.threw ?? "did not throw"}`
+    ).toBe(at.threw);
+    if (at.threw) continue;
+    const a = at.value!;
+    const b = bt.value!;
     expect(b.success, `success mismatch for input ${describe(input)}`).toBe(a.success);
     if (a.success && b.success) {
       if (!opts?.fallbackOk) {
@@ -85,6 +93,15 @@ function differential(schema: z.ZodType, inputs: unknown[], opts?: { fallbackOk?
  * Wrap the schema next to a branch that accepts anything and assert the sentinel
  * never wins on input the schema itself accepts.
  */
+/** Runs `fn`, reporting the error's name rather than letting it escape. */
+function attempt<T>(fn: () => T): { value?: T; threw?: string } {
+  try {
+    return { value: fn() };
+  } catch (err) {
+    return { threw: (err as Error).name || "Error" };
+  }
+}
+
 function assertUnionSound(schema: z.ZodType, inputs: unknown[]) {
   const marker = Symbol("sentinel");
   const sentinel = z.any().transform(() => marker);
@@ -97,8 +114,12 @@ function assertUnionSound(schema: z.ZodType, inputs: unknown[]) {
     return; // Refused at codegen, which is the outcome a union honours.
   }
   for (const input of inputs) {
-    if (!schema.safeParse(input).success) continue;
-    const got = compiledUnion.safeParse(input);
+    const direct = attempt(() => schema.safeParse(input));
+    // A throwing schema is covered by the throw-parity assertion above; a union cannot answer for it either way.
+    if (direct.threw || !direct.value!.success) continue;
+    const attempted = attempt(() => compiledUnion.safeParse(input));
+    if (attempted.threw) continue;
+    const got = attempted.value!;
     expect(
       got.success && got.data === marker,
       `union selected the sentinel for input ${describe(input)} the schema accepts — a bail-out read as a rejection`
@@ -620,10 +641,17 @@ test("a coercing object key cannot materialize an absent key", () => {
   differential(z.object({ a: z.string(), k: z.coerce.string() }), [{ a: "x" }, { a: "x", k: 5 }]);
 });
 
-test("a custom predicate returning a thenable is not read as a pass", () => {
-  // `isAsyncFunction` is syntactic, so a plain function returning a promise reaches the codegen — and a promise is truthy, which read as a pass where the interpreter throws. The `.refine()` path already tested the returned value; `z.custom` did not.
-  const thenable = z.custom(() => Promise.resolve(true) as never);
-  for (const input of ["x", 1, null]) expectBothThrow(thenable, input);
+test("a thenable predicate throws rather than rejecting", () => {
+  // `isAsyncFunction` is syntactic, so a plain function returning a promise reaches the codegen. The interpreter throws $ZodAsyncError for it — returning INVALID instead is a bail-out, and a union reads a bail-out as a rejected branch and answers with a later one. Routed through differential() precisely so assertUnionSound sees it; the previous bespoke helper skipped that and is why this shipped.
+  differential(
+    z.custom(() => Promise.resolve(true) as never),
+    ["x", 1, null]
+  );
+  differential(z.string().refine((() => Promise.resolve(true)) as never), ["x", 1]);
+  differential(z.string().superRefine(((_v: any, _c: any) => Promise.resolve(true)) as never), ["x", 1]);
+
+  // A transform is the other way round: the interpreter's own union also falls through to the next branch, so INVALID there is parity rather than a bail-out.
+  differential(z.string().transform((() => Promise.resolve(1)) as never), ["x"], { fallbackOk: true });
 
   // A real async predicate is still refused at codegen, and an ordinary one still compiles.
   expect(() => compile(z.custom(async () => true))).toThrow();
@@ -632,19 +660,3 @@ test("a custom predicate returning a thenable is not read as a pass", () => {
     ["x", 1, null, undefined]
   );
 });
-
-function expectBothThrow(schema: z.ZodType, input: unknown) {
-  let runtimeThrew = false;
-  let compiledThrew = false;
-  try {
-    schema.parse(input);
-  } catch {
-    runtimeThrew = true;
-  }
-  try {
-    compile(schema).parse(input);
-  } catch {
-    compiledThrew = true;
-  }
-  expect(compiledThrew, `compiled accepted ${describe(input)} where the runtime threw`).toBe(runtimeThrew);
-}
