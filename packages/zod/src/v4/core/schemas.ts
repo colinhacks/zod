@@ -1987,8 +1987,8 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
   const desc = Object.getOwnPropertyDescriptor(def, "shape");
   if (!desc?.get) {
     const sh = def.shape;
-    // Lives on `def`, already a dictionary-mode object, so the extra entry costs ~11x less than a property on `_zod`. `Object.keys` does not invoke the shape's getters, which is what keeps this safe for recursive schemas.
-    Object.defineProperty(def, "propKeys", { value: Object.keys(sh), configurable: true });
+    // Lives on `def`, which is already a dictionary-mode object, so the extra entry is far cheaper than a property on `_zod` — that one crosses a size class. `Object.keys` does not invoke the shape's getters, which is what keeps this safe for recursive schemas.
+    Object.defineProperty(def, "propKeys", { value: sh ? Object.keys(sh) : undefined, configurable: true });
     Object.defineProperty(def, "shape", {
       get: () => {
         const newSh = { ...sh };
@@ -2000,7 +2000,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       },
     });
   } else {
-    // A getter-backed shape (`.extend()`, `.merge()`, …) cannot be enumerated without resolving it, and `mergeDefs` copies non-enumerable descriptors, so any list here describes the source def, not this one. Drop it rather than let it go stale; these options fall back to the lookup-map check.
+    // Every builder that rebuilds the def gives it a getter-backed shape — `.extend()`, `.omit()`, `.pick()`, `.partial()`, `.describe()`, `.meta()`, `.check()` — and such a shape cannot be enumerated without resolving it. `mergeDefs` copies non-enumerable descriptors, so any list here describes the source def, not this one. Drop it rather than let it go stale; the discriminated union falls back to its lookup map for these, so the construction-time check covers freshly built objects only.
     Object.defineProperty(def, "propKeys", { value: undefined, configurable: true });
   }
 
