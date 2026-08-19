@@ -49,38 +49,57 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
 
     inst.def = def;
     inst.type = def.type;
-    inst.parse = (data, params) => parse.parse(inst, data, params, { callee: inst.parse });
-    inst.safeParse = (data, params) => parse.safeParse(inst, data, params);
-    inst.parseAsync = async (data, params) => parse.parseAsync(inst, data, params, { callee: inst.parseAsync });
-    inst.safeParseAsync = async (data, params) => parse.safeParseAsync(inst, data, params);
-    inst.check = (...checks) => {
-      return inst.clone(
+
+    util.installLazyMethods<ZodMiniType>(inst, "parse", _zodMiniTypeMethods);
+    // `with` is an alias for `check`: the same function object, not a wrapper.
+    util.installLazyProp(inst, "with", (self: ZodMiniType) => self.check);
+  }
+);
+
+function _zodMiniTypeMethods(): util.LazyMethodsOf<ZodMiniType> {
+  return {
+    parse(data, params) {
+      return parse.parse(this, data, params, { callee: this.parse });
+    },
+    parseAsync(data, params) {
+      return parse.parseAsync(this, data, params, { callee: this.parseAsync });
+    },
+    safeParse(data, params) {
+      return parse.safeParse(this, data, params);
+    },
+    safeParseAsync(data, params) {
+      return parse.safeParseAsync(this, data, params);
+    },
+    check(...checks) {
+      const def = this.def;
+      return this.clone(
         {
           ...def,
           checks: [
             ...(def.checks ?? []),
             ...checks.map((ch) =>
-              typeof ch === "function"
-                ? {
-                    _zod: { check: ch, def: { check: "custom" }, onattach: [] },
-                  }
-                : ch
+              typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
             ),
           ],
         },
         { parent: true }
       );
-    };
-    inst.with = inst.check;
-    inst.clone = (_def, params) => core.clone(inst, _def, params);
-    inst.brand = () => inst as any;
-    inst.register = ((reg: any, meta: any) => {
-      reg.add(inst, meta);
-      return inst;
-    }) as any;
-    inst.apply = (fn) => fn(inst);
-  }
-);
+    },
+    clone(_def, params) {
+      return core.clone(this, _def, params);
+    },
+    brand() {
+      return this as any;
+    },
+    register(reg: any, meta: any) {
+      reg.add(this, meta);
+      return this;
+    },
+    apply(fn) {
+      return fn(this);
+    },
+  };
+}
 
 export interface _ZodMiniString<T extends core.$ZodStringInternals<unknown> = core.$ZodStringInternals<unknown>>
   extends _ZodMiniType<T>,
@@ -472,6 +491,21 @@ export const ZodMiniE164: core.$constructor<ZodMiniE164> = /*@__PURE__*/ core.$c
 // @__NO_SIDE_EFFECTS__
 export function e164(params?: string | core.$ZodE164Params): ZodMiniE164 {
   return core._e164(ZodMiniE164, params);
+}
+
+// ZodMiniCreditCard
+export interface ZodMiniCreditCard extends _ZodMiniString<core.$ZodCreditCardInternals> {}
+export const ZodMiniCreditCard: core.$constructor<ZodMiniCreditCard> = /*@__PURE__*/ core.$constructor(
+  "ZodMiniCreditCard",
+  (inst, def) => {
+    core.$ZodCreditCard.init(inst, def);
+    ZodMiniStringFormat.init(inst, def);
+  }
+);
+
+// @__NO_SIDE_EFFECTS__
+export function creditCard(params?: string | core.$ZodCreditCardParams): ZodMiniCreditCard {
+  return core._creditCard(ZodMiniCreditCard, params);
 }
 
 // ZodMiniJWT
@@ -918,14 +952,15 @@ export function safeExtend<T extends ZodMiniObject, U extends core.$ZodLooseShap
   return util.safeExtend(schema, shape as any);
 }
 
-/** @deprecated Identical to `z.extend(A, B)` */
+/**
+ * @deprecated Use [`z.extend(A, B.shape)`](https://zod.dev/api?id=extend) instead.
+ */
+// @__NO_SIDE_EFFECTS__
 export function merge<T extends ZodMiniObject, U extends ZodMiniObject>(
   a: T,
   b: U
-): ZodMiniObject<util.Extend<T["shape"], U["shape"]>, T["_zod"]["config"]>;
-// @__NO_SIDE_EFFECTS__
-export function merge(schema: ZodMiniObject, shape: any): ZodMiniObject {
-  return util.extend(schema, shape);
+): ZodMiniObject<util.Extend<T["shape"], U["shape"]>, U["_zod"]["config"]> {
+  return util.merge(a, b) as any;
 }
 
 // @__NO_SIDE_EFFECTS__
@@ -968,6 +1003,30 @@ export function partial<T extends ZodMiniObject, M extends util.Mask<keyof T["sh
 // @__NO_SIDE_EFFECTS__
 export function partial(schema: ZodMiniObject, mask?: object) {
   return util.partial(ZodMiniOptional, schema, mask);
+}
+
+// @__NO_SIDE_EFFECTS__
+export function exactPartial<T extends ZodMiniObject>(
+  schema: T
+): ZodMiniObject<
+  {
+    -readonly [k in keyof T["shape"]]: ZodMiniExactOptional<T["shape"][k]>;
+  },
+  T["_zod"]["config"]
+>;
+// @__NO_SIDE_EFFECTS__
+export function exactPartial<T extends ZodMiniObject, M extends util.Mask<keyof T["shape"]>>(
+  schema: T,
+  mask: M & Record<Exclude<keyof M, keyof T["shape"]>, never>
+): ZodMiniObject<
+  {
+    -readonly [k in keyof T["shape"]]: k extends keyof M ? ZodMiniExactOptional<T["shape"][k]> : T["shape"][k];
+  },
+  T["_zod"]["config"]
+>;
+// @__NO_SIDE_EFFECTS__
+export function exactPartial(schema: ZodMiniObject, mask?: object) {
+  return util.partial(ZodMiniExactOptional, schema, mask, "exactPartial");
 }
 
 export type RequiredInterfaceShape<
@@ -1205,13 +1264,12 @@ export function partialRecord<Key extends core.$ZodRecordKey, Value extends Some
   valueType: Value,
   params?: string | core.$ZodRecordParams
 ): ZodMiniRecord<Key & core.$partial, Value> {
-  const k = core.clone(keyType);
-  k._zod.values = undefined;
   return new ZodMiniRecord({
     type: "record",
-    keyType: k,
+    keyType,
     valueType: valueType as any,
     ...util.normalizeParams(params),
+    partial: true,
   }) as any;
 }
 
@@ -1576,7 +1634,7 @@ function _catch<T extends SomeType>(
   return new ZodMiniCatch({
     type: "catch",
     innerType: innerType as any as core.$ZodType,
-    catchValue: (typeof catchValue === "function" ? catchValue : () => catchValue) as (
+    catchValue: (typeof catchValue === "function" ? catchValue : core.util.constantCatch(catchValue)) as (
       ctx: core.$ZodCatchCtx
     ) => core.output<T>,
   }) as any;
@@ -1781,8 +1839,7 @@ export function check<O = unknown>(fn: core.CheckFn<O>, params?: string | core.$
   return ch;
 }
 
-// ZodCustom
-// custom schema
+// ZodCustom custom schema
 // @__NO_SIDE_EFFECTS__
 export function custom<O = unknown, I = O>(
   fn?: (data: O) => unknown,

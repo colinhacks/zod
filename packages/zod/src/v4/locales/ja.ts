@@ -8,6 +8,7 @@ const error: () => errors.$ZodErrorMap = () => {
     file: { unit: "バイト", verb: "である" },
     array: { unit: "要素", verb: "である" },
     set: { unit: "要素", verb: "である" },
+    map: { unit: "要素", verb: "である" },
   };
 
   function getSizing(origin: string): { unit: string; verb: string } | null {
@@ -37,12 +38,14 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "ISO期間",
     ipv4: "IPv4アドレス",
     ipv6: "IPv6アドレス",
+    mac: "MACアドレス",
     cidrv4: "IPv4範囲",
     cidrv6: "IPv6範囲",
     base64: "base64エンコード文字列",
     base64url: "base64urlエンコード文字列",
     json_string: "JSON文字列",
     e164: "E.164番号",
+    credit_card: "クレジットカード番号",
     jwt: "JWT",
     template_literal: "入力値",
   };

@@ -68,6 +68,15 @@ describe("Are The Types Wrong (attw) tests", () => {
 
       ***********************************
 
+      "zod/compile"
+
+      node10: 🟢 
+      node16 (from CJS): 🟢 (CJS)
+      node16 (from ESM): 🎭 Masquerading as CJS
+      bundler: 🟢 
+
+      ***********************************
+
       "zod/locales"
 
       node10: 🟢 

@@ -8,6 +8,7 @@ const error: () => errors.$ZodErrorMap = () => {
     file: { unit: "byte", verb: "có" },
     array: { unit: "phần tử", verb: "có" },
     set: { unit: "phần tử", verb: "có" },
+    map: { unit: "phần tử", verb: "có" },
   };
 
   function getSizing(origin: string): { unit: string; verb: string } | null {
@@ -37,12 +38,14 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "khoảng thời gian ISO",
     ipv4: "địa chỉ IPv4",
     ipv6: "địa chỉ IPv6",
+    mac: "địa chỉ MAC",
     cidrv4: "dải IPv4",
     cidrv6: "dải IPv6",
     base64: "chuỗi mã hóa base64",
     base64url: "chuỗi mã hóa base64url",
     json_string: "chuỗi JSON",
     e164: "số E.164",
+    credit_card: "số thẻ tín dụng",
     jwt: "JWT",
     template_literal: "đầu vào",
   };

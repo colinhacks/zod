@@ -374,8 +374,7 @@ export function isObject(data: any): data is Record<PropertyKey, unknown> {
 }
 
 export const allowsEval: { value: boolean } = /* @__PURE__*/ cached(() => {
-  // Skip the probe under `jitless`: strict CSPs report the caught `new Function`
-  // as a `securitypolicyviolation` even though the throw is swallowed.
+  // Skip the probe under `jitless`: strict CSPs report the caught `new Function` as a `securitypolicyviolation` even though the throw is swallowed.
   if (globalConfig.jitless) {
     return false;
   }
@@ -585,7 +584,7 @@ export function stringifyPrimitive(value: any): string {
 
 export function optionalKeys(shape: schemas.$ZodShape): string[] {
   return Object.keys(shape).filter((k) => {
-    return shape[k]!._zod.optin === "optional" && shape[k]!._zod.optout === "optional";
+    return shape[k]!._zod.optin !== undefined && shape[k]!._zod.optout === "optional";
   });
 }
 
@@ -597,13 +596,14 @@ export type FromCleanMap<T extends schemas.$ZodLooseShape> = {
   [k in keyof T as k extends `?${infer K}` ? K : k extends `${infer K}?` ? K : k]: k;
 };
 
-export const NUMBER_FORMAT_RANGES: Record<checks.$ZodNumberFormats, [number, number]> = {
+// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle.
+export const NUMBER_FORMAT_RANGES: Record<checks.$ZodNumberFormats, [number, number]> = /*@__PURE__*/ (() => ({
   safeint: [Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER],
   int32: [-2147483648, 2147483647],
   uint32: [0, 4294967295],
   float32: [-3.4028234663852886e38, 3.4028234663852886e38],
   float64: [-Number.MAX_VALUE, Number.MAX_VALUE],
-};
+}))();
 
 export const BIGINT_FORMAT_RANGES: Record<checks.$ZodBigIntFormats, [bigint, bigint]> = {
   int64: [/* @__PURE__*/ BigInt("-9223372036854775808"), /* @__PURE__*/ BigInt("9223372036854775807")],
@@ -623,11 +623,11 @@ export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>):
     get shape() {
       const newShape: Writeable<schemas.$ZodShape> = {};
       for (const key in mask) {
-        if (!(key in currDef.shape)) {
+        if (!Object.prototype.hasOwnProperty.call(currDef.shape, key)) {
           throw new Error(`Unrecognized key: "${key}"`);
         }
         if (!mask[key]) continue;
-        newShape[key] = currDef.shape[key]!;
+        assignProp(newShape, key, currDef.shape[key]!);
       }
 
       assignProp(this, "shape", newShape); // self-caching
@@ -652,7 +652,7 @@ export function omit(schema: schemas.$ZodObject, mask: object): any {
     get shape() {
       const newShape: Writeable<schemas.$ZodShape> = { ...schema._zod.def.shape };
       for (const key in mask) {
-        if (!(key in currDef.shape)) {
+        if (!Object.prototype.hasOwnProperty.call(currDef.shape, key)) {
           throw new Error(`Unrecognized key: "${key}"`);
         }
         if (!(mask as any)[key]) continue;
@@ -676,8 +676,7 @@ export function extend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): an
   const checks = schema._zod.def.checks;
   const hasChecks = checks && checks.length > 0;
   if (hasChecks) {
-    // Only throw if new shape overlaps with existing shape
-    // Use getOwnPropertyDescriptor to check key existence without accessing values
+    // Only throw if new shape overlaps with existing shape. Use getOwnPropertyDescriptor to check key existence without accessing values
     const existingShape = schema._zod.def.shape;
     for (const key in shape) {
       if (Object.getOwnPropertyDescriptor(existingShape, key) !== undefined) {
@@ -711,6 +710,9 @@ export function safeExtend(schema: schemas.$ZodObject, shape: schemas.$ZodShape)
 }
 
 export function merge(a: schemas.$ZodObject, b: schemas.$ZodObject): any {
+  if (!b?._zod?.def) {
+    throw new Error("Invalid input to merge: expected an object schema. To merge a plain shape, use `.extend()`.");
+  }
   if (a._zod.def.checks?.length) {
     throw new Error(".merge() cannot be used on object schemas containing refinements. Use .safeExtend() instead.");
   }
@@ -732,13 +734,14 @@ export function merge(a: schemas.$ZodObject, b: schemas.$ZodObject): any {
 export function partial(
   Class: SchemaClass<schemas.$ZodOptional> | null,
   schema: schemas.$ZodObject,
-  mask: object | undefined
+  mask: object | undefined,
+  name = "partial"
 ): any {
   const currDef = schema._zod.def;
   const checks = currDef.checks;
   const hasChecks = checks && checks.length > 0;
   if (hasChecks) {
-    throw new Error(".partial() cannot be used on object schemas containing refinements");
+    throw new Error(`.${name}() cannot be used on object schemas containing refinements`);
   }
 
   const def = mergeDefs(schema._zod.def, {
@@ -748,7 +751,7 @@ export function partial(
 
       if (mask) {
         for (const key in mask) {
-          if (!(key in oldShape)) {
+          if (!Object.prototype.hasOwnProperty.call(oldShape, key)) {
             throw new Error(`Unrecognized key: "${key}"`);
           }
           if (!(mask as any)[key]) continue;
@@ -793,7 +796,7 @@ export function required(
 
       if (mask) {
         for (const key in mask) {
-          if (!(key in shape)) {
+          if (!Object.prototype.hasOwnProperty.call(shape, key)) {
             throw new Error(`Unrecognized key: "${key}"`);
           }
           if (!(mask as any)[key]) continue;
@@ -834,8 +837,7 @@ export function aborted(x: schemas.ParsePayload, startIndex = 0): boolean {
   return false;
 }
 
-// Checks for explicit abort (continue === false), as opposed to implicit abort (continue === undefined).
-// Used to respect `abort: true` in .refine() even for checks that have a `when` function.
+// Checks for explicit abort (continue === false), as opposed to implicit abort (continue === undefined). Used to respect `abort: true` in .refine() even for checks that have a `when` function.
 export function explicitlyAborted(x: schemas.ParsePayload, startIndex = 0): boolean {
   if (x.aborted === true) return true;
   for (let i = startIndex; i < x.issues.length; i++) {
@@ -858,20 +860,37 @@ export function unwrapMessage(message: string | { message: string } | undefined 
   return typeof message === "string" ? message : message?.message;
 }
 
+/* A check holds no link back to the schema it is attached to — the same check instance is shared by every clone of that schema — so the owner is stamped onto the issues a check just raised, at the only point where both are in scope. Runs on the failure path only; `start` is the issue count from before the check ran. */
+export function attachSchema(issues: errors.$ZodRawIssue[], start: number, inst: schemas.$ZodType): void {
+  for (let i = start; i < issues.length; i++) {
+    (issues[i] as any).schema ??= inst;
+  }
+}
+
 export function finalizeIssue(
   iss: errors.$ZodRawIssue,
   ctx: schemas.ParseContextInternal | undefined,
   config: $ZodConfig
 ): errors.$ZodIssue {
+  // A schema that raised an issue itself owns it outright, and outranks any stamp an enclosing check left in `attachSchema`. String formats and z.custom() are schema and check at once, so when they act as a check they defer to that stamp instead.
+  const traits: Set<string> | undefined = (iss.inst as any)?._zod?.traits;
+  if (traits?.has("$ZodType")) {
+    if (traits.has("$ZodCheck")) (iss as any).schema ??= iss.inst;
+    else (iss as any).schema = iss.inst;
+  }
+
+  // Decreasing specificity, short-circuiting on the first map that returns a message. `inst` is whatever raised the issue, so for a check-originated issue that rung is the check's own map; the owning schema's map sits one rung below it and above the parse call. Skipped when the schema raised the issue itself, since `inst` was already the schema.
+  const schemaError = iss.schema !== iss.inst ? iss.schema?._zod.def?.error : undefined;
   const message = iss.message
     ? iss.message
     : (unwrapMessage(iss.inst?._zod.def?.error?.(iss as never)) ??
+      unwrapMessage(schemaError?.(iss as never)) ??
       unwrapMessage(ctx?.error?.(iss as never)) ??
       unwrapMessage(config.customError?.(iss)) ??
       unwrapMessage(config.localeError?.(iss)) ??
       "Invalid input");
 
-  const { inst: _inst, continue: _continue, input: _input, ...rest } = iss as any;
+  const { inst: _inst, schema: _schema, continue: _continue, input: _input, ...rest } = iss as any;
   rest.path ??= [];
   rest.message = message;
   if (ctx?.reportInput) {
@@ -992,4 +1011,138 @@ export function uint8ArrayToHex(bytes: Uint8Array): string {
 // instanceof
 export abstract class Class {
   constructor(..._args: any[]) {}
+}
+
+//////////    PROTOTYPE INSTALLERS     //////////
+//
+// Members live on the prototype and materialize per instance on first read, which keeps own-property count under the step where V8 stops using inline slots. Changing anything here means re-measuring runtime, memory and bundle size together — see "The three axes" in AGENTS.md.
+
+/** Returns the prototype to install on, or `undefined` if this group is already installed on it. */
+function claim(inst: object, sentinel: string): object | undefined {
+  const proto = Object.getPrototypeOf(inst);
+  // Runs on every construction, so `in` rather than the costlier `hasOwnProperty.call`. Sentinels are keys the group itself defines.
+  return sentinel in proto ? undefined : proto;
+}
+
+function defineCached(proto: object, key: string, compute: (self: any) => unknown): void {
+  // `~standard` was never an own data property, so caching it must not add it to `Object.keys`. Everything else here was enumerable and stays so.
+  const enumerable = key !== "~standard";
+  Object.defineProperty(proto, key, {
+    configurable: true,
+    get(this: any) {
+      const value = compute(this);
+      Object.defineProperty(this, key, { configurable: true, writable: true, enumerable, value });
+      return value;
+    },
+    set(this: any, value: unknown) {
+      Object.defineProperty(this, key, { configurable: true, writable: true, enumerable: true, value });
+    },
+  });
+}
+
+/** Methods of `T` reshaped so each body has `this: T`. */
+export type LazyMethodsOf<T> = Partial<{
+  [K in keyof T]: T[K] extends (...args: infer A) => infer R ? (this: T, ...args: A) => R : never;
+}>;
+
+/** Factories for properties whose value is built per instance on first read. */
+export type LazyPropsOf<T> = Partial<{ [K in keyof T]: (self: T) => T[K] }>;
+
+/**
+ * Installs methods that bind to the instance on first access. Not for hot-path
+ * functions — a bound function pays a call-time trampoline; use
+ * `installLazyProps` there.
+ */
+export function installLazyMethods<T extends object>(inst: T, sentinel: string, methods: () => LazyMethodsOf<T>): void {
+  const proto = claim(inst, sentinel);
+  if (!proto) return;
+  const built = methods();
+  for (const key in built) {
+    const fn = built[key]!;
+    defineCached(proto, key, (self) => (fn as AnyFunc).bind(self));
+  }
+}
+
+/** Like `installLazyMethods`, but the factory builds the value instead of binding a shared function. */
+export function installLazyProps<T extends object>(inst: T, sentinel: string, props: () => LazyPropsOf<T>): void {
+  const proto = claim(inst, sentinel);
+  if (!proto) return;
+  const built = props();
+  for (const key in built) {
+    defineCached(proto, key, built[key] as AnyFunc);
+  }
+}
+
+// The internals whose init chain is currently installing. A second call for the same one is a derived constructor replacing what its base installed; anything else is a repeat construction with nothing left to install. This makes the override order-dependent where a per-prototype seal would not be: a derived constructor must not construct another schema between its base's install and its own override, or the override is silently dropped.
+let installing: object | undefined;
+
+// Set while a getter is running, so a value that resolved through a recursion break is not memoized. One shared descriptor shadows the key for the duration, which costs no per-key allocation.
+let broke = false;
+const breaker: PropertyDescriptor = {
+  configurable: true,
+  get() {
+    broke = true;
+    return undefined;
+  },
+};
+
+/**
+ * Installs a lazily-derived internal on the `_zod` prototype of `inst`'s
+ * constructor, computed from the internals object itself and cached there on
+ * first read. One accessor per constructor rather than one per instance.
+ */
+export function defineLazyInternal<T extends { _zod: any }>(
+  inst: T,
+  key: string,
+  compute: (zod: T["_zod"]) => unknown
+): void {
+  const proto = Object.getPrototypeOf(inst._zod);
+  if (key in proto && installing !== inst._zod) {
+    // A repeat construction: everything is installed already. Cleared here so the reference is not held past the first construction of every type.
+    installing = undefined;
+    return;
+  }
+  installing = inst._zod;
+
+  Object.defineProperty(proto, key, {
+    configurable: true,
+    get(this: any) {
+      // Shadowed before computing so a re-entrant read from a recursive schema resolves to undefined instead of running the getter again.
+      Object.defineProperty(this, key, breaker);
+      const outer = broke;
+      broke = false;
+      try {
+        const value = compute(this);
+        // Only a result that resolved through a recursion break goes uncached, since it has to be recomputed once the schema graph is complete. Everything else memoizes, undefined included — it is the ordinary answer for most schemas, and these getters are read per parse on the tuple and interpreted-object paths.
+        if (broke) delete this[key];
+        else Object.defineProperty(this, key, { configurable: true, writable: true, value });
+        broke = broke || outer;
+        return value;
+      } catch (err) {
+        // A compute that threw memoizes nothing, so a later read runs it again and fails the same way. The shadow goes with it, since leaving it installed would answer undefined for every later read.
+        delete this[key];
+        broke = broke || outer;
+        throw err;
+      }
+    },
+    set(this: any, value: unknown) {
+      Object.defineProperty(this, key, { configurable: true, writable: true, value });
+    },
+  });
+}
+
+/** Single-property variant; the key doubles as the sentinel. */
+export function installLazyProp(inst: object, key: string, make: (self: any) => unknown): void {
+  const proto = claim(inst, key);
+  if (proto) defineCached(proto, key, make);
+}
+
+/** Marks the thunk `_catch` synthesises for a constant catch value. `Function.length` cannot tell that thunk from a user callback — rest and defaulted parameters both report arity 0 — and a user callback reads `ctx.error`, whose issues only finalize correctly against the caller's per-parse error map. Provenance can say what arity cannot. A plain string key rather than `Symbol.for`, whose call at module scope no bundler can prove pure — the same shape that anchored `urlCanParse` into every build. */
+export const CONSTANT_CATCH = "~constantCatch";
+
+/** Wraps a constant catch value in a thunk tagged with {@link CONSTANT_CATCH}. */
+export function constantCatch<T>(value: T): () => T {
+  const fn = () => value;
+  (fn as { [CONSTANT_CATCH]?: boolean })[CONSTANT_CATCH] = true;
+  return fn;
 }

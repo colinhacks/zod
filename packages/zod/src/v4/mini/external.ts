@@ -2,8 +2,10 @@ export * as core from "../core/index.js";
 export * from "./parse.js";
 export * from "./schemas.js";
 export * from "./checks.js";
+export { deepPartial } from "./deep-partial.js";
+export { input, output } from "./in-out.js";
 
-export type { infer, output, input } from "../core/index.js";
+export type { infer } from "../core/index.js";
 export type { JSONType } from "../core/util.js";
 export {
   globalRegistry,
@@ -22,6 +24,9 @@ export {
   util,
   NEVER,
   schemaForType,
+  compile,
+  ZodCompileAsyncError,
+  ZodCompileUnsupportedError,
 } from "../core/index.js";
 export { toJSONSchema } from "../core/json-schema-processors.js";
 
