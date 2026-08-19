@@ -1543,7 +1543,7 @@ export function _catch<T extends schemas.$ZodObject>(
   return new Class({
     type: "catch",
     innerType,
-    catchValue: (typeof catchValue === "function" ? catchValue : () => catchValue) as any,
+    catchValue: (typeof catchValue === "function" ? catchValue : util.constantCatch(catchValue)) as any,
   }) as any;
 }
 

@@ -29,3 +29,5 @@ open-issues-triage.md
 tmp/
 .worktrees/
 research/
+
+.repos/

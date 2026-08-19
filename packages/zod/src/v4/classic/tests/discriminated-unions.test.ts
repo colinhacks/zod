@@ -759,3 +759,27 @@ test.each(["__proto__", "constructor", "toString", "hasOwnProperty", "valueOf"])
     expect(parsed.value).toBe("ok");
   }
 );
+
+// An omittable discriminator reads back as undefined at the lookup, exactly as TypeScript sees it: `{ k?: "a" } | { k?: "c" }` does not narrow on `k === undefined`.
+test("an omittable discriminator claims undefined", () => {
+  const omittable = [z.exactOptional(z.literal("a")), z.optional(z.literal("a")), z.literal("a").default("a")];
+  for (const k of omittable) {
+    expect(z.object({ k })._zod.propValues.k).toEqual(new Set(["a", undefined]));
+  }
+
+  // one option omits the key: it claims undefined, so an absent key routes there and the union agrees
+  const options = [
+    z.object({ k: z.exactOptional(z.literal("a")), x: z.string() }),
+    z.object({ k: z.literal("b"), y: z.number() }),
+  ] as const;
+  expect(z.discriminatedUnion("k", options).safeParse({ x: "s" }).success).toEqual(true);
+  expect(z.union(options).safeParse({ x: "s" }).success).toEqual(true);
+  expect(z.discriminatedUnion("k", options).safeParse({ k: "b", y: 1 }).success).toEqual(true);
+
+  // two options omit the key: both claim undefined, so they are not discriminable on it
+  for (const k of omittable) {
+    expect(() =>
+      z.discriminatedUnion("k", [z.object({ k }), z.object({ k: z.exactOptional(z.literal("c")) })]).parse({})
+    ).toThrow(/Duplicate discriminator value "undefined"/);
+  }
+});

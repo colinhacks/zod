@@ -498,69 +498,96 @@ export interface $ZodURL extends $ZodType {
   _zod: $ZodURLInternals;
 }
 
+/** The `://` guard rejected the input before the URL constructor saw it. */
+export const URL_BAD_FORMAT = 1;
+/** The URL constructor rejected the input. */
+export const URL_UNPARSEABLE = 2;
+
+/** Parses a URL for `$ZodURL`, applying the one guard the URL constructor cannot express. Returns the parsed URL, or a code naming the stage that rejected it — the runtime needs that distinction to pick an issue note, and compiled code only needs to know it is not a URL. */
+export function parseURLObject(
+  trimmed: string,
+  def: Pick<$ZodURLDef, "protocol" | "normalize">
+): URL | typeof URL_BAD_FORMAT | typeof URL_UNPARSEABLE {
+  // When normalize is off, require :// for http/https URLs. This prevents strings like "http:example.com" or "https:/path" from being silently accepted
+  if (!def.normalize && def.protocol?.source === regexes.httpProtocol.source && !/^https?:\/\//i.test(trimmed)) {
+    return URL_BAD_FORMAT;
+  }
+
+  try {
+    // @ts-ignore
+    return new URL(trimmed);
+  } catch {
+    return URL_UNPARSEABLE;
+  }
+}
+
+export function urlHostnameOk(url: URL, hostname: RegExp): boolean {
+  hostname.lastIndex = 0;
+  return hostname.test(url.hostname);
+}
+
+export function urlProtocolOk(url: URL, protocol: RegExp): boolean {
+  protocol.lastIndex = 0;
+  return protocol.test(url.protocol.endsWith(":") ? url.protocol.slice(0, -1) : url.protocol);
+}
+
 export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$constructor("$ZodURL", (inst, def) => {
   $ZodStringFormat.init(inst, def);
   inst._zod.check = (payload) => {
     try {
       // Trim whitespace from input
       const trimmed = payload.value.trim();
+      const url = parseURLObject(trimmed, def);
 
-      // When normalize is off, require :// for http/https URLs. This prevents strings like "http:example.com" or "https:/path" from being silently accepted
-      if (!def.normalize && def.protocol?.source === regexes.httpProtocol.source) {
-        if (!/^https?:\/\//i.test(trimmed)) {
-          payload.issues.push({
-            code: "invalid_format",
-            format: "url",
-            note: "Invalid URL format",
-            input: payload.value,
-            inst,
-            continue: !def.abort,
-          });
-          return;
-        }
+      if (url === URL_BAD_FORMAT) {
+        payload.issues.push({
+          code: "invalid_format",
+          format: "url",
+          note: "Invalid URL format",
+          input: payload.value,
+          inst,
+          continue: !def.abort,
+        });
+        return;
       }
 
-      // @ts-ignore
-      const url = new URL(trimmed);
-
-      if (def.hostname) {
-        def.hostname.lastIndex = 0;
-        if (!def.hostname.test(url.hostname)) {
-          payload.issues.push({
-            code: "invalid_format",
-            format: "url",
-            note: "Invalid hostname",
-            pattern: def.hostname.source,
-            input: payload.value,
-            inst,
-            continue: !def.abort,
-          });
-        }
+      if (url === URL_UNPARSEABLE) {
+        payload.issues.push({
+          code: "invalid_format",
+          format: "url",
+          input: payload.value,
+          inst,
+          continue: !def.abort,
+        });
+        return;
       }
 
-      if (def.protocol) {
-        def.protocol.lastIndex = 0;
-        if (!def.protocol.test(url.protocol.endsWith(":") ? url.protocol.slice(0, -1) : url.protocol)) {
-          payload.issues.push({
-            code: "invalid_format",
-            format: "url",
-            note: "Invalid protocol",
-            pattern: def.protocol.source,
-            input: payload.value,
-            inst,
-            continue: !def.abort,
-          });
-        }
+      if (def.hostname && !urlHostnameOk(url, def.hostname)) {
+        payload.issues.push({
+          code: "invalid_format",
+          format: "url",
+          note: "Invalid hostname",
+          pattern: def.hostname.source,
+          input: payload.value,
+          inst,
+          continue: !def.abort,
+        });
+      }
+
+      if (def.protocol && !urlProtocolOk(url, def.protocol)) {
+        payload.issues.push({
+          code: "invalid_format",
+          format: "url",
+          note: "Invalid protocol",
+          pattern: def.protocol.source,
+          input: payload.value,
+          inst,
+          continue: !def.abort,
+        });
       }
 
       // Set the output value based on normalize flag
-      if (def.normalize) {
-        // Use normalized URL
-        payload.value = url.href;
-      } else {
-        // Preserve the original input (trimmed)
-        payload.value = trimmed;
-      }
+      payload.value = def.normalize ? url.href : trimmed;
 
       return;
     } catch (_) {
@@ -820,6 +847,16 @@ export interface $ZodIPv6 extends $ZodType {
   _zod: $ZodIPv6Internals;
 }
 
+export function isValidIPv6(value: string): boolean {
+  try {
+    // @ts-ignore
+    new URL(`http://[${value}]`);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export const $ZodIPv6: core.$constructor<$ZodIPv6> = /*@__PURE__*/ core.$constructor("$ZodIPv6", (inst, def): void => {
   def.pattern ??= regexes.ipv6;
   $ZodStringFormat.init(inst, def);
@@ -827,11 +864,7 @@ export const $ZodIPv6: core.$constructor<$ZodIPv6> = /*@__PURE__*/ core.$constru
   inst._zod.bag.format = `ipv6`;
 
   inst._zod.check = (payload) => {
-    try {
-      // @ts-ignore
-      new URL(`http://[${payload.value}]`);
-      // return;
-    } catch {
+    if (!isValidIPv6(payload.value)) {
       payload.issues.push({
         code: "invalid_format",
         format: "ipv6",
@@ -899,6 +932,23 @@ export interface $ZodCIDRv6 extends $ZodType {
   _zod: $ZodCIDRv6Internals;
 }
 
+export function isValidCIDRv6(value: string): boolean {
+  const parts = value.split("/");
+  if (parts.length !== 2) return false;
+  const [address, prefix] = parts;
+  if (!prefix) return false;
+  const prefixNum = Number(prefix);
+  if (`${prefixNum}` !== prefix) return false;
+  if (prefixNum < 0 || prefixNum > 128) return false;
+  try {
+    // @ts-ignore
+    new URL(`http://[${address}]`);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export const $ZodCIDRv6: core.$constructor<$ZodCIDRv6> = /*@__PURE__*/ core.$constructor(
   "$ZodCIDRv6",
   (inst, def): void => {
@@ -906,17 +956,7 @@ export const $ZodCIDRv6: core.$constructor<$ZodCIDRv6> = /*@__PURE__*/ core.$con
     $ZodStringFormat.init(inst, def);
 
     inst._zod.check = (payload) => {
-      const parts = payload.value.split("/");
-      try {
-        if (parts.length !== 2) throw new Error();
-        const [address, prefix] = parts;
-        if (!prefix) throw new Error();
-        const prefixNum = Number(prefix);
-        if (`${prefixNum}` !== prefix) throw new Error();
-        if (prefixNum < 0 || prefixNum > 128) throw new Error();
-        // @ts-ignore
-        new URL(`http://[${address}]`);
-      } catch {
+      if (!isValidCIDRv6(payload.value)) {
         payload.issues.push({
           code: "invalid_format",
           format: "cidrv6",
@@ -2013,6 +2053,8 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
           util.assignProp(propValues, key, new Set());
         }
         for (const v of field.values) propValues[key].add(v);
+        // An omittable slot reads back as undefined at a discriminator lookup, so it has to claim undefined: two options that can both omit the key are not discriminable on it.
+        if (field.optin !== undefined) propValues[key].add(undefined);
       }
     }
     return propValues;
@@ -2593,7 +2635,7 @@ export const $ZodIntersection: core.$constructor<$ZodIntersection> = /*@__PURE__
   }
 );
 
-function mergeValues(
+export function mergeValues(
   a: any,
   b: any
 ): { valid: true; data: any } | { valid: false; mergeErrorPath: (string | number)[] } {
