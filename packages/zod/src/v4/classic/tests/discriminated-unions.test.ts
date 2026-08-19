@@ -687,8 +687,51 @@ test("encode with codec discriminator", () => {
   const decoded = schema.decode({ type: 1, value: "hello" });
   expect(decoded).toEqual({ type: "one", value: "hello" });
 
-  // encode (backward) should also work — the discriminator values differ
-  // between forward (1, 2) and backward ("one", "two") directions
+  // encode (backward) should also work — the discriminator values differ between forward (1, 2) and backward ("one", "two") directions
   const encoded = z.encode(schema, { type: "one", value: "hello" });
   expect(encoded).toEqual({ type: 1, value: "hello" });
+});
+
+test.each(["__proto__", "constructor", "toString", "hasOwnProperty", "valueOf"])(
+  "Object.prototype discriminator name: %s",
+  (key) => {
+    const first = z.object({ [key]: z.literal("a"), value: z.string() });
+    const second = z.object({ [key]: z.literal("b"), value: z.number() });
+    const schema = z.discriminatedUnion(key, [first, second]);
+
+    expect(schema._zod.propValues?.[key]).toEqual(new Set(["a", "b"]));
+
+    const input = Object.fromEntries([
+      [key, "a"],
+      ["value", "ok"],
+    ]);
+    const parsed: any = schema.parse(input);
+    expect(Object.prototype.hasOwnProperty.call(parsed, key)).toBe(key !== "__proto__");
+    if (key !== "__proto__") expect(parsed[key]).toBe("a");
+    expect(parsed.value).toBe("ok");
+  }
+);
+
+// An omittable discriminator reads back as undefined at the lookup, exactly as TypeScript sees it: `{ k?: "a" } | { k?: "c" }` does not narrow on `k === undefined`.
+test("an omittable discriminator claims undefined", () => {
+  const omittable = [z.exactOptional(z.literal("a")), z.optional(z.literal("a")), z.literal("a").default("a")];
+  for (const k of omittable) {
+    expect(z.object({ k })._zod.propValues.k).toEqual(new Set(["a", undefined]));
+  }
+
+  // one option omits the key: it claims undefined, so an absent key routes there and the union agrees
+  const options = [
+    z.object({ k: z.exactOptional(z.literal("a")), x: z.string() }),
+    z.object({ k: z.literal("b"), y: z.number() }),
+  ] as const;
+  expect(z.discriminatedUnion("k", options).safeParse({ x: "s" }).success).toEqual(true);
+  expect(z.union(options).safeParse({ x: "s" }).success).toEqual(true);
+  expect(z.discriminatedUnion("k", options).safeParse({ k: "b", y: 1 }).success).toEqual(true);
+
+  // two options omit the key: both claim undefined, so they are not discriminable on it
+  for (const k of omittable) {
+    expect(() =>
+      z.discriminatedUnion("k", [z.object({ k }), z.object({ k: z.exactOptional(z.literal("c")) })]).parse({})
+    ).toThrow(/Duplicate discriminator value "undefined"/);
+  }
 });

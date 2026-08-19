@@ -8,6 +8,7 @@ const error: () => errors.$ZodErrorMap = () => {
     file: { unit: "байтів", verb: "матиме" },
     array: { unit: "елементів", verb: "матиме" },
     set: { unit: "елементів", verb: "матиме" },
+    map: { unit: "елементів", verb: "матиме" },
   };
 
   function getSizing(origin: string): { unit: string; verb: string } | null {
@@ -37,12 +38,14 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "тривалість ISO",
     ipv4: "адреса IPv4",
     ipv6: "адреса IPv6",
+    mac: "адреса MAC",
     cidrv4: "діапазон IPv4",
     cidrv6: "діапазон IPv6",
     base64: "рядок у кодуванні base64",
     base64url: "рядок у кодуванні base64url",
     json_string: "рядок JSON",
     e164: "номер E.164",
+    credit_card: "номер кредитної картки",
     jwt: "JWT",
     template_literal: "вхідні дані",
   };

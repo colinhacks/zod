@@ -56,6 +56,14 @@ const error: () => errors.$ZodErrorMap = () => {
       },
       verb: "мець",
     },
+    map: {
+      unit: {
+        one: "элемент",
+        few: "элементы",
+        many: "элементаў",
+      },
+      verb: "мець",
+    },
     file: {
       unit: {
         one: "байт",
@@ -93,12 +101,14 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "ISO працягласць",
     ipv4: "IPv4 адрас",
     ipv6: "IPv6 адрас",
+    mac: "MAC адрас",
     cidrv4: "IPv4 дыяпазон",
     cidrv6: "IPv6 дыяпазон",
     base64: "радок у фармаце base64",
     base64url: "радок у фармаце base64url",
     json_string: "JSON радок",
     e164: "нумар E.164",
+    credit_card: "нумар крэдытнай карты",
     jwt: "JWT",
     template_literal: "увод",
   };

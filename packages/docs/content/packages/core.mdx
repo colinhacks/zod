@@ -84,7 +84,7 @@ export type $ZodTypes =
   | $ZodNonOptional
   | $ZodReadonly
   | $ZodNaN
-  | $ZodPipe // $ZodCodec extends this
+  | $ZodPipe // $ZodCodec and $ZodPreprocess extend this
   | $ZodSuccess
   | $ZodCatch
   | $ZodFile;
@@ -156,6 +156,7 @@ export type $ZodTypes =
       - $ZodNaN
       - $ZodPipe
           - $ZodCodec
+          - $ZodPreprocess
       - $ZodReadonly
       - $ZodTemplateLiteral
       - $ZodCustom
