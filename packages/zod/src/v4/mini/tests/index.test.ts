@@ -247,9 +247,42 @@ test("z.union([]) / z.xor([]) / z.discriminatedUnion(_, []) construct and reject
   }
 });
 
-test("z.discriminatedUnion rejects object options missing the discriminator at type level", () => {
-  // @ts-expect-error missing discriminator property
-  z.discriminatedUnion("type", [z.object({ value: z.string() })]);
+test("z.discriminatedUnion rejects object options missing the discriminator", () => {
+  expect(() => z.discriminatedUnion("type", [z.object({ value: z.string() })])).toThrow(
+    /Invalid discriminated union option at index "0"/
+  );
+
+  // An option whose shape cannot be listed without resolving it is left to the lookup map, on the first object parsed.
+  const viaPipe = z.discriminatedUnion("type", [
+    z.pipe(z.object({ value: z.literal("x") }), z.object({ value: z.literal("x") })),
+  ]);
+  expect(() => z.safeParse(viaPipe, { value: "x" })).toThrow(/Invalid discriminated union option at index "0"/);
+});
+
+test("z.discriminatedUnion infers mutually-recursive getter options", () => {
+  const variantA = z.object({
+    kind: z.literal("a"),
+    get child() {
+      return z.optional(tree);
+    },
+  });
+
+  const variantB = z.object({
+    kind: z.literal("b"),
+    get sibling() {
+      return z.optional(tree);
+    },
+  });
+
+  const tree = z.discriminatedUnion("kind", [variantA, variantB]);
+
+  type _Tree = { kind: "a"; child?: _Tree | undefined } | { kind: "b"; sibling?: _Tree | undefined };
+
+  expectTypeOf<z.input<typeof tree>>().toEqualTypeOf<_Tree>();
+  expectTypeOf<z.input<typeof tree>>().not.toBeAny();
+
+  expect(z.parse(tree, { kind: "a", child: { kind: "b" } })).toEqual({ kind: "a", child: { kind: "b" } });
+  expect(() => z.parse(tree, { kind: "c" })).toThrow();
 });
 
 test("z.intersection", () => {
@@ -998,4 +1031,14 @@ test("type narrowing works with type property", () => {
     expectTypeOf(arraySchema).toEqualTypeOf<z.ZodMiniArray<z.ZodMiniString<unknown>>>();
     expect(arraySchema.def.element).toBeDefined();
   }
+});
+
+test("getDiscriminatedOption", () => {
+  const a = z.object({ type: z.literal("a"), x: z.string() });
+  const b = z.object({ type: z.literal("b"), y: z.number() });
+  const schema = z.discriminatedUnion("type", [a, b]);
+
+  expect(z.getDiscriminatedOption(schema, "a")).toBe(a);
+  expect(z.getDiscriminatedOption(schema, "b")).toBe(b);
+  expectTypeOf(z.getDiscriminatedOption(schema, "a")).toEqualTypeOf<typeof a>();
 });

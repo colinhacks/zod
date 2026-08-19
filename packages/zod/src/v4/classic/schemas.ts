@@ -159,7 +159,7 @@ export interface ZodType<
    * ```
    */
   isNullable(): boolean;
-  apply<T>(fn: (schema: this) => T): T;
+  apply<T, TArgs extends unknown[] = []>(fn: (schema: this, ...args: TArgs) => T, ...args: TArgs): T;
 }
 
 export interface _ZodType<out Internals extends core.$ZodTypeInternals = core.$ZodTypeInternals>
@@ -292,8 +292,8 @@ function _zodTypeMethods(): _LazyMethodsOf<ZodType> {
     isNullable() {
       return this.safeParse(null).success;
     },
-    apply(fn) {
-      return fn(this);
+    apply(fn, ...args) {
+      return args.length === 0 ? fn(this) : fn(this, ...args);
     },
   };
 }
@@ -1787,7 +1787,7 @@ export const ZodDiscriminatedUnion: core.$constructor<ZodDiscriminatedUnion> = /
 );
 
 export function discriminatedUnion<
-  Types extends readonly [core.$ZodTypeDiscriminable<Disc>, ...core.$ZodTypeDiscriminable<Disc>[]],
+  Types extends readonly [core.$ZodTypeDiscriminable, ...core.$ZodTypeDiscriminable[]],
   Disc extends string,
 >(
   discriminator: Disc,
@@ -1797,7 +1797,7 @@ export function discriminatedUnion<
   // const [options, params] = args;
   return new ZodDiscriminatedUnion({
     type: "union",
-    options,
+    options: options as any as core.$ZodType[],
     discriminator,
     ...util.normalizeParams(params),
   }) as any;

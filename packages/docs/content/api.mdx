@@ -219,6 +219,14 @@ z.string().check(z.lowercase());
 </Tab>
 </Tabs>
 
+Length is measured in Unicode code points, not UTF-16 code units. Emoji outside the Basic Multilingual Plane count as one, and combining marks and ZWJ sequences count as several.
+
+```ts
+z.string().length(1).parse("😀"); // one code point, two UTF-16 units
+z.string().length(2).parse("e\u0301"); // "é" — an e plus a combining acute
+z.string().length(3).parse("🧑‍🍼"); // person + ZWJ + baby bottle
+```
+
 To perform some simple string transforms:
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
@@ -413,7 +421,7 @@ This schema validates strings with a leading `+`, a non-zero country code, and 7
 
 As you may have noticed, Zod string includes a few date/time related validations. These validations are regular expression based, so they are not as strict as a full date/time library. However, they are very convenient for validating user input.
 
-The `z.iso.datetime()` method enforces ISO 8601; by default, no timezone offsets are allowed:
+The `z.iso.datetime()` method accepts a strict subset of ISO 8601; by default, no timezone offsets are allowed:
 
 ```ts
 const datetime = z.iso.datetime();
@@ -2210,6 +2218,20 @@ blobSchema.parse("hello there!"); // ✅
 blobSchema.parse("hello."); // ❌
 ```
 
+Use `z.properties()` to declare several property checks from an object literal. It returns an array to spread into `.check()`.
+
+```ts
+const httpsUrl = z.instanceof(URL).check(
+  ...z.properties({
+    protocol: z.literal("https:" as string),
+    hostname: z.string().regex(z.regexes.domain),
+  })
+);
+
+httpsUrl.parse(new URL("https://example.com")); // ✅
+httpsUrl.parse(new URL("http://localhost")); // ❌ protocol
+```
+
 ## Refinements
 
 Every Zod schema stores an array of *refinements*. Refinements are a way to perform custom validation that Zod doesn't provide a native API for.
@@ -3340,3 +3362,16 @@ z.parse(schema, null); // => null
 ```
 </Tab>
 </Tabs>
+
+Additional arguments are passed through to the function:
+
+```ts
+function withDefault<T extends z.ZodType>(schema: T, value: z.output<T>) {
+  return schema.nullish().transform((val) => val ?? value);
+}
+
+const schema = z.string().apply(withDefault, "anonymous");
+
+schema.parse(undefined); // => "anonymous"
+schema.parse("sandwich"); // => "sandwich"
+```

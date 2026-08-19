@@ -285,3 +285,11 @@ test("duration", () => {
     expect(result.error.issues[0].message).toEqual("Invalid ISO duration");
   }
 });
+
+test("datetime pattern has no empty alternation branch", () => {
+  for (const args of [{}, { local: true }, { offset: true }, { local: true, offset: true }]) {
+    const { pattern } = z.toJSONSchema(z.iso.datetime(args));
+    expect(pattern, JSON.stringify(args)).toBeDefined();
+    expect(pattern, JSON.stringify(args)).not.toMatch(/\|\||\(\?:\||\|\)/);
+  }
+});

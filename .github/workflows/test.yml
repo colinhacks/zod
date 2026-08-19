@@ -23,11 +23,11 @@ jobs:
         typescript: ["5.5", "6", "latest"]
     name: Test with TypeScript ${{ matrix.typescript }} on Node ${{ matrix.node }} (${{ matrix.os }})
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - run: pnpm install
       # Build with the repo-pinned TypeScript: zshy uses the classic compiler API,
       # which TypeScript 7 no longer ships. The matrix version applies to the tests.
@@ -46,11 +46,11 @@ jobs:
         node: ["latest"]
     name: Lint on Node ${{ matrix.node }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - run: pnpm install
       - run: pnpm format:check
       - run: pnpm lint:check
@@ -60,10 +60,10 @@ jobs:
     runs-on: ubuntu-latest
     name: Check for circular dependencies
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "latest"
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - run: pnpm install
       - run: pnpm check:circular

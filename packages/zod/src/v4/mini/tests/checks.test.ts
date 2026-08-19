@@ -140,6 +140,12 @@ test("z.overwrite", () => {
 // toUpperCase;
 // property
 
+test("z.properties", () => {
+  const a = z.instanceof(URL).check(...z.properties({ protocol: z.literal("https:" as string), hostname: z.string() }));
+  expect(z.safeParse(a, new URL("https://example.com")).success).toEqual(true);
+  expect(z.safeParse(a, new URL("http://example.com")).error!.issues.map((i) => i.path)).toEqual([["protocol"]]);
+});
+
 test("abort early", () => {
   const schema = z.string().check(
     z.refine((val) => val.length > 1),

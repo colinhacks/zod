@@ -1127,6 +1127,15 @@ export function _property<K extends string, T extends schemas.$ZodType>(
   });
 }
 
+// @__NO_SIDE_EFFECTS__
+export function _properties<Shape extends schemas.$ZodShape>(
+  shape: Shape
+): checks.$ZodCheckProperty<{ -readonly [k in keyof Shape]: core.output<Shape[k]> }>[] {
+  return Object.entries(shape).map(
+    ([property, schema]) => new checks.$ZodCheckProperty({ check: "property", property, schema })
+  ) as any;
+}
+
 export type $ZodCheckMimeTypeParams = CheckParams<checks.$ZodCheckMimeType, "mime" | "when">;
 // @__NO_SIDE_EFFECTS__
 export function _mime(types: util.MimeTypes[], params?: string | $ZodCheckMimeTypeParams): checks.$ZodCheckMimeType {
@@ -1224,19 +1233,26 @@ export function _xor<const T extends readonly schemas.$ZodObject[]>(
 }
 
 // ZodDiscriminatedUnion
-export interface $ZodTypeDiscriminableInternals<Disc extends string = string>
-  extends schemas.$ZodTypeInternals<unknown, { [K in Disc]?: unknown }> {
+
+// The bound stops at `propValues`; it deliberately does not check that the option carries the discriminator. Any such check has to name the option's `input`, and constraining `input` in argument position forces TypeScript to resolve it while checking the call — circular for an option whose input references the union, which collapses the whole union to `any`. `$ZodDiscriminatedUnion` validates the discriminator lazily instead, when it builds its lookup map.
+//
+// Validating eagerly through `propValues` is not available: reading it runs the option's shape getters, and for a recursive option that getter references the union whose initializer is still running, so it throws `ReferenceError: Cannot access '...' before initialization`.
+//
+// `Object.keys` on the shape is recursion-safe by contrast — it lists the keys without invoking them — so an eager check is reachable. It was tried and reverted: a key list derived from the shape cannot be kept in agreement with `shape` itself, which resolves lazily over the object the caller passed and then freezes to a copy, and it charged every object schema construction time and memory for a check only this one type reads.
+//
+// `_Disc` is unused and retained only so `$ZodTypeDiscriminable<"kind">` keeps compiling for external callers.
+export interface $ZodTypeDiscriminableInternals<_Disc extends string = string> extends schemas._$ZodTypeInternals {
   propValues: util.PropValues;
 }
 
-export interface $ZodTypeDiscriminable<Disc extends string = string> extends schemas.$ZodType {
-  _zod: $ZodTypeDiscriminableInternals<Disc>;
+export interface $ZodTypeDiscriminable<_Disc extends string = string> extends schemas.SomeType {
+  _zod: $ZodTypeDiscriminableInternals;
 }
 
 export type $ZodDiscriminatedUnionParams = TypeParams<schemas.$ZodDiscriminatedUnion, "options" | "discriminator">;
 // @__NO_SIDE_EFFECTS__
 export function _discriminatedUnion<
-  Types extends [$ZodTypeDiscriminable<Disc>, ...$ZodTypeDiscriminable<Disc>[]],
+  Types extends [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]],
   Disc extends string,
 >(
   Class: util.SchemaClass<schemas.$ZodDiscriminatedUnion>,
@@ -1246,7 +1262,7 @@ export function _discriminatedUnion<
 ): schemas.$ZodDiscriminatedUnion<Types, Disc> {
   return new Class({
     type: "union",
-    options,
+    options: options as any as schemas.$ZodType[],
     discriminator,
     ...util.normalizeParams(params),
   }) as any;

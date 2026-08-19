@@ -39,8 +39,10 @@ const BUILT_ENTRY = path.join(__dirname, "node_modules", "zod", "index.js");
  */
 const CEILINGS: Record<string, number> = {
   "zod-mini-boolean": 2813,
-  "zod-mini-string": 3130,
-  "zod-mini-object": 4257,
+  // Raised from 3130 in the commit that caused it: string length checks now measure code points, so any bundle using `.min`/`.max`/`.length` on a string carries the surrogate scan. Measured 3257; 28 bytes of headroom to match the others. `zod-mini-object` does not move — a bundle with no length check still carries none of it.
+  "zod-mini-string": 3285,
+  // Raised from 4257 in the commit that caused it: the construction-time discriminator check writes a WeakMap entry from `$ZodObject`, so every bundle containing `z.object` carries it. Measured 4260; 28 bytes of headroom to match the other two.
+  "zod-mini-object": 4288,
 };
 
 /**

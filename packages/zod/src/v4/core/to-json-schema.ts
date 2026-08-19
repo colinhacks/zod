@@ -432,6 +432,30 @@ export function extractDefs<T extends schemas.$ZodType>(
   if (ctx.external) ctx.sharedDefsExtractedFor = ctx.external;
 }
 
+/** Rewrites `anyOf: [{type: "a"}, {type: "b"}]` to `type: ["a", "b"]`, which every JSON Schema draft treats as equivalent and most consumers render far better for the nullable case. Only branches that are a bare type assertion qualify — anything carrying a constraint, `$ref`, `const` or metadata is left alone. Runs after `flattenRef`, so a branch an override decorated or `$defs` extraction turned into a `$ref` is no longer bare and correctly stays in `anyOf`. `oneOf` is excluded: `integer` and `number` overlap, so "exactly one" and "at least one" are not the same there. OpenAPI 3.0 is excluded: its `type` must be a single string. */
+function compactTypeUnion(schema: JSONSchema.BaseSchema): void {
+  const options = schema.anyOf;
+  if (!Array.isArray(options) || options.length === 0 || schema.type !== undefined) return;
+
+  const types: JSONSchema.SchemaType[] = [];
+  for (const option of options) {
+    if (!option || typeof option !== "object") return;
+    // A branch that is itself a compactible union folds into this one — nested `anyOf` and a flat `type` array say the same thing. Compacting it first also makes the result independent of the order this pass walks the seen map in.
+    compactTypeUnion(option as JSONSchema.BaseSchema);
+    const keys = Object.keys(option);
+    if (keys.length !== 1 || keys[0] !== "type") return;
+    const type = (option as JSONSchema.BaseSchema).type;
+    for (const member of Array.isArray(type) ? type : [type]) {
+      if (typeof member !== "string") return;
+      if (!types.includes(member)) types.push(member);
+    }
+  }
+
+  delete schema.anyOf;
+  // A `type` array must be non-empty and unique (metaschema); a single member is spelled as a bare string.
+  schema.type = types.length === 1 ? types[0] : types;
+}
+
 export function finalize<T extends schemas.$ZodType>(
   ctx: ToJSONSchemaContext,
   schema: T
@@ -524,6 +548,12 @@ export function finalize<T extends schemas.$ZodType>(
   if (!ctx.external || ctx.sharedEmitDoneFor !== ctx.external) {
     for (const entry of [...ctx.seen.entries()].reverse()) {
       flattenRef(entry[0]);
+    }
+
+    if (ctx.target !== "openapi-3.0") {
+      for (const entry of ctx.seen.entries()) {
+        compactTypeUnion(entry[1].def ?? entry[1].schema);
+      }
     }
   }
 
