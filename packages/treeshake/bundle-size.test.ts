@@ -37,7 +37,7 @@ const BUILT_ENTRY = path.join(__dirname, "node_modules", "zod", "index.js");
  *
  * The failure message prints the measured size, so updating is mechanical.
  */
-// Raised from 2813 / 3130 / 4288 in the commit that caused it: every throwing parse entry point now threads a `callee` to `Error.captureStackTrace` so the first frame is the caller's, which costs a few bytes in every bundle that parses at all. Measured 2808 / 3128 / 4301 against the base this merges into; 28 bytes of headroom each.
+// Raised from 2813 / 3130 / 4288. Two causes, and only the first belongs to this commit: threading a `callee` to `Error.captureStackTrace` from every throwing parse entry point costs +13 / +17 / +16, and the rest is ordinary drift on main since these numbers were last set. Base 2795 / 3111 / 4285, this branch 2808 / 3128 / 4301, so the ceilings sit at measured + 28. Note main alone had already reached 4285 against the old 4288.
 const CEILINGS: Record<string, number> = {
   "zod-mini-boolean": 2836,
   "zod-mini-string": 3156,
