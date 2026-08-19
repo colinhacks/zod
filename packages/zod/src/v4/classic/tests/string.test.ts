@@ -869,6 +869,47 @@ test("boundary cases with zero length", () => {
   expect(() => maxZero.parse("hello")).toThrow();
 });
 
+test("length checks count Unicode code points, not UTF-16 code units", () => {
+  // "\u{1F600}" is one code point but two UTF-16 code units
+  const five = "\u{1F600}\u{1F600}\u{1F600}\u{1F600}\u{1F600}";
+  expect(z.string().max(5).safeParse(five).success).toBe(true);
+  expect(
+    z
+      .string()
+      .max(5)
+      .safeParse(five + "\u{1F600}").success
+  ).toBe(false);
+  expect(z.string().min(5).safeParse(five).success).toBe(true);
+  expect(z.string().min(5).safeParse("\u{1F600}\u{1F600}\u{1F600}\u{1F600}").success).toBe(false);
+  expect(z.string().length(5).safeParse(five).success).toBe(true);
+  expect(z.string().length(1).safeParse("\u{1F600}").success).toBe(true);
+  expect(z.string().nonempty().safeParse("\u{1F600}").success).toBe(true);
+
+  // code points, not graphemes: a combining mark and a ZWJ sequence each stay several
+  expect(z.string().length(2).safeParse("e\u0301").success).toBe(true);
+  expect(z.string().length(3).safeParse("\u{1F9D1}\u200D\u{1F37C}").success).toBe(true);
+
+  // an unpaired surrogate is its own code point
+  expect(z.string().length(1).safeParse("\uD83D").success).toBe(true);
+  expect(z.string().length(2).safeParse("\uDE00\uD83D").success).toBe(true);
+
+  // the reported bound is still the declared one
+  expect(
+    z
+      .string()
+      .max(5)
+      .safeParse(five + "\u{1F600}").error!.issues[0]
+  ).toMatchObject({
+    code: "too_big",
+    maximum: 5,
+    origin: "string",
+  });
+
+  // other lengthables keep counting elements
+  expect(z.array(z.string()).max(2).safeParse(["a", "b", "c"]).success).toBe(false);
+  expect(z.array(z.string()).length(2).safeParse(["\u{1F600}", "\u{1F600}"]).success).toBe(true);
+});
+
 test("trim", () => {
   expect(z.string().trim().min(2).parse(" 12 ")).toEqual("12");
 

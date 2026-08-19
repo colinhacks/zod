@@ -37,11 +37,12 @@ const BUILT_ENTRY = path.join(__dirname, "node_modules", "zod", "index.js");
  *
  * The failure message prints the measured size, so updating is mechanical.
  */
-// Raised from 2813 / 3130 / 4288. Two causes, and only the first belongs to this commit: threading a `callee` to `Error.captureStackTrace` from every throwing parse entry point costs +13 / +17 / +16, and the rest is ordinary drift on main since these numbers were last set. Base 2795 / 3111 / 4285, this branch 2808 / 3128 / 4301, so the ceilings sit at measured + 28. Note main alone had already reached 4285 against the old 4288.
 const CEILINGS: Record<string, number> = {
+  // Raised from 2813 / 3285 / 4288 by the commit that caused it: threading a `callee` to `Error.captureStackTrace` from every throwing parse entry point costs +13 / +17 / +16, since a bundle that parses at all carries it. Measured 2808 / 3271 / 4301 here; 28 bytes of headroom each. The per-fixture notes below record what each ceiling already carried before this.
   "zod-mini-boolean": 2836,
-  "zod-mini-string": 3156,
-  // Carries an earlier raise as well: the construction-time discriminator check writes a WeakMap entry from `$ZodObject`, so every bundle containing `z.object` pays for it whether or not it builds a discriminated union.
+  // Also carries the code-point string length scan: `.min`/`.max`/`.length` on a string pulls in the surrogate walk.
+  "zod-mini-string": 3299,
+  // Also carries the construction-time discriminator check, which writes a WeakMap entry from `$ZodObject`, so every bundle containing `z.object` pays for it whether or not it builds a discriminated union.
   "zod-mini-object": 4329,
 };
 
