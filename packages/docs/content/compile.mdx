@@ -91,6 +91,8 @@ Compilation is sync and forward-only. `z.compile()` throws if the schema can't b
 
 Inside containers (objects, arrays, tuples, records, intersections), an unsupported *child* doesn't prevent compilation — the child runs on the standard parser while the surrounding structure stays compiled.
 
+`.catch()` with a callback is the exception: it's the one construct that *consumes* issues instead of propagating them, so running only that node on the standard parser would finalize its issues against the wrong error map and still succeed. A schema containing one refuses to compile as a whole.
+
 Under global mode, schemas that fail to compile silently keep using the standard parser. There is no behavioral difference — only the speedup is lost. For this reason, avoid enabling global mode in a library on behalf of your users; leave the choice to the application.
 
 Encode operations (`z.encode()`, codec `"backward"` direction) and async parsing always use the standard parser.
