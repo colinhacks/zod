@@ -22,6 +22,7 @@ function allPatterns(): [string, RegExp][] {
   for (const version of [1, 2, 3, 4, 5, 6, 7, 8]) patterns.push([`uuid(${version})`, regexes.uuid(version)]);
   for (const precision of [null, -1, 0, 3, 6]) {
     patterns.push([`time(${precision})`, regexes.time({ precision })]);
+    patterns.push([`time(${precision},offset)`, regexes.time({ precision, offset: true })]);
     for (const local of [false, true]) {
       for (const offset of [false, true]) {
         patterns.push([`datetime(${precision},${local},${offset})`, regexes.datetime({ precision, local, offset })]);

@@ -106,7 +106,9 @@ function anchor(source: string): RegExp {
 
 export const date: RegExp = /*@__PURE__*/ anchor(dateSource);
 
-function timeSource(args: { precision?: number | null | undefined }) {
+const offsetSource = `[+-](?:[01]\\d|2[0-3]):[0-5]\\d`;
+
+function timeSource(args: { precision?: number | null | undefined; offset?: boolean }) {
   const hhmm = `(?:[01]\\d|2[0-3]):[0-5]\\d`;
   const regex =
     typeof args.precision === "number"
@@ -115,7 +117,10 @@ function timeSource(args: { precision?: number | null | undefined }) {
         : args.precision === 0
           ? `${hhmm}:[0-5]\\d`
           : `${hhmm}:[0-5]\\d\\.\\d{${args.precision}}`
-      : `${hhmm}(?::[0-5]\\d(?:\\.\\d+)?)?`;
+      : // `offset` selects RFC 3339 `full-time`, whose `partial-time` makes seconds mandatory. An unspecified precision therefore means "seconds plus an arbitrary fraction" there, rather than the optional-seconds default that applies without an offset.
+        args.offset
+        ? `${hhmm}:[0-5]\\d(?:\\.\\d+)?`
+        : `${hhmm}(?::[0-5]\\d(?:\\.\\d+)?)?`;
   return regex;
 }
 export function time(args: {
@@ -124,10 +129,7 @@ export function time(args: {
   // local?: boolean;
 }): RegExp {
   const t = timeSource(args);
-  if (args.offset) {
-    return new RegExp(`^${t}(?:Z|[+-](?:[01]\\d|2[0-3]):[0-5]\\d)$`);
-  }
-  return new RegExp(`^${t}$`);
+  return new RegExp(args.offset ? `^${t}(?:Z|${offsetSource})$` : `^${t}$`);
 }
 
 // Adapted from https://stackoverflow.com/a/3143231
@@ -139,7 +141,7 @@ export function datetime(args: {
   const time = timeSource({ precision: args.precision });
   const opts = ["Z"];
   // if (args.offset) opts.push(`([+-]\\d{2}:\\d{2})`);
-  if (args.offset) opts.push(`([+-](?:[01]\\d|2[0-3]):[0-5]\\d)`);
+  if (args.offset) opts.push(`(${offsetSource})`);
   const timeRegex = `${time}(?:${opts.join("|")})${args.local ? "?" : ""}`;
 
   return new RegExp(`^${dateSource}T(?:${timeRegex})$`);

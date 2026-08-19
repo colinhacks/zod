@@ -497,11 +497,22 @@ time.parse("03:15:00"); // ✅
 time.parse("03:15:00.9999999"); // ✅ (arbitrary precision)
 ```
 
-No offsets of any kind are allowed.
+By default no offsets of any kind are allowed.
 
 ```ts
 time.parse("03:15:00Z"); // ❌ (no `Z` allowed)
 time.parse("03:15:00+02:00"); // ❌ (no offsets allowed)
+```
+
+Pass `offset: true` to require one. This is RFC 3339 `full-time`, so seconds become mandatory.
+
+```ts
+const fullTime = z.iso.time({ offset: true });
+
+fullTime.parse("03:15:00Z"); // ✅
+fullTime.parse("03:15:00.123+02:00"); // ✅
+fullTime.parse("03:15:00"); // ❌ (an offset is required)
+fullTime.parse("03:15Z"); // ❌ (seconds are required)
 ```
 
 Use the `precision` parameter to constrain the allowable decimal precision.
@@ -512,6 +523,12 @@ z.iso.time({ precision: 0 });  // HH:MM:SS (second precision)
 z.iso.time({ precision: 1 });  // HH:MM:SS.s (decisecond precision)
 z.iso.time({ precision: 2 });  // HH:MM:SS.ss (centisecond precision)
 z.iso.time({ precision: 3 });  // HH:MM:SS.sss (millisecond precision)
+```
+
+The two combine, though `precision: -1` and `offset: true` no longer describe a `full-time`.
+
+```ts
+z.iso.time({ offset: true, precision: 0 }); // HH:MM:SS followed by an offset
 ```
 
 ### IP addresses

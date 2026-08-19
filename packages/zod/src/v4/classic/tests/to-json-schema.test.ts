@@ -127,6 +127,31 @@ describe("toJSONSchema", () => {
         "type": "string",
       }
     `);
+    // `format: "time"` is RFC 3339 full-time, so it appears only once an offset is required.
+    expect(z.toJSONSchema(z.iso.time({ offset: true }))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "time",
+        "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|[+-](?:[01]\\d|2[0-3]):[0-5]\\d)$",
+        "type": "string",
+      }
+    `);
+    expect(z.toJSONSchema(z.iso.time({ offset: true, precision: 0 }))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "time",
+        "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:Z|[+-](?:[01]\\d|2[0-3]):[0-5]\\d)$",
+        "type": "string",
+      }
+    `);
+    // Minute precision drops the seconds full-time requires, so the format goes away again.
+    expect(z.toJSONSchema(z.iso.time({ offset: true, precision: -1 }))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d(?:Z|[+-](?:[01]\\d|2[0-3]):[0-5]\\d)$",
+        "type": "string",
+      }
+    `);
     expect(z.toJSONSchema(z.iso.duration())).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",

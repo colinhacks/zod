@@ -150,6 +150,12 @@ test("z.iso.time", () => {
   expect(z.safeParse(c, d1).success).toEqual(true);
   expect(z.safeParse(c, d2).success).toEqual(true);
   expect(z.safeParse(c, d3).success).toEqual(false);
+
+  const d = z.iso.time({ offset: true });
+  expect(z.safeParse(d, "00:00:00Z").success).toEqual(true);
+  expect(z.safeParse(d, "00:00:00.123+02:00").success).toEqual(true);
+  expect(z.safeParse(d, d1).success).toEqual(false);
+  expect(z.safeParse(d, "00:00Z").success).toEqual(false);
 });
 
 test("z.iso.duration", () => {

@@ -825,6 +825,24 @@ test("string format - date-time", () => {
   expect(roundTripped.safeParse("2026-07-29T16:30:00+02:00").success).toBe(true);
 });
 
+test("string format - time", () => {
+  const schema = fromJSONSchema({
+    type: "string",
+    format: "time",
+  });
+  // JSON Schema `time` is RFC 3339 full-time, so an offset is required and a bare partial-time is not.
+  expect(schema.safeParse("14:30:00Z").success).toBe(true);
+  expect(schema.safeParse("16:30:00+02:00").success).toBe(true);
+  expect(schema.safeParse("16:30:00.123-05:30").success).toBe(true);
+  expect(schema.safeParse("14:30:00").success).toBe(false);
+  expect(schema.safeParse("14:30Z").success).toBe(false);
+  expect(schema.safeParse("16:30:00+0200").success).toBe(false);
+
+  const roundTripped = fromJSONSchema(z.toJSONSchema(z.iso.time({ offset: true })));
+  expect(roundTripped.safeParse("16:30:00+02:00").success).toBe(true);
+  expect(roundTripped.safeParse("16:30:00").success).toBe(false);
+});
+
 test("string format - hostname", () => {
   const schema = fromJSONSchema({
     type: "string",

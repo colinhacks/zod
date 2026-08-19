@@ -151,13 +151,28 @@ test("z.iso.time", () => {
   expect(z.safeParse(c, d2).success).toEqual(true);
   expect(z.safeParse(c, d3).success).toEqual(false);
 
-  // offset: true allows timezone suffixes (Z, +HH:MM, -HH:MM)
+  // `offset` selects RFC 3339 full-time: a `Z` or numeric offset is required, and so are seconds.
   const withOffset = z.iso.time({ offset: true });
   expect(z.safeParse(withOffset, "10:15:30Z").success).toEqual(true);
-  expect(z.safeParse(withOffset, "10:15:30+02:00").success).toEqual(true);
+  expect(z.safeParse(withOffset, "10:15:30.123456+02:00").success).toEqual(true);
   expect(z.safeParse(withOffset, "10:15:30-05:30").success).toEqual(true);
-  expect(z.safeParse(withOffset, "10:15:30").success).toEqual(false); // no offset ??? rejected when offset required
+  expect(z.safeParse(withOffset, "10:15:30").success).toEqual(false);
+  expect(z.safeParse(withOffset, "10:15Z").success).toEqual(false);
+  expect(z.safeParse(withOffset, "10:15:30z").success).toEqual(false);
+  expect(z.safeParse(withOffset, "10:15:30+24:00").success).toEqual(false);
   expect(z.safeParse(withOffset, "bad data").success).toEqual(false);
+
+  // An explicit precision still wins, so the two compose.
+  const offsetMinutes = z.iso.time({ offset: true, precision: -1 });
+  expect(z.safeParse(offsetMinutes, "10:15Z").success).toEqual(true);
+  expect(z.safeParse(offsetMinutes, "10:15:30Z").success).toEqual(false);
+
+  const offsetSeconds = z.iso.time({ offset: true, precision: 0 });
+  expect(z.safeParse(offsetSeconds, "10:15:30Z").success).toEqual(true);
+  expect(z.safeParse(offsetSeconds, "10:15:30.5Z").success).toEqual(false);
+
+  // Adding `offset` must not loosen the default, which still refuses every suffix.
+  expect(z.safeParse(a, "10:15:30Z").success).toEqual(false);
 });
 
 test("z.iso.duration", () => {

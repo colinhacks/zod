@@ -325,7 +325,7 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         } else if (format === "date") {
           stringSchema = stringSchema.check(z.iso.date());
         } else if (format === "time") {
-          stringSchema = stringSchema.check(z.iso.time());
+          stringSchema = stringSchema.check(z.iso.time({ offset: true }));
         } else if (format === "duration") {
           stringSchema = stringSchema.check(z.iso.duration());
         } else if (format === "hostname") {

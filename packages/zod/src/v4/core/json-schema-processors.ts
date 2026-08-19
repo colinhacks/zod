@@ -39,9 +39,10 @@ export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _jso
     json.format = formatMap[format as checks.$ZodStringFormats] ?? format;
     if (json.format === "") delete json.format; // empty format is not valid
 
-    // JSON Schema format: "time" requires a full time with offset or Z. z.iso.time() does not include timezone information, so format: "time" should never be used
+    // JSON Schema format: "time" is RFC 3339 `full-time`, which requires a `Z` or numeric offset. Only `z.iso.time({ offset: true })` produces that, and only while the precision still admits seconds.
     if (format === "time") {
-      delete json.format;
+      const { offset, precision } = schema._zod.def as schemas.$ZodISOTimeDef;
+      if (!offset || precision === -1) delete json.format;
     }
   }
   if (contentEncoding) json.contentEncoding = contentEncoding;
