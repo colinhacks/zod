@@ -629,6 +629,10 @@ test("url options match the runtime across the whole option matrix", () => {
     "",
     "//example.com",
     "mailto:a@b.com",
+    // The WHATWG parser deletes these rather than failing, so the two paths only agree if both apply that deletion to the value they return.
+    "https://exa\nmple.com",
+    "https://exa\tmple.com",
+    "https://example.com/a\rb?c=d#e",
   ];
   const schemas: z.ZodType[] = [
     z.url(),

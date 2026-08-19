@@ -726,8 +726,8 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
       doc.write(`if (!${protocolConst}(${urlVar}, ${defConst}.protocol)) return INVALID;`);
     }
     const outputVar = newVar(ctx);
-    const stripConst = addConstant(ctx, stripTabAndNewline);
-    doc.write(`const ${outputVar} = ${formatDef.normalize ? `${urlVar}.href` : `${stripConst}(${trimVar})`};`);
+    const outputExpr = formatDef.normalize ? `${urlVar}.href` : `${addConstant(ctx, stripTabAndNewline)}(${trimVar})`;
+    doc.write(`const ${outputVar} = ${outputExpr};`);
     return outputVar;
   }
 

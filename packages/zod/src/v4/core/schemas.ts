@@ -523,7 +523,7 @@ export function parseURLObject(
 
 const asciiTabOrNewline = /[\t\n\r]/g;
 
-/** The URL parser deletes every ASCII tab, LF and CR from its input before it parses, so `new URL("https://exa\nmple.com")` reports on `example.com`. Applying the same deletion to the returned value is what keeps the string Zod hands back the string Zod validated. */
+/** The URL parser deletes every ASCII tab, LF and CR from its input before it parses, so `new URL("https://exa\nmple.com")` reports on `example.com`. Applying the same deletion to the returned value closes the half of that divergence which can move the host; the parser's other rewrite, stripping C0 controls at the edges, cannot. */
 export function stripTabAndNewline(value: string): string {
   return value.replace(asciiTabOrNewline, "");
 }
