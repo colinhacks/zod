@@ -1032,3 +1032,13 @@ test("type narrowing works with type property", () => {
     expect(arraySchema.def.element).toBeDefined();
   }
 });
+
+test("getDiscriminatedOption", () => {
+  const a = z.object({ type: z.literal("a"), x: z.string() });
+  const b = z.object({ type: z.literal("b"), y: z.number() });
+  const schema = z.discriminatedUnion("type", [a, b]);
+
+  expect(z.getDiscriminatedOption(schema, "a")).toBe(a);
+  expect(z.getDiscriminatedOption(schema, "b")).toBe(b);
+  expectTypeOf(z.getDiscriminatedOption(schema, "a")).toEqualTypeOf<typeof a>();
+});
