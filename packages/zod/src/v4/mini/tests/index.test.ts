@@ -252,6 +252,42 @@ test("z.discriminatedUnion rejects object options missing the discriminator at t
   z.discriminatedUnion("type", [z.object({ value: z.string() })]);
 });
 
+test("z.discriminatedUnion infers mutually-recursive getter options", () => {
+  const variantA = z.object({
+    kind: z.literal("a"),
+    get child() {
+      return z.optional(tree);
+    },
+  });
+
+  const variantB = z.object({
+    kind: z.literal("b"),
+    get sibling() {
+      return z.optional(tree);
+    },
+  });
+
+  const tree = z.discriminatedUnion("kind", [variantA, variantB]);
+  type Tree = z.input<typeof tree>;
+
+  type _Tree =
+    | {
+        kind: "a";
+        child?: _Tree | undefined;
+      }
+    | {
+        kind: "b";
+        sibling?: _Tree | undefined;
+      };
+
+  // Inference must not collapse to `any`.
+  expectTypeOf<Tree>().toEqualTypeOf<_Tree>();
+  expectTypeOf<Tree>().not.toBeAny();
+
+  expect(z.parse(tree, { kind: "a", child: { kind: "b" } })).toEqual({ kind: "a", child: { kind: "b" } });
+  expect(() => z.parse(tree, { kind: "c" })).toThrow();
+});
+
 test("z.intersection", () => {
   const a = z.intersection(z.object({ a: z.string() }), z.object({ b: z.number() }));
   expect(z.parse(a, { a: "hello", b: 123 })).toEqual({ a: "hello", b: 123 });
