@@ -448,3 +448,33 @@ test("catch clears the abort flag on the async branch too", () => {
     error: { issues: [{ message: "REFINE RAN" }] },
   });
 });
+
+test("catch resolves the issues array itself, so an outer catch does not resurrect them", () => {
+  // The same rebinding-vs-truncating distinction as `handleOptionalResult`. `handlePipeResult` runs a pipe's `out` on a payload sharing the caller's issues array, so a catch used as an `out` that rebinds its own reference leaves the caller's copy dirty — and appending an outer `.catch()`, which can only turn failure into success, turned success into failure.
+  const inner = z.string().pipe(z.string().min(10).catch("FB"));
+
+  expect(inner.safeParse("abc")).toMatchObject({ success: true, data: "FB" });
+  expect(inner.catch("FB2").safeParse("abc")).toMatchObject({ success: true, data: "FB" });
+
+  // Controls: catch still catches, still passes a success through, and the callback still sees the issues it caught.
+  expect(z.string().catch("FB").parse(123)).toBe("FB");
+  expect(z.string().catch("FB").parse("ok")).toBe("ok");
+  expect(
+    z
+      .string()
+      .catch((ctx) => `n=${ctx.error.issues.length}`)
+      .parse(123)
+  ).toBe("n=1");
+});
+
+test("catch resolves the issues array on the async branch too", () => {
+  // Reaching the async branch needs the catch's own inner to be async, as above.
+  const inner = z.string().pipe(
+    z
+      .string()
+      .refine(async () => false, "INNER")
+      .catch("FB")
+  );
+
+  return expect(inner.catch("FB2").safeParseAsync("abc")).resolves.toMatchObject({ success: true, data: "FB" });
+});

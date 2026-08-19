@@ -4150,7 +4150,7 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
             },
             input: payload.value,
           });
-          payload.issues = [];
+          payload.issues.length = 0;
           payload.aborted = false;
         }
 
@@ -4168,8 +4168,8 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
         input: payload.value,
       });
 
-      // The abort flag goes with the issues. A pipe or codec marks the payload aborted when its `in` fails, and `util.aborted` short-circuits on that flag alone, so a catch that clears only the issues reports success and then every check after it is skipped.
-      payload.issues = [];
+      // Resolve the issues on the ARRAY and take the abort flag with them. Truncating rather than rebinding because `handlePipeResult` runs a pipe's `out` on a payload sharing the caller's array, so a catch used as an `out` would otherwise leave the caller's copy dirty and the failure would resurface above it. The flag matters for the same reason: a pipe or codec marks the payload aborted when its `in` fails, and `util.aborted` short-circuits on that alone, so clearing only the issues reports success and then skips every check after the catch.
+      payload.issues.length = 0;
       payload.aborted = false;
     }
 
