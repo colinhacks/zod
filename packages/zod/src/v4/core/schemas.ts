@@ -4151,6 +4151,7 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
             input: payload.value,
           });
           payload.issues = [];
+          payload.aborted = false;
         }
 
         return payload;
@@ -4167,7 +4168,9 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
         input: payload.value,
       });
 
+      // The abort flag goes with the issues. A pipe or codec marks the payload aborted when its `in` fails, and `util.aborted` short-circuits on that flag alone, so a catch that clears only the issues reports success and then every check after it is skipped.
       payload.issues = [];
+      payload.aborted = false;
     }
 
     return payload;

@@ -400,3 +400,51 @@ test("resolving an optional's failure clears the abort flag with it", () => {
   expect(result.success).toBe(false);
   expect(result.error!.issues[0]?.message).toBe("REFINE RAN");
 });
+
+test("catch clears the abort flag along with the issues", () => {
+  // Same defect as the optional case one wrapper over. A pipe marks the payload aborted when its `in` fails, and `util.aborted` short-circuits on that flag alone — so a catch that cleared only the issues reported success and then skipped every check after it, including this refinement.
+  const schema = z
+    .string()
+    .min(10)
+    .pipe(z.string())
+    .catch("FB")
+    .refine(() => false, "REFINE RAN");
+
+  const result = schema.safeParse("abc");
+  expect(result.success).toBe(false);
+  expect(result.error!.issues[0]?.message).toBe("REFINE RAN");
+
+  // A catch that never fires must not have its flag touched, and one with no pipe never had it set.
+  expect(
+    z
+      .string()
+      .min(2)
+      .pipe(z.string())
+      .catch("FB")
+      .refine(() => false, "REFINE RAN")
+      .safeParse("abcdef").success
+  ).toBe(false);
+  expect(
+    z
+      .string()
+      .min(10)
+      .catch("FB")
+      .refine(() => false, "REFINE RAN")
+      .safeParse("abc").success
+  ).toBe(false);
+});
+
+test("catch clears the abort flag on the async branch too", () => {
+  // The clear is written twice, once per branch of the promise check, so the async branch needs its own guard. Reaching it requires the catch's INNER to be async — an async refinement *outside* the catch leaves the inner sync and exercises the other branch.
+  const schema = z
+    .string()
+    .refine(async () => false, "INNER")
+    .pipe(z.string())
+    .catch("FB")
+    .refine(() => false, "REFINE RAN");
+
+  return expect(schema.safeParseAsync("abc")).resolves.toMatchObject({
+    success: false,
+    error: { issues: [{ message: "REFINE RAN" }] },
+  });
+});
