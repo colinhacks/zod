@@ -6,7 +6,7 @@ export * from "./memoizer.js";
 export * from "./checks.js";
 export * from "./versions.js";
 export * as util from "./util.js";
-export { schemaForType } from "./util.js";
+export { toZod } from "./util.js";
 export * as regexes from "./regexes.js";
 export * as locales from "../locales/index.js";
 export * from "./registries.js";

@@ -159,7 +159,7 @@ type MySchemaOut = z.output<typeof mySchema>; // equivalent to z.infer<typeof my
 
 ## Matching an existing type
 
-Sometimes the type comes first: a database model, a type from a generated client, an interface you don't own. Pass it to `z.schemaForType<T>()` and TypeScript checks that the schema's output type is exactly `T`.
+Sometimes the type comes first: a database model, a type from a generated client, an interface you don't own. Pass it to `z.toZod<T>()` and TypeScript checks that the schema's output type is exactly `T`.
 
 ```ts
 type Player = {
@@ -167,7 +167,7 @@ type Player = {
   xp: number;
 };
 
-const Player = z.schemaForType<Player>()(
+const Player = z.toZod<Player>()(
   z.object({
     username: z.string(),
     xp: z.number(),
@@ -180,7 +180,7 @@ Player.shape.username; // ZodString — the schema is returned unchanged
 The check is exact type equality, so any drift from the type is a compile error:
 
 ```ts
-z.schemaForType<Player>()(
+z.toZod<Player>()(
   z.object({
     username: z.string(),
     xp: z.number(),
@@ -206,8 +206,8 @@ Exactness applies to the type as TypeScript wrote it, so an intersection target 
 ```ts
 type Entry = { id: string } & { label: string };
 
-z.schemaForType<Entry>()(z.object({ id: z.string() }).and(z.object({ label: z.string() }))); // ✅
-z.schemaForType<Entry>()(z.object({ id: z.string() }).safeExtend({ label: z.string() })); // ❌
+z.toZod<Entry>()(z.object({ id: z.string() }).and(z.object({ label: z.string() }))); // ✅
+z.toZod<Entry>()(z.object({ id: z.string() }).safeExtend({ label: z.string() })); // ❌
 ```
 
 Flatten the target to accept either one:
@@ -215,7 +215,7 @@ Flatten the target to accept either one:
 ```ts
 type Flatten<T> = { [K in keyof T]: T[K] } & {};
 
-z.schemaForType<Flatten<Entry>>()(z.object({ id: z.string() }).safeExtend({ label: z.string() })); // ✅
+z.toZod<Flatten<Entry>>()(z.object({ id: z.string() }).safeExtend({ label: z.string() })); // ✅
 ```
 
 ---

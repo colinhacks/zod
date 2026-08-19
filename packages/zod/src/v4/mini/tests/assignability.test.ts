@@ -116,7 +116,7 @@ test("assignability", () => {
   z.file() satisfies z.core.$ZodFile;
 });
 
-test("schemaForType", () => {
+test("toZod", () => {
   type Company = {
     id: string;
     name: string;
@@ -128,17 +128,17 @@ test("schemaForType", () => {
     name: z.string(),
     webAddress: z.nullable(z.string()),
   });
-  const Company = z.schemaForType<Company>()(CompanySchema);
+  const Company = z.toZod<Company>()(CompanySchema);
 
   expectTypeOf<z.output<typeof Company>>().toEqualTypeOf<Company>();
 
-  const CoreCompany = z.core.schemaForType<Company>()(CompanySchema);
+  const CoreCompany = z.core.toZod<Company>()(CompanySchema);
   expectTypeOf<z.output<typeof CoreCompany>>().toEqualTypeOf<Company>();
 
-  const UtilCompany = z.core.util.schemaForType<Company>()(CompanySchema);
+  const UtilCompany = z.core.util.toZod<Company>()(CompanySchema);
   expectTypeOf<z.output<typeof UtilCompany>>().toEqualTypeOf<Company>();
 
-  const Transformed = z.schemaForType<{ count: number }>()(
+  const Transformed = z.toZod<{ count: number }>()(
     z.object({
       count: z.pipe(
         z.string(),
@@ -149,7 +149,7 @@ test("schemaForType", () => {
   expectTypeOf<z.input<typeof Transformed>>().toEqualTypeOf<{ count: string }>();
   expectTypeOf<z.output<typeof Transformed>>().toEqualTypeOf<{ count: number }>();
 
-  z.schemaForType<Company>()(
+  z.toZod<Company>()(
     // @ts-expect-error missing optional keys still fail exact output matching
     z.object({
       id: z.string(),
@@ -157,7 +157,7 @@ test("schemaForType", () => {
     })
   );
 
-  z.schemaForType<Company>()(
+  z.toZod<Company>()(
     // @ts-expect-error extra keys fail exact output matching
     z.object({
       id: z.string(),
@@ -167,7 +167,7 @@ test("schemaForType", () => {
     })
   );
 
-  z.schemaForType<Company>()(
+  z.toZod<Company>()(
     // @ts-expect-error wrong property output fails matching
     z.object({
       id: z.number(),

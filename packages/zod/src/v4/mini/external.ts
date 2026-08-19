@@ -23,7 +23,7 @@ export {
   TimePrecision,
   util,
   NEVER,
-  schemaForType,
+  toZod,
   compile,
   ZodCompileAsyncError,
   ZodCompileUnsupportedError,

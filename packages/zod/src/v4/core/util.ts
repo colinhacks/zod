@@ -86,7 +86,7 @@ export type ParsedTypes =
 export type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <V>() => V extends U ? 1 : 2 ? true : false;
 export type AssertNotEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <V>() => V extends U ? 1 : 2 ? false : true;
 export type AssertExtends<T, U> = T extends U ? T : never;
-type SchemaForTypeMismatch<T, S extends schemas.$ZodType> = {
+type ToZodMismatch<T, S extends schemas.$ZodType> = {
   "types do not match": {
     expected: T;
     received: S["_zod"]["output"];
@@ -203,8 +203,8 @@ export function assertNotEqual<A, B>(val: AssertNotEqual<A, B>): AssertNotEqual<
   return val;
 }
 
-export function schemaForType<T>(): <S extends schemas.$ZodType>(
-  schema: AssertEqual<S["_zod"]["output"], T> extends true ? S : S & SchemaForTypeMismatch<T, S>
+export function toZod<T>(): <S extends schemas.$ZodType>(
+  schema: AssertEqual<S["_zod"]["output"], T> extends true ? S : S & ToZodMismatch<T, S>
 ) => S {
   return (schema) => schema;
 }
