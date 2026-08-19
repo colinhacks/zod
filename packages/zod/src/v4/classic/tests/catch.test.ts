@@ -324,3 +324,34 @@ test("optional clobbers catch through pipe boundaries", () => {
       .parse(123)
   ).toBe("X!");
 });
+
+test("catch does not resurrect issues an inner optional already resolved", () => {
+  // `.optional()` yields undefined when a substituting inner still failed, and it used to signal that by handing back a fresh payload. `.catch()` keeps the payload it passed down and reads issues off that one, so it saw the failure the optional had already resolved — and adding `.catch()`, which can only ever turn failure into success, turned success into failure.
+  const base = z
+    .undefined()
+    .prefault(null as any)
+    .optional();
+  const caught = z
+    .undefined()
+    .prefault(null as any)
+    .optional()
+    .catch(null as any);
+
+  expect(base.safeParse(undefined).success).toBe(true);
+  expect(caught.safeParse(undefined).success).toBe(true);
+
+  // Same defect through the other substituting rung, and through a container.
+  expect(
+    z
+      .undefined()
+      .default(null as any)
+      .optional()
+      .catch(null as any)
+      .safeParse(undefined).success
+  ).toBe(true);
+  expect(z.object({ a: caught }).safeParse({ a: undefined }).success).toBe(true);
+
+  // Controls: catch still catches, and optional still rejects a genuine type error.
+  expect(z.string().catch("FB").parse(123)).toBe("FB");
+  expect(z.string().optional().safeParse(123).success).toBe(false);
+});
