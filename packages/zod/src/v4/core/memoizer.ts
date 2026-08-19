@@ -27,6 +27,16 @@ type WithState = { [STATE]?: State };
 
 const NO_ISSUES: errors.$ZodRawIssue[] = [];
 
+/* An issue belongs to the payload it was raised into: whoever receives it prefixes a path onto it in place. A memoized node is reached from more than one place, so both the cached copy and every hand-out of it have to be private, or the second visitor prefixes onto the first visitor's path. Cold: it only runs for a node that both failed and is shared. */
+function cloneIssues(issues: errors.$ZodRawIssue[]): errors.$ZodRawIssue[] {
+  const out: errors.$ZodRawIssue[] = new Array(issues.length);
+  for (let i = 0; i < issues.length; i++) {
+    const iss = issues[i];
+    out[i] = iss.path ? { ...iss, path: iss.path.slice() } : { ...iss };
+  }
+  return out;
+}
+
 interface Memoizer extends $ZodMemoizer {
   recursive: boolean | undefined;
   /** Set immediately before delegating to core and cleared immediately after, so
@@ -156,7 +166,7 @@ export function attachMemoizer(inst: $ZodType): void {
       if (hit) {
         payload.value = hit.value;
         if (hit.issues) {
-          payload.issues.push(...hit.issues);
+          if (hit.issues.length) payload.issues.push(...cloneIssues(hit.issues));
         } else {
           // Still being parsed: its own checks cover it, so skip them here.
           payload.memo = true;
@@ -176,11 +186,11 @@ export function attachMemoizer(inst: $ZodType): void {
       // Both paths written out so the sync one allocates no closure. It runs once per node, and capturing here cost more than everything else combined.
       if (result instanceof Promise) {
         return result.then((r) => {
-          if (entry) entry.issues = r.issues.length ? r.issues.slice() : NO_ISSUES;
+          if (entry) entry.issues = r.issues.length ? cloneIssues(r.issues) : NO_ISSUES;
           return r;
         });
       }
-      if (entry) entry.issues = result.issues.length ? result.issues.slice() : NO_ISSUES;
+      if (entry) entry.issues = result.issues.length ? cloneIssues(result.issues) : NO_ISSUES;
       return result;
     };
 
