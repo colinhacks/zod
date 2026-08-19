@@ -81,7 +81,7 @@ The user-visible consequence: `z.input<typeof z.object({ a: z.preprocess(fn, T) 
 
 ```ts
 const isPresent = key in input;
-const optin = propSchema._zod.optin;
+const isOptionalOut = optout === "optional";   // optin and optout both arrive raw
 
 if (!isPresent && isOptionalOut && optin === "optional") {
   return; // absent slot, middle rung: contribute nothing at all — no issue, no key

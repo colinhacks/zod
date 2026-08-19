@@ -1894,9 +1894,10 @@ function handlePropertyResult(
   key: PropertyKey,
   input: any,
   optin: "optional" | "defaulted" | undefined,
-  isOptionalOut: boolean
+  optout: "optional" | undefined
 ) {
   const isPresent = key in input;
+  const isOptionalOut = optout === "optional";
   // The middle rung means "absence permitted, nothing supplied in its place", so an absent key contributes nothing — whatever the schema made of `undefined` is invented, not substituted. Only `optional` reaches this with a value: `defaulted` substitutes, and a schema that isn't optional-out has to keep the key.
   if (!isPresent && isOptionalOut && optin === "optional") {
     return;
@@ -2011,7 +2012,7 @@ function handleCatchall(
   const _catchall = def.catchall!._zod;
   const t = _catchall.def.type;
   const optin = _catchall.optin;
-  const isOptionalOut = _catchall.optout === "optional";
+  const optout = _catchall.optout;
   for (const key in input) {
     // Must precede the __proto__ branch: a declared key is not unrecognized, even though the shape loop deliberately strips __proto__ from the parsed output.
     if (keySet.has(key)) continue;
@@ -2027,9 +2028,9 @@ function handleCatchall(
     const r = _catchall.run({ value: input[key], issues: [] }, ctx);
 
     if (r instanceof Promise) {
-      proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, optin, isOptionalOut)));
+      proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, optin, optout)));
     } else {
-      handlePropertyResult(r, payload, key, input, optin, isOptionalOut);
+      handlePropertyResult(r, payload, key, input, optin, optout);
     }
   }
 
@@ -2116,13 +2117,13 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
       if (key === "__proto__") continue;
       const el = shape[key]!;
       const optin = el._zod.optin;
-      const isOptionalOut = el._zod.optout === "optional";
+      const optout = el._zod.optout;
 
       const r = el._zod.run({ value: input[key], issues: [] }, ctx);
       if (r instanceof Promise) {
-        proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, optin, isOptionalOut)));
+        proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, optin, optout)));
       } else {
-        handlePropertyResult(r, payload, key, input, optin, isOptionalOut);
+        handlePropertyResult(r, payload, key, input, optin, optout);
       }
     }
 
