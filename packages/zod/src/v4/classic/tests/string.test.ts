@@ -217,9 +217,7 @@ test("base64 validations", () => {
     "?QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // Invalid character '?'
     ".MTIzND2Nzg5MC4=", // Invalid character '.'
     "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo", // Missing padding
-    // Whitespace is not part of canonical base64 (RFC 4648 §3.3) — atob() strips
-    // whitespace internally before validating, so the length check alone would
-    // accept "123 " etc.
+    // Whitespace is not part of canonical base64 (RFC 4648 §3.3) — atob() strips whitespace internally before validating, so the length check alone would accept "123 " etc.
     "123 ", // bypasses length-mod-4 via trailing whitespace
     "SGVsbG8gV29ybGQ= ", // trailing space
     " SGVsbG8gV29ybGQ=", // leading space
@@ -430,7 +428,7 @@ test("httpurl", () => {
   const httpUrl = z.url({
     protocol: /^https?$/,
     hostname: z.regexes.domain,
-    // /^([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/
+    // /^(?=.{1,253}$)([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/
   });
 
   httpUrl.parse("https://example.com");
@@ -464,6 +462,16 @@ test("httpurl", () => {
   ).toThrow();
   expect(() => httpUrl.parse("http://asdf.c")).toThrow();
   expect(() => httpUrl.parse("mailto:asdf@lckj.com")).toThrow();
+  // total host length over the RFC 1035 limit of 253 chars (built from valid-length labels)
+  const longHost = `${`${"a".repeat(50)}.`.repeat(5)}com`; // 5 * 51 + 3 = 258 chars
+  expect(longHost.length).toBeGreaterThan(253);
+  expect(() => httpUrl.parse(`http://${longHost}`)).toThrow();
+  // TLD over the 63-char label limit
+  expect(() => httpUrl.parse(`http://example.${"a".repeat(64)}`)).toThrow();
+  // a host at exactly the 253-char limit is still accepted, one char more is not
+  const maxHost = `${`${"a".repeat(61)}.`.repeat(4)}aaaaa`; // 4 * 62 + 5 = 253 chars
+  httpUrl.parse(`http://${maxHost}`);
+  expect(() => httpUrl.parse(`http://${maxHost}a`)).toThrow();
   // missing // after protocol
   expect(() => httpUrl.parse("http:example.com")).toThrow();
   expect(() => httpUrl.parse("https:example.com")).toThrow();
@@ -493,6 +501,7 @@ test("url error overrides", () => {
 test("emoji validations", () => {
   const emoji = z.string().emoji();
 
+  emoji.parse("🦰🦱🦲🦳"); // both Extended_Pictographic and Emoji_Component
   emoji.parse("👋👋👋👋");
   emoji.parse("🍺👩‍🚀🫡");
   emoji.parse("💚💙💜💛❤️");

@@ -41,6 +41,14 @@ test("z.gte", () => {
   expect(z.safeParse(a, 9).success).toEqual(false);
 });
 
+test("z.gte/z.lte origin on a date schema with a numeric bound", () => {
+  const bound = new Date(Date.UTC(2022, 10, 5)).getTime();
+  const tooSmall = z.safeParse(z.date().check(z.gte(bound)), new Date(Date.UTC(2022, 10, 4)));
+  const tooBig = z.safeParse(z.date().check(z.lte(bound)), new Date(Date.UTC(2022, 10, 6)));
+  expect(tooSmall.error!.issues[0]).toMatchObject({ code: "too_small", origin: "date" });
+  expect(tooBig.error!.issues[0]).toMatchObject({ code: "too_big", origin: "date" });
+});
+
 // min;
 test("z.min", () => {
   const a = z.number().check(z.minimum(10));
@@ -131,6 +139,12 @@ test("z.overwrite", () => {
 // toLowerCase;
 // toUpperCase;
 // property
+
+test("z.properties", () => {
+  const a = z.instanceof(URL).check(...z.properties({ protocol: z.literal("https:" as string), hostname: z.string() }));
+  expect(z.safeParse(a, new URL("https://example.com")).success).toEqual(true);
+  expect(z.safeParse(a, new URL("http://example.com")).error!.issues.map((i) => i.path)).toEqual([["protocol"]]);
+});
 
 test("abort early", () => {
   const schema = z.string().check(

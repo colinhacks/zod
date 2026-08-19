@@ -317,6 +317,20 @@ test("z.e164", () => {
   expect(() => z.parse(a, 123)).toThrow();
 });
 
+test("z.creditCard", () => {
+  const a = z.creditCard();
+  // valid credit card
+  expect(z.parse(a, "4111111111111111")).toEqual("4111111111111111");
+  expect(z.parse(a, "4111 1111 1111 1111")).toEqual("4111 1111 1111 1111");
+  // failed Luhn checksum
+  expect(() => z.parse(a, "4111111111111112")).toThrow();
+  // outside the 12-19 digit range
+  expect(() => z.parse(a, "40000000006")).toThrow();
+  expect(() => z.parse(a, "hello")).toThrow();
+  // wrong type
+  expect(() => z.parse(a, 123)).toThrow();
+});
+
 test("z.jwt", () => {
   const a = z.jwt();
   // valid jwt
