@@ -144,6 +144,9 @@ describe("toJSONSchema", () => {
         "type": "string",
       }
     `);
+    // The format has to survive being composed onto a string rather than constructed directly.
+    expect(z.toJSONSchema(z.string().check(z.iso.time({ offset: true }))).format).toEqual("time");
+    expect(z.toJSONSchema(z.string().check(z.iso.time())).format).toEqual(undefined);
     // Minute precision drops the seconds full-time requires, so the format goes away again.
     expect(z.toJSONSchema(z.iso.time({ offset: true, precision: -1 }))).toMatchInlineSnapshot(`
       {

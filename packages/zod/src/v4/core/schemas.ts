@@ -368,6 +368,8 @@ export interface $ZodStringInternals<Input> extends $ZodTypeInternals<string, In
     patterns: Set<RegExp>;
     format: string;
     contentEncoding: string;
+    /** Set by `z.iso.time({ offset: true })` when its pattern is an RFC 3339 `full-time`. */
+    fullTime: boolean;
   }>;
 }
 
@@ -793,6 +795,14 @@ export const $ZodISOTime: core.$constructor<$ZodISOTime> = /*@__PURE__*/ core.$c
   (inst, def): void => {
     def.pattern ??= regexes.time(def);
     $ZodStringFormat.init(inst, def);
+
+    // Whether this is an RFC 3339 `full-time` is a fact only the ISO time def holds, but `toJSONSchema` asks it of the string the check ends up on — a different schema under `z.string().check(...)`. Publishing it makes both spellings answer the same; `init` has already run the attach list, so this schema is marked directly and any later host through the callback.
+    if (def.offset && (def.precision ?? 0) >= 0) {
+      inst._zod.bag.fullTime = true;
+      inst._zod.onattach.push((s) => {
+        (s._zod.bag as $ZodStringInternals<unknown>["bag"]).fullTime = true;
+      });
+    }
   }
 );
 

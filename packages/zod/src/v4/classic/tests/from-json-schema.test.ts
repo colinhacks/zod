@@ -841,6 +841,9 @@ test("string format - time", () => {
   const roundTripped = fromJSONSchema(z.toJSONSchema(z.iso.time({ offset: true })));
   expect(roundTripped.safeParse("16:30:00+02:00").success).toBe(true);
   expect(roundTripped.safeParse("16:30:00").success).toBe(false);
+
+  // The keyword has to survive the trip, not just the pattern it ships alongside.
+  expect(z.toJSONSchema(schema).format).toEqual("time");
 });
 
 test("string format - hostname", () => {

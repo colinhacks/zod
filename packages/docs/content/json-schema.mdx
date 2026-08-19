@@ -426,7 +426,7 @@ z.base64(); // => { type: "string", contentEncoding: "base64" }
 All other string formats are supported via `pattern`:
 
 ```ts
-z.iso.time(); // JSON Schema `format: "time"` requires an offset; plain `z.iso.time()` does not accept one
+z.iso.time(); // without an offset
 z.base64url();
 z.cuid();
 z.emoji();

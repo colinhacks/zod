@@ -30,7 +30,7 @@ const formatMap: Partial<Record<checks.$ZodStringFormats, string | undefined>> =
 export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _json, _params) => {
   const json = _json as JSONSchema.StringSchema;
   json.type = "string";
-  const { minimum, maximum, format, patterns, contentEncoding } = schema._zod
+  const { minimum, maximum, format, patterns, contentEncoding, fullTime } = schema._zod
     .bag as schemas.$ZodStringInternals<unknown>["bag"];
   if (typeof minimum === "number") json.minLength = minimum;
   if (typeof maximum === "number") json.maxLength = maximum;
@@ -39,11 +39,8 @@ export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _jso
     json.format = formatMap[format as checks.$ZodStringFormats] ?? format;
     if (json.format === "") delete json.format; // empty format is not valid
 
-    // JSON Schema format: "time" is RFC 3339 `full-time`, which requires a `Z` or numeric offset. Only `z.iso.time({ offset: true })` produces that, and only while the precision still admits seconds.
-    if (format === "time") {
-      const { offset, precision } = schema._zod.def as schemas.$ZodISOTimeDef;
-      if (!offset || precision === -1) delete json.format;
-    }
+    // JSON Schema format: "time" is RFC 3339 `full-time`, which requires a `Z` or numeric offset. Only `z.iso.time({ offset: true })` builds one, and it says so on the bag.
+    if (format === "time" && !fullTime) delete json.format;
   }
   if (contentEncoding) json.contentEncoding = contentEncoding;
   if (patterns && patterns.size > 0) {
