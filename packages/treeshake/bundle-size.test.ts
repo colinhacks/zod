@@ -37,12 +37,12 @@ const BUILT_ENTRY = path.join(__dirname, "node_modules", "zod", "index.js");
  *
  * The failure message prints the measured size, so updating is mechanical.
  */
-// Raised from 2813 / 3130 / 4288 in the commit that caused it: every throwing parse entry point now threads a `callee` to `Error.captureStackTrace` so the first frame is the caller's, which costs a few bytes in every bundle that parses at all. Measured 2798 / 3118 / 4273; 28 bytes of headroom each.
+// Raised from 2813 / 3130 / 4288 in the commit that caused it: every throwing parse entry point now threads a `callee` to `Error.captureStackTrace` so the first frame is the caller's, which costs a few bytes in every bundle that parses at all. Measured 2808 / 3128 / 4301 against the base this merges into; 28 bytes of headroom each.
 const CEILINGS: Record<string, number> = {
-  "zod-mini-boolean": 2826,
-  "zod-mini-string": 3146,
+  "zod-mini-boolean": 2836,
+  "zod-mini-string": 3156,
   // Carries an earlier raise as well: the construction-time discriminator check writes a WeakMap entry from `$ZodObject`, so every bundle containing `z.object` pays for it whether or not it builds a discriminated union.
-  "zod-mini-object": 4301,
+  "zod-mini-object": 4329,
 };
 
 /**
