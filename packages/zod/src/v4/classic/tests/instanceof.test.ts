@@ -58,3 +58,40 @@ test("instanceof respects customError", () => {
 
   z.config({ customError: undefined });
 });
+
+test("z.properties", () => {
+  const httpsUrl = z.instanceof(URL).check(
+    ...z.properties({
+      protocol: z.literal("https:" as string),
+      hostname: z.string().regex(z.regexes.domain),
+    })
+  );
+
+  expectTypeOf<URL>().toEqualTypeOf<z.infer<typeof httpsUrl>>();
+  expect(httpsUrl.safeParse(new URL("https://example.com")).success).toBe(true);
+
+  // Every property reports, rather than only the first one to fail.
+  const both = httpsUrl.safeParse(new URL("http://localhost"));
+  expect(both.error!.issues.map((i) => i.path)).toEqual([["protocol"], ["hostname"]]);
+
+  // A failing base schema yields its own issue and no property issues.
+  for (const input of ["not a url", null]) {
+    const issues = httpsUrl.safeParse(input).error!.issues;
+    expect(issues.map((i) => [i.code, i.path])).toEqual([["custom", []]]);
+  }
+
+  // Not specific to z.instanceof().
+  const obj = z
+    .object({ a: z.string(), b: z.string() })
+    .check(...z.properties({ a: z.literal("x"), b: z.literal("y") }));
+  expect(obj.safeParse({ a: "x", b: "y" }).success).toBe(true);
+  expect(obj.safeParse({ a: "!", b: "!" }).error!.issues.map((i) => i.path)).toEqual([["a"], ["b"]]);
+
+  // The `when` gate that buys the aggregation makes the check itself uncompilable, so a container absorbs it as a runtime island instead of dropping the whole schema off the fast path.
+  const compiled = z.compile(z.object({ url: httpsUrl }));
+  expect(compiled.safeParse({ url: new URL("https://example.com") }).success).toBe(true);
+  expect(compiled.safeParse({ url: new URL("http://localhost") }).error!.issues.map((i) => i.path)).toEqual([
+    ["url", "protocol"],
+    ["url", "hostname"],
+  ]);
+});
