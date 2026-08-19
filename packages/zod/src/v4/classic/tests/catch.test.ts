@@ -385,3 +385,18 @@ test("catch does not resurrect issues an inner optional already resolved", () =>
   expect(z.string().catch("FB").parse(123)).toBe("FB");
   expect(z.string().optional().safeParse(123).success).toBe(false);
 });
+
+test("resolving an optional's failure clears the abort flag with it", () => {
+  // `handlePipeResult` marks the payload aborted when the pipe's `in` fails, and `util.aborted` short-circuits on that flag alone. Clearing the issues without the flag turns the failure into a success whose downstream checks are all skipped, so the refinement below never runs and the parse wrongly passes.
+  const schema = z
+    .string()
+    .min(10)
+    .prefault("abc")
+    .pipe(z.string())
+    .optional()
+    .refine(() => false, "REFINE RAN");
+
+  const result = schema.safeParse(undefined);
+  expect(result.success).toBe(false);
+  expect(result.error!.issues[0]?.message).toBe("REFINE RAN");
+});

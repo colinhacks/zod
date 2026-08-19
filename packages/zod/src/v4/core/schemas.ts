@@ -3705,6 +3705,8 @@ function handleOptionalResult(result: ParsePayload) {
   if (result.issues.length) {
     result.issues.length = 0;
     result.value = undefined;
+    // `aborted` goes with them. A pipe marks the payload aborted when its `in` fails, and `util.aborted` short-circuits on that flag alone, so leaving it set resolves the failure into a success whose every downstream check is then skipped — a refinement after the optional silently stops running. The replacement payload this used to return carried no flag, which is the behaviour to keep. `false` rather than `delete`, which would drop the object into dictionary mode on a parse path; both readers test `=== true`.
+    result.aborted = false;
   }
   return result;
 }
