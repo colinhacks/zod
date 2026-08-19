@@ -276,6 +276,22 @@ test("schemaForType", () => {
 
   // @ts-expect-error schemaForType checks output, not input
   z.schemaForType<string>()(z.string().transform((value) => value.length));
+
+  // Exact equality is deliberately the only mode. A bidirectional-assignability mode would accept both of the two cases above — `any` is assignable in both directions by construction, and `readonly` is not part of assignability — so it would silently drop the guarantees the rest of this test pins. The cost is the asymmetry below: an intersection target matches `.and()` but not `.safeExtend()`, and a flat target matches `.safeExtend()` but not `.and()`. Flattening the target with a mapped type accepts either.
+  type Intersected = { a: number } & { b: string };
+  type Flatten<T> = { [K in keyof T]: T[K] } & {};
+  const viaAnd = z.object({ a: z.number() }).and(z.object({ b: z.string() }));
+  const viaExtend = z.object({ a: z.number() }).safeExtend({ b: z.string() });
+
+  z.schemaForType<Intersected>()(viaAnd);
+  z.schemaForType<{ a: number; b: string }>()(viaExtend);
+  z.schemaForType<Flatten<Intersected>>()(viaExtend);
+
+  // @ts-expect-error .safeExtend() produces a flat object type, not an intersection
+  z.schemaForType<Intersected>()(viaExtend);
+
+  // @ts-expect-error .and() produces an intersection, not a flat object type
+  z.schemaForType<{ a: number; b: string }>()(viaAnd);
 });
 
 test("checks", () => {
