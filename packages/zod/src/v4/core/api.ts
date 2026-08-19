@@ -481,6 +481,23 @@ export function _e164<T extends schemas.$ZodE164>(
   });
 }
 
+// CreditCard
+export type $ZodCreditCardParams = StringFormatParams<schemas.$ZodCreditCard, "pattern" | "when">;
+export type $ZodCheckCreditCardParams = CheckStringFormatParams<schemas.$ZodCreditCard, "pattern" | "when">;
+// @__NO_SIDE_EFFECTS__
+export function _creditCard<T extends schemas.$ZodCreditCard>(
+  Class: util.SchemaClass<T>,
+  params?: string | $ZodCreditCardParams | $ZodCheckCreditCardParams
+): T {
+  return new Class({
+    type: "string",
+    format: "credit_card",
+    check: "string_format",
+    abort: false,
+    ...util.normalizeParams(params),
+  });
+}
+
 // JWT
 export type $ZodJWTParams = StringFormatParams<schemas.$ZodJWT, "pattern" | "when">;
 export type $ZodCheckJWTParams = CheckStringFormatParams<schemas.$ZodJWT, "pattern" | "when">;
@@ -1220,19 +1237,26 @@ export function _xor<const T extends readonly schemas.$ZodObject[]>(
 }
 
 // ZodDiscriminatedUnion
-export interface $ZodTypeDiscriminableInternals<Disc extends string = string>
-  extends schemas.$ZodTypeInternals<unknown, { [K in Disc]?: unknown }> {
+
+// The bound stops at `propValues`; it deliberately does not check that the option carries the discriminator. Any such check has to name the option's `input`, and constraining `input` in argument position forces TypeScript to resolve it while checking the call — circular for an option whose input references the union, which collapses the whole union to `any`. `$ZodDiscriminatedUnion` validates the discriminator lazily instead, when it builds its lookup map.
+//
+// Validating eagerly through `propValues` is not available: reading it runs the option's shape getters, and for a recursive option that getter references the union whose initializer is still running, so it throws `ReferenceError: Cannot access '...' before initialization`.
+//
+// `Object.keys` on the shape is recursion-safe by contrast — it lists the keys without invoking them — so an eager check is reachable. It was tried and reverted: a key list derived from the shape cannot be kept in agreement with `shape` itself, which resolves lazily over the object the caller passed and then freezes to a copy, and it charged every object schema construction time and memory for a check only this one type reads.
+//
+// `_Disc` is unused and retained only so `$ZodTypeDiscriminable<"kind">` keeps compiling for external callers.
+export interface $ZodTypeDiscriminableInternals<_Disc extends string = string> extends schemas._$ZodTypeInternals {
   propValues: util.PropValues;
 }
 
-export interface $ZodTypeDiscriminable<Disc extends string = string> extends schemas.$ZodType {
-  _zod: $ZodTypeDiscriminableInternals<Disc>;
+export interface $ZodTypeDiscriminable<_Disc extends string = string> extends schemas.SomeType {
+  _zod: $ZodTypeDiscriminableInternals;
 }
 
 export type $ZodDiscriminatedUnionParams = TypeParams<schemas.$ZodDiscriminatedUnion, "options" | "discriminator">;
 // @__NO_SIDE_EFFECTS__
 export function _discriminatedUnion<
-  Types extends [$ZodTypeDiscriminable<Disc>, ...$ZodTypeDiscriminable<Disc>[]],
+  Types extends [$ZodTypeDiscriminable, ...$ZodTypeDiscriminable[]],
   Disc extends string,
 >(
   Class: util.SchemaClass<schemas.$ZodDiscriminatedUnion>,
@@ -1242,7 +1266,7 @@ export function _discriminatedUnion<
 ): schemas.$ZodDiscriminatedUnion<Types, Disc> {
   return new Class({
     type: "union",
-    options,
+    options: options as any as schemas.$ZodType[],
     discriminator,
     ...util.normalizeParams(params),
   }) as any;
@@ -1302,7 +1326,7 @@ export function _tuple(
 }
 
 // ZodRecord
-export type $ZodRecordParams = TypeParams<schemas.$ZodRecord, "keyType" | "valueType">;
+export type $ZodRecordParams = TypeParams<schemas.$ZodRecord, "keyType" | "valueType" | "partial">;
 // @__NO_SIDE_EFFECTS__
 export function _record<Key extends schemas.$ZodRecordKey, Value extends schemas.$ZodObject>(
   Class: util.SchemaClass<schemas.$ZodRecord>,
@@ -1532,7 +1556,7 @@ export function _catch<T extends schemas.$ZodObject>(
   return new Class({
     type: "catch",
     innerType,
-    catchValue: (typeof catchValue === "function" ? catchValue : () => catchValue) as any,
+    catchValue: (typeof catchValue === "function" ? catchValue : util.constantCatch(catchValue)) as any,
   }) as any;
 }
 
@@ -1682,7 +1706,7 @@ export function _superRefine<T>(
         const _issue: any = issue;
         if (_issue.fatal) _issue.continue = false;
         _issue.code ??= "custom";
-        _issue.input ??= payload.value;
+        if (!("input" in _issue)) _issue.input = payload.value;
         _issue.inst ??= ch;
         _issue.continue ??= !ch._zod.def.abort; // abort is always undefined, so this is always true...
         payload.issues.push(util.issue(_issue));

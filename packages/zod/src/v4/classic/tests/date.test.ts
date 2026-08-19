@@ -53,6 +53,36 @@ test("date max", () => {
   `);
 });
 
+test("date min/max origin with numeric bound", () => {
+  const minRes = z.date().min(benchmarkDate.getTime()).safeParse(beforeBenchmarkDate);
+  expect(minRes.error!.issues).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "too_small",
+        "inclusive": true,
+        "message": "Too small: expected date to be >=1667606400000",
+        "minimum": 1667606400000,
+        "origin": "date",
+        "path": [],
+      },
+    ]
+  `);
+
+  const maxRes = z.date().max(benchmarkDate.getTime()).safeParse(afterBenchmarkDate);
+  expect(maxRes.error!.issues).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "too_big",
+        "inclusive": true,
+        "maximum": 1667606400000,
+        "message": "Too big: expected date to be <=1667606400000",
+        "origin": "date",
+        "path": [],
+      },
+    ]
+  `);
+});
+
 test("min max getters", () => {
   expect(minCheck.minDate).toEqual(benchmarkDate);
   expect(minCheck.min(afterBenchmarkDate).minDate).toEqual(afterBenchmarkDate);
