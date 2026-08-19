@@ -1,0 +1,16 @@
+{
+  "extends": "../../.configs/tsconfig.base.json",
+  "compilerOptions": {
+    "module": "nodenext",
+    "customConditions": ["@zod/source"],
+    "noEmit": true,
+    "types": ["vitest"]
+  },
+  "files": [
+    "src/v4/classic/tests/recursive-types.test.ts",
+    "src/v4/mini/tests/recursive-types.test.ts",
+    "src/v4/core/tests/recursive-tuples.test.ts",
+    "src/v4/classic/tests/cyclic-data.test.ts",
+    "src/v4/classic/tests/lazy.test.ts"
+  ]
+}
