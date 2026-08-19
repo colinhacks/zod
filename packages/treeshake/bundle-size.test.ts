@@ -40,7 +40,8 @@ const BUILT_ENTRY = path.join(__dirname, "node_modules", "zod", "index.js");
 const CEILINGS: Record<string, number> = {
   "zod-mini-boolean": 2813,
   "zod-mini-string": 3130,
-  "zod-mini-object": 4257,
+  // Raised from 4257 in the commit that caused it: the construction-time discriminator check writes a WeakMap entry from `$ZodObject`, so every bundle containing `z.object` carries it. Measured 4260; 28 bytes of headroom to match the other two.
+  "zod-mini-object": 4288,
 };
 
 /**
