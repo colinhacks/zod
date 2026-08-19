@@ -740,51 +740,51 @@ test("encode with codec discriminator", () => {
   expect(encoded).toEqual({ type: 1, value: "hello" });
 });
 
-test("optionForDiscriminator", () => {
+test("getDiscriminatedOption", () => {
   const fruit = z.object({ type: z.literal("fruit"), seeds: z.boolean() });
   const veg = z.object({ type: z.literal("vegetable"), leafy: z.boolean() });
   const schema = z.discriminatedUnion("type", [fruit, veg]);
 
-  expect(z.optionForDiscriminator(schema, "fruit")).toBe(fruit);
-  expect(z.optionForDiscriminator(schema, "vegetable")).toBe(veg);
+  expect(z.getDiscriminatedOption(schema, "fruit")).toBe(fruit);
+  expect(z.getDiscriminatedOption(schema, "vegetable")).toBe(veg);
 
   // The result is narrowed to the one member, not the union of all of them.
-  expectTypeOf(z.optionForDiscriminator(schema, "fruit")).toEqualTypeOf<typeof fruit>();
-  expectTypeOf(z.optionForDiscriminator(schema, "vegetable")).toEqualTypeOf<typeof veg>();
+  expectTypeOf(z.getDiscriminatedOption(schema, "fruit")).toEqualTypeOf<typeof fruit>();
+  expectTypeOf(z.getDiscriminatedOption(schema, "vegetable")).toEqualTypeOf<typeof veg>();
   // @ts-expect-error — "unknown" is not a declared discriminator value
-  z.optionForDiscriminator(schema, "unknown");
+  z.getDiscriminatedOption(schema, "unknown");
 });
 
-test("optionForDiscriminator — multi-value members and non-string discriminators", () => {
+test("getDiscriminatedOption — multi-value members and non-string discriminators", () => {
   const a = z.object({ type: z.literal(["x", "y"]), payload: z.string() });
   const b = z.object({ type: z.literal("z"), payload: z.number() });
   const multi = z.discriminatedUnion("type", [a, b]);
-  expect(z.optionForDiscriminator(multi, "x")).toBe(a);
-  expect(z.optionForDiscriminator(multi, "y")).toBe(a);
-  expect(z.optionForDiscriminator(multi, "z")).toBe(b);
+  expect(z.getDiscriminatedOption(multi, "x")).toBe(a);
+  expect(z.getDiscriminatedOption(multi, "y")).toBe(a);
+  expect(z.getDiscriminatedOption(multi, "z")).toBe(b);
 
   const num = z.object({ type: z.literal(1) });
   const bool = z.object({ type: z.literal(true) });
   const nul = z.object({ type: z.null() });
   const mixed = z.discriminatedUnion("type", [num, bool, nul]);
-  expect(z.optionForDiscriminator(mixed, 1)).toBe(num);
-  expect(z.optionForDiscriminator(mixed, true)).toBe(bool);
-  expect(z.optionForDiscriminator(mixed, null)).toBe(nul);
+  expect(z.getDiscriminatedOption(mixed, 1)).toBe(num);
+  expect(z.getDiscriminatedOption(mixed, true)).toBe(bool);
+  expect(z.getDiscriminatedOption(mixed, null)).toBe(nul);
 
   // An omittable discriminator claims undefined, so it resolves like any other value.
   const opt = z.object({ type: z.literal("a").optional(), a: z.string() });
   const req = z.object({ type: z.literal("b"), b: z.string() });
-  expect(z.optionForDiscriminator(z.discriminatedUnion("type", [opt, req]), undefined)).toBe(opt);
+  expect(z.getDiscriminatedOption(z.discriminatedUnion("type", [opt, req]), undefined)).toBe(opt);
 });
 
-test("optionForDiscriminator caches in the bag and costs nothing until called", () => {
+test("getDiscriminatedOption caches in the bag and costs nothing until called", () => {
   const schema = z.discriminatedUnion("type", [z.object({ type: z.literal("a") }), z.object({ type: z.literal("b") })]);
 
   expect(schema._zod.bag.optionsMap).toBeUndefined();
-  expect(z.optionForDiscriminator(schema, "a")).toBe(schema.options[0]);
+  expect(z.getDiscriminatedOption(schema, "a")).toBe(schema.options[0]);
   const map = schema._zod.bag.optionsMap;
   expect(map).toBeInstanceOf(Map);
-  expect(z.optionForDiscriminator(schema, "b")).toBe(schema.options[1]);
+  expect(z.getDiscriminatedOption(schema, "b")).toBe(schema.options[1]);
   expect(schema._zod.bag.optionsMap).toBe(map);
 
   // A clone recomputes rather than inheriting the cache.

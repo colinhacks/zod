@@ -2507,8 +2507,8 @@ export type $DiscriminatedOption<Options extends readonly SomeType[], Disc exten
     : never;
 }[number];
 
-/** Returns the member of a discriminated union that declares `value` as its discriminator. */
-export function optionForDiscriminator<
+/** Returns the option of `union` whose discriminator claims `value`. */
+export function getDiscriminatedOption<
   Options extends readonly SomeType[],
   Disc extends string,
   const V extends $DiscriminatorValue<Options, Disc>,

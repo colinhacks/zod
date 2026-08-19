@@ -26,7 +26,7 @@ export {
   compile,
   ZodCompileAsyncError,
   ZodCompileUnsupportedError,
-  optionForDiscriminator,
+  getDiscriminatedOption,
 } from "../core/index.js";
 export { toJSONSchema } from "../core/json-schema-processors.js";
 
