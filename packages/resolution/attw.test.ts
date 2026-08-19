@@ -33,8 +33,13 @@ describe("Are The Types Wrong (attw) tests", () => {
       reject: false, // Don't throw on non-zero exit codes
     });
 
-    // Combine stdout and stderr for comprehensive output
-    const output = result.stdout + (result.stderr ? "\n" + result.stderr : "");
+    // Combine stdout and stderr for comprehensive output, minus pnpm's own warnings: under CI, setup-node writes an .npmrc containing an unresolved ${NODE_AUTH_TOKEN} and pnpm warns about it on every invocation, which is not part of attw's report.
+    const stderr = result.stderr
+      .split("\n")
+      .filter((line) => !/^\s*WARN\b/.test(line))
+      .join("\n")
+      .trim();
+    const output = result.stdout + (stderr ? "\n" + stderr : "");
     // remove first line
     const outputWithoutFirstLine = output.split("\n").slice(2).join("\n").trim();
     expect(outputWithoutFirstLine).toMatchInlineSnapshot(`
