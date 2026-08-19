@@ -264,25 +264,66 @@ test("valid discriminator value, invalid data", () => {
 });
 
 test("wrong schema - missing discriminator", () => {
-  // A bad option is rejected at runtime rather than by the option bound, which has to stay lazy so recursive options can infer. Two different predicates do it, so both are pinned here.
-
-  // No literal-valued property at all: caught when `propValues` is built.
-  expect(() => z.discriminatedUnion("type", [z.object({ value: z.string() })])._zod.propValues).toThrow(
-    /Invalid discriminated union option/
+  // An option whose properties can be listed is checked when the union is constructed.
+  expect(() => z.discriminatedUnion("type", [z.object({ value: z.string() })])).toThrow(
+    /Invalid discriminated union option at index "0"/
   );
+  expect(() =>
+    z.discriminatedUnion("type", [z.object({ type: z.literal("a"), a: z.string() }), z.object({ b: z.string() })])
+  ).toThrow(/Invalid discriminated union option at index "1"/);
 
-  // Has a literal-valued property, but not the discriminator: passes `propValues` and is caught when the lookup map is built, on the first object input.
-  const missingDisc = z.discriminatedUnion("type", [z.object({ value: z.literal("x") })]);
-  expect(missingDisc._zod.propValues).toEqual({ value: new Set(["x"]) });
-  expect(() => missingDisc.safeParse({ value: "x" })).toThrow(/Invalid discriminated union option/);
+  // An option whose shape cannot be listed without resolving it — a pipe here — is left to the lookup map, and fails on the first object parsed.
+  const viaPipe = z.discriminatedUnion("type", [
+    z.object({ value: z.literal("x") }).pipe(z.object({ value: z.literal("x") })),
+  ]);
+  expect(() => viaPipe.safeParse({ value: "x" })).toThrow(/Invalid discriminated union option at index "0"/);
+});
 
-  try {
-    z.discriminatedUnion("type", [z.object({ type: z.literal("a"), a: z.string() }), z.object({ b: z.string() })])._zod
-      .propValues;
-    throw new Error();
-  } catch (e: any) {
-    expect(e.message.includes("Invalid discriminated union option")).toBe(true);
-  }
+test("the construction check follows shape through both of its phases", () => {
+  // `shape` answers from the object the caller passed until the first read, then from a frozen copy. A key list derived at either moment would disagree with it at the other and reject an option that does carry the discriminator.
+  const mutatedBeforeRead: Record<string, z.ZodType> = { value: z.string() };
+  const A = z.object(mutatedBeforeRead);
+  mutatedBeforeRead.type = z.literal("a");
+  expect(
+    z.discriminatedUnion("type", [A, z.object({ type: z.literal("b") })]).parse({ type: "a", value: "x" })
+  ).toEqual({ type: "a", value: "x" });
+
+  const mutatedAfterRead: Record<string, z.ZodType> = { type: z.literal("a"), value: z.string() };
+  const B = z.object(mutatedAfterRead);
+  B.parse({ type: "a", value: "x" });
+  delete mutatedAfterRead.type;
+  expect(() => z.discriminatedUnion("type", [B])).not.toThrow();
+});
+
+test("deriving a schema neither clobbers nor is inherited by the source", () => {
+  // `.describe()` and friends reuse the def by identity, so the source keeps its own check.
+  const A = z.object({ value: z.literal("x") });
+  A.describe("just documenting this");
+  expect(() => z.discriminatedUnion("type", [A])).toThrow(/Invalid discriminated union option/);
+  expect(() => z.discriminatedUnion("type", [A.describe("d")])).toThrow(/Invalid discriminated union option/);
+
+  // A def rebuilt by a builder is a different object, so it inherits nothing and is left to the lookup map.
+  const Base = z.object({ status: z.literal("failed"), message: z.string() });
+  expect(() => z.discriminatedUnion("code", [Base.extend({ code: z.literal(400) })])).not.toThrow();
+});
+
+test("mutually-recursive getter options are checked without resolving them", () => {
+  // `Object.keys` lists a shape's keys without invoking them, so the check sees `child` without running the getter that references the union being constructed.
+  const variantA = z.object({
+    kind: z.literal("a"),
+    get child() {
+      return tree.optional();
+    },
+  });
+  const variantB = z.object({
+    kind: z.literal("b"),
+    get sibling() {
+      return tree.optional();
+    },
+  });
+  const tree = z.discriminatedUnion("kind", [variantA, variantB]);
+
+  expect(tree.parse({ kind: "a", child: { kind: "b" } })).toEqual({ kind: "a", child: { kind: "b" } });
 });
 
 // removed to account for unions of unions

@@ -1977,6 +1977,9 @@ function handleCatchall(
   });
 }
 
+// Whichever object a def's `shape` currently answers from: the one the caller passed until the first read, the frozen copy after it. Keyed by def, so a def rebuilt by a builder is simply absent rather than inheriting the source's. Read its keys with `Object.keys`, which does not invoke them — that is what lets a discriminated union check its discriminator without resolving an option whose getters reference the union being constructed.
+const propShapes = new WeakMap<object, Record<string, unknown>>();
+
 export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$constructor("$ZodObject", (inst, def) => {
   // requires cast because technically $ZodObject doesn't extend
   $ZodType.init(inst, def);
@@ -1984,12 +1987,14 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
   const desc = Object.getOwnPropertyDescriptor(def, "shape");
   if (!desc?.get) {
     const sh = def.shape;
+    propShapes.set(def, sh);
     Object.defineProperty(def, "shape", {
       get: () => {
         const newSh = { ...sh };
         Object.defineProperty(def, "shape", {
           value: newSh,
         });
+        propShapes.set(def, newSh);
 
         return newSh;
       },
@@ -2468,6 +2473,14 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
         }
       }
       return propValues;
+    });
+
+    // Checked now rather than in the lookup map below, so an option that lacks the discriminator fails at the `discriminatedUnion` call instead of on the first object parsed. Options whose shape cannot be enumerated without resolving it — pipes, lazies, and objects rebuilt by a builder such as `.extend()` — are left to the map.
+    def.options.forEach((option, i) => {
+      const propShape = propShapes.get(option._zod.def);
+      if (propShape && !(def.discriminator in propShape)) {
+        throw new Error(`Invalid discriminated union option at index "${i}"`);
+      }
     });
 
     const disc = util.cached(() => {
