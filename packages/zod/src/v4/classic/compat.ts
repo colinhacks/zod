@@ -25,10 +25,10 @@ export const ZodIssueCode = {
   custom: "custom",
 } as const;
 
-/** @deprecated Use `z.$ZodFlattenedError` */
+/** @deprecated Use `z.core.$ZodFlattenedError<z.output<T>>` instead; it takes an inferred type, not a schema. */
 export type inferFlattenedErrors<T extends core.$ZodType, U = string> = core.$ZodFlattenedError<core.output<T>, U>;
 
-/** @deprecated Use `z.$ZodFormattedError` */
+/** @deprecated Use `z.core.$ZodFormattedError<z.output<T>>` instead; it takes an inferred type, not a schema. */
 export type inferFormattedError<T extends core.$ZodType<any, any>, U = string> = core.$ZodFormattedError<
   core.output<T>,
   U
