@@ -437,6 +437,21 @@ test("string length checks", () => {
   differential(z.string().min(3).max(5), ["abc", "abcde", "ab", "abcdef", "abcd"]);
 });
 
+test("string length checks measure code points", () => {
+  const inputs = [
+    "abc",
+    "\u{1F600}",
+    "\u{1F600}\u{1F600}",
+    "\u{1F600}\u{1F600}\u{1F600}",
+    "\u{1F600}\u{1F600}ab",
+    "\uD83D",
+    "",
+  ];
+  differential(z.string().min(3), inputs);
+  differential(z.string().max(3), inputs);
+  differential(z.string().length(3), inputs);
+});
+
 test("string regex", () => {
   differential(z.string().regex(/^[a-z]+$/), ["abc", "ABC", "abc123", ""]);
 });

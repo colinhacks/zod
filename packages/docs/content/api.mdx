@@ -219,6 +219,14 @@ z.string().check(z.lowercase());
 </Tab>
 </Tabs>
 
+Length is measured in Unicode code points, not UTF-16 code units. Emoji outside the Basic Multilingual Plane count as one, and combining marks and ZWJ sequences count as several.
+
+```ts
+z.string().length(1).parse("😀"); // one code point, two UTF-16 units
+z.string().length(2).parse("e\u0301"); // "é" — an e plus a combining acute
+z.string().length(3).parse("🧑‍🍼"); // person + ZWJ + baby bottle
+```
+
 To perform some simple string transforms:
 
 <Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
