@@ -3701,9 +3701,9 @@ export interface $ZodOptional<T extends SomeType = $ZodType> extends $ZodType {
 }
 
 function handleOptionalResult(result: ParsePayload) {
-  // A substituting schema that still failed has no usable answer; yield undefined. Resolve it on the payload rather than in a replacement: an outer schema that kept the payload it passed down still reads issues off that one, so handing back a clean copy leaves the original dirty and the failure resurfaces above. `.catch()` does exactly that. A fresh `issues` array rather than truncating in place, because a pipe hands its array to the next schema and truncating would clear it there too.
+  // A substituting schema that still failed has no usable answer; yield undefined. Resolve it on the ARRAY, not on the payload: an outer schema that kept the payload it passed down still reads issues off that one, so handing back a clean copy — or rebinding a fresh array here — leaves the original dirty and the failure resurfaces above. `.catch()` does exactly that. Rebinding is not enough either, because `handlePipeResult` forwards the SAME array to the next schema, so a pipe in the substituting inner makes `result` a different payload sharing the outer array; only truncating reaches both. Clearing it everywhere is the point: these issues no longer exist for anyone.
   if (result.issues.length) {
-    result.issues = [];
+    result.issues.length = 0;
     result.value = undefined;
   }
   return result;
