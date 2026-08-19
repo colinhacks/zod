@@ -115,6 +115,8 @@ await schema.parseAsync("hello");
 
 ### AOT compilation
 
+**Canary only** — compilation has not shipped in a stable release yet. Install with `npm install zod@canary`.
+
 For hot validation paths, `z.compile(schema)` returns a schema clone with an ahead-of-time compiled fast path. Valid inputs take the compiled path; invalid inputs fall back to the regular parser so error reporting stays identical.
 
 Across a 55-schema benchmark the median speedup is **2.4x**, and it scales with how much work the schema does per parse: a large array of objects is ~9x, a 20-key object ~9x, a nested object ~4.5x, while a bare `z.string()` gains nothing — compilation removes per-node dispatch and allocation, and a single `typeof` has none to remove.

@@ -44,6 +44,7 @@ The project uses pnpm workspaces. Key commands:
 - Keep JSDoc as minimal as possible. A self-explanatory type or symbol name needs no doc comment. When a comment is genuinely required, write one short sentence describing behavior — not history, rationale, or examples. Don't add interface-level JSDoc that just restates the interface name.
 - When you've modified a PR (or opened/closed/commented on one), include the PR URL liberally in summary messages — at minimum once at the end of any reply that touched it
 - When creating a PR, do not include a separate test plan section in the body. Link to any relevant issues under discussion, and use the same copywriting guidelines from "Commenting on issues and PRs": concise maintainer voice, prose over templates, and validation details only when they are material to the reader.
+- Format validators (`z.iso.*`, `z.email()`, `z.url()`, `z.uuid()`, …) are deliberately narrower than the specs they're named after. "The spec allows X" is not a reason to accept X — see "Format validators: spec compliance is not the bar" below.
 - NEVER bump the version in `packages/zod/package.json` (or any package's `package.json`). A version bump is the only thing that triggers a release; everything else (including direct pushes to `main`) is recoverable until that happens. If a version bump is genuinely needed, ask first.
 
 ## The three axes
@@ -101,6 +102,22 @@ git push origin main
 ```
 
 The release workflow only fires on changes under `packages/zod/package.json`, `packages/zod/src/**`, or the workflow file itself, so the bump must include `package.json`. Watch the Actions tab to confirm `build_and_publish` succeeds.
+
+## Format validators: spec compliance is not the bar
+
+Zod's format validators — `z.iso.*`, `z.email()`, `z.url()`, `z.uuid()`, and the rest — are named after specs but do not implement them. Each one matches the profile that real producers emit and real consumers accept, which is almost always far narrower than what the grammar permits. That narrowness is the product, not a gap in it.
+
+So **"the spec allows X, therefore Zod must accept X" is not an argument**, and a PR that widens a format regex on that basis alone will be closed. The question is never what the spec permits; it's whether accepting the wider form helps more people than rejecting it hurts. A form that shows up in real payloads and breaks real integrations is worth fixing. A form that only appears when someone reads the grammar and constructs a string from it is not — when one of those reaches a validator in production it's a bug or an attack, and rejecting it is the useful behavior.
+
+Three things make a widening request an automatic no:
+
+- **The spec permits the form only "by mutual agreement" of the two parties.** A general-purpose validator is never party to that agreement, so it can't honor the clause. ISO 8601 expanded years (`+010000-01-01T00:00:00.000Z`) are the canonical case: the standard also requires the parties to agree the digit count, and runtimes disagree — JavaScript emits six digits, Java's `Instant` emits five, Python rejects both. Declined in #6154.
+- **The wider form breaks the JSON Schema output.** `z.iso.datetime()` and `z.iso.date()` emit `format: "date-time"` and `format: "date"`, which mean RFC 3339 — four-digit years, no sign. Widening those regexes makes `z.toJSONSchema()` emit a pattern that conformant consumers reject.
+- **The cost lands on everyone.** These regexes live in `core/regexes.ts`, so every added alternation is bytes in every bundle including `zod/mini`, plus more backtracking on a hot parse path. Weigh it on all three axes above before you argue for it at all.
+
+For calibration on how narrow these already are: `z.iso.datetime()` rejects basic format (`20200101T061500Z`), week dates (`2020-W01-1`), ordinal dates (`2020-001`), comma decimal separators, and `24:00`. Every one of those is valid ISO 8601. None of them are going in either.
+
+Point anyone who genuinely needs a wider format at `z.string().regex()` or `z.string().refine()`. That escape hatch is the answer, not a wider default.
 
 ## Triaging issues and PRs
 

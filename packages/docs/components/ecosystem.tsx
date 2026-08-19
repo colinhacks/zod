@@ -390,6 +390,12 @@ const zodUtilities: ZodResource[] = [
     description: "Oxlint plugin to enforce namespace imports for Zod.",
     slug: "samchungy/oxlint-plugin-import-zod",
   },
+  {
+    name: "shorn",
+    url: "https://shorn.dev",
+    description: "Compact binary serialization that uses your Zod schema as the wire format. No IDL or codegen.",
+    slug: "ChiChuRita/shorn",
+  },
 ];
 
 export {

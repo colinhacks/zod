@@ -3,6 +3,12 @@ title: AOT compilation
 description: "Ahead-of-time schema compilation for hot validation paths"
 ---
 
+import { Callout } from "fumadocs-ui/components/callout";
+
+<Callout type="warn">
+Compilation is canary-only — it has not shipped in a stable release yet. Install with `npm install zod@canary`.
+</Callout>
+
 For hot validation paths, Zod can compile a schema into a specialized validator ahead of time, with identical results and identical errors.
 
 Across a 55-schema benchmark the median speedup is **2.4x**. It scales with how much work the schema does per parse, because what compilation removes is per-node dispatch and allocation rather than the checks themselves:
