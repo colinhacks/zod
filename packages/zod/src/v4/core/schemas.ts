@@ -2520,7 +2520,7 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
     // Checked now rather than in the lookup map below, so an option that lacks the discriminator fails at the `discriminatedUnion` call instead of on the first object parsed. Options whose shape cannot be enumerated without resolving it — pipes, lazies, and objects rebuilt by a builder such as `.extend()` — are left to the map.
     def.options.forEach((option, i) => {
       const propShape = propShapes.get(option._zod.def);
-      if (propShape && !(def.discriminator in propShape)) {
+      if (propShape && !Object.prototype.hasOwnProperty.call(propShape, def.discriminator)) {
         throw new Error(`Invalid discriminated union option at index "${i}"`);
       }
     });
