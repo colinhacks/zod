@@ -38,11 +38,12 @@ const BUILT_ENTRY = path.join(__dirname, "node_modules", "zod", "index.js");
  * The failure message prints the measured size, so updating is mechanical.
  */
 const CEILINGS: Record<string, number> = {
-  "zod-mini-boolean": 2813,
-  // Raised from 3130 in the commit that caused it: string length checks now measure code points, so any bundle using `.min`/`.max`/`.length` on a string carries the surrogate scan. Measured 3257; 28 bytes of headroom to match the others. `zod-mini-object` does not move — a bundle with no length check still carries none of it.
-  "zod-mini-string": 3285,
-  // Raised from 4257 in the commit that caused it: the construction-time discriminator check writes a WeakMap entry from `$ZodObject`, so every bundle containing `z.object` carries it. Measured 4260; 28 bytes of headroom to match the other two.
-  "zod-mini-object": 4288,
+  // Raised from 2813 / 3285 / 4288 by the commit that caused it: threading a `callee` to `Error.captureStackTrace` from every throwing parse entry point costs +13 / +17 / +16, since a bundle that parses at all carries it. Measured 2808 / 3271 / 4301 here; 28 bytes of headroom each. The per-fixture notes below record what each ceiling already carried before this.
+  "zod-mini-boolean": 2836,
+  // Also carries the code-point string length scan: `.min`/`.max`/`.length` on a string pulls in the surrogate walk.
+  "zod-mini-string": 3299,
+  // Also carries the construction-time discriminator check, which writes a WeakMap entry from `$ZodObject`, so every bundle containing `z.object` pays for it whether or not it builds a discriminated union.
+  "zod-mini-object": 4329,
 };
 
 /**

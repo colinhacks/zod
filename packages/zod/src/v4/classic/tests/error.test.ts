@@ -7,6 +7,36 @@ afterEach(() => {
   z.config({ customError: undefined });
 });
 
+function getThrownError(fn: () => unknown): unknown {
+  try {
+    fn();
+  } catch (error) {
+    return error;
+  }
+  throw new Error("Expected function to throw");
+}
+
+async function getRejectedError(fn: () => Promise<unknown>): Promise<unknown> {
+  try {
+    await fn();
+  } catch (error) {
+    return error;
+  }
+  throw new Error("Expected function to reject");
+}
+
+function expectFirstStackFrameAtCallsite(error: unknown): void {
+  expect(error).toBeInstanceOf(Error);
+  const stack = (error as Error).stack;
+  expect(stack).toEqual(expect.any(String));
+
+  const firstFrame = stack!.split("\n").find((line) => line.trim().startsWith("at "));
+  expect(firstFrame).toBeDefined();
+  expect(firstFrame).toContain("error.test.ts");
+  expect(firstFrame).not.toContain("core/parse.ts");
+  expect(firstFrame).not.toContain("classic/schemas.ts");
+}
+
 test("error creation", () => {
   const err1 = new z.ZodError([]);
 
@@ -719,6 +749,59 @@ test("error inheritance", () => {
     expect(e2).toBeInstanceOf(z.ZodRealError);
     // expect(e2).toBeInstanceOf(Error);
   }
+});
+
+test("parse errors capture the caller stack frame", async () => {
+  const schema = z.string();
+  const parse = schema.parse;
+  const parseAsync = schema.parseAsync;
+
+  expectFirstStackFrameAtCallsite(getThrownError(() => schema.parse(123)));
+  expectFirstStackFrameAtCallsite(getThrownError(() => parse(123)));
+  expectFirstStackFrameAtCallsite(getThrownError(() => z.parse(schema, 123)));
+
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => schema.parseAsync(123)));
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => parseAsync(123)));
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => z.parseAsync(schema, 123)));
+});
+
+test("codec errors capture the caller stack frame", async () => {
+  const schema = z.string();
+  const encode = schema.encode;
+  const decode = schema.decode;
+  const encodeAsync = schema.encodeAsync;
+  const decodeAsync = schema.decodeAsync;
+
+  expectFirstStackFrameAtCallsite(getThrownError(() => schema.encode(123 as any)));
+  expectFirstStackFrameAtCallsite(getThrownError(() => encode(123 as any)));
+  expectFirstStackFrameAtCallsite(getThrownError(() => z.encode(schema, 123 as any)));
+
+  expectFirstStackFrameAtCallsite(getThrownError(() => schema.decode(123 as any)));
+  expectFirstStackFrameAtCallsite(getThrownError(() => decode(123 as any)));
+  expectFirstStackFrameAtCallsite(getThrownError(() => z.decode(schema, 123 as any)));
+
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => schema.encodeAsync(123 as any)));
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => encodeAsync(123 as any)));
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => z.encodeAsync(schema, 123 as any)));
+
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => schema.decodeAsync(123 as any)));
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => decodeAsync(123 as any)));
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => z.decodeAsync(schema, 123 as any)));
+});
+
+test("async errors that fail after suspending capture the caller stack frame", async () => {
+  // `Error.captureStackTrace` is skip-until-seen: when it cannot find its callee it discards every frame, not just the ones above. An async wrapper that returns its inner promise without awaiting has already left the async chain by the time the rejection is built, so its callee is unfindable and the stack comes back empty. Only a schema that actually suspends reaches that path — the sync cases above run straight through to their first await and pass either way.
+  const refined = z.string().refine(async () => false, "nope");
+  const codec = z.codec(z.string(), z.number(), {
+    decode: async (value) => value as never,
+    encode: async (value) => value as never,
+  });
+
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => refined.parseAsync("x")));
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => codec.decodeAsync("x")));
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => z.decodeAsync(codec, "x")));
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => codec.encodeAsync(5)));
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => z.encodeAsync(codec, 5)));
 });
 
 test("error serialization", () => {

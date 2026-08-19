@@ -314,17 +314,32 @@ function _zodTypeParseProps(): _LazyPropsOf<ZodType> {
       return fn;
     },
     parseAsync: (self) => {
-      const fn: ZodType["parseAsync"] = async (data, params) => parse.parseAsync(self, data, params, { callee: fn });
+      const fn: ZodType["parseAsync"] = async (data, params) =>
+        await parse.parseAsync(self, data, params, { callee: fn });
       return fn;
     },
     safeParse: (self) => (data, params) => parse.safeParse(self, data, params),
     safeParseAsync: (self) => async (data, params) => parse.safeParseAsync(self, data, params),
     // `spa` is an alias: same function object as `safeParseAsync`, as before.
     spa: (self) => self.safeParseAsync,
-    encode: (self) => (data, params) => parse.encode(self, data, params),
-    decode: (self) => (data, params) => parse.decode(self, data, params),
-    encodeAsync: (self) => async (data, params) => parse.encodeAsync(self, data, params),
-    decodeAsync: (self) => async (data, params) => parse.decodeAsync(self, data, params),
+    encode: (self) => {
+      const fn: ZodType["encode"] = (data, params) => parse.encode(self, data, params, { callee: fn });
+      return fn;
+    },
+    decode: (self) => {
+      const fn: ZodType["decode"] = (data, params) => parse.decode(self, data, params, { callee: fn });
+      return fn;
+    },
+    encodeAsync: (self) => {
+      const fn: ZodType["encodeAsync"] = async (data, params) =>
+        await parse.encodeAsync(self, data, params, { callee: fn });
+      return fn;
+    },
+    decodeAsync: (self) => {
+      const fn: ZodType["decodeAsync"] = async (data, params) =>
+        await parse.decodeAsync(self, data, params, { callee: fn });
+      return fn;
+    },
     safeEncode: (self) => (data, params) => parse.safeEncode(self, data, params),
     safeDecode: (self) => (data, params) => parse.safeDecode(self, data, params),
     safeEncodeAsync: (self) => async (data, params) => parse.safeEncodeAsync(self, data, params),
