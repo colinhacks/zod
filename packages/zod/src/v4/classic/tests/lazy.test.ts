@@ -252,3 +252,11 @@ test("an internal computed without a cycle break is memoized", () => {
   expect(union._zod.optin).toEqual(undefined);
   expect(Object.getOwnPropertyNames(union._zod)).toContain("optin");
 });
+
+// A compute that throws must memoize nothing, or the second read answers undefined for a schema whose internals were never derived.
+test("a throwing lazy internal throws on every read", () => {
+  const schema = z.discriminatedUnion("type", [z.string() as any]) as any;
+  for (let i = 0; i < 3; i++) {
+    expect(() => schema._zod.propValues).toThrow();
+  }
+});
