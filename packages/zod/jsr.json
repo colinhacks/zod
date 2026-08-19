@@ -31,6 +31,7 @@
     "./v4/locales/fi": "./src/v4/locales/fi.ts",
     "./v4/locales/fr-CA": "./src/v4/locales/fr-CA.ts",
     "./v4/locales/fr": "./src/v4/locales/fr.ts",
+    "./v4/locales/gu": "./src/v4/locales/gu.ts",
     "./v4/locales/he": "./src/v4/locales/he.ts",
     "./v4/locales/hi": "./src/v4/locales/hi.ts",
     "./v4/locales/hr": "./src/v4/locales/hr.ts",

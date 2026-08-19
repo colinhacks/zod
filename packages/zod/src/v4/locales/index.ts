@@ -16,6 +16,7 @@ export { default as fa } from "./fa.js";
 export { default as fi } from "./fi.js";
 export { default as fr } from "./fr.js";
 export { default as frCA } from "./fr-CA.js";
+export { default as gu } from "./gu.js";
 export { default as he } from "./he.js";
 export { default as hi } from "./hi.js";
 export { default as hr } from "./hr.js";
