@@ -12,7 +12,9 @@ import {
   isValidIPv6,
   isValidJWT,
   mergeValues,
-  parseValidURL,
+  parseURLObject,
+  urlHostnameOk,
+  urlProtocolOk,
 } from "./schemas.js";
 import type { ParseContextInternal, ParsePayload, SomeType } from "./schemas.js";
 import * as util from "./util.js";
@@ -679,11 +681,24 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
     formatDef.hostname !== undefined ||
     formatDef.protocol !== undefined
   ) {
-    const validator = addConstant(ctx, parseValidURL);
+    // Same three predicates the runtime calls, in the same order, so there is no second URL implementation to drift. Which options exist is known now, so the calls the runtime makes conditionally are emitted conditionally instead.
+    const parseConst = addConstant(ctx, parseURLObject);
     const defConst = addConstant(ctx, def);
+    const trimVar = newVar(ctx);
+    const urlVar = newVar(ctx);
+    doc.write(`const ${trimVar} = ${accessor}.trim();`);
+    doc.write(`const ${urlVar} = ${parseConst}(${trimVar}, ${defConst});`);
+    doc.write(`if (typeof ${urlVar} === "number") return INVALID;`);
+    if (formatDef.hostname !== undefined) {
+      const hostnameConst = addConstant(ctx, urlHostnameOk);
+      doc.write(`if (!${hostnameConst}(${urlVar}, ${defConst}.hostname)) return INVALID;`);
+    }
+    if (formatDef.protocol !== undefined) {
+      const protocolConst = addConstant(ctx, urlProtocolOk);
+      doc.write(`if (!${protocolConst}(${urlVar}, ${defConst}.protocol)) return INVALID;`);
+    }
     const outputVar = newVar(ctx);
-    doc.write(`const ${outputVar} = ${validator}(${accessor}, ${defConst});`);
-    doc.write(`if (${outputVar} === undefined) return INVALID;`);
+    doc.write(`const ${outputVar} = ${formatDef.normalize ? `${urlVar}.href` : trimVar};`);
     return outputVar;
   }
 
