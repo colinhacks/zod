@@ -2210,7 +2210,7 @@ blobSchema.parse("hello there!"); // ✅
 blobSchema.parse("hello."); // ❌
 ```
 
-Use `z.properties()` to check several properties at once. It returns an array of `z.property()` checks to spread into `.check()`. Chained `z.property()` checks stop at the first failure; each check from `z.properties()` runs regardless, so one parse reports every property that didn't match.
+Use `z.properties()` to declare several property checks from an object literal. It returns an array to spread into `.check()`.
 
 ```ts
 const httpsUrl = z.instanceof(URL).check(
@@ -2221,7 +2221,7 @@ const httpsUrl = z.instanceof(URL).check(
 );
 
 httpsUrl.parse(new URL("https://example.com")); // ✅
-httpsUrl.parse(new URL("http://localhost")); // ❌ reports protocol and hostname
+httpsUrl.parse(new URL("http://localhost")); // ❌ protocol
 ```
 
 ## Refinements

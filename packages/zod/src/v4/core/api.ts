@@ -1127,17 +1127,12 @@ export function _property<K extends string, T extends schemas.$ZodType>(
   });
 }
 
-// Opts a check out of the run loop's aborted-issue gate. Shared so a shape of any size costs one function rather than one per key.
-function alwaysRun(): boolean {
-  return true;
-}
-
 // @__NO_SIDE_EFFECTS__
 export function _properties<Shape extends schemas.$ZodShape>(
   shape: Shape
 ): checks.$ZodCheckProperty<{ -readonly [k in keyof Shape]: core.output<Shape[k]> }>[] {
   return Object.entries(shape).map(
-    ([property, schema]) => new checks.$ZodCheckProperty({ check: "property", property, schema, when: alwaysRun })
+    ([property, schema]) => new checks.$ZodCheckProperty({ check: "property", property, schema })
   ) as any;
 }
 
