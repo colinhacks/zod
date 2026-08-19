@@ -3340,3 +3340,16 @@ z.parse(schema, null); // => null
 ```
 </Tab>
 </Tabs>
+
+Additional arguments are passed through to the function:
+
+```ts
+function withDefault<T extends z.ZodType>(schema: T, value: z.output<T>) {
+  return schema.nullish().transform((val) => val ?? value);
+}
+
+const schema = z.string().apply(withDefault, "anonymous");
+
+schema.parse(undefined); // => "anonymous"
+schema.parse("sandwich"); // => "sandwich"
+```
