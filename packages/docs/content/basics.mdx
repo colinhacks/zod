@@ -210,7 +210,7 @@ z.toZod<Entry>()(z.object({ id: z.string() }).and(z.object({ label: z.string() }
 z.toZod<Entry>()(z.object({ id: z.string() }).safeExtend({ label: z.string() })); // ❌
 ```
 
-Flatten the target to accept either one:
+Flatten the target and `.safeExtend()` matches instead:
 
 ```ts
 type Flatten<T> = { [K in keyof T]: T[K] } & {};

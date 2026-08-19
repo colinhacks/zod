@@ -277,7 +277,7 @@ test("toZod", () => {
   // @ts-expect-error toZod checks output, not input
   z.toZod<string>()(z.string().transform((value) => value.length));
 
-  // Exact equality is deliberately the only mode. A bidirectional-assignability mode would accept both of the two cases above — `any` is assignable in both directions by construction, and `readonly` is not part of assignability — so it would silently drop the guarantees the rest of this test pins. The cost is the asymmetry below: an intersection target matches `.and()` but not `.safeExtend()`, and a flat target matches `.safeExtend()` but not `.and()`. Flattening the target with a mapped type accepts either.
+  // Exact equality is deliberately the only mode. A bidirectional-assignability mode would accept both of the two cases above — `any` is assignable in both directions by construction, and `readonly` is not part of assignability — so it would silently drop the guarantees the rest of this test pins. The cost is the asymmetry below: an intersection target matches `.and()` but not `.safeExtend()`, and a flat target matches `.safeExtend()` but not `.and()`. Flattening the target with a mapped type switches which spelling matches rather than accepting both.
   type Intersected = { a: number } & { b: string };
   type Flatten<T> = { [K in keyof T]: T[K] } & {};
   const viaAnd = z.object({ a: z.number() }).and(z.object({ b: z.string() }));
@@ -286,6 +286,9 @@ test("toZod", () => {
   z.toZod<Intersected>()(viaAnd);
   z.toZod<{ a: number; b: string }>()(viaExtend);
   z.toZod<Flatten<Intersected>>()(viaExtend);
+
+  // @ts-expect-error flattening the target does not make `.and()` match as well
+  z.toZod<Flatten<Intersected>>()(viaAnd);
 
   // @ts-expect-error .safeExtend() produces a flat object type, not an intersection
   z.toZod<Intersected>()(viaExtend);
