@@ -521,6 +521,13 @@ export function parseURLObject(
   }
 }
 
+const asciiTabOrNewline = /[\t\n\r]/g;
+
+/** The URL parser deletes every ASCII tab, LF and CR from its input before it parses, so `new URL("https://exa\nmple.com")` reports on `example.com`. Applying the same deletion to the returned value closes the half of that divergence which can move the host; the parser's other rewrite, stripping C0 controls at the edges, cannot. */
+export function stripTabAndNewline(value: string): string {
+  return value.replace(asciiTabOrNewline, "");
+}
+
 export function urlHostnameOk(url: URL, hostname: RegExp): boolean {
   hostname.lastIndex = 0;
   return hostname.test(url.hostname);
@@ -587,7 +594,7 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
       }
 
       // Set the output value based on normalize flag
-      payload.value = def.normalize ? url.href : trimmed;
+      payload.value = def.normalize ? url.href : stripTabAndNewline(trimmed);
 
       return;
     } catch (_) {
@@ -847,7 +854,11 @@ export interface $ZodIPv6 extends $ZodType {
   _zod: $ZodIPv6Internals;
 }
 
+/** An IPv6 address is written with hex digits, colons and dots, and nothing else. The guard is what makes the check below an IPv6 check: `new URL("http://[...]")` parses an authority, not an address, so `@` and `\` re-delimit it and `"::@1\\"` validates against the host `0.0.0.1`. The URL parser also deletes ASCII tab, LF and CR rather than failing, which is how `"::1\n"` validated as `::1`. */
+const ipv6Alphabet = /^[0-9a-fA-F:.]+$/;
+
 export function isValidIPv6(value: string): boolean {
+  if (!ipv6Alphabet.test(value)) return false;
   try {
     // @ts-ignore
     new URL(`http://[${value}]`);
@@ -940,13 +951,7 @@ export function isValidCIDRv6(value: string): boolean {
   const prefixNum = Number(prefix);
   if (`${prefixNum}` !== prefix) return false;
   if (prefixNum < 0 || prefixNum > 128) return false;
-  try {
-    // @ts-ignore
-    new URL(`http://[${address}]`);
-    return true;
-  } catch {
-    return false;
-  }
+  return isValidIPv6(address);
 }
 
 export const $ZodCIDRv6: core.$constructor<$ZodCIDRv6> = /*@__PURE__*/ core.$constructor(
