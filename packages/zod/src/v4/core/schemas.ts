@@ -3743,13 +3743,8 @@ export const $ZodExactOptional: core.$constructor<$ZodExactOptional> = /*@__PURE
     util.defineLazyInternal(inst, "values", (zod) => zod.def.innerType._zod.values);
     util.defineLazyInternal(inst, "pattern", (zod) => zod.def.innerType._zod.pattern);
 
-    // OPTION B PROTOTYPE: fix in $ZodExactOptional.parse, expressed through the inner's optin rung.
+    // Override parse to just delegate (no undefined handling)
     inst._zod.parse = (payload, ctx) => {
-      const _inner = def.innerType._zod;
-      if (payload.value === undefined && _inner.optin !== "defaulted" && _inner.optout !== "optional") {
-        payload.issues.push({ code: "invalid_type", expected: "nonoptional", input: undefined, inst });
-        return payload;
-      }
       return def.innerType._zod.run(payload, ctx);
     };
   }
