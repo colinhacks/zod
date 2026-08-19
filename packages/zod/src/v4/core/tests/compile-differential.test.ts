@@ -527,6 +527,19 @@ test("catch with function reading issues is refused", () => {
   expect(schema.parse(123 as never, { error: () => "MAPPED" })).toBe("e:1");
 });
 
+test("catch with a callback is refused inside a container, not islanded", () => {
+  // A container normally absorbs an unsupported child by running just that node through the runtime. That is only equivalent for a node that *propagates* its issues: an island gets no parse context, and catch CONSUMES issues, so an islanded catch finalizes against an empty error map and still succeeds. The divergence is silent — the parse returns a different string with no error anywhere. Refusing the whole schema is what keeps the container honest, so this asserts the throw rather than a matching value.
+  const inner = z.catch(z.string(), (ctx) => `msg=${ctx.error.issues[0]?.message}`);
+  const schema = z.object({ a: inner, b: z.number() });
+  const mapped = { error: () => "MAPPED" };
+
+  expect(() => compile(schema)).toThrow(ZodCompileUnsupportedError);
+  expect(schema.parse({ a: 1, b: 2 }, mapped)).toEqual({ a: "msg=MAPPED", b: 2 });
+
+  // The sibling stays compilable on its own, so the refusal is about catch and not about the container.
+  expect(() => compile(z.object({ a: z.string(), b: z.number() }))).not.toThrow();
+});
+
 test("catch with a constant value keeps the fast path", () => {
   differential(z.catch(z.string().min(5), "fb"), ["abcdef", "ab", 42, undefined]);
 });

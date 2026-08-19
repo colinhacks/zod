@@ -46,9 +46,13 @@ export class ZodCompileAsyncError extends Error {
  * they should not be compiling that schema.
  */
 export class ZodCompileUnsupportedError extends Error {
-  constructor(feature: string) {
+  /** Whether a container may absorb this refusal by running the child through the runtime (see `compileChild`). False when running only that node on the runtime is not equivalent to running the whole parse there — a runtime island gets no parse context, so a node that *consumes* issues rather than propagating them would finalize them against the wrong error map and still succeed. */
+  readonly islandable: boolean;
+
+  constructor(feature: string, islandable = true) {
     super(`z.compile does not support ${feature}; this schema must use the runtime parser`);
     this.name = "ZodCompileUnsupportedError";
+    this.islandable = islandable;
   }
 }
 
@@ -262,7 +266,7 @@ function compileChild(doc: Doc, ctx: CompileContext, schema: SomeType, accessor:
   try {
     return generateCheck(doc, ctx, schema, accessor);
   } catch (err) {
-    if (!(err instanceof ZodCompileUnsupportedError)) throw err;
+    if (!(err instanceof ZodCompileUnsupportedError) || !err.islandable) throw err;
     doc.content.length = contentLen;
     if (ctx.constants.size > constantCount) {
       const trailing = Array.from(ctx.constants.keys()).slice(constantCount);
@@ -1963,9 +1967,11 @@ function generateCatchCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
     catchValue: (ctx: any) => unknown;
   };
 
-  // `.catch(value)` synthesises a tagged thunk for a constant, so anything untagged is a user callback. Every callback is refused, not just one that reads `ctx.error`: whether it does is undecidable here, and a callback that reads it needs issues finalized against the caller's per-parse error map, which generated code never sees. Producing them here gave a different message than `.parse(input, { error })` and, because catch *succeeds*, nothing downstream could notice. Refuse at codegen instead: returning INVALID would be a bail-out, and a union reads that as a rejected branch rather than a reason to hand the whole parse back.
+  // `.catch(value)` synthesises a tagged thunk for a constant, so anything untagged is a user callback. Every callback is refused, not just one that reads `ctx.error`: whether it does is undecidable here, and a callback that reads it needs issues finalized against the caller's per-parse error map, which generated code never sees. Producing them here gives a different message than `.parse(input, { error })` and, because catch *succeeds*, nothing downstream can notice. Refuse at codegen instead: returning INVALID would be a bail-out, and a union reads that as a rejected branch rather than a reason to hand the whole parse back.
+  //
+  // Not islandable either. A runtime island runs only this node through the runtime, and `runtimeRun` has no parse context to hand it, so an islanded catch finalizes against an empty context and *succeeds* with the wrong message — the same divergence, reintroduced by the container that was trying to tolerate it.
   if (!(def.catchValue as { [util.CONSTANT_CATCH]?: boolean })[util.CONSTANT_CATCH]) {
-    throw new ZodCompileUnsupportedError("catch with a callback (only a constant catch value compiles)");
+    throw new ZodCompileUnsupportedError("catch with a callback (only a constant catch value compiles)", false);
   }
 
   const outputVar = newVar(ctx);
