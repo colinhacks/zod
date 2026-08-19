@@ -532,11 +532,14 @@ z.null();
 
 Note that `z.undefined()` is unrepresentable in JSON Schema (see [below](#unrepresentable)).
 
-Similarly, `nullable` is represented via a union with `null`:
+Similarly, `nullable` adds `"null"` to the set of accepted types. Inner schemas that can't be written as a bare type fall back to `anyOf`:
 
 ```ts
 z.nullable(z.string());
-// => { oneOf: [{ type: "string" }, { type: "null" }] }
+// => { type: ["string", "null"] }
+
+z.nullable(z.string().min(5));
+// => { anyOf: [{ type: "string", minLength: 5 }, { type: "null" }] }
 ```
 
 Optional schemas are represented as-is, though they are decorated with an `optional` annotation.

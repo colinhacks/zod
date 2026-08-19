@@ -795,12 +795,179 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": [
+          "string",
+          "number",
+        ],
+      }
+    `);
+  });
+
+  test("nullable compacts to a type array", () => {
+    expect(z.toJSONSchema(z.string().nullable())).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": [
+          "string",
+          "null",
+        ],
+      }
+    `);
+
+    // a nested union folds into the outer type array rather than leaving a mixed shape
+    expect(z.toJSONSchema(z.union([z.string(), z.number()]).nullable())).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": [
+          "string",
+          "number",
+          "null",
+        ],
+      }
+    `);
+
+    // the null branch is bare but the object branch is not, so this stays an anyOf
+    expect(z.toJSONSchema(z.object({ a: z.string() }).nullable())).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "anyOf": [
           {
+            "additionalProperties": false,
+            "properties": {
+              "a": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "a",
+            ],
+            "type": "object",
+          },
+          {
+            "type": "null",
+          },
+        ],
+      }
+    `);
+  });
+
+  test("duplicate branches dedupe, single branch stays a bare type", () => {
+    // a `type` array must have unique members, so two branches that erase to the same bare type collapse
+    const refined = z.union([z.string().refine((s) => s.length > 2), z.string().refine((s) => s.length < 9)]);
+    expect(z.toJSONSchema(refined)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "string",
+      }
+    `);
+    expect(z.toJSONSchema(z.union([z.string()]))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "string",
+      }
+    `);
+  });
+
+  test("compaction runs after overrides and ref extraction", () => {
+    // an override decorates the string branch, so it is no longer a bare type and must survive in anyOf
+    const decorated = z.toJSONSchema(z.union([z.string(), z.number()]), {
+      override(ctx) {
+        if (ctx.zodSchema._zod.def.type === "string") ctx.jsonSchema.whatever = "sup";
+      },
+    });
+    expect(decorated).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "anyOf": [
+          {
+            "type": "string",
+            "whatever": "sup",
+          },
+          {
+            "type": "number",
+          },
+        ],
+      }
+    `);
+
+    // a branch extracted into $defs is a $ref, not a bare type, so `reused` is not silently bypassed
+    const shared = z.string();
+    expect(
+      z.toJSONSchema(z.object({ a: shared, b: z.union([shared, z.null()]) }), { reused: "ref" })
+    ).toMatchInlineSnapshot(`
+      {
+        "$defs": {
+          "__schema0": {
+            "type": "string",
+          },
+        },
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "a": {
+            "$ref": "#/$defs/__schema0",
+          },
+          "b": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/__schema0",
+              },
+              {
+                "type": "null",
+              },
+            ],
+          },
+        },
+        "required": [
+          "a",
+          "b",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  test("openapi-3.0 keeps a single-string type", () => {
+    // OpenAPI 3.0 has no type arrays; nullability is spelled with `nullable`
+    expect(z.toJSONSchema(z.string().nullable(), { target: "openapi-3.0" })).toMatchInlineSnapshot(`
+      {
+        "nullable": true,
+        "type": "string",
+      }
+    `);
+  });
+
+  test("union with constrained branch is not compacted", () => {
+    const schema = z.union([z.string().min(1), z.number()]);
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "anyOf": [
+          {
+            "minLength": 1,
             "type": "string",
           },
           {
             "type": "number",
+          },
+        ],
+      }
+    `);
+  });
+
+  test("union of literals is not compacted", () => {
+    const schema = z.union([z.literal("a"), z.literal("b")]);
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "anyOf": [
+          {
+            "const": "a",
+            "type": "string",
+          },
+          {
+            "const": "b",
+            "type": "string",
           },
         ],
       }
@@ -1999,13 +2166,9 @@ test("override execution order", () => {
 
   expect(unionSchema).toMatchInlineSnapshot(`
     {
-      "anyOf": [
-        {
-          "type": "string",
-        },
-        {
-          "type": "number",
-        },
+      "type": [
+        "string",
+        "number",
       ],
     }
   `);
@@ -3114,13 +3277,9 @@ test("input type", () => {
           "type": "string",
         },
         "d": {
-          "anyOf": [
-            {
-              "type": "string",
-            },
-            {
-              "type": "null",
-            },
+          "type": [
+            "string",
+            "null",
           ],
         },
         "e": {
@@ -3146,14 +3305,7 @@ test("input type", () => {
           ],
         },
         "i": {
-          "anyOf": [
-            {
-              "type": "string",
-            },
-            {
-              "type": "string",
-            },
-          ],
+          "type": "string",
         },
       },
       "required": [
@@ -3181,13 +3333,9 @@ test("input type", () => {
           "type": "string",
         },
         "d": {
-          "anyOf": [
-            {
-              "type": "string",
-            },
-            {
-              "type": "null",
-            },
+          "type": [
+            "string",
+            "null",
           ],
         },
         "e": {
@@ -3212,14 +3360,7 @@ test("input type", () => {
           ],
         },
         "i": {
-          "anyOf": [
-            {
-              "type": "string",
-            },
-            {
-              "type": "string",
-            },
-          ],
+          "type": "string",
         },
       },
       "required": [
