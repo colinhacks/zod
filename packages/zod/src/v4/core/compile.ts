@@ -1236,14 +1236,14 @@ function fastPathAcceptsAbsence(schema: SomeType): boolean {
   }
 }
 
-// Whether a schema's success-path output can be `undefined`. Object output
-// assembly gives such props the runtime's value-or-presence inclusion rule;
-// everything else keeps the unconditional object-literal slot.
 /** The middle rung permits absence without supplying anything in its place, so an absent key contributes nothing — mirrors the leading gate in `handlePropertyResult`. */
 function dropsWhenAbsent(schema: SomeType): boolean {
   return schema._zod.optin === "optional" && schema._zod.optout === "optional";
 }
 
+// Whether a schema's success-path output can be `undefined`. Object output
+// assembly gives such props the runtime's value-or-presence inclusion rule;
+// everything else keeps the unconditional object-literal slot.
 function mayOutputUndefined(schema: SomeType): boolean {
   const def = schema._zod.def as {
     type: string;
