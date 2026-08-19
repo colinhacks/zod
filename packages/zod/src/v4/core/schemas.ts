@@ -1864,19 +1864,24 @@ function handlePropertyResult(
   final: ParsePayload,
   key: PropertyKey,
   input: any,
-  isOptionalIn: boolean,
-  isOptionalOut: boolean
+  optin: "optional" | "defaulted" | undefined,
+  optout: "optional" | undefined
 ) {
   const isPresent = key in input;
+  const isOptionalOut = optout === "optional";
+  // The middle rung means "absence permitted, nothing supplied in its place", so an absent key contributes nothing — whatever the schema made of `undefined` is invented, not substituted. Only `optional` reaches this with a value: `defaulted` substitutes, and a schema that isn't optional-out has to keep the key.
+  if (!isPresent && isOptionalOut && optin === "optional") {
+    return;
+  }
   if (result.issues.length) {
     // For optional-in/out schemas, ignore errors on absent keys.
-    if (isOptionalIn && isOptionalOut && !isPresent) {
+    if (optin !== undefined && isOptionalOut && !isPresent) {
       return;
     }
     final.issues.push(...util.prefixIssues(key, result.issues));
   }
 
-  if (!isPresent && !isOptionalIn) {
+  if (!isPresent && optin === undefined) {
     if (!result.issues.length) {
       final.issues.push({
         code: "invalid_type",
@@ -1977,8 +1982,8 @@ function handleCatchall(
   const keySet = def.keySet;
   const _catchall = def.catchall!._zod;
   const t = _catchall.def.type;
-  const isOptionalIn = _catchall.optin !== undefined;
-  const isOptionalOut = _catchall.optout === "optional";
+  const optin = _catchall.optin;
+  const optout = _catchall.optout;
   for (const key in input) {
     // Must precede the __proto__ branch: a declared key is not unrecognized, even though the shape loop deliberately strips __proto__ from the parsed output.
     if (keySet.has(key)) continue;
@@ -1994,9 +1999,9 @@ function handleCatchall(
     const r = _catchall.run({ value: input[key], issues: [] }, ctx);
 
     if (r instanceof Promise) {
-      proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, isOptionalIn, isOptionalOut)));
+      proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, optin, optout)));
     } else {
-      handlePropertyResult(r, payload, key, input, isOptionalIn, isOptionalOut);
+      handlePropertyResult(r, payload, key, input, optin, optout);
     }
   }
 
@@ -2087,14 +2092,14 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     for (const key of value.keys) {
       if (key === "__proto__") continue;
       const el = shape[key]!;
-      const isOptionalIn = el._zod.optin !== undefined;
-      const isOptionalOut = el._zod.optout === "optional";
+      const optin = el._zod.optin;
+      const optout = el._zod.optout;
 
       const r = el._zod.run({ value: input[key], issues: [] }, ctx);
       if (r instanceof Promise) {
-        proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, isOptionalIn, isOptionalOut)));
+        proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, optin, optout)));
       } else {
-        handlePropertyResult(r, payload, key, input, isOptionalIn, isOptionalOut);
+        handlePropertyResult(r, payload, key, input, optin, optout);
       }
     }
 
@@ -2142,13 +2147,15 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         const k = util.esc(key);
         const isPresent = `${k} in input`;
         const schema = shape[key];
-        const isOptionalIn = schema?._zod?.optin !== undefined;
+        const optin = schema?._zod?.optin;
+        const isOptionalIn = optin !== undefined;
         const isOptionalOut = schema?._zod?.optout === "optional";
 
         doc.write(`const ${id} = ${parseStr(key)};`);
 
         if (isOptionalIn && isOptionalOut) {
-          // For optional-in/out schemas, ignore errors on absent keys — and, like the interpreted path, drop the value produced alongside them.
+          // For optional-in/out schemas, ignore errors on absent keys — and, like the interpreted path, drop the value produced alongside them. The middle rung goes further: it permits absence without supplying anything in its place, so an absent key contributes nothing at all.
+          const assign = optin === "optional" ? `${id}_present` : `${id}.value !== undefined || ${id}_present`;
           doc.write(`
         const ${id}_present = ${isPresent};
         if (!${id}.issues.length || ${id}_present) {
@@ -2159,7 +2166,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
             })));
           }
 
-          if (${id}.value !== undefined || ${id}_present) {
+          if (${assign}) {
             newResult[${k}] = ${id}.value;
           }
         }
@@ -2482,6 +2489,49 @@ export interface $ZodDiscriminatedUnionInternals<
 > extends $ZodUnionInternals<Options> {
   def: $ZodDiscriminatedUnionDef<Options, Disc>;
   propValues: util.PropValues;
+  bag: util.LoosePartial<{
+    optionsMap: Map<util.Primitive, $ZodType>;
+  }>;
+}
+
+/** The discriminator values a member of `Options` can declare. An omittable discriminator contributes `undefined`, matching what `propValues` claims for it. */
+export type $DiscriminatorValue<Options extends readonly SomeType[], Disc extends string> = {
+  [I in keyof Options]: Options[I] extends { _zod: { output: infer Out } }
+    ? Disc extends keyof Out
+      ? Out[Disc]
+      : never
+    : never;
+}[number];
+
+/** The member of `Options` that declares `V`. */
+export type $DiscriminatedOption<Options extends readonly SomeType[], Disc extends string, V> = {
+  [I in keyof Options]: Options[I] extends { _zod: { output: infer Out } }
+    ? Disc extends keyof Out
+      ? V extends Out[Disc]
+        ? Options[I]
+        : never
+      : never
+    : never;
+}[number];
+
+/** Returns the option of `union` whose discriminator claims `value`. */
+export function getDiscriminatedOption<
+  Options extends readonly SomeType[],
+  Disc extends string,
+  const V extends $DiscriminatorValue<Options, Disc>,
+>(union: $ZodDiscriminatedUnion<Options, Disc>, value: V): $DiscriminatedOption<Options, Disc, V> {
+  const internals = union._zod;
+  let map = internals.bag.optionsMap;
+  if (!map) {
+    map = new Map();
+    const { options, discriminator } = internals.def;
+    for (const option of options as unknown as readonly $ZodType[]) {
+      // First declaration wins, matching the order the parse path resolves a duplicate in.
+      for (const v of option._zod.propValues?.[discriminator] ?? []) if (!map.has(v)) map.set(v, option);
+    }
+    internals.bag.optionsMap = map;
+  }
+  return map.get(value as util.Primitive) as any;
 }
 
 export interface $ZodDiscriminatedUnion<
@@ -2926,6 +2976,11 @@ function handleTupleResults(
   for (let i = 0; i < items.length; i++) {
     const r = itemResults[i];
     const isPresent = i < input.length;
+    // The array analog of `handlePropertyResult`'s absent-key early return: the middle rung permits absence without supplying anything in its place, so the tail truncates here instead of materializing whatever the item made of `undefined`.
+    if (!isPresent && i >= optoutStart && items[i]._zod.optin === "optional") {
+      final.value.length = i;
+      break;
+    }
     if (r.issues.length) {
       if (!isPresent && i >= optoutStart) {
         final.value.length = i;

@@ -81,16 +81,20 @@ The user-visible consequence: `z.input<typeof z.object({ a: z.preprocess(fn, T) 
 
 ```ts
 const isPresent = key in input;
-const isOptionalIn = propSchema._zod.optin === "optional";
+const isOptionalOut = optout === "optional";   // optin and optout both arrive raw
+
+if (!isPresent && isOptionalOut && optin === "optional") {
+  return; // absent slot, middle rung: contribute nothing at all — no issue, no key
+}
 
 if (result.issues.length) {
-  if (isOptionalIn && isOptionalOut && !isPresent) {
+  if (optin !== undefined && isOptionalOut && !isPresent) {
     return; // swallow the issue — schema can't possibly succeed on absent input but is allowed to fail
   }
   final.issues.push(...prefixed);
 }
 
-if (!isPresent && !isOptionalIn) {
+if (!isPresent && optin === undefined) {
   if (!result.issues.length) {
     final.issues.push({ code: "invalid_type", expected: "nonoptional", input: undefined, path: [key] });
   }
@@ -104,7 +108,13 @@ if (result.value === undefined) {
 }
 ```
 
-`$ZodTuple` does the analogous thing for trailing tuple slots.
+The leading gate is what keeps an absent key absent. The ladder says the middle rung permits absence *without supplying anything in its place*, so whatever the property schema made of `undefined` is invented rather than substituted, and assigning it would contradict the schema's own declaration. `optout` is the other half of the gate: a schema that isn't optional-out has to keep the key, which is why `z.string().catch("c")` — optional-in only — still fills an absent key with `"c"`. Only the top rung reaches the assignment with a value.
+
+The wrapper alone cannot make this call. `$ZodOptional` never hits the gate with a value because it short-circuits on `undefined` unless the inner is `"defaulted"`; `$ZodExactOptional` deliberately does *not* short-circuit, because delegating to the inner is the only thing that makes it reject an explicitly present `undefined`. Since `el._zod.run({ value: input[key], issues: [] }, ctx)` carries no presence information, `$ZodObject` is the only place that knows the difference, and the gate belongs there.
+
+`$ZodTuple` does the analogous thing for trailing tuple slots, where "omit the key" becomes "truncate the tail".
+
+There are three parse paths, and the gate has to appear in all three or compile mode diverges. The interpreted path is `handlePropertyResult` above; `$ZodObjectJIT` emits `if (<key>_present)` instead of `if (value !== undefined || <key>_present)` for a middle-rung key; and `z.compile()` assembles its own output object, so `compileObject` applies `dropsWhenAbsent` — `optin === "optional" && optout === "optional"` — to pick the same condition, with the tuple compiler truncating instead of running an absent middle-rung item.
 
 `$ZodOptional` (the standalone wrapper) reads the *inner's* `optin` to decide whether to short-circuit on `undefined` input:
 
@@ -358,6 +368,23 @@ z.object({ a: z.unknown() }).parse({})
 
 z.object({ a: z.any() }).parse({})
 // → THROW  (same)
+
+// === exactOptional (delegates instead of short-circuiting) ===
+
+z.object({ a: z.coerce.string().exactOptional() }).parse({})
+// → {}  (absent + middle rung: the object drops what coerce made of undefined)
+
+z.object({ a: z.coerce.string().exactOptional() }).parse({ a: undefined })
+// → { a: "undefined" }  (present: the inner runs and its answer stands)
+
+z.object({ a: z.string().exactOptional() }).parse({ a: undefined })
+// → THROW  (present: string rejects undefined, and the object surfaces it)
+
+z.object({ a: z.string().default("x").exactOptional() }).parse({})
+// → { a: "x" }  (top rung substitutes, so the gate doesn't fire)
+
+z.tuple([z.string(), z.coerce.string().exactOptional()]).parse(["x"])
+// → ["x"]  (the tuple analog: truncate rather than materialize)
 
 // === Static type vs runtime divergence ===
 

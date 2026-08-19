@@ -133,10 +133,9 @@ export function datetime(args: {
 }): RegExp {
   const time = timeSource({ precision: args.precision });
   const opts = ["Z"];
-  if (args.local) opts.push("");
   // if (args.offset) opts.push(`([+-]\\d{2}:\\d{2})`);
   if (args.offset) opts.push(`([+-](?:[01]\\d|2[0-3]):[0-5]\\d)`);
-  const timeRegex = `${time}(?:${opts.join("|")})`;
+  const timeRegex = `${time}(?:${opts.join("|")})${args.local ? "?" : ""}`;
 
   return new RegExp(`^${dateSource}T(?:${timeRegex})$`);
 }

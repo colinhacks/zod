@@ -159,7 +159,7 @@ export interface ZodType<
    * ```
    */
   isNullable(): boolean;
-  apply<T>(fn: (schema: this) => T): T;
+  apply<T, TArgs extends unknown[] = []>(fn: (schema: this, ...args: TArgs) => T, ...args: TArgs): T;
 }
 
 export interface _ZodType<out Internals extends core.$ZodTypeInternals = core.$ZodTypeInternals>
@@ -292,8 +292,8 @@ function _zodTypeMethods(): _LazyMethodsOf<ZodType> {
     isNullable() {
       return this.safeParse(null).success;
     },
-    apply(fn) {
-      return fn(this);
+    apply(fn, ...args) {
+      return args.length === 0 ? fn(this) : fn(this, ...args);
     },
   };
 }
