@@ -58,13 +58,15 @@ const error: () => errors.$ZodErrorMap = () => {
   };
 
   const FormatDictionary: {
-    [k in $ZodStringFormats]: { label: string; gender: "m" | "f" };
+    [k in $ZodStringFormats | (string & {})]?: { label: string; gender: "m" | "f" };
   } = {
     regex: { label: "קלט", gender: "m" },
     email: { label: "כתובת אימייל", gender: "f" },
     url: { label: "כתובת רשת", gender: "f" },
     emoji: { label: "אימוג'י", gender: "m" },
     uuid: { label: "UUID", gender: "m" },
+    uuidv4: { label: "UUIDv4", gender: "m" },
+    uuidv6: { label: "UUIDv6", gender: "m" },
     nanoid: { label: "nanoid", gender: "m" },
     guid: { label: "GUID", gender: "m" },
     cuid: { label: "cuid", gender: "m" },
@@ -78,13 +80,16 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: { label: "משך זמן ISO", gender: "m" },
     ipv4: { label: "כתובת IPv4", gender: "f" },
     ipv6: { label: "כתובת IPv6", gender: "f" },
+    mac: { label: "כתובת MAC", gender: "f" },
     cidrv4: { label: "טווח IPv4", gender: "m" },
     cidrv6: { label: "טווח IPv6", gender: "m" },
     base64: { label: "מחרוזת בבסיס 64", gender: "f" },
     base64url: { label: "מחרוזת בבסיס 64 לכתובות רשת", gender: "f" },
     json_string: { label: "מחרוזת JSON", gender: "f" },
     e164: { label: "מספר E.164", gender: "m" },
+    credit_card: { label: "מספר כרטיס אשראי", gender: "m" },
     jwt: { label: "JWT", gender: "m" },
+    template_literal: { label: "קלט", gender: "m" },
     ends_with: { label: "קלט", gender: "m" },
     includes: { label: "קלט", gender: "m" },
     lowercase: { label: "קלט", gender: "m" },

@@ -82,7 +82,7 @@ export const $ZodCheckLessThan: core.$constructor<$ZodCheckLessThan> = /*@__PURE
       }
 
       payload.issues.push({
-        origin,
+        origin: numericOriginMap[typeof payload.value as "number" | "bigint" | "object"] ?? origin,
         code: "too_big",
         maximum: typeof def.value === "object" ? def.value.getTime() : def.value,
         input: payload.value,
@@ -133,7 +133,7 @@ export const $ZodCheckGreaterThan: core.$constructor<$ZodCheckGreaterThan> = /*@
       }
 
       payload.issues.push({
-        origin,
+        origin: numericOriginMap[typeof payload.value as "number" | "bigint" | "object"] ?? origin,
         code: "too_small",
         minimum: typeof def.value === "object" ? def.value.getTime() : def.value,
         input: payload.value,
@@ -772,6 +772,7 @@ export type $ZodStringFormats =
   | "base64url"
   | "json_string"
   | "e164"
+  | "credit_card"
   | "lowercase"
   | "uppercase"
   | "regex"

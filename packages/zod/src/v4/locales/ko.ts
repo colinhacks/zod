@@ -8,6 +8,7 @@ const error: () => errors.$ZodErrorMap = () => {
     file: { unit: "바이트", verb: "to have" },
     array: { unit: "개", verb: "to have" },
     set: { unit: "개", verb: "to have" },
+    map: { unit: "개", verb: "to have" },
   };
 
   function getSizing(origin: string): { unit: string; verb: string } | null {
@@ -37,12 +38,14 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "ISO 기간",
     ipv4: "IPv4 주소",
     ipv6: "IPv6 주소",
+    mac: "MAC 주소",
     cidrv4: "IPv4 범위",
     cidrv6: "IPv6 범위",
     base64: "base64 인코딩 문자열",
     base64url: "base64url 인코딩 문자열",
     json_string: "JSON 문자열",
     e164: "E.164 번호",
+    credit_card: "신용카드 번호",
     jwt: "JWT",
     template_literal: "입력",
   };

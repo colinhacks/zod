@@ -4,10 +4,11 @@ import type * as schemas from "./schemas.js";
 import * as util from "./util.js";
 
 export type $ZodErrorClass = { new (issues: errors.$ZodIssue[]): errors.$ZodError };
-type $ParseParams = { callee?: util.AnyFunc; Err?: $ZodErrorClass };
+type $ParseParams = { callee?: util.AnyFunc; Err?: $ZodErrorClass | undefined };
 
+// Always both keys, so the `_params` read site in `_parse` sees one object shape rather than two.
 function finalizeParams(callee: util.AnyFunc, params: $ParseParams | undefined): $ParseParams {
-  return params?.Err ? { callee: params.callee ?? callee, Err: params.Err } : { callee: params?.callee ?? callee };
+  return { callee: params?.callee ?? callee, Err: params?.Err };
 }
 
 ///////////        METHODS       ///////////

@@ -247,9 +247,42 @@ test("z.union([]) / z.xor([]) / z.discriminatedUnion(_, []) construct and reject
   }
 });
 
-test("z.discriminatedUnion rejects object options missing the discriminator at type level", () => {
-  // @ts-expect-error missing discriminator property
-  z.discriminatedUnion("type", [z.object({ value: z.string() })]);
+test("z.discriminatedUnion rejects object options missing the discriminator", () => {
+  expect(() => z.discriminatedUnion("type", [z.object({ value: z.string() })])).toThrow(
+    /Invalid discriminated union option at index "0"/
+  );
+
+  // An option whose shape cannot be listed without resolving it is left to the lookup map, on the first object parsed.
+  const viaPipe = z.discriminatedUnion("type", [
+    z.pipe(z.object({ value: z.literal("x") }), z.object({ value: z.literal("x") })),
+  ]);
+  expect(() => z.safeParse(viaPipe, { value: "x" })).toThrow(/Invalid discriminated union option at index "0"/);
+});
+
+test("z.discriminatedUnion infers mutually-recursive getter options", () => {
+  const variantA = z.object({
+    kind: z.literal("a"),
+    get child() {
+      return z.optional(tree);
+    },
+  });
+
+  const variantB = z.object({
+    kind: z.literal("b"),
+    get sibling() {
+      return z.optional(tree);
+    },
+  });
+
+  const tree = z.discriminatedUnion("kind", [variantA, variantB]);
+
+  type _Tree = { kind: "a"; child?: _Tree | undefined } | { kind: "b"; sibling?: _Tree | undefined };
+
+  expectTypeOf<z.input<typeof tree>>().toEqualTypeOf<_Tree>();
+  expectTypeOf<z.input<typeof tree>>().not.toBeAny();
+
+  expect(z.parse(tree, { kind: "a", child: { kind: "b" } })).toEqual({ kind: "a", child: { kind: "b" } });
+  expect(() => z.parse(tree, { kind: "c" })).toThrow();
 });
 
 test("z.intersection", () => {
@@ -343,6 +376,15 @@ test("z.record", () => {
     [Enum.A]: "hello",
     [Enum.B]: "world",
   });
+
+  const partial = z.partialRecord(z.enum(["__proto__", "b"]), z.string());
+  type partial = z.output<typeof partial>;
+  expectTypeOf<partial>().toEqualTypeOf<Partial<Record<"__proto__" | "b", string>>>();
+  const parsed: any = z.parse(partial, Object.fromEntries([["__proto__", "declared"]]));
+  expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+  expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(false);
+  expect(parsed).toEqual({});
+  expect(z.parse(partial, {})).toEqual({});
 
   // v3-compat single-arg form: z.record(valueType) defaults keyType to z.string()
   const f = (z.record as any)(z.number());
@@ -679,8 +721,7 @@ test("z.custom", () => {
 });
 
 test("z.check", () => {
-  // this is a more flexible version of z.custom that accepts an arbitrary _parse logic
-  // the function should return core.$ZodResult
+  // this is a more flexible version of z.custom that accepts an arbitrary _parse logic the function should return core.$ZodResult
   const a = z.any().check(
     z.check<string>((ctx) => {
       if (typeof ctx.value === "string") return;
