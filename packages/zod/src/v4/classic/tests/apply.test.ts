@@ -70,3 +70,17 @@ test("apply forwards extra args to the callback", () => {
   expect(schema.parse("value")).toBe("value");
   expectTypeOf<z.infer<typeof schema>>().toEqualTypeOf<string>();
 });
+
+test("apply type-checks the extra args", () => {
+  const withMin = (schema: z.ZodString, n: number) => schema.min(n);
+
+  expect(z.string().apply(withMin, 3).parse("abcd")).toBe("abcd");
+  expectTypeOf(z.number().apply<z.ZodNumber>((schema) => schema.min(0))).toEqualTypeOf<z.ZodNumber>();
+
+  // @ts-expect-error wrong arg type
+  z.string().apply(withMin, "3");
+  // @ts-expect-error missing arg
+  z.string().apply(withMin);
+  // @ts-expect-error extra arg for a single-parameter callback
+  z.string().apply((schema: z.ZodString) => schema, 3);
+});

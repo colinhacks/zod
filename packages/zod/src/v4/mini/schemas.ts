@@ -34,7 +34,7 @@ export interface ZodMiniType<
     data: unknown,
     params?: core.ParseContext<core.$ZodIssue>
   ): Promise<util.SafeParseResult<core.output<this>>>;
-  apply<T, TArgs extends unknown[]>(fn: (schema: this, ...args: TArgs) => T, ...args: TArgs): T;
+  apply<T, TArgs extends unknown[] = []>(fn: (schema: this, ...args: TArgs) => T, ...args: TArgs): T;
 }
 
 interface _ZodMiniType<out Internals extends core.$ZodTypeInternals = core.$ZodTypeInternals>
@@ -84,7 +84,7 @@ function _zodMiniTypeMethods(): util.LazyMethodsOf<ZodMiniType> {
         },
         { parent: true }
       );
-},
+    },
     clone(_def, params) {
       return core.clone(this, _def, params);
     },
@@ -96,7 +96,7 @@ function _zodMiniTypeMethods(): util.LazyMethodsOf<ZodMiniType> {
       return this;
     },
     apply(fn, ...args) {
-      return fn(this, ...args);
+      return args.length === 0 ? fn(this) : fn(this, ...args);
     },
   };
 }
