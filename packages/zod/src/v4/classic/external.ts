@@ -5,12 +5,7 @@ export * from "./errors.js";
 export * from "./parse.js";
 export * from "./compat.js";
 
-// zod-specified
-import { config } from "../core/index.js";
-import en from "../locales/en.js";
-config(en());
-
-export type { infer, output, input } from "../core/index.js";
+export type { infer } from "../core/index.js";
 export type { JSONType } from "../core/util.js";
 export {
   globalRegistry,
@@ -29,15 +24,20 @@ export {
   TimePrecision,
   util,
   NEVER,
+  compile,
+  ZodCompileAsyncError,
+  ZodCompileUnsupportedError,
+  getDiscriminatedOption,
 } from "../core/index.js";
 export { toJSONSchema } from "../core/json-schema-processors.js";
 export { fromJSONSchema } from "./from-json-schema.js";
+export { deepPartial } from "./deep-partial.js";
+// Types and values both, from one module — re-exporting the types from core would collide.
+export { input, output } from "./in-out.js";
 
 export * as locales from "../locales/index.js";
 
-// iso
-// must be exported from top-level
-// https://github.com/colinhacks/zod/issues/4491
+// iso must be exported from top-level https://github.com/colinhacks/zod/issues/4491
 export { ZodISODateTime, ZodISODate, ZodISOTime, ZodISODuration } from "./iso.js";
 export * as iso from "./iso.js";
 

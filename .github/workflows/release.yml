@@ -14,10 +14,14 @@ jobs:
   test-node:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest]
         node: ["lts/*"]
-        typescript: ["5.5", "latest"]
+        # Deliberately narrower than test.yml, which also runs a "latest" leg. This
+        # matrix gates publishing, so a regression in a bleeding-edge compiler must
+        # not be able to block a release. test.yml carries the TypeScript 7 signal.
+        typescript: ["5.5", "6"]
     name: Test with TypeScript ${{ matrix.typescript }} on Node ${{ matrix.node }} (${{ matrix.os }})
     steps:
       - uses: actions/checkout@v4
@@ -26,8 +30,10 @@ jobs:
           node-version: ${{ matrix.node }}
       - uses: pnpm/action-setup@v4
       - run: pnpm install
-      - run: pnpm add typescript@${{ matrix.typescript }} -w
+      # Build with the repo-pinned TypeScript, which is what actually ships. zshy
+      # uses the classic compiler API, which TypeScript 7 no longer provides.
       - run: pnpm build
+      - run: pnpm add typescript@${{ matrix.typescript }} -w
       - run: pnpm test
       - run: pnpm run --filter @zod/resolution test:all
       - run: pnpm run --filter @zod/integration test:all

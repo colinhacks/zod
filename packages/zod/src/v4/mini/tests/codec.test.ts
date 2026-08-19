@@ -246,6 +246,7 @@ test("nested codec with object containing codec property", () => {
   `);
 
   // Test refinements at all levels
+
   // String validation (empty waypoint name)
   const emptyNameResult = z.safeDecode(waypointSchema, {
     name: "",
