@@ -173,3 +173,16 @@ test("ladder: the rung values themselves", () => {
   expect(z.union([z.string().default("D"), z.number()])._zod.optin).toBe("defaulted");
   expect(z.union([z.string().optional(), z.number()])._zod.optin).toBe("optional");
 });
+
+test("exactOptional overrides the values and pattern optional installs", () => {
+  expect(z.exactOptional(z.enum(["a", "b"]))._zod.values).toEqual(new Set(["a", "b"]));
+  expect(z.exactOptional(z.string().regex(/^abc$/))._zod.pattern).toEqual(/^abc$/);
+  expect(z.templateLiteral(["a", z.exactOptional(z.literal("b"))]).safeParse("a").success).toEqual(false);
+});
+
+// The override is installed once, on a prototype every instance of the type shares, so it has to hold for instances built after the first.
+test("exactOptional's override holds for later instances", () => {
+  z.exactOptional(z.enum(["a", "b"]));
+  expect(z.exactOptional(z.enum(["c", "d"]))._zod.values).toEqual(new Set(["c", "d"]));
+  expect(z.exactOptional(z.string().regex(/^xyz$/))._zod.pattern).toEqual(/^xyz$/);
+});

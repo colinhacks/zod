@@ -867,9 +867,12 @@ export function finalizeIssue(
     else (iss as any).schema = iss.inst;
   }
 
+  // Decreasing specificity, short-circuiting on the first map that returns a message. `inst` is whatever raised the issue, so for a check-originated issue that rung is the check's own map; the owning schema's map sits one rung below it and above the parse call. Skipped when the schema raised the issue itself, since `inst` was already the schema.
+  const schemaError = iss.schema !== iss.inst ? iss.schema?._zod.def?.error : undefined;
   const message = iss.message
     ? iss.message
     : (unwrapMessage(iss.inst?._zod.def?.error?.(iss as never)) ??
+      unwrapMessage(schemaError?.(iss as never)) ??
       unwrapMessage(ctx?.error?.(iss as never)) ??
       unwrapMessage(config.customError?.(iss)) ??
       unwrapMessage(config.localeError?.(iss)) ??
@@ -1058,6 +1061,19 @@ export function installLazyProps<T extends object>(inst: T, sentinel: string, pr
   }
 }
 
+// The internals whose init chain is currently installing. A second call for the same one is a derived constructor replacing what its base installed; anything else is a repeat construction with nothing left to install. This makes the override order-dependent where a per-prototype seal would not be: a derived constructor must not construct another schema between its base's install and its own override, or the override is silently dropped.
+let installing: object | undefined;
+
+// Set while a getter is running, so a value that resolved through a recursion break is not memoized. One shared descriptor shadows the key for the duration, which costs no per-key allocation.
+let broke = false;
+const breaker: PropertyDescriptor = {
+  configurable: true,
+  get() {
+    broke = true;
+    return undefined;
+  },
+};
+
 /**
  * Installs a lazily-derived internal on the `_zod` prototype of `inst`'s
  * constructor, computed from the internals object itself and cached there on
@@ -1069,15 +1085,33 @@ export function defineLazyInternal<T extends { _zod: any }>(
   compute: (zod: T["_zod"]) => unknown
 ): void {
   const proto = Object.getPrototypeOf(inst._zod);
-  if (key in proto) return;
+  if (key in proto && installing !== inst._zod) {
+    // A repeat construction: everything is installed already. Cleared here so the reference is not held past the first construction of every type.
+    installing = undefined;
+    return;
+  }
+  installing = inst._zod;
+
   Object.defineProperty(proto, key, {
     configurable: true,
     get(this: any) {
-      // Installed before computing so a re-entrant read resolves against this own property instead of running the getter again; a recursive schema reaches its own derived internals while they are still being built.
-      Object.defineProperty(this, key, { configurable: true, writable: true, value: undefined });
-      const value = compute(this);
-      this[key] = value;
-      return value;
+      // Shadowed before computing so a re-entrant read from a recursive schema resolves to undefined instead of running the getter again.
+      Object.defineProperty(this, key, breaker);
+      const outer = broke;
+      broke = false;
+      try {
+        const value = compute(this);
+        // Only a result that resolved through a recursion break goes uncached, since it has to be recomputed once the schema graph is complete. Everything else memoizes, undefined included — it is the ordinary answer for most schemas, and these getters are read per parse on the tuple and interpreted-object paths.
+        if (broke) delete this[key];
+        else Object.defineProperty(this, key, { configurable: true, writable: true, value });
+        broke = broke || outer;
+        return value;
+      } catch (err) {
+        // A compute that threw memoizes nothing, so a later read runs it again and fails the same way. The shadow goes with it, since leaving it installed would answer undefined for every later read.
+        delete this[key];
+        broke = broke || outer;
+        throw err;
+      }
     },
     set(this: any, value: unknown) {
       Object.defineProperty(this, key, { configurable: true, writable: true, value });
@@ -1089,4 +1123,14 @@ export function defineLazyInternal<T extends { _zod: any }>(
 export function installLazyProp(inst: object, key: string, make: (self: any) => unknown): void {
   const proto = claim(inst, key);
   if (proto) defineCached(proto, key, make);
+}
+
+/** Marks the thunk `_catch` synthesises for a constant catch value. `Function.length` cannot tell that thunk from a user callback — rest and defaulted parameters both report arity 0 — and a user callback reads `ctx.error`, whose issues only finalize correctly against the caller's per-parse error map. Provenance can say what arity cannot. A plain string key rather than `Symbol.for`, whose call at module scope no bundler can prove pure — the same shape that anchored `urlCanParse` into every build. */
+export const CONSTANT_CATCH = "~constantCatch";
+
+/** Wraps a constant catch value in a thunk tagged with {@link CONSTANT_CATCH}. */
+export function constantCatch<T>(value: T): () => T {
+  const fn = () => value;
+  (fn as { [CONSTANT_CATCH]?: boolean })[CONSTANT_CATCH] = true;
+  return fn;
 }

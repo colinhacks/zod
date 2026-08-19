@@ -38,6 +38,7 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "ISO wagt aralygy",
     ipv4: "IPv4 salgysy",
     ipv6: "IPv6 salgysy",
+    mac: "MAC salgysy",
     cidrv4: "IPv4 aralygy",
     cidrv6: "IPv6 aralygy",
     base64: "base64 bilen şifrlenen setir",

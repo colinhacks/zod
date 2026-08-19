@@ -2471,7 +2471,7 @@ function _catch<T extends core.SomeType>(
   return new ZodCatch({
     type: "catch",
     innerType: innerType as any as core.$ZodType,
-    catchValue: (typeof catchValue === "function" ? catchValue : () => catchValue) as (
+    catchValue: (typeof catchValue === "function" ? catchValue : core.util.constantCatch(catchValue)) as (
       ctx: core.$ZodCatchCtx
     ) => core.output<T>,
   }) as any;
