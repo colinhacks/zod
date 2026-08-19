@@ -215,6 +215,24 @@ test("z.exactPartial with mask", () => {
   expect(z.safeParse(partialSchemaWithMask, { age: 30, name: undefined }).success).toBe(false);
 });
 
+test("z.required", () => {
+  const requiredSchema = z.required(userSchema);
+  type RequiredUser = z.infer<typeof requiredSchema>;
+  expectTypeOf<RequiredUser>().toEqualTypeOf<{ name: string; age: number; email: string }>();
+  expect(requiredSchema.shape.email).toBeInstanceOf(z.ZodMiniNonOptional);
+  expect(z.safeParse(requiredSchema, { name: "John", age: 30 }).success).toBe(false);
+  expect(z.safeParse(requiredSchema, { name: "John", age: 30, email: "john@example.com" }).success).toBe(true);
+});
+
+test("z.required with mask", () => {
+  const schema = z.object({ name: z.optional(z.string()), age: z.optional(z.number()) });
+  const requiredSchemaWithMask = z.required(schema, { name: true });
+  type RequiredWithMask = z.infer<typeof requiredSchemaWithMask>;
+  expectTypeOf<RequiredWithMask>().toEqualTypeOf<{ name: string; age?: number | undefined }>();
+  expect(requiredSchemaWithMask.shape.name).toBeInstanceOf(z.ZodMiniNonOptional);
+  expect(requiredSchemaWithMask.shape.age).toBeInstanceOf(z.ZodMiniOptional);
+});
+
 test("z.pick/omit/partial/required - do not allow unknown keys", () => {
   const schema = z.object({
     name: z.string(),
