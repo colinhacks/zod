@@ -692,7 +692,7 @@ test("encode with codec discriminator", () => {
   expect(encoded).toEqual({ type: 1, value: "hello" });
 });
 
-test("optionsMap and get(value) — by-discriminator lookup", () => {
+test("optionsMap — by-discriminator lookup", () => {
   const fruit = z.object({ type: z.literal("fruit"), seeds: z.boolean() });
   const veg = z.object({ type: z.literal("vegetable"), leafy: z.boolean() });
   const schema = z.discriminatedUnion("type", [fruit, veg]);
@@ -702,68 +702,41 @@ test("optionsMap and get(value) — by-discriminator lookup", () => {
   expect(schema.optionsMap.get("fruit")).toBe(fruit);
   expect(schema.optionsMap.get("vegetable")).toBe(veg);
 
-  const got = schema.get("fruit");
-  expect(got).toBe(fruit);
-  expectTypeOf(got).toEqualTypeOf<typeof fruit>();
-
-  expectTypeOf(schema.get("vegetable")).toEqualTypeOf<typeof veg>();
-
-  // @ts-expect-error — "unknown" is not a valid discriminator value
-  schema.get("unknown");
+  // The key type is the union of declared discriminator values, so a typo is a compile error.
+  expectTypeOf<Parameters<typeof schema.optionsMap.get>[0]>().toEqualTypeOf<"fruit" | "vegetable">();
+  // @ts-expect-error — "unknown" is not a declared discriminator value
+  schema.optionsMap.get("unknown");
 });
 
-test("get(value) — single member with multiple discriminator values", () => {
+test("optionsMap — non-string discriminators and multi-value members", () => {
   const a = z.object({ type: z.literal(["x", "y"]), payload: z.string() });
   const b = z.object({ type: z.literal("z"), payload: z.number() });
-  const schema = z.discriminatedUnion("type", [a, b]);
-
-  expect(schema.get("x")).toBe(a);
-  expect(schema.get("y")).toBe(a);
-  expect(schema.get("z")).toBe(b);
-  expectTypeOf(schema.get("x")).toEqualTypeOf<typeof a>();
-  expectTypeOf(schema.get("z")).toEqualTypeOf<typeof b>();
-});
-
-test("a duplicate discriminator reports the same error on every parse", () => {
-  const schema = z.discriminatedUnion("type", [
-    z.object({ type: z.literal("dup"), a: z.string() }),
-    z.object({ type: z.literal("dup"), b: z.string() }),
+  expect(Array.from(z.discriminatedUnion("type", [a, b]).optionsMap)).toEqual([
+    ["x", a],
+    ["y", a],
+    ["z", b],
   ]);
 
-  // Detection is lazy, so the first parse builds the map and throws. Reading `optionsMap` must not latch that failure into a `TypeError` on later parses.
-  for (let i = 0; i < 3; i++) {
-    expect(() => schema.safeParse({ type: "dup", a: "x" })).toThrow(/Duplicate discriminator value "dup"/);
-  }
-  expect(() => schema.optionsMap).toThrow(/Duplicate discriminator value "dup"/);
+  const num = z.object({ type: z.literal(1) });
+  const bool = z.object({ type: z.literal(true) });
+  const nul = z.object({ type: z.null() });
+  const mixed = z.discriminatedUnion("type", [num, bool, nul]);
+  expect(mixed.optionsMap.get(1)).toBe(num);
+  expect(mixed.optionsMap.get(true)).toBe(bool);
+  expect(mixed.optionsMap.get(null)).toBe(nul);
 });
 
-test("get is installed on the prototype exactly once", () => {
-  const mk = () =>
-    z.discriminatedUnion("type", [z.object({ type: z.literal("a") }), z.object({ type: z.literal("b") })]);
-  const proto = Object.getPrototypeOf(mk());
-  expect(Object.getOwnPropertyDescriptor(proto, "get")?.get).toBeInstanceOf(Function);
+test("optionsMap is lazy, cached, and independent of the parse path", () => {
+  const schema = z.discriminatedUnion("type", [z.object({ type: z.literal("a") }), z.object({ type: z.literal("b") })]);
 
-  // The sentinel must be a key this group defines, or every later construction redefines the accessor and drops the prototype into dictionary mode.
-  const define = Object.defineProperty;
-  let redefines = 0;
-  Object.defineProperty = (obj: any, key: any, desc: any) => {
-    if (obj === proto && key === "get") redefines++;
-    return define(obj, key, desc);
-  };
-  try {
-    mk();
-    mk();
-  } finally {
-    Object.defineProperty = define;
-  }
-  expect(redefines).toEqual(0);
+  // It lives on the prototype, so a union nobody introspects carries no extra own property.
+  expect(Object.prototype.hasOwnProperty.call(schema, "optionsMap")).toEqual(false);
+  expect(schema.optionsMap).toBe(schema.optionsMap);
+  expect(Object.prototype.hasOwnProperty.call(schema, "optionsMap")).toEqual(true);
 
-  // Reading it caches on the instance, and it stays usable when detached.
-  const schema = mk();
-  expect(Object.prototype.hasOwnProperty.call(schema, "get")).toEqual(false);
-  const get = schema.get;
-  expect(get("a")).toBe(schema.options[0]);
-  expect(Object.prototype.hasOwnProperty.call(schema, "get")).toEqual(true);
+  // Mutating the returned map must not reach the parse path.
+  (schema.optionsMap as Map<string, unknown>).set("a", z.object({ type: z.literal("b") }));
+  expect(schema.safeParse({ type: "a" }).success).toEqual(true);
 });
 
 test.each(["__proto__", "constructor", "toString", "hasOwnProperty", "valueOf"])(

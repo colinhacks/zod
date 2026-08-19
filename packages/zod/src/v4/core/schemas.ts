@@ -499,6 +499,61 @@ export interface $ZodURL extends $ZodType {
   _zod: $ZodURLInternals;
 }
 
+// URL.canParse: Node 18.17+, Safari 17+; fall back for older runtimes. Resolved on first use rather than at module scope — a top-level `.bind()` is a call, so bundlers cannot prove it side-effect free and keep it in every build, including ones that never touch z.url().
+let urlCanParseImpl: ((s: string) => boolean) | undefined;
+function urlCanParse(s: string): boolean {
+  urlCanParseImpl ??=
+    typeof URL.canParse === "function"
+      ? URL.canParse.bind(URL)
+      : (v: string) => {
+          try {
+            new URL(v);
+            return true;
+          } catch {
+            return false;
+          }
+        };
+  return urlCanParseImpl(s);
+}
+
+export function parseValidURL(
+  data: string,
+  def: Pick<$ZodURLDef, "hostname" | "protocol" | "normalize">
+): string | undefined {
+  const trimmed = data.trim();
+
+  // Bare z.url() (no hostname/protocol/normalize options) skips the parsed-URL path entirely. URL.canParse avoids the try/catch on invalid input.
+  if (!def.hostname && !def.protocol && !def.normalize) {
+    return urlCanParse(trimmed) ? trimmed : undefined;
+  }
+
+  // When normalize is off, require :// for http/https URLs. This prevents strings like "http:example.com" or "https:/path" from being silently accepted by URL.
+  if (!def.normalize && def.protocol?.source === regexes.httpProtocol.source && !/^https?:\/\//i.test(trimmed)) {
+    return undefined;
+  }
+
+  let url: URL;
+  try {
+    // @ts-ignore
+    url = new URL(trimmed);
+  } catch {
+    return undefined;
+  }
+
+  if (def.hostname) {
+    def.hostname.lastIndex = 0;
+    if (!def.hostname.test(url.hostname)) return undefined;
+  }
+
+  if (def.protocol) {
+    def.protocol.lastIndex = 0;
+    const protocol = url.protocol.endsWith(":") ? url.protocol.slice(0, -1) : url.protocol;
+    if (!def.protocol.test(protocol)) return undefined;
+  }
+
+  return def.normalize ? url.href : trimmed;
+}
+
 export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$constructor("$ZodURL", (inst, def) => {
   $ZodStringFormat.init(inst, def);
   inst._zod.check = (payload) => {
@@ -821,6 +876,16 @@ export interface $ZodIPv6 extends $ZodType {
   _zod: $ZodIPv6Internals;
 }
 
+export function isValidIPv6(value: string): boolean {
+  try {
+    // @ts-ignore
+    new URL(`http://[${value}]`);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export const $ZodIPv6: core.$constructor<$ZodIPv6> = /*@__PURE__*/ core.$constructor("$ZodIPv6", (inst, def): void => {
   def.pattern ??= regexes.ipv6;
   $ZodStringFormat.init(inst, def);
@@ -828,11 +893,7 @@ export const $ZodIPv6: core.$constructor<$ZodIPv6> = /*@__PURE__*/ core.$constru
   inst._zod.bag.format = `ipv6`;
 
   inst._zod.check = (payload) => {
-    try {
-      // @ts-ignore
-      new URL(`http://[${payload.value}]`);
-      // return;
-    } catch {
+    if (!isValidIPv6(payload.value)) {
       payload.issues.push({
         code: "invalid_format",
         format: "ipv6",
@@ -900,6 +961,23 @@ export interface $ZodCIDRv6 extends $ZodType {
   _zod: $ZodCIDRv6Internals;
 }
 
+export function isValidCIDRv6(value: string): boolean {
+  const parts = value.split("/");
+  if (parts.length !== 2) return false;
+  const [address, prefix] = parts;
+  if (!prefix) return false;
+  const prefixNum = Number(prefix);
+  if (`${prefixNum}` !== prefix) return false;
+  if (prefixNum < 0 || prefixNum > 128) return false;
+  try {
+    // @ts-ignore
+    new URL(`http://[${address}]`);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export const $ZodCIDRv6: core.$constructor<$ZodCIDRv6> = /*@__PURE__*/ core.$constructor(
   "$ZodCIDRv6",
   (inst, def): void => {
@@ -907,17 +985,7 @@ export const $ZodCIDRv6: core.$constructor<$ZodCIDRv6> = /*@__PURE__*/ core.$con
     $ZodStringFormat.init(inst, def);
 
     inst._zod.check = (payload) => {
-      const parts = payload.value.split("/");
-      try {
-        if (parts.length !== 2) throw new Error();
-        const [address, prefix] = parts;
-        if (!prefix) throw new Error();
-        const prefixNum = Number(prefix);
-        if (`${prefixNum}` !== prefix) throw new Error();
-        if (prefixNum < 0 || prefixNum > 128) throw new Error();
-        // @ts-ignore
-        new URL(`http://[${address}]`);
-      } catch {
+      if (!isValidCIDRv6(payload.value)) {
         payload.issues.push({
           code: "invalid_format",
           format: "cidrv6",
@@ -2436,7 +2504,6 @@ export interface $ZodDiscriminatedUnionInternals<
 > extends $ZodUnionInternals<Options> {
   def: $ZodDiscriminatedUnionDef<Options, Disc>;
   propValues: util.PropValues;
-  optionsMap: ReadonlyMap<util.Primitive, Options[number]>;
 }
 
 export interface $ZodDiscriminatedUnion<
@@ -2488,9 +2555,6 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
       }
       return map;
     });
-
-    // The parse path keeps reading `disc.value`: `defineLazy` latches on a throwing getter and returns `undefined` on every later read, which would turn a duplicate-discriminator error into a TypeError on the second parse.
-    util.defineLazy(inst._zod, "optionsMap", () => disc.value);
 
     inst._zod.parse = (payload, ctx) => {
       const input = payload.value;
@@ -2585,7 +2649,7 @@ export const $ZodIntersection: core.$constructor<$ZodIntersection> = /*@__PURE__
   }
 );
 
-function mergeValues(
+export function mergeValues(
   a: any,
   b: any
 ): { valid: true; data: any } | { valid: false; mergeErrorPath: (string | number)[] } {

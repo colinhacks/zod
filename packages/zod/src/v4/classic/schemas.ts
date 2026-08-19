@@ -1777,16 +1777,6 @@ type DiscriminatorValue<Options extends readonly core.SomeType[], Disc extends s
     : never;
 }[number];
 
-type DiscriminatedOption<Options extends readonly core.SomeType[], Disc extends string, V> = {
-  [I in keyof Options]: Options[I] extends { _zod: { output: infer Out } }
-    ? Out extends Record<Disc, infer OV>
-      ? V extends OV
-        ? Options[I]
-        : never
-      : never
-    : never;
-}[number];
-
 export interface ZodDiscriminatedUnion<
   Options extends readonly core.SomeType[] = readonly core.$ZodType[],
   Disc extends string = string,
@@ -1795,9 +1785,7 @@ export interface ZodDiscriminatedUnion<
   "~standard": ZodStandardSchemaWithJSON<this>;
   _zod: core.$ZodDiscriminatedUnionInternals<Options, Disc>;
   def: core.$ZodDiscriminatedUnionDef<Options, Disc>;
-  /** Returns the option schema matching the given discriminator value. */
-  get<V extends DiscriminatorValue<Options, Disc>>(value: V): DiscriminatedOption<Options, Disc, V>;
-  /** Maps each valid discriminator value to its option schema. Shared with the parse path, so `ReadonlyMap` holds at compile time only — mutating it corrupts parsing. */
+  /** Maps each discriminator value to the option that declares it. */
   readonly optionsMap: ReadonlyMap<DiscriminatorValue<Options, Disc>, Options[number]>;
 }
 export const ZodDiscriminatedUnion: core.$constructor<ZodDiscriminatedUnion> = /*@__PURE__*/ core.$constructor(
@@ -1805,18 +1793,23 @@ export const ZodDiscriminatedUnion: core.$constructor<ZodDiscriminatedUnion> = /
   (inst, def) => {
     ZodUnion.init(inst, def);
     core.$ZodDiscriminatedUnion.init(inst, def);
-    _installLazyMethods(inst, "get", _zodDiscriminatedUnionMethods);
-    util.defineLazy(inst, "optionsMap", () => inst._zod.optionsMap as any);
+    _installLazyProps(inst, "optionsMap", _zodDiscriminatedUnionProps);
   }
 );
 
-// `DiscriminatorValue`/`DiscriminatedOption` collapse to `never` under the interface's default type arguments, so the body is typed against the erased signature and asserted back.
-function _zodDiscriminatedUnionMethods(): _LazyMethodsOf<ZodDiscriminatedUnion> {
+function _zodDiscriminatedUnionProps(): _LazyPropsOf<ZodDiscriminatedUnion> {
   return {
-    get(this: ZodDiscriminatedUnion, value: util.Primitive) {
-      return this._zod.optionsMap.get(value);
+    optionsMap: (self) => {
+      const { options, discriminator } = self._zod.def;
+      const map = new Map<util.Primitive, core.SomeType>();
+      for (const option of options as core.$ZodTypeDiscriminable[]) {
+        for (const value of option._zod.propValues?.[discriminator] ?? []) {
+          if (!map.has(value)) map.set(value, option);
+        }
+      }
+      return map as any;
     },
-  } as _LazyMethodsOf<ZodDiscriminatedUnion>;
+  };
 }
 
 export function discriminatedUnion<
