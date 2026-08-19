@@ -1,5 +1,5 @@
 import type * as checks from "./checks.js";
-import { built, globalConfig } from "./core.js";
+import { globalConfig } from "./core.js";
 import type { $ZodConfig } from "./core.js";
 import type * as errors from "./errors.js";
 import type * as schemas from "./schemas.js";
@@ -1061,8 +1061,18 @@ export function installLazyProps<T extends object>(inst: T, sentinel: string, pr
   }
 }
 
-// Bumped whenever a recursive read resolves to `undefined` instead of recursing. Shared across every accessor, so a break anywhere inside a `compute` keeps that result from being memoized.
-let cycleBreaks = 0;
+// The internals whose init chain is currently installing. A second call for the same one is a derived constructor replacing what its base installed; anything else is a repeat construction with nothing left to install. This makes the override order-dependent where a per-prototype seal would not be: a derived constructor must not construct another schema between its base's install and its own override, or the override is silently dropped.
+let installing: object | undefined;
+
+// Set while a getter is running, so a value that resolved through a recursion break is not memoized. One shared descriptor shadows the key for the duration, which costs no per-key allocation.
+let broke = false;
+const breaker: PropertyDescriptor = {
+  configurable: true,
+  get() {
+    broke = true;
+    return undefined;
+  },
+};
 
 /**
  * Installs a lazily-derived internal on the `_zod` prototype of `inst`'s
@@ -1075,31 +1085,33 @@ export function defineLazyInternal<T extends { _zod: any }>(
   compute: (zod: T["_zod"]) => unknown
 ): void {
   const proto = Object.getPrototypeOf(inst._zod);
-  // Installs share one prototype across a whole init chain, so a derived constructor has to be able to replace what its base installed. Only a prototype a construction has already finished with is closed to further installs.
-  if (proto[built] && key in proto) return;
+  if (key in proto && installing !== inst._zod) {
+    // A repeat construction: everything is installed already. Cleared here so the reference is not held past the first construction of every type.
+    installing = undefined;
+    return;
+  }
+  installing = inst._zod;
 
-  // Holds the internals whose getter is currently running, so a re-entrant read from a recursive schema resolves to `undefined` rather than recursing.
-  const active = new WeakSet<object>();
   Object.defineProperty(proto, key, {
     configurable: true,
     get(this: any) {
-      if (active.has(this)) {
-        cycleBreaks++;
-        return undefined;
-      }
-      active.add(this);
-      const before = cycleBreaks;
-      let value: unknown;
+      // Shadowed before computing so a re-entrant read from a recursive schema resolves to undefined instead of running the getter again.
+      Object.defineProperty(this, key, breaker);
+      const outer = broke;
+      broke = false;
       try {
-        value = compute(this);
-      } finally {
-        active.delete(this);
+        const value = compute(this);
+        // Only a result that resolved through a recursion break goes uncached, since it has to be recomputed once the schema graph is complete. Everything else memoizes, undefined included — it is the ordinary answer for most schemas, and these getters are read per parse on the tuple and interpreted-object paths.
+        if (broke) delete this[key];
+        else Object.defineProperty(this, key, { configurable: true, writable: true, value });
+        broke = broke || outer;
+        return value;
+      } catch (err) {
+        // A compute that threw memoizes nothing, so a later read runs it again and fails the same way. The shadow goes with it, since leaving it installed would answer undefined for every later read.
+        delete this[key];
+        broke = broke || outer;
+        throw err;
       }
-      // Only a result that resolved through a recursion break goes uncached, since it has to be recomputed once the schema graph is complete. Everything else memoizes, `undefined` included — it is the ordinary answer for most schemas, and these getters are read per parse on the tuple and interpreted-object paths.
-      if (cycleBreaks === before) {
-        Object.defineProperty(this, key, { configurable: true, writable: true, value });
-      }
-      return value;
     },
     set(this: any, value: unknown) {
       Object.defineProperty(this, key, { configurable: true, writable: true, value });
