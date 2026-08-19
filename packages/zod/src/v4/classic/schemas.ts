@@ -314,7 +314,8 @@ function _zodTypeParseProps(): _LazyPropsOf<ZodType> {
       return fn;
     },
     parseAsync: (self) => {
-      const fn: ZodType["parseAsync"] = async (data, params) => parse.parseAsync(self, data, params, { callee: fn });
+      const fn: ZodType["parseAsync"] = async (data, params) =>
+        await parse.parseAsync(self, data, params, { callee: fn });
       return fn;
     },
     safeParse: (self) => (data, params) => parse.safeParse(self, data, params),
@@ -330,11 +331,13 @@ function _zodTypeParseProps(): _LazyPropsOf<ZodType> {
       return fn;
     },
     encodeAsync: (self) => {
-      const fn: ZodType["encodeAsync"] = async (data, params) => parse.encodeAsync(self, data, params, { callee: fn });
+      const fn: ZodType["encodeAsync"] = async (data, params) =>
+        await parse.encodeAsync(self, data, params, { callee: fn });
       return fn;
     },
     decodeAsync: (self) => {
-      const fn: ZodType["decodeAsync"] = async (data, params) => parse.decodeAsync(self, data, params, { callee: fn });
+      const fn: ZodType["decodeAsync"] = async (data, params) =>
+        await parse.decodeAsync(self, data, params, { callee: fn });
       return fn;
     },
     safeEncode: (self) => (data, params) => parse.safeEncode(self, data, params),

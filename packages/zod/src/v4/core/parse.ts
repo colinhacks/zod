@@ -152,7 +152,7 @@ export const _encodeAsync: (_Err: $ZodErrorClass) => $EncodeAsync = (_Err) => {
   const parseAsync = _parseAsync(_Err);
   const fn: $EncodeAsync = async (schema, value, _ctx, _params) => {
     const ctx = _ctx ? { ..._ctx, direction: "backward" as const } : { direction: "backward" as const };
-    return parseAsync(schema, value, ctx as any, finalizeParams(fn, _params)) as any;
+    return (await parseAsync(schema, value, ctx as any, finalizeParams(fn, _params))) as any;
   };
   return fn;
 };
@@ -169,7 +169,7 @@ export type $DecodeAsync = <T extends schemas.$ZodType>(
 export const _decodeAsync: (_Err: $ZodErrorClass) => $DecodeAsync = (_Err) => {
   const parseAsync = _parseAsync(_Err);
   const fn: $DecodeAsync = async (schema, value, _ctx, _params) => {
-    return parseAsync(schema, value, _ctx, finalizeParams(fn, _params));
+    return await parseAsync(schema, value, _ctx, finalizeParams(fn, _params));
   };
   return fn;
 };

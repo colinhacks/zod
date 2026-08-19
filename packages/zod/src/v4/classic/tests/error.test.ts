@@ -789,6 +789,21 @@ test("codec errors capture the caller stack frame", async () => {
   expectFirstStackFrameAtCallsite(await getRejectedError(() => z.decodeAsync(schema, 123 as any)));
 });
 
+test("async errors that fail after suspending capture the caller stack frame", async () => {
+  // `Error.captureStackTrace` is skip-until-seen: when it cannot find its callee it discards every frame, not just the ones above. An async wrapper that returns its inner promise without awaiting has already left the async chain by the time the rejection is built, so its callee is unfindable and the stack comes back empty. Only a schema that actually suspends reaches that path — the sync cases above run straight through to their first await and pass either way.
+  const refined = z.string().refine(async () => false, "nope");
+  const codec = z.codec(z.string(), z.number(), {
+    decode: async (value) => value as never,
+    encode: async (value) => value as never,
+  });
+
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => refined.parseAsync("x")));
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => codec.decodeAsync("x")));
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => z.decodeAsync(codec, "x")));
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => codec.encodeAsync(5)));
+  expectFirstStackFrameAtCallsite(await getRejectedError(() => z.encodeAsync(codec, 5)));
+});
+
 test("error serialization", () => {
   try {
     z.string().parse(123);

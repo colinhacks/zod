@@ -41,6 +41,7 @@ const BUILT_ENTRY = path.join(__dirname, "node_modules", "zod", "index.js");
 const CEILINGS: Record<string, number> = {
   "zod-mini-boolean": 2826,
   "zod-mini-string": 3146,
+  // Carries an earlier raise as well: the construction-time discriminator check writes a WeakMap entry from `$ZodObject`, so every bundle containing `z.object` pays for it whether or not it builds a discriminated union.
   "zod-mini-object": 4301,
 };
 
