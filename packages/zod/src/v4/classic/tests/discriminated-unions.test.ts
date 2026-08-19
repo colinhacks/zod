@@ -740,51 +740,55 @@ test("encode with codec discriminator", () => {
   expect(encoded).toEqual({ type: 1, value: "hello" });
 });
 
-test("optionsMap — by-discriminator lookup", () => {
+test("optionForDiscriminator", () => {
   const fruit = z.object({ type: z.literal("fruit"), seeds: z.boolean() });
   const veg = z.object({ type: z.literal("vegetable"), leafy: z.boolean() });
   const schema = z.discriminatedUnion("type", [fruit, veg]);
 
-  expect(schema.optionsMap).toBeInstanceOf(Map);
-  expect(Array.from(schema.optionsMap.keys())).toEqual(["fruit", "vegetable"]);
-  expect(schema.optionsMap.get("fruit")).toBe(fruit);
-  expect(schema.optionsMap.get("vegetable")).toBe(veg);
+  expect(z.optionForDiscriminator(schema, "fruit")).toBe(fruit);
+  expect(z.optionForDiscriminator(schema, "vegetable")).toBe(veg);
 
-  // The key type is the union of declared discriminator values, so a typo is a compile error.
-  expectTypeOf<Parameters<typeof schema.optionsMap.get>[0]>().toEqualTypeOf<"fruit" | "vegetable">();
+  // The result is narrowed to the one member, not the union of all of them.
+  expectTypeOf(z.optionForDiscriminator(schema, "fruit")).toEqualTypeOf<typeof fruit>();
+  expectTypeOf(z.optionForDiscriminator(schema, "vegetable")).toEqualTypeOf<typeof veg>();
   // @ts-expect-error — "unknown" is not a declared discriminator value
-  schema.optionsMap.get("unknown");
+  z.optionForDiscriminator(schema, "unknown");
 });
 
-test("optionsMap — non-string discriminators and multi-value members", () => {
+test("optionForDiscriminator — multi-value members and non-string discriminators", () => {
   const a = z.object({ type: z.literal(["x", "y"]), payload: z.string() });
   const b = z.object({ type: z.literal("z"), payload: z.number() });
-  expect(Array.from(z.discriminatedUnion("type", [a, b]).optionsMap)).toEqual([
-    ["x", a],
-    ["y", a],
-    ["z", b],
-  ]);
+  const multi = z.discriminatedUnion("type", [a, b]);
+  expect(z.optionForDiscriminator(multi, "x")).toBe(a);
+  expect(z.optionForDiscriminator(multi, "y")).toBe(a);
+  expect(z.optionForDiscriminator(multi, "z")).toBe(b);
 
   const num = z.object({ type: z.literal(1) });
   const bool = z.object({ type: z.literal(true) });
   const nul = z.object({ type: z.null() });
   const mixed = z.discriminatedUnion("type", [num, bool, nul]);
-  expect(mixed.optionsMap.get(1)).toBe(num);
-  expect(mixed.optionsMap.get(true)).toBe(bool);
-  expect(mixed.optionsMap.get(null)).toBe(nul);
+  expect(z.optionForDiscriminator(mixed, 1)).toBe(num);
+  expect(z.optionForDiscriminator(mixed, true)).toBe(bool);
+  expect(z.optionForDiscriminator(mixed, null)).toBe(nul);
+
+  // An omittable discriminator claims undefined, so it resolves like any other value.
+  const opt = z.object({ type: z.literal("a").optional(), a: z.string() });
+  const req = z.object({ type: z.literal("b"), b: z.string() });
+  expect(z.optionForDiscriminator(z.discriminatedUnion("type", [opt, req]), undefined)).toBe(opt);
 });
 
-test("optionsMap is lazy, cached, and independent of the parse path", () => {
+test("optionForDiscriminator caches in the bag and costs nothing until called", () => {
   const schema = z.discriminatedUnion("type", [z.object({ type: z.literal("a") }), z.object({ type: z.literal("b") })]);
 
-  // It lives on the prototype, so a union nobody introspects carries no extra own property.
-  expect(Object.prototype.hasOwnProperty.call(schema, "optionsMap")).toEqual(false);
-  expect(schema.optionsMap).toBe(schema.optionsMap);
-  expect(Object.prototype.hasOwnProperty.call(schema, "optionsMap")).toEqual(true);
+  expect(schema._zod.bag.optionsMap).toBeUndefined();
+  expect(z.optionForDiscriminator(schema, "a")).toBe(schema.options[0]);
+  const map = schema._zod.bag.optionsMap;
+  expect(map).toBeInstanceOf(Map);
+  expect(z.optionForDiscriminator(schema, "b")).toBe(schema.options[1]);
+  expect(schema._zod.bag.optionsMap).toBe(map);
 
-  // Mutating the returned map must not reach the parse path.
-  (schema.optionsMap as Map<string, unknown>).set("a", z.object({ type: z.literal("b") }));
-  expect(schema.safeParse({ type: "a" }).success).toEqual(true);
+  // A clone recomputes rather than inheriting the cache.
+  expect(schema.clone()._zod.bag.optionsMap).toBeUndefined();
 });
 
 test.each(["__proto__", "constructor", "toString", "hasOwnProperty", "valueOf"])(

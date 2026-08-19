@@ -2482,6 +2482,49 @@ export interface $ZodDiscriminatedUnionInternals<
 > extends $ZodUnionInternals<Options> {
   def: $ZodDiscriminatedUnionDef<Options, Disc>;
   propValues: util.PropValues;
+  bag: util.LoosePartial<{
+    optionsMap: Map<util.Primitive, $ZodType>;
+  }>;
+}
+
+/** The discriminator values a member of `Options` can declare. An omittable discriminator contributes `undefined`, matching what `propValues` claims for it. */
+export type $DiscriminatorValue<Options extends readonly SomeType[], Disc extends string> = {
+  [I in keyof Options]: Options[I] extends { _zod: { output: infer Out } }
+    ? Disc extends keyof Out
+      ? Out[Disc]
+      : never
+    : never;
+}[number];
+
+/** The member of `Options` that declares `V`. */
+export type $DiscriminatedOption<Options extends readonly SomeType[], Disc extends string, V> = {
+  [I in keyof Options]: Options[I] extends { _zod: { output: infer Out } }
+    ? Disc extends keyof Out
+      ? V extends Out[Disc]
+        ? Options[I]
+        : never
+      : never
+    : never;
+}[number];
+
+/** Returns the member of a discriminated union that declares `value` as its discriminator. */
+export function optionForDiscriminator<
+  Options extends readonly SomeType[],
+  Disc extends string,
+  const V extends $DiscriminatorValue<Options, Disc>,
+>(union: $ZodDiscriminatedUnion<Options, Disc>, value: V): $DiscriminatedOption<Options, Disc, V> {
+  const internals = union._zod;
+  let map = internals.bag.optionsMap;
+  if (!map) {
+    map = new Map();
+    const { options, discriminator } = internals.def;
+    for (const option of options as unknown as readonly $ZodType[]) {
+      // First declaration wins, matching the order the parse path resolves a duplicate in.
+      for (const v of option._zod.propValues?.[discriminator] ?? []) if (!map.has(v)) map.set(v, option);
+    }
+    internals.bag.optionsMap = map;
+  }
+  return map.get(value as util.Primitive) as any;
 }
 
 export interface $ZodDiscriminatedUnion<

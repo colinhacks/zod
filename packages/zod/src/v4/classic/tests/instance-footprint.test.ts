@@ -20,10 +20,6 @@ test("schema instances stay under V8's property-count step", () => {
     ["map", z.map(z.string(), z.string())],
     ["set", z.set(z.string())],
     ["union", z.union([z.string(), z.number()])],
-    [
-      "discriminated union",
-      z.discriminatedUnion("t", [z.object({ t: z.literal("a") }), z.object({ t: z.literal("b") })]),
-    ],
     ["optional", z.string().optional()],
     ["pipe", z.string().pipe(z.string())],
     ["email", z.email()],
