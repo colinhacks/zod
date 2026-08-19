@@ -413,7 +413,7 @@ This schema validates strings with a leading `+`, a non-zero country code, and 7
 
 As you may have noticed, Zod string includes a few date/time related validations. These validations are regular expression based, so they are not as strict as a full date/time library. However, they are very convenient for validating user input.
 
-The `z.iso.datetime()` method enforces ISO 8601; by default, no timezone offsets are allowed:
+The `z.iso.datetime()` method accepts a strict subset of ISO 8601; by default, no timezone offsets are allowed:
 
 ```ts
 const datetime = z.iso.datetime();
