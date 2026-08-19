@@ -1127,6 +1127,15 @@ export function _property<K extends string, T extends schemas.$ZodType>(
   });
 }
 
+// @__NO_SIDE_EFFECTS__
+export function _properties<Shape extends schemas.$ZodShape>(
+  shape: Shape
+): checks.$ZodCheckProperty<{ -readonly [k in keyof Shape]: core.output<Shape[k]> }>[] {
+  return Object.entries(shape).map(
+    ([property, schema]) => new checks.$ZodCheckProperty({ check: "property", property, schema })
+  ) as any;
+}
+
 export type $ZodCheckMimeTypeParams = CheckParams<checks.$ZodCheckMimeType, "mime" | "when">;
 // @__NO_SIDE_EFFECTS__
 export function _mime(types: util.MimeTypes[], params?: string | $ZodCheckMimeTypeParams): checks.$ZodCheckMimeType {
