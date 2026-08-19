@@ -523,6 +523,18 @@ test("z.transform async", async () => {
   await expect(() => z.parseAsync(a, 123)).rejects.toThrow();
 });
 
+test("z.pipe compatibility checks", () => {
+  const a = z.pipe(z.number(), z.optional(z.number()));
+  expectTypeOf<z.output<typeof a>>().toEqualTypeOf<number | undefined>();
+  expect(z.parse(a, 42)).toEqual(42);
+
+  const branded = z.object({ c: z.string().brand<"myBrand">() });
+  z.pipe(branded, branded);
+
+  // @ts-expect-error incompatible pipe targets are still rejected
+  z.pipe(z.string(), z.number());
+});
+
 test("z.preprocess", () => {
   const a = z.pipe(
     z.transform((val) => String(val).toUpperCase()),

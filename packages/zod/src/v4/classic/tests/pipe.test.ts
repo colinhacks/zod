@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 
 import * as z from "zod/v4";
 
@@ -20,6 +20,29 @@ test("pipe preserves contextual typing and compatibility checks", () => {
 
   // @ts-expect-error incompatible pipe targets are still rejected
   z.string().pipe(z.number());
+  // @ts-expect-error the function form rejects them identically
+  z.pipe(z.string(), z.number());
+});
+
+test("pipe stricter source into looser target (issue #5694)", () => {
+  const maybeNumber = z.number().optional();
+  const out = z.number().pipe(maybeNumber).parse(42);
+  expectTypeOf(out).toEqualTypeOf<number | undefined>();
+});
+
+test("pipe transform output into nullable target (issue #5694)", () => {
+  const backEnd = z.object({ field: z.number().min(1).max(100).nullable() });
+  backEnd.extend({
+    field: z.string().nonempty().transform(Number).pipe(backEnd.shape.field),
+  });
+});
+
+test("z.pipe accepts everything the method accepts", () => {
+  const out = z.pipe(z.number(), z.number().optional()).parse(42);
+  expectTypeOf(out).toEqualTypeOf<number | undefined>();
+
+  const branded = z.object({ c: z.string().brand<"myBrand">() });
+  z.pipe(branded, branded);
 });
 
 test("pipe accepts branded output into unbranded input", () => {

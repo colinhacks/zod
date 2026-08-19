@@ -2491,6 +2491,11 @@ export function pipe<
   const A extends core.SomeType,
   B extends core.$ZodType<unknown, core.output<A>> = core.$ZodType<unknown, core.output<A>>,
 >(in_: A, out: B | core.$ZodType<unknown, core.output<A>>): ZodPipe<A, B>;
+export function pipe<const A extends core.SomeType, const B extends core.SomeType>(
+  in_: A,
+  out: B,
+  ...rest: core.output<A> extends core.input<B> ? [] : ["Incompatible pipe target"]
+): ZodPipe<A, B>;
 export function pipe(in_: core.SomeType, out: core.SomeType) {
   return new ZodPipe({
     type: "pipe",
