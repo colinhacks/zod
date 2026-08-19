@@ -13,6 +13,7 @@ import {
   isValidJWT,
   mergeValues,
   parseURLObject,
+  stripTabAndNewline,
   urlHostnameOk,
   urlProtocolOk,
 } from "./schemas.js";
@@ -725,7 +726,8 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
       doc.write(`if (!${protocolConst}(${urlVar}, ${defConst}.protocol)) return INVALID;`);
     }
     const outputVar = newVar(ctx);
-    doc.write(`const ${outputVar} = ${formatDef.normalize ? `${urlVar}.href` : trimVar};`);
+    const stripConst = addConstant(ctx, stripTabAndNewline);
+    doc.write(`const ${outputVar} = ${formatDef.normalize ? `${urlVar}.href` : `${stripConst}(${trimVar})`};`);
     return outputVar;
   }
 

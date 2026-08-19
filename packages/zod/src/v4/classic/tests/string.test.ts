@@ -384,6 +384,44 @@ test("url trims whitespace", () => {
   expect(url.parse("https://example.com/path")).toBe("https://example.com/path");
 });
 
+test("url returns the string the parser validated", () => {
+  // The URL parser deletes ASCII tab, LF and CR instead of failing, so `new URL()` reports on a string that is not the one it was given. The host is the consequential case: this validated example.com and used to hand back a URL naming a different host.
+  expect(z.url().parse("https://exa\nmple.com")).toBe("https://example.com");
+  expect(z.url().parse("https://exa\tmple.com")).toBe("https://example.com");
+  expect(z.url().parse("https://exa\rmple.com")).toBe("https://example.com");
+  expect(z.httpUrl().parse("https://exa\nmple.com")).toBe("https://example.com");
+  expect(z.url({ hostname: /^a\.com$/ }).parse("https://a\n.com")).toBe("https://a.com");
+  expect(z.url().parse("https://example.com/a\nb?c=\td#e")).toBe("https://example.com/ab?c=d#e");
+
+  // Nothing that parsed before stops parsing, and normalize still wins where it applies.
+  expect(z.url().parse("https://example.com/path")).toBe("https://example.com/path");
+  expect(z.url({ normalize: true }).parse("https://exa\nmple.com")).toBe("https://example.com/");
+});
+
+test("ipv6 and cidrv6 reject anything outside the address alphabet", () => {
+  // `new URL("http://[...]")` parses an authority rather than an address, so a delimiter re-splits it and the parser validates something else entirely.
+  expect(z.ipv6().safeParse("::@1\\").success).toBe(false); // used to validate against the host 0.0.0.1
+  expect(z.ipv6().safeParse("::]/1").success).toBe(false);
+  expect(z.ipv6().safeParse("@[::1").success).toBe(false);
+  expect(z.cidrv6().safeParse("::@1\\/64").success).toBe(false);
+
+  for (const c of ["\t", "\n", "\r"]) {
+    expect(z.ipv6().safeParse(`2001:db8::${c}1`).success).toBe(false);
+    expect(z.ipv6().safeParse(`::1${c}`).success).toBe(false);
+    expect(z.cidrv6().safeParse(`::1${c}/64`).success).toBe(false);
+  }
+
+  // A rejection has to surface as an issue, not just success: false.
+  const result = z.ipv6().safeParse("::1\n");
+  expect(result.success).toBe(false);
+  expect(result.error!.issues[0]).toMatchObject({ code: "invalid_format", format: "ipv6" });
+
+  expect(z.ipv6().parse("2001:db8::1")).toBe("2001:db8::1");
+  expect(z.ipv6().parse("::ffff:192.0.2.1")).toBe("::ffff:192.0.2.1");
+  expect(z.ipv6().parse("2001:DB8::1")).toBe("2001:DB8::1");
+  expect(z.cidrv6().parse("::ffff:192.0.2.1/96")).toBe("::ffff:192.0.2.1/96");
+});
+
 test("url normalize flag", () => {
   const normalizeUrl = z.url({ normalize: true });
   const preserveUrl = z.url(); // normalize: false/undefined by default
