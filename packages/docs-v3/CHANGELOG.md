@@ -6,6 +6,8 @@
 
 ### 3.10
 
+- Added regression coverage for `.readonly()` on nested structures and collections, including deep inference and freezing behavior for parsed values.
+
 - New parser that allows parsing to continue after non-fatal errors have occurred. This allows Zod to surface more errors to the user at once.
 
 ### 3.9
