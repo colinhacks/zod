@@ -1048,7 +1048,7 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
   const shape = def.shape;
   const keys = Object.keys(shape);
   const symbolKeys = Object.getOwnPropertySymbols(shape);
-  // A symbol has no source literal, so it is hoisted as a constant. `keys` stays string-only where the emitted code uses `for...in`.
+  // a symbol has no source literal, so it is hoisted as a constant; `keys` stays string-only where the emitted code uses `for...in`
   const allKeys: (string | symbol)[] = symbolKeys.length ? [...keys, ...symbolKeys] : keys;
   const keyExpr = (k: string | symbol) => (typeof k === "symbol" ? addConstant(ctx, k) : util.esc(k));
   const propKey = (k: string | symbol) => (typeof k === "symbol" ? `[${keyExpr(k)}]` : util.esc(k));

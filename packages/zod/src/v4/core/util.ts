@@ -610,7 +610,7 @@ export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>):
   const def = mergeDefs(schema._zod.def, {
     get shape() {
       const newShape: Writeable<schemas.$ZodShape> = {};
-      // `for...in` skips symbols, so a symbol in the mask would select nothing.
+      // `for...in` skips symbols, so a symbol in the mask would select nothing
       for (const key of Reflect.ownKeys(mask)) {
         if (!Object.prototype.hasOwnProperty.call(currDef.shape, key)) {
           throw new Error(`Unrecognized key: "${String(key)}"`);
@@ -667,7 +667,7 @@ export function extend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): an
   if (hasChecks) {
     // Only throw if new shape overlaps with existing shape. Use getOwnPropertyDescriptor to check key existence without accessing values
     const existingShape = schema._zod.def.shape;
-    for (const key in shape) {
+    for (const key of Reflect.ownKeys(shape)) {
       if (Object.getOwnPropertyDescriptor(existingShape, key) !== undefined) {
         throw new Error("Cannot overwrite keys on object schemas containing refinements. Use `.safeExtend()` instead.");
       }
@@ -753,7 +753,7 @@ export function partial(
             : (oldShape as any)[key]!;
         }
       } else {
-        // The spread copies symbol keys; `for...in` would not reach them.
+        // the spread copies symbol keys; `for...in` would not reach them
         for (const key of Reflect.ownKeys(oldShape)) {
           // if (oldShape[key]!._zod.optin === "optional") continue;
           (shape as any)[key] = Class

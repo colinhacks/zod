@@ -1957,14 +1957,14 @@ export interface $ZodObject<
   out Params extends $ZodObjectConfig = $ZodObjectConfig,
 > extends $ZodType<any, any, $ZodObjectInternals<Shape, Params>> {}
 
-// One shared instance; a fresh [] per schema cost 56 bytes of retained heap.
+// one shared instance; a fresh [] per schema cost 56 bytes retained
 const NO_SYMBOL_KEYS: symbol[] = [];
 
 function normalizeDef(def: $ZodObjectDef) {
   const keys = Object.keys(def.shape);
   const ownSymbols = Object.getOwnPropertySymbols(def.shape);
   const symbolKeys = ownSymbols.length ? ownSymbols : NO_SYMBOL_KEYS;
-  // Aliases `keys` when there are no symbols, so a string-only shape keeps one array.
+  // aliases `keys` when there are no symbols, so a string-only shape keeps one array
   const allKeys: (string | symbol)[] = symbolKeys.length ? [...keys, ...symbolKeys] : keys;
   for (const k of allKeys) {
     if (!(def.shape as any)?.[k]?._zod?.traits?.has("$ZodType")) {
@@ -1977,7 +1977,7 @@ function normalizeDef(def: $ZodObjectDef) {
     ...def,
     allKeys,
     symbolKeys,
-    // String-only: handleCatchall matches this against `for...in`, which never yields a symbol.
+    // string-only: handleCatchall matches it against `for...in`, which never yields a symbol
     keySet: new Set(keys),
     numKeys: keys.length,
     optionalKeys: new Set(okeys),
@@ -2138,9 +2138,9 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
 
     const generateFastpass = (shape: any) => {
       const normalized = _normalized.value;
-      // The closure returned below retains this whole scope per schema, so add no bindings here — a key-expression helper cost 328 bytes each.
+      // closure below retains this scope per schema, so add no bindings here — a key-expression helper cost 328 bytes each
       const syms = normalized.symbolKeys;
-      // A symbol has no source literal, so it is passed in and read as `syms[i]`; a string-only shape gets no such parameter.
+      // a symbol has no source literal, so it is passed in and read as `syms[i]`; string-only shapes get no such parameter
       const doc = new Doc(
         syms.length
           ? memo

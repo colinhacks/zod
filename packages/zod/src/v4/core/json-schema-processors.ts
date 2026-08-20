@@ -285,7 +285,7 @@ export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _jso
   const def = schema._zod.def as schemas.$ZodObjectDef;
   const shape = def.shape;
 
-  // Dropping it while still emitting `additionalProperties: false` would produce a schema that rejects data this one requires.
+  // dropping it while still emitting `additionalProperties: false` would emit a schema that rejects data this one requires
   const symbolKeys = Object.getOwnPropertySymbols(shape);
   if (
     symbolKeys.length &&

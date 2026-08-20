@@ -919,6 +919,12 @@ describe("symbol keys in object shape", () => {
     expect(Reflect.ownKeys(z.object({ a: z.string() }).extend({ [SYM]: z.number() }).shape)).toEqual(["a", SYM]);
   });
 
+  test("extend's refinement-overlap guard sees symbol keys", () => {
+    const refined = z.object({ a: z.string(), [SYM]: z.number() }).refine(() => true);
+    expect(() => refined.extend({ a: z.string() })).toThrow(/Cannot overwrite keys/);
+    expect(() => refined.extend({ [SYM]: z.string() })).toThrow(/Cannot overwrite keys/);
+  });
+
   test("a symbol key is unrepresentable in JSON Schema", () => {
     const schema = z.object({ a: z.string(), [SYM]: z.number() });
     expect(() => z.toJSONSchema(schema)).toThrow(/Symbol keys cannot be represented/);
