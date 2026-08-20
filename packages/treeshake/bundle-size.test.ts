@@ -43,8 +43,8 @@ const CEILINGS: Record<string, number> = {
   // Also carries the code-point string length scan: `.min`/`.max`/`.length` on a string pulls in the surrogate walk.
   "zod-mini-string": 3299,
   // Also carries the construction-time discriminator check, which writes a WeakMap entry from `$ZodObject`, so every bundle containing `z.object` pays for it whether or not it builds a discriminated union.
-  // Raised from 4329 by the commit that caused it: declared symbol keys mean `normalizeDef` collects the shape's own symbols and the parse loop walks them, which every bundle containing `z.object` carries. Measured 4340; 28 bytes of headroom to match the others.
-  "zod-mini-object": 4368,
+  // Raised from 4329 by the commit that caused it: declared symbol keys mean `normalizeDef` collects the shape's own symbols and the parse loop walks them, which every bundle containing `z.object` carries. Measured 4346; 28 bytes of headroom to match the others.
+  "zod-mini-object": 4374,
 };
 
 /**

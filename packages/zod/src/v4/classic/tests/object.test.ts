@@ -919,6 +919,19 @@ describe("symbol keys in object shape", () => {
     expect(Reflect.ownKeys(z.object({ a: z.string() }).extend({ [SYM]: z.number() }).shape)).toEqual(["a", SYM]);
   });
 
+  test("a cycle through a symbol key is detected like a string-keyed one", () => {
+    const A: any = z.object({
+      name: z.string(),
+      get [SYM]() {
+        return A.optional();
+      },
+    });
+    const input: any = { name: "root" };
+    input[SYM] = input;
+    expect(A.safeParse(input).success).toBe(true);
+    expect(() => z.compile(A)).toThrow(/does not support/);
+  });
+
   test("extend's refinement-overlap guard sees symbol keys", () => {
     const refined = z.object({ a: z.string(), [SYM]: z.number() }).refine(() => true);
     expect(() => refined.extend({ a: z.string() })).toThrow(/Cannot overwrite keys/);
