@@ -1,5 +1,5 @@
-import { inspect } from "node:util";
-import { afterEach, expect, test } from "vitest";
+import { inspect, types } from "node:util";
+import { afterEach, expect, test, vi } from "vitest";
 import * as z from "zod/v4";
 
 // Several tests install a global error map. Resetting on the last line of each leaks it into every later test in the file whenever an assertion above that line fails, which turns one real failure into a cascade.
@@ -739,7 +739,7 @@ test("error inheritance", () => {
   expect(e1).toBeInstanceOf(z.core.$ZodError);
   expect(e1).toBeInstanceOf(z.ZodError);
   expect(e1).toBeInstanceOf(z.ZodRealError);
-  // expect(e1).not.toBeInstanceOf(Error);
+  expect(e1).toBeInstanceOf(Error);
 
   try {
     z.string().parse(123);
@@ -747,7 +747,7 @@ test("error inheritance", () => {
     expect(e1).toBeInstanceOf(z.core.$ZodError);
     expect(e2).toBeInstanceOf(z.ZodError);
     expect(e2).toBeInstanceOf(z.ZodRealError);
-    // expect(e2).toBeInstanceOf(Error);
+    expect(e2).toBeInstanceOf(Error);
   }
 });
 
@@ -872,15 +872,72 @@ test("error helpers survive detaching", () => {
   expect(empty.message).toContain("added");
 });
 
-test("stack trace carries the message and the parse call site", () => {
-  function callSite() {
-    return z.string().safeParse(123).error!;
-  }
-  const stack = callSite().stack!;
+test("an error is a real Error, minus the captured frames", () => {
+  const err = z.string().safeParse(123).error!;
 
-  expect(stack.startsWith("ZodError: [")).toBe(true);
-  expect(stack).toContain("invalid_type");
-  expect(stack).toContain("callSite");
+  // suppressing the capture, not skipping the constructor, keeps every brand check working
+  expect(err).toBeInstanceOf(Error);
+  expect(types.isNativeError(err)).toBe(true);
+  expect(Object.prototype.toString.call(err)).toBe("[object Error]");
+  expect(structuredClone(err)).toBeInstanceOf(Error);
+
+  // only a returned error loses its frames; the throwing paths restore them
+  expect(err.stack!.startsWith("ZodError: [")).toBe(true);
+  expect(err.stack!).toContain("invalid_type");
+  expect(err.stack!.split("\n").some((line) => line.trim().startsWith("at "))).toBe(false);
+
+  // the borrowed global is given back unchanged, including a caller's own value
+  const ambient = Error.stackTraceLimit;
+  z.string().safeParse(123);
+  expect(Error.stackTraceLimit).toBe(ambient);
+  Error.stackTraceLimit = ambient + 3;
+  try {
+    z.string().safeParse(123);
+    expect(Error.stackTraceLimit).toBe(ambient + 3);
+  } finally {
+    Error.stackTraceLimit = ambient;
+  }
+});
+
+test("a realm that hardens Error after import degrades instead of throwing", async () => {
+  // lockdown() runs after zod's module graph evaluates, so the latch fires in a throwaway instance rather than the one this file uses
+  vi.resetModules();
+  const fresh = await import("zod/v4");
+  const desc = Object.getOwnPropertyDescriptor(Error, "stackTraceLimit")!;
+  Object.defineProperty(Error, "stackTraceLimit", { value: 10, writable: false, configurable: true });
+
+  try {
+    for (const err of [fresh.string().safeParse(1).error!, fresh.string().safeParse(2).error!]) {
+      expect(err).toBeInstanceOf(Error);
+      expect(err.issues).toHaveLength(1);
+    }
+    expect(Error.stackTraceLimit).toBe(10);
+  } finally {
+    Object.defineProperty(Error, "stackTraceLimit", desc);
+  }
+});
+
+test("an engine with no stackTraceLimit is never written to", () => {
+  // off v8 the property is absent and SES deletes it before hardening; an accessor makes the write observable where a data property would not
+  const desc = Object.getOwnPropertyDescriptor(Error, "stackTraceLimit")!;
+  let writes = 0;
+  Object.defineProperty(Error, "stackTraceLimit", {
+    get: () => undefined,
+    set: () => {
+      writes++;
+    },
+    configurable: true,
+  });
+
+  try {
+    const err = z.string().safeParse(123).error!;
+    expect(err).toBeInstanceOf(z.ZodError);
+    expect(types.isNativeError(err)).toBe(true);
+    expect(err.issues).toHaveLength(1);
+    expect(writes).toBe(0);
+  } finally {
+    Object.defineProperty(Error, "stackTraceLimit", desc);
+  }
 });
 
 test("error initializer never installs onto an intrinsic prototype", () => {

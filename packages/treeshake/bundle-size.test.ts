@@ -38,12 +38,12 @@ const BUILT_ENTRY = path.join(__dirname, "node_modules", "zod", "index.js");
  * The failure message prints the measured size, so updating is mechanical.
  */
 const CEILINGS: Record<string, number> = {
-  // Raised from 2813 / 3285 / 4288 by the commit that caused it: threading a `callee` to `Error.captureStackTrace` from every throwing parse entry point costs +13 / +17 / +16, since a bundle that parses at all carries it. Measured 2808 / 3271 / 4301 here; 28 bytes of headroom each. The per-fixture notes below record what each ceiling already carried before this.
-  "zod-mini-boolean": 2836,
+  // raised from 2836 / 3299 / 4329 — suppressing v8's stack capture costs +64 / +65 / +62 and every bundle carries `core.ts`; measured 2872 / 3336 / 4362 plus 28 headroom, and the per-fixture notes below record what each one already carried
+  "zod-mini-boolean": 2900,
   // Also carries the code-point string length scan: `.min`/`.max`/`.length` on a string pulls in the surrogate walk.
-  "zod-mini-string": 3299,
+  "zod-mini-string": 3364,
   // Also carries the construction-time discriminator check, which writes a WeakMap entry from `$ZodObject`, so every bundle containing `z.object` pays for it whether or not it builds a discriminated union.
-  "zod-mini-object": 4329,
+  "zod-mini-object": 4390,
 };
 
 /**
