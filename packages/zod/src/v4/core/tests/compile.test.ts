@@ -1532,3 +1532,27 @@ test("date min/max bounds compile with runtime parity", () => {
   expect(valid(aot, inputs[0])).toEqual(inputs[0]);
   invalid(aot, inputs[2]);
 });
+
+test("the compiled fallback builds the same Error-shaped error as the runtime", () => {
+  const schema = z.object({ a: z.string(), b: z.number() });
+  const aot = compile(schema);
+
+  // both fast closures fall back to the runtime on rejection, so the error is the runtime's
+  const err = aot.safeParse({ a: 1, b: "x" }).error!;
+  expect(err).toBeInstanceOf(Error);
+  expect(err).toBeInstanceOf(z.core.$ZodError);
+  expect(err.issues).toEqual(schema.safeParse({ a: 1, b: "x" }).error!.issues);
+
+  function callSite() {
+    aot.parse({ a: 1, b: "x" });
+  }
+
+  let thrown: unknown;
+  try {
+    callSite();
+  } catch (err) {
+    thrown = err;
+  }
+  expect(thrown).toBeInstanceOf(Error);
+  expect((thrown as Error).stack).toContain("callSite");
+});

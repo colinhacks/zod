@@ -18,8 +18,8 @@ export const NEVER: never = /*@__PURE__*/ Object.freeze({
  * synchronously, so reusing one object avoids a per-instance allocation. */
 const _zodDesc: PropertyDescriptor = { value: undefined, enumerable: false };
 
-// latched to null once `stackTraceLimit` proves unassignable, which a realm can do at any point by hardening Error
-let _E: (ErrorConstructor & { stackTraceLimit?: number }) | null = Error;
+// null where suppressing the capture would be unrecoverable: `parse()` puts the frames back with `captureStackTrace`, so without it the throw would lose its stack. also latched to null once `stackTraceLimit` proves unassignable, which a realm can do at any point by hardening Error
+let _E: (ErrorConstructor & { stackTraceLimit?: number }) | null = "captureStackTrace" in Error ? Error : null;
 
 // v8 captures a stack trace inside the Error constructor, which dominates a failed parse; costs only the frames, and parse() restores those
 function newError(Definition: new () => any): any {
