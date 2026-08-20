@@ -435,6 +435,12 @@ test("ulid", () => {
   }
   const caseInsensitive = ulid.safeParse("01arZ3nDeKTsV4RRffQ69G5FAV");
   expect(caseInsensitive.success).toEqual(true);
+
+  // The largest valid ULID is 7ZZZZZZZZZZZZZZZZZZZZZZZZZ per the spec.
+  // First characters 8 and 9 would exceed 2^48-1 and must be rejected.
+  expect(ulid.safeParse("7ZZZZZZZZZZZZZZZZZZZZZZZZZ").success).toEqual(true);
+  expect(ulid.safeParse("8AAAAAAAAAAAAAAAAAAAAAAAAA").success).toEqual(false);
+  expect(ulid.safeParse("9AAAAAAAAAAAAAAAAAAAAAAAAA").success).toEqual(false);
 });
 
 test("regex", () => {

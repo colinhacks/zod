@@ -318,7 +318,7 @@ test("continuability", () => {
         "message": "Invalid ULID",
         "origin": "string",
         "path": [],
-        "pattern": "/^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$/",
+        "pattern": "/^[0-7][0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$/",
       },
       {
         "code": "custom",

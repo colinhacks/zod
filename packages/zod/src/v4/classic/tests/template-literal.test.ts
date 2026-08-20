@@ -579,7 +579,7 @@ test("regexes", () => {
   expect(mac._zod.pattern.source).toMatchInlineSnapshot(
     `"^(?:[0-9A-F]{2}:){5}[0-9A-F]{2}$|^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}$"`
   );
-  expect(ulid._zod.pattern.source).toMatchInlineSnapshot(`"^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$"`);
+  expect(ulid._zod.pattern.source).toMatchInlineSnapshot(`"^[0-7][0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$"`);
   expect(uuid._zod.pattern.source).toMatchInlineSnapshot(
     `"^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"`
   );
