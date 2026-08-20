@@ -86,6 +86,40 @@ export type ParsedTypes =
 export type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <V>() => V extends U ? 1 : 2 ? true : false;
 export type AssertNotEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <V>() => V extends U ? 1 : 2 ? false : true;
 export type AssertExtends<T, U> = T extends U ? T : never;
+type ToZodMismatch<T, S extends schemas.$ZodType> = {
+  "types do not match": {
+    expected: T;
+    received: S["_zod"]["output"];
+  };
+};
+
+// Stays a `$ZodType` so it still satisfies the shape constraint, and carries a brand no real schema has so the offending property is the one TypeScript reports as unassignable.
+type ToZodKeyMismatch<Expected, Received> = schemas.$ZodType & {
+  "types do not match": { expected: Expected; received: Received };
+};
+
+// Rebuilds the shape with a marker on each key that disagrees, so the diagnostic names the key instead of failing the whole schema at the top level. A key the target lacks reports `expected: never`; a key the schema lacks reports `received: never`.
+type ToZodShape<Shape, T> = {
+  [K in keyof Shape]: Shape[K] extends schemas.$ZodType
+    ? K extends keyof T
+      ? AssertEqual<Shape[K]["_zod"]["output"], T[K]> extends true
+        ? Shape[K]
+        : ToZodKeyMismatch<T[K], Shape[K]["_zod"]["output"]>
+      : ToZodKeyMismatch<never, Shape[K]["_zod"]["output"]>
+    : Shape[K];
+} & { [K in Exclude<keyof T, keyof Shape>]: ToZodKeyMismatch<T[K], never> };
+
+// Forces the mapped type to display expanded, so the error prints the keys rather than the alias name.
+type ToZodExpand<X> = { [K in keyof X]: X[K] } & {};
+
+// Only localizes when a key is genuinely at fault. A whole-type difference the per-key walk cannot see — a `readonly` modifier, an intersection versus the flat object with the same keys — leaves every key agreeing, and reporting nothing there would silently accept what the top-level check rejected.
+type ToZodTarget<S extends schemas.$ZodType, T> = S extends schemas.$ZodObject<infer Shape, infer Config>
+  ? T extends object
+    ? AssertEqual<ToZodExpand<ToZodShape<Shape, T>>, ToZodExpand<Shape>> extends true
+      ? S & ToZodMismatch<T, S>
+      : schemas.$ZodObject<ToZodExpand<ToZodShape<Shape, T>>, Config>
+    : S & ToZodMismatch<T, S>
+  : S & ToZodMismatch<T, S>;
 export type IsAny<T> = 0 extends 1 & T ? true : false;
 export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 export type OmitKeys<T, K extends string> = Pick<T, Exclude<keyof T, K>>;
@@ -195,6 +229,12 @@ export function assertEqual<A, B>(val: AssertEqual<A, B>): AssertEqual<A, B> {
 
 export function assertNotEqual<A, B>(val: AssertNotEqual<A, B>): AssertNotEqual<A, B> {
   return val;
+}
+
+export function toZod<T>(): <S extends schemas.$ZodType>(
+  schema: AssertEqual<S["_zod"]["output"], T> extends true ? S : ToZodTarget<S, T>
+) => S {
+  return (schema) => schema as any;
 }
 
 export function assertIs<T>(_arg: T): void {}
