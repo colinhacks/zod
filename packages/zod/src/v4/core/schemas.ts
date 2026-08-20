@@ -784,6 +784,7 @@ export const $ZodISODate: core.$constructor<$ZodISODate> = /*@__PURE__*/ core.$c
 
 export interface $ZodISOTimeDef extends $ZodStringFormatDef<"time"> {
   precision?: number | null;
+  offset?: boolean;
 }
 
 export interface $ZodISOTimeInternals extends $ZodStringFormatInternals<"time"> {
