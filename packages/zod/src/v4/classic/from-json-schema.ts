@@ -193,6 +193,9 @@ function getTupleRest(restSchema: JSONSchema._JSONSchema | undefined, ctx: Conve
   return convertSchema(restSchema, ctx);
 }
 
+// JSON Schema `time` is RFC 3339 `full-time`, which mandates seconds and a `Z` or numeric offset. `z.iso.time()` is `partial-time`, so it rejects every string this format is defined to accept and accepts every string it forbids — hence a pattern here rather than a borrowed format validator.
+const fullTime = /^(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/;
+
 function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext): ZodType {
   // Handle unsupported features
   if (schema.not !== undefined) {
@@ -325,7 +328,7 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         } else if (format === "date") {
           stringSchema = stringSchema.check(z.iso.date());
         } else if (format === "time") {
-          stringSchema = stringSchema.check(z.iso.time());
+          stringSchema = stringSchema.check(z.regex(fullTime));
         } else if (format === "duration") {
           stringSchema = stringSchema.check(z.iso.duration());
         } else if (format === "hostname") {
