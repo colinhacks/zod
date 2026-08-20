@@ -121,7 +121,7 @@ export function compile<T extends SomeType>(schema: T): T {
       return originalRun(payload, ctx);
     }
 
-    // The value is a placeholder the runtime memoizer is still filling in, so a reference cycle closes here. Only the runtime can finish it — and a transform on the cycle has to raise $ZodCyclicError from its own parse, which a compiled node would skip. Cheap to ask: no memo state on the ctx means no cycle in flight, which is every ordinary parse.
+    // A memoized back-edge: only the runtime can close a reference cycle, and a transform on one must raise $ZodCyclicError from its own parse.
     if (ctx && isBackEdge(ctx, payload.value)) {
       return originalRun(payload, ctx);
     }
@@ -185,7 +185,7 @@ export function compileFastpass<T extends SomeType>(
   schema: T,
   options?: CompileFastpassOptions
 ): CompiledFastpass<core.output<T>> {
-  // A recursive schema can be re-entered by a single parse, which is how input containing a reference cycle terminates: the runtime memoizer registers each in-progress output before its children run, keyed on the parse context every schema in that call shares. The generated fast path takes an input and returns a value — it has no context to key on, so it would follow the cycle in the input until the stack ran out. Hand the whole schema to the runtime. Walking the graph reads `shape`, which some schemas define as a getter that throws (`z.pick()` with an unrecognized mask key). Treat "can't tell" as recursive: the runtime raises that error from the parse where it belongs, and every escape from here stays a ZodCompileUnsupportedError.
+  // Cycle-breaking is keyed on the parse context, which generated code never receives. `shape` can be a getter that throws (z.pick() with an unrecognized mask key), so treat "can't tell" as recursive.
   let recursive = true;
   try {
     recursive = isRecursiveSchema(schema as any);
@@ -245,7 +245,7 @@ function newVar(ctx: CompileContext): string {
   return `v${ctx.varCounter++}`;
 }
 
-// Runtime helper called from inside the compiled fast path. Black-boxes a child schema by running its `_zod.run` with a fresh payload. Returns either the parsed value, INVALID (validation failed, triggers outer fallback), or signals async-boundary-violation by returning INVALID when the run resolves asynchronously. Used by the runtime-island pattern (see `compileChild`).
+// Runs a child schema as a black box: its value, or INVALID for a failure or an async run.
 function runtimeRun(schema: SomeType, value: unknown): unknown {
   const result = (schema._zod.run as (p: ParsePayload, c: ParseContextInternal) => any)(
     { value, issues: [] },
@@ -309,7 +309,7 @@ function generateChecks(doc: Doc, ctx: CompileContext, schema: SomeType, accesso
 
   for (const check of schemaChecks) {
     const def = check._zod.def;
-    // Custom `when` gates make the runtime skip a check conditionally; the fast path always runs it, which diverges (dangerously so for value-mutating checks). The six size/length classes auto-default `when` to "skip after aborting issues" — satisfied by the fast path's bail-on-first-failure, and they never mutate values, so they stay compilable.
+    // A custom `when` skips a check the fast path always runs; the one auto-defaulted on size/length classes matches its bail-on-first-failure.
     if ((def as { when?: unknown }).when && !WHEN_DEFAULTED_CHECKS.has(def.check)) {
       throw new ZodCompileUnsupportedError(`check with a custom "when" condition`);
     }
@@ -740,7 +740,7 @@ function generateStringFormatCheck(doc: Doc, ctx: CompileContext, def: StringFor
     return accessor;
   }
 
-  // Formats whose `pattern` IS the entire check, so testing the regex is exact. A pattern is not on its own evidence of that: `credit_card` advertises a shape-only pattern and validates the Luhn digit separately, and `base64`, `ipv6` and friends do the same. Emitting the regex for one of those silently accepts invalid input, which is why this is an allowlist rather than an `if (def.pattern)` catch-all — an unrecognized format falls through to the throw below and takes the runtime path instead of a wrong fast one.
+  // Formats whose `pattern` IS the whole check. An allowlist rather than `if (def.pattern)`, because credit_card, base64 and ipv6 carry a shape-only pattern and validate the rest separately.
   if (PATTERN_IS_COMPLETE.has(fmt) && def.pattern) {
     const patternConst = addConstant(ctx, def.pattern);
     doc.write(`${patternConst}.lastIndex = 0;`);
@@ -826,7 +826,7 @@ function generateCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor
   const def = schema._zod.def;
   const type = def.type as SupportedSchemaType;
 
-  // Coercion is modelled nowhere: a coercing schema would compile to the bare type test and reject everything it was supposed to convert. Standalone the wrapper hides that, but inside a union a rejected branch is indistinguishable from one the runtime rejected, so a later branch wins and the parse silently returns a different value. Refuse at codegen time, which the union honours.
+  // A coercing schema would compile to the bare type test and reject what it should convert; inside a union that reads as a rejected branch, so refuse at codegen.
   if ((def as { coerce?: boolean }).coerce) {
     throw new ZodCompileUnsupportedError(`coercion (z.coerce.${type}())`);
   }
@@ -966,7 +966,7 @@ function generateCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor
 function generateStringCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
   doc.write(`if (typeof ${accessor} !== "string") return INVALID;`);
 
-  // A string-format schema (z.email(), z.creditCard(), z.hostname(), …) carries its format on its own def rather than in def.checks, while z.string().email() puts it in def.checks. Both route through generateStringFormatCheck so the two can never drift: keeping a second copy of the format table here is what let z.creditCard() compile to its shape-only regex without the Luhn digit.
+  // z.email() carries its format on the def, z.string().email() in def.checks; both route here so the format table has no second copy to drift from.
   const def = schema._zod.def as unknown as StringFormatDef & { format?: string };
   if (def.format === undefined) return accessor;
   return generateStringFormatCheck(doc, ctx, def, accessor);
@@ -1071,7 +1071,7 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
     doc.write(`const ${inputVar} = ${accessor}[${kx}];`);
 
     if (propSchema._zod.optin !== undefined) {
-      // Any rung of the optin ladder means the container may omit this key. The runtime runs such properties even when absent, then ignores issues on absent keys only when the output is optional too. This is what makes exactOptional compositional: the child rejects explicit undefined, while the object layer suppresses that failure only for an actually absent key.
+      // Any optin rung means the key may be omitted. The runtime runs the property anyway and ignores issues only when the key is genuinely absent, which is what makes exactOptional compositional.
       const outputVar = newVar(ctx);
       doc.write(`let ${outputVar} = (() => {`);
       doc.indented((d) => {
@@ -1110,7 +1110,7 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
     const catchallType = catchall._zod.def.type;
 
     if (catchallType === "never") {
-      // Strict object: reject unknown keys. Runtime iterates with for...in, so inherited enumerable keys count as unrecognized. An undeclared `__proto__` counts too (handleCatchall reports it before skipping the copy, see #6221) — it is only excluded from the *output*, never from this scan. A declared `__proto__` can't reach here; the shape key is rejected at compile time above. One `for...in` for every shape, which is what the runtime does. An own-key count is faster but only equivalent for a plain prototype, and guarding on the prototype meant rejecting a class instance whose own enumerable keys match — input the runtime accepts. Standalone the wrapper hid that; inside a union the branch merely looked rejected and a later one won, so the parse returned a different value with no error at all. `|| "true"` for an empty shape: with no keys the join is "" and the emitted `if () return INVALID;` is a syntax error, which the single top-level `new Function` rejects long after compileChild's per-branch catch could island it — so the whole tree lost its fast path. An empty strict object rejects any own enumerable key, which is what `true` says.
+      // Strict: one `for...in`, as the runtime does, so inherited enumerable keys count. An undeclared `__proto__` is reported here and excluded only from the output (#6221); an own-key count would wrongly reject a class instance.
       const condition = keys.map((k) => `k !== ${util.esc(k)}`).join(" && ") || "true";
       doc.write(`for (const k in ${accessor}) {`);
       doc.indented((d) => {
@@ -1125,7 +1125,7 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
   }
   // else: strip mode (no catchall) - unknown keys ignored, only include known keys
 
-  // Build the output: shape keys first in declared order (the runtime assigns them before its catchall loop), then unknown keys in for...in order. Runtime inclusion rule (handlePropertyResult): a key on the middle rung is included iff the key is present on the input; otherwise iff its output value !== undefined OR the key is present. Props that can never output undefined keep the fast object-literal form.
+  // Shape keys in declared order, then unknown keys in for...in order. A middle-rung key is included iff present on the input, else iff its output is not undefined.
   const outputVar = newVar(ctx);
   const hasConditionalKeys = allKeys.some((k) => mayOutputUndefined(propShape[k]!) || dropsWhenAbsent(propShape[k]!));
 
@@ -1215,13 +1215,13 @@ function isExactOptional(schema: SomeType): boolean {
   return (schema._zod as { traits?: Set<string> }).traits?.has("$ZodExactOptional") === true;
 }
 
-// A required object key whose value-level fast path would silently accept an absent key (which reads as `undefined`) needs an explicit `key in input` guard. Without it, schemas like `z.undefined()` / `z.any()` / unions containing undefined would pass for missing properties even though the runtime rejects them.
+// A value-level fast path reads an absent key as `undefined`, so z.undefined(), z.any() and unions containing undefined would accept a missing property the runtime rejects.
 function requiresPresenceCheck(schema: SomeType): boolean {
   return schema._zod.optin === undefined && fastPathAcceptsAbsence(schema);
 }
 
 function fastPathAcceptsAbsence(schema: SomeType): boolean {
-  // A coercing schema materialises a value out of an absent key — `z.coerce.string()` turns one into "undefined" — but the runtime object refuses to let a coercion fill a key that was not there (#6405). Compilation refuses coercion, so the child becomes a runtime island, and an island is handed `input[key]` with no way to tell absent from explicitly undefined. Report it as absence-accepting so the object emits the presence guard that keeps the two apart.
+  // An island is handed `input[key]` and cannot tell absent from explicitly undefined, so report absence-accepting and let the object emit the presence guard (#6405).
   if ((schema._zod.def as { coerce?: boolean }).coerce) return true;
 
   const def = schema._zod.def as {
@@ -1421,7 +1421,7 @@ function generateLiteralCheck(doc: Doc, ctx: CompileContext, schema: SomeType, a
 
 function generateEnumCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
   const values = (schema._zod as unknown as { values?: Set<unknown> }).values;
-  // `_zod.values` is cleared by z.partialRecord and similar helpers when they want a schema that *infers* like an enum but isn't structurally enumerated. Without a known value set the fast path can't check membership. Throw (rather than emit `return INVALID`) so containers island this child and unions fall back whole — a falsely-rejecting branch inside xor would otherwise corrupt the match count into a false accept.
+  // z.partialRecord and friends clear `_zod.values`, leaving no set to test membership against. Throw rather than emit INVALID so a union falls back whole instead of counting a false rejection.
   if (!values) {
     throw new ZodCompileUnsupportedError("enum schema without enumerated values");
   }
@@ -1493,7 +1493,7 @@ function generateDefaultCheck(doc: Doc, ctx: CompileContext, schema: SomeType, a
 
 function generateNonOptionalCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
   const def = schema._zod.def as unknown as { innerType: SomeType };
-  // The runtime inspects what the inner *produced*, not what it was given. Both directions matter: an inner catch or transform can turn a defined input into `undefined`, which has to be rejected, and an inner default turns an absent input into a value, which has to be accepted. Testing the input did neither.
+  // The runtime inspects what the inner produced, not what it was given: a catch can turn a defined input into undefined, a default an absent one into a value.
   const innerOutput = generateCheck(doc, ctx, def.innerType, accessor);
   const outputVar = newVar(ctx);
   doc.write(`const ${outputVar} = ${innerOutput};`);
@@ -1755,7 +1755,7 @@ function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
 
   doc.write(`const ${outputVar} = {};`);
 
-  // Exhaustive records: keyType has a known value set (enum/literal/etc.). Runtime validates every known key, applies key transforms to choose the output key, and rejects unrecognized string keys. Generate the same shape. The runtime gates this on `values && !def.partial`: z.partialRecord keeps its value set but every key is optional, so required-key codegen would reject a record missing one. A loose record passes an unrecognized key through rather than rejecting it, which the scan below cannot express either.
+  // Exhaustive record. The runtime gates this on `values && !def.partial`, since z.partialRecord keeps its value set but makes every key optional; a loose record passes unrecognized keys through, which the per-key scan cannot express.
   const recordDef = def as unknown as { mode?: string; partial?: boolean };
   const keyValues = recordDef.partial ? undefined : (def.keyType._zod as unknown as { values?: Set<unknown> }).values;
   if (keyValues) {
@@ -1781,7 +1781,7 @@ function generateRecordCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
       doc.write(`${outputVar}[${outKey}] = ${valOutput};`);
     }
 
-    // `mode: "loose"` only changes what happens to *unrecognized* keys — it still requires every enumerated key, so it belongs on this path rather than the per-present-key scan, which has no notion of a declared-but-absent key. Passing it through here matches the runtime, which copies the extra key across and skips `__proto__` so the assignment cannot reseat the output's prototype.
+    // `mode: "loose"` changes only what happens to unrecognized keys, so it belongs here rather than the per-present-key scan. Passing them through matches the runtime, which skips `__proto__`.
     const knownKeysConst = addConstant(ctx, new Set(inputKeys));
     doc.write(`for (const ${kVar} in ${accessor}) {`);
     doc.indented((d) => {
@@ -2030,9 +2030,7 @@ function generateCatchCheck(doc: Doc, ctx: CompileContext, schema: SomeType, acc
     catchValue: (ctx: any) => unknown;
   };
 
-  // `.catch(value)` synthesises a tagged thunk for a constant, so anything untagged is a user callback. Every callback is refused, not just one that reads `ctx.error`: whether it does is undecidable here, and a callback that reads it needs issues finalized against the caller's per-parse error map, which generated code never sees. Producing them here gives a different message than `.parse(input, { error })` and, because catch *succeeds*, nothing downstream can notice. Refuse at codegen instead: returning INVALID would be a bail-out, and a union reads that as a rejected branch rather than a reason to hand the whole parse back.
-  //
-  // Not islandable either. A runtime island runs only this node through the runtime, and `runtimeRun` has no parse context to hand it, so an islanded catch finalizes against an empty context and *succeeds* with the wrong message — the same divergence, reintroduced by the container that was trying to tolerate it.
+  // An untagged catchValue is a user callback, and one reading `ctx.error` needs the caller's per-parse error map. Catch *succeeds*, so a wrong message there is unobservable — refuse at codegen, and not islandable either, since `runtimeRun` has no context to hand it.
   if (!(def.catchValue as { [util.CONSTANT_CATCH]?: boolean })[util.CONSTANT_CATCH]) {
     throw new ZodCompileUnsupportedError("catch with a callback (only a constant catch value compiles)", false);
   }

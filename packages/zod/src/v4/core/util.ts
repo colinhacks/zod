@@ -869,7 +869,7 @@ export function finalizeIssue(
     else (iss as any).schema = iss.inst;
   }
 
-  // Decreasing specificity, short-circuiting on the first map that returns a message. `inst` is whatever raised the issue, so for a check-originated issue that rung is the check's own map; the owning schema's map sits one rung below it and above the parse call. Skipped when the schema raised the issue itself, since `inst` was already the schema.
+  // Decreasing specificity, first map to return a message wins. `inst` is whatever raised the issue, so a check's own map outranks the owning schema's.
   const schemaError = iss.schema !== iss.inst ? iss.schema?._zod.def?.error : undefined;
   const message = iss.message
     ? iss.message
@@ -899,7 +899,7 @@ export function getSizableOrigin(input: any): "set" | "map" | "file" | "unknown"
 
 const highSurrogate = /[\uD800-\uDBFF]/;
 
-// Number of Unicode code points in `str`. A surrogate pair counts once and a lone surrogate counts as itself, matching `for..of` and `String.prototype.codePointAt`. Hand-rolled instead of `[...str].length` because the string iterator allocates and runs ~250x slower, and this sits on the parse path. The regex probe is the fast exit for a string that has no astral characters at all, which is nearly all of them — it settles a 255-character string ~50x quicker than reaching the loop.
+// Code points in `str`: a surrogate pair counts once, a lone surrogate as itself. Hand-rolled because the string iterator allocates and runs ~250x slower on this path; the regex probe exits ~50x quicker for a string with no astral characters.
 export function codePointLength(str: string): number {
   const units = str.length;
   if (!highSurrogate.test(str)) return units;
@@ -1079,7 +1079,7 @@ export function installLazyProps<T extends object>(inst: T, sentinel: string, pr
   }
 }
 
-// The internals whose init chain is currently installing. A second call for the same one is a derived constructor replacing what its base installed; anything else is a repeat construction with nothing left to install. This makes the override order-dependent where a per-prototype seal would not be: a derived constructor must not construct another schema between its base's install and its own override, or the override is silently dropped.
+// The internals whose init chain is installing. A second call for the same one is a derived constructor overriding its base, so it must not construct another schema in between or the override is dropped.
 let installing: object | undefined;
 
 // Set while a getter is running, so a value that resolved through a recursion break is not memoized. One shared descriptor shadows the key for the duration, which costs no per-key allocation.
@@ -1119,7 +1119,7 @@ export function defineLazyInternal<T extends { _zod: any }>(
       broke = false;
       try {
         const value = compute(this);
-        // Only a result that resolved through a recursion break goes uncached, since it has to be recomputed once the schema graph is complete. Everything else memoizes, undefined included — it is the ordinary answer for most schemas, and these getters are read per parse on the tuple and interpreted-object paths.
+        // A result that resolved through a recursion break is recomputed once the graph is complete; everything else memoizes, undefined included.
         if (broke) delete this[key];
         else Object.defineProperty(this, key, { configurable: true, writable: true, value });
         broke = broke || outer;

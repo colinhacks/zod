@@ -2153,6 +2153,14 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
 
       const parseStr = (k: string) => `shape[${k}]._zod.run({ value: input[${k}], issues: [] }, ctx)`;
 
+      // Prefixes in place, like util.prefixIssues does for every interpreted path.
+      const prefixStr = (id: string, k: string) => `
+          for (let i = 0; i < ${id}.issues.length; i++) {
+            const iss = ${id}.issues[i];
+            iss.path = iss.path ? [${k}, ...iss.path] : [${k}];
+            payload.issues.push(iss);
+          }`;
+
       doc.write(`const input = payload.value;`);
 
       const ids: any = Object.create(null);
@@ -2181,11 +2189,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
           doc.write(`
         const ${id}_present = ${isPresent};
         if (!${id}.issues.length || ${id}_present) {
-          if (${id}.issues.length) {
-            payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
-              ...iss,
-              path: iss.path ? [${k}, ...iss.path] : [${k}]
-            })));
+          if (${id}.issues.length) {${prefixStr(id, k)}
           }
 
           if (${assign}) {
@@ -2197,11 +2201,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         } else if (!isOptionalIn) {
           doc.write(`
         const ${id}_present = ${isPresent};
-        if (${id}.issues.length) {
-          payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
-            ...iss,
-            path: iss.path ? [${k}, ...iss.path] : [${k}]
-          })));
+        if (${id}.issues.length) {${prefixStr(id, k)}
         }
         if (!${id}_present && !${id}.issues.length) {
           payload.issues.push({
@@ -2219,11 +2219,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
       `);
         } else {
           doc.write(`
-        if (${id}.issues.length) {
-          payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
-            ...iss,
-            path: iss.path ? [${k}, ...iss.path] : [${k}]
-          })));
+        if (${id}.issues.length) {${prefixStr(id, k)}
         }
         
         if (${id}.value === undefined) {
@@ -3739,8 +3735,12 @@ export interface $ZodOptional<T extends SomeType = $ZodType> extends $ZodType {
 }
 
 function handleOptionalResult(result: ParsePayload) {
-  // A substituting schema that still failed has no usable answer; yield undefined.
-  if (result.issues.length) return { issues: [], value: undefined };
+  // A substituting schema that still failed has no usable answer; yield undefined. Truncate rather than rebind, and clear the abort flag with it: a pipe shares its issues array with the next schema, so an outer holder reads the same one.
+  if (result.issues.length) {
+    result.issues.length = 0;
+    result.value = undefined;
+    result.aborted = false;
+  }
   return result;
 }
 
@@ -4183,7 +4183,8 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
             },
             input: payload.value,
           });
-          payload.issues = [];
+          payload.issues.length = 0;
+          payload.aborted = false;
         }
 
         return payload;
@@ -4200,7 +4201,9 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
         input: payload.value,
       });
 
-      payload.issues = [];
+      // Truncate rather than rebind: as a pipe's `out` this shares the caller's array. See handleOptionalResult.
+      payload.issues.length = 0;
+      payload.aborted = false;
     }
 
     return payload;
