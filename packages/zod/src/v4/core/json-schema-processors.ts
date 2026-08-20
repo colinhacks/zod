@@ -30,7 +30,7 @@ const formatMap: Partial<Record<checks.$ZodStringFormats, string | undefined>> =
 export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _json, _params) => {
   const json = _json as JSONSchema.StringSchema;
   json.type = "string";
-  const { minimum, maximum, format, patterns, contentEncoding } = schema._zod
+  const { minimum, maximum, format, patterns, contentEncoding, laxFormat } = schema._zod
     .bag as schemas.$ZodStringInternals<unknown>["bag"];
   if (typeof minimum === "number") json.minLength = minimum;
   if (typeof maximum === "number") json.maxLength = maximum;
@@ -39,8 +39,8 @@ export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _jso
     json.format = formatMap[format as checks.$ZodStringFormats] ?? format;
     if (json.format === "") delete json.format; // empty format is not valid
 
-    // JSON Schema format: "time" requires a full time with offset or Z. z.iso.time() does not include timezone information, so format: "time" should never be used
-    if (format === "time") {
+    // `time` is RFC 3339 full-time, which `z.iso.time()` never is; `laxFormat` carries the datetime shapes that likewise accept what their keyword forbids.
+    if (format === "time" || laxFormat) {
       delete json.format;
     }
   }
