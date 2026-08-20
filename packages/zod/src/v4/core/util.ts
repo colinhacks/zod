@@ -610,7 +610,7 @@ export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>):
   const def = mergeDefs(schema._zod.def, {
     get shape() {
       const newShape: Writeable<schemas.$ZodShape> = {};
-      // `for...in` skips symbol keys, so a symbol entry in the mask would silently select nothing.
+      // `for...in` skips symbols, so a symbol in the mask would select nothing.
       for (const key of Reflect.ownKeys(mask)) {
         if (!Object.prototype.hasOwnProperty.call(currDef.shape, key)) {
           throw new Error(`Unrecognized key: "${String(key)}"`);
@@ -753,7 +753,7 @@ export function partial(
             : (oldShape as any)[key]!;
         }
       } else {
-        // The spread above copies symbol keys, but `for...in` would not reach them, leaving a declared symbol key un-transformed.
+        // The spread copies symbol keys; `for...in` would not reach them.
         for (const key of Reflect.ownKeys(oldShape)) {
           // if (oldShape[key]!._zod.optin === "optional") continue;
           (shape as any)[key] = Class

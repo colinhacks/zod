@@ -285,7 +285,7 @@ export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _jso
   const def = schema._zod.def as schemas.$ZodObjectDef;
   const shape = def.shape;
 
-  // A JSON object key is always a string, so a declared symbol key has no equivalent. Reported rather than dropped: dropping one while still emitting `additionalProperties: false` yields a schema that rejects the very data this schema requires.
+  // Dropping it while still emitting `additionalProperties: false` would produce a schema that rejects data this one requires.
   const symbolKeys = Object.getOwnPropertySymbols(shape);
   if (
     symbolKeys.length &&

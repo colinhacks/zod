@@ -1957,14 +1957,14 @@ export interface $ZodObject<
   out Params extends $ZodObjectConfig = $ZodObjectConfig,
 > extends $ZodType<any, any, $ZodObjectInternals<Shape, Params>> {}
 
-// Shared by every string-only shape, which is nearly all of them. A fresh empty array per schema measured 56 bytes of retained heap each.
+// One shared instance; a fresh [] per schema cost 56 bytes of retained heap.
 const NO_SYMBOL_KEYS: symbol[] = [];
 
 function normalizeDef(def: $ZodObjectDef) {
   const keys = Object.keys(def.shape);
   const ownSymbols = Object.getOwnPropertySymbols(def.shape);
   const symbolKeys = ownSymbols.length ? ownSymbols : NO_SYMBOL_KEYS;
-  // Aliases `keys` outright when the shape declares no symbol keys, so the overwhelmingly common string-only shape retains one array rather than two and its parse loop iterates the identical object it always has.
+  // Aliases `keys` when there are no symbols, so a string-only shape keeps one array.
   const allKeys: (string | symbol)[] = symbolKeys.length ? [...keys, ...symbolKeys] : keys;
   for (const k of allKeys) {
     if (!(def.shape as any)?.[k]?._zod?.traits?.has("$ZodType")) {
@@ -1975,8 +1975,9 @@ function normalizeDef(def: $ZodObjectDef) {
 
   return {
     ...def,
-    keys,
     allKeys,
+    symbolKeys,
+    // String-only: handleCatchall matches this against `for...in`, which never yields a symbol.
     keySet: new Set(keys),
     numKeys: keys.length,
     optionalKeys: new Set(okeys),
@@ -2137,12 +2138,9 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
 
     const generateFastpass = (shape: any) => {
       const normalized = _normalized.value;
-      // `allKeys` is the string keys followed by the symbol keys, and aliases `keys` outright when there are none — so the tail slice is the symbol keys, without a predicate.
-      const syms =
-        normalized.allKeys === normalized.keys
-          ? NO_SYMBOL_KEYS
-          : (normalized.allKeys.slice(normalized.keys.length) as symbol[]);
-      // A symbol has no source literal, so a declared symbol key is reached through the `syms` array bound as an extra parameter. A string-only shape never gets that parameter, so its generated function and call site are exactly what they were. The closure returned below captures this whole scope for the schema's lifetime, so `syms` is the only binding added here — a helper closure for the key expression measured +328 bytes of retained heap per object schema.
+      // The closure returned below retains this whole scope per schema, so add no bindings here — a key-expression helper cost 328 bytes each.
+      const syms = normalized.symbolKeys;
+      // A symbol has no source literal, so it is passed in and read as `syms[i]`; a string-only shape gets no such parameter.
       const doc = new Doc(
         syms.length
           ? memo
