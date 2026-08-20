@@ -617,3 +617,30 @@ test("resolves a recursive reference once, however it is written", () => {
   expect(getterCalls).toBe(1);
   expect(lazyCalls).toBe(1);
 });
+
+// The second visitor of a shared node must not prefix onto the first visitor's path.
+test.each([false, true])("prefixes a shared node's issues once per reference (jitless: %s)", (jitless) => {
+  z.config({ jitless });
+  try {
+    const Node: any = z.object({
+      name: z.string(),
+      get left() {
+        return z.optional(Node);
+      },
+      get right() {
+        return z.optional(Node);
+      },
+    });
+
+    const shared: any = { name: 123 };
+    const result = Node.safeParse({ name: "root", left: shared, right: shared });
+
+    expect(result.success).toBe(false);
+    expect(result.error.issues.map((iss: any) => iss.path)).toEqual([
+      ["left", "name"],
+      ["right", "name"],
+    ]);
+  } finally {
+    z.config({ jitless: false });
+  }
+});
