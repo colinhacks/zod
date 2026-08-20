@@ -4150,6 +4150,7 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
     }
 
     // Forward direction (decode): apply catch logic
+    const input = payload.value;
     const result = def.innerType._zod.run(payload, ctx);
     if (result instanceof Promise) {
       return result.then((result) => {
@@ -4157,10 +4158,11 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
         if (result.issues.length) {
           payload.value = def.catchValue({
             ...payload,
+            value: input,
             error: {
               issues: result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
             },
-            input: payload.value,
+            input,
           });
           payload.issues = [];
         }
@@ -4173,10 +4175,11 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
     if (result.issues.length) {
       payload.value = def.catchValue({
         ...payload,
+        value: input,
         error: {
           issues: result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
         },
-        input: payload.value,
+        input,
       });
 
       payload.issues = [];

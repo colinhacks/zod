@@ -253,6 +253,27 @@ test("ctx.input", () => {
   expect(schema.parse(123)).toEqual("123");
 });
 
+test("catch context preserves the original input after coercion", async () => {
+  const inputs: unknown[][] = [];
+  const catchValue = (ctx: z.core.$ZodCatchCtx) => {
+    inputs.push([ctx.value, ctx.input]);
+    return -1;
+  };
+
+  expect(z.coerce.number().min(10).catch(catchValue).parse("5")).toBe(-1);
+  expect(
+    await z.coerce
+      .number()
+      .refine(async (value) => value >= 10)
+      .catch(catchValue)
+      .parseAsync("6")
+  ).toBe(-1);
+  expect(inputs).toEqual([
+    ["5", "5"],
+    ["6", "6"],
+  ]);
+});
+
 test("direction-aware catch", () => {
   const schema = z.string().catch("fallback");
 
