@@ -871,3 +871,28 @@ test("object parsing still reads ordinary inherited properties", () => {
   expect(schema.parse(input)).toEqual({ value: "inherited" });
   expect(schema.parse(input, { jitless: true } as any)).toEqual({ value: "inherited" });
 });
+
+describe("symbol keys in object shape", () => {
+  const SYM = Symbol("sym");
+
+  test("parses symbol-keyed shape entries", () => {
+    const schema = z.object({ name: z.string(), [SYM]: z.number() });
+    const parsed = schema.parse({ name: "alice", [SYM]: 42 });
+    expect(parsed.name).toBe("alice");
+    expect(parsed[SYM]).toBe(42);
+  });
+
+  test("passthrough preserves symbol keys on input", () => {
+    const schema = z.object({ name: z.string() }).passthrough();
+    const OTHER = Symbol("other");
+    const parsed: any = schema.parse({ name: "alice", [OTHER]: "x" });
+    expect(parsed[OTHER]).toBe("x");
+  });
+
+  test("strict rejects unrecognized symbol keys", () => {
+    const schema = z.object({ name: z.string() }).strict();
+    const OTHER = Symbol("other");
+    const result = schema.safeParse({ name: "alice", [OTHER]: "x" });
+    expect(result.success).toBe(false);
+  });
+});
