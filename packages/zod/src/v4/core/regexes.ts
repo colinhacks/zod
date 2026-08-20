@@ -128,8 +128,8 @@ export function time(args: {
   offset?: boolean;
   // local?: boolean;
 }): RegExp {
-  const t = timeSource(args);
-  return new RegExp(args.offset ? `^${t}(?:Z|${offsetSource})$` : `^${t}$`);
+  const source = timeSource(args);
+  return new RegExp(args.offset ? `^${source}(?:Z|${offsetSource})$` : `^${source}$`);
 }
 
 // Adapted from https://stackoverflow.com/a/3143231

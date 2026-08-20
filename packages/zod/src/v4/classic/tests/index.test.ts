@@ -159,7 +159,9 @@ test("z.iso.time", () => {
   expect(z.safeParse(withOffset, "10:15:30").success).toEqual(false);
   expect(z.safeParse(withOffset, "10:15Z").success).toEqual(false);
   expect(z.safeParse(withOffset, "10:15:30z").success).toEqual(false);
+  expect(z.safeParse(withOffset, "10:15:30-00:00").success).toEqual(true);
   expect(z.safeParse(withOffset, "10:15:30+24:00").success).toEqual(false);
+  expect(z.safeParse(withOffset, "10:15:30+10:60").success).toEqual(false);
 
   // An explicit precision still wins, so the two compose.
   const offsetMinutes = z.iso.time({ offset: true, precision: -1 });
