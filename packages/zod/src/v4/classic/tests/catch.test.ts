@@ -326,9 +326,7 @@ test("optional clobbers catch through pipe boundaries", () => {
 });
 
 test("catch does not resurrect issues an inner optional already resolved", () => {
-  // `.optional()` yields undefined when a substituting inner still failed. It used to signal that with a replacement payload, and `.catch()` keeps the payload it passed down and reads issues off that one — so it saw a failure the optional had already resolved, and appending `.catch()`, which can only ever turn failure into success, turned success into failure.
-  //
-  // Asserted as the invariant rather than as one input, because the first fix rebound a fresh array and closed only the cases where `result` IS the payload. A pipe forwards the same array to a different payload object, so the pipe rows below still failed until the issues were cleared on the array itself.
+  // `.catch()` reads issues off the payload it passed down, so an optional that resolved a failure without clearing that array let the failure resurface. The pipe rows matter: a pipe shares the array with a different payload object.
   const chains: [string, () => z.ZodType][] = [
     [
       "prefault.optional",
@@ -381,13 +379,12 @@ test("catch does not resurrect issues an inner optional already resolved", () =>
       .safeParse({ a: undefined }).success
   ).toBe(true);
 
-  // Controls: catch still catches, and optional still rejects a genuine type error.
   expect(z.string().catch("FB").parse(123)).toBe("FB");
   expect(z.string().optional().safeParse(123).success).toBe(false);
 });
 
 test("resolving an optional's failure clears the abort flag with it", () => {
-  // `handlePipeResult` marks the payload aborted when the pipe's `in` fails, and `util.aborted` short-circuits on that flag alone. Clearing the issues without the flag turns the failure into a success whose downstream checks are all skipped, so the refinement below never runs and the parse wrongly passes.
+  // A pipe marks the payload aborted when its `in` fails, and `util.aborted` tests that flag alone, so leaving it set skips every check after the optional.
   const schema = z
     .string()
     .min(10)
@@ -402,7 +399,7 @@ test("resolving an optional's failure clears the abort flag with it", () => {
 });
 
 test("catch clears the abort flag along with the issues", () => {
-  // Same defect as the optional case one wrapper over. A pipe marks the payload aborted when its `in` fails, and `util.aborted` short-circuits on that flag alone — so a catch that cleared only the issues reported success and then skipped every check after it, including this refinement.
+  // Same as the optional case one wrapper over: a catch that clears only the issues leaves the flag set, skipping every check after it.
   const schema = z
     .string()
     .min(10)
@@ -414,7 +411,6 @@ test("catch clears the abort flag along with the issues", () => {
   expect(result.success).toBe(false);
   expect(result.error!.issues[0]?.message).toBe("REFINE RAN");
 
-  // A catch that never fires must not have its flag touched, and one with no pipe never had it set.
   expect(
     z
       .string()
@@ -435,7 +431,7 @@ test("catch clears the abort flag along with the issues", () => {
 });
 
 test("catch clears the abort flag on the async branch too", () => {
-  // The clear is written twice, once per branch of the promise check, so the async branch needs its own guard. Reaching it requires the catch's INNER to be async — an async refinement *outside* the catch leaves the inner sync and exercises the other branch.
+  // Reaching the async branch needs the catch's own inner to be async; an async refinement outside it leaves the inner sync.
   const schema = z
     .string()
     .refine(async () => false, "INNER")
@@ -450,13 +446,12 @@ test("catch clears the abort flag on the async branch too", () => {
 });
 
 test("catch resolves the issues array itself, so an outer catch does not resurrect them", () => {
-  // The same rebinding-vs-truncating distinction as `handleOptionalResult`. `handlePipeResult` runs a pipe's `out` on a payload sharing the caller's issues array, so a catch used as an `out` that rebinds its own reference leaves the caller's copy dirty — and appending an outer `.catch()`, which can only turn failure into success, turned success into failure.
+  // A pipe runs its `out` on a payload sharing the caller's issues array, so a catch that rebinds its own reference leaves the caller's copy dirty.
   const inner = z.string().pipe(z.string().min(10).catch("FB"));
 
   expect(inner.safeParse("abc")).toMatchObject({ success: true, data: "FB" });
   expect(inner.catch("FB2").safeParse("abc")).toMatchObject({ success: true, data: "FB" });
 
-  // Controls: catch still catches, still passes a success through, and the callback still sees the issues it caught.
   expect(z.string().catch("FB").parse(123)).toBe("FB");
   expect(z.string().catch("FB").parse("ok")).toBe("ok");
   expect(
@@ -468,7 +463,6 @@ test("catch resolves the issues array itself, so an outer catch does not resurre
 });
 
 test("catch resolves the issues array on the async branch too", () => {
-  // Reaching the async branch needs the catch's own inner to be async, as above.
   const inner = z.string().pipe(
     z
       .string()

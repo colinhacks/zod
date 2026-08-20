@@ -3701,11 +3701,10 @@ export interface $ZodOptional<T extends SomeType = $ZodType> extends $ZodType {
 }
 
 function handleOptionalResult(result: ParsePayload) {
-  // A substituting schema that still failed has no usable answer; yield undefined. Resolve it on the ARRAY, not on the payload: an outer schema that kept the payload it passed down still reads issues off that one, so handing back a clean copy — or rebinding a fresh array here — leaves the original dirty and the failure resurfaces above. `.catch()` does exactly that. Rebinding is not enough either, because `handlePipeResult` forwards the SAME array to the next schema, so a pipe in the substituting inner makes `result` a different payload sharing the outer array; only truncating reaches both. Clearing it everywhere is the point: these issues no longer exist for anyone.
+  // A substituting schema that still failed has no usable answer; yield undefined. Truncate rather than rebind, and clear the abort flag with it: a pipe shares its issues array with the next schema, so an outer holder reads the same one.
   if (result.issues.length) {
     result.issues.length = 0;
     result.value = undefined;
-    // `aborted` goes with them. A pipe marks the payload aborted when its `in` fails, and `util.aborted` short-circuits on that flag alone, so leaving it set resolves the failure into a success whose every downstream check is then skipped — a refinement after the optional silently stops running. The replacement payload this used to return carried no flag, which is the behaviour to keep. `false` rather than `delete`, which would drop the object into dictionary mode on a parse path; both readers test `=== true`.
     result.aborted = false;
   }
   return result;
@@ -4168,7 +4167,7 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
         input: payload.value,
       });
 
-      // Resolve the issues on the ARRAY and take the abort flag with them. Truncating rather than rebinding because `handlePipeResult` runs a pipe's `out` on a payload sharing the caller's array, so a catch used as an `out` would otherwise leave the caller's copy dirty and the failure would resurface above it. The flag matters for the same reason: a pipe or codec marks the payload aborted when its `in` fails, and `util.aborted` short-circuits on that alone, so clearing only the issues reports success and then skips every check after the catch.
+      // Truncate rather than rebind: as a pipe's `out` this shares the caller's array. See handleOptionalResult.
       payload.issues.length = 0;
       payload.aborted = false;
     }
