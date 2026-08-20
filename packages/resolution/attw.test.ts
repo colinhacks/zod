@@ -33,10 +33,10 @@ describe("Are The Types Wrong (attw) tests", () => {
       reject: false, // Don't throw on non-zero exit codes
     });
 
-    // Combine stdout and stderr for comprehensive output, minus pnpm's own warnings: under CI, setup-node writes an .npmrc containing an unresolved ${NODE_AUTH_TOKEN} and pnpm warns about it on every invocation, which is not part of attw's report.
+    // drop pnpm's warnings — under CI setup-node leaves an unresolved ${NODE_AUTH_TOKEN} in the .npmrc and pnpm complains on every run
     const stderr = result.stderr
       .split("\n")
-      // pnpm pads WARN with U+2009 thin spaces rather than ASCII spaces, so this has to stay a \s match; startsWith(" WARN") misses it entirely.
+      // pnpm pads WARN with U+2009 thin spaces, so \s is load-bearing — startsWith(" WARN") misses it
       .filter((line) => !/^\s*WARN\b/.test(line))
       .join("\n")
       .trim();
