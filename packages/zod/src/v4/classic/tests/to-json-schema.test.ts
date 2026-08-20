@@ -1030,7 +1030,6 @@ describe("toJSONSchema", () => {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "allOf": [
           {
-            "additionalProperties": false,
             "properties": {
               "name": {
                 "type": "string",
@@ -1042,7 +1041,6 @@ describe("toJSONSchema", () => {
             "type": "object",
           },
           {
-            "additionalProperties": false,
             "properties": {
               "age": {
                 "type": "number",
@@ -1054,6 +1052,7 @@ describe("toJSONSchema", () => {
             "type": "object",
           },
         ],
+        "unevaluatedProperties": false,
       }
     `);
   });
@@ -1247,6 +1246,218 @@ describe("toJSONSchema", () => {
               },
             },
             "type": "object",
+          },
+        ],
+      }
+    `);
+  });
+
+  test("intersection with discriminated union", () => {
+    const base = z.object({ name: z.string() });
+    const variant = z.discriminatedUnion("type", [
+      z.object({ type: z.literal("a"), value: z.string() }),
+      z.object({ type: z.literal("b"), count: z.number() }),
+    ]);
+    const schema = base.and(variant);
+
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "allOf": [
+          {
+            "properties": {
+              "name": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "name",
+            ],
+            "type": "object",
+          },
+          {
+            "oneOf": [
+              {
+                "properties": {
+                  "type": {
+                    "const": "a",
+                    "type": "string",
+                  },
+                  "value": {
+                    "type": "string",
+                  },
+                },
+                "required": [
+                  "type",
+                  "value",
+                ],
+                "type": "object",
+              },
+              {
+                "properties": {
+                  "count": {
+                    "type": "number",
+                  },
+                  "type": {
+                    "const": "b",
+                    "type": "string",
+                  },
+                },
+                "required": [
+                  "type",
+                  "count",
+                ],
+                "type": "object",
+              },
+            ],
+          },
+        ],
+        "unevaluatedProperties": false,
+      }
+    `);
+  });
+
+  test("intersection of strict and loose objects uses placeholders on draft-2020-12", () => {
+    const schema = z.looseObject({ name: z.string() }).and(z.object({ value: z.number() }));
+
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "name": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "name",
+            ],
+            "type": "object",
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "name": {},
+              "value": {
+                "type": "number",
+              },
+            },
+            "required": [
+              "value",
+            ],
+            "type": "object",
+          },
+        ],
+      }
+    `);
+  });
+
+  test("intersection of two objects on draft-07", () => {
+    const schema = z.intersection(z.object({ name: z.string() }), z.object({ age: z.number() }));
+
+    expect(z.toJSONSchema(schema, { target: "draft-07" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "allOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "age": {},
+              "name": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "name",
+            ],
+            "type": "object",
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "age": {
+                "type": "number",
+              },
+              "name": {},
+            },
+            "required": [
+              "age",
+            ],
+            "type": "object",
+          },
+        ],
+      }
+    `);
+  });
+
+  test("intersection with discriminated union on draft-07", () => {
+    const base = z.object({ name: z.string() });
+    const variant = z.discriminatedUnion("type", [
+      z.object({ type: z.literal("a"), value: z.string() }),
+      z.object({ type: z.literal("b"), count: z.number() }),
+    ]);
+    const schema = base.and(variant);
+
+    expect(z.toJSONSchema(schema, { target: "draft-07" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "allOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "count": {},
+              "name": {
+                "type": "string",
+              },
+              "type": {},
+              "value": {},
+            },
+            "required": [
+              "name",
+            ],
+            "type": "object",
+          },
+          {
+            "oneOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "name": {},
+                  "type": {
+                    "const": "a",
+                    "type": "string",
+                  },
+                  "value": {
+                    "type": "string",
+                  },
+                },
+                "required": [
+                  "type",
+                  "value",
+                ],
+                "type": "object",
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "count": {
+                    "type": "number",
+                  },
+                  "name": {},
+                  "type": {
+                    "const": "b",
+                    "type": "string",
+                  },
+                },
+                "required": [
+                  "type",
+                  "count",
+                ],
+                "type": "object",
+              },
+            ],
           },
         ],
       }
@@ -3588,9 +3799,11 @@ test("flatten simple intersections", () => {
         {
           "additionalProperties": false,
           "properties": {
+            "testBool": {},
             "testNum": {
               "type": "number",
             },
+            "testStr": {},
           },
           "required": [
             "testNum",
@@ -3600,6 +3813,8 @@ test("flatten simple intersections", () => {
         {
           "additionalProperties": false,
           "properties": {
+            "testBool": {},
+            "testNum": {},
             "testStr": {
               "type": "string",
             },
@@ -3615,6 +3830,8 @@ test("flatten simple intersections", () => {
             "testBool": {
               "type": "boolean",
             },
+            "testNum": {},
+            "testStr": {},
           },
           "required": [
             "testBool",
