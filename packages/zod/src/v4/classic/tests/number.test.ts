@@ -137,6 +137,17 @@ test("multipleOf", () => {
   expect(() => schemas.schema7.parse(numbers.number8)).toThrow();
 });
 
+test(".multipleOf() accepts exact decimal multiples", () => {
+  // 2.03 === 29 * 0.07, but val / step lands ~1.1 ULP away from 29, so a
+  // one-ULP tolerance wrongly rejected it while neighbours (1.96, 2.10) passed.
+  const schema = z.number().multipleOf(0.07);
+  expect(schema.safeParse(2.03).success).toBe(true);
+  expect(schema.safeParse(4.06).success).toBe(true);
+  expect(schema.safeParse(8.54).success).toBe(true);
+  // genuine non-multiples must still be rejected
+  expect(schema.safeParse(2.04).success).toBe(false);
+});
+
 test(".multipleOf() with positive divisor", () => {
   const schema = z.number().multipleOf(5);
   expect(schema.parse(15)).toEqual(15);
