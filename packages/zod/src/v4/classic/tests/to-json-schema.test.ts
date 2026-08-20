@@ -485,7 +485,7 @@ describe("toJSONSchema", () => {
             "pattern": "cruel",
           },
           {
-            "pattern": "^.{10}dark",
+            "pattern": "^.{10,}dark",
           },
           {
             "pattern": ".*world$",
@@ -524,7 +524,7 @@ describe("toJSONSchema", () => {
             "type": "string",
           },
           {
-            "pattern": "^.{10}dark",
+            "pattern": "^.{10,}dark",
             "type": "string",
           },
           {
