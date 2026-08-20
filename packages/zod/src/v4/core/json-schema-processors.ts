@@ -39,7 +39,7 @@ export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _jso
     json.format = formatMap[format as checks.$ZodStringFormats] ?? format;
     if (json.format === "") delete json.format; // empty format is not valid
 
-    // JSON Schema format: "time" requires a full time with offset or Z. z.iso.time() does not include timezone information, so format: "time" should never be used
+    // `time` is RFC 3339 full-time, which `z.iso.time()` never is; `laxFormat` carries the datetime shapes that likewise accept what their keyword forbids.
     if (format === "time" || laxFormat) {
       delete json.format;
     }

@@ -193,7 +193,7 @@ function getTupleRest(restSchema: JSONSchema._JSONSchema | undefined, ctx: Conve
   return convertSchema(restSchema, ctx);
 }
 
-// JSON Schema `time` is RFC 3339 `full-time`, which mandates seconds and a `Z` or numeric offset. `z.iso.time()` is `partial-time`, so it rejects every string this format is defined to accept and accepts every string it forbids — hence a pattern here rather than a borrowed format validator.
+// RFC 3339 full-time, which `z.iso.time()` is not; kept local because exporting it from core/regexes.ts pins it into every bundle (+228 B on a mini `z.boolean()`).
 const fullTime = /^(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/;
 
 function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext): ZodType {

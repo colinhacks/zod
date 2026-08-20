@@ -763,7 +763,7 @@ export const $ZodISODateTime: core.$constructor<$ZodISODateTime> = /*@__PURE__*/
     def.pattern ??= regexes.datetime(def);
     $ZodStringFormat.init(inst, def);
 
-    // `local` drops the offset and `precision: -1` drops the seconds, and RFC 3339 `date-time` requires both — so these two opt out of the keyword they would otherwise advertise. Only they pay: the flag rides the bag rather than the def because the string a format check attaches to is a different schema under `z.string().check(...)`, and `init` has already run the attach list.
+    // These two drop the offset or the seconds RFC 3339 `date-time` requires, so they must not advertise the keyword — on the bag, not the def, since `z.string().check(...)` lands the format on a different schema.
     if (def.local || def.precision === -1) {
       inst._zod.bag.laxFormat = true;
       inst._zod.onattach.push((s) => {
