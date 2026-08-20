@@ -1,4 +1,4 @@
-// Side-effect-only module: enables AOT compilation for every schema constructed after this import. The only operation is installing a post-processor on `globalConfig`. Bundlers preserve this import because the file is listed in `package.json`'s `sideEffects` array; nothing else in `zod` references it, so apps that don't `import "zod/compile"` drop the entire compiler.
+// Side-effect-only: installs the post-processor on `globalConfig`. Listed in `package.json`'s `sideEffects`, and nothing else references it, so apps that never import it drop the compiler.
 //
 // Usage:
 //
@@ -34,7 +34,7 @@ core.globalConfig.postProcessor = (inst: any) => {
         return originalRun(payload, ctx);
       }
       const compiled = compile(inst);
-      // Only the run wrapper is installed. Copying the compiled parse/ safeParse closures here would make their INVALID fallback re-enter this instance's methods — which now route through the compiled run — executing user callbacks a third time on invalid input. The method → wrapper path runs them exactly twice.
+      // Only the run wrapper. Copying the compiled parse/safeParse closures would make their fallback re-enter this instance and run user callbacks a third time.
       inst._zod.run = compiled._zod.run;
     } catch {
       // Permanent fallback for unsupported schemas.
