@@ -160,7 +160,7 @@ Notes:
 
 ## Commenting on issues and PRs
 
-When posting on a maintainer's behalf via `gh` (PR comments, issue comments, reviews), match the house tone. The register is authoritative and friendly — concise, not bubbly, not over-explaining, not effusive. Comments come from a maintainer handing down decisions, not negotiating them. Friendly does not mean deferential.
+When posting on a maintainer's behalf via `gh` (PR comments, issue comments, reviews), match the house tone. Load the `prose-writing` skill before you write any of it — it is the general copy guide, and this section layers on top of it. The register is authoritative and friendly — concise, not bubbly, not over-explaining, not effusive. Comments come from a maintainer handing down decisions, not negotiating them. Friendly does not mean deferential.
 
 - Exclamation points are fine in moderation, especially to soften a decline or close out a thread ("Thanks for looking into this!"). Don't stack them and don't sprinkle them through technical writeups.
 - Skip effusive praise: "Great work", "Awesome", "Thanks so much for this", "Thanks for the careful writeup", "you clearly read the RFC". A short flat-affect affirmation walks the line well — "Good investigation." or "Solid catch." with a period, no exclamation, no superlatives. Warmth otherwise comes from a short closer ("Thanks for looking into this, though 👍"), not a preamble that butters up the contributor before the decision.
@@ -171,7 +171,8 @@ When posting on a maintainer's behalf via `gh` (PR comments, issue comments, rev
 - Speak with authority. No hedging ("maybe", "I think perhaps", "if that's okay"), no apologizing for decisions, no asking permission to land changes the maintainer has already made. Decisions are stated as decisions.
 - Be direct when declining, but not curt. "out of scope", "behaving as intended", "this is more complicated than it looks" — firm, with a concrete reason. A friendly closer ("thanks for looking into this") is fine.
 - Cross-reference by number: `#4433`, `commit 2f8414bc`, `merged in #5718`. Concrete and verifiable.
-- Length matches substance. Default to 1–4 sentences. Go long only when the content earns it (root-cause writeups, benchmark results, pointing to a canonical thread).
+- Length matches substance, and substance is almost never as much as you think. Two or three sentences closes most threads. How long you spent investigating has nothing to do with how long the reply should be — a week of benchmarking still closes in three sentences. The `triage` skill works this through against a real decline.
+- No file paths, line numbers, or symbol names unless the reader has to open that file. They turn a two-line decision into a report, and nobody asked you to show your work. Say what the code does instead — "the parse context is per-call state now", not "`core/memoizer.ts:133` writes onto the context". The detail belongs in the `.triage/` write-up.
 - Pick the one or two strongest reasons and write them as prose. Resist enumerating every objection in a bullet list — even when each point is fair, it reads as piling on. The strongest argument plus a concrete escape hatch (e.g. "`z.email().max(254)` already does this") is usually enough.
 - Don't lift informal or coarse phrasing from external sources (blog posts, issues, comments) into the maintainer voice, even in quotes. Paraphrase the substance — quoted-in-context still reads as the maintainer talking.
 - Use prose with inline backticks for symbols. Reach for fenced code blocks only when showing non-trivial code is genuinely clearer than describing it.
