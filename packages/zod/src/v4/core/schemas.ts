@@ -1957,18 +1957,27 @@ export interface $ZodObject<
   out Params extends $ZodObjectConfig = $ZodObjectConfig,
 > extends $ZodType<any, any, $ZodObjectInternals<Shape, Params>> {}
 
+// one shared instance; a fresh [] per schema cost 56 bytes retained
+const NO_SYMBOL_KEYS: symbol[] = [];
+
 function normalizeDef(def: $ZodObjectDef) {
   const keys = Object.keys(def.shape);
-  for (const k of keys) {
-    if (!def.shape?.[k]?._zod?.traits?.has("$ZodType")) {
-      throw new Error(`Invalid element at key "${k}": expected a Zod schema`);
+  const ownSymbols = Object.getOwnPropertySymbols(def.shape);
+  const symbolKeys = ownSymbols.length ? ownSymbols : NO_SYMBOL_KEYS;
+  // aliases `keys` when there are no symbols, so a string-only shape keeps one array
+  const allKeys: (string | symbol)[] = symbolKeys.length ? [...keys, ...symbolKeys] : keys;
+  for (const k of allKeys) {
+    if (!(def.shape as any)?.[k]?._zod?.traits?.has("$ZodType")) {
+      throw new Error(`Invalid element at key "${String(k)}": expected a Zod schema`);
     }
   }
   const okeys = util.optionalKeys(def.shape);
 
   return {
     ...def,
-    keys,
+    allKeys,
+    symbolKeys,
+    // string-only: handleCatchall matches it against `for...in`, which never yields a symbol
     keySet: new Set(keys),
     numKeys: keys.length,
     optionalKeys: new Set(okeys),
@@ -2094,9 +2103,9 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     const proms: Promise<any>[] = [];
     const shape = value.shape;
 
-    for (const key of value.keys) {
+    for (const key of value.allKeys) {
       if (key === "__proto__") continue;
-      const el = shape[key]!;
+      const el = (shape as any)[key]!;
       const optin = el._zod.optin;
       const optout = el._zod.optout;
 
@@ -2129,12 +2138,20 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
 
     const generateFastpass = (shape: any) => {
       const normalized = _normalized.value;
-      const doc = new Doc(memo ? ["shape", "payload", "ctx", "inst", "memo"] : ["shape", "payload", "ctx"]);
+      // closure below retains this scope per schema, so add no bindings here — a key-expression helper cost 328 bytes each
+      const syms = normalized.symbolKeys;
+      // a symbol has no source literal, so it is passed in and read as `syms[i]`; string-only shapes get no such parameter
+      const doc = new Doc(
+        syms.length
+          ? memo
+            ? ["shape", "payload", "ctx", "inst", "memo", "syms"]
+            : ["shape", "payload", "ctx", "syms"]
+          : memo
+            ? ["shape", "payload", "ctx", "inst", "memo"]
+            : ["shape", "payload", "ctx"]
+      );
 
-      const parseStr = (key: string) => {
-        const k = util.esc(key);
-        return `shape[${k}]._zod.run({ value: input[${k}], issues: [] }, ctx)`;
-      };
+      const parseStr = (k: string) => `shape[${k}]._zod.run({ value: input[${k}], issues: [] }, ctx)`;
 
       // Prefixes in place, like util.prefixIssues does for every interpreted path.
       const prefixStr = (id: string, k: string) => `
@@ -2148,23 +2165,23 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
 
       const ids: any = Object.create(null);
       let counter = 0;
-      for (const key of normalized.keys) {
+      for (const key of normalized.allKeys) {
         ids[key] = `key_${counter++}`;
       }
 
       // A: preserve key order {
       doc.write(memo ? `const newResult = memo.alloc(inst, payload, {}, ctx);` : `const newResult = {};`);
-      for (const key of normalized.keys) {
+      for (const key of normalized.allKeys) {
         if (key === "__proto__") continue;
         const id = ids[key];
-        const k = util.esc(key);
+        const k = typeof key === "symbol" ? `syms[${syms.indexOf(key)}]` : util.esc(key);
         const isPresent = `${k} in input`;
         const schema = shape[key];
         const optin = schema?._zod?.optin;
         const isOptionalIn = optin !== undefined;
         const isOptionalOut = schema?._zod?.optout === "optional";
 
-        doc.write(`const ${id} = ${parseStr(key)};`);
+        doc.write(`const ${id} = ${parseStr(k)};`);
 
         if (isOptionalIn && isOptionalOut) {
           // For optional-in/out schemas, ignore errors on absent keys — and, like the interpreted path, drop the value produced alongside them. The middle rung goes further: it permits absence without supplying anything in its place, so an absent key contributes nothing at all.
@@ -2220,6 +2237,10 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
       doc.write(`payload.value = newResult;`);
       doc.write(`return payload;`);
       const fn = doc.compile();
+      if (syms.length) {
+        if (memo) return (payload: any, ctx: any) => fn(shape, payload, ctx, inst, memo, syms);
+        return (payload: any, ctx: any) => fn(shape, payload, ctx, syms);
+      }
       if (memo) return (payload: any, ctx: any) => fn(shape, payload, ctx, inst, memo);
       return (payload: any, ctx: any) => fn(shape, payload, ctx);
     };

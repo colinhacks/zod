@@ -67,7 +67,8 @@ function isRecursive(inst: $ZodType, stack: Set<object>): boolean {
   } else {
     // $ZodObject redefines `shape` as a non-enumerable accessor, so `for...in` misses it.
     const shape = def.shape;
-    if (shape) for (const key in shape) check(shape[key]);
+    // `for...in` skips symbols, so a cycle through a declared symbol key would read as non-recursive
+    if (shape) for (const key of Reflect.ownKeys(shape)) check(shape[key]);
     for (const key in def) {
       const value = def[key];
       if (!value || typeof value !== "object") continue;

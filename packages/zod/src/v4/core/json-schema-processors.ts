@@ -283,9 +283,19 @@ function inputOptin(schema: schemas.$ZodType): "optional" | "defaulted" | undefi
 export const objectProcessor: Processor<schemas.$ZodObject> = (schema, ctx, _json, params) => {
   const json = _json as JSONSchema.ObjectSchema;
   const def = schema._zod.def as schemas.$ZodObjectDef;
+  const shape = def.shape;
+
+  // dropping it while still emitting `additionalProperties: false` would emit a schema that rejects data this one requires
+  const symbolKeys = Object.getOwnPropertySymbols(shape);
+  if (
+    symbolKeys.length &&
+    handleUnrepresentable(schema, ctx, json, params, "Symbol keys cannot be represented in JSON Schema")
+  ) {
+    return;
+  }
+
   json.type = "object";
   json.properties = {};
-  const shape = def.shape;
 
   for (const key in shape) {
     // assignProp so a __proto__ key becomes an own property instead of hitting the inherited setter on the plain {} we build into
