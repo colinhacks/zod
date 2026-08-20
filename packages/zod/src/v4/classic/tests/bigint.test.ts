@@ -52,3 +52,13 @@ test("min max getters", () => {
   expect(z.bigint().max(BigInt(5)).maxValue).toEqual(BigInt(5));
   expect(z.bigint().max(BigInt(5)).max(BigInt(1)).maxValue).toEqual(BigInt(1));
 });
+
+test("multipleOf(0n) does not throw from safeParse", () => {
+  // `value % 0n` throws RangeError; safeParse must never throw. Mirror the
+  // number branch, where z.number().multipleOf(0) reports a failure instead.
+  const schema = z.bigint().multipleOf(BigInt(0));
+  const result = schema.safeParse(BigInt(10));
+  expect(result.success).toBe(false);
+  // consistent with the number equivalent
+  expect(z.number().multipleOf(0).safeParse(10).success).toBe(false);
+});
