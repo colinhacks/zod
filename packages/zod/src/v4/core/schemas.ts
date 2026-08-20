@@ -3714,8 +3714,12 @@ export interface $ZodOptional<T extends SomeType = $ZodType> extends $ZodType {
 }
 
 function handleOptionalResult(result: ParsePayload) {
-  // A substituting schema that still failed has no usable answer; yield undefined.
-  if (result.issues.length) return { issues: [], value: undefined };
+  // A substituting schema that still failed has no usable answer; yield undefined. Truncate rather than rebind, and clear the abort flag with it: a pipe shares its issues array with the next schema, so an outer holder reads the same one.
+  if (result.issues.length) {
+    result.issues.length = 0;
+    result.value = undefined;
+    result.aborted = false;
+  }
   return result;
 }
 
@@ -4158,7 +4162,8 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
             },
             input: payload.value,
           });
-          payload.issues = [];
+          payload.issues.length = 0;
+          payload.aborted = false;
         }
 
         return payload;
@@ -4175,7 +4180,9 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
         input: payload.value,
       });
 
-      payload.issues = [];
+      // Truncate rather than rebind: as a pipe's `out` this shares the caller's array. See handleOptionalResult.
+      payload.issues.length = 0;
+      payload.aborted = false;
     }
 
     return payload;

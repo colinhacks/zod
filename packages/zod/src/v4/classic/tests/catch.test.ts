@@ -324,3 +324,151 @@ test("optional clobbers catch through pipe boundaries", () => {
       .parse(123)
   ).toBe("X!");
 });
+
+test("catch does not resurrect issues an inner optional already resolved", () => {
+  // `.catch()` reads issues off the payload it passed down, so an optional that resolved a failure without clearing that array let the failure resurface. The pipe rows matter: a pipe shares the array with a different payload object.
+  const chains: [string, () => z.ZodType][] = [
+    [
+      "prefault.optional",
+      () =>
+        z
+          .undefined()
+          .prefault(null as any)
+          .optional(),
+    ],
+    [
+      "default.optional",
+      () =>
+        z
+          .undefined()
+          .default(null as any)
+          .optional(),
+    ],
+    ["prefault.pipe.optional", () => z.string().prefault("abc").pipe(z.string().min(10)).optional()],
+    ["default.pipe.optional", () => z.string().default("abc").pipe(z.string().min(10)).optional()],
+    [
+      "prefault.optional.optional",
+      () =>
+        z
+          .undefined()
+          .prefault(null as any)
+          .optional()
+          .optional(),
+    ],
+    [
+      "prefault.pipe.optional.optional",
+      () => z.string().prefault("abc").pipe(z.string().min(10)).optional().optional(),
+    ],
+  ];
+
+  for (const [name, make] of chains) {
+    expect(make().safeParse(undefined).success, `${name} without catch`).toBe(true);
+    expect((make() as any).catch(null).safeParse(undefined).success, `${name} + catch(value)`).toBe(true);
+    expect((make() as any).catch(() => null).safeParse(undefined).success, `${name} + catch(callback)`).toBe(true);
+  }
+
+  expect(
+    z
+      .object({
+        a: z
+          .undefined()
+          .prefault(null as any)
+          .optional()
+          .catch(null as any),
+      })
+      .safeParse({ a: undefined }).success
+  ).toBe(true);
+
+  expect(z.string().catch("FB").parse(123)).toBe("FB");
+  expect(z.string().optional().safeParse(123).success).toBe(false);
+});
+
+test("resolving an optional's failure clears the abort flag with it", () => {
+  // A pipe marks the payload aborted when its `in` fails, and `util.aborted` tests that flag alone, so leaving it set skips every check after the optional.
+  const schema = z
+    .string()
+    .min(10)
+    .prefault("abc")
+    .pipe(z.string())
+    .optional()
+    .refine(() => false, "REFINE RAN");
+
+  const result = schema.safeParse(undefined);
+  expect(result.success).toBe(false);
+  expect(result.error!.issues[0]?.message).toBe("REFINE RAN");
+});
+
+test("catch clears the abort flag along with the issues", () => {
+  // Same as the optional case one wrapper over: a catch that clears only the issues leaves the flag set, skipping every check after it.
+  const schema = z
+    .string()
+    .min(10)
+    .pipe(z.string())
+    .catch("FB")
+    .refine(() => false, "REFINE RAN");
+
+  const result = schema.safeParse("abc");
+  expect(result.success).toBe(false);
+  expect(result.error!.issues[0]?.message).toBe("REFINE RAN");
+
+  expect(
+    z
+      .string()
+      .min(2)
+      .pipe(z.string())
+      .catch("FB")
+      .refine(() => false, "REFINE RAN")
+      .safeParse("abcdef").success
+  ).toBe(false);
+  expect(
+    z
+      .string()
+      .min(10)
+      .catch("FB")
+      .refine(() => false, "REFINE RAN")
+      .safeParse("abc").success
+  ).toBe(false);
+});
+
+test("catch clears the abort flag on the async branch too", () => {
+  // Reaching the async branch needs the catch's own inner to be async; an async refinement outside it leaves the inner sync.
+  const schema = z
+    .string()
+    .refine(async () => false, "INNER")
+    .pipe(z.string())
+    .catch("FB")
+    .refine(() => false, "REFINE RAN");
+
+  return expect(schema.safeParseAsync("abc")).resolves.toMatchObject({
+    success: false,
+    error: { issues: [{ message: "REFINE RAN" }] },
+  });
+});
+
+test("catch resolves the issues array itself, so an outer catch does not resurrect them", () => {
+  // A pipe runs its `out` on a payload sharing the caller's issues array, so a catch that rebinds its own reference leaves the caller's copy dirty.
+  const inner = z.string().pipe(z.string().min(10).catch("FB"));
+
+  expect(inner.safeParse("abc")).toMatchObject({ success: true, data: "FB" });
+  expect(inner.catch("FB2").safeParse("abc")).toMatchObject({ success: true, data: "FB" });
+
+  expect(z.string().catch("FB").parse(123)).toBe("FB");
+  expect(z.string().catch("FB").parse("ok")).toBe("ok");
+  expect(
+    z
+      .string()
+      .catch((ctx) => `n=${ctx.error.issues.length}`)
+      .parse(123)
+  ).toBe("n=1");
+});
+
+test("catch resolves the issues array on the async branch too", () => {
+  const inner = z.string().pipe(
+    z
+      .string()
+      .refine(async () => false, "INNER")
+      .catch("FB")
+  );
+
+  return expect(inner.catch("FB2").safeParseAsync("abc")).resolves.toMatchObject({ success: true, data: "FB" });
+});
