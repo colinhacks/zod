@@ -155,9 +155,7 @@ test("exclude", () => {
   expect(UnhealthyEnum.safeParse("Salad").success).toEqual(false);
   expectTypeOf<z.infer<typeof UnhealthyEnum>>().toEqualTypeOf<"Pasta" | "Pizza" | "Tacos" | "Burgers">();
 
-  const EmptyFoodEnum = FoodEnum.exclude(foods);
-  expectTypeOf<typeof EmptyFoodEnum>().toEqualTypeOf<z.ZodEnum<{}>>();
-  expectTypeOf<z.infer<typeof EmptyFoodEnum>>().toEqualTypeOf<never>();
+  expect(() => FoodEnum.exclude(foods)).toThrow(/no valid values/);
 });
 
 test("error map inheritance", () => {
