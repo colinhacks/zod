@@ -30,7 +30,6 @@ export {
 } from "../core/index.js";
 export { toJSONSchema } from "../core/json-schema-processors.js";
 
-export * as locales from "../locales/index.js";
 /** A special constant with type `never` */
 // export const NEVER = {} as never;
 
