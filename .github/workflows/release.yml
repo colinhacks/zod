@@ -139,34 +139,34 @@ jobs:
       - name: Configure changelog
         if: ${{ steps.publish.outputs.type }}
         run: |
-          echo '{"categories": [], "template": "## Commits:\n\n${{ '${{UNCATEGORIZED}}' }}", "pr_template": ${{ '"- ${{MERGE_SHA}} ${{TITLE}}"' }} }' > changelog_config.json
+          echo '{"categories": [], "template": "## Commits:\n\n#{{UNCATEGORIZED}}", "pr_template": "- #{{MERGE_SHA}} #{{TITLE}}"}' > changelog_config.json
           cat changelog_config.json
           echo "last_tag=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
-          echo "curr_commit=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
       - name: Generate changelog
         if: ${{ steps.publish.outputs.type }}
         id: github_release
-        uses: mikepenz/release-changelog-builder-action@v2.9.0
+        uses: mikepenz/release-changelog-builder-action@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           fromTag: "${{ env.last_tag }}"
           toTag: ${{ github.ref }}
-          commitMode: true
+          mode: COMMIT
           configuration: changelog_config.json
 
+      # Replaces actions/create-release@v1, which was archived in 2021 and still declares the node12 runtime. The notes go through a file and the environment rather than an expression inside the script, so a commit subject can't break out of the command.
       - name: Create release
         if: ${{ steps.publish.outputs.type }}
-        id: create_release
-        uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ steps.publish.outputs.version }}
-          release_name: v${{ steps.publish.outputs.version }}
-          commitish: ${{ github.ref }}
-          body: ${{steps.github_release.outputs.changelog}}
-          draft: false
-          prerelease: false
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.publish.outputs.version }}
+          CHANGELOG: ${{ steps.github_release.outputs.changelog }}
+        run: |
+          printf '%s' "$CHANGELOG" > "$RUNNER_TEMP/release_notes.md"
+          gh release create "v$VERSION" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "v$VERSION" \
+            --notes-file "$RUNNER_TEMP/release_notes.md"
 
