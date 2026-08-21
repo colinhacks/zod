@@ -581,6 +581,45 @@ const ACTIONABLE_KEYS = /*@__PURE__*/ new Set([
   "if",
 ]);
 
+// Searches a JSON Schema (and its allOf members) for a single-property
+// `properties.X.const = value` discriminator. Returns { field, value } when
+// exactly one const property is found at the top level or in any allOf member;
+// returns null if none is found or if multiple candidates exist.
+function extractDiscriminator(schema: JSONSchema.JSONSchema): { field: string; value: unknown } | null {
+  if (typeof schema === "boolean") return null;
+
+  // Collect all properties that have a `const` value
+  const collect = (s: JSONSchema.JSONSchema): Array<{ field: string; value: unknown }> => {
+    const found: Array<{ field: string; value: unknown }> = [];
+    if (s.properties) {
+      for (const [field, propSchema] of Object.entries(s.properties)) {
+        if (typeof propSchema === "object" && propSchema !== null && "const" in propSchema) {
+          found.push({ field, value: propSchema.const });
+        }
+      }
+    }
+    return found;
+  };
+
+  // Check top level first
+  const top = collect(schema);
+  if (top.length === 1) return top[0]!;
+
+  // Check allOf members
+  if (schema.allOf && Array.isArray(schema.allOf)) {
+    const allOfResults: Array<{ field: string; value: unknown }> = [];
+    for (const member of schema.allOf) {
+      if (typeof member === "object" && member !== null) {
+        const found = collect(member as JSONSchema.JSONSchema);
+        allOfResults.push(...found);
+      }
+    }
+    if (allOfResults.length === 1) return allOfResults[0]!;
+  }
+
+  return null;
+}
+
 // Returns true when we can meaningfully evaluate a schema as a `not` sub-schema.
 // An empty schema {} matches everything (z.any()) and is always evaluable — not: {}
 // correctly becomes z.never(). A schema with ONLY unimplemented keywords (e.g.
@@ -630,11 +669,54 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
     baseSchema = hasExplicitType ? z.intersection(baseSchema, anyOfUnion) : anyOfUnion;
   }
 
-  // Handle oneOf - exclusive union (exactly one must match)
+  // Handle oneOf - exclusive union (exactly one must match).
+  // When all branches share a common const-property discriminator we use a
+  // superRefine that validates the discriminator first and reports a precise
+  // error at that field (e.g. "expected 'debug' | 'elasticsearch' | …").
+  // Otherwise fall back to z.xor which enforces strict exclusivity.
   if (schema.oneOf && Array.isArray(schema.oneOf)) {
-    const options = schema.oneOf.map((s) => convertSchema(s, ctx));
-    const oneOfUnion = z.xor(options as [ZodType, ZodType, ...ZodType[]]);
-    baseSchema = hasExplicitType ? z.intersection(baseSchema, oneOfUnion) : oneOfUnion;
+    const rawOptions = schema.oneOf;
+    const discriminators = rawOptions.map((s) =>
+      typeof s === "object" && s !== null ? extractDiscriminator(s as JSONSchema.JSONSchema) : null
+    );
+    const firstField = discriminators[0]?.field;
+    const allSameField = firstField !== undefined && discriminators.every((d) => d !== null && d.field === firstField);
+
+    if (allSameField) {
+      // Build (discriminatorValue → converted schema) pairs
+      const discriminatorField = firstField!;
+      const branches = rawOptions.map((s, i) => ({
+        value: discriminators[i]!.value,
+        zod: convertSchema(s, ctx),
+      }));
+      const validValues = branches.map((b) => b.value);
+
+      const oneOfDiscriminated = z.any().superRefine((val, refinementCtx) => {
+        if (typeof val !== "object" || val === null) return;
+        const discriminatorValue = (val as Record<string, unknown>)[discriminatorField];
+        const match = branches.find((b) => b.value === discriminatorValue);
+        if (!match) {
+          refinementCtx.addIssue({
+            code: "invalid_value",
+            values: validValues,
+            path: [discriminatorField],
+            message: `Invalid input: expected ${validValues.map((v) => `"${v}"`).join(" | ")}`,
+          } as any);
+          return;
+        }
+        const result = match.zod.safeParse(val);
+        if (!result.success) {
+          for (const issue of result.error.issues) {
+            refinementCtx.addIssue(issue as any);
+          }
+        }
+      });
+      baseSchema = hasExplicitType ? z.intersection(baseSchema, oneOfDiscriminated) : oneOfDiscriminated;
+    } else {
+      const options = rawOptions.map((s) => convertSchema(s, ctx));
+      const oneOfUnion = z.xor(options as [ZodType, ZodType, ...ZodType[]]);
+      baseSchema = hasExplicitType ? z.intersection(baseSchema, oneOfUnion) : oneOfUnion;
+    }
   }
 
   // Handle allOf - wrap base schema with intersection

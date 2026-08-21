@@ -247,6 +247,28 @@ test("type with oneOf creates intersection", () => {
   expect(() => schema.parse("apple")).toThrow();
 });
 
+test("oneOf with const discriminator gives precise error on discriminator field", () => {
+  const schema = fromJSONSchema({
+    oneOf: [
+      { type: "object", properties: { type: { const: "cat" }, indoor: { type: "boolean" } }, required: ["type"] },
+      { type: "object", properties: { type: { const: "dog" }, breed: { type: "string" } }, required: ["type"] },
+    ],
+  });
+
+  // Valid
+  expect(schema.parse({ type: "cat", indoor: true })).toEqual({ type: "cat", indoor: true });
+  expect(schema.parse({ type: "dog", breed: "husky" })).toEqual({ type: "dog", breed: "husky" });
+
+  // Unknown discriminator value → error on the type field, not "Invalid input"
+  const result = schema.safeParse({ type: "fish" });
+  expect(result.success).toBe(false);
+  if (!result.success) {
+    const issue = result.error.issues[0]!;
+    expect(issue.code).toBe("invalid_value");
+    expect(issue.path).toEqual(["type"]);
+  }
+});
+
 test("unevaluatedItems throws error", () => {
   expect(() => {
     fromJSONSchema({
