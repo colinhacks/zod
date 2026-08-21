@@ -48,7 +48,7 @@ const RECOGNIZED_KEYS = /*@__PURE__*/ new Set([
   "type",
   "enum",
   "const",
-  // Composition
+  // Composition (all handled in convertSchema)
   "anyOf",
   "oneOf",
   "allOf",
@@ -147,13 +147,6 @@ function resolveRef(ref: string, ctx: ConversionContext): JSONSchema.JSONSchema 
 
 function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext): ZodType {
   // Handle unsupported features
-  if (schema.not !== undefined) {
-    // Special case: { not: {} } represents never
-    if (typeof schema.not === "object" && Object.keys(schema.not).length === 0) {
-      return z.never();
-    }
-    throw new Error("not is not supported in Zod (except { not: {} } for never)");
-  }
   if (schema.unevaluatedItems !== undefined) {
     throw new Error("unevaluatedItems is not supported");
   }
@@ -248,14 +241,30 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
     return z.union(typeSchemas as [ZodType, ZodType, ...ZodType[]]);
   }
 
-  if (!type) {
-    // No type specified - empty schema (any)
+  // Infer "object" when object-specific keywords are present without an explicit type.
+  // JSON Schema allows these keywords on untyped schemas, but in practice they always
+  // describe objects, and inferring the type enables proper validation of properties,
+  // required fields, and discriminated oneOf/anyOf branches.
+  const effectiveType: string | undefined =
+    type ??
+    (schema.properties !== undefined ||
+    schema.required !== undefined ||
+    schema.additionalProperties !== undefined ||
+    schema.patternProperties !== undefined ||
+    schema.propertyNames !== undefined ||
+    schema.minProperties !== undefined ||
+    schema.maxProperties !== undefined
+      ? "object"
+      : undefined);
+
+  if (!effectiveType) {
+    // No type and no object-specific keywords — empty schema (any)
     return z.any();
   }
 
   let zodSchema: ZodType;
 
-  switch (type) {
+  switch (effectiveType) {
     case "string": {
       let stringSchema: ZodString = z.string();
 
@@ -380,6 +389,15 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         // If not in required array, make it optional. assignProp so a __proto__
         // key becomes an own property instead of hitting the inherited setter
         assignProp(shape, key, requiredSet.has(key) ? propZodSchema : propZodSchema.optional());
+      }
+
+      // Required keys not declared in properties are added as z.unknown() so that
+      // the Zod object enforces their presence (e.g. { required: ["destinations"] }
+      // without a matching properties entry).
+      for (const key of requiredSet) {
+        if (!(key in shape)) {
+          assignProp(shape, key, z.unknown());
+        }
       }
 
       // Handle propertyNames
@@ -530,6 +548,52 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
   return zodSchema;
 }
 
+// Actionable keys are ones we can actually validate. Used by schemaIsEvaluable.
+const ACTIONABLE_KEYS = /*@__PURE__*/ new Set([
+  "type",
+  "enum",
+  "const",
+  "properties",
+  "required",
+  "additionalProperties",
+  "patternProperties",
+  "propertyNames",
+  "minProperties",
+  "maxProperties",
+  "items",
+  "prefixItems",
+  "additionalItems",
+  "minItems",
+  "maxItems",
+  "minLength",
+  "maxLength",
+  "pattern",
+  "format",
+  "minimum",
+  "maximum",
+  "exclusiveMinimum",
+  "exclusiveMaximum",
+  "multipleOf",
+  "anyOf",
+  "oneOf",
+  "allOf",
+  "not",
+  "if",
+]);
+
+// Returns true when we can meaningfully evaluate a schema as a `not` sub-schema.
+// An empty schema {} matches everything (z.any()) and is always evaluable — not: {}
+// correctly becomes z.never(). A schema with ONLY unimplemented keywords (e.g.
+// contains) converts to z.any(), making not always reject, which is incorrect; we
+// skip those to preserve correctness.
+function schemaIsEvaluable(schema: JSONSchema.JSONSchema | boolean): boolean {
+  if (typeof schema === "boolean") return true;
+  const keys = Object.keys(schema);
+  // Empty schema = matches everything; evaluable as z.any() so not: {} works.
+  if (keys.length === 0) return true;
+  return keys.some((k) => ACTIONABLE_KEYS.has(k));
+}
+
 function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionContext): ZodType {
   if (typeof schema === "boolean") {
     return schema ? z.any() : z.never();
@@ -537,7 +601,26 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
 
   // Convert base schema first (ignoring composition keywords)
   let baseSchema = convertBaseSchema(schema, ctx);
-  const hasExplicitType = schema.type || schema.enum !== undefined || schema.const !== undefined;
+
+  // hasExplicitType controls allOf/anyOf/oneOf merging behaviour:
+  // - true  → composition members are intersected WITH the base schema
+  // - false → composition takes over entirely (base schema is discarded)
+  //
+  // We treat inferred-object schemas the same as explicitly-typed ones so that
+  // a schema like { properties: { type: { const: "s3" } }, allOf: [...] } keeps
+  // its object shape when allOf members are processed.
+  const hasInferredObjectType =
+    !schema.type &&
+    (schema.properties !== undefined ||
+      schema.required !== undefined ||
+      schema.additionalProperties !== undefined ||
+      schema.patternProperties !== undefined ||
+      schema.propertyNames !== undefined ||
+      schema.minProperties !== undefined ||
+      schema.maxProperties !== undefined);
+
+  const hasExplicitType =
+    schema.type !== undefined || schema.enum !== undefined || schema.const !== undefined || hasInferredObjectType;
 
   // Process composition keywords LAST (they can appear together)
   // Handle anyOf - wrap base schema with union
@@ -566,6 +649,18 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
       }
       baseSchema = result;
     }
+  }
+
+  // Handle not — skip when the sub-schema only has keywords we cannot validate
+  // (e.g. only "contains"). Those convert to z.any(), which always passes,
+  // making not always reject. schemaIsEvaluable lets not: {} through (correct).
+  if (schema.not !== undefined && schemaIsEvaluable(schema.not)) {
+    const notZod = convertSchema(schema.not, ctx);
+    baseSchema = baseSchema.superRefine((val, refinementCtx) => {
+      if (notZod.safeParse(val).success) {
+        refinementCtx.addIssue("Value must not match the 'not' schema");
+      }
+    });
   }
 
   // Handle if/then/else conditionals

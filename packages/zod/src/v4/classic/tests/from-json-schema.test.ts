@@ -969,3 +969,32 @@ test("if/else without then: passes when if matches", () => {
   // n is negative: else applied, maximum: -1 must hold — -5 <= -1
   expect(schema.safeParse({ n: -5 }).success).toBe(true);
 });
+
+test("not: rejects values that match the sub-schema", () => {
+  const schema = fromJSONSchema({ not: { type: "string" } });
+  expect(schema.safeParse(42).success).toBe(true);
+  expect(schema.safeParse(true).success).toBe(true);
+  expect(schema.safeParse("hello").success).toBe(false);
+});
+
+test("not: mutual exclusion of fields", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    not: { required: ["a", "b"] },
+  });
+  expect(schema.safeParse({ a: 1 }).success).toBe(true);
+  expect(schema.safeParse({ b: 2 }).success).toBe(true);
+  expect(schema.safeParse({ a: 1, b: 2 }).success).toBe(false);
+});
+
+test("not: composed with type constraint", () => {
+  // integer that is not a multiple of 2
+  const schema = fromJSONSchema({
+    type: "integer",
+    not: { type: "integer", multipleOf: 2 },
+  });
+  expect(schema.safeParse(1).success).toBe(true);
+  expect(schema.safeParse(3).success).toBe(true);
+  expect(schema.safeParse(2).success).toBe(false);
+  expect(schema.safeParse(4).success).toBe(false);
+});

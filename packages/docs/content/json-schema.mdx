@@ -35,6 +35,60 @@ const jsonSchema = {
 const zodSchema = z.fromJSONSchema(jsonSchema);
 ```
 
+### Conditionals (`if`/`then`/`else`)
+
+`z.fromJSONSchema()` supports [JSON Schema conditionals](https://json-schema.org/understanding-json-schema/reference/conditionals). The semantics match the spec: if the `if` sub-schema passes, the `then` constraint is enforced; if it fails, the `else` constraint is enforced. Omitting `then` or `else` is equivalent to `true` (no additional constraint for that branch).
+
+```ts
+const schema = z.fromJSONSchema({
+  type: "object",
+  properties: {
+    country: { type: "string" },
+    postalCode: { type: "string" },
+  },
+  if: {
+    properties: { country: { const: "US" } },
+    required: ["country"],
+  },
+  then: {
+    properties: { postalCode: { pattern: "^[0-9]{5}$" } },
+  },
+  else: {
+    properties: { postalCode: { pattern: "^[A-Z0-9 ]{3,10}$" } },
+  },
+});
+```
+
+### Negation (`not`)
+
+The `not` keyword is supported. A value is valid only if it does **not** match the `not` sub-schema. `not: {}` (empty schema, which matches everything) is treated as `z.never()`.
+
+```ts
+const schema = z.fromJSONSchema({
+  type: "object",
+  properties: {
+    location: { type: "string" },
+    context: { type: "string" },
+  },
+  // location and context are mutually exclusive
+  not: { required: ["location", "context"] },
+});
+
+schema.parse({ location: "home" });           // ✓
+schema.parse({ location: "home", context: "work" }); // ✗
+```
+
+### Unsupported keywords
+
+The following keywords are not yet implemented and will throw an error if encountered:
+
+- `unevaluatedItems`
+- `unevaluatedProperties`
+- `dependentSchemas`
+- `dependentRequired`
+
+Keywords like `contains`, `minContains`, and `maxContains` are recognized but not validated — they are silently ignored. This means `not: { contains: {...} }` is also skipped rather than incorrectly rejecting all values.
+
 
 ## `z.toJSONSchema()`
 
