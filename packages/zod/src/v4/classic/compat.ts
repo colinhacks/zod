@@ -7,7 +7,7 @@ import type { ZodType } from "./schemas.js";
 export type TypeOf<T> = core.output<T>;
 /** @deprecated Use `z.output<T>` instead. */
 export type Infer<T> = core.output<T>;
-/** @deprecated Use `z.core.$$ZodFirstPartyTypes` instead */
+/** @deprecated Use `z.core.$ZodTypes` instead */
 export type ZodFirstPartySchemaTypes = core.$ZodTypes;
 
 /** @deprecated Use the raw string literal codes instead, e.g. "invalid_type". */

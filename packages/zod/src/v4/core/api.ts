@@ -1844,7 +1844,6 @@ export function _stringFormat<Format extends string>(
 ): schemas.$ZodCustomStringFormat<Format> {
   const params = util.normalizeParams(_params);
   const def: schemas.$ZodCustomStringFormatDef = {
-    ...util.normalizeParams(_params),
     check: "string_format",
     type: "string",
     format,
