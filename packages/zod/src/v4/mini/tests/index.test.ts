@@ -912,12 +912,15 @@ test("z.stringbool", () => {
   expect(z.parse(b, "n")).toEqual(false);
   expect(z.safeParse(b, "true")).toMatchObject({ success: false });
   expect(z.safeParse(b, "false")).toMatchObject({ success: false });
+  expect(b._zod.bag.truthy).toEqual(["y"]);
+  expect(b._zod.bag.falsy).toEqual(["n"]);
 
   const c = z.stringbool({
     case: "sensitive",
   });
   expect(z.parse(c, "true")).toEqual(true);
   expect(z.safeParse(c, "TRUE")).toMatchObject({ success: false });
+  expect(c._zod.bag.case).toEqual("sensitive");
 });
 
 // promise
