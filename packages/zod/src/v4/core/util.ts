@@ -288,10 +288,7 @@ export function cleanRegex(source: string): string {
 export function floatSafeRemainder(val: number, step: number): number {
   const ratio = val / step;
   const roundedRatio = Math.round(ratio);
-  // The quotient val / step accumulates rounding error from representing
-  // `val` and `step` as floats and from the division itself, so allow a few
-  // ULPs of tolerance. A single ULP (the previous value) rejected exact decimal
-  // multiples such as 2.03 === 29 * 0.07, whose quotient lands ~1.1 ULP away.
+  // `val` and `step` each round to a double before the division rounds again, so a true decimal multiple's quotient can sit up to 1.5 of these scaled epsilons from the integer. A 1x tolerance therefore rejected 2.03 as a multiple of 0.07; 4x covers the worst case with margin.
   const tolerance = 4 * Number.EPSILON * Math.max(Math.abs(ratio), 1);
   if (Math.abs(ratio - roundedRatio) < tolerance) return 0;
   return ratio - roundedRatio;

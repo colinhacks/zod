@@ -138,8 +138,7 @@ test("multipleOf", () => {
 });
 
 test(".multipleOf() accepts exact decimal multiples", () => {
-  // 2.03 === 29 * 0.07, but val / step lands ~1.1 ULP away from 29, so a
-  // one-ULP tolerance wrongly rejected it while neighbours (1.96, 2.10) passed.
+  // 2.03 === 29 * 0.07, but the quotient lands 2 ULP below 29, so the old tolerance rejected it while the neighbouring multiples 1.96 and 2.10 passed.
   const schema = z.number().multipleOf(0.07);
   expect(schema.safeParse(2.03).success).toBe(true);
   expect(schema.safeParse(4.06).success).toBe(true);
