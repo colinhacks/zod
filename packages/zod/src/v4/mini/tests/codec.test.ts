@@ -547,3 +547,14 @@ test("invertCodec", () => {
   const doubleInverted = z.invertCodec(z.invertCodec(isoDateCodec));
   expect(z.decode(doubleInverted, "2024-01-15T10:30:00.000Z")).toBeInstanceOf(Date);
 });
+
+test("z.output carries checks attached to a pipe", () => {
+  const c = z
+    .codec(z.string(), z.number(), { decode: Number, encode: String })
+    .check(z.refine((n) => n > 10, { error: "gt10" }));
+
+  expect(z.output(c).parse(50)).toBe(50);
+  expect(() => z.output(c).parse(5)).toThrow("gt10");
+  // The input side drops it: the check constrains a value that side never produces.
+  expect(z.input(c).parse("5")).toBe("5");
+});

@@ -1,4 +1,5 @@
 import type * as core from "../core/index.js";
+import { clone, mergeDefs } from "../core/util.js";
 import { visit } from "../core/visit.js";
 import type * as schemas from "./schemas.js";
 
@@ -6,16 +7,23 @@ import type * as schemas from "./schemas.js";
 export type input<T> = core.input<T>;
 export type output<T> = core.output<T>;
 
-/** Returns a copy of the schema with every pipe replaced by its input side. */
+/** Appends a pipe's own checks to the side that replaces it, mirroring how `.check()` clones. */
+function withChecks(side: core.$ZodType, checks: core.$ZodTypeDef["checks"]): core.$ZodType {
+  if (!checks?.length) return side;
+  const def = side._zod.def;
+  return clone(side, mergeDefs(def, { checks: [...(def.checks ?? []), ...checks] }), { parent: true });
+}
+
+/** Returns a copy of the schema with every pipe replaced by its input side. A pipe's own checks are dropped, since they constrain the decoded value the input side never produces. */
 export function input<T extends core.$ZodType>(schema: T): schemas.ZodType<core.input<T>, core.input<T>> {
   return visit(schema, {
     pipe: (s) => s._zod.def.in,
   }) as schemas.ZodType<core.input<T>, core.input<T>>;
 }
 
-/** Returns a copy of the schema with every pipe replaced by its output side. */
+/** Returns a copy of the schema with every pipe replaced by its output side, carrying over the pipe's own checks. */
 export function output<T extends core.$ZodType>(schema: T): schemas.ZodType<core.output<T>, core.output<T>> {
   return visit(schema, {
-    pipe: (s) => s._zod.def.out,
+    pipe: (s) => withChecks(s._zod.def.out, s._zod.def.checks),
   }) as schemas.ZodType<core.output<T>, core.output<T>>;
 }

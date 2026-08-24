@@ -65,6 +65,31 @@ describe("z.input / z.output", () => {
     expect(z.output(s)).toBe(s);
   });
 
+  test("z.output carries checks attached to a pipe", () => {
+    const c = z
+      .codec(z.string(), z.number().int(), { decode: Number, encode: String })
+      .refine((n) => n > 10, { error: "gt10" });
+    const obj = z.object({ list: z.array(c) });
+    const decoded = z.output(obj);
+
+    expect(decoded.parse({ list: [50] })).toEqual({ list: [50] });
+    // The pipe's own check and the one already on its out side both survive, in that order.
+    expect(() => decoded.parse({ list: [5] })).toThrow("gt10");
+    expect(() => decoded.parse({ list: [50.5] })).toThrow();
+    // A pipe's checks run on the decoded value in both directions, so encode enforces them too.
+    expect(() => decoded.encode({ list: [5] })).toThrow("gt10");
+    // Carrying them clones the out side rather than mutating it.
+    expect(c._zod.def.out._zod.def.checks).toHaveLength(1);
+  });
+
+  test("z.input drops a pipe's checks, which constrain a value the input side never produces", () => {
+    const c = z.codec(z.string(), z.number(), { decode: Number, encode: String }).refine((n) => n > 10);
+    expect(z.input(c).parse("5")).toBe("5");
+
+    // Control: a check that isn't attached to a pipe is left alone.
+    expect(() => z.input(z.object({ s: z.string().min(2) })).parse({ s: "a" })).toThrow();
+  });
+
   test("runtime `z.input` agrees with type-level `z.input<T>`", () => {
     const c = z.codec(z.string(), z.bigint(), {
       decode: (s) => BigInt(s),
