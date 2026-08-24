@@ -38,13 +38,13 @@ const BUILT_ENTRY = path.join(__dirname, "node_modules", "zod", "index.js");
  * The failure message prints the measured size, so updating is mechanical.
  */
 const CEILINGS: Record<string, number> = {
-  // Raised from 2813 / 3285 / 4288 by the commit that caused it: threading a `callee` to `Error.captureStackTrace` from every throwing parse entry point costs +13 / +17 / +16, since a bundle that parses at all carries it. Measured 2808 / 3271 / 4301 here; 28 bytes of headroom each. The per-fixture notes below record what each ceiling already carried before this.
-  "zod-mini-boolean": 2836,
+  // raised from 2836 / 3299 / 4374 by the commit that caused it: suppressing v8's stack capture while building an error costs +68 / +68 / +63, and every bundle carries `core.ts`; measured 2875 / 3338 / 4409 plus 28 headroom, and the per-fixture notes below record what each already carried
+  "zod-mini-boolean": 2903,
   // Also carries the code-point string length scan: `.min`/`.max`/`.length` on a string pulls in the surrogate walk.
-  "zod-mini-string": 3299,
+  "zod-mini-string": 3366,
   // Also carries the construction-time discriminator check, which writes a WeakMap entry from `$ZodObject`, so every bundle containing `z.object` pays for it whether or not it builds a discriminated union.
-  // Raised from 4329 by the commit that caused it: declared symbol keys mean `normalizeDef` collects the shape's own symbols and the parse loop walks them, which every bundle containing `z.object` carries. Measured 4346 against a 4300 baseline; 28 bytes of headroom to match the others. Almost none of it is the `Reflect.ownKeys` conversions — reverting all eight of them measures a byte larger.
-  "zod-mini-object": 4374,
+  // Also carries the declared symbol keys from #6448: `normalizeDef` collects the shape's own symbols and the parse loop walks them. Almost none of that is the `Reflect.ownKeys` conversions — reverting all eight of them measures a byte larger.
+  "zod-mini-object": 4437,
 };
 
 /**

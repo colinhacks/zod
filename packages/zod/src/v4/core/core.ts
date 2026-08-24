@@ -18,6 +18,31 @@ export const NEVER: never = /*@__PURE__*/ Object.freeze({
  * synchronously, so reusing one object avoids a per-instance allocation. */
 const _zodDesc: PropertyDescriptor = { value: undefined, enumerable: false };
 
+// null where suppressing the capture would be unrecoverable: `parse()` puts the frames back with `captureStackTrace`, so without it the throw would lose its stack. also latched to null once `stackTraceLimit` proves unassignable, which a realm can do at any point by hardening Error
+let _E: (ErrorConstructor & { stackTraceLimit?: number }) | null = "captureStackTrace" in Error ? Error : null;
+
+// v8 captures a stack trace inside the Error constructor, which dominates a failed parse; costs only the frames, and parse() restores those
+function newError(Definition: new () => any): any {
+  const E = _E;
+  if (E) {
+    const saved = E.stackTraceLimit;
+    if (typeof saved === "number") {
+      try {
+        E.stackTraceLimit = 0;
+      } catch {
+        _E = null;
+        return new Definition();
+      }
+      try {
+        return new Definition();
+      } finally {
+        E.stackTraceLimit = saved;
+      }
+    }
+  }
+  return new Definition();
+}
+
 export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T["_zod"]["def"]>(
   name: string,
   initializer: (inst: T, def: D) => void,
@@ -69,7 +94,7 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
   Object.defineProperty(Definition, "name", { value: name });
 
   function _(this: any, def: D) {
-    const inst = params?.Parent ? new Definition() : this;
+    const inst = params?.Parent ? newError(Definition) : this;
     init(inst, def);
     const deferred = inst._zod.deferred;
     if (deferred) {
