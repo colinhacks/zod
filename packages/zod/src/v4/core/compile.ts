@@ -1047,6 +1047,12 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
 
   const shape = def.shape;
   const keys = Object.keys(shape);
+  const symbolKeys = Object.getOwnPropertySymbols(shape);
+  // a symbol has no source literal, so it is hoisted as a constant; `keys` stays string-only where the emitted code uses `for...in`
+  const allKeys: (string | symbol)[] = symbolKeys.length ? [...keys, ...symbolKeys] : keys;
+  const keyExpr = (k: string | symbol) => (typeof k === "symbol" ? addConstant(ctx, k) : util.esc(k));
+  const propKey = (k: string | symbol) => (typeof k === "symbol" ? `[${keyExpr(k)}]` : util.esc(k));
+  const propShape = shape as Record<string | symbol, SomeType>;
 
   // `__proto__` as an own shape key can't be expressed in an output object literal (the literal form sets the prototype instead of an own property).
   if (keys.includes("__proto__")) {
@@ -1054,14 +1060,15 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
   }
 
   // Map from key to output accessor for that property
-  const propOutputs: Record<string, string> = {};
+  const propOutputs = new Map<string | symbol, string>();
 
   // Validate each property and collect output accessors
-  for (const key of keys) {
-    const propSchema = shape[key]!;
+  for (const key of allKeys) {
+    const propSchema = propShape[key]!;
+    const kx = keyExpr(key);
     // Always cache the property read: the runtime reads input[key] exactly once, so a getter must not be re-read by checks or output assembly.
     const inputVar = newVar(ctx);
-    doc.write(`const ${inputVar} = ${accessor}[${util.esc(key)}];`);
+    doc.write(`const ${inputVar} = ${accessor}[${kx}];`);
 
     if (propSchema._zod.optin !== undefined) {
       // Any optin rung means the key may be omitted. The runtime runs the property anyway and ignores issues only when the key is genuinely absent, which is what makes exactOptional compositional.
@@ -1076,22 +1083,22 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
       if (propSchema._zod.optout === "optional") {
         doc.write(`if (${outputVar} === INVALID) {`);
         doc.indented((d) => {
-          d.write(`if (${util.esc(key)} in ${accessor}) return INVALID;`);
+          d.write(`if (${kx} in ${accessor}) return INVALID;`);
           d.write(`${outputVar} = undefined;`);
         });
         doc.write(`}`);
       } else {
         doc.write(`if (${outputVar} === INVALID) return INVALID;`);
       }
-      propOutputs[key] = outputVar;
+      propOutputs.set(key, outputVar);
     } else {
       if (requiresPresenceCheck(propSchema)) {
-        doc.write(`if (!(${util.esc(key)} in ${accessor})) return INVALID;`);
+        doc.write(`if (!(${kx} in ${accessor})) return INVALID;`);
       }
 
       // Generate check and get output accessor
       const outputAccessor = compileChild(doc, ctx, propSchema, inputVar);
-      propOutputs[key] = outputAccessor;
+      propOutputs.set(key, outputAccessor);
     }
   }
 
@@ -1120,22 +1127,22 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
 
   // Shape keys in declared order, then unknown keys in for...in order. A middle-rung key is included iff present on the input, else iff its output is not undefined.
   const outputVar = newVar(ctx);
-  const hasConditionalKeys = keys.some((k) => mayOutputUndefined(shape[k]!) || dropsWhenAbsent(shape[k]!));
+  const hasConditionalKeys = allKeys.some((k) => mayOutputUndefined(propShape[k]!) || dropsWhenAbsent(propShape[k]!));
 
   if (!hasConditionalKeys) {
-    const propLiterals = keys.map((k) => `${util.esc(k)}: ${propOutputs[k]}`).join(", ");
+    const propLiterals = allKeys.map((k) => `${propKey(k)}: ${propOutputs.get(k)}`).join(", ");
     doc.write(`const ${outputVar} = { ${propLiterals} };`);
   } else {
     doc.write(`const ${outputVar} = {};`);
-    for (const k of keys) {
-      if (dropsWhenAbsent(shape[k]!)) {
-        doc.write(`if (${util.esc(k)} in ${accessor}) ${outputVar}[${util.esc(k)}] = ${propOutputs[k]};`);
-      } else if (mayOutputUndefined(shape[k]!)) {
-        doc.write(
-          `if (${propOutputs[k]} !== undefined || ${util.esc(k)} in ${accessor}) ${outputVar}[${util.esc(k)}] = ${propOutputs[k]};`
-        );
+    for (const k of allKeys) {
+      const kx = keyExpr(k);
+      const out = propOutputs.get(k);
+      if (dropsWhenAbsent(propShape[k]!)) {
+        doc.write(`if (${kx} in ${accessor}) ${outputVar}[${kx}] = ${out};`);
+      } else if (mayOutputUndefined(propShape[k]!)) {
+        doc.write(`if (${out} !== undefined || ${kx} in ${accessor}) ${outputVar}[${kx}] = ${out};`);
       } else {
-        doc.write(`${outputVar}[${util.esc(k)}] = ${propOutputs[k]};`);
+        doc.write(`${outputVar}[${kx}] = ${out};`);
       }
     }
   }

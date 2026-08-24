@@ -650,12 +650,13 @@ export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>):
   const def = mergeDefs(schema._zod.def, {
     get shape() {
       const newShape: Writeable<schemas.$ZodShape> = {};
-      for (const key in mask) {
+      // `for...in` skips symbols, so a symbol in the mask would select nothing
+      for (const key of Reflect.ownKeys(mask)) {
         if (!Object.prototype.hasOwnProperty.call(currDef.shape, key)) {
-          throw new Error(`Unrecognized key: "${key}"`);
+          throw new Error(`Unrecognized key: "${String(key)}"`);
         }
-        if (!mask[key]) continue;
-        assignProp(newShape, key, currDef.shape[key]!);
+        if (!mask[key as string]) continue;
+        assignProp(newShape, key as string, (currDef.shape as any)[key]!);
       }
 
       assignProp(this, "shape", newShape); // self-caching
@@ -679,13 +680,13 @@ export function omit(schema: schemas.$ZodObject, mask: object): any {
   const def = mergeDefs(schema._zod.def, {
     get shape() {
       const newShape: Writeable<schemas.$ZodShape> = { ...schema._zod.def.shape };
-      for (const key in mask) {
+      for (const key of Reflect.ownKeys(mask)) {
         if (!Object.prototype.hasOwnProperty.call(currDef.shape, key)) {
-          throw new Error(`Unrecognized key: "${key}"`);
+          throw new Error(`Unrecognized key: "${String(key)}"`);
         }
         if (!(mask as any)[key]) continue;
 
-        delete newShape[key];
+        delete newShape[key as string];
       }
       assignProp(this, "shape", newShape); // self-caching
       return newShape;
@@ -706,7 +707,7 @@ export function extend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): an
   if (hasChecks) {
     // Only throw if new shape overlaps with existing shape. Use getOwnPropertyDescriptor to check key existence without accessing values
     const existingShape = schema._zod.def.shape;
-    for (const key in shape) {
+    for (const key of Reflect.ownKeys(shape)) {
       if (Object.getOwnPropertyDescriptor(existingShape, key) !== undefined) {
         throw new Error("Cannot overwrite keys on object schemas containing refinements. Use `.safeExtend()` instead.");
       }
@@ -778,28 +779,29 @@ export function partial(
       const shape: Writeable<schemas.$ZodShape> = { ...oldShape };
 
       if (mask) {
-        for (const key in mask) {
+        for (const key of Reflect.ownKeys(mask)) {
           if (!Object.prototype.hasOwnProperty.call(oldShape, key)) {
-            throw new Error(`Unrecognized key: "${key}"`);
+            throw new Error(`Unrecognized key: "${String(key)}"`);
           }
           if (!(mask as any)[key]) continue;
           // if (oldShape[key]!._zod.optin === "optional") continue;
-          shape[key] = Class
+          (shape as any)[key] = Class
             ? new Class({
                 type: "optional",
-                innerType: oldShape[key]!,
+                innerType: (oldShape as any)[key]!,
               })
-            : oldShape[key]!;
+            : (oldShape as any)[key]!;
         }
       } else {
-        for (const key in oldShape) {
+        // the spread copies symbol keys; `for...in` would not reach them
+        for (const key of Reflect.ownKeys(oldShape)) {
           // if (oldShape[key]!._zod.optin === "optional") continue;
-          shape[key] = Class
+          (shape as any)[key] = Class
             ? new Class({
                 type: "optional",
-                innerType: oldShape[key]!,
+                innerType: (oldShape as any)[key]!,
               })
-            : oldShape[key]!;
+            : (oldShape as any)[key]!;
         }
       }
 
@@ -823,23 +825,23 @@ export function required(
       const shape: Writeable<schemas.$ZodShape> = { ...oldShape };
 
       if (mask) {
-        for (const key in mask) {
+        for (const key of Reflect.ownKeys(mask)) {
           if (!Object.prototype.hasOwnProperty.call(shape, key)) {
-            throw new Error(`Unrecognized key: "${key}"`);
+            throw new Error(`Unrecognized key: "${String(key)}"`);
           }
           if (!(mask as any)[key]) continue;
           // overwrite with non-optional
-          shape[key] = new Class({
+          (shape as any)[key] = new Class({
             type: "nonoptional",
-            innerType: oldShape[key]!,
+            innerType: (oldShape as any)[key]!,
           });
         }
       } else {
-        for (const key in oldShape) {
+        for (const key of Reflect.ownKeys(oldShape)) {
           // overwrite with non-optional
-          shape[key] = new Class({
+          (shape as any)[key] = new Class({
             type: "nonoptional",
-            innerType: oldShape[key]!,
+            innerType: (oldShape as any)[key]!,
           });
         }
       }
