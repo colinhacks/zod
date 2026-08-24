@@ -368,7 +368,7 @@ export interface $ZodStringInternals<Input> extends $ZodTypeInternals<string, In
     patterns: Set<RegExp>;
     format: string;
     contentEncoding: string;
-    /** The pattern admits strings the JSON Schema keyword named by `format` forbids, so `toJSONSchema` must not emit that keyword. */
+    /** the pattern admits strings its `format` keyword forbids, so `toJSONSchema` must not emit it */
     laxFormat: boolean;
   }>;
 }
@@ -763,7 +763,7 @@ export const $ZodISODateTime: core.$constructor<$ZodISODateTime> = /*@__PURE__*/
     def.pattern ??= regexes.datetime(def);
     $ZodStringFormat.init(inst, def);
 
-    // These two drop the offset or the seconds RFC 3339 `date-time` requires, so they must not advertise the keyword — on the bag, not the def, since `z.string().check(...)` lands the format on a different schema.
+    // these two drop the offset or seconds `date-time` requires — on the bag not the def, since `z.string().check(...)` lands the format on a different schema
     if (def.local || def.precision === -1) {
       inst._zod.bag.laxFormat = true;
       inst._zod.onattach.push((s) => {

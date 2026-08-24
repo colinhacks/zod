@@ -99,7 +99,7 @@ describe("toJSONSchema", () => {
         "type": "string",
       }
     `);
-    // `format: "date-time"` is RFC 3339, which requires both an offset and seconds. `local` drops the first and `precision: -1` the second, so those two must not advertise it — including when composed onto a string rather than constructed directly.
+    // only shapes keeping both an offset and seconds may advertise `date-time`, composed onto a string as well as constructed
     expect(z.toJSONSchema(z.iso.datetime()).format).toEqual("date-time");
     expect(z.toJSONSchema(z.iso.datetime({ offset: true })).format).toEqual("date-time");
     expect(z.toJSONSchema(z.iso.datetime({ precision: 0 })).format).toEqual("date-time");
@@ -107,7 +107,7 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(z.iso.datetime({ precision: -1 })).format).toEqual(undefined);
     expect(z.toJSONSchema(z.string().check(z.iso.datetime({ local: true }))).format).toEqual(undefined);
     expect(z.toJSONSchema(z.string().check(z.iso.datetime())).format).toEqual("date-time");
-    // The pattern still describes what the schema accepts either way.
+    // the pattern still describes what the schema accepts
     expect(z.toJSONSchema(z.iso.datetime({ local: true })).pattern).toBeDefined();
 
     expect(z.toJSONSchema(z.iso.time())).toMatchInlineSnapshot(`

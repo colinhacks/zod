@@ -830,7 +830,7 @@ test("string format - time", () => {
     type: "string",
     format: "time",
   });
-  // JSON Schema `time` is RFC 3339 full-time, so seconds and an offset are both required.
+  // full-time, so seconds and an offset are both required
   expect(schema.safeParse("14:30:00Z").success).toBe(true);
   expect(schema.safeParse("16:30:00+02:00").success).toBe(true);
   expect(schema.safeParse("16:30:00.123-05:30").success).toBe(true);

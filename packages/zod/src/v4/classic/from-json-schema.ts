@@ -193,7 +193,7 @@ function getTupleRest(restSchema: JSONSchema._JSONSchema | undefined, ctx: Conve
   return convertSchema(restSchema, ctx);
 }
 
-// RFC 3339 full-time, which `z.iso.time()` is not; kept local because the only version that would share logic derives it from `timeSource`, which pins that builder into every bundle (+139 B gzipped on a mini `z.boolean()`).
+// the RFC 3339 full-time keyword, narrower than `z.iso.time()`; local because sharing it via `timeSource` pins that builder into every bundle (+139 B gzipped on a mini `z.boolean()`)
 const fullTime = /^(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/;
 
 function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext): ZodType {
