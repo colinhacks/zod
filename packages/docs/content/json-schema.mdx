@@ -416,6 +416,8 @@ z.guid(); // => { type: "string", format: "uuid" }
 z.url(); // => { type: "string", format: "uri" }
 ```
 
+The `local: true` and `precision: -1` variants of `z.iso.datetime()` fall back to `pattern`, since RFC 3339 `date-time` requires both an offset and seconds.
+
 These schemas are supported via `contentEncoding`:
 
 ```ts

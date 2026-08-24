@@ -825,6 +825,21 @@ test("string format - date-time", () => {
   expect(roundTripped.safeParse("2026-07-29T16:30:00+02:00").success).toBe(true);
 });
 
+test("string format - time", () => {
+  const schema = fromJSONSchema({
+    type: "string",
+    format: "time",
+  });
+  // full-time, so seconds and an offset are both required
+  expect(schema.safeParse("14:30:00Z").success).toBe(true);
+  expect(schema.safeParse("16:30:00+02:00").success).toBe(true);
+  expect(schema.safeParse("16:30:00.123-05:30").success).toBe(true);
+  expect(schema.safeParse("14:30:00").success).toBe(false);
+  expect(schema.safeParse("14:30Z").success).toBe(false);
+  expect(schema.safeParse("16:30:00+0200").success).toBe(false);
+  expect(schema.safeParse("16:30:00+24:00").success).toBe(false);
+});
+
 test("string format - hostname", () => {
   const schema = fromJSONSchema({
     type: "string",
