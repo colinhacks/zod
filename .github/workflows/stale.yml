@@ -10,7 +10,7 @@ jobs:
   auto-close:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/stale@v9               # Close stale issues & PRs :contentReference[oaicite:0]{index=0}
+      - uses: actions/stale@v11 # Close stale issues & PRs
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           stale-issue-label: 'needs-info'     # label you’ll add to trigger closing

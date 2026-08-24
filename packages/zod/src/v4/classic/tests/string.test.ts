@@ -217,9 +217,7 @@ test("base64 validations", () => {
     "?QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // Invalid character '?'
     ".MTIzND2Nzg5MC4=", // Invalid character '.'
     "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo", // Missing padding
-    // Whitespace is not part of canonical base64 (RFC 4648 §3.3) — atob() strips
-    // whitespace internally before validating, so the length check alone would
-    // accept "123 " etc.
+    // Whitespace is not part of canonical base64 (RFC 4648 §3.3) — atob() strips whitespace internally before validating, so the length check alone would accept "123 " etc.
     "123 ", // bypasses length-mod-4 via trailing whitespace
     "SGVsbG8gV29ybGQ= ", // trailing space
     " SGVsbG8gV29ybGQ=", // leading space
@@ -386,6 +384,44 @@ test("url trims whitespace", () => {
   expect(url.parse("https://example.com/path")).toBe("https://example.com/path");
 });
 
+test("url returns the string the parser validated", () => {
+  // The URL parser deletes ASCII tab, LF and CR instead of failing, so `new URL()` reports on a string that is not the one it was given. The host is the consequential case: this validated example.com and used to hand back a URL naming a different host.
+  expect(z.url().parse("https://exa\nmple.com")).toBe("https://example.com");
+  expect(z.url().parse("https://exa\tmple.com")).toBe("https://example.com");
+  expect(z.url().parse("https://exa\rmple.com")).toBe("https://example.com");
+  expect(z.httpUrl().parse("https://exa\nmple.com")).toBe("https://example.com");
+  expect(z.url({ hostname: /^a\.com$/ }).parse("https://a\n.com")).toBe("https://a.com");
+  expect(z.url().parse("https://example.com/a\nb?c=\td#e")).toBe("https://example.com/ab?c=d#e");
+
+  // Nothing that parsed before stops parsing, and normalize still wins where it applies.
+  expect(z.url().parse("https://example.com/path")).toBe("https://example.com/path");
+  expect(z.url({ normalize: true }).parse("https://exa\nmple.com")).toBe("https://example.com/");
+});
+
+test("ipv6 and cidrv6 reject anything outside the address alphabet", () => {
+  // `new URL("http://[...]")` parses an authority rather than an address, so a delimiter re-splits it and the parser validates something else entirely.
+  expect(z.ipv6().safeParse("::@1\\").success).toBe(false); // used to validate against the host 0.0.0.1
+  expect(z.ipv6().safeParse("::]/1").success).toBe(false);
+  expect(z.ipv6().safeParse("@[::1").success).toBe(false);
+  expect(z.cidrv6().safeParse("::@1\\/64").success).toBe(false);
+
+  for (const c of ["\t", "\n", "\r"]) {
+    expect(z.ipv6().safeParse(`2001:db8::${c}1`).success).toBe(false);
+    expect(z.ipv6().safeParse(`::1${c}`).success).toBe(false);
+    expect(z.cidrv6().safeParse(`::1${c}/64`).success).toBe(false);
+  }
+
+  // A rejection has to surface as an issue, not just success: false.
+  const result = z.ipv6().safeParse("::1\n");
+  expect(result.success).toBe(false);
+  expect(result.error!.issues[0]).toMatchObject({ code: "invalid_format", format: "ipv6" });
+
+  expect(z.ipv6().parse("2001:db8::1")).toBe("2001:db8::1");
+  expect(z.ipv6().parse("::ffff:192.0.2.1")).toBe("::ffff:192.0.2.1");
+  expect(z.ipv6().parse("2001:DB8::1")).toBe("2001:DB8::1");
+  expect(z.cidrv6().parse("::ffff:192.0.2.1/96")).toBe("::ffff:192.0.2.1/96");
+});
+
 test("url normalize flag", () => {
   const normalizeUrl = z.url({ normalize: true });
   const preserveUrl = z.url(); // normalize: false/undefined by default
@@ -430,7 +466,7 @@ test("httpurl", () => {
   const httpUrl = z.url({
     protocol: /^https?$/,
     hostname: z.regexes.domain,
-    // /^([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/
+    // /^(?=.{1,253}$)([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/
   });
 
   httpUrl.parse("https://example.com");
@@ -464,6 +500,16 @@ test("httpurl", () => {
   ).toThrow();
   expect(() => httpUrl.parse("http://asdf.c")).toThrow();
   expect(() => httpUrl.parse("mailto:asdf@lckj.com")).toThrow();
+  // total host length over the RFC 1035 limit of 253 chars (built from valid-length labels)
+  const longHost = `${`${"a".repeat(50)}.`.repeat(5)}com`; // 5 * 51 + 3 = 258 chars
+  expect(longHost.length).toBeGreaterThan(253);
+  expect(() => httpUrl.parse(`http://${longHost}`)).toThrow();
+  // TLD over the 63-char label limit
+  expect(() => httpUrl.parse(`http://example.${"a".repeat(64)}`)).toThrow();
+  // a host at exactly the 253-char limit is still accepted, one char more is not
+  const maxHost = `${`${"a".repeat(61)}.`.repeat(4)}aaaaa`; // 4 * 62 + 5 = 253 chars
+  httpUrl.parse(`http://${maxHost}`);
+  expect(() => httpUrl.parse(`http://${maxHost}a`)).toThrow();
   // missing // after protocol
   expect(() => httpUrl.parse("http:example.com")).toThrow();
   expect(() => httpUrl.parse("https:example.com")).toThrow();
@@ -493,6 +539,7 @@ test("url error overrides", () => {
 test("emoji validations", () => {
   const emoji = z.string().emoji();
 
+  emoji.parse("🦰🦱🦲🦳"); // both Extended_Pictographic and Emoji_Component
   emoji.parse("👋👋👋👋");
   emoji.parse("🍺👩‍🚀🫡");
   emoji.parse("💚💙💜💛❤️");
@@ -858,6 +905,47 @@ test("boundary cases with zero length", () => {
   expect(maxZero.parse("")).toEqual("");
   expect(() => maxZero.parse("a")).toThrow();
   expect(() => maxZero.parse("hello")).toThrow();
+});
+
+test("length checks count Unicode code points, not UTF-16 code units", () => {
+  // "\u{1F600}" is one code point but two UTF-16 code units
+  const five = "\u{1F600}\u{1F600}\u{1F600}\u{1F600}\u{1F600}";
+  expect(z.string().max(5).safeParse(five).success).toBe(true);
+  expect(
+    z
+      .string()
+      .max(5)
+      .safeParse(five + "\u{1F600}").success
+  ).toBe(false);
+  expect(z.string().min(5).safeParse(five).success).toBe(true);
+  expect(z.string().min(5).safeParse("\u{1F600}\u{1F600}\u{1F600}\u{1F600}").success).toBe(false);
+  expect(z.string().length(5).safeParse(five).success).toBe(true);
+  expect(z.string().length(1).safeParse("\u{1F600}").success).toBe(true);
+  expect(z.string().nonempty().safeParse("\u{1F600}").success).toBe(true);
+
+  // code points, not graphemes: a combining mark and a ZWJ sequence each stay several
+  expect(z.string().length(2).safeParse("e\u0301").success).toBe(true);
+  expect(z.string().length(3).safeParse("\u{1F9D1}\u200D\u{1F37C}").success).toBe(true);
+
+  // an unpaired surrogate is its own code point
+  expect(z.string().length(1).safeParse("\uD83D").success).toBe(true);
+  expect(z.string().length(2).safeParse("\uDE00\uD83D").success).toBe(true);
+
+  // the reported bound is still the declared one
+  expect(
+    z
+      .string()
+      .max(5)
+      .safeParse(five + "\u{1F600}").error!.issues[0]
+  ).toMatchObject({
+    code: "too_big",
+    maximum: 5,
+    origin: "string",
+  });
+
+  // other lengthables keep counting elements
+  expect(z.array(z.string()).max(2).safeParse(["a", "b", "c"]).success).toBe(false);
+  expect(z.array(z.string()).length(2).safeParse(["\u{1F600}", "\u{1F600}"]).success).toBe(true);
 });
 
 test("trim", () => {

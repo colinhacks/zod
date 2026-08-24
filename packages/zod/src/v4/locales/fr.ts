@@ -17,7 +17,7 @@ const error: () => errors.$ZodErrorMap = () => {
   const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
-    regex: "entrée",
+    regex: "expression régulière",
     email: "adresse e-mail",
     url: "URL",
     emoji: "emoji",
@@ -37,12 +37,14 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "durée ISO",
     ipv4: "adresse IPv4",
     ipv6: "adresse IPv6",
+    mac: "adresse MAC",
     cidrv4: "plage IPv4",
     cidrv6: "plage IPv6",
-    base64: "chaîne encodée en base64",
-    base64url: "chaîne encodée en base64url",
-    json_string: "chaîne JSON",
-    e164: "numéro E.164",
+    base64: "chaîne de caractères encodée en base64",
+    base64url: "chaîne de caractères encodée en base64url",
+    json_string: "chaîne de caractères JSON",
+    e164: "numéro au format E.164",
+    credit_card: "numéro de carte de crédit",
     jwt: "JWT",
     template_literal: "entrée",
   };
@@ -50,7 +52,7 @@ const error: () => errors.$ZodErrorMap = () => {
   const TypeDictionary: {
     [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
   } = {
-    string: "chaîne",
+    string: "chaîne de caractères",
     number: "nombre",
     int: "entier",
     boolean: "booléen",
@@ -64,11 +66,11 @@ const error: () => errors.$ZodErrorMap = () => {
     array: "tableau",
     object: "objet",
     tuple: "tuple",
-    record: "enregistrement",
-    map: "carte",
+    record: "record",
+    map: "map",
     set: "ensemble",
     file: "fichier",
-    nonoptional: "non-optionnel",
+    nonoptional: "non optionnel",
     nan: "NaN",
     function: "fonction",
   };
@@ -80,7 +82,7 @@ const error: () => errors.$ZodErrorMap = () => {
         const receivedType = util.parsedType(issue.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue.expected)) {
-          return `Entrée invalide : instanceof ${issue.expected} attendu, ${received} reçu`;
+          return `Entrée invalide : instance de ${issue.expected} attendu, ${received} reçu`;
         }
         return `Entrée invalide : ${expected} attendu, ${received} reçu`;
       }
@@ -103,10 +105,13 @@ const error: () => errors.$ZodErrorMap = () => {
       }
       case "invalid_format": {
         const _issue = issue as errors.$ZodStringFormatIssues;
-        if (_issue.format === "starts_with") return `Chaîne invalide : doit commencer par "${_issue.prefix}"`;
-        if (_issue.format === "ends_with") return `Chaîne invalide : doit se terminer par "${_issue.suffix}"`;
-        if (_issue.format === "includes") return `Chaîne invalide : doit inclure "${_issue.includes}"`;
-        if (_issue.format === "regex") return `Chaîne invalide : doit correspondre au modèle ${_issue.pattern}`;
+        if (_issue.format === "starts_with")
+          return `Chaîne de caractères invalide : doit commencer par "${_issue.prefix}"`;
+        if (_issue.format === "ends_with")
+          return `Chaîne de caractères invalide : doit se terminer par "${_issue.suffix}"`;
+        if (_issue.format === "includes") return `Chaîne de caractères invalide : doit inclure "${_issue.includes}"`;
+        if (_issue.format === "regex")
+          return `Chaîne de caractères invalide : doit correspondre au motif ${_issue.pattern}`;
         return `${FormatDictionary[_issue.format] ?? issue.format} invalide`;
       }
       case "not_multiple_of":

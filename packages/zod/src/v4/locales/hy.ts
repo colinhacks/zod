@@ -51,6 +51,13 @@ const error: () => errors.$ZodErrorMap = () => {
       },
       verb: "ունենալ",
     },
+    map: {
+      unit: {
+        one: "տարր",
+        many: "տարրեր",
+      },
+      verb: "ունենալ",
+    },
   };
 
   function getSizing(origin: string): ArmenianSizable | null {
@@ -80,12 +87,14 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "ISO տևողություն",
     ipv4: "IPv4 հասցե",
     ipv6: "IPv6 հասցե",
+    mac: "MAC հասցե",
     cidrv4: "IPv4 միջակայք",
     cidrv6: "IPv6 միջակայք",
     base64: "base64 ձևաչափով տող",
     base64url: "base64url ձևաչափով տող",
     json_string: "JSON տող",
     e164: "E.164 համար",
+    credit_card: "կրեդիտ քարտի համար",
     jwt: "JWT",
     template_literal: "մուտք",
   };
