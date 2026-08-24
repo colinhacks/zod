@@ -455,13 +455,15 @@ To allow unqualified (timezone-less) datetimes:
 const schema = z.iso.datetime({ local: true });
 schema.parse("2020-01-01T06:15:01"); // ✅
 schema.parse("2020-01-01T06:15"); // ✅ seconds optional
+schema.parse("2020-01-01T06:15:00Z"); // ✅
+schema.parse("2020-01-01T06:15Z"); // ❌ (a `Z` requires seconds)
 ```
 
-To constrain the allowable time `precision`. By default, seconds are optional and arbitrary sub-second precision is allowed.
+To constrain the allowable time `precision`. By default, seconds are required and sub-second precision is arbitrary. RFC 3339 mandates the seconds wherever a `Z` or an offset is present, so only the unqualified form `local` adds may omit them.
 
 ```ts
 const a = z.iso.datetime();
-a.parse("2020-01-01T06:15Z"); // ✅
+a.parse("2020-01-01T06:15Z"); // ❌ (seconds required)
 a.parse("2020-01-01T06:15:00Z"); // ✅
 a.parse("2020-01-01T06:15:00.123Z"); // ✅
 
@@ -479,6 +481,15 @@ const d = z.iso.datetime({ precision: 3 }); // millisecond precision only
 d.parse("2020-01-01T06:15Z"); // ❌
 d.parse("2020-01-01T06:15:00Z"); // ❌
 d.parse("2020-01-01T06:15:00.123Z"); // ✅
+```
+
+To accept minute precision alongside the rest, union the two — no single `precision` covers both.
+
+```ts
+const mixed = z.union([z.iso.datetime(), z.iso.datetime({ precision: -1 })]);
+mixed.parse("2020-01-01T06:15Z"); // ✅
+mixed.parse("2020-01-01T06:15:00.123Z"); // ✅
+mixed.parse("2020-01-01T06:15"); // ❌ (still qualified-only)
 ```
 
 ### ISO dates
