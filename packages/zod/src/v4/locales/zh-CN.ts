@@ -8,6 +8,7 @@ const error: () => errors.$ZodErrorMap = () => {
     file: { unit: "字节", verb: "包含" },
     array: { unit: "项", verb: "包含" },
     set: { unit: "项", verb: "包含" },
+    map: { unit: "项", verb: "包含" },
   };
 
   function getSizing(origin: string): { unit: string; verb: string } | null {
@@ -37,12 +38,14 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "ISO时长",
     ipv4: "IPv4地址",
     ipv6: "IPv6地址",
+    mac: "MAC地址",
     cidrv4: "IPv4网段",
     cidrv6: "IPv6网段",
     base64: "base64编码字符串",
     base64url: "base64url编码字符串",
     json_string: "JSON字符串",
     e164: "E.164号码",
+    credit_card: "信用卡号",
     jwt: "JWT",
     template_literal: "输入",
   };

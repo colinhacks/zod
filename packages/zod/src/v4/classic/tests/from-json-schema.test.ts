@@ -54,6 +54,33 @@ test("number with constraints", () => {
   expect(() => schema.parse(47)).toThrow(); // not multiple of 5
 });
 
+test("draft-04 boolean exclusive bounds do not emit a redundant inclusive bound", () => {
+  const schema = fromJSONSchema({
+    type: "number",
+    minimum: 5,
+    maximum: 10,
+    exclusiveMinimum: true,
+    exclusiveMaximum: true,
+  });
+  // exclusive on both ends: boundaries rejected, interior accepted
+  expect(() => schema.parse(5)).toThrow();
+  expect(() => schema.parse(10)).toThrow();
+  expect(schema.parse(7)).toBe(7);
+  // the dominated inclusive bound would otherwise report a second, weaker issue alongside the exclusive one
+  expect(schema.safeParse(4).error!.issues).toHaveLength(1);
+  expect(schema.safeParse(11).error!.issues).toHaveLength(1);
+  // the inclusive .min()/.max() must be skipped so only the exclusive checks remain
+  const checks = (schema as any)._zod.def.checks.map((c: any) => [
+    c._zod.def.check,
+    c._zod.def.value,
+    c._zod.def.inclusive,
+  ]);
+  expect(checks).toEqual([
+    ["greater_than", 5, false],
+    ["less_than", 10, false],
+  ]);
+});
+
 test("integer schema", () => {
   const schema = fromJSONSchema({ type: "integer" });
   expect(schema.parse(42)).toBe(42);
@@ -127,9 +154,74 @@ test("tuple with prefixItems (draft-2020-12)", () => {
     type: "array",
     prefixItems: [{ type: "string" }, { type: "number" }],
   });
+  expect(schema.parse([])).toEqual([]);
+  expect(schema.parse(["hello"])).toEqual(["hello"]);
   expect(schema.parse(["hello", 42])).toEqual(["hello", 42]);
-  expect(() => schema.parse(["hello"])).toThrow();
+  // no `items`, so the tail is unconstrained
+  expect(schema.parse(["hello", 42, "extra"])).toEqual(["hello", 42, "extra"]);
+  expect(() => schema.parse([1])).toThrow();
   expect(() => schema.parse(["hello", "world"])).toThrow();
+});
+
+test("tuple with prefixItems and minItems (draft-2020-12)", () => {
+  const partialItems = fromJSONSchema({
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "array",
+    prefixItems: [{ type: "string" }, { type: "number" }],
+    minItems: 1,
+  });
+  expect(() => partialItems.parse([])).toThrow();
+  expect(partialItems.parse(["hello"])).toEqual(["hello"]);
+
+  const allRequired = fromJSONSchema({
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "array",
+    prefixItems: [{ type: "string" }, { type: "number" }],
+    minItems: 2,
+  });
+  expect(() => allRequired.parse(["hello"])).toThrow();
+  expect(allRequired.parse(["hello", 42])).toEqual(["hello", 42]);
+});
+
+test("tuple with prefixItems allows extra items by default (draft-2020-12)", () => {
+  const schema = fromJSONSchema({
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "array",
+    prefixItems: [{ type: "string" }],
+  });
+  expect(schema.parse(["hello", 42, true])).toEqual(["hello", 42, true]);
+});
+
+test("tuple with prefixItems respects items schema (draft-2020-12)", () => {
+  const schema = fromJSONSchema({
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "array",
+    prefixItems: [{ type: "string" }],
+    items: { type: "number" },
+  });
+  expect(schema.parse(["hello", 1, 2])).toEqual(["hello", 1, 2]);
+  expect(() => schema.parse(["hello", 1, "extra"])).toThrow();
+});
+
+test("tuple with prefixItems and items true allows extra items (draft-2020-12)", () => {
+  const schema = fromJSONSchema({
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "array",
+    prefixItems: [{ type: "string" }, { type: "number" }],
+    items: true,
+  });
+  expect(schema.parse(["hello", 42, "extra", true])).toEqual(["hello", 42, "extra", true]);
+});
+
+test("tuple with prefixItems and items false rejects extra items (draft-2020-12)", () => {
+  const schema = fromJSONSchema({
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "array",
+    prefixItems: [{ type: "string" }],
+    items: false,
+  });
+  expect(schema.parse(["hello"])).toEqual(["hello"]);
+  expect(() => schema.parse(["hello", 42])).toThrow();
 });
 
 test("tuple with items array (draft-7)", () => {
@@ -139,8 +231,64 @@ test("tuple with items array (draft-7)", () => {
     items: [{ type: "string" }, { type: "number" }],
     additionalItems: false,
   });
+  expect(schema.parse([])).toEqual([]);
+  expect(schema.parse(["hello"])).toEqual(["hello"]);
   expect(schema.parse(["hello", 42])).toEqual(["hello", 42]);
+  expect(() => schema.parse([1])).toThrow();
+  expect(() => schema.parse(["hello", "world"])).toThrow();
   expect(() => schema.parse(["hello", 42, "extra"])).toThrow();
+});
+
+test("tuple with items array and minItems (draft-7)", () => {
+  const partialItems = fromJSONSchema({
+    $schema: "http://json-schema.org/draft-07/schema#",
+    type: "array",
+    items: [{ type: "string" }, { type: "number" }],
+    additionalItems: false,
+    minItems: 1,
+  });
+  expect(() => partialItems.parse([])).toThrow();
+  expect(partialItems.parse(["hello"])).toEqual(["hello"]);
+
+  const allRequired = fromJSONSchema({
+    $schema: "http://json-schema.org/draft-07/schema#",
+    type: "array",
+    items: [{ type: "string" }, { type: "number" }],
+    additionalItems: false,
+    minItems: 2,
+  });
+  expect(() => allRequired.parse(["hello"])).toThrow();
+  expect(allRequired.parse(["hello", 42])).toEqual(["hello", 42]);
+});
+
+test("tuple with items array allows extra items by default (draft-7)", () => {
+  const schema = fromJSONSchema({
+    $schema: "http://json-schema.org/draft-07/schema#",
+    type: "array",
+    items: [{ type: "string" }],
+  });
+  expect(schema.parse(["hello", 42, true])).toEqual(["hello", 42, true]);
+});
+
+test("tuple with items array and additionalItems true allows extra items (draft-7)", () => {
+  const schema = fromJSONSchema({
+    $schema: "http://json-schema.org/draft-07/schema#",
+    type: "array",
+    items: [{ type: "string" }, { type: "number" }],
+    additionalItems: true,
+  });
+  expect(schema.parse(["hello", 42, "extra", true])).toEqual(["hello", 42, "extra", true]);
+});
+
+test("tuple with items array respects additionalItems schema (draft-7)", () => {
+  const schema = fromJSONSchema({
+    $schema: "http://json-schema.org/draft-07/schema#",
+    type: "array",
+    items: [{ type: "string" }],
+    additionalItems: { type: "number" },
+  });
+  expect(schema.parse(["hello", 1, 2])).toEqual(["hello", 1, 2]);
+  expect(() => schema.parse(["hello", 1, "extra"])).toThrow();
 });
 
 test("enum schema", () => {
@@ -299,6 +447,15 @@ test("local $ref resolution", () => {
   expect(() => schema.parse({})).toThrow();
 });
 
+test("local $ref resolution unescapes JSON Pointer tokens", () => {
+  // `~1` must be decoded before `~0`, so the id "a~1b" survives as itself and not as "a/b".
+  for (const id of ["Shared/User", "My~Model", "a~b/c", "a~1b"]) {
+    const inner = z.object({ name: z.string() }).meta({ id });
+    const schema = fromJSONSchema(z.toJSONSchema(z.object({ inner })));
+    expect(schema.parse({ inner: { name: "John" } })).toEqual({ inner: { name: "John" } });
+  }
+});
+
 test("circular $ref with lazy", () => {
   const schema = fromJSONSchema({
     $defs: {
@@ -336,10 +493,156 @@ test("patternProperties", () => {
   expect(result.S_age).toBe("30");
 });
 
+test("propertyNames with enum does not require keys", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    propertyNames: { enum: ["a", "b"] },
+    additionalProperties: { type: "string" },
+  });
+  expect(schema.parse({ a: "x" })).toEqual({ a: "x" });
+  expect(schema.parse({ b: "y" })).toEqual({ b: "y" });
+  expect(schema.parse({})).toEqual({});
+  expect(() => schema.parse({ c: "z" })).toThrow();
+});
+
+test("propertyNames with enum alongside properties", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    properties: { a: { type: "string" } },
+    propertyNames: { enum: ["a", "b"] },
+    additionalProperties: { type: "string" },
+  });
+  expect(schema.parse({ a: "x" })).toEqual({ a: "x" });
+  expect(schema.parse({})).toEqual({});
+  expect(() => schema.parse({ c: "z" })).toThrow();
+  expect(() => schema.parse({ a: "x", c: "z" })).toThrow();
+});
+
+test("propertyNames with enum still honors required", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    properties: { a: { type: "string" }, b: { type: "string" } },
+    required: ["a"],
+    propertyNames: { enum: ["a", "b"] },
+    additionalProperties: { type: "string" },
+  });
+  expect(schema.parse({ a: "x" })).toEqual({ a: "x" });
+  expect(schema.parse({ a: "x", b: "y" })).toEqual({ a: "x", b: "y" });
+  expect(() => schema.parse({})).toThrow();
+  expect(() => schema.parse({ b: "y" })).toThrow();
+});
+
+test("propertyNames does not apply additionalProperties to declared properties", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    properties: { a: { type: "number" } },
+    propertyNames: { enum: ["a", "b"] },
+    additionalProperties: { type: "string" },
+  });
+  expect(schema.parse({ a: 1 })).toEqual({ a: 1 });
+  expect(schema.parse({ a: 1, b: "x" })).toEqual({ a: 1, b: "x" });
+  expect(() => schema.parse({ b: 1 })).toThrow();
+});
+
+test("propertyNames alongside additionalProperties: false", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    properties: { a: { type: "string" } },
+    propertyNames: { enum: ["a", "b"] },
+    additionalProperties: false,
+  });
+  expect(schema.parse({ a: "x" })).toEqual({ a: "x" });
+  expect(() => schema.parse({ a: "x", b: "y" })).toThrow();
+  expect(() => schema.parse({ c: "z" })).toThrow();
+});
+
+test("propertyNames alongside patternProperties", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    patternProperties: { "^S_": { type: "string" } },
+    propertyNames: { type: "string", pattern: "^S_" },
+  });
+  expect(schema.parse({ S_a: "x" })).toEqual({ S_a: "x" });
+  expect(() => schema.parse({ S_a: 1 })).toThrow();
+  expect(() => schema.parse({ other: "x" })).toThrow();
+});
+
+test("propertyNames rejects keys the object parse would drop or synthesize", () => {
+  const schema = fromJSONSchema({ type: "object", propertyNames: { enum: ["a"] } });
+  // An object parse strips `__proto__`, so the guard has to see the raw input.
+  expect(() => schema.parse(JSON.parse('{"__proto__":1}'))).toThrow();
+
+  // A property `default` adds a key that was never in the instance.
+  const withDefault = fromJSONSchema({
+    type: "object",
+    properties: { AB: { type: "string", default: "x" } },
+    propertyNames: { type: "string", pattern: "^[a-z]+$" },
+  });
+  expect(withDefault.parse({})).toEqual({ AB: "x" });
+});
+
+test("propertyNames subschema without a type still constrains keys", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    propertyNames: { pattern: "^[A-Za-z_][A-Za-z0-9_]*$" },
+  });
+  expect(schema.parse({ valid_key: "x" })).toEqual({ valid_key: "x" });
+  expect(() => schema.parse({ "001 invalid": "x" })).toThrow();
+});
+
+test("boolean propertyNames", () => {
+  expect(() => fromJSONSchema({ type: "object", propertyNames: false }).parse({ a: 1 })).toThrow();
+  expect(fromJSONSchema({ type: "object", propertyNames: false }).parse({})).toEqual({});
+  expect(fromJSONSchema({ type: "object", propertyNames: true }).parse({ anything: 1 })).toEqual({ anything: 1 });
+});
+
+test("propertyNames metadata is not attached where it is inert", () => {
+  // Not an object: nothing enforces it, so it must not be advertised either.
+  expect(z.toJSONSchema(fromJSONSchema({ type: "string", propertyNames: { enum: ["a"] } }))).not.toHaveProperty(
+    "propertyNames"
+  );
+
+  // A $ref target is shared by every reference to it; metadata must not leak onto it.
+  const shared = z.toJSONSchema(
+    fromJSONSchema({
+      $defs: { N: { type: "object", properties: { v: { type: "string" } } } },
+      type: "object",
+      properties: { a: { $ref: "#/$defs/N", propertyNames: { enum: ["v"] } }, b: { $ref: "#/$defs/N" } },
+    })
+  ) as any;
+  expect(shared.properties.b).not.toHaveProperty("propertyNames");
+});
+
+test("propertyNames survives a toJSONSchema round trip", () => {
+  const roundTripped = z.toJSONSchema(
+    fromJSONSchema({
+      type: "object",
+      propertyNames: { enum: ["a", "b"] },
+      additionalProperties: { type: "string" },
+    })
+  ) as Record<string, unknown>;
+  expect(roundTripped.propertyNames).toEqual({ enum: ["a", "b"] });
+  expect(roundTripped.required).toBeUndefined();
+
+  // The key guard is a pipe; neither side may swallow the object it wraps.
+  for (const io of ["input", "output"] as const) {
+    const out = z.toJSONSchema(
+      fromJSONSchema({
+        type: "object",
+        properties: { a: { type: "string" } },
+        propertyNames: { enum: ["a", "b"] },
+        additionalProperties: { type: "string" },
+      }),
+      { io }
+    ) as Record<string, unknown>;
+    expect(out.type).toBe("object");
+    expect(out.properties).toEqual({ a: { type: "string" } });
+    expect(out.propertyNames).toEqual({ enum: ["a", "b"] });
+  }
+});
+
 test("patternProperties with regular properties", () => {
-  // Note: When patternProperties is combined with properties, the intersection
-  // validates all keys against the pattern. This test uses a pattern that
-  // matches the regular property name as well.
+  // Note: When patternProperties is combined with properties, the intersection validates all keys against the pattern. This test uses a pattern that matches the regular property name as well.
   const schema = fromJSONSchema({
     type: "object",
     properties: {
@@ -387,13 +690,55 @@ test("multiple overlapping patternProperties", () => {
   expect(() => schema.parse({ S_N: "ab" })).toThrow(); // too short for ^S_N pattern
 });
 
+test("patternProperties with additionalProperties false", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    patternProperties: {
+      "^S_": { type: "string" },
+    },
+    additionalProperties: false,
+  });
+  expect(schema.parse({ S_name: "ok" })).toEqual({ S_name: "ok" });
+  expect(() => schema.parse({ X_A: false })).toThrow();
+  expect(() => schema.parse({ S_name: 1 })).toThrow();
+});
+
+test("patternProperties and properties with additionalProperties false", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    properties: {
+      name: { type: "string" },
+    },
+    patternProperties: {
+      "^S_": { type: "string" },
+    },
+    additionalProperties: false,
+    required: ["name"],
+  });
+  expect(schema.parse({ name: "ok", S_count: "1" })).toEqual({ name: "ok", S_count: "1" });
+  expect(() => schema.parse({ name: "ok", S_count: 1 })).toThrow();
+  expect(() => schema.parse({ name: "ok", other: "value" })).toThrow();
+});
+
+test("multiple patternProperties with additionalProperties false", () => {
+  const schema = fromJSONSchema({
+    type: "object",
+    patternProperties: {
+      "^S_": { type: "string" },
+      "^N_": { type: "number" },
+    },
+    additionalProperties: false,
+  });
+  expect(schema.parse({ S_a: "a", N_b: 1 })).toEqual({ S_a: "a", N_b: 1 });
+  expect(() => schema.parse({ S_a: "a", N_b: 1, other: "value" })).toThrow();
+});
+
 test("default value", () => {
   const schema = fromJSONSchema({
     type: "string",
     default: "hello",
   });
-  // Default is applied during parsing if value is missing/undefined
-  // This depends on Zod's default behavior
+  // Default is applied during parsing if value is missing/undefined. This depends on Zod's default behavior
   expect(schema.parse("world")).toBe("world");
 });
 
@@ -455,6 +800,53 @@ test("string format - uuid", () => {
   });
   const uuid = "550e8400-e29b-41d4-a716-446655440000";
   expect(schema.parse(uuid)).toBe(uuid);
+});
+
+test("string format - date-time", () => {
+  const schema = fromJSONSchema({
+    type: "string",
+    format: "date-time",
+  });
+  expect(schema.safeParse("2026-07-29T14:30:00Z").success).toBe(true);
+  expect(schema.safeParse("2026-07-29T16:30:00+02:00").success).toBe(true);
+  expect(schema.safeParse("2026-07-29T14:30:00").success).toBe(false);
+  expect(schema.safeParse("2026-07-29T16:30:00+0200").success).toBe(false);
+
+  const zuluOnly = fromJSONSchema({
+    type: "string",
+    format: "date-time",
+    pattern: "Z$",
+  });
+  expect(zuluOnly.safeParse("2026-07-29T14:30:00Z").success).toBe(true);
+  expect(zuluOnly.safeParse("2026-07-29T16:30:00+02:00").success).toBe(false);
+  expect(zuluOnly.safeParse("garbageZ").success).toBe(false);
+
+  const roundTripped = fromJSONSchema(z.toJSONSchema(z.iso.datetime({ offset: true })));
+  expect(roundTripped.safeParse("2026-07-29T16:30:00+02:00").success).toBe(true);
+});
+
+test("string format - time", () => {
+  const schema = fromJSONSchema({
+    type: "string",
+    format: "time",
+  });
+  // full-time, so seconds and an offset are both required
+  expect(schema.safeParse("14:30:00Z").success).toBe(true);
+  expect(schema.safeParse("16:30:00+02:00").success).toBe(true);
+  expect(schema.safeParse("16:30:00.123-05:30").success).toBe(true);
+  expect(schema.safeParse("14:30:00").success).toBe(false);
+  expect(schema.safeParse("14:30Z").success).toBe(false);
+  expect(schema.safeParse("16:30:00+0200").success).toBe(false);
+  expect(schema.safeParse("16:30:00+24:00").success).toBe(false);
+});
+
+test("string format - hostname", () => {
+  const schema = fromJSONSchema({
+    type: "string",
+    format: "hostname",
+  });
+  expect(schema.parse("example.com")).toBe("example.com");
+  expect(() => schema.parse("not a hostname!")).toThrow();
 });
 
 test("exclusiveMinimum and exclusiveMaximum", () => {
@@ -648,8 +1040,7 @@ test("metadata on nested schemas", () => {
   // Verify parent schema has its metadata
   expect(customRegistry.get(parentSchema)?.title).toBe("User");
 
-  // We can't easily access nested schemas directly, but we can verify
-  // the registry is being used correctly by checking a separate schema
+  // We can't easily access nested schemas directly, but we can verify the registry is being used correctly by checking a separate schema
   const simpleSchema = fromJSONSchema(
     {
       type: "string",
@@ -673,8 +1064,7 @@ test("no metadata added when no unrecognized keys", () => {
     { registry: customRegistry }
   );
 
-  // description is handled via .describe(), so it shouldn't be in metadata
-  // All other keys are recognized, so no metadata should be added
+  // description is handled via .describe(), so it shouldn't be in metadata. All other keys are recognized, so no metadata should be added
   expect(customRegistry.get(schema)).toBeUndefined();
 });
 
@@ -892,4 +1282,29 @@ test("Date default is coerced to its JSON string form", () => {
   const date = new Date("2026-01-02T03:04:05.000Z");
   const schema = fromJSONSchema({ type: "string", default: date as any });
   expect(schema.parse(undefined)).toBe(date.toISOString());
+});
+
+// An object literal can't express an own "__proto__" key — `{ __proto__: x }` sets the literal's prototype instead. JSON.parse is both the realistic source of a JSON Schema and the only way to write these cases.
+test("required __proto__ property is represented in the shape but stripped during parsing", () => {
+  const schema = fromJSONSchema(
+    JSON.parse(`{
+      "type": "object",
+      "properties": { "__proto__": { "type": "string", "const": "admin" }, "role": { "type": "string" } },
+      "required": ["__proto__", "role"]
+    }`)
+  );
+
+  expect(Object.prototype.hasOwnProperty.call((schema as z.ZodObject).shape, "__proto__")).toBe(true);
+  expect(schema.parse({ role: "x" })).toEqual({ role: "x" });
+  expect(schema.parse(JSON.parse(`{ "role": "x", "__proto__": "wrong" }`))).toEqual({ role: "x" });
+  expect(schema.parse(JSON.parse(`{ "role": "x", "__proto__": "admin" }`))).toEqual({ role: "x" });
+});
+
+test("__proto__ annotation key reaches the registry", () => {
+  const registry = z.registry<Record<string, unknown>>();
+  const schema = fromJSONSchema(JSON.parse(`{ "type": "string", "__proto__": { "custom": 1 } }`), { registry });
+
+  const meta = registry.get(schema)!;
+  expect(Object.prototype.hasOwnProperty.call(meta, "__proto__")).toBe(true);
+  expect(meta.__proto__).toEqual({ custom: 1 });
 });

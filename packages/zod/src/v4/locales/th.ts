@@ -8,6 +8,7 @@ const error: () => errors.$ZodErrorMap = () => {
     file: { unit: "ไบต์", verb: "ควรมี" },
     array: { unit: "รายการ", verb: "ควรมี" },
     set: { unit: "รายการ", verb: "ควรมี" },
+    map: { unit: "รายการ", verb: "ควรมี" },
   };
 
   function getSizing(origin: string): { unit: string; verb: string } | null {
@@ -37,12 +38,14 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "ช่วงเวลาแบบ ISO",
     ipv4: "ที่อยู่ IPv4",
     ipv6: "ที่อยู่ IPv6",
+    mac: "ที่อยู่ MAC",
     cidrv4: "ช่วง IP แบบ IPv4",
     cidrv6: "ช่วง IP แบบ IPv6",
     base64: "ข้อความแบบ Base64",
     base64url: "ข้อความแบบ Base64 สำหรับ URL",
     json_string: "ข้อความแบบ JSON",
     e164: "เบอร์โทรศัพท์ระหว่างประเทศ (E.164)",
+    credit_card: "หมายเลขบัตรเครดิต",
     jwt: "โทเคน JWT",
     template_literal: "ข้อมูลที่ป้อน",
   };

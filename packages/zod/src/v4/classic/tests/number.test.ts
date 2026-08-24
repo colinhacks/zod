@@ -22,7 +22,7 @@ test("Infinity validation", () => {
         "code": "invalid_type",
         "received": "Infinity",
         "path": [],
-        "message": "Invalid input: expected number, received number"
+        "message": "Invalid input: expected number, received Infinity"
       }
     ]],
       "success": false,
@@ -34,9 +34,9 @@ test("Infinity validation", () => {
       {
         "expected": "number",
         "code": "invalid_type",
-        "received": "Infinity",
+        "received": "-Infinity",
         "path": [],
-        "message": "Invalid input: expected number, received number"
+        "message": "Invalid input: expected number, received -Infinity"
       }
     ]],
       "success": false,
@@ -165,8 +165,7 @@ test(".multipleOf() with negative divisor", () => {
 });
 
 test(".multipleOf() with scientific notation (multi-digit exponents)", () => {
-  // Regression test for https://github.com/colinhacks/zod/pull/5687
-  // The regex was using \d? which only matches single-digit exponents
+  // Regression test for https://github.com/colinhacks/zod/pull/5687 — the regex was using \d? which only matches single-digit exponents
   const schema = z.number().multipleOf(1e-10);
 
   // These should all pass - they are valid multiples of 1e-10
@@ -219,7 +218,7 @@ test(".finite() validation", () => {
         "code": "invalid_type",
         "received": "Infinity",
         "path": [],
-        "message": "Invalid input: expected number, received number"
+        "message": "Invalid input: expected number, received Infinity"
       }
     ]],
       "success": false,
@@ -231,9 +230,9 @@ test(".finite() validation", () => {
       {
         "expected": "number",
         "code": "invalid_type",
-        "received": "Infinity",
+        "received": "-Infinity",
         "path": [],
-        "message": "Invalid input: expected number, received number"
+        "message": "Invalid input: expected number, received -Infinity"
       }
     ]],
       "success": false,
