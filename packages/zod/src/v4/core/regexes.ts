@@ -106,7 +106,7 @@ function anchor(source: string): RegExp {
 
 export const date: RegExp = /*@__PURE__*/ anchor(dateSource);
 
-function timeSource(args: { precision?: number | null | undefined }) {
+function timeSource(args: { precision?: number | null | undefined; seconds?: boolean }) {
   const hhmm = `(?:[01]\\d|2[0-3]):[0-5]\\d`;
   const regex =
     typeof args.precision === "number"
@@ -115,7 +115,9 @@ function timeSource(args: { precision?: number | null | undefined }) {
         : args.precision === 0
           ? `${hhmm}:[0-5]\\d`
           : `${hhmm}:[0-5]\\d\\.\\d{${args.precision}}`
-      : `${hhmm}(?::[0-5]\\d(?:\\.\\d+)?)?`;
+      : args.seconds
+        ? `${hhmm}:[0-5]\\d(?:\\.\\d+)?`
+        : `${hhmm}(?::[0-5]\\d(?:\\.\\d+)?)?`;
   return regex;
 }
 export function time(args: {
@@ -131,11 +133,13 @@ export function datetime(args: {
   offset?: boolean;
   local?: boolean;
 }): RegExp {
-  const time = timeSource({ precision: args.precision });
   const opts = ["Z"];
   // if (args.offset) opts.push(`([+-]\\d{2}:\\d{2})`);
   if (args.offset) opts.push(`([+-](?:[01]\\d|2[0-3]):[0-5]\\d)`);
-  const timeRegex = `${time}(?:${opts.join("|")})${args.local ? "?" : ""}`;
+
+  // RFC 3339 mandates seconds wherever the time carries a `Z` or an offset, so only the unqualified form `local` adds may omit them
+  const qualified = `${timeSource({ precision: args.precision, seconds: true })}(?:${opts.join("|")})`;
+  const timeRegex = args.local ? `${qualified}|${timeSource({ precision: args.precision })}` : qualified;
 
   return new RegExp(`^${dateSource}T(?:${timeRegex})$`);
 }
