@@ -489,6 +489,7 @@ To accept minute precision alongside the rest, union the two — no single `prec
 const mixed = z.union([z.iso.datetime(), z.iso.datetime({ precision: -1 })]);
 mixed.parse("2020-01-01T06:15Z"); // ✅
 mixed.parse("2020-01-01T06:15:00.123Z"); // ✅
+mixed.parse("2020-01-01T06:15"); // ❌ (still qualified-only)
 ```
 
 ### ISO dates
