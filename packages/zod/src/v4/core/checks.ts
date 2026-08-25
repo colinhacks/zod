@@ -392,7 +392,7 @@ export type $ZodBigIntFormats = "int64" | "uint64";
 
 export interface $ZodCheckBigIntFormatDef<Format extends $ZodBigIntFormats = $ZodBigIntFormats> extends $ZodCheckDef {
   check: "bigint_format";
-  format: Format;
+  format: Format | undefined;
 }
 
 export interface $ZodCheckBigIntFormatInternals<Format extends $ZodBigIntFormats = $ZodBigIntFormats>

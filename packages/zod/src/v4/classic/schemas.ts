@@ -1341,13 +1341,15 @@ export const ZodBigIntFormat: core.$constructor<ZodBigIntFormat> = /*@__PURE__*/
 );
 
 // int64
-export function int64(params?: string | core.$ZodBigIntFormatParams): ZodBigIntFormat<"int64"> {
-  return core._int64(ZodBigIntFormat, params) as ZodBigIntFormat<"int64">;
+export interface ZodInt64 extends ZodBigIntFormat<"int64"> {}
+export function int64(params?: string | core.$ZodBigIntFormatParams): ZodInt64 {
+  return core._int64(ZodBigIntFormat, params) as ZodInt64;
 }
 
 // uint64
-export function uint64(params?: string | core.$ZodBigIntFormatParams): ZodBigIntFormat<"uint64"> {
-  return core._uint64(ZodBigIntFormat, params) as ZodBigIntFormat<"uint64">;
+export interface ZodUInt64 extends ZodBigIntFormat<"uint64"> {}
+export function uint64(params?: string | core.$ZodBigIntFormatParams): ZodUInt64 {
+  return core._uint64(ZodBigIntFormat, params) as ZodUInt64;
 }
 
 // symbol
