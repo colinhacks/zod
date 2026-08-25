@@ -146,6 +146,13 @@ export const dateProcessor: Processor<schemas.$ZodDate> = (schema, ctx, json, pa
 export const enumProcessor: Processor<schemas.$ZodEnum> = (schema, _ctx, json, _params) => {
   const def = schema._zod.def as schemas.$ZodEnumDef;
   const values = getEnumValues(def.entries);
+
+  // an empty enum accepts nothing, same as z.never()
+  if (values.length === 0) {
+    json.not = {};
+    return;
+  }
+
   // Number enums can have both string and number values
   if (values.every((v) => typeof v === "number")) json.type = "number";
   if (values.every((v) => typeof v === "string")) json.type = "string";
@@ -154,6 +161,13 @@ export const enumProcessor: Processor<schemas.$ZodEnum> = (schema, _ctx, json, _
 
 export const literalProcessor: Processor<schemas.$ZodLiteral> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodLiteralDef<any>;
+
+  // a literal with no values accepts nothing, same as z.never()
+  if (def.values.length === 0) {
+    json.not = {};
+    return;
+  }
+
   const vals: (string | number | boolean | null)[] = [];
   for (const val of def.values) {
     if (val === undefined) {

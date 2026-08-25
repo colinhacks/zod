@@ -3498,11 +3498,11 @@ export const $ZodEnum: core.$constructor<$ZodEnum> = /*@__PURE__*/ core.$constru
   const valuesSet = new Set<util.Primitive>(values);
   inst._zod.values = valuesSet;
 
+  const patternValues = values.filter((k) => util.propertyKeyTypes.has(typeof k));
+
+  // unmatchable fallback, RE2-safe: an empty alternation would compile to /^()$/, which matches ""
   inst._zod.pattern = new RegExp(
-    `^(${values
-      .filter((k) => util.propertyKeyTypes.has(typeof k))
-      .map((o) => util.escapeRegex(o.toString()))
-      .join("|")})$`
+    patternValues.length ? `^(${patternValues.map((o) => util.escapeRegex(o.toString())).join("|")})$` : "^[^\\s\\S]$"
   );
 
   inst._zod.parse = (payload, _ctx) => {
@@ -3549,17 +3549,17 @@ export const $ZodLiteral: core.$constructor<$ZodLiteral> = /*@__PURE__*/ core.$c
   "$ZodLiteral",
   (inst, def) => {
     $ZodType.init(inst, def);
-    if (def.values.length === 0) {
-      throw new Error("Cannot create literal schema with no valid values");
-    }
 
     const values = new Set<util.Literal>(def.values);
     inst._zod.values = values;
-    inst._zod.pattern = new RegExp(
-      `^(${def.values
 
-        .map((o) => (typeof o === "string" ? util.escapeRegex(o) : o ? util.escapeRegex(o.toString()) : String(o)))
-        .join("|")})$`
+    // unmatchable fallback, RE2-safe: an empty alternation would compile to /^()$/, which matches ""
+    inst._zod.pattern = new RegExp(
+      def.values.length
+        ? `^(${def.values
+            .map((o) => (typeof o === "string" ? util.escapeRegex(o) : o ? util.escapeRegex(o.toString()) : String(o)))
+            .join("|")})$`
+        : "^[^\\s\\S]$"
     );
 
     inst._zod.parse = (payload, _ctx) => {
