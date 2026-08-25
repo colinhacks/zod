@@ -1571,7 +1571,7 @@ export interface ZodObject<
    */
   merge<U extends ZodObject>(other: U): ZodObject<util.Extend<this["shape"], U["shape"]>, U["_zod"]["config"]>;
 
-  // no `Record<Exclude<keyof M, keyof Shape>, never>` guard — it cannot resolve once `Shape` is deferred, so it rejected every chained call; `util.pick` still throws on an unrecognized key
+  // no `Record<Exclude<keyof M, keyof Shape>, never>` guard — no formulation rejects a mixed mask and still accepts a chained generic receiver; an unrecognized key throws when the shape is first read
   pick<M extends util.Mask<keyof Shape>>(
     mask: M
   ): ZodObject<util.Flatten<Pick<this["shape"], Extract<keyof this["shape"], keyof M>>>, this["_zod"]["config"]>;

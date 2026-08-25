@@ -114,7 +114,7 @@ test("pick/omit/required/partial - do not allow unknown keys", () => {
     age: z.number(),
   });
 
-  // mixed valid + invalid keys are caught at runtime only — the mask type cannot reject them once the shape is deferred
+  // mixed valid + invalid keys are caught at runtime only — a mask guard that rejects them cannot also accept a chained generic receiver
   expect(() => schema.pick({ name: true, asdf: true }).safeParse({})).toThrow();
   expect(() => schema.omit({ name: true, asdf: true }).safeParse({})).toThrow();
   expect(() => schema.partial({ name: true, asdf: true }).safeParse({})).toThrow();
