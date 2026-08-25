@@ -21,7 +21,7 @@ const _zodDesc: PropertyDescriptor = { value: undefined, enumerable: false };
 // null where suppressing the capture would be unrecoverable: `parse()` puts the frames back with `captureStackTrace`, so without it the throw would lose its stack. also latched to null once `stackTraceLimit` proves unassignable, which a realm can do at any point by hardening Error
 let _E: (ErrorConstructor & { stackTraceLimit?: number }) | null = "captureStackTrace" in Error ? Error : null;
 
-// v8 captures a stack trace inside the Error constructor, which dominates a failed parse; costs only the frames, and parse() restores those
+// v8 captures a stack trace inside the Error constructor, which dominates a failed parse; costs only the frames, and parse() restores those. the constructor must RUN: Object.create is cheaper and passes instanceof, but Error.isError and util.types.isNativeError check an internal slot
 function newError(Definition: new () => any): any {
   const E = _E;
   if (E) {

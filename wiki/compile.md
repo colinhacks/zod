@@ -112,10 +112,24 @@ Children of the cloned schema are shared by reference with the original. `z.comp
 
 ## Non-goals
 
-- **Two compiled codegens per node (arktype-style `Allows` + `Apply`).** Considered. The runtime-fallback model gets us error parity without the maintenance cost of a parallel error-path codegen. Revisit only if benchmarks show the fallback's failure-path cost matters to a real workload.
+- **Two compiled codegens per node (arktype-style `Allows` + `Apply`).** Declined; see [Why the failure path is not worth compiling](#why-the-failure-path-is-not-worth-compiling). The runtime-fallback model gets us error parity without the maintenance cost of a parallel error-path codegen.
 - **Returning a function instead of a schema.** Considered. Returning a schema preserves chaining and composition, integrates with Standard Schema via the existing `safeParse → _zod.run` path, and lets the fast path be exposed transparently with no parallel API surface.
 - **In-place mutation of the input schema.** Considered. Cloning avoids the mutation-surprise footgun for library code that takes user schemas as inputs.
 - **Public `globalConfig.postProcessor`.** Internal implementation detail. Not documented as part of the public config surface. If multiple consumers ever need to register hooks, this becomes a registry, not a single slot.
+
+## Why the failure path is not worth compiling
+
+An Apply-mode codegen would replace the runtime walk a failed parse falls back to. That walk is 1.4-9.5% of a failing `safeParse`; producing the error is the other 90-99%.
+
+| case | walk | `finalizeIssue` | `new ZodError` | total | walk share |
+| --- | --- | --- | --- | --- | --- |
+| `z.string()` invalid | 13ns | 136ns | 777ns | 926ns | 1.4% |
+| 5-key object, one bad key | 69ns | 198ns | 680ns | 947ns | 7.3% |
+| nested 3-deep | 75ns | 212ns | 2181ns | 2468ns | 3.0% |
+| array of 20, one bad element | 71ns | 174ns | 2242ns | 2487ns | 2.9% |
+| 243-leaf object | 2434ns | 12043ns | 11233ns | 25709ns | 9.5% |
+
+Under 10%, for a second emission mode through every generator and twice the generated code per schema. The lever for failure-path performance is error construction, not the compiler — and past a few issues, resolving their messages costs more than building the error.
 
 ## Runtime islands
 
