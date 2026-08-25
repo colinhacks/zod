@@ -111,6 +111,38 @@ describe("z.input / z.output", () => {
     expect(z.input(c)).toBe(c._zod.def.in);
   });
 
+  test("a wrapper's stored value survives only on the side it belongs to", () => {
+    const c = z.codec(z.string(), z.number(), { decode: Number, encode: String });
+
+    // A default and a catch hold output-side values, so the input projection sheds them.
+    expect(z.input(c.default(7)).parse(undefined)).toBe(undefined);
+    expect(z.input(c.default(7)).parse("1")).toBe("1");
+    expect(() => z.input(c.catch(9)).parse(123 as any)).toThrow();
+    expect(z.input(c.catch(9)).parse("1")).toBe("1");
+    expect(z.output(c.default(7)).parse(undefined)).toBe(7);
+    expect(z.output(c.catch(9)).parse("zz" as any)).toBe(9);
+
+    // A prefault is fed through the schema, so it is input-side and the output projection sheds it.
+    expect(z.input(c.prefault("5")).parse(undefined)).toBe("5");
+    expect(() => z.output(c.prefault("5")).parse(undefined as any)).toThrow();
+    expect(z.output(c.prefault("5")).parse(3)).toBe(3);
+  });
+
+  test("a wrapper over a pipe-free schema keeps both its value and its identity", () => {
+    const d = z.string().default("x");
+    const k = z.string().catch("y");
+    const f = z.string().prefault("z");
+
+    expect(z.input(d)).toBe(d);
+    expect(z.input(d).parse(undefined)).toBe("x");
+    expect(z.input(k)).toBe(k);
+    expect(z.output(f)).toBe(f);
+
+    const obj = z.object({ a: z.string().default("q") });
+    expect(z.input(obj)).toBe(obj);
+    expect(z.input(obj).parse({})).toEqual({ a: "q" });
+  });
+
   test("runtime `z.input` agrees with type-level `z.input<T>`", () => {
     const c = z.codec(z.string(), z.bigint(), {
       decode: (s) => BigInt(s),

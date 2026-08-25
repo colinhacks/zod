@@ -568,3 +568,15 @@ test("z.input resolves past a transform piped into a schema", () => {
   expect(z.input(p).parse("abcde")).toBe("abcde");
   expect(() => z.input(p).parse(1)).toThrow();
 });
+
+test("a wrapper's stored value survives only on the side it belongs to", () => {
+  const c = z.codec(z.string(), z.number(), { decode: Number, encode: String });
+
+  expect(z.input(z._default(c, 7)).parse(undefined)).toBe(undefined);
+  expect(z.output(z._default(c, 7)).parse(undefined)).toBe(7);
+
+  // A wrapper over a pipe-free schema keeps both its value and its identity.
+  const plain = z._default(z.string(), "x");
+  expect(z.input(plain)).toBe(plain);
+  expect(z.input(plain).parse(undefined)).toBe("x");
+});

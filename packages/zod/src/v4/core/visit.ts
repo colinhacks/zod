@@ -14,13 +14,14 @@ type SchemaOfKind<K extends Kind> = [Extract<schemas.$ZodTypes, { _zod: { def: {
   ? AnyZod
   : Extract<schemas.$ZodTypes, { _zod: { def: { type: K } } }>;
 
-export type VisitFn = (node: AnyZod) => AnyZod;
-export type VisitHandlers = { [K in Kind]?: (node: SchemaOfKind<K>) => AnyZod };
+export type VisitFn = (node: AnyZod, rewritten: boolean) => AnyZod;
+export type VisitHandlers = { [K in Kind]?: (node: SchemaOfKind<K>, rewritten: boolean) => AnyZod };
 
 /**
  * @internal Bottom-up rewrite of a schema tree. Unhandled kinds and unchanged branches keep their
  * identity. Returns `$ZodType`: a visitor can swap in a schema of any type, so callers declare
- * their own return type.
+ * their own return type. `rewritten` tells a handler whether the traversal replaced anything
+ * below the node it is looking at.
  */
 export function visit(schema: schemas.SomeType, fn: VisitFn): AnyZod;
 export function visit(schema: schemas.SomeType, handlers: VisitHandlers): AnyZod;
@@ -28,10 +29,12 @@ export function visit(schema: schemas.SomeType, fnOrHandlers: VisitFn | VisitHan
   const fn: VisitFn =
     typeof fnOrHandlers === "function"
       ? fnOrHandlers
-      : (node) => {
+      : (node, rewritten) => {
           // A union of handlers isn't callable with one argument; handler `K` only ever sees kind `K`.
-          const h = (fnOrHandlers as VisitHandlers)[node._zod.def.type] as ((n: AnyZod) => AnyZod) | undefined;
-          return h ? h(node) : node;
+          const h = (fnOrHandlers as VisitHandlers)[node._zod.def.type] as
+            | ((n: AnyZod, rewritten: boolean) => AnyZod)
+            | undefined;
+          return h ? h(node, rewritten) : node;
         };
 
   const cache = new Map<AnyZod, AnyZod | Resolving>();
@@ -47,7 +50,8 @@ export function visit(schema: schemas.SomeType, fnOrHandlers: VisitFn | VisitHan
     }
     if (cached !== undefined) return cached;
     cache.set(s, RESOLVING);
-    const mapped = fn(mapInner(s));
+    const inner = mapInner(s);
+    const mapped = fn(inner, inner !== s);
     cache.set(s, mapped);
     return mapped;
   }
