@@ -15,7 +15,7 @@ export async function getLLMText(page: InferPageType<typeof source>): Promise<st
   // Resolve file path relative to project root to handle ISR correctly
   // During ISR on Vercel, absolutePath might not be correct, so we resolve it ourselves
   // process.cwd() is already packages/docs during build/ISR
-  const relativePath = page.file.path;
+  const relativePath = page.data.info.path;
   const resolvedPath = path.join(process.cwd(), "content", relativePath);
 
   // Try resolved path first, fallback to absolutePath if it doesn't exist
@@ -26,7 +26,7 @@ export async function getLLMText(page: InferPageType<typeof source>): Promise<st
     fileContent = await fs.readFile(filePath);
   } catch {
     // If the resolved path doesn't work, try the absolutePath as fallback
-    filePath = page.data._file.absolutePath;
+    filePath = page.data.info.fullPath;
     fileContent = await fs.readFile(filePath);
   }
 

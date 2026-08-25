@@ -12,10 +12,9 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "paths": {
-      "@/.source": ["./.source/index.ts"],
       "@/*": ["./*"]
     },
     "plugins": [
@@ -25,6 +24,6 @@
     ],
     "types": ["mdx", "node", "react", "react-dom", "@vercel/og"]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "components/if.tsx", "types/**/*.d.ts"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", ".next/dev/types/**/*.ts", "components/if.tsx", "types/**/*.d.ts"],
   "exclude": ["node_modules"]
 }

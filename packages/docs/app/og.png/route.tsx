@@ -3,10 +3,6 @@
 import { ImageResponse } from "next/og";
 // import type { NextRequest } from "next/server";
 
-export const config = {
-  runtime: "edge",
-};
-
 // export const loadImage = (img: string) => {
 //   const p = path.join(process.cwd(), img);
 //   const image = fs.readFileSync(p);

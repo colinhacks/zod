@@ -1,6 +1,6 @@
-import { blogPosts, docs } from "@/.source";
+import { blogPosts, docs } from "@/.source/server";
 import { loader } from "fumadocs-core/source";
-import { createMDXSource } from "fumadocs-mdx";
+import { toFumadocsSource } from "fumadocs-mdx/runtime/server";
 
 // `loader()` also assign a URL to your pages
 // See https://fumadocs.vercel.app/docs/headless/source-api for more info
@@ -12,5 +12,5 @@ export const source = loader({
 // Blog content loader
 export const blog = loader({
   baseUrl: "/blog",
-  source: createMDXSource(blogPosts),
+  source: toFumadocsSource(blogPosts, []),
 });

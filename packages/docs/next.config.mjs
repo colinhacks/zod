@@ -36,6 +36,10 @@ function generateRedirects(idmap, page, origin = "/") {
 /** @type {import('next').NextConfig} */
 const config = {
   reactStrictMode: true,
+  // next 16 narrowed the default allowed qualities to [75]; the logos ask for 100
+  images: {
+    qualities: [75, 100],
+  },
   redirects() {
     const mainPageRedirects = [
       // INTRO

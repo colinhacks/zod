@@ -20,7 +20,7 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
 
   return (
     <>
-      <header className="container px-4">
+      <header className="container mx-auto px-4">
         <div className="mx-auto max-w-3xl py-10 md:py-14">
           {page.data.title ? (
             <>
@@ -46,7 +46,7 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
           </div>
         </div>
       </header>
-      <article className="container px-4">
+      <article className="container mx-auto px-4">
         <div className="mx-auto max-w-3xl flex flex-col py-6 md:py-10">
           <div className="prose prose-lg min-w-0">
             <Mdx components={defaultMdxComponents} />

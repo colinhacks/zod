@@ -7,6 +7,7 @@ import { Callout } from "fumadocs-ui/components/callout";
 import defaultMdxComponents, { createRelativeLink } from "fumadocs-ui/mdx";
 import { DocsBody, DocsPage, DocsTitle } from "fumadocs-ui/page";
 import { notFound } from "next/navigation";
+import type { ComponentProps } from "react";
 
 export const revalidate = 86400;
 export const dynamic = "force-static";
@@ -37,7 +38,7 @@ export default async function Page(props: {
           <div className="flex items-center gap-2">
             <CopyMarkdownButton content={markdownContent} />
             <a
-              href={`https://github.com/colinhacks/zod/edit/main/packages/docs/content/${page.file.path}`}
+              href={`https://github.com/colinhacks/zod/edit/main/packages/docs/content/${page.data.info.path}`}
               target="_blank"
               rel="noreferrer noopener"
               className="inline-flex items-center gap-1.5 px-2 py-1 text-xs text-fd-muted-foreground hover:text-fd-foreground border border-[var(--color-fd-border)] rounded hover:bg-fd-muted/50 transition-colors"
@@ -59,7 +60,8 @@ export default async function Page(props: {
             // this allows you to link to other pages with relative file paths
             a: createRelativeLink(source, page),
             // you can add other MDX components here
-            blockquote: Callout,
+            // the blockquote slot is typed to HTMLQuoteElement, Callout renders a div
+            blockquote: (props) => <Callout {...(props as ComponentProps<typeof Callout>)} />,
             Tabs,
             h1: (props) => <Heading as="h1" {...props} />,
             h2: (props) => <Heading as="h2" {...props} />,

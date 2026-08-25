@@ -5,7 +5,7 @@ import "./global.css";
 import Scroller from "@/components/scroller";
 import { Analytics } from "@vercel/analytics/react";
 import { Banner } from "fumadocs-ui/components/banner";
-import { RootProvider } from "fumadocs-ui/provider";
+import { RootProvider } from "fumadocs-ui/provider/next";
 import { Inter } from "next/font/google";
 import { type ReactNode, Suspense } from "react";
 
