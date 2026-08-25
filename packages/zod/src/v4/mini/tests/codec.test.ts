@@ -558,3 +558,13 @@ test("z.output carries checks attached to a pipe", () => {
   // The input side drops it: the check constrains a value that side never produces.
   expect(z.input(c).parse("5")).toBe("5");
 });
+
+test("z.input resolves past a transform piped into a schema", () => {
+  const p = z.pipe(
+    z.transform((v: unknown) => String(v)),
+    z.string().check(z.minLength(5))
+  );
+
+  expect(z.input(p).parse("abcde")).toBe("abcde");
+  expect(() => z.input(p).parse(1)).toThrow();
+});

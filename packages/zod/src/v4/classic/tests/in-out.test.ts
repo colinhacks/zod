@@ -90,6 +90,27 @@ describe("z.input / z.output", () => {
     expect(() => z.input(z.object({ s: z.string().min(2) })).parse({ s: "a" })).toThrow();
   });
 
+  test("z.input resolves past a preprocess transform, which is not a real input side", () => {
+    const p = z.preprocess((v) => String(v), z.string().min(5));
+    const encoded = z.input(p);
+
+    expect(encoded.parse("abcde")).toBe("abcde");
+    // The bare transform used to come back here: it validated nothing and re-ran the preprocessor.
+    expect(() => encoded.parse(1)).toThrow();
+    expect(() => encoded.parse("abc")).toThrow();
+    // The same resolution the JSON Schema emitter already makes for this schema.
+    expect(z.toJSONSchema(p, { io: "input" })).toMatchObject({ type: "string", minLength: 5 });
+
+    // A check on the pipe itself travels with whichever side wins.
+    const checked = z.preprocess((v) => String(v), z.string()).refine((s) => s.startsWith("ok"));
+    expect(z.input(checked).parse("okay")).toBe("okay");
+    expect(() => z.input(checked).parse("nope")).toThrow();
+
+    // Control: a codec has two real sides, so its input side is still `in`, by identity.
+    const c = z.codec(z.string(), z.number(), { decode: Number, encode: String });
+    expect(z.input(c)).toBe(c._zod.def.in);
+  });
+
   test("runtime `z.input` agrees with type-level `z.input<T>`", () => {
     const c = z.codec(z.string(), z.bigint(), {
       decode: (s) => BigInt(s),

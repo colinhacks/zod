@@ -15,15 +15,25 @@ function withChecks(side: core.$ZodType, checks: core.$ZodTypeDef["checks"]): co
 }
 
 /** See `classic/in-out.ts`. */
+function outSide(def: core.$ZodPipeDef): core.$ZodType {
+  return withChecks(def.out, def.checks);
+}
+
+/** See `classic/in-out.ts`. */
+function inSide(def: core.$ZodPipeDef): core.$ZodType {
+  return def.in._zod.traits.has("$ZodTransform") ? outSide(def) : def.in;
+}
+
+/** See `classic/in-out.ts`. */
 export function input<T extends core.$ZodType>(schema: T): schemas.ZodMiniType<core.input<T>, core.input<T>> {
   return visit(schema, {
-    pipe: (s) => s._zod.def.in,
+    pipe: (s) => inSide(s._zod.def),
   }) as schemas.ZodMiniType<core.input<T>, core.input<T>>;
 }
 
 /** See `classic/in-out.ts`. */
 export function output<T extends core.$ZodType>(schema: T): schemas.ZodMiniType<core.output<T>, core.output<T>> {
   return visit(schema, {
-    pipe: (s) => withChecks(s._zod.def.out, s._zod.def.checks),
+    pipe: (s) => outSide(s._zod.def),
   }) as schemas.ZodMiniType<core.output<T>, core.output<T>>;
 }
