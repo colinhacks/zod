@@ -1,6 +1,6 @@
 ---
 name: triage
-description: Investigate a GitHub issue, pull request, or draft security advisory in colinhacks/zod and write up a durable verdict. Use whenever asked to triage, investigate, review, evaluate, or form an opinion on an issue, PR, or advisory (by number, GHSA id, URL, or "the open PR queue"), and when sweeping many of them in bulk. Covers where write-ups live on disk (.triage/issues/NNNN/, .triage/prs/NNNN/, .triage/advisories/GHSA-xxxx-xxxx-xxxx/), the cheap-disqualifier pass that avoids spinning up a worktree for stale PRs, the worktree checkout procedure for PRs, reproducing a reported vulnerability against main, the results.md format that keeps a 250-PR sweep greppable and resumable, how to report back in chat — the final message is all the user sees, so it leads with a code block showing the problem and a short outline of the fix — and the maintainer-voice comment it drafts whenever the verdict is to close.
+description: Investigate a GitHub issue or pull request in colinhacks/zod and write up a durable verdict. Use whenever asked to triage, investigate, review, evaluate, or form an opinion on an issue or PR (by number, URL, or "the open PR queue"), and when sweeping many of them in bulk. For a draft SECURITY ADVISORY (a GHSA id, the Security tab, a private vulnerability report) use the `security-advisory` skill instead — it shares this file's conventions but its workflow lands the fix before drafting any comment. Covers where write-ups live on disk (.triage/issues/NNNN/, .triage/prs/NNNN/), the cheap-disqualifier pass that avoids spinning up a worktree for stale PRs, the worktree checkout procedure for PRs, the results.md format that keeps a 250-PR sweep greppable and resumable, how to report back in chat — the final message is all the user sees, so it leads with a code block showing the problem and a short outline of the fix — and the maintainer-voice comment it drafts whenever the verdict is to close.
 ---
 
 # Investigating issues and PRs
@@ -82,7 +82,9 @@ investigated: 2026-08-08
 
 Advisory frontmatter swaps `number:` for `ghsa:` and adds `severity_claimed:` (what the reporter asserted) alongside `severity_actual:` (your assessment, or `none`).
 
-Set `status: in-progress` in a stub the moment you start, so a parallel agent or a later session does not duplicate the work. Flip to `done` only when the write-up stands on its own.
+Set `status: in-progress` in a stub the moment you start, so a parallel agent or a later session does not duplicate the work. Flip to `done` before you report back.
+
+**One pass. Finish the ticket.** A maintainer question is never a reason to leave a write-up unfinished — investigate fully, commit to a recommended `verdict`, write every section including `## Proposed comment`, and flip `status: done`. Anything genuinely needing the maintainer goes in `## Open questions` (below) *inside the finished file*, so their answer is a one-line amendment to a complete write-up rather than a second investigation. Never hand back a provisional verdict, a `status: in-progress` file, or a promise to finalize later; never wait on an answer before writing. `verdict: TBD` is not a verdict. The only thing that legitimately blocks `done` is evidence you could not obtain — a PR that will not build, a repro that needs credentials — and that is `needs-author-changes` or `needs-more-reproduction`, which are verdicts, not deferrals.
 
 After the frontmatter, write prose under these headings. Match the density of the existing issue write-ups in `.triage/issues/*/results.md` — they are the house style; skim one before your first write-up.
 
@@ -91,6 +93,25 @@ After the frontmatter, write prose under these headings. Match the density of th
 - `## Analysis` — correctness, edge cases, type-level implications, perf, and whether the tests actually cover the claim.
 - `## Recommendation` — the action to take, and the substance of the reply to post. Do not draft it in maintainer voice unless asked, with one standing exception below.
 - `## Proposed comment` — **required whenever the recommendation is to close the ticket**, in a fenced block, ready to paste. See below.
+- `## Open questions` — **only** for calls that are genuinely the maintainer's: product/API direction, a breaking-change tradeoff, taste, or picking between two contributors' PRs. Omit the heading entirely when there are none, which is the common case. Never park a question here that the code, the tests, `git log`, or an existing write-up answers — that is research you owe, not a decision they owe. See below.
+
+### Writing `## Open questions`
+
+Each question is answerable cold, by someone who has not read the write-up and will not open it. One line for what is at stake, then 2–4 lettered options, each with a one-line consequence, with your recommendation marked and placed first. Write in behavior, not identifiers: "should a schema that declares a field named `__proto__` still reject it?" not "should `handleCatchall` precede the `keySet` check?".
+
+The verdict above already assumes your recommended option. Say which verdict each *other* option would produce, so the maintainer can see the cost of disagreeing without asking you to redo the analysis:
+
+```markdown
+## Open questions
+
+**Q1 — Should `.strict()` reject an own `__proto__` key, or keep silently dropping it?** Runtime breaking change for anyone posting JSON bodies through `.strict()`.
+
+- **(A) Report it — take the PR.** ← recommended. Restores "strict rejects every unknown key". Verdict as written: `merge-with-changes`.
+- (B) Keep dropping it, document the exemption. Zero breakage; the one key an attacker actually sends stays the one key strict does not flag. → `decline`.
+- (C) Report it behind a config flag. No breakage; a permanent knob for a two-line behavior. → `needs-author-changes`.
+```
+
+When the answer arrives, amend the file in place: set the final `verdict`, fold the decision into `## Recommendation`, rewrite `## Proposed comment` to match, and leave the question and its answer recorded so nobody relitigates it. `status` stays `done` throughout — it was never not done.
 
 ### Drafting the close comment
 
@@ -108,7 +129,29 @@ If you want these rejected, use plain `z.number()` and do the coercion at the bo
 
 Note what it does not do: no bullet list of every objection, no apology, no "great question", no asking whether the reporter agrees. Decision, reason, escape hatch, closer.
 
+#### The investigation's depth never sets the comment's length
+
+This is the rule that gets broken, and it gets broken hardest on exactly the tickets where the investigation went deepest. A week of benchmarks, a prior-art trail, a prototype, an ecosystem comparison — all of it feels load-bearing, so it leaks into the reply and the two-or-three-sentence bar quietly becomes five paragraphs. **The evidence you are proudest of is the first thing to cut.** It belongs in `results.md`, which is where a maintainer looks when someone pushes back; the comment is not the place to prove you did the work.
+
+A worked case. A draft advisory reported ReDoS in `z.fromJSONSchema()` — real, reproducible, two sinks, exponential. The investigation ran long: measured timings, prior art in a closed issue and a closed fix PR, a 54MB dependency weighed, a zero-dep detector prototyped and evaluated, Ajv's published security contract pulled in as precedent. The drafted comment carried most of that. What the maintainer actually posted, in full:
+
+```markdown
+Closing this out — declining. `z.fromJSONSchema` is designed to convert arbitrary JSON Schema to a Zod schema, and it up to the user to do their own out of band validation. Thanks for the report.
+```
+
+Three sentences, and **this is what most declining comments should look like.** Read what it drops and adopt each as a rule:
+
+- **No cross-references.** No issue number, no PR number, no prior-art trail — even when a maintainer closed the identical report before. That history justifies the decision to *you*; it does not need to be shown to the reporter.
+- **No numbers, no engineering.** No timings, no dependency sizes, no analysis of what a guard would cost or why the cheap version fails. None of it changes the answer.
+- **No external precedent.** How another library documents the same contract is research that settles your verdict, not material for the reply.
+- **The reason is design intent, asserted — not an argument, defended.** "Is designed to convert arbitrary JSON Schema" states the contract in one clause and stops. A maintainer declares scope; they do not litigate it. Once you find yourself building a case, you have written the wrong document.
+- **No concession and no promise.** Do not offer "you have a fair point about X", and do not commit to a docs change, a new option, or any follow-up. Real follow-ups get filed as their own issue; a decline that promises work is no longer a decline.
+
+Keep only: the decision, one clause of reason, what the user does instead ("their own out of band validation"), and a short closer. When a drafted comment runs past three or four sentences, that is the signal to cut, not to reorganize.
+
 Drafting is not posting. The draft sits in `results.md` and in your chat message; you never send it unless the user explicitly asks in this session. For an advisory the draft is the note to the reporter, and it must not restate an unpatched exploit.
+
+The length rule binds hardest on an advisory decline, which is where it is most often broken: a reporter who filed a real, reproducible defect invites you to walk them through the whole severity argument, and the analysis you just spent hours on is right there. Do not paste it. The reporter needs four things — it is fixed and where, you are not publishing, the one reason that actually decides it, and the offer of credit. Everything else belongs in `results.md`. A decline that runs to six paragraphs is a worse decline, not a more rigorous one.
 
 ## Reporting back
 
@@ -141,12 +184,25 @@ type Out = z.infer<typeof schema>;
 
 **4. The proposed comment, if the verdict is to close.** Repeat the `## Proposed comment` draft in the message, in its own fenced block, so the user can read and paste it without opening the file. Say plainly that you have not posted it.
 
+**5. The open questions, if the write-up has any.** Repeat them from `## Open questions`, options and all, so they are answerable without opening the file. Frame them as what they are — the ticket is triaged and the verdict is recorded; the answer only confirms or redirects it. Never present them as a request for permission to finish, never say the write-up is waiting on them, and never end on "send me your answer and I'll finalize". The work is already done.
+
 Keep the whole thing short — the code block plus a few sentences. The message is a summary that stands alone, not a condensed replay of the write-up, and it is not the place for the investigation narrative, the commands you ran, or the branches you ruled out. Those are what the file is for.
 
 Two adjustments by shape of the task:
 
 - **Nothing reproduced** — an `already-fixed` or `not-a-vulnerability` verdict still gets a code block. Show the reporter's own snippet and the *correct* output it now produces on `main`; that is the evidence, and without it the user just has your word.
 - **A bulk sweep** — one summary table of ticket, verdict, and a one-line reason, and code blocks only for the two or three tickets that genuinely need a decision. Twenty code blocks is the same as none. Every close still gets its drafted comment written into its own `results.md`; the message just says which tickets have one waiting instead of inlining them all.
+- **More than one ticket has a comment to post** — pair each one: the link on its own line, its fenced comment block **directly underneath it**, then the next link. Never collect the links in one place and the comment blocks in another, and never make the user match a block to a link by reading the prose between them. This is how a set of draft advisories is always handed back, since the user posts them one at a time with the link and its text side by side.
+
+  ```markdown
+  ### [GHSA-xxxx-xxxx-xxxx](https://github.com/colinhacks/zod/security/advisories/GHSA-xxxx-xxxx-xxxx) — valid
+
+  <the comment for that advisory, in its own fenced block>
+
+  ### [GHSA-yyyy-yyyy-yyyy](https://github.com/colinhacks/zod/security/advisories/GHSA-yyyy-yyyy-yyyy) — duplicate
+
+  <the comment for that advisory, in its own fenced block>
+  ```
 
 ## Investigating an issue
 
@@ -160,24 +216,11 @@ No worktree — read the code on `main`.
 
 ## Investigating a draft advisory
 
-Draft advisories live in the Security tab, not the issue list, so nothing in `gh issue list` will ever surface them. They are **private** — the report body may contain an unpatched exploit, so never paste it into a public issue, PR, or commit message.
+**Use the `security-advisory` skill instead — invoke it before you start.** Draft advisories live in the Security tab, so nothing in `gh issue list` surfaces them, and the workflow diverges from this one in ways that matter: the report is private in both directions, the burden of proof sits with the reporter, the fix must be **landed before any comment is drafted**, and "real defect" and "publishable vulnerability" are separate calls.
 
-```bash
-gh api repos/colinhacks/zod/security-advisories --paginate \
-  --jq '.[] | select(.state=="triage") | [.ghsa_id, .severity, .summary] | @tsv'
-gh api repos/colinhacks/zod/security-advisories/<GHSA-ID> --jq '.description'   # full report + PoC
-```
+What carries over from this skill: where files live, the `results.md` frontmatter and headings, the close-comment voice, and `## Reporting back`. Advisory write-ups go to `.triage/advisories/<GHSA-ID>/results.md` with `ghsa:` in place of `number:`.
 
-The burden of proof is on the report. Most submissions are automated scanner output or a rediscovery of intended behavior, and a plausible-sounding writeup is not evidence.
-
-1. Read the full `description` and extract the reporter's PoC verbatim into `.triage/advisories/<GHSA-ID>/poc.ts`. Do not clean it up first — a PoC that only works after you fix it is a finding in itself.
-2. Run it against current `main`: `pnpm dev .triage/advisories/<GHSA-ID>/poc.ts`. If it does not reproduce, say so and check whether it ever did (`git log -S`, or test against the version the reporter named).
-3. Decide whether the *reproduced* behavior is actually a vulnerability. The recurring question on this repo is whether the attacker controls the **schema** or only the **input**. A schema is application code — a report that requires an attacker-authored schema is usually `not-a-vulnerability`. Prototype reports specifically: check whether the polluted prototype is the *returned object's own* prototype (contained) or `Object.prototype` itself (real).
-4. Check the cluster before concluding. Many reports describe one underlying defect. `grep -rl '<keyword>' .triage/advisories/*/results.md` and cross-link with `duplicate_of`.
-5. Check for an existing open issue or PR covering the same defect — the `signal-report.md` duplicate-cluster section is the fastest way — and cross-reference it.
-6. Write `.triage/advisories/<GHSA-ID>/results.md`, then report back per `## Reporting back` — the code block there is the PoC reduced to the two or three lines that carry the claim.
-
-Never accept, publish, decline, or comment on an advisory. The write-up is the deliverable; the disposition is Colin's. A verdict that closes the report still gets its drafted note to the reporter, per `## Reporting back` — drafted, never sent.
+Never accept, publish, decline, or comment on an advisory. The write-up and the drafted note are the deliverables; the disposition is Colin's.
 
 ## Investigating a PR
 
