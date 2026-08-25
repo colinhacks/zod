@@ -963,8 +963,8 @@ export function merge<T extends ZodMiniObject, U extends ZodMiniObject>(
   return util.merge(a, b) as any;
 }
 
-// @__NO_SIDE_EFFECTS__
 // the mask constraint is inline rather than `util.Mask<keyof T["shape"]>` — a homomorphic mapped type defers while the shape is generic, then checks normally once it resolves
+// @__NO_SIDE_EFFECTS__
 export function pick<T extends ZodMiniObject, M extends { [K in keyof T["shape"]]?: true }>(
   schema: T,
   mask: M
