@@ -362,6 +362,27 @@ test("catch propagates a back-edge to whatever wraps it", () => {
   expect(checks).toBe(0);
 });
 
+test("a catch that fires does not rescue an issue from outside it", () => {
+  // The callback still runs and still computes its fallback — the inner schema really did fail. What it cannot do is answer for the unrecognized key the pipe forwarded past it, so the parse fails anyway.
+  let fired = 0;
+  const result = z
+    .strictObject({ a: z.string() })
+    .pipe(
+      z
+        .object({ a: z.string() })
+        .refine(() => false)
+        .catch(() => {
+          fired++;
+          return { a: "FALLBACK" };
+        })
+    )
+    .safeParse({ a: "x", extra: 1 });
+
+  expect(fired).toBe(1);
+  expect(result.success).toBe(false);
+  expect(result.error!.issues.map((i) => i.code)).toEqual(["unrecognized_keys"]);
+});
+
 test("direction-aware catch", () => {
   const schema = z.string().catch("fallback");
 
