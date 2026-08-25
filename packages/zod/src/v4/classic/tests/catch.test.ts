@@ -308,6 +308,14 @@ test("catch ctx carries the rest of the payload through", () => {
   expect(seen.aborted).toBe(true);
 });
 
+test("catch does not swallow an issue it did not cause", () => {
+  // A pipe hands its `out` schema the caller's issues array so an unrecognized key can survive to an enclosing intersection. The catch must not read that as its own inner failing.
+  const result = z.strictObject({ a: z.string() }).pipe(z.any().catch("CAUGHT")).safeParse({ a: "x", extra: 1 });
+
+  expect(result.success).toBe(false);
+  expect(result.error!.issues.map((i) => i.code)).toEqual(["unrecognized_keys"]);
+});
+
 test("direction-aware catch", () => {
   const schema = z.string().catch("fallback");
 
