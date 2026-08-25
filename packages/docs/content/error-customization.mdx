@@ -357,6 +357,13 @@ z.config(z.locales.en());
 </Tab>
 </Tabs>
 
+With your own translation function, the `error` param is called during `.parse()`, not when the schema is constructed — a schema defined once picks up the current language on every parse. To translate at render time, translate the issue itself: `code` is the key, and the issue's other properties are the interpolation values.
+
+```ts
+z.string().min(5, { error: (iss) => t("too_short", iss) }); // at parse time
+result.error?.issues.map((iss) => t(iss.code, iss)); // at render time
+```
+
 ### Locales
 
 The following locales are available:
