@@ -253,6 +253,61 @@ test("ctx.input", () => {
   expect(schema.parse(123)).toEqual("123");
 });
 
+test("ctx.value is the input to the catch, not what the inner schema made of it", async () => {
+  const seen: unknown[] = [];
+  const cb = (ctx: z.core.$ZodCatchCtx) => {
+    seen.push(ctx.value, ctx.input);
+    return -1;
+  };
+
+  expect(z.coerce.number().min(10).catch(cb).parse("5")).toBe(-1);
+  expect(
+    await z.coerce
+      .number()
+      .refine(async (n) => n >= 10)
+      .catch(cb)
+      .parseAsync("6")
+  ).toBe(-1);
+  expect(
+    z
+      .string()
+      .transform((s) => s.length)
+      .refine((n) => n > 10)
+      .catch(cb)
+      .parse("abc")
+  ).toBe(-1);
+
+  expect(seen).toEqual(["5", "5", "6", "6", "abc", "abc"]);
+});
+
+test("ctx.issues outlives the callback", () => {
+  let stashed!: z.core.$ZodRawIssue[];
+  z.string()
+    .min(10)
+    .catch((ctx) => {
+      stashed = ctx.issues;
+      return "fallback";
+    })
+    .parse("hi");
+
+  expect(stashed).toHaveLength(1);
+  expect(stashed[0].code).toBe("too_small");
+});
+
+test("catch ctx carries the rest of the payload through", () => {
+  let seen!: z.core.$ZodCatchCtx;
+  z.string()
+    .min(10)
+    .pipe(z.string())
+    .catch((ctx) => {
+      seen = ctx;
+      return "fallback";
+    })
+    .parse("hi");
+
+  expect(seen.aborted).toBe(true);
+});
+
 test("direction-aware catch", () => {
   const schema = z.string().catch("fallback");
 

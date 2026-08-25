@@ -4180,6 +4180,35 @@ export interface $ZodCatch<T extends SomeType = $ZodType> extends $ZodType {
   _zod: $ZodCatchInternals<T>;
 }
 
+function handleCatchResult(
+  payload: ParsePayload,
+  result: ParsePayload,
+  input: unknown,
+  def: $ZodCatchDef,
+  ctx: ParseContextInternal
+) {
+  if (!result.issues.length) {
+    payload.value = result.value;
+    return payload;
+  }
+
+  // `value` and `issues` are pinned rather than left to the spread, because the payload keeps moving around this call: the inner run has already replaced `value` with whatever it coerced or transformed, and the truncation below empties the issues array in place. Everything else on the payload carries through untouched.
+  payload.value = def.catchValue({
+    ...payload,
+    value: input,
+    issues: [...result.issues],
+    error: {
+      issues: result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
+    },
+    input,
+  });
+
+  // Truncate rather than rebind: as a pipe's `out` this shares the caller's array. See handleOptionalResult.
+  payload.issues.length = 0;
+  payload.aborted = false;
+  return payload;
+}
+
 export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$constructor("$ZodCatch", (inst, def) => {
   $ZodType.init(inst, def);
   util.defineLazyInternal(inst, "optin", (zod) =>
@@ -4194,42 +4223,13 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
     }
 
     // Forward direction (decode): apply catch logic
+    const input = payload.value;
     const result = def.innerType._zod.run(payload, ctx);
     if (result instanceof Promise) {
-      return result.then((result) => {
-        payload.value = result.value;
-        if (result.issues.length) {
-          payload.value = def.catchValue({
-            ...payload,
-            error: {
-              issues: result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
-            },
-            input: payload.value,
-          });
-          payload.issues.length = 0;
-          payload.aborted = false;
-        }
-
-        return payload;
-      });
+      return result.then((result) => handleCatchResult(payload, result, input, def, ctx));
     }
 
-    payload.value = result.value;
-    if (result.issues.length) {
-      payload.value = def.catchValue({
-        ...payload,
-        error: {
-          issues: result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
-        },
-        input: payload.value,
-      });
-
-      // Truncate rather than rebind: as a pipe's `out` this shares the caller's array. See handleOptionalResult.
-      payload.issues.length = 0;
-      payload.aborted = false;
-    }
-
-    return payload;
+    return handleCatchResult(payload, result, input, def, ctx);
   };
 });
 
