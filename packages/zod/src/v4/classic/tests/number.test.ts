@@ -22,7 +22,7 @@ test("Infinity validation", () => {
         "code": "invalid_type",
         "received": "Infinity",
         "path": [],
-        "message": "Invalid input: expected number, received number"
+        "message": "Invalid input: expected number, received Infinity"
       }
     ]],
       "success": false,
@@ -34,9 +34,9 @@ test("Infinity validation", () => {
       {
         "expected": "number",
         "code": "invalid_type",
-        "received": "Infinity",
+        "received": "-Infinity",
         "path": [],
-        "message": "Invalid input: expected number, received number"
+        "message": "Invalid input: expected number, received -Infinity"
       }
     ]],
       "success": false,
@@ -137,6 +137,16 @@ test("multipleOf", () => {
   expect(() => schemas.schema7.parse(numbers.number8)).toThrow();
 });
 
+test(".multipleOf() accepts exact decimal multiples", () => {
+  // 2.03 === 29 * 0.07, but the quotient lands 2 ULP below 29, so the old tolerance rejected it while the neighbouring multiples 1.96 and 2.10 passed.
+  const schema = z.number().multipleOf(0.07);
+  expect(schema.safeParse(2.03).success).toBe(true);
+  expect(schema.safeParse(4.06).success).toBe(true);
+  expect(schema.safeParse(8.54).success).toBe(true);
+  // genuine non-multiples must still be rejected
+  expect(schema.safeParse(2.04).success).toBe(false);
+});
+
 test(".multipleOf() with positive divisor", () => {
   const schema = z.number().multipleOf(5);
   expect(schema.parse(15)).toEqual(15);
@@ -154,8 +164,7 @@ test(".multipleOf() with negative divisor", () => {
 });
 
 test(".multipleOf() with scientific notation (multi-digit exponents)", () => {
-  // Regression test for https://github.com/colinhacks/zod/pull/5687
-  // The regex was using \d? which only matches single-digit exponents
+  // Regression test for https://github.com/colinhacks/zod/pull/5687 — the regex was using \d? which only matches single-digit exponents
   const schema = z.number().multipleOf(1e-10);
 
   // These should all pass - they are valid multiples of 1e-10
@@ -208,7 +217,7 @@ test(".finite() validation", () => {
         "code": "invalid_type",
         "received": "Infinity",
         "path": [],
-        "message": "Invalid input: expected number, received number"
+        "message": "Invalid input: expected number, received Infinity"
       }
     ]],
       "success": false,
@@ -220,9 +229,9 @@ test(".finite() validation", () => {
       {
         "expected": "number",
         "code": "invalid_type",
-        "received": "Infinity",
+        "received": "-Infinity",
         "path": [],
-        "message": "Invalid input: expected number, received number"
+        "message": "Invalid input: expected number, received -Infinity"
       }
     ]],
       "success": false,

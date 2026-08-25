@@ -135,8 +135,7 @@ test("pick and omit with getter", () => {
   }
   expectTypeOf<Category>().toEqualTypeOf<_Category>();
 
-  // Shape should not surface `readonly` modifiers from getter-defined keys.
-  // object/strictObject/looseObject all pass shape through util.Writeable<T>.
+  // Shape should not surface `readonly` modifiers from getter-defined keys. object/strictObject/looseObject all pass shape through util.Writeable<T>.
   type Shape = (typeof Category)["shape"];
   expectTypeOf<Shape>().toEqualTypeOf<{ name: z.ZodString; subcategories: z.ZodArray<typeof Category> }>();
 
@@ -628,4 +627,36 @@ test("recursive type with `id` meta", () => {
       ],
     },
   });
+});
+
+test("mutual recursion through discriminatedUnion getter", () => {
+  const variantA = z.object({
+    kind: z.literal("a"),
+    get child() {
+      return tree.optional();
+    },
+  });
+
+  const variantB = z.object({
+    kind: z.literal("b"),
+    get sibling() {
+      return tree.optional();
+    },
+  });
+
+  const tree = z.discriminatedUnion("kind", [variantA, variantB]);
+
+  type _Tree = { kind: "a"; child?: _Tree | undefined } | { kind: "b"; sibling?: _Tree | undefined };
+
+  const treeUnion = z.union([variantA, variantB]);
+
+  expectTypeOf<z.input<typeof tree>>().toEqualTypeOf<_Tree>();
+  expectTypeOf<z.input<typeof tree>>().not.toBeAny();
+  expectTypeOf<z.input<typeof tree>>().toEqualTypeOf<z.input<typeof treeUnion>>();
+
+  expect(tree.parse({ kind: "a", child: { kind: "b", sibling: { kind: "a" } } })).toEqual({
+    kind: "a",
+    child: { kind: "b", sibling: { kind: "a" } },
+  });
+  expect(() => tree.parse({ kind: "c" })).toThrow();
 });

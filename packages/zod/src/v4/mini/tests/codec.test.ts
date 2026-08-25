@@ -103,7 +103,7 @@ test("safe codec operations", () => {
           "message": "Invalid ISO datetime",
           "origin": "string",
           "path": [],
-          "pattern": "/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/",
+          "pattern": "/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$/",
         },
       ]
     `);
@@ -246,6 +246,7 @@ test("nested codec with object containing codec property", () => {
   `);
 
   // Test refinements at all levels
+
   // String validation (empty waypoint name)
   const emptyNameResult = z.safeDecode(waypointSchema, {
     name: "",
@@ -545,4 +546,15 @@ test("invertCodec", () => {
 
   const doubleInverted = z.invertCodec(z.invertCodec(isoDateCodec));
   expect(z.decode(doubleInverted, "2024-01-15T10:30:00.000Z")).toBeInstanceOf(Date);
+});
+
+test("z.output carries checks attached to a pipe", () => {
+  const c = z
+    .codec(z.string(), z.number(), { decode: Number, encode: String })
+    .check(z.refine((n) => n > 10, { error: "gt10" }));
+
+  expect(z.output(c).parse(50)).toBe(50);
+  expect(() => z.output(c).parse(5)).toThrow("gt10");
+  // The input side drops it: the check constrains a value that side never produces.
+  expect(z.input(c).parse("5")).toBe("5");
 });

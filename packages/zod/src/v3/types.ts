@@ -619,7 +619,7 @@ const emailRegex = /^(?!\.)(?!.*\.\.)([A-Z0-9_'+\-\.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z
 //   /^[a-z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-z0-9-]+(?:\.[a-z0-9\-]+)*$/i;
 
 // from https://thekevinscott.com/emojis-in-javascript/#writing-a-regular-expression
-const _emojiRegex = `^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$`;
+const _emojiRegex = `^[\\p{Extended_Pictographic}\\p{Emoji_Component}]+$`;
 let emojiRegex: RegExp;
 
 // faster, simpler, safer
@@ -3249,7 +3249,9 @@ function mergeValues(a: any, b: any): { valid: true; data: any } | { valid: fals
     const sharedKeys = util.objectKeys(a).filter((key) => bKeys.indexOf(key) !== -1);
 
     const newObj: any = { ...a, ...b };
+    if (Object.prototype.hasOwnProperty.call(newObj, "__proto__")) delete newObj.__proto__;
     for (const key of sharedKeys) {
+      if (key === "__proto__") continue;
       const sharedValue = mergeValues(a[key], b[key]);
       if (!sharedValue.valid) {
         return { valid: false };
@@ -3862,8 +3864,7 @@ export class ZodFunction<Args extends ZodTuple<any, any>, Returns extends ZodTyp
     const fn = ctx.data;
 
     if (this._def.returns instanceof ZodPromise) {
-      // Would love a way to avoid disabling this rule, but we need
-      // an alias (using an arrow function was what caused 2651).
+      // Would love a way to avoid disabling this rule, but we need an alias (using an arrow function was what caused 2651).
       // eslint-disable-next-line @typescript-eslint/no-this-alias
       const me = this;
       return OK(async function (this: any, ...args: any[]) {
@@ -3882,8 +3883,7 @@ export class ZodFunction<Args extends ZodTuple<any, any>, Returns extends ZodTyp
         return parsedReturns;
       });
     } else {
-      // Would love a way to avoid disabling this rule, but we need
-      // an alias (using an arrow function was what caused 2651).
+      // Would love a way to avoid disabling this rule, but we need an alias (using an arrow function was what caused 2651).
       // eslint-disable-next-line @typescript-eslint/no-this-alias
       const me = this;
       return OK(function (this: any, ...args: any[]) {

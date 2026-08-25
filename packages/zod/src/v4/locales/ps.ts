@@ -8,6 +8,7 @@ const error: () => errors.$ZodErrorMap = () => {
     file: { unit: "بایټس", verb: "ولري" },
     array: { unit: "توکي", verb: "ولري" },
     set: { unit: "توکي", verb: "ولري" },
+    map: { unit: "توکي", verb: "ولري" },
   };
 
   function getSizing(origin: string): { unit: string; verb: string } | null {
@@ -37,12 +38,14 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "موده",
     ipv4: "د IPv4 پته",
     ipv6: "د IPv6 پته",
+    mac: "د MAC پته",
     cidrv4: "د IPv4 ساحه",
     cidrv6: "د IPv6 ساحه",
     base64: "base64-encoded متن",
     base64url: "base64url-encoded متن",
     json_string: "JSON متن",
     e164: "د E.164 شمېره",
+    credit_card: "د کریډیټ کارت شمیره",
     jwt: "JWT",
     template_literal: "ورودي",
   };
