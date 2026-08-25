@@ -316,6 +316,16 @@ test("catch does not swallow an issue it did not cause", () => {
   expect(result.error!.issues.map((i) => i.code)).toEqual(["unrecognized_keys"]);
 });
 
+test("catch does not break intersection reconciliation", () => {
+  // Forwarding the unrecognized key is what lets the intersection reconcile it. A catch that fired on it substituted its fallback into one side, and the merge threw out of safeParse.
+  const schema = z.intersection(
+    z.strictObject({ a: z.string() }).pipe(z.any().catch("CAUGHT")),
+    z.strictObject({ b: z.string() })
+  );
+
+  expect(schema.parse({ a: "x", b: "y" })).toEqual({ a: "x", b: "y" });
+});
+
 test("direction-aware catch", () => {
   const schema = z.string().catch("fallback");
 
