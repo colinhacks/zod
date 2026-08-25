@@ -244,6 +244,7 @@ test("z.pick/omit/partial/required - do not allow unknown keys", () => {
   expect(() => z.parse(z.omit(schema, { name: true, asdf: true }), {})).toThrow();
   expect(() => z.parse(z.partial(schema, { name: true, asdf: true }), {})).toThrow();
   expect(() => z.parse(z.required(schema, { name: true, asdf: true }), {})).toThrow();
+  expect(() => z.parse(z.exactPartial(schema, { name: true, asdf: true }), {})).toThrow();
 
   // Only invalid keys
   // @ts-expect-error
@@ -285,4 +286,14 @@ test("z.catchall", () => {
   });
 
   expect(() => schema.parse({ name: "john", age: 30 })).toThrow();
+});
+
+// the mask helpers take the schema as an argument, so `T["shape"]` was already deferred and an excess-key guard rejected every generic receiver
+test("mask helpers keep the shape through a generic wrapper", () => {
+  const src = z.object({ a: z.string(), b: z.number() });
+  const pick = <T extends z.ZodMiniObject>(s: T) => z.pick(s, { a: true });
+  const chained = <T extends z.ZodMiniObject>(s: T) => z.pick(z.partial(s), { a: true });
+
+  expectTypeOf<z.infer<ReturnType<typeof pick<typeof src>>>>().toEqualTypeOf<{ a: string }>();
+  expectTypeOf<z.infer<ReturnType<typeof chained<typeof src>>>>().toEqualTypeOf<{ a?: string | undefined }>();
 });
