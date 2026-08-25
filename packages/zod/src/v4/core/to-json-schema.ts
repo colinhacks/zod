@@ -140,6 +140,8 @@ export interface ToJSONSchemaContext {
   sharedEmitDoneFor?: ToJSONSchemaContext["external"];
   cycles: "ref" | "throw";
   reused: "ref" | "inline";
+  /** The `allOf` array of each intersection encountered during traversal, innermost first. `finalize` folds every emitted object holding one; see `foldIntersection`. */
+  intersections: JSONSchema.BaseSchema[][];
   external?:
     | {
         registry: $ZodRegistry<{ id?: string | undefined }>;
@@ -177,6 +179,7 @@ export function initializeContext(params: JSONSchemaGeneratorParams): ToJSONSche
     sharedEmitDoneFor: undefined,
     cycles: params?.cycles ?? "ref",
     reused: params?.reused ?? "inline",
+    intersections: [],
     external: params?.external ?? undefined,
   };
 }
@@ -456,6 +459,107 @@ function compactTypeUnion(schema: JSONSchema.BaseSchema): void {
   schema.type = types.length === 1 ? types[0] : types;
 }
 
+/** Keywords `foldIntersection` knows how to combine. Anything else — `$ref`, `patternProperties`,
+ * an annotation like `description` — makes a member unfoldable, so a constraint this does not
+ * understand leaves the `allOf` alone instead of being silently dropped or misattributed. */
+const FOLDABLE_KEYS = new Set(["type", "properties", "required", "additionalProperties"]);
+const UNION_KEYS = ["oneOf", "anyOf"] as const;
+
+/** A member's constraint on a key it does not declare itself. A `catchall` states one; `false`, an absent `additionalProperties`, and the empty schema a loose object emits state nothing. */
+function undeclaredConstraint(member: JSONSchema.ObjectSchema): JSONSchema.BaseSchema | null {
+  const extra = member.additionalProperties;
+  if (extra === undefined || extra === false || typeof extra !== "object" || extra === null) return null;
+  return Object.keys(extra).length ? (extra as JSONSchema.BaseSchema) : null;
+}
+
+/** Combines object members into the single object they describe together, or returns `null` if any of them carries a keyword outside {@link FOLDABLE_KEYS}. */
+function foldObjects(members: JSONSchema._JSONSchema[]): JSONSchema.ObjectSchema | null {
+  const objects: JSONSchema.ObjectSchema[] = [];
+  for (const member of members) {
+    // A boolean subschema is legal JSON Schema and carries no keywords to fold.
+    if (typeof member !== "object" || member.type !== "object") return null;
+    for (const key in member) {
+      if (!FOLDABLE_KEYS.has(key)) return null;
+    }
+    objects.push(member as JSONSchema.ObjectSchema);
+  }
+
+  const properties: Record<string, JSONSchema._JSONSchema> = {};
+  const required = new Set<string>();
+  for (const object of objects) {
+    for (const key in object.properties) {
+      // `in` would report a `__proto__` key as already present via the prototype chain and skip it.
+      if (Object.prototype.hasOwnProperty.call(properties, key)) continue;
+      // Every member constrains this key: the ones that declare it say how, and a `catchall` member constrains it too even though it does not name it. The key has to satisfy all of them, which is the same intersection one level down.
+      const parts: JSONSchema._JSONSchema[] = [];
+      for (const other of objects) {
+        const part = other.properties?.[key] ?? undeclaredConstraint(other);
+        if (part === null || part === undefined) continue;
+        if (!parts.some((seen) => JSON.stringify(seen) === JSON.stringify(part))) parts.push(part);
+      }
+      const merged =
+        parts.length === 1
+          ? parts[0]!
+          : (foldObjects(parts) ?? ({ allOf: parts as JSONSchema.BaseSchema[] } as JSONSchema.BaseSchema));
+      assignProp(properties, key, merged);
+    }
+    for (const key of object.required ?? []) required.add(key);
+  }
+
+  const folded: JSONSchema.ObjectSchema = { type: "object", properties };
+  if (required.size) folded.required = [...required];
+  // A key no member declares is rejected only when every member rejects it, so the fold is closed only when every member is. Otherwise it carries whatever the `catchall` members demand of such a key.
+  if (objects.every((object) => object.additionalProperties === false)) {
+    folded.additionalProperties = false;
+  } else {
+    const constraints: JSONSchema.BaseSchema[] = [];
+    for (const object of objects) {
+      const constraint = undeclaredConstraint(object);
+      if (constraint && !constraints.some((seen) => JSON.stringify(seen) === JSON.stringify(constraint)))
+        constraints.push(constraint);
+    }
+    if (constraints.length === 1) folded.additionalProperties = constraints[0]!;
+    else if (constraints.length > 1) folded.additionalProperties = { allOf: constraints };
+  }
+  return folded;
+}
+
+/** `additionalProperties` in an `allOf` member sees only that member's own `properties`, so two
+ * closed object members reject each other's keys and the schema validates nothing. Zod's parser
+ * pools the key sets instead — `handleIntersectionResults` reports a key as unrecognized only when
+ * *every* side rejects it — so the emitted schema has to pool them too, and folding the members
+ * into one object is the encoding that says so on every target.
+ *
+ * This runs from `finalize`, after `extractDefs`, which is what keeps it clear of the `$ref`
+ * machinery: a member extracted into `$defs` is already a `$ref` by now and declines to fold, so it
+ * keeps its reference and its own closedness rather than being inlined as a stale copy. */
+function foldIntersection(json: JSONSchema.BaseSchema): void {
+  const allOf = json.allOf;
+  if (!Array.isArray(allOf) || allOf.length < 2) return;
+  // An `override` runs before this pass and may have written object keywords onto the intersection itself. Those are deliberate, so decline rather than overwrite them.
+  for (const key of FOLDABLE_KEYS) if (key in json) return;
+
+  // An intersection distributes over a union: `A & (X | Y)` is `(A & X) | (A & Y)`. Only the first union is distributed over; a second one stays among the members every branch folds against, where it fails the object check and declines the whole intersection rather than multiplying out.
+  const unions = allOf.filter((m) => UNION_KEYS.some((k) => Array.isArray(m[k])));
+
+  let folded: JSONSchema.BaseSchema | null = null;
+  if (!unions.length) {
+    folded = foldObjects(allOf);
+  } else {
+    const union = unions[0]!;
+    const keyword = UNION_KEYS.find((k) => Array.isArray(union[k]))!;
+    if (Object.keys(union).length !== 1) return;
+    const rest = allOf.filter((m) => m !== union);
+    const branches = (union[keyword] as JSONSchema._JSONSchema[]).map((branch) => foldObjects([...rest, branch]));
+    if (branches.some((b) => !b)) return;
+    folded = { [keyword]: branches } as JSONSchema.BaseSchema;
+  }
+  if (!folded) return;
+
+  delete json.allOf;
+  assignProps(json, folded);
+}
+
 export function finalize<T extends schemas.$ZodType>(
   ctx: ToJSONSchemaContext,
   schema: T
@@ -553,6 +657,23 @@ export function finalize<T extends schemas.$ZodType>(
     if (ctx.target !== "openapi-3.0") {
       for (const entry of ctx.seen.entries()) {
         compactTypeUnion(entry[1].def ?? entry[1].schema);
+      }
+    }
+
+    // After flattening, every member that was extracted is a `$ref`, so the fold sees the final shape. A schema that inherits an intersection — through `z.lazy`, or any `ref` chain — holds the same `allOf` array, so fold by array identity to catch every copy.
+    if (ctx.intersections.length) {
+      const carriers = new Map<JSONSchema.BaseSchema[], JSONSchema.BaseSchema[]>();
+      for (const seen of ctx.seen.values()) {
+        for (const json of [seen.schema, seen.def]) {
+          const allOf = json?.allOf as JSONSchema.BaseSchema[] | undefined;
+          if (!Array.isArray(allOf)) continue;
+          const existing = carriers.get(allOf);
+          if (existing) existing.push(json!);
+          else carriers.set(allOf, [json!]);
+        }
+      }
+      for (const allOf of ctx.intersections) {
+        for (const json of carriers.get(allOf) ?? []) foldIntersection(json);
       }
     }
   }

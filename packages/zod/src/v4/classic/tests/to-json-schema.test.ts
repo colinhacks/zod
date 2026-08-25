@@ -1052,32 +1052,20 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "allOf": [
-          {
-            "additionalProperties": false,
-            "properties": {
-              "name": {
-                "type": "string",
-              },
-            },
-            "required": [
-              "name",
-            ],
-            "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "age": {
+            "type": "number",
           },
-          {
-            "additionalProperties": false,
-            "properties": {
-              "age": {
-                "type": "number",
-              },
-            },
-            "required": [
-              "age",
-            ],
-            "type": "object",
+          "name": {
+            "type": "string",
           },
+        },
+        "required": [
+          "name",
+          "age",
         ],
+        "type": "object",
       }
     `);
   });
@@ -2975,29 +2963,38 @@ test("basic registry", () => {
 });
 
 test("large registry converts in linear time", () => {
-  const registry = z.registry<{ id: string }>();
   const count = 2000;
-  for (let i = 0; i < count; i++) {
-    registry.add(
-      z.object({ id: z.string(), name: z.string(), count: z.number(), nested: z.object({ a: z.boolean() }) }),
-      { id: `Type${i}` }
-    );
-  }
+  const convert = (withIntersection: boolean) => {
+    const registry = z.registry<{ id: string }>();
+    for (let i = 0; i < count; i++) {
+      registry.add(
+        z.object({ id: z.string(), name: z.string(), count: z.number(), nested: z.object({ a: z.boolean() }) }),
+        { id: `Type${i}` }
+      );
+    }
+    if (withIntersection) registry.add(z.object({ a: z.string() }).and(z.object({ b: z.string() })), { id: "Inter" });
 
-  const start = performance.now();
-  const { schemas } = z.toJSONSchema(registry, { uri: (id) => `https://example.com/${id}.json` });
-  const elapsed = performance.now() - start;
+    const start = performance.now();
+    const { schemas } = z.toJSONSchema(registry, { uri: (id) => `https://example.com/${id}.json` });
+    return { schemas, elapsed: performance.now() - start };
+  };
 
-  expect(Object.keys(schemas)).toHaveLength(count);
-  expect(schemas.Type0).toMatchObject({
+  const plain = convert(false);
+  expect(Object.keys(plain.schemas)).toHaveLength(count);
+  expect(plain.schemas.Type0).toMatchObject({
     $id: "https://example.com/Type0.json",
     type: "object",
     properties: { nested: { type: "object" } },
   });
-  expect(schemas[`Type${count - 1}`]!.$id).toBe(`https://example.com/Type${count - 1}.json`);
+  expect(plain.schemas[`Type${count - 1}`]!.$id).toBe(`https://example.com/Type${count - 1}.json`);
 
   // The whole-map passes in extractDefs/finalize used to re-run once per registered schema, which made this quadratic: ~9s of CPU at this size before the passes were hoisted, ~50ms after.
-  expect(elapsed).toBeLessThan(5000);
+  expect(plain.elapsed).toBeLessThan(5000);
+
+  // The intersection fold walks the whole map as well, so it has to run inside the same guard. Hoisting it back out costs ~10x at this size. Comparing the two conversions rather than asserting a fixed budget keeps this independent of how fast the machine is.
+  const folded = convert(true);
+  expect(folded.schemas.Inter).toMatchObject({ type: "object", properties: { a: {}, b: {} } });
+  expect(folded.elapsed).toBeLessThan(plain.elapsed * 4 + 100);
 });
 
 test("registry extracts unregistered subschemas into __shared", () => {
@@ -3624,45 +3621,25 @@ test("flatten simple intersections", () => {
   expect(result).toMatchInlineSnapshot(`
     {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "allOf": [
-        {
-          "additionalProperties": false,
-          "properties": {
-            "testNum": {
-              "type": "number",
-            },
-          },
-          "required": [
-            "testNum",
-          ],
-          "type": "object",
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "testStr": {
-              "type": "string",
-            },
-          },
-          "required": [
-            "testStr",
-          ],
-          "type": "object",
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "testBool": {
-              "type": "boolean",
-            },
-          },
-          "required": [
-            "testBool",
-          ],
-          "type": "object",
-        },
-      ],
+      "additionalProperties": false,
       "description": "123",
+      "properties": {
+        "testBool": {
+          "type": "boolean",
+        },
+        "testNum": {
+          "type": "number",
+        },
+        "testStr": {
+          "type": "string",
+        },
+      },
+      "required": [
+        "testNum",
+        "testStr",
+        "testBool",
+      ],
+      "type": "object",
     }
   `);
 });
@@ -4077,5 +4054,327 @@ describe("unrepresentable callback", () => {
         "type": "string",
       }
     `);
+  });
+});
+
+describe("intersection folding", () => {
+  const TARGETS = ["draft-2020-12", "draft-07", "draft-04", "openapi-3.0"] as const;
+  const body = (schema: z.ZodType, params?: Parameters<typeof z.toJSONSchema>[1]) => {
+    const { $schema, ...rest } = z.toJSONSchema(schema, params) as Record<string, unknown>;
+    return rest;
+  };
+
+  test("two objects become one object", () => {
+    expect(body(z.object({ name: z.string() }).and(z.object({ age: z.number() })))).toMatchInlineSnapshot(`
+      {
+        "additionalProperties": false,
+        "properties": {
+          "age": {
+            "type": "number",
+          },
+          "name": {
+            "type": "string",
+          },
+        },
+        "required": [
+          "name",
+          "age",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  test("the folded shape is identical on every target", () => {
+    const schema = z.object({ name: z.string() }).and(z.object({ age: z.number() }));
+    const bodies = TARGETS.map((target) => body(schema, { target }));
+    for (const emitted of bodies) expect(emitted).toEqual(bodies[0]);
+  });
+
+  test("closed only when every member is closed", () => {
+    expect(body(z.strictObject({ a: z.string() }).and(z.strictObject({ b: z.number() })))).toMatchObject({
+      additionalProperties: false,
+    });
+    // A loose member keeps the intersection open, which is what the parser does: it merges both results, so the loose side's extra keys survive.
+    expect(body(z.looseObject({ a: z.string() }).and(z.object({ b: z.number() })))).not.toHaveProperty(
+      "additionalProperties"
+    );
+  });
+
+  test("chained and nested intersections fold flat", () => {
+    const chained = z
+      .object({ a: z.string() })
+      .and(z.object({ b: z.string() }))
+      .and(z.object({ c: z.string() }));
+    expect(body(chained)).toMatchObject({ properties: { a: {}, b: {}, c: {} }, required: ["a", "b", "c"] });
+    const nested = z.object({ a: z.string() }).and(z.object({ b: z.string() }).and(z.object({ c: z.string() })));
+    expect(body(nested)).toEqual(body(chained));
+  });
+
+  test("required is the union, and an optional key stays optional", () => {
+    expect(body(z.object({ a: z.string().optional() }).and(z.object({ b: z.string() })))).toMatchObject({
+      properties: { a: { type: "string" }, b: { type: "string" } },
+      required: ["b"],
+    });
+  });
+
+  test("a key both members declare has to satisfy both", () => {
+    // identical declarations collapse
+    expect(body(z.object({ k: z.string() }).and(z.object({ k: z.string() })))).toMatchObject({
+      properties: { k: { type: "string" } },
+    });
+    // object declarations fold, matching the parser's deep merge
+    expect(
+      body(z.object({ k: z.object({ a: z.string() }) }).and(z.object({ k: z.object({ b: z.string() }) })))
+    ).toMatchObject({
+      properties: { k: { type: "object", properties: { a: {}, b: {} }, required: ["a", "b"] } },
+    });
+    // anything else stays an intersection one level down
+    expect(body(z.object({ k: z.string() }).and(z.object({ k: z.number() })))).toMatchObject({
+      properties: { k: { allOf: [{ type: "string" }, { type: "number" }] } },
+    });
+  });
+
+  test("an intersection distributes over a union", () => {
+    const schema = z
+      .object({ name: z.string() })
+      .and(
+        z.discriminatedUnion("type", [
+          z.object({ type: z.literal("a"), value: z.string() }),
+          z.object({ type: z.literal("b"), count: z.number() }),
+        ])
+      );
+    expect(body(schema)).toMatchObject({
+      oneOf: [
+        { type: "object", properties: { name: {}, type: {}, value: {} }, additionalProperties: false },
+        { type: "object", properties: { name: {}, type: {}, count: {} }, additionalProperties: false },
+      ],
+    });
+    const inclusive = z
+      .object({ name: z.string() })
+      .and(z.union([z.object({ v: z.string() }), z.object({ c: z.number() })]));
+    expect(body(inclusive)).toMatchObject({
+      anyOf: [{ properties: { name: {}, v: {} } }, { properties: { name: {}, c: {} } }],
+    });
+  });
+
+  test("input conversion has nothing to close", () => {
+    expect(body(z.object({ a: z.string() }).and(z.object({ b: z.string() })), { io: "input" })).toEqual({
+      type: "object",
+      properties: { a: { type: "string" }, b: { type: "string" } },
+      required: ["a", "b"],
+    });
+  });
+
+  test("folds through a property and through z.lazy", () => {
+    expect(body(z.object({ inner: z.object({ a: z.string() }).and(z.object({ b: z.string() })) }))).toMatchObject({
+      properties: { inner: { type: "object", properties: { a: {}, b: {} } } },
+    });
+    const self: z.ZodType = z.lazy(() => z.object({ a: z.string() }).and(z.object({ next: z.optional(self) })));
+    expect(body(self)).toMatchObject({ type: "object", properties: { a: {}, next: { $ref: "#" } } });
+  });
+
+  test("metadata on the intersection itself survives", () => {
+    expect(
+      body(
+        z
+          .object({ a: z.string() })
+          .and(z.object({ b: z.string() }))
+          .meta({ title: "T" })
+      )
+    ).toMatchObject({
+      title: "T",
+      type: "object",
+      properties: { a: {}, b: {} },
+    });
+  });
+
+  test("a catchall constrains the sibling's keys too", () => {
+    // The catchall member does not declare `b`, so its `additionalProperties` is what it demands of `b`. Folding `b` into `properties` has to carry that demand across, or the key would escape it.
+    const schema = z
+      .object({ a: z.string() })
+      .catchall(z.number())
+      .and(z.object({ b: z.string() }));
+    expect(body(schema)).toEqual({
+      type: "object",
+      properties: { a: { type: "string" }, b: { allOf: [{ type: "number" }, { type: "string" }] } },
+      required: ["a", "b"],
+      additionalProperties: { type: "number" },
+    });
+  });
+
+  test("two catchalls both constrain the keys neither declares", () => {
+    const schema = z
+      .object({})
+      .catchall(z.number())
+      .and(z.object({}).catchall(z.number().min(0)));
+    expect(body(schema)).toEqual({
+      type: "object",
+      properties: {},
+      additionalProperties: { allOf: [{ type: "number" }, { type: "number", minimum: 0 }] },
+    });
+    expect(schema.safeParse({ zz: 5 }).success).toBe(true);
+    expect(schema.safeParse({ zz: -1 }).success).toBe(false);
+  });
+
+  test("the emitted openness agrees with the parser for every pair of object modes", () => {
+    const modes = {
+      strip: (shape: z.ZodRawShape) => z.object(shape),
+      strict: (shape: z.ZodRawShape) => z.strictObject(shape),
+      loose: (shape: z.ZodRawShape) => z.looseObject(shape),
+      catchall: (shape: z.ZodRawShape) => z.object(shape).catchall(z.number()),
+    };
+    const grid: Record<string, unknown> = {};
+    for (const [leftName, left] of Object.entries(modes)) {
+      for (const [rightName, right] of Object.entries(modes)) {
+        const schema = left({ a: z.string() }).and(right({ b: z.number() }));
+        const emitted = body(schema) as { additionalProperties?: unknown };
+        grid[`${leftName} & ${rightName}`] = emitted.additionalProperties ?? "open";
+
+        // Whatever the emitted keyword says, it has to agree with what the parser does with a key neither member declares.
+        const parsed = schema.safeParse({ a: "s", b: 1, zz: 7 });
+        const keepsUnknown = parsed.success && Object.prototype.hasOwnProperty.call(parsed.data, "zz");
+        if (keepsUnknown) expect(emitted.additionalProperties).not.toBe(false);
+      }
+    }
+    expect(grid).toMatchInlineSnapshot(`
+      {
+        "catchall & catchall": {
+          "type": "number",
+        },
+        "catchall & loose": {
+          "type": "number",
+        },
+        "catchall & strict": {
+          "type": "number",
+        },
+        "catchall & strip": {
+          "type": "number",
+        },
+        "loose & catchall": {
+          "type": "number",
+        },
+        "loose & loose": "open",
+        "loose & strict": "open",
+        "loose & strip": "open",
+        "strict & catchall": {
+          "type": "number",
+        },
+        "strict & loose": "open",
+        "strict & strict": false,
+        "strict & strip": false,
+        "strip & catchall": {
+          "type": "number",
+        },
+        "strip & loose": "open",
+        "strip & strict": false,
+        "strip & strip": false,
+      }
+    `);
+  });
+
+  test("a __proto__ key stays an own property", () => {
+    const folded = body(z.object({ ["__proto__"]: z.string() }).and(z.object({ b: z.number() }))) as any;
+    expect(Object.prototype.hasOwnProperty.call(folded.properties, "__proto__")).toBe(true);
+    expect(folded.required).toEqual(["__proto__", "b"]);
+  });
+});
+
+describe("intersection folding declines", () => {
+  // Every case here keeps the `allOf` it produces today. The fold only understands the four object keywords, so a member carrying anything else is left alone rather than having a constraint dropped or an annotation re-scoped.
+  const allOf = (schema: z.ZodType, params?: Parameters<typeof z.toJSONSchema>[1]) =>
+    (z.toJSONSchema(schema, params) as any).allOf;
+
+  test("a member that is a reference keeps its reference", () => {
+    const named = z.object({ a: z.string() }).meta({ id: "Named" });
+    expect(allOf(named.and(z.object({ b: z.string() })))[0]).toEqual({ $ref: "#/$defs/Named" });
+
+    const shared = z.object({ c: z.string() });
+    const reused = z.toJSONSchema(z.object({ x: shared.and(z.object({ d: z.string() })), y: shared }), {
+      reused: "ref",
+    }) as any;
+    expect(reused.properties.x.allOf[0]).toEqual({ $ref: "#/$defs/__schema0" });
+
+    const cyclic: any = z.object({
+      get next() {
+        return z.optional(cyclic);
+      },
+      n: z.string(),
+    });
+    expect(allOf(cyclic.and(z.object({ m: z.string() })))[0].$ref).toBe("#/$defs/__schema0");
+  });
+
+  test("an annotated member keeps its place", () => {
+    expect(
+      allOf(
+        z
+          .object({ a: z.string() })
+          .describe("A")
+          .and(z.object({ b: z.string() }))
+      )[0]
+    ).toMatchObject({
+      description: "A",
+    });
+  });
+
+  test("members that are not plain objects are left alone", () => {
+    expect(allOf(z.intersection(z.string().min(2), z.string().max(5)))).toHaveLength(2);
+    expect(allOf(z.object({ a: z.string() }).and(z.nullable(z.object({ b: z.string() }))))).toHaveLength(2);
+    expect(
+      allOf(z.object({ label: z.string() }).and(z.looseRecord(z.string().regex(/^label:[a-z]{2}$/), z.string())))
+    ).toHaveLength(2);
+  });
+
+  test("a shared member is never rewritten for its other uses", () => {
+    const shared = z.object({ c: z.string() });
+    const result = z.toJSONSchema(z.object({ x: shared.and(z.object({ d: z.string() })), y: shared })) as any;
+    expect(result.properties.x).toMatchObject({ properties: { c: {}, d: {} }, additionalProperties: false });
+    // `y` is the same Zod schema, emitted separately, and keeps the closedness it had on its own.
+    expect(result.properties.y).toEqual({
+      type: "object",
+      properties: { c: { type: "string" } },
+      required: ["c"],
+      additionalProperties: false,
+    });
+  });
+
+  test("registry conversion keeps its cross-references", () => {
+    const registry = z.registry<{ id: string }>();
+    const left = z.object({ p: z.string() });
+    const right = z.object({ q: z.string() });
+    registry.add(left, { id: "P" });
+    registry.add(right, { id: "Q" });
+    registry.add(left.and(right), { id: "PQ" });
+    expect((z.toJSONSchema(registry) as any).schemas.PQ.allOf).toEqual([{ $ref: "P" }, { $ref: "Q" }]);
+  });
+
+  test("override still runs, and sees the intersection before it folds", () => {
+    const schema = z.object({ a: z.string() }).and(z.object({ b: z.string() }));
+    const result = z.toJSONSchema(schema, {
+      override(ctx) {
+        if ((ctx.jsonSchema as any).allOf) (ctx.jsonSchema as any).title = "intersection";
+      },
+    }) as any;
+    expect(result).toMatchObject({ title: "intersection", type: "object", properties: { a: {}, b: {} } });
+  });
+
+  test("an override that writes object keywords wins over the fold", () => {
+    // The override runs first, so anything it puts on the intersection is deliberate. Folding would overwrite it silently, so the fold stands down instead.
+    const result = z.toJSONSchema(z.object({ a: z.string() }).and(z.object({ b: z.string() })), {
+      override(ctx) {
+        if ((ctx.jsonSchema as any).allOf) (ctx.jsonSchema as any).additionalProperties = true;
+      },
+    }) as any;
+    expect(result.additionalProperties).toBe(true);
+    expect(result.allOf).toHaveLength(2);
+  });
+
+  test("more than one union member is left alone rather than multiplied out", () => {
+    // The second union lands among the members the first is distributed across, and a union is not an object, so every branch fails to fold and the whole intersection stands down.
+    const schema = z
+      .object({ a: z.string() })
+      .and(z.union([z.object({ v: z.string() }), z.object({ w: z.string() })]))
+      .and(z.union([z.object({ x: z.string() }), z.object({ y: z.string() })]));
+    expect(allOf(schema)).toHaveLength(3);
   });
 });
