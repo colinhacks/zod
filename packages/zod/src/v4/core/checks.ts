@@ -255,22 +255,23 @@ export const $ZodCheckMultipleOf: core.$constructor<$ZodCheckMultipleOf<number |
 
 export type $ZodNumberFormats = "int32" | "uint32" | "float32" | "float64" | "safeint";
 
-export interface $ZodCheckNumberFormatDef extends $ZodCheckDef {
+export interface $ZodCheckNumberFormatDef<Format extends $ZodNumberFormats = $ZodNumberFormats> extends $ZodCheckDef {
   check: "number_format";
-  format: $ZodNumberFormats;
+  format: Format;
   // abort?: boolean;
 }
 
-export interface $ZodCheckNumberFormatInternals extends $ZodCheckInternals<number> {
-  def: $ZodCheckNumberFormatDef;
+export interface $ZodCheckNumberFormatInternals<Format extends $ZodNumberFormats = $ZodNumberFormats>
+  extends $ZodCheckInternals<number> {
+  def: $ZodCheckNumberFormatDef<Format>;
   issc: errors.$ZodIssueInvalidType | errors.$ZodIssueTooBig<"number"> | errors.$ZodIssueTooSmall<"number">;
   // bag: util.LoosePartial<{
   //   minimum?: number | undefined;
   // }>;
 }
 
-export interface $ZodCheckNumberFormat extends $ZodCheck<number> {
-  _zod: $ZodCheckNumberFormatInternals;
+export interface $ZodCheckNumberFormat<Format extends $ZodNumberFormats = $ZodNumberFormats> extends $ZodCheck<number> {
+  _zod: $ZodCheckNumberFormatInternals<Format>;
 }
 
 export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /*@__PURE__*/ core.$constructor(
@@ -389,18 +390,19 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
 
 export type $ZodBigIntFormats = "int64" | "uint64";
 
-export interface $ZodCheckBigIntFormatDef extends $ZodCheckDef {
+export interface $ZodCheckBigIntFormatDef<Format extends $ZodBigIntFormats = $ZodBigIntFormats> extends $ZodCheckDef {
   check: "bigint_format";
-  format: $ZodBigIntFormats | undefined;
+  format: Format;
 }
 
-export interface $ZodCheckBigIntFormatInternals extends $ZodCheckInternals<bigint> {
-  def: $ZodCheckBigIntFormatDef;
+export interface $ZodCheckBigIntFormatInternals<Format extends $ZodBigIntFormats = $ZodBigIntFormats>
+  extends $ZodCheckInternals<bigint> {
+  def: $ZodCheckBigIntFormatDef<Format>;
   issc: errors.$ZodIssueTooBig<"bigint"> | errors.$ZodIssueTooSmall<"bigint">;
 }
 
-export interface $ZodCheckBigIntFormat extends $ZodCheck<bigint> {
-  _zod: $ZodCheckBigIntFormatInternals;
+export interface $ZodCheckBigIntFormat<Format extends $ZodBigIntFormats = $ZodBigIntFormats> extends $ZodCheck<bigint> {
+  _zod: $ZodCheckBigIntFormatInternals<Format>;
 }
 
 export const $ZodCheckBigIntFormat: core.$constructor<$ZodCheckBigIntFormat> = /*@__PURE__*/ core.$constructor(
@@ -408,7 +410,7 @@ export const $ZodCheckBigIntFormat: core.$constructor<$ZodCheckBigIntFormat> = /
   (inst, def) => {
     $ZodCheck.init(inst, def); // no format checks
 
-    const [minimum, maximum] = util.BIGINT_FORMAT_RANGES[def.format!];
+    const [minimum, maximum] = util.BIGINT_FORMAT_RANGES[def.format];
 
     inst._zod.onattach.push((inst) => {
       const bag = inst._zod.bag;
