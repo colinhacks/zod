@@ -326,6 +326,42 @@ test("catch does not break intersection reconciliation", () => {
   expect(schema.parse({ a: "x", b: "y" })).toEqual({ a: "x", b: "y" });
 });
 
+test("catch propagates a back-edge to whatever wraps it", () => {
+  // The memoizer marks a payload whose value is a node still being parsed. That mark has to survive the catch: an enclosing readonly must not freeze a half-built object, and the node's checks belong to the node itself rather than to the back-edge.
+  const Node: any = z.object({
+    get self() {
+      return z
+        .lazy(() => Node)
+        .catch(null)
+        .readonly()
+        .optional();
+    },
+  });
+  const cyclic: any = {};
+  cyclic.self = cyclic;
+  const frozen = Node.safeParse(cyclic);
+  expect(frozen.success).toBe(true);
+  expect(Object.keys(frozen.data)).toEqual(["self"]);
+
+  let checks = 0;
+  const Checked: any = z.object({
+    get self() {
+      return z
+        .lazy(() => Checked)
+        .catch(null)
+        .refine(() => {
+          checks++;
+          return true;
+        })
+        .optional();
+    },
+  });
+  const cyclic2: any = {};
+  cyclic2.self = cyclic2;
+  Checked.safeParse(cyclic2);
+  expect(checks).toBe(0);
+});
+
 test("direction-aware catch", () => {
   const schema = z.string().catch("fallback");
 

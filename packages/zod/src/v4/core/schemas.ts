@@ -4183,6 +4183,8 @@ export interface $ZodCatch<T extends SomeType = $ZodType> extends $ZodType {
 function handleCatchResult(payload: ParsePayload, result: ParsePayload, def: $ZodCatchDef, ctx: ParseContextInternal) {
   if (!result.issues.length) {
     payload.value = result.value;
+    // The value carries up, so the flag describing it has to carry with it: a back-edge into a node still being parsed must not be frozen by an enclosing readonly, and its checks belong to the node itself. Guarded so the ordinary case adds no own property.
+    if (result.memo) payload.memo = true;
     return payload;
   }
 
