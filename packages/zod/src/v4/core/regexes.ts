@@ -11,6 +11,9 @@ export const ulid: RegExp = /^[0-7][0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$/;
 export const xid: RegExp = /^[0-9a-vA-V]{20}$/;
 export const ksuid: RegExp = /^[A-Za-z0-9]{27}$/;
 export const nanoid: RegExp = /^[a-zA-Z0-9_-]{21}$/;
+export function nanoidOfLength(length: number): RegExp {
+  return new RegExp(`^[a-zA-Z0-9_-]{${length}}$`);
+}
 
 /** ISO 8601-1 duration regex. Does not support the 8601-2 extensions like negative durations or fractional/negative components. */
 export const duration: RegExp =

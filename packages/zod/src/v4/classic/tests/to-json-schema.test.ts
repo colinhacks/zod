@@ -243,6 +243,14 @@ describe("toJSONSchema", () => {
         "type": "string",
       }
     `);
+    expect(z.toJSONSchema(z.nanoid({ length: 64 }))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "nanoid",
+        "pattern": "^[a-zA-Z0-9_-]{64}$",
+        "type": "string",
+      }
+    `);
     expect(z.toJSONSchema(z.cuid2())).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
