@@ -255,6 +255,8 @@ test("z.pick/omit/partial/required - do not allow unknown keys", () => {
   expect(() => z.parse(z.partial(schema, { $unknown: true }), {})).toThrow();
   // @ts-expect-error
   expect(() => z.parse(z.required(schema, { $unknown: true }), {})).toThrow();
+  // @ts-expect-error
+  expect(() => z.parse(z.exactPartial(schema, { $unknown: true }), {})).toThrow();
 });
 
 test("z.catchall", () => {
@@ -293,7 +295,11 @@ test("mask helpers keep the shape through a generic wrapper", () => {
   const src = z.object({ a: z.string(), b: z.number() });
   const pick = <T extends z.ZodMiniObject>(s: T) => z.pick(s, { a: true });
   const chained = <T extends z.ZodMiniObject>(s: T) => z.pick(z.partial(s), { a: true });
+  const afterExtend = <T extends z.ZodMiniObject>(s: T) => z.pick(z.extend(s, { c: z.boolean() }), { a: true });
+  const omitAfterExtend = <T extends z.ZodMiniObject>(s: T) => z.omit(z.extend(s, { c: z.boolean() }), { a: true });
 
   expectTypeOf<z.infer<ReturnType<typeof pick<typeof src>>>>().toEqualTypeOf<{ a: string }>();
   expectTypeOf<z.infer<ReturnType<typeof chained<typeof src>>>>().toEqualTypeOf<{ a?: string | undefined }>();
+  expectTypeOf<z.infer<ReturnType<typeof afterExtend<typeof src>>>>().toEqualTypeOf<{ a: string }>();
+  expectTypeOf<z.infer<ReturnType<typeof omitAfterExtend<typeof src>>>>().toEqualTypeOf<{ b: number; c: boolean }>();
 });

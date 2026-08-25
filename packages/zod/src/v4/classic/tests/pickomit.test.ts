@@ -119,6 +119,7 @@ test("pick/omit/required/partial - do not allow unknown keys", () => {
   expect(() => schema.omit({ name: true, asdf: true }).safeParse({})).toThrow();
   expect(() => schema.partial({ name: true, asdf: true }).safeParse({})).toThrow();
   expect(() => schema.required({ name: true, asdf: true }).safeParse({})).toThrow();
+  expect(() => schema.exactPartial({ name: true, asdf: true }).safeParse({})).toThrow();
 
   // an all-invalid mask is still rejected at compile time — the mask constraint defers while the receiver's shape is generic, then checks normally once it resolves
   // @ts-expect-error
@@ -129,6 +130,8 @@ test("pick/omit/required/partial - do not allow unknown keys", () => {
   expect(() => schema.required({ $unknown: true }).safeParse({})).toThrow();
   // @ts-expect-error
   expect(() => schema.partial({ $unknown: true }).safeParse({})).toThrow();
+  // @ts-expect-error
+  expect(() => schema.exactPartial({ $unknown: true }).safeParse({})).toThrow();
 });
 
 test("pick - throws error on schema with refinements", () => {
