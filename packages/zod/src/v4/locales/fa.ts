@@ -8,36 +8,14 @@ const error: () => errors.$ZodErrorMap = () => {
     file: { unit: "بایت", verb: "داشته باشد" },
     array: { unit: "آیتم", verb: "داشته باشد" },
     set: { unit: "آیتم", verb: "داشته باشد" },
+    map: { unit: "آیتم", verb: "داشته باشد" },
   };
 
   function getSizing(origin: string): { unit: string; verb: string } | null {
     return Sizable[origin] ?? null;
   }
 
-  const parsedType = (data: any): string => {
-    const t = typeof data;
-
-    switch (t) {
-      case "number": {
-        return Number.isNaN(data) ? "NaN" : "عدد";
-      }
-      case "object": {
-        if (Array.isArray(data)) {
-          return "آرایه";
-        }
-        if (data === null) {
-          return "null";
-        }
-
-        if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-          return data.constructor.name;
-        }
-      }
-    }
-    return t;
-  };
-
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "ورودی",
@@ -60,20 +38,37 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "مدت زمان ایزو",
     ipv4: "IPv4 آدرس",
     ipv6: "IPv6 آدرس",
+    mac: "MAC آدرس",
     cidrv4: "IPv4 دامنه",
     cidrv6: "IPv6 دامنه",
     base64: "base64-encoded رشته",
     base64url: "base64url-encoded رشته",
     json_string: "JSON رشته",
     e164: "E.164 عدد",
+    credit_card: "شماره کارت اعتباری",
     jwt: "JWT",
     template_literal: "ورودی",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+    number: "عدد",
+    array: "آرایه",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `ورودی نامعتبر: می‌بایست ${issue.expected} می‌بود، ${parsedType(issue.input)} دریافت شد`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `ورودی نامعتبر: می‌بایست instanceof ${issue.expected} می‌بود، ${received} دریافت شد`;
+        }
+        return `ورودی نامعتبر: می‌بایست ${expected} می‌بود، ${received} دریافت شد`;
+      }
       case "invalid_value":
         if (issue.values.length === 1) {
           return `ورودی نامعتبر: می‌بایست ${util.stringifyPrimitive(issue.values[0])} می‌بود`;
@@ -109,7 +104,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "regex") {
           return `رشته نامعتبر: باید با الگوی ${_issue.pattern} مطابقت داشته باشد`;
         }
-        return `${Nouns[_issue.format] ?? issue.format} نامعتبر`;
+        return `${FormatDictionary[_issue.format] ?? issue.format} نامعتبر`;
       }
       case "not_multiple_of":
         return `عدد نامعتبر: باید مضرب ${issue.divisor} باشد`;

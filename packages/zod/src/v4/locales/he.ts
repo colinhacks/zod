@@ -57,33 +57,16 @@ const error: () => errors.$ZodErrorMap = () => {
     return Sizable[origin] ?? null;
   };
 
-  // Robust type parser for "received" — returns a key we understand or a constructor name
-  const parsedType = (data: any): string => {
-    const t = typeof data;
-    switch (t) {
-      case "number":
-        return Number.isNaN(data) ? "NaN" : "number";
-      case "object": {
-        if (Array.isArray(data)) return "array";
-        if (data === null) return "null";
-        if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-          return data.constructor.name; // keep as-is (e.g., "Date")
-        }
-        return "object";
-      }
-      default:
-        return t;
-    }
-  };
-
-  const Nouns: {
-    [k in $ZodStringFormats]: { label: string; gender: "m" | "f" };
+  const FormatDictionary: {
+    [k in $ZodStringFormats | (string & {})]?: { label: string; gender: "m" | "f" };
   } = {
     regex: { label: "קלט", gender: "m" },
     email: { label: "כתובת אימייל", gender: "f" },
     url: { label: "כתובת רשת", gender: "f" },
     emoji: { label: "אימוג'י", gender: "m" },
     uuid: { label: "UUID", gender: "m" },
+    uuidv4: { label: "UUIDv4", gender: "m" },
+    uuidv6: { label: "UUIDv6", gender: "m" },
     nanoid: { label: "nanoid", gender: "m" },
     guid: { label: "GUID", gender: "m" },
     cuid: { label: "cuid", gender: "m" },
@@ -97,13 +80,16 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: { label: "משך זמן ISO", gender: "m" },
     ipv4: { label: "כתובת IPv4", gender: "f" },
     ipv6: { label: "כתובת IPv6", gender: "f" },
+    mac: { label: "כתובת MAC", gender: "f" },
     cidrv4: { label: "טווח IPv4", gender: "m" },
     cidrv6: { label: "טווח IPv6", gender: "m" },
     base64: { label: "מחרוזת בבסיס 64", gender: "f" },
     base64url: { label: "מחרוזת בבסיס 64 לכתובות רשת", gender: "f" },
     json_string: { label: "מחרוזת JSON", gender: "f" },
     e164: { label: "מספר E.164", gender: "m" },
+    credit_card: { label: "מספר כרטיס אשראי", gender: "m" },
     jwt: { label: "JWT", gender: "m" },
+    template_literal: { label: "קלט", gender: "m" },
     ends_with: { label: "קלט", gender: "m" },
     includes: { label: "קלט", gender: "m" },
     lowercase: { label: "קלט", gender: "m" },
@@ -111,15 +97,24 @@ const error: () => errors.$ZodErrorMap = () => {
     uppercase: { label: "קלט", gender: "m" },
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+  };
+
   return (issue) => {
     switch (issue.code) {
       case "invalid_type": {
         // Expected type: show without definite article for clearer Hebrew
         const expectedKey = issue.expected as string | undefined;
-        const expected = typeLabel(expectedKey);
+        const expected = TypeDictionary[expectedKey ?? ""] ?? typeLabel(expectedKey);
         // Received: show localized label if known, otherwise constructor/raw
-        const receivedKey = parsedType(issue.input);
-        const received = TypeNames[receivedKey]?.label ?? receivedKey;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? TypeNames[receivedType]?.label ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `קלט לא תקין: צריך להיות instanceof ${issue.expected}, התקבל ${received}`;
+        }
         return `קלט לא תקין: צריך להיות ${expected}, התקבל ${received}`;
       }
 
@@ -218,7 +213,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "regex") return `המחרוזת חייבת להתאים לתבנית ${_issue.pattern}`;
 
         // Handle gender agreement for formats
-        const nounEntry = Nouns[_issue.format];
+        const nounEntry = FormatDictionary[_issue.format];
         const noun = nounEntry?.label ?? _issue.format;
         const gender = nounEntry?.gender ?? "m";
         const adjective = gender === "f" ? "תקינה" : "תקין";

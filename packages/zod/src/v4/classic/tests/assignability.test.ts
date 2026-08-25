@@ -1,6 +1,7 @@
 import { expectTypeOf, test } from "vitest";
 
 import * as z from "zod/v4";
+import * as core from "zod/v4/core";
 
 test("assignability", () => {
   // $ZodString
@@ -143,6 +144,12 @@ test("assignability", () => {
   z.unknown().pipe(z.number()) satisfies z.core.$ZodPipe;
   z.unknown().pipe(z.number()) satisfies z.ZodPipe;
 
+  // $ZodPreprocess
+  z.preprocess((v) => v, z.number()) satisfies z.core.$ZodPreprocess;
+  z.preprocess((v) => v, z.number()) satisfies z.ZodPreprocess;
+  z.preprocess((v) => v, z.number()) satisfies z.core.$ZodPipe<z.core.$ZodTransform, z.ZodNumber>;
+  z.preprocess((v) => v, z.number()) satisfies z.ZodPipe<z.core.$ZodTransform, z.ZodNumber>;
+
   // $ZodSuccess
   z.success(z.string()) satisfies z.core.$ZodSuccess;
   z.success(z.string()) satisfies z.ZodSuccess;
@@ -154,6 +161,140 @@ test("assignability", () => {
   // $ZodFile
   z.file() satisfies z.core.$ZodFile;
   z.file() satisfies z.ZodFile;
+});
+
+test("toZod", () => {
+  type Company = {
+    id: string;
+    name: string;
+    webAddress: string | null;
+  };
+
+  const CompanySchema = z.object({
+    id: z.string(),
+    name: z.string(),
+    webAddress: z.string().url().nullable(),
+  });
+  const Company = z.toZod<Company>()(CompanySchema);
+
+  Company.shape.id.min(1);
+  expectTypeOf<z.output<typeof Company>>().toEqualTypeOf<Company>();
+
+  const CoreCompany = core.toZod<Company>()(CompanySchema);
+  expectTypeOf<core.output<typeof CoreCompany>>().toEqualTypeOf<Company>();
+
+  const UtilCompany = z.core.util.toZod<Company>()(CompanySchema);
+  expectTypeOf<z.output<typeof UtilCompany>>().toEqualTypeOf<Company>();
+
+  type Complex = {
+    kind: "company";
+    nested: {
+      founded: Date;
+      tags: string[];
+    };
+    scores: Record<"a" | "b", number>;
+    tuple: [string, number];
+    status: "active" | "inactive";
+  };
+
+  const Complex = z.toZod<Complex>()(
+    z.object({
+      kind: z.literal("company"),
+      nested: z.object({
+        founded: z.date(),
+        tags: z.array(z.string()),
+      }),
+      scores: z.record(z.enum(["a", "b"]), z.number()),
+      tuple: z.tuple([z.string(), z.number()]),
+      status: z.union([z.literal("active"), z.literal("inactive")]),
+    })
+  );
+  expectTypeOf<z.output<typeof Complex>>().toEqualTypeOf<Complex>();
+
+  type Items = {
+    items: { value: string }[];
+  };
+
+  const Items = z.toZod<Items>()(
+    z.object({
+      items: z.array(z.object({ value: z.string() })),
+    })
+  );
+  expectTypeOf<z.output<typeof Items>>().toEqualTypeOf<Items>();
+
+  type ReadonlyItem = Readonly<{
+    id: string;
+  }>;
+
+  const ReadonlyItem = z.toZod<ReadonlyItem>()(z.object({ id: z.string() }).readonly());
+  expectTypeOf<z.output<typeof ReadonlyItem>>().toEqualTypeOf<ReadonlyItem>();
+
+  const Transformed = z.toZod<{ count: number }>()(
+    z.object({
+      count: z.string().transform((value) => value.length),
+    })
+  );
+  expectTypeOf<z.input<typeof Transformed>>().toEqualTypeOf<{ count: string }>();
+  expectTypeOf<z.output<typeof Transformed>>().toEqualTypeOf<{ count: number }>();
+
+  z.toZod<Company>()(
+    // @ts-expect-error missing optional keys still fail exact output matching
+    z.object({
+      id: z.string(),
+      name: z.string(),
+    })
+  );
+
+  z.toZod<Company>()(
+    // @ts-expect-error extra keys fail exact output matching
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      webAddress: z.string().url().nullable(),
+      extra: z.string(),
+    })
+  );
+
+  z.toZod<Company>()(
+    // @ts-expect-error wrong property output fails matching
+    z.object({
+      id: z.number(),
+      name: z.string(),
+      webAddress: z.string().url().nullable(),
+    })
+  );
+
+  z.toZod<ReadonlyItem>()(
+    // @ts-expect-error readonly output is required
+    z.object({
+      id: z.string(),
+    })
+  );
+
+  // @ts-expect-error any is only an exact match for any
+  z.toZod<string>()(z.any());
+
+  // @ts-expect-error toZod checks output, not input
+  z.toZod<string>()(z.string().transform((value) => value.length));
+
+  // Exact equality is deliberately the only mode. A bidirectional-assignability mode would accept both of the two cases above — `any` is assignable in both directions by construction, and `readonly` is not part of assignability — so it would silently drop the guarantees the rest of this test pins. The cost is the asymmetry below: an intersection target matches `.and()` but not `.safeExtend()`, and a flat target matches `.safeExtend()` but not `.and()`. Flattening the target with a mapped type switches which spelling matches rather than accepting both.
+  type Intersected = { a: number } & { b: string };
+  type Flatten<T> = { [K in keyof T]: T[K] } & {};
+  const viaAnd = z.object({ a: z.number() }).and(z.object({ b: z.string() }));
+  const viaExtend = z.object({ a: z.number() }).safeExtend({ b: z.string() });
+
+  z.toZod<Intersected>()(viaAnd);
+  z.toZod<{ a: number; b: string }>()(viaExtend);
+  z.toZod<Flatten<Intersected>>()(viaExtend);
+
+  // @ts-expect-error flattening the target does not make `.and()` match as well
+  z.toZod<Flatten<Intersected>>()(viaAnd);
+
+  // @ts-expect-error .safeExtend() produces a flat object type, not an intersection
+  z.toZod<Intersected>()(viaExtend);
+
+  // @ts-expect-error .and() produces an intersection, not a flat object type
+  z.toZod<{ a: number; b: string }>()(viaAnd);
 });
 
 test("checks", () => {

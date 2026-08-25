@@ -230,7 +230,7 @@ test("continuability", () => {
         "message": "Invalid emoji",
         "origin": "string",
         "path": [],
-        "pattern": "/^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$/u",
+        "pattern": "/^[\\p{Extended_Pictographic}\\p{Emoji_Component}]+$/u",
       },
       {
         "code": "custom",
@@ -274,7 +274,7 @@ test("continuability", () => {
         "message": "Invalid cuid",
         "origin": "string",
         "path": [],
-        "pattern": "/^[cC][^\\s-]{8,}$/",
+        "pattern": "/^[cC][0-9a-z]{6,}$/",
       },
       {
         "code": "custom",
@@ -318,7 +318,7 @@ test("continuability", () => {
         "message": "Invalid ULID",
         "origin": "string",
         "path": [],
-        "pattern": "/^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$/",
+        "pattern": "/^[0-7][0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$/",
       },
       {
         "code": "custom",

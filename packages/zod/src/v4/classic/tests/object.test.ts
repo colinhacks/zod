@@ -1,4 +1,4 @@
-import { expect, expectTypeOf, test } from "vitest";
+import { describe, expect, expectTypeOf, test } from "vitest";
 import * as z from "zod/v4";
 import * as core from "zod/v4/core";
 
@@ -132,14 +132,12 @@ test("catchall inference", () => {
 test("catchall overrides strict", () => {
   const o1 = z.object({ first: z.string().optional() }).strict().catchall(z.number());
 
-  // should run fine
-  // setting a catchall overrides the unknownKeys behavior
+  // should run fine setting a catchall overrides the unknownKeys behavior
   o1.parse({
     asdf: 1234,
   });
 
-  // should only run catchall validation
-  // against unknown keys
+  // should only run catchall validation against unknown keys
   o1.parse({
     first: "asdf",
     asdf: 1234,
@@ -154,8 +152,7 @@ test("catchall overrides strict", () => {
     .strict()
     .catchall(z.number());
 
-  // should run fine
-  // setting a catchall overrides the unknownKeys behavior
+  // should run fine setting a catchall overrides the unknownKeys behavior
   o1.parse({
     first: "asdf",
     asdf: 1234,
@@ -232,8 +229,7 @@ test("inferred merged object type with optional properties", async () => {
     .object({ a: z.string(), b: z.string().optional() })
     .merge(z.object({ a: z.string().optional(), b: z.string() }));
   type Merged = z.infer<typeof Merged>;
-  expectTypeOf<Merged>().toEqualTypeOf<{ a?: string; b: string }>();
-  expectTypeOf<Merged>().toEqualTypeOf<{ a?: string; b: string }>();
+  expectTypeOf<Merged>().toEqualTypeOf<{ a?: string | undefined; b: string }>();
 });
 
 test("inferred unioned object type with optional properties", async () => {
@@ -242,7 +238,9 @@ test("inferred unioned object type with optional properties", async () => {
     z.object({ a: z.string().optional(), b: z.string() }),
   ]);
   type Unioned = z.infer<typeof Unioned>;
-  expectTypeOf<Unioned>().toEqualTypeOf<{ a: string; b?: string } | { a?: string; b: string }>();
+  expectTypeOf<Unioned>().toEqualTypeOf<
+    { a: string; b?: string | undefined } | { a?: string | undefined; b: string }
+  >();
 });
 
 test("inferred enum type", async () => {
@@ -279,13 +277,13 @@ test("z.keyof returns enum", () => {
 test("inferred partial object type with optional properties", async () => {
   const Partial = z.object({ a: z.string(), b: z.string().optional() }).partial();
   type Partial = z.infer<typeof Partial>;
-  expectTypeOf<Partial>().toEqualTypeOf<{ a?: string; b?: string }>();
+  expectTypeOf<Partial>().toEqualTypeOf<{ a?: string | undefined; b?: string | undefined }>();
 });
 
 test("inferred picked object type with optional properties", async () => {
   const Picked = z.object({ a: z.string(), b: z.string().optional() }).pick({ b: true });
   type Picked = z.infer<typeof Picked>;
-  expectTypeOf<Picked>().toEqualTypeOf<{ b?: string }>();
+  expectTypeOf<Picked>().toEqualTypeOf<{ b?: string | undefined }>();
 });
 
 test("inferred type for unknown/any keys", () => {
@@ -403,6 +401,36 @@ test("unknownkeys merging", () => {
   // incoming object overrides
   const c = a.merge(b);
   expect(c._zod.def.catchall).toBeInstanceOf(core.$ZodNever);
+});
+
+test("merge() throws when receiver has refinements", () => {
+  const a = z
+    .object({
+      password: z.string(),
+      confirmPassword: z.string(),
+    })
+    .refine((data) => data.password === data.confirmPassword);
+
+  const b = z.object({ email: z.string() });
+
+  expect(() => a.merge(b)).toThrow(".merge() cannot be used on object schemas containing refinements");
+});
+
+test("merge() throws when receiver has superRefine", () => {
+  const a = z.object({ x: z.string() }).superRefine(() => {});
+  const b = z.object({ y: z.number() });
+
+  expect(() => a.merge(b)).toThrow(".merge() cannot be used on object schemas containing refinements");
+});
+
+test("merge() preserves refinements on the second schema", () => {
+  const a = z.object({ name: z.string() });
+  const b = z.object({ age: z.number() }).refine((data) => data.age >= 18, { message: "Must be 18+" });
+
+  const merged = a.merge(b);
+
+  expect(merged.parse({ name: "n", age: 21 })).toEqual({ name: "n", age: 21 });
+  expect(() => merged.parse({ name: "n", age: 12 })).toThrow("Must be 18+");
 });
 
 const personToExtend = z.object({
@@ -602,14 +630,31 @@ test("index signature in shape", () => {
   expectTypeOf<schema>().toEqualTypeOf<Record<string, string>>();
 });
 
-test("extent() on object with refinements should throw", () => {
+test("extend() on object with refinements should throw when overwriting properties", () => {
   const schema = z
     .object({
       a: z.string(),
     })
     .refine(() => true);
 
-  expect(() => schema.extend({ b: z.string() })).toThrow();
+  expect(() => schema.extend({ a: z.number() })).toThrow();
+});
+
+test("extend() on object with refinements should not throw when adding new properties", () => {
+  const schema = z
+    .object({
+      a: z.string(),
+    })
+    .refine((data) => data.a.length > 0);
+
+  // Should not throw since 'b' doesn't overlap with 'a'
+  const extended = schema.extend({ b: z.number() });
+
+  // Verify the extended schema works correctly
+  expect(extended.parse({ a: "hello", b: 42 })).toEqual({ a: "hello", b: 42 });
+
+  // Verify the original refinement still applies
+  expect(() => extended.parse({ a: "", b: 42 })).toThrow();
 });
 
 test("safeExtend() on object with refinements should not throw", () => {
@@ -620,4 +665,286 @@ test("safeExtend() on object with refinements should not throw", () => {
     .refine(() => true);
 
   expect(() => schema.safeExtend({ b: z.string() })).not.toThrow();
+});
+
+// __proto__ in input must not replace the prototype of the parsed object via the assignment setter on the result {}.
+describe("__proto__ in object catchall paths", () => {
+  const protoInput = () => JSON.parse('{"__proto__":{"isAdmin":true},"name":"alice"}');
+
+  test("looseObject drops __proto__ and preserves Object.prototype", () => {
+    const schema = z.looseObject({ name: z.string() });
+    const parsed = schema.parse(protoInput());
+    expect(Object.keys(parsed)).toEqual(["name"]);
+    expect((parsed as any).isAdmin).toBeUndefined();
+    expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+  });
+
+  test("passthrough drops __proto__", () => {
+    const schema = z.object({ name: z.string() }).passthrough();
+    const parsed = schema.parse(protoInput());
+    expect((parsed as any).isAdmin).toBeUndefined();
+    expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+  });
+
+  test("catchall(unknown) drops __proto__", () => {
+    const schema = z.object({ name: z.string() }).catchall(z.unknown());
+    const parsed = schema.parse(protoInput());
+    expect((parsed as any).isAdmin).toBeUndefined();
+    expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+  });
+
+  test("safeParseAsync + jitless drops __proto__", async () => {
+    const schema = z.looseObject({ name: z.string() });
+    const result = await schema.safeParseAsync(protoInput(), { jitless: true } as any);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect((result.data as any).isAdmin).toBeUndefined();
+      expect(Object.getPrototypeOf(result.data)).toBe(Object.prototype);
+    }
+  });
+
+  test("strict surfaces __proto__ as unrecognized without copying it", () => {
+    const schema = z.object({ name: z.string() }).strict();
+    const result = schema.safeParse(protoInput());
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].code).toBe("unrecognized_keys");
+      expect((result.error.issues[0] as any).keys).toEqual(["__proto__"]);
+    }
+  });
+
+  test("strict accepts but strips a __proto__ key the shape declares", () => {
+    const shape: any = { name: z.string() };
+    Object.defineProperty(shape, "__proto__", {
+      value: z.string(),
+      enumerable: true,
+      configurable: true,
+      writable: true,
+    });
+    const input = JSON.parse('{"name":"alice","__proto__":"hello"}');
+
+    for (const schema of [z.object(shape).strict(), z.object(shape).catchall(z.any()), z.object(shape)]) {
+      const result = schema.safeParse(input);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(Object.keys(result.data)).toEqual(["name"]);
+        expect(Object.getPrototypeOf(result.data)).toBe(Object.prototype);
+      }
+    }
+  });
+
+  test("strictObject and jitless agree with .strict()", async () => {
+    for (const schema of [z.strictObject({ name: z.string() }), z.object({ name: z.string() }).strict()]) {
+      for (const result of [
+        schema.safeParse(protoInput()),
+        await schema.safeParseAsync(protoInput(), {
+          jitless: true,
+        } as any),
+      ]) {
+        expect(result.success).toBe(false);
+        if (!result.success) {
+          expect((result.error.issues[0] as any).keys).toEqual(["__proto__"]);
+        }
+      }
+    }
+  });
+});
+
+// Parsed objects always strip __proto__, including keys explicitly declared by the schema.
+describe("__proto__ as a declared shape key", () => {
+  const protoInput = () => JSON.parse('{"__proto__":{"isAdmin":true},"name":"alice"}');
+  const makeShape = () =>
+    Object.fromEntries([
+      ["__proto__", z.object({ isAdmin: z.boolean() })],
+      ["name", z.string()],
+    ]) as Record<string, any>;
+
+  const expectStripped = (parsed: any) => {
+    expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+    expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(false);
+    expect((parsed as any).isAdmin).toBeUndefined();
+    expect(Object.keys(parsed)).toEqual(["name"]);
+  };
+
+  test("jit fastpass", () => {
+    expectStripped(z.object(makeShape()).parse(protoInput()));
+  });
+
+  test("jitless", () => {
+    expectStripped(z.object(makeShape()).parse(protoInput(), { jitless: true } as any));
+  });
+
+  test("async", async () => {
+    const shape = Object.fromEntries([
+      ["__proto__", z.object({ isAdmin: z.boolean() }).refine(async () => true)],
+      ["name", z.string()],
+    ]) as Record<string, any>;
+    expectStripped(await z.object(shape).parseAsync(protoInput()));
+  });
+
+  test("primitive value is stripped", () => {
+    const schema = z.object(Object.fromEntries([["__proto__", z.string()]]) as Record<string, any>);
+    const parsed: any = schema.parse(JSON.parse('{"__proto__":"hello"}'));
+    expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(false);
+    expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+  });
+
+  test("declared key is not validated", () => {
+    const schema = z.object(Object.fromEntries([["__proto__", z.string()]]) as Record<string, any>);
+    expect(schema.parse(JSON.parse('{"__proto__":123}'))).toEqual({});
+  });
+
+  test("required, optional, and defaulted declarations are all stripped", () => {
+    const shape = (schema: z.ZodType) => Object.fromEntries([["__proto__", schema]]) as Record<string, any>;
+
+    for (const jitless of [false, true]) {
+      const ctx = { jitless } as any;
+      expect(z.object(shape(z.unknown())).parse({}, ctx)).toEqual({});
+      expect(z.object(shape(z.string().optional())).parse({}, ctx)).toEqual({});
+      expect(z.object(shape(z.string().default("fallback"))).parse({}, ctx)).toEqual({});
+    }
+  });
+
+  test("an own getter is not evaluated", () => {
+    let reads = 0;
+    const input = Object.defineProperty({}, "__proto__", {
+      get() {
+        reads++;
+        return "value";
+      },
+      enumerable: true,
+    });
+    const schema = z.object(Object.fromEntries([["__proto__", z.string()]]) as Record<string, any>);
+
+    expect(schema.parse(input)).toEqual({});
+    expect(reads).toBe(0);
+  });
+
+  test("pick keeps a declared key", () => {
+    const shape = Object.fromEntries([["__proto__", z.string()]]) as Record<string, any>;
+    const mask = Object.fromEntries([["__proto__", true]]) as Record<string, true>;
+    const picked = z.object(shape).pick(mask);
+
+    expect(Object.keys(picked.shape)).toEqual(["__proto__"]);
+    const parsed: any = picked.parse(Object.fromEntries([["__proto__", "value"]]));
+    expect(parsed).toEqual({});
+    expect(() => z.object({ value: z.string() }).pick(mask as any).shape).toThrow('Unrecognized key: "__proto__"');
+  });
+
+  test.each(["omit", "partial", "required"] as const)("%s rejects an undeclared key", (method) => {
+    const mask = Object.fromEntries([["__proto__", true]]);
+    const schema = z.object({ value: z.string() });
+
+    expect(() => (schema[method] as any)(mask).shape).toThrow('Unrecognized key: "__proto__"');
+  });
+
+  test("shape helpers preserve a declared key", () => {
+    const shape = () =>
+      Object.fromEntries([
+        ["__proto__", z.string()],
+        ["value", z.string()],
+      ]) as Record<string, any>;
+    const protoMask = Object.fromEntries([["__proto__", true]]);
+    const valueMask = { value: true } as const;
+    const shapes = [
+      z.object(shape()).omit(valueMask).shape,
+      z.object(shape()).partial(protoMask as any).shape,
+      z.object(shape()).required(protoMask as any).shape,
+    ];
+
+    for (const next of shapes) {
+      expect(Object.getPrototypeOf(next)).toBe(Object.prototype);
+      expect(Object.prototype.hasOwnProperty.call(next, "__proto__")).toBe(true);
+    }
+  });
+
+  test("Object.prototype is untouched", () => {
+    z.object(makeShape()).parse(protoInput());
+    expect(({} as any).isAdmin).toBeUndefined();
+  });
+});
+
+test("object parsing still reads ordinary inherited properties", () => {
+  const input = Object.create({ value: "inherited" });
+  const schema = z.object({ value: z.string() });
+
+  expect(schema.parse(input)).toEqual({ value: "inherited" });
+  expect(schema.parse(input, { jitless: true } as any)).toEqual({ value: "inherited" });
+});
+
+describe("symbol keys in object shape", () => {
+  const SYM = Symbol("sym");
+  const OTHER = Symbol("other");
+
+  test("parses and validates a declared symbol key", () => {
+    const schema = z.object({ name: z.string(), [SYM]: z.number() });
+    expectTypeOf<z.infer<typeof schema>>().toEqualTypeOf<{ name: string; [SYM]: number }>();
+
+    for (const params of [undefined, { jitless: true } as any]) {
+      expect(schema.parse({ name: "alice", [SYM]: 42 }, params)).toEqual({ name: "alice", [SYM]: 42 });
+      expect(schema.safeParse({ name: "alice", [SYM]: "nope" }, params).success).toBe(false);
+      expect(schema.safeParse({ name: "alice" }, params).success).toBe(false);
+    }
+  });
+
+  test("reports an invalid symbol value at the symbol's own path", () => {
+    const schema = z.object({ [SYM]: z.number() });
+    const result = schema.safeParse({ [SYM]: "nope" });
+    expect(result.error!.issues[0].path).toEqual([SYM]);
+  });
+
+  test("honours optionality and defaults on a symbol key", () => {
+    expect(z.object({ [SYM]: z.number().optional() }).parse({})).toEqual({});
+    expect(z.object({ [SYM]: z.number().default(7) }).parse({})).toEqual({ [SYM]: 7 });
+  });
+
+  test("a declared symbol key survives strict and loose", () => {
+    expect(z.strictObject({ [SYM]: z.number() }).safeParse({ [SYM]: 1 }).success).toBe(true);
+    expect(z.strictObject({ [SYM]: z.number() }).safeParse({ [SYM]: 1, extra: 1 }).success).toBe(false);
+    expect(z.looseObject({ [SYM]: z.number() }).parse({ [SYM]: 1, extra: "e" })).toEqual({ [SYM]: 1, extra: "e" });
+  });
+
+  // Deliberate: hunting each input for undeclared symbols costs a `getOwnPropertySymbols` call on every parse of every strict/loose/catchall object, which measured +16-44% on `z.strictObject`. Declared keys are static and cost nothing, so only they are supported.
+  test("an undeclared symbol key is ignored, not passed through or flagged", () => {
+    expect(z.looseObject({ name: z.string() }).parse({ name: "a", [OTHER]: "x" })).toEqual({ name: "a" });
+    expect(z.strictObject({ name: z.string() }).safeParse({ name: "a", [OTHER]: "x" }).success).toBe(true);
+  });
+
+  test("builder methods reach symbol keys", () => {
+    const base = z.object({ a: z.string(), [SYM]: z.number() });
+    expect(base.partial().safeParse({ a: "x" }).success).toBe(true);
+    expect(base.partial().required().safeParse({ a: "x" }).success).toBe(false);
+    expect(Reflect.ownKeys(base.pick({ [SYM]: true }).shape)).toEqual([SYM]);
+    expect(Reflect.ownKeys(base.omit({ [SYM]: true }).shape)).toEqual(["a"]);
+    expect(Reflect.ownKeys(z.object({ a: z.string() }).extend({ [SYM]: z.number() }).shape)).toEqual(["a", SYM]);
+  });
+
+  test("a cycle through a symbol key is detected like a string-keyed one", () => {
+    const A: any = z.object({
+      name: z.string(),
+      get [SYM]() {
+        return A.optional();
+      },
+    });
+    const input: any = { name: "root" };
+    input[SYM] = input;
+    expect(A.safeParse(input).success).toBe(true);
+    expect(() => z.compile(A)).toThrow(/does not support/);
+  });
+
+  test("extend's refinement-overlap guard sees symbol keys", () => {
+    const refined = z.object({ a: z.string(), [SYM]: z.number() }).refine(() => true);
+    expect(() => refined.extend({ a: z.string() })).toThrow(/Cannot overwrite keys/);
+    expect(() => refined.extend({ [SYM]: z.string() })).toThrow(/Cannot overwrite keys/);
+  });
+
+  test("a symbol key is unrepresentable in JSON Schema", () => {
+    const schema = z.object({ a: z.string(), [SYM]: z.number() });
+    expect(() => z.toJSONSchema(schema)).toThrow(/Symbol keys cannot be represented/);
+    expect(z.toJSONSchema(schema, { unrepresentable: "any" })).toMatchObject({ properties: { a: { type: "string" } } });
+  });
+
+  test("rejects a non-schema value under a symbol key", () => {
+    expect(() => z.object({ [SYM]: 123 as any }).parse({})).toThrow(/Invalid element at key "Symbol\(sym\)"/);
+  });
 });

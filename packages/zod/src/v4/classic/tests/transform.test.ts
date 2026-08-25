@@ -359,3 +359,20 @@ test("encode error", () => {
     `[ZodEncodeError: Encountered unidirectional transform during encode: ZodTransform]`
   );
 });
+
+test("transform context should have addIssue", () => {
+  const schema = z.transform((val, ctx) => {
+    ctx.addIssue({
+      code: "custom",
+      message: "Not valid",
+    });
+    return val;
+  });
+
+  const result = schema.safeParse("test");
+
+  expect(result.success).toBe(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toBe("Not valid");
+  }
+});

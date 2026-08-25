@@ -8,36 +8,14 @@ const error: () => errors.$ZodErrorMap = () => {
     file: { unit: "byte", verb: "memiliki" },
     array: { unit: "item", verb: "memiliki" },
     set: { unit: "item", verb: "memiliki" },
+    map: { unit: "item", verb: "memiliki" },
   };
 
   function getSizing(origin: string): { unit: string; verb: string } | null {
     return Sizable[origin] ?? null;
   }
 
-  const parsedType = (data: any): string => {
-    const t = typeof data;
-
-    switch (t) {
-      case "number": {
-        return Number.isNaN(data) ? "NaN" : "number";
-      }
-      case "object": {
-        if (Array.isArray(data)) {
-          return "array";
-        }
-        if (data === null) {
-          return "null";
-        }
-
-        if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-          return data.constructor.name;
-        }
-      }
-    }
-    return t;
-  };
-
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "input",
@@ -60,20 +38,35 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "durasi format ISO",
     ipv4: "alamat IPv4",
     ipv6: "alamat IPv6",
+    mac: "alamat MAC",
     cidrv4: "rentang alamat IPv4",
     cidrv6: "rentang alamat IPv6",
     base64: "string dengan enkode base64",
     base64url: "string dengan enkode base64url",
     json_string: "string JSON",
     e164: "angka E.164",
+    credit_card: "nomor kartu kredit",
     jwt: "JWT",
     template_literal: "input",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `Input tidak valid: diharapkan ${issue.expected}, diterima ${parsedType(issue.input)}`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `Input tidak valid: diharapkan instanceof ${issue.expected}, diterima ${received}`;
+        }
+        return `Input tidak valid: diharapkan ${expected}, diterima ${received}`;
+      }
       case "invalid_value":
         if (issue.values.length === 1)
           return `Input tidak valid: diharapkan ${util.stringifyPrimitive(issue.values[0])}`;
@@ -100,7 +93,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `String tidak valid: harus berakhir dengan "${_issue.suffix}"`;
         if (_issue.format === "includes") return `String tidak valid: harus menyertakan "${_issue.includes}"`;
         if (_issue.format === "regex") return `String tidak valid: harus sesuai pola ${_issue.pattern}`;
-        return `${Nouns[_issue.format] ?? issue.format} tidak valid`;
+        return `${FormatDictionary[_issue.format] ?? issue.format} tidak valid`;
       }
       case "not_multiple_of":
         return `Angka tidak valid: harus kelipatan dari ${issue.divisor}`;

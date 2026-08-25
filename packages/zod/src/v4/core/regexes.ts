@@ -1,14 +1,16 @@
 import * as util from "./util.js";
 
-export const cuid: RegExp = /^[cC][^\s-]{8,}$/;
+/**
+ * @deprecated CUID v1 is deprecated by its authors due to information leakage
+ * (timestamps embedded in the id). Use {@link cuid2} instead.
+ * See https://github.com/paralleldrive/cuid.
+ */
+export const cuid: RegExp = /^[cC][0-9a-z]{6,}$/;
 export const cuid2: RegExp = /^[0-9a-z]+$/;
-export const ulid: RegExp = /^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$/;
+export const ulid: RegExp = /^[0-7][0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$/;
 export const xid: RegExp = /^[0-9a-vA-V]{20}$/;
 export const ksuid: RegExp = /^[A-Za-z0-9]{27}$/;
-export function nanoid(length = 21): RegExp {
-  return new RegExp(`^[a-zA-Z0-9_-]{${length}}$`);
-}
-export const nanoid21: RegExp = /*@__PURE__*/ nanoid(21);
+export const nanoid: RegExp = /^[a-zA-Z0-9_-]{21}$/;
 
 /** ISO 8601-1 duration regex. Does not support the 8601-2 extensions like negative durations or fractional/negative components. */
 export const duration: RegExp =
@@ -55,7 +57,8 @@ export const browserEmail: RegExp =
   /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 // from https://thekevinscott.com/emojis-in-javascript/#writing-a-regular-expression
 
-const _emoji: string = `^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$`;
+// Single character class, not an alternation: the two properties overlap (U+1F9B0-U+1F9B3), so `(A|B)+` backtracks exponentially on a failed match.
+const _emoji: string = `^[\\p{Extended_Pictographic}\\p{Emoji_Component}]+$`;
 export function emoji(): RegExp {
   return new RegExp(_emoji, "u");
 }
@@ -71,7 +74,7 @@ export const mac = (delimiter?: string): RegExp => {
 export const cidrv4: RegExp =
   /^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\/([0-9]|[1-2][0-9]|3[0-2])$/;
 export const cidrv6: RegExp =
-  /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|::|([0-9a-fA-F]{1,4})?::([0-9a-fA-F]{1,4}:?){0,6})\/(12[0-8]|1[01][0-9]|[1-9]?[0-9])$/;
+  /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))\/(12[0-8]|1[01][0-9]|[1-9]?[0-9])$/;
 
 // https://stackoverflow.com/questions/7860392/determine-if-string-is-in-base64-using-javascript
 export const base64: RegExp = /^$|^(?:[0-9a-zA-Z+/]{4})*(?:(?:[0-9a-zA-Z+/]{2}==)|(?:[0-9a-zA-Z+/]{3}=))?$/;
@@ -82,17 +85,28 @@ export const base64url: RegExp = /^[A-Za-z0-9_-]*$/;
 export const hostname: RegExp =
   /^(?=.{1,253}\.?$)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[-0-9a-zA-Z]{0,61}[0-9a-zA-Z])?)*\.?$/;
 
-export const domain: RegExp = /^([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
+export const domain: RegExp = /^(?=.{1,253}$)([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/;
 
-// https://blog.stevenlevithan.com/archives/validate-phone-number#r4-3 (regex sans spaces)
-// E.164: leading digit must be 1-9; total digits (excluding '+') between 7-15
+export const httpProtocol: RegExp = /^https?$/;
+
+// https://blog.stevenlevithan.com/archives/validate-phone-number#r4-3 (regex sans spaces) E.164: leading digit must be 1-9; total digits (excluding '+') between 7-15
 export const e164: RegExp = /^\+[1-9]\d{6,14}$/;
 
-// const dateSource = `((\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-((0[13578]|1[02])-(0[1-9]|[12]\\d|3[01])|(0[469]|11)-(0[1-9]|[12]\\d|30)|(02)-(0[1-9]|1\\d|2[0-8])))`;
-const dateSource = `(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))`;
-export const date: RegExp = /*@__PURE__*/ new RegExp(`^${dateSource}$`);
+// Credit card shape: 12–19 digits, optionally separated by single spaces or single hyphens. ISO/IEC 7812 caps the PAN at 19 digits; 12 is the shortest issued length (Maestro).
+export const creditCard: RegExp = /^\d(?:[ -]?\d){11,18}$/;
 
-function timeSource(args: { precision?: number | null | undefined }) {
+const dateSource = `(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))`;
+
+/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+ * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+ * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */
+function anchor(source: string): RegExp {
+  return new RegExp(`^${source}$`);
+}
+
+export const date: RegExp = /*@__PURE__*/ anchor(dateSource);
+
+function timeSource(args: { precision?: number | null | undefined; seconds?: boolean }) {
   const hhmm = `(?:[01]\\d|2[0-3]):[0-5]\\d`;
   const regex =
     typeof args.precision === "number"
@@ -101,7 +115,9 @@ function timeSource(args: { precision?: number | null | undefined }) {
         : args.precision === 0
           ? `${hhmm}:[0-5]\\d`
           : `${hhmm}:[0-5]\\d\\.\\d{${args.precision}}`
-      : `${hhmm}(?::[0-5]\\d(?:\\.\\d+)?)?`;
+      : args.seconds
+        ? `${hhmm}:[0-5]\\d(?:\\.\\d+)?`
+        : `${hhmm}(?::[0-5]\\d(?:\\.\\d+)?)?`;
   return regex;
 }
 export function time(args: {
@@ -117,12 +133,13 @@ export function datetime(args: {
   offset?: boolean;
   local?: boolean;
 }): RegExp {
-  const time = timeSource({ precision: args.precision });
   const opts = ["Z"];
-  if (args.local) opts.push("");
   // if (args.offset) opts.push(`([+-]\\d{2}:\\d{2})`);
   if (args.offset) opts.push(`([+-](?:[01]\\d|2[0-3]):[0-5]\\d)`);
-  const timeRegex = `${time}(?:${opts.join("|")})`;
+
+  // RFC 3339 mandates seconds wherever the time carries a `Z` or an offset, so only the unqualified form `local` adds may omit them
+  const qualified = `${timeSource({ precision: args.precision, seconds: true })}(?:${opts.join("|")})`;
+  const timeRegex = args.local ? `${qualified}|${timeSource({ precision: args.precision })}` : qualified;
 
   return new RegExp(`^${dateSource}T(?:${timeRegex})$`);
 }
@@ -134,7 +151,7 @@ export const string = (params?: { minimum?: number | undefined; maximum?: number
 
 export const bigint: RegExp = /^-?\d+n?$/;
 export const integer: RegExp = /^-?\d+$/;
-export const number: RegExp = /^-?\d+(?:\.\d+)?/;
+export const number: RegExp = /^-?\d+(?:\.\d+)?$/;
 export const boolean: RegExp = /^(?:true|false)$/i;
 const _null: RegExp = /^null$/i;
 export { _null as null };
@@ -150,6 +167,7 @@ export const uppercase: RegExp = /^[^a-z]*$/;
 export const hex: RegExp = /^[0-9a-fA-F]*$/;
 
 // Hash regexes for different algorithms and encodings
+
 // Helper function to create base64 regex with exact length and padding
 function fixedBase64(bodyLength: number, padding: "" | "=" | "=="): RegExp {
   return new RegExp(`^[A-Za-z0-9+/]{${bodyLength}}${padding}$`);

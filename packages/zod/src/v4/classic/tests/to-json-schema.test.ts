@@ -18,8 +18,7 @@ const validateOpenAPI30Schema = async (zodJSONSchema: Record<string, unknown>): 
   });
 
   if (!res.valid) {
-    // `console.error` should make `vitest` trow an unhandled error
-    // printing the validation messages in consoles
+    // `console.error` should make `vitest` trow an unhandled error printing the validation messages in consoles
     console.error(
       `OpenAPI schema is not valid against ${openAPI30Validator.version}`,
       JSON.stringify(res.errors, null, 2)
@@ -88,7 +87,7 @@ describe("toJSONSchema", () => {
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "format": "date-time",
-        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
         "type": "string",
       }
     `);
@@ -100,11 +99,42 @@ describe("toJSONSchema", () => {
         "type": "string",
       }
     `);
+    // only shapes keeping both an offset and seconds may advertise `date-time`, composed onto a string as well as constructed
+    expect(z.toJSONSchema(z.iso.datetime()).format).toEqual("date-time");
+    expect(z.toJSONSchema(z.iso.datetime({ offset: true })).format).toEqual("date-time");
+    expect(z.toJSONSchema(z.iso.datetime({ precision: 0 })).format).toEqual("date-time");
+    expect(z.toJSONSchema(z.iso.datetime({ local: true })).format).toEqual(undefined);
+    expect(z.toJSONSchema(z.iso.datetime({ precision: -1 })).format).toEqual(undefined);
+    expect(z.toJSONSchema(z.string().check(z.iso.datetime({ local: true }))).format).toEqual(undefined);
+    expect(z.toJSONSchema(z.string().check(z.iso.datetime())).format).toEqual("date-time");
+    // the pattern still describes what the schema accepts
+    expect(z.toJSONSchema(z.iso.datetime({ local: true })).pattern).toBeDefined();
+
     expect(z.toJSONSchema(z.iso.time())).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "format": "time",
         "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?$",
+        "type": "string",
+      }
+    `);
+    expect(z.toJSONSchema(z.iso.time({ precision: -1 }))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$",
+        "type": "string",
+      }
+    `);
+    expect(z.toJSONSchema(z.iso.time({ precision: 0 }))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d$",
+        "type": "string",
+      }
+    `);
+    expect(z.toJSONSchema(z.iso.time({ precision: 3 }))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}$",
         "type": "string",
       }
     `);
@@ -192,7 +222,7 @@ describe("toJSONSchema", () => {
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "format": "cuid",
-        "pattern": "^[cC][^\\s-]{8,}$",
+        "pattern": "^[cC][0-9a-z]{6,}$",
         "type": "string",
       }
     `);
@@ -201,7 +231,7 @@ describe("toJSONSchema", () => {
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "format": "emoji",
-        "pattern": "^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$",
+        "pattern": "^[\\p{Extended_Pictographic}\\p{Emoji_Component}]+$",
         "type": "string",
       }
     `);
@@ -225,7 +255,7 @@ describe("toJSONSchema", () => {
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "format": "ulid",
-        "pattern": "^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$",
+        "pattern": "^[0-7][0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$",
         "type": "string",
       }
     `);
@@ -305,6 +335,12 @@ describe("toJSONSchema", () => {
     // Dynamic catch values
     const dynamicCatchSchema = z.string().catch((ctx) => `${ctx.issues.length}`);
     expect(() => z.toJSONSchema(dynamicCatchSchema)).toThrow("Dynamic catch values are not supported in JSON Schema");
+    expect(z.toJSONSchema(dynamicCatchSchema, { unrepresentable: "any" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "string",
+      }
+    `);
   });
 
   test("string formats", () => {
@@ -328,7 +364,7 @@ describe("toJSONSchema", () => {
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "format": "date-time",
-        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
         "type": "string",
       }
     `);
@@ -344,7 +380,6 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(z.iso.time())).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "format": "time",
         "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?$",
         "type": "string",
       }
@@ -461,7 +496,7 @@ describe("toJSONSchema", () => {
             "pattern": "cruel",
           },
           {
-            "pattern": "^.{10}dark",
+            "pattern": "^.{10,}dark",
           },
           {
             "pattern": ".*world$",
@@ -500,7 +535,7 @@ describe("toJSONSchema", () => {
             "type": "string",
           },
           {
-            "pattern": "^.{10}dark",
+            "pattern": "^.{10,}dark",
             "type": "string",
           },
           {
@@ -515,6 +550,19 @@ describe("toJSONSchema", () => {
         "type": "string",
       }
     `);
+  });
+
+  test("includes with position emits a pattern matching runtime semantics", () => {
+    // String.prototype.includes(sub, position) matches `sub` at `position` OR
+    // LATER, so the JSON Schema pattern must allow >= position leading chars.
+    const schema = z.string().includes("foo", { position: 2 });
+    const json = z.toJSONSchema(schema) as { pattern?: string };
+    expect(json.pattern).toBe("^.{2,}foo");
+
+    const re = new RegExp(json.pattern!);
+    for (const input of ["xxfoo", "xxxfoo", "xfoo", "ab"]) {
+      expect(re.test(input)).toBe(schema.safeParse(input).success);
+    }
   });
 
   test("number constraints", () => {
@@ -628,8 +676,49 @@ describe("toJSONSchema", () => {
     `);
   });
 
+  test("number constraints intersection draft-04", () => {
+    // When both minimum (from .int()) and exclusiveMinimum (from .positive()) exist, the more restrictive constraint should be used
+    expect(z.toJSONSchema(z.number().int().positive().lte(65535), { target: "draft-04" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "exclusiveMinimum": true,
+        "maximum": 65535,
+        "minimum": 0,
+        "type": "integer",
+      }
+    `);
+    // Same for openapi-3.0
+    expect(z.toJSONSchema(z.number().int().positive().lte(65535), { target: "openapi-3.0" })).toMatchInlineSnapshot(`
+      {
+        "exclusiveMinimum": true,
+        "maximum": 65535,
+        "minimum": 0,
+        "type": "integer",
+      }
+    `);
+    // When inclusive minimum is more restrictive than exclusive minimum
+    expect(z.toJSONSchema(z.number().gt(3).gte(10), { target: "draft-04" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "minimum": 10,
+        "type": "number",
+      }
+    `);
+    // Same logic for maximum constraints
+    expect(z.toJSONSchema(z.number().int().negative(), { target: "draft-04" })).toMatchInlineSnapshot(`
+      {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "exclusiveMaximum": true,
+        "maximum": 0,
+        "minimum": -9007199254740991,
+        "type": "integer",
+      }
+    `);
+  });
+
   test("target normalization draft-04 and draft-07", () => {
     // Test that both old (draft-4, draft-7) and new (draft-04, draft-07) target formats work
+
     // Test draft-04 / draft-4
     expect(z.toJSONSchema(z.number().gt(5), { target: "draft-04" })).toMatchInlineSnapshot(`
       {
@@ -730,12 +819,179 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": [
+          "string",
+          "number",
+        ],
+      }
+    `);
+  });
+
+  test("nullable compacts to a type array", () => {
+    expect(z.toJSONSchema(z.string().nullable())).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": [
+          "string",
+          "null",
+        ],
+      }
+    `);
+
+    // a nested union folds into the outer type array rather than leaving a mixed shape
+    expect(z.toJSONSchema(z.union([z.string(), z.number()]).nullable())).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": [
+          "string",
+          "number",
+          "null",
+        ],
+      }
+    `);
+
+    // the null branch is bare but the object branch is not, so this stays an anyOf
+    expect(z.toJSONSchema(z.object({ a: z.string() }).nullable())).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "anyOf": [
           {
+            "additionalProperties": false,
+            "properties": {
+              "a": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "a",
+            ],
+            "type": "object",
+          },
+          {
+            "type": "null",
+          },
+        ],
+      }
+    `);
+  });
+
+  test("duplicate branches dedupe, single branch stays a bare type", () => {
+    // a `type` array must have unique members, so two branches that erase to the same bare type collapse
+    const refined = z.union([z.string().refine((s) => s.length > 2), z.string().refine((s) => s.length < 9)]);
+    expect(z.toJSONSchema(refined)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "string",
+      }
+    `);
+    expect(z.toJSONSchema(z.union([z.string()]))).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "string",
+      }
+    `);
+  });
+
+  test("compaction runs after overrides and ref extraction", () => {
+    // an override decorates the string branch, so it is no longer a bare type and must survive in anyOf
+    const decorated = z.toJSONSchema(z.union([z.string(), z.number()]), {
+      override(ctx) {
+        if (ctx.zodSchema._zod.def.type === "string") ctx.jsonSchema.whatever = "sup";
+      },
+    });
+    expect(decorated).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "anyOf": [
+          {
+            "type": "string",
+            "whatever": "sup",
+          },
+          {
+            "type": "number",
+          },
+        ],
+      }
+    `);
+
+    // a branch extracted into $defs is a $ref, not a bare type, so `reused` is not silently bypassed
+    const shared = z.string();
+    expect(
+      z.toJSONSchema(z.object({ a: shared, b: z.union([shared, z.null()]) }), { reused: "ref" })
+    ).toMatchInlineSnapshot(`
+      {
+        "$defs": {
+          "__schema0": {
+            "type": "string",
+          },
+        },
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "a": {
+            "$ref": "#/$defs/__schema0",
+          },
+          "b": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/__schema0",
+              },
+              {
+                "type": "null",
+              },
+            ],
+          },
+        },
+        "required": [
+          "a",
+          "b",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  test("openapi-3.0 keeps a single-string type", () => {
+    // OpenAPI 3.0 has no type arrays; nullability is spelled with `nullable`
+    expect(z.toJSONSchema(z.string().nullable(), { target: "openapi-3.0" })).toMatchInlineSnapshot(`
+      {
+        "nullable": true,
+        "type": "string",
+      }
+    `);
+  });
+
+  test("union with constrained branch is not compacted", () => {
+    const schema = z.union([z.string().min(1), z.number()]);
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "anyOf": [
+          {
+            "minLength": 1,
             "type": "string",
           },
           {
             "type": "number",
+          },
+        ],
+      }
+    `);
+  });
+
+  test("union of literals is not compacted", () => {
+    const schema = z.union([z.literal("a"), z.literal("b")]);
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "anyOf": [
+          {
+            "const": "a",
+            "type": "string",
+          },
+          {
+            "const": "b",
+            "type": "string",
           },
         ],
       }
@@ -796,32 +1052,20 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "allOf": [
-          {
-            "additionalProperties": false,
-            "properties": {
-              "name": {
-                "type": "string",
-              },
-            },
-            "required": [
-              "name",
-            ],
-            "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "age": {
+            "type": "number",
           },
-          {
-            "additionalProperties": false,
-            "properties": {
-              "age": {
-                "type": "number",
-              },
-            },
-            "required": [
-              "age",
-            ],
-            "type": "object",
+          "name": {
+            "type": "string",
           },
+        },
+        "required": [
+          "name",
+          "age",
         ],
+        "type": "object",
       }
     `);
   });
@@ -856,11 +1100,195 @@ describe("toJSONSchema", () => {
     `);
   });
 
+  test("record with enum keys adds required", () => {
+    const schema = z.record(z.enum(["key1", "key2"]), z.number());
+
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": {
+          "type": "number",
+        },
+        "propertyNames": {
+          "enum": [
+            "key1",
+            "key2",
+          ],
+          "type": "string",
+        },
+        "required": [
+          "key1",
+          "key2",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  test("record with enum keys drops required for an optional-in value under io: input", () => {
+    const schema = z.record(z.enum(["key1", "key2"]), z.number().default(0));
+
+    expect(z.toJSONSchema(schema, { io: "input" }).required).toBeUndefined();
+    expect(z.toJSONSchema(schema).required).toEqual(["key1", "key2"]);
+    expect(z.toJSONSchema(z.record(z.enum(["key1", "key2"]), z.number()), { io: "input" }).required).toEqual([
+      "key1",
+      "key2",
+    ]);
+    // A caught value keeps required, matching the input type and z.object().
+    expect(z.toJSONSchema(z.record(z.enum(["key1", "key2"]), z.number().catch(0)), { io: "input" }).required).toEqual([
+      "key1",
+      "key2",
+    ]);
+  });
+
+  test("record filters enum values to strings and numbers for required", () => {
+    enum NumberEnum {
+      Zero = 0,
+      One = 1,
+    }
+    const schema = z.record(z.enum(NumberEnum), z.string());
+
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": {
+          "type": "string",
+        },
+        "propertyNames": {
+          "enum": [
+            0,
+            1,
+          ],
+          "type": "number",
+        },
+        "required": [
+          0,
+          1,
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  test("strict record with regex key uses propertyNames", () => {
+    const schema = z.record(z.string().regex(/^label:[a-z]{2}$/), z.string());
+
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": {
+          "type": "string",
+        },
+        "propertyNames": {
+          "pattern": "^label:[a-z]{2}$",
+          "type": "string",
+        },
+        "type": "object",
+      }
+    `);
+  });
+
+  test("looseRecord with regex key uses patternProperties", () => {
+    const schema = z.looseRecord(z.string().regex(/^label:[a-z]{2}$/), z.string());
+
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "patternProperties": {
+          "^label:[a-z]{2}$": {
+            "type": "string",
+          },
+        },
+        "type": "object",
+      }
+    `);
+  });
+
+  test("looseRecord with multiple regex patterns uses patternProperties", () => {
+    const schema = z.looseRecord(
+      z
+        .string()
+        .regex(/^prefix_/)
+        .regex(/_suffix$/),
+      z.number()
+    );
+
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "patternProperties": {
+          "^prefix_": {
+            "type": "number",
+          },
+          "_suffix$": {
+            "type": "number",
+          },
+        },
+        "type": "object",
+      }
+    `);
+  });
+
+  test("looseRecord without regex key uses propertyNames", () => {
+    // looseRecord with plain string key should still use propertyNames
+    const schema = z.looseRecord(z.string(), z.boolean());
+
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": {
+          "type": "boolean",
+        },
+        "propertyNames": {
+          "type": "string",
+        },
+        "type": "object",
+      }
+    `);
+  });
+
+  test("intersection of object with looseRecord uses patternProperties", () => {
+    const zLabeled = z.object({ label: z.string() });
+    const zLocalizedLabeled = z.looseRecord(z.string().regex(/^label:[a-z]{2}$/), z.string());
+    const schema = zLabeled.and(zLocalizedLabeled);
+
+    expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "allOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "label",
+            ],
+            "type": "object",
+          },
+          {
+            "patternProperties": {
+              "^label:[a-z]{2}$": {
+                "type": "string",
+              },
+            },
+            "type": "object",
+          },
+        ],
+      }
+    `);
+  });
+
   test("tuple", () => {
     const schema = z.tuple([z.string(), z.number()]);
     expect(z.toJSONSchema(schema)).toMatchInlineSnapshot(`
       {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "items": false,
+        "maxItems": 2,
+        "minItems": 2,
         "prefixItems": [
           {
             "type": "string",
@@ -882,6 +1310,7 @@ describe("toJSONSchema", () => {
         "items": {
           "type": "boolean",
         },
+        "minItems": 2,
         "prefixItems": [
           {
             "type": "string",
@@ -937,7 +1366,7 @@ describe("toJSONSchema", () => {
             },
           ],
         },
-        "minItems": 3,
+        "minItems": 2,
         "type": "array",
       }
     `);
@@ -978,6 +1407,7 @@ describe("toJSONSchema", () => {
     expect(z.toJSONSchema(schema, { target: "draft-7", io: "input" })).toMatchInlineSnapshot(`
       {
         "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalItems": false,
         "items": [
           {
             "type": "string",
@@ -986,6 +1416,8 @@ describe("toJSONSchema", () => {
             "type": "number",
           },
         ],
+        "maxItems": 2,
+        "minItems": 2,
         "type": "array",
       }
     `);
@@ -1007,14 +1439,14 @@ describe("toJSONSchema", () => {
             "type": "number",
           },
         ],
+        "minItems": 2,
         "type": "array",
       }
     `);
   });
 
   test("tuple with rest draft-7 - issue #5151 regression test", () => {
-    // This test addresses issue #5151: tuple with rest elements and ids
-    // in draft-7 had incorrect internal path handling affecting complex scenarios
+    // This test addresses issue #5151: tuple with rest elements and ids in draft-7 had incorrect internal path handling affecting complex scenarios
     const primarySchema = z.string().meta({ id: "primary" });
     const restSchema = z.number().meta({ id: "rest" });
     const testSchema = z.tuple([primarySchema], restSchema);
@@ -1035,11 +1467,9 @@ describe("toJSONSchema", () => {
         },
         "definitions": {
           "primary": {
-            "id": "primary",
             "type": "string",
           },
           "rest": {
-            "id": "rest",
             "type": "number",
           },
         },
@@ -1048,6 +1478,7 @@ describe("toJSONSchema", () => {
             "$ref": "#/definitions/primary",
           },
         ],
+        "minItems": 1,
         "type": "array",
       }
     `);
@@ -1060,6 +1491,88 @@ describe("toJSONSchema", () => {
     // Structural validations
     expect(Array.isArray(result.items)).toBe(true);
     expect(result.additionalItems).toBeDefined();
+  });
+
+  test("closed tuple length constraints - issue #6193", () => {
+    const schema = z.tuple([z.string(), z.string(), z.object({ lang: z.string() })]);
+
+    expect(schema.safeParse(["a", "b", { lang: "en" }, "extra"]).success).toBe(false);
+
+    const draft2020 = z.toJSONSchema(schema, { target: "draft-2020-12" });
+    expect(draft2020.items).toBe(false);
+    expect(draft2020.minItems).toBe(3);
+    expect(draft2020.maxItems).toBe(3);
+
+    const draft7 = z.toJSONSchema(schema, { target: "draft-7", io: "input" });
+    expect(draft7.additionalItems).toBe(false);
+    expect(draft7.minItems).toBe(3);
+    expect(draft7.maxItems).toBe(3);
+
+    const openapi = z.toJSONSchema(schema, { target: "openapi-3.0" });
+    validateOpenAPI30Schema(openapi);
+    expect(openapi.minItems).toBe(3);
+    expect(openapi.maxItems).toBe(3);
+  });
+
+  test("closed tuple with optional trailing items", () => {
+    const schema = z.tuple([z.string(), z.number().optional()]);
+
+    const draft2020 = z.toJSONSchema(schema, { target: "draft-2020-12" });
+    expect(draft2020.items).toBe(false);
+    expect(draft2020.minItems).toBe(1);
+    expect(draft2020.maxItems).toBe(2);
+
+    const draft7 = z.toJSONSchema(schema, { target: "draft-7", io: "input" });
+    expect(draft7.additionalItems).toBe(false);
+    expect(draft7.minItems).toBe(1);
+    expect(draft7.maxItems).toBe(2);
+  });
+
+  test("empty closed tuple rejects extra elements", () => {
+    const schema = z.tuple([]);
+
+    const draft2020 = z.toJSONSchema(schema, { target: "draft-2020-12" });
+    expect(draft2020.items).toBe(false);
+    expect(draft2020.maxItems).toBe(0);
+
+    const draft7 = z.toJSONSchema(schema, { target: "draft-7", io: "input" });
+    expect(draft7.additionalItems).toBe(false);
+    expect(draft7.maxItems).toBe(0);
+
+    const openapi = z.toJSONSchema(schema, { target: "openapi-3.0" });
+    validateOpenAPI30Schema(openapi);
+    expect(openapi.maxItems).toBe(0);
+  });
+
+  test("closed tuple length respects io direction with defaults", () => {
+    const schema = z.tuple([z.string(), z.string().default("x")]);
+
+    const input = z.toJSONSchema(schema, { target: "draft-2020-12", io: "input" });
+    expect(input.items).toBe(false);
+    expect(input.minItems).toBe(1);
+    expect(input.maxItems).toBe(2);
+
+    const output = z.toJSONSchema(schema, { target: "draft-2020-12", io: "output" });
+    expect(output.items).toBe(false);
+    expect(output.minItems).toBe(2);
+    expect(output.maxItems).toBe(2);
+  });
+
+  test("closed tuple length resolves input optionality past transform and catch", () => {
+    const minItems = (schema: z.core.$ZodType, io: "input" | "output") =>
+      z.toJSONSchema(schema, { target: "draft-2020-12", io }).minItems;
+
+    // Both let the parser observe an absent slot, but declare a required input.
+    const pre = z.tuple([z.string(), z.preprocess((v) => v, z.string())]);
+    expect(minItems(pre, "input")).toBe(2);
+    expect(minItems(pre, "output")).toBe(2);
+
+    const caught = z.tuple([z.string(), z.string().catch("x")]);
+    expect(minItems(caught, "input")).toBe(2);
+    expect(minItems(caught, "output")).toBe(2);
+
+    // Resolution passes through the wrapper rather than stopping at it.
+    expect(minItems(z.tuple([z.string(), z.string().optional().catch("x")]), "input")).toBe(1);
   });
 
   test("promise", () => {
@@ -1647,7 +2160,7 @@ test("override: do not run on references", () => {
     },
   });
 
-  expect(overrideCount).toBe(6);
+  expect(overrideCount).toBe(12);
 });
 
 test("override with refs", () => {
@@ -1681,13 +2194,9 @@ test("override execution order", () => {
 
   expect(unionSchema).toMatchInlineSnapshot(`
     {
-      "anyOf": [
-        {
-          "type": "string",
-        },
-        {
-          "type": "number",
-        },
+      "type": [
+        "string",
+        "number",
       ],
     }
   `);
@@ -1830,11 +2339,9 @@ test("extract schemas with id", () => {
     {
       "$defs": {
         "age": {
-          "id": "age",
           "type": "number",
         },
         "name": {
-          "id": "name",
           "type": "string",
         },
       },
@@ -1867,6 +2374,117 @@ test("extract schemas with id", () => {
         "age",
       ],
       "type": "object",
+    }
+  `);
+});
+
+test("escapes JSON Pointer reserved characters in $ref but not in $defs key", () => {
+  const User = z.object({ name: z.string() }).meta({ id: "Shared/User~" });
+  const result = z.toJSONSchema(z.object({ User }));
+  // the $ref pointer escapes `/` -> `~1` and `~` -> `~0` (RFC 6901),
+  // while the $defs key keeps the original id
+  expect((result.properties!.User as any).$ref).toBe("#/$defs/Shared~1User~0");
+  expect(Object.keys(result.$defs!)).toEqual(["Shared/User~"]);
+});
+
+test("escapes JSON Pointer reserved characters in the root $ref", () => {
+  const User = z.object({ name: z.string() }).meta({ id: "Shared/User~" });
+  const result = z.toJSONSchema(User);
+  expect(result.$ref).toBe("#/$defs/Shared~1User~0");
+  expect(Object.keys(result.$defs!)).toEqual(["Shared/User~"]);
+});
+
+test("unrepresentable default values go through `unrepresentable`", () => {
+  // a bigint default has no reliable JSON encoding, so it is dropped rather than approximated
+  expect(z.toJSONSchema(z.bigint().default(0n), { unrepresentable: "any" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+    }
+  `);
+  expect(z.toJSONSchema(z.bigint().prefault(2n), { io: "input", unrepresentable: "any" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+    }
+  `);
+  // including when nested inside an otherwise representable default
+  expect(
+    z.toJSONSchema(z.object({ a: z.bigint() }).default({ a: 1n }), { unrepresentable: "any" })
+  ).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "a": {},
+      },
+      "required": [
+        "a",
+      ],
+      "type": "object",
+    }
+  `);
+
+  // under the default strict mode the inner type throws first; a representable inner type surfaces the default's own error rather than a raw `JSON.stringify` TypeError
+  expect(() => z.toJSONSchema(z.bigint().default(0n))).toThrow("BigInt cannot be represented in JSON Schema");
+  expect(() => z.toJSONSchema(z.unknown().default(1n))).toThrow("BigInt defaults cannot be represented in JSON Schema");
+
+  // representable defaults are untouched
+  expect(z.toJSONSchema(z.object({ a: z.number() }).default({ a: 2 }))).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "default": {
+        "a": 2,
+      },
+      "properties": {
+        "a": {
+          "type": "number",
+        },
+      },
+      "required": [
+        "a",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
+test("an `unrepresentable` handler can represent a bigint default", () => {
+  // one handler covers both the type and its default, so no `unrepresentable: "any"` is needed and every other unrepresentable type still throws
+  expect(
+    z.toJSONSchema(z.object({ startAt: z.coerce.bigint().optional().default(0n) }), {
+      io: "input",
+      unrepresentable: ({ zodSchema }) => {
+        const def = zodSchema._zod.def;
+        if (def.type === "bigint") return { type: "integer", format: "int64" };
+        if (def.type === "default") return { default: String(def.defaultValue) };
+        return "throw";
+      },
+    })
+  ).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "startAt": {
+          "default": "0",
+          "format": "int64",
+          "type": "integer",
+        },
+      },
+      "type": "object",
+    }
+  `);
+
+  // a handler may also drop just the default while still representing the type
+  expect(
+    z.toJSONSchema(z.bigint().default(0n), {
+      unrepresentable: ({ zodSchema }) =>
+        zodSchema._zod.def.type === "bigint" ? { type: "integer", format: "int64" } : "any",
+    })
+  ).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "format": "int64",
+      "type": "integer",
     }
   `);
 });
@@ -1922,7 +2540,6 @@ test("describe with id", () => {
     {
       "$defs": {
         "jobId": {
-          "id": "jobId",
           "type": "string",
         },
       },
@@ -1947,6 +2564,124 @@ test("describe with id", () => {
   `);
 });
 
+test("id is stripped from $defs entries (draft-2020-12)", () => {
+  // The `id` in `.meta()` is a registration tag — it determines the $defs key but should not leak into the definition body, where it is redundant.
+  const inner = z.string().meta({ id: "Inner" });
+  const result = z.toJSONSchema(z.object({ a: inner, b: inner }));
+  expect(result.$defs?.Inner).toEqual({ type: "string" });
+  expect((result.$defs?.Inner as any).id).toBeUndefined();
+});
+
+test("id is stripped from definitions entries (draft-04)", () => {
+  // In draft-04, `id` is a reserved keyword that sets a base URI for the subschema. Leaking Zod's registration tag here is semantically wrong, so ensure it is stripped.
+  const inner = z.string().meta({ id: "Inner" });
+  const result = z.toJSONSchema(z.object({ a: inner, b: inner }), { target: "draft-04" }) as any;
+  expect(result.definitions?.Inner).toEqual({ type: "string" });
+  expect(result.definitions?.Inner?.id).toBeUndefined();
+});
+
+test("id is stripped from root schema", () => {
+  // The registration tag should not appear on the root either.
+  const A = z.object({ name: z.string() }).meta({ id: "A" });
+  const result = z.toJSONSchema(A);
+  expect((result as any).id).toBeUndefined();
+});
+
+test("root schema with id is hoisted into $defs", () => {
+  const A = z.object({ name: z.string() }).meta({ id: "A" });
+  const result = z.toJSONSchema(A);
+
+  expect(result).toEqual({
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    $ref: "#/$defs/A",
+    $defs: {
+      A: {
+        type: "object",
+        properties: {
+          name: {
+            type: "string",
+          },
+        },
+        required: ["name"],
+        additionalProperties: false,
+      },
+    },
+  });
+});
+
+test("root schema with id uses definitions on legacy targets", () => {
+  const A = z.object({ name: z.string() }).meta({ id: "A" });
+  const result = z.toJSONSchema(A, { target: "draft-07" });
+
+  expect(result).toEqual({
+    $schema: "http://json-schema.org/draft-07/schema#",
+    $ref: "#/definitions/A",
+    definitions: {
+      A: {
+        type: "object",
+        properties: {
+          name: {
+            type: "string",
+          },
+        },
+        required: ["name"],
+        additionalProperties: false,
+      },
+    },
+  });
+});
+
+test("id is observable in override callback", () => {
+  // The strip happens after override callbacks run, so userland override code can still read `jsonSchema.id` if it wants to.
+  const inner = z.string().meta({ id: "Inner" });
+  const seenIds: Array<string | undefined> = [];
+  z.toJSONSchema(z.object({ a: inner }), {
+    override: ({ jsonSchema }) => {
+      if (jsonSchema.id !== undefined) seenIds.push(jsonSchema.id as string);
+    },
+  });
+  expect(seenIds).toContain("Inner");
+});
+
+test("describe with id on wrapper", () => {
+  // Test that $ref propagation works when processor sets a different ref (readonly -> innerType) but parent was extracted due to having an id
+  const roJobId = z.string().readonly().meta({ id: "roJobId" });
+
+  const a = z.toJSONSchema(
+    z.object({
+      current: roJobId.describe("Current readonly job"),
+      previous: roJobId.describe("Previous readonly job"),
+    })
+  );
+  expect(a).toMatchInlineSnapshot(`
+    {
+      "$defs": {
+        "roJobId": {
+          "readOnly": true,
+          "type": "string",
+        },
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "current": {
+          "$ref": "#/$defs/roJobId",
+          "description": "Current readonly job",
+        },
+        "previous": {
+          "$ref": "#/$defs/roJobId",
+          "description": "Previous readonly job",
+        },
+      },
+      "required": [
+        "current",
+        "previous",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
 test("overwrite id", () => {
   const jobId = z.string().meta({ id: "aaa" });
 
@@ -1960,12 +2695,10 @@ test("overwrite id", () => {
     {
       "$defs": {
         "aaa": {
-          "id": "aaa",
           "type": "string",
         },
         "bbb": {
           "$ref": "#/$defs/aaa",
-          "id": "bbb",
         },
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1999,12 +2732,10 @@ test("overwrite id", () => {
     {
       "$defs": {
         "aaa": {
-          "id": "aaa",
           "type": "string",
         },
         "ccc": {
           "$ref": "#/$defs/aaa",
-          "id": "ccc",
         },
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2121,47 +2852,40 @@ test("top-level readonly", () => {
   // .meta({ id: "B" });
 
   const result = z.toJSONSchema(A);
-  expect(result).toMatchInlineSnapshot(`
-    {
-      "$defs": {
-        "B": {
-          "additionalProperties": false,
-          "id": "B",
-          "properties": {
-            "a": {
-              "$ref": "#",
-            },
-            "name": {
-              "type": "string",
-            },
+  expect(result).toEqual({
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    $ref: "#/$defs/A",
+    $defs: {
+      A: {
+        additionalProperties: false,
+        properties: {
+          b: {
+            $ref: "#/$defs/B",
           },
-          "readOnly": true,
-          "required": [
-            "name",
-            "a",
-          ],
-          "type": "object",
+          name: {
+            type: "string",
+          },
         },
+        readOnly: true,
+        required: ["name", "b"],
+        type: "object",
       },
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "additionalProperties": false,
-      "id": "A",
-      "properties": {
-        "b": {
-          "$ref": "#/$defs/B",
+      B: {
+        additionalProperties: false,
+        properties: {
+          a: {
+            $ref: "#/$defs/A",
+          },
+          name: {
+            type: "string",
+          },
         },
-        "name": {
-          "type": "string",
-        },
+        readOnly: true,
+        required: ["name", "a"],
+        type: "object",
       },
-      "readOnly": true,
-      "required": [
-        "name",
-        "b",
-      ],
-      "type": "object",
-    }
-  `);
+    },
+  });
 });
 
 test("basic registry", () => {
@@ -2238,6 +2962,164 @@ test("basic registry", () => {
   `);
 });
 
+test("large registry converts in linear time", () => {
+  const count = 2000;
+  const convert = (withIntersection: boolean) => {
+    const registry = z.registry<{ id: string }>();
+    for (let i = 0; i < count; i++) {
+      registry.add(
+        z.object({ id: z.string(), name: z.string(), count: z.number(), nested: z.object({ a: z.boolean() }) }),
+        { id: `Type${i}` }
+      );
+    }
+    if (withIntersection) registry.add(z.object({ a: z.string() }).and(z.object({ b: z.string() })), { id: "Inter" });
+
+    const start = performance.now();
+    const { schemas } = z.toJSONSchema(registry, { uri: (id) => `https://example.com/${id}.json` });
+    return { schemas, elapsed: performance.now() - start };
+  };
+
+  const plain = convert(false);
+  expect(Object.keys(plain.schemas)).toHaveLength(count);
+  expect(plain.schemas.Type0).toMatchObject({
+    $id: "https://example.com/Type0.json",
+    type: "object",
+    properties: { nested: { type: "object" } },
+  });
+  expect(plain.schemas[`Type${count - 1}`]!.$id).toBe(`https://example.com/Type${count - 1}.json`);
+
+  // The whole-map passes in extractDefs/finalize used to re-run once per registered schema, which made this quadratic: ~9s of CPU at this size before the passes were hoisted, ~50ms after.
+  expect(plain.elapsed).toBeLessThan(5000);
+
+  // The intersection fold walks the whole map as well, so it has to run inside the same guard. Hoisting it back out costs ~10x at this size. Comparing the two conversions rather than asserting a fixed budget keeps this independent of how fast the machine is.
+  const folded = convert(true);
+  expect(folded.schemas.Inter).toMatchObject({ type: "object", properties: { a: {}, b: {} } });
+  expect(folded.elapsed).toBeLessThan(plain.elapsed * 4 + 100);
+});
+
+test("registry extracts unregistered subschemas into __shared", () => {
+  const registry = z.registry<{ id: string }>();
+  const address = z.object({ street: z.string() }).meta({ id: "Address" });
+  registry.add(z.object({ home: address, work: address }), { id: "Person" });
+  registry.add(z.object({ hq: address }), { id: "Company" });
+
+  const { schemas } = z.toJSONSchema(registry, { uri: (id) => `https://example.com/${id}.json` });
+
+  expect(schemas.__shared).toMatchInlineSnapshot(`
+    {
+      "$defs": {
+        "Address": {
+          "additionalProperties": false,
+          "properties": {
+            "street": {
+              "type": "string",
+            },
+          },
+          "required": [
+            "street",
+          ],
+          "type": "object",
+        },
+      },
+    }
+  `);
+  expect(schemas.Person).toMatchInlineSnapshot(`
+    {
+      "$id": "https://example.com/Person.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "home": {
+          "$ref": "https://example.com/__shared.json#/$defs/Address",
+        },
+        "work": {
+          "$ref": "https://example.com/__shared.json#/$defs/Address",
+        },
+      },
+      "required": [
+        "home",
+        "work",
+      ],
+      "type": "object",
+    }
+  `);
+  // Company is emitted after Person, so it only resolves if the shared $defs built on the first finalize are still reachable — the pass that writes them no longer runs per schema.
+  expect(schemas.Company!.properties!.hq).toEqual({
+    $ref: "https://example.com/__shared.json#/$defs/Address",
+  });
+});
+
+test("registry extracts reused subschemas into __shared without an id", () => {
+  const registry = z.registry<{ id: string }>();
+  const shared = z.object({ q: z.string() });
+  registry.add(z.object({ a: shared, b: shared }), { id: "First" });
+  registry.add(z.object({ c: shared }), { id: "Second" });
+
+  const { schemas } = z.toJSONSchema(registry, { uri: (id) => `${id}.json`, reused: "ref" });
+
+  // The id is counter-generated, so this pins that ctx.counter is consumed exactly once.
+  expect(Object.keys(schemas.__shared!.$defs!)).toEqual(["schema0"]);
+  expect(schemas.First!.properties!.a).toEqual({ $ref: "__shared.json#/$defs/schema0" });
+  expect(schemas.Second!.properties!.c).toEqual({ $ref: "__shared.json#/$defs/schema0" });
+});
+
+test("JSONSchemaGenerator re-runs shared passes when emit params change", () => {
+  const shared = z.object({ s: z.string() });
+  const a = z.object({ x: shared, y: shared });
+  const registry = z.registry<{ id: string }>();
+  registry.add(a, { id: "A" });
+
+  const gen = new z.core.JSONSchemaGenerator({ target: "draft-2020-12" });
+  gen.process(a);
+  const defs: Record<string, any> = {};
+  const external = { registry, uri: (id: string) => `${id}.json`, defs };
+
+  gen.emit(a, { external, reused: "inline" });
+  // Same `external`, different `reused` — the second emit must still extract `shared`.
+  const second: any = gen.emit(a, { external, reused: "ref" });
+
+  expect(Object.keys(defs)).toEqual(["schema0"]);
+  expect(second.properties.x).toEqual({ $ref: "__shared.json#/$defs/schema0" });
+  expect(second.properties.y).toEqual({ $ref: "__shared.json#/$defs/schema0" });
+});
+
+test("JSONSchemaGenerator still throws on cycles when a later emit asks for it", () => {
+  const Node: any = z.object({
+    v: z.string(),
+    get next() {
+      return Node;
+    },
+  });
+  const registry = z.registry<{ id: string }>();
+  registry.add(Node, { id: "Node" });
+
+  const gen = new z.core.JSONSchemaGenerator({ target: "draft-2020-12" });
+  gen.process(Node);
+  const external = { registry, uri: (id: string) => `${id}.json`, defs: {} };
+
+  gen.emit(Node, { external, cycles: "ref" });
+  expect(() => gen.emit(Node, { external, cycles: "throw" })).toThrow(/Cycle detected/);
+});
+
+test("JSONSchemaGenerator re-runs shared passes on a no-params emit", () => {
+  const shared = z.object({ s: z.string() });
+  const a = z.object({ x: shared });
+  const registry = z.registry<{ id: string }>();
+  registry.add(a, { id: "A" });
+
+  const gen = new z.core.JSONSchemaGenerator({ target: "draft-2020-12" });
+  gen.process(a);
+  const defs: Record<string, any> = {};
+  gen.emit(a, { external: { registry, uri: (id: string) => `${id}.json`, defs }, reused: "ref" });
+
+  // Re-processing an already-seen schema bumps `seen.count`, which `extractDefs` branches on under `reused: "ref"` — and it returns early, so it cannot clear the guards itself.
+  gen.process(shared);
+  const second: any = gen.emit(a);
+
+  expect(Object.keys(defs)).toEqual(["schema0"]);
+  expect(second.properties.x).toEqual({ $ref: "__shared.json#/$defs/schema0" });
+});
+
 test("_ref", () => {
   // const a = z.promise(z.string().describe("a"));
   const a = z.toJSONSchema(z.promise(z.string().describe("a")));
@@ -2264,6 +3146,20 @@ test("_ref", () => {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "description": "a",
       "type": "string",
+    }
+  `);
+
+  const d = z.toJSONSchema(z.string().meta({ id: "foo" }).describe("bar").optional());
+  expect(d).toMatchInlineSnapshot(`
+    {
+      "$defs": {
+        "foo": {
+          "type": "string",
+        },
+      },
+      "$ref": "#/$defs/foo",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "description": "bar",
     }
   `);
 });
@@ -2320,6 +3216,77 @@ test("defaults/prefaults", () => {
   `);
 });
 
+test("catch on a transforming schema", () => {
+  const a = z
+    .string()
+    .transform((val) => val.length)
+    .pipe(z.number())
+    .catch(0);
+
+  expect(z.toJSONSchema(a)).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "default": 0,
+      "type": "number",
+    }
+  `);
+  // catch values are output-typed, so they are not valid input
+  expect(z.toJSONSchema(a, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+    }
+  `);
+
+  // the catch no longer hides the inner transform from ancestors, so their output-typed metadata is stripped too — matching a bare nested transform
+  expect(z.toJSONSchema(z.object({ a }).meta({ examples: [{ a: 1 }] }), { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "a": {
+          "type": "string",
+        },
+      },
+      "required": [
+        "a",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
+test("falsy prefaults (false, 0, empty string)", () => {
+  // boolean prefault false
+  const a = z.boolean().prefault(false);
+  expect(z.toJSONSchema(a, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "default": false,
+      "type": "boolean",
+    }
+  `);
+
+  // number prefault 0
+  const b = z.number().prefault(0);
+  expect(z.toJSONSchema(b, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "default": 0,
+      "type": "number",
+    }
+  `);
+
+  // string prefault empty string
+  const c = z.string().prefault("");
+  expect(z.toJSONSchema(c, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "default": "",
+      "type": "string",
+    }
+  `);
+});
+
 test("input type", () => {
   const schema = z.object({
     a: z.string(),
@@ -2347,13 +3314,9 @@ test("input type", () => {
           "type": "string",
         },
         "d": {
-          "anyOf": [
-            {
-              "type": "string",
-            },
-            {
-              "type": "null",
-            },
+          "type": [
+            "string",
+            "null",
           ],
         },
         "e": {
@@ -2379,14 +3342,7 @@ test("input type", () => {
           ],
         },
         "i": {
-          "anyOf": [
-            {
-              "type": "string",
-            },
-            {
-              "type": "string",
-            },
-          ],
+          "type": "string",
         },
       },
       "required": [
@@ -2414,13 +3370,9 @@ test("input type", () => {
           "type": "string",
         },
         "d": {
-          "anyOf": [
-            {
-              "type": "string",
-            },
-            {
-              "type": "null",
-            },
+          "type": [
+            "string",
+            "null",
           ],
         },
         "e": {
@@ -2445,14 +3397,7 @@ test("input type", () => {
           ],
         },
         "i": {
-          "anyOf": [
-            {
-              "type": "string",
-            },
-            {
-              "type": "string",
-            },
-          ],
+          "type": "string",
         },
       },
       "required": [
@@ -2557,6 +3502,74 @@ test("use output type for preprocess", () => {
   `);
 });
 
+test("object property with preprocess stays required in input JSON schema", () => {
+  const schema = z.object({
+    noPreprocess: z.string(),
+    withPreprocess: z.preprocess((v) => v, z.string()),
+    optionalPreprocess: z.preprocess((v) => v, z.string().optional()),
+  });
+
+  // A preprocessed property is only optional when its inner schema is — the
+  // transform wrapper must not make a required property optional in the input
+  // JSON schema (matches runtime: `schema.parse({})` rejects `withPreprocess`).
+  expect(z.toJSONSchema(schema, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "noPreprocess": {
+          "type": "string",
+        },
+        "optionalPreprocess": {
+          "type": "string",
+        },
+        "withPreprocess": {
+          "type": "string",
+        },
+      },
+      "required": [
+        "noPreprocess",
+        "withPreprocess",
+      ],
+      "type": "object",
+    }
+  `);
+});
+
+test("input JSON schema resolves requiredness past transform and catch wrappers", () => {
+  const required = (schema: z.ZodObject) =>
+    (z.toJSONSchema(schema, { io: "input" }) as z.core.JSONSchema.ObjectSchema).required;
+  const id = (v: unknown) => v;
+
+  // catch observes an absent key at runtime, but its declared input type stays required (#5003)
+  expect(required(z.object({ a: z.string().catch("x") }))).toEqual(["a"]);
+  expect(required(z.object({ a: z.string().optional().catch("x") }))).toBeUndefined();
+  // nested preprocess and the legacy transform-pipe form both resolve through to the inner schema
+  expect(required(z.object({ a: z.preprocess(id, z.preprocess(id, z.string())) }))).toEqual(["a"]);
+  expect(required(z.object({ a: z.transform((v: unknown) => String(v)).pipe(z.string()) }))).toEqual(["a"]);
+});
+
+test("strip output-side examples from input JSON schema for codec", () => {
+  const codec = z
+    .codec(z.string(), z.number(), { decode: (s) => Number(s), encode: (n) => String(n) })
+    .meta({ examples: [42] });
+
+  expect(z.toJSONSchema(codec, { io: "input" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+    }
+  `);
+  expect(z.toJSONSchema(codec, { io: "output" })).toMatchInlineSnapshot(`
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "examples": [
+        42,
+      ],
+      "type": "number",
+    }
+  `);
+});
+
 // test("isTransforming", () => {
 //   const tx = z.core.isTransforming;
 //   expect(tx(z.string())).toEqual(false);
@@ -2608,45 +3621,25 @@ test("flatten simple intersections", () => {
   expect(result).toMatchInlineSnapshot(`
     {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "allOf": [
-        {
-          "additionalProperties": false,
-          "properties": {
-            "testNum": {
-              "type": "number",
-            },
-          },
-          "required": [
-            "testNum",
-          ],
-          "type": "object",
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "testStr": {
-              "type": "string",
-            },
-          },
-          "required": [
-            "testStr",
-          ],
-          "type": "object",
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "testBool": {
-              "type": "boolean",
-            },
-          },
-          "required": [
-            "testBool",
-          ],
-          "type": "object",
-        },
-      ],
+      "additionalProperties": false,
       "description": "123",
+      "properties": {
+        "testBool": {
+          "type": "boolean",
+        },
+        "testNum": {
+          "type": "number",
+        },
+        "testStr": {
+          "type": "string",
+        },
+      },
+      "required": [
+        "testNum",
+        "testStr",
+        "testBool",
+      ],
+      "type": "object",
     }
   `);
 });
@@ -2681,22 +3674,17 @@ test("z.file()", () => {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "anyOf": [
         {
-          "contentEncoding": "binary",
           "contentMediaType": "image/png",
-          "format": "binary",
-          "maxLength": 10000,
-          "minLength": 1000,
-          "type": "string",
         },
         {
-          "contentEncoding": "binary",
           "contentMediaType": "image/jpg",
-          "format": "binary",
-          "maxLength": 10000,
-          "minLength": 1000,
-          "type": "string",
         },
       ],
+      "contentEncoding": "binary",
+      "format": "binary",
+      "maxLength": 10000,
+      "minLength": 1000,
+      "type": "string",
     }
   `);
 });
@@ -2752,4 +3740,641 @@ test("cycle detection - mutual recursion", () => {
 
     Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.]
   `);
+});
+
+test("recursive lazy with describe does not stack overflow", () => {
+  const NodeSchema: z.ZodType = z.lazy(() =>
+    z
+      .object({
+        value: z.string().describe("node value"),
+        children: z.array(NodeSchema.describe("child node")).optional().describe("child list"),
+      })
+      .describe("tree node")
+  );
+
+  const result = z.toJSONSchema(NodeSchema, { cycles: "ref", reused: "ref" });
+  expect(result).toBeDefined();
+  expect(result.$defs).toBeDefined();
+});
+
+test("__proto__ shape key is emitted as an own property", () => {
+  const schema = z.object({ ["__proto__"]: z.literal("admin"), role: z.string() });
+  const result = z.toJSONSchema(schema, { io: "input" });
+
+  expect(result.required).toEqual(["__proto__", "role"]);
+  // every required key needs a matching entry in properties
+  for (const key of result.required!) {
+    expect(Object.prototype.hasOwnProperty.call(result.properties, key)).toBe(true);
+  }
+  expect(JSON.parse(JSON.stringify(result)).properties.__proto__).toEqual({ type: "string", const: "admin" });
+});
+
+test("__proto__ registry id is emitted as an own entry", () => {
+  const myRegistry = z.registry<{ id: string }>();
+  myRegistry.add(z.object({ a: z.string() }), { id: "__proto__" });
+  myRegistry.add(z.object({ b: z.string() }), { id: "normal" });
+
+  expect(Object.keys(z.toJSONSchema(myRegistry).schemas)).toEqual(["__proto__", "normal"]);
+});
+
+test("__proto__ def id emits a resolvable $ref", () => {
+  const myRegistry = z.registry<{ id: string }>();
+  const Inner = z.object({ x: z.string() });
+  myRegistry.add(Inner, { id: "__proto__" });
+
+  const json = JSON.parse(JSON.stringify(z.toJSONSchema(z.object({ a: Inner, b: Inner }), { metadata: myRegistry })));
+  expect(json.properties.a.$ref).toBe("#/$defs/__proto__");
+  expect(json.$defs.__proto__).toBeDefined();
+});
+
+test("__proto__ patternProperties key is emitted as an own property", () => {
+  const result = z.toJSONSchema(z.looseRecord(z.string().regex(/__proto__/), z.string()));
+
+  expect(Object.getPrototypeOf(result.patternProperties)).toBe(Object.prototype);
+  expect(Object.prototype.hasOwnProperty.call(result.patternProperties, "__proto__")).toBe(true);
+  expect(result.patternProperties?.__proto__).toEqual({ type: "string" });
+});
+
+test("__proto__ metadata survives direct and wrapper metadata merges", () => {
+  for (const schema of [z.string(), z.readonly(z.string())]) {
+    const registry = z.registry<Record<string, unknown>>();
+    registry.add(schema, Object.fromEntries([["__proto__", { marker: true }]]));
+
+    const result: any = z.toJSONSchema(schema, { metadata: registry });
+    expect(Object.getPrototypeOf(result)).toBe(Object.prototype);
+    expect(Object.prototype.hasOwnProperty.call(result, "__proto__")).toBe(true);
+    expect(result.__proto__).toEqual({ marker: true });
+    expect(JSON.parse(JSON.stringify(result)).__proto__).toEqual({ marker: true });
+  }
+});
+
+test("partialRecord does not require finite keys", () => {
+  const result = z.toJSONSchema(z.partialRecord(z.enum(["__proto__", "b"]), z.string()));
+
+  expect(result.required).toBeUndefined();
+  expect(result.propertyNames).toEqual({ type: "string", enum: ["__proto__", "b"] });
+  expect(result.additionalProperties).toEqual({ type: "string" });
+});
+
+describe("unrepresentable callback", () => {
+  test("is consulted for every unrepresentable type", () => {
+    const seen: string[] = [];
+    const collect: z.core.UnrepresentableHandler<z.core.$ZodTypes> = ({ zodSchema }) => {
+      seen.push(zodSchema._zod.def.type);
+      return "any";
+    };
+
+    const schemas = [
+      z.bigint(),
+      z.symbol(),
+      z.undefined(),
+      z.void(),
+      z.date(),
+      z.nan(),
+      z.custom<string>(),
+      z.map(z.string(), z.string()),
+      z.set(z.string()),
+      z.transform((x: unknown) => x),
+      z.literal([undefined]),
+      z.literal([1n]),
+      z.string().catch(() => {
+        throw new Error("dynamic");
+      }),
+      // z.function() is not a ZodType, but its processor is reachable through the same path
+      z.function() as unknown as z.ZodType,
+    ];
+    for (const schema of schemas) z.toJSONSchema(schema, { unrepresentable: collect });
+
+    expect(seen).toEqual([
+      "bigint",
+      "symbol",
+      "undefined",
+      "void",
+      "date",
+      "nan",
+      "custom",
+      "map",
+      "set",
+      "transform",
+      "literal",
+      "literal",
+      "catch",
+      "function",
+    ]);
+  });
+
+  test("returned JSON Schema replaces the unrepresentable node", () => {
+    // the motivating case: represent dates, keep throwing for everything else
+    const params: z.core.ToJSONSchemaParams = {
+      unrepresentable: ({ zodSchema }) =>
+        zodSchema._zod.def.type === "date" ? { type: "string", format: "date-time" } : "throw",
+    };
+    expect(z.toJSONSchema(z.object({ when: z.date() }), params)).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "when": {
+            "format": "date-time",
+            "type": "string",
+          },
+        },
+        "required": [
+          "when",
+        ],
+        "type": "object",
+      }
+    `);
+    expect(() => z.toJSONSchema(z.object({ id: z.bigint() }), params)).toThrow(
+      "BigInt cannot be represented in JSON Schema"
+    );
+  });
+
+  test("`throw` and `undefined` returns produce the default error", () => {
+    expect(() => z.toJSONSchema(z.date(), { unrepresentable: () => "throw" })).toThrow(
+      "Date cannot be represented in JSON Schema"
+    );
+    expect(() => z.toJSONSchema(z.date(), { unrepresentable: () => undefined })).toThrow(
+      "Date cannot be represented in JSON Schema"
+    );
+  });
+
+  test("`any` return matches the string option", () => {
+    expect(z.toJSONSchema(z.date(), { unrepresentable: () => "any" })).toEqual(
+      z.toJSONSchema(z.date(), { unrepresentable: "any" })
+    );
+  });
+
+  test("`message` distinguishes sites that share a schema", () => {
+    const seen: string[] = [];
+    expect(
+      z.toJSONSchema(z.literal([undefined, 1n, "a"]), {
+        unrepresentable: ({ zodSchema, message }) => {
+          seen.push(`${zodSchema._zod.def.type}: ${message}`);
+          return "any";
+        },
+      })
+    ).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "enum": [
+          1,
+          "a",
+        ],
+      }
+    `);
+    // same `zodSchema`, different message -- the only way to tell the two literal sites apart
+    expect(seen).toEqual([
+      "literal: Literal `undefined` cannot be represented in JSON Schema",
+      "literal: BigInt literals cannot be represented in JSON Schema",
+    ]);
+  });
+
+  test("errors thrown by the callback propagate", () => {
+    expect(() =>
+      z.toJSONSchema(z.object({ when: z.date() }), {
+        unrepresentable: ({ zodSchema, path }) => {
+          throw new Error(`${zodSchema._zod.def.type} at /${path.join("/")}`);
+        },
+      })
+    ).toThrow("date at /properties/when");
+  });
+
+  test("runs before `override`", () => {
+    const order: string[] = [];
+    expect(
+      z.toJSONSchema(z.date(), {
+        unrepresentable: () => {
+          order.push("unrepresentable");
+          return { type: "string" };
+        },
+        override: (ctx) => {
+          order.push("override");
+          if (ctx.jsonSchema.type === "string") ctx.jsonSchema.format = "date-time";
+        },
+      })
+    ).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "format": "date-time",
+        "type": "string",
+      }
+    `);
+    expect(order).toEqual(["unrepresentable", "override"]);
+  });
+
+  test("a returned schema replaces the whole literal", () => {
+    expect(
+      z.toJSONSchema(z.literal(["a", 1n]), {
+        unrepresentable: () => ({ type: "string", pattern: "^\\d+$" }),
+      })
+    ).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "pattern": "^\\d+$",
+        "type": "string",
+      }
+    `);
+
+    // "any" keeps the existing per-value behavior: undefined dropped, bigint coerced
+    expect(z.toJSONSchema(z.literal(["a", 1n, undefined]), { unrepresentable: () => "any" })).toEqual(
+      z.toJSONSchema(z.literal(["a", 1n, undefined]), { unrepresentable: "any" })
+    );
+  });
+
+  const dateToString: z.core.ToJSONSchemaParams["unrepresentable"] = ({ zodSchema }) =>
+    zodSchema._zod.def.type === "date" ? { type: "string", format: "date-time" } : "throw";
+
+  test("emits a valid OpenAPI 3.0 schema", async () => {
+    const jsonSchema = z.toJSONSchema(z.object({ start: z.date() }), {
+      target: "openapi-3.0",
+      unrepresentable: dateToString,
+    });
+    expect(jsonSchema).toMatchInlineSnapshot(`
+      {
+        "additionalProperties": false,
+        "properties": {
+          "start": {
+            "format": "date-time",
+            "type": "string",
+          },
+        },
+        "required": [
+          "start",
+        ],
+        "type": "object",
+      }
+    `);
+    await expect(validateOpenAPI30Schema(jsonSchema)).resolves.toBe(true);
+  });
+
+  test("the returned schema survives extraction into $defs", () => {
+    const When = z.date().meta({ id: "When" });
+    expect(
+      z.toJSONSchema(z.object({ start: When, end: When }), { unrepresentable: dateToString })
+    ).toMatchInlineSnapshot(`
+      {
+        "$defs": {
+          "When": {
+            "format": "date-time",
+            "type": "string",
+          },
+        },
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "end": {
+            "$ref": "#/$defs/When",
+          },
+          "start": {
+            "$ref": "#/$defs/When",
+          },
+        },
+        "required": [
+          "start",
+          "end",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  test("applies to dynamic catch values", () => {
+    const schema = z.string().catch(() => {
+      throw new Error("dynamic");
+    });
+    expect(
+      z.toJSONSchema(schema, {
+        unrepresentable: () => ({ default: "fallback" }),
+      })
+    ).toMatchInlineSnapshot(`
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "default": "fallback",
+        "type": "string",
+      }
+    `);
+  });
+});
+
+describe("intersection folding", () => {
+  const TARGETS = ["draft-2020-12", "draft-07", "draft-04", "openapi-3.0"] as const;
+  const body = (schema: z.ZodType, params?: Parameters<typeof z.toJSONSchema>[1]) => {
+    const { $schema, ...rest } = z.toJSONSchema(schema, params) as Record<string, unknown>;
+    return rest;
+  };
+
+  test("two objects become one object", () => {
+    expect(body(z.object({ name: z.string() }).and(z.object({ age: z.number() })))).toMatchInlineSnapshot(`
+      {
+        "additionalProperties": false,
+        "properties": {
+          "age": {
+            "type": "number",
+          },
+          "name": {
+            "type": "string",
+          },
+        },
+        "required": [
+          "name",
+          "age",
+        ],
+        "type": "object",
+      }
+    `);
+  });
+
+  test("the folded shape is identical on every target", () => {
+    const schema = z.object({ name: z.string() }).and(z.object({ age: z.number() }));
+    const bodies = TARGETS.map((target) => body(schema, { target }));
+    for (const emitted of bodies) expect(emitted).toEqual(bodies[0]);
+  });
+
+  test("closed only when every member is closed", () => {
+    expect(body(z.strictObject({ a: z.string() }).and(z.strictObject({ b: z.number() })))).toMatchObject({
+      additionalProperties: false,
+    });
+    // A loose member keeps the intersection open, which is what the parser does: it merges both results, so the loose side's extra keys survive.
+    expect(body(z.looseObject({ a: z.string() }).and(z.object({ b: z.number() })))).not.toHaveProperty(
+      "additionalProperties"
+    );
+  });
+
+  test("chained and nested intersections fold flat", () => {
+    const chained = z
+      .object({ a: z.string() })
+      .and(z.object({ b: z.string() }))
+      .and(z.object({ c: z.string() }));
+    expect(body(chained)).toMatchObject({ properties: { a: {}, b: {}, c: {} }, required: ["a", "b", "c"] });
+    const nested = z.object({ a: z.string() }).and(z.object({ b: z.string() }).and(z.object({ c: z.string() })));
+    expect(body(nested)).toEqual(body(chained));
+  });
+
+  test("required is the union, and an optional key stays optional", () => {
+    expect(body(z.object({ a: z.string().optional() }).and(z.object({ b: z.string() })))).toMatchObject({
+      properties: { a: { type: "string" }, b: { type: "string" } },
+      required: ["b"],
+    });
+  });
+
+  test("a key both members declare has to satisfy both", () => {
+    // identical declarations collapse
+    expect(body(z.object({ k: z.string() }).and(z.object({ k: z.string() })))).toMatchObject({
+      properties: { k: { type: "string" } },
+    });
+    // object declarations fold, matching the parser's deep merge
+    expect(
+      body(z.object({ k: z.object({ a: z.string() }) }).and(z.object({ k: z.object({ b: z.string() }) })))
+    ).toMatchObject({
+      properties: { k: { type: "object", properties: { a: {}, b: {} }, required: ["a", "b"] } },
+    });
+    // anything else stays an intersection one level down
+    expect(body(z.object({ k: z.string() }).and(z.object({ k: z.number() })))).toMatchObject({
+      properties: { k: { allOf: [{ type: "string" }, { type: "number" }] } },
+    });
+  });
+
+  test("an intersection distributes over a union", () => {
+    const schema = z
+      .object({ name: z.string() })
+      .and(
+        z.discriminatedUnion("type", [
+          z.object({ type: z.literal("a"), value: z.string() }),
+          z.object({ type: z.literal("b"), count: z.number() }),
+        ])
+      );
+    expect(body(schema)).toMatchObject({
+      oneOf: [
+        { type: "object", properties: { name: {}, type: {}, value: {} }, additionalProperties: false },
+        { type: "object", properties: { name: {}, type: {}, count: {} }, additionalProperties: false },
+      ],
+    });
+    const inclusive = z
+      .object({ name: z.string() })
+      .and(z.union([z.object({ v: z.string() }), z.object({ c: z.number() })]));
+    expect(body(inclusive)).toMatchObject({
+      anyOf: [{ properties: { name: {}, v: {} } }, { properties: { name: {}, c: {} } }],
+    });
+  });
+
+  test("input conversion has nothing to close", () => {
+    expect(body(z.object({ a: z.string() }).and(z.object({ b: z.string() })), { io: "input" })).toEqual({
+      type: "object",
+      properties: { a: { type: "string" }, b: { type: "string" } },
+      required: ["a", "b"],
+    });
+  });
+
+  test("folds through a property and through z.lazy", () => {
+    expect(body(z.object({ inner: z.object({ a: z.string() }).and(z.object({ b: z.string() })) }))).toMatchObject({
+      properties: { inner: { type: "object", properties: { a: {}, b: {} } } },
+    });
+    const self: z.ZodType = z.lazy(() => z.object({ a: z.string() }).and(z.object({ next: z.optional(self) })));
+    expect(body(self)).toMatchObject({ type: "object", properties: { a: {}, next: { $ref: "#" } } });
+  });
+
+  test("metadata on the intersection itself survives", () => {
+    expect(
+      body(
+        z
+          .object({ a: z.string() })
+          .and(z.object({ b: z.string() }))
+          .meta({ title: "T" })
+      )
+    ).toMatchObject({
+      title: "T",
+      type: "object",
+      properties: { a: {}, b: {} },
+    });
+  });
+
+  test("a catchall constrains the sibling's keys too", () => {
+    // The catchall member does not declare `b`, so its `additionalProperties` is what it demands of `b`. Folding `b` into `properties` has to carry that demand across, or the key would escape it.
+    const schema = z
+      .object({ a: z.string() })
+      .catchall(z.number())
+      .and(z.object({ b: z.string() }));
+    expect(body(schema)).toEqual({
+      type: "object",
+      properties: { a: { type: "string" }, b: { allOf: [{ type: "number" }, { type: "string" }] } },
+      required: ["a", "b"],
+      additionalProperties: { type: "number" },
+    });
+  });
+
+  test("two catchalls both constrain the keys neither declares", () => {
+    const schema = z
+      .object({})
+      .catchall(z.number())
+      .and(z.object({}).catchall(z.number().min(0)));
+    expect(body(schema)).toEqual({
+      type: "object",
+      properties: {},
+      additionalProperties: { allOf: [{ type: "number" }, { type: "number", minimum: 0 }] },
+    });
+    expect(schema.safeParse({ zz: 5 }).success).toBe(true);
+    expect(schema.safeParse({ zz: -1 }).success).toBe(false);
+  });
+
+  test("the emitted openness agrees with the parser for every pair of object modes", () => {
+    const modes = {
+      strip: (shape: z.ZodRawShape) => z.object(shape),
+      strict: (shape: z.ZodRawShape) => z.strictObject(shape),
+      loose: (shape: z.ZodRawShape) => z.looseObject(shape),
+      catchall: (shape: z.ZodRawShape) => z.object(shape).catchall(z.number()),
+    };
+    const grid: Record<string, unknown> = {};
+    for (const [leftName, left] of Object.entries(modes)) {
+      for (const [rightName, right] of Object.entries(modes)) {
+        const schema = left({ a: z.string() }).and(right({ b: z.number() }));
+        const emitted = body(schema) as { additionalProperties?: unknown };
+        grid[`${leftName} & ${rightName}`] = emitted.additionalProperties ?? "open";
+
+        // Whatever the emitted keyword says, it has to agree with what the parser does with a key neither member declares.
+        const parsed = schema.safeParse({ a: "s", b: 1, zz: 7 });
+        const keepsUnknown = parsed.success && Object.prototype.hasOwnProperty.call(parsed.data, "zz");
+        if (keepsUnknown) expect(emitted.additionalProperties).not.toBe(false);
+      }
+    }
+    expect(grid).toMatchInlineSnapshot(`
+      {
+        "catchall & catchall": {
+          "type": "number",
+        },
+        "catchall & loose": {
+          "type": "number",
+        },
+        "catchall & strict": {
+          "type": "number",
+        },
+        "catchall & strip": {
+          "type": "number",
+        },
+        "loose & catchall": {
+          "type": "number",
+        },
+        "loose & loose": "open",
+        "loose & strict": "open",
+        "loose & strip": "open",
+        "strict & catchall": {
+          "type": "number",
+        },
+        "strict & loose": "open",
+        "strict & strict": false,
+        "strict & strip": false,
+        "strip & catchall": {
+          "type": "number",
+        },
+        "strip & loose": "open",
+        "strip & strict": false,
+        "strip & strip": false,
+      }
+    `);
+  });
+
+  test("a __proto__ key stays an own property", () => {
+    const folded = body(z.object({ ["__proto__"]: z.string() }).and(z.object({ b: z.number() }))) as any;
+    expect(Object.prototype.hasOwnProperty.call(folded.properties, "__proto__")).toBe(true);
+    expect(folded.required).toEqual(["__proto__", "b"]);
+  });
+});
+
+describe("intersection folding declines", () => {
+  // Every case here keeps the `allOf` it produces today. The fold only understands the four object keywords, so a member carrying anything else is left alone rather than having a constraint dropped or an annotation re-scoped.
+  const allOf = (schema: z.ZodType, params?: Parameters<typeof z.toJSONSchema>[1]) =>
+    (z.toJSONSchema(schema, params) as any).allOf;
+
+  test("a member that is a reference keeps its reference", () => {
+    const named = z.object({ a: z.string() }).meta({ id: "Named" });
+    expect(allOf(named.and(z.object({ b: z.string() })))[0]).toEqual({ $ref: "#/$defs/Named" });
+
+    const shared = z.object({ c: z.string() });
+    const reused = z.toJSONSchema(z.object({ x: shared.and(z.object({ d: z.string() })), y: shared }), {
+      reused: "ref",
+    }) as any;
+    expect(reused.properties.x.allOf[0]).toEqual({ $ref: "#/$defs/__schema0" });
+
+    const cyclic: any = z.object({
+      get next() {
+        return z.optional(cyclic);
+      },
+      n: z.string(),
+    });
+    expect(allOf(cyclic.and(z.object({ m: z.string() })))[0].$ref).toBe("#/$defs/__schema0");
+  });
+
+  test("an annotated member keeps its place", () => {
+    expect(
+      allOf(
+        z
+          .object({ a: z.string() })
+          .describe("A")
+          .and(z.object({ b: z.string() }))
+      )[0]
+    ).toMatchObject({
+      description: "A",
+    });
+  });
+
+  test("members that are not plain objects are left alone", () => {
+    expect(allOf(z.intersection(z.string().min(2), z.string().max(5)))).toHaveLength(2);
+    expect(allOf(z.object({ a: z.string() }).and(z.nullable(z.object({ b: z.string() }))))).toHaveLength(2);
+    expect(
+      allOf(z.object({ label: z.string() }).and(z.looseRecord(z.string().regex(/^label:[a-z]{2}$/), z.string())))
+    ).toHaveLength(2);
+  });
+
+  test("a shared member is never rewritten for its other uses", () => {
+    const shared = z.object({ c: z.string() });
+    const result = z.toJSONSchema(z.object({ x: shared.and(z.object({ d: z.string() })), y: shared })) as any;
+    expect(result.properties.x).toMatchObject({ properties: { c: {}, d: {} }, additionalProperties: false });
+    // `y` is the same Zod schema, emitted separately, and keeps the closedness it had on its own.
+    expect(result.properties.y).toEqual({
+      type: "object",
+      properties: { c: { type: "string" } },
+      required: ["c"],
+      additionalProperties: false,
+    });
+  });
+
+  test("registry conversion keeps its cross-references", () => {
+    const registry = z.registry<{ id: string }>();
+    const left = z.object({ p: z.string() });
+    const right = z.object({ q: z.string() });
+    registry.add(left, { id: "P" });
+    registry.add(right, { id: "Q" });
+    registry.add(left.and(right), { id: "PQ" });
+    expect((z.toJSONSchema(registry) as any).schemas.PQ.allOf).toEqual([{ $ref: "P" }, { $ref: "Q" }]);
+  });
+
+  test("override still runs, and sees the intersection before it folds", () => {
+    const schema = z.object({ a: z.string() }).and(z.object({ b: z.string() }));
+    const result = z.toJSONSchema(schema, {
+      override(ctx) {
+        if ((ctx.jsonSchema as any).allOf) (ctx.jsonSchema as any).title = "intersection";
+      },
+    }) as any;
+    expect(result).toMatchObject({ title: "intersection", type: "object", properties: { a: {}, b: {} } });
+  });
+
+  test("an override that writes object keywords wins over the fold", () => {
+    // The override runs first, so anything it puts on the intersection is deliberate. Folding would overwrite it silently, so the fold stands down instead.
+    const result = z.toJSONSchema(z.object({ a: z.string() }).and(z.object({ b: z.string() })), {
+      override(ctx) {
+        if ((ctx.jsonSchema as any).allOf) (ctx.jsonSchema as any).additionalProperties = true;
+      },
+    }) as any;
+    expect(result.additionalProperties).toBe(true);
+    expect(result.allOf).toHaveLength(2);
+  });
+
+  test("more than one union member is left alone rather than multiplied out", () => {
+    // The second union lands among the members the first is distributed across, and a union is not an object, so every branch fails to fold and the whole intersection stands down.
+    const schema = z
+      .object({ a: z.string() })
+      .and(z.union([z.object({ v: z.string() }), z.object({ w: z.string() })]))
+      .and(z.union([z.object({ x: z.string() }), z.object({ y: z.string() })]));
+    expect(allOf(schema)).toHaveLength(3);
+  });
 });

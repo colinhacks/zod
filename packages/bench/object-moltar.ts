@@ -45,34 +45,6 @@ const z4Schema = z4.strictObject({
   }),
 });
 
-// const z4SchemaStrict = z4.strictObject({
-//   number: z4.number(),
-//   negNumber: z4.number(),
-//   maxNumber: z4.number(),
-//   string: z4.string(),
-//   longString: z4.string(),
-//   boolean: z4.boolean(),
-//   deeplyNested: z4.strictObject({
-//     foo: z4.string(),
-//     num: z4.number(),
-//     bool: z4.boolean(),
-//   }),
-// });
-
-// const z4SchemaLoose = z4.object({
-//   number: z4.number(),
-//   negNumber: z4.number(),
-//   maxNumber: z4.number(),
-//   string: z4.string(),
-//   longString: z4.string(),
-//   boolean: z4.boolean(),
-//   deeplyNested: z4.object({
-//     foo: z4.string(),
-//     num: z4.number(),
-//     bool: z4.boolean(),
-//   }),
-// });
-
 const DATA = Array.from({ length: 1000 }, () =>
   Object.freeze({
     number: 1,

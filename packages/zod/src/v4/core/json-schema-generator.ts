@@ -1,9 +1,11 @@
 import { allProcessors } from "./json-schema-processors.js";
 import type * as JSONSchema from "./json-schema.js";
+import type { $ZodRegistry } from "./registries.js";
 import type * as schemas from "./schemas.js";
 import {
   type JSONSchemaGeneratorParams,
   type ProcessParams,
+  type Seen,
   type ToJSONSchemaContext,
   extractDefs,
   finalize,
@@ -47,15 +49,16 @@ export class JSONSchemaGenerator {
   private ctx: ToJSONSchemaContext;
 
   /** @deprecated Access via ctx instead */
-  get metadataRegistry() {
+  get metadataRegistry(): $ZodRegistry<Record<string, any>> {
     return this.ctx.metadataRegistry;
   }
   /** @deprecated Access via ctx instead */
   get target() {
     return this.ctx.target;
   }
+  // annotated so the .d.cts emits an indexed access rather than an inline `import()` of an ESM path
   /** @deprecated Access via ctx instead */
-  get unrepresentable() {
+  get unrepresentable(): ToJSONSchemaContext["unrepresentable"] {
     return this.ctx.unrepresentable;
   }
   /** @deprecated Access via ctx instead */
@@ -74,7 +77,7 @@ export class JSONSchemaGenerator {
     this.ctx.counter = value;
   }
   /** @deprecated Access via ctx instead */
-  get seen() {
+  get seen(): Map<schemas.$ZodType, Seen> {
     return this.ctx.seen;
   }
 
@@ -113,6 +116,10 @@ export class JSONSchemaGenerator {
       if (_params.reused) this.ctx.reused = _params.reused;
       if (_params.external) this.ctx.external = _params.external;
     }
+
+    // extractDefs/finalize skip their whole-map passes when they have already run for this `external`, but they also branch on `cycles`, `reused`, `seen.count` and the metadata registry — any of which can change between emits, including with no params at all. Drop the guards so the passes re-run. The registry conversion calls extractDefs/finalize directly and never routes through here, so it keeps skipping them.
+    this.ctx.sharedDefsExtractedFor = undefined;
+    this.ctx.sharedEmitDoneFor = undefined;
 
     extractDefs(this.ctx, schema);
     const result = finalize(this.ctx, schema);

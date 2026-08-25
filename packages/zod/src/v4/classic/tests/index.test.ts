@@ -247,7 +247,7 @@ test("z.tuple", () => {
   const b = z.tuple([z.string(), z.number(), z.optional(z.string())], z.boolean());
   type b = z.output<typeof b>;
 
-  expectTypeOf<b>().toEqualTypeOf<[string, number, string?, ...boolean[]]>();
+  expectTypeOf<b>().toEqualTypeOf<[string, number, (string | undefined)?, ...boolean[]]>();
   const datas = [
     ["hello", 123],
     ["hello", 123, "world"],
@@ -265,7 +265,7 @@ test("z.tuple", () => {
   const cArgs = [z.string(), z.number(), z.optional(z.string())] as const;
   const c = z.tuple(cArgs, z.boolean());
   type c = z.output<typeof c>;
-  expectTypeOf<c>().toEqualTypeOf<[string, number, string?, ...boolean[]]>();
+  expectTypeOf<c>().toEqualTypeOf<[string, number, (string | undefined)?, ...boolean[]]>();
   // type c = z.output<typeof c>;
 });
 
@@ -653,8 +653,7 @@ test("z.custom check", () => {
 });
 
 test("z.check", () => {
-  // this is a more flexible version of z.custom that accepts an arbitrary _parse logic
-  // the function should return base.$ZodResult
+  // this is a more flexible version of z.custom that accepts an arbitrary _parse logic the function should return base.$ZodResult
   const a = z.any().check(
     z.check<string>((ctx) => {
       if (typeof ctx.value === "string") return;
@@ -676,6 +675,47 @@ test("z.check", () => {
   });
 });
 
+test("z.with (alias for z.check)", () => {
+  // .with() should work exactly the same as .check()
+  const a = z.any().with(
+    z.check<string>((ctx) => {
+      if (typeof ctx.value === "string") return;
+      ctx.issues.push({
+        code: "custom",
+        origin: "custom",
+        message: "Expected a string",
+        input: ctx.value,
+      });
+    })
+  );
+  expect(z.safeParse(a, "hello")).toMatchObject({
+    success: true,
+    data: "hello",
+  });
+  expect(z.safeParse(a, 123)).toMatchObject({
+    success: false,
+    error: { issues: [{ code: "custom", message: "Expected a string" }] },
+  });
+
+  // Test with refine
+  const b = z.string().with(z.refine((val) => val.length > 3, "Must be longer than 3"));
+  expect(z.safeParse(b, "hello").success).toBe(true);
+  expect(z.safeParse(b, "hi").success).toBe(false);
+
+  // Test with function
+  const c = z.string().with(({ value, issues }) => {
+    if (value.length <= 3) {
+      issues.push({
+        code: "custom",
+        input: value,
+        message: "Must be longer than 3",
+      });
+    }
+  });
+  expect(z.safeParse(c, "hello").success).toBe(true);
+  expect(z.safeParse(c, "hi").success).toBe(false);
+});
+
 test("z.instanceof", () => {
   class A {}
 
@@ -693,6 +733,26 @@ test("z.refine", () => {
   expect(() => z.parse(a, 2)).toThrow();
   expect(() => z.parse(a, 11)).toThrow();
   expect(() => z.parse(a, "hi")).toThrow();
+});
+
+test("z.superRefine preserves explicit nullish issue input", () => {
+  const schema = z.string().check(
+    z.superRefine((_, ctx) => {
+      ctx.addIssue({ code: "custom", message: "default" });
+      ctx.addIssue({ code: "custom", message: "null", input: null });
+      ctx.addIssue({ code: "custom", message: "undefined", input: undefined });
+    })
+  );
+
+  const result = z.safeParse(schema, "sensitive", { reportInput: true });
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues).toHaveLength(3);
+    expect(result.error.issues[0].input).toEqual("sensitive");
+    expect(result.error.issues[1].input).toEqual(null);
+    expect(result.error.issues[2]).toHaveProperty("input");
+    expect(result.error.issues[2].input).toEqual(undefined);
+  }
 });
 
 // test("z.superRefine", () => {

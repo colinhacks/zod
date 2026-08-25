@@ -17,9 +17,33 @@ export interface $ZodIssueBase {
 ////////////////////////////////
 ////     issue subtypes     ////
 ////////////////////////////////
+export type $ZodInvalidTypeExpected =
+  | "string"
+  | "number"
+  | "int"
+  | "boolean"
+  | "bigint"
+  | "symbol"
+  | "undefined"
+  | "null"
+  | "never"
+  | "void"
+  | "date"
+  | "array"
+  | "object"
+  | "tuple"
+  | "record"
+  | "map"
+  | "set"
+  | "file"
+  | "nonoptional"
+  | "nan"
+  | "function"
+  | (string & {}); // class names for instanceof
+
 export interface $ZodIssueInvalidType<Input = unknown> extends $ZodIssueBase {
   readonly code: "invalid_type";
-  readonly expected: $ZodType["_zod"]["def"]["type"];
+  readonly expected: $ZodInvalidTypeExpected;
   readonly input?: Input;
 }
 
@@ -67,6 +91,7 @@ interface $ZodIssueInvalidUnionNoMatch extends $ZodIssueBase {
   readonly errors: $ZodIssue[][];
   readonly input?: unknown;
   readonly discriminator?: string | undefined;
+  readonly options?: util.Primitive[];
   readonly inclusive?: true;
 }
 
@@ -76,6 +101,8 @@ interface $ZodIssueInvalidUnionMultipleMatch extends $ZodIssueBase {
   readonly input?: unknown;
   readonly discriminator?: string | undefined;
   readonly inclusive: false;
+  /** Indices of the options that matched */
+  readonly matches: number[];
 }
 
 export type $ZodIssueInvalidUnion = $ZodIssueInvalidUnionNoMatch | $ZodIssueInvalidUnionMultipleMatch;
@@ -175,6 +202,8 @@ type RawIssue<T extends $ZodIssueBase> = T extends any
         readonly input: unknown;
         /** The schema or check that originated this issue. */
         readonly inst?: $ZodType | $ZodCheck;
+        /** The schema that owns the issue. Equal to `inst` when a schema originated the issue, and the schema the check was attached to when a check did. */
+        readonly schema?: $ZodType | undefined;
         /** If `true`, Zod will continue executing checks/refinements after this issue. */
         readonly continue?: boolean | undefined;
       } & Record<string, unknown>
@@ -202,22 +231,64 @@ export interface $ZodError<T = unknown> extends Error {
   name: string;
 }
 
+/* Computing the message eagerly is expensive (pretty-printed JSON of all
+ * issues), so defer it until first read. The accessor functions and
+ * descriptors are shared across instances to keep error construction
+ * cheap; the computed message is cached on the internals object. The
+ * setter preserves plain assignment semantics for consumers that
+ * overwrite `message`. */
+function _getMessage(this: $ZodError): string {
+  const internals = this._zod as { def: $ZodIssue[]; message?: string };
+  internals.message ??= JSON.stringify(internals.def, util.jsonStringifyReplacer, 2);
+  return internals.message;
+}
+function _setMessage(this: $ZodError, value: string): void {
+  (this._zod as { message?: string }).message = value;
+}
+const _messageDesc: PropertyDescriptor = {
+  get: _getMessage,
+  set: _setMessage,
+  enumerable: true,
+  configurable: true,
+};
+const _zodDesc: PropertyDescriptor = { value: undefined, enumerable: false };
+const _issuesDesc: PropertyDescriptor = { value: undefined, enumerable: false };
+
+/* Prototypes that already carry the lazy `toString`. Seeded with the
+ * intrinsics so that `init` on a foreign object — it accepts any object —
+ * can never install an accessor onto a prototype we do not own. */
+const _installedToString = /* @__PURE__ */ new WeakSet<object>([Object.prototype, Error.prototype]);
+
 const initializer = (inst: $ZodError, def: $ZodIssue[]): void => {
   inst.name = "$ZodError";
-  Object.defineProperty(inst, "_zod", {
-    value: inst._zod,
-    enumerable: false,
-  });
-  Object.defineProperty(inst, "issues", {
-    value: def,
-    enumerable: false,
-  });
-  inst.message = JSON.stringify(def, util.jsonStringifyReplacer, 2);
+  _zodDesc.value = inst._zod;
+  Object.defineProperty(inst, "_zod", _zodDesc);
+  _issuesDesc.value = def;
+  Object.defineProperty(inst, "issues", _issuesDesc);
+  // Clear the shared slots; a retained `value` pins the last error's issues.
+  _zodDesc.value = undefined;
+  _issuesDesc.value = undefined;
+  Object.defineProperty(inst, "message", _messageDesc);
 
-  Object.defineProperty(inst, "toString", {
-    value: () => inst.message,
-    enumerable: false,
-  });
+  /* `toString` lives as a non-enumerable lazy getter on the shared
+   * prototype; on first access it caches a per-instance closure so
+   * detached usage still works. */
+  const proto = Object.getPrototypeOf(inst);
+  if (!_installedToString.has(proto)) {
+    _installedToString.add(proto);
+    Object.defineProperty(proto, "toString", {
+      configurable: true,
+      enumerable: false,
+      get(this: $ZodError) {
+        const value = () => this.message;
+        Object.defineProperty(this, "toString", { value, configurable: true, writable: true });
+        return value;
+      },
+      set(this: $ZodError, value: unknown) {
+        Object.defineProperty(this, "toString", { value, configurable: true, writable: true });
+      },
+    });
+  }
 };
 
 export const $ZodError: $constructor<$ZodError> = $constructor("$ZodError", initializer);
@@ -235,6 +306,20 @@ type _FlattenedError<T, U = string> = {
   };
 };
 
+/** Get-or-create `obj[key]` as an own data property. A path segment naming an inherited member
+ * ("toString", "constructor") would otherwise read through to the prototype, and assigning
+ * "__proto__" would hit the setter instead of creating a key. */
+function node<T>(obj: any, key: PropertyKey, make: () => T): T {
+  if (!Object.prototype.hasOwnProperty.call(obj, key)) {
+    if (key === "__proto__") {
+      Object.defineProperty(obj, key, { value: make(), writable: true, enumerable: true, configurable: true });
+    } else {
+      obj[key] = make();
+    }
+  }
+  return obj[key];
+}
+
 export function flattenError<T>(error: $ZodError<T>): _FlattenedError<T>;
 export function flattenError<T, U>(error: $ZodError<T>, mapper?: (issue: $ZodIssue) => U): _FlattenedError<T, U>;
 export function flattenError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIssue) => issue.message as U) {
@@ -242,8 +327,7 @@ export function flattenError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIss
   const formErrors: U[] = [];
   for (const sub of error.issues) {
     if (sub.path.length > 0) {
-      fieldErrors[sub.path[0]!] = fieldErrors[sub.path[0]!] || [];
-      fieldErrors[sub.path[0]!].push(mapper(sub));
+      node<U[]>(fieldErrors, sub.path[0]!, () => []).push(mapper(sub));
     } else {
       formErrors.push(mapper(sub));
     }
@@ -267,32 +351,53 @@ export function formatError<T>(error: $ZodError<T>): $ZodFormattedError<T>;
 export function formatError<T, U>(error: $ZodError<T>, mapper?: (issue: $ZodIssue) => U): $ZodFormattedError<T, U>;
 export function formatError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIssue) => issue.message as U) {
   const fieldErrors: $ZodFormattedError<T> = { _errors: [] } as any;
-  const processError = (error: { issues: $ZodIssue[] }) => {
+  const processError = (error: { issues: $ZodIssue[] }, path: PropertyKey[] = []) => {
     for (const issue of error.issues) {
       if (issue.code === "invalid_union" && issue.errors.length) {
-        issue.errors.map((issues) => processError({ issues }));
+        issue.errors.map((issues) => processError({ issues }, [...path, ...issue.path]));
       } else if (issue.code === "invalid_key") {
-        processError({ issues: issue.issues });
+        processError({ issues: issue.issues }, [...path, ...issue.path]);
       } else if (issue.code === "invalid_element") {
-        processError({ issues: issue.issues });
-      } else if (issue.path.length === 0) {
-        (fieldErrors as any)._errors.push(mapper(issue));
+        processError({ issues: issue.issues }, [...path, ...issue.path]);
       } else {
-        let curr: any = fieldErrors;
-        let i = 0;
-        while (i < issue.path.length) {
-          const el = issue.path[i]!;
-          const terminal = i === issue.path.length - 1;
+        const fullpath = [...path, ...issue.path];
+        if (fullpath.length === 0) {
+          (fieldErrors as any)._errors.push(mapper(issue));
+        } else {
+          let curr: any = fieldErrors;
+          let i = 0;
+          while (i < fullpath.length) {
+            const el = fullpath[i]!;
+            const terminal = i === fullpath.length - 1;
 
-          if (!terminal) {
-            curr[el] = curr[el] || { _errors: [] };
-          } else {
-            curr[el] = curr[el] || { _errors: [] };
-            curr[el]._errors.push(mapper(issue));
+            // `_errors` is reserved by this legacy format, so merge a matching path segment into the current node instead of treating its array as a child.
+            if (el === "_errors") {
+              if (terminal) curr._errors.push(mapper(issue));
+              i++;
+              continue;
+            }
+
+            // A path element may collide with an inherited property name such as
+            // "__proto__" or "constructor". Truthiness checks read the prototype
+            // (so no node is created, then ._errors.push throws), and bracket
+            // assignment of "__proto__" hits the setter instead of creating an
+            // own key. Guard the read with hasOwnProperty and create the node
+            // with defineProperty so any path element becomes a real own key.
+            if (!Object.prototype.hasOwnProperty.call(curr, el)) {
+              Object.defineProperty(curr, el, {
+                value: { _errors: [] },
+                enumerable: true,
+                writable: true,
+                configurable: true,
+              });
+            }
+            const node = curr[el];
+            if (terminal) {
+              node._errors.push(mapper(issue));
+            }
+            curr = node;
+            i++;
           }
-
-          curr = curr[el];
-          i++;
         }
       }
     }
@@ -308,7 +413,10 @@ export type $ZodErrorTree<T, U = string> = T extends util.Primitive
     : T extends any[]
       ? { errors: U[]; items?: Array<$ZodErrorTree<T[number], U>> }
       : T extends object
-        ? { errors: U[]; properties?: { [K in keyof T]?: $ZodErrorTree<T[K], U> } }
+        ? {
+            errors: U[];
+            properties?: { [K in keyof T]?: $ZodErrorTree<T[K], U> };
+          }
         : { errors: U[] };
 
 export function treeifyError<T>(error: $ZodError<T>): $ZodErrorTree<T>;
@@ -319,11 +427,11 @@ export function treeifyError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIss
     for (const issue of error.issues) {
       if (issue.code === "invalid_union" && issue.errors.length) {
         // regular union error
-        issue.errors.map((issues) => processError({ issues }, issue.path));
+        issue.errors.map((issues) => processError({ issues }, [...path, ...issue.path]));
       } else if (issue.code === "invalid_key") {
-        processError({ issues: issue.issues }, issue.path);
+        processError({ issues: issue.issues }, [...path, ...issue.path]);
       } else if (issue.code === "invalid_element") {
-        processError({ issues: issue.issues }, issue.path);
+        processError({ issues: issue.issues }, [...path, ...issue.path]);
       } else {
         const fullpath = [...path, ...issue.path];
         if (fullpath.length === 0) {
@@ -339,7 +447,19 @@ export function treeifyError<T, U>(error: $ZodError<T>, mapper = (issue: $ZodIss
           const terminal = i === fullpath.length - 1;
           if (typeof el === "string") {
             curr.properties ??= {};
-            curr.properties[el] ??= { errors: [] };
+            // el may collide with an inherited property name ("__proto__",
+            // "constructor", ...); ??= reads the prototype so the node is never
+            // created and curr.errors.push throws. Guard with hasOwnProperty and
+            // create the node with defineProperty so "__proto__" becomes a real
+            // own key rather than invoking the prototype setter.
+            if (!Object.prototype.hasOwnProperty.call(curr.properties, el)) {
+              Object.defineProperty(curr.properties, el, {
+                value: { errors: [] },
+                enumerable: true,
+                writable: true,
+                configurable: true,
+              });
+            }
             curr = curr.properties[el];
           } else {
             curr.items ??= [];

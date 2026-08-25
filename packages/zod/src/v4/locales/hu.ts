@@ -8,36 +8,14 @@ const error: () => errors.$ZodErrorMap = () => {
     file: { unit: "byte", verb: "legyen" },
     array: { unit: "elem", verb: "legyen" },
     set: { unit: "elem", verb: "legyen" },
+    map: { unit: "elem", verb: "legyen" },
   };
 
   function getSizing(origin: string): { unit: string; verb: string } | null {
     return Sizable[origin] ?? null;
   }
 
-  const parsedType = (data: any): string => {
-    const t = typeof data;
-
-    switch (t) {
-      case "number": {
-        return Number.isNaN(data) ? "NaN" : "szám";
-      }
-      case "object": {
-        if (Array.isArray(data)) {
-          return "tömb";
-        }
-        if (data === null) {
-          return "null";
-        }
-
-        if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-          return data.constructor.name;
-        }
-      }
-    }
-    return t;
-  };
-
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "bemenet",
@@ -60,21 +38,37 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "ISO időintervallum",
     ipv4: "IPv4 cím",
     ipv6: "IPv6 cím",
+    mac: "MAC cím",
     cidrv4: "IPv4 tartomány",
     cidrv6: "IPv6 tartomány",
     base64: "base64-kódolt string",
     base64url: "base64url-kódolt string",
     json_string: "JSON string",
     e164: "E.164 szám",
+    credit_card: "hitelkártyaszám",
     jwt: "JWT",
     template_literal: "bemenet",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+    number: "szám",
+    array: "tömb",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `Érvénytelen bemenet: a várt érték ${issue.expected}, a kapott érték ${parsedType(issue.input)}`;
-      // return `Invalid input: expected ${issue.expected}, received ${util.getParsedType(issue.input)}`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `Érvénytelen bemenet: a várt érték instanceof ${issue.expected}, a kapott érték ${received}`;
+        }
+        return `Érvénytelen bemenet: a várt érték ${expected}, a kapott érték ${received}`;
+      }
       case "invalid_value":
         if (issue.values.length === 1)
           return `Érvénytelen bemenet: a várt érték ${util.stringifyPrimitive(issue.values[0])}`;
@@ -101,7 +95,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `Érvénytelen string: "${_issue.suffix}" értékkel kell végződnie`;
         if (_issue.format === "includes") return `Érvénytelen string: "${_issue.includes}" értéket kell tartalmaznia`;
         if (_issue.format === "regex") return `Érvénytelen string: ${_issue.pattern} mintának kell megfelelnie`;
-        return `Érvénytelen ${Nouns[_issue.format] ?? issue.format}`;
+        return `Érvénytelen ${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":
         return `Érvénytelen szám: ${issue.divisor} többszörösének kell lennie`;

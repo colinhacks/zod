@@ -135,6 +135,10 @@ test("pick and omit with getter", () => {
   }
   expectTypeOf<Category>().toEqualTypeOf<_Category>();
 
+  // Shape should not surface `readonly` modifiers from getter-defined keys. object/strictObject/looseObject all pass shape through util.Writeable<T>.
+  type Shape = (typeof Category)["shape"];
+  expectTypeOf<Shape>().toEqualTypeOf<{ name: z.ZodString; subcategories: z.ZodArray<typeof Category> }>();
+
   const PickedCategory = Category.pick({ name: true });
   const OmittedCategory = Category.omit({ subcategories: true });
 
@@ -146,6 +150,50 @@ test("pick and omit with getter", () => {
 
   expect(() => PickedCategory.parse({ name: "test", subcategories: [] })).toThrow();
   expect(() => OmittedCategory.parse({ name: "test", subcategories: [] })).toThrow();
+});
+
+test("shape stays writeable through extend/safeExtend/partial/required", () => {
+  const Base = z.object({ name: z.string() });
+
+  const Extended = Base.extend({
+    get sub() {
+      return z.array(Extended);
+    },
+  });
+  type ExtendedShape = (typeof Extended)["shape"];
+  expectTypeOf<ExtendedShape>().toEqualTypeOf<{
+    name: z.ZodString;
+    sub: z.ZodArray<typeof Extended>;
+  }>();
+
+  const SafeExt = Base.safeExtend({ extra: z.string() } as const);
+  type SafeExtShape = (typeof SafeExt)["shape"];
+  expectTypeOf<SafeExtShape>().toEqualTypeOf<{
+    name: z.ZodString;
+    extra: z.ZodString;
+  }>();
+
+  const FromConst = Base.extend({ a: z.string(), b: z.number() } as const);
+  type FromConstShape = (typeof FromConst)["shape"];
+  expectTypeOf<FromConstShape>().toEqualTypeOf<{
+    name: z.ZodString;
+    a: z.ZodString;
+    b: z.ZodNumber;
+  }>();
+
+  const PartialExtended = Extended.partial();
+  type PartialShape = (typeof PartialExtended)["shape"];
+  expectTypeOf<PartialShape>().toEqualTypeOf<{
+    name: z.ZodOptional<z.ZodString>;
+    sub: z.ZodOptional<z.ZodArray<typeof Extended>>;
+  }>();
+
+  const RequiredExtended = Extended.required();
+  type RequiredShape = (typeof RequiredExtended)["shape"];
+  expectTypeOf<RequiredShape>().toEqualTypeOf<{
+    name: z.ZodNonOptional<z.ZodString>;
+    sub: z.ZodNonOptional<z.ZodArray<typeof Extended>>;
+  }>();
 });
 
 test("deferred self-recursion", () => {
@@ -579,4 +627,36 @@ test("recursive type with `id` meta", () => {
       ],
     },
   });
+});
+
+test("mutual recursion through discriminatedUnion getter", () => {
+  const variantA = z.object({
+    kind: z.literal("a"),
+    get child() {
+      return tree.optional();
+    },
+  });
+
+  const variantB = z.object({
+    kind: z.literal("b"),
+    get sibling() {
+      return tree.optional();
+    },
+  });
+
+  const tree = z.discriminatedUnion("kind", [variantA, variantB]);
+
+  type _Tree = { kind: "a"; child?: _Tree | undefined } | { kind: "b"; sibling?: _Tree | undefined };
+
+  const treeUnion = z.union([variantA, variantB]);
+
+  expectTypeOf<z.input<typeof tree>>().toEqualTypeOf<_Tree>();
+  expectTypeOf<z.input<typeof tree>>().not.toBeAny();
+  expectTypeOf<z.input<typeof tree>>().toEqualTypeOf<z.input<typeof treeUnion>>();
+
+  expect(tree.parse({ kind: "a", child: { kind: "b", sibling: { kind: "a" } } })).toEqual({
+    kind: "a",
+    child: { kind: "b", sibling: { kind: "a" } },
+  });
+  expect(() => tree.parse({ kind: "c" })).toThrow();
 });

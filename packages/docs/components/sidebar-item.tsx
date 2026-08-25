@@ -7,11 +7,6 @@ import {
 } from "fumadocs-ui/layouts/docs/sidebar";
 
 const Tags: Record<string, string> = {
-  "/packages/core": "New",
-  "/packages/mini": "New",
-  "/json-schema": "New",
-  "/metadata": "New",
-  "/codecs": "New",
   "/packages/v3": "Legacy",
 };
 export const SidebarItem = ({

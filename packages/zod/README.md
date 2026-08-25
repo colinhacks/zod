@@ -31,23 +31,6 @@
 <br/>
 <br/>
 
-<h2 align="center">Featured sponsor: Jazz</h2>
-
-<div align="center">
-  <a href="https://jazz.tools/?utm_source=zod">
-    <picture width="85%" >
-      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/garden-co/jazz/938f6767e46cdfded60e50d99bf3b533f4809c68/homepage/homepage/public/Zod%20sponsor%20message.png">
-      <img alt="jazz logo" src="https://raw.githubusercontent.com/garden-co/jazz/938f6767e46cdfded60e50d99bf3b533f4809c68/homepage/homepage/public/Zod%20sponsor%20message.png" width="85%">
-    </picture>
-  </a>
-  <br/>
-  <p><sub>Learn more about <a target="_blank" rel="noopener noreferrer" href="mailto:sponsorship@colinhacks.com">featured sponsorships</a></sub></p>
-</div>
-
-<br/>
-<br/>
-<br/>
-
 ### [Read the docs →](https://zod.dev/api)
 
 <br/>
@@ -130,6 +113,35 @@ await schema.parseAsync("hello");
 // => "hello"
 ```
 
+### AOT compilation
+
+**Canary only** — compilation has not shipped in a stable release yet. Install with `npm install zod@canary`.
+
+For hot validation paths, `z.compile(schema)` returns a schema clone with an ahead-of-time compiled fast path. Valid inputs take the compiled path; invalid inputs fall back to the regular parser so error reporting stays identical.
+
+Across a 55-schema benchmark the median speedup is **2.4x**, and it scales with how much work the schema does per parse: a large array of objects is ~9x, a 20-key object ~9x, a nested object ~4.5x, while a bare `z.string()` gains nothing — compilation removes per-node dispatch and allocation, and a single `typeof` has none to remove.
+
+```ts
+const CompiledPlayer = z.compile(Player);
+
+CompiledPlayer.parse({ username: "billie", xp: 100 });
+```
+
+To enable compilation globally for schemas constructed after import:
+
+```ts
+import "zod/compile"; // place before modules that define schemas
+```
+
+Things to know:
+
+- Compilation uses `new Function`. Global mode is automatically disabled when `z.config({ jitless: true })` is set (e.g. CSP environments); calling `z.compile()` directly is an explicit opt-in.
+- Schemas with async refinements or transforms can't be compiled — `z.compile()` throws `ZodCompileAsyncError`; other unsupported constructs throw `ZodCompileUnsupportedError`. In global mode such schemas silently keep using the regular parser.
+- On invalid input, refinements and transforms may run twice (fast path, then fallback).
+- Deriving a new schema from a compiled one (`.refine()`, `.extend()`, etc.) returns an uncompiled schema — compile the final schema.
+
+See [`compile` docs](https://zod.dev/compile) for details.
+
 ### Handling errors
 
 When validation fails, the `.parse()` method will throw a `ZodError` instance with granular information about the validation issues.
@@ -169,7 +181,7 @@ if (!result.success) {
 }
 ```
 
-**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](#transform), you'll need to use the `.safeParseAsync()` method instead.
+**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](https://zod.dev/api#refinements) or [transforms](https://zod.dev/api#transforms), you'll need to use the `.safeParseAsync()` method instead.
 
 ```ts
 const schema = z.string().refine(async (val) => val.length <= 8);

@@ -64,6 +64,9 @@ const measurement = z.templateLiteral([
   z.number().finite(),
   z.enum(["px", "em", "rem", "vh", "vw", "vmin", "vmax"]).optional(),
 ]);
+const decimalEnum = z.templateLiteral(["", z.enum({ A: 1.2 })]);
+// String(1e21) is "1e+21" — the `+` needs escaping too, or the pattern rejects its own enum value
+const exponentEnum = z.templateLiteral(["", z.enum({ A: 1e21 })]);
 
 const connectionString = z.templateLiteral([
   "mongodb://",
@@ -482,7 +485,7 @@ test("template literal parsing - failure - basic cases", () => {
   expect(() => nullishBruh.parse("1null")).toThrow();
   expect(() => nullishBruh.parse("undefined")).toThrow();
   expect(() => cuid.parse("bjld2cyuq0000t3rmniod1foy")).toThrow();
-  expect(() => cuid.parse("cjld2cyu")).toThrow();
+  expect(() => cuid.parse("cjld2")).toThrow();
   expect(() => cuid.parse("cjld2 cyu")).toThrow();
   expect(() => cuid.parse("cjld2cyuq0000t3rmniod1foy ")).toThrow();
   expect(() => cuid.parse("1cjld2cyuq0000t3rmniod1foy")).toThrow();
@@ -555,11 +558,11 @@ test("regexes", () => {
   expect(optionalNumber._zod.pattern.source).toMatchInlineSnapshot(`"^(-?\\d+(?:\\.\\d+)?)?$"`);
   expect(nullishBruh._zod.pattern.source).toMatchInlineSnapshot(`"^(((bruh)|null))?$"`);
   expect(nullishString._zod.pattern.source).toMatchInlineSnapshot(`"^(([\\s\\S]{0,}|null))?$"`);
-  expect(cuid._zod.pattern.source).toMatchInlineSnapshot(`"^[cC][^\\s-]{8,}$"`);
-  expect(cuidZZZ._zod.pattern.source).toMatchInlineSnapshot(`"^[cC][^\\s-]{8,}ZZZ$"`);
+  expect(cuid._zod.pattern.source).toMatchInlineSnapshot(`"^[cC][0-9a-z]{6,}$"`);
+  expect(cuidZZZ._zod.pattern.source).toMatchInlineSnapshot(`"^[cC][0-9a-z]{6,}ZZZ$"`);
   expect(cuid2._zod.pattern.source).toMatchInlineSnapshot(`"^[0-9a-z]+$"`);
   expect(datetime._zod.pattern.source).toMatchInlineSnapshot(
-    `"^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"`
+    `"^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"`
   );
   expect(email._zod.pattern.source).toMatchInlineSnapshot(
     `"^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"`
@@ -576,7 +579,7 @@ test("regexes", () => {
   expect(mac._zod.pattern.source).toMatchInlineSnapshot(
     `"^(?:[0-9A-F]{2}:){5}[0-9A-F]{2}$|^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}$"`
   );
-  expect(ulid._zod.pattern.source).toMatchInlineSnapshot(`"^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$"`);
+  expect(ulid._zod.pattern.source).toMatchInlineSnapshot(`"^[0-7][0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$"`);
   expect(uuid._zod.pattern.source).toMatchInlineSnapshot(
     `"^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"`
   );
@@ -590,6 +593,8 @@ test("regexes", () => {
   expect(brandedString._zod.pattern.source).toMatchInlineSnapshot(`"^[\\s\\S]{1,}$"`);
   expect(url._zod.pattern.source).toMatchInlineSnapshot(`"^https:\\/\\/\\w+\\.(com|net)$"`);
   expect(measurement._zod.pattern.source).toMatchInlineSnapshot(`"^-?\\d+(?:\\.\\d+)?((px|em|rem|vh|vw|vmin|vmax))?$"`);
+  expect(decimalEnum._zod.pattern.source).toMatchInlineSnapshot(`"^(1\\.2)$"`);
+  expect(exponentEnum._zod.pattern.source).toMatchInlineSnapshot(`"^(1e\\+21)$"`);
   expect(connectionString._zod.pattern.source).toMatchInlineSnapshot(
     `"^mongodb:\\/\\/(\\w+:\\w+@)?\\w+:-?\\d+(\\/(\\w+)?(\\?(\\w+=\\w+(&\\w+=\\w+)*)?)?)?$"`
   );
@@ -598,6 +603,8 @@ test("regexes", () => {
 test("template literal parsing - success - complex cases", () => {
   url.parse("https://example.com");
   url.parse("https://speedtest.net");
+
+  exponentEnum.parse("1e+21");
 
   // measurement.parse(1);
   // measurement.parse(1.1);
@@ -675,6 +682,8 @@ test("template literal parsing - failure - complex cases", () => {
   expect(() => measurement.parse("-Infinity")).toThrow();
   expect(() => measurement.parse("NaN")).toThrow();
   expect(() => measurement.parse("1%")).toThrow();
+  expect(() => decimalEnum.parse("1x2")).toThrow();
+  expect(() => exponentEnum.parse("1e21")).toThrow();
 
   expect(() => connectionString.parse("mongod://host:1234")).toThrow();
   expect(() => connectionString.parse("mongodb://:1234")).toThrow();
@@ -717,7 +726,7 @@ test("template literal parsing - failure - issue format", () => {
       {
         "code": "invalid_format",
         "format": "template_literal",
-        "pattern": "^[cC][^\\\\s-]{8,}ZZZ$",
+        "pattern": "^[cC][0-9a-z]{6,}ZZZ$",
         "path": [],
         "message": "Invalid input"
       }

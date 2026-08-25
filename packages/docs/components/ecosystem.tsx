@@ -59,6 +59,13 @@ const apiLibraries: ZodResource[] = [
     description: "Advanced fetch client builder",
     slug: "L-Blondy/up-fetch",
   },
+  {
+    name: "zodql",
+    url: "https://github.com/mattiasahlsen/zodql",
+    description:
+      "Use a single Zod schema as the source of truth for a GraphQL query, its inferred response type, and runtime validation.",
+    slug: "mattiasahlsen/zodql",
+  },
   // https://github.com/honojs/middleware/tree/main/packages/zod-validator
   // {
   //   name: "@hono/zod-validator",
@@ -112,6 +119,18 @@ const formIntegrations: ZodResource[] = [
     description: "Components, hooks & utilities for creating and managing delightfully simple form experiences in React.",
     slug: "maanlamp/react-f3",
   },
+  {
+    name: "Attaform",
+    url: "https://attaform.dev",
+    description: "Type-safe, Zod-first form library for Vue 3 and Nuxt.",
+    slug: "attaform/Attaform",
+  },
+  {
+    name: "zod-form-action",
+    url: "https://github.com/Vish05/zod-form-action",
+    description: "A tiny helper for wiring Zod validation into React's useActionState — typed field errors, zero boilerplate.",
+    slug: "Vish05/zod-form-action",
+  },
 ];
 
 const zodToXConverters: ZodResource[] = [
@@ -146,16 +165,22 @@ const zodToXConverters: ZodResource[] = [
     slug: "traversable/schema",
   },
   {
-    name: "zod-to-mongo-schema",
-    url: "https://github.com/udohjeremiah/zod-to-mongo-schema",
+    name: "zod-mongo-schema",
+    url: "https://github.com/udohjeremiah/zod-mongo-schema",
     description: "Convert Zod schemas to MongoDB-compatible JSON Schemas effortlessly",
-    slug: "udohjeremiah/zod-to-mongo-schema",
+    slug: "udohjeremiah/zod-mongo-schema",
   },
   {
     name: "convex-helpers",
     url: "https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/README.md#zod-validation",
     description: "Use Zod to validate arguments and return values of Convex functions, and to create Convex database schemas",
     slug: "get-convex/convex-helpers",
+  },
+  {
+    name: "@nullix/zod-mongoose",
+    url: "https://zodmongoose.com/",
+    description: "Convert zod schemas into typesafe mongoose schemas with full transparent mongoose options and helpers",
+    slug: "Harm-Nullix/zod-mongoose",
   },
 ];
 
@@ -175,7 +200,7 @@ const xToZodConverters: ZodResource[] = [
   {
     name: "Hey API",
     url: "https://heyapi.dev/openapi-ts/plugins/zod",
-    description: "The OpenAPI to TypeScript codegen. Generate clients, SDKs, validators, and more.",
+    description: "OpenAPI to TypeScript codegen. Production-ready SDKs, Zod schemas, TanStack Query hooks, and 20+ plugins. Used by Vercel, OpenCode, and PayPal.",
     slug: "hey-api/openapi-ts",
   },
   {
@@ -203,6 +228,19 @@ const xToZodConverters: ZodResource[] = [
     url: "https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/README.md#zod-validation",
     description: "Generate Zod schemas from Convex validators",
     slug: "get-convex/convex-helpers",
+  },
+  {
+    name: "Hono Takibi",
+    url: "https://github.com/nakita628/hono-takibi",
+    description: "Hono Takibi is a code generator from OpenAPI to @hono/zod-openapi",
+    slug: "nakita628/hono-takibi",
+  },
+  {
+    name: "tauri-typegen",
+    url: "https://github.com/thwbh/tauri-typegen",
+    description:
+      "tauri-typegen allows you to generate Zod schemas and validation hooks for the Rust @tauri-apps/tauri cross-platform application framework.",
+    slug: "thwbh/tauri-typegen",
   }
 ];
 
@@ -264,10 +302,46 @@ const poweredByZodProjects: ZodResource[] = [
     url: "https://github.com/endel/zodgres",
     description: "Postgres.js + Zod: Database collections with static type inference and automatic migrations",
     slug: "endel/zodgres",
-  }
+  },
+  {
+    name: "validex",
+    url: "https://github.com/chiptoma/validex",
+    description: "25 tree-shakeable validation rules for common fields (email, phone, password, etc.) with structured error codes, i18n, and framework adapters.",
+    slug: "chiptoma/validex",
+  },
+  {
+    name: "json-up",
+    url: "https://github.com/Nano-Collective/json-up",
+    description: "A fast, type-safe JSON migration tool with Zod schema validation.",
+    slug: "Nano-Collective/json-up",
+  },
+  {
+    name: "@chrock-studio/overload",
+    url: "https://jsr.io/@chrock-studio/overload",
+    description: "A lightweight, type-safe runtime function overloading library that allows runtime dispatch based on argument types.",
+    slug: "chrock-studio/toolbox/tree/main/packages/overload",
+  },
+  {
+    name: "ArkEnv",
+    url: "https://github.com/yamcodes/arkenv",
+    description: "Environment variable validation from editor to runtime, for Next.js, Nuxt, Node.js, Vite, Bun, and more.",
+    slug: "yamcodes/arkenv",
+  },
 ];
 
 const zodUtilities: ZodResource[] = [
+  {
+    name: "zod-compiler",
+    url: "https://github.com/gajus/zod-compiler",
+    description: "Compile Zod schemas into zero-overhead validation functions at build time. Works with Vite, webpack, esbuild, Rollup, etc.",
+    slug: "gajus/zod-compiler",
+  },
+  {
+    name: "babel-plugin-zod-hoist",
+    url: "https://github.com/gajus/babel-plugin-zod-hoist",
+    description: "Babel plugin that optimizes Zod performance by hoisting schema definitions to the top of the file, avoiding repeated initialization overhead.",
+    slug: "gajus/babel-plugin-zod-hoist",
+  },
   {
     name: "eslint-plugin-import-zod",
     url: "https://github.com/samchungy/eslint-plugin-import-zod",
@@ -281,10 +355,10 @@ const zodUtilities: ZodResource[] = [
     slug: "marilari88/zod-playground",
   },
   {
-    name: "eslint-plugin-zod-x",
-    url: "https://github.com/marcalexiei/eslint-plugin-zod-x",
-    description: "ESLint plugin that adds custom linting rules to enforce best practices when using Zod",
-    slug: "marcalexiei/eslint-plugin-zod-x",
+    name: "eslint-zod",
+    url: "https://github.com/marcalexiei/eslint-zod",
+    description: "ESLint plugins that add custom linting rules to enforce best practices when using Zod and/or Zod Mini.",
+    slug: "marcalexiei/eslint-zod",
   },
   {
     name: "Zod Compare",
@@ -297,6 +371,30 @@ const zodUtilities: ZodResource[] = [
     url: "https://github.com/Reza-kh80/zod-ir",
     description: "Comprehensive validation for Iranian data structures (National Code, Bank Cards, Sheba, Crypto, etc) with smart metadata extraction (Bank Names, Logos). Zero dependencies.",
     slug: "Reza-kh80/zod-ir",
+  },
+  {
+    name: "Zod AOT",
+    url: "https://github.com/wakita181009/zod-aot",
+    description: "Compile Zod schemas into zero-overhead validation functions at build time. 2-64x faster validation with no code changes.",
+    slug: "wakita181009/zod-aot",
+  },
+  {
+    name: "@chrock-studio/zod-utils",
+    url: "https://jsr.io/@chrock-studio/zod-utils",
+    description: "A collection of Zod utilities focusing on enhanced functionality (e.g. classless Rich Domain Models while maintaining pure data structures).",
+    slug: "chrock-studio/toolbox/tree/main/packages/zod-utils",
+  },
+  {
+    name: "oxlint-plugin-import-zod",
+    url: "https://github.com/samchungy/oxlint-plugin-import-zod",
+    description: "Oxlint plugin to enforce namespace imports for Zod.",
+    slug: "samchungy/oxlint-plugin-import-zod",
+  },
+  {
+    name: "shorn",
+    url: "https://shorn.dev",
+    description: "Compact binary serialization that uses your Zod schema as the wire format. No IDL or codegen.",
+    slug: "ChiChuRita/shorn",
   },
 ];
 

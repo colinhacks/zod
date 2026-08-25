@@ -1,9 +1,9 @@
 import type * as core from "./core.js";
 import type { $ZodType } from "./schemas.js";
 
-export const $output: unique symbol = Symbol("ZodOutput");
+export const $output: unique symbol = /*@__PURE__*/ Symbol("ZodOutput");
 export type $output = typeof $output;
-export const $input: unique symbol = Symbol("ZodInput");
+export const $input: unique symbol = /*@__PURE__*/ Symbol("ZodInput");
 export type $input = typeof $input;
 
 export type $replace<Meta, S extends $ZodType> = Meta extends $output
@@ -37,9 +37,6 @@ export class $ZodRegistry<Meta extends MetadataType = MetadataType, Schema exten
     const meta: any = _meta[0];
     this._map.set(schema, meta!);
     if (meta && typeof meta === "object" && "id" in meta) {
-      if (this._idmap.has(meta.id!)) {
-        throw new Error(`ID ${meta.id} already exists in the registry`);
-      }
       this._idmap.set(meta.id!, schema);
     }
     return this as any;

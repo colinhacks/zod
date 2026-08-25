@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 
 import * as z from "zod/v4";
 
@@ -51,4 +51,15 @@ test("min max getters", () => {
 
   expect(z.bigint().max(BigInt(5)).maxValue).toEqual(BigInt(5));
   expect(z.bigint().max(BigInt(5)).max(BigInt(1)).maxValue).toEqual(BigInt(1));
+});
+
+test("bigint formats are distinct at the type level", () => {
+  expectTypeOf(z.int64()._zod.def.format).toEqualTypeOf<"int64">();
+  expectTypeOf(z.uint64()._zod.def.format).toEqualTypeOf<"uint64">();
+
+  z.int64() satisfies z.ZodBigIntFormat;
+  z.int64() satisfies z.ZodBigInt;
+
+  // @ts-expect-error a uint64 schema is not a ZodInt64
+  z.uint64() satisfies z.ZodInt64;
 });

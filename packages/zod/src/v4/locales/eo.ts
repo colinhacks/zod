@@ -2,42 +2,20 @@ import type { $ZodStringFormats } from "../core/checks.js";
 import type * as errors from "../core/errors.js";
 import * as util from "../core/util.js";
 
-export const parsedType = (data: any): string => {
-  const t = typeof data;
-
-  switch (t) {
-    case "number": {
-      return Number.isNaN(data) ? "NaN" : "nombro";
-    }
-    case "object": {
-      if (Array.isArray(data)) {
-        return "tabelo";
-      }
-      if (data === null) {
-        return "senvalora";
-      }
-
-      if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-        return data.constructor.name;
-      }
-    }
-  }
-  return t;
-};
-
 const error: () => errors.$ZodErrorMap = () => {
   const Sizable: Record<string, { unit: string; verb: string }> = {
     string: { unit: "karaktrojn", verb: "havi" },
     file: { unit: "bajtojn", verb: "havi" },
     array: { unit: "elementojn", verb: "havi" },
     set: { unit: "elementojn", verb: "havi" },
+    map: { unit: "elementojn", verb: "havi" },
   };
 
   function getSizing(origin: string): { unit: string; verb: string } | null {
     return Sizable[origin] ?? null;
   }
 
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "enigo",
@@ -60,20 +38,38 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "ISO-daŭro",
     ipv4: "IPv4-adreso",
     ipv6: "IPv6-adreso",
+    mac: "MAC-adreso",
     cidrv4: "IPv4-rango",
     cidrv6: "IPv6-rango",
     base64: "64-ume kodita karaktraro",
     base64url: "URL-64-ume kodita karaktraro",
     json_string: "JSON-karaktraro",
     e164: "E.164-nombro",
+    credit_card: "kreditkarta numero",
     jwt: "JWT",
     template_literal: "enigo",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+    number: "nombro",
+    array: "tabelo",
+    null: "senvalora",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `Nevalida enigo: atendiĝis ${issue.expected}, riceviĝis ${parsedType(issue.input)}`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `Nevalida enigo: atendiĝis instanceof ${issue.expected}, riceviĝis ${received}`;
+        }
+        return `Nevalida enigo: atendiĝis ${expected}, riceviĝis ${received}`;
+      }
 
       case "invalid_value":
         if (issue.values.length === 1) return `Nevalida enigo: atendiĝis ${util.stringifyPrimitive(issue.values[0])}`;
@@ -100,7 +96,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `Nevalida karaktraro: devas finiĝi per "${_issue.suffix}"`;
         if (_issue.format === "includes") return `Nevalida karaktraro: devas inkluzivi "${_issue.includes}"`;
         if (_issue.format === "regex") return `Nevalida karaktraro: devas kongrui kun la modelo ${_issue.pattern}`;
-        return `Nevalida ${Nouns[_issue.format] ?? issue.format}`;
+        return `Nevalida ${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":
         return `Nevalida nombro: devas esti oblo de ${issue.divisor}`;

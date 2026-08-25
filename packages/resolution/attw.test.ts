@@ -22,7 +22,7 @@ describe("Are The Types Wrong (attw) tests", () => {
         cwd: __dirname,
         timeout: 5000,
       });
-    } catch {
+    } catch (_: any) {
       console.warn("attw not available, skipping test");
       return;
     }
@@ -33,8 +33,14 @@ describe("Are The Types Wrong (attw) tests", () => {
       reject: false, // Don't throw on non-zero exit codes
     });
 
-    // Combine stdout and stderr for comprehensive output
-    const output = result.stdout + (result.stderr ? "\n" + result.stderr : "");
+    // drop pnpm's warnings — under CI setup-node leaves an unresolved ${NODE_AUTH_TOKEN} in the .npmrc and pnpm complains on every run
+    const stderr = result.stderr
+      .split("\n")
+      // pnpm pads WARN with U+2009 thin spaces, so \s is load-bearing — startsWith(" WARN") misses it
+      .filter((line) => !/^\s*WARN\b/.test(line))
+      .join("\n")
+      .trim();
+    const output = result.stdout + (stderr ? "\n" + stderr : "");
     // remove first line
     const outputWithoutFirstLine = output.split("\n").slice(2).join("\n").trim();
     expect(outputWithoutFirstLine).toMatchInlineSnapshot(`
@@ -60,6 +66,15 @@ describe("Are The Types Wrong (attw) tests", () => {
       ***********************************
 
       "zod/mini"
+
+      node10: 🟢 
+      node16 (from CJS): 🟢 (CJS)
+      node16 (from ESM): 🎭 Masquerading as CJS
+      bundler: 🟢 
+
+      ***********************************
+
+      "zod/compile"
 
       node10: 🟢 
       node16 (from CJS): 🟢 (CJS)

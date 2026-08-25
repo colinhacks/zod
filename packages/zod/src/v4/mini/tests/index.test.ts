@@ -228,6 +228,63 @@ test("z.union", () => {
   expect(() => z.parse(a, true)).toThrow();
 });
 
+test("z.union([]) / z.xor([]) / z.discriminatedUnion(_, []) construct and reject all input", () => {
+  for (const schema of [z.union([]), z.xor([])]) {
+    const r = schema.safeParse("anything");
+    expect(r.success).toEqual(false);
+    if (!r.success) {
+      expect(r.error.issues[0].code).toBe("invalid_union");
+      expect((r.error.issues[0] as any).errors).toEqual([]);
+    }
+  }
+  const disc = z.discriminatedUnion("type", [] as any);
+  const r = disc.safeParse({ type: "x" });
+  expect(r.success).toEqual(false);
+  if (!r.success) {
+    expect(r.error.issues[0].code).toBe("invalid_union");
+    expect((r.error.issues[0] as any).errors).toEqual([]);
+    expect((r.error.issues[0] as any).options).toEqual([]);
+  }
+});
+
+test("z.discriminatedUnion rejects object options missing the discriminator", () => {
+  expect(() => z.discriminatedUnion("type", [z.object({ value: z.string() })])).toThrow(
+    /Invalid discriminated union option at index "0"/
+  );
+
+  // An option whose shape cannot be listed without resolving it is left to the lookup map, on the first object parsed.
+  const viaPipe = z.discriminatedUnion("type", [
+    z.pipe(z.object({ value: z.literal("x") }), z.object({ value: z.literal("x") })),
+  ]);
+  expect(() => z.safeParse(viaPipe, { value: "x" })).toThrow(/Invalid discriminated union option at index "0"/);
+});
+
+test("z.discriminatedUnion infers mutually-recursive getter options", () => {
+  const variantA = z.object({
+    kind: z.literal("a"),
+    get child() {
+      return z.optional(tree);
+    },
+  });
+
+  const variantB = z.object({
+    kind: z.literal("b"),
+    get sibling() {
+      return z.optional(tree);
+    },
+  });
+
+  const tree = z.discriminatedUnion("kind", [variantA, variantB]);
+
+  type _Tree = { kind: "a"; child?: _Tree | undefined } | { kind: "b"; sibling?: _Tree | undefined };
+
+  expectTypeOf<z.input<typeof tree>>().toEqualTypeOf<_Tree>();
+  expectTypeOf<z.input<typeof tree>>().not.toBeAny();
+
+  expect(z.parse(tree, { kind: "a", child: { kind: "b" } })).toEqual({ kind: "a", child: { kind: "b" } });
+  expect(() => z.parse(tree, { kind: "c" })).toThrow();
+});
+
 test("z.intersection", () => {
   const a = z.intersection(z.object({ a: z.string() }), z.object({ b: z.number() }));
   expect(z.parse(a, { a: "hello", b: 123 })).toEqual({ a: "hello", b: 123 });
@@ -247,7 +304,7 @@ test("z.tuple", () => {
   const b = z.tuple([z.string(), z.number(), z.optional(z.string())], z.boolean());
   type b = z.output<typeof b>;
 
-  expectTypeOf<b>().toEqualTypeOf<[string, number, string?, ...boolean[]]>();
+  expectTypeOf<b>().toEqualTypeOf<[string, number, (string | undefined)?, ...boolean[]]>();
   const datas = [
     ["hello", 123],
     ["hello", 123, "world"],
@@ -265,7 +322,7 @@ test("z.tuple", () => {
   const cArgs = [z.string(), z.number(), z.optional(z.string())] as const;
   const c = z.tuple(cArgs, z.boolean());
   type c = z.output<typeof c>;
-  expectTypeOf<c>().toEqualTypeOf<[string, number, string?, ...boolean[]]>();
+  expectTypeOf<c>().toEqualTypeOf<[string, number, (string | undefined)?, ...boolean[]]>();
 });
 
 test("z.record", () => {
@@ -319,6 +376,21 @@ test("z.record", () => {
     [Enum.A]: "hello",
     [Enum.B]: "world",
   });
+
+  const partial = z.partialRecord(z.enum(["__proto__", "b"]), z.string());
+  type partial = z.output<typeof partial>;
+  expectTypeOf<partial>().toEqualTypeOf<Partial<Record<"__proto__" | "b", string>>>();
+  const parsed: any = z.parse(partial, Object.fromEntries([["__proto__", "declared"]]));
+  expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+  expect(Object.prototype.hasOwnProperty.call(parsed, "__proto__")).toBe(false);
+  expect(parsed).toEqual({});
+  expect(z.parse(partial, {})).toEqual({});
+
+  // v3-compat single-arg form: z.record(valueType) defaults keyType to z.string()
+  const f = (z.record as any)(z.number());
+  expect(f._zod.def.keyType._zod.def.type).toEqual("string");
+  expect(f._zod.def.valueType._zod.def.type).toEqual("number");
+  expect(z.parse(f, { a: 1, b: 2 })).toEqual({ a: 1, b: 2 });
 });
 
 test("z.map", () => {
@@ -649,8 +721,7 @@ test("z.custom", () => {
 });
 
 test("z.check", () => {
-  // this is a more flexible version of z.custom that accepts an arbitrary _parse logic
-  // the function should return core.$ZodResult
+  // this is a more flexible version of z.custom that accepts an arbitrary _parse logic the function should return core.$ZodResult
   const a = z.any().check(
     z.check<string>((ctx) => {
       if (typeof ctx.value === "string") return;
@@ -670,6 +741,47 @@ test("z.check", () => {
     success: false,
     error: { issues: [{ code: "custom", message: "Expected a string" }] },
   });
+});
+
+test("z.with (alias for z.check)", () => {
+  // .with() should work exactly the same as .check()
+  const a = z.any().with(
+    z.check<string>((ctx) => {
+      if (typeof ctx.value === "string") return;
+      ctx.issues.push({
+        code: "custom",
+        origin: "custom",
+        message: "Expected a string",
+        input: ctx.value,
+      });
+    })
+  );
+  expect(z.safeParse(a, "hello")).toMatchObject({
+    success: true,
+    data: "hello",
+  });
+  expect(z.safeParse(a, 123)).toMatchObject({
+    success: false,
+    error: { issues: [{ code: "custom", message: "Expected a string" }] },
+  });
+
+  // Test with refine
+  const b = z.string().with(z.refine((val) => val.length > 3, "Must be longer than 3"));
+  expect(z.safeParse(b, "hello").success).toBe(true);
+  expect(z.safeParse(b, "hi").success).toBe(false);
+
+  // Test with function
+  const c = z.string().with(({ value, issues }) => {
+    if (value.length <= 3) {
+      issues.push({
+        code: "custom",
+        input: value,
+        message: "Must be longer than 3",
+      });
+    }
+  });
+  expect(z.safeParse(c, "hello").success).toBe(true);
+  expect(z.safeParse(c, "hi").success).toBe(false);
 });
 
 test("z.instanceof", () => {
@@ -800,12 +912,15 @@ test("z.stringbool", () => {
   expect(z.parse(b, "n")).toEqual(false);
   expect(z.safeParse(b, "true")).toMatchObject({ success: false });
   expect(z.safeParse(b, "false")).toMatchObject({ success: false });
+  expect(b._zod.bag.truthy).toEqual(["y"]);
+  expect(b._zod.bag.falsy).toEqual(["n"]);
 
   const c = z.stringbool({
     case: "sensitive",
   });
   expect(z.parse(c, "true")).toEqual(true);
   expect(z.safeParse(c, "TRUE")).toMatchObject({ success: false });
+  expect(c._zod.bag.case).toEqual("sensitive");
 });
 
 // promise
@@ -919,4 +1034,14 @@ test("type narrowing works with type property", () => {
     expectTypeOf(arraySchema).toEqualTypeOf<z.ZodMiniArray<z.ZodMiniString<unknown>>>();
     expect(arraySchema.def.element).toBeDefined();
   }
+});
+
+test("getDiscriminatedOption", () => {
+  const a = z.object({ type: z.literal("a"), x: z.string() });
+  const b = z.object({ type: z.literal("b"), y: z.number() });
+  const schema = z.discriminatedUnion("type", [a, b]);
+
+  expect(z.getDiscriminatedOption(schema, "a")).toBe(a);
+  expect(z.getDiscriminatedOption(schema, "b")).toBe(b);
+  expectTypeOf(z.getDiscriminatedOption(schema, "a")).toEqualTypeOf<typeof a>();
 });

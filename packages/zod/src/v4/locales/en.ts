@@ -2,29 +2,6 @@ import type { $ZodStringFormats } from "../core/checks.js";
 import type * as errors from "../core/errors.js";
 import * as util from "../core/util.js";
 
-export const parsedType = (data: any): string => {
-  const t = typeof data;
-
-  switch (t) {
-    case "number": {
-      return Number.isNaN(data) ? "NaN" : "number";
-    }
-    case "object": {
-      if (Array.isArray(data)) {
-        return "array";
-      }
-      if (data === null) {
-        return "null";
-      }
-
-      if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-        return data.constructor.name;
-      }
-    }
-  }
-  return t;
-};
-
 const error: () => errors.$ZodErrorMap = () => {
   const Sizable: Record<string, { unit: string; verb: string }> = {
     string: { unit: "characters", verb: "to have" },
@@ -38,7 +15,7 @@ const error: () => errors.$ZodErrorMap = () => {
     return Sizable[origin] ?? null;
   }
 
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "input",
@@ -68,27 +45,48 @@ const error: () => errors.$ZodErrorMap = () => {
     base64url: "base64url-encoded string",
     json_string: "JSON string",
     e164: "E.164 number",
+    credit_card: "credit card number",
     jwt: "JWT",
     template_literal: "input",
   };
 
+  // type names: missing keys = do not translate (use raw value via ?? fallback)
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    // Compatibility: "nan" -> "NaN" for display
+    nan: "NaN",
+    // All other type names omitted - they fall back to raw values via ?? operator
+  };
+
+  function getTypeName(type: errors.$ZodInvalidTypeExpected, input?: unknown): string {
+    if (type === "number" && typeof input === "number" && !Number.isFinite(input)) {
+      return String(input);
+    }
+    return TypeDictionary[type] ?? type;
+  }
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `Invalid input: expected ${issue.expected}, received ${parsedType(issue.input)}`;
+      case "invalid_type": {
+        const expected = getTypeName(issue.expected);
+        const receivedType = util.parsedType(issue.input);
+        const received = getTypeName(receivedType, issue.input);
+        return `Invalid input: expected ${expected}, received ${received}`;
+      }
 
       case "invalid_value":
         if (issue.values.length === 1) return `Invalid input: expected ${util.stringifyPrimitive(issue.values[0])}`;
         return `Invalid option: expected one of ${util.joinValues(issue.values, "|")}`;
       case "too_big": {
-        const adj = issue.inclusive ? "<=" : "<";
+        const adj = issue.exact ? "exactly " : issue.inclusive ? "<=" : "<";
         const sizing = getSizing(issue.origin);
         if (sizing)
           return `Too big: expected ${issue.origin ?? "value"} to have ${adj}${issue.maximum.toString()} ${sizing.unit ?? "elements"}`;
         return `Too big: expected ${issue.origin ?? "value"} to be ${adj}${issue.maximum.toString()}`;
       }
       case "too_small": {
-        const adj = issue.inclusive ? ">=" : ">";
+        const adj = issue.exact ? "exactly " : issue.inclusive ? ">=" : ">";
         const sizing = getSizing(issue.origin);
         if (sizing) {
           return `Too small: expected ${issue.origin} to have ${adj}${issue.minimum.toString()} ${sizing.unit}`;
@@ -104,7 +102,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `Invalid string: must end with "${_issue.suffix}"`;
         if (_issue.format === "includes") return `Invalid string: must include "${_issue.includes}"`;
         if (_issue.format === "regex") return `Invalid string: must match pattern ${_issue.pattern}`;
-        return `Invalid ${Nouns[_issue.format] ?? issue.format}`;
+        return `Invalid ${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":
         return `Invalid number: must be a multiple of ${issue.divisor}`;
@@ -113,6 +111,13 @@ const error: () => errors.$ZodErrorMap = () => {
       case "invalid_key":
         return `Invalid key in ${issue.origin}`;
       case "invalid_union":
+        if (issue.options && Array.isArray(issue.options) && issue.options.length > 0) {
+          const opts = issue.options.map((o) => `'${o}'`).join(" | ");
+          return `Invalid discriminator value. Expected ${opts}`;
+        }
+        if (issue.inclusive === false) {
+          return "Invalid input: more than one option matched";
+        }
         return "Invalid input";
       case "invalid_element":
         return `Invalid value in ${issue.origin}`;

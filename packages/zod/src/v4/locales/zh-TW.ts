@@ -8,36 +8,14 @@ const error: () => errors.$ZodErrorMap = () => {
     file: { unit: "位元組", verb: "擁有" },
     array: { unit: "項目", verb: "擁有" },
     set: { unit: "項目", verb: "擁有" },
+    map: { unit: "項目", verb: "擁有" },
   };
 
   function getSizing(origin: string): { unit: string; verb: string } | null {
     return Sizable[origin] ?? null;
   }
 
-  const parsedType = (data: any): string => {
-    const t = typeof data;
-
-    switch (t) {
-      case "number": {
-        return Number.isNaN(data) ? "NaN" : "number";
-      }
-      case "object": {
-        if (Array.isArray(data)) {
-          return "array";
-        }
-        if (data === null) {
-          return "null";
-        }
-
-        if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-          return data.constructor.name;
-        }
-      }
-    }
-    return t;
-  };
-
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "輸入",
@@ -60,20 +38,35 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "ISO 期間",
     ipv4: "IPv4 位址",
     ipv6: "IPv6 位址",
+    mac: "MAC 位址",
     cidrv4: "IPv4 範圍",
     cidrv6: "IPv6 範圍",
     base64: "base64 編碼字串",
     base64url: "base64url 編碼字串",
     json_string: "JSON 字串",
     e164: "E.164 數值",
+    credit_card: "信用卡號",
     jwt: "JWT",
     template_literal: "輸入",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `無效的輸入值：預期為 ${issue.expected}，但收到 ${parsedType(issue.input)}`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `無效的輸入值：預期為 instanceof ${issue.expected}，但收到 ${received}`;
+        }
+        return `無效的輸入值：預期為 ${expected}，但收到 ${received}`;
+      }
       case "invalid_value":
         if (issue.values.length === 1) return `無效的輸入值：預期為 ${util.stringifyPrimitive(issue.values[0])}`;
         return `無效的選項：預期為以下其中之一 ${util.joinValues(issue.values, "|")}`;
@@ -100,7 +93,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `無效的字串：必須以 "${_issue.suffix}" 結尾`;
         if (_issue.format === "includes") return `無效的字串：必須包含 "${_issue.includes}"`;
         if (_issue.format === "regex") return `無效的字串：必須符合格式 ${_issue.pattern}`;
-        return `無效的 ${Nouns[_issue.format] ?? issue.format}`;
+        return `無效的 ${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":
         return `無效的數字：必須為 ${issue.divisor} 的倍數`;

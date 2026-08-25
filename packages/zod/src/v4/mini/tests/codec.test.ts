@@ -103,7 +103,7 @@ test("safe codec operations", () => {
           "message": "Invalid ISO datetime",
           "origin": "string",
           "path": [],
-          "pattern": "/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/",
+          "pattern": "/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$/",
         },
       ]
     `);
@@ -246,6 +246,7 @@ test("nested codec with object containing codec property", () => {
   `);
 
   // Test refinements at all levels
+
   // String validation (empty waypoint name)
   const emptyNameResult = z.safeDecode(waypointSchema, {
     name: "",
@@ -526,4 +527,56 @@ test("codec type enforcement - complex types", () => {
       encode: (user: UserInput) => ({ id: String(user.id), name: user.name }), // Wrong type
     }
   );
+});
+
+test("invertCodec", () => {
+  const inverted = z.invertCodec(isoDateCodec);
+
+  type InvIn = z.input<typeof inverted>;
+  type InvOut = z.output<typeof inverted>;
+  expectTypeOf<InvIn>().toEqualTypeOf<Date>();
+  expectTypeOf<InvOut>().toEqualTypeOf<string>();
+
+  const testDate = new Date("2024-01-15T10:30:00.000Z");
+  expect(z.decode(inverted, testDate)).toBe("2024-01-15T10:30:00.000Z");
+
+  const encoded = z.encode(inverted, "2024-01-15T10:30:00.000Z");
+  expect(encoded).toBeInstanceOf(Date);
+  expect(encoded.toISOString()).toBe("2024-01-15T10:30:00.000Z");
+
+  const doubleInverted = z.invertCodec(z.invertCodec(isoDateCodec));
+  expect(z.decode(doubleInverted, "2024-01-15T10:30:00.000Z")).toBeInstanceOf(Date);
+});
+
+test("z.output carries checks attached to a pipe", () => {
+  const c = z
+    .codec(z.string(), z.number(), { decode: Number, encode: String })
+    .check(z.refine((n) => n > 10, { error: "gt10" }));
+
+  expect(z.output(c).parse(50)).toBe(50);
+  expect(() => z.output(c).parse(5)).toThrow("gt10");
+  // The input side drops it: the check constrains a value that side never produces.
+  expect(z.input(c).parse("5")).toBe("5");
+});
+
+test("z.input resolves past a transform piped into a schema", () => {
+  const p = z.pipe(
+    z.transform((v: unknown) => String(v)),
+    z.string().check(z.minLength(5))
+  );
+
+  expect(z.input(p).parse("abcde")).toBe("abcde");
+  expect(() => z.input(p).parse(1)).toThrow();
+});
+
+test("a wrapper's stored value survives only on the side it belongs to", () => {
+  const c = z.codec(z.string(), z.number(), { decode: Number, encode: String });
+
+  expect(z.input(z._default(c, 7)).parse(undefined)).toBe(undefined);
+  expect(z.output(z._default(c, 7)).parse(undefined)).toBe(7);
+
+  // A wrapper over a pipe-free schema keeps both its value and its identity.
+  const plain = z._default(z.string(), "x");
+  expect(z.input(plain)).toBe(plain);
+  expect(z.input(plain).parse(undefined)).toBe("x");
 });

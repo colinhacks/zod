@@ -2,42 +2,20 @@ import type { $ZodStringFormats } from "../core/checks.js";
 import type * as errors from "../core/errors.js";
 import * as util from "../core/util.js";
 
-export const parsedType = (data: any): string => {
-  const t = typeof data;
-
-  switch (t) {
-    case "number": {
-      return Number.isNaN(data) ? "NaN" : "númer";
-    }
-    case "object": {
-      if (Array.isArray(data)) {
-        return "fylki";
-      }
-      if (data === null) {
-        return "null";
-      }
-
-      if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-        return data.constructor.name;
-      }
-    }
-  }
-  return t;
-};
-
 const error: () => errors.$ZodErrorMap = () => {
   const Sizable: Record<string, { unit: string; verb: string }> = {
     string: { unit: "stafi", verb: "að hafa" },
     file: { unit: "bæti", verb: "að hafa" },
     array: { unit: "hluti", verb: "að hafa" },
     set: { unit: "hluti", verb: "að hafa" },
+    map: { unit: "hluti", verb: "að hafa" },
   };
 
   function getSizing(origin: string): { unit: string; verb: string } | null {
     return Sizable[origin] ?? null;
   }
 
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "gildi",
@@ -60,20 +38,37 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "ISO tímalengd",
     ipv4: "IPv4 address",
     ipv6: "IPv6 address",
+    mac: "MAC address",
     cidrv4: "IPv4 range",
     cidrv6: "IPv6 range",
     base64: "base64-encoded strengur",
     base64url: "base64url-encoded strengur",
     json_string: "JSON strengur",
     e164: "E.164 tölugildi",
+    credit_card: "kreditkortanúmer",
     jwt: "JWT",
     template_literal: "gildi",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+    number: "númer",
+    array: "fylki",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `Rangt gildi: Þú slóst inn ${parsedType(issue.input)} þar sem á að vera ${issue.expected}`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `Rangt gildi: Þú slóst inn ${received} þar sem á að vera instanceof ${issue.expected}`;
+        }
+        return `Rangt gildi: Þú slóst inn ${received} þar sem á að vera ${expected}`;
+      }
 
       case "invalid_value":
         if (issue.values.length === 1) return `Rangt gildi: gert ráð fyrir ${util.stringifyPrimitive(issue.values[0])}`;
@@ -102,7 +97,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `Ógildur strengur: verður að enda á "${_issue.suffix}"`;
         if (_issue.format === "includes") return `Ógildur strengur: verður að innihalda "${_issue.includes}"`;
         if (_issue.format === "regex") return `Ógildur strengur: verður að fylgja mynstri ${_issue.pattern}`;
-        return `Rangt ${Nouns[_issue.format] ?? issue.format}`;
+        return `Rangt ${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":
         return `Röng tala: verður að vera margfeldi af ${issue.divisor}`;

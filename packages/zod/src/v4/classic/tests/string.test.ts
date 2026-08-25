@@ -217,6 +217,14 @@ test("base64 validations", () => {
     "?QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // Invalid character '?'
     ".MTIzND2Nzg5MC4=", // Invalid character '.'
     "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo", // Missing padding
+    // Whitespace is not part of canonical base64 (RFC 4648 §3.3) — atob() strips whitespace internally before validating, so the length check alone would accept "123 " etc.
+    "123 ", // bypasses length-mod-4 via trailing whitespace
+    "SGVsbG8gV29ybGQ= ", // trailing space
+    " SGVsbG8gV29ybGQ=", // leading space
+    "SGVsbG8gV29ybGQ=\n", // trailing newline
+    "SGVs bG8gV29ybGQ=", // internal space
+    "SGVs\nbG8gV29ybGQ=", // internal newline
+    "SGVs\tbG8gV29ybGQ=", // internal tab
   ];
 
   for (const str of invalidBase64Strings) {
@@ -376,6 +384,44 @@ test("url trims whitespace", () => {
   expect(url.parse("https://example.com/path")).toBe("https://example.com/path");
 });
 
+test("url returns the string the parser validated", () => {
+  // The URL parser deletes ASCII tab, LF and CR instead of failing, so `new URL()` reports on a string that is not the one it was given. The host is the consequential case: this validated example.com and used to hand back a URL naming a different host.
+  expect(z.url().parse("https://exa\nmple.com")).toBe("https://example.com");
+  expect(z.url().parse("https://exa\tmple.com")).toBe("https://example.com");
+  expect(z.url().parse("https://exa\rmple.com")).toBe("https://example.com");
+  expect(z.httpUrl().parse("https://exa\nmple.com")).toBe("https://example.com");
+  expect(z.url({ hostname: /^a\.com$/ }).parse("https://a\n.com")).toBe("https://a.com");
+  expect(z.url().parse("https://example.com/a\nb?c=\td#e")).toBe("https://example.com/ab?c=d#e");
+
+  // Nothing that parsed before stops parsing, and normalize still wins where it applies.
+  expect(z.url().parse("https://example.com/path")).toBe("https://example.com/path");
+  expect(z.url({ normalize: true }).parse("https://exa\nmple.com")).toBe("https://example.com/");
+});
+
+test("ipv6 and cidrv6 reject anything outside the address alphabet", () => {
+  // `new URL("http://[...]")` parses an authority rather than an address, so a delimiter re-splits it and the parser validates something else entirely.
+  expect(z.ipv6().safeParse("::@1\\").success).toBe(false); // used to validate against the host 0.0.0.1
+  expect(z.ipv6().safeParse("::]/1").success).toBe(false);
+  expect(z.ipv6().safeParse("@[::1").success).toBe(false);
+  expect(z.cidrv6().safeParse("::@1\\/64").success).toBe(false);
+
+  for (const c of ["\t", "\n", "\r"]) {
+    expect(z.ipv6().safeParse(`2001:db8::${c}1`).success).toBe(false);
+    expect(z.ipv6().safeParse(`::1${c}`).success).toBe(false);
+    expect(z.cidrv6().safeParse(`::1${c}/64`).success).toBe(false);
+  }
+
+  // A rejection has to surface as an issue, not just success: false.
+  const result = z.ipv6().safeParse("::1\n");
+  expect(result.success).toBe(false);
+  expect(result.error!.issues[0]).toMatchObject({ code: "invalid_format", format: "ipv6" });
+
+  expect(z.ipv6().parse("2001:db8::1")).toBe("2001:db8::1");
+  expect(z.ipv6().parse("::ffff:192.0.2.1")).toBe("::ffff:192.0.2.1");
+  expect(z.ipv6().parse("2001:DB8::1")).toBe("2001:DB8::1");
+  expect(z.cidrv6().parse("::ffff:192.0.2.1/96")).toBe("::ffff:192.0.2.1/96");
+});
+
 test("url normalize flag", () => {
   const normalizeUrl = z.url({ normalize: true });
   const preserveUrl = z.url(); // normalize: false/undefined by default
@@ -420,7 +466,7 @@ test("httpurl", () => {
   const httpUrl = z.url({
     protocol: /^https?$/,
     hostname: z.regexes.domain,
-    // /^([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/
+    // /^(?=.{1,253}$)([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/
   });
 
   httpUrl.parse("https://example.com");
@@ -454,6 +500,22 @@ test("httpurl", () => {
   ).toThrow();
   expect(() => httpUrl.parse("http://asdf.c")).toThrow();
   expect(() => httpUrl.parse("mailto:asdf@lckj.com")).toThrow();
+  // total host length over the RFC 1035 limit of 253 chars (built from valid-length labels)
+  const longHost = `${`${"a".repeat(50)}.`.repeat(5)}com`; // 5 * 51 + 3 = 258 chars
+  expect(longHost.length).toBeGreaterThan(253);
+  expect(() => httpUrl.parse(`http://${longHost}`)).toThrow();
+  // TLD over the 63-char label limit
+  expect(() => httpUrl.parse(`http://example.${"a".repeat(64)}`)).toThrow();
+  // a host at exactly the 253-char limit is still accepted, one char more is not
+  const maxHost = `${`${"a".repeat(61)}.`.repeat(4)}aaaaa`; // 4 * 62 + 5 = 253 chars
+  httpUrl.parse(`http://${maxHost}`);
+  expect(() => httpUrl.parse(`http://${maxHost}a`)).toThrow();
+  // missing // after protocol
+  expect(() => httpUrl.parse("http:example.com")).toThrow();
+  expect(() => httpUrl.parse("https:example.com")).toThrow();
+  // missing one /
+  expect(() => httpUrl.parse("https:/www.google.com")).toThrow();
+  expect(() => httpUrl.parse("http:/example.com")).toThrow();
 });
 
 test("url error overrides", () => {
@@ -477,6 +539,7 @@ test("url error overrides", () => {
 test("emoji validations", () => {
   const emoji = z.string().emoji();
 
+  emoji.parse("🦰🦱🦲🦳"); // both Extended_Pictographic and Emoji_Component
   emoji.parse("👋👋👋👋");
   emoji.parse("🍺👩‍🚀🫡");
   emoji.parse("💚💙💜💛❤️");
@@ -598,22 +661,6 @@ test("bad guid", () => {
   }
 });
 
-test("custom character length nanoid", () => {
-  const nanoid64 = z.string().nanoid(64);
-  const valid64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
-  nanoid64.parse(valid64);
-
-  const nanoid64WithCustomError = z.string().nanoid(64, { message: "custom error" });
-  nanoid64WithCustomError.parse(valid64);
-
-  const shortId = "abc123";
-  const result = nanoid64WithCustomError.safeParse(shortId);
-  expect(result.success).toEqual(false);
-  if (!result.success) {
-    expect(result.error.issues[0].message).toEqual("custom error");
-  }
-});
-
 test("cuid", () => {
   const cuid = z.string().cuid();
   cuid.parse("ckopqwooh000001la8mbi2im9");
@@ -627,12 +674,26 @@ test("cuid", () => {
         "origin": "string",
         "code": "invalid_format",
         "format": "cuid",
-        "pattern": "/^[cC][^\\\\s-]{8,}$/",
+        "pattern": "/^[cC][0-9a-z]{6,}$/",
         "path": [],
         "message": "Invalid cuid"
       }
     ]]
   `);
+
+  // Strings containing non-base36 characters that the old denylist regex
+  // (/^[cC][^\s-]{8,}$/) accepted. The new regex restricts the body to
+  // [0-9a-z], matching the actual CUID v1 base36 format. See #3621.
+  const previouslyAcceptedNonCuids = [
+    "cly63t164000245zw008pggon';select1;", // SQLi-shaped (no whitespace, no hyphen)
+    "c<script>alert(1)</script>aaaaaa", // XSS-shaped
+    "c{};alert(1)//", // bracket / curly chars
+    "C0123_45678", // underscore is not base36
+    "cAAAAAAAAA", // uppercase letters in body are not base36 (CUIDs are lowercase)
+  ];
+  for (const s of previouslyAcceptedNonCuids) {
+    expect(cuid.safeParse(s).success).toBe(false);
+  }
 });
 
 test("cuid2", () => {
@@ -669,6 +730,12 @@ test("ulid", () => {
   const caseInsensitive = ulid.safeParse("01arZ3nDeKTsV4RRffQ69G5FAV");
   expect(caseInsensitive.success).toEqual(true);
 
+  // first char is capped at 7: the spec's largest ULID is 7ZZZZZZZZZZZZZZZZZZZZZZZZZ, so 8-9 and every letter overflow 2^48-1
+  expect(ulid.safeParse("7ZZZZZZZZZZZZZZZZZZZZZZZZZ").success).toEqual(true);
+  for (const first of ["8", "9", "A", "Z", "z"]) {
+    expect(ulid.safeParse(`${first}AAAAAAAAAAAAAAAAAAAAAAAAA`).success).toEqual(false);
+  }
+
   expect(result.error!.issues[0].message).toEqual("Invalid ULID");
   expect(result.error).toMatchInlineSnapshot(`
     [ZodError: [
@@ -676,7 +743,7 @@ test("ulid", () => {
         "origin": "string",
         "code": "invalid_format",
         "format": "ulid",
-        "pattern": "/^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$/",
+        "pattern": "/^[0-7][0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$/",
         "path": [],
         "message": "Invalid ULID"
       }
@@ -825,6 +892,66 @@ test("min max getters", () => {
   expect(z.string().max(5).max(1).maxLength).toEqual(1);
   expect(z.string().max(5).max(10).maxLength).toEqual(5);
   expect(z.string().maxLength).toEqual(null);
+});
+
+test("boundary cases with zero length", () => {
+  // Test length(0) - only empty string should pass
+  const lengthZero = z.string().length(0);
+  expect(lengthZero.parse("")).toEqual("");
+  expect(() => lengthZero.parse("a")).toThrow();
+
+  // Test min(0) - all strings including empty should pass
+  const minZero = z.string().min(0);
+  expect(minZero.parse("")).toEqual("");
+  expect(minZero.parse("a")).toEqual("a");
+  expect(minZero.parse("hello")).toEqual("hello");
+
+  // Test max(0) - only empty string should pass
+  const maxZero = z.string().max(0);
+  expect(maxZero.parse("")).toEqual("");
+  expect(() => maxZero.parse("a")).toThrow();
+  expect(() => maxZero.parse("hello")).toThrow();
+});
+
+test("length checks count Unicode code points, not UTF-16 code units", () => {
+  // "\u{1F600}" is one code point but two UTF-16 code units
+  const five = "\u{1F600}\u{1F600}\u{1F600}\u{1F600}\u{1F600}";
+  expect(z.string().max(5).safeParse(five).success).toBe(true);
+  expect(
+    z
+      .string()
+      .max(5)
+      .safeParse(five + "\u{1F600}").success
+  ).toBe(false);
+  expect(z.string().min(5).safeParse(five).success).toBe(true);
+  expect(z.string().min(5).safeParse("\u{1F600}\u{1F600}\u{1F600}\u{1F600}").success).toBe(false);
+  expect(z.string().length(5).safeParse(five).success).toBe(true);
+  expect(z.string().length(1).safeParse("\u{1F600}").success).toBe(true);
+  expect(z.string().nonempty().safeParse("\u{1F600}").success).toBe(true);
+
+  // code points, not graphemes: a combining mark and a ZWJ sequence each stay several
+  expect(z.string().length(2).safeParse("e\u0301").success).toBe(true);
+  expect(z.string().length(3).safeParse("\u{1F9D1}\u200D\u{1F37C}").success).toBe(true);
+
+  // an unpaired surrogate is its own code point
+  expect(z.string().length(1).safeParse("\uD83D").success).toBe(true);
+  expect(z.string().length(2).safeParse("\uDE00\uD83D").success).toBe(true);
+
+  // the reported bound is still the declared one
+  expect(
+    z
+      .string()
+      .max(5)
+      .safeParse(five + "\u{1F600}").error!.issues[0]
+  ).toMatchObject({
+    code: "too_big",
+    maximum: 5,
+    origin: "string",
+  });
+
+  // other lengthables keep counting elements
+  expect(z.array(z.string()).max(2).safeParse(["a", "b", "c"]).success).toBe(false);
+  expect(z.array(z.string()).length(2).safeParse(["\u{1F600}", "\u{1F600}"]).success).toBe(true);
 });
 
 test("trim", () => {
@@ -1021,6 +1148,14 @@ test("CIDR v6 validation", () => {
   expect(cidrV6.safeParse("fe80::/10").success).toBe(true);
   expect(cidrV6.safeParse("::1/128").success).toBe(true);
   expect(cidrV6.safeParse("2001:0db8:85a3::/64").success).toBe(true);
+  expect(cidrV6.safeParse("2001:db8:1::/48").success).toBe(true);
+  expect(cidrV6.safeParse("2001:db8:85a3::8a2e:370:7334/64").success).toBe(true);
+  expect(cidrV6.safeParse("2001:db8:85a3:0:0:8a2e:370:7334/64").success).toBe(true);
+
+  const pattern = new RegExp(z.toJSONSchema(cidrV6).pattern as string);
+  for (const input of ["2001:db8::/32", "2001:db8:1::/48", "2001:0db8:85a3::/64", "fe80::/10", "::/0"]) {
+    expect(pattern.test(input)).toBe(true);
+  }
 
   // Invalid CIDR v6 addresses
   expect(cidrV6.safeParse("2001:db8::").success).toBe(false); // Missing prefix

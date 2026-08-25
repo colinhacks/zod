@@ -8,36 +8,14 @@ const error: () => errors.$ZodErrorMap = () => {
     file: { unit: "bajtów", verb: "mieć" },
     array: { unit: "elementów", verb: "mieć" },
     set: { unit: "elementów", verb: "mieć" },
+    map: { unit: "elementów", verb: "mieć" },
   };
 
   function getSizing(origin: string): { unit: string; verb: string } | null {
     return Sizable[origin] ?? null;
   }
 
-  const parsedType = (data: any): string => {
-    const t = typeof data;
-
-    switch (t) {
-      case "number": {
-        return Number.isNaN(data) ? "NaN" : "liczba";
-      }
-      case "object": {
-        if (Array.isArray(data)) {
-          return "tablica";
-        }
-        if (data === null) {
-          return "null";
-        }
-
-        if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-          return data.constructor.name;
-        }
-      }
-    }
-    return t;
-  };
-
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "wyrażenie",
@@ -60,20 +38,37 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "czas trwania ISO",
     ipv4: "adres IPv4",
     ipv6: "adres IPv6",
+    mac: "adres MAC",
     cidrv4: "zakres IPv4",
     cidrv6: "zakres IPv6",
     base64: "ciąg znaków zakodowany w formacie base64",
     base64url: "ciąg znaków zakodowany w formacie base64url",
     json_string: "ciąg znaków w formacie JSON",
     e164: "liczba E.164",
+    credit_card: "numer karty kredytowej",
     jwt: "JWT",
     template_literal: "wejście",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+    number: "liczba",
+    array: "tablica",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `Nieprawidłowe dane wejściowe: oczekiwano ${issue.expected}, otrzymano ${parsedType(issue.input)}`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `Nieprawidłowe dane wejściowe: oczekiwano instanceof ${issue.expected}, otrzymano ${received}`;
+        }
+        return `Nieprawidłowe dane wejściowe: oczekiwano ${expected}, otrzymano ${received}`;
+      }
       case "invalid_value":
         if (issue.values.length === 1)
           return `Nieprawidłowe dane wejściowe: oczekiwano ${util.stringifyPrimitive(issue.values[0])}`;
@@ -101,7 +96,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `Nieprawidłowy ciąg znaków: musi kończyć się na "${_issue.suffix}"`;
         if (_issue.format === "includes") return `Nieprawidłowy ciąg znaków: musi zawierać "${_issue.includes}"`;
         if (_issue.format === "regex") return `Nieprawidłowy ciąg znaków: musi odpowiadać wzorcowi ${_issue.pattern}`;
-        return `Nieprawidłow(y/a/e) ${Nouns[_issue.format] ?? issue.format}`;
+        return `Nieprawidłow(y/a/e) ${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":
         return `Nieprawidłowa liczba: musi być wielokrotnością ${issue.divisor}`;

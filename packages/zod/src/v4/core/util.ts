@@ -1,4 +1,5 @@
 import type * as checks from "./checks.js";
+import { globalConfig } from "./core.js";
 import type { $ZodConfig } from "./core.js";
 import type * as errors from "./errors.js";
 import type * as schemas from "./schemas.js";
@@ -85,6 +86,40 @@ export type ParsedTypes =
 export type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <V>() => V extends U ? 1 : 2 ? true : false;
 export type AssertNotEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <V>() => V extends U ? 1 : 2 ? false : true;
 export type AssertExtends<T, U> = T extends U ? T : never;
+type ToZodMismatch<T, S extends schemas.$ZodType> = {
+  "types do not match": {
+    expected: T;
+    received: S["_zod"]["output"];
+  };
+};
+
+// Stays a `$ZodType` so it still satisfies the shape constraint, and carries a brand no real schema has so the offending property is the one TypeScript reports as unassignable.
+type ToZodKeyMismatch<Expected, Received> = schemas.$ZodType & {
+  "types do not match": { expected: Expected; received: Received };
+};
+
+// Rebuilds the shape with a marker on each key that disagrees, so the diagnostic names the key instead of failing the whole schema at the top level. A key the target lacks reports `expected: never`; a key the schema lacks reports `received: never`.
+type ToZodShape<Shape, T> = {
+  [K in keyof Shape]: Shape[K] extends schemas.$ZodType
+    ? K extends keyof T
+      ? AssertEqual<Shape[K]["_zod"]["output"], T[K]> extends true
+        ? Shape[K]
+        : ToZodKeyMismatch<T[K], Shape[K]["_zod"]["output"]>
+      : ToZodKeyMismatch<never, Shape[K]["_zod"]["output"]>
+    : Shape[K];
+} & { [K in Exclude<keyof T, keyof Shape>]: ToZodKeyMismatch<T[K], never> };
+
+// Forces the mapped type to display expanded, so the error prints the keys rather than the alias name.
+type ToZodExpand<X> = { [K in keyof X]: X[K] } & {};
+
+// Only localizes when a key is genuinely at fault. A whole-type difference the per-key walk cannot see — a `readonly` modifier, an intersection versus the flat object with the same keys — leaves every key agreeing, and reporting nothing there would silently accept what the top-level check rejected.
+type ToZodTarget<S extends schemas.$ZodType, T> = S extends schemas.$ZodObject<infer Shape, infer Config>
+  ? T extends object
+    ? AssertEqual<ToZodExpand<ToZodShape<Shape, T>>, ToZodExpand<Shape>> extends true
+      ? S & ToZodMismatch<T, S>
+      : schemas.$ZodObject<ToZodExpand<ToZodShape<Shape, T>>, Config>
+    : S & ToZodMismatch<T, S>
+  : S & ToZodMismatch<T, S>;
 export type IsAny<T> = 0 extends 1 & T ? true : false;
 export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 export type OmitKeys<T, K extends string> = Pick<T, Exclude<keyof T, K>>;
@@ -196,6 +231,12 @@ export function assertNotEqual<A, B>(val: AssertNotEqual<A, B>): AssertNotEqual<
   return val;
 }
 
+export function toZod<T>(): <S extends schemas.$ZodType>(
+  schema: AssertEqual<S["_zod"]["output"], T> extends true ? S : ToZodTarget<S, T>
+) => S {
+  return (schema) => schema as any;
+}
+
 export function assertIs<T>(_arg: T): void {}
 
 export function assertNever(_x: never): never {
@@ -245,23 +286,15 @@ export function cleanRegex(source: string): string {
 }
 
 export function floatSafeRemainder(val: number, step: number): number {
-  const valDecCount = (val.toString().split(".")[1] || "").length;
-  const stepString = step.toString();
-  let stepDecCount = (stepString.split(".")[1] || "").length;
-  if (stepDecCount === 0 && /\d?e-\d?/.test(stepString)) {
-    const match = stepString.match(/\d?e-(\d?)/);
-    if (match?.[1]) {
-      stepDecCount = Number.parseInt(match[1]);
-    }
-  }
-
-  const decCount = valDecCount > stepDecCount ? valDecCount : stepDecCount;
-  const valInt = Number.parseInt(val.toFixed(decCount).replace(".", ""));
-  const stepInt = Number.parseInt(step.toFixed(decCount).replace(".", ""));
-  return (valInt % stepInt) / 10 ** decCount;
+  const ratio = val / step;
+  const roundedRatio = Math.round(ratio);
+  // `val` and `step` each round to a double before the division rounds again, so a true decimal multiple's quotient can sit up to 1.5 of these scaled epsilons from the integer. A 1x tolerance therefore rejected 2.03 as a multiple of 0.07; 4x covers the worst case with margin.
+  const tolerance = 4 * Number.EPSILON * Math.max(Math.abs(ratio), 1);
+  if (Math.abs(ratio - roundedRatio) < tolerance) return 0;
+  return ratio - roundedRatio;
 }
 
-const EVALUATING = Symbol("evaluating");
+const EVALUATING = /* @__PURE__*/ Symbol("evaluating");
 
 export function defineLazy<T, K extends keyof T>(object: T, key: K, getter: () => T[K]): void {
   let value: T[K] | typeof EVALUATING | undefined = undefined;
@@ -368,7 +401,12 @@ export function isObject(data: any): data is Record<PropertyKey, unknown> {
   return typeof data === "object" && data !== null && !Array.isArray(data);
 }
 
-export const allowsEval: { value: boolean } = cached(() => {
+export const allowsEval: { value: boolean } = /* @__PURE__*/ cached(() => {
+  // Skip the probe under `jitless`: strict CSPs report the caught `new Function` as a `securitypolicyviolation` even though the throw is swallowed.
+  if (globalConfig.jitless) {
+    return false;
+  }
+
   // @ts-ignore
   if (typeof navigator !== "undefined" && navigator?.userAgent?.includes("Cloudflare")) {
     return false;
@@ -407,6 +445,8 @@ export function isPlainObject(o: any): o is Record<PropertyKey, unknown> {
 export function shallowClone(o: any): any {
   if (isPlainObject(o)) return { ...o };
   if (Array.isArray(o)) return [...o];
+  if (o instanceof Map) return new Map(o);
+  if (o instanceof Set) return new Set(o);
   return o;
 }
 
@@ -475,8 +515,15 @@ export const getParsedType = (data: any): ParsedTypes => {
   }
 };
 
-export const propertyKeyTypes: Set<string> = new Set(["string", "number", "symbol"]);
-export const primitiveTypes: Set<string> = new Set(["string", "number", "bigint", "boolean", "symbol", "undefined"]);
+export const propertyKeyTypes: Set<string> = /* @__PURE__*/ new Set(["string", "number", "symbol"]);
+export const primitiveTypes: Set<string> = /* @__PURE__*/ new Set([
+  "string",
+  "number",
+  "bigint",
+  "boolean",
+  "symbol",
+  "undefined",
+]);
 export function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -565,7 +612,7 @@ export function stringifyPrimitive(value: any): string {
 
 export function optionalKeys(shape: schemas.$ZodShape): string[] {
   return Object.keys(shape).filter((k) => {
-    return shape[k]!._zod.optin === "optional" && shape[k]!._zod.optout === "optional";
+    return shape[k]!._zod.optin !== undefined && shape[k]!._zod.optout === "optional";
   });
 }
 
@@ -577,13 +624,14 @@ export type FromCleanMap<T extends schemas.$ZodLooseShape> = {
   [k in keyof T as k extends `?${infer K}` ? K : k extends `${infer K}?` ? K : k]: k;
 };
 
-export const NUMBER_FORMAT_RANGES: Record<checks.$ZodNumberFormats, [number, number]> = {
+// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle.
+export const NUMBER_FORMAT_RANGES: Record<checks.$ZodNumberFormats, [number, number]> = /*@__PURE__*/ (() => ({
   safeint: [Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER],
   int32: [-2147483648, 2147483647],
   uint32: [0, 4294967295],
   float32: [-3.4028234663852886e38, 3.4028234663852886e38],
   float64: [-Number.MAX_VALUE, Number.MAX_VALUE],
-};
+}))();
 
 export const BIGINT_FORMAT_RANGES: Record<checks.$ZodBigIntFormats, [bigint, bigint]> = {
   int64: [/* @__PURE__*/ BigInt("-9223372036854775808"), /* @__PURE__*/ BigInt("9223372036854775807")],
@@ -602,12 +650,13 @@ export function pick(schema: schemas.$ZodObject, mask: Record<string, unknown>):
   const def = mergeDefs(schema._zod.def, {
     get shape() {
       const newShape: Writeable<schemas.$ZodShape> = {};
-      for (const key in mask) {
-        if (!(key in currDef.shape)) {
-          throw new Error(`Unrecognized key: "${key}"`);
+      // `for...in` skips symbols, so a symbol in the mask would select nothing
+      for (const key of Reflect.ownKeys(mask)) {
+        if (!Object.prototype.hasOwnProperty.call(currDef.shape, key)) {
+          throw new Error(`Unrecognized key: "${String(key)}"`);
         }
-        if (!mask[key]) continue;
-        newShape[key] = currDef.shape[key]!;
+        if (!mask[key as string]) continue;
+        assignProp(newShape, key as string, (currDef.shape as any)[key]!);
       }
 
       assignProp(this, "shape", newShape); // self-caching
@@ -631,13 +680,13 @@ export function omit(schema: schemas.$ZodObject, mask: object): any {
   const def = mergeDefs(schema._zod.def, {
     get shape() {
       const newShape: Writeable<schemas.$ZodShape> = { ...schema._zod.def.shape };
-      for (const key in mask) {
-        if (!(key in currDef.shape)) {
-          throw new Error(`Unrecognized key: "${key}"`);
+      for (const key of Reflect.ownKeys(mask)) {
+        if (!Object.prototype.hasOwnProperty.call(currDef.shape, key)) {
+          throw new Error(`Unrecognized key: "${String(key)}"`);
         }
         if (!(mask as any)[key]) continue;
 
-        delete newShape[key];
+        delete newShape[key as string];
       }
       assignProp(this, "shape", newShape); // self-caching
       return newShape;
@@ -656,7 +705,13 @@ export function extend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): an
   const checks = schema._zod.def.checks;
   const hasChecks = checks && checks.length > 0;
   if (hasChecks) {
-    throw new Error("Object schemas containing refinements cannot be extended. Use `.safeExtend()` instead.");
+    // Only throw if new shape overlaps with existing shape. Use getOwnPropertyDescriptor to check key existence without accessing values
+    const existingShape = schema._zod.def.shape;
+    for (const key of Reflect.ownKeys(shape)) {
+      if (Object.getOwnPropertyDescriptor(existingShape, key) !== undefined) {
+        throw new Error("Cannot overwrite keys on object schemas containing refinements. Use `.safeExtend()` instead.");
+      }
+    }
   }
 
   const def = mergeDefs(schema._zod.def, {
@@ -665,7 +720,6 @@ export function extend(schema: schemas.$ZodObject, shape: schemas.$ZodShape): an
       assignProp(this, "shape", _shape); // self-caching
       return _shape;
     },
-    checks: [],
   });
   return clone(schema, def) as any;
 }
@@ -685,6 +739,12 @@ export function safeExtend(schema: schemas.$ZodObject, shape: schemas.$ZodShape)
 }
 
 export function merge(a: schemas.$ZodObject, b: schemas.$ZodObject): any {
+  if (!b?._zod?.def) {
+    throw new Error("Invalid input to merge: expected an object schema. To merge a plain shape, use `.extend()`.");
+  }
+  if (a._zod.def.checks?.length) {
+    throw new Error(".merge() cannot be used on object schemas containing refinements. Use .safeExtend() instead.");
+  }
   const def = mergeDefs(a._zod.def, {
     get shape() {
       const _shape = { ...a._zod.def.shape, ...b._zod.def.shape };
@@ -694,7 +754,7 @@ export function merge(a: schemas.$ZodObject, b: schemas.$ZodObject): any {
     get catchall() {
       return b._zod.def.catchall;
     },
-    checks: [], // delete existing checks
+    checks: b._zod.def.checks ?? [],
   });
 
   return clone(a, def) as any;
@@ -703,13 +763,14 @@ export function merge(a: schemas.$ZodObject, b: schemas.$ZodObject): any {
 export function partial(
   Class: SchemaClass<schemas.$ZodOptional> | null,
   schema: schemas.$ZodObject,
-  mask: object | undefined
+  mask: object | undefined,
+  name = "partial"
 ): any {
   const currDef = schema._zod.def;
   const checks = currDef.checks;
   const hasChecks = checks && checks.length > 0;
   if (hasChecks) {
-    throw new Error(".partial() cannot be used on object schemas containing refinements");
+    throw new Error(`.${name}() cannot be used on object schemas containing refinements`);
   }
 
   const def = mergeDefs(schema._zod.def, {
@@ -718,28 +779,29 @@ export function partial(
       const shape: Writeable<schemas.$ZodShape> = { ...oldShape };
 
       if (mask) {
-        for (const key in mask) {
-          if (!(key in oldShape)) {
-            throw new Error(`Unrecognized key: "${key}"`);
+        for (const key of Reflect.ownKeys(mask)) {
+          if (!Object.prototype.hasOwnProperty.call(oldShape, key)) {
+            throw new Error(`Unrecognized key: "${String(key)}"`);
           }
           if (!(mask as any)[key]) continue;
           // if (oldShape[key]!._zod.optin === "optional") continue;
-          shape[key] = Class
+          (shape as any)[key] = Class
             ? new Class({
                 type: "optional",
-                innerType: oldShape[key]!,
+                innerType: (oldShape as any)[key]!,
               })
-            : oldShape[key]!;
+            : (oldShape as any)[key]!;
         }
       } else {
-        for (const key in oldShape) {
+        // the spread copies symbol keys; `for...in` would not reach them
+        for (const key of Reflect.ownKeys(oldShape)) {
           // if (oldShape[key]!._zod.optin === "optional") continue;
-          shape[key] = Class
+          (shape as any)[key] = Class
             ? new Class({
                 type: "optional",
-                innerType: oldShape[key]!,
+                innerType: (oldShape as any)[key]!,
               })
-            : oldShape[key]!;
+            : (oldShape as any)[key]!;
         }
       }
 
@@ -763,23 +825,23 @@ export function required(
       const shape: Writeable<schemas.$ZodShape> = { ...oldShape };
 
       if (mask) {
-        for (const key in mask) {
-          if (!(key in shape)) {
-            throw new Error(`Unrecognized key: "${key}"`);
+        for (const key of Reflect.ownKeys(mask)) {
+          if (!Object.prototype.hasOwnProperty.call(shape, key)) {
+            throw new Error(`Unrecognized key: "${String(key)}"`);
           }
           if (!(mask as any)[key]) continue;
           // overwrite with non-optional
-          shape[key] = new Class({
+          (shape as any)[key] = new Class({
             type: "nonoptional",
-            innerType: oldShape[key]!,
+            innerType: (oldShape as any)[key]!,
           });
         }
       } else {
-        for (const key in oldShape) {
+        for (const key of Reflect.ownKeys(oldShape)) {
           // overwrite with non-optional
-          shape[key] = new Class({
+          (shape as any)[key] = new Class({
             type: "nonoptional",
-            innerType: oldShape[key]!,
+            innerType: (oldShape as any)[key]!,
           });
         }
       }
@@ -805,6 +867,17 @@ export function aborted(x: schemas.ParsePayload, startIndex = 0): boolean {
   return false;
 }
 
+// Checks for explicit abort (continue === false), as opposed to implicit abort (continue === undefined). Used to respect `abort: true` in .refine() even for checks that have a `when` function.
+export function explicitlyAborted(x: schemas.ParsePayload, startIndex = 0): boolean {
+  if (x.aborted === true) return true;
+  for (let i = startIndex; i < x.issues.length; i++) {
+    if (x.issues[i]?.continue === false) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function prefixIssues(path: PropertyKey, issues: errors.$ZodRawIssue[]): errors.$ZodRawIssue[] {
   return issues.map((iss) => {
     (iss as any).path ??= [];
@@ -817,32 +890,43 @@ export function unwrapMessage(message: string | { message: string } | undefined 
   return typeof message === "string" ? message : message?.message;
 }
 
+/* A check holds no link back to the schema it is attached to — the same check instance is shared by every clone of that schema — so the owner is stamped onto the issues a check just raised, at the only point where both are in scope. Runs on the failure path only; `start` is the issue count from before the check ran. */
+export function attachSchema(issues: errors.$ZodRawIssue[], start: number, inst: schemas.$ZodType): void {
+  for (let i = start; i < issues.length; i++) {
+    (issues[i] as any).schema ??= inst;
+  }
+}
+
 export function finalizeIssue(
   iss: errors.$ZodRawIssue,
   ctx: schemas.ParseContextInternal | undefined,
   config: $ZodConfig
 ): errors.$ZodIssue {
-  const full = { ...iss, path: iss.path ?? [] } as errors.$ZodIssue;
+  // A schema that raised an issue itself owns it outright, and outranks any stamp an enclosing check left in `attachSchema`. String formats and z.custom() are schema and check at once, so when they act as a check they defer to that stamp instead.
+  const traits: Set<string> | undefined = (iss.inst as any)?._zod?.traits;
+  if (traits?.has("$ZodType")) {
+    if (traits.has("$ZodCheck")) (iss as any).schema ??= iss.inst;
+    else (iss as any).schema = iss.inst;
+  }
 
-  // for backwards compatibility
-  if (!iss.message) {
-    const message =
-      unwrapMessage(iss.inst?._zod.def?.error?.(iss as never)) ??
+  // Decreasing specificity, first map to return a message wins. `inst` is whatever raised the issue, so a check's own map outranks the owning schema's.
+  const schemaError = iss.schema !== iss.inst ? iss.schema?._zod.def?.error : undefined;
+  const message = iss.message
+    ? iss.message
+    : (unwrapMessage(iss.inst?._zod.def?.error?.(iss as never)) ??
+      unwrapMessage(schemaError?.(iss as never)) ??
       unwrapMessage(ctx?.error?.(iss as never)) ??
       unwrapMessage(config.customError?.(iss)) ??
       unwrapMessage(config.localeError?.(iss)) ??
-      "Invalid input";
-    (full as any).message = message;
-  }
+      "Invalid input");
 
-  // delete (full as any).def;
-  delete (full as any).inst;
-  delete (full as any).continue;
-  if (!ctx?.reportInput) {
-    delete (full as any).input;
+  const { inst: _inst, schema: _schema, continue: _continue, input: _input, ...rest } = iss as any;
+  rest.path ??= [];
+  rest.message = message;
+  if (ctx?.reportInput) {
+    rest.input = _input;
   }
-
-  return full;
+  return rest;
 }
 
 export function getSizableOrigin(input: any): "set" | "map" | "file" | "unknown" {
@@ -853,10 +937,49 @@ export function getSizableOrigin(input: any): "set" | "map" | "file" | "unknown"
   return "unknown";
 }
 
+const highSurrogate = /[\uD800-\uDBFF]/;
+
+// Code points in `str`: a surrogate pair counts once, a lone surrogate as itself. Hand-rolled because the string iterator allocates and runs ~250x slower on this path; the regex probe exits ~50x quicker for a string with no astral characters.
+export function codePointLength(str: string): number {
+  const units = str.length;
+  if (!highSurrogate.test(str)) return units;
+  let count = units;
+  for (let i = 0; i < units - 1; i++) {
+    if ((str.charCodeAt(i) & 0xfc00) === 0xd800 && (str.charCodeAt(i + 1) & 0xfc00) === 0xdc00) {
+      count--;
+      i++;
+    }
+  }
+  return count;
+}
+
 export function getLengthableOrigin(input: any): "array" | "string" | "unknown" {
   if (Array.isArray(input)) return "array";
   if (typeof input === "string") return "string";
   return "unknown";
+}
+
+export function parsedType(data: unknown): errors.$ZodInvalidTypeExpected {
+  const t = typeof data;
+  switch (t) {
+    case "number": {
+      return Number.isNaN(data) ? "nan" : "number";
+    }
+    case "object": {
+      if (data === null) {
+        return "null";
+      }
+      if (Array.isArray(data)) {
+        return "array";
+      }
+
+      const obj = data as object;
+      if (obj && Object.getPrototypeOf(obj) !== Object.prototype && "constructor" in obj && obj.constructor) {
+        return (obj.constructor as { name: string }).name;
+      }
+    }
+  }
+  return t;
 }
 
 //////////    REFINES     //////////
@@ -934,4 +1057,138 @@ export function uint8ArrayToHex(bytes: Uint8Array): string {
 // instanceof
 export abstract class Class {
   constructor(..._args: any[]) {}
+}
+
+//////////    PROTOTYPE INSTALLERS     //////////
+//
+// Members live on the prototype and materialize per instance on first read, which keeps own-property count under the step where V8 stops using inline slots. Changing anything here means re-measuring runtime, memory and bundle size together — see "The three axes" in AGENTS.md.
+
+/** Returns the prototype to install on, or `undefined` if this group is already installed on it. */
+function claim(inst: object, sentinel: string): object | undefined {
+  const proto = Object.getPrototypeOf(inst);
+  // Runs on every construction, so `in` rather than the costlier `hasOwnProperty.call`. Sentinels are keys the group itself defines.
+  return sentinel in proto ? undefined : proto;
+}
+
+function defineCached(proto: object, key: string, compute: (self: any) => unknown): void {
+  // `~standard` was never an own data property, so caching it must not add it to `Object.keys`. Everything else here was enumerable and stays so.
+  const enumerable = key !== "~standard";
+  Object.defineProperty(proto, key, {
+    configurable: true,
+    get(this: any) {
+      const value = compute(this);
+      Object.defineProperty(this, key, { configurable: true, writable: true, enumerable, value });
+      return value;
+    },
+    set(this: any, value: unknown) {
+      Object.defineProperty(this, key, { configurable: true, writable: true, enumerable: true, value });
+    },
+  });
+}
+
+/** Methods of `T` reshaped so each body has `this: T`. */
+export type LazyMethodsOf<T> = Partial<{
+  [K in keyof T]: T[K] extends (...args: infer A) => infer R ? (this: T, ...args: A) => R : never;
+}>;
+
+/** Factories for properties whose value is built per instance on first read. */
+export type LazyPropsOf<T> = Partial<{ [K in keyof T]: (self: T) => T[K] }>;
+
+/**
+ * Installs methods that bind to the instance on first access. Not for hot-path
+ * functions — a bound function pays a call-time trampoline; use
+ * `installLazyProps` there.
+ */
+export function installLazyMethods<T extends object>(inst: T, sentinel: string, methods: () => LazyMethodsOf<T>): void {
+  const proto = claim(inst, sentinel);
+  if (!proto) return;
+  const built = methods();
+  for (const key in built) {
+    const fn = built[key]!;
+    defineCached(proto, key, (self) => (fn as AnyFunc).bind(self));
+  }
+}
+
+/** Like `installLazyMethods`, but the factory builds the value instead of binding a shared function. */
+export function installLazyProps<T extends object>(inst: T, sentinel: string, props: () => LazyPropsOf<T>): void {
+  const proto = claim(inst, sentinel);
+  if (!proto) return;
+  const built = props();
+  for (const key in built) {
+    defineCached(proto, key, built[key] as AnyFunc);
+  }
+}
+
+// The internals whose init chain is installing. A second call for the same one is a derived constructor overriding its base, so it must not construct another schema in between or the override is dropped.
+let installing: object | undefined;
+
+// Set while a getter is running, so a value that resolved through a recursion break is not memoized. One shared descriptor shadows the key for the duration, which costs no per-key allocation.
+let broke = false;
+const breaker: PropertyDescriptor = {
+  configurable: true,
+  get() {
+    broke = true;
+    return undefined;
+  },
+};
+
+/**
+ * Installs a lazily-derived internal on the `_zod` prototype of `inst`'s
+ * constructor, computed from the internals object itself and cached there on
+ * first read. One accessor per constructor rather than one per instance.
+ */
+export function defineLazyInternal<T extends { _zod: any }>(
+  inst: T,
+  key: string,
+  compute: (zod: T["_zod"]) => unknown
+): void {
+  const proto = Object.getPrototypeOf(inst._zod);
+  if (key in proto && installing !== inst._zod) {
+    // A repeat construction: everything is installed already. Cleared here so the reference is not held past the first construction of every type.
+    installing = undefined;
+    return;
+  }
+  installing = inst._zod;
+
+  Object.defineProperty(proto, key, {
+    configurable: true,
+    get(this: any) {
+      // Shadowed before computing so a re-entrant read from a recursive schema resolves to undefined instead of running the getter again.
+      Object.defineProperty(this, key, breaker);
+      const outer = broke;
+      broke = false;
+      try {
+        const value = compute(this);
+        // A result that resolved through a recursion break is recomputed once the graph is complete; everything else memoizes, undefined included.
+        if (broke) delete this[key];
+        else Object.defineProperty(this, key, { configurable: true, writable: true, value });
+        broke = broke || outer;
+        return value;
+      } catch (err) {
+        // A compute that threw memoizes nothing, so a later read runs it again and fails the same way. The shadow goes with it, since leaving it installed would answer undefined for every later read.
+        delete this[key];
+        broke = broke || outer;
+        throw err;
+      }
+    },
+    set(this: any, value: unknown) {
+      Object.defineProperty(this, key, { configurable: true, writable: true, value });
+    },
+  });
+}
+
+/** Single-property variant; the key doubles as the sentinel. */
+export function installLazyProp(inst: object, key: string, make: (self: any) => unknown): void {
+  const proto = claim(inst, key);
+  if (proto) defineCached(proto, key, make);
+}
+
+/** Marks the thunk `_catch` synthesises for a constant catch value. `Function.length` cannot tell that thunk from a user callback — rest and defaulted parameters both report arity 0 — and a user callback reads `ctx.error`, whose issues only finalize correctly against the caller's per-parse error map. Provenance can say what arity cannot. A plain string key rather than `Symbol.for`, whose call at module scope no bundler can prove pure — the same shape that anchored `urlCanParse` into every build. */
+export const CONSTANT_CATCH = "~constantCatch";
+
+/** Wraps a constant catch value in a thunk tagged with {@link CONSTANT_CATCH}. */
+export function constantCatch<T>(value: T): () => T {
+  const fn = () => value;
+  (fn as { [CONSTANT_CATCH]?: boolean })[CONSTANT_CATCH] = true;
+  return fn;
 }

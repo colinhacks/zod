@@ -8,36 +8,14 @@ const error: () => errors.$ZodErrorMap = () => {
     file: { unit: "bayt", verb: "olmalıdır" },
     array: { unit: "element", verb: "olmalıdır" },
     set: { unit: "element", verb: "olmalıdır" },
+    map: { unit: "element", verb: "olmalıdır" },
   };
 
   function getSizing(origin: string): { unit: string; verb: string } | null {
     return Sizable[origin] ?? null;
   }
 
-  const parsedType = (data: any): string => {
-    const t = typeof data;
-
-    switch (t) {
-      case "number": {
-        return Number.isNaN(data) ? "NaN" : "number";
-      }
-      case "object": {
-        if (Array.isArray(data)) {
-          return "array";
-        }
-        if (data === null) {
-          return "null";
-        }
-
-        if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-          return data.constructor.name;
-        }
-      }
-    }
-    return t;
-  };
-
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "input",
@@ -60,20 +38,35 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "ISO duration",
     ipv4: "IPv4 address",
     ipv6: "IPv6 address",
+    mac: "MAC address",
     cidrv4: "IPv4 range",
     cidrv6: "IPv6 range",
     base64: "base64-encoded string",
     base64url: "base64url-encoded string",
     json_string: "JSON string",
     e164: "E.164 number",
+    credit_card: "kredit kartı nömrəsi",
     jwt: "JWT",
     template_literal: "input",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `Yanlış dəyər: gözlənilən ${issue.expected}, daxil olan ${parsedType(issue.input)}`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `Yanlış dəyər: gözlənilən instanceof ${issue.expected}, daxil olan ${received}`;
+        }
+        return `Yanlış dəyər: gözlənilən ${expected}, daxil olan ${received}`;
+      }
       case "invalid_value":
         if (issue.values.length === 1) return `Yanlış dəyər: gözlənilən ${util.stringifyPrimitive(issue.values[0])}`;
         return `Yanlış seçim: aşağıdakılardan biri olmalıdır: ${util.joinValues(issue.values, "|")}`;
@@ -96,7 +89,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `Yanlış mətn: "${_issue.suffix}" ilə bitməlidir`;
         if (_issue.format === "includes") return `Yanlış mətn: "${_issue.includes}" daxil olmalıdır`;
         if (_issue.format === "regex") return `Yanlış mətn: ${_issue.pattern} şablonuna uyğun olmalıdır`;
-        return `Yanlış ${Nouns[_issue.format] ?? issue.format}`;
+        return `Yanlış ${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":
         return `Yanlış ədəd: ${issue.divisor} ilə bölünə bilən olmalıdır`;

@@ -56,6 +56,14 @@ const error: () => errors.$ZodErrorMap = () => {
       },
       verb: "мець",
     },
+    map: {
+      unit: {
+        one: "элемент",
+        few: "элементы",
+        many: "элементаў",
+      },
+      verb: "мець",
+    },
     file: {
       unit: {
         one: "байт",
@@ -70,30 +78,7 @@ const error: () => errors.$ZodErrorMap = () => {
     return Sizable[origin] ?? null;
   }
 
-  const parsedType = (data: any): string => {
-    const t = typeof data;
-
-    switch (t) {
-      case "number": {
-        return Number.isNaN(data) ? "NaN" : "лік";
-      }
-      case "object": {
-        if (Array.isArray(data)) {
-          return "масіў";
-        }
-        if (data === null) {
-          return "null";
-        }
-
-        if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-          return data.constructor.name;
-        }
-      }
-    }
-    return t;
-  };
-
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "увод",
@@ -116,20 +101,37 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "ISO працягласць",
     ipv4: "IPv4 адрас",
     ipv6: "IPv6 адрас",
+    mac: "MAC адрас",
     cidrv4: "IPv4 дыяпазон",
     cidrv6: "IPv6 дыяпазон",
     base64: "радок у фармаце base64",
     base64url: "радок у фармаце base64url",
     json_string: "JSON радок",
     e164: "нумар E.164",
+    credit_card: "нумар крэдытнай карты",
     jwt: "JWT",
     template_literal: "увод",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+    number: "лік",
+    array: "масіў",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `Няправільны ўвод: чакаўся ${issue.expected}, атрымана ${parsedType(issue.input)}`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `Няправільны ўвод: чакаўся instanceof ${issue.expected}, атрымана ${received}`;
+        }
+        return `Няправільны ўвод: чакаўся ${expected}, атрымана ${received}`;
+      }
       case "invalid_value":
         if (issue.values.length === 1) return `Няправільны ўвод: чакалася ${util.stringifyPrimitive(issue.values[0])}`;
         return `Няправільны варыянт: чакаўся адзін з ${util.joinValues(issue.values, "|")}`;
@@ -159,7 +161,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `Няправільны радок: павінен заканчвацца на "${_issue.suffix}"`;
         if (_issue.format === "includes") return `Няправільны радок: павінен змяшчаць "${_issue.includes}"`;
         if (_issue.format === "regex") return `Няправільны радок: павінен адпавядаць шаблону ${_issue.pattern}`;
-        return `Няправільны ${Nouns[_issue.format] ?? issue.format}`;
+        return `Няправільны ${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":
         return `Няправільны лік: павінен быць кратным ${issue.divisor}`;

@@ -8,35 +8,14 @@ const error: () => errors.$ZodErrorMap = () => {
     file: { unit: "bytes", verb: "ní" },
     array: { unit: "nkan", verb: "ní" },
     set: { unit: "nkan", verb: "ní" },
+    map: { unit: "nkan", verb: "ní" },
   };
 
   function getSizing(origin: string): { unit: string; verb: string } | null {
     return Sizable[origin] ?? null;
   }
 
-  const parsedType = (data: any): string => {
-    const t = typeof data;
-
-    switch (t) {
-      case "number": {
-        return Number.isNaN(data) ? "NaN" : "nọ́mbà";
-      }
-      case "object": {
-        if (Array.isArray(data)) {
-          return "akopọ";
-        }
-        if (data === null) {
-          return "null";
-        }
-        if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-          return data.constructor.name;
-        }
-      }
-    }
-    return t;
-  };
-
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "ẹ̀rọ ìbáwọlé",
@@ -59,20 +38,37 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "àkókò tó pé ISO",
     ipv4: "àdírẹ́sì IPv4",
     ipv6: "àdírẹ́sì IPv6",
+    mac: "àdírẹ́sì MAC",
     cidrv4: "àgbègbè IPv4",
     cidrv6: "àgbègbè IPv6",
     base64: "ọ̀rọ̀ tí a kọ́ ní base64",
     base64url: "ọ̀rọ̀ base64url",
     json_string: "ọ̀rọ̀ JSON",
     e164: "nọ́mbà E.164",
+    credit_card: "nọmba kaadi gbese",
     jwt: "JWT",
     template_literal: "ẹ̀rọ ìbáwọlé",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+    number: "nọ́mbà",
+    array: "akopọ",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `Ìbáwọlé aṣìṣe: a ní láti fi ${issue.expected}, àmọ̀ a rí ${parsedType(issue.input)}`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `Ìbáwọlé aṣìṣe: a ní láti fi instanceof ${issue.expected}, àmọ̀ a rí ${received}`;
+        }
+        return `Ìbáwọlé aṣìṣe: a ní láti fi ${expected}, àmọ̀ a rí ${received}`;
+      }
 
       case "invalid_value":
         if (issue.values.length === 1) return `Ìbáwọlé aṣìṣe: a ní láti fi ${util.stringifyPrimitive(issue.values[0])}`;
@@ -100,7 +96,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `Ọ̀rọ̀ aṣìṣe: gbọ́dọ̀ parí pẹ̀lú "${_issue.suffix}"`;
         if (_issue.format === "includes") return `Ọ̀rọ̀ aṣìṣe: gbọ́dọ̀ ní "${_issue.includes}"`;
         if (_issue.format === "regex") return `Ọ̀rọ̀ aṣìṣe: gbọ́dọ̀ bá àpẹẹrẹ mu ${_issue.pattern}`;
-        return `Aṣìṣe: ${Nouns[_issue.format] ?? issue.format}`;
+        return `Aṣìṣe: ${FormatDictionary[_issue.format] ?? issue.format}`;
       }
 
       case "not_multiple_of":

@@ -8,36 +8,14 @@ const error: () => errors.$ZodErrorMap = () => {
     file: { unit: "بايت", verb: "أن يحوي" },
     array: { unit: "عنصر", verb: "أن يحوي" },
     set: { unit: "عنصر", verb: "أن يحوي" },
+    map: { unit: "عنصر", verb: "أن يحوي" },
   };
 
   function getSizing(origin: string): { unit: string; verb: string } | null {
     return Sizable[origin] ?? null;
   }
 
-  const parsedType = (data: any): string => {
-    const t = typeof data;
-
-    switch (t) {
-      case "number": {
-        return Number.isNaN(data) ? "NaN" : "number";
-      }
-      case "object": {
-        if (Array.isArray(data)) {
-          return "array";
-        }
-        if (data === null) {
-          return "null";
-        }
-
-        if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-          return data.constructor.name;
-        }
-      }
-    }
-    return t;
-  };
-
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "مدخل",
@@ -60,20 +38,35 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "مدة بمعيار ISO",
     ipv4: "عنوان IPv4",
     ipv6: "عنوان IPv6",
+    mac: "عنوان MAC",
     cidrv4: "مدى عناوين بصيغة IPv4",
     cidrv6: "مدى عناوين بصيغة IPv6",
     base64: "نَص بترميز base64-encoded",
     base64url: "نَص بترميز base64url-encoded",
     json_string: "نَص على هيئة JSON",
     e164: "رقم هاتف بمعيار E.164",
+    credit_card: "رقم بطاقة الائتمان",
     jwt: "JWT",
     template_literal: "مدخل",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `مدخلات غير مقبولة: يفترض إدخال ${issue.expected}، ولكن تم إدخال ${parsedType(issue.input)}`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `مدخلات غير مقبولة: يفترض إدخال instanceof ${issue.expected}، ولكن تم إدخال ${received}`;
+        }
+        return `مدخلات غير مقبولة: يفترض إدخال ${expected}، ولكن تم إدخال ${received}`;
+      }
       case "invalid_value":
         if (issue.values.length === 1)
           return `مدخلات غير مقبولة: يفترض إدخال ${util.stringifyPrimitive(issue.values[0])}`;
@@ -100,7 +93,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `نَص غير مقبول: يجب أن ينتهي بـ "${_issue.suffix}"`;
         if (_issue.format === "includes") return `نَص غير مقبول: يجب أن يتضمَّن "${_issue.includes}"`;
         if (_issue.format === "regex") return `نَص غير مقبول: يجب أن يطابق النمط ${_issue.pattern}`;
-        return `${Nouns[_issue.format] ?? issue.format} غير مقبول`;
+        return `${FormatDictionary[_issue.format] ?? issue.format} غير مقبول`;
       }
       case "not_multiple_of":
         return `رقم غير مقبول: يجب أن يكون من مضاعفات ${issue.divisor}`;

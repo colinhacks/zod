@@ -550,7 +550,7 @@ export type ZodStringCheck =
   | { kind: "url"; message?: string | undefined }
   | { kind: "emoji"; message?: string | undefined }
   | { kind: "uuid"; message?: string | undefined }
-  | { kind: "nanoid"; value: number; message?: string | undefined }
+  | { kind: "nanoid"; message?: string | undefined }
   | { kind: "cuid"; message?: string | undefined }
   | { kind: "includes"; value: string; position?: number | undefined; message?: string | undefined }
   | { kind: "cuid2"; message?: string | undefined }
@@ -597,9 +597,7 @@ const ulidRegex = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
 // const uuidRegex =
 //   /^([a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[a-f0-9]{4}-[a-f0-9]{12}|00000000-0000-0000-0000-000000000000)$/i;
 const uuidRegex = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/i;
-function nanoidRegex(length: number): RegExp {
-  return new RegExp(`^[a-z0-9_-]{${length}}$`, "i");
-}
+const nanoidRegex = /^[a-z0-9_-]{21}$/i;
 const jwtRegex = /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$/;
 const durationRegex =
   /^[-+]?P(?!$)(?:(?:[-+]?\d+Y)|(?:[-+]?\d+[.,]\d+Y$))?(?:(?:[-+]?\d+M)|(?:[-+]?\d+[.,]\d+M$))?(?:(?:[-+]?\d+W)|(?:[-+]?\d+[.,]\d+W$))?(?:(?:[-+]?\d+D)|(?:[-+]?\d+[.,]\d+D$))?(?:T(?=[\d+-])(?:(?:[-+]?\d+H)|(?:[-+]?\d+[.,]\d+H$))?(?:(?:[-+]?\d+M)|(?:[-+]?\d+[.,]\d+M$))?(?:[-+]?\d+(?:[.,]\d+)?S)?)??$/;
@@ -621,7 +619,7 @@ const emailRegex = /^(?!\.)(?!.*\.\.)([A-Z0-9_'+\-\.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z
 //   /^[a-z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-z0-9-]+(?:\.[a-z0-9\-]+)*$/i;
 
 // from https://thekevinscott.com/emojis-in-javascript/#writing-a-regular-expression
-const _emojiRegex = `^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$`;
+const _emojiRegex = `^[\\p{Extended_Pictographic}\\p{Emoji_Component}]+$`;
 let emojiRegex: RegExp;
 
 // faster, simpler, safer
@@ -837,8 +835,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           status.dirty();
         }
       } else if (check.kind === "nanoid") {
-        const regex = nanoidRegex(check.value);
-        if (!regex.test(input.data)) {
+        if (!nanoidRegex.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             validation: "nanoid",
@@ -1072,32 +1069,8 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   uuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "uuid", ...errorUtil.errToObj(message) });
   }
-  nanoid(arg1?: number | string | { length?: number; message?: string }, arg2?: { message?: string }) {
-    let length = 21;
-    let message: errorUtil.ErrMessage | undefined;
-
-    // Support legacy string-based message, numeric length with optional message, and object params.
-    if (typeof arg1 === "string") {
-      message = arg1;
-    } else if (typeof arg1 === "number") {
-      length = arg1;
-      if (arg2?.message !== undefined) {
-        message = arg2.message;
-      }
-    } else if (typeof arg1 === "object" && arg1 !== null) {
-      if (typeof arg1.length === "number") {
-        length = arg1.length;
-      }
-      if (arg1.message !== undefined) {
-        message = arg1.message;
-      }
-    }
-
-    return this._addCheck({
-      kind: "nanoid",
-      value: length,
-      ...errorUtil.errToObj(message),
-    });
+  nanoid(message?: errorUtil.ErrMessage) {
+    return this._addCheck({ kind: "nanoid", ...errorUtil.errToObj(message) });
   }
   cuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "cuid", ...errorUtil.errToObj(message) });
@@ -3276,7 +3249,9 @@ function mergeValues(a: any, b: any): { valid: true; data: any } | { valid: fals
     const sharedKeys = util.objectKeys(a).filter((key) => bKeys.indexOf(key) !== -1);
 
     const newObj: any = { ...a, ...b };
+    if (Object.prototype.hasOwnProperty.call(newObj, "__proto__")) delete newObj.__proto__;
     for (const key of sharedKeys) {
+      if (key === "__proto__") continue;
       const sharedValue = mergeValues(a[key], b[key]);
       if (!sharedValue.valid) {
         return { valid: false };
@@ -3889,8 +3864,7 @@ export class ZodFunction<Args extends ZodTuple<any, any>, Returns extends ZodTyp
     const fn = ctx.data;
 
     if (this._def.returns instanceof ZodPromise) {
-      // Would love a way to avoid disabling this rule, but we need
-      // an alias (using an arrow function was what caused 2651).
+      // Would love a way to avoid disabling this rule, but we need an alias (using an arrow function was what caused 2651).
       // eslint-disable-next-line @typescript-eslint/no-this-alias
       const me = this;
       return OK(async function (this: any, ...args: any[]) {
@@ -3909,8 +3883,7 @@ export class ZodFunction<Args extends ZodTuple<any, any>, Returns extends ZodTyp
         return parsedReturns;
       });
     } else {
-      // Would love a way to avoid disabling this rule, but we need
-      // an alias (using an arrow function was what caused 2651).
+      // Would love a way to avoid disabling this rule, but we need an alias (using an arrow function was what caused 2651).
       // eslint-disable-next-line @typescript-eslint/no-this-alias
       const me = this;
       return OK(function (this: any, ...args: any[]) {

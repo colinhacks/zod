@@ -10,7 +10,49 @@ const error: () => errors.$ZodErrorMap = () => {
     set: { unit: "elementos", verb: "tener" },
   };
 
-  const TypeNames: Record<string, string> = {
+  function getSizing(origin: string): { unit: string; verb: string } | null {
+    return Sizable[origin] ?? null;
+  }
+
+  const FormatDictionary: {
+    [k in $ZodStringFormats | (string & {})]?: string;
+  } = {
+    regex: "entrada",
+    email: "dirección de correo electrónico",
+    url: "URL",
+    emoji: "emoji",
+    uuid: "UUID",
+    uuidv4: "UUIDv4",
+    uuidv6: "UUIDv6",
+    nanoid: "nanoid",
+    guid: "GUID",
+    cuid: "cuid",
+    cuid2: "cuid2",
+    ulid: "ULID",
+    xid: "XID",
+    ksuid: "KSUID",
+    datetime: "fecha y hora ISO",
+    date: "fecha ISO",
+    time: "hora ISO",
+    duration: "duración ISO",
+    ipv4: "dirección IPv4",
+    ipv6: "dirección IPv6",
+    mac: "dirección MAC",
+    cidrv4: "rango IPv4",
+    cidrv6: "rango IPv6",
+    base64: "cadena codificada en base64",
+    base64url: "URL codificada en base64",
+    json_string: "cadena JSON",
+    e164: "número E.164",
+    credit_card: "número de tarjeta de crédito",
+    jwt: "JWT",
+    template_literal: "entrada",
+  };
+
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
     string: "texto",
     number: "número",
     boolean: "booleano",
@@ -37,75 +79,17 @@ const error: () => errors.$ZodErrorMap = () => {
     any: "cualquiera",
   };
 
-  function getSizing(origin: string): { unit: string; verb: string } | null {
-    return Sizable[origin] ?? null;
-  }
-
-  function getTypeName(type: string): string {
-    return TypeNames[type] ?? type;
-  }
-
-  const parsedType = (data: any): string => {
-    const t = typeof data;
-
-    switch (t) {
-      case "number": {
-        return Number.isNaN(data) ? "NaN" : "number";
-      }
-      case "object": {
-        if (Array.isArray(data)) {
-          return "array";
-        }
-        if (data === null) {
-          return "null";
-        }
-        if (Object.getPrototypeOf(data) !== Object.prototype) {
-          return data.constructor.name;
-        }
-        return "object";
-      }
-    }
-    return t;
-  };
-
-  const Nouns: {
-    [k in $ZodStringFormats | (string & {})]?: string;
-  } = {
-    regex: "entrada",
-    email: "dirección de correo electrónico",
-    url: "URL",
-    emoji: "emoji",
-    uuid: "UUID",
-    uuidv4: "UUIDv4",
-    uuidv6: "UUIDv6",
-    nanoid: "nanoid",
-    guid: "GUID",
-    cuid: "cuid",
-    cuid2: "cuid2",
-    ulid: "ULID",
-    xid: "XID",
-    ksuid: "KSUID",
-    datetime: "fecha y hora ISO",
-    date: "fecha ISO",
-    time: "hora ISO",
-    duration: "duración ISO",
-    ipv4: "dirección IPv4",
-    ipv6: "dirección IPv6",
-    cidrv4: "rango IPv4",
-    cidrv6: "rango IPv6",
-    base64: "cadena codificada en base64",
-    base64url: "URL codificada en base64",
-    json_string: "cadena JSON",
-    e164: "número E.164",
-    jwt: "JWT",
-    template_literal: "entrada",
-  };
-
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `Entrada inválida: se esperaba ${getTypeName(issue.expected)}, recibido ${getTypeName(parsedType(issue.input))}`;
-      // return `Entrada inválida: se esperaba ${issue.expected}, recibido ${util.getParsedType(issue.input)}`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `Entrada inválida: se esperaba instanceof ${issue.expected}, recibido ${received}`;
+        }
+        return `Entrada inválida: se esperaba ${expected}, recibido ${received}`;
+      }
       case "invalid_value":
         if (issue.values.length === 1)
           return `Entrada inválida: se esperaba ${util.stringifyPrimitive(issue.values[0])}`;
@@ -113,7 +97,7 @@ const error: () => errors.$ZodErrorMap = () => {
       case "too_big": {
         const adj = issue.inclusive ? "<=" : "<";
         const sizing = getSizing(issue.origin);
-        const origin = getTypeName(issue.origin);
+        const origin = TypeDictionary[issue.origin] ?? issue.origin;
         if (sizing)
           return `Demasiado grande: se esperaba que ${origin ?? "valor"} tuviera ${adj}${issue.maximum.toString()} ${sizing.unit ?? "elementos"}`;
         return `Demasiado grande: se esperaba que ${origin ?? "valor"} fuera ${adj}${issue.maximum.toString()}`;
@@ -121,7 +105,7 @@ const error: () => errors.$ZodErrorMap = () => {
       case "too_small": {
         const adj = issue.inclusive ? ">=" : ">";
         const sizing = getSizing(issue.origin);
-        const origin = getTypeName(issue.origin);
+        const origin = TypeDictionary[issue.origin] ?? issue.origin;
         if (sizing) {
           return `Demasiado pequeño: se esperaba que ${origin} tuviera ${adj}${issue.minimum.toString()} ${sizing.unit}`;
         }
@@ -134,18 +118,18 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `Cadena inválida: debe terminar en "${_issue.suffix}"`;
         if (_issue.format === "includes") return `Cadena inválida: debe incluir "${_issue.includes}"`;
         if (_issue.format === "regex") return `Cadena inválida: debe coincidir con el patrón ${_issue.pattern}`;
-        return `Inválido ${Nouns[_issue.format] ?? issue.format}`;
+        return `Inválido ${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":
         return `Número inválido: debe ser múltiplo de ${issue.divisor}`;
       case "unrecognized_keys":
         return `Llave${issue.keys.length > 1 ? "s" : ""} desconocida${issue.keys.length > 1 ? "s" : ""}: ${util.joinValues(issue.keys, ", ")}`;
       case "invalid_key":
-        return `Llave inválida en ${getTypeName(issue.origin)}`;
+        return `Llave inválida en ${TypeDictionary[issue.origin] ?? issue.origin}`;
       case "invalid_union":
         return "Entrada inválida";
       case "invalid_element":
-        return `Valor inválido en ${getTypeName(issue.origin)}`;
+        return `Valor inválido en ${TypeDictionary[issue.origin] ?? issue.origin}`;
       default:
         return `Entrada inválida`;
     }

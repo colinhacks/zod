@@ -8,6 +8,7 @@ const error: () => errors.$ZodErrorMap = () => {
     file: { unit: "tavua", subject: "tiedoston" },
     array: { unit: "alkiota", subject: "listan" },
     set: { unit: "alkiota", subject: "joukon" },
+    map: { unit: "alkiota", subject: "kuvauksen" },
     number: { unit: "", subject: "luvun" },
     bigint: { unit: "", subject: "suuren kokonaisluvun" },
     int: { unit: "", subject: "kokonaisluvun" },
@@ -18,30 +19,7 @@ const error: () => errors.$ZodErrorMap = () => {
     return Sizable[origin] ?? null;
   }
 
-  const parsedType = (data: any): string => {
-    const t = typeof data;
-
-    switch (t) {
-      case "number": {
-        return Number.isNaN(data) ? "NaN" : "number";
-      }
-      case "object": {
-        if (Array.isArray(data)) {
-          return "array";
-        }
-        if (data === null) {
-          return "null";
-        }
-
-        if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-          return data.constructor.name;
-        }
-      }
-    }
-    return t;
-  };
-
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "säännöllinen lauseke",
@@ -64,20 +42,35 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "ISO-kesto",
     ipv4: "IPv4-osoite",
     ipv6: "IPv6-osoite",
+    mac: "MAC-osoite",
     cidrv4: "IPv4-alue",
     cidrv6: "IPv6-alue",
     base64: "base64-koodattu merkkijono",
     base64url: "base64url-koodattu merkkijono",
     json_string: "JSON-merkkijono",
     e164: "E.164-luku",
+    credit_card: "luottokortin numero",
     jwt: "JWT",
     template_literal: "templaattimerkkijono",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `Virheellinen tyyppi: odotettiin ${issue.expected}, oli ${parsedType(issue.input)}`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `Virheellinen tyyppi: odotettiin instanceof ${issue.expected}, oli ${received}`;
+        }
+        return `Virheellinen tyyppi: odotettiin ${expected}, oli ${received}`;
+      }
       case "invalid_value":
         if (issue.values.length === 1)
           return `Virheellinen syöte: täytyy olla ${util.stringifyPrimitive(issue.values[0])}`;
@@ -106,7 +99,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "regex") {
           return `Virheellinen syöte: täytyy vastata säännöllistä lauseketta ${_issue.pattern}`;
         }
-        return `Virheellinen ${Nouns[_issue.format] ?? issue.format}`;
+        return `Virheellinen ${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":
         return `Virheellinen luku: täytyy olla luvun ${issue.divisor} monikerta`;

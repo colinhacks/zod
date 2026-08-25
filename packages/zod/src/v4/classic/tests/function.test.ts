@@ -186,12 +186,12 @@ test("input validation error", () => {
     expect(e.issues).toMatchInlineSnapshot(`
       [
         {
-          "code": "invalid_type",
-          "expected": "string",
-          "message": "Invalid input: expected string, received undefined",
-          "path": [
-            0,
-          ],
+          "code": "too_small",
+          "inclusive": true,
+          "message": "Too small: expected array to have >=1 items",
+          "minimum": 1,
+          "origin": "array",
+          "path": [],
         },
       ]
     `);
@@ -357,4 +357,35 @@ test("extra parameters with rest", () => {
 
   const filteredList = ["apple", "orange", "pear", "banana", "strawberry"].filter(maxLength5);
   expect(filteredList.length).toEqual(2);
+});
+
+test("implement exposes the function schema at runtime", () => {
+  const schema = z.function({ input: [z.string()], output: z.number() });
+  const fn = schema.implement((s) => s.length);
+
+  // Deliberately absent from implement()'s return type: reaching `_zod` takes a cast, so an implemented function never reads as a schema to TypeScript even though it does at runtime.
+  type HasZod = "_zod" extends keyof typeof fn ? true : false;
+  expectTypeOf<HasZod>().toEqualTypeOf<false>();
+
+  expect((fn as any)._zod).toBe(schema._zod);
+  expect((fn as any)._zod.def.input).toBe(schema._def.input);
+  expect((fn as any)._zod.def.output).toBe(schema._def.output);
+  expect(Object.keys(fn)).toEqual([]);
+  expect(Object.getOwnPropertyDescriptor(fn, "_zod")).toMatchObject({ enumerable: false, writable: false });
+  expect(fn("asdf")).toBe(4);
+});
+
+test("implementAsync exposes the function schema at runtime", async () => {
+  const schema = z.function({ input: [z.string()], output: z.promise(z.number()) });
+  const fn = schema.implementAsync(async (s) => s.length);
+
+  expect((fn as any)._zod).toBe(schema._zod);
+  await expect(fn("asdf")).resolves.toBe(4);
+});
+
+test("parsing through a function schema exposes it the same way", () => {
+  const schema = z.function({ input: [z.string()], output: z.number() });
+  const { handler } = z.object({ handler: schema }).parse({ handler: (s: string) => s.length });
+
+  expect((handler as any)._zod).toBe(schema._zod);
 });

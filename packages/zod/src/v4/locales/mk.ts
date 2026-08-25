@@ -8,36 +8,14 @@ const error: () => errors.$ZodErrorMap = () => {
     file: { unit: "бајти", verb: "да имаат" },
     array: { unit: "ставки", verb: "да имаат" },
     set: { unit: "ставки", verb: "да имаат" },
+    map: { unit: "ставки", verb: "да имаат" },
   };
 
   function getSizing(origin: string): { unit: string; verb: string } | null {
     return Sizable[origin] ?? null;
   }
 
-  const parsedType = (data: any): string => {
-    const t = typeof data;
-
-    switch (t) {
-      case "number": {
-        return Number.isNaN(data) ? "NaN" : "број";
-      }
-      case "object": {
-        if (Array.isArray(data)) {
-          return "низа";
-        }
-        if (data === null) {
-          return "null";
-        }
-
-        if (Object.getPrototypeOf(data) !== Object.prototype && data.constructor) {
-          return data.constructor.name;
-        }
-      }
-    }
-    return t;
-  };
-
-  const Nouns: {
+  const FormatDictionary: {
     [k in $ZodStringFormats | (string & {})]?: string;
   } = {
     regex: "внес",
@@ -60,21 +38,37 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "ISO времетраење",
     ipv4: "IPv4 адреса",
     ipv6: "IPv6 адреса",
+    mac: "MAC адреса",
     cidrv4: "IPv4 опсег",
     cidrv6: "IPv6 опсег",
     base64: "base64-енкодирана низа",
     base64url: "base64url-енкодирана низа",
     json_string: "JSON низа",
     e164: "E.164 број",
+    credit_card: "број на кредитна картичка",
     jwt: "JWT",
     template_literal: "внес",
   };
 
+  const TypeDictionary: {
+    [k in errors.$ZodInvalidTypeExpected | (string & {})]?: string;
+  } = {
+    nan: "NaN",
+    number: "број",
+    array: "низа",
+  };
+
   return (issue) => {
     switch (issue.code) {
-      case "invalid_type":
-        return `Грешен внес: се очекува ${issue.expected}, примено ${parsedType(issue.input)}`;
-      // return `Invalid input: expected ${issue.expected}, received ${util.getParsedType(issue.input)}`;
+      case "invalid_type": {
+        const expected = TypeDictionary[issue.expected] ?? issue.expected;
+        const receivedType = util.parsedType(issue.input);
+        const received = TypeDictionary[receivedType] ?? receivedType;
+        if (/^[A-Z]/.test(issue.expected)) {
+          return `Грешен внес: се очекува instanceof ${issue.expected}, примено ${received}`;
+        }
+        return `Грешен внес: се очекува ${expected}, примено ${received}`;
+      }
       case "invalid_value":
         if (issue.values.length === 1) return `Invalid input: expected ${util.stringifyPrimitive(issue.values[0])}`;
         return `Грешана опција: се очекува една ${util.joinValues(issue.values, "|")}`;
@@ -102,7 +96,7 @@ const error: () => errors.$ZodErrorMap = () => {
         if (_issue.format === "ends_with") return `Неважечка низа: мора да завршува со "${_issue.suffix}"`;
         if (_issue.format === "includes") return `Неважечка низа: мора да вклучува "${_issue.includes}"`;
         if (_issue.format === "regex") return `Неважечка низа: мора да одгоара на патернот ${_issue.pattern}`;
-        return `Invalid ${Nouns[_issue.format] ?? issue.format}`;
+        return `Invalid ${FormatDictionary[_issue.format] ?? issue.format}`;
       }
       case "not_multiple_of":
         return `Грешен број: мора да биде делив со ${issue.divisor}`;
