@@ -76,6 +76,37 @@ test("enum exhaustiveness", () => {
   `);
 });
 
+test("optional-in value type", () => {
+  const defaulted = z.record(z.enum(["Tuna", "Salmon"]), z.string().default("unknown"));
+  expectTypeOf<z.input<typeof defaulted>>().toEqualTypeOf<Partial<Record<"Tuna" | "Salmon", string | undefined>>>();
+  expectTypeOf<z.output<typeof defaulted>>().toEqualTypeOf<Record<"Tuna" | "Salmon", string>>();
+  expect(defaulted.parse({ Tuna: "asdf" })).toEqual({ Tuna: "asdf", Salmon: "unknown" });
+
+  const prefaulted = z.record(z.enum(["Tuna", "Salmon"]), z.string().prefault("unknown"));
+  expectTypeOf<z.input<typeof prefaulted>>().toEqualTypeOf<Partial<Record<"Tuna" | "Salmon", string | undefined>>>();
+  expect(prefaulted.parse({ Tuna: "asdf" })).toEqual({ Tuna: "asdf", Salmon: "unknown" });
+
+  const optional = z.record(z.enum(["Tuna", "Salmon"]), z.string().optional());
+  expectTypeOf<z.input<typeof optional>>().toEqualTypeOf<Partial<Record<"Tuna" | "Salmon", string | undefined>>>();
+  // toStrictEqual, not toEqual: an exhaustive record assigns every key, and toEqual cannot tell an absent key from one holding undefined.
+  expect(optional.parse({ Tuna: "asdf" })).toStrictEqual({ Tuna: "asdf", Salmon: undefined });
+
+  // A value that needs a slot keeps the key required, and a non-enumerable key stays an index signature either way.
+  const required = z.record(z.enum(["Tuna", "Salmon"]), z.string());
+  expectTypeOf<z.input<typeof required>>().toEqualTypeOf<Record<"Tuna" | "Salmon", string>>();
+  const indexed = z.record(z.string(), z.string().default("unknown"));
+  expectTypeOf<z.input<typeof indexed>>().toEqualTypeOf<Record<string, string | undefined>>();
+
+  // A catch and a preprocess pipe declare no static optin, so the key stays required even where the parser can fill it. The static predicate and the one the JSON Schema emitter uses resolve these differently, and the two have to keep agreeing.
+  const caught = z.record(z.enum(["Tuna", "Salmon"]), z.string().catch("unknown"));
+  expectTypeOf<z.input<typeof caught>>().toEqualTypeOf<Record<"Tuna" | "Salmon", string>>();
+  const preprocessed = z.record(
+    z.enum(["Tuna", "Salmon"]),
+    z.preprocess((v) => v, z.string())
+  );
+  expectTypeOf<z.input<typeof preprocessed>>().toEqualTypeOf<Record<"Tuna" | "Salmon", unknown>>();
+});
+
 test("typescript enum exhaustiveness", () => {
   enum BigFish {
     Tuna = 0,

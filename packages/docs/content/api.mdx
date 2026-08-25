@@ -2008,6 +2008,15 @@ intKeys.parse({
 });
 ```
 
+A value schema that can stand in for an absent key — `.default()`, `.prefault()`, `.optional()` — makes that key optional on the input side, the same as it does inside `z.object()`:
+
+```ts
+const Person = z.record(z.enum(["id", "name"]), z.string().default(""));
+
+type Input = z.input<typeof Person>; // { id?: string; name?: string }
+type Output = z.output<typeof Person>; // { id: string; name: string }
+```
+
 ### `z.partialRecord`
 
 
