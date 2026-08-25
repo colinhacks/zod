@@ -3495,11 +3495,11 @@ export const $ZodEnum: core.$constructor<$ZodEnum> = /*@__PURE__*/ core.$constru
   const valuesSet = new Set<util.Primitive>(values);
   inst._zod.values = valuesSet;
 
+  const patternValues = values.filter((k) => util.propertyKeyTypes.has(typeof k));
+
+  // an empty alternation compiles to /^()$/, which matches the empty string; `(?!)` matches nothing
   inst._zod.pattern = new RegExp(
-    `^(${values
-      .filter((k) => util.propertyKeyTypes.has(typeof k))
-      .map((o) => util.escapeRegex(o.toString()))
-      .join("|")})$`
+    patternValues.length ? `^(${patternValues.map((o) => util.escapeRegex(o.toString())).join("|")})$` : "^(?!)$"
   );
 
   inst._zod.parse = (payload, _ctx) => {
