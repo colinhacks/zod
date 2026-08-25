@@ -93,3 +93,17 @@ test("z.uint64", () => {
   // expect(() => z.parse(a, BigInt("18446744073709551616"))).toThrow(); // Exceeds max
   // expect(() => z.parse(a, BigInt("-1"))).toThrow(); // Below min
 });
+
+test("number and bigint formats are distinct at the type level", () => {
+  expectTypeOf(z.int()._zod.def.format).toEqualTypeOf<"safeint">();
+  expectTypeOf(z.uint32()._zod.def.format).toEqualTypeOf<"uint32">();
+  expectTypeOf(z.int64()._zod.def.format).toEqualTypeOf<"int64">();
+
+  z.int32() satisfies z.ZodMiniInt32;
+  z.uint64() satisfies z.ZodMiniUInt64;
+
+  // @ts-expect-error a float64 schema is not a ZodMiniFloat32
+  z.float64() satisfies z.ZodMiniFloat32;
+  // @ts-expect-error a uint64 schema is not a ZodMiniInt64
+  z.uint64() satisfies z.ZodMiniInt64;
+});

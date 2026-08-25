@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 
 import * as z from "zod/v4";
 
@@ -321,4 +321,32 @@ test("negative zero edge case", () => {
 test("error customization", () => {
   z.number().gte(5, { error: (iss) => "Min: " + iss.minimum.valueOf() });
   z.number().lte(5, { error: (iss) => "Max: " + iss.maximum.valueOf() });
+});
+
+test("number formats are distinct at the type level", () => {
+  expectTypeOf(z.int()._zod.def.format).toEqualTypeOf<"safeint">();
+  expectTypeOf(z.int32()._zod.def.format).toEqualTypeOf<"int32">();
+  expectTypeOf(z.uint32()._zod.def.format).toEqualTypeOf<"uint32">();
+  expectTypeOf(z.float32()._zod.def.format).toEqualTypeOf<"float32">();
+  expectTypeOf(z.float64()._zod.def.format).toEqualTypeOf<"float64">();
+
+  z.int() satisfies z.ZodNumberFormat;
+  z.int() satisfies z.ZodNumber;
+
+  // @ts-expect-error a float32 schema is not a ZodInt
+  z.float32() satisfies z.ZodInt;
+  // @ts-expect-error a uint32 schema is not a ZodInt32
+  z.uint32() satisfies z.ZodInt32;
+
+  // the point of the distinction: dispatching on the schema type in a conditional type
+  type Sql<T> = T extends z.ZodUInt32
+    ? "BIGINT"
+    : T extends z.ZodInt32
+      ? "INTEGER"
+      : T extends z.ZodFloat32
+        ? "REAL"
+        : never;
+  expectTypeOf<Sql<z.ZodUInt32>>().toEqualTypeOf<"BIGINT">();
+  expectTypeOf<Sql<z.ZodInt32>>().toEqualTypeOf<"INTEGER">();
+  expectTypeOf<Sql<z.ZodFloat32>>().toEqualTypeOf<"REAL">();
 });
