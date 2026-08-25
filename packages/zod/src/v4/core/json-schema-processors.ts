@@ -389,6 +389,8 @@ export const intersectionProcessor: Processor<schemas.$ZodIntersection> = (schem
     ...(isSimpleIntersection(b) ? (b.allOf as any[]) : [b]),
   ];
   json.allOf = allOf;
+  // Recorded innermost first, so a nested intersection has already folded by the time this one is considered. The array is the handle rather than the schema, because a wrapper that inherits this schema shares the same array; `finalize` folds every object holding it. See `foldIntersection`.
+  ctx.intersections.push(allOf);
 };
 
 export const tupleProcessor: Processor<schemas.$ZodTuple> = (schema, ctx, _json, params) => {
