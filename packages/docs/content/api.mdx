@@ -2825,7 +2825,9 @@ z.input(Event).parse({ name: "launch", at: "2024-01-01T00:00:00Z" }); // ✅
 z.output(Event).parse({ name: "launch", at: new Date() });            // ✅
 ```
 
-Only codecs have two real sides; `z.output()` on a one-way [transform](#transforms) returns the transform, which validates nothing.
+Only codecs have two real sides. `z.output()` on a one-way [transform](#transforms) returns the transform, which validates nothing; `z.input()` on a `z.preprocess()` returns the schema the preprocessor feeds.
+
+A wrapper's stored value survives only on the side it belongs to, so with a codec underneath, `z.input()` drops a `.default()` or `.catch()` and `z.output()` drops a `.prefault()`.
 
 ## Transforms
 
