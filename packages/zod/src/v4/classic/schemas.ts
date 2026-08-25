@@ -1874,9 +1874,12 @@ function _zodTupleMethods(): _LazyMethodsOf<ZodTuple> {
       }) as any;
     },
     partial() {
+      const def = this._zod.def;
+      // a refinement was authored against the full arity; partialing would run it on a shorter array
+      if (def.checks?.length) throw new Error(".partial() cannot be used on tuple schemas containing refinements");
       return this.clone({
-        ...this._zod.def,
-        items: this._zod.def.items.map((item) => new ZodOptional({ type: "optional", innerType: item })),
+        ...def,
+        items: def.items.map((item) => new ZodOptional({ type: "optional", innerType: item })),
       }) as any;
     },
   };

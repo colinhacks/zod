@@ -1054,4 +1054,7 @@ test("z.partial on a tuple", () => {
   expect(z.safeParse(schema, ["a"]).success).toEqual(true);
   expect(z.safeParse(schema, ["a", 1]).success).toEqual(true);
   expect(z.safeParse(schema, ["a", "b"]).success).toEqual(false);
+
+  const refined = z.tuple([z.string(), z.number()]).check(z.refine(([a]) => a.length > 0));
+  expect(() => z.partial(refined)).toThrow("cannot be used on tuple schemas containing refinements");
 });

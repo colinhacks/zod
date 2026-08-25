@@ -1018,12 +1018,13 @@ export function partial<T extends util.TupleItems, Rest extends SomeType | null>
 // @__NO_SIDE_EFFECTS__
 export function partial(schema: ZodMiniObject | ZodMiniTuple, mask?: object) {
   const def = schema._zod.def;
-  return def.type === "tuple"
-    ? util.clone(schema, {
-        ...def,
-        items: def.items.map((item) => new ZodMiniOptional({ type: "optional", innerType: item as core.$ZodType })),
-      })
-    : util.partial(ZodMiniOptional, schema as ZodMiniObject, mask);
+  if (def.type !== "tuple") return util.partial(ZodMiniOptional, schema as ZodMiniObject, mask);
+  // a refinement was authored against the full arity; partialing would run it on a shorter array
+  if (def.checks?.length) throw new Error(".partial() cannot be used on tuple schemas containing refinements");
+  return util.clone(schema, {
+    ...def,
+    items: def.items.map((item) => new ZodMiniOptional({ type: "optional", innerType: item as core.$ZodType })),
+  });
 }
 
 // @__NO_SIDE_EFFECTS__

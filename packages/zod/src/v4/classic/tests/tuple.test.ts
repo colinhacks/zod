@@ -488,6 +488,11 @@ test("partial", () => {
   expect(schema.parse(["a", 1, true])).toEqual(["a", 1, true]);
   expect(schema.safeParse(["a", "b"]).success).toEqual(false);
   expect(schema.safeParse(["a", 1, true, 4]).success).toEqual(false);
+
+  // the arity relaxation has to survive the JSON Schema round trip: `minItems` disappears
+  expect(z.toJSONSchema(schema)).toEqual(
+    z.toJSONSchema(z.tuple([z.string().optional(), z.number().optional(), z.boolean().optional()]))
+  );
 });
 
 test("partial leaves rest alone", () => {
@@ -496,5 +501,11 @@ test("partial leaves rest alone", () => {
 
   expect(schema.parse([])).toEqual([]);
   expect(schema.parse(["a", 1, 2])).toEqual(["a", 1, 2]);
-  expect(schema.safeParse([undefined, "b"]).success).toEqual(false);
+  // discriminating input: `true` only if rest had been wrapped too
+  expect(schema.safeParse(["a", undefined]).success).toEqual(false);
+});
+
+test("partial rejects a tuple carrying refinements", () => {
+  const schema = z.tuple([z.string(), z.number()]).refine(([a]) => a.length > 0);
+  expect(() => schema.partial()).toThrow("cannot be used on tuple schemas containing refinements");
 });
