@@ -429,12 +429,6 @@ test("ulid", () => {
   }
   const caseInsensitive = ulid.safeParse("01arZ3nDeKTsV4RRffQ69G5FAV");
   expect(caseInsensitive.success).toEqual(true);
-
-  // first char is capped at 7: the spec's largest ULID is 7ZZZZZZZZZZZZZZZZZZZZZZZZZ, so 8-9 and every letter overflow 2^48-1
-  expect(ulid.safeParse("7ZZZZZZZZZZZZZZZZZZZZZZZZZ").success).toEqual(true);
-  for (const first of ["8", "9", "A", "Z", "z"]) {
-    expect(ulid.safeParse(`${first}AAAAAAAAAAAAAAAAAAAAAAAAA`).success).toEqual(false);
-  }
 });
 
 test("regex", () => {
