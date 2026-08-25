@@ -1571,12 +1571,12 @@ export interface ZodObject<
    */
   merge<U extends ZodObject>(other: U): ZodObject<util.Extend<this["shape"], U["shape"]>, U["_zod"]["config"]>;
 
-  // the mask is typed `util.Mask<PropertyKey>` rather than against `Shape` — every narrower form also rejects a valid mask once the receiver's shape is deferred, so an unrecognized key is caught when the shape is first read instead
-  pick<M extends util.Mask<PropertyKey>>(
+  // the mask constraint is inline rather than `util.Mask<keyof Shape>` — a homomorphic mapped type defers while the receiver's shape is generic, then checks normally once it resolves
+  pick<M extends { [K in keyof this["shape"]]?: true }>(
     mask: M
   ): ZodObject<util.Flatten<Pick<this["shape"], Extract<keyof this["shape"], keyof M>>>, this["_zod"]["config"]>;
 
-  omit<M extends util.Mask<PropertyKey>>(
+  omit<M extends { [K in keyof this["shape"]]?: true }>(
     mask: M
   ): ZodObject<util.Flatten<Omit<this["shape"], Extract<keyof this["shape"], keyof M>>>, this["_zod"]["config"]>;
 
@@ -1586,7 +1586,7 @@ export interface ZodObject<
     },
     this["_zod"]["config"]
   >;
-  partial<M extends util.Mask<PropertyKey>>(
+  partial<M extends { [K in keyof this["shape"]]?: true }>(
     mask: M
   ): ZodObject<
     {
@@ -1607,7 +1607,7 @@ export interface ZodObject<
     },
     this["_zod"]["config"]
   >;
-  exactPartial<M extends util.Mask<PropertyKey>>(
+  exactPartial<M extends { [K in keyof this["shape"]]?: true }>(
     mask: M
   ): ZodObject<
     {
@@ -1623,7 +1623,7 @@ export interface ZodObject<
     },
     this["_zod"]["config"]
   >;
-  required<M extends util.Mask<PropertyKey>>(
+  required<M extends { [K in keyof this["shape"]]?: true }>(
     mask: M
   ): ZodObject<
     {

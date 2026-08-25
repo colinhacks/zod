@@ -239,17 +239,21 @@ test("z.pick/omit/partial/required - do not allow unknown keys", () => {
     age: z.number(),
   });
 
-  // mask keys are validated at parse time only — every compile-time formulation that rejects them also rejects a valid mask on a generic receiver
+  // a mask mixing valid and invalid keys is caught at parse time only — no constraint rejects it without also rejecting a valid mask on a generic receiver
   expect(() => z.parse(z.pick(schema, { name: true, asdf: true }), {})).toThrow();
   expect(() => z.parse(z.omit(schema, { name: true, asdf: true }), {})).toThrow();
   expect(() => z.parse(z.partial(schema, { name: true, asdf: true }), {})).toThrow();
   expect(() => z.parse(z.required(schema, { name: true, asdf: true }), {})).toThrow();
   expect(() => z.parse(z.exactPartial(schema, { name: true, asdf: true }), {})).toThrow();
 
-  // an all-invalid mask is caught at parse time too
+  // an all-invalid mask is still rejected at compile time
+  // @ts-expect-error
   expect(() => z.parse(z.pick(schema, { $unknown: true }), {})).toThrow();
+  // @ts-expect-error
   expect(() => z.parse(z.omit(schema, { $unknown: true }), {})).toThrow();
+  // @ts-expect-error
   expect(() => z.parse(z.partial(schema, { $unknown: true }), {})).toThrow();
+  // @ts-expect-error
   expect(() => z.parse(z.required(schema, { $unknown: true }), {})).toThrow();
 });
 

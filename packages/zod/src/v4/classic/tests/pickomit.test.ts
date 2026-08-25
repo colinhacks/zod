@@ -114,16 +114,20 @@ test("pick/omit/required/partial - do not allow unknown keys", () => {
     age: z.number(),
   });
 
-  // mask keys are validated at runtime only — every compile-time formulation that rejects them also rejects a valid mask on a generic receiver
+  // a mask mixing valid and invalid keys is caught at runtime only — no constraint rejects it without also rejecting a valid mask on a generic receiver
   expect(() => schema.pick({ name: true, asdf: true }).safeParse({})).toThrow();
   expect(() => schema.omit({ name: true, asdf: true }).safeParse({})).toThrow();
   expect(() => schema.partial({ name: true, asdf: true }).safeParse({})).toThrow();
   expect(() => schema.required({ name: true, asdf: true }).safeParse({})).toThrow();
 
-  // an all-invalid mask is caught at runtime too — the mask type accepts any key so that a generic receiver still resolves
+  // an all-invalid mask is still rejected at compile time — the mask constraint defers while the receiver's shape is generic, then checks normally once it resolves
+  // @ts-expect-error
   expect(() => schema.pick({ $unknown: true }).safeParse({})).toThrow();
+  // @ts-expect-error
   expect(() => schema.omit({ $unknown: true }).safeParse({})).toThrow();
+  // @ts-expect-error
   expect(() => schema.required({ $unknown: true }).safeParse({})).toThrow();
+  // @ts-expect-error
   expect(() => schema.partial({ $unknown: true }).safeParse({})).toThrow();
 });
 

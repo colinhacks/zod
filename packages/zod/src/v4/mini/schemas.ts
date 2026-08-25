@@ -964,7 +964,7 @@ export function merge<T extends ZodMiniObject, U extends ZodMiniObject>(
 }
 
 // @__NO_SIDE_EFFECTS__
-export function pick<T extends ZodMiniObject, M extends util.Mask<PropertyKey>>(
+export function pick<T extends ZodMiniObject, M extends { [K in keyof T["shape"]]?: true }>(
   schema: T,
   mask: M
 ): ZodMiniObject<util.Flatten<Pick<T["shape"], keyof T["shape"] & keyof M>>, T["_zod"]["config"]> {
@@ -974,7 +974,7 @@ export function pick<T extends ZodMiniObject, M extends util.Mask<PropertyKey>>(
 // .omit
 
 // @__NO_SIDE_EFFECTS__
-export function omit<T extends ZodMiniObject, M extends util.Mask<PropertyKey>>(
+export function omit<T extends ZodMiniObject, M extends { [K in keyof T["shape"]]?: true }>(
   schema: T,
   mask: M
 ): ZodMiniObject<util.Flatten<Omit<T["shape"], keyof M>>, T["_zod"]["config"]> {
@@ -991,7 +991,7 @@ export function partial<T extends ZodMiniObject>(
   T["_zod"]["config"]
 >;
 // @__NO_SIDE_EFFECTS__
-export function partial<T extends ZodMiniObject, M extends util.Mask<PropertyKey>>(
+export function partial<T extends ZodMiniObject, M extends { [K in keyof T["shape"]]?: true }>(
   schema: T,
   mask: M
 ): ZodMiniObject<
@@ -1015,7 +1015,7 @@ export function exactPartial<T extends ZodMiniObject>(
   T["_zod"]["config"]
 >;
 // @__NO_SIDE_EFFECTS__
-export function exactPartial<T extends ZodMiniObject, M extends util.Mask<PropertyKey>>(
+export function exactPartial<T extends ZodMiniObject, M extends { [K in keyof T["shape"]]?: true }>(
   schema: T,
   mask: M
 ): ZodMiniObject<
@@ -1050,7 +1050,7 @@ export function required<T extends ZodMiniObject>(
   T["_zod"]["config"]
 >;
 // @__NO_SIDE_EFFECTS__
-export function required<T extends ZodMiniObject, M extends util.Mask<PropertyKey>>(
+export function required<T extends ZodMiniObject, M extends { [K in keyof T["shape"]]?: true }>(
   schema: T,
   mask: M
 ): ZodMiniObject<
