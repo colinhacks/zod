@@ -1482,6 +1482,8 @@ test("unsupported features throw ZodCompileUnsupportedError, not raw errors", ()
   );
   // NaN comparison bounds can't compile to a faithful comparison.
   expect(() => compile(z.number().gt(Number.NaN))).toThrow(ZodCompileUnsupportedError);
+  // A zero bigint divisor has no compiled form: `x % 0n` throws.
+  expect(() => compile(z.bigint().multipleOf(BigInt(0)))).toThrow(ZodCompileUnsupportedError);
   // Unsupported children still island inside containers.
   const aot = compile(z.object({ a: z.string(), x: z.xor([z.literal("p"), z.literal("q")]) }));
   expect(valid(aot, { a: "x", x: "p" })).toEqual({ a: "x", x: "p" });
