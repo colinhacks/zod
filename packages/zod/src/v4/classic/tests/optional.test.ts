@@ -352,3 +352,15 @@ test("swallowed issue on an absent optional key drops its value", async () => {
   expect(schema.safeParse({ a: "x" }).success).toEqual(false);
   expect(schema.safeParse({ a: "x" }, { jitless: true }).success).toEqual(false);
 });
+
+test("optional does not swallow an issue it did not cause", () => {
+  // A pipe hands its `out` schema the caller's issues array so an unrecognized key can survive to an enclosing intersection. A defaulted inner substituting for absence must not read that as its own failing and drop it.
+  const result = z
+    .strictObject({ a: z.string() })
+    .transform((): number | undefined => undefined)
+    .pipe(z.number().default(5).optional())
+    .safeParse({ a: "x", extra: 1 });
+
+  expect(result.success).toBe(false);
+  expect(result.error!.issues.map((i) => i.code)).toEqual(["unrecognized_keys"]);
+});
