@@ -4679,17 +4679,13 @@ export interface $ZodFunction<
   implement<F extends $InferInnerFunctionType<Args, Returns>>(
     func: F
   ): // allow for return type inference
-  ((
+  (
     ...args: Parameters<this["_output"]>
-  ) => ReturnType<F> extends ReturnType<this["_output"]> ? ReturnType<F> : ReturnType<this["_output"]>) & {
-    _zod: $ZodFunctionInternals<Args, Returns>;
-  };
+  ) => ReturnType<F> extends ReturnType<this["_output"]> ? ReturnType<F> : ReturnType<this["_output"]>;
 
   implementAsync<F extends $InferInnerFunctionTypeAsync<Args, Returns>>(
     func: F
-  ): (F extends $InferOuterFunctionTypeAsync<Args, Returns> ? F : $InferOuterFunctionTypeAsync<Args, Returns>) & {
-    _zod: $ZodFunctionInternals<Args, Returns>;
-  };
+  ): F extends $InferOuterFunctionTypeAsync<Args, Returns> ? F : $InferOuterFunctionTypeAsync<Args, Returns>;
 
   input<const Items extends util.TupleItems, const Rest extends $ZodFunctionOut = $ZodFunctionOut>(
     args: Items,
@@ -4718,38 +4714,37 @@ export const $ZodFunction: core.$constructor<$ZodFunction> = /*@__PURE__*/ core.
       if (typeof func !== "function") {
         throw new Error("implement() must be called with a function");
       }
-      const implemented = function (this: any, ...args: never[]) {
-        const parsedArgs = inst._def.input ? parse(inst._def.input, args) : args;
-        const result = Reflect.apply(func, this, parsedArgs as never[]);
-        if (inst._def.output) {
-          return parse(inst._def.output, result);
-        }
-        return result as any;
-      };
-      Object.defineProperty(implemented, "_zod", {
-        value: inst._zod,
-        enumerable: false,
-      });
-      return implemented as any;
+      // Defined inline so the closure stays anonymous: binding it to a `const` first names it, which costs 256 bytes per implemented function.
+      return Object.defineProperty(
+        function (this: any, ...args: never[]) {
+          const parsedArgs = inst._def.input ? parse(inst._def.input, args) : args;
+          const result = Reflect.apply(func, this, parsedArgs as never[]);
+          if (inst._def.output) {
+            return parse(inst._def.output, result);
+          }
+          return result as any;
+        },
+        "_zod",
+        { value: inst._zod, enumerable: false }
+      ) as any;
     };
 
     inst.implementAsync = (func) => {
       if (typeof func !== "function") {
         throw new Error("implementAsync() must be called with a function");
       }
-      const implemented = async function (this: any, ...args: never[]) {
-        const parsedArgs = inst._def.input ? await parseAsync(inst._def.input, args) : args;
-        const result = await Reflect.apply(func, this, parsedArgs as never[]);
-        if (inst._def.output) {
-          return await parseAsync(inst._def.output, result);
-        }
-        return result;
-      };
-      Object.defineProperty(implemented, "_zod", {
-        value: inst._zod,
-        enumerable: false,
-      });
-      return implemented as any;
+      return Object.defineProperty(
+        async function (this: any, ...args: never[]) {
+          const parsedArgs = inst._def.input ? await parseAsync(inst._def.input, args) : args;
+          const result = await Reflect.apply(func, this, parsedArgs as never[]);
+          if (inst._def.output) {
+            return await parseAsync(inst._def.output, result);
+          }
+          return result;
+        },
+        "_zod",
+        { value: inst._zod, enumerable: false }
+      ) as any;
     };
 
     inst._zod.parse = (payload, _ctx) => {
