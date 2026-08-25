@@ -4717,28 +4717,37 @@ export const $ZodFunction: core.$constructor<$ZodFunction> = /*@__PURE__*/ core.
       if (typeof func !== "function") {
         throw new Error("implement() must be called with a function");
       }
-      return function (this: any, ...args: never[]) {
-        const parsedArgs = inst._def.input ? parse(inst._def.input, args) : args;
-        const result = Reflect.apply(func, this, parsedArgs as never[]);
-        if (inst._def.output) {
-          return parse(inst._def.output, result);
-        }
-        return result as any;
-      };
+      // Defined inline so the closure stays anonymous: binding it to a `const` first names it, which costs 256 bytes per implemented function.
+      return Object.defineProperty(
+        function (this: any, ...args: never[]) {
+          const parsedArgs = inst._def.input ? parse(inst._def.input, args) : args;
+          const result = Reflect.apply(func, this, parsedArgs as never[]);
+          if (inst._def.output) {
+            return parse(inst._def.output, result);
+          }
+          return result as any;
+        },
+        "_zod",
+        { value: inst._zod, enumerable: false }
+      ) as any;
     };
 
     inst.implementAsync = (func) => {
       if (typeof func !== "function") {
         throw new Error("implementAsync() must be called with a function");
       }
-      return async function (this: any, ...args: never[]) {
-        const parsedArgs = inst._def.input ? await parseAsync(inst._def.input, args) : args;
-        const result = await Reflect.apply(func, this, parsedArgs as never[]);
-        if (inst._def.output) {
-          return await parseAsync(inst._def.output, result);
-        }
-        return result;
-      } as any;
+      return Object.defineProperty(
+        async function (this: any, ...args: never[]) {
+          const parsedArgs = inst._def.input ? await parseAsync(inst._def.input, args) : args;
+          const result = await Reflect.apply(func, this, parsedArgs as never[]);
+          if (inst._def.output) {
+            return await parseAsync(inst._def.output, result);
+          }
+          return result;
+        },
+        "_zod",
+        { value: inst._zod, enumerable: false }
+      ) as any;
     };
 
     inst._zod.parse = (payload, _ctx) => {
