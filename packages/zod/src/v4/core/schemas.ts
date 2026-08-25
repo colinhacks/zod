@@ -3757,14 +3757,10 @@ export interface $ZodOptional<T extends SomeType = $ZodType> extends $ZodType {
   _zod: $ZodOptionalInternals<T>;
 }
 
-function handleOptionalResult(result: ParsePayload) {
-  // A substituting schema that still failed has no usable answer; yield undefined. Truncate rather than rebind, and clear the abort flag with it: a pipe shares its issues array with the next schema, so an outer holder reads the same one.
-  if (result.issues.length) {
-    result.issues.length = 0;
-    result.value = undefined;
-    result.aborted = false;
-  }
-  return result;
+function handleOptionalResult(payload: ParsePayload, result: ParsePayload) {
+  // A substituting schema that still failed has no usable answer; yield undefined. Its issues are simply dropped: it ran on a payload of its own, so there is no shared array to truncate and nothing of the caller's to lose with it.
+  payload.value = result.issues.length ? undefined : result.value;
+  return payload;
 }
 
 export const $ZodOptional: core.$constructor<$ZodOptional> = /*@__PURE__*/ core.$constructor(
@@ -3790,9 +3786,10 @@ export const $ZodOptional: core.$constructor<$ZodOptional> = /*@__PURE__*/ core.
       if (payload.value === undefined) {
         // Only the top rung substitutes a value for absence; everything else leaves it intact, which is what .optional() means.
         if (def.innerType._zod.optin !== "defaulted") return payload;
-        const result = def.innerType._zod.run(payload, ctx);
-        if (result instanceof Promise) return result.then(handleOptionalResult);
-        return handleOptionalResult(result);
+        // Its own payload, for the same reason $ZodCatch gets one: a pipe forwards an unrecognized key through the caller's issues array, and this must not read that as the substituting schema failing and drop it.
+        const result = def.innerType._zod.run({ value: payload.value, issues: [] }, ctx);
+        if (result instanceof Promise) return result.then((result) => handleOptionalResult(payload, result));
+        return handleOptionalResult(payload, result);
       }
       return def.innerType._zod.run(payload, ctx);
     };
@@ -4180,32 +4177,23 @@ export interface $ZodCatch<T extends SomeType = $ZodType> extends $ZodType {
   _zod: $ZodCatchInternals<T>;
 }
 
-function handleCatchResult(
-  payload: ParsePayload,
-  result: ParsePayload,
-  input: unknown,
-  def: $ZodCatchDef,
-  ctx: ParseContextInternal
-) {
+function handleCatchResult(payload: ParsePayload, result: ParsePayload, def: $ZodCatchDef, ctx: ParseContextInternal) {
   if (!result.issues.length) {
     payload.value = result.value;
+    // The value carries up, so the flag describing it has to carry with it: a back-edge into a node still being parsed must not be frozen by an enclosing readonly, and its checks belong to the node itself. Guarded so the ordinary case adds no own property.
+    if (result.memo) payload.memo = true;
     return payload;
   }
 
-  // `value` and `issues` are pinned rather than left to the spread, because the payload keeps moving around this call: the inner run has already replaced `value` with whatever it coerced or transformed, and the truncation below empties the issues array in place. Everything else on the payload carries through untouched.
+  // Spread the inner's own payload, not ours: `value` has to stay the input the catch was handed, and the inner ran on a payload of its own so its issues are already private to this call.
   payload.value = def.catchValue({
-    ...payload,
-    value: input,
-    issues: [...result.issues],
+    ...result,
+    value: payload.value,
     error: {
       issues: result.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
     },
-    input,
+    input: payload.value,
   });
-
-  // Truncate rather than rebind: as a pipe's `out` this shares the caller's array. See handleOptionalResult.
-  payload.issues.length = 0;
-  payload.aborted = false;
   return payload;
 }
 
@@ -4223,13 +4211,12 @@ export const $ZodCatch: core.$constructor<$ZodCatch> = /*@__PURE__*/ core.$const
     }
 
     // Forward direction (decode): apply catch logic
-    const input = payload.value;
-    const result = def.innerType._zod.run(payload, ctx);
+    const result = def.innerType._zod.run({ value: payload.value, issues: [] }, ctx);
     if (result instanceof Promise) {
-      return result.then((result) => handleCatchResult(payload, result, input, def, ctx));
+      return result.then((result) => handleCatchResult(payload, result, def, ctx));
     }
 
-    return handleCatchResult(payload, result, input, def, ctx);
+    return handleCatchResult(payload, result, def, ctx);
   };
 });
 
