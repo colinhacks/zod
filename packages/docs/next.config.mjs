@@ -36,6 +36,8 @@ function generateRedirects(idmap, page, origin = "/") {
 /** @type {import('next').NextConfig} */
 const config = {
   reactStrictMode: true,
+  // next dev otherwise drops its own AGENTS.md and CLAUDE.md into this directory
+  agentRules: false,
   // next 16 narrowed the default allowed qualities to [75]; the logos ask for 100
   images: {
     qualities: [75, 100],
