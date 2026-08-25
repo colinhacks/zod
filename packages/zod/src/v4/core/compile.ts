@@ -460,6 +460,8 @@ function generateMultipleOfCheck(
   accessor: string
 ): void {
   if (typeof def.value === "bigint") {
+    // `x % 0n` throws RangeError, so there is no expression to emit; the runtime reports it as a plain not_multiple_of failure
+    if (def.value === BigInt(0)) throw new ZodCompileUnsupportedError("multiple_of check with a zero divisor");
     doc.write(`if (${accessor} % ${def.value}n !== 0n) return INVALID;`);
   } else {
     // Float `%` has well-known precision issues for sub-integer steps

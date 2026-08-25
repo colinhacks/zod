@@ -49,14 +49,15 @@ test("multipleOf zero divisor returns result object instead of throwing", () => 
   const schema = z.bigint().multipleOf(BigInt(0));
 
   // safeParse must return a result object, never throw a RangeError
-  const result = schema.safeParse(BigInt(5));
-  expect(result.success).toEqual(false);
-
-  // zero is a multiple of zero
-  expect(schema.safeParse(BigInt(0)).success).toEqual(true);
+  expect(schema.safeParse(BigInt(5)).success).toEqual(false);
+  expect(schema.safeParse(BigInt(0)).success).toEqual(false);
 
   // parse must throw a ZodError, not a RangeError
   expect(() => schema.parse(BigInt(5))).toThrow(z.ZodError);
+
+  // the number branch already agrees nothing is a multiple of zero
+  expect(z.number().multipleOf(0).safeParse(10).success).toEqual(false);
+  expect(z.number().multipleOf(0).safeParse(0).success).toEqual(false);
 });
 
 test("min max getters", () => {
