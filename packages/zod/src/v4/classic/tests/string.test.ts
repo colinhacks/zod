@@ -661,6 +661,26 @@ test("bad guid", () => {
   }
 });
 
+test("nanoid custom length", () => {
+  const nanoid64 = z.nanoid({ length: 64 });
+  nanoid64.parse("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_");
+  expect(nanoid64.safeParse("lfNZluvAxMkf7Q8C5H-QS")).toMatchObject({ success: false });
+
+  // the deprecated method and the default length both still work
+  expect(z.string().nanoid({ length: 10 }).safeParse("IRFa-VaY2b")).toMatchObject({ success: true });
+  expect(z.nanoid().safeParse("lfNZluvAxMkf7Q8C5H-QS")).toMatchObject({ success: true });
+
+  expect(z.nanoid({ length: 64, error: "custom error" }).safeParse("abc").error!.issues[0].message).toEqual(
+    "custom error"
+  );
+});
+
+test("nanoid rejects a length that is not a positive integer", () => {
+  expect(() => z.nanoid({ length: 0 })).toThrow("Invalid nanoid length: 0");
+  expect(() => z.nanoid({ length: -1 })).toThrow("Invalid nanoid length: -1");
+  expect(() => z.nanoid({ length: 1.5 })).toThrow("Invalid nanoid length: 1.5");
+});
+
 test("cuid", () => {
   const cuid = z.string().cuid();
   cuid.parse("ckopqwooh000001la8mbi2im9");

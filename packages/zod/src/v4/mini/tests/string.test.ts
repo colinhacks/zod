@@ -177,6 +177,13 @@ test("z.nanoid", () => {
   expect(() => z.parse(a, "abc")).toThrow();
 });
 
+test("z.nanoid custom length", () => {
+  const a = z.nanoid({ length: 64 });
+  const id = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+  expect(z.parse(a, id)).toEqual(id);
+  expect(() => z.parse(a, "8FHZpIxleEK3axQRBNNjN")).toThrow();
+});
+
 test("z.cuid", () => {
   const a = z.cuid();
   expect(z.parse(a, "cixs7y0c0000f7x3b1z6m3w6r")).toEqual("cixs7y0c0000f7x3b1z6m3w6r");

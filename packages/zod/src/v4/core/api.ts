@@ -229,8 +229,8 @@ export function _emoji<T extends schemas.$ZodEmoji>(
 }
 
 // NanoID
-export type $ZodNanoIDParams = StringFormatParams<schemas.$ZodNanoID, "when">;
-export type $ZodCheckNanoIDParams = CheckStringFormatParams<schemas.$ZodNanoID, "when">;
+export type $ZodNanoIDParams = StringFormatParams<schemas.$ZodNanoID, "when" | "pattern">;
+export type $ZodCheckNanoIDParams = CheckStringFormatParams<schemas.$ZodNanoID, "when" | "pattern">;
 // @__NO_SIDE_EFFECTS__
 export function _nanoid<T extends schemas.$ZodNanoID>(
   Class: util.SchemaClass<T>,
