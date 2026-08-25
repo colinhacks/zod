@@ -3095,7 +3095,10 @@ export type $InferZodRecordInput<
   Value extends SomeType = $ZodType,
 > = Key extends $partial
   ? Partial<Record<core.input<Key> & PropertyKey, core.input<Value>>>
-  : Record<core.input<Key> & PropertyKey, core.input<Value>>;
+  : // A value schema that accepts an absent slot makes the key omittable on the way in, exactly as it does in an object shape. The output side keeps every key, since the parser fills each one.
+    [Value] extends [OptionalInSchema]
+    ? Partial<Record<core.input<Key> & PropertyKey, core.input<Value>>>
+    : Record<core.input<Key> & PropertyKey, core.input<Value>>;
 
 export interface $ZodRecordInternals<Key extends $ZodRecordKey = $ZodRecordKey, Value extends SomeType = $ZodType>
   extends $ZodTypeInternals<$InferZodRecordOutput<Key, Value>, $InferZodRecordInput<Key, Value>> {

@@ -1137,6 +1137,22 @@ describe("toJSONSchema", () => {
     `);
   });
 
+  test("record with enum keys drops required for an optional-in value under io: input", () => {
+    const schema = z.record(z.enum(["key1", "key2"]), z.number().default(0));
+
+    expect(z.toJSONSchema(schema, { io: "input" }).required).toBeUndefined();
+    expect(z.toJSONSchema(schema).required).toEqual(["key1", "key2"]);
+    expect(z.toJSONSchema(z.record(z.enum(["key1", "key2"]), z.number()), { io: "input" }).required).toEqual([
+      "key1",
+      "key2",
+    ]);
+    // A caught value keeps required, matching the input type and z.object().
+    expect(z.toJSONSchema(z.record(z.enum(["key1", "key2"]), z.number().catch(0)), { io: "input" }).required).toEqual([
+      "key1",
+      "key2",
+    ]);
+  });
+
   test("record filters enum values to strings and numbers for required", () => {
     enum NumberEnum {
       Zero = 0,

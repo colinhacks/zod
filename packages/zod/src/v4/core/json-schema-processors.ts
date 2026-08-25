@@ -484,7 +484,9 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
 
   // Add required for keys with discrete values (enum, literal, etc.)
   const keyValues = keyType._zod.values;
-  if (keyValues && !def.partial) {
+  // Every key shares one value schema, so an optional-in value makes the whole key set omittable on input. Output keeps them: the exhaustive branch assigns every key, even one whose value came back undefined.
+  const omittableOnInput = ctx.io === "input" && inputOptin(def.valueType as schemas.$ZodType) !== undefined;
+  if (keyValues && !def.partial && !omittableOnInput) {
     const validKeyValues = [...keyValues].filter(
       (v): v is string | number => typeof v === "string" || typeof v === "number"
     );
