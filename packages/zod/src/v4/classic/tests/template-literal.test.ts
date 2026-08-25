@@ -64,6 +64,9 @@ const measurement = z.templateLiteral([
   z.number().finite(),
   z.enum(["px", "em", "rem", "vh", "vw", "vmin", "vmax"]).optional(),
 ]);
+const decimalEnum = z.templateLiteral(["", z.enum({ A: 1.2 })]);
+// String(1e21) is "1e+21" — the `+` needs escaping too, or the pattern rejects its own enum value
+const exponentEnum = z.templateLiteral(["", z.enum({ A: 1e21 })]);
 
 const connectionString = z.templateLiteral([
   "mongodb://",
@@ -559,7 +562,7 @@ test("regexes", () => {
   expect(cuidZZZ._zod.pattern.source).toMatchInlineSnapshot(`"^[cC][0-9a-z]{6,}ZZZ$"`);
   expect(cuid2._zod.pattern.source).toMatchInlineSnapshot(`"^[0-9a-z]+$"`);
   expect(datetime._zod.pattern.source).toMatchInlineSnapshot(
-    `"^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"`
+    `"^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"`
   );
   expect(email._zod.pattern.source).toMatchInlineSnapshot(
     `"^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"`
@@ -590,6 +593,8 @@ test("regexes", () => {
   expect(brandedString._zod.pattern.source).toMatchInlineSnapshot(`"^[\\s\\S]{1,}$"`);
   expect(url._zod.pattern.source).toMatchInlineSnapshot(`"^https:\\/\\/\\w+\\.(com|net)$"`);
   expect(measurement._zod.pattern.source).toMatchInlineSnapshot(`"^-?\\d+(?:\\.\\d+)?((px|em|rem|vh|vw|vmin|vmax))?$"`);
+  expect(decimalEnum._zod.pattern.source).toMatchInlineSnapshot(`"^(1\\.2)$"`);
+  expect(exponentEnum._zod.pattern.source).toMatchInlineSnapshot(`"^(1e\\+21)$"`);
   expect(connectionString._zod.pattern.source).toMatchInlineSnapshot(
     `"^mongodb:\\/\\/(\\w+:\\w+@)?\\w+:-?\\d+(\\/(\\w+)?(\\?(\\w+=\\w+(&\\w+=\\w+)*)?)?)?$"`
   );
@@ -598,6 +603,8 @@ test("regexes", () => {
 test("template literal parsing - success - complex cases", () => {
   url.parse("https://example.com");
   url.parse("https://speedtest.net");
+
+  exponentEnum.parse("1e+21");
 
   // measurement.parse(1);
   // measurement.parse(1.1);
@@ -675,6 +682,8 @@ test("template literal parsing - failure - complex cases", () => {
   expect(() => measurement.parse("-Infinity")).toThrow();
   expect(() => measurement.parse("NaN")).toThrow();
   expect(() => measurement.parse("1%")).toThrow();
+  expect(() => decimalEnum.parse("1x2")).toThrow();
+  expect(() => exponentEnum.parse("1e21")).toThrow();
 
   expect(() => connectionString.parse("mongod://host:1234")).toThrow();
   expect(() => connectionString.parse("mongodb://:1234")).toThrow();

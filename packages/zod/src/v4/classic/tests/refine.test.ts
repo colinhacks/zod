@@ -338,6 +338,66 @@ describe("superRefine functionality", () => {
     }
   });
 
+  test("should preserve explicit nullish issue input", () => {
+    const schema = z.string().superRefine((_, ctx) => {
+      ctx.addIssue({ code: "custom", message: "default" });
+      ctx.addIssue({ code: "custom", message: "null", input: null });
+      ctx.addIssue({ code: "custom", message: "undefined", input: undefined });
+    });
+
+    const result = schema.safeParse("sensitive", { reportInput: true });
+    expect(result.success).toEqual(false);
+    if (!result.success) {
+      expect(result.error.issues).toHaveLength(3);
+      expect(result.error.issues[0].input).toEqual("sensitive");
+      expect(result.error.issues[1].input).toEqual(null);
+      expect(result.error.issues[2]).toHaveProperty("input");
+      expect(result.error.issues[2].input).toEqual(undefined);
+    }
+  });
+
+  test("should keep issue input aligned with the issue path", () => {
+    const nested = z.object({ a: z.string().nullable() }).superRefine((val, ctx) => {
+      if (val.a === null) ctx.addIssue({ code: "custom", path: ["a"], input: val.a, message: "no null" });
+    });
+
+    const direct = nested.safeParse({ a: null }, { reportInput: true });
+    expect(direct.success).toEqual(false);
+    if (!direct.success) {
+      expect(direct.error.issues[0].path).toEqual(["a"]);
+      expect(direct.error.issues[0].input).toEqual(null);
+    }
+
+    // Forwarding a nested parse's issues must not overwrite their input with the outer payload.
+    const inner = z.object({ x: z.string() });
+    const forwarding = z.unknown().superRefine((val, ctx) => {
+      const result = inner.safeParse(val, { reportInput: true });
+      if (!result.success) {
+        for (const iss of result.error.issues) {
+          ctx.addIssue({ code: "custom", path: iss.path, input: iss.input, message: iss.message });
+        }
+      }
+    });
+
+    const forwarded = forwarding.safeParse({}, { reportInput: true });
+    expect(forwarded.success).toEqual(false);
+    if (!forwarded.success) {
+      expect(forwarded.error.issues[0].path).toEqual(["x"]);
+      expect(forwarded.error.issues[0]).toHaveProperty("input");
+      expect(forwarded.error.issues[0].input).toEqual(undefined);
+    }
+  });
+
+  test("should surface an explicit undefined input to the error map", () => {
+    const schema = z.object({ a: z.string().optional() }).superRefine((val, ctx) => {
+      if (!val.a) ctx.addIssue({ code: "custom", path: ["a"], input: val.a });
+    });
+
+    const result = schema.safeParse({}, { error: (iss) => (iss.input === undefined ? "Required" : "Invalid") });
+    expect(result.success).toEqual(false);
+    if (!result.success) expect(result.error.issues[0].message).toEqual("Required");
+  });
+
   test("should respect fatal flag in superRefine", () => {
     const schema = z
       .string()

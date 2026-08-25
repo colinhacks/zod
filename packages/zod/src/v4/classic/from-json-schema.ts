@@ -1,5 +1,6 @@
 import type * as JSONSchema from "../core/json-schema.js";
 import { type $ZodRegistry, globalRegistry } from "../core/registries.js";
+import { assignProp, isPlainObject } from "../core/util.js";
 import * as _checks from "./checks.js";
 import * as _iso from "./iso.js";
 import * as _schemas from "./schemas.js";
@@ -118,6 +119,16 @@ function detectVersion(schema: JSONSchema.JSONSchema, defaultTarget?: JSONSchema
   return defaultTarget ?? "draft-2020-12";
 }
 
+// Positional schemas constrain the elements that are present; only minItems makes them required.
+function applyMinItems(items: ZodType[], minItems: number): ZodType[] {
+  return items.map((item, index) => (index < minItems ? item : item.optional()));
+}
+
+// Inverse of the encoding applied to $ref pointer segments in to-json-schema.ts. Per RFC 6901 the `~1` replacement must run before `~0`.
+function decodeJSONPointerSegment(segment: string): string {
+  return segment.replace(/~1/g, "/").replace(/~0/g, "~");
+}
+
 function resolveRef(ref: string, ctx: ConversionContext): JSONSchema.JSONSchema {
   if (!ref.startsWith("#")) {
     throw new Error("External $ref is not supported, only local refs (#/...) are allowed");
@@ -133,7 +144,7 @@ function resolveRef(ref: string, ctx: ConversionContext): JSONSchema.JSONSchema 
   const defsKey = ctx.version === "draft-2020-12" ? "$defs" : "definitions";
 
   if (path[0] === defsKey) {
-    const key = path[1];
+    const key = path[1] === undefined ? undefined : decodeJSONPointerSegment(path[1]);
     if (!key || !ctx.defs[key]) {
       throw new Error(`Reference not found: ${ref}`);
     }
@@ -142,6 +153,48 @@ function resolveRef(ref: string, ctx: ConversionContext): JSONSchema.JSONSchema 
 
   throw new Error(`Reference not found: ${ref}`);
 }
+
+/**
+ * Rejects every own key that fails `keySchema`, before `objectSchema` runs. The
+ * guard has to see the raw input: an object parse drops `__proto__` and can add
+ * keys from a property `default`, so its output is not the set of names the
+ * instance actually carried.
+ */
+function checkPropertyNames(objectSchema: ZodType, keySchema: ZodType): ZodType {
+  // An identity transform, not z.any(), so `toJSONSchema` reports the object on both the input and the output side of the pipe.
+  const guard = z
+    .transform((value: unknown) => value)
+    .check((payload) => {
+      const value = payload.value;
+      if (typeof value !== "object" || value === null || Array.isArray(value)) return;
+      for (const key of Object.getOwnPropertyNames(value)) {
+        const result = keySchema.safeParse(key);
+        if (result.success) continue;
+        payload.issues.push({
+          code: "invalid_key",
+          origin: "record",
+          issues: result.error.issues,
+          input: key,
+          path: [key],
+          continue: true,
+        });
+      }
+    });
+  return guard.pipe(objectSchema);
+}
+
+function getTupleRest(restSchema: JSONSchema._JSONSchema | undefined, ctx: ConversionContext): ZodType | undefined {
+  if (restSchema === false) {
+    return undefined;
+  }
+  if (restSchema === undefined || restSchema === true) {
+    return z.any();
+  }
+  return convertSchema(restSchema, ctx);
+}
+
+// the RFC 3339 full-time keyword, narrower than `z.iso.time()`; local because sharing it via `timeSource` pins that builder into every bundle (+139 B gzipped on a mini `z.boolean()`)
+const fullTime = /^(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/;
 
 function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext): ZodType {
   // Handle unsupported features
@@ -271,13 +324,15 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         } else if (format === "uuid" || format === "guid") {
           stringSchema = stringSchema.check(z.uuid());
         } else if (format === "date-time") {
-          stringSchema = stringSchema.check(z.iso.datetime());
+          stringSchema = stringSchema.check(z.iso.datetime({ offset: true }));
         } else if (format === "date") {
           stringSchema = stringSchema.check(z.iso.date());
         } else if (format === "time") {
-          stringSchema = stringSchema.check(z.iso.time());
+          stringSchema = stringSchema.check(z.regex(fullTime));
         } else if (format === "duration") {
           stringSchema = stringSchema.check(z.iso.duration());
+        } else if (format === "hostname") {
+          stringSchema = stringSchema.check(z.hostname());
         } else if (format === "ipv4") {
           stringSchema = stringSchema.check(z.ipv4());
         } else if (format === "ipv6") {
@@ -294,6 +349,8 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
           stringSchema = stringSchema.check(z.base64url());
         } else if (format === "e164") {
           stringSchema = stringSchema.check(z.e164());
+        } else if (format === "credit_card") {
+          stringSchema = stringSchema.check(z.creditCard());
         } else if (format === "jwt") {
           stringSchema = stringSchema.check(z.jwt());
         } else if (format === "emoji") {
@@ -336,10 +393,12 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
       let numberSchema: ZodNumber = type === "integer" ? z.number().int() : z.number();
 
       // Apply constraints
-      if (typeof schema.minimum === "number") {
+
+      // In draft-04, `exclusiveMinimum: true` makes the sibling `minimum` exclusive rather than an independent bound, so the inclusive `.min()` is skipped; emitting it too would be dominated by the exclusive check and report a second, weaker issue.
+      if (typeof schema.minimum === "number" && schema.exclusiveMinimum !== true) {
         numberSchema = numberSchema.min(schema.minimum);
       }
-      if (typeof schema.maximum === "number") {
+      if (typeof schema.maximum === "number" && schema.exclusiveMaximum !== true) {
         numberSchema = numberSchema.max(schema.maximum);
       }
       if (typeof schema.exclusiveMinimum === "number") {
@@ -375,38 +434,21 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
       const properties = schema.properties || {};
       const requiredSet = new Set(schema.required || []);
 
+      const additionalSchema =
+        typeof schema.additionalProperties === "object"
+          ? convertSchema(schema.additionalProperties as JSONSchema.JSONSchema, ctx)
+          : undefined;
+
       // Convert properties - mark optional ones
       for (const [key, propSchema] of Object.entries(properties)) {
         const propZodSchema = convertSchema(propSchema as JSONSchema.JSONSchema, ctx);
-        // If not in required array, make it optional
-        shape[key] = requiredSet.has(key) ? propZodSchema : propZodSchema.optional();
-      }
-
-      // Handle propertyNames
-      if (schema.propertyNames) {
-        const keySchema = convertSchema(schema.propertyNames, ctx) as ZodString;
-        const valueSchema =
-          schema.additionalProperties && typeof schema.additionalProperties === "object"
-            ? convertSchema(schema.additionalProperties as JSONSchema.JSONSchema, ctx)
-            : z.any();
-
-        // Case A: No properties (pure record)
-        if (Object.keys(shape).length === 0) {
-          zodSchema = z.record(keySchema, valueSchema);
-          break;
-        }
-
-        // Case B: With properties (intersection of object and looseRecord)
-        const objectSchema = z.object(shape).passthrough();
-        const recordSchema = z.looseRecord(keySchema, valueSchema);
-        zodSchema = z.intersection(objectSchema, recordSchema);
-        break;
+        // If not in required array, make it optional. assignProp so a __proto__ key becomes an own property instead of hitting the inherited setter
+        assignProp(shape, key, requiredSet.has(key) ? propZodSchema : propZodSchema.optional());
       }
 
       // Handle patternProperties
       if (schema.patternProperties) {
-        // patternProperties: keys matching pattern must satisfy corresponding schema
-        // Use loose records so non-matching keys pass through
+        // patternProperties: keys matching pattern must satisfy corresponding schema. Use loose records so non-matching keys pass through
         const patternProps = schema.patternProperties;
         const patternKeys = Object.keys(patternProps);
         const looseRecords: ZodType[] = [];
@@ -437,45 +479,72 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
           }
           zodSchema = result;
         }
-        break;
+
+        // When additionalProperties is false, reject keys that are neither defined in properties nor matched by any patternProperty.
+        if (schema.additionalProperties === false) {
+          const propertyKeys = Object.keys(shape);
+          const patterns = patternKeys.map((p) => new RegExp(p));
+          const basePatternSchema = zodSchema;
+          zodSchema = zodSchema.check((payload) => {
+            if (!isPlainObject(payload.value)) return;
+            const unrecognized: string[] = [];
+            for (const key of Object.keys(payload.value)) {
+              if (propertyKeys.includes(key)) continue;
+              if (patterns.some((regex) => regex.test(key))) continue;
+              unrecognized.push(key);
+            }
+            if (unrecognized.length) {
+              payload.issues.push({
+                code: "unrecognized_keys",
+                keys: unrecognized,
+                input: payload.value,
+                inst: basePatternSchema,
+              });
+            }
+          });
+        }
+      } else {
+        // Handle additionalProperties. In JSON Schema, additionalProperties defaults to true (allow any extra properties). In Zod, objects strip unknown keys by default, so we need to handle this explicitly
+        const objectSchema = z.object(shape);
+        if (schema.additionalProperties === false) {
+          // Strict mode - no extra properties allowed
+          zodSchema = objectSchema.strict();
+        } else if (additionalSchema) {
+          // Extra properties must match the specified schema
+          zodSchema = objectSchema.catchall(additionalSchema);
+        } else {
+          // additionalProperties is true or undefined - allow any extra properties (passthrough)
+          zodSchema = objectSchema.passthrough();
+        }
       }
 
-      // Handle additionalProperties
-      // In JSON Schema, additionalProperties defaults to true (allow any extra properties)
-      // In Zod, objects strip unknown keys by default, so we need to handle this explicitly
-      const objectSchema = z.object(shape);
-      if (schema.additionalProperties === false) {
-        // Strict mode - no extra properties allowed
-        zodSchema = objectSchema.strict();
-      } else if (typeof schema.additionalProperties === "object") {
-        // Extra properties must match the specified schema
-        zodSchema = objectSchema.catchall(convertSchema(schema.additionalProperties as JSONSchema.JSONSchema, ctx));
-      } else {
-        // additionalProperties is true or undefined - allow any extra properties (passthrough)
-        zodSchema = objectSchema.passthrough();
+      // propertyNames constrains key *names* only, and says nothing about which keys are required or how their values validate. Layering it on top of the result keeps properties/patternProperties/additionalProperties composing underneath. `true` allows every name, so it needs no guard.
+      if (schema.propertyNames !== undefined && schema.propertyNames !== true) {
+        // Keys are always strings, so a propertyNames subschema that omits `type` still constrains them — without this it would convert to z.any().
+        const keyJSONSchema =
+          typeof schema.propertyNames === "object" && schema.propertyNames.type === undefined
+            ? { type: "string", ...schema.propertyNames }
+            : schema.propertyNames;
+        zodSchema = checkPropertyNames(zodSchema, convertSchema(keyJSONSchema as JSONSchema.JSONSchema, ctx));
       }
       break;
     }
 
     case "array": {
-      // TODO: uniqueItems is not supported
-      // TODO: contains/minContains/maxContains are not supported
+      // TODO: uniqueItems and contains/minContains/maxContains are not supported
+
       // Check if this is a tuple (prefixItems or items as array)
       const prefixItems = schema.prefixItems;
       const items = schema.items;
 
       if (prefixItems && Array.isArray(prefixItems)) {
         // Tuple with prefixItems (draft-2020-12)
+        const minItems = typeof schema.minItems === "number" ? schema.minItems : 0;
         const tupleItems = prefixItems.map((item) => convertSchema(item as JSONSchema.JSONSchema, ctx));
-        const rest =
-          items && typeof items === "object" && !Array.isArray(items)
-            ? convertSchema(items as JSONSchema.JSONSchema, ctx)
-            : undefined;
-        if (rest) {
-          zodSchema = z.tuple(tupleItems as [ZodType, ...ZodType[]]).rest(rest);
-        } else {
-          zodSchema = z.tuple(tupleItems as [ZodType, ...ZodType[]]);
-        }
+        const positionalItems = applyMinItems(tupleItems, minItems);
+        const rest = !Array.isArray(items) ? getTupleRest(items, ctx) : undefined;
+        const tupleSchema = z.tuple(positionalItems as [ZodType, ...ZodType[]]);
+        zodSchema = rest ? tupleSchema.rest(rest) : tupleSchema;
         // Apply minItems/maxItems constraints to tuples
         if (typeof schema.minItems === "number") {
           zodSchema = zodSchema.check(z.minLength(schema.minItems));
@@ -485,16 +554,12 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         }
       } else if (Array.isArray(items)) {
         // Tuple with items array (draft-7)
+        const minItems = typeof schema.minItems === "number" ? schema.minItems : 0;
         const tupleItems = items.map((item) => convertSchema(item as JSONSchema.JSONSchema, ctx));
-        const rest =
-          schema.additionalItems && typeof schema.additionalItems === "object"
-            ? convertSchema(schema.additionalItems as JSONSchema.JSONSchema, ctx)
-            : undefined; // additionalItems: false means no rest, handled by default tuple behavior
-        if (rest) {
-          zodSchema = z.tuple(tupleItems as [ZodType, ...ZodType[]]).rest(rest);
-        } else {
-          zodSchema = z.tuple(tupleItems as [ZodType, ...ZodType[]]);
-        }
+        const positionalItems = applyMinItems(tupleItems, minItems);
+        const rest = getTupleRest(schema.additionalItems, ctx);
+        const tupleSchema = z.tuple(positionalItems as [ZodType, ...ZodType[]]);
+        zodSchema = rest ? tupleSchema.rest(rest) : tupleSchema;
         // Apply minItems/maxItems constraints to tuples
         if (typeof schema.minItems === "number") {
           zodSchema = zodSchema.check(z.minLength(schema.minItems));
@@ -540,6 +605,7 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
   const hasExplicitType = schema.type || schema.enum !== undefined || schema.const !== undefined;
 
   // Process composition keywords LAST (they can appear together)
+
   // Handle anyOf - wrap base schema with union
   if (schema.anyOf && Array.isArray(schema.anyOf)) {
     const options = schema.anyOf.map((s) => convertSchema(s, ctx));
@@ -578,16 +644,12 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
     baseSchema = z.readonly(baseSchema);
   }
 
-  // Apply `default` so it wraps the fully-composed schema. This ensures
-  // `parse(undefined) -> default` works regardless of which branch of
-  // `convertBaseSchema` produced the inner schema (enum/const/not/typed/etc.).
+  // Apply `default` so it wraps the fully-composed schema. This ensures `parse(undefined) -> default` works regardless of which branch of `convertBaseSchema` produced the inner schema (enum/const/not/typed/etc.).
   if (schema.default !== undefined) {
     baseSchema = baseSchema.default(schema.default);
   }
 
-  // Collect non-description annotation metadata into the user-supplied
-  // registry. Description is handled separately below via `.describe()` to
-  // preserve the contract that `schema.description` reads from globalRegistry.
+  // Collect non-description annotation metadata into the user-supplied registry. Description is handled separately below via `.describe()` to preserve the contract that `schema.description` reads from globalRegistry.
   const extraMeta: Record<string, unknown> = {};
 
   const coreMetadataKeys = ["$id", "id", "$comment", "$anchor", "$vocabulary", "$dynamicRef", "$dynamicAnchor"];
@@ -604,9 +666,14 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
     }
   }
 
+  // `propertyNames` is enforced by a key guard, which `toJSONSchema` cannot infer, so the original keyword is carried as metadata to keep the round-trip lossless. Only where it was actually applied: on any other type it is inert, and on a `$ref` the metadata would land on the target every reference shares.
+  if (schema.propertyNames !== undefined && schema.type === "object" && schema.$ref === undefined) {
+    extraMeta.propertyNames = schema.propertyNames;
+  }
+
   for (const key of Object.keys(schema)) {
     if (!RECOGNIZED_KEYS.has(key)) {
-      extraMeta[key] = schema[key];
+      assignProp(extraMeta, key, schema[key]);
     }
   }
 
@@ -614,9 +681,7 @@ function convertSchema(schema: JSONSchema.JSONSchema | boolean, ctx: ConversionC
     ctx.registry.add(baseSchema, extraMeta);
   }
 
-  // Apply description last. `.describe()` clones the schema and sets
-  // `_zod.parent` on the clone, so registry lookups on the returned reference
-  // still resolve `extraMeta` via parent inheritance.
+  // Apply description last. `.describe()` clones the schema and sets `_zod.parent` on the clone, so registry lookups on the returned reference still resolve `extraMeta` via parent inheritance.
   if (schema.description) {
     baseSchema = baseSchema.describe(schema.description);
   }
@@ -632,10 +697,7 @@ export function fromJSONSchema(schema: JSONSchema.JSONSchema | boolean, params?:
     return schema ? z.any() : z.never();
   }
 
-  // Normalize input via a JSON round-trip. This guarantees the converter
-  // walks a plain, finite, JSON-valid object graph: cyclic inputs fail here,
-  // getter/Proxy-based properties are materialized into static values, and
-  // class instances collapse to plain objects.
+  // Normalize input via a JSON round-trip. This guarantees the converter walks a plain, finite, JSON-valid object graph: cyclic inputs fail here, getter/Proxy-based properties are materialized into static values, and class instances collapse to plain objects.
   let normalized: JSONSchema.JSONSchema;
   try {
     normalized = JSON.parse(JSON.stringify(schema));

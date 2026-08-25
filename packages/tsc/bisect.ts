@@ -35,9 +35,7 @@ let MAX: number | null = null;
 let MIN = 1;
 let CURR = MIN;
 
-// regular object: 43478
-// regular interface: 33328
-// shape interface: 43472
+// regular object: 43478 regular interface: 33328 shape interface: 43472
 
 while (!MAX || MAX - MIN > 2) {
   gen.generateExtendChain({

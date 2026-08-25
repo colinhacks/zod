@@ -1,5 +1,5 @@
 import * as z from "./external.js";
 
-export { z };
 export * from "./external.js";
-export default z;
+// See the note in `src/index.ts` — aliasing keeps the default export shakable.
+export { z, z as default };

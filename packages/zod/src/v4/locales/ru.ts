@@ -64,6 +64,14 @@ const error: () => errors.$ZodErrorMap = () => {
       },
       verb: "иметь",
     },
+    map: {
+      unit: {
+        one: "элемент",
+        few: "элемента",
+        many: "элементов",
+      },
+      verb: "иметь",
+    },
   };
 
   function getSizing(origin: string): RussianSizable | null {
@@ -93,12 +101,14 @@ const error: () => errors.$ZodErrorMap = () => {
     duration: "ISO длительность",
     ipv4: "IPv4 адрес",
     ipv6: "IPv6 адрес",
+    mac: "MAC адрес",
     cidrv4: "IPv4 диапазон",
     cidrv6: "IPv6 диапазон",
     base64: "строка в формате base64",
     base64url: "строка в формате base64url",
     json_string: "JSON строка",
     e164: "номер E.164",
+    credit_card: "номер кредитной карты",
     jwt: "JWT",
     template_literal: "ввод",
   };
