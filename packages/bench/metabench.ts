@@ -2,7 +2,7 @@ import Benchmark from "benchmark";
 import chalk from "chalk";
 import { Table } from "console-table-printer";
 import * as mitata from "mitata";
-import { Bench } from "tinybench";
+import { Bench, type Task, type TaskResultWithStatistics } from "tinybench";
 
 // import { assertNever } from "../packages/zod-core/src/index.js";
 import { formatNumber } from "./benchUtil.js";
@@ -89,27 +89,24 @@ class Tinybench extends Metabench {
     console.log(`   benchmarking ${chalk.bold.white(this.name)} with ${chalk.bold.white(this.runner)}`);
 
     bench.addEventListener("cycle", (e) => {
-      const task = e.task?.result;
-      if (!task) throw new Error("Task has no result");
+      const stats = statsOf(e.task);
 
       console.log(
         chalk.dim("   ") +
           chalk.white.dim(`→ `) +
           chalk.white(e.task.name) +
           chalk.white.dim(" ") +
-          chalk.cyan(formatNumber(task.hz)) +
+          chalk.cyan(formatNumber(stats.throughput.mean)) +
           chalk.cyan(` ops/sec`) +
-          chalk.dim(` (${e.task.result?.totalTime.toFixed(2)}ms)`)
+          chalk.dim(` (${stats.totalTime.toFixed(2)}ms)`)
       );
     });
 
-    await bench.warmup();
     await bench.run();
 
-    const sorted = bench.tasks.sort((a, b) => {
-      if (!a.result || !b.result) throw new Error("Task has no result");
-      return a.result?.mean - b.result?.mean;
-    });
+    const sorted = bench.tasks
+      .map((task) => ({ name: task.name, stats: statsOf(task) }))
+      .sort((a, b) => b.stats.throughput.mean - a.stats.throughput.mean);
     // const fastest = sorted[0];
     const slowest = sorted[sorted.length - 1];
 
@@ -124,18 +121,17 @@ class Tinybench extends Metabench {
       ],
     });
 
-    for (const task of sorted) {
-      const result = task.result;
-      if (!result) throw new Error("Task has no result");
-      if (!slowest.result) throw new Error("Task has no result");
+    for (const { name, stats } of sorted) {
       table.addRow({
-        name: task.name,
+        name,
         summary:
-          task === slowest ? "slowest" : `${(result.hz / slowest.result.hz).toFixed(3)}x faster than ${slowest.name}`,
-        "ops/sec": `${formatNumber(result.hz)} ops/sec`,
-        "time/op": `${formatNumber(result.mean / 1000)}s`,
-        margin: `±${result.rme.toFixed(2)}%`,
-        samples: result.samples.length,
+          stats === slowest.stats
+            ? "slowest"
+            : `${(stats.throughput.mean / slowest.stats.throughput.mean).toFixed(3)}x faster than ${slowest.name}`,
+        "ops/sec": `${formatNumber(stats.throughput.mean)} ops/sec`,
+        "time/op": `${formatNumber(stats.latency.mean / 1000)}s`,
+        margin: `±${stats.latency.rme.toFixed(2)}%`,
+        samples: stats.latency.samplesCount,
       });
     }
     const rendered = `   ${table.render().split("\n").join("\n   ")}`;
@@ -143,6 +139,13 @@ class Tinybench extends Metabench {
     console.log(rendered);
     console.log();
   }
+}
+
+// tinybench only attaches statistics once a task reaches a terminal state
+function statsOf(task: Task): TaskResultWithStatistics {
+  const result = task.result;
+  if (!("latency" in result)) throw new Error(`Task "${task.name}" has no result`);
+  return result;
 }
 
 class BenchmarkJS extends Metabench {

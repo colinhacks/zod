@@ -6,11 +6,11 @@
   "main": "./lib/index.js",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^22.10.5",
-    "@typescript/analyze-trace": "^0.10.1",
-    "arktype": "^2.0.0",
-    "execa": "^9.5.2",
-    "valibot": "^1.3.1",
+    "@types/node": "^26.3.0",
+    "@typescript/analyze-trace": "^0.11.1",
+    "arktype": "^2.2.3",
+    "execa": "^10.0.1",
+    "valibot": "^1.4.2",
     "zod": "workspace:*",
     "zod3": "npm:zod@^3.0.0",
     "zod4": "npm:zod@4.0.0-beta.20250420T053007"

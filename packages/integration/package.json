@@ -5,12 +5,12 @@
   "version": "1.0.0",
   "license": "MIT",
   "devDependencies": {
-    "@ai-sdk/openai": "^3.0.2",
-    "@types/node": "^22.13.13",
-    "ai": "^6.0.5",
+    "@ai-sdk/openai": "^4.0.47",
+    "@types/node": "^26.3.0",
+    "ai": "^7.0.79",
     "drizzle-orm": "^0.45.2",
     "drizzle-zod": "^0.8.3",
-    "typescript": "^5.8.2"
+    "typescript": "^5.9.2"
   },
   "scripts": {
     "test:all": "pnpm test:source && pnpm test:built",
