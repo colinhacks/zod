@@ -114,17 +114,13 @@ test("pick/omit/required/partial - do not allow unknown keys", () => {
     age: z.number(),
   });
 
-  // Mixed valid + invalid keys
-  // @ts-expect-error
+  // mixed valid + invalid keys are caught at runtime only — the mask type cannot reject them once the shape is deferred
   expect(() => schema.pick({ name: true, asdf: true }).safeParse({})).toThrow();
-  // @ts-expect-error
   expect(() => schema.omit({ name: true, asdf: true }).safeParse({})).toThrow();
-  // @ts-expect-error
   expect(() => schema.partial({ name: true, asdf: true }).safeParse({})).toThrow();
-  // @ts-expect-error
   expect(() => schema.required({ name: true, asdf: true }).safeParse({})).toThrow();
 
-  // Only invalid keys
+  // an all-invalid mask still fails to compile, since it has no key in common with the shape
   // @ts-expect-error
   expect(() => schema.pick({ $unknown: true }).safeParse({})).toThrow();
   // @ts-expect-error

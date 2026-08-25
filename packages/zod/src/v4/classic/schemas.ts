@@ -1542,7 +1542,7 @@ export interface ZodObject<
   "~standard": ZodStandardSchemaWithJSON<this>;
   shape: Shape;
 
-  // Return types index `this` instead of naming `Shape`/`Config` directly. TypeScript resolves a member of `T extends ZodObject` through the constraint, so naming the parameter collapses the result to the `ZodObject` default whenever a method is called on a bare type parameter. Parameter types deliberately stay on `Shape`: deferring those leaves `safeExtend`'s conditional shape unresolvable and rejects calls that compile today.
+  // return types index `this`, not `Shape`/`Config` — naming the parameter resolves it through the constraint and collapses to the `ZodObject` default on a bare type parameter
   keyof(): ZodEnum<util.ToEnum<keyof this["shape"] & string>>;
   /** Define a schema to validate all unrecognized keys. This overrides the existing strict/loose behavior. */
   catchall<T extends core.SomeType>(schema: T): ZodObject<this["shape"], core.$catchall<T>>;
@@ -1571,12 +1571,13 @@ export interface ZodObject<
    */
   merge<U extends ZodObject>(other: U): ZodObject<util.Extend<this["shape"], U["shape"]>, U["_zod"]["config"]>;
 
+  // no `Record<Exclude<keyof M, keyof Shape>, never>` guard — it cannot resolve once `Shape` is deferred, so it rejected every chained call; `util.pick` still throws on an unrecognized key
   pick<M extends util.Mask<keyof Shape>>(
-    mask: M & Record<Exclude<keyof M, keyof Shape>, never>
+    mask: M
   ): ZodObject<util.Flatten<Pick<this["shape"], Extract<keyof this["shape"], keyof M>>>, this["_zod"]["config"]>;
 
   omit<M extends util.Mask<keyof Shape>>(
-    mask: M & Record<Exclude<keyof M, keyof Shape>, never>
+    mask: M
   ): ZodObject<util.Flatten<Omit<this["shape"], Extract<keyof this["shape"], keyof M>>>, this["_zod"]["config"]>;
 
   partial(): ZodObject<
@@ -1586,7 +1587,7 @@ export interface ZodObject<
     this["_zod"]["config"]
   >;
   partial<M extends util.Mask<keyof Shape>>(
-    mask: M & Record<Exclude<keyof M, keyof Shape>, never>
+    mask: M
   ): ZodObject<
     {
       -readonly [k in keyof this["shape"]]: k extends keyof M
@@ -1607,7 +1608,7 @@ export interface ZodObject<
     this["_zod"]["config"]
   >;
   exactPartial<M extends util.Mask<keyof Shape>>(
-    mask: M & Record<Exclude<keyof M, keyof Shape>, never>
+    mask: M
   ): ZodObject<
     {
       -readonly [k in keyof this["shape"]]: k extends keyof M ? ZodExactOptional<this["shape"][k]> : this["shape"][k];
@@ -1623,7 +1624,7 @@ export interface ZodObject<
     this["_zod"]["config"]
   >;
   required<M extends util.Mask<keyof Shape>>(
-    mask: M & Record<Exclude<keyof M, keyof Shape>, never>
+    mask: M
   ): ZodObject<
     {
       -readonly [k in keyof this["shape"]]: k extends keyof M ? ZodNonOptional<this["shape"][k]> : this["shape"][k];
