@@ -159,12 +159,16 @@ test("chained object methods keep the shape through a generic wrapper", () => {
   const looseRequired = <T extends z.ZodObject>(s: T) => s.loose().required({ b: true });
   const catchallPartial = <T extends z.ZodObject>(s: T) => s.catchall(z.string()).partial({ a: true });
   const stripExactPartial = <T extends z.ZodObject>(s: T) => s.strip().exactPartial({ a: true });
+  const extendPick = <T extends z.ZodObject>(s: T) => s.extend({ c: z.boolean() }).pick({ a: true });
+  const mergeOmit = <T extends z.ZodObject>(s: T) => s.merge(z.object({ c: z.boolean() })).omit({ a: true });
 
   expectTypeOf<Infer<typeof strictPick<Src>>>().toEqualTypeOf<{ a: string }>();
   expectTypeOf<Infer<typeof partialOmit<Src>>>().toEqualTypeOf<{ b?: number | undefined }>();
   expectTypeOf<Infer<typeof looseRequired<Src>>["b"]>().toEqualTypeOf<number>();
   expectTypeOf<Infer<typeof catchallPartial<Src>>["a"]>().toEqualTypeOf<string | undefined>();
   expectTypeOf<Infer<typeof stripExactPartial<Src>>>().toEqualTypeOf<{ a?: string; b?: number | undefined }>();
+  expectTypeOf<Infer<typeof extendPick<Src>>>().toEqualTypeOf<{ a: string }>();
+  expectTypeOf<Infer<typeof mergeOmit<Src>>>().toEqualTypeOf<{ c: boolean; b?: number | undefined }>();
 
   // known limitation: safeExtend keeps a compatibility guard that references `Shape`, and it cannot resolve against a chained receiver
   // @ts-expect-error
