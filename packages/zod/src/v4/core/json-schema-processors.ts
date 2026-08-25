@@ -154,6 +154,13 @@ export const enumProcessor: Processor<schemas.$ZodEnum> = (schema, _ctx, json, _
 
 export const literalProcessor: Processor<schemas.$ZodLiteral> = (schema, ctx, json, params) => {
   const def = schema._zod.def as schemas.$ZodLiteralDef<any>;
+
+  // a literal with no values accepts nothing, same as z.never()
+  if (def.values.length === 0) {
+    json.not = {};
+    return;
+  }
+
   const vals: (string | number | boolean | null)[] = [];
   for (const val of def.values) {
     if (val === undefined) {
