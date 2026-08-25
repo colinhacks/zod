@@ -14,16 +14,26 @@ function withChecks(side: core.$ZodType, checks: core.$ZodTypeDef["checks"]): co
   return clone(side, mergeDefs(def, { checks: [...(def.checks ?? []), ...checks] }), { parent: true });
 }
 
-/** Returns a copy of the schema with every pipe replaced by its input side. A pipe's own checks are dropped, since they constrain the decoded value the input side never produces. */
+/** The out side, carrying the pipe's own checks: those run against the decoded value, which is what `out` produces. */
+function outSide(def: core.$ZodPipeDef): core.$ZodType {
+  return withChecks(def.out, def.checks);
+}
+
+/** The in side. `z.preprocess` pipes a transform into a schema, and a bare transform validates nothing, so the schema it feeds is the real input side — the resolution `toJSONSchema` already makes for this case. */
+function inSide(def: core.$ZodPipeDef): core.$ZodType {
+  return def.in._zod.traits.has("$ZodTransform") ? outSide(def) : def.in;
+}
+
+/** Returns a copy of the schema with every pipe replaced by its input side. A codec's checks are dropped: they constrain the decoded value the input side never produces. */
 export function input<T extends core.$ZodType>(schema: T): schemas.ZodType<core.input<T>, core.input<T>> {
   return visit(schema, {
-    pipe: (s) => s._zod.def.in,
+    pipe: (s) => inSide(s._zod.def),
   }) as schemas.ZodType<core.input<T>, core.input<T>>;
 }
 
 /** Returns a copy of the schema with every pipe replaced by its output side, carrying over the pipe's own checks. */
 export function output<T extends core.$ZodType>(schema: T): schemas.ZodType<core.output<T>, core.output<T>> {
   return visit(schema, {
-    pipe: (s) => withChecks(s._zod.def.out, s._zod.def.checks),
+    pipe: (s) => outSide(s._zod.def),
   }) as schemas.ZodType<core.output<T>, core.output<T>>;
 }
