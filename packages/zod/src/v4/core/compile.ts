@@ -1389,7 +1389,7 @@ function generateLiteralCheck(doc: Doc, ctx: CompileContext, schema: SomeType, a
   const def = schema._zod.def as unknown as { values: unknown[] };
   const values = def.values;
 
-  // Anything but a single value goes through Set.has: multi-value (z.literal(["a", "b", c])) so every allowed value participates, and empty (z.literal([])) so nothing matches — reading values[0] there would be undefined and compile to an `!== undefined` check that accepts it. Single-value stays inlined for speed.
+  // Anything but a single value goes through Set.has: multi-value so every value participates, empty so nothing does — values[0] would be undefined and compile to an `!== undefined` check that accepts it. Single-value stays inlined for speed.
   if (values.length !== 1) {
     const literalSet = addConstant(ctx, new Set(values));
     doc.write(`if (!${literalSet}.has(${accessor})) return INVALID;`);

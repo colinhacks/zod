@@ -146,6 +146,13 @@ export const dateProcessor: Processor<schemas.$ZodDate> = (schema, ctx, json, pa
 export const enumProcessor: Processor<schemas.$ZodEnum> = (schema, _ctx, json, _params) => {
   const def = schema._zod.def as schemas.$ZodEnumDef;
   const values = getEnumValues(def.entries);
+
+  // an empty enum accepts nothing, same as z.never()
+  if (values.length === 0) {
+    json.not = {};
+    return;
+  }
+
   // Number enums can have both string and number values
   if (values.every((v) => typeof v === "number")) json.type = "number";
   if (values.every((v) => typeof v === "string")) json.type = "string";

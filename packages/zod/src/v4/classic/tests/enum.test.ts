@@ -166,6 +166,8 @@ test("empty enum matches nothing", () => {
   expect(z.templateLiteral(["", Empty]).safeParse("").success).toEqual(false);
   expect(z.templateLiteral(["", z.object({}).keyof()]).safeParse("").success).toEqual(false);
 
+  expect(z.toJSONSchema(Empty)).toMatchObject({ not: {} });
+
   expect(z.templateLiteral(["", z.enum([""])]).safeParse("").success).toEqual(true);
 });
 

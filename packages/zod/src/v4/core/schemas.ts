@@ -3497,9 +3497,9 @@ export const $ZodEnum: core.$constructor<$ZodEnum> = /*@__PURE__*/ core.$constru
 
   const patternValues = values.filter((k) => util.propertyKeyTypes.has(typeof k));
 
-  // an empty alternation compiles to /^()$/, which matches the empty string; `(?!)` matches nothing
+  // unmatchable fallback, RE2-safe: an empty alternation would compile to /^()$/, which matches ""
   inst._zod.pattern = new RegExp(
-    patternValues.length ? `^(${patternValues.map((o) => util.escapeRegex(o.toString())).join("|")})$` : "^(?!)$"
+    patternValues.length ? `^(${patternValues.map((o) => util.escapeRegex(o.toString())).join("|")})$` : "^[^\\s\\S]$"
   );
 
   inst._zod.parse = (payload, _ctx) => {
@@ -3550,13 +3550,13 @@ export const $ZodLiteral: core.$constructor<$ZodLiteral> = /*@__PURE__*/ core.$c
     const values = new Set<util.Literal>(def.values);
     inst._zod.values = values;
 
-    // an empty alternation compiles to /^()$/, which matches the empty string; `(?!)` matches nothing
+    // unmatchable fallback, RE2-safe: an empty alternation would compile to /^()$/, which matches ""
     inst._zod.pattern = new RegExp(
       def.values.length
         ? `^(${def.values
             .map((o) => (typeof o === "string" ? util.escapeRegex(o) : o ? util.escapeRegex(o.toString()) : String(o)))
             .join("|")})$`
-        : "^(?!)$"
+        : "^[^\\s\\S]$"
     );
 
     inst._zod.parse = (payload, _ctx) => {
