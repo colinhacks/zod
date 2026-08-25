@@ -476,3 +476,25 @@ test("too_big tuple still surfaces element-wise type errors for present indices"
     ]
   `);
 });
+
+test("partial", () => {
+  const schema = z.tuple([z.string(), z.number(), z.boolean()]).partial();
+  expectTypeOf<z.infer<typeof schema>>().toEqualTypeOf<
+    [(string | undefined)?, (number | undefined)?, (boolean | undefined)?]
+  >();
+
+  expect(schema.parse([])).toEqual([]);
+  expect(schema.parse(["a"])).toEqual(["a"]);
+  expect(schema.parse(["a", 1, true])).toEqual(["a", 1, true]);
+  expect(schema.safeParse(["a", "b"]).success).toEqual(false);
+  expect(schema.safeParse(["a", 1, true, 4]).success).toEqual(false);
+});
+
+test("partial leaves rest alone", () => {
+  const schema = z.tuple([z.string()], z.number()).partial();
+  expectTypeOf<z.infer<typeof schema>>().toEqualTypeOf<[(string | undefined)?, ...number[]]>();
+
+  expect(schema.parse([])).toEqual([]);
+  expect(schema.parse(["a", 1, 2])).toEqual(["a", 1, 2]);
+  expect(schema.safeParse([undefined, "b"]).success).toEqual(false);
+});

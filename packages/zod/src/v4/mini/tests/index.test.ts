@@ -1045,3 +1045,13 @@ test("getDiscriminatedOption", () => {
   expect(z.getDiscriminatedOption(schema, "b")).toBe(b);
   expectTypeOf(z.getDiscriminatedOption(schema, "a")).toEqualTypeOf<typeof a>();
 });
+
+test("z.partial on a tuple", () => {
+  const schema = z.partial(z.tuple([z.string(), z.number()]));
+  expectTypeOf<z.infer<typeof schema>>().toEqualTypeOf<[(string | undefined)?, (number | undefined)?]>();
+
+  expect(z.safeParse(schema, []).success).toEqual(true);
+  expect(z.safeParse(schema, ["a"]).success).toEqual(true);
+  expect(z.safeParse(schema, ["a", 1]).success).toEqual(true);
+  expect(z.safeParse(schema, ["a", "b"]).success).toEqual(false);
+});

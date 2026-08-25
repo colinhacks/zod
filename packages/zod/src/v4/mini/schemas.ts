@@ -1012,8 +1012,18 @@ export function partial<T extends ZodMiniObject, M extends util.Mask<keyof T["sh
   T["_zod"]["config"]
 >;
 // @__NO_SIDE_EFFECTS__
-export function partial(schema: ZodMiniObject, mask?: object) {
-  return util.partial(ZodMiniOptional, schema, mask);
+export function partial<T extends util.TupleItems, Rest extends SomeType | null>(
+  schema: ZodMiniTuple<T, Rest>
+): ZodMiniTuple<{ -readonly [k in keyof T]: ZodMiniOptional<T[k]> }, Rest>;
+// @__NO_SIDE_EFFECTS__
+export function partial(schema: ZodMiniObject | ZodMiniTuple, mask?: object) {
+  const def = schema._zod.def;
+  return def.type === "tuple"
+    ? util.clone(schema, {
+        ...def,
+        items: def.items.map((item) => new ZodMiniOptional({ type: "optional", innerType: item as core.$ZodType })),
+      })
+    : util.partial(ZodMiniOptional, schema as ZodMiniObject, mask);
 }
 
 // @__NO_SIDE_EFFECTS__
