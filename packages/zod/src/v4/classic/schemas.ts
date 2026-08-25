@@ -1542,90 +1542,93 @@ export interface ZodObject<
   "~standard": ZodStandardSchemaWithJSON<this>;
   shape: Shape;
 
-  keyof(): ZodEnum<util.ToEnum<keyof Shape & string>>;
+  // Return types index `this` instead of naming `Shape`/`Config` directly. TypeScript resolves a member of `T extends ZodObject` through the constraint, so naming the parameter collapses the result to the `ZodObject` default whenever a method is called on a bare type parameter. Parameter types deliberately stay on `Shape`: deferring those leaves `safeExtend`'s conditional shape unresolvable and rejects calls that compile today.
+  keyof(): ZodEnum<util.ToEnum<keyof this["shape"] & string>>;
   /** Define a schema to validate all unrecognized keys. This overrides the existing strict/loose behavior. */
-  catchall<T extends core.SomeType>(schema: T): ZodObject<Shape, core.$catchall<T>>;
+  catchall<T extends core.SomeType>(schema: T): ZodObject<this["shape"], core.$catchall<T>>;
 
   /** @deprecated Use `z.looseObject()` or `.loose()` instead. */
-  passthrough(): ZodObject<Shape, core.$loose>;
+  passthrough(): ZodObject<this["shape"], core.$loose>;
   /** Consider `z.looseObject(A.shape)` instead */
-  loose(): ZodObject<Shape, core.$loose>;
+  loose(): ZodObject<this["shape"], core.$loose>;
 
   /** Consider `z.strictObject(A.shape)` instead */
-  strict(): ZodObject<Shape, core.$strict>;
+  strict(): ZodObject<this["shape"], core.$strict>;
 
   /** This is the default behavior. This method call is likely unnecessary. */
-  strip(): ZodObject<Shape, core.$strip>;
+  strip(): ZodObject<this["shape"], core.$strip>;
 
-  extend<U extends core.$ZodLooseShape>(shape: U): ZodObject<util.Extend<Shape, util.Writeable<U>>, Config>;
+  extend<U extends core.$ZodLooseShape>(
+    shape: U
+  ): ZodObject<util.Extend<this["shape"], util.Writeable<U>>, this["_zod"]["config"]>;
 
   safeExtend<U extends core.$ZodLooseShape>(
     shape: SafeExtendShape<Shape, U> & Partial<Record<keyof Shape, core.SomeType>>
-  ): ZodObject<util.Extend<Shape, util.Writeable<U>>, Config>;
+  ): ZodObject<util.Extend<this["shape"], util.Writeable<U>>, this["_zod"]["config"]>;
 
   /**
    * @deprecated Use [`A.extend(B.shape)`](https://zod.dev/api?id=extend) instead.
    */
-  merge<U extends ZodObject>(other: U): ZodObject<util.Extend<Shape, U["shape"]>, U["_zod"]["config"]>;
+  merge<U extends ZodObject>(other: U): ZodObject<util.Extend<this["shape"], U["shape"]>, U["_zod"]["config"]>;
 
   pick<M extends util.Mask<keyof Shape>>(
     mask: M & Record<Exclude<keyof M, keyof Shape>, never>
-  ): ZodObject<util.Flatten<Pick<Shape, Extract<keyof Shape, keyof M>>>, Config>;
+  ): ZodObject<util.Flatten<Pick<this["shape"], Extract<keyof this["shape"], keyof M>>>, this["_zod"]["config"]>;
 
   omit<M extends util.Mask<keyof Shape>>(
     mask: M & Record<Exclude<keyof M, keyof Shape>, never>
-  ): ZodObject<util.Flatten<Omit<Shape, Extract<keyof Shape, keyof M>>>, Config>;
+  ): ZodObject<util.Flatten<Omit<this["shape"], Extract<keyof this["shape"], keyof M>>>, this["_zod"]["config"]>;
 
   partial(): ZodObject<
     {
-      -readonly [k in keyof Shape]: ZodOptional<Shape[k]>;
+      -readonly [k in keyof this["shape"]]: ZodOptional<this["shape"][k]>;
     },
-    Config
+    this["_zod"]["config"]
   >;
   partial<M extends util.Mask<keyof Shape>>(
     mask: M & Record<Exclude<keyof M, keyof Shape>, never>
   ): ZodObject<
     {
-      -readonly [k in keyof Shape]: k extends keyof M
-        ? // Shape[k] extends OptionalInSchema
-          //   ? Shape[k]
+      -readonly [k in keyof this["shape"]]: k extends keyof M
+        ? // this["shape"][k] extends OptionalInSchema
+          //   ? this["shape"][k]
           //   :
-          ZodOptional<Shape[k]>
-        : Shape[k];
+          ZodOptional<this["shape"][k]>
+        : this["shape"][k];
     },
-    Config
+    this["_zod"]["config"]
   >;
 
   // exactPartial
   exactPartial(): ZodObject<
     {
-      -readonly [k in keyof Shape]: ZodExactOptional<Shape[k]>;
+      -readonly [k in keyof this["shape"]]: ZodExactOptional<this["shape"][k]>;
     },
-    Config
+    this["_zod"]["config"]
   >;
   exactPartial<M extends util.Mask<keyof Shape>>(
     mask: M & Record<Exclude<keyof M, keyof Shape>, never>
   ): ZodObject<
     {
-      -readonly [k in keyof Shape]: k extends keyof M ? ZodExactOptional<Shape[k]> : Shape[k];
+      -readonly [k in keyof this["shape"]]: k extends keyof M ? ZodExactOptional<this["shape"][k]> : this["shape"][k];
     },
-    Config
+    this["_zod"]["config"]
   >;
 
   // required
   required(): ZodObject<
     {
-      -readonly [k in keyof Shape]: ZodNonOptional<Shape[k]>;
+      -readonly [k in keyof this["shape"]]: ZodNonOptional<this["shape"][k]>;
     },
-    Config
+    this["_zod"]["config"]
   >;
   required<M extends util.Mask<keyof Shape>>(
     mask: M & Record<Exclude<keyof M, keyof Shape>, never>
   ): ZodObject<
     {
-      -readonly [k in keyof Shape]: k extends keyof M ? ZodNonOptional<Shape[k]> : Shape[k];
+      -readonly [k in keyof this["shape"]]: k extends keyof M ? ZodNonOptional<this["shape"][k]> : this["shape"][k];
     },
-    Config
+    this["_zod"]["config"]
   >;
 }
 

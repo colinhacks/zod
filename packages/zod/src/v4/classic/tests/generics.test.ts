@@ -70,3 +70,80 @@ test("generic on output type", () => {
     }),
   })?._zod?.output?.name;
 });
+
+// Every ZodObject method that returns a ZodObject resolves its shape and config against `this`, so a schema passed into a generic wrapper keeps its concrete shape instead of collapsing to the `ZodObject` default.
+test("object methods keep the shape through a generic wrapper", () => {
+  const src = z.object({ a: z.string(), b: z.number().optional() });
+  type Src = typeof src;
+  type Infer<F extends (...args: never) => z.ZodType> = z.infer<ReturnType<F>>;
+  type Base = { a: string; b?: number | undefined };
+
+  const keyof_ = <T extends z.ZodObject>(s: T) => s.keyof();
+  const catchall = <T extends z.ZodObject>(s: T) => s.catchall(z.bigint());
+  const passthrough = <T extends z.ZodObject>(s: T) => s.passthrough();
+  const loose = <T extends z.ZodObject>(s: T) => s.loose();
+  const strict = <T extends z.ZodObject>(s: T) => s.strict();
+  const strip = <T extends z.ZodObject>(s: T) => s.strip();
+  const extend = <T extends z.ZodObject>(s: T) => s.extend({ c: z.boolean() });
+  const safeExtend = <T extends z.ZodObject>(s: T) => s.safeExtend({ c: z.boolean() });
+  const merge = <T extends z.ZodObject>(s: T) => s.merge(z.object({ c: z.boolean() }));
+  const pick = <T extends z.ZodObject>(s: T) => s.pick({ a: true });
+  const omit = <T extends z.ZodObject>(s: T) => s.omit({ a: true });
+  const partial = <T extends z.ZodObject>(s: T) => s.partial();
+  const partialMask = <T extends z.ZodObject>(s: T) => s.partial({ a: true });
+  const exactPartial = <T extends z.ZodObject>(s: T) => s.exactPartial();
+  const exactPartialMask = <T extends z.ZodObject>(s: T) => s.exactPartial({ a: true });
+  const required = <T extends z.ZodObject>(s: T) => s.required();
+  const requiredMask = <T extends z.ZodObject>(s: T) => s.required({ b: true });
+
+  expectTypeOf<Infer<typeof keyof_<Src>>>().toEqualTypeOf<"a" | "b">();
+  expectTypeOf<Infer<typeof strict<Src>>>().toEqualTypeOf<Base>();
+  expectTypeOf<Infer<typeof strip<Src>>>().toEqualTypeOf<Base>();
+  expectTypeOf<Infer<typeof extend<Src>>>().toEqualTypeOf<{ a: string; c: boolean; b?: number | undefined }>();
+  expectTypeOf<Infer<typeof safeExtend<Src>>>().toEqualTypeOf<{ a: string; c: boolean; b?: number | undefined }>();
+  expectTypeOf<Infer<typeof merge<Src>>>().toEqualTypeOf<{ a: string; c: boolean; b?: number | undefined }>();
+  expectTypeOf<Infer<typeof pick<Src>>>().toEqualTypeOf<{ a: string }>();
+  expectTypeOf<Infer<typeof omit<Src>>>().toEqualTypeOf<{ b?: number | undefined }>();
+  expectTypeOf<Infer<typeof partial<Src>>>().toEqualTypeOf<{ a?: string | undefined; b?: number | undefined }>();
+  expectTypeOf<Infer<typeof partialMask<Src>>>().toEqualTypeOf<{ a?: string | undefined; b?: number | undefined }>();
+  expectTypeOf<Infer<typeof exactPartial<Src>>>().toEqualTypeOf<{ a?: string; b?: number | undefined }>();
+  expectTypeOf<Infer<typeof exactPartialMask<Src>>>().toEqualTypeOf<{ a?: string; b?: number | undefined }>();
+  expectTypeOf<Infer<typeof required<Src>>>().toEqualTypeOf<{ a: string; b: number }>();
+  expectTypeOf<Infer<typeof requiredMask<Src>>>().toEqualTypeOf<{ a: string; b: number }>();
+
+  // The catchall variants carry an index signature alongside the concrete keys, so assert the keys directly.
+  expectTypeOf<Infer<typeof catchall<Src>>["a"]>().toEqualTypeOf<string>();
+  expectTypeOf<Infer<typeof catchall<Src>>[string]>().toEqualTypeOf<bigint>();
+  expectTypeOf<Infer<typeof passthrough<Src>>["a"]>().toEqualTypeOf<string>();
+  expectTypeOf<Infer<typeof loose<Src>>["a"]>().toEqualTypeOf<string>();
+  expectTypeOf<Infer<typeof loose<Src>>[string]>().toEqualTypeOf<unknown>();
+});
+
+test("object methods keep the catchall config through a generic wrapper", () => {
+  const strictSrc = z.strictObject({ a: z.string() });
+  const looseSrc = z.looseObject({ a: z.string() });
+  const partial = <T extends z.ZodObject>(s: T) => s.partial();
+  const pick = <T extends z.ZodObject>(s: T) => s.pick({ a: true });
+
+  expectTypeOf<ReturnType<typeof partial<typeof strictSrc>>["_zod"]["config"]>().toEqualTypeOf<z.core.$strict>();
+  expectTypeOf<ReturnType<typeof pick<typeof looseSrc>>["_zod"]["config"]>().toEqualTypeOf<z.core.$loose>();
+});
+
+test("a recursive schema survives a generic wrapper", () => {
+  const Node = z.object({
+    id: z.string(),
+    get children() {
+      return z.array(Node);
+    },
+  });
+  const strict = <T extends z.ZodObject>(s: T) => s.strict();
+  const StrictNode = strict(Node);
+
+  type StrictNode = z.infer<typeof StrictNode>;
+  expectTypeOf<StrictNode["id"]>().toEqualTypeOf<string>();
+  expectTypeOf<StrictNode["children"][number]["children"][number]["id"]>().toEqualTypeOf<string>();
+  expect(StrictNode.parse({ id: "a", children: [{ id: "b", children: [] }] })).toEqual({
+    id: "a",
+    children: [{ id: "b", children: [] }],
+  });
+});
