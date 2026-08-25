@@ -392,7 +392,7 @@ export type $ZodBigIntFormats = "int64" | "uint64";
 
 export interface $ZodCheckBigIntFormatDef<Format extends $ZodBigIntFormats = $ZodBigIntFormats> extends $ZodCheckDef {
   check: "bigint_format";
-  format: Format | undefined;
+  format: Format;
 }
 
 export interface $ZodCheckBigIntFormatInternals<Format extends $ZodBigIntFormats = $ZodBigIntFormats>
@@ -410,7 +410,7 @@ export const $ZodCheckBigIntFormat: core.$constructor<$ZodCheckBigIntFormat> = /
   (inst, def) => {
     $ZodCheck.init(inst, def); // no format checks
 
-    const [minimum, maximum] = util.BIGINT_FORMAT_RANGES[def.format!];
+    const [minimum, maximum] = util.BIGINT_FORMAT_RANGES[def.format];
 
     inst._zod.onattach.push((inst) => {
       const bag = inst._zod.bag;

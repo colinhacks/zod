@@ -1413,8 +1413,6 @@ export interface $ZodBigIntFormatDef<Format extends $ZodBigIntFormats = $ZodBigI
   extends $ZodBigIntDef,
     checks.$ZodCheckBigIntFormatDef<Format> {
   check: "bigint_format";
-  // narrower than the check def it extends: a bigint format schema is only ever built by z.int64()/z.uint64(), which always set a format
-  format: Format;
 }
 
 export interface $ZodBigIntFormatInternals<Format extends $ZodBigIntFormats = $ZodBigIntFormats>
