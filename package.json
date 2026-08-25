@@ -37,6 +37,7 @@
     "recheck": "4.6.0-beta.3",
     "rolldown": "^1.2.5",
     "rollup": "^4.63.0",
+    "rollup-plugin-bundle-size": "^1.0.3",
     "semver": "^7.8.5",
     "supershy": "^1.0.0",
     "tinybench": "^6.1.3",

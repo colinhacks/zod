@@ -1,7 +1,7 @@
 import commonjs from "@rollup/plugin-commonjs";
 import resolve from "@rollup/plugin-node-resolve";
 import typescript from "@rollup/plugin-typescript";
-import filesize from "rollup-plugin-filesize";
+import bundleSize from "rollup-plugin-bundle-size";
 
 /** @type {import('rollup').RollupOptions} */
 export default {
@@ -15,7 +15,7 @@ export default {
     resolve(), // Resolve node_modules
     commonjs(), // Convert CommonJS modules to ES6
     typescript(), // Compile TypeScript
-    filesize(), // Display bundle size
+    bundleSize(), // Display bundle size
   ],
   treeshake: {
     preset: "smallest",

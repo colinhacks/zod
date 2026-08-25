@@ -16,7 +16,6 @@
     "@types/node": "^26.3.0",
     "rollup": "^4.63.0",
     "rollup-plugin-bundle-size": "^1.0.3",
-    "rollup-plugin-filesize": "^10.0.0",
     "valibot": "^1.4.2",
     "zod": "workspace:*",
     "zod3": "npm:zod@^3.24.0",
