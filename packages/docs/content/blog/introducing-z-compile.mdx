@@ -189,9 +189,9 @@ A few constructs stay on the existing runtime implementation instead of compilin
 - `z.coerce.*`, checks with a custom `when`, and `.catch()` given a callback
 - CSP environments, where `new Function` is unavailable: global mode stands down under `z.config({ jitless: true })`, and `z.compile()` throws `ZodCompileUnsupportedError`
 
-Two paths always use the standard parser even on a compiled schema: `safeParseAsync()` and encoding (`z.encode()` and the codec `"backward"` direction).
+Two paths skip the fast path without throwing: `safeParseAsync()`, and encoding (`z.encode()` and the codec `"backward"` direction). A compiled codec is still compiled; it decodes fast and encodes at the usual speed.
 
-Inside an object, array, tuple, record, or intersection, an unsupported child runs on the standard parser while the surrounding structure stays compiled.
+Inside an object, array, tuple, record, or intersection, an unsupported child runs on the standard parser while the surrounding structure stays compiled. A union with an unsupported member falls back as a whole, since a branch that rejected for the wrong reason would corrupt the match.
 
 Methods that derive a new schema return uncompiled schemas, so compile the final schema, not an intermediate:
 
