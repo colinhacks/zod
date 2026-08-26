@@ -106,16 +106,17 @@ The benefits scale with schema complexity. Objects and tuples benefit the most, 
   alt="Bar chart of parse speedup for compiled schemas: arrays of 100 strings 13.9x, arrays of 50 objects 9.3x, a 20-key object 8.9x, a union of 3 objects 8.4x, a pipe chain 7.7x, a 3-element tuple 4.8x, a nested object 4.5x, a discriminated union 4.3x, a 5-key strict object 3.0x, a 5-key object 2.5x, a bare string 1.0x"
 />
 
-What compilation removes is per-node dispatch and allocation, not the checks themselves, so the win grows with how many nodes a parse walks:
+What compilation removes is per-node dispatch and allocation, not the checks themselves, so the win grows with how many nodes a parse walks — with key count, tuple size, and nesting depth:
 
-| shape | speedup |
-| --- | --- |
-| object, 5 keys | 2.5x |
-| object, 20 keys | 8.9x |
-| nested object, 7 keys + 3 nested | 4.5x |
-| tuple, 3 items | 4.8x |
-| array of 50 objects | 9.3x |
-| array of 100 strings | 13.9x |
+| object | speedup | | tuple | speedup | | nested object | speedup |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 key | 1.9x | | 1 item | 1.8x | | depth 1 | 1.9x |
+| 5 keys | 1.9x | | 3 items | 2.2x | | depth 2 | 2.7x |
+| 10 keys | 2.3x | | 5 items | 2.7x | | depth 3 | 3.5x |
+| 20 keys | 5.2x | | 10 items | 3.5x | | depth 5 | 4.8x |
+| 50 keys | 11.1x | | | | | | |
+
+This table holds 13 schemas in one process, fewer than the 55-schema chart above, which is why the same shapes read lower here; the note on process sharing below explains why.
 
 ```ts
 // 20-key object — 8.9x
