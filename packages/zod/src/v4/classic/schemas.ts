@@ -1855,18 +1855,35 @@ export interface ZodTuple<
     core.$ZodTuple<T, Rest> {
   "~standard": ZodStandardSchemaWithJSON<this>;
   rest<Rest extends core.SomeType = core.$ZodType>(rest: Rest): ZodTuple<T, Rest>;
+  partial(): ZodTuple<{ -readonly [k in keyof T]: ZodOptional<T[k]> }, Rest>;
 }
 export const ZodTuple: core.$constructor<ZodTuple> = /*@__PURE__*/ core.$constructor("ZodTuple", (inst, def) => {
   core.attachMemoizer(inst);
   core.$ZodTuple.init(inst, def);
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.tupleProcessor(inst, ctx, json, params);
-  inst.rest = (rest) =>
-    inst.clone({
-      ...inst._zod.def,
-      rest: rest as any as core.$ZodType,
-    }) as any;
+  _installLazyMethods(inst, "rest", _zodTupleMethods);
 });
+
+function _zodTupleMethods(): _LazyMethodsOf<ZodTuple> {
+  return {
+    rest(rest) {
+      return this.clone({
+        ...this._zod.def,
+        rest: rest as any as core.$ZodType,
+      }) as any;
+    },
+    partial() {
+      const def = this._zod.def;
+      // a refinement was authored against the full arity; partialing would run it on a shorter array
+      if (def.checks?.length) throw new Error(".partial() cannot be used on tuple schemas containing refinements");
+      return this.clone({
+        ...def,
+        items: def.items.map((item) => new ZodOptional({ type: "optional", innerType: item })),
+      }) as any;
+    },
+  };
+}
 
 export function tuple<T extends readonly [core.SomeType, ...core.SomeType[]]>(
   items: T,
