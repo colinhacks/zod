@@ -1,46 +1,75 @@
 <!-- Draft of the GitHub release notes for v4.5.0. Paste everything below this comment into the release body when the version is cut. -->
 
-Zod 4.5 is a performance release. Schemas can now be compiled ahead of time for a median 2.4x faster parse, and every schema you construct costs about a third of the memory it did in 4.4. A few of the bug fixes make Zod stricter; they're marked with ⚠️ below.
+Zod 4.5 is a performance release. Schemas can now be compiled ahead of time for up to 14x faster parsing, and every schema you construct costs about a third of the memory it did in 4.4.
 
 ## `z.compile()` — ahead-of-time compilation ([#6085](https://github.com/colinhacks/zod/pull/6085))
 
-Zod can now compile a schema into a specialized validator ahead of time. The compiled schema produces identical output and identical errors.
+> Read the announcement: [Introducing `z.compile()`](https://zod.dev/blog/introducing-z-compile)
+
+Zod can now compile a schema into a specialized validator ahead of time. On the shapes that dominate real workloads — objects, arrays, unions — compiled schemas parse 4–14x faster.
 
 ```ts
 import * as z from "zod";
 
 const Player = z.object({
   username: z.string(),
+  bio: z.string(),
   xp: z.number(),
+  level: z.number(),
+  rank: z.number(),
+  admin: z.boolean(),
+  stats: z.object({ title: z.string(), score: z.number(), active: z.boolean() }),
 });
 
-const CompiledPlayer = z.compile(Player);
-
-CompiledPlayer.parse({ username: "billie", xp: 100 });
+const CompiledPlayer = z.compile(Player); // parses ~4.5x faster
 ```
 
-The result is a regular Zod schema — `.parse()`, `.safeParse()`, type inference, Standard Schema, and composition all work as before. Across a 55-schema benchmark the median speedup is **2.4x**, and it scales with how much work the schema does per parse:
+`CompiledPlayer` is a regular Zod schema. Use it exactly like `Player`:
 
-| schema | speedup |
-| ------ | ------- |
-| `z.array(z.string())`, 100 items | ~14x |
-| `z.array(z.object({…}))`, 50 items | ~9x |
-| 20-key object | ~9x |
-| nested object | ~4.5x |
-| discriminated union | ~4x |
-| 5-key object | ~2.5x |
-| bare `z.string()` | none |
+- It has every method the original has — `.parse()`, `.safeParse()`, `.extend()`, `.optional()`, Standard Schema — and composes into other schemas.
+- Its inferred input and output types are identical.
+- On failure it returns identical issues. The compiled code only handles the happy path; when an input is invalid, Zod runs the standard parser to produce the `ZodError`.
 
-To compile everything, import `zod/compile` once at the top of your entry point. Every schema constructed after that import is compiled on its first parse.
+Zod's entire test suite runs twice, once against uncompiled schemas and once with compilation enabled globally, asserting that the compiled path produced every value.
+
+### `import "zod/compile"`
+
+To compile every schema in an application, import `zod/compile` once at the top of your entry point. Every schema constructed after that import is compiled on its first parse.
 
 ```ts
-import "zod/compile";
+import "zod/compile"; // must come before modules that define schemas
 import * as z from "zod";
+
+const schema = z.object({ name: z.string() });
+schema.parse({ name: "ok" }); // compiled on first parse
 ```
 
-The compiled fast path only handles the happy path. When an input fails validation, Zod falls back to the standard parser to produce the `ZodError`, so there is no second error implementation to drift out of sync.
+Compilation is lazy, so intermediate schemas in a builder chain cost nothing. Leave this import to applications; a library that adds it opts in every schema in the process on its users' behalf.
 
-Compilation uses `new Function`; global mode stands down automatically under `z.config({ jitless: true })`. The [announcement post](https://zod.dev/blog/introducing-z-compile) and the [docs](https://zod.dev/compile) cover the details and the constructs that fall back to the standard parser.
+### Speedups
+
+![Parse speedup of compiled schemas over the standard parser](https://zod.dev/blog/compile-speedup-light.svg)
+
+What compilation removes is per-node dispatch and allocation, so the win scales with how many nodes a parse walks. Containers benefit most:
+
+```ts
+// 20-key object — 8.9x
+z.object({ k0: z.string(), k1: z.string(), /* … */ k19: z.string() });
+```
+
+```ts
+// union of 3 objects — 8.4x
+z.union([z.object({ a: z.string() }), z.object({ b: z.number() }), z.object({ c: z.boolean() })]);
+```
+
+```ts
+// tuple of 3 — 4.8x
+z.tuple([z.string(), z.number(), z.boolean()]);
+```
+
+A bare `z.string()` has nothing to remove, since the whole schema is one `typeof`. Everything built out of such schemas still benefits, because leaves are inlined into the parent's compiled code.
+
+Async schemas, `z.xor()`, recursive schemas, coercion, and encoding fall back to the standard parser, and global mode stands down under `z.config({ jitless: true })` for CSP environments. The [docs](https://zod.dev/compile) have the full list.
 
 ## ~70% less memory per schema ([#6318](https://github.com/colinhacks/zod/pull/6318), [#6415](https://github.com/colinhacks/zod/pull/6415))
 
@@ -56,7 +85,7 @@ Schema instances used to carry every builder method and every lazily-derived int
 | `z.discriminatedUnion()`, 2 options | 42.0 KB | 13.7 KB |
 | `zod/mini` `z.string()` | 2.5 KB | 577 B |
 
-On a realistic catalogue of API resource schemas (~40 nodes each), the cost per resource drops from 406 KB to 118 KB, and 500 of them go from 198 MB to 58 MB of heap. Schema construction is roughly twice as fast as a side effect, and keeping instances in V8's fast-properties mode sped up several parse paths too. The [memory post](https://zod.dev/blog/memory) has the full story.
+On a realistic catalogue of API resource schemas (~40 nodes each), the cost per resource drops from 406 KB to 118 KB, and 500 of them go from 198 MB to 58 MB of heap. Schema construction is roughly twice as fast as a side effect, and keeping instances in V8's fast-properties mode sped up several parse paths too.
 
 The one visible difference is that `hasOwnProperty("optional")` is `false` until the first time you touch `.optional`.
 

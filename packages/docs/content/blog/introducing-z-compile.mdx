@@ -2,99 +2,40 @@
 title: Introducing z.compile()
 author: Colin McDonnell
 date: 2026-08-25
-description: Zod 4.5 can compile a schema into a specialized validator ahead of time. Parsing gets a median 2.4x faster, with identical output and identical errors.
+description: Zod 4.5 can compile a schema into a specialized validator ahead of time. Objects, arrays, and unions parse 4 to 14x faster, with identical output and identical errors.
 ---
 
-Zod 4.5 can compile a schema into a specialized validator ahead of time, and the result parses about 2.4x faster with exactly the same output and exactly the same errors.
+import { ThemedImage } from "@/components/themed-image";
+
+Zod 4.5 can compile a schema into a specialized validator ahead of time, and on the shapes that dominate real workloads the compiled schema parses 4–14x faster with exactly the same output and exactly the same errors.
 
 ```ts
 import * as z from "zod";
 
 const Player = z.object({
-  username: z.string().min(2),
-  xp: z.number().int(),
-  tags: z.array(z.string()),
+  username: z.string(),
+  bio: z.string(),
+  xp: z.number(),
+  level: z.number(),
+  rank: z.number(),
+  admin: z.boolean(),
+  stats: z.object({ title: z.string(), score: z.number(), active: z.boolean() }),
 });
 
-const CompiledPlayer = z.compile(Player);
-
-CompiledPlayer.parse({ username: "billie", xp: 100, tags: ["a"] });
-// { username: 'billie', xp: 100, tags: [ 'a' ] }
+const CompiledPlayer = z.compile(Player); // parses ~4.5x faster
 ```
 
-The thing that comes back from `z.compile()` is a regular Zod schema. `.parse()`, `.safeParse()`, type inference, Standard Schema, and composition all work exactly as before, and the original schema is untouched.
+`CompiledPlayer` is a regular Zod schema. Use it exactly like `Player`:
 
-## What the compiler generates
+- It has every method the original has — `.parse()`, `.safeParse()`, `.extend()`, `.optional()`, Standard Schema — and it composes into other schemas.
+- Its inferred input and output types are identical.
+- On failure it returns identical issues.
 
-Zod schemas are trees, and parsing one is a walk over that tree: each node receives a payload, checks its value, runs its checks, and hands the payload to its children. That walk is what makes Zod composable, and it is also what makes it slow. Every node pays for dispatch, a payload allocation, and path tracking, whether the node is a twenty-key object or a bare `typeof`.
+Zod's entire test suite runs twice, once against uncompiled schemas and once with compilation enabled globally, asserting per fixture that the compiled path produced every value rather than silently falling back.
 
-Compilation flattens the walk into straight-line code. This is the function Zod generates for the `Player` schema above:
+## Compile everything with one import
 
-```js
-if (typeof input !== "object" || input === null || Array.isArray(input)) return INVALID;
-const v0 = input["username"];
-if (typeof v0 !== "string") return INVALID;
-const v1 = typeof v0 === "string" && v0.length >= 2 && v0.length < 4 ? c0(v0) : v0.length;
-if (v1 < 2) return INVALID;
-const v2 = input["xp"];
-if (typeof v2 !== "number" || !Number.isFinite(v2)) return INVALID;
-if (!Number.isSafeInteger(v2)) return INVALID;
-const v3 = input["tags"];
-if (!Array.isArray(v3)) return INVALID;
-const v4 = new Array(v3.length);
-for (let v5 = 0; v5 < v3.length; v5++) {
-  const v6 = v3[v5];
-  if (typeof v6 !== "string") return INVALID;
-  v4[v5] = v6;
-}
-const v7 = { "username": v0, "xp": v2, "tags": v4 };
-return v7;
-```
-
-No payloads, no dispatch, no path arrays. Leaf schemas are inlined into their parent, so a `z.string()` inside an object costs one `typeof`. (The `c0` call is the code-point counter for `.min(2)`; it only runs when the string is short enough that surrogate pairs could change the answer.)
-
-## Why this was hard
-
-The obvious way to build a compiler is to generate everything: one code path that validates, and one that produces the errors when validation fails. ArkType takes this route.
-
-For Zod that would mean a second implementation of every schema type and every check, agreeing with the first on every edge case: dozens of schema types, dozens of checks, 60 locales, and years of error shapes that people snapshot in their test suites. A second implementation of all that was never going to stay in sync.
-
-So Zod's compiler doesn't produce errors at all. Look at the generated code again: every failure is `return INVALID`. The compiled function is a happy-path validator, and when it returns `INVALID`, the wrapper hands the input to the standard parser, which produces the `ZodError` the same way it always has.
-
-```ts
-const result = CompiledPlayer.safeParse({ username: "b", xp: 1.5, tags: ["a"] });
-result.error.issues;
-// [
-//   {
-//     origin: "string",
-//     code: "too_small",
-//     minimum: 2,
-//     inclusive: true,
-//     path: ["username"],
-//     message: "Too small: expected string to have >=2 characters"
-//   },
-//   {
-//     expected: "int",
-//     format: "safeint",
-//     code: "invalid_type",
-//     path: ["xp"],
-//     message: "Invalid input: expected int, received number"
-//   }
-// ]
-```
-
-That is the error the uncompiled `Player` produces, because the fallback ran the uncompiled `Player` to build it. There is no second error path to drift out of sync, and every fix to the standard parser's error reporting applies to compiled schemas automatically.
-
-Two consequences follow:
-
-- Invalid inputs pay for both the fast path and the fallback. If your workload is mostly invalid input, compilation won't help.
-- Refinements and transforms run exactly once on valid input, and at most twice on invalid input: once in the fast path, once in the fallback.
-
-Output parity is tested rather than assumed. The repo runs its entire test suite a second time with compilation enabled globally, asserting per fixture that the fast path actually produced the value rather than silently falling back. Key order, `undefined`-valued versus absent keys, array holes, frozenness, `NaN` and `-0` all match.
-
-## Compiling everything
-
-You don't have to call `z.compile()` on each schema. Import `zod/compile` once, before anything that defines schemas, and every schema constructed after that is compiled on its first parse:
+You don't have to call `z.compile()` per schema. Import `zod/compile` once, before anything that defines schemas, and every schema constructed after that is compiled on its first parse:
 
 ```ts
 import "zod/compile"; // must come before modules that define schemas
@@ -106,30 +47,36 @@ schema.parse({ name: "ok" }); // compiled on first parse
 
 Compilation is lazy, so the intermediate schemas inside a builder chain like `z.string().min(1).max(10).optional()` cost nothing. Only the schemas you actually parse with get compiled.
 
-Global mode is meant for applications, not libraries. A library that imports `zod/compile` opts in every schema in the process on behalf of its users, which is not its decision to make.
+This import is for applications, not libraries. A library that imports `zod/compile` opts in every schema in the process on behalf of its users, which is not its decision to make.
 
-## Numbers
+## Speedups
 
-Across a 55-schema benchmark in the repo, the median speedup is **2.4x**. It scales with how much work the schema does per parse, because what compilation removes is per-node overhead rather than the checks themselves:
+<ThemedImage
+  lightSrc="/blog/compile-speedup-light.svg"
+  darkSrc="/blog/compile-speedup-dark.svg"
+  alt="Bar chart of parse speedup for compiled schemas: arrays of 100 strings 13.9x, arrays of 50 objects 9.3x, a 20-key object 8.9x, a union of 3 objects 8.4x, a pipe chain 7.7x, a 3-element tuple 4.8x, a nested object 4.5x, a discriminated union 4.3x, a 5-key strict object 3.0x, a 5-key object 2.5x, a bare string 1.0x"
+/>
 
-| schema | speedup |
-| ------ | ------- |
-| `z.array(z.string())`, 100 items | ~14x |
-| `z.array(z.object({…}))`, 50 items | ~9x |
-| 20-key object | ~9x |
-| `.pipe()` chain | ~7.7x |
-| tuple | ~4.8x |
-| nested object | ~4.5x |
-| discriminated union | ~4.3x |
-| intersection | ~4.3x |
-| strict object | ~3x |
-| `z.string().min(3).max(64).regex(…)` | ~2.8x |
-| 5-key object | ~2.5x |
-| bare `z.string()` | none |
+What compilation removes is per-node dispatch and allocation, not the checks themselves, so the win scales with how many nodes a parse walks. Containers benefit most.
 
-A bare `z.string()` has nothing to remove: the whole schema is one `typeof`. Everything built out of such schemas benefits, because the leaves get inlined into the parent's generated code.
+```ts
+// 20-key object — 8.9x
+z.object({ k0: z.string(), k1: z.string(), /* … */ k19: z.string() });
+```
 
-The 2.4x median is measured with all 55 schemas sharing one process. Measured one schema per process, the median is 1.6x. Both are real: every schema shares zod's internal dispatch sites, and running many of them together makes those call sites megamorphic, which taxes the interpreter more than it taxes a generated function. The shared number is the default because an application holds many schemas at once, and that is the speedup its users see.
+```ts
+// union of 3 objects — 8.4x
+z.union([z.object({ a: z.string() }), z.object({ b: z.number() }), z.object({ c: z.boolean() })]);
+```
+
+```ts
+// tuple of 3 — 4.8x
+z.tuple([z.string(), z.number(), z.boolean()]);
+```
+
+A bare `z.string()` has nothing to remove: the whole schema is one `typeof`. Everything built out of such schemas still benefits, because leaves are inlined into the parent's generated code.
+
+These numbers come from the repo's 55-schema `compile-matrix` benchmark, run with all 55 schemas sharing one process, where the median is 2.4x. Measured one schema per process, the median is 1.6x. Both are real: every schema shares zod's internal dispatch sites, and running many of them together makes those call sites megamorphic, which taxes the interpreter more than it taxes a generated function. The shared number is the default because an application holds many schemas at once, and that is the speedup its users see.
 
 Four corrections to the harness were needed before these numbers meant anything, and they are written up in the repo:
 
@@ -137,6 +84,75 @@ Four corrections to the harness were needed before these numbers meant anything,
 - Inputs must arrive through an array load, not a constant, or the call becomes loop-invariant.
 - The number of schemas sharing the process is the single largest lever on the result.
 - Compiled and uncompiled runs must be interleaved, because absolute throughput drifts by tens of percent between runs.
+
+## What the compiler generates
+
+Zod schemas are trees, and parsing one is a walk over that tree: each node receives a payload, checks its value, runs its checks, and hands the payload to its children. That walk is what makes Zod composable, and it is also what makes it slow. Every node pays for dispatch, a payload allocation, and path tracking, whether the node is a twenty-key object or a bare `typeof`.
+
+Compilation flattens the walk into straight-line code. This is the function Zod generates for the `Player` schema above:
+
+```js
+if (typeof input !== "object" || input === null || Array.isArray(input)) return INVALID;
+const v0 = input["username"];
+if (typeof v0 !== "string") return INVALID;
+const v1 = input["bio"];
+if (typeof v1 !== "string") return INVALID;
+const v2 = input["xp"];
+if (typeof v2 !== "number" || !Number.isFinite(v2)) return INVALID;
+const v3 = input["level"];
+if (typeof v3 !== "number" || !Number.isFinite(v3)) return INVALID;
+const v4 = input["rank"];
+if (typeof v4 !== "number" || !Number.isFinite(v4)) return INVALID;
+const v5 = input["admin"];
+if (typeof v5 !== "boolean") return INVALID;
+const v6 = input["stats"];
+if (typeof v6 !== "object" || v6 === null || Array.isArray(v6)) return INVALID;
+const v7 = v6["title"];
+if (typeof v7 !== "string") return INVALID;
+const v8 = v6["score"];
+if (typeof v8 !== "number" || !Number.isFinite(v8)) return INVALID;
+const v9 = v6["active"];
+if (typeof v9 !== "boolean") return INVALID;
+const v10 = { "title": v7, "score": v8, "active": v9 };
+const v11 = { "username": v0, "bio": v1, "xp": v2, "level": v3, "rank": v4, "admin": v5, "stats": v10 };
+return v11;
+```
+
+No payloads, no dispatch, no path arrays. Leaf schemas are inlined into their parent, so a `z.string()` inside an object costs one `typeof`, and the nested `stats` object costs nothing beyond its own three checks.
+
+## Why this was hard
+
+The obvious way to build a compiler is to generate everything: one code path that validates, and one that produces the errors when validation fails. ArkType takes this route.
+
+For Zod that would mean a second implementation of every schema type and every check, agreeing with the first on every edge case: dozens of schema types, dozens of checks, 60 locales, and years of error shapes that people snapshot in their test suites. A second implementation of all that was never going to stay in sync.
+
+So Zod's compiler doesn't produce errors at all. Look at the generated code again: every failure is `return INVALID`. The compiled function is a happy-path validator, and when it returns `INVALID`, the wrapper hands the input to the standard parser, which produces the `ZodError` the same way it always has.
+
+```ts
+const result = CompiledPlayer.safeParse({ ...player, xp: "100", stats: { ...player.stats, active: "yes" } });
+result.error.issues;
+// [
+//   {
+//     expected: "number",
+//     code: "invalid_type",
+//     path: ["xp"],
+//     message: "Invalid input: expected number, received string"
+//   },
+//   {
+//     expected: "boolean",
+//     code: "invalid_type",
+//     path: ["stats", "active"],
+//     message: "Invalid input: expected boolean, received string"
+//   }
+// ]
+```
+
+That is the error the uncompiled `Player` produces, because the fallback ran the uncompiled `Player` to build it. There is no second error path to drift out of sync, and every fix to the standard parser's error reporting applies to compiled schemas automatically.
+
+Two consequences follow:
+
+- Invalid inputs pay for both the fast path and the fallback. If your workload is mostly invalid input, compilation won't help.
+- Refinements and transforms run exactly once on valid input, and at most twice on invalid input: once in the fast path, once in the fallback.
 
 ## What doesn't compile
 
