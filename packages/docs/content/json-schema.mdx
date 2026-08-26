@@ -71,6 +71,7 @@ z.set(); // ❌
 z.transform(); // ❌
 z.nan(); // ❌
 z.custom(); // ❌
+z.number().multipleOf(0); // ❌ the divisor must be finite and greater than zero
 ```
 
 
@@ -238,6 +239,7 @@ z.set(); // ❌
 z.transform(); // ❌
 z.nan(); // ❌
 z.custom(); // ❌
+z.number().multipleOf(0); // ❌ the divisor must be finite and greater than zero
 ```
 
 By default, Zod will throw an error if any of these are encountered. 
