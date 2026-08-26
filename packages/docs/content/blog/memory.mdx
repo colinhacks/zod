@@ -1,0 +1,81 @@
+---
+title: Zod 4.5 uses 70% less memory
+author: Colin McDonnell
+date: 2026-08-25
+description: Every schema in a Zod 4.5 process costs about a third of what it did in 4.4, and a bare string schema costs a tenth. Here is where the bytes were going.
+---
+
+A bare `z.string()` retained 7.5 KB of heap in Zod 4.4; in Zod 4.5 it retains 784 bytes.
+
+That is not a typo about a string schema. It's a fixed cost paid by every node of every schema in your process, and a typical service holds hundreds of schemas for its entire lifetime. Here is what the same measurement looks like across the board, taken with the repo's memory benchmark on both versions:
+
+| schema | 4.4.3 | 4.5 | |
+| --- | --- | --- | --- |
+| `z.string()` | 7.5 KB | 784 B | 9.8x |
+| `z.number()` | 4.4 KB | 706 B | 6.4x |
+| `z.string().min(1)` | 16.7 KB | 3.4 KB | 5.0x |
+| `z.string().optional()` | 12.6 KB | 1.5 KB | 8.4x |
+| `z.string().nullable()` | 13.1 KB | 1.5 KB | 8.8x |
+| `z.email()` | 5.8 KB | 2.2 KB | 2.7x |
+| `z.array(z.string())` | 11.2 KB | 1.9 KB | 5.8x |
+| `z.enum(["a", "b", "c"])` | 5.3 KB | 1.5 KB | 3.5x |
+| `z.object()`, 3 keys | 22.2 KB | 5.8 KB | 3.8x |
+| `z.object()`, 10 keys | 82.0 KB | 11.5 KB | 7.1x |
+| `z.union([z.string(), z.number()])` | 17.5 KB | 2.1 KB | 8.3x |
+| `z.discriminatedUnion()`, 2 options | 42.0 KB | 13.7 KB | 3.1x |
+| `z.record(z.string(), z.number())` | 16.4 KB | 2.6 KB | 6.2x |
+| `z.string().transform(fn)` | 17.5 KB | 2.0 KB | 8.5x |
+| `zod/mini` `z.string()` | 2.5 KB | 577 B | 4.4x |
+| `zod/mini` `z.object()`, 3 keys | 11.8 KB | 3.8 KB | 3.1x |
+
+Per-schema numbers flatter the change a little, since a real schema shares leaves. So the benchmark also builds a catalogue of realistic API resources — each one an object with nested objects, an enum, a discriminated union of events, arrays, and refinements, about 40 schema nodes in all — and holds them live:
+
+| resources held | 4.4.3 | 4.5 |
+| --- | --- | --- |
+| 50 | 20.1 MB | 6.0 MB |
+| 200 | 79.4 MB | 23.2 MB |
+| 500 | 198.2 MB | 57.7 MB |
+
+Per resource, that's 406 KB down to 118 KB, or 71% less. That's the number in the title.
+
+## Where 7.5 KB goes
+
+A `z.string()` closes over almost nothing. Its definition is a small object, its checks array is empty, and its parse function is shared. So where were the bytes?
+
+They were in its own properties. Zod's classic API is a fluent one: `z.string()` has `.min()`, `.max()`, `.email()`, `.uuid()`, `.optional()`, `.nullable()`, `.default()`, `.refine()`, `.transform()`, `.pipe()`, `.brand()`, `.describe()`, `.meta()`, and about seventy more. In Zod 4.0 through 4.3, every one of those was a bound closure created in the constructor and assigned onto the instance as an own property, because that's the simplest way to make `const { optional } = schema; optional()` keep working. Seventy closures is seventy allocations, but the closures weren't even the expensive part.
+
+The expensive part is how V8 stores own properties. An object's properties live in a backing store that V8 sizes in steps, and because Zod builds instances through a custom constructor that assigns nothing itself, instances get no in-object slots at all. Measured on this codebase: an instance with 12 or fewer own properties costs 128 bytes of backing store, 13 to 20 costs 848, and 21 or more costs 1616. Cross the threshold and every instance pays the top rate, whether or not it ever reads most of those properties. `z.string()` was well past it.
+
+Then there were the accessors. Some of a schema's internals are derived lazily from its definition — the set of literal values a wrapper accepts, the regex pattern it contributes to a template literal — and until 4.5 each wrapper installed those as getter/setter pairs directly on the instance's internals object. A per-instance accessor is a far more expensive shape than a data property. Thirteen data properties cost 136 bytes; the same thirteen plus two lazy accessors cost 1.2 KB. That single fact explained why `z.string().optional()` cost more than the `z.string()` inside it, and why `.nullable()` and `.readonly()`, which installed four accessors each, cost 2.4 KB apiece before their inner schema.
+
+## The fix
+
+Everything moved to the prototype.
+
+Builder methods now live on a shared prototype as lazy getters. The first time you read `schema.optional`, the getter allocates the bound closure, caches it as a non-enumerable own property on that instance, and returns it. Every read after that is a plain property hit, and an instance that never touches `.optional` never pays for it. Detached calls keep working because the cached property is the same bound function it always was. Zod 4.4 did this for the core builder methods ([#5897](https://github.com/colinhacks/zod/pull/5897)); 4.5 finishes the job for the codec methods, the 26 string-format methods that `z.string()` carried, the Standard Schema object, and the JSON Schema helpers ([#6318](https://github.com/colinhacks/zod/pull/6318)).
+
+The derived internals moved the same way. An instance's internals object now inherits from a prototype owned by its constructor, and each lazy field is installed there once. The getter computes from the instance it's called on and caches the result as an own property, so laziness (which is what keeps recursive schemas from looping at construction) is preserved and reads after the first are unchanged ([#6415](https://github.com/colinhacks/zod/pull/6415)). That took a wrapper from 2.4 KB to 665 bytes.
+
+None of this is observable from the outside. Moving a property between definition sites changes its descriptor, and writability and enumerability are part of the public contract, so the repo now has a script that dumps every property descriptor, alias, and assign/delete semantic on both revisions and diffs them. It caught four regressions on the way here that the test suite did not. The one thing that does change is `Object.hasOwn(schema, "optional")`, which is `false` until the first read.
+
+## An unexpected parse speedup
+
+The property work was aimed at memory. It also made parsing faster, and by more than construction.
+
+Redefining an accessor on an object, or piling enough properties onto it, demotes the object from V8's fast-properties representation to dictionary mode, where every property access is a hash lookup. Zod's per-instance `~standard` accessor was the last accessor left on schema instances. Moving it to the prototype kept instances in fast mode, and the parse paths that never touch `~standard` at all got faster: array parsing measured 2.4x in the A/B harness that found the effect, object parsing 1.3x, and leaf string and number parsing 1.2x. Schema construction came out about twice as fast, which was the intended effect ([#6318](https://github.com/colinhacks/zod/pull/6318)). The repo keeps a script that asserts every instance, its internals, and its prototype report fast properties, because the inverse experiment (adding accessors back) regressed object parsing by 57% to 142%.
+
+## Errors too
+
+A `ZodError` had the same problem in miniature. Every construction pretty-printed all of its issues into `error.message` as indented JSON, eagerly, even on the `safeParse()` path where almost nobody reads `.message`. And because it extends `Error`, the constructor captured a structured stack trace, which was the single largest cost of a failed parse and about half the error's retained bytes.
+
+The message is now computed on first read ([#6316](https://github.com/colinhacks/zod/pull/6316)), and the stack capture is skipped for errors that are returned rather than thrown ([#6450](https://github.com/colinhacks/zod/pull/6450)). Per returned error that's 1073 bytes down to 714, and the cost no longer grows with call depth. A failing `safeParse()` got about 1.6x faster from the first change and another 2.3x from the second. The trade is that an error returned from `safeParse()` carries no stack frames; `parse()` still throws with a full stack, and the top-level `z.parse()` and codec methods now start that stack at your call site instead of inside Zod ([#5910](https://github.com/colinhacks/zod/pull/5910)).
+
+## Measuring this
+
+Retained bytes are easy to measure badly. Every number above comes from `packages/bench/memory/` in the repo: build twenty thousand instances, hold them all live, force a full collection, and take the heap delta per instance as the median of five runs. The realistic-catalogue table is `realworld.ts`; the per-schema table is `schema-footprint.ts`. Both were run unchanged against a 4.4.3 checkout and against 4.5.
+
+## Credits
+
+The construction and error work came out of a systematic performance campaign by [Chris Cook](https://github.com/zirkelc), who ran eighteen isolated experiments with a paired A/B harness and a calibrated noise floor, kept the eleven that survived, and wrote up the ones that didn't. [#6318](https://github.com/colinhacks/zod/pull/6318) and [#6316](https://github.com/colinhacks/zod/pull/6316) are Chris's, and the fast-properties finding is what pointed the rest of this work at the right target.
+
+— Colin
