@@ -33,6 +33,8 @@ const CompiledPlayer = z.compile(Player); // parses ~4.5x faster
 
 Zod's entire test suite runs twice, once against uncompiled schemas and once with compilation enabled globally, asserting per fixture that the compiled path produced every value rather than silently falling back.
 
+Under the hood, `z.compile()` walks the entire schema once and generates a specialized fast-path validator with the `Function` constructor. For the large majority of inputs, that function validates the data with the fastest logic JavaScript can express: straight-line `typeof` checks and property reads, with no interpreter in between. When the fast path can't handle an input, Zod falls back to the standard parser.
+
 ## Compile everything with one import
 
 You don't have to call `z.compile()` per schema. Import `zod/compile` once, before anything that defines schemas, and every schema constructed after that is compiled on its first parse:
@@ -122,9 +124,7 @@ No payloads, no dispatch, no path arrays. Leaf schemas are inlined into their pa
 
 ## Why this was hard
 
-The obvious way to build a compiler is to generate everything: one code path that validates, and one that produces the errors when validation fails. ArkType takes this route.
-
-For Zod that would mean a second implementation of every schema type and every check, agreeing with the first on every edge case: dozens of schema types, dozens of checks, 60 locales, and years of error shapes that people snapshot in their test suites. A second implementation of all that was never going to stay in sync.
+The obvious way to build a compiler is to generate everything: one code path that validates, and one that produces the errors when validation fails. For Zod that would mean a second implementation of every schema type and every check, agreeing with the first on every edge case: dozens of schema types, dozens of checks, 60 locales, and years of error shapes that people snapshot in their test suites. A second implementation of all that was never going to stay in sync.
 
 So Zod's compiler doesn't produce errors at all. Look at the generated code again: every failure is `return INVALID`. The compiled function is a happy-path validator, and when it returns `INVALID`, the wrapper hands the input to the standard parser, which produces the `ZodError` the same way it always has.
 
@@ -151,23 +151,23 @@ That is the error the uncompiled `Player` produces, because the fallback ran the
 
 Two consequences follow:
 
-- Invalid inputs pay for both the fast path and the fallback. If your workload is mostly invalid input, compilation won't help.
+- An invalid input runs the fast path and then the standard parser, so compilation itself doesn't speed up failures. Failures got their own speedup in 4.5: `ZodError` construction is now lazy and skips the eager stack capture on the `safeParse()` path, so a failing `safeParse()` is 3–4x faster than in 4.4 ([#6316](https://github.com/colinhacks/zod/pull/6316), [#6450](https://github.com/colinhacks/zod/pull/6450)).
 - Refinements and transforms run exactly once on valid input, and at most twice on invalid input: once in the fast path, once in the fallback.
 
-## What doesn't compile
+## What falls back
 
-The compiler refuses anything it can't model *exactly*. `z.compile()` throws in these cases; global mode silently keeps using the standard parser.
+A few constructs stay on the existing runtime implementation instead of compiling. Nothing changes in their behavior; they just don't get faster.
 
-- **Async.** A schema with an async refinement, transform, or check throws `ZodCompileAsyncError`. `safeParseAsync()` always uses the standard parser.
-- **Exclusive unions (`z.xor()`).** The exactly-one-match rule needs every branch to reject for the same reason the standard parser would, and a compiled branch that returns `INVALID` can't say why.
-- **Recursive schemas.** Cycle detection in the input needs the standard parser's memoizer.
-- **Coercion**, checks with a custom `when`, and `.catch()` given a callback rather than a value.
+- async refinements, transforms, and checks, and `safeParseAsync()`
+- `z.xor()`
+- recursive schemas
+- `z.coerce.*`, checks with a custom `when`, and `.catch()` given a callback
+- encoding (`z.encode()` and the codec `"backward"` direction)
+- CSP environments, where `new Function` is unavailable: global mode stands down under `z.config({ jitless: true })`, and `z.compile()` throws `ZodCompileUnsupportedError`
 
-Inside a container — object, array, tuple, record, intersection — an unsupported *child* doesn't prevent compilation. The child runs on the standard parser as an island and the surrounding structure stays compiled. Unions are the exception: a falsely-rejecting compiled branch would corrupt match semantics, so a union with an unsupported member falls back as a whole.
+Inside an object, array, tuple, record, or intersection, an unsupported child runs on the standard parser while the surrounding structure stays compiled.
 
-Encoding (`z.encode()` and the codec `"backward"` direction) always uses the standard parser. Backward codegen may come later.
-
-Methods that derive a new schema return uncompiled schemas. Compile the final schema, not an intermediate.
+Methods that derive a new schema return uncompiled schemas, so compile the final schema, not an intermediate:
 
 ```ts
 // ❌ the .refine() result is not compiled
@@ -176,16 +176,6 @@ const schema = z.compile(z.string()).refine((val) => val.length > 1);
 // ✅ compile last
 const schema2 = z.compile(z.string().refine((val) => val.length > 1));
 ```
-
-## Content Security Policy
-
-Compilation uses `new Function`, which is unavailable under a CSP that forbids `eval`. Global mode stands down automatically when `jitless` is set, so `import "zod/compile"` is inert in those environments:
-
-```ts
-z.config({ jitless: true });
-```
-
-Calling `z.compile()` directly is treated as an explicit opt-in and throws `ZodCompileUnsupportedError` if code generation is unavailable.
 
 ## Cost
 

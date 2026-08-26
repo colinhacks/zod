@@ -32,6 +32,8 @@ const CompiledPlayer = z.compile(Player); // parses ~4.5x faster
 
 Zod's entire test suite runs twice, once against uncompiled schemas and once with compilation enabled globally, asserting that the compiled path produced every value.
 
+Under the hood, `z.compile()` walks the entire schema once and generates a specialized fast-path validator with the `Function` constructor. For the large majority of inputs, that function validates the data with the fastest logic JavaScript can express; when it can't handle an input, Zod falls back to the standard parser.
+
 ### `import "zod/compile"`
 
 To compile every schema in an application, import `zod/compile` once at the top of your entry point. Every schema constructed after that import is compiled on its first parse.
