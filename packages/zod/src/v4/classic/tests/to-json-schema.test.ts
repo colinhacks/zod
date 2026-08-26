@@ -2402,6 +2402,23 @@ test("escapes JSON Pointer reserved characters in the root $ref", () => {
   expect(Object.keys(result.$defs!)).toEqual(["Shared/User~"]);
 });
 
+test("a multipleOf divisor JSON Schema cannot express goes through `unrepresentable`", () => {
+  // the keyword must be strictly greater than zero, and NaN/Infinity do not survive JSON at all
+  for (const divisor of [0, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+    expect(() => z.toJSONSchema(z.number().multipleOf(divisor))).toThrow(/cannot be represented in JSON Schema/);
+    expect(z.toJSONSchema(z.number().multipleOf(divisor), { unrepresentable: "any" })).toMatchObject({
+      type: "number",
+    });
+    expect(z.toJSONSchema(z.number().multipleOf(divisor), { unrepresentable: "any" })).not.toHaveProperty("multipleOf");
+  }
+
+  // a negative divisor accepts exactly what its absolute value accepts, so it still maps
+  expect(z.number().multipleOf(-5).safeParse(10).success).toEqual(true);
+  expect(z.number().multipleOf(-5).safeParse(13).success).toEqual(false);
+  expect(z.toJSONSchema(z.number().multipleOf(-5))).toMatchObject({ multipleOf: 5 });
+  expect(z.toJSONSchema(z.number().multipleOf(0.1))).toMatchObject({ multipleOf: 0.1 });
+});
+
 test("unrepresentable default values go through `unrepresentable`", () => {
   // a bigint default has no reliable JSON encoding, so it is dropped rather than approximated
   expect(z.toJSONSchema(z.bigint().default(0n), { unrepresentable: "any" })).toMatchInlineSnapshot(`
