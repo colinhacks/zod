@@ -249,11 +249,14 @@ z.toJSONSchema(z.bigint());
 // => throws Error
 ```
 
-You can change this behavior by setting the `unrepresentable` option to `"any"`. This will convert any unrepresentable types to `{}` (the equivalent of `unknown` in JSON Schema).
+You can change this behavior by setting the `unrepresentable` option to `"any"`. This will convert any unrepresentable type to `{}` (the equivalent of `unknown` in JSON Schema), and drop an unrepresentable check from the schema that carries it.
 
 ```ts
 z.toJSONSchema(z.bigint(), { unrepresentable: "any" });
 // => {}
+
+z.toJSONSchema(z.number().multipleOf(0), { unrepresentable: "any" });
+// => { type: "number" }
 ```
 
 To decide case by case, pass a function instead. It's called for each unrepresentable schema encountered. Return a JSON Schema to use in its place, `"any"`, or `"throw"` (the default when you return nothing).
