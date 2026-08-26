@@ -46,7 +46,7 @@ const schema = z.object({ name: z.string() });
 schema.parse({ name: "ok" }); // compiled on first parse
 ```
 
-Compilation is lazy, so intermediate schemas in a builder chain cost nothing. Leave this import to applications; a library that adds it opts in every schema in the process on its users' behalf.
+Compilation is lazy, so intermediate schemas in a builder chain cost nothing. It also works as a Node.js CLI flag — `node --import zod/compile app.js`, or `--require` for CommonJS — which guarantees it runs before any module defines a schema. Leave this import to applications; a library that adds it opts in every schema in the process on its users' behalf.
 
 ### Speedups
 

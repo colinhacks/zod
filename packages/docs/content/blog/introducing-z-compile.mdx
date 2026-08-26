@@ -14,15 +14,12 @@ import * as z from "zod";
 
 const Player = z.object({
   username: z.string(),
-  bio: z.string(),
   xp: z.number(),
-  level: z.number(),
-  rank: z.number(),
   admin: z.boolean(),
-  stats: z.object({ title: z.string(), score: z.number(), active: z.boolean() }),
+  stats: z.object({ score: z.number(), active: z.boolean() }),
 });
 
-const CompiledPlayer = z.compile(Player); // parses ~4.5x faster
+const CompiledPlayer = z.compile(Player);
 ```
 
 `CompiledPlayer` is a regular Zod schema. Use it exactly like `Player`:
@@ -57,34 +54,28 @@ This is the function Zod generates for the `Player` schema above:
 if (typeof input !== "object" || input === null || Array.isArray(input)) return INVALID;
 const v0 = input["username"];
 if (typeof v0 !== "string") return INVALID;
-const v1 = input["bio"];
-if (typeof v1 !== "string") return INVALID;
-const v2 = input["xp"];
-if (typeof v2 !== "number" || !Number.isFinite(v2)) return INVALID;
-const v3 = input["level"];
-if (typeof v3 !== "number" || !Number.isFinite(v3)) return INVALID;
-const v4 = input["rank"];
+const v1 = input["xp"];
+if (typeof v1 !== "number" || !Number.isFinite(v1)) return INVALID;
+const v2 = input["admin"];
+if (typeof v2 !== "boolean") return INVALID;
+const v3 = input["stats"];
+if (typeof v3 !== "object" || v3 === null || Array.isArray(v3)) return INVALID;
+const v4 = v3["score"];
 if (typeof v4 !== "number" || !Number.isFinite(v4)) return INVALID;
-const v5 = input["admin"];
+const v5 = v3["active"];
 if (typeof v5 !== "boolean") return INVALID;
-const v6 = input["stats"];
-if (typeof v6 !== "object" || v6 === null || Array.isArray(v6)) return INVALID;
-const v7 = v6["title"];
-if (typeof v7 !== "string") return INVALID;
-const v8 = v6["score"];
-if (typeof v8 !== "number" || !Number.isFinite(v8)) return INVALID;
-const v9 = v6["active"];
-if (typeof v9 !== "boolean") return INVALID;
-const v10 = { "title": v7, "score": v8, "active": v9 };
-const v11 = { "username": v0, "bio": v1, "xp": v2, "level": v3, "rank": v4, "admin": v5, "stats": v10 };
-return v11;
+const v6 = { "score": v4, "active": v5 };
+const v7 = { "username": v0, "xp": v1, "admin": v2, "stats": v6 };
+return v7;
 ```
 
-Compare that to what the standard parser does: each node in the schema tree receives a payload, checks its value, runs its checks, and hands the payload to its children. Every node pays for dispatch, a payload allocation, and path tracking. The compiled version has no payloads, no dispatch, and no path arrays. Leaf schemas are inlined into their parent, so a `z.string()` inside an object costs one `typeof`, and the nested `stats` object costs nothing beyond its own three checks.
+Armed with the power of `new Function()`, this happens in-process at runtime. There is no need to integrate with your build system.
 
-## Compile everything with one import
+> Worth noting that the compiled schema is purely additive on top of the existing schema. It tacks on the pre-compiled fast path for checking valid inputs. When invalid data is detected, it returns the `INVALID` symbol to signal that parsing should fall back to the uncompiled parser. This structurally prevents subtle deviations in error reporting between compiled and uncompiled variants.
 
-You don't have to call `z.compile()` per schema. Import `zod/compile` once, before anything that defines schemas, and every schema constructed after that is compiled on its first parse:
+## Compile all the things!
+
+If you import `"zod/compile"` in the entrypoint of your application, Zod enables compile-by-default—all schemas you declare will self-compile the first time you use them. This gives you the performance boost of compilation throughout your application with one line of code.
 
 ```ts
 import "zod/compile"; // must come before modules that define schemas
@@ -95,6 +86,13 @@ schema.parse({ name: "ok" }); // compiled on first parse
 ```
 
 Compilation is lazy, so the intermediate schemas inside a builder chain like `z.string().min(1).max(10).optional()` cost nothing. Only the schemas you actually parse with get compiled.
+
+It also works as a Node.js CLI flag, which guarantees it runs before any module defines a schema:
+
+```sh
+node --import zod/compile app.js   # ESM
+node --require zod/compile app.cjs # CommonJS
+```
 
 This import is for applications, not libraries. A library that imports `zod/compile` opts in every schema in the process on behalf of its users, which is not its decision to make.
 
@@ -138,21 +136,10 @@ A bare `z.string()` has nothing to remove: the whole schema is one `typeof`. Eve
 
 These numbers come from the repo's 55-schema `compile-matrix` benchmark, run with all 55 schemas sharing one process, where the median is 2.4x. Measured one schema per process, the median is 1.6x. Both are real: every schema shares zod's internal dispatch sites, and running many of them together makes those call sites megamorphic, which taxes the interpreter more than it taxes a generated function. The shared number is the default because an application holds many schemas at once, and that is the speedup its users see.
 
-Four corrections to the harness were needed before these numbers meant anything, and they are written up in the repo:
-
-- Results must escape. V8 deletes a parse whose result is discarded; `z.string()` measured 625M ops/sec before this was fixed.
-- Inputs must arrive through an array load, not a constant, or the call becomes loop-invariant.
-- The number of schemas sharing the process is the single largest lever on the result.
-- Compiled and uncompiled runs must be interleaved, because absolute throughput drifts by tens of percent between runs.
-
-## Why this was hard
-
-The obvious way to build a compiler is to generate everything: one code path that validates, and one that produces the errors when validation fails. For Zod that would mean a second implementation of every schema type and every check, agreeing with the first on every edge case: dozens of schema types, dozens of checks, 60 locales, and years of error shapes that people snapshot in their test suites. A second implementation of all that was never going to stay in sync.
-
-So Zod's compiler doesn't produce errors at all. Look at the generated code above again: every failure is `return INVALID`. The compiled function is a happy-path validator, and when it returns `INVALID`, the wrapper hands the input to the standard parser, which produces the `ZodError` the same way it always has.
+## Identical errors
 
 ```ts
-const player = { username: "billie", bio: "hi", xp: 100, level: 3, rank: 12, admin: false, stats: { title: "pro", score: 9000, active: true } };
+const player = { username: "billie", xp: 100, admin: false, stats: { score: 9000, active: true } };
 
 const result = CompiledPlayer.safeParse({ ...player, xp: "100", stats: { ...player.stats, active: "yes" } });
 result.error.issues;
