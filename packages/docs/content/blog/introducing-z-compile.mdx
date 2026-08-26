@@ -2,12 +2,12 @@
 title: Introducing z.compile()
 author: Colin McDonnell
 date: 2026-08-25
-description: Zod 4.5 can compile a schema into a specialized validator ahead of time. Objects, arrays, and unions parse 4 to 14x faster, with identical output and identical errors.
+description: Zod 4.5 can compile a schema into a specialized validator ahead of time. Arrays, unions, and nested or wide objects parse 4 to 14x faster, with identical output and identical errors.
 ---
 
 import { ThemedImage } from "@/components/themed-image";
 
-Zod 4.5 can compile a schema into a specialized validator ahead of time, and on the shapes that dominate real workloads the compiled schema parses 4–14x faster with exactly the same output and exactly the same errors.
+Zod 4.5 can compile a schema into a specialized validator ahead of time, and on arrays, unions, and nested or wide objects the compiled schema parses 4–14x faster with exactly the same output and exactly the same errors.
 
 ```ts
 import * as z from "zod";
@@ -129,6 +129,8 @@ The obvious way to build a compiler is to generate everything: one code path tha
 So Zod's compiler doesn't produce errors at all. Look at the generated code again: every failure is `return INVALID`. The compiled function is a happy-path validator, and when it returns `INVALID`, the wrapper hands the input to the standard parser, which produces the `ZodError` the same way it always has.
 
 ```ts
+const player = { username: "billie", bio: "hi", xp: 100, level: 3, rank: 12, admin: false, stats: { title: "pro", score: 9000, active: true } };
+
 const result = CompiledPlayer.safeParse({ ...player, xp: "100", stats: { ...player.stats, active: "yes" } });
 result.error.issues;
 // [
@@ -156,7 +158,7 @@ Two consequences follow:
 
 ## What falls back
 
-A few constructs stay on the existing runtime implementation instead of compiling. Nothing changes in their behavior; they just don't get faster.
+A few constructs stay on the existing runtime implementation instead of compiling. `z.compile()` throws on them; global mode quietly keeps using the standard parser. Nothing changes in their behavior; they just don't get faster.
 
 - async refinements, transforms, and checks, and `safeParseAsync()`
 - `z.xor()`

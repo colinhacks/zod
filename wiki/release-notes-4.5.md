@@ -6,7 +6,7 @@ Zod 4.5 is a performance release. Schemas can now be compiled ahead of time for 
 
 > Read the announcement: [Introducing `z.compile()`](https://zod.dev/blog/introducing-z-compile)
 
-Zod can now compile a schema into a specialized validator ahead of time. On the shapes that dominate real workloads — objects, arrays, unions — compiled schemas parse 4–14x faster.
+Zod can now compile a schema into a specialized validator ahead of time. On arrays, unions, and nested or wide objects, compiled schemas parse 4–14x faster.
 
 ```ts
 import * as z from "zod";
@@ -50,7 +50,7 @@ Compilation is lazy, so intermediate schemas in a builder chain cost nothing. Le
 
 ### Speedups
 
-![Parse speedup of compiled schemas over the standard parser](https://zod.dev/blog/compile-speedup-light.svg)
+![Parse speedup of compiled schemas over the standard parser](https://zod.dev/blog/compile-speedup.svg)
 
 What compilation removes is per-node dispatch and allocation, so the win scales with how many nodes a parse walks. Containers benefit most:
 
@@ -71,7 +71,7 @@ z.tuple([z.string(), z.number(), z.boolean()]);
 
 A bare `z.string()` has nothing to remove, since the whole schema is one `typeof`. Everything built out of such schemas still benefits, because leaves are inlined into the parent's compiled code.
 
-Async schemas, `z.xor()`, recursive schemas, coercion, and encoding fall back to the standard parser, and global mode stands down under `z.config({ jitless: true })` for CSP environments. The [docs](https://zod.dev/compile) have the full list.
+Async schemas, `z.xor()`, recursive schemas, coercion, and encoding aren't compiled: `z.compile()` throws on them, and global mode quietly keeps using the standard parser. Global mode also stands down under `z.config({ jitless: true })` for CSP environments. The [docs](https://zod.dev/compile) have the full list.
 
 ## ~70% less memory per schema ([#6318](https://github.com/colinhacks/zod/pull/6318), [#6415](https://github.com/colinhacks/zod/pull/6415))
 
