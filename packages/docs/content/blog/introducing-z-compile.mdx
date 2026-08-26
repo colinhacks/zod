@@ -22,7 +22,7 @@ CompiledPlayer.parse({ username: "billie", xp: 100, tags: ["a"] });
 // { username: 'billie', xp: 100, tags: [ 'a' ] }
 ```
 
-The thing that comes back from `z.compile()` is a regular Zod schema. `.parse()`, `.safeParse()`, type inference, Standard Schema, and composition all work exactly as before; the original schema is untouched. The only difference is what happens inside `.parse()`.
+The thing that comes back from `z.compile()` is a regular Zod schema. `.parse()`, `.safeParse()`, type inference, Standard Schema, and composition all work exactly as before, and the original schema is untouched.
 
 ## What the compiler generates
 
@@ -55,7 +55,9 @@ No payloads, no dispatch, no path arrays. Leaf schemas are inlined into their pa
 
 ## Why this was hard
 
-The obvious way to build a compiler is to generate everything: one code path that validates, and one that produces the errors when validation fails. ArkType takes this route. The cost is that you now maintain two implementations of every schema type and every check, and they have to agree on every edge case, forever. Zod has dozens of schema types, dozens of checks, 60 locales, and years of accumulated error-shape expectations that people snapshot in their test suites. A second implementation of all that was never going to stay in sync.
+The obvious way to build a compiler is to generate everything: one code path that validates, and one that produces the errors when validation fails. ArkType takes this route.
+
+For Zod that would mean a second implementation of every schema type and every check, agreeing with the first on every edge case: dozens of schema types, dozens of checks, 60 locales, and years of error shapes that people snapshot in their test suites. A second implementation of all that was never going to stay in sync.
 
 So Zod's compiler doesn't produce errors at all. Look at the generated code again: every failure is `return INVALID`. The compiled function is a happy-path validator, and when it returns `INVALID`, the wrapper hands the input to the standard parser, which produces the `ZodError` the same way it always has.
 
@@ -81,14 +83,14 @@ result.error.issues;
 // ]
 ```
 
-That is byte-for-byte the error the uncompiled `Player` produces, because it *is* the error the uncompiled `Player` produces. There is no second error path to drift out of sync, and every fix to the standard parser's error reporting applies to compiled schemas automatically.
+That is the error the uncompiled `Player` produces, because the fallback ran the uncompiled `Player` to build it. There is no second error path to drift out of sync, and every fix to the standard parser's error reporting applies to compiled schemas automatically.
 
-Two consequences follow, and both are worth knowing:
+Two consequences follow:
 
-- Invalid inputs pay for both the fast path and the fallback. If your workload is mostly invalid input, compilation won't help. It also won't change any behavior.
+- Invalid inputs pay for both the fast path and the fallback. If your workload is mostly invalid input, compilation won't help.
 - Refinements and transforms run exactly once on valid input, and at most twice on invalid input: once in the fast path, once in the fallback.
 
-Value parity on the success path is the compiler's job, and it's checked rather than assumed. The repo runs its entire test suite a second time with compilation enabled globally, asserting per fixture that the fast path actually produced the value rather than silently falling back. Key order, `undefined`-valued versus absent keys, array holes, frozenness, `NaN` and `-0` all match.
+Output parity is tested rather than assumed. The repo runs its entire test suite a second time with compilation enabled globally, asserting per fixture that the fast path actually produced the value rather than silently falling back. Key order, `undefined`-valued versus absent keys, array holes, frozenness, `NaN` and `-0` all match.
 
 ## Compiling everything
 
@@ -118,31 +120,36 @@ Across a 55-schema benchmark in the repo, the median speedup is **2.4x**. It sca
 | `.pipe()` chain | ~7.7x |
 | tuple | ~4.8x |
 | nested object | ~4.5x |
-| discriminated union | ~4x |
+| discriminated union | ~4.3x |
 | intersection | ~4.3x |
 | strict object | ~3x |
-| 5-key object | ~2.5x |
 | `z.string().min(3).max(64).regex(…)` | ~2.8x |
+| 5-key object | ~2.5x |
 | bare `z.string()` | none |
 
 A bare `z.string()` has nothing to remove: the whole schema is one `typeof`. Everything built out of such schemas benefits, because the leaves get inlined into the parent's generated code.
 
-Getting these numbers took four separate corrections to the benchmark harness, which are written up in the repo for anyone who wants to reproduce them. The short version: results must escape (V8 will delete a parse whose result is discarded, and `z.string()` measured 625M ops/sec before that was fixed), inputs must arrive through an array load rather than a constant, the number of schemas sharing the process is the single largest lever on the result, and compiled and uncompiled runs must be interleaved because absolute throughput drifts by tens of percent between runs.
+Four corrections to the harness were needed before these numbers meant anything, and they are written up in the repo:
+
+- Results must escape. V8 deletes a parse whose result is discarded; `z.string()` measured 625M ops/sec before this was fixed.
+- Inputs must arrive through an array load, not a constant, or the call becomes loop-invariant.
+- The number of schemas sharing the process is the single largest lever on the result.
+- Compiled and uncompiled runs must be interleaved, because absolute throughput drifts by tens of percent between runs.
 
 ## What doesn't compile
 
 The compiler refuses anything it can't model *exactly*. `z.compile()` throws in these cases; global mode silently keeps using the standard parser.
 
 - **Async.** A schema with an async refinement, transform, or check throws `ZodCompileAsyncError`. `safeParseAsync()` always uses the standard parser.
-- **`z.xor()`.** Its exactly-one-match rule needs every branch to reject for the same reason the standard parser would, and a compiled branch that returns `INVALID` can't say why.
+- **Exclusive unions (`z.xor()`).** The exactly-one-match rule needs every branch to reject for the same reason the standard parser would, and a compiled branch that returns `INVALID` can't say why.
 - **Recursive schemas.** Cycle detection in the input needs the standard parser's memoizer.
 - **Coercion**, checks with a custom `when`, and `.catch()` given a callback rather than a value.
 
 Inside a container — object, array, tuple, record, intersection — an unsupported *child* doesn't prevent compilation. The child runs on the standard parser as an island and the surrounding structure stays compiled. Unions are the exception: a falsely-rejecting compiled branch would corrupt match semantics, so a union with an unsupported member falls back as a whole.
 
-Encoding (`z.encode()` and the codec `"backward"` direction) always uses the standard parser. Backward codegen can come later if the benchmarks ask for it.
+Encoding (`z.encode()` and the codec `"backward"` direction) always uses the standard parser. Backward codegen may come later.
 
-One more thing to know: methods that derive a new schema return uncompiled schemas. Compile the final schema, not an intermediate.
+Methods that derive a new schema return uncompiled schemas. Compile the final schema, not an intermediate.
 
 ```ts
 // ❌ the .refine() result is not compiled
@@ -164,7 +171,9 @@ Calling `z.compile()` directly is treated as an explicit opt-in and throws `ZodC
 
 ## Cost
 
-Everything in Zod is weighed on runtime, memory, and bundle size at once, and a compiler is a lot of code. The compiler itself tree-shakes cleanly: unless you call `z.compile()` or import `zod/compile`, none of it ends up in your bundle. What every bundle does carry is the hook that global mode needs in the schema constructor, which measured at +21 to +25 bytes gzipped on the smallest `zod/mini` fixtures and below the noise floor on construction speed. The bundle-size test in CI now holds those fixtures to a ceiling, so a regression fails the build instead of waiting for someone to measure.
+A compiler is a lot of code, so the question is what it costs a bundle that never uses it. The compiler itself tree-shakes cleanly: unless you call `z.compile()` or import `zod/compile`, none of it ends up in your bundle.
+
+What every bundle does carry is the hook that global mode needs in the schema constructor. It measured at +21 to +25 bytes gzipped on the smallest `zod/mini` fixtures and below the noise floor on construction speed, and the bundle-size test in CI now holds those fixtures to a ceiling.
 
 ## Try it
 

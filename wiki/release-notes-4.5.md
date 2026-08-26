@@ -1,14 +1,10 @@
-# 4.5.0 release notes (draft)
+<!-- Draft of the GitHub release notes for v4.5.0. Paste everything below this comment into the release body when the version is cut. -->
 
-Draft of the GitHub release notes for `v4.5.0`. Paste into the release body when the version is cut.
-
----
-
-Zod 4.5 is a performance release. Schemas can now be compiled ahead of time for a median 2.4x faster parse, and every schema you construct costs about a third of the memory it did in 4.4. Alongside that there's a long list of new APIs, JSON Schema improvements, eight new locales, and a batch of soundness fixes. A few of those fixes make Zod stricter; they're marked with ⚠️ below.
+Zod 4.5 is a performance release. Schemas can now be compiled ahead of time for a median 2.4x faster parse, and every schema you construct costs about a third of the memory it did in 4.4. A few of the bug fixes make Zod stricter; they're marked with ⚠️ below.
 
 ## `z.compile()` — ahead-of-time compilation ([#6085](https://github.com/colinhacks/zod/pull/6085))
 
-Zod can now compile a schema into a specialized validator ahead of time. The compiled schema produces identical output and identical errors; it just gets there faster.
+Zod can now compile a schema into a specialized validator ahead of time. The compiled schema produces identical output and identical errors.
 
 ```ts
 import * as z from "zod";
@@ -42,9 +38,11 @@ import "zod/compile";
 import * as z from "zod";
 ```
 
-The compiled fast path only handles the happy path. When an input fails validation, Zod falls back to the standard parser to produce the `ZodError`, so there is no second error implementation to drift out of sync. Compilation uses `new Function`; global mode stands down automatically under `z.config({ jitless: true })`. Read the [announcement post](https://zod.dev/blog/introducing-z-compile) and the [docs](https://zod.dev/compile) for the details and the list of constructs that fall back to the standard parser.
+The compiled fast path only handles the happy path. When an input fails validation, Zod falls back to the standard parser to produce the `ZodError`, so there is no second error implementation to drift out of sync.
 
-## ~70% less memory per schema ([#6318](https://github.com/colinhacks/zod/pull/6318), [#6415](https://github.com/colinhacks/zod/pull/6415), [#6435](https://github.com/colinhacks/zod/pull/6435))
+Compilation uses `new Function`; global mode stands down automatically under `z.config({ jitless: true })`. The [announcement post](https://zod.dev/blog/introducing-z-compile) and the [docs](https://zod.dev/compile) cover the details and the constructs that fall back to the standard parser.
+
+## ~70% less memory per schema ([#6318](https://github.com/colinhacks/zod/pull/6318), [#6415](https://github.com/colinhacks/zod/pull/6415))
 
 Schema instances used to carry every builder method and every lazily-derived internal as an own property. Those now live on prototypes and materialize per instance on first read. Retained heap per schema, 4.4.3 vs 4.5:
 
@@ -60,7 +58,7 @@ Schema instances used to carry every builder method and every lazily-derived int
 
 On a realistic catalogue of API resource schemas (~40 nodes each), the cost per resource drops from 406 KB to 118 KB, and 500 of them go from 198 MB to 58 MB of heap. Schema construction is roughly twice as fast as a side effect, and keeping instances in V8's fast-properties mode sped up several parse paths too. The [memory post](https://zod.dev/blog/memory) has the full story.
 
-Nothing observable changes: enumerability is the same, detached method calls still work, and `Object.keys` / `JSON.stringify` / spread behave as before. The one visible difference is that `hasOwnProperty("optional")` is `false` until the first time you touch `.optional`.
+The one visible difference is that `hasOwnProperty("optional")` is `false` until the first time you touch `.optional`.
 
 ## Faster failures ([#6316](https://github.com/colinhacks/zod/pull/6316), [#6450](https://github.com/colinhacks/zod/pull/6450))
 
@@ -123,15 +121,18 @@ Closes [#372](https://github.com/colinhacks/zod/issues/372), [#2084](https://git
 Like `.partial()`, but wraps each field in `z.exactOptional()` instead of `z.optional()`: keys may be omitted, but an explicit `undefined` is rejected. This matches TypeScript's `Partial<>` under `exactOptionalPropertyTypes`.
 
 ```ts
-const PartialRecipe = Recipe.exactPartial();
+const Recipe = z.object({ title: z.string(), servings: z.number() });
 
-// Zod Mini
-const PartialRecipe = z.exactPartial(Recipe);
+const PartialRecipe = Recipe.exactPartial();
+PartialRecipe.parse({});                    // ✅
+PartialRecipe.parse({ title: undefined });  // ❌
 ```
+
+In Zod Mini it's a top-level function: `z.exactPartial(Recipe)`.
 
 ## `z.creditCard()` ([#5931](https://github.com/colinhacks/zod/pull/5931))
 
-A new string format: 12–19 digits, optionally separated by single spaces or hyphens, with a valid Luhn checksum. The issuer is not identified — an allowlist of card schemes turns away real cards from real networks, so there isn't one.
+A new string format: 12–19 digits, optionally separated by single spaces or hyphens, with a valid Luhn checksum. The issuer is not identified: an allowlist of card schemes turns away Luhn-valid cards from every scheme it doesn't know, and keeping one current needs a BIN table.
 
 ```ts
 z.creditCard().parse("4111 1111 1111 1111"); // ✅
@@ -200,15 +201,31 @@ httpsUrl.parse(new URL("http://localhost")); // ❌ protocol
 
 ## `issue.schema` ([#6420](https://github.com/colinhacks/zod/pull/6420), [#6426](https://github.com/colinhacks/zod/pull/6426))
 
-For an issue raised by a check (`too_small`, `too_big`, `invalid_format`, `not_multiple_of`), `issue.inst` is the check itself, which has no metadata and no link back to the schema. Issues now also carry `issue.schema`: the schema the check was attached to, so an error map can label a `.min()` failure with the field's own `.meta()`. Relatedly, a schema-level `error` now covers issues raised by its own checks, not just the ones it raised itself. Closes [#5240](https://github.com/colinhacks/zod/issues/5240), [#6108](https://github.com/colinhacks/zod/issues/6108).
+For an issue raised by a check (`too_small`, `too_big`, `invalid_format`, `not_multiple_of`), `issue.inst` is the check itself, which has no metadata and no link back to the schema. Issues now also carry `issue.schema`, the schema the check was attached to, so an error map can label a `.min()` failure with the field's own `.meta()`.
+
+```ts
+z.config({
+  customError: (iss) => `${iss.schema?.meta?.()?.title ?? "Value"} is invalid.`,
+});
+
+z.string().min(5).meta({ title: "Password" }).safeParse("abc");
+// => "Password is invalid."
+```
+
+A schema-level `error` also now covers issues raised by its own checks, not just the ones it raised itself:
+
+```ts
+z.string({ error: "Bad" }).min(5).safeParse("abc").error.issues[0].message;
+// => "Bad"
+```
+
+Closes [#5240](https://github.com/colinhacks/zod/issues/5240), [#6108](https://github.com/colinhacks/zod/issues/6108).
 
 ## JSON Schema
 
-A lot of JSON Schema work landed in this release, in both directions.
-
 `z.toJSONSchema()`:
 
-- `unrepresentable` accepts a function, so you can substitute a schema for one type while every other unrepresentable type still throws ([#6380](https://github.com/colinhacks/zod/pull/6380)). `override` now runs before the unrepresentable error for the same reason ([#6391](https://github.com/colinhacks/zod/pull/6391)).
+- `unrepresentable` accepts a function, so you can substitute a schema for one type while every other unrepresentable type still throws ([#6380](https://github.com/colinhacks/zod/pull/6380)).
 - Simple unions emit a type array — `z.union([z.string(), z.null()])` becomes `{ type: ["string", "null"] }` instead of `anyOf` ([#6339](https://github.com/colinhacks/zod/pull/6339)).
 - An intersection of object schemas is folded into one object instead of an `allOf` that no object could satisfy ([#6461](https://github.com/colinhacks/zod/pull/6461)).
 - A root schema with an `id` emits a root `$ref` ([#6029](https://github.com/colinhacks/zod/pull/6029)).
@@ -227,7 +244,7 @@ A lot of JSON Schema work landed in this release, in both directions.
 
 ## Tree-shaking
 
-- `import z from "zod"` no longer pulls all 53 locales into the bundle ([#6384](https://github.com/colinhacks/zod/pull/6384)).
+- `import z from "zod"` no longer pulls every locale into the bundle ([#6384](https://github.com/colinhacks/zod/pull/6384)).
 - The default English locale survives bundlers that honor `sideEffects: false`, so messages no longer fall through to `"Invalid input"` ([#5959](https://github.com/colinhacks/zod/pull/5959)).
 - Three dead declarations no longer survive into every `zod/mini` bundle under esbuild ([#6381](https://github.com/colinhacks/zod/pull/6381)).
 
@@ -257,13 +274,21 @@ import { sk } from "zod/locales";
 z.config(sk());
 ```
 
-Message text also changed in several existing locales — French ([#6120](https://github.com/colinhacks/zod/pull/6120), [#5999](https://github.com/colinhacks/zod/pull/5999)), Portuguese ([#6076](https://github.com/colinhacks/zod/pull/6076)), and the Danish, Norwegian, and Swedish words for an IP address ([#6430](https://github.com/colinhacks/zod/pull/6430)) — and every locale now has the full dictionary, with a test pinning it ([#6424](https://github.com/colinhacks/zod/pull/6424), [#6427](https://github.com/colinhacks/zod/pull/6427)). English changes: fixed-length failures say `exactly N` ([#6177](https://github.com/colinhacks/zod/pull/6177)), `z.xor()` names the overlap when more than one option matches ([#6376](https://github.com/colinhacks/zod/pull/6376)), and `Infinity` is called out by name ([#5906](https://github.com/colinhacks/zod/pull/5906)). If you snapshot error messages, expect diffs.
+Message text also changed in existing locales:
 
-<br/><br/><br/>
+- French: more natural wording ([#6120](https://github.com/colinhacks/zod/pull/6120), [#5999](https://github.com/colinhacks/zod/pull/5999))
+- Portuguese: article fixes ([#6076](https://github.com/colinhacks/zod/pull/6076))
+- Danish, Norwegian, Swedish: `ipv4` / `ipv6` name an address, not a range ([#6430](https://github.com/colinhacks/zod/pull/6430))
+- Every locale now has the full dictionary, with a test pinning it ([#6424](https://github.com/colinhacks/zod/pull/6424), [#6427](https://github.com/colinhacks/zod/pull/6427))
+- English: fixed-length failures say `exactly N` ([#6177](https://github.com/colinhacks/zod/pull/6177)), `z.xor()` names the overlap when more than one option matches ([#6376](https://github.com/colinhacks/zod/pull/6376)), and `Infinity` is called out by name ([#5906](https://github.com/colinhacks/zod/pull/5906))
+
+If you snapshot error messages, expect diffs.
+
+---
 
 ## Bug fixes
 
-All of these fix soundness issues. As with any bug fix, there's some chance of breakage if you were relying on the old behavior, intentionally or not.
+All of these fix soundness issues, so a schema that relied on the old behavior may now reject input it used to accept.
 
 ### ⚠️ `z.iso.datetime()` requires seconds ([#6457](https://github.com/colinhacks/zod/pull/6457))
 
@@ -286,7 +311,7 @@ z.union([z.iso.datetime(), z.iso.datetime({ precision: -1 })]);
 
 ```ts
 z.string().max(5).parse("😀😀😀😀😀"); // was too_big, now passes
-z.string().min(5).parse("😀😀");       // was fine, now too_small
+z.string().min(5).parse("😀😀😀");     // was fine, now too_small
 ```
 
 Closes [#3355](https://github.com/colinhacks/zod/issues/3355).
