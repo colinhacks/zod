@@ -160,12 +160,13 @@ Two consequences follow:
 
 A few constructs stay on the existing runtime implementation instead of compiling. `z.compile()` throws on them; global mode quietly keeps using the standard parser. Nothing changes in their behavior; they just don't get faster.
 
-- async refinements, transforms, and checks, and `safeParseAsync()`
+- async refinements, transforms, and checks
 - `z.xor()`
 - recursive schemas
 - `z.coerce.*`, checks with a custom `when`, and `.catch()` given a callback
-- encoding (`z.encode()` and the codec `"backward"` direction)
 - CSP environments, where `new Function` is unavailable: global mode stands down under `z.config({ jitless: true })`, and `z.compile()` throws `ZodCompileUnsupportedError`
+
+Two paths always use the standard parser even on a compiled schema: `safeParseAsync()` and encoding (`z.encode()` and the codec `"backward"` direction).
 
 Inside an object, array, tuple, record, or intersection, an unsupported child runs on the standard parser while the surrounding structure stays compiled.
 

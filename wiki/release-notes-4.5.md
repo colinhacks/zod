@@ -71,7 +71,7 @@ z.tuple([z.string(), z.number(), z.boolean()]);
 
 A bare `z.string()` has nothing to remove, since the whole schema is one `typeof`. Everything built out of such schemas still benefits, because leaves are inlined into the parent's compiled code.
 
-Async schemas, `z.xor()`, recursive schemas, coercion, and encoding aren't compiled: `z.compile()` throws on them, and global mode quietly keeps using the standard parser. Global mode also stands down under `z.config({ jitless: true })` for CSP environments. The [docs](https://zod.dev/compile) have the full list.
+Async schemas, `z.xor()`, recursive schemas, and coercion aren't compiled: `z.compile()` throws on them, and global mode quietly keeps using the standard parser. Encoding always runs on the standard parser, and global mode stands down under `z.config({ jitless: true })` for CSP environments. The [docs](https://zod.dev/compile) have the full list.
 
 ## ~70% less memory per schema ([#6318](https://github.com/colinhacks/zod/pull/6318), [#6415](https://github.com/colinhacks/zod/pull/6415))
 
