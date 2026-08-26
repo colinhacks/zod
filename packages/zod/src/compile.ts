@@ -36,6 +36,8 @@ core.globalConfig.postProcessor = (inst: any) => {
       const compiled = compile(inst);
       // Only the run wrapper. Copying the compiled parse/safeParse closures would make their fallback re-enter this instance and run user callbacks a third time.
       inst._zod.run = compiled._zod.run;
+      inst._zod.bag.fastpass = compiled._zod.bag.fastpass;
+      inst._zod.bag.fallbackRun = compiled._zod.bag.fallbackRun;
     } catch {
       // Permanent fallback for unsupported schemas.
       inst._zod.run = originalRun;

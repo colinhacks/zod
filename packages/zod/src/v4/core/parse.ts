@@ -105,6 +105,66 @@ export const _safeParseAsync: (_Err: $ZodErrorClass) => $SafeParseAsync = (_Err)
 
 export const safeParseAsync: $SafeParseAsync = /* @__PURE__*/ _safeParseAsync(errors.$ZodRealError);
 
+// registry mirrors of the compiler's sentinels, so this module never imports the compiler
+const COMPILE_INVALID = /* @__PURE__ */ Symbol.for("zod.compile.invalid");
+const COMPILE_FALLBACK = /* @__PURE__ */ Symbol.for("zod.compile.fallback");
+
+interface CompiledBag {
+  fastpass?: (input: unknown) => unknown;
+  fallbackRun?: (payload: schemas.ParsePayload, ctx: schemas.ParseContextInternal) => unknown;
+}
+
+export type $IsValid = <T extends schemas.$ZodType>(
+  schema: T,
+  value: unknown,
+  _ctx?: schemas.ParseContext<errors.$ZodIssue>
+) => value is core.input<T>;
+
+export const isValid: $IsValid = ((
+  schema: schemas.$ZodType,
+  value: unknown,
+  _ctx?: schemas.ParseContext<errors.$ZodIssue>
+): boolean => {
+  const bag = schema._zod.bag as CompiledBag;
+  let result: unknown;
+  if (bag.fastpass && bag.fallbackRun) {
+    if (bag.fastpass(value) !== COMPILE_INVALID) return true;
+    const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: false } : { async: false };
+    // skip nested fast paths on the fallback, so user callbacks keep the at-most-twice bound
+    (ctx as Record<symbol, unknown>)[COMPILE_FALLBACK] = true;
+    result = bag.fallbackRun({ value, issues: [] }, ctx);
+  } else {
+    const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: false } : { async: false };
+    result = schema._zod.run({ value, issues: [] }, ctx);
+  }
+  if (result instanceof Promise) {
+    throw new core.$ZodAsyncError();
+  }
+  return (result as schemas.ParsePayload).issues.length === 0;
+}) as $IsValid;
+
+export type $IsValidAsync = <T extends schemas.$ZodType>(
+  schema: T,
+  value: unknown,
+  _ctx?: schemas.ParseContext<errors.$ZodIssue>
+) => Promise<boolean>;
+
+export const isValidAsync: $IsValidAsync = async (schema, value, _ctx) => {
+  const bag = schema._zod.bag as CompiledBag;
+  let result: unknown;
+  if (bag.fastpass && bag.fallbackRun) {
+    if (bag.fastpass(value) !== COMPILE_INVALID) return true;
+    const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: true } : { async: true };
+    (ctx as Record<symbol, unknown>)[COMPILE_FALLBACK] = true;
+    result = bag.fallbackRun({ value, issues: [] }, ctx);
+  } else {
+    const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: true } : { async: true };
+    result = schema._zod.run({ value, issues: [] }, ctx);
+  }
+  if (result instanceof Promise) result = await result;
+  return (result as schemas.ParsePayload).issues.length === 0;
+};
+
 // Codec functions
 export type $Encode = <T extends schemas.$ZodType>(
   schema: T,

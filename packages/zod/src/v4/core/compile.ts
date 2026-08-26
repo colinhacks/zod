@@ -135,8 +135,10 @@ export function compile<T extends SomeType>(schema: T): T {
     if (ctx) (ctx as Record<symbol, unknown>)[FALLBACK_FLAG] = true;
     return originalRun(payload, ctx);
   };
-  // Let later compiles of (or through) this run unwrap to the true runtime — both the global shim and repeated z.compile calls rely on this.
+  // Let later compiles of (or through) this run unwrap to the true runtime — both the global shim and repeated z.compile calls rely on this. __fastpass lets the standalone isValid skip the payload and wrapper on the happy path.
   (wrapped as { __originalRun?: typeof originalRun }).__originalRun = originalRun;
+  clone._zod.bag.fastpass = fast;
+  clone._zod.bag.fallbackRun = originalRun;
   clone._zod.run = wrapped;
 
   // The fast parse/safeParse closures fall back through the source schema's methods. If the source is shim- or wrapper-managed, those methods route into a compiled run and would execute user callbacks a third time on invalid input — the plain method → wrapper path is exactly 2x, so skip.
