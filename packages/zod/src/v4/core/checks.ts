@@ -190,7 +190,8 @@ export const $ZodCheckMultipleOf: core.$constructor<$ZodCheckMultipleOf<number |
         throw new Error("Cannot mix number and bigint in multiple_of check.");
       const isMultiple =
         typeof payload.value === "bigint"
-          ? payload.value % (def.value as bigint) === BigInt(0)
+          ? // `value % 0n` throws, and nothing is a multiple of zero — the number branch already fails this way via NaN
+            (def.value as bigint) !== BigInt(0) && payload.value % (def.value as bigint) === BigInt(0)
           : util.floatSafeRemainder(payload.value, def.value as number) === 0;
 
       if (isMultiple) return;
