@@ -410,30 +410,33 @@ export {
 
 export function Table(props: { resources: ZodResource[] }) {
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Stars</th>
-          {/* <th>Zod 4 support</th> */}
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-        {props.resources.map((resource) => (
-          <tr key={resource.slug}>
-            <td>
-              <a href={resource.url}>
-                <code className="whitespace-nowrap">{resource.name}</code>
-              </a>
-            </td>
-            <td className="whitespace-nowrap">{`⭐️ ${resource.stars ?? "—"}`}</td>
-            {/* <td className="whitespace-nowrap">{`⭐️ ${resource.v4 ? "✅" : ""}`}</td> */}
-            <td>{resource.description}</td>
+    // matches the wrapper fumadocs puts around markdown tables; without it the last column is clipped on mobile
+    <div className="relative overflow-auto prose-no-margin my-6">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Stars</th>
+            {/* <th>Zod 4 support</th> */}
+            <th>Description</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {props.resources.map((resource) => (
+            <tr key={resource.slug}>
+              <td>
+                <a href={resource.url}>
+                  <code className="whitespace-nowrap">{resource.name}</code>
+                </a>
+              </td>
+              <td className="whitespace-nowrap">{`⭐️ ${resource.stars ?? "—"}`}</td>
+              {/* <td className="whitespace-nowrap">{`⭐️ ${resource.v4 ? "✅" : ""}`}</td> */}
+              <td>{resource.description}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
