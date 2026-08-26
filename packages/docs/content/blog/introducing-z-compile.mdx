@@ -129,6 +129,8 @@ Across a 55-schema benchmark in the repo, the median speedup is **2.4x**. It sca
 
 A bare `z.string()` has nothing to remove: the whole schema is one `typeof`. Everything built out of such schemas benefits, because the leaves get inlined into the parent's generated code.
 
+The 2.4x median is measured with all 55 schemas sharing one process. Measured one schema per process, the median is 1.6x. Both are real: every schema shares zod's internal dispatch sites, and running many of them together makes those call sites megamorphic, which taxes the interpreter more than it taxes a generated function. The shared number is the default because an application holds many schemas at once, and that is the speedup its users see.
+
 Four corrections to the harness were needed before these numbers meant anything, and they are written up in the repo:
 
 - Results must escape. V8 deletes a parse whose result is discarded; `z.string()` measured 625M ops/sec before this was fixed.

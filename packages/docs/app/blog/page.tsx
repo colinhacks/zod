@@ -4,7 +4,9 @@ import Link from "next/link";
 export const revalidate = false;
 
 export default function BlogIndexPage() {
-  const posts = blog.getPages() as any[];
+  const posts = (blog.getPages() as any[]).sort(
+    (a, b) => new Date(b.data?.date ?? 0).getTime() - new Date(a.data?.date ?? 0).getTime()
+  );
 
   return (
     <main className="grow container mx-auto px-4 py-12">

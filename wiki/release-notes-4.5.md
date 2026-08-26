@@ -201,7 +201,7 @@ httpsUrl.parse(new URL("http://localhost")); // ❌ protocol
 
 ## `issue.schema` ([#6420](https://github.com/colinhacks/zod/pull/6420), [#6426](https://github.com/colinhacks/zod/pull/6426))
 
-For an issue raised by a check (`too_small`, `too_big`, `invalid_format`, `not_multiple_of`), `issue.inst` is the check itself, which has no metadata and no link back to the schema. Issues now also carry `issue.schema`, the schema the check was attached to, so an error map can label a `.min()` failure with the field's own `.meta()`.
+For an issue raised by a check (`too_small`, `too_big`, `invalid_format`, `not_multiple_of`), `issue.inst` is the check itself, which has no metadata and no link back to the schema. The raw issue handed to an error map now also carries `issue.schema`, the schema the check was attached to, so an error map can label a `.min()` failure with the field's own `.meta()`. It is stripped before the issue lands in `ZodError.issues`.
 
 ```ts
 z.config({
@@ -253,7 +253,6 @@ Closes [#5240](https://github.com/colinhacks/zod/issues/5240), [#6108](https://g
 - `.apply()` forwards extra arguments to the function it's given ([#6337](https://github.com/colinhacks/zod/pull/6337)).
 - The function returned by `.implement()` exposes its schema on a non-enumerable `_zod` property ([#6267](https://github.com/colinhacks/zod/pull/6267)).
 - `z.stringbool()` exposes its resolved `truthy` / `falsy` / `case` config on `._zod.bag` ([#6357](https://github.com/colinhacks/zod/pull/6357)).
-- `ZodInt`, `ZodInt32`, `ZodFloat32`, etc. are distinguishable at the type level via `ZodNumberFormat<Format>` ([#6052](https://github.com/colinhacks/zod/pull/6052)).
 - Stack traces from `z.parse()`, `.encode()`, and `.decode()` start at your call site instead of inside Zod ([#5910](https://github.com/colinhacks/zod/pull/5910)). Closes [#3254](https://github.com/colinhacks/zod/issues/3254).
 - The Zod 3 compat aliases (`ZodTypeAny`, `ZodSchema`, `TypeOf`, …) now render as `@deprecated` in editors ([#6072](https://github.com/colinhacks/zod/pull/6072)).
 
@@ -278,7 +277,7 @@ Message text also changed in existing locales:
 
 - French: more natural wording ([#6120](https://github.com/colinhacks/zod/pull/6120), [#5999](https://github.com/colinhacks/zod/pull/5999))
 - Portuguese: article fixes ([#6076](https://github.com/colinhacks/zod/pull/6076))
-- Danish, Norwegian, Swedish: `ipv4` / `ipv6` name an address, not a range ([#6430](https://github.com/colinhacks/zod/pull/6430))
+- Danish, Norwegian (Bokmål and Nynorsk), Swedish: `ipv4` / `ipv6` name an address, not a range ([#6430](https://github.com/colinhacks/zod/pull/6430))
 - Every locale now has the full dictionary, with a test pinning it ([#6424](https://github.com/colinhacks/zod/pull/6424), [#6427](https://github.com/colinhacks/zod/pull/6427))
 - English: fixed-length failures say `exactly N` ([#6177](https://github.com/colinhacks/zod/pull/6177)), `z.xor()` names the overlap when more than one option matches ([#6376](https://github.com/colinhacks/zod/pull/6376)), and `Infinity` is called out by name ([#5906](https://github.com/colinhacks/zod/pull/5906))
 
@@ -334,10 +333,14 @@ Separately, an `unrecognized_keys` issue no longer aborts the schema it came fro
 
 Object and record parsers now drop a `__proto__` key whether it comes from the input, is declared by the schema, or is produced by a record key transform. A key that a record's key schema *normalizes* to `__proto__` is dropped too. `.strict()` reports an own `__proto__` input key as `unrecognized_keys` instead of silently swallowing it. Error formatters and both JSON Schema converters use own-property writes so a `toString` or `constructor` path segment can't walk onto `Object.prototype` ([#6213](https://github.com/colinhacks/zod/pull/6213), [#6367](https://github.com/colinhacks/zod/pull/6367), [#6346](https://github.com/colinhacks/zod/pull/6346)).
 
+### ⚠️ Number and bigint formats are distinct types ([#6052](https://github.com/colinhacks/zod/pull/6052))
+
+`ZodInt`, `ZodFloat32`, `ZodFloat64`, `ZodInt32`, and `ZodUInt32` were empty extensions of one base, so TypeScript treated all five as the same type. They are now `ZodNumberFormat<Format>` with a distinct format each, and the bigint formats get the same treatment: `z.int64()` and `z.uint64()` return `ZodInt64` and `ZodUInt64`. This is breaking at the type level only: `z.float32()` is no longer assignable to a `ZodInt` annotation.
+
 ### ⚠️ Stricter string formats
 
 - `z.ipv6()` validated by handing the string to `new URL()`, which let `::@1\` and `::1\n` through. It now checks the address alphabet directly ([#6442](https://github.com/colinhacks/zod/pull/6442)).
-- `z.ulid()` rejects a first character of `8` or `9`, which overflows the 48-bit timestamp ([#6095](https://github.com/colinhacks/zod/pull/6095)).
+- `z.ulid()` restricts the first character to `0`–`7`; anything higher overflows the 48-bit timestamp. A fixture that doesn't start with a real timestamp, such as one with a leading letter, is now rejected ([#6095](https://github.com/colinhacks/zod/pull/6095)).
 - `z.httpUrl()` enforces the RFC 1035 length limits on the host, matching `z.hostname()` ([#6035](https://github.com/colinhacks/zod/pull/6035)).
 - `z.emoji()` no longer backtracks exponentially on a failed match ([#6347](https://github.com/colinhacks/zod/pull/6347)).
 - `z.string().includes(sub, { position: N })` emits a JSON Schema pattern that allows *at least* N leading characters, matching `String.prototype.includes` ([#6024](https://github.com/colinhacks/zod/pull/6024)).
