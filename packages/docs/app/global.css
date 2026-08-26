@@ -95,6 +95,11 @@ html .prose {
   }
 }
 
+/* long inline tokens are clipped rather than reachable now that the layout container clips overflow */
+html .prose :not(pre) > code {
+  overflow-wrap: anywhere;
+}
+
 h3.not-prose button {
   /* color: red; */
   color: var(--color-fd-popover-foreground);
