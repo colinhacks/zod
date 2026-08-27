@@ -41,6 +41,10 @@ test("isValid throws on async schemas; isValidAsync handles them", async () => {
   await expect(z.isValidAsync(schema, "asdf")).resolves.toBe(true);
   await expect(z.isValidAsync(schema, "a")).resolves.toBe(false);
   await expect(z.isValidAsync(z.string(), "a")).resolves.toBe(true);
+  // a promise-returning callback that is not declared async compiles, so the compiled schema must stay off the fast path
+  const compiled = z.compile(z.string().refine((s) => Promise.resolve(s.length > 1)));
+  await expect(z.isValidAsync(compiled, "abc")).resolves.toBe(true);
+  await expect(z.isValidAsync(compiled, "a")).resolves.toBe(false);
 });
 
 test("isValid agrees with the compiled fast path and keeps the callback bound", () => {

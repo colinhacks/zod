@@ -149,18 +149,10 @@ export type $IsValidAsync = <T extends schemas.$ZodType>(
   _ctx?: schemas.ParseContext<errors.$ZodIssue>
 ) => Promise<boolean>;
 
+// no fast path here: the compiler keeps async parses on the runtime, since a callback that returns a promise without being declared async compiles to a throw
 export const isValidAsync: $IsValidAsync = async (schema, value, _ctx) => {
-  const bag = schema._zod.bag as CompiledBag;
-  let result: unknown;
-  if (bag.fastpass && bag.fallbackRun) {
-    if (bag.fastpass(value) !== COMPILE_INVALID) return true;
-    const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: true } : { async: true };
-    (ctx as Record<symbol, unknown>)[COMPILE_FALLBACK] = true;
-    result = bag.fallbackRun({ value, issues: [] }, ctx);
-  } else {
-    const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: true } : { async: true };
-    result = schema._zod.run({ value, issues: [] }, ctx);
-  }
+  const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: true } : { async: true };
+  let result: unknown = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) result = await result;
   return (result as schemas.ParsePayload).issues.length === 0;
 };
