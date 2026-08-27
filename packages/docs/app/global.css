@@ -23,6 +23,8 @@ body {
   --color-fd-muted: hsl(0, 0%, 89%);
   /* fumadocs 16 lightened its warning token; warn callouts were orange */
   --color-fd-warning: var(--color-orange-500);
+  /* and it swapped a solid border for a translucent grey, which shows on every rule */
+  --color-fd-border: #242424;
 }
 .dark {
   --ui-color: hsl(320, 100%, 76%);
@@ -95,6 +97,58 @@ html .prose {
   ul ul li {
     @apply mt-0;
   }
+}
+
+/* fumadocs 16 widened the article column, tightened its padding and shrank the page title */
+#nd-page {
+  max-width: 860px;
+  gap: 1.5rem;
+  padding-bottom: 0;
+}
+
+@media (min-width: 48rem) {
+  #nd-page {
+    padding-top: 3rem;
+  }
+}
+
+#nd-page h1 {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+
+/* code blocks lost a point of type and gained a lot of rounding */
+.prose > figure:has(pre) {
+  margin-block: 1.5rem;
+  border-radius: 0.5rem;
+}
+
+.prose figure:has(pre) {
+  background-color: color-mix(in oklab, var(--color-fd-secondary) 50%, transparent);
+}
+
+.prose figure:has(pre) > div:has(> pre) {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  padding-block: 0;
+}
+
+.prose figure pre {
+  padding: 1rem;
+}
+
+/* a code block inside a tab panel is clipped by the panel, so it carries no rounding of its own */
+.prose [role="tabpanel"] figure:has(pre) {
+  border-radius: 0;
+}
+
+#nd-toc {
+  padding-inline: 0;
+}
+
+/* the sidebar never had a rule down its trailing edge */
+#nd-sidebar {
+  border-inline-end-width: 0;
 }
 
 /* fumadocs 16 flattened the blog navbar; it used to float as a rounded bar from lg up */
