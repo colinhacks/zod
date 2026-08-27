@@ -977,3 +977,95 @@ test("error initializer never installs onto an intrinsic prototype", () => {
   expect({}.toString()).toEqual("[object Object]");
   expect(String(new Error("boom"))).toEqual("Error: boom");
 });
+
+test("abortEarly stops at the first issue", () => {
+  const arr = z.array(z.string());
+  expect(arr.safeParse([1, 2, 3]).error!.issues.length).toBe(3);
+  expect(arr.safeParse([1, 2, 3], { abortEarly: true }).error!.issues.length).toBe(1);
+
+  // objects take the compiled parser by default, which has no early exit, so abortEarly has to fall back to the interpreter
+  const obj = z.object({ a: z.string(), b: z.string(), c: z.string() });
+  expect(obj.safeParse({}).error!.issues.length).toBe(3);
+  expect(obj.safeParse({}, { abortEarly: true }).error!.issues.length).toBe(1);
+
+  const rec = z.record(z.string(), z.string());
+  expect(rec.safeParse({ a: 1, b: 2 }).error!.issues.length).toBe(2);
+  expect(rec.safeParse({ a: 1, b: 2 }, { abortEarly: true }).error!.issues.length).toBe(1);
+
+  const set = z.set(z.string());
+  expect(set.safeParse(new Set([1, 2])).error!.issues.length).toBe(2);
+  expect(set.safeParse(new Set([1, 2]), { abortEarly: true }).error!.issues.length).toBe(1);
+
+  // a map entry is one unit, so its key and value both report before the next entry is skipped
+  const map = z.map(z.string(), z.string());
+  expect(
+    map.safeParse(
+      new Map([
+        [1, 2],
+        [3, 4],
+      ])
+    ).error!.issues.length
+  ).toBe(4);
+  expect(
+    map.safeParse(
+      new Map([
+        [1, 2],
+        [3, 4],
+      ]),
+      { abortEarly: true }
+    ).error!.issues.length
+  ).toBe(2);
+
+  const catchall = z.object({ a: z.string() }).catchall(z.string());
+  expect(catchall.safeParse({ a: "x", b: 1, c: 2 }).error!.issues.length).toBe(2);
+  expect(catchall.safeParse({ a: "x", b: 1, c: 2 }, { abortEarly: true }).error!.issues.length).toBe(1);
+
+  const tup = z.tuple([z.string()], z.string());
+  expect(tup.safeParse(["a", 1, 2]).error!.issues.length).toBe(2);
+  expect(tup.safeParse(["a", 1, 2], { abortEarly: true }).error!.issues.length).toBe(1);
+});
+
+test("abortEarly stops running checks after one fails", () => {
+  const schema = z.string().min(5).regex(/^x/);
+  expect(schema.safeParse("a").error!.issues.length).toBe(2);
+  expect(schema.safeParse("a", { abortEarly: true }).error!.issues.length).toBe(1);
+
+  const spy = vi.fn();
+  z.string()
+    .min(5)
+    .refine((v) => {
+      spy(v);
+      return true;
+    })
+    .safeParse("a", { abortEarly: true });
+  expect(spy).not.toHaveBeenCalled();
+});
+
+test("abortEarly leaves valid parses untouched", () => {
+  expect(z.array(z.string()).parse(["a", "b"], { abortEarly: true })).toEqual(["a", "b"]);
+  expect(z.object({ a: z.string() }).parse({ a: "x" }, { abortEarly: true })).toEqual({ a: "x" });
+
+  // a union has to keep trying options after an earlier one fails
+  expect(z.union([z.string(), z.number()]).parse(42, { abortEarly: true })).toBe(42);
+  expect(z.string().optional().parse(undefined, { abortEarly: true })).toBe(undefined);
+  expect(z.string().catch("fallback").parse(1, { abortEarly: true })).toBe("fallback");
+});
+
+test("abortEarly bounds the issue count on a large invalid input", () => {
+  const schema = z.array(z.object({ a: z.string(), b: z.string() }));
+  const input = Array(1000).fill({});
+  expect(schema.safeParse(input).error!.issues.length).toBe(2000);
+  expect(schema.safeParse(input, { abortEarly: true }).error!.issues.length).toBe(1);
+});
+
+test("abortEarly applies to async parses", async () => {
+  const arr = z.array(z.string());
+  expect((await arr.safeParseAsync([1, 2, 3])).error!.issues.length).toBe(3);
+  expect((await arr.safeParseAsync([1, 2, 3], { abortEarly: true })).error!.issues.length).toBe(1);
+});
+
+test("abortEarly does not short-circuit a genuinely async element schema", async () => {
+  // the loop dispatches every child before any promise settles, so there is no issue to see yet
+  const arr = z.array(z.string().refine(async () => false));
+  expect((await arr.safeParseAsync(["a", "b", "c"], { abortEarly: true })).error!.issues.length).toBe(3);
+});

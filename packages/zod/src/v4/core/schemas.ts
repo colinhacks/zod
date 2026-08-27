@@ -22,7 +22,7 @@ export interface ParseContext<T extends errors.$ZodIssueBase = never> {
   /** Skip eval-based fast path. Default `false`. */
   readonly jitless?: boolean;
   /** Abort validation after the first error. Default `false`. */
-  // readonly abortEarly?: boolean;
+  readonly abortEarly?: boolean;
 }
 
 /** @internal */
@@ -237,8 +237,11 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
 
       let isAborted = util.aborted(payload);
 
+      const abortEarly = ctx?.abortEarly;
+
       let asyncResult!: Promise<unknown> | undefined;
       for (const ch of checks) {
+        if (abortEarly && payload.issues.length) break;
         if (ch._zod.def.when) {
           if (util.explicitlyAborted(payload)) continue;
           const shouldRun = ch._zod.def.when(payload);
@@ -1796,7 +1799,9 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
 
     payload.value = memo ? memo.alloc(inst, payload, Array(input.length), ctx) : Array(input.length);
     const proms: Promise<any>[] = [];
+    const abortEarly = ctx?.abortEarly;
     for (let i = 0; i < input.length; i++) {
+      if (abortEarly && payload.issues.length) break;
       const item = input[i];
       const result = def.element._zod.run(
         {
@@ -2024,7 +2029,9 @@ function handleCatchall(
   const t = _catchall.def.type;
   const optin = _catchall.optin;
   const optout = _catchall.optout;
+  const abortEarly = ctx?.abortEarly;
   for (const key in input) {
+    if (abortEarly && payload.issues.length) break;
     // Must precede the __proto__ branch: a declared key is not unrecognized, even though the shape loop deliberately strips __proto__ from the parsed output.
     if (keySet.has(key)) continue;
     // Don't copy an undeclared __proto__ into the result; assignment to a plain {} would replace the result prototype. But in strict mode it is still an unknown key, so report it before skipping.
@@ -2128,8 +2135,10 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
 
     const proms: Promise<any>[] = [];
     const shape = value.shape;
+    const abortEarly = ctx?.abortEarly;
 
     for (const key of value.allKeys) {
+      if (abortEarly && payload.issues.length) break;
       if (key === "__proto__") continue;
       const el = (shape as any)[key]!;
       const optin = el._zod.optin;
@@ -2281,7 +2290,8 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
         return payload;
       }
 
-      if (jit && fastEnabled && ctx?.async === false && ctx.jitless !== true) {
+      // the compiled parser has no early exit, so abortEarly takes the interpreter
+      if (jit && fastEnabled && ctx?.async === false && ctx.jitless !== true && ctx.abortEarly !== true) {
         // always synchronous
         if (!fastpass) fastpass = generateFastpass(def.shape);
         payload = fastpass(payload, ctx);
@@ -2965,7 +2975,9 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
     if (def.rest) {
       let i = items.length - 1;
       const rest = input.slice(items.length);
+      const abortEarly = ctx?.abortEarly;
       for (const el of rest) {
+        if (abortEarly && payload.issues.length) break;
         i++;
         const result = def.rest._zod.run({ value: el, issues: [] }, ctx);
         if (result instanceof Promise) {
@@ -3135,12 +3147,14 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
     }
 
     const proms: Promise<any>[] = [];
+    const abortEarly = ctx?.abortEarly;
 
     const values = def.keyType._zod.values;
     if (values && !def.partial) {
       payload.value = memo ? memo.alloc(inst, payload, {}, ctx) : {};
       const recordKeys = new Set<string | symbol>();
       for (const key of values) {
+        if (abortEarly && payload.issues.length) break;
         if (typeof key === "string" || typeof key === "number" || typeof key === "symbol") {
           recordKeys.add(typeof key === "number" ? key.toString() : key);
           // A declared __proto__ is stripped but is not an unrecognized key.
@@ -3211,6 +3225,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       let unrecognized!: string[];
       // Reflect.ownKeys for Symbol-key support; filter non-enumerable to match z.object()
       for (const key of Reflect.ownKeys(input)) {
+        if (abortEarly && payload.issues.length) break;
         if (key === "__proto__") continue;
         if (!Object.prototype.propertyIsEnumerable.call(input, key)) continue;
         let keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
@@ -3337,8 +3352,10 @@ export const $ZodMap: core.$constructor<$ZodMap> = /*@__PURE__*/ core.$construct
 
     const proms: Promise<any>[] = [];
     payload.value = memo ? memo.alloc(inst, payload, new Map(), ctx) : new Map();
+    const abortEarly = ctx?.abortEarly;
 
     for (const [key, value] of input) {
+      if (abortEarly && payload.issues.length) break;
       const keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
       const valueResult = def.valueType._zod.run({ value: value, issues: [] }, ctx);
 
@@ -3441,7 +3458,9 @@ export const $ZodSet: core.$constructor<$ZodSet> = /*@__PURE__*/ core.$construct
 
     const proms: Promise<any>[] = [];
     payload.value = memo ? memo.alloc(inst, payload, new Set(), ctx) : new Set();
+    const abortEarly = ctx?.abortEarly;
     for (const item of input) {
+      if (abortEarly && payload.issues.length) break;
       const result = def.valueType._zod.run({ value: item, issues: [] }, ctx);
       if (result instanceof Promise) {
         proms.push(result.then((result) => handleSetResult(result, payload)));
