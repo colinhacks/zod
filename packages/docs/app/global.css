@@ -97,6 +97,30 @@ html .prose {
   }
 }
 
+/* fumadocs 16 flattened the blog navbar; it used to float as a rounded bar from lg up */
+@media (min-width: 64rem) {
+  #nd-home-layout > #nd-nav {
+    position: fixed;
+    top: var(--fd-banner-height, 0px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 1rem);
+    max-width: 87.5rem;
+    margin-top: 0.5rem;
+    border: 1px solid color-mix(in oklab, var(--color-fd-foreground) 10%, transparent);
+    border-radius: 1rem;
+    background-color: color-mix(in oklab, var(--color-fd-background) 80%, transparent);
+    backdrop-filter: blur(16px);
+    box-shadow:
+      0 1px 3px 0 rgb(0 0 0 / 0.1),
+      0 1px 2px -1px rgb(0 0 0 / 0.1);
+  }
+
+  #nd-home-layout > #nd-nav + * {
+    padding-top: 3.5rem;
+  }
+}
+
 /* fumadocs 16 loosened the sidebar rows and dropped the wider column it used from lg up */
 @media (min-width: 64rem) {
   #nd-docs-layout {
