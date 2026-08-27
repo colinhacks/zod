@@ -168,6 +168,25 @@ html .prose {
   border-inline-end-width: 0;
 }
 
+/* the drawer used to be a full-width panel below the header; fumadocs 16 makes it a
+   right-hand sheet at 85% width */
+#nd-sidebar-mobile {
+  inset-inline: 0;
+  width: 100%;
+  max-width: none;
+  top: calc(var(--fd-banner-height, 0px) + var(--fd-header-height, 0px));
+  border-inline-start-width: 0;
+}
+
+/* the drawer keeps the looser row padding, and the smaller type, it always had */
+#nd-sidebar-mobile {
+  font-size: 0.875rem;
+}
+
+#nd-sidebar-mobile a[data-active] {
+  padding: 0.5rem;
+}
+
 /* fumadocs 16 flattened the blog navbar; it used to float as a rounded bar from lg up */
 @media (min-width: 64rem) {
   #nd-home-layout > #nd-nav {
@@ -199,24 +218,31 @@ html .prose {
   }
 }
 
+#nd-sidebar a[data-active],
+#nd-sidebar-mobile a[data-active] {
+  border-radius: 0.375rem;
+}
+
 #nd-sidebar a[data-active] {
   padding: 0.375rem 0.5rem;
-  border-radius: 0.375rem;
 }
 
 /* the scroll viewport forces gap-0.5 on the item list with !important, so this has to win inside the same layer */
 @layer utilities {
-  #nd-sidebar div:has(> a[data-active]) {
+  #nd-sidebar div:has(> a[data-active]),
+  #nd-sidebar-mobile div:has(> a[data-active]) {
     gap: 0 !important;
   }
 }
 
 /* fumadocs 16 boxed the version switcher, moved it below search and hid its description on desktop */
-#nd-sidebar button[data-search-full] {
+#nd-sidebar button[data-search-full],
+#nd-sidebar-mobile button[data-search-full] {
   order: 1;
 }
 
-#nd-sidebar button[aria-haspopup="dialog"] {
+#nd-sidebar button[aria-haspopup="dialog"],
+#nd-sidebar-mobile button[aria-haspopup="dialog"] {
   border: none;
   background-color: transparent;
   gap: 0.625rem;
@@ -224,15 +250,18 @@ html .prose {
   margin-inline: -0.5rem;
 }
 
-#nd-sidebar button[aria-haspopup="dialog"]:hover {
+#nd-sidebar button[aria-haspopup="dialog"]:hover,
+#nd-sidebar-mobile button[aria-haspopup="dialog"]:hover {
   background-color: color-mix(in oklab, var(--color-fd-accent) 50%, transparent);
 }
 
-#nd-sidebar button[aria-haspopup="dialog"][data-state="open"] {
+#nd-sidebar button[aria-haspopup="dialog"][data-state="open"],
+#nd-sidebar-mobile button[aria-haspopup="dialog"][data-state="open"] {
   background-color: var(--color-fd-accent);
 }
 
-#nd-sidebar button[aria-haspopup="dialog"] p + p {
+#nd-sidebar button[aria-haspopup="dialog"] p + p,
+#nd-sidebar-mobile button[aria-haspopup="dialog"] p + p {
   display: block;
   font-size: 0.75rem;
   line-height: 1rem;
