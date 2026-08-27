@@ -279,7 +279,12 @@ z.array(z.string()).safeParse([1, 2, 3], {
 // one issue, instead of one per element
 ```
 
-This only applies to schemas that validate synchronously. An async schema runs all of its children before any of them settles, so there is no issue to stop on yet.
+The flag does not apply everywhere:
+
+- Objects skip the compiled parser, so a valid object parses more slowly too.
+- Unions keep trying their options, since a later one may still match.
+- A tuple's fixed items all report; only its rest elements stop early.
+- An async schema runs all of its children before any of them settles, so there is nothing to stop on yet.
 
 ## Global error customization
 

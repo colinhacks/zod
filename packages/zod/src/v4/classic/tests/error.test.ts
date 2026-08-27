@@ -1064,6 +1064,42 @@ test("abortEarly applies to async parses", async () => {
   expect((await arr.safeParseAsync([1, 2, 3], { abortEarly: true })).error!.issues.length).toBe(1);
 });
 
+test("abortEarly is invisible to a parse that succeeds", () => {
+  // a pipe forwards a continuable unrecognized_keys into the next stage and the enclosing intersection reconciles it away, so these loops are entered with issues they did not produce
+  const left = z.strictObject({ a: z.string() }).overwrite((v) => ({ ...v, tag: "left" }));
+  const withCheck = z.intersection(left, z.object({ a: z.string(), b: z.number() }));
+  expect(withCheck.parse({ a: "x", b: 1 }, { abortEarly: true })).toEqual(withCheck.parse({ a: "x", b: 1 }));
+
+  const piped = z.strictObject({ a: z.string() }).pipe(z.object({ a: z.string() }));
+  const withPipe = z.intersection(piped, z.strictObject({ b: z.string() }));
+  expect(withPipe.parse({ a: "x", b: "y" }, { abortEarly: true })).toEqual(withPipe.parse({ a: "x", b: "y" }));
+});
+
+test("abortEarly never reports more issues than the default", () => {
+  const cases: Array<[z.ZodType, unknown]> = [
+    // an enum key type drives a post-loop pass that needs every declared key collected
+    [z.record(z.enum(["a", "b", "c"]), z.string()), { a: 1, b: "x", c: "y" }],
+    [z.record(z.string(), z.string()), { a: 1, b: 2 }],
+    [z.array(z.string()), [1, 2, 3]],
+    [z.object({ a: z.string(), b: z.string() }), {}],
+    [z.object({ a: z.string() }).catchall(z.string()), { a: 1, b: 2 }],
+    [z.strictObject({ a: z.string() }), { a: 1, b: 2 }],
+    [z.tuple([z.string()], z.string()), ["a", 1, 2]],
+    [z.set(z.string()), new Set([1, 2])],
+    [z.map(z.string(), z.string()), new Map([[1, 2]])],
+    [z.string().min(5).regex(/^x/), "a"],
+  ];
+  for (const [schema, input] of cases) {
+    const base = schema.safeParse(input);
+    const early = schema.safeParse(input, { abortEarly: true });
+    expect(early.success).toBe(base.success);
+    const baseCount = base.success ? 0 : base.error.issues.length;
+    const earlyCount = early.success ? 0 : early.error.issues.length;
+    expect(earlyCount).toBeLessThanOrEqual(baseCount);
+    expect(earlyCount).toBeGreaterThan(0);
+  }
+});
+
 test("abortEarly does not short-circuit a genuinely async element schema", async () => {
   // the loop dispatches every child before any promise settles, so there is no issue to see yet
   const arr = z.array(z.string().refine(async () => false));
