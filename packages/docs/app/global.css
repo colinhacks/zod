@@ -97,6 +97,25 @@ html .prose {
   }
 }
 
+/* fumadocs 16 loosened the sidebar rows and dropped the wider column it used from lg up */
+@media (min-width: 64rem) {
+  #nd-docs-layout {
+    --fd-sidebar-width: 286px;
+  }
+}
+
+#nd-sidebar a[data-active] {
+  padding: 0.375rem 0.5rem;
+  border-radius: 0.375rem;
+}
+
+/* the scroll viewport forces gap-0.5 on the item list with !important, so this has to win inside the same layer */
+@layer utilities {
+  #nd-sidebar div:has(> a[data-active]) {
+    gap: 0 !important;
+  }
+}
+
 /* fumadocs 16 boxed the version switcher, moved it below search and hid its description on desktop */
 #nd-sidebar button[data-search-full] {
   order: 1;

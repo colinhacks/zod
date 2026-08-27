@@ -10,7 +10,7 @@ export const SidebarSeparator = ({
 }) => {
   return (
     <InternalSidebarSeparator
-      className={"inline-flex items-center gap-2 mb-1 px-2 mt-8 text-lg tracking-wide dark:text-white"}
+      className={"inline-flex items-center gap-2 mb-2 px-2 mt-8 text-lg tracking-wide dark:text-white"}
       style={{ fontVariant: "all-petite-caps" }}
     >
       {item.icon}
