@@ -154,6 +154,11 @@ html .prose {
   padding-block: 1rem;
 }
 
+/* the copy button on a code block lost half its padding */
+.prose figure button[aria-label="Copy Text"] {
+  padding: 0.5rem;
+}
+
 /* a code block inside a tab panel is clipped by the panel, so it carries no rounding of its own */
 .prose [role="tabpanel"] figure:has(pre) {
   border-radius: 0;
