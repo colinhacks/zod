@@ -38,13 +38,14 @@ const BUILT_ENTRY = path.join(__dirname, "node_modules", "zod", "index.js");
  * The failure message prints the measured size, so updating is mechanical.
  */
 const CEILINGS: Record<string, number> = {
-  // raised from 2903 / 3366 / 4437 by the commit that caused it: the `abortEarly` parse option costs +28 / +31 / +72, and every bundle carries the check-loop exit in `core.ts`; measured 2904 / 3368 / 4480 plus 28 headroom, and the per-fixture notes below record what each already carried
-  "zod-mini-boolean": 2932,
+  // raised from 2836 / 3299 / 4374 by the commit that caused it: suppressing v8's stack capture while building an error costs +68 / +68 / +63, and every bundle carries `core.ts`; measured 2875 / 3338 / 4409 plus 28 headroom, and the per-fixture notes below record what each already carried
+  "zod-mini-boolean": 2903,
   // Also carries the code-point string length scan: `.min`/`.max`/`.length` on a string pulls in the surrogate walk.
-  "zod-mini-string": 3396,
+  "zod-mini-string": 3366,
   // Also carries the construction-time discriminator check, which writes a WeakMap entry from `$ZodObject`, so every bundle containing `z.object` pays for it whether or not it builds a discriminated union.
   // Also carries the declared symbol keys from #6448: `normalizeDef` collects the shape's own symbols and the parse loop walks them. Almost none of that is the `Reflect.ownKeys` conversions — reverting all eight of them measures a byte larger.
-  "zod-mini-object": 4508,
+  // Also carries the `abortEarly` guards, which live only in the container loops: +56 over the 4409 above, measured 4464 plus 28 headroom.
+  "zod-mini-object": 4492,
 };
 
 /**

@@ -237,12 +237,8 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
 
       let isAborted = util.aborted(payload);
 
-      const abortEarly = ctx?.abortEarly;
-      const startLen = payload.issues.length;
-
       let asyncResult!: Promise<unknown> | undefined;
       for (const ch of checks) {
-        if (abortEarly && payload.issues.length > startLen) break;
         if (ch._zod.def.when) {
           if (util.explicitlyAborted(payload)) continue;
           const shouldRun = ch._zod.def.when(payload);
@@ -1803,7 +1799,7 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
     const abortEarly = ctx?.abortEarly;
     const startLen = payload.issues.length;
     for (let i = 0; i < input.length; i++) {
-      if (abortEarly && payload.issues.length > startLen) break;
+      if (abortEarly && util.aborted(payload, startLen)) break;
       const item = input[i];
       const result = def.element._zod.run(
         {
@@ -2034,7 +2030,7 @@ function handleCatchall(
   const abortEarly = ctx?.abortEarly;
   const startLen = payload.issues.length;
   for (const key in input) {
-    if (abortEarly && payload.issues.length > startLen) break;
+    if (abortEarly && util.aborted(payload, startLen)) break;
     // Must precede the __proto__ branch: a declared key is not unrecognized, even though the shape loop deliberately strips __proto__ from the parsed output.
     if (keySet.has(key)) continue;
     // Don't copy an undeclared __proto__ into the result; assignment to a plain {} would replace the result prototype. But in strict mode it is still an unknown key, so report it before skipping.
@@ -2142,7 +2138,7 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
     const startLen = payload.issues.length;
 
     for (const key of value.allKeys) {
-      if (abortEarly && payload.issues.length > startLen) break;
+      if (abortEarly && util.aborted(payload, startLen)) break;
       if (key === "__proto__") continue;
       const el = (shape as any)[key]!;
       const optin = el._zod.optin;
@@ -2982,7 +2978,7 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
       const abortEarly = ctx?.abortEarly;
       const startLen = payload.issues.length;
       for (const el of rest) {
-        if (abortEarly && payload.issues.length > startLen) break;
+        if (abortEarly && util.aborted(payload, startLen)) break;
         i++;
         const result = def.rest._zod.run({ value: el, issues: [] }, ctx);
         if (result instanceof Promise) {
@@ -3165,7 +3161,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
           // A declared __proto__ is stripped but is not an unrecognized key.
           if (key === "__proto__") continue;
           // skip the validation work but keep collecting keys, so the unrecognized pass below stays correct
-          if (abortEarly && payload.issues.length > startLen) continue;
+          if (abortEarly && util.aborted(payload, startLen)) continue;
           const keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
           if (keyResult instanceof Promise) {
             throw new Error("Async schemas not supported in object keys currently");
@@ -3232,7 +3228,7 @@ export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$con
       let unrecognized!: string[];
       // Reflect.ownKeys for Symbol-key support; filter non-enumerable to match z.object()
       for (const key of Reflect.ownKeys(input)) {
-        if (abortEarly && payload.issues.length > startLen) break;
+        if (abortEarly && util.aborted(payload, startLen)) break;
         if (key === "__proto__") continue;
         if (!Object.prototype.propertyIsEnumerable.call(input, key)) continue;
         let keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
@@ -3363,7 +3359,7 @@ export const $ZodMap: core.$constructor<$ZodMap> = /*@__PURE__*/ core.$construct
     const startLen = payload.issues.length;
 
     for (const [key, value] of input) {
-      if (abortEarly && payload.issues.length > startLen) break;
+      if (abortEarly && util.aborted(payload, startLen)) break;
       const keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
       const valueResult = def.valueType._zod.run({ value: value, issues: [] }, ctx);
 
@@ -3469,7 +3465,7 @@ export const $ZodSet: core.$constructor<$ZodSet> = /*@__PURE__*/ core.$construct
     const abortEarly = ctx?.abortEarly;
     const startLen = payload.issues.length;
     for (const item of input) {
-      if (abortEarly && payload.issues.length > startLen) break;
+      if (abortEarly && util.aborted(payload, startLen)) break;
       const result = def.valueType._zod.run({ value: item, issues: [] }, ctx);
       if (result instanceof Promise) {
         proms.push(result.then((result) => handleSetResult(result, payload)));

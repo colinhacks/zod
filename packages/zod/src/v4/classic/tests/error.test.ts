@@ -1025,20 +1025,17 @@ test("abortEarly stops at the first issue", () => {
   expect(tup.safeParse(["a", 1, 2], { abortEarly: true }).error!.issues.length).toBe(1);
 });
 
-test("abortEarly stops running checks after one fails", () => {
-  const schema = z.string().min(5).regex(/^x/);
-  expect(schema.safeParse("a").error!.issues.length).toBe(2);
-  expect(schema.safeParse("a", { abortEarly: true }).error!.issues.length).toBe(1);
+test("abortEarly stops only on an issue that aborts validation", () => {
+  // too_small and invalid_format are continuable, so the rest of the chain still runs
+  const chain = z.string().min(5).regex(/^x/);
+  expect(chain.safeParse("a", { abortEarly: true }).error!.issues.length).toBe(2);
 
-  const spy = vi.fn();
-  z.string()
-    .min(5)
-    .refine((v) => {
-      spy(v);
-      return true;
-    })
-    .safeParse("a", { abortEarly: true });
-  expect(spy).not.toHaveBeenCalled();
+  // too_big is continuable too, so a range failure still reports once per element
+  const ranged = z.array(z.number().max(1));
+  expect(ranged.safeParse([5, 5, 5], { abortEarly: true }).error!.issues.length).toBe(3);
+
+  // a wrong element type aborts, so the array stops on the first one
+  expect(z.array(z.number()).safeParse(["a", "b", "c"], { abortEarly: true }).error!.issues.length).toBe(1);
 });
 
 test("abortEarly leaves valid parses untouched", () => {
@@ -1073,6 +1070,23 @@ test("abortEarly is invisible to a parse that succeeds", () => {
   const piped = z.strictObject({ a: z.string() }).pipe(z.object({ a: z.string() }));
   const withPipe = z.intersection(piped, z.strictObject({ b: z.string() }));
   expect(withPipe.parse({ a: "x", b: "y" }, { abortEarly: true })).toEqual(withPipe.parse({ a: "x", b: "y" }));
+});
+
+test("abortEarly does not stop on a continuable issue", () => {
+  // unrecognized_keys is continuable, so an enclosing intersection may still reconcile it away;
+  // stopping on one would leave a truncated value that mergeValues cannot merge
+  const schema = z.intersection(
+    z.array(z.strictObject({ a: z.string() })),
+    z.array(z.object({ a: z.string(), b: z.number() }))
+  );
+  const input = [
+    { a: "x", b: 1 },
+    { a: "y", b: 2 },
+  ];
+  const base = schema.safeParse(input);
+  const early = schema.safeParse(input, { abortEarly: true });
+  expect(early.success).toBe(base.success);
+  expect(early.error!.issues.length).toBe(base.error!.issues.length);
 });
 
 test("abortEarly never reports more issues than the default", () => {
