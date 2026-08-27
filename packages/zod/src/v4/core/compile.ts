@@ -135,7 +135,7 @@ export function compile<T extends SomeType>(schema: T): T {
     if (ctx) (ctx as Record<symbol, unknown>)[FALLBACK_FLAG] = true;
     return originalRun(payload, ctx);
   };
-  // Let later compiles of (or through) this run unwrap to the true runtime — both the global shim and repeated z.compile calls rely on this. __fastpass lets the standalone isValid skip the payload and wrapper on the happy path.
+  // Let later compiles of (or through) this run unwrap to the true runtime — both the global shim and repeated z.compile calls rely on this. The bag's fastpass lets the standalone isValid skip the payload and wrapper on the happy path.
   (wrapped as { __originalRun?: typeof originalRun }).__originalRun = originalRun;
   clone._zod.bag.fastpass = fast;
   clone._zod.bag.fallbackRun = originalRun;
