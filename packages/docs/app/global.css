@@ -24,9 +24,10 @@ body {
   /* fumadocs 16 lightened its warning token; warn callouts were orange */
   --color-fd-warning: var(--color-orange-500);
   /* and it swapped a solid border for a translucent grey, which shows on every rule */
-  --color-fd-border: #242424;
+  --color-fd-border: #e5e5e5;
 }
 .dark {
+  --color-fd-border: #242424;
   --ui-color: hsl(320, 100%, 76%);
   --color-fd-foreground: hsl(0, 0%, 80%);
   --color-fd-headings: hsl(0, 0%, 94%);
