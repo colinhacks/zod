@@ -103,3 +103,28 @@ test("deferred initializers are released after construction", () => {
   expect(z.string()._zod.deferred).toEqual(undefined);
   expect(z.object({ a: z.string() })._zod.deferred).toEqual(undefined);
 });
+
+test("a trait initializer called directly still installs its members", () => {
+  // The installers skip their per-group lookup while a constructor that has already built its prototype is constructing. A direct `init` is not that, so it has to see the guard off.
+  z.string();
+
+  const proto = {};
+  const inst = Object.create(proto) as z.ZodString;
+  z.ZodString.init(inst, { type: "string" });
+
+  expect(typeof inst.email).toBe("function");
+  expect(typeof inst.optional).toBe("function");
+  expect(Object.prototype.hasOwnProperty.call(proto, "email")).toBe(true);
+});
+
+test("an initializer that throws leaves the install guard off", () => {
+  // A successful one first, so the guard is armed for this constructor when the next throws.
+  z.uuid();
+  expect(() => z.uuid({ version: "v9" as never })).toThrow();
+
+  const proto = {};
+  const inst = Object.create(proto) as z.ZodString;
+  z.ZodString.init(inst, { type: "string" });
+
+  expect(Object.prototype.hasOwnProperty.call(proto, "email")).toBe(true);
+});

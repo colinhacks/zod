@@ -18,6 +18,12 @@ export const NEVER: never = /*@__PURE__*/ Object.freeze({
  * synchronously, so reusing one object avoids a per-instance allocation. */
 const _zodDesc: PropertyDescriptor = { value: undefined, enumerable: false };
 
+/**
+ * True for the length of a construction whose constructor has already built its prototype. The prototype installers in `util` are per-constructor and idempotent, so after the first construction their own lookups can only miss; this lets them skip the lookup instead. Read through the live binding in `util`.
+ * @internal
+ */
+export let protoBuilt = false;
+
 // null where suppressing the capture would be unrecoverable: `parse()` puts the frames back with `captureStackTrace`, so without it the throw would lose its stack. also latched to null once `stackTraceLimit` proves unassignable, which a realm can do at any point by hardening Error
 let _E: (ErrorConstructor & { stackTraceLimit?: number }) | null = "captureStackTrace" in Error ? Error : null;
 
@@ -93,9 +99,19 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
   class Definition extends Parent {}
   Object.defineProperty(Definition, "name", { value: name });
 
+  // Flipped by the first complete construction, which is what installs this constructor's prototype.
+  let installed = false;
+
   function _(this: any, def: D) {
     const inst = params?.Parent ? newError(Definition) : this;
-    init(inst, def);
+    protoBuilt = installed;
+    try {
+      init(inst, def);
+    } finally {
+      // Cleared even on throw, so a direct `SomeTrait.init(obj, def)` outside a construction never inherits another constructor's answer.
+      protoBuilt = false;
+    }
+    installed = true;
     const deferred = inst._zod.deferred;
     if (deferred) {
       for (const fn of deferred) {

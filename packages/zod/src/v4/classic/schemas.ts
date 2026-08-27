@@ -176,8 +176,8 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   _installLazyMethods(inst, "check", _zodTypeMethods);
   _installLazyProps(inst, "parse", _zodTypeParseProps);
   // Reads through to the registry on every access, so it must not cache.
-  const proto = Object.getPrototypeOf(inst);
-  if (!("description" in proto)) {
+  const proto = util.claim(inst, "description");
+  if (proto) {
     Object.defineProperty(proto, "description", {
       configurable: true,
       get(this: ZodType) {

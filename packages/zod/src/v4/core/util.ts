@@ -1,5 +1,5 @@
 import type * as checks from "./checks.js";
-import { globalConfig } from "./core.js";
+import { globalConfig, protoBuilt } from "./core.js";
 import type { $ZodConfig } from "./core.js";
 import type * as errors from "./errors.js";
 import type * as schemas from "./schemas.js";
@@ -1064,7 +1064,9 @@ export abstract class Class {
 // Members live on the prototype and materialize per instance on first read, which keeps own-property count under the step where V8 stops using inline slots. Changing anything here means re-measuring runtime, memory and bundle size together — see "The three axes" in AGENTS.md.
 
 /** Returns the prototype to install on, or `undefined` if this group is already installed on it. */
-function claim(inst: object, sentinel: string): object | undefined {
+export function claim(inst: object, sentinel: string): object | undefined {
+  // A constructor that has completed one construction has its whole prototype, so the lookup below can only miss.
+  if (protoBuilt) return undefined;
   const proto = Object.getPrototypeOf(inst);
   // Runs on every construction, so `in` rather than the costlier `hasOwnProperty.call`. Sentinels are keys the group itself defines.
   return sentinel in proto ? undefined : proto;
@@ -1142,6 +1144,11 @@ export function defineLazyInternal<T extends { _zod: any }>(
   key: string,
   compute: (zod: T["_zod"]) => unknown
 ): void {
+  if (protoBuilt) {
+    // Released here too: the first construction leaves it pointing at that instance's internals.
+    installing = undefined;
+    return;
+  }
   const proto = Object.getPrototypeOf(inst._zod);
   if (key in proto && installing !== inst._zod) {
     // A repeat construction: everything is installed already. Cleared here so the reference is not held past the first construction of every type.
