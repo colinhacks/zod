@@ -125,11 +125,27 @@ html .prose {
 
 .prose figure:has(pre) {
   background-color: color-mix(in oklab, var(--color-fd-secondary) 50%, transparent);
+  box-shadow: none;
 }
 
+/* the tab card around a code block, and the panel inside it */
+.prose div:has(> [role="tablist"]) {
+  background-color: var(--color-fd-card);
+}
+
+.prose [role="tabpanel"] {
+  font-size: 1rem;
+  background-color: transparent;
+  border-radius: 0;
+}
+
+/* a callout that opens a page carries no top margin */
+.prose > div[style*="--callout-color"]:first-child {
+  margin-top: 0;
+}
+
+/* the pre reports 14px but the .line children render at 13px, which is what fumadocs 16 already uses */
 .prose figure:has(pre) > div:has(> pre) {
-  font-size: 0.875rem;
-  line-height: 1.25rem;
   padding-block: 0;
 }
 
@@ -243,5 +259,6 @@ html .prose :not(pre) > code {
 h3.not-prose button {
   /* color: red; */
   color: var(--color-fd-popover-foreground);
+  padding: 0.625rem 1rem;
   @apply font-light;
 }
