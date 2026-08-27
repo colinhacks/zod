@@ -1797,6 +1797,7 @@ export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$const
     payload.value = memo ? memo.alloc(inst, payload, Array(input.length), ctx) : Array(input.length);
     const proms: Promise<any>[] = [];
     const abortEarly = ctx?.abortEarly;
+    // advance past issues already examined; rescanning from the loop entry is quadratic when children emit continuable issues
     let seen = payload.issues.length;
     for (let i = 0; i < input.length; i++) {
       if (abortEarly) {
