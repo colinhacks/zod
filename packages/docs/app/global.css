@@ -297,3 +297,8 @@ h3.not-prose button {
   padding: 0.625rem 1rem;
   @apply font-light;
 }
+
+/* the accordion chevron used to hang 4px into the padding */
+h3.not-prose button > svg:first-child {
+  margin-inline-start: -0.25rem;
+}
