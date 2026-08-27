@@ -21,6 +21,8 @@ body {
   --color-fd-headings: hsl(0, 0%, 3.9%);
   --color-fd-popover-foreground: hsl(0, 0%, 3.9%);
   --color-fd-muted: hsl(0, 0%, 89%);
+  /* fumadocs 16 lightened its warning token; warn callouts were orange */
+  --color-fd-warning: var(--color-orange-500);
 }
 .dark {
   --ui-color: hsl(320, 100%, 76%);
@@ -93,6 +95,46 @@ html .prose {
   ul ul li {
     @apply mt-0;
   }
+}
+
+/* fumadocs 16 boxed the version switcher, moved it below search and hid its description on desktop */
+#nd-sidebar button[data-search-full] {
+  order: 1;
+}
+
+#nd-sidebar button[aria-haspopup="dialog"] {
+  border: none;
+  background-color: transparent;
+  gap: 0.625rem;
+  padding: 0.375rem 1rem 0.375rem 0.5rem;
+  margin-inline: -0.5rem;
+}
+
+#nd-sidebar button[aria-haspopup="dialog"]:hover {
+  background-color: color-mix(in oklab, var(--color-fd-accent) 50%, transparent);
+}
+
+#nd-sidebar button[aria-haspopup="dialog"][data-state="open"] {
+  background-color: var(--color-fd-accent);
+}
+
+#nd-sidebar button[aria-haspopup="dialog"] p + p {
+  display: block;
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+/* fumadocs 16 moved the callout accent off the container edge onto an inner bar */
+.prose div[style*="--callout-color"] {
+  margin-block: 1.5rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  border-inline-start-width: 2px;
+  border-inline-start-color: color-mix(in oklab, var(--callout-color) 50%, transparent);
+}
+
+.prose div[style*="--callout-color"] > div[role="none"] {
+  display: none;
 }
 
 /* long inline tokens are clipped rather than reachable now that the layout container clips overflow */
