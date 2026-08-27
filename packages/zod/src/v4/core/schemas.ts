@@ -2164,18 +2164,9 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
 
     const generateFastpass = (shape: any) => {
       const normalized = _normalized.value;
-      // closure below retains this scope per schema, so add no bindings here — a key-expression helper cost 328 bytes each
       const syms = normalized.symbolKeys;
-      // a symbol has no source literal, so it is passed in and read as `syms[i]`; string-only shapes get no such parameter
-      const doc = new Doc(
-        syms.length
-          ? memo
-            ? ["shape", "payload", "ctx", "inst", "memo", "syms"]
-            : ["shape", "payload", "ctx", "syms"]
-          : memo
-            ? ["shape", "payload", "ctx", "inst", "memo"]
-            : ["shape", "payload", "ctx"]
-      );
+      // a symbol has no source literal, so it is read as `syms[i]` off the closed-over scope
+      const doc = new Doc(["payload", "ctx"], { shape, inst, memo, syms });
 
       const parseStr = (k: string) => `shape[${k}]._zod.run({ value: input[${k}], issues: [] }, ctx)`;
 
@@ -2262,13 +2253,8 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
 
       doc.write(`payload.value = newResult;`);
       doc.write(`return payload;`);
-      const fn = doc.compile();
-      if (syms.length) {
-        if (memo) return (payload: any, ctx: any) => fn(shape, payload, ctx, inst, memo, syms);
-        return (payload: any, ctx: any) => fn(shape, payload, ctx, syms);
-      }
-      if (memo) return (payload: any, ctx: any) => fn(shape, payload, ctx, inst, memo);
-      return (payload: any, ctx: any) => fn(shape, payload, ctx);
+      // closing `shape` in is what pays: turbofan specializes the parser against that one shape object, so every `shape[k]._zod.run` folds to a known callee. as a parameter it stays a generic load and measures 13% slower even with the forwarding frame gone
+      return doc.compile() as (payload: any, ctx: any) => any;
     };
 
     let fastpass!: ReturnType<typeof generateFastpass>;
