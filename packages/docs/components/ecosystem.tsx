@@ -329,7 +329,7 @@ const poweredByZodProjects: ZodResource[] = [
   },
   {
     name: "fullproduct.dev",
-    url: "https://fullproduct.dev?via=zod-v4-docs",
+    url: "https://fullproduct.dev",
     description: "Zod & TS-first approach to building Universal Expo + Next.js apps using schemas as single source of truth",
     slug: "FullProduct-dev/green-stack-starter-demo",
   },
