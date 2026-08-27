@@ -44,8 +44,8 @@ const CEILINGS: Record<string, number> = {
   "zod-mini-string": 3366,
   // Also carries the construction-time discriminator check, which writes a WeakMap entry from `$ZodObject`, so every bundle containing `z.object` pays for it whether or not it builds a discriminated union.
   // Also carries the declared symbol keys from #6448: `normalizeDef` collects the shape's own symbols and the parse loop walks them. Almost none of that is the `Reflect.ownKeys` conversions — reverting all eight of them measures a byte larger.
-  // Also carries the `abortEarly` guards, which live only in the container loops: +56 over the 4409 above, measured 4464 plus 28 headroom.
-  "zod-mini-object": 4492,
+  // Also carries the `abortEarly` guards, which live only in the container loops: +63 over the 4409 above, measured 4471 plus 28 headroom.
+  "zod-mini-object": 4499,
 };
 
 /**

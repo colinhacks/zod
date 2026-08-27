@@ -270,7 +270,7 @@ z.string().parse(12, {
 
 ### Stop at the first error
 
-By default, Zod reports every issue it finds, so a large invalid input produces one issue per invalid element. The `abortEarly` flag stops each container at its first aborting error, which bounds the issue count by the schema instead of the input:
+By default, Zod reports every issue it finds, so a large invalid input produces one issue per invalid element. The `abortEarly` flag stops each container at its first aborting error:
 
 ```ts
 z.array(z.string()).safeParse([1, 2, 3], {
