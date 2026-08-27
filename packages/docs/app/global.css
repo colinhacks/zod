@@ -133,8 +133,9 @@ html .prose {
   padding-block: 0;
 }
 
+/* only the block padding: fumadocs 16 pads the lines themselves so they scroll with the content */
 .prose figure pre {
-  padding: 1rem;
+  padding-block: 1rem;
 }
 
 /* a code block inside a tab panel is clipped by the panel, so it carries no rounding of its own */
