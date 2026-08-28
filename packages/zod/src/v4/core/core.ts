@@ -96,7 +96,9 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
       let up: object | null = own;
       while (up && up !== ctorProto) up = Object.getPrototypeOf(up);
       const target = up ?? own;
-      if (!initialized.has(target)) {
+      // eager: every construction installs, since the methods land on the instance and the prototype carries only the getters
+      if (globalConfig.eager) installMembers(target, protoMembers!, inst);
+      else if (!initialized.has(target)) {
         initialized.add(target);
         installMembers(target, protoMembers!);
       }
@@ -207,6 +209,8 @@ export interface $ZodConfig {
    * @internal
    */
   postProcessor?: ((inst: any) => void) | undefined;
+  /** Internal: methods become own properties of every new schema, the layout a test mocker can wrap. Defaults to on under a test runner. @internal */
+  eager?: boolean | undefined;
 }
 
 interface GlobalThisWithConfig {
@@ -225,6 +229,11 @@ interface GlobalThisWithConfig {
 
 (globalThis as GlobalThisWithConfig).__zod_globalConfig ??= {};
 export const globalConfig: $ZodConfig = (globalThis as GlobalThisWithConfig).__zod_globalConfig!;
+// type-only: the build has no runtime types, and the identifier has to stay `process.env.NODE_ENV` for a bundler to fold it
+declare const process: { env: Record<string, string | undefined> } | undefined;
+declare const Deno: unknown;
+// a test runner sets NODE_ENV=test, and its automocker can only wrap a method that is an own property. skipped in Deno, where reading an env var without permission prompts or throws
+globalConfig.eager ??= typeof Deno === "undefined" && typeof process !== "undefined" && process.env.NODE_ENV === "test";
 
 export function config(newConfig?: Partial<$ZodConfig>): $ZodConfig {
   if (newConfig) Object.assign(globalConfig, newConfig);

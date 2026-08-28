@@ -1068,11 +1068,15 @@ export abstract class Class {
  *
  * Call this from a `proto` initializer, which runs once per prototype — never per instance.
  */
-export function members(proto: object, table: object): void {
+export function members(proto: object, table: object, inst?: object): void {
   for (const key in table) {
     const desc = Object.getOwnPropertyDescriptor(table, key)!;
-    // a getter installs as written, so it stays live: `description` reads through to the registry on every access. not enumerable: an object literal's is, and a prototype member never was
+    // a getter installs as written, so it stays live: `description` reads through to the registry on every access. not enumerable: an object literal's is, and a prototype member never was. an identical redefinition is a no-op by spec, so the eager path can repeat it per construction
     if (desc.get) Object.defineProperty(proto, key, { ...desc, enumerable: false });
+    // eager: the method lands bound on the instance as a hidden own property, the pre-4.5 layout a test mocker can wrap, and never on the prototype. one a subclass overrides already answers `in` and is left alone
+    else if (inst) {
+      if (!(key in inst)) hide(inst, key, desc.value.bind(inst));
+    }
     // a method materializes bound on first read, which is what keeps a detached member working: `const opt = schema.optional; opt()`
     else defineBound(proto, key, desc.value);
   }
