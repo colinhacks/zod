@@ -72,3 +72,21 @@ test("schemas with unsupported features fall back without crashing", () => {
   // First call attempts compile, falls back. Subsequent calls use runtime. Sync parse of an async-refined schema is its own runtime concern; we only care that the post-processor doesn't crash with a compile error.
   expect(() => schema.safeParse("ok")).not.toThrow(/ZodCompile/);
 });
+
+test("global mode installs the validator isValid reads", () => {
+  const schema = z.looseObject({ name: z.string() });
+  schema.parse({ name: "ok", extra: 1 }); // shim fires and compiles
+
+  // Without this the shim leaves no validator behind, isValid misses its fast path and answers from the runtime parser instead. Correct, so nothing else in the suite notices, and several times slower.
+  const bag = schema._zod.bag as { validator?: (input: unknown) => unknown };
+  const trampoline = bag.validator;
+  expect(typeof trampoline).toBe("function");
+
+  expect(z.isValid(schema, { name: "ok", extra: 1 })).toBe(true);
+  expect(z.isValid(schema, { name: 1 })).toBe(false);
+
+  // Its own trampoline, resolved in place. Copying the compiled clone's would keep rebuilding, since that one replaces itself on the clone's bag.
+  expect(bag.validator).not.toBe(trampoline);
+  // Assert mode: a verdict, not a rebuilt object.
+  expect(bag.validator!({ name: "ok", extra: 1 })).toBe(true);
+});

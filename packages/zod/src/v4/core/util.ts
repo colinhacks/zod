@@ -1229,12 +1229,7 @@ export function defineLazyInternal<T extends { _zod: any }>(
 }
 
 /** Single-property variant; the key doubles as the sentinel. */
-export function installLazyProp(
-  inst: object,
-  key: string,
-  make: (self: any) => unknown,
-  enumerable?: boolean
-): void {
+export function installLazyProp(inst: object, key: string, make: (self: any) => unknown, enumerable?: boolean): void {
   const proto = claim(inst, key);
   if (proto) defineCached(proto, key, make, enumerable);
 }

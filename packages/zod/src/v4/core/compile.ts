@@ -33,8 +33,6 @@ interface CompileFastpassOptions {
   assertOnly?: boolean | undefined;
 }
 
-// Returned in place of an accessor by a node that skipped building its value. It cannot appear in valid JS, so if a consumer ever interpolates it the generated source fails to evaluate and `compileFastpass` degrades to the runtime rather than emitting something subtly wrong.
-
 type CompiledFastpass<T> = ((input: unknown) => T | INVALID) & { code?: string | undefined };
 
 /** Raised when the schema contains async refinements or transforms. Surfaces only under `compile(schema, { strict: true })`. */
@@ -86,6 +84,34 @@ type SupportedCheck =
   | checks.$ZodCheckMimeType
   | checks.$ZodCheckOverwrite
   | { _zod: { def: { check: "custom"; fn?: (value: unknown) => boolean }; check?: (payload: unknown) => unknown } };
+
+/**
+ * Install the validator `isValid` calls on a bag: the same codegen as the parser with the output
+ * construction dropped. It replaces itself on first call, so a schema that never reaches `isValid`
+ * pays no second codegen and every later call is a plain property read. A schema the flag cannot
+ * express installs the parser instead and is never retried.
+ *
+ * Takes the bag it writes to rather than closing over one, because global mode installs a validator
+ * on the original instance too, and a trampoline that overwrote some other bag would rebuild on
+ * every call there.
+ */
+export function installValidator(
+  bag: Record<string, unknown>,
+  schema: SomeType,
+  fast: (input: unknown) => unknown
+): void {
+  bag.validator = (input: unknown): unknown => {
+    let built: ((input: unknown) => unknown) | null = null;
+    try {
+      built = compileFastpass(schema, { assertOnly: true }) as (input: unknown) => unknown;
+    } catch {
+      built = null;
+    }
+    const real = built ?? fast;
+    bag.validator = real;
+    return real(input);
+  };
+}
 
 export interface CompileOptions {
   /** Throw the refusal instead of returning the schema uncompiled. */
@@ -148,19 +174,7 @@ export function compile<T extends SomeType>(schema: T, options?: CompileOptions)
     (wrapped as { __originalRun?: typeof originalRun }).__originalRun = originalRun;
     clone._zod.bag.fastpass = fast;
     clone._zod.bag.fallbackRun = originalRun;
-    // The validator isValid calls: the same codegen with the output construction dropped. It overwrites itself on first call, so a schema that never reaches isValid pays no second codegen and every later call is one property load instead of a lazy-init branch. A schema the flag cannot express installs the parser instead, and so is never retried.
-    const bag = clone._zod.bag as { validator?: (input: unknown) => unknown };
-    bag.validator = (input: unknown): unknown => {
-      let built: ((input: unknown) => unknown) | null = null;
-      try {
-        built = compileFastpass(schema, { assertOnly: true }) as (input: unknown) => unknown;
-      } catch {
-        built = null;
-      }
-      const real = built ?? (fast as (input: unknown) => unknown);
-      bag.validator = real;
-      return real(input);
-    };
+    installValidator(clone._zod.bag, schema, fast as (input: unknown) => unknown);
     clone._zod.run = wrapped;
 
     // The fast parse/safeParse closures fall back through the source schema's methods. If the source is shim- or wrapper-managed, those methods route into a compiled run and would execute user callbacks a third time on invalid input — the plain method → wrapper path is exactly 2x, so skip.
