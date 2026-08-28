@@ -86,31 +86,16 @@ type SupportedCheck =
   | { _zod: { def: { check: "custom"; fn?: (value: unknown) => boolean }; check?: (payload: unknown) => unknown } };
 
 /**
- * Install the validator `isValid` calls on a bag: the same codegen as the parser with the output
- * construction dropped. It replaces itself on first call, so a schema that never reaches `isValid`
- * pays no second codegen and every later call is a plain property read. A schema the flag cannot
- * express installs the parser instead and is never retried.
- *
- * Takes the bag it writes to rather than closing over one, because global mode installs a validator
- * on the original instance too, and a trampoline that overwrote some other bag would rebuild on
- * every call there.
+ * Build the validator `validate` calls: the same codegen as the parser with the output construction
+ * dropped. A schema the flag cannot express reuses the parser, which still answers correctly — it
+ * just builds a value nothing reads.
  */
-export function installValidator(
-  bag: Record<string, unknown>,
-  schema: SomeType,
-  fast: (input: unknown) => unknown
-): void {
-  bag.validator = (input: unknown): unknown => {
-    let built: ((input: unknown) => unknown) | null = null;
-    try {
-      built = compileFastpass(schema, { assertOnly: true }) as (input: unknown) => unknown;
-    } catch {
-      built = null;
-    }
-    const real = built ?? fast;
-    bag.validator = real;
-    return real(input);
-  };
+function compileValidator(schema: SomeType, fast: (input: unknown) => unknown): (input: unknown) => unknown {
+  try {
+    return compileFastpass(schema, { assertOnly: true }) as (input: unknown) => unknown;
+  } catch {
+    return fast;
+  }
 }
 
 export interface CompileOptions {
@@ -170,11 +155,11 @@ export function compile<T extends SomeType>(schema: T, options?: CompileOptions)
       if (ctx) (ctx as Record<symbol, unknown>)[FALLBACK_FLAG] = true;
       return originalRun(payload, ctx);
     };
-    // Let later compiles of (or through) this run unwrap to the true runtime — both the global shim and repeated z.compile calls rely on this. The bag also carries the parser and the validator, so the standalone isValid can skip the payload and wrapper on the happy path.
+    // Let later compiles of (or through) this run unwrap to the true runtime — both the global shim and repeated z.compile calls rely on this. The bag also carries the parser and the validator, so the standalone validate can skip the payload and wrapper on the happy path.
     (wrapped as { __originalRun?: typeof originalRun }).__originalRun = originalRun;
     clone._zod.bag.fastpass = fast;
     clone._zod.bag.fallbackRun = originalRun;
-    installValidator(clone._zod.bag, schema, fast as (input: unknown) => unknown);
+    clone._zod.bag.validator = compileValidator(schema, fast as (input: unknown) => unknown);
     clone._zod.run = wrapped;
 
     // The fast parse/safeParse closures fall back through the source schema's methods. If the source is shim- or wrapper-managed, those methods route into a compiled run and would execute user callbacks a third time on invalid input — the plain method → wrapper path is exactly 2x, so skip.

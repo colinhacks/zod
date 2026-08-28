@@ -114,24 +114,24 @@ interface CompiledBag {
   fallbackRun?: (payload: schemas.ParsePayload, ctx: schemas.ParseContextInternal) => unknown;
 }
 
-export type $IsValid = <T extends schemas.$ZodType>(
+export type $Validate = <T extends schemas.$ZodType>(
   schema: T,
   value: unknown,
   _ctx?: schemas.ParseContext<errors.$ZodIssue>
 ) => value is core.input<T>;
 
-// Deliberately tiny, because v8 will not inline a body carrying the fallback's object literals and throw. Everything that is not the compiled happy path lives in isValidFallback, and that split is worth ~35% on a compiled schema.
-export const isValid: $IsValid = ((
+// Deliberately tiny, because v8 will not inline a body carrying the fallback's object literals and throw. Everything that is not the compiled happy path lives in validateFallback, and that split is worth ~35% on a compiled schema.
+export const validate: $Validate = ((
   schema: schemas.$ZodType,
   value: unknown,
   _ctx?: schemas.ParseContext<errors.$ZodIssue>
 ): boolean => {
   const validator = (schema._zod.bag as CompiledBag).validator;
   if (validator !== undefined && validator(value) !== COMPILE_INVALID) return true;
-  return isValidFallback(schema, value, _ctx);
-}) as $IsValid;
+  return validateFallback(schema, value, _ctx);
+}) as $Validate;
 
-function isValidFallback(
+function validateFallback(
   schema: schemas.$ZodType,
   value: unknown,
   _ctx?: schemas.ParseContext<errors.$ZodIssue>
@@ -152,14 +152,14 @@ function isValidFallback(
   return (result as schemas.ParsePayload).issues.length === 0;
 }
 
-export type $IsValidAsync = <T extends schemas.$ZodType>(
+export type $ValidateAsync = <T extends schemas.$ZodType>(
   schema: T,
   value: unknown,
   _ctx?: schemas.ParseContext<errors.$ZodIssue>
 ) => Promise<boolean>;
 
 // no fast path: the compiler keeps async parses on the runtime, because a promise-returning callback that is not declared async compiles to a throw
-export const isValidAsync: $IsValidAsync = async (schema, value, _ctx) => {
+export const validateAsync: $ValidateAsync = async (schema, value, _ctx) => {
   const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: true } : { async: true };
   let result: unknown = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) result = await result;

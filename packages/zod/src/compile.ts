@@ -10,7 +10,7 @@
 //
 // Failure handling: if the compiler refuses a schema (async refinement, unsupported feature, etc.) the shim permanently restores the runtime `_zod.run` for that schema. The schema continues to work via the regular runtime parser — no observable difference to the caller.
 
-import { compile, installValidator } from "./v4/core/compile.js";
+import { compile } from "./v4/core/compile.js";
 import * as core from "./v4/core/index.js";
 
 let compiling = false;
@@ -39,8 +39,7 @@ core.globalConfig.postProcessor = (inst: any) => {
       inst._zod.run = compiled._zod.run;
       inst._zod.bag.fastpass = compiled._zod.bag.fastpass;
       inst._zod.bag.fallbackRun = compiled._zod.bag.fallbackRun;
-      // Its own trampoline, not the clone's: that one replaces itself on the bag it was built for.
-      installValidator(inst._zod.bag, inst, compiled._zod.bag.fastpass);
+      inst._zod.bag.validator = compiled._zod.bag.validator;
     } catch {
       // Permanent fallback for unsupported schemas.
       inst._zod.run = originalRun;
