@@ -11,13 +11,13 @@ This can lead to dramatic speedups, especially for container types like objects,
 
 | schema | speedup |
 | ------ | ------- |
-| 20-key object | ~7.5x |
+| 20-key object | ~8x |
 | `z.array(z.string())`, 10 items | ~7x |
-| `z.array(z.object({…}))`, 10 items | ~6x |
-| union of 3 objects | ~5.5x |
+| `z.array(z.object({…}))`, 10 items | ~5.5x |
+| union of 3 objects | ~5x |
 | tuple of 3 | ~3.5x |
 | discriminated union | ~3.5x |
-| 5-key object | ~2.7x |
+| 5-key object | ~2.8x |
 
 There are two ways to opt in.
 

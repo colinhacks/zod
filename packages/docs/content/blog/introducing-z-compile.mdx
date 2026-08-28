@@ -88,7 +88,7 @@ Containers like objects and tuples benefit the most, since compilation unrolls t
 <ThemedImage
   lightSrc="/blog/compile-speedup-light.svg"
   darkSrc="/blog/compile-speedup-dark.svg"
-  alt="Time per parse on a shared nanosecond axis, standard parser as a gray bar with the compiled time as a blue bar inside it: an array of 10 objects 439 ns to 69 ns (6.3x), a 20-key object 304 ns to 40 ns (7.6x), an array of 10 strings 245 ns to 33 ns (7.4x), a union of 3 objects 207 ns to 36 ns (5.7x), a 3-element tuple 120 ns to 33 ns (3.7x), a 5-key strict object 114 ns to 34 ns (3.4x), a discriminated union 99 ns to 27 ns (3.7x), a 5-key object 79 ns to 29 ns (2.7x); up to 7.6x faster when compiled"
+  alt="Time per parse on a shared nanosecond axis, standard parser as a gray bar with the compiled time as a blue bar inside it: an array of 10 objects 377 ns to 68 ns (5.5x), a 20-key object 301 ns to 38 ns (7.8x), an array of 10 strings 241 ns to 33 ns (7.3x), a union of 3 objects 190 ns to 36 ns (5.3x), a 3-element tuple 119 ns to 33 ns (3.6x), a 5-key strict object 117 ns to 32 ns (3.7x), a discriminated union 92 ns to 27 ns (3.4x), a 5-key object 76 ns to 28 ns (2.8x); up to 7.8x faster when compiled"
   caption={<>Time per parse, standard parser vs compiled — lower is better (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/compile-matrix.ts">benchmark</a>)</>}
 />
 
@@ -96,18 +96,18 @@ The benefits scale with schema complexity.
 
 | object | speedup |
 | --- | --- |
-| 1 key | 1.8x |
-| 5 keys | 1.9x |
-| 10 keys | 2.3x |
-| 20 keys | 4.9x |
-| 50 keys | 9.8x |
+| 1 key | 2.3x |
+| 5 keys | 1.8x |
+| 10 keys | 2.2x |
+| 20 keys | 5.0x |
+| 50 keys | 10.2x |
 
 | tuple | speedup |
 | --- | --- |
 | 1 item | 2.2x |
 | 3 items | 2.5x |
-| 5 items | 2.9x |
-| 10 items | 3.6x |
+| 5 items | 3.0x |
+| 10 items | 3.7x |
 
 ## Tradeoffs
 

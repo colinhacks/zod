@@ -21,7 +21,7 @@ At a glance:
 - [`z.creditCard()`](#zcreditcard) — 12–19 digits plus Luhn checksum
 - [`z.properties()`](#zproperties) — the multi-property counterpart to `z.property()`
 - [`z.deepPartial()`](#zdeeppartial)/[`.exactPartial()`](#exactpartial)
-- [`z.isValid(): boolean`](#zisvalid) — a fast-path to verify input validity without a full parse (up to 16x faster on invalid data)
+- [`z.validate(): boolean`](#zvalidate) — a fast-path to verify input validity without a full parse (up to 16x faster on invalid data)
 
 Plus:
 - [9x reduction in memory footprint](#9x-reduction-in-schema-memory-footprint)
@@ -55,7 +55,7 @@ On objects, arrays, and unions, this speeds up parsing by a factor of ~3–7. Mo
 <ThemedImage
   lightSrc="/blog/compile-speedup-light.svg"
   darkSrc="/blog/compile-speedup-dark.svg"
-  alt="Time per parse on a shared nanosecond axis, standard parser as a gray bar with the compiled time as a blue bar inside it: an array of 10 objects 439 ns to 69 ns (6.3x), a 20-key object 304 ns to 40 ns (7.6x), an array of 10 strings 245 ns to 33 ns (7.4x), a union of 3 objects 207 ns to 36 ns (5.7x), a 3-element tuple 120 ns to 33 ns (3.7x), a 5-key strict object 114 ns to 34 ns (3.4x), a discriminated union 99 ns to 27 ns (3.7x), a 5-key object 79 ns to 29 ns (2.7x); up to 7.6x faster when compiled"
+  alt="Time per parse on a shared nanosecond axis, standard parser as a gray bar with the compiled time as a blue bar inside it: an array of 10 objects 377 ns to 68 ns (5.5x), a 20-key object 301 ns to 38 ns (7.8x), an array of 10 strings 241 ns to 33 ns (7.3x), a union of 3 objects 190 ns to 36 ns (5.3x), a 3-element tuple 119 ns to 33 ns (3.6x), a 5-key strict object 117 ns to 32 ns (3.7x), a discriminated union 92 ns to 27 ns (3.4x), a 5-key object 76 ns to 28 ns (2.8x); up to 7.8x faster when compiled"
   caption={<>Time per parse by schema type, standard parser vs compiled — lower is better (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/compile-matrix.ts">benchmark</a>)</>}
 />
 
@@ -64,16 +64,16 @@ Below are the Moltar benchmark results comparing Zod (compiled and uncompiled) a
 <ThemedImage
   lightSrc="/blog/moltar-light.svg"
   darkSrc="/blog/moltar-dark.svg"
-  alt="Bar chart of operations per second on the moltar benchmark fixture, parseSafe category: typia 46.0M, Zod 4 compiled 40.8M, Zod 4 10.2M, valibot 1.8M, effect 1.8M, Zod 3 1.3M, arktype 156k, yup 149k"
+  alt="Bar chart of operations per second on the moltar benchmark fixture, parseSafe category: Zod 4 compiled 47.5M, typia 45.3M, Zod 4 11.6M, valibot 1.8M, effect 1.7M, Zod 3 1.2M, arktype 152k, yup 121k"
   caption={<>Throughput on the moltar benchmark fixture (parseSafe: returns a new object with unknown keys stripped) — higher is better (<a href="https://github.com/moltar/typescript-runtime-type-benchmarks/pull/2329">benchmark</a>)</>}
 />
 
-And the equivalent results for the Moltar AssertLoose bench (unrecognized keys allowed, simple `boolean` result). Tested against the new `z.isValid(schema, input)` function (detailed later in the post).
+And the equivalent results for the Moltar AssertLoose bench (unrecognized keys allowed, simple `boolean` result). Tested against the new `z.validate(schema, input)` function (detailed later in the post).
 
 <ThemedImage
   lightSrc="/blog/moltar-assertLoose-light.svg"
   darkSrc="/blog/moltar-assertLoose-dark.svg"
-  alt="Bar chart of operations per second on the moltar benchmark fixture, assertLoose category: typia 72.0M, arktype 62.9M, Zod 4 compiled with z.isValid 14.0M, Zod 4 with z.isValid 6.9M, valibot 1.9M, effect 1.8M, Zod 3 1.2M, yup 157k"
+  alt="Bar chart of operations per second on the moltar benchmark fixture, assertLoose category: typia 74.9M, arktype 66.2M, Zod 4 compiled 60.6M, Zod 4 6.5M, valibot 1.9M, effect 1.7M, Zod 3 1.2M, yup 124k"
   caption={<>Throughput on the moltar benchmark fixture (assertLoose: returns a boolean, unknown keys allowed) — higher is better (<a href="https://github.com/moltar/typescript-runtime-type-benchmarks/pull/2329">benchmark</a>)</>}
 />
 
@@ -177,13 +177,13 @@ PartialRecipe.parse({ title: undefined });  // ❌
 
 In Zod Mini it's a top-level function: `z.exactPartial(Recipe)`.
 
-## `z.isValid()`
+## `z.validate()`
 
-Standalone boolean validation, in Zod, Zod Mini, and Zod Core. It answers "is this input valid?" without constructing a `ZodError`, which makes rejection cheap: on invalid input it is up to 16x faster than `.safeParse().success`. The return type is a guard on the schema's input type, and `z.isValidAsync()` covers schemas with async refinements. ([#6471](https://github.com/colinhacks/zod/pull/6471))
+Standalone boolean validation, in Zod, Zod Mini, and Zod Core. It answers "is this input valid?" without constructing a `ZodError`, which makes rejection cheap: on invalid input it is up to 16x faster than `.safeParse().success`. The return type is a guard on the schema's input type, and `z.validateAsync()` covers schemas with async refinements. ([#6471](https://github.com/colinhacks/zod/pull/6471))
 
 ```ts
-z.isValid(z.string(), "hi"); // true
-z.isValid(z.string(), 42);   // false
+z.validate(z.string(), "hi"); // true
+z.validate(z.string(), 42);   // false
 ```
 
 ## `z.input()` / `z.output()`
@@ -258,7 +258,7 @@ In Zod 4.4 a bare `z.string()` retained 7.5kb of heap. In Zod 4.5 it retains 784
 <ThemedImage
   lightSrc="/blog/memory-light.svg"
   darkSrc="/blog/memory-dark.svg"
-  alt="Bar chart of heap retained by one schema instance, zod 4.4.3 versus 4.5: a 10-key object 82.0kb to 11.5kb, a union 17.5kb to 2.13kb, z.string().min(1) 16.7kb to 3.37kb, a record 16.4kb to 2.64kb, z.string().optional() 12.6kb to 1.50kb, an array of strings 11.2kb to 1.93kb, z.string() 7.53kb to 784b, z.number() 4.44kb to 706b. Up to 9.8x smaller than 4.4.3."
+  alt="Bar chart of heap retained by one schema instance, zod 4.4.3 versus 4.5: a 10-key object 82.0kb to 11.0kb, a union 17.5kb to 2.13kb, z.string().min(1) 16.7kb to 3.37kb, a record 16.4kb to 2.64kb, z.string().optional() 12.6kb to 1.50kb, an array of strings 11.2kb to 1.93kb, z.string() 7.53kb to 784b, z.number() 4.44kb to 706b. Up to 9.8x smaller than 4.4.3."
   caption={<>Retained heap per schema instance, Zod 4.4.3 vs 4.5 (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/memory/schema-footprint.ts">benchmark</a>)</>}
 />
 
@@ -360,8 +360,9 @@ Object and record parsers now drop a `__proto__` key whether it comes from the i
 
 ## Commits
 
-Zod 4.5 rolls up 154 commits. Thanks to everyone who contributed: [@pullfrog[bot]](https://github.com/pullfrog[bot]), [@dokson](https://github.com/dokson), [@deepshekhardas](https://github.com/deepshekhardas), [@zirkelc](https://github.com/zirkelc), [@francisjohnjohnston-web](https://github.com/francisjohnjohnston-web), [@MerlijnW70](https://github.com/MerlijnW70), [@codinsonn](https://github.com/codinsonn), [@oimo23](https://github.com/oimo23), [@JSap0914](https://github.com/JSap0914), [@zelinewang](https://github.com/zelinewang), [@abhishek-chaudhary2003](https://github.com/abhishek-chaudhary2003), [@spokodev](https://github.com/spokodev), [@Mohammad-Faiz-Cloud-Engineer](https://github.com/Mohammad-Faiz-Cloud-Engineer), [@hamed-bavar](https://github.com/hamed-bavar), [@MGPOCKY](https://github.com/MGPOCKY), [@ChiChuRita](https://github.com/ChiChuRita), [@dinwwwh](https://github.com/dinwwwh), [@thristhart](https://github.com/thristhart), [@tsmartin9](https://github.com/tsmartin9), [@vedanshshetti](https://github.com/vedanshshetti), [@belicam](https://github.com/belicam), [@frastefanini](https://github.com/frastefanini), [@andersk](https://github.com/andersk), [@musaddiq-rafi](https://github.com/musaddiq-rafi), [@tachmyratsaparmyradov](https://github.com/tachmyratsaparmyradov), [@arvindfroi](https://github.com/arvindfroi), [@KUMachine](https://github.com/KUMachine), [@spidersouris](https://github.com/spidersouris), [@catdalfonso](https://github.com/catdalfonso), [@mneetika](https://github.com/mneetika), [@gwagjiug](https://github.com/gwagjiug), [@MahinAnowar](https://github.com/MahinAnowar), [@MaksZhukov](https://github.com/MaksZhukov), [@emmayusufu](https://github.com/emmayusufu), [@agcty](https://github.com/agcty), [@devareddy05](https://github.com/devareddy05), [@Vish05](https://github.com/Vish05), [@yamcodes](https://github.com/yamcodes), [@mattiasahlsen](https://github.com/mattiasahlsen), [@samchungy](https://github.com/samchungy), [@ozzyfromspace](https://github.com/ozzyfromspace), [@udohjeremiah](https://github.com/udohjeremiah), [@patrickwehbe](https://github.com/patrickwehbe), [@gajus](https://github.com/gajus), [@Harm-Nullix](https://github.com/Harm-Nullix), [@thwbh](https://github.com/thwbh), [@IdanGonen](https://github.com/IdanGonen), [@irfanfandi](https://github.com/irfanfandi), [@JuerGenie](https://github.com/JuerGenie), [@marcalexiei](https://github.com/marcalexiei), [@itsahmedbilal](https://github.com/itsahmedbilal), [@DucMinhNe](https://github.com/DucMinhNe), [@meliharik](https://github.com/meliharik).
+Zod 4.5 rolls up 155 commits. Thanks to everyone who contributed: [@dokson](https://github.com/dokson), [@deepshekhardas](https://github.com/deepshekhardas), [@zirkelc](https://github.com/zirkelc), [@francisjohnjohnston-web](https://github.com/francisjohnjohnston-web), [@MerlijnW70](https://github.com/MerlijnW70), [@codinsonn](https://github.com/codinsonn), [@oimo23](https://github.com/oimo23), [@JSap0914](https://github.com/JSap0914), [@zelinewang](https://github.com/zelinewang), [@abhishek-chaudhary2003](https://github.com/abhishek-chaudhary2003), [@spokodev](https://github.com/spokodev), [@Mohammad-Faiz-Cloud-Engineer](https://github.com/Mohammad-Faiz-Cloud-Engineer), [@hamed-bavar](https://github.com/hamed-bavar), [@MGPOCKY](https://github.com/MGPOCKY), [@ChiChuRita](https://github.com/ChiChuRita), [@dinwwwh](https://github.com/dinwwwh), [@thristhart](https://github.com/thristhart), [@tsmartin9](https://github.com/tsmartin9), [@vedanshshetti](https://github.com/vedanshshetti), [@belicam](https://github.com/belicam), [@frastefanini](https://github.com/frastefanini), [@andersk](https://github.com/andersk), [@musaddiq-rafi](https://github.com/musaddiq-rafi), [@tachmyratsaparmyradov](https://github.com/tachmyratsaparmyradov), [@arvindfroi](https://github.com/arvindfroi), [@KUMachine](https://github.com/KUMachine), [@spidersouris](https://github.com/spidersouris), [@catdalfonso](https://github.com/catdalfonso), [@mneetika](https://github.com/mneetika), [@gwagjiug](https://github.com/gwagjiug), [@MahinAnowar](https://github.com/MahinAnowar), [@MaksZhukov](https://github.com/MaksZhukov), [@emmayusufu](https://github.com/emmayusufu), [@agcty](https://github.com/agcty), [@devareddy05](https://github.com/devareddy05), [@Vish05](https://github.com/Vish05), [@yamcodes](https://github.com/yamcodes), [@mattiasahlsen](https://github.com/mattiasahlsen), [@samchungy](https://github.com/samchungy), [@ozzyfromspace](https://github.com/ozzyfromspace), [@udohjeremiah](https://github.com/udohjeremiah), [@patrickwehbe](https://github.com/patrickwehbe), [@gajus](https://github.com/gajus), [@Harm-Nullix](https://github.com/Harm-Nullix), [@thwbh](https://github.com/thwbh), [@IdanGonen](https://github.com/IdanGonen), [@irfanfandi](https://github.com/irfanfandi), [@JuerGenie](https://github.com/JuerGenie), [@marcalexiei](https://github.com/marcalexiei), [@itsahmedbilal](https://github.com/itsahmedbilal), [@DucMinhNe](https://github.com/DucMinhNe), [@meliharik](https://github.com/meliharik).
 
+- [`9782f87c`](https://github.com/colinhacks/zod/commit/9782f87c) perf(v4): validate without building the output, and keep schemas out of dictionary mode ([#6480](https://github.com/colinhacks/zod/pull/6480)) by [@colinhacks](https://github.com/colinhacks)
 - [`773a4867`](https://github.com/colinhacks/zod/commit/773a4867) refactor(v4): declare a trait's members on $constructor ([#6478](https://github.com/colinhacks/zod/pull/6478)) by [@colinhacks](https://github.com/colinhacks)
 - [`68fb3f13`](https://github.com/colinhacks/zod/commit/68fb3f13) feat(v4): make z.compile() fall back instead of throwing ([#6479](https://github.com/colinhacks/zod/pull/6479)) by [@colinhacks](https://github.com/colinhacks)
 - [`37b01501`](https://github.com/colinhacks/zod/commit/37b01501) feat(v4): add z.isValid and z.isValidAsync ([#6471](https://github.com/colinhacks/zod/pull/6471)) by [@colinhacks](https://github.com/colinhacks)
