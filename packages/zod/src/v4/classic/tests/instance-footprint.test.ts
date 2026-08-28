@@ -183,7 +183,8 @@ test("a subclass's own members survive the install", () => {
   const sym = Symbol();
   expect(z.symbol().parse(sym)).toBe(sym);
 
-  // and the other way round, with the base prototype already built
+  // and the other way round, with the base prototype already built by the `z.number()` above. Asserted for the same reason: drop that one and this block quietly becomes a second copy of the cold case.
+  expect(Object.prototype.hasOwnProperty.call((z.ZodNumber as any).prototype, "parse")).toBe(true);
   const Second = class extends (z.ZodNumber as any) {
     parse() {
       return "SECOND";
