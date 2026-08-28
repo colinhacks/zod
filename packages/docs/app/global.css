@@ -95,6 +95,14 @@ html .prose {
   }
 }
 
+/* long-form posts: h3 gets the same rule as h2; html prefix outranks the base html .prose rule */
+html .blog-prose {
+  & > h3 {
+    @apply border-b pb-2 mt-14;
+    border-color: var(--color-fd-border);
+  }
+}
+
 h3.not-prose button {
   /* color: red; */
   color: var(--color-fd-popover-foreground);
