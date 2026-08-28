@@ -167,8 +167,9 @@ test("constructing through a subclass does not strip the base prototype", () => 
 });
 
 test("a subclass's own members survive the install", () => {
-  // The members go on the nearest prototype a `$constructor` built, so a subclass's prototype keeps whatever it declared. `z.number()` is untouched here to construct the subclass before its base.
-  const First = class extends (z.ZodNumber as any) {
+  // The members go on the prototype of the constructor that built the instance, so a subclass's own prototype keeps what it declared. `z.symbol()` is constructed nowhere else here, which puts the subclass before its base — the ordering the install has to get right. Asserted rather than assumed, so warming it elsewhere fails the test instead of hollowing it out.
+  expect(Object.prototype.hasOwnProperty.call((z.ZodSymbol as any).prototype, "parse")).toBe(false);
+  const First = class extends (z.ZodSymbol as any) {
     parse() {
       return "PARSE";
     }
@@ -176,10 +177,11 @@ test("a subclass's own members survive the install", () => {
       return "OPTIONAL";
     }
   } as any;
-  const first = new First({ type: "number" });
-  expect(first.parse(1)).toBe("PARSE");
+  const first = new First({ type: "symbol" });
+  expect(first.parse(Symbol())).toBe("PARSE");
   expect(first.optional()).toBe("OPTIONAL");
-  expect(z.number().parse(1)).toBe(1);
+  const sym = Symbol();
+  expect(z.symbol().parse(sym)).toBe(sym);
 
   // and the other way round, with the base prototype already built
   const Second = class extends (z.ZodNumber as any) {
@@ -189,7 +191,7 @@ test("a subclass's own members survive the install", () => {
   } as any;
   expect(new Second({ type: "number" }).parse(1)).toBe("SECOND");
 
-  // two levels deep: neither prototype gets its own copy, so the inherited member is one function
+  // two levels deep: neither prototype takes a copy, so the inherited member is one function
   const Third = class extends (Second as any) {} as any;
   new Third({ type: "number" });
   expect(Second.prototype.parse).toBe(Third.prototype.parse);

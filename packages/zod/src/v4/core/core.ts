@@ -93,7 +93,7 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
     initializer(inst, def);
 
     if (initialized && !protoReady) {
-      // `super(def)` from a user subclass gives `this` a prototype the subclass owns, and installing there would overwrite whatever the subclass declared. `constr` built the instance, so its prototype is the one below the subclass's that should carry the members. A plain object handed straight to `init` is not below it and takes them itself, as before.
+      // `super(def)` from a user subclass gives `this` a prototype the subclass owns, and installing there would overwrite whatever the subclass declared. `constr` built the instance, so its prototype is the one below the subclass's that should carry the members. A receiver whose chain never reaches that prototype installs on its own, which for a plain object handed straight to `init` means `Object.prototype` — unchanged from before.
       const own = Object.getPrototypeOf(inst);
       const ctorProto = inst._zod.constr.prototype;
       let up: object | null = own;
