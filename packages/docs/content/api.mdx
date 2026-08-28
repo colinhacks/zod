@@ -1580,12 +1580,18 @@ input.subcategories.push(input);
 
 const result = Category.parse(input);
 result.subcategories[0] === result; // true
+
+// the output graph mirrors the input graph
+result.subcategories[0].subcategories[0] === result; // true
 ```
 </Tab>
 <Tab value="Zod Mini">
 ```ts
-// register a memoizer before defining any schemas
+// Zod Mini requires a memoizer, registered before schemas are defined
 z.config({ memoizer: z.memoizer() });
+
+const input: any = { name: "root", subcategories: [] };
+input.subcategories.push(input);
 
 const result = Category.parse(input);
 result.subcategories[0] === result; // true
