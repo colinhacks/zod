@@ -149,13 +149,18 @@ export function compile<T extends SomeType>(schema: T, options?: CompileOptions)
     (wrapped as { __originalRun?: typeof originalRun }).__originalRun = originalRun;
     clone._zod.bag.fastpass = fast;
     clone._zod.bag.fallbackRun = originalRun;
-    // A validator built from the same codegen with the output construction dropped, built on first use so a schema that never reaches isValid pays no second codegen. `null` records a refusal, so a schema the validator cannot express is not retried on every call.
-    clone._zod.bag.buildAssertpass = (): ((input: unknown) => unknown) | null => {
+    // The validator isValid calls: the same codegen with the output construction dropped. It overwrites itself on first call, so a schema that never reaches isValid pays no second codegen and every later call is one property load instead of a lazy-init branch. A schema the flag cannot express installs the parser instead, and so is never retried.
+    const bag = clone._zod.bag as { validator?: (input: unknown) => unknown };
+    bag.validator = (input: unknown): unknown => {
+      let built: ((input: unknown) => unknown) | null = null;
       try {
-        return compileFastpass(schema, { assertOnly: true }) as (input: unknown) => unknown;
+        built = compileFastpass(schema, { assertOnly: true }) as (input: unknown) => unknown;
       } catch {
-        return null;
+        built = null;
       }
+      const real = built ?? (fast as (input: unknown) => unknown);
+      bag.validator = real;
+      return real(input);
     };
     clone._zod.run = wrapped;
 
