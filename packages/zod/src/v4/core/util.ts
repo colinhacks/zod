@@ -1071,8 +1071,8 @@ export abstract class Class {
 export function members(proto: object, table: object): void {
   for (const key in table) {
     const desc = Object.getOwnPropertyDescriptor(table, key)!;
-    // A getter installs as written, so it stays live — `description` reads through to the registry on every access.
-    if (desc.get) Object.defineProperty(proto, key, desc);
+    // A getter installs as written, so it stays live — `description` reads through to the registry on every access. Not enumerable: an object literal's is, and a prototype member never was.
+    if (desc.get) Object.defineProperty(proto, key, { ...desc, enumerable: false });
     else defineCached(proto, key, desc.value);
   }
 }

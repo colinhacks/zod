@@ -135,6 +135,17 @@ test("a derived trait's members win over the ones it composes", () => {
   expect(typeof (z.string()["~standard"] as any).jsonSchema.input).toBe("function");
 });
 
+test("a live member keeps the descriptor a prototype member had", () => {
+  // An object literal's getter is enumerable; the `defineProperty` it replaced was not. `for..in` over a schema is public surface, and the construction path walks the prototype with it.
+  const proto = Object.getPrototypeOf(z.string());
+  expect(Object.getOwnPropertyDescriptor(proto, "description")?.enumerable).toBe(false);
+  expect(Object.getOwnPropertyDescriptor(proto, "_def")?.enumerable).toBe(false);
+
+  const keys: string[] = [];
+  for (const k in z.string()) keys.push(k);
+  expect(keys).toEqual(["def", "type", "format", "minLength", "maxLength"]);
+});
+
 test("a live member is not cached per instance", () => {
   const schema = z.string();
 
