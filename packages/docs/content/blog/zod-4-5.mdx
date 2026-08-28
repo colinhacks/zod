@@ -287,7 +287,7 @@ const { parse } = z.string();
 parse("some data");
 ```
 
-A consequence of this is that each bound method allocates space on the heap; methods implementations are no longer shared across all instances via `prototype`, as you'd expect. Zod 4.5 implements a method memoization pattern that avoids allocating bound methods until they are actually accessed. 
+A consequence of this is that each bound method allocates space on the heap; method implementations are not shared across all instances via `prototype`, as you'd expect. Zod 4.5 implements a method memoization pattern that avoids allocating bound methods until they are actually accessed.
 
 <Callout>Read the deep dive: [Reducing Zod's memory footprint by an order of magnitude](https://zod.dev/blog/reducing-memory-footprint)</Callout>
 
