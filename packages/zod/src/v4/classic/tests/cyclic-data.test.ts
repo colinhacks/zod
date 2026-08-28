@@ -646,7 +646,7 @@ test.each([false, true])("prefixes a shared node's issues once per reference (ji
 });
 
 test("the default memoizer is installed before the first container reads it", () => {
-  // nothing built yet in a fresh process; a container with only getter keys constructs no leaf first
+  // the delete manufactures the fresh-process state; a container with only getter keys then constructs no leaf before the config read
   delete z.config().memoizer;
   const Node: any = z.object({
     get self() {

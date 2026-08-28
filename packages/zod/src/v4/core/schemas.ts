@@ -5,6 +5,7 @@ import * as core from "./core.js";
 import { Doc } from "./doc.js";
 import type * as errors from "./errors.js";
 import type * as JSONSchema from "./json-schema.js";
+import { $ZodCyclicError, isBackEdge } from "./memoizer.js";
 import { parse, parseAsync, safeParse, safeParseAsync } from "./parse.js";
 import * as regexes from "./regexes.js";
 import type { StandardSchemaV1 } from "./standard-schema.js";
@@ -3715,6 +3716,9 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
       if (ctx.direction === "backward") {
         throw new core.$ZodEncodeError(inst.constructor.name);
       }
+
+      // The value is a placeholder a back-edge is still waiting on, so the cycle closes through this transform. Its output can't exist in time to bind.
+      if (isBackEdge(ctx, payload.value)) throw new $ZodCyclicError();
 
       const _out = def.transform(payload.value, payload);
       if (ctx.async) {
