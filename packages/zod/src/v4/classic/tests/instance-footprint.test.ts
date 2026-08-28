@@ -130,7 +130,8 @@ test("a nested init during a repeat construction still installs its members", ()
   });
   const Outer = core.$constructor<any>("Outer", (_inst, def) => {
     if (!def.nest) return;
-    const plain: any = {};
+    // not a plain `{}`: the install target would resolve to `Object.prototype` and leak `tag` into every object the worker touches
+    const plain: any = Object.create({});
     Nested.init(plain, {});
     seen.push(typeof plain.tag);
   });
