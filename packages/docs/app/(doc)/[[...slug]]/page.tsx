@@ -9,7 +9,8 @@ import { DocsBody, DocsPage, DocsTitle } from "fumadocs-ui/page";
 import { Github } from "lucide-react";
 import { notFound } from "next/navigation";
 
-export const revalidate = 86400;
+// no ISR: a Vercel regeneration of the root route renders with pathname /index and breaks hydration (vercel/next.js#95648)
+export const revalidate = false;
 export const dynamic = "force-static";
 
 export default async function Page(props: {
