@@ -149,10 +149,14 @@ export function compile<T extends SomeType>(schema: T, options?: CompileOptions)
     (wrapped as { __originalRun?: typeof originalRun }).__originalRun = originalRun;
     clone._zod.bag.fastpass = fast;
     clone._zod.bag.fallbackRun = originalRun;
-    // A validator built from the same codegen with the output construction dropped. Only isValid reads it; a schema it refuses simply has no entry and isValid uses the parser instead.
-    try {
-      clone._zod.bag.assertpass = compileFastpass(schema, { assertOnly: true });
-    } catch {}
+    // A validator built from the same codegen with the output construction dropped, built on first use so a schema that never reaches isValid pays no second codegen. `null` records a refusal, so a schema the validator cannot express is not retried on every call.
+    clone._zod.bag.buildAssertpass = (): ((input: unknown) => unknown) | null => {
+      try {
+        return compileFastpass(schema, { assertOnly: true }) as (input: unknown) => unknown;
+      } catch {
+        return null;
+      }
+    };
     clone._zod.run = wrapped;
 
     // The fast parse/safeParse closures fall back through the source schema's methods. If the source is shim- or wrapper-managed, those methods route into a compiled run and would execute user callbacks a third time on invalid input — the plain method → wrapper path is exactly 2x, so skip.
