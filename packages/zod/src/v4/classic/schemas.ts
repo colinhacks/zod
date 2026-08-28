@@ -2860,5 +2860,3 @@ export function preprocess<A, U extends core.SomeType, B = unknown>(
     out: schema as any as core.$ZodType,
   }) as any;
 }
-
-/** Built as closures rather than bound methods; see `installLazyProps`. */

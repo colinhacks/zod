@@ -1108,71 +1108,11 @@ function claim(inst: object, sentinel: string): object | undefined {
   return sentinel in proto ? undefined : proto;
 }
 
-function defineCached(proto: object, key: string, compute: (self: any) => unknown, enumerable?: boolean): void {
-  // `~standard` was never an own data property, so caching it must not add it to `Object.keys`. Everything else here was enumerable and stays so; a key that was not says so explicitly.
-  const cached = enumerable ?? key !== "~standard";
-  Object.defineProperty(proto, key, {
-    configurable: true,
-    get(this: any) {
-      // Shadowed before computing, so a re-entrant read from a self-referential shape resolves to undefined instead of running the getter again. A data property rather than an accessor: an own accessor is what puts every later instance into dictionary mode.
-      const desc = { configurable: true, writable: true, enumerable: cached, value: undefined as unknown };
-      Object.defineProperty(this, key, desc);
-      // a compute that throws leaves the shadow behind, so later reads answer undefined instead of re-throwing; `defineLazy` did the same, and `defineLazyInternal`'s delete-on-catch would cost bytes in every bundle for a case only a throwing user getter reaches
-      desc.value = compute(this);
-      Object.defineProperty(this, key, desc);
-      return desc.value;
-    },
-    set(this: any, value: unknown) {
-      Object.defineProperty(this, key, { configurable: true, writable: true, enumerable: enumerable ?? true, value });
-    },
-  });
-}
-
-/** Methods of `T` reshaped so each body has `this: T`. */
-export type LazyMethodsOf<T> = Partial<{
-  [K in keyof T]: T[K] extends (...args: infer A) => infer R ? (this: T, ...args: A) => R : never;
-}>;
-
-/**
- * A trait's members, as `$constructor` takes them. Each entry is a factory that builds the member for one instance on first read, except a getter, which installs as written and stays live.
- *
- * A method's signature is erased to its call form, so an overloaded or generic one is written once against its constraint.
- */
-export type LazyPropsOf<T> = {
-  [K in keyof T]?:
-    | (T[K] extends (...args: infer A) => infer R ? (inst: T) => (...args: A) => R : ((inst: T) => T[K]) | T[K])
-    | undefined;
-} & ThisType<T>;
-
 /** A trait's prototype members: a partial view of its own interface, with `this` typed as the instance. */
 export type ProtoOf<T> = {
   // `infer R` resolves a polymorphic `this` return type to `T`, which a method written here can actually produce
   [K in keyof T]?: (T[K] extends (...args: infer A) => infer R ? (...args: A) => R : T[K]) | undefined;
 } & ThisType<T>;
-
-/**
- * Installs methods that bind to the instance on first access. Superseded by
- * `$constructor`'s `proto` parameter; kept for anyone who called it directly.
- */
-export function installLazyMethods<T extends object>(inst: T, sentinel: string, methods: () => LazyMethodsOf<T>): void {
-  const proto = claim(inst, sentinel);
-  if (!proto) return;
-  const built = methods();
-  for (const key in built) {
-    const fn = built[key]!;
-    defineCached(proto, key, (self) => (fn as AnyFunc).bind(self));
-  }
-}
-
-/** Like `installLazyMethods`, but the factory builds the value instead of binding a shared function. Superseded by `$constructor`'s `proto` parameter. */
-export function installLazyProps<T extends object>(inst: T, sentinel: string, props: () => LazyPropsOf<T>): void {
-  const proto = claim(inst, sentinel);
-  if (!proto) return;
-  const built = props();
-  for (const key in built) {
-    defineCached(proto, key, built[key] as AnyFunc);
-  }
-}
 
 // The internals whose init chain is installing. A second call for the same one is a derived constructor overriding its base, so it must not construct another schema in between or the override is dropped.
 let installing: object | undefined;
@@ -1232,10 +1172,29 @@ export function defineLazyInternal<T extends { _zod: any }>(
   });
 }
 
-/** Single-property variant; the key doubles as the sentinel. */
-export function installLazyProp(inst: object, key: string, make: (self: any) => unknown, enumerable?: boolean): void {
+/**
+ * Installs `key` on `inst`'s prototype, computed by `make` on first read and cached there as an own
+ * data property. One accessor per constructor rather than one per instance, because an own accessor
+ * puts every instance after the first into v8 dictionary mode. The key doubles as the sentinel.
+ */
+export function installLazyProp(inst: object, key: string, make: (self: any) => unknown, enumerable: boolean): void {
   const proto = claim(inst, key);
-  if (proto) defineCached(proto, key, make, enumerable);
+  if (!proto) return;
+  Object.defineProperty(proto, key, {
+    configurable: true,
+    get(this: any) {
+      // Shadowed before computing, so a re-entrant read from a self-referential shape resolves to undefined instead of running the getter again. A data property rather than an accessor: an own accessor is the dictionary-mode transition this exists to avoid.
+      const desc = { configurable: true, writable: true, enumerable, value: undefined as unknown };
+      Object.defineProperty(this, key, desc);
+      // a compute that throws leaves the shadow behind, so later reads answer undefined instead of re-throwing; `defineLazy` did the same, and `defineLazyInternal`'s delete-on-catch would cost bytes in every bundle for a case only a throwing user getter reaches
+      desc.value = make(this);
+      Object.defineProperty(this, key, desc);
+      return desc.value;
+    },
+    set(this: any, value: unknown) {
+      Object.defineProperty(this, key, { configurable: true, writable: true, enumerable, value });
+    },
+  });
 }
 
 /** Marks the thunk `_catch` synthesises for a constant catch value. `Function.length` cannot tell that thunk from a user callback — rest and defaulted parameters both report arity 0 — and a user callback reads `ctx.error`, whose issues only finalize correctly against the caller's per-parse error map. Provenance can say what arity cannot. A plain string key rather than `Symbol.for`, whose call at module scope no bundler can prove pure — the same shape that anchored `urlCanParse` into every build. */
