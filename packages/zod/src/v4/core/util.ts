@@ -1080,7 +1080,16 @@ export function members(proto: object, table: object): void {
 
 /** Shadows a prototype member with an own value, so a getter that builds from the instance runs once. */
 export function own<T>(inst: object, key: string, value: T): T {
-  Object.defineProperty(inst, key, { configurable: true, writable: true, enumerable: true, value });
+  return shadow(inst, key, value, true);
+}
+
+/** Like {@link own}, for a member that was never an own data property and has to stay out of `Object.keys`. */
+export function hide<T>(inst: object, key: string, value: T): T {
+  return shadow(inst, key, value, false);
+}
+
+function shadow<T>(inst: object, key: string, value: T, enumerable: boolean): T {
+  Object.defineProperty(inst, key, { configurable: true, writable: true, enumerable, value });
   return value;
 }
 

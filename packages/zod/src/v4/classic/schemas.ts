@@ -175,7 +175,8 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   },
   {
     proto: {
-      check(...chks) {
+      // `this` is declared on the two members that call each other through it: without that TypeScript gives up on the whole literal's contextual types and every parameter below lands as `any`
+      check(this: ZodType, ...chks) {
         const def = this.def;
         return this.clone(
           util.mergeDefs(def, {
@@ -194,7 +195,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
         return this.check(...chks);
       },
 
-      clone(def, params) {
+      clone(this: ZodType, def, params) {
         return core.clone(this, def, params);
       },
 
@@ -303,16 +304,13 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
 
       // Overrides core's `~standard` to add `jsonSchema`. Must stay a prototype entry: redefining it per instance demotes instances to dictionary mode.
       get "~standard"(): ZodType["~standard"] {
-        const props = {
+        return util.hide(this, "~standard", {
           ...core.standardProps(this),
           jsonSchema: {
             input: createStandardJSONSchemaMethod(this, "input"),
             output: createStandardJSONSchemaMethod(this, "output"),
           },
-        } as ZodType["~standard"];
-        // cached, but not enumerable: it was never an own data property, so it must stay out of `Object.keys`
-        Object.defineProperty(this, "~standard", { configurable: true, writable: true, value: props });
-        return props;
+        } as ZodType["~standard"]);
       },
       set "~standard"(value: ZodType["~standard"]) {
         util.own(this, "~standard", value);
@@ -375,7 +373,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
       get _def(): core.$ZodTypeDef {
         return (this as unknown as ZodType)._zod.def;
       },
-    } satisfies core.util.ProtoOf<ZodType>,
+    },
   }
 );
 
