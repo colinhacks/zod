@@ -118,7 +118,7 @@ export function BlogToc({ sections, labelClassName }: { sections: TocEntry[]; la
                   href={t.url}
                   aria-current={active ? "location" : undefined}
                   onClick={() => setActiveId(id)}
-                  className={`block -ml-px border-l border-transparent py-1.5 ${t.depth === 3 ? "pl-8 text-[0.95em]" : "pl-4"} hover:text-fd-foreground hover:border-[var(--ui-color)] [&_code]:rounded-[5px] [&_code]:bg-fd-muted [&_code]:px-[0.3em] [&_code]:py-[0.1em] [&_code]:text-[0.9em] ${
+                  className={`block -ml-0.5 border-l-2 border-transparent py-1.5 ${t.depth === 3 ? "pl-8 text-[0.95em]" : "pl-4"} hover:text-fd-foreground hover:border-[var(--ui-color)] [&_code]:rounded-[5px] [&_code]:bg-fd-muted [&_code]:px-[0.3em] [&_code]:py-[0.1em] [&_code]:text-[0.9em] ${
                     active ? "text-fd-foreground" : "text-fd-muted-foreground"
                   }`}
                 >
