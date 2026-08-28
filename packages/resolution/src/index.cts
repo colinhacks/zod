@@ -1,3 +1,4 @@
+import * as z9 from "@zod/mini";
 import * as z1 from "zod";
 import z2 from "zod";
 import { z as z3 } from "zod";
@@ -16,6 +17,7 @@ console.log(z5.string().parse("Hello, world!"));
 console.log(z6.string().parse("Hello, world!"));
 console.log(z7.string().parse("Hello, world!"));
 console.log(z8.string().parse("Hello, world!"));
+console.log(z9.string().parse("Hello, world!"));
 
 z4.config(fr());
 const schema = z4.object({

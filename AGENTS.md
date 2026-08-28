@@ -84,11 +84,12 @@ If you touch that machinery, three things bite:
 
 Only do this when the user explicitly asks. Pushing a version bump to `main` triggers `.github/workflows/release.yml`, which publishes to npm + JSR and creates a `v<version>` GitHub release. There is no undo.
 
-Three files must be bumped together — `pnpm check:semver` runs in pre-commit and `prepublishOnly`, and will fail the commit if they disagree:
+Four files must be bumped together — `pnpm check:semver` runs in pre-commit and `prepublishOnly`, and will fail the commit if they disagree:
 
 - `packages/zod/package.json` — `version`
 - `packages/zod/jsr.json` — `version`
 - `packages/zod/src/v4/core/versions.ts` — `major` / `minor` / `patch`
+- `packages/mini/package.json` — `version` (same x.y.z; `@zod/mini` ships in lockstep) and `peerDependencies.zod` (`^x.y.0`, the minor being released — bump it on every minor)
 
 Procedure:
 
@@ -97,12 +98,12 @@ Procedure:
 git checkout main && git pull
 
 # Bump all three files to the new x.y.z, then:
-git add packages/zod/package.json packages/zod/jsr.json packages/zod/src/v4/core/versions.ts
+git add packages/zod/package.json packages/zod/jsr.json packages/zod/src/v4/core/versions.ts packages/mini/package.json
 git commit -m "<x.y.z>"   # commit message is just the version, e.g. "4.4.3"
 git push origin main
 ```
 
-The release workflow only fires on changes under `packages/zod/package.json` or the workflow file itself, so the bump must include `package.json`. Watch the Actions tab to confirm `build_and_publish` succeeds.
+The release workflow only fires on changes under `packages/zod/package.json`, `packages/mini/package.json` or the workflow file itself, so the bump must include `package.json`. It publishes `zod`, then tags and releases it, then publishes `@zod/mini` last. Watch the Actions tab to confirm `build_and_publish` succeeds.
 
 ## Format validators: spec compliance is not the bar
 

@@ -53,6 +53,11 @@
   "bugs": {
     "url": "https://github.com/colinhacks/zod/issues"
   },
+  "support": {
+    "backing": {
+      "npm-funding": true
+    }
+  },
   "peerDependencies": {
     "zod": "^4.5.0"
   },
