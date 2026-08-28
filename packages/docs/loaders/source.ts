@@ -24,3 +24,19 @@ export const blog = loader({
   baseUrl: "/blog",
   source: createMDXSource(blogPosts),
 });
+
+export function formatDate(value: string | Date, style: "short" | "long" = "short"): string {
+  return new Date(value).toLocaleDateString("en-US", {
+    month: style === "long" ? "long" : "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+// reading time from the mdx structured data, at a conservative 220 wpm
+export function readingMinutes(page: any): number {
+  const contents: { content?: string }[] = page.data?.structuredData?.contents ?? [];
+  const words = contents.reduce((n, c) => n + (c.content?.split(/\s+/).length ?? 0), 0);
+  return Math.max(1, Math.round(words / 220));
+}
