@@ -53,17 +53,28 @@ CompiledPlayer.parse({ ... }); // ~2x faster
 On objects, arrays, and unions, this speeds up parsing by a factor of ~3–7. More complex schemas stand to benefit more than simpler ones.
 
 <ThemedImage
+  lightSrc="/blog/compile-speedup-light.svg"
+  darkSrc="/blog/compile-speedup-dark.svg"
+  alt="Time per parse on a shared nanosecond axis, standard parser as a gray bar with the compiled time as a blue bar inside it: an array of 10 objects 439 ns to 69 ns (6.3x), a 20-key object 304 ns to 40 ns (7.6x), an array of 10 strings 245 ns to 33 ns (7.4x), a union of 3 objects 207 ns to 36 ns (5.7x), a 3-element tuple 120 ns to 33 ns (3.7x), a 5-key strict object 114 ns to 34 ns (3.4x), a discriminated union 99 ns to 27 ns (3.7x), a 5-key object 79 ns to 29 ns (2.7x); up to 7.6x faster when compiled"
+  caption={<>Time per parse by schema type, standard parser vs compiled — lower is better (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/compile-matrix.ts">benchmark</a>)</>}
+/>
+
+Below are the Moltar benchmark results comparing Zod (compiled and uncompiled) against the [**Moltar ParseSafe**](https://github.com/moltar/typescript-runtime-type-benchmarks) bench (no unrecognized keys allowed & must return a newly built object).
+
+<ThemedImage
   lightSrc="/blog/moltar-light.svg"
   darkSrc="/blog/moltar-dark.svg"
   alt="Bar chart of operations per second on the moltar benchmark fixture, parseSafe category: typia 46.0M, Zod 4 compiled 40.8M, Zod 4 10.2M, valibot 1.8M, effect 1.8M, Zod 3 1.3M, arktype 156k, yup 149k"
   caption={<>Throughput on the moltar benchmark fixture (parseSafe: returns a new object with unknown keys stripped) — higher is better (<a href="https://github.com/moltar/typescript-runtime-type-benchmarks/pull/2329">benchmark</a>)</>}
 />
 
+And the equivalent results for the Moltar AssertLoose bench (unrecognized keys allowed, simple `boolean` result). Tested against the new `z.isValid(schema, input)` function (detailed later in the post).
+
 <ThemedImage
-  lightSrc="/blog/compile-speedup-light.svg"
-  darkSrc="/blog/compile-speedup-dark.svg"
-  alt="Time per parse on a shared nanosecond axis, standard parser as a gray bar with the compiled time as a blue bar inside it: an array of 10 objects 439 ns to 69 ns (6.3x), a 20-key object 304 ns to 40 ns (7.6x), an array of 10 strings 245 ns to 33 ns (7.4x), a union of 3 objects 207 ns to 36 ns (5.7x), a 3-element tuple 120 ns to 33 ns (3.7x), a 5-key strict object 114 ns to 34 ns (3.4x), a discriminated union 99 ns to 27 ns (3.7x), a 5-key object 79 ns to 29 ns (2.7x); up to 7.6x faster when compiled"
-  caption={<>Time per parse by schema type, standard parser vs compiled — lower is better (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/compile-matrix.ts">benchmark</a>)</>}
+  lightSrc="/blog/moltar-assertLoose-light.svg"
+  darkSrc="/blog/moltar-assertLoose-dark.svg"
+  alt="Bar chart of operations per second on the moltar benchmark fixture, assertLoose category: typia 72.0M, arktype 62.9M, Zod 4 compiled with z.isValid 14.0M, Zod 4 with z.isValid 6.9M, valibot 1.9M, effect 1.8M, Zod 3 1.2M, yup 157k"
+  caption={<>Throughput on the moltar benchmark fixture (assertLoose: returns a boolean, unknown keys allowed) — higher is better (<a href="https://github.com/moltar/typescript-runtime-type-benchmarks/pull/2329">benchmark</a>)</>}
 />
 
 Zod's entire test suite runs twice—once normally and again with auto-compilation enabled globally—to ensure perfect fidelity.
