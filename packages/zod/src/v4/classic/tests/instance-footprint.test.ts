@@ -106,7 +106,7 @@ test("deferred initializers are released after construction", () => {
 });
 
 test("a trait initializer called directly still installs its members", () => {
-  // `$constructor` skips the prototype initializers while constructing from a constructor that has already run them. A direct `init` is not that, so it has to see the guard off.
+  // a direct `init` installs onto the receiver's own prototype, since it is not below the constructor's
   z.string();
 
   const proto = {};
@@ -118,16 +118,27 @@ test("a trait initializer called directly still installs its members", () => {
   expect(Object.prototype.hasOwnProperty.call(proto, "email")).toBe(true);
 });
 
-test("an initializer that throws leaves the install guard off", () => {
-  // A successful one first, so the guard is armed for this constructor when the next throws.
-  z.uuid();
-  expect(() => z.uuid({ version: "v9" as never })).toThrow();
+test("a nested init during a repeat construction still installs its members", () => {
+  // the install used to read a module-level flag the outer construction set, so a nested `init` on an unrelated receiver inherited an answer that was not about it
+  const seen: string[] = [];
 
-  const proto = {};
-  const inst = Object.create(proto) as z.ZodString;
-  z.ZodString.init(inst, { type: "string" });
+  // an assertion signature needs the call target explicitly annotated
+  const Nested: core.$constructor<any> = core.$constructor<any>("Nested", () => {}, {
+    tag() {
+      return "nested";
+    },
+  });
+  const Outer = core.$constructor<any>("Outer", (_inst, def) => {
+    if (!def.nest) return;
+    const plain: any = {};
+    Nested.init(plain, {});
+    seen.push(typeof plain.tag);
+  });
 
-  expect(Object.prototype.hasOwnProperty.call(proto, "email")).toBe(true);
+  new Outer({ nest: false });
+  new Outer({ nest: true });
+
+  expect(seen).toEqual(["function"]);
 });
 
 test("a derived trait's members win over the ones it composes", () => {
