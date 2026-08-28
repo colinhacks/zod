@@ -52,64 +52,62 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
     inst.type = def.type;
   },
   {
-    proto: {
-      // `with` is an alias for `check`: the same function object, not a wrapper.
-      get with(): ZodMiniType["check"] {
-        return this.check;
-      },
-      set with(value: ZodMiniType["check"]) {
-        util.own(this, "with", value);
-      },
+    // `with` is an alias for `check`: the same function object, not a wrapper.
+    get with(): ZodMiniType["check"] {
+      return this.check;
+    },
+    set with(value: ZodMiniType["check"]) {
+      util.own(this, "with", value);
+    },
 
-      parse(data, params) {
-        return parse.parse(this, data, params, { callee: this.parse });
-      },
+    parse(data, params) {
+      return parse.parse(this, data, params, { callee: this.parse });
+    },
 
-      parseAsync(data, params) {
-        return parse.parseAsync(this, data, params, { callee: this.parseAsync });
-      },
+    parseAsync(data, params) {
+      return parse.parseAsync(this, data, params, { callee: this.parseAsync });
+    },
 
-      safeParse(data, params) {
-        return parse.safeParse(this, data, params);
-      },
+    safeParse(data, params) {
+      return parse.safeParse(this, data, params);
+    },
 
-      safeParseAsync(data, params) {
-        return parse.safeParseAsync(this, data, params);
-      },
+    safeParseAsync(data, params) {
+      return parse.safeParseAsync(this, data, params);
+    },
 
-      // `this` is declared on the two members that call each other through it: without that TypeScript gives up on the whole literal's contextual types and every parameter below lands as `any`
-      check(this: ZodMiniType, ...checks) {
-        const def = this.def;
-        return this.clone(
-          {
-            ...def,
-            checks: [
-              ...(def.checks ?? []),
-              ...checks.map((ch) =>
-                typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
-              ),
-            ],
-          },
-          { parent: true }
-        );
-      },
+    // `this` is declared on the two members that call each other through it: without that TypeScript gives up on the whole literal's contextual types and every parameter below lands as `any`
+    check(this: ZodMiniType, ...checks) {
+      const def = this.def;
+      return this.clone(
+        {
+          ...def,
+          checks: [
+            ...(def.checks ?? []),
+            ...checks.map((ch) =>
+              typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
+            ),
+          ],
+        },
+        { parent: true }
+      );
+    },
 
-      clone(this: ZodMiniType, _def, params) {
-        return core.clone(this, _def, params);
-      },
+    clone(this: ZodMiniType, _def, params) {
+      return core.clone(this, _def, params);
+    },
 
-      brand() {
-        return this as any;
-      },
+    brand() {
+      return this as any;
+    },
 
-      register(reg: any, meta: any): any {
-        reg.add(this, meta);
-        return this;
-      },
+    register(reg: any, meta: any): any {
+      reg.add(this, meta);
+      return this;
+    },
 
-      apply(fn: any, ...args: any[]) {
-        return args.length === 0 ? fn(this) : fn(this, ...args);
-      },
+    apply(fn: any, ...args: any[]) {
+      return args.length === 0 ? fn(this) : fn(this, ...args);
     },
   }
 );

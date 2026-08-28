@@ -1079,30 +1079,24 @@ export function members(proto: object, table: object): void {
 }
 
 /** Shadows a prototype member with an own value, so a getter that builds from the instance runs once. */
-export function own<T>(inst: object, key: string, value: T): T {
-  return shadow(inst, key, value, true);
+export function own<T>(inst: object, key: string, value: T, enumerable = true): T {
+  Object.defineProperty(inst, key, { configurable: true, writable: true, enumerable, value });
+  return value;
 }
 
 /** Like {@link own}, for a member that was never an own data property and has to stay out of `Object.keys`. */
 export function hide<T>(inst: object, key: string, value: T): T {
-  return shadow(inst, key, value, false);
-}
-
-function shadow<T>(inst: object, key: string, value: T, enumerable: boolean): T {
-  Object.defineProperty(inst, key, { configurable: true, writable: true, enumerable, value });
-  return value;
+  return own(inst, key, value, false);
 }
 
 function defineBound(proto: object, key: string, fn: AnyFunc): void {
   Object.defineProperty(proto, key, {
     configurable: true,
     get(this: any) {
-      const value = fn.bind(this);
-      Object.defineProperty(this, key, { configurable: true, writable: true, enumerable: true, value });
-      return value;
+      return own(this, key, fn.bind(this));
     },
     set(this: any, value: unknown) {
-      Object.defineProperty(this, key, { configurable: true, writable: true, enumerable: true, value });
+      own(this, key, value);
     },
   });
 }

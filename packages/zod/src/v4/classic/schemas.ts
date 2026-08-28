@@ -174,205 +174,203 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
     return inst;
   },
   {
-    proto: {
-      // `this` is declared on the two members that call each other through it: without that TypeScript gives up on the whole literal's contextual types and every parameter below lands as `any`
-      check(this: ZodType, ...chks) {
-        const def = this.def;
-        return this.clone(
-          util.mergeDefs(def, {
-            checks: [
-              ...(def.checks ?? []),
-              ...chks.map((ch) =>
-                typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
-              ),
-            ],
-          }),
-          { parent: true }
-        );
-      },
+    // `this` is declared on the two members that call each other through it: without that TypeScript gives up on the whole literal's contextual types and every parameter below lands as `any`
+    check(this: ZodType, ...chks) {
+      const def = this.def;
+      return this.clone(
+        util.mergeDefs(def, {
+          checks: [
+            ...(def.checks ?? []),
+            ...chks.map((ch) =>
+              typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
+            ),
+          ],
+        }),
+        { parent: true }
+      );
+    },
 
-      with(...chks) {
-        return this.check(...chks);
-      },
+    with(...chks) {
+      return this.check(...chks);
+    },
 
-      clone(this: ZodType, def, params) {
-        return core.clone(this, def, params);
-      },
+    clone(this: ZodType, def, params) {
+      return core.clone(this, def, params);
+    },
 
-      brand() {
-        return this;
-      },
+    brand() {
+      return this;
+    },
 
-      register(reg, meta) {
-        reg.add(this, meta);
-        return this;
-      },
+    register(reg, meta) {
+      reg.add(this, meta);
+      return this;
+    },
 
-      refine(check, params) {
-        return this.check(refine(check, params));
-      },
+    refine(check, params) {
+      return this.check(refine(check, params));
+    },
 
-      superRefine(refinement, params) {
-        return this.check(superRefine(refinement, params));
-      },
+    superRefine(refinement, params) {
+      return this.check(superRefine(refinement, params));
+    },
 
-      overwrite(fn) {
-        return this.check(checks.overwrite(fn));
-      },
+    overwrite(fn) {
+      return this.check(checks.overwrite(fn));
+    },
 
-      optional() {
-        return optional(this);
-      },
+    optional() {
+      return optional(this);
+    },
 
-      exactOptional() {
-        return exactOptional(this);
-      },
+    exactOptional() {
+      return exactOptional(this);
+    },
 
-      nullable() {
-        return nullable(this);
-      },
+    nullable() {
+      return nullable(this);
+    },
 
-      nullish() {
-        return optional(nullable(this));
-      },
+    nullish() {
+      return optional(nullable(this));
+    },
 
-      nonoptional(params) {
-        return nonoptional(this, params);
-      },
+    nonoptional(params) {
+      return nonoptional(this, params);
+    },
 
-      array() {
-        return array(this);
-      },
+    array() {
+      return array(this);
+    },
 
-      or(arg) {
-        return union([this, arg]);
-      },
+    or(arg) {
+      return union([this, arg]);
+    },
 
-      and(arg) {
-        return intersection(this, arg);
-      },
+    and(arg) {
+      return intersection(this, arg);
+    },
 
-      transform(tx) {
-        return pipe(this, transform(tx));
-      },
+    transform(tx) {
+      return pipe(this, transform(tx));
+    },
 
-      default(d) {
-        return _default(this, d);
-      },
+    default(d) {
+      return _default(this, d);
+    },
 
-      prefault(d) {
-        return prefault(this, d);
-      },
+    prefault(d) {
+      return prefault(this, d);
+    },
 
-      catch(params) {
-        return _catch(this, params);
-      },
+    catch(params) {
+      return _catch(this, params);
+    },
 
-      pipe(target) {
-        return pipe(this, target);
-      },
+    pipe(target) {
+      return pipe(this, target);
+    },
 
-      readonly() {
-        return readonly(this);
-      },
+    readonly() {
+      return readonly(this);
+    },
 
-      describe(description) {
-        const cl = this.clone();
-        core.globalRegistry.add(cl, { description });
-        return cl;
-      },
+    describe(description) {
+      const cl = this.clone();
+      core.globalRegistry.add(cl, { description });
+      return cl;
+    },
 
-      meta(...args: any[]): any {
-        // overloaded: meta() returns the registered metadata, meta(data) returns a clone with `data` registered. The mapped type picks up the second overload, so we accept variadic any-args and return `any` to satisfy both at runtime.
-        if (args.length === 0) return core.globalRegistry.get(this);
-        const cl = this.clone();
-        core.globalRegistry.add(cl, args[0]);
-        return cl;
-      },
+    meta(...args: any[]): any {
+      // overloaded: meta() returns the registered metadata, meta(data) returns a clone with `data` registered. The mapped type picks up the second overload, so we accept variadic any-args and return `any` to satisfy both at runtime.
+      if (args.length === 0) return core.globalRegistry.get(this);
+      const cl = this.clone();
+      core.globalRegistry.add(cl, args[0]);
+      return cl;
+    },
 
-      isOptional() {
-        return this.safeParse(undefined).success;
-      },
+    isOptional() {
+      return this.safeParse(undefined).success;
+    },
 
-      isNullable() {
-        return this.safeParse(null).success;
-      },
+    isNullable() {
+      return this.safeParse(null).success;
+    },
 
-      apply(fn, ...args) {
-        return args.length === 0 ? fn(this) : fn(this, ...args);
-      },
+    apply(fn, ...args) {
+      return args.length === 0 ? fn(this) : fn(this, ...args);
+    },
 
-      // Overrides core's `~standard` to add `jsonSchema`. Must stay a prototype entry: redefining it per instance demotes instances to dictionary mode.
-      get "~standard"(): ZodType["~standard"] {
-        return util.hide(this, "~standard", {
-          ...core.standardProps(this),
-          jsonSchema: {
-            input: createStandardJSONSchemaMethod(this, "input"),
-            output: createStandardJSONSchemaMethod(this, "output"),
-          },
-        } as ZodType["~standard"]);
-      },
-      set "~standard"(value: ZodType["~standard"]) {
-        util.own(this, "~standard", value);
-      },
-      parse: function _parse(data, params) {
-        return parse.parse(this, data, params, { callee: _parse });
-      },
-      parseAsync: async function _parseAsync(data, params) {
-        return await parse.parseAsync(this, data, params, { callee: _parseAsync });
-      },
-      safeParse(data, params) {
-        return parse.safeParse(this, data, params);
-      },
-      async safeParseAsync(data, params) {
-        return parse.safeParseAsync(this, data, params);
-      },
-      // `spa` is an alias: same function object as `safeParseAsync`, as before.
-      get spa(): ZodType["safeParseAsync"] {
-        return this.safeParseAsync;
-      },
-      set spa(value: ZodType["safeParseAsync"]) {
-        util.own(this, "spa", value);
-      },
-      encode: function _encode(data, params) {
-        return parse.encode(this, data, params, { callee: _encode });
-      },
-      decode: function _decode(data, params) {
-        return parse.decode(this, data, params, { callee: _decode });
-      },
-      encodeAsync: async function _encodeAsync(data, params) {
-        return await parse.encodeAsync(this, data, params, { callee: _encodeAsync });
-      },
-      decodeAsync: async function _decodeAsync(data, params) {
-        return await parse.decodeAsync(this, data, params, { callee: _decodeAsync });
-      },
-      safeEncode(data, params) {
-        return parse.safeEncode(this, data, params);
-      },
-      safeDecode(data, params) {
-        return parse.safeDecode(this, data, params);
-      },
-      async safeEncodeAsync(data, params) {
-        return parse.safeEncodeAsync(this, data, params);
-      },
-      async safeDecodeAsync(data, params) {
-        return parse.safeDecodeAsync(this, data, params);
-      },
-      get toJSONSchema(): ZodType["toJSONSchema"] {
-        return util.own(this, "toJSONSchema", createToJSONSchemaMethod(this, {}));
-      },
-      set toJSONSchema(value: ZodType["toJSONSchema"]) {
-        util.own(this, "toJSONSchema", value);
-      },
-      // Reads through to the registry on every access, so it must not cache.
-      get description(): string | undefined {
-        return core.globalRegistry.get(this as unknown as ZodType)?.description;
-      },
+    // Overrides core's `~standard` to add `jsonSchema`. Must stay a prototype entry: redefining it per instance demotes instances to dictionary mode.
+    get "~standard"(): ZodType["~standard"] {
+      return util.hide(this, "~standard", {
+        ...core.standardProps(this),
+        jsonSchema: {
+          input: createStandardJSONSchemaMethod(this, "input"),
+          output: createStandardJSONSchemaMethod(this, "output"),
+        },
+      } as ZodType["~standard"]);
+    },
+    set "~standard"(value: ZodType["~standard"]) {
+      util.own(this, "~standard", value);
+    },
+    parse: function _parse(data, params) {
+      return parse.parse(this, data, params, { callee: _parse });
+    },
+    parseAsync: async function _parseAsync(data, params) {
+      return await parse.parseAsync(this, data, params, { callee: _parseAsync });
+    },
+    safeParse(data, params) {
+      return parse.safeParse(this, data, params);
+    },
+    async safeParseAsync(data, params) {
+      return parse.safeParseAsync(this, data, params);
+    },
+    // `spa` is an alias: same function object as `safeParseAsync`, as before.
+    get spa(): ZodType["safeParseAsync"] {
+      return this.safeParseAsync;
+    },
+    set spa(value: ZodType["safeParseAsync"]) {
+      util.own(this, "spa", value);
+    },
+    encode: function _encode(data, params) {
+      return parse.encode(this, data, params, { callee: _encode });
+    },
+    decode: function _decode(data, params) {
+      return parse.decode(this, data, params, { callee: _decode });
+    },
+    encodeAsync: async function _encodeAsync(data, params) {
+      return await parse.encodeAsync(this, data, params, { callee: _encodeAsync });
+    },
+    decodeAsync: async function _decodeAsync(data, params) {
+      return await parse.decodeAsync(this, data, params, { callee: _decodeAsync });
+    },
+    safeEncode(data, params) {
+      return parse.safeEncode(this, data, params);
+    },
+    safeDecode(data, params) {
+      return parse.safeDecode(this, data, params);
+    },
+    async safeEncodeAsync(data, params) {
+      return parse.safeEncodeAsync(this, data, params);
+    },
+    async safeDecodeAsync(data, params) {
+      return parse.safeDecodeAsync(this, data, params);
+    },
+    get toJSONSchema(): ZodType["toJSONSchema"] {
+      return util.own(this, "toJSONSchema", createToJSONSchemaMethod(this, {}));
+    },
+    set toJSONSchema(value: ZodType["toJSONSchema"]) {
+      util.own(this, "toJSONSchema", value);
+    },
+    // Reads through to the registry on every access, so it must not cache.
+    get description(): string | undefined {
+      return core.globalRegistry.get(this as unknown as ZodType)?.description;
+    },
 
-      // No setter: `schema._def = x` throws, as it did when `_def` was a non-writable own property.
-      get _def(): core.$ZodTypeDef {
-        return (this as unknown as ZodType)._zod.def;
-      },
+    // No setter: `schema._def = x` throws, as it did when `_def` was a non-writable own property.
+    get _def(): core.$ZodTypeDef {
+      return (this as unknown as ZodType)._zod.def;
     },
   }
 );
@@ -419,66 +417,64 @@ export const _ZodString: core.$constructor<_ZodString> = /*@__PURE__*/ core.$con
     inst.maxLength = bag.maximum ?? null;
   },
   {
-    proto: {
-      regex(...args) {
-        return this.check((checks.regex as any)(...args));
-      },
+    regex(...args) {
+      return this.check((checks.regex as any)(...args));
+    },
 
-      includes(...args) {
-        return this.check((checks.includes as any)(...args));
-      },
+    includes(...args) {
+      return this.check((checks.includes as any)(...args));
+    },
 
-      startsWith(...args) {
-        return this.check((checks.startsWith as any)(...args));
-      },
+    startsWith(...args) {
+      return this.check((checks.startsWith as any)(...args));
+    },
 
-      endsWith(...args) {
-        return this.check((checks.endsWith as any)(...args));
-      },
+    endsWith(...args) {
+      return this.check((checks.endsWith as any)(...args));
+    },
 
-      min(...args) {
-        return this.check((checks.minLength as any)(...args));
-      },
+    min(...args) {
+      return this.check((checks.minLength as any)(...args));
+    },
 
-      max(...args) {
-        return this.check((checks.maxLength as any)(...args));
-      },
+    max(...args) {
+      return this.check((checks.maxLength as any)(...args));
+    },
 
-      length(...args) {
-        return this.check((checks.length as any)(...args));
-      },
+    length(...args) {
+      return this.check((checks.length as any)(...args));
+    },
 
-      nonempty(...args) {
-        return this.check((checks.minLength as any)(1, ...args));
-      },
+    nonempty(...args) {
+      return this.check((checks.minLength as any)(1, ...args));
+    },
 
-      lowercase(params) {
-        return this.check(checks.lowercase(params));
-      },
+    lowercase(params) {
+      return this.check(checks.lowercase(params));
+    },
 
-      uppercase(params) {
-        return this.check(checks.uppercase(params));
-      },
+    uppercase(params) {
+      return this.check(checks.uppercase(params));
+    },
 
-      trim() {
-        return this.check(checks.trim());
-      },
+    trim() {
+      return this.check(checks.trim());
+    },
 
-      normalize(...args) {
-        return this.check(checks.normalize(...args));
-      },
+    normalize(...args) {
+      return this.check(checks.normalize(...args));
+    },
 
-      toLowerCase() {
-        return this.check(checks.toLowerCase());
-      },
+    toLowerCase() {
+      return this.check(checks.toLowerCase());
+    },
 
-      toUpperCase() {
-        return this.check(checks.toUpperCase());
-      },
+    toUpperCase() {
+      return this.check(checks.toUpperCase());
+    },
 
-      slugify() {
-        return this.check(checks.slugify());
-      },
+    slugify() {
+      return this.check(checks.slugify());
     },
   }
 );
@@ -567,109 +563,107 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
     _ZodString.init(inst, def);
   },
   {
-    proto: {
-      email(params) {
-        return this.check(core._email(ZodEmail, params));
-      },
+    email(params) {
+      return this.check(core._email(ZodEmail, params));
+    },
 
-      url(params) {
-        return this.check(core._url(ZodURL, params));
-      },
+    url(params) {
+      return this.check(core._url(ZodURL, params));
+    },
 
-      jwt(params) {
-        return this.check(core._jwt(ZodJWT, params));
-      },
+    jwt(params) {
+      return this.check(core._jwt(ZodJWT, params));
+    },
 
-      emoji(params) {
-        return this.check(core._emoji(ZodEmoji, params));
-      },
+    emoji(params) {
+      return this.check(core._emoji(ZodEmoji, params));
+    },
 
-      guid(params) {
-        return this.check(core._guid(ZodGUID, params));
-      },
+    guid(params) {
+      return this.check(core._guid(ZodGUID, params));
+    },
 
-      uuid(params) {
-        return this.check(core._uuid(ZodUUID, params));
-      },
+    uuid(params) {
+      return this.check(core._uuid(ZodUUID, params));
+    },
 
-      uuidv4(params) {
-        return this.check(core._uuidv4(ZodUUID, params));
-      },
+    uuidv4(params) {
+      return this.check(core._uuidv4(ZodUUID, params));
+    },
 
-      uuidv6(params) {
-        return this.check(core._uuidv6(ZodUUID, params));
-      },
+    uuidv6(params) {
+      return this.check(core._uuidv6(ZodUUID, params));
+    },
 
-      uuidv7(params) {
-        return this.check(core._uuidv7(ZodUUID, params));
-      },
+    uuidv7(params) {
+      return this.check(core._uuidv7(ZodUUID, params));
+    },
 
-      nanoid(params) {
-        return this.check(core._nanoid(ZodNanoID, params));
-      },
+    nanoid(params) {
+      return this.check(core._nanoid(ZodNanoID, params));
+    },
 
-      cuid(params) {
-        return this.check(core._cuid(ZodCUID, params));
-      },
+    cuid(params) {
+      return this.check(core._cuid(ZodCUID, params));
+    },
 
-      cuid2(params) {
-        return this.check(core._cuid2(ZodCUID2, params));
-      },
+    cuid2(params) {
+      return this.check(core._cuid2(ZodCUID2, params));
+    },
 
-      ulid(params) {
-        return this.check(core._ulid(ZodULID, params));
-      },
+    ulid(params) {
+      return this.check(core._ulid(ZodULID, params));
+    },
 
-      base64(params) {
-        return this.check(core._base64(ZodBase64, params));
-      },
+    base64(params) {
+      return this.check(core._base64(ZodBase64, params));
+    },
 
-      base64url(params) {
-        return this.check(core._base64url(ZodBase64URL, params));
-      },
+    base64url(params) {
+      return this.check(core._base64url(ZodBase64URL, params));
+    },
 
-      xid(params) {
-        return this.check(core._xid(ZodXID, params));
-      },
+    xid(params) {
+      return this.check(core._xid(ZodXID, params));
+    },
 
-      ksuid(params) {
-        return this.check(core._ksuid(ZodKSUID, params));
-      },
+    ksuid(params) {
+      return this.check(core._ksuid(ZodKSUID, params));
+    },
 
-      ipv4(params) {
-        return this.check(core._ipv4(ZodIPv4, params));
-      },
+    ipv4(params) {
+      return this.check(core._ipv4(ZodIPv4, params));
+    },
 
-      ipv6(params) {
-        return this.check(core._ipv6(ZodIPv6, params));
-      },
+    ipv6(params) {
+      return this.check(core._ipv6(ZodIPv6, params));
+    },
 
-      cidrv4(params) {
-        return this.check(core._cidrv4(ZodCIDRv4, params));
-      },
+    cidrv4(params) {
+      return this.check(core._cidrv4(ZodCIDRv4, params));
+    },
 
-      cidrv6(params) {
-        return this.check(core._cidrv6(ZodCIDRv6, params));
-      },
+    cidrv6(params) {
+      return this.check(core._cidrv6(ZodCIDRv6, params));
+    },
 
-      e164(params) {
-        return this.check(core._e164(ZodE164, params));
-      },
-      datetime(params) {
-        return this.check(core._isoDateTime(ZodISODateTime, params as any));
-      },
+    e164(params) {
+      return this.check(core._e164(ZodE164, params));
+    },
+    datetime(params) {
+      return this.check(core._isoDateTime(ZodISODateTime, params as any));
+    },
 
-      date(params) {
-        return this.check(core._isoDate(ZodISODate, params as any));
-      },
+    date(params) {
+      return this.check(core._isoDate(ZodISODate, params as any));
+    },
 
-      time(params) {
-        return this.check(core._isoTime(ZodISOTime, params as any));
-      },
+    time(params) {
+      return this.check(core._isoTime(ZodISOTime, params as any));
+    },
 
-      duration(params) {
-        return this.check(core._isoDuration(ZodISODuration, params as any));
-      },
+    duration(params) {
+      return this.check(core._isoDuration(ZodISODuration, params as any));
     },
   }
 );
@@ -1205,66 +1199,64 @@ export const ZodNumber: core.$constructor<ZodNumber> = /*@__PURE__*/ core.$const
     inst.format = bag.format ?? null;
   },
   {
-    proto: {
-      gt(value, params) {
-        return this.check(checks.gt(value, params));
-      },
+    gt(value, params) {
+      return this.check(checks.gt(value, params));
+    },
 
-      gte(value, params) {
-        return this.check(checks.gte(value, params));
-      },
+    gte(value, params) {
+      return this.check(checks.gte(value, params));
+    },
 
-      min(value, params) {
-        return this.check(checks.gte(value, params));
-      },
+    min(value, params) {
+      return this.check(checks.gte(value, params));
+    },
 
-      lt(value, params) {
-        return this.check(checks.lt(value, params));
-      },
+    lt(value, params) {
+      return this.check(checks.lt(value, params));
+    },
 
-      lte(value, params) {
-        return this.check(checks.lte(value, params));
-      },
+    lte(value, params) {
+      return this.check(checks.lte(value, params));
+    },
 
-      max(value, params) {
-        return this.check(checks.lte(value, params));
-      },
+    max(value, params) {
+      return this.check(checks.lte(value, params));
+    },
 
-      int(params) {
-        return this.check(int(params));
-      },
+    int(params) {
+      return this.check(int(params));
+    },
 
-      safe(params) {
-        return this.check(int(params));
-      },
+    safe(params) {
+      return this.check(int(params));
+    },
 
-      positive(params) {
-        return this.check(checks.gt(0, params));
-      },
+    positive(params) {
+      return this.check(checks.gt(0, params));
+    },
 
-      nonnegative(params) {
-        return this.check(checks.gte(0, params));
-      },
+    nonnegative(params) {
+      return this.check(checks.gte(0, params));
+    },
 
-      negative(params) {
-        return this.check(checks.lt(0, params));
-      },
+    negative(params) {
+      return this.check(checks.lt(0, params));
+    },
 
-      nonpositive(params) {
-        return this.check(checks.lte(0, params));
-      },
+    nonpositive(params) {
+      return this.check(checks.lte(0, params));
+    },
 
-      multipleOf(value, params) {
-        return this.check(checks.multipleOf(value, params));
-      },
+    multipleOf(value, params) {
+      return this.check(checks.multipleOf(value, params));
+    },
 
-      step(value, params) {
-        return this.check(checks.multipleOf(value, params));
-      },
+    step(value, params) {
+      return this.check(checks.multipleOf(value, params));
+    },
 
-      finite() {
-        return this;
-      },
+    finite() {
+      return this;
     },
   }
 );
@@ -1363,50 +1355,48 @@ export const ZodBigInt: core.$constructor<ZodBigInt> = /*@__PURE__*/ core.$const
     inst.format = bag.format ?? null;
   },
   {
-    proto: {
-      gte(value, params) {
-        return this.check(checks.gte(value, params));
-      },
+    gte(value, params) {
+      return this.check(checks.gte(value, params));
+    },
 
-      min(value, params) {
-        return this.check(checks.gte(value, params));
-      },
+    min(value, params) {
+      return this.check(checks.gte(value, params));
+    },
 
-      gt(value, params) {
-        return this.check(checks.gt(value, params));
-      },
+    gt(value, params) {
+      return this.check(checks.gt(value, params));
+    },
 
-      lt(value, params) {
-        return this.check(checks.lt(value, params));
-      },
+    lt(value, params) {
+      return this.check(checks.lt(value, params));
+    },
 
-      lte(value, params) {
-        return this.check(checks.lte(value, params));
-      },
+    lte(value, params) {
+      return this.check(checks.lte(value, params));
+    },
 
-      max(value, params) {
-        return this.check(checks.lte(value, params));
-      },
+    max(value, params) {
+      return this.check(checks.lte(value, params));
+    },
 
-      positive(params) {
-        return this.check(checks.gt(BigInt(0), params));
-      },
+    positive(params) {
+      return this.check(checks.gt(BigInt(0), params));
+    },
 
-      negative(params) {
-        return this.check(checks.lt(BigInt(0), params));
-      },
+    negative(params) {
+      return this.check(checks.lt(BigInt(0), params));
+    },
 
-      nonpositive(params) {
-        return this.check(checks.lte(BigInt(0), params));
-      },
+    nonpositive(params) {
+      return this.check(checks.lte(BigInt(0), params));
+    },
 
-      nonnegative(params) {
-        return this.check(checks.gte(BigInt(0), params));
-      },
+    nonnegative(params) {
+      return this.check(checks.gte(BigInt(0), params));
+    },
 
-      multipleOf(value, params) {
-        return this.check(checks.multipleOf(value, params));
-      },
+    multipleOf(value, params) {
+      return this.check(checks.multipleOf(value, params));
     },
   }
 );
@@ -1583,26 +1573,24 @@ export const ZodArray: core.$constructor<ZodArray> = /*@__PURE__*/ core.$constru
     inst.element = def.element;
   },
   {
-    proto: {
-      min(n, params) {
-        return this.check(checks.minLength(n, params));
-      },
+    min(n, params) {
+      return this.check(checks.minLength(n, params));
+    },
 
-      nonempty(params) {
-        return this.check(checks.minLength(1, params));
-      },
+    nonempty(params) {
+      return this.check(checks.minLength(1, params));
+    },
 
-      max(n, params) {
-        return this.check(checks.maxLength(n, params));
-      },
+    max(n, params) {
+      return this.check(checks.maxLength(n, params));
+    },
 
-      length(n, params) {
-        return this.check(checks.length(n, params));
-      },
+    length(n, params) {
+      return this.check(checks.length(n, params));
+    },
 
-      unwrap() {
-        return this.element;
-      },
+    unwrap() {
+      return this.element;
     },
   }
 );
@@ -1738,62 +1726,60 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
     });
   },
   {
-    proto: {
-      keyof() {
-        return _enum(Object.keys(this._zod.def.shape));
-      },
+    keyof() {
+      return _enum(Object.keys(this._zod.def.shape));
+    },
 
-      catchall(catchall) {
-        return this.clone({ ...this._zod.def, catchall: catchall as any });
-      },
+    catchall(catchall) {
+      return this.clone({ ...this._zod.def, catchall: catchall as any });
+    },
 
-      passthrough() {
-        return this.clone({ ...this._zod.def, catchall: unknown() });
-      },
+    passthrough() {
+      return this.clone({ ...this._zod.def, catchall: unknown() });
+    },
 
-      loose() {
-        return this.clone({ ...this._zod.def, catchall: unknown() });
-      },
+    loose() {
+      return this.clone({ ...this._zod.def, catchall: unknown() });
+    },
 
-      strict() {
-        return this.clone({ ...this._zod.def, catchall: never() });
-      },
+    strict() {
+      return this.clone({ ...this._zod.def, catchall: never() });
+    },
 
-      strip() {
-        return this.clone({ ...this._zod.def, catchall: undefined });
-      },
+    strip() {
+      return this.clone({ ...this._zod.def, catchall: undefined });
+    },
 
-      extend(incoming) {
-        return util.extend(this, incoming);
-      },
+    extend(incoming) {
+      return util.extend(this, incoming);
+    },
 
-      safeExtend(incoming) {
-        return util.safeExtend(this, incoming);
-      },
+    safeExtend(incoming) {
+      return util.safeExtend(this, incoming);
+    },
 
-      merge(other) {
-        return util.merge(this, other);
-      },
+    merge(other) {
+      return util.merge(this, other);
+    },
 
-      pick(mask) {
-        return util.pick(this, mask);
-      },
+    pick(mask) {
+      return util.pick(this, mask);
+    },
 
-      omit(mask) {
-        return util.omit(this, mask);
-      },
+    omit(mask) {
+      return util.omit(this, mask);
+    },
 
-      partial(...args) {
-        return util.partial(ZodOptional, this, args[0]);
-      },
+    partial(...args) {
+      return util.partial(ZodOptional, this, args[0]);
+    },
 
-      exactPartial(...args) {
-        return util.partial(ZodExactOptional, this, args[0], "exactPartial");
-      },
+    exactPartial(...args) {
+      return util.partial(ZodExactOptional, this, args[0], "exactPartial");
+    },
 
-      required(...args) {
-        return util.required(ZodNonOptional, this, args[0]);
-      },
+    required(...args) {
+      return util.required(ZodNonOptional, this, args[0]);
     },
   }
 );
@@ -1972,23 +1958,21 @@ export const ZodTuple: core.$constructor<ZodTuple> = /*@__PURE__*/ core.$constru
     inst._zod.processJSONSchema = (ctx, json, params) => processors.tupleProcessor(inst, ctx, json, params);
   },
   {
-    proto: {
-      rest(rest) {
-        return this.clone({
-          ...this._zod.def,
-          rest: rest as any as core.$ZodType,
-        }) as any;
-      },
+    rest(rest) {
+      return this.clone({
+        ...this._zod.def,
+        rest: rest as any as core.$ZodType,
+      }) as any;
+    },
 
-      partial() {
-        const def = this._zod.def;
-        // a refinement was authored against the full arity; partialing would run it on a shorter array
-        if (def.checks?.length) throw new Error(".partial() cannot be used on tuple schemas containing refinements");
-        return this.clone({
-          ...def,
-          items: def.items.map((item) => new ZodOptional({ type: "optional", innerType: item })),
-        }) as any;
-      },
+    partial() {
+      const def = this._zod.def;
+      // a refinement was authored against the full arity; partialing would run it on a shorter array
+      if (def.checks?.length) throw new Error(".partial() cannot be used on tuple schemas containing refinements");
+      return this.clone({
+        ...def,
+        items: def.items.map((item) => new ZodOptional({ type: "optional", innerType: item })),
+      }) as any;
     },
   }
 );

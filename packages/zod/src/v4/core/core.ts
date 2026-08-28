@@ -10,10 +10,8 @@ export interface $constructor<T extends ZodTrait, D = T["_zod"]["def"]> {
   init(inst: T, def: D): asserts inst is T;
 }
 
-export interface $constructorParams<T> {
+export interface $constructorParams {
   Parent?: typeof Class;
-  /** This trait's members, installed once on every prototype that composes it. They cannot be declared in the initializer above: that runs per instance, and the prototype is shared. */
-  proto?: ProtoOf<T>;
 }
 
 /** A special constant with type `never` */
@@ -24,9 +22,6 @@ export const NEVER: never = /*@__PURE__*/ Object.freeze({
 /* Shared descriptor for installing `_zod`; defineProperty reads it
  * synchronously, so reusing one object avoids a per-instance allocation. */
 const _zodDesc: PropertyDescriptor = { value: undefined, enumerable: false };
-
-// Set while constructing an instance whose constructor has already run its prototype initializers. They are idempotent, so on every construction after the first they have nothing to do; this is how they find that out without looking.
-let protoReady = false;
 
 // null where suppressing the capture would be unrecoverable: `parse()` puts the frames back with `captureStackTrace`, so without it the throw would lose its stack. also latched to null once `stackTraceLimit` proves unassignable, which a realm can do at any point by hardening Error
 let _E: (ErrorConstructor & { stackTraceLimit?: number }) | null = "captureStackTrace" in Error ? Error : null;
@@ -56,7 +51,9 @@ function newError(Definition: new () => any): any {
 export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T["_zod"]["def"]>(
   name: string,
   initializer: (inst: T, def: D) => void,
-  params?: $constructorParams<T>
+  /** This trait's members, installed once on every prototype that composes it. They cannot be declared in the initializer above: that runs per instance, and the prototype is shared. */
+  proto?: ProtoOf<T>,
+  params?: $constructorParams
 ): $constructor<T, D> {
   // Prototype for this constructor's `_zod` internals. Lazily-derived fields (`values`, `pattern`, `optin`, …) install here once rather than as an accessor on every instance.
   const zodProto: any = {};
@@ -69,7 +66,7 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
   }
   Internals.prototype = zodProto;
 
-  const protoMembers = params?.proto;
+  const protoMembers = proto;
   // One trait's members land on every prototype whose chain composes it, so the answer is per prototype rather than per trait.
   const initialized = protoMembers && new WeakSet<object>();
 
@@ -92,7 +89,7 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
 
     initializer(inst, def);
 
-    if (initialized && !protoReady) {
+    if (initialized) {
       // `super(def)` from a user subclass gives `this` a prototype the subclass owns, and installing there would overwrite whatever the subclass declared. `constr` built the instance, so its prototype is the one below the subclass's that should carry the members. A receiver whose chain never reaches that prototype installs on its own, which for a plain object handed straight to `init` means `Object.prototype` — unchanged from before.
       const own = Object.getPrototypeOf(inst);
       const ctorProto = inst._zod.constr.prototype;
@@ -120,20 +117,9 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
   class Definition extends Parent {}
   Object.defineProperty(Definition, "name", { value: name });
 
-  // The prototype the last complete construction built. Not a boolean: `super(def)` from a subclass gives `this` a prototype of `new.target.prototype`, so a constructor can complete without having built its own.
-  let builtProto: object | undefined;
-
   function _(this: any, def: D) {
     const inst = params?.Parent ? newError(Definition) : this;
-    const proto = Object.getPrototypeOf(inst);
-    protoReady = proto === builtProto;
-    try {
-      init(inst, def);
-    } finally {
-      // Cleared even on throw, so a direct `SomeTrait.init(obj, def)` outside a construction never inherits another constructor's answer.
-      protoReady = false;
-    }
-    builtProto = proto;
+    init(inst, def);
     const deferred = inst._zod.deferred;
     if (deferred) {
       for (const fn of deferred) {

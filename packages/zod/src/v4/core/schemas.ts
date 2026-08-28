@@ -324,13 +324,11 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
   },
   {
     // Wrappers extend this by installing a richer factory over it; reading it eagerly would defeat the laziness.
-    proto: {
-      get "~standard"(): StandardSchemaV1.Props<any, any> {
-        return util.hide(this, "~standard", standardProps(this));
-      },
-      set "~standard"(value: StandardSchemaV1.Props<any, any>) {
-        util.own(this, "~standard", value);
-      },
+    get "~standard"(): StandardSchemaV1.Props<any, any> {
+      return util.hide(this, "~standard", standardProps(this));
+    },
+    set "~standard"(value: StandardSchemaV1.Props<any, any>) {
+      util.own(this, "~standard", value);
     },
   }
 );

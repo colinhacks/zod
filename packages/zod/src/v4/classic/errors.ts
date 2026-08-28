@@ -74,9 +74,14 @@ const initializer = (inst: ZodError, issues: core.$ZodIssue[]) => {
   });
 };
 export const ZodError: core.$constructor<ZodError> = /*@__PURE__*/ core.$constructor("ZodError", initializer);
-export const ZodRealError: core.$constructor<ZodError> = /*@__PURE__*/ core.$constructor("ZodError", initializer, {
-  Parent: Error,
-});
+export const ZodRealError: core.$constructor<ZodError> = /*@__PURE__*/ core.$constructor(
+  "ZodError",
+  initializer,
+  undefined,
+  {
+    Parent: Error,
+  }
+);
 
 /** @deprecated Use `z.core.$ZodFlattenedError` instead. */
 export type ZodFlattenedError<T, U = string> = core.$ZodFlattenedError<T, U>;
