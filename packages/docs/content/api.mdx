@@ -1570,9 +1570,34 @@ type Category = z.infer<typeof Category>;
 // { name: string; subcategories: Category[] }
 ```
 
-<Callout type="warn"> 
-  Though recursive schemas are supported, passing cyclical data into Zod will cause an infinite loop.
-</Callout>
+Cyclical inputs work out of the box with Zod. For bundle size reasons, Zod Mini requires you to register a memoizer explicitly (see code example).
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+const input: any = { name: "root", subcategories: [] };
+input.subcategories.push(input);
+
+const result = Category.parse(input);
+result.subcategories[0] === result; // true
+
+// the output graph mirrors the input graph
+result.subcategories[0].subcategories[0] === result; // true
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+// Zod Mini requires a memoizer, registered before schemas are defined
+z.config({ memoizer: z.memoizer() });
+
+const input: any = { name: "root", subcategories: [] };
+input.subcategories.push(input);
+
+const result = Category.parse(input);
+result.subcategories[0] === result; // true
+```
+</Tab>
+</Tabs>
 
 You can also represent *mutually recursive types*:
 

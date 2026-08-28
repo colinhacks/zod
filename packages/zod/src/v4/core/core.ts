@@ -198,6 +198,8 @@ export interface $ZodConfig {
   localeError?: errors.$ZodErrorMap | undefined;
   /** Disable JIT schema compilation. Useful in environments that disallow `eval`. */
   jitless?: boolean | undefined;
+  /** Enables parsing input that contains reference cycles. Read when a schema is constructed. */
+  memoizer?: schemas.$ZodMemoizer | undefined;
   /**
    * Internal: post-processor invoked on every freshly-constructed schema
    * instance, after init and deferred fns run. Set by `import "zod/compile"`

@@ -12,6 +12,7 @@ export {
   globalRegistry,
   registry,
   config,
+  memoizer,
   $output,
   $input,
   $brand,

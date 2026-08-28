@@ -13,6 +13,7 @@ export {
   type GlobalMeta,
   registry,
   config,
+  memoizer,
   $output,
   $input,
   $brand,

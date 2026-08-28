@@ -14,6 +14,11 @@ function _ensureDefaultLocale(): void {
   if (!core.globalConfig.localeError) core.config(en());
 }
 
+// the default memoizer is read by the core container init, which runs before `ZodType.init`, so each container calls this first
+function _ensureDefaultMemoizer(): void {
+  if (!core.globalConfig.memoizer) core.config({ memoizer: core.memoizer() });
+}
+
 // Methods live on each concrete constructor's prototype and materialize per instance on first access, so a schema only pays for what it is asked for.
 
 ///////////////////////////////////////////
@@ -1474,7 +1479,7 @@ export interface ZodArray<T extends core.SomeType = core.$ZodType>
 export const ZodArray: core.$constructor<ZodArray> = /*@__PURE__*/ core.$constructor<ZodArray>(
   "ZodArray",
   (inst, def) => {
-    core.attachMemoizer(inst);
+    _ensureDefaultMemoizer();
     core.$ZodArray.init(inst, def);
     ZodType.init(inst, def);
     inst._zod.processJSONSchema = (ctx, json, params) => processors.arrayProcessor(inst, ctx, json, params);
@@ -1621,7 +1626,7 @@ export interface ZodObject<
 export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$constructor<ZodObject>(
   "ZodObject",
   (inst, def) => {
-    core.attachMemoizer(inst);
+    _ensureDefaultMemoizer();
     core.$ZodObjectJIT.init(inst, def);
     ZodType.init(inst, def);
     inst._zod.processJSONSchema = (ctx, json, params) => processors.objectProcessor(inst, ctx, json, params);
@@ -1842,7 +1847,7 @@ export interface ZodTuple<
 export const ZodTuple: core.$constructor<ZodTuple> = /*@__PURE__*/ core.$constructor<ZodTuple>(
   "ZodTuple",
   (inst, def) => {
-    core.attachMemoizer(inst);
+    _ensureDefaultMemoizer();
     core.$ZodTuple.init(inst, def);
     ZodType.init(inst, def);
     inst._zod.processJSONSchema = (ctx, json, params) => processors.tupleProcessor(inst, ctx, json, params);
@@ -1903,7 +1908,7 @@ export interface ZodRecord<
   valueType: Value;
 }
 export const ZodRecord: core.$constructor<ZodRecord> = /*@__PURE__*/ core.$constructor("ZodRecord", (inst, def) => {
-  core.attachMemoizer(inst);
+  _ensureDefaultMemoizer();
   core.$ZodRecord.init(inst, def);
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.recordProcessor(inst, ctx, json, params);
@@ -1975,7 +1980,7 @@ export interface ZodMap<Key extends core.SomeType = core.$ZodType, Value extends
   size(size: number, params?: string | core.$ZodCheckSizeEqualsParams): this;
 }
 export const ZodMap: core.$constructor<ZodMap> = /*@__PURE__*/ core.$constructor("ZodMap", (inst, def) => {
-  core.attachMemoizer(inst);
+  _ensureDefaultMemoizer();
   core.$ZodMap.init(inst, def);
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.mapProcessor(inst, ctx, json, params);
@@ -2011,7 +2016,7 @@ export interface ZodSet<T extends core.SomeType = core.$ZodType>
   size(size: number, params?: string | core.$ZodCheckSizeEqualsParams): this;
 }
 export const ZodSet: core.$constructor<ZodSet> = /*@__PURE__*/ core.$constructor("ZodSet", (inst, def) => {
-  core.attachMemoizer(inst);
+  _ensureDefaultMemoizer();
   core.$ZodSet.init(inst, def);
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json, params) => processors.setProcessor(inst, ctx, json, params);
@@ -2194,6 +2199,7 @@ export interface ZodTransform<O = unknown, I = unknown>
 export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.$constructor(
   "ZodTransform",
   (inst, def) => {
+    _ensureDefaultMemoizer();
     core.$ZodTransform.init(inst, def);
     ZodType.init(inst, def);
     inst._zod.processJSONSchema = (ctx, json, params) => processors.transformProcessor(inst, ctx, json, params);
@@ -2202,9 +2208,6 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
       if (_ctx.direction === "backward") {
         throw new core.$ZodEncodeError(inst.constructor.name);
       }
-
-      // The value is a placeholder a back-edge is still waiting on, so the cycle closes through this transform. Its output can't exist in time to bind.
-      if (core.isBackEdge(_ctx, payload.value)) throw new core.$ZodCyclicError();
 
       (payload as core.$RefinementCtx).addIssue = (issue) => {
         if (typeof issue === "string") {
