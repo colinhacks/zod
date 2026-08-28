@@ -1105,7 +1105,7 @@ function claim(inst: object, sentinel: string): object | undefined {
   return sentinel in proto ? undefined : proto;
 }
 
-function defineCached(proto: object, key: string, compute: (inst: any) => unknown): void {
+function defineCached(proto: object, key: string, compute: (self: any) => unknown): void {
   // `~standard` was never an own data property, so caching it must not add it to `Object.keys`. Everything else here was enumerable and stays so.
   const enumerable = key !== "~standard";
   Object.defineProperty(proto, key, {
@@ -1153,7 +1153,7 @@ export function installLazyMethods<T extends object>(inst: T, sentinel: string, 
   const built = methods();
   for (const key in built) {
     const fn = built[key]!;
-    defineCached(proto, key, (inst) => (fn as AnyFunc).bind(inst));
+    defineCached(proto, key, (self) => (fn as AnyFunc).bind(self));
   }
 }
 
