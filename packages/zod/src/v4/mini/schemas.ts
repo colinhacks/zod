@@ -54,29 +54,29 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
   {
     proto: {
       // `with` is an alias for `check`: the same function object, not a wrapper.
-      with: (self) => self.check,
+      with: (inst) => inst.check,
 
-      parse: (self) => (data, params) => {
-        return parse.parse(self, data, params, { callee: self.parse });
+      parse: (inst) => (data, params) => {
+        return parse.parse(inst, data, params, { callee: inst.parse });
       },
 
-      parseAsync: (self) => (data, params) => {
-        return parse.parseAsync(self, data, params, { callee: self.parseAsync });
+      parseAsync: (inst) => (data, params) => {
+        return parse.parseAsync(inst, data, params, { callee: inst.parseAsync });
       },
 
-      safeParse: (self) => (data, params) => {
-        return parse.safeParse(self, data, params);
+      safeParse: (inst) => (data, params) => {
+        return parse.safeParse(inst, data, params);
       },
 
-      safeParseAsync: (self) => (data, params) => {
-        return parse.safeParseAsync(self, data, params);
+      safeParseAsync: (inst) => (data, params) => {
+        return parse.safeParseAsync(inst, data, params);
       },
 
       check:
-        (self) =>
+        (inst) =>
         (...checks) => {
-          const def = self.def;
-          return self.clone(
+          const def = inst.def;
+          return inst.clone(
             {
               ...def,
               checks: [
@@ -90,23 +90,23 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
           );
         },
 
-      clone: (self) => (_def, params) => {
-        return core.clone(self, _def, params);
+      clone: (inst) => (_def, params) => {
+        return core.clone(inst, _def, params);
       },
 
-      brand: (self) => () => {
-        return self as any;
+      brand: (inst) => () => {
+        return inst as any;
       },
 
-      register: ((self: ZodMiniType) => (reg: any, meta: any) => {
-        reg.add(self, meta);
-        return self;
+      register: ((inst: ZodMiniType) => (reg: any, meta: any) => {
+        reg.add(inst, meta);
+        return inst;
       }) as any,
 
       apply:
-        (self) =>
+        (inst) =>
         (fn: any, ...args: any[]) => {
-          return args.length === 0 ? fn(self) : fn(self, ...args);
+          return args.length === 0 ? fn(inst) : fn(inst, ...args);
         },
     },
   }

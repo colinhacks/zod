@@ -1064,7 +1064,7 @@ export abstract class Class {
 // Members live on the prototype and materialize per instance on first read, which keeps own-property count under the step where V8 stops using inline slots. Changing anything here means re-measuring runtime, memory and bundle size together — see "The three axes" in AGENTS.md.
 
 /**
- * Installs a trait's members on its prototype. Each value builds that member for one instance on first read; the built value shadows the accessor as an own property, so a detached `const { parse } = schema` keeps working.
+ * Installs a trait's members on its prototype. Each value builds that member for the instance on first read; the built value shadows the accessor as an own property, so a detached `const { parse } = schema` keeps working.
  *
  * Call this from a `proto` initializer, which runs once per prototype — never per instance.
  */
@@ -1084,7 +1084,7 @@ function claim(inst: object, sentinel: string): object | undefined {
   return sentinel in proto ? undefined : proto;
 }
 
-function defineCached(proto: object, key: string, compute: (self: any) => unknown): void {
+function defineCached(proto: object, key: string, compute: (inst: any) => unknown): void {
   // `~standard` was never an own data property, so caching it must not add it to `Object.keys`. Everything else here was enumerable and stays so.
   const enumerable = key !== "~standard";
   Object.defineProperty(proto, key, {
@@ -1112,7 +1112,7 @@ export type LazyMethodsOf<T> = Partial<{
  */
 export type LazyPropsOf<T> = {
   [K in keyof T]?:
-    | (T[K] extends (...args: infer A) => infer R ? (self: T) => (...args: A) => R : ((self: T) => T[K]) | T[K])
+    | (T[K] extends (...args: infer A) => infer R ? (inst: T) => (...args: A) => R : ((inst: T) => T[K]) | T[K])
     | undefined;
 } & ThisType<T>;
 
@@ -1127,7 +1127,7 @@ export function installLazyMethods<T extends object>(inst: T, sentinel: string, 
   const built = methods();
   for (const key in built) {
     const fn = built[key]!;
-    defineCached(proto, key, (self) => (fn as AnyFunc).bind(self));
+    defineCached(proto, key, (inst) => (fn as AnyFunc).bind(inst));
   }
 }
 

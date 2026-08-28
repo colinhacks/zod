@@ -176,10 +176,10 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   {
     proto: {
       check:
-        (self) =>
+        (inst) =>
         (...chks) => {
-          const def = self.def;
-          return self.clone(
+          const def = inst.def;
+          return inst.clone(
             util.mergeDefs(def, {
               checks: [
                 ...(def.checks ?? []),
@@ -193,167 +193,167 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
         },
 
       with:
-        (self) =>
+        (inst) =>
         (...chks) => {
-          return self.check(...chks);
+          return inst.check(...chks);
         },
 
-      clone: (self) => (def, params) => {
-        return core.clone(self, def, params);
+      clone: (inst) => (def, params) => {
+        return core.clone(inst, def, params);
       },
 
-      brand: (self) => () => {
-        return self;
+      brand: (inst) => () => {
+        return inst;
       },
 
-      register: (self) => (reg, meta) => {
-        reg.add(self, meta);
-        return self;
+      register: (inst) => (reg, meta) => {
+        reg.add(inst, meta);
+        return inst;
       },
 
-      refine: (self) => (check, params) => {
-        return self.check(refine(check, params));
+      refine: (inst) => (check, params) => {
+        return inst.check(refine(check, params));
       },
 
-      superRefine: (self) => (refinement, params) => {
-        return self.check(superRefine(refinement, params));
+      superRefine: (inst) => (refinement, params) => {
+        return inst.check(superRefine(refinement, params));
       },
 
-      overwrite: (self) => (fn) => {
-        return self.check(checks.overwrite(fn));
+      overwrite: (inst) => (fn) => {
+        return inst.check(checks.overwrite(fn));
       },
 
-      optional: (self) => () => {
-        return optional(self);
+      optional: (inst) => () => {
+        return optional(inst);
       },
 
-      exactOptional: (self) => () => {
-        return exactOptional(self);
+      exactOptional: (inst) => () => {
+        return exactOptional(inst);
       },
 
-      nullable: (self) => () => {
-        return nullable(self);
+      nullable: (inst) => () => {
+        return nullable(inst);
       },
 
-      nullish: (self) => () => {
-        return optional(nullable(self));
+      nullish: (inst) => () => {
+        return optional(nullable(inst));
       },
 
-      nonoptional: (self) => (params) => {
-        return nonoptional(self, params);
+      nonoptional: (inst) => (params) => {
+        return nonoptional(inst, params);
       },
 
-      array: (self) => () => {
-        return array(self);
+      array: (inst) => () => {
+        return array(inst);
       },
 
-      or: (self) => (arg) => {
-        return union([self, arg]);
+      or: (inst) => (arg) => {
+        return union([inst, arg]);
       },
 
-      and: (self) => (arg) => {
-        return intersection(self, arg);
+      and: (inst) => (arg) => {
+        return intersection(inst, arg);
       },
 
-      transform: (self) => (tx) => {
-        return pipe(self, transform(tx));
+      transform: (inst) => (tx) => {
+        return pipe(inst, transform(tx));
       },
 
-      default: (self) => (d) => {
-        return _default(self, d);
+      default: (inst) => (d) => {
+        return _default(inst, d);
       },
 
-      prefault: (self) => (d) => {
-        return prefault(self, d);
+      prefault: (inst) => (d) => {
+        return prefault(inst, d);
       },
 
-      catch: (self) => (params) => {
-        return _catch(self, params);
+      catch: (inst) => (params) => {
+        return _catch(inst, params);
       },
 
-      pipe: (self) => (target) => {
-        return pipe(self, target);
+      pipe: (inst) => (target) => {
+        return pipe(inst, target);
       },
 
-      readonly: (self) => () => {
-        return readonly(self);
+      readonly: (inst) => () => {
+        return readonly(inst);
       },
 
-      describe: (self) => (description) => {
-        const cl = self.clone();
+      describe: (inst) => (description) => {
+        const cl = inst.clone();
         core.globalRegistry.add(cl, { description });
         return cl;
       },
 
       meta:
-        (self) =>
+        (inst) =>
         (...args: any[]): any => {
           // overloaded: meta() returns the registered metadata, meta(data) returns a clone with `data` registered. The mapped type picks up the second overload, so we accept variadic any-args and return `any` to satisfy both at runtime.
-          if (args.length === 0) return core.globalRegistry.get(self);
-          const cl = self.clone();
+          if (args.length === 0) return core.globalRegistry.get(inst);
+          const cl = inst.clone();
           core.globalRegistry.add(cl, args[0]);
           return cl;
         },
 
-      isOptional: (self) => () => {
-        return self.safeParse(undefined).success;
+      isOptional: (inst) => () => {
+        return inst.safeParse(undefined).success;
       },
 
-      isNullable: (self) => () => {
-        return self.safeParse(null).success;
+      isNullable: (inst) => () => {
+        return inst.safeParse(null).success;
       },
 
       apply:
-        (self) =>
+        (inst) =>
         (fn, ...args) => {
-          return args.length === 0 ? fn(self) : fn(self, ...args);
+          return args.length === 0 ? fn(inst) : fn(inst, ...args);
         },
 
       // Overrides core's `~standard` to add `jsonSchema`. Must stay a prototype entry: redefining it per instance demotes instances to dictionary mode.
-      "~standard": (self) =>
+      "~standard": (inst) =>
         ({
-          ...core.standardProps(self),
+          ...core.standardProps(inst),
           jsonSchema: {
-            input: createStandardJSONSchemaMethod(self, "input"),
-            output: createStandardJSONSchemaMethod(self, "output"),
+            input: createStandardJSONSchemaMethod(inst, "input"),
+            output: createStandardJSONSchemaMethod(inst, "output"),
           },
         }) as ZodType["~standard"],
-      parse: (self) => {
-        const fn: ZodType["parse"] = (data, params) => parse.parse(self, data, params, { callee: fn });
+      parse: (inst) => {
+        const fn: ZodType["parse"] = (data, params) => parse.parse(inst, data, params, { callee: fn });
         return fn;
       },
-      parseAsync: (self) => {
+      parseAsync: (inst) => {
         const fn: ZodType["parseAsync"] = async (data, params) =>
-          await parse.parseAsync(self, data, params, { callee: fn });
+          await parse.parseAsync(inst, data, params, { callee: fn });
         return fn;
       },
-      safeParse: (self) => (data, params) => parse.safeParse(self, data, params),
-      safeParseAsync: (self) => async (data, params) => parse.safeParseAsync(self, data, params),
+      safeParse: (inst) => (data, params) => parse.safeParse(inst, data, params),
+      safeParseAsync: (inst) => async (data, params) => parse.safeParseAsync(inst, data, params),
       // `spa` is an alias: same function object as `safeParseAsync`, as before.
-      spa: (self) => self.safeParseAsync,
-      encode: (self) => {
-        const fn: ZodType["encode"] = (data, params) => parse.encode(self, data, params, { callee: fn });
+      spa: (inst) => inst.safeParseAsync,
+      encode: (inst) => {
+        const fn: ZodType["encode"] = (data, params) => parse.encode(inst, data, params, { callee: fn });
         return fn;
       },
-      decode: (self) => {
-        const fn: ZodType["decode"] = (data, params) => parse.decode(self, data, params, { callee: fn });
+      decode: (inst) => {
+        const fn: ZodType["decode"] = (data, params) => parse.decode(inst, data, params, { callee: fn });
         return fn;
       },
-      encodeAsync: (self) => {
+      encodeAsync: (inst) => {
         const fn: ZodType["encodeAsync"] = async (data, params) =>
-          await parse.encodeAsync(self, data, params, { callee: fn });
+          await parse.encodeAsync(inst, data, params, { callee: fn });
         return fn;
       },
-      decodeAsync: (self) => {
+      decodeAsync: (inst) => {
         const fn: ZodType["decodeAsync"] = async (data, params) =>
-          await parse.decodeAsync(self, data, params, { callee: fn });
+          await parse.decodeAsync(inst, data, params, { callee: fn });
         return fn;
       },
-      safeEncode: (self) => (data, params) => parse.safeEncode(self, data, params),
-      safeDecode: (self) => (data, params) => parse.safeDecode(self, data, params),
-      safeEncodeAsync: (self) => async (data, params) => parse.safeEncodeAsync(self, data, params),
-      safeDecodeAsync: (self) => async (data, params) => parse.safeDecodeAsync(self, data, params),
-      toJSONSchema: (self) => createToJSONSchemaMethod(self, {}),
+      safeEncode: (inst) => (data, params) => parse.safeEncode(inst, data, params),
+      safeDecode: (inst) => (data, params) => parse.safeDecode(inst, data, params),
+      safeEncodeAsync: (inst) => async (data, params) => parse.safeEncodeAsync(inst, data, params),
+      safeDecodeAsync: (inst) => async (data, params) => parse.safeDecodeAsync(inst, data, params),
+      toJSONSchema: (inst) => createToJSONSchemaMethod(inst, {}),
       // Reads through to the registry on every access, so it must not cache.
       get description(): string | undefined {
         return core.globalRegistry.get(this as unknown as ZodType)?.description;
@@ -411,81 +411,81 @@ export const _ZodString: core.$constructor<_ZodString> = /*@__PURE__*/ core.$con
   {
     proto: {
       regex:
-        (self) =>
+        (inst) =>
         (...args) => {
-          return self.check((checks.regex as any)(...args));
+          return inst.check((checks.regex as any)(...args));
         },
 
       includes:
-        (self) =>
+        (inst) =>
         (...args) => {
-          return self.check((checks.includes as any)(...args));
+          return inst.check((checks.includes as any)(...args));
         },
 
       startsWith:
-        (self) =>
+        (inst) =>
         (...args) => {
-          return self.check((checks.startsWith as any)(...args));
+          return inst.check((checks.startsWith as any)(...args));
         },
 
       endsWith:
-        (self) =>
+        (inst) =>
         (...args) => {
-          return self.check((checks.endsWith as any)(...args));
+          return inst.check((checks.endsWith as any)(...args));
         },
 
       min:
-        (self) =>
+        (inst) =>
         (...args) => {
-          return self.check((checks.minLength as any)(...args));
+          return inst.check((checks.minLength as any)(...args));
         },
 
       max:
-        (self) =>
+        (inst) =>
         (...args) => {
-          return self.check((checks.maxLength as any)(...args));
+          return inst.check((checks.maxLength as any)(...args));
         },
 
       length:
-        (self) =>
+        (inst) =>
         (...args) => {
-          return self.check((checks.length as any)(...args));
+          return inst.check((checks.length as any)(...args));
         },
 
       nonempty:
-        (self) =>
+        (inst) =>
         (...args) => {
-          return self.check((checks.minLength as any)(1, ...args));
+          return inst.check((checks.minLength as any)(1, ...args));
         },
 
-      lowercase: (self) => (params) => {
-        return self.check(checks.lowercase(params));
+      lowercase: (inst) => (params) => {
+        return inst.check(checks.lowercase(params));
       },
 
-      uppercase: (self) => (params) => {
-        return self.check(checks.uppercase(params));
+      uppercase: (inst) => (params) => {
+        return inst.check(checks.uppercase(params));
       },
 
-      trim: (self) => () => {
-        return self.check(checks.trim());
+      trim: (inst) => () => {
+        return inst.check(checks.trim());
       },
 
       normalize:
-        (self) =>
+        (inst) =>
         (...args) => {
-          return self.check(checks.normalize(...args));
+          return inst.check(checks.normalize(...args));
         },
 
-      toLowerCase: (self) => () => {
-        return self.check(checks.toLowerCase());
+      toLowerCase: (inst) => () => {
+        return inst.check(checks.toLowerCase());
       },
 
-      toUpperCase: (self) => () => {
-        return self.check(checks.toUpperCase());
+      toUpperCase: (inst) => () => {
+        return inst.check(checks.toUpperCase());
       },
 
-      slugify: (self) => () => {
-        return self.check(checks.slugify());
+      slugify: (inst) => () => {
+        return inst.check(checks.slugify());
       },
     },
   }
@@ -576,107 +576,107 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
   },
   {
     proto: {
-      email: (self) => (params) => {
-        return self.check(core._email(ZodEmail, params));
+      email: (inst) => (params) => {
+        return inst.check(core._email(ZodEmail, params));
       },
 
-      url: (self) => (params) => {
-        return self.check(core._url(ZodURL, params));
+      url: (inst) => (params) => {
+        return inst.check(core._url(ZodURL, params));
       },
 
-      jwt: (self) => (params) => {
-        return self.check(core._jwt(ZodJWT, params));
+      jwt: (inst) => (params) => {
+        return inst.check(core._jwt(ZodJWT, params));
       },
 
-      emoji: (self) => (params) => {
-        return self.check(core._emoji(ZodEmoji, params));
+      emoji: (inst) => (params) => {
+        return inst.check(core._emoji(ZodEmoji, params));
       },
 
-      guid: (self) => (params) => {
-        return self.check(core._guid(ZodGUID, params));
+      guid: (inst) => (params) => {
+        return inst.check(core._guid(ZodGUID, params));
       },
 
-      uuid: (self) => (params) => {
-        return self.check(core._uuid(ZodUUID, params));
+      uuid: (inst) => (params) => {
+        return inst.check(core._uuid(ZodUUID, params));
       },
 
-      uuidv4: (self) => (params) => {
-        return self.check(core._uuidv4(ZodUUID, params));
+      uuidv4: (inst) => (params) => {
+        return inst.check(core._uuidv4(ZodUUID, params));
       },
 
-      uuidv6: (self) => (params) => {
-        return self.check(core._uuidv6(ZodUUID, params));
+      uuidv6: (inst) => (params) => {
+        return inst.check(core._uuidv6(ZodUUID, params));
       },
 
-      uuidv7: (self) => (params) => {
-        return self.check(core._uuidv7(ZodUUID, params));
+      uuidv7: (inst) => (params) => {
+        return inst.check(core._uuidv7(ZodUUID, params));
       },
 
-      nanoid: (self) => (params) => {
-        return self.check(core._nanoid(ZodNanoID, params));
+      nanoid: (inst) => (params) => {
+        return inst.check(core._nanoid(ZodNanoID, params));
       },
 
-      cuid: (self) => (params) => {
-        return self.check(core._cuid(ZodCUID, params));
+      cuid: (inst) => (params) => {
+        return inst.check(core._cuid(ZodCUID, params));
       },
 
-      cuid2: (self) => (params) => {
-        return self.check(core._cuid2(ZodCUID2, params));
+      cuid2: (inst) => (params) => {
+        return inst.check(core._cuid2(ZodCUID2, params));
       },
 
-      ulid: (self) => (params) => {
-        return self.check(core._ulid(ZodULID, params));
+      ulid: (inst) => (params) => {
+        return inst.check(core._ulid(ZodULID, params));
       },
 
-      base64: (self) => (params) => {
-        return self.check(core._base64(ZodBase64, params));
+      base64: (inst) => (params) => {
+        return inst.check(core._base64(ZodBase64, params));
       },
 
-      base64url: (self) => (params) => {
-        return self.check(core._base64url(ZodBase64URL, params));
+      base64url: (inst) => (params) => {
+        return inst.check(core._base64url(ZodBase64URL, params));
       },
 
-      xid: (self) => (params) => {
-        return self.check(core._xid(ZodXID, params));
+      xid: (inst) => (params) => {
+        return inst.check(core._xid(ZodXID, params));
       },
 
-      ksuid: (self) => (params) => {
-        return self.check(core._ksuid(ZodKSUID, params));
+      ksuid: (inst) => (params) => {
+        return inst.check(core._ksuid(ZodKSUID, params));
       },
 
-      ipv4: (self) => (params) => {
-        return self.check(core._ipv4(ZodIPv4, params));
+      ipv4: (inst) => (params) => {
+        return inst.check(core._ipv4(ZodIPv4, params));
       },
 
-      ipv6: (self) => (params) => {
-        return self.check(core._ipv6(ZodIPv6, params));
+      ipv6: (inst) => (params) => {
+        return inst.check(core._ipv6(ZodIPv6, params));
       },
 
-      cidrv4: (self) => (params) => {
-        return self.check(core._cidrv4(ZodCIDRv4, params));
+      cidrv4: (inst) => (params) => {
+        return inst.check(core._cidrv4(ZodCIDRv4, params));
       },
 
-      cidrv6: (self) => (params) => {
-        return self.check(core._cidrv6(ZodCIDRv6, params));
+      cidrv6: (inst) => (params) => {
+        return inst.check(core._cidrv6(ZodCIDRv6, params));
       },
 
-      e164: (self) => (params) => {
-        return self.check(core._e164(ZodE164, params));
+      e164: (inst) => (params) => {
+        return inst.check(core._e164(ZodE164, params));
       },
-      datetime: (self) => (params) => {
-        return self.check(core._isoDateTime(ZodISODateTime, params as any));
-      },
-
-      date: (self) => (params) => {
-        return self.check(core._isoDate(ZodISODate, params as any));
+      datetime: (inst) => (params) => {
+        return inst.check(core._isoDateTime(ZodISODateTime, params as any));
       },
 
-      time: (self) => (params) => {
-        return self.check(core._isoTime(ZodISOTime, params as any));
+      date: (inst) => (params) => {
+        return inst.check(core._isoDate(ZodISODate, params as any));
       },
 
-      duration: (self) => (params) => {
-        return self.check(core._isoDuration(ZodISODuration, params as any));
+      time: (inst) => (params) => {
+        return inst.check(core._isoTime(ZodISOTime, params as any));
+      },
+
+      duration: (inst) => (params) => {
+        return inst.check(core._isoDuration(ZodISODuration, params as any));
       },
     },
   }
@@ -1214,64 +1214,64 @@ export const ZodNumber: core.$constructor<ZodNumber> = /*@__PURE__*/ core.$const
   },
   {
     proto: {
-      gt: (self) => (value, params) => {
-        return self.check(checks.gt(value, params));
+      gt: (inst) => (value, params) => {
+        return inst.check(checks.gt(value, params));
       },
 
-      gte: (self) => (value, params) => {
-        return self.check(checks.gte(value, params));
+      gte: (inst) => (value, params) => {
+        return inst.check(checks.gte(value, params));
       },
 
-      min: (self) => (value, params) => {
-        return self.check(checks.gte(value, params));
+      min: (inst) => (value, params) => {
+        return inst.check(checks.gte(value, params));
       },
 
-      lt: (self) => (value, params) => {
-        return self.check(checks.lt(value, params));
+      lt: (inst) => (value, params) => {
+        return inst.check(checks.lt(value, params));
       },
 
-      lte: (self) => (value, params) => {
-        return self.check(checks.lte(value, params));
+      lte: (inst) => (value, params) => {
+        return inst.check(checks.lte(value, params));
       },
 
-      max: (self) => (value, params) => {
-        return self.check(checks.lte(value, params));
+      max: (inst) => (value, params) => {
+        return inst.check(checks.lte(value, params));
       },
 
-      int: (self) => (params) => {
-        return self.check(int(params));
+      int: (inst) => (params) => {
+        return inst.check(int(params));
       },
 
-      safe: (self) => (params) => {
-        return self.check(int(params));
+      safe: (inst) => (params) => {
+        return inst.check(int(params));
       },
 
-      positive: (self) => (params) => {
-        return self.check(checks.gt(0, params));
+      positive: (inst) => (params) => {
+        return inst.check(checks.gt(0, params));
       },
 
-      nonnegative: (self) => (params) => {
-        return self.check(checks.gte(0, params));
+      nonnegative: (inst) => (params) => {
+        return inst.check(checks.gte(0, params));
       },
 
-      negative: (self) => (params) => {
-        return self.check(checks.lt(0, params));
+      negative: (inst) => (params) => {
+        return inst.check(checks.lt(0, params));
       },
 
-      nonpositive: (self) => (params) => {
-        return self.check(checks.lte(0, params));
+      nonpositive: (inst) => (params) => {
+        return inst.check(checks.lte(0, params));
       },
 
-      multipleOf: (self) => (value, params) => {
-        return self.check(checks.multipleOf(value, params));
+      multipleOf: (inst) => (value, params) => {
+        return inst.check(checks.multipleOf(value, params));
       },
 
-      step: (self) => (value, params) => {
-        return self.check(checks.multipleOf(value, params));
+      step: (inst) => (value, params) => {
+        return inst.check(checks.multipleOf(value, params));
       },
 
-      finite: (self) => () => {
-        return self;
+      finite: (inst) => () => {
+        return inst;
       },
     },
   }
@@ -1372,48 +1372,48 @@ export const ZodBigInt: core.$constructor<ZodBigInt> = /*@__PURE__*/ core.$const
   },
   {
     proto: {
-      gte: (self) => (value, params) => {
-        return self.check(checks.gte(value, params));
+      gte: (inst) => (value, params) => {
+        return inst.check(checks.gte(value, params));
       },
 
-      min: (self) => (value, params) => {
-        return self.check(checks.gte(value, params));
+      min: (inst) => (value, params) => {
+        return inst.check(checks.gte(value, params));
       },
 
-      gt: (self) => (value, params) => {
-        return self.check(checks.gt(value, params));
+      gt: (inst) => (value, params) => {
+        return inst.check(checks.gt(value, params));
       },
 
-      lt: (self) => (value, params) => {
-        return self.check(checks.lt(value, params));
+      lt: (inst) => (value, params) => {
+        return inst.check(checks.lt(value, params));
       },
 
-      lte: (self) => (value, params) => {
-        return self.check(checks.lte(value, params));
+      lte: (inst) => (value, params) => {
+        return inst.check(checks.lte(value, params));
       },
 
-      max: (self) => (value, params) => {
-        return self.check(checks.lte(value, params));
+      max: (inst) => (value, params) => {
+        return inst.check(checks.lte(value, params));
       },
 
-      positive: (self) => (params) => {
-        return self.check(checks.gt(BigInt(0), params));
+      positive: (inst) => (params) => {
+        return inst.check(checks.gt(BigInt(0), params));
       },
 
-      negative: (self) => (params) => {
-        return self.check(checks.lt(BigInt(0), params));
+      negative: (inst) => (params) => {
+        return inst.check(checks.lt(BigInt(0), params));
       },
 
-      nonpositive: (self) => (params) => {
-        return self.check(checks.lte(BigInt(0), params));
+      nonpositive: (inst) => (params) => {
+        return inst.check(checks.lte(BigInt(0), params));
       },
 
-      nonnegative: (self) => (params) => {
-        return self.check(checks.gte(BigInt(0), params));
+      nonnegative: (inst) => (params) => {
+        return inst.check(checks.gte(BigInt(0), params));
       },
 
-      multipleOf: (self) => (value, params) => {
-        return self.check(checks.multipleOf(value, params));
+      multipleOf: (inst) => (value, params) => {
+        return inst.check(checks.multipleOf(value, params));
       },
     },
   }
@@ -1592,24 +1592,24 @@ export const ZodArray: core.$constructor<ZodArray> = /*@__PURE__*/ core.$constru
   },
   {
     proto: {
-      min: (self) => (n, params) => {
-        return self.check(checks.minLength(n, params));
+      min: (inst) => (n, params) => {
+        return inst.check(checks.minLength(n, params));
       },
 
-      nonempty: (self) => (params) => {
-        return self.check(checks.minLength(1, params));
+      nonempty: (inst) => (params) => {
+        return inst.check(checks.minLength(1, params));
       },
 
-      max: (self) => (n, params) => {
-        return self.check(checks.maxLength(n, params));
+      max: (inst) => (n, params) => {
+        return inst.check(checks.maxLength(n, params));
       },
 
-      length: (self) => (n, params) => {
-        return self.check(checks.length(n, params));
+      length: (inst) => (n, params) => {
+        return inst.check(checks.length(n, params));
       },
 
-      unwrap: (self) => () => {
-        return self.element;
+      unwrap: (inst) => () => {
+        return inst.element;
       },
     },
   }
@@ -1747,66 +1747,66 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
   },
   {
     proto: {
-      keyof: (self) => () => {
-        return _enum(Object.keys(self._zod.def.shape));
+      keyof: (inst) => () => {
+        return _enum(Object.keys(inst._zod.def.shape));
       },
 
-      catchall: (self) => (catchall) => {
-        return self.clone({ ...self._zod.def, catchall: catchall as any });
+      catchall: (inst) => (catchall) => {
+        return inst.clone({ ...inst._zod.def, catchall: catchall as any });
       },
 
-      passthrough: (self) => () => {
-        return self.clone({ ...self._zod.def, catchall: unknown() });
+      passthrough: (inst) => () => {
+        return inst.clone({ ...inst._zod.def, catchall: unknown() });
       },
 
-      loose: (self) => () => {
-        return self.clone({ ...self._zod.def, catchall: unknown() });
+      loose: (inst) => () => {
+        return inst.clone({ ...inst._zod.def, catchall: unknown() });
       },
 
-      strict: (self) => () => {
-        return self.clone({ ...self._zod.def, catchall: never() });
+      strict: (inst) => () => {
+        return inst.clone({ ...inst._zod.def, catchall: never() });
       },
 
-      strip: (self) => () => {
-        return self.clone({ ...self._zod.def, catchall: undefined });
+      strip: (inst) => () => {
+        return inst.clone({ ...inst._zod.def, catchall: undefined });
       },
 
-      extend: (self) => (incoming) => {
-        return util.extend(self, incoming);
+      extend: (inst) => (incoming) => {
+        return util.extend(inst, incoming);
       },
 
-      safeExtend: (self) => (incoming) => {
-        return util.safeExtend(self, incoming);
+      safeExtend: (inst) => (incoming) => {
+        return util.safeExtend(inst, incoming);
       },
 
-      merge: (self) => (other) => {
-        return util.merge(self, other);
+      merge: (inst) => (other) => {
+        return util.merge(inst, other);
       },
 
-      pick: (self) => (mask) => {
-        return util.pick(self, mask);
+      pick: (inst) => (mask) => {
+        return util.pick(inst, mask);
       },
 
-      omit: (self) => (mask) => {
-        return util.omit(self, mask);
+      omit: (inst) => (mask) => {
+        return util.omit(inst, mask);
       },
 
       partial:
-        (self) =>
+        (inst) =>
         (...args) => {
-          return util.partial(ZodOptional, self, args[0]);
+          return util.partial(ZodOptional, inst, args[0]);
         },
 
       exactPartial:
-        (self) =>
+        (inst) =>
         (...args) => {
-          return util.partial(ZodExactOptional, self, args[0], "exactPartial");
+          return util.partial(ZodExactOptional, inst, args[0], "exactPartial");
         },
 
       required:
-        (self) =>
+        (inst) =>
         (...args) => {
-          return util.required(ZodNonOptional, self, args[0]);
+          return util.required(ZodNonOptional, inst, args[0]);
         },
     },
   }
@@ -1987,18 +1987,18 @@ export const ZodTuple: core.$constructor<ZodTuple> = /*@__PURE__*/ core.$constru
   },
   {
     proto: {
-      rest: (self) => (rest) => {
-        return self.clone({
-          ...self._zod.def,
+      rest: (inst) => (rest) => {
+        return inst.clone({
+          ...inst._zod.def,
           rest: rest as any as core.$ZodType,
         }) as any;
       },
 
-      partial: (self) => () => {
-        const def = self._zod.def;
+      partial: (inst) => () => {
+        const def = inst._zod.def;
         // a refinement was authored against the full arity; partialing would run it on a shorter array
         if (def.checks?.length) throw new Error(".partial() cannot be used on tuple schemas containing refinements");
-        return self.clone({
+        return inst.clone({
           ...def,
           items: def.items.map((item) => new ZodOptional({ type: "optional", innerType: item })),
         }) as any;
