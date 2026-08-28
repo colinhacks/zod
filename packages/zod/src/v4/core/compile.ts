@@ -29,7 +29,12 @@ const FALLBACK_FLAG: unique symbol = Symbol.for("zod.compile.fallback");
 
 interface CompileFastpassOptions {
   debug?: boolean | undefined;
+  /** Emit a validator instead of a parser: skip building the output value where nothing reads it. */
+  assertOnly?: boolean | undefined;
 }
+
+// Returned in place of an accessor by a node that skipped building its value. It cannot appear in valid JS, so if a consumer ever interpolates it the generated source fails to evaluate and `compileFastpass` degrades to the runtime rather than emitting something subtly wrong.
+const NO_VALUE = "\u0000novalue";
 
 type CompiledFastpass<T> = ((input: unknown) => T | INVALID) & { code?: string | undefined };
 
@@ -144,6 +149,10 @@ export function compile<T extends SomeType>(schema: T, options?: CompileOptions)
     (wrapped as { __originalRun?: typeof originalRun }).__originalRun = originalRun;
     clone._zod.bag.fastpass = fast;
     clone._zod.bag.fallbackRun = originalRun;
+    // A validator built from the same codegen with the output construction dropped. Only isValid reads it; a schema it refuses simply has no entry and isValid uses the parser instead.
+    try {
+      clone._zod.bag.assertpass = compileFastpass(schema, { assertOnly: true });
+    } catch {}
     clone._zod.run = wrapped;
 
     // The fast parse/safeParse closures fall back through the source schema's methods. If the source is shim- or wrapper-managed, those methods route into a compiled run and would execute user callbacks a third time on invalid input — the plain method → wrapper path is exactly 2x, so skip.
@@ -213,8 +222,9 @@ export function compileFastpass<T extends SomeType>(
   };
 
   const doc = new Doc(["input"]);
-  const outputAccessor = generateCheck(doc, ctx, schema, "input");
-  doc.write(`return ${outputAccessor};`);
+  const outputAccessor = generateCheck(doc, ctx, schema, "input", !options?.assertOnly);
+  // In assert mode a root that built nothing has already returned INVALID on every failure, so reaching the end means valid.
+  doc.write(outputAccessor === NO_VALUE ? `return true;` : `return ${outputAccessor};`);
 
   // Build the function with hoisted constants Always include INVALID as the first constant
   const constantNames = ["INVALID", ...ctx.constants.keys()];
@@ -273,13 +283,13 @@ function runtimeRun(schema: SomeType, value: unknown): unknown {
 // runtime island is emitted instead — the child schema is invoked through
 // `runtimeRun` at parse time and treated as a black box. Anything else thrown
 // propagates (e.g. `ZodCompileAsyncError`).
-function compileChild(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
+function compileChild(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string, needsValue = true): string {
   const contentLen = doc.content.length;
   const constantCount = ctx.constants.size;
   const constantCounter = ctx.constantCounter;
   const varCounter = ctx.varCounter;
   try {
-    return generateCheck(doc, ctx, schema, accessor);
+    return generateCheck(doc, ctx, schema, accessor, needsValue);
   } catch (err) {
     if (!(err instanceof ZodCompileUnsupportedError) || !err.islandable) throw err;
     doc.content.length = contentLen;
@@ -836,7 +846,7 @@ type SupportedSchemaType =
   | "transform"
   | "catch";
 
-function generateCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
+function generateCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string, needsValue = true): string {
   const def = schema._zod.def;
   const type = def.type as SupportedSchemaType;
 
@@ -888,7 +898,8 @@ function generateCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor
       typeAccessor = generateDateCheck(doc, accessor);
       break;
     case "object":
-      typeAccessor = generateObjectCheck(doc, ctx, schema, accessor);
+      // checks read the constructed object, so a checked node builds its value even in assert mode
+      typeAccessor = generateObjectCheck(doc, ctx, schema, accessor, !needsValue && !def.checks?.length);
       break;
     case "optional":
       typeAccessor = generateOptionalCheck(doc, ctx, schema, accessor);
@@ -1051,7 +1062,13 @@ function generateDateCheck(doc: Doc, accessor: string): string {
   return accessor;
 }
 
-function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
+function generateObjectCheck(
+  doc: Doc,
+  ctx: CompileContext,
+  schema: SomeType,
+  accessor: string,
+  skipValue = false
+): string {
   const def = schema._zod.def as unknown as { shape: Record<string, SomeType>; catchall?: SomeType };
 
   // Check that input is a non-null, non-array object
@@ -1111,7 +1128,7 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
       }
 
       // Generate check and get output accessor
-      const outputAccessor = compileChild(doc, ctx, propSchema, inputVar);
+      const outputAccessor = compileChild(doc, ctx, propSchema, inputVar, !skipValue);
       propOutputs.set(key, outputAccessor);
     }
   }
@@ -1142,6 +1159,23 @@ function generateObjectCheck(doc: Doc, ctx: CompileContext, schema: SomeType, ac
   // Shape keys in declared order, then unknown keys in for...in order. A middle-rung key is included iff present on the input, else iff its output is not undefined.
   const outputVar = newVar(ctx);
   const hasConditionalKeys = allKeys.some((k) => mayOutputUndefined(propShape[k]!) || dropsWhenAbsent(propShape[k]!));
+
+  // Assert mode: every declared key is validated above, so the output literal and the unknown-key copy are pure waste. A `never` catchall already emitted its rejection loop; a schema catchall still has to validate the values it would otherwise have stored.
+  if (skipValue) {
+    if (unknownKeysMode === "schema") {
+      const knownSet = keys.length > 0 ? addConstant(ctx, new Set(keys)) : null;
+      doc.write(`for (const k in ${accessor}) {`);
+      doc.indented((d) => {
+        d.write(`if (k === "__proto__") continue;`);
+        if (knownSet) d.write(`if (${knownSet}.has(k)) continue;`);
+        const valVar = newVar(ctx);
+        d.write(`const ${valVar} = ${accessor}[k];`);
+        compileChild(d, ctx, catchall!, valVar, false);
+      });
+      doc.write(`}`);
+    }
+    return NO_VALUE;
+  }
 
   if (!hasConditionalKeys) {
     const propLiterals = allKeys.map((k) => `${propKey(k)}: ${propOutputs.get(k)}`).join(", ");

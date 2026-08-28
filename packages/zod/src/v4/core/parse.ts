@@ -111,6 +111,7 @@ const COMPILE_FALLBACK = /* @__PURE__ */ Symbol.for("zod.compile.fallback");
 
 interface CompiledBag {
   fastpass?: (input: unknown) => unknown;
+  assertpass?: (input: unknown) => unknown;
   fallbackRun?: (payload: schemas.ParsePayload, ctx: schemas.ParseContextInternal) => unknown;
 }
 
@@ -128,7 +129,8 @@ export const isValid: $IsValid = ((
   const bag = schema._zod.bag as CompiledBag;
   let result: unknown;
   if (bag.fastpass && bag.fallbackRun) {
-    if (bag.fastpass(value) !== COMPILE_INVALID) return true;
+    // prefer the validator: same checks, no output object built
+    if ((bag.assertpass ?? bag.fastpass)(value) !== COMPILE_INVALID) return true;
     const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: false } : { async: false };
     // skip nested fast paths on the fallback, so user callbacks keep the at-most-twice bound
     (ctx as Record<symbol, unknown>)[COMPILE_FALLBACK] = true;

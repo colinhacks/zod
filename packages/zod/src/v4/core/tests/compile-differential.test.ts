@@ -59,6 +59,8 @@ function assertIdentical(actual: unknown, expected: unknown, path: string): void
 function differential(schema: z.ZodType, inputs: unknown[], opts?: { fallbackOk?: boolean }) {
   const compiled = compile(schema);
   const fast = compileFastpass(schema);
+  // Assert-mode codegen shares every validation path with the parser and only drops the output construction, so it must reach the same verdict on every fixture. Refusing to compile at all is fine (the caller falls back); silently disagreeing is the drift this catches.
+  const assertFast = attempt(() => compileFastpass(schema, { assertOnly: true })).value;
   for (const input of inputs) {
     // A schema may throw rather than return — an async check reached synchronously does. Both sides have to agree on that too, and comparing results would just rethrow.
     const at = attempt(() => schema.safeParse(input));
@@ -71,6 +73,19 @@ function differential(schema: z.ZodType, inputs: unknown[], opts?: { fallbackOk?
     const a = at.value!;
     const b = bt.value!;
     expect(b.success, `success mismatch for input ${describe(input)}`).toBe(a.success);
+    if (assertFast) {
+      const parseVerdict = attempt(() => fast(input) !== INVALID);
+      const assertVerdict = attempt(() => assertFast(input) !== INVALID);
+      expect(assertVerdict.threw ?? "did not throw", `assert-mode threw differently for input ${describe(input)}`).toBe(
+        parseVerdict.threw ?? "did not throw"
+      );
+      if (!parseVerdict.threw) {
+        expect(
+          assertVerdict.value,
+          `assert-mode verdict disagreed with the parse fast path for input ${describe(input)}`
+        ).toBe(parseVerdict.value);
+      }
+    }
     if (a.success && b.success) {
       if (!opts?.fallbackOk) {
         expect(fast(input) === INVALID, `fast path fell back on valid input ${describe(input)}`).toBe(false);
