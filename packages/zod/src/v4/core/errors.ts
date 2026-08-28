@@ -293,7 +293,9 @@ const initializer = (inst: $ZodError, def: $ZodIssue[]): void => {
 
 export const $ZodError: $constructor<$ZodError> = $constructor("$ZodError", initializer);
 interface $ZodRealError<T = any> extends $ZodError<T> {}
-export const $ZodRealError: $constructor<$ZodRealError> = $constructor("$ZodError", initializer, { Parent: Error });
+export const $ZodRealError: $constructor<$ZodRealError> = $constructor("$ZodError", initializer, undefined, {
+  Parent: Error,
+});
 
 ///////////////////    ERROR UTILITIES   ////////////////////////
 

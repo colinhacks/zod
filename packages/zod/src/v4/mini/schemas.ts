@@ -41,7 +41,7 @@ export interface ZodMiniType<
 interface _ZodMiniType<out Internals extends core.$ZodTypeInternals = core.$ZodTypeInternals>
   extends ZodMiniType<any, any, Internals> {}
 
-export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$constructor(
+export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$constructor<ZodMiniType>(
   "ZodMiniType",
   (inst, def) => {
     if (!inst._zod) throw new Error("Uninitialized schema in ZodMiniType.");
@@ -50,15 +50,15 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
 
     inst.def = def;
     inst.type = def.type;
-
-    util.installLazyMethods<ZodMiniType>(inst, "parse", _zodMiniTypeMethods);
+  },
+  {
     // `with` is an alias for `check`: the same function object, not a wrapper.
-    util.installLazyProp(inst, "with", (self: ZodMiniType) => self.check);
-  }
-);
-
-function _zodMiniTypeMethods(): util.LazyMethodsOf<ZodMiniType> {
-  return {
+    get with(): ZodMiniType["check"] {
+      return this.check;
+    },
+    set with(value: ZodMiniType["check"]) {
+      util.own(this, "with", value);
+    },
     parse(data, params) {
       return parse.parse(this, data, params, { callee: this.parse });
     },
@@ -92,15 +92,15 @@ function _zodMiniTypeMethods(): util.LazyMethodsOf<ZodMiniType> {
     brand() {
       return this as any;
     },
-    register(reg: any, meta: any) {
+    register(reg: any, meta: any): any {
       reg.add(this, meta);
       return this;
     },
-    apply(fn, ...args) {
+    apply(fn: any, ...args: any[]) {
       return args.length === 0 ? fn(this) : fn(this, ...args);
     },
-  };
-}
+  }
+);
 
 export interface _ZodMiniString<T extends core.$ZodStringInternals<unknown> = core.$ZodStringInternals<unknown>>
   extends _ZodMiniType<T>,

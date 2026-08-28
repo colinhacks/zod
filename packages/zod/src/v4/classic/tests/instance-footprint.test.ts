@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 
 import * as zm from "zod/mini";
 import * as z from "zod/v4";
+import * as core from "zod/v4/core";
 
 // V8 sizes an instance's property backing store in steps, and schema instances get no in-object slots (their constructor assigns nothing itself): 12 own properties cost 128 bytes, 13 cost 848, 21 cost 1616. Methods therefore live on the prototype and materialize per instance on first read. These bounds are what keeps a schema graph small; crossing one silently multiplies its memory by 6x.
 const MAX_OWN_PROPS = 12;
@@ -102,4 +103,122 @@ test("_def stays read-only", () => {
 test("deferred initializers are released after construction", () => {
   expect(z.string()._zod.deferred).toEqual(undefined);
   expect(z.object({ a: z.string() })._zod.deferred).toEqual(undefined);
+});
+
+test("a trait initializer called directly still installs its members", () => {
+  // a direct `init` installs onto the receiver's own prototype, since it is not below the constructor's
+  z.string();
+
+  const proto = {};
+  const inst = Object.create(proto) as z.ZodString;
+  z.ZodString.init(inst, { type: "string" });
+
+  expect(typeof inst.email).toBe("function");
+  expect(typeof inst.optional).toBe("function");
+  expect(Object.prototype.hasOwnProperty.call(proto, "email")).toBe(true);
+});
+
+test("a nested init during a repeat construction still installs its members", () => {
+  // the install used to read a module-level flag the outer construction set, so a nested `init` on an unrelated receiver inherited an answer that was not about it
+  const seen: string[] = [];
+
+  // an assertion signature needs the call target explicitly annotated
+  const Nested: core.$constructor<any> = core.$constructor<any>("Nested", () => {}, {
+    tag() {
+      return "nested";
+    },
+  });
+  const Outer = core.$constructor<any>("Outer", (_inst, def) => {
+    if (!def.nest) return;
+    // not a plain `{}`: the install target would resolve to `Object.prototype` and leak `tag` into every object the worker touches
+    const plain: any = Object.create({});
+    Nested.init(plain, {});
+    seen.push(typeof plain.tag);
+  });
+
+  new Outer({ nest: false });
+  new Outer({ nest: true });
+
+  expect(seen).toEqual(["function"]);
+});
+
+test("a derived trait's members win over the ones it composes", () => {
+  // Classic installs a richer `~standard` over core's. Trait dedupe is what orders them: core's initializer runs once, at the first `init` that reaches it, so classic's always lands second.
+  expect(typeof (z.string()["~standard"] as any).jsonSchema.input).toBe("function");
+});
+
+test("a live member keeps the descriptor a prototype member had", () => {
+  // An object literal's getter is enumerable; the `defineProperty` it replaced was not. `for..in` over a schema is public surface, and the construction path walks the prototype with it.
+  const proto = Object.getPrototypeOf(z.string());
+  expect(Object.getOwnPropertyDescriptor(proto, "description")?.enumerable).toBe(false);
+  expect(Object.getOwnPropertyDescriptor(proto, "_def")?.enumerable).toBe(false);
+
+  const keys: string[] = [];
+  for (const k in z.string()) keys.push(k);
+  expect(keys).toEqual(["def", "type", "format", "minLength", "maxLength"]);
+});
+
+test("a live member is not cached per instance", () => {
+  const schema = z.string();
+
+  expect(schema.description).toBe(undefined);
+  core.globalRegistry.add(schema, { description: "later" });
+  expect(schema.description).toBe("later");
+  expect(Object.prototype.hasOwnProperty.call(schema, "description")).toBe(false);
+});
+
+test("constructing through a subclass does not strip the base prototype", () => {
+  // `super(def)` gives `this` a prototype of `new.target.prototype`, so a constructor can complete a construction without having built its own prototype.
+  const MyString: new (def: { type: "string" }) => z.ZodString = class extends (z.ZodString as any) {} as any;
+  new MyString({ type: "string" });
+
+  const plain = z.string();
+  expect(plain.parse("x")).toBe("x");
+  expect(typeof plain.email).toBe("function");
+  expect(typeof new MyString({ type: "string" }).email).toBe("function");
+});
+
+test("a subclass's own members survive the install", () => {
+  // The members go on the prototype of the constructor that built the instance, so a subclass's own prototype keeps what it declared. `z.symbol()` is constructed nowhere else here, which puts the subclass before its base — the ordering the install has to get right. Asserted rather than assumed, so warming it elsewhere fails the test instead of hollowing it out.
+  expect(Object.prototype.hasOwnProperty.call((z.ZodSymbol as any).prototype, "parse")).toBe(false);
+  const First = class extends (z.ZodSymbol as any) {
+    parse() {
+      return "PARSE";
+    }
+    optional() {
+      return "OPTIONAL";
+    }
+  } as any;
+  const first = new First({ type: "symbol" });
+  expect(first.parse(Symbol())).toBe("PARSE");
+  expect(first.optional()).toBe("OPTIONAL");
+  const sym = Symbol();
+  expect(z.symbol().parse(sym)).toBe(sym);
+
+  // and the other way round, with the base prototype already built by one of the `z.number()` calls above. Asserted for the same reason: warm it nowhere and this block quietly becomes a second copy of the cold case.
+  expect(Object.prototype.hasOwnProperty.call((z.ZodNumber as any).prototype, "parse")).toBe(true);
+  const Second = class extends (z.ZodNumber as any) {
+    parse() {
+      return "SECOND";
+    }
+  } as any;
+  expect(new Second({ type: "number" }).parse(1)).toBe("SECOND");
+
+  // two levels deep: neither prototype takes a copy, so the inherited member is one function
+  const Third = class extends (Second as any) {} as any;
+  new Third({ type: "number" });
+  expect(Second.prototype.parse).toBe(Third.prototype.parse);
+});
+
+test("a hand-written getter member accepts assignment", () => {
+  // Every member was an accessor with a setter before they moved onto `proto`, so a getter written by hand needs one too.
+  const schema: any = z.string();
+  schema.spa = () => "SPA";
+  schema.toJSONSchema = () => "JSON";
+  expect(schema.spa()).toBe("SPA");
+  expect(schema.toJSONSchema()).toBe("JSON");
+
+  const mini: any = zm.string();
+  mini.with = () => "WITH";
+  expect(mini.with()).toBe("WITH");
 });

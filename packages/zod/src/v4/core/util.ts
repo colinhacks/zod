@@ -1063,6 +1063,44 @@ export abstract class Class {
 //
 // Members live on the prototype and materialize per instance on first read, which keeps own-property count under the step where V8 stops using inline slots. Changing anything here means re-measuring runtime, memory and bundle size together — see "The three axes" in AGENTS.md.
 
+/**
+ * Installs a trait's members on its prototype. Each value builds that member for the instance on first read; the built value shadows the accessor as an own property, so a detached `const { parse } = schema` keeps working.
+ *
+ * Call this from a `proto` initializer, which runs once per prototype — never per instance.
+ */
+export function members(proto: object, table: object): void {
+  for (const key in table) {
+    const desc = Object.getOwnPropertyDescriptor(table, key)!;
+    // a getter installs as written, so it stays live: `description` reads through to the registry on every access. not enumerable: an object literal's is, and a prototype member never was
+    if (desc.get) Object.defineProperty(proto, key, { ...desc, enumerable: false });
+    // a method materializes bound on first read, which is what keeps a detached member working: `const opt = schema.optional; opt()`
+    else defineBound(proto, key, desc.value);
+  }
+}
+
+/** Shadows a prototype member with an own value, so a getter that builds from the instance runs once. */
+export function own<T>(inst: object, key: string, value: T, enumerable = true): T {
+  Object.defineProperty(inst, key, { configurable: true, writable: true, enumerable, value });
+  return value;
+}
+
+/** Like {@link own}, for a member that was never an own data property and has to stay out of `Object.keys`. */
+export function hide<T>(inst: object, key: string, value: T): T {
+  return own(inst, key, value, false);
+}
+
+function defineBound(proto: object, key: string, fn: AnyFunc): void {
+  Object.defineProperty(proto, key, {
+    configurable: true,
+    get(this: any) {
+      return own(this, key, fn.bind(this));
+    },
+    set(this: any, value: unknown) {
+      own(this, key, value);
+    },
+  });
+}
+
 /** Returns the prototype to install on, or `undefined` if this group is already installed on it. */
 function claim(inst: object, sentinel: string): object | undefined {
   const proto = Object.getPrototypeOf(inst);
@@ -1091,13 +1129,26 @@ export type LazyMethodsOf<T> = Partial<{
   [K in keyof T]: T[K] extends (...args: infer A) => infer R ? (this: T, ...args: A) => R : never;
 }>;
 
-/** Factories for properties whose value is built per instance on first read. */
-export type LazyPropsOf<T> = Partial<{ [K in keyof T]: (self: T) => T[K] }>;
+/**
+ * A trait's members, as `$constructor` takes them. Each entry is a factory that builds the member for one instance on first read, except a getter, which installs as written and stays live.
+ *
+ * A method's signature is erased to its call form, so an overloaded or generic one is written once against its constraint.
+ */
+export type LazyPropsOf<T> = {
+  [K in keyof T]?:
+    | (T[K] extends (...args: infer A) => infer R ? (inst: T) => (...args: A) => R : ((inst: T) => T[K]) | T[K])
+    | undefined;
+} & ThisType<T>;
+
+/** A trait's prototype members: a partial view of its own interface, with `this` typed as the instance. */
+export type ProtoOf<T> = {
+  // `infer R` resolves a polymorphic `this` return type to `T`, which a method written here can actually produce
+  [K in keyof T]?: (T[K] extends (...args: infer A) => infer R ? (...args: A) => R : T[K]) | undefined;
+} & ThisType<T>;
 
 /**
- * Installs methods that bind to the instance on first access. Not for hot-path
- * functions — a bound function pays a call-time trampoline; use
- * `installLazyProps` there.
+ * Installs methods that bind to the instance on first access. Superseded by
+ * `$constructor`'s `proto` parameter; kept for anyone who called it directly.
  */
 export function installLazyMethods<T extends object>(inst: T, sentinel: string, methods: () => LazyMethodsOf<T>): void {
   const proto = claim(inst, sentinel);
@@ -1109,7 +1160,7 @@ export function installLazyMethods<T extends object>(inst: T, sentinel: string, 
   }
 }
 
-/** Like `installLazyMethods`, but the factory builds the value instead of binding a shared function. */
+/** Like `installLazyMethods`, but the factory builds the value instead of binding a shared function. Superseded by `$constructor`'s `proto` parameter. */
 export function installLazyProps<T extends object>(inst: T, sentinel: string, props: () => LazyPropsOf<T>): void {
   const proto = claim(inst, sentinel);
   if (!proto) return;
