@@ -83,7 +83,6 @@ type SupportedCheck =
   | checks.$ZodCheckOverwrite
   | { _zod: { def: { check: "custom"; fn?: (value: unknown) => boolean }; check?: (payload: unknown) => unknown } };
 
-/** Options for `compile()`. */
 export interface CompileOptions {
   /** Throw the refusal instead of returning the schema uncompiled. */
   strict?: boolean | undefined;
