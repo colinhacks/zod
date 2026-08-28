@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import * as z from "zod/v4";
 
 /**
@@ -194,4 +194,28 @@ test("broad sweep: detaching builder methods does not throw or produce a corrupt
   }
 
   expect(broken).toEqual([]);
+});
+
+test("vi.spyOn wraps a prototype method that was never read", () => {
+  const schema = z.object({ a: z.string() });
+  const spy = vi.spyOn(schema, "safeParse").mockReturnValue({ success: true, data: { a: "mocked" } });
+
+  expect(schema.safeParse({})).toEqual({ success: true, data: { a: "mocked" } });
+  expect(spy).toHaveBeenCalledOnce();
+
+  spy.mockRestore();
+  expect(schema.safeParse({ a: "x" })).toEqual({ success: true, data: { a: "x" } });
+  expect(schema.safeParse({}).success).toBe(false);
+
+  const json = vi.spyOn(schema, "toJSONSchema").mockReturnValue({ type: "null" } as any);
+  expect(schema.toJSONSchema()).toEqual({ type: "null" });
+  json.mockRestore();
+  expect(schema.toJSONSchema().type).toBe("object");
+});
+
+test("a getter member answers a bare read without a receiver", () => {
+  const schema = z.string();
+  const get = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(schema), "spa")!.get!;
+  expect(get.call(undefined)).toBeUndefined();
+  expect(schema.spa).toBe(schema.safeParseAsync);
 });

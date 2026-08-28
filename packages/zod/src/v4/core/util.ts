@@ -1093,7 +1093,8 @@ function defineBound(proto: object, key: string, fn: AnyFunc): void {
   Object.defineProperty(proto, key, {
     configurable: true,
     get(this: any) {
-      return own(this, key, fn.bind(this));
+      // vitest's spyOn calls a prototype getter bare to find the function it wraps, so a nullish receiver answers the raw method
+      return this == null ? fn : own(this, key, fn.bind(this));
     },
     set(this: any, value: unknown) {
       own(this, key, value);

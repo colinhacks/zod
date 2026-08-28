@@ -305,7 +305,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
     },
     // `spa` is an alias: same function object as `safeParseAsync`, as before.
     get spa(): ZodType["safeParseAsync"] {
-      return this.safeParseAsync;
+      return this?.safeParseAsync;
     },
     set spa(value: ZodType["safeParseAsync"]) {
       util.own(this, "spa", value);
@@ -334,11 +334,8 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
     async safeDecodeAsync(data, params) {
       return parse.safeDecodeAsync(this, data, params);
     },
-    get toJSONSchema(): ZodType["toJSONSchema"] {
-      return util.own(this, "toJSONSchema", createToJSONSchemaMethod(this, {}));
-    },
-    set toJSONSchema(value: ZodType["toJSONSchema"]) {
-      util.own(this, "toJSONSchema", value);
+    toJSONSchema(params) {
+      return createToJSONSchemaMethod(this, {})(params);
     },
     // Reads through to the registry on every access, so it must not cache.
     get description(): string | undefined {
