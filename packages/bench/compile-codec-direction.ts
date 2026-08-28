@@ -36,7 +36,7 @@ const codec = z.codec(inputSchema, outputSchema, {
 });
 
 const compiled = zcore.compile(codec);
-const forward = zcore.compileFastpass(codec);
+const forward = zcore.compileFn(codec);
 
 const input = {
   id: "abc",
@@ -118,7 +118,7 @@ console.log("manual backward:", backwardBranchless(output));
 console.log("");
 
 await metabench("codec forward direction", {
-  "current compileFastpass"() {
+  "current compileFn"() {
     return forward(input);
   },
   "manual branchless forward"() {

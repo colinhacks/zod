@@ -32,7 +32,7 @@ export const safeParseAsync: <T extends core.$ZodType>(
   _ctx?: core.ParseContext<core.$ZodIssue>
 ) => Promise<ZodSafeParseResult<core.output<T>>> = /* @__PURE__ */ core._safeParseAsync(ZodRealError) as any;
 
-export { isValid, isValidAsync } from "../core/index.js";
+export { validate, validateAsync } from "../core/index.js";
 
 // Codec functions
 export const encode: <T extends core.$ZodType>(

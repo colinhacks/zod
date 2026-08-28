@@ -110,47 +110,56 @@ const COMPILE_INVALID = /* @__PURE__ */ Symbol.for("zod.compile.invalid");
 const COMPILE_FALLBACK = /* @__PURE__ */ Symbol.for("zod.compile.fallback");
 
 interface CompiledBag {
-  fastpass?: (input: unknown) => unknown;
+  validator?: (input: unknown) => unknown;
   fallbackRun?: (payload: schemas.ParsePayload, ctx: schemas.ParseContextInternal) => unknown;
 }
 
-export type $IsValid = <T extends schemas.$ZodType>(
+export type $Validate = <T extends schemas.$ZodType>(
   schema: T,
   value: unknown,
   _ctx?: schemas.ParseContext<errors.$ZodIssue>
 ) => value is core.input<T>;
 
-export const isValid: $IsValid = ((
+// Deliberately tiny, because v8 will not inline a body carrying the fallback's object literals and throw. Everything that is not the compiled happy path lives in validateFallback, and that split is worth ~35% on a compiled schema.
+export const validate: $Validate = ((
   schema: schemas.$ZodType,
   value: unknown,
   _ctx?: schemas.ParseContext<errors.$ZodIssue>
 ): boolean => {
-  const bag = schema._zod.bag as CompiledBag;
+  const validator = (schema._zod.bag as CompiledBag).validator;
+  if (validator !== undefined && validator(value) !== COMPILE_INVALID) return true;
+  return validateFallback(schema, value, _ctx);
+}) as $Validate;
+
+function validateFallback(
+  schema: schemas.$ZodType,
+  value: unknown,
+  _ctx?: schemas.ParseContext<errors.$ZodIssue>
+): boolean {
+  const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: false } : { async: false };
+  const fallbackRun = (schema._zod.bag as CompiledBag).fallbackRun;
   let result: unknown;
-  if (bag.fastpass && bag.fallbackRun) {
-    if (bag.fastpass(value) !== COMPILE_INVALID) return true;
-    const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: false } : { async: false };
+  if (fallbackRun) {
     // skip nested fast paths on the fallback, so user callbacks keep the at-most-twice bound
     (ctx as Record<symbol, unknown>)[COMPILE_FALLBACK] = true;
-    result = bag.fallbackRun({ value, issues: [] }, ctx);
+    result = fallbackRun({ value, issues: [] }, ctx);
   } else {
-    const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: false } : { async: false };
     result = schema._zod.run({ value, issues: [] }, ctx);
   }
   if (result instanceof Promise) {
     throw new core.$ZodAsyncError();
   }
   return (result as schemas.ParsePayload).issues.length === 0;
-}) as $IsValid;
+}
 
-export type $IsValidAsync = <T extends schemas.$ZodType>(
+export type $ValidateAsync = <T extends schemas.$ZodType>(
   schema: T,
   value: unknown,
   _ctx?: schemas.ParseContext<errors.$ZodIssue>
 ) => Promise<boolean>;
 
 // no fast path: the compiler keeps async parses on the runtime, because a promise-returning callback that is not declared async compiles to a throw
-export const isValidAsync: $IsValidAsync = async (schema, value, _ctx) => {
+export const validateAsync: $ValidateAsync = async (schema, value, _ctx) => {
   const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: true } : { async: true };
   let result: unknown = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) result = await result;
