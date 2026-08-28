@@ -1,6 +1,6 @@
 import type * as errors from "./errors.js";
 import type * as schemas from "./schemas.js";
-import type { Class, LazyPropsOf } from "./util.js";
+import type { Class, ProtoOf } from "./util.js";
 import { members as installMembers } from "./util.js";
 //////////////////////////////   CONSTRUCTORS   ///////////////////////////////////////
 
@@ -13,7 +13,7 @@ export interface $constructor<T extends ZodTrait, D = T["_zod"]["def"]> {
 export interface $constructorParams<T> {
   Parent?: typeof Class;
   /** This trait's members, installed once on every prototype that composes it. They cannot be declared in the initializer above: that runs per instance, and the prototype is shared. */
-  proto?: LazyPropsOf<T>;
+  proto?: ProtoOf<T>;
 }
 
 /** A special constant with type `never` */

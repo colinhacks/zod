@@ -1071,10 +1071,31 @@ export abstract class Class {
 export function members(proto: object, table: object): void {
   for (const key in table) {
     const desc = Object.getOwnPropertyDescriptor(table, key)!;
-    // A getter installs as written, so it stays live — `description` reads through to the registry on every access. Not enumerable: an object literal's is, and a prototype member never was.
+    // a getter installs as written, so it stays live: `description` reads through to the registry on every access. not enumerable: an object literal's is, and a prototype member never was
     if (desc.get) Object.defineProperty(proto, key, { ...desc, enumerable: false });
-    else defineCached(proto, key, desc.value);
+    // a method materializes bound on first read, which is what keeps a detached member working: `const opt = schema.optional; opt()`
+    else defineBound(proto, key, desc.value);
   }
+}
+
+/** Shadows a prototype member with an own value, so a getter that builds from the instance runs once. */
+export function own<T>(inst: object, key: string, value: T): T {
+  Object.defineProperty(inst, key, { configurable: true, writable: true, enumerable: true, value });
+  return value;
+}
+
+function defineBound(proto: object, key: string, fn: AnyFunc): void {
+  Object.defineProperty(proto, key, {
+    configurable: true,
+    get(this: any) {
+      const value = fn.bind(this);
+      Object.defineProperty(this, key, { configurable: true, writable: true, enumerable: true, value });
+      return value;
+    },
+    set(this: any, value: unknown) {
+      Object.defineProperty(this, key, { configurable: true, writable: true, enumerable: true, value });
+    },
+  });
 }
 
 /** Returns the prototype to install on, or `undefined` if this group is already installed on it. */
@@ -1116,10 +1137,15 @@ export type LazyPropsOf<T> = {
     | undefined;
 } & ThisType<T>;
 
+/** A trait's prototype members: a partial view of its own interface, with `this` typed as the instance. */
+export type ProtoOf<T> = {
+  // `infer R` resolves a polymorphic `this` return type to `T`, which a method written here can actually produce
+  [K in keyof T]?: (T[K] extends (...args: infer A) => infer R ? (...args: A) => R : T[K]) | undefined;
+} & ThisType<T>;
+
 /**
- * Installs methods that bind to the instance on first access. Not for hot-path
- * functions — a bound function pays a call-time trampoline; use
- * `installLazyProps` there.
+ * Installs methods that bind to the instance on first access. Superseded by
+ * `$constructor`'s `proto` parameter; kept for anyone who called it directly.
  */
 export function installLazyMethods<T extends object>(inst: T, sentinel: string, methods: () => LazyMethodsOf<T>): void {
   const proto = claim(inst, sentinel);
@@ -1131,7 +1157,7 @@ export function installLazyMethods<T extends object>(inst: T, sentinel: string, 
   }
 }
 
-/** Like `installLazyMethods`, but the factory builds the value instead of binding a shared function. */
+/** Like `installLazyMethods`, but the factory builds the value instead of binding a shared function. Superseded by `$constructor`'s `proto` parameter. */
 export function installLazyProps<T extends object>(inst: T, sentinel: string, props: () => LazyPropsOf<T>): void {
   const proto = claim(inst, sentinel);
   if (!proto) return;

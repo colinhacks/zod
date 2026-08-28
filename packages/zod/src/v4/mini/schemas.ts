@@ -54,61 +54,59 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
   {
     proto: {
       // `with` is an alias for `check`: the same function object, not a wrapper.
-      with: (inst) => inst.check,
-
-      parse: (inst) => (data, params) => {
-        return parse.parse(inst, data, params, { callee: inst.parse });
+      get with() {
+        return this.check;
       },
 
-      parseAsync: (inst) => (data, params) => {
-        return parse.parseAsync(inst, data, params, { callee: inst.parseAsync });
+      parse(data, params) {
+        return parse.parse(this, data, params, { callee: this.parse });
       },
 
-      safeParse: (inst) => (data, params) => {
-        return parse.safeParse(inst, data, params);
+      parseAsync(data, params) {
+        return parse.parseAsync(this, data, params, { callee: this.parseAsync });
       },
 
-      safeParseAsync: (inst) => (data, params) => {
-        return parse.safeParseAsync(inst, data, params);
+      safeParse(data, params) {
+        return parse.safeParse(this, data, params);
       },
 
-      check:
-        (inst) =>
-        (...checks) => {
-          const def = inst.def;
-          return inst.clone(
-            {
-              ...def,
-              checks: [
-                ...(def.checks ?? []),
-                ...checks.map((ch) =>
-                  typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
-                ),
-              ],
-            },
-            { parent: true }
-          );
-        },
-
-      clone: (inst) => (_def, params) => {
-        return core.clone(inst, _def, params);
+      safeParseAsync(data, params) {
+        return parse.safeParseAsync(this, data, params);
       },
 
-      brand: (inst) => () => {
-        return inst as any;
+      check(...checks) {
+        const def = this.def;
+        return this.clone(
+          {
+            ...def,
+            checks: [
+              ...(def.checks ?? []),
+              ...checks.map((ch) =>
+                typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
+              ),
+            ],
+          },
+          { parent: true }
+        );
       },
 
-      register: ((inst: ZodMiniType) => (reg: any, meta: any) => {
-        reg.add(inst, meta);
-        return inst;
-      }) as any,
+      clone(_def, params) {
+        return core.clone(this, _def, params);
+      },
 
-      apply:
-        (inst) =>
-        (fn: any, ...args: any[]) => {
-          return args.length === 0 ? fn(inst) : fn(inst, ...args);
-        },
-    },
+      brand() {
+        return this as any;
+      },
+
+      register(reg: any, meta: any): any {
+        reg.add(this, meta);
+        return this;
+      },
+
+      apply(fn: any, ...args: any[]) {
+        return args.length === 0 ? fn(this) : fn(this, ...args);
+      },
+    } satisfies core.util.ProtoOf<ZodMiniType>,
   }
 );
 

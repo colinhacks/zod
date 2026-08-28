@@ -175,185 +175,197 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   },
   {
     proto: {
-      check:
-        (inst) =>
-        (...chks) => {
-          const def = inst.def;
-          return inst.clone(
-            util.mergeDefs(def, {
-              checks: [
-                ...(def.checks ?? []),
-                ...chks.map((ch) =>
-                  typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
-                ),
-              ],
-            }),
-            { parent: true }
-          );
-        },
-
-      with:
-        (inst) =>
-        (...chks) => {
-          return inst.check(...chks);
-        },
-
-      clone: (inst) => (def, params) => {
-        return core.clone(inst, def, params);
+      check(...chks) {
+        const def = this.def;
+        return this.clone(
+          util.mergeDefs(def, {
+            checks: [
+              ...(def.checks ?? []),
+              ...chks.map((ch) =>
+                typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
+              ),
+            ],
+          }),
+          { parent: true }
+        );
       },
 
-      brand: (inst) => () => {
-        return inst;
+      with(...chks) {
+        return this.check(...chks);
       },
 
-      register: (inst) => (reg, meta) => {
-        reg.add(inst, meta);
-        return inst;
+      clone(def, params) {
+        return core.clone(this, def, params);
       },
 
-      refine: (inst) => (check, params) => {
-        return inst.check(refine(check, params));
+      brand() {
+        return this;
       },
 
-      superRefine: (inst) => (refinement, params) => {
-        return inst.check(superRefine(refinement, params));
+      register(reg, meta) {
+        reg.add(this, meta);
+        return this;
       },
 
-      overwrite: (inst) => (fn) => {
-        return inst.check(checks.overwrite(fn));
+      refine(check, params) {
+        return this.check(refine(check, params));
       },
 
-      optional: (inst) => () => {
-        return optional(inst);
+      superRefine(refinement, params) {
+        return this.check(superRefine(refinement, params));
       },
 
-      exactOptional: (inst) => () => {
-        return exactOptional(inst);
+      overwrite(fn) {
+        return this.check(checks.overwrite(fn));
       },
 
-      nullable: (inst) => () => {
-        return nullable(inst);
+      optional() {
+        return optional(this);
       },
 
-      nullish: (inst) => () => {
-        return optional(nullable(inst));
+      exactOptional() {
+        return exactOptional(this);
       },
 
-      nonoptional: (inst) => (params) => {
-        return nonoptional(inst, params);
+      nullable() {
+        return nullable(this);
       },
 
-      array: (inst) => () => {
-        return array(inst);
+      nullish() {
+        return optional(nullable(this));
       },
 
-      or: (inst) => (arg) => {
-        return union([inst, arg]);
+      nonoptional(params) {
+        return nonoptional(this, params);
       },
 
-      and: (inst) => (arg) => {
-        return intersection(inst, arg);
+      array() {
+        return array(this);
       },
 
-      transform: (inst) => (tx) => {
-        return pipe(inst, transform(tx));
+      or(arg) {
+        return union([this, arg]);
       },
 
-      default: (inst) => (d) => {
-        return _default(inst, d);
+      and(arg) {
+        return intersection(this, arg);
       },
 
-      prefault: (inst) => (d) => {
-        return prefault(inst, d);
+      transform(tx) {
+        return pipe(this, transform(tx));
       },
 
-      catch: (inst) => (params) => {
-        return _catch(inst, params);
+      default(d) {
+        return _default(this, d);
       },
 
-      pipe: (inst) => (target) => {
-        return pipe(inst, target);
+      prefault(d) {
+        return prefault(this, d);
       },
 
-      readonly: (inst) => () => {
-        return readonly(inst);
+      catch(params) {
+        return _catch(this, params);
       },
 
-      describe: (inst) => (description) => {
-        const cl = inst.clone();
+      pipe(target) {
+        return pipe(this, target);
+      },
+
+      readonly() {
+        return readonly(this);
+      },
+
+      describe(description) {
+        const cl = this.clone();
         core.globalRegistry.add(cl, { description });
         return cl;
       },
 
-      meta:
-        (inst) =>
-        (...args: any[]): any => {
-          // overloaded: meta() returns the registered metadata, meta(data) returns a clone with `data` registered. The mapped type picks up the second overload, so we accept variadic any-args and return `any` to satisfy both at runtime.
-          if (args.length === 0) return core.globalRegistry.get(inst);
-          const cl = inst.clone();
-          core.globalRegistry.add(cl, args[0]);
-          return cl;
-        },
-
-      isOptional: (inst) => () => {
-        return inst.safeParse(undefined).success;
+      meta(...args: any[]): any {
+        // overloaded: meta() returns the registered metadata, meta(data) returns a clone with `data` registered. The mapped type picks up the second overload, so we accept variadic any-args and return `any` to satisfy both at runtime.
+        if (args.length === 0) return core.globalRegistry.get(this);
+        const cl = this.clone();
+        core.globalRegistry.add(cl, args[0]);
+        return cl;
       },
 
-      isNullable: (inst) => () => {
-        return inst.safeParse(null).success;
+      isOptional() {
+        return this.safeParse(undefined).success;
       },
 
-      apply:
-        (inst) =>
-        (fn, ...args) => {
-          return args.length === 0 ? fn(inst) : fn(inst, ...args);
-        },
+      isNullable() {
+        return this.safeParse(null).success;
+      },
+
+      apply(fn, ...args) {
+        return args.length === 0 ? fn(this) : fn(this, ...args);
+      },
 
       // Overrides core's `~standard` to add `jsonSchema`. Must stay a prototype entry: redefining it per instance demotes instances to dictionary mode.
-      "~standard": (inst) =>
-        ({
-          ...core.standardProps(inst),
+      get "~standard"(): ZodType["~standard"] {
+        const props = {
+          ...core.standardProps(this),
           jsonSchema: {
-            input: createStandardJSONSchemaMethod(inst, "input"),
-            output: createStandardJSONSchemaMethod(inst, "output"),
+            input: createStandardJSONSchemaMethod(this, "input"),
+            output: createStandardJSONSchemaMethod(this, "output"),
           },
-        }) as ZodType["~standard"],
-      parse: (inst) => {
-        const fn: ZodType["parse"] = (data, params) => parse.parse(inst, data, params, { callee: fn });
-        return fn;
+        } as ZodType["~standard"];
+        // cached, but not enumerable: it was never an own data property, so it must stay out of `Object.keys`
+        Object.defineProperty(this, "~standard", { configurable: true, writable: true, value: props });
+        return props;
       },
-      parseAsync: (inst) => {
-        const fn: ZodType["parseAsync"] = async (data, params) =>
-          await parse.parseAsync(inst, data, params, { callee: fn });
-        return fn;
+      set "~standard"(value: ZodType["~standard"]) {
+        util.own(this, "~standard", value);
       },
-      safeParse: (inst) => (data, params) => parse.safeParse(inst, data, params),
-      safeParseAsync: (inst) => async (data, params) => parse.safeParseAsync(inst, data, params),
+      parse: function _parse(data, params) {
+        return parse.parse(this, data, params, { callee: _parse });
+      },
+      parseAsync: async function _parseAsync(data, params) {
+        return await parse.parseAsync(this, data, params, { callee: _parseAsync });
+      },
+      safeParse(data, params) {
+        return parse.safeParse(this, data, params);
+      },
+      async safeParseAsync(data, params) {
+        return parse.safeParseAsync(this, data, params);
+      },
       // `spa` is an alias: same function object as `safeParseAsync`, as before.
-      spa: (inst) => inst.safeParseAsync,
-      encode: (inst) => {
-        const fn: ZodType["encode"] = (data, params) => parse.encode(inst, data, params, { callee: fn });
-        return fn;
+      get spa(): ZodType["safeParseAsync"] {
+        return this.safeParseAsync;
       },
-      decode: (inst) => {
-        const fn: ZodType["decode"] = (data, params) => parse.decode(inst, data, params, { callee: fn });
-        return fn;
+      set spa(value: ZodType["safeParseAsync"]) {
+        util.own(this, "spa", value);
       },
-      encodeAsync: (inst) => {
-        const fn: ZodType["encodeAsync"] = async (data, params) =>
-          await parse.encodeAsync(inst, data, params, { callee: fn });
-        return fn;
+      encode: function _encode(data, params) {
+        return parse.encode(this, data, params, { callee: _encode });
       },
-      decodeAsync: (inst) => {
-        const fn: ZodType["decodeAsync"] = async (data, params) =>
-          await parse.decodeAsync(inst, data, params, { callee: fn });
-        return fn;
+      decode: function _decode(data, params) {
+        return parse.decode(this, data, params, { callee: _decode });
       },
-      safeEncode: (inst) => (data, params) => parse.safeEncode(inst, data, params),
-      safeDecode: (inst) => (data, params) => parse.safeDecode(inst, data, params),
-      safeEncodeAsync: (inst) => async (data, params) => parse.safeEncodeAsync(inst, data, params),
-      safeDecodeAsync: (inst) => async (data, params) => parse.safeDecodeAsync(inst, data, params),
-      toJSONSchema: (inst) => createToJSONSchemaMethod(inst, {}),
+      encodeAsync: async function _encodeAsync(data, params) {
+        return await parse.encodeAsync(this, data, params, { callee: _encodeAsync });
+      },
+      decodeAsync: async function _decodeAsync(data, params) {
+        return await parse.decodeAsync(this, data, params, { callee: _decodeAsync });
+      },
+      safeEncode(data, params) {
+        return parse.safeEncode(this, data, params);
+      },
+      safeDecode(data, params) {
+        return parse.safeDecode(this, data, params);
+      },
+      async safeEncodeAsync(data, params) {
+        return parse.safeEncodeAsync(this, data, params);
+      },
+      async safeDecodeAsync(data, params) {
+        return parse.safeDecodeAsync(this, data, params);
+      },
+      get toJSONSchema(): ZodType["toJSONSchema"] {
+        return util.own(this, "toJSONSchema", createToJSONSchemaMethod(this, {}));
+      },
+      set toJSONSchema(value: ZodType["toJSONSchema"]) {
+        util.own(this, "toJSONSchema", value);
+      },
       // Reads through to the registry on every access, so it must not cache.
       get description(): string | undefined {
         return core.globalRegistry.get(this as unknown as ZodType)?.description;
@@ -363,7 +375,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
       get _def(): core.$ZodTypeDef {
         return (this as unknown as ZodType)._zod.def;
       },
-    },
+    } satisfies core.util.ProtoOf<ZodType>,
   }
 );
 
@@ -410,82 +422,64 @@ export const _ZodString: core.$constructor<_ZodString> = /*@__PURE__*/ core.$con
   },
   {
     proto: {
-      regex:
-        (inst) =>
-        (...args) => {
-          return inst.check((checks.regex as any)(...args));
-        },
-
-      includes:
-        (inst) =>
-        (...args) => {
-          return inst.check((checks.includes as any)(...args));
-        },
-
-      startsWith:
-        (inst) =>
-        (...args) => {
-          return inst.check((checks.startsWith as any)(...args));
-        },
-
-      endsWith:
-        (inst) =>
-        (...args) => {
-          return inst.check((checks.endsWith as any)(...args));
-        },
-
-      min:
-        (inst) =>
-        (...args) => {
-          return inst.check((checks.minLength as any)(...args));
-        },
-
-      max:
-        (inst) =>
-        (...args) => {
-          return inst.check((checks.maxLength as any)(...args));
-        },
-
-      length:
-        (inst) =>
-        (...args) => {
-          return inst.check((checks.length as any)(...args));
-        },
-
-      nonempty:
-        (inst) =>
-        (...args) => {
-          return inst.check((checks.minLength as any)(1, ...args));
-        },
-
-      lowercase: (inst) => (params) => {
-        return inst.check(checks.lowercase(params));
+      regex(...args) {
+        return this.check((checks.regex as any)(...args));
       },
 
-      uppercase: (inst) => (params) => {
-        return inst.check(checks.uppercase(params));
+      includes(...args) {
+        return this.check((checks.includes as any)(...args));
       },
 
-      trim: (inst) => () => {
-        return inst.check(checks.trim());
+      startsWith(...args) {
+        return this.check((checks.startsWith as any)(...args));
       },
 
-      normalize:
-        (inst) =>
-        (...args) => {
-          return inst.check(checks.normalize(...args));
-        },
-
-      toLowerCase: (inst) => () => {
-        return inst.check(checks.toLowerCase());
+      endsWith(...args) {
+        return this.check((checks.endsWith as any)(...args));
       },
 
-      toUpperCase: (inst) => () => {
-        return inst.check(checks.toUpperCase());
+      min(...args) {
+        return this.check((checks.minLength as any)(...args));
       },
 
-      slugify: (inst) => () => {
-        return inst.check(checks.slugify());
+      max(...args) {
+        return this.check((checks.maxLength as any)(...args));
+      },
+
+      length(...args) {
+        return this.check((checks.length as any)(...args));
+      },
+
+      nonempty(...args) {
+        return this.check((checks.minLength as any)(1, ...args));
+      },
+
+      lowercase(params) {
+        return this.check(checks.lowercase(params));
+      },
+
+      uppercase(params) {
+        return this.check(checks.uppercase(params));
+      },
+
+      trim() {
+        return this.check(checks.trim());
+      },
+
+      normalize(...args) {
+        return this.check(checks.normalize(...args));
+      },
+
+      toLowerCase() {
+        return this.check(checks.toLowerCase());
+      },
+
+      toUpperCase() {
+        return this.check(checks.toUpperCase());
+      },
+
+      slugify() {
+        return this.check(checks.slugify());
       },
     },
   }
@@ -576,107 +570,107 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
   },
   {
     proto: {
-      email: (inst) => (params) => {
-        return inst.check(core._email(ZodEmail, params));
+      email(params) {
+        return this.check(core._email(ZodEmail, params));
       },
 
-      url: (inst) => (params) => {
-        return inst.check(core._url(ZodURL, params));
+      url(params) {
+        return this.check(core._url(ZodURL, params));
       },
 
-      jwt: (inst) => (params) => {
-        return inst.check(core._jwt(ZodJWT, params));
+      jwt(params) {
+        return this.check(core._jwt(ZodJWT, params));
       },
 
-      emoji: (inst) => (params) => {
-        return inst.check(core._emoji(ZodEmoji, params));
+      emoji(params) {
+        return this.check(core._emoji(ZodEmoji, params));
       },
 
-      guid: (inst) => (params) => {
-        return inst.check(core._guid(ZodGUID, params));
+      guid(params) {
+        return this.check(core._guid(ZodGUID, params));
       },
 
-      uuid: (inst) => (params) => {
-        return inst.check(core._uuid(ZodUUID, params));
+      uuid(params) {
+        return this.check(core._uuid(ZodUUID, params));
       },
 
-      uuidv4: (inst) => (params) => {
-        return inst.check(core._uuidv4(ZodUUID, params));
+      uuidv4(params) {
+        return this.check(core._uuidv4(ZodUUID, params));
       },
 
-      uuidv6: (inst) => (params) => {
-        return inst.check(core._uuidv6(ZodUUID, params));
+      uuidv6(params) {
+        return this.check(core._uuidv6(ZodUUID, params));
       },
 
-      uuidv7: (inst) => (params) => {
-        return inst.check(core._uuidv7(ZodUUID, params));
+      uuidv7(params) {
+        return this.check(core._uuidv7(ZodUUID, params));
       },
 
-      nanoid: (inst) => (params) => {
-        return inst.check(core._nanoid(ZodNanoID, params));
+      nanoid(params) {
+        return this.check(core._nanoid(ZodNanoID, params));
       },
 
-      cuid: (inst) => (params) => {
-        return inst.check(core._cuid(ZodCUID, params));
+      cuid(params) {
+        return this.check(core._cuid(ZodCUID, params));
       },
 
-      cuid2: (inst) => (params) => {
-        return inst.check(core._cuid2(ZodCUID2, params));
+      cuid2(params) {
+        return this.check(core._cuid2(ZodCUID2, params));
       },
 
-      ulid: (inst) => (params) => {
-        return inst.check(core._ulid(ZodULID, params));
+      ulid(params) {
+        return this.check(core._ulid(ZodULID, params));
       },
 
-      base64: (inst) => (params) => {
-        return inst.check(core._base64(ZodBase64, params));
+      base64(params) {
+        return this.check(core._base64(ZodBase64, params));
       },
 
-      base64url: (inst) => (params) => {
-        return inst.check(core._base64url(ZodBase64URL, params));
+      base64url(params) {
+        return this.check(core._base64url(ZodBase64URL, params));
       },
 
-      xid: (inst) => (params) => {
-        return inst.check(core._xid(ZodXID, params));
+      xid(params) {
+        return this.check(core._xid(ZodXID, params));
       },
 
-      ksuid: (inst) => (params) => {
-        return inst.check(core._ksuid(ZodKSUID, params));
+      ksuid(params) {
+        return this.check(core._ksuid(ZodKSUID, params));
       },
 
-      ipv4: (inst) => (params) => {
-        return inst.check(core._ipv4(ZodIPv4, params));
+      ipv4(params) {
+        return this.check(core._ipv4(ZodIPv4, params));
       },
 
-      ipv6: (inst) => (params) => {
-        return inst.check(core._ipv6(ZodIPv6, params));
+      ipv6(params) {
+        return this.check(core._ipv6(ZodIPv6, params));
       },
 
-      cidrv4: (inst) => (params) => {
-        return inst.check(core._cidrv4(ZodCIDRv4, params));
+      cidrv4(params) {
+        return this.check(core._cidrv4(ZodCIDRv4, params));
       },
 
-      cidrv6: (inst) => (params) => {
-        return inst.check(core._cidrv6(ZodCIDRv6, params));
+      cidrv6(params) {
+        return this.check(core._cidrv6(ZodCIDRv6, params));
       },
 
-      e164: (inst) => (params) => {
-        return inst.check(core._e164(ZodE164, params));
+      e164(params) {
+        return this.check(core._e164(ZodE164, params));
       },
-      datetime: (inst) => (params) => {
-        return inst.check(core._isoDateTime(ZodISODateTime, params as any));
-      },
-
-      date: (inst) => (params) => {
-        return inst.check(core._isoDate(ZodISODate, params as any));
+      datetime(params) {
+        return this.check(core._isoDateTime(ZodISODateTime, params as any));
       },
 
-      time: (inst) => (params) => {
-        return inst.check(core._isoTime(ZodISOTime, params as any));
+      date(params) {
+        return this.check(core._isoDate(ZodISODate, params as any));
       },
 
-      duration: (inst) => (params) => {
-        return inst.check(core._isoDuration(ZodISODuration, params as any));
+      time(params) {
+        return this.check(core._isoTime(ZodISOTime, params as any));
+      },
+
+      duration(params) {
+        return this.check(core._isoDuration(ZodISODuration, params as any));
       },
     },
   }
@@ -1214,64 +1208,64 @@ export const ZodNumber: core.$constructor<ZodNumber> = /*@__PURE__*/ core.$const
   },
   {
     proto: {
-      gt: (inst) => (value, params) => {
-        return inst.check(checks.gt(value, params));
+      gt(value, params) {
+        return this.check(checks.gt(value, params));
       },
 
-      gte: (inst) => (value, params) => {
-        return inst.check(checks.gte(value, params));
+      gte(value, params) {
+        return this.check(checks.gte(value, params));
       },
 
-      min: (inst) => (value, params) => {
-        return inst.check(checks.gte(value, params));
+      min(value, params) {
+        return this.check(checks.gte(value, params));
       },
 
-      lt: (inst) => (value, params) => {
-        return inst.check(checks.lt(value, params));
+      lt(value, params) {
+        return this.check(checks.lt(value, params));
       },
 
-      lte: (inst) => (value, params) => {
-        return inst.check(checks.lte(value, params));
+      lte(value, params) {
+        return this.check(checks.lte(value, params));
       },
 
-      max: (inst) => (value, params) => {
-        return inst.check(checks.lte(value, params));
+      max(value, params) {
+        return this.check(checks.lte(value, params));
       },
 
-      int: (inst) => (params) => {
-        return inst.check(int(params));
+      int(params) {
+        return this.check(int(params));
       },
 
-      safe: (inst) => (params) => {
-        return inst.check(int(params));
+      safe(params) {
+        return this.check(int(params));
       },
 
-      positive: (inst) => (params) => {
-        return inst.check(checks.gt(0, params));
+      positive(params) {
+        return this.check(checks.gt(0, params));
       },
 
-      nonnegative: (inst) => (params) => {
-        return inst.check(checks.gte(0, params));
+      nonnegative(params) {
+        return this.check(checks.gte(0, params));
       },
 
-      negative: (inst) => (params) => {
-        return inst.check(checks.lt(0, params));
+      negative(params) {
+        return this.check(checks.lt(0, params));
       },
 
-      nonpositive: (inst) => (params) => {
-        return inst.check(checks.lte(0, params));
+      nonpositive(params) {
+        return this.check(checks.lte(0, params));
       },
 
-      multipleOf: (inst) => (value, params) => {
-        return inst.check(checks.multipleOf(value, params));
+      multipleOf(value, params) {
+        return this.check(checks.multipleOf(value, params));
       },
 
-      step: (inst) => (value, params) => {
-        return inst.check(checks.multipleOf(value, params));
+      step(value, params) {
+        return this.check(checks.multipleOf(value, params));
       },
 
-      finite: (inst) => () => {
-        return inst;
+      finite() {
+        return this;
       },
     },
   }
@@ -1372,48 +1366,48 @@ export const ZodBigInt: core.$constructor<ZodBigInt> = /*@__PURE__*/ core.$const
   },
   {
     proto: {
-      gte: (inst) => (value, params) => {
-        return inst.check(checks.gte(value, params));
+      gte(value, params) {
+        return this.check(checks.gte(value, params));
       },
 
-      min: (inst) => (value, params) => {
-        return inst.check(checks.gte(value, params));
+      min(value, params) {
+        return this.check(checks.gte(value, params));
       },
 
-      gt: (inst) => (value, params) => {
-        return inst.check(checks.gt(value, params));
+      gt(value, params) {
+        return this.check(checks.gt(value, params));
       },
 
-      lt: (inst) => (value, params) => {
-        return inst.check(checks.lt(value, params));
+      lt(value, params) {
+        return this.check(checks.lt(value, params));
       },
 
-      lte: (inst) => (value, params) => {
-        return inst.check(checks.lte(value, params));
+      lte(value, params) {
+        return this.check(checks.lte(value, params));
       },
 
-      max: (inst) => (value, params) => {
-        return inst.check(checks.lte(value, params));
+      max(value, params) {
+        return this.check(checks.lte(value, params));
       },
 
-      positive: (inst) => (params) => {
-        return inst.check(checks.gt(BigInt(0), params));
+      positive(params) {
+        return this.check(checks.gt(BigInt(0), params));
       },
 
-      negative: (inst) => (params) => {
-        return inst.check(checks.lt(BigInt(0), params));
+      negative(params) {
+        return this.check(checks.lt(BigInt(0), params));
       },
 
-      nonpositive: (inst) => (params) => {
-        return inst.check(checks.lte(BigInt(0), params));
+      nonpositive(params) {
+        return this.check(checks.lte(BigInt(0), params));
       },
 
-      nonnegative: (inst) => (params) => {
-        return inst.check(checks.gte(BigInt(0), params));
+      nonnegative(params) {
+        return this.check(checks.gte(BigInt(0), params));
       },
 
-      multipleOf: (inst) => (value, params) => {
-        return inst.check(checks.multipleOf(value, params));
+      multipleOf(value, params) {
+        return this.check(checks.multipleOf(value, params));
       },
     },
   }
@@ -1592,24 +1586,24 @@ export const ZodArray: core.$constructor<ZodArray> = /*@__PURE__*/ core.$constru
   },
   {
     proto: {
-      min: (inst) => (n, params) => {
-        return inst.check(checks.minLength(n, params));
+      min(n, params) {
+        return this.check(checks.minLength(n, params));
       },
 
-      nonempty: (inst) => (params) => {
-        return inst.check(checks.minLength(1, params));
+      nonempty(params) {
+        return this.check(checks.minLength(1, params));
       },
 
-      max: (inst) => (n, params) => {
-        return inst.check(checks.maxLength(n, params));
+      max(n, params) {
+        return this.check(checks.maxLength(n, params));
       },
 
-      length: (inst) => (n, params) => {
-        return inst.check(checks.length(n, params));
+      length(n, params) {
+        return this.check(checks.length(n, params));
       },
 
-      unwrap: (inst) => () => {
-        return inst.element;
+      unwrap() {
+        return this.element;
       },
     },
   }
@@ -1747,67 +1741,61 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
   },
   {
     proto: {
-      keyof: (inst) => () => {
-        return _enum(Object.keys(inst._zod.def.shape));
+      keyof() {
+        return _enum(Object.keys(this._zod.def.shape));
       },
 
-      catchall: (inst) => (catchall) => {
-        return inst.clone({ ...inst._zod.def, catchall: catchall as any });
+      catchall(catchall) {
+        return this.clone({ ...this._zod.def, catchall: catchall as any });
       },
 
-      passthrough: (inst) => () => {
-        return inst.clone({ ...inst._zod.def, catchall: unknown() });
+      passthrough() {
+        return this.clone({ ...this._zod.def, catchall: unknown() });
       },
 
-      loose: (inst) => () => {
-        return inst.clone({ ...inst._zod.def, catchall: unknown() });
+      loose() {
+        return this.clone({ ...this._zod.def, catchall: unknown() });
       },
 
-      strict: (inst) => () => {
-        return inst.clone({ ...inst._zod.def, catchall: never() });
+      strict() {
+        return this.clone({ ...this._zod.def, catchall: never() });
       },
 
-      strip: (inst) => () => {
-        return inst.clone({ ...inst._zod.def, catchall: undefined });
+      strip() {
+        return this.clone({ ...this._zod.def, catchall: undefined });
       },
 
-      extend: (inst) => (incoming) => {
-        return util.extend(inst, incoming);
+      extend(incoming) {
+        return util.extend(this, incoming);
       },
 
-      safeExtend: (inst) => (incoming) => {
-        return util.safeExtend(inst, incoming);
+      safeExtend(incoming) {
+        return util.safeExtend(this, incoming);
       },
 
-      merge: (inst) => (other) => {
-        return util.merge(inst, other);
+      merge(other) {
+        return util.merge(this, other);
       },
 
-      pick: (inst) => (mask) => {
-        return util.pick(inst, mask);
+      pick(mask) {
+        return util.pick(this, mask);
       },
 
-      omit: (inst) => (mask) => {
-        return util.omit(inst, mask);
+      omit(mask) {
+        return util.omit(this, mask);
       },
 
-      partial:
-        (inst) =>
-        (...args) => {
-          return util.partial(ZodOptional, inst, args[0]);
-        },
+      partial(...args) {
+        return util.partial(ZodOptional, this, args[0]);
+      },
 
-      exactPartial:
-        (inst) =>
-        (...args) => {
-          return util.partial(ZodExactOptional, inst, args[0], "exactPartial");
-        },
+      exactPartial(...args) {
+        return util.partial(ZodExactOptional, this, args[0], "exactPartial");
+      },
 
-      required:
-        (inst) =>
-        (...args) => {
-          return util.required(ZodNonOptional, inst, args[0]);
-        },
+      required(...args) {
+        return util.required(ZodNonOptional, this, args[0]);
+      },
     },
   }
 );
@@ -1987,18 +1975,18 @@ export const ZodTuple: core.$constructor<ZodTuple> = /*@__PURE__*/ core.$constru
   },
   {
     proto: {
-      rest: (inst) => (rest) => {
-        return inst.clone({
-          ...inst._zod.def,
+      rest(rest) {
+        return this.clone({
+          ...this._zod.def,
           rest: rest as any as core.$ZodType,
         }) as any;
       },
 
-      partial: (inst) => () => {
-        const def = inst._zod.def;
+      partial() {
+        const def = this._zod.def;
         // a refinement was authored against the full arity; partialing would run it on a shorter array
         if (def.checks?.length) throw new Error(".partial() cannot be used on tuple schemas containing refinements");
-        return inst.clone({
+        return this.clone({
           ...def,
           items: def.items.map((item) => new ZodOptional({ type: "optional", innerType: item })),
         }) as any;
