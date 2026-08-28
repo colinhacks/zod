@@ -143,3 +143,14 @@ test("a live member is not cached per instance", () => {
   expect(schema.description).toBe("later");
   expect(Object.prototype.hasOwnProperty.call(schema, "description")).toBe(false);
 });
+
+test("constructing through a subclass does not strip the base prototype", () => {
+  // `super(def)` gives `this` a prototype of `new.target.prototype`, so a constructor can complete a construction without having built its own prototype.
+  const MyString: new (def: { type: "string" }) => z.ZodString = class extends (z.ZodString as any) {} as any;
+  new MyString({ type: "string" });
+
+  const plain = z.string();
+  expect(plain.parse("x")).toBe("x");
+  expect(typeof plain.email).toBe("function");
+  expect(typeof new MyString({ type: "string" }).email).toBe("function");
+});

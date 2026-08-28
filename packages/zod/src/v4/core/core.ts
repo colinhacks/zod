@@ -115,19 +115,20 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
   class Definition extends Parent {}
   Object.defineProperty(Definition, "name", { value: name });
 
-  // Flipped by the first complete construction, which is what runs this constructor's prototype initializers.
-  let ready = false;
+  // The prototype the last complete construction built. Not a boolean: `super(def)` from a subclass gives `this` a prototype of `new.target.prototype`, so a constructor can complete without having built its own.
+  let builtProto: object | undefined;
 
   function _(this: any, def: D) {
     const inst = params?.Parent ? newError(Definition) : this;
-    protoReady = ready;
+    const proto = Object.getPrototypeOf(inst);
+    protoReady = proto === builtProto;
     try {
       init(inst, def);
     } finally {
       // Cleared even on throw, so a direct `SomeTrait.init(obj, def)` outside a construction never inherits another constructor's answer.
       protoReady = false;
     }
-    ready = true;
+    builtProto = proto;
     const deferred = inst._zod.deferred;
     if (deferred) {
       for (const fn of deferred) {
