@@ -929,7 +929,7 @@ describe("symbol keys in object shape", () => {
     const input: any = { name: "root" };
     input[SYM] = input;
     expect(A.safeParse(input).success).toBe(true);
-    expect(() => z.compile(A)).toThrow(/does not support/);
+    expect(() => z.compile(A, { strict: true })).toThrow(/does not support/);
   });
 
   test("extend's refinement-overlap guard sees symbol keys", () => {

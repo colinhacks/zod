@@ -161,7 +161,7 @@ For the record, so the PR review doesn't relitigate these:
 
 ## Force-fallback cases (Phase 4 outcome)
 
-The compile pass throws `ZodCompileUnsupportedError` at codegen time for the schemas/features below. The global shim (and `import "zod/compile"`) catches it and permanently restores the runtime `_zod.run` for that schema. Direct `z.compile(schema)` callers see the throw and should not be compiling that schema. None of these affect *correctness* — runtime semantics are preserved by construction.
+The compile pass throws `ZodCompileUnsupportedError` at codegen time for the schemas/features below. The global shim (and `import "zod/compile"`) catches it and permanently restores the runtime `_zod.run` for that schema. Direct `z.compile(schema)` callers get the schema back uncompiled; `{ strict: true }` surfaces the throw instead. None of these affect *correctness* — runtime semantics are preserved by construction.
 
 Future work would re-add fast-path codegen for these, ideally one bucket per PR with focused benches.
 

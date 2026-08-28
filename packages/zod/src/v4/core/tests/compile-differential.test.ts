@@ -408,7 +408,7 @@ test("union all-literals (Set optimization)", () => {
 
 test("xor is unsupported directly; parity holds through a container island", () => {
   // Exactly-one-match counting is unsound against any falsely-rejecting branch, so xor always uses the runtime.
-  expect(() => compile(z.xor([z.string(), z.number()]))).toThrow();
+  expect(() => compile(z.xor([z.string(), z.number()]), { strict: true })).toThrow();
   differential(z.object({ v: z.xor([z.string(), z.number()]) }), [{ v: "a" }, { v: 1 }, { v: true }, { v: null }]);
   differential(z.object({ v: z.xor([z.string(), z.any()]) }), [{ v: "a" }, { v: 1 }, { v: null }]);
 });
@@ -537,7 +537,7 @@ test("catch inside object property", () => {
 test("catch with function reading issues is refused", () => {
   // The callback reads issues finalized against the caller's per-parse error map, which generated code has no access to. Refusing at codegen is what makes it safe inside a union; returning INVALID at parse time would read as a rejected branch.
   const schema = z.catch(z.string().min(5), (ctx) => `e:${ctx.error.issues.length}`);
-  expect(() => compile(schema)).toThrow(ZodCompileUnsupportedError);
+  expect(() => compile(schema, { strict: true })).toThrow(ZodCompileUnsupportedError);
   expect(schema.parse("ab")).toBe("e:1");
   expect(schema.parse(123 as never, { error: () => "MAPPED" })).toBe("e:1");
 });
@@ -548,11 +548,11 @@ test("catch with a callback is refused inside a container, not islanded", () => 
   const schema = z.object({ a: inner, b: z.number() });
   const mapped = { error: () => "MAPPED" };
 
-  expect(() => compile(schema)).toThrow(ZodCompileUnsupportedError);
+  expect(() => compile(schema, { strict: true })).toThrow(ZodCompileUnsupportedError);
   expect(schema.parse({ a: 1, b: 2 }, mapped)).toEqual({ a: "msg=MAPPED", b: 2 });
 
   // The sibling stays compilable on its own, so the refusal is about catch and not about the container.
-  expect(() => compile(z.object({ a: z.string(), b: z.number() }))).not.toThrow();
+  expect(() => compile(z.object({ a: z.string(), b: z.number() }), { strict: true })).not.toThrow();
 });
 
 test("catch with a constant value keeps the fast path", () => {
@@ -672,7 +672,7 @@ test("a catch callback is refused however it declares its arity", () => {
     ((ctx: any = { error: { issues: [] } }) => `e:${ctx.error.issues.length}`) as never
   );
   for (const schema of [rest, dflt]) {
-    expect(() => compile(schema)).toThrow(ZodCompileUnsupportedError);
+    expect(() => compile(schema, { strict: true })).toThrow(ZodCompileUnsupportedError);
     expect(schema.parse("ab")).toBe("e:1");
   }
   differential(z.catch(z.string().min(5), "fb"), ["abcdef", "ab", 42]);
@@ -699,7 +699,12 @@ test("a thenable predicate throws rather than rejecting", () => {
   differential(z.string().transform((() => Promise.resolve(1)) as never), ["x"], { fallbackOk: true });
 
   // A real async predicate is still refused at codegen, and an ordinary one still compiles.
-  expect(() => compile(z.custom(async () => true))).toThrow();
+  expect(() =>
+    compile(
+      z.custom(async () => true),
+      { strict: true }
+    )
+  ).toThrow();
   differential(
     z.custom((v) => typeof v === "string"),
     ["x", 1, null, undefined]

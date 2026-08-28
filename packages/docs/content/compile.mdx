@@ -85,7 +85,21 @@ Two consequences worth knowing:
 
 ## Unsupported schemas
 
-Compilation is sync and forward-only. `z.compile()` throws if the schema can't be fully modeled:
+Compilation is sync and forward-only. A schema the fast path can't fully model is not an error — `z.compile()` hands it back unchanged, still running on the standard parser:
+
+```ts
+const Schema = z.string().refine(async (val) => isAvailable(val));
+
+z.compile(Schema); // returns Schema itself, uncompiled
+```
+
+Pass `strict` to surface the refusal instead. Use it to confirm that a schema on a hot path really did compile:
+
+```ts
+z.compile(Schema, { strict: true }); // throws ZodCompileAsyncError
+```
+
+There are two error classes, and both are thrown only under `strict`:
 
 - **`ZodCompileAsyncError`** — the schema contains an async refinement, transform, or check.
 - **`ZodCompileUnsupportedError`** — the schema uses a construct the fast path can't reproduce exactly:
@@ -97,9 +111,9 @@ Compilation is sync and forward-only. `z.compile()` throws if the schema can't b
 
 Inside containers (objects, arrays, tuples, records, intersections), an unsupported *child* doesn't prevent compilation — the child runs on the standard parser while the surrounding structure stays compiled.
 
-`.catch()` with a callback is the exception: it's the one construct that *consumes* issues instead of propagating them, so running only that node on the standard parser would finalize its issues against the wrong error map and still succeed. A schema containing one refuses to compile as a whole.
+`.catch()` with a callback is the exception: it's the one construct that *consumes* issues instead of propagating them, so running only that node on the standard parser would finalize its issues against the wrong error map and still succeed. A schema containing one falls back as a whole.
 
-Under global mode, schemas that fail to compile silently keep using the standard parser. There is no behavioral difference — only the speedup is lost. For this reason, avoid enabling global mode in a library on behalf of your users; leave the choice to the application.
+Global mode behaves identically: a schema it can't compile keeps using the standard parser. Either way the only thing lost is the speedup. Avoid enabling global mode in a library on behalf of your users; leave the choice to the application.
 
 Encode operations (`z.encode()`, codec `"backward"` direction) and async parsing always use the standard parser.
 
@@ -111,4 +125,4 @@ Compilation uses `new Function`, which is unavailable in CSP/no-`eval` environme
 z.config({ jitless: true });
 ```
 
-Calling `z.compile()` directly is treated as an explicit opt-in and throws `ZodCompileUnsupportedError` if code generation is unavailable.
+Calling `z.compile()` directly is an explicit opt-in, so it attempts code generation regardless of `jitless`. Where the environment rejects `new Function`, the schema comes back uncompiled like any other refusal.
