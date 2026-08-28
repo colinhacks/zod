@@ -740,3 +740,205 @@ test("a thenable predicate throws rather than rejecting", () => {
     ["x", 1, null, undefined]
   );
 });
+
+// Generated corpus. The hand-written fixtures above pin the shapes we reasoned about; this covers the combinations nobody thought to write, which is where a codegen flag actually breaks. Seeded so a failure reproduces.
+function makeRng(seed: number): () => number {
+  let a = seed;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+interface Generated {
+  schema: z.ZodType;
+  ok: () => unknown;
+}
+
+function generate(rnd: () => number, depth: number): Generated {
+  const pick = <T>(xs: T[]): T => xs[Math.floor(rnd() * xs.length)];
+  const leaves = ["string", "number", "boolean", "literal", "enum", "bounded", "int"];
+  const nodes = [
+    "object",
+    "looseObject",
+    "strictObject",
+    "array",
+    "optional",
+    "nullable",
+    "union",
+    "tuple",
+    "record",
+    "default",
+    "catch",
+    "refine",
+    "transform",
+    "pipe",
+  ];
+  switch (depth <= 0 ? pick(leaves) : pick(rnd() < 0.45 ? leaves : nodes)) {
+    case "string":
+      return { schema: z.string(), ok: () => pick(["a", "", "hello"]) };
+    case "bounded":
+      return { schema: z.string().min(2).max(6), ok: () => pick(["ab", "abcdef"]) };
+    case "number":
+      return { schema: z.number(), ok: () => pick([0, 1, -1, 3.5]) };
+    case "int":
+      return { schema: z.number().int().min(0), ok: () => pick([0, 42]) };
+    case "boolean":
+      return { schema: z.boolean(), ok: () => rnd() < 0.5 };
+    case "literal":
+      return { schema: z.literal("lit"), ok: () => "lit" };
+    case "enum":
+      return { schema: z.enum(["a", "b"]), ok: () => pick(["a", "b"]) };
+    case "object":
+    case "looseObject":
+    case "strictObject": {
+      const kids: Record<string, Generated> = {};
+      const shape: Record<string, z.ZodType> = {};
+      for (let i = 0; i < 1 + Math.floor(rnd() * 3); i++) {
+        kids[`k${i}`] = generate(rnd, depth - 1);
+        shape[`k${i}`] = kids[`k${i}`].schema;
+      }
+      const ctor = pick([z.object, z.looseObject, z.strictObject]) as typeof z.object;
+      return {
+        schema: ctor(shape as never),
+        ok: () => Object.fromEntries(Object.entries(kids).map(([k, v]) => [k, v.ok()])),
+      };
+    }
+    case "array": {
+      const c = generate(rnd, depth - 1);
+      return { schema: z.array(c.schema), ok: () => Array.from({ length: Math.floor(rnd() * 3) }, () => c.ok()) };
+    }
+    case "tuple": {
+      const a = generate(rnd, depth - 1);
+      const b = generate(rnd, depth - 1);
+      return { schema: z.tuple([a.schema, b.schema]), ok: () => [a.ok(), b.ok()] };
+    }
+    case "record": {
+      const c = generate(rnd, depth - 1);
+      return { schema: z.record(z.string(), c.schema), ok: () => ({ p: c.ok(), q: c.ok() }) };
+    }
+    case "optional": {
+      const c = generate(rnd, depth - 1);
+      return { schema: z.optional(c.schema), ok: () => (rnd() < 0.3 ? undefined : c.ok()) };
+    }
+    case "nullable": {
+      const c = generate(rnd, depth - 1);
+      return { schema: z.nullable(c.schema), ok: () => (rnd() < 0.3 ? null : c.ok()) };
+    }
+    case "union": {
+      const a = generate(rnd, depth - 1);
+      const b = generate(rnd, depth - 1);
+      return { schema: z.union([a.schema, b.schema]), ok: () => (rnd() < 0.5 ? a.ok() : b.ok()) };
+    }
+    case "default": {
+      const c = generate(rnd, depth - 1);
+      return { schema: z.optional(c.schema).default(c.ok() as never), ok: () => (rnd() < 0.3 ? undefined : c.ok()) };
+    }
+    case "catch": {
+      const c = generate(rnd, depth - 1);
+      return { schema: c.schema.catch(c.ok() as never), ok: () => (rnd() < 0.4 ? 12345 : c.ok()) };
+    }
+    case "refine": {
+      const c = generate(rnd, depth - 1);
+      return { schema: c.schema.refine((v: unknown) => v !== "__never__"), ok: () => c.ok() };
+    }
+    case "transform": {
+      const c = generate(rnd, depth - 1);
+      return { schema: c.schema.transform((v: unknown) => ({ wrapped: v })), ok: () => c.ok() };
+    }
+    default: {
+      const c = generate(rnd, depth - 1);
+      return { schema: c.schema.pipe(z.any()), ok: () => c.ok() };
+    }
+  }
+}
+
+const HOSTILE: unknown[] = [
+  undefined,
+  null,
+  Number.NaN,
+  -0,
+  0,
+  "",
+  "x",
+  true,
+  false,
+  [],
+  {},
+  [1, 2],
+  { k0: 1 },
+  Object.create(null),
+  new Date(Number.NaN),
+  1n,
+  Symbol.iterator,
+  Number.POSITIVE_INFINITY,
+];
+
+function corrupt(rnd: () => number, value: unknown, depth = 0): unknown {
+  const pick = <T>(xs: T[]): T => xs[Math.floor(rnd() * xs.length)];
+  if (depth > 2 || rnd() < 0.35) return pick(HOSTILE);
+  if (Array.isArray(value)) {
+    const out = value.slice();
+    if (out.length && rnd() < 0.6) out[Math.floor(rnd() * out.length)] = corrupt(rnd, out[0], depth + 1);
+    else out.push(pick(HOSTILE));
+    return out;
+  }
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = { ...(value as Record<string, unknown>) };
+    const keys = Object.keys(out);
+    if (keys.length && rnd() < 0.6) out[pick(keys)] = corrupt(rnd, out[pick(keys)], depth + 1);
+    else if (rnd() < 0.5) out[`extra${Math.floor(rnd() * 3)}`] = pick(HOSTILE);
+    else delete out[pick(keys)];
+    return out;
+  }
+  return pick(HOSTILE);
+}
+
+test("assert mode agrees with the parser and the runtime across generated schemas", () => {
+  let accepted = 0;
+  let rejected = 0;
+
+  for (const seed of [1, 7, 42, 1337]) {
+    const rnd = makeRng(seed);
+    for (let i = 0; i < 150; i++) {
+      const g = generate(rnd, 1 + Math.floor(rnd() * 3));
+      const parser = attempt(() => compileFastpass(g.schema));
+      const validator = attempt(() => compileFastpass(g.schema, { assertOnly: true }));
+      const parseFn = parser.value;
+      const assertFn = validator.value;
+      if (!parseFn || !assertFn) continue;
+      const compiled = attempt(() => compile(g.schema));
+      const compiledSchema = compiled.value;
+
+      for (let j = 0; j < 6; j++) {
+        const input = j < 3 ? g.ok() : corrupt(rnd, g.ok());
+        const label = `seed ${seed} case ${i}/${j} input ${describe(input)}`;
+
+        const viaParser = attempt(() => parseFn(input) !== INVALID);
+        const viaValidator = attempt(() => assertFn(input) !== INVALID);
+        expect(viaValidator.threw ?? "did not throw", `assert-mode throw disagrees, ${label}`).toBe(
+          viaParser.threw ?? "did not throw"
+        );
+        if (viaParser.threw) continue;
+        expect(viaValidator.value, `assert-mode verdict disagrees, ${label}`).toBe(viaParser.value);
+
+        const runtime = attempt(() => g.schema.safeParse(input).success);
+        if (runtime.threw) continue;
+        expect(viaParser.value, `compiled verdict disagrees with the runtime, ${label}`).toBe(runtime.value);
+        if (compiledSchema) {
+          expect(z.validate(compiledSchema, input), `z.validate disagrees with the runtime, ${label}`).toBe(
+            runtime.value
+          );
+        }
+        if (runtime.value) accepted++;
+        else rejected++;
+      }
+    }
+  }
+
+  // Guard against a corpus that only ever passes: agreement on 3600 accepted verdicts would prove nothing about rejection.
+  expect(accepted, "generated corpus produced too few accepted inputs").toBeGreaterThan(500);
+  expect(rejected, "generated corpus produced too few rejected inputs").toBeGreaterThan(500);
+});

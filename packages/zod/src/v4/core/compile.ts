@@ -157,7 +157,6 @@ export function compile<T extends SomeType>(schema: T, options?: CompileOptions)
     };
     // Let later compiles of (or through) this run unwrap to the true runtime — both the global shim and repeated z.compile calls rely on this. The bag also carries the parser and the validator, so the standalone validate can skip the payload and wrapper on the happy path.
     (wrapped as { __originalRun?: typeof originalRun }).__originalRun = originalRun;
-    clone._zod.bag.fastpass = fast;
     clone._zod.bag.fallbackRun = originalRun;
     clone._zod.bag.validator = compileValidator(schema, fast as (input: unknown) => unknown);
     clone._zod.run = wrapped;
