@@ -1626,9 +1626,7 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
     ZodType.init(inst, def);
     inst._zod.processJSONSchema = (ctx, json, params) => processors.objectProcessor(inst, ctx, json, params);
 
-    util.defineLazy(inst, "shape", () => {
-      return def.shape;
-    });
+    util.installLazyProp(inst, "shape", (self) => self._zod.def.shape, false);
   },
   {
     keyof() {

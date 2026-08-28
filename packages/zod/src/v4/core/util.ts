@@ -1108,18 +1108,18 @@ function claim(inst: object, sentinel: string): object | undefined {
   return sentinel in proto ? undefined : proto;
 }
 
-function defineCached(proto: object, key: string, compute: (self: any) => unknown): void {
-  // `~standard` was never an own data property, so caching it must not add it to `Object.keys`. Everything else here was enumerable and stays so.
-  const enumerable = key !== "~standard";
+function defineCached(proto: object, key: string, compute: (self: any) => unknown, enumerable?: boolean): void {
+  // `~standard` was never an own data property, so caching it must not add it to `Object.keys`. Everything else here was enumerable and stays so; a key that was not says so explicitly.
+  const cached = enumerable ?? key !== "~standard";
   Object.defineProperty(proto, key, {
     configurable: true,
     get(this: any) {
       const value = compute(this);
-      Object.defineProperty(this, key, { configurable: true, writable: true, enumerable, value });
+      Object.defineProperty(this, key, { configurable: true, writable: true, enumerable: cached, value });
       return value;
     },
     set(this: any, value: unknown) {
-      Object.defineProperty(this, key, { configurable: true, writable: true, enumerable: true, value });
+      Object.defineProperty(this, key, { configurable: true, writable: true, enumerable: enumerable ?? true, value });
     },
   });
 }
@@ -1229,9 +1229,14 @@ export function defineLazyInternal<T extends { _zod: any }>(
 }
 
 /** Single-property variant; the key doubles as the sentinel. */
-export function installLazyProp(inst: object, key: string, make: (self: any) => unknown): void {
+export function installLazyProp(
+  inst: object,
+  key: string,
+  make: (self: any) => unknown,
+  enumerable?: boolean
+): void {
   const proto = claim(inst, key);
-  if (proto) defineCached(proto, key, make);
+  if (proto) defineCached(proto, key, make, enumerable);
 }
 
 /** Marks the thunk `_catch` synthesises for a constant catch value. `Function.length` cannot tell that thunk from a user callback — rest and defaulted parameters both report arity 0 — and a user callback reads `ctx.error`, whose issues only finalize correctly against the caller's per-parse error map. Provenance can say what arity cannot. A plain string key rather than `Symbol.for`, whose call at module scope no bundler can prove pure — the same shape that anchored `urlCanParse` into every build. */
