@@ -14,7 +14,8 @@ const P44 = shape(z44);
 if (require("zod443/package.json").version !== "4.4.3") throw new Error("zod443 must resolve to 4.4.3");
 const P45 = shape(z45);
 const bad = { username: 42, bio: "hello", xp: 12 };
-if (P44.safeParse(bad).success !== false || P45.safeParse(bad).success !== false) throw new Error("input must fail on both");
+if (P44.safeParse(bad).success !== false || P45.safeParse(bad).success !== false)
+  throw new Error("input must fail on both");
 
 const N = 200_000;
 let sink = 0;
@@ -31,4 +32,6 @@ for (let r = 0; r < 14; r++) {
   best44 = Math.min(best44, time(P44));
   best45 = Math.min(best45, time(P45));
 }
-console.log(`failing safeParse: 4.4.3 ${best44.toFixed(0)} ns, current ${best45.toFixed(0)} ns, ${(best44 / best45).toFixed(2)}x (sink ${sink})`);
+console.log(
+  `failing safeParse: 4.4.3 ${best44.toFixed(0)} ns, current ${best45.toFixed(0)} ns, ${(best44 / best45).toFixed(2)}x (sink ${sink})`
+);
