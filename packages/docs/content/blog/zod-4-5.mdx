@@ -261,25 +261,22 @@ result.subcategories[0] === result; // true
 // register a memoizer before defining any schemas
 z.config({ memoizer: z.memoizer() });
 
+const Category = z.object({
+  name: z.string(),
+  get subcategories() {
+    return z.array(Category);
+  },
+});
+
+const input: any = { name: "root", subcategories: [] };
+input.subcategories.push(input);
+
 const result = Category.parse(input);
 result.subcategories[0] === result; // true
 ```
 
 </Tab>
 </Tabs>
-
-```ts
-const Node = z.object({
-  id: z.number(),
-  get self() { return Node; },
-});
-
-const input: any = { id: 1 };
-input.self = input;
-
-const out = Node.parse(input);
-out.self === out; // true
-```
 
 ## 9x reduction in schema memory footprint
 
@@ -295,18 +292,18 @@ In Zod 4.4 a bare `z.string()` retained 7.5kb of heap. In Zod 4.5 it retains 784
 In Zod 4.4 and earlier, all schema methods were automatically bound to the instance itself. This allowed users to pluck methods from schemas without causing issues due to `this`-binding.
 
 ```ts
-const {parse} = z.string();
+const { parse } = z.string();
 
-parse("some data")
+parse("some data");
 ```
 
-A consequence of this is that each bound method allocates space on the heap. Method implementations are not shared across all instances via `prototype`, as you'd expect. Zod 4.5 implements a [method memoization](https://zod.dev/blog/reducing-memory-footprint#the-fix) pattern that avoids allocating methods until they are actually called.
+A consequence of this is that each bound method allocates space on the heap; methods implementations are no longer shared across all instances via `prototype`, as you'd expect. Zod 4.5 implements a method memoization pattern that avoids allocating bound methods until they are actually accessed. 
 
 <Callout>Read the deep dive: [Reducing Zod's memory footprint by an order of magnitude](https://zod.dev/blog/reducing-memory-footprint)</Callout>
 
 ## Faster failures
 
-Zod `.parse()` instantiates a JavaScript `Error`, which captures a stack trace and is often much slower than the parsing logic itself. When using `.safeParse()`, Zod no longer captures this stack trace, speeding up failure-path parses by a factor of ~7.5x. ([#6316](https://github.com/colinhacks/zod/pull/6316), [#6450](https://github.com/colinhacks/zod/pull/6450))
+Zod `.parse()`/`.safeParse()` instantiates a JavaScript `Error`, which captures a stack trace. In the case of validation failures, this is often much slower than the parsing logic itself. When using `.safeParse()`, Zod no longer captures this stack trace, speeding up failure-path parses by a factor of ~7.5x. ([#6316](https://github.com/colinhacks/zod/pull/6316), [#6450](https://github.com/colinhacks/zod/pull/6450))
 
 ```ts
 const result = Player.safeParse({ username: 42, bio: "hello", xp: 12 });
