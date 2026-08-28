@@ -4,11 +4,11 @@ import * as util from "../core/util.js";
 
 const error: () => errors.$ZodErrorMap = () => {
   const Sizable: Record<string, { unit: string; verb: string }> = {
-    string: { unit: "अक्षरहरू", verb: "हुनुपर्छ" },
-    file: { unit: "बाइटहरू", verb: "हुनुपर्छ" },
-    array: { unit: "तत्वहरू", verb: "हुनुपर्छ" },
-    set: { unit: "तत्वहरू", verb: "हुनुपर्छ" },
-    map: { unit: "प्रविष्टिहरू", verb: "हुनुपर्छ" },
+    string: { unit: "अक्षर", verb: "हुनुपर्छ" },
+    file: { unit: "बाइट", verb: "हुनुपर्छ" },
+    array: { unit: "तत्व", verb: "हुनुपर्छ" },
+    set: { unit: "तत्व", verb: "हुनुपर्छ" },
+    map: { unit: "प्रविष्टि", verb: "हुनुपर्छ" },
   };
 
   function getSizing(origin: string): { unit: string; verb: string } | null {
