@@ -44,7 +44,8 @@ const CEILINGS: Record<string, number> = {
   "zod-mini-string": 3448,
   // Also carries the construction-time discriminator check, which writes a WeakMap entry from `$ZodObject`, so every bundle containing `z.object` pays for it whether or not it builds a discriminated union.
   // Also carries the declared symbol keys from #6448: `normalizeDef` collects the shape's own symbols and the parse loop walks them. Almost none of that is the `Reflect.ownKeys` conversions — reverting all eight of them measures a byte larger.
-  "zod-mini-object": 4531,
+  // Also carries the memoizer seam from #6482: each container init reads `globalConfig.memoizer` and calls `attach`, which is what lets `zod/mini` opt into cycle support. Measured 4512 locally but 4533 on CI — the gzip stream differs across zlib builds — so the headroom rides on the CI number.
+  "zod-mini-object": 4561,
 };
 
 /**
