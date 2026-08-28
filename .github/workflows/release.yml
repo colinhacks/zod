@@ -7,7 +7,6 @@ on:
       - main
     paths:
       - "packages/zod/package.json"
-      - "packages/zod/src/**"
       - ".github/workflows/release.yml"
 
 jobs:
@@ -126,28 +125,6 @@ jobs:
           echo "zod@$VERSION is not on the registry after 10 minutes; stopping before the GitHub release and the JSR publish"
           exit 1
 
-      - name: Set canary version
-        if: ${{ !steps.publish.outputs.type }}
-        working-directory: ./packages/zod
-        run: |
-          npm --no-git-tag-version version minor
-          npm --no-git-tag-version version $(npm pkg get version | sed 's/"//g')-canary.$(date +'%Y%m%dT%H%M%S')
-
-      - name: Publish canary
-        if: ${{ !steps.publish.outputs.type }}
-        uses: JS-DevTools/npm-publish@v4
-        with:
-          dry-run: false
-          provenance: true
-          tag: canary
-          package: ./packages/zod
-      
-      - name: Done with canary
-        if: ${{ !steps.publish.outputs.type }}
-        run: |
-          echo "Canary published."
-          exit 0
-     
       - name: Configure changelog
         if: ${{ steps.publish.outputs.type }}
         run: |

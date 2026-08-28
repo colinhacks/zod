@@ -606,16 +606,6 @@ bun add zod           # bun
 pnpm add zod          # pnpm
 ```
 
-Zod는 모든 커밋마다 카나리(canary) 버전도 배포합니다. 카나리 버전을 설치하려면:
-
-```sh
-npm install zod@canary       # npm
-deno add npm:zod@canary      # deno
-yarn add zod@canary          # yarn
-bun add zod@canary           # bun
-pnpm add zod@canary          # pnpm
-```
-
 > 이 README의 나머지 부분은 여러분이 npm을 사용하고 `"zod"` 패키지에서 직접 임포트한다고 가정합니다.
 
 ## 기본 사용법

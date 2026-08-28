@@ -102,7 +102,7 @@ git commit -m "<x.y.z>"   # commit message is just the version, e.g. "4.4.3"
 git push origin main
 ```
 
-The release workflow only fires on changes under `packages/zod/package.json`, `packages/zod/src/**`, or the workflow file itself, so the bump must include `package.json`. Watch the Actions tab to confirm `build_and_publish` succeeds.
+The release workflow only fires on changes under `packages/zod/package.json` or the workflow file itself, so the bump must include `package.json`. Watch the Actions tab to confirm `build_and_publish` succeeds.
 
 ## Format validators: spec compliance is not the bar
 

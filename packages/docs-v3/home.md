@@ -636,16 +636,6 @@ bun add zod           # bun
 pnpm add zod          # pnpm
 ```
 
-Zod also publishes a canary version on every commit. To install the canary:
-
-```sh
-npm install zod@canary       # npm
-deno add npm:zod@canary      # deno
-yarn add zod@canary          # yarn
-bun add zod@canary           # bun
-pnpm add zod@canary          # pnpm
-```
-
 > The rest of this README assumes you are using npm and importing directly from the `"zod"` package.
 
 <br/>
