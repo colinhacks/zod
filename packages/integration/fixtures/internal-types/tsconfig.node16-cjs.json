@@ -10,5 +10,5 @@
     "resolveJsonModule": true,
     "isolatedModules": true
   },
-  "include": ["./cjs-test.cts"]
+  "include": ["./cjs-test.cts", "./mini-cjs-test.cts"]
 }

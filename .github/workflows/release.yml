@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - "packages/zod/package.json"
+      - "packages/mini/package.json"
       - ".github/workflows/release.yml"
 
 jobs:
@@ -95,6 +96,8 @@ jobs:
       - run: pnpm run --filter @zod/resolution test:all
       - run: pnpm run prepublishOnly
         working-directory: ./packages/zod
+      - run: pnpm run prepublishOnly
+        working-directory: ./packages/mini
 
       - id: publish
         name: Publish to NPM
@@ -123,6 +126,29 @@ jobs:
             sleep 15
           done
           echo "zod@$VERSION is not on the registry after 10 minutes; stopping before the GitHub release and the JSR publish"
+          exit 1
+
+      # @zod/mini ships in lockstep with zod and is a no-op when its version is already on the registry, so it runs unconditionally: the first release of the scoped package rides on a merge that does not bump zod itself
+      - id: publish_mini
+        name: Publish @zod/mini to NPM
+        uses: JS-DevTools/npm-publish@v4
+        with:
+          provenance: true
+          package: ./packages/mini
+
+      - name: Verify @zod/mini is live on npm
+        if: ${{ steps.publish_mini.outputs.type }}
+        env:
+          VERSION: ${{ steps.publish_mini.outputs.version }}
+        run: |
+          for i in $(seq 1 40); do
+            if curl -sf "https://registry.npmjs.org/@zod%2fmini/$VERSION" > /dev/null; then
+              echo "@zod/mini@$VERSION is live"
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "@zod/mini@$VERSION is not on the registry after 10 minutes"
           exit 1
 
       - name: Configure changelog

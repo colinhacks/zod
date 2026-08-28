@@ -61,3 +61,18 @@ if (!isPackageJsonValid || !isJsrJsonValid) {
     console.log(`✅ Versions match: ${packageJsonVersion} starts with ${versionsVersion}`);
   }
 }
+
+// @zod/mini ships in lockstep with zod and its peer floor is the minor it shipped with
+const miniPackageJson = JSON.parse(readFileSync(join(__dirname, "..", "packages", "mini", "package.json"), "utf8"));
+const miniVersion = miniPackageJson.version as string;
+const miniPeer = miniPackageJson.peerDependencies?.zod as string | undefined;
+const expectedMiniPeer = `^${version.major}.${version.minor}.0`;
+const isMiniVersionValid = tag === "latest" ? miniVersion === versionsVersion : miniVersion.startsWith(versionsVersion);
+if (!isMiniVersionValid || miniPeer !== expectedMiniPeer) {
+  console.error(`❌ @zod/mini version mismatch:`);
+  console.error(`   packages/mini/package.json version: ${miniVersion} (expected ${versionsVersion})`);
+  console.error(`   packages/mini/package.json peerDependencies.zod: ${miniPeer} (expected ${expectedMiniPeer})`);
+  process.exit(1);
+} else {
+  console.log(`✅ @zod/mini ${miniVersion} with peer zod@${miniPeer}`);
+}

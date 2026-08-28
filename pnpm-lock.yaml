@@ -231,6 +231,9 @@ importers:
 
   packages/integration:
     dependencies:
+      '@zod/mini':
+        specifier: workspace:*
+        version: link:../mini
       zod:
         specifier: workspace:*
         version: link:../zod
@@ -254,8 +257,17 @@ importers:
         specifier: ^5.8.2
         version: 5.9.2
 
+  packages/mini:
+    devDependencies:
+      zod:
+        specifier: workspace:*
+        version: link:../zod
+
   packages/resolution:
     dependencies:
+      '@zod/mini':
+        specifier: workspace:*
+        version: link:../mini
       zod:
         specifier: workspace:*
         version: link:../zod

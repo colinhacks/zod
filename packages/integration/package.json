@@ -18,6 +18,7 @@
     "test:built": "tsc --project fixtures/internal-types/tsconfig.bundler.json && tsc --project fixtures/internal-types/tsconfig.nodenext.json && tsc --project fixtures/internal-types/tsconfig.node16-cjs.json"
   },
   "dependencies": {
-    "zod": "workspace:*"
+    "zod": "workspace:*",
+    "@zod/mini": "workspace:*"
   }
 }

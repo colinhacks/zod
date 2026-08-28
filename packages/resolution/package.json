@@ -29,6 +29,7 @@
     }
   },
   "dependencies": {
-    "zod": "workspace:*"
+    "zod": "workspace:*",
+    "@zod/mini": "workspace:*"
   }
 }

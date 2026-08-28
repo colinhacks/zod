@@ -71,7 +71,7 @@
     "lint": "biome lint --write .",
     "lint:check": "biome lint .",
     "clean": "pnpm run -r clean",
-    "build": "pnpm run -r --filter zod build",
+    "build": "pnpm run -r --filter zod --filter @zod/mini build",
     "test:watch": "vitest",
     "test": "vitest run",
     "test:compile": "vitest run --config vitest.compile.config.ts",
