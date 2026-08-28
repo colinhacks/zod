@@ -752,6 +752,13 @@ function makeRng(seed: number): () => number {
   };
 }
 
+function nonEmpty(v: unknown): boolean {
+  if (v === "") return false;
+  if (Array.isArray(v)) return v.length > 0;
+  if (v !== null && typeof v === "object" && !(v instanceof Date)) return Object.keys(v).length > 0;
+  return true;
+}
+
 interface Generated {
   schema: z.ZodType;
   ok: () => unknown;
@@ -760,10 +767,15 @@ interface Generated {
 function generate(rnd: () => number, depth: number): Generated {
   const pick = <T>(xs: T[]): T => xs[Math.floor(rnd() * xs.length)];
   const leaves = ["string", "number", "boolean", "literal", "enum", "bounded", "int"];
+  // Only object, array, optional and nullable consume `buildsValue`; every other generator calls the 4-arg `compileChild`, which defaults `needsValue` to true and puts the subtree back in full-value mode. Assert-mode-specific state only arises in chains of those four, so they are weighted to make such chains common rather than incidental.
   const nodes = [
     "object",
     "looseObject",
     "strictObject",
+    "array",
+    "optional",
+    "nullable",
+    "object",
     "array",
     "optional",
     "nullable",
@@ -772,6 +784,8 @@ function generate(rnd: () => number, depth: number): Generated {
     "record",
     "default",
     "catch",
+    "refine",
+    "refine",
     "refine",
     "transform",
     "pipe",
@@ -842,7 +856,8 @@ function generate(rnd: () => number, depth: number): Generated {
     }
     case "refine": {
       const c = generate(rnd, depth - 1);
-      return { schema: c.schema.refine((v: unknown) => v !== "__never__"), ok: () => c.ok() };
+      // Keyed to the value's own content, not a sentinel nothing produces. `refine` is the only generator that hangs a check on a container, so this predicate is what exercises the "carries checks of its own" half of `buildsValue`, and a check that can never reject leaves that half uncovered. Rejecting every empty value makes that rejection common rather than lucky.
+      return { schema: c.schema.refine(nonEmpty), ok: () => c.ok() };
     }
     case "transform": {
       const c = generate(rnd, depth - 1);
@@ -899,6 +914,7 @@ function corrupt(rnd: () => number, value: unknown, depth = 0): unknown {
 test("assert mode agrees with the parser and the runtime across generated schemas", () => {
   let accepted = 0;
   let rejected = 0;
+  let refused = 0;
 
   for (const seed of [1, 7, 42, 1337]) {
     const rnd = makeRng(seed);
@@ -906,9 +922,16 @@ test("assert mode agrees with the parser and the runtime across generated schema
       const g = generate(rnd, 1 + Math.floor(rnd() * 3));
       const parser = attempt(() => compileFn(g.schema));
       const validator = attempt(() => compileFn(g.schema, { assertOnly: true }));
+      // A one-sided refusal is a silent loss of the fast path, so it fails here rather than dropping the schema.
+      expect(!!validator.threw, `assert-mode refusal disagrees with the parser, seed ${seed} case ${i}`).toBe(
+        !!parser.threw
+      );
       const parseFn = parser.value;
       const assertFn = validator.value;
-      if (!parseFn || !assertFn) continue;
+      if (!parseFn || !assertFn) {
+        refused++;
+        continue;
+      }
       const compiled = attempt(() => compile(g.schema));
       const compiledSchema = compiled.value;
 
@@ -941,4 +964,6 @@ test("assert mode agrees with the parser and the runtime across generated schema
   // Guard against a corpus that only ever passes: agreement on 3600 accepted verdicts would prove nothing about rejection.
   expect(accepted, "generated corpus produced too few accepted inputs").toBeGreaterThan(500);
   expect(rejected, "generated corpus produced too few rejected inputs").toBeGreaterThan(500);
+  // Every construct the generator emits compiles today. Pinning it means a schema that starts refusing surfaces here instead of quietly shrinking the corpus behind the floors above.
+  expect(refused, "a generated schema stopped compiling").toBe(0);
 });
