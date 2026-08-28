@@ -1,12 +1,19 @@
 import type * as errors from "./errors.js";
 import type * as schemas from "./schemas.js";
-import type { Class } from "./util.js";
+import type { Class, LazyPropsOf } from "./util.js";
+import { members as installMembers } from "./util.js";
 //////////////////////////////   CONSTRUCTORS   ///////////////////////////////////////
 
 type ZodTrait = { _zod: { def: any; [k: string]: any } };
 export interface $constructor<T extends ZodTrait, D = T["_zod"]["def"]> {
   new (def: D): T;
   init(inst: T, def: D): asserts inst is T;
+}
+
+export interface $constructorParams<T> {
+  Parent?: typeof Class;
+  /** This trait's members, installed once on every prototype that composes it. They cannot be declared in the initializer above: that runs per instance, and the prototype is shared. */
+  proto?: LazyPropsOf<T>;
 }
 
 /** A special constant with type `never` */
@@ -17,6 +24,9 @@ export const NEVER: never = /*@__PURE__*/ Object.freeze({
 /* Shared descriptor for installing `_zod`; defineProperty reads it
  * synchronously, so reusing one object avoids a per-instance allocation. */
 const _zodDesc: PropertyDescriptor = { value: undefined, enumerable: false };
+
+// Set while constructing an instance whose constructor has already run its prototype initializers. They are idempotent, so on every construction after the first they have nothing to do; this is how they find that out without looking.
+let protoReady = false;
 
 // null where suppressing the capture would be unrecoverable: `parse()` puts the frames back with `captureStackTrace`, so without it the throw would lose its stack. also latched to null once `stackTraceLimit` proves unassignable, which a realm can do at any point by hardening Error
 let _E: (ErrorConstructor & { stackTraceLimit?: number }) | null = "captureStackTrace" in Error ? Error : null;
@@ -46,7 +56,7 @@ function newError(Definition: new () => any): any {
 export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T["_zod"]["def"]>(
   name: string,
   initializer: (inst: T, def: D) => void,
-  params?: { Parent?: typeof Class }
+  params?: $constructorParams<T>
 ): $constructor<T, D> {
   // Prototype for this constructor's `_zod` internals. Lazily-derived fields (`values`, `pattern`, `optin`, …) install here once rather than as an accessor on every instance.
   const zodProto: any = {};
@@ -58,6 +68,10 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
     this.traits = new Set();
   }
   Internals.prototype = zodProto;
+
+  const protoMembers = params?.proto;
+  // One trait's members land on every prototype whose chain composes it, so the answer is per prototype rather than per trait.
+  const initialized = protoMembers && new WeakSet<object>();
 
   function init(inst: T, def: D) {
     if (!inst._zod) {
@@ -78,6 +92,14 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
 
     initializer(inst, def);
 
+    if (initialized && !protoReady) {
+      const proto = Object.getPrototypeOf(inst);
+      if (!initialized.has(proto)) {
+        initialized.add(proto);
+        installMembers(proto, protoMembers!);
+      }
+    }
+
     // support prototype modifications; for-in avoids the array allocation of Object.keys on the (usually empty) prototype
     const proto = _.prototype;
     for (const k in proto) {
@@ -93,9 +115,19 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends ZodTrait, D = T[
   class Definition extends Parent {}
   Object.defineProperty(Definition, "name", { value: name });
 
+  // Flipped by the first complete construction, which is what runs this constructor's prototype initializers.
+  let ready = false;
+
   function _(this: any, def: D) {
     const inst = params?.Parent ? newError(Definition) : this;
-    init(inst, def);
+    protoReady = ready;
+    try {
+      init(inst, def);
+    } finally {
+      // Cleared even on throw, so a direct `SomeTrait.init(obj, def)` outside a construction never inherits another constructor's answer.
+      protoReady = false;
+    }
+    ready = true;
     const deferred = inst._zod.deferred;
     if (deferred) {
       for (const fn of deferred) {

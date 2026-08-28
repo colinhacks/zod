@@ -41,7 +41,7 @@ export interface ZodMiniType<
 interface _ZodMiniType<out Internals extends core.$ZodTypeInternals = core.$ZodTypeInternals>
   extends ZodMiniType<any, any, Internals> {}
 
-export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$constructor(
+export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$constructor<ZodMiniType>(
   "ZodMiniType",
   (inst, def) => {
     if (!inst._zod) throw new Error("Uninitialized schema in ZodMiniType.");
@@ -50,57 +50,67 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
 
     inst.def = def;
     inst.type = def.type;
+  },
+  {
+    proto: {
+      // `with` is an alias for `check`: the same function object, not a wrapper.
+      with: (self) => self.check,
 
-    util.installLazyMethods<ZodMiniType>(inst, "parse", _zodMiniTypeMethods);
-    // `with` is an alias for `check`: the same function object, not a wrapper.
-    util.installLazyProp(inst, "with", (self: ZodMiniType) => self.check);
+      parse: (self) => (data, params) => {
+        return parse.parse(self, data, params, { callee: self.parse });
+      },
+
+      parseAsync: (self) => (data, params) => {
+        return parse.parseAsync(self, data, params, { callee: self.parseAsync });
+      },
+
+      safeParse: (self) => (data, params) => {
+        return parse.safeParse(self, data, params);
+      },
+
+      safeParseAsync: (self) => (data, params) => {
+        return parse.safeParseAsync(self, data, params);
+      },
+
+      check:
+        (self) =>
+        (...checks) => {
+          const def = self.def;
+          return self.clone(
+            {
+              ...def,
+              checks: [
+                ...(def.checks ?? []),
+                ...checks.map((ch) =>
+                  typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
+                ),
+              ],
+            },
+            { parent: true }
+          );
+        },
+
+      clone: (self) => (_def, params) => {
+        return core.clone(self, _def, params);
+      },
+
+      brand: (self) => () => {
+        return self as any;
+      },
+
+      register: ((self: ZodMiniType) => (reg: any, meta: any) => {
+        reg.add(self, meta);
+        return self;
+      }) as any,
+
+      apply:
+        (self) =>
+        (fn: any, ...args: any[]) => {
+          return args.length === 0 ? fn(self) : fn(self, ...args);
+        },
+    },
   }
 );
-
-function _zodMiniTypeMethods(): util.LazyMethodsOf<ZodMiniType> {
-  return {
-    parse(data, params) {
-      return parse.parse(this, data, params, { callee: this.parse });
-    },
-    parseAsync(data, params) {
-      return parse.parseAsync(this, data, params, { callee: this.parseAsync });
-    },
-    safeParse(data, params) {
-      return parse.safeParse(this, data, params);
-    },
-    safeParseAsync(data, params) {
-      return parse.safeParseAsync(this, data, params);
-    },
-    check(...checks) {
-      const def = this.def;
-      return this.clone(
-        {
-          ...def,
-          checks: [
-            ...(def.checks ?? []),
-            ...checks.map((ch) =>
-              typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch
-            ),
-          ],
-        },
-        { parent: true }
-      );
-    },
-    clone(_def, params) {
-      return core.clone(this, _def, params);
-    },
-    brand() {
-      return this as any;
-    },
-    register(reg: any, meta: any) {
-      reg.add(this, meta);
-      return this;
-    },
-    apply(fn, ...args) {
-      return args.length === 0 ? fn(this) : fn(this, ...args);
-    },
-  };
-}
 
 export interface _ZodMiniString<T extends core.$ZodStringInternals<unknown> = core.$ZodStringInternals<unknown>>
   extends _ZodMiniType<T>,

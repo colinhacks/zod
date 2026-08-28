@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 
 import * as zm from "zod/mini";
 import * as z from "zod/v4";
+import * as core from "zod/v4/core";
 
 // V8 sizes an instance's property backing store in steps, and schema instances get no in-object slots (their constructor assigns nothing itself): 12 own properties cost 128 bytes, 13 cost 848, 21 cost 1616. Methods therefore live on the prototype and materialize per instance on first read. These bounds are what keeps a schema graph small; crossing one silently multiplies its memory by 6x.
 const MAX_OWN_PROPS = 12;
@@ -102,4 +103,43 @@ test("_def stays read-only", () => {
 test("deferred initializers are released after construction", () => {
   expect(z.string()._zod.deferred).toEqual(undefined);
   expect(z.object({ a: z.string() })._zod.deferred).toEqual(undefined);
+});
+
+test("a trait initializer called directly still installs its members", () => {
+  // `$constructor` skips the prototype initializers while constructing from a constructor that has already run them. A direct `init` is not that, so it has to see the guard off.
+  z.string();
+
+  const proto = {};
+  const inst = Object.create(proto) as z.ZodString;
+  z.ZodString.init(inst, { type: "string" });
+
+  expect(typeof inst.email).toBe("function");
+  expect(typeof inst.optional).toBe("function");
+  expect(Object.prototype.hasOwnProperty.call(proto, "email")).toBe(true);
+});
+
+test("an initializer that throws leaves the install guard off", () => {
+  // A successful one first, so the guard is armed for this constructor when the next throws.
+  z.uuid();
+  expect(() => z.uuid({ version: "v9" as never })).toThrow();
+
+  const proto = {};
+  const inst = Object.create(proto) as z.ZodString;
+  z.ZodString.init(inst, { type: "string" });
+
+  expect(Object.prototype.hasOwnProperty.call(proto, "email")).toBe(true);
+});
+
+test("a derived trait's members win over the ones it composes", () => {
+  // Classic installs a richer `~standard` over core's. Trait dedupe is what orders them: core's initializer runs once, at the first `init` that reaches it, so classic's always lands second.
+  expect(typeof (z.string()["~standard"] as any).jsonSchema.input).toBe("function");
+});
+
+test("a live member is not cached per instance", () => {
+  const schema = z.string();
+
+  expect(schema.description).toBe(undefined);
+  core.globalRegistry.add(schema, { description: "later" });
+  expect(schema.description).toBe("later");
+  expect(Object.prototype.hasOwnProperty.call(schema, "description")).toBe(false);
 });

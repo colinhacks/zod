@@ -1063,6 +1063,20 @@ export abstract class Class {
 //
 // Members live on the prototype and materialize per instance on first read, which keeps own-property count under the step where V8 stops using inline slots. Changing anything here means re-measuring runtime, memory and bundle size together — see "The three axes" in AGENTS.md.
 
+/**
+ * Installs a trait's members on its prototype. Each value builds that member for one instance on first read; the built value shadows the accessor as an own property, so a detached `const { parse } = schema` keeps working.
+ *
+ * Call this from a `proto` initializer, which runs once per prototype — never per instance.
+ */
+export function members(proto: object, table: object): void {
+  for (const key in table) {
+    const desc = Object.getOwnPropertyDescriptor(table, key)!;
+    // A getter installs as written, so it stays live — `description` reads through to the registry on every access.
+    if (desc.get) Object.defineProperty(proto, key, desc);
+    else defineCached(proto, key, desc.value);
+  }
+}
+
 /** Returns the prototype to install on, or `undefined` if this group is already installed on it. */
 function claim(inst: object, sentinel: string): object | undefined {
   const proto = Object.getPrototypeOf(inst);
@@ -1091,8 +1105,16 @@ export type LazyMethodsOf<T> = Partial<{
   [K in keyof T]: T[K] extends (...args: infer A) => infer R ? (this: T, ...args: A) => R : never;
 }>;
 
-/** Factories for properties whose value is built per instance on first read. */
-export type LazyPropsOf<T> = Partial<{ [K in keyof T]: (self: T) => T[K] }>;
+/**
+ * A trait's members, as `$constructor` takes them. Each entry is a factory that builds the member for one instance on first read, except a getter, which installs as written and stays live.
+ *
+ * A method's signature is erased to its call form, so an overloaded or generic one is written once against its constraint.
+ */
+export type LazyPropsOf<T> = {
+  [K in keyof T]?:
+    | (T[K] extends (...args: infer A) => infer R ? (self: T) => (...args: A) => R : ((self: T) => T[K]) | T[K])
+    | undefined;
+} & ThisType<T>;
 
 /**
  * Installs methods that bind to the instance on first access. Not for hot-path

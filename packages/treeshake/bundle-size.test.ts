@@ -38,13 +38,13 @@ const BUILT_ENTRY = path.join(__dirname, "node_modules", "zod", "index.js");
  * The failure message prints the measured size, so updating is mechanical.
  */
 const CEILINGS: Record<string, number> = {
-  // raised from 2836 / 3299 / 4374 by the commit that caused it: suppressing v8's stack capture while building an error costs +68 / +68 / +63, and every bundle carries `core.ts`; measured 2875 / 3338 / 4409 plus 28 headroom, and the per-fixture notes below record what each already carried
-  "zod-mini-boolean": 2903,
+  // raised from 2903 / 3366 / 4437 by the commit that caused it: installing a trait's members from `$constructor` rather than from its initializer costs mini +19 / +31 / +16, and every bundle carries `core.ts`; measured 2895 / 3368 / 4424 plus 28 headroom, and the per-fixture notes below record what each already carried. Classic pays nothing for it — its string fixture drops 76 gzipped bytes.
+  "zod-mini-boolean": 2923,
   // Also carries the code-point string length scan: `.min`/`.max`/`.length` on a string pulls in the surrogate walk.
-  "zod-mini-string": 3366,
+  "zod-mini-string": 3396,
   // Also carries the construction-time discriminator check, which writes a WeakMap entry from `$ZodObject`, so every bundle containing `z.object` pays for it whether or not it builds a discriminated union.
   // Also carries the declared symbol keys from #6448: `normalizeDef` collects the shape's own symbols and the parse loop walks them. Almost none of that is the `Reflect.ownKeys` conversions — reverting all eight of them measures a byte larger.
-  "zod-mini-object": 4437,
+  "zod-mini-object": 4452,
 };
 
 /**
