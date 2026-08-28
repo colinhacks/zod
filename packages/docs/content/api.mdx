@@ -1580,7 +1580,14 @@ const result = Category.parse(input);
 result.subcategories[0] === result; // true
 ```
 
-Zod Mini requires an opt-in for this; see [Reference cycles](/packages/mini#reference-cycles).
+In Zod Mini this requires an opt-in, configured before any schema is defined:
+
+```ts
+import * as z from "zod/mini";
+
+// cyclical inputs require an explicit memoizer in Zod Mini
+z.config({ memoizer: z.memoizer() });
+```
 
 You can also represent *mutually recursive types*:
 
