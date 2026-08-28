@@ -34,6 +34,7 @@ export { default as ko } from "./ko.js";
 export { default as lt } from "./lt.js";
 export { default as mk } from "./mk.js";
 export { default as ms } from "./ms.js";
+export { default as ne } from "./ne.js";
 export { default as nl } from "./nl.js";
 export { default as nn } from "./nn.js";
 export { default as no } from "./no.js";
