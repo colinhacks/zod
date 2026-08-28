@@ -9,15 +9,15 @@ const URL_DATA = Array.from({ length: 1000 }, () => "  https://example.com/path?
 
 const base64url = z.string().base64url();
 const compiledBase64url = zcore.compile(base64url);
-const fastBase64url = zcore.compileFastpass(base64url);
+const fastBase64url = zcore.compileFn(base64url);
 
 const jwt = z.jwt();
 const compiledJwt = zcore.compile(jwt);
-const fastJwt = zcore.compileFastpass(jwt);
+const fastJwt = zcore.compileFn(jwt);
 
 const url = z.url();
 const compiledUrl = zcore.compile(url);
-const fastUrl = zcore.compileFastpass(url);
+const fastUrl = zcore.compileFn(url);
 
 function makeScopedValidator(extraConstants: number) {
   const names = ["helper"];
@@ -49,7 +49,7 @@ await metabench("compiled string-format helpers", {
   "base64url direct helper"() {
     for (const d of DATA) isValidBase64URL(d);
   },
-  "base64url compileFastpass"() {
+  "base64url compileFn"() {
     for (const d of DATA) fastBase64url(d);
   },
   "base64url compiled.safeParse"() {
@@ -61,7 +61,7 @@ await metabench("compiled string-format helpers", {
   "jwt direct helper"() {
     for (const d of JWT_DATA) isValidJWT(d);
   },
-  "jwt compileFastpass"() {
+  "jwt compileFn"() {
     for (const d of JWT_DATA) fastJwt(d);
   },
   "jwt compiled.safeParse"() {
@@ -73,7 +73,7 @@ await metabench("compiled string-format helpers", {
   "url direct helper"() {
     for (const d of URL_DATA) parseValidURL(d, url._zod.def as any);
   },
-  "url compileFastpass"() {
+  "url compileFn"() {
     for (const d of URL_DATA) fastUrl(d);
   },
   "url compiled.safeParse"() {

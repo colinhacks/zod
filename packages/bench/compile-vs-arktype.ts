@@ -210,15 +210,15 @@ const zodXorCompiled = (() => {
   }
 })();
 
-const zodSimpleFastpass = zcore.compileFastpass(zodSimple);
-const zodNestedFastpass = zcore.compileFastpass(zodNested);
-const zodArrayFastpass = zcore.compileFastpass(zodArray);
-const zodArrayOfObjectsFastpass = zcore.compileFastpass(zodArrayOfObjects);
-const zodDiscriminatedFastpass = zcore.compileFastpass(zodDiscriminated);
-const zodIntersectionFastpass = zcore.compileFastpass(zodIntersection);
-const zodXorFastpass = (() => {
+const zodSimpleFn = zcore.compileFn(zodSimple);
+const zodNestedFn = zcore.compileFn(zodNested);
+const zodArrayFn = zcore.compileFn(zodArray);
+const zodArrayOfObjectsFn = zcore.compileFn(zodArrayOfObjects);
+const zodDiscriminatedFn = zcore.compileFn(zodDiscriminated);
+const zodIntersectionFn = zcore.compileFn(zodIntersection);
+const zodXorFn = (() => {
   try {
-    return zcore.compileFastpass(zodXor);
+    return zcore.compileFn(zodXor);
   } catch {
     return (d: unknown) => zodXor.safeParse(d);
   }
@@ -310,7 +310,7 @@ if (selectedCaseSet.has("simple") || selectedCaseSet.has("nested")) {
   if (selectedCaseSet.has("simple")) {
     console.log("Zod safeParse simple:", zodSimple.safeParse(simpleData).success);
     console.log("z.compile() simple:", zodSimpleCompiled.safeParse(simpleData).success);
-    console.log("z.compileFastpass() simple:", zodSimpleFastpass(simpleData) !== zcore.INVALID);
+    console.log("z.compileFn() simple:", zodSimpleFn(simpleData) !== zcore.INVALID);
     console.log("Arktype simple:", !(arktypeSimple(simpleData) instanceof type.errors));
     console.log("Handwritten simple:", handwrittenSimple(simpleData) !== INVALID);
     console.log("");
@@ -318,7 +318,7 @@ if (selectedCaseSet.has("simple") || selectedCaseSet.has("nested")) {
   if (selectedCaseSet.has("nested")) {
     console.log("Zod safeParse nested:", zodNested.safeParse(nestedData).success);
     console.log("z.compile() nested:", zodNestedCompiled.safeParse(nestedData).success);
-    console.log("z.compileFastpass() nested:", zodNestedFastpass(nestedData) !== zcore.INVALID);
+    console.log("z.compileFn() nested:", zodNestedFn(nestedData) !== zcore.INVALID);
     console.log("Arktype nested:", !(arktypeNested(nestedData) instanceof type.errors));
     console.log("Handwritten nested:", handwrittenNested(nestedData) !== INVALID);
     console.log("");
@@ -365,8 +365,8 @@ const benchmarkCases: Record<BenchmarkCase, () => Promise<void>> = {
       "z.compile().safeParse"() {
         return zodSimpleCompiled.safeParse(simpleData);
       },
-      "z.compileFastpass()"() {
-        return zodSimpleFastpass(simpleData);
+      "z.compileFn()"() {
+        return zodSimpleFn(simpleData);
       },
       "zod safeParse"() {
         return zodSimple.safeParse(simpleData);
@@ -384,8 +384,8 @@ const benchmarkCases: Record<BenchmarkCase, () => Promise<void>> = {
       "z.compile().safeParse"() {
         return zodNestedCompiled.safeParse(nestedData);
       },
-      "z.compileFastpass()"() {
-        return zodNestedFastpass(nestedData);
+      "z.compileFn()"() {
+        return zodNestedFn(nestedData);
       },
       "zod safeParse"() {
         return zodNested.safeParse(nestedData);
@@ -403,8 +403,8 @@ const benchmarkCases: Record<BenchmarkCase, () => Promise<void>> = {
       "z.compile().safeParse"() {
         return zodArrayCompiled.safeParse(arrayData);
       },
-      "z.compileFastpass()"() {
-        return zodArrayFastpass(arrayData);
+      "z.compileFn()"() {
+        return zodArrayFn(arrayData);
       },
       "zod safeParse"() {
         return zodArray.safeParse(arrayData);
@@ -419,8 +419,8 @@ const benchmarkCases: Record<BenchmarkCase, () => Promise<void>> = {
       "z.compile().safeParse"() {
         return zodArrayOfObjectsCompiled.safeParse(arrayOfObjectsData);
       },
-      "z.compileFastpass()"() {
-        return zodArrayOfObjectsFastpass(arrayOfObjectsData);
+      "z.compileFn()"() {
+        return zodArrayOfObjectsFn(arrayOfObjectsData);
       },
       "zod safeParse"() {
         return zodArrayOfObjects.safeParse(arrayOfObjectsData);
@@ -435,8 +435,8 @@ const benchmarkCases: Record<BenchmarkCase, () => Promise<void>> = {
       "z.compile().safeParse"() {
         return zodDiscriminatedCompiled.safeParse(discriminatedData);
       },
-      "z.compileFastpass()"() {
-        return zodDiscriminatedFastpass(discriminatedData);
+      "z.compileFn()"() {
+        return zodDiscriminatedFn(discriminatedData);
       },
       "zod safeParse"() {
         return zodDiscriminated.safeParse(discriminatedData);
@@ -448,8 +448,8 @@ const benchmarkCases: Record<BenchmarkCase, () => Promise<void>> = {
       "z.compile().safeParse"() {
         return zodIntersectionCompiled.safeParse(intersectionData);
       },
-      "z.compileFastpass()"() {
-        return zodIntersectionFastpass(intersectionData);
+      "z.compileFn()"() {
+        return zodIntersectionFn(intersectionData);
       },
       "zod safeParse"() {
         return zodIntersection.safeParse(intersectionData);
@@ -461,8 +461,8 @@ const benchmarkCases: Record<BenchmarkCase, () => Promise<void>> = {
       "z.compile().safeParse"() {
         return zodXorCompiled.safeParse(xorData);
       },
-      "z.compileFastpass()"() {
-        return zodXorFastpass(xorData);
+      "z.compileFn()"() {
+        return zodXorFn(xorData);
       },
       "zod safeParse"() {
         return zodXor.safeParse(xorData);

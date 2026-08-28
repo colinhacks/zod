@@ -10,7 +10,7 @@ const INVALID_WHITESPACE = "SGVsbG8gV29ybGQ= ";
 
 const base64 = z.base64();
 const compiled = zcore.compile(base64);
-const fastpass = zcore.compileFastpass(base64);
+const compiledFn = zcore.compileFn(base64);
 
 const F = Function;
 
@@ -63,7 +63,7 @@ for (const value of [VALID, INVALID_LENGTH, INVALID_WHITESPACE]) {
   console.log(value, {
     runtime: base64.safeParse(value).success,
     helper: isValidBase64(value),
-    fastpass: fastpass(value) !== zcore.INVALID,
+    compiledFn: compiledFn(value) !== zcore.INVALID,
     hoisted: manualHoisted(value) !== INVALID,
     inline: manualInline(value) !== INVALID,
     inlineHoistedRegex: manualInlineHoistedRegex(value) !== INVALID,
@@ -84,8 +84,8 @@ await metabench("single z.base64() validator — valid input", {
   "manual inline body + hoisted regex"() {
     return manualInlineHoistedRegex(VALID);
   },
-  "compileFastpass(z.base64())"() {
-    return fastpass(VALID);
+  "compileFn(z.base64())"() {
+    return compiledFn(VALID);
   },
   "z.compile(z.base64()).safeParse"() {
     return compiled.safeParse(VALID);
@@ -108,8 +108,8 @@ await metabench("single z.base64() validator — invalid length", {
   "manual inline body + hoisted regex"() {
     return manualInlineHoistedRegex(INVALID_LENGTH);
   },
-  "compileFastpass(z.base64())"() {
-    return fastpass(INVALID_LENGTH);
+  "compileFn(z.base64())"() {
+    return compiledFn(INVALID_LENGTH);
   },
   "z.compile(z.base64()).safeParse"() {
     return compiled.safeParse(INVALID_LENGTH);

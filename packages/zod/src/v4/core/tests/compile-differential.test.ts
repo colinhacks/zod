@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 
 import * as z from "../../index.js";
-import { INVALID, ZodCompileUnsupportedError, compile, compileFastpass } from "../compile.js";
+import { INVALID, ZodCompileUnsupportedError, compile, compileFn } from "../compile.js";
 
 // Differential harness: assert compiled schema agrees with the original on every fixture. Success path: data identical (incl. key order and undefined-vs-absent, which toEqual cannot see) AND the fast path actually produced the value (a fixture set that silently falls back on valid inputs tests nothing). Failure path: issues deep-equal (errors always come from the runtime fallback).
 function describe(value: unknown): string {
@@ -58,9 +58,9 @@ function assertIdentical(actual: unknown, expected: unknown, path: string): void
 
 function differential(schema: z.ZodType, inputs: unknown[], opts?: { fallbackOk?: boolean }) {
   const compiled = compile(schema);
-  const fast = compileFastpass(schema);
+  const fast = compileFn(schema);
   // Assert-mode codegen shares every validation path with the parser and only drops the output construction, so it must reach the same verdict on every fixture. Refusing to compile at all is fine (the caller falls back); silently disagreeing is the drift this catches.
-  const assertFast = attempt(() => compileFastpass(schema, { assertOnly: true })).value;
+  const assertFast = attempt(() => compileFn(schema, { assertOnly: true })).value;
   for (const input of inputs) {
     // A schema may throw rather than return — an async check reached synchronously does. Both sides have to agree on that too, and comparing results would just rethrow.
     const at = attempt(() => schema.safeParse(input));
@@ -904,8 +904,8 @@ test("assert mode agrees with the parser and the runtime across generated schema
     const rnd = makeRng(seed);
     for (let i = 0; i < 150; i++) {
       const g = generate(rnd, 1 + Math.floor(rnd() * 3));
-      const parser = attempt(() => compileFastpass(g.schema));
-      const validator = attempt(() => compileFastpass(g.schema, { assertOnly: true }));
+      const parser = attempt(() => compileFn(g.schema));
+      const validator = attempt(() => compileFn(g.schema, { assertOnly: true }));
       const parseFn = parser.value;
       const assertFn = validator.value;
       if (!parseFn || !assertFn) continue;
