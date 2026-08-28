@@ -892,7 +892,7 @@ export const ZodMiniObject: core.$constructor<ZodMiniObject> = /*@__PURE__*/ cor
   (inst, def) => {
     core.$ZodObject.init(inst, def);
     ZodMiniType.init(inst, def);
-    util.defineLazy(inst, "shape", () => def.shape);
+    util.installLazyProp(inst, "shape", (self) => self._zod.def.shape, false);
   }
 );
 // @__NO_SIDE_EFFECTS__

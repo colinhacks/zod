@@ -1,6 +1,6 @@
 export {
-  isValid,
-  isValidAsync,
+  validate,
+  validateAsync,
   parse,
   safeParse,
   parseAsync,

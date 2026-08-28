@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 
 import * as z from "../../index.js";
-import { INVALID, ZodCompileUnsupportedError, compile, compileFastpass } from "../compile.js";
+import { INVALID, ZodCompileUnsupportedError, compile, compileFn } from "../compile.js";
 
 // Differential harness: assert compiled schema agrees with the original on every fixture. Success path: data identical (incl. key order and undefined-vs-absent, which toEqual cannot see) AND the fast path actually produced the value (a fixture set that silently falls back on valid inputs tests nothing). Failure path: issues deep-equal (errors always come from the runtime fallback).
 function describe(value: unknown): string {
@@ -58,7 +58,9 @@ function assertIdentical(actual: unknown, expected: unknown, path: string): void
 
 function differential(schema: z.ZodType, inputs: unknown[], opts?: { fallbackOk?: boolean }) {
   const compiled = compile(schema);
-  const fast = compileFastpass(schema);
+  const fast = compileFn(schema);
+  // Assert-mode codegen shares every validation path with the parser and only drops the output construction, so it must reach the same verdict on every fixture. Refusing to compile at all is fine (the caller falls back); silently disagreeing is the drift this catches.
+  const assertFast = attempt(() => compileFn(schema, { assertOnly: true })).value;
   for (const input of inputs) {
     // A schema may throw rather than return — an async check reached synchronously does. Both sides have to agree on that too, and comparing results would just rethrow.
     const at = attempt(() => schema.safeParse(input));
@@ -71,6 +73,19 @@ function differential(schema: z.ZodType, inputs: unknown[], opts?: { fallbackOk?
     const a = at.value!;
     const b = bt.value!;
     expect(b.success, `success mismatch for input ${describe(input)}`).toBe(a.success);
+    if (assertFast) {
+      const parseVerdict = attempt(() => fast(input) !== INVALID);
+      const assertVerdict = attempt(() => assertFast(input) !== INVALID);
+      expect(assertVerdict.threw ?? "did not throw", `assert-mode threw differently for input ${describe(input)}`).toBe(
+        parseVerdict.threw ?? "did not throw"
+      );
+      if (!parseVerdict.threw) {
+        expect(
+          assertVerdict.value,
+          `assert-mode verdict disagreed with the parse fast path for input ${describe(input)}`
+        ).toBe(parseVerdict.value);
+      }
+    }
     if (a.success && b.success) {
       if (!opts?.fallbackOk) {
         expect(fast(input) === INVALID, `fast path fell back on valid input ${describe(input)}`).toBe(false);
@@ -205,6 +220,21 @@ test("optional", () => {
 
 test("nullable", () => {
   differential(z.string().nullable(), ["hello", null, undefined, 0]);
+});
+
+// A wrapper around a container is where assert mode stops building: the wrapper itself constructs nothing, so the object or array inside it drops its output. Wrapping a scalar exercises none of that.
+test("wrapped containers", () => {
+  const shape = { a: z.string(), b: z.number() };
+  differential(z.object(shape).nullable(), [{ a: "x", b: 1 }, null, undefined, { a: 1, b: 1 }, "no"]);
+  differential(z.looseObject(shape).optional(), [{ a: "x", b: 1, extra: 9 }, undefined, null, { a: 1 }]);
+  differential(z.strictObject(shape).nullable(), [{ a: "x", b: 1 }, null, { a: "x", b: 1, extra: 9 }]);
+  differential(z.array(z.object(shape)).nullable(), [[{ a: "x", b: 1 }], [], null, [{ a: 1 }]]);
+  differential(z.object({ inner: z.object(shape).nullable() }), [
+    { inner: { a: "x", b: 1 } },
+    { inner: null },
+    { inner: { a: 1, b: 1 } },
+  ]);
+  differential(z.object({ inner: z.looseObject(shape).optional() }), [{ inner: { a: "x", b: 1 } }, {}, { inner: 5 }]);
 });
 
 test("nullish", () => {
@@ -709,4 +739,231 @@ test("a thenable predicate throws rather than rejecting", () => {
     z.custom((v) => typeof v === "string"),
     ["x", 1, null, undefined]
   );
+});
+
+// Generated corpus. The hand-written fixtures above pin the shapes we reasoned about; this covers the combinations nobody thought to write, which is where a codegen flag actually breaks. Seeded so a failure reproduces.
+function makeRng(seed: number): () => number {
+  let a = seed;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function nonEmpty(v: unknown): boolean {
+  if (v === "") return false;
+  if (Array.isArray(v)) return v.length > 0;
+  if (v !== null && typeof v === "object" && !(v instanceof Date)) return Object.keys(v).length > 0;
+  return true;
+}
+
+interface Generated {
+  schema: z.ZodType;
+  ok: () => unknown;
+}
+
+function generate(rnd: () => number, depth: number): Generated {
+  const pick = <T>(xs: T[]): T => xs[Math.floor(rnd() * xs.length)];
+  const leaves = ["string", "number", "boolean", "literal", "enum", "bounded", "int"];
+  // Only object, array, optional and nullable consume `buildsValue`; every other generator calls the 4-arg `compileChild`, which defaults `needsValue` to true and puts the subtree back in full-value mode. Assert-mode-specific state only arises in chains of those four, so they are weighted to make such chains common rather than incidental.
+  const nodes = [
+    "object",
+    "looseObject",
+    "strictObject",
+    "array",
+    "optional",
+    "nullable",
+    "object",
+    "array",
+    "optional",
+    "nullable",
+    "union",
+    "tuple",
+    "record",
+    "default",
+    "catch",
+    "refine",
+    "refine",
+    "refine",
+    "transform",
+    "pipe",
+  ];
+  switch (depth <= 0 ? pick(leaves) : pick(rnd() < 0.45 ? leaves : nodes)) {
+    case "string":
+      return { schema: z.string(), ok: () => pick(["a", "", "hello"]) };
+    case "bounded":
+      return { schema: z.string().min(2).max(6), ok: () => pick(["ab", "abcdef"]) };
+    case "number":
+      return { schema: z.number(), ok: () => pick([0, 1, -1, 3.5]) };
+    case "int":
+      return { schema: z.number().int().min(0), ok: () => pick([0, 42]) };
+    case "boolean":
+      return { schema: z.boolean(), ok: () => rnd() < 0.5 };
+    case "literal":
+      return { schema: z.literal("lit"), ok: () => "lit" };
+    case "enum":
+      return { schema: z.enum(["a", "b"]), ok: () => pick(["a", "b"]) };
+    case "object":
+    case "looseObject":
+    case "strictObject": {
+      const kids: Record<string, Generated> = {};
+      const shape: Record<string, z.ZodType> = {};
+      for (let i = 0; i < 1 + Math.floor(rnd() * 3); i++) {
+        kids[`k${i}`] = generate(rnd, depth - 1);
+        shape[`k${i}`] = kids[`k${i}`].schema;
+      }
+      const ctor = pick([z.object, z.looseObject, z.strictObject]) as typeof z.object;
+      return {
+        schema: ctor(shape as never),
+        ok: () => Object.fromEntries(Object.entries(kids).map(([k, v]) => [k, v.ok()])),
+      };
+    }
+    case "array": {
+      const c = generate(rnd, depth - 1);
+      return { schema: z.array(c.schema), ok: () => Array.from({ length: Math.floor(rnd() * 3) }, () => c.ok()) };
+    }
+    case "tuple": {
+      const a = generate(rnd, depth - 1);
+      const b = generate(rnd, depth - 1);
+      return { schema: z.tuple([a.schema, b.schema]), ok: () => [a.ok(), b.ok()] };
+    }
+    case "record": {
+      const c = generate(rnd, depth - 1);
+      return { schema: z.record(z.string(), c.schema), ok: () => ({ p: c.ok(), q: c.ok() }) };
+    }
+    case "optional": {
+      const c = generate(rnd, depth - 1);
+      return { schema: z.optional(c.schema), ok: () => (rnd() < 0.3 ? undefined : c.ok()) };
+    }
+    case "nullable": {
+      const c = generate(rnd, depth - 1);
+      return { schema: z.nullable(c.schema), ok: () => (rnd() < 0.3 ? null : c.ok()) };
+    }
+    case "union": {
+      const a = generate(rnd, depth - 1);
+      const b = generate(rnd, depth - 1);
+      return { schema: z.union([a.schema, b.schema]), ok: () => (rnd() < 0.5 ? a.ok() : b.ok()) };
+    }
+    case "default": {
+      const c = generate(rnd, depth - 1);
+      return { schema: z.optional(c.schema).default(c.ok() as never), ok: () => (rnd() < 0.3 ? undefined : c.ok()) };
+    }
+    case "catch": {
+      const c = generate(rnd, depth - 1);
+      return { schema: c.schema.catch(c.ok() as never), ok: () => (rnd() < 0.4 ? 12345 : c.ok()) };
+    }
+    case "refine": {
+      const c = generate(rnd, depth - 1);
+      // Keyed to the value's own content, not a sentinel nothing produces. `refine` is the only generator that hangs a check on a container, so this predicate is what exercises the "carries checks of its own" half of `buildsValue`, and a check that can never reject leaves that half uncovered. Rejecting every empty value makes that rejection common rather than lucky.
+      return { schema: c.schema.refine(nonEmpty), ok: () => c.ok() };
+    }
+    case "transform": {
+      const c = generate(rnd, depth - 1);
+      return { schema: c.schema.transform((v: unknown) => ({ wrapped: v })), ok: () => c.ok() };
+    }
+    default: {
+      const c = generate(rnd, depth - 1);
+      return { schema: c.schema.pipe(z.any()), ok: () => c.ok() };
+    }
+  }
+}
+
+const HOSTILE: unknown[] = [
+  undefined,
+  null,
+  Number.NaN,
+  -0,
+  0,
+  "",
+  "x",
+  true,
+  false,
+  [],
+  {},
+  [1, 2],
+  { k0: 1 },
+  Object.create(null),
+  new Date(Number.NaN),
+  1n,
+  Symbol.iterator,
+  Number.POSITIVE_INFINITY,
+];
+
+function corrupt(rnd: () => number, value: unknown, depth = 0): unknown {
+  const pick = <T>(xs: T[]): T => xs[Math.floor(rnd() * xs.length)];
+  if (depth > 2 || rnd() < 0.35) return pick(HOSTILE);
+  if (Array.isArray(value)) {
+    const out = value.slice();
+    if (out.length && rnd() < 0.6) out[Math.floor(rnd() * out.length)] = corrupt(rnd, out[0], depth + 1);
+    else out.push(pick(HOSTILE));
+    return out;
+  }
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = { ...(value as Record<string, unknown>) };
+    const keys = Object.keys(out);
+    if (keys.length && rnd() < 0.6) out[pick(keys)] = corrupt(rnd, out[pick(keys)], depth + 1);
+    else if (rnd() < 0.5) out[`extra${Math.floor(rnd() * 3)}`] = pick(HOSTILE);
+    else delete out[pick(keys)];
+    return out;
+  }
+  return pick(HOSTILE);
+}
+
+test("assert mode agrees with the parser and the runtime across generated schemas", () => {
+  let accepted = 0;
+  let rejected = 0;
+  let refused = 0;
+
+  for (const seed of [1, 7, 42, 1337]) {
+    const rnd = makeRng(seed);
+    for (let i = 0; i < 150; i++) {
+      const g = generate(rnd, 1 + Math.floor(rnd() * 3));
+      const parser = attempt(() => compileFn(g.schema));
+      const validator = attempt(() => compileFn(g.schema, { assertOnly: true }));
+      // A one-sided refusal is a silent loss of the fast path, so it fails here rather than dropping the schema.
+      expect(!!validator.threw, `assert-mode refusal disagrees with the parser, seed ${seed} case ${i}`).toBe(
+        !!parser.threw
+      );
+      const parseFn = parser.value;
+      const assertFn = validator.value;
+      if (!parseFn || !assertFn) {
+        refused++;
+        continue;
+      }
+      const compiled = attempt(() => compile(g.schema));
+      const compiledSchema = compiled.value;
+
+      for (let j = 0; j < 6; j++) {
+        const input = j < 3 ? g.ok() : corrupt(rnd, g.ok());
+        const label = `seed ${seed} case ${i}/${j} input ${describe(input)}`;
+
+        const viaParser = attempt(() => parseFn(input) !== INVALID);
+        const viaValidator = attempt(() => assertFn(input) !== INVALID);
+        expect(viaValidator.threw ?? "did not throw", `assert-mode throw disagrees, ${label}`).toBe(
+          viaParser.threw ?? "did not throw"
+        );
+        if (viaParser.threw) continue;
+        expect(viaValidator.value, `assert-mode verdict disagrees, ${label}`).toBe(viaParser.value);
+
+        const runtime = attempt(() => g.schema.safeParse(input).success);
+        if (runtime.threw) continue;
+        expect(viaParser.value, `compiled verdict disagrees with the runtime, ${label}`).toBe(runtime.value);
+        if (compiledSchema) {
+          expect(z.validate(compiledSchema, input), `z.validate disagrees with the runtime, ${label}`).toBe(
+            runtime.value
+          );
+        }
+        if (runtime.value) accepted++;
+        else rejected++;
+      }
+    }
+  }
+
+  // Guard against a corpus that only ever passes: agreement on 3600 accepted verdicts would prove nothing about rejection.
+  expect(accepted, "generated corpus produced too few accepted inputs").toBeGreaterThan(500);
+  expect(rejected, "generated corpus produced too few rejected inputs").toBeGreaterThan(500);
+  // Every construct the generator emits compiles today. Pinning it means a schema that starts refusing surfaces here instead of quietly shrinking the corpus behind the floors above.
+  expect(refused, "a generated schema stopped compiling").toBe(0);
 });

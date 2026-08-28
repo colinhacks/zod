@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import * as z from "zod";
-import { INVALID, ZodCompileUnsupportedError, compile, compileFastpass } from "zod/v4/core";
+import { INVALID, ZodCompileUnsupportedError, compile, compileFn } from "zod/v4/core";
 
 // Broad compiled-vs-runtime sweep across schema categories.
 //
@@ -393,7 +393,7 @@ for (const c of selected) {
   let rawFn: (() => void) | null = null;
   if (compiledSchema) {
     try {
-      const fp = compileFastpass(c.schema);
+      const fp = compileFn(c.schema);
       if (fp(c.input) === INVALID) status = "fallthrough";
       else
         rawFn = () => {

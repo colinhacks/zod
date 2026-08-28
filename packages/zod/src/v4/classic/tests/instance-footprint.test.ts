@@ -222,3 +222,60 @@ test("a hand-written getter member accepts assignment", () => {
   mini.with = () => "WITH";
   expect(mini.with()).toBe("WITH");
 });
+
+test("shape is lazy and stays out of Object.keys", () => {
+  const schema = z.object({ a: z.string() });
+
+  expect(Object.prototype.hasOwnProperty.call(schema, "shape")).toEqual(false);
+  expect("shape" in schema).toEqual(true);
+  expect(Object.keys(schema)).not.toContain("shape");
+  expect({ ...schema }).not.toHaveProperty("shape");
+
+  expect(Object.keys(schema.shape)).toEqual(["a"]);
+
+  // Reading caches a non-enumerable own data property. An own accessor here would put every later object schema into V8 dictionary mode.
+  expect(Object.prototype.hasOwnProperty.call(schema, "shape")).toEqual(true);
+  expect(Object.getOwnPropertyDescriptor(schema, "shape")).toMatchObject({
+    writable: true,
+    enumerable: false,
+    configurable: true,
+  });
+  expect(Object.keys(schema)).not.toContain("shape");
+
+  const mini = zm.object({ a: zm.string() });
+  expect(Object.prototype.hasOwnProperty.call(mini, "shape")).toEqual(false);
+  expect(Object.keys(mini.shape)).toEqual(["a"]);
+  expect(Object.keys(mini)).not.toContain("shape");
+});
+
+test("shape accepts repeated assignment and recomputes after deletion", () => {
+  const schema: any = z.object({ a: z.string() });
+
+  schema.shape = { b: z.number() };
+  expect(Object.keys(schema.shape)).toEqual(["b"]);
+  // The cached property stays writable, so a second assignment does not throw in strict mode.
+  schema.shape = { c: z.boolean() };
+  expect(Object.keys(schema.shape)).toEqual(["c"]);
+
+  // Deleting clears the memo rather than removing the property, since the accessor lives on the prototype.
+  delete schema.shape;
+  expect(Object.keys(schema.shape)).toEqual(["a"]);
+});
+
+test("a self-referential shape getter breaks the cycle instead of recursing", () => {
+  const Self: any = z.object({
+    a: z.string(),
+    get b() {
+      return z.array(z.object(Self.shape));
+    },
+  });
+  expect(Object.keys(Self.shape)).toEqual(["a", "b"]);
+
+  const Mini: any = zm.object({
+    a: zm.string(),
+    get b() {
+      return zm.array(zm.object(Mini.shape));
+    },
+  });
+  expect(Object.keys(Mini.shape)).toEqual(["a", "b"]);
+});

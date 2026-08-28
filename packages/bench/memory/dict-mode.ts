@@ -34,12 +34,15 @@ console.log(
   `reference: plain literal fast=${hasFast(plain)}, non-enumerable defineProperty fast=${hasFast(forcedSlow)}\n`
 );
 
+// two instances each, because the first is not representative: an own accessor transitions cleanly on instance #1 and normalizes every one after it, so a one-instance report says `fast` for a type that is DICT for the rest of the program
 table(
   cases.map(([label, f]) => {
     const s = f();
+    const second = f();
     return {
       schema: label,
       "inst fast?": hasFast(s) ? "fast" : "DICT",
+      "2nd inst": hasFast(second) ? "fast" : "DICT",
       "inst props": Reflect.ownKeys(s).length,
       "_zod fast?": hasFast(s._zod) ? "fast" : "DICT",
       "_zod props": Reflect.ownKeys(s._zod).length,

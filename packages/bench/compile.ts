@@ -20,7 +20,7 @@ const schema = z4.strictObject({
 // AOT compiled schema (wraps fast path + runtime fallback)
 const compiledSchema = z4core.compile(schema);
 // Raw fast-path function (no fallback wrapper) for direct comparison
-const aotValidator = z4core.compileFastpass(schema);
+const aotValidator = z4core.compileFn(schema);
 
 // Test data
 const DATA = Array.from({ length: 1000 }, () =>
