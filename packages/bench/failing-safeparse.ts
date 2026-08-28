@@ -11,7 +11,9 @@ declare const gc: () => void;
 
 // gc only exists under --expose-gc; pnpm bench runs plain tsx, so name the working invocation instead of dying on a bare ReferenceError
 if (typeof (globalThis as any).gc !== "function") {
-  throw new Error("gc is not exposed — run: node --expose-gc --import tsx --conditions @zod/source packages/bench/failing-safeparse.ts");
+  throw new Error(
+    "gc is not exposed — run: node --expose-gc --import tsx --conditions @zod/source packages/bench/failing-safeparse.ts"
+  );
 }
 
 const shape = (z: any) => z.object({ username: z.string(), bio: z.string(), xp: z.number() });
