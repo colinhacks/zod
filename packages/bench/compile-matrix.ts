@@ -369,7 +369,8 @@ for (const c of selected) {
   let compiledSchema: z.ZodType | null = null;
   let status = "compiled";
   try {
-    compiledSchema = compile(c.schema);
+    // Strict: this table classifies refusals, so it wants the error rather than the silent uncompiled fallback.
+    compiledSchema = compile(c.schema, { strict: true });
   } catch (err) {
     status = err instanceof ZodCompileUnsupportedError ? "fallback" : `refused: ${(err as Error).name}`;
   }

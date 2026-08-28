@@ -1774,6 +1774,29 @@ const variadicTuple = z.tuple([z.string()], z.number());
 // => [string, ...number[]];
 ```
 
+To make every element optional:
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts zod
+const PartialTuple = z.tuple([z.string(), z.number()]).partial();
+// => [(string | undefined)?, (number | undefined)?]
+
+z.tuple([z.string()], z.number()).partial();
+// => [(string | undefined)?, ...number[]]
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+const PartialTuple = z.partial(z.tuple([z.string(), z.number()]));
+// => [(string | undefined)?, (number | undefined)?]
+
+z.partial(z.tuple([z.string()], z.number()));
+// => [(string | undefined)?, ...number[]]
+```
+</Tab>
+</Tabs>
+
 ## Unions
 
 Union types (`A | B`) represent a logical "OR". Zod union schemas will check the input against each option in order. The first value that validates successfully is returned.

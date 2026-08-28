@@ -809,7 +809,7 @@ test("lazy recursive schemas are refused, and still parse through the runtime", 
   });
 
   // A recursive schema is re-entered by a single parse, which is how the runtime memoizer terminates input containing a reference cycle. That state is keyed on the parse context, and the fast path has none, so it declines the schema rather than following the cycle until the stack runs out.
-  expect(() => compile(nodeSchema)).toThrow(ZodCompileUnsupportedError);
+  expect(() => compile(nodeSchema, { strict: true })).toThrow(ZodCompileUnsupportedError);
 
   expect(valid(nodeSchema, { value: "a" })).toEqual({ value: "a" });
   expect(valid(nodeSchema, { value: "a", next: { value: "b" } })).toEqual({ value: "a", next: { value: "b" } });
@@ -1250,12 +1250,12 @@ test("compile bypasses fast path for safeParseAsync", async () => {
 
 test("ZodCompileAsyncError thrown on async refinement", () => {
   const schema = z.string().refine(async () => true);
-  expect(() => compile(schema)).toThrow(ZodCompileAsyncError);
+  expect(() => compile(schema, { strict: true })).toThrow(ZodCompileAsyncError);
 });
 
 test("ZodCompileAsyncError thrown on async transform", () => {
   const schema = z.string().transform(async (s) => s.length);
-  expect(() => compile(schema)).toThrow(ZodCompileAsyncError);
+  expect(() => compile(schema, { strict: true })).toThrow(ZodCompileAsyncError);
 });
 
 test("compiled clone is composable inside another schema", () => {
@@ -1288,7 +1288,7 @@ test("catch as object property", () => {
 test("a catch callback reading ctx is refused; a constant catch compiles", () => {
   // Finalizing the issues the callback sees depends on the caller's per-parse error map, which generated code never receives — the compiled path produced the default message where `.parse(input, { error })` produces the mapped one. Refuse it, so a union treats it as uncompilable rather than as a rejected branch.
   const reads = z.catch(z.string().min(5), (ctx) => `bad:${ctx.error.issues.length}`);
-  expect(() => compile(reads)).toThrow(ZodCompileUnsupportedError);
+  expect(() => compile(reads, { strict: true })).toThrow(ZodCompileUnsupportedError);
   expect(reads.parse("hi")).toBe("bad:1");
   expect(reads.parse(42 as never)).toMatch(/^bad:\d+$/);
 
@@ -1372,7 +1372,7 @@ test("lazy schemas with checked or defaulted descendants parse without crashing"
 
   // Recursive, so the fast path declines it; the runtime still parses it.
   const tree: z.ZodType = z.lazy(() => z.object({ v: z.number().int(), kids: z.array(tree).default([]) }));
-  expect(() => compile(tree)).toThrow(ZodCompileUnsupportedError);
+  expect(() => compile(tree, { strict: true })).toThrow(ZodCompileUnsupportedError);
   expect(valid(tree, { v: 1, kids: [{ v: 2 }] })).toEqual({ v: 1, kids: [{ v: 2, kids: [] }] });
   invalid(tree, { v: 1.5 });
 });
@@ -1406,14 +1406,14 @@ test("literal-union Set optimization respects checks and multi-value literals", 
 });
 
 test("xor and custom when-gated checks force runtime fallback", () => {
-  expect(() => compile(z.xor([z.string(), z.number()]))).toThrow(ZodCompileUnsupportedError);
+  expect(() => compile(z.xor([z.string(), z.number()]), { strict: true })).toThrow(ZodCompileUnsupportedError);
   // Multi-match must reject — verified through the object island.
   expectMatch(z.object({ v: z.xor([z.number(), z.number().int()]) }), { v: 2 });
   expectMatch(z.object({ v: z.xor([z.number(), z.number().int()]) }), { v: 1.5 });
 
   const gated = z.number().gt(5);
   (gated._zod.def.checks![0]!._zod.def as { when?: unknown }).when = () => false;
-  expect(() => compile(gated)).toThrow(ZodCompileUnsupportedError);
+  expect(() => compile(gated, { strict: true })).toThrow(ZodCompileUnsupportedError);
   expectMatch(z.object({ n: gated }), { n: 3 }); // runtime skips the gated check
 });
 
@@ -1475,13 +1475,15 @@ test("object output parity: key order, undefined keys, inherited keys, getters",
 
 test("unsupported features throw ZodCompileUnsupportedError, not raw errors", () => {
   // __proto__ shape key: output object literal would set the prototype.
-  expect(() => compile(z.object({ ["__proto__"]: z.string() }))).toThrow(ZodCompileUnsupportedError);
+  expect(() => compile(z.object({ ["__proto__"]: z.string() }), { strict: true })).toThrow(ZodCompileUnsupportedError);
   // Exclusive unions need every branch's failure to be a real runtime failure.
-  expect(() => compile(z.xor([z.object({ a: z.string() }), z.object({ b: z.string() })]))).toThrow(
+  expect(() => compile(z.xor([z.object({ a: z.string() }), z.object({ b: z.string() })]), { strict: true })).toThrow(
     ZodCompileUnsupportedError
   );
   // NaN comparison bounds can't compile to a faithful comparison.
-  expect(() => compile(z.number().gt(Number.NaN))).toThrow(ZodCompileUnsupportedError);
+  expect(() => compile(z.number().gt(Number.NaN), { strict: true })).toThrow(ZodCompileUnsupportedError);
+  // A zero bigint divisor has no compiled form: `x % 0n` throws.
+  expect(() => compile(z.bigint().multipleOf(BigInt(0)), { strict: true })).toThrow(ZodCompileUnsupportedError);
   // Unsupported children still island inside containers.
   const aot = compile(z.object({ a: z.string(), x: z.xor([z.literal("p"), z.literal("q")]) }));
   expect(valid(aot, { a: "x", x: "p" })).toEqual({ a: "x", x: "p" });
@@ -1516,7 +1518,7 @@ test("record key schemas compile: formats, checks, numbers, transforms", () => {
   expectMatch(z.record(z.email(), z.number()), JSON.parse('{"__proto__":{"p":1},"a@b.com":1}'));
 
   // Coercion is modelled nowhere, so a coercing key schema is refused outright rather than compiled to the bare type test it would otherwise become.
-  expect(() => compile(z.record(z.coerce.string(), z.number()))).toThrow(ZodCompileUnsupportedError);
+  expect(() => compile(z.record(z.coerce.string(), z.number()), { strict: true })).toThrow(ZodCompileUnsupportedError);
 
   // A loose record keeps a rejected key verbatim, copying its value across unvalidated instead of failing.
   for (const input of [{ "a@b.com": 1 }, { nope: 1 }, { "a@b.com": 1, nope: "raw" }, { "a@b.com": "bad" }]) {
@@ -1555,4 +1557,83 @@ test("the compiled fallback builds the same Error-shaped error as the runtime", 
   }
   expect(thrown).toBeInstanceOf(Error);
   expect((thrown as Error).stack).toContain("callSite");
+});
+
+// === Never throws ===
+
+// Snapshot a parse outcome structurally, so a refused compile can be shown not to have disturbed it.
+function snap(schema: z.ZodType, value: unknown) {
+  const r = schema.safeParse(value);
+  return r.success ? { ok: true, data: r.data } : { ok: false, issues: r.error.issues };
+}
+
+// Every shape the compiler refuses, with inputs that exercise the pass, fail and fallback branches of each.
+function refusedCases(): [string, z.ZodType, unknown[]][] {
+  const gated = z.number().gt(5);
+  (gated._zod.def.checks![0]!._zod.def as { when?: unknown }).when = () => false;
+  const tree: z.ZodType = z.lazy(() => z.object({ v: z.number().int(), kids: z.array(tree).default([]) }));
+
+  return [
+    ["cycle", tree, [{ v: 1, kids: [{ v: 2 }] }, { v: 1.5 }, "nope"]],
+    ["async refine", z.string().refine(async () => true), ["a", 1]],
+    ["async transform", z.string().transform(async (s) => s.length), ["a", 1]],
+    ["async custom", z.custom(async () => true), ["a"]],
+    ["xor", z.xor([z.string(), z.number()]), ["a", 1, true]],
+    ["coerce", z.coerce.number(), ["5", 5, Symbol("x")]],
+    ["catch callback", z.catch(z.string().min(5), (c) => `bad:${c.error.issues.length}`), ["hello world", "hi", 42]],
+    ["when-gated check", gated, [3, 9, "x"]],
+    ["__proto__ key", z.object({ ["__proto__"]: z.string() }), [{}, { a: 1 }]],
+    ["NaN bound", z.number().gt(Number.NaN), [1, "x"]],
+    ["zero bigint divisor", z.bigint().multipleOf(BigInt(0)), [BigInt(4), "x"]],
+    ["coercing record key", z.record(z.coerce.string(), z.number()), [{ a: 1 }, { a: "x" }]],
+  ];
+}
+
+test("compile hands back the original schema instead of throwing", () => {
+  for (const [name, schema] of refusedCases()) {
+    expect(() => compile(schema, { strict: true }), name).toThrow();
+    // No wrapper and no clone: the uncompilable schema is its own fallback, exactly as global mode leaves it.
+    expect(compile(schema), name).toBe(schema);
+  }
+});
+
+test("a refused compile leaves the schema parsing identically", () => {
+  for (const [name, schema, inputs] of refusedCases()) {
+    // Async schemas throw $ZodAsyncError out of a sync parse; that path is covered separately.
+    if (name.startsWith("async")) continue;
+    const before = inputs.map((i) => snap(schema, i));
+    compile(schema);
+    expect(
+      inputs.map((i) => snap(schema, i)),
+      name
+    ).toEqual(before);
+  }
+});
+
+test("a refused compile keeps cyclic input parsing", () => {
+  const nodeSchema: z.ZodType = z.object({ value: z.string(), next: z.lazy(() => nodeSchema).optional() });
+  const cyclic: any = { value: "a" };
+  cyclic.next = cyclic;
+  expect(() => compile(nodeSchema).parse(cyclic)).not.toThrow();
+});
+
+test("a refused async compile parses async and rejects sync like the runtime", async () => {
+  const schema = z.string().refine(async (s) => s.length > 1);
+  const aot = compile(schema);
+  expect(aot).toBe(schema);
+
+  await expect(aot.parseAsync("ab")).resolves.toBe("ab");
+  const bad = await aot.safeParseAsync("a");
+  expect(bad.success).toBe(false);
+  expect(bad.error!.issues).toEqual((await schema.safeParseAsync("a")).error!.issues);
+  expect(() => aot.parse("ab")).toThrow(z.core.$ZodAsyncError);
+});
+
+test("strict is per-call, so a supported schema compiles either way", () => {
+  const schema = z.object({ a: z.string(), b: z.number() });
+  for (const aot of [compile(schema), compile(schema, { strict: true }), compile(schema, { strict: false })]) {
+    expect(aot).not.toBe(schema);
+    expect(valid(aot, { a: "x", b: 1 })).toEqual({ a: "x", b: 1 });
+    invalid(aot, { a: 1, b: 1 });
+  }
 });

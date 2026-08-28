@@ -298,7 +298,8 @@ for (let r = 0; r < ROUNDS && failures.length < 5; r++) {
   const built = build(Number(process.env.DEPTH ?? 3));
   let fast: z.ZodType;
   try {
-    fast = compile(built.schema) as z.ZodType;
+    // Strict: an unsupported schema must be classified as skipped, not silently compared against itself.
+    fast = compile(built.schema, { strict: true }) as z.ZodType;
   } catch (e) {
     if (e instanceof ZodCompileUnsupportedError || e instanceof ZodCompileAsyncError) {
       skipped++;
@@ -314,7 +315,9 @@ for (let r = 0; r < ROUNDS && failures.length < 5; r++) {
     const marker = Symbol("sentinel");
     let cu: z.ZodType | null = null;
     try {
-      cu = compile(z.union([built.schema, z.any().transform(() => marker)]) as z.ZodType) as z.ZodType;
+      cu = compile(z.union([built.schema, z.any().transform(() => marker)]) as z.ZodType, {
+        strict: true,
+      }) as z.ZodType;
     } catch {
       cu = null;
     }

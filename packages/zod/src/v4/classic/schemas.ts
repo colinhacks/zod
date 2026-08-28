@@ -15,10 +15,6 @@ function _ensureDefaultLocale(): void {
 }
 
 // Methods live on each concrete constructor's prototype and materialize per instance on first access, so a schema only pays for what it is asked for.
-const _installLazyMethods = util.installLazyMethods;
-const _installLazyProps = util.installLazyProps;
-type _LazyMethodsOf<T> = util.LazyMethodsOf<T>;
-type _LazyPropsOf<T> = util.LazyPropsOf<T>;
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -166,37 +162,18 @@ export interface ZodType<
 export interface _ZodType<out Internals extends core.$ZodTypeInternals = core.$ZodTypeInternals>
   extends ZodType<any, any, Internals> {}
 
-export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$constructor("ZodType", (inst, def) => {
-  _ensureDefaultLocale();
-  core.$ZodType.init(inst, def);
+export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$constructor<ZodType>(
+  "ZodType",
+  (inst, def) => {
+    _ensureDefaultLocale();
+    core.$ZodType.init(inst, def);
 
-  inst.def = def;
-  inst.type = def.type;
+    inst.def = def;
+    inst.type = def.type;
 
-  _installLazyMethods(inst, "check", _zodTypeMethods);
-  _installLazyProps(inst, "parse", _zodTypeParseProps);
-  // Reads through to the registry on every access, so it must not cache.
-  const proto = Object.getPrototypeOf(inst);
-  if (!("description" in proto)) {
-    Object.defineProperty(proto, "description", {
-      configurable: true,
-      get(this: ZodType) {
-        return core.globalRegistry.get(this)?.description;
-      },
-    });
-    // No setter: `schema._def = x` throws, as it did when `_def` was a non-writable own property.
-    Object.defineProperty(proto, "_def", {
-      configurable: true,
-      get(this: ZodType) {
-        return this._zod.def;
-      },
-    });
-  }
-  return inst;
-});
-
-function _zodTypeMethods(): _LazyMethodsOf<ZodType> {
-  return {
+    return inst;
+  },
+  {
     check(...chks) {
       const def = this.def;
       return this.clone(
@@ -296,58 +273,78 @@ function _zodTypeMethods(): _LazyMethodsOf<ZodType> {
     apply(fn, ...args) {
       return args.length === 0 ? fn(this) : fn(this, ...args);
     },
-  };
-}
-
-function _zodTypeParseProps(): _LazyPropsOf<ZodType> {
-  return {
     // Overrides core's `~standard` to add `jsonSchema`. Must stay a prototype entry: redefining it per instance demotes instances to dictionary mode.
-    "~standard": (self) =>
-      ({
-        ...core.standardProps(self),
+    get "~standard"(): ZodType["~standard"] {
+      return util.hide(this, "~standard", {
+        ...core.standardProps(this),
         jsonSchema: {
-          input: createStandardJSONSchemaMethod(self, "input"),
-          output: createStandardJSONSchemaMethod(self, "output"),
+          input: createStandardJSONSchemaMethod(this, "input"),
+          output: createStandardJSONSchemaMethod(this, "output"),
         },
-      }) as ZodType["~standard"],
-    parse: (self) => {
-      const fn: ZodType["parse"] = (data, params) => parse.parse(self, data, params, { callee: fn });
-      return fn;
+      } as ZodType["~standard"]);
     },
-    parseAsync: (self) => {
-      const fn: ZodType["parseAsync"] = async (data, params) =>
-        await parse.parseAsync(self, data, params, { callee: fn });
-      return fn;
+    set "~standard"(value: ZodType["~standard"]) {
+      util.own(this, "~standard", value);
     },
-    safeParse: (self) => (data, params) => parse.safeParse(self, data, params),
-    safeParseAsync: (self) => async (data, params) => parse.safeParseAsync(self, data, params),
+    parse: function _parse(data, params) {
+      return parse.parse(this, data, params, { callee: _parse });
+    },
+    parseAsync: async function _parseAsync(data, params) {
+      return await parse.parseAsync(this, data, params, { callee: _parseAsync });
+    },
+    safeParse(data, params) {
+      return parse.safeParse(this, data, params);
+    },
+    async safeParseAsync(data, params) {
+      return parse.safeParseAsync(this, data, params);
+    },
     // `spa` is an alias: same function object as `safeParseAsync`, as before.
-    spa: (self) => self.safeParseAsync,
-    encode: (self) => {
-      const fn: ZodType["encode"] = (data, params) => parse.encode(self, data, params, { callee: fn });
-      return fn;
+    get spa(): ZodType["safeParseAsync"] {
+      return this.safeParseAsync;
     },
-    decode: (self) => {
-      const fn: ZodType["decode"] = (data, params) => parse.decode(self, data, params, { callee: fn });
-      return fn;
+    set spa(value: ZodType["safeParseAsync"]) {
+      util.own(this, "spa", value);
     },
-    encodeAsync: (self) => {
-      const fn: ZodType["encodeAsync"] = async (data, params) =>
-        await parse.encodeAsync(self, data, params, { callee: fn });
-      return fn;
+    encode: function _encode(data, params) {
+      return parse.encode(this, data, params, { callee: _encode });
     },
-    decodeAsync: (self) => {
-      const fn: ZodType["decodeAsync"] = async (data, params) =>
-        await parse.decodeAsync(self, data, params, { callee: fn });
-      return fn;
+    decode: function _decode(data, params) {
+      return parse.decode(this, data, params, { callee: _decode });
     },
-    safeEncode: (self) => (data, params) => parse.safeEncode(self, data, params),
-    safeDecode: (self) => (data, params) => parse.safeDecode(self, data, params),
-    safeEncodeAsync: (self) => async (data, params) => parse.safeEncodeAsync(self, data, params),
-    safeDecodeAsync: (self) => async (data, params) => parse.safeDecodeAsync(self, data, params),
-    toJSONSchema: (self) => createToJSONSchemaMethod(self, {}),
-  };
-}
+    encodeAsync: async function _encodeAsync(data, params) {
+      return await parse.encodeAsync(this, data, params, { callee: _encodeAsync });
+    },
+    decodeAsync: async function _decodeAsync(data, params) {
+      return await parse.decodeAsync(this, data, params, { callee: _decodeAsync });
+    },
+    safeEncode(data, params) {
+      return parse.safeEncode(this, data, params);
+    },
+    safeDecode(data, params) {
+      return parse.safeDecode(this, data, params);
+    },
+    async safeEncodeAsync(data, params) {
+      return parse.safeEncodeAsync(this, data, params);
+    },
+    async safeDecodeAsync(data, params) {
+      return parse.safeDecodeAsync(this, data, params);
+    },
+    get toJSONSchema(): ZodType["toJSONSchema"] {
+      return util.own(this, "toJSONSchema", createToJSONSchemaMethod(this, {}));
+    },
+    set toJSONSchema(value: ZodType["toJSONSchema"]) {
+      util.own(this, "toJSONSchema", value);
+    },
+    // Reads through to the registry on every access, so it must not cache.
+    get description(): string | undefined {
+      return core.globalRegistry.get(this as unknown as ZodType)?.description;
+    },
+    // No setter: `schema._def = x` throws, as it did when `_def` was a non-writable own property.
+    get _def(): core.$ZodTypeDef {
+      return (this as unknown as ZodType)._zod.def;
+    },
+  }
+);
 
 // ZodString
 export interface _ZodString<T extends core.$ZodStringInternals<unknown> = core.$ZodStringInternals<unknown>>
@@ -377,22 +374,20 @@ export interface _ZodString<T extends core.$ZodStringInternals<unknown> = core.$
 }
 
 /** @internal */
-export const _ZodString: core.$constructor<_ZodString> = /*@__PURE__*/ core.$constructor("_ZodString", (inst, def) => {
-  core.$ZodString.init(inst, def);
-  ZodType.init(inst, def);
+export const _ZodString: core.$constructor<_ZodString> = /*@__PURE__*/ core.$constructor<_ZodString>(
+  "_ZodString",
+  (inst, def) => {
+    core.$ZodString.init(inst, def);
+    ZodType.init(inst, def);
 
-  inst._zod.processJSONSchema = (ctx, json, params) => processors.stringProcessor(inst, ctx, json, params);
+    inst._zod.processJSONSchema = (ctx, json, params) => processors.stringProcessor(inst, ctx, json, params);
 
-  const bag = inst._zod.bag;
-  inst.format = bag.format ?? null;
-  inst.minLength = bag.minimum ?? null;
-  inst.maxLength = bag.maximum ?? null;
-
-  _installLazyMethods(inst, "regex", _zodStringBaseMethods);
-});
-
-function _zodStringBaseMethods(): _LazyMethodsOf<_ZodString> {
-  return {
+    const bag = inst._zod.bag;
+    inst.format = bag.format ?? null;
+    inst.minLength = bag.minimum ?? null;
+    inst.maxLength = bag.maximum ?? null;
+  },
+  {
     regex(...args) {
       return this.check((checks.regex as any)(...args));
     },
@@ -438,8 +433,8 @@ function _zodStringBaseMethods(): _LazyMethodsOf<_ZodString> {
     slugify() {
       return this.check(checks.slugify());
     },
-  };
-}
+  }
+);
 
 export interface ZodString extends _ZodString<core.$ZodStringInternals<string>> {
   // string format checks
@@ -518,15 +513,13 @@ export interface ZodString extends _ZodString<core.$ZodStringInternals<string>> 
   duration(params?: string | core.$ZodCheckISODurationParams): this;
 }
 
-export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$constructor("ZodString", (inst, def) => {
-  core.$ZodString.init(inst, def);
-  _ZodString.init(inst, def);
-
-  _installLazyMethods(inst, "email", _zodStringMethods);
-});
-
-function _zodStringMethods(): _LazyMethodsOf<ZodString> {
-  return {
+export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$constructor<ZodString>(
+  "ZodString",
+  (inst, def) => {
+    core.$ZodString.init(inst, def);
+    _ZodString.init(inst, def);
+  },
+  {
     email(params) {
       return this.check(core._email(ZodEmail, params));
     },
@@ -593,8 +586,6 @@ function _zodStringMethods(): _LazyMethodsOf<ZodString> {
     e164(params) {
       return this.check(core._e164(ZodE164, params));
     },
-
-    // iso
     datetime(params) {
       return this.check(core._isoDateTime(ZodISODateTime, params as any));
     },
@@ -607,8 +598,8 @@ function _zodStringMethods(): _LazyMethodsOf<ZodString> {
     duration(params) {
       return this.check(core._isoDuration(ZodISODuration, params as any));
     },
-  };
-}
+  }
+);
 
 export function string(params?: string | core.$ZodStringParams): ZodString;
 export function string<T extends string>(params?: string | core.$ZodStringParams): core.$ZodType<T, T>;
@@ -1122,27 +1113,25 @@ export interface _ZodNumber<Internals extends core.$ZodNumberInternals = core.$Z
 
 export interface ZodNumber extends _ZodNumber<core.$ZodNumberInternals<number>> {}
 
-export const ZodNumber: core.$constructor<ZodNumber> = /*@__PURE__*/ core.$constructor("ZodNumber", (inst, def) => {
-  core.$ZodNumber.init(inst, def);
+export const ZodNumber: core.$constructor<ZodNumber> = /*@__PURE__*/ core.$constructor<ZodNumber>(
+  "ZodNumber",
+  (inst, def) => {
+    core.$ZodNumber.init(inst, def);
 
-  ZodType.init(inst, def);
+    ZodType.init(inst, def);
 
-  inst._zod.processJSONSchema = (ctx, json, params) => processors.numberProcessor(inst, ctx, json, params);
+    inst._zod.processJSONSchema = (ctx, json, params) => processors.numberProcessor(inst, ctx, json, params);
 
-  _installLazyMethods(inst, "gt", _zodNumberMethods);
-
-  const bag = inst._zod.bag;
-  inst.minValue =
-    Math.max(bag.minimum ?? Number.NEGATIVE_INFINITY, bag.exclusiveMinimum ?? Number.NEGATIVE_INFINITY) ?? null;
-  inst.maxValue =
-    Math.min(bag.maximum ?? Number.POSITIVE_INFINITY, bag.exclusiveMaximum ?? Number.POSITIVE_INFINITY) ?? null;
-  inst.isInt = (bag.format ?? "").includes("int") || Number.isSafeInteger(bag.multipleOf ?? 0.5);
-  inst.isFinite = true;
-  inst.format = bag.format ?? null;
-});
-
-function _zodNumberMethods(): _LazyMethodsOf<ZodNumber> {
-  return {
+    const bag = inst._zod.bag;
+    inst.minValue =
+      Math.max(bag.minimum ?? Number.NEGATIVE_INFINITY, bag.exclusiveMinimum ?? Number.NEGATIVE_INFINITY) ?? null;
+    inst.maxValue =
+      Math.min(bag.maximum ?? Number.POSITIVE_INFINITY, bag.exclusiveMaximum ?? Number.POSITIVE_INFINITY) ?? null;
+    inst.isInt = (bag.format ?? "").includes("int") || Number.isSafeInteger(bag.multipleOf ?? 0.5);
+    inst.isFinite = true;
+    inst.format = bag.format ?? null;
+  },
+  {
     gt(value, params) {
       return this.check(checks.gt(value, params));
     },
@@ -1188,8 +1177,8 @@ function _zodNumberMethods(): _LazyMethodsOf<ZodNumber> {
     finite() {
       return this;
     },
-  };
-}
+  }
+);
 
 export function number(params?: string | core.$ZodNumberParams): ZodNumber {
   return core._number(ZodNumber, params);
@@ -1272,21 +1261,19 @@ export interface _ZodBigInt<T extends core.$ZodBigIntInternals = core.$ZodBigInt
 }
 
 export interface ZodBigInt extends _ZodBigInt<core.$ZodBigIntInternals<bigint>> {}
-export const ZodBigInt: core.$constructor<ZodBigInt> = /*@__PURE__*/ core.$constructor("ZodBigInt", (inst, def) => {
-  core.$ZodBigInt.init(inst, def);
-  ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => processors.bigintProcessor(inst, ctx, json, params);
+export const ZodBigInt: core.$constructor<ZodBigInt> = /*@__PURE__*/ core.$constructor<ZodBigInt>(
+  "ZodBigInt",
+  (inst, def) => {
+    core.$ZodBigInt.init(inst, def);
+    ZodType.init(inst, def);
+    inst._zod.processJSONSchema = (ctx, json, params) => processors.bigintProcessor(inst, ctx, json, params);
 
-  _installLazyMethods(inst, "gte", _zodBigIntMethods);
-
-  const bag = inst._zod.bag;
-  inst.minValue = bag.minimum ?? null;
-  inst.maxValue = bag.maximum ?? null;
-  inst.format = bag.format ?? null;
-});
-
-function _zodBigIntMethods(): _LazyMethodsOf<ZodBigInt> {
-  return {
+    const bag = inst._zod.bag;
+    inst.minValue = bag.minimum ?? null;
+    inst.maxValue = bag.maximum ?? null;
+    inst.format = bag.format ?? null;
+  },
+  {
     gte(value, params) {
       return this.check(checks.gte(value, params));
     },
@@ -1320,8 +1307,8 @@ function _zodBigIntMethods(): _LazyMethodsOf<ZodBigInt> {
     multipleOf(value, params) {
       return this.check(checks.multipleOf(value, params));
     },
-  };
-}
+  }
+);
 
 export function bigint(params?: string | core.$ZodBigIntParams): ZodBigInt {
   return core._bigint(ZodBigInt, params);
@@ -1484,18 +1471,17 @@ export interface ZodArray<T extends core.SomeType = core.$ZodType>
   unwrap(): T;
   "~standard": ZodStandardSchemaWithJSON<this>;
 }
-export const ZodArray: core.$constructor<ZodArray> = /*@__PURE__*/ core.$constructor("ZodArray", (inst, def) => {
-  core.attachMemoizer(inst);
-  core.$ZodArray.init(inst, def);
-  ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => processors.arrayProcessor(inst, ctx, json, params);
+export const ZodArray: core.$constructor<ZodArray> = /*@__PURE__*/ core.$constructor<ZodArray>(
+  "ZodArray",
+  (inst, def) => {
+    core.attachMemoizer(inst);
+    core.$ZodArray.init(inst, def);
+    ZodType.init(inst, def);
+    inst._zod.processJSONSchema = (ctx, json, params) => processors.arrayProcessor(inst, ctx, json, params);
 
-  inst.element = def.element;
-  _installLazyMethods(inst, "min", _zodArrayMethods);
-});
-
-function _zodArrayMethods(): _LazyMethodsOf<ZodArray> {
-  return {
+    inst.element = def.element;
+  },
+  {
     min(n, params) {
       return this.check(checks.minLength(n, params));
     },
@@ -1511,8 +1497,8 @@ function _zodArrayMethods(): _LazyMethodsOf<ZodArray> {
     unwrap() {
       return this.element;
     },
-  };
-}
+  }
+);
 
 export function array<T extends core.SomeType>(element: T, params?: string | core.$ZodArrayParams): ZodArray<T> {
   return core._array(ZodArray, element as any, params) as any;
@@ -1632,21 +1618,19 @@ export interface ZodObject<
   >;
 }
 
-export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$constructor("ZodObject", (inst, def) => {
-  core.attachMemoizer(inst);
-  core.$ZodObjectJIT.init(inst, def);
-  ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => processors.objectProcessor(inst, ctx, json, params);
+export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$constructor<ZodObject>(
+  "ZodObject",
+  (inst, def) => {
+    core.attachMemoizer(inst);
+    core.$ZodObjectJIT.init(inst, def);
+    ZodType.init(inst, def);
+    inst._zod.processJSONSchema = (ctx, json, params) => processors.objectProcessor(inst, ctx, json, params);
 
-  util.defineLazy(inst, "shape", () => {
-    return def.shape;
-  });
-
-  _installLazyMethods(inst, "keyof", _zodObjectMethods);
-});
-
-function _zodObjectMethods(): _LazyMethodsOf<ZodObject> {
-  return {
+    util.defineLazy(inst, "shape", () => {
+      return def.shape;
+    });
+  },
+  {
     keyof() {
       return _enum(Object.keys(this._zod.def.shape));
     },
@@ -1689,8 +1673,8 @@ function _zodObjectMethods(): _LazyMethodsOf<ZodObject> {
     required(...args) {
       return util.required(ZodNonOptional, this, args[0]);
     },
-  };
-}
+  }
+);
 
 export function object<T extends core.$ZodLooseShape = Partial<Record<never, core.SomeType>>>(
   shape?: T,
@@ -1855,18 +1839,34 @@ export interface ZodTuple<
     core.$ZodTuple<T, Rest> {
   "~standard": ZodStandardSchemaWithJSON<this>;
   rest<Rest extends core.SomeType = core.$ZodType>(rest: Rest): ZodTuple<T, Rest>;
+  partial(): ZodTuple<{ -readonly [k in keyof T]: ZodOptional<T[k]> }, Rest>;
 }
-export const ZodTuple: core.$constructor<ZodTuple> = /*@__PURE__*/ core.$constructor("ZodTuple", (inst, def) => {
-  core.attachMemoizer(inst);
-  core.$ZodTuple.init(inst, def);
-  ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => processors.tupleProcessor(inst, ctx, json, params);
-  inst.rest = (rest) =>
-    inst.clone({
-      ...inst._zod.def,
-      rest: rest as any as core.$ZodType,
-    }) as any;
-});
+export const ZodTuple: core.$constructor<ZodTuple> = /*@__PURE__*/ core.$constructor<ZodTuple>(
+  "ZodTuple",
+  (inst, def) => {
+    core.attachMemoizer(inst);
+    core.$ZodTuple.init(inst, def);
+    ZodType.init(inst, def);
+    inst._zod.processJSONSchema = (ctx, json, params) => processors.tupleProcessor(inst, ctx, json, params);
+  },
+  {
+    rest(rest) {
+      return this.clone({
+        ...this._zod.def,
+        rest: rest as any as core.$ZodType,
+      }) as any;
+    },
+    partial() {
+      const def = this._zod.def;
+      // a refinement was authored against the full arity; partialing would run it on a shorter array
+      if (def.checks?.length) throw new Error(".partial() cannot be used on tuple schemas containing refinements");
+      return this.clone({
+        ...def,
+        items: def.items.map((item) => new ZodOptional({ type: "optional", innerType: item })),
+      }) as any;
+    },
+  }
+);
 
 export function tuple<T extends readonly [core.SomeType, ...core.SomeType[]]>(
   items: T,

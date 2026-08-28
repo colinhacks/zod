@@ -41,7 +41,7 @@ export interface ZodMiniType<
 interface _ZodMiniType<out Internals extends core.$ZodTypeInternals = core.$ZodTypeInternals>
   extends ZodMiniType<any, any, Internals> {}
 
-export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$constructor(
+export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$constructor<ZodMiniType>(
   "ZodMiniType",
   (inst, def) => {
     if (!inst._zod) throw new Error("Uninitialized schema in ZodMiniType.");
@@ -50,15 +50,15 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
 
     inst.def = def;
     inst.type = def.type;
-
-    util.installLazyMethods<ZodMiniType>(inst, "parse", _zodMiniTypeMethods);
+  },
+  {
     // `with` is an alias for `check`: the same function object, not a wrapper.
-    util.installLazyProp(inst, "with", (self: ZodMiniType) => self.check);
-  }
-);
-
-function _zodMiniTypeMethods(): util.LazyMethodsOf<ZodMiniType> {
-  return {
+    get with(): ZodMiniType["check"] {
+      return this.check;
+    },
+    set with(value: ZodMiniType["check"]) {
+      util.own(this, "with", value);
+    },
     parse(data, params) {
       return parse.parse(this, data, params, { callee: this.parse });
     },
@@ -92,15 +92,15 @@ function _zodMiniTypeMethods(): util.LazyMethodsOf<ZodMiniType> {
     brand() {
       return this as any;
     },
-    register(reg: any, meta: any) {
+    register(reg: any, meta: any): any {
       reg.add(this, meta);
       return this;
     },
-    apply(fn, ...args) {
+    apply(fn: any, ...args: any[]) {
       return args.length === 0 ? fn(this) : fn(this, ...args);
     },
-  };
-}
+  }
+);
 
 export interface _ZodMiniString<T extends core.$ZodStringInternals<unknown> = core.$ZodStringInternals<unknown>>
   extends _ZodMiniType<T>,
@@ -1012,8 +1012,19 @@ export function partial<T extends ZodMiniObject, M extends util.Mask<keyof T["sh
   T["_zod"]["config"]
 >;
 // @__NO_SIDE_EFFECTS__
-export function partial(schema: ZodMiniObject, mask?: object) {
-  return util.partial(ZodMiniOptional, schema, mask);
+export function partial<T extends util.TupleItems, Rest extends SomeType | null>(
+  schema: ZodMiniTuple<T, Rest>
+): ZodMiniTuple<{ -readonly [k in keyof T]: ZodMiniOptional<T[k]> }, Rest>;
+// @__NO_SIDE_EFFECTS__
+export function partial(schema: ZodMiniObject | ZodMiniTuple, mask?: object) {
+  const def = schema._zod.def;
+  if (def.type !== "tuple") return util.partial(ZodMiniOptional, schema as ZodMiniObject, mask);
+  // a refinement was authored against the full arity; partialing would run it on a shorter array
+  if (def.checks?.length) throw new Error(".partial() cannot be used on tuple schemas containing refinements");
+  return util.clone(schema, {
+    ...def,
+    items: def.items.map((item) => new ZodMiniOptional({ type: "optional", innerType: item as core.$ZodType })),
+  });
 }
 
 // @__NO_SIDE_EFFECTS__

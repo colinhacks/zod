@@ -33,7 +33,7 @@ interface CompileFastpassOptions {
 
 type CompiledFastpass<T> = ((input: unknown) => T | INVALID) & { code?: string | undefined };
 
-/** Thrown by `compile()` when the schema contains async refinements or transforms. */
+/** Raised when the schema contains async refinements or transforms. Surfaces only under `compile(schema, { strict: true })`. */
 export class ZodCompileAsyncError extends Error {
   constructor(message = "z.compile does not support async refinements, transforms, or checks") {
     super(message);
@@ -42,11 +42,10 @@ export class ZodCompileAsyncError extends Error {
 }
 
 /**
- * Thrown by `compile()` when the schema contains a feature whose semantics the
- * fast path can't fully model. The shim in `zod/compile` catches this and
- * falls back permanently to the runtime parser for that schema. Users calling
- * `z.compile(s)` explicitly will see this thrown and should not catch it —
- * they should not be compiling that schema.
+ * Raised when the schema contains a feature whose semantics the fast path
+ * can't fully model. Both the shim in `zod/compile` and the default
+ * `compile()` fall back to the runtime parser for that schema; only
+ * `compile(schema, { strict: true })` lets it surface.
  */
 export class ZodCompileUnsupportedError extends Error {
   /** Whether a container may absorb this refusal by running the child through the runtime (see `compileChild`). False when running only that node on the runtime is not equivalent to running the whole parse there — a runtime island gets no parse context, so a node that *consumes* issues rather than propagating them would finalize them against the wrong error map and still succeed. */
@@ -84,65 +83,78 @@ type SupportedCheck =
   | checks.$ZodCheckOverwrite
   | { _zod: { def: { check: "custom"; fn?: (value: unknown) => boolean }; check?: (payload: unknown) => unknown } };
 
+export interface CompileOptions {
+  /** Throw the refusal instead of returning the schema uncompiled. */
+  strict?: boolean | undefined;
+}
+
 /**
  * AOT-compile a Zod schema. Returns a clone whose `_zod.run` calls a generated
  * fast path first and falls back to the original runtime parser on failure.
  *
  * - Forward direction only. Backward (encode), async, and `skipChecks` paths
  *   bypass the fast path and use the runtime directly.
- * - Throws `ZodCompileAsyncError` at compile time if the schema contains any
- *   async refinement/transform/check. Async detection is static: the
- *   `isAsyncFunction` probe runs on every hoisted user function.
+ * - Never throws. A schema the fast path can't model is returned unchanged and
+ *   keeps using the runtime parser. Pass `{ strict: true }` to get the refusal
+ *   as a thrown `ZodCompileUnsupportedError` / `ZodCompileAsyncError` instead.
  * - The original schema is unchanged. The clone shares children by reference.
  */
-export function compile<T extends SomeType>(schema: T): T {
-  const fast = compileFastpass(schema);
-  const clone = util.clone(schema as any) as T;
+export function compile<T extends SomeType>(schema: T, options?: CompileOptions): T {
+  try {
+    const fast = compileFastpass(schema);
+    const clone = util.clone(schema as any) as T;
 
-  // Capture the source-of-truth runtime eagerly. If schema._zod.run is itself a shim installed by global-mode (`__originalRun` set), unwrap past it. Otherwise capturing the live property lazily would let a later self- replacement of schema._zod.run feed our wrapper back into itself.
-  const liveRun = schema._zod.run as ((p: ParsePayload, c: ParseContextInternal) => any) & {
-    __originalRun?: (p: ParsePayload, c: ParseContextInternal) => any;
-  };
-  const originalRun = liveRun.__originalRun ?? liveRun;
+    // Capture the source-of-truth runtime eagerly. If schema._zod.run is itself a shim installed by global-mode (`__originalRun` set), unwrap past it. Otherwise capturing the live property lazily would let a later self- replacement of schema._zod.run feed our wrapper back into itself.
+    const liveRun = schema._zod.run as ((p: ParsePayload, c: ParseContextInternal) => any) & {
+      __originalRun?: (p: ParsePayload, c: ParseContextInternal) => any;
+    };
+    const originalRun = liveRun.__originalRun ?? liveRun;
 
-  // Delegate to the *original* schema's run on bypass/fallback (not the
-  // clone's). The original closed over its own `inst` at construction time;
-  // issue payloads use that reference to derive things like the class name
-  // for `z.instanceof(Test)`. Calling the clone's freshly-initialized run
-  // would push issues with `inst === clone`, producing diverging error
-  // messages from the original schema.
-  const wrapped = (payload: ParsePayload, ctx: ParseContextInternal): any => {
-    if (
-      ctx?.async ||
-      ctx?.direction === "backward" ||
-      ctx?.skipChecks ||
-      (ctx as Record<symbol, unknown> | undefined)?.[FALLBACK_FLAG]
-    ) {
+    // Delegate to the *original* schema's run on bypass/fallback (not the
+    // clone's). The original closed over its own `inst` at construction time;
+    // issue payloads use that reference to derive things like the class name
+    // for `z.instanceof(Test)`. Calling the clone's freshly-initialized run
+    // would push issues with `inst === clone`, producing diverging error
+    // messages from the original schema.
+    const wrapped = (payload: ParsePayload, ctx: ParseContextInternal): any => {
+      if (
+        ctx?.async ||
+        ctx?.direction === "backward" ||
+        ctx?.skipChecks ||
+        (ctx as Record<symbol, unknown> | undefined)?.[FALLBACK_FLAG]
+      ) {
+        return originalRun(payload, ctx);
+      }
+
+      // A memoized back-edge: only the runtime can close a reference cycle, and a transform on one must raise $ZodCyclicError from its own parse.
+      if (ctx && isBackEdge(ctx, payload.value)) {
+        return originalRun(payload, ctx);
+      }
+
+      const out = fast(payload.value);
+      if (out !== INVALID) {
+        payload.value = out;
+        return payload;
+      }
+      // Mark this parse as runtime-driven: under global mode every nested schema carries its own compiled wrapper, and without the flag the parent's runtime fallback re-enters each child's fast path, running user callbacks a third time on invalid input.
+      if (ctx) (ctx as Record<symbol, unknown>)[FALLBACK_FLAG] = true;
       return originalRun(payload, ctx);
-    }
+    };
+    // Let later compiles of (or through) this run unwrap to the true runtime — both the global shim and repeated z.compile calls rely on this. The bag's fastpass lets the standalone isValid skip the payload and wrapper on the happy path.
+    (wrapped as { __originalRun?: typeof originalRun }).__originalRun = originalRun;
+    clone._zod.bag.fastpass = fast;
+    clone._zod.bag.fallbackRun = originalRun;
+    clone._zod.run = wrapped;
 
-    // A memoized back-edge: only the runtime can close a reference cycle, and a transform on one must raise $ZodCyclicError from its own parse.
-    if (ctx && isBackEdge(ctx, payload.value)) {
-      return originalRun(payload, ctx);
-    }
+    // The fast parse/safeParse closures fall back through the source schema's methods. If the source is shim- or wrapper-managed, those methods route into a compiled run and would execute user callbacks a third time on invalid input — the plain method → wrapper path is exactly 2x, so skip.
+    if (!liveRun.__originalRun) installCompiledUserMethods(clone, schema, fast);
 
-    const out = fast(payload.value);
-    if (out !== INVALID) {
-      payload.value = out;
-      return payload;
-    }
-    // Mark this parse as runtime-driven: under global mode every nested schema carries its own compiled wrapper, and without the flag the parent's runtime fallback re-enters each child's fast path, running user callbacks a third time on invalid input.
-    if (ctx) (ctx as Record<symbol, unknown>)[FALLBACK_FLAG] = true;
-    return originalRun(payload, ctx);
-  };
-  // Let later compiles of (or through) this run unwrap to the true runtime — both the global shim and repeated z.compile calls rely on this.
-  (wrapped as { __originalRun?: typeof originalRun }).__originalRun = originalRun;
-  clone._zod.run = wrapped;
-
-  // The fast parse/safeParse closures fall back through the source schema's methods. If the source is shim- or wrapper-managed, those methods route into a compiled run and would execute user callbacks a third time on invalid input — the plain method → wrapper path is exactly 2x, so skip.
-  if (!liveRun.__originalRun) installCompiledUserMethods(clone, schema, fast);
-
-  return clone;
+    return clone;
+  } catch (err) {
+    if (options?.strict) throw err;
+    // a schema we can't compile still has to work, so hand it back untouched on the runtime parser — the same silent fallback global mode already does
+    return schema;
+  }
 }
 
 function installCompiledUserMethods<T extends SomeType>(
@@ -460,6 +472,8 @@ function generateMultipleOfCheck(
   accessor: string
 ): void {
   if (typeof def.value === "bigint") {
+    // a zero divisor has no compiled form: `x % 0n` throws
+    if (def.value === BigInt(0)) throw new ZodCompileUnsupportedError("multiple_of check with a zero divisor");
     doc.write(`if (${accessor} % ${def.value}n !== 0n) return INVALID;`);
   } else {
     // Float `%` has well-known precision issues for sub-integer steps

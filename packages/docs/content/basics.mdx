@@ -128,6 +128,15 @@ await schema.safeParseAsync("hello");
 ```
 </Callout>
 
+When you only need to know whether an input is acceptable, use the top-level `z.isValid()` function. It returns a boolean, never builds an error, and acts as a type guard on the schema's input type.
+
+```ts
+z.isValid(Player, { username: "billie", xp: 100 }); // true
+z.isValid(Player, { username: 42, xp: "100" });     // false
+```
+
+Use `z.isValidAsync()` for schemas with async refinements or transforms. On a [compiled schema](/compile), `z.isValid()` answers directly from the compiled fast path.
+
 ## Inferring types
 
 Zod infers a static type from your schema definitions. You can extract this type with the `z.infer<>` utility and use it however you like.

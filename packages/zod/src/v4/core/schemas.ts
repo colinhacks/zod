@@ -200,129 +200,138 @@ export interface $ZodType<
 export interface _$ZodType<T extends $ZodTypeInternals = $ZodTypeInternals>
   extends $ZodType<T["output"], T["input"], T> {}
 
-export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constructor("$ZodType", (inst, def) => {
-  inst ??= {} as any;
+export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constructor<$ZodType>(
+  "$ZodType",
+  (inst, def) => {
+    inst ??= {} as any;
 
-  inst._zod.def = def; // set _def property
-  inst._zod.bag = inst._zod.bag || {}; // initialize _bag object
-  inst._zod.version = version;
+    inst._zod.def = def; // set _def property
+    inst._zod.bag = inst._zod.bag || {}; // initialize _bag object
+    inst._zod.version = version;
 
-  const defChecks = inst._zod.def.checks;
-  // if inst is itself a checks.$ZodCheck, run it as a check
-  const checks: checks.$ZodCheck<never>[] = inst._zod.traits.has("$ZodCheck")
-    ? [inst as any, ...(defChecks ?? [])]
-    : defChecks?.length
-      ? [...defChecks]
-      : [];
+    const defChecks = inst._zod.def.checks;
+    // if inst is itself a checks.$ZodCheck, run it as a check
+    const checks: checks.$ZodCheck<never>[] = inst._zod.traits.has("$ZodCheck")
+      ? [inst as any, ...(defChecks ?? [])]
+      : defChecks?.length
+        ? [...defChecks]
+        : [];
 
-  for (const ch of checks) {
-    for (const fn of ch._zod.onattach) {
-      fn(inst);
+    for (const ch of checks) {
+      for (const fn of ch._zod.onattach) {
+        fn(inst);
+      }
     }
-  }
 
-  if (checks.length === 0) {
-    // deferred initializer inst._zod.parse is not yet defined
-    inst._zod.deferred ??= [];
-    inst._zod.deferred?.push(() => {
-      inst._zod.run = inst._zod.parse;
-    });
-  } else {
-    const runChecks = (
-      payload: ParsePayload,
-      checks: checks.$ZodCheck<never>[],
-      ctx?: ParseContextInternal | undefined
-    ): util.MaybeAsync<ParsePayload> => {
-      if (payload.memo) return payload;
+    if (checks.length === 0) {
+      // deferred initializer inst._zod.parse is not yet defined
+      inst._zod.deferred ??= [];
+      inst._zod.deferred?.push(() => {
+        inst._zod.run = inst._zod.parse;
+      });
+    } else {
+      const runChecks = (
+        payload: ParsePayload,
+        checks: checks.$ZodCheck<never>[],
+        ctx?: ParseContextInternal | undefined
+      ): util.MaybeAsync<ParsePayload> => {
+        if (payload.memo) return payload;
 
-      let isAborted = util.aborted(payload);
+        let isAborted = util.aborted(payload);
 
-      let asyncResult!: Promise<unknown> | undefined;
-      for (const ch of checks) {
-        if (ch._zod.def.when) {
-          if (util.explicitlyAborted(payload)) continue;
-          const shouldRun = ch._zod.def.when(payload);
-          if (!shouldRun) continue;
-        } else if (isAborted) {
-          continue;
-        }
-        const currLen = payload.issues.length;
-        const _ = ch._zod.check(payload as any) as any as ParsePayload;
+        let asyncResult!: Promise<unknown> | undefined;
+        for (const ch of checks) {
+          if (ch._zod.def.when) {
+            if (util.explicitlyAborted(payload)) continue;
+            const shouldRun = ch._zod.def.when(payload);
+            if (!shouldRun) continue;
+          } else if (isAborted) {
+            continue;
+          }
+          const currLen = payload.issues.length;
+          const _ = ch._zod.check(payload as any) as any as ParsePayload;
 
-        if (_ instanceof Promise && ctx?.async === false) {
-          throw new core.$ZodAsyncError();
-        }
-        if (asyncResult || _ instanceof Promise) {
-          asyncResult = (asyncResult ?? Promise.resolve()).then(async () => {
-            await _;
+          if (_ instanceof Promise && ctx?.async === false) {
+            throw new core.$ZodAsyncError();
+          }
+          if (asyncResult || _ instanceof Promise) {
+            asyncResult = (asyncResult ?? Promise.resolve()).then(async () => {
+              await _;
+              const nextLen = payload.issues.length;
+              if (nextLen === currLen) return;
+              util.attachSchema(payload.issues, currLen, inst);
+              if (!isAborted) isAborted = util.aborted(payload, currLen);
+            });
+          } else {
             const nextLen = payload.issues.length;
-            if (nextLen === currLen) return;
+            if (nextLen === currLen) continue;
             util.attachSchema(payload.issues, currLen, inst);
             if (!isAborted) isAborted = util.aborted(payload, currLen);
-          });
-        } else {
-          const nextLen = payload.issues.length;
-          if (nextLen === currLen) continue;
-          util.attachSchema(payload.issues, currLen, inst);
-          if (!isAborted) isAborted = util.aborted(payload, currLen);
-        }
-      }
-
-      if (asyncResult) {
-        return asyncResult.then(() => {
-          return payload;
-        });
-      }
-      return payload;
-    };
-
-    const handleCanaryResult = (canary: ParsePayload, payload: ParsePayload, ctx: ParseContextInternal) => {
-      // abort if the canary is aborted
-      if (util.aborted(canary)) {
-        canary.aborted = true;
-        return canary;
-      }
-
-      // run checks first, then
-      const checkResult = runChecks(payload, checks, ctx);
-      if (checkResult instanceof Promise) {
-        if (ctx.async === false) throw new core.$ZodAsyncError();
-        return checkResult.then((checkResult) => inst._zod.parse(checkResult, ctx));
-      }
-      return inst._zod.parse(checkResult, ctx);
-    };
-
-    inst._zod.run = (payload, ctx) => {
-      if (ctx.skipChecks) {
-        return inst._zod.parse(payload, ctx);
-      }
-      if (ctx.direction === "backward") {
-        // run canary initial pass (no checks)
-        const canary = inst._zod.parse({ value: payload.value, issues: [] }, { ...ctx, skipChecks: true });
-
-        if (canary instanceof Promise) {
-          return canary.then((canary) => {
-            return handleCanaryResult(canary, payload, ctx);
-          });
+          }
         }
 
-        return handleCanaryResult(canary, payload, ctx);
-      }
+        if (asyncResult) {
+          return asyncResult.then(() => {
+            return payload;
+          });
+        }
+        return payload;
+      };
 
-      // forward
-      const result = inst._zod.parse(payload, ctx);
-      if (result instanceof Promise) {
-        if (ctx.async === false) throw new core.$ZodAsyncError();
-        return result.then((result) => runChecks(result, checks, ctx));
-      }
+      const handleCanaryResult = (canary: ParsePayload, payload: ParsePayload, ctx: ParseContextInternal) => {
+        // abort if the canary is aborted
+        if (util.aborted(canary)) {
+          canary.aborted = true;
+          return canary;
+        }
 
-      return runChecks(result, checks, ctx);
-    };
+        // run checks first, then
+        const checkResult = runChecks(payload, checks, ctx);
+        if (checkResult instanceof Promise) {
+          if (ctx.async === false) throw new core.$ZodAsyncError();
+          return checkResult.then((checkResult) => inst._zod.parse(checkResult, ctx));
+        }
+        return inst._zod.parse(checkResult, ctx);
+      };
+
+      inst._zod.run = (payload, ctx) => {
+        if (ctx.skipChecks) {
+          return inst._zod.parse(payload, ctx);
+        }
+        if (ctx.direction === "backward") {
+          // run canary initial pass (no checks)
+          const canary = inst._zod.parse({ value: payload.value, issues: [] }, { ...ctx, skipChecks: true });
+
+          if (canary instanceof Promise) {
+            return canary.then((canary) => {
+              return handleCanaryResult(canary, payload, ctx);
+            });
+          }
+
+          return handleCanaryResult(canary, payload, ctx);
+        }
+
+        // forward
+        const result = inst._zod.parse(payload, ctx);
+        if (result instanceof Promise) {
+          if (ctx.async === false) throw new core.$ZodAsyncError();
+          return result.then((result) => runChecks(result, checks, ctx));
+        }
+
+        return runChecks(result, checks, ctx);
+      };
+    }
+  },
+  {
+    // Wrappers extend this by installing a richer factory over it; reading it eagerly would defeat the laziness.
+    get "~standard"(): StandardSchemaV1.Props<any, any> {
+      return util.hide(this, "~standard", standardProps(this));
+    },
+    set "~standard"(value: StandardSchemaV1.Props<any, any>) {
+      util.own(this, "~standard", value);
+    },
   }
-
-  // Wrappers extend this by installing a richer factory over it; reading it eagerly would defeat the laziness.
-  util.installLazyProp(inst, "~standard", standardProps);
-});
+);
 
 /** The Standard Schema surface for `inst`. Shared so wrappers can extend it without forcing it. */
 const toStandardResult = (r: util.SafeParseResult<unknown>) =>
@@ -2164,18 +2173,9 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
 
     const generateFastpass = (shape: any) => {
       const normalized = _normalized.value;
-      // closure below retains this scope per schema, so add no bindings here — a key-expression helper cost 328 bytes each
       const syms = normalized.symbolKeys;
-      // a symbol has no source literal, so it is passed in and read as `syms[i]`; string-only shapes get no such parameter
-      const doc = new Doc(
-        syms.length
-          ? memo
-            ? ["shape", "payload", "ctx", "inst", "memo", "syms"]
-            : ["shape", "payload", "ctx", "syms"]
-          : memo
-            ? ["shape", "payload", "ctx", "inst", "memo"]
-            : ["shape", "payload", "ctx"]
-      );
+      // a symbol has no source literal, so it is read as `syms[i]` off the closed-over scope
+      const doc = new Doc(["payload", "ctx"], { shape, inst, memo, syms });
 
       const parseStr = (k: string) => `shape[${k}]._zod.run({ value: input[${k}], issues: [] }, ctx)`;
 
@@ -2262,13 +2262,8 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
 
       doc.write(`payload.value = newResult;`);
       doc.write(`return payload;`);
-      const fn = doc.compile();
-      if (syms.length) {
-        if (memo) return (payload: any, ctx: any) => fn(shape, payload, ctx, inst, memo, syms);
-        return (payload: any, ctx: any) => fn(shape, payload, ctx, syms);
-      }
-      if (memo) return (payload: any, ctx: any) => fn(shape, payload, ctx, inst, memo);
-      return (payload: any, ctx: any) => fn(shape, payload, ctx);
+      // closing `shape` in is what pays: turbofan specializes the parser against that one shape object, so every `shape[k]._zod.run` folds to a known callee. as a parameter it stays a generic load and measures 13% slower even with the forwarding frame gone
+      return doc.compile() as (payload: any, ctx: any) => any;
     };
 
     let fastpass!: ReturnType<typeof generateFastpass>;

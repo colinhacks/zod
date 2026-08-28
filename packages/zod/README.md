@@ -136,7 +136,7 @@ import "zod/compile"; // place before modules that define schemas
 Things to know:
 
 - Compilation uses `new Function`. Global mode is automatically disabled when `z.config({ jitless: true })` is set (e.g. CSP environments); calling `z.compile()` directly is an explicit opt-in.
-- Schemas with async refinements or transforms can't be compiled — `z.compile()` throws `ZodCompileAsyncError`; other unsupported constructs throw `ZodCompileUnsupportedError`. In global mode such schemas silently keep using the regular parser.
+- Schemas with async refinements or transforms can't be compiled, and neither can a few other constructs. That is not an error: `z.compile()` hands the schema back unchanged and it keeps using the regular parser, exactly as global mode leaves it. Pass `{ strict: true }` to throw `ZodCompileAsyncError` / `ZodCompileUnsupportedError` instead.
 - On invalid input, refinements and transforms may run twice (fast path, then fallback).
 - Deriving a new schema from a compiled one (`.refine()`, `.extend()`, etc.) returns an uncompiled schema — compile the final schema.
 

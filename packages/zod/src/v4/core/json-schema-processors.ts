@@ -61,7 +61,7 @@ export const stringProcessor: Processor<schemas.$ZodString> = (schema, ctx, _jso
   }
 };
 
-export const numberProcessor: Processor<schemas.$ZodNumber> = (schema, ctx, _json, _params) => {
+export const numberProcessor: Processor<schemas.$ZodNumber> = (schema, ctx, _json, params) => {
   const json = _json as JSONSchema.NumberSchema | JSONSchema.IntegerSchema;
   const { minimum, maximum, format, multipleOf, exclusiveMaximum, exclusiveMinimum } = schema._zod.bag;
   if (typeof format === "string" && format.includes("int")) json.type = "integer";
@@ -94,7 +94,18 @@ export const numberProcessor: Processor<schemas.$ZodNumber> = (schema, ctx, _jso
     json.maximum = maximum;
   }
 
-  if (typeof multipleOf === "number") json.multipleOf = multipleOf;
+  if (typeof multipleOf === "number") {
+    // JSON Schema requires a divisor strictly greater than zero, and a non-finite one does not survive JSON at all. A negative divisor accepts exactly what its absolute value accepts, so it still maps; zero, NaN and Infinity have no keyword form.
+    if (Number.isFinite(multipleOf) && multipleOf !== 0) json.multipleOf = Math.abs(multipleOf);
+    else
+      handleUnrepresentable(
+        schema,
+        ctx,
+        json,
+        params,
+        `A multipleOf divisor of ${multipleOf} cannot be represented in JSON Schema`
+      );
+  }
 };
 
 export const booleanProcessor: Processor<schemas.$ZodBoolean> = (_schema, _ctx, json, _params) => {

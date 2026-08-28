@@ -7,6 +7,7 @@ export * from "./compat.js";
 
 export type { infer } from "../core/index.js";
 export type { JSONType } from "../core/util.js";
+export type { CompileOptions } from "../core/index.js";
 export {
   globalRegistry,
   type GlobalMeta,

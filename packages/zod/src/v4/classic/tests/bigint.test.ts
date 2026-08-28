@@ -63,3 +63,21 @@ test("bigint formats are distinct at the type level", () => {
   // @ts-expect-error a uint64 schema is not a ZodInt64
   z.uint64() satisfies z.ZodInt64;
 });
+
+test("multipleOf(0n) does not throw from safeParse", () => {
+  // `value % 0n` throws RangeError, so the compiled path declines and the runtime reports the failure
+  const schema = z.bigint().multipleOf(BigInt(0));
+  const result = schema.safeParse(BigInt(10));
+  expect(result.success).toBe(false);
+  expect(result.error!.issues[0].code).toEqual("not_multiple_of");
+  expect(schema.safeParse(BigInt(0)).success).toBe(false);
+
+  // matches the number equivalent
+  expect(z.number().multipleOf(0).safeParse(10).success).toBe(false);
+  expect(z.number().multipleOf(0).safeParse(0).success).toBe(false);
+
+  // a zero divisor nested in an object must not break the surrounding parse
+  const obj = z.object({ a: z.bigint().multipleOf(BigInt(0)), b: z.bigint() });
+  expect(obj.safeParse({ a: BigInt(1), b: BigInt(2) }).success).toBe(false);
+  expect(obj.safeParse({ a: BigInt(1), b: 2 }).success).toBe(false);
+});

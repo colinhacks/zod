@@ -476,3 +476,36 @@ test("too_big tuple still surfaces element-wise type errors for present indices"
     ]
   `);
 });
+
+test("partial", () => {
+  const schema = z.tuple([z.string(), z.number(), z.boolean()]).partial();
+  expectTypeOf<z.infer<typeof schema>>().toEqualTypeOf<
+    [(string | undefined)?, (number | undefined)?, (boolean | undefined)?]
+  >();
+
+  expect(schema.parse([])).toEqual([]);
+  expect(schema.parse(["a"])).toEqual(["a"]);
+  expect(schema.parse(["a", 1, true])).toEqual(["a", 1, true]);
+  expect(schema.safeParse(["a", "b"]).success).toEqual(false);
+  expect(schema.safeParse(["a", 1, true, 4]).success).toEqual(false);
+
+  // the arity relaxation has to survive the JSON Schema round trip: `minItems` disappears
+  expect(z.toJSONSchema(schema)).toEqual(
+    z.toJSONSchema(z.tuple([z.string().optional(), z.number().optional(), z.boolean().optional()]))
+  );
+});
+
+test("partial leaves rest alone", () => {
+  const schema = z.tuple([z.string()], z.number()).partial();
+  expectTypeOf<z.infer<typeof schema>>().toEqualTypeOf<[(string | undefined)?, ...number[]]>();
+
+  expect(schema.parse([])).toEqual([]);
+  expect(schema.parse(["a", 1, 2])).toEqual(["a", 1, 2]);
+  // discriminating input: `true` only if rest had been wrapped too
+  expect(schema.safeParse(["a", undefined]).success).toEqual(false);
+});
+
+test("partial rejects a tuple carrying refinements", () => {
+  const schema = z.tuple([z.string(), z.number()]).refine(([a]) => a.length > 0);
+  expect(() => schema.partial()).toThrow("cannot be used on tuple schemas containing refinements");
+});

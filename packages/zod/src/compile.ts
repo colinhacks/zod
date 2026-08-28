@@ -8,7 +8,7 @@
 //
 // Module evaluation order matters: schemas constructed in modules that evaluate before this import will not be compiled. Place this import in the app entry point, before any module that constructs schemas at top level.
 //
-// Failure handling: if `compile()` throws for a schema (async refinement, unsupported feature, etc.) the shim catches and permanently restores the runtime `_zod.run` for that schema. The schema continues to work via the regular runtime parser — no observable difference to the caller.
+// Failure handling: if the compiler refuses a schema (async refinement, unsupported feature, etc.) the shim permanently restores the runtime `_zod.run` for that schema. The schema continues to work via the regular runtime parser — no observable difference to the caller.
 
 import { compile } from "./v4/core/compile.js";
 import * as core from "./v4/core/index.js";
@@ -33,9 +33,12 @@ core.globalConfig.postProcessor = (inst: any) => {
         inst._zod.run = originalRun;
         return originalRun(payload, ctx);
       }
-      const compiled = compile(inst);
+      // Strict: the shim owns its own fallback below, and a non-strict compile would hand back `inst` — whose run is this shim — and reinstall it on itself.
+      const compiled = compile(inst, { strict: true });
       // Only the run wrapper. Copying the compiled parse/safeParse closures would make their fallback re-enter this instance and run user callbacks a third time.
       inst._zod.run = compiled._zod.run;
+      inst._zod.bag.fastpass = compiled._zod.bag.fastpass;
+      inst._zod.bag.fallbackRun = compiled._zod.bag.fallbackRun;
     } catch {
       // Permanent fallback for unsupported schemas.
       inst._zod.run = originalRun;
