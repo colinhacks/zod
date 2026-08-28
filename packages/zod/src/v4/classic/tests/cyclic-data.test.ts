@@ -658,3 +658,21 @@ test("the default memoizer is installed before the first container reads it", ()
   const out = Node.parse(input);
   expect(out.self).toBe(out);
 });
+
+test("guards a transform built before any container", () => {
+  // the guard attaches at construction, so a transform predating the first container must still get the default
+  delete z.config().memoizer;
+  const wrap = z.transform((value: any) => ({ wrapped: value }));
+  const Inner: any = z.object({
+    name: z.string(),
+    get self() {
+      return Wrapped;
+    },
+  });
+  const Wrapped: any = z.pipe(Inner, wrap);
+
+  const input: any = { name: "x" };
+  input.self = input;
+
+  expect(() => Wrapped.parse(input)).toThrow(/reference cycle/);
+});

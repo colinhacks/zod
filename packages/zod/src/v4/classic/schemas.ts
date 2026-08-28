@@ -2201,6 +2201,7 @@ export interface ZodTransform<O = unknown, I = unknown>
 export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.$constructor(
   "ZodTransform",
   (inst, def) => {
+    _ensureDefaultMemoizer();
     core.$ZodTransform.init(inst, def);
     ZodType.init(inst, def);
     inst._zod.processJSONSchema = (ctx, json, params) => processors.transformProcessor(inst, ctx, json, params);
