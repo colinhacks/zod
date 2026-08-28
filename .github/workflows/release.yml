@@ -110,6 +110,22 @@ jobs:
         run: |
           echo "Published ${{ steps.publish.outputs.type }} version: ${{ steps.publish.outputs.version }}"
 
+      # npm can accept a publish and never finish processing it (4.5.0 sat in a phantom "staged" state); the action still reports success, so nothing below may run until the registry actually serves the version
+      - name: Verify the version is live on npm
+        if: ${{ steps.publish.outputs.type }}
+        env:
+          VERSION: ${{ steps.publish.outputs.version }}
+        run: |
+          for i in $(seq 1 40); do
+            if curl -sf "https://registry.npmjs.org/zod/$VERSION" > /dev/null; then
+              echo "zod@$VERSION is live"
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "zod@$VERSION is not on the registry after 10 minutes; stopping before the GitHub release and the JSR publish"
+          exit 1
+
       - name: Set canary version
         if: ${{ !steps.publish.outputs.type }}
         working-directory: ./packages/zod
