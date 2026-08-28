@@ -97,7 +97,7 @@ Procedure:
 # Make sure main is clean and up to date first.
 git checkout main && git pull
 
-# Bump all three files to the new x.y.z, then:
+# Bump all four files to the new x.y.z (and the @zod/mini peer floor on a minor), then:
 git add packages/zod/package.json packages/zod/jsr.json packages/zod/src/v4/core/versions.ts packages/mini/package.json
 git commit -m "<x.y.z>"   # commit message is just the version, e.g. "4.4.3"
 git push origin main
