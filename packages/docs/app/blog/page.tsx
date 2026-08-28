@@ -1,12 +1,13 @@
 import { blog, formatDate } from "@/loaders/source";
+import { InlineCodeTitle } from "@/components/inline-code-title";
 import Link from "next/link";
 
 export const revalidate = false;
 
 export default function BlogIndexPage() {
-  const posts = (blog.getPages() as any[]).sort(
-    (a, b) => new Date(b.data?.date ?? 0).getTime() - new Date(a.data?.date ?? 0).getTime()
-  );
+  const posts = (blog.getPages() as any[])
+    .filter((post) => !post.data?.draft)
+    .sort((a, b) => new Date(b.data?.date ?? 0).getTime() - new Date(a.data?.date ?? 0).getTime());
 
   return (
     <main className="grow container px-4 py-16 md:py-24">
@@ -28,7 +29,7 @@ export default function BlogIndexPage() {
                 >
                   <div>
                     <h2 className="text-3xl md:text-[42px] font-semibold tracking-[-0.03em] leading-[1.05] group-hover:text-[var(--ui-color)] transition-colors">
-                      {title}
+                      <InlineCodeTitle text={title} />
                     </h2>
                     {description ? (
                       <p className="mt-4 text-fd-muted-foreground text-[17px] leading-relaxed max-w-[54ch]">

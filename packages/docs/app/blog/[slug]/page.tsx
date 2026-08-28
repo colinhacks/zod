@@ -1,22 +1,21 @@
+import { BlogToc, type TocEntry } from "@/components/blog-toc";
 import { Heading } from "@/components/heading";
+import { InlineCodeTitle, stripBackticks } from "@/components/inline-code-title";
 import { Tabs } from "@/components/tabs";
 import { blog, formatDate, readingMinutes } from "@/loaders/source";
 import { Callout } from "fumadocs-ui/components/callout";
 import defaultMdxComponents, { createRelativeLink } from "fumadocs-ui/mdx";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import type { ComponentType, ReactNode } from "react";
+import type { ComponentType } from "react";
 
 export const revalidate = false;
 
 const AUTHOR_URL = "https://x.com/colinhacks";
-const LABEL = "text-[11px] font-medium uppercase tracking-[0.16em] text-fd-muted-foreground";
 
-interface TocEntry {
-  title: ReactNode;
-  url: string;
-  depth: number;
-}
+// a `draft: true` post stays reachable on the dev server but never ships
+const isHidden = (page: any) => Boolean(page.data?.draft) && process.env.NODE_ENV === "production";
+const LABEL = "text-[11px] font-medium uppercase tracking-[0.16em] text-fd-muted-foreground";
 
 function MetaLine({ author, date, minutes }: { author: string; date?: Date; minutes: number }) {
   return (
@@ -40,25 +39,30 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
   const params = await props.params;
   const page = blog.getPage([params.slug]) as any;
 
-  if (!page) notFound();
+  if (!page || isHidden(page)) notFound();
   const Mdx = page.data.body as ComponentType<any>;
   const title: string = page.data?.title ?? params.slug;
   const author: string = page.data?.author ?? "Colin McDonnell";
   const date = page.data?.date ? new Date(page.data.date) : undefined;
   const minutes = readingMinutes(page);
-  const sections = ((page.data?.toc ?? []) as TocEntry[]).filter((t) => t.depth === 2);
+  // h2s plus their h3s, except under Bug fixes where the h3s are long and numerous
+  let section = "";
+  const sections = ((page.data?.toc ?? []) as TocEntry[]).filter((t) => {
+    if (t.depth === 2) section = t.url;
+    return t.depth === 2 || (t.depth === 3 && section !== "#bug-fixes");
+  });
 
   return (
     <main className="grow container px-4 py-12 md:py-20">
       <div className="mx-auto max-w-5xl lg:grid lg:grid-cols-[minmax(0,1fr)_13rem] lg:gap-12">
         <article className="min-w-0 max-w-3xl">
-          <p className="text-sm text-fd-muted-foreground lg:hidden">
+          <nav aria-label="Breadcrumb" className={LABEL}>
             <Link href="/blog" className="hover:text-[var(--ui-color)]">
-              ← Blog
+              Blog
             </Link>
-          </p>
-          <h1 className="mt-4 lg:mt-0 text-4xl md:text-[52px] font-semibold tracking-[-0.03em] leading-[1.05]">
-            {title}
+          </nav>
+          <h1 className="mt-4 text-4xl md:text-[52px] font-semibold tracking-[-0.03em] leading-[1.05]">
+            <InlineCodeTitle text={title} />
           </h1>
           <div className="mt-4 lg:hidden">
             <MetaLine author={author} date={date} minutes={minutes} />
@@ -85,10 +89,7 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
           </footer>
         </article>
         <aside className="hidden lg:block lg:sticky lg:top-24 self-start text-sm">
-          <Link href="/blog" className="text-fd-muted-foreground hover:text-[var(--ui-color)]">
-            ← Blog
-          </Link>
-          <dl className="mt-8 grid gap-y-5">
+          <dl className="grid gap-y-5">
             {date ? (
               <div>
                 <dt className={LABEL}>Published</dt>
@@ -110,23 +111,7 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
               <dd className="mt-1">{minutes} min</dd>
             </div>
           </dl>
-          {sections.length ? (
-            <nav className="mt-8">
-              <p className={LABEL}>On this page</p>
-              <ol className="mt-2 border-l border-fd-border">
-                {sections.map((t) => (
-                  <li key={t.url}>
-                    <a
-                      href={t.url}
-                      className="block -ml-px border-l border-transparent pl-4 py-1 text-fd-muted-foreground hover:text-fd-foreground hover:border-[var(--ui-color)]"
-                    >
-                      {t.title}
-                    </a>
-                  </li>
-                ))}
-              </ol>
-            </nav>
-          ) : null}
+          <BlogToc sections={sections} labelClassName={LABEL} />
         </aside>
       </div>
     </main>
@@ -134,19 +119,35 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
 }
 
 export function generateStaticParams(): { slug: string }[] {
-  return blog.getPages().map((page) => ({
-    slug: page.slugs[0],
-  }));
+  return blog
+    .getPages()
+    .filter((page) => !isHidden(page))
+    .map((page) => ({
+      slug: page.slugs[0],
+    }));
 }
 
 export async function generateMetadata(props: { params: Promise<{ slug: string }> }) {
   const params = await props.params;
   const page = blog.getPage([params.slug]) as any;
 
-  if (!page) notFound();
+  if (!page || isHidden(page)) notFound();
+
+  const title = stripBackticks((page.data?.title as string | undefined) ?? params.slug);
+  const description = (page.data?.description as string | undefined) ?? undefined;
+  const url = `https://zod.dev/blog/${params.slug}`;
+  // same generated card the docs pages use
+  const image = {
+    url: `/og.png?title=${encodeURIComponent(title)}&description=${encodeURIComponent(description ?? "")}&path=${encodeURIComponent(`zod.dev/blog/${params.slug}`)}`,
+    width: 1200,
+    height: 630,
+    alt: title,
+  };
 
   return {
-    title: (page.data?.title as string | undefined) ?? params.slug,
-    description: (page.data?.description as string | undefined) ?? undefined,
+    title,
+    description,
+    openGraph: { type: "article", title, description, siteName: "Zod", url, images: [image] },
+    twitter: { card: "summary_large_image", title, description, images: [image], creator: "@colinhacks", site: "@colinhacks" },
   };
 }
