@@ -644,3 +644,17 @@ test.each([false, true])("prefixes a shared node's issues once per reference (ji
     z.config({ jitless: false });
   }
 });
+
+test("the default memoizer is installed before the first container reads it", () => {
+  // nothing built yet in a fresh process; a container with only getter keys constructs no leaf first
+  delete z.config().memoizer;
+  const Node: any = z.object({
+    get self() {
+      return Node;
+    },
+  });
+  const input: any = {};
+  input.self = input;
+  const out = Node.parse(input);
+  expect(out.self).toBe(out);
+});

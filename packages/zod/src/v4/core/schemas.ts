@@ -32,9 +32,9 @@ export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> ex
   readonly skipChecks?: boolean;
 }
 
-/** @internal Supplies the object a container builds into, registered before any
- * child is parsed so a reference back to the same input resolves to it. */
+/** Gives a container cycle support: `attach` wraps its parse, and `alloc` registers the object it builds into before any child is parsed so a reference back to the same input resolves to it. */
 export interface $ZodMemoizer {
+  attach(inst: $ZodType): void;
   alloc<T extends object>(inst: $ZodType, payload: ParsePayload, empty: T, ctx: ParseContextInternal): T;
 }
 
@@ -134,9 +134,6 @@ export interface _$ZodTypeInternals {
   optin?: "optional" | "defaulted" | undefined;
   /** @internal */
   optout?: "optional" | undefined;
-
-  /** @internal */
-  memoizer?: $ZodMemoizer | undefined;
 
   /** @internal The set of literal values that will pass validation. Must be an exhaustive set. Used to determine optionality in z.record().
    *
@@ -1787,7 +1784,8 @@ function handleArrayResult(result: ParsePayload<any>, final: ParsePayload<any[]>
 export const $ZodArray: core.$constructor<$ZodArray> = /*@__PURE__*/ core.$constructor("$ZodArray", (inst, def) => {
   $ZodType.init(inst, def);
 
-  const memo = inst._zod.memoizer;
+  const memo = core.globalConfig.memoizer;
+  memo?.attach(inst);
 
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
@@ -2118,7 +2116,8 @@ export const $ZodObject: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$con
   const catchall = def.catchall;
 
   let value!: typeof _normalized.value;
-  const memo = inst._zod.memoizer;
+  const memo = core.globalConfig.memoizer;
+  memo?.attach(inst);
 
   inst._zod.parse = (payload, ctx) => {
     value ??= _normalized.value;
@@ -2169,7 +2168,7 @@ export const $ZodObjectJIT: core.$constructor<$ZodObject> = /*@__PURE__*/ core.$
     const superParse = inst._zod.parse;
     const _normalized = util.cached(() => normalizeDef(def));
 
-    const memo = inst._zod.memoizer;
+    const memo = core.globalConfig.memoizer;
 
     const generateFastpass = (shape: any) => {
       const normalized = _normalized.value;
@@ -2912,7 +2911,8 @@ export interface $ZodTuple<
 export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$constructor("$ZodTuple", (inst, def) => {
   $ZodType.init(inst, def);
   const items = def.items;
-  const memo = inst._zod.memoizer;
+  const memo = core.globalConfig.memoizer;
+  memo?.attach(inst);
 
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
@@ -3127,7 +3127,8 @@ export interface $ZodRecord<Key extends $ZodRecordKey = $ZodRecordKey, Value ext
 
 export const $ZodRecord: core.$constructor<$ZodRecord> = /*@__PURE__*/ core.$constructor("$ZodRecord", (inst, def) => {
   $ZodType.init(inst, def);
-  const memo = inst._zod.memoizer;
+  const memo = core.globalConfig.memoizer;
+  memo?.attach(inst);
 
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
@@ -3329,7 +3330,8 @@ export interface $ZodMap<Key extends SomeType = $ZodType, Value extends SomeType
 
 export const $ZodMap: core.$constructor<$ZodMap> = /*@__PURE__*/ core.$constructor("$ZodMap", (inst, def) => {
   $ZodType.init(inst, def);
-  const memo = inst._zod.memoizer;
+  const memo = core.globalConfig.memoizer;
+  memo?.attach(inst);
 
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
@@ -3434,7 +3436,8 @@ export interface $ZodSet<T extends SomeType = $ZodType> extends $ZodType {
 
 export const $ZodSet: core.$constructor<$ZodSet> = /*@__PURE__*/ core.$constructor("$ZodSet", (inst, def) => {
   $ZodType.init(inst, def);
-  const memo = inst._zod.memoizer;
+  const memo = core.globalConfig.memoizer;
+  memo?.attach(inst);
 
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;

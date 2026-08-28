@@ -241,3 +241,13 @@ z.config(z.locales.en());
 ```
 
 Refer to the [Locales](/error-customization#internationalization) docs for more on localization.
+
+## No cycle support by default
+
+Regular Zod parses input that contains [reference cycles](/api#recursive-objects) by default. Zod Mini does not, which keeps that code out of the bundle. To enable it, configure the memoizer before defining any schemas:
+
+```ts
+import * as z from "zod/mini"
+
+z.config({ memoizer: z.memoizer() });
+```
