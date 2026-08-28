@@ -1,0 +1,69 @@
+/* global.css sets unlayered h1 / .prose h2 borders that utilities cannot override, so the resets live here */
+.blog-concept h1 {
+  border: 0;
+  padding: 0;
+}
+
+.blog-concept .prose h2 {
+  border: 0;
+  padding: 0;
+}
+
+.blog-concept {
+  --font-serif: var(--font-concept-serif), Georgia, "Times New Roman", serif;
+  --font-mono: var(--font-concept-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* editorial */
+.concept-editorial .prose h2 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 2.15em;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  margin-top: 2.4em;
+  margin-bottom: 0.6em;
+}
+
+.concept-editorial .prose h3 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 1.6em;
+}
+
+.concept-editorial .prose a {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+/* timeline */
+.concept-timeline .prose h2 {
+  margin-top: 2.6em;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.concept-timeline .prose h2::before {
+  content: "";
+  display: inline-block;
+  width: 0.4em;
+  height: 0.4em;
+  margin-right: 0.55em;
+  transform: rotate(45deg) translateY(-0.12em);
+  border: 1.5px solid var(--ui-color);
+}
+
+/* glow */
+.concept-glow .prose h2 {
+  margin-top: 2.6em;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* margin */
+.concept-margin .prose h2 {
+  margin-top: 2.6em;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  scroll-margin-top: 6rem;
+}
