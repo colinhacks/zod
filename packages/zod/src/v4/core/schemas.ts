@@ -5,7 +5,6 @@ import * as core from "./core.js";
 import { Doc } from "./doc.js";
 import type * as errors from "./errors.js";
 import type * as JSONSchema from "./json-schema.js";
-import { $ZodCyclicError, isBackEdge } from "./memoizer.js";
 import { parse, parseAsync, safeParse, safeParseAsync } from "./parse.js";
 import * as regexes from "./regexes.js";
 import type { StandardSchemaV1 } from "./standard-schema.js";
@@ -36,6 +35,7 @@ export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> ex
 /** Gives a container cycle support: `attach` wraps its parse, and `alloc` registers the object it builds into before any child is parsed so a reference back to the same input resolves to it. */
 export interface $ZodMemoizer {
   attach(inst: $ZodType): void;
+  guard(inst: $ZodType): void;
   alloc<T extends object>(inst: $ZodType, payload: ParsePayload, empty: T, ctx: ParseContextInternal): T;
 }
 
@@ -3712,13 +3712,12 @@ export const $ZodTransform: core.$constructor<$ZodTransform> = /*@__PURE__*/ cor
   (inst, def) => {
     $ZodType.init(inst, def);
     inst._zod.optin = "optional";
+    core.globalConfig.memoizer?.guard(inst);
+
     inst._zod.parse = (payload, ctx) => {
       if (ctx.direction === "backward") {
         throw new core.$ZodEncodeError(inst.constructor.name);
       }
-
-      // The value is a placeholder a back-edge is still waiting on, so the cycle closes through this transform. Its output can't exist in time to bind.
-      if (isBackEdge(ctx, payload.value)) throw new $ZodCyclicError();
 
       const _out = def.transform(payload.value, payload);
       if (ctx.async) {

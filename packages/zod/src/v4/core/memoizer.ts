@@ -104,6 +104,20 @@ const memo: $ZodMemoizer = {
     return empty;
   },
 
+  guard(inst) {
+    inst._zod.deferred ??= [];
+    inst._zod.deferred.push(() => {
+      const base = inst._zod.parse;
+      const wrapped = (payload: ParsePayload, ctx: ParseContextInternal): util.MaybeAsync<ParsePayload> => {
+        // The value is a placeholder a back-edge is still waiting on, so the cycle closes through this transform. Its output can't exist in time to bind.
+        if (ctx.direction !== "backward" && isBackEdge(ctx, payload.value)) throw new $ZodCyclicError();
+        return base(payload, ctx);
+      };
+      inst._zod.parse = wrapped;
+      if (inst._zod.run === base) inst._zod.run = wrapped;
+    });
+  },
+
   attach(inst) {
     let isRecursiveInst: boolean | undefined;
     // `bucket` memoized for one parse; a recursive schema is re-entered many times and its bucket never changes

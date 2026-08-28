@@ -2210,9 +2210,6 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
         throw new core.$ZodEncodeError(inst.constructor.name);
       }
 
-      // The value is a placeholder a back-edge is still waiting on, so the cycle closes through this transform. Its output can't exist in time to bind.
-      if (core.isBackEdge(_ctx, payload.value)) throw new core.$ZodCyclicError();
-
       (payload as core.$RefinementCtx).addIssue = (issue) => {
         if (typeof issue === "string") {
           payload.issues.push(util.issue(issue, payload.value, def));
