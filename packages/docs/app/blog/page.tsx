@@ -31,7 +31,9 @@ export default function BlogIndexPage() {
                       {title}
                     </h2>
                     {description ? (
-                      <p className="mt-4 text-fd-muted-foreground text-[17px] leading-relaxed max-w-[54ch]">{description}</p>
+                      <p className="mt-4 text-fd-muted-foreground text-[17px] leading-relaxed max-w-[54ch]">
+                        {description}
+                      </p>
                     ) : null}
                   </div>
                   {dateValue ? (
