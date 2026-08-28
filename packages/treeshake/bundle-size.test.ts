@@ -38,13 +38,13 @@ const BUILT_ENTRY = path.join(__dirname, "node_modules", "zod", "index.js");
  * The failure message prints the measured size, so updating is mechanical.
  */
 const CEILINGS: Record<string, number> = {
-  // raised from 2903 / 3366 / 4437 by the commit that caused it: installing a trait's members from `$constructor` rather than from its initializer costs mini +54 / +70 / +65, and every bundle carries `core.ts`; measured 2930 / 3407 / 4473 plus 28 headroom, and the per-fixture notes below record what each already carried. Most of that is writing the members as `this`-methods rather than per-key factories: `nullable(){return e(this)}` minifies larger than `nullable:t=>()=>e(t)`, since `this` is not renameable and a block body cannot collapse to an arrow.
-  "zod-mini-boolean": 2958,
+  // raised from 2903 / 3366 / 4437 by the commit that caused it: installing a trait's members from `$constructor` rather than from its initializer costs mini +98 / +113 / +108, and every bundle carries `core.ts`; measured 2974 / 3450 / 4516 plus 28 headroom, and the per-fixture notes below record what each already carried. Most of that is writing the members as `this`-methods rather than per-key factories: `nullable(){return e(this)}` minifies larger than `nullable:t=>()=>e(t)`, since `this` is not renameable and a block body cannot collapse to an arrow. About 43 of it is the guard that keeps the install off a user subclass's prototype.
+  "zod-mini-boolean": 3002,
   // Also carries the code-point string length scan: `.min`/`.max`/`.length` on a string pulls in the surrogate walk.
-  "zod-mini-string": 3435,
+  "zod-mini-string": 3478,
   // Also carries the construction-time discriminator check, which writes a WeakMap entry from `$ZodObject`, so every bundle containing `z.object` pays for it whether or not it builds a discriminated union.
   // Also carries the declared symbol keys from #6448: `normalizeDef` collects the shape's own symbols and the parse loop walks them. Almost none of that is the `Reflect.ownKeys` conversions — reverting all eight of them measures a byte larger.
-  "zod-mini-object": 4501,
+  "zod-mini-object": 4544,
 };
 
 /**

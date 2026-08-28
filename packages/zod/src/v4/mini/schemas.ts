@@ -54,8 +54,11 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
   {
     proto: {
       // `with` is an alias for `check`: the same function object, not a wrapper.
-      get with() {
+      get with(): ZodMiniType["check"] {
         return this.check;
+      },
+      set with(value: ZodMiniType["check"]) {
+        util.own(this, "with", value);
       },
 
       parse(data, params) {

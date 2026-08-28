@@ -165,3 +165,45 @@ test("constructing through a subclass does not strip the base prototype", () => 
   expect(typeof plain.email).toBe("function");
   expect(typeof new MyString({ type: "string" }).email).toBe("function");
 });
+
+test("a subclass's own members survive the install", () => {
+  // The members go on the nearest prototype a `$constructor` built, so a subclass's prototype keeps whatever it declared. `z.number()` is untouched here to construct the subclass before its base.
+  const First = class extends (z.ZodNumber as any) {
+    parse() {
+      return "PARSE";
+    }
+    optional() {
+      return "OPTIONAL";
+    }
+  } as any;
+  const first = new First({ type: "number" });
+  expect(first.parse(1)).toBe("PARSE");
+  expect(first.optional()).toBe("OPTIONAL");
+  expect(z.number().parse(1)).toBe(1);
+
+  // and the other way round, with the base prototype already built
+  const Second = class extends (z.ZodNumber as any) {
+    parse() {
+      return "SECOND";
+    }
+  } as any;
+  expect(new Second({ type: "number" }).parse(1)).toBe("SECOND");
+
+  // two levels deep: neither prototype gets its own copy, so the inherited member is one function
+  const Third = class extends (Second as any) {} as any;
+  new Third({ type: "number" });
+  expect(Second.prototype.parse).toBe(Third.prototype.parse);
+});
+
+test("a hand-written getter member accepts assignment", () => {
+  // Every member was an accessor with a setter before they moved onto `proto`, so a getter written by hand needs one too.
+  const schema: any = z.string();
+  schema.spa = () => "SPA";
+  schema.toJSONSchema = () => "JSON";
+  expect(schema.spa()).toBe("SPA");
+  expect(schema.toJSONSchema()).toBe("JSON");
+
+  const mini: any = zm.string();
+  mini.with = () => "WITH";
+  expect(mini.with()).toBe("WITH");
+});
