@@ -33,7 +33,7 @@ This is often useful for preventing unexpected behavior in certain uncommon circ
 
 ## The fix
 
-This is now conclusively fixed in Zod 4.5 via a new pattern I call a "method memoization". 
+This is now conclusively fixed in Zod 4.5 via a pattern I've been calling "method memoization".
 
 Zod classes define their methods as *getters* on a standard `prototype`. The first time an instance's method is accessed, it falls through to the prototype via standard prototype inheritance. The getter returns a method implementation that's bound to the accessing instance and *assigns it as an [own property](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/hasOwnProperty)* to the instance, effectively memoizing it forever. Successive accesses on that same method thus avoid getter-invocation overheads and resolve directly from the own property.
 
