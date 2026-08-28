@@ -170,7 +170,7 @@ export function compile<T extends SomeType>(schema: T, options?: CompileOptions)
       if (ctx) (ctx as Record<symbol, unknown>)[FALLBACK_FLAG] = true;
       return originalRun(payload, ctx);
     };
-    // Let later compiles of (or through) this run unwrap to the true runtime — both the global shim and repeated z.compile calls rely on this. The bag's fastpass lets the standalone isValid skip the payload and wrapper on the happy path.
+    // Let later compiles of (or through) this run unwrap to the true runtime — both the global shim and repeated z.compile calls rely on this. The bag also carries the parser and the validator, so the standalone isValid can skip the payload and wrapper on the happy path.
     (wrapped as { __originalRun?: typeof originalRun }).__originalRun = originalRun;
     clone._zod.bag.fastpass = fast;
     clone._zod.bag.fallbackRun = originalRun;
@@ -906,6 +906,8 @@ function generateCheck(
     throw new ZodCompileUnsupportedError(`coercion (z.coerce.${type}())`);
   }
 
+  // A node drops its output only when nothing reads it and it carries no checks of its own, since a check reads what was built. Computed once: every branch below asks the same question.
+  const skipValue = !needsValue && !def.checks?.length;
   let typeAccessor: string | null;
 
   switch (type) {
@@ -949,17 +951,16 @@ function generateCheck(
       typeAccessor = generateDateCheck(doc, accessor);
       break;
     case "object":
-      // checks read the constructed object, so a checked node builds its value even in assert mode
-      typeAccessor = generateObjectCheck(doc, ctx, schema, accessor, !needsValue && !def.checks?.length);
+      typeAccessor = generateObjectCheck(doc, ctx, schema, accessor, skipValue);
       break;
     case "optional":
-      typeAccessor = generateOptionalCheck(doc, ctx, schema, accessor);
+      typeAccessor = generateOptionalCheck(doc, ctx, schema, accessor, skipValue);
       break;
     case "nullable":
-      typeAccessor = generateNullableCheck(doc, ctx, schema, accessor);
+      typeAccessor = generateNullableCheck(doc, ctx, schema, accessor, skipValue);
       break;
     case "array":
-      typeAccessor = generateArrayCheck(doc, ctx, schema, accessor, !needsValue && !def.checks?.length);
+      typeAccessor = generateArrayCheck(doc, ctx, schema, accessor, skipValue);
       break;
     case "literal":
       typeAccessor = generateLiteralCheck(doc, ctx, schema, accessor);
@@ -1272,10 +1273,16 @@ function generateObjectCheck(
   return outputVar;
 }
 
-function generateOptionalCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
+function generateOptionalCheck(
+  doc: Doc,
+  ctx: CompileContext,
+  schema: SomeType,
+  accessor: string,
+  skipValue = false
+): string | null {
   const def = schema._zod.def as unknown as { innerType: SomeType };
   if (isExactOptional(schema)) {
-    return generateCheck(doc, ctx, def.innerType, accessor);
+    return generateCheck(doc, ctx, def.innerType, accessor, !skipValue);
   }
 
   // Same question $ZodOptional asks: only the top rung of the optin ladder substitutes a value for an absent input, so only it is worth running on `undefined`. Every other rung leaves the value intact, which is the skip branch below.
@@ -1302,12 +1309,12 @@ function generateOptionalCheck(doc: Doc, ctx: CompileContext, schema: SomeType, 
     return outputVar;
   }
 
-  const outputVar = newVar(ctx);
-  doc.write(`let ${outputVar};`);
+  const outputVar = skipValue ? null : newVar(ctx);
+  if (outputVar) doc.write(`let ${outputVar};`);
   doc.write(`if (${accessor} !== undefined) {`);
   doc.indented((d) => {
-    const innerOutput = generateCheck(d, ctx, def.innerType, accessor);
-    d.write(`${outputVar} = ${innerOutput};`);
+    const innerOutput = generateCheck(d, ctx, def.innerType, accessor, !skipValue);
+    if (outputVar && innerOutput !== null) d.write(`${outputVar} = ${innerOutput};`);
   });
   doc.write(`}`);
   return outputVar;
@@ -1453,14 +1460,21 @@ function mayOutputUndefined(schema: SomeType): boolean {
   }
 }
 
-function generateNullableCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
+function generateNullableCheck(
+  doc: Doc,
+  ctx: CompileContext,
+  schema: SomeType,
+  accessor: string,
+  skipValue = false
+): string | null {
   const def = schema._zod.def as unknown as { innerType: SomeType };
-  const outputVar = newVar(ctx);
-  doc.write(`let ${outputVar} = null;`);
+  // Claimed before the branch either way, so parse-mode numbering does not shift when assert mode drops it.
+  const outputVar = skipValue ? null : newVar(ctx);
+  if (outputVar) doc.write(`let ${outputVar} = null;`);
   doc.write(`if (${accessor} !== null) {`);
   doc.indented((d) => {
-    const innerOutput = generateCheck(d, ctx, def.innerType, accessor);
-    d.write(`${outputVar} = ${innerOutput};`);
+    const innerOutput = generateCheck(d, ctx, def.innerType, accessor, !skipValue);
+    if (outputVar && innerOutput !== null) d.write(`${outputVar} = ${innerOutput};`);
   });
   doc.write(`}`);
   return outputVar;

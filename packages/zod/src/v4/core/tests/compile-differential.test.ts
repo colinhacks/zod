@@ -222,6 +222,21 @@ test("nullable", () => {
   differential(z.string().nullable(), ["hello", null, undefined, 0]);
 });
 
+// A wrapper around a container is where assert mode stops building: the wrapper itself constructs nothing, so the object or array inside it drops its output. Wrapping a scalar exercises none of that.
+test("wrapped containers", () => {
+  const shape = { a: z.string(), b: z.number() };
+  differential(z.object(shape).nullable(), [{ a: "x", b: 1 }, null, undefined, { a: 1, b: 1 }, "no"]);
+  differential(z.looseObject(shape).optional(), [{ a: "x", b: 1, extra: 9 }, undefined, null, { a: 1 }]);
+  differential(z.strictObject(shape).nullable(), [{ a: "x", b: 1 }, null, { a: "x", b: 1, extra: 9 }]);
+  differential(z.array(z.object(shape)).nullable(), [[{ a: "x", b: 1 }], [], null, [{ a: 1 }]]);
+  differential(z.object({ inner: z.object(shape).nullable() }), [
+    { inner: { a: "x", b: 1 } },
+    { inner: null },
+    { inner: { a: 1, b: 1 } },
+  ]);
+  differential(z.object({ inner: z.looseObject(shape).optional() }), [{ inner: { a: "x", b: 1 } }, {}, { inner: 5 }]);
+});
+
 test("nullish", () => {
   differential(z.string().nullish(), ["hello", null, undefined, 0]);
 });
