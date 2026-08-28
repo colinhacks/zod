@@ -1570,8 +1570,10 @@ type Category = z.infer<typeof Category>;
 // { name: string; subcategories: Category[] }
 ```
 
-Input that contains reference cycles parses too. A reference back to an input that is still being parsed resolves to the output object being built for it, so the output graph mirrors the input graph.
+Cyclical inputs work out of the box with Zod. For bundle size reasons, Zod Mini requires you to register a memoizer explicitly (see code example).
 
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
 ```ts
 const input: any = { name: "root", subcategories: [] };
 input.subcategories.push(input);
@@ -1579,15 +1581,17 @@ input.subcategories.push(input);
 const result = Category.parse(input);
 result.subcategories[0] === result; // true
 ```
-
-In Zod Mini this requires an opt-in, configured before any schema is defined:
-
+</Tab>
+<Tab value="Zod Mini">
 ```ts
-import * as z from "zod/mini";
-
-// cyclical inputs require an explicit memoizer in Zod Mini
+// register a memoizer before defining any schemas
 z.config({ memoizer: z.memoizer() });
+
+const result = Category.parse(input);
+result.subcategories[0] === result; // true
 ```
+</Tab>
+</Tabs>
 
 You can also represent *mutually recursive types*:
 
