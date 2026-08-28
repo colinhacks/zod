@@ -48,8 +48,8 @@ for (const c of cases)
 console.log("| schema | standard | compiled | speedup |\n| --- | --- | --- | --- |");
 for (const c of cases) {
   const iters = 20_000;
-  let a = Number.POSITIVE_INFINITY,
-    b = Number.POSITIVE_INFINITY;
+  let a = Number.POSITIVE_INFINITY;
+  let b = Number.POSITIVE_INFINITY;
   for (let round = 0; round < 3; round++) {
     a = Math.min(
       a,
