@@ -945,7 +945,7 @@ function generateCheck(
       typeAccessor = generateNullableCheck(doc, ctx, schema, accessor);
       break;
     case "array":
-      typeAccessor = generateArrayCheck(doc, ctx, schema, accessor);
+      typeAccessor = generateArrayCheck(doc, ctx, schema, accessor, !needsValue && !def.checks?.length);
       break;
     case "literal":
       typeAccessor = generateLiteralCheck(doc, ctx, schema, accessor);
@@ -1452,21 +1452,27 @@ function generateNullableCheck(doc: Doc, ctx: CompileContext, schema: SomeType, 
   return outputVar;
 }
 
-function generateArrayCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string {
+function generateArrayCheck(
+  doc: Doc,
+  ctx: CompileContext,
+  schema: SomeType,
+  accessor: string,
+  skipValue = false
+): string | null {
   const def = schema._zod.def as unknown as { element: SomeType };
   doc.write(`if (!Array.isArray(${accessor})) return INVALID;`);
 
-  // Build a new array with validated/transformed elements
-  const outputVar = newVar(ctx);
+  // Build a new array with validated/transformed elements. Claim the var first either way, so parse-mode numbering does not shift when assert mode drops it.
+  const outputVar = skipValue ? null : newVar(ctx);
   const iVar = newVar(ctx);
   const elemVar = newVar(ctx);
 
-  doc.write(`const ${outputVar} = new Array(${accessor}.length);`);
+  if (outputVar) doc.write(`const ${outputVar} = new Array(${accessor}.length);`);
   doc.write(`for (let ${iVar} = 0; ${iVar} < ${accessor}.length; ${iVar}++) {`);
   doc.indented((d) => {
     d.write(`const ${elemVar} = ${accessor}[${iVar}];`);
-    const elemOutput = compileChild(d, ctx, def.element, elemVar);
-    d.write(`${outputVar}[${iVar}] = ${elemOutput};`);
+    const elemOutput = compileChild(d, ctx, def.element, elemVar, !skipValue);
+    if (outputVar && elemOutput !== null) d.write(`${outputVar}[${iVar}] = ${elemOutput};`);
   });
   doc.write(`}`);
 
