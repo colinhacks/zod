@@ -1453,7 +1453,6 @@ function generateNullableCheck(
   skipValue = false
 ): string | null {
   const def = schema._zod.def as unknown as { innerType: SomeType };
-  // Claimed before the branch either way, so parse-mode numbering does not shift when assert mode drops it.
   const outputVar = skipValue ? null : newVar(ctx);
   if (outputVar) doc.write(`let ${outputVar} = null;`);
   doc.write(`if (${accessor} !== null) {`);
@@ -1475,7 +1474,7 @@ function generateArrayCheck(
   const def = schema._zod.def as unknown as { element: SomeType };
   doc.write(`if (!Array.isArray(${accessor})) return INVALID;`);
 
-  // Build a new array with validated/transformed elements. Claim the var first either way, so parse-mode numbering does not shift when assert mode drops it.
+  // Build a new array with validated/transformed elements.
   const outputVar = skipValue ? null : newVar(ctx);
   const iVar = newVar(ctx);
   const elemVar = newVar(ctx);

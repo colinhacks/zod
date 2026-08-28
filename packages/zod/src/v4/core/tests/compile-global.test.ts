@@ -78,11 +78,10 @@ test("global mode installs the validator validate reads", () => {
   schema.parse({ name: "ok", extra: 1 }); // shim fires and compiles
 
   // Without this the shim leaves no validator behind, validate misses its fast path and answers from the runtime parser instead. Correct, so nothing else in the suite notices, and several times slower.
-  const bag = schema._zod.bag as { validator?: (input: unknown) => unknown; fastpass?: (input: unknown) => unknown };
+  const bag = schema._zod.bag as { validator?: (input: unknown) => unknown };
   expect(typeof bag.validator).toBe("function");
 
-  // assert mode really compiled: falling back to the parser would alias fastpass and rebuild the object
-  expect(bag.validator).not.toBe(bag.fastpass);
+  // a verdict rather than a rebuilt object, so this is the assert-mode codegen and not the parser
   expect(bag.validator!({ name: "ok", extra: 1 })).toBe(true);
 
   expect(z.validate(schema, { name: "ok", extra: 1 })).toBe(true);

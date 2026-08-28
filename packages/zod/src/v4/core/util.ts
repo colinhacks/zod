@@ -1114,9 +1114,12 @@ function defineCached(proto: object, key: string, compute: (self: any) => unknow
   Object.defineProperty(proto, key, {
     configurable: true,
     get(this: any) {
-      const value = compute(this);
-      Object.defineProperty(this, key, { configurable: true, writable: true, enumerable: cached, value });
-      return value;
+      // Shadowed before computing, so a re-entrant read from a self-referential shape resolves to undefined instead of running the getter again. A data property rather than an accessor: an own accessor is what puts every later instance into dictionary mode.
+      const desc = { configurable: true, writable: true, enumerable: cached, value: undefined as unknown };
+      Object.defineProperty(this, key, desc);
+      desc.value = compute(this);
+      Object.defineProperty(this, key, desc);
+      return desc.value;
     },
     set(this: any, value: unknown) {
       Object.defineProperty(this, key, { configurable: true, writable: true, enumerable: enumerable ?? true, value });
