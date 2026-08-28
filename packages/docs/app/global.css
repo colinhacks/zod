@@ -30,6 +30,11 @@ body {
   --color-fd-muted: hsl(0, 0%, 15%);
 }
 
+/* the black theme leaves nothing visible through an 80% bar, so the blog navbar lets more of the page through */
+.dark #nd-nav {
+  background-color: color-mix(in oklab, var(--color-fd-background) 50%, transparent);
+}
+
 aside {
   button[data-search-full] {
     font-weight: 200;

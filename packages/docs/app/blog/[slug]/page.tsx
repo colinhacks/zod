@@ -89,7 +89,7 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
             <MetaLine author={author} date={date} minutes={minutes} />
           </footer>
         </article>
-        <aside className="hidden lg:block lg:sticky lg:top-24 self-start text-sm">
+        <aside className="hidden lg:block lg:sticky lg:top-[calc(var(--fd-banner-height)+6rem)] self-start text-sm">
           <dl className="grid gap-y-5">
             {date ? (
               <div>
