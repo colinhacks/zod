@@ -76,8 +76,7 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
       return parse.safeParseAsync(this, data, params);
     },
 
-    // `this` is declared on the two members that call each other through it: without that TypeScript gives up on the whole literal's contextual types and every parameter below lands as `any`
-    check(this: ZodMiniType, ...checks) {
+    check(...checks) {
       const def = this.def;
       return this.clone(
         {
@@ -93,7 +92,7 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
       );
     },
 
-    clone(this: ZodMiniType, _def, params) {
+    clone(_def, params) {
       return core.clone(this, _def, params);
     },
 

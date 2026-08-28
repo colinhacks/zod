@@ -174,8 +174,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
     return inst;
   },
   {
-    // `this` is declared on the two members that call each other through it: without that TypeScript gives up on the whole literal's contextual types and every parameter below lands as `any`
-    check(this: ZodType, ...chks) {
+    check(...chks) {
       const def = this.def;
       return this.clone(
         util.mergeDefs(def, {
@@ -194,7 +193,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
       return this.check(...chks);
     },
 
-    clone(this: ZodType, def, params) {
+    clone(def, params) {
       return core.clone(this, def, params);
     },
 
