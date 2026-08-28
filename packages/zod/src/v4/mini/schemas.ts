@@ -59,23 +59,18 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
     set with(value: ZodMiniType["check"]) {
       util.own(this, "with", value);
     },
-
     parse(data, params) {
       return parse.parse(this, data, params, { callee: this.parse });
     },
-
     parseAsync(data, params) {
       return parse.parseAsync(this, data, params, { callee: this.parseAsync });
     },
-
     safeParse(data, params) {
       return parse.safeParse(this, data, params);
     },
-
     safeParseAsync(data, params) {
       return parse.safeParseAsync(this, data, params);
     },
-
     check(...checks) {
       const def = this.def;
       return this.clone(
@@ -91,20 +86,16 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$c
         { parent: true }
       );
     },
-
     clone(_def, params) {
       return core.clone(this, _def, params);
     },
-
     brand() {
       return this as any;
     },
-
     register(reg: any, meta: any): any {
       reg.add(this, meta);
       return this;
     },
-
     apply(fn: any, ...args: any[]) {
       return args.length === 0 ? fn(this) : fn(this, ...args);
     },
