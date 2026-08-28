@@ -92,11 +92,10 @@ Containers like objects and tuples benefit the most, since compilation unrolls t
   caption={<>Time per parse, standard parser vs compiled — lower is better (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/compile-matrix.ts">benchmark</a>)</>}
 />
 
-The benefits scale with schema complexity. 
+The benefits scale with schema complexity. Each schema here is measured alone in a tight loop — the standard parser's best case — so the ratios run lower than in the mixed-workload chart above ([benchmark](https://github.com/colinhacks/zod/blob/main/packages/bench/compile-scaling.ts)).
 
 | object | speedup |
 | --- | --- |
-| 1 key | 2.3x |
 | 5 keys | 1.8x |
 | 10 keys | 2.2x |
 | 20 keys | 5.0x |

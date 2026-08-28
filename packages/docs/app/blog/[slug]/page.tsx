@@ -1,7 +1,7 @@
 import { BlogToc, type TocEntry } from "@/components/blog-toc";
 import { Heading } from "@/components/heading";
 import { InlineCodeTitle, stripBackticks } from "@/components/inline-code-title";
-import { Tabs } from "@/components/tabs";
+import { Tab, Tabs } from "@/components/tabs";
 import { blog, formatDate, readingMinutes } from "@/loaders/source";
 import { Callout } from "fumadocs-ui/components/callout";
 import defaultMdxComponents, { createRelativeLink } from "fumadocs-ui/mdx";
@@ -74,6 +74,7 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
                 ...defaultMdxComponents,
                 a: createRelativeLink(blog, page),
                 blockquote: Callout,
+                Tab,
                 Tabs,
                 h1: (props: any) => <Heading as="h1" {...props} />,
                 h2: (props: any) => <Heading as="h2" {...props} />,

@@ -22,8 +22,6 @@ At a glance:
 - [`z.properties()`](#zproperties) — the multi-property counterpart to `z.property()`
 - [`z.deepPartial()`](#zdeeppartial)/[`.exactPartial()`](#exactpartial)
 - [`z.validate(): boolean`](#zvalidate) — a fast-path to verify input validity without a full parse (up to 16x faster on invalid data)
-
-Plus:
 - [9x reduction in memory footprint](#9x-reduction-in-schema-memory-footprint)
 - [New locales](https://zod.dev/error-customization#locales): Bengali (`bn`), Central Kurdish (`ckb`), Hindi (`hi`), Kannada (`kn`), Norwegian Nynorsk (`nn`), Brazilian Portuguese (`pt-BR`), Slovak (`sk`), Turkmen (`tk`)
 
@@ -59,7 +57,7 @@ On objects, arrays, and unions, this speeds up parsing by a factor of ~3–7. Mo
   caption={<>Time per parse by schema type, standard parser vs compiled — lower is better (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/compile-matrix.ts">benchmark</a>)</>}
 />
 
-Below are the Moltar benchmark results comparing Zod (compiled and uncompiled) against the [**Moltar ParseSafe**](https://github.com/moltar/typescript-runtime-type-benchmarks) bench (no unrecognized keys allowed & must return a newly built object).
+Below are the Moltar benchmark results comparing Zod (compiled and uncompiled) against the [**Moltar ParseSafe**](https://github.com/moltar/typescript-runtime-type-benchmarks) bench.
 
 <ThemedImage
   lightSrc="/blog/moltar-light.svg"
@@ -68,7 +66,7 @@ Below are the Moltar benchmark results comparing Zod (compiled and uncompiled) a
   caption={<>Throughput on the moltar benchmark fixture (parseSafe: returns a new object with unknown keys stripped) — higher is better (<a href="https://github.com/moltar/typescript-runtime-type-benchmarks/pull/2329">benchmark</a>)</>}
 />
 
-And the equivalent results for the Moltar AssertLoose bench (unrecognized keys allowed, simple `boolean` result). Tested against the new `z.validate(schema, input)` function (detailed later in the post).
+And the equivalent results for the Moltar AssertLoose bench. Tested against the new `z.validate(schema, input)` function (detailed later in the post).
 
 <ThemedImage
   lightSrc="/blog/moltar-assertLoose-light.svg"
@@ -236,7 +234,39 @@ z.getDiscriminatedOption(Produce, "meat");  // ❌ TypeScript error
 
 ## Cyclical inputs
 
-Zod recursive schemas now support cyclical data. For bundle size reasons this isn't supported in Zod Mini at the moment. ([#6387](https://github.com/colinhacks/zod/pull/6387))
+Zod recursive schemas now support cyclical data. For bundle size reasons, Zod Mini requires you to register a memoizer explicitly. ([#6387](https://github.com/colinhacks/zod/pull/6387), [#6482](https://github.com/colinhacks/zod/pull/6482))
+
+<Tabs>
+<Tab title="Zod">
+
+```ts
+const Category = z.object({
+  name: z.string(),
+  get subcategories() {
+    return z.array(Category);
+  },
+});
+
+const input: any = { name: "root", subcategories: [] };
+input.subcategories.push(input);
+
+const result = Category.parse(input);
+result.subcategories[0] === result; // true
+```
+
+</Tab>
+<Tab title="Zod Mini">
+
+```ts
+// register a memoizer before defining any schemas
+z.config({ memoizer: z.memoizer() });
+
+const result = Category.parse(input);
+result.subcategories[0] === result; // true
+```
+
+</Tab>
+</Tabs>
 
 ```ts
 const Node = z.object({
@@ -286,8 +316,8 @@ result.success; // false — ~7.5x faster than Zod 4.4
 <ThemedImage
   lightSrc="/blog/fail-light.svg"
   darkSrc="/blog/fail-dark.svg"
-  alt="Bar chart of time per failing safeParse: zod 4.4 at 6.4 microseconds, zod 4.5 at 840 nanoseconds — 7.6x faster"
-  caption={<>Time per failing safeParse() on the Player schema, zod 4.4.3 vs 4.5 (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/failing-safeparse.ts">benchmark</a>)</>}
+  alt="Bar chart of time per failing safeParse: zod 4.4 at 6.3 microseconds, zod 4.5 at 840 nanoseconds — 7.6x faster"
+  caption={<>Player schema (<a href="https://github.com/colinhacks/zod/blob/main/packages/bench/failing-safeparse.ts">benchmark</a>)</>}
 />
 
 ## Symbol keys in `z.object()`
@@ -308,7 +338,7 @@ All of these fix soundness issues, so a schema that relied on the old behavior m
 
 ### ⚠️ `z.iso.datetime()` requires seconds
 
-RFC 3339 mandates seconds, and Zod's own pattern did too until a refactor ([#4680](https://github.com/colinhacks/zod/pull/4680)) dropped it by accident. `z.iso.datetime()` and `z.iso.datetime({ offset: true })` no longer accept minute-precision input like `2020-01-01T06:15Z`. `local: true` still admits `2020-01-01T06:15`, since an unqualified datetime is outside RFC 3339 either way. ([#6457](https://github.com/colinhacks/zod/pull/6457))
+RFC 3339 mandates seconds. `z.iso.datetime()` and `z.iso.datetime({ offset: true })` no longer accept minute-precision input like `2020-01-01T06:15Z`. `local: true` still admits `2020-01-01T06:15`, since an unqualified datetime is outside RFC 3339 either way. ([#6457](https://github.com/colinhacks/zod/pull/6457))
 
 ```ts
 z.iso.datetime().parse("2020-01-01T06:15:00Z"); // ✅
