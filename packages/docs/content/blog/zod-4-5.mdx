@@ -261,16 +261,6 @@ result.subcategories[0] === result; // true
 // register a memoizer before defining any schemas
 z.config({ memoizer: z.memoizer() });
 
-const Category = z.object({
-  name: z.string(),
-  get subcategories() {
-    return z.array(Category);
-  },
-});
-
-const input: any = { name: "root", subcategories: [] };
-input.subcategories.push(input);
-
 const result = Category.parse(input);
 result.subcategories[0] === result; // true
 ```
