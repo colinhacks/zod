@@ -110,7 +110,7 @@ z.compile(Schema); // returns Schema itself, uncompiled
 - checks with a custom `when`
 - `.catch()` given a callback (`.catch(value)` with a constant compiles normally)
 
-Inside an object, array, tuple, record, or intersection, an unsupported child runs on the standard parser while the surrounding structure stays compiled. A union with an unsupported member, or any schema containing a `.catch()` callback, falls back as a whole.
+Inside an object, array, tuple, record, or intersection, an unsupported child runs on the standard parser while the surrounding structure stays compiled. A union with an unsupported member, a `.catch()` callback, or anything async anywhere in the subtree makes the whole schema fall back.
 
 Encoding (`z.encode()`, the codec `"backward"` direction) and async parsing always use the standard parser.
 

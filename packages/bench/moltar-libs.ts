@@ -4,7 +4,7 @@ import { Schema } from "effect";
 import * as v from "valibot";
 import * as yup from "yup";
 import * as z from "zod";
-import { INVALID, compileFastpass } from "zod/v4/core";
+import { INVALID, compileFn } from "zod/v4/core";
 import * as z3 from "zod3";
 
 // Cross-library throughput on the fixture and the categories from moltar/typescript-runtime-type-benchmarks.
@@ -64,14 +64,8 @@ const zodLoose = z.looseObject({
   deeplyNested: z.looseObject({ foo: z.string(), num: z.number(), bool: z.boolean() }),
 });
 const zodLooseCompiled = z.compile(zodLoose);
-add("zod 4 (compiled)", "assertLoose", (d) => {
-  zodLooseCompiled.parse(d);
-  return true;
-});
-add("zod 4", "assertLoose", (d) => {
-  zodLoose.parse(d);
-  return true;
-});
+add("zod 4 (compiled)", "assertLoose", (d) => z.validate(zodLooseCompiled, d));
+add("zod 4", "assertLoose", (d) => z.validate(zodLoose, d));
 
 // --- zod 3 ---
 const zod3Leaves = { foo: z3.string(), num: z3.number(), bool: z3.boolean() };
@@ -275,7 +269,7 @@ for (const [label, sch] of [
   ["parseSafe", zodSchema],
   ["assertLoose", zodLoose],
 ] as const) {
-  if (compileFastpass(sch as any)(DIRTY) === INVALID) {
+  if (compileFn(sch as any)(DIRTY) === INVALID) {
     problems.push(`zod ${label}: the fast path rejected the fixture, so the compiled row measures the fallback`);
   }
 }
