@@ -34,7 +34,6 @@ interface CompileFastpassOptions {
 }
 
 // Returned in place of an accessor by a node that skipped building its value. It cannot appear in valid JS, so if a consumer ever interpolates it the generated source fails to evaluate and `compileFastpass` degrades to the runtime rather than emitting something subtly wrong.
-const NO_VALUE = "\u0000novalue";
 
 type CompiledFastpass<T> = ((input: unknown) => T | INVALID) & { code?: string | undefined };
 
@@ -233,7 +232,7 @@ export function compileFastpass<T extends SomeType>(
   const doc = new Doc(["input"]);
   const outputAccessor = generateCheck(doc, ctx, schema, "input", !options?.assertOnly);
   // In assert mode a root that built nothing has already returned INVALID on every failure, so reaching the end means valid.
-  doc.write(outputAccessor === NO_VALUE ? `return true;` : `return ${outputAccessor};`);
+  doc.write(outputAccessor === null ? `return true;` : `return ${outputAccessor};`);
 
   // Build the function with hoisted constants Always include INVALID as the first constant
   const constantNames = ["INVALID", ...ctx.constants.keys()];
@@ -292,7 +291,22 @@ function runtimeRun(schema: SomeType, value: unknown): unknown {
 // runtime island is emitted instead — the child schema is invoked through
 // `runtimeRun` at parse time and treated as a black box. Anything else thrown
 // propagates (e.g. `ZodCompileAsyncError`).
-function compileChild(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string, needsValue = true): string {
+function compileChild(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string;
+function compileChild(
+  doc: Doc,
+  ctx: CompileContext,
+  schema: SomeType,
+  accessor: string,
+  needsValue: boolean
+): string | null;
+// `null` means the node built no value because nothing reads it. The overloads keep that case out of the 20-odd callers that always want one, so only a caller passing needsValue has to handle it.
+function compileChild(
+  doc: Doc,
+  ctx: CompileContext,
+  schema: SomeType,
+  accessor: string,
+  needsValue = true
+): string | null {
   const contentLen = doc.content.length;
   const constantCount = ctx.constants.size;
   const constantCounter = ctx.constantCounter;
@@ -855,7 +869,21 @@ type SupportedSchemaType =
   | "transform"
   | "catch";
 
-function generateCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string, needsValue = true): string {
+function generateCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor: string): string;
+function generateCheck(
+  doc: Doc,
+  ctx: CompileContext,
+  schema: SomeType,
+  accessor: string,
+  needsValue: boolean
+): string | null;
+function generateCheck(
+  doc: Doc,
+  ctx: CompileContext,
+  schema: SomeType,
+  accessor: string,
+  needsValue = true
+): string | null {
   const def = schema._zod.def;
   const type = def.type as SupportedSchemaType;
 
@@ -864,7 +892,7 @@ function generateCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor
     throw new ZodCompileUnsupportedError(`coercion (z.coerce.${type}())`);
   }
 
-  let typeAccessor: string;
+  let typeAccessor: string | null;
 
   switch (type) {
     case "string":
@@ -993,6 +1021,9 @@ function generateCheck(doc: Doc, ctx: CompileContext, schema: SomeType, accessor
     }
   }
 
+  // a node that built nothing has no checks to run: skipValue requires an empty check list
+  if (typeAccessor === null) return null;
+
   // Generate checks after the type-specific validation (may transform value)
   return generateChecks(doc, ctx, schema, typeAccessor);
 }
@@ -1077,7 +1108,7 @@ function generateObjectCheck(
   schema: SomeType,
   accessor: string,
   skipValue = false
-): string {
+): string | null {
   const def = schema._zod.def as unknown as { shape: Record<string, SomeType>; catchall?: SomeType };
 
   // Check that input is a non-null, non-array object
@@ -1138,7 +1169,7 @@ function generateObjectCheck(
 
       // Generate check and get output accessor
       const outputAccessor = compileChild(doc, ctx, propSchema, inputVar, !skipValue);
-      propOutputs.set(key, outputAccessor);
+      if (outputAccessor !== null) propOutputs.set(key, outputAccessor);
     }
   }
 
@@ -1183,7 +1214,7 @@ function generateObjectCheck(
       });
       doc.write(`}`);
     }
-    return NO_VALUE;
+    return null;
   }
 
   if (!hasConditionalKeys) {
