@@ -4,11 +4,11 @@ import { metabench } from "./metabench.js";
 
 // Tuple without rest
 const tupleNoRest = z4.tuple([z4.string(), z4.number(), z4.boolean()]);
-const aotNoRest = z4core.compile(tupleNoRest);
+const aotNoRest = z4core.compileFn(tupleNoRest, { debug: true });
 
 // Tuple with rest
 const tupleWithRest = z4.tuple([z4.string(), z4.number()]).rest(z4.boolean());
-const aotWithRest = z4core.compile(tupleWithRest);
+const aotWithRest = z4core.compileFn(tupleWithRest, { debug: true });
 
 // Test data
 const validNoRest = Array.from({ length: 1000 }, () => ["hello", 42, true]);
