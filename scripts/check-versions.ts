@@ -70,14 +70,27 @@ if (tag !== "latest") {
   }
 } else {
   const miniPackageJson = JSON.parse(readFileSync(join(__dirname, "..", "packages", "mini", "package.json"), "utf8"));
+  const miniJsrJson = JSON.parse(readFileSync(join(__dirname, "..", "packages", "mini", "jsr.json"), "utf8"));
   const miniVersion = miniPackageJson.version as string;
+  const miniJsrVersion = miniJsrJson.version as string;
   const miniPeer = miniPackageJson.peerDependencies?.zod as string | undefined;
+  const miniJsrImport = miniJsrJson.imports?.["zod/mini"] as string | undefined;
   const expectedMiniPeer = `^${version.major}.${version.minor}.0`;
-  if (miniVersion !== versionsVersion || miniPeer !== expectedMiniPeer) {
+  const expectedMiniJsrImport = `jsr:@zod/zod@${expectedMiniPeer}/mini`;
+  if (
+    miniVersion !== versionsVersion ||
+    miniJsrVersion !== versionsVersion ||
+    miniPeer !== expectedMiniPeer ||
+    miniJsrImport !== expectedMiniJsrImport
+  ) {
     console.error(`❌ @zod/mini version mismatch:`);
     console.error(`   packages/mini/package.json version: ${miniVersion} (expected ${versionsVersion})`);
+    console.error(`   packages/mini/jsr.json version: ${miniJsrVersion} (expected ${versionsVersion})`);
     console.error(`   packages/mini/package.json peerDependencies.zod: ${miniPeer} (expected ${expectedMiniPeer})`);
+    console.error(
+      `   packages/mini/jsr.json imports["zod/mini"]: ${miniJsrImport} (expected ${expectedMiniJsrImport})`
+    );
     process.exit(1);
   }
-  console.log(`✅ @zod/mini ${miniVersion} with peer zod@${miniPeer}`);
+  console.log(`✅ @zod/mini ${miniVersion} with peer zod@${miniPeer} (npm + jsr)`);
 }
