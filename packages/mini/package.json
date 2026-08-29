@@ -1,0 +1,74 @@
+{
+  "name": "@zod/mini",
+  "version": "4.5.3",
+  "type": "module",
+  "license": "MIT",
+  "author": "Colin McDonnell <zod@colinhacks.com>",
+  "description": "Zod Mini as a standalone package: the tree-shakable, functional variant of Zod",
+  "homepage": "https://zod.dev/packages/mini",
+  "funding": "https://github.com/sponsors/colinhacks",
+  "sideEffects": false,
+  "files": [
+    "src",
+    "index.js",
+    "index.cjs",
+    "index.d.ts",
+    "index.d.cts"
+  ],
+  "keywords": [
+    "typescript",
+    "schema",
+    "validation",
+    "type",
+    "inference",
+    "zod",
+    "tree-shaking"
+  ],
+  "main": "./index.cjs",
+  "types": "./index.d.cts",
+  "module": "./index.js",
+  "zshy": {
+    "exports": {
+      "./package.json": "./package.json",
+      ".": "./src/index.ts"
+    },
+    "conditions": {
+      "@zod/source": "src"
+    }
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@zod/source": "./src/index.ts",
+      "types": "./index.d.cts",
+      "import": "./index.js",
+      "require": "./index.cjs"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/colinhacks/zod.git",
+    "directory": "packages/mini"
+  },
+  "bugs": {
+    "url": "https://github.com/colinhacks/zod/issues"
+  },
+  "support": {
+    "backing": {
+      "npm-funding": true
+    }
+  },
+  "peerDependencies": {
+    "zod": "^4.5.0"
+  },
+  "devDependencies": {
+    "zod": "workspace:*"
+  },
+  "scripts": {
+    "clean": "git clean -xdf . -e node_modules",
+    "build": "zshy --project tsconfig.build.json",
+    "postbuild": "pnpm biome check --write .",
+    "test": "pnpm vitest run",
+    "prepublishOnly": "tsx ../../scripts/check-versions.ts"
+  }
+}
