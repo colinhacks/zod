@@ -201,6 +201,9 @@ jobs:
           echo "@zod/mini@$VERSION is not on the registry after 10 minutes"
           exit 1
 
+      # every zod release from 4.5.0 on must have an @zod/mini twin on npm, whichever of the two publishes above ran
+      - run: pnpm check:lockstep
+
   backpublish_mini:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
@@ -258,3 +261,5 @@ jobs:
           done
           echo "@zod/mini@$VERSION is not on the registry after 10 minutes"
           exit 1
+
+      - run: pnpm check:lockstep

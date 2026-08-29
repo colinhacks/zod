@@ -88,6 +88,7 @@
     "bundle:esbuild": "esbuild --bundle ./scratch/input.ts --outfile=./scratch/out_esbuild.js --bundle --format=esm",
     "check:semver": "tsx scripts/check-versions.ts",
     "check:circular": "madge --circular --extensions ts --exclude '(v4/core|v3)' packages/zod/src",
-    "check:comments": "tsx scripts/check-comments.ts"
+    "check:comments": "tsx scripts/check-comments.ts",
+    "check:lockstep": "tsx scripts/check-lockstep.ts"
   }
 }
