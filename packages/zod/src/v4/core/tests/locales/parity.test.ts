@@ -53,8 +53,12 @@ test("every locale's Sizable table carries each key en's does", () => {
   const gaps = readdirSync(localesDir)
     .filter((f) => f.endsWith(".ts") && f !== "index.ts")
     .flatMap((f) => {
-      const keys = keysIn(readFileSync(`${localesDir}${f}`, "utf8"), "Sizable");
-      return keys ? required.filter((k) => !keys.includes(k)).map((k) => `${f}.${k}`) : [];
+      const source = readFileSync(`${localesDir}${f}`, "utf8");
+      // a deprecated alias re-exports another locale and has no table of its own
+      if (!source.includes("const Sizable")) return [];
+      const keys = keysIn(source, "Sizable");
+      if (!keys) throw new Error(`could not read Sizable out of ${f}`);
+      return required.filter((k) => !keys.includes(k)).map((k) => `${f}.${k}`);
     });
   expect(gaps).toEqual([]);
 });
