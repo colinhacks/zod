@@ -1238,6 +1238,31 @@ describe("toJSONSchema", () => {
     });
   });
 
+  test("record key rewrite reaches a wrapped record", () => {
+    // the flatten copies a record's properties onto its wrapper by reference, so the rewrite has to find every copy
+    expect(z.toJSONSchema(z.record(z.number(), z.boolean()).optional()).propertyNames).toEqual({
+      type: "string",
+      pattern: "^-?\\d+(?:\\.\\d+)?$",
+    });
+    expect(z.toJSONSchema(z.object({ a: z.record(z.literal([1, 2]), z.boolean()).optional() }))).toMatchObject({
+      properties: { a: { propertyNames: { type: "string", enum: ["1", "2"] }, required: ["1", "2"] } },
+    });
+  });
+
+  test("record with a recursive key converts without looping", () => {
+    const numeric: any = z.lazy(() => z.union([z.number(), numeric]));
+    expect(z.toJSONSchema(z.record(numeric, z.boolean())).propertyNames).toMatchObject({
+      anyOf: [{ type: "string", pattern: "^-?\\d+(?:\\.\\d+)?$" }, { $ref: "#/$defs/__schema0" }],
+    });
+    // a key with nothing to re-express keeps the reference it had
+    const stringy: any = z.lazy(() => z.union([z.string(), stringy]));
+    expect(z.toJSONSchema(z.record(stringy, z.boolean())).propertyNames).toEqual({ $ref: "#/$defs/__schema0" });
+    expect(
+      z.toJSONSchema(z.record(z.union([z.literal("a"), z.literal("b")]).meta({ id: "Keys" }), z.boolean()))
+        .propertyNames
+    ).toEqual({ $ref: "#/$defs/Keys" });
+  });
+
   test("record stringifies required for every target", () => {
     const schema = z.record(z.literal([1, 2]), z.boolean());
     for (const target of ["draft-2020-12", "draft-7", "draft-4", "openapi-3.0"] as const) {

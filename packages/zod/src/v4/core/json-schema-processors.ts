@@ -479,12 +479,19 @@ export const tupleProcessor: Processor<schemas.$ZodTuple> = (schema, ctx, _json,
 /** JSON object keys are always strings, so a numeric record key schema is re-expressed over the
  * numeric-string form the record parser matches. Deferred to `finalize`, after the flatten: a key
  * behind a wrapper only carries its own `type` before then, and a union key only has its branches. */
-function stringifyKeyNames(ctx: ToJSONSchemaContext, json: JSONSchema.BaseSchema): JSONSchema.BaseSchema {
+function stringifyKeyNames(
+  ctx: ToJSONSchemaContext,
+  json: JSONSchema.BaseSchema,
+  visited: Set<JSONSchema.BaseSchema>
+): JSONSchema.BaseSchema {
   // an extracted key that rewrites cannot go on sharing its definition — the string form a key position needs is not the number form every other reference wants — so it inlines. One that does not rewrite keeps the `$ref`.
   if (json.$ref) {
+    // a recursive key holds its own reference inside its definition, so a node already on the path is left alone rather than resolved again
+    if (visited.has(json)) return json;
+    visited.add(json);
     for (const seen of ctx.seen.values()) {
       if (seen.schema !== json || !seen.def) continue;
-      const inlined = stringifyKeyNames(ctx, seen.def);
+      const inlined = stringifyKeyNames(ctx, seen.def, visited);
       return inlined === seen.def ? json : inlined;
     }
     return json;
@@ -493,7 +500,9 @@ function stringifyKeyNames(ctx: ToJSONSchemaContext, json: JSONSchema.BaseSchema
   for (const keyword of ["anyOf", "oneOf"] as const) {
     const branches = json[keyword];
     if (!Array.isArray(branches)) continue;
-    json = { ...json, [keyword]: branches.map((branch) => stringifyKeyNames(ctx, branch)) };
+    const mapped = branches.map((branch) => stringifyKeyNames(ctx, branch, visited));
+    // rebuilding regardless would detach a key that had nothing to re-express, dropping its `$ref` and leaking the internal `id`
+    if (mapped.some((branch, i) => branch !== branches[i])) json = { ...json, [keyword]: mapped };
   }
 
   // a member that already admits a string leaves the key unconstrained, so there is nothing to re-express
@@ -537,10 +546,15 @@ export const recordProcessor: Processor<schemas.$ZodRecord> = (schema, ctx, _jso
       });
       ctx.deferred.push(() => {
         const seen = ctx.seen.get(schema)!;
-        // the extracted body is a copy taken before the rewrite runs, so both carriers need it
-        for (const carrier of [seen.schema, seen.def]) {
-          const names = carrier?.propertyNames;
-          if (names && names !== true) carrier!.propertyNames = stringifyKeyNames(ctx, names);
+        const names = (seen.def ?? seen.schema).propertyNames;
+        if (!names || names === true) return;
+        const rewritten = stringifyKeyNames(ctx, names, new Set());
+        if (rewritten === names) return;
+        // the flatten has already copied this record's own properties onto every wrapper by reference, and its extracted body is another such copy, so every carrier holding the key needs the rewrite
+        for (const entry of ctx.seen.values()) {
+          for (const carrier of [entry.schema, entry.def]) {
+            if (carrier?.propertyNames === names) carrier.propertyNames = rewritten;
+          }
         }
       });
     }
