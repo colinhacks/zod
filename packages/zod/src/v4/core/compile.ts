@@ -20,8 +20,9 @@ import {
 import type { ParseContextInternal, ParsePayload, SomeType } from "./schemas.js";
 import * as util from "./util.js";
 
-/** Sentinel value returned by the compiled fast path when validation fails. Internal. */
+/** @internal Sentinel the compiled fast path returns when validation fails. */
 export const INVALID: unique symbol = Symbol.for("zod.compile.invalid");
+/** @internal */
 export type INVALID = typeof INVALID;
 
 // Set on the parse ctx when a compiled wrapper falls back to the runtime, so nested compiled wrappers skip their fast paths for the rest of that parse.
@@ -204,9 +205,8 @@ function installCompiledUserMethods<T extends SomeType>(
 }
 
 /**
- * Generate the standalone compiled function: a parser by default, a validator under
- * `assertOnly`. Returns either the parsed value, `true` where nothing reads the output,
- * or the `INVALID` sentinel. Internal — consumers should use `compile()`.
+ * @internal Generate the standalone compiled function: a parser by default, a validator under
+ * `assertOnly`. Returns the parsed value, `true` where nothing reads the output, or `INVALID`. Consumers use `compile()`.
  */
 export function compileFn<T extends SomeType>(schema: T, options?: CompileFnOptions): CompiledFn<core.output<T>> {
   // Cycle-breaking is keyed on the parse context, which generated code never receives. `shape` can be a getter that throws (z.pick() with an unrecognized mask key), so treat "can't tell" as recursive.

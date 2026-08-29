@@ -1,6 +1,5 @@
 import * as z4 from "zod/v4";
 import * as z4core from "zod/v4/core";
-import * as zcompile from "../zod/src/v4/core/compile.js";
 import { metabench } from "./metabench.js";
 
 // Schema for benchmarking - same as moltar benchmark
@@ -21,7 +20,7 @@ const schema = z4.strictObject({
 // AOT compiled schema (wraps fast path + runtime fallback)
 const compiledSchema = z4core.compile(schema);
 // Raw fast-path function (no fallback wrapper) for direct comparison
-const aotValidator = zcompile.compileFn(schema);
+const aotValidator = z4core.compileFn(schema);
 
 // Test data
 const DATA = Array.from({ length: 1000 }, () =>

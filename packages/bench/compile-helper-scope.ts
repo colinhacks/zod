@@ -1,7 +1,6 @@
 import * as z from "zod/v4";
 import * as zcore from "zod/v4/core";
 import { isValidBase64URL, isValidJWT, parseURLObject, urlHostnameOk, urlProtocolOk } from "zod/v4/core";
-import * as zcompile from "../zod/src/v4/core/compile.js";
 import { metabench } from "./metabench.js";
 
 const DATA = Array.from({ length: 1000 }, () => "SGVsbG8gV29ybGQ");
@@ -10,15 +9,15 @@ const URL_DATA = Array.from({ length: 1000 }, () => "  https://example.com/path?
 
 const base64url = z.string().base64url();
 const compiledBase64url = zcore.compile(base64url);
-const fastBase64url = zcompile.compileFn(base64url);
+const fastBase64url = zcore.compileFn(base64url);
 
 const jwt = z.jwt();
 const compiledJwt = zcore.compile(jwt);
-const fastJwt = zcompile.compileFn(jwt);
+const fastJwt = zcore.compileFn(jwt);
 
 const url = z.url();
 const compiledUrl = zcore.compile(url);
-const fastUrl = zcompile.compileFn(url);
+const fastUrl = zcore.compileFn(url);
 
 function makeScopedValidator(extraConstants: number) {
   const names = ["helper"];
@@ -39,7 +38,7 @@ const scoped50 = makeScopedValidator(50);
 console.log("=== Correctness ===");
 console.log("base64url runtime:", base64url.safeParse(DATA[0]).success);
 console.log("base64url compiled:", compiledBase64url.safeParse(DATA[0]).success);
-console.log("base64url fast:", fastBase64url(DATA[0]) !== zcompile.INVALID);
+console.log("base64url fast:", fastBase64url(DATA[0]) !== zcore.INVALID);
 console.log("jwt runtime:", jwt.safeParse(JWT_DATA[0]).success);
 console.log("jwt compiled:", compiledJwt.safeParse(JWT_DATA[0]).success);
 console.log("url runtime:", url.safeParse(URL_DATA[0]).success);
