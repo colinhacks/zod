@@ -80,6 +80,8 @@ jobs:
     if: github.event_name == 'push'
     needs: [test-node, lint, check-circular]
     runs-on: ubuntu-latest
+    # 6h is GitHub's hard cap for a hosted runner, not a tunable. The two npm waits below share it, so neither can have the whole thing; a stall that outlives them needs the wait moved to its own job rather than a larger number here.
+    timeout-minutes: 360
     permissions:
       contents: write
       pull-requests: read
@@ -110,8 +112,17 @@ jobs:
       - run: pnpm run prepublishOnly
         working-directory: ./packages/mini
 
+      # The versions being released, read from the manifests rather than from the publish steps: an action that decides the version is already on npm reports nothing, and the release still has to finish. `prepublishOnly` has already checked these against jsr.json and versions.ts.
+      - name: Resolve the versions
+        id: version
+        run: |
+          echo "zod=$(node -p "require('./packages/zod/package.json').version")" >> "$GITHUB_OUTPUT"
+          echo "mini=$(node -p "require('./packages/mini/package.json').version")" >> "$GITHUB_OUTPUT"
+
       - id: publish
         name: Publish to NPM
+        # npm refuses to publish over a version it has already staged, and the action reports that 409 inconsistently — sometimes as success, sometimes as a hard failure (JS-DevTools/npm-publish#245). Liveness below is the real gate, so this step does not get to decide the job.
+        continue-on-error: true
         uses: JS-DevTools/npm-publish@v4
         with:
           # dry-run: true
@@ -123,31 +134,29 @@ jobs:
         run: |
           echo "Published ${{ steps.publish.outputs.type }} version: ${{ steps.publish.outputs.version }}"
 
-      # npm can accept a publish and never finish processing it (4.5.0 sat in a phantom "staged" state); the action still reports success, so nothing below may run until the registry actually serves the version
-      - name: Verify the version is live on npm
-        if: ${{ steps.publish.outputs.type }}
+      # npm can accept a publish and leave it staged: 4.5.0 sat there 16 minutes and 4.5.3 sat there 25, and neither is an upper bound — this package is downloaded enough that processing is routinely slow. The version does arrive, and the release and the JSR publish are worthless without it, so wait rather than fail. A publish that failed for some other reason waits the whole window and then fails with the publish step's log to read.
+      - name: Wait for the version to be live on npm
         env:
-          VERSION: ${{ steps.publish.outputs.version }}
+          VERSION: ${{ steps.version.outputs.zod }}
         run: |
-          for i in $(seq 1 40); do
+          for i in $(seq 1 150); do
             if curl -sf "https://registry.npmjs.org/zod/$VERSION" > /dev/null; then
               echo "zod@$VERSION is live"
               exit 0
             fi
-            sleep 15
+            if [ $((i % 15)) -eq 0 ]; then echo "zod@$VERSION is not on the registry yet ($i minutes)"; fi
+            sleep 60
           done
-          echo "zod@$VERSION is not on the registry after 10 minutes; stopping before the GitHub release and the JSR publish"
+          echo "zod@$VERSION never reached the registry; see the publish step for why"
           exit 1
 
       - name: Configure changelog
-        if: ${{ steps.publish.outputs.type }}
         run: |
           echo '{"categories": [], "template": "## Commits:\n\n#{{UNCATEGORIZED}}", "pr_template": "- #{{MERGE_SHA}} #{{TITLE}}"}' > changelog_config.json
           cat changelog_config.json
           echo "last_tag=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
 
       - name: Generate changelog
-        if: ${{ steps.publish.outputs.type }}
         id: github_release
         uses: mikepenz/release-changelog-builder-action@v6
         env:
@@ -160,12 +169,15 @@ jobs:
 
       # notes go through env and a file so a commit subject can't break out of the command
       - name: Create release
-        if: ${{ steps.publish.outputs.type }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ steps.publish.outputs.version }}
+          VERSION: ${{ steps.version.outputs.zod }}
           CHANGELOG: ${{ steps.github_release.outputs.changelog }}
         run: |
+          if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "v$VERSION is already released"
+            exit 0
+          fi
           printf '%s' "$CHANGELOG" > "$RUNNER_TEMP/release_notes.md"
           gh release create "v$VERSION" \
             --repo "$GITHUB_REPOSITORY" \
@@ -174,36 +186,45 @@ jobs:
             --notes-file "$RUNNER_TEMP/release_notes.md"
 
       # last so a jsr outage can't cost the tag — and it aborts on a dirty tree, so nothing above it may leave the workspace dirty
-      - run: pnpm jsr publish --allow-slow-types # --dry-run
-        if: ${{ steps.publish.outputs.type }}
+      - name: Publish to JSR
+        env:
+          VERSION: ${{ steps.version.outputs.zod }}
         working-directory: ./packages/zod
+        run: |
+          if curl -sf "https://jsr.io/@zod/zod/${VERSION}_meta.json" > /dev/null; then
+            echo "@zod/zod@$VERSION is already on JSR"
+            exit 0
+          fi
+          pnpm jsr publish --allow-slow-types # --dry-run
 
       # @zod/mini ships in lockstep with zod and is a no-op when its version is already on the registry, so it runs unconditionally (the first release of the scoped package rides on a merge that does not bump zod itself) and last, so a failed mini publish cannot cost zod its tag, GitHub release or JSR publish
       - id: publish_mini
         name: Publish @zod/mini to NPM
+        continue-on-error: true
         uses: JS-DevTools/npm-publish@v4
         with:
           provenance: true
           package: ./packages/mini
 
-      - name: Verify @zod/mini is live on npm
-        if: ${{ steps.publish_mini.outputs.type }}
+      - name: Wait for @zod/mini to be live on npm
         env:
-          VERSION: ${{ steps.publish_mini.outputs.version }}
+          VERSION: ${{ steps.version.outputs.mini }}
         run: |
-          for i in $(seq 1 40); do
+          for i in $(seq 1 150); do
             if curl -sf "https://registry.npmjs.org/@zod%2fmini/$VERSION" > /dev/null; then
               echo "@zod/mini@$VERSION is live"
               exit 0
             fi
-            sleep 15
+            if [ $((i % 15)) -eq 0 ]; then echo "@zod/mini@$VERSION is not on the registry yet ($i minutes)"; fi
+            sleep 60
           done
-          echo "@zod/mini@$VERSION is not on the registry after 10 minutes"
+          echo "@zod/mini@$VERSION never reached the registry; see the publish step for why"
           exit 1
 
   backpublish_mini:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 360
     permissions:
       contents: read
       id-token: write
@@ -237,6 +258,7 @@ jobs:
       # the lockstep check in prepublishOnly is deliberately skipped: this version is older than versions.ts by design. npm refuses a bare publish of a version below latest, so it goes out under a throwaway dist-tag that leaves latest alone; remove it afterwards with `npm dist-tag rm @zod/mini backfill`
       - id: publish_mini
         name: Publish @zod/mini to NPM
+        continue-on-error: true
         uses: JS-DevTools/npm-publish@v4
         with:
           provenance: true
@@ -244,17 +266,18 @@ jobs:
           tag: backfill
           package: ./packages/mini
 
-      - name: Verify @zod/mini is live on npm
-        if: ${{ steps.publish_mini.outputs.type }}
+      # the dispatch input is the version, already checked against npm above, so this does not depend on what the publish step reported
+      - name: Wait for @zod/mini to be live on npm
         env:
-          VERSION: ${{ steps.publish_mini.outputs.version }}
+          VERSION: ${{ inputs.mini_version }}
         run: |
-          for i in $(seq 1 40); do
+          for i in $(seq 1 150); do
             if curl -sf "https://registry.npmjs.org/@zod%2fmini/$VERSION" > /dev/null; then
               echo "@zod/mini@$VERSION is live"
               exit 0
             fi
-            sleep 15
+            if [ $((i % 15)) -eq 0 ]; then echo "@zod/mini@$VERSION is not on the registry yet ($i minutes)"; fi
+            sleep 60
           done
-          echo "@zod/mini@$VERSION is not on the registry after 10 minutes"
+          echo "@zod/mini@$VERSION never reached the registry; see the publish step for why"
           exit 1
