@@ -11,7 +11,8 @@ export * as regexes from "./regexes.js";
 export * as locales from "../locales/index.js";
 export * from "./registries.js";
 export * from "./doc.js";
-export * from "./compile.js";
+// only the public surface: the parser contract (`compileFn`, `INVALID`) stays internal so it can change without a major
+export { compile, ZodCompileAsyncError, ZodCompileUnsupportedError, type CompileOptions } from "./compile.js";
 export * from "./api.js";
 export * from "./to-json-schema.js";
 export { toJSONSchema } from "./json-schema-processors.js";
