@@ -751,7 +751,9 @@ export function merge(a: schemas.$ZodObject, b: schemas.$ZodObject): any {
       assignProp(this, "shape", _shape); // self-caching
       return _shape;
     },
-    catchall: b._zod.def.catchall,
+    get catchall() {
+      return b._zod.def.catchall;
+    },
     checks: b._zod.def.checks ?? [],
   });
 
