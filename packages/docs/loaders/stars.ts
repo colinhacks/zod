@@ -1,5 +1,37 @@
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
 const API_URL = "https://api.github.com/graphql";
+const ATTEMPTS = 3;
+
+// retries transient github failures (5xx, secondary rate limits) so one bad response doesn't fail the whole build
+async function query(body: string): Promise<any> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${GITHUB_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body,
+        next: { revalidate: 86400 }, // Cache for 1 day to match route revalidation
+      });
+      if (res.status >= 400) {
+        throw new Error(`GitHub GraphQL responded ${res.status}: ${(await res.text()).slice(0, 500)}`);
+      }
+      const json = await res.json();
+      if (json.errors) {
+        throw new Error(`GitHub GraphQL errors: ${JSON.stringify(json.errors).slice(0, 500)}`);
+      }
+      return json;
+    } catch (err) {
+      lastError = err;
+      console.error(`Failed to fetch GitHub stars (attempt ${attempt}/${ATTEMPTS}):`, err);
+      if (attempt < ATTEMPTS) await new Promise((r) => setTimeout(r, 1000 * 2 ** (attempt - 1)));
+    }
+  }
+  throw lastError;
+}
 
 export async function fetchStars(resources: { slug: string; stars?: number }[]) {
   try {
@@ -26,33 +58,7 @@ export async function fetchStars(resources: { slug: string; stars?: number }[]) 
     `;
     });
 
-    const query = `{ ${queryParts.join("\n")} }`;
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${GITHUB_TOKEN}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ query }),
-      next: { revalidate: 86400 }, // Cache for 1 day to match route revalidation
-    });
-
-    if (res.status > 400) {
-      console.error(
-        "Failed to fetch GitHub stars. Make sure you are providing a valid GITHUB_TOKEN in packages/docs/.env"
-      );
-      if (process.env.NODE_ENV === "production") {
-        throw new Error("Failed to fetch GitHub stars.");
-      }
-      return;
-    }
-
-    const json = await res.json();
-
-    if (json.errors) {
-      console.dir(json.errors, { depth: null });
-      throw new Error("Failed to fetch GitHub stars");
-    }
+    const json = await query(JSON.stringify({ query: `{ ${queryParts.join("\n")} }` }));
 
     // Create a map of slug → star count
     const starsMap = new Map<string, number>();
@@ -71,8 +77,7 @@ export async function fetchStars(resources: { slug: string; stars?: number }[]) 
     // sort by star coun (descending) in place
     resources.sort((a, b) => (b.stars || 0) - (a.stars || 0));
   } catch (_) {
-    console.log(_);
-
+    // dev renders "—" without a token; production fails the build so a deploy never ships a starless ecosystem page
     if (process.env.NODE_ENV === "production") {
       throw new Error("Failed to fetch GitHub stars");
     }
