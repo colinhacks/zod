@@ -114,7 +114,7 @@ gh workflow run release.yml -f mini_version=4.5.2
 
 A back-published version below `latest` goes out under a `backfill` dist-tag, because npm refuses to publish below `latest` without one; remove the tag once the backfill is done: `npm dist-tag rm @zod/mini backfill`. A version that is zod's `latest` is published under `latest` instead. Dispatch one version at a time and let each run finish — concurrent publishes to one package fail with npm `E409` while the previous packument write is still processing.
 
-Both release paths end with `pnpm check:lockstep --wait`, and `.github/workflows/lockstep.yml` runs it daily. It reads npm and fails when any `zod` release from `4.5.0` on lacks an `@zod/mini` twin, when a `@zod/mini` version has no `zod` twin, or when the two `latest` tags differ. Run `pnpm check:lockstep` by hand after any manual publish; `--wait` retries for six minutes while the registry cache catches up.
+Both release paths end with `pnpm check:lockstep --wait`, and `.github/workflows/lockstep.yml` runs it daily. It reads npm and JSR and fails when any `zod` release from `4.5.0` on lacks an `@zod/mini` twin on either registry, when a `@zod/mini` version has no `zod` twin, or when the `latest` tags differ. A `zod` version present on npm but missing on JSR is only warned about, since that publish is recovered by hand and must not hold a release red. Run `pnpm check:lockstep` by hand after any manual publish; `--wait` retries for six minutes while the registry cache catches up.
 
 ## Format validators: spec compliance is not the bar
 
