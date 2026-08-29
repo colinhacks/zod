@@ -5,7 +5,7 @@ import * as core from "./core.js";
 import { Doc } from "./doc.js";
 import type * as errors from "./errors.js";
 import type * as JSONSchema from "./json-schema.js";
-import { parse, parseAsync, safeParse, safeParseAsync } from "./parse.js";
+import { _safeParse, _safeParseAsync, parse, parseAsync } from "./parse.js";
 import * as regexes from "./regexes.js";
 import type { StandardSchemaV1 } from "./standard-schema.js";
 import type { ProcessParams, ToJSONSchemaContext } from "./to-json-schema.js";
@@ -335,13 +335,20 @@ export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constru
 const toStandardResult = (r: util.SafeParseResult<unknown>) =>
   r.success ? { value: r.data } : { issues: r.error?.issues };
 
+// a Standard Schema result only reports issues, so a failure skips the ZodError and its construction cost: the bag holds the finalized issues and nothing else
+function IssueBag(this: { issues: errors.$ZodIssue[] }, issues: errors.$ZodIssue[]) {
+  this.issues = issues;
+}
+const standardParse = /* @__PURE__ */ _safeParse(IssueBag as any);
+const standardParseAsync = /* @__PURE__ */ _safeParseAsync(IssueBag as any);
+
 export function standardProps(inst: $ZodType): StandardSchemaV1.Props<any, any> {
   return {
     validate: (value: unknown) => {
       try {
-        return toStandardResult(safeParse(inst, value));
+        return toStandardResult(standardParse(inst, value));
       } catch (_) {
-        return safeParseAsync(inst, value).then(toStandardResult);
+        return standardParseAsync(inst, value).then(toStandardResult);
       }
     },
     vendor: "zod",
