@@ -18,7 +18,8 @@ import * as z from "zod";
 const Player = z.object({
   username: z.string(),
   bio: z.string(),
-  xp: z.number()
+  xp: z.number(),
+  // ...20 more properties...
 });
 
 const CompiledPlayer = z.compile(Player);
@@ -34,7 +35,7 @@ Use it exactly like `Player`:
 
 ```ts
 Player.parse({ ... });
-CompiledPlayer.parse({ ... }); // ~2x faster
+CompiledPlayer.parse({ ... }); // ~9x faster
 ```
 
 Zod's entire test suite runs twice—once normally and again with auto-compilation enabled globally—to ensure perfect fidelity.

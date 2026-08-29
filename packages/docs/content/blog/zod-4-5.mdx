@@ -35,7 +35,8 @@ import * as z from "zod";
 const Player = z.object({
   username: z.string(),
   bio: z.string(),
-  xp: z.number()
+  xp: z.number(),
+  // ...20 more properties...
 });
 
 const CompiledPlayer = z.compile(Player);
@@ -45,10 +46,10 @@ A compiled schema can be used *exactly* like an uncompiled one. There are no spe
 
 ```ts
 Player.parse({ ... });
-CompiledPlayer.parse({ ... }); // ~2x faster
+CompiledPlayer.parse({ ... }); // ~9x faster
 ```
 
-On objects, arrays, and unions, this speeds up parsing by a factor of ~3–7. More complex schemas stand to benefit more than simpler ones.
+On objects, arrays, and unions, this speeds up parsing by a factor of ~3–9. More complex schemas stand to benefit more than simpler ones.
 
 <ThemedImage
   lightSrc="/blog/compile-speedup-light.svg"
