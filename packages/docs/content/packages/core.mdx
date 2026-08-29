@@ -5,7 +5,6 @@ description: "Zod Core package - minimal core functionality for custom implement
 
 import { Callout } from "fumadocs-ui/components/callout"
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
-import { ThemedImage } from "@/components/themed-image";
 
 This sub-package exports the core classes and utilities that are consumed by Zod and Zod Mini. It is not intended to be used directly; instead it's designed to be extended by other packages. It implements:
 
@@ -168,7 +167,7 @@ export type $ZodTypes =
 
 ## Internals
 
-All `zod/v4/core` subclasses only contain a single property: `_zod`. This property is an object containing the schemas *internals*. The goal is to make `zod/v4/core` as extensible and unopinionated as possible. Other libraries can "build their own Zod" on top of these classes without `zod/v4/core` cluttering up the interface. Refer to the implementations of `zod` and `zod/mini` for examples of how to extend these classes, and to [Traits](#traits) below for the mechanism they use.
+All `zod/v4/core` subclasses only contain a single property: `_zod`. This property is an object containing the schemas *internals*. The goal is to make `zod/v4/core` as extensible and unopinionated as possible. Other libraries can "build their own Zod" on top of these classes without `zod/v4/core` cluttering up the interface. Refer to the implementations of `zod` and `zod/mini` for examples of how to extend these classes. 
 
 The `_zod` internals property contains some notable properties:
 
@@ -424,81 +423,6 @@ export type $ZodIssue =
 
 For details on each type, refer to [the implementation](https://github.com/colinhacks/zod/blob/main/packages/zod/src/v4/core/errors.ts).
 
-
-## Traits
-
-Both Zod and Zod Mini are user-facing "API frontends" over the shared validators in Zod Core. A regular Zod string schema must functionally extend both Zod Core's `$ZodString` class—which implements all string validation—as well as the `ZodType` class—defining Zod's base methods like `.optional()`, `.nullable()`, etc. This is the classic "diamond inheritance" problem.
-
-<ThemedImage
-  lightSrc="/blog/diamond-light.png"
-  darkSrc="/blog/diamond-dark.png"
-  alt="Diamond inheritance: $ZodType at the top, splitting into $ZodString (Zod Core, string validation) and ZodType (classic, .optional() / .nullable()), which meet at ZodString."
-  caption="The ZodString inheritance diamond"
-/>
-
-Since JavaScript doesn't support multiple inheritance, Zod implements a *typesafe trait pattern*. Each "trait" is an interface coupled with an initializer function, created with `$constructor`.
-
-```ts
-import { $constructor } from "zod/v4/core";
-
-interface Pet {
-  _zod: { def: { name: string } };
-  name: string;
-  greet(): string;
-}
-
-const Pet: $constructor<Pet> = $constructor("Pet", (inst, def) => {
-  inst.name = def.name;
-  inst.greet = () => `${inst.name} says hi`;
-});
-
-new Pet({ name: "Rex" }).greet(); // "Rex says hi"
-```
-
-The static `.init()` method applies the trait to a pre-existing object. Think of it like a constructor you can "apply" retroactively.
-
-```ts
-const obj = {};
-
-Pet.init(obj, { name: "Rex" });
-obj.greet(); // => "Rex says hi"
-```
-
-A trait can compose other traits by calling their `.init()` in its own initializer, instead of being restricted to a single `super()` call.
-
-```ts
-interface Swimmer extends Pet {
-  swim(): string;
-}
-const Swimmer: $constructor<Swimmer> = $constructor("Swimmer", (inst, def) => {
-  Pet.init(inst, def);
-  inst.swim = () => `${inst.name} swims`;
-});
-
-interface Flyer extends Pet {
-  fly(): string;
-}
-const Flyer: $constructor<Flyer> = $constructor("Flyer", (inst, def) => {
-  Pet.init(inst, def);
-  inst.fly = () => `${inst.name} flies`;
-});
-
-interface Duck extends Swimmer, Flyer {}
-const Duck: $constructor<Duck> = $constructor("Duck", (inst, def) => {
-  Swimmer.init(inst, def);
-  Flyer.init(inst, def);
-});
-
-const duck = new Duck({ name: "Rex" });
-duck.greet(); // "Rex says hi"
-duck.swim(); // "Rex swims"
-duck.fly(); // "Rex flies"
-
-duck._zod.traits; // a Set of implemented traits
-// => Set(['Duck', 'Swimmer', 'Pet', 'Flyer'])
-```
-
-Each trait initializes at most once per instance—`Pet.init()` runs once for `Duck` even though both `Swimmer` and `Flyer` call it. `instanceof` checks `_zod.traits`, so `duck instanceof Pet` is `true`. This is the same diamond pattern `ZodString` uses: its initializer calls `$ZodString.init()` and `ZodType.init()`.
 
 {/* ## Best practices
 
