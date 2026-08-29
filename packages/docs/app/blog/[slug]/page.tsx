@@ -2,7 +2,7 @@ import { BlogToc, type TocEntry } from "@/components/blog-toc";
 import { Heading } from "@/components/heading";
 import { InlineCodeTitle, stripBackticks } from "@/components/inline-code-title";
 import { Tab, Tabs } from "@/components/tabs";
-import { blog, formatDate, readingMinutes } from "@/loaders/source";
+import { blog, formatDate } from "@/loaders/source";
 import { Callout } from "fumadocs-ui/components/callout";
 import defaultMdxComponents, { createRelativeLink } from "fumadocs-ui/mdx";
 import Link from "next/link";
@@ -17,7 +17,7 @@ const AUTHOR_URL = "https://x.com/colinhacks";
 const isHidden = (page: any) => Boolean(page.data?.draft) && process.env.NODE_ENV === "production";
 const LABEL = "text-[11px] font-medium uppercase tracking-[0.16em] text-fd-muted-foreground";
 
-function MetaLine({ author, date, minutes }: { author: string; date?: Date; minutes: number }) {
+function MetaLine({ author, date }: { author: string; date?: Date }) {
   return (
     <p className="flex flex-wrap items-center gap-x-2 text-sm text-fd-muted-foreground">
       <a href={AUTHOR_URL} className="font-medium text-fd-foreground hover:text-[var(--ui-color)]">
@@ -29,8 +29,6 @@ function MetaLine({ author, date, minutes }: { author: string; date?: Date; minu
           <time dateTime={date.toISOString()}>{formatDate(date, "long")}</time>
         </>
       ) : null}
-      <span className="opacity-50">·</span>
-      <span>{minutes} min read</span>
     </p>
   );
 }
@@ -44,7 +42,6 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
   const title: string = page.data?.title ?? params.slug;
   const author: string = page.data?.author ?? "Colin McDonnell";
   const date = page.data?.date ? new Date(page.data.date) : undefined;
-  const minutes = readingMinutes(page);
   // h2s plus their h3s, except under Bug fixes where the h3s are long and numerous
   let section = "";
   const sections = ((page.data?.toc ?? []) as TocEntry[]).filter((t) => {
@@ -65,7 +62,7 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
             <InlineCodeTitle text={title} />
           </h1>
           <div className="mt-4 lg:hidden">
-            <MetaLine author={author} date={date} minutes={minutes} />
+            <MetaLine author={author} date={date} />
           </div>
           {/* the docs page's mdx setup, so headings, callouts and tabs render as they do in the docs */}
           <div className="prose prose-lg blog-prose min-w-0 mt-8">
@@ -86,7 +83,7 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
             />
           </div>
           <footer className="mt-12 pt-6 border-t border-fd-border">
-            <MetaLine author={author} date={date} minutes={minutes} />
+            <MetaLine author={author} date={date} />
           </footer>
         </article>
         <aside className="hidden lg:block lg:sticky lg:top-[calc(var(--fd-banner-height)+6rem)] self-start text-sm">
@@ -106,10 +103,6 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
                   {author}
                 </a>
               </dd>
-            </div>
-            <div>
-              <dt className={LABEL}>Reading time</dt>
-              <dd className="mt-1">{minutes} min</dd>
             </div>
           </dl>
           <BlogToc sections={sections} labelClassName={LABEL} />
