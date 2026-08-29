@@ -4,7 +4,7 @@ import { INVALID, ZodCompileUnsupportedError, compile, compileFn } from "zod/v4/
 
 // Broad compiled-vs-runtime sweep across schema categories.
 //
-// Methodology: absolute ops/sec on a laptop drifts by tens of percent between runs (thermal state, other processes), so a table of absolute numbers taken minutes apart is not comparable. Each case therefore measures runtime and compiled *interleaved* inside one round and keeps the best of N rounds — the minimum time is the closest estimate of the noise floor, and the speedup is a ratio of two measurements taken microseconds apart. Correctness is checked before timing: a fast path that returns the wrong value is not faster. How many schemas share the process is the largest single lever on the ratio — with many live, the safeParse site and zod's internal dispatch go megamorphic and the runtime slows more than the compiled path does — so the same set reports a higher median together than one schema per process; compare rows only within one regime.
+// Methodology: absolute ops/sec on a laptop drifts by tens of percent between runs (thermal state, other processes), so a table of absolute numbers taken minutes apart is not comparable. Each case therefore measures runtime and compiled *interleaved* inside one round and keeps the best of N rounds — the minimum time is the closest estimate of the noise floor, and the speedup is a ratio of two measurements taken microseconds apart. Correctness is checked before timing: a fast path that returns the wrong value is not faster.
 
 interface Case {
   group: string;
