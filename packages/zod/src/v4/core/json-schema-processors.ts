@@ -7,6 +7,7 @@ import {
   type ProcessParams,
   type Processor,
   type RegistryToJSONSchemaParams,
+  type Seen,
   type ToJSONSchemaContext,
   type ToJSONSchemaParams,
   type ZodStandardJSONSchemaPayload,
@@ -478,9 +479,15 @@ export const tupleProcessor: Processor<schemas.$ZodTuple> = (schema, ctx, _json,
 
 /** JSON object keys are always strings, so a numeric record key schema is re-expressed over the
  * numeric-string form the record parser matches. Deferred to `finalize`, after the flatten: a key
- * behind a wrapper only carries its own `type` before then, and a union key only has its branches. */
+ * behind a wrapper only carries its own `type` before then, and a union key only has its branches.
+ *
+ * A numeric bound cannot apply to a property name, so `minimum` and its siblings are dropped rather
+ * than carried over: keeping them beside `type: "string"` reproduces the match-nothing schema this
+ * exists to fix. A key that carries one therefore emits wider than the record parses — `z.record(z.number().min(5), V)`
+ * accepts `"3"` — which is the deliberate trade, since throwing on it would reject an ordinary schema
+ * outright. */
 function stringifyKeyNames(
-  ctx: ToJSONSchemaContext,
+  bySchema: Map<JSONSchema.BaseSchema, Seen>,
   json: JSONSchema.BaseSchema,
   visited: Set<JSONSchema.BaseSchema>
 ): JSONSchema.BaseSchema {
@@ -489,18 +496,16 @@ function stringifyKeyNames(
     // a recursive key holds its own reference inside its definition, so a node already on the path is left alone rather than resolved again
     if (visited.has(json)) return json;
     visited.add(json);
-    for (const seen of ctx.seen.values()) {
-      if (seen.schema !== json || !seen.def) continue;
-      const inlined = stringifyKeyNames(ctx, seen.def, visited);
-      return inlined === seen.def ? json : inlined;
-    }
-    return json;
+    const def = bySchema.get(json)?.def;
+    if (!def) return json;
+    const inlined = stringifyKeyNames(bySchema, def, visited);
+    return inlined === def ? json : inlined;
   }
 
   for (const keyword of ["anyOf", "oneOf"] as const) {
     const branches = json[keyword];
     if (!Array.isArray(branches)) continue;
-    const mapped = branches.map((branch) => stringifyKeyNames(ctx, branch, visited));
+    const mapped = branches.map((branch) => stringifyKeyNames(bySchema, branch, visited));
     // rebuilding regardless would detach a key that had nothing to re-express, dropping its `$ref` and leaking the internal `id`
     if (mapped.some((branch, i) => branch !== branches[i])) json = { ...json, [keyword]: mapped };
   }
@@ -526,12 +531,16 @@ function stringifyKeyNames(
 const pendingRecords = new WeakMap<ToJSONSchemaContext, schemas.$ZodType[]>();
 
 function rewriteKeyNames(ctx: ToJSONSchemaContext): void {
+  // an extracted key is resolved by the object `extractToDef` left in its place, so the map is built once rather than searched per reference
+  const bySchema = new Map<JSONSchema.BaseSchema, Seen>();
+  for (const entry of ctx.seen.values()) bySchema.set(entry.schema, entry);
+
   const rewrites = new Map<JSONSchema.BaseSchema, JSONSchema.BaseSchema>();
   for (const record of pendingRecords.get(ctx) ?? []) {
     const seen = ctx.seen.get(record);
     const names = (seen?.def ?? seen?.schema)?.propertyNames;
     if (!names || names === true || rewrites.has(names)) continue;
-    const rewritten = stringifyKeyNames(ctx, names, new Set());
+    const rewritten = stringifyKeyNames(bySchema, names, new Set());
     if (rewritten !== names) rewrites.set(names, rewritten);
   }
   if (!rewrites.size) return;
